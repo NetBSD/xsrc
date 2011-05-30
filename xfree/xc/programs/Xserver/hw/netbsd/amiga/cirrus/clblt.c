@@ -31,6 +31,7 @@ Author: Keith Packard
 
 */
 /* $XConsortium: cfbblt.c,v 1.13 94/04/17 20:28:44 dpw Exp $ */
+#include	"amiga.h"
 
 #include	"X.h"
 #include	"Xmd.h"
@@ -47,7 +48,7 @@ Author: Keith Packard
 #include	"mergerop.h"
 
 #include	<stdio.h>
-#include	"clstuff.h"	/* defines for blitting */
+#include	"clstuff.h"
 #include 	"amigaCL.h"
 /*static unsigned char *clregs,*clfb;*/
 

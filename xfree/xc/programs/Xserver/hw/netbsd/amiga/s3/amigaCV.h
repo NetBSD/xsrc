@@ -531,7 +531,7 @@ void amigaCVImageWriteNoMem(int, int, int, int, char *, int, int, int, short, un
 void amigaCVImageReadNoMem(int, int, int, int, char *, int, int, int, unsigned long, fbFd *);
 void amigaCVImageFillNoMem(int, int, int, int, char *, int, int, int, int, int, short, unsigned long, fbFd *);
 void amigaCVImageStipple(int, int, int, int, char *, int, int, int, int, int, Pixel, short, unsigned long, fbFd *);
-void amigaCVImageOpStipple(int, int, int, int, char *, int, int, int , int , int , Pixel, Pixel, short, unsigned long, fbFd *);
+void amigaCVImageOpStipple(int, int, int, int, char *, int, int, int, int, int, Pixel, Pixel, short, unsigned long, fbFd *);
 
 /* amigaCVline.c */
 void amigaCVLine(DrawablePtr, GCPtr, int, int, DDXPointPtr);
@@ -546,7 +546,7 @@ Bool amigaCVInit(int, ScreenPtr, int, char **);
 void amigaCVSegment(DrawablePtr, GCPtr, int, xSegment *);
 
 /* s3bcach.c */
-void s3CacheMoveBlock(int, int , int , int , int , int , unsigned int);
+void s3CacheMoveBlock(int, int, int, int, int, int, unsigned int);
 
 /* s3font.c */
 Bool s3RealizeFont(ScreenPtr, FontPtr);
@@ -556,16 +556,16 @@ Bool s3UnrealizeFont(ScreenPtr, FontPtr);
 void s3SetSpans(DrawablePtr, GCPtr, char *, DDXPointPtr, int *, int, int);
 
 /* s3text.c */
-void s3SimpleStipple(int, int , int, int , unsigned char *, int , fbFd *);
-void s3FontStipple(int, int , int, int , unsigned char *, int , Pixel);
+void s3SimpleStipple(int, int, int, int, unsigned char *, int, fbFd *);
+void s3FontStipple(int, int, int, int, unsigned char *, int, Pixel);
 int s3NoCPolyText(DrawablePtr, GCPtr, int, int, int, char *, Bool);
 int s3NoCImageText(DrawablePtr, GCPtr, int, int, int, char *, Bool);
 
 /* xf86text.c */
 void xf86InitText(void (*GlyphWriteFunc )(), int (*NoCPolyTextFunc )(), int (*NoCImageTextFunc )());
-int xf86PolyText8(DrawablePtr, GCPtr, int, int , int, char *);
-int xf86PolyText16(DrawablePtr, GCPtr, int, int , int, unsigned short *);
-void xf86ImageText8(DrawablePtr, GCPtr, int, int , int, char *);
-void xf86ImageText16(DrawablePtr, GCPtr, int, int , int, unsigned short *);
+int xf86PolyText8(DrawablePtr, GCPtr, int, int, int, char *);
+int xf86PolyText16(DrawablePtr, GCPtr, int, int, int, unsigned short *);
+void xf86ImageText8(DrawablePtr, GCPtr, int, int, int, char *);
+void xf86ImageText16(DrawablePtr, GCPtr, int, int, int, unsigned short *);
 
 #endif /* _REGS3_H */

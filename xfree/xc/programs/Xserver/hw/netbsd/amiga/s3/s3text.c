@@ -34,20 +34,21 @@
  */
 
 #include	"amiga.h"
-#include	"amigaCV.h"
 #include        "gcstruct.h"
 #include        "fontstruct.h"
 #include        "dixfontstr.h"
 #include	"cfb.h"
+#include	"amigaCV.h"
 
 extern unsigned char s3SwapBits[256];
 extern short s3alu[];
 
-__inline__ s3SimpleStipple(x, y, width, height, pb, pwidth, inf)
-int x, y;
-int  width, height, pwidth;
-unsigned char *pb;
- fbFd *inf;
+void s3SimpleStipple(
+    int x, int y,
+    int width, int height,
+    unsigned char *pb,
+    int pwidth,
+    fbFd *inf)
 {
     	    volatile caddr_t vgaBase = (inf->regs);  
 
@@ -99,13 +100,13 @@ __dolog ("Leaving s3SimpleStipple\n");
  * with no tiling and starting from (0,0) in the source bitmap. - Jon.
  */
 __inline__ static void
-s3PolyGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
-    DrawablePtr pDrawable;
-    GC 		*pGC;
-    int 	x, y;
-    unsigned int nglyph;
-    CharInfoPtr *ppci;		/* array of character info */
-    unsigned char *pglyphBase;	/* start of array of glyphs */
+s3PolyGlyphBlt(
+    DrawablePtr pDrawable,
+    GC 		*pGC,
+    int 	x, int y,
+    unsigned int nglyph,
+    CharInfoPtr *ppci,		/* array of character info */
+    unsigned char *pglyphBase)	/* start of array of glyphs */
 {
     int width, height;
     int nbyLine;			/* bytes per line of padded pixmap */
@@ -174,11 +175,12 @@ __dolog ("Entering s3PolyGlyphBlt\n");
     __dolog ("Leaving s3PolyGlyphBlt\n");
 }
 
-void s3FontStipple(x, y, width, height, pb, pwidth, id)
-int x, y;
-int width, height, pwidth;
-Pixel id;
-unsigned char *pb;
+void s3FontStipple(
+    int x, int y,
+    int width, int height,
+    unsigned char *pb,
+    int pwidth,
+    Pixel id)
 {
    fbFd *inf = amigaInfo(amigaCVsavepScreen);
    volatile caddr_t vgaBase =  (inf->regs);
@@ -205,14 +207,14 @@ unsigned char *pb;
 }
 
 int
-s3NoCPolyText(pDraw, pGC, x, y, count, chars, is8bit)
-     DrawablePtr pDraw;
-     GCPtr pGC;
-     int   x;
-     int   y;
-     int   count;
-     char *chars;
-     Bool is8bit;
+s3NoCPolyText(
+     DrawablePtr pDraw,
+     GCPtr pGC,
+     int   x,
+     int   y,
+     int   count,
+     char *chars,
+     Bool is8bit)
 {
    int   i;
    BoxPtr pBox;
@@ -323,14 +325,14 @@ __dolog ("Entering s3NoCPolyText\n");
  */
  
 int
-s3NoCImageText(pDraw, pGC, x, y, count, chars, is8bit)
-     DrawablePtr pDraw;
-     GCPtr pGC;
-     int   x;
-     int   y;
-     int   count;
-     char *chars;
-     Bool is8bit;
+s3NoCImageText(
+     DrawablePtr pDraw,
+     GCPtr pGC,
+     int   x,
+     int   y,
+     int   count,
+     char *chars,
+     Bool is8bit)
 {
    ExtentInfoRec info;		/* used by QueryGlyphExtents() */
    XID   gcvals[3];

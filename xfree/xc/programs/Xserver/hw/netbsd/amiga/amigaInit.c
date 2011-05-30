@@ -52,6 +52,10 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include    <sys/resource.h>
 #include    <unistd.h>
 #include    "mipointer.h"
+#include    "mfb.h"
+#include    "cfb.h"
+#include    "cfb16.h"
+#include    "cfb32.h"
 
 /* maximum pixmap depth */
 #ifndef AMIGAMAXDEPTH

@@ -47,6 +47,7 @@ SOFTWARE.
 ******************************************************************/
 
 /* $XConsortium: cfbgc.c,v 5.62 94/04/17 20:28:49 dpw Exp $ */
+#include "amiga.h"
 
 #include "X.h"
 #include "Xmd.h"

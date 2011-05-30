@@ -26,12 +26,12 @@
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
-#include "dev/kbdreg.h"
-#include "dev/vuid_event.h"
-#include "dev/grfabs_reg.h"
-#include "dev/viewioctl.h"
-#include "dev/grfioctl.h"
-#include "dev/grfvar.h"
+#include <dev/kbdreg.h>
+#include <dev/vuid_event.h>
+#include <dev/grfabs_reg.h>
+#include <dev/viewioctl.h>
+#include <dev/grfioctl.h>
+#include <dev/grfvar.h>
 
 /* X headers */
 #include "Xos.h"

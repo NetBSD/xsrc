@@ -32,6 +32,8 @@ Author: Keith Packard
 */
 /* $XConsortium: cfbbitblt.c,v 5.51 94/05/27 11:00:56 dpw Exp $ */
 
+#include	"amiga.h"
+
 #include	"X.h"
 #include	"Xmd.h"
 #include	"Xproto.h"
