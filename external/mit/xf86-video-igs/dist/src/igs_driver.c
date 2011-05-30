@@ -1,5 +1,5 @@
 /* $OpenBSD: wsfb_driver.c,v 1.19 2003/04/27 16:42:32 matthieu Exp $ */
-/* $NetBSD: igs_driver.c,v 1.7 2011/05/29 12:42:59 christos Exp $ */
+/* $NetBSD: igs_driver.c,v 1.8 2011/05/30 15:11:33 christos Exp $ */
 /*
  * Copyright (c) 2001 Matthieu Herrb
  *		 2009 Michael Lorenz
@@ -407,7 +407,7 @@ IgsProbe(DriverPtr drv, int flags)
 		pScrn->LeaveVT       = IgsLeaveVT;
 		pScrn->ValidMode     = IgsValidMode;
 		if (!IgsGetRec(pScrn)) {
-		    return;
+		    return FALSE;
 		}
 		cPtr = IGSPTR(pScrn);
 		cPtr->Chipset = chipset;
