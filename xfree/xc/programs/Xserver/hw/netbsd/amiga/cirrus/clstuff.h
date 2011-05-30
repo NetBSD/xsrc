@@ -4,6 +4,8 @@
 typedef volatile unsigned char      vuchar; 
 typedef vuchar *                    vucharptr;
 
+#if 0
+/* in <dev/grfioctl.h> */
 struct grfdyninfo {
         int     gdi_fbx;                        /* frame buffer x offset */
         int     gdi_fby;                        /* frame buffer y offset */
@@ -36,6 +38,7 @@ struct  grfinfo {
         /* new for banked pager support */
         int     gd_bank_size;           /* size of a bank (or 0) */
 };
+#endif
 
 
 #define InitCLBlt(regs,width,rop,memclk)\
@@ -207,6 +210,7 @@ struct  grfinfo {
 }\
 
 #define amigaInfo(s) (&amigaFbs[(s)->myNum])
+#if 0
 
 typedef struct {
     unsigned char*  fb;         /* Frame buffer itself */
@@ -216,7 +220,14 @@ typedef struct {
     void            (*EnterLeave)();/* screen switch */
     int             type;       /* index into the amigaFbData table */
 } fbFd;
+#endif
 
+void
+clFillRectSolidCopy(
+    DrawablePtr	    pDrawable,
+    GCPtr	    pGC,
+    int		    nBox,
+    BoxPtr	    pBox);
 
 extern fbFd             amigaFbs[];
 

@@ -47,6 +47,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define NEED_EVENTS
 #include    "amiga.h"
+#include    "mi.h"
 
 Bool            amigaEmulateMiddleButton = FALSE;
 Bool            amigaEmulateRightButton = FALSE;

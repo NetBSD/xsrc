@@ -30,6 +30,8 @@ in this Software without prior written authorization from the X Consortium.
 
 /* $XConsortium: cfbfillrct.c,v 5.18 94/04/17 20:28:47 dpw Exp $ */
 
+#include "amiga.h"
+
 #include "X.h"
 #include "Xmd.h"
 #include "servermd.h"
@@ -42,6 +44,7 @@ in this Software without prior written authorization from the X Consortium.
 #include "cfb.h"
 #include "cfbmskbits.h"
 #include "mergerop.h"
+#include "clstuff.h"
 #include "amigaCL.h"
 
 

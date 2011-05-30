@@ -41,11 +41,27 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ********************************************************/
 
 #define NEED_EVENTS
-#include "amiga.h"
+#include	"amiga.h"
 #include "keysym.h"
 
 #ifdef CV64_SUPPORT
-#include "s3/amigaCV.h"
+
+#include	"Xmd.h"
+#include	"gcstruct.h"
+#include	"scrnintstr.h"
+#include	"pixmapstr.h"
+#include	"regionstr.h"
+#include	"mistruct.h"
+#include	"mifillarc.h"
+#include	"fontstruct.h"
+#include	"dixfontstr.h"
+#include	"cfb.h"
+#include	"cfbmskbits.h"
+#include	"cfb8bit.h"
+#include	"fastblt.h"
+#include	"mergerop.h"
+#include	"s3/amigaCV.h"
+#include	"mi.h"
 #endif
 
 #ifdef XKB
@@ -56,8 +72,6 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #ifdef CV64_SUPPORT
 extern ScreenPtr amigaCVsavepScreen;
-extern void amigaCVadjustVirtual (volatile char *);
-extern void amigaCVRestoreCursor();
 #endif
 
 extern int amigaVideoMode;

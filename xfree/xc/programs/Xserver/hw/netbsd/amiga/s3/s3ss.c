@@ -75,6 +75,8 @@ Modified for the 8514/A by Kevin E. Martin (martin@cs.unc.edu)
 #include "scrnintstr.h"
 
 #include "cfb.h"
+#include "cfb16.h"
+#include "cfb32.h"
 #include "cfbmskbits.h"
 
 #include "amigaCV.h"

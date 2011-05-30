@@ -40,12 +40,16 @@ in this Software without prior written authorization from the X Consortium.
 #include	"fontstruct.h"
 #include	"dixfontstr.h"
 #include	"cfb.h"
+#include	"cfb16.h"
+#include	"cfb32.h"
 #include	"cfbmskbits.h"
 #include	"cfb8bit.h"
 #include	"fastblt.h"
 #include	"mergerop.h"
 #include	"amigaGX.h"
 #include	"migc.h"
+#include	"mi.h"
+#include	"mispans.h"
 
 
 /* make cfb somewhat more consistent.. */
@@ -2054,10 +2058,11 @@ amigaGXMatchCommon (pGC, devPriv, bpp)
 }
 
 void
-amiga8GXValidateGC (pGC, changes, pDrawable, bpp)
-    GCPtr	pGC;
-    Mask	changes;
-    DrawablePtr	pDrawable;
+amiga8GXValidateGC(
+    GCPtr	pGC,
+    Mask	changes,
+    DrawablePtr	pDrawable,
+    int		bpp)
 {
     int         mask;		/* stateChanges */
     int         index;		/* used for stepping through bitfields */
@@ -2454,10 +2459,11 @@ amiga8GXValidateGC (pGC, changes, pDrawable, bpp)
 }
 
 void
-amiga16GXValidateGC (pGC, changes, pDrawable, bpp)
-    GCPtr	pGC;
-    Mask	changes;
-    DrawablePtr	pDrawable;
+amiga16GXValidateGC(
+    GCPtr	pGC,
+    Mask	changes,
+    DrawablePtr	pDrawable,
+    int		bpp)
 {
     int         mask;		/* stateChanges */
     int         index;		/* used for stepping through bitfields */
@@ -2640,8 +2646,9 @@ amiga16GXValidateGC (pGC, changes, pDrawable, bpp)
 		    if ((width <= 32) && !(width & (width - 1)))
 		    {
 		    	cfb16CopyRotatePixmap(pGC->tile.pixmap,
-					    &cfbGetCompositeClip(pGC),
-					    xrot, yrot);
+					      &pGC->pRotatedPixmap,
+					      /* &cfbGetCompositeClip(pGC), */
+					      xrot, yrot);
 		    	new_pix = TRUE;
 		    }
 	    	}
@@ -2848,10 +2855,11 @@ amiga16GXValidateGC (pGC, changes, pDrawable, bpp)
 }
 
 void
-amiga24GXValidateGC (pGC, changes, pDrawable, bpp)
-    GCPtr	pGC;
-    Mask	changes;
-    DrawablePtr	pDrawable;
+amiga24GXValidateGC(
+    GCPtr	pGC,
+    Mask	changes,
+    DrawablePtr	pDrawable,
+    int		bpp)
 {
     int         mask;		/* stateChanges */
     int         index;		/* used for stepping through bitfields */
@@ -3255,8 +3263,8 @@ amigaGXDestroyGC (pGC)
     miDestroyGC (pGC);
 }
 
-amigaGXCreateGC (pGC)
-    GCPtr   pGC;
+Bool
+amigaGXCreateGC(GCPtr   pGC)
 {
     amigaGXPrivGCPtr  gxPriv;
     if (pGC->depth == 1)
@@ -3354,9 +3362,10 @@ amiga24GXDestroyWindow (pWin)
     return cfb32DestroyWindow (pWin);
 }
 
-amiga8GXChangeWindowAttributes (pWin, mask)
-    WindowPtr	pWin;
-    Mask	mask;
+Bool
+amiga8GXChangeWindowAttributes(
+    WindowPtr	pWin,
+    Mask	mask)
 {
 #if 0
     amigaGXStipplePtr stipple;
@@ -3507,9 +3516,10 @@ amiga8GXChangeWindowAttributes (pWin, mask)
     return (TRUE);
 }
 
-amiga16GXChangeWindowAttributes (pWin, mask)
-    WindowPtr	pWin;
-    Mask	mask;
+Bool
+amiga16GXChangeWindowAttributes(
+    WindowPtr	pWin,
+    Mask	mask)
 {
 #if 0
     amigaGXStipplePtr stipple;
@@ -3660,9 +3670,10 @@ amiga16GXChangeWindowAttributes (pWin, mask)
     return (TRUE);
 }
 
-amiga24GXChangeWindowAttributes (pWin, mask)
-    WindowPtr	pWin;
-    Mask	mask;
+Bool
+amiga24GXChangeWindowAttributes(
+    WindowPtr	pWin,
+    Mask	mask)
 {
 #if 0
     amigaGXStipplePtr stipple;
@@ -4163,15 +4174,10 @@ amigaGXCopyWindow(pWin, ptOldOrg, prgnSrc)
     REGION_DESTROY(pWin->drawable.pScreen, prgnDst);
 }
 
-#if NeedFunctionPrototypes
+Bool
 amigaGXInit (
     ScreenPtr	pScreen,
     fbFd	*fb)
-#else
-amigaGXInit (pScreen, fb)
-    ScreenPtr	pScreen;
-    fbFd	*fb;
-#endif
 {
     Uint	    mode;
     register long   r;
@@ -4312,19 +4318,19 @@ amiga24GXGetSpans(pDrawable, wMax, ppt, pwidth, nspans, pchardstStart)
  * boxes, we may not want to start grabbing bits at psrc but at some offset
  * further on.) 
  */
-amiga24GXSetScanline(inf, acm, y, xOrigin, xStart, xEnd, psrc, alu, pdstBase, 
-		     widthDst, planemask)
-    fbFd		*inf;
-    struct ACM		*acm;
-    int			y;
-    int			xOrigin;	/* where this scanline starts */
-    int			xStart;		/* first bit to use from scanline */
-    int			xEnd;		/* last bit to use from scanline + 1 */
-    register unsigned int *psrc;
-    register int	alu;		/* raster op */
-    int			*pdstBase;	/* start of the drawable */
-    int			widthDst;	/* width of drawable in pixels */
-    unsigned long	planemask;
+void
+amiga24GXSetScanline(
+    fbFd		*inf,
+    struct ACM		*acm,
+    int			y,
+    int			xOrigin,	/* where this scanline starts */
+    int			xStart,		/* first bit to use from scanline */
+    int			xEnd,		/* last bit to use from scanline + 1 */
+    unsigned int	*psrc,
+    int			alu,		/* raster op */
+    int			*pdstBase,	/* start of the drawable */
+    int			widthDst,	/* width of drawable in pixels */
+    unsigned long	planemask)
 {
     int			w;		/* width of scanline in bits */
     Uint		dst, dim;

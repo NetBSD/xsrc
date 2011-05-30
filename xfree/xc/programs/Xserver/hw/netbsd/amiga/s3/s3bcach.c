@@ -32,6 +32,8 @@
  */
 
 #include "amiga.h" 
+#include "gcstruct.h"
+#include "cfb.h"
 #include        "amigaCV.h"  
 #include "xf86bcache.h" 
 

@@ -27,6 +27,7 @@ in this Software without prior written authorization from the X Consortium.
  * Author:  Keith Packard, MIT X Consortium
  */
 
+#include "amiga.h"
 
 #include "X.h"
 #include "Xmd.h"

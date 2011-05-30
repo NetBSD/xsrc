@@ -47,10 +47,13 @@ SOFTWARE.
 
 ******************************************************************/
 
+#include "amiga.h"
+
 #include "X.h"
 #include "scrnintstr.h"
 #include "windowstr.h"
 #include "cfb.h"
+#include "gcstruct.h"
 #include "mistruct.h"
 #include "regionstr.h"
 #include "cfbmskbits.h"

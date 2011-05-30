@@ -51,8 +51,6 @@ typedef Uchar  VUchar;
    in the other modes. (thus 8x1x8=64 bytes) */
 #define PAT_MEM_OFF (1280*1*1024)
 
-#include "dev/grf_clreg.h"
-
 #define Map(m) \
 	do { WGfx(ba, GCT_ID_READ_MAP_SELECT, m & 3 ); WSeq(ba, SEQ_ID_MAP_MASK, (1 << (m & 3))); } while (0)
 

@@ -34,6 +34,8 @@
  */
 
 #include	"amiga.h"
+#include	"gcstruct.h"
+#include	"cfb.h"
 #include 	"amigaCV.h"
 #include        "xf86bcache.h"
 #include	"xf86fcache.h"
@@ -163,12 +165,13 @@ Dos3CPolyText8(x, y, count, chars, fentry, pGC, pBox)
  * call the glyph output routine.
  */
 void 
-s3GlyphWrite(x, y, count, chars, fentry, pGC, pBox, numRects)
-     int   x, y, count;
-     unsigned char *chars;
-     CacheFont8Ptr fentry;
-     GCPtr pGC;
-     BoxPtr pBox;
+s3GlyphWrite(
+     int x, int y, int count,
+     unsigned char *chars,
+     CacheFont8Ptr fentry,
+     GCPtr pGC,
+     BoxPtr pBox,
+     int numRects)
 {
 
    fbFd *inf = amigaInfo(amigaCVsavepScreen);
