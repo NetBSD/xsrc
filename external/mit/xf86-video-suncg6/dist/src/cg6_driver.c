@@ -61,7 +61,8 @@ static void	CG6FreeScreen(int scrnIndex, int flags);
 static ModeStatus CG6ValidMode(int scrnIndex, DisplayModePtr mode,
 			       Bool verbose, int flags);
 
-void CG6Sync(ScrnInfoPtr pScrn);
+static Bool CG6DriverFunc(ScrnInfoPtr pScrn, xorgDriverFuncOp op,
+				pointer ptr);
 
 #define CG6_VERSION 4000
 #define CG6_NAME "SUNCG6"
@@ -85,7 +86,8 @@ _X_EXPORT DriverRec SUNCG6 = {
     CG6Probe,
     CG6AvailableOptions,
     NULL,
-    0
+    0,
+    CG6DriverFunc
 };
 
 typedef enum {
@@ -136,7 +138,7 @@ cg6Setup(pointer module, pointer opts, int *errmaj, int *errmin)
 
     if (!setupDone) {
 	setupDone = TRUE;
-	xf86AddDriver(&SUNCG6, module, 0);
+	xf86AddDriver(&SUNCG6, module, HaveDriverFuncs);
 
 	/*
 	 * Modules that this driver always requires can be loaded here
@@ -752,11 +754,19 @@ CG6SaveScreen(ScreenPtr pScreen, int mode)
     return TRUE;
 }
 
-/*
- * This is the implementation of the Sync() function.
- */
-void
-CG6Sync(ScrnInfoPtr pScrn)
+static Bool
+CG6DriverFunc(ScrnInfoPtr pScrn, xorgDriverFuncOp op,
+    pointer ptr)
 {
-    return;
+	xorgHWFlags *flag;
+
+	switch (op) {
+	case GET_REQUIRED_HW_INTERFACES:
+		flag = (CARD32*)ptr;
+		(*flag) = HW_MMIO;
+		return TRUE;
+	default:
+		return FALSE;
+	}
 }
+
