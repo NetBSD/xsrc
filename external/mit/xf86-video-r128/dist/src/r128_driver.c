@@ -1395,6 +1395,10 @@ R128I2cInit(ScrnInfoPtr pScrn)
     return TRUE;
 }
 
+/* XXX
+ * the following comment is bogus - the code scans the main monitor port,
+ * not R128_GPIO_MONIDB
+ */
 /* return TRUE is a DFP is indeed connected to a DVI port */
 static Bool R128GetDFPInfo(ScrnInfoPtr pScrn)
 {
@@ -1416,6 +1420,22 @@ static Bool R128GetDFPInfo(ScrnInfoPtr pScrn)
            & ~(CARD32)(R128_GPIO_MONID_A_0 | R128_GPIO_MONID_A_3));
 
     MonInfo = xf86DoEDID_DDC2(pScrn->scrnIndex, info->pI2CBus);
+#ifdef __NetBSD__
+    {
+    	struct wsdisplayio_edid_info ei;
+    	char buffer[1024];
+    	int i, j;
+
+	ei.edid_data = buffer;
+	ei.buffer_size = 1024;
+	if (ioctl(xf86Info.screenFd, WSDISPLAYIO_GET_EDID, &ei) != -1) {
+	    xf86Msg(X_INFO, "got %d bytes worth of EDID from wsdisplay\n", ei.data_size);
+	    MonInfo = xf86InterpretEDID(pScrn->scrnIndex, buffer);
+	} else
+	    xf86Msg(X_INFO, "ioctl failed %d\n", errno);
+    }
+#endif
+		
     if(!MonInfo) {
         xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
                    "No DFP detected\n");
