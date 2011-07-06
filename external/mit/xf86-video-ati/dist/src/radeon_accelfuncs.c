@@ -1332,7 +1332,6 @@ FUNC_NAME(RADEONAccelInit)(ScreenPtr pScreen, XAAInfoRecPtr a)
 #endif
 
 #ifdef RENDER
-    info->RenderAccel = FALSE;
     if (info->RenderAccel && info->xaaReq.minorversion >= 2) {
 
 	a->CPUToScreenAlphaTextureFlags = XAA_RENDER_POWER_OF_2_TILE_ONLY;
