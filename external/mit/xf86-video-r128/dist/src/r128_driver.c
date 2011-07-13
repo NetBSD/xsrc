@@ -1059,7 +1059,8 @@ static Bool R128PreInitConfig(ScrnInfoPtr pScrn)
 	case PCI_CHIP_RAGE128LF:
 	case PCI_CHIP_RAGE128MF:
 	case PCI_CHIP_RAGE128ML: 
-			info->HasPanelRegs = TRUE;  
+			info->HasPanelRegs = TRUE; 
+			info->isDFP = TRUE; 
 			/* which chips support dualhead? */
 			info->HasCRTC2 = TRUE;  
 			break;
@@ -1421,7 +1422,7 @@ static Bool R128GetDFPInfo(ScrnInfoPtr pScrn)
 
     MonInfo = xf86DoEDID_DDC2(pScrn->scrnIndex, info->pI2CBus);
 #ifdef __NetBSD__
-    {
+    if (MonInfo == NULL) {
     	struct wsdisplayio_edid_info ei;
     	char buffer[1024];
     	int i, j;
