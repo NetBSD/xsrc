@@ -546,7 +546,7 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 	xf86SetGamma(pScrn,zeros);
 
 	pScrn->progClock = TRUE;
-	pScrn->rgbBits   = 8;
+	pScrn->rgbBits   = (pScrn->depth >= 8) ? 8 : pScrn->depth;
 	pScrn->chipset   = "wsfb";
 	pScrn->videoRam  = fPtr->linebytes * fPtr->info.height;
 
@@ -736,6 +736,7 @@ WsfbScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	VisualPtr visual;
 	int ret, flags, ncolors;
 	int wsmode = WSDISPLAYIO_MODE_DUMBFB;
+	int wstype;
 	size_t len;
 
 	TRACE_ENTER("WsfbScreenInit");
@@ -787,6 +788,13 @@ WsfbScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 			   strerror(errno));
 		return FALSE;
 	}
+	/* Get wsdisplay type to handle quirks */
+	if (ioctl(fPtr->fd, WSDISPLAYIO_GTYPE, &wstype) == -1) {
+		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+			   "ioctl WSDISPLAY_GTYPE: %s\n",
+			   strerror(errno));
+		return FALSE;
+	}
 	fPtr->fbmem = wsfb_mmap(len, 0, fPtr->fd);
 
 	if (fPtr->fbmem == NULL) {
@@ -826,6 +834,17 @@ WsfbScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	}
 
 	fPtr->fbstart = fPtr->fbmem;
+#ifdef	WSDISPLAY_TYPE_LUNA
+	if (wstype == WSDISPLAY_TYPE_LUNA) {
+		/*
+		 * XXX
+		 * LUNA's FB seems to have 64 dot (8 byte) offset.
+		 * This might be able to be changed in kernel lunafb driver,
+		 * but current setting was pulled from 4.4BSD-Lite2/luna68k.
+		 */
+		fPtr->fbstart += 8;
+	}
+#endif
 
 	if (fPtr->shadowFB) {
 		fPtr->shadow = xcalloc(1, pScrn->virtualX * pScrn->virtualY *
@@ -840,6 +859,12 @@ WsfbScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
 	switch (pScrn->bitsPerPixel) {
 	case 1:
+		ret = fbScreenInit(pScreen,
+		    fPtr->fbstart,
+		    pScrn->virtualX, pScrn->virtualY,
+		    pScrn->xDpi, pScrn->yDpi,
+		    fPtr->linebytes * 8, pScrn->bitsPerPixel);
+		break;
 	case 4:
 	case 8:
 	case 16:
