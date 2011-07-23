@@ -59,7 +59,7 @@ XIQueryPointer(Display     *dpy,
     XExtDisplayInfo *info = XInput_find_display(dpy);
 
     LockDisplay(dpy);
-    if (_XiCheckExtInit(dpy, Dont_Check, info) == -1)
+    if (_XiCheckExtInit(dpy, XInput_2_0, info) == -1)
 	return False;
 
     GetReq(XIQueryPointer, req);

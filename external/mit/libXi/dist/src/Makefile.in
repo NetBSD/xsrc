@@ -73,18 +73,18 @@ am__DEPENDENCIES_1 =
 libXi_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am__objects_1 = XIAllowEvents.lo XIGrabDevice.lo XIQueryVersion.lo \
 	XIQueryDevice.lo XISetDevFocus.lo XIGetDevFocus.lo \
-	XIPassiveGrab.lo XIProperties.lo XISelEv.lo XIWarpPointer.lo \
-	XIHierarchy.lo XIDefineCursor.lo XIQueryPointer.lo
+	XIPassiveGrab.lo XIProperties.lo XISelEv.lo XISetCPtr.lo \
+	XIWarpPointer.lo XIHierarchy.lo XIDefineCursor.lo \
+	XIQueryPointer.lo
 am_libXi_la_OBJECTS = XAllowDv.lo XChDProp.lo XChgDCtl.lo XChgFCtl.lo \
 	XChgKbd.lo XChgKMap.lo XChgPnt.lo XChgProp.lo XCloseDev.lo \
 	XDelDProp.lo XDevBell.lo XExtToWire.lo XGetBMap.lo XGetCPtr.lo \
 	XGetDCtl.lo XGetDProp.lo XGetFCtl.lo XGetKMap.lo XGetMMap.lo \
 	XGetProp.lo XGetVers.lo XGMotion.lo XGrabDev.lo XGrDvBut.lo \
 	XGrDvKey.lo XGtFocus.lo XGtSelect.lo XListDev.lo XListDProp.lo \
-	XOpenDev.lo XQueryDv.lo XSelect.lo XSetBMap.lo XSetCPtr.lo \
-	XSetDVal.lo XSetMMap.lo XSetMode.lo XSndExEv.lo XStFocus.lo \
-	XUngrDev.lo XUngrDvB.lo XUngrDvK.lo XExtInt.lo \
-	$(am__objects_1)
+	XOpenDev.lo XQueryDv.lo XSelect.lo XSetBMap.lo XSetDVal.lo \
+	XSetMMap.lo XSetMode.lo XSndExEv.lo XStFocus.lo XUngrDev.lo \
+	XUngrDvB.lo XUngrDvK.lo XExtInt.lo $(am__objects_1)
 libXi_la_OBJECTS = $(am_libXi_la_OBJECTS)
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
@@ -147,6 +147,7 @@ CWARNFLAGS = @CWARNFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DLLTOOL = @DLLTOOL@
 DRIVER_MAN_DIR = @DRIVER_MAN_DIR@
 DRIVER_MAN_SUFFIX = @DRIVER_MAN_SUFFIX@
 DSYMUTIL = @DSYMUTIL@
@@ -180,6 +181,7 @@ LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MALLOC_ZERO_CFLAGS = @MALLOC_ZERO_CFLAGS@
+MANIFEST_TOOL = @MANIFEST_TOOL@
 MAN_SUBSTS = @MAN_SUBSTS@
 MISC_MAN_DIR = @MISC_MAN_DIR@
 MISC_MAN_SUFFIX = @MISC_MAN_SUFFIX@
@@ -220,6 +222,7 @@ abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 am__include = @am__include@
@@ -277,6 +280,7 @@ XI2_sources = XIAllowEvents.c \
 		  XIPassiveGrab.c \
 		  XIProperties.c \
 		  XISelEv.c \
+		  XISetCPtr.c \
 		  XIWarpPointer.c \
 		  XIHierarchy.c \
 		  XIDefineCursor.c \
@@ -316,7 +320,6 @@ libXi_la_SOURCES = \
 		  XQueryDv.c \
 		  XSelect.c \
 		  XSetBMap.c \
-		  XSetCPtr.c \
 		  XSetDVal.c \
 		  XSetMMap.c \
 		  XSetMode.c \
@@ -474,6 +477,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/XIQueryPointer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/XIQueryVersion.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/XISelEv.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/XISetCPtr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/XISetDevFocus.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/XIWarpPointer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/XListDProp.Plo@am__quote@
@@ -482,7 +486,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/XQueryDv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/XSelect.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/XSetBMap.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/XSetCPtr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/XSetDVal.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/XSetMMap.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/XSetMode.Plo@am__quote@

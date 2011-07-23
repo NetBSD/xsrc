@@ -1,3 +1,309 @@
+commit 9fd7b9a9652ecebb8eb533c2a30b9fa7bb186b90
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jun 7 13:32:11 2011 +1000
+
+    libXi 1.4.3
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 7bdaa3635b7eb4bd993c317922d35cad7ed0cab9
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Fri Jun 3 15:10:27 2011 +1000
+
+    man: Fix typo in XIChangeProperty
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit 938ef832b892fdefe0d5c2bb4510c91bbbccca9f)
+
+commit 63027b24113b349720f1612a4426933c1364ea28
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Fri Jun 3 15:02:35 2011 +1000
+
+    man: Fix wrong event names in XIGrabButton.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit 597a6a51721d30c4354d1133bb6da6bd2e12446e)
+
+commit 9affea8cfd3f583647e9c6ea2b5debb97e6904c5
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Thu Jun 2 16:21:59 2011 +1000
+
+    Use Data, not Data32 in XIPassiveGrabDevice
+    
+    Data32 takes and iterates over an array of longs, thus skipping every 4
+    bytes on LP64. Here we only have arrays of ints, use the normal Data macro
+    instead.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Jeremy Huddleston <jeremyhu@apple.com>
+    (cherry picked from commit 9faab2bc0bdd4d98a04e572a7a5201bfcd3bdc70)
+
+commit 641d1e9943208a8b2c2aef843bd17cb22f833b06
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Thu Jun 2 14:17:44 2011 +1000
+
+    man: fix missing comma in XIGrabEnter man page
+    (cherry picked from commit 67441d30df756eb715a262d3439865dedd4055e8)
+
+commit f37dee93cb288f11d286c7bc4222b2f571ccfd65
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Thu May 5 09:43:32 2011 +1000
+
+    man: fix typo, layout in XGetExtensionVersion.man
+    
+    Fix a typo and move from MPX to XI2. Add a linebreak to make the
+    depreciation separate from the function description. Changes in the second
+    paragraph are just realignment due to the linebreak.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit aa2432240ad02c54280f2d11c007969c3eb9b79f)
+
+commit 89c7eff322c60d78c814693ecb28fa6c65159d3e
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue May 3 14:34:22 2011 +1000
+
+    XIChangeHierarchy: Return Success early if no actual changes are requested.
+    
+    Do the same for negative num_changes.
+    
+    Found by static analyzer.
+    
+    Reported-by: Jeremy Huddleston <jeremyhu@apple.com>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Jeremy Huddleston <jeremyhu@apple.com>
+    (cherry picked from commit cc6feecae23b321952921cf927bc965386844c8c)
+
+commit 7c6003718458ede0542233a213e05d67731d3e28
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue May 3 13:21:02 2011 +1000
+
+    Allocate enough memory for raw events + extra data.
+    
+    Necessary space was calculated, but not actually used to allocate memory. As
+    a result, valuator data would overwrite the allocated memory.
+    
+    ==4166== Invalid write of size 1
+    ==4166==    at 0x4C29F04: memcpy (mc_replace_strmem.c:497)
+    ==4166==    by 0x8F39180: ??? (in /usr/lib/libXi.so.6.1.0)
+    ==4166==    by 0x7433D48: _XCopyEventCookie (in /usr/lib/libX11.so.6.3.0)
+    ==4166==    by 0x7425166: XPeekEvent (in /usr/lib/libX11.so.6.3.0)
+    ==4166==    by 0x49C3E3: process_key (x11_be.c:1065)
+    ==4166==    by 0x49EA5C: event_key_release (x11_be.c:2201)
+    ==4166==    by 0x49DD6E: x11_be_process_events (x11_be.c:1892)
+    ==4166==    by 0x4A38F4: x11_be_main_loop (x11_be.c:4353)
+    ==4166==    by 0x4A39E1: x11_be_thread_main (x11_be.c:4385)
+    ==4166==    by 0x87549C9: start_thread (pthread_create.c:300)
+    ==4166==    by 0x8A516FC: clone (clone.S:112)
+    ==4166==  Address 0x168afe80 is 0 bytes after a block of size 96 alloc'd
+    ==4166==    at 0x4C284A8: malloc (vg_replace_malloc.c:236)
+    ==4166==    by 0x8F390BD: ??? (in /usr/lib/libXi.so.6.1.0)
+    ==4166==    by 0x7433D48: _XCopyEventCookie (in /usr/lib/libX11.so.6.3.0)
+    ==4166==    by 0x7425166: XPeekEvent (in /usr/lib/libX11.so.6.3.0)
+    ==4166==    by 0x49C3E3: process_key (x11_be.c:1065)
+    ==4166==    by 0x49EA5C: event_key_release (x11_be.c:2201)
+    ==4166==    by 0x49DD6E: x11_be_process_events (x11_be.c:1892)
+    ==4166==    by 0x4A38F4: x11_be_main_loop (x11_be.c:4353)
+    ==4166==    by 0x4A39E1: x11_be_thread_main (x11_be.c:4385)
+    ==4166==    by 0x87549C9: start_thread (pthread_create.c:300)
+    
+    Reported-by: Roger Cruz <roger.cruz@virtualcomputer.com>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Jeremy Huddleston <jeremyhu@apple.com>
+    Reviewed-by: Daniel Stone <daniel@fooishbar.org>
+    (cherry picked from commit af65475b1f6b7209750220a74aaad9968d54aaf7)
+
+commit 8abdde71b83ff37b8500282e4856c323be508f67
+Author: Matthieu Herrb <matthieu.herrb@laas.fr>
+Date:   Fri Apr 1 22:49:09 2011 +0200
+
+    Fix XISelectEvents on 64 bits, strict alignement architectures.
+    
+    Use Data() to send the struct xXIEventMask on the wire instead of
+    Data32() which expects a pointer to a 64bits value on LP64
+    architectures.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit 18177afd4fb3934d0a9083c599fb96701eec2ad9)
+
+commit 32236a7779f721d252d633d06ade306f246421a3
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Fri Mar 18 16:30:13 2011 -0700
+
+    configure.ac: 1.4.2
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit 2d638fc37b0dbf28e5c826f74f68ada83a8c3e2b
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Mar 15 10:55:10 2011 +1000
+
+    Force alignment with sizeof(Atom) for XIButtonClassInfo
+    
+    The memory layout of an XIButtonClassInfo is
+    [struct XIButtonClassInfo][mask][labels]
+    
+    With the mask being currently 4-byte aligned and labels a list of Atoms. On
+    LP64, Atoms are 8 byte, leading to unaligned access for some mask lengths.
+    Force the alignment to be sizeof(Atom).
+    
+    Reported-by: Christian Weisgerber <naddy@mips.inka.de>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Tested-by: Christian Weisgerber <naddy@mips.inka.de>
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+
+commit 477f922fb07eea629f16c55b0a022e836ede6d41
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Mar 8 14:44:10 2011 +1000
+
+    Don't discard extra data for passive grabs.
+    
+    Failed modifier data was discarded, causing assertions inside xcb.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit f0a352412920d9989323c7d33ca75c3646ee3f35
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Mar 8 14:01:35 2011 +1000
+
+    man: describe return value for XI2 passive grabbing calls.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 11b1e8ea7bc160cf9a42231742eedb0e7fefa222
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Thu Sep 9 14:43:03 2010 +1000
+
+    Rename XSetCPtr.c to XISetCPtr.c.
+    
+    XISetClientPointer is an XI2.0 call and should be named accordingly.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Daniel Stone <daniel@fooishbar.org>
+
+commit 19ac7ef23e7ff07068a63d1553159e7cb3ad2576
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Thu Sep 9 14:43:02 2010 +1000
+
+    Require XI 2 for all XI 2 calls.
+    
+    Each XI2 call should check _XiCheckExtInit for XI version 2.0 or higher.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Daniel Stone <daniel@fooishbar.org>
+
+commit 536bd44c513ede7e61e112c82a80fb9197f261f7
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed Feb 23 10:53:21 2011 +1000
+
+    Fix typo in comment.
+    
+    Reported-by: Julien Cristau <jcristau@debian.org>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 4ca8be9f3ffbafe9515e50d784f4ff83f6993be0
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed Feb 23 09:30:59 2011 +1000
+
+    Fix invalid read in XIGrabDevice.
+    
+    Miscalculation of length caused Data() to memcpy too many bytes.
+    
+    ==2865== Invalid read of size 1
+    ==2865==    at 0x4A07480: memcpy (mc_replace_strmem.c:602)
+    ==2865==    by 0x544271E: XIGrabDevice (XIGrabDevice.c:69)
+    ==2865==    by 0x400B0A: main (gnome642481.c:56)
+    ==2865==  Address 0x642f614 is 0 bytes after a block of size 20 alloc'd
+    ==2865==    at 0x4A04896: calloc (vg_replace_malloc.c:418)
+    ==2865==    by 0x54425D3: XIGrabDevice (XIGrabDevice.c:65)
+    ==2865==    by 0x400B0A: main (gnome642481.c:56)
+    
+    SetReqLen() expects 4-byte units.
+    Data() expects bytes.
+    
+    Gnome Bug 642481 <https://bugzilla.gnome.org/show_bug.cgi?id=642481>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 4db3db2b38d8eb9024170633d3bf7c5050272dd0
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Mon Feb 14 08:48:07 2011 +1000
+
+    Mark sourceid in Raw events as bug and force to 0..
+    
+    The protocol does not provide a source ID for raw events, so this value is
+    always 0. It shouldn't really be there, but the past is so hard to change.
+    
+    Reported-by:  Mark Dokter <dokter@icg.tugraz.at>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit d79a9b174a79e89ca2507a61f2e12af25102313f
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Feb 1 07:36:08 2011 +1000
+
+    man: note that callers of XIQueryPointer must free the button mask.
+    
+    buttons_return->mask is allocated by the library and must be freed by the
+    caller to avoid leaking.
+    
+    Reported-by: Matthias Clasen <mclasen@redhat.com>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 1b376f371c2f866cd1cdf047e50210a5c69772b9
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Feb 2 11:43:43 2011 -0500
+
+    config: comment, minor upgrade, quote and layout configure.ac
+    
+    Group statements per section as per Autoconf standard layout
+    Quote statements where appropriate.
+    Autoconf recommends not using dnl instead of # for comments
+    
+    Use AC_CONFIG_FILES to replace the deprecated AC_OUTPUT with parameters.
+    Use AC_PROG_LIBTOOL to replace the deprecated AM_PROG_LIBTOOL
+    Remove redundant AC_SUBST(*_CFLAGS) and/or *_LIBS
+    Remove redundant AC_PROG_MAKE_SET included with AM_INIT_AUTOMAKE
+    Remove redundant AC_CANONICAL_HOST included in XORG_DEFAULT_OPTIONS
+    Add AC_CONFIG_SRCDIR([Makefile.am]) where missing
+    Update minimum version of util-macros to at least 1.8.
+    
+    One or more of the above actions were applied
+    No functional configuration changes
+    
+    This helps automated maintenance and release activities.
+    Details can be found in http://wiki.x.org/wiki/NewModuleGuidelines
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit faff510fed9733b2860e14490d5a40d70b840eae
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Jan 28 19:41:37 2011 -0500
+
+    config: replace deprecated AM_CONFIG_HEADER with AC_CONFIG_HEADERS
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 3776075264024af7eca93f689305d46302e88536
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Jan 28 12:07:46 2011 -0500
+
+    config: remove already included AC_PROG_SED statement
+    
+    Use AC_PROG_SED now supplied by XORG_DEFAULT_OPTIONS
+    Use the appropriate platform version of sed
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 5283e87ca909304d3e1820ef877bf3587a9c8724
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Jan 27 18:50:15 2011 -0500
+
+    config: remove AC_PROG_CC as it overrides AC_PROG_C_C99
+    
+    XORG_STRICT_OPTION from XORG_DEFAULT_OPTIONS calls
+    AC_PROG_C_C99. This sets gcc with -std=gnu99.
+    If AC_PROG_CC macro is called afterwards, it resets CC to gcc.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
 commit be2a1b33c9394dcab52622bde53c83f1dd840ea0
 Author: Peter Hutterer <peter.hutterer@who-t.net>
 Date:   Wed Jan 26 07:42:53 2011 +1000
