@@ -169,6 +169,7 @@ R600DisplayTexturedVideo(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 	dst_obj.offset = 0;
 	src_obj.offset = 0;
 	dst_obj.bo = radeon_get_pixmap_bo(pPixmap);
+	dst_obj.tiling_flags = radeon_get_pixmap_tiling(pPixmap);
     } else
 #endif
     {
@@ -184,7 +185,8 @@ R600DisplayTexturedVideo(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     src_obj.bpp = 16;
     src_obj.domain = RADEON_GEM_DOMAIN_VRAM | RADEON_GEM_DOMAIN_GTT;
     src_obj.bo = pPriv->src_bo[pPriv->currentBuffer];
-    
+    src_obj.tiling_flags = 0;
+
     dst_obj.width = pPixmap->drawable.width;
     dst_obj.height = pPixmap->drawable.height;
     dst_obj.bpp = pPixmap->drawable.bitsPerPixel;
