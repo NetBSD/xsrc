@@ -28,6 +28,7 @@
 #include "config.h"
 #endif
 
+#include "xorgVersion.h"
 #include "ati.h"
 #include "aticonsole.h"
 #include "atii2c.h"
@@ -689,7 +690,9 @@ ATIEnterVT
     ScreenPtr   pScreen     = pScreenInfo->pScreen;
     ATIPtr      pATI        = ATIPTR(pScreenInfo);
     PixmapPtr   pScreenPixmap;
+#if (XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1, 9, 99, 1, 0))
     DevUnion    PixmapPrivate;
+#endif
     Bool        Entered;
 
     if (!ATIEnterGraphics(NULL, pScreenInfo, pATI))
@@ -714,19 +717,24 @@ ATIEnterVT
     }
 
     pScreenPixmap = (*pScreen->GetScreenPixmap)(pScreen);
+
+#if (XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1, 9, 99, 1, 0))
     PixmapPrivate = pScreenPixmap->devPrivate;
     if (!PixmapPrivate.ptr)
         pScreenPixmap->devPrivate = pScreenInfo->pixmapPrivate;
+#endif
 
     /* Tell framebuffer about remapped aperture */
     Entered = (*pScreen->ModifyPixmapHeader)(pScreenPixmap,
         -1, -1, -1, -1, -1, pATI->pMemory);
 
+#if (XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1, 9, 99, 1, 0))
     if (!PixmapPrivate.ptr)
     {
         pScreenInfo->pixmapPrivate = pScreenPixmap->devPrivate;
         pScreenPixmap->devPrivate.ptr = NULL;
     }
+#endif
 
 #ifdef XF86DRI_DEVEL
 
@@ -784,33 +792,26 @@ ATIFreeScreen
     int flags
 )
 {
-    ScreenPtr   pScreen     = screenInfo.screens[iScreen];
     ScrnInfoPtr pScreenInfo = xf86Screens[iScreen];
     ATIPtr      pATI        = ATIPTR(pScreenInfo);
 
-    if (pATI->Closeable || (serverGeneration > 1))
-        ATII2CFreeScreen(iScreen);
-
-    if (pATI->Closeable)
-        (void)(*pScreen->CloseScreen)(iScreen, pScreen);
-
-    ATILeaveGraphics(pScreenInfo, pATI);
+    ATII2CFreeScreen(iScreen);
 
 #ifndef AVOID_CPIO
 
-    xfree(pATI->OldHW.frame_buffer);
-    xfree(pATI->NewHW.frame_buffer);
+    free(pATI->OldHW.frame_buffer);
+    free(pATI->NewHW.frame_buffer);
 
 #endif /* AVOID_CPIO */
 
-    xfree(pATI->pShadow);
+    free(pATI->pShadow);
 
 #ifndef AVOID_DGA
 
-    xfree(pATI->pDGAMode);
+    free(pATI->pDGAMode);
 
 #endif /* AVOID_DGA */
 
-    xfree(pATI);
+    free(pATI);
     pScreenInfo->driverPrivate = NULL;
 }
