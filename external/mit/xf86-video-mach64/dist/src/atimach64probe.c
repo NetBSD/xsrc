@@ -234,7 +234,7 @@ Mach64Probe(DriverPtr pDriver, int flags)
                                     Mach64Chipsets, Mach64PciChipsets,
                                     devSections, numDevSections,
                                     pDriver, &usedChips);
-    xfree(devSections);
+    free(devSections);
 
     if (numUsed <= 0)
         return FALSE;
@@ -248,7 +248,7 @@ Mach64Probe(DriverPtr pDriver, int flags)
         }
     }
 
-    xfree(usedChips);
+    free(usedChips);
 
     return ProbeSuccess;
 }
