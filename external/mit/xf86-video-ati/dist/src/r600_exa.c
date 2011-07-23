@@ -53,7 +53,6 @@ R600SetAccelState(ScrnInfoPtr pScrn,
 {
     RADEONInfoPtr info = RADEONPTR(pScrn);
     struct radeon_accel_state *accel_state = info->accel_state;
-    uint32_t pitch = 0;
     uint32_t pitch_align = 0x7, base_align = 0xff;
 #if defined(XF86DRM_MODE)
     int ret;
@@ -64,11 +63,6 @@ R600SetAccelState(ScrnInfoPtr pScrn,
 	accel_state->src_size[0] = src0->pitch * src0->height * (src0->bpp/8);
 #if defined(XF86DRM_MODE)
 	if (info->cs) {
-	    ret = radeon_bo_get_tiling(accel_state->src_obj[0].bo,
-				       &accel_state->src_obj[0].tiling_flags,
-				       &pitch);
-	    if (ret)
-		RADEON_FALLBACK(("src0 radeon_bo_get_tiling failed\n"));
 	    pitch_align = drmmode_get_pitch_align(pScrn,
 						  accel_state->src_obj[0].bpp / 8,
 						  accel_state->src_obj[0].tiling_flags) - 1;
@@ -95,11 +89,6 @@ R600SetAccelState(ScrnInfoPtr pScrn,
 	accel_state->src_size[1] = src1->pitch * src1->height * (src1->bpp/8);
 #if defined(XF86DRM_MODE)
 	if (info->cs) {
-	    ret = radeon_bo_get_tiling(accel_state->src_obj[1].bo,
-				       &accel_state->src_obj[1].tiling_flags,
-				       &pitch);
-	    if (ret)
-		RADEON_FALLBACK(("src1 radeon_bo_get_tiling failed\n"));
 	    pitch_align = drmmode_get_pitch_align(pScrn,
 						  accel_state->src_obj[1].bpp / 8,
 						  accel_state->src_obj[1].tiling_flags) - 1;
@@ -125,11 +114,6 @@ R600SetAccelState(ScrnInfoPtr pScrn,
 	accel_state->dst_size = dst->pitch * dst->height * (dst->bpp/8);
 #if defined(XF86DRM_MODE)
 	if (info->cs) {
-	    ret = radeon_bo_get_tiling(accel_state->dst_obj.bo,
-				       &accel_state->dst_obj.tiling_flags,
-				       &pitch);
-	    if (ret)
-		RADEON_FALLBACK(("dst radeon_bo_get_tiling failed\n"));
 	    pitch_align = drmmode_get_pitch_align(pScrn,
 						  accel_state->dst_obj.bpp / 8,
 						  accel_state->dst_obj.tiling_flags) - 1;
@@ -210,6 +194,7 @@ R600PrepareSolid(PixmapPtr pPix, int alu, Pixel pm, Pixel fg)
     if (info->cs) {
 	dst.offset = 0;
 	dst.bo = radeon_get_pixmap_bo(pPix);
+	dst.tiling_flags = radeon_get_pixmap_tiling(pPix);
     } else
 #endif
     {
@@ -589,6 +574,8 @@ R600PrepareCopy(PixmapPtr pSrc,   PixmapPtr pDst,
 	dst_obj.offset = 0;
 	src_obj.bo = radeon_get_pixmap_bo(pSrc);
 	dst_obj.bo = radeon_get_pixmap_bo(pDst);
+	dst_obj.tiling_flags = radeon_get_pixmap_tiling(pDst);
+	src_obj.tiling_flags = radeon_get_pixmap_tiling(pSrc);
 	if (radeon_get_pixmap_bo(pSrc) == radeon_get_pixmap_bo(pDst))
 	    accel_state->same_surface = TRUE;
     } else
@@ -621,8 +608,12 @@ R600PrepareCopy(PixmapPtr pSrc,   PixmapPtr pDst,
 	return FALSE;
 
     if (accel_state->same_surface == TRUE) {
+#if defined(XF86DRM_MODE)
 	unsigned height = RADEON_ALIGN(pDst->drawable.height,
 				       drmmode_get_height_align(pScrn, accel_state->dst_obj.tiling_flags));
+#else
+	unsigned height = pDst->drawable.height;
+#endif
 	unsigned long size = height * accel_state->dst_obj.pitch * pDst->drawable.bitsPerPixel/8;
 
 #if defined(XF86DRM_MODE)
@@ -1265,6 +1256,8 @@ static Bool R600PrepareComposite(int op, PicturePtr pSrcPicture,
 	dst_obj.offset = 0;
 	src_obj.bo = radeon_get_pixmap_bo(pSrc);
 	dst_obj.bo = radeon_get_pixmap_bo(pDst);
+	dst_obj.tiling_flags = radeon_get_pixmap_tiling(pDst);
+	src_obj.tiling_flags = radeon_get_pixmap_tiling(pSrc);
     } else
 #endif
     {
@@ -1291,6 +1284,7 @@ static Bool R600PrepareComposite(int op, PicturePtr pSrcPicture,
 	if (info->cs) {
 	    mask_obj.offset = 0;
 	    mask_obj.bo = radeon_get_pixmap_bo(pMask);
+	    mask_obj.tiling_flags = radeon_get_pixmap_tiling(pMask);
 	} else
 #endif
 	{
@@ -1780,7 +1774,7 @@ R600UploadToScreenCS(PixmapPtr pDst, int x, int y, int w, int h,
     Bool r;
     int i;
     struct r600_accel_object src_obj, dst_obj;
-    uint32_t tiling_flags = 0, pitch = 0, height, base_align;
+    uint32_t height, base_align;
 
     if (bpp < 8)
 	return FALSE;
@@ -1789,14 +1783,10 @@ R600UploadToScreenCS(PixmapPtr pDst, int x, int y, int w, int h,
     if (!driver_priv || !driver_priv->bo)
 	return FALSE;
 
-    ret = radeon_bo_get_tiling(driver_priv->bo, &tiling_flags, &pitch);
-    if (ret)
-	ErrorF("radeon_bo_get_tiling failed\n");
-
     /* If we know the BO won't be busy, don't bother with a scratch */
     copy_dst = driver_priv->bo;
     copy_pitch = pDst->devKind;
-    if (!(tiling_flags & (RADEON_TILING_MACRO | RADEON_TILING_MICRO))) {
+    if (!(driver_priv->tiling_flags & (RADEON_TILING_MACRO | RADEON_TILING_MICRO))) {
 	if (!radeon_bo_is_referenced_by_cs(driver_priv->bo, info->cs)) {
 	    flush = FALSE;
 	    if (!radeon_bo_is_busy(driver_priv->bo, &dst_domain))
@@ -1820,6 +1810,7 @@ R600UploadToScreenCS(PixmapPtr pDst, int x, int y, int w, int h,
     src_obj.bpp = bpp;
     src_obj.domain = RADEON_GEM_DOMAIN_GTT;
     src_obj.bo = scratch;
+    src_obj.tiling_flags = 0;
 
     dst_obj.pitch = dst_pitch_hw;
     dst_obj.width = pDst->drawable.width;
@@ -1828,6 +1819,7 @@ R600UploadToScreenCS(PixmapPtr pDst, int x, int y, int w, int h,
     dst_obj.bpp = bpp;
     dst_obj.domain = RADEON_GEM_DOMAIN_VRAM;
     dst_obj.bo = radeon_get_pixmap_bo(pDst);
+    dst_obj.tiling_flags = radeon_get_pixmap_tiling(pDst);
 
     if (!R600SetAccelState(pScrn,
 			   &src_obj,
@@ -1897,7 +1889,7 @@ R600DownloadFromScreenCS(PixmapPtr pSrc, int x, int y, int w,
     Bool flush = FALSE;
     Bool r;
     struct r600_accel_object src_obj, dst_obj;
-    uint32_t tiling_flags = 0, pitch = 0, height, base_align;
+    uint32_t height, base_align;
 
     if (bpp < 8)
 	return FALSE;
@@ -1906,14 +1898,10 @@ R600DownloadFromScreenCS(PixmapPtr pSrc, int x, int y, int w,
     if (!driver_priv || !driver_priv->bo)
 	return FALSE;
 
-    ret = radeon_bo_get_tiling(driver_priv->bo, &tiling_flags, &pitch);
-    if (ret)
-	ErrorF("radeon_bo_get_tiling failed\n");
-
     /* If we know the BO won't end up in VRAM anyway, don't bother with a scratch */
     copy_src = driver_priv->bo;
     copy_pitch = pSrc->devKind;
-    if (!(tiling_flags & (RADEON_TILING_MACRO | RADEON_TILING_MICRO))) {
+    if (!(driver_priv->tiling_flags & (RADEON_TILING_MACRO | RADEON_TILING_MICRO))) {
 	if (radeon_bo_is_referenced_by_cs(driver_priv->bo, info->cs)) {
 	    src_domain = radeon_bo_get_src_domain(driver_priv->bo);
 	    if ((src_domain & (RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM)) ==
@@ -1957,6 +1945,7 @@ R600DownloadFromScreenCS(PixmapPtr pSrc, int x, int y, int w,
     src_obj.bpp = bpp;
     src_obj.domain = RADEON_GEM_DOMAIN_VRAM | RADEON_GEM_DOMAIN_GTT;
     src_obj.bo = radeon_get_pixmap_bo(pSrc);
+    src_obj.tiling_flags = radeon_get_pixmap_tiling(pSrc);
 
     dst_obj.pitch = scratch_pitch;
     dst_obj.width = w;
@@ -1965,6 +1954,7 @@ R600DownloadFromScreenCS(PixmapPtr pSrc, int x, int y, int w,
     dst_obj.bo = scratch;
     dst_obj.bpp = bpp;
     dst_obj.domain = RADEON_GEM_DOMAIN_GTT;
+    dst_obj.tiling_flags = 0;
 
     if (!R600SetAccelState(pScrn,
 			   &src_obj,

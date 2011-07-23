@@ -1020,7 +1020,7 @@ drmmode_output_init(ScrnInfoPtr pScrn, drmmode_ptr drmmode, int num, int *num_dv
 
 	for (i = 0; i < koutput->count_props; i++) {
 		props = drmModeGetProperty(drmmode->fd, koutput->props[i]);
-		if (props && (props->flags && DRM_MODE_PROP_ENUM)) {
+		if (props && (props->flags & DRM_MODE_PROP_ENUM)) {
 			if (!strcmp(props->name, "DPMS")) {
 				drmmode_output->dpms_enum_id = koutput->props[i];
 				drmModeFreeProperty(props);

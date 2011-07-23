@@ -145,6 +145,9 @@ evergreen_sq_setup(ScrnInfoPtr pScrn, sq_config_t *sq_conf)
     END_BATCH();
 }
 
+/* cayman has some minor differences in CB_COLOR*_INFO and _ATTRIB, but none that
+ * we use here.
+ */
 void
 evergreen_set_render_target(ScrnInfoPtr pScrn, cb_config_t *cb_conf, uint32_t domain)
 {
@@ -365,6 +368,9 @@ evergreen_fs_setup(ScrnInfoPtr pScrn, shader_config_t *fs_conf, uint32_t domain)
     END_BATCH();
 }
 
+/* cayman has some minor differences in SQ_PGM_RESOUCES_VS and _RESOURCES_2_VS,
+ * but none that we use here.
+ */
 void
 evergreen_vs_setup(ScrnInfoPtr pScrn, shader_config_t *vs_conf, uint32_t domain)
 {
@@ -408,6 +414,9 @@ evergreen_vs_setup(ScrnInfoPtr pScrn, shader_config_t *vs_conf, uint32_t domain)
     END_BATCH();
 }
 
+/* cayman has some minor differences in SQ_PGM_RESOUCES_PS and _RESOURCES_2_PS,
+ * but none that we use here.
+ */
 void
 evergreen_ps_setup(ScrnInfoPtr pScrn, shader_config_t *ps_conf, uint32_t domain)
 {
@@ -507,6 +516,9 @@ evergreen_set_bool_consts(ScrnInfoPtr pScrn, int offset, uint32_t val)
     END_BATCH();
 }
 
+/* cayman has some minor differences in SQ_VTX_CONSTANT_WORD2_0 and _WORD3_0,
+ * but none that we use here.
+ */
 static void
 evergreen_set_vtx_resource(ScrnInfoPtr pScrn, vtx_resource_t *res, uint32_t domain)
 {
@@ -542,7 +554,8 @@ evergreen_set_vtx_resource(ScrnInfoPtr pScrn, vtx_resource_t *res, uint32_t doma
     /* flush vertex cache */
     if ((info->ChipFamily == CHIP_FAMILY_CEDAR) ||
 	(info->ChipFamily == CHIP_FAMILY_PALM) ||
-	(info->ChipFamily == CHIP_FAMILY_CAICOS))
+	(info->ChipFamily == CHIP_FAMILY_CAICOS) ||
+	(info->ChipFamily == CHIP_FAMILY_CAYMAN))
 	evergreen_cp_set_surface_sync(pScrn, TC_ACTION_ENA_bit,
 				      accel_state->vbo.vb_offset, accel_state->vbo.vb_mc_addr,
 				      res->bo,
@@ -567,6 +580,9 @@ evergreen_set_vtx_resource(ScrnInfoPtr pScrn, vtx_resource_t *res, uint32_t doma
     END_BATCH();
 }
 
+/* cayman has some minor differences in SQ_TEX_CONSTANT_WORD0_0 and _WORD4_0,
+ * but none that we use here.
+ */
 void
 evergreen_set_tex_resource(ScrnInfoPtr pScrn, tex_resource_t *tex_res, uint32_t domain)
 {
@@ -640,6 +656,9 @@ evergreen_set_tex_resource(ScrnInfoPtr pScrn, tex_resource_t *tex_res, uint32_t 
     END_BATCH();
 }
 
+/* cayman has some minor differences in SQ_TEX_SAMPLER_WORD0_0,
+ * but none that we use here.
+ */
 void
 evergreen_set_tex_sampler (ScrnInfoPtr pScrn, tex_sampler_t *s)
 {
@@ -685,11 +704,36 @@ evergreen_set_tex_sampler (ScrnInfoPtr pScrn, tex_sampler_t *s)
     END_BATCH();
 }
 
+/* workarounds for hw bugs in eg+ */
+/* only affects screen/window/generic/vport.  cliprects are not affected */
+static void
+evergreen_fix_scissor_coordinates(ScrnInfoPtr pScrn, int *x1, int *y1, int *x2, int *y2)
+{
+    RADEONInfoPtr info = RADEONPTR(pScrn);
+
+    /* all eg+ asics */
+    if (*x2 == 0)
+	*x1 = 1;
+    if (*y2 == 0)
+	*y1 = 1;
+
+    /* cayman only */
+    if (info->ChipFamily == CHIP_FAMILY_CAYMAN) {
+	/* cliprects aren't affected so we can use them to clip if we need
+	 * a true 1x1 clip region
+	 */
+	if ((*x2 == 1) && (*y2 == 1))
+	    *x2 = 2;
+    }
+}
+
 //XXX deal with clip offsets in clip setup
 void
 evergreen_set_screen_scissor(ScrnInfoPtr pScrn, int x1, int y1, int x2, int y2)
 {
     RADEONInfoPtr info = RADEONPTR(pScrn);
+
+    evergreen_fix_scissor_coordinates(pScrn, &x1, &y1, &x2, &y2);
 
     BEGIN_BATCH(4);
     PACK0(PA_SC_SCREEN_SCISSOR_TL, 2);
@@ -704,6 +748,8 @@ void
 evergreen_set_vport_scissor(ScrnInfoPtr pScrn, int id, int x1, int y1, int x2, int y2)
 {
     RADEONInfoPtr info = RADEONPTR(pScrn);
+
+    evergreen_fix_scissor_coordinates(pScrn, &x1, &y1, &x2, &y2);
 
     BEGIN_BATCH(4);
     PACK0(PA_SC_VPORT_SCISSOR_0_TL + id * PA_SC_VPORT_SCISSOR_0_TL_offset, 2);
@@ -720,6 +766,8 @@ evergreen_set_generic_scissor(ScrnInfoPtr pScrn, int x1, int y1, int x2, int y2)
 {
     RADEONInfoPtr info = RADEONPTR(pScrn);
 
+    evergreen_fix_scissor_coordinates(pScrn, &x1, &y1, &x2, &y2);
+
     BEGIN_BATCH(4);
     PACK0(PA_SC_GENERIC_SCISSOR_TL, 2);
     E32(((x1 << PA_SC_GENERIC_SCISSOR_TL__TL_X_shift) |
@@ -734,6 +782,8 @@ void
 evergreen_set_window_scissor(ScrnInfoPtr pScrn, int x1, int y1, int x2, int y2)
 {
     RADEONInfoPtr info = RADEONPTR(pScrn);
+
+    evergreen_fix_scissor_coordinates(pScrn, &x1, &y1, &x2, &y2);
 
     BEGIN_BATCH(4);
     PACK0(PA_SC_WINDOW_SCISSOR_TL, 2);
@@ -772,6 +822,11 @@ evergreen_set_default_state(ScrnInfoPtr pScrn)
     int i;
     RADEONInfoPtr info = RADEONPTR(pScrn);
     struct radeon_accel_state *accel_state = info->accel_state;
+
+    if (info->ChipFamily == CHIP_FAMILY_CAYMAN) {
+	cayman_set_default_state(pScrn);
+	return;
+    }
 
     if (accel_state->XInited3D)
 	return;

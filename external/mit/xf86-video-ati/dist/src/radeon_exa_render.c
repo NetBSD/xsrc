@@ -1180,10 +1180,10 @@ static Bool FUNC_NAME(R300TextureSetup)(PicturePtr pPict, PixmapPtr pPix,
 					int unit)
 {
     RINFO_FROM_SCREEN(pPix->drawable.pScreen);
-    uint32_t txfilter, txformat0, txformat1, txoffset, txpitch;
+    uint32_t txfilter, txformat0, txformat1, txoffset, txpitch, us_format = 0;
     int w = pPict->pDrawable->width;
     int h = pPict->pDrawable->height;
-    int i, pixel_shift;
+    int i, pixel_shift, out_size = 6;
     unsigned int repeatType = pPict->repeat ? pPict->repeatType : RepeatNone;
     struct radeon_exa_pixmap_priv *driver_priv;
     ACCEL_PREAMBLE();
@@ -1229,6 +1229,26 @@ static Bool FUNC_NAME(R300TextureSetup)(PicturePtr pPict, PixmapPtr pPix,
 
     if (IS_R500_3D && ((h - 1) & 0x800))
 	txpitch |= R500_TXHEIGHT_11;
+
+    if (info->ChipFamily == CHIP_FAMILY_R520) {
+	unsigned us_width = (w - 1) & 0x7ff;
+	unsigned us_height = (h - 1) & 0x7ff;
+	unsigned us_depth = 0;
+
+	if (w > 2048) {
+	    us_width = (0x7ff + us_width) >> 1;
+	    us_depth |= 0x0d;
+	}
+	if (h > 2048) {
+	    us_height = (0x7ff + us_height) >> 1;
+	    us_depth |= 0x0e;
+	}
+
+	us_format = (us_width << R300_TXWIDTH_SHIFT) |
+		    (us_height << R300_TXHEIGHT_SHIFT) |
+		    (us_depth << R300_TXDEPTH_SHIFT);
+	out_size++;
+    }
 
     /* Use TXPITCH instead of TXWIDTH for address computations: we could
      * omit this if there is no padding, but there is no apparent advantage
@@ -1276,7 +1296,9 @@ static Bool FUNC_NAME(R300TextureSetup)(PicturePtr pPict, PixmapPtr pPix,
 	RADEON_FALLBACK(("Bad filter 0x%x\n", pPict->filter));
     }
 
-    BEGIN_ACCEL_RELOC(repeatType == RepeatNone ? 7 : 6, 1);
+    if (repeatType == RepeatNone)
+	out_size++;
+    BEGIN_ACCEL_RELOC(out_size, 1);
     OUT_ACCEL_REG(R300_TX_FILTER0_0 + (unit * 4), txfilter);
     OUT_ACCEL_REG(R300_TX_FILTER1_0 + (unit * 4), 0);
     OUT_ACCEL_REG(R300_TX_FORMAT0_0 + (unit * 4), txformat0);
@@ -1287,6 +1309,8 @@ static Bool FUNC_NAME(R300TextureSetup)(PicturePtr pPict, PixmapPtr pPix,
 
     if (repeatType == RepeatNone)
 	OUT_ACCEL_REG(R300_TX_BORDER_COLOR_0 + (unit * 4), 0);
+    if (info->ChipFamily == CHIP_FAMILY_R520)
+	OUT_ACCEL_REG(R500_US_FORMAT0_0 + (unit * 4), us_format);
     FINISH_ACCEL();
 
     if (pPict->transform != 0) {

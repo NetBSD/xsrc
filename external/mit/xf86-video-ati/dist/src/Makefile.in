@@ -140,15 +140,17 @@ am__radeon_drv_la_SOURCES_DIST = radeon_accel.c radeon_cursor.c \
 	r6xx_accel.c r600_textured_videofuncs.c r600_shader.c \
 	radeon_exa_shared.c evergreen_exa.c evergreen_accel.c \
 	evergreen_shader.c evergreen_textured_videofuncs.c \
-	atombios_output.c atombios_crtc.c radeon_dri2.c radeon_kms.c \
-	drmmode_display.c radeon_vbo.c
+	cayman_accel.c cayman_shader.c atombios_output.c \
+	atombios_crtc.c radeon_dri2.c radeon_kms.c drmmode_display.c \
+	radeon_vbo.c
 am__objects_1 = CD_Operations.lo Decoder.lo hwserv_drv.lo
 @DRI_TRUE@am__objects_2 = radeon_dri.lo
 @USE_EXA_TRUE@am__objects_3 = radeon_exa.lo r600_exa.lo r6xx_accel.lo \
 @USE_EXA_TRUE@	r600_textured_videofuncs.lo r600_shader.lo \
 @USE_EXA_TRUE@	radeon_exa_shared.lo evergreen_exa.lo \
 @USE_EXA_TRUE@	evergreen_accel.lo evergreen_shader.lo \
-@USE_EXA_TRUE@	evergreen_textured_videofuncs.lo
+@USE_EXA_TRUE@	evergreen_textured_videofuncs.lo cayman_accel.lo \
+@USE_EXA_TRUE@	cayman_shader.lo
 @XF86DRM_MODE_TRUE@am__objects_4 = radeon_dri2.lo radeon_kms.lo \
 @XF86DRM_MODE_TRUE@	drmmode_display.lo radeon_vbo.lo
 am_radeon_drv_la_OBJECTS = radeon_accel.lo radeon_cursor.lo \
@@ -297,7 +299,6 @@ PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
-PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PCIACCESS_CFLAGS = @PCIACCESS_CFLAGS@
@@ -387,7 +388,7 @@ RADEON_ATOMBIOS_SOURCES = \
 
 @XF86DRM_MODE_TRUE@RADEON_KMS_SRCS = radeon_dri2.c radeon_kms.c drmmode_display.c radeon_vbo.c
 @USE_EXA_TRUE@RADEON_EXA_SOURCES = radeon_exa.c r600_exa.c r6xx_accel.c r600_textured_videofuncs.c r600_shader.c radeon_exa_shared.c \
-@USE_EXA_TRUE@	evergreen_exa.c evergreen_accel.c evergreen_shader.c evergreen_textured_videofuncs.c
+@USE_EXA_TRUE@	evergreen_exa.c evergreen_accel.c evergreen_shader.c evergreen_textured_videofuncs.c cayman_accel.c cayman_shader.c
 
 AM_CFLAGS = \
             @LIBDRM_RADEON_CFLAGS@ \
@@ -457,6 +458,9 @@ EXTRA_DIST = \
 	evergreen_reg_auto.h \
 	evergreen_shader.h \
 	evergreen_state.h \
+	cayman_reg.h \
+	cayman_reg_auto.h \
+	cayman_shader.h \
 	ati.h \
 	ativersion.h \
 	bicubic_table.h \
@@ -707,6 +711,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/atimodule.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/atombios_crtc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/atombios_output.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cayman_accel.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cayman_shader.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/drmmode_display.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/evergreen_accel.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/evergreen_exa.Plo@am__quote@
