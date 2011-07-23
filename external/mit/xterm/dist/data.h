@@ -1,4 +1,4 @@
-/* $XTermId: data.h,v 1.115 2011/02/18 01:23:22 tom Exp $ */
+/* $XTermId: data.h,v 1.119 2011/07/12 08:37:24 tom Exp $ */
 
 /*
  * Copyright 2002-2009,2011 by Thomas E. Dickey
@@ -160,6 +160,15 @@ typedef struct XTERM_RESOURCE {
     String omitTranslation;
 
     String keyboardType;
+
+#if OPT_PRINT_ON_EXIT
+    int printModeNow;
+    int printModeOnXError;
+    int printOptsNow;
+    int printOptsOnXError;
+    String printFileNow;
+    String printFileOnXError;
+#endif
 #if OPT_SUNPC_KBD
     Boolean sunKeyboard;
 #endif

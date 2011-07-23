@@ -1,8 +1,8 @@
-## $XTermId: Makefile.in,v 1.175 2011/02/13 18:17:55 tom Exp $
+## $XTermId: Makefile.in,v 1.181 2011/07/14 22:13:45 tom Exp $
 # -----------------------------------------------------------------------------
 # this file is part of xterm
 #
-# Copyright 1997-2009,2010 by Thomas E. Dickey
+# Copyright 1997-2010,2011 by Thomas E. Dickey
 #
 #                         All Rights Reserved
 #
@@ -89,7 +89,7 @@ ICONDIR		= $(DESTDIR)$(icondir)
 
 INSTALL_DIRS    = $(BINDIR) $(APPSDIR) $(ICONDIR) $(MANDIR)
 
-CLASS		= XTerm
+CLASS		= @APP_CLASS@
 EXTRAHDR	= @EXTRAHDRS@
 EXTRASRC	= @EXTRASRCS@
 EXTRAOBJ	= @EXTRAOBJS@
@@ -192,6 +192,8 @@ install-full :: xterm$x resize$x $(BINDIR)
 @NOT_SETUID@	$(INSTALL_PROGRAM) xterm$x $(BINDIR)/$(binary_xterm)
 	$(INSTALL_PROGRAM) -m  755 resize$x $(BINDIR)/$(binary_resize)
 
+EDIT_SCRIPT = sed -e s,=xterm,=\$$name, -e s,XTerm,$(CLASS),
+
 install \
 install-bin \
 install-scripts \
@@ -199,23 +201,15 @@ install-full ::
 	@$(SHELL) -c "name=\"$(binary_xterm)\"; \
 		dest=\"$(binary_uxterm)\"; \
 		echo \"... installing $(BINDIR)/\$$dest\"; \
-		if test \"\$$name\" != \"xterm\"; then \
-			sed -e \"s,=xterm,=\$$name,\" $(srcdir)/uxterm >uxterm.tmp; \
-			$(INSTALL_SCRIPT) -m  755 uxterm.tmp $(BINDIR)/\$$dest; \
-			rm -f uxterm.tmp; \
-		else \
-			$(INSTALL_SCRIPT) -m  755 $(srcdir)/uxterm $(BINDIR)/\$$dest; \
-		fi"
+		$(EDIT_SCRIPT) $(srcdir)/uxterm >uxterm.tmp; \
+		$(INSTALL_SCRIPT) -m  755 uxterm.tmp $(BINDIR)/\$$dest; \
+		rm -f uxterm.tmp"
 	@$(SHELL) -c "name=\"$(binary_xterm)\"; \
 		dest=\"$(binary_k8term)\"; \
 		echo \"... installing $(BINDIR)/\$$dest\"; \
-		if test \"\$$name\" != \"xterm\"; then \
-			sed -e \"s,=xterm,=\$$name,\" $(srcdir)/koi8rxterm >k8term.tmp; \
-			$(INSTALL_SCRIPT) -m  755 k8term.tmp $(BINDIR)/\$$dest; \
-			rm -f k8term.tmp; \
-		else \
-			$(INSTALL_SCRIPT) -m  755 $(srcdir)/koi8rxterm $(BINDIR)/\$$dest; \
-		fi"
+		$(EDIT_SCRIPT) $(srcdir)/koi8rxterm >k8term.tmp; \
+		$(INSTALL_SCRIPT) -m  755 k8term.tmp $(BINDIR)/\$$dest; \
+		rm -f k8term.tmp"
 	@-$(SHELL) -c "name=\"$(binary_xterm)\"; \
 		if test @XTERM_SYMLINK@ != NONE ; then \
 		cd $(BINDIR) && ( \
@@ -258,10 +252,10 @@ APP_NAMES = XTerm UXTerm KOI8RXTerm
 @no_icondir@install \
 @no_icondir@install-icon \
 @no_icondir@install-full :: $(ICONDIR)
-@no_icondir@	@$(INSTALL_DATA) $(srcdir)/icons/xterm-color_32x32.xpm $(ICONDIR)
-@no_icondir@	@$(INSTALL_DATA) $(srcdir)/icons/xterm-color_48x48.xpm $(ICONDIR)
-@no_icondir@	@$(INSTALL_DATA) $(srcdir)/icons/xterm_32x32.xpm $(ICONDIR)
-@no_icondir@	@$(INSTALL_DATA) $(srcdir)/icons/xterm_48x48.xpm $(ICONDIR)
+@no_icondir@	@$(INSTALL_DATA) $(srcdir)/icons/xterm-color_32x32.xpm $(ICONDIR)/$(actual_xterm)-color_32x32.xpm 
+@no_icondir@	@$(INSTALL_DATA) $(srcdir)/icons/xterm-color_48x48.xpm $(ICONDIR)/$(actual_xterm)-color_48x48.xpm 
+@no_icondir@	@$(INSTALL_DATA) $(srcdir)/icons/xterm_32x32.xpm $(ICONDIR)/$(actual_xterm)_32x32.xpm 
+@no_icondir@	@$(INSTALL_DATA) $(srcdir)/icons/xterm_48x48.xpm $(ICONDIR)/$(actual_xterm)_48x48.xpm 
 @no_icondir@	@echo "... installed icons"
 
 install ::
@@ -321,17 +315,17 @@ uninstall-full ::
 @no_icondir@uninstall \
 @no_icondir@uninstall-icon \
 @no_icondir@uninstall-full ::
-@no_icondir@	-$(RM) $(ICONDIR)/xterm-color_32x32.xpm
-@no_icondir@	-$(RM) $(ICONDIR)/xterm_32x32.xpm
-@no_icondir@	-$(RM) $(ICONDIR)/xterm-color_48x48.xpm
-@no_icondir@	-$(RM) $(ICONDIR)/xterm_48x48.xpm
+@no_icondir@	-$(RM) $(ICONDIR)/$(actual_xterm)-color_32x32.xpm
+@no_icondir@	-$(RM) $(ICONDIR)/$(actual_xterm)_32x32.xpm
+@no_icondir@	-$(RM) $(ICONDIR)/$(actual_xterm)-color_48x48.xpm
+@no_icondir@	-$(RM) $(ICONDIR)/$(actual_xterm)_48x48.xpm
 ################################################################################
 # Desktop-utils does not provide an uninstall, and is not uniformly available.
 @desktop_utils@DESKTOP_FLAGS = @DESKTOP_FLAGS@
 @desktop_utils@install-desktop \
 @desktop_utils@install-full ::
-@desktop_utils@	desktop-file-install $(DESKTOP_FLAGS) xterm.desktop
-@desktop_utils@	desktop-file-install $(DESKTOP_FLAGS) uxterm.desktop
+@desktop_utils@	$(SHELL) df-install $(actual_xterm) $(DESKTOP_FLAGS) $(srcdir)/xterm.desktop
+@desktop_utils@	$(SHELL) df-install $(actual_xterm) $(DESKTOP_FLAGS) $(srcdir)/uxterm.desktop
 ################################################################################
 mostlyclean :
 	-$(RM) *$o *.[is] XtermLog.* .pure core *~ *.bak *.BAK *.out *.tmp
@@ -341,6 +335,7 @@ clean : mostlyclean
 
 distclean :: clean
 	-$(RM) Makefile config.status config.cache config.log xtermcfg.h
+	-$(RM) df-install
 
 distclean \
 docs-clean ::

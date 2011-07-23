@@ -1,6 +1,6 @@
--- $XTermId: INSTALL,v 1.123 2010/06/14 08:57:22 tom Exp $
+-- $XTermId: INSTALL,v 1.125 2011/07/07 01:01:14 tom Exp $
 -------------------------------------------------------------------------------
--- Copyright 1997-2009,2010 by Thomas E. Dickey
+-- Copyright 1997-2010,2011 by Thomas E. Dickey
 --
 --                         All Rights Reserved
 --
@@ -29,9 +29,9 @@
 -- authorization.
 -------------------------------------------------------------------------------
 
-Xterm is normally built as part of the X Window System source tree, using
-imake to generate a Makefile from Imakefile.  You can also use the
-configure script to generate a Makefile from Makefile.in:
+Xterm was originally built as part of the X Window System source tree, using
+imake to generate a Makefile from Imakefile.  You can also use the configure
+script to generate a Makefile from Makefile.in:
 
 	+ If you have imake (or xmkmf), then you can use those directly,
 	  or use the configure script, which normally uses those tools
@@ -499,6 +499,11 @@ The options (in alphabetic order):
 
   	Look for, compile and link with the Xaw Plus widget library.
 
+  --with-app-class=XXX    X resource class (default: XTerm)
+
+	Rename the X resource class, e.g., for packaging a development version
+	of xterm with different result names.
+
   --with-app-defaults=DIR directory in which to install resource files (default: EPREFIX/lib/X11/app-defaults)
 
 	autoconf scripts assume that all of the files should be installed
@@ -523,6 +528,14 @@ The options (in alphabetic order):
 
 	Use --without-app-defaults or --with-app-defaults=no to disable the
 	feature.
+
+  --with-desktop-category=XXX  one or more desktop catgories or auto
+	This is a list of names.  The configure script maps blanks and commas
+	to semicolons (";") which are used by the desktop utils as a separator.
+
+	The default value "auto" tells the configure script to look
+	at existing ".desktop" files for xterm and common terminal
+	emulators, to use those.
 
   --with-freetype-cflags  -D/-I options for compiling with FreeType library
 
