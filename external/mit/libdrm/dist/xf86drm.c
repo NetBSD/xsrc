@@ -156,23 +156,6 @@ void drmFree(void *pt)
 	free(pt);
 }
 
-/* drmStrdup can't use strdup(3), since it doesn't call _DRM_MALLOC... */
-static char *drmStrdup(const char *s)
-{
-    char *retval;
-
-    if (!s)
-        return NULL;
-
-    retval = malloc(strlen(s)+1);
-    if (!retval)
-        return NULL;
-
-    strcpy(retval, s);
-
-    return retval;
-}
-
 /**
  * Call ioctl, restarting if it is interupted
  */
@@ -388,6 +371,7 @@ wait_for_udev:
     if (fd >= 0)
 	return fd;
 
+#if !defined(UDEV)
     /* Check if the device node is not what we expect it to be, and recreate it
      * and try again if so.
      */
@@ -409,6 +393,7 @@ wait_for_udev:
 
     drmMsg("drmOpenDevice: Open failed\n");
     remove(buf);
+#endif
     return -errno;
 }
 
@@ -727,11 +712,11 @@ static void drmCopyVersion(drmVersionPtr d, const drm_version_t *s)
     d->version_minor      = s->version_minor;
     d->version_patchlevel = s->version_patchlevel;
     d->name_len           = s->name_len;
-    d->name               = drmStrdup(s->name);
+    d->name               = strdup(s->name);
     d->date_len           = s->date_len;
-    d->date               = drmStrdup(s->date);
+    d->date               = strdup(s->date);
     d->desc_len           = s->desc_len;
-    d->desc               = drmStrdup(s->desc);
+    d->desc               = strdup(s->desc);
 }
 
 
@@ -2544,5 +2529,5 @@ char *drmGetDeviceNameFromFd(int fd)
 	if (i == DRM_MAX_MINOR)
 		return NULL;
 
-	return drmStrdup(name);
+	return strdup(name);
 }
