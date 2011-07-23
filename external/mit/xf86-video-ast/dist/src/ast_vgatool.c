@@ -2945,7 +2945,7 @@ GetVGAEDID(ScrnInfoPtr pScrn, unsigned char *pEDIDBuffer)
 Bool bInitAST1180(ScrnInfoPtr pScrn)
 {
     ASTRecPtr pAST;	
-    ULONG ulData;
+    uint32_t ulData;
 
     pAST = ASTPTR(pScrn);    
 
