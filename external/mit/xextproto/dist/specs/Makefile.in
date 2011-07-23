@@ -59,7 +59,6 @@ build_triplet = @build@
 host_triplet = @host@
 @ENABLE_SPECS_TRUE@@HAVE_FOP_TRUE@@HAVE_XMLTO_TRUE@am__append_1 = $(doc_sources:.xml=.ps) $(doc_sources:.xml=.pdf)
 @ENABLE_SPECS_TRUE@@HAVE_XMLTO_TEXT_TRUE@@HAVE_XMLTO_TRUE@am__append_2 = $(doc_sources:.xml=.txt)
-@ENABLE_SPECS_TRUE@@HAVE_STYLESHEETS_TRUE@@HAVE_XMLTO_TRUE@am__append_3 = xorg.css
 subdir = specs
 DIST_COMMON = $(am__dist_doc_DATA_DIST) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
@@ -78,9 +77,9 @@ am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
 am__v_at_0 = @
 SOURCES =
 DIST_SOURCES =
-am__dist_doc_DATA_DIST = appgroup.xml dbe.xml dpms.xml evi.xml \
-	geproto.xml multibuf.xml security.xml shape.xml shm.xml \
-	sync.xml tog-cup.xml xtest.xml
+am__dist_doc_DATA_DIST = appgrp.xml dbe.xml dpms.xml evi.xml \
+	geproto.xml lbx.xml multibuf.xml security.xml shape.xml \
+	shm.xml sync.xml tog-cup.xml xtest.xml appendix.xml
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -161,9 +160,12 @@ PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
+PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
+PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
+PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
@@ -225,11 +227,12 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 @ENABLE_SPECS_TRUE@doc_sources = \
-@ENABLE_SPECS_TRUE@	appgroup.xml	\
+@ENABLE_SPECS_TRUE@	appgrp.xml	\
 @ENABLE_SPECS_TRUE@	dbe.xml		\
 @ENABLE_SPECS_TRUE@	dpms.xml	\
 @ENABLE_SPECS_TRUE@	evi.xml		\
 @ENABLE_SPECS_TRUE@	geproto.xml	\
+@ENABLE_SPECS_TRUE@	lbx.xml		\
 @ENABLE_SPECS_TRUE@	multibuf.xml	\
 @ENABLE_SPECS_TRUE@	security.xml	\
 @ENABLE_SPECS_TRUE@	shape.xml	\
@@ -238,13 +241,14 @@ top_srcdir = @top_srcdir@
 @ENABLE_SPECS_TRUE@	tog-cup.xml	\
 @ENABLE_SPECS_TRUE@	xtest.xml
 
-@ENABLE_SPECS_TRUE@dist_doc_DATA = $(doc_sources)
+@ENABLE_SPECS_TRUE@dist_doc_DATA = $(doc_sources) appendix.xml
 @ENABLE_SPECS_TRUE@@HAVE_XMLTO_TRUE@doc_DATA =  \
 @ENABLE_SPECS_TRUE@@HAVE_XMLTO_TRUE@	$(doc_sources:.xml=.html) \
 @ENABLE_SPECS_TRUE@@HAVE_XMLTO_TRUE@	$(am__append_1) \
-@ENABLE_SPECS_TRUE@@HAVE_XMLTO_TRUE@	$(am__append_2) \
-@ENABLE_SPECS_TRUE@@HAVE_XMLTO_TRUE@	$(am__append_3)
-@ENABLE_SPECS_TRUE@@HAVE_STYLESHEETS_TRUE@@HAVE_XMLTO_TRUE@XMLTO_FLAGS = -m $(XSL_STYLESHEET)
+@ENABLE_SPECS_TRUE@@HAVE_XMLTO_TRUE@	$(am__append_2)
+@ENABLE_SPECS_TRUE@@HAVE_STYLESHEETS_TRUE@@HAVE_XMLTO_TRUE@XMLTO_FLAGS = -m $(XSL_STYLESHEET) \
+@ENABLE_SPECS_TRUE@@HAVE_STYLESHEETS_TRUE@@HAVE_XMLTO_TRUE@	--stringparam html.stylesheet=$(STYLESHEET_SRCDIR)/xorg.css
+
 @ENABLE_SPECS_TRUE@@HAVE_XMLTO_TRUE@CLEANFILES = $(doc_DATA)
 @ENABLE_SPECS_TRUE@@HAVE_XMLTO_TRUE@SUFFIXES = .xml .ps .pdf .txt .html
 all: all-am
@@ -471,19 +475,17 @@ uninstall-am: uninstall-dist_docDATA uninstall-docDATA
 	mostlyclean-generic pdf pdf-am ps ps-am uninstall uninstall-am \
 	uninstall-dist_docDATA uninstall-docDATA
 
-@ENABLE_SPECS_TRUE@@HAVE_STYLESHEETS_TRUE@@HAVE_XMLTO_TRUE@xorg.css: $(STYLESHEET_SRCDIR)/xorg.css
-@ENABLE_SPECS_TRUE@@HAVE_STYLESHEETS_TRUE@@HAVE_XMLTO_TRUE@	$(AM_V_GEN)cp -pf $(STYLESHEET_SRCDIR)/xorg.css $@
 
-@ENABLE_SPECS_TRUE@@HAVE_XMLTO_TRUE@.xml.txt:
+@ENABLE_SPECS_TRUE@@HAVE_XMLTO_TRUE@%.txt: %.xml $(dist_doc_DATA)
 @ENABLE_SPECS_TRUE@@HAVE_XMLTO_TRUE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) txt $<
 
-@ENABLE_SPECS_TRUE@@HAVE_XMLTO_TRUE@.xml.html:
+@ENABLE_SPECS_TRUE@@HAVE_XMLTO_TRUE@%.html: %.xml $(dist_doc_DATA)
 @ENABLE_SPECS_TRUE@@HAVE_XMLTO_TRUE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) xhtml-nochunks $<
 
-@ENABLE_SPECS_TRUE@@HAVE_XMLTO_TRUE@.xml.pdf:
+@ENABLE_SPECS_TRUE@@HAVE_XMLTO_TRUE@%.pdf: %.xml $(dist_doc_DATA)
 @ENABLE_SPECS_TRUE@@HAVE_XMLTO_TRUE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) --with-fop pdf $<
 
-@ENABLE_SPECS_TRUE@@HAVE_XMLTO_TRUE@.xml.ps:
+@ENABLE_SPECS_TRUE@@HAVE_XMLTO_TRUE@%.ps: %.xml $(dist_doc_DATA)
 @ENABLE_SPECS_TRUE@@HAVE_XMLTO_TRUE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) --with-fop ps $<
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
