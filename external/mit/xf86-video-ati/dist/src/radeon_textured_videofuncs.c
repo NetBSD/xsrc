@@ -2661,11 +2661,11 @@ FUNC_NAME(R500PrepareTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     PixmapPtr pPixmap = pPriv->pPixmap;
     struct radeon_exa_pixmap_priv *driver_priv;
     struct radeon_bo *src_bo = pPriv->src_bo[pPriv->currentBuffer];
-    uint32_t txfilter, txformat0, txformat1, txoffset, txpitch;
+    uint32_t txfilter, txformat0, txformat1, txoffset, txpitch, us_format = 0;
     uint32_t dst_pitch, dst_format;
     uint32_t txenable, colorpitch, bicubic_offset;
     uint32_t output_fmt;
-    int pixel_shift;
+    int pixel_shift, out_size = 6;
     ACCEL_PREAMBLE();
 
 #ifdef XF86DRM_MODE
@@ -2791,15 +2791,36 @@ FUNC_NAME(R500PrepareTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     if ((pPriv->h - 1) & 0x800)
 	txpitch |= R500_TXHEIGHT_11;
 
+    if (info->ChipFamily == CHIP_FAMILY_R520) {
+	unsigned us_width = (pPriv->w - 1) & 0x7ff;
+	unsigned us_height = (pPriv->h - 1) & 0x7ff;
+	unsigned us_depth = 0;
+
+	if (pPriv->w > 2048) {
+	    us_width = (0x7ff + us_width) >> 1;
+	    us_depth |= 0x0d;
+	}
+	if (pPriv->h > 2048) {
+	    us_height = (0x7ff + us_height) >> 1;
+	    us_depth |= 0x0e;
+	}
+	us_format = (us_width << R300_TXWIDTH_SHIFT) |
+		    (us_height << R300_TXHEIGHT_SHIFT) |
+		    (us_depth << R300_TXDEPTH_SHIFT);
+	out_size++;
+    }
+
     txoffset = info->cs ? 0 : pPriv->src_offset;
 
-    BEGIN_ACCEL_RELOC(6, 1);
+    BEGIN_ACCEL_RELOC(out_size, 1);
     OUT_ACCEL_REG(R300_TX_FILTER0_0, txfilter);
     OUT_ACCEL_REG(R300_TX_FILTER1_0, 0);
     OUT_ACCEL_REG(R300_TX_FORMAT0_0, txformat0);
     OUT_ACCEL_REG(R300_TX_FORMAT1_0, txformat1);
     OUT_ACCEL_REG(R300_TX_FORMAT2_0, txpitch);
     OUT_TEXTURE_REG(R300_TX_OFFSET_0, txoffset, src_bo);
+    if (info->ChipFamily == CHIP_FAMILY_R520)
+	OUT_ACCEL_REG(R500_US_FORMAT0_0, us_format);
     FINISH_ACCEL();
 
     txenable = R300_TEX_0_ENABLE;
