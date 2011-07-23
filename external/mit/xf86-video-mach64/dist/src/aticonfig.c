@@ -502,5 +502,5 @@ ATIProcessOptions
 #endif
     }
 
-    xfree(PublicOption);
+    free(PublicOption);
 }
