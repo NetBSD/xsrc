@@ -1,8 +1,4 @@
-// $XKeyboardConfig$
-
 // Separate keymaps merged into one file by Nerijus Baliūnas, 2002
-//
-// $XFree86: xc/programs/xkbcomp/symbols/lt,v 1.3 2002/12/14 22:26:11 dawes Exp $
 
 // Lithuanian Numeric layout - Lithuanian letters on the numeric row
 // based on Lithuanian keyboard map by Ričardas Čepas <rch@richard.eu.org>
@@ -18,7 +14,7 @@ xkb_symbols "basic" {
     include "eurosign(e)"
     include "level3(ralt_switch)"
 
-    name[Group1]="Lithuania";
+    name[Group1]="Lithuanian";
 
     key <TLDE> {[               grave,   asciitilde,    acute                ]};
     key <AE01> {[             aogonek,      Aogonek,        1,        exclam ]};
@@ -46,7 +42,7 @@ xkb_symbols "us" {
     include "eurosign(e)"
     include "level3(ralt_switch)"
 
-    name[Group1]="Lithuania - US keyboard with Lithuanian letters";
+    name[Group1]="Lithuanian (US keyboard with Lithuanian letters)";
 
     key <TLDE> {[    grave,    asciitilde,               acute               ]};
     key <AE01> {[        1,        exclam,             aogonek,      Aogonek ]};
@@ -82,7 +78,7 @@ xkb_symbols "std" {
     include "kpdl(comma)"
     include "level3(ralt_switch)"
 
-    name[Group1]="Lithuania - Standard";
+    name[Group1]="Lithuanian (standard)";
 
     key <TLDE> {[        grave,  asciitilde,               acute ]};
     key <AE01> {[       exclam,           1,                  at ]};
@@ -134,7 +130,7 @@ xkb_symbols "ibm" {
     include "nbsp(level3)"
     include "level3(ralt_switch)"
 
-    name[Group1]="Lithuania - IBM (LST 1205-92)";
+    name[Group1]="Lithuanian (IBM LST 1205-92)";
 
     key <TLDE> {[              grave,          asciitilde,          acute               ]};
     key <AE01> {[             exclam,                   1                               ]};
@@ -166,16 +162,9 @@ xkb_symbols "ibm" {
 };
 
 // LEKP and LEKPa layouts 1.0
-// Copyright (c) 2007 Tautrimas Pajarskas
 // For more info visit http://lekp.info
-//
-// LEKP and LEKPa layouts are licensed under the Creative Commons
-// Attribution-Noncommercial-Share Alike 3.0 License.
-// To view a copy of this license, visit
-// http://creativecommons.org/licenses/by-nc-sa/3.0/ or send
-// a letter to Creative Commons, 171 Second Street, Suite 300,
-// San Francisco, California, 94105, USA.
-//
+// Created by Tautrimas Pajarskas, 2007
+// Made by Ernestas Lukoševičius, 2007
 // Minor cleanup by Rimas Kudelis, 2010
 
 partial alphanumeric_keys modifier_keys
@@ -184,7 +173,7 @@ xkb_symbols "lekp" {
     include "capslock(backspace)"
     include "level3(ralt_switch)"
     
-    name[Group1]="Lithuania - LEKP";
+    name[Group1]="Lithuanian (LEKP)";
     
     key <TLDE> {[        grave,          asciitilde,         acute ]};
     key <AE01> {[        slash,          numbersign,           bar ]};
@@ -245,7 +234,7 @@ xkb_symbols "lekpa" {
     include "capslock(backspace)"
     include "level3(ralt_switch)"
 
-    name[Group1]="Lithuania - LEKPa";
+    name[Group1]="Lithuanian (LEKPa)";
 
     key <TLDE> {[        grave,          asciitilde,         acute ]};
     key <AE01> {[        slash,            quotedbl,           bar ]};
@@ -297,5 +286,29 @@ xkb_symbols "lekpa" {
     key <AB08> {[      umacron,             Umacron,          less ]};
     key <AB09> {[      aogonek,             Aogonek,       greater ]};
     key <AB10> {[            h,                   H                ]};
+};
+
+// EXTRAS:
+
+partial alphanumeric_keys modifier_keys
+xkb_symbols "us_dvorak" {
+
+    include "us(dvorak)"
+
+    name[Group1]="Lithuanian (US Dvorak with Lithuanian letters)";
+
+    key <AE01>	{ [        1,      exclam,    aogonek,      Aogonek ] };
+    key <AE02>	{ [        2,          at,     ccaron,       Ccaron ] };
+    key <AE03>	{ [        3,  numbersign,    eogonek,      Eogonek ] };
+    key <AE04>	{ [        4,      dollar,  eabovedot,    Eabovedot ] };
+    key <AE05>	{ [        5,     percent,    iogonek,      Iogonek ] };
+    key <AE06>	{ [        6, asciicircum,     scaron,       Scaron ] };
+    key <AE07>	{ [        7,   ampersand,    uogonek,      Uogonek ] };
+    key <AE08>	{ [        8,    asterisk,    umacron,      Umacron ] };
+    key <AE09>	{ [        9,   parenleft, doublelowquotemark,  parenleft ] };
+    key <AE10>	{ [        0,  parenright, leftdoublequotemark,parenright ] };
+    key <AD12>	{ [    equal,        plus,     zcaron,       Zcaron ] };
+
+    include "level3(ralt_switch)"
 };
 

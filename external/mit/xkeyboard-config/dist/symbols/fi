@@ -1,6 +1,4 @@
 //
-// $XKeyboardConfig$
-//
 // X keyboard maps for Finland
 //
 // SFS 5966 / Kotoistus keymap created by Troy Korjuslommi
@@ -31,7 +29,7 @@ xkb_symbols "kotoistus" {
     //
     // Annex 3 of the standard is implemented in fi_FI.UTF-8/Compose
 
-    name[Group1]="Finland";
+    name[Group1]="Finnish";
 
     key <TLDE> { [  section,         onehalf,          dead_stroke,           NoSymbol              ] };
     key <AE01> { [  1,               exclam,           NoSymbol,              exclamdown            ] };
@@ -97,7 +95,7 @@ xkb_symbols "classic" {
 
     include "fi(fi)"
 
-    name[Group1]="Finland - Classic";
+    name[Group1]="Finnish (classic)";
 };
 
 partial alphanumeric_keys hidden
@@ -171,7 +169,7 @@ xkb_symbols "nodeadkeys" {
 
     include "fi(fi)"
 
-    name[Group1]="Finland - Classic, eliminate dead keys";
+    name[Group1]="Finnish (classic, eliminate dead keys)";
 
     key <AE12> { [  acute,           grave,            cedilla,               ogonek                ] };
     key <AD12> { [  diaeresis,       asciicircum,      asciitilde,            caron                 ] };
@@ -191,7 +189,7 @@ xkb_symbols "smi" {
 
     include "no(smi)"
 
-    name[Group1]="Finland - Northern Saami";
+    name[Group1]="Northern Saami (Finland)";
 
     key <AC10> { [  odiaeresis,      Odiaeresis,       oslash,                Oslash                ] };
     key <AC11> { [  adiaeresis,      Adiaeresis,       ae,                    AE                    ] };
@@ -204,5 +202,5 @@ xkb_symbols "mac" {
 
     include "se(mac)"
 
-    name[Group1]="Finland - Macintosh";
+    name[Group1]="Finnish (Macintosh)";
 };
