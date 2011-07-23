@@ -125,7 +125,7 @@ typedef struct _SynapticsParameters
     int edge_motion_max_z;		    /* finger pressure at which maximum edge motion speed is set */
     int edge_motion_min_speed;		    /* slowest setting for edge motion speed */
     int edge_motion_max_speed;		    /* fastest setting for edge motion speed */
-    Bool edge_motion_use_always;	    /* If false, egde motion is used only when dragging */
+    Bool edge_motion_use_always;	    /* If false, edge motion is used only when dragging */
 
     Bool updown_button_scrolling;	    /* Up/Down-Button scrolling or middle/double-click */
     Bool leftright_button_scrolling;	    /* Left/right-button scrolling, or two lots of middle button */
@@ -160,6 +160,7 @@ typedef struct _SynapticsParameters
     unsigned int resolution_horiz;          /* horizontal resolution of touchpad in units/mm */
     unsigned int resolution_vert;           /* vertical resolution of touchpad in units/mm */
     int area_left_edge, area_right_edge, area_top_edge, area_bottom_edge; /* area coordinates absolute */
+    int hyst_x, hyst_y;                     /* x and y width of hysteresis box */
 } SynapticsParameters;
 
 
@@ -180,8 +181,11 @@ typedef struct _SynapticsPrivateRec
 
     struct CommData comm;
 
+    Bool absolute_events;               /* post absolute motion events instead of relative */
     SynapticsMoveHistRec move_hist[SYNAPTICS_MOVE_HISTORY]; /* movement history */
     int hist_index;			/* Last added entry in move_hist[] */
+    int hyst_center_x;			/* center x of hysteresis*/
+    int hyst_center_y;			/* center y of hysteresis*/
     int scroll_y;			/* last y-scroll position */
     int scroll_x;			/* last x-scroll position */
     double scroll_a;			/* last angle-scroll position */
@@ -240,6 +244,6 @@ typedef struct _SynapticsPrivateRec
 } SynapticsPrivate;
 
 
-extern void SynapticsDefaultDimensions(LocalDevicePtr local);
+extern void SynapticsDefaultDimensions(InputInfoPtr pInfo);
 
 #endif /* _SYNAPTICSSTR_H_ */
