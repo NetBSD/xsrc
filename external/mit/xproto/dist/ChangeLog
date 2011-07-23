@@ -1,3 +1,570 @@
+commit 42c16165df536f74d1177eae2b94f96b3ebbdfb2
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Thu Jun 23 09:28:57 2011 +1000
+
+    xproto 7.0.22
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 13799852a8b8116094a885809782604fa7507115
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Thu Jun 16 11:01:39 2011 +1000
+
+    Add two more symbols for logging grab and window trees
+    
+    These two keysyms provide exciting new possibilities of a close relationship
+    between our valued users and hard-working developers through innovative
+    logging solutions. Such keysyms truly pave new ground in the reponsiveness
+    to bug reports and and debug-ability of grabs.
+    
+    For unprecedented uses of these keysyms, see the patches here:
+    http://patchwork.freedesktop.org/patch/5936/
+    http://patchwork.freedesktop.org/patch/5935/
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Daniel Stone <daniel@fooishbar.org>
+
+commit 7c3c4332d63d9003f7115173b7ece6ab1297cc15
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Jun 12 17:54:50 2011 -0400
+
+    Install xml versions of specs even if HAVE_XMLTO is false
+    
+    DocBook/XML input source is also a usefull output format that can be viewed
+    with an XML viewer or editor and by some O/S help system.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit c10589c12f45bfb8c0134d0370cf5f36ac7262bf
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Jun 5 16:27:37 2011 -0400
+
+    Install target dbs alongside generated documents
+    
+    This matches a change in xorg-sgml-docs whereby the masterdb will look for
+    the target dbs into the same location as the generated documents.
+    
+    The target dbs are now installed alongside the generated documents.
+    Previously they are installed in $prefix/sgml/X11/dbs alongside masterdb which
+    has the potential of installing outside the package prefix and cause
+    distcheck to fail when user does not have write permission in this package.
+    
+    Requires XORG_CHECK_SGML_DOCTOOLS(1.8) which was released 2011-06-11
+
+commit 951295cceb72e929c55f639bbb91314fa276b2aa
+Author: Cyril Brulebois <kibi@debian.org>
+Date:   Sun Jun 5 09:26:33 2011 +0000
+
+    Fix sorting by codepoint in Latin 2.
+    
+    Sort performed by calling “sort -k 3” on the part between #ifdef
+    XK_LATIN8 and #endif.
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Cyril Brulebois <kibi@debian.org>
+
+commit d8920f71b68fe3fabd4ba04e2a4308579a8fe333
+Author: Cyril Brulebois <kibi@debian.org>
+Date:   Fri Jun 3 14:27:45 2011 +0200
+
+    build: Add SIAddresses as a subdir of specs.
+    
+    Fix the following distcheck failure:
+    | configure: creating ./config.status
+    | config.status: creating Makefile
+    | config.status: creating specs/Makefile
+    | config.status: error: cannot find input file: `specs/SIAddresses/Makefile.in'
+    | make: *** [distcheck] Error 1
+    
+    Signed-off-by: Cyril Brulebois <kibi@debian.org>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 2ef6cb7ced5812975b3630cf201e75db439936e6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 28 17:31:36 2011 -0700
+
+    spec: Add more indexterm & glossterm links
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0ffb15d69844f1a653d51e29e0c6a1140cd52c3e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 28 13:53:10 2011 -0700
+
+    spec: move id attributes for event definitions so fop can find them
+    
+    FOP gives 'Unresolved ID reference "events:FocusOut" found.' errors
+    when the id attribute is on the emphasis tag, so moved up to the
+    surrounding entry tag.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 41da11426e0ad420952fbd329527c2ae267e232b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 28 13:39:37 2011 -0700
+
+    spec: Add zone attributes to indexterm tags for more stable link ids
+    
+    Use named id's instead of autogenerating idXXXXXX values that change
+    in different versions so that it's easier to have stable links.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 58897af838482f52abc8a70fc1e1d39c89736bfb
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 28 11:04:17 2011 -0700
+
+    spec: move &gt; outside emphasis to match &lt; in note after error list
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 19b35215c9cff167c62dabecef89e3d5f8df2853
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 28 10:56:36 2011 -0700
+
+    spec: Syntactic Conventions examples should not be separate list entries
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e6ad4dd8d054caf6cd63575167db468929532089
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 28 09:54:07 2011 -0700
+
+    spec: Add cross-reference links in glossary to InputOnly & InputOutput
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2fc4719ba4f122ce5604d693442fa041114526ac
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 28 09:43:04 2011 -0700
+
+    spec: Markup VoidSymbol and NoSymbol with <keysym> instead of <emphasis>
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9bbb6e3f835219110ec0f7bd72ba7fa92974bae8
+Author: Cyril Brulebois <kibi@debian.org>
+Date:   Tue May 24 13:08:27 2011 +0200
+
+    Sort Latin 8 keysyms by codepoints.
+    
+    The overall chaos misled implementors into writing interval checks to
+    determine the case, but that doesn't work too well when lines aren't
+    sorted.
+    
+    Sort performed by calling “sort -k 3” on the part between #ifdef
+    XK_LATIN8 and #endif.
+    
+    Signed-off-by: Cyril Brulebois <kibi@debian.org>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b283f6cba77987b215556f80b6b2f1da45672d8b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon May 23 16:01:02 2011 -0700
+
+    Add comments to Xfuncproto.h noting required xproto versions for each macro
+    
+    Saves time trawling git logs to determine what to put in the call to
+    PKG_CHECK_MODULES in configure.ac when you start using one of these.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Jeremy Huddleston <jeremyhu@apple.com>
+    Acked-by: Cyril Brulebois <kibi@debian.org>
+
+commit 217d1dae0093ccaaac59a4fa42000e732492cb66
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Wed Apr 27 17:25:53 2011 -0700
+
+    Add _X_NONNULL macro to annotate when a function expects arguments to be non-null
+    
+    This will allow with compiler optimization and better static analysis.
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+    Reviewed-by: Daniel Stone <daniel@fooishbar.org>
+
+commit 6648db8f910fb74c100cf24436bf0df12cba7fd7
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Wed Apr 27 17:25:40 2011 -0700
+
+    Add _X_UNUSED attribute to designate unused variables and silence warnings
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+    Reviewed-by: Daniel Stone <daniel@fooishbar.org>
+
+commit 19c12c60c22d5a23039bc90845a6ecacdd64f2db
+Author: Matthieu Herrb <matthieu.herrb@laas.fr>
+Date:   Wed Apr 20 22:57:05 2011 +0200
+
+    Fix __STDC_VERSION__ tests.
+    
+    the existing test:
+    defined(__STDC__) && (__STDC_VERSION__ - 0 >= 199901L) causes an
+    warning when building X stuff with gcc -Wundef. Other tests for
+     __STDC_VERSION__ in the X sources all use
+    defined(__STDC_VERSION__) && (__STDC_VERSION__ -0 >= 199901L)
+    
+    Signed-off-by: Matthieu Herrb <matthieu.herrb@laas.fr>
+    Reviewed-by: Matt Turner <mattst88@gmail.com>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit da46c2d0e11c1709b7dd6b2c79253ce8751c81bb
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Feb 27 15:06:18 2011 -0500
+
+    Documentation: add Docbook external references support
+    
+    When writing technical documentation, it is often necessary to cross
+    reference to other information. When that other information is not in the
+    current document, additional support is needed, namely <olink>.
+    
+    A new feature with version 1.7 of xorg-sgml-doctools adds references to
+    other documents within or outside this package.
+    
+    This patch adds technical support for this feature but does not change
+    the content of the documentation as seen by the end user.
+    
+    Each book or article must generate a database containing the href
+    of sections that can be referred to from another document. This database
+    is installed in DATAROOTDIR/sgml/X11/dbs. There is a requirement that
+    the value of DATAROOTDIR for xorg-sgml-doctools and for the package
+    documentation is the same. This forms a virtual document tree.
+    
+    This database is consulted by other documents while they are being generated
+    in order to fulfill the missing information for linking.
+    Refer to the xorg-sgml-doctools for further technical information.
+    
+    Co-authored-by: Matt Dew <marcoz@osource.org>
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 452ae1076b4ad8ccd60e218a3676baa274c083ff
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed Mar 23 11:44:18 2011 +1000
+
+    xproto 7.0.21
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 423f5faddbb1023d0c1cf55b9d1da4397aa1aa26
+Author: Harshula Jayasuriya <harshula@gmail.com>
+Date:   Tue Mar 15 10:46:48 2011 +0000
+
+    Add #defines for Unicode Sinhala to keysymdef.h
+    
+    Add #defines for Unicode Sinhala so that they can be used in the lk XKB
+    keyboard layout.
+    
+    Signed-off-by: Harshula Jayasuriya <harshula@gmail.com>
+    Reviewed-by: Daniel Stone <daniel@fooishbar.org>
+
+commit f0c5b701a5f8fe6be24229dea35c35b50afe8646
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Feb 24 20:13:20 2011 -0800
+
+    Support _X_INLINE in any C99-compliant compiler
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6eed63f7455d718bf6238ca2f24515329b2a3895
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jan 6 22:24:33 2011 -0800
+
+    Add missing notices to COPYING
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1870ec9ce40e8852e1cdce473afa90d21d780e52
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Dec 13 16:25:31 2010 -0800
+
+    Xfuncproto.h: Add _X_RESTRICT_KEYWORD for C99 & gcc in non-strict-C89 mode
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e5604f04482350eb922a31ad4342aab91ab3b412
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Dec 9 16:04:52 2010 -0800
+
+    Enable gcc attribute(__format__) on gcc versions older than 4.0
+    
+    Enabled on 2.3 and up, since that's where it's available according to
+    http://www.ohse.de/uwe/articles/gcc-attributes.html#func-format
+    
+    Tested with gcc 3.4.3 on Solaris.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit d25f90fe260f546cdea0ec2ebc84df446eef5f47
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Dec 7 19:05:26 2010 -0800
+
+    xproto 7.0.20
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 78806c9fc4be8da93581dcbdafbd668cac9f2d8b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 4 17:57:24 2010 -0800
+
+    spec: Convert .DS/.DE nroff sections to <literallayout> tags
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f1309dd259f29357b362c7c40913f33d3c144f49
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 4 17:37:05 2010 -0800
+
+    spec: Convert some tables that didn't get converted from troff properly
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 19e314d95219d64aea079eb9d2b378533b6efdcd
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 4 16:28:48 2010 -0800
+
+    Replace ASCII -> arrows with Unicode ▶
+    
+    Matches formatting used in current extension specs like randr
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit fa2daaceb0fe5324589b9fca9d156b41697d3a52
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 4 16:06:37 2010 -0800
+
+    spec: Make request names in text hyperlinks to request definition sections
+    
+    Same basic process as previous commit for event names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 998f64c6c986feee7a745a5169152025b229c6d8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 4 15:31:21 2010 -0800
+
+    spec: Make event names in text hyperlinks to event definition sections
+    
+    Started by taking list of event names and generating a list of perl
+    commands such as:
+    s{^\<emphasis role='bold'\>KeyPress\</emphasis\>}{<link linkend="events:KeyPress"><emphasis role='bold'>KeyPress</emphasis></link>}g;
+    
+    and running that with perl -i -p /tmp/e.pl *.xml
+    
+    Many of those changes were then manually reverted to avoid having
+    the same link appear multiple times in a paragraph or to avoid having
+    the definition sections link to themselves.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c4be93c2188c9d8b1b186dde4d80ef91b31f4123
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 4 14:31:08 2010 -0800
+
+    spec: Convert Events chapter into sections
+    
+    Started with a similar replace-regexp as the Requests chapter, but
+    with a lot more manual editing due to the sections with multiple
+    events grouped into a set.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit eb772110ff1a4f6fc6d574bd23679b0408621ef3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 4 13:22:04 2010 -0800
+
+    spec: Convert Requests chapter to have a section per request
+    
+    Bulk of change performed with emacs replace-regexp:
+    <para id="requests:[^"]+">
+    <emphasis role='bold'>\([^<]+\)</emphasis>
+    <indexterm significance="preferred"><primary>[^<]+</primary></indexterm>
+    </para>
+    with:
+       </section>
+      <section id="requests:\1">
+        <title>\1</title>
+        <indexterm significance="preferred"><primary>\1</primary></indexterm>
+    
+    Plus manual editing of the first & last section, and manual
+    conversion of GrabButton & GrabServer due to extra indexterm lines.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 14a0efb08c5e5ca12c8afce213d457e07900b5e6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 4 11:45:48 2010 -0800
+
+    spec: Fix a bunch of the .RB -> <emphasis> mappings
+    
+    Cleans up the opening { of enum lists that the closing was handled
+    by commit 68bf1a7a0c89
+    
+    perl -i -p -e 's{^<emphasis([^>]*)>(\W+?\s+)}{$2<emphasis$1>}g' *.xml
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c11f17ab7654ff32bcf486db24e36a3620408871
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 4 01:38:10 2010 -0800
+
+    spec: add more indexterms linking into the body of the document
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 19ce91d22578e0a12c4afb4171ae03a497c1fff3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Dec 4 00:21:36 2010 -0800
+
+    spec: move another indexterm in glossary to workaround fop crashing bug
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2406b705e546a97b39b3238bd95f125e0f004993
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 3 22:09:05 2010 -0800
+
+    spec: Change titles of other specs from emphasis to citetitle tags
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 10b0200992ee81c0749a69eeba1a05562d724b3a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 3 22:00:44 2010 -0800
+
+    spec: Fix section title markup in Connection Setup chapter
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 573cf6480727dafa68bd14e5bc725f0b5839f34e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 3 21:49:39 2010 -0800
+
+    spec: Fix section title markup in Protocol Formats chapter
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 79afc5fb996e820eaf437f1dff42df3a7f70810a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 3 21:42:00 2010 -0800
+
+    spec: convert predefined atom list from table to simplelist
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 68bf1a7a0c89cdc1c48ed967793d083519f2fb96
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 3 16:02:45 2010 -0800
+
+    spec: Fix a bunch of the .BR -> <emphasis> mappings
+    
+    perl -i -p -e 's{ (\W*?)\s*</emphasis>}{</emphasis>$1}g' *.xml
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit eef13837a6296cbe8d4cd9bda74352769f6a1a66
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Dec 2 15:33:34 2010 -0500
+
+    specs: add ServerInterpreted addresses directory
+    
+    Relocated from xorg-docs/specs/SIAddresses
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit fb8a596aec87133500b6ee33b7843d82b09ecdf7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Nov 29 00:23:38 2010 -0800
+
+    spec: Add glossterm cross reference links to glossary
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ee6ddb4b0e6852df8c07680bd6b1dddaa5c24616
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 28 23:56:12 2010 -0800
+
+    spec: Stopping marking glossary terms as functions when they're not
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 710b9979c9db2d0be0dcc787fa1a9229d2b30636
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 28 23:41:36 2010 -0800
+
+    spec: Finish converting some unconverted index entries in glossary
+    
+    Change made by:
+    perl -i -p -e 's{\<\!-- \.IN "([^"]+)" "([^"]+)" "\@DEF\@" --\>}{  <indexterm significance="preferred"><primary>$1</primary><secondary>$2</secondary></indexterm>}' glossary.xml
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ae571ef20dce0281cd7961663decd9e45838368e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 28 23:33:54 2010 -0800
+
+    spec: Add id's to glossary entries for use in cross-reference links
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6bc03d2e9f390638295966714b96ec517ea0b3af
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 28 23:26:53 2010 -0800
+
+    spec: Add cross-reference links in doc ("see ...")
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2fd776b24ed85865186d40d95e2e9f11831a8e33
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 21 11:46:30 2010 -0800
+
+    Sun's copyrights belong to Oracle now
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit fe7b269fd329201fdbffa12ce7724287c10a3abf
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 21 09:48:52 2010 -0800
+
+    Bug 31132: Xarch.h needs to include <sys/types.h> on Solaris 10
+    
+    Workaround older Solaris releases using types from <sys/types.h> in
+    <sys/byteorder.h> and not including it directly.
+    (That was fixed in OpenSolaris/Solaris 11 as part of:
+    http://bugs.opensolaris.org/bugdatabase/view_bug.do?bug_id=4483139 )
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Acked-by: Pat Kane <pekane52@gmail.com>
+
+commit 5d3428de974d15357b0ad407f4c5222cfaa8f9f3
+Author: Bastien Nocera <hadess@hadess.net>
+Date:   Mon Nov 8 15:24:55 2010 +1000
+
+    Add XF86XK_TouchpadOn/Off
+    
+    Those keysyms will be used to report events from the hardware. Hardware
+    like the HP laptops emit 2 separate keycodes when the touchpad is enabled
+    or disabled. So we can catch those in user-space and display a popup.
+    
+    https://bugs.freedesktop.org/show_bug.cgi?id=31300
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit d441b9b0230b57159fa8522b80f18a0b87f5aac5
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Nov 9 15:19:09 2010 -0500
+
+    config: HTML file generation: use the installed copy of xorg.css
+    
+    Currenlty the xorg.css file is copied in each location
+    where a DocBook/XML file resides. This produces about
+    70 copies in the $(docdir) install tree.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
 commit cda6ce66caa01997b9dd32eb8689d6e746558369
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Wed Nov 3 00:04:22 2010 -0700
