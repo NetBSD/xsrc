@@ -1,3 +1,95 @@
+commit 5f064f70b183147578919166bedeca55cdb0af71
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon May 2 21:12:31 2011 -0700
+
+    xlsclients 1.1.2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 61be3feb4cfc760f63d6b8a4debd3898fdc8fa16
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Mon May 2 11:37:34 2011 +0900
+
+    Depend on xcb >= 1.6 for XCB_ATOM_*.
+    
+    Signed-off-by: Arnaud Fontaine <arnau@debian.org>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 41689f150904be690f3aa96c283a7ee632d566ce
+Author: Dan Nicholson <dbn.lists@gmail.com>
+Date:   Mon Mar 7 14:21:09 2011 -0800
+
+    Drop dependency on xcb-atom/xcb-util
+    
+    With commit 223851b6, the atom names from xcb/xproto.h are being used
+    and xcb-atom is no longer needed.
+    
+    Signed-off-by: Dan Nicholson <dbn.lists@gmail.com>
+    Reviewed-by: Jon TURNEY <jon.turney@dronecode.org.uk>
+
+commit 223851b68fedad730747652bc6560e40ca695ea7
+Author: Jon TURNEY <jon.turney@dronecode.org.uk>
+Date:   Mon Mar 7 13:54:53 2011 +0000
+
+    Use XCB_ATOM_* atom names rather than deprecated atom names
+    
+    Those deprecated atom names were removed from xcb/util in commit
+    2f0334b3eb49fa3a0d6daf6b9dde10e480a5c59f
+    
+    Found by tinderbox, see:
+    
+    http://tinderbox.freedesktop.org/builds/2011-03-06-0008/logs/xlsclients/#build
+    http://tinderbox.freedesktop.org/builds/2011-03-07-0001/logs/xlsclients/#build
+    
+    Signed-off-by: Jon TURNEY <jon.turney@dronecode.org.uk>
+    Tested-by: Dan Nicholson <dbn.lists@gmail.com>
+    Signed-off-by: Peter Harris <pharris@opentext.com>
+
+commit 1439da945a066c5bdf821a4f1af2bc356452e170
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jan 19 10:06:56 2011 -0500
+
+    config: move man pages into their own directory
+    
+    Use services provided by XORG_MANPAGE_SECTIONS.
+    Use standard Makefile for man pages.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 2bb00a3e1d7eea20a232f079d41cd45985e0a721
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Jan 13 17:15:36 2011 -0500
+
+    man: replace hard coded man page section with substitution strings
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 9a2a65ddea132b64d43b8f853ad7d3ca229d34fe
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Jan 13 11:15:47 2011 -0500
+
+    man: remove trailing spaces and tabs
+    
+    Using s/[ \t]*$//
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit d2dba124d303cf7b031c5f64293ac38b5a8418ab
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jan 12 16:28:02 2011 -0500
+
+    config: replace deprecated AM_CONFIG_HEADER with AC_CONFIG_HEADERS
+    
+    This silences an Autoconf warning
+
+commit c1c91e1545ef34d0eeb4fb9b5577174121e28859
+Author: Jesse Adkins <jesserayadkins@gmail.com>
+Date:   Tue Sep 28 13:29:50 2010 -0700
+
+    Purge cvs tags.
+    
+    Signed-off-by: Jesse Adkins <jesserayadkins@gmail.com>
+
 commit 29ad1d40dbd77d6efedd5d7db53e35650732dd6e
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Fri Sep 24 09:43:42 2010 -0700
