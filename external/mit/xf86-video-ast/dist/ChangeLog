@@ -1,3 +1,41 @@
+commit 59d994f46218b5909725ce690cd3fef089a88ba5
+Author: root <root@localhost.localdomain>
+Date:   Fri Jul 15 14:08:13 2011 +0800
+
+    fixed bug #39235
+
+commit 666abcb51ac69161a548055ee41274f2131551ca
+Author: Y.C. Chen <yc_chen@aspeedtech.com>
+Date:   Wed Jul 13 16:20:31 2011 +0800
+
+    xf86-video-ast-0.93.09
+
+commit acec72c6a52879752b080a4f0e644e70c6a2aded
+Author: Y.C. Chen <yc_chen@aspeedtech.com>
+Date:   Thu Nov 11 11:54:26 2010 +0800
+
+    xf86-video-ast-v.0.92.02
+
+commit 143f004a40ed0f95d9cbc30d38b829af00541f6c
+Author: Y.C. Chen <yc_chen@aspeedtech.com>
+Date:   Wed Nov 10 15:01:36 2010 +0800
+
+    xf86-video-ast-0.92.02
+
+commit b4466dad5d60c4a79b775c6e6de989563f7eac45
+Author: Y.C. Chen <yc_chen@aspeedtech.com>
+Date:   Wed Nov 10 14:08:55 2010 +0800
+
+    xf86-video-ast-0.92.02
+
+commit e387e54fd65b7db984975bf7a97cf30b5f1b9b9e
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue Aug 10 10:44:18 2010 -0400
+
+    xf86-video-ast 0.91.10
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
 commit 6196d848a0b12d7e8f7aae0374d53072c69546a6
 Author: Gaetan Nadon <memsize@videotron.ca>
 Date:   Wed Jul 21 16:49:04 2010 -0400
@@ -325,7 +363,7 @@ Date:   Sat Mar 1 10:13:03 2008 +0800
     Make sure used symbols are of public visibility
 
 commit d5b5a0e603e47dd3782c41685e75c6bd2d9e1016
-Merge: 2d1b721 486380c
+Merge: 2d1b721... 486380c...
 Author: James Cloos <cloos@jhcloos.com>
 Date:   Mon Sep 3 06:06:32 2007 -0400
 

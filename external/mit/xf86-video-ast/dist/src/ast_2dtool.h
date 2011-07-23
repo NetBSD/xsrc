@@ -47,8 +47,18 @@
 #define    CMD_QUEUE_SIZE_2M               	0x00200000
 #define    CMD_QUEUE_SIZE_4M               	0x00400000
 
+#define PIXEL_FMT_YV12 				FOURCC_YV12  		/* 0x32315659 */
+#define PIXEL_FMT_UYVY 				FOURCC_UYVY  		/* 0x59565955 */
+#define PIXEL_FMT_YUY2 				FOURCC_YUY2  		/* 0x32595559 */
+#define PIXEL_FMT_RGB5 				0x35315652
+#define PIXEL_FMT_RGB6 				0x36315652
+#define PIXEL_FMT_YVYU 				0x55595659
+#define PIXEL_FMT_NV12 				0x3231564e
+#define PIXEL_FMT_NV21 				0x3132564e
+
 /* CMD Type Info */
 #define    PKT_NULL_CMD             		0x00009561
+#define    PKT_BURST_CMD_HEADER0    	    	0x00009564
 
 #define    PKT_SINGLE_LENGTH        		8
 #define    PKT_SINGLE_CMD_HEADER    		0x00009562
@@ -59,6 +69,70 @@ typedef struct  _PKT_SC
     ULONG    PKT_SC_dwData[1];
     
 } PKT_SC, *PPKT_SC;
+
+/* Packet CMD Scale */
+#define    PKT_TYPESCALE_LENGTH        		56
+#define    PKT_TYPESCALE_DATALENGTH    		(0xC<<16)	  
+#define    PKT_TYPESCALE_ADDRSTART     		0x00000000		  		  
+
+typedef struct _BURSTSCALECMD
+{
+    ULONG    dwHeader0;
+    ULONG    dwSrcBaseAddr;         		/* 8000 */
+    union
+    {
+        struct
+        {
+            USHORT    wSrcDummy;      		/* 8004 */
+            USHORT    wSrcPitch;      		/* 8006 */
+        };
+        ULONG    dwSrcPitch;         		/* 8004 */
+    };
+    ULONG    dwDstBaseAddr;         		/* 8008 */
+    union
+    {
+        struct
+        {
+            USHORT   wDstHeight;      		/* 800C */
+            USHORT   wDstPitch;       		/* 800E */
+        };
+        ULONG    dwDstHeightPitch;   		/* 800C */
+    };        
+    union
+    {
+        struct
+        {
+            short    wDstY;           		/* 8010 */
+            short    wDstX;           		/* 8012 */
+        };
+        ULONG    dwDstXY;            		/* 8010 */
+    };
+    union
+    {
+        struct
+        {
+            short    wSrcY;           		/* 8014 */
+            short    wSrcX;           		/* 8016 */
+        };
+        ULONG    dwSrcXY;            		/* 8014 */
+    };        
+    union
+    {
+        struct
+        {
+            USHORT   wRecHeight;      		/* 8018 */
+            USHORT   wRecWidth;       		/* 801A */
+        };
+        ULONG    dwRecHeightWidth;   		/* 8018 */
+    };
+    ULONG    dwInitScaleFactorH;        	/* 801C */
+    ULONG    dwInitScaleFactorV;        	/* 8020 */
+    ULONG    dwScaleFactorH;            	/* 8024 */
+    ULONG    dwScaleFactorV;            	/* 8028 */
+
+    ULONG    dwCmd;             	    	/* 823C */
+    ULONG    NullData[1];
+} BURSTSCALECMD, *PBURSTSCALECMD; 
 
 /* Eng Reg. Limitation */
 #define	MAX_SRC_X				0x7FF
@@ -153,6 +227,7 @@ typedef struct  _PKT_SC
 #define   CMD_COLOREXP               		0x00000002
 #define   CMD_ENHCOLOREXP            		0x00000003
 #define   CMD_TRANSPARENTBLT           		0x00000004
+#define   CMD_TYPE_SCALE                    	0x00000005
 #define   CMD_MASK            	        	0x00000007
 					
 #define   CMD_DISABLE_CLIP           		0x00000000   
@@ -192,6 +267,19 @@ typedef struct  _PKT_SC
 #define   CMD_NOT_RESET_STYLE_COUNTER   	0x00000000
 
 #define   BURST_FORCE_CMD            		0x80000000
+
+#define YUV_FORMAT_YUYV     			(0UL<<12)
+#define YUV_FORMAT_YVYU     			(1UL<<12)
+#define YUV_FORMAT_UYVY     			(2UL<<12)
+#define YUV_FORMAT_VYUY     			(3UL<<12)
+
+#define SCALE_FORMAT_RGB2RGB        		(0UL<<14)
+#define SCALE_FORMAT_YUV2RGB        		(1UL<<14)
+#define SCALE_FORMAT_RGB2RGB_DOWN   		(2UL<<14)	/* RGB32 to RGB16 */
+#define SCALE_FORMAT_RGB2RGB_UP     		(3UL<<14) 	/* RGB16 to RGB32 */
+#define SCALE_SEG_NUM_1         		(0x3FUL<<24) 	/* DstWi >= SrcWi */
+#define SCALE_SEG_NUM_2         		(0x1FUL<<24) 	/* DstWi < SrcWi */
+#define	SCALE_EQUAL_VER				(0x1UL<<23)
 
 /* Line */
 #define	LINEPARAM_XM				0x00000001
