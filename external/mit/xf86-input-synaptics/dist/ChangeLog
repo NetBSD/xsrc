@@ -1,3 +1,668 @@
+commit a1c77348563d882a5da870d6884ee91434458689
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jun 28 14:47:04 2011 +1000
+
+    synaptics 1.4.1
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 65c8d5c703b2f9a65e3bf86b1ad35a0d439b46aa
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Mon May 23 10:18:22 2011 +1000
+
+    syndaemon: don't compare against a null-property. (#37459)
+    
+    synaptics_property is not set, touchpad_off_prop is the property we need to
+    check against.
+    
+    False check for (nprops != 0) instead of (nprops < 0) would result in
+    syndaemon always reporting a touchpad device, even if none are present.
+    
+    X.Org Bug 37459 <http://bugs.freedesktop.org/show_bug.cgi?id=37459>
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit be83094bd98c353b0ee7894eefcb1ae91e0cae30)
+
+commit 11b70094aa66a85bc06e5c160cdc15139df94cb7
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Mon May 23 10:12:42 2011 +1000
+
+    syndaemon: fix abysimal indentation in dp_get_device.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit e4958186fae78770bc739be701b849f28c87cf11)
+
+commit ee216923ddaf4492c7e1eb026fa0b4f5e8ed5ec9
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Thu May 19 09:45:10 2011 +1000
+
+    include: update documentation for capabilities property
+    
+    pressure and width were added recently
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit 0c8971c80c21d7541d9614ac67a8d4954d4859ec)
+
+commit 77ad03caf8070a25d21e37ae3b7602be6cffe3b1
+Author: Christoph Brill <egore911@egore911.de>
+Date:   Tue May 17 08:08:08 2011 +0200
+
+    Update maintainer information
+    
+    There is no distinct maintainer for synaptics but everything should go
+    to the list.
+    (cherry picked from commit 8ad40444596259b8b5b60ae4069e94875253c21a)
+
+commit f23b388478cf60ee53aa4ca435693fcc9f3324ec
+Author: Diego Elio Pettenò <flameeyes@gmail.com>
+Date:   Sat May 14 03:34:26 2011 +0200
+
+    README: fix typos.
+    
+    Signed-off-by: Christoph Brill <egore911@egore911.de>
+    (cherry picked from commit 0c0e3e3df6af54777e47550e555e76c787f6f0a4)
+
+commit ccdf11061a08d664f092493968f182ac8241052b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun May 8 11:56:25 2011 -0700
+
+    Fix "nose canellation" typo in man page
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit ec791423531a12129358a2e10b4f9b4721fcd761)
+
+commit de59d0368e427e5d1ed299b8769cbf15706801d7
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Mon Apr 18 14:18:22 2011 +1000
+
+    synaptics 1.4.0.901
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 27d04237d60ba0bcd0dafa30f9fd076e80e4d2f6
+Author: Chase Douglas <chase.douglas@canonical.com>
+Date:   Fri Apr 15 15:29:57 2011 -0400
+
+    Drain XRecord connection of any events after handling replies
+    
+    If the X server sends an event to the XRecord connection the event
+    will never be handled. This will cause the event queue to fill up in
+    Xlib and lead to syndaemon running away at 100% cpu usage.
+    
+    This change drains any events from the connection. It's not a fix for
+    the underlying bug in the server or Xlib, but it does paper over the
+    issue for now.
+    
+    https://bugs.launchpad.net/bugs/754470
+    http://bugs.freedesktop.org/show_bug.cgi?id=31921
+    
+    Signed-off-by: Chase Douglas <chase.douglas@canonical.com>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit bdc9c7cf9767bda77c690cb4211f6f6cb4567748)
+
+commit ae226ae5c90b9c6724e1f1cd44e6d223641e59fa
+Author: Cyril Brulebois <kibi@debian.org>
+Date:   Thu Apr 14 05:38:25 2011 +0200
+
+    Fix egde/edge typo in manpage and comments.
+    
+    Debian bug #622663 <http://bugs.debian.org/622663>
+    
+    Signed-off-by: Cyril Brulebois <kibi@debian.org>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit fe05c60fee1f8fc24cc6cc2af7027d897607af2a)
+
+commit e783c187757b0412f53c8ec555d7f5bf7b10195b
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Fri Mar 18 20:56:51 2011 +1000
+
+    eventcomm: add a missing break statement
+    
+    If the EV_SYN wasn't SYN_REPORT, we'd fall through to key event processing,
+    which almost certainly won't do what we want and/or need.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Cyril Brulebois <kibi@debian.org>
+    (cherry picked from commit ecf42db47629cadc7a332398a1784bb0acbd6511)
+
+commit 92ff5f4318ca602a2cdf3deb1d859a7235163416
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Fri Mar 18 10:34:03 2011 +1000
+
+    conf: add a descriptive header with warning to example config file
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit b7acee2346494846e80d2fe25f699081a51c49a2)
+
+commit d25ba5e11d5b86978a576adaab539ca62311a881
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Fri Mar 18 10:40:50 2011 +1000
+
+    conf: remove SHM example from fdi
+    
+    SHM is dead for configuration.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit bc01d6a88ae84a0b1e52b8feb93c168d5120cd58)
+
+commit 847131077636bc935e3b4d7c9f1c94e537c3f79b
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Fri Mar 18 10:29:37 2011 +1000
+
+    man: add short blurb about InputClass configuration in servers 1.8
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit 5f546777173dc78146025499d186fe97d31eaeac)
+
+commit e49d5d07c718df59802ac79511dcfcbd200dd9c7
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Fri Mar 18 10:26:37 2011 +1000
+
+    man: update source path for fdi file and shorten description.
+    
+    Don't describe what the example config file does in the man page, let the
+    file speak for itself. Point out that fdi files are for servers 1.5 - 1.7
+    only.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit 86cab92b41443a5c9391b3bb20c93d902cf67961)
+
+commit a62aad0f94498ad7e80ee2408cb3e56860b8ccaf
+Author: Christoph Brill <egore911@egore911.de>
+Date:   Wed Mar 9 23:25:05 2011 +0100
+
+    Add note about MatchDevicePath
+    
+    This question seems to pop up very often. Add a note pointing to Peter's
+    blog entry describing the details of this misconfiguration.
+    (cherry picked from commit 0662e1c18122768549e51baf9ce3649c57ff0528)
+
+commit f963bc06f42b33e6f4452eab7dc10a4158cb0dd5
+Author: Alexandr Shadchin <alexandr.shadchin@gmail.com>
+Date:   Mon Feb 28 16:38:19 2011 +0500
+
+    Fix typo (resx -> resy)
+    
+    Signed-off-by: Alexandr Shadchin <Alexandr.Shadchin@gmail.com>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit 3c598daec845ff6ef4ba0769ad78a0d562effe29)
+
+commit de0dfb76444ad4160468d00515876c91a9fa20bf
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Fri Mar 4 12:36:24 2011 +1000
+
+    synaptics 1.4.0
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit fefb3b63c589b0758c02777e652f05e537ba663f
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Fri Feb 25 20:41:12 2011 +0100
+
+    Fix build on BSD
+    
+    local was renamed to pInfo in 81ad2e389d11691d5c2687d83150e8e9033cfe76,
+    but a couple places were missed.
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 8ec84d1850fe801fa9a123ae70e09821a4358389
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Mon Feb 21 12:57:21 2011 +1000
+
+    synaptics 1.3.99.901
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit ee99d4f7bc3374e8bac083ac4ea159f5da43db06
+Author: Daniel Kurtz <djkurtz@google.com>
+Date:   Mon Feb 14 22:08:41 2011 +0800
+
+    Stop scrolling if not exactly two fingers on touchpad.
+    
+    X.Org Bug 34257 <http://bugs.freedesktop.org/show_bug.cgi?id=34257>
+    
+    Signed-off-by: Daniel Kurtz <djkurtz@google.com>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 7771bc91c989d1ac6f6147f2b26e5d7e70555856
+Author: Simon Thum <simon.thum@gmx.de>
+Date:   Mon Feb 21 11:55:17 2011 +1000
+
+    add a few comments to ComputeDeltas()
+    
+    Signed-off-by: Simon Thum <simon.thum@gmx.de>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    
+    Conflicts:
+    
+    	src/synaptics.c
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit f2f19be03d62b45e51e7fa55b24ed14fec3ba4d2
+Author: Simon Thum <simon.thum@gmx.de>
+Date:   Thu Feb 10 13:30:07 2011 +0100
+
+    add some acceleration-related info to the man page
+    
+    Signed-off-by: Simon Thum <simon.thum@gmx.de>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 4a1f524fcbc47e6af772f82dffa6286eea43e460
+Author: Simon Thum <simon.thum@gmx.de>
+Date:   Thu Feb 10 12:33:04 2011 +0100
+
+    reshuffle details on acceleration in the man page for increased readability
+    
+    Signed-off-by: Simon Thum <simon.thum@gmx.de>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 91c85a7d010728bf493e77527984024660eb2b6c
+Merge: cc26edf 442527d
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Mon Feb 21 11:47:46 2011 +1000
+
+    Merge branch 'devel' into merge
+    
+    Conflicts:
+    	src/synaptics.c
+
+commit cc26edfba13216ceda02d9d352643535ba359e5e
+Author: Simon Thum <simon.thum@gmx.de>
+Date:   Sun Feb 6 17:57:17 2011 +0100
+
+    Add hysteresis-based noise reduction
+    
+    This introduces hysteresis into the driver's processing. It significantly
+    reduces noise motion, i.e. now the pad does no longer generate a stream of
+    sub-pixel events when just holding the position with the finger down.
+    Also, taking off the finger no longer generates additional motion,
+    scrolling becomes flicker-free etc.
+    
+    The code makes use of "fuzz" from the kernel, if available. This has not
+    been tested extensively, as an overwhelming majority of evdev touchpad
+    drivers view 0 (zero) as a good value for fuzz, forcing userland into
+    assuming "zero fuzz" means "make zero assumptions about fuzz", not
+    "there is no fuzz". Until things improve, this is what we do.
+    
+    Anyway, the fuzz a.k.a. hysteresis can be set/overridden with options
+    and properties, as documented.
+    
+    Signed-off-by: Simon Thum <simon.thum@gmx.de>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 442527d44a07eceaf6d8b33f4b469e36afc0dcc5
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed Feb 9 16:03:36 2011 +1000
+
+    Factor out edge speed calculation.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Chris Bagwell <chris@cnpbagwell.com>
+
+commit a785b831a6cdb14ea1c11b894cc1a84aea4a37fd
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed Feb 9 16:00:10 2011 +1000
+
+    Factor out delta calculation into a static func.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Chris Bagwell <chris@cnpbagwell.com>
+
+commit 736b32cadd55b05d67c4988bec96dc8df7ebb51c
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed Feb 9 15:55:41 2011 +1000
+
+    Move delta calculation for trackstick out.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Chris Bagwell <chris@cnpbagwell.com>
+
+commit f2cbd47caebd85904dd0c480d9a3128c55fec56c
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed Feb 9 15:52:45 2011 +1000
+
+    Reshuffle ComputeDeltas for less indentation.
+    
+    No functional changes, just moving out of double-nested conditions.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Chris Bagwell <chris@cnpbagwell.com>
+
+commit 5aaeea79eea98705fbbbea363a7ee4be1eeed827
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Thu Oct 8 11:56:57 2009 +1000
+
+    Don't expect a palm based on pressure (#22806)
+    
+    If the first touch on the touchpad is above palm_min_z, the palm detection
+    unsets the finger status ("probably palm"). Don't do that, for low values of
+    palm_min_z this disables the finger during normal use of the touchpad.
+    
+    X.Org Bug 22806 <http://bugs.freedesktop.org/show_bug.cgi?id=22806>
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit f34ee8e8ac68c3fdff38d084f175106a3415f3a5
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Feb 8 11:46:46 2011 +1000
+
+    syndaemon: reset idle time if the system time has changed (#31968)
+    
+    If the system time is changed backwards while the touchpad is disabled
+    through syndaemon it remains disabled until the time catches up with the
+    previous idle time again. Avoid this by resetting last_activity with a time
+    that will trigger re-enabling of the device.
+    
+    X.Org Bug 31968 <http://bugs.freedesktop.org/show_bug.cgi?id=31968>
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 311e54594a7dbacf241c046626139a260716ba31
+Author: Nicolas Cavallari <batchman@free.fr>
+Date:   Sun Jan 23 16:14:48 2011 +0100
+
+    synaptics: detect corner tap using the initial touch position
+    
+    Currently, when detecting a tap release, the corner tap detection
+    uses the current touch position to figure out which corner it
+    corresponds. The problem is that, theoretically, there is no such position
+    because there is no touch. It work in mosts cases because most touchpad
+    are fast enough to still have a position on release, but some aren't.
+    
+    In that case, the driver do corner tap detection using the position
+    given by the hardware when there is no touch, that is, (0,0), (1,5855)
+    or whatever. The driver will detect them as corner tap, regardless of
+    the initial touch position. On the default configuration, corner taps
+    are ignored, so basically, these tap are not working.
+    
+    This patch make tap detection use the initial touch position to
+    detect corner taps.
+    
+    Signed-off-by: Nicolas Cavallari <batchman@free.fr>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 0e27ce3ad7493ec28bde421a61c8a6e8d147efb6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 16 12:57:15 2011 -0800
+
+    syndaemon.c: Add #include <string.h>
+    
+    Solaris FD_ZERO is defined using memset, but <sys/select.h> doesn't include
+    <string.h> itself, leading to compiler warning:
+    
+    "syndaemon.c", line 404: warning: implicit function declaration: memset
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 5c98205e025adaf2aa4d99b71cb4581963076a04
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 16 12:57:14 2011 -0800
+
+    synclient.c: Replace old index() function with C89-standard strchr()
+    
+    Fixes Solaris compiler warnings of:
+    "synclient.c", line 152: warning: implicit function declaration: index
+    "synclient.c", line 152: warning: improper pointer/integer combination: op "="
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit ca0f87eb2a7491048d49e6449b688c4fea245310
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed Dec 8 11:15:09 2010 +1000
+
+    Rename SHM functions from alloc/free_param_data to alloc/free_shm_data
+    
+    This naming is historical, we used to export the parameters through SHM.
+    These days it's just confusing.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Daniel Stone <daniel@fooishbar.org>
+
+commit 07dbd6b85d806aa7ebb340f7f555d1992940f319
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed Dec 8 11:08:55 2010 +1000
+
+    Don't report all options unconditionally.
+    
+    While this is useful to see all options provided, it also lists options that
+    are not actually interpreted by the driver. Skip it, use xf86Set*Option()
+    instead to just report the options handled by the driver.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Daniel Stone <daniel@fooishbar.org>
+
+commit 9b62f5c29152d59a894a463711737c52c97b5cbe
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed Dec 8 11:08:03 2010 +1000
+
+    Dont report the version explicitly, it's reported in the module blob anyway.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Daniel Stone <daniel@fooishbar.org>
+
+commit 2da93d9735b6951861043de8ea59c8ca1cea4f96
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed Dec 8 11:05:51 2010 +1000
+
+    Use xf86SetStrOption instead of xf86FindOption for the Device
+    
+    xf86SetStrOption reports to the log if found.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Daniel Stone <daniel@fooishbar.org>
+
+commit b2cc4f5c4aa35fb13d96fafdbd907b6dba4b4796
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed Dec 8 11:01:56 2010 +1000
+
+    Remove the need for XI86_CONFIGURED on input-ABI 12
+    
+    Just move the assignment into an already if GET_ABI_MAJOR() block.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Daniel Stone <daniel@fooishbar.org>
+
+commit 6f61aa776332b99e0d3cc035bff11d87d2735a47
+Author: Alessandro Guido <ag@alessandroguido.name>
+Date:   Fri Dec 3 11:55:00 2010 +0100
+
+    syndaemon: decouple background mode from quietness
+    
+    syndaemon currently outputs lots of stuff when not running in background mode.
+    However, current init daemons and session managers can manage to launch the
+    daemon in background without "-b" just fine (if not better), by doing the
+    fork() themselves. Indeed, if one uses that setup, ie. by having syndaemon
+    launched by GNOME at login, it gets the ~/.xsession-errors file spammed by
+    Enable/Disabled messages.
+    
+    This patch fixes this by introducing a new verbose (-v) flag that enables those
+    messages and makes syndaemon quiet by default.
+    
+    Signed-off-by: Alessandro Guido <ag@alessandroguido.name>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 4d22aa06fd2b53e11233ebd3a25045cd96bf67ab
+Author: Takashi Iwai <tiwai@suse.de>
+Date:   Fri Oct 8 19:22:29 2010 +0200
+
+    Fix 64bit arch issue in synaptics eventcomm.c
+    
+    In C, "1" is an integer, not an unsigned long. Thus (1 << 33) doesn't give
+    you the 33th bit shift, but it's undefined.
+    
+    Signed-off-by: Takashi Iwai <tiwai@suse.de>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 57193777374dd10a920171670a06b7e79d389703
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Mon Oct 25 10:39:38 2010 +1000
+
+    Input API 12 requires a valuator mode for each axis.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Chase Douglas <chase.douglas@canonical.com>
+
+commit 61aa201dabe9aa46dadd1a9dc08eadab878cd09c
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Mon Oct 18 09:47:20 2010 +1000
+
+    Remove convert_proc and close_proc.
+    
+    Both aren't actually called by the server anymore.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 26d5eaeb6b9321ad1a794846333a60125df7317d
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Mon Oct 18 09:44:35 2010 +1000
+
+    Replace two LocalDevicePtr with InputInfoPtr.
+    
+    ABI 12 removes the LocalDevicePtr define from the server, InputInfoPtr is
+    the replacement.
+    Compile error introduced in 0b28a4c046a30ccb83278ea0aa59541fad89092c.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit e2260fef76b08f782ab5640ae490d9b2da33c94b
+Author: Joe Shaw <joe@joeshaw.org>
+Date:   Tue Oct 12 10:00:48 2010 -0400
+
+    don't post motion events if the finger state is FS_UNTOUCHED
+    
+    Works around some buggy touchpads that report their position as things
+    like 0,0; 0,ymax; etc. at the same time as they turn off the finger
+    tool and/or touch indication.  This is particularly a problem when
+    using the touchpad in absolute mode.
+    
+    Signed-off-by: Joe Shaw <joe@joeshaw.org>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit a7637b5b3782f6f7b8efadaa459e9e365701d88b
+Author: Joe Shaw <joe@joeshaw.org>
+Date:   Fri Oct 8 15:20:42 2010 -0400
+
+    post absolute coordinate motion events if device mode is absolute
+    
+    Signed-off-by: Joe Shaw <joe@joeshaw.org>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 0b28a4c046a30ccb83278ea0aa59541fad89092c
+Author: Joe Shaw <joe@joeshaw.org>
+Date:   Fri Oct 8 15:20:41 2010 -0400
+
+    track abs/rel mode changes in SwitchMode() instead of ignoring them
+    
+    Signed-off-by: Joe Shaw <joe@joeshaw.org>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit a36976e7c9b1d408751a35caceef4fb64b6d7a1d
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed Oct 6 11:00:47 2010 +1000
+
+    Remove refcnt initialization from InputDriverRec.
+    
+    Removed from the server with
+    commit 6130170e7e9b64c611ee942ec3455dd1a185193d
+    Author: Adam Jackson <ajax@redhat.com>
+    Date:   Sat Sep 18 06:41:35 2010 -0400
+    
+        xfree86: Remove unused refcounting from input drivers
+    
+    And given that it was unused, we don't need to ifdef it.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit f5687a6741a19ef3081e7fd83ac55f6df8bcd5c2
+Author: Giuseppe Bilotta <giuseppe.bilotta@gmail.com>
+Date:   Sun Sep 19 09:49:59 2010 +0200
+
+    config: don't autoprobe when device was set
+    
+    If device was already set, we were asked to handle that specific device
+    and we should not go probing around. If we do, we might end up handling
+    a device different from what the X server thinks we are handling, with
+    dire consequences in case of hot plugging and unplugging.
+    
+    Without this patch, a situation such as the following can happen.
+    
+    A user has both a built-in laptop touchpad and a tablet such as the
+    Wacom Bamboo Pen & Touch, that is also exposed as a touchpad.
+    
+    The tablet is plugged in before the server starts, and during setup the
+    server calls the synaptic driver for the /dev/input/mouseX device
+    corresponding to the touch device of the tablet; we end up in the
+    autoprobe path even though `device' was set, and the driver scans
+    /dev/input, where the first useful device it finds is the event device
+    for the built-in touchpad.
+    
+    The driver starts managing the built-in touchpad, preventing future
+    instances from managing it too, while the server thinks the driver is
+    managing the tablet.
+    
+    When the user disconnects the tablet, the corresponding instance of the
+    synpatics driver (which is actually managing the touchpad instead) is
+    unloaded: the built-in touchpad stops working in X.
+    
+    Signed-off-by: Giuseppe Bilotta <giuseppe.bilotta@gmail.com>
+    Reviewed-by: Chase Douglas <chase.douglas@canonical.com>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit f2039cb7fba41032ec87315a3a4511472a5ef0dc
+Author: Giuseppe Bilotta <giuseppe.bilotta@gmail.com>
+Date:   Wed Sep 22 21:44:13 2010 +0200
+
+    config: collect options during preinit
+    
+    This must to ensure that the "Device" option is set correctly before
+    SetDeviceAndProtocol is called, but it's only needed when the old input
+    API is used.
+    
+    Signed-off-by: Giuseppe Bilotta <giuseppe.bilotta@gmail.com>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 6f7daad930bbceb98a3bea537446b457a5f76246
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed Sep 1 13:42:56 2010 +1000
+
+    Bump to 1.3.99
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit f0623c56b91d1444ceb0f18a3b090a06bd6817a9
+Merge: 1a9495a 81ad2e3
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed Sep 1 13:42:37 2010 +1000
+
+    Merge branch 'input-api'
+    
+    Conflicts:
+    	src/properties.c
+
+commit 81ad2e389d11691d5c2687d83150e8e9033cfe76
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Fri Jul 23 15:03:42 2010 +1000
+
+    Use InputInfoPtr instead of LocalDevicePtr.
+    
+    The latter is about to be removed from the server, InputInfoPtr has been
+    around in all supported server versions.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit b7dbe57332bd3d009ea60038f555ae1ef7e17e85
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Thu Jul 22 11:53:52 2010 +1000
+
+    Support the new input api.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
 commit 1a9495a74c41d956751177807602383ce4549c37
 Author: Peter Hutterer <peter.hutterer@who-t.net>
 Date:   Wed Sep 1 09:04:11 2010 +1000
@@ -106,6 +771,35 @@ Date:   Tue Aug 17 11:34:32 2010 +1000
     
     Virtually all touchpads still in use have one or more properties missing
     anyway. If it's not in the list, then it's missing.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit a9d25b818d364594bfb761a996a86db002a7d4ac
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Thu Jul 22 11:44:35 2010 +1000
+
+    Reshuffle initialization in preparation for new input API.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 4dd15cf37d388a720e502f364410c28f17e03ce6
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Thu Jul 22 11:42:38 2010 +1000
+
+    Add some ifdefs missing from XINPUT ABI 12
+    
+    These flags are not used in the newer servers anymore. Define them locally,
+    remove the defines once we stop supporting server 1.9.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit e6f209d1aacef18e68eeede84c7bfca4c1c100c8
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Thu Jul 22 11:41:35 2010 +1000
+
+    Remove XI86_POINTER_CAPABLE usage.
+    
+    This is a write-only flag.
     
     Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
 
