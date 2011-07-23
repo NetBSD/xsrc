@@ -83,7 +83,7 @@
 #define PACKAGE_NAME "xf86-video-ati"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-video-ati 6.14.1"
+#define PACKAGE_STRING "xf86-video-ati 6.14.2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-video-ati"
@@ -92,7 +92,7 @@
 #undef PACKAGE_URL
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "6.14.1"
+#define PACKAGE_VERSION "6.14.2"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 6
@@ -101,7 +101,7 @@
 #define PACKAGE_VERSION_MINOR 14
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 1
+#define PACKAGE_VERSION_PATCHLEVEL 2
 
 /* Enable DRI2 code */
 #define RADEON_DRI2 1
@@ -119,7 +119,7 @@
 #define USE_XAA 1
 
 /* Version number of package */
-#define VERSION "6.14.1"
+#define VERSION "6.14.2"
 
 /* Enable DRI driver support */
 #define XF86DRI 1
