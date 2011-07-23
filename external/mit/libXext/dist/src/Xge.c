@@ -291,6 +291,7 @@ _xgeEventToWire(Display* dpy, XEvent* re, xEvent* event)
 /*
  * Extensions need to register callbacks for their events.
  */
+Bool
 _X_HIDDEN xgeExtRegister(Display* dpy, int offset, XExtensionHooks* callbacks)
 {
     XGEExtNode* newExt;
