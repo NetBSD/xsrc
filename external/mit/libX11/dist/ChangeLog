@@ -1,3 +1,735 @@
+commit a0ad0d5c99023bb9a8ce3944dbc3267f5265721e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Apr 5 13:29:04 2011 -0700
+
+    libX11 1.4.3
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e8c76407d2f6e3b11babdb84426e43e780c859c3
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Feb 25 09:23:54 2011 -0500
+
+    Documentation: add Docbook external references support
+    
+    When writing technical documentation, it is often necessary to cross
+    reference to other information. When that other information is not in the
+    current document, additional support is needed, namely <olink>.
+    
+    A new feature with version 1.7 of xorg-sgml-doctools adds references to
+    other documents within or outside this package.
+    
+    This patch adds technical support for this feature but does not change
+    the content of the documentation as seen by the end user.
+    
+    Each book or article must generate a database containing the href
+    of sections that can be referred to from another document. This database
+    is installed in DATAROOTDIR/sgml/X11/dbs. There is a requirement that
+    the value of DATAROOTDIR for xorg-sgml-doctools and for the package
+    documentation is the same. This forms a virtual document tree.
+    
+    This database is consulted by other documents while they are being generated
+    in order to fulfill the missing information for linking.
+    Refer to the xorg-sgml-doctools for further technical information.
+    
+    Co-authored-by: Matt Dew <marcoz@osource.org>
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 25eb76b3d2726f2f1de759901971ae53b2539dc4
+Author: Harshula Jayasuriya <harshula@gmail.com>
+Date:   Mon Mar 21 14:49:37 2011 +0000
+
+    Add #define XK_SINHALA
+    
+    Add #define XK_SINHALA so that the Sinhala keysyms can be used by
+    the lk xkb keymap.
+    
+    Signed-off-by: Harshula Jayasuriya <harshula@gmail.com>
+    Reviewed-by: Daniel Stone <daniel@fooishbar.org>
+
+commit db8b20b789112717ac0590b40f0b4dc2171797d0
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Thu Mar 17 16:15:00 2011 -0700
+
+    configure.ac: Bump version to 1.4.2
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit 83e1ba59c48c79f8b0a7e7aa0b9c9cfd84fa403d
+Author: Jamey Sharp <jamey@minilop.net>
+Date:   Tue Mar 15 16:48:07 2011 -0700
+
+    Call _XErrorFunction without holding the Display lock.
+    
+    Historically, Xlib dropped the Display lock around the upcall to any
+    user-supplied _XErrorFunction, but somewhere along the way I quit doing
+    that if you built with XCB. The reasons are lost somewhere in the
+    pre-git history of Xlib/XCB, and I can't now see any reason to hold the
+    lock.
+    
+    The documentation for XSetErrorHandler still applies though:
+    
+        Because this condition is not assumed to be fatal, it is acceptable
+        for your error handler to return; the returned value is ignored.
+        However, the error handler should not call any functions (directly
+        or indirectly) on the display that will generate protocol requests
+        or that will look for input events.
+    
+    So while you are now once again permitted to re-enter Xlib from the
+    error handler, you're only allowed to call non-protocol functions.
+    
+    Signed-off-by: Jamey Sharp <jamey@minilop.net>
+
+commit fd85aca7a616c595fc17b2520f84316a11e8906f
+Author: Jamey Sharp <jamey@minilop.net>
+Date:   Mon Mar 14 14:45:35 2011 -0700
+
+    Ignore user locks after sleeping in _XReply and _XReadEvents.
+    
+    This bug appears as a hang in applications that wait for replies from
+    multiple threads, where one such thread has taken a user lock using
+    XLockDisplay.
+    
+    Prior to this fix, the code could deadlock in this way: If thread 1 goes
+    to sleep waiting for a reply, and then thread 2 takes a user lock and
+    waits for a reply, then thread 2 will wait for thread 1 to process its
+    reply (because responses must be processed in order), but thread 1 will
+    wait for thread 2 to drop its user lock.
+    
+    Fixed by making thread 1 not wait for thread 2 to drop its user lock.
+    This makes the semantics of user locks hard to define, but they were
+    already hard to define. The new behavior appears to be consistent with
+    the way Xlib worked historically, anyway.
+    
+    Fixes: http://lists.freedesktop.org/archives/xcb/2011-March/006802.html
+    
+    There was a similar potential for deadlock in _XReadEvents, fixed the
+    same way, with the same caveats about user-lock semantics.
+    
+    Signed-off-by: Jamey Sharp <jamey@minilop.net>
+
+commit 690f8bffd48a4e7e74298360ddd0431dc95dcd3f
+Author: Erkki Seppälä <erkki.seppala@vincit.fi>
+Date:   Tue Jan 18 15:58:20 2011 +0200
+
+    xkb: XkbPropertyPtr determined allocation success from wrong variables
+    
+    Cannot reach dead statement "return NULL;"
+    
+    Check for the NULLness of prop->name and prop->value instead of
+    name and value, which was checked earlier anyway. Decided against
+    using strdup due to curious memory allocation functions and the
+    rest of the xkb not using it either.
+    
+    Signed-off-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith at oracle.com>
+
+commit 6a4d027284e7bb5dd458157947bbb1ff580ad071
+Author: Erkki Seppälä <erkki.seppala@vincit.fi>
+Date:   Mon Jan 10 16:37:22 2011 +0200
+
+    keyBind: Use Xcalloc to initialize allocated _XKeytrans
+    
+    Using uninitialized value "p->modifiers"
+    
+    Small fix by using Xcalloc instead of Xmalloc
+    
+    Signed-off-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith at oracle.com>
+
+commit b993d73bb3214ecc24646f5427c8003b816c6921
+Author: Erkki Seppälä <erkki.seppala@vincit.fi>
+Date:   Mon Jan 10 16:22:45 2011 +0200
+
+    im/ximcp: release modifiermap before returning
+    
+    Variable "map" goes out of scope
+    
+    Release modifiermap before returning. Reordered code to call
+    XGetModifierMapping after the first return from the function.
+    
+    Signed-off-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+    Reviewed-by: Dirk Wallenstein <halsmit@t-online.de>
+
+commit 807a7fc0354f2212dfa5ff1f9e4ede56d8e69ef4
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Feb 25 09:23:54 2011 -0500
+
+    Docbook: change the book id to match the xml file basename
+    
+    This is required for the up-coming external references support.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 40812b53ff5fe548f6eaf43ba4c8781cb43dab43
+Author: Samuel Thibault <samuel.thibault@ens-lyon.org>
+Date:   Mon Feb 21 21:54:17 2011 +0100
+
+    Make the Local XIM request key releases for braille
+    
+    Braille chords management needs key release events. We need to explicitly
+    request then, else GTK would not pass them throught XFilterEvent and braille
+    wouldn't work.
+    
+    Signed-off-by: Samuel Thibault <samuel.thibault@ens-lyon.org>
+
+commit c97c42c49cd5095462abecdf908b416fb0b540b6
+Author: Samuel Thibault <samuel.thibault@ens-lyon.org>
+Date:   Mon Feb 21 17:27:38 2011 +0100
+
+    Match braille patterns with compose tree
+    
+    Braille patterns should also be usable in Compose.  This combines the
+    implementation of braille chords and compose tree: only emit the braille
+    pattern if it can not be found in the compose tree, if any.
+    
+    Signed-off-by: Samuel Thibault <samuel.thibault@ens-lyon.org>
+
+commit 0c6ca565d7c8a47ef3ea823569a9ca5298a5307d
+Author: Samuel Thibault <samuel.thibault@ens-lyon.org>
+Date:   Mon Feb 21 15:56:54 2011 +0100
+
+    Fix status reporting for braille patterns
+    
+    _XimLocalMbLookupString can return a braille keysym even if _Xlcwctomb can't
+    convert to the current MB charset.
+    _XimLocalUtf8LookupString needs to set the braille keysym and status too.
+    
+    Signed-off-by: Samuel Thibault <samuel.thibault@ens-lyon.org>
+
+commit 993abe751f4141f54d8d28b8b73588a1c9085970
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Feb 11 14:49:17 2011 -0800
+
+    Clean up memory when first XCreateRegion succeeds and second fails
+    
+    Error: Memory leak (CWE 401)
+       Memory leak of pointer 's' allocated with XCreateRegion()
+            at line 387 of /export/alanc/X.Org/sx86-gcc/lib/libX11/src/Region.c in function 'XShrinkRegion'.
+              's' allocated at line 387 with XCreateRegion().
+              s leaks when s != 0 at line 387.
+    Error: Memory leak (CWE 401)
+       Memory leak of pointer 'tra' allocated with XCreateRegion()
+            at line 1452 of /export/alanc/X.Org/sx86-gcc/lib/libX11/src/Region.c in function 'XXorRegion'.
+              'tra' allocated at line 1451 with XCreateRegion().
+              tra leaks when tra != 0 at line 1451.
+    
+    [ This bug was found by the Parfait 0.3.6 bug checking tool.
+      For more information see http://labs.oracle.com/projects/parfait/ ]
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6ac417cea1136a3617f5e40f4b106aaa3f48d6c2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Feb 11 14:20:24 2011 -0800
+
+    ximcp: Prevent memory leak & double free if multiple %L in string
+    
+    In the highly unlikely event that TransFileName was passed a path
+    containing multiple %L entries, for each entry it would call
+    _XlcFileName, leaking the previous results, and then for each entry it
+    would copy from that pointer and free it, resulting in invalid pointers
+    & possible double frees for each use after the first one freed it.
+    
+    Error: Use after free (CWE 416)
+       Use after free of pointer 'lcCompose'
+            at line 358 of modules/im/ximcp/imLcPrs.c in function 'TransFileName'.
+              Previously freed at line 360 with free.
+    Error: Use after free (CWE 416)
+       Use after free of pointer 'lcCompose'
+            at line 359 of modules/im/ximcp/imLcPrs.c in function 'TransFileName'.
+              Previously freed at line 360 with free.
+    Error: Double free (CWE 415)
+       Double free of pointer 'lcCompose'
+            at line 360 of modules/im/ximcp/imLcPrs.c in function 'TransFileName'.
+              Previously freed at line 360 with free.
+    
+    [ This bug was found by the Parfait 0.3.6 bug checking tool.
+      For more information see http://labs.oracle.com/projects/parfait/ ]
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 502d414118c97d35a44f8e295709682022876331
+Author: Erkki Seppälä <erkki.seppala@vincit.fi>
+Date:   Thu Feb 3 17:08:57 2011 +0200
+
+    xcms/cmsProp: don't deal with uninitialized values, fail instead
+    
+    Properly handle the return value of XGetWindowProperty by considering
+    if after the loop as well.
+    
+    Using freed pointer "prop_ret"
+    
+    There were numerous things wrong in how this function interacted with
+    XGetWindowProperty.
+    
+    None of the local variables were initialized and remained that way if
+    the call to XGetWindowProperty returned 1 (not Succeed). That doesn't
+    result in after_ret being initialized in which case if it happens to
+    be 0, the loop was exited. In that case format_ret and nitems_ret were
+    uninitialized and the function might return with success (but with
+    uninitialized pointer in prop_ret) or XcmsFailure.
+    
+    As the buffer enlarging code was called only when XGetWindowProperty
+    failed (returned not Success), after_ret would not have been
+    initialized. It would have been initialized only if the
+    XGetWindowProperty has returned Success earlier, but in that case the
+    code fragment would not have been reached.
+    
+    This patch alters the function to return XcmsFailure if the call to
+    XGetWindowProperty fails.
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+    Reviewed-by: Rami Ylimäki <rami.ylimaki@vincit.fi>
+    Signed-off-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+
+commit c37e278993b9e5b3d7025ef4c434373a011996ec
+Author: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+Date:   Mon Jan 31 14:02:07 2011 +0200
+
+    xcms/LRGB: don't double-free property_return
+    
+    property_return was free'd before and in the case the conditional is true,
+    the call to XcmsGetProperty failed which means that property_return wasn't
+    set so there is no need to free it again.
+    
+    Double free of pointer "property_return" in call to "free"
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+    Signed-off-by: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+
+commit 50f4107811249806718a100f9d34f996c58e5e25
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Feb 2 08:58:45 2011 -0800
+
+    Xrm.c: ReadInFile: refactor fstat error handling
+    
+    We can simplify the fstat failure case now that the GetFileSize macro
+    has been expanded inline.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Julien Cristau <jcristau@debian.org>
+
+commit 5e9c40fcb5da43c9fdacf12967d090bf202daf2a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Feb 2 08:56:00 2011 -0800
+
+    Expand GetSizeOfFile() macro at the one place it's called
+    
+    Removes XrmI.h header that only contained this single macro
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Julien Cristau <jcristau@debian.org>
+
+commit 450e17422c0e374d25c643f343ea268cec68da38
+Author: Erkki Seppälä <erkki.seppala@vincit.fi>
+Date:   Mon Jan 31 14:01:57 2011 +0200
+
+    XlibInt: Use strncpy+zero termination instead of strcpy to enforce buffer size
+    
+    Possible overrun of 8192 byte fixed size buffer "buffer" by copying
+    "ext->name" without length checking
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+    Signed-off-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e2566e43b02d2d7b7c1c3bb7db7c5ae81c1245fa
+Author: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+Date:   Mon Jan 31 14:02:13 2011 +0200
+
+    lc/def/lcDefConv: Use Xcalloc to avoid use of uninitialized memory
+    
+    Fixed by zero'ing conv on allocation with Xcalloc. Then
+    close_converter works properly.
+    
+    Using uninitialized value "conv->state" in call to function "close_converter"
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+    Signed-off-by: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 03f81ad8fb9783986cf9b17661dd31e95c396681
+Author: Erkki Seppälä <erkki.seppala@vincit.fi>
+Date:   Mon Jan 31 14:02:16 2011 +0200
+
+    xlibi18n/lcFile: Removed superfluous check for NULL target_dir
+    
+    The situation is already handled before this code.
+    
+    Cannot reach dead expression "0U" inside statement "if (1U + (target_dir ? strl..."
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+    Signed-off-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1346b9ea3b3882201ff8c3ee462ff4b0d4edf639
+Author: Erkki Seppälä <erkki.seppala@vincit.fi>
+Date:   Mon Jan 31 14:02:15 2011 +0200
+
+    ximcp/imLckup: Handle negative return value from _Xlcwctomb
+    
+    Fixed by negative value to memcpy by checking for the negative return
+    value of _Xlcwctomb and returning 0/XLookupNone in that case.
+    
+    a negative value was passed to memcpy
+    
+    Unfortunately the other return values for *status don't fit into the
+    error (which appears to indicate some internal error or running out of
+    memory). The other valid status codes are XBufferOverflow,
+    XLookupNone, XLookupChars, XLookupKeySym, and XLookupBoth. Each of
+    these has a specific meaning attached.
+    
+    Reviewed-by: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+    Signed-off-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 79a5c86e020f08cc108184298a72e2777036de39
+Author: Erkki Seppälä <erkki.seppala@vincit.fi>
+Date:   Mon Jan 31 14:02:14 2011 +0200
+
+    ximcp/imTrX: Handle failing XGetWindowProperty
+    
+    Checked return value of XGetWindowProperty and return false if it fails.
+    
+    Return value of "XGetWindowProperty(im->core.display, spec->lib_connect_wid, prop, 0L, (length + bytes_after_ret + 3UL) / 4UL, 1, 0UL, &type_ret, &format_ret, &nitems, &bytes_after_ret, &prop_ret)" is not checked
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2ace8d5c89c8f6d9f42b4068f4b508ca28f0ced1
+Author: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+Date:   Mon Jan 31 14:02:12 2011 +0200
+
+    XlibInt: info_list->watch_data was reallocated, but result was discarded
+    
+    info_list->watch_data was being reallocated, but the return value of
+    the reallocation was stored only into a local variable. This might
+    cause some funky behavior and crashes.
+    
+    Variable "wd_array" goes out of scope
+    Value "wd_array" is overwritten in "wd_array = (XPointer*)realloc((char*)info_list->watch_data, (((dpy->watcher_count + 1) * 4U == 0U) ? 1U : ((dpy->watcher_count + 1) * 4U)))"
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+    Signed-off-by: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2b16a7e683e355c9746290b2cee2fd0dd2bf342a
+Author: Erkki Seppälä <erkki.seppala@vincit.fi>
+Date:   Mon Jan 31 14:02:10 2011 +0200
+
+    GetProp: Zero-initialized error so its resourceID field is initialized
+    
+    Using uninitialized value "error.resourceID" in call to function "_XError"
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+    Signed-off-by: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 85e9f38e016137f0ff2791eb0d092ab027382d2c
+Author: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+Date:   Tue Feb 1 11:07:25 2011 +0200
+
+    xcms/LRGB: Add a label for freeing property_return.
+    
+    The rest of the code uses goto's to free memory allocated later
+    and prevent memory leaks, but there were several paths were
+    property_return was free'd just before a goto.
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+    Signed-off-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3161dc57d4e9b70f852f05e5e474455e121b06ab
+Author: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+Date:   Mon Jan 31 14:02:08 2011 +0200
+
+    xcms/LRGB: Fix potential resource leak.
+    
+    property_return was not free'd if the allocation of pRedTbl failed.
+    
+    Reviewed-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+    Signed-off-by: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit be3e6c205d94dedc1cdebf5d17b987f0f828377a
+Author: Erkki Seppälä <erkki.seppala@vincit.fi>
+Date:   Mon Jan 31 14:02:06 2011 +0200
+
+    Xrm: Handle the extremely unlikely situation of fstat failing
+    
+    Tracked variable "size" was passed to a negative sink.
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+    Signed-off-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3fae16c64d6ef76fd4a25a54c7f7de76596457db
+Author: Erkki Seppälä <erkki.seppala@vincit.fi>
+Date:   Mon Jan 31 14:02:05 2011 +0200
+
+    Xrm: NEWTABLE had a memory leak after a memory allocation error
+    
+    The NEWTABLE macro missed freeing its allocated memory on subsequent
+    memory allocation errors. Added call to Xfree.
+    
+    Variable "table" goes out of scope
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+    Signed-off-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 7110ac653349a23c80c365f11f6270dc27c8975a
+Author: Erkki Seppälä <erkki.seppala@vincit.fi>
+Date:   Mon Jan 31 14:02:03 2011 +0200
+
+    ImUtil: Handle a memory leak in one early return branch
+    
+    Fixed memory leak by adding Xfree for image
+    
+    Variable "image" goes out of scope
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+    Signed-off-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d695f5da9f5b778e54b6987d9177048e32818c4d
+Author: Erkki Seppälä <erkki.seppala@vincit.fi>
+Date:   Mon Jan 31 14:02:01 2011 +0200
+
+    ximcp/imRm: Handle leaking colormap_ret
+    
+    Fixed memory leak by adding Xfree for colormap_ret
+    
+    Variable "colormap_ret" goes out of scope
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+    Signed-off-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f9eda19d08c1ea0973dfe0bc10a2519d6fd26cc7
+Author: Erkki Seppälä <erkki.seppala@vincit.fi>
+Date:   Mon Jan 31 14:01:59 2011 +0200
+
+    ximcp/imRmAttr: Handle leaking missing_list
+    
+    Fixed memory leak by adding Xfree and initializing missing_list with NULL
+    
+    Variable "missing_list" goes out of scope
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+    Signed-off-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3183269e0979c9dbce9d55d9e03937897dc9fb3b
+Author: Erkki Seppälä <erkki.seppala@vincit.fi>
+Date:   Mon Jan 31 14:01:58 2011 +0200
+
+    ximcp/imRmAttr: Handle leaking colormap_ret
+    
+    XFree colormap_ret and initialize it when appropriate.
+    
+    Variable "colormap_ret" goes out of scope
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f66a032a937030f2d9baa81744d36dc585bb085c
+Author: Erkki Seppälä <erkki.seppala@vincit.fi>
+Date:   Mon Jan 31 14:01:56 2011 +0200
+
+    xlibi18n/lcGeneric: Initialize uninitialized local variable
+    
+    Using uninitialized value "new"
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+    Signed-off-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d0266e06d38110ec908ca28379014eff743630b7
+Author: Erkki Seppälä <erkki.seppala@vincit.fi>
+Date:   Mon Jan 31 14:01:54 2011 +0200
+
+    xcmx/cmxColNm: Removed unused assignments to pBuf (in two functions)
+    
+    Pointer "pBuf" returned from "fgets(buf, 256, stream)" is never used
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+    Signed-off-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit cc686655d7bfdeab8b67e01a24bd452a2e9e3fcf
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Feb 1 12:30:56 2011 +0200
+
+    XDefaultOMIF.c: Fix memory leaks in get_font_name
+    
+    Instead of copying the value returned by get_prop_name and then releasing it,
+    directly use the return value of get_prop_name, which allocates memory for the
+    name.
+    
+    If get_prop_name returns NULL, continue on to XFreeFont to release the font
+    before returning the NULL via the normal function return.
+    
+    Reviewed-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 95796351435d81eaef8166d49ba3a6e7b633d70a
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Mon Jan 31 14:50:19 2011 -0500
+
+    config: comment, minor upgrade, quote and layout configure.ac
+    
+    Group statements per section as per Autoconf standard layout
+    Quote statements where appropriate.
+    Autoconf recommends not using dnl instead of # for comments
+    
+    Use AC_CONFIG_FILES to replace the deprecated AC_OUTPUT with parameters.
+    Remove redundant AC_CANONICAL_HOST included in XORG_DEFAULT_OPTIONS
+    
+    This helps automated maintenance and release activities.
+    Details can be found in http://wiki.x.org/wiki/NewModuleGuidelines
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit e994ab227ed28655565c3193e63733630105e7f9
+Author: Erkki Seppälä <erkki.seppala@vincit.fi>
+Date:   Tue Jan 18 12:49:48 2011 +0200
+
+    Comparing array against NULL is not useful "&xkb->server->vmods != NULL"
+    
+    Removed superfluous comparison.
+    
+    Reviewed-by: Dirk Wallenstein <halsmit@t-online.de>
+    Signed-off-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+
+commit 4115f051e62f9b098efce691e070d44f09f30f1c
+Author: Erkki Seppälä <erkki.seppala@vincit.fi>
+Date:   Wed Jan 12 15:51:11 2011 +0200
+
+    Variable "entry" tracked as NULL was dereferenced.
+    
+    Check entry for non-nullness before dereferencing it
+    
+    Reviewed-by: Dirk Wallenstein <halsmit@t-online.de>
+    Reviewed-by: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+    Signed-off-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+
+commit 0edb76d1d5fdca5a2543332699be2e72386dab24
+Author: Erkki Seppälä <erkki.seppala@vincit.fi>
+Date:   Thu Jan 27 09:54:00 2011 +0200
+
+    Dereferencing possibly NULL "str" in call to function "memcpy" (Deref assumed on the basis of 'nonnull' parameter attribute.)
+    
+    If _XkbGetReadBufferPtr returns NULL, goto BAILOUT
+    
+    Reviewed-by: Dirk Wallenstein <halsmit@t-online.de>
+    Reviewed-by: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+    Signed-off-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+
+commit 59da8a211ef723909d0530c0331d541db8e63378
+Author: Erkki Seppälä <erkki.seppala@vincit.fi>
+Date:   Mon Jan 10 16:17:47 2011 +0200
+
+    Using freed pointer "e"
+    
+    Reordered code to first to do the comparison and then to release data
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Ander Conselvan de Oliveira <ander.conselvan-de-oliveira@nokia.com>
+    Signed-off-by: Erkki Seppälä <erkki.seppala@vincit.fi>
+
+commit 0f11c229f7099f7c5aeed4691b358dca151dac7d
+Author: Matt Dew <marcoz@osource.org>
+Date:   Thu Jan 27 00:31:23 2011 -0700
+
+    Remove <literal> tags from compose-chart.pl so pdf building doesn't die on soft-hyphens.
+    
+    Signed-off-by: Matt Dew <marcoz@osource.org>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ca00bb202f3afcdbbcb8c4cb50308c5dd03f2322
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Jan 28 16:07:07 2011 -0500
+
+    config: replace deprecated AC_HELP_STRING with AS_HELP_STRING
+    
+    This silences an Automake warning.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 8dac08c7515cb6f8a8f4d0a721713697eae755d8
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Jan 28 14:59:04 2011 -0500
+
+    config: remove unrequired AC_HEADER_STDC
+    
+    Autoconf says:
+    "This macro is obsolescent, as current systems have conforming
+    header files. New programs need not use this macro".
+
+commit d4483375e37a72631d5821413cb75a423e990ffe
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jan 18 19:37:02 2011 -0800
+
+    config: Use correct AC_CONFIG_HEADERS macro
+    
+    Replaces obsolete AM_CONFIG_HEADER and undocumented AC_CONFIG_HEADER
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Gaetan Nadon <memsize@videotron.ca>
+    Reviewed-by: Dan Nicholson <dbn.lists@gmail.com>
+
+commit c6405fe931f313a0d159bdad00244fc8aae12468
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 16 11:55:23 2011 -0800
+
+    config: remove AC_PROG_CC as it overrides AC_PROG_C_C99
+    
+    XORG_STRICT_OPTION from XORG_DEFAULT_OPTIONS calls
+    AC_PROG_C_C99. This sets gcc with -std=gnu99.
+    If AC_PROG_CC macro is called afterwards, it resets CC to gcc.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 17aa1f2305da0952ad594c7329d08aba21f13ac8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 16 11:40:59 2011 -0800
+
+    Update to xf86bigfontproto >= 1.2.0 header name
+    
+    Clears compile-time warning of:
+    "X11/extensions/xf86bigfstr.h", line 1: #warning: "xf86bigfstr.h is obsolete and may be removed in the future."
+    "X11/extensions/xf86bigfstr.h", line 2: #warning: "include <X11/extensions/xf86bigfproto.h> for the protocol defines."
+    
+    Requires xf86bigfontproto >= 1.2.0 if --disable-xf86bigfont is not
+    passed to configure.
+    
+    Also removes unnecessary AC_SUBST of BIGFONT_CFLAGS & BIGFONT_LIBS
+    that PKG_CHECK_MODULES does automatically
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Julien Cristau <jcristau@debian.org>
+
 commit a9228fcc676aacf9a760dd94891c89f9bc82b20d
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Tue Jan 11 17:55:22 2011 -0800

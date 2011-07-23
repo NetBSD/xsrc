@@ -1,40 +1,38 @@
-#                                               -*- Autoconf -*-
-# Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.60)
-AC_INIT([libX11],
-        [1.4.1],
-        [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
-        libX11)
+# Initialize Autoconf
+AC_PREREQ([2.60])
+AC_INIT([libX11], [1.4.3],
+        [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg], [libX11])
 AC_CONFIG_SRCDIR([Makefile.am])
+AC_CONFIG_HEADERS([src/config.h include/X11/XlibConf.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
-
-AM_INIT_AUTOMAKE([foreign dist-bzip2])
-AM_MAINTAINER_MODE
-AM_CONFIG_HEADER([src/config.h])
-AC_CONFIG_HEADER([include/X11/XlibConf.h])
-
 # Set common system defines for POSIX extensions, such as _GNU_SOURCE
 # Must be called before any macros that run the compiler (like AC_PROG_LIBTOOL)
 # to avoid autoconf errors.
 AC_USE_SYSTEM_EXTENSIONS
 
-# Require xorg-macros minimum of 1.11 for disabling fop by default
+# Initialize Automake
+AM_INIT_AUTOMAKE([foreign dist-bzip2])
+AM_MAINTAINER_MODE
+
+# Initialize libtool
+AC_PROG_LIBTOOL
+
+# Require xorg-macros minimum of 1.12 for DocBook external references
 m4_ifndef([XORG_MACROS_VERSION],
-          [m4_fatal([must install xorg-macros 1.11 or later before running autoconf/autogen])])
-XORG_MACROS_VERSION(1.11)
+          [m4_fatal([must install xorg-macros 1.12 or later before running autoconf/autogen])])
+XORG_MACROS_VERSION(1.12)
 XORG_DEFAULT_OPTIONS
 XORG_ENABLE_SPECS
-XORG_WITH_XMLTO(0.0.20)
+XORG_WITH_XMLTO(0.0.22)
 XORG_WITH_FOP([no])
-XORG_CHECK_SGML_DOCTOOLS(1.5)
+XORG_WITH_XSLTPROC
+XORG_CHECK_SGML_DOCTOOLS(1.7)
 XORG_PROG_RAWCPP
 
-# Checks for programs.
-AC_PROG_LIBTOOL
-AC_PROG_CC
+# Required when PKG_CHECK_MODULES called within an if statement
 PKG_PROG_PKG_CONFIG
 
 if test x"$CC_FOR_BUILD" = x; then
@@ -69,7 +67,7 @@ AC_SUBST(LDFLAGS_FOR_BUILD)
 
 # Find perl for "make check" tests in nls/Makefile.am
 AC_ARG_WITH(perl,
-	AC_HELP_STRING([--with-perl=<path>],
+	AS_HELP_STRING([--with-perl=<path>],
 			[path to perl interpreter for build-time tests]),
 	[PERL=$withval ; AC_MSG_CHECKING([perl]) ;
 	 AC_MSG_RESULT([(from --with-perl) $PERL])],
@@ -86,13 +84,13 @@ PKG_PROG_PKG_CONFIG()
 
 AC_SUBST(X11_EXTRA_DEPS)
 
-dnl Issue an error if xtrans.m4 was not found and XTRANS_CONNECTION_FLAGS macro
-dnl was not expanded, since libX11 with no transport types is rather useless.
-dnl
-dnl If you're seeing an error here, be sure you installed the lib/xtrans module
-dnl first and if it's not in the default location, that you set the ACLOCAL
-dnl environment variable to find it, such as:
-dnl	ACLOCAL="aclocal -I ${PREFIX}/share/aclocal"
+# Issue an error if xtrans.m4 was not found and XTRANS_CONNECTION_FLAGS macro
+# was not expanded, since libX11 with no transport types is rather useless.
+#
+# If you're seeing an error here, be sure you installed the lib/xtrans module
+# first and if it's not in the default location, that you set the ACLOCAL
+# environment variable to find it, such as:
+#	ACLOCAL="aclocal -I ${PREFIX}/share/aclocal"
 m4_pattern_forbid([^XTRANS_CONNECTION_FLAGS$])
 
 # Transport selection macro from xtrans.m4
@@ -166,7 +164,7 @@ case $host_os in
 esac
 
 AC_ARG_WITH(local-transport-order,
-	AC_HELP_STRING([--with-local-transport-order=LIST], [preference sorted list of transport types to try for local connections]),
+	AS_HELP_STRING([--with-local-transport-order=LIST], [preference sorted list of transport types to try for local connections]),
 	[LOCAL_TRANSPORT_LIST=$withval],
 	[LOCAL_TRANSPORT_LIST=$DEFAULT_LOCAL_TRANS])
 AC_DEFINE_UNQUOTED([LOCAL_TRANSPORT_LIST], [$LOCAL_TRANSPORT_LIST],
@@ -196,7 +194,7 @@ AC_MSG_RESULT($HAVE_LOADABLE_MODULES)
 
 AC_MSG_CHECKING([if loadable i18n module support should be enabled])
 AC_ARG_ENABLE(loadable-i18n,
-	      AC_HELP_STRING([--enable-loadable-i18n],
+	      AS_HELP_STRING([--enable-loadable-i18n],
 	       [Controls loadable i18n module support]),
 	       [XLIB_LOADABLE_I18N=$enableval],
 	       [XLIB_LOADABLE_I18N="no"])
@@ -214,7 +212,7 @@ AM_CONDITIONAL(XLIB_LOADABLE_I18N, test x$XLIB_LOADABLE_I18N = xyes)
 
 AC_MSG_CHECKING([if loadable Xcursor library support should be enabled])
 AC_ARG_ENABLE(loadable-xcursor,
-	      AC_HELP_STRING([--disable-loadable-xcursor],
+	      AS_HELP_STRING([--disable-loadable-xcursor],
 	       [Controls loadable xcursor library support]),
 	       [XLIB_LOADABLE_XCURSOR=$enableval],
 	       [XLIB_LOADABLE_XCURSOR=$HAVE_LOADABLE_MODULES])
@@ -225,7 +223,6 @@ fi
 AC_MSG_RESULT($XLIB_LOADABLE_XCURSOR)
 
 # Checks for header files.
-AC_HEADER_STDC
 AC_CHECK_HEADERS([sys/select.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -242,7 +239,7 @@ AC_CHECK_FUNC([getresuid], [XLOCALEDIR_IS_SAFE="yes"]
 AC_CHECK_FUNC([shmat], AC_DEFINE(HAS_SHM,1,[Has shm*() functions]))
 
 # Checks for system services
-dnl AC_PATH_XTRA
+# AC_PATH_XTRA
 
 # arch specific things
 WCHAR32="1"
@@ -266,7 +263,7 @@ if test "x$LAUNCHD" = xyes ; then
 fi
 
 AC_ARG_ENABLE(xthreads,
-              AC_HELP_STRING([--disable-xthreads],
+              AS_HELP_STRING([--disable-xthreads],
                 [Disable Xlib support for Multithreading]),
               [xthreads=$enableval],[xthreads=yes])
 
@@ -287,7 +284,7 @@ esac
 AC_CHECK_LIB(c, pthread_self, [thrstubs="no"], [thrstubs="yes"])
 AM_CONDITIONAL(THRSTUBS, test x$thrstubs = xyes)
 
-dnl XXX incomplete, please fill this in
+# XXX incomplete, please fill this in
 if test x$xthreads = xyes ; then
     case $host_os in
     linux*|openbsd*|gnu*|k*bsd*-gnu)
@@ -328,7 +325,7 @@ AC_SUBST(KEYSYMDEFS)
 AM_CONDITIONAL(UDC, test xfalse = xtrue)
 
 AC_ARG_ENABLE(xcms,
-              AC_HELP_STRING([--disable-xcms],
+              AS_HELP_STRING([--disable-xcms],
                 [Disable Xlib support for CMS *EXPERIMENTAL*]),
               [XCMS=$enableval],[XCMS=yes])
 AM_CONDITIONAL(XCMS, [test x$XCMS = xyes ])
@@ -337,7 +334,7 @@ if test x"$XCMS" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(xlocale,
-              AC_HELP_STRING([--disable-xlocale],
+              AS_HELP_STRING([--disable-xlocale],
                 [Disable Xlib locale implementation *EXPERIMENTAL*]),
               [XLOCALE=$enableval],[XLOCALE=yes])
 
@@ -351,7 +348,7 @@ fi
 # clients that are setgid or setuid to an id other than 0.
 AC_MSG_CHECKING([if XLOCALEDIR support should be enabled])
 AC_ARG_ENABLE(xlocaledir,
-	      AC_HELP_STRING([--enable-xlocaledir],
+	      AS_HELP_STRING([--enable-xlocaledir],
 		[Enable XLOCALEDIR environment variable support]),
 	      [ENABLE_XLOCALEDIR=$enableval],[ENABLE_XLOCALEDIR=$XLOCALEDIR_IS_SAFE])
 if test "x$ENABLE_XLOCALEDIR" = "xno"; then
@@ -360,18 +357,16 @@ fi
 AC_MSG_RESULT($ENABLE_XLOCALEDIR)
 
 AC_ARG_ENABLE(xf86bigfont,
-	      AC_HELP_STRING([--disable-xf86bigfont],
+	      AS_HELP_STRING([--disable-xf86bigfont],
 		[Disable XF86BigFont extension support]),
 	      [XF86BIGFONT=$enableval],[XF86BIGFONT="yes"])
 if test "x$XF86BIGFONT" = "xyes"; then
-    PKG_CHECK_MODULES(BIGFONT, xf86bigfontproto,
+    PKG_CHECK_MODULES(BIGFONT, [xf86bigfontproto >= 1.2.0],
          AC_DEFINE(XF86BIGFONT,1,[Enable XF86BIGFONT extension]),XF86BIGFONT="no")
-    AC_SUBST(BIGFONT_CFLAGS)
-    AC_SUBST(BIGFONT_LIBS)
 fi
 
 AC_ARG_ENABLE(xkb,
-              AC_HELP_STRING([--disable-xkb],
+              AS_HELP_STRING([--disable-xkb],
                 [Disable XKB support *EXPERIMENTAL*]),
               [XKB=$enableval],[XKB=yes])
 
@@ -389,14 +384,14 @@ AC_FUNC_MMAP()
 composecache_default=$ac_cv_func_mmap_fixed_mapped
 AC_CHECK_FUNC(nl_langinfo, , [composecache_default=no])
 AC_ARG_ENABLE(composecache,
-              AC_HELP_STRING([--disable-composecache],
+              AS_HELP_STRING([--disable-composecache],
                 [Disable compose table cache support]),
               [COMPOSECACHE=$enableval],[COMPOSECACHE=$composecache_default])
 if test x"$COMPOSECACHE" = "xyes"; then
 	AC_DEFINE(COMPOSECACHE,1,[Include compose table cache support])
 fi
 
-dnl Allow checking code with lint, sparse, etc.
+# Allow checking code with lint, sparse, etc.
 XORG_WITH_LINT
 XORG_LINT_LIBRARY([X11])
 
@@ -442,36 +437,37 @@ AX_DEFINE_DIR(XERRORDB, XERRORDB, [Location of error message database])
 
 XORG_CHECK_MALLOC_ZERO
 
-AC_OUTPUT([Makefile
-           include/Makefile
-	   man/Makefile
-           man/xkb/Makefile
-           src/Makefile
-           src/util/Makefile
-	   src/xcms/Makefile
-	   src/xlibi18n/Makefile
-	   modules/Makefile
-	   modules/im/Makefile
-	   modules/im/ximcp/Makefile
-	   modules/lc/Makefile
-	   modules/lc/def/Makefile
-	   modules/lc/gen/Makefile
-	   modules/lc/Utf8/Makefile
-	   modules/lc/xlocale/Makefile
-	   modules/om/Makefile
-	   modules/om/generic/Makefile
-	   src/xkb/Makefile
-	   nls/Makefile
-	   specs/Makefile
-	   specs/i18n/Makefile
-	   specs/i18n/framework/Makefile
-	   specs/i18n/localedb/Makefile
-	   specs/i18n/trans/Makefile
-	   specs/libX11/Makefile
-	   specs/XIM/Makefile
-	   specs/XKB/Makefile
-	   x11.pc
-	   x11-xcb.pc])
+AC_CONFIG_FILES([Makefile
+		include/Makefile
+		man/Makefile
+		man/xkb/Makefile
+		src/Makefile
+		src/util/Makefile
+		src/xcms/Makefile
+		src/xlibi18n/Makefile
+		modules/Makefile
+		modules/im/Makefile
+		modules/im/ximcp/Makefile
+		modules/lc/Makefile
+		modules/lc/def/Makefile
+		modules/lc/gen/Makefile
+		modules/lc/Utf8/Makefile
+		modules/lc/xlocale/Makefile
+		modules/om/Makefile
+		modules/om/generic/Makefile
+		src/xkb/Makefile
+		nls/Makefile
+		specs/Makefile
+		specs/i18n/Makefile
+		specs/i18n/framework/Makefile
+		specs/i18n/localedb/Makefile
+		specs/i18n/trans/Makefile
+		specs/libX11/Makefile
+		specs/XIM/Makefile
+		specs/XKB/Makefile
+		x11.pc
+		x11-xcb.pc])
+AC_OUTPUT
 
 echo ""
 echo "X11 will be built with the following settings:"
