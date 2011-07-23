@@ -1,13 +1,22 @@
 '\" t
 .\"     Title: xigrabbutton
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 10/07/2010
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 06/07/2011
 .\"    Manual: [FIXME: manual]
 .\"    Source: [FIXME: source]
 .\"  Language: English
 .\"
-.TH "XIGRABBUTTON" "libmansuffix" "10/07/2010" "[FIXME: source]" "[FIXME: manual]"
+.TH "XIGRABBUTTON" "libmansuffix" "06/07/2011" "[FIXME: source]" "[FIXME: manual]"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -155,7 +164,7 @@ if deviceid specifies a master pointer\&. Otherwise, the modifier
 device is the device specified with deviceid\&. In the future,
 the device is actively grabbed (as for XIGrabDevice, the
 last\-grab time is set to the time at which the button or keycode
-was pressed and the X_XIButtonPress or X_XIKeyPress event is
+was pressed and the XI_ButtonPress or XI_KeyPress event is
 reported if all of the following conditions are true:
   * The device is not grabbed, and the specified button or
     keycode is logically pressed when the specified modifier
@@ -252,6 +261,20 @@ active grab\&.
 .RS 4
 .\}
 .nf
+On success, XIGrabButton and XIGrabKeycode return 0;
+If one or more modifier combinations could not be grabbed,
+XIGrabButton and XIGrabKeycode return the number of failed
+combinations and modifiers_inout contains the failed combinations
+and their respective status codes\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
 XIGrabButton and XIGrabKeycode can generate BadClass, BadDevice,
 BadMatch, BadValue, and BadWindow errors\&.
 .fi
@@ -321,7 +344,7 @@ BadValue
        Some numeric value falls outside the range of values
        accepted by the request\&. Unless a specific range is
        specified for an argument, the full range defined by the
-       argument\'s type is accepted\&. Any argument defined as a
+       argument\*(Aqs type is accepted\&. Any argument defined as a
        set of alternatives can generate this error\&.
 .fi
 .if n \{\
