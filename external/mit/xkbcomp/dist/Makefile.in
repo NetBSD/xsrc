@@ -226,6 +226,7 @@ PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
+STRICT_CFLAGS = @STRICT_CFLAGS@
 STRIP = @STRIP@
 VERSION = @VERSION@
 XKBCOMP_CFLAGS = @XKBCOMP_CFLAGS@
@@ -286,7 +287,8 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = man
-AM_CFLAGS = $(XKBCOMP_CFLAGS) -DDFLT_XKB_CONFIG_ROOT='"$(XKBCONFIGROOT)"' $(CWARNFLAGS)
+AM_CPPFLAGS = -DDFLT_XKB_CONFIG_ROOT='"$(XKBCONFIGROOT)"'
+AM_CFLAGS = $(XKBCOMP_CFLAGS) $(CWARNFLAGS)
 xkbcomp_LDADD = $(XKBCOMP_LIBS)
 xkbcomp_SOURCES = \
         action.c \
@@ -322,9 +324,8 @@ xkbcomp_SOURCES = \
         xkbpath.h \
         xkbscan.c
 
-BUILT_SOURCES = xkbparse.c
-MAINTAINERCLEANFILES = ChangeLog INSTALL $(BUILT_SOURCES)
-all: $(BUILT_SOURCES) config.h
+MAINTAINERCLEANFILES = ChangeLog INSTALL
+all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
 .SUFFIXES:
@@ -780,16 +781,14 @@ distcleancheck: distclean
 	       $(distcleancheck_listfiles) ; \
 	       exit 1; } >&2
 check-am: all-am
-check: $(BUILT_SOURCES)
-	$(MAKE) $(AM_MAKEFLAGS) check-recursive
+check: check-recursive
 all-am: Makefile $(PROGRAMS) config.h
 installdirs: installdirs-recursive
 installdirs-am:
 	for dir in "$(DESTDIR)$(bindir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
-install: $(BUILT_SOURCES)
-	$(MAKE) $(AM_MAKEFLAGS) install-recursive
+install: install-recursive
 install-exec: install-exec-recursive
 install-data: install-data-recursive
 uninstall: uninstall-recursive
@@ -815,7 +814,6 @@ maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
 	-rm -f xkbparse.c
-	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
 clean: clean-recursive
 
@@ -889,9 +887,8 @@ ps-am:
 
 uninstall-am: uninstall-binPROGRAMS
 
-.MAKE: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) all check \
-	ctags-recursive install install-am install-strip \
-	tags-recursive
+.MAKE: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) all \
+	ctags-recursive install-am install-strip tags-recursive
 
 .PHONY: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) CTAGS GTAGS \
 	all all-am am--refresh check check-am clean clean-binPROGRAMS \
