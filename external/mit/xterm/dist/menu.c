@@ -1,4 +1,4 @@
-/* $XTermId: menu.c,v 1.284 2011/02/17 00:46:18 tom Exp $ */
+/* $XTermId: menu.c,v 1.295 2011/07/12 10:45:36 tom Exp $ */
 
 /*
  * Copyright 1999-2010,2011 by Thomas E. Dickey
@@ -130,6 +130,7 @@
 /* *INDENT-OFF* */
 static void do_8bit_control    PROTO_XT_CALLBACK_ARGS;
 static void do_allow132        PROTO_XT_CALLBACK_ARGS;
+static void do_allowBoldFonts  PROTO_XT_CALLBACK_ARGS;
 static void do_allowsends      PROTO_XT_CALLBACK_ARGS;
 static void do_altscreen       PROTO_XT_CALLBACK_ARGS;
 static void do_appcursor       PROTO_XT_CALLBACK_ARGS;
@@ -144,6 +145,7 @@ static void do_delete_del      PROTO_XT_CALLBACK_ARGS;
 static void do_hardreset       PROTO_XT_CALLBACK_ARGS;
 static void do_interrupt       PROTO_XT_CALLBACK_ARGS;
 static void do_jumpscroll      PROTO_XT_CALLBACK_ARGS;
+static void do_keepSelection   PROTO_XT_CALLBACK_ARGS;
 static void do_kill            PROTO_XT_CALLBACK_ARGS;
 static void do_old_fkeys       PROTO_XT_CALLBACK_ARGS;
 static void do_poponbell       PROTO_XT_CALLBACK_ARGS;
@@ -157,7 +159,6 @@ static void do_scrollbar       PROTO_XT_CALLBACK_ARGS;
 static void do_scrollkey       PROTO_XT_CALLBACK_ARGS;
 static void do_scrollttyoutput PROTO_XT_CALLBACK_ARGS;
 static void do_securekbd       PROTO_XT_CALLBACK_ARGS;
-static void do_keepSelection   PROTO_XT_CALLBACK_ARGS;
 static void do_selectClipboard PROTO_XT_CALLBACK_ARGS;
 static void do_softreset       PROTO_XT_CALLBACK_ARGS;
 static void do_suspend         PROTO_XT_CALLBACK_ARGS;
@@ -214,6 +215,11 @@ static void do_num_lock        PROTO_XT_CALLBACK_ARGS;
 static void do_meta_esc        PROTO_XT_CALLBACK_ARGS;
 #endif
 
+#if OPT_PRINT_ON_EXIT
+static void do_write_now       PROTO_XT_CALLBACK_ARGS;
+static void do_write_error     PROTO_XT_CALLBACK_ARGS;
+#endif
+
 #if OPT_RENDERFONT
 static void do_font_renderfont PROTO_XT_CALLBACK_ARGS;
 #endif
@@ -260,6 +266,7 @@ static void do_toolbar         PROTO_XT_CALLBACK_ARGS;
 
 #if OPT_WIDE_CHARS
 static void do_font_utf8_mode  PROTO_XT_CALLBACK_ARGS;
+static void do_font_utf8_fonts PROTO_XT_CALLBACK_ARGS;
 static void do_font_utf8_title PROTO_XT_CALLBACK_ARGS;
 #endif
 
@@ -279,6 +286,10 @@ MenuEntry mainMenuEntries[] = {
     { "line1",		NULL,		NULL },
 #ifdef ALLOWLOGGING
     { "logging",	do_logging,	NULL },
+#endif
+#ifdef OPT_PRINT_ON_EXIT
+    { "print-immediate", do_write_now,	NULL },
+    { "print-on-error",	do_write_error,	NULL },
 #endif
     { "print",		do_print,	NULL },
     { "print-redir",	do_print_redir,	NULL },
@@ -369,6 +380,7 @@ MenuEntry fontMenuEntries[] = {
 
 #if OPT_DEC_CHRSET || OPT_BOX_CHARS || OPT_DEC_SOFTFONT
     { "line1",		NULL,		NULL },
+    { "allow-bold-fonts", do_allowBoldFonts, NULL },
 #if OPT_BOX_CHARS
     { "font-linedrawing",do_font_boxchars,NULL },
     { "font-packed",	do_font_packed,NULL },
@@ -388,6 +400,7 @@ MenuEntry fontMenuEntries[] = {
 #endif
 #if OPT_WIDE_CHARS
     { "utf8-mode",	do_font_utf8_mode,NULL },
+    { "utf8-fonts",	do_font_utf8_fonts,NULL },
     { "utf8-title",	do_font_utf8_title,NULL },
 #endif
 #endif /* toggles for other font extensions */
@@ -509,11 +522,89 @@ sizeof_menu(Widget w, MenuIndex num)
 }
 
 /*
+ * Return an array of flags telling if a given menu item is never going to
+ * be used, so we can reduce the size of menus.
+ */
+static Boolean *
+unusedEntries(XtermWidget xw, MenuIndex num)
+{
+    static Boolean result[XtNumber(mainMenuEntries)
+			  + XtNumber(vtMenuEntries)
+			  + XtNumber(fontMenuEntries)
+#if OPT_TEK4014
+			  + XtNumber(tekMenuEntries)
+#endif
+    ];
+    TScreen *screen = TScreenOf(xw);
+
+    memset(result, 0, sizeof(result));
+    switch (num) {
+    case mainMenu:
+	if (resource.fullscreen > 1) {
+	    result[mainMenu_fullscreen] = True;
+	}
+#if OPT_NUM_LOCK
+	if (!screen->alt_is_not_meta) {
+	    result[mainMenu_alt_esc] = True;
+	}
+#endif
+	if (!xtermHasPrinter(xw)) {
+	    result[mainMenu_print] = True;
+	    result[mainMenu_print_redir] = True;
+	}
+	if (screen->terminal_id < 200) {
+	    result[mainMenu_8bit_ctrl] = True;
+	}
+#if !defined(SIGTSTP)
+	result[mainMenu_suspend] = True;
+#endif
+#if !defined(SIGCONT)
+	result[mainMenu_continue] = True;
+#endif
+#ifdef ALLOWLOGGING
+	if (screen->inhibit & I_LOG) {
+	    result[mainMenu_logging] = True;
+	}
+#endif
+	if (screen->inhibit & I_SIGNAL) {
+	    int n;
+	    for (n = (int) mainMenu_suspend; n <= (int) mainMenu_quit; ++n) {
+		result[n] = True;
+	    }
+	}
+	break;
+    case vtMenu:
+#ifndef NO_ACTIVE_ICON
+	if (!screen->fnt_icon.fs || !screen->iconVwin.window) {
+	    result[vtMenu_activeicon] = True;
+	}
+#endif /* NO_ACTIVE_ICON */
+#if OPT_TEK4014
+	if (screen->inhibit & I_TEK) {
+	    int n;
+	    for (n = (int) vtMenu_tekshow; n <= (int) vtMenu_vthide; ++n) {
+		result[n] = True;
+	    }
+	}
+#endif
+	break;
+    case fontMenu:
+	break;
+#if OPT_TEK4014
+    case tekMenu:
+	break;
+#endif
+    case noMenu:
+	break;
+    }
+    return result;
+}
+
+/*
  * create_menu - create a popup shell and stuff the menu into it.
  */
-
 static Widget
-create_menu(Widget w, XtermWidget xtw, MenuIndex num)
+create_menu(Widget w, XtermWidget xw, MenuIndex num)
 {
     static XtCallbackRec cb[2] =
     {
@@ -522,7 +613,7 @@ create_menu(Widget w, XtermWidget xtw, MenuIndex num)
     static Arg arg =
     {XtNcallback, (XtArgVal) cb};
 
-    TScreen *screen = TScreenOf(xtw);
+    TScreen *screen = TScreenOf(xw);
     MenuHeader *data = &menu_names[num];
     MenuList *list = select_menu(w, num);
     struct _MenuEntry *entries = data->entry_list;
@@ -544,8 +635,8 @@ create_menu(Widget w, XtermWidget xtw, MenuIndex num)
 	};
 
 	screen->menu_item_bitmap =
-	    XCreateBitmapFromData(XtDisplay(xtw),
-				  RootWindowOfScreen(XtScreen(xtw)),
+	    XCreateBitmapFromData(XtDisplay(xw),
+				  RootWindowOfScreen(XtScreen(xw)),
 				  (char *) check_bits, check_width, check_height);
     }
 #if !OPT_TOOLBAR
@@ -556,17 +647,23 @@ create_menu(Widget w, XtermWidget xtw, MenuIndex num)
 				 NULL, 0);
 #endif
     if (list->w != 0) {
-	list->entries = nentries;
+	Boolean *unused = unusedEntries(xw, num);
+	Cardinal n;
 
-	for (; nentries > 0; nentries--, entries++) {
-	    cb[0].callback = (XtCallbackProc) entries->function;
-	    cb[0].closure = (caddr_t) entries->name;
-	    entries->widget = XtCreateManagedWidget(entries->name,
-						    (entries->function
-						     ? smeBSBObjectClass
-						     : smeLineObjectClass),
-						    list->w,
-						    &arg, (Cardinal) 1);
+	list->entries = 0;
+
+	for (n = 0; n < nentries; ++n) {
+	    if (!unused[n]) {
+		cb[0].callback = (XtCallbackProc) entries[n].function;
+		cb[0].closure = (caddr_t) entries[n].name;
+		entries[n].widget = XtCreateManagedWidget(entries[n].name,
+							  (entries[n].function
+							   ? smeBSBObjectClass
+							   : smeLineObjectClass),
+							  list->w,
+							  &arg, (Cardinal) 1);
+		list->entries++;
+	    }
 	}
     }
 #if !OPT_TOOLBAR
@@ -650,43 +747,11 @@ domenu(Widget w,
 	    update_meta_esc();
 	    update_delete_del();
 	    update_keyboard_type();
-#if OPT_NUM_LOCK
-	    if (!screen->alt_is_not_meta) {
-		SetItemSensitivity(mainMenuEntries[mainMenu_alt_esc].widget,
-				   False);
-	    }
+#ifdef PRINT_ON_EXIT
+	    screen->write_error = !IsEmpty(resource.printOnXError);
+	    SetItemSensitivity(mainMenuEntries[mainMenu_write_now].widget, False);
+	    SetItemSensitivity(mainMenuEntries[mainMenu_write_error].widget, screen->write_error);
 #endif
-	    if (!xtermHasPrinter(xw)) {
-		SetItemSensitivity(mainMenuEntries[mainMenu_print].widget,
-				   False);
-		SetItemSensitivity(mainMenuEntries[mainMenu_print_redir].widget,
-				   False);
-	    }
-	    if (screen->terminal_id < 200) {
-		SetItemSensitivity(
-				      mainMenuEntries[mainMenu_8bit_ctrl].widget,
-				      False);
-	    }
-#if !defined(SIGTSTP)
-	    SetItemSensitivity(
-				  mainMenuEntries[mainMenu_suspend].widget, False);
-#endif
-#if !defined(SIGCONT)
-	    SetItemSensitivity(
-				  mainMenuEntries[mainMenu_continue].widget, False);
-#endif
-#ifdef ALLOWLOGGING
-	    if (screen->inhibit & I_LOG) {
-		SetItemSensitivity(
-				      mainMenuEntries[mainMenu_logging].widget, False);
-	    }
-#endif
-	    if (screen->inhibit & I_SIGNAL) {
-		int n;
-		for (n = (int) mainMenu_suspend; n <= (int) mainMenu_quit; ++n) {
-		    SetItemSensitivity(mainMenuEntries[n].widget, False);
-		}
-	    }
 	}
 	break;
 
@@ -713,31 +778,25 @@ domenu(Widget w,
 	    update_altscreen();
 	    update_titeInhibit();
 #ifndef NO_ACTIVE_ICON
-	    if (!screen->fnt_icon.fs || !screen->iconVwin.window) {
-		SetItemSensitivity(
-				      vtMenuEntries[vtMenu_activeicon].widget,
-				      False);
-	    } else
-		update_activeicon();
+	    update_activeicon();
 #endif /* NO_ACTIVE_ICON */
-#if OPT_TEK4014
-	    if (screen->inhibit & I_TEK) {
-		int n;
-		for (n = (int) vtMenu_tekshow; n <= (int) vtMenu_vthide; ++n) {
-		    SetItemSensitivity(vtMenuEntries[n].widget, False);
-		}
-	    }
-#endif
 	}
 	break;
 
     case fontMenu:
 	if (created) {
+	    int n;
+
 	    set_menu_font(True);
+	    for (n = fontMenu_font1; n <= fontMenu_font6; ++n) {
+		if (IsEmpty(screen->menu_font_names[n][fNorm]))
+		    SetItemSensitivity(fontMenuEntries[n].widget, False);
+	    }
 	    SetItemSensitivity(
 				  fontMenuEntries[fontMenu_fontescape].widget,
 				  (screen->menu_font_names[fontMenu_fontescape][fNorm]
 				   ? True : False));
+	    update_menu_allowBoldFonts();
 #if OPT_BOX_CHARS
 	    update_font_boxchars();
 	    SetItemSensitivity(
@@ -766,6 +825,7 @@ domenu(Widget w,
 #endif
 #if OPT_WIDE_CHARS
 	    update_font_utf8_mode();
+	    update_font_utf8_fonts();
 	    update_font_utf8_title();
 #endif
 #if OPT_ALLOW_XXX_OPS
@@ -822,10 +882,29 @@ HandlePopupMenu(Widget w,
 {
     TRACE(("HandlePopupMenu\n"));
     if (domenu(w, event, params, param_count)) {
+	XtermWidget xw = term;
+	TScreen *screen = TScreenOf(xw);
+
 #if OPT_TOOLBAR
 	w = select_menu(w, mainMenu)->w;
 #endif
-	XtCallActionProc(w, "XawPositionSimpleMenu", event, params, 1);
+	/*
+	 * The action procedure in SimpleMenu.c, PositionMenu does not expect a
+	 * key translation event when we are popping up a menu.  In particular,
+	 * if the pointer is outside the menu, then the action procedure will
+	 * fail in its attempt to determine the location of the pointer within
+	 * the menu.  Anticipate that by warping the pointer into the menu when
+	 * a key event is detected.
+	 */
+	switch (event->type) {
+	case KeyPress:
+	case KeyRelease:
+	    XWarpPointer(screen->display, None, XtWindow(w), 0, 0, 0, 0, 0, 0);
+	    break;
+	default:
+	    XtCallActionProc(w, "XawPositionSimpleMenu", event, params, 1);
+	    break;
+	}
 	XtCallActionProc(w, "MenuPopup", event, params, 1);
     }
 }
@@ -1036,6 +1115,37 @@ do_logging(Widget gw GCC_UNUSED,
 }
 #endif
 
+#ifdef OPT_PRINT_ON_EXIT
+static void
+do_write_now(Widget gw GCC_UNUSED,
+	     XtPointer closure GCC_UNUSED,
+	     XtPointer data GCC_UNUSED)
+{
+    XtermWidget xw = term;
+
+    xtermPrintImmediately(xw,
+			  (IsEmpty(resource.printFileNow)
+			   ? "XTerm"
+			   : resource.printFileNow),
+			  resource.printOptsNow,
+			  resource.printModeNow);
+}
+
+static void
+do_write_error(Widget gw GCC_UNUSED,
+	       XtPointer closure GCC_UNUSED,
+	       XtPointer data GCC_UNUSED)
+{
+    XtermWidget xw = term;
+
+    if (IsEmpty(resource.printFileOnXError)) {
+	resource.printFileOnXError = "XTermError";
+    }
+    TScreenOf(xw)->write_error = (Boolean) (!TScreenOf(xw)->write_error);
+    update_write_error();
+}
+#endif
+
 static void
 do_print(Widget gw GCC_UNUSED,
 	 XtPointer closure GCC_UNUSED,
@@ -1049,7 +1159,10 @@ do_print_redir(Widget gw GCC_UNUSED,
 	       XtPointer closure GCC_UNUSED,
 	       XtPointer data GCC_UNUSED)
 {
-    setPrinterControlMode(term, TScreenOf(term)->printer_controlmode ? 0 : 2);
+    setPrinterControlMode(term,
+			  (PrinterOf(TScreenOf(term)).printer_controlmode
+			   ? 0
+			   : 2));
 }
 
 static void
@@ -1643,24 +1756,43 @@ do_font_renderfont(Widget gw GCC_UNUSED,
 
 #if OPT_WIDE_CHARS
 static void
+setup_wide_fonts(XtermWidget xw)
+{
+    TScreen *screen = TScreenOf(xw);
+
+    if (screen->wide_chars) {
+	if (xtermLoadWideFonts(xw, True)) {
+	    SetVTFont(xw, screen->menu_font_number, True, NULL);
+	}
+    } else {
+	ChangeToWide(xw);
+    }
+}
+
+static void
+setup_narrow_fonts(XtermWidget xw)
+{
+    TScreen *screen = TScreenOf(xw);
+
+    if (xtermLoadDefaultFonts(xw)) {
+	SetVTFont(xw, screen->menu_font_number, True, NULL);
+    }
+}
+
+static void
 do_font_utf8_mode(Widget gw GCC_UNUSED,
 		  XtPointer closure GCC_UNUSED,
 		  XtPointer data GCC_UNUSED)
 {
-    TScreen *screen = TScreenOf(term);
+    XtermWidget xw = term;
+    TScreen *screen = TScreenOf(xw);
 
     /*
      * If xterm was started with -wc option, it might not have the wide fonts.
      * If xterm was not started with -wc, it might not have wide cells.
      */
     if (!screen->utf8_mode) {
-	if (screen->wide_chars) {
-	    if (xtermLoadWideFonts(term, True)) {
-		SetVTFont(term, screen->menu_font_number, True, NULL);
-	    }
-	} else {
-	    ChangeToWide(term);
-	}
+	setup_wide_fonts(xw);
     }
     switchPtyData(screen, !screen->utf8_mode);
     /*
@@ -1668,6 +1800,24 @@ do_font_utf8_mode(Widget gw GCC_UNUSED,
      * on - the Latin-1 codes should paint as-is.  When switching off, that's
      * hard to do properly.
      */
+}
+
+static void
+do_font_utf8_fonts(Widget gw GCC_UNUSED,
+		   XtPointer closure GCC_UNUSED,
+		   XtPointer data GCC_UNUSED)
+{
+    XtermWidget xw = term;
+    TScreen *screen = TScreenOf(xw);
+
+    ToggleFlag(screen->utf8_fonts);
+    update_font_utf8_fonts();
+
+    if (screen->utf8_fonts) {
+	setup_wide_fonts(xw);
+    } else {
+	setup_narrow_fonts(xw);
+    }
 }
 
 static void
@@ -1896,6 +2046,26 @@ HandleLogging(Widget w,
 	      Cardinal *param_count)
 {
     HANDLE_VT_TOGGLE(logging);
+}
+#endif
+
+#if OPT_PRINT_ON_EXIT
+void
+HandleWriteNow(Widget w,
+	       XEvent * event GCC_UNUSED,
+	       String * params GCC_UNUSED,
+	       Cardinal *param_count GCC_UNUSED)
+{
+    do_write_now(w, 0, 0);
+}
+
+void
+HandleWriteError(Widget w,
+		 XEvent * event GCC_UNUSED,
+		 String * params,
+		 Cardinal *param_count)
+{
+    HANDLE_VT_TOGGLE(write_error);
 }
 #endif
 
@@ -2339,6 +2509,15 @@ HandleClearSavedLines(Widget w,
     do_clearsavedlines(w, (XtPointer) 0, (XtPointer) 0);
 }
 
+void
+HandleAllowBoldFonts(Widget w,
+		     XEvent * event GCC_UNUSED,
+		     String * params,
+		     Cardinal *param_count)
+{
+    HANDLE_VT_TOGGLE(allowBoldFonts);
+}
+
 #if OPT_DEC_CHRSET
 void
 HandleFontDoublesize(Widget w,
@@ -2408,6 +2587,16 @@ HandleUTF8Mode(Widget w,
 	       Cardinal *param_count)
 {
     handle_vt_toggle(do_font_utf8_mode, TScreenOf(term)->utf8_mode,
+		     params, *param_count, w);
+}
+
+void
+HandleUTF8Fonts(Widget w,
+		XEvent * event GCC_UNUSED,
+		String * params,
+		Cardinal *param_count)
+{
+    handle_vt_toggle(do_font_utf8_fonts, TScreenOf(term)->utf8_fonts,
 		     params, *param_count, w);
 }
 
@@ -2919,13 +3108,24 @@ update_logging(void)
 }
 #endif
 
+#if OPT_PRINT_ON_EXIT
+void
+update_write_error(void)
+{
+    UpdateCheckbox("update_write_error",
+		   mainMenuEntries,
+		   mainMenu_write_error,
+		   TScreenOf(term)->write_error);
+}
+#endif
+
 void
 update_print_redir(void)
 {
     UpdateCheckbox("update_print_redir",
 		   mainMenuEntries,
 		   mainMenu_print_redir,
-		   TScreenOf(term)->printer_controlmode);
+		   PrinterOf(TScreenOf(term)).printer_controlmode);
 }
 
 void
@@ -3252,6 +3452,19 @@ update_activeicon(void)
 }
 #endif /* NO_ACTIVE_ICON */
 
+static void
+do_allowBoldFonts(Widget w,
+		  XtPointer closure GCC_UNUSED,
+		  XtPointer data GCC_UNUSED)
+{
+    XtermWidget xw = getXtermWidget(w);
+    if (xw != 0) {
+	ToggleFlag(TScreenOf(xw)->allowBoldFonts);
+	update_menu_allowBoldFonts();
+	Redraw();
+    }
+}
+
 #if OPT_DEC_CHRSET
 void
 update_font_doublesize(void)
@@ -3315,10 +3528,24 @@ update_font_utf8_mode(void)
     Bool enable = (TScreenOf(term)->utf8_mode != uFalse);
 
     TRACE(("update_font_utf8_mode active %d, enable %d\n", active, enable));
-    SetItemSensitivity(fontMenuEntries[fontMenu_wide_chars].widget, active);
+    SetItemSensitivity(fontMenuEntries[fontMenu_utf8_mode].widget, active);
     UpdateCheckbox("update_font_utf8_mode",
 		   fontMenuEntries,
-		   fontMenu_wide_chars,
+		   fontMenu_utf8_mode,
+		   enable);
+}
+
+void
+update_font_utf8_fonts(void)
+{
+    Bool active = (TScreenOf(term)->utf8_fonts != uAlways);
+    Bool enable = (TScreenOf(term)->utf8_fonts != uFalse);
+
+    TRACE(("update_font_utf8_fonts active %d, enable %d\n", active, enable));
+    SetItemSensitivity(fontMenuEntries[fontMenu_utf8_fonts].widget, active);
+    UpdateCheckbox("update_font_utf8_fonts",
+		   fontMenuEntries,
+		   fontMenu_utf8_fonts,
 		   enable);
 }
 
@@ -3329,13 +3556,22 @@ update_font_utf8_title(void)
     Bool enable = (TScreenOf(term)->utf8_title);
 
     TRACE(("update_font_utf8_title active %d, enable %d\n", active, enable));
-    SetItemSensitivity(fontMenuEntries[fontMenu_wide_title].widget, active);
+    SetItemSensitivity(fontMenuEntries[fontMenu_utf8_title].widget, active);
     UpdateCheckbox("update_font_utf8_title",
 		   fontMenuEntries,
-		   fontMenu_wide_title,
+		   fontMenu_utf8_title,
 		   enable);
 }
 #endif
+
+void
+update_menu_allowBoldFonts(void)
+{
+    UpdateCheckbox("update_menu_allowBoldFonts",
+		   fontMenuEntries,
+		   fontMenu_allowBoldFonts,
+		   TScreenOf(term)->allowBoldFonts);
+}
 
 #if OPT_ALLOW_XXX_OPS
 static void

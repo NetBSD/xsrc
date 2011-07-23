@@ -1,4 +1,4 @@
-/* $XTermId: main.c,v 1.625 2011/02/18 01:24:50 tom Exp $ */
+/* $XTermId: main.c,v 1.638 2011/07/14 00:18:58 tom Exp $ */
 
 /*
  *				 W A R N I N G
@@ -259,7 +259,7 @@ static Bool IsPts = False;
 #include <sys/strredir.h>
 #endif
 
-#else	/* } !SYSV { */	/* BSD systems */
+#else /* } !SYSV { */ /* BSD systems */
 
 #ifdef __QNX__
 
@@ -846,6 +846,14 @@ static XtResource application_resources[] =
     Sres("menuLocale", "MenuLocale", menuLocale, DEF_MENU_LOCALE),
     Sres("omitTranslation", "OmitTranslation", omitTranslation, NULL),
     Sres("keyboardType", "KeyboardType", keyboardType, "unknown"),
+#if OPT_PRINT_ON_EXIT
+    Ires("printModeImmediate", "PrintModeImmediate", printModeNow, 0),
+    Ires("printOptsImmediate", "PrintOptsImmediate", printOptsNow, 9),
+    Sres("printFileImmediate", "PrintFileImmediate", printFileNow, NULL),
+    Ires("printModeOnXError", "PrintModeOnXError", printModeOnXError, 0),
+    Ires("printOptsOnXError", "PrintOptsOnXError", printOptsOnXError, 9),
+    Sres("printFileOnXError", "PrintFileOnXError", printFileOnXError, NULL),
+#endif
 #if OPT_SUNPC_KBD
     Bres("sunKeyboard", "SunKeyboard", sunKeyboard, False),
 #endif
@@ -891,6 +899,9 @@ static XtResource application_resources[] =
 
 static String fallback_resources[] =
 {
+#if OPT_TOOLBAR
+    "*toolBar: false",
+#endif
     "*SimpleMenu*menuLabel.vertSpace: 100",
     "*SimpleMenu*HorizontalMargins: 16",
     "*SimpleMenu*Sme.height: 16",
@@ -1821,24 +1832,21 @@ main(int argc, char *argv[]ENVP_ARG)
     if (argc > 1) {
 	int n;
 	size_t unique = 2;
-	Bool quit = True;
+	Bool quit = False;
 
 	for (n = 1; n < argc; n++) {
 	    TRACE(("parsing %s\n", argv[n]));
 	    if (abbrev(argv[n], "-version", unique)) {
 		Version();
+		quit = True;
 	    } else if (abbrev(argv[n], "-help", unique)) {
 		Help();
+		quit = True;
 	    } else if (abbrev(argv[n], "-class", (size_t) 3)) {
 		if ((my_class = argv[++n]) == 0) {
 		    Help();
-		} else {
-		    quit = False;
+		    quit = True;
 		}
-		unique = 3;
-	    } else {
-		quit = False;
-		unique = 3;
 	    }
 	}
 	if (quit)
@@ -2001,12 +2009,12 @@ main(int argc, char *argv[]ENVP_ARG)
 				  application_resources,
 				  XtNumber(application_resources), NULL, 0);
 	TRACE_XRES();
-	VTInitTranslations();
 #if OPT_MAXIMIZE
 	resource.fullscreen = extendedBoolean(resource.fullscreen_s,
 					      tblFullscreen,
 					      XtNumber(tblFullscreen));
 #endif
+	VTInitTranslations();
 #if OPT_PTY_HANDSHAKE
 	resource.wait_for_map0 = resource.wait_for_map;
 #endif
@@ -2095,10 +2103,10 @@ main(int argc, char *argv[]ENVP_ARG)
 	switch (argv[0][1]) {
 	case 'h':		/* -help */
 	    Help();
-	    continue;
+	    exit(0);
 	case 'v':		/* -version */
 	    Version();
-	    continue;
+	    exit(0);
 	case 'C':
 #if defined(TIOCCONS) || defined(SRIOCSREDIR)
 #ifndef __sgi
@@ -2274,11 +2282,11 @@ main(int argc, char *argv[]ENVP_ARG)
 	/* Set up stderr properly.  Opening this log file cannot be
 	   done securely by a privileged xterm process (although we try),
 	   so the debug feature is disabled by default. */
-	char dbglogfile[45];
+	char dbglogfile[TIMESTAMP_LEN + 20];
 	int i = -1;
 	if (debug) {
 	    timestamp_filename(dbglogfile, "xterm.debug.log.");
-	    if (creat_as(save_ruid, save_rgid, False, dbglogfile, 0666) > 0) {
+	    if (creat_as(save_ruid, save_rgid, False, dbglogfile, 0600) > 0) {
 		i = open(dbglogfile, O_WRONLY | O_TRUNC);
 	    }
 	}
@@ -2374,6 +2382,7 @@ main(int argc, char *argv[]ENVP_ARG)
 #endif /* DEBUG */
     XSetErrorHandler(xerror);
     XSetIOErrorHandler(xioerror);
+    IceSetIOErrorHandler(ice_error);
 
     initPtyData(&VTbuffer);
 #ifdef ALLOWLOGGING
@@ -2382,6 +2391,7 @@ main(int argc, char *argv[]ENVP_ARG)
     }
 #endif
 
+    TRACE(("checking winToEmbedInto %#lx\n", winToEmbedInto));
     if (winToEmbedInto != None) {
 	XtRealizeWidget(toplevel);
 	/*
@@ -2389,6 +2399,9 @@ main(int argc, char *argv[]ENVP_ARG)
 	 * winToEmbedInto in order to verify that it exists, but I'm still not
 	 * certain what is the best way to do it -GPS
 	 */
+	TRACE(("...reparenting toplevel %#lx into %#lx\n",
+	       XtWindow(toplevel),
+	       winToEmbedInto));
 	XReparentWindow(XtDisplay(toplevel),
 			XtWindow(toplevel),
 			winToEmbedInto, 0, 0);
@@ -2934,8 +2947,7 @@ set_owner(char *device, uid_t uid, gid_t gid, mode_t mode)
 		    strerror(why));
 	}
 	TRACE(("...chown failed: %s\n", strerror(why)));
-    }
-    if (chmod(device, mode) < 0) {
+    } else if (chmod(device, mode) < 0) {
 	why = errno;
 	if (why != ENOENT) {
 	    struct stat sb;
@@ -3086,6 +3098,10 @@ spawnXTerm(XtermWidget xw)
 #endif /* USE_LASTLOG */
 #endif /* HAVE_UTMP */
 #endif /* !USE_UTEMPTER */
+
+#if OPT_TRACE
+    unsigned long xterm_parent = (unsigned long) getpid();
+#endif
 
     /* Noisy compilers (suppress some unused-variable warnings) */
     (void) rc;
@@ -3922,6 +3938,18 @@ spawnXTerm(XtermWidget xw)
 	    xtermSetenv("XTERM_VERSION", xtermVersion());
 	    xtermSetenv("XTERM_LOCALE", xtermEnvLocale());
 
+	    /*
+	     * For debugging only, add environment variables that can be used
+	     * in scripts to selectively kill xterm's parent or child
+	     * processes.
+	     */
+#if OPT_TRACE
+	    sprintf(buf, "%lu", (unsigned long) xterm_parent);
+	    xtermSetenv("XTERM_PARENT", buf);
+	    sprintf(buf, "%lu", (unsigned long) getpid());
+	    xtermSetenv("XTERM_CHILD", buf);
+#endif
+
 	    signal(SIGTERM, SIG_DFL);
 
 	    /* this is the time to go and set up stdin, out, and err
@@ -4715,6 +4743,7 @@ Exit(int n)
      */
     ttyFlush(screen->respond);
 
+#ifdef USE_PTY_SEARCH
     if (am_slave < 0) {
 	TRACE_IDS;
 	/* restore ownership of tty and pty */
@@ -4723,6 +4752,7 @@ Exit(int n)
 	set_owner(ptydev, 0, 0, 0666U);
 #endif
     }
+#endif
 
     /*
      * Close after releasing ownership to avoid race condition: other programs 
@@ -4733,6 +4763,8 @@ Exit(int n)
     if (screen->logging)
 	CloseLog(xw);
 #endif
+
+    xtermPrintOnXError(xw, n);
 
 #ifdef NO_LEAKS
     if (n == 0) {
