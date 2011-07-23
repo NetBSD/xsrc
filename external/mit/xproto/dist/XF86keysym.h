@@ -207,6 +207,8 @@
 #define XF86XK_Suspend		0x1008FFA7   /* Sleep to RAM                */
 #define XF86XK_Hibernate	0x1008FFA8   /* Sleep to disk               */
 #define XF86XK_TouchpadToggle	0x1008FFA9   /* Toggle between touchpad/trackstick */
+#define XF86XK_TouchpadOn	0x1008FFB0   /* The touchpad got switched on */
+#define XF86XK_TouchpadOff	0x1008FFB1   /* The touchpad got switched off */
 
 /* Keys for special action keys (hot keys) */
 /* Virtual terminals on some operating systems */
@@ -227,4 +229,5 @@
 #define XF86XK_ClearGrab	0x1008FE21   /* kill application with grab */
 #define XF86XK_Next_VMode	0x1008FE22   /* next video mode available  */
 #define XF86XK_Prev_VMode	0x1008FE23   /* prev. video mode available */
-
+#define XF86XK_LogWindowTree	0x1008FE24   /* print window tree to log   */
+#define XF86XK_LogGrabInfo	0x1008FE25   /* print all active grabs to log */
