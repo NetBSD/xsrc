@@ -107,17 +107,17 @@ HEADERS = $(klibdrminclude_HEADERS)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = aclocal -I /opt/xorg/share/aclocal
+ACLOCAL = ${SHELL} /home/ickle/git/drm/missing --run aclocal-1.11
 ALLOCA = 
-AMTAR = ${SHELL} /home/cworth/src/xorg/drm/missing --run tar
+AMTAR = ${SHELL} /home/ickle/git/drm/missing --run tar
 AM_DEFAULT_VERBOSITY = 0
 AR = ar
-AUTOCONF = ${SHELL} /home/cworth/src/xorg/drm/missing --run autoconf
-AUTOHEADER = ${SHELL} /home/cworth/src/xorg/drm/missing --run autoheader
-AUTOMAKE = ${SHELL} /home/cworth/src/xorg/drm/missing --run automake-1.11
-AWK = gawk
-CAIRO_CFLAGS = -pthread -I/opt/xorg/include/cairo -I/opt/xorg/include/pixman-1 -I/opt/xorg/include -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -I/usr/include/freetype2 -I/usr/include/libpng12  
-CAIRO_LIBS = -L/opt/xorg/lib -lcairo  
+AUTOCONF = ${SHELL} /home/ickle/git/drm/missing --run autoconf
+AUTOHEADER = ${SHELL} /home/ickle/git/drm/missing --run autoheader
+AUTOMAKE = ${SHELL} /home/ickle/git/drm/missing --run automake-1.11
+AWK = mawk
+CAIRO_CFLAGS = -pthread -I/usr/local/include/cairo -I/usr/local/include/pixman-1 -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -I/usr/include/freetype2 -I/usr/include/libpng12  
+CAIRO_LIBS = -L/usr/local/lib -lcairo  
 CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2
@@ -136,22 +136,22 @@ EGREP = /bin/grep -E
 EXEEXT = 
 FGREP = /bin/grep -F
 GREP = /bin/grep
-INSTALL = /usr/bin/install -C
+INSTALL = /usr/bin/install -c
 INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
-LD = /usr/bin/ld -m elf_i386
+LD = /usr/bin/ld -m elf_x86_64
 LDFLAGS = 
 LIBOBJS = 
 LIBS = 
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
-LIBUDEV_CFLAGS =  
-LIBUDEV_LIBS = -ludev  
+LIBUDEV_CFLAGS = 
+LIBUDEV_LIBS = 
 LIPO = 
 LN_S = ln -s
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /home/cworth/src/xorg/drm/missing --run makeinfo
+MAKEINFO = ${SHELL} /home/ickle/git/drm/missing --run makeinfo
 MKDIR_P = /bin/mkdir -p
 NM = /usr/bin/nm -B
 NMEDIT = 
@@ -162,14 +162,14 @@ OTOOL64 =
 PACKAGE = libdrm
 PACKAGE_BUGREPORT = dri-devel@lists.sourceforge.net
 PACKAGE_NAME = libdrm
-PACKAGE_STRING = libdrm 2.4.22
+PACKAGE_STRING = libdrm 2.4.23
 PACKAGE_TARNAME = libdrm
 PACKAGE_URL = 
-PACKAGE_VERSION = 2.4.22
+PACKAGE_VERSION = 2.4.23
 PATH_SEPARATOR = :
 PKG_CONFIG = /usr/bin/pkg-config
 PKG_CONFIG_LIBDIR = 
-PKG_CONFIG_PATH = /opt/xorg/lib/pkgconfig
+PKG_CONFIG_PATH = 
 PTHREADSTUBS_CFLAGS =  
 PTHREADSTUBS_LIBS =  
 RANLIB = ranlib
@@ -177,12 +177,12 @@ SED = /bin/sed
 SET_MAKE = 
 SHELL = /bin/bash
 STRIP = strip
-VERSION = 2.4.22
+VERSION = 2.4.23
 WARN_CFLAGS =  -Wall -Wextra -Wsign-compare -Werror-implicit-function-declaration -Wpointer-arith -Wwrite-strings -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -Wpacked -Wswitch-enum -Wmissing-format-attribute -Wstrict-aliasing=2 -Winit-self -Wunsafe-loop-optimizations -Wdeclaration-after-statement -Wold-style-definition -Wno-missing-field-initializers -Wno-unused-parameter -Wno-attributes -Wno-long-long -Winline
-abs_builddir = /home/cworth/src/xorg/drm/include/drm
-abs_srcdir = /home/cworth/src/xorg/drm/include/drm
-abs_top_builddir = /home/cworth/src/xorg/drm
-abs_top_srcdir = /home/cworth/src/xorg/drm
+abs_builddir = /home/ickle/git/drm/include/drm
+abs_srcdir = /home/ickle/git/drm/include/drm
+abs_top_builddir = /home/ickle/git/drm
+abs_top_srcdir = /home/ickle/git/drm
 ac_ct_CC = gcc
 ac_ct_DUMPBIN = 
 am__include = include
@@ -210,7 +210,7 @@ host_vendor = unknown
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /home/cworth/src/xorg/drm/install-sh
+install_sh = ${SHELL} /home/ickle/git/drm/install-sh
 kernel_source = 
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
@@ -222,7 +222,7 @@ mkdir_p = /bin/mkdir -p
 oldincludedir = /usr/include
 pdfdir = ${docdir}
 pkgconfigdir = ${exec_prefix}/lib/pkgconfig
-prefix = /opt/xorg
+prefix = /usr/local
 program_transform_name = s,x,x,
 psdir = ${docdir}
 sbindir = ${exec_prefix}/sbin
@@ -249,9 +249,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu include/drm/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign include/drm/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu include/drm/Makefile
+	  $(AUTOMAKE) --foreign include/drm/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
