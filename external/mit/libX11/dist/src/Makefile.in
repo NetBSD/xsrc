@@ -140,7 +140,7 @@ am__libX11_la_SOURCES_DIST = AllCells.c AllowEv.c AllPlanes.c \
 	UnmapWin.c utlist.h VisUtil.c WarpPtr.c Window.c WinEvent.c \
 	Withdraw.c WMGeom.c WMProps.c WrBitF.c Xatomtype.h xcb_disp.c \
 	xcb_io.c Xintatom.h Xintconn.h XlibAsync.c XlibInt.c \
-	Xprivate.h XomGeneric.h Xresinternal.h Xrm.c XrmI.h Xxcbint.h \
+	Xprivate.h XomGeneric.h Xresinternal.h Xrm.c Xxcbint.h \
 	os2Stubs.c udcInf.c UIThrStubs.c
 @OS2_TRUE@am__objects_1 = os2Stubs.lo
 @UDC_TRUE@am__objects_2 = udcInf.lo
@@ -394,6 +394,7 @@ XMALLOC_ZERO_CFLAGS = @XMALLOC_ZERO_CFLAGS@
 XMLTO = @XMLTO@
 XORG_MAN_PAGE = @XORG_MAN_PAGE@
 XORG_SGML_PATH = @XORG_SGML_PATH@
+XSLTPROC = @XSLTPROC@
 XSL_STYLESHEET = @XSL_STYLESHEET@
 XTHREADLIB = @XTHREADLIB@
 XTHREAD_CFLAGS = @XTHREAD_CFLAGS@
@@ -545,7 +546,7 @@ libX11_la_SOURCES = AllCells.c AllowEv.c AllPlanes.c AutoRep.c \
 	UnmapWin.c utlist.h VisUtil.c WarpPtr.c Window.c WinEvent.c \
 	Withdraw.c WMGeom.c WMProps.c WrBitF.c Xatomtype.h xcb_disp.c \
 	xcb_io.c Xintatom.h Xintconn.h XlibAsync.c XlibInt.c \
-	Xprivate.h XomGeneric.h Xresinternal.h Xrm.c XrmI.h Xxcbint.h \
+	Xprivate.h XomGeneric.h Xresinternal.h Xrm.c Xxcbint.h \
 	$(am__append_1) $(am__append_2) $(am__append_3)
 x11datadir = @X11_DATADIR@
 x11data_DATA = XErrorDB
