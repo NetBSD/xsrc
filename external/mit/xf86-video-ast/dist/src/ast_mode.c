@@ -51,8 +51,14 @@
 /* H/W cursor support */
 #include "xf86Cursor.h"
 
+/* usleep() */
+#include <unistd.h>
+
 /* Driver specific headers */
 #include "ast.h"
+
+/* external reference fucntion */
+extern Bool bInitAST1180(ScrnInfoPtr pScrn);
 
 VBIOS_STDTABLE_STRUCT StdTable[] = {
     /* MD_2_3_400 */
@@ -198,32 +204,32 @@ VBIOS_ENHTABLE_STRUCT  Res1920x1200Table[] = {
 /* 16:10 */
 VBIOS_ENHTABLE_STRUCT  Res1280x800Table[] = {
     {1680, 1280, 72,128,  831,  800, 3, 6, VCLK83_5,	/* 60Hz */
-      (SyncPN | Charx8Dot | LineCompareOff), 60, 1, 0x35 }, 
+      (SyncPN | Charx8Dot | LineCompareOff | WideScreenMode), 60, 1, 0x35 }, 
     {1680, 1280, 72,128,  831,  800, 3, 6, VCLK83_5,	/* 60Hz */
-      (SyncPN | Charx8Dot | LineCompareOff), 0xFF, 1, 0x35 },   		
+      (SyncPN | Charx8Dot | LineCompareOff | WideScreenMode), 0xFF, 1, 0x35 },   		
         		
 };
 
 VBIOS_ENHTABLE_STRUCT  Res1440x900Table[] = {
     {1904, 1440, 80,152,  934,  900, 3, 6, VCLK106_5,	/* 60Hz */
-      (SyncPN | Charx8Dot | LineCompareOff), 60, 1, 0x36 },
+      (SyncPN | Charx8Dot | LineCompareOff | WideScreenMode), 60, 1, 0x36 },
     {1904, 1440, 80,152,  934,  900, 3, 6, VCLK106_5,	/* 60Hz */
-      (SyncPN | Charx8Dot | LineCompareOff), 0xFF, 1, 0x36 },   		         		
+      (SyncPN | Charx8Dot | LineCompareOff | WideScreenMode), 0xFF, 1, 0x36 },   		         		
 };
 
 VBIOS_ENHTABLE_STRUCT  Res1680x1050Table[] = {
     {2240, 1680,104,176, 1089, 1050, 3, 6, VCLK146_25,	/* 60Hz */
-      (SyncPN | Charx8Dot | LineCompareOff), 60, 1, 0x37 },
+      (SyncPN | Charx8Dot | LineCompareOff | WideScreenMode), 60, 1, 0x37 },
     {2240, 1680,104,176, 1089, 1050, 3, 6, VCLK146_25,	/* 60Hz */
-      (SyncPN | Charx8Dot | LineCompareOff), 0xFF, 1, 0x37 },   		         		
+      (SyncPN | Charx8Dot | LineCompareOff | WideScreenMode), 0xFF, 1, 0x37 },   		         		
 };
 
 /* HDTV */
 VBIOS_ENHTABLE_STRUCT  Res1920x1080Table[] = {
     {2200, 1920, 88, 44, 1125, 1080, 4, 5, VCLK148_5,	/* 60Hz */
-      (SyncNP | Charx8Dot | LineCompareOff), 60, 1, 0x38 },
+      (SyncNP | Charx8Dot | LineCompareOff | WideScreenMode), 60, 1, 0x38 },
     {2200, 1920, 88, 44, 1125, 1080, 4, 5, VCLK148_5,	/* 60Hz */
-      (SyncNP | Charx8Dot | LineCompareOff), 0xFF, 1, 0x38 },   		         		
+      (SyncNP | Charx8Dot | LineCompareOff | WideScreenMode), 0xFF, 1, 0x38 },   		         		
 };
 
 VBIOS_DCLK_INFO DCLKTable [] = {
@@ -245,6 +251,30 @@ VBIOS_DCLK_INFO DCLKTable [] = {
     {0x6A, 0x22, 0x00},				        /* 0F: VCLK162         	*/
     {0x4d, 0x4c, 0x80},				        /* 10: VCLK154      	*/
     {0xa7, 0x78, 0x80},					/* 11: VCLK83.5         */
+    {0x28, 0x49, 0x80},					/* 12: VCLK106.5        */           
+    {0x37, 0x49, 0x80},					/* 13: VCLK146.25       */           
+    {0x1f, 0x45, 0x80},					/* 14: VCLK148.5        */                                      
+};
+
+VBIOS_DCLK_INFO DCLKTable_AST2100 [] = {
+    {0x2C, 0xE7, 0x03},					/* 00: VCLK25_175	*/
+    {0x95, 0x62, 0x03},					/* 01: VCLK28_322	*/
+    {0x67, 0x63, 0x01},					/* 02: VCLK31_5         */
+    {0x76, 0x63, 0x01},					/* 03: VCLK36		*/
+    {0xEE, 0x67, 0x01},					/* 04: VCLK40		*/
+    {0x82, 0x62, 0x01},					/* 05: VCLK49_5		*/
+    {0xC6, 0x64, 0x01},					/* 06: VCLK50		*/
+    {0x94, 0x62, 0x01},					/* 07: VCLK56_25	*/
+    {0x80, 0x64, 0x00},					/* 08: VCLK65		*/
+    {0x7B, 0x63, 0x00},					/* 09: VCLK75		*/
+    {0x67, 0x62, 0x00},					/* 0A: VCLK78_75	*/
+    {0x7C, 0x62, 0x00},					/* 0B: VCLK94_5		*/
+    {0x8E, 0x62, 0x00},					/* 0C: VCLK108		*/
+    {0x85, 0x24, 0x00},					/* 0D: VCLK135		*/
+    {0x67, 0x22, 0x00},					/* 0E: VCLK157_5	*/
+    {0x6A, 0x22, 0x00},					/* 0F: VCLK162		*/
+    {0x4d, 0x4c, 0x80},				        /* 10: VCLK154      	*/
+    {0x68, 0x6f, 0x80},					/* 11: VCLK83.5         */
     {0x28, 0x49, 0x80},					/* 12: VCLK106.5        */           
     {0x37, 0x49, 0x80},					/* 13: VCLK146.25       */           
     {0x1f, 0x45, 0x80},					/* 14: VCLK148.5        */                                      
@@ -376,6 +406,11 @@ void vSetDCLKReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAMo
 void vSetExtReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAModeInfo);
 void vSetSyncReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAModeInfo);
 Bool bSetDACReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAModeInfo);
+BOOL bSetAST1180CRTCReg(ScrnInfoPtr pScrn,  DisplayModePtr mode, PVBIOS_MODE_INFO pVGAModeInfo);
+BOOL bSetAST1180OffsetReg(ScrnInfoPtr pScrn,  DisplayModePtr mode, PVBIOS_MODE_INFO pVGAModeInfo);
+BOOL bSetAST1180DCLKReg(ScrnInfoPtr pScrn,  DisplayModePtr mode, PVBIOS_MODE_INFO pVGAModeInfo);
+BOOL bSetAST1180ExtReg(ScrnInfoPtr pScrn,  DisplayModePtr mode, PVBIOS_MODE_INFO pVGAModeInfo);
+void vInitChontelReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAModeInfo);
 
 Bool
 ASTSetMode(ScrnInfoPtr pScrn, DisplayModePtr mode)
@@ -385,20 +420,34 @@ ASTSetMode(ScrnInfoPtr pScrn, DisplayModePtr mode)
 		
     pAST = ASTPTR(pScrn);
 
-    vASTOpenKey(pScrn);
-    bASTRegInit(pScrn);
-    
     /* pre set mode */        		
     bGetAST1000VGAModeInfo(pScrn, mode, &vgamodeinfo);  
-      
+           
     /* set mode */
-    vSetStdReg(pScrn, mode, &vgamodeinfo);      
-    vSetCRTCReg(pScrn, mode, &vgamodeinfo);
-    vSetOffsetReg(pScrn, mode, &vgamodeinfo);    
-    vSetDCLKReg(pScrn, mode, &vgamodeinfo);
-    vSetExtReg(pScrn, mode, &vgamodeinfo);
-    vSetSyncReg(pScrn, mode, &vgamodeinfo);    
-    bSetDACReg(pScrn, mode, &vgamodeinfo);       
+    if (pAST->jChipType == AST1180)
+    {
+        bInitAST1180(pScrn);
+    	
+        bSetAST1180CRTCReg(pScrn, mode, &vgamodeinfo);
+        bSetAST1180OffsetReg(pScrn, mode, &vgamodeinfo);
+        bSetAST1180DCLKReg(pScrn, mode, &vgamodeinfo);
+        bSetAST1180ExtReg(pScrn, mode, &vgamodeinfo);
+        
+        vInitChontelReg(pScrn, mode, &vgamodeinfo);
+    }
+    else
+    {
+        vASTOpenKey(pScrn);
+        bASTRegInit(pScrn);
+    		
+        vSetStdReg(pScrn, mode, &vgamodeinfo);      
+        vSetCRTCReg(pScrn, mode, &vgamodeinfo);
+        vSetOffsetReg(pScrn, mode, &vgamodeinfo);    
+        vSetDCLKReg(pScrn, mode, &vgamodeinfo);
+        vSetExtReg(pScrn, mode, &vgamodeinfo);
+        vSetSyncReg(pScrn, mode, &vgamodeinfo);
+        bSetDACReg(pScrn, mode, &vgamodeinfo);           
+    }
     
     /* post set mode */
 #ifdef	Accel_2D
@@ -526,9 +575,26 @@ Bool bGetAST1000VGAModeInfo(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_
     ulRefreshRateIndex = pVGAModeInfo->pEnhTableEntry->ulRefreshRateIndex;
     ulModeID = pVGAModeInfo->pEnhTableEntry->ulModeID;
 
-    SetIndexReg(CRTC_PORT, 0x8C, (UCHAR) ((ulColorIndex & 0x0F) << 4));         	    
-    SetIndexReg(CRTC_PORT, 0x8D, (UCHAR) (ulRefreshRateIndex & 0xFF));         	    
-    SetIndexReg(CRTC_PORT, 0x8E, (UCHAR) (ulModeID & 0xFF));         	
+    if (pAST->jChipType == AST1180)
+    {
+        /* TODO */	
+    }
+    else
+    {	
+        SetIndexReg(CRTC_PORT, 0x8C, (UCHAR) ((ulColorIndex & 0x0F) << 4));
+        SetIndexReg(CRTC_PORT, 0x8D, (UCHAR) (ulRefreshRateIndex & 0xFF));
+        SetIndexReg(CRTC_PORT, 0x8E, (UCHAR) (ulModeID & 0xFF));
+        
+        /* NewModeInfo */
+        SetIndexReg(CRTC_PORT, 0x91, 0xA8);	/* signature */
+        SetIndexReg(CRTC_PORT, 0x92, (UCHAR) (pScrn->bitsPerPixel) );
+        SetIndexReg(CRTC_PORT, 0x93, (UCHAR) (mode->Clock / 1000) );        
+        SetIndexReg(CRTC_PORT, 0x94, (UCHAR) (mode->CrtcHDisplay) );
+        SetIndexReg(CRTC_PORT, 0x95, (UCHAR) (mode->CrtcHDisplay >> 8) );	/* color depth */
+        SetIndexReg(CRTC_PORT, 0x96, (UCHAR) (mode->CrtcVDisplay) );
+        SetIndexReg(CRTC_PORT, 0x97, (UCHAR) (mode->CrtcVDisplay >> 8) );	/* color depth */
+        
+    }    
     
     return (TRUE);
 }
@@ -688,7 +754,10 @@ void vSetDCLKReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAMo
     pAST = ASTPTR(pScrn);
 
     pEnhModePtr = pVGAModeInfo->pEnhTableEntry;
-    pDCLKPtr = &DCLKTable[pEnhModePtr->DCLKIndex];
+    if ((pAST->jChipType == AST2100) || (pAST->jChipType == AST1100) || (pAST->jChipType == AST2200) || (pAST->jChipType == AST2150) || (pAST->jChipType == AST2300)) 
+        pDCLKPtr = &DCLKTable_AST2100[pEnhModePtr->DCLKIndex];    
+    else
+        pDCLKPtr = &DCLKTable[pEnhModePtr->DCLKIndex];
 
     SetIndexRegMask(CRTC_PORT,0xC0, 0x00,  pDCLKPtr->Param1); 
     SetIndexRegMask(CRTC_PORT,0xC1, 0x00,  pDCLKPtr->Param2);    
@@ -732,8 +801,8 @@ void vSetExtReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAMod
     /* Set Threshold */
     if (pAST->jChipType == AST2300)
     {
-        SetIndexReg(CRTC_PORT,0xA7, 0x6F);
-        SetIndexReg(CRTC_PORT,0xA6, 0x3F);    	    	
+        SetIndexReg(CRTC_PORT,0xA7, 0x78);
+        SetIndexReg(CRTC_PORT,0xA6, 0x60);    	    	
     }	    
     else if ((pAST->jChipType == AST2100) || (pAST->jChipType == AST1100) || (pAST->jChipType == AST2200) || (pAST->jChipType == AST2150) ) 
     {
@@ -797,4 +866,319 @@ Bool bSetDACReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAMod
 
 }
 
+ULONG AST1180DCLKTable [] = {
+    0x0008676b,						/* 00: VCLK25_175	*/		
+    0x00086342,				        	/* 01: VCLK28_322	*/
+    0x00086568,				        	/* 02: VCLK31_5         */
+    0x00082118,				        	/* 03: VCLK36         	*/
+    0x0008232e,				        	/* 04: VCLK40          	*/    
+    0x000c256d, 		        		/* 05: VCLK49_5        	*/
+    0x00082016,                        	        	/* 06: VCLK50          	*/
+    0x000c0010,                        	        	/* 07: VCLK56_25       	*/
+    0x000c0332,                        	        	/* 08: VCLK65		*/
+    0x00080010,                        	        	/* 09: VCLK75	        */
+    0x000c033d,				        	/* 0A: VCLK78_75       	*/
+    0x000c0568,                        	        	/* 0B: VCLK94_5        	*/
+    0x00040118,                        	        	/* 0C: VCLK108         	*/
+    0x00040334,                        	        	/* 0D: VCLK135         	*/
+    0x0004033d,                        	        	/* 0E: VCLK157_5       	*/
+    0x00040018,				        	/* 0F: VCLK162         	*/
+    0x00040123,						/* 10: VCLK154          */           
+    0x000c0669,						/* 11: VCLK83_5         */           
+    0x0004074b,						/* 12: VCLK106_5        */           
+    0x0004022d,						/* 13: VCLK146_25       */           
+    0x00040769,						/* 14: VCLK148_5        */               
+};
+
+BOOL bSetAST1180CRTCReg(ScrnInfoPtr pScrn,  DisplayModePtr mode, PVBIOS_MODE_INFO pVGAModeInfo)
+{
+    ASTRecPtr pAST = ASTPTR(pScrn);	
+
+    ULONG HTIndex, HRIndex, VTIndex, VRIndex;    
+    ULONG HT, HDE, HBS, HBE, HRS, HRE;
+    ULONG VT, VDE, VBS, VBE, VRS, VRE;    	
+    ULONG HT2, HDE2, HRS2, HRE2;
+    ULONG VT2, VDE2, VRS2, VRE2;    	
+        	
+    /* Reg. Index Select */
+    {
+        HTIndex =  AST1180_VGA1_HTREG;
+        HRIndex =  AST1180_VGA1_HRREG;
+        VTIndex =  AST1180_VGA1_VTREG;
+        VRIndex =  AST1180_VGA1_VRREG;          
+    }    
+    
+    /* Get CRTC Info */
+    HT = mode->CrtcHTotal;
+    HDE= mode->CrtcHDisplay;
+    HBS= mode->CrtcHBlankStart;
+    HBE= mode->CrtcHBlankEnd;    
+    HRS= mode->CrtcHSyncStart;
+    HRE= mode->CrtcHSyncEnd;
+    VT = mode->CrtcVTotal;
+    VDE= mode->CrtcVDisplay;
+    VBS= mode->CrtcVBlankStart;
+    VBE= mode->CrtcVBlankEnd;    
+    VRS= mode->CrtcVSyncStart;
+    VRE= mode->CrtcVSyncEnd;           
+    
+    /* Calculate CRTC Reg Setting */
+    HT2  = HT - 1;
+    HDE2 = HDE - 1;
+    HRS2 = HRS - 1;
+    HRE2 = HRE - 1;
+    VT2  = VT  - 1;
+    VDE2 = VDE - 1;
+    VRS2 = VRS - 1;    
+    VRE2 = VRE - 1;
+    
+    /* Write Reg */
+    WriteAST1180SOC(AST1180_GFX_BASE + HTIndex, (ULONG)(HDE2 << 16) | (ULONG) (HT2));                
+    WriteAST1180SOC(AST1180_GFX_BASE + HRIndex, (ULONG)(HRE2 << 16) | (ULONG) (HRS2));                
+    WriteAST1180SOC(AST1180_GFX_BASE + VTIndex, (ULONG)(VDE2 << 16) | (ULONG) (VT2));                
+    WriteAST1180SOC(AST1180_GFX_BASE + VRIndex, (ULONG)(VRE2 << 16) | (ULONG) (VRS2));                
+          
+    return (TRUE);
+                          	
+} /* bSetAST1180CRTCReg */
+
+BOOL bSetAST1180OffsetReg(ScrnInfoPtr pScrn,  DisplayModePtr mode, PVBIOS_MODE_INFO pVGAModeInfo)
+{
+    ASTRecPtr pAST = ASTPTR(pScrn);	
+    ULONG ulOffset, ulTermalCount;	
+        	
+    ulOffset      = pAST->VideoModeInfo.ScreenPitch;
+    ulTermalCount = (pAST->VideoModeInfo.ScreenPitch + 7) >> 3;
+
+    /* Write Reg */
+    WriteAST1180SOC(AST1180_GFX_BASE + AST1180_VGA1_OFFSET, (ULONG) (ulTermalCount << 16) | (ULONG) (ulOffset));                
+    
+    return (TRUE);
+        
+} /* bSetAST1180OffsetReg */
+
+BOOL bSetAST1180DCLKReg(ScrnInfoPtr pScrn,  DisplayModePtr mode, PVBIOS_MODE_INFO pVGAModeInfo)
+{
+    PVBIOS_ENHTABLE_STRUCT pEnhModePtr;
+    ASTRecPtr pAST = ASTPTR(pScrn);	
+    ULONG ulDCLK;
+         
+    pEnhModePtr = pVGAModeInfo->pEnhTableEntry;
+    ulDCLK = AST1180DCLKTable[pEnhModePtr->DCLKIndex];
+    if (pEnhModePtr->Flags & HalfDCLK)
+        ulDCLK |= 0x00400000;		/* D[22]: div by 2 */
+    WriteAST1180SOC(AST1180_GFX_BASE + AST1180_VGA1_PLL, ulDCLK);                
+
+    return (TRUE);
+}
+
+BOOL bSetAST1180ExtReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAModeInfo)
+{
+    PVBIOS_ENHTABLE_STRUCT pEnhModePtr;
+    ASTRecPtr pAST = ASTPTR(pScrn);	
+	
+    ULONG ulCtlRegIndex, ulCtlReg;			/* enable display */
+    ULONG ulCtlReg2Index, ulCtlReg2 = 0x80;		/* single edge */    
+    ULONG ulThresholdRegIndex ;				/* Threshold */
+    ULONG ulStartAddressIndex;				/* ulStartAddress */
+    ULONG ulStartAddress = pAST->ulVRAMBase;
+    
+    /* Reg. Index Select */
+    {
+        ulCtlRegIndex       = AST1180_VGA1_CTRL;
+        ulCtlReg2Index      = AST1180_VGA1_CTRL2;                
+        ulThresholdRegIndex = AST1180_VGA1_THRESHOLD;
+        ulStartAddressIndex = AST1180_VGA1_STARTADDR;       
+    }
+
+    /* Mode Type Setting */
+    ulCtlReg = 0x30000000;
+    {    	
+        switch (pScrn->bitsPerPixel) {
+        case 15:	
+        case 16:
+            ulCtlReg |= 0x100001;            	/* RGB565, SCREEN OFF, ENABLE */       
+            break;    
+        case 32:
+            ulCtlReg |= 0x100101;            	/* XRGB8888, SCREEN OFF, ENABLE */           
+            break;
+        }	
+    }    
+
+    /* Polarity */
+    pEnhModePtr = pVGAModeInfo->pEnhTableEntry;
+    ulCtlReg   |= (ULONG) (pEnhModePtr->Flags & SyncNN) << 10;
+     
+    /* Single/Dual Edge */
+    ulCtlReg2 |= 0x40;				/* dual-edge */
+    
+    /* Write Reg */
+    WriteAST1180SOC(AST1180_GFX_BASE + ulStartAddressIndex, ulStartAddress);                
+    WriteAST1180SOC(AST1180_GFX_BASE + ulThresholdRegIndex, ((ULONG) CRT_HIGH_THRESHOLD_VALUE << 8) | (ULONG) (CRT_LOW_THRESHOLD_VALUE));                
+    WriteAST1180SOC(AST1180_GFX_BASE + ulCtlReg2Index, ulCtlReg2);                
+    WriteAST1180SOC(AST1180_GFX_BASE + ulCtlRegIndex, ulCtlReg);                
+  
+    return (TRUE);
+    
+} /* bSetAST1180ExtReg */
+
+#define I2C_BASE_AST1180	0x80fcb000
+#define I2C_DEVICEADDR_AST1180	0x0EC			/* slave addr */
+
+void SetChrontelReg(ASTRecPtr pAST, UCHAR jChannel, UCHAR jIndex, UCHAR jData )
+{
+    ULONG ulData, ulI2CAddr, ulI2CPortBase;	
+    ULONG retry;
+    
+    {
+        ulI2CPortBase = I2C_BASE_AST1180 + 0x40 * jChannel;        
+        ulI2CAddr = I2C_DEVICEADDR_AST1180;	
+    }	    	
+
+    WriteAST1180SOC(ulI2CPortBase + 0x00, 0x00);
+    WriteAST1180SOC(ulI2CPortBase + 0x04, 0x77743355);
+    WriteAST1180SOC(ulI2CPortBase + 0x08, 0x0);
+    WriteAST1180SOC(ulI2CPortBase + 0x10, 0xffffffff);
+    WriteAST1180SOC(ulI2CPortBase + 0x00, 0x1);
+    WriteAST1180SOC(ulI2CPortBase + 0x0C, 0xAF);
+    WriteAST1180SOC(ulI2CPortBase + 0x20, ulI2CAddr);
+    WriteAST1180SOC(ulI2CPortBase + 0x14, 0x03);
+    retry = 0;
+    do {
+        ReadAST1180SOC(ulI2CPortBase + 0x10, ulData);
+        usleep(10);
+        if (retry++ > 1000)
+            goto Exit_SetChrontelReg;
+    } while (!(ulData & 0x01));
+
+    WriteAST1180SOC(ulI2CPortBase + 0x10, 0xffffffff);
+    WriteAST1180SOC(ulI2CPortBase + 0x20, (ULONG) jIndex);
+    WriteAST1180SOC(ulI2CPortBase + 0x14, 0x02);
+    do {
+        ReadAST1180SOC(ulI2CPortBase + 0x10, ulData);
+     } while (!(ulData & 0x01));
+
+    WriteAST1180SOC(ulI2CPortBase + 0x10, 0xffffffff);
+    WriteAST1180SOC(ulI2CPortBase + 0x20, (ULONG) jData);
+    WriteAST1180SOC(ulI2CPortBase + 0x14, 0x02);
+    do {
+        ReadAST1180SOC(ulI2CPortBase + 0x10, ulData);
+     } while (!(ulData & 0x01));
+
+    WriteAST1180SOC(ulI2CPortBase + 0x10, 0xffffffff);
+    WriteAST1180SOC(ulI2CPortBase + 0x0C, 0xBF);
+    WriteAST1180SOC(ulI2CPortBase + 0x14, 0x20);
+    do {
+        ReadAST1180SOC(ulI2CPortBase + 0x10, ulData);
+    } while (!(ulData & 0x10));
+
+    ReadAST1180SOC(ulI2CPortBase + 0x0C, ulData);
+    ulData &= 0xffffffef;
+    WriteAST1180SOC(ulI2CPortBase + 0x0C, ulData);
+    WriteAST1180SOC(ulI2CPortBase + 0x10, 0xffffffff);
+
+Exit_SetChrontelReg:
+    ;
+}
+
+UCHAR GetChrontelReg(ASTRecPtr pAST, UCHAR jChannel, UCHAR jIndex)
+{
+    ULONG ulData, ulI2CAddr, ulI2CPortBase;	
+    UCHAR jData;
+    ULONG retry;
+    
+    {
+        ulI2CPortBase = I2C_BASE_AST1180 + 0x40 * jChannel;        
+        ulI2CAddr = I2C_DEVICEADDR_AST1180;	
+    }	    	
+
+    WriteAST1180SOC(ulI2CPortBase + 0x00, 0x00);
+    WriteAST1180SOC(ulI2CPortBase + 0x04, 0x77743355);
+    WriteAST1180SOC(ulI2CPortBase + 0x08, 0x0);
+    WriteAST1180SOC(ulI2CPortBase + 0x10, 0xffffffff);
+    WriteAST1180SOC(ulI2CPortBase + 0x00, 0x1);
+    WriteAST1180SOC(ulI2CPortBase + 0x0C, 0xAF);
+    WriteAST1180SOC(ulI2CPortBase + 0x20, ulI2CAddr);
+    WriteAST1180SOC(ulI2CPortBase + 0x14, 0x03);
+    retry = 0;
+    do {
+        ReadAST1180SOC(ulI2CPortBase + 0x10, ulData);
+        usleep(10);
+        if (retry++ > 1000)
+            return 0;
+    } while (!(ulData & 0x01));
+
+    WriteAST1180SOC(ulI2CPortBase + 0x10, 0xffffffff);
+    WriteAST1180SOC(ulI2CPortBase + 0x20, (ULONG) jIndex);
+    WriteAST1180SOC(ulI2CPortBase + 0x14, 0x02);
+    do {
+        ReadAST1180SOC(ulI2CPortBase + 0x10, ulData);
+     } while (!(ulData & 0x01));
+
+    WriteAST1180SOC(ulI2CPortBase + 0x10, 0xffffffff);
+    WriteAST1180SOC(ulI2CPortBase + 0x20, (ULONG) (ulI2CAddr + 1) );
+    WriteAST1180SOC(ulI2CPortBase + 0x14, 0x1B);
+    do {
+        ReadAST1180SOC(ulI2CPortBase + 0x10, ulData);
+     } while (!(ulData & 0x04));
+
+    WriteAST1180SOC(ulI2CPortBase + 0x10, 0xffffffff);
+    WriteAST1180SOC(ulI2CPortBase + 0x0C, 0xBF);
+    WriteAST1180SOC(ulI2CPortBase + 0x14, 0x20);
+    do {
+        ReadAST1180SOC(ulI2CPortBase + 0x10, ulData);
+    } while (!(ulData & 0x10));
+
+    ReadAST1180SOC(ulI2CPortBase + 0x0C, ulData);
+    ulData &= 0xffffffef;
+    WriteAST1180SOC(ulI2CPortBase + 0x0C, ulData);
+    WriteAST1180SOC(ulI2CPortBase + 0x10, 0xffffffff);
+            	
+    ReadAST1180SOC(ulI2CPortBase + 0x20, ulData);
+    jData = (UCHAR) ((ulData & 0xFF00) >> 8);
+           
+    return (jData);	
+}
+
+void vInitChontelReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAModeInfo)
+{
+
+    PVBIOS_ENHTABLE_STRUCT pEnhModePtr = pVGAModeInfo->pEnhTableEntry;    
+    ASTRecPtr pAST = ASTPTR(pScrn);	
+    ULONG ulDCLK = 65;					/* todo */
+    UCHAR jReg;
+    
+    jReg = GetChrontelReg(pAST, 1, 0x4A);		/* get vendor id */
+    if (jReg == 0x95)    
+    {    	
+        jReg = GetChrontelReg(pAST, 1, 0x20);		/* DVI/D-Sub */    
+        if (jReg & 0x20)			        /* DVI */
+        {
+        	
+            /* DVI PLL Filter */
+            if (ulDCLK > 65)
+            {
+                SetChrontelReg(pAST, 1, 0x33, 0x06);
+                SetChrontelReg(pAST, 1, 0x34, 0x26);
+                SetChrontelReg(pAST, 1, 0x36, 0xA0);
+            }
+            else
+        	{
+                SetChrontelReg(pAST, 1, 0x33, 0x08);
+                SetChrontelReg(pAST, 1, 0x34, 0x16);
+                SetChrontelReg(pAST, 1, 0x36, 0x60);
+            }
+                	            
+            SetChrontelReg(pAST, 1, 0x49, 0xc0);    	    	
+        }
+        else						/* D-Sub */
+        {
+        	    	    		
+            SetChrontelReg(pAST, 1, 0x21, 0x09);
+            SetChrontelReg(pAST, 1, 0x49, 0x00);
+            SetChrontelReg(pAST, 1, 0x56, 0x00);    	
+        }    
+    }	
+    	
+}
 

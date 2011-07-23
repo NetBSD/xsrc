@@ -66,6 +66,7 @@
 #define SyncNN                  0x000000C0
 #define HBorder                 0x00000020
 #define VBorder                 0x00000010
+#define WideScreenMode		0x00000100
 
 /* DAC Definition */
 #define DAC_NUM_TEXT		64
