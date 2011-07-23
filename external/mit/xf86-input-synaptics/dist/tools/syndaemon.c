@@ -38,6 +38,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <signal.h>
@@ -64,6 +65,7 @@ static XDevice *dev;
 static Atom touchpad_off_prop;
 static TouchpadState previous_state;
 static TouchpadState disable_state = TouchpadOff;
+static int verbose;
 
 #define KEYMAP_SIZE 32
 static unsigned char keyboard_mask[KEYMAP_SIZE];
@@ -82,6 +84,7 @@ usage(void)
     fprintf(stderr, "  -k Ignore modifier keys when monitoring keyboard activity.\n");
     fprintf(stderr, "  -K Like -k but also ignore Modifier+Key combos.\n");
     fprintf(stderr, "  -R Use the XRecord extension.\n");
+    fprintf(stderr, "  -v Print diagnostic messages.\n");
     exit(1);
 }
 
@@ -110,7 +113,7 @@ toggle_touchpad(Bool enable)
     if (pad_disabled && enable) {
         data = previous_state;
         pad_disabled = False;
-        if (!background)
+        if (verbose)
             printf("Enable\n");
     } else if (!pad_disabled && !enable &&
                previous_state != disable_state &&
@@ -118,7 +121,7 @@ toggle_touchpad(Bool enable)
         store_current_touchpad_state();
         pad_disabled = True;
         data = disable_state;
-        if (!background)
+        if (verbose)
             printf("Disable\n");
     } else
         return;
@@ -224,6 +227,11 @@ main_loop(Display *display, double idle_time, int poll_delay)
 	if (keyboard_activity(display))
 	    last_activity = current_time;
 
+	/* If system times goes backwards, touchpad can get locked. Make
+	 * sure our last activity wasn't in the future and reset if it was. */
+	if (last_activity > current_time)
+	    last_activity = current_time - idle_time - 1;
+
 	if (current_time > last_activity + idle_time) {	/* Enable touchpad */
 	    toggle_touchpad(True);
 	} else {			    /* Disable touchpad */
@@ -290,7 +298,7 @@ Bool check_xrecord(Display *display) {
 			    &first_error);
 
     status = XRecordQueryVersion(display, version, version+1);
-    if (!background && status) {
+    if (verbose && status) {
 	printf("X RECORD extension version %d.%d\n", version[0], version[1]);
     }
     return found;
@@ -413,6 +421,14 @@ void record_main_loop(Display* display, double idle_time) {
 
 	    XRecordProcessReplies(dpy_data);
 
+	    /* If there are any events left over, they are in error. Drain them
+	     * from the connection queue so we don't get stuck. */
+	    while (XEventsQueued(dpy_data, QueuedAlready) > 0) {
+	        XEvent event;
+	        XNextEvent(dpy_data, &event);
+	        fprintf(stderr, "bad event received, major opcode %d\n", event.type);
+	    }
+
 	    if (!ignore_modifier_keys && cbres.key_event) {
 		disable_event = 1;
 	    }
@@ -433,7 +449,7 @@ void record_main_loop(Display* display, double idle_time) {
 
 	if (ret == 0 && pad_disabled) { /* timeout => enable event */
 	    toggle_touchpad(True);
-	    if (!background) printf("enable touchpad\n");
+	    if (verbose) printf("enable touchpad\n");
 	}
 
     } /* end while(1) */
@@ -449,7 +465,6 @@ dp_get_device(Display *dpy)
     XDeviceInfo *info		= NULL;
     int ndevices		= 0;
     Atom touchpad_type		= 0;
-    Atom synaptics_property	= 0;
     Atom *properties		= NULL;
     int nprops			= 0;
     int error			= 0;
@@ -471,24 +486,24 @@ dp_get_device(Display *dpy)
 	    properties = XListDeviceProperties(dpy, dev, &nprops);
 	    if (!properties || !nprops)
 	    {
-	  fprintf(stderr, "No properties on device '%s'.\n",
-		  info[ndevices].name);
-	  error = 1;
-	  goto unwind;
-      }
+		fprintf(stderr, "No properties on device '%s'.\n",
+			info[ndevices].name);
+		error = 1;
+		goto unwind;
+	    }
 
 	    while(nprops--)
 	    {
-	  if (properties[nprops] == synaptics_property)
-	      break;
-      }
-	    if (!nprops)
+		if (properties[nprops] == touchpad_off_prop)
+		    break;
+	    }
+	    if (nprops < 0)
 	    {
-	  fprintf(stderr, "No synaptics properties on device '%s'.\n",
-		  info[ndevices].name);
-	  error = 1;
-	  goto unwind;
-      }
+		fprintf(stderr, "No synaptics properties on device '%s'.\n",
+			info[ndevices].name);
+		error = 1;
+		goto unwind;
+	    }
 
 	    break; /* Yay, device is suitable */
 	}
@@ -516,7 +531,7 @@ main(int argc, char *argv[])
     int use_xrecord = 0;
 
     /* Parse command line parameters */
-    while ((c = getopt(argc, argv, "i:m:dtp:kKR?")) != EOF) {
+    while ((c = getopt(argc, argv, "i:m:dtp:kKR?v")) != EOF) {
 	switch(c) {
 	case 'i':
 	    idle_time = atof(optarg);
@@ -542,6 +557,9 @@ main(int argc, char *argv[])
 	    break;
 	case 'R':
 	    use_xrecord = 1;
+	    break;
+	case 'v':
+	    verbose = 1;
 	    break;
 	default:
 	    usage();

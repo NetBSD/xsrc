@@ -145,8 +145,8 @@
 /* 8 bit (BOOL), 1 value, tap-and-drag */
 #define SYNAPTICS_PROP_GESTURES "Synaptics Gestures"
 
-/* 8 bit (BOOL), 5 values (read-only), has_left, has_middle, has_right,
- * has_double, has_triple */
+/* 8 bit (BOOL), 7 values (read-only), has_left, has_middle, has_right,
+ * has_double, has_triple, has_pressure, has_width */
 #define SYNAPTICS_PROP_CAPABILITIES "Synaptics Capabilities"
 
 /* 32 bit unsigned, 2 values, vertical, horizontal in units/millimeter */
@@ -154,5 +154,8 @@
 
 /* 32 bit, 4 values, left, right, top, bottom */
 #define SYNAPTICS_PROP_AREA "Synaptics Area"
+
+/* 32 Bit Integer, 2 values, horizontal hysteresis, vertical hysteresis */
+#define SYNAPTICS_PROP_NOISE_CANCELLATION "Synaptics Noise Cancellation"
 
 #endif /* _SYNAPTICS_PROPERTIES_H_ */
