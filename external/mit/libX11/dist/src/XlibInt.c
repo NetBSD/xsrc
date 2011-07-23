@@ -662,6 +662,7 @@ XAddConnectionWatch(
 	    UnlockDisplay(dpy);
 	    return 0;
 	}
+	info_list->watch_data = wd_array;
 	wd_array[dpy->watcher_count] = NULL;	/* for cleanliness */
     }
 
@@ -777,10 +778,10 @@ _XFreeEventCookies(Display *dpy)
     head = (struct stored_event**)&dpy->cookiejar;
 
     DL_FOREACH_SAFE(*head, e, tmp) {
-        XFree(e->ev.data);
-        XFree(e);
         if (dpy->cookiejar == e)
             dpy->cookiejar = NULL;
+        XFree(e->ev.data);
+        XFree(e);
     }
 }
 
@@ -1438,9 +1439,10 @@ static int _XPrintDefaultError(
 	     ext && (ext->codes.major_opcode != event->request_code);
 	     ext = ext->next)
 	  ;
-	if (ext)
-	    strcpy(buffer, ext->name);
-	else
+	if (ext) {
+	    strncpy(buffer, ext->name, BUFSIZ);
+	    buffer[BUFSIZ - 1] = '\0';
+        } else
 	    buffer[0] = '\0';
     }
     (void) fprintf(fp, " (%s)\n", buffer);
@@ -1572,7 +1574,19 @@ int _XError (
 	!(*dpy->error_vec[rep->errorCode])(dpy, &event.xerror, rep))
 	return 0;
     if (_XErrorFunction != NULL) {
-	return (*_XErrorFunction)(dpy, (XErrorEvent *)&event); /* upcall */
+	int rtn_val;
+#ifdef XTHREADS
+	if (dpy->lock)
+	    (*dpy->lock->user_lock_display)(dpy);
+	UnlockDisplay(dpy);
+#endif
+	rtn_val = (*_XErrorFunction)(dpy, (XErrorEvent *)&event); /* upcall */
+#ifdef XTHREADS
+	LockDisplay(dpy);
+	if (dpy->lock)
+	    (*dpy->lock->user_unlock_display)(dpy);
+#endif
+	return rtn_val;
     } else {
 	return _XDefaultError(dpy, (XErrorEvent *)&event);
     }
