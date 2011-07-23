@@ -59,16 +59,19 @@
 /* Prototype type declaration */
 Bool ASTCursorInit(ScreenPtr pScreen);
 Bool bInitHWC(ScrnInfoPtr pScrn, ASTRecPtr pAST);
+void ASTDisableHWC(ScrnInfoPtr pScrn);
 static void ASTShowCursor(ScrnInfoPtr pScrn); 
-void ASTHideCursor(ScrnInfoPtr pScrn);
+static void ASTHideCursor(ScrnInfoPtr pScrn);
 static void ASTSetCursorPosition(ScrnInfoPtr pScrn, int x, int y);
 static void ASTSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg);
 static void ASTLoadCursorImage(ScrnInfoPtr pScrn, UCHAR *src);
 static Bool ASTUseHWCursor(ScreenPtr pScreen, CursorPtr pCurs);
 static void ASTLoadCursorARGB(ScrnInfoPtr pScrn, CursorPtr pCurs);
 static Bool ASTUseHWCursorARGB(ScreenPtr pScreen, CursorPtr pCurs);
-
 static void ASTFireCursor(ScrnInfoPtr pScrn); 
+static void ASTShowCursor_AST1180(ScrnInfoPtr pScrn); 
+static void ASTHideCursor_AST1180(ScrnInfoPtr pScrn);
+static void ASTSetCursorPosition_AST1180(ScrnInfoPtr pScrn, int x, int y);
 
 Bool
 ASTCursorInit(ScreenPtr pScreen)
@@ -88,10 +91,19 @@ ASTCursorInit(ScreenPtr pScreen)
 
     infoPtr->MaxWidth  = MAX_HWC_WIDTH;
     infoPtr->MaxHeight = MAX_HWC_HEIGHT;
-    infoPtr->ShowCursor = ASTShowCursor;
-    infoPtr->HideCursor = ASTHideCursor;
-    infoPtr->SetCursorPosition = ASTSetCursorPosition;
-    infoPtr->SetCursorColors = ASTSetCursorColors;
+    if (pAST->jChipType == AST1180)
+    {
+        infoPtr->ShowCursor = ASTShowCursor_AST1180;
+        infoPtr->HideCursor = ASTHideCursor_AST1180;
+        infoPtr->SetCursorPosition = ASTSetCursorPosition_AST1180;
+    }        
+    else
+    {
+        infoPtr->ShowCursor = ASTShowCursor;
+        infoPtr->HideCursor = ASTHideCursor;
+        infoPtr->SetCursorPosition = ASTSetCursorPosition;
+    }
+    infoPtr->SetCursorColors = ASTSetCursorColors;        
     infoPtr->LoadCursorImage = ASTLoadCursorImage;
     infoPtr->UseHWCursor = ASTUseHWCursor;
 #ifdef ARGB_CURSOR
@@ -129,6 +141,15 @@ Bool bInitHWC(ScrnInfoPtr pScrn, ASTRecPtr pAST)
     return (TRUE);	
 }
 
+void ASTDisableHWC(ScrnInfoPtr pScrn)
+{
+    ASTRecPtr   pAST = ASTPTR(pScrn);    
+	
+    if (pAST->jChipType == AST1180)
+        ASTHideCursor_AST1180(pScrn);    
+    else 
+        ASTHideCursor(pScrn);
+}	
 
 static void
 ASTShowCursor(ScrnInfoPtr pScrn)
@@ -144,7 +165,7 @@ ASTShowCursor(ScrnInfoPtr pScrn)
     
 }
 
-void
+static void
 ASTHideCursor(ScrnInfoPtr pScrn)
 {
     ASTRecPtr  pAST = ASTPTR(pScrn);
@@ -271,19 +292,27 @@ ASTLoadCursorImage(ScrnInfoPtr pScrn, UCHAR *src)
         
     }        		    
 
-    /* Write Checksum as signature */
-    pjDstData = (UCHAR *) pAST->HWCInfo.pjHWCVirtualAddr + (HWC_SIZE+HWC_SIGNATURE_SIZE)*pAST->HWCInfo.HWC_NUM_Next + HWC_SIZE;   
-    *((ULONG *) pjDstData) = ulCheckSum;
-    *((ULONG *) (pjDstData + HWC_SIGNATURE_SizeX)) = pAST->HWCInfo.width;
-    *((ULONG *) (pjDstData + HWC_SIGNATURE_SizeY)) = pAST->HWCInfo.height;
-    *((ULONG *) (pjDstData + HWC_SIGNATURE_HOTSPOTX)) = 0;
-    *((ULONG *) (pjDstData + HWC_SIGNATURE_HOTSPOTY)) = 0;
-    
-    /* set pattern offset */
-    ulPatternAddr = ((pAST->HWCInfo.ulHWCOffsetAddr+(HWC_SIZE+HWC_SIGNATURE_SIZE)*pAST->HWCInfo.HWC_NUM_Next) >> 3);
-    SetIndexReg(CRTC_PORT, 0xC8, (UCHAR) (ulPatternAddr & 0xFF)); 	
-    SetIndexReg(CRTC_PORT, 0xC9, (UCHAR) ((ulPatternAddr >> 8) & 0xFF)); 	
-    SetIndexReg(CRTC_PORT, 0xCA, (UCHAR) ((ulPatternAddr >> 16) & 0xFF)); 
+    if (pAST->jChipType == AST1180)
+    {
+        ulPatternAddr = pAST->ulVRAMBase + (pAST->HWCInfo.ulHWCOffsetAddr+(HWC_SIZE+HWC_SIGNATURE_SIZE)*pAST->HWCInfo.HWC_NUM_Next);    	
+        WriteAST1180SOC(AST1180_GFX_BASE+AST1180_HWC1_PATTERNADDR, ulPatternAddr);    	
+    }	
+    else
+    {
+        /* Write Checksum as signature */
+        pjDstData = (UCHAR *) pAST->HWCInfo.pjHWCVirtualAddr + (HWC_SIZE+HWC_SIGNATURE_SIZE)*pAST->HWCInfo.HWC_NUM_Next + HWC_SIZE;   
+        *((ULONG *) pjDstData) = ulCheckSum;
+        *((ULONG *) (pjDstData + HWC_SIGNATURE_SizeX)) = pAST->HWCInfo.width;
+        *((ULONG *) (pjDstData + HWC_SIGNATURE_SizeY)) = pAST->HWCInfo.height;
+        *((ULONG *) (pjDstData + HWC_SIGNATURE_HOTSPOTX)) = 0;
+        *((ULONG *) (pjDstData + HWC_SIGNATURE_HOTSPOTY)) = 0;
+        
+        /* set pattern offset */
+        ulPatternAddr = ((pAST->HWCInfo.ulHWCOffsetAddr+(HWC_SIZE+HWC_SIGNATURE_SIZE)*pAST->HWCInfo.HWC_NUM_Next) >> 3);
+        SetIndexReg(CRTC_PORT, 0xC8, (UCHAR) (ulPatternAddr & 0xFF)); 	
+        SetIndexReg(CRTC_PORT, 0xC9, (UCHAR) ((ulPatternAddr >> 8) & 0xFF)); 	
+        SetIndexReg(CRTC_PORT, 0xCA, (UCHAR) ((ulPatternAddr >> 16) & 0xFF)); 
+    }
     
     /* update HWC_NUM_Next */
     pAST->HWCInfo.HWC_NUM_Next = (pAST->HWCInfo.HWC_NUM_Next+1) % pAST->HWCInfo.HWC_NUM;
@@ -375,19 +404,27 @@ ASTLoadCursorARGB(ScrnInfoPtr pScrn, CursorPtr pCurs)
         
     } /* end of for-loop */
 
-    /* Write Checksum as signature */
-    pjDstXor = (UCHAR *) pAST->HWCInfo.pjHWCVirtualAddr + (HWC_SIZE+HWC_SIGNATURE_SIZE)*pAST->HWCInfo.HWC_NUM_Next + HWC_SIZE;   
-    *((ULONG *) pjDstXor) = ulCheckSum;
-    *((ULONG *) (pjDstXor + HWC_SIGNATURE_SizeX)) = pAST->HWCInfo.width;
-    *((ULONG *) (pjDstXor + HWC_SIGNATURE_SizeY)) = pAST->HWCInfo.height;
-    *((ULONG *) (pjDstXor + HWC_SIGNATURE_HOTSPOTX)) = 0;
-    *((ULONG *) (pjDstXor + HWC_SIGNATURE_HOTSPOTY)) = 0;
-           
-    /* set pattern offset */
-    ulPatternAddr = ((pAST->HWCInfo.ulHWCOffsetAddr +(HWC_SIZE+HWC_SIGNATURE_SIZE)*pAST->HWCInfo.HWC_NUM_Next) >> 3);
-    SetIndexReg(CRTC_PORT, 0xC8, (UCHAR) (ulPatternAddr & 0xFF)); 	
-    SetIndexReg(CRTC_PORT, 0xC9, (UCHAR) ((ulPatternAddr >> 8) & 0xFF)); 	
-    SetIndexReg(CRTC_PORT, 0xCA, (UCHAR) ((ulPatternAddr >> 16) & 0xFF)); 
+    if (pAST->jChipType == AST1180)
+    {
+        ulPatternAddr = pAST->ulVRAMBase + (pAST->HWCInfo.ulHWCOffsetAddr+(HWC_SIZE+HWC_SIGNATURE_SIZE)*pAST->HWCInfo.HWC_NUM_Next);    	
+        WriteAST1180SOC(AST1180_GFX_BASE+AST1180_HWC1_PATTERNADDR, ulPatternAddr);    	
+    }	    
+    else
+    {
+        /* Write Checksum as signature */
+        pjDstXor = (UCHAR *) pAST->HWCInfo.pjHWCVirtualAddr + (HWC_SIZE+HWC_SIGNATURE_SIZE)*pAST->HWCInfo.HWC_NUM_Next + HWC_SIZE;   
+        *((ULONG *) pjDstXor) = ulCheckSum;
+        *((ULONG *) (pjDstXor + HWC_SIGNATURE_SizeX)) = pAST->HWCInfo.width;
+        *((ULONG *) (pjDstXor + HWC_SIGNATURE_SizeY)) = pAST->HWCInfo.height;
+        *((ULONG *) (pjDstXor + HWC_SIGNATURE_HOTSPOTX)) = 0;
+        *((ULONG *) (pjDstXor + HWC_SIGNATURE_HOTSPOTY)) = 0;
+               
+        /* set pattern offset */
+        ulPatternAddr = ((pAST->HWCInfo.ulHWCOffsetAddr +(HWC_SIZE+HWC_SIGNATURE_SIZE)*pAST->HWCInfo.HWC_NUM_Next) >> 3);
+        SetIndexReg(CRTC_PORT, 0xC8, (UCHAR) (ulPatternAddr & 0xFF)); 	
+        SetIndexReg(CRTC_PORT, 0xC9, (UCHAR) ((ulPatternAddr >> 8) & 0xFF)); 	
+        SetIndexReg(CRTC_PORT, 0xCA, (UCHAR) ((ulPatternAddr >> 16) & 0xFF)); 
+    }
     
     /* update HWC_NUM_Next */
     pAST->HWCInfo.HWC_NUM_Next = (pAST->HWCInfo.HWC_NUM_Next+1) % pAST->HWCInfo.HWC_NUM;
@@ -411,5 +448,72 @@ ASTFireCursor(ScrnInfoPtr pScrn)
     SetIndexRegMask(CRTC_PORT, 0xCB, 0xFF, 0x00);	/* dummp write to fire HWC */ 	
     
 }
+
+/* AST1180 */
+static void
+ASTShowCursor_AST1180(ScrnInfoPtr pScrn)
+{
+    ASTRecPtr   pAST = ASTPTR(pScrn);    
+    ULONG 	ulData, ulTemp;
+
+    ReadAST1180SOC(AST1180_GFX_BASE+AST1180_HWC1_POSITION, ulTemp);               
+
+    ReadAST1180SOC(AST1180_GFX_BASE+AST1180_VGA1_CTRL, ulData);
+    ulData &= ~AST1180_ALPHAHWC;
+    if (pAST->HWCInfo.cursortype ==HWC_COLOR)
+        ulData |= AST1180_ALPHAHWC;    
+    ulData |= AST1180_ENABLEHWC;
+    WriteAST1180SOC(AST1180_GFX_BASE+AST1180_VGA1_CTRL, ulData);    	
+
+    /* fire cursor */
+    WriteAST1180SOC(AST1180_GFX_BASE+AST1180_HWC1_POSITION, ulTemp);    	    	        
+    
+} /* ASTShowCursor_AST1180 */
+
+static void
+ASTHideCursor_AST1180(ScrnInfoPtr pScrn)
+{
+    ASTRecPtr  pAST = ASTPTR(pScrn);
+    ULONG 	ulData;
+
+    ReadAST1180SOC(AST1180_GFX_BASE+AST1180_VGA1_CTRL, ulData);
+    ulData &= ~AST1180_ENABLEHWC;
+    WriteAST1180SOC(AST1180_GFX_BASE+AST1180_VGA1_CTRL, ulData);    	
+ 
+    /* fire cursor */
+    WriteAST1180SOC(AST1180_GFX_BASE+AST1180_HWC1_POSITION, 0x07ff07ff);    	    	               
+    
+} /* ASTHideCursor_AST1180 */
+
+static void
+ASTSetCursorPosition_AST1180(ScrnInfoPtr pScrn, int x, int y)
+{
+    ASTRecPtr	pAST = ASTPTR(pScrn);
+    DisplayModePtr mode = pAST->ModePtr;    
+    int		x_offset, y_offset;
+    ULONG	ulData;
+                      
+    x_offset = pAST->HWCInfo.offset_x;
+    y_offset = pAST->HWCInfo.offset_y;
+    
+    if(x < 0) {
+       x_offset = (-x) + pAST->HWCInfo.offset_x;
+       x = 0;
+    }
+
+    if(y < 0) {
+       y_offset = (-y) + pAST->HWCInfo.offset_y;
+       y = 0;
+    }
+
+    if(mode->Flags & V_DBLSCAN)  y *= 2;
+ 
+    /* Set to Reg. */
+    ulData = (x_offset) | (y_offset << 8);
+    WriteAST1180SOC(AST1180_GFX_BASE+AST1180_HWC1_OFFSET, ulData);    	
+    ulData = (x) | (y << 16);
+    WriteAST1180SOC(AST1180_GFX_BASE+AST1180_HWC1_POSITION, ulData);    	    	    
+    
+} /* ASTSetCursorPosition_AST1180 */ 
 
 #endif	/* End of HWC */
