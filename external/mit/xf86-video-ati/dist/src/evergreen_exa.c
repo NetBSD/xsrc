@@ -43,6 +43,18 @@
 #include "radeon_exa_shared.h"
 #include "radeon_vbo.h"
 
+extern int cayman_solid_vs(RADEONChipFamily ChipSet, uint32_t* vs);
+extern int cayman_solid_ps(RADEONChipFamily ChipSet, uint32_t* ps);
+
+extern int cayman_copy_vs(RADEONChipFamily ChipSet, uint32_t* vs);
+extern int cayman_copy_ps(RADEONChipFamily ChipSet, uint32_t* ps);
+
+extern int cayman_xv_vs(RADEONChipFamily ChipSet, uint32_t* shader);
+extern int cayman_xv_ps(RADEONChipFamily ChipSet, uint32_t* shader);
+
+extern int cayman_comp_vs(RADEONChipFamily ChipSet, uint32_t* vs);
+extern int cayman_comp_ps(RADEONChipFamily ChipSet, uint32_t* ps);
+
 static void
 EVERGREENDoneSolid(PixmapPtr pPix);
 
@@ -59,7 +71,6 @@ EVERGREENPrepareSolid(PixmapPtr pPix, int alu, Pixel pm, Pixel fg)
     const_config_t ps_const_conf;
     struct r600_accel_object dst;
 
-    //return FALSE;
 
     if (!RADEONCheckBPP(pPix->drawable.bitsPerPixel))
 	RADEON_FALLBACK(("EVERGREENCheckDatatype failed\n"));
@@ -68,6 +79,7 @@ EVERGREENPrepareSolid(PixmapPtr pPix, int alu, Pixel pm, Pixel fg)
 
     dst.offset = 0;
     dst.bo = radeon_get_pixmap_bo(pPix);
+    dst.tiling_flags = radeon_get_pixmap_tiling(pPix);
 
     dst.pitch = exaGetPixmapPitch(pPix) / (pPix->drawable.bitsPerPixel / 8);
     dst.width = pPix->drawable.width;
@@ -430,8 +442,6 @@ EVERGREENPrepareCopy(PixmapPtr pSrc,   PixmapPtr pDst,
     struct radeon_accel_state *accel_state = info->accel_state;
     struct r600_accel_object src_obj, dst_obj;
 
-    //return FALSE;
-
     if (!RADEONCheckBPP(pSrc->drawable.bitsPerPixel))
 	RADEON_FALLBACK(("EVERGREENCheckDatatype src failed\n"));
     if (!RADEONCheckBPP(pDst->drawable.bitsPerPixel))
@@ -448,6 +458,8 @@ EVERGREENPrepareCopy(PixmapPtr pSrc,   PixmapPtr pDst,
     dst_obj.offset = 0;
     src_obj.bo = radeon_get_pixmap_bo(pSrc);
     dst_obj.bo = radeon_get_pixmap_bo(pDst);
+    dst_obj.tiling_flags = radeon_get_pixmap_tiling(pDst);
+    src_obj.tiling_flags = radeon_get_pixmap_tiling(pSrc);
     if (radeon_get_pixmap_bo(pSrc) == radeon_get_pixmap_bo(pDst))
 	accel_state->same_surface = TRUE;
 
@@ -1086,8 +1098,6 @@ static Bool EVERGREENPrepareComposite(int op, PicturePtr pSrcPicture,
     struct r600_accel_object src_obj, mask_obj, dst_obj;
     float *cbuf;
 
-    //return FALSE;
-
     if (pDst->drawable.bitsPerPixel < 8 || pSrc->drawable.bitsPerPixel < 8)
 	return FALSE;
 
@@ -1095,6 +1105,8 @@ static Bool EVERGREENPrepareComposite(int op, PicturePtr pSrcPicture,
     dst_obj.offset = 0;
     src_obj.bo = radeon_get_pixmap_bo(pSrc);
     dst_obj.bo = radeon_get_pixmap_bo(pDst);
+    dst_obj.tiling_flags = radeon_get_pixmap_tiling(pDst);
+    src_obj.tiling_flags = radeon_get_pixmap_tiling(pSrc);
 
     src_obj.pitch = exaGetPixmapPitch(pSrc) / (pSrc->drawable.bitsPerPixel / 8);
     dst_obj.pitch = exaGetPixmapPitch(pDst) / (pDst->drawable.bitsPerPixel / 8);
@@ -1112,6 +1124,7 @@ static Bool EVERGREENPrepareComposite(int op, PicturePtr pSrcPicture,
     if (pMask) {
 	mask_obj.offset = 0;
 	mask_obj.bo = radeon_get_pixmap_bo(pMask);
+	mask_obj.tiling_flags = radeon_get_pixmap_tiling(pMask);
 	mask_obj.pitch = exaGetPixmapPitch(pMask) / (pMask->drawable.bitsPerPixel / 8);
 
 	mask_obj.width = pMask->drawable.width;
@@ -1402,7 +1415,7 @@ EVERGREENUploadToScreen(PixmapPtr pDst, int x, int y, int w, int h,
     Bool r;
     int i;
     struct r600_accel_object src_obj, dst_obj;
-    uint32_t tiling_flags = 0, pitch = 0, height, base_align;
+    uint32_t height, base_align;
 
     if (bpp < 8)
 	return FALSE;
@@ -1411,14 +1424,10 @@ EVERGREENUploadToScreen(PixmapPtr pDst, int x, int y, int w, int h,
     if (!driver_priv || !driver_priv->bo)
 	return FALSE;
 
-    ret = radeon_bo_get_tiling(driver_priv->bo, &tiling_flags, &pitch);
-    if (ret)
-	ErrorF("radeon_bo_get_tiling failed\n");
-
     /* If we know the BO won't be busy, don't bother with a scratch */
     copy_dst = driver_priv->bo;
     copy_pitch = pDst->devKind;
-    if (!(tiling_flags & (RADEON_TILING_MACRO | RADEON_TILING_MICRO))) {
+    if (!(driver_priv->tiling_flags & (RADEON_TILING_MACRO | RADEON_TILING_MICRO))) {
 	if (!radeon_bo_is_referenced_by_cs(driver_priv->bo, info->cs)) {
 	    flush = FALSE;
 	    if (!radeon_bo_is_busy(driver_priv->bo, &dst_domain))
@@ -1442,6 +1451,7 @@ EVERGREENUploadToScreen(PixmapPtr pDst, int x, int y, int w, int h,
     src_obj.bpp = bpp;
     src_obj.domain = RADEON_GEM_DOMAIN_GTT;
     src_obj.bo = scratch;
+    src_obj.tiling_flags = 0;
 
     dst_obj.pitch = dst_pitch_hw;
     dst_obj.width = pDst->drawable.width;
@@ -1450,6 +1460,7 @@ EVERGREENUploadToScreen(PixmapPtr pDst, int x, int y, int w, int h,
     dst_obj.bpp = bpp;
     dst_obj.domain = RADEON_GEM_DOMAIN_VRAM;
     dst_obj.bo = radeon_get_pixmap_bo(pDst);
+    dst_obj.tiling_flags = radeon_get_pixmap_tiling(pDst);
 
     if (!R600SetAccelState(pScrn,
 			   &src_obj,
@@ -1519,7 +1530,7 @@ EVERGREENDownloadFromScreen(PixmapPtr pSrc, int x, int y, int w,
     Bool flush = FALSE;
     Bool r;
     struct r600_accel_object src_obj, dst_obj;
-    uint32_t tiling_flags = 0, pitch = 0, height, base_align;
+    uint32_t height, base_align;
 
     if (bpp < 8)
 	return FALSE;
@@ -1528,14 +1539,10 @@ EVERGREENDownloadFromScreen(PixmapPtr pSrc, int x, int y, int w,
     if (!driver_priv || !driver_priv->bo)
 	return FALSE;
 
-    ret = radeon_bo_get_tiling(driver_priv->bo, &tiling_flags, &pitch);
-    if (ret)
-	ErrorF("radeon_bo_get_tiling failed\n");
-
     /* If we know the BO won't end up in VRAM anyway, don't bother with a scratch */
     copy_src = driver_priv->bo;
     copy_pitch = pSrc->devKind;
-    if (!(tiling_flags & (RADEON_TILING_MACRO | RADEON_TILING_MICRO))) {
+    if (!(driver_priv->tiling_flags & (RADEON_TILING_MACRO | RADEON_TILING_MICRO))) {
 	if (radeon_bo_is_referenced_by_cs(driver_priv->bo, info->cs)) {
 	    src_domain = radeon_bo_get_src_domain(driver_priv->bo);
 	    if ((src_domain & (RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM)) ==
@@ -1553,7 +1560,7 @@ EVERGREENDownloadFromScreen(PixmapPtr pSrc, int x, int y, int w,
 
     }
 
-    if (info->ChipFamily == CHIP_FAMILY_PALM)
+    if (!accel_state->allowHWDFS)
 	goto copy;
 
     scratch_pitch = RADEON_ALIGN(w, drmmode_get_pitch_align(pScrn, (bpp / 8), 0));
@@ -1583,6 +1590,7 @@ EVERGREENDownloadFromScreen(PixmapPtr pSrc, int x, int y, int w,
     src_obj.bpp = bpp;
     src_obj.domain = RADEON_GEM_DOMAIN_VRAM | RADEON_GEM_DOMAIN_GTT;
     src_obj.bo = radeon_get_pixmap_bo(pSrc);
+    src_obj.tiling_flags = radeon_get_pixmap_tiling(pSrc);
 
     dst_obj.pitch = scratch_pitch;
     dst_obj.width = w;
@@ -1591,6 +1599,7 @@ EVERGREENDownloadFromScreen(PixmapPtr pSrc, int x, int y, int w,
     dst_obj.bo = scratch;
     dst_obj.bpp = bpp;
     dst_obj.domain = RADEON_GEM_DOMAIN_GTT;
+    dst_obj.tiling_flags = 0;
 
     if (!R600SetAccelState(pScrn,
 			   &src_obj,
@@ -1674,7 +1683,7 @@ EVERGREENAllocShaders(ScrnInfoPtr pScrn, ScreenPtr pScreen)
     return TRUE;
 }
 
-Bool
+static Bool
 EVERGREENLoadShaders(ScrnInfoPtr pScrn)
 {
     RADEONInfoPtr info = RADEONPTR(pScrn);
@@ -1721,6 +1730,59 @@ EVERGREENLoadShaders(ScrnInfoPtr pScrn)
     /*  xv ps --------------------------------------- */
     accel_state->xv_ps_offset = 3584;
     evergreen_xv_ps(ChipSet, shader + accel_state->xv_ps_offset / 4);
+
+    radeon_bo_unmap(accel_state->shaders_bo);
+
+    return TRUE;
+}
+
+static Bool
+CAYMANLoadShaders(ScrnInfoPtr pScrn)
+{
+    RADEONInfoPtr info = RADEONPTR(pScrn);
+    struct radeon_accel_state *accel_state = info->accel_state;
+    RADEONChipFamily ChipSet = info->ChipFamily;
+    uint32_t *shader;
+    int ret;
+
+    ret = radeon_bo_map(accel_state->shaders_bo, 1);
+    if (ret) {
+	FatalError("failed to map shader %d\n", ret);
+	return FALSE;
+    }
+    shader = accel_state->shaders_bo->ptr;
+
+    /*  solid vs --------------------------------------- */
+    accel_state->solid_vs_offset = 0;
+    cayman_solid_vs(ChipSet, shader + accel_state->solid_vs_offset / 4);
+
+    /*  solid ps --------------------------------------- */
+    accel_state->solid_ps_offset = 512;
+    cayman_solid_ps(ChipSet, shader + accel_state->solid_ps_offset / 4);
+
+    /*  copy vs --------------------------------------- */
+    accel_state->copy_vs_offset = 1024;
+    cayman_copy_vs(ChipSet, shader + accel_state->copy_vs_offset / 4);
+
+    /*  copy ps --------------------------------------- */
+    accel_state->copy_ps_offset = 1536;
+    cayman_copy_ps(ChipSet, shader + accel_state->copy_ps_offset / 4);
+
+    /*  comp vs --------------------------------------- */
+    accel_state->comp_vs_offset = 2048;
+    cayman_comp_vs(ChipSet, shader + accel_state->comp_vs_offset / 4);
+
+    /*  comp ps --------------------------------------- */
+    accel_state->comp_ps_offset = 2560;
+    cayman_comp_ps(ChipSet, shader + accel_state->comp_ps_offset / 4);
+
+    /*  xv vs --------------------------------------- */
+    accel_state->xv_vs_offset = 3072;
+    cayman_xv_vs(ChipSet, shader + accel_state->xv_vs_offset / 4);
+
+    /*  xv ps --------------------------------------- */
+    accel_state->xv_ps_offset = 3584;
+    cayman_xv_ps(ChipSet, shader + accel_state->xv_ps_offset / 4);
 
     radeon_bo_unmap(accel_state->shaders_bo);
 
@@ -1826,8 +1888,13 @@ EVERGREENDrawInit(ScreenPtr pScreen)
     if (!EVERGREENAllocShaders(pScrn, pScreen))
 	return FALSE;
 
-    if (!EVERGREENLoadShaders(pScrn))
-	return FALSE;
+    if (info->ChipFamily == CHIP_FAMILY_CAYMAN) {
+	if (!CAYMANLoadShaders(pScrn))
+	    return FALSE;
+    } else {
+	if (!EVERGREENLoadShaders(pScrn))
+	    return FALSE;
+    }
 
     exaMarkSync(pScreen);
 

@@ -54,7 +54,7 @@ endif
 
 if USE_EXA
 RADEON_EXA_SOURCES = radeon_exa.c r600_exa.c r6xx_accel.c r600_textured_videofuncs.c r600_shader.c radeon_exa_shared.c \
-	evergreen_exa.c evergreen_accel.c evergreen_shader.c evergreen_textured_videofuncs.c
+	evergreen_exa.c evergreen_accel.c evergreen_shader.c evergreen_textured_videofuncs.c cayman_accel.c cayman_shader.c
 endif
 
 AM_CFLAGS = \
@@ -134,6 +134,9 @@ EXTRA_DIST = \
 	evergreen_reg_auto.h \
 	evergreen_shader.h \
 	evergreen_state.h \
+	cayman_reg.h \
+	cayman_reg_auto.h \
+	cayman_shader.h \
 	ati.h \
 	ativersion.h \
 	bicubic_table.h \

@@ -154,18 +154,11 @@ EVERGREENDisplayTexturedVideo(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     CLEAR (vs_const_conf);
     CLEAR (ps_const_conf);
 
-#if defined(XF86DRM_MODE)
-    if (info->cs) {
-	dst_obj.offset = 0;
-	src_obj.offset = 0;
-	dst_obj.bo = radeon_get_pixmap_bo(pPixmap);
-    } else
-#endif
-    {
-	dst_obj.offset = exaGetPixmapOffset(pPixmap) + info->fbLocation + pScrn->fbOffset;
-	src_obj.offset = pPriv->src_offset + info->fbLocation + pScrn->fbOffset;
-	dst_obj.bo = src_obj.bo = NULL;
-    }
+    dst_obj.offset = 0;
+    src_obj.offset = 0;
+    dst_obj.bo = radeon_get_pixmap_bo(pPixmap);
+    dst_obj.tiling_flags = radeon_get_pixmap_tiling(pPixmap);
+
     dst_obj.pitch = exaGetPixmapPitch(pPixmap) / (pPixmap->drawable.bitsPerPixel / 8);
 
     src_obj.pitch = pPriv->src_pitch;
@@ -174,6 +167,7 @@ EVERGREENDisplayTexturedVideo(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     src_obj.bpp = 16;
     src_obj.domain = RADEON_GEM_DOMAIN_VRAM | RADEON_GEM_DOMAIN_GTT;
     src_obj.bo = pPriv->src_bo[pPriv->currentBuffer];
+    src_obj.tiling_flags = 0;
 
     dst_obj.width = pPixmap->drawable.width;
     dst_obj.height = pPixmap->drawable.height;

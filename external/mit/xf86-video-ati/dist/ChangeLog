@@ -1,3 +1,311 @@
+commit 2fca40ea65d9f2a6f8451c324bb4b82786f34f76
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Thu May 26 12:52:21 2011 +1000
+
+    radeon: bump version for release of 6.14.2
+
+commit fab868c5f7d8cafdb0176d2751f216819a5ba66a
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed May 25 01:09:12 2011 -0400
+
+    EXA: make evergreen_fix_scissor_coordinates static
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit fe5c42f5155361006b687da824181418f688809f
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Tue May 24 22:32:01 2011 -0400
+
+    cayman: endian fixes for shaders
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 470ecd02347c32e79316046d01a7d5dad0e2fe99
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Tue May 24 18:31:47 2011 -0400
+
+    EXA/Xv: add workarounds for eg/cayman scissors bugs
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit b913e7ba2b60d47a6660699210cc3cf6f5dc52c2
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Tue May 24 18:02:52 2011 -0400
+
+    Revert "cayman: add scissors workaround."
+    
+    Needs a proper workaround for a hw bug.
+    
+    This reverts commit b77d374b0d11f48c33cfffdb4157c4ec4b05ea15.
+
+commit 82cb33c3f0e1ba802d7a94f3159b3c5c86cd4043
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed May 18 14:49:17 2011 +1000
+
+    cayman: enable all accel
+
+commit b77d374b0d11f48c33cfffdb4157c4ec4b05ea15
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue May 24 15:53:58 2011 +1000
+
+    cayman: add scissors workaround.
+    
+    wasted a lot of time getting to this.
+
+commit ffeab7a7058298e15294a3b2c740c731e36dda1d
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Mon Apr 18 18:16:51 2011 -0400
+
+    cayman: fix dword counts default state
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 3cbfae361bf5e779d3364f0f31cfd25bd0f59e65
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed Mar 2 20:48:19 2011 -0500
+
+    cayman: add spi state to default state
+    
+    changed in e3145801b80fd4be4cf770128876e86e89bda66f
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit b8ade97c9d0fa5aacb0e3166868bb72e9bc679a6
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed Mar 2 20:44:19 2011 -0500
+
+    cayman: first pass at exa/Xv shaders
+    
+    Main differences with evergreen:
+    - 4-way rather than 5-way
+    - END_OF_PROGRAM bit removed from CF istructions, use
+    CF_INST_END instead.
+    - MEGA_FETCH* fields removed from VTX commands
+    - no more VC, all fetches go through the TC
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 01b646ed800732985c1638b147716641a99082f9
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed Mar 2 20:39:38 2011 -0500
+
+    cayman: add a default state function
+    
+    The rest of the state functions can be shared
+    with evergreen.  I've noted where there are
+    differences.
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 42eecc6f4fb1570769490bdaeac06817c6c36a7e
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed Mar 2 20:20:56 2011 -0500
+
+    cayman: add 3D register headers
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit e1d28e011f4a5139cbc778973c63158ed2746716
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed Mar 2 20:13:50 2011 -0500
+
+    kms/cayman: stub out exa support
+    
+    Just fallbacks for now.
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 21e44a20b8b1b64079ee77f45aaa5010206ed7b6
+Author: Michel Dänzer <daenzer@vmware.com>
+Date:   Thu May 12 09:23:38 2011 +0200
+
+    UMS: Fix comparison of unsigned variable against < 0.
+    
+    Pointed out by clang:
+    
+    ../../src/radeon_crtc.c:242:18: error: comparison of unsigned expression < 0 is always false [-Werror,-Wtautological-compare]
+                            error = error < 0 ? 0xffffffff : error;
+                                    ~~~~~ ^ ~
+    
+    If a UMS regression is bisected to this commit, the assignment should probably
+    just be removed, as it's a no-op in the current form.
+
+commit 3b893d81982c9381393c92625e308541e0071b05
+Author: Michel Dänzer <daenzer@vmware.com>
+Date:   Fri May 13 09:10:02 2011 +0200
+
+    KMS: Fix output properties logic error.
+    
+    Pointed out by clang:
+    
+    ../../src/drmmode_display.c:1023:30: error: use of logical && with constant operand; switch to bitwise & or remove constant [-Werror,-Wconstant-logical-operand]
+                    if (props && (props->flags && DRM_MODE_PROP_ENUM)) {
+                                               ^  ~~~~~~~~~~~~~~~~~~
+    
+    Reviewed-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit f83d58cf5b33686139067f8f898b8e566ba5c253
+Author: Nicolas Kaiser <nikai@nikai.net>
+Date:   Fri May 13 00:56:31 2011 +0200
+
+    man: fix typos
+    
+    Signed-off-by: Nicolas Kaiser <nikai@nikai.net>
+
+commit 90abffbd30f44b9cf76a6e28103ddcb5419b4522
+Author: Ilija Hadzic <ihadzic@research.bell-labs.com>
+Date:   Fri May 6 09:45:23 2011 -0400
+
+    DRI2: fix high-crtc/vblank oversight/bug
+    
+    improvements to high-crtc handling done in
+    f0b7d7b449cc77bb2b281d81108507f8bc2e6018 introduced a bug that caused
+    the populate_vbl_request_type to never use the high-crtc field even
+    when it should. The reason is that the offending patch put the code
+    under #ifdef DRM_VBLANK_HIGH_CRTC_MASK which is not visible outside the
+    enum type, so #else was always taken in compilation type. This patch
+    fixes it by basing #ifdef on (pre-processor visible)
+    DRM_VBLANK_HIGH_CRTC_SHIFT constant
+    
+    Signed-off-by: Ilija Hadzic <ihadzic@research.bell-labs.com>
+
+commit 62a4cd180fe884dca24586d453395472516e6496
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed May 4 01:13:55 2011 -0400
+
+    fusion: fix tiling enable logic
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 76638ca687b02d3b1494b9868f817fd4fd892c64
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed May 4 01:06:22 2011 -0400
+
+    fusion: enable tiling if DFS works
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit a6d2dba6573a3512d550d7e442bf42ea03012bbc
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed May 4 10:44:43 2011 +1000
+
+    radeon: add add hw DFS support for fusion
+    
+    Fusion had a bug setting up the VM on earlier kernels so we need to work
+    around that and only enable accel on a new enough kernel.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit 859e052af49e68a826b77a9135c7f067dc331a06
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Tue May 3 15:15:04 2011 -0400
+
+    radeon: add some new pci ids
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 8f8bbf628c6eed037f57bc8c155f0ecdacbebad1
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Sun May 1 13:19:15 2011 -0400
+
+    man: add cayman to man page
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 903e90c31cf0319be9297529aa7b8daa1756cf63
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed Apr 20 03:10:08 2011 -0400
+
+    EXA/Xv: used cached bo tiling flags for accel setup on 6xx+
+    
+    This avoids calling into the kernel for each bo in the accel
+    code.  This is a follow on to:
+    cc7d1fa39da40a532fcdbe6c7924ca47a879e66a
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 982c22f16c8eeee9be81779fbfe17d8d3f9b6897
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Thu Apr 14 16:04:50 2011 -0400
+
+    R520: Fix textures larger than 2k
+    
+    Ported from the equivalent fix in Mesa.
+
+commit cc7d1fa39da40a532fcdbe6c7924ca47a879e66a
+Author: Michel Dänzer <daenzer@vmware.com>
+Date:   Mon Apr 4 17:37:12 2011 +0200
+
+    EXA: Cache BO tiling flags.
+    
+    Calling into the kernel every time is quite expensive, and nobody else should
+    ever change the tiling flags.
+    
+    There's still more to do along the same lines for >= R6xx.
+
+commit f0b7d7b449cc77bb2b281d81108507f8bc2e6018
+Author: Michel Dänzer <daenzer@vmware.com>
+Date:   Tue Apr 5 13:36:01 2011 +0200
+
+    DRI2: Some cleanups for the scheduling mess.
+    
+    * Fix build against libdrm that doesn't define *_VBLANK_HIGH_CRTC*.
+    * If we have more than two CRTCs but can't use DRM_VBLANK_HIGH_CRTC_MASK, don't
+      enable scheduling in the first place rather than relying on
+      DRM_VBLANK_SECONDARY magically doing something sensible for higher CRTCs.
+    * Only set up client state tracking when scheduling is enabled.
+    * Only declare pRADEONEnt when it's needed, and break long lines.
+
+commit 7acf9bc833de539fa2259a051c66a99445a54bc4
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Mon Apr 4 11:08:37 2011 -0400
+
+    radeon: add some additional ontario pci ids
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 0af6386f85a0f1ba14864a3334164733a10a6cb8
+Author: Ilija Hadzic <ihadzic@research.bell-labs.com>
+Date:   Thu Mar 24 13:33:27 2011 -0400
+
+    xf86-video-ati: (revised #2) add support for vblank on crtc > 1
+    
+    Hi Alex,
+    
+    Enclosed is a revised version of two patches sent on Mar 18 and Mar 22,
+    respectively. Details summarized in these two threads:
+    http://lists.freedesktop.org/archives/dri-devel/2011-March/009463.html
+    http://lists.freedesktop.org/archives/dri-devel/2011-March/009582.html
+    
+    This patch reconciles the DDX with the change in libdrm sent to this list
+    earlier today. Specifically, it refers to a symbol that has been renamed
+    from DRM_CAP_HIGH_CRTC to DRM_CAP_VBLANK_HIGH_CRTC. It *supersedes* the
+    previous patch (i.e. apply it to the master branch as it exists at the
+    time of this writing, not as an incremental patch to the one sent previously).
+    
+    Regards,
+    
+    Ilija
+    
+    Signed-off-by: Ilija Hadzic <ihadzic@research.bell-labs.com>
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit fe2e0ad3ffa58f40311319c950b842e2928a5740
+Author: matthew green <mrg@eterna.com.au>
+Date:   Mon Mar 21 12:17:58 2011 -0400
+
+    bug fix for r6xx/r7xx UMS
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 83978ad5fe37581e2b2f3fbd9c073d91b2ae1d50
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Thu Mar 17 19:07:43 2011 -0400
+
+    bump version post release
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
 commit 38d9368e59b2990bf32a028ece2132451b402350
 Author: Alex Deucher <alexdeucher@gmail.com>
 Date:   Thu Mar 17 18:59:55 2011 -0400

@@ -4688,6 +4688,7 @@
 #define R300_TX_FORMAT0_2				0x4488
 #       define R300_TXWIDTH_SHIFT                       0
 #       define R300_TXHEIGHT_SHIFT                      11
+#       define R300_TXDEPTH_SHIFT                       22
 #       define R300_NUM_LEVELS_SHIFT                    26
 #       define R300_NUM_LEVELS_MASK                     0x
 #       define R300_TXPROJECTED                         (1 << 30)
