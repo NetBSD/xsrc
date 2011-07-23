@@ -324,6 +324,8 @@ evergreen_set_clip_rect(ScrnInfoPtr pScrn, int id, int x1, int y1, int x2, int y
 void
 evergreen_set_default_state(ScrnInfoPtr pScrn);
 void
+cayman_set_default_state(ScrnInfoPtr pScrn);
+void
 evergreen_draw_auto(ScrnInfoPtr pScrn, draw_config_t *draw_conf);
 
 void evergreen_finish_op(ScrnInfoPtr pScrn, int vtx_size);

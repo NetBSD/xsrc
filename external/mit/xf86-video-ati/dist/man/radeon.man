@@ -193,6 +193,9 @@ Radeon HD 6570/6670
 .TP 12
 .B CAICOS
 Radeon HD 6450
+.TP 12
+.B CAYMAN
+Radeon HD 6950/6970/6990
 .PD
 .SH CONFIGURATION DETAILS
 Please refer to __xconfigfile__(__filemansuffix__) for general configuration
@@ -234,7 +237,7 @@ hardware acceleration.
 .TP
 .BI "Option \*qZaphodHeads\*q \*q" string \*q
 Specify the RandR output(s) to use with zaphod mode for a particular driver
-instance.  If you use this option you most use this option for all instances
+instance.  If you use this option you must use this option for all instances
 of the driver.
 .br
 For example:
@@ -352,7 +355,7 @@ The default is
 .BI "Option \*qBusType\*q \*q" string \*q
 Used to replace previous ForcePCIMode option.
 Should only be used when driver's bus detection is incorrect
-or you want to force a AGP card to PCI mode. You should NEVER force
+or you want to force an AGP card to PCI mode. You should NEVER force
 a PCI card to AGP bus.
 .br
 PCI    \-\- PCI bus
@@ -425,7 +428,7 @@ will assign the EDID from the file /tmp/edid1.bin to the output device
 VGA-0, and the EDID from the file /tmp/edid2.bin to the output device
 DVI-0 and force the DVI port to use the digital encoder.
 .br
-Note that a output name must always be specified,
+Note that an output name must always be specified,
 even if only one EDID is specified.
 .br
 .B
