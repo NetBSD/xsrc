@@ -122,7 +122,8 @@ static Bool ASTModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode);
 static void ASTInitVideo(ScreenPtr pScreen);
 static int  ASTPutImage( ScrnInfoPtr,
         short, short, short, short, short, short, short, short,
-        int, unsigned char*, short, short, Bool, RegionPtr, pointer);
+        int, unsigned char*, short, short, Bool, RegionPtr, pointer,
+	DrawablePtr);
 #endif
 
 /*
@@ -1862,7 +1863,8 @@ static int ASTPutImage(ScrnInfoPtr pScrn,
                           int id, unsigned char* buf,
                           short width, short height,
                           Bool sync,
-                          RegionPtr clipBoxes, pointer data
+                          RegionPtr clipBoxes, pointer data,
+			  DrawablePtr pDraw
 )
 {	
     ASTPtr pAST = ASTPTR(pScrn);
