@@ -1,5 +1,3 @@
-// $XKeyboardConfig$
-
 // Urdu keymap
 // Developed by:
 // Zaeem Arshad <zaeem@linux.net.pk>
@@ -8,12 +6,11 @@
 //Alt key combinations are yet to be put in. The unavailable keys are those which do not have a corresponding //glyph in unicode.
 
 // based on a keyboard map from an 'xkb/symbols/ur' file
-// $XFree86$
 
 partial default alphanumeric_keys
 xkb_symbols "urd-phonetic" {
 
-   name[Group1]= "Pakistan";
+   name[Group1]= "Urdu (Pakistan)";
 
    key <TLDE> {  [     0x100064b  ,       0x100007E, 0x100200C     ]     };
    key <AE01> {  [     0x1000031  ,       0x1000021      ]     };
@@ -76,7 +73,7 @@ xkb_symbols "urd-phonetic" {
 partial alphanumeric_keys
 xkb_symbols "urd-crulp" {
 
-   name[Group1]= "Pakistan - CRULP";
+   name[Group1]= "Urdu (Pakistan, CRULP)";
 // www.crulp.org phonetic v1.1
 
    key <TLDE> {  [     0x100007E  ,       0x100064B      ]     };
@@ -140,7 +137,7 @@ xkb_symbols "urd-crulp" {
 
 partial alphanumeric_keys
 xkb_symbols "urd-nla" {
-   name[Group1]= "Pakistan - NLA";
+   name[Group1]= "Urdu (Pakistan, NLA)";
 // www.nla.gov.pk
 
    key <TLDE> {  [     0x1000060  ,       0x100007E, 0x100200C     ]     };
@@ -202,7 +199,7 @@ xkb_symbols "urd-nla" {
 
 partial alphanumeric_keys
 xkb_symbols "snd" {
-   name[Group1]= "Pakistan - Sindhi";
+   name[Group1]= "Sindhi";
 // www.bhurgri.com
 
      key <TLDE> {  [       0x1002019,       0x1002018                 ]       };
@@ -263,7 +260,7 @@ xkb_symbols "snd" {
 
 partial alphanumeric_keys
 xkb_symbols "ara" {
-   name[Group1]= "Pakistan - Arabic";
+   name[Group1]= "Arabic (Pakistan)";
 
 // NOTES:
 //
@@ -334,7 +331,7 @@ xkb_symbols "olpc" {
 
    include "pk(ara)"
 
-   name[Group1]= "Pakistan";
+   name[Group1]= "Urdu (Pakistan)";
 
    // Keys '~' - '='
    key <TLDE> {  [ 0x1000654, 0x100064B ] };
