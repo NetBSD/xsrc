@@ -98,7 +98,7 @@ static int
 SupportedInterfaces(void)
 {
 #if defined(__NetBSD__)
-    return MSE_SERIAL | MSE_BUS | MSE_PS2 | MSE_AUTO;
+    return MSE_SERIAL | MSE_BUS | MSE_PS2 | MSE_AUTO | MSE_MISC;
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
     return MSE_SERIAL | MSE_BUS | MSE_PS2 | MSE_AUTO | MSE_MISC;
 #else
