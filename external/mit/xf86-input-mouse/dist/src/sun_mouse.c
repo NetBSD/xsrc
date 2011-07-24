@@ -54,7 +54,7 @@
 #include "xorg-server.h"
 #include "xf86.h"
 #include "xf86_OSlib.h"
-#include "xf86OSmouse.h"
+#include "mouse.h"
 #include "xisb.h"
 #include "mipointer.h"
 #include <sys/stropts.h>
@@ -205,83 +205,15 @@ vuidPreInit(InputInfoPtr pInfo, const char *protocol, int flags)
     VuidMsePtr pVuidMse;
     int buttons, i;
 
-    pVuidMse = xcalloc(sizeof(VuidMseRec), 1);
+    pVuidMse = calloc(sizeof(VuidMseRec), 1);
     if (pVuidMse == NULL) {
 	xf86Msg(X_ERROR, "%s: cannot allocate VuidMouseRec\n", pInfo->name);
-	xfree(pMse);
+	free(pMse);
 	return FALSE;
     }
 
-    pMse->protocol = protocol;
-    xf86Msg(X_CONFIG, "%s: Protocol: %s\n", pInfo->name, protocol);
-
-    /* Collect the options, and process the common options. */
-    xf86CollectInputOptions(pInfo, NULL, NULL);
-    xf86ProcessCommonOptions(pInfo, pInfo->options);
-
     pVuidMse->buffer = (unsigned char *)&pVuidMse->event;
     pVuidMse->strmod = xf86SetStrOption(pInfo->options, "StreamsModule", NULL);
-
-    /* Check if the device can be opened. */
-    pInfo->fd = xf86OpenSerial(pInfo->options);
-    if (pInfo->fd == -1) {
-	if (xf86GetAllowMouseOpenFail()) {
-	    xf86Msg(X_WARNING, "%s: cannot open input device\n", pInfo->name);
-	} else {
-	    xf86Msg(X_ERROR, "%s: cannot open input device\n", pInfo->name);
-	    xfree(pVuidMse->strmod);
-	    xfree(pVuidMse);
-	    xfree(pMse);
-	    return FALSE;
-	}
-    } else {
-	if (pVuidMse->strmod) {
-	    /* Check to see if module is already pushed */
-	    SYSCALL(i = ioctl(pInfo->fd, I_FIND, pVuidMse->strmod));
-
-	    if (i == 0) { /* Not already pushed */
-		SYSCALL(i = ioctl(pInfo->fd, I_PUSH, pVuidMse->strmod));
-		if (i < 0) {
-		    xf86Msg(X_ERROR,
-			"%s: cannot push module '%s' onto mouse device: %s\n",
-			pInfo->name, pVuidMse->strmod, strerror(errno));
-		    xf86CloseSerial(pInfo->fd);
-		    pInfo->fd = -1;
-		    xfree(pVuidMse->strmod);
-		    xfree(pVuidMse);
-		    xfree(pMse);
-		    return FALSE;
-		}
-	    }
-	}
-
-	buttons = xf86SetIntOption(pInfo->options, "Buttons", 0);
-	if (buttons == 0) {
-	    SYSCALL(i = ioctl(pInfo->fd, MSIOBUTTONS, &buttons));
-	    if (i == 0) {
-		pInfo->conf_idev->commonOptions =
-		    xf86ReplaceIntOption(pInfo->conf_idev->commonOptions,
-					 "Buttons", buttons);
-		xf86Msg(X_INFO, "%s: Setting Buttons option to \"%d\"\n",
-			pInfo->name, buttons);
-	    }
-	}
-
-	if (pVuidMse->strmod) {
-	    SYSCALL(i = ioctl(pInfo->fd, I_POP, pVuidMse->strmod));
-	    if (i == -1) {
-		xf86Msg(X_WARNING,
-			"%s: cannot pop module '%s' off mouse device: %s\n",
-			pInfo->name, pVuidMse->strmod, strerror(errno));
-	    }
-	}
-
-	xf86CloseSerial(pInfo->fd);
-	pInfo->fd = -1;
-    }
-
-    /* Process common mouse options (like Emulate3Buttons, etc). */
-    pMse->CommonOptions(pInfo);
 
     /* Setup the local procs. */
     pVuidMse->wrapped_device_control = pInfo->device_control;
@@ -297,7 +229,9 @@ vuidPreInit(InputInfoPtr pInfo, const char *protocol, int flags)
     pVuidMse->next = vuidMouseList; 
     vuidMouseList = pVuidMse;
 
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 12
     pInfo->flags |= XI86_CONFIGURED;
+#endif
     return TRUE;
 }
 
@@ -443,11 +377,7 @@ vuidReadInput(InputInfoPtr pInfo)
 
 	    /* force sending absolute resolution scaling ioctl */
 	    pVuidMse->absres.height = pVuidMse->absres.width = 0;
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
-	    ptrCurScreen = miPointerCurrentScreen();
-#else
 	    ptrCurScreen = miPointerGetScreen(pInfo->dev);
-#endif	    
 	    vuidMouseSendScreenSize(ptrCurScreen, pVuidMse);
 	}
 #endif
@@ -512,14 +442,8 @@ static void vuidMouseAdjustFrame(int index, int x, int y, int flags)
         pScrn->AdjustFrame = vuidMouseAdjustFrame;
       }
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
-      ptrCurScreen = miPointerCurrentScreen();
-#endif
-      
       for (m = vuidMouseList; m != NULL ; m = m->next) {
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 0
 	  ptrCurScreen = miPointerGetScreen(m->pInfo->dev);
-#endif
 	  if (ptrCurScreen == pScreen)
 	  {
 	      vuidMouseSendScreenSize(pScreen, m);
@@ -586,7 +510,7 @@ vuidMouseProc(DeviceIntPtr pPointer, int what)
 			xf86Msg(X_WARNING, "%s: cannot push module '%s' "
 				"onto mouse device: %s\n", pInfo->name,
 				pVuidMse->strmod, strerror(errno));
-			xfree(pVuidMse->strmod);
+			free(pVuidMse->strmod);
 			pVuidMse->strmod = NULL;
 		    }
 		}
@@ -686,16 +610,14 @@ solarisMouseAutoProbe(InputInfoPtr pInfo, const char **protocol,
 	/* Check to see if xorg.conf or HAL specified a device to use */
 	*device = xf86CheckStrOption(pInfo->options, "Device", NULL);
 	if (*device == NULL) {
-	    *device = xf86CheckStrOption(pInfo->conf_idev->commonOptions,
-					 "Device", NULL);
+	    *device = xf86CheckStrOption(pInfo->options, "Device", NULL);
 	}
     }
 
     if (*device != NULL) {
 	strmod = xf86CheckStrOption(pInfo->options, "StreamsModule", NULL);
 	if (strmod == NULL) {
-	    strmod = xf86CheckStrOption(pInfo->conf_idev->commonOptions,
-					"StreamsModule", NULL);
+	    strmod = xf86CheckStrOption(pInfo->options, "StreamsModule", NULL);
 	}
 	if (strmod) {
 	    /* if a device name is already known, and a StreamsModule is
@@ -754,13 +676,13 @@ SetupAuto(InputInfoPtr pInfo, int *protoPara)
 	/* probe to find device/protocol to use */
 	if (solarisMouseAutoProbe(pInfo, &pproto, &pdev) != FALSE) {
 	    /* Set the Device option. */
-	    pInfo->conf_idev->commonOptions =
-	     xf86AddNewOption(pInfo->conf_idev->commonOptions, "Device", pdev);
+	    pInfo->options =
+	     xf86AddNewOption(pInfo->options, "Device", pdev);
 	    xf86Msg(X_INFO, "%s: Setting Device option to \"%s\"\n",
 	      pInfo->name, pdev);
 	}
     } else if (pMse->protocolID == PROT_AUTO) {
-	pdev = xf86CheckStrOption(pInfo->conf_idev->commonOptions, 
+	pdev = xf86CheckStrOption(pInfo->options,
 		"Device", NULL);
 	solarisMouseAutoProbe(pInfo, &pproto, &pdev);
     }
@@ -775,8 +697,8 @@ FindDevice(InputInfoPtr pInfo, const char *protocol, int flags)
 
     if (solarisMouseAutoProbe(pInfo, &pproto, &pdev) != FALSE) {
 	/* Set the Device option. */
-	pInfo->conf_idev->commonOptions =
-	  xf86AddNewOption(pInfo->conf_idev->commonOptions, "Device", pdev);
+	pInfo->options =
+	  xf86AddNewOption(pInfo->options, "Device", pdev);
 	xf86Msg(X_INFO, "%s: Setting Device option to \"%s\"\n",
 	  pInfo->name, pdev);
     }
@@ -790,12 +712,12 @@ SupportedInterfaces(void)
     return MSE_SERIAL | MSE_BUS | MSE_PS2 | MSE_AUTO | MSE_XPS2 | MSE_MISC;
 }
 
-_X_EXPORT OSMouseInfoPtr
-xf86OSMouseInit(int flags)
+OSMouseInfoPtr
+OSMouseInit(int flags)
 {
     OSMouseInfoPtr p;
 
-    p = xcalloc(sizeof(OSMouseInfoRec), 1);
+    p = calloc(sizeof(OSMouseInfoRec), 1);
     if (!p)
 	return NULL;
     p->SupportedInterfaces = SupportedInterfaces;
