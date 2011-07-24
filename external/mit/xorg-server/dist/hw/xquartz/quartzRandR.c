@@ -40,6 +40,8 @@
 #include "quartz.h"
 #include "darwin.h"
 
+#include "X11Application.h"
+
 #include <AvailabilityMacros.h>
 
 #include <X11/extensions/randr.h>
@@ -346,6 +348,16 @@ static int QuartzRandRRegisterModeCallback (ScreenPtr pScreen,
 static Bool QuartzRandRSetMode(ScreenPtr pScreen, QuartzModeInfoPtr pMode, BOOL doRegister) {
     QuartzScreenPtr pQuartzScreen = QUARTZ_PRIV(pScreen);
     CGDirectDisplayID screenId = pQuartzScreen->displayIDs[0];
+    Bool captureDisplay = (pMode->refresh != FAKE_REFRESH_FULLSCREEN && pMode->refresh != FAKE_REFRESH_ROOTLESS);
+
+    if(XQuartzShieldingWindowLevel == 0 && captureDisplay) {
+        if(!X11ApplicationCanEnterRandR())
+            return FALSE;
+        CGCaptureAllDisplays();
+        XQuartzShieldingWindowLevel = CGShieldingWindowLevel(); // 2147483630
+        DEBUG_LOG("Display captured.  ShieldWindowID: %u, Shield level: %d\n",
+                  CGShieldingWindowID(screenId), XQuartzShieldingWindowLevel);
+    }
 
     if (pQuartzScreen->currentMode.ref && CFEqual(pMode->ref, pQuartzScreen->currentMode.ref)) {
         DEBUG_LOG("Requested RandR resolution matches current CG mode\n");
@@ -369,6 +381,11 @@ static Bool QuartzRandRSetMode(ScreenPtr pScreen, QuartzModeInfoPtr pMode, BOOL 
     pQuartzScreen->currentMode = *pMode;
     CFRetain(pQuartzScreen->currentMode.ref);
     
+    if(XQuartzShieldingWindowLevel != 0 && !captureDisplay) {
+        CGReleaseAllDisplays();
+        XQuartzShieldingWindowLevel = 0;
+    }
+
     return TRUE;
 }
 
@@ -395,16 +412,6 @@ static Bool QuartzRandRGetInfo (ScreenPtr pScreen, Rotation *rotations) {
 
     if (pQuartzScreen->displayCount == 0)
         return FALSE;
-
-    if (pQuartzScreen->displayCount > 1) {
-        /* RandR operations are not well-defined for an X11 screen spanning
-           multiple CG displays. Create two entries for the current virtual
-           resolution including/excluding the menu bar. */
-
-        QuartzRandRRegisterMode(pScreen, &pQuartzScreen->rootlessMode);
-        QuartzRandRRegisterMode(pScreen, &pQuartzScreen->fullscreenMode);
-        return TRUE;
-    }
 
     return QuartzRandREnumerateModes(pScreen, QuartzRandRRegisterModeCallback, NULL);
 }
@@ -438,18 +445,16 @@ static Bool QuartzRandRSetConfig (ScreenPtr           pScreen,
 static Bool _QuartzRandRUpdateFakeModes (ScreenPtr pScreen) {
     QuartzScreenPtr pQuartzScreen = QUARTZ_PRIV(pScreen);
 
-    if (pQuartzScreen->displayCount == 1) {
-        if(pQuartzScreen->fullscreenMode.ref)
-            CFRelease(pQuartzScreen->fullscreenMode.ref);
-        if(pQuartzScreen->currentMode.ref)
-            CFRelease(pQuartzScreen->currentMode.ref);
+    if(pQuartzScreen->fullscreenMode.ref)
+        CFRelease(pQuartzScreen->fullscreenMode.ref);
+    if(pQuartzScreen->currentMode.ref)
+        CFRelease(pQuartzScreen->currentMode.ref);
         
-        if (!QuartzRandRCopyCurrentModeInfo(pQuartzScreen->displayIDs[0],
-                                            &pQuartzScreen->fullscreenMode))
-            return FALSE;
+    if (!QuartzRandRCopyCurrentModeInfo(pQuartzScreen->displayIDs[0],
+                                        &pQuartzScreen->fullscreenMode))
+        return FALSE;
 
-        CFRetain(pQuartzScreen->fullscreenMode.ref);  /* This extra retain is for currentMode's copy */
-    } else {
+    if (pQuartzScreen->displayCount > 1) {
         pQuartzScreen->fullscreenMode.width = pScreen->width;
         pQuartzScreen->fullscreenMode.height = pScreen->height;
         if(XQuartzIsRootless)
@@ -467,6 +472,11 @@ static Bool _QuartzRandRUpdateFakeModes (ScreenPtr pScreen) {
     } else {
         pQuartzScreen->currentMode = pQuartzScreen->fullscreenMode;
     }
+
+    /* This extra retain is for currentMode's copy.
+     * fullscreen and rootless share a retain.
+     */
+    CFRetain(pQuartzScreen->currentMode.ref);
     
     DEBUG_LOG("rootlessMode: %d x %d\n", (int)pQuartzScreen->rootlessMode.width, (int)pQuartzScreen->rootlessMode.height);
     DEBUG_LOG("fullscreenMode: %d x %d\n", (int)pQuartzScreen->fullscreenMode.width, (int)pQuartzScreen->fullscreenMode.height);
