@@ -9,7 +9,7 @@ CONFOPT="${CONFOPT} --with-dtrace"
 
 # Parallel Make.  Change $MAKE if you don't have gmake installed
 MAKE="gnumake"
-MAKE_OPTS="-j10"
+MAKE_OPTS="-j4"
 
 #SCAN_BUILD="scan-build -v -V -o clang.d"
  
@@ -43,7 +43,7 @@ if false ; then
 	export ASCIIDOC=/opt/local/bin/asciidoc
 	export DOXYGEN=/opt/local/bin/doxygen
 	export FOP=/opt/local/bin/fop
-	export FOP_OPTS="-Xmx2048m"
+	export FOP_OPTS="-Xmx2048m -Djava.awt.headless=true"
 	export GROFF=/opt/local/bin/groff
 	export PS2PDF=/opt/local/bin/ps2pdf
 fi
@@ -62,7 +62,7 @@ docomp() {
 	autoreconf -fvi || die
 	${SCAN_BUILD} ./configure --prefix=${PREFIX} ${CONFOPT} --disable-dependency-tracking --enable-maintainer-mode --enable-xcsecurity --enable-record --disable-xevie "${@}" || die "Could not configure xserver"
 	${MAKE} clean || die "Unable to make clean"
-#	${SCAN_BUILD} ${MAKE} ${MAKE_OPTS} || die "Could not make xserver"
+	${SCAN_BUILD} ${MAKE} ${MAKE_OPTS} || die "Could not make xserver"
 }
 
 doinst() {

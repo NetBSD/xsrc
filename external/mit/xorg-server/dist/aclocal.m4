@@ -10027,7 +10027,7 @@ dnl DEALINGS IN THE SOFTWARE.
 # See the "minimum version" comment for each macro you use to see what 
 # version you require.
 m4_defun([XORG_MACROS_VERSION],[
-m4_define([vers_have], [1.11.0])
+m4_define([vers_have], [1.12.0])
 m4_define([maj_have], m4_substr(vers_have, 0, m4_index(vers_have, [.])))
 m4_define([maj_needed], m4_substr([$1], 0, m4_index([$1], [.])))
 m4_if(m4_cmp(maj_have, maj_needed), 0,,
@@ -10422,6 +10422,69 @@ AM_CONDITIONAL([HAVE_XMLTO_TEXT], [test $have_xmlto_text = yes])
 AM_CONDITIONAL([HAVE_XMLTO], [test "$have_xmlto" = yes])
 ]) # XORG_WITH_XMLTO
 
+# XORG_WITH_XSLTPROC([MIN-VERSION], [DEFAULT])
+# --------------------------------------------
+# Minimum version: 1.12.0
+# Minimum version for optional DEFAULT argument: 1.12.0
+#
+# XSLT (Extensible Stylesheet Language Transformations) is a declarative,
+# XML-based language used for the transformation of XML documents.
+# The xsltproc command line tool is for applying XSLT stylesheets to XML documents.
+# It is used under the cover by xmlto to generate html files from DocBook/XML.
+# The XSLT processor is often used as a standalone tool for transformations.
+# It should not be assumed that this tool is used only to work with documnetation.
+# When DEFAULT is not specified, --with-xsltproc assumes 'auto'.
+#
+# Interface to module:
+# HAVE_XSLTPROC: used in makefiles to conditionally generate documentation
+# XSLTPROC:	 returns the path of the xsltproc program found
+#		 returns the path set by the user in the environment
+# --with-xsltproc: 'yes' user instructs the module to use xsltproc
+#		  'no' user instructs the module not to use xsltproc
+# have_xsltproc: returns yes if xsltproc found in PATH or no
+#
+# If the user sets the value of XSLTPROC, AC_PATH_PROG skips testing the path.
+#
+AC_DEFUN([XORG_WITH_XSLTPROC],[
+AC_ARG_VAR([XSLTPROC], [Path to xsltproc command])
+m4_define([_defopt], m4_default([$2], [auto]))
+AC_ARG_WITH(xsltproc,
+	AS_HELP_STRING([--with-xsltproc],
+	   [Use xsltproc for the transformation of XML documents (default: ]_defopt[)]),
+	   [use_xsltproc=$withval], [use_xsltproc=]_defopt)
+m4_undefine([_defopt])
+
+if test "x$use_xsltproc" = x"auto"; then
+   AC_PATH_PROG([XSLTPROC], [xsltproc])
+   if test "x$XSLTPROC" = "x"; then
+        AC_MSG_WARN([xsltproc not found - cannot transform XML documents])
+	have_xsltproc=no
+   else
+        have_xsltproc=yes
+   fi
+elif test "x$use_xsltproc" = x"yes" ; then
+   AC_PATH_PROG([XSLTPROC], [xsltproc])
+   if test "x$XSLTPROC" = "x"; then
+        AC_MSG_ERROR([--with-xsltproc=yes specified but xsltproc not found in PATH])
+   fi
+   have_xsltproc=yes
+elif test "x$use_xsltproc" = x"no" ; then
+   if test "x$XSLTPROC" != "x"; then
+      AC_MSG_WARN([ignoring XSLTPROC environment variable since --with-xsltproc=no was specified])
+   fi
+   have_xsltproc=no
+else
+   AC_MSG_ERROR([--with-xsltproc expects 'yes' or 'no'])
+fi
+
+# Checking for minimum version is not implemented
+# but we want to keep the interface consistent with other commands
+m4_ifval([$1],[AC_MSG_WARN(Checking for MIN-VERSION is not implemented.)])
+
+AM_CONDITIONAL([HAVE_XSLTPROC], [test "$have_xsltproc" = yes])
+]) # XORG_WITH_XSLTPROC
+
+
 # XORG_WITH_ASCIIDOC([MIN-VERSION], [DEFAULT])
 # ----------------
 # Minimum version: 1.5.0
@@ -10801,12 +10864,12 @@ AM_CONDITIONAL([HAVE_PS2PDF], [test "$have_ps2pdf" = yes])
 # parm1:	specify the default value, yes or no.
 #
 AC_DEFUN([XORG_ENABLE_DOCS],[
-m4_define([default], m4_default([$1], [yes]))
+m4_define([docs_default], m4_default([$1], [yes]))
 AC_ARG_ENABLE(docs,
 	AS_HELP_STRING([--enable-docs],
-	   [Enable building the documentation (default: ]default[)]),
-	   [build_docs=$enableval], [build_docs=]default)
-m4_undefine([default])
+	   [Enable building the documentation (default: ]docs_default[)]),
+	   [build_docs=$enableval], [build_docs=]docs_default)
+m4_undefine([docs_default])
 AM_CONDITIONAL(ENABLE_DOCS, [test x$build_docs = xyes])
 AC_MSG_CHECKING([whether to build documentation])
 AC_MSG_RESULT([$build_docs])
@@ -10894,18 +10957,16 @@ AC_ARG_ENABLE(malloc0returnsnull,
 
 AC_MSG_CHECKING([whether malloc(0) returns NULL])
 if test "x$MALLOC_ZERO_RETURNS_NULL" = xauto; then
-	AC_RUN_IFELSE([
-char *malloc();
-char *realloc();
-char *calloc();
-main() {
+	AC_RUN_IFELSE([AC_LANG_PROGRAM([
+#include <stdlib.h>
+],[
     char *m0, *r0, *c0, *p;
     m0 = malloc(0);
     p = malloc(10);
     r0 = realloc(p,0);
-    c0 = calloc(0);
-    exit(m0 == 0 || r0 == 0 || c0 == 0 ? 0 : 1);
-}],
+    c0 = calloc(0,10);
+    exit((m0 == 0 || r0 == 0 || c0 == 0) ? 0 : 1);
+])],
 		[MALLOC_ZERO_RETURNS_NULL=yes],
 		[MALLOC_ZERO_RETURNS_NULL=no],
 		[MALLOC_ZERO_RETURNS_NULL=yes])
@@ -11185,32 +11246,28 @@ echo 'git directory not found: installing possibly empty changelog.' >&2)"
 AC_SUBST([CHANGELOG_CMD])
 ]) # XORG_CHANGELOG
 
-dnl $XdotOrg: lib/xtrans/xtrans.m4,v 1.6 2005/07/26 18:59:11 alanc Exp $
 dnl
-dnl Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
-dnl 
-dnl Permission to use, copy, modify, distribute, and sell this software and its
-dnl documentation for any purpose is hereby granted without fee, provided that
-dnl the above copyright notice appear in all copies and that both that
-dnl copyright notice and this permission notice appear in supporting
-dnl documentation.
-dnl 
-dnl The above copyright notice and this permission notice shall be included
-dnl in all copies or substantial portions of the Software.
-dnl 
-dnl THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-dnl OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-dnl MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-dnl IN NO EVENT SHALL THE OPEN GROUP BE LIABLE FOR ANY CLAIM, DAMAGES OR
-dnl OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-dnl ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-dnl OTHER DEALINGS IN THE SOFTWARE.
-dnl 
-dnl Except as contained in this notice, the name of the copyright holders shall
-dnl not be used in advertising or otherwise to promote the sale, use or
-dnl other dealings in this Software without prior written authorization
-dnl from the copyright holders.
-dnl 
+dnl Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+dnl
+dnl Permission is hereby granted, free of charge, to any person obtaining a
+dnl copy of this software and associated documentation files (the "Software"),
+dnl to deal in the Software without restriction, including without limitation
+dnl the rights to use, copy, modify, merge, publish, distribute, sublicense,
+dnl and/or sell copies of the Software, and to permit persons to whom the
+dnl Software is furnished to do so, subject to the following conditions:
+dnl
+dnl The above copyright notice and this permission notice (including the next
+dnl paragraph) shall be included in all copies or substantial portions of the
+dnl Software.
+dnl
+dnl THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+dnl IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+dnl FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+dnl THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+dnl LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+dnl FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+dnl DEALINGS IN THE SOFTWARE.
+dnl
 
 # XTRANS_TCP_FLAGS()
 # ------------------
