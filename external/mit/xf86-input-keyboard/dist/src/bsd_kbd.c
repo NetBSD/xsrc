@@ -25,11 +25,7 @@
 #include "xf86Xinput.h"
 #include "xf86OSKbd.h"
 #include "atKeynames.h"
-
-extern void KbdGetMapping(InputInfoPtr pInfo, KeySymsPtr pKeySyms,
-                          CARD8 *pModMap);
-
-extern Bool VTSwitchEnabled;
+#include "bsd_kbd.h"
 
 static KbdProtocolRec protocols[] = {
    {"standard", PROT_STD },
@@ -140,25 +136,6 @@ GetKbdLeds(InputInfoPtr pInfo)
 #endif
 
     return(leds);
-}
-
-static void
-SetKbdRepeat(InputInfoPtr pInfo, char rad)
-{
-    KbdDevPtr pKbd = (KbdDevPtr) pInfo->private;
-    switch (pKbd->consType) {
-
-#ifdef PCCONS_SUPPORT
-	case PCCONS:
-		break;
-#endif
-#if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
-	case SYSCONS:
-	case PCVT:
-		ioctl(pInfo->fd, KDSETRAD, rad);
-		break;
-#endif
-    }
 }
 
 static int
@@ -377,11 +354,10 @@ OpenKeyboard(InputInfoPtr pInfo)
 #endif
         default:
            xf86Msg(X_ERROR,"\"%s\" is not a valid keyboard protocol name\n", s);
-           xfree(s);
+           free(s);
            return FALSE;
     }
-    xf86Msg(X_CONFIG, "%s: Protocol: %s\n", pInfo->name, s);
-    xfree(s);
+    free(s);
 
     s = xf86SetStrOption(pInfo->options, "Device", NULL);
     if (s == NULL) {
@@ -398,19 +374,13 @@ OpenKeyboard(InputInfoPtr pInfo)
 	pInfo->fd = open(s, O_RDONLY | O_NONBLOCK | O_EXCL);
        if (pInfo->fd == -1) {
            xf86Msg(X_ERROR, "%s: cannot open \"%s\"\n", pInfo->name, s);
-           xfree(s);
+           free(s);
            return FALSE;
        }
        pKbd->isConsole = FALSE;
        pKbd->consType = xf86Info.consType;
-       xfree(s);
+       free(s);
     }
-
-#if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
-    if (pKbd->isConsole &&
-        ((pKbd->consType == SYSCONS) || (pKbd->consType == PCVT)))
-        pKbd->vtSwitchSupported = TRUE;
-#endif
 
 #ifdef WSCONS_SUPPORT
     if( prot == PROT_WSCONS) {
@@ -442,9 +412,9 @@ OpenKeyboard(InputInfoPtr pInfo)
                break;
 #endif
 #ifdef WSKBD_TYPE_SUN5
-     case WSKBD_TYPE_SUN5:
-	     xf86Msg(X_PROBED, "Keyboard type: Sun5\n");
-	     break;
+           case WSKBD_TYPE_SUN5:
+               printWsType("Sun5", pInfo->name);
+               break;
 #endif
            default:
                xf86Msg(X_ERROR, "%s: Unsupported wskbd type \"%d\"",
@@ -468,16 +438,13 @@ xf86OSKbdPreInit(InputInfoPtr pInfo)
     pKbd->Bell		= SoundBell;
     pKbd->SetLeds	= SetKbdLeds;
     pKbd->GetLeds	= GetKbdLeds;
-    pKbd->SetKbdRepeat	= SetKbdRepeat;
     pKbd->KbdGetMapping	= KbdGetMapping;
 
     pKbd->RemapScanCode = NULL;
 
     pKbd->OpenKeyboard = OpenKeyboard;
-    pKbd->vtSwitchSupported = FALSE;
-    pKbd->CustomKeycodes = FALSE;
-    
-    pKbd->private = xcalloc(sizeof(BsdKbdPrivRec), 1);
+
+    pKbd->private = calloc(sizeof(BsdKbdPrivRec), 1);
     if (pKbd->private == NULL) {
        xf86Msg(X_ERROR,"can't allocate keyboard OS private data\n");
        return FALSE;
