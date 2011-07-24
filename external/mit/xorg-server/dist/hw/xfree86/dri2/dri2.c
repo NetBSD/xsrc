@@ -640,6 +640,17 @@ DRI2CanFlip(DrawablePtr pDraw)
     if (!RegionEqual(&pWin->clipList, &pRoot->winSize))
 	return FALSE;
 
+    /* Does the window match the pixmap exactly? */
+    if (pDraw->x != 0 ||
+	pDraw->y != 0 ||
+#ifdef COMPOSITE
+	pDraw->x != pWinPixmap->screen_x ||
+	pDraw->y != pWinPixmap->screen_y ||
+#endif
+	pDraw->width != pWinPixmap->drawable.width ||
+	pDraw->height != pWinPixmap->drawable.height)
+	return FALSE;
+
     return TRUE;
 }
 
@@ -828,11 +839,14 @@ DRI2SwapBuffers(ClientPtr client, DrawablePtr pDraw, CARD64 target_msc,
 	 * is moved to a crtc with a lower refresh rate, or a crtc that just
 	 * got enabled.
 	 */
-	if (!(*ds->GetMSC)(pDraw, &ust, &current_msc))
-	    pPriv->last_swap_target = 0;
+	if (ds->GetMSC) {
+	    if (!(*ds->GetMSC)(pDraw, &ust, &current_msc))
+		pPriv->last_swap_target = 0;
 
-	if (current_msc < pPriv->last_swap_target)
-	    pPriv->last_swap_target = current_msc;
+	    if (current_msc < pPriv->last_swap_target)
+		pPriv->last_swap_target = current_msc;
+
+	}
 
 	/*
 	 * Swap target for this swap is last swap target + swap interval since

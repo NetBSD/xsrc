@@ -8,6 +8,8 @@ Rickard E. Faith
 
 29 June 2004 (created 25 July 2001)
 
+Abstract
+
 This document covers the motivation, background, design, and implementation of
 the distributed multihead X (DMX) system. It is a living document and describes
 the current design and implementation details of the DMX system. As the project
@@ -600,10 +602,12 @@ InitInput() usually has implementation specific code to determine which input
 devices are available. For each input device it will be using, it calls
 AddInputDevice():
 
-               This DIX function allocates the device structure, registers a
-AddInputDevice callback function (which handles device init, close, on and
-()             off), and returns the input handle, which can be treated as
-               opaque. It is called once for each input device.
+AddInputDevice()
+
+    This DIX function allocates the device structure, registers a callback
+    function (which handles device init, close, on and off), and returns the
+    input handle, which can be treated as opaque. It is called once for each
+    input device.
 
 Once input handles for core keyboard and core pointer devices have been
 obtained from AddInputDevice(), they are registered as core devices by calling
@@ -612,18 +616,21 @@ called once. If both core devices are not registered, then the X server will
 exit with a fatal error when it attempts to start the input devices in
 InitAndStartDevices(), which is called directly after InitInput() (see below).
 
-Register           These DIX functions take a handle returned from
-{Pointer,Keyboard} AddInputDevice() and initialize the core input device fields
-Device()           in inputInfo, and initialize the input processing and grab
-                   functions for each core input device.
+Register{Pointer,Keyboard}Device()
+
+    These DIX functions take a handle returned from AddInputDevice() and
+    initialize the core input device fields in inputInfo, and initialize the
+    input processing and grab functions for each core input device.
 
 The core pointer device is then registered with the miPointer code (which does
 the high level cursor handling). While this registration is not necessary for
 correct miPointer operation in the current XFree86 code, it is still done
 mostly for compatibility reasons.
 
-miRegisterPointerDevice This MI function registers the core pointer's input
-()                      handle with with the miPointer code.
+miRegisterPointerDevice()
+
+    This MI function registers the core pointer's input handle with with the
+    miPointer code.
 
 The final part of InitInput() is the initialization of the input event queue
 handling. In most cases, the event queue handling provided in the MI layer is
@@ -632,9 +639,11 @@ some special cases related to the XInput extension and the XFree86-specific DGA
 extension. For our purposes, the MI event queue handling should be suitable. It
 is initialized by calling mieqInit():
 
-mieqInit This MI function initializes the MI event queue for the core devices,
-()       and is passed the public component of the input handles for the two
-         core devices.
+mieqInit()
+
+    This MI function initializes the MI event queue for the core devices, and
+    is passed the public component of the input handles for the two core
+    devices.
 
 If a wakeup handler is required to deliver synchronous input events, it can be
 registered here by calling the DIX function RegisterBlockAndWakeupHandlers().
@@ -655,32 +664,37 @@ with a fatal error.
 Each registered device is initialized by calling its callback (dev->deviceProc)
 with the DEVICE_INIT argument:
 
-              This function initializes the device structs with core
-              information relevant to the device.
+(*dev->deviceProc)(dev, DEVICE_INIT)
 
-              For pointer devices, this means specifying the number of buttons,
-              default button mapping, the function used to get motion events
-(*dev->       (usually miPointerGetMotionEvents()), the function used to change
-deviceProc)   /control the core pointer motion parameters (acceleration and
-(dev,         threshold), and the motion buffer size.
-DEVICE_INIT)
-              For keyboard devices, this means specifying the keycode range,
-              default keycode to keysym mapping, default modifier mapping, and
-              the functions used to sound the keyboard bell and modify/control
-              the keyboard parameters (LEDs, bell pitch and duration, key
-              click, which keys are auto-repeating, etc).
+    This function initializes the device structs with core information relevant
+    to the device.
+
+    For pointer devices, this means specifying the number of buttons, default
+    button mapping, the function used to get motion events (usually
+    miPointerGetMotionEvents()), the function used to change/control the core
+    pointer motion parameters (acceleration and threshold), and the motion
+    buffer size.
+
+    For keyboard devices, this means specifying the keycode range, default
+    keycode to keysym mapping, default modifier mapping, and the functions used
+    to sound the keyboard bell and modify/control the keyboard parameters
+    (LEDs, bell pitch and duration, key click, which keys are auto-repeating,
+    etc).
 
 Each initialized device is enabled by calling EnableDevice():
 
-             EnableDevice() calls the device callback with DEVICE_ON:
+EnableDevice()
 
-             (*dev->       This typically opens and initializes the relevant
-EnableDevice deviceProc)   physical device, and when appropriate, registers the
-()           (dev,         device's file descriptor (or equivalent) as a valid
-             DEVICE_ON)    input source.
+    EnableDevice() calls the device callback with DEVICE_ON:
 
-             EnableDevice() then adds the device handle to the X server's
-             global list of enabled devices.
+    (*dev->deviceProc)(dev, DEVICE_ON)
+
+        This typically opens and initializes the relevant physical device, and
+        when appropriate, registers the device's file descriptor (or
+        equivalent) as a valid input source.
+
+    EnableDevice() then adds the device handle to the X server's global list of
+    enabled devices.
 
 InitAndStartDevices() then verifies that a valid core keyboard and pointer has
 been initialized and enabled. It returns failure if either are missing.
@@ -700,17 +714,23 @@ handling).
 
 Events are queued by calling mieqEnqueue():
 
-mieqEnqueue This MI function is used to add input events to the event queue. It
-()          is simply passed the event to be queued.
+mieqEnqueue()
+
+    This MI function is used to add input events to the event queue. It is
+    simply passed the event to be queued.
 
 The cursor position should be updated when motion events are enqueued, by
 calling either miPointerAbsoluteCursor() or miPointerDeltaCursor():
 
-miPointerAbsoluteCursor This MI function is used to move the cursor to the
-()                      absolute coordinates provided.
+miPointerAbsoluteCursor()
 
-miPointerDeltaCursor()  This MI function is used to move the cursor relative to
-                        its current position.
+    This MI function is used to move the cursor to the absolute coordinates
+    provided.
+
+miPointerDeltaCursor()
+
+    This MI function is used to move the cursor relative to its current
+    position.
 
 ProcessInputEvents()
 
@@ -722,16 +742,18 @@ position. It may also do other DDX-specific event processing.
 Enqueued events are processed by mieqProcessInputEvents() and passed to the DIX
 layer for transmission to clients:
 
-                       This function processes each event in the event queue,
-mieqProcessInputEvents and passes it to the device's input processing function.
-()                     The DIX layer provides default functions to do this
-                       processing, and they handle the task of getting the
-                       events passed back to the relevant clients.
+mieqProcessInputEvents()
 
-                       This function resynchronized the cursor position with
-miPointerUpdate()      the new pointer position. It also takes care of moving
-                       the cursor between screens when needed in multi-head
-                       configurations.
+    This function processes each event in the event queue, and passes it to the
+    device's input processing function. The DIX layer provides default
+    functions to do this processing, and they handle the task of getting the
+    events passed back to the relevant clients.
+
+miPointerUpdate()
+
+    This function resynchronized the cursor position with the new pointer
+    position. It also takes care of moving the cursor between screens when
+    needed in multi-head configurations.
 
 DisableDevice()
 
@@ -745,9 +767,11 @@ called for core input devices.
 
 DisableDevice() calls the device's callback function with DEVICE_OFF:
 
-(*dev->          This typically closes the relevant physical device, and when
-deviceProc)(dev, appropriate, unregisters the device's file descriptor (or
-DEVICE_OFF)      equivalent) as a valid input source.
+(*dev->deviceProc)(dev, DEVICE_OFF)
+
+    This typically closes the relevant physical device, and when appropriate,
+    unregisters the device's file descriptor (or equivalent) as a valid input
+    source.
 
 DisableDevice() then removes the device handle from the X server's global list
 of enabled devices.
@@ -762,11 +786,12 @@ generation to close all input devices.
 
 CloseDevice() calls the device's callback function with DEVICE_CLOSE:
 
-(*dev->        This typically closes the relevant physical device, and when
-deviceProc)    appropriate, unregisters the device's file descriptor (or
-(dev,          equivalent) as a valid input source. If any device specific data
-DEVICE_CLOSE)  structures were allocated when the device was initialized, they
-               are freed here.
+(*dev->deviceProc)(dev, DEVICE_CLOSE)
+
+    This typically closes the relevant physical device, and when appropriate,
+    unregisters the device's file descriptor (or equivalent) as a valid input
+    source. If any device specific data structures were allocated when the
+    device was initialized, they are freed here.
 
 CloseDevice() then frees the data structures that were allocated for the device
 when it was registered/initialized.
@@ -848,29 +873,30 @@ values).
 The screen init function usually calls several functions to perform certain
 screen initialization functions. They are described below:
 
-                         The DDX layer's ScreenInit() function usually calls
-                         another layer's ScreenInit() function (e.g.,
-                         miScreenInit() or fbScreenInit()) to initialize the
-                         fallbacks that the DDX driver does not specifically
-                         handle.
+{mi,*fb}ScreenInit()
 
-{mi,*fb}ScreenInit()     After calling another layer's ScreenInit() function,
-                         any screen-specific functions either wrap or replace
-                         the other layer's function pointers. If a function is
-                         to be wrapped, each of the old function pointers from
-                         the other layer are stored in a screen private area.
-                         Common functions to wrap are CloseScreen() and
-                         SaveScreen().
+    The DDX layer's ScreenInit() function usually calls another layer's
+    ScreenInit() function (e.g., miScreenInit() or fbScreenInit()) to
+    initialize the fallbacks that the DDX driver does not specifically handle.
 
-miInitializeBackingStore This MI function initializes the screen's backing
-()                       storage functions, which are used to save areas of
-                         windows that are currently covered by other windows.
+    After calling another layer's ScreenInit() function, any screen-specific
+    functions either wrap or replace the other layer's function pointers. If a
+    function is to be wrapped, each of the old function pointers from the other
+    layer are stored in a screen private area. Common functions to wrap are
+    CloseScreen() and SaveScreen().
 
-                         This MI function initializes the MI cursor display
-                         structures and function pointers. If a hardware cursor
-miDCInitialize()         is used, the DDX layer's ScreenInit() function will
-                         wrap additional screen and the MI cursor display
-                         function pointers.
+miInitializeBackingStore()
+
+    This MI function initializes the screen's backing storage functions, which
+    are used to save areas of windows that are currently covered by other
+    windows.
+
+miDCInitialize()
+
+    This MI function initializes the MI cursor display structures and function
+    pointers. If a hardware cursor is used, the DDX layer's ScreenInit()
+    function will wrap additional screen and the MI cursor display function
+    pointers.
 
 Another common task for ScreenInit() function is to initialize the output
 device state. For example, in the XFree86 X server, the ScreenInit() function
@@ -919,60 +945,64 @@ requests.
 The Xnest server implements all of the standard input and output initialization
 steps outlined above.
 
-            Xnest takes its configuration information from command line
-            arguments via ddxProcessArguments(). This information includes the
-            real X server display to connect to, its default visual class, the
-            screen depth, the Xnest window's geometry, etc. Xnest then connects
-            to the real X server and gathers visual, colormap, depth and pixmap
-InitOutput  information about that server's display, creates a window on that
-()          server, which will be used as the root window for Xnest.
+InitOutput()
 
-            Next, Xnest initializes its internal data structures and uses the
-            data from the real X server's pixmaps to initialize its own pixmap
-            formats. Finally, it calls AddScreen(xnestOpenScreen, argc, argv)
-            to initialize each of its screens.
+    Xnest takes its configuration information from command line arguments via
+    ddxProcessArguments(). This information includes the real X server display
+    to connect to, its default visual class, the screen depth, the Xnest
+    window's geometry, etc. Xnest then connects to the real X server and
+    gathers visual, colormap, depth and pixmap information about that server's
+    display, creates a window on that server, which will be used as the root
+    window for Xnest.
 
-            Xnest's ScreenInit() function is called xnestOpenScreen(). This
-            function initializes its screen's depth and visual information, and
-            then calls miScreenInit() to set up the default screen functions.
-ScreenInit  It then calls miInitializeBackingStore() and miDCInitialize() to
-()          initialize backing store and the software cursor. Finally, it
-            replaces many of the screen functions with its own functions that
-            repackage and send the requests to the real X server to which Xnest
-            is attached.
+    Next, Xnest initializes its internal data structures and uses the data from
+    the real X server's pixmaps to initialize its own pixmap formats. Finally,
+    it calls AddScreen(xnestOpenScreen, argc, argv) to initialize each of its
+    screens.
 
-            This function frees its internal data structure allocations. Since
-CloseScreen it replaces instead of wrapping screen functions, there are no
-()          function pointers to unwrap. This can potentially lead to problems
-            during server regeneration.
+ScreenInit()
 
-            The GC operations in Xnest are very simple since they leave all of
-            the drawing to the real X server to which Xnest is attached. Each
-            of the GCOps takes the request and sends it to the real X server
-            using standard Xlib calls. For example, the X application issues a
-            XDrawLines() call. This function turns into a protocol request to
-            Xnest, which calls the xnestPolylines() function through Xnest's
-            GCOps function pointer table. The xnestPolylines() function is only
-            a single line, which calls XDrawLines() using the same arguments
-            that were passed into it. Other GCOps functions are very similar.
-            Two exceptions to the simple GCOps functions described above are
-            the image functions and the BLT operations.
+    Xnest's ScreenInit() function is called xnestOpenScreen(). This function
+    initializes its screen's depth and visual information, and then calls
+    miScreenInit() to set up the default screen functions. It then calls
+    miInitializeBackingStore() and miDCInitialize() to initialize backing store
+    and the software cursor. Finally, it replaces many of the screen functions
+    with its own functions that repackage and send the requests to the real X
+    server to which Xnest is attached.
 
-GC          The image functions, GetImage() and PutImage(), must use a
-operations  temporary image to hold the image to be put of the image that was
-            just grabbed from the screen while it is in transit to the real X
-            server or the client. When the image has been transmitted, the
-            temporary image is destroyed.
+CloseScreen()
 
-            The BLT operations, CopyArea() and CopyPlane(), handle not only the
-            copy function, which is the same as the simple cases described
-            above, but also the graphics exposures that result when the GC's
-            graphics exposure bit is set to True. Graphics exposures are
-            handled in a helper function, xnestBitBlitHelper(). This function
-            collects the exposure events from the real X server and, if any
-            resulting in regions being exposed, then those regions are passed
-            back to the MI layer so that it can generate exposure events for
-            the X application.
+    This function frees its internal data structure allocations. Since it
+    replaces instead of wrapping screen functions, there are no function
+    pointers to unwrap. This can potentially lead to problems during server
+    regeneration.
+
+GC operations
+
+    The GC operations in Xnest are very simple since they leave all of the
+    drawing to the real X server to which Xnest is attached. Each of the GCOps
+    takes the request and sends it to the real X server using standard Xlib
+    calls. For example, the X application issues a XDrawLines() call. This
+    function turns into a protocol request to Xnest, which calls the
+    xnestPolylines() function through Xnest's GCOps function pointer table. The
+    xnestPolylines() function is only a single line, which calls XDrawLines()
+    using the same arguments that were passed into it. Other GCOps functions
+    are very similar. Two exceptions to the simple GCOps functions described
+    above are the image functions and the BLT operations.
+
+    The image functions, GetImage() and PutImage(), must use a temporary image
+    to hold the image to be put of the image that was just grabbed from the
+    screen while it is in transit to the real X server or the client. When the
+    image has been transmitted, the temporary image is destroyed.
+
+    The BLT operations, CopyArea() and CopyPlane(), handle not only the copy
+    function, which is the same as the simple cases described above, but also
+    the graphics exposures that result when the GC's graphics exposure bit is
+    set to True. Graphics exposures are handled in a helper function,
+    xnestBitBlitHelper(). This function collects the exposure events from the
+    real X server and, if any resulting in regions being exposed, then those
+    regions are passed back to the MI layer so that it can generate exposure
+    events for the X application.
 
 The Xnest server takes its input from the X server to which it is connected.
 When the mouse is in the Xnest server's window, keyboard and mouse events are
@@ -990,19 +1020,21 @@ video memory and rotated framebuffers.
 
 There are two main entry points to the shadow framebuffer code:
 
-shadowAlloc   This function allocates the in memory copy of the framebuffer of
-(width,       size width*height*bpp. It returns a pointer to that memory, which
-height, bpp)  will be used by the framebuffer ScreenInit() code during the
-              screen's initialization.
+shadowAlloc(width, height, bpp)
 
-              This function initializes the shadow framebuffer layer. It wraps
-              several screen drawing functions, and registers a block handler
-shadowInit    that will update the screen. The updateProc is a function that
-(pScreen,     will copy the damaged regions to the screen, and the windowProc
-updateProc,   is a function that is used when the entire linear video memory
-windowProc)   range cannot be accessed simultaneously so that only a window
-              into that memory is available (e.g., when using the VGA
-              aperture).
+    This function allocates the in memory copy of the framebuffer of size
+    width*height*bpp. It returns a pointer to that memory, which will be used
+    by the framebuffer ScreenInit() code during the screen's initialization.
+
+shadowInit(pScreen, updateProc, windowProc)
+
+    This function initializes the shadow framebuffer layer. It wraps several
+    screen drawing functions, and registers a block handler that will update
+    the screen. The updateProc is a function that will copy the damaged regions
+    to the screen, and the windowProc is a function that is used when the
+    entire linear video memory range cannot be accessed simultaneously so that
+    only a window into that memory is available (e.g., when using the VGA
+    aperture).
 
 The shadow framebuffer code keeps track of the damaged area of each screen by
 calculating the bounding box of all drawing operations that have occurred since
@@ -1035,111 +1067,80 @@ The following is a code-level description of how Xinerama functions.
 Note: Because the Xinerama extension was originally called the PanoramiX
 extension, many of the Xinerama functions still have the PanoramiX prefix.
 
-                               PanoramiXExtensionInit() is a device-independent
-                               extension function that is called at the start
-                               of each server generation from InitExtensions(),
-                               which is called from the X server's main()
-                               function after all output devices have been
-                               initialized, but before any input devices have
-                               been initialized.
+PanoramiXExtensionInit()
 
-                               PanoramiXNumScreens is set to the number of
-                               physical screens. If only one physical screen is
-                               present, the extension is disabled, and
-                               PanoramiXExtensionInit() returns without doing
-                               anything else.
+    PanoramiXExtensionInit() is a device-independent extension function that is
+    called at the start of each server generation from InitExtensions(), which
+    is called from the X server's main() function after all output devices have
+    been initialized, but before any input devices have been initialized.
 
-                               The Xinerama extension is registered by calling
-                               AddExtension().
+    PanoramiXNumScreens is set to the number of physical screens. If only one
+    physical screen is present, the extension is disabled, and
+    PanoramiXExtensionInit() returns without doing anything else.
 
-                               GC and Screen private indexes are allocated, and
-                               both GC and Screen private areas are allocated
-                               for each physical screen. These hold
-                               Xinerama-specific per-GC and per-Screen data.
-                               Each screen's CreateGC and CloseScreen functions
-                               are wrapped by XineramaCreateGC() and
-                               XineramaCloseScreen() respectively. Some new
-                               resource classes are created for Xinerama
-                               drawables and GCs, and resource types for
-PanoramiXExtensionInit()       Xinerama windows, pixmaps and colormaps.
+    The Xinerama extension is registered by calling AddExtension().
 
-                               A region (PanoramiXScreenRegion) is initialized
-                               to be the union of the screen regions. The
-                               relative positioning information for the
-                               physical screens is taken from the ScreenRec x
-                               and y members, which the DDX layer must
-                               initialize in InitOutput(). The bounds of the
-                               combined screen is also calculated
-                               (PanoramiXPixWidth and PanoramiXPixHeight).
+    GC and Screen private indexes are allocated, and both GC and Screen private
+    areas are allocated for each physical screen. These hold Xinerama-specific
+    per-GC and per-Screen data. Each screen's CreateGC and CloseScreen
+    functions are wrapped by XineramaCreateGC() and XineramaCloseScreen()
+    respectively. Some new resource classes are created for Xinerama drawables
+    and GCs, and resource types for Xinerama windows, pixmaps and colormaps.
 
-                               The DIX layer has a list of function pointers
-                               (ProcVector[]) that holds the entry points for
-                               the functions that process core protocol
-                               requests. The requests that Xinerama must
-                               intercept and break up into physical
-                               screen-specific requests are wrapped. The
-                               original set is copied to SavedProcVector[]. The
-                               types of requests intercepted are Window
-                               requests, GC requests, colormap requests,
-                               drawing requests, and some geometry-related
-                               requests. This wrapping allows the bulk of the
-                               protocol request processing to be handled
-                               transparently to the DIX layer. Some operations
-                               cannot be dealt with in this way and are handled
-                               with Xinerama-specific code within the DIX
-                               layer.
+    A region (PanoramiXScreenRegion) is initialized to be the union of the
+    screen regions. The relative positioning information for the physical
+    screens is taken from the ScreenRec x and y members, which the DDX layer
+    must initialize in InitOutput(). The bounds of the combined screen is also
+    calculated (PanoramiXPixWidth and PanoramiXPixHeight).
 
-                               PanoramiXConsolidate() is a device-independent
-                               extension function that is called directly from
-                               the X server's main() function after extensions
-                               and input/output devices have been initialized,
-                               and before the root windows are defined and
-                               initialized.
+    The DIX layer has a list of function pointers (ProcVector[]) that holds the
+    entry points for the functions that process core protocol requests. The
+    requests that Xinerama must intercept and break up into physical
+    screen-specific requests are wrapped. The original set is copied to
+    SavedProcVector[]. The types of requests intercepted are Window requests,
+    GC requests, colormap requests, drawing requests, and some geometry-related
+    requests. This wrapping allows the bulk of the protocol request processing
+    to be handled transparently to the DIX layer. Some operations cannot be
+    dealt with in this way and are handled with Xinerama-specific code within
+    the DIX layer.
 
-                               This function finds the set of depths
-PanoramiXConsolidate()         (PanoramiXDepths[]) and visuals
-                               (PanoramiXVisuals[]) common to all of the
-                               physical screens. PanoramiXNumDepths is set to
-                               the number of common depths, and
-                               PanoramiXNumVisuals is set to the number of
-                               common visuals. Resources are created for the
-                               single root window and the default colormap.
-                               Each of these resources has per-physical screen
-                               entries.
+PanoramiXConsolidate()
 
-                               PanoramiXConsolidate() is a device-independent
-                               extension function that is called directly from
-                               the X server's main() function after the
-                               per-physical screen root windows are created. It
-                               is called instead of the standard DIX
-                               CreateConnectionBlock() function. If this
-                               function returns FALSE, the X server exits with
-                               a fatal error. This function will return FALSE
-                               if no common depths were found in
-                               PanoramiXConsolidate(). With no common depths,
-                               Xinerama mode is not possible.
+    PanoramiXConsolidate() is a device-independent extension function that is
+    called directly from the X server's main() function after extensions and
+    input/output devices have been initialized, and before the root windows are
+    defined and initialized.
 
-                               The connection block holds the information that
-                               clients get when they open a connection to the X
-                               server. It includes information such as the
-PanoramiXCreateConnectionBlock supported pixmap formats, number of screens and
-()                             the sizes, depths, visuals, default colormap
-                               information, etc, for each of the screens (much
-                               of information that xdpyinfo shows). The
-                               connection block is initialized with the
-                               combined single screen values that were
-                               calculated in the above two functions.
+    This function finds the set of depths (PanoramiXDepths[]) and visuals
+    (PanoramiXVisuals[]) common to all of the physical screens.
+    PanoramiXNumDepths is set to the number of common depths, and
+    PanoramiXNumVisuals is set to the number of common visuals. Resources are
+    created for the single root window and the default colormap. Each of these
+    resources has per-physical screen entries.
 
-                               The Xinerama extension allows the registration
-                               of connection block callback functions. The
-                               purpose of these is to allow other extensions to
-                               do processing at this point. These callbacks can
-                               be registered by calling
-                               XineramaRegisterConnectionBlockCallback() from
-                               the other extension's ExtensionInit() function.
-                               Each registered connection block callback is
-                               called at the end of
-                               PanoramiXCreateConnectionBlock().
+PanoramiXCreateConnectionBlock()
+
+    PanoramiXConsolidate() is a device-independent extension function that is
+    called directly from the X server's main() function after the per-physical
+    screen root windows are created. It is called instead of the standard DIX
+    CreateConnectionBlock() function. If this function returns FALSE, the X
+    server exits with a fatal error. This function will return FALSE if no
+    common depths were found in PanoramiXConsolidate(). With no common depths,
+    Xinerama mode is not possible.
+
+    The connection block holds the information that clients get when they open
+    a connection to the X server. It includes information such as the supported
+    pixmap formats, number of screens and the sizes, depths, visuals, default
+    colormap information, etc, for each of the screens (much of information
+    that xdpyinfo shows). The connection block is initialized with the combined
+    single screen values that were calculated in the above two functions.
+
+    The Xinerama extension allows the registration of connection block callback
+    functions. The purpose of these is to allow other extensions to do
+    processing at this point. These callbacks can be registered by calling
+    XineramaRegisterConnectionBlockCallback() from the other extension's
+    ExtensionInit() function. Each registered connection block callback is
+    called at the end of PanoramiXCreateConnectionBlock().
 
 Xinerama-specific changes to the DIX code
 
@@ -2168,14 +2169,20 @@ Most of these extensions are documented in the X11R6 source tree. Further,
 several original papers exist that this author was unable to locate -- for
 completeness and historical interest, citations are provide:
 
-XRECORD         Martha Zimet. Extending X For Recording. 8th Annual X Technical
-                Conference Boston, MA January 24-26, 1994.
+XRECORD
 
-DEC-XTRAP       Dick Annicchiarico, Robert Chesler, Alan Jamison. XTrap
-                Architecture. Digital Equipment Corporation, July 1991.
+    Martha Zimet. Extending X For Recording. 8th Annual X Technical Conference
+    Boston, MA January 24-26, 1994.
 
-XTestExtension1 Larry Woestman. X11 Input Synthesis Extension Proposal. Hewlett
-                Packard, November 1991.
+DEC-XTRAP
+
+    Dick Annicchiarico, Robert Chesler, Alan Jamison. XTrap Architecture.
+    Digital Equipment Corporation, July 1991.
+
+XTestExtension1
+
+    Larry Woestman. X11 Input Synthesis Extension Proposal. Hewlett Packard,
+    November 1991.
 
 MIT-MISC (not supported)
 

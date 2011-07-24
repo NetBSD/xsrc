@@ -62,6 +62,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <IOKit/pwr_mgt/IOPMLib.h>
+#include <pthread.h>
+#include <signal.h>
 
 #include <rootlessCommon.h>
 #include <Xplugin.h>
@@ -79,7 +81,8 @@ Bool XQuartzRootlessDefault = TRUE;
 Bool XQuartzIsRootless = TRUE;
 Bool XQuartzServerVisible = FALSE;
 Bool XQuartzFullscreenMenu = FALSE;
-Bool XQuartzUseSysBeep = FALSE;
+
+int32_t XQuartzShieldingWindowLevel = 0;
 
 /*
 ===========================================================================
@@ -143,6 +146,26 @@ void QuartzInitOutput(
     int argc,
     char **argv )
 {
+    /* For XQuartz, we want to just use the default signal handler to work better with CrashTracer */
+    signal(SIGSEGV, SIG_DFL);
+    signal(SIGILL, SIG_DFL);
+#ifdef SIGEMT
+    signal(SIGEMT, SIG_DFL);
+#endif
+    signal(SIGFPE, SIG_DFL);
+#ifdef SIGBUS
+    signal(SIGBUS, SIG_DFL);
+#endif
+#ifdef SIGSYS
+    signal(SIGSYS, SIG_DFL);
+#endif
+#ifdef SIGXCPU
+    signal(SIGXCPU, SIG_DFL);
+#endif
+#ifdef SIGXFSZ
+    signal(SIGXFSZ, SIG_DFL);
+#endif
+
     if (!RegisterBlockAndWakeupHandlers(QuartzBlockHandler,
                                         QuartzWakeupHandler,
                                         NULL))
@@ -244,6 +267,43 @@ void QuartzUpdateScreens(void) {
     DeliverEvents(pRoot, &e, 1, NullWindow);
 
     quartzProcs->UpdateScreen(pScreen);
+
+    /* Tell RandR about the new size, so new connections get the correct info */
+    RRScreenSizeNotify(pScreen);
+}
+
+static void pokeActivityCallback(CFRunLoopTimerRef timer, void *info) {
+    UpdateSystemActivity(OverallAct);
+}
+
+static void QuartzScreenSaver(int state) {
+    static CFRunLoopTimerRef pokeActivityTimer = NULL;
+    static CFRunLoopTimerContext pokeActivityContext = { 0, NULL, NULL, NULL, NULL };
+    static pthread_mutex_t pokeActivityMutex = PTHREAD_MUTEX_INITIALIZER;
+
+    pthread_mutex_lock(&pokeActivityMutex);
+    
+    if(state) {
+        if(pokeActivityTimer == NULL)
+            goto QuartzScreenSaverEnd;
+
+        CFRunLoopTimerInvalidate(pokeActivityTimer);
+        CFRelease(pokeActivityTimer);
+        pokeActivityTimer = NULL;
+    } else {
+        if(pokeActivityTimer != NULL)
+            goto QuartzScreenSaverEnd;
+        
+        pokeActivityTimer = CFRunLoopTimerCreate(NULL, CFAbsoluteTimeGetCurrent(), 30, 0, 0, pokeActivityCallback, &pokeActivityContext);
+        if(pokeActivityTimer == NULL) {
+            ErrorF("Unable to create pokeActivityTimer.\n");
+            goto QuartzScreenSaverEnd;
+        }
+
+        CFRunLoopAddTimer(CFRunLoopGetMain(), pokeActivityTimer, kCFRunLoopCommonModes);
+    }
+QuartzScreenSaverEnd:
+    pthread_mutex_unlock(&pokeActivityMutex);
 }
 
 void QuartzShowFullscreen(int state) {
@@ -255,6 +315,8 @@ void QuartzShowFullscreen(int state) {
         ErrorF("QuartzShowFullscreen called while in rootless mode.\n");
         return;
     }
+    
+    QuartzScreenSaver(!state);
     
     if(XQuartzFullscreenVisible == state)
         return;
@@ -408,4 +470,14 @@ void QuartzCopyDisplayIDs(ScreenPtr pScreen,
     pQuartzScreen->displayIDs = malloc(size);
     memcpy(pQuartzScreen->displayIDs, displayIDs, size);
     pQuartzScreen->displayCount = displayCount;
+}
+
+void NSBeep(void);
+void DDXRingBell(
+    int volume,         // volume is % of max
+    int pitch,          // pitch is Hz
+    int duration)       // duration is milliseconds
+{
+    if (volume)
+        NSBeep();
 }
