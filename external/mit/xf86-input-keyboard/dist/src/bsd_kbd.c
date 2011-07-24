@@ -435,11 +435,13 @@ OpenKeyboard(InputInfoPtr pInfo)
     }
 #endif
 
+#if 0	/* no more vtSwitchSupported in xf86-input-keyboard-1.6.0 */
 #if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT) || defined (WSCONS_SUPPORT)
     if ((pKbd->isConsole &&
          ((pKbd->consType == SYSCONS) || (pKbd->consType == PCVT))) ||
 	(pKbd->consType == WSCONS))
         pKbd->vtSwitchSupported = TRUE;
+#endif
 #endif
 
     return TRUE;
