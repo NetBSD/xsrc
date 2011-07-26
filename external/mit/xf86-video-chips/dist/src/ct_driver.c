@@ -102,13 +102,16 @@
 /* All drivers implementing backing store need this */
 #include "mibstore.h"
 
+/* mibank.h is no more */
+#if 0
 /* All drivers using the mi banking wrapper need this */
 #if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #define USE_MIBANK
 #endif
 
-#if defined(USE_MIBANK) || defined(HAVE_ISA)
+#if defined(USE_MIBANK)
 #include "mibank.h"
+#endif
 #endif
 
 /* All drivers using the mi colormap manipulation need this */
@@ -4077,7 +4080,7 @@ CHIPSScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     cPtr->HWCursorShown = FALSE;
 
-#if defined(USE_MIBANK) || defined(HAVE_ISA)
+#if defined(USE_MIBANK)
     if (!(cPtr->Flags & ChipsLinearSupport)) {
 	miBankInfoPtr pBankInfo;
 
