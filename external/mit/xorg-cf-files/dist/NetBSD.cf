@@ -596,11 +596,11 @@ InstallManPageAliasesBase(file,destdir,aliases)
 # define BuildXInputLib          YES
 #endif
 
-
-/* was !defined(SparcArchitecture) */
-#if defined(i386Architecture) || defined(Arm32Architecture) || defined(AlphaArchitecture) || defined(PpcArchitecture) || defined(AMD64Architecture)
-# include <xorg.cf>
-#endif
+/*
+ * Always include xorg.cf for GccAliasingArgs,
+ * regardless of server support on this plattform
+ */
+#include <xorg.cf>
 
 /*
  * Definitions for the SUN server on NetBSD/sparc
