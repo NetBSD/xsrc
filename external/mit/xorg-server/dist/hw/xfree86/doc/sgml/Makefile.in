@@ -36,6 +36,10 @@
 #  NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 #  CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+# The doc_sources variable contains one or more DocBook/XML source file.
+# The generated documents will NOT be installed in $(docdir),
+# The DocBook/XML files will always be included in the tarball
+
 #
 # Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
 #
@@ -59,12 +63,11 @@
 # DEALINGS IN THE SOFTWARE.
 #
 
-# This file is included by Makefile.am in subdirectories that have
-# DocBook XML documentation files.
-#
-# No files are automatically distributed or installed by this subset of rules
-# Any files to be distributed or installed would be listed in the including
-# Makefile.am
+# This file provides pattern rules to generate html/pdf/txt from DocBook/XML
+# A stylesheet is used if xorg-sgml-doctools is installed
+# This file is included by xmlrules-inst.in for installable user's documentation
+# It is included by xmlrules-noinst for non installable developer's documentation
+# If the server version or release date changes, autogen && make
 
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
@@ -85,17 +88,18 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-DIST_COMMON = $(srcdir)/../../../../doc/xml/xmlrules.in \
-	$(srcdir)/Makefile.am $(srcdir)/Makefile.in
-@HAVE_STYLESHEETS_TRUE@am__append_1 = -m $(XSL_STYLESHEET)
-@HAVE_STYLESHEETS_TRUE@am__append_2 = xorg.css
-@HAVE_XMLTO_TEXT_TRUE@@HAVE_XMLTO_TRUE@am__append_3 = $(TXT_FILES)
-@HAVE_XMLTO_TRUE@am__append_4 = $(HTML_FILES)
-@HAVE_FOP_TRUE@@HAVE_XMLTO_TRUE@am__append_5 = $(PDF_FILES)
+DIST_COMMON = $(am__dist_noinst_DATA_DIST) $(srcdir)/Makefile.am \
+	$(srcdir)/Makefile.in $(top_srcdir)/doc/xml/xmlrules-noinst.in \
+	$(top_srcdir)/doc/xml/xmlrules.in
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_FOP_TRUE@@HAVE_XMLTO_TRUE@am__append_1 = $(doc_sources:.xml=.pdf)
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TEXT_TRUE@@HAVE_XMLTO_TRUE@am__append_2 = $(doc_sources:.xml=.txt)
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_STYLESHEETS_TRUE@@HAVE_XMLTO_TRUE@am__append_3 = -m $(XSL_STYLESHEET) \
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_STYLESHEETS_TRUE@@HAVE_XMLTO_TRUE@	--stringparam html.stylesheet=$(STYLESHEET_SRCDIR)/xorg.css
+
 subdir = hw/xfree86/doc/sgml
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_define_dir.m4 \
-	$(top_srcdir)/m4/dolt.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/ax_tls.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -117,7 +121,8 @@ am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
 am__v_at_0 = @
 SOURCES =
 DIST_SOURCES =
-DATA = $(noinst_DATA)
+am__dist_noinst_DATA_DIST = DESIGN.xml
+DATA = $(dist_noinst_DATA) $(noinst_DATA)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 ADMIN_MAN_DIR = @ADMIN_MAN_DIR@
@@ -174,7 +179,6 @@ DMXXIEXAMPLES_DEP_CFLAGS = @DMXXIEXAMPLES_DEP_CFLAGS@
 DMXXIEXAMPLES_DEP_LIBS = @DMXXIEXAMPLES_DEP_LIBS@
 DMXXMUEXAMPLES_DEP_CFLAGS = @DMXXMUEXAMPLES_DEP_CFLAGS@
 DMXXMUEXAMPLES_DEP_LIBS = @DMXXMUEXAMPLES_DEP_LIBS@
-DOLT_BASH = @DOLT_BASH@
 DOXYGEN = @DOXYGEN@
 DRI2PROTO_CFLAGS = @DRI2PROTO_CFLAGS@
 DRI2PROTO_LIBS = @DRI2PROTO_LIBS@
@@ -208,6 +212,7 @@ GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_LIBS = @GLIB_LIBS@
 GLX_ARCH_DEFINES = @GLX_ARCH_DEFINES@
 GLX_DEFINES = @GLX_DEFINES@
+GLX_TLS = @GLX_TLS@
 GL_CFLAGS = @GL_CFLAGS@
 GL_LIBS = @GL_LIBS@
 GREP = @GREP@
@@ -243,8 +248,6 @@ LIB_MAN_DIR = @LIB_MAN_DIR@
 LIB_MAN_SUFFIX = @LIB_MAN_SUFFIX@
 LIPO = @LIPO@
 LN_S = @LN_S@
-LTCOMPILE = @LTCOMPILE@
-LTCXXCOMPILE = @LTCXXCOMPILE@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAIN_LIB = @MAIN_LIB@
@@ -301,6 +304,7 @@ SHA1_LIBS = @SHA1_LIBS@
 SHELL = @SHELL@
 SOLARIS_ASM_CFLAGS = @SOLARIS_ASM_CFLAGS@
 SOLARIS_INOUT_ARCH = @SOLARIS_INOUT_ARCH@
+STRICT_CFLAGS = @STRICT_CFLAGS@
 STRIP = @STRIP@
 STYLESHEET_SRCDIR = @STYLESHEET_SRCDIR@
 SYSCONFDIR = @SYSCONFDIR@
@@ -439,24 +443,22 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-XML_FILES = DESIGN.xml
-TXT_FILES = $(XML_FILES:%.xml=%.txt)
-HTML_FILES = $(XML_FILES:%.xml=%.html)
-PDF_FILES = $(XML_FILES:%.xml=%.pdf)
-BUILT_DOC_FILES = $(am__append_2) $(am__append_3) $(am__append_4) \
-	$(am__append_5)
-SUFFIXES = .xml .txt .html .pdf
-XML_ENT_DIR = $(abs_top_builddir)/doc/xml
-XMLTO_FLAGS = --searchpath $(XML_ENT_DIR) $(am__append_1)
-CLEAN_DOC_FILES = $(TXT_FILES) $(HTML_FILES) $(PDF_FILES) xorg.css
-@ENABLE_DEVEL_DOCS_TRUE@noinst_DATA = $(BUILT_DOC_FILES)
-CLEANFILES = $(CLEAN_DOC_FILES)
-EXTRA_DIST = $(XML_FILES)
+doc_sources = DESIGN.xml
+@ENABLE_DEVEL_DOCS_TRUE@dist_noinst_DATA = $(doc_sources)
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@noinst_DATA = $(doc_sources:.xml=.html) \
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@	$(am__append_1) \
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@	$(am__append_2)
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@CLEANFILES = $(noinst_DATA)
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@XML_ENT_DIR = $(abs_top_builddir)/doc/xml
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@SUFFIXES = .xml .txt .html .pdf
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@XMLTO_FLAGS = --searchpath \
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@	$(XML_ENT_DIR) \
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@	$(am__append_3)
 all: all-am
 
 .SUFFIXES:
 .SUFFIXES: .xml .txt .html .pdf
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(srcdir)/../../../../doc/xml/xmlrules.in $(am__configure_deps)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(top_srcdir)/doc/xml/xmlrules-noinst.in $(top_srcdir)/doc/xml/xmlrules.in $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -639,23 +641,16 @@ uninstall-am:
 	mostlyclean-libtool pdf pdf-am ps ps-am uninstall uninstall-am
 
 
-@HAVE_STYLESHEETS_TRUE@xorg.css: $(STYLESHEET_SRCDIR)/xorg.css
-@HAVE_STYLESHEETS_TRUE@	$(AM_V_GEN)cp -pf $(STYLESHEET_SRCDIR)/xorg.css $@
-@HAVE_XMLTO_TEXT_TRUE@@HAVE_XMLTO_TRUE@.xml.txt:
-@HAVE_XMLTO_TEXT_TRUE@@HAVE_XMLTO_TRUE@	@rm -f $@
-@HAVE_XMLTO_TEXT_TRUE@@HAVE_XMLTO_TRUE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) txt $<
-@HAVE_XMLTO_TRUE@.xml.html:
-@HAVE_XMLTO_TRUE@	@rm -f $@
-@HAVE_XMLTO_TRUE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) xhtml-nochunks $<
-@HAVE_FOP_TRUE@@HAVE_XMLTO_TRUE@.xml.pdf:
-@HAVE_FOP_TRUE@@HAVE_XMLTO_TRUE@	@rm -f $@
-@HAVE_FOP_TRUE@@HAVE_XMLTO_TRUE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) --with-fop pdf $<
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@%.txt: %.xml $(XML_ENT_DIR)/xserver.ent
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) txt $<
 
-# All the files we build depend on the entities
-$(BUILT_DOC_FILES): $(XML_ENT_DIR)/xserver.ent
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@%.html: %.xml $(XML_ENT_DIR)/xserver.ent
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) xhtml-nochunks $<
 
-$(XML_ENT_DIR)/xserver.ent:
-	(cd $(XML_ENT_DIR) && $(MAKE) $(AM_MAKEFLAGS) $(@F))
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@%.pdf: %.xml $(XML_ENT_DIR)/xserver.ent
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) --with-fop pdf $<
+
+# Developer's documentation is not installed
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

@@ -221,11 +221,16 @@ DRI2AddDrawableRef(DRI2DrawablePtr pPriv, XID id, XID dri2_id,
     if (ref == NULL)
 	return BadAlloc;
 	
-    if (!AddResource(dri2_id, dri2DrawableRes, pPriv))
+    if (!AddResource(dri2_id, dri2DrawableRes, pPriv)) {
+	free(ref);
 	return BadAlloc;
+    }
     if (!DRI2LookupDrawableRef(pPriv, id))
-	if (!AddResource(id, dri2DrawableRes, pPriv))
+	if (!AddResource(id, dri2DrawableRes, pPriv)) {
+	    FreeResourceByType(dri2_id, dri2DrawableRes, TRUE);
+	    free(ref);
 	    return BadAlloc;
+        }
 
     ref->id = id;
     ref->dri2_id = dri2_id; 
@@ -403,7 +408,7 @@ do_get_buffers(DrawablePtr pDraw, int *width, int *height,
 	&& (pDraw->height == pPriv->height)
 	&& (pPriv->serialNumber == DRI2DrawableSerial(pDraw));
 
-    buffers = malloc((count + 1) * sizeof(buffers[0]));
+    buffers = calloc((count + 1), sizeof(buffers[0]));
 
     for (i = 0; i < count; i++) {
 	const unsigned attachment = *(attachments++);
