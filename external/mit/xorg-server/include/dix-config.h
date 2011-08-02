@@ -352,7 +352,7 @@
 #define XORG_VERSION_CURRENT (((1) * 10000000) + ((10) * 100000) + ((3) * 1000) + 0)
 
 /* Xorg release date */
-#define XORG_DATE "2010-10-30"
+#define XORG_DATE "2011-07-08"
 
 /* Build Xv Extension */
 #define XvExtension 1
