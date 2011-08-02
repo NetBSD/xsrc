@@ -52,6 +52,7 @@
 #include "mipointer.h"
 #include "xserver-properties.h"
 #include "exevents.h"
+#include "inpututils.h"
 
 #include "modinit.h"
 
@@ -84,26 +85,6 @@ static int XTestSwapFakeInput(
         xReq * /* req */
         );
 
-static DISPATCH_PROC(ProcXTestCompareCursor);
-static DISPATCH_PROC(ProcXTestDispatch);
-static DISPATCH_PROC(ProcXTestFakeInput);
-static DISPATCH_PROC(ProcXTestGetVersion);
-static DISPATCH_PROC(ProcXTestGrabControl);
-static DISPATCH_PROC(SProcXTestCompareCursor);
-static DISPATCH_PROC(SProcXTestDispatch);
-static DISPATCH_PROC(SProcXTestFakeInput);
-static DISPATCH_PROC(SProcXTestGetVersion);
-static DISPATCH_PROC(SProcXTestGrabControl);
-
-void
-XTestExtensionInit(INITARGS)
-{
-    AddExtension(XTestExtensionName, 0, 0,
-            ProcXTestDispatch, SProcXTestDispatch,
-            NULL, StandardMinorOpcode);
-
-    xtest_evlist = InitEventList(GetMaximumEventsNum());
-}
 
 static int
 ProcXTestGetVersion(ClientPtr client)
@@ -173,6 +154,7 @@ ProcXTestFakeInput(ClientPtr client)
     WindowPtr root;
     Bool extension = FALSE;
     deviceValuator *dv = NULL;
+    ValuatorMask mask;
     int valuators[MAX_VALUATORS] = {0};
     int numValuators = 0;
     int firstValuator = 0;
@@ -392,10 +374,7 @@ ProcXTestFakeInput(ClientPtr client)
             if (!dev->valuator)
                 return BadDevice;
 
-            /* broken lib, XI events have root uninitialized */
-            if (extension || ev->u.keyButtonPointer.root == None)
-                root = GetCurrentRootWindow(dev);
-            else
+            if (!(extension || ev->u.keyButtonPointer.root == None))
             {
                 rc = dixLookupWindow(&root, ev->u.keyButtonPointer.root,
                                      client, DixGetAttrAccess);
@@ -433,14 +412,14 @@ ProcXTestFakeInput(ClientPtr client)
 
     switch(type) {
         case MotionNotify:
-            nevents = GetPointerEvents(xtest_evlist, dev, type, 0, flags,
-                            firstValuator, numValuators, valuators);
+            valuator_mask_set_range(&mask, firstValuator, numValuators, valuators);
+            nevents = GetPointerEvents(xtest_evlist, dev, type, 0, flags, &mask);
             break;
         case ButtonPress:
         case ButtonRelease:
+            valuator_mask_set_range(&mask, firstValuator, numValuators, valuators);
             nevents = GetPointerEvents(xtest_evlist, dev, type, ev->u.u.detail,
-                                       flags, firstValuator,
-                                       numValuators, valuators);
+                                       flags, &mask);
             break;
         case KeyPress:
         case KeyRelease:
@@ -699,3 +678,12 @@ GetXTestDevice(DeviceIntPtr master)
     return NULL;
 }
 
+void
+XTestExtensionInit(INITARGS)
+{
+    AddExtension(XTestExtensionName, 0, 0,
+            ProcXTestDispatch, SProcXTestDispatch,
+            NULL, StandardMinorOpcode);
+
+    xtest_evlist = InitEventList(GetMaximumEventsNum());
+}

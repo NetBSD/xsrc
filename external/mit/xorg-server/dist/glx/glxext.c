@@ -39,7 +39,6 @@
 #include <registry.h>
 #include "privates.h"
 #include <os.h>
-#include "g_disptab.h"
 #include "unpack.h"
 #include "glxutil.h"
 #include "glxext.h"
@@ -58,7 +57,6 @@ __GLXcontext *__glXContextList;
 */
 RESTYPE __glXContextRes;
 RESTYPE __glXDrawableRes;
-RESTYPE __glXSwapBarrierRes;
 
 /*
 ** Reply for most singles.
@@ -126,49 +124,34 @@ static Bool DrawableGone(__GLXdrawable *glxPriv, XID xid)
 {
     __GLXcontext *c, *next;
 
-    /* If this drawable was created using glx 1.3 drawable
-     * constructors, we added it as a glx drawable resource under both
-     * its glx drawable ID and it X drawable ID.  Remove the other
-     * resource now so we don't a callback for freed memory. */
-    if (glxPriv->drawId != glxPriv->pDraw->id) {
-	if (xid == glxPriv->drawId)
-	    FreeResourceByType(glxPriv->pDraw->id, __glXDrawableRes, TRUE);
-	else
-	    FreeResourceByType(glxPriv->drawId, __glXDrawableRes, TRUE);
+    if (glxPriv->type == GLX_DRAWABLE_WINDOW) {
+        /* If this was created by glXCreateWindow, free the matching resource */
+        if (glxPriv->drawId != glxPriv->pDraw->id) {
+            if (xid == glxPriv->drawId)
+                FreeResourceByType(glxPriv->pDraw->id, __glXDrawableRes, TRUE);
+            else
+                FreeResourceByType(glxPriv->drawId, __glXDrawableRes, TRUE);
+        }
+        /* otherwise this window was implicitly created by MakeCurrent */
     }
 
     for (c = glxAllContexts; c; c = next) {
 	next = c->next;
 	if (c->isCurrent && (c->drawPriv == glxPriv || c->readPriv == glxPriv)) {
-	    int i;
-
 	    (*c->loseCurrent)(c);
 	    c->isCurrent = GL_FALSE;
 	    if (c == __glXLastContext)
 		__glXFlushContextCache();
-
-	    for (i = 1; i < currentMaxClients; i++) {
-		if (clients[i]) {
-		    __GLXclientState *cl = glxGetClient(clients[i]);
-
-		    if (cl->inUse) {
-			int j;
-
-			for (j = 0; j < cl->numCurrentContexts; j++) {
-			    if (cl->currentContexts[j] == c)
-				cl->currentContexts[j] = NULL;
-			}
-		    }
-		}
-	    }
 	}
 	if (c->drawPriv == glxPriv)
 	    c->drawPriv = NULL;
 	if (c->readPriv == glxPriv)
 	    c->readPriv = NULL;
-	if (!c->idExists && !c->isCurrent)
-	    __glXFreeContext(c);
     }
+
+    /* drop our reference to any backing pixmap */
+    if (glxPriv->type == GLX_DRAWABLE_PIXMAP)
+        glxPriv->pDraw->pScreen->DestroyPixmap((PixmapPtr)glxPriv->pDraw);
 
     glxPriv->destroy(glxPriv);
 
@@ -228,19 +211,6 @@ GLboolean __glXFreeContext(__GLXcontext *cx)
     return GL_TRUE;
 }
 
-extern RESTYPE __glXSwapBarrierRes;
-
-static int SwapBarrierGone(int screen, XID drawable)
-{
-    __GLXscreen *pGlxScreen = glxGetScreen(screenInfo.screens[screen]);
-
-    if (pGlxScreen->swapBarrierFuncs) {
-        pGlxScreen->swapBarrierFuncs->bindSwapBarrierFunc(screen, drawable, 0);
-    }
-    FreeResourceByType(drawable, __glXSwapBarrierRes, FALSE);
-    return True;
-}
-
 /************************************************************************/
 
 /*
@@ -298,8 +268,6 @@ glxClientCallback (CallbackListPtr	*list,
     NewClientInfoRec	*clientinfo = (NewClientInfoRec *) data;
     ClientPtr		pClient = clientinfo->client;
     __GLXclientState	*cl = glxGetClient(pClient);
-    __GLXcontext	*cx;
-    int i;
 
     switch (pClient->clientState) {
     case ClientStateRunning:
@@ -313,18 +281,8 @@ glxClientCallback (CallbackListPtr	*list,
 	break;
 
     case ClientStateGone:
-	for (i = 0; i < cl->numCurrentContexts; i++) {
-	    cx = cl->currentContexts[i];
-	    if (cx) {
-		cx->isCurrent = GL_FALSE;
-		if (!cx->idExists)
-		    __glXFreeContext(cx);
-	    }
-	}
-
 	free(cl->returnBuf);
 	free(cl->largeCmdBuf);
-	free(cl->currentContexts);
 	free(cl->GLClientextensions);
 	break;
 
@@ -358,9 +316,7 @@ void GlxExtensionInit(void)
 					    "GLXContext");
     __glXDrawableRes = CreateNewResourceType((DeleteType)DrawableGone,
 					     "GLXDrawable");
-    __glXSwapBarrierRes = CreateNewResourceType((DeleteType)SwapBarrierGone,
-						"GLXSwapBarrier");
-    if (!__glXContextRes || !__glXDrawableRes || !__glXSwapBarrierRes)
+    if (!__glXContextRes || !__glXDrawableRes)
 	return;
 
     if (!dixRegisterPrivateKey(&glxClientPrivateKeyRec, PRIVATE_CLIENT, sizeof (__GLXclientState)))
