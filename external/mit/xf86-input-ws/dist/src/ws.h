@@ -16,9 +16,6 @@
 
 #include <dev/wscons/wsconsio.h>
 
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 3
-#define HAVE_PROPERTIES 1
-#endif
 
 /* #undef DEBUG */
 #define DEBUG
@@ -44,7 +41,6 @@ typedef struct WSDevice {
 	int swap_axes;
 	int raw;
 	int inv_x, inv_y;
-	int screen_width, screen_height;
 	int screen_no;
 	int num, den, threshold; /* relative accel params */
 	pointer buffer;
