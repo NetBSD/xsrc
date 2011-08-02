@@ -74,9 +74,6 @@ SOFTWARE.
 #endif
 #endif
 
-#if defined(__SCO__)
-#include <sys/wait.h>
-#endif
 
 #if !defined(SYSV) && !defined(WIN32) 
 #include <sys/resource.h>
@@ -168,15 +165,9 @@ OsInit(void)
 	struct sigaction act, oact;
 	int i;
 	int siglist[] = { SIGSEGV, SIGQUIT, SIGILL, SIGFPE, SIGBUS,
-#ifdef SIGSYS
 			  SIGSYS,
-#endif
-#ifdef SIGXCPU
 			  SIGXCPU,
-#endif
-#ifdef SIGXFSZ
 			  SIGXFSZ,
-#endif
 #ifdef SIGEMT
 			  SIGEMT,
 #endif
@@ -215,7 +206,7 @@ OsInit(void)
 	dlinfo(RTLD_SELF, RTLD_DI_SETSIGNAL, &failure_signal);
 #endif
 
-#if !defined(__SCO__) && !defined(__CYGWIN__) && !defined(__UNIXWARE__)
+#if !defined(__CYGWIN__) 
 	fclose(stdin);
 	fclose(stdout);
 #endif
@@ -311,9 +302,7 @@ OsInit(void)
      * log file name if logging to a file is desired.
      */
     LogInit(NULL, NULL);
-    if (!SmartScheduleDisable)
-	if (!SmartScheduleInit ())
-	    SmartScheduleDisable = TRUE;
+    SmartScheduleInit ();
 }
 
 void

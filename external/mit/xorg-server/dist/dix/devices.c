@@ -261,8 +261,8 @@ AddInputDevice(ClientPtr client, DeviceProc deviceProc, Bool autoStart)
     if (!dev)
 	return (DeviceIntPtr)NULL;
     dev->id = devid;
-    dev->public.processInputProc = (ProcessInputProc)NoopDDA;
-    dev->public.realInputProc = (ProcessInputProc)NoopDDA;
+    dev->public.processInputProc = ProcessOtherEvent;
+    dev->public.realInputProc = ProcessOtherEvent;
     dev->public.enqueueInputProc = EnqueueEvent;
     dev->deviceProc = deviceProc;
     dev->startup = autoStart;
@@ -271,6 +271,8 @@ AddInputDevice(ClientPtr client, DeviceProc deviceProc, Bool autoStart)
     dev->deviceGrab.grabTime = currentTime;
     dev->deviceGrab.ActivateGrab = ActivateKeyboardGrab;
     dev->deviceGrab.DeactivateGrab = DeactivateKeyboardGrab;
+
+    XkbSetExtension(dev, ProcessKeyboardEvent);
 
     dev->coreEvents = TRUE;
 
@@ -936,6 +938,8 @@ CloseDevice(DeviceIntPtr dev)
     }
 
     free(dev->deviceGrab.sync.event);
+    free(dev->config_info);     /* Allocated in xf86ActivateDevice. */
+    dev->config_info = NULL;
     dixFreeObjectWithPrivates(dev, PRIVATE_DEVICE);
 }
 
@@ -1106,18 +1110,6 @@ NumMotionEvents(void)
     return inputInfo.pointer->valuator->numMotionEvents;
 }
 
-void
-RegisterPointerDevice(DeviceIntPtr device)
-{
-    RegisterOtherDevice(device);
-}
-
-void
-RegisterKeyboardDevice(DeviceIntPtr device)
-{
-    RegisterOtherDevice(device);
-}
-
 int
 dixLookupDevice(DeviceIntPtr *pDev, int id, ClientPtr client, Mask access_mode)
 {
@@ -1229,6 +1221,40 @@ InitButtonClassDeviceStruct(DeviceIntPtr dev, int numButtons, Atom* labels,
     return TRUE;
 }
 
+/**
+ * Allocate a valuator class and set up the pointers for the axis values
+ * appropriately.
+ *
+ * @param src If non-NULL, the memory is reallocated from src. If NULL, the
+ * memory is calloc'd.
+ * @parma numAxes Number of axes to allocate.
+ * @return The allocated valuator struct.
+ */
+ValuatorClassPtr
+AllocValuatorClass(ValuatorClassPtr src, int numAxes)
+{
+    ValuatorClassPtr v;
+    /* force alignment with double */
+    union align_u { ValuatorClassRec valc; double d; } *align;
+    int size;
+
+    size = sizeof(union align_u) + numAxes * (sizeof(double) + sizeof(AxisInfo));
+    align = (union align_u *) realloc(src, size);
+
+    if (!align)
+        return NULL;
+
+    if (!src)
+        memset(align, 0, size);
+
+    v = &align->valc;
+    v->numAxes = numAxes;
+    v->axisVal = (double*)(align + 1);
+    v->axes = (AxisInfoPtr)(v->axisVal + numAxes);
+
+    return v;
+}
+
 Bool
 InitValuatorClassDeviceStruct(DeviceIntPtr dev, int numAxes, Atom *labels,
                               int numMotionEvents, int mode)
@@ -1247,11 +1273,9 @@ InitValuatorClassDeviceStruct(DeviceIntPtr dev, int numAxes, Atom *labels,
         numAxes = MAX_VALUATORS;
     }
 
-    valc = (ValuatorClassPtr)calloc(1, sizeof(ValuatorClassRec) +
-				    numAxes * sizeof(AxisInfo) +
-				    numAxes * sizeof(double));
+    valc = AllocValuatorClass(NULL, numAxes);
     if (!valc)
-	return FALSE;
+        return FALSE;
 
     valc->sourceid = dev->id;
     valc->motion = NULL;
@@ -1260,17 +1284,17 @@ InitValuatorClassDeviceStruct(DeviceIntPtr dev, int numAxes, Atom *labels,
 
     valc->numMotionEvents = numMotionEvents;
     valc->motionHintWindow = NullWindow;
-    valc->numAxes = numAxes;
-    valc->mode = mode;
-    valc->axes = (AxisInfoPtr)(valc + 1);
-    valc->axisVal = (double *)(valc->axes + numAxes);
+
+    if (mode & OutOfProximity)
+        InitProximityClassDeviceStruct(dev);
+
     dev->valuator = valc;
 
     AllocateMotionHistory(dev);
 
     for (i=0; i<numAxes; i++) {
         InitValuatorAxisStruct(dev, i, labels[i], NO_AXIS_LIMITS, NO_AXIS_LIMITS,
-                               0, 0, 0);
+                               0, 0, 0, mode);
 	valc->axisVal[i]=0;
     }
 
@@ -2018,8 +2042,9 @@ ProcChangeKeyboardControl (ClientPtr client)
     keyboard = PickKeyboard(client);
 
     for (pDev = inputInfo.devices; pDev; pDev = pDev->next) {
-        if ((pDev == keyboard || (!IsMaster(pDev) && pDev->u.master == keyboard)) &&
-            pDev->kbdfeed && pDev->kbdfeed->CtrlProc) {
+        if ((pDev == keyboard ||
+	     (!IsMaster(pDev) && GetMaster(pDev, MASTER_KEYBOARD) == keyboard))
+	    && pDev->kbdfeed && pDev->kbdfeed->CtrlProc) {
             ret = XaceHook(XACE_DEVICE_ACCESS, client, pDev, DixManageAccess);
 	    if (ret != Success)
                 return ret;
@@ -2027,8 +2052,9 @@ ProcChangeKeyboardControl (ClientPtr client)
     }
 
     for (pDev = inputInfo.devices; pDev; pDev = pDev->next) {
-        if ((pDev == keyboard || (!IsMaster(pDev) && pDev->u.master == keyboard)) &&
-            pDev->kbdfeed && pDev->kbdfeed->CtrlProc) {
+        if ((pDev == keyboard ||
+	     (!IsMaster(pDev) && GetMaster(pDev, MASTER_KEYBOARD) == keyboard))
+	    && pDev->kbdfeed && pDev->kbdfeed->CtrlProc) {
             ret = DoChangeKeyboardControl(client, pDev, vlist, vmask);
             if (ret != Success)
                 error = ret;
@@ -2088,7 +2114,8 @@ ProcBell(ClientPtr client)
 	newpercent = base - newpercent + stuff->percent;
 
     for (dev = inputInfo.devices; dev; dev = dev->next) {
-        if ((dev == keybd || (!IsMaster(dev) && dev->u.master == keybd)) &&
+        if ((dev == keybd ||
+	     (!IsMaster(dev) && GetMaster(dev, MASTER_KEYBOARD) == keybd)) &&
             dev->kbdfeed && dev->kbdfeed->BellProc) {
 
 	    rc = XaceHook(XACE_DEVICE_ACCESS, client, dev, DixBellAccess);
@@ -2157,7 +2184,8 @@ ProcChangePointerControl(ClientPtr client)
     }
 
     for (dev = inputInfo.devices; dev; dev = dev->next) {
-        if ((dev == mouse || (!IsMaster(dev) && dev->u.master == mouse)) &&
+        if ((dev == mouse ||
+	     (!IsMaster(dev) && GetMaster(dev, MASTER_POINTER) == mouse)) &&
             dev->ptrfeed) {
 	    rc = XaceHook(XACE_DEVICE_ACCESS, client, dev, DixManageAccess);
 	    if (rc != Success)
@@ -2166,7 +2194,8 @@ ProcChangePointerControl(ClientPtr client)
     }
 
     for (dev = inputInfo.devices; dev; dev = dev->next) {
-        if ((dev == mouse || (!IsMaster(dev) && dev->u.master == mouse)) &&
+        if ((dev == mouse ||
+	     (!IsMaster(dev) && GetMaster(dev, MASTER_POINTER) == mouse)) &&
             dev->ptrfeed) {
             dev->ptrfeed->ctrl = ctrl;
         }
@@ -2362,8 +2391,7 @@ RecalculateMasterButtons(DeviceIntPtr slave)
                 event.valuators[i].min = master->valuator->axes[i].min_value;
                 event.valuators[i].max = master->valuator->axes[i].max_value;
                 event.valuators[i].resolution = master->valuator->axes[i].resolution;
-                /* This should, eventually, be a per-axis mode */
-                event.valuators[i].mode = master->valuator->mode;
+                event.valuators[i].mode = master->valuator->axes[i].mode;
                 event.valuators[i].name = master->valuator->axes[i].label;
             }
         }
@@ -2376,6 +2404,46 @@ RecalculateMasterButtons(DeviceIntPtr slave)
 
         XISendDeviceChangedEvent(master, master, &event);
     }
+}
+
+/**
+ * Generate release events for all keys/button currently down on this
+ * device.
+ */
+void
+ReleaseButtonsAndKeys(DeviceIntPtr dev)
+{
+    EventListPtr        eventlist = InitEventList(GetMaximumEventsNum());
+    ButtonClassPtr      b = dev->button;
+    KeyClassPtr         k = dev->key;
+    int                 i, j, nevents;
+
+    if (!eventlist) /* no release events for you */
+        return;
+
+    /* Release all buttons */
+    for (i = 0; b && i < b->numButtons; i++)
+    {
+        if (BitIsOn(b->down, i))
+        {
+            nevents = GetPointerEvents(eventlist, dev, ButtonRelease, i, 0, NULL);
+            for (j = 0; j < nevents; j++)
+                mieqProcessDeviceEvent(dev, (InternalEvent*)(eventlist+j)->event, NULL);
+        }
+    }
+
+    /* Release all keys */
+    for (i = 0; k && i < MAP_LENGTH; i++)
+    {
+        if (BitIsOn(k->down, i))
+        {
+            nevents = GetKeyboardEvents(eventlist, dev, KeyRelease, i);
+            for (j = 0; j < nevents; j++)
+                mieqProcessDeviceEvent(dev, (InternalEvent*)(eventlist+j)->event, NULL);
+        }
+    }
+
+    FreeEventList(eventlist, GetMaximumEventsNum());
 }
 
 /**
@@ -2425,7 +2493,7 @@ AttachDevice(ClientPtr client, DeviceIntPtr dev, DeviceIntPtr master)
         WindowPtr currentRoot;
 
         if (dev->spriteInfo->sprite)
-            currentRoot = dev->spriteInfo->sprite->spriteTrace[0];
+            currentRoot = GetCurrentRootWindow(dev);
         else /* new device auto-set to floating */
             currentRoot = screenInfo.screens[0]->root;
 
@@ -2527,9 +2595,11 @@ AllocDevicePair (ClientPtr client, char* name,
     if (!pointer)
         return BadAlloc;
 
-    pointer->name = calloc(strlen(name) + strlen(" pointer") + 1, sizeof(char));
-    strcpy(pointer->name, name);
-    strcat(pointer->name, " pointer");
+    if (asprintf(&pointer->name, "%s pointer", name) == -1) {
+        pointer->name = NULL;
+        RemoveDevice(pointer, FALSE);
+        return BadAlloc;
+    }
 
     pointer->public.processInputProc = ProcessOtherEvent;
     pointer->public.realInputProc = ProcessOtherEvent;
@@ -2550,9 +2620,12 @@ AllocDevicePair (ClientPtr client, char* name,
         return BadAlloc;
     }
 
-    keyboard->name = calloc(strlen(name) + strlen(" keyboard") + 1, sizeof(char));
-    strcpy(keyboard->name, name);
-    strcat(keyboard->name, " keyboard");
+    if (asprintf(&keyboard->name, "%s keyboard", name) == -1) {
+        keyboard->name = NULL;
+        RemoveDevice(keyboard, FALSE);
+        RemoveDevice(pointer, FALSE);
+        return BadAlloc;
+    }
 
     keyboard->public.processInputProc = ProcessOtherEvent;
     keyboard->public.realInputProc = ProcessOtherEvent;
@@ -2576,3 +2649,25 @@ AllocDevicePair (ClientPtr client, char* name,
     return Success;
 }
 
+/**
+ * Return Relative or Absolute for the device.
+ */
+int valuator_get_mode(DeviceIntPtr dev, int axis)
+{
+    return (dev->valuator->axes[axis].mode & DeviceMode);
+}
+
+/**
+ * Set the given mode for the axis. If axis is VALUATOR_MODE_ALL_AXES, then
+ * set the mode for all axes.
+ */
+void valuator_set_mode(DeviceIntPtr dev, int axis, int mode)
+{
+    if (axis != VALUATOR_MODE_ALL_AXES)
+        dev->valuator->axes[axis].mode = mode;
+    else {
+        int i;
+        for (i = 0; i < dev->valuator->numAxes; i++)
+            dev->valuator->axes[i].mode = mode;
+    }
+}

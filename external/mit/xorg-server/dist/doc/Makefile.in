@@ -15,10 +15,6 @@
 
 @SET_MAKE@
 
-#							-*- Makefile -*-
-# Rules for generating files using the C pre-processor
-# (Replaces CppFileTarget from Imake)
-
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
@@ -38,12 +34,12 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
-	$(top_srcdir)/cpprules.in
 subdir = doc
+DIST_COMMON = $(dist_noinst_DATA) $(srcdir)/Makefile.am \
+	$(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_define_dir.m4 \
-	$(top_srcdir)/m4/dolt.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/ax_tls.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -72,29 +68,7 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	install-pdf-recursive install-ps-recursive install-recursive \
 	installcheck-recursive installdirs-recursive pdf-recursive \
 	ps-recursive uninstall-recursive
-am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
-am__vpath_adj = case $$p in \
-    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
-    *) f=$$p;; \
-  esac;
-am__strip_dir = f=`echo $$p | sed -e 's|^.*/||'`;
-am__install_max = 40
-am__nobase_strip_setup = \
-  srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*|]/\\\\&/g'`
-am__nobase_strip = \
-  for p in $$list; do echo "$$p"; done | sed -e "s|$$srcdirstrip/||"
-am__nobase_list = $(am__nobase_strip_setup); \
-  for p in $$list; do echo "$$p $$p"; done | \
-  sed "s| $$srcdirstrip/| |;"' / .*\//!s/ .*/ ./; s,\( .*\)/[^/]*$$,\1,' | \
-  $(AWK) 'BEGIN { files["."] = "" } { files[$$2] = files[$$2] " " $$1; \
-    if (++n[$$2] == $(am__install_max)) \
-      { print $$2, files[$$2]; n[$$2] = 0; files[$$2] = "" } } \
-    END { for (dir in files) print dir, files[dir] }'
-am__base_list = \
-  sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
-  sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
-am__installdirs = "$(DESTDIR)$(appmandir)"
-DATA = $(appman_DATA)
+DATA = $(dist_noinst_DATA)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 AM_RECURSIVE_TARGETS = $(RECURSIVE_TARGETS:-recursive=) \
@@ -184,7 +158,6 @@ DMXXIEXAMPLES_DEP_CFLAGS = @DMXXIEXAMPLES_DEP_CFLAGS@
 DMXXIEXAMPLES_DEP_LIBS = @DMXXIEXAMPLES_DEP_LIBS@
 DMXXMUEXAMPLES_DEP_CFLAGS = @DMXXMUEXAMPLES_DEP_CFLAGS@
 DMXXMUEXAMPLES_DEP_LIBS = @DMXXMUEXAMPLES_DEP_LIBS@
-DOLT_BASH = @DOLT_BASH@
 DOXYGEN = @DOXYGEN@
 DRI2PROTO_CFLAGS = @DRI2PROTO_CFLAGS@
 DRI2PROTO_LIBS = @DRI2PROTO_LIBS@
@@ -218,6 +191,7 @@ GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_LIBS = @GLIB_LIBS@
 GLX_ARCH_DEFINES = @GLX_ARCH_DEFINES@
 GLX_DEFINES = @GLX_DEFINES@
+GLX_TLS = @GLX_TLS@
 GL_CFLAGS = @GL_CFLAGS@
 GL_LIBS = @GL_LIBS@
 GREP = @GREP@
@@ -253,8 +227,6 @@ LIB_MAN_DIR = @LIB_MAN_DIR@
 LIB_MAN_SUFFIX = @LIB_MAN_SUFFIX@
 LIPO = @LIPO@
 LN_S = @LN_S@
-LTCOMPILE = @LTCOMPILE@
-LTCXXCOMPILE = @LTCXXCOMPILE@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAIN_LIB = @MAIN_LIB@
@@ -311,6 +283,7 @@ SHA1_LIBS = @SHA1_LIBS@
 SHELL = @SHELL@
 SOLARIS_ASM_CFLAGS = @SOLARIS_ASM_CFLAGS@
 SOLARIS_INOUT_ARCH = @SOLARIS_INOUT_ARCH@
+STRICT_CFLAGS = @STRICT_CFLAGS@
 STRIP = @STRIP@
 STYLESHEET_SRCDIR = @STYLESHEET_SRCDIR@
 SYSCONFDIR = @SYSCONFDIR@
@@ -449,67 +422,12 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-
-# Xserver.man covers options generic to all X servers built in this tree
-# (i.e. those handled in the os/utils.c options processing instead of in
-#  the DDX-level options processing)
-appmandir = $(APP_MAN_DIR)
-appman_PRE = Xserver.man.pre
-appman_PROCESSED = $(appman_PRE:man.pre=man)
-appman_DATA = $(appman_PRE:man.pre=@APP_MAN_SUFFIX@)
-BUILT_SOURCES = $(appman_PROCESSED)
-CLEANFILES = $(appman_PROCESSED) $(appman_DATA)
-SUFFIXES = .pre .man .man.pre
-
-# Translate XCOMM into pound sign with sed, rather than passing -DXCOMM=XCOMM
-# to cpp, because that trick does not work on all ANSI C preprocessors.
-# Delete line numbers from the cpp output (-P is not portable, I guess).
-# Allow XCOMM to be preceded by whitespace and provide a means of generating
-# output lines with trailing backslashes.
-# Allow XHASH to always be substituted, even in cases where XCOMM isn't.
-CPP_SED_MAGIC = $(SED) -e '/^\#  *[0-9][0-9]*  *.*$$/d' \
-                       -e '/^\#line  *[0-9][0-9]*  *.*$$/d' \
-                       -e '/^[         ]*XCOMM$$/s/XCOMM/\#/' \
-                       -e '/^[         ]*XCOMM[^a-zA-Z0-9_]/s/XCOMM/\#/' \
-                       -e '/^[         ]*XHASH/s/XHASH/\#/' \
-                       -e '/\@\@$$/s/\@\@$$/\\/'
-
-
-# Strings to replace in man pages
-XORGRELSTRING = @PACKAGE_STRING@
-XORGMANNAME = X Version 11
-XSERVERNAME = Xorg
-MANDEFS = \
-        -D__vendorversion__="\"$(XORGRELSTRING)\" \"$(XORGMANNAME)\"" \
-        -D__xorgversion__="\"$(XORGRELSTRING)\" \"$(XORGMANNAME)\"" \
-	-D__appmansuffix__=$(APP_MAN_SUFFIX) \
-	-D__filemansuffix__=$(FILE_MAN_SUFFIX) \
-	-D__libmansuffix__=$(LIB_MAN_SUFFIX) \
-	-D__miscmansuffix__=$(MISC_MAN_SUFFIX) \
-	-D__drivermansuffix__=$(DRIVER_MAN_SUFFIX) \
-	-D__adminmansuffix__=$(ADMIN_MAN_SUFFIX) \
-	-D__mandir__=$(mandir) \
-	-D__projectroot__=$(prefix) \
-	-D__sysconfdir__=$(sysconfdir) \
-	-D__datadir__=$(datadir) \
-	-D__xconfigfile__=$(__XCONFIGFILE__) \
-	-D__xconfigdir__=$(__XCONFIGDIR__) \
-	-D__xkbdir__=$(XKB_BASE_DIRECTORY) \
-	-D__modulepath__="$(DEFAULT_MODULE_PATH)" \
-	-D__xlogfile__=$(XLOGFILE) -D__xservername__=$(XSERVERNAME) 
-
-EXTRAMANDEFS = -D__default_font_path__="`echo $(COMPILEDDEFAULTFONTPATH) | $(SED) -e 's/,/, /g'`"
-
-# Docs about X server internals that we ship with source but don't install
-DEVEL_DOCS = smartsched
-EXTRA_DIST = $(DEVEL_DOCS) $(appman_PRE) $(fileman_PRE)
-SUBDIRS = xml
-all: $(BUILT_SOURCES)
-	$(MAKE) $(AM_MAKEFLAGS) all-recursive
+SUBDIRS = man xml
+dist_noinst_DATA = smartsched
+all: all-recursive
 
 .SUFFIXES:
-.SUFFIXES: .pre .man .man.pre .$(APP_MAN_SUFFIX)
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(top_srcdir)/cpprules.in $(am__configure_deps)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -545,26 +463,6 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
-install-appmanDATA: $(appman_DATA)
-	@$(NORMAL_INSTALL)
-	test -z "$(appmandir)" || $(MKDIR_P) "$(DESTDIR)$(appmandir)"
-	@list='$(appman_DATA)'; test -n "$(appmandir)" || list=; \
-	for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  echo "$$d$$p"; \
-	done | $(am__base_list) | \
-	while read files; do \
-	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(appmandir)'"; \
-	  $(INSTALL_DATA) $$files "$(DESTDIR)$(appmandir)" || exit $$?; \
-	done
-
-uninstall-appmanDATA:
-	@$(NORMAL_UNINSTALL)
-	@list='$(appman_DATA)'; test -n "$(appmandir)" || list=; \
-	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	test -n "$$files" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(appmandir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(appmandir)" && rm -f $$files
 
 # This directory's subdirectories are mostly independent; you can cd
 # into them and run `make' without going through this Makefile.
@@ -760,16 +658,11 @@ distdir: $(DISTFILES)
 	  fi; \
 	done
 check-am: all-am
-check: $(BUILT_SOURCES)
-	$(MAKE) $(AM_MAKEFLAGS) check-recursive
+check: check-recursive
 all-am: Makefile $(DATA)
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(appmandir)"; do \
-	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
-	done
-install: $(BUILT_SOURCES)
-	$(MAKE) $(AM_MAKEFLAGS) install-recursive
+install: install-recursive
 install-exec: install-exec-recursive
 install-data: install-data-recursive
 uninstall: uninstall-recursive
@@ -786,7 +679,6 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
-	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -795,7 +687,6 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 clean: clean-recursive
 
 clean-am: clean-generic clean-libtool mostlyclean-am
@@ -816,7 +707,7 @@ info: info-recursive
 
 info-am:
 
-install-data-am: install-appmanDATA
+install-data-am:
 
 install-dvi: install-dvi-recursive
 
@@ -860,36 +751,25 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am: uninstall-appmanDATA
+uninstall-am:
 
-.MAKE: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) all check \
-	ctags-recursive install install-am install-strip \
-	tags-recursive
+.MAKE: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) ctags-recursive \
+	install-am install-strip tags-recursive
 
 .PHONY: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) CTAGS GTAGS \
 	all all-am check check-am clean clean-generic clean-libtool \
 	ctags ctags-recursive distclean distclean-generic \
 	distclean-libtool distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-appmanDATA \
-	install-data install-data-am install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs installdirs-am \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-recursive uninstall uninstall-am \
-	uninstall-appmanDATA
+	html-am info info-am install install-am install-data \
+	install-data-am install-dvi install-dvi-am install-exec \
+	install-exec-am install-html install-html-am install-info \
+	install-info-am install-man install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs installdirs-am maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-recursive \
+	uninstall uninstall-am
 
-
-.pre:
-	$(AM_V_GEN)$(RAWCPP) $(RAWCPPFLAGS) $(CPP_FILES_FLAGS) < $< | $(CPP_SED_MAGIC) > $@
-
-.man.pre.man:
-	$(AM_V_GEN)$(RAWCPP) $(RAWCPPFLAGS) $(MANDEFS) $(EXTRAMANDEFS) < $< | $(CPP_SED_MAGIC) > $@
-
-.man.$(APP_MAN_SUFFIX):
-	$(AM_V_at)cp $< $@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

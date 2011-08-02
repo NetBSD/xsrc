@@ -54,7 +54,7 @@ DIST_COMMON = $(am__sdk_HEADERS_DIST) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_define_dir.m4 \
-	$(top_srcdir)/m4/dolt.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/ax_tls.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -74,8 +74,8 @@ am__DEPENDENCIES_1 =
 am__DEPENDENCIES_3 = $(am__DEPENDENCIES_2)
 libXext_la_DEPENDENCIES = $(am__DEPENDENCIES_3)
 am__libXext_la_SOURCES_DIST = bigreq.c geext.c shape.c sleepuntil.c \
-	sleepuntil.h sync.c syncsrv.h xcmisc.c xtest.c shm.c shmint.h \
-	panoramiX.c panoramiX.h panoramiXh.h panoramiXsrv.h \
+	sleepuntil.h sync.c syncsdk.h syncsrv.h xcmisc.c xtest.c shm.c \
+	shmint.h panoramiX.c panoramiX.h panoramiXh.h panoramiXsrv.h \
 	panoramiXprocs.c panoramiXSwap.c xace.c xace.h xacestr.h \
 	security.c securitysrv.h xcalibrate.c xf86bigfont.c \
 	xf86bigfontsrv.h xvmain.c xvdisp.c xvmc.c xvdix.h xvmcext.h \
@@ -118,8 +118,8 @@ am__v_lt_0 = --silent
 @XORG_TRUE@am_libXext_la_rpath =
 libXextbuiltin_la_LIBADD =
 am__libXextbuiltin_la_SOURCES_DIST = bigreq.c geext.c shape.c \
-	sleepuntil.c sleepuntil.h sync.c syncsrv.h xcmisc.c xtest.c \
-	shm.c shmint.h panoramiX.c panoramiX.h panoramiXh.h \
+	sleepuntil.c sleepuntil.h sync.c syncsdk.h syncsrv.h xcmisc.c \
+	xtest.c shm.c shmint.h panoramiX.c panoramiX.h panoramiXh.h \
 	panoramiXsrv.h panoramiXprocs.c panoramiXSwap.c xace.c xace.h \
 	xacestr.h security.c securitysrv.h xcalibrate.c xf86bigfont.c \
 	xf86bigfontsrv.h
@@ -140,6 +140,10 @@ am__depfiles_maybe = depfiles
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
 AM_V_CC = $(am__v_CC_$(V))
 am__v_CC_ = $(am__v_CC_$(AM_DEFAULT_VERBOSITY))
 am__v_CC_0 = @echo "  CC    " $@;
@@ -162,7 +166,7 @@ DIST_SOURCES = $(am__libXext_la_SOURCES_DIST) \
 	$(am__libXextbuiltin_la_SOURCES_DIST) \
 	$(am__libXextmodule_la_SOURCES_DIST)
 am__sdk_HEADERS_DIST = xvdix.h xvmcext.h geext.h geint.h shmint.h \
-	panoramiXsrv.h panoramiX.h xace.h xacestr.h
+	syncsdk.h panoramiXsrv.h panoramiX.h xace.h xacestr.h
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -244,7 +248,6 @@ DMXXIEXAMPLES_DEP_CFLAGS = @DMXXIEXAMPLES_DEP_CFLAGS@
 DMXXIEXAMPLES_DEP_LIBS = @DMXXIEXAMPLES_DEP_LIBS@
 DMXXMUEXAMPLES_DEP_CFLAGS = @DMXXMUEXAMPLES_DEP_CFLAGS@
 DMXXMUEXAMPLES_DEP_LIBS = @DMXXMUEXAMPLES_DEP_LIBS@
-DOLT_BASH = @DOLT_BASH@
 DOXYGEN = @DOXYGEN@
 DRI2PROTO_CFLAGS = @DRI2PROTO_CFLAGS@
 DRI2PROTO_LIBS = @DRI2PROTO_LIBS@
@@ -278,6 +281,7 @@ GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_LIBS = @GLIB_LIBS@
 GLX_ARCH_DEFINES = @GLX_ARCH_DEFINES@
 GLX_DEFINES = @GLX_DEFINES@
+GLX_TLS = @GLX_TLS@
 GL_CFLAGS = @GL_CFLAGS@
 GL_LIBS = @GL_LIBS@
 GREP = @GREP@
@@ -313,8 +317,6 @@ LIB_MAN_DIR = @LIB_MAN_DIR@
 LIB_MAN_SUFFIX = @LIB_MAN_SUFFIX@
 LIPO = @LIPO@
 LN_S = @LN_S@
-LTCOMPILE = @LTCOMPILE@
-LTCXXCOMPILE = @LTCXXCOMPILE@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAIN_LIB = @MAIN_LIB@
@@ -371,6 +373,7 @@ SHA1_LIBS = @SHA1_LIBS@
 SHELL = @SHELL@
 SOLARIS_ASM_CFLAGS = @SOLARIS_ASM_CFLAGS@
 SOLARIS_INOUT_ARCH = @SOLARIS_INOUT_ARCH@
+STRICT_CFLAGS = @STRICT_CFLAGS@
 STRIP = @STRIP@
 STYLESHEET_SRCDIR = @STYLESHEET_SRCDIR@
 SYSCONFDIR = @SYSCONFDIR@
@@ -521,11 +524,11 @@ top_srcdir = @top_srcdir@
 INCLUDES = -I$(top_srcdir)/hw/xfree86/dixmods/extmod
 AM_CFLAGS = $(DIX_CFLAGS)
 @XORG_TRUE@sdk_HEADERS = xvdix.h xvmcext.h geext.h geint.h shmint.h \
-@XORG_TRUE@	$(am__append_6) $(am__append_8)
+@XORG_TRUE@	syncsdk.h $(am__append_6) $(am__append_8)
 
 # Sources always included in libXextbuiltin.la & libXext.la
 BUILTIN_SRCS = bigreq.c geext.c shape.c sleepuntil.c sleepuntil.h \
-	sync.c syncsrv.h xcmisc.c xtest.c $(am__append_1) \
+	sync.c syncsdk.h syncsrv.h xcmisc.c xtest.c $(am__append_1) \
 	$(am__append_5) $(am__append_7) $(am__append_11) \
 	$(am__append_12) $(am__append_13)
 

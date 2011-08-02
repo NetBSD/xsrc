@@ -1,5 +1,5 @@
 /*
- * Copyright © 2006 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -262,3 +262,33 @@ XFixesExtensionInit(void)
 	SetResourceTypeErrorValue(RegionResType, XFixesErrorBase + BadRegion);
     }
 }
+
+#ifdef PANORAMIX
+
+int (*PanoramiXSaveXFixesVector[XFixesNumberRequests])(ClientPtr);
+
+void
+PanoramiXFixesInit (void)
+{
+    int i;
+
+    for (i = 0; i < XFixesNumberRequests; i++)
+	PanoramiXSaveXFixesVector[i] = ProcXFixesVector[i];
+    /*
+     * Stuff in Xinerama aware request processing hooks
+     */
+    ProcXFixesVector[X_XFixesSetGCClipRegion] = PanoramiXFixesSetGCClipRegion;
+    ProcXFixesVector[X_XFixesSetWindowShapeRegion] = PanoramiXFixesSetWindowShapeRegion;
+    ProcXFixesVector[X_XFixesSetPictureClipRegion] = PanoramiXFixesSetPictureClipRegion;
+}
+
+void
+PanoramiXFixesReset (void)
+{
+    int i;
+
+    for (i = 0; i < XFixesNumberRequests; i++)
+	ProcXFixesVector[i] = PanoramiXSaveXFixesVector[i];
+}
+
+#endif

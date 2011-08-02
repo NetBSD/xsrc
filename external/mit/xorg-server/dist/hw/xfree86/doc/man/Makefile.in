@@ -15,10 +15,6 @@
 
 @SET_MAKE@
 
-#							-*- Makefile -*-
-# Rules for generating files using the C pre-processor
-# (Replaces CppFileTarget from Imake)
-
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
@@ -39,11 +35,11 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
-	$(top_srcdir)/cpprules.in
+	$(top_srcdir)/manpages.am
 subdir = hw/xfree86/doc/man
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_define_dir.m4 \
-	$(top_srcdir)/m4/dolt.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/ax_tls.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -86,8 +82,9 @@ am__nobase_list = $(am__nobase_strip_setup); \
 am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
-am__installdirs = "$(DESTDIR)$(appmandir)" "$(DESTDIR)$(filemandir)"
-DATA = $(appman_DATA) $(fileman_DATA)
+am__installdirs = "$(DESTDIR)$(appmandir)" "$(DESTDIR)$(drivermandir)" \
+	"$(DESTDIR)$(filemandir)"
+DATA = $(appman_DATA) $(driverman_DATA) $(fileman_DATA)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 ADMIN_MAN_DIR = @ADMIN_MAN_DIR@
@@ -144,7 +141,6 @@ DMXXIEXAMPLES_DEP_CFLAGS = @DMXXIEXAMPLES_DEP_CFLAGS@
 DMXXIEXAMPLES_DEP_LIBS = @DMXXIEXAMPLES_DEP_LIBS@
 DMXXMUEXAMPLES_DEP_CFLAGS = @DMXXMUEXAMPLES_DEP_CFLAGS@
 DMXXMUEXAMPLES_DEP_LIBS = @DMXXMUEXAMPLES_DEP_LIBS@
-DOLT_BASH = @DOLT_BASH@
 DOXYGEN = @DOXYGEN@
 DRI2PROTO_CFLAGS = @DRI2PROTO_CFLAGS@
 DRI2PROTO_LIBS = @DRI2PROTO_LIBS@
@@ -178,6 +174,7 @@ GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_LIBS = @GLIB_LIBS@
 GLX_ARCH_DEFINES = @GLX_ARCH_DEFINES@
 GLX_DEFINES = @GLX_DEFINES@
+GLX_TLS = @GLX_TLS@
 GL_CFLAGS = @GL_CFLAGS@
 GL_LIBS = @GL_LIBS@
 GREP = @GREP@
@@ -213,14 +210,23 @@ LIB_MAN_DIR = @LIB_MAN_DIR@
 LIB_MAN_SUFFIX = @LIB_MAN_SUFFIX@
 LIPO = @LIPO@
 LN_S = @LN_S@
-LTCOMPILE = @LTCOMPILE@
-LTCXXCOMPILE = @LTCXXCOMPILE@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAIN_LIB = @MAIN_LIB@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
-MAN_SUBSTS = @MAN_SUBSTS@
+
+# Add server specific man pages string substitution from XORG_MANPAGE_SECTIONS
+# 's|/,|/, |g' will add a space to help font path formatting
+MAN_SUBSTS = @MAN_SUBSTS@ -e 's|__logdir__|$(logdir)|g' -e \
+	's|__datadir__|$(datadir)|g' -e 's|__mandir__|$(mandir)|g' -e \
+	's|__sysconfdir__|$(sysconfdir)|g' -e \
+	's|__xconfigdir__|$(__XCONFIGDIR__)|g' -e \
+	's|__xkbdir__|$(XKB_BASE_DIRECTORY)|g' -e \
+	's|__laucnd_id_prefix__|$(LAUNCHD_ID_PREFIX)|g' -e \
+	's|__modulepath__|$(DEFAULT_MODULE_PATH)|g' -e \
+	's|__default_font_path__|$(COMPILEDDEFAULTFONTPATH)|g' -e \
+	'\|$(COMPILEDDEFAULTFONTPATH)| s|/,|/, |g'
 MISC_MAN_DIR = @MISC_MAN_DIR@
 MISC_MAN_SUFFIX = @MISC_MAN_SUFFIX@
 MKDIR_P = @MKDIR_P@
@@ -271,6 +277,7 @@ SHA1_LIBS = @SHA1_LIBS@
 SHELL = @SHELL@
 SOLARIS_ASM_CFLAGS = @SOLARIS_ASM_CFLAGS@
 SOLARIS_INOUT_ARCH = @SOLARIS_INOUT_ARCH@
+STRICT_CFLAGS = @STRICT_CFLAGS@
 STRIP = @STRIP@
 STYLESHEET_SRCDIR = @STYLESHEET_SRCDIR@
 SYSCONFDIR = @SYSCONFDIR@
@@ -409,60 +416,28 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-
-# Xserver.man covers options generic to all X servers built in this tree
-MAN_SRCS = Xorg.man.pre xorg.conf.man.pre
 appmandir = $(APP_MAN_DIR)
-appman_DATA = Xorg.$(APP_MAN_SUFFIX)
+#appman_PRE = list of application man page files set by calling Makefile.am
+appman_DATA = $(appman_PRE:man=$(APP_MAN_SUFFIX))
+drivermandir = $(DRIVER_MAN_DIR)
+#driverman_PRE = list of driver man page files set by calling Makefile.am
+driverman_DATA = $(driverman_PRE:man=$(DRIVER_MAN_SUFFIX))
 filemandir = $(FILE_MAN_DIR)
-fileman_DATA = xorg.conf.$(FILE_MAN_SUFFIX)
-SUFFIXES = .pre .man .man.pre
+#fileman_PRE = list of file man page files set by calling Makefile.am
+fileman_DATA = $(fileman_PRE:man=$(FILE_MAN_SUFFIX))
 
-# Translate XCOMM into pound sign with sed, rather than passing -DXCOMM=XCOMM
-# to cpp, because that trick does not work on all ANSI C preprocessors.
-# Delete line numbers from the cpp output (-P is not portable, I guess).
-# Allow XCOMM to be preceded by whitespace and provide a means of generating
-# output lines with trailing backslashes.
-# Allow XHASH to always be substituted, even in cases where XCOMM isn't.
-CPP_SED_MAGIC = $(SED) -e '/^\#  *[0-9][0-9]*  *.*$$/d' \
-                       -e '/^\#line  *[0-9][0-9]*  *.*$$/d' \
-                       -e '/^[         ]*XCOMM$$/s/XCOMM/\#/' \
-                       -e '/^[         ]*XCOMM[^a-zA-Z0-9_]/s/XCOMM/\#/' \
-                       -e '/^[         ]*XHASH/s/XHASH/\#/' \
-                       -e '/\@\@$$/s/\@\@$$/\\/'
-
-
-# Strings to replace in man pages
-XORGRELSTRING = @PACKAGE_STRING@
-XORGMANNAME = X Version 11
-XSERVERNAME = Xorg
-MANDEFS = \
-        -D__vendorversion__="\"$(XORGRELSTRING)\" \"$(XORGMANNAME)\"" \
-        -D__xorgversion__="\"$(XORGRELSTRING)\" \"$(XORGMANNAME)\"" \
-	-D__appmansuffix__=$(APP_MAN_SUFFIX) \
-	-D__filemansuffix__=$(FILE_MAN_SUFFIX) \
-	-D__libmansuffix__=$(LIB_MAN_SUFFIX) \
-	-D__miscmansuffix__=$(MISC_MAN_SUFFIX) \
-	-D__drivermansuffix__=$(DRIVER_MAN_SUFFIX) \
-	-D__adminmansuffix__=$(ADMIN_MAN_SUFFIX) \
-	-D__mandir__=$(mandir) \
-	-D__projectroot__=$(prefix) \
-	-D__sysconfdir__=$(sysconfdir) \
-	-D__datadir__=$(datadir) \
-	-D__xconfigfile__=$(__XCONFIGFILE__) \
-	-D__xconfigdir__=$(__XCONFIGDIR__) \
-	-D__xkbdir__=$(XKB_BASE_DIRECTORY) \
-	-D__modulepath__="$(DEFAULT_MODULE_PATH)" \
-	-D__xlogfile__=$(XLOGFILE) -D__xservername__=$(XSERVERNAME) 
-
-EXTRAMANDEFS = -D__logdir__=$(logdir)
-CLEANFILES = $(appman_DATA) $(fileman_DATA) xorg.conf.man Xorg.man
-EXTRA_DIST = $(MAN_SRCS)
+# The calling Makefile should only contain man page targets
+# Otherwise the following three global variables may conflict
+EXTRA_DIST = $(appman_PRE) $(driverman_PRE) $(fileman_PRE)
+CLEANFILES = $(appman_DATA) $(driverman_DATA) $(fileman_DATA)
+SUFFIXES = .$(APP_MAN_SUFFIX) .$(DRIVER_MAN_SUFFIX) .$(FILE_MAN_SUFFIX) .man
+appman_PRE = Xorg.man
+fileman_PRE = xorg.conf.man xorg.conf.d.man
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .pre .man .man.pre
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(top_srcdir)/cpprules.in $(am__configure_deps)
+.SUFFIXES: .$(APP_MAN_SUFFIX) .$(DRIVER_MAN_SUFFIX) .$(FILE_MAN_SUFFIX) .man
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(top_srcdir)/manpages.am $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -518,6 +493,26 @@ uninstall-appmanDATA:
 	test -n "$$files" || exit 0; \
 	echo " ( cd '$(DESTDIR)$(appmandir)' && rm -f" $$files ")"; \
 	cd "$(DESTDIR)$(appmandir)" && rm -f $$files
+install-drivermanDATA: $(driverman_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(drivermandir)" || $(MKDIR_P) "$(DESTDIR)$(drivermandir)"
+	@list='$(driverman_DATA)'; test -n "$(drivermandir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(drivermandir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(drivermandir)" || exit $$?; \
+	done
+
+uninstall-drivermanDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(driverman_DATA)'; test -n "$(drivermandir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	test -n "$$files" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(drivermandir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(drivermandir)" && rm -f $$files
 install-filemanDATA: $(fileman_DATA)
 	@$(NORMAL_INSTALL)
 	test -z "$(filemandir)" || $(MKDIR_P) "$(DESTDIR)$(filemandir)"
@@ -579,7 +574,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(DATA)
 installdirs:
-	for dir in "$(DESTDIR)$(appmandir)" "$(DESTDIR)$(filemandir)"; do \
+	for dir in "$(DESTDIR)$(appmandir)" "$(DESTDIR)$(drivermandir)" "$(DESTDIR)$(filemandir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -628,7 +623,8 @@ info: info-am
 
 info-am:
 
-install-data-am: install-appmanDATA install-filemanDATA
+install-data-am: install-appmanDATA install-drivermanDATA \
+	install-filemanDATA
 
 install-dvi: install-dvi-am
 
@@ -672,37 +668,32 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-appmanDATA uninstall-filemanDATA
+uninstall-am: uninstall-appmanDATA uninstall-drivermanDATA \
+	uninstall-filemanDATA
 
 .MAKE: install-am install-strip
 
 .PHONY: all all-am check check-am clean clean-generic clean-libtool \
 	distclean distclean-generic distclean-libtool distdir dvi \
 	dvi-am html html-am info info-am install install-am \
-	install-appmanDATA install-data install-data-am install-dvi \
-	install-dvi-am install-exec install-exec-am \
-	install-filemanDATA install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am uninstall uninstall-am \
-	uninstall-appmanDATA uninstall-filemanDATA
+	install-appmanDATA install-data install-data-am \
+	install-drivermanDATA install-dvi install-dvi-am install-exec \
+	install-exec-am install-filemanDATA install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	uninstall uninstall-am uninstall-appmanDATA \
+	uninstall-drivermanDATA uninstall-filemanDATA
 
 
-Xorg.$(APP_MAN_SUFFIX): Xorg.man
-	-$(AM_V_at)rm -f Xorg.$(APP_MAN_SUFFIX)
-	$(AM_V_at)$(LN_S) Xorg.man Xorg.$(APP_MAN_SUFFIX)
-
-xorg.conf.$(FILE_MAN_SUFFIX): xorg.conf.man
-	-$(AM_V_at)rm -f xorg.conf.$(FILE_MAN_SUFFIX)
-	$(AM_V_at)$(LN_S) xorg.conf.man xorg.conf.$(FILE_MAN_SUFFIX)
-
-.pre:
-	$(AM_V_GEN)$(RAWCPP) $(RAWCPPFLAGS) $(CPP_FILES_FLAGS) < $< | $(CPP_SED_MAGIC) > $@
-
-.man.pre.man:
-	$(AM_V_GEN)$(RAWCPP) $(RAWCPPFLAGS) $(MANDEFS) $(EXTRAMANDEFS) < $< | $(CPP_SED_MAGIC) > $@
+.man.$(APP_MAN_SUFFIX):
+	$(AM_V_GEN)$(SED) $(MAN_SUBSTS) < $< > $@
+.man.$(DRIVER_MAN_SUFFIX):
+	$(AM_V_GEN)$(SED) $(MAN_SUBSTS) < $< > $@
+.man.$(FILE_MAN_SUFFIX):
+	$(AM_V_GEN)$(SED) $(MAN_SUBSTS) < $< > $@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

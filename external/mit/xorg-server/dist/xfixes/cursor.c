@@ -1,5 +1,5 @@
 /*
- * Copyright © 2006 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1045,7 +1045,7 @@ XFixesCursorInit (void)
 	ScreenPtr	pScreen = screenInfo.screens[i];
 	CursorScreenPtr	cs;
 
-	cs = (CursorScreenPtr) malloc(sizeof (CursorScreenRec));
+	cs = (CursorScreenPtr) calloc(1, sizeof (CursorScreenRec));
 	if (!cs)
 	    return FALSE;
 	Wrap (cs, pScreen, CloseScreen, CursorCloseScreen);

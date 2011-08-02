@@ -1,5 +1,5 @@
 /*
- * Copyright © 2006 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -48,6 +48,30 @@
 #include "compint.h"
 
 static void
+compScreenUpdate (ScreenPtr pScreen)
+{
+    compCheckTree (pScreen);
+    compPaintChildrenToWindow (pScreen->root);
+}
+
+static void
+compBlockHandler (int	    i,
+		  pointer   blockData,
+		  pointer   pTimeout,
+		  pointer   pReadmask)
+{
+    ScreenPtr	    pScreen = screenInfo.screens[i];
+    CompScreenPtr   cs = GetCompScreen (pScreen);
+
+    pScreen->BlockHandler = cs->BlockHandler;
+    compScreenUpdate (pScreen);
+    (*pScreen->BlockHandler) (i, blockData, pTimeout, pReadmask);
+
+    /* Next damage will restore the block handler */
+    cs->BlockHandler = NULL;
+}
+
+static void
 compReportDamage (DamagePtr pDamage, RegionPtr pRegion, void *closure)
 {
     WindowPtr	    pWin = (WindowPtr) closure;
@@ -55,8 +79,20 @@ compReportDamage (DamagePtr pDamage, RegionPtr pRegion, void *closure)
     CompScreenPtr   cs = GetCompScreen (pScreen);
     CompWindowPtr   cw = GetCompWindow (pWin);
 
-    cs->damaged = TRUE;
+    if (!cs->BlockHandler) {
+        cs->BlockHandler = pScreen->BlockHandler;
+        pScreen->BlockHandler = compBlockHandler;
+    }
     cw->damaged = TRUE;
+
+    /* Mark the ancestors */
+    pWin = pWin->parent;
+    while (pWin) {
+	if (pWin->damagedDescendants)
+	    break;
+	pWin->damagedDescendants = TRUE;
+	pWin = pWin->parent;
+    }
 }
 
 static void
@@ -472,8 +508,19 @@ compUnredirectOneSubwindow (WindowPtr pParent, WindowPtr pWin)
     return Success;
 }
 
+static int
+bgNoneVisitWindow(WindowPtr pWin, void *null)
+{
+    if (pWin->backgroundState != BackgroundPixmap)
+	return WT_WALKCHILDREN;
+    if (pWin->background.pixmap != None)
+	return WT_WALKCHILDREN;
+
+    return WT_STOPWALKING;
+}
+
 static PixmapPtr
-compNewPixmap (WindowPtr pWin, int x, int y, int w, int h)
+compNewPixmap (WindowPtr pWin, int x, int y, int w, int h, Bool map)
 {
     ScreenPtr	    pScreen = pWin->drawable.pScreen;
     WindowPtr	    pParent = pWin->parent;
@@ -487,15 +534,30 @@ compNewPixmap (WindowPtr pWin, int x, int y, int w, int h)
     
     pPixmap->screen_x = x;
     pPixmap->screen_y = y;
-    
+
+    /* resize allocations will update later in compCopyWindow, not here */
+    if (!map)
+	return pPixmap;
+
+    /*
+     * If there's no bg=None in the tree, we're done.
+     *
+     * We could optimize this more by collection the regions of all the
+     * bg=None subwindows and feeding that in as the clip for the
+     * CopyArea below, but since window trees are shallow these days it
+     * might not be worth the effort.
+     */
+    if (TraverseTree(pWin, bgNoneVisitWindow, NULL) == WT_NOMATCH)
+	return pPixmap;
+
+    /*
+     * Copy bits from the parent into the new pixmap so that it will
+     * have "reasonable" contents in case for background None areas.
+     */
     if (pParent->drawable.depth == pWin->drawable.depth)
     {
 	GCPtr	pGC = GetScratchGC (pWin->drawable.depth, pScreen);
 	
-	/*
-	 * Copy bits from the parent into the new pixmap so that it will
-	 * have "reasonable" contents in case for background None areas.
-	 */
 	if (pGC)
 	{
 	    ChangeGCVal val;
@@ -558,7 +620,7 @@ compAllocPixmap (WindowPtr pWin)
     int		    y = pWin->drawable.y - bw;
     int		    w = pWin->drawable.width + (bw << 1);
     int		    h = pWin->drawable.height + (bw << 1);
-    PixmapPtr	    pPixmap = compNewPixmap (pWin, x, y, w, h);
+    PixmapPtr	    pPixmap = compNewPixmap (pWin, x, y, w, h, TRUE);
     CompWindowPtr   cw = GetCompWindow (pWin);
 
     if (!pPixmap)
@@ -632,7 +694,7 @@ compReallocPixmap (WindowPtr pWin, int draw_x, int draw_y,
     pix_h = h + (bw << 1);
     if (pix_w != pOld->drawable.width || pix_h != pOld->drawable.height)
     {
-	pNew = compNewPixmap (pWin, pix_x, pix_y, pix_w, pix_h);
+	pNew = compNewPixmap (pWin, pix_x, pix_y, pix_w, pix_h, FALSE);
 	if (!pNew)
 	    return FALSE;
 	cw->pOldPixmap = pOld;

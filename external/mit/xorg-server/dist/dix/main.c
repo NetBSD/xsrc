@@ -108,7 +108,6 @@ Equipment Corporation.
 #include "panoramiXsrv.h"
 #else
 #include "dixevents.h"		/* InitEvents() */
-#include "dispatch.h"		/* InitProcVectors() */
 #endif
 
 #ifdef DPMSExtension
@@ -118,14 +117,12 @@ Equipment Corporation.
 
 extern void Dispatch(void);
 
-extern void InitProcVectors(void);
-
 #ifdef XQUARTZ
 #include <pthread.h>
 
-BOOL serverInitComplete = FALSE;
-pthread_mutex_t serverInitCompleteMutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t serverInitCompleteCond = PTHREAD_COND_INITIALIZER;
+BOOL serverRunning = FALSE;
+pthread_mutex_t serverRunningMutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t serverRunningCond = PTHREAD_COND_INITIALIZER;
 
 int dix_main(int argc, char *argv[], char *envp[]);
 
@@ -171,7 +168,6 @@ int main(int argc, char *argv[], char *envp[])
 	if(serverGeneration == 1)
 	{
 	    CreateWellKnownSockets();
-	    InitProcVectors();
 	    for (i=1; i<MAXCLIENTS; i++)
 		clients[i] = NullClient;
 	    serverClient = calloc(sizeof(ClientRec), 1);
@@ -279,18 +275,25 @@ int main(int argc, char *argv[], char *envp[])
 	}
 
 #ifdef XQUARTZ
-    /* Let the other threads know the server is done with its init */
-    pthread_mutex_lock(&serverInitCompleteMutex);
-    serverInitComplete = TRUE;
-    pthread_cond_broadcast(&serverInitCompleteCond);
-    pthread_mutex_unlock(&serverInitCompleteMutex);
+	/* Let the other threads know the server is done with its init */
+	pthread_mutex_lock(&serverRunningMutex);
+	serverRunning = TRUE;
+	pthread_cond_broadcast(&serverRunningCond);
+	pthread_mutex_unlock(&serverRunningMutex);
 #endif
         
 	NotifyParentProcess();
 
 	Dispatch();
 
-        UndisplayDevices();
+#ifdef XQUARTZ
+	/* Let the other threads know the server is no longer running */
+	pthread_mutex_lock(&serverRunningMutex);
+	serverRunning = FALSE;
+	pthread_mutex_unlock(&serverRunningMutex);
+#endif
+
+	UndisplayDevices();
 
 	/* Now free up whatever must be freed */
 	if (screenIsSaved == SCREEN_SAVER_ON)

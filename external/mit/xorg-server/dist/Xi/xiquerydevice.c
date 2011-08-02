@@ -107,8 +107,10 @@ ProcXIQueryDevice(ClientPtr client)
     }
 
     info = calloc(1, len);
-    if (!info)
+    if (!info) {
+        free(skip);
         return BadAlloc;
+    }
 
     memset(&rep, 0, sizeof(xXIQueryDeviceReply));
     rep.repType = X_Reply;
@@ -153,8 +155,9 @@ ProcXIQueryDevice(ClientPtr client)
         }
     }
 
+    len = rep.length * 4;
     WriteReplyToClient(client, sizeof(xXIQueryDeviceReply), &rep);
-    WriteToClient(client, rep.length * 4, ptr);
+    WriteToClient(client, len, ptr);
     free(ptr);
     free(skip);
     return rc;
@@ -349,7 +352,7 @@ ListValuatorInfo(DeviceIntPtr dev, xXIValuatorInfo* info, int axisnumber,
     info->value.frac = (int)(v->axisVal[axisnumber] * (1 << 16) * (1 << 16));
     info->resolution = v->axes[axisnumber].resolution;
     info->number = axisnumber;
-    info->mode = v->mode; /* Server doesn't have per-axis mode yet */
+    info->mode = valuator_get_mode(dev, axisnumber);
     info->sourceid = v->sourceid;
 
     if (!reportState)

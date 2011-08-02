@@ -19,7 +19,6 @@ cat > sdksyms.c << EOF
 #include "mipict.h"
 #include "glyphstr.h"
 #include "picturestr.h"
-#include "renderedge.h"
 
 
 /* fb/Makefile.am -- module */
@@ -42,6 +41,9 @@ cat > sdksyms.c << EOF
 #include "damage.h"
 #include "damagestr.h"
 
+/* miext/sync/Makefile.am */
+#include "misync.h"
+#include "misyncstr.h"
 
 /* Xext/Makefile.am -- half is module, half is builtin */
 /*
@@ -51,6 +53,7 @@ cat > sdksyms.c << EOF
 #include "geext.h"
 #include "geint.h"
 #include "shmint.h"
+#include "syncsdk.h"
 #if XINERAMA
 # include "panoramiXsrv.h"
 # include "panoramiX.h"
@@ -178,7 +181,6 @@ cat > sdksyms.c << EOF
 #include "xaa.h"
 #include "xaalocal.h"
 #include "xaarop.h"
-#include "xaaWrapper.h"
  */
 
 
@@ -207,12 +209,6 @@ cat > sdksyms.c << EOF
 # include "sarea.h"
 # include "dristruct.h"
 #endif
- */
-
-
-/* hw/xfree86/xf8_16bpp/Makefile.am -- module */
-/*
-#include "cfb8_16.h"
  */
 
 
@@ -257,8 +253,7 @@ cat > sdksyms.c << EOF
 
 /* include/Makefile.am */
 #include "XIstubs.h"
-#include "bstore.h"
-#include "bstorestr.h"
+#include "Xprintf.h"
 #include "closestr.h"
 #include "closure.h"
 #include "colormap.h"
@@ -345,11 +340,14 @@ BEGIN {
     if (sdk && $3 ~ /\.h"$/) {
 	# remove quotes
 	gsub(/"/, "", $3);
+	line = $2;
+	header = $3;
 	if (! headers[$3]) {
 	    printf(" \\\n  %s", $3) >> "sdksyms.dep";
 	    headers[$3] = 1;
 	}
     }
+    next;
 }
 
 /^extern[ 	]/  {
@@ -361,13 +359,17 @@ BEGIN {
 	    # skip modifiers, if any
 	    $n ~ /^\*?(unsigned|const|volatile|struct)$/ ||
 	    # skip pointer
-	    $n ~ /\*$/)
+	    $n ~ /^[a-zA-Z0-9_]*\*$/)
 	    n++;
 
 	# type specifier may not be set, as in
 	#   extern _X_EXPORT unsigned name(...)
 	if ($n !~ /[^a-zA-Z0-9_]/)
 	    n++;
+
+	# go back if we are at the parameter list already
+	if ($n ~ /^[(]([^*].*)?$/)
+	    n--;
 
 	# match
 	#    extern _X_EXPORT type (* name[])(...)
@@ -398,8 +400,12 @@ BEGIN {
 	sub(/[^a-zA-Z0-9_].*/, "", symbol);
 
 	#print;
-	printf("    (void *) &%s,\n", symbol);
+	printf("    (void *) &%-50s /* %s:%s */\n", symbol ",", header, line);
     }
+}
+
+{
+    line++;
 }
 
 END {

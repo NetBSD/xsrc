@@ -450,7 +450,6 @@ damageCreateGC(GCPtr pGC)
     damageGCPriv(pGC);
     Bool ret;
 
-    pGC->pCompositeClip = 0;
     unwrap (pScrPriv, pScreen, CreateGC);
     if((ret = (*pScreen->CreateGC) (pGC))) {
 	pGCPriv->ops = NULL;
@@ -461,28 +460,6 @@ damageCreateGC(GCPtr pGC)
 
     return ret;
 }
-
-#ifdef NOTUSED
-static void
-damageWrapGC (GCPtr pGC)
-{
-    damageGCPriv(pGC);
-
-    pGCPriv->ops = NULL;
-    pGCPriv->funcs = pGC->funcs;
-    pGC->funcs = &damageGCFuncs;
-}
-
-static void
-damageUnwrapGC (GCPtr pGC)
-{
-    damageGCPriv(pGC);
-
-    pGC->funcs = pGCPriv->funcs;
-    if (pGCPriv->ops)
-	pGC->ops = pGCPriv->ops;
-}
-#endif
 
 #define DAMAGE_GC_OP_PROLOGUE(pGC, pDrawable) \
     damageGCPriv(pGC);  \
@@ -918,16 +895,6 @@ damageCopyArea(DrawablePtr   pSrc,
     RegionPtr ret;
     DAMAGE_GC_OP_PROLOGUE(pGC, pDst);
     
-    /* The driver will only call SourceValidate() when pSrc != pDst,
-     * but the software sprite (misprite.c) always need to know when a
-     * drawable is copied so it can remove the sprite. See #1030. */
-    if ((pSrc == pDst) && pSrc->pScreen->SourceValidate &&
-	pSrc->type == DRAWABLE_WINDOW &&
-	((WindowPtr)pSrc)->viewable)
-    {
-	(*pSrc->pScreen->SourceValidate) (pSrc, srcx, srcy, width, height);
-    }
-    
     if (checkGCDamage (pDst, pGC))
     {
 	BoxRec box;
@@ -963,16 +930,6 @@ damageCopyPlane(DrawablePtr	pSrc,
 {
     RegionPtr ret;
     DAMAGE_GC_OP_PROLOGUE(pGC, pDst);
-
-    /* The driver will only call SourceValidate() when pSrc != pDst,
-     * but the software sprite (misprite.c) always need to know when a
-     * drawable is copied so it can remove the sprite. See #1030. */
-    if ((pSrc == pDst) && pSrc->pScreen->SourceValidate &&
-	pSrc->type == DRAWABLE_WINDOW &&
-	((WindowPtr)pSrc)->viewable)
-    {
-        (*pSrc->pScreen->SourceValidate) (pSrc, srcx, srcy, width, height);
-    }
 
     if (checkGCDamage (pDst, pGC))
     {
@@ -1783,7 +1740,6 @@ static GCOps damageGCOps = {
     damagePolyText16, damageImageText8,
     damageImageText16, damageImageGlyphBlt,
     damagePolyGlyphBlt, damagePushPixels,
-    {NULL}		/* devPrivate */
 };
 
 static void
