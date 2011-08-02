@@ -392,7 +392,7 @@ DoGetDirection(int dx, int dy){
     float r;
     int i1, i2;
     /* on insignificant mickeys, flag 135 degrees */
-    if(abs(dx) < 2 && abs(dy < 2)){
+    if(abs(dx) < 2 && abs(dy) < 2){
 	/* first check diagonal cases */
 	if(dx > 0 && dy > 0)
 	    return 4+8+16;
@@ -952,11 +952,9 @@ SetAccelerationProfile(
     if(profile == NULL && profile_num != PROFILE_UNINITIALIZE)
 	return FALSE;
 
-    if(vel->profile_private != NULL){
-        /* Here one could free old profile-private data */
-        free(vel->profile_private);
-        vel->profile_private = NULL;
-    }
+    /* Here one could free old profile-private data */
+    free(vel->profile_private);
+    vel->profile_private = NULL;
     /* Here one could init profile-private data */
     vel->Profile = profile;
     vel->statistics.profile_number = profile_num;
