@@ -48,7 +48,6 @@
 #include "glxutil.h"
 #include "glxdricommon.h"
 
-#include "g_disptab.h"
 #include "glapitable.h"
 #include "glapi.h"
 #include "glthread.h"
@@ -185,6 +184,7 @@ __glXdriSwapEvent(ClientPtr client, void *data, int type, CARD64 ust,
 	break;
     default:
 	/* unknown swap completion type */
+	wire.event_type = 0;
 	break;
     }
     wire.drawable = drawable->drawId;
@@ -595,7 +595,7 @@ static const __DRIextension *loader_extensions[] = {
     &systemTimeExtension.base,
     &loaderExtension.base,
 #ifdef __DRI_USE_INVALIDATE
-    &dri2UseInvalidate,
+    &dri2UseInvalidate.base,
 #endif
     NULL
 };
@@ -792,9 +792,7 @@ __glXDRIscreenProbe(ScreenPtr pScreen)
      */
     buffer_size = __glXGetExtensionString(screen->glx_enable_bits, NULL);
     if (buffer_size > 0) {
-	if (screen->base.GLXextensions != NULL) {
-	    free(screen->base.GLXextensions);
-	}
+	free(screen->base.GLXextensions);
 
 	screen->base.GLXextensions = xnfalloc(buffer_size);
 	(void) __glXGetExtensionString(screen->glx_enable_bits, 
