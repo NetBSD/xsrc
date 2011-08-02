@@ -5,13 +5,13 @@
 #define VERSION_CONFIG_H
 
 /* Vendor man version */
-#define VENDOR_MAN_VERSION "Version 1.9.5"
+#define VENDOR_MAN_VERSION "Version 1.10.3"
 
 /* Vendor name */
 /* #define VENDOR_NAME "The X.Org Foundation" */
 
 /* Vendor release */
-#define VENDOR_RELEASE (((1) * 10000000) + ((9) * 100000) + ((5) * 1000) + 0)
+#define VENDOR_RELEASE (((1) * 10000000) + ((10) * 100000) + ((3) * 1000) + 0)
 
 #endif /* VERSION_CONFIG_H */
 
