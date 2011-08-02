@@ -124,13 +124,15 @@ static Bool DrawableGone(__GLXdrawable *glxPriv, XID xid)
 {
     __GLXcontext *c, *next;
 
-    if (glxPriv->type == GLX_DRAWABLE_WINDOW) {
+    if (glxPriv->type == GLX_DRAWABLE_WINDOW || glxPriv->type == GLX_DRAWABLE_PIXMAP) {
         /* If this was created by glXCreateWindow, free the matching resource */
-        if (glxPriv->drawId != glxPriv->pDraw->id) {
-            if (xid == glxPriv->drawId)
-                FreeResourceByType(glxPriv->pDraw->id, __glXDrawableRes, TRUE);
-            else
+        if (glxPriv->otherId) {
+            XID other = glxPriv->otherId;
+            glxPriv->otherId = 0;
+            if (xid == other)
                 FreeResourceByType(glxPriv->drawId, __glXDrawableRes, TRUE);
+            else
+                FreeResourceByType(other, __glXDrawableRes, TRUE);
         }
         /* otherwise this window was implicitly created by MakeCurrent */
     }
