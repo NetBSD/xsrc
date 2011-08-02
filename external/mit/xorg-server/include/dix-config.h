@@ -349,7 +349,7 @@
 /* #undef XORG_RELEASE */
 
 /* Current Xorg version */
-#define XORG_VERSION_CURRENT (((1) * 10000000) + ((9) * 100000) + ((5) * 1000) + 0)
+#define XORG_VERSION_CURRENT (((1) * 10000000) + ((10) * 100000) + ((3) * 1000) + 0)
 
 /* Xorg release date */
 #define XORG_DATE "2010-10-30"
@@ -394,7 +394,9 @@
 /* #undef ROOTLESS */
 
 /* Define to 1 if unsigned long is 64 bits. */
+#ifdef _LP64
 #define _XSERVER64 1
+#endif
 
 /* System is BSD-like */
 #define CSRG_BASED 1
