@@ -336,7 +336,7 @@ A(SetupImageVideo)(ScreenPtr pScreen)
     adapt->GetPortAttribute = ApmGetPortAttribute;
     adapt->QueryBestSize = ApmQueryBestSize;
     adapt->PutImage = A(PutImage);
-    adapt->ReputImage = A(ReputImage);
+    adapt->ReputImage = NULL;
     adapt->QueryImageAttributes = ApmQueryImageAttributes;
 
     pPriv->brightness = 0;
