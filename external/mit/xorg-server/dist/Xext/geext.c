@@ -28,13 +28,10 @@
 #endif
 #include "windowstr.h"
 #include <X11/extensions/ge.h>
-#include "registry.h"
 
 #include "geint.h"
 #include "geext.h"
 #include "protocol-versions.h"
-
-#define rClient(obj) (clients[CLIENT_ID((obj)->resource)])
 
 DevPrivateKeyRec GEClientPrivateKeyRec;
 
@@ -188,7 +185,7 @@ SGEGenericEvent(xEvent* from, xEvent* to)
     xGenericEvent* gefrom = (xGenericEvent*)from;
     xGenericEvent* geto = (xGenericEvent*)to;
 
-    if (gefrom->extension > MAXEXTENSIONS)
+    if ((gefrom->extension & 0x7f) > MAXEXTENSIONS)
     {
         ErrorF("GE: Invalid extension offset for event.\n");
         return;
