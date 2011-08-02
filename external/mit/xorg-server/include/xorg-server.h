@@ -158,11 +158,6 @@
 /* Name of X server */
 #define __XSERVERNAME__ "Xorg"
 
-#if defined(_LP64)
-/* Define to 1 if unsigned long is 64 bits. */
-#define _XSERVER64 1
-#endif
-
 /* Building vgahw module */
 #define WITH_VGAHW 1
 
@@ -189,5 +184,9 @@
 
 /* X Access Control Extension */
 #define XACE 1
+
+#ifdef _LP64
+#define _XSERVER64 1
+#endif
 
 #endif /* _XORG_SERVER_H_ */

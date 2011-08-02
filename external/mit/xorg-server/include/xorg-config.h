@@ -17,7 +17,7 @@
 #define XORGSERVER 1
 
 /* Current X.Org version. */
-#define XORG_VERSION_CURRENT (((1) * 10000000) + ((9) * 100000) + ((5) * 1000) + 0)
+#define XORG_VERSION_CURRENT (((1) * 10000000) + ((10) * 100000) + ((3) * 1000) + 0)
 
 /* Name of X server. */
 #define __XSERVERNAME__ "Xorg"
