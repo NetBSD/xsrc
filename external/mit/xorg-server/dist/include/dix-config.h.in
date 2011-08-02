@@ -243,6 +243,9 @@
 /* Define to 1 if you have the `vprintf' function. */
 #undef HAVE_VPRINTF
 
+/* Define to 1 if you have the `vasprintf' function. */
+#undef HAVE_VASPRINTF
+
 /* Support IPv6 for TCP connections */
 #undef IPv6
 
@@ -437,6 +440,9 @@
 
 /* Define to 1 if you have the `ffs' function. */
 #undef HAVE_FFS
+
+/* If the compiler supports a TLS storage class define it to that here */
+#undef TLS
 
 /* Correctly set _XSERVER64 for OSX fat binaries */
 #ifdef __APPLE__

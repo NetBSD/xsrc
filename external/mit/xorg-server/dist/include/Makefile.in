@@ -43,7 +43,7 @@ DIST_COMMON = $(am__sdk_HEADERS_DIST) $(srcdir)/Makefile.am \
 	$(srcdir)/xwin-config.h.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_define_dir.m4 \
-	$(top_srcdir)/m4/dolt.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/ax_tls.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -82,9 +82,9 @@ am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
 am__installdirs = "$(DESTDIR)$(sdkdir)" "$(DESTDIR)$(sdkdir)"
-am__sdk_HEADERS_DIST = XIstubs.h bstore.h bstorestr.h callback.h \
-	closestr.h closure.h colormap.h colormapst.h hotplug.h \
-	cursor.h cursorstr.h dix.h dixaccess.h dixevents.h dixfont.h \
+am__sdk_HEADERS_DIST = XIstubs.h Xprintf.h callback.h closestr.h \
+	closure.h colormap.h colormapst.h hotplug.h cursor.h \
+	cursorstr.h dix.h dixaccess.h dixevents.h dixfont.h \
 	dixfontstr.h dixgrabs.h dixstruct.h events.h exevents.h \
 	extension.h extinit.h extnsionst.h gc.h gcstruct.h globals.h \
 	input.h inputstr.h list.h misc.h miscstruct.h opaque.h os.h \
@@ -152,7 +152,6 @@ DMXXIEXAMPLES_DEP_CFLAGS = @DMXXIEXAMPLES_DEP_CFLAGS@
 DMXXIEXAMPLES_DEP_LIBS = @DMXXIEXAMPLES_DEP_LIBS@
 DMXXMUEXAMPLES_DEP_CFLAGS = @DMXXMUEXAMPLES_DEP_CFLAGS@
 DMXXMUEXAMPLES_DEP_LIBS = @DMXXMUEXAMPLES_DEP_LIBS@
-DOLT_BASH = @DOLT_BASH@
 DOXYGEN = @DOXYGEN@
 DRI2PROTO_CFLAGS = @DRI2PROTO_CFLAGS@
 DRI2PROTO_LIBS = @DRI2PROTO_LIBS@
@@ -186,6 +185,7 @@ GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_LIBS = @GLIB_LIBS@
 GLX_ARCH_DEFINES = @GLX_ARCH_DEFINES@
 GLX_DEFINES = @GLX_DEFINES@
+GLX_TLS = @GLX_TLS@
 GL_CFLAGS = @GL_CFLAGS@
 GL_LIBS = @GL_LIBS@
 GREP = @GREP@
@@ -221,8 +221,6 @@ LIB_MAN_DIR = @LIB_MAN_DIR@
 LIB_MAN_SUFFIX = @LIB_MAN_SUFFIX@
 LIPO = @LIPO@
 LN_S = @LN_S@
-LTCOMPILE = @LTCOMPILE@
-LTCXXCOMPILE = @LTCXXCOMPILE@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAIN_LIB = @MAIN_LIB@
@@ -279,6 +277,7 @@ SHA1_LIBS = @SHA1_LIBS@
 SHELL = @SHELL@
 SOLARIS_ASM_CFLAGS = @SOLARIS_ASM_CFLAGS@
 SOLARIS_INOUT_ARCH = @SOLARIS_INOUT_ARCH@
+STRICT_CFLAGS = @STRICT_CFLAGS@
 STRIP = @STRIP@
 STYLESHEET_SRCDIR = @STYLESHEET_SRCDIR@
 SYSCONFDIR = @SYSCONFDIR@
@@ -419,8 +418,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 @XORG_TRUE@sdk_HEADERS = \
 @XORG_TRUE@	XIstubs.h	\
-@XORG_TRUE@	bstore.h	\
-@XORG_TRUE@	bstorestr.h	\
+@XORG_TRUE@	Xprintf.h	\
 @XORG_TRUE@	callback.h	\
 @XORG_TRUE@	closestr.h	\
 @XORG_TRUE@	closure.h	\
@@ -482,7 +480,7 @@ top_srcdir = @top_srcdir@
 AM_CFLAGS = $(DIX_CFLAGS)
 EXTRA_DIST = \
 	dix-config-apple-verbatim.h \
-	eventconvert.h eventstr.h \
+	eventconvert.h eventstr.h inpututils.h \
 	protocol-versions.h \
 	xsha1.h
 

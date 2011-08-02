@@ -372,6 +372,13 @@ extern void AllowSome(
 extern void ReleaseActiveGrabs(
     ClientPtr client);
 
+extern GrabPtr CheckPassiveGrabsOnWindow(
+    WindowPtr /* pWin */,
+    DeviceIntPtr /* device */,
+    DeviceEvent * /* event */,
+    BOOL /* checkCore */,
+    BOOL /* activate */);
+
 extern _X_EXPORT int DeliverEventsToWindow(
     DeviceIntPtr /* pWin */,
     WindowPtr /* pWin */,
@@ -401,7 +408,7 @@ extern _X_EXPORT void WindowHasNewCursor(
 extern Bool CheckDeviceGrabs(
     DeviceIntPtr /* device */,
     DeviceEvent* /* event */,
-    int /* checkFirst */);
+    WindowPtr /* ancestor */);
 
 extern void DeliverFocusedEvent(
     DeviceIntPtr /* keybd */,

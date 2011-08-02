@@ -375,6 +375,9 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* Define to 1 if you have the `vasprintf' function. */
+#undef HAVE_VASPRINTF
+
 /* Define to 1 if you have the `vprintf' function. */
 #undef HAVE_VPRINTF
 
@@ -551,6 +554,9 @@
 
 /* Support TCP socket connections */
 #undef TCPCONN
+
+/* If the compiler supports a TLS storage class define it to that here */
+#undef TLS
 
 /* Have tslib support */
 #undef TSLIB
