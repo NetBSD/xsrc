@@ -49,6 +49,7 @@ SOFTWARE.
  *  Dispatch routines and initialization routines for the X input extension.
  *
  */
+#define ARRAY_SIZE(_a)        (sizeof((_a)) / sizeof((_a)[0]))
 
 #define	 NUMTYPES 15
 
@@ -410,7 +411,7 @@ static int
 ProcIDispatch(ClientPtr client)
 {
     REQUEST(xReq);
-    if (stuff->data > (IREQUESTS + XI2REQUESTS) || !ProcIVector[stuff->data])
+    if (stuff->data > ARRAY_SIZE(ProcIVector) || !ProcIVector[stuff->data])
         return BadRequest;
 
     return (*ProcIVector[stuff->data])(client);
@@ -429,7 +430,7 @@ static int
 SProcIDispatch(ClientPtr client)
 {
     REQUEST(xReq);
-    if (stuff->data > IREQUESTS || !SProcIVector[stuff->data])
+    if (stuff->data > ARRAY_SIZE(SProcIVector) || !SProcIVector[stuff->data])
         return BadRequest;
 
     return (*SProcIVector[stuff->data])(client);
@@ -510,7 +511,7 @@ SReplyIDispatch(ClientPtr client, int len, xGrabDeviceReply * rep)
         SRepXIQueryDevice(client, len, (xXIQueryDeviceReply*)rep);
     else if (rep->RepType == X_XIGrabDevice)
 	SRepXIGrabDevice(client, len, (xXIGrabDeviceReply *) rep);
-    else if (rep->RepType == X_XIGrabDevice)
+    else if (rep->RepType == X_XIPassiveGrabDevice)
 	SRepXIPassiveGrabDevice(client, len, (xXIPassiveGrabDeviceReply *) rep);
     else if (rep->RepType == X_XIListProperties)
 	SRepXIListProperties(client, len, (xXIListPropertiesReply *) rep);
@@ -757,6 +758,7 @@ static void SDeviceEvent(xXIDeviceEvent *from, xXIDeviceEvent *to)
     swapl(&to->mods.latched_mods, n);
     swapl(&to->mods.locked_mods, n);
     swapl(&to->mods.effective_mods, n);
+    swapl(&to->flags, n);
 
     ptr = (char*)(&to[1]);
     ptr += from->buttons_len * 4;
@@ -862,6 +864,8 @@ XI2EventSwap(xGenericEvent *from, xGenericEvent *to)
     {
         case XI_Enter:
         case XI_Leave:
+        case XI_FocusIn:
+        case XI_FocusOut:
             SDeviceLeaveNotifyEvent((xXILeaveEvent*)from, (xXILeaveEvent*)to);
             break;
         case XI_DeviceChanged:
@@ -1152,8 +1156,7 @@ void
 AssignTypeAndName(DeviceIntPtr dev, Atom type, char *name)
 {
     dev->xinput_type = type;
-    dev->name = (char *)malloc(strlen(name) + 1);
-    strcpy(dev->name, name);
+    dev->name = strdup(name);
 }
 
 /***********************************************************************

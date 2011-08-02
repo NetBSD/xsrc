@@ -193,6 +193,7 @@ xprAddPseudoramiXScreens(int *x, int *y, int *width, int *height, ScreenPtr pScr
         *width = 800;
         *height = 600;
         PseudoramiXAddScreen(*x, *y, *width, *height);
+        QuartzCopyDisplayIDs(pScreen, 0, NULL);
         return;
     }
 
@@ -403,12 +404,6 @@ have_depth:
 static Bool
 xprSetupScreen(int index, ScreenPtr pScreen)
 {
-    // Initialize accelerated rootless drawing
-    // Note that this must be done before DamageSetup().
-
-    // These are crashing ugly... better to be stable and not crash for now.
-    //RootlessAccelInit(pScreen);
-
 #ifdef DAMAGE
     // The Damage extension needs to wrap underneath the
     // generic rootless layer, so do it now.

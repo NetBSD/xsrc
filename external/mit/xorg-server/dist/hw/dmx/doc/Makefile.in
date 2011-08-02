@@ -36,6 +36,10 @@
 #  NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 #  CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+# The doc_sources variable contains one or more DocBook/XML source file.
+# The generated documents will NOT be installed in $(docdir),
+# The DocBook/XML files will always be included in the tarball
+
 #
 # Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
 #
@@ -59,12 +63,11 @@
 # DEALINGS IN THE SOFTWARE.
 #
 
-# This file is included by Makefile.am in subdirectories that have
-# DocBook XML documentation files.
-#
-# No files are automatically distributed or installed by this subset of rules
-# Any files to be distributed or installed would be listed in the including
-# Makefile.am
+# This file provides pattern rules to generate html/pdf/txt from DocBook/XML
+# A stylesheet is used if xorg-sgml-doctools is installed
+# This file is included by xmlrules-inst.in for installable user's documentation
+# It is included by xmlrules-noinst for non installable developer's documentation
+# If the server version or release date changes, autogen && make
 
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
@@ -85,17 +88,19 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-DIST_COMMON = $(srcdir)/../../../doc/xml/xmlrules.in \
-	$(srcdir)/Makefile.am $(srcdir)/Makefile.in
-@HAVE_STYLESHEETS_TRUE@am__append_1 = -m $(XSL_STYLESHEET)
-@HAVE_STYLESHEETS_TRUE@am__append_2 = xorg.css
-@HAVE_XMLTO_TEXT_TRUE@@HAVE_XMLTO_TRUE@am__append_3 = $(TXT_FILES)
-@HAVE_XMLTO_TRUE@am__append_4 = $(HTML_FILES)
-@HAVE_FOP_TRUE@@HAVE_XMLTO_TRUE@am__append_5 = $(PDF_FILES)
+DIST_COMMON = $(am__dist_noinst_DATA_DIST) $(srcdir)/Makefile.am \
+	$(srcdir)/Makefile.in $(srcdir)/doxygen.conf.in \
+	$(top_srcdir)/doc/xml/xmlrules-noinst.in \
+	$(top_srcdir)/doc/xml/xmlrules.in
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_FOP_TRUE@@HAVE_XMLTO_TRUE@am__append_1 = $(doc_sources:.xml=.pdf)
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TEXT_TRUE@@HAVE_XMLTO_TRUE@am__append_2 = $(doc_sources:.xml=.txt)
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_STYLESHEETS_TRUE@@HAVE_XMLTO_TRUE@am__append_3 = -m $(XSL_STYLESHEET) \
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_STYLESHEETS_TRUE@@HAVE_XMLTO_TRUE@	--stringparam html.stylesheet=$(STYLESHEET_SRCDIR)/xorg.css
+
 subdir = hw/dmx/doc
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_define_dir.m4 \
-	$(top_srcdir)/m4/dolt.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/ax_tls.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -107,7 +112,7 @@ CONFIG_HEADER = $(top_builddir)/include/do-not-use-config.h \
 	$(top_builddir)/include/xwin-config.h \
 	$(top_builddir)/include/kdrive-config.h \
 	$(top_builddir)/include/version-config.h
-CONFIG_CLEAN_FILES =
+CONFIG_CLEAN_FILES = doxygen.conf
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_GEN = $(am__v_GEN_$(V))
 am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
@@ -117,7 +122,8 @@ am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
 am__v_at_0 = @
 SOURCES =
 DIST_SOURCES =
-DATA = $(noinst_DATA)
+am__dist_noinst_DATA_DIST = dmx.xml scaled.xml
+DATA = $(dist_noinst_DATA) $(noinst_DATA)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 ADMIN_MAN_DIR = @ADMIN_MAN_DIR@
@@ -174,7 +180,6 @@ DMXXIEXAMPLES_DEP_CFLAGS = @DMXXIEXAMPLES_DEP_CFLAGS@
 DMXXIEXAMPLES_DEP_LIBS = @DMXXIEXAMPLES_DEP_LIBS@
 DMXXMUEXAMPLES_DEP_CFLAGS = @DMXXMUEXAMPLES_DEP_CFLAGS@
 DMXXMUEXAMPLES_DEP_LIBS = @DMXXMUEXAMPLES_DEP_LIBS@
-DOLT_BASH = @DOLT_BASH@
 DOXYGEN = @DOXYGEN@
 DRI2PROTO_CFLAGS = @DRI2PROTO_CFLAGS@
 DRI2PROTO_LIBS = @DRI2PROTO_LIBS@
@@ -208,6 +213,7 @@ GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_LIBS = @GLIB_LIBS@
 GLX_ARCH_DEFINES = @GLX_ARCH_DEFINES@
 GLX_DEFINES = @GLX_DEFINES@
+GLX_TLS = @GLX_TLS@
 GL_CFLAGS = @GL_CFLAGS@
 GL_LIBS = @GL_LIBS@
 GREP = @GREP@
@@ -243,8 +249,6 @@ LIB_MAN_DIR = @LIB_MAN_DIR@
 LIB_MAN_SUFFIX = @LIB_MAN_SUFFIX@
 LIPO = @LIPO@
 LN_S = @LN_S@
-LTCOMPILE = @LTCOMPILE@
-LTCXXCOMPILE = @LTCXXCOMPILE@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAIN_LIB = @MAIN_LIB@
@@ -301,6 +305,7 @@ SHA1_LIBS = @SHA1_LIBS@
 SHELL = @SHELL@
 SOLARIS_ASM_CFLAGS = @SOLARIS_ASM_CFLAGS@
 SOLARIS_INOUT_ARCH = @SOLARIS_INOUT_ARCH@
+STRICT_CFLAGS = @STRICT_CFLAGS@
 STRIP = @STRIP@
 STYLESHEET_SRCDIR = @STYLESHEET_SRCDIR@
 SYSCONFDIR = @SYSCONFDIR@
@@ -439,36 +444,40 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-XML_FILES = dmx.xml scaled.xml
-TXT_FILES = $(XML_FILES:%.xml=%.txt)
-HTML_FILES = $(XML_FILES:%.xml=%.html)
-PDF_FILES = $(XML_FILES:%.xml=%.pdf)
-BUILT_DOC_FILES = $(am__append_2) $(am__append_3) $(am__append_4) \
-	$(am__append_5)
-SUFFIXES = .xml .txt .html .pdf
-XML_ENT_DIR = $(abs_top_builddir)/doc/xml
-XMLTO_FLAGS = --searchpath $(XML_ENT_DIR) $(am__append_1)
-CLEAN_DOC_FILES = $(TXT_FILES) $(HTML_FILES) $(PDF_FILES) xorg.css
-@ENABLE_DEVEL_DOCS_TRUE@noinst_DATA = $(BUILT_DOC_FILES)
-CLEANFILES = $(CLEAN_DOC_FILES)
-@HAVE_DOXYGEN_TRUE@DOXYGEN_SRC = doxygen.head doxygen.foot doxygen.css doxygen.conf
-EXTRA_DIST = \
-	$(XML_FILES) \
-	DMXSpec.txt \
-	DMXSpec-v1.txt \
+doc_sources = dmx.xml scaled.xml
+@ENABLE_DEVEL_DOCS_TRUE@dist_noinst_DATA = $(doc_sources)
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@noinst_DATA = $(doc_sources:.xml=.html) \
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@	$(am__append_1) \
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@	$(am__append_2)
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@CLEANFILES = $(noinst_DATA)
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@XML_ENT_DIR = $(abs_top_builddir)/doc/xml
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@SUFFIXES = .xml .txt .html .pdf
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@XMLTO_FLAGS = --searchpath \
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@	$(XML_ENT_DIR) \
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@	$(am__append_3)
+
+# Developer's documentation is not installed
+DOXYGEN_HEAD = \
+	html/annotated.html
+
+DOXYGEN_REST = \
 	dmx.txt \
-	doxygen.conf \
-	doxygen.css \
-	doxygen.foot \
-	doxygen.head \
 	scaled.txt \
 	html/annotated.html \
+	html/bc_s.png \
 	html/ChkNotMaskEv_8c.html \
 	html/ChkNotMaskEv_8h.html \
 	html/ChkNotMaskEv_8h_source.html \
 	html/classes.html \
+	html/closed.png \
+	html/dmx-config_8h.html \
+	html/dmx-config_8h_source.html \
+	html/dmx_8c.html \
 	html/dmx_8h.html \
 	html/dmx_8h_source.html \
+	html/dmx__glxvisuals_8c.html \
+	html/dmx__glxvisuals_8h.html \
+	html/dmx__glxvisuals_8h_source.html \
 	html/dmxarg_8c.html \
 	html/dmxarg_8h.html \
 	html/dmxarg_8h_source.html \
@@ -520,7 +529,6 @@ EXTRA_DIST = \
 	html/dmxgcops_8c.html \
 	html/dmxgcops_8h.html \
 	html/dmxgcops_8h_source.html \
-	html/dmx__glxvisuals_8h_source.html \
 	html/dmxinit_8c.html \
 	html/dmxinit_8h.html \
 	html/dmxinit_8h_source.html \
@@ -569,6 +577,7 @@ EXTRA_DIST = \
 	html/dmxsync_8c.html \
 	html/dmxsync_8h.html \
 	html/dmxsync_8h_source.html \
+	html/dmxtodmx_8c.html \
 	html/dmxvisual_8c.html \
 	html/dmxvisual_8h.html \
 	html/dmxvisual_8h_source.html \
@@ -590,17 +599,119 @@ EXTRA_DIST = \
 	html/ftv2node.png \
 	html/ftv2plastnode.png \
 	html/ftv2pnode.png \
+	html/ftv2splitbar.png \
 	html/ftv2vertline.png \
 	html/functions.html \
+	html/functions_0x62.html \
+	html/functions_0x63.html \
+	html/functions_0x64.html \
+	html/functions_0x65.html \
+	html/functions_0x66.html \
+	html/functions_0x67.html \
+	html/functions_0x68.html \
+	html/functions_0x69.html \
+	html/functions_0x6b.html \
+	html/functions_0x6c.html \
+	html/functions_0x6d.html \
+	html/functions_0x6e.html \
+	html/functions_0x6f.html \
+	html/functions_0x70.html \
+	html/functions_0x72.html \
+	html/functions_0x73.html \
+	html/functions_0x74.html \
+	html/functions_0x75.html \
+	html/functions_0x76.html \
+	html/functions_0x77.html \
+	html/functions_0x78.html \
+	html/functions_0x79.html \
+	html/functions_eval.html \
 	html/functions_vars.html \
+	html/functions_vars_0x62.html \
+	html/functions_vars_0x63.html \
+	html/functions_vars_0x64.html \
+	html/functions_vars_0x65.html \
+	html/functions_vars_0x66.html \
+	html/functions_vars_0x67.html \
+	html/functions_vars_0x68.html \
+	html/functions_vars_0x69.html \
+	html/functions_vars_0x6b.html \
+	html/functions_vars_0x6c.html \
+	html/functions_vars_0x6d.html \
+	html/functions_vars_0x6e.html \
+	html/functions_vars_0x6f.html \
+	html/functions_vars_0x70.html \
+	html/functions_vars_0x72.html \
+	html/functions_vars_0x73.html \
+	html/functions_vars_0x74.html \
+	html/functions_vars_0x75.html \
+	html/functions_vars_0x76.html \
+	html/functions_vars_0x77.html \
+	html/functions_vars_0x78.html \
+	html/functions_vars_0x79.html \
+	html/globals.html \
+	html/globals_0x61.html \
+	html/globals_0x62.html \
+	html/globals_0x63.html \
+	html/globals_0x64.html \
+	html/globals_0x65.html \
+	html/globals_0x66.html \
+	html/globals_0x67.html \
+	html/globals_0x69.html \
+	html/globals_0x6b.html \
+	html/globals_0x6c.html \
+	html/globals_0x6d.html \
+	html/globals_0x6e.html \
+	html/globals_0x6f.html \
+	html/globals_0x70.html \
+	html/globals_0x71.html \
+	html/globals_0x72.html \
+	html/globals_0x73.html \
+	html/globals_0x74.html \
+	html/globals_0x75.html \
+	html/globals_0x76.html \
+	html/globals_0x78.html \
+	html/globals_0x79.html \
 	html/globals_defs.html \
+	html/globals_defs_0x62.html \
+	html/globals_defs_0x63.html \
+	html/globals_defs_0x64.html \
+	html/globals_defs_0x65.html \
+	html/globals_defs_0x66.html \
+	html/globals_defs_0x67.html \
+	html/globals_defs_0x6c.html \
+	html/globals_defs_0x6d.html \
+	html/globals_defs_0x6e.html \
+	html/globals_defs_0x6f.html \
+	html/globals_defs_0x70.html \
+	html/globals_defs_0x72.html \
+	html/globals_defs_0x73.html \
+	html/globals_defs_0x74.html \
+	html/globals_defs_0x75.html \
+	html/globals_defs_0x76.html \
 	html/globals_enum.html \
 	html/globals_eval.html \
 	html/globals_func.html \
-	html/globals.html \
+	html/globals_func_0x61.html \
+	html/globals_func_0x63.html \
+	html/globals_func_0x64.html \
+	html/globals_func_0x65.html \
+	html/globals_func_0x67.html \
+	html/globals_func_0x69.html \
+	html/globals_func_0x6b.html \
+	html/globals_func_0x6c.html \
+	html/globals_func_0x6d.html \
+	html/globals_func_0x6e.html \
+	html/globals_func_0x6f.html \
+	html/globals_func_0x70.html \
+	html/globals_func_0x73.html \
+	html/globals_func_0x75.html \
+	html/globals_func_0x76.html \
+	html/globals_func_0x78.html \
+	html/globals_func_0x79.html \
 	html/globals_type.html \
 	html/globals_vars.html \
 	html/index.html \
+	html/jquery.js \
 	html/lnx-keyboard_8c.html \
 	html/lnx-keyboard_8h.html \
 	html/lnx-keyboard_8h_source.html \
@@ -610,15 +721,18 @@ EXTRA_DIST = \
 	html/lnx-ps2_8c.html \
 	html/lnx-ps2_8h.html \
 	html/lnx-ps2_8h_source.html \
-	html/main.html \
+	html/nav_f.png \
+	html/nav_h.png \
+	html/navtree.css \
+	html/navtree.js \
+	html/open.png \
+	html/resize.js \
 	html/struct__dmxArg.html \
 	html/struct__dmxColormapPriv.html \
-	html/structDMXConfigCmdStruct.html \
 	html/struct__DMXConfigComment.html \
 	html/struct__DMXConfigDisplay.html \
 	html/struct__DMXConfigEntry.html \
 	html/struct__DMXConfigFullDim.html \
-	html/structDMXConfigListStruct.html \
 	html/struct__DMXConfigNumber.html \
 	html/struct__DMXConfigOption.html \
 	html/struct__DMXConfigPair.html \
@@ -630,26 +744,33 @@ EXTRA_DIST = \
 	html/struct__DMXConfigVirtual.html \
 	html/struct__DMXConfigWall.html \
 	html/struct__dmxCursorPriv.html \
-	html/structDMXDesktopAttributesRec.html \
 	html/struct__DMXEventMap.html \
 	html/struct__dmxFontPriv.html \
 	html/struct__dmxGCPriv.html \
-	html/structdmxGlxVisualPrivate.html \
 	html/struct__dmxGlyphPriv.html \
-	html/structDMXInputAttributesRec.html \
 	html/struct__DMXInputInfo.html \
 	html/struct__DMXLocalInitInfo.html \
 	html/struct__DMXLocalInputInfo.html \
 	html/struct__dmxPictPriv.html \
 	html/struct__dmxPixPriv.html \
-	html/structDMXScreenAttributesRec.html \
 	html/struct__DMXScreenInfo.html \
 	html/struct__DMXStatAvg.html \
 	html/struct__DMXStatInfo.html \
-	html/structDMXWindowAttributesRec.html \
 	html/struct__dmxWinPriv.html \
 	html/struct__myPrivate.html \
-	html/tree.html \
+	html/structDMXConfigCmdStruct.html \
+	html/structDMXConfigListStruct.html \
+	html/structDMXDesktopAttributesRec.html \
+	html/structdmxGlxVisualPrivate.html \
+	html/structDMXInputAttributesRec.html \
+	html/structDMXScreenAttributesRec.html \
+	html/structDMXWindowAttributesRec.html \
+	html/structstack.html \
+	html/tab_a.png \
+	html/tab_b.png \
+	html/tab_h.png \
+	html/tab_s.png \
+	html/tabs.css \
 	html/usb-common_8c.html \
 	html/usb-common_8h.html \
 	html/usb-common_8h_source.html \
@@ -663,13 +784,27 @@ EXTRA_DIST = \
 	html/usb-other_8h.html \
 	html/usb-other_8h_source.html \
 	html/usb-private_8h.html \
-	html/usb-private_8h_source.html
+	html/usb-private_8h_source.html \
+	html/vdltodmx_8c.html \
+	html/xdmxconfig_8c.html
 
+DOXYGEN_FILES = $(DOXYGEN_HEAD) $(DOXYGEN_REST)
+EXTRA_DIST = \
+	$(XML_FILES) \
+	DMXSpec.txt \
+	DMXSpec-v1.txt \
+	doxygen.conf \
+	doxygen.css \
+	doxygen.foot \
+	doxygen.head \
+	$(DOXYGEN_FILES)
+
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_DOXYGEN_TRUE@DOXYGEN_SRC = doxygen.head doxygen.foot doxygen.css doxygen.conf
 all: all-am
 
 .SUFFIXES:
 .SUFFIXES: .xml .txt .html .pdf
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(srcdir)/../../../doc/xml/xmlrules.in $(am__configure_deps)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(top_srcdir)/doc/xml/xmlrules-noinst.in $(top_srcdir)/doc/xml/xmlrules.in $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -699,6 +834,8 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
+doxygen.conf: $(top_builddir)/config.status $(srcdir)/doxygen.conf.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -744,6 +881,7 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
+@ENABLE_DEVEL_DOCS_FALSE@all-local:
 @HAVE_DOXYGEN_FALSE@all-local:
 all-am: Makefile $(DATA) all-local
 installdirs:
@@ -773,6 +911,9 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+@ENABLE_DEVEL_DOCS_FALSE@distclean-local:
+@HAVE_DOXYGEN_FALSE@distclean-local:
+@ENABLE_DEVEL_DOCS_FALSE@maintainer-clean-local:
 @HAVE_DOXYGEN_FALSE@maintainer-clean-local:
 clean: clean-am
 
@@ -780,7 +921,7 @@ clean-am: clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-am
 	-rm -f Makefile
-distclean-am: clean-am distclean-generic
+distclean-am: clean-am distclean-generic distclean-local
 
 dvi: dvi-am
 
@@ -845,8 +986,8 @@ uninstall-am:
 
 .PHONY: all all-am all-local check check-am clean clean-generic \
 	clean-libtool distclean distclean-generic distclean-libtool \
-	distdir dvi dvi-am html html-am info info-am install \
-	install-am install-data install-data-am install-dvi \
+	distclean-local distdir dvi dvi-am html html-am info info-am \
+	install install-am install-data install-data-am install-dvi \
 	install-dvi-am install-exec install-exec-am install-html \
 	install-html-am install-info install-info-am install-man \
 	install-pdf install-pdf-am install-ps install-ps-am \
@@ -856,33 +997,29 @@ uninstall-am:
 	mostlyclean-libtool pdf pdf-am ps ps-am uninstall uninstall-am
 
 
-@HAVE_STYLESHEETS_TRUE@xorg.css: $(STYLESHEET_SRCDIR)/xorg.css
-@HAVE_STYLESHEETS_TRUE@	$(AM_V_GEN)cp -pf $(STYLESHEET_SRCDIR)/xorg.css $@
-@HAVE_XMLTO_TEXT_TRUE@@HAVE_XMLTO_TRUE@.xml.txt:
-@HAVE_XMLTO_TEXT_TRUE@@HAVE_XMLTO_TRUE@	@rm -f $@
-@HAVE_XMLTO_TEXT_TRUE@@HAVE_XMLTO_TRUE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) txt $<
-@HAVE_XMLTO_TRUE@.xml.html:
-@HAVE_XMLTO_TRUE@	@rm -f $@
-@HAVE_XMLTO_TRUE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) xhtml-nochunks $<
-@HAVE_FOP_TRUE@@HAVE_XMLTO_TRUE@.xml.pdf:
-@HAVE_FOP_TRUE@@HAVE_XMLTO_TRUE@	@rm -f $@
-@HAVE_FOP_TRUE@@HAVE_XMLTO_TRUE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) --with-fop pdf $<
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@%.txt: %.xml $(XML_ENT_DIR)/xserver.ent
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) txt $<
 
-# All the files we build depend on the entities
-$(BUILT_DOC_FILES): $(XML_ENT_DIR)/xserver.ent
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@%.html: %.xml $(XML_ENT_DIR)/xserver.ent
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) xhtml-nochunks $<
 
-$(XML_ENT_DIR)/xserver.ent:
-	(cd $(XML_ENT_DIR) && $(MAKE) $(AM_MAKEFLAGS) $(@F))
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@%.pdf: %.xml $(XML_ENT_DIR)/xserver.ent
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_XMLTO_TRUE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) --with-fop pdf $<
 
-@HAVE_DOXYGEN_TRUE@all-local: html/annotated.html
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_DOXYGEN_TRUE@all-local: $(DOXYGEN_FILES)
 
-@HAVE_DOXYGEN_TRUE@dist-local: html/annotated.html
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_DOXYGEN_TRUE@dist-local: $(DOXYGEN_FILES)
 
-@HAVE_DOXYGEN_TRUE@html/annotated.html: $(DOXYGEN_SRC)
-@HAVE_DOXYGEN_TRUE@	$(DOXYGEN) $(srcdir)/doxygen.conf
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_DOXYGEN_TRUE@$(DOXYGEN_HEAD): $(DOXYGEN_SRC)
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_DOXYGEN_TRUE@	$(DOXYGEN) doxygen.conf
 
-@HAVE_DOXYGEN_TRUE@maintainer-clean-local:
-@HAVE_DOXYGEN_TRUE@	rm -rf html/
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_DOXYGEN_TRUE@$(DOXYGEN_REST): $(DOXYGEN_HEAD)
+
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_DOXYGEN_TRUE@maintainer-clean-local:
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_DOXYGEN_TRUE@	rm -rf html/ scaled.txt dmx.txt
+
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_DOXYGEN_TRUE@distclean-local:
+@ENABLE_DEVEL_DOCS_TRUE@@HAVE_DOXYGEN_TRUE@	rm -rf html/ scaled.txt dmx.txt
 
 $(builddir)/doxygen.head:
 	$(LN_S) $(srcdir)/doxygen.head $@

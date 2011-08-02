@@ -47,6 +47,11 @@
 #include "xace.h"
 #include "protocol-versions.h"
 
+#ifdef PANORAMIX
+#include "panoramiX.h"
+#include "panoramiXsrv.h"
+#endif
+
 #if HAVE_STDINT_H
 #include <stdint.h>
 #elif !defined(UINT32_MAX)
@@ -1079,8 +1084,10 @@ ProcRenderAddGlyphs (ClientPtr client)
     remain -= (sizeof (CARD32) + sizeof (xGlyphInfo)) * nglyphs;
 
     /* protect against bad nglyphs */
-    if (gi < stuff || gi > ((CARD32 *)stuff + client->req_len) ||
-        bits < stuff || bits > ((CARD32 *)stuff + client->req_len)) {
+    if (gi < ((xGlyphInfo *)stuff) ||
+        gi > ((xGlyphInfo *)((CARD32 *)stuff + client->req_len)) ||
+        bits < ((CARD8 *)stuff) ||
+        bits > ((CARD8 *)((CARD32 *)stuff + client->req_len))) {
         err = BadLength;
         goto bail;
     }
@@ -1365,8 +1372,10 @@ ProcRenderCompositeGlyphs (ClientPtr client)
     else
     {
 	listsBase = (GlyphListPtr) malloc(nlist * sizeof (GlyphListRec));
-	if (!listsBase)
-	    return BadAlloc;
+	if (!listsBase) {
+	    rc = BadAlloc;
+	    goto bail;
+	}
     }
     buffer = (CARD8 *) (stuff + 1);
     glyphs = glyphsBase;
@@ -1385,13 +1394,7 @@ ProcRenderCompositeGlyphs (ClientPtr client)
 					     GlyphSetType, client,
 					     DixUseAccess);
 		if (rc != Success)
-		{
-		    if (glyphsBase != glyphsLocal)
-			free(glyphsBase);
-		    if (listsBase != listsLocal)
-			free(listsBase);
-		    return rc;
-		}
+		    goto bail;
 	    }
 	    buffer += 4;
 	}
@@ -1429,8 +1432,10 @@ ProcRenderCompositeGlyphs (ClientPtr client)
 	    lists++;
 	}
     }
-    if (buffer > end)
-	return BadLength;
+    if (buffer > end) {
+	rc = BadLength;
+	goto bail;
+    }
 
     CompositeGlyphs (stuff->op,
 		     pSrc,
@@ -1441,13 +1446,14 @@ ProcRenderCompositeGlyphs (ClientPtr client)
 		     nlist,
 		     listsBase,
 		     glyphsBase);
+    rc = Success;
 
+bail:
     if (glyphsBase != glyphsLocal)
 	free(glyphsBase);
     if (listsBase != listsLocal)
 	free(listsBase);
-    
-    return Success;
+    return rc;
 }
 
 static int
@@ -2651,9 +2657,6 @@ SProcRenderDispatch (ClientPtr client)
 }
 
 #ifdef PANORAMIX
-#include "panoramiX.h"
-#include "panoramiXsrv.h"
-
 #define VERIFY_XIN_PICTURE(pPicture, pid, client, mode) {\
     int rc = dixLookupResourceByType((pointer *)&(pPicture), pid,\
                                      XRT_PICTURE, client, mode);\

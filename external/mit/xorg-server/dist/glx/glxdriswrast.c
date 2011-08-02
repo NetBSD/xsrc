@@ -48,7 +48,6 @@
 #include "glxutil.h"
 #include "glxdricommon.h"
 
-#include "g_disptab.h"
 #include "glapitable.h"
 #include "glapi.h"
 #include "glthread.h"
@@ -99,8 +98,8 @@ __glXDRIdrawableDestroy(__GLXdrawable *drawable)
 
     (*core->destroyDrawable)(private->driDrawable);
 
-    FreeScratchGC(private->gc);
-    FreeScratchGC(private->swapgc);
+    FreeGC(private->gc, (GContext)0);
+    FreeGC(private->swapgc, (GContext)0);
 
     __glXDrawableRelease(drawable);
 
@@ -202,6 +201,14 @@ __glXDRIbindTexImage(__GLXcontext *baseContext,
     if (texBuffer == NULL)
         return Success;
 
+#if __DRI_TEX_BUFFER_VERSION >= 2
+    if (texBuffer->base.version >= 2 && texBuffer->setTexBuffer2 != NULL) {
+	(*texBuffer->setTexBuffer2)(context->driContext,
+				    glxPixmap->target,
+				    glxPixmap->format,
+				    drawable->driDrawable);
+    } else
+#endif
     texBuffer->setTexBuffer(context->driContext,
 			    glxPixmap->target,
 			    drawable->driDrawable);
@@ -301,12 +308,11 @@ __glXDRIscreenCreateDrawable(ClientPtr client,
 			     XID glxDrawId,
 			     __GLXconfig *glxConfig)
 {
-    ChangeGCVal gcvals[2];
+    XID gcvals[2];
+    int status;
     __GLXDRIscreen *driScreen = (__GLXDRIscreen *) screen;
     __GLXDRIconfig *config = (__GLXDRIconfig *) glxConfig;
     __GLXDRIdrawable *private;
-
-    ScreenPtr pScreen = driScreen->base.pScreen;
 
     private = calloc(1, sizeof *private);
     if (private == NULL)
@@ -323,13 +329,10 @@ __glXDRIscreenCreateDrawable(ClientPtr client,
     private->base.swapBuffers   = __glXDRIdrawableSwapBuffers;
     private->base.copySubBuffer = __glXDRIdrawableCopySubBuffer;
 
-    private->gc = CreateScratchGC(pScreen, pDraw->depth);
-    private->swapgc = CreateScratchGC(pScreen, pDraw->depth);
-
-    gcvals[0].val = GXcopy;
-    ChangeGC(NullClient, private->gc, GCFunction, gcvals);
-    gcvals[1].val = FALSE;
-    ChangeGC(NullClient, private->swapgc, GCFunction | GCGraphicsExposures, gcvals);
+    gcvals[0] = GXcopy;
+    private->gc = CreateGC(pDraw, GCFunction, gcvals, &status, (XID)0, serverClient);
+    gcvals[1] = FALSE;
+    private->swapgc = CreateGC(pDraw, GCFunction | GCGraphicsExposures, gcvals, &status, (XID)0, serverClient);
 
     private->driDrawable =
 	(*driScreen->swrast->createNewDrawable)(driScreen->driScreen,

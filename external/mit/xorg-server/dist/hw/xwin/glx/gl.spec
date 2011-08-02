@@ -7,7 +7,7 @@
 # This document is licensed under the SGI Free Software B License Version
 # 2.0. For details, see http://oss.sgi.com/projects/FreeB/ .
 #
-# $Revision: 1.1.1.1 $ on $Date: 2010/11/23 05:22:03 $
+# $Revision: 1.1.1.2 $ on $Date: 2011/08/02 06:57:02 $
 
 required-props:
 # Description of a parameter
@@ -21,7 +21,7 @@ vectorequiv:	*
 # Category this function falls in. While there are many categories for
 # early GL 1.0 functions, later functions just have a core version
 # (e.g. VERSION_major_minor) or extension name for the category.
-category:	display-list drawing drawing-control feedback framebuf misc modeling pixel-op pixel-rw state-req xform VERSION_1_0 VERSION_1_0_DEPRECATED VERSION_1_1 VERSION_1_1_DEPRECATED VERSION_1_2 VERSION_1_2_DEPRECATED VERSION_1_3 VERSION_1_3_DEPRECATED VERSION_1_4 VERSION_1_4_DEPRECATED VERSION_1_5 VERSION_2_0 VERSION_2_1 VERSION_3_0 VERSION_3_0_DEPRECATED VERSION_3_1 VERSION_3_2 VERSION_3_3 VERSION_4_0 VERSION_4_1 VERSION_4_1_DEPRECATED ATI_element_array ATI_envmap_bumpmap ATI_fragment_shader ATI_pn_triangles ATI_vertex_array_object ATI_vertex_streams EXT_blend_color EXT_blend_minmax EXT_convolution EXT_copy_texture EXT_histogram EXT_polygon_offset EXT_subtexture EXT_texture3D EXT_texture_object EXT_vertex_array EXT_vertex_shader SGIS_detail_texture SGIS_multisample SGIS_pixel_texture ARB_point_parameters EXT_point_parameters SGIS_point_parameters SGIS_sharpen_texture SGIS_texture4D SGIS_texture_filter4 SGIX_async SGIX_flush_raster SGIX_fragment_lighting SGIX_framezoom SGIX_igloo_interface SGIX_instruments SGIX_list_priority SGIX_pixel_texture SGIX_polynomial_ffd SGIX_reference_plane SGIX_sprite SGIX_tag_sample_buffer SGI_color_table ARB_multitexture ARB_multisample ARB_texture_compression ARB_transpose_matrix ARB_vertex_blend ARB_matrix_palette EXT_compiled_vertex_array EXT_cull_vertex EXT_index_func EXT_index_material EXT_draw_range_elements EXT_vertex_weighting INGR_blend_func_separate NV_evaluators NV_fence NV_occlusion_query NV_point_sprite NV_register_combiners NV_register_combiners2 NV_vertex_array_range NV_vertex_program NV_vertex_program1_1_dcc MESA_resize_buffers MESA_window_pos PGI_misc_hints EXT_fog_coord EXT_blend_func_separate EXT_color_subtable EXT_coordinate_frame EXT_light_texture EXT_multi_draw_arrays EXT_paletted_texture EXT_pixel_transform EXT_secondary_color EXT_texture_perturb_normal HP_image_transform IBM_multimode_draw_arrays IBM_vertex_array_lists INTEL_parallel_arrays SUNX_constant_data SUN_global_alpha SUN_mesh_array SUN_triangle_list SUN_vertex 3DFX_tbuffer EXT_multisample SGIS_fog_function SGIS_texture_color_mask ARB_window_pos EXT_stencil_two_side EXT_depth_bounds_test EXT_blend_equation_separate ARB_vertex_program ARB_fragment_program ARB_vertex_buffer_object ARB_occlusion_query ARB_shader_objects ARB_vertex_shader ARB_fragment_shader S3_s3tc ATI_draw_buffers ATI_texture_env_combine3 ATI_texture_float NV_float_buffer NV_fragment_program NV_half_float NV_pixel_data_range NV_primitive_restart NV_texture_expand_normal NV_texture_expand_normal NV_vertex_program2 APPLE_element_array APPLE_fence APPLE_vertex_array_object APPLE_vertex_array_range ATI_draw_buffers NV_fragment_program NV_half_float NV_pixel_data_range NV_primitive_restart ATI_map_object_buffer ATI_separate_stencil ATI_vertex_attrib_array_object ARB_draw_buffers ARB_texture_rectangle ARB_color_buffer_float EXT_framebuffer_object GREMEDY_string_marker EXT_stencil_clear_tag EXT_framebuffer_blit EXT_framebuffer_multisample MESAX_texture_stack EXT_timer_query EXT_gpu_program_parameters APPLE_flush_buffer_range NV_gpu_program4 NV_geometry_program4 EXT_geometry_shader4 NV_vertex_program4 EXT_gpu_shader4 EXT_draw_instanced EXT_texture_buffer_object NV_depth_buffer_float NV_framebuffer_multisample_coverage NV_parameter_buffer_object EXT_draw_buffers2 NV_transform_feedback EXT_bindable_uniform EXT_texture_integer GREMEDY_frame_terminator NV_conditional_render NV_present_video EXT_transform_feedback ARB_depth_buffer_float ARB_draw_instanced ARB_framebuffer_object ARB_framebuffer_sRGB ARB_geometry_shader4 ARB_half_float_vertex ARB_instanced_arrays ARB_map_buffer_range ARB_texture_buffer_object ARB_texture_compression_rgtc ARB_texture_rg ARB_vertex_array_object EXT_direct_state_access EXT_vertex_array_bgra EXT_texture_swizzle NV_explicit_multisample NV_transform_feedback2 ATI_meminfo AMD_performance_monitor AMD_vertex_shader_tesselator EXT_provoking_vertex ARB_uniform_buffer_object ARB_copy_buffer EXT_texture_snorm AMD_draw_buffers_blend APPLE_texture_range APPLE_float_pixels APPLE_vertex_program_evaluators APPLE_aux_depth_stencil APPLE_object_purgeable APPLE_row_bytes ARB_draw_elements_base_vertex ARB_provoking_vertex ARB_sync ARB_texture_multisample ARB_draw_buffers_blend ARB_sample_shading NV_video_capture NV_copy_image EXT_separate_shader_objects NV_parameter_buffer_object2 NV_shader_buffer_load NV_vertex_buffer_unified_memory NV_texture_barrier ARB_shading_language_include ARB_blend_func_extended ARB_sampler_objects ARB_timer_query ARB_vertex_type_2_10_10_10_rev ARB_draw_indirect ARB_gpu_shader_fp64 ARB_shader_subroutine ARB_tessellation_shader ARB_transform_feedback2 ARB_transform_feedback3 AMD_conservative_depth NV_vdpau_interop ARB_ES2_compatibility ARB_get_program_binary ARB_separate_shader_objects ARB_vertex_attrib_64bit ARB_viewport_array ARB_cl_event ARB_debug_output ARB_robustness EXT_shader_image_load_store EXT_vertex_attrib_64bit NV_gpu_shader5 NV_vertex_attrib_integer_64bit AMD_name_gen_delete AMD_debug_output NV_vdpau_interop NV_gpu_program5
+category:	display-list drawing drawing-control feedback framebuf misc modeling pixel-op pixel-rw state-req xform VERSION_1_0 VERSION_1_0_DEPRECATED VERSION_1_1 VERSION_1_1_DEPRECATED VERSION_1_2 VERSION_1_2_DEPRECATED VERSION_1_3 VERSION_1_3_DEPRECATED VERSION_1_4 VERSION_1_4_DEPRECATED VERSION_1_5 VERSION_2_0 VERSION_2_1 VERSION_3_0 VERSION_3_0_DEPRECATED VERSION_3_1 VERSION_3_2 VERSION_3_3 VERSION_4_0 VERSION_4_1 VERSION_4_1_DEPRECATED ATI_element_array ATI_envmap_bumpmap ATI_fragment_shader ATI_pn_triangles ATI_vertex_array_object ATI_vertex_streams EXT_blend_color EXT_blend_minmax EXT_convolution EXT_copy_texture EXT_histogram EXT_polygon_offset EXT_subtexture EXT_texture3D EXT_texture_object EXT_vertex_array EXT_vertex_shader SGIS_detail_texture SGIS_multisample SGIS_pixel_texture ARB_point_parameters EXT_point_parameters SGIS_point_parameters SGIS_sharpen_texture SGIS_texture4D SGIS_texture_filter4 SGIX_async SGIX_flush_raster SGIX_fragment_lighting SGIX_framezoom SGIX_igloo_interface SGIX_instruments SGIX_list_priority SGIX_pixel_texture SGIX_polynomial_ffd SGIX_reference_plane SGIX_sprite SGIX_tag_sample_buffer SGI_color_table ARB_multitexture ARB_multisample ARB_texture_compression ARB_transpose_matrix ARB_vertex_blend ARB_matrix_palette EXT_compiled_vertex_array EXT_cull_vertex EXT_index_func EXT_index_material EXT_draw_range_elements EXT_vertex_weighting INGR_blend_func_separate NV_evaluators NV_fence NV_occlusion_query NV_point_sprite NV_register_combiners NV_register_combiners2 NV_vertex_array_range NV_vertex_program NV_vertex_program1_1_dcc MESA_resize_buffers MESA_window_pos PGI_misc_hints EXT_fog_coord EXT_blend_func_separate EXT_color_subtable EXT_coordinate_frame EXT_light_texture EXT_multi_draw_arrays EXT_paletted_texture EXT_pixel_transform EXT_secondary_color EXT_texture_perturb_normal HP_image_transform IBM_multimode_draw_arrays IBM_vertex_array_lists INTEL_parallel_arrays SUNX_constant_data SUN_global_alpha SUN_mesh_array SUN_triangle_list SUN_vertex 3DFX_tbuffer EXT_multisample SGIS_fog_function SGIS_texture_color_mask ARB_window_pos EXT_stencil_two_side EXT_depth_bounds_test EXT_blend_equation_separate ARB_vertex_program ARB_fragment_program ARB_vertex_buffer_object ARB_occlusion_query ARB_shader_objects ARB_vertex_shader ARB_fragment_shader S3_s3tc ATI_draw_buffers ATI_texture_env_combine3 ATI_texture_float NV_float_buffer NV_fragment_program NV_half_float NV_pixel_data_range NV_primitive_restart NV_texture_expand_normal NV_texture_expand_normal NV_vertex_program2 APPLE_element_array APPLE_fence APPLE_vertex_array_object APPLE_vertex_array_range ATI_draw_buffers NV_fragment_program NV_half_float NV_pixel_data_range NV_primitive_restart ATI_map_object_buffer ATI_separate_stencil ATI_vertex_attrib_array_object ARB_draw_buffers ARB_texture_rectangle ARB_color_buffer_float EXT_framebuffer_object GREMEDY_string_marker EXT_stencil_clear_tag EXT_framebuffer_blit EXT_framebuffer_multisample MESAX_texture_stack EXT_timer_query EXT_gpu_program_parameters APPLE_flush_buffer_range NV_gpu_program4 NV_geometry_program4 EXT_geometry_shader4 NV_vertex_program4 EXT_gpu_shader4 EXT_draw_instanced EXT_texture_buffer_object NV_depth_buffer_float NV_framebuffer_multisample_coverage NV_parameter_buffer_object EXT_draw_buffers2 NV_transform_feedback EXT_bindable_uniform EXT_texture_integer GREMEDY_frame_terminator NV_conditional_render NV_present_video EXT_transform_feedback ARB_depth_buffer_float ARB_draw_instanced ARB_framebuffer_object ARB_framebuffer_sRGB ARB_geometry_shader4 ARB_half_float_vertex ARB_instanced_arrays ARB_map_buffer_range ARB_texture_buffer_object ARB_texture_compression_rgtc ARB_texture_rg ARB_vertex_array_object EXT_direct_state_access EXT_vertex_array_bgra EXT_texture_swizzle NV_explicit_multisample NV_transform_feedback2 ATI_meminfo AMD_performance_monitor AMD_vertex_shader_tesselator EXT_provoking_vertex ARB_uniform_buffer_object ARB_copy_buffer EXT_texture_snorm AMD_draw_buffers_blend APPLE_texture_range APPLE_float_pixels APPLE_vertex_program_evaluators APPLE_aux_depth_stencil APPLE_object_purgeable APPLE_row_bytes ARB_draw_elements_base_vertex ARB_provoking_vertex ARB_sync ARB_texture_multisample ARB_draw_buffers_blend ARB_sample_shading NV_video_capture NV_copy_image EXT_separate_shader_objects NV_parameter_buffer_object2 NV_shader_buffer_load NV_vertex_buffer_unified_memory NV_texture_barrier ARB_shading_language_include ARB_blend_func_extended ARB_sampler_objects ARB_timer_query ARB_vertex_type_2_10_10_10_rev ARB_draw_indirect ARB_gpu_shader_fp64 ARB_shader_subroutine ARB_tessellation_shader ARB_transform_feedback2 ARB_transform_feedback3 AMD_conservative_depth NV_vdpau_interop ARB_ES2_compatibility ARB_get_program_binary ARB_separate_shader_objects ARB_vertex_attrib_64bit ARB_viewport_array ARB_cl_event ARB_debug_output ARB_robustness EXT_shader_image_load_store EXT_vertex_attrib_64bit NV_gpu_shader5 NV_vertex_attrib_integer_64bit AMD_name_gen_delete AMD_debug_output NV_vdpau_interop NV_gpu_program5 NV_texture_multisample
 
 # Categories for extensions with no functions - need not be included now
 # ARB_texture_env_add ARB_texture_cube_map ARB_texture_border_clamp
@@ -61,6 +61,7 @@ category:	display-list drawing drawing-control feedback framebuf misc modeling p
 # ARB_seamless_cube_map ARB_vertex_array_bgra ARB_texture_cube_map_array
 # ARB_texture_gather ARB_texture_query_lod
 # AMD_shader_stencil_export AMD_seamless_cubemap_per_texture
+# AMD_blend_minmax_factor commands
 
 # Core version in which a function was introduced, or against
 # which an extension can be implemented
@@ -31461,7 +31462,156 @@ newcategory: AMD_transform_feedback3_lines_triangles
 ###############################################################################
 #
 # Extension #398 - GLX_AMD_gpu_association
+# Extension #399 - GLX_EXT_create_context_es2_profile
+# Extension #400 - WGL_EXT_create_context_es2_profile
 #
 ###############################################################################
 
+###############################################################################
+#
+# Extension #401
+# AMD_depth_clamp_separate commands
+#
+###############################################################################
 
+# (none)
+newcategory: AMD_depth_clamp_separate
+
+###############################################################################
+#
+# Extension #402
+# EXT_texture_sRGB_decode commands
+#
+###############################################################################
+
+# (none)
+newcategory: EXT_texture_sRGB_decode
+
+###############################################################################
+#
+# Extension #403
+# NV_texture_multisample commands
+#
+###############################################################################
+
+TexImage2DMultisampleCoverageNV(target, coverageSamples, colorSamples, internalFormat, width, height, fixedSampleLocations)
+	return		void
+	param		target		GLenum in value
+	param		coverageSamples SizeI in value
+	param		colorSamples	SizeI in value
+	param		internalFormat	Int32 in value
+	param		width		SizeI in value
+	param		height		SizeI in value
+	param		fixedSampleLocations	Boolean in value
+	category	NV_texture_multisample
+	version		4.1
+	extension
+	glxropcode	?
+	glxflags	ignore
+	offset		?
+
+TexImage3DMultisampleCoverageNV(target, coverageSamples, colorSamples, internalFormat, width, height, depth, fixedSampleLocations)
+	return		void
+	param		target		GLenum in value
+	param		coverageSamples SizeI in value
+	param		colorSamples	SizeI in value
+	param		internalFormat	Int32 in value
+	param		width		SizeI in value
+	param		height		SizeI in value
+	param		depth		SizeI in value
+	param		fixedSampleLocations	Boolean in value
+	category	NV_texture_multisample
+	version		4.1
+	extension
+	glxropcode	?
+	glxflags	ignore
+	offset		?
+
+TextureImage2DMultisampleNV(texture, target, samples, internalFormat, width, height, fixedSampleLocations)
+	return		void
+	param		texture		UInt32 in value
+	param		target		GLenum in value
+	param		samples		SizeI in value
+	param		internalFormat	Int32 in value
+	param		width		SizeI in value
+	param		height		SizeI in value
+	param		fixedSampleLocations	Boolean in value
+	category	NV_texture_multisample
+	version		4.1
+	extension
+	glxropcode	?
+	glxflags	ignore
+	offset		?
+
+TextureImage3DMultisampleNV(texture, target, samples, internalFormat, width, height, depth, fixedSampleLocations)
+	return		void
+	param		texture		UInt32 in value
+	param		target		GLenum in value
+	param		samples		SizeI in value
+	param		internalFormat	Int32 in value
+	param		width		SizeI in value
+	param		height		SizeI in value
+	param		depth		SizeI in value
+	param		fixedSampleLocations	Boolean in value
+	category	NV_texture_multisample
+	version		4.1
+	extension
+	glxropcode	?
+	glxflags	ignore
+	offset		?
+
+TextureImage2DMultisampleCoverageNV(texture, target, coverageSamples, colorSamples, internalFormat, width, height, fixedSampleLocations)
+	return		void
+	param		texture		UInt32 in value
+	param		target		GLenum in value
+	param		coverageSamples SizeI in value
+	param		colorSamples	SizeI in value
+	param		internalFormat	Int32 in value
+	param		width		SizeI in value
+	param		height		SizeI in value
+	param		fixedSampleLocations	Boolean in value
+	category	NV_texture_multisample
+	version		4.1
+	extension
+	glxropcode	?
+	glxflags	ignore
+	offset		?
+
+TextureImage3DMultisampleCoverageNV(texture, target, coverageSamples, colorSamples, internalFormat, width, height, depth, fixedSampleLocations)
+	return		void
+	param		texture		UInt32 in value
+	param		target		GLenum in value
+	param		coverageSamples SizeI in value
+	param		colorSamples	SizeI in value
+	param		internalFormat	Int32 in value
+	param		width		SizeI in value
+	param		height		SizeI in value
+	param		depth		SizeI in value
+	param		fixedSampleLocations	Boolean in value
+	category	NV_texture_multisample
+	version		4.1
+	extension
+	glxropcode	?
+	glxflags	ignore
+	offset		?
+
+
+###############################################################################
+#
+# Extension #404
+# AMD_blend_minmax_factor commands
+#
+###############################################################################
+
+# (none)
+newcategory: AMD_blend_minmax_factor
+
+###############################################################################
+#
+# Extension #405 (awaiting spec clarification)
+# AMD_sample_positions commands
+#
+###############################################################################
+
+#@GL_AMD_sample_positions
+#@void SetMultisamplefv(enum pname, uint index, const float *val);

@@ -71,8 +71,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "inputstr.h"
 #include "xf86VGAarbiter.h"
 
-#define PCI_BUS_NO_DOMAIN(bus) ((bus) & 0xffu)
-
 static int DRIEntPrivIndex = -1;
 static DevPrivateKeyRec DRIScreenPrivKeyRec;
 #define DRIScreenPrivKey (&DRIScreenPrivKeyRec)
@@ -433,7 +431,7 @@ DRIScreenInit(ScreenPtr pScreen, DRIInfoPtr pDRIInfo, int *pDRMFD)
     if (!pDRIPriv->pDriverInfo->dontMapFrameBuffer)
     {
 	if (drmAddMap( pDRIPriv->drmFD,
-		       (drm_handle_t)pDRIPriv->pDriverInfo->frameBufferPhysicalAddress,
+		       (uintptr_t)pDRIPriv->pDriverInfo->frameBufferPhysicalAddress,
 		       pDRIPriv->pDriverInfo->frameBufferSize,
 		       DRM_FRAME_BUFFER,
 		       0,
@@ -2428,12 +2426,9 @@ DRICreatePCIBusID(const struct pci_device * dev)
 {
     char *busID;
 
-    busID = malloc(20);
-    if (busID == NULL)
+    if (asprintf(&busID, "pci:%04x:%02x:%02x.%d",
+		 dev->domain, dev->bus, dev->dev, dev->func) == -1)
 	return NULL;
-
-    snprintf(busID, 20, "pci:%04x:%02x:%02x.%d", dev->domain, dev->bus,
-	dev->dev, dev->func);
 
     return busID;
 }

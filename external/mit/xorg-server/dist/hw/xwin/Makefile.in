@@ -15,10 +15,6 @@
 
 @SET_MAKE@
 
-#							-*- Makefile -*-
-# Rules for generating files using the C pre-processor
-# (Replaces CppFileTarget from Imake)
-
 
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
@@ -40,13 +36,12 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = XWin$(EXEEXT)
-DIST_COMMON = README $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
-	$(top_srcdir)/cpprules.in winprefslex.c winprefsyacc.c \
-	winprefsyacc.h
 subdir = hw/xwin
+DIST_COMMON = README $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
+	winprefslex.c winprefsyacc.c winprefsyacc.h
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_define_dir.m4 \
-	$(top_srcdir)/m4/dolt.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/ax_tls.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -60,24 +55,23 @@ CONFIG_HEADER = $(top_builddir)/include/do-not-use-config.h \
 	$(top_builddir)/include/version-config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(appmandir)" \
-	"$(DESTDIR)$(filemandir)" "$(DESTDIR)$(xwinconfigdir)"
+am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(xwinconfigdir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__XWin_SOURCES_DIST = InitInput.c InitOutput.c winallpriv.c \
 	winauth.c winblock.c wincmap.c winconfig.c wincreatewnd.c \
 	wincursor.c windialogs.c winengine.c winerror.c winglobals.c \
-	winkeybd.c winkeyhook.c winmisc.c winmouse.c winmsg.c \
-	winmultiwindowclass.c winmultiwindowicons.c winprefs.c \
-	winprefsyacc.y winprefslex.l winprocarg.c winregistry.c \
-	winscrinit.c winshaddd.c winshadddnl.c winshadgdi.c \
-	wintrayicon.c winvalargs.c winwakeup.c winwindow.c \
-	winwndproc.c ddraw.h winclipboard.h winconfig.h win.h \
-	winkeybd.h winkeynames.h winlayouts.h winmessages.h winmsg.h \
-	winms.h winmultiwindowclass.h winprefs.h winresource.h \
-	winwindow.h XWin.rc $(top_srcdir)/Xext/dpmsstubs.c \
-	$(top_srcdir)/Xi/stubs.c $(top_srcdir)/mi/miinitext.c \
-	$(top_srcdir)/fb/fbcmap_mi.c winclipboardinit.c \
-	winclipboardtextconv.c winclipboardthread.c \
+	winkeybd.c winkeyhook.c winmisc.c winmonitors.c winmouse.c \
+	winmsg.c winmultiwindowclass.c winmultiwindowicons.c \
+	winprefs.c winprefsyacc.y winprefslex.l winprocarg.c \
+	winregistry.c winscrinit.c winshaddd.c winshadddnl.c \
+	winshadgdi.c wintrayicon.c winvalargs.c winwakeup.c \
+	winwindow.c winwndproc.c ddraw.h winclipboard.h winconfig.h \
+	win.h winkeybd.h winkeynames.h winlayouts.h winmessages.h \
+	winmsg.h winms.h winmultiwindowclass.h winprefs.h \
+	winresource.h winwindow.h XWin.rc \
+	$(top_srcdir)/Xext/dpmsstubs.c $(top_srcdir)/Xi/stubs.c \
+	$(top_srcdir)/mi/miinitext.c $(top_srcdir)/fb/fbcmap_mi.c \
+	winclipboardinit.c winclipboardtextconv.c winclipboardthread.c \
 	winclipboardunicode.c winclipboardwndproc.c \
 	winclipboardwrappers.c winclipboardxevents.c \
 	winmultiwindowshape.c winmultiwindowwindow.c \
@@ -116,19 +110,19 @@ am__objects_8 = InitInput.$(OBJEXT) InitOutput.$(OBJEXT) \
 	wincmap.$(OBJEXT) winconfig.$(OBJEXT) wincreatewnd.$(OBJEXT) \
 	wincursor.$(OBJEXT) windialogs.$(OBJEXT) winengine.$(OBJEXT) \
 	winerror.$(OBJEXT) winglobals.$(OBJEXT) winkeybd.$(OBJEXT) \
-	winkeyhook.$(OBJEXT) winmisc.$(OBJEXT) winmouse.$(OBJEXT) \
-	winmsg.$(OBJEXT) winmultiwindowclass.$(OBJEXT) \
-	winmultiwindowicons.$(OBJEXT) winprefs.$(OBJEXT) \
-	winprefsyacc.$(OBJEXT) winprefslex.$(OBJEXT) \
-	winprocarg.$(OBJEXT) winregistry.$(OBJEXT) \
-	winscrinit.$(OBJEXT) winshaddd.$(OBJEXT) winshadddnl.$(OBJEXT) \
-	winshadgdi.$(OBJEXT) wintrayicon.$(OBJEXT) \
-	winvalargs.$(OBJEXT) winwakeup.$(OBJEXT) winwindow.$(OBJEXT) \
-	winwndproc.$(OBJEXT) XWin.$(OBJEXT) dpmsstubs.$(OBJEXT) \
-	stubs.$(OBJEXT) miinitext.$(OBJEXT) fbcmap_mi.$(OBJEXT) \
-	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
-	$(am__objects_4) $(am__objects_5) $(am__objects_6) \
-	$(am__objects_7)
+	winkeyhook.$(OBJEXT) winmisc.$(OBJEXT) winmonitors.$(OBJEXT) \
+	winmouse.$(OBJEXT) winmsg.$(OBJEXT) \
+	winmultiwindowclass.$(OBJEXT) winmultiwindowicons.$(OBJEXT) \
+	winprefs.$(OBJEXT) winprefsyacc.$(OBJEXT) \
+	winprefslex.$(OBJEXT) winprocarg.$(OBJEXT) \
+	winregistry.$(OBJEXT) winscrinit.$(OBJEXT) winshaddd.$(OBJEXT) \
+	winshadddnl.$(OBJEXT) winshadgdi.$(OBJEXT) \
+	wintrayicon.$(OBJEXT) winvalargs.$(OBJEXT) winwakeup.$(OBJEXT) \
+	winwindow.$(OBJEXT) winwndproc.$(OBJEXT) XWin.$(OBJEXT) \
+	dpmsstubs.$(OBJEXT) stubs.$(OBJEXT) miinitext.$(OBJEXT) \
+	fbcmap_mi.$(OBJEXT) $(am__objects_1) $(am__objects_2) \
+	$(am__objects_3) $(am__objects_4) $(am__objects_5) \
+	$(am__objects_6) $(am__objects_7)
 am_XWin_OBJECTS = $(am__objects_8)
 XWin_OBJECTS = $(am_XWin_OBJECTS)
 am__DEPENDENCIES_1 =
@@ -144,6 +138,10 @@ am__depfiles_maybe = depfiles
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
 AM_V_CC = $(am__v_CC_$(V))
 am__v_CC_ = $(am__v_CC_$(AM_DEFAULT_VERBOSITY))
 am__v_CC_0 = @echo "  CC    " $@;
@@ -205,7 +203,7 @@ am__nobase_list = $(am__nobase_strip_setup); \
 am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
-DATA = $(appman_DATA) $(fileman_DATA) $(xwinconfig_DATA)
+DATA = $(xwinconfig_DATA)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 AM_RECURSIVE_TARGETS = $(RECURSIVE_TARGETS:-recursive=) \
@@ -302,7 +300,6 @@ DMXXIEXAMPLES_DEP_CFLAGS = @DMXXIEXAMPLES_DEP_CFLAGS@
 DMXXIEXAMPLES_DEP_LIBS = @DMXXIEXAMPLES_DEP_LIBS@
 DMXXMUEXAMPLES_DEP_CFLAGS = @DMXXMUEXAMPLES_DEP_CFLAGS@
 DMXXMUEXAMPLES_DEP_LIBS = @DMXXMUEXAMPLES_DEP_LIBS@
-DOLT_BASH = @DOLT_BASH@
 DOXYGEN = @DOXYGEN@
 DRI2PROTO_CFLAGS = @DRI2PROTO_CFLAGS@
 DRI2PROTO_LIBS = @DRI2PROTO_LIBS@
@@ -336,6 +333,7 @@ GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_LIBS = @GLIB_LIBS@
 GLX_ARCH_DEFINES = @GLX_ARCH_DEFINES@
 GLX_DEFINES = @GLX_DEFINES@
+GLX_TLS = @GLX_TLS@
 GL_CFLAGS = @GL_CFLAGS@
 GL_LIBS = @GL_LIBS@
 GREP = @GREP@
@@ -371,8 +369,6 @@ LIB_MAN_DIR = @LIB_MAN_DIR@
 LIB_MAN_SUFFIX = @LIB_MAN_SUFFIX@
 LIPO = @LIPO@
 LN_S = @LN_S@
-LTCOMPILE = @LTCOMPILE@
-LTCXXCOMPILE = @LTCXXCOMPILE@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAIN_LIB = @MAIN_LIB@
@@ -429,6 +425,7 @@ SHA1_LIBS = @SHA1_LIBS@
 SHELL = @SHELL@
 SOLARIS_ASM_CFLAGS = @SOLARIS_ASM_CFLAGS@
 SOLARIS_INOUT_ARCH = @SOLARIS_INOUT_ARCH@
+STRICT_CFLAGS = @STRICT_CFLAGS@
 STRIP = @STRIP@
 STYLESHEET_SRCDIR = @STYLESHEET_SRCDIR@
 SYSCONFDIR = @SYSCONFDIR@
@@ -637,6 +634,7 @@ SRCS = InitInput.c \
 	winkeybd.c \
 	winkeyhook.c \
 	winmisc.c \
+	winmonitors.c \
 	winmouse.c \
 	winmsg.c \
 	winmultiwindowclass.c \
@@ -688,63 +686,17 @@ XWin_DEPENDENCIES = $(MULTIWINDOWEXTWM_LIBS) $(XWIN_GLX_LIBS) $(XWIN_LIBS) $(MAI
 XWin_LDADD = $(MULTIWINDOWEXTWM_LIBS) $(XWIN_GLX_LIBS) $(XWIN_GLX_LINK_FLAGS) $(XWIN_LIBS) $(MAIN_LIB) $(XSERVER_LIBS) $(XSERVER_SYS_LIBS) $(XWIN_SYS_LIBS)
 XWin_LDFLAGS = -mwindows -static
 BUILT_SOURCES = winprefsyacc.h winprefsyacc.c winprefslex.c
-CLEANFILES = $(BUILT_SOURCES) $(appman_DATA) $(fileman_DATA) XWin.man XWinrc.man
+CLEANFILES = $(BUILT_SOURCES)
 AM_YFLAGS = -d
 AM_LFLAGS = -i
 AM_CFLAGS = -DHAVE_XWIN_CONFIG_H $(DIX_CFLAGS) \
             $(XWINMODULES_CFLAGS) \
-            -DXFree86Server \
-            -I$(top_srcdir)
+            -I$(top_srcdir) \
+            -Wno-bad-function-cast
 
-MAN_SRCS = XWin.man.pre XWinrc.man.pre
-appmandir = $(APP_MAN_DIR)
-appman_DATA = XWin.$(APP_MAN_SUFFIX)
-filemandir = $(FILE_MAN_DIR)
-fileman_DATA = XWinrc.$(FILE_MAN_SUFFIX)
-EXTRAMANDEFS = -D__logdir__=$(logdir) -D__sysconfdir__=$(sysconfdir) -D__datadir__=$(datadir)
 xwinconfigdir = $(sysconfdir)/X11
 xwinconfig_DATA = system.XWinrc
-SUFFIXES = .pre .man .man.pre
-
-# Translate XCOMM into pound sign with sed, rather than passing -DXCOMM=XCOMM
-# to cpp, because that trick does not work on all ANSI C preprocessors.
-# Delete line numbers from the cpp output (-P is not portable, I guess).
-# Allow XCOMM to be preceded by whitespace and provide a means of generating
-# output lines with trailing backslashes.
-# Allow XHASH to always be substituted, even in cases where XCOMM isn't.
-CPP_SED_MAGIC = $(SED) -e '/^\#  *[0-9][0-9]*  *.*$$/d' \
-                       -e '/^\#line  *[0-9][0-9]*  *.*$$/d' \
-                       -e '/^[         ]*XCOMM$$/s/XCOMM/\#/' \
-                       -e '/^[         ]*XCOMM[^a-zA-Z0-9_]/s/XCOMM/\#/' \
-                       -e '/^[         ]*XHASH/s/XHASH/\#/' \
-                       -e '/\@\@$$/s/\@\@$$/\\/'
-
-
-# Strings to replace in man pages
-XORGRELSTRING = @PACKAGE_STRING@
-XORGMANNAME = X Version 11
-XSERVERNAME = Xorg
-MANDEFS = \
-        -D__vendorversion__="\"$(XORGRELSTRING)\" \"$(XORGMANNAME)\"" \
-        -D__xorgversion__="\"$(XORGRELSTRING)\" \"$(XORGMANNAME)\"" \
-	-D__appmansuffix__=$(APP_MAN_SUFFIX) \
-	-D__filemansuffix__=$(FILE_MAN_SUFFIX) \
-	-D__libmansuffix__=$(LIB_MAN_SUFFIX) \
-	-D__miscmansuffix__=$(MISC_MAN_SUFFIX) \
-	-D__drivermansuffix__=$(DRIVER_MAN_SUFFIX) \
-	-D__adminmansuffix__=$(ADMIN_MAN_SUFFIX) \
-	-D__mandir__=$(mandir) \
-	-D__projectroot__=$(prefix) \
-	-D__sysconfdir__=$(sysconfdir) \
-	-D__datadir__=$(datadir) \
-	-D__xconfigfile__=$(__XCONFIGFILE__) \
-	-D__xconfigdir__=$(__XCONFIGDIR__) \
-	-D__xkbdir__=$(XKB_BASE_DIRECTORY) \
-	-D__modulepath__="$(DEFAULT_MODULE_PATH)" \
-	-D__xlogfile__=$(XLOGFILE) -D__xservername__=$(XSERVERNAME) 
-
 EXTRA_DIST = \
-	$(MAN_SRCS) \
 	$(xwinconfig_DATA) \
 	X.ico \
 	XWin.rc \
@@ -769,14 +721,14 @@ EXTRA_DIST = \
 	xlaunch/window/wizard.cc \
 	xlaunch/window/wizard.h
 
-SUBDIRS = $(GLX_DIR) .
-DIST_SUBDIRS = glx .
+SUBDIRS = man $(GLX_DIR) .
+DIST_SUBDIRS = man glx .
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
 .SUFFIXES:
-.SUFFIXES: .pre .man .man.pre .c .l .lo .o .obj .rc .y
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(top_srcdir)/cpprules.in $(am__configure_deps)
+.SUFFIXES: .c .l .lo .o .obj .rc .y
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -891,6 +843,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/winkeybd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/winkeyhook.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/winmisc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/winmonitors.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/winmouse.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/winmsg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/winmultiwindowclass.Po@am__quote@
@@ -1025,46 +978,6 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
-install-appmanDATA: $(appman_DATA)
-	@$(NORMAL_INSTALL)
-	test -z "$(appmandir)" || $(MKDIR_P) "$(DESTDIR)$(appmandir)"
-	@list='$(appman_DATA)'; test -n "$(appmandir)" || list=; \
-	for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  echo "$$d$$p"; \
-	done | $(am__base_list) | \
-	while read files; do \
-	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(appmandir)'"; \
-	  $(INSTALL_DATA) $$files "$(DESTDIR)$(appmandir)" || exit $$?; \
-	done
-
-uninstall-appmanDATA:
-	@$(NORMAL_UNINSTALL)
-	@list='$(appman_DATA)'; test -n "$(appmandir)" || list=; \
-	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	test -n "$$files" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(appmandir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(appmandir)" && rm -f $$files
-install-filemanDATA: $(fileman_DATA)
-	@$(NORMAL_INSTALL)
-	test -z "$(filemandir)" || $(MKDIR_P) "$(DESTDIR)$(filemandir)"
-	@list='$(fileman_DATA)'; test -n "$(filemandir)" || list=; \
-	for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  echo "$$d$$p"; \
-	done | $(am__base_list) | \
-	while read files; do \
-	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(filemandir)'"; \
-	  $(INSTALL_DATA) $$files "$(DESTDIR)$(filemandir)" || exit $$?; \
-	done
-
-uninstall-filemanDATA:
-	@$(NORMAL_UNINSTALL)
-	@list='$(fileman_DATA)'; test -n "$(filemandir)" || list=; \
-	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	test -n "$$files" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(filemandir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(filemandir)" && rm -f $$files
 install-xwinconfigDATA: $(xwinconfig_DATA)
 	@$(NORMAL_INSTALL)
 	test -z "$(xwinconfigdir)" || $(MKDIR_P) "$(DESTDIR)$(xwinconfigdir)"
@@ -1285,7 +1198,7 @@ check: $(BUILT_SOURCES)
 all-am: Makefile $(PROGRAMS) $(DATA)
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(appmandir)" "$(DESTDIR)$(filemandir)" "$(DESTDIR)$(xwinconfigdir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(xwinconfigdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: $(BUILT_SOURCES)
@@ -1341,8 +1254,7 @@ info: info-recursive
 
 info-am:
 
-install-data-am: install-appmanDATA install-filemanDATA \
-	install-xwinconfigDATA
+install-data-am: install-xwinconfigDATA
 
 install-dvi: install-dvi-recursive
 
@@ -1389,8 +1301,7 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am: uninstall-appmanDATA uninstall-binPROGRAMS \
-	uninstall-filemanDATA uninstall-xwinconfigDATA
+uninstall-am: uninstall-binPROGRAMS uninstall-xwinconfigDATA
 
 .MAKE: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) all check \
 	ctags-recursive install install-am install-exec-am \
@@ -1401,18 +1312,17 @@ uninstall-am: uninstall-appmanDATA uninstall-binPROGRAMS \
 	clean-generic clean-libtool ctags ctags-recursive distclean \
 	distclean-compile distclean-generic distclean-libtool \
 	distclean-tags distdir dvi dvi-am html html-am info info-am \
-	install install-am install-appmanDATA install-binPROGRAMS \
-	install-data install-data-am install-dvi install-dvi-am \
-	install-exec install-exec-am install-exec-hook \
-	install-filemanDATA install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip install-xwinconfigDATA \
-	installcheck installcheck-am installdirs installdirs-am \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am tags tags-recursive uninstall uninstall-am \
-	uninstall-appmanDATA uninstall-binPROGRAMS \
-	uninstall-filemanDATA uninstall-xwinconfigDATA
+	install install-am install-binPROGRAMS install-data \
+	install-data-am install-dvi install-dvi-am install-exec \
+	install-exec-am install-exec-hook install-html install-html-am \
+	install-info install-info-am install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	install-xwinconfigDATA installcheck installcheck-am \
+	installdirs installdirs-am maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags tags-recursive uninstall uninstall-am \
+	uninstall-binPROGRAMS uninstall-xwinconfigDATA
 
 
 .rc.o:
@@ -1420,20 +1330,6 @@ uninstall-am: uninstall-appmanDATA uninstall-binPROGRAMS \
 
 winprefsyacc.h: winprefsyacc.c
 winprefslex.c: winprefslex.l winprefsyacc.c winprefsyacc.h
-
-XWin.$(APP_MAN_SUFFIX): XWin.man
-	-$(AM_V_at)rm -f XWin.$(APP_MAN_SUFFIX)
-	$(AM_V_at)$(LN_S) XWin.man XWin.$(APP_MAN_SUFFIX)
-
-XWinrc.$(FILE_MAN_SUFFIX): XWinrc.man
-	-$(AM_V_at)rm -f XWinrc.$(FILE_MAN_SUFFIX)
-	$(AM_V_at)$(LN_S) XWinrc.man XWinrc.$(FILE_MAN_SUFFIX)
-
-.pre:
-	$(AM_V_GEN)$(RAWCPP) $(RAWCPPFLAGS) $(CPP_FILES_FLAGS) < $< | $(CPP_SED_MAGIC) > $@
-
-.man.pre.man:
-	$(AM_V_GEN)$(RAWCPP) $(RAWCPPFLAGS) $(MANDEFS) $(EXTRAMANDEFS) < $< | $(CPP_SED_MAGIC) > $@
 
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir) && rm -f X && $(LN_S) XWin$(EXEEXT) X)

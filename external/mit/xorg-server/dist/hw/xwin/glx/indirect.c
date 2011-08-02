@@ -444,16 +444,13 @@ glxLogExtensions(const char *prefix, const char *extensions)
 {
   int length = 0;
   char *strl;
-  char *str = malloc(strlen(extensions) + 1);
+  char *str = strdup(extensions);
 
   if (str == NULL)
     {
       ErrorF("glxLogExtensions: xalloc error\n");
       return;
     }
-
-  str[strlen(extensions)] = '\0';
-  strncpy (str, extensions, strlen(extensions));
 
   strl = strtok(str, " ");
   ErrorF("%s%s", prefix, strl);
@@ -652,8 +649,6 @@ glxWinScreenProbe(ScreenPtr pScreen)
       screen->base.createContext = glxWinCreateContext;
       screen->base.createDrawable = glxWinCreateDrawable;
       screen->base.swapInterval = glxWinScreenSwapInterval;
-      screen->base.hyperpipeFuncs = NULL;
-      screen->base.swapBarrierFuncs = NULL;
       screen->base.pScreen = pScreen;
 
       if (strstr(wgl_extensions, "WGL_ARB_pixel_format"))
@@ -685,10 +680,7 @@ glxWinScreenProbe(ScreenPtr pScreen)
         unsigned int buffer_size = __glXGetExtensionString(screen->glx_enable_bits, NULL);
         if (buffer_size > 0)
           {
-            if (screen->base.GLXextensions != NULL)
-              {
-                free(screen->base.GLXextensions);
-              }
+            free(screen->base.GLXextensions);
 
             screen->base.GLXextensions = xnfalloc(buffer_size);
             __glXGetExtensionString(screen->glx_enable_bits, screen->base.GLXextensions);

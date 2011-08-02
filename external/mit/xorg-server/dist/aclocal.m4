@@ -1039,7 +1039,7 @@ AC_SUBST([am__untar])
 ]) # _AM_PROG_TAR
 
 m4_include([m4/ac_define_dir.m4])
-m4_include([m4/dolt.m4])
+m4_include([m4/ax_tls.m4])
 dnl fontutil.m4.  Generated from fontutil.m4.in by configure.
 dnl
 dnl This file comes from X.Org's font-util 1.2.0
@@ -9858,7 +9858,8 @@ m4_ifndef([_LT_PROG_CXX],		[AC_DEFUN([_LT_PROG_CXX])])
 # ----------------------------------
 AC_DEFUN([PKG_PROG_PKG_CONFIG],
 [m4_pattern_forbid([^_?PKG_[A-Z_]+$])
-m4_pattern_allow([^PKG_CONFIG(_PATH)?$])
+m4_pattern_allow([^PKG_CONFIG(_(PATH|LIBDIR|SYSROOT_DIR|ALLOW_SYSTEM_(CFLAGS|LIBS)))?$])
+m4_pattern_allow([^PKG_CONFIG_(DISABLE_UNINSTALLED|TOP_BUILD_DIR|DEBUG_SPEW)$])
 AC_ARG_VAR([PKG_CONFIG], [path to pkg-config utility])
 AC_ARG_VAR([PKG_CONFIG_PATH], [directories to add to pkg-config's search path])
 AC_ARG_VAR([PKG_CONFIG_LIBDIR], [path overriding pkg-config's built-in search path])
@@ -9904,7 +9905,8 @@ m4_define([_PKG_CONFIG],
     pkg_cv_[]$1="$$1"
  elif test -n "$PKG_CONFIG"; then
     PKG_CHECK_EXISTS([$3],
-                     [pkg_cv_[]$1=`$PKG_CONFIG --[]$2 "$3" 2>/dev/null`],
+                     [pkg_cv_[]$1=`$PKG_CONFIG --[]$2 "$3" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes ],
 		     [pkg_failed=yes])
  else
     pkg_failed=untried
@@ -9952,9 +9954,9 @@ if test $pkg_failed = yes; then
    	AC_MSG_RESULT([no])
         _PKG_SHORT_ERRORS_SUPPORTED
         if test $_pkg_short_errors_supported = yes; then
-	        $1[]_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "$2" 2>&1`
+	        $1[]_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$2" 2>&1`
         else 
-	        $1[]_PKG_ERRORS=`$PKG_CONFIG --print-errors "$2" 2>&1`
+	        $1[]_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$2" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$$1[]_PKG_ERRORS" >&AS_MESSAGE_LOG_FD
@@ -9978,7 +9980,7 @@ path to pkg-config.
 
 _PKG_TEXT
 
-To get pkg-config, see <http://pkg-config.freedesktop.org/>.])dnl
+To get pkg-config, see <http://pkg-config.freedesktop.org/>.])[]dnl
         ])
 else
 	$1[]_CFLAGS=$pkg_cv_[]$1[]_CFLAGS
@@ -10027,7 +10029,7 @@ dnl DEALINGS IN THE SOFTWARE.
 # See the "minimum version" comment for each macro you use to see what 
 # version you require.
 m4_defun([XORG_MACROS_VERSION],[
-m4_define([vers_have], [1.12.0])
+m4_define([vers_have], [1.14.0])
 m4_define([maj_have], m4_substr(vers_have, 0, m4_index(vers_have, [.])))
 m4_define([maj_needed], m4_substr([$1], 0, m4_index([$1], [.])))
 m4_if(m4_cmp(maj_have, maj_needed), 0,,
@@ -10054,7 +10056,8 @@ AC_PATH_PROGS(RAWCPP, [cpp], [${CPP}],
 # which is not the best choice for supporting other OS'es, but covers most
 # of the ones we need for now.
 AC_MSG_CHECKING([if $RAWCPP requires -undef])
-AC_LANG_CONFTEST([Does cpp redefine unix ?])
+AC_LANG_CONFTEST([Does cpp redefine unix ?
+		  AC_LANG_DEFINES_PROVIDED])
 if test `${RAWCPP} < conftest.$ac_ext | grep -c 'unix'` -eq 1 ; then
 	AC_MSG_RESULT([no])
 else
@@ -10072,7 +10075,8 @@ fi
 rm -f conftest.$ac_ext
 
 AC_MSG_CHECKING([if $RAWCPP requires -traditional])
-AC_LANG_CONFTEST([Does cpp preserve   "whitespace"?])
+AC_LANG_CONFTEST([Does cpp preserve   "whitespace"?
+		  AC_LANG_DEFINES_PROVIDED])
 if test `${RAWCPP} < conftest.$ac_ext | grep -c 'preserve   \"'` -eq 1 ; then
 	AC_MSG_RESULT([no])
 else
@@ -10941,6 +10945,194 @@ AC_MSG_CHECKING([whether to build functional specifications])
 AC_MSG_RESULT([$build_specs])
 ]) # XORG_ENABLE_SPECS
 
+# XORG_ENABLE_UNIT_TESTS (enable_unit_tests=auto)
+# ----------------------------------------------
+# Minimum version: 1.13.0
+#
+# This macro enables a builder to enable/disable unit testing
+# It makes no assumption about the test cases implementation
+# Test cases may or may not use Automake "Support for test suites"
+# They may or may not use the software utility library GLib
+#
+# When used in conjunction with XORG_WITH_GLIB, use both AM_CONDITIONAL
+# ENABLE_UNIT_TESTS and HAVE_GLIB. Not all unit tests may use glib.
+# The variable enable_unit_tests is used by other macros in this file.
+#
+# Interface to module:
+# ENABLE_UNIT_TESTS:	used in makefiles to conditionally build tests
+# enable_unit_tests:    used in configure.ac for additional configuration
+# --enable-unit-tests:	'yes' user instructs the module to build tests
+#			'no' user instructs the module not to build tests
+# parm1:		specify the default value, yes or no.
+#
+AC_DEFUN([XORG_ENABLE_UNIT_TESTS],[
+AC_BEFORE([$0], [XORG_WITH_GLIB])
+AC_BEFORE([$0], [XORG_LD_WRAP])
+m4_define([_defopt], m4_default([$1], [auto]))
+AC_ARG_ENABLE(unit-tests, AS_HELP_STRING([--enable-unit-tests],
+	[Enable building unit test cases (default: ]_defopt[)]),
+	[enable_unit_tests=$enableval], [enable_unit_tests=]_defopt)
+m4_undefine([_defopt])
+AM_CONDITIONAL(ENABLE_UNIT_TESTS, [test "x$enable_unit_tests" != xno])
+AC_MSG_CHECKING([whether to build unit test cases])
+AC_MSG_RESULT([$enable_unit_tests])
+]) # XORG_ENABLE_UNIT_TESTS
+
+# XORG_WITH_GLIB([MIN-VERSION], [DEFAULT])
+# ----------------------------------------
+# Minimum version: 1.13.0
+#
+# GLib is a library which provides advanced data structures and functions.
+# This macro enables a module to test for the presence of Glib.
+#
+# When used with ENABLE_UNIT_TESTS, it is assumed GLib is used for unit testing.
+# Otherwise the value of $enable_unit_tests is blank.
+#
+# Interface to module:
+# HAVE_GLIB: used in makefiles to conditionally build targets
+# with_glib: used in configure.ac to know if GLib has been found
+# --with-glib:	'yes' user instructs the module to use glib
+#		'no' user instructs the module not to use glib
+#
+AC_DEFUN([XORG_WITH_GLIB],[
+AC_REQUIRE([PKG_PROG_PKG_CONFIG])
+m4_define([_defopt], m4_default([$2], [auto]))
+AC_ARG_WITH(glib, AS_HELP_STRING([--with-glib],
+	[Use GLib library for unit testing (default: ]_defopt[)]),
+	[with_glib=$withval], [with_glib=]_defopt)
+m4_undefine([_defopt])
+
+have_glib=no
+# Do not probe GLib if user explicitly disabled unit testing
+if test "x$enable_unit_tests" != x"no"; then
+  # Do not probe GLib if user explicitly disabled it
+  if test "x$with_glib" != x"no"; then
+    m4_ifval(
+      [$1],
+      [PKG_CHECK_MODULES([GLIB], [glib-2.0 >= $1], [have_glib=yes], [have_glib=no])],
+      [PKG_CHECK_MODULES([GLIB], [glib-2.0], [have_glib=yes], [have_glib=no])]
+    )
+  fi
+fi
+
+# Not having GLib when unit testing has been explicitly requested is an error
+if test "x$enable_unit_tests" = x"yes"; then
+  if test "x$have_glib" = x"no"; then
+    AC_MSG_ERROR([--enable-unit-tests=yes specified but glib-2.0 not found])
+  fi
+fi
+
+# Having unit testing disabled when GLib has been explicitly requested is an error
+if test "x$enable_unit_tests" = x"no"; then
+  if test "x$with_glib" = x"yes"; then
+    AC_MSG_ERROR([--enable-unit-tests=yes specified but glib-2.0 not found])
+  fi
+fi
+
+# Not having GLib when it has been explicitly requested is an error
+if test "x$with_glib" = x"yes"; then
+  if test "x$have_glib" = x"no"; then
+    AC_MSG_ERROR([--with-glib=yes specified but glib-2.0 not found])
+  fi
+fi
+
+AM_CONDITIONAL([HAVE_GLIB], [test "$have_glib" = yes])
+]) # XORG_WITH_GLIB
+
+# XORG_LD_WRAP
+# ------------
+# Minimum version: 1.13.0
+#
+# Check if linker supports -wrap, passed via compiler flags
+#
+# When used with ENABLE_UNIT_TESTS, it is assumed -wrap is used for unit testing.
+# Otherwise the value of $enable_unit_tests is blank.
+#
+AC_DEFUN([XORG_LD_WRAP],[
+XORG_CHECK_LINKER_FLAGS([-Wl,-wrap,exit],[have_ld_wrap=yes],[have_ld_wrap=no])
+# Not having ld wrap when unit testing has been explicitly requested is an error
+if test "x$enable_unit_tests" = x"yes"; then
+  if test "x$have_ld_wrap" = x"no"; then
+    AC_MSG_ERROR([--enable-unit-tests=yes specified but ld -wrap support is not available])
+  fi
+fi
+AM_CONDITIONAL([HAVE_LD_WRAP], [test "$have_ld_wrap" = yes])
+#
+]) # XORG_LD_WRAP
+
+# XORG_CHECK_LINKER_FLAGS
+# -----------------------
+# SYNOPSIS
+#
+#   XORG_CHECK_LINKER_FLAGS(FLAGS, [ACTION-SUCCESS], [ACTION-FAILURE])
+#
+# DESCRIPTION
+#
+#   Check whether the given linker FLAGS work with the current language's
+#   linker, or whether they give an error.
+#
+#   ACTION-SUCCESS/ACTION-FAILURE are shell commands to execute on
+#   success/failure.
+#
+#   NOTE: Based on AX_CHECK_COMPILER_FLAGS.
+#
+# LICENSE
+#
+#   Copyright (c) 2009 Mike Frysinger <vapier@gentoo.org>
+#   Copyright (c) 2009 Steven G. Johnson <stevenj@alum.mit.edu>
+#   Copyright (c) 2009 Matteo Frigo
+#
+#   This program is free software: you can redistribute it and/or modify it
+#   under the terms of the GNU General Public License as published by the
+#   Free Software Foundation, either version 3 of the License, or (at your
+#   option) any later version.
+#
+#   This program is distributed in the hope that it will be useful, but
+#   WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+#   Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along
+#   with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+#   As a special exception, the respective Autoconf Macro's copyright owner
+#   gives unlimited permission to copy, distribute and modify the configure
+#   scripts that are the output of Autoconf when processing the Macro. You
+#   need not follow the terms of the GNU General Public License when using
+#   or distributing such scripts, even though portions of the text of the
+#   Macro appear in them. The GNU General Public License (GPL) does govern
+#   all other use of the material that constitutes the Autoconf Macro.
+#
+#   This special exception to the GPL applies to versions of the Autoconf
+#   Macro released by the Autoconf Archive. When you make and distribute a
+#   modified version of the Autoconf Macro, you may extend this special
+#   exception to the GPL to apply to your modified version as well.#
+AC_DEFUN([XORG_CHECK_LINKER_FLAGS],
+[AC_MSG_CHECKING([whether the linker accepts $1])
+dnl Some hackery here since AC_CACHE_VAL can't handle a non-literal varname:
+AS_LITERAL_IF([$1],
+  [AC_CACHE_VAL(AS_TR_SH(xorg_cv_linker_flags_[$1]), [
+      ax_save_FLAGS=$LDFLAGS
+      LDFLAGS="$1"
+      AC_LINK_IFELSE([AC_LANG_PROGRAM()],
+        AS_TR_SH(xorg_cv_linker_flags_[$1])=yes,
+        AS_TR_SH(xorg_cv_linker_flags_[$1])=no)
+      LDFLAGS=$ax_save_FLAGS])],
+  [ax_save_FLAGS=$LDFLAGS
+   LDFLAGS="$1"
+   AC_LINK_IFELSE([AC_LANG_PROGRAM()],
+     eval AS_TR_SH(xorg_cv_linker_flags_[$1])=yes,
+     eval AS_TR_SH(xorg_cv_linker_flags_[$1])=no)
+   LDFLAGS=$ax_save_FLAGS])
+eval xorg_check_linker_flags=$AS_TR_SH(xorg_cv_linker_flags_[$1])
+AC_MSG_RESULT($xorg_check_linker_flags)
+if test "x$xorg_check_linker_flags" = xyes; then
+	m4_default([$2], :)
+else
+	m4_default([$3], :)
+fi
+]) # XORG_CHECK_LINKER_FLAGS
+
 # XORG_CHECK_MALLOC_ZERO
 # ----------------------
 # Minimum version: 1.0.0
@@ -11092,6 +11284,23 @@ AM_CONDITIONAL(MAKE_LINT_LIB, [test x$make_lint_lib != xno])
 
 ]) # XORG_LINT_LIBRARY
 
+# XORG_COMPILER_BRAND
+# -------------------
+# Minimum version: 1.14.0
+#
+# Checks for various brands of compilers and sets flags as appropriate:
+#   GNU gcc - relies on AC_PROG_CC (via AC_PROG_CC_C99) to set GCC to "yes"
+#   clang compiler - sets CLANGCC to "yes"
+#   Intel compiler - sets INTELCC to "yes"
+#   Sun/Oracle Solaris Studio cc - sets SUNCC to "yes"
+#
+AC_DEFUN([XORG_COMPILER_BRAND], [
+AC_REQUIRE([AC_PROG_CC_C99])
+AC_CHECK_DECL([__clang__], [CLANGCC="yes"], [CLANGCC="no"])
+AC_CHECK_DECL([__INTEL_COMPILER], [INTELCC="yes"], [INTELCC="no"])
+AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
+]) # XORG_COMPILER_BRAND
+
 # XORG_CWARNFLAGS
 # ---------------
 # Minimum version: 1.2.0
@@ -11100,6 +11309,7 @@ AM_CONDITIONAL(MAKE_LINT_LIB, [test x$make_lint_lib != xno])
 #
 AC_DEFUN([XORG_CWARNFLAGS], [
 AC_REQUIRE([AC_PROG_CC_C99])
+AC_REQUIRE([XORG_COMPILER_BRAND])
 if  test "x$GCC" = xyes ; then
     CWARNFLAGS="-Wall -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes \
 -Wmissing-declarations -Wnested-externs -fno-strict-aliasing \
@@ -11110,7 +11320,6 @@ if  test "x$GCC" = xyes ; then
 	;;
     esac
 else
-    AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
     if test "x$SUNCC" = "xyes"; then
 	CWARNFLAGS="-v"
     fi
@@ -11122,28 +11331,43 @@ AC_SUBST(CWARNFLAGS)
 # -----------------------
 # Minimum version: 1.3.0
 #
-# Add configure option to enable strict compilation
+# Add configure option to enable strict compilation flags, such as treating
+# warnings as fatal errors.
+# If --enable-strict-compilation is passed to configure, adds strict flags to
+# $CWARNFLAGS.
+#
+# Starting in 1.14.0 also exports $STRICT_CFLAGS for use in other tests or
+# when strict compilation is unconditionally desired.
 AC_DEFUN([XORG_STRICT_OPTION], [
 # If the module's configure.ac calls AC_PROG_CC later on, CC gets set to C89
 AC_REQUIRE([AC_PROG_CC_C99])
+AC_REQUIRE([XORG_COMPILER_BRAND])
 AC_REQUIRE([XORG_CWARNFLAGS])
 
 AC_ARG_ENABLE(strict-compilation,
 			  AS_HELP_STRING([--enable-strict-compilation],
 			  [Enable all warnings from compiler and make them errors (default: disabled)]),
 			  [STRICT_COMPILE=$enableval], [STRICT_COMPILE=no])
-if test "x$STRICT_COMPILE" = "xyes"; then
-	AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
-	AC_CHECK_DECL([__INTEL_COMPILER], [INTELCC="yes"], [INTELCC="no"])
-	if test "x$GCC" = xyes ; then
-		STRICT_CFLAGS="-pedantic -Werror"
-	elif test "x$SUNCC" = "xyes"; then
-		STRICT_CFLAGS="-errwarn"
-    elif test "x$INTELCC" = "xyes"; then
-		STRICT_CFLAGS="-Werror"
-	fi
+if test "x$GCC" = xyes ; then
+    STRICT_CFLAGS="-pedantic -Werror"
+    # Add -Werror=attributes if supported (gcc 4.2 & later)
+    AC_MSG_CHECKING([if $CC supports -Werror=attributes])
+    save_CFLAGS="$CFLAGS"
+    CFLAGS="$CFLAGS $STRICT_CFLAGS -Werror=attributes"
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE([return 0;])],
+		      [STRICT_CFLAGS="$STRICT_CFLAGS -Werror=attributes"
+		       AC_MSG_RESULT([yes])],
+		      [AC_MSG_RESULT([no])])
+    CFLAGS="$save_CFLAGS"
+elif test "x$SUNCC" = "xyes"; then
+    STRICT_CFLAGS="-errwarn"
+elif test "x$INTELCC" = "xyes"; then
+    STRICT_CFLAGS="-Werror"
 fi
-CWARNFLAGS="$CWARNFLAGS $STRICT_CFLAGS"
+if test "x$STRICT_COMPILE" = "xyes"; then
+    CWARNFLAGS="$CWARNFLAGS $STRICT_CFLAGS"
+fi
+AC_SUBST([STRICT_CFLAGS])
 AC_SUBST([CWARNFLAGS])
 ]) # XORG_STRICT_OPTION
 
