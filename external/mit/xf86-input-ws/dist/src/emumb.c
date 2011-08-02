@@ -36,6 +36,9 @@
 #include "config.h"
 #endif
 
+#include <sys/types.h>
+#include <sys/time.h>
+
 #include <xorg-server.h>
 #include <X11/Xatom.h>
 #include <xf86.h>

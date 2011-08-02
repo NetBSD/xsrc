@@ -892,17 +892,23 @@ wsSetProperty(DeviceIntPtr device, Atom atom, XIPropertyValuePtr val,
 		priv->coords.maxx = priv->max_x;
 		priv->coords.miny = priv->min_y;
 		priv->coords.maxy = priv->max_y;
+#if 0
 		priv->coords.swapxy = priv->swap_axes;
+#endif
 
 		/* Update the kernel calibration table */
 		coords.minx = priv->min_x;
 		coords.maxx = priv->max_x;
 		coords.miny = priv->min_y;
 		coords.maxy = priv->max_y;
+#if 0
 		coords.swapxy = priv->swap_axes;
+#endif
 		coords.samplelen = priv->raw;
+#if 0
 		coords.resx = priv->coords.resx;
 		coords.resy = priv->coords.resy;
+#endif
 		if (ioctl(pInfo->fd, WSMOUSEIO_SCALIBCOORDS, &coords) != 0) {
 			xf86Msg(X_ERROR, "SCALIBCOORDS failed %s\n",
 			    strerror(errno));
