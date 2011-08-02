@@ -38,6 +38,10 @@
 # DEALINGS IN THE SOFTWARE.
 #
 
+# The doc_sources variable contains one or more DocBook/XML source file.
+# The generated documents will be installed in $(docdir),
+# The DocBook/XML files will always be included in the tarball
+
 #
 # Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
 #
@@ -61,12 +65,44 @@
 # DEALINGS IN THE SOFTWARE.
 #
 
-# This file is included by Makefile.am in subdirectories that have
-# DocBook XML documentation files.
+# This file provides pattern rules to generate html/pdf/txt from DocBook/XML
+# A stylesheet is used if xorg-sgml-doctools is installed
+# This file is included by xmlrules-inst.in for installable user's documentation
+# It is included by xmlrules-noinst for non installable developer's documentation
+# If the server version or release date changes, autogen && make
+
+# The doc_sources variable contains one or more DocBook/XML source file.
+# The generated documents will NOT be installed in $(docdir),
+# The DocBook/XML files will always be included in the tarball
+
 #
-# No files are automatically distributed or installed by this subset of rules
-# Any files to be distributed or installed would be listed in the including
-# Makefile.am
+# Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice (including the next
+# paragraph) shall be included in all copies or substantial portions of the
+# Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+#
+
+# This file provides pattern rules to generate html/pdf/txt from DocBook/XML
+# A stylesheet is used if xorg-sgml-doctools is installed
+# This file is included by xmlrules-inst.in for installable user's documentation
+# It is included by xmlrules-noinst for non installable developer's documentation
+# If the server version or release date changes, autogen && make
 
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
@@ -87,17 +123,25 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-DIST_COMMON = $(srcdir)/../xmlrules.in $(srcdir)/Makefile.am \
-	$(srcdir)/Makefile.in
-@HAVE_STYLESHEETS_TRUE@am__append_1 = -m $(XSL_STYLESHEET)
-@HAVE_STYLESHEETS_TRUE@am__append_2 = xorg.css
-@HAVE_XMLTO_TEXT_TRUE@@HAVE_XMLTO_TRUE@am__append_3 = $(TXT_FILES)
-@HAVE_XMLTO_TRUE@am__append_4 = $(HTML_FILES)
-@HAVE_FOP_TRUE@@HAVE_XMLTO_TRUE@am__append_5 = $(PDF_FILES)
+DIST_COMMON = $(am__dist_doc_DATA_DIST) $(am__dist_noinst_DATA_DIST) \
+	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
+	$(top_srcdir)/doc/xml/xmlrules-inst.in \
+	$(top_srcdir)/doc/xml/xmlrules-noinst.in \
+	$(top_srcdir)/doc/xml/xmlrules.in
+@ENABLE_DOCS_TRUE@@HAVE_FOP_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_TRUE@am__append_1 = $(doc_sources:.xml=.pdf)
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TEXT_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_TRUE@am__append_2 = $(doc_sources:.xml=.txt)
+@ENABLE_DOCS_TRUE@@HAVE_STYLESHEETS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_TRUE@am__append_3 = -m $(XSL_STYLESHEET) \
+@ENABLE_DOCS_TRUE@@HAVE_STYLESHEETS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_TRUE@	--stringparam html.stylesheet=$(STYLESHEET_SRCDIR)/xorg.css
+
+@ENABLE_DOCS_TRUE@@HAVE_FOP_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_FALSE@am__append_4 = $(doc_sources:.xml=.pdf)
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TEXT_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_FALSE@am__append_5 = $(doc_sources:.xml=.txt)
+@ENABLE_DOCS_TRUE@@HAVE_STYLESHEETS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_FALSE@am__append_6 = -m $(XSL_STYLESHEET) \
+@ENABLE_DOCS_TRUE@@HAVE_STYLESHEETS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_FALSE@	--stringparam html.stylesheet=$(STYLESHEET_SRCDIR)/xorg.css
+
 subdir = doc/xml/dtrace
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_define_dir.m4 \
-	$(top_srcdir)/m4/dolt.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/ax_tls.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -119,6 +163,7 @@ am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
 am__v_at_0 = @
 SOURCES =
 DIST_SOURCES =
+am__dist_doc_DATA_DIST = Xserver-DTrace.xml
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -140,8 +185,9 @@ am__nobase_list = $(am__nobase_strip_setup); \
 am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
-am__installdirs = "$(DESTDIR)$(docdir)"
-DATA = $(doc_DATA) $(noinst_DATA)
+am__installdirs = "$(DESTDIR)$(docdir)" "$(DESTDIR)$(docdir)"
+am__dist_noinst_DATA_DIST = Xserver-DTrace.xml
+DATA = $(dist_doc_DATA) $(dist_noinst_DATA) $(doc_DATA) $(noinst_DATA)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 ADMIN_MAN_DIR = @ADMIN_MAN_DIR@
@@ -198,7 +244,6 @@ DMXXIEXAMPLES_DEP_CFLAGS = @DMXXIEXAMPLES_DEP_CFLAGS@
 DMXXIEXAMPLES_DEP_LIBS = @DMXXIEXAMPLES_DEP_LIBS@
 DMXXMUEXAMPLES_DEP_CFLAGS = @DMXXMUEXAMPLES_DEP_CFLAGS@
 DMXXMUEXAMPLES_DEP_LIBS = @DMXXMUEXAMPLES_DEP_LIBS@
-DOLT_BASH = @DOLT_BASH@
 DOXYGEN = @DOXYGEN@
 DRI2PROTO_CFLAGS = @DRI2PROTO_CFLAGS@
 DRI2PROTO_LIBS = @DRI2PROTO_LIBS@
@@ -232,6 +277,7 @@ GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_LIBS = @GLIB_LIBS@
 GLX_ARCH_DEFINES = @GLX_ARCH_DEFINES@
 GLX_DEFINES = @GLX_DEFINES@
+GLX_TLS = @GLX_TLS@
 GL_CFLAGS = @GL_CFLAGS@
 GL_LIBS = @GL_LIBS@
 GREP = @GREP@
@@ -267,8 +313,6 @@ LIB_MAN_DIR = @LIB_MAN_DIR@
 LIB_MAN_SUFFIX = @LIB_MAN_SUFFIX@
 LIPO = @LIPO@
 LN_S = @LN_S@
-LTCOMPILE = @LTCOMPILE@
-LTCXXCOMPILE = @LTCXXCOMPILE@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAIN_LIB = @MAIN_LIB@
@@ -325,6 +369,7 @@ SHA1_LIBS = @SHA1_LIBS@
 SHELL = @SHELL@
 SOLARIS_ASM_CFLAGS = @SOLARIS_ASM_CFLAGS@
 SOLARIS_INOUT_ARCH = @SOLARIS_INOUT_ARCH@
+STRICT_CFLAGS = @STRICT_CFLAGS@
 STRIP = @STRIP@
 STYLESHEET_SRCDIR = @STYLESHEET_SRCDIR@
 SYSCONFDIR = @SYSCONFDIR@
@@ -463,25 +508,33 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-XML_FILES = Xserver-DTrace.xml
-TXT_FILES = $(XML_FILES:%.xml=%.txt)
-HTML_FILES = $(XML_FILES:%.xml=%.html)
-PDF_FILES = $(XML_FILES:%.xml=%.pdf)
-BUILT_DOC_FILES = $(am__append_2) $(am__append_3) $(am__append_4) \
-	$(am__append_5)
-SUFFIXES = .xml .txt .html .pdf
-XML_ENT_DIR = $(abs_top_builddir)/doc/xml
-XMLTO_FLAGS = --searchpath $(XML_ENT_DIR) $(am__append_1)
-CLEAN_DOC_FILES = $(TXT_FILES) $(HTML_FILES) $(PDF_FILES) xorg.css
-@ENABLE_DOCS_TRUE@@XSERVER_DTRACE_TRUE@doc_DATA = $(BUILT_DOC_FILES)
-@ENABLE_DOCS_TRUE@@XSERVER_DTRACE_FALSE@noinst_DATA = $(BUILT_DOC_FILES)
-CLEANFILES = $(CLEAN_DOC_FILES)
-EXTRA_DIST = $(XML_FILES)
+doc_sources = Xserver-DTrace.xml
+@ENABLE_DOCS_TRUE@@XSERVER_DTRACE_TRUE@dist_doc_DATA = $(doc_sources)
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_TRUE@doc_DATA = $(doc_sources:.xml=.html) \
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_TRUE@	$(am__append_1) \
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_TRUE@	$(am__append_2)
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_FALSE@CLEANFILES = $(noinst_DATA)
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_TRUE@CLEANFILES = $(doc_DATA)
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_FALSE@XML_ENT_DIR = $(abs_top_builddir)/doc/xml
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_TRUE@XML_ENT_DIR = $(abs_top_builddir)/doc/xml
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_FALSE@SUFFIXES = .xml .txt .html .pdf
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_TRUE@SUFFIXES = .xml .txt .html .pdf
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_FALSE@XMLTO_FLAGS = --searchpath \
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_FALSE@	$(XML_ENT_DIR) \
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_FALSE@	$(am__append_6)
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_TRUE@XMLTO_FLAGS = --searchpath \
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_TRUE@	$(XML_ENT_DIR) \
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_TRUE@	$(am__append_3) \
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_TRUE@	$(am__append_6)
+@ENABLE_DOCS_TRUE@@XSERVER_DTRACE_FALSE@dist_noinst_DATA = $(doc_sources)
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_FALSE@noinst_DATA = $(doc_sources:.xml=.html) \
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_FALSE@	$(am__append_4) \
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_FALSE@	$(am__append_5)
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .xml .txt .html .pdf
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(srcdir)/../xmlrules.in $(am__configure_deps)
+.SUFFIXES: .xml .txt .html .pdf .xml .txt .html .pdf
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(top_srcdir)/doc/xml/xmlrules-inst.in $(top_srcdir)/doc/xml/xmlrules.in $(top_srcdir)/doc/xml/xmlrules-noinst.in $(top_srcdir)/doc/xml/xmlrules.in $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -517,6 +570,26 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+install-dist_docDATA: $(dist_doc_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(docdir)" || $(MKDIR_P) "$(DESTDIR)$(docdir)"
+	@list='$(dist_doc_DATA)'; test -n "$(docdir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(docdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(docdir)" || exit $$?; \
+	done
+
+uninstall-dist_docDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(dist_doc_DATA)'; test -n "$(docdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	test -n "$$files" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(docdir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(docdir)" && rm -f $$files
 install-docDATA: $(doc_DATA)
 	@$(NORMAL_INSTALL)
 	test -z "$(docdir)" || $(MKDIR_P) "$(DESTDIR)$(docdir)"
@@ -578,7 +651,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(DATA)
 installdirs:
-	for dir in "$(DESTDIR)$(docdir)"; do \
+	for dir in "$(DESTDIR)$(docdir)" "$(DESTDIR)$(docdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -627,7 +700,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-docDATA
+install-data-am: install-dist_docDATA install-docDATA
 
 install-dvi: install-dvi-am
 
@@ -671,40 +744,43 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-docDATA
+uninstall-am: uninstall-dist_docDATA uninstall-docDATA
 
 .MAKE: install-am install-strip
 
 .PHONY: all all-am check check-am clean clean-generic clean-libtool \
 	distclean distclean-generic distclean-libtool distdir dvi \
 	dvi-am html html-am info info-am install install-am \
-	install-data install-data-am install-docDATA install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-info install-info-am install-man \
-	install-pdf install-pdf-am install-ps install-ps-am \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	uninstall uninstall-am uninstall-docDATA
+	install-data install-data-am install-dist_docDATA \
+	install-docDATA install-dvi install-dvi-am install-exec \
+	install-exec-am install-html install-html-am install-info \
+	install-info-am install-man install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am uninstall uninstall-am \
+	uninstall-dist_docDATA uninstall-docDATA
 
 
-@HAVE_STYLESHEETS_TRUE@xorg.css: $(STYLESHEET_SRCDIR)/xorg.css
-@HAVE_STYLESHEETS_TRUE@	$(AM_V_GEN)cp -pf $(STYLESHEET_SRCDIR)/xorg.css $@
-@HAVE_XMLTO_TEXT_TRUE@@HAVE_XMLTO_TRUE@.xml.txt:
-@HAVE_XMLTO_TEXT_TRUE@@HAVE_XMLTO_TRUE@	@rm -f $@
-@HAVE_XMLTO_TEXT_TRUE@@HAVE_XMLTO_TRUE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) txt $<
-@HAVE_XMLTO_TRUE@.xml.html:
-@HAVE_XMLTO_TRUE@	@rm -f $@
-@HAVE_XMLTO_TRUE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) xhtml-nochunks $<
-@HAVE_FOP_TRUE@@HAVE_XMLTO_TRUE@.xml.pdf:
-@HAVE_FOP_TRUE@@HAVE_XMLTO_TRUE@	@rm -f $@
-@HAVE_FOP_TRUE@@HAVE_XMLTO_TRUE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) --with-fop pdf $<
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_TRUE@%.txt: %.xml $(XML_ENT_DIR)/xserver.ent
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_TRUE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) txt $<
 
-# All the files we build depend on the entities
-$(BUILT_DOC_FILES): $(XML_ENT_DIR)/xserver.ent
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_TRUE@%.html: %.xml $(XML_ENT_DIR)/xserver.ent
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_TRUE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) xhtml-nochunks $<
 
-$(XML_ENT_DIR)/xserver.ent:
-	(cd $(XML_ENT_DIR) && $(MAKE) $(AM_MAKEFLAGS) $(@F))
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_TRUE@%.pdf: %.xml $(XML_ENT_DIR)/xserver.ent
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_TRUE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) --with-fop pdf $<
+
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_FALSE@%.txt: %.xml $(XML_ENT_DIR)/xserver.ent
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_FALSE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) txt $<
+
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_FALSE@%.html: %.xml $(XML_ENT_DIR)/xserver.ent
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_FALSE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) xhtml-nochunks $<
+
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_FALSE@%.pdf: %.xml $(XML_ENT_DIR)/xserver.ent
+@ENABLE_DOCS_TRUE@@HAVE_XMLTO_TRUE@@XSERVER_DTRACE_FALSE@	$(AM_V_GEN)$(XMLTO) $(XMLTO_FLAGS) --with-fop pdf $<
+
+# This user's documentation is installed only if tracing is available
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
