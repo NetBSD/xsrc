@@ -130,17 +130,12 @@ static Bool DrawableGone(__GLXdrawable *glxPriv, XID xid)
      * constructors, we added it as a glx drawable resource under both
      * its glx drawable ID and it X drawable ID.  Remove the other
      * resource now so we don't a callback for freed memory. */
-    if (glxPriv->otherId) {
-	    XID other = glxPriv->otherId;
-	    glxPriv->otherId = 0;
-	    if (xid == other)
-		    FreeResourceByType(glxPriv->drawId, __glXDrawableRes, TRUE);
-	    else
-		    FreeResourceByType(other, __glXDrawableRes, TRUE);
+    if (glxPriv->drawId != glxPriv->pDraw->id) {
+	if (xid == glxPriv->drawId)
+	    FreeResourceByType(glxPriv->pDraw->id, __glXDrawableRes, TRUE);
+	else
+	    FreeResourceByType(glxPriv->drawId, __glXDrawableRes, TRUE);
     }
-
-    if (--glxPriv->refcnt)
-	    return True;
 
     for (c = glxAllContexts; c; c = next) {
 	next = c->next;
