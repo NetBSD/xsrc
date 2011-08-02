@@ -50,6 +50,10 @@
 #include <xorg-config.h>
 #endif
 
+/*#ifdef HAVE_DIX_CONFIG_H*/
+#include <dix-config.h>
+/*#endif*/
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
