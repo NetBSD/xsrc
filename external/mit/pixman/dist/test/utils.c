@@ -133,11 +133,12 @@ compute_crc32 (uint32_t    in_crc32,
 /* perform endian conversion of pixel data
  */
 void
-image_endian_swap (pixman_image_t *img, int bpp)
+image_endian_swap (pixman_image_t *img)
 {
     int stride = pixman_image_get_stride (img);
     uint32_t *data = pixman_image_get_data (img);
     int height = pixman_image_get_height (img);
+    int bpp = PIXMAN_FORMAT_BPP (pixman_image_get_format (img));
     int i, j;
 
     /* swap bytes only on big endian systems */
@@ -145,10 +146,13 @@ image_endian_swap (pixman_image_t *img, int bpp)
     if (*(volatile uint8_t *)&endian_check_var != 0x12)
 	return;
 
+    if (bpp == 8)
+	return;
+
     for (i = 0; i < height; i++)
     {
 	uint8_t *line_data = (uint8_t *)data + stride * i;
-	/* swap bytes only for 16, 24 and 32 bpp for now */
+	
 	switch (bpp)
 	{
 	case 1:
@@ -208,6 +212,7 @@ image_endian_swap (pixman_image_t *img, int bpp)
 	    }
 	    break;
 	default:
+	    assert (FALSE);
 	    break;
 	}
     }
@@ -224,7 +229,7 @@ typedef struct
     int n_bytes;
 } info_t;
 
-#if defined(HAVE_MPROTECT) && defined(HAVE_GETPAGESIZE) && defined(HAVE_SYS_MMAN_H)
+#if defined(HAVE_MPROTECT) && defined(HAVE_GETPAGESIZE) && defined(HAVE_SYS_MMAN_H) && defined(HAVE_MMAP)
 
 /* This is apparently necessary on at least OS X */
 #ifndef MAP_ANONYMOUS
@@ -295,7 +300,7 @@ fence_free (void *data)
 #else
 
 void *
-fence_malloc (uint32_t len)
+fence_malloc (int64_t len)
 {
     return malloc (len);
 }
@@ -448,6 +453,16 @@ gettime (void)
 #else
     return (double)clock() / (double)CLOCKS_PER_SEC;
 #endif
+}
+
+uint32_t
+get_random_seed (void)
+{
+    double d = gettime();
+
+    lcg_srand (*(uint32_t *)&d);
+
+    return lcg_rand_u32 ();
 }
 
 static const char *global_msg;
