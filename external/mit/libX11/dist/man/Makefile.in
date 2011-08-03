@@ -213,6 +213,7 @@ RAWCPPFLAGS = @RAWCPPFLAGS@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
+STRICT_CFLAGS = @STRICT_CFLAGS@
 STRIP = @STRIP@
 STYLESHEET_SRCDIR = @STYLESHEET_SRCDIR@
 VERSION = @VERSION@
@@ -780,7 +781,7 @@ XChangeKeyboardMapping_shadows = \
     XNewModifiermap                         \
     XInsertModifiermapEntry                 \
     XDeleteModifiermapEntry                 \
-    XFreeModifierMap                        \
+    XFreeModifiermap                        \
     XModifierKeymap
 
 XChangePointerControl_shadows = \
