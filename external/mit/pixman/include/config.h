@@ -28,6 +28,9 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
+/* Whether we have mmap() */
+#define HAVE_MMAP 1
+
 /* Whether we have mprotect() */
 #define HAVE_MPROTECT 1
 
@@ -64,10 +67,6 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
-#define LT_OBJDIR ".libs/"
-
 /* Name of package */
 #define PACKAGE "pixman"
 
@@ -78,7 +77,7 @@
 #define PACKAGE_NAME "pixman"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "pixman 0.21.4"
+#define PACKAGE_STRING "pixman 0.23.2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "pixman"
@@ -87,7 +86,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.21.4"
+#define PACKAGE_VERSION "0.23.2"
 
 /* enable TIMER_BEGIN/TIMER_END macros */
 /* #undef PIXMAN_TIMERS */
@@ -132,7 +131,7 @@
 /* #undef USE_VMX */
 
 /* Version number of package */
-#define VERSION "0.21.4"
+#define VERSION "0.23.2"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
