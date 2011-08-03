@@ -89,7 +89,7 @@ XpGetPrinterList (
      */
     if ( printer_name == (char *) NULL )
 	req->printerNameLen = 0;
-    else if ( *printer_name == (char) NULL )
+    else if ( *printer_name == '\0' )
 	req->printerNameLen = 0;
     else {
 	printer_name_len    = strlen( printer_name );
@@ -99,7 +99,7 @@ XpGetPrinterList (
 
     if ( locale == (char *) NULL )
 	req->localeLen = 0;
-    else if ( *locale == (char) NULL )
+    else if ( *locale == '\0' )
 	req->localeLen = 0;
     else {
 	locale_len     = strlen( locale );

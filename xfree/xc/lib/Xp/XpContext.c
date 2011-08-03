@@ -76,7 +76,7 @@ XpCreateContext (
 
     if ( locale == (char *) NULL )
         req->localeLen = 0;
-    else if ( *locale == (char) NULL )
+    else if ( *locale == '\0' )
         req->localeLen = 0;
     else {
         locale_len     = strlen( locale );
