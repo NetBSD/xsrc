@@ -389,6 +389,8 @@ PIXMAN_ARM_BIND_FAST_PATH_N_MASK_DST (SKIP_ZERO_SRC, armv6, over_n_8_8888,
 
 PIXMAN_ARM_BIND_SCALED_NEAREST_SRC_DST (armv6, 0565_0565, SRC,
                                         uint16_t, uint16_t)
+PIXMAN_ARM_BIND_SCALED_NEAREST_SRC_DST (armv6, 8888_8888, SRC,
+                                        uint32_t, uint32_t)
 
 static const pixman_fast_path_t arm_simd_fast_paths[] =
 {
@@ -411,14 +413,20 @@ static const pixman_fast_path_t arm_simd_fast_paths[] =
     PIXMAN_ARM_SIMPLE_NEAREST_FAST_PATH (SRC, r5g6b5, r5g6b5, armv6_0565_0565),
     PIXMAN_ARM_SIMPLE_NEAREST_FAST_PATH (SRC, b5g6r5, b5g6r5, armv6_0565_0565),
 
+    PIXMAN_ARM_SIMPLE_NEAREST_FAST_PATH (SRC, a8r8g8b8, a8r8g8b8, armv6_8888_8888),
+    PIXMAN_ARM_SIMPLE_NEAREST_FAST_PATH (SRC, a8r8g8b8, x8r8g8b8, armv6_8888_8888),
+    PIXMAN_ARM_SIMPLE_NEAREST_FAST_PATH (SRC, x8r8g8b8, x8r8g8b8, armv6_8888_8888),
+    PIXMAN_ARM_SIMPLE_NEAREST_FAST_PATH (SRC, a8b8g8r8, a8b8g8r8, armv6_8888_8888),
+    PIXMAN_ARM_SIMPLE_NEAREST_FAST_PATH (SRC, a8b8g8r8, x8b8g8r8, armv6_8888_8888),
+    PIXMAN_ARM_SIMPLE_NEAREST_FAST_PATH (SRC, x8b8g8r8, x8b8g8r8, armv6_8888_8888),
+
     { PIXMAN_OP_NONE },
 };
 
 pixman_implementation_t *
-_pixman_implementation_create_arm_simd (void)
+_pixman_implementation_create_arm_simd (pixman_implementation_t *fallback)
 {
-    pixman_implementation_t *general = _pixman_implementation_create_fast_path ();
-    pixman_implementation_t *imp = _pixman_implementation_create (general, arm_simd_fast_paths);
+    pixman_implementation_t *imp = _pixman_implementation_create (fallback, arm_simd_fast_paths);
 
     return imp;
 }
