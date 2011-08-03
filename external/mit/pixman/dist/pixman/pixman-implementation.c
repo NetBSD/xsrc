@@ -85,14 +85,14 @@ delegate_blt (pixman_implementation_t * imp,
               int                       dst_bpp,
               int                       src_x,
               int                       src_y,
-              int                       dst_x,
-              int                       dst_y,
+              int                       dest_x,
+              int                       dest_y,
               int                       width,
               int                       height)
 {
     return _pixman_implementation_blt (
 	imp->delegate, src_bits, dst_bits, src_stride, dst_stride,
-	src_bpp, dst_bpp, src_x, src_y, dst_x, dst_y,
+	src_bpp, dst_bpp, src_x, src_y, dest_x, dest_y,
 	width, height);
 }
 
@@ -113,32 +113,16 @@ delegate_fill (pixman_implementation_t *imp,
 
 static void
 delegate_src_iter_init (pixman_implementation_t *imp,
-			pixman_iter_t *	         iter,
-			pixman_image_t *         image,
-			int                      x,
-			int                      y,
-			int                      width,
-			int                      height,
-			uint8_t *		 buffer,
-			iter_flags_t             flags)
+			pixman_iter_t *	         iter)
 {
-    _pixman_implementation_src_iter_init (
-	imp->delegate, iter, image, x, y, width, height, buffer, flags);
+    imp->delegate->src_iter_init (imp->delegate, iter);
 }
 
 static void
 delegate_dest_iter_init (pixman_implementation_t *imp,
-			 pixman_iter_t *	  iter,
-			 pixman_image_t *         image,
-			 int                      x,
-			 int                      y,
-			 int                      width,
-			 int                      height,
-			 uint8_t *		  buffer,
-			 iter_flags_t             flags)
+			 pixman_iter_t *	  iter)
 {
-    _pixman_implementation_dest_iter_init (
-	imp->delegate, iter, image, x, y, width, height, buffer, flags);
+    imp->delegate->dest_iter_init (imp->delegate, iter);
 }
 
 pixman_implementation_t *
@@ -233,13 +217,13 @@ _pixman_implementation_blt (pixman_implementation_t * imp,
                             int                       dst_bpp,
                             int                       src_x,
                             int                       src_y,
-                            int                       dst_x,
-                            int                       dst_y,
+                            int                       dest_x,
+                            int                       dest_y,
                             int                       width,
                             int                       height)
 {
     return (*imp->blt) (imp, src_bits, dst_bits, src_stride, dst_stride,
-			src_bpp, dst_bpp, src_x, src_y, dst_x, dst_y,
+			src_bpp, dst_bpp, src_x, src_y, dest_x, dest_y,
 			width, height);
 }
 
@@ -257,12 +241,6 @@ _pixman_implementation_fill (pixman_implementation_t *imp,
     return (*imp->fill) (imp, bits, stride, bpp, x, y, width, height, xor);
 }
 
-static uint32_t *
-get_scanline_null (pixman_iter_t *iter, const uint32_t *mask)
-{
-    return NULL;
-}
-
 void
 _pixman_implementation_src_iter_init (pixman_implementation_t	*imp,
 				      pixman_iter_t             *iter,
@@ -274,20 +252,15 @@ _pixman_implementation_src_iter_init (pixman_implementation_t	*imp,
 				      uint8_t			*buffer,
 				      iter_flags_t		 flags)
 {
-    if (!image)
-    {
-	iter->get_scanline = get_scanline_null;
-    }
-    else if ((flags & (ITER_IGNORE_ALPHA | ITER_IGNORE_RGB)) ==
-	     (ITER_IGNORE_ALPHA | ITER_IGNORE_RGB))
-    {
-	iter->get_scanline = _pixman_iter_get_scanline_noop;
-    }
-    else
-    {
-	(*imp->src_iter_init) (
-	    imp, iter, image, x, y, width, height, buffer, flags);
-    }
+    iter->image = image;
+    iter->buffer = (uint32_t *)buffer;
+    iter->x = x;
+    iter->y = y;
+    iter->width = width;
+    iter->height = height;
+    iter->flags = flags;
+
+    (*imp->src_iter_init) (imp, iter);
 }
 
 void
@@ -301,6 +274,13 @@ _pixman_implementation_dest_iter_init (pixman_implementation_t	*imp,
 				       uint8_t			*buffer,
 				       iter_flags_t		 flags)
 {
-    (*imp->dest_iter_init) (
-	imp, iter, image, x, y, width, height, buffer, flags);
+    iter->image = image;
+    iter->buffer = (uint32_t *)buffer;
+    iter->x = x;
+    iter->y = y;
+    iter->width = width;
+    iter->height = height;
+    iter->flags = flags;
+
+    (*imp->dest_iter_init) (imp, iter);
 }

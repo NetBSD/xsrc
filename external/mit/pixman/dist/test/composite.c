@@ -102,6 +102,8 @@ static const format_t formats[] =
     P(x8b8g8r8),
     P(b8g8r8a8),
     P(b8g8r8x8),
+    P(r8g8b8a8),
+    P(r8g8b8x8),
     P(x2r10g10b10),
     P(x2b10g10r10),
     P(a2r10g10b10),
@@ -426,6 +428,7 @@ calc_op (pixman_op_t op, double src, double dst, double srca, double dsta)
     case PIXMAN_OP_HSL_LUMINOSITY:
     default:
 	abort();
+	return 0; /* silence MSVC */
     }
 #undef mult_chan
 }
@@ -555,6 +558,13 @@ get_pixel (pixman_image_t *image,
         bs = g + gs;
 	break;
 
+    case PIXMAN_TYPE_RGBA:
+	as = 0;
+	bs = PIXMAN_FORMAT_BPP (format) - (b + g + r);
+	gs = b + bs;
+	rs = g + gs;
+	break;
+
     case PIXMAN_TYPE_A:
         as = 0;
         rs = 0;
@@ -617,18 +627,18 @@ eval_diff (color_t *expected, color_t *test, pixman_format_code_t format)
 }
 
 static char *
-describe_image (image_t *info, char *buf, int buflen)
+describe_image (image_t *info, char *buf)
 {
     if (info->size)
     {
-	snprintf (buf, buflen, "%s %dx%d%s",
-		  info->format->name,
-		  info->size, info->size,
-		  info->repeat ? "R" :"");
+	sprintf (buf, "%s %dx%d%s",
+		 info->format->name,
+		 info->size, info->size,
+		 info->repeat ? "R" :"");
     }
     else
     {
-	snprintf (buf, buflen, "solid");
+	sprintf (buf, "solid");
     }
 
     return buf;
@@ -710,10 +720,9 @@ composite_test (image_t *dst,
     {
 	char buf[40];
 
-	snprintf (buf, sizeof (buf),
-		  "%s %scomposite",
-		  op->name,
-		  component_alpha ? "CA " : "");
+	sprintf (buf, "%s %scomposite",
+		 op->name,
+		 component_alpha ? "CA " : "");
 
 	printf ("%s test error of %.4f --\n"
 		"           R    G    B    A\n"
@@ -735,9 +744,9 @@ composite_test (image_t *dst,
 		    mask->color->b, mask->color->a,
 		    dst->color->r, dst->color->g,
 		    dst->color->b, dst->color->a);
-	    printf ("src: %s, ", describe_image (src, buf, sizeof (buf)));
-	    printf ("mask: %s, ", describe_image (mask, buf, sizeof (buf)));
-	    printf ("dst: %s\n\n", describe_image (dst, buf, sizeof (buf)));
+	    printf ("src: %s, ", describe_image (src, buf));
+	    printf ("mask: %s, ", describe_image (mask, buf));
+	    printf ("dst: %s\n\n", describe_image (dst, buf));
 	}
 	else
 	{
@@ -747,8 +756,8 @@ composite_test (image_t *dst,
 		    src->color->b, src->color->a,
 		    dst->color->r, dst->color->g,
 		    dst->color->b, dst->color->a);
-	    printf ("src: %s, ", describe_image (src, buf, sizeof (buf)));
-	    printf ("dst: %s\n\n", describe_image (dst, buf, sizeof (buf)));
+	    printf ("src: %s, ", describe_image (src, buf));
+	    printf ("dst: %s\n\n", describe_image (dst, buf));
 	}
 
 	success = FALSE;
@@ -868,7 +877,7 @@ main (int argc, char **argv)
 {
 #define N_TESTS (8 * 1024 * 1024)
     int result = 0;
-    int i;
+    uint32_t i, seed;
 
     if (argc > 1)
     {
@@ -890,16 +899,21 @@ main (int argc, char **argv)
 	}
     }
 
+    if (getenv ("PIXMAN_RANDOMIZE_TESTS"))
+	seed = get_random_seed();
+    else
+	seed = 1;
+    
 #ifdef USE_OPENMP
-#   pragma omp parallel for default(none) shared(result) shared(argv) 
+#   pragma omp parallel for default(none) shared(result, argv, seed)
 #endif
-    for (i = 1; i <= N_TESTS; ++i)
+    for (i = 0; i <= N_TESTS; ++i)
     {
-	if (!result && !run_test (i))
+	if (!result && !run_test (i + seed))
 	{
-	    printf ("Test %d failed.\n", i);
-
-	    result = i;
+	    printf ("Test 0x%08X failed.\n", seed + i);
+	    
+	    result = seed + i;
 	}
     }
     
