@@ -128,8 +128,6 @@
 #include "xf4bpp.h"
 #endif
 
-#include "hw/xfree86/xf8_16bpp/cfb8_16.h"
-
 /* int10 */
 #include "xf86int10.h"
 #include "vbe.h"
@@ -3823,7 +3821,7 @@ chipsLoadPalette16(ScrnInfoPtr pScrn, int numColors, int *indices,
 }
 
 static Bool
-local_cfb8_16ScreenInit(ScreenPtr pScreen, pointer pbits16, pointer pbits8,
+cfb8_16ScreenInit(ScreenPtr pScreen, pointer pbits16, pointer pbits8,
                   int xsize, int ysize, int dpix, int dpiy,
                   int width16, int width8)
 {
@@ -4018,7 +4016,7 @@ CHIPSScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 #endif
     case 16:
       if (cPtr->Flags & ChipsOverlay8plus16) {
-	  ret = local_cfb8_16ScreenInit(pScreen, (unsigned char *)FBStart + 
+	  ret = cfb8_16ScreenInit(pScreen, (unsigned char *)FBStart + 
 				  cPtr->FbOffset16, FBStart, width, 
 				  height, pScrn->xDpi, pScrn->yDpi,
 				  displayWidth, displayWidth);
