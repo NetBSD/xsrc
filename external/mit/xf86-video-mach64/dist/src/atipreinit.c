@@ -27,6 +27,13 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifdef __NetBSD__
+#include <sys/time.h>
+#include <sys/ioctl.h>
+#include <errno.h>
+#include <dev/wscons/wsconsio.h>
+#endif
+
 #include "ati.h"
 #include "atiadjust.h"
 #include "atiaudio.h"
@@ -55,6 +62,8 @@
 #if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86RAC.h"
 #endif
+
+#include "xf86Priv.h"
 
 /*
  * FreeScreen handles the clean-up.
@@ -529,7 +538,7 @@ ATIPreInit
 
 #   define           pATIHW     (&pATI->OldHW)
 
-#ifndef AVOID_CPIO
+#ifndef AVOID_CPIO_
 
     xf86Int10InfoPtr pInt10Info = NULL;
     vbeInfoPtr       pVBE = NULL;
@@ -648,7 +657,6 @@ ATIPreInit
     ATIClaimBusSlot(pGDev->active, pATI);
 
 #ifndef AVOID_CPIO
-
 #ifdef TV_OUT
 
     pATI->pVBE = NULL;
@@ -725,6 +733,23 @@ ATIPreInit
     pVBE = NULL;
     pInt10Info = NULL;
 #endif /* TV_OUT */
+#endif /* AVOID_CPIO */
+#ifdef __NetBSD__
+    if (ConfiguredMonitor == NULL) {
+    	struct wsdisplayio_edid_info ei;
+    	char buffer[1024];
+    	int i, j;
+
+	ei.edid_data = buffer;
+	ei.buffer_size = 1024;
+	if (ioctl(xf86Info.screenFd, WSDISPLAYIO_GET_EDID, &ei) != -1) {
+	    xf86Msg(X_INFO, "got %d bytes worth of EDID from wsdisplay\n", ei.data_size);
+	    ConfiguredMonitor = xf86InterpretEDID(pScreenInfo->scrnIndex, buffer);
+	} else
+	    xf86Msg(X_INFO, "ioctl failed %d\n", errno);
+    }
+#endif
+
 
     if (ConfiguredMonitor && !(flags & PROBE_DETECT))
     {
@@ -732,10 +757,10 @@ ATIPreInit
         xf86SetDDCproperties(pScreenInfo, ConfiguredMonitor);
     }
 
+#ifndef AVOID_CPIO
     /* DDC module is no longer needed at this point */
     xf86UnloadSubModule(pDDCModule);
-
-#endif /* AVOID_CPIO */
+#endif
 
     if (flags & PROBE_DETECT)
     {
