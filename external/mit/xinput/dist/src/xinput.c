@@ -140,7 +140,7 @@ static entry drivers[] =
 static const char version_id[] = VERSION;
 
 int
-print_version()
+print_version(void)
 {
     XExtensionVersion	*version;
     Display *display;
@@ -336,7 +336,7 @@ main(int argc, char * argv[])
     while((*func) == '-') func++;
 
     if (strcmp("version", func) == 0) {
-        return print_version(argv[0]);
+        return print_version();
     }
 
     display = XOpenDisplay(NULL);
