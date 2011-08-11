@@ -125,7 +125,7 @@ sfnt_get_ushort( FT_Face     face,
   FT_ULong   len = sizeof(buff);
   FT_UShort  result = 0;
 
-  if ( !FT_Load_Sfnt_Table( face, table_tag, table_offset, buff, &len ) );
+  if ( !FT_Load_Sfnt_Table( face, table_tag, table_offset, buff, &len ) )
     result = (FT_UShort)( (buff[0] << 8) | buff[1] );
 
   return result;
