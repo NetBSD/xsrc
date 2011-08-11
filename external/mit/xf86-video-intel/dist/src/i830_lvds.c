@@ -430,7 +430,7 @@ i830_lvds_acpi_lid_open(xf86OutputPtr output)
 	}
     }
     state_name = malloc(strlen(ACPI_LID) + strlen(lid_dent->d_name) + 7);
-    memset(state_name, 0, sizeof(state_name));
+    memset(state_name, 0, sizeof(*state_name));
     strcat(state_name, ACPI_LID);
     strcat(state_name, lid_dent->d_name);
     strcat(state_name, "/state");
