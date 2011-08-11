@@ -71,7 +71,7 @@ XETC *XECreateTC(Display *dpy, CARD32 valuemask, XETCValues *value)
     {   
         firsttime = False;
         /* The first Trap Context is the Template (default) TC */
-        (void)memset(tc,0L,sizeof(tc));
+        (void)memset(tc,0L,sizeof(*tc));
         tc->eventBase             = 0x7FFFFFFFL;
         tc->errorBase             = 0x7FFFFFFFL;
         tc->values.v.max_pkt_size = 0x7FFFL;
