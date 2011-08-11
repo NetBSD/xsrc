@@ -104,7 +104,7 @@ XkbDescPtr	xkb;
 	    char buf[20];
 	    sprintf(buf,"#%02x%02x%02x",(sdef.red>>8)&0xff,
 						(sdef.green>>8)&0xff,
-						(sdef.blue>>8)&&0xff);
+						(sdef.blue>>8)&0xff);
 	    if (XAllocNamedColor(view->dpy,view->opts.cmap,buf,&sdef,&xdef)) {
 		xkb->geom->colors[i].pixel= sdef.pixel;
 #ifdef DEBUG
