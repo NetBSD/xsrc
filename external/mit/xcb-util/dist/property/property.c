@@ -95,7 +95,7 @@ handle_property_notify_event(void *data, xcb_connection_t *c, xcb_property_notif
 void
 xcb_property_handlers_init(xcb_property_handlers_t *prophs, xcb_event_handlers_t *evenths)
 {
-    memset(prophs, 0, sizeof(prophs));
+    memset(prophs, 0, sizeof(*prophs));
     prophs->evenths = evenths;
     xcb_event_set_property_notify_handler(evenths, handle_property_notify_event, prophs);
 }
