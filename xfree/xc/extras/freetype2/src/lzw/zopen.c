@@ -1,5 +1,5 @@
 /* $XFree86: xc/extras/freetype2/src/lzw/zopen.c,v 1.2 2004/12/16 22:15:48 tsi Exp $ */
-/*	$NetBSD: zopen.c,v 1.1.1.1 2005/03/18 13:07:34 tron Exp $	*/
+/*	$NetBSD: zopen.c,v 1.2 2011/08/16 18:17:19 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1986, 1992, 1993
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)zopen.c	8.1 (Berkeley) 6/27/93";
 #else
-static char rcsid[] = "$NetBSD: zopen.c,v 1.1.1.1 2005/03/18 13:07:34 tron Exp $";
+static char rcsid[] = "$NetBSD: zopen.c,v 1.2 2011/08/16 18:17:19 joerg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -214,7 +214,7 @@ zread(s_zstate_t *zs)
 	block_compress = maxbits & BLOCK_MASK;
 	maxbits &= BIT_MASK;
 	maxmaxcode = 1L << maxbits;
-	if (maxbits > BITS) {
+	if (maxbits > BITS || maxbits < 12) {
 		return -1;
 	}
 	/* As above, initialize the first 256 entries in the table. */
@@ -224,15 +224,7 @@ zread(s_zstate_t *zs)
 		tab_suffixof(code) = (char_type) code;
 	}
 	free_ent = block_compress ? FIRST : 256;
-
-	finchar = oldcode = getcode(zs);
-	if (oldcode == -1)		/* EOF already? */
-		return 0;		/* Get out of here */
-
-	/* First code must be 8 bits = char. */
-	*(zs->next_out)++ = (unsigned char)finchar;
-	zs->total_out++;
-	count--;
+	oldcode = -1;
 	stackp = de_stack;
 
 	while ((code = getcode(zs)) > -1) {
@@ -240,15 +232,19 @@ zread(s_zstate_t *zs)
 			for (code = 255; code >= 0; code--)
 				tab_prefixof(code) = 0;
 			clear_flg = 1;
-			free_ent = FIRST - 1;
-			if ((code = getcode(zs)) == -1)
-				/* O, untimely death! */
-				break;
+			free_ent = FIRST ;
+			oldcode = -1;
+			continue;
 		}
 		incode = code;
 
 		/* Special case for KwKwK string. */
 		if (code >= free_ent) {
+			if (code > free_ent || oldcode == -1) {
+				/* Bad stream. */
+				errno = EINVAL;
+				return (-1);
+			}
 			*stackp++ = finchar;
 			code = oldcode;
 		}
@@ -274,7 +270,7 @@ middle:
 		} while (stackp > de_stack);
 
 		/* Generate the new entry. */
-		if ((code = free_ent) < maxmaxcode) {
+		if ((code = free_ent) < maxmaxcode && oldcode != -1) {
 			tab_prefixof(code) = (unsigned short) oldcode;
 			tab_suffixof(code) = finchar;
 			free_ent = code + 1;
