@@ -1,5 +1,5 @@
 /* $XFree86: xc/extras/freetype2/src/lzw/zopen.c,v 1.2 2004/12/16 22:15:48 tsi Exp $ */
-/*	$NetBSD: zopen.c,v 1.1.1.1.6.1 2011/08/19 22:28:19 riz Exp $	*/
+/*	$NetBSD: zopen.c,v 1.1.1.1.6.2 2011/08/22 17:54:40 riz Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1986, 1992, 1993
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)zopen.c	8.1 (Berkeley) 6/27/93";
 #else
-static char rcsid[] = "$NetBSD: zopen.c,v 1.1.1.1.6.1 2011/08/19 22:28:19 riz Exp $";
+static char rcsid[] = "$NetBSD: zopen.c,v 1.1.1.1.6.2 2011/08/22 17:54:40 riz Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -242,7 +242,6 @@ zread(s_zstate_t *zs)
 		if (code >= free_ent) {
 			if (code > free_ent || oldcode == -1) {
 				/* Bad stream. */
-				errno = EINVAL;
 				return (-1);
 			}
 			*stackp++ = finchar;
