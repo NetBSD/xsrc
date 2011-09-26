@@ -892,7 +892,7 @@ wsSetProperty(DeviceIntPtr device, Atom atom, XIPropertyValuePtr val,
 		priv->coords.maxx = priv->max_x;
 		priv->coords.miny = priv->min_y;
 		priv->coords.maxy = priv->max_y;
-#if 0
+#ifndef __NetBSD__
 		priv->coords.swapxy = priv->swap_axes;
 #endif
 
@@ -901,11 +901,11 @@ wsSetProperty(DeviceIntPtr device, Atom atom, XIPropertyValuePtr val,
 		coords.maxx = priv->max_x;
 		coords.miny = priv->min_y;
 		coords.maxy = priv->max_y;
-#if 0
+#ifndef __NetBSD__
 		coords.swapxy = priv->swap_axes;
 #endif
 		coords.samplelen = priv->raw;
-#if 0
+#ifndef __NetBSD__
 		coords.resx = priv->coords.resx;
 		coords.resy = priv->coords.resy;
 #endif
