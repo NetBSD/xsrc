@@ -501,7 +501,9 @@ wsDeviceOn(DeviceIntPtr pWS)
 {
 	InputInfoPtr pInfo = (InputInfoPtr)pWS->public.devicePrivate;
 	WSDevicePtr priv = (WSDevicePtr)pInfo->private;
+#ifndef __NetBSD__
 	struct wsmouse_calibcoords coords;
+#endif
 
 	DBG(1, ErrorF("WS DEVICE ON\n"));
 	if ((pInfo->fd < 0) && (wsOpen(pInfo) != Success)) {
@@ -549,7 +551,9 @@ wsDeviceOff(DeviceIntPtr pWS)
 {
 	InputInfoPtr pInfo = (InputInfoPtr)pWS->public.devicePrivate;
 	WSDevicePtr priv = pInfo->private;
+#ifndef __NetBSD__
 	struct wsmouse_calibcoords coords;
+#endif
 
 	DBG(1, ErrorF("WS DEVICE OFF\n"));
 	wsmbEmuFinalize(pInfo);
