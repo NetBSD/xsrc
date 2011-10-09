@@ -121,11 +121,13 @@ xf86AddBusDeviceToConfigure(const char *driver, BusType bus, void *busData, int 
         case BUS_PCI:
             xf86PciConfigureNewDev(busData, DevToConfig[i].pVideo,
                                    &DevToConfig[i].GDev, &chipset);
+            DevToConfig[i].pVideo = busData;
 	        break;
 #if (defined(__sparc__) || defined(__sparc)) && !defined(__OpenBSD__)
         case BUS_SBUS:
             xf86SbusConfigureNewDev(busData, DevToConfig[i].sVideo,
                                     &DevToConfig[i].GDev);
+            DevToConfig[i].sVideo = busData;
 	        break;
 #endif
 #if defined(__arm32__)
