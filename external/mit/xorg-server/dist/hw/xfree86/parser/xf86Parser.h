@@ -496,6 +496,7 @@ extern void xf86closeConfigFile(void);
 extern void xf86freeConfig(XF86ConfigPtr p);
 extern int xf86writeConfigFile(const char *, XF86ConfigPtr);
 extern _X_EXPORT XF86ConfDevicePtr xf86findDevice(const char *ident, XF86ConfDevicePtr p);
+extern _X_EXPORT XF86ConfDevicePtr xf86findDeviceByDriver(const char *driver, XF86ConfDevicePtr p);
 extern _X_EXPORT XF86ConfLayoutPtr xf86findLayout(const char *name, XF86ConfLayoutPtr list);
 extern _X_EXPORT XF86ConfMonitorPtr xf86findMonitor(const char *ident, XF86ConfMonitorPtr p);
 extern _X_EXPORT XF86ConfModesPtr xf86findModes(const char *ident, XF86ConfModesPtr p);
