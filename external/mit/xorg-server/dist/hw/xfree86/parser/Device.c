@@ -369,3 +369,16 @@ xf86findDevice (const char *ident, XF86ConfDevicePtr p)
 	}
 	return NULL;
 }
+
+XF86ConfDevicePtr
+xf86findDeviceByDriver (const char *driver, XF86ConfDevicePtr p)
+{
+	while (p)
+	{
+		if (xf86nameCompare (driver, p->dev_driver) == 0)
+			return p;
+
+		p = p->list.next;
+	}
+	return NULL;
+}
