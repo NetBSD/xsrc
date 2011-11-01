@@ -168,7 +168,7 @@ main(int argc, char *argv[])
 
     appW = XtAppInitialize(&app,"XTrap",optionTable,(Cardinal)1L,
         (int *)&argc, (String *)argv, (String *)NULL,(ArgList)&tmp,
-        (Cardinal)NULL);
+        (Cardinal)0);
 
     dpy = XtDisplay(appW);
 #ifdef DEBUG
@@ -268,4 +268,3 @@ static Bool found_input_rec(FILE *ifp, file_rec *rec)
 
     return(found);
 }
-
