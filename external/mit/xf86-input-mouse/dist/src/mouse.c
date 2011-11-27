@@ -273,7 +273,7 @@ MouseCommonOptions(InputInfoPtr pInfo)
     MessageType buttons_from = X_CONFIG;
     char *s;
     int origButtons;
-    int i;
+    int btn;
 
     pMse = pInfo->private;
 
@@ -583,8 +583,8 @@ MouseCommonOptions(InputInfoPtr pInfo)
        free(s);
     }
     /* get maximum of mapped buttons */
-    for (i = pMse->buttons-1; i >= 0; i--) {
-	int f = ffs (pMse->buttonMap[i]);
+    for (btn = pMse->buttons-1; btn >= 0; btn--) {
+	int f = ffs (pMse->buttonMap[btn]);
 	if (f > pMse->buttons)
 	    pMse->buttons = f;
     }
@@ -3487,21 +3487,21 @@ autoProbeMouse(InputInfoPtr pInfo, Bool inSync, Bool lostSync)
 	}
 	case AUTOPROBE_SWITCH_PROTOCOL:
 	{
-	    MouseProtocolID proto;
+	    MouseProtocolID protoid;
 	    void *defaults;
 	    AP_DBG(("State SWITCH_PROTOCOL\n"));
-	    proto = mPriv->protoList[mPriv->protocolID++];
-	    if (proto == PROT_UNKNOWN) 
+	    protoid = mPriv->protoList[mPriv->protocolID++];
+	    if (protoid == PROT_UNKNOWN) 
 		mPriv->autoState = AUTOPROBE_SWITCHSERIAL;
-	    else if (!(defaults = GetProtocol(proto)->defaults)
+	    else if (!(defaults = GetProtocol(protoid)->defaults)
 		       || (mPriv->serialDefaultsNum == -1 
 			   && (defaults == msDefaults))
 		       || (mPriv->serialDefaultsNum != -1
 			   && serialDefaultsList[mPriv->serialDefaultsNum]
 			   == defaults)) {
 		AP_DBG(("Changing Protocol to %s\n",
-			ProtocolIDToName(proto)));
-		SetMouseProto(pMse,proto);
+			ProtocolIDToName(protoid)));
+		SetMouseProto(pMse,protoid);
 		FlushButtons(pMse);
 		RESET_VALIDATION;
 		mPriv->autoState = AUTOPROBE_VALIDATE2;
