@@ -1,5 +1,5 @@
 /* $OpenBSD: wsfb_driver.c,v 1.19 2003/04/27 16:42:32 matthieu Exp $ */
-/* $NetBSD: igs_driver.c,v 1.8 2011/05/30 15:11:33 christos Exp $ */
+/* $NetBSD: igs_driver.c,v 1.9 2011/12/14 23:58:54 macallan Exp $ */
 /*
  * Copyright (c) 2001 Matthieu Herrb
  *		 2009 Michael Lorenz
@@ -208,7 +208,7 @@ static const char *ramdacSymbols[] = {
 #ifdef XFree86LOADER
 static XF86ModuleVersionInfo IgsVersRec = {
 	"igs",
-	MODULEVENDORSTRING,
+	"The NetBSD Foundation",
 	MODINFOSTRING1,
 	MODINFOSTRING2,
 	XORG_VERSION_CURRENT,
@@ -571,6 +571,12 @@ IgsPreInit(ScrnInfoPtr pScrn, int flags)
 	xf86DrvMsg(pScrn->scrnIndex, from, "Using %s cursor\n",
 		fPtr->HWCursor ? "HW" : "SW");
 
+	if (xf86GetOptValBool(fPtr->Options, OPTION_NOACCEL, &fPtr->no_accel))
+		from = X_CONFIG;
+
+	xf86DrvMsg(pScrn->scrnIndex, from, "%s acceleration\n",
+		fPtr->no_accel ? "disabling" : "enabling");
+
 	/* Load bpp-specific modules */
 	switch(pScrn->bitsPerPixel) {
 	default:
@@ -668,7 +674,7 @@ IgsScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 		return FALSE;
 	}
 
-	/* find our aperturwe */
+	/* find our aperture */
 	
 	/* assume 2MB for now, until I add actual RAM size probing */
 	len = 2 * 1024 * 1024;
@@ -760,7 +766,7 @@ IgsScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	xf86SetBackingStore(pScreen);
 
 	/* setup acceleration */
-	if (1) {
+	if (!fPtr->no_accel) {
 		XF86ModReqInfo req;
 		int errmaj, errmin;
 
@@ -773,7 +779,7 @@ IgsScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 			return FALSE;
 		}
 		if (!IgsInitAccel(pScreen))
-			return FALSE;
+			fPtr->no_accel = 1;
 	}
 
 	/* software cursor */
