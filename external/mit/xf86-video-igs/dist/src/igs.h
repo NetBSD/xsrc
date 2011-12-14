@@ -1,5 +1,5 @@
 /* $OpenBSD: wsfb_driver.c,v 1.18 2003/04/02 16:42:13 jason Exp $ */
-/* $NetBSD: igs.h,v 1.5 2011/05/23 19:51:27 christos Exp $ */
+/* $NetBSD: igs.h,v 1.6 2011/12/14 23:58:54 macallan Exp $ */
 /*
  * Copyright (c) 2001 Matthieu Herrb
  *		 2009 Michael Lorenz
@@ -64,6 +64,7 @@ typedef struct {
 	unsigned long		fb_paddr;
 	Bool			shadowFB;
 	Bool			HWCursor;
+	Bool			no_accel;
 	CloseScreenProcPtr	CloseScreen;
 	CreateScreenResourcesProcPtr CreateScreenResources;
 	EntityInfoPtr		pEnt;

@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: igs_accel.c,v 1.7 2011/05/28 13:26:54 christos Exp $ */
+/* $NetBSD: igs_accel.c,v 1.8 2011/12/14 23:58:54 macallan Exp $ */
 
 #include <sys/types.h>
 
@@ -90,13 +90,6 @@ IgsWaitMarker(ScreenPtr pScreen, int Marker)
 		IgsWrite1(fPtr, IGS_COP_CTL_REG, 0);
 	}
 	LEAVE;
-}
-
-static int
-IgsMarkSync(ScreenPtr pScreenInfo)
-{
-	ENTER;
-	return 0;
 }
 
 static void
@@ -193,6 +186,7 @@ IgsCopy
 	IgsWrite2(fPtr, IGS_COP_HEIGHT_REG, h - 1);
 	IgsWrite2(fPtr, IGS_COP_PIXEL_OP_REG, fPtr->cmd & 0xffff);
 	IgsWrite2(fPtr, IGS_COP_PIXEL_OP_REG + 2, (fPtr->cmd >> 16) & 0xffff);
+	exaMarkSync(pDstPixmap->drawable.pScreen);
 	LEAVE;
 }
 
@@ -251,6 +245,7 @@ IgsSolid(
 	IgsWrite2(fPtr, IGS_COP_HEIGHT_REG, h - 1);
 	IgsWrite2(fPtr, IGS_COP_PIXEL_OP_REG, fPtr->cmd & 0xffff);
 	IgsWrite2(fPtr, IGS_COP_PIXEL_OP_REG + 2, (fPtr->cmd >> 16) & 0xffff);
+	exaMarkSync(pPixmap->drawable.pScreen);
 }
 
 /*
@@ -357,7 +352,6 @@ IgsInitAccel(ScreenPtr pScreen)
 	pExa->maxX = 2048;
 	pExa->maxY = 2048;	
 
-	pExa->MarkSync = IgsMarkSync;
 	pExa->WaitMarker = IgsWaitMarker;
 	pExa->PrepareSolid = IgsPrepareSolid;
 	pExa->Solid = IgsSolid;
