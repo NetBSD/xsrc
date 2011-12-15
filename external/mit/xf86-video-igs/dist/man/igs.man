@@ -1,6 +1,6 @@
 .\" $OpenBSD: wsfb.man,v 1.10 2003/08/30 10:51:55 matthieu Exp $
 .\"
-.\" Copyright (c) 2001,2002 Matthieu Herrb
+.\" Copyright (c) 2009 Michael Lorenz
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -29,37 +29,28 @@
 .\"
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
-.TH WSFB __drivermansuffix__ __vendorversion__
+.TH IGS __drivermansuffix__ __vendorversion__
 .SH NAME
-wsfb \- video driver for wsdisplay framebuffer device
+igs \- video driver for IGS CyberPro 20x0 graphics controllers
 .SH SYNOPSIS
 .nf
 .B "Section \*qDevice\*q"
 .BI "  Identifier \*q"  devname \*q
-.B  "  Driver \*qwsfb\*q"
+.B  "  Driver \*qigs\*q"
 \ \ ...
 .B EndSection
 .fi
 .SH DESCRIPTION
-.B wsfb
-is an __xservername__ driver for OpenBSD and NetBSD
-wsdisplay framebuffer devices.
-This is a non-accelerated driver. 
-The following framebuffer depths are supported: 1, 8, 16 and 24, given
-that the wsdisplay device underneath supports them.
+.B igs
+is an __xservername__ driver for NetBSD..
+This driver supports basic acceleration on Shark rev. 5 hardware.
+The following framebuffer depths are supported: 8, 16, 24
 .br
-A StaticGray monochrome visual is provided for depth 1,
-all visual types are supported for depth  8 and a TrueColor visual is
-supported for the other depths.
-Multi-head configurations are supported.
 .SH SUPPORTED HARDWARE
 The
-.B wsfb
-driver supports all hardware where a wsdisplay framebuffer driver
-is available on OpenBSD and NetBSD.
-On OpenBSD, currently this includes OpenBSD/macppc, OpenBSD/sparc,
-OpenBSD/sparc64 and OpenBSD/alpha on TGA graphics cards.
-It also supports NetBSD/i386 using wsdisplay on vesafb(4).
+.B igs
+driver supports shark hardware only for now, adapting it to work PCI variants
+of the CyberPro 20x0 family should be trivial though.
 .SH CONFIGURATION DETAILS
 Please refer to __xconfigfile__(__filemansuffix__) for general configuration
 details.
@@ -69,28 +60,16 @@ For this driver it is not required to specify modes in the
 .B Screen
 section of the configuration file.
 The
-.B wsfb
+.B igs
 driver picks up the currently used video mode from the framebuffer
 driver and uses it.
 Video modes specifications in the configuration file are ignored.
 .PP
-The following driver options are supported in the 
-.B Device
-section:
-.TP
-.BI "Option \*qdevice\*q \*q" string \*q
-The wsdisplay framebuffer device to use.
-Default for OpenBSD: \fI/dev/ttyC0\fP.
-Default for NetBSD: \fI/dev/ttyE0\fP.
-.TP
-.BI "Option \*qShadowFB\*q \*q" boolean \*q
-Enable or disable use of the shadow framebuffer layer.
-See shadowfb(__drivermansuffix__) for further information.
-Default: on for depths were it is supported, off otherwise.
-.br
-ShadowFB is currently not supported on monochrome displays.
+.SH BUGS
+The driver doesn't contain any code to program video modes, it relies on the
+igsfb driver to take care of that.
 .SH "SEE ALSO"
-XFree86(1), __xconfigfile__(__filemansuffix__), xorgconfig(1), Xserver(1),
-X(__miscmansuffix__), fbdev(__drivermansuffix__)
+Xorg(1), __xconfigfile__(__filemansuffix__), xorgconfig(1), Xserver(1),
+X(__miscmansuffix__), wsfb(__drivermansuffix__)
 .SH AUTHORS
-Authors include: Matthieu Herrb, Gerd Knorr, Michel Dänzer, Geert Uytterhoeven
+This driver was written by Michael Lorenz
