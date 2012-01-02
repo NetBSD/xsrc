@@ -908,7 +908,7 @@ fbCompositeSolidMask_nx1xn (CARD8      op,
 	      0x0);
 }
 
-# define mod(a,b)	((b) == 1 ? 0 : (a) >= 0 ? (a) % (b) : (b) - (-a) % (b))
+# define mod(a,b)	((b) == 1 ? 0 : (a) >= 0 ? (a) % (b) : (b) - (-(a)) % (b))
 
 void
 fbComposite (CARD8      op,

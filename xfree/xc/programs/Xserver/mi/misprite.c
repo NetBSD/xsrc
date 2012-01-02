@@ -1978,7 +1978,7 @@ miSpriteLineHelper()
 
 #ifdef RENDER
 
-# define mod(a,b)	((b) == 1 ? 0 : (a) >= 0 ? (a) % (b) : (b) - (-a) % (b))
+# define mod(a,b)	((b) == 1 ? 0 : (a) >= 0 ? (a) % (b) : (b) - (-(a)) % (b))
 
 static void
 miSpritePictureOverlap (PicturePtr  pPict,
