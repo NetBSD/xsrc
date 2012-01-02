@@ -597,12 +597,6 @@ InstallManPageAliasesBase(file,destdir,aliases)
 #endif
 
 /*
- * Always include xorg.cf for GccAliasingArgs,
- * regardless of server support on this plattform
- */
-#include <xorg.cf>
-
-/*
  * Definitions for the SUN server on NetBSD/sparc
  */
 #ifdef SparcArchitecture
@@ -631,6 +625,11 @@ InstallManPageAliasesBase(file,destdir,aliases)
 #define BuildXF86VidModeExt	NO
 #define BuildXF86DGA		NO
 #define BuildXInputExt		NO
+
+/*
+ * Always include xorg.cf for GccAliasingArgs,
+ * regardless of server support on this plattform
+ */
 #include <xorg.cf>
 #endif
 
