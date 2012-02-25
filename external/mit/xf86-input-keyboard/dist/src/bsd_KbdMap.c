@@ -260,7 +260,8 @@ static CARD8 wsUsbMap[] = {
 	/* 47 */ KEY_LBrace,	/* [ { */
 	/* 48 */ KEY_RBrace,	/* ] } */
 	/* 49 */ KEY_BSlash,	/* \ | */
-	/* 50 */ KEY_BSlash2,	/* \ _ # ~ on some keyboards */
+	/* this was KEY_BSlash2 which seems bogus */
+	/* 50 */ KEY_BSlash,    /* \ _ # ~ on some keyboards */
 	/* 51 */ KEY_SemiColon,	/* ; : */
 	/* 52 */ KEY_Quote,	/* ' " */
 	/* 53 */ KEY_Tilde,	/* ` ~ */
