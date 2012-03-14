@@ -86,6 +86,7 @@
 #include <X11/extensions/dpms.h>
 #endif
 
+#include <inputstr.h>
 
 #ifdef XF86DRI
 #include "dri.h"
@@ -9322,9 +9323,8 @@ SISMergedPointerMoved(int scrnIndex, int x, int y)
 	}
      }
      if(doit) {
-	UpdateCurrentTime();
 	sigstate = xf86BlockSIGIO();
-	miPointerAbsoluteCursor(x, y, currentTime.milliseconds);
+	miPointerSetPosition(inputInfo.pointer, x, y);
 	xf86UnblockSIGIO(sigstate);
 	return;
      }
