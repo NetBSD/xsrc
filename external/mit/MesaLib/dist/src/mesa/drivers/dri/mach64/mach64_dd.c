@@ -66,7 +66,7 @@ static const GLubyte *mach64DDGetString( GLcontext *ctx, GLenum name )
 
    switch ( name ) {
    case GL_VENDOR:
-      return (GLubyte*)"Gareth Hughes, Leif Delgass, José Fonseca";
+      return (GLubyte*)"Gareth Hughes, Leif Delgass, Jos\xe9 Fonseca";
 
    case GL_RENDERER:
  
