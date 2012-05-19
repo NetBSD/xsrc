@@ -408,6 +408,8 @@ pcfReadFont(FontPtr pFont, FontFilePtr file,
 
     pFont->info.nprops = 0;
     pFont->info.props = 0;
+    pFont->info.isStringProp=0;
+
     if (!(tables = pcfReadTOC(file, &ntables)))
 	goto Bail;
 
