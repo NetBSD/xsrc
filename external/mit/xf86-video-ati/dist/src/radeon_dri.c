@@ -56,7 +56,6 @@
 
 				/* X and server generic header files */
 #include "xf86.h"
-#include "xf86PciInfo.h"
 #include "windowstr.h"
 
 				/* GLX/DRI/DRM definitions */
@@ -1451,8 +1450,26 @@ Bool RADEONDRIGetVersion(ScrnInfoPtr pScrn)
     }
 
     /* We don't, bummer ! */
-    if (info->dri->pKernelDRMVersion->version_major != req_major ||
-        info->dri->pKernelDRMVersion->version_minor < req_minor ||
+    if (info->dri->pKernelDRMVersion->version_major != req_major) {
+        /* Looks like we're trying to start in UMS mode on a KMS kernel.
+	 * This can happen if the radeon kernel module wasn't loaded before
+	 * X starts.
+	 */
+        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+            "[dri] RADEONDRIGetVersion failed because of a version mismatch.\n"
+            "[dri] This chipset requires a kernel module version of %d.%d.%d,\n"
+            "[dri] but the kernel reports a version of %d.%d.%d."
+            "[dri] Make sure your module is loaded prior to starting X, and\n"
+            "[dri] that this driver was built with support for KMS.\n"
+            "[dri] Aborting.\n",
+            req_major, req_minor, req_patch,
+            info->dri->pKernelDRMVersion->version_major,
+            info->dri->pKernelDRMVersion->version_minor,
+            info->dri->pKernelDRMVersion->version_patchlevel);
+        drmFreeVersion(info->dri->pKernelDRMVersion);
+        info->dri->pKernelDRMVersion = NULL;
+        return -1;
+    } else if (info->dri->pKernelDRMVersion->version_minor < req_minor ||
         (info->dri->pKernelDRMVersion->version_minor == req_minor &&
         info->dri->pKernelDRMVersion->version_patchlevel < req_patch)) {
         /* Incompatible drm version */
@@ -1460,10 +1477,7 @@ Bool RADEONDRIGetVersion(ScrnInfoPtr pScrn)
             "[dri] RADEONDRIGetVersion failed because of a version mismatch.\n"
             "[dri] This chipset requires a kernel module version of %d.%d.%d,\n"
             "[dri] but the kernel reports a version of %d.%d.%d."
-            "[dri] If using legacy modesetting, upgrade your kernel.\n"
-            "[dri] If using kernel modesetting, make sure your module is\n"
-            "[dri] loaded prior to starting X, and that this driver was built\n"
-            "[dri] with support for KMS.\n"
+            "[dri] Try upgrading your kernel.\n"
             "[dri] Disabling DRI.\n",
             req_major, req_minor, req_patch,
             info->dri->pKernelDRMVersion->version_major,
@@ -1566,7 +1580,7 @@ Bool RADEONDRIScreenInit(ScreenPtr pScreen)
     pDRIInfo->ddxDriverMajorVersion      = info->allowColorTiling ? 5 : 4;
     pDRIInfo->ddxDriverMinorVersion      = 3;
     pDRIInfo->ddxDriverPatchVersion      = 0;
-    pDRIInfo->frameBufferPhysicalAddress = (void *)info->LinearAddr + info->dri->frontOffset;
+    pDRIInfo->frameBufferPhysicalAddress = (void *)(uintptr_t)info->LinearAddr + info->dri->frontOffset;
     pDRIInfo->frameBufferSize            = info->FbMapSize - info->FbSecureSize;
     pDRIInfo->frameBufferStride          = (pScrn->displayWidth *
 					    info->CurrentLayout.pixel_bytes);
