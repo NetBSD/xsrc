@@ -15,6 +15,8 @@
 
 #include "bicubic_table.h"
 
+#include <xf86xvmc.h>
+
 #define ClipValue(v,min,max) ((v) < (min) ? (min) : (v) > (max) ? (max) : (v))
 
 /* Xvideo port struct */
@@ -160,6 +162,9 @@ int  RADEONQueryImageAttributes(ScrnInfoPtr, int, unsigned short *,
 
 XF86VideoAdaptorPtr
 RADEONSetupImageTexturedVideo(ScreenPtr pScreen);
+
+XF86MCAdaptorPtr
+RADEONCreateAdaptorXvMC(ScreenPtr pScreen, char *xv_adaptor_name);
 
 void
 RADEONCopyData(ScrnInfoPtr pScrn,

@@ -55,6 +55,73 @@ extern DriverRec RADEON;
 #define RADEON_MAX_CRTC 6
 #define RADEON_MAX_BIOS_CONNECTOR 16
 
+typedef enum {
+    CHIP_FAMILY_UNKNOW,
+    CHIP_FAMILY_LEGACY,
+    CHIP_FAMILY_RADEON,
+    CHIP_FAMILY_RV100,
+    CHIP_FAMILY_RS100,    /* U1 (IGP320M) or A3 (IGP320)*/
+    CHIP_FAMILY_RV200,
+    CHIP_FAMILY_RS200,    /* U2 (IGP330M/340M/350M) or A4 (IGP330/340/345/350), RS250 (IGP 7000) */
+    CHIP_FAMILY_R200,
+    CHIP_FAMILY_RV250,
+    CHIP_FAMILY_RS300,    /* RS300/RS350 */
+    CHIP_FAMILY_RV280,
+    CHIP_FAMILY_R300,
+    CHIP_FAMILY_R350,
+    CHIP_FAMILY_RV350,
+    CHIP_FAMILY_RV380,    /* RV370/RV380/M22/M24 */
+    CHIP_FAMILY_R420,     /* R420/R423/M18 */
+    CHIP_FAMILY_RV410,    /* RV410, M26 */
+    CHIP_FAMILY_RS400,    /* xpress 200, 200m (RS400) Intel */
+    CHIP_FAMILY_RS480,    /* xpress 200, 200m (RS410/480/482/485) AMD */
+    CHIP_FAMILY_RV515,    /* rv515 */
+    CHIP_FAMILY_R520,    /* r520 */
+    CHIP_FAMILY_RV530,    /* rv530 */
+    CHIP_FAMILY_R580,    /* r580 */
+    CHIP_FAMILY_RV560,   /* rv560 */
+    CHIP_FAMILY_RV570,   /* rv570 */
+    CHIP_FAMILY_RS600,
+    CHIP_FAMILY_RS690,
+    CHIP_FAMILY_RS740,
+    CHIP_FAMILY_R600,    /* r600 */
+    CHIP_FAMILY_RV610,
+    CHIP_FAMILY_RV630,
+    CHIP_FAMILY_RV670,
+    CHIP_FAMILY_RV620,
+    CHIP_FAMILY_RV635,
+    CHIP_FAMILY_RS780,
+    CHIP_FAMILY_RS880,
+    CHIP_FAMILY_RV770,   /* r700 */
+    CHIP_FAMILY_RV730,
+    CHIP_FAMILY_RV710,
+    CHIP_FAMILY_RV740,
+    CHIP_FAMILY_CEDAR,   /* evergreen */
+    CHIP_FAMILY_REDWOOD,
+    CHIP_FAMILY_JUNIPER,
+    CHIP_FAMILY_CYPRESS,
+    CHIP_FAMILY_HEMLOCK,
+    CHIP_FAMILY_PALM,
+    CHIP_FAMILY_SUMO,
+    CHIP_FAMILY_SUMO2,
+    CHIP_FAMILY_BARTS,
+    CHIP_FAMILY_TURKS,
+    CHIP_FAMILY_CAICOS,
+    CHIP_FAMILY_CAYMAN,
+    CHIP_FAMILY_ARUBA,
+    CHIP_FAMILY_LAST
+} RADEONChipFamily;
+
+typedef struct {
+    uint32_t pci_device_id;
+    RADEONChipFamily chip_family;
+    int mobility;
+    int igp;
+    int nocrtc2;
+    int nointtvout;
+    int singledac;
+} RADEONCardInfo;
+
 typedef enum
 {
     MT_UNKNOWN = -1,
@@ -597,8 +664,8 @@ typedef struct {
 
 				/* Pallet */
     Bool              palette_valid;
-    uint32_t          palette[256];
-    uint32_t          palette2[256];
+    Bool	      palette_saved[2];
+    uint32_t          palette[2][256];
 
     uint32_t          disp2_req_cntl1;
     uint32_t          disp2_req_cntl2;
@@ -684,7 +751,7 @@ typedef struct
     void              *FB;              /* Map of FB region                  */
     int               FB_cnt;           /* Map of FB region refcount         */
     int fd;                             /* for sharing across zaphod heads   */
-    Bool              fd_wakeup_registered; /* fd has already been registered for wakeup handling */
+    unsigned long     fd_wakeup_registered; /* server generation for which fd has been registered for wakeup handling */
     int dri2_info_cnt;
 } RADEONEntRec, *RADEONEntPtr;
 

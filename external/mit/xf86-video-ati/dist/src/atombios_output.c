@@ -1465,6 +1465,8 @@ atombios_output_dpms(xf86OutputPtr output, int mode)
     unsigned char *space;
     int index = 0;
     Bool is_dig = FALSE;
+    unsigned char *RADEONMMIO = info->MMIO;
+    uint32_t reg = 0;
 
     if (radeon_encoder == NULL)
         return;
@@ -1541,12 +1543,19 @@ atombios_output_dpms(xf86OutputPtr output, int mode)
 	    data.exec.dataSpace = (void *)&space;
 	    data.exec.pspace = &disp_data;
 
+	    /* workaround for DVOOutputControl on some RS690 systems */
+	    if (radeon_encoder->encoder_id == ENCODER_OBJECT_ID_INTERNAL_DDI) {
+		reg = INREG(RADEON_BIOS_3_SCRATCH);
+		OUTREG(RADEON_BIOS_3_SCRATCH, reg & ~ATOM_S3_DFP2I_ACTIVE);
+	    }
 	    if (RHDAtomBiosFunc(info->atomBIOS->scrnIndex, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS)
 		ErrorF("Output %s enable success\n",
 		       device_name[radeon_get_device_index(radeon_output->active_device)]);
 	    else
 		ErrorF("Output %s enable failed\n",
 		       device_name[radeon_get_device_index(radeon_output->active_device)]);
+	    if (radeon_encoder->encoder_id == ENCODER_OBJECT_ID_INTERNAL_DDI)
+		OUTREG(RADEON_BIOS_3_SCRATCH, reg);
 	}
 	/* at least for TV atom fails to reassociate the correct crtc source at dpms on */
 	if (radeon_output->active_device & (ATOM_DEVICE_TV_SUPPORT))
