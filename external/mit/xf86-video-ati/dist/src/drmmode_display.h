@@ -39,7 +39,6 @@
 typedef struct {
   int fd;
   unsigned fb_id;
-  unsigned old_fb_id;
   drmModeResPtr mode_res;
   drmModeFBPtr mode_fb;
   int cpp;
@@ -50,15 +49,20 @@ typedef struct {
   InputHandlerProc uevent_handler;
 #endif
   drmEventContext event_context;
+} drmmode_rec, *drmmode_ptr;
+
+typedef struct {
+  drmmode_ptr drmmode;
+  unsigned old_fb_id;
   int flip_count;
   void *event_data;
   unsigned int fe_frame;
   unsigned int fe_tv_sec;
   unsigned int fe_tv_usec;
-} drmmode_rec, *drmmode_ptr;
+} drmmode_flipdata_rec, *drmmode_flipdata_ptr;
 
 typedef struct {
-  drmmode_ptr drmmode;
+  drmmode_flipdata_ptr flipdata;
   Bool dispatch_me;
 } drmmode_flipevtcarrier_rec, *drmmode_flipevtcarrier_ptr;
 
@@ -95,6 +99,7 @@ typedef struct {
 
 
 extern Bool drmmode_pre_init(ScrnInfoPtr pScrn, drmmode_ptr drmmode, int cpp);
+extern void drmmode_init(ScrnInfoPtr pScrn, drmmode_ptr drmmode);
 extern Bool drmmode_set_bufmgr(ScrnInfoPtr pScrn, drmmode_ptr drmmode, struct radeon_bo_manager *bufmgr);
 extern void drmmode_set_cursor(ScrnInfoPtr scrn, drmmode_ptr drmmode, int id, struct radeon_bo *bo);
 void drmmode_adjust_frame(ScrnInfoPtr pScrn, drmmode_ptr drmmode, int x, int y, int flags);
