@@ -44,6 +44,7 @@
 #ifndef PCI_VENDOR_HP
 #define PCI_VENDOR_HP			0x103c
 #endif
+#define PCI_VENDOR_SONY			0x104D
 
 #include "ati_pciids_gen.h"
 

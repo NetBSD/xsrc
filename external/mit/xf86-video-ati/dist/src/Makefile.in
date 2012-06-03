@@ -125,8 +125,8 @@ am__radeon_drv_la_SOURCES_DIST = radeon_accel.c radeon_cursor.c \
 	radeon_legacy_memory.c radeon_driver.c radeon_video.c \
 	radeon_bios.c radeon_mm_i2c.c radeon_vip.c radeon_misc.c \
 	radeon_probe.c legacy_crtc.c legacy_output.c \
-	radeon_textured_video.c radeon_pm.c radeon_crtc.c \
-	radeon_output.c radeon_modes.c radeon_tv.c \
+	radeon_textured_video.c radeon_xvmc.c radeon_pm.c \
+	radeon_crtc.c radeon_output.c radeon_modes.c radeon_tv.c \
 	AtomBios/CD_Operations.c AtomBios/Decoder.c \
 	AtomBios/hwserv_drv.c AtomBios/includes/atombios.h \
 	AtomBios/includes/CD_binding.h \
@@ -157,11 +157,11 @@ am_radeon_drv_la_OBJECTS = radeon_accel.lo radeon_cursor.lo \
 	radeon_legacy_memory.lo radeon_driver.lo radeon_video.lo \
 	radeon_bios.lo radeon_mm_i2c.lo radeon_vip.lo radeon_misc.lo \
 	radeon_probe.lo legacy_crtc.lo legacy_output.lo \
-	radeon_textured_video.lo radeon_pm.lo radeon_crtc.lo \
-	radeon_output.lo radeon_modes.lo radeon_tv.lo $(am__objects_1) \
-	radeon_atombios.lo radeon_atomwrapper.lo $(am__objects_2) \
-	$(am__objects_3) atombios_output.lo atombios_crtc.lo \
-	$(am__objects_4)
+	radeon_textured_video.lo radeon_xvmc.lo radeon_pm.lo \
+	radeon_crtc.lo radeon_output.lo radeon_modes.lo radeon_tv.lo \
+	$(am__objects_1) radeon_atombios.lo radeon_atomwrapper.lo \
+	$(am__objects_2) $(am__objects_3) atombios_output.lo \
+	atombios_crtc.lo $(am__objects_4)
 radeon_drv_la_OBJECTS = $(am_radeon_drv_la_OBJECTS)
 radeon_drv_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -299,6 +299,7 @@ PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
+PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PCIACCESS_CFLAGS = @PCIACCESS_CFLAGS@
@@ -417,7 +418,7 @@ radeon_drv_la_SOURCES = \
 	radeon_driver.c radeon_video.c radeon_bios.c radeon_mm_i2c.c \
 	radeon_vip.c radeon_misc.c radeon_probe.c \
 	legacy_crtc.c legacy_output.c \
-	radeon_textured_video.c radeon_pm.c \
+	radeon_textured_video.c radeon_xvmc.c radeon_pm.c \
 	radeon_crtc.c radeon_output.c radeon_modes.c radeon_tv.c \
 	$(RADEON_ATOMBIOS_SOURCES) radeon_atombios.c radeon_atomwrapper.c \
 	$(RADEON_DRI_SRCS) $(RADEON_EXA_SOURCES) atombios_output.c atombios_crtc.c \
@@ -749,6 +750,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radeon_vbo.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radeon_video.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radeon_vip.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radeon_xvmc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/theatre.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/theatre200_drv_la-theatre200.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/theatre200_drv_la-theatre200_module.Plo@am__quote@
