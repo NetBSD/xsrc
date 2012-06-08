@@ -972,6 +972,8 @@ static inline int i830_fb_compression_supported(I830Ptr pI830)
 	return FALSE;
     if (IS_I810(pI830) || IS_I815(pI830) || IS_I830(pI830))
 	return FALSE;
+    if (IS_IGD(pI830))
+	return FALSE;
     /* fbc depends on tiled surface. And we don't support tiled
      * front buffer with XAA now.
      */
