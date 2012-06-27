@@ -585,7 +585,7 @@ xf86SbusUseBuiltinMode(ScrnInfoPtr pScrn, sbusDevicePtr psdp)
     pScrn->virtualY = psdp->height;
 }
 
-static DevPrivateKeyRec sbusPaletteKeyIndex;
+static DevPrivateKeyRec sbusPaletteKeyIndex = { .initialized = 0 };
 static DevPrivateKey sbusPaletteKey = &sbusPaletteKeyIndex;
 typedef struct _sbusCmap {
     sbusDevicePtr psdp;
@@ -603,7 +603,7 @@ static void
 xf86SbusCmapLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indices,
 			LOCO *colors, VisualPtr pVisual)
 {
-    int i, index;
+    int i, index, ret;
     sbusCmapPtr cmap;
     struct fbcmap fbcmap;
     unsigned char *data = malloc(numColors*3);
@@ -618,7 +618,10 @@ xf86SbusCmapLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indices,
     for (i = 0; i < numColors; i++) {
 	index = indices[i];
 	if (fbcmap.count && index != fbcmap.index + fbcmap.count) {
-	    ioctl (cmap->psdp->fd, FBIOPUTCMAP, &fbcmap);
+	    ret = ioctl (cmap->psdp->fd, FBIOPUTCMAP, &fbcmap);
+    	    if (ret != 0)
+	        xf86Msg(X_ERROR, "%s: ioctl(%d, FBIOPUTCMAP): %d %d\n",
+		  __func__, cmap->psdp->fd, ret, errno);
 	    fbcmap.count = 0;
 	    fbcmap.index = index;
 	}
@@ -626,7 +629,10 @@ xf86SbusCmapLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indices,
 	fbcmap.green[fbcmap.count] = colors[index].green;
 	fbcmap.blue[fbcmap.count++] = colors[index].blue;
     }
-    ioctl (cmap->psdp->fd, FBIOPUTCMAP, &fbcmap);
+    ret = ioctl (cmap->psdp->fd, FBIOPUTCMAP, &fbcmap);
+    if (ret != 0)
+        xf86Msg(X_ERROR, "%s: ioctl(%d, FBIOPUTCMAP): %d %d\n", __func__,
+          cmap->psdp->fd, ret, errno);
     free(data);
 }
 
@@ -655,9 +661,13 @@ xf86SbusHandleColormaps(ScreenPtr pScreen, sbusDevicePtr psdp)
 {
     sbusCmapPtr cmap;
     struct fbcmap fbcmap;
+    int ret;
     unsigned char data[2];
 
     cmap = xnfcalloc(1, sizeof(sbusCmapRec));
+    if (!dixPrivateKeyRegistered(sbusPaletteKey)) {
+        dixRegisterPrivateKey(sbusPaletteKey, PRIVATE_SCREEN, 0);
+    }
     dixSetPrivate(&pScreen->devPrivates, sbusPaletteKey, cmap);
     cmap->psdp = psdp;
     fbcmap.index = 0;
@@ -665,7 +675,7 @@ xf86SbusHandleColormaps(ScreenPtr pScreen, sbusDevicePtr psdp)
     fbcmap.red = cmap->origRed;
     fbcmap.green = cmap->origGreen;
     fbcmap.blue = cmap->origBlue;
-    if (ioctl (psdp->fd, FBIOGETCMAP, &fbcmap) >= 0)
+    if ((ret = ioctl (psdp->fd, FBIOGETCMAP, &fbcmap)) >= 0)
 	cmap->origCmapValid = TRUE;
     fbcmap.index = 0;
     fbcmap.count = 2;
@@ -679,7 +689,10 @@ xf86SbusHandleColormaps(ScreenPtr pScreen, sbusDevicePtr psdp)
 	data[0] = 0;
 	data[1] = 255;
     }
-    ioctl (psdp->fd, FBIOPUTCMAP, &fbcmap);
+    ret = ioctl (psdp->fd, FBIOPUTCMAP, &fbcmap);
+    if (ret != 0) 
+        xf86Msg(X_ERROR, "%s: ioctl(%d, FBIOPUTCMAP): %d %d\n", __func__,
+	  psdp->fd, ret, errno);
     cmap->CloseScreen = pScreen->CloseScreen;
     pScreen->CloseScreen = xf86SbusCmapCloseScreen;
     return xf86HandleColormaps(pScreen, 256, 8,
