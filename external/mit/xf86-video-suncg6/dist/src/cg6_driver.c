@@ -688,19 +688,31 @@ CG6CloseScreen(int scrnIndex, ScreenPtr pScreen)
 {
     ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
     Cg6Ptr pCg6 = GET_CG6_FROM_SCRN(pScrn);
+    sbusDevicePtr psdp = pCg6->psdp;
 
     pScrn->vtSema = FALSE;
 
-    xf86UnmapSbusMem(pCg6->psdp, pCg6->fbc,
-		     CG6_RAM_VOFF - CG6_FBC_VOFF +
-		     (pCg6->psdp->width * pCg6->psdp->height));
+    if (pCg6->fbc) {
+        xf86UnmapSbusMem(psdp, pCg6->fbc, sizeof(*pCg6->fbc));
+        pCg6->fbc = NULL;
+    }
+
+    if (pCg6->thc) {
+        xf86UnmapSbusMem(psdp, pCg6->thc, sizeof(*pCg6->thc));
+        pCg6->thc = NULL;
+    }
+
+    if (pCg6->fb) {
+        xf86UnmapSbusMem(psdp, pCg6->fb, pCg6->vidmem);
+        pCg6->fb = NULL;
+    }
     
     if (pCg6->HWCursor)
     	xf86SbusHideOsHwCursor(pCg6->psdp);
 
     pScreen->CloseScreen = pCg6->CloseScreen;
+
     return (*pScreen->CloseScreen)(scrnIndex, pScreen);
-    return FALSE;
 }
 
 
