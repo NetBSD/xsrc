@@ -748,14 +748,13 @@ TCXCloseScreen(int scrnIndex, ScreenPtr pScreen)
 			 (pTcx->psdp->width * pTcx->psdp->height * 4));
     }
     if (pTcx->thc)
-	xf86UnmapSbusMem(pTcx->psdp, pTcx->fb, 8192);
+	xf86UnmapSbusMem(pTcx->psdp, pTcx->thc, 8192);
     
     if (pTcx->HWCursor)
 	xf86SbusHideOsHwCursor (pTcx->psdp);
 
     pScreen->CloseScreen = pTcx->CloseScreen;
     return (*pScreen->CloseScreen)(scrnIndex, pScreen);
-    return FALSE;
 }
 
 
