@@ -103,7 +103,7 @@ main(int argc, char * argv[])
       for(loop=0; loop<num_devices; loop++)
         {
 	  if (list) {
-	      printf("%lu: \"%s\"	[", (unsigned long)devices[loop].id, devices[loop].name ? devices[loop].name : "<noname>");
+	      printf("%d: \"%s\"	[", (int)devices[loop].id, devices[loop].name ? devices[loop].name : "<noname>");
 	      switch(devices[loop].use) {
 	      case IsXPointer:
 		  printf("XPointer]\n");
