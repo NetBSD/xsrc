@@ -912,9 +912,6 @@ get_pty(int *pty, int *tty, char *ttydev, char *ptydev)
 		return 0;
 	}
 #else
-#if defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__)
-	return openpty(pty, tty, ttydev, NULL, NULL);
-#else
 	strcpy (ttydev, "/dev/ttyxx");
 	strcpy (ptydev, "/dev/ptyxx");
 	while (PTYCHAR1[letter]) {
@@ -941,7 +938,6 @@ get_pty(int *pty, int *tty, char *ttydev, char *ptydev)
 	    devindex = 0;
 	    (void) letter++;
 	}
-#endif /* BSD4_4 else not BSD4_4 */
 #endif /* sgi else not sgi */
 #endif /* CRAY else not CRAY */
 #endif /* umips && SYSTYPE_SYSV */
