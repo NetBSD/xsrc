@@ -3,6 +3,7 @@
 #include "config.h"
 #endif
 
+#include <unistd.h>
 #include "osdef.h"
 #include "vgatypes.h"
 /* #include "vb_util.h" */ /* Jong@08032009 */
@@ -114,7 +115,7 @@ typedef enum _I2C_ACCESS_CMD
 #define ENABLE_GPIOC          0x04
 VOID
 EnableGPIOA(
-PUCHAR pjIOPort, I2C_ACCESS_CMD CmdType)
+XGIIOADDRESS pjIOPort, I2C_ACCESS_CMD CmdType)
 {
 	PDEBUGI2C(ErrorF("EnableGPIOA()-pjIOPort=0x%x...\n", pjIOPort));
 
@@ -134,7 +135,7 @@ PUCHAR pjIOPort, I2C_ACCESS_CMD CmdType)
 
 VOID
 EnableGPIOB(
-PUCHAR pjIOPort, I2C_ACCESS_CMD CmdType)
+XGIIOADDRESS pjIOPort, I2C_ACCESS_CMD CmdType)
 {
     UCHAR ujCR4A = XGI_GetReg(pjIOPort, IND_CR4A_GPIO_REG_III);
 
@@ -152,7 +153,7 @@ PUCHAR pjIOPort, I2C_ACCESS_CMD CmdType)
 
 VOID
 EnableGPIOC(
-PUCHAR pjIOPort, I2C_ACCESS_CMD CmdType)
+XGIIOADDRESS pjIOPort, I2C_ACCESS_CMD CmdType)
 {
     UCHAR ujCR4A = XGI_GetReg(pjIOPort, IND_CR4A_GPIO_REG_III);
 
@@ -1174,8 +1175,8 @@ UCHAR ReverseUCHAR(UCHAR data)
 *************************************************************************/
 VOID vWriteClockLineDVI(PXGI_HW_DEVICE_INFO pHWDE, UCHAR data)
 {
-    UCHAR       temp;
-    PUCHAR      pjI2cIOBase;
+    UCHAR        temp;
+    XGIIOADDRESS pjI2cIOBase;
 
 	PDEBUGI2C(ErrorF("vWriteClockLineDVI()...begin\n"));
 
@@ -1224,8 +1225,8 @@ VOID vWriteClockLineDVI(PXGI_HW_DEVICE_INFO pHWDE, UCHAR data)
 *************************************************************************/
 VOID vWriteDataLineDVI(PXGI_HW_DEVICE_INFO pHWDE, UCHAR data)
 {
-    UCHAR       temp;
-    PUCHAR      pjI2cIOBase;
+    UCHAR        temp;
+    XGIIOADDRESS pjI2cIOBase;
 
 	PDEBUGI2C(ErrorF("vWriteDataLineDVI()...begin\n"));
 
@@ -1277,8 +1278,8 @@ VOID vWriteDataLineDVI(PXGI_HW_DEVICE_INFO pHWDE, UCHAR data)
 *************************************************************************/
 BOOLEAN bReadClockLineDVI(PXGI_HW_DEVICE_INFO pHWDE)
 {
-    UCHAR   cPortData;
-    PUCHAR  pjI2cIOBase;
+    UCHAR        cPortData;
+    XGIIOADDRESS pjI2cIOBase;
 
 	PDEBUGI2C(ErrorF("bReadClockLineDVI()...begin\n"));
 
@@ -1318,7 +1319,7 @@ BOOLEAN bReadClockLineDVI(PXGI_HW_DEVICE_INFO pHWDE)
 BOOLEAN bReadDataLineDVI(PXGI_HW_DEVICE_INFO pHWDE)
 {
     UCHAR       cPortData;
-    PUCHAR      pjI2cIOBase; 
+    XGIIOADDRESS      pjI2cIOBase; 
 
 	PDEBUGI2C(ErrorF("bReadDataLineDVI()...begin\n"));
 
@@ -1357,7 +1358,7 @@ BOOLEAN bReadDataLineDVI(PXGI_HW_DEVICE_INFO pHWDE)
 //*************************************************************************//
 VOID vWaitForCRT1HsyncActive(PXGI_HW_DEVICE_INFO  pHWDE)
 {
-    PUCHAR  pjPort = pHWDE->pjIOAddress + INPUT_STATUS_1_COLOR;
+    XGIIOADDRESS  pjPort = pHWDE->pjIOAddress + INPUT_STATUS_1_COLOR;
     ULONG   i;
 
     for (i = 0; i < 0x00FFFF; i++)
@@ -1398,7 +1399,7 @@ VOID vWaitForCRT1HsyncActive(PXGI_HW_DEVICE_INFO  pHWDE)
 VOID vWriteClockLineCRT(PXGI_HW_DEVICE_INFO pHWDE, UCHAR data)
 {
     UCHAR       temp, ujSR1F;
-    PUCHAR      pjI2cIOBase = pHWDE->pjIOAddress + SEQ_ADDRESS_PORT;
+    XGIIOADDRESS      pjI2cIOBase = pHWDE->pjIOAddress + SEQ_ADDRESS_PORT;
 
     PDEBUGI2C(ErrorF("I2C:Write CRT clock = %x\n", data & 1));
 
@@ -1433,7 +1434,7 @@ VOID vWriteClockLineCRT(PXGI_HW_DEVICE_INFO pHWDE, UCHAR data)
 VOID vWriteDataLineCRT(PXGI_HW_DEVICE_INFO pHWDE, UCHAR data)
 {
     UCHAR       temp, ujSR1F;
-    PUCHAR      pjI2cIOBase = pHWDE->pjIOAddress + SEQ_ADDRESS_PORT;
+    XGIIOADDRESS      pjI2cIOBase = pHWDE->pjIOAddress + SEQ_ADDRESS_PORT;
 
     PDEBUGI2C(ErrorF("I2C:Write CRT data = %x\n", data & 1));
 
@@ -1467,7 +1468,7 @@ VOID vWriteDataLineCRT(PXGI_HW_DEVICE_INFO pHWDE, UCHAR data)
 BOOLEAN bReadClockLineCRT(PXGI_HW_DEVICE_INFO pHWDE)
 {
     UCHAR       cPortData;
-    PUCHAR      pjI2cIOBase = pHWDE->pjIOAddress + SEQ_ADDRESS_PORT;
+    XGIIOADDRESS      pjI2cIOBase = pHWDE->pjIOAddress + SEQ_ADDRESS_PORT;
 
     cPortData = XGI_GetReg(pjI2cIOBase, IND_SR11_DDC_REG);
     cPortData = GETBITS(cPortData, 0:0);
@@ -1489,7 +1490,7 @@ BOOLEAN bReadClockLineCRT(PXGI_HW_DEVICE_INFO pHWDE)
 BOOLEAN bReadDataLineCRT(PXGI_HW_DEVICE_INFO pHWDE)
 {
     UCHAR cPortData;
-    PUCHAR      pjI2cIOBase = pHWDE->pjIOAddress + SEQ_ADDRESS_PORT;
+    XGIIOADDRESS      pjI2cIOBase = pHWDE->pjIOAddress + SEQ_ADDRESS_PORT;
 
     cPortData = XGI_GetReg(pjI2cIOBase, IND_SR11_DDC_REG);
     cPortData = GETBITS(cPortData, 1:1);
@@ -1517,7 +1518,7 @@ BOOLEAN bReadDataLineCRT(PXGI_HW_DEVICE_INFO pHWDE)
 VOID vWriteClockLineFCNT(PXGI_HW_DEVICE_INFO pHWDE, UCHAR data)
 {
     UCHAR       temp;
-    PUCHAR      pjI2cIOBase = pHWDE->pjIOAddress + SEQ_ADDRESS_PORT;
+    XGIIOADDRESS      pjI2cIOBase = pHWDE->pjIOAddress + SEQ_ADDRESS_PORT;
 
     PDEBUGI2C(ErrorF("I2C:Write FCNT clock = %x\n", data & 1));
 
@@ -1541,7 +1542,7 @@ VOID vWriteClockLineFCNT(PXGI_HW_DEVICE_INFO pHWDE, UCHAR data)
 VOID vWriteDataLineFCNT(PXGI_HW_DEVICE_INFO pHWDE, UCHAR data)
 {
     UCHAR       temp, temp2, temp3;
-    PUCHAR      pjI2cIOBase = pHWDE->pjIOAddress + SEQ_ADDRESS_PORT;
+    XGIIOADDRESS      pjI2cIOBase = pHWDE->pjIOAddress + SEQ_ADDRESS_PORT;
 
     PDEBUGI2C(ErrorF("I2C:Write FCNT data = %x\n", data & 1));
 
@@ -1565,7 +1566,7 @@ VOID vWriteDataLineFCNT(PXGI_HW_DEVICE_INFO pHWDE, UCHAR data)
 BOOLEAN bReadClockLineFCNT(PXGI_HW_DEVICE_INFO pHWDE)
 {
     UCHAR       cPortData;
-    PUCHAR      pjI2cIOBase = pHWDE->pjIOAddress + SEQ_ADDRESS_PORT;
+    XGIIOADDRESS      pjI2cIOBase = pHWDE->pjIOAddress + SEQ_ADDRESS_PORT;
 
     cPortData = XGI_GetReg(pjI2cIOBase, IND_SR11_DDC_REG);
     cPortData = GETBITS(cPortData, 2:2);
@@ -1587,7 +1588,7 @@ BOOLEAN bReadClockLineFCNT(PXGI_HW_DEVICE_INFO pHWDE)
 BOOLEAN bReadDataLineFCNT(PXGI_HW_DEVICE_INFO pHWDE)
 {
     UCHAR       cPortData;
-    PUCHAR      pjI2cIOBase = pHWDE->pjIOAddress + SEQ_ADDRESS_PORT;
+    XGIIOADDRESS      pjI2cIOBase = pHWDE->pjIOAddress + SEQ_ADDRESS_PORT;
 
     cPortData = XGI_GetReg(pjI2cIOBase, IND_SR11_DDC_REG);
     cPortData = GETBITS(cPortData, 3:3);

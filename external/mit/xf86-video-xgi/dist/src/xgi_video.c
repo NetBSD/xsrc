@@ -101,7 +101,7 @@ static void XGIQueryBestSize(ScrnInfoPtr, Bool,
         short, short, short, short, unsigned int *, unsigned int *, pointer);
 static int XGIPutImage( ScrnInfoPtr,
         short, short, short, short, short, short, short, short,
-        int, unsigned char*, short, short, Bool, RegionPtr, pointer);
+        int, unsigned char*, short, short, Bool, RegionPtr, pointer, DrawablePtr);
 static int XGIQueryImageAttributes(ScrnInfoPtr,
         int, unsigned short *, unsigned short *,  int *, int *);
 
@@ -1081,7 +1081,8 @@ XGIPutImage(
   int id, unsigned char* buf,
   short width, short height,
   Bool sync,
-  RegionPtr clipBoxes, pointer data
+  RegionPtr clipBoxes, pointer data,
+  DrawablePtr pDraw
 ){	
    XGIPtr pXGI = XGIPTR(pScrn);
    XGIPortPrivPtr pPriv = (XGIPortPrivPtr)data;

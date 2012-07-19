@@ -32,13 +32,6 @@
 #ifndef _XGI_H_
 #define _XGI_H_
 
-#define DEBUG 
-#define DEBUG1
-#define DEBUG2
-#define DEBUG3
-#define DEBUG4
-#define DEBUG5
-
 /***************
 #define DEBUG 
 #define DEBUG1
@@ -51,7 +44,7 @@
 
 #ifndef XGI_VIDEO_HW /* avoid compile error in xgi_videohw.c; weird!  */
 /* Jong 07/27/2009; use run-time debug instead except for HW acceleration routines */
-extern BOOL g_bRunTimeDebug;
+extern Bool g_bRunTimeDebug;
 #define RUNTIMEDEBUG(p)		if(g_bRunTimeDebug)p;
 
 /* Jong@08052009 */
@@ -1017,7 +1010,10 @@ extern void XGI_SetRegANDOR(XGIIOADDRESS Port, USHORT Index, USHORT DataAND,
 extern void XGI_SetRegAND(XGIIOADDRESS Port, USHORT Index, USHORT DataAND);
 extern void XGI_SetRegOR(XGIIOADDRESS Port, USHORT Index, USHORT DataOR);
 
+#ifndef __NetBSD__
 #define uint8_t	CARD8
+#endif
+
 extern void XGI_WriteDAC(XGIIOADDRESS dac_data, unsigned shift,
     unsigned ordering, uint8_t red, uint8_t green, uint8_t blue);
 

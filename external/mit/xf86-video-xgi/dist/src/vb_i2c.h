@@ -7,7 +7,7 @@
 #endif 
 #ifndef u32
 #define u32 unsigned long
-#define u8 unsigned long
+#define u8 uint8_t
 #endif
 
 /* Jong@08052009 */
@@ -81,8 +81,11 @@
 //#define MASK(n)         BITSMASK(1?n, 0?n)
 // set bits as 1 between bit(a) and bit(b)
 #define MASK(n)         ( BITS(LARGE(n)-SMALL(n)+1) << SMALL(n) )
+
+#ifndef GETBITS
 // get bits [a:b]'s binary value
 #define GETBITS(b,n)    ( ((b) & MASK(n)) >> SMALL(n) ) /* Jong@08032009 */
+#endif /* GETBITS */
 // set binary value from [a:0] to [c:d]
 #define SETBITS(b, n)   ( ( (b) << ((1?n) > (0?n) ? (0?n) : (1?n)) ) & MASK(n) )
 // move bits value from [a:b] to [c:d]
@@ -180,5 +183,6 @@ extern  BOOLEAN ResetI2C(PXGI_HW_DEVICE_INFO pHWDE,  PI2CControl pI2CControl);
 extern  BOOLEAN I2CRead(PXGI_HW_DEVICE_INFO pHWDE,PI2CControl pI2CControl);
 extern  BOOLEAN I2CWrite(PXGI_HW_DEVICE_INFO pHWDE,  PI2CControl pI2CControl);
 extern  BOOLEAN ResetI2C(PXGI_HW_DEVICE_INFO pHWDE,  PI2CControl pI2CControl);
+extern  BOOLEAN bGetEDID(PXGI_HW_DEVICE_INFO, ULONG , PUCHAR, ULONG);
 
 #endif
