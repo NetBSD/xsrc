@@ -212,7 +212,7 @@ typedef struct _XGI_DSReg
 
 typedef struct _XGI_HW_DEVICE_INFO  XGI_HW_DEVICE_INFO, *PXGI_HW_DEVICE_INFO;
 
-typedef BOOLEAN (*PXGI_QUERYSPACE)   (PXGI_HW_DEVICE_INFO, ULONG, ULONG, ULONG *);
+typedef BOOLEAN (*PXGI_QUERYSPACE)   (PXGI_HW_DEVICE_INFO, ULONG, ULONG, CARD32 *);
 
 struct _XGI_HW_DEVICE_INFO
 {
@@ -229,7 +229,7 @@ struct _XGI_HW_DEVICE_INFO
 
     ULONG  ulVideoMemorySize;    /* size, in bytes, of the memory on the board */
 
-    PUCHAR pjIOAddress;          /* base I/O address of VGA ports (0x3B0) */
+    XGIIOADDRESS pjIOAddress;          /* base I/O address of VGA ports (0x3B0) */
 
     PUCHAR pjCustomizedROMImage;
 

@@ -3112,14 +3112,14 @@ static const XGI_ModeResInfoStruct XGI330_ModeResInfo[]=
  { 1152, 864, 8,16}
 };
 
-static const UCHAR XGI330_OutputSelect = 0x40;
-static const UCHAR XGI330_SoftSetting = 0x30;
-static const UCHAR XGI330_SR07 = 0x18;
-static const UCHAR XG21_DVOSetting = 0x00 ;
-static const UCHAR XG21_CR2E = 0x00 ;
-static const UCHAR XG21_CR2F = 0x00 ;
-static const UCHAR XG21_CR46 = 0x00 ;
-static const UCHAR XG21_CR47 = 0x00 ;
+static UCHAR XGI330_OutputSelect = 0x40;
+static UCHAR XGI330_SoftSetting = 0x30;
+static UCHAR XGI330_SR07 = 0x18;
+static UCHAR XG21_DVOSetting = 0x00 ;
+static UCHAR XG21_CR2E = 0x00 ;
+static UCHAR XG21_CR2F = 0x00 ;
+static UCHAR XG21_CR46 = 0x00 ;
+static UCHAR XG21_CR47 = 0x00 ;
 
 UCHAR XG27_CR97 = 0xC1 ;
 UCHAR XG27_SR36 = 0x30 ;

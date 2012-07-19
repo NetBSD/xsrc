@@ -189,7 +189,7 @@ void XGI_GetTVInfo(USHORT ModeNo, USHORT ModeIdIndex,
 void XGI_SetCRT2ECLK(USHORT ModeNo, USHORT ModeIdIndex,
                      USHORT RefreshRateTableIndex, PVB_DEVICE_INFO pVBInfo);
 void InitTo330Pointer(UCHAR, PVB_DEVICE_INFO pVBInfo);
-void XGI_GetLCDSync(USHORT * HSyncWidth, USHORT * VSyncWidth,
+void XGI_GetLCDSync(ULONG * HSyncWidth, ULONG * VSyncWidth,
                     PVB_DEVICE_INFO pVBInfo);
 void XGI_DisableBridge(PXGI_HW_DEVICE_INFO HwDeviceExtension,
                        PVB_DEVICE_INFO pVBInfo);
@@ -325,8 +325,8 @@ InitTo330Pointer(UCHAR ChipType, PVB_DEVICE_INFO pVBInfo)
         (void) memcpy(pVBInfo->ECLKData, XGI330_ECLKData, sizeof(XGI330_ECLKData));
     }
 
-    pVBInfo->VCLKData = XGI_VCLKData;
-    pVBInfo->VBVCLKData = XGI_VBVCLKData;
+    pVBInfo->VCLKData = (const XGI_VCLKDataStruct *)XGI_VCLKData;
+    pVBInfo->VBVCLKData = (const XGI_VBVCLKDataStruct *)XGI_VBVCLKData;
     pVBInfo->ScreenOffset = XGI330_ScreenOffset;
     pVBInfo->StResInfo = XGI330_StResInfo;
     pVBInfo->ModeResInfo = XGI330_ModeResInfo;
@@ -3131,7 +3131,7 @@ XGI_GetLVDSResInfo(USHORT ModeNo, USHORT ModeIdIndex, PVB_DEVICE_INFO pVBInfo)
 
 
 static void
-get_HDE_VDE(PVB_DEVICE_INFO pVBInfo, USHORT *HDE, USHORT *VDE)
+get_HDE_VDE(PVB_DEVICE_INFO pVBInfo, ULONG *HDE, ULONG *VDE)
 {
     switch (pVBInfo->LCDResInfo) {
     case Panel1024x768:
@@ -3265,7 +3265,7 @@ void
 XGI_SetLVDSRegs(USHORT ModeNo, USHORT ModeIdIndex,
                 USHORT RefreshRateTableIndex, PVB_DEVICE_INFO pVBInfo)
 {
-    USHORT tempbx, tempax, tempcx, tempdx, push1, push2, modeflag;
+    ULONG tempbx, tempax, tempcx, tempdx, push1, push2, modeflag;
     unsigned long temp, temp1, temp2, temp3, push3;
     XGI330_LCDDataDesStruct *LCDPtr = NULL;
     XGI330_LCDDataDesStruct2 *LCDPtr1 = NULL;
@@ -6282,7 +6282,7 @@ XGI_SetLCDRegs(USHORT ModeNo, USHORT ModeIdIndex,
                PXGI_HW_DEVICE_INFO HwDeviceExtension,
                USHORT RefreshRateTableIndex, PVB_DEVICE_INFO pVBInfo)
 {
-    USHORT push1,
+    ULONG push1,
         push2,
         pushbx,
         tempax,
@@ -8610,7 +8610,7 @@ XGI_GetLCDCapPtr1(PVB_DEVICE_INFO pVBInfo)
 /* Description : */
 /* --------------------------------------------------------------------- */
 void
-XGI_GetLCDSync(USHORT * HSyncWidth, USHORT * VSyncWidth,
+XGI_GetLCDSync(ULONG * HSyncWidth, ULONG * VSyncWidth,
                PVB_DEVICE_INFO pVBInfo)
 {
     USHORT Index;
@@ -10018,7 +10018,7 @@ XGI_GetVCLK2Ptr(USHORT ModeNo, USHORT ModeIdIndex,
 {
 	/* Jong 10/08/2007; merge code */
     USHORT tempbx ; 
-    UCHAR *CHTVVCLKPtr = NULL ;
+    const UCHAR *CHTVVCLKPtr = NULL ;
 
 	unsigned VCLKIndex;
     USHORT CRT2Index;

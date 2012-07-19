@@ -315,13 +315,13 @@ xgiOptions(ScrnInfoPtr pScrn)
 				Non_DDCDefaultResolutionY , 
 				Non_DDCDefaultRefreshRate  );
 
-		if( (xf86NameCmp(Non_DDCDefaultResolutionX,"") == NULL) || (xf86NameCmp(Non_DDCDefaultResolutionY,"") == NULL) ) 
+		if( (xf86NameCmp(Non_DDCDefaultResolutionX,"") == 0) || (xf86NameCmp(Non_DDCDefaultResolutionY,"") == 0) ) 
 		{
 			strcpy(Non_DDCDefaultResolutionX, "1024");
 			strcpy(Non_DDCDefaultResolutionY, "768");
 		}
 
-		if( (xf86NameCmp(Non_DDCDefaultRefreshRate,"") == NULL) || (xf86NameCmp(Non_DDCDefaultRefreshRate,"auto") == NULL) ) 
+		if( (xf86NameCmp(Non_DDCDefaultRefreshRate,"") == 0) || (xf86NameCmp(Non_DDCDefaultRefreshRate,"auto") == 0) ) 
 				strcpy(Non_DDCDefaultRefreshRate, "60");
 
 		ErrorF("Non-DDC default mode is (%s x %s @ %s Hz)...\n", 

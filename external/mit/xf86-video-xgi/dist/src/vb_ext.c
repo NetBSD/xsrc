@@ -139,7 +139,7 @@ void XGI_GetSenseStatus( PXGI_HW_DEVICE_INFO HwDeviceExtension , PVB_DEVICE_INFO
     USHORT tempax = 0 , tempbx , tempcx , temp ,
            P2reg0 = 0 , SenseModeNo = 0 , OutputSelect = pVBInfo->OutputSelect,
            ModeIdIndex , i ;
-    pVBInfo->BaseAddr = ( USHORT )HwDeviceExtension->pjIOAddress ;
+    pVBInfo->BaseAddr = ( ULONG )HwDeviceExtension->pjIOAddress ;
 
     {		/* for 301 */
         if ( pVBInfo->VBInfo & SetCRT2ToHiVisionTV )
