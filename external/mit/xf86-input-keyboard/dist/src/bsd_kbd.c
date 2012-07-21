@@ -432,10 +432,10 @@ OpenKeyboard(InputInfoPtr pInfo)
                break;
 #endif
            default:
-               xf86Msg(X_ERROR, "%s: Unsupported wskbd type \"%d\"",
-                                pInfo->name, pKbd->wsKbdType);
-               close(pInfo->fd);
-               return FALSE;
+               xf86Msg(X_WARNING, "%s: Unsupported wskbd type \"%d\"\n",
+                                  pInfo->name, pKbd->wsKbdType);
+               printWsType("Unknown wskbd", pInfo->name);
+               break;
        }
     }
 #endif
