@@ -146,7 +146,13 @@ Cg6Sync(ScrnInfoPtr pScrn)
 
 #define runDraw(pCg6) { volatile CARD32 rubbish = pCg6->fbc->draw; }
 #define runBlit(pCg6) { volatile CARD32 rubbish = pCg6->fbc->blit; }
-#define waitReady(pCg6) while(pCg6->fbc->s & GX_FULL)
+
+/*
+ * XXX
+ * was GX_FULL, which apparently isn't enough on some (slower) CG6 like
+ * the one found on the SPARCstation LX mainboard
+ */
+#define waitReady(pCg6) while(pCg6->fbc->s & GX_INPROGRESS)
 
 /*
  * restore clipping values set by the Xserver since we're messing with them in 
