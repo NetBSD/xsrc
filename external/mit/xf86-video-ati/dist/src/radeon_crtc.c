@@ -1119,7 +1119,7 @@ RADEONSetTiling(ScrnInfoPtr pScrn)
 	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		       "[drm] failed changing tiling status\n");
 	/* if this is called during ScreenInit() we don't have pScrn->pScreen yet */
-	pSAREAPriv = DRIGetSAREAPrivate(screenInfo.screens[pScrn->scrnIndex]);
+	pSAREAPriv = DRIGetSAREAPrivate(xf86ScrnToScreen(pScrn));
 	info->tilingEnabled = pSAREAPriv->tiling_enabled ? TRUE : FALSE;
     }
 #endif

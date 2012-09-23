@@ -22,8 +22,22 @@
  * authorization from the author.
  *
  * $Log: theatre_detect.c,v $
- * Revision 1.1.1.2  2010/11/20 10:00:26  mrg
- * initial import of xf86-video-ati-6.13.2
+ * Revision 1.1.1.3  2012/09/23 19:49:19  veego
+ * initial import of xf86-video-ati-6.14.6.
+ *
+ * NetBSD note: The libdrm requirement seems to be KMS related which we do
+ *              not have.
+ *
+ * * 6.15.6
+ *   This version requires the latest libdrm 2.4.36 release, and fixes a few
+ *   other bugs seen since 6.14.5.
+ * * 6.14.5
+ *   - add solid picture accel
+ *   - tiling fixes
+ *   - new pci ids
+ *   - 6xx-9xx Xv improvements
+ *   - support for upcoming xserver API changes
+ *   - bug fixes
  *
  * Revision 1.4  2005/08/28 18:00:23  bogdand
  * Modified the licens type from GPL to a X/MIT one
@@ -77,7 +91,7 @@ _X_EXPORT TheatrePtr DetectTheatre(GENERIC_BUS_Ptr b)
    
    b->ioctl(b,GB_IOCTL_GET_TYPE,20,s);
    if(strcmp(VIP_TYPE, s)){
-   xf86DrvMsg(b->scrnIndex, X_ERROR, "DetectTheatre must be called with bus of type \"%s\", not \"%s\"\n",
+   xf86DrvMsg(b->pScrn->scrnIndex, X_ERROR, "DetectTheatre must be called with bus of type \"%s\", not \"%s\"\n",
           VIP_TYPE, s);
    return NULL;
    }
@@ -92,7 +106,7 @@ _X_EXPORT TheatrePtr DetectTheatre(GENERIC_BUS_Ptr b)
    {
 	if(b->read(b, ((i & 0x03)<<14) | VIP_VIP_VENDOR_DEVICE_ID, 4, (uint8_t *)&val))
         {
-	  if(val)xf86DrvMsg(b->scrnIndex, X_INFO,
+	  if(val)xf86DrvMsg(b->pScrn->scrnIndex, X_INFO,
 			    "Device %d on VIP bus ids as 0x%08x\n", i,
 			    (unsigned)val);
 	  if(t->theatre_num>=0)continue; /* already found one instance */
@@ -107,10 +121,10 @@ _X_EXPORT TheatrePtr DetectTheatre(GENERIC_BUS_Ptr b)
 		   break;
                 }
 	} else {
-	  xf86DrvMsg(b->scrnIndex, X_INFO, "No response from device %d on VIP bus\n",i);	
+	  xf86DrvMsg(b->pScrn->scrnIndex, X_INFO, "No response from device %d on VIP bus\n",i);	
 	}
    }
-   if(t->theatre_num>=0)xf86DrvMsg(b->scrnIndex, X_INFO,
+   if(t->theatre_num>=0)xf86DrvMsg(b->pScrn->scrnIndex, X_INFO,
 				   "Detected Rage Theatre as device %d on VIP bus with id 0x%08x\n",
 				   t->theatre_num, (unsigned)t->theatre_id);
 
@@ -121,7 +135,7 @@ _X_EXPORT TheatrePtr DetectTheatre(GENERIC_BUS_Ptr b)
    }
 
    RT_regr(VIP_VIP_REVISION_ID, &val);
-   xf86DrvMsg(b->scrnIndex, X_INFO, "Detected Rage Theatre revision %8.8X\n",
+   xf86DrvMsg(b->pScrn->scrnIndex, X_INFO, "Detected Rage Theatre revision %8.8X\n",
 	      (unsigned)val);
 
 #if 0
