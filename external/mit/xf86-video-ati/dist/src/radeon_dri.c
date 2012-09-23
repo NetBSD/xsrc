@@ -93,7 +93,7 @@ static void RADEONDRIClipNotify(ScreenPtr pScreen, WindowPtr *ppWin, int num);
  */
 static Bool RADEONInitVisualConfigs(ScreenPtr pScreen)
 {
-    ScrnInfoPtr          pScrn             = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr          pScrn             = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr        info              = RADEONPTR(pScrn);
     int                  numConfigs        = 0;
     __GLXvisualConfig   *pConfigs          = 0;
@@ -319,7 +319,7 @@ static void RADEONDestroyContext(ScreenPtr pScreen, drm_context_t hwContext,
  */
 static void RADEONEnterServer(ScreenPtr pScreen)
 {
-    ScrnInfoPtr    pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr    pScrn = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr  info  = RADEONPTR(pScrn);
     drm_radeon_sarea_t *pSAREAPriv;
 
@@ -361,7 +361,7 @@ static void RADEONEnterServer(ScreenPtr pScreen)
  */
 static void RADEONLeaveServer(ScreenPtr pScreen)
 {
-    ScrnInfoPtr    pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr    pScrn = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr  info  = RADEONPTR(pScrn);
     RING_LOCALS;
 
@@ -492,7 +492,7 @@ static void RADEONDRIMoveBuffers(WindowPtr pParent, DDXPointRec ptOldOrg,
 {
 #ifdef USE_XAA
     ScreenPtr      pScreen  = pParent->drawable.pScreen;
-    ScrnInfoPtr    pScrn    = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr    pScrn    = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr  info     = RADEONPTR(pScrn);
 
     BoxPtr         pboxTmp, pboxNext, pboxBase;
@@ -902,7 +902,7 @@ static Bool RADEONSetAgpMode(RADEONInfoPtr info, ScreenPtr pScreen)
 /* Initialize Radeon's AGP registers */
 static void RADEONSetAgpBase(RADEONInfoPtr info, ScreenPtr pScreen)
 {
-    ScrnInfoPtr    pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr    pScrn = xf86ScreenToScrn(pScreen);
     unsigned char *RADEONMMIO = info->MMIO;
 
     if (info->ChipFamily >= CHIP_FAMILY_R600)
@@ -1173,7 +1173,7 @@ static Bool RADEONDRIMapInit(RADEONInfoPtr info, ScreenPtr pScreen)
 /* Initialize the kernel data structures */
 static int RADEONDRIKernelInit(RADEONInfoPtr info, ScreenPtr pScreen)
 {
-    ScrnInfoPtr    pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr    pScrn = xf86ScreenToScrn(pScreen);
     int            cpp   = info->CurrentLayout.pixel_bytes;
     drm_radeon_init_t  drmInfo;
 
@@ -1280,7 +1280,7 @@ static Bool RADEONDRIBufInit(RADEONInfoPtr info, ScreenPtr pScreen)
 
 static void RADEONDRIIrqInit(RADEONInfoPtr info, ScreenPtr pScreen)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 
     if (!info->dri->irq) {
 	info->dri->irq = drmGetInterruptFromBusID(
@@ -1524,7 +1524,7 @@ Bool RADEONDRISetVBlankInterrupt(ScrnInfoPtr pScrn, Bool on)
  */
 Bool RADEONDRIScreenInit(ScreenPtr pScreen)
 {
-    ScrnInfoPtr    pScrn   = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr    pScrn   = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr  info    = RADEONPTR(pScrn);
     DRIInfoPtr     pDRIInfo;
     RADEONDRIPtr   pRADEONDRI;
@@ -1715,15 +1715,15 @@ Bool RADEONDRIScreenInit(ScreenPtr pScreen)
     return TRUE;
 }
 
-static Bool RADEONDRIDoCloseScreen(int scrnIndex, ScreenPtr pScreen)
+static Bool RADEONDRIDoCloseScreen(CLOSE_SCREEN_ARGS_DECL)
 {
-    ScrnInfoPtr    pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr    pScrn = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr  info  = RADEONPTR(pScrn);
 
     RADEONDRICloseScreen(pScreen);
 
     pScreen->CloseScreen = info->dri->DRICloseScreen;
-    return (*pScreen->CloseScreen)(scrnIndex, pScreen);
+    return (*pScreen->CloseScreen)(CLOSE_SCREEN_ARGS);
 }
 
 /* Finish initializing the device-dependent DRI state, and call
@@ -1732,7 +1732,7 @@ static Bool RADEONDRIDoCloseScreen(int scrnIndex, ScreenPtr pScreen)
  */
 Bool RADEONDRIFinishScreenInit(ScreenPtr pScreen)
 {
-    ScrnInfoPtr         pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr         pScrn = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr       info  = RADEONPTR(pScrn);
     drm_radeon_sarea_t  *pSAREAPriv;
     RADEONDRIPtr        pRADEONDRI;
@@ -1830,7 +1830,7 @@ Bool RADEONDRIFinishScreenInit(ScreenPtr pScreen)
 void RADEONDRIResume(ScreenPtr pScreen)
 {
     int _ret;
-    ScrnInfoPtr   pScrn   = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr   pScrn   = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr info    = RADEONPTR(pScrn);
 
     if (info->dri->pKernelDRMVersion->version_minor >= 9) {
@@ -1865,7 +1865,7 @@ void RADEONDRIResume(ScreenPtr pScreen)
 
 void RADEONDRIStop(ScreenPtr pScreen)
 {
-    ScrnInfoPtr    pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr    pScrn = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr  info  = RADEONPTR(pScrn);
     RING_LOCALS;
 
@@ -1888,7 +1888,7 @@ void RADEONDRIStop(ScreenPtr pScreen)
  */
 void RADEONDRICloseScreen(ScreenPtr pScreen)
 {
-    ScrnInfoPtr    pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr    pScrn = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr  info  = RADEONPTR(pScrn);
     drm_radeon_init_t  drmInfo;
 
@@ -2092,7 +2092,7 @@ out:
 static void RADEONEnablePageFlip(ScreenPtr pScreen)
 {
 #ifdef DAMAGE
-    ScrnInfoPtr         pScrn      = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr         pScrn      = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr       info       = RADEONPTR(pScrn);
 
     if (info->dri->allowPageFlip) {
@@ -2132,7 +2132,7 @@ static void RADEONDRITransitionMultiToSingle3d(ScreenPtr pScreen)
 
 static void RADEONDRITransitionTo3d(ScreenPtr pScreen)
 {
-    ScrnInfoPtr    pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr    pScrn = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr  info  = RADEONPTR(pScrn);
 #ifdef USE_XAA
     FBAreaPtr      fbarea;
@@ -2220,7 +2220,7 @@ static void RADEONDRITransitionTo3d(ScreenPtr pScreen)
 
 static void RADEONDRITransitionTo2d(ScreenPtr pScreen)
 {
-    ScrnInfoPtr         pScrn      = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr         pScrn      = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr       info       = RADEONPTR(pScrn);
     drm_radeon_sarea_t  *pSAREAPriv = DRIGetSAREAPrivate(pScreen);
 
@@ -2265,7 +2265,7 @@ static void RADEONDRITransitionTo2d(ScreenPtr pScreen)
 static void
 RADEONDRIClipNotify(ScreenPtr pScreen, WindowPtr *ppWin, int num)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr info = RADEONPTR(pScrn);
 
     REGION_UNINIT(pScreen, &info->dri->driRegion);
@@ -2288,7 +2288,7 @@ RADEONDRIClipNotify(ScreenPtr pScreen, WindowPtr *ppWin, int num)
 
 void RADEONDRIAllocatePCIGARTTable(ScreenPtr pScreen)
 {
-    ScrnInfoPtr        pScrn   = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr        pScrn   = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr      info    = RADEONPTR(pScrn);
 
     if (info->cardType != CARD_PCIE ||
