@@ -510,7 +510,7 @@ VOID XGISetDPMS(ScrnInfoPtr pScrn, PVB_DEVICE_INFO pVBInfo, PXGI_HW_DEVICE_INFO 
     /* VB_DEVICE_INFO VBINF; */
     /* PVB_DEVICE_INFO pVBInfo = pXGI->XGI_Pr */ /* &VBINF */;
 
-	ErrorF("XGISetDPMS(VESA_POWER_STATE = 0x%x)...\n", VESA_POWER_STATE);
+	ErrorF("XGISetDPMS(VESA_POWER_STATE = 0x%lx)...\n", VESA_POWER_STATE);
 
     InitTo330Pointer( pXGIHWDE->jChipType,  pVBInfo ) ;
     ReadVBIOSTablData( pXGIHWDE->jChipType , pVBInfo) ;

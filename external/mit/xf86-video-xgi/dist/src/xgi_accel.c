@@ -1739,8 +1739,8 @@ void XGIDumpCMDQueue(ScrnInfoPtr pScrn)
     ErrorF("----------------------------------------------------------------------\n") ;
 
 	SwWP = Volari_GetSwWP() ;
-    ErrorF("SwWP=0x%x\n", SwWP) ;
-    ErrorF("pXGI->cmdQueueBase=0x%x\n", pXGI->cmdQueueBase) ;
+    ErrorF("SwWP=0x%lx\n", SwWP) ;
+    ErrorF("pXGI->cmdQueueBase=%p\n", pXGI->cmdQueueBase) ;
 	for( i = 0 ; i < SwWP ; i+=0x04 )
 	{
 		ErrorF("[%04X]: %08lX\n",i, *(CARD32 *)(pXGI->cmdQueueBase+i));
