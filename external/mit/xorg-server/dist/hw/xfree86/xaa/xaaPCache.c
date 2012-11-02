@@ -1198,10 +1198,10 @@ load_24bits(void *where)
     }
 
 #if X_BYTE_ORDER == X_LITTLE_ENDIAN
-    return bytes[2] << 16 + bytes[1] << 8 + bytes[0];
+    return (bytes[2] << 16) + (bytes[1] << 8) + bytes[0];
 #endif
 #if X_BYTE_ORDER == X_BIG_ENDIAN
-    return bytes[0] << 16 + bytes[1] << 8 + bytes[2];
+    return (bytes[0] << 16) + (bytes[1] << 8) + bytes[2];
 #endif
 }
 
