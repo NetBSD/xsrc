@@ -1631,8 +1631,10 @@ BOOLEAN bReadClockLine(PXGI_HW_DEVICE_INFO pHWDE)
 		return(bReadClockLineDVI(pHWDE));
 	else if(pHWDE->crtno == 2)
 		return(bReadClockLineFCNT(pHWDE));
-	else
+	else {
 		ErrorF("Error(XGI) : Unkonwn output device! \n");
+		return FALSE;
+	}
 }
 
 BOOLEAN bReadDataLine(PXGI_HW_DEVICE_INFO pHWDE)
@@ -1643,8 +1645,10 @@ BOOLEAN bReadDataLine(PXGI_HW_DEVICE_INFO pHWDE)
 		return(bReadDataLineDVI(pHWDE));
 	else if(pHWDE->crtno == 2)
 		return(bReadDataLineFCNT(pHWDE));
-	else
+	else {
 		ErrorF("Error(XGI) : Unkonwn output device! \n");
+		return FALSE;
+	}
 }
 
 BOOLEAN bEDIDCheckSum(PUCHAR  pjEDIDBuf,ULONG   ulBufSize)
