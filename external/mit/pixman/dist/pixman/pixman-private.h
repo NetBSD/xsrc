@@ -591,8 +591,6 @@ _pixman_iter_get_scanline_noop (pixman_iter_t *iter, const uint32_t *mask);
 #define PIXMAN_unknown		PIXMAN_FORMAT (0, 4, 0, 0, 0, 0)
 #define PIXMAN_any		PIXMAN_FORMAT (0, 5, 0, 0, 0, 0)
 
-#define PIXMAN_OP_any		(PIXMAN_N_OPERATORS + 1)
-
 #define FAST_PATH_ID_TRANSFORM			(1 <<  0)
 #define FAST_PATH_NO_ALPHA_MAP			(1 <<  1)
 #define FAST_PATH_NO_CONVOLUTION_FILTER		(1 <<  2)

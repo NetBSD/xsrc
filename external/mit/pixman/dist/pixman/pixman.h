@@ -354,7 +354,8 @@ typedef enum
 #ifdef PIXMAN_USE_INTERNAL_API
     ,
     PIXMAN_N_OPERATORS,
-    PIXMAN_OP_NONE = PIXMAN_N_OPERATORS
+    PIXMAN_OP_NONE = PIXMAN_N_OPERATORS,
+    PIXMAN_OP_any = PIXMAN_N_OPERATORS + 1
 #endif
 } pixman_op_t;
 
