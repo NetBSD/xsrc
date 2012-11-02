@@ -9502,7 +9502,7 @@ XGI_GetTVPtrIndex2(USHORT * tempbx, UCHAR * tempcl, UCHAR * tempch,
     if (pVBInfo->
         VBType & (VB_XGI301B | VB_XGI302B | VB_XGI301LV | VB_XGI302LV |
                   VB_XGI301C))
-        *tempch++;
+        (*tempch)++;
 }
 
 
