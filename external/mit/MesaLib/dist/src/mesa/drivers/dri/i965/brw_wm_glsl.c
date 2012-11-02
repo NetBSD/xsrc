@@ -565,7 +565,7 @@ static void invoke_subroutine( struct brw_wm_compile *c,
 {
     struct brw_compile *p = &c->func;
 
-    assert( subroutine < BRW_WM_MAX_SUBROUTINE );
+    assert( (int)subroutine < (int)BRW_WM_MAX_SUBROUTINE );
     
     if( c->subroutines[ subroutine ] ) {
 	/* subroutine previously emitted: reuse existing instructions */
