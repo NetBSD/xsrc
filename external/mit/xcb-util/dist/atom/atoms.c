@@ -322,6 +322,7 @@ static const struct stringpool_t stringpool_contents =
     "SECONDARY"
   };
 #define stringpool ((const char *) &stringpool_contents)
+static
 #ifdef __GNUC__
 __inline
 #ifdef __GNUC_STDC_INLINE__
