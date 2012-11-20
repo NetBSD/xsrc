@@ -206,6 +206,7 @@ typedef struct {
     RegionRec srcReg;
     RegionRec maskReg;
     PixmapPtr srcPix;
+    PixmapPtr maskPix;
 
 } ExaScreenPrivRec, *ExaScreenPrivPtr;
 
