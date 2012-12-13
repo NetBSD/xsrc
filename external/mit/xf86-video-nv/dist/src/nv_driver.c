@@ -1219,7 +1219,9 @@ NVCloseScreen(int scrnIndex, ScreenPtr pScreen)
     }
 
     NVUnmapMem(pScrn);
+#ifndef AVOID_VGAHW
     vgaHWUnmapMem(pScrn);
+#endif
     if (pNv->AccelInfoRec)
         XAADestroyInfoRec(pNv->AccelInfoRec);
     if (pNv->CursorInfoRec)
@@ -1259,6 +1261,7 @@ NVFreeScreen(int scrnIndex, int flags)
      * This only gets called when a screen is being deleted.  It does not
      * get called routinely at the end of a server generation.
      */
+  
     if (xf86LoaderCheckSymbol("vgaHWFreeHWRec"))
 	vgaHWFreeHWRec(xf86Screens[scrnIndex]);
     NVFreeRec(xf86Screens[scrnIndex]);
@@ -2410,11 +2413,13 @@ NVScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     }
 
     /* Map the VGA memory when the primary video */
+#ifndef AVOID_VGAHW
     if (pNv->Primary && !pNv->FBDev) {
 	hwp->MapSize = 0x10000;
 	if (!vgaHWMapMem(pScrn))
 	    return FALSE;
     }
+#endif
 
     if (pNv->FBDev) {
 	fbdevHWSave(pScrn);
