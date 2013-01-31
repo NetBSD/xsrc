@@ -372,7 +372,7 @@ FcObjectFini (void)
 	FcObjectBuckets[i] = 0;
     }
     for (i = 0; i < FcObjectsNumber; i++)
-	if (FcObjects[i].type == -1)
+	if (FcObjects[i].type == (FcType)-1)
 	    free ((void*) FcObjects[i].object);
     if (FcObjects != _FcBaseObjectTypes)
 	free (FcObjects);
