@@ -1,4 +1,3 @@
-#include <config.h>
 #include <stdlib.h>
 #include "utils.h"
 
@@ -37,7 +36,7 @@ main ()
 {
     int o, s, m, d;
 
-    enable_fp_exceptions();
+    enable_divbyzero_exceptions();
 
     for (o = 0; o < ARRAY_LENGTH (pdf_ops); ++o)
     {

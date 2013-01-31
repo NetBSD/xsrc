@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "utils.h"
 #include <sys/types.h>
 
@@ -24,6 +25,7 @@ static const pixman_format_code_t image_formats[] =
     PIXMAN_x14r6g6b6,
     PIXMAN_r8g8b8,
     PIXMAN_b8g8r8,
+    PIXMAN_a8r8g8b8_sRGB,
     PIXMAN_r5g6b5,
     PIXMAN_b5g6r5,
     PIXMAN_x2r10g10b10,
@@ -82,7 +84,7 @@ get_size (void)
 
     default:
     case 2:
-	return lcg_rand_n (200);
+	return lcg_rand_n (100);
 
     case 4:
 	return lcg_rand_n (2000) + 1000;
@@ -165,7 +167,8 @@ fake_reader (const void *src, int size)
     uint32_t r = lcg_rand_u32 ();
 
     assert (size == 1 || size == 2 || size == 4);
-    return r & ((1 << (size * 8)) - 1);
+
+    return r >> (32 - (size * 8));
 }
 
 static void
@@ -179,9 +182,27 @@ log_rand (void)
 {
     uint32_t mask;
 
-    mask = (1 << lcg_rand_n (31)) - 1;
+    mask = (1 << lcg_rand_n (10)) - 1;
 
-    return (lcg_rand () & mask) - (mask >> 1);
+    return (lcg_rand_u32 () & mask) - (mask >> 1);
+}
+
+static int32_t
+rand_x (pixman_image_t *image)
+{
+    if (image->type == BITS)
+	return lcg_rand_n (image->bits.width);
+    else
+	return log_rand ();
+}
+
+static int32_t
+rand_y (pixman_image_t *image)
+{
+    if (image->type == BITS)
+	return lcg_rand_n (image->bits.height);
+    else
+	return log_rand ();
 }
 
 static pixman_image_t *
@@ -223,7 +244,7 @@ create_random_bits_image (void)
     width = get_size ();
     height = get_size ();
 
-    if ((uint64_t)width * height > 200000)
+    while ((uint64_t)width * height > 200000)
     {
 	if (lcg_rand_n(2) == 0)
 	    height = 200000 / width;
@@ -302,8 +323,8 @@ create_random_bits_image (void)
     filter = filters[lcg_rand_n (ARRAY_LENGTH (filters))];
     if (filter == PIXMAN_FILTER_CONVOLUTION)
     {
-	int width = lcg_rand_n (17);
-	int height = lcg_rand_n (19);
+	int width = lcg_rand_n (3);
+	int height = lcg_rand_n (4);
 
 	n_coefficients = width * height + 2;
 	coefficients = malloc (n_coefficients * sizeof (pixman_fixed_t));
@@ -363,7 +384,7 @@ set_general_properties (pixman_image_t *image, pixman_bool_t allow_alpha_map)
     pixman_image_set_repeat (image, repeat);
 
     /* Alpha map */
-    if (allow_alpha_map && lcg_rand_n (3) == 0)
+    if (allow_alpha_map && lcg_rand_n (4) == 0)
     {
 	pixman_image_t *alpha_map;
 	int16_t x, y;
@@ -374,8 +395,8 @@ set_general_properties (pixman_image_t *image, pixman_bool_t allow_alpha_map)
 	{
 	    set_general_properties (alpha_map, FALSE);
 
-	    x = lcg_rand_N (100000) - 65536;
-	    y = lcg_rand_N (100000) - 65536;
+	    x = rand_x (image) - image->bits.width / 2;
+	    y = rand_y (image) - image->bits.height / 2;
 
 	    pixman_image_set_alpha_map (image, alpha_map, x, y);
 
@@ -387,14 +408,14 @@ set_general_properties (pixman_image_t *image, pixman_bool_t allow_alpha_map)
     pixman_image_set_component_alpha (image, lcg_rand_n (3) == 0);
 
     /* Clip region */
-    if (lcg_rand_n (8) != 0)
+    if (lcg_rand_n (8) < 2)
     {
 	pixman_region32_t region;
 	int i, n_rects;
 
 	pixman_region32_init (&region);
 
-	switch (lcg_rand_n (10))
+	switch (lcg_rand_n (12))
 	{
 	case 0:
 	    n_rects = 0;
@@ -410,6 +431,7 @@ set_general_properties (pixman_image_t *image, pixman_bool_t allow_alpha_map)
 
 	case 6: case 7:
 	    n_rects = 3;
+	    break;
 
 	default:
 	    n_rects = lcg_rand_n (100);
@@ -428,6 +450,32 @@ set_general_properties (pixman_image_t *image, pixman_bool_t allow_alpha_map)
 
 	    pixman_region32_union_rect (
 		&region, &region, x, y, width, height);
+	}
+
+	if (image->type == BITS && lcg_rand_n (8) != 0)
+	{
+	    uint32_t width, height;
+	    int x, y;
+	    int i;
+
+	    /* Also add a couple of clip rectangles inside the image
+	     * so that compositing will actually take place.
+	     */
+	    for (i = 0; i < 5; ++i)
+	    {
+		x = lcg_rand_n (2 * image->bits.width) - image->bits.width;
+		y = lcg_rand_n (2 * image->bits.height) - image->bits.height;
+		width = lcg_rand_n (image->bits.width) - x + 10;
+		height = lcg_rand_n (image->bits.height) - y + 10;
+
+		if (width + x < x)
+		    width = INT32_MAX - x;
+		if (height + y < y)
+		    height = INT32_MAX - y;
+		
+		pixman_region32_union_rect (
+		    &region, &region, x, y, width, height);
+	    }
 	}
 
 	pixman_image_set_clip_region32 (image, &region);
@@ -759,11 +807,11 @@ run_test (uint32_t seed, pixman_bool_t verbose, uint32_t mod)
 
 	pixman_image_composite32 (op,
 				  source, mask, dest,
-				  log_rand(), log_rand(),
-				  log_rand(), log_rand(),
-				  log_rand(), log_rand(),
-				  absolute (log_rand()),
-				  absolute (log_rand()));
+				  rand_x (source), rand_y (source),
+				  rand_x (mask), rand_y (mask),
+				  0, 0, 
+				  dest->bits.width,
+				  dest->bits.height);
     }
     if (source)
 	pixman_image_unref (source);
@@ -795,14 +843,14 @@ main (int argc, char **argv)
 {
     int verbose = FALSE;
     uint32_t seed = 1;
-    uint32_t n_tests = 0xffffffff;
+    uint32_t n_tests = 8000;
     uint32_t mod = 0;
     pixman_bool_t use_threads = TRUE;
-    uint32_t i;
+    int32_t i;
 
     pixman_disable_out_of_bounds_workaround ();
 
-    enable_fp_exceptions();
+    enable_divbyzero_exceptions();
 
     if (getenv ("VERBOSE") != NULL)
 	verbose = TRUE;
@@ -845,9 +893,6 @@ main (int argc, char **argv)
 	}
     }
 
-    if (n_tests == 0xffffffff)
-	n_tests = 8000;
-
     if (getenv ("PIXMAN_RANDOMIZE_TESTS"))
     {
 	seed = get_random_seed();
@@ -859,13 +904,13 @@ main (int argc, char **argv)
 #ifdef USE_OPENMP
 #   pragma omp parallel for default(none) shared(verbose, n_tests, mod, seed)
 #endif
-	for (i = seed; i < seed + n_tests; ++i)
-	    run_test (i, verbose, mod);
+	for (i = 0; i < (int32_t)n_tests; ++i)
+	    run_test (seed + i, verbose, mod);
     }
     else
     {
-	for (i = seed; i < seed + n_tests; ++i)
-	    run_test (i, verbose, mod);
+	for (i = 0; i < (int32_t)n_tests; ++i)
+	    run_test (seed + i, verbose, mod);
     }
 
     return 0;

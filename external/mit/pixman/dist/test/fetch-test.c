@@ -1,8 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "pixman.h"
-#include <config.h>
+#include "utils.h"
 
 #define SIZE 1024
 
@@ -104,7 +103,7 @@ static testcase_t testcases[] =
     },
 };
 
-int n_test_cases = sizeof(testcases)/sizeof(testcases[0]);
+int n_test_cases = ARRAY_LENGTH (testcases);
 
 
 static uint32_t

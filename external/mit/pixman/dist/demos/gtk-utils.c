@@ -1,13 +1,10 @@
 #include <gtk/gtk.h>
 #include <config.h>
-#include "pixman-private.h"	/* For image->bits.format
-				 * FIXME: there should probably be public API for this
-				 */
+#include "../test/utils.h"
 #include "gtk-utils.h"
 
 GdkPixbuf *
 pixbuf_from_argb32 (uint32_t *bits,
-		    gboolean has_alpha,
 		    int width,
 		    int height,
 		    int stride)
@@ -16,44 +13,18 @@ pixbuf_from_argb32 (uint32_t *bits,
 					8, width, height);
     int p_stride = gdk_pixbuf_get_rowstride (pixbuf);
     guint32 *p_bits = (guint32 *)gdk_pixbuf_get_pixels (pixbuf);
-    int w, h;
-    
-    for (h = 0; h < height; ++h)
+    int i;
+
+    for (i = 0; i < height; ++i)
     {
-	for (w = 0; w < width; ++w)
-	{
-	    uint32_t argb = bits[h * (stride / 4) + w];
-	    guint r, g, b, a;
-	    char *pb = (char *)p_bits;
+	uint32_t *src_row = &bits[i * (stride / 4)];
+	uint32_t *dst_row = p_bits + i * (p_stride / 4);
 
-	    pb += h * p_stride + w * 4;
-
-	    r = (argb & 0x00ff0000) >> 16;
-	    g = (argb & 0x0000ff00) >> 8;
-	    b = (argb & 0x000000ff) >> 0;
-	    a = has_alpha? (argb & 0xff000000) >> 24 : 0xff;
-
-	    if (a)
-	    {
-		r = (r * 255) / a;
-		g = (g * 255) / a;
-		b = (b * 255) / a;
-	    }
-
-	    if (r > 255) r = 255;
-	    if (g > 255) g = 255;
-	    if (b > 255) b = 255;
-	    
-	    pb[0] = r;
-	    pb[1] = g;
-	    pb[2] = b;
-	    pb[3] = a;
-	}
+	a8r8g8b8_to_rgba_np (dst_row, src_row, width);
     }
-    
+
     return pixbuf;
 }
-
 
 static gboolean
 on_expose (GtkWidget *widget, GdkEventExpose *expose, gpointer data)
@@ -75,12 +46,12 @@ show_image (pixman_image_t *image)
 {
     GtkWidget *window;
     GdkPixbuf *pixbuf;
-    int width, height, stride;
+    int width, height;
     int argc;
     char **argv;
     char *arg0 = g_strdup ("pixman-test-program");
-    gboolean has_alpha;
     pixman_format_code_t format;
+    pixman_image_t *copy;
 
     argc = 1;
     argv = (char **)&arg0;
@@ -90,21 +61,43 @@ show_image (pixman_image_t *image)
     window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
     width = pixman_image_get_width (image);
     height = pixman_image_get_height (image);
-    stride = pixman_image_get_stride (image);
 
     gtk_window_set_default_size (GTK_WINDOW (window), width, height);
-    
-    format = image->bits.format;
-    
-    if (format == PIXMAN_a8r8g8b8)
-	has_alpha = TRUE;
-    else if (format == PIXMAN_x8r8g8b8)
-	has_alpha = FALSE;
-    else
-	g_error ("Can't deal with this format: %x\n", format);
-    
-    pixbuf = pixbuf_from_argb32 (pixman_image_get_data (image), has_alpha,
-				 width, height, stride);
+
+    format = pixman_image_get_format (image);
+
+    /* Three cases:
+     *
+     *  - image is a8r8g8b8_sRGB: we will display without modification
+     *    under the assumption that the monitor is sRGB
+     *
+     *  - image is a8r8g8b8: we will display without modification
+     *    under the assumption that whoever created the image
+     *    probably did it wrong by using sRGB inputs
+     *
+     *  - other: we will convert to a8r8g8b8 under the assumption that
+     *    whoever created the image probably did it wrong.
+     */
+    switch (format)
+    {
+    case PIXMAN_a8r8g8b8_sRGB:
+    case PIXMAN_a8r8g8b8:
+	copy = pixman_image_ref (image);
+	break;
+
+    default:
+	copy = pixman_image_create_bits (PIXMAN_a8r8g8b8,
+					 width, height, NULL, -1);
+	pixman_image_composite32 (PIXMAN_OP_SRC,
+				  image, NULL, copy,
+				  0, 0, 0, 0, 0, 0,
+				  width, height);
+	break;
+    }
+
+    pixbuf = pixbuf_from_argb32 (pixman_image_get_data (copy),
+				 width, height,
+				 pixman_image_get_stride (copy));
     
     g_signal_connect (window, "expose_event", G_CALLBACK (on_expose), pixbuf);
     g_signal_connect (window, "delete_event", G_CALLBACK (gtk_main_quit), NULL);
