@@ -88,7 +88,7 @@ pixman_fixed_to_bilinear_weight (pixman_fixed_t x)
 	   ((1 << BILINEAR_INTERPOLATION_BITS) - 1);
 }
 
-#if SIZEOF_LONG > 4
+#ifdef _LP64
 
 static force_inline uint32_t
 bilinear_interpolation (uint32_t tl, uint32_t tr,
