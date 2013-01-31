@@ -136,7 +136,7 @@ static Bool G80ReadPortMapping(int scrnIndex, G80Ptr pNv)
                                "VGA%d: unrecognized port %d\n", or, port);
                     break;
                 }
-                if(pNv->i2cMap[port].dac != -1) {
+                if(pNv->i2cMap[port].dac != (ORNum)-1) {
                     xf86DrvMsg(scrnIndex, X_WARNING,
                                "DDC routing table corrupt!  DAC %i -> %i for "
                                "port %i\n", or, pNv->i2cMap[port].dac, port);
@@ -167,7 +167,7 @@ static Bool G80ReadPortMapping(int scrnIndex, G80Ptr pNv)
                                "DVI%d: unrecognized port %d\n", or, port);
                     break;
                 }
-                if(pNv->i2cMap[port].sor != -1)
+                if(pNv->i2cMap[port].sor != (ORNum)-1)
                     xf86DrvMsg(scrnIndex, X_WARNING,
                                "DDC routing table corrupt!  SOR %i -> %i for "
                                "port %i\n", or, pNv->i2cMap[port].sor, port);
@@ -226,9 +226,9 @@ static Bool G80ReadPortMapping(int scrnIndex, G80Ptr pNv)
             xf86DrvMsg(scrnIndex, X_PROBED, "  [N/A] -> SOR%i (LVDS)\n", pNv->lvds.or);
     }
     for(i = 0; i < G80_NUM_I2C_PORTS; i++) {
-        if(pNv->i2cMap[i].dac != -1)
+        if(pNv->i2cMap[i].dac != (ORNum)-1)
             xf86DrvMsg(scrnIndex, X_PROBED, "  Bus %i -> DAC%i\n", i, pNv->i2cMap[i].dac);
-        if(pNv->i2cMap[i].sor != -1)
+        if(pNv->i2cMap[i].sor != (ORNum)-1)
             xf86DrvMsg(scrnIndex, X_PROBED, "  Bus %i -> SOR%i\n", i, pNv->i2cMap[i].sor);
     }
 
@@ -445,7 +445,7 @@ G80CreateOutputs(ScrnInfoPtr pScrn)
         I2CBusPtr i2c;
         char i2cName[16];
 
-        if(pNv->i2cMap[i].dac == -1 && pNv->i2cMap[i].sor == -1)
+        if(pNv->i2cMap[i].dac == (ORNum)-1 && pNv->i2cMap[i].sor == (ORNum)-1)
             /* No outputs on this port */
             continue;
 
@@ -458,9 +458,9 @@ G80CreateOutputs(ScrnInfoPtr pScrn)
             continue;
         }
 
-        if(pNv->i2cMap[i].dac != -1)
+        if(pNv->i2cMap[i].dac != (ORNum)-1)
             dac = G80CreateDac(pScrn, pNv->i2cMap[i].dac);
-        if(pNv->i2cMap[i].sor != -1)
+        if(pNv->i2cMap[i].sor != (ORNum)-1)
             sor = G80CreateSor(pScrn, pNv->i2cMap[i].sor, TMDS);
 
         if(dac) {
