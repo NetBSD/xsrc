@@ -22,16 +22,9 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
-#include "pixman-private.h"
 #include "utils.h"
 
 #define SOLID_FLAG 1
@@ -87,10 +80,28 @@ bench_memcpy ()
     return (double)total / (t2 - t1);
 }
 
+static pixman_bool_t use_scaling = FALSE;
+static pixman_filter_t filter = PIXMAN_FILTER_NEAREST;
+
+/* nearly 1x scale factor */
+static pixman_transform_t m =
+{
+    {
+        { pixman_fixed_1 + 1, 0,              0              },
+        { 0,                  pixman_fixed_1, 0              },
+        { 0,                  0,              pixman_fixed_1 }
+    }
+};
+
 static void
 pixman_image_composite_wrapper (pixman_implementation_t *impl,
 				pixman_composite_info_t *info)
 {
+    if (use_scaling)
+    {
+        pixman_image_set_filter (info->src_image, filter, NULL, 0);
+        pixman_image_set_transform(info->src_image, &m);
+    }
     pixman_image_composite (info->op,
 			    info->src_image, info->mask_image, info->dest_image,
 			    info->src_x, info->src_y,
@@ -103,6 +114,11 @@ static void
 pixman_image_composite_empty (pixman_implementation_t *impl,
 			      pixman_composite_info_t *info)
 {
+    if (use_scaling)
+    {
+        pixman_image_set_filter (info->src_image, filter, NULL, 0);
+        pixman_image_set_transform(info->src_image, &m);
+    }
     pixman_image_composite (info->op,
 			    info->src_image, info->mask_image, info->dest_image,
 			    0, 0, 0, 0, 0, 0, 1, 1);
@@ -589,6 +605,8 @@ tests_tbl[] =
     { "add_1555_1555",         PIXMAN_a1r5g5b5,    0, PIXMAN_OP_ADD,     PIXMAN_null,     0, PIXMAN_a1r5g5b5 },
     { "add_0565_2x10",         PIXMAN_r5g6b5,      0, PIXMAN_OP_ADD,     PIXMAN_null,     0, PIXMAN_x2r10g10b10 },
     { "add_2a10_2a10",         PIXMAN_a2r10g10b10, 0, PIXMAN_OP_ADD,     PIXMAN_null,     0, PIXMAN_a2r10g10b10 },
+    { "in_n_8_8",              PIXMAN_a8r8g8b8,    1, PIXMAN_OP_IN,      PIXMAN_a8,       0, PIXMAN_a8 },
+    { "in_8_8",                PIXMAN_a8,          0, PIXMAN_OP_IN,      PIXMAN_null,     0, PIXMAN_a8 },
     { "src_n_2222",            PIXMAN_a8r8g8b8,    1, PIXMAN_OP_SRC,     PIXMAN_null,     0, PIXMAN_a2r2g2b2 },
     { "src_n_0565",            PIXMAN_a8r8g8b8,    1, PIXMAN_OP_SRC,     PIXMAN_null,     0, PIXMAN_r5g6b5 },
     { "src_n_1555",            PIXMAN_a8r8g8b8,    1, PIXMAN_OP_SRC,     PIXMAN_null,     0, PIXMAN_a1r5g5b5 },
@@ -633,8 +651,10 @@ tests_tbl[] =
     { "over_n_0565",           PIXMAN_a8r8g8b8,    1, PIXMAN_OP_OVER,    PIXMAN_null,     0, PIXMAN_r5g6b5 },
     { "over_n_1555",           PIXMAN_a8r8g8b8,    1, PIXMAN_OP_OVER,    PIXMAN_null,     0, PIXMAN_a1r5g5b5 },
     { "over_8888_0565",        PIXMAN_a8r8g8b8,    0, PIXMAN_OP_OVER,    PIXMAN_null,     0, PIXMAN_r5g6b5 },
+    { "over_8888_8888",        PIXMAN_a8r8g8b8,    0, PIXMAN_OP_OVER,    PIXMAN_null,     0, PIXMAN_a8r8g8b8 },
     { "over_8888_x888",        PIXMAN_a8r8g8b8,    0, PIXMAN_OP_OVER,    PIXMAN_null,     0, PIXMAN_x8r8g8b8 },
     { "over_x888_8_0565",      PIXMAN_x8r8g8b8,    0, PIXMAN_OP_OVER,    PIXMAN_a8,       0, PIXMAN_r5g6b5 },
+    { "over_x888_8_8888",      PIXMAN_x8r8g8b8,    0, PIXMAN_OP_OVER,    PIXMAN_a8,       0, PIXMAN_a8r8g8b8 },
     { "over_n_8_0565",         PIXMAN_a8r8g8b8,    1, PIXMAN_OP_OVER,    PIXMAN_a8,       0, PIXMAN_r5g6b5 },
     { "over_n_8_1555",         PIXMAN_a8r8g8b8,    1, PIXMAN_OP_OVER,    PIXMAN_a8,       0, PIXMAN_a1r5g5b5 },
     { "over_n_8_4444",         PIXMAN_a8r8g8b8,    1, PIXMAN_OP_OVER,    PIXMAN_a8,       0, PIXMAN_a4r4g4b4 },
@@ -655,6 +675,7 @@ tests_tbl[] =
     { "over_8888_n_x888",      PIXMAN_a8r8g8b8,    0, PIXMAN_OP_OVER,    PIXMAN_a8,       1, PIXMAN_x8r8g8b8 },
     { "over_8888_n_0565",      PIXMAN_a8r8g8b8,    0, PIXMAN_OP_OVER,    PIXMAN_a8,       1, PIXMAN_r5g6b5 },
     { "over_8888_n_1555",      PIXMAN_a8r8g8b8,    0, PIXMAN_OP_OVER,    PIXMAN_a8,       1, PIXMAN_a1r5g5b5 },
+    { "over_x888_n_8888",      PIXMAN_x8r8g8b8,    0, PIXMAN_OP_OVER,    PIXMAN_a8,       1, PIXMAN_a8r8g8b8 },
     { "outrev_n_8_0565",       PIXMAN_a8r8g8b8,    1, PIXMAN_OP_OUT_REV, PIXMAN_a8,       0, PIXMAN_r5g6b5 },
     { "outrev_n_8_1555",       PIXMAN_a8r8g8b8,    1, PIXMAN_OP_OUT_REV, PIXMAN_a8,       0, PIXMAN_a1r5g5b5 },
     { "outrev_n_8_x888",       PIXMAN_a8r8g8b8,    1, PIXMAN_OP_OUT_REV, PIXMAN_a8,       0, PIXMAN_x8r8g8b8 },
@@ -663,6 +684,7 @@ tests_tbl[] =
     { "outrev_n_8888_1555_ca", PIXMAN_a8r8g8b8,    1, PIXMAN_OP_OUT_REV, PIXMAN_a8r8g8b8, 2, PIXMAN_a1r5g5b5 },
     { "outrev_n_8888_x888_ca", PIXMAN_a8r8g8b8,    1, PIXMAN_OP_OUT_REV, PIXMAN_a8r8g8b8, 2, PIXMAN_x8r8g8b8 },
     { "outrev_n_8888_8888_ca", PIXMAN_a8r8g8b8,    1, PIXMAN_OP_OUT_REV, PIXMAN_a8r8g8b8, 2, PIXMAN_a8r8g8b8 },
+    { "over_reverse_n_8888",   PIXMAN_a8r8g8b8,    0, PIXMAN_OP_OVER_REVERSE, PIXMAN_null, 0, PIXMAN_a8r8g8b8 },
 };
 
 int
@@ -670,7 +692,35 @@ main (int argc, char *argv[])
 {
     double x;
     int i;
-    char *pattern = argc > 1 ? argv[1] : "all";
+    const char *pattern = NULL;
+    for (i = 1; i < argc; i++)
+    {
+	if (argv[i][0] == '-')
+	{
+	    if (strchr (argv[i] + 1, 'b'))
+	    {
+		use_scaling = TRUE;
+		filter = PIXMAN_FILTER_BILINEAR;
+	    }
+	    else if (strchr (argv[i] + 1, 'n'))
+	    {
+		use_scaling = TRUE;
+		filter = PIXMAN_FILTER_NEAREST;
+	    }
+	}
+	else
+	{
+	    pattern = argv[i];
+	}
+    }
+
+    if (!pattern)
+    {
+	printf ("Usage: lowlevel-blt-bench [-b] [-n] pattern\n");
+	printf ("  -n : benchmark nearest scaling\n");
+	printf ("  -b : benchmark bilinear scaling\n");
+	return 1;
+    }
 
     src = aligned_malloc (4096, BUFSIZE * 3);
     memset (src, 0xCC, BUFSIZE * 3);
@@ -707,9 +757,19 @@ main (int argc, char *argv[])
     bandwidth = x = bench_memcpy ();
     printf ("reference memcpy speed = %.1fMB/s (%.1fMP/s for 32bpp fills)\n",
             x / 1000000., x / 4000000);
+    if (use_scaling)
+    {
+	printf ("---\n");
+	if (filter == PIXMAN_FILTER_BILINEAR)
+	    printf ("BILINEAR scaling\n");
+	else if (filter == PIXMAN_FILTER_NEAREST)
+	    printf ("NEAREST scaling\n");
+	else
+	    printf ("UNKNOWN scaling\n");
+    }
     printf ("---\n");
 
-    for (i = 0; i < sizeof(tests_tbl) / sizeof(tests_tbl[0]); i++)
+    for (i = 0; i < ARRAY_LENGTH (tests_tbl); i++)
     {
 	if (strcmp (pattern, "all") == 0 || strstr (tests_tbl[i].testname, pattern))
 	{

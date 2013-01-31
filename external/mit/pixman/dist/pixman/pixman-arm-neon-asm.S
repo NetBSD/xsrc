@@ -47,7 +47,9 @@
     .eabi_attribute 12, 0 /* suppress Tag_Advanced_SIMD_arch */
     .arm
     .altmacro
+    .p2align 2
 
+#include "pixman-private.h"
 #include "pixman-arm-neon-asm.h"
 
 /* Global configuration options and preferences */
@@ -705,13 +707,55 @@ generate_composite_function_single_scanline \
 
 /******************************************************************************/
 
-/* TODO: expand macros and do better instructions scheduling */
+.macro pixman_composite_over_n_8888_process_pixblock_head
+    /* deinterleaved source pixels in {d0, d1, d2, d3} */
+    /* inverted alpha in {d24} */
+    /* destination pixels in {d4, d5, d6, d7} */
+    vmull.u8    q8, d24, d4
+    vmull.u8    q9, d24, d5
+    vmull.u8    q10, d24, d6
+    vmull.u8    q11, d24, d7
+.endm
+
+.macro pixman_composite_over_n_8888_process_pixblock_tail
+    vrshr.u16   q14, q8, #8
+    vrshr.u16   q15, q9, #8
+    vrshr.u16   q2, q10, #8
+    vrshr.u16   q3, q11, #8
+    vraddhn.u16 d28, q14, q8
+    vraddhn.u16 d29, q15, q9
+    vraddhn.u16 d30, q2, q10
+    vraddhn.u16 d31, q3, q11
+    vqadd.u8    q14, q0, q14
+    vqadd.u8    q15, q1, q15
+.endm
+
 .macro pixman_composite_over_n_8888_process_pixblock_tail_head
-    pixman_composite_over_8888_8888_process_pixblock_tail
+        vrshr.u16   q14, q8, #8
+        vrshr.u16   q15, q9, #8
+        vrshr.u16   q2, q10, #8
+        vrshr.u16   q3, q11, #8
+        vraddhn.u16 d28, q14, q8
+        vraddhn.u16 d29, q15, q9
+        vraddhn.u16 d30, q2, q10
+        vraddhn.u16 d31, q3, q11
     vld4.8      {d4, d5, d6, d7}, [DST_R, :128]!
-    vst4.8      {d28, d29, d30, d31}, [DST_W, :128]!
-    pixman_composite_over_8888_8888_process_pixblock_head
-    cache_preload 8, 8
+        vqadd.u8    q14, q0, q14
+                                    PF add PF_X, PF_X, #8
+                                    PF tst PF_CTL, #0x0F
+                                    PF addne PF_X, PF_X, #8
+                                    PF subne PF_CTL, PF_CTL, #1
+        vqadd.u8    q15, q1, q15
+                                    PF cmp PF_X, ORIG_W
+    vmull.u8    q8, d24, d4
+                                    PF pld, [PF_DST, PF_X, lsl #dst_bpp_shift]
+    vmull.u8    q9, d24, d5
+                                    PF subge PF_X, PF_X, ORIG_W
+    vmull.u8    q10, d24, d6
+                                    PF subges PF_CTL, PF_CTL, #0x10
+    vmull.u8    q11, d24, d7
+                                    PF ldrgeb DUMMY, [PF_DST, DST_STRIDE, lsl #dst_bpp_shift]!
+        vst4.8      {d28, d29, d30, d31}, [DST_W, :128]!
 .endm
 
 .macro pixman_composite_over_n_8888_init
@@ -721,6 +765,7 @@ generate_composite_function_single_scanline \
     vdup.8      d1, d3[1]
     vdup.8      d2, d3[2]
     vdup.8      d3, d3[3]
+    vmvn.8      d24, d3  /* get inverted alpha */
 .endm
 
 generate_composite_function \
@@ -1175,6 +1220,145 @@ generate_composite_function \
 
 /******************************************************************************/
 
+.macro pixman_composite_src_n_8_8888_process_pixblock_head
+    /* expecting solid source in {d0, d1, d2, d3} */
+    /* mask is in d24 (d25, d26, d27 are unused) */
+
+    /* in */
+    vmull.u8    q8, d24, d0
+    vmull.u8    q9, d24, d1
+    vmull.u8    q10, d24, d2
+    vmull.u8    q11, d24, d3
+    vrsra.u16   q8, q8, #8
+    vrsra.u16   q9, q9, #8
+    vrsra.u16   q10, q10, #8
+    vrsra.u16   q11, q11, #8
+.endm
+
+.macro pixman_composite_src_n_8_8888_process_pixblock_tail
+    vrshrn.u16  d28, q8, #8
+    vrshrn.u16  d29, q9, #8
+    vrshrn.u16  d30, q10, #8
+    vrshrn.u16  d31, q11, #8
+.endm
+
+.macro pixman_composite_src_n_8_8888_process_pixblock_tail_head
+    fetch_mask_pixblock
+                                    PF add PF_X, PF_X, #8
+        vrshrn.u16  d28, q8, #8
+                                    PF tst PF_CTL, #0x0F
+        vrshrn.u16  d29, q9, #8
+                                    PF addne PF_X, PF_X, #8
+        vrshrn.u16  d30, q10, #8
+                                    PF subne PF_CTL, PF_CTL, #1
+        vrshrn.u16  d31, q11, #8
+                                    PF cmp PF_X, ORIG_W
+    vmull.u8    q8, d24, d0
+                                    PF pld, [PF_MASK, PF_X, lsl #mask_bpp_shift]
+    vmull.u8    q9, d24, d1
+                                    PF subge PF_X, PF_X, ORIG_W
+    vmull.u8    q10, d24, d2
+                                    PF subges PF_CTL, PF_CTL, #0x10
+    vmull.u8    q11, d24, d3
+                                    PF ldrgeb DUMMY, [PF_MASK, MASK_STRIDE, lsl #mask_bpp_shift]!
+        vst4.8      {d28, d29, d30, d31}, [DST_W, :128]!
+    vrsra.u16   q8, q8, #8
+    vrsra.u16   q9, q9, #8
+    vrsra.u16   q10, q10, #8
+    vrsra.u16   q11, q11, #8
+.endm
+
+.macro pixman_composite_src_n_8_8888_init
+    add         DUMMY, sp, #ARGS_STACK_OFFSET
+    vld1.32     {d3[0]}, [DUMMY]
+    vdup.8      d0, d3[0]
+    vdup.8      d1, d3[1]
+    vdup.8      d2, d3[2]
+    vdup.8      d3, d3[3]
+.endm
+
+.macro pixman_composite_src_n_8_8888_cleanup
+.endm
+
+generate_composite_function \
+    pixman_composite_src_n_8_8888_asm_neon, 0, 8, 32, \
+    FLAG_DST_WRITEONLY | FLAG_DEINTERLEAVE_32BPP, \
+    8, /* number of pixels, processed in a single block */ \
+    5, /* prefetch distance */ \
+    pixman_composite_src_n_8_8888_init, \
+    pixman_composite_src_n_8_8888_cleanup, \
+    pixman_composite_src_n_8_8888_process_pixblock_head, \
+    pixman_composite_src_n_8_8888_process_pixblock_tail, \
+    pixman_composite_src_n_8_8888_process_pixblock_tail_head, \
+
+/******************************************************************************/
+
+.macro pixman_composite_src_n_8_8_process_pixblock_head
+    vmull.u8    q0, d24, d16
+    vmull.u8    q1, d25, d16
+    vmull.u8    q2, d26, d16
+    vmull.u8    q3, d27, d16
+    vrsra.u16   q0, q0,  #8
+    vrsra.u16   q1, q1,  #8
+    vrsra.u16   q2, q2,  #8
+    vrsra.u16   q3, q3,  #8
+.endm
+
+.macro pixman_composite_src_n_8_8_process_pixblock_tail
+    vrshrn.u16  d28, q0, #8
+    vrshrn.u16  d29, q1, #8
+    vrshrn.u16  d30, q2, #8
+    vrshrn.u16  d31, q3, #8
+.endm
+
+.macro pixman_composite_src_n_8_8_process_pixblock_tail_head
+    fetch_mask_pixblock
+                                    PF add PF_X, PF_X, #8
+        vrshrn.u16  d28, q0, #8
+                                    PF tst PF_CTL, #0x0F
+        vrshrn.u16  d29, q1, #8
+                                    PF addne PF_X, PF_X, #8
+        vrshrn.u16  d30, q2, #8
+                                    PF subne PF_CTL, PF_CTL, #1
+        vrshrn.u16  d31, q3, #8
+                                    PF cmp PF_X, ORIG_W
+    vmull.u8    q0,  d24, d16
+                                    PF pld, [PF_MASK, PF_X, lsl #mask_bpp_shift]
+    vmull.u8    q1,  d25, d16
+                                    PF subge PF_X, PF_X, ORIG_W
+    vmull.u8    q2,  d26, d16
+                                    PF subges PF_CTL, PF_CTL, #0x10
+    vmull.u8    q3,  d27, d16
+                                    PF ldrgeb DUMMY, [PF_MASK, MASK_STRIDE, lsl #mask_bpp_shift]!
+        vst1.8      {d28, d29, d30, d31}, [DST_W, :128]!
+    vrsra.u16   q0, q0,  #8
+    vrsra.u16   q1, q1,  #8
+    vrsra.u16   q2, q2,  #8
+    vrsra.u16   q3, q3,  #8
+.endm
+
+.macro pixman_composite_src_n_8_8_init
+    add         DUMMY, sp, #ARGS_STACK_OFFSET
+    vld1.32     {d16[0]}, [DUMMY]
+    vdup.8      d16, d16[3]
+.endm
+
+.macro pixman_composite_src_n_8_8_cleanup
+.endm
+
+generate_composite_function \
+    pixman_composite_src_n_8_8_asm_neon, 0, 8, 8, \
+    FLAG_DST_WRITEONLY, \
+    32, /* number of pixels, processed in a single block */ \
+    5, /* prefetch distance */ \
+    pixman_composite_src_n_8_8_init, \
+    pixman_composite_src_n_8_8_cleanup, \
+    pixman_composite_src_n_8_8_process_pixblock_head, \
+    pixman_composite_src_n_8_8_process_pixblock_tail, \
+    pixman_composite_src_n_8_8_process_pixblock_tail_head
+
+/******************************************************************************/
+
 .macro pixman_composite_over_n_8_8888_process_pixblock_head
     /* expecting deinterleaved source data in {d8, d9, d10, d11} */
     /* d8 - blue, d9 - green, d10 - red, d11 - alpha */
@@ -1182,49 +1366,83 @@ generate_composite_function \
     /* mask is in d24 (d25, d26, d27 are unused) */
 
     /* in */
-    vmull.u8    q0, d24, d8
-    vmull.u8    q1, d24, d9
-    vmull.u8    q6, d24, d10
-    vmull.u8    q7, d24, d11
-    vrshr.u16   q10, q0, #8
-    vrshr.u16   q11, q1, #8
-    vrshr.u16   q12, q6, #8
-    vrshr.u16   q13, q7, #8
-    vraddhn.u16 d0, q0, q10
-    vraddhn.u16 d1, q1, q11
-    vraddhn.u16 d2, q6, q12
-    vraddhn.u16 d3, q7, q13
-    vmvn.8      d24, d3  /* get inverted alpha */
+    vmull.u8    q6, d24, d8
+    vmull.u8    q7, d24, d9
+    vmull.u8    q8, d24, d10
+    vmull.u8    q9, d24, d11
+    vrshr.u16   q10, q6, #8
+    vrshr.u16   q11, q7, #8
+    vrshr.u16   q12, q8, #8
+    vrshr.u16   q13, q9, #8
+    vraddhn.u16 d0, q6, q10
+    vraddhn.u16 d1, q7, q11
+    vraddhn.u16 d2, q8, q12
+    vraddhn.u16 d3, q9, q13
+    vmvn.8      d25, d3  /* get inverted alpha */
     /* source:      d0 - blue, d1 - green, d2 - red, d3 - alpha */
     /* destination: d4 - blue, d5 - green, d6 - red, d7 - alpha */
     /* now do alpha blending */
-    vmull.u8    q8, d24, d4
-    vmull.u8    q9, d24, d5
-    vmull.u8    q10, d24, d6
-    vmull.u8    q11, d24, d7
+    vmull.u8    q8, d25, d4
+    vmull.u8    q9, d25, d5
+    vmull.u8    q10, d25, d6
+    vmull.u8    q11, d25, d7
 .endm
 
 .macro pixman_composite_over_n_8_8888_process_pixblock_tail
     vrshr.u16   q14, q8, #8
     vrshr.u16   q15, q9, #8
-    vrshr.u16   q12, q10, #8
-    vrshr.u16   q13, q11, #8
+    vrshr.u16   q6, q10, #8
+    vrshr.u16   q7, q11, #8
     vraddhn.u16 d28, q14, q8
     vraddhn.u16 d29, q15, q9
-    vraddhn.u16 d30, q12, q10
-    vraddhn.u16 d31, q13, q11
+    vraddhn.u16 d30, q6, q10
+    vraddhn.u16 d31, q7, q11
     vqadd.u8    q14, q0, q14
     vqadd.u8    q15, q1, q15
 .endm
 
-/* TODO: expand macros and do better instructions scheduling */
 .macro pixman_composite_over_n_8_8888_process_pixblock_tail_head
-    pixman_composite_over_n_8_8888_process_pixblock_tail
-    vst4.8      {d28, d29, d30, d31}, [DST_W, :128]!
+        vrshr.u16   q14, q8, #8
     vld4.8      {d4, d5, d6, d7}, [DST_R, :128]!
+        vrshr.u16   q15, q9, #8
     fetch_mask_pixblock
-    cache_preload 8, 8
-    pixman_composite_over_n_8_8888_process_pixblock_head
+        vrshr.u16   q6, q10, #8
+                                    PF add PF_X, PF_X, #8
+        vrshr.u16   q7, q11, #8
+                                    PF tst PF_CTL, #0x0F
+        vraddhn.u16 d28, q14, q8
+                                    PF addne PF_X, PF_X, #8
+        vraddhn.u16 d29, q15, q9
+                                    PF subne PF_CTL, PF_CTL, #1
+        vraddhn.u16 d30, q6, q10
+                                    PF cmp PF_X, ORIG_W
+        vraddhn.u16 d31, q7, q11
+                                    PF pld, [PF_DST, PF_X, lsl #dst_bpp_shift]
+    vmull.u8    q6, d24, d8
+                                    PF pld, [PF_MASK, PF_X, lsl #mask_bpp_shift]
+    vmull.u8    q7, d24, d9
+                                    PF subge PF_X, PF_X, ORIG_W
+    vmull.u8    q8, d24, d10
+                                    PF subges PF_CTL, PF_CTL, #0x10
+    vmull.u8    q9, d24, d11
+                                    PF ldrgeb DUMMY, [PF_DST, DST_STRIDE, lsl #dst_bpp_shift]!
+        vqadd.u8    q14, q0, q14
+                                    PF ldrgeb DUMMY, [PF_MASK, MASK_STRIDE, lsl #mask_bpp_shift]!
+        vqadd.u8    q15, q1, q15
+    vrshr.u16   q10, q6, #8
+    vrshr.u16   q11, q7, #8
+    vrshr.u16   q12, q8, #8
+    vrshr.u16   q13, q9, #8
+    vraddhn.u16 d0, q6, q10
+    vraddhn.u16 d1, q7, q11
+    vraddhn.u16 d2, q8, q12
+    vraddhn.u16 d3, q9, q13
+        vst4.8      {d28, d29, d30, d31}, [DST_W, :128]!
+    vmvn.8      d25, d3
+    vmull.u8    q8, d25, d4
+    vmull.u8    q9, d25, d5
+    vmull.u8    q10, d25, d6
+    vmull.u8    q11, d25, d7
 .endm
 
 .macro pixman_composite_over_n_8_8888_init
@@ -2488,6 +2706,56 @@ generate_composite_function \
 
 /******************************************************************************/
 
+.macro pixman_composite_out_reverse_8_8888_process_pixblock_head
+    /* src is in d0 */
+    /* destination pixel data is in {d4, d5, d6, d7} */
+    vmvn.8      d1, d0 /* get inverted alpha */
+    /* now do alpha blending */
+    vmull.u8    q8, d1, d4
+    vmull.u8    q9, d1, d5
+    vmull.u8    q10, d1, d6
+    vmull.u8    q11, d1, d7
+.endm
+
+.macro pixman_composite_out_reverse_8_8888_process_pixblock_tail
+    vrshr.u16   q14, q8, #8
+    vrshr.u16   q15, q9, #8
+    vrshr.u16   q12, q10, #8
+    vrshr.u16   q13, q11, #8
+    vraddhn.u16 d28, q14, q8
+    vraddhn.u16 d29, q15, q9
+    vraddhn.u16 d30, q12, q10
+    vraddhn.u16 d31, q13, q11
+    /* 32bpp result is in {d28, d29, d30, d31} */
+.endm
+
+/* TODO: expand macros and do better instructions scheduling */
+.macro pixman_composite_out_reverse_8_8888_process_pixblock_tail_head
+    fetch_src_pixblock
+    pixman_composite_out_reverse_8_8888_process_pixblock_tail
+    vld4.8    {d4, d5, d6, d7}, [DST_R, :128]!
+    cache_preload 8, 8
+    pixman_composite_out_reverse_8_8888_process_pixblock_head
+    vst4.8    {d28, d29, d30, d31}, [DST_W, :128]!
+.endm
+
+generate_composite_function \
+    pixman_composite_out_reverse_8_8888_asm_neon, 8, 0, 32, \
+    FLAG_DST_READWRITE | FLAG_DEINTERLEAVE_32BPP, \
+    8, /* number of pixels, processed in a single block */ \
+    5, /* prefetch distance */ \
+    default_init, \
+    default_cleanup, \
+    pixman_composite_out_reverse_8_8888_process_pixblock_head, \
+    pixman_composite_out_reverse_8_8888_process_pixblock_tail, \
+    pixman_composite_out_reverse_8_8888_process_pixblock_tail_head, \
+    28, /* dst_w_basereg */ \
+    4, /* dst_r_basereg */ \
+    0, /* src_basereg   */ \
+    0   /* mask_basereg  */
+
+/******************************************************************************/
+
 generate_composite_function_nearest_scanline \
     pixman_scaled_nearest_scanline_8888_8888_OVER_asm_neon, 32, 0, 32, \
     FLAG_DST_READWRITE | FLAG_DEINTERLEAVE_32BPP, \
@@ -2719,11 +2987,11 @@ fname:
     vmull.u8  q1, d0, d28
     vmlal.u8  q1, d1, d29
     /* 5 cycles bubble */
-    vshll.u16 q0, d2, #8
+    vshll.u16 q0, d2, #BILINEAR_INTERPOLATION_BITS
     vmlsl.u16 q0, d2, d30
     vmlal.u16 q0, d3, d30
     /* 5 cycles bubble */
-    vshrn.u32 d0, q0, #16
+    vshrn.u32 d0, q0, #(2 * BILINEAR_INTERPOLATION_BITS)
     /* 3 cycles bubble */
     vmovn.u16 d0, q0
     /* 1 cycle bubble */
@@ -2733,15 +3001,15 @@ fname:
 .macro bilinear_interpolate_two_pixels src_fmt, dst_fmt
     bilinear_load_and_vertical_interpolate_two_&src_fmt \
                 q1, q11, d0, d1, d20, d21, d22, d23
-    vshll.u16 q0, d2, #8
+    vshll.u16 q0, d2, #BILINEAR_INTERPOLATION_BITS
     vmlsl.u16 q0, d2, d30
     vmlal.u16 q0, d3, d30
-    vshll.u16 q10, d22, #8
+    vshll.u16 q10, d22, #BILINEAR_INTERPOLATION_BITS
     vmlsl.u16 q10, d22, d31
     vmlal.u16 q10, d23, d31
-    vshrn.u32 d0, q0, #16
-    vshrn.u32 d1, q10, #16
-    vshr.u16  q15, q12, #8
+    vshrn.u32 d0, q0, #(2 * BILINEAR_INTERPOLATION_BITS)
+    vshrn.u32 d1, q10, #(2 * BILINEAR_INTERPOLATION_BITS)
+    vshr.u16  q15, q12, #(16 - BILINEAR_INTERPOLATION_BITS)
     vadd.u16  q12, q12, q13
     vmovn.u16 d0, q0
     bilinear_store_&dst_fmt 2, q2, q3
@@ -2753,26 +3021,26 @@ fname:
                 q3, q9,  d4, d5, d16, d17, d18, d19
     pld       [TMP1, PF_OFFS]
     sub       TMP1, TMP1, STRIDE
-    vshll.u16 q0, d2, #8
+    vshll.u16 q0, d2, #BILINEAR_INTERPOLATION_BITS
     vmlsl.u16 q0, d2, d30
     vmlal.u16 q0, d3, d30
-    vshll.u16 q10, d22, #8
+    vshll.u16 q10, d22, #BILINEAR_INTERPOLATION_BITS
     vmlsl.u16 q10, d22, d31
     vmlal.u16 q10, d23, d31
-    vshr.u16  q15, q12, #8
-    vshll.u16 q2, d6, #8
+    vshr.u16  q15, q12, #(16 - BILINEAR_INTERPOLATION_BITS)
+    vshll.u16 q2, d6, #BILINEAR_INTERPOLATION_BITS
     vmlsl.u16 q2, d6, d30
     vmlal.u16 q2, d7, d30
-    vshll.u16 q8, d18, #8
+    vshll.u16 q8, d18, #BILINEAR_INTERPOLATION_BITS
     pld       [TMP2, PF_OFFS]
     vmlsl.u16 q8, d18, d31
     vmlal.u16 q8, d19, d31
     vadd.u16  q12, q12, q13
-    vshrn.u32 d0, q0, #16
-    vshrn.u32 d1, q10, #16
-    vshrn.u32 d4, q2, #16
-    vshrn.u32 d5, q8, #16
-    vshr.u16  q15, q12, #8
+    vshrn.u32 d0, q0, #(2 * BILINEAR_INTERPOLATION_BITS)
+    vshrn.u32 d1, q10, #(2 * BILINEAR_INTERPOLATION_BITS)
+    vshrn.u32 d4, q2, #(2 * BILINEAR_INTERPOLATION_BITS)
+    vshrn.u32 d5, q8, #(2 * BILINEAR_INTERPOLATION_BITS)
+    vshr.u16  q15, q12, #(16 - BILINEAR_INTERPOLATION_BITS)
     vmovn.u16 d0, q0
     vmovn.u16 d1, q2
     vadd.u16  q12, q12, q13
@@ -2891,13 +3159,13 @@ pixman_asm_function fname
     blt       0f
     tst       OUT, #(1 << dst_bpp_shift)
     beq       0f
-    vshr.u16  q15, q12, #8
+    vshr.u16  q15, q12, #(16 - BILINEAR_INTERPOLATION_BITS)
     vadd.u16  q12, q12, q13
     bilinear_interpolate_last_pixel src_fmt, dst_fmt
     sub       WIDTH, WIDTH, #1
 0:
     vadd.u16  q13, q13, q13
-    vshr.u16  q15, q12, #8
+    vshr.u16  q15, q12, #(16 - BILINEAR_INTERPOLATION_BITS)
     vadd.u16  q12, q12, q13
 
     cmp       WIDTH, #2
@@ -3015,7 +3283,7 @@ pixman_asm_function fname
     vmull.u8  q10, d22, d28
     vmlal.u8  q10, d23, d29
 
-    vshll.u16 q0, d16, #8
+    vshll.u16 q0, d16, #BILINEAR_INTERPOLATION_BITS
     vmlsl.u16 q0, d16, d30
     vmlal.u16 q0, d17, d30
 
@@ -3026,25 +3294,25 @@ pixman_asm_function fname
     vmull.u8  q11, d16, d28
     vmlal.u8  q11, d17, d29
 
-    vshll.u16 q1, d18, #8
+    vshll.u16 q1, d18, #BILINEAR_INTERPOLATION_BITS
     vmlsl.u16 q1, d18, d31
 .endm
 
 .macro bilinear_interpolate_four_pixels_8888_8888_tail
     vmlal.u16 q1, d19, d31
-    vshr.u16  q15, q12, #8
-    vshll.u16 q2, d20, #8
+    vshr.u16  q15, q12, #(16 - BILINEAR_INTERPOLATION_BITS)
+    vshll.u16 q2, d20, #BILINEAR_INTERPOLATION_BITS
     vmlsl.u16 q2, d20, d30
     vmlal.u16 q2, d21, d30
-    vshll.u16 q3, d22, #8
+    vshll.u16 q3, d22, #BILINEAR_INTERPOLATION_BITS
     vmlsl.u16 q3, d22, d31
     vmlal.u16 q3, d23, d31
     vadd.u16  q12, q12, q13
-    vshrn.u32 d0, q0, #16
-    vshrn.u32 d1, q1, #16
-    vshrn.u32 d4, q2, #16
-    vshr.u16  q15, q12, #8
-    vshrn.u32 d5, q3, #16
+    vshrn.u32 d0, q0, #(2 * BILINEAR_INTERPOLATION_BITS)
+    vshrn.u32 d1, q1, #(2 * BILINEAR_INTERPOLATION_BITS)
+    vshrn.u32 d4, q2, #(2 * BILINEAR_INTERPOLATION_BITS)
+    vshr.u16  q15, q12, #(16 - BILINEAR_INTERPOLATION_BITS)
+    vshrn.u32 d5, q3, #(2 * BILINEAR_INTERPOLATION_BITS)
     vmovn.u16 d6, q0
     vmovn.u16 d7, q2
     vadd.u16  q12, q12, q13
@@ -3059,22 +3327,22 @@ pixman_asm_function fname
     add       X, X, UX
     add       TMP2, TOP, TMP2, asl #2
         vmlal.u16 q1, d19, d31
-        vshr.u16  q15, q12, #8
-        vshll.u16 q2, d20, #8
+        vshr.u16  q15, q12, #(16 - BILINEAR_INTERPOLATION_BITS)
+        vshll.u16 q2, d20, #BILINEAR_INTERPOLATION_BITS
         vmlsl.u16 q2, d20, d30
         vmlal.u16 q2, d21, d30
-        vshll.u16 q3, d22, #8
+        vshll.u16 q3, d22, #BILINEAR_INTERPOLATION_BITS
     vld1.32   {d20}, [TMP1], STRIDE
         vmlsl.u16 q3, d22, d31
         vmlal.u16 q3, d23, d31
     vld1.32   {d21}, [TMP1]
     vmull.u8  q8, d20, d28
     vmlal.u8  q8, d21, d29
-        vshrn.u32 d0, q0, #16
-        vshrn.u32 d1, q1, #16
-        vshrn.u32 d4, q2, #16
+        vshrn.u32 d0, q0, #(2 * BILINEAR_INTERPOLATION_BITS)
+        vshrn.u32 d1, q1, #(2 * BILINEAR_INTERPOLATION_BITS)
+        vshrn.u32 d4, q2, #(2 * BILINEAR_INTERPOLATION_BITS)
     vld1.32   {d22}, [TMP2], STRIDE
-        vshrn.u32 d5, q3, #16
+        vshrn.u32 d5, q3, #(2 * BILINEAR_INTERPOLATION_BITS)
         vadd.u16  q12, q12, q13
     vld1.32   {d23}, [TMP2]
     vmull.u8  q9, d22, d28
@@ -3086,12 +3354,12 @@ pixman_asm_function fname
     add       TMP4, TOP, TMP4, asl #2
     vmlal.u8  q9, d23, d29
     vld1.32   {d22}, [TMP3], STRIDE
-        vshr.u16  q15, q12, #8
+        vshr.u16  q15, q12, #(16 - BILINEAR_INTERPOLATION_BITS)
     vld1.32   {d23}, [TMP3]
     vmull.u8  q10, d22, d28
     vmlal.u8  q10, d23, d29
         vmovn.u16 d6, q0
-    vshll.u16 q0, d16, #8
+    vshll.u16 q0, d16, #BILINEAR_INTERPOLATION_BITS
         vmovn.u16 d7, q2
     vmlsl.u16 q0, d16, d30
     vmlal.u16 q0, d17, d30
@@ -3103,7 +3371,7 @@ pixman_asm_function fname
     vmull.u8  q11, d16, d28
     vmlal.u8  q11, d17, d29
         vst1.32   {d6, d7}, [OUT, :128]!
-    vshll.u16 q1, d18, #8
+    vshll.u16 q1, d18, #BILINEAR_INTERPOLATION_BITS
     vmlsl.u16 q1, d18, d31
 .endm
 
@@ -3136,7 +3404,7 @@ pixman_asm_function fname
     vld1.32   {d23}, [TMP3]
     vmull.u8  q10, d22, d28
     vmlal.u8  q10, d23, d29
-    vshll.u16 q0, d16, #8
+    vshll.u16 q0, d16, #BILINEAR_INTERPOLATION_BITS
     vmlsl.u16 q0, d16, d30
     vmlal.u16 q0, d17, d30
     pld       [TMP4, PF_OFFS]
@@ -3145,7 +3413,7 @@ pixman_asm_function fname
     pld       [TMP4, PF_OFFS]
     vmull.u8  q11, d16, d28
     vmlal.u8  q11, d17, d29
-    vshll.u16 q1, d18, #8
+    vshll.u16 q1, d18, #BILINEAR_INTERPOLATION_BITS
     vmlsl.u16 q1, d18, d31
 
     mov       TMP1, X, asr #16
@@ -3155,22 +3423,22 @@ pixman_asm_function fname
     add       X, X, UX
     add       TMP2, TOP, TMP2, asl #2
         vmlal.u16 q1, d19, d31
-        vshr.u16  q15, q12, #8
-        vshll.u16 q2, d20, #8
+        vshr.u16  q15, q12, #(16 - BILINEAR_INTERPOLATION_BITS)
+        vshll.u16 q2, d20, #BILINEAR_INTERPOLATION_BITS
         vmlsl.u16 q2, d20, d30
         vmlal.u16 q2, d21, d30
-        vshll.u16 q3, d22, #8
+        vshll.u16 q3, d22, #BILINEAR_INTERPOLATION_BITS
     vld1.32   {d20}, [TMP1], STRIDE
         vmlsl.u16 q3, d22, d31
         vmlal.u16 q3, d23, d31
     vld1.32   {d21}, [TMP1]
     vmull.u8  q8, d20, d28
     vmlal.u8  q8, d21, d29
-        vshrn.u32 d0, q0, #16
-        vshrn.u32 d1, q1, #16
-        vshrn.u32 d4, q2, #16
+        vshrn.u32 d0, q0, #(2 * BILINEAR_INTERPOLATION_BITS)
+        vshrn.u32 d1, q1, #(2 * BILINEAR_INTERPOLATION_BITS)
+        vshrn.u32 d4, q2, #(2 * BILINEAR_INTERPOLATION_BITS)
     vld1.32   {d22}, [TMP2], STRIDE
-        vshrn.u32 d5, q3, #16
+        vshrn.u32 d5, q3, #(2 * BILINEAR_INTERPOLATION_BITS)
         vadd.u16  q12, q12, q13
     vld1.32   {d23}, [TMP2]
     vmull.u8  q9, d22, d28
@@ -3182,12 +3450,12 @@ pixman_asm_function fname
     add       TMP4, TOP, TMP4, asl #2
     vmlal.u8  q9, d23, d29
     vld1.32   {d22}, [TMP3], STRIDE
-        vshr.u16  q15, q12, #8
+        vshr.u16  q15, q12, #(16 - BILINEAR_INTERPOLATION_BITS)
     vld1.32   {d23}, [TMP3]
     vmull.u8  q10, d22, d28
     vmlal.u8  q10, d23, d29
         vmovn.u16 d8, q0
-    vshll.u16 q0, d16, #8
+    vshll.u16 q0, d16, #BILINEAR_INTERPOLATION_BITS
         vmovn.u16 d9, q2
     vmlsl.u16 q0, d16, d30
     vmlal.u16 q0, d17, d30
@@ -3198,25 +3466,25 @@ pixman_asm_function fname
     pld       [TMP4, PF_OFFS]
     vmull.u8  q11, d16, d28
     vmlal.u8  q11, d17, d29
-    vshll.u16 q1, d18, #8
+    vshll.u16 q1, d18, #BILINEAR_INTERPOLATION_BITS
     vmlsl.u16 q1, d18, d31
 .endm
 
 .macro bilinear_interpolate_eight_pixels_8888_0565_tail
     vmlal.u16 q1, d19, d31
-    vshr.u16  q15, q12, #8
-    vshll.u16 q2, d20, #8
+    vshr.u16  q15, q12, #(16 - BILINEAR_INTERPOLATION_BITS)
+    vshll.u16 q2, d20, #BILINEAR_INTERPOLATION_BITS
     vmlsl.u16 q2, d20, d30
     vmlal.u16 q2, d21, d30
-    vshll.u16 q3, d22, #8
+    vshll.u16 q3, d22, #BILINEAR_INTERPOLATION_BITS
     vmlsl.u16 q3, d22, d31
     vmlal.u16 q3, d23, d31
     vadd.u16  q12, q12, q13
-    vshrn.u32 d0, q0, #16
-    vshrn.u32 d1, q1, #16
-    vshrn.u32 d4, q2, #16
-    vshr.u16  q15, q12, #8
-    vshrn.u32 d5, q3, #16
+    vshrn.u32 d0, q0, #(2 * BILINEAR_INTERPOLATION_BITS)
+    vshrn.u32 d1, q1, #(2 * BILINEAR_INTERPOLATION_BITS)
+    vshrn.u32 d4, q2, #(2 * BILINEAR_INTERPOLATION_BITS)
+    vshr.u16  q15, q12, #(16 - BILINEAR_INTERPOLATION_BITS)
+    vshrn.u32 d5, q3, #(2 * BILINEAR_INTERPOLATION_BITS)
     vmovn.u16 d10, q0
     vmovn.u16 d11, q2
     vadd.u16  q12, q12, q13
@@ -3241,23 +3509,23 @@ pixman_asm_function fname
     add       X, X, UX
     add       TMP2, TOP, TMP2, asl #2
         vmlal.u16 q1, d19, d31
-        vshr.u16  q15, q12, #8
+        vshr.u16  q15, q12, #(16 - BILINEAR_INTERPOLATION_BITS)
             vuzp.u8 d8, d9
-        vshll.u16 q2, d20, #8
+        vshll.u16 q2, d20, #BILINEAR_INTERPOLATION_BITS
         vmlsl.u16 q2, d20, d30
         vmlal.u16 q2, d21, d30
-        vshll.u16 q3, d22, #8
+        vshll.u16 q3, d22, #BILINEAR_INTERPOLATION_BITS
     vld1.32   {d20}, [TMP1], STRIDE
         vmlsl.u16 q3, d22, d31
         vmlal.u16 q3, d23, d31
     vld1.32   {d21}, [TMP1]
     vmull.u8  q8, d20, d28
     vmlal.u8  q8, d21, d29
-        vshrn.u32 d0, q0, #16
-        vshrn.u32 d1, q1, #16
-        vshrn.u32 d4, q2, #16
+        vshrn.u32 d0, q0, #(2 * BILINEAR_INTERPOLATION_BITS)
+        vshrn.u32 d1, q1, #(2 * BILINEAR_INTERPOLATION_BITS)
+        vshrn.u32 d4, q2, #(2 * BILINEAR_INTERPOLATION_BITS)
     vld1.32   {d22}, [TMP2], STRIDE
-        vshrn.u32 d5, q3, #16
+        vshrn.u32 d5, q3, #(2 * BILINEAR_INTERPOLATION_BITS)
         vadd.u16  q12, q12, q13
     vld1.32   {d23}, [TMP2]
     vmull.u8  q9, d22, d28
@@ -3269,12 +3537,12 @@ pixman_asm_function fname
     add       TMP4, TOP, TMP4, asl #2
     vmlal.u8  q9, d23, d29
     vld1.32   {d22}, [TMP3], STRIDE
-        vshr.u16  q15, q12, #8
+        vshr.u16  q15, q12, #(16 - BILINEAR_INTERPOLATION_BITS)
     vld1.32   {d23}, [TMP3]
     vmull.u8  q10, d22, d28
     vmlal.u8  q10, d23, d29
         vmovn.u16 d10, q0
-    vshll.u16 q0, d16, #8
+    vshll.u16 q0, d16, #BILINEAR_INTERPOLATION_BITS
         vmovn.u16 d11, q2
     vmlsl.u16 q0, d16, d30
     vmlal.u16 q0, d17, d30
@@ -3286,7 +3554,7 @@ pixman_asm_function fname
     vmull.u8  q11, d16, d28
     vmlal.u8  q11, d17, d29
             vuzp.u8 d10, d11
-    vshll.u16 q1, d18, #8
+    vshll.u16 q1, d18, #BILINEAR_INTERPOLATION_BITS
     vmlsl.u16 q1, d18, d31
 
     mov       TMP1, X, asr #16
@@ -3297,12 +3565,12 @@ pixman_asm_function fname
     add       TMP2, TOP, TMP2, asl #2
         vmlal.u16 q1, d19, d31
             vuzp.u8 d9, d11
-        vshr.u16  q15, q12, #8
-        vshll.u16 q2, d20, #8
+        vshr.u16  q15, q12, #(16 - BILINEAR_INTERPOLATION_BITS)
+        vshll.u16 q2, d20, #BILINEAR_INTERPOLATION_BITS
             vuzp.u8 d8, d10
         vmlsl.u16 q2, d20, d30
         vmlal.u16 q2, d21, d30
-        vshll.u16 q3, d22, #8
+        vshll.u16 q3, d22, #BILINEAR_INTERPOLATION_BITS
     vld1.32   {d20}, [TMP1], STRIDE
         vmlsl.u16 q3, d22, d31
         vmlal.u16 q3, d23, d31
@@ -3312,13 +3580,13 @@ pixman_asm_function fname
             vshll.u8  q6, d9, #8
             vshll.u8  q5, d10, #8
             vshll.u8  q7, d8, #8
-        vshrn.u32 d0, q0, #16
+        vshrn.u32 d0, q0, #(2 * BILINEAR_INTERPOLATION_BITS)
             vsri.u16  q5, q6, #5
-        vshrn.u32 d1, q1, #16
+        vshrn.u32 d1, q1, #(2 * BILINEAR_INTERPOLATION_BITS)
             vsri.u16  q5, q7, #11
-        vshrn.u32 d4, q2, #16
+        vshrn.u32 d4, q2, #(2 * BILINEAR_INTERPOLATION_BITS)
     vld1.32   {d22}, [TMP2], STRIDE
-        vshrn.u32 d5, q3, #16
+        vshrn.u32 d5, q3, #(2 * BILINEAR_INTERPOLATION_BITS)
         vadd.u16  q12, q12, q13
     vld1.32   {d23}, [TMP2]
     vmull.u8  q9, d22, d28
@@ -3330,12 +3598,12 @@ pixman_asm_function fname
     add       TMP4, TOP, TMP4, asl #2
     vmlal.u8  q9, d23, d29
     vld1.32   {d22}, [TMP3], STRIDE
-        vshr.u16  q15, q12, #8
+        vshr.u16  q15, q12, #(16 - BILINEAR_INTERPOLATION_BITS)
     vld1.32   {d23}, [TMP3]
     vmull.u8  q10, d22, d28
     vmlal.u8  q10, d23, d29
         vmovn.u16 d8, q0
-    vshll.u16 q0, d16, #8
+    vshll.u16 q0, d16, #BILINEAR_INTERPOLATION_BITS
         vmovn.u16 d9, q2
     vmlsl.u16 q0, d16, d30
     vmlal.u16 q0, d17, d30
@@ -3346,7 +3614,7 @@ pixman_asm_function fname
     pld       [TMP4, PF_OFFS]
     vmull.u8  q11, d16, d28
     vmlal.u8  q11, d17, d29
-    vshll.u16 q1, d18, #8
+    vshll.u16 q1, d18, #BILINEAR_INTERPOLATION_BITS
             vst1.32   {d10, d11}, [OUT, :128]!
     vmlsl.u16 q1, d18, d31
 .endm

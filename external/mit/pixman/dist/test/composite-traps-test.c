@@ -1,6 +1,5 @@
 /* Based loosely on scaling-test */
 
-#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "utils.h"
@@ -252,6 +251,6 @@ test_composite (int      testnum,
 int
 main (int argc, const char *argv[])
 {
-    return fuzzer_test_main("composite traps", 40000, 0xE3112106,
+    return fuzzer_test_main("composite traps", 40000, 0x33BFAA55,
 			    test_composite, argc, argv);
 }

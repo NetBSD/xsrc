@@ -5,10 +5,8 @@
  * Script 'fuzzer-find-diff.pl' can be used to narrow down the problem in
  * the case of test failure.
  */
-#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <config.h>
 #include "utils.h"
 
 static pixman_indexed_t rgb_palette[9];
@@ -69,6 +67,9 @@ create_random_image (pixman_format_code_t *allowed_formats,
 	pixman_image_set_indexed (img, &(y_palette[PIXMAN_FORMAT_BPP (fmt)]));
     }
 
+    if (lcg_rand_n (16) == 0)
+	pixman_image_set_filter (img, PIXMAN_FILTER_BILINEAR, NULL, 0);
+
     image_endian_swap (img);
 
     if (used_fmt) *used_fmt = fmt;
@@ -82,39 +83,10 @@ free_random_image (uint32_t initcrc,
 		   pixman_format_code_t fmt)
 {
     uint32_t crc32 = 0;
-    int stride = pixman_image_get_stride (img);
     uint32_t *data = pixman_image_get_data (img);
-    int height = pixman_image_get_height (img);
 
     if (fmt != PIXMAN_null)
-    {
-	/* mask unused 'x' part */
-	if (PIXMAN_FORMAT_BPP (fmt) - PIXMAN_FORMAT_DEPTH (fmt) &&
-	    PIXMAN_FORMAT_DEPTH (fmt) != 0)
-	{
-	    int i;
-	    uint32_t *data = pixman_image_get_data (img);
-	    uint32_t mask = (1 << PIXMAN_FORMAT_DEPTH (fmt)) - 1;
-
-	    if (PIXMAN_FORMAT_TYPE (fmt) == PIXMAN_TYPE_BGRA ||
-		PIXMAN_FORMAT_TYPE (fmt) == PIXMAN_TYPE_RGBA)
-	    {
-		mask <<= (PIXMAN_FORMAT_BPP (fmt) - PIXMAN_FORMAT_DEPTH (fmt));
-	    }
-
-	    for (i = 0; i < 32; i++)
-		mask |= mask << (i * PIXMAN_FORMAT_BPP (fmt));
-
-	    for (i = 0; i < stride * height / 4; i++)
-		data[i] &= mask;
-	}
-
-	/* swap endiannes in order to provide identical results on both big
-	 * and litte endian systems
-	 */
-	image_endian_swap (img);
-	crc32 = compute_crc32 (initcrc, data, stride * height);
-    }
+	crc32 = compute_crc32_for_image (initcrc, img);
 
     pixman_image_unref (img);
     free (data);
@@ -200,10 +172,12 @@ static pixman_format_code_t img_fmt_list[] = {
     PIXMAN_x14r6g6b6,
     PIXMAN_r8g8b8,
     PIXMAN_b8g8r8,
+#if 0 /* These are going to use floating point in the near future */
     PIXMAN_x2r10g10b10,
     PIXMAN_a2r10g10b10,
     PIXMAN_x2b10g10r10,
     PIXMAN_a2b10g10r10,
+#endif
     PIXMAN_a1r5g5b5,
     PIXMAN_x1r5g5b5,
     PIXMAN_a1b5g5r5,
@@ -279,7 +253,7 @@ test_composite (int testnum, int verbose)
 
     lcg_srand (testnum);
 
-    op = op_list[lcg_rand_n (sizeof (op_list) / sizeof (op_list[0]))];
+    op = op_list[lcg_rand_n (ARRAY_LENGTH (op_list))];
 
     if (lcg_rand_n (8))
     {
@@ -423,6 +397,6 @@ main (int argc, const char *argv[])
     }
 
     return fuzzer_test_main("blitters", 2000000,
-			    0xB610300B,
+			    0x46136E0A,
 			    test_composite, argc, argv);
 }
