@@ -52,8 +52,7 @@
 /* private data */
 typedef struct {
 	int			fd; /* file descriptor of open device */
-	struct wsdisplay_fbinfo info; /* frame buffer characteristics */
-	int			linebytes; /* number of bytes per row */
+	struct wsdisplayio_fbinfo fbi;
 	int			rotate;
 	unsigned char*		fbstart;
 	unsigned char*		fbmem;
