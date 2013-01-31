@@ -176,6 +176,39 @@ detect_cpu_features (void)
     return features;
 }
 
+#elif defined (__NetBSD__) /* NetBSD */
+
+#include <sys/sysctl.h>
+
+static arm_cpu_features_t
+detect_cpu_features (void)
+{
+    arm_cpu_features_t features = 0;
+    size_t len;
+    int flag;
+
+    len = sizeof(flag);
+    if (sysctlbyname("machdep.fpu_present", &flag, &len, NULL, 0) == 0)
+    {
+        if (flag)
+            features |= ARM_VFP;
+    }
+    len = sizeof(flag);
+    if (sysctlbyname("machdep.simdex_present", &flag, &len, NULL, 0) == 0)
+    {
+        if (flag)
+            features |= ARM_V6;
+    }
+    len = sizeof(flag);
+    if (sysctlbyname("machdep.neon_present", &flag, &len, NULL, 0) == 0)
+    {
+        if (flag)
+            features |= ARM_NEON;
+    }
+
+    return features;
+}
+
 #else /* Unknown */
 
 static arm_cpu_features_t
