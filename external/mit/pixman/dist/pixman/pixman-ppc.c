@@ -48,7 +48,7 @@ pixman_have_vmx (void)
     return have_vmx;
 }
 
-#elif defined (__OpenBSD__)
+#elif defined (__OpenBSD__) || defined(__NetBSD__)
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <machine/cpu.h>
