@@ -131,7 +131,7 @@
 /* #undef USE_VMX */
 
 /* Version number of package */
-#define VERSION "0.23.2"
+#define VERSION "0.28.2"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
