@@ -66,6 +66,9 @@ R600CopyToVRAM(ScrnInfoPtr pScrn,
 #define IMAGE_MAX_WIDTH_R600	8192
 #define IMAGE_MAX_HEIGHT_R600	8192
 
+#define IMAGE_MAX_WIDTH_EG	16384
+#define IMAGE_MAX_HEIGHT_EG	16384
+
 static Bool
 RADEONTilingEnabled(ScrnInfoPtr pScrn, PixmapPtr pPix)
 {
@@ -383,7 +386,7 @@ RADEONPutImageTextured(ScrnInfoPtr pScrn,
 
     /* copy data */
     top = (y1 >> 16) & ~1;
-    nlines = RADEON_ALIGN((y2 + 0xffff) >> 16, 2) - top;
+    nlines = ((y2 + 0xffff) >> 16) - top;
 
     pPriv->src_offset = pPriv->video_offset;
     if (info->cs) {
@@ -550,6 +553,16 @@ static XF86VideoEncodingRec DummyEncodingR600[1] =
 	0,
 	"XV_IMAGE",
 	IMAGE_MAX_WIDTH_R600, IMAGE_MAX_HEIGHT_R600,
+	{1, 1}
+    }
+};
+
+static XF86VideoEncodingRec DummyEncodingEG[1] =
+{
+    {
+	0,
+	"XV_IMAGE",
+	IMAGE_MAX_WIDTH_EG, IMAGE_MAX_HEIGHT_EG,
 	{1, 1}
     }
 };
@@ -798,7 +811,7 @@ static void radeon_unload_bicubic_texture(ScrnInfoPtr pScrn)
 XF86VideoAdaptorPtr
 RADEONSetupImageTexturedVideo(ScreenPtr pScreen)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr    info = RADEONPTR(pScrn);
     RADEONPortPrivPtr pPortPriv;
     XF86VideoAdaptorPtr adapt;
@@ -824,7 +837,9 @@ RADEONSetupImageTexturedVideo(ScreenPtr pScreen)
     adapt->flags = 0;
     adapt->name = "Radeon Textured Video";
     adapt->nEncodings = 1;
-    if (IS_R600_3D)
+    if (IS_EVERGREEN_3D)
+	adapt->pEncodings = DummyEncodingEG;
+    else if (IS_R600_3D)
 	adapt->pEncodings = DummyEncodingR600;
     else if (IS_R500_3D)
 	adapt->pEncodings = DummyEncodingR500;

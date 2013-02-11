@@ -233,8 +233,8 @@ atombios_output_dac_setup(xf86OutputPtr output, int action)
     data.exec.dataSpace = (void *)&space;
     data.exec.pspace = &disp_data;
 
-    if (RHDAtomBiosFunc(info->atomBIOS->scrnIndex, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
-	ErrorF("Output DAC%d setup success\n", num);
+    if (RHDAtomBiosFunc(info->atomBIOS->pScrn, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
+/*	ErrorF("Output DAC%d setup success\n", num); */
 	return ATOM_SUCCESS;
     }
 
@@ -297,8 +297,8 @@ atombios_output_tv_setup(xf86OutputPtr output, int action)
     data.exec.dataSpace = (void *)&space;
     data.exec.pspace = &disp_data;
 
-    if (RHDAtomBiosFunc(info->atomBIOS->scrnIndex, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
-	ErrorF("Output TV setup success\n");
+    if (RHDAtomBiosFunc(info->atomBIOS->pScrn, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
+/*	ErrorF("Output TV setup success\n"); */
 	return ATOM_SUCCESS;
     }
 
@@ -332,8 +332,8 @@ atombios_external_tmds_setup(xf86OutputPtr output, int action)
     data.exec.dataSpace = (void *)&space;
     data.exec.pspace = &disp_data;
 
-    if (RHDAtomBiosFunc(info->atomBIOS->scrnIndex, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
-	ErrorF("External TMDS setup success\n");
+    if (RHDAtomBiosFunc(info->atomBIOS->pScrn, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
+/*	ErrorF("External TMDS setup success\n"); */
 	return ATOM_SUCCESS;
     }
 
@@ -363,8 +363,8 @@ atombios_output_ddia_setup(xf86OutputPtr output, int action)
     data.exec.dataSpace = (void *)&space;
     data.exec.pspace = &disp_data;
 
-    if (RHDAtomBiosFunc(info->atomBIOS->scrnIndex, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
-	ErrorF("DDIA setup success\n");
+    if (RHDAtomBiosFunc(info->atomBIOS->pScrn, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
+/*	ErrorF("DDIA setup success\n"); */
 	return ATOM_SUCCESS;
     }
 
@@ -502,8 +502,8 @@ atombios_output_digital_setup(xf86OutputPtr output, int action)
     data.exec.index = index;
     data.exec.dataSpace = (void *)&space;
 
-    if (RHDAtomBiosFunc(info->atomBIOS->scrnIndex, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
-	ErrorF("Output digital setup success\n");
+    if (RHDAtomBiosFunc(info->atomBIOS->pScrn, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
+/*	ErrorF("Output digital setup success\n"); */
 	return ATOM_SUCCESS;
     }
 
@@ -825,8 +825,8 @@ atombios_output_dig_encoder_setup(xf86OutputPtr output, int action)
     data.exec.dataSpace = (void *)&space;
     data.exec.pspace = &disp_data;
 
-    if (RHDAtomBiosFunc(info->atomBIOS->scrnIndex, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
-	ErrorF("Output DIG%d encoder setup success\n", radeon_output->dig_encoder);
+    if (RHDAtomBiosFunc(info->atomBIOS->pScrn, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
+/*	ErrorF("Output DIG%d encoder setup success\n", radeon_output->dig_encoder); */
 	return ATOM_SUCCESS;
     }
 
@@ -1010,11 +1010,13 @@ atombios_output_dig_transmitter_setup(xf86OutputPtr output, int action, uint8_t 
     data.exec.dataSpace = (void *)&space;
     data.exec.pspace = &disp_data;
 
-    if (RHDAtomBiosFunc(info->atomBIOS->scrnIndex, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
+    if (RHDAtomBiosFunc(info->atomBIOS->pScrn, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
+/*
 	if (IS_DCE32_VARIANT)
 	    ErrorF("Output UNIPHY%d transmitter setup success\n", num);
 	else
 	   ErrorF("Output DIG%d transmitter setup success\n", num);
+*/
 	return ATOM_SUCCESS;
     }
 
@@ -1295,11 +1297,11 @@ atombios_output_yuv_setup(xf86OutputPtr output, Bool enable)
     data.exec.dataSpace = (void *)&space;
     data.exec.pspace = &disp_data;
 
-    if (RHDAtomBiosFunc(info->atomBIOS->scrnIndex, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
+    if (RHDAtomBiosFunc(info->atomBIOS->pScrn, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
 
 	OUTREG(reg, temp);
 
-	ErrorF("crtc %d YUV %s setup success\n", radeon_crtc->crtc_id, enable ? "enable" : "disable");
+/*	ErrorF("crtc %d YUV %s setup success\n", radeon_crtc->crtc_id, enable ? "enable" : "disable"); */
 	return ATOM_SUCCESS;
     }
 
@@ -1356,8 +1358,8 @@ atombios_output_overscan_setup(xf86OutputPtr output, DisplayModePtr mode, Displa
     data.exec.dataSpace = (void *)&space;
     data.exec.pspace = &overscan_param;
 
-    if (RHDAtomBiosFunc(info->atomBIOS->scrnIndex, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
-	ErrorF("Set CRTC %d Overscan success\n", radeon_crtc->crtc_id);
+    if (RHDAtomBiosFunc(info->atomBIOS->pScrn, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
+/*	ErrorF("Set CRTC %d Overscan success\n", radeon_crtc->crtc_id); */
 	return ATOM_SUCCESS ;
     }
 
@@ -1414,13 +1416,13 @@ atombios_output_scaler_setup(xf86OutputPtr output)
 	    break;
 	}
 	disp_data.ucEnable = SCALER_ENABLE_MULTITAP_MODE;
-        ErrorF("Using TV scaler %x %x\n", disp_data.ucTVStandard, disp_data.ucEnable);
+/*        ErrorF("Using TV scaler %x %x\n", disp_data.ucTVStandard, disp_data.ucEnable); */
     } else if (radeon_output->active_device & (ATOM_DEVICE_CV_SUPPORT)) {
 	disp_data.ucTVStandard = ATOM_TV_CV;
 	disp_data.ucEnable = SCALER_ENABLE_MULTITAP_MODE;
-        ErrorF("Using CV scaler %x %x\n", disp_data.ucTVStandard, disp_data.ucEnable);
+/*        ErrorF("Using CV scaler %x %x\n", disp_data.ucTVStandard, disp_data.ucEnable); */
     } else if (radeon_output->Flags & RADEON_USE_RMX) {
-	ErrorF("Using RMX\n");
+/*	ErrorF("Using RMX\n"); */
 	if (radeon_output->rmx_type == RMX_FULL)
 	    disp_data.ucEnable = ATOM_SCALER_EXPANSION;
 	else if (radeon_output->rmx_type == RMX_CENTER)
@@ -1428,7 +1430,7 @@ atombios_output_scaler_setup(xf86OutputPtr output)
 	else if (radeon_output->rmx_type == RMX_ASPECT)
 	    disp_data.ucEnable = ATOM_SCALER_EXPANSION;
     } else {
-	ErrorF("Not using RMX\n");
+/*	ErrorF("Not using RMX\n"); */
 	if (IS_AVIVO_VARIANT)
 	    disp_data.ucEnable = ATOM_SCALER_DISABLE;
 	else
@@ -1439,13 +1441,13 @@ atombios_output_scaler_setup(xf86OutputPtr output)
     data.exec.dataSpace = (void *)&space;
     data.exec.pspace = &disp_data;
 
-    if (RHDAtomBiosFunc(info->atomBIOS->scrnIndex, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
+    if (RHDAtomBiosFunc(info->atomBIOS->pScrn, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
 	if (radeon_output->active_device & (ATOM_DEVICE_CV_SUPPORT | ATOM_DEVICE_TV_SUPPORT)
 	    && info->ChipFamily >= CHIP_FAMILY_RV515 && info->ChipFamily <= CHIP_FAMILY_RV570) {
-	    ErrorF("forcing TV scaler\n");
+/*	    ErrorF("forcing TV scaler\n"); */
 	    atom_rv515_force_tv_scaler(output->scrn, radeon_crtc);
 	}
-	ErrorF("scaler %d setup success\n", radeon_crtc->crtc_id);
+/*	ErrorF("scaler %d setup success\n", radeon_crtc->crtc_id); */
 	return ATOM_SUCCESS;
     }
 
@@ -1465,6 +1467,8 @@ atombios_output_dpms(xf86OutputPtr output, int mode)
     unsigned char *space;
     int index = 0;
     Bool is_dig = FALSE;
+    unsigned char *RADEONMMIO = info->MMIO;
+    uint32_t reg = 0;
 
     if (radeon_encoder == NULL)
         return;
@@ -1541,12 +1545,21 @@ atombios_output_dpms(xf86OutputPtr output, int mode)
 	    data.exec.dataSpace = (void *)&space;
 	    data.exec.pspace = &disp_data;
 
-	    if (RHDAtomBiosFunc(info->atomBIOS->scrnIndex, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS)
+	    /* workaround for DVOOutputControl on some RS690 systems */
+	    if (radeon_encoder->encoder_id == ENCODER_OBJECT_ID_INTERNAL_DDI) {
+		reg = INREG(RADEON_BIOS_3_SCRATCH);
+		OUTREG(RADEON_BIOS_3_SCRATCH, reg & ~ATOM_S3_DFP2I_ACTIVE);
+	    }
+	    if (RHDAtomBiosFunc(info->atomBIOS->pScrn, info->atomBIOS, ATOMBIOS_EXEC, &data) != ATOM_SUCCESS)
+/*
 		ErrorF("Output %s enable success\n",
 		       device_name[radeon_get_device_index(radeon_output->active_device)]);
 	    else
+*/
 		ErrorF("Output %s enable failed\n",
 		       device_name[radeon_get_device_index(radeon_output->active_device)]);
+	    if (radeon_encoder->encoder_id == ENCODER_OBJECT_ID_INTERNAL_DDI)
+		OUTREG(RADEON_BIOS_3_SCRATCH, reg);
 	}
 	/* at least for TV atom fails to reassociate the correct crtc source at dpms on */
 	if (radeon_output->active_device & (ATOM_DEVICE_TV_SUPPORT))
@@ -1571,11 +1584,13 @@ atombios_output_dpms(xf86OutputPtr output, int mode)
 		data.exec.dataSpace = (void *)&space;
 		data.exec.pspace = &disp_data;
 
-		if (RHDAtomBiosFunc(info->atomBIOS->scrnIndex, info->atomBIOS, ATOMBIOS_EXEC, &data)
-		    == ATOM_SUCCESS)
+		if (RHDAtomBiosFunc(info->atomBIOS->pScrn, info->atomBIOS, ATOMBIOS_EXEC, &data)
+		    != ATOM_SUCCESS)
+/*
 		    ErrorF("Output %s disable success\n",
 			   device_name[radeon_get_device_index(radeon_output->active_device)]);
 		else
+*/
 		    ErrorF("Output %s disable failed\n",
 			   device_name[radeon_get_device_index(radeon_output->active_device)]);
 	    }
@@ -1725,8 +1740,8 @@ atombios_set_output_crtc_source(xf86OutputPtr output)
     data.exec.index = index;
     data.exec.dataSpace = (void *)&space;
 
-    if (RHDAtomBiosFunc(info->atomBIOS->scrnIndex, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
-	ErrorF("Set CRTC %d Source success\n", radeon_crtc->crtc_id);
+    if (RHDAtomBiosFunc(info->atomBIOS->pScrn, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
+/*	ErrorF("Set CRTC %d Source success\n", radeon_crtc->crtc_id); */
 	return;
     }
 
@@ -1996,8 +2011,8 @@ atom_bios_dac_load_detect(atomBiosHandlePtr atomBIOS, xf86OutputPtr output)
     data.exec.dataSpace = (void *)&space;
     data.exec.pspace = &dac_data;
 
-    if (RHDAtomBiosFunc(atomBIOS->scrnIndex, atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
-	ErrorF("Dac detection success\n");
+    if (RHDAtomBiosFunc(atomBIOS->pScrn, atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
+/*	ErrorF("Dac detection success\n"); */
 	return ATOM_SUCCESS ;
     }
 
@@ -2109,7 +2124,7 @@ retry:
     data.exec.dataSpace = (void *)&space;
     data.exec.pspace = &args;
 
-    RHDAtomBiosFunc(info->atomBIOS->scrnIndex, info->atomBIOS, ATOMBIOS_EXEC, &data);
+    RHDAtomBiosFunc(info->atomBIOS->pScrn, info->atomBIOS, ATOMBIOS_EXEC, &data);
     if (args.v1.ucReplyStatus && !args.v1.ucDataOutLen) {
 	if (args.v1.ucReplyStatus == 0x20 && retry_count++ < 10)
 		goto retry;
@@ -2150,9 +2165,9 @@ RADEONDPEncoderService(xf86OutputPtr output, int action, uint8_t ucconfig, uint8
     data.exec.dataSpace = (void *)&space;
     data.exec.pspace = &args;
 
-    RHDAtomBiosFunc(info->atomBIOS->scrnIndex, info->atomBIOS, ATOMBIOS_EXEC, &data);
+    RHDAtomBiosFunc(info->atomBIOS->pScrn, info->atomBIOS, ATOMBIOS_EXEC, &data);
 
-    ErrorF("%s: %d %d\n", __func__, action, args.ucStatus);
+/*    ErrorF("%s: %d %d\n", __func__, action, args.ucStatus); */
     return args.ucStatus;
 }
 
@@ -2311,7 +2326,7 @@ atom_dp_i2c_address(I2CDevPtr dev, I2CSlaveAddr addr)
 static Bool
 atom_dp_i2c_start(I2CBusPtr bus, int timeout)
 {
-    ErrorF("%s\n", __func__);
+/*    ErrorF("%s\n", __func__); */
     return TRUE;
 }
 
@@ -2458,8 +2473,8 @@ atom_dp_get_link_status(xf86OutputPtr output,
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "dp link status failed\n");
 	return FALSE;
     }
-    ErrorF("link status %02x %02x %02x %02x %02x %02x\n", link_status[0], link_status[1],
-	   link_status[2], link_status[3], link_status[4], link_status[5]);
+/*    ErrorF("link status %02x %02x %02x %02x %02x %02x\n", link_status[0], link_status[1],
+	   link_status[2], link_status[3], link_status[4], link_status[5]); */
 
     return TRUE;
 }

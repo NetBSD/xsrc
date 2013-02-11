@@ -42,22 +42,21 @@ enum {
 
 
 /* SET_*_REG offsets + ends */
-enum {
-    SET_CONFIG_REG_offset          = 0x00008000,
-    SET_CONFIG_REG_end             = 0x0000ac00,
-    SET_CONTEXT_REG_offset         = 0x00028000,
-    SET_CONTEXT_REG_end            = 0x00029000,
-    SET_RESOURCE_offset            = 0x00030000,
-    SET_RESOURCE_end               = 0x00038000,
-    SET_SAMPLER_offset             = 0x0003c000,
-    SET_SAMPLER_end                = 0x0003c600,
-    SET_CTL_CONST_offset           = 0x0003cff0,
-    SET_CTL_CONST_end              = 0x0003ff0c,
-    SET_LOOP_CONST_offset          = 0x0003a200,
-    SET_LOOP_CONST_end             = 0x0003a500,
-    SET_BOOL_CONST_offset          = 0x0003a500,
-    SET_BOOL_CONST_end             = 0x0003a518,
-};
+#define SET_CONFIG_REG_offset  0x00008000
+#define SET_CONFIG_REG_end     0x0000ac00
+#define SET_CONTEXT_REG_offset 0x00028000
+#define SET_CONTEXT_REG_end    0x00029000
+#define SET_RESOURCE_offset    0x00030000
+#define SET_RESOURCE_end       0x00038000
+#define SET_SAMPLER_offset     0x0003c000
+#define SET_SAMPLER_end        0x0003c600
+#define SET_CTL_CONST_offset   0x0003cff0
+#define SET_CTL_CONST_end      0x0003ff0c
+#define SET_LOOP_CONST_offset  0x0003a200
+#define SET_LOOP_CONST_end     0x0003a500
+#define SET_BOOL_CONST_offset  0x0003a500
+#define SET_BOOL_CONST_end     0x0003a518
+
 
 /* Packet3 commands */
 enum {
@@ -118,6 +117,7 @@ enum {
     SQ_LDS_ALLOC_PS                                       = 0x288ec,
     SQ_DYN_GPR_RESOURCE_LIMIT_1                           = 0x28838,
     SQ_DYN_GPR_CNTL_PS_FLUSH_REQ                          = 0x8d8c,
+    SQ_LDS_RESOURCE_MGMT				  = 0x8e2c,
 
     WAIT_UNTIL                                            = 0x8040,
 	WAIT_CP_DMA_IDLE_bit                              = 1 << 8,

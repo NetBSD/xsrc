@@ -56,7 +56,6 @@
 
 				/* X and server generic header files */
 #include "xf86.h"
-#include "xf86PciInfo.h"
 #include "windowstr.h"
 
 				/* GLX/DRI/DRM definitions */
@@ -94,7 +93,7 @@ static void RADEONDRIClipNotify(ScreenPtr pScreen, WindowPtr *ppWin, int num);
  */
 static Bool RADEONInitVisualConfigs(ScreenPtr pScreen)
 {
-    ScrnInfoPtr          pScrn             = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr          pScrn             = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr        info              = RADEONPTR(pScrn);
     int                  numConfigs        = 0;
     __GLXvisualConfig   *pConfigs          = 0;
@@ -320,7 +319,7 @@ static void RADEONDestroyContext(ScreenPtr pScreen, drm_context_t hwContext,
  */
 static void RADEONEnterServer(ScreenPtr pScreen)
 {
-    ScrnInfoPtr    pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr    pScrn = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr  info  = RADEONPTR(pScrn);
     drm_radeon_sarea_t *pSAREAPriv;
 
@@ -362,7 +361,7 @@ static void RADEONEnterServer(ScreenPtr pScreen)
  */
 static void RADEONLeaveServer(ScreenPtr pScreen)
 {
-    ScrnInfoPtr    pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr    pScrn = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr  info  = RADEONPTR(pScrn);
     RING_LOCALS;
 
@@ -493,7 +492,7 @@ static void RADEONDRIMoveBuffers(WindowPtr pParent, DDXPointRec ptOldOrg,
 {
 #ifdef USE_XAA
     ScreenPtr      pScreen  = pParent->drawable.pScreen;
-    ScrnInfoPtr    pScrn    = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr    pScrn    = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr  info     = RADEONPTR(pScrn);
 
     BoxPtr         pboxTmp, pboxNext, pboxBase;
@@ -903,7 +902,7 @@ static Bool RADEONSetAgpMode(RADEONInfoPtr info, ScreenPtr pScreen)
 /* Initialize Radeon's AGP registers */
 static void RADEONSetAgpBase(RADEONInfoPtr info, ScreenPtr pScreen)
 {
-    ScrnInfoPtr    pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr    pScrn = xf86ScreenToScrn(pScreen);
     unsigned char *RADEONMMIO = info->MMIO;
 
     if (info->ChipFamily >= CHIP_FAMILY_R600)
@@ -1174,7 +1173,7 @@ static Bool RADEONDRIMapInit(RADEONInfoPtr info, ScreenPtr pScreen)
 /* Initialize the kernel data structures */
 static int RADEONDRIKernelInit(RADEONInfoPtr info, ScreenPtr pScreen)
 {
-    ScrnInfoPtr    pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr    pScrn = xf86ScreenToScrn(pScreen);
     int            cpp   = info->CurrentLayout.pixel_bytes;
     drm_radeon_init_t  drmInfo;
 
@@ -1281,7 +1280,7 @@ static Bool RADEONDRIBufInit(RADEONInfoPtr info, ScreenPtr pScreen)
 
 static void RADEONDRIIrqInit(RADEONInfoPtr info, ScreenPtr pScreen)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 
     if (!info->dri->irq) {
 	info->dri->irq = drmGetInterruptFromBusID(
@@ -1451,8 +1450,26 @@ Bool RADEONDRIGetVersion(ScrnInfoPtr pScrn)
     }
 
     /* We don't, bummer ! */
-    if (info->dri->pKernelDRMVersion->version_major != req_major ||
-        info->dri->pKernelDRMVersion->version_minor < req_minor ||
+    if (info->dri->pKernelDRMVersion->version_major != req_major) {
+        /* Looks like we're trying to start in UMS mode on a KMS kernel.
+	 * This can happen if the radeon kernel module wasn't loaded before
+	 * X starts.
+	 */
+        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+            "[dri] RADEONDRIGetVersion failed because of a version mismatch.\n"
+            "[dri] This chipset requires a kernel module version of %d.%d.%d,\n"
+            "[dri] but the kernel reports a version of %d.%d.%d."
+            "[dri] Make sure your module is loaded prior to starting X, and\n"
+            "[dri] that this driver was built with support for KMS.\n"
+            "[dri] Aborting.\n",
+            req_major, req_minor, req_patch,
+            info->dri->pKernelDRMVersion->version_major,
+            info->dri->pKernelDRMVersion->version_minor,
+            info->dri->pKernelDRMVersion->version_patchlevel);
+        drmFreeVersion(info->dri->pKernelDRMVersion);
+        info->dri->pKernelDRMVersion = NULL;
+        return -1;
+    } else if (info->dri->pKernelDRMVersion->version_minor < req_minor ||
         (info->dri->pKernelDRMVersion->version_minor == req_minor &&
         info->dri->pKernelDRMVersion->version_patchlevel < req_patch)) {
         /* Incompatible drm version */
@@ -1460,10 +1477,7 @@ Bool RADEONDRIGetVersion(ScrnInfoPtr pScrn)
             "[dri] RADEONDRIGetVersion failed because of a version mismatch.\n"
             "[dri] This chipset requires a kernel module version of %d.%d.%d,\n"
             "[dri] but the kernel reports a version of %d.%d.%d."
-            "[dri] If using legacy modesetting, upgrade your kernel.\n"
-            "[dri] If using kernel modesetting, make sure your module is\n"
-            "[dri] loaded prior to starting X, and that this driver was built\n"
-            "[dri] with support for KMS.\n"
+            "[dri] Try upgrading your kernel.\n"
             "[dri] Disabling DRI.\n",
             req_major, req_minor, req_patch,
             info->dri->pKernelDRMVersion->version_major,
@@ -1510,7 +1524,7 @@ Bool RADEONDRISetVBlankInterrupt(ScrnInfoPtr pScrn, Bool on)
  */
 Bool RADEONDRIScreenInit(ScreenPtr pScreen)
 {
-    ScrnInfoPtr    pScrn   = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr    pScrn   = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr  info    = RADEONPTR(pScrn);
     DRIInfoPtr     pDRIInfo;
     RADEONDRIPtr   pRADEONDRI;
@@ -1566,7 +1580,7 @@ Bool RADEONDRIScreenInit(ScreenPtr pScreen)
     pDRIInfo->ddxDriverMajorVersion      = info->allowColorTiling ? 5 : 4;
     pDRIInfo->ddxDriverMinorVersion      = 3;
     pDRIInfo->ddxDriverPatchVersion      = 0;
-    pDRIInfo->frameBufferPhysicalAddress = (void *)info->LinearAddr + info->dri->frontOffset;
+    pDRIInfo->frameBufferPhysicalAddress = (void *)(uintptr_t)info->LinearAddr + info->dri->frontOffset;
     pDRIInfo->frameBufferSize            = info->FbMapSize - info->FbSecureSize;
     pDRIInfo->frameBufferStride          = (pScrn->displayWidth *
 					    info->CurrentLayout.pixel_bytes);
@@ -1701,15 +1715,15 @@ Bool RADEONDRIScreenInit(ScreenPtr pScreen)
     return TRUE;
 }
 
-static Bool RADEONDRIDoCloseScreen(int scrnIndex, ScreenPtr pScreen)
+static Bool RADEONDRIDoCloseScreen(CLOSE_SCREEN_ARGS_DECL)
 {
-    ScrnInfoPtr    pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr    pScrn = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr  info  = RADEONPTR(pScrn);
 
     RADEONDRICloseScreen(pScreen);
 
     pScreen->CloseScreen = info->dri->DRICloseScreen;
-    return (*pScreen->CloseScreen)(scrnIndex, pScreen);
+    return (*pScreen->CloseScreen)(CLOSE_SCREEN_ARGS);
 }
 
 /* Finish initializing the device-dependent DRI state, and call
@@ -1718,7 +1732,7 @@ static Bool RADEONDRIDoCloseScreen(int scrnIndex, ScreenPtr pScreen)
  */
 Bool RADEONDRIFinishScreenInit(ScreenPtr pScreen)
 {
-    ScrnInfoPtr         pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr         pScrn = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr       info  = RADEONPTR(pScrn);
     drm_radeon_sarea_t  *pSAREAPriv;
     RADEONDRIPtr        pRADEONDRI;
@@ -1816,7 +1830,7 @@ Bool RADEONDRIFinishScreenInit(ScreenPtr pScreen)
 void RADEONDRIResume(ScreenPtr pScreen)
 {
     int _ret;
-    ScrnInfoPtr   pScrn   = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr   pScrn   = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr info    = RADEONPTR(pScrn);
 
     if (info->dri->pKernelDRMVersion->version_minor >= 9) {
@@ -1851,7 +1865,7 @@ void RADEONDRIResume(ScreenPtr pScreen)
 
 void RADEONDRIStop(ScreenPtr pScreen)
 {
-    ScrnInfoPtr    pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr    pScrn = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr  info  = RADEONPTR(pScrn);
     RING_LOCALS;
 
@@ -1874,7 +1888,7 @@ void RADEONDRIStop(ScreenPtr pScreen)
  */
 void RADEONDRICloseScreen(ScreenPtr pScreen)
 {
-    ScrnInfoPtr    pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr    pScrn = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr  info  = RADEONPTR(pScrn);
     drm_radeon_init_t  drmInfo;
 
@@ -2078,7 +2092,7 @@ out:
 static void RADEONEnablePageFlip(ScreenPtr pScreen)
 {
 #ifdef DAMAGE
-    ScrnInfoPtr         pScrn      = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr         pScrn      = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr       info       = RADEONPTR(pScrn);
 
     if (info->dri->allowPageFlip) {
@@ -2118,7 +2132,7 @@ static void RADEONDRITransitionMultiToSingle3d(ScreenPtr pScreen)
 
 static void RADEONDRITransitionTo3d(ScreenPtr pScreen)
 {
-    ScrnInfoPtr    pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr    pScrn = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr  info  = RADEONPTR(pScrn);
 #ifdef USE_XAA
     FBAreaPtr      fbarea;
@@ -2206,7 +2220,7 @@ static void RADEONDRITransitionTo3d(ScreenPtr pScreen)
 
 static void RADEONDRITransitionTo2d(ScreenPtr pScreen)
 {
-    ScrnInfoPtr         pScrn      = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr         pScrn      = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr       info       = RADEONPTR(pScrn);
     drm_radeon_sarea_t  *pSAREAPriv = DRIGetSAREAPrivate(pScreen);
 
@@ -2251,7 +2265,7 @@ static void RADEONDRITransitionTo2d(ScreenPtr pScreen)
 static void
 RADEONDRIClipNotify(ScreenPtr pScreen, WindowPtr *ppWin, int num)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr info = RADEONPTR(pScrn);
 
     REGION_UNINIT(pScreen, &info->dri->driRegion);
@@ -2274,7 +2288,7 @@ RADEONDRIClipNotify(ScreenPtr pScreen, WindowPtr *ppWin, int num)
 
 void RADEONDRIAllocatePCIGARTTable(ScreenPtr pScreen)
 {
-    ScrnInfoPtr        pScrn   = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr        pScrn   = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr      info    = RADEONPTR(pScrn);
 
     if (info->cardType != CARD_PCIE ||
