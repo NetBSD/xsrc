@@ -69,18 +69,12 @@ RADEONInitDispBandwidthAVIVO(ScrnInfoPtr pScrn,
 			     DisplayModePtr mode2, int pixel_bytes2);
 
 void
-radeon_crtc_dpms(xf86CrtcPtr crtc, int mode)
+radeon_do_crtc_dpms(xf86CrtcPtr crtc, int mode)
 {
     RADEONInfoPtr info = RADEONPTR(crtc->scrn);
     RADEONEntPtr pRADEONEnt = RADEONEntPriv(crtc->scrn);
-    RADEONCrtcPrivatePtr radeon_crtc = crtc->driver_private;
     xf86CrtcPtr crtc0 = pRADEONEnt->pCrtc[0];
-
-    if ((mode == DPMSModeOn) && radeon_crtc->enabled)
-	return;
-
-    if (mode == DPMSModeOff)
-	radeon_crtc_modeset_ioctl(crtc, FALSE);
+    RADEONCrtcPrivatePtr radeon_crtc = crtc->driver_private;
 
     if (IS_AVIVO_VARIANT || info->r4xx_atom) {
 	atombios_crtc_dpms(crtc, mode);
@@ -101,6 +95,20 @@ radeon_crtc_dpms(xf86CrtcPtr crtc, int mode)
 		legacy_crtc_dpms(crtc0, mode);
 	}
     }
+}
+
+void
+radeon_crtc_dpms(xf86CrtcPtr crtc, int mode)
+{
+    RADEONCrtcPrivatePtr radeon_crtc = crtc->driver_private;
+
+    if ((mode == DPMSModeOn) && radeon_crtc->enabled)
+	return;
+
+    if (mode == DPMSModeOff)
+	radeon_crtc_modeset_ioctl(crtc, FALSE);
+
+    radeon_do_crtc_dpms(crtc, mode);
 
     if (mode != DPMSModeOff) {
 	radeon_crtc_modeset_ioctl(crtc, TRUE);
@@ -162,7 +170,7 @@ RADEONComputePLL_old(RADEONPLLPtr pll,
 
     freq = freq * 1000;
 
-    ErrorF("freq: %lu\n", freq);
+/*    ErrorF("freq: %lu\n", freq); */
 
     if (flags & RADEON_PLL_USE_REF_DIV)
 	min_ref_div = max_ref_div = pll->reference_div;
@@ -292,11 +300,13 @@ RADEONComputePLL_old(RADEONPLLPtr pll,
 	}
     }
 
+/*
     ErrorF("best_freq: %u\n", (unsigned int)best_freq);
     ErrorF("best_feedback_div: %u\n", (unsigned int)best_feedback_div);
     ErrorF("best_frac_feedback_div: %u\n", (unsigned int)best_frac_feedback_div);
     ErrorF("best_ref_div: %u\n", (unsigned int)best_ref_div);
     ErrorF("best_post_div: %u\n", (unsigned int)best_post_div);
+*/
 
     if (best_freq == -1)
 	FatalError("Couldn't find valid PLL dividers\n");
@@ -430,11 +440,13 @@ RADEONComputePLL_new(RADEONPLLPtr pll,
     best_freq += pll->reference_freq * fb_div_frac;
     best_freq = best_freq / (ref_div * post_div);
 
+/*
     ErrorF("best_freq: %u\n", (unsigned int)best_freq);
     ErrorF("best_feedback_div: %u\n", (unsigned int)fb_div);
     ErrorF("best_frac_feedback_div: %u\n", (unsigned int)fb_div_frac);
     ErrorF("best_ref_div: %u\n", (unsigned int)ref_div);
     ErrorF("best_post_div: %u\n", (unsigned int)post_div);
+*/
 
 done:
     if (best_freq == 0)
@@ -510,6 +522,8 @@ radeon_crtc_load_lut(xf86CrtcPtr crtc)
     if (!crtc->enabled)
 	return;
 
+    radeon_save_palette_on_demand(pScrn, radeon_crtc->crtc_id);
+
     if (IS_DCE4_VARIANT) {
 	OUTREG(EVERGREEN_DC_LUT_CONTROL + radeon_crtc->crtc_offset, 0);
 
@@ -558,7 +572,6 @@ radeon_crtc_load_lut(xf86CrtcPtr crtc)
 	if (IS_AVIVO_VARIANT)
 	    OUTREG(AVIVO_D1GRPH_LUT_SEL + radeon_crtc->crtc_offset, radeon_crtc->crtc_id);
     }
-
 }
 
 static void
@@ -1110,7 +1123,7 @@ RADEONSetTiling(ScrnInfoPtr pScrn)
 	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		       "[drm] failed changing tiling status\n");
 	/* if this is called during ScreenInit() we don't have pScrn->pScreen yet */
-	pSAREAPriv = DRIGetSAREAPrivate(screenInfo.screens[pScrn->scrnIndex]);
+	pSAREAPriv = DRIGetSAREAPrivate(xf86ScrnToScreen(pScrn));
 	info->tilingEnabled = pSAREAPriv->tiling_enabled ? TRUE : FALSE;
     }
 #endif

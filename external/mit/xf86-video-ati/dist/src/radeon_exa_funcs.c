@@ -27,7 +27,7 @@
  *    Eric Anholt <anholt@FreeBSD.org>
  *    Zack Rusin <zrusin@trolltech.com>
  *    Benjamin Herrenschmidt <benh@kernel.crashing.org>
- *    Michel Dänzer <michel@tungstengraphics.com>
+ *    Michel Dänzer <michel@daenzer.net>
  *
  */
 
@@ -71,7 +71,7 @@ FUNC_NAME(RADEONMarkSync)(ScreenPtr pScreen)
 static void
 FUNC_NAME(RADEONSync)(ScreenPtr pScreen, int marker)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr info = RADEONPTR(pScrn);
 
     if (info->cs)
@@ -132,19 +132,27 @@ static void FUNC_NAME(Emit2DState)(ScrnInfoPtr pScrn, int op)
 }
 
 static void
-FUNC_NAME(RADEONDone2D)(PixmapPtr pPix)
+FUNC_NAME(RADEONFlush2D)(PixmapPtr pPix)
 {
     RINFO_FROM_SCREEN(pPix->drawable.pScreen);
     ACCEL_PREAMBLE();
 
     TRACE;
 
-    info->state_2d.op = 0;
     BEGIN_ACCEL(2);
     OUT_ACCEL_REG(RADEON_DSTCACHE_CTLSTAT, RADEON_RB2D_DC_FLUSH_ALL);
     OUT_ACCEL_REG(RADEON_WAIT_UNTIL,
                   RADEON_WAIT_2D_IDLECLEAN | RADEON_WAIT_DMA_GUI_IDLE);
     FINISH_ACCEL();
+}
+
+static void
+FUNC_NAME(RADEONDone2D)(PixmapPtr pPix)
+{
+    RINFO_FROM_SCREEN(pPix->drawable.pScreen);
+    info->state_2d.op = 0;
+
+    FUNC_NAME(RADEONFlush2D)(pPix);
 }
 
 static Bool
@@ -220,7 +228,7 @@ FUNC_NAME(RADEONSolid)(PixmapPtr pPix, int x1, int y1, int x2, int y2)
 
 #if defined(ACCEL_CP) && defined(XF86DRM_MODE)
     if (info->cs && CS_FULL(info->cs)) {
-	FUNC_NAME(RADEONDone2D)(info->accel_state->dst_pix);
+	FUNC_NAME(RADEONFlush2D)(info->accel_state->dst_pix);
 	radeon_cs_flush_indirect(pScrn);
     }
 #endif
@@ -332,7 +340,7 @@ FUNC_NAME(RADEONCopy)(PixmapPtr pDst,
 
 #if defined(ACCEL_CP) && defined(XF86DRM_MODE)
     if (info->cs && CS_FULL(info->cs)) {
-	FUNC_NAME(RADEONDone2D)(info->accel_state->dst_pix);
+	FUNC_NAME(RADEONFlush2D)(info->accel_state->dst_pix);
 	radeon_cs_flush_indirect(pScrn);
     }
 #endif

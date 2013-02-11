@@ -63,6 +63,7 @@
 #include "atipcirename.h"
 
 #include "ati.h"
+#include "atipciids.h"
 #include "ativersion.h"
 
 /* names duplicated from version headers */

@@ -42,6 +42,7 @@
 #include <sys/time.h>		/* For gettimeofday() */
 
 #include "config.h"
+
 #include "xf86str.h"
 #include "compiler.h"
 #include "xf86fbman.h"
@@ -91,6 +92,7 @@
 #include "radeon_cs.h"
 #include "radeon_dri2.h"
 #include "drmmode_display.h"
+#include "radeon_surface.h"
 #else
 #include "radeon_dummy_bufmgr.h"
 #endif
@@ -99,6 +101,8 @@
 #ifdef RENDER
 #include "picturestr.h"
 #endif
+
+#include "compat-api.h"
 
 #include "simple_list.h"
 #include "atipcirename.h"
@@ -183,6 +187,7 @@ typedef enum {
     OPTION_PANEL_SIZE,
     OPTION_MIN_DOTCLOCK,
     OPTION_COLOR_TILING,
+    OPTION_COLOR_TILING_2D,
 #ifdef XvExtension
     OPTION_VIDEO_KEY,
     OPTION_RAGE_THEATRE_CRYSTAL,
@@ -313,60 +318,6 @@ typedef struct {
     DisplayModePtr    mode;
 } RADEONFBLayout;
 
-typedef enum {
-    CHIP_FAMILY_UNKNOW,
-    CHIP_FAMILY_LEGACY,
-    CHIP_FAMILY_RADEON,
-    CHIP_FAMILY_RV100,
-    CHIP_FAMILY_RS100,    /* U1 (IGP320M) or A3 (IGP320)*/
-    CHIP_FAMILY_RV200,
-    CHIP_FAMILY_RS200,    /* U2 (IGP330M/340M/350M) or A4 (IGP330/340/345/350), RS250 (IGP 7000) */
-    CHIP_FAMILY_R200,
-    CHIP_FAMILY_RV250,
-    CHIP_FAMILY_RS300,    /* RS300/RS350 */
-    CHIP_FAMILY_RV280,
-    CHIP_FAMILY_R300,
-    CHIP_FAMILY_R350,
-    CHIP_FAMILY_RV350,
-    CHIP_FAMILY_RV380,    /* RV370/RV380/M22/M24 */
-    CHIP_FAMILY_R420,     /* R420/R423/M18 */
-    CHIP_FAMILY_RV410,    /* RV410, M26 */
-    CHIP_FAMILY_RS400,    /* xpress 200, 200m (RS400) Intel */
-    CHIP_FAMILY_RS480,    /* xpress 200, 200m (RS410/480/482/485) AMD */
-    CHIP_FAMILY_RV515,    /* rv515 */
-    CHIP_FAMILY_R520,    /* r520 */
-    CHIP_FAMILY_RV530,    /* rv530 */
-    CHIP_FAMILY_R580,    /* r580 */
-    CHIP_FAMILY_RV560,   /* rv560 */
-    CHIP_FAMILY_RV570,   /* rv570 */
-    CHIP_FAMILY_RS600,
-    CHIP_FAMILY_RS690,
-    CHIP_FAMILY_RS740,
-    CHIP_FAMILY_R600,    /* r600 */
-    CHIP_FAMILY_RV610,
-    CHIP_FAMILY_RV630,
-    CHIP_FAMILY_RV670,
-    CHIP_FAMILY_RV620,
-    CHIP_FAMILY_RV635,
-    CHIP_FAMILY_RS780,
-    CHIP_FAMILY_RS880,
-    CHIP_FAMILY_RV770,   /* r700 */
-    CHIP_FAMILY_RV730,
-    CHIP_FAMILY_RV710,
-    CHIP_FAMILY_RV740,
-    CHIP_FAMILY_CEDAR,   /* evergreen */
-    CHIP_FAMILY_REDWOOD,
-    CHIP_FAMILY_JUNIPER,
-    CHIP_FAMILY_CYPRESS,
-    CHIP_FAMILY_HEMLOCK,
-    CHIP_FAMILY_PALM,
-    CHIP_FAMILY_BARTS,
-    CHIP_FAMILY_TURKS,
-    CHIP_FAMILY_CAICOS,
-    CHIP_FAMILY_CAYMAN,
-    CHIP_FAMILY_LAST
-} RADEONChipFamily;
-
 #define IS_RV100_VARIANT ((info->ChipFamily == CHIP_FAMILY_RV100)  ||  \
         (info->ChipFamily == CHIP_FAMILY_RV200)  ||  \
         (info->ChipFamily == CHIP_FAMILY_RS100)  ||  \
@@ -456,7 +407,8 @@ typedef enum {
     RADEON_MAC_MINI_EXTERNAL,
     RADEON_MAC_MINI_INTERNAL,
     RADEON_MAC_IMAC_G5_ISIGHT,
-    RADEON_MAC_EMAC
+    RADEON_MAC_EMAC,
+    RADEON_MAC_SAM440EP
 } RADEONMacModel;
 #endif
 
@@ -496,18 +448,11 @@ typedef struct _atomBiosHandle *atomBiosHandlePtr;
 struct radeon_exa_pixmap_priv {
     struct radeon_bo *bo;
     uint32_t tiling_flags;
+#ifdef XF86DRM_MODE
+    struct radeon_surface surface;
+#endif
     Bool bo_mapped;
 };
-
-typedef struct {
-    uint32_t pci_device_id;
-    RADEONChipFamily chip_family;
-    int mobility;
-    int igp;
-    int nocrtc2;
-    int nointtvout;
-    int singledac;
-} RADEONCardInfo;
 
 #define RADEON_2D_EXA_COPY 1
 #define RADEON_2D_EXA_SOLID 2
@@ -570,7 +515,7 @@ struct radeon_dri {
     int               numVisualConfigs;
     __GLXvisualConfig *pVisualConfigs;
     RADEONConfigPrivPtr pVisualConfigsPriv;
-    Bool             (*DRICloseScreen)(int, ScreenPtr);
+    Bool             (*DRICloseScreen)(CLOSE_SCREEN_ARGS_DECL);
 
     drm_handle_t      fbHandle;
 
@@ -685,6 +630,9 @@ struct r600_accel_object {
     uint32_t domain;
     struct radeon_bo *bo;
     uint32_t tiling_flags;
+#if defined(XF86DRM_MODE)
+    struct radeon_surface *surface;
+#endif
 };
 
 struct radeon_vbo_object {
@@ -799,12 +747,13 @@ struct radeon_accel_state {
     // UTS/DFS
     drmBufPtr         scratch;
 
-    // copy
+    // solid/copy
     ExaOffscreenArea  *copy_area;
     struct radeon_bo  *copy_area_bo;
     Bool              same_surface;
     int               rop;
     uint32_t          planemask;
+    uint32_t          fg;
 
     // composite
     Bool              component_alpha;
@@ -855,7 +804,9 @@ struct radeon_accel_state {
 typedef struct {
     EntityInfoPtr     pEnt;
     pciVideoPtr       PciInfo;
+#ifndef XSERVER_LIBPCIACCESS
     PCITAG            PciTag;
+#endif
     int               Chipset;
     RADEONChipFamily  ChipFamily;
     RADEONErrata      ChipErrata;
@@ -914,9 +865,9 @@ typedef struct {
 
     RADEONSavePtr     SavedReg;         /* Original (text) mode              */
     RADEONSavePtr     ModeReg;          /* Current mode                      */
-    Bool              (*CloseScreen)(int, ScreenPtr);
+    Bool              (*CloseScreen)(CLOSE_SCREEN_ARGS_DECL);
 
-    void              (*BlockHandler)(int, pointer, pointer, pointer);
+    void              (*BlockHandler)(BLOCKHANDLER_ARGS_DECL);
 
     Bool              PaletteSavedOnVT; /* Palette saved on last VT switch   */
 
@@ -950,6 +901,7 @@ typedef struct {
     /* accel */
     Bool              RenderAccel; /* Render */
     Bool              allowColorTiling;
+    Bool              allowColorTiling2D;
     Bool              tilingEnabled; /* mirror of sarea->tiling_enabled */
     struct radeon_accel_state *accel_state;
     Bool              accelOn;
@@ -1064,7 +1016,7 @@ typedef struct {
     struct radeon_cs_manager *csm;
     struct radeon_cs *cs;
 
-    struct radeon_bo *cursor_bo[6];
+    struct radeon_bo *cursor_bo[32];
     uint64_t vram_size;
     uint64_t gart_size;
     drmmode_rec drmmode;
@@ -1075,6 +1027,8 @@ typedef struct {
     int num_channels;
     int num_banks;
     int r7xx_bank_op;
+    struct radeon_surface_manager *surf_man;
+    struct radeon_surface front_surface;
 #else
     /* fake bool */
     Bool cs;
@@ -1133,6 +1087,7 @@ extern void RADEONRestoreLVDSRegisters(ScrnInfoPtr pScrn, RADEONSavePtr restore)
 extern void RADEONRestoreRMXRegisters(ScrnInfoPtr pScrn, RADEONSavePtr restore);
 extern void RADEONSaveDACRegisters(ScrnInfoPtr pScrn, RADEONSavePtr save);
 extern void RADEONSaveFPRegisters(ScrnInfoPtr pScrn, RADEONSavePtr save);
+extern void radeon_save_palette_on_demand(ScrnInfoPtr pScrn, int palID);
 
 extern void RADEONGetTVDacAdjInfo(ScrnInfoPtr pScrn, radeon_tvdac_ptr tvdac);
 extern void RADEONGetTMDSInfoFromTable(ScrnInfoPtr pScrn, radeon_tmds_ptr tmds);
@@ -1168,7 +1123,7 @@ extern void RADEONCPFlushIndirect(ScrnInfoPtr pScrn, int discard);
 extern void RADEONCPReleaseIndirect(ScrnInfoPtr pScrn);
 extern int RADEONCPStop(ScrnInfoPtr pScrn,  RADEONInfoPtr info);
 #  ifdef USE_XAA
-extern Bool RADEONSetupMemXAA_DRI(int scrnIndex, ScreenPtr pScreen);
+extern Bool RADEONSetupMemXAA_DRI(ScreenPtr pScreen);
 #  endif
 uint32_t radeonGetPixmapOffset(PixmapPtr pPix);
 #endif
@@ -1177,7 +1132,7 @@ extern int radeon_cs_space_remaining(ScrnInfoPtr pScrn);
 #ifdef USE_XAA
 /* radeon_accelfuncs.c */
 extern void RADEONAccelInitMMIO(ScreenPtr pScreen, XAAInfoRecPtr a);
-extern Bool RADEONSetupMemXAA(int scrnIndex, ScreenPtr pScreen);
+extern Bool RADEONSetupMemXAA(ScreenPtr pScreen);
 #endif
 
 /* radeon_bios.c */
@@ -1207,6 +1162,7 @@ extern void RADEONWaitForVLineMMIO(ScrnInfoPtr pScrn, PixmapPtr pPix,
 
 /* radeon_crtc.c */
 extern void radeon_crtc_dpms(xf86CrtcPtr crtc, int mode);
+extern void radeon_do_crtc_dpms(xf86CrtcPtr crtc, int mode);
 extern void radeon_crtc_load_lut(xf86CrtcPtr crtc);
 extern void radeon_crtc_modeset_ioctl(xf86CrtcPtr crtc, Bool post);
 extern Bool RADEONAllocateControllers(ScrnInfoPtr pScrn, int mask);
@@ -1290,6 +1246,7 @@ extern void RADEONPMFini(ScrnInfoPtr pScrn);
 
 #ifdef USE_EXA
 /* radeon_exa.c */
+extern unsigned eg_tile_split(unsigned tile_split);
 extern Bool RADEONSetupMemEXA(ScreenPtr pScreen);
 extern Bool radeon_transform_is_affine_or_scaled(PictTransformPtr t);
 
@@ -1381,6 +1338,7 @@ extern void radeon_ddx_cs_start(ScrnInfoPtr pScrn,
 				int num, const char *file,
 				const char *func, int line);
 void radeon_kms_update_vram_limit(ScrnInfoPtr pScrn, int new_fb_size);
+struct radeon_surface *radeon_get_pixmap_surface(PixmapPtr pPix);
 #endif
 struct radeon_bo *radeon_get_pixmap_bo(PixmapPtr pPix);
 void radeon_set_pixmap_bo(PixmapPtr pPix, struct radeon_bo *bo);
@@ -1728,6 +1686,8 @@ static __inline__ int radeon_timedout(const struct timeval *endtime)
 enum {
     RADEON_CREATE_PIXMAP_TILING_MACRO = 0x10000000,
     RADEON_CREATE_PIXMAP_TILING_MICRO = 0x20000000,
+    RADEON_CREATE_PIXMAP_DEPTH = 0x40000000, /* for r200 */
+    RADEON_CREATE_PIXMAP_SZBUFFER = 0x80000000, /* for eg */
 };
 
 #endif /* _RADEON_H_ */

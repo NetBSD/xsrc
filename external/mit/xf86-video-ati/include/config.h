@@ -25,7 +25,7 @@
 /* #undef HAVE_LIBUDEV */
 
 /* Define to 1 if you have the <list.h> header file. */
-#undef HAVE_LIST_H
+#define HAVE_LIST_H 1
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
@@ -63,6 +63,9 @@
 /* Have xf86ModeBandwidth prototype */
 #define HAVE_XF86MODEBANDWIDTH 1
 
+/* Have xorg_list API */
+/* #undef HAVE_XORG_LIST */
+
 /* Have xf86XVFillKeyHelperDrawable prototype */
 #define HAVE_XV_DRAWABLE_HELPER 1
 
@@ -71,7 +74,7 @@
 #define LT_OBJDIR ".libs/"
 
 /* Define to 1 if your C compiler doesn't accept -c and -o together. */
-#undef NO_MINUS_C_MINUS_O
+/* #undef NO_MINUS_C_MINUS_O */
 
 /* Name of package */
 #define PACKAGE "xf86-video-ati"
@@ -83,16 +86,16 @@
 #define PACKAGE_NAME "xf86-video-ati"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-video-ati 6.14.2"
+#define PACKAGE_STRING "xf86-video-ati 6.14.6"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-video-ati"
 
 /* Define to the home page for this package. */
-#undef PACKAGE_URL
+#define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "6.14.2"
+#define PACKAGE_VERSION "6.14.6"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 6
@@ -101,7 +104,7 @@
 #define PACKAGE_VERSION_MINOR 14
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 2
+#define PACKAGE_VERSION_PATCHLEVEL 6
 
 /* Enable DRI2 code */
 #define RADEON_DRI2 1
@@ -119,7 +122,7 @@
 #define USE_XAA 1
 
 /* Version number of package */
-#define VERSION "6.14.2"
+#define VERSION "6.14.6"
 
 /* Enable DRI driver support */
 #define XF86DRI 1
@@ -128,7 +131,7 @@
 #define XF86DRI_DEVEL 1
 
 /* DRM kernel modesetting */
-/* #define XF86DRM_MODE 1 */
+/* #undef XF86DRM_MODE */
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */
