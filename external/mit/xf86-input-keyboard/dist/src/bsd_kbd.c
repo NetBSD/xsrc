@@ -204,6 +204,24 @@ KbdOn(InputInfoPtr pInfo, int what)
 #endif
         }
 #endif
+    } else {
+        switch (pKbd->consType) {
+#ifdef WSCONS_SUPPORT
+            case WSCONS:
+            	 if ((pKbd->wsKbdDev[0] != 0) && (pInfo->fd == -1)) {
+            	 	xf86Msg(X_INFO, "opening %s\n", pKbd->wsKbdDev);
+            	 	pInfo->fd = open(pKbd->wsKbdDev, O_RDONLY | O_NONBLOCK | O_EXCL);
+#ifdef WSKBDIO_SETVERSION
+		       int version = WSKBDIO_EVENT_VERSION;
+		       if (ioctl(pInfo->fd, WSKBDIO_SETVERSION, &version) == -1) {
+		           xf86Msg(X_WARNING, "%s: cannot set version\n", pInfo->name);
+		           return FALSE;
+		       }
+#endif 
+            	 }
+	     break;
+#endif
+	}
     }
     return Success;
 }
@@ -238,7 +256,20 @@ KbdOff(InputInfoPtr pInfo, int what)
 	         break;
 #endif
         }
-    }
+    } else {
+         switch (pKbd->consType) {
+#ifdef WSCONS_SUPPORT
+            case WSCONS:
+                 if ((pKbd->wsKbdDev[0] != 0) && (pInfo->fd != -1)) {
+                 	xf86Msg(X_INFO, "closing %s\n", pKbd->wsKbdDev);
+                 	/* need to close the fd while we're gone */
+                 	close(pInfo->fd);
+                 	pInfo->fd = -1;
+                 }
+	         break;
+#endif
+        }
+    }   	
     return Success;
 }
 
@@ -368,6 +399,7 @@ OpenKeyboard(InputInfoPtr pInfo)
 	pInfo->fd = xf86Info.consoleFd;
 	pKbd->isConsole = TRUE;
 	pKbd->consType = xf86Info.consType;
+	pKbd->wsKbdDev[0] = 0;
     } else {
 	pInfo->fd = open(s, O_RDONLY | O_NONBLOCK | O_EXCL);
 	if (pInfo->fd == -1) {
@@ -376,6 +408,7 @@ OpenKeyboard(InputInfoPtr pInfo)
            return FALSE;
        }
        pKbd->isConsole = FALSE;
+       strncpy(pKbd->wsKbdDev, s, 256);
        pKbd->consType = xf86Info.consType;
        free(s);
     }
