@@ -1147,9 +1147,19 @@ static Bool
 WsfbEnterVT(int scrnIndex, int flags)
 {
 	ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
+	WsfbPtr fPtr = WSFBPTR(pScrn);
+	int mode;
 
 	TRACE_ENTER("EnterVT");
 	pScrn->vtSema = TRUE;
+
+	/* Restore the graphics mode. */
+	mode = WSDISPLAYIO_MODE_DUMBFB;
+	if (ioctl(fPtr->fd, WSDISPLAYIO_SMODE, &mode) == -1) {
+		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+			   "error setting graphics mode %s\n", strerror(errno));
+	}
+
 	TRACE_EXIT("EnterVT");
 	return TRUE;
 }
@@ -1157,11 +1167,39 @@ WsfbEnterVT(int scrnIndex, int flags)
 static void
 WsfbLeaveVT(int scrnIndex, int flags)
 {
-#if DEBUG
 	ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
-#endif
+	WsfbPtr fPtr = WSFBPTR(pScrn);
+	int mode;
 
 	TRACE_ENTER("LeaveVT");
+
+	/*
+	 * stuff to do:
+	 * - turn off hw cursor
+	 * - restore colour map if WSFB_CI
+	 * - ioctl(WSDISPLAYIO_MODE_EMUL) to notify the kernel driver that
+	 *   we're backing off
+	 */
+
+	if (fPtr->fbi.fbi_pixeltype == WSFB_CI) {
+		/* reset colormap for text mode */
+		if (ioctl(fPtr->fd, WSDISPLAYIO_PUTCMAP,
+			  &(fPtr->saved_cmap)) == -1) {
+			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+				   "error restoring colormap %s\n",
+				   strerror(errno));
+		}
+	}
+
+	/* Restore the text mode. */
+	mode = WSDISPLAYIO_MODE_EMUL;
+	if (ioctl(fPtr->fd, WSDISPLAYIO_SMODE, &mode) == -1) {
+		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+			   "error setting text mode %s\n", strerror(errno));
+	}
+
+	pScrn->vtSema = FALSE;
+	TRACE_EXIT("LeaveVT");
 }
 
 static Bool
