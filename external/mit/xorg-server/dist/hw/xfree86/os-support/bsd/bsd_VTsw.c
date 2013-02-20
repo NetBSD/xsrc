@@ -69,7 +69,6 @@ xf86VTSwitchAway()
 #if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
 	if (xf86Info.consType == SYSCONS || xf86Info.consType == PCVT) {
 #ifdef WSCONS_SUPPORT
-		xf86Msg(X_ERROR, "KD_TEXT\n");
 		ioctl(xf86Info.consoleFd, KDSETMODE, KD_TEXT);
 #endif
 		xf86Info.vtRequestsPending = FALSE;
@@ -88,7 +87,6 @@ xf86VTSwitchTo()
 #if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
 	if (xf86Info.consType == SYSCONS || xf86Info.consType == PCVT) {
 #ifdef WSCONS_SUPPORT
-		xf86Msg(X_ERROR, "KD_GRAPHICS\n");
 		ioctl(xf86Info.consoleFd, KDSETMODE, KD_GRAPHICS);
 #endif
 		xf86Info.vtRequestsPending = FALSE;
