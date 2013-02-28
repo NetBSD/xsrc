@@ -565,7 +565,7 @@ SMILynx_CrtcModeSet_bios(xf86CrtcPtr crtc,
     CARD8 tmp;
 
     ENTER();
-
+#ifdef USE_INT10
     /* Find the INT 10 mode number */
     {
 	static struct {
@@ -604,14 +604,14 @@ SMILynx_CrtcModeSet_bios(xf86CrtcPtr crtc,
 	    }
 	}
     }
-
+#endif
     if(!reg->mode){
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "SMILynx_CrtcModeSet_bios: Not a known BIOS mode: "
 		   "falling back to direct modesetting.\n");
 	SMILynx_CrtcModeSet_vga(crtc,mode,adjusted_mode,x,y);
 	LEAVE();
     }
-
+#ifdef USE_INT10
     pSmi->pInt10->num = 0x10;
     pSmi->pInt10->ax = reg->mode | 0x80;
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Setting mode 0x%02X\n",
@@ -632,7 +632,7 @@ SMILynx_CrtcModeSet_bios(xf86CrtcPtr crtc,
 
     SMICRTC(crtc)->video_init(crtc);
     SMILynx_CrtcAdjustFrame(crtc, x,y);
-
+#endif
     LEAVE();
 }
 

@@ -297,6 +297,7 @@ SMILynx_Save(ScrnInfoPtr pScrn)
 	pSmi->ModeStructInit = TRUE;
     }
 
+#ifdef USE_INT10
     if (pSmi->useBIOS && pSmi->pInt10 != NULL) {
 	pSmi->pInt10->num = 0x10;
 	pSmi->pInt10->ax = 0x0F00;
@@ -305,7 +306,7 @@ SMILynx_Save(ScrnInfoPtr pScrn)
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Current mode 0x%02X.\n",
 		   save->mode);
     }
-
+#endif
     if (xf86GetVerbosity() > 1) {
 	xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, VERBLEV,
 		       "Saved current video mode.  Register dump:\n");
@@ -358,6 +359,7 @@ SMILynx_WriteMode(ScrnInfoPtr pScrn, vgaRegPtr vgaSavePtr, SMIRegPtr restore)
     VGAOUT8_INDEX(pSmi, VGA_SEQ_INDEX, VGA_SEQ_DATA, 0xA0, restore->SRA0);
 
     if (pSmi->useBIOS && restore->mode != 0){
+#ifdef USE_INT10
 	pSmi->pInt10->num = 0x10;
 	pSmi->pInt10->ax = restore->mode | 0x80;
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Setting mode 0x%02X\n",
@@ -372,6 +374,7 @@ SMILynx_WriteMode(ScrnInfoPtr pScrn, vgaRegPtr vgaSavePtr, SMIRegPtr restore)
 	/* Enable DPR/VPR registers. */
 	tmp = VGAIN8_INDEX(pSmi, VGA_SEQ_INDEX, VGA_SEQ_DATA, 0x21);
 	VGAOUT8_INDEX(pSmi, VGA_SEQ_INDEX, VGA_SEQ_DATA, 0x21, tmp & ~0x03);
+#endif	
     } else {
 	/* Restore the standard VGA registers */
 	vgaHWRestore(pScrn, vgaSavePtr, VGA_SR_ALL);
