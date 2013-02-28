@@ -30,6 +30,12 @@
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef __NetBSD__
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#include <machine/cpu.h>
+#endif
+
 static pixman_bool_t
 have_feature (const char *search_string)
 {
@@ -57,6 +63,20 @@ have_feature (const char *search_string)
     }
 
     fclose (f);
+#elif defined(__NetBSD__)
+    int error, have_lmmi;
+    int mib[2] = { CTL_MACHDEP, CPU_LMMI };
+    size_t length = sizeof(have_lmmi);
+
+    if (strcmp(search_string, "Loongson") != 0)
+    	return FALSE;
+
+    error = sysctl (mib, 2, &have_lmmi, &length, NULL, 0);
+
+    if (error != 0)
+	return FALSE;
+
+    return have_lmmi;
 #endif
 
     /* Did not find string in the proc file, or not Linux ELF. */
