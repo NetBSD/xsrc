@@ -60,6 +60,12 @@ authorization from the XFree86 Project and Silicon Motion.
 #include "xf86xv.h"
 #include <X11/extensions/Xv.h>
 
+#ifndef __BYTE_ORDER
+#define __BYTE_ORDER BYTE_ORDER
+#define __BIG_ENDIAN BIG_ENDIAN
+#define __LITTLE_ENDIAN LITTLE_ENDIAN
+#endif
+
 /******************************************************************************/
 /*			D E F I N I T I O N S				      */
 /******************************************************************************/
@@ -70,7 +76,7 @@ authorization from the XFree86 Project and Silicon Motion.
 
 #define SMI_USE_IMAGE_WRITES	0
 #define SMI_USE_VIDEO		1
-#define SMI_USE_CAPTURE		1
+#define SMI_USE_CAPTURE		0
 #define SMI501_CLI_DEBUG	0
 
 /*

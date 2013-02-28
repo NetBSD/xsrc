@@ -54,7 +54,6 @@ authorization from The XFree86 Project or Silicon Motion.
 #include <X11/extensions/dpms.h>
 #endif
 
-
 /*
  * Internals
  */
@@ -1016,6 +1015,7 @@ SMI_DetectPanelSize(ScrnInfoPtr pScrn)
 
     if (pSmi->lcdWidth == 0 || pSmi->lcdHeight == 0) {
 	/* panel size detection ... requires BIOS call on 730 hardware */
+#ifdef USE_INT10
 	if (pSmi->Chipset == SMI_COUGAR3DR) {
 	    if (pSmi->pInt10 != NULL) {
 		pSmi->pInt10->num = 0x10;
@@ -1072,7 +1072,9 @@ SMI_DetectPanelSize(ScrnInfoPtr pScrn)
 	    /* Set this to indicate that we've done the detection */
 	    pSmi->lcd = 1;
 	}
-	else if (IS_MSOC(pSmi)) {
+	else
+#endif /* USE_INT10 */
+	if (IS_MSOC(pSmi)) {
 	    pSmi->lcdWidth  = (READ_SCR(pSmi, PANEL_WWIDTH)  >> 16) & 2047;
 	    pSmi->lcdHeight = (READ_SCR(pSmi, PANEL_WHEIGHT) >> 16) & 2047;
 	}
@@ -1262,7 +1264,7 @@ SMI_MapMmio(ScrnInfoPtr pScrn)
 					     result);
 
 	if (err)
-	    return (FALSE);
+	    pSmi->MapBase = NULL;
     }
 #endif
 

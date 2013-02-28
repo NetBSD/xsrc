@@ -124,6 +124,7 @@ SMILynx_OutputDPMS_lcd(xf86OutputPtr output, int mode)
 static void
 SMILynx_OutputDPMS_bios(xf86OutputPtr output, int mode)
 {
+#ifdef USE_INT10
     ScrnInfoPtr pScrn = output->scrn;
     SMIPtr pSmi = SMIPTR(pScrn);
 
@@ -147,7 +148,7 @@ SMILynx_OutputDPMS_bios(xf86OutputPtr output, int mode)
     pSmi->pInt10->cx = 0x0000;
     pSmi->pInt10->num = 0x10;
     xf86ExecX86int10(pSmi->pInt10);
-
+#endif
     LEAVE();
 }
 
