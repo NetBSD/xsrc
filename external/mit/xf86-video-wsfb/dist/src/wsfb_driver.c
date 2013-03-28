@@ -1058,7 +1058,8 @@ WsfbCloseScreen(int scrnIndex, ScreenPtr pScreen)
 	TRACE_ENTER("WsfbCloseScreen");
 
 	pPixmap = pScreen->GetScreenPixmap(pScreen);
-	shadowRemove(pScreen, pPixmap);
+	if (fPtr->shadowFB)
+		shadowRemove(pScreen, pPixmap);
 
 	if (pScrn->vtSema) {
 		WsfbRestore(pScrn);
