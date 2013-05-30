@@ -102,7 +102,7 @@ main(int argc, char *argv[])
 
     fontServer = FSOpenServer(serverName);
     if (!fontServer) {
-	char *sn = FSServerName(serverName);
+	const char *sn = FSServerName(serverName);
 	if (sn)
 	    fprintf(stderr, "%s: can't open font server \"%s\"\n",
 	      	    argv[0], sn);
