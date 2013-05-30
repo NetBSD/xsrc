@@ -2,24 +2,24 @@
  * Copyright 1990 Network Computing Devices;
  * Portions Copyright 1987 by Digital Equipment Corporation
  *
- * Permission to use, copy, modify, distribute, and sell this software 
- * and its documentation for any purpose is hereby granted without fee, 
- * provided that the above copyright notice appear in all copies and 
- * that both that copyright notice and this permission notice appear 
- * in supporting documentation, and that the names of Network Computing 
- * Devices or Digital not be used in advertising or publicity pertaining 
- * to distribution of the software without specific, written prior 
- * permission. Network Computing Devices or Digital make no representations 
- * about the suitability of this software for any purpose.  It is provided 
+ * Permission to use, copy, modify, distribute, and sell this software
+ * and its documentation for any purpose is hereby granted without fee,
+ * provided that the above copyright notice appear in all copies and
+ * that both that copyright notice and this permission notice appear
+ * in supporting documentation, and that the names of Network Computing
+ * Devices or Digital not be used in advertising or publicity pertaining
+ * to distribution of the software without specific, written prior
+ * permission. Network Computing Devices or Digital make no representations
+ * about the suitability of this software for any purpose.  It is provided
  * "as is" without express or implied warranty.
  *
  * NETWORK COMPUTING DEVICES AND  DIGITAL DISCLAIM ALL WARRANTIES WITH
- * REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF 
+ * REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL NETWORK COMPUTING DEVICES
- * OR DIGITAL BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES 
- * OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, 
- * WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, 
- * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
+ * OR DIGITAL BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES
+ * OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+ * WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
 
@@ -80,7 +80,7 @@ void _FSFreeServerStructure(FSServer *svr)
     if (svr->buffer)
 	FSfree(svr->buffer);
 
-    FSfree((char *) svr);
+    FSfree(svr);
 }
 
 static
@@ -101,7 +101,7 @@ void OutOfMemory(
  */
 
 FSServer   *
-FSOpenServer(char *server)
+FSOpenServer(const char *server)
 {
     FSServer   *svr;
     int         i;
@@ -111,10 +111,10 @@ FSOpenServer(char *server)
     char       *setup = NULL;
     fsConnSetupAccept conn;
     char       *auth_data = NULL;
-    char       *alt_data = NULL,
+    unsigned char *alt_data = NULL,
                *ad;
     AlternateServer *alts = NULL;
-    int         altlen;
+    unsigned int altlen;
     char       *vendor_string;
     unsigned long        setuplength;
 
@@ -124,18 +124,17 @@ FSOpenServer(char *server)
 	}
     }
 
-    if ((svr = (FSServer *) FScalloc(1, sizeof(FSServer))) == NULL) {
+    if ((svr = FScalloc(1, sizeof(FSServer))) == NULL) {
 	errno = ENOMEM;
 	return (FSServer *) NULL;
     }
 
-    if ((svr->server_name = FSmalloc((unsigned) (strlen(server) + 1)))
-	    == NULL) {
+    if ((svr->server_name = FSmalloc(strlen(server) + 1)) == NULL) {
 	goto fail;
     }
     (void) strcpy(svr->server_name, server);
 
-    if ((svr->trans_conn = _FSConnectServer(server)) == NULL) {
+    if ((svr->trans_conn = _FSConnectServer(svr->server_name)) == NULL) {
 	goto fail;
     }
 
@@ -158,8 +157,8 @@ FSOpenServer(char *server)
 
     setuplength = prefix.alternate_len << 2;
     if (setuplength > (SIZE_MAX>>2)
-	|| (alt_data = (char *)
-	 (setup = FSmalloc((unsigned) setuplength))) == NULL) {
+	|| (alt_data = (unsigned char *)
+	 (setup = FSmalloc(setuplength))) == NULL) {
 	goto fail;
     }
     _FSRead(svr, (char *) alt_data, setuplength);
@@ -171,18 +170,17 @@ FSOpenServer(char *server)
     }
 #endif
 
-    alts = (AlternateServer *)
-	FSmalloc(sizeof(AlternateServer) * prefix.num_alternates);
+    alts = FSmalloc(sizeof(AlternateServer) * prefix.num_alternates);
     if (!alts) {
 	goto fail;
     }
     for (i = 0; i < prefix.num_alternates; i++) {
 	alts[i].subset = (Bool) *ad++;
-	altlen = (int) *ad++;
-	alts[i].name = (char *) FSmalloc(altlen + 1);
+	altlen = (unsigned int) *ad++;
+	alts[i].name = FSmalloc(altlen + 1);
 	if (!alts[i].name) {
 	    while (--i) {
-		FSfree((char *) alts[i].name);
+		FSfree(alts[i].name);
 	    }
 	    goto fail;
 	}
@@ -190,16 +188,16 @@ FSOpenServer(char *server)
 	alts[i].name[altlen] = '\0';
 	ad += altlen + ((4 - (altlen + 2)) & 3);
     }
-    FSfree((char *) alt_data);
+    FSfree(alt_data);
     alt_data = NULL;
 
     svr->alternate_servers = alts;
     svr->num_alternates = prefix.num_alternates;
 
     setuplength = prefix.auth_len << 2;
-    if (setuplength > (SIZE_MAX>>2) 
+    if (setuplength > (SIZE_MAX>>2)
 	|| (auth_data = (char *)
-	 (setup = FSmalloc((unsigned) setuplength))) == NULL) {
+	 (setup = FSmalloc(setuplength))) == NULL) {
 	goto fail;
     }
     _FSRead(svr, (char *) auth_data, setuplength);
@@ -212,8 +210,7 @@ FSOpenServer(char *server)
     /* get rest */
     _FSRead(svr, (char *) &conn, (long) SIZEOF(fsConnSetupAccept));
 
-    if ((vendor_string = (char *)
-	 FSmalloc((unsigned) conn.vendor_len + 1)) == NULL) {
+    if ((vendor_string = FSmalloc(conn.vendor_len + 1)) == NULL) {
 	goto fail;
     }
     _FSReadPad(svr, (char *) vendor_string, conn.vendor_len);
@@ -263,9 +260,9 @@ FSOpenServer(char *server)
     return (svr);
 
   fail: /* Failure: clean up and return null */
-    FSfree((char *) alts);
-    FSfree((char *) alt_data);
-    FSfree((char *) auth_data);
+    FSfree(alts);
+    FSfree(alt_data);
+    FSfree(auth_data);
     OutOfMemory(svr, setup);
     return (FSServer *) NULL;
 
