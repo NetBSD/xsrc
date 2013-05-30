@@ -12,7 +12,7 @@ AM_CFLAGS = \
 	-DICONDIR=\"$(ICONDIR)\" \
 	-DXCURSORPATH=\"$(XCURSORPATH)\"
 
-INCLUDES = -I$(top_srcdir)/include/X11/Xcursor
+AM_CPPFLAGS = -I$(top_srcdir)/include/X11/Xcursor
 
 #
 # Shared library version info.  This is not the same as the package version
@@ -20,7 +20,7 @@ INCLUDES = -I$(top_srcdir)/include/X11/Xcursor
 libXcursor_la_LDFLAGS = -version-number 1:0:2 -no-undefined
 
 libXcursorincludedir = $(includedir)/X11/Xcursor
-libXcursorinclude_HEADERS = $(top_srcdir)/include/X11/Xcursor/Xcursor.h 
+libXcursorinclude_HEADERS = $(top_builddir)/include/X11/Xcursor/Xcursor.h
 
 if LINT
 ALL_LINT_FLAGS=$(LINT_FLAGS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \

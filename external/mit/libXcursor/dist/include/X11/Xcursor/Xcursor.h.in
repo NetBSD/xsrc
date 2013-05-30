@@ -1,4 +1,3 @@
-/* include/X11/Xcursor/Xcursor.h.  Generated from Xcursor.h.in by configure.  */
 /*
  * Copyright © 2002 Keith Packard
  *
@@ -74,9 +73,9 @@ typedef XcursorUInt	XcursorPixel;
  * from the version in the libXcursor configure.ac file.
  */
 
-#define XCURSOR_LIB_MAJOR 1
-#define XCURSOR_LIB_MINOR 1
-#define XCURSOR_LIB_REVISION 14
+#undef XCURSOR_LIB_MAJOR
+#undef XCURSOR_LIB_MINOR
+#undef XCURSOR_LIB_REVISION
 #define XCURSOR_LIB_VERSION	((XCURSOR_LIB_MAJOR * 10000) + \
 				 (XCURSOR_LIB_MINOR * 100) + \
 				 (XCURSOR_LIB_REVISION))
