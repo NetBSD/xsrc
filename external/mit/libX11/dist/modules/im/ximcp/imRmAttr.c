@@ -34,7 +34,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "Ximint.h"
 
 
-Private XIMResourceList
+static XIMResourceList
 _XimGetNestedListSeparator(
     XIMResourceList	 res_list,		/* LISTofIMATTR or IMATTR */
     unsigned int	 res_num)
@@ -42,7 +42,7 @@ _XimGetNestedListSeparator(
     return  _XimGetResourceListRec(res_list, res_num, XNSeparatorofNestedList);
 }
 
-Private Bool
+static Bool
 _XimCheckInnerIMAttributes(
     Xim			 im,
     XIMArg		*arg,
@@ -64,7 +64,7 @@ _XimCheckInnerIMAttributes(
     return True;
 }
 
-Public char *
+char *
 _XimMakeIMAttrIDList(
     Xim			 im,
     XIMResourceList	 res_list,
@@ -102,7 +102,7 @@ _XimMakeIMAttrIDList(
     return (char *)NULL;
 }
 
-Private Bool
+static Bool
 _XimCheckInnerICAttributes(
     Xic			 ic,
     XIMArg		*arg,
@@ -124,7 +124,7 @@ _XimCheckInnerICAttributes(
     return True;
 }
 
-Public char *
+char *
 _XimMakeICAttrIDList(
     Xic			 ic,
     XIMResourceList	 res_list,
@@ -177,6 +177,8 @@ _XimMakeICAttrIDList(
 		    else *len += new_len;
 		    return name;
 		}
+		*len += new_len;
+		buf = (CARD16 *)((char *)buf + new_len);
 	    } else if (res->xrm_name == sts_quark) {
 		if ((name = _XimMakeICAttrIDList(ic, res_list, res_num,
 				(XIMArg *)p->value, buf, &new_len,
@@ -185,9 +187,10 @@ _XimMakeICAttrIDList(
 		    else *len += new_len;
 		    return name;
 		}
+		*len += new_len;
+		buf = (CARD16 *)((char *)buf + new_len);
 	    }
-	    *len += new_len;
-	    buf = (CARD16 *)((char *)buf + new_len);
+
 	    if (!(res = _XimGetNestedListSeparator(res_list, res_num))) {
 		p++;
 		if (p) {
@@ -206,7 +209,7 @@ _XimMakeICAttrIDList(
     return (char *)NULL;
 }
 
-Private Bool
+static Bool
 _XimAttributeToValue(
     Xic			  ic,
     XIMResourceList	  res,
@@ -396,7 +399,7 @@ _XimAttributeToValue(
     return True;
 }
 
-Private Bool
+static Bool
 _XimDecodeInnerIMATTRIBUTE(
     Xim			 im,
     XIMArg		*arg)
@@ -412,7 +415,7 @@ _XimDecodeInnerIMATTRIBUTE(
     return _XimDecodeLocalIMAttr(res, (XPointer)&im_values, arg->value);
 }
 
-Public char *
+char *
 _XimDecodeIMATTRIBUTE(
     Xim			 im,
     XIMResourceList	 res_list,
@@ -465,7 +468,7 @@ _XimDecodeIMATTRIBUTE(
     return (char *)NULL;
 }
 
-Private Bool
+static Bool
 _XimDecodeInnerICATTRIBUTE(
     Xic			 ic,
     XIMArg		*arg,
@@ -485,7 +488,7 @@ _XimDecodeInnerICATTRIBUTE(
     return True;
 }
 
-Public char *
+char *
 _XimDecodeICATTRIBUTE(
     Xic			 ic,
     XIMResourceList	 res_list,
@@ -561,7 +564,7 @@ _XimDecodeICATTRIBUTE(
     return (char *)NULL;
 }
 
-Private Bool
+static Bool
 _XimValueToAttribute(
     XIMResourceList	 res,
     XPointer		 buf,
@@ -769,7 +772,7 @@ _XimValueToAttribute(
     return True;
 }
 
-Private Bool
+static Bool
 _XimSetInnerIMAttributes(
     Xim			 im,
     XPointer		 top,
@@ -792,7 +795,7 @@ _XimSetInnerIMAttributes(
     return _XimEncodeLocalIMAttr(res, top, arg->value);
 }
 
-Public char *
+char *
 _XimEncodeIMATTRIBUTE(
     Xim			  im,
     XIMResourceList	  res_list,
@@ -856,7 +859,7 @@ _XimEncodeIMATTRIBUTE(
 }
 
 #ifdef XIM_CONNECTABLE
-Public	Bool
+Bool
 _XimEncodeSavedIMATTRIBUTE(
     Xim			 im,
     XIMResourceList	 res_list,
@@ -919,7 +922,7 @@ _XimEncodeSavedIMATTRIBUTE(
 }
 #endif /* XIM_CONNECTABLE */
 
-Private Bool
+static Bool
 _XimEncodeTopValue(
     Xic			 ic,
     XIMResourceList	 res,
@@ -942,7 +945,7 @@ _XimEncodeTopValue(
     return True;
 }
 
-Private Bool
+static Bool
 _XimEncodePreeditValue(
     Xic			 ic,
     XIMResourceList	 res,
@@ -994,7 +997,7 @@ _XimEncodePreeditValue(
     return True;
 }
 
-Private Bool
+static Bool
 _XimEncodeStatusValue(
     Xic			 ic,
     XIMResourceList	 res,
@@ -1046,7 +1049,7 @@ _XimEncodeStatusValue(
     return True;
 }
 
-Private Bool
+static Bool
 _XimSetInnerICAttributes(
     Xic			 ic,
     XPointer		 top,
@@ -1069,7 +1072,7 @@ _XimSetInnerICAttributes(
     return _XimEncodeLocalICAttr(ic, res, top, arg, mode);
 }
 
-Public char *
+char *
 _XimEncodeICATTRIBUTE(
     Xic			  ic,
     XIMResourceList	  res_list,
@@ -1181,7 +1184,7 @@ _XimEncodeICATTRIBUTE(
 }
 
 #ifdef XIM_CONNECTABLE
-Private Bool
+static Bool
 _XimEncodeSavedPreeditValue(
     Xic			  ic,
     XIMResourceList	  res,
@@ -1223,7 +1226,7 @@ _XimEncodeSavedPreeditValue(
     return True;
 }
 
-Private Bool
+static Bool
 _XimEncodeSavedStatusValue(
     Xic			  ic,
     XIMResourceList	  res,
@@ -1265,7 +1268,7 @@ _XimEncodeSavedStatusValue(
     return True;
 }
 
-Public	Bool
+Bool
 _XimEncodeSavedICATTRIBUTE(
     Xic			 ic,
     XIMResourceList	 res_list,
@@ -1376,7 +1379,7 @@ _XimEncodeSavedICATTRIBUTE(
 }
 #endif /* XIM_CONNECTABLE */
 
-Private unsigned int
+static unsigned int
 _XimCountNumberOfAttr(
     INT16	 total,
     CARD16	*attr,
@@ -1401,7 +1404,7 @@ _XimCountNumberOfAttr(
     return n;
 }
 
-Public Bool
+Bool
 _XimGetAttributeID(
     Xim			  im,
     CARD16		 *buf)

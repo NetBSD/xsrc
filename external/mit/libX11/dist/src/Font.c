@@ -31,8 +31,9 @@ authorization from the X Consortium and the XFree86 Project.
 #include <config.h>
 #endif
 #include "Xlibint.h"
+#include <limits.h>
 
-#if defined(XF86BIGFONT) && !defined(MUSTCOPY)
+#if defined(XF86BIGFONT)
 #define USE_XF86BIGFONT
 #endif
 #ifdef USE_XF86BIGFONT
@@ -183,7 +184,8 @@ _XQueryFont (
     unsigned long seq)
 {
     register XFontStruct *fs;
-    register long nbytes;
+    unsigned long nbytes;
+    unsigned long reply_left; /* unused data words left in reply buffer */
     xQueryFontReply reply;
     register xResourceReq *req;
     register _XExtension *ext;
@@ -211,9 +213,10 @@ _XQueryFont (
     }
     if (seq)
 	DeqAsyncHandler(dpy, &async);
-    if (! (fs = (XFontStruct *) Xmalloc (sizeof (XFontStruct)))) {
-	_XEatData(dpy, (unsigned long)(reply.nFontProps * SIZEOF(xFontProp) +
-				       reply.nCharInfos * SIZEOF(xCharInfo)));
+    reply_left = reply.length -
+	((SIZEOF(xQueryFontReply) - SIZEOF(xReply)) >> 2);
+    if (! (fs = Xmalloc (sizeof (XFontStruct)))) {
+	_XEatDataWords(dpy, reply_left);
 	return (XFontStruct *)NULL;
     }
     fs->ext_data 		= NULL;
@@ -228,31 +231,9 @@ _XQueryFont (
     fs->ascent 			= cvtINT16toInt (reply.fontAscent);
     fs->descent 		= cvtINT16toInt (reply.fontDescent);
 
-#ifdef MUSTCOPY
-    {
-	xCharInfo *xcip;
-
-	xcip = (xCharInfo *) &reply.minBounds;
-	fs->min_bounds.lbearing = cvtINT16toShort(xcip->leftSideBearing);
-	fs->min_bounds.rbearing = cvtINT16toShort(xcip->rightSideBearing);
-	fs->min_bounds.width = cvtINT16toShort(xcip->characterWidth);
-	fs->min_bounds.ascent = cvtINT16toShort(xcip->ascent);
-	fs->min_bounds.descent = cvtINT16toShort(xcip->descent);
-	fs->min_bounds.attributes = xcip->attributes;
-
-	xcip = (xCharInfo *) &reply.maxBounds;
-	fs->max_bounds.lbearing = cvtINT16toShort(xcip->leftSideBearing);
-	fs->max_bounds.rbearing =  cvtINT16toShort(xcip->rightSideBearing);
-	fs->max_bounds.width =  cvtINT16toShort(xcip->characterWidth);
-	fs->max_bounds.ascent =  cvtINT16toShort(xcip->ascent);
-	fs->max_bounds.descent =  cvtINT16toShort(xcip->descent);
-	fs->max_bounds.attributes = xcip->attributes;
-    }
-#else
     /* XXX the next two statements won't work if short isn't 16 bits */
     fs->min_bounds = * (XCharStruct *) &reply.minBounds;
     fs->max_bounds = * (XCharStruct *) &reply.maxBounds;
-#endif /* MUSTCOPY */
 
     fs->n_properties = reply.nFontProps;
     /*
@@ -261,54 +242,42 @@ _XQueryFont (
      */
     fs->properties = NULL;
     if (fs->n_properties > 0) {
-	    nbytes = reply.nFontProps * sizeof(XFontProp);
-	    fs->properties = (XFontProp *) Xmalloc ((unsigned) nbytes);
+	    /* nFontProps is a CARD16 */
 	    nbytes = reply.nFontProps * SIZEOF(xFontProp);
+	    if ((nbytes >> 2) <= reply_left) {
+		size_t pbytes = reply.nFontProps * sizeof(XFontProp);
+		fs->properties = Xmalloc (pbytes);
+	    }
 	    if (! fs->properties) {
 		Xfree((char *) fs);
-		_XEatData(dpy, (unsigned long)
-			  (nbytes + reply.nCharInfos * SIZEOF(xCharInfo)));
+		_XEatDataWords(dpy, reply_left);
 		return (XFontStruct *)NULL;
 	    }
 	    _XRead32 (dpy, (long *)fs->properties, nbytes);
+	    reply_left -= (nbytes >> 2);
     }
     /*
      * If no characters in font, then it is a bad font, but
      * shouldn't try to read nothing.
      */
-    /* have to unpack charinfos on some machines (CRAY) */
     fs->per_char = NULL;
     if (reply.nCharInfos > 0){
-	nbytes = reply.nCharInfos * sizeof(XCharStruct);
-	if (! (fs->per_char = (XCharStruct *) Xmalloc ((unsigned) nbytes))) {
+	/* nCharInfos is a CARD32 */
+	if (reply.nCharInfos < (INT_MAX / sizeof(XCharStruct))) {
+	    nbytes = reply.nCharInfos * SIZEOF(xCharInfo);
+	    if ((nbytes >> 2) <= reply_left) {
+		size_t cibytes = reply.nCharInfos * sizeof(XCharStruct);
+		fs->per_char = Xmalloc (cibytes);
+	    }
+	}
+	if (! fs->per_char) {
 	    if (fs->properties) Xfree((char *) fs->properties);
 	    Xfree((char *) fs);
-	    _XEatData(dpy, (unsigned long)
-			    (reply.nCharInfos * SIZEOF(xCharInfo)));
+	    _XEatDataWords(dpy, reply_left);
 	    return (XFontStruct *)NULL;
 	}
 
-#ifdef MUSTCOPY
-	{
-	    register XCharStruct *cs = fs->per_char;
-	    register int i;
-
-	    for (i = 0; i < reply.nCharInfos; i++, cs++) {
-		xCharInfo xcip;
-
-		_XRead(dpy, (char *)&xcip, SIZEOF(xCharInfo));
-		cs->lbearing = cvtINT16toShort(xcip.leftSideBearing);
-		cs->rbearing = cvtINT16toShort(xcip.rightSideBearing);
-		cs->width =  cvtINT16toShort(xcip.characterWidth);
-		cs->ascent =  cvtINT16toShort(xcip.ascent);
-		cs->descent =  cvtINT16toShort(xcip.descent);
-		cs->attributes = xcip.attributes;
-	    }
-	}
-#else
-	nbytes = reply.nCharInfos * SIZEOF(xCharInfo);
 	_XRead16 (dpy, (char *)fs->per_char, nbytes);
-#endif
     }
 
     /* call out to any extensions interested */
@@ -354,7 +323,7 @@ _XF86BigfontCodes (
     if (pData)
 	return (XF86BigfontCodes *) pData->private_data;
 
-    pData = (XExtData *) Xmalloc(sizeof(XExtData) + sizeof(XF86BigfontCodes));
+    pData = Xmalloc(sizeof(XExtData) + sizeof(XF86BigfontCodes));
     if (!pData) {
 	/* Out of luck. */
 	return (XF86BigfontCodes *) NULL;
@@ -434,7 +403,8 @@ _XF86BigfontQueryFont (
     unsigned long seq)
 {
     register XFontStruct *fs;
-    register long nbytes;
+    unsigned long nbytes;
+    unsigned long reply_left; /* unused data left in reply buffer */
     xXF86BigfontQueryFontReply reply;
     register xXF86BigfontQueryFontReq *req;
     register _XExtension *ext;
@@ -487,13 +457,10 @@ _XF86BigfontQueryFont (
     DeqAsyncHandler(dpy, &async2);
     if (seq)
 	DeqAsyncHandler(dpy, &async1);
-    if (! (fs = (XFontStruct *) Xmalloc (sizeof (XFontStruct)))) {
-	_XEatData(dpy,
-	          reply.nFontProps * SIZEOF(xFontProp)
-	          + (reply.nCharInfos > 0 && reply.shmid == (CARD32)(-1)
-	             ? reply.nUniqCharInfos * SIZEOF(xCharInfo)
-	               + (reply.nCharInfos+1)/2 * 2 * sizeof(CARD16)
-	             : 0));
+    reply_left = reply.length -
+	((SIZEOF(xXF86BigfontQueryFontReply) - SIZEOF(xReply)) >> 2);
+    if (! (fs = Xmalloc (sizeof (XFontStruct)))) {
+	_XEatDataWords(dpy, reply_left);
 	return (XFontStruct *)NULL;
     }
     fs->ext_data 		= NULL;
@@ -519,23 +486,33 @@ _XF86BigfontQueryFont (
      */
     fs->properties = NULL;
     if (fs->n_properties > 0) {
-	nbytes = reply.nFontProps * sizeof(XFontProp);
-	fs->properties = (XFontProp *) Xmalloc ((unsigned) nbytes);
+	/* nFontProps is a CARD16 */
 	nbytes = reply.nFontProps * SIZEOF(xFontProp);
+	if ((nbytes >> 2) <= reply_left) {
+	    size_t pbytes = reply.nFontProps * sizeof(XFontProp);
+	    fs->properties = Xmalloc (pbytes);
+	}
 	if (! fs->properties) {
 	    Xfree((char *) fs);
-	    _XEatData(dpy,
-		      nbytes
-		      + (reply.nCharInfos > 0 && reply.shmid == (CARD32)(-1)
-		         ? reply.nUniqCharInfos * SIZEOF(xCharInfo)
-		           + (reply.nCharInfos+1)/2 * 2 * sizeof(CARD16)
-		         : 0));
+	    _XEatDataWords(dpy, reply_left);
 	    return (XFontStruct *)NULL;
 	}
 	_XRead32 (dpy, (long *)fs->properties, nbytes);
+	reply_left -= (nbytes >> 2);
     }
 
     fs->per_char = NULL;
+#ifndef LONG64
+    /* compares each part to half the maximum, which should be far more than
+       any real font needs, so the combined total doesn't overflow either */
+    if (reply.nUniqCharInfos > ((ULONG_MAX / 2) / SIZEOF(xCharInfo)) ||
+	reply.nCharInfos > ((ULONG_MAX / 2) / sizeof(CARD16))) {
+	Xfree((char *) fs->properties);
+	Xfree((char *) fs);
+	_XEatDataWords(dpy, reply_left);
+	return (XFontStruct *)NULL;
+    }
+#endif
     if (reply.nCharInfos > 0) {
 	/* fprintf(stderr, "received font metrics, nCharInfos = %d, nUniqCharInfos = %d, shmid = %d\n", reply.nCharInfos, reply.nUniqCharInfos, reply.shmid); */
 	if (reply.shmid == (CARD32)(-1)) {
@@ -545,18 +522,18 @@ _XF86BigfontQueryFont (
 
 	    nbytes = reply.nUniqCharInfos * SIZEOF(xCharInfo)
 	             + (reply.nCharInfos+1)/2 * 2 * sizeof(CARD16);
-	    pUniqCI = (xCharInfo *) Xmalloc (nbytes);
+	    pUniqCI = Xmalloc (nbytes);
 	    if (!pUniqCI) {
 		if (fs->properties) Xfree((char *) fs->properties);
 		Xfree((char *) fs);
-		_XEatData(dpy, nbytes);
+		_XEatDataWords(dpy, reply_left);
 		return (XFontStruct *)NULL;
 	    }
-	    if (! (fs->per_char = (XCharStruct *) Xmalloc (reply.nCharInfos * sizeof(XCharStruct)))) {
+	    if (! (fs->per_char = Xmalloc (reply.nCharInfos * sizeof(XCharStruct)))) {
 		Xfree((char *) pUniqCI);
 		if (fs->properties) Xfree((char *) fs->properties);
 		Xfree((char *) fs);
-		_XEatData(dpy, nbytes);
+		_XEatDataWords(dpy, reply_left);
 		return (XFontStruct *)NULL;
 	    }
 	    _XRead16 (dpy, (char *) pUniqCI, nbytes);
@@ -579,7 +556,7 @@ _XF86BigfontQueryFont (
 	    XEDataObject fs_union;
 	    char *addr;
 
-	    pData = (XExtData *) Xmalloc(sizeof(XExtData));
+	    pData = Xmalloc(sizeof(XExtData));
 	    if (!pData) {
 		if (fs->properties) Xfree((char *) fs->properties);
 		Xfree((char *) fs);
@@ -611,6 +588,7 @@ _XF86BigfontQueryFont (
 	    if (!(extcodes->serverCapabilities & CAP_VerifiedLocal)) {
 		struct shmid_ds buf;
 		if (!(shmctl(reply.shmid, IPC_STAT, &buf) >= 0
+		      && reply.nCharInfos < (LONG_MAX / sizeof(XCharStruct))
 		      && buf.shm_segsz >= reply.shmsegoffset + reply.nCharInfos * sizeof(XCharStruct) + sizeof(CARD32)
 		      && *(CARD32 *)(addr + reply.shmsegoffset + reply.nCharInfos * sizeof(XCharStruct)) == extcodes->serverSignature)) {
 		    shmdt(addr);

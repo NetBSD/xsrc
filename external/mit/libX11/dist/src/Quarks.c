@@ -131,10 +131,8 @@ static char *permalloc(unsigned int length)
     return(ret);
 }
 
-#ifndef WORD64
 typedef struct {char a; double b;} TestType1;
 typedef struct {char a; unsigned long b;} TestType2;
-#endif
 
 #ifdef XTHREADS
 static char *_Xpermalloc(unsigned int length);
@@ -157,7 +155,6 @@ char *Xpermalloc(unsigned int length)
     int i;
 
     if (neverFreeTableSize && length < NEVERFREETABLESIZE) {
-#ifndef WORD64
 	if ((sizeof(TestType1) !=
 	     (sizeof(TestType2) - sizeof(unsigned long) + sizeof(double))) &&
 	    !(length & (DALIGN-1)) &&
@@ -165,7 +162,6 @@ char *Xpermalloc(unsigned int length)
 	    neverFreeTableSize -= DALIGN - i;
 	    neverFreeTable += DALIGN - i;
 	} else
-#endif
 	    if ((i = (NEVERFREETABLESIZE - neverFreeTableSize) & (WALIGN-1))) {
 		neverFreeTableSize -= WALIGN - i;
 		neverFreeTable += WALIGN - i;
@@ -190,15 +186,14 @@ ExpandQuarkTable(void)
 	newmask = (oldmask << 1) + 1;
     else {
 	if (!stringTable) {
-	    stringTable = (XrmString **)Xmalloc(sizeof(XrmString *) *
-						CHUNKPER);
+	    stringTable = Xmalloc(sizeof(XrmString *) * CHUNKPER);
 	    if (!stringTable)
 		return False;
 	    stringTable[0] = (XrmString *)NULL;
 	}
 #ifdef PERMQ
 	if (!permTable)
-	    permTable = (Bits **)Xmalloc(sizeof(Bits *) * CHUNKPER);
+	    permTable = Xmalloc(sizeof(Bits *) * CHUNKPER);
 	if (!permTable)
 	    return False;
 #endif
@@ -293,13 +288,13 @@ nomatch:    if (!rehash)
     q = nextQuark;
     if (!(q & QUANTUMMASK)) {
 	if (!(q & CHUNKMASK)) {
-	    if (!(new = Xrealloc((char *)stringTable,
+	    if (!(new = Xrealloc(stringTable,
 				 sizeof(XrmString *) *
 				 ((q >> QUANTUMSHIFT) + CHUNKPER))))
 		goto fail;
 	    stringTable = (XrmString **)new;
 #ifdef PERMQ
-	    if (!(new = Xrealloc((char *)permTable,
+	    if (!(new = Xrealloc(permTable,
 				 sizeof(Bits *) *
 				 ((q >> QUANTUMSHIFT) + CHUNKPER))))
 		goto fail;

@@ -53,6 +53,14 @@ SOFTWARE.
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 
+/* The Xlib structs are full of implicit padding to properly align members.
+   We can't clean that up without breaking ABI, so tell clang not to bother
+   complaining about it. */
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpadded"
+#endif
+
 /*
  * Bitmask returned by XParseGeometry().  Each bit tells if the corresponding
  * value (x, y, width, height) was found in the parsed string.
@@ -250,7 +258,7 @@ typedef struct _XComposeStatus {
 #define IsModifierKey(keysym) \
   ((((KeySym)(keysym) >= XK_Shift_L) && ((KeySym)(keysym) <= XK_Hyper_R)) \
    || (((KeySym)(keysym) >= XK_ISO_Lock) && \
-       ((KeySym)(keysym) <= XK_ISO_Last_Group_Lock)) \
+       ((KeySym)(keysym) <= XK_ISO_Level5_Lock)) \
    || ((KeySym)(keysym) == XK_Mode_switch) \
    || ((KeySym)(keysym) == XK_Num_Lock))
 #else
@@ -820,6 +828,10 @@ extern int XXorRegion(
     Region		/* srb */,
     Region		/* dr_return */
 );
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 _XFUNCPROTOEND
 

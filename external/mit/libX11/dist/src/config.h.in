@@ -48,6 +48,9 @@
 /* Define to 1 if you have a working `mmap' system call. */
 #undef HAVE_MMAP
 
+/* Define to 1 if you have the `seteuid' function. */
+#undef HAVE_SETEUID
+
 /* Use shl_load to load shared libraries */
 #undef HAVE_SHL_LOAD
 

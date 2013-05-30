@@ -332,7 +332,7 @@ XImage *XCreateImage (
 	    (xpad != 8 && xpad != 16 && xpad != 32) ||
 	    offset < 0)
 	    return (XImage *) NULL;
-	if ((image = (XImage *) Xcalloc(1, (unsigned) sizeof(XImage))) == NULL)
+	if ((image = Xcalloc(1, sizeof(XImage))) == NULL)
 	    return (XImage *) NULL;
 
 	image->width = width;
@@ -528,9 +528,7 @@ static unsigned long _XGetPixel (
 	  return (pixel & low_bits_table[ximage->depth]);
 }
 
-#ifndef WORD64
 static CARD32 const byteorderpixel = MSBFirst << 24;
-#endif
 
 static unsigned long _XGetPixel32 (
     register XImage *ximage,
@@ -543,12 +541,9 @@ static unsigned long _XGetPixel32 (
 	if ((ximage->format == ZPixmap) && (ximage->bits_per_pixel == 32)) {
 	    addr = &((unsigned char *)ximage->data)
 			[y * ximage->bytes_per_line + (x << 2)];
-#ifndef WORD64
 	    if (*((const char *)&byteorderpixel) == ximage->byte_order)
 		pixel = *((CARD32 *)addr);
-	    else
-#endif
-	    if (ximage->byte_order == MSBFirst)
+	    else if (ximage->byte_order == MSBFirst)
 		pixel = ((unsigned long)addr[0] << 24 |
 			 (unsigned long)addr[1] << 16 |
 			 (unsigned long)addr[2] << 8 |
@@ -734,12 +729,9 @@ static int _XPutPixel32 (
 	if ((ximage->format == ZPixmap) && (ximage->bits_per_pixel == 32)) {
 	    addr = &((unsigned char *)ximage->data)
 			[y * ximage->bytes_per_line + (x << 2)];
-#ifndef WORD64
 	    if (*((const char *)&byteorderpixel) == ximage->byte_order)
 		*((CARD32 *)addr) = pixel;
-	    else
-#endif
-	    if (ximage->byte_order == MSBFirst) {
+	    else if (ximage->byte_order == MSBFirst) {
 		addr[0] = pixel >> 24;
 		addr[1] = pixel >> 16;
 		addr[2] = pixel >> 8;
@@ -850,7 +842,7 @@ static XImage *_XSubImage (
 	register unsigned long pixel;
 	char *data;
 
-	if ((subimage = (XImage *) Xcalloc (1, sizeof (XImage))) == NULL)
+	if ((subimage = Xcalloc (1, sizeof (XImage))) == NULL)
 	    return (XImage *) NULL;
 	subimage->width = width;
 	subimage->height = height;
@@ -876,7 +868,7 @@ static XImage *_XSubImage (
 	_XInitImageFuncPtrs (subimage);
 	dsize = subimage->bytes_per_line * height;
 	if (subimage->format == XYPixmap) dsize = dsize * subimage->depth;
-	if (((data = Xcalloc (1, (unsigned) dsize)) == NULL) && (dsize > 0)) {
+	if (((data = Xcalloc (1, dsize)) == NULL) && (dsize > 0)) {
 	    Xfree((char *) subimage);
 	    return (XImage *) NULL;
 	}
@@ -997,7 +989,6 @@ _XAddPixel (
 	    x = ximage->bytes_per_line * ximage->height;
 	    while (--x >= 0)
 		*dp++ += value;
-#ifndef WORD64
 	} else if ((ximage->format == ZPixmap) &&
 		   (ximage->bits_per_pixel == 16) &&
 		   (*((const char *)&byteorderpixel) == ximage->byte_order)) {
@@ -1012,7 +1003,6 @@ _XAddPixel (
 	    x = (ximage->bytes_per_line >> 2) * ximage->height;
 	    while (--x >= 0)
 		*dp++ += value;
-#endif
 	} else {
 	    for (y = ximage->height; --y >= 0; ) {
 		for (x = ximage->width; --x >= 0; ) {

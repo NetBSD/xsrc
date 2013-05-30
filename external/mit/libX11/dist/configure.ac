@@ -1,7 +1,7 @@
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([libX11], [1.4.4],
+AC_INIT([libX11], [1.5.99.902],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg], [libX11])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([src/config.h include/X11/XlibConf.h])
@@ -15,7 +15,6 @@ AC_USE_SYSTEM_EXTENSIONS
 
 # Initialize Automake
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
-AM_MAINTAINER_MODE
 
 # Initialize libtool
 AC_PROG_LIBTOOL
@@ -29,7 +28,7 @@ XORG_ENABLE_SPECS
 XORG_WITH_XMLTO(0.0.22)
 XORG_WITH_FOP([],[no])
 XORG_WITH_XSLTPROC
-XORG_CHECK_SGML_DOCTOOLS(1.8)
+XORG_CHECK_SGML_DOCTOOLS(1.10)
 XORG_PROG_RAWCPP
 XORG_WITH_PERL
 
@@ -177,7 +176,7 @@ else
 	AC_DEFINE(HAVE_DLOPEN,1,[Use dlopen to load shared libraries])
 	AC_CHECK_HEADERS([dlfcn.h])
 fi
-if test x$ac_cv_header_dlcfn_h -o x$ac_cv_header_dl_h; then
+if test "x$ac_cv_header_dlfcn_h" = xyes -o "x$ac_cv_header_dl_h" = xyes; then
 	HAVE_LOADABLE_MODULES=yes
 else
 	HAVE_LOADABLE_MODULES=no
@@ -220,11 +219,15 @@ AC_CHECK_HEADERS([sys/select.h])
 # Checks for typedefs, structures, and compiler characteristics.
 
 # Checks for library functions.
-AC_CHECK_FUNCS([strtol])
+AC_CHECK_FUNCS([strtol seteuid])
 # Used in lcFile.c (see also --enable-xlocaledir settings below)
 XLOCALEDIR_IS_SAFE="no"
-AC_CHECK_FUNC([issetugid], [XLOCALEDIR_IS_SAFE="yes"]
-	AC_DEFINE(HASSETUGID,1,[Has issetugid() function]))
+AC_CHECK_DECL([issetugid])
+AC_CHECK_FUNC([issetugid])
+if test "$ac_cv_have_decl_issetugid" = yes && test "$ac_cv_func_issetugid" = yes; then
+    XLOCALEDIR_IS_SAFE="yes"
+    AC_DEFINE(HASSETUGID,1,[Has issetugid() function])
+fi
 AC_CHECK_FUNC([getresuid], [XLOCALEDIR_IS_SAFE="yes"]
 	AC_DEFINE(HASGETRESUID,1,[Has getresuid() & getresgid() functions]))
 # Used in Font.c
@@ -302,7 +305,15 @@ AC_CHECK_FUNC(poll, [AC_DEFINE(USE_POLL, 1, [poll() function is available])], )
 # Find keysymdef.h
 #
 AC_MSG_CHECKING([keysym definitions])
-KEYSYMDEFDIR=`$PKG_CONFIG --variable=includedir xproto`/X11
+AC_ARG_WITH([keysymdefdir],
+        [AC_HELP_STRING([--with-keysymdefdir=DIR], [The location of keysymdef.h (defaults to xproto include dir)])],
+        [KEYSYMDEFDIR=$withval],
+        [KEYSYMDEFDIR=`$PKG_CONFIG --variable=includedir xproto`/X11])
+
+if test ! -d "$KEYSYMDEFDIR"; then
+	AC_MSG_ERROR([$KEYSYMDEFDIR doesn't exist or isn't a directory])
+fi
+
 FILES="keysymdef.h XF86keysym.h Sunkeysym.h DECkeysym.h HPkeysym.h"
 for i in $FILES; do
     if test -f "$KEYSYMDEFDIR/$i"; then
@@ -421,6 +432,20 @@ X11_LOCALEDIR="${X11_LOCALEDATADIR}"
 AX_DEFINE_DIR(XLOCALEDIR, X11_LOCALEDIR, [Location of libX11 locale data])
 AC_SUBST(X11_LOCALEDIR)
 
+locales="\
+ am_ET.UTF-8  armscii-8   C           el_GR.UTF-8  en_US.UTF-8  fi_FI.UTF-8 \
+ georgian-academy         georgian-ps ibm-cp1133   iscii-dev    isiri-3342 \
+ iso8859-1    iso8859-10  iso8859-11  iso8859-13   iso8859-14   iso8859-15 \
+ iso8859-2    iso8859-3   iso8859-4   iso8859-5    iso8859-6    iso8859-7 \
+ iso8859-8    iso8859-9   iso8859-9e  ja           ja.JIS       ja_JP.UTF-8\
+ ja.SJIS      ko          koi8-c      koi8-r                                  \
+ koi8-u       ko_KR.UTF-8 microsoft-cp1251         microsoft-cp1255 \
+ microsoft-cp1256         mulelao-1   nokhchi-1    pt_BR.UTF-8  ru_RU.UTF-8 \
+ tatar-cyr    th_TH       th_TH.UTF-8 tscii-0      vi_VN.tcvn   vi_VN.viscii \
+ zh_CN        zh_CN.gb18030           zh_CN.gbk    zh_CN.UTF-8  zh_HK.big5 \
+ zh_HK.big5hkscs          zh_HK.UTF-8 zh_TW        zh_TW.big5   zh_TW.UTF-8"
+AC_SUBST(locales)
+
 XKEYSYMDB="${X11_DATADIR}/XKeysymDB"
 AX_DEFINE_DIR(XKEYSYMDB, XKEYSYMDB, [Location of keysym database])
 
@@ -451,6 +476,7 @@ AC_CONFIG_FILES([Makefile
 		nls/Makefile
 		specs/Makefile
 		specs/i18n/Makefile
+		specs/i18n/compose/Makefile
 		specs/i18n/framework/Makefile
 		specs/i18n/localedb/Makefile
 		specs/i18n/trans/Makefile
