@@ -1,3 +1,373 @@
+commit 9d1458e02fe8dcac68b32917c9b10fa49d7161e7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue May 28 17:17:40 2013 -0700
+
+    libFS 1.0.5
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 26dc23446c2e7818fdebfb46e101bac4883df07e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 14 09:07:32 2013 -0700
+
+    Sign extension issue and integer overflow in FSOpenServer() [CVE-2013-1996]
+    
+    >       altlen = (int) *ad++; <-- if char is 0xff, will sign extend to int (0xffffffff == -1)
+    >       alts[i].name = (char *) FSmalloc(altlen + 1); <-- -1 + 1 == 0
+    > ...
+    >       memmove(alts[i].name, ad, altlen); <-- memory corruption
+    
+    Reported-by: Ilja Van Sprundel <ivansprundel@ioactive.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f6030dd569094fb29720a4bf54aec784b1edcac5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Apr 10 21:43:40 2013 -0700
+
+    Get rid of more duplication in error cleanup code in FSListFontsWithXInfo
+    
+    Also get rely on free() to handle null pointers in cleanup code instead
+    of checking each one ourselves.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1f260bfdcb8d83d6c21db70ad6ed0fa94e5f5abf
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Apr 10 20:55:36 2013 -0700
+
+    Avoid accessing freed memory on realloc failure in FSListFontsWithXInfo
+    
+    Since we realloc 5 things in a row, and then check for failure, it's
+    quite possible one of our old pointers is now pointing to something
+    completely different, so instead update the pointers as we successfully
+    realloc them and then jump to the normal error processing cleanup if
+    one fails.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3022dfdcdac08a4950695ded9f372e845f2be008
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Apr 10 19:04:22 2013 -0700
+
+    Avoid reading outside bounds when _FSReply receives an Error response
+    
+    Upon receiving a response, _FSReply copies the first 8 bytes into *rep
+    and then looks at them to determine what type of response.   If it's an
+    error packet, it then converts to an error struct and reads the rest,
+    but it was copying 16 bytes out of *rep to begin with, due to sloppy
+    casting.   Since we immediately overwrite the second 8 bytes with the
+    data coming off the wire, this isn't horrible, but it really freaks out
+    static analysis and memory debugging tools.
+    
+    Fixes parfait 1.1 warning:
+    
+    Error: Buffer overrun
+       Read Outside Array Bounds in STD C function: Read outside array bounds in call to llvm.memcpy.p0i8.p0i8.i64. Buffer ((char*)((union fsError*)rep)) of size ??? is read at an offset of 16
+          size(((char*)((union fsError*)rep))) is 8, 16 is 16
+            at line 751 of src/FSlibInt.c in function '_FSReply'.
+            called at line 67 of src/FSSync.c in function 'FSSync' with rep = ((union fsReply*)&rep).
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 932131874109931bb6d50acc47ac94e51a2353de
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Apr 10 18:54:35 2013 -0700
+
+    Use NULL instead of 0 for null pointers
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 90b9754da977cb6804da4c38711ff33db772a9ca
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Apr 10 18:30:24 2013 -0700
+
+    Get rid of unnecessary casts in FSfree calls
+    
+    No need to cast all other pointers to char *, since C89 free takes
+    any type of pointer.   Casting all of them just hides errors if you
+    try to free something that's not really a pointer.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2cf3ed903048758ee696d410aba6afefd1582dec
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Apr 10 18:26:22 2013 -0700
+
+    Get rid of unnecessary casts in FS*alloc calls
+    
+    Stop taking 64-bit size_t, truncating to 32-bit unsigned int, and then
+    putting into a 64-bit size_t argument to underlying *alloc call.
+    
+    Also stop casting results, since in C, that just hides missing prototype
+    errors that can cause memory corruption when taking an implicit 32-bit
+    int return value and trying to make a 64-bit pointer out of it.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0ef550010ad1cb08297951b385c0034010e89a9a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jan 18 23:18:47 2013 -0800
+
+    Replace deprecated Automake INCLUDES variable with AM_CPPFLAGS
+    
+    Excerpt https://lists.gnu.org/archive/html/automake/2012-12/msg00038.html
+    
+      - Support for the long-deprecated INCLUDES variable will be removed
+        altogether in Automake 1.14.  The AM_CPPFLAGS variable should be
+        used instead.
+    
+    This variable was deprecated in Automake releases prior to 1.10, which is
+    the current minimum level required to build X.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 464fb353a406cbb4c478fae89952979cb5c8775c
+Author: Colin Walters <walters@verbum.org>
+Date:   Wed Jan 4 17:37:06 2012 -0500
+
+    autogen.sh: Implement GNOME Build API
+    
+    http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 0e0109c5d035c9f803b52d2189151f600de59866
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue Jan 15 14:28:48 2013 -0500
+
+    configure: Remove AM_MAINTAINER_MODE
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 56c83935a873fa7c6bb0c8c7d9f755ee08439aa5
+Author: Thomas Klausner <wiz@NetBSD.org>
+Date:   Thu Jul 12 14:39:26 2012 +0200
+
+    Fix a prototype error
+    
+    Per NetBSD PR 41899 from Henning Petersen.
+    
+    Signed-off-by: Thomas Klausner <wiz@NetBSD.org>
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+
+commit 589eea0713cacb7b6889d15e4dbcd2914684db9b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Mar 2 19:47:42 2012 -0800
+
+    libFS 1.0.4
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9e5c931053f261cc97e3d7b75a5c2f14990bbb9d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Mar 2 19:42:18 2012 -0800
+
+    Remove unneeded shadow definition of 'i' from FSQueryXBitmaps16
+    
+    Fixes gcc warning:
+    FSQGlyphs.c: In function 'FSQueryXBitmaps16':
+    FSQGlyphs.c:153:6: warning: declaration of 'i' shadows a previous local
+    FSQGlyphs.c:143:10: warning: shadowed declaration is here
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4ebfa48f74deb4f35490e02eeeb1e59ff56856ab
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Dec 4 08:54:38 2011 -0800
+
+    Fix builds of FSlibInt.c with Solaris Studio compilers
+    
+    Required in order to build with Studio cc now that xorg-macros is
+    setting -errwarn=E_FUNC_HAS_NO_RETURN_STMT since a bug in the Solaris
+    system headers causes the noreturn attribute to not be correctly
+    applied to the exit() prototype in <stdlib.h> when building with
+    Studio instead of gcc.
+    
+    Otherwise compiler exits with error:
+    "FSlibInt.c", line 976: Function has no return statement : _FSDefaultIOError
+    
+    Uses Studio-specific pragma instead of adding another exit() prototype
+    with a noreturn attribute to avoid causing gcc to warn about having
+    a redundant prototype for the exit() function.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 447b3268bfb2d6a92d105ad75c2ac5462f1adecb
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Nov 11 22:54:21 2011 -0800
+
+    Mark pattern argument to FSListFonts* as const char *
+    
+    Needed to fix gcc -Wwrite-strings warnings in clients such as fslsfonts
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5dae1f32a775c3f99f26571f3fab8fb4f0f2874f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Sep 28 22:28:22 2011 -0700
+
+    Change FSOpenServer and FSServerName to take const char * args.
+    
+    Almost matches the current versions of the XOpenDisplay & XDisplayName
+    functions they're modeled on - unlike XDisplayName, FSServerName now
+    returns const char * as well so we don't lose the constness of the
+    string passed in if we return it.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1353bd6b52241857f9e37cc6403e1fee3c5e69e4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Sep 26 15:07:57 2011 -0700
+
+    Add const attributes to fix gcc -Wwrite-strings warnings
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 750fbfe7562e94788e5dfecb6617e26d6d3f0157
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Sep 16 22:08:05 2011 -0700
+
+    Strip trailing whitespace
+    
+    Performed with: find * -type f | xargs perl -i -p -e 's{[ \t]+$}{}'
+    git diff -w & git diff -b show no diffs from this change
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 06fd3e765d96fda0e323c11c7a6786b870655bbe
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Thu Apr 28 17:21:15 2011 -0700
+
+    Silence clang's -Wformat-nonliteral around our error printing code
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit b39bb910ce7a8dc18922957bad7c0e7b1fe9c499
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Thu Apr 28 17:11:05 2011 -0700
+
+    Annotate fatal errors with _X_NORETURN
+    
+    Fixes a false-positive with clang static analysis
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit 8607b9de7b331f7a97e623b1490194324a8b9a4b
+Author: Cyril Brulebois <kibi@debian.org>
+Date:   Fri Feb 18 21:17:12 2011 +0100
+
+    Silence gcc warning.
+    
+    Fix the build with CFLAGS="-Wall -Werror":
+    |   CC     FSGetErrorText.o
+    | cc1: warnings being treated as errors
+    | FSGetErrorText.c: In function ‘CheckErrorMessage’:
+    | FSGetErrorText.c:43: error: format ‘%d’ expects type ‘int’, but argument 5 has type ‘long unsigned int’
+    
+    An int is likely to be sufficient for this buffer's size…
+    
+    Signed-off-by: Cyril Brulebois <kibi@debian.org>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 07c1f9c135039606c63b88d51b93532199897ceb
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 13 10:23:43 2011 -0800
+
+    Off-by-one error on the other end of FSGetErrorText bounds check
+    
+    The Font Server protocol actually defines 0 as an error code too.
+    
+    Before this fix, test/FSGetErrorText printed:
+    
+    FSGetErrorText for code FSBadRequest (0) returned:
+    ||
+    
+    Afterwards:
+    
+    FSGetErrorText for code FSBadRequest (0) returned:
+    |BadRequest, invalid request code or no such operation|
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ba4f4e7604afc23431c62c3886ab9419d5913661
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 13 10:20:48 2011 -0800
+
+    Add simple test program for FSGetErrorText()
+    
+    When run with arguments, prints messages for the given codes.
+    When run with no arguments, prints messages for known valid error codes
+    and some invalid codes.
+    
+    Not run as part of "make check" since it requires a connection to an
+    xfs server to run, just available for developers to manually run when
+    needed.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3deb5cb746e94854728f8265b6bb8eeaec367322
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Feb 11 18:32:08 2011 -0800
+
+    Off-by-one error in FSGetErrorText bounds check
+    
+    Read outside array bounds (CWE 125): In array dereference of <unknown> with index 'code'
+      Array size is 12 elements (of 4 bytes each), index >= 1 and index <= 12
+        at line 108 of libFS/src/FSErrDis.c in function 'FSGetErrorText'.
+    
+    [ This bug was found by the Parfait 0.3.6 bug checking tool.
+      For more information see http://labs.oracle.com/projects/parfait/ ]
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Julien Cristau <jcristau@debian.org>
+
+commit ee8e378880e3fd3422f378b419bb77665626629c
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Feb 2 16:08:21 2011 -0500
+
+    config: splitting FS and XTRANS compiler option no longer required
+    
+    This was done for the wrong reasons and fixed in commit:
+    87c96993d17812a55d92ef32a91083614e258f02
+    where the libfs.pc.in was fixed.
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 92a10dde49d707d79fe588bb9e5aba2534c0ab2c
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Feb 2 11:43:40 2011 -0500
+
+    config: comment, minor upgrade, quote and layout configure.ac
+    
+    Group statements per section as per Autoconf standard layout
+    Quote statements where appropriate.
+    Autoconf recommends not using dnl instead of # for comments
+    
+    Use AC_CONFIG_FILES to replace the deprecated AC_OUTPUT with parameters.
+    Add AC_CONFIG_SRCDIR([Makefile.am])
+    Update minimum version of util-macros to at least 1.8.
+    
+    This helps automated maintenance and release activities.
+    Details can be found in http://wiki.x.org/wiki/NewModuleGuidelines
+
+commit 195bc673e232e73b4cfa0fd34150a574683c69d1
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Jan 28 19:41:37 2011 -0500
+
+    config: replace deprecated AM_CONFIG_HEADER with AC_CONFIG_HEADERS
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 5895de6dedcb8603b6a415d3486395c29501868c
+Author: Cristian Rodríguez <cristian.rodriguez@opensuse.org>
+Date:   Tue Dec 14 15:07:34 2010 -0500
+
+    Export only public API symbols
+    
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Signed-off-by: Cristian Rodríguez <cristian.rodriguez@opensuse.org>
+
 commit 4218339a30a899ceb82a9a057c6b96bce624f917
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Tue Oct 26 18:47:31 2010 -0700
