@@ -997,11 +997,9 @@ XRebindKeysym (
     tmp = dpy->key_bindings;
     nb = sizeof(KeySym) * nm;
 
-    if ((! (p = (struct _XKeytrans *) Xcalloc( 1, sizeof(struct _XKeytrans)))) ||
-	((! (p->string = (char *) Xmalloc( (unsigned) nbytes))) &&
-	 (nbytes > 0)) ||
-	((! (p->modifiers = (KeySym *) Xmalloc( (unsigned) nb))) &&
-	 (nb > 0))) {
+    if ((! (p = Xcalloc( 1, sizeof(struct _XKeytrans)))) ||
+	((! (p->string = Xmalloc(nbytes))) && (nbytes > 0)) ||
+	((! (p->modifiers = Xmalloc(nb))) && (nb > 0))) {
 	if (p) {
 	    if (p->string) Xfree(p->string);
 	    if (p->modifiers) Xfree((char *) p->modifiers);
@@ -1014,7 +1012,7 @@ XRebindKeysym (
     dpy->key_bindings = p;
     dpy->free_funcs->key_bindings = _XFreeKeyBindings;
     p->next = tmp;	/* chain onto list */
-    memcpy (p->string, (char *) str, nbytes);
+    memcpy (p->string, str, nbytes);
     p->len = nbytes;
     memcpy ((char *) p->modifiers, (char *) mlist, nb);
     p->key = keysym;
