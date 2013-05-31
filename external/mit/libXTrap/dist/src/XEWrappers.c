@@ -268,7 +268,7 @@ int XETrapWaitForSomething(XtAppContext app)
 #ifdef XTHREADS
     , FALSE
 #endif /* XTHREADS */
-    , 0L));
+    , NULL));
 #else   /* vms */
 #define IS_AFTER(t1,t2) (((t2).high > (t1).high) \
        ||(((t2).high == (t1).high)&& ((t2).low > (t1).low)))

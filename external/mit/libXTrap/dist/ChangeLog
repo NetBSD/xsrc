@@ -1,38 +1,239 @@
-2005-12-14  Kevin E. Martin  <kem-at-freedesktop-dot-org>
+commit e6b833f5cb053af936e3a60015ac0cca1ac1f13e
+Author: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+Date:   Thu Jan 3 09:38:31 2013 -0800
 
-	* configure.ac:
-	Update package version number for final X11R7 release candidate.
+    configure.ac: 1.0.1
+    
+    Signed-off-by: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
 
-2005-12-03  Kevin E. Martin  <kem-at-freedesktop-dot-org>
+commit 8f2e33f4c40fb3baa3d0b2b153ff029112bb6071
+Author: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+Date:   Thu Jan 3 09:34:05 2013 -0800
 
-	* configure.ac:
-	Update package version number for X11R7 RC3 release.
+    configure.ac: foreign and use XORG_COMPILER_FLAGS
+    
+    Signed-off-by: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
 
-2005-11-19  Kevin E. Martin  <kem-at-freedesktop-dot-org>
+commit 6ef02c79f1713e45475c56e3ca84df619a55c0f6
+Author: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+Date:   Thu Jan 3 09:21:18 2013 -0800
 
-	* xtrap.pc.in:
-	Update pkgconfig files to separate library build-time dependencies
-	from application build-time dependencies.
+    configure.ac: Use AC_CONFIG_HEADERS instead of AM_CONFIG_HEADER for automake 1.13
+    
+    Signed-off-by: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
 
-2005-10-18  Kevin E. Martin  <kem-at-freedesktop-dot-org>
+commit b9d8ee673b4296d0962bfdc63e5b1b82590cfdf6
+Author: Thomas Klausner <wiz@NetBSD.org>
+Date:   Fri Jul 20 23:41:19 2012 +0200
 
-	* configure.ac:
-	Update package version number for RC1 release.
+    Remove unnecessary memset return value casts to void.
+    
+    Signed-off-by: Thomas Klausner <wiz@NetBSD.org>
+    Reviewed-by: Rémi Cardona <remi.cardona@free.fr>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
-2005-07-08  Keith Packard  <keithp@keithp.com>
+commit 45a8bd9a1ebf4f829d0f837beba2bb2b846fc834
+Author: Thomas Klausner <wiz@NetBSD.org>
+Date:   Fri Jul 20 23:41:18 2012 +0200
 
-	* .cvsignore:
-	* src/.cvsignore:
-	* src/Makefile.am:
-	Add .cvsignore files
-	Switch _la_CFLAGS for AM_CFLAGS to clean up directory
+    Fix memset usage.
+    
+    From Joerg Sonnenberger <joerg@NetBSD.org>
+    
+    Signed-off-by: Thomas Klausner <wiz@NetBSD.org>
+    Reviewed-by: Rémi Cardona <remi.cardona@free.fr>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
-2005-05-17    <ssp@aware-of-vacuity.boston.redhat.com>
+commit 74a751e9821bcd313ed9b8fb71d30ac9b5598b23
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jun 8 19:36:06 2010 -0700
 
-	* configure.ac: Remove rest of half-removed if statement
+    Add note about XTrap history & deprecation to README
+    
+    Summarized from the description in the xtrap(1) man page.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
-	* ChangeLog: remove irrelevant entries
+commit cb487b4242b653f75772bef6f7c1da0ddc9a03c0
+Author: Jamey Sharp <jamey@minilop.net>
+Date:   Fri Apr 9 17:28:29 2010 -0700
 
-2005-04-16  Josh Triplett  <josh@freedesktop.org>
+    SyncHandle must not be called with the Display lock held.
+    
+    The correct pattern is to call UnlockDisplay, *then* SyncHandle.
 
-	* Makefile.am: Tell automake about the manpage.
+commit d324480514d0c915cbb30e504eccf2fae087e402
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Mon Feb 2 20:34:31 2009 -0800
+
+    Add README with pointers to mailing list, bugzilla & git repos
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit 9ef7d1fc012b2ef15738f8b499f7d5fcd9af415c
+Author: Paulo Cesar Pereira de Andrade <pcpa@mandriva.com.br>
+Date:   Fri Jan 30 19:29:48 2009 -0200
+
+    Janitor: ansification, make distcheck, compiler warnings.
+
+commit 170b0b6941967b7f7a11f32d1c826ddfeb8c23ce
+Author: Matthieu Herrb <matthieu.herrb@laas.fr>
+Date:   Sun Mar 9 00:22:40 2008 +0100
+
+    nuke RCS Ids
+
+commit 168b120a6f3d3fef2a0e9c66493c00c3e89cdae9
+Author: James Cloos <cloos@jhcloos.com>
+Date:   Thu Dec 6 16:38:23 2007 -0500
+
+    Replace static ChangeLog with dist-hook to generate from git log
+
+commit 4ff5c996213a08c204f4285d6df1013587ecf5e7
+Author: James Cloos <cloos@jhcloos.com>
+Date:   Mon Sep 3 05:53:35 2007 -0400
+
+    Add *~ to .gitignore to skip patch/emacs droppings
+
+commit 59f6d41359428e2616c22e317d75733cab474d4b
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Thu Jul 13 14:58:48 2006 -0700
+
+    renamed: .cvsignore -> .gitignore
+
+commit fecbb3c852e3ee2af26c1fcbc9153f3bb76f565b
+Author: Kevin E Martin <kem@kem.org>
+Date:   Thu Dec 15 00:24:28 2005 +0000
+
+    Update package version number for final X11R7 release candidate.
+
+commit 0004b2300c346a2a0d3d793e953e4a3326384d6d
+Author: Kevin E Martin <kem@kem.org>
+Date:   Sat Dec 3 05:49:42 2005 +0000
+
+    Update package version number for X11R7 RC3 release.
+
+commit 57e90bc7b9bafa3f7425a0b05297bf23c851289f
+Author: Kevin E Martin <kem@kem.org>
+Date:   Sat Nov 19 07:15:40 2005 +0000
+
+    Update pkgconfig files to separate library build-time dependencies from
+        application build-time dependencies, and update package deps to work
+        with separate build roots.
+
+commit 8d3dec4df464d1090f39b69c9e9b2c4b9fadc651
+Author: Kevin E Martin <kem@kem.org>
+Date:   Wed Oct 19 02:48:09 2005 +0000
+
+    Update package version number for RC1 release.
+
+commit 8699c1dff957252e54466f41ed9fe3fe1d1bea16
+Author: Adam Jackson <ajax@nwnk.net>
+Date:   Wed Aug 3 03:28:01 2005 +0000
+
+    Do PKG_CHECK_MODULES on a unique token instead of on "DEP", so builds with
+        a global configure cache don't get confused.
+
+commit 4690351c2e2a53c7f5a5d6729ee401c140825f70
+Author: Kevin E Martin <kem@kem.org>
+Date:   Fri Jul 29 21:22:50 2005 +0000
+
+    Various changes preparing packages for RC0:
+    - Verify and update package version numbers as needed
+    - Implement versioning scheme
+    - Change bug address to point to bugzilla bug entry form
+    - Disable loadable i18n in libX11 by default (use --enable-loadable-i18n to
+        reenable it)
+    - Fix makedepend to use pkgconfig and pass distcheck
+    - Update build script to build macros first
+    - Update modular Xorg version
+
+commit 25302594022079635901ad99d70aff5a28945e47
+Author: Daniel Stone <daniel@fooishbar.org>
+Date:   Wed Jul 20 11:02:25 2005 +0000
+
+    Change soversion to 6.4.0 with -version-number.
+
+commit 5d9aaf8db932d543dfcbab71b241d35e656cfd43
+Author: Keith Packard <keithp@keithp.com>
+Date:   Sat Jul 9 06:06:07 2005 +0000
+
+    Add .cvsignore files Switch _la_CFLAGS for AM_CFLAGS to clean up directory
+
+commit d04f712ea8d7e34e2c7bdae255c9956d68d98657
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Date:   Fri Jul 1 20:09:11 2005 +0000
+
+    xtrap.pc.in: s/Xfixes/XTrap/ xi.pc.in: s/Xt/Xi/ Xv/src/Makefile.am: remove
+        whitespace after backslash modularizeapp.sh: s/destkop/desktop/
+        modular/symlink.sh: Add bitmaps for xeyes, system.xsm for xsm, and
+        Xvidtune.cpp for xvidtune. Also comment out non-existing mga_bios.h
+    Check in buildsystems for xsetroot, xsm, xstdcmap, xtrap, and xvinfo
+
+commit 4c53f5f702a735b2ee20f86a5b898f999296cb5c
+Author: Alexander Gottwald <alexander.gottwald@s1999.tu-chemnitz.de>
+Date:   Thu Jun 30 12:19:09 2005 +0000
+
+    add missing check for xext.pc
+
+commit d3dcbf6f834d50ea5ba2e530e9b37dd6b29473aa
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Date:   Wed Jun 29 21:36:44 2005 +0000
+
+    Check in build system for XTrap
+
+commit 6446598fd5e19390dd2bb6240a15b4133ed5b74b
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Date:   Mon Jun 20 21:47:31 2005 +0000
+
+    - Make Xt install its internal files in /usr/include/X11, both in the
+        modular and the monolithic tree.
+    - Update XTrap to use #include <X11/internal-xt-headerI.h>
+    - Add XvMC to symlink.sh
+
+commit b3fce83504c051e4f241a91b4a04e2b877778686
+Author: Adam Jackson <ajax@nwnk.net>
+Date:   Mon May 30 18:36:19 2005 +0000
+
+    Bug #3407: Clean out ancient #ifdef X11R5 conditionals.
+
+commit 2b2a1e1519939bd71bc2141499e051f6e19c4de6
+Author: Egbert Eich <eich@suse.de>
+Date:   Fri Apr 23 18:43:36 2004 +0000
+
+    Merging XORG-CURRENT into trunk
+
+commit 3bc6a06a2e61a42711fc24d1b688efd5749bc895
+Author: Egbert Eich <eich@suse.de>
+Date:   Sun Mar 14 08:32:01 2004 +0000
+
+    Importing vendor version xf86-4_4_99_1 on Sun Mar 14 00:26:39 PST 2004
+
+commit ab01d1452b5c1a5e4639450bf5da3d4515b22bef
+Author: Egbert Eich <eich@suse.de>
+Date:   Wed Mar 3 12:11:20 2004 +0000
+
+    Importing vendor version xf86-4_4_0 on Wed Mar 3 04:09:24 PST 2004
+
+commit f407232870f8924670a3b1510d6c884d634b50a7
+Author: Egbert Eich <eich@suse.de>
+Date:   Thu Feb 26 13:35:30 2004 +0000
+
+    readding XFree86's cvs IDs
+
+commit 65e5285b0fb9b7e45bffe6cc6fe7e7d21df3f0af
+Author: Egbert Eich <eich@suse.de>
+Date:   Thu Feb 26 09:22:39 2004 +0000
+
+    Importing vendor version xf86-4_3_99_903 on Wed Feb 26 01:21:00 PST 2004
+
+commit a13dac472005af380593f889872fabfa8cfb0c63
+Author: Kaleb Keithley <kaleb@freedesktop.org>
+Date:   Fri Nov 14 16:48:47 2003 +0000
+
+    XFree86 4.3.0.1
+
+commit d0f9768bb0ef1daac029865fbccb96316444e9e9
+Author: Kaleb Keithley <kaleb@freedesktop.org>
+Date:   Fri Nov 14 16:48:47 2003 +0000
+
+    Initial revision

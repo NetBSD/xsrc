@@ -114,8 +114,8 @@ typedef struct
     char *extName;
     int  extEvent;
 }  _extensionData;
-_extensionData *extensionData;
-int numExtension = -1;
+static _extensionData *extensionData;
+static int numExtension = -1;
 
 static struct _pf_tbl {CARD32 id; char *str;} pf_tbl[] =
 {
