@@ -177,7 +177,7 @@ DviClassRec dviClassRec = {
 	NULL,				/* accept_focus		  */
 	XtVersion,			/* version		  */
 	NULL,				/* callback_private	  */
-	0,				/* tm_table		  */
+	NULL,				/* tm_table		  */
 	QueryGeometry,			/* query_geometry	  */
 	XtInheritDisplayAccelerator,	/* display_accelerator	  */
 	NULL,				/* extension		  */
@@ -215,42 +215,36 @@ ClassInitialize (void)
 
 /* ARGSUSED */
 static void
-Initialize(request, new, args, num_args)
-	Widget request, new;
-	ArgList args;
-	Cardinal *num_args;
+Initialize(Widget request, Widget new, ArgList args, Cardinal *num_args)
 {
     DviWidget	dw = (DviWidget) new;
 
-    dw->dvi.tmpFile = 0;
+    dw->dvi.tmpFile = NULL;
     dw->dvi.readingTmp = 0;
     dw->dvi.ungot = 0;
-    dw->dvi.normal_GC = 0;
-    dw->dvi.file_map = 0;
-    dw->dvi.fonts = 0;
-    dw->dvi.font_map = 0;
+    dw->dvi.normal_GC = NULL;
+    dw->dvi.file_map = NULL;
+    dw->dvi.fonts = NULL;
+    dw->dvi.font_map = NULL;
     dw->dvi.current_page = 0;
     dw->dvi.font_size = 0;
     dw->dvi.font_number = 0;
     dw->dvi.device_resolution = 0;
     dw->dvi.line_width = 0;
     dw->dvi.line_style = 0;
-    dw->dvi.font = 0;
+    dw->dvi.font = NULL;
     dw->dvi.display_enable = 0;
     dw->dvi.scale = 0.0;
-    dw->dvi.state = 0;
+    dw->dvi.state = NULL;
     dw->dvi.cache.index = 0;
-    dw->dvi.cache.font = 0; 
+    dw->dvi.cache.font = NULL; 
     dw->dvi.size_scale = 0;
     dw->dvi.size_scale_set = 0;
     RequestDesiredSize (dw);
 }
 
 static void
-Realize(w, valueMask, attrs)
-	Widget			w;
-	XtValueMask		*valueMask;
-	XSetWindowAttributes	*attrs;
+Realize(Widget w, XtValueMask *valueMask, XSetWindowAttributes *attrs)
 {
     DviWidget	dw = (DviWidget) w;
     XGCValues	values;
@@ -292,8 +286,7 @@ Realize(w, valueMask, attrs)
 }
 
 static void
-Destroy(w)
-	Widget w;
+Destroy(Widget w)
 {
 	DviWidget	dw = (DviWidget) w;
 
@@ -308,10 +301,7 @@ Destroy(w)
 
 /* ARGSUSED */
 static void
-Redisplay(w, event, region)
-	Widget w;
-	XEvent *event;
-	Region region;
+Redisplay(Widget w, XEvent *event, Region region)
 {
 	DviWidget	dw = (DviWidget) w;
 #ifndef USE_XFT
@@ -337,8 +327,7 @@ Redisplay(w, event, region)
 }
 
 static void
-RequestDesiredSize (dw)
-    DviWidget	dw;
+RequestDesiredSize (DviWidget dw)
 {
     XtWidgetGeometry	req, rep;
 
@@ -357,10 +346,8 @@ RequestDesiredSize (dw)
  */
 /* ARGSUSED */
 static Boolean
-SetValues (wcurrent, wrequest, wnew, args, num_args)
-	Widget wcurrent, wrequest, wnew;
-	ArgList args;
-	Cardinal *num_args;
+SetValues (Widget wcurrent, Widget wrequest, Widget wnew,
+	   ArgList args, Cardinal *num_args)
 {
     DviWidget	current = (DviWidget) wcurrent;
     DviWidget	request = (DviWidget) wrequest;
@@ -393,7 +380,7 @@ SetValues (wcurrent, wrequest, wnew, args, num_args)
 		    new->dvi.font_map_string = new_map;
 		    if (current->dvi.font_map_string)
 			    XtFree (current->dvi.font_map_string);
-		    current->dvi.font_map_string = 0;
+		    current->dvi.font_map_string = NULL;
 		    ParseFontMap (new);
 	    }
     }
@@ -421,10 +408,7 @@ SetValues (wcurrent, wrequest, wnew, args, num_args)
  */
 
 static Boolean
-SetValuesHook (widget, args, num_argsp)
-	Widget		widget;
-	ArgList		args;
-	Cardinal	*num_argsp;
+SetValuesHook (Widget widget, ArgList args, Cardinal *num_argsp)
 {
 	DviWidget	dw = (DviWidget) widget;
 	Cardinal	i;
@@ -440,8 +424,7 @@ SetValuesHook (widget, args, num_argsp)
 }
 
 static void
-CloseFile (dw)
-	DviWidget	dw;
+CloseFile (DviWidget dw)
 {
     if (dw->dvi.tmpFile)
 	fclose (dw->dvi.tmpFile);
@@ -449,15 +432,14 @@ CloseFile (dw)
 }
 
 static void
-OpenFile (dw)
-	DviWidget	dw;
+OpenFile (DviWidget dw)
 {
     char	tmpName[sizeof ("/tmp/dviXXXXXX")];
 #ifdef HAS_MKSTEMP
     int fd;
 #endif
 
-    dw->dvi.tmpFile = 0;
+    dw->dvi.tmpFile = NULL;
     if (!dw->dvi.seek) {
 	strcpy (tmpName, "/tmp/dviXXXXXX");
 #ifndef HAS_MKSTEMP
@@ -475,9 +457,8 @@ OpenFile (dw)
 }
 
 static XtGeometryResult
-QueryGeometry (w, request, geometry_return)
-	Widget			w;
-	XtWidgetGeometry	*request, *geometry_return;
+QueryGeometry (Widget w, XtWidgetGeometry *request,
+	       XtWidgetGeometry *geometry_return)
 {
 	XtGeometryResult	ret;
 	DviWidget		dw = (DviWidget) w;
@@ -493,9 +474,7 @@ QueryGeometry (w, request, geometry_return)
 }
 
 void
-SetDeviceResolution (dw, resolution)
-	DviWidget   dw;
-	int	    resolution;
+SetDeviceResolution (DviWidget dw, int resolution)
 {
     if (resolution != dw->dvi.device_resolution) {
 	dw->dvi.device_resolution = resolution;
@@ -505,8 +484,7 @@ SetDeviceResolution (dw, resolution)
 }
 
 static void
-ShowDvi (dw)
-	DviWidget	dw;
+ShowDvi (DviWidget dw)
 {
 	int	i;
 	long	file_position;

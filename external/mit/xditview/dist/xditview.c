@@ -142,7 +142,7 @@ static void	CancelAction(Widget, XEvent *, String *, Cardinal *);
 static void	UpdatePageNumber(Widget, XEvent *, String *, Cardinal *);
 static void	Noop(Widget, XEvent *, String *, Cardinal *);
 
-XtActionsRec xditview_actions[] = {
+static XtActionsRec xditview_actions[] = {
     { "NextPage",	    NextPageAction },
     { "PreviousPage",	    PreviousPageAction },
     { "SetResolution",	    SetResolutionAction },
@@ -213,7 +213,7 @@ PortholeCallback(Widget w, XtPointer panner_ptr, XtPointer report_ptr)
 int
 main(int argc, char **argv)
 {
-    char	    *file_name = 0;
+    char	    *file_name = NULL;
     int		    i;
     XtAppContext    xtcontext;
     Arg		    topLevelArgs[2];
@@ -260,7 +260,7 @@ main(int argc, char **argv)
 
     paned = XtCreateManagedWidget("paned", panedWidgetClass, toplevel,
 				    NULL, (Cardinal) 0);
-    menuBar = XtCreateManagedWidget ("menuBar", boxWidgetClass, paned, 0, 0);
+    menuBar = XtCreateManagedWidget ("menuBar", boxWidgetClass, paned, NULL, 0);
 
     fileMenuButton = XtCreateManagedWidget ("fileMenuButton", menuButtonWidgetClass,
 				    menuBar, NULL, (Cardinal) 0);
@@ -311,7 +311,7 @@ main(int argc, char **argv)
 }
 
 static void
-DisplayPageNumber ()
+DisplayPageNumber (void)
 {
     Arg	arg[2];
     int	actual_number, last_page;
@@ -361,8 +361,7 @@ UpdatePageNumber (Widget w, XEvent *xev, String *s, Cardinal *c)
 }
 
 static void
-NewResolution(resString)
-char	*resString;
+NewResolution(char *resString)
 {
     int	res;
     Arg	arg[1];
@@ -423,8 +422,7 @@ VisitFile (char *name, Boolean resetPage)
 }
 
 static void
-NewFile (name)
-char	*name;
+NewFile (char *name)
 {
     VisitFile (name, TRUE);
 }
@@ -443,9 +441,7 @@ ResetMenuEntry (Widget entry)
 
 /*ARGSUSED*/
 static void
-NextPage (entry, name, data)
-    Widget  entry;
-    XtPointer name, data;
+NextPage (Widget entry, XtPointer name, XtPointer data)
 {
     NextPageAction(entry, NULL, NULL, NULL);
     ResetMenuEntry (entry);
@@ -464,9 +460,7 @@ NextPageAction (Widget w, XEvent *xev, String *s, Cardinal *c)
 
 /*ARGSUSED*/
 static void
-PreviousPage (entry, name, data)
-    Widget  entry;
-    XtPointer name, data;
+PreviousPage (Widget entry, XtPointer name, XtPointer data)
 {
     PreviousPageAction (entry, NULL, NULL, NULL);
     ResetMenuEntry (entry);
@@ -485,9 +479,7 @@ PreviousPageAction (Widget w, XEvent *xev, String *s, Cardinal *c)
 
 /*ARGSUSED*/
 static void
-SetResolution (entry, name, data)
-    Widget  entry;
-    XtPointer name, data;
+SetResolution (Widget entry, XtPointer name, XtPointer data)
 {
     SetResolutionAction (entry, NULL, NULL, NULL);
     ResetMenuEntry (entry);
@@ -507,9 +499,7 @@ SetResolutionAction (Widget w, XEvent *xev, String *s, Cardinal *c)
 
 /*ARGSUSED*/
 static void
-OpenFile (entry, name, data)
-    Widget  entry;
-    XtPointer name, data;
+OpenFile (Widget entry, XtPointer name, XtPointer data)
 {
     OpenFileAction (entry, NULL, NULL, NULL);
     ResetMenuEntry (entry);
@@ -527,9 +517,7 @@ OpenFileAction (Widget w, XEvent *xev, String *s, Cardinal *c)
 
 /*ARGSUSED*/
 static void
-RevisitFile (entry, name, data)
-    Widget  entry;
-    XtPointer name, data;
+RevisitFile (Widget entry, XtPointer name, XtPointer data)
 {
     RevisitFileAction (entry, NULL, NULL, NULL);
     ResetMenuEntry (entry);
@@ -544,9 +532,7 @@ RevisitFileAction (Widget w, XEvent *xev, String *s, Cardinal *c)
 
 /*ARGSUSED*/
 static void
-Quit (entry, closure, data)
-    Widget  entry;
-    XtPointer closure, data;
+Quit (Widget entry, XtPointer closure, XtPointer data)
 {
     QuitAction (entry, NULL, NULL, NULL);
 }
@@ -557,16 +543,13 @@ QuitAction (Widget w, XEvent *xev, String *s, Cardinal *c)
     exit (0);
 }
 
-Widget	promptShell, promptDialog;
-void	(*promptfunction)(char *);
+static Widget promptShell, promptDialog;
+static void (*promptfunction)(char *);
 
 /* ARGSUSED */
 static
-void CancelAction (widget, event, params, num_params)
-    Widget	widget;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void CancelAction (Widget widget, XEvent *event,
+		   String *params, Cardinal *num_params)
 {
     if (promptShell) {
 	XtSetKeyboardFocus(toplevel, (Widget) None);
@@ -578,11 +561,8 @@ void CancelAction (widget, event, params, num_params)
 
 /* ARGSUSED */
 static
-void AcceptAction (widget, event, params, num_params)
-    Widget	widget;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void AcceptAction (Widget widget, XEvent *event,
+		   String *params, Cardinal *num_params)
 {
     (*promptfunction)(XawDialogGetValueString(promptDialog));
     CancelAction (widget, event, params, num_params);
@@ -594,11 +574,7 @@ void Noop (Widget w, XEvent *xev, String *s, Cardinal *c)
 }
 
 static void
-MakePrompt(centerw, prompt, func, def)
-Widget	centerw;
-char *prompt;
-void (*func)(char *);
-char	*def;
+MakePrompt(Widget centerw, char *prompt, void (*func)(char *), char *def)
 {
     static Arg dialogArgs[] = {
 	{XtNlabel, (XtArgVal) 0},

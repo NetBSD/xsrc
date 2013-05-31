@@ -70,7 +70,7 @@ typedef struct	Point {
 #define	length(p,q)	sqrt(((q->x - p->x)*(q->x - p->x)) \
 			     + ((q->y - p->y)*(q->y - p->y))) /* length of pq */
 
-Point	*spline = (Point *)NULL;	/* head of spline linked list */
+static Point *spline = (Point *)NULL;	/* head of spline linked list */
 
 static void	ApproxSpline(int n);
 static void	DeletePoint(Point *p);
@@ -81,33 +81,25 @@ static void	LineApprox(Point *p1, Point *p2, Point *p3);
 static Point *	MakePoint(double x, double y);
 
 void
-HorizontalMove(dw, delta)
-	DviWidget	dw;
-	int		delta;
+HorizontalMove(DviWidget dw, int delta)
 {
     dw->dvi.state->x += delta;
 }
 
 void
-HorizontalGoto(dw, NewPosition)
-	DviWidget	dw;
-	int		NewPosition;
+HorizontalGoto(DviWidget dw, int NewPosition)
 {
     dw->dvi.state->x = NewPosition;
 }
 
 void
-VerticalMove(dw, delta)
-	DviWidget	dw;
-	int		delta;
+VerticalMove(DviWidget dw, int delta)
 {
     dw->dvi.state->y += delta;
 }
 
 void
-VerticalGoto(dw, NewPosition)
-	DviWidget	dw;
-	int		NewPosition;
+VerticalGoto(DviWidget dw, int NewPosition)
 {
     dw->dvi.state->y = NewPosition;
 }
@@ -135,8 +127,7 @@ DrawText (DviWidget dw)
 #endif
 
 void
-FlushCharCache (dw)
-	DviWidget	dw;
+FlushCharCache (DviWidget dw)
 {
     int	    xx, yx;
 
@@ -172,8 +163,7 @@ ClearPage (DviWidget dw)
 #endif
 
 void
-SetGCForDraw (dw)
-    DviWidget	dw;
+SetGCForDraw (DviWidget dw)
 {
     int	lw;
     if (dw->dvi.state->line_style != dw->dvi.line_style ||
@@ -190,9 +180,7 @@ SetGCForDraw (dw)
 }
 
 void
-DrawLine (dw, x, y)
-    DviWidget	dw;
-    int		x, y;
+DrawLine (DviWidget dw, int x, int y)
 {
     if (dw->dvi.display_enable)
 	XDrawLine (XtDisplay (dw), XtWindow (dw), dw->dvi.normal_GC,
@@ -203,9 +191,7 @@ DrawLine (dw, x, y)
 }
 
 void
-DrawCircle (dw, diameter)
-	DviWidget	dw;
-	int		diameter;
+DrawCircle (DviWidget dw, int diameter)
 {
     if (dw->dvi.display_enable)
     	XDrawArc (XtDisplay (dw), XtWindow (dw), dw->dvi.normal_GC,
@@ -216,9 +202,7 @@ DrawCircle (dw, diameter)
 }
 
 void
-DrawEllipse (dw, a, b)
-	DviWidget	dw;
-	int		a, b;
+DrawEllipse (DviWidget dw, int a, int b)
 {
     if (dw->dvi.display_enable)
 	XDrawArc (XtDisplay (dw), XtWindow (dw), dw->dvi.normal_GC,
@@ -237,9 +221,7 @@ ConvertAngle(int theta)
 }
 
 void
-DrawArc (dw, x0, y0, x1, y1)
-	DviWidget	dw;
-	int		x0, y0, x1, y1;
+DrawArc (DviWidget dw, int x0, int y0, int x1, int y1)
 {
     int	xc, yc, x2, y2, r;
     int	angle1, angle2;
@@ -330,10 +312,7 @@ getstr(char *p, char *temp)
 
 /*ARGSUSED*/
 void
-DrawSpline (dw, s, len)
-	DviWidget	dw;
-	char		*s;
-	int		len;
+DrawSpline (DviWidget dw, char *s, int len)
 {
     int		n;
 
@@ -351,8 +330,7 @@ DrawSpline (dw, s, len)
 /*	as its head.  Return the number of coordinate pairs found.    */
 
 static int
-GetSpline(s)
-    char *s;
+GetSpline(char *s)
 {
     double	x, y, x1, y1;
     int		n = 0;
@@ -389,8 +367,7 @@ GetSpline(s)
 /*	approximation algorithm from the original n points in the spline. */
 
 static void
-ApproxSpline(n)
-int n;
+ApproxSpline(int n)
 {
     int		mid, j;
     Point	*p1, *p2, *p3, *p;
@@ -440,8 +417,7 @@ int n;
 
 /*ARGSUSED*/
 static void
-LineApprox(p1, p2, p3)
-Point	*p1, *p2, *p3;
+LineApprox(Point *p1, Point *p2, Point *p3)
 {
     Point	*p4, *p;
     int		reps = ITERATIONS;
@@ -463,8 +439,7 @@ Point	*p1, *p2, *p3;
 /*	the "curve" is continuous, and ends up where expected.	      */
 
 static void
-DrawSplineSegments(dw)
-DviWidget dw;
+DrawSplineSegments(DviWidget dw)
 {
     Point	*p, *q;
     double	x1, y1;
@@ -503,8 +478,7 @@ DviWidget dw;
 /*	Return a pointer to the new Point.				     */
 
 static Point *
-MakePoint(x, y)
-double x, y;
+MakePoint(double x, double y)
 {
     Point	*p;
 
@@ -520,8 +494,7 @@ double x, y;
 /*	Insert point q in linked list after point p. */
 
 static void
-InsertPoint(p, q)
-Point *p, *q;
+InsertPoint(Point *p, Point *q)
 {
     /* point q to the next point */
     q->next = p->next;
@@ -533,8 +506,7 @@ Point *p, *q;
 /*	Delete point p from the linked list. */
 
 static void
-DeletePoint(p)
-Point	*p;
+DeletePoint(Point *p)
 {
     Point	*tmp;
 
