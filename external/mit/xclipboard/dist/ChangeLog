@@ -1,3 +1,81 @@
+commit a614c2be68ce6cb176901fb14bbd1802d39a5a69
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Feb 10 21:37:33 2012 -0800
+
+    xclipboard 1.1.2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4f1a5dbc00d577cdbd37a824c396b030cb170d65
+Author: Kees Cook <kees.cook@canonical.com>
+Date:   Sat Jul 9 07:40:23 2011 -0700
+
+    xclipboard: avoid overflow crash when building labels
+    
+    This replaces sprintf with XtAsprintf to avoid crashing when creating
+    various potentially large labels.
+    
+    https://bugs.launchpad.net/ubuntu/+source/x11-apps/+bug/792642
+    
+    Signed-off-by: Kees Cook <kees.cook@canonical.com>
+    Reviewed-by: James Cloos <cloos@jhcloos.com>
+    [jcristau: added xt >= 1.1 dependency per Alan Coopersmith]
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+
+commit 35e2f74fbcf172813b7016e58585bb30b39a3de6
+Author: Stanislav Maslovski <stanislav.maslovski@gmail.com>
+Date:   Sun Apr 3 20:10:54 2011 +1000
+
+    Change resource to better position Accept/Cancel. #17364
+    
+    Fixes: https://bugs.freedesktop.org/show_bug.cgi?id=17364
+    
+    The Accept and Cancel buttons on the Save dialog where just
+    visible at the bottom of the dialog.  Even if you resized
+    the dialog, the buttons where never fully visible.
+    
+    Signed-off-by: Alistair Leslie-Hughes <leslie_alistair@hotmail.com>
+    Acked-by: Dan Nicholson <dbn.lists@gmail.com>
+
+commit 81129a226ae24600642249847cdcc980ec5f9d18
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jan 19 10:06:55 2011 -0500
+
+    config: move man pages into their own directory
+    
+    Use services provided by XORG_MANPAGE_SECTIONS.
+    Use standard Makefile for man pages.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 936aa5b9bbbe3a2bf08f928fa5f186d2b75e0a71
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Jan 13 17:15:36 2011 -0500
+
+    man: replace hard coded man page section with substitution strings
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 201eb36b403a4408aaac4be8cecd4e5eca38f5e0
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Jan 13 11:15:47 2011 -0500
+
+    man: remove trailing spaces and tabs
+    
+    Using s/[ \t]*$//
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 5b8a938a22059638c33061e47f0028ebc5f53a01
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jan 12 15:29:50 2011 -0500
+
+    config: replace deprecated AC_HELP_STRING with AS_HELP_STRING
+    
+    This silences an Automake warning.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
 commit 4c5ba0adecd411786b11bd34122cd498ba980c01
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Mon Nov 8 22:53:01 2010 -0800

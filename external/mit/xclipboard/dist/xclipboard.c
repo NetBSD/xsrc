@@ -332,13 +332,14 @@ AcceptSaveFile(Widget w, XEvent *e, String *argv, Cardinal *argc)
     XtPopdown (fileDialogShell);
     if (!success)
     {
-	char	failMessage[1024];
+	char	*failMessage;
 
-	sprintf (failMessage, "Can't open file \"%s\"", filename);
+	XtAsprintf (&failMessage, "Can't open file \"%s\"", filename);
 	XtSetArg (args[0], XtNlabel, failMessage);
 	XtSetValues (failDialog, args, 1);
 	CenterWidgetOnEvent (failDialogShell, e);
 	XtPopup (failDialogShell, XtGrabNone);
+	XtFree (failMessage);
     }
     else
     {
