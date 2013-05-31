@@ -1,36 +1,34 @@
-/* $XTermId: xstrings.c,v 1.37 2010/04/04 22:34:17 tom Exp $ */
+/* $XTermId: xstrings.c,v 1.57 2013/02/03 22:11:25 tom Exp $ */
 
-/************************************************************
-
-Copyright 2000-2009,2010 by Thomas E. Dickey
-
-                        All Rights Reserved
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be included
-in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-Except as contained in this notice, the name(s) of the above copyright
-holders shall not be used in advertising or otherwise to promote the
-sale, use or other dealings in this Software without prior written
-authorization.
-
-********************************************************/
+/*
+ * Copyright 2000-2012,2013 by Thomas E. Dickey
+ *
+ *                         All Rights Reserved
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Except as contained in this notice, the name(s) of the above copyright
+ * holders shall not be used in advertising or otherwise to promote the
+ * sale, use or other dealings in this Software without prior written
+ * authorization.
+ */
 
 #include <xterm.h>
 
@@ -41,17 +39,44 @@ authorization.
 
 #include <xstrings.h>
 
+static void
+alloc_pw(struct passwd *target, struct passwd *source)
+{
+    *target = *source;
+    /* we care only about these strings */
+    target->pw_dir = x_strdup(source->pw_dir);
+    target->pw_name = x_strdup(source->pw_name);
+    target->pw_shell = x_strdup(source->pw_shell);
+}
+
+void
+x_appendargv(char **target, char **source)
+{
+    if (target && source) {
+	target += x_countargv(target);
+	while ((*target++ = *source++) != 0) ;
+    }
+}
+
 char *
 x_basename(char *name)
 {
     char *cp;
 
     cp = strrchr(name, '/');
-#ifdef __UNIXOS2__
-    if (cp == 0)
-	cp = strrchr(name, '\\');
-#endif
     return (cp ? cp + 1 : name);
+}
+
+unsigned
+x_countargv(char **argv)
+{
+    unsigned result = 0;
+    if (argv) {
+	while (*argv++) {
+	    ++result;
+	}
+    }
+    return result;
 }
 
 /*
@@ -112,12 +137,125 @@ x_encode_hex(const char *source)
 char *
 x_getenv(const char *name)
 {
-    return x_strdup(x_nonempty(getenv(name)));
+    char *result;
+    result = x_strdup(x_nonempty(getenv(name)));
+    TRACE2(("getenv(%s) %s\n", name, result));
+    return result;
+}
+
+static char *
+login_alias(char *login_name, uid_t uid, struct passwd *in_out)
+{
+    /*
+     * If the logon-name differs from the value we get by looking in the
+     * password file, check if it does correspond to the same uid.  If so,
+     * allow that as an alias for the uid.
+     */
+    if (!IsEmpty(login_name)
+	&& strcmp(login_name, in_out->pw_name)) {
+	struct passwd pw2;
+
+	if (x_getpwnam(login_name, &pw2)) {
+	    uid_t uid2 = pw2.pw_uid;
+	    struct passwd pw3;
+
+	    if (x_getpwuid(uid, &pw3)
+		&& ((uid_t) pw3.pw_uid == uid2)) {
+		/* use the other passwd-data including shell */
+		alloc_pw(in_out, &pw2);
+	    } else {
+		free(login_name);
+		login_name = NULL;
+	    }
+	}
+    }
+    return login_name;
+}
+
+/*
+ * Call this with in_out pointing to data filled in by x_getpwnam() or by
+ * x_getpwnam().  It finds the user's logon name, if possible.  As a side
+ * effect, it updates in_out to fill in possibly more-relevant data, i.e.,
+ * in case there is more than one alias for the same uid.
+ */
+char *
+x_getlogin(uid_t uid, struct passwd *in_out)
+{
+    char *login_name = NULL;
+
+    login_name = login_alias(x_getenv("LOGNAME"), uid, in_out);
+    if (IsEmpty(login_name)) {
+	free(login_name);
+	login_name = login_alias(x_getenv("USER"), uid, in_out);
+    }
+#ifdef HAVE_GETLOGIN
+    /*
+     * Of course getlogin() will fail if we're started from a window-manager,
+     * since there's no controlling terminal to fuss with.  For that reason, we
+     * tried first to get something useful from the user's $LOGNAME or $USER
+     * environment variables.
+     */
+    if (IsEmpty(login_name)) {
+	TRACE2(("...try getlogin\n"));
+	free(login_name);
+	login_name = login_alias(x_strdup(getlogin()), uid, in_out);
+    }
+#endif
+
+    if (IsEmpty(login_name)) {
+	free(login_name);
+	login_name = x_strdup(in_out->pw_name);
+    }
+
+    TRACE2(("x_getloginid ->%s\n", NonNull(login_name)));
+    return login_name;
+}
+
+/*
+ * Simpler than getpwnam_r, retrieves the passwd result by name and stores the
+ * result via the given pointer.  On failure, wipes the data to prevent use.
+ */
+Boolean
+x_getpwnam(const char *name, struct passwd * result)
+{
+    struct passwd *ptr = getpwnam(name);
+    Boolean code;
+
+    if (ptr != 0 && OkPasswd(ptr)) {
+	code = True;
+	alloc_pw(result, ptr);
+    } else {
+	code = False;
+	memset(result, 0, sizeof(*result));
+    }
+    return code;
+}
+
+/*
+ * Simpler than getpwuid_r, retrieves the passwd result by uid and stores the
+ * result via the given pointer.  On failure, wipes the data to prevent use.
+ */
+Boolean
+x_getpwuid(uid_t uid, struct passwd * result)
+{
+    struct passwd *ptr = getpwuid((uid_t) uid);
+    Boolean code;
+
+    if (ptr != 0 && OkPasswd(ptr)) {
+	code = True;
+	alloc_pw(result, ptr);
+    } else {
+	code = False;
+	memset(result, 0, sizeof(*result));
+    }
+    TRACE2(("x_getpwuid(%d) %d\n", (int) uid, (int) code));
+    return code;
 }
 
 /*
  * Decode a single hex "nibble", returning the nibble as 0-15, or -1 on error.
- */ int
+ */
+int
 x_hex2int(int c)
 {
     if (c >= '0' && c <= '9')
@@ -164,6 +302,80 @@ x_skip_nonblanks(String s)
     return s;
 }
 
+static const char *
+skip_blanks(const char *s)
+{
+    while (isspace(CharOf(*s)))
+	++s;
+    return s;
+}
+
+/*
+ * Split a command-string into an argv[]-style array.
+ */
+char **
+x_splitargs(const char *command)
+{
+    char **result = 0;
+
+    if (command != 0) {
+	const char *first = skip_blanks(command);
+	char *blob = x_strdup(first);
+	size_t count;
+	size_t n;
+	int state;
+	int pass;
+
+	if (blob != 0) {
+	    for (pass = 0; pass < 2; ++pass) {
+		for (n = count = 0, state = 0; first[n] != '\0'; ++n) {
+		    switch (state) {
+		    case 0:
+			if (!isspace(CharOf(first[n]))) {
+			    state = 1;
+			    if (pass)
+				result[count] = blob + n;
+			    ++count;
+			} else {
+			    blob[n] = '\0';
+			}
+			break;
+		    case 1:
+			if (isspace(CharOf(first[n]))) {
+			    blob[n] = '\0';
+			    state = 0;
+			}
+			break;
+		    }
+		}
+		if (!pass) {
+		    result = TypeCallocN(char *, count + 1);
+		    if (!result) {
+			free(blob);
+			break;
+		    }
+		}
+	    }
+	}
+    } else {
+	result = TypeCalloc(char *);
+    }
+    return result;
+}
+
+/*
+ * Free storage allocated by x_splitargs().
+ */
+void
+x_freeargs(char **argv)
+{
+    if (argv != 0) {
+	if (*argv != 0)
+	    free(*argv);
+	free(argv);
+    }
+}
+
 int
 x_strcasecmp(const char *s1, const char *s2)
 {
@@ -200,7 +412,7 @@ x_strdup(const char *s)
     char *result = 0;
 
     if (s != 0) {
-	char *t = CastMallocN(char, strlen(s));
+	char *t = CastMallocN(char, strlen(s) + 1);
 	if (t != 0) {
 	    strcpy(t, s);
 	}
@@ -239,17 +451,19 @@ x_strtrim(const char *source)
 
     if (source != 0 && *source != '\0') {
 	char *t = x_strdup(source);
-	s = t;
-	d = s;
-	while (isspace(CharOf(*s)))
-	    ++s;
-	while ((*d++ = *s++) != '\0') {
-	    ;
-	}
-	if (*t != '\0') {
-	    s = t + strlen(t);
-	    while (s != t && isspace(CharOf(s[-1]))) {
-		*--s = '\0';
+	if (t != 0) {
+	    s = t;
+	    d = s;
+	    while (isspace(CharOf(*s)))
+		++s;
+	    while ((*d++ = *s++) != '\0') {
+		;
+	    }
+	    if (*t != '\0') {
+		s = t + strlen(t);
+		while (s != t && isspace(CharOf(s[-1]))) {
+		    *--s = '\0';
+		}
 	    }
 	}
 	result = t;

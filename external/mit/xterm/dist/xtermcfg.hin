@@ -1,36 +1,34 @@
-/* $XTermId: xtermcfg.hin,v 1.182 2010/11/11 01:14:49 tom Exp $ */
+/* $XTermId: xtermcfg.hin,v 1.199 2013/05/27 21:05:23 tom Exp $ */
 
-/************************************************************
-
-Copyright 1997-2009,2010 by Thomas E. Dickey
-
-                        All Rights Reserved
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be included
-in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-Except as contained in this notice, the name(s) of the above copyright
-holders shall not be used in advertising or otherwise to promote the
-sale, use or other dealings in this Software without prior written
-authorization.
-
-********************************************************/
+/*
+ * Copyright 1997-2012,2013 by Thomas E. Dickey
+ *
+ *                         All Rights Reserved
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Except as contained in this notice, the name(s) of the above copyright
+ * holders shall not be used in advertising or otherwise to promote the
+ * sale, use or other dealings in this Software without prior written
+ * authorization.
+ */
 
 #ifndef included_xtermcfg_h
 #define included_xtermcfg_h 1
@@ -42,6 +40,11 @@ authorization.
 #undef CC_HAS_PROTOS		/* CF_ANSI_CC */
 #undef CSRG_BASED		/* CF_TYPE_FD_MASK */
 #undef DECL_ERRNO		/* CF_ERRNO */
+#undef DEFDELETE_DEL		/* AC_ARG_ENABLE(delete-is-del) */
+#undef DEF_ALT_SENDS_ESC	/* CF_ARG_ENABLE(alt-sends-esc) */
+#undef DEF_BACKARO_BS		/* CF_ARG_DISABLE(backarrow-key) */
+#undef DEF_BACKARO_ERASE	/* CF_ARG_ENABLE(backarrow-is-erase) */
+#undef DEF_META_SENDS_ESC	/* CF_ARG_ENABLE(meta-sends-esc) */
 #undef DFT_COLORMODE		/* AC_ARG_WITH(default-color-mode) */
 #undef DFT_DECID		/* AC_ARG_WITH(default-terminal-id) */
 #undef DFT_TERMTYPE		/* AC_ARG_WITH(default-term-type) */
@@ -49,21 +52,27 @@ authorization.
 #undef DISABLE_SETUID		/* CF_ARG_DISABLE(setuid) */
 #undef HAVE_GETHOSTNAME		/* AC_CHECK_FUNCS(gethostname) */
 #undef HAVE_GETLOGIN		/* AC_CHECK_FUNCS(getlogin) */
+#undef HAVE_GRANTPT		/* CF_FUNC_GRANTPT */
+#undef HAVE_GRANTPT_PTY_ISATTY	/* CF_FUNC_GRANTPT */
 #undef HAVE_LANGINFO_CODESET	/* AM_LANGINFO_CODESET */
 #undef HAVE_LASTLOG_H		/* CF_LASTLOG */
+#undef HAVE_LIBXPM		/* CF_WITH_XPM */
 #undef HAVE_LIB_NEXTAW		/* CF_X_ATHENA(--with-neXtaw) */
 #undef HAVE_LIB_PCRE		/* CF_WITH_PCRE */
 #undef HAVE_LIB_XAW		/* CF_X_ATHENA */
 #undef HAVE_LIB_XAW3D		/* CF_X_ATHENA(--with-Xaw3d) */
 #undef HAVE_LIB_XAWPLUS		/* CF_X_ATHENA(--with-XawPlus) */
+#undef HAVE_NCURSES_CURSES_H	/* AC_CHECK_HEADERS(ncurses/curses.h) */
 #undef HAVE_NCURSES_TERM_H	/* AC_CHECK_HEADERS(ncurses/term.h) */
 #undef HAVE_PATHS_H		/* CF_LASTLOG */
 #undef HAVE_PCREPOSIX_H		/* CF_WITH_PCRE */
+#undef HAVE_POSIX_OPENPT	/* CF_FUNC_GRANTPT */
 #undef HAVE_POSIX_SAVED_IDS	/* CF_POSIX_SAVED_IDS */
+#undef HAVE_PTSNAME		/* CF_FUNC_GRANTPT */
 #undef HAVE_PUTENV		/* AC_CHECK_FUNCS(putenv) */
 #undef HAVE_SCHED_YIELD		/* AC_CHECK_FUNCS(sched_yield) */
+#undef HAVE_SETPGID		/* AC_CHECK_FUNCS(setpgid) */
 #undef HAVE_STDLIB_H		/* AC_CHECK_HEADERS(stdlib.h) */
-#undef HAVE_STRERROR		/* AC_CHECK_FUNCS(strerror) */
 #undef HAVE_STRFTIME		/* AC_CHECK_FUNCS(strftime) */
 #undef HAVE_SYS_TIME_H		/* AC_HEADER_TIME */
 #undef HAVE_SYS_TTYDEFAULTS_H	/* AC_CHECK_HEADERS(sys/ttydefaults.h) */
@@ -75,6 +84,7 @@ authorization.
 #undef HAVE_TERM_H		/* AC_CHECK_HEADERS(term.h) */
 #undef HAVE_TIGETSTR		/* AC_CHECK_FUNCS(tigetstr) */
 #undef HAVE_UNISTD_H		/* AC_CHECK_HEADERS(unistd.h) */
+#undef HAVE_UNSETENV		/* AC_CHECK_FUNCS(unsetenv) */
 #undef HAVE_USE_EXTENDED_NAMES	/* AC_CHECK_FUNCS(use_extended_names) */
 #undef HAVE_UTMP		/* CF_UTMP */
 #undef HAVE_UTMP_UT_HOST	/* CF_UTMP_UT_HOST */
@@ -94,6 +104,7 @@ authorization.
 #undef HAVE_X11_XPOLL_H		/* AC_CHECK_HEADERS(X11/Xpoll.h) */
 #undef HAVE_XFTDRAWSETCLIP	/* CF_X_FREETYPE */
 #undef HAVE_XFTDRAWSETCLIPRECTANGLES /* CF_X_FREETYPE */
+#undef HAVE_XKBKEYCODETOKEYSYM	/* AC_CHECK_FUNCS(XkbKeycodeToKeysym) */
 #undef HAVE_XKBQUERYEXTENSION	/* AC_CHECK_FUNCS(XkbQueryExtension) */
 #undef HAVE_XKB_BELL_EXT	/* CF_XKB_BELL_EXT */
 #undef LUIT_PATH		/* CF_ARG_ENABLE(luit) */
@@ -112,6 +123,7 @@ authorization.
 #undef OPT_DABBREV		/* CF_ARG_ENABLE(dabbrev) */
 #undef OPT_DEC_CHRSET		/* CF_ARG_DISABLE(doublechars) */
 #undef OPT_DEC_LOCATOR		/* CF_ARG_ENABLE(dec-locator) */
+#undef OPT_DOUBLE_BUFFER	/* CF_ARG_ENABLE(double-buffer) */
 #undef OPT_DEC_RECTOPS		/* CF_ARG_ENABLE(rectangles) */
 #undef OPT_EXEC_XTERM		/* CF_ARG_ENABLE(exec-xterm) */
 #undef OPT_FIFO_LINES		/* CF_ARG_ENABLE(fifo-lines) */
@@ -132,6 +144,7 @@ authorization.
 #undef OPT_READLINE		/* CF_ARG_ENABLE(readline-mouse) */
 #undef OPT_SAME_NAME		/* CF_ARG_DISABLE(samename) */
 #undef OPT_SCO_FUNC_KEYS	/* CF_ARG_ENABLE(sco-fkeys) */
+#undef OPT_SELECTION_OPS	/* CF_ARG_DISABLE(selection-ops) */
 #undef OPT_SELECT_REGEX		/* CF_ARG_DISABLE(regex) */
 #undef OPT_SESSION_MGT		/* CF_ARG_DISABLE(session-mgt) */
 #undef OPT_SUN_FUNC_KEYS	/* CF_ARG_ENABLE(sun-fkeys) */
@@ -153,8 +166,6 @@ authorization.
 #undef TIME_WITH_SYS_TIME	/* AC_HEADER_TIME */
 #undef TTY_GROUP_NAME		/* CF_TTY_GROUP */
 #undef USE_LASTLOG		/* CF_LASTLOG */
-#undef USE_MY_MEMMOVE		/* CF_FUNC_MEMMOVE */
-#undef USE_OK_BCOPY		/* CF_FUNC_MEMMOVE */
 #undef USE_POSIX_WAIT		/* CF_POSIX_WAIT */
 #undef USE_STRUCT_LASTLOG	/* CF_STRUCT_LASTLOG */
 #undef USE_SYSV_UTMP		/* CF_UTMP */
@@ -166,12 +177,11 @@ authorization.
 #undef USE_UTMP_SETGID		/* AC_ARG_WITH(utmp-setgid) */
 #undef UTMPX_FOR_UTMP		/* CF_UTMP */
 #undef XRENDERFONT		/* CF_X_FREETYPE */
-#undef const			/* AC_CONST */
+#undef cc_t			/* CF_TYPE_CC_T */
 #undef gid_t			/* AC_TYPE_UID_T */
 #undef mode_t			/* AC_TYPE_MODE_T */
 #undef off_t			/* AC_TYPE_OFF_T */
 #undef pid_t			/* AC_TYPE_PID_T */
-#undef size_t			/* AC_TYPE_SIZE_T */
 #undef time_t			/* AC_CHECK_TYPE(time_t, long) */
 #undef uid_t			/* AC_TYPE_UID_T */
 #undef ut_name			/* CF_UTMP */
@@ -192,21 +202,8 @@ authorization.
 #ifndef __cplusplus
 #undef GCC_PRINTF
 #undef GCC_PRINTFLIKE
+#undef GCC_NORETURN
 #undef GCC_UNUSED
-#endif
-
-#ifdef USE_OK_BCOPY
-#define memmove(d,s,n) bcopy(s,d,n)
-#endif
-
-#ifdef USE_MY_MEMMOVE
-#define memmove(d,s,n) my_memmove(d,s,n)
-extern void * my_memmove(void * s1, void * s2, size_t n);
-#endif
-
-#ifndef HAVE_STRERROR
-#define strerror(n) my_strerror(n)
-extern char *my_strerror(int n);
 #endif
 
 #ifndef HAVE_X11_XPOLL_H

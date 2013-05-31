@@ -1,4 +1,4 @@
-/* $XTermId: menu.h,v 1.125 2011/07/11 09:41:34 tom Exp $ */
+/* $XTermId: menu.h,v 1.128 2012/09/21 10:39:10 tom Exp $ */
 
 /*
  * Copyright 1999-2010,2011 by Thomas E. Dickey
@@ -340,6 +340,15 @@ typedef enum {
 
 extern void SetItemSensitivity(Widget mi, Bool val);
 
+typedef enum {
+    toggleErr = -2,
+    toggleAll = -1,
+    toggleOff = 0,
+    toggleOn = 1
+} ToggleEnum;
+
+extern int decodeToggle(XtermWidget /* xw */, String * /* params */, Cardinal /* nparams */);
+
 /*
  * there should be one of each of the following for each checkable item
  */
@@ -435,8 +444,6 @@ extern void update_poponbell(void);
 
 #define update_marginbell() /* nothing */
 
-extern void update_menu_allowBoldFonts(void);
-
 #if OPT_ALLOW_XXX_OPS
 extern void update_menu_allowColorOps(void);
 extern void update_menu_allowFontOps(void);
@@ -506,6 +513,12 @@ extern void set_tekhide_sensitivity(void);
 #define update_vtshow() /*nothing*/
 #define set_vthide_sensitivity() /*nothing*/
 #define set_tekhide_sensitivity() /*nothing*/
+#endif
+
+#if OPT_DEC_CHRSET || OPT_BOX_CHARS || OPT_DEC_SOFTFONT
+extern void update_menu_allowBoldFonts(void);
+#else
+#define update_menu_allowBoldFonts() /*nothing*/
 #endif
 
 /*
