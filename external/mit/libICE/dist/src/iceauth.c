@@ -54,7 +54,7 @@ IceGenerateMagicCookie (
     int	    seed;
     int	    value;
     int	    i;
-    
+
     if ((auth = (char *) malloc (len + 1)) == NULL)
 	return (NULL);
 

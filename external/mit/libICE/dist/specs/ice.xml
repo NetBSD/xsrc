@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd"
+[
+<!ENTITY % defs SYSTEM "defs.ent"> %defs;
+]>
 
 
 <!-- lifted from troff+ms+XMan by doclifter -->
@@ -9,33 +12,33 @@
 <bookinfo>
    <title>Inter-Client Exchange (ICE) Protocol</title>
    <subtitle>X Consortium Standard</subtitle>
-   <releaseinfo>X Version 11, Release 6.4</releaseinfo>
+   <releaseinfo>X Version 11, Release &fullrelvers;</releaseinfo>
    <authorgroup>
       <author>
          <firstname>Robert</firstname><surname>Scheifler</surname>
+         <affiliation><orgname>X Consortium</orgname></affiliation>
       </author>
       <othercredit>
          <firstname>Jordan</firstname><surname>Brown</surname>
          <affiliation><orgname>Quarterdeck Office Systems</orgname></affiliation>
       </othercredit>
    </authorgroup>
-   <corpname>X Consortium Standard</corpname>
-   <copyright><year>1993</year><holder>X Consortium</holder></copyright>
-   <copyright><year>1994</year><holder>X Consortium</holder></copyright>
-   <releaseinfo>Version 1.0</releaseinfo>
-   <affiliation><orgname>X Consortium</orgname></affiliation>
-   <productnumber>X Version 11, Release 7</productnumber>
+   <releaseinfo>Version 1.1</releaseinfo>
+   <copyright>
+     <year>1993</year><year>1994</year>
+     <holder>X Consortium</holder>
+   </copyright>
 
 <legalnotice>
 <para>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the &ldquo;Software&rdquo;), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</para>
 
 <para>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</para>
 
-<para>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE X CONSORTIUM BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</para>
+<para>THE SOFTWARE IS PROVIDED &ldquo;AS IS&rdquo;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE X CONSORTIUM BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</para>
 
 <para>Except as contained in this notice, the name of the X Consortium shall not be used in advertising or otherwise to promote the sale, use or other dealings in this Software without prior written authorization from the X Consortium.</para>
 
-<para>X Window System is a trademark of X Consortium, Inc.</para>
+<para>X Window System is a trademark of The Open Group.</para>
 </legalnotice>
 
 <abstract>
@@ -50,7 +53,7 @@ allows the sharing of many aspects of the implementation.
 </abstract>
 </bookinfo>
 
-<chapter id="purpose_and_goals">
+<chapter id='Purpose_and_Goals'>
 <title>Purpose and Goals</title>
 
 <para>
@@ -85,7 +88,7 @@ allow them to share the same transport layer connection.</para>
 
 </chapter>
 
-<chapter id="overview_of_the_protocol">
+<chapter id='Overview_of_the_Protocol'>
 <title>Overview of the Protocol</title>
 
 
@@ -216,7 +219,7 @@ from party A.</para>
 <!--  .nH 1 "Data Types" -->
 </chapter>
 
-<chapter id="data_types">
+<chapter id='Data_Types'>
 <title>Data Types</title>
 
 <para>ICE messages contain several types of data.  Byte order is negotiated in
@@ -233,41 +236,42 @@ to pad <emphasis remap='I'>E</emphasis> bytes to the next multiple of
 pad(<emphasis remap='I'>E</emphasis>, <emphasis remap='I'>b</emphasis>) = (<emphasis remap='I'>b</emphasis> - (<emphasis remap='I'>E</emphasis> mod <emphasis remap='I'>b</emphasis>)) mod <emphasis remap='I'>b</emphasis>
 </literallayout>
 
-<sect1 id="primitive_types">
+<sect1 id='Primitive_Types'>
 <title>Primitive Types</title>
 
-<informaltable pgwide='1' frame='none'>
-  <tgroup cols='2' align='center'>
-    <colspec colname='c1'/>
-    <colspec colname='c2'/>
+<informaltable frame='topbot'>
+  <?dbfo keep-together="always" ?>
+  <tgroup cols='2' align='left' colsep='0' rowsep='0'>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='3.0*'/>
     <thead>
-      <row>
-        <entry align='left'>Type Name</entry>
-        <entry align='left'>Description</entry>
+      <row rowsep='1'>
+        <entry>Type Name</entry>
+        <entry>Description</entry>
       </row>
     </thead>
     <tbody>
       <row>
-        <entry align='left'>CARD8</entry>
-        <entry align='left'>8-bit unsigned integer</entry>
+        <entry>CARD8</entry>
+        <entry>8-bit unsigned integer</entry>
       </row>
       <row>
-        <entry align='left'>CARD16</entry>
-        <entry align='left'>16-bit unsigned integer</entry>
+        <entry>CARD16</entry>
+        <entry>16-bit unsigned integer</entry>
       </row>
       <row>
-        <entry align='left'>CARD32</entry>
-        <entry align='left'>32-bit unsigned integer</entry>
+        <entry>CARD32</entry>
+        <entry>32-bit unsigned integer</entry>
       </row>
       <row>
-        <entry align='left'>BOOL</entry>
-        <entry align='left'><para><function>False</function>
+        <entry>BOOL</entry>
+        <entry><para><function>False</function>
 or
 <function>True</function></para></entry>
       </row>
       <row>
-        <entry align='left'>LPCE</entry>
-        <entry align='left'>A character from the X Portable Character Set in Latin Portable Character
+        <entry>LPCE</entry>
+        <entry>A character from the X Portable Character Set in Latin Portable Character
 Encoding</entry>
       </row>
     </tbody>
@@ -276,31 +280,28 @@ Encoding</entry>
 
 </sect1>
 
-<sect1 id="complex_types">
+<sect1 id='Complex_Types'>
 <title>Complex Types</title>
 
-<informaltable pgwide='1' frame='none'>
-  <tgroup cols='2' align='center'>
-    <colspec colname='c1'/>
-    <colspec colname='c2'/>
+<informaltable frame='topbot'>
+  <?dbfo keep-together="always" ?>
+  <tgroup cols='2' align='left' colsep='0' rowsep='0'>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='3.0*'/>
     <thead>
-      <row>
-        <entry align='left'>Type Name</entry>
-        <entry align='left'>Type</entry>
-      </row>
-      <row>
-        <entry align='left'>.TH</entry>
-        <entry align='left'></entry>
+      <row rowsep='1'>
+        <entry>Type Name</entry>
+        <entry>Type</entry>
       </row>
     </thead>
     <tbody>
       <row>
-        <entry align='left'>VERSION</entry>
-        <entry align='left'>[Major, minor: CARD16]</entry>
+        <entry>VERSION</entry>
+        <entry>[Major, minor: CARD16]</entry>
       </row>
       <row>
-        <entry align='left'>STRING</entry>
-        <entry align='left'>LISTofLPCE</entry>
+        <entry>STRING</entry>
+        <entry>LISTofLPCE</entry>
       </row>
     </tbody>
   </tgroup>
@@ -312,33 +313,34 @@ varies depending on the context; see the encoding section.</para>
 <!--  .nH 1 "Message Format" -->
 </sect1>
 
-<sect1 id="message_format">
+<sect1 id='Message_Format'>
 <title>Message Format</title>
 
 <para>All ICE messages include the following information:</para>
 
-<informaltable pgwide='1' frame='none'>
-  <tgroup cols='2' align='center'>
-    <colspec colname='c1'/>
-    <colspec colname='c2'/>
+<informaltable frame='topbot'>
+  <?dbfo keep-together="always" ?>
+  <tgroup cols='2' align='left' colsep='0' rowsep='0'>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='3.0*'/>
     <thead>
-      <row>
+      <row rowsep='1'>
         <entry>Field Type</entry>
         <entry>Description</entry>
       </row>
     </thead>
     <tbody>
       <row>
-        <entry align='left'>CARD8</entry>
-        <entry align='left'>protocol major opcode</entry>
+        <entry>CARD8</entry>
+        <entry>protocol major opcode</entry>
       </row>
       <row>
-        <entry align='left'>CARD8</entry>
-        <entry align='left'>protocol minor opcode</entry>
+        <entry>CARD8</entry>
+        <entry>protocol minor opcode</entry>
       </row>
       <row>
-        <entry align='left'>CARD32</entry>
-        <entry align='left'>length of remaining data in 8-byte units</entry>
+        <entry>CARD32</entry>
+        <entry>length of remaining data in 8-byte units</entry>
       </row>
     </tbody>
   </tgroup>
@@ -387,7 +389,7 @@ error.
 
 </chapter>
 
-<chapter id="overall_protocol_description">
+<chapter id='Overall_Protocol_Description'>
 <title>Overall Protocol Description</title>
 
 <para>
@@ -461,10 +463,8 @@ indicates the sender is unwilling to accept any further
 messages for any protocols on the connection.  The sender
 is required to conform to specified severity conditions
 for generic and ICE (major opcode 0) errors; see
-<link linkend="generic_error_classes">
-<xref linkend="generic_error_classes"></xref></link> and
-<link linkend="ice_error_classes">
-<xref linkend="ice_error_classes"></xref></link>.
+<xref linkend='Generic_Error_Classes' xrefstyle='select: title'/>
+<xref linkend='ICE_Error_Classes' xrefstyle='select: title'/>
 .
 The class defines the generic class of
 error.  Classes are specified separately for each protocol (numeric
@@ -474,7 +474,7 @@ for the protocol.
 </para>
 </chapter>
 
-<chapter id="ice_control_subprotocol__major_opcode_0">
+<chapter id='ICE_Control_Subprotocol____Major_Opcode_0_0'>
 <title>ICE Control Subprotocol -- Major Opcode 0</title>
 
 <para>
@@ -1073,7 +1073,7 @@ connection.  Either party may again initiate
 <function>WantToClose</function> at some future time.
 </para>
 
-<sect1 id="generic_error_classes">
+<sect1 id='Generic_Error_Classes'>
 <title>Generic Error Classes</title>
 
 <para>
@@ -1205,7 +1205,7 @@ CARD32 Length of offending value.
 
 </sect1>
 
-<sect1 id="ice_error_classes">
+<sect1 id='ICE_Error_Classes'>
 <title>ICE Error Classes</title>
 
 <para>These errors are all major opcode 0 errors.</para>
@@ -1497,7 +1497,7 @@ existing registration.
 </sect1>
 </chapter>
 
-<chapter id="state_diagrams">
+<chapter id='State_Diagrams'>
 <title>State Diagrams</title>
 
 <para>
@@ -1637,7 +1637,7 @@ Here are the state transitions for shutting down the connection:
      connection close -&gt; <emphasis remap='C'>quit</emphasis>
 </literallayout>
 </chapter>
-<chapter id="protocol_encoding">
+<chapter id='Protocol_Encoding'>
 <title>Protocol Encoding</title>
 
 <para>
@@ -1660,41 +1660,42 @@ additional padding.  The number of repetitions must be specified elsewhere
 in the message.
 </para>
 
-<sect1 id="primitives">
+<sect1 id='Primitives'>
 <title>Primitives</title>
 
-<informaltable pgwide='1' frame='none'>
-  <tgroup cols='3' align='center'>
-    <colspec colname='c1'/>
-    <colspec colname='c2'/>
-    <colspec colname='c3'/>
+<informaltable frame='topbot'>
+  <?dbfo keep-together="always" ?>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='1.0*'/>
+    <colspec colname='c3' colwidth='3.0*'/>
     <thead>
-      <row>
-        <entry align='left'>Type Name</entry>
-        <entry align='left'>Length (bytes)</entry>
-        <entry align='left'>Description</entry>
+      <row rowsep='1'>
+        <entry>Type Name</entry>
+        <entry>Length (bytes)</entry>
+        <entry>Description</entry>
       </row>
     </thead>
     <tbody>
       <row>
-        <entry align='left'>CARD8</entry>
-        <entry align='left'>1</entry>
-        <entry align='left'>8-bit unsigned integer</entry>
+        <entry>CARD8</entry>
+        <entry>1</entry>
+        <entry>8-bit unsigned integer</entry>
       </row>
       <row>
-        <entry align='left'>CARD16</entry>
-        <entry align='left'>2</entry>
-        <entry align='left'>16-bit unsigned integer</entry>
+        <entry>CARD16</entry>
+        <entry>2</entry>
+        <entry>16-bit unsigned integer</entry>
       </row>
       <row>
-        <entry align='left'>CARD32</entry>
-        <entry align='left'>4</entry>
-        <entry align='left'>32-bit unsigned integer</entry>
+        <entry>CARD32</entry>
+        <entry>4</entry>
+        <entry>32-bit unsigned integer</entry>
       </row>
       <row>
-        <entry align='left'>LPCE</entry>
-        <entry align='left'>1</entry>
-        <entry align='left'><para>A character from the X Portable Character Set in Latin Portable Character
+        <entry>LPCE</entry>
+        <entry>1</entry>
+        <entry><para>A character from the X Portable Character Set in Latin Portable Character
 Encoding</para></entry>
       </row>
     </tbody>
@@ -1703,32 +1704,33 @@ Encoding</para></entry>
 
 </sect1>
 
-<sect1 id="enumerations">
+<sect1 id='Enumerations'>
 <title>Enumerations</title>
 
 
-<informaltable pgwide='1' frame='none'>
-  <tgroup cols='3' align='center'>
-    <colspec colname='c1'/>
-    <colspec colname='c2'/>
-    <colspec colname='c3'/>
+<informaltable frame='topbot'>
+  <?dbfo keep-together="always" ?>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='1.0*'/>
+    <colspec colname='c3' colwidth='3.0*'/>
     <thead>
-      <row>
-        <entry align='left'>Type Name</entry>
-        <entry align='left'>Value</entry>
-        <entry align='left'>Description</entry>
+      <row rowsep='1'>
+        <entry>Type Name</entry>
+        <entry>Value</entry>
+        <entry>Description</entry>
       </row>
     </thead>
     <tbody>
       <row>
-        <entry align='left'>BOOL</entry>
-        <entry align='left'>0</entry>
-        <entry align='left'>False</entry>
+        <entry>BOOL</entry>
+        <entry>0</entry>
+        <entry>False</entry>
       </row>
       <row>
-        <entry align='left'></entry>
-        <entry align='left'>1</entry>
-        <entry align='left'>True</entry>
+        <entry></entry>
+        <entry>1</entry>
+        <entry>True</entry>
       </row>
     </tbody>
   </tgroup>
@@ -1736,65 +1738,66 @@ Encoding</para></entry>
 
 </sect1>
 
-<sect1 id="compound_types">
+<sect1 id='Compound_Types'>
 <title>Compound Types</title>
 
-<informaltable pgwide='1' frame='none'>
-  <tgroup cols='4' align='center'>
-    <colspec colname='c1'/>
-    <colspec colname='c2'/>
-    <colspec colname='c3'/>
-    <colspec colname='c4'/>
+<informaltable frame='topbot'>
+  <?dbfo keep-together="always" ?>
+  <tgroup cols='4' align='left' colsep='0' rowsep='0'>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='1.0*'/>
+    <colspec colname='c3' colwidth='1.0*'/>
+    <colspec colname='c4' colwidth='2.0*'/>
     <thead>
-      <row>
-        <entry align='left'>Type Name</entry>
-        <entry align='left'>Length (bytes)</entry>
-        <entry align='left'>Type</entry>
-        <entry align='left'>Description</entry>
+      <row rowsep='1'>
+        <entry>Type Name</entry>
+        <entry>Length (bytes)</entry>
+        <entry>Type</entry>
+        <entry>Description</entry>
       </row>
     </thead>
     <tbody>
       <row>
-        <entry align='left'>VERSION</entry>
-        <entry align='left'></entry>
-        <entry align='left'></entry>
-        <entry align='left'></entry>
+        <entry>VERSION</entry>
+        <entry></entry>
+        <entry></entry>
+        <entry></entry>
       </row>
       <row>
-        <entry align='left'></entry>
-        <entry align='left'>2</entry>
-        <entry align='left'>CARD16</entry>
-        <entry align='left'>Major version number</entry>
+        <entry></entry>
+        <entry>2</entry>
+        <entry>CARD16</entry>
+        <entry>Major version number</entry>
       </row>
       <row>
-        <entry align='left'></entry>
-        <entry align='left'>2</entry>
-        <entry align='left'>CARD16</entry>
-        <entry align='left'>Minor version number</entry>
+        <entry></entry>
+        <entry>2</entry>
+        <entry>CARD16</entry>
+        <entry>Minor version number</entry>
       </row>
       <row>
-        <entry align='left'>STRING</entry>
-        <entry align='left'></entry>
-        <entry align='left'></entry>
-        <entry align='left'></entry>
+        <entry>STRING</entry>
+        <entry></entry>
+        <entry></entry>
+        <entry></entry>
       </row>
       <row>
-        <entry align='left'></entry>
-        <entry align='left'>2</entry>
-        <entry align='left'>CARD16</entry>
-        <entry align='left'>length of string in bytes</entry>
+        <entry></entry>
+        <entry>2</entry>
+        <entry>CARD16</entry>
+        <entry>length of string in bytes</entry>
       </row>
       <row>
-        <entry align='left'></entry>
-        <entry align='left'>n</entry>
-        <entry align='left'>LISTofLPCE</entry>
-        <entry align='left'>string</entry>
+        <entry></entry>
+        <entry>n</entry>
+        <entry>LISTofLPCE</entry>
+        <entry>string</entry>
       </row>
       <row>
-        <entry align='left'></entry>
-        <entry align='left'>p</entry>
-        <entry align='left'></entry>
-        <entry align='left'>unused, p = pad(n+2, 4)</entry>
+        <entry></entry>
+        <entry>p</entry>
+        <entry></entry>
+        <entry>unused, p = pad(n+2, 4)</entry>
       </row>
     </tbody>
   </tgroup>
@@ -1802,71 +1805,71 @@ Encoding</para></entry>
 
 </sect1>
 
-<sect1 id="ice_minor_opcodes">
+<sect1 id='ICE_Minor_opcodes'>
 <title>ICE Minor opcodes</title>
 
-<informaltable pgwide='0' frame='none'>
-  <tgroup cols='2' align='center'>
-    <colspec colname='c1'/>
-    <colspec colname='c2'/>
+<informaltable frame='topbot'>
+  <tgroup cols='2' align='left' colsep='0' rowsep='0'>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='1.0*'/>
     <thead>
-      <row>
-        <entry align='left'>Message Name</entry>
-        <entry align='right'>Encoding</entry>
+      <row rowsep='1'>
+        <entry>Message Name</entry>
+        <entry>Encoding</entry>
       </row>
     </thead>
     <tbody>
       <row>
-        <entry align='left'>Error</entry>
-        <entry align='right'>0</entry>
+        <entry>Error</entry>
+        <entry>0</entry>
       </row>
       <row>
-        <entry align='left'>ByteOrder</entry>
-        <entry align='right'>1</entry>
+        <entry>ByteOrder</entry>
+        <entry>1</entry>
       </row>
       <row>
-        <entry align='left'>ConnectionSetup</entry>
-        <entry align='right'>2</entry>
+        <entry>ConnectionSetup</entry>
+        <entry>2</entry>
       </row>
       <row>
-        <entry align='left'>AuthenticationRequired</entry>
-        <entry align='right'>3</entry>
+        <entry>AuthenticationRequired</entry>
+        <entry>3</entry>
       </row>
       <row>
-        <entry align='left'>AuthenticationReply</entry>
-        <entry align='right'>4</entry>
+        <entry>AuthenticationReply</entry>
+        <entry>4</entry>
       </row>
       <row>
-        <entry align='left'>AuthenticationNextPhase</entry>
-        <entry align='right'>5</entry>
+        <entry>AuthenticationNextPhase</entry>
+        <entry>5</entry>
       </row>
       <row>
-        <entry align='left'>ConnectionReply</entry>
-        <entry align='right'>6</entry>
+        <entry>ConnectionReply</entry>
+        <entry>6</entry>
       </row>
       <row>
-        <entry align='left'>ProtocolSetup</entry>
-        <entry align='right'>7</entry>
+        <entry>ProtocolSetup</entry>
+        <entry>7</entry>
       </row>
       <row>
-        <entry align='left'>ProtocolReply</entry>
-        <entry align='right'>8</entry>
+        <entry>ProtocolReply</entry>
+        <entry>8</entry>
       </row>
       <row>
-        <entry align='left'>Ping</entry>
-        <entry align='right'>9</entry>
+        <entry>Ping</entry>
+        <entry>9</entry>
       </row>
       <row>
-        <entry align='left'>PingReply</entry>
-        <entry align='right'>10</entry>
+        <entry>PingReply</entry>
+        <entry>10</entry>
       </row>
       <row>
-        <entry align='left'>WantToClose</entry>
-        <entry align='right'>11</entry>
+        <entry>WantToClose</entry>
+        <entry>11</entry>
       </row>
       <row>
-        <entry align='left'>NoClose</entry>
-        <entry align='right'>12</entry>
+        <entry>NoClose</entry>
+        <entry>12</entry>
       </row>
     </tbody>
   </tgroup>
@@ -1874,7 +1877,7 @@ Encoding</para></entry>
 
 </sect1>
 
-<sect1 id="message_encoding">
+<sect1 id='Message_Encoding'>
 <title>Message Encoding</title>
 
 <literallayout class="monospaced">
@@ -2035,7 +2038,7 @@ Encoding</para></entry>
 
 </sect1>
 
-<sect1 id="error_class_encoding">
+<sect1 id='Error_Class_Encoding'>
 <title>Error Class Encoding</title>
 
 <para>
@@ -2043,90 +2046,92 @@ Generic errors have classes in the range 0x8000-0xFFFF, and
 subprotocol-specific errors are in the range 0x0000-0x7FFF.
 </para>
 
-<sect2 id="generic_error_class_encoding">
+<sect2 id='Generic_Error_Class_Encoding'>
 <title>Generic Error Class Encoding</title>
 
-<informaltable pgwide='0' frame='none'>
-  <tgroup cols='2' align='center'>
-    <colspec colname='c1'/>
-    <colspec colname='c2'/>
+<informaltable frame='topbot'>
+  <?dbfo keep-together="always" ?>
+  <tgroup cols='2' align='left' colsep='0' rowsep='0'>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='3.0*'/>
     <thead>
-      <row>
-        <entry align='left'>Class</entry>
-        <entry align='center'>Encoding</entry>
+      <row rowsep='1'>
+        <entry>Class</entry>
+        <entry>Encoding</entry>
       </row>
     </thead>
     <tbody>
       <row>
-        <entry align='left'>BadMinor</entry>
-        <entry align='right'>0x8000</entry>
+        <entry>BadMinor</entry>
+        <entry>0x8000</entry>
       </row>
       <row>
-        <entry align='left'>BadState</entry>
-        <entry align='right'>0x8001</entry>
+        <entry>BadState</entry>
+        <entry>0x8001</entry>
       </row>
       <row>
-        <entry align='left'>BadLength</entry>
-        <entry align='right'>0x8002</entry>
+        <entry>BadLength</entry>
+        <entry>0x8002</entry>
       </row>
       <row>
-        <entry align='left'>BadValue</entry>
-        <entry align='right'>0x8003</entry>
+        <entry>BadValue</entry>
+        <entry>0x8003</entry>
       </row>
     </tbody>
   </tgroup>
 </informaltable>
 
 </sect2>
-<sect2 id="ice_specific_error_class_encoding">
+<sect2 id='ICE_specific_Error_Class_Encoding'>
 <title>ICE-specific Error Class Encoding</title>
 
-<informaltable pgwide='0' frame='none'>
-  <tgroup cols='2' align='center'>
-    <colspec colname='c1'/>
-    <colspec colname='c2'/>
+<informaltable frame='topbot'>
+  <?dbfo keep-together="always" ?>
+  <tgroup cols='2' align='left' colsep='0' rowsep='0'>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='3.0*'/>
     <thead>
-      <row>
-        <entry align='left'>Class</entry>
-        <entry align='center'>Encoding</entry>
+      <row rowsep='1'>
+        <entry>Class</entry>
+        <entry>Encoding</entry>
       </row>
     </thead>
     <tbody>
       <row>
-        <entry align='left'>BadMajor</entry>
-        <entry align='right'>0</entry>
+        <entry>BadMajor</entry>
+        <entry>0</entry>
       </row>
       <row>
-        <entry align='left'>NoAuthentication</entry>
-        <entry align='right'>1</entry>
+        <entry>NoAuthentication</entry>
+        <entry>1</entry>
       </row>
       <row>
-        <entry align='left'>NoVersion</entry>
-        <entry align='right'>2</entry>
+        <entry>NoVersion</entry>
+        <entry>2</entry>
       </row>
       <row>
-        <entry align='left'>SetupFailed</entry>
-        <entry align='right'>3</entry>
+        <entry>SetupFailed</entry>
+        <entry>3</entry>
       </row>
       <row>
-        <entry align='left'>AuthenticationRejected</entry>
-        <entry align='right'>4</entry>
+        <entry>AuthenticationRejected</entry>
+        <entry>4</entry>
       </row>
       <row>
-        <entry align='left'>AuthenticationFailed</entry>
-        <entry align='right'>5</entry>
+        <entry>AuthenticationFailed</entry>
+        <entry>5</entry>
       </row>
       <row>
-        <entry align='left'>ProtocolDuplicate</entry>
-        <entry align='right'>6</entry>
+        <entry>ProtocolDuplicate</entry>
+        <entry>6</entry>
       </row>
       <row>
-        <entry align='left'>MajorOpcodeDuplicate</entry>
-        <entry align='right'>7</entry>
+        <entry>MajorOpcodeDuplicate</entry>
+        <entry>7</entry>
       </row>
       <row>
-        <entry align='left'>UnknownProtocol</entry>
-        <entry align='right'>8</entry>
+        <entry>UnknownProtocol</entry>
+        <entry>8</entry>
       </row>
     </tbody>
   </tgroup>
@@ -2140,7 +2145,7 @@ subprotocol-specific errors are in the range 0x0000-0x7FFF.
 
 <title>Modification History</title>
 
-<sect1 id="release_6_to_release_6_1">
+<sect1 id='Release_6_to_Release_61_1'>
 <title>Release 6 to Release 6.1</title>
 <para>
 Release 6.1 added the ICE X rendezvous protocol (Appendix B) and
@@ -2148,7 +2153,7 @@ updated the document version to 1.1.
 </para>
 </sect1>
 
-<sect1 id="release_6_1_to_release_6_3">
+<sect1 id='Release_61_to_Release_63_3'>
 <title>Release 6.1 to Release 6.3</title>
 <para>Release 6.3 added the listen on well known ports feature.</para>
 </sect1>
@@ -2158,7 +2163,7 @@ updated the document version to 1.1.
 <appendix id="ice_x_rendezvous_protocol">
 <title>ICE X Rendezvous Protocol</title>
 
-<sect1 id="introduction">
+<sect1 id='Introduction'>
 <title>Introduction</title>
 <para>
 The ICE X rendezvous protocol is designed to answer the need posed
@@ -2169,7 +2174,7 @@ connections to the same X server.
 </para>
 </sect1>
 
-<sect1 id="overview_of_ice_x_rendezvous">
+<sect1 id='Overview_of_ICE_X_Rendezvous'>
 <title>Overview of ICE X Rendezvous</title>
 
 <para>
@@ -2188,7 +2193,7 @@ with the ICE answering party.
 </para>
 </sect1>
 
-<sect1 id="registering_known_protocols">
+<sect1 id='Registering_Known_Protocols'>
 <title>Registering Known Protocols</title>
 
 <para>
@@ -2217,7 +2222,7 @@ or remove the ICE_PROTOCOLS property entirely.
 </para>
 </sect1>
 
-<sect1 id="initiating_the_rendezvoud">
+<sect1 id='Initiating_the_Rendezvous'>
 <title>Initiating the Rendezvous</title>
 
 <para>
@@ -2245,28 +2250,29 @@ name of the ICE answering party's choosing.  The format for this text
 property is as follows:
 </para>
 
-<informaltable pgwide='0' frame='none'>
-  <tgroup cols='2' align='center'>
-    <colspec colname='c1'/>
-    <colspec colname='c2'/>
+<informaltable frame='topbot'>
+  <?dbfo keep-together="always" ?>
+  <tgroup cols='2' align='left' colsep='0' rowsep='0'>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='3.0*'/>
     <thead>
-      <row>
-        <entry align='left'>Field</entry>
-        <entry align='left'>Value</entry>
+      <row rowsep='1'>
+        <entry>Field</entry>
+        <entry>Value</entry>
       </row>
     </thead>
     <tbody>
       <row>
-        <entry align='left'>type</entry>
-        <entry align='left'>XA_STRING</entry>
+        <entry>type</entry>
+        <entry>XA_STRING</entry>
       </row>
       <row>
-        <entry align='left'>format</entry>
-        <entry align='left'>8</entry>
+        <entry>format</entry>
+        <entry>8</entry>
       </row>
       <row>
-        <entry align='left'>value</entry>
-        <entry align='left'>comma-separated list of ICE network IDs</entry>
+        <entry>value</entry>
+        <entry>comma-separated list of ICE network IDs</entry>
       </row>
     </tbody>
   </tgroup>
@@ -2285,46 +2291,47 @@ and must only be sent to windows that have pre-registered the ICE
 subprotocol in an ICE_PROTOCOLS property on their top-level window.
 </para>
 
-<informaltable pgwide='0' frame='none'>
-  <tgroup cols='2' align='center'>
-    <colspec colname='c1'/>
-    <colspec colname='c2'/>
+<informaltable frame='topbot'>
+  <?dbfo keep-together="always" ?>
+  <tgroup cols='2' align='left' colsep='0' rowsep='0'>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='3.0*'/>
     <thead>
-      <row>
-        <entry align='left'>Field</entry>
-        <entry align='left'>Value</entry>
+      <row rowsep='1'>
+        <entry>Field</entry>
+        <entry>Value</entry>
       </row>
     </thead>
     <tbody>
       <row>
-        <entry align='left'>message_type</entry>
-        <entry align='left'>Atom = "ICE_PROTOCOLS"</entry>
+        <entry>message_type</entry>
+        <entry>Atom = "ICE_PROTOCOLS"</entry>
       </row>
       <row>
-        <entry align='left'>format</entry>
-        <entry align='left'>32</entry>
+        <entry>format</entry>
+        <entry>32</entry>
       </row>
       <row>
-        <entry align='left'>data.l[0]</entry>
-        <entry align='left'>Atom identifying the ICE subprotocol to speak</entry>
+        <entry>data.l[0]</entry>
+        <entry>Atom identifying the ICE subprotocol to speak</entry>
       </row>
       <row>
-        <entry align='left'>data.l[1]</entry>
-        <entry align='left'>Timestamp</entry>
+        <entry>data.l[1]</entry>
+        <entry>Timestamp</entry>
       </row>
       <row>
-        <entry align='left'>data.l[2]</entry>
-        <entry align='left'><para>ICE answering party's window ID with
+        <entry>data.l[2]</entry>
+        <entry><para>ICE answering party's window ID with
 ICE network IDs text property</para></entry>
       </row>
       <row>
-        <entry align='left'>data.l[3]</entry>
-        <entry align='left'>Atom naming text property containing the ICE
+        <entry>data.l[3]</entry>
+        <entry>Atom naming text property containing the ICE
 answering party's ICE network IDs</entry>
       </row>
       <row>
-        <entry align='left'>data.l[4]</entry>
-        <entry align='left'>Reserved.  Must be 0.</entry>
+        <entry>data.l[4]</entry>
+        <entry>Reserved.  Must be 0.</entry>
       </row>
     </tbody>
   </tgroup>
@@ -2357,45 +2364,46 @@ event to the window specified in data.l[2].  This return
 event has the following format:
 </para>
 
-<informaltable pgwide='0' frame='none'>
-  <tgroup cols='2' align='center'>
-    <colspec colname='c1'/>
-    <colspec colname='c2'/>
+<informaltable frame='topbot'>
+  <?dbfo keep-together="always" ?>
+  <tgroup cols='2' align='left' colsep='0' rowsep='0'>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='3.0*'/>
     <thead>
-      <row>
-        <entry align='left'>Field</entry>
-        <entry align='left'>Value</entry>
+      <row rowsep='1'>
+        <entry>Field</entry>
+        <entry>Value</entry>
       </row>
     </thead>
     <tbody>
       <row>
-        <entry align='left'>message_type</entry>
-        <entry align='left'>Atom = "ICE_INITIATE_FAILED"</entry>
+        <entry>message_type</entry>
+        <entry>Atom = "ICE_INITIATE_FAILED"</entry>
       </row>
       <row>
-        <entry align='left'>format</entry>
-        <entry align='left'>32</entry>
+        <entry>format</entry>
+        <entry>32</entry>
       </row>
       <row>
-        <entry align='left'>data.l[0]</entry>
-        <entry align='left'>Atom identifying the ICE subprotocol requested</entry>
+        <entry>data.l[0]</entry>
+        <entry>Atom identifying the ICE subprotocol requested</entry>
       </row>
       <row>
-        <entry align='left'>data.l[1]</entry>
-        <entry align='left'>Timestamp</entry>
+        <entry>data.l[1]</entry>
+        <entry>Timestamp</entry>
       </row>
       <row>
-        <entry align='left'>data.l[2]</entry>
-        <entry align='left'><para>Initiating party's window ID
+        <entry>data.l[2]</entry>
+        <entry><para>Initiating party's window ID
 (holding ICE_PROTOCOLS)</para></entry>
       </row>
       <row>
-        <entry align='left'>data.l[3]</entry>
-        <entry align='left'>int: reason for failure</entry>
+        <entry>data.l[3]</entry>
+        <entry>int: reason for failure</entry>
       </row>
       <row>
-        <entry align='left'>data.l[4]</entry>
-        <entry align='left'>Reserved, must be 0</entry>
+        <entry>data.l[4]</entry>
+        <entry>Reserved, must be 0</entry>
       </row>
     </tbody>
   </tgroup>
@@ -2418,23 +2426,23 @@ client message event was sent.
 
 <!-- .ne 21 -->
 
-<informaltable pgwide='0' frame='none'>
-  <tgroup cols='3' align='center'>
-    <colspec colname='c1'/>
-    <colspec colname='c2'/>
-    <colspec colname='c3'/>
+<informaltable frame='topbot'>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <colspec colname='c1' colwidth='1.5*'/>
+    <colspec colname='c2' colwidth='1.0*'/>
+    <colspec colname='c3' colwidth='3.0*'/>
     <thead>
-      <row>
-        <entry align='left'>Value</entry>
-        <entry align='left'>Encoding</entry>
-        <entry align='left'>Description</entry>
+      <row rowsep='1'>
+        <entry>Value</entry>
+        <entry>Encoding</entry>
+        <entry>Description</entry>
       </row>
     </thead>
     <tbody>
       <row>
-        <entry align='left'>OpenFailed</entry>
-        <entry align='center'>1</entry>
-        <entry align='left'>
+        <entry>OpenFailed</entry>
+        <entry>1</entry>
+        <entry>
 The client was unable to open the connection
 (e.g. a call to IceOpenConnection() failed).  If the
 client is able to distinguish authentication or
@@ -2444,9 +2452,9 @@ for authorization errors.
           </entry>
       </row>
       <row>
-        <entry align='left'>AuthenticationFailed</entry>
-        <entry align='center'>2</entry>
-        <entry align='left'>Authentication or authorization of the
+        <entry>AuthenticationFailed</entry>
+        <entry>2</entry>
+        <entry>Authentication or authorization of the
 connection or protocol setup was refused.
 This reply will be given only if the client is
 able to distinguish it from
@@ -2456,23 +2464,23 @@ otherwise
 will be returned.</entry>
       </row>
       <row>
-        <entry align='left'>SetupFailed</entry>
-        <entry align='center'>3</entry>
-        <entry align='left'>The client was unable to initiate the specified
+        <entry>SetupFailed</entry>
+        <entry>3</entry>
+        <entry>The client was unable to initiate the specified
 protocol on the connection (e.g. a call to
 IceProtocolSetup() failed).</entry>
       </row>
       <row>
-        <entry align='left'>UnknownProtocol</entry>
-        <entry align='center'>4</entry>
-        <entry align='left'>The client does not recognize the requested
+        <entry>UnknownProtocol</entry>
+        <entry>4</entry>
+        <entry>The client does not recognize the requested
 protocol.  (This represents a semantic error
 on the part of the answering party.)</entry>
       </row>
       <row>
-        <entry align='left'>Refused</entry>
-        <entry align='center'>5</entry>
-        <entry align='left'>
+        <entry>Refused</entry>
+        <entry>5</entry>
+        <entry>
 The client was in the process of removing
 ICE_INITIATE_<emphasis remap='I'>pname</emphasis>
 from its ICE_PROTOCOLS list
@@ -2535,7 +2543,7 @@ for ICE subprotocol <emphasis remap='I'>pname</emphasis>.
 </note>
 </sect1>
 
-<sect1 id="ice_subprotocol_versioning">
+<sect1 id='ICE_Subprotocol_Versioning'>
 <title>ICE Subprotocol Versioning</title>
 
 <para>

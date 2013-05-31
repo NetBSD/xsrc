@@ -40,6 +40,6 @@ int     	_IceConnectionCount = 0;
 int         	_IceLastMajorOpcode = 0;
 
 int		_IceAuthCount = 1;
-char		*_IceAuthNames[] = {"MIT-MAGIC-COOKIE-1"};
+const char	*_IceAuthNames[] = {"MIT-MAGIC-COOKIE-1"};
 
 _IceWatchProc	*_IceWatchProcs = NULL;
