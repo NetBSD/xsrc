@@ -10,14 +10,14 @@ then
 else
 #ifdef MKTEMP_COMMAND
 	mktemp=MKTEMP_COMMAND
- 	for errfile in "${TMPDIR-/tmp}/xses-$USER" "/tmp/xses-$USER"
+	for errfile in "${TMPDIR-/tmp}/xses-$USER" "/tmp/xses-$USER"
 	do
 		if ef="$( umask 077 && $mktemp "$errfile.XXXXXX" 2> /dev/null)"
 		then
 			exec > "$ef" 2>&1
 			mv "$ef" "$errfile" 2> /dev/null
- 			break
- 		fi
+			break
+		fi
 	done
 #else
 XCOMM Since this system doesn't have a mktemp command to allow secure

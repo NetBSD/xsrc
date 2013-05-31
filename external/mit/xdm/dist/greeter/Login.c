@@ -26,7 +26,7 @@ from The Open Group.
 
 */
 /*
- * Copyright © 2006 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -162,11 +162,11 @@ static XtResource resources[] = {
 
 #ifndef USE_XFT
     {XtNfont, XtCFont, XtRFontStruct, sizeof (XFontStruct *),
-    	offset (textFont), XtRString,	"*-new century schoolbook-medium-r-normal-*-180-*"},
+	offset (textFont), XtRString,	"*-new century schoolbook-medium-r-normal-*-180-*"},
     {XtNpromptFont, XtCFont, XtRFontStruct, sizeof (XFontStruct *),
-    	offset (promptFont), XtRString, "*-new century schoolbook-bold-r-normal-*-180-*"},
+	offset (promptFont), XtRString, "*-new century schoolbook-bold-r-normal-*-180-*"},
     {XtNgreetFont, XtCFont, XtRFontStruct, sizeof (XFontStruct *),
-    	offset (greetFont), XtRString,	"*-new century schoolbook-bold-i-normal-*-240-*"},
+	offset (greetFont), XtRString,	"*-new century schoolbook-bold-i-normal-*-240-*"},
     {XtNfailFont, XtCFont, XtRFontStruct, sizeof (XFontStruct *),
 	offset (failFont), XtRString,	"*-new century schoolbook-bold-r-normal-*-180-*"},
 #else /* USE_XFT */
@@ -188,7 +188,7 @@ static XtResource resources[] = {
 	offset(failcolor), XtRString,	XtDefaultForeground},
 #endif
     {XtNgreeting, XtCGreeting, XtRString, sizeof (char *),
-    	offset(greeting), XtRString, "X Window System"},
+	offset(greeting), XtRString, "X Window System"},
     {XtNunsecureGreeting, XtCGreeting, XtRString, sizeof (char *),
 	offset(unsecure_greet), XtRString, "This is an unsecure session"},
     {XtNnamePrompt, XtCNamePrompt, XtRString, sizeof (char *),
@@ -197,11 +197,7 @@ static XtResource resources[] = {
 	offset(passwdPrompt), XtRString, "Password:  "},
     {XtNfail, XtCFail, XtRString, sizeof (char *),
 	offset(failMsg), XtRString,
-#if defined(sun) && defined(SVR4)
-     "Login incorrect or not on system console if root"
-#else
-     "Login incorrect"
-#endif
+	"Login incorrect or forbidden by policy"
     },
     {XtNchangePasswdMessage, XtCChangePasswdMessage, XtRString,
 	sizeof (char *), offset(passwdChangeMsg), XtRString,
@@ -221,7 +217,9 @@ static XtResource resources[] = {
     {XtNallowRootLogin, XtCAllowRootLogin, XtRBoolean, sizeof(Boolean),
 	offset(allow_root_login), XtRImmediate, (XtPointer) True},
     {XtNechoPasswd, XtCEchoPasswd, XtRBoolean, sizeof(Boolean),
-	offset(echo_passwd), XtRImmediate, (XtPointer) False}
+	offset(echo_passwd), XtRImmediate, (XtPointer) False},
+    {XtNechoPasswdChar, XtCEchoPasswdChar, XtRString,	sizeof (char *),
+	offset(echo_passwd_char), XtRString, (XtPointer) "*" }
 };
 
 #undef offset
@@ -294,7 +292,12 @@ XmuXftTextWidth(Display *dpy, XftFont *font, FcChar8 *string, int len);
 
 #define STRING_WIDTH(f, s) 	TEXT_WIDTH (f, s, strlen(s))
 
-
+/* Padded width of logo image, if compiled with XPM support */
+#ifdef XPM
+# define LOGO_W(w)     ((w)->login.logoWidth + ((w)->login.logoPadding * 2))
+#else
+# define LOGO_W(w)     0
+#endif
 
 #define TEXT_PROMPT_W(w, m) (STRING_WIDTH(prompt, m) + w->login.inframeswidth)
 
@@ -309,14 +312,10 @@ XmuXftTextWidth(Display *dpy, XftFont *font, FcChar8 *string, int len);
 #define GREET_X(w)	((int)((w->core.width - \
 			     	STRING_WIDTH (greet, GREETING(w))) / 2))
 #define GREET_Y(w)	(GREETING(w)[0] ? 2 * GREET_Y_INC (w) : 0)
-#ifndef XPM
-# define GREET_W(w)	(max (STRING_WIDTH (greet, w->login.greeting), \
-			      STRING_WIDTH (greet, w->login.unsecure_greet)))
-#else
-# define GREET_W(w)	(max (STRING_WIDTH (greet, w->login.greeting), \
+#define GREET_W(w)	(max (STRING_WIDTH (greet, w->login.greeting), \
 			      STRING_WIDTH (greet, w->login.unsecure_greet)) \
-			 + w->login.logoWidth + (2*w->login.logoPadding))
-#endif /* XPM */
+			 + LOGO_W(w))
+
 #define PROMPT_X(w)	(2 * PROMPT_X_INC(w))
 #define PROMPT_Y(w,n)	((GREET_Y(w) + GREET_Y_INC(w) +\
 			  F_ASCENT(greet) + Y_INC(w)) + \
@@ -324,18 +323,16 @@ XmuXftTextWidth(Display *dpy, XftFont *font, FcChar8 *string, int len);
 #define PROMPT_W(w)	(w->core.width - (2 * TEXT_X_INC(w)))
 #define PROMPT_H(w)	(3 * Y_INC(w) / 2)
 #define VALUE_X(w,n)	(PROMPT_X(w) + CUR_PROMPT_W(w,n))
+#define CURSOR_W	5
+#define MAX_VALUE_W(w,n) (PROMPT_W(w) - VALUE_X (w,n) - CURSOR_W - 1 - \
+			  (w->login.inframeswidth * 2) - LOGO_W(w))
 #define PROMPT_SPACE_Y(w)	(10 * Y_INC(w) / 5)
 
 #define ERROR_X(w,m)	((int)(w->core.width - STRING_WIDTH (fail, m)) / 2)
 #define FAIL_X(w)	ERROR_X(w, w->login.fail)
 #define FAIL_Y(w)	(PROMPT_Y(w,1) + 2 * FAIL_Y_INC (w) + F_ASCENT(fail))
 
-#ifndef XPM
-# define ERROR_W(w,m)	STRING_WIDTH (fail, m)
-#else
-# define ERROR_W(w,m)	(STRING_WIDTH (fail, m) \
-			 + w->login.logoWidth + (2*w->login.logoPadding))
-#endif /* XPM */
+#define ERROR_W(w,m)	(STRING_WIDTH (fail, m) + LOGO_W(w))
 
 #define FAIL_W(w)	max(ERROR_W(w, w->login.failMsg), \
 			    ERROR_W(w, w->login.passwdChangeMsg))
@@ -374,7 +371,7 @@ realizeValue (LoginWidget w, int cursor, int promptNum, GC gc)
 
 	while (i < length)
 	{
-	    text[i++] = '*';
+	    text[i++] = w->login.echo_passwd_char[0];
 	}
 
 	text[i] = 0;
@@ -383,14 +380,9 @@ realizeValue (LoginWidget w, int cursor, int promptNum, GC gc)
     x = VALUE_X (w,promptNum);
     y = PROMPT_Y (w,promptNum);
 
-    height = PROMPT_H(w);
-    width = PROMPT_W(w) - x - 3;
+    height = PROMPT_H(w) - (w->login.inframeswidth * 2);
+    width = MAX_VALUE_W(w,promptNum);
 
-    height -= (w->login.inframeswidth * 2);
-    width -= (w->login.inframeswidth * 2);
-#ifdef XPM
-    width -= (w->login.logoWidth + (w->login.logoPadding * 2));
-#endif
     if (cursor > VALUE_SHOW_START(w, promptNum))
 	curoff = TEXT_WIDTH (text, text, cursor);
     else
@@ -406,24 +398,21 @@ realizeValue (LoginWidget w, int cursor, int promptNum, GC gc)
     } else if ((state == LOGIN_PROMPT_ECHO_ON) || (state == LOGIN_TEXT_INFO) ||
 	       ((state == LOGIN_PROMPT_ECHO_OFF) && (w->login.echo_passwd == True)))
     {
-	int textwidth;
 	int offset = max(cursor, VALUE_SHOW_START(w, promptNum));
 	int textlen = strlen (text + offset);
 
-	textwidth = TEXT_WIDTH (text, text + offset, textlen);
-
-	if (textwidth > (width - curoff)) {
+	if (TEXT_WIDTH (text, text + offset, textlen) > (width - curoff)) {
 	    /* Recalculate amount of text that can fit in field */
 	    offset = VALUE_SHOW_START(w, promptNum);
 	    textlen = strlen (text + offset);
 
-	    while ((textlen > 0) && (textwidth > width))
+	    while ((textlen > 0) &&
+		   (TEXT_WIDTH (text, text + offset, textlen) > width))
 	    {
 		if (offset < PROMPT_CURSOR(w, promptNum)) {
 		    offset++;
 		}
 		textlen--;
-		textwidth = TEXT_WIDTH (text, text + offset, textlen);
 	    }
 
 	    VALUE_SHOW_START(w, promptNum) = offset;
@@ -492,16 +481,20 @@ realizeCursor (LoginWidget w, GC gc)
 	break;
     case LOGIN_PROMPT_ECHO_OFF:
 	if (w->login.echo_passwd == True) {
-	    int len = PROMPT_CURSOR(w, w->login.activePrompt) -
-		VALUE_SHOW_START(w, w->login.activePrompt);
+	    if (w->login.echo_passwd_char[0] != 0) {
+		int len = PROMPT_CURSOR(w, w->login.activePrompt) -
+		    VALUE_SHOW_START(w, w->login.activePrompt);
 
-	    x += len*TEXT_WIDTH(text, "*", 1);
-	}
-	else
-	{
-	    /* Move cursor one pixel per character to give some feedback
-	       without giving away the password length */
-	    x += PROMPT_CURSOR(w, w->login.activePrompt);
+		x += len*TEXT_WIDTH(text, w->login.echo_passwd_char, 1);
+	    } else {
+		/* Move cursor one pixel per character to give some feedback
+		   without giving away the password length */
+		if (PROMPT_CURSOR(w, w->login.activePrompt) <
+		    MAX_VALUE_W(w, w->login.activePrompt))
+		    x += PROMPT_CURSOR(w, w->login.activePrompt);
+		else
+		    x += MAX_VALUE_W(w, w->login.activePrompt);
+	    }
 	}
 	break;
     }
@@ -509,21 +502,21 @@ realizeCursor (LoginWidget w, GC gc)
     XFillRectangle (XtDisplay (w), XtWindow (w), gc,
 		    x, y+1 - F_ASCENT(text), width, height-1);
     XDrawPoint     (XtDisplay (w), XtWindow (w), gc,
-    		    x-1 , y - F_ASCENT(text));
+		    x-1 , y - F_ASCENT(text));
     XDrawPoint     (XtDisplay (w), XtWindow (w), gc,
-    		    x+1 , y - F_ASCENT(text));
+		    x+1 , y - F_ASCENT(text));
     XDrawPoint     (XtDisplay (w), XtWindow (w), gc,
-    		    x-1 , y - F_ASCENT(text)+height);
+		    x-1 , y - F_ASCENT(text)+height);
     XDrawPoint     (XtDisplay (w), XtWindow (w), gc,
-    		    x+1 , y - F_ASCENT(text)+height);
+		    x+1 , y - F_ASCENT(text)+height);
     XDrawPoint     (XtDisplay (w), XtWindow (w), gc,
-    		    x-2 , y - F_ASCENT(text));
+		    x-2 , y - F_ASCENT(text));
     XDrawPoint     (XtDisplay (w), XtWindow (w), gc,
-    		    x+2 , y - F_ASCENT(text));
+		    x+2 , y - F_ASCENT(text));
     XDrawPoint     (XtDisplay (w), XtWindow (w), gc,
-    		    x-2 , y - F_ASCENT(text)+height);
+		    x-2 , y - F_ASCENT(text)+height);
     XDrawPoint     (XtDisplay (w), XtWindow (w), gc,
-    		    x+2 , y - F_ASCENT(text)+height);
+		    x+2 , y - F_ASCENT(text)+height);
 
     XFlush (XtDisplay(w));
 }
@@ -709,13 +702,13 @@ draw_it (LoginWidget w)
     for(i=1;i<=(w->login.outframewidth);i++)
     {
       XDrawLine(XtDisplay (w), XtWindow (w), w->login.hiGC,
-    		i-1,i-1,w->core.width-i,i-1);
+		i-1,i-1,w->core.width-i,i-1);
       XDrawLine(XtDisplay (w), XtWindow (w), w->login.hiGC,
-    		i-1,i-1,i-1,w->core.height-i);
+		i-1,i-1,i-1,w->core.height-i);
       XDrawLine(XtDisplay (w), XtWindow (w), w->login.shdGC,
-    		w->core.width-i,i-1,w->core.width-i,w->core.height-i);
+		w->core.width-i,i-1,w->core.width-i,w->core.height-i);
       XDrawLine(XtDisplay (w), XtWindow (w), w->login.shdGC,
-    		i-1,w->core.height-i,w->core.width-i,w->core.height-i);
+		i-1,w->core.height-i,w->core.width-i,w->core.height-i);
     }
 
     /* make separator line */
@@ -744,14 +737,10 @@ draw_it (LoginWidget w)
 	int in_frame_y
 	    = PROMPT_Y(w,p) - w->login.inframeswidth - 1 - TEXT_Y_INC(w);
 
-	int in_width = PROMPT_W(w) - VALUE_X(w,p);
+	int in_width = PROMPT_W(w) - VALUE_X(w,p) - LOGO_W(w);
 	int in_height = PROMPT_H(w) + w->login.inframeswidth + 2;
 
 	GC topLeftGC, botRightGC;
-
-#ifdef XPM
-	in_width -= (w->login.logoWidth + 2*(w->login.logoPadding));
-#endif /* XPM */
 
 	if ((PROMPT_STATE(w, p) == LOGIN_PROMPT_ECHO_ON) ||
 	    (PROMPT_STATE(w, p) == LOGIN_PROMPT_ECHO_OFF)) {
@@ -1729,7 +1718,7 @@ static void Initialize (
 
     xvaluemask = valuemask;
     if (w->login.greetFont == NULL)
-    	w->login.greetFont = w->login.textFont;
+	w->login.greetFont = w->login.textFont;
     else
 	xvaluemask |= GCFont;
 
@@ -1903,11 +1892,10 @@ static void Realize (
          * Create pixmap window
          */
         {
-            unsigned long valueMask = CWBackPixel | CWBackPixmap;
-            XSetWindowAttributes windowAttributes = { 0 };
-
-            windowAttributes.background_pixel = w->core.background_pixel;
-            windowAttributes.background_pixmap = None;
+            XSetWindowAttributes windowAttributes = {
+                .background_pixel = w->core.background_pixel,
+                .background_pixmap = None
+            };
 
             w->login.logoWindow = XCreateWindow(XtDisplay(w),
                 XtWindow(w),
@@ -1916,7 +1904,7 @@ static void Realize (
                 (w->core.height - w->login.logoHeight) /2,
                 w->login.logoWidth, w->login.logoHeight, 0,
                 CopyFromParent, InputOutput, CopyFromParent,
-                valueMask, &windowAttributes);
+                CWBackPixel | CWBackPixmap, &windowAttributes);
         }
 
         /*
