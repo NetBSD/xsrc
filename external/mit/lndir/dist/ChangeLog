@@ -1,3 +1,65 @@
+commit 70ac3aeac918c916fffb6b2ee09514f50beb0ce9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Mar 7 21:50:44 2012 -0800
+
+    lndir 1.0.3
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit cc807bb858287537da97be0051318f15bf712a76
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Sep 28 14:46:18 2011 -0700
+
+    Add printf & noreturn attributes for static analysis
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 966e58a5522c56ad5144ad5fe51273f24e9e729e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Sep 28 14:43:27 2011 -0700
+
+    Add const attributes to fix gcc -Wwrite-strings warnings
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2eb55c2ed3a0e01466cb64d2e74905461eac3c66
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 7 23:39:56 2011 -0700
+
+    config: Remove unnecessary AC_SUBST from configure.ac
+    
+    PKG_CONFIG_MODULES handles AC_SUBST of the CFLAGS & LIBS variables
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 847f506047b3e7b9390f50d3b12f041cdfd1b2a3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 7 23:37:46 2011 -0700
+
+    config: replace deprecated AM_CONFIG_HEADER with AC_CONFIG_HEADERS
+    
+    Regroup AC statements under the Autoconf initialization section.
+    Regroup AM statements under the Automake initialization section.
+    Add missing AC_CONFIG_SRCDIR
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e20d41e86c18cac3dfc61bd1d61a52694a40b7de
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 7 23:30:24 2011 -0700
+
+    Convert main() to use traditional argc & argv names instead of ac & av
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit da14ef5b73bd8bfd57af9ee7541ec2ae96d3d03b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 7 23:28:27 2011 -0700
+
+    Add missing -withrevinfo flag to usage output
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 9da4c0b964f96ef8bd37cf5e3f74a86b93e890f7
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Fri Aug 13 21:11:32 2010 -0700
