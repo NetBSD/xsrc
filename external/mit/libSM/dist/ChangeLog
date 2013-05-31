@@ -1,3 +1,394 @@
+commit b3d1f4896cab54717acd691b62b7fa3122a5fd8c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Mar 2 20:53:41 2012 -0800
+
+    libSM 1.2.1
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6475d9eff0bfbb6446eff205fd52c5ba82c5819c
+Author: Matt Dew <marcoz@osource.org>
+Date:   Wed Jan 11 20:33:41 2012 -0700
+
+    informaltable cleanup
+    
+    On certain tables, add top and bottom borders to table
+    header and a bottom border to the table. This matches
+    what those tables in the old pdfs looked like.
+    
+    the <?dbfo keep-together='always'> prevents tables from
+    splitting across pages. Useful for tiny tables.
+    
+    Converting the colwidth to a floating point,
+    IE, 1* -> 1.0* cleans up these build errors:
+    WARNING: table-layout="fixed" and column-width unspecified
+    => falling back to proportional-column-width(1)
+    
+    Signed-off-by: Matt Dew <marcoz@osource.org>
+
+commit 3ca545c7835b71b63f8c5a8f758b08418a65a5bb
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Dec 5 20:04:51 2011 -0800
+
+    unifdef -ULynx
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Mark Kettenis <kettenis@openbsd.org>
+    Reviewed-by: James Cloos <cloos@jhcloos.com>
+
+commit 4af9e4a71f7c07da86ef1940cba69e92b11ba337
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 19 11:33:30 2011 -0800
+
+    SmsInitialize: Mark vendor & release args as const char *
+    
+    Needed to fix gcc -Wwrite-strings arguments in callers such as xsm.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: James Cloos <cloos@jhcloos.com>
+
+commit e77dd2e4bc8227ebdab70b4233cb33ed690fa264
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 19 10:33:15 2011 -0800
+
+    Remove a bunch of unnecessary casts with malloc & free calls
+    
+    With modern compilers and headers, they cause more problems than they
+    solve and just hide real issues.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Mark Kettenis <kettenis@openbsd.org>
+    Reviewed-by: James Cloos <cloos@jhcloos.com>
+
+commit 46f3ef4460aa2c1c2cba22897694a1cea572d506
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 19 10:23:24 2011 -0800
+
+    Replace malloc(strlen) + strcpy sets with strdup calls
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Mark Kettenis <kettenis@openbsd.org>
+    Reviewed-by: James Cloos <cloos@jhcloos.com>
+
+commit fb3ef5844d392f70cc6bd9b0d8770ca17bde1428
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 19 10:13:02 2011 -0800
+
+    Reindent IPv4 code to match IPv6 code
+    
+    Takes care of the other block of code confusingly sharing indent levels
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: James Cloos <cloos@jhcloos.com>
+
+commit 638496507882f0afe506fe294f68ad5290ef95db
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 19 10:07:32 2011 -0800
+
+    Move variable declarations to get rid of unnecessary scope brackets
+    
+    Gets rid of one of the multiple levels of bracketing that confusingly
+    shared the same indent level.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: James Cloos <cloos@jhcloos.com>
+
+commit 9f350d75a4553d8e2bc365f8de4110bb79ec7b32
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 19 10:01:50 2011 -0800
+
+    Move and rename temp[4] definition to reduce confusion with temp[256]
+    
+    Both variables were locals in different scope levels of the same
+    function, leading to both confusing code and gcc -Wshadow warnings:
+    
+    sm_genid.c: In function 'SmsGenerateClientID':
+    sm_genid.c:160:10: warning: declaration of 'temp' shadows a previous local
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: James Cloos <cloos@jhcloos.com>
+
+commit 079de6fd4bd0423e20e472d7342f919eebce0517
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 19 09:52:17 2011 -0800
+
+    Use imdent to make multiple levels of nested #if easier to follow
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: James Cloos <cloos@jhcloos.com>
+
+commit 79c785adf86ef06f09910b68019bc8a1e6fcb122
+Author: Matt Dew <marcoz@osource.org>
+Date:   Tue Oct 4 22:42:05 2011 -0600
+
+    Cleanup IDs and links in doc
+    
+    1 - fix the capitalization of the ID attributes to match either the
+         <title> or <funcdef> string it goes with.
+    2 - fix any <linkend>'s that were affected by 1.
+    3 - any <function> in the docs that has an actual funcdef,
+    will become an olink.
+    
+    Signed-off-by: Matt Dew <marcoz@osource.org>
+
+commit 4708d636de50281ab2c52c32b81b7ecb67657820
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Sep 16 22:03:00 2011 -0700
+
+    Strip trailing whitespace
+    
+    Performed with: find * -type f | xargs perl -i -p -e 's{[ \t]+$}{}'
+    git diff -w & git diff -b show no diffs from this change
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 44eecd93986368e71c404d8faa264a514bf88ab1
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Sep 14 14:59:27 2011 -0400
+
+    docs: fix author affiliation
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 7ed7ef36b7e1fdd29554db122e4eb07323e27dee
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Mon Sep 12 16:54:45 2011 -0400
+
+    docs: use the &fullrelvers; entity to set X11 release information
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 7601182a252b44d0b04435f1eb4d574dfcf5fabb
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Sep 11 19:49:53 2011 -0400
+
+    docs: remove <productnumber> which is not used by default
+    
+    This element is not rendered by default on the title. A template
+    customization is required to display it.
+    X Window System does not have a product number.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit cbca5fad657122d1a9f370d0640acb66ef80aaef
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Sep 8 20:00:00 2011 -0400
+
+    docbook.am: embed css styles inside the HTML HEAD element
+    
+    Rather than referring to the external xorg.css stylesheet, embed the content
+    of the file in the html output produced. This is accomplished by using
+    version 1.10 of xorg-xhtml.xsl.
+    
+    This makes the whole html docs tree much more relocatable.
+    In addition, it eliminates xorg.css as a runtime file which makes
+    xorg-sgml-doctools a build time only package.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit b88a9949fa6e1b12348541c6293535cc7ff931f4
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Sep 7 10:31:04 2011 -0400
+
+    docbook.am: global maintenance update - entities, images and olinking
+    
+    Adding support in libX11 for html chunking caused a reorg of docbook.am
+    as well as the xorg-sgml-doctools masterdb for olinking.
+    The parameter img.src.path is added for pdf images.
+    A searchpath to the root builddir is added for local entities, if present.
+    
+    The docbook.am makefile hides all the details and is identical for
+    all 22 modules having DocBook documentation. It is included by a thin
+    Makefile.am which requires no docbook knowledge.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 64e002e55555205fdcdb9e6d78d6eadd4136cb7a
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Jun 12 17:54:50 2011 -0400
+
+    Install xml versions of specs even if HAVE_XMLTO is false
+    
+    DocBook/XML input source is also a usefull output format that can be viewed
+    with an XML viewer or editor and by some O/S help system.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit bef231eefedae448255b705aa2f687f49e371b71
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Jun 5 16:27:36 2011 -0400
+
+    Install target dbs alongside generated documents
+    
+    This matches a change in xorg-sgml-docs whereby the masterdb will look for
+    the target dbs into the same location as the generated documents.
+    
+    The target dbs are now installed alongside the generated documents.
+    Previously they are installed in $prefix/sgml/X11/dbs alongside masterdb which
+    has the potential of installing outside the package prefix and cause
+    distcheck to fail when user does not have write permission in this package.
+    
+    Requires XORG_CHECK_SGML_DOCTOOLS(1.8) which was released 2011-06-11
+
+commit f7473da7b1ff6a5295a145f808c327e655e574a9
+Author: Matt Dew <marcoz@osource.org>
+Date:   Wed May 25 23:46:36 2011 -0600
+
+    add id attributes to funcsynopsis to allow other docs to olink to them.
+    
+    Signed-off-by: Matt Dew <marcoz@osource.org>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 8683bdd74d3e40c7db92efd25acf345f6331b252
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Feb 27 15:06:18 2011 -0500
+
+    Documentation: add Docbook external references support
+    
+    When writing technical documentation, it is often necessary to cross
+    reference to other information. When that other information is not in the
+    current document, additional support is needed, namely <olink>.
+    
+    A new feature with version 1.7 of xorg-sgml-doctools adds references to
+    other documents within or outside this package.
+    
+    This patch adds technical support for this feature but does not change
+    the content of the documentation as seen by the end user.
+    
+    Each book or article must generate a database containing the href
+    of sections that can be referred to from another document. This database
+    is installed in DATAROOTDIR/sgml/X11/dbs. There is a requirement that
+    the value of DATAROOTDIR for xorg-sgml-doctools and for the package
+    documentation is the same. This forms a virtual document tree.
+    
+    This database is consulted by other documents while they are being generated
+    in order to fulfill the missing information for linking.
+    Refer to the xorg-sgml-doctools for further technical information.
+    
+    Co-authored-by: Matt Dew <marcoz@osource.org>
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 252f6d2add7c926cdcf0cea43da04f182720b0b4
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Feb 25 09:04:45 2011 -0500
+
+    Docbook: change the book id to match the xml file basename
+    
+    This is required for the up-coming external references support.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 2cd30c36c080217c20addf311510881c8eecf374
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Feb 2 19:25:52 2011 -0500
+
+    config: splitting SM and XTRANS compiler options is not required
+    
+    Simplify configuration by using a single PKG_CHECK_MODULES statement.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 3c923881f415651d75434efd209003d602253437
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Feb 2 11:43:40 2011 -0500
+
+    config: comment, minor upgrade, quote and layout configure.ac
+    
+    Group statements per section as per Autoconf standard layout
+    Quote statements where appropriate.
+    Autoconf recommends not using dnl instead of # for comments
+    
+    Use AC_CONFIG_FILES to replace the deprecated AC_OUTPUT with parameters.
+    
+    This helps automated maintenance and release activities.
+    Details can be found in http://wiki.x.org/wiki/NewModuleGuidelines
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit b29f5c9f3a728c5b7673cf54ad60d988b5dd93e7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jan 27 22:05:40 2011 -0800
+
+    Bug 33390 - sm.pc: don't export a dependency on ice
+    
+    https://bugs.freedesktop.org/show_bug.cgi?id=33390
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Dan Nicholson <dbn.lists@gmail.com>
+
+commit fe43b6de5bb4423ce99d2df1ab37ea8ece39a9fa
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Jan 28 16:07:07 2011 -0500
+
+    config: replace deprecated AC_HELP_STRING with AS_HELP_STRING
+    
+    This silences an Automake warning.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 57b6f700378a001e1aff9b83f6cb396c7c4a7368
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Jan 28 14:59:04 2011 -0500
+
+    config: remove unrequired AC_HEADER_STDC
+    
+    Autoconf says:
+    "This macro is obsolescent, as current systems have conforming
+    header files. New programs need not use this macro".
+
+commit 8f9878c06e359d21715a3e4358895b589466bc46
+Author: Paulo Zanoni <pzanoni@mandriva.com>
+Date:   Thu Dec 16 14:03:06 2010 -0200
+
+    Use docbookx.dtd version 4.3 for all docs
+    
+    Signed-off-by: Paulo Zanoni <pzanoni@mandriva.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6d093e2397ecdbbba044fe7ef2fd922c8c8261de
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 21 11:19:45 2010 -0800
+
+    config: replace deprecated AM_CONFIG_HEADER with AC_CONFIG_HEADERS
+    
+    Regroup AC statements under the Autoconf initialization section.
+    Regroup AM statements under the Automake initialization section.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b8ef6cea0ccae4d88a9cb91cd836188ae781cda8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 21 11:17:25 2010 -0800
+
+    config: Remove unnecessary calls from configure.ac
+    
+    AC_PROG_CC are provided by XORG_DEFAULT_OPTIONS now
+    PKG_CONFIG_MODULES handles AC_SUBST of the CFLAGS & LIBS variables
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 15dc32dd7b57315f9e319f3e346ba28a1e69c646
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 21 11:16:14 2010 -0800
+
+    Sun's copyrights belong to Oracle now
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8480764c94d15673c884b90c7a10bc86635dec63
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Nov 9 13:04:40 2010 -0500
+
+    config: HTML file generation: use the installed copy of xorg.css
+    
+    Currenlty the xorg.css file is copied in each location
+    where a DocBook/XML file resides. This produces about
+    70 copies in the $(docdir) install tree.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
 commit d2327760a52fdbcd3759211578e3663e00e4a31e
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Wed Oct 27 22:26:41 2010 -0700
