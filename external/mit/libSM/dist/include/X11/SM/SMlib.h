@@ -168,7 +168,7 @@ typedef struct {
 typedef Status (*SmsRegisterClientProc) (
     SmsConn 		/* smsConn */,
     SmPointer		/* managerData */,
-    char *		/* previousId */				     
+    char *		/* previousId */
 );
 
 typedef void (*SmsInteractRequestProc) (
@@ -445,8 +445,8 @@ extern IceConn SmcGetIceConnection (
 );
 
 extern Status SmsInitialize (
-    char *			/* vendor */,
-    char *			/* release */,
+    const char *		/* vendor */,
+    const char *		/* release */,
     SmsNewClientProc		/* newClientProc */,
     SmPointer			/* managerData */,
     IceHostBasedAuthProc	/* hostBasedAuthProc */,

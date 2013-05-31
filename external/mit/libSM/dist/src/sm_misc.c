@@ -54,11 +54,11 @@ SmFreeProperty(SmProp *prop)
 	{
 	    for (i = 0; i < prop->num_vals; i++)
 		if (prop->vals[i].value)
-		    free ((char *) prop->vals[i].value);
-	    free ((char *) prop->vals);
+		    free (prop->vals[i].value);
+	    free (prop->vals);
 	}
 
-	free ((char *) prop);
+	free (prop);
     }
 }
 
@@ -77,7 +77,7 @@ SmFreeReasons(int count, char **reasonMsgs)
 	for (i = 0; i < count; i++)
 	    free (reasonMsgs[i]);
 
-	free ((char *) reasonMsgs);
+	free (reasonMsgs);
     }
 }
 
@@ -104,33 +104,21 @@ SmcProtocolRevision(SmcConn smcConn)
 char *
 SmcVendor(SmcConn smcConn)
 {
-    char *string = (char *) malloc (strlen (smcConn->vendor) + 1);
-
-    strcpy (string, smcConn->vendor);
-
-    return (string);
+    return strdup(smcConn->vendor);
 }
 
 
 char *
 SmcRelease(SmcConn smcConn)
 {
-    char *string = (char *) malloc (strlen (smcConn->release) + 1);
-
-    strcpy (string, smcConn->release);
-
-    return (string);
+    return strdup(smcConn->release);
 }
 
 
 char *
 SmcClientID(SmcConn smcConn)
 {
-    char *clientId = (char *) malloc (strlen (smcConn->client_id) + 1);
-
-    strcpy (clientId, smcConn->client_id);
-
-    return (clientId);
+    return strdup(smcConn->client_id);
 }
 
 
@@ -163,11 +151,7 @@ SmsProtocolRevision(SmsConn smsConn)
 char *
 SmsClientID(SmsConn smsConn)
 {
-    char *clientId = (char *) malloc (strlen (smsConn->client_id) + 1);
-
-    strcpy (clientId, smsConn->client_id);
-
-    return (clientId);
+    return strdup(smsConn->client_id);
 }
 
 

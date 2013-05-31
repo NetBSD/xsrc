@@ -1,28 +1,29 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd"
+[
+<!ENTITY % defs SYSTEM "defs.ent"> %defs;
+]>
 
 
 <!-- lifted from troff+ms+XMan by doclifter -->
-<book id="xsmpms">
+<book id="xsmp">
 
 <bookinfo>
    <title>X Session Management Protocol</title>
    <subtitle>X Consortium Standard</subtitle>
-   <releaseinfo>X Version 11, Release 7</releaseinfo>
+   <releaseinfo>X Version 11, Release &fullrelvers;</releaseinfo>
+   <releaseinfo>Version 1.0</releaseinfo>
    <authorgroup>
       <author>
          <firstname>Mike</firstname><surname>Wexler</surname>
+         <affiliation><orgname>Kubota Pacific Computer, Inc</orgname></affiliation>
       </author>
    </authorgroup>
-   <corpname>Kubota Pacific Computer, Inc</corpname>
    <copyright>
      <year>1992</year><year>1993</year><year>1994</year><year>2002</year>
      <holder>The Open Group</holder>
    </copyright>
-   <releaseinfo>Version 1.0</releaseinfo>
-   <affiliation><orgname>X Consortium</orgname></affiliation>
-   <productnumber>X Version 11, Release 7</productnumber>
 
    <legalnotice>
      <para>
@@ -74,7 +75,7 @@ top of the X.Org <acronym>ICE</acronym> protocol.
 
 </bookinfo>
 
-<chapter id="acknowledgments">
+<chapter id='Acknowledgments'>
   <title>Acknowledgments</title>
 
   <para>
@@ -86,7 +87,7 @@ and Bob Scheifler.
   </para>
 </chapter>
 
-<chapter id="definitions_and_goals">
+<chapter id='Definitions_and_Goals'>
   <title>Definitions and Goals</title>
 
   <para>
@@ -123,7 +124,7 @@ relies on the <acronym>ICE</acronym> protocol to handle connection management an
 
 </chapter>
 
-<chapter id="overview_of_the_protocol">
+<chapter id='Overview_of_the_Protocol'>
   <title>Overview of the Protocol</title>
 
   <para>
@@ -229,7 +230,7 @@ no properties set.
   </para>
 </chapter>
 
-<chapter id="data_types">
+<chapter id='Data_Types'>
   <title>Data Types</title>
 
   <para>
@@ -245,12 +246,12 @@ types, a <errorname>BadValue</errorname> error message must be sent by
 the receiver of the message to the sender of the message.
   </para>
 
-<informaltable pgwide='0' frame='none'>
-  <tgroup cols='2' align='left'>
-    <colspec colname='c1'/>
-    <colspec colname='c2'/>
+<informaltable frame='topbot'>
+  <tgroup cols='2' align='left' colsep='0' rowsep='0'>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='3.0*'/>
     <thead>
-      <row>
+      <row rowsep='1'>
         <entry>Type Name</entry>
         <entry>Description</entry>
       </row>
@@ -306,7 +307,7 @@ the receiver of the message to the sender of the message.
 
 </chapter>
 
-<chapter id="protocol_setup_and_message_format">
+<chapter id='Protocol_Setup_and_Message_Format'>
   <title>Protocol Setup and Message Format</title>
 
   <para>
@@ -321,7 +322,7 @@ message this message contains.
   </para>
 </chapter>
 
-<chapter id="client_identification_string">
+<chapter id='Client_Identification_String'>
   <title>Client Identification String</title>
   <para>
 A client ID is a string of XPCS characters encoded in ISO Latin 1 (ISO
@@ -399,7 +400,7 @@ any user, session manager, and machine will be different from any other.
   </itemizedlist>
 </chapter>
 
-<chapter id="protocol">
+<chapter id='Protocol'>
   <title>Protocol</title>
   <para>
 The protocol consists of a sequence of messages as described below.
@@ -425,12 +426,12 @@ set of valid responses and possible error messages are listed.  The
 The client must send this message to the SM to register the client's
 existence.  If a client is being restarted from a previous session,
 the <parameter>previous-ID</parameter> field must contain the client
-ID from the previous session.  For new clients, 
+ID from the previous session.  For new clients,
 <parameter>previous-ID</parameter> should be of zero length.
   </para>
 
   <para>
-If <parameter>previous-ID</parameter> is not valid, 
+If <parameter>previous-ID</parameter> is not valid,
 the SM will send a <errorname>BadValue</errorname>
 error message to the client.  At this point the SM reverts to the
 register state and waits for another <function>RegisterClient</function>
@@ -446,14 +447,14 @@ null <parameter>previous-ID</parameter> field.
 
   <para>
 The <parameter>client-ID</parameter> specifies a unique identification
-for this client.  If the client had specified an ID in the 
-<parameter>previous-ID</parameter> field of the 
-<function>RegisterClient</function> message, 
+for this client.  If the client had specified an ID in the
+<parameter>previous-ID</parameter> field of the
+<function>RegisterClient</function> message,
 <parameter>client-ID</parameter> will be identical to the previously
 specified ID.  If <parameter>previous-ID</parameter> was null,
 <parameter>client-ID</parameter> will be a unique ID freshly generated
 by the SM.  The <parameter>client-ID</parameter> format is specified in
-<link linkend="client_identification_string">section 6</link>.
+<link linkend='Client_Identification_String'>section 6</link>.
   </para>
 
   <para>
@@ -778,7 +779,7 @@ and <function>Any</function> or <function>Errors</function> for the
     <function>SaveComplete</function>
     <function>Die</function>
     <function>ShutdownCancelled</function>
-  
+
   </synopsis>
 
   <para>
@@ -807,7 +808,7 @@ field of the <function>SaveYourselfDone</function> message.
   Valid Responses:
     <function>ShutdownCancelled</function>
     <function>SaveYourselfPhase2</function>
-  
+
   </synopsis>
 
   <para>
@@ -901,7 +902,7 @@ Sets the specified <parameter>properties</parameter> to the specified values.
 Existing
 properties not specified in the <function>Set&shy;Properties</function>
 message are unaffected. Some properties have predefined semantics.
-See <link linkend='predefined_properties'>section 11, 
+See <link linkend='Predefined_Properties'>section 11, 
 &ldquo;Predefined Properties.&rdquo;</link>
   </para>
 
@@ -946,7 +947,7 @@ message and includes the <parameter>values</parameter> of all the properties.
   </para>
 </chapter>
 
-<chapter id="errors">
+<chapter id='Errors'>
   <title>Errors</title>
 
   <para>
@@ -963,15 +964,15 @@ a <errorname>BadState</errorname> error message.
   </para>
 </chapter>
 
-<chapter id="state_diagrams">
+<chapter id='State_Diagrams'>
   <title>State Diagrams</title>
   <para>
 These state diagrams are designed to cover all actions of both the
 client and the SM.
   </para>
 
-  <sect1 id='client_state_diagram'>
-    <title>Client State Diagram</title>
+  <sect1 id='Client_State_Diagram'>
+<title>Client State Diagram</title>
 
 <!-- <literallayout remap='DS'> -->
 <literallayout>
@@ -1065,7 +1066,7 @@ client and the SM.
      client stops participating in session </literallayout>
 </sect1>
 
-<sect1 id='session_manager_state_diagram'>
+<sect1 id='Session_Manager_State_Diagram'>
 <title>Session Manager State Diagram</title>
 
 <literallayout remap='DS'>
@@ -1163,198 +1164,258 @@ client and the SM.
   </sect1>
 </chapter>
 
-<chapter id='protocol_encoding'>
+<chapter id='Protocol_Encoding'>
   <title>Protocol Encoding</title>
-  <sect1 id="types">
-    <title>Types</title>
+  <sect1 id='Types'>
+<title>Types</title>
 
-<informaltable pgwide='0' frame='none'>
-  <tgroup cols='4'>
-    <colspec colwidth='0.5in' colname='c0'/>
-    <colspec colwidth='1.0in' colname='c1'/>
-    <colspec colwidth='1.0in' colname='c2'/>
-    <colspec colwidth='1.0in' colname='c3'/>
-    <spanspec spanname="typename" namest="c0" nameend="c3" />
+<informaltable frame='none'>
+  <tgroup cols='2' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='10.0*'/>
+    <thead>
+      <row>
+        <entry namest='c1' nameend='c2'><emphasis role="bold">BOOL</emphasis></entry>
+      </row>
+    </thead>
     <tbody>
       <row>
-        <entry spanname="typename"><emphasis role="bold">BOOL</emphasis></entry>
+        <entry>0</entry>
+        <entry>False</entry>
       </row>
       <row>
-        <entry namest="c1">0</entry>
-        <entry namest="c2">False</entry>
+        <entry>1</entry>
+        <entry>True</entry>
+      </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='2' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='10.0*'/>
+    <thead>
+      <row>
+        <entry namest='c1' nameend='c2'><emphasis role="bold">INTERACT_STYLE</emphasis></entry>
+      </row>
+    </thead>
+    <tbody>
+      <row>
+        <entry>0</entry>
+        <entry>None</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">True</entry>
-      </row>
-
-      <row>
-        <entry spanname="typename"><emphasis role="bold">INTERACT_STYLE</emphasis></entry>
+        <entry>1</entry>
+        <entry>Errors</entry>
       </row>
       <row>
-        <entry namest="c1">0</entry>
-        <entry namest="c2">None</entry>
+        <entry>2</entry>
+        <entry>Any</entry>
+      </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='2' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='10.0*'/>
+    <thead>
+      <row>
+        <entry namest='c1' nameend='c2'><emphasis role="bold">DIALOG_TYPE</emphasis></entry>
+      </row>
+    </thead>
+    <tbody>
+      <row>
+        <entry>0</entry>
+        <entry>Error</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">Errors</entry>
+        <entry>1</entry>
+        <entry>Normal</entry>
+      </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='2' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='10.0*'/>
+    <thead>
+      <row>
+        <entry namest='c1' nameend='c2'><emphasis role="bold">SAVE_TYPE</emphasis></entry>
+      </row>
+    </thead>
+    <tbody>
+      <row>
+        <entry>0</entry>
+        <entry>Global</entry>
       </row>
       <row>
-        <entry namest="c1">2</entry>
-        <entry namest="c2">Any</entry>
-      </row>
-
-      <row>
-        <entry spanname="typename"><emphasis role="bold">DIALOG_TYPE</emphasis></entry>
+        <entry>1</entry>
+        <entry>Local</entry>
       </row>
       <row>
-        <entry namest="c1">0</entry>
-        <entry namest="c2">Error</entry>
+        <entry>2</entry>
+        <entry>Both</entry>
+      </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='5.0*'/>
+    <colspec colname='c3' colwidth='5.0*'/>
+    <thead>
+      <row>
+        <entry namest='c1' nameend='c2'><emphasis role="bold">ARRAY8</emphasis></entry>
+      </row>
+    </thead>
+    <tbody>
+      <row>
+        <entry>4</entry>
+        <entry>CARD32</entry>
+        <entry>length</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">Normal</entry>
-      </row>
-
-      <row>
-        <entry spanname="typename"><emphasis role="bold">SAVE_TYPE</emphasis></entry>
+        <entry>n</entry>
+        <entry>ListofCARD8, the array</entry>
+        <entry>p = pad (4 + n, 8)</entry>
       </row>
       <row>
-        <entry namest="c1">0</entry>
-        <entry namest="c2">Global</entry>
+        <entry>2</entry>
+        <entry>Both</entry>
+      </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='5.0*'/>
+    <colspec colname='c3' colwidth='5.0*'/>
+    <thead>
+      <row>
+        <entry namest='c1' nameend='c2'><emphasis role="bold">LISTofARRAY8</emphasis></entry>
+      </row>
+    </thead>
+    <tbody>
+      <row>
+        <entry>4</entry>
+        <entry>CARD32</entry>
+        <entry>count</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">Local</entry>
+        <entry>4</entry>
+        <entry></entry>
+        <entry>unused</entry>
       </row>
       <row>
-        <entry namest="c1">2</entry>
-        <entry namest="c2">Both</entry>
-      </row>
-
-      <row>
-        <entry spanname="typename"><emphasis role="bold">ARRAY8</emphasis></entry>
+        <entry>a</entry>
+        <entry>ARRAY8</entry>
+        <entry>first array</entry>
       </row>
       <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2">CARD32</entry>
-        <entry namest="c3">length</entry>
+        <entry>b</entry>
+        <entry>ARRAY8</entry>
+        <entry>second array</entry>
       </row>
       <row>
-        <entry namest="c1">n</entry>
-        <entry namest="c2">ListofCARD8, the array</entry>
-        <entry namest="c3">p = pad (4 + n, 8)</entry>
+        <entry>.</entry>
+        <entry></entry>
+        <entry></entry>
       </row>
       <row>
-        <entry namest="c1">2</entry>
-        <entry namest="c2">Both</entry>
-      </row>
-
-      <row>
-        <entry spanname="typename"><emphasis role="bold">LISTofARRAY8</emphasis></entry>
+        <entry>.</entry>
+        <entry></entry>
+        <entry></entry>
       </row>
       <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2">CARD32</entry>
-        <entry namest="c3">count</entry>
+        <entry>.</entry>
+        <entry></entry>
+        <entry></entry>
       </row>
       <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3">unused</entry>
+        <entry>q</entry>
+        <entry>ARRAY8</entry>
+        <entry>last array</entry>
+      </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='5.0*'/>
+    <colspec colname='c3' colwidth='5.0*'/>
+    <thead>
+      <row>
+        <entry namest='c1' nameend='c2'><emphasis role="bold">PROPERTY</emphasis></entry>
+      </row>
+    </thead>
+    <tbody>
+      <row>
+        <entry>a</entry>
+        <entry>ARRAY8</entry>
+        <entry>name</entry>
       </row>
       <row>
-        <entry namest="c1">a</entry>
-        <entry namest="c2">ARRAY8</entry>
-        <entry namest="c3">first array</entry>
+        <entry>b</entry>
+        <entry>ARRAY8</entry>
+        <entry>type (XPCS encoded in Latin-1, case sensitive)</entry>
       </row>
       <row>
-        <entry namest="c1">b</entry>
-        <entry namest="c2">ARRAY8</entry>
-        <entry namest="c3">second array</entry>
+        <entry>c</entry>
+        <entry>LISTofARRAY8</entry>
+        <entry>values</entry>
+      </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='5.0*'/>
+    <colspec colname='32' colwidth='5.0*'/>
+    <thead>
+      <row>
+        <entry namest='c1' nameend='c2'><emphasis role="bold">LISTofPROPERTY</emphasis></entry>
+      </row>
+    </thead>
+    <tbody>
+      <row>
+        <entry>4</entry>
+        <entry>CARD32</entry>
+        <entry>count</entry>
       </row>
       <row>
-        <entry namest="c1">.</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3"></entry>
+        <entry>4</entry>
+        <entry></entry>
+        <entry>unused</entry>
       </row>
       <row>
-        <entry namest="c1">.</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3"></entry>
+        <entry>a</entry>
+        <entry>PROPERTY</entry>
+        <entry>first property</entry>
       </row>
       <row>
-        <entry namest="c1">.</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3"></entry>
+        <entry>b</entry>
+        <entry>PROPERTY</entry>
+        <entry>second property</entry>
       </row>
       <row>
-        <entry namest="c1">q</entry>
-        <entry namest="c2">ARRAY8</entry>
-        <entry namest="c3">last array</entry>
-      </row>
-
-      <row>
-        <entry spanname="typename"><emphasis role="bold">PROPERTY</emphasis></entry>
+        <entry>.</entry>
+        <entry></entry>
+        <entry></entry>
       </row>
       <row>
-        <entry namest="c1">a</entry>
-        <entry namest="c2">ARRAY8</entry>
-        <entry namest="c3">name</entry>
+        <entry>.</entry>
+        <entry></entry>
+        <entry></entry>
       </row>
       <row>
-        <entry namest="c1">b</entry>
-        <entry namest="c2">ARRAY8</entry>
-        <entry namest="c3">type (XPCS encoded in Latin-1, case sensitive)</entry>
+        <entry>.</entry>
+        <entry></entry>
+        <entry></entry>
       </row>
       <row>
-        <entry namest="c1">c</entry>
-        <entry namest="c2">LISTofARRAY8</entry>
-        <entry namest="c3">values</entry>
-      </row>
-
-      <row>
-        <entry spanname="typename"><emphasis role="bold">LISTofPROPERTY</emphasis></entry>
-      </row>
-      <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2">CARD32</entry>
-        <entry namest="c3">count</entry>
-      </row>
-      <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3">unused</entry>
-      </row>
-      <row>
-        <entry namest="c1">a</entry>
-        <entry namest="c2">PROPERTY</entry>
-        <entry namest="c3">first property</entry>
-      </row>
-      <row>
-        <entry namest="c1">b</entry>
-        <entry namest="c2">PROPERTY</entry>
-        <entry namest="c3">second property</entry>
-      </row>
-      <row>
-        <entry namest="c1">.</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3"></entry>
-      </row>
-      <row>
-        <entry namest="c1">.</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3"></entry>
-      </row>
-      <row>
-        <entry namest="c1">.</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3"></entry>
-      </row>
-      <row>
-        <entry namest="c1">q</entry>
-        <entry namest="c2">PROPERTY</entry>
-        <entry namest="c3">last property</entry>
+        <entry>q</entry>
+        <entry>PROPERTY</entry>
+        <entry>last property</entry>
       </row>
      </tbody>
   </tgroup>
@@ -1362,8 +1423,8 @@ client and the SM.
 
   </sect1>
 
-  <sect1 id='messages'>
-    <title>Messages</title>
+  <sect1 id='Messages'>
+<title>Messages</title>
     <para>
 XSMP is a sub-protocol of <acronym>ICE</acronym>.  The major opcode is
 assigned at run-time by <acronym>ICE</acronym> and is represented here
@@ -1389,572 +1450,735 @@ manager.  The session manager should supply this information in the
 <acronym>ICE</acronym> <function>ProtocolReply</function> message.
     </para>
 
-<informaltable pgwide='0' frame='none'>
-  <tgroup cols='4' align='left'>
-    <colspec  colwidth='0.5in' colname='c0'/>
-    <colspec  colwidth='0.5in' colname='c1'/>
-    <colspec  colwidth='1.1in' colname='c2'/>
-    <colspec  colwidth='1.0in' colname='c3'/>
-    <spanspec spanname="messagename" namest="c0" nameend="c3" />
+<informaltable frame='none'>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='5.0*'/>
+    <colspec colname='c3' colwidth='5.0*'/>
+    <thead>
+      <row>
+	<entry namest="c1" nameend="c3"><emphasis role="bold"><function>RegisterClient</function></emphasis></entry>
+      </row>
+    </thead>
     <tbody>
       <row>
-	<entry spanname="messagename"><emphasis role="bold"><function>RegisterClient</function></emphasis></entry>
+        <entry>1</entry>
+        <entry>?</entry>
+        <entry>XSMP</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">?</entry>
-        <entry namest="c3">XSMP</entry>
+        <entry>1</entry>
+        <entry>1</entry>
+        <entry>opcode</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">1</entry>
-        <entry namest="c3">opcode</entry>
+        <entry>2</entry>
+        <entry></entry>
+        <entry>unused</entry>
       </row>
       <row>
-        <entry namest="c1">2</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3">unused</entry>
+        <entry>4</entry>
+        <entry>a/8</entry>
+        <entry>length of remaining data in 8-byte units</entry>
       </row>
       <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2">a/8</entry>
-        <entry namest="c3">length of remaining data in 8-byte units</entry>
+        <entry>a</entry>
+        <entry>ARRAY8</entry>
+        <entry>previous-ID</entry>
       </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='5.0*'/>
+    <colspec colname='c3' colwidth='5.0*'/>
+    <thead>
       <row>
-        <entry namest="c1">a</entry>
-        <entry namest="c2">ARRAY8</entry>
-        <entry namest="c3">previous-ID</entry>
+        <entry namest='c1' nameend='c3'><emphasis role="bold"><function>RegisterClientReply</function></emphasis></entry>
       </row>
-
+    </thead>
+    <tbody>
       <row>
-        <entry spanname="messagename"><emphasis role="bold"><function>RegisterClientReply</function></emphasis></entry>
+        <entry>1</entry>
+        <entry>?</entry>
+        <entry>XSMP</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">?</entry>
-        <entry namest="c3">XSMP</entry>
+        <entry>1</entry>
+        <entry>2</entry>
+        <entry>opcode</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">2</entry>
-        <entry namest="c3">opcode</entry>
+        <entry>2</entry>
+        <entry></entry>
+        <entry>unused</entry>
       </row>
       <row>
-        <entry namest="c1">2</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3">unused</entry>
+        <entry>4</entry>
+        <entry>a/8</entry>
+        <entry>length of remaining data in 8-byte units</entry>
       </row>
       <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2">a/8</entry>
-        <entry namest="c3">length of remaining data in 8-byte units</entry>
+        <entry>a</entry>
+        <entry>ARRAY8</entry>
+        <entry>client-ID</entry>
       </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='5.0*'/>
+    <colspec colname='c3' colwidth='5.0*'/>
+    <thead>
       <row>
-        <entry namest="c1">a</entry>
-        <entry namest="c2">ARRAY8</entry>
-        <entry namest="c3">client-ID</entry>
+        <entry namest='c1' nameend='c3'><emphasis role="bold"><function>SaveYourself</function></emphasis></entry>
       </row>
-
+    </thead>
+    <tbody>
       <row>
-        <entry spanname="messagename"><emphasis role="bold"><function>SaveYourself</function></emphasis></entry>
+        <entry>1</entry>
+        <entry>?</entry>
+        <entry>XSMP</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">?</entry>
-        <entry namest="c3">XSMP</entry>
+        <entry>1</entry>
+        <entry>3</entry>
+        <entry>opcode</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">3</entry>
-        <entry namest="c3">opcode</entry>
+        <entry>2</entry>
+        <entry></entry>
+        <entry>unused</entry>
       </row>
       <row>
-        <entry namest="c1">2</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3">unused</entry>
+        <entry>4</entry>
+        <entry>1</entry>
+        <entry>length of remaining data in 8-byte units</entry>
       </row>
       <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2">1</entry>
-        <entry namest="c3">length of remaining data in 8-byte units</entry>
+        <entry>1</entry>
+        <entry>SAVE_TYPE</entry>
+        <entry>type</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">SAVE_TYPE</entry>
-        <entry namest="c3">type</entry>
+        <entry>1</entry>
+        <entry>BOOL</entry>
+        <entry>shutdown</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">BOOL</entry>
-        <entry namest="c3">shutdown</entry>
+        <entry>1</entry>
+        <entry>INTERACT_STYLE</entry>
+        <entry>interact-style</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">INTERACT_STYLE</entry>
-        <entry namest="c3">interact-style</entry>
+        <entry>1</entry>
+        <entry>BOOL</entry>
+        <entry>fast</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">BOOL</entry>
-        <entry namest="c3">fast</entry>
+        <entry>4</entry>
+        <entry></entry>
+        <entry>unused</entry>
       </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='5.0*'/>
+    <colspec colname='c3' colwidth='5.0*'/>
+    <thead>
       <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3">unused</entry>
+        <entry namest="c1" nameend="c3"><emphasis role="bold"><function>SaveYourselfRequest</function></emphasis></entry>
       </row>
-
+    </thead>
+    <tbody>
       <row>
-        <entry spanname="messagename"><emphasis role="bold"><function>SaveYourselfRequest</function></emphasis></entry>
+        <entry>1</entry>
+        <entry>?</entry>
+        <entry>XSMP</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">?</entry>
-        <entry namest="c3">XSMP</entry>
+        <entry>1</entry>
+        <entry>4</entry>
+        <entry>opcode</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">4</entry>
-        <entry namest="c3">opcode</entry>
+        <entry>2</entry>
+        <entry></entry>
+        <entry>unused</entry>
       </row>
       <row>
-        <entry namest="c1">2</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3">unused</entry>
+        <entry>4</entry>
+        <entry>1</entry>
+        <entry>length of remainning data in 8-byte units</entry>
       </row>
       <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2">1</entry>
-        <entry namest="c3">length of remainning data in 8-byte units</entry>
+        <entry>1</entry>
+        <entry>SAVE_TYPE</entry>
+        <entry>type</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">SAVE_TYPE</entry>
-        <entry namest="c3">type</entry>
+        <entry>1</entry>
+        <entry>BOOL</entry>
+        <entry>shutdown</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">BOOL</entry>
-        <entry namest="c3">shutdown</entry>
+        <entry>1</entry>
+        <entry>INTERACT_STYLE</entry>
+        <entry>interact-style</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">INTERACT_STYLE</entry>
-        <entry namest="c3">interact-style</entry>
+        <entry>1</entry>
+        <entry>BOOL</entry>
+        <entry>fast</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">BOOL</entry>
-        <entry namest="c3">fast</entry>
+        <entry>3</entry>
+        <entry></entry>
+        <entry>unused</entry>
       </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='5.0*'/>
+    <colspec colname='c3' colwidth='5.0*'/>
+    <thead>
       <row>
-        <entry namest="c1">3</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3">unused</entry>
+        <entry namest="c1" nameend="c3"><emphasis role="bold"><function>InteractRequest</function></emphasis></entry>
       </row>
-
+    </thead>
+    <tbody>
       <row>
-        <entry spanname="messagename"><emphasis role="bold"><function>InteractRequest</function></emphasis></entry>
+        <entry>1</entry>
+        <entry>?</entry>
+        <entry>XSMP</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">?</entry>
-        <entry namest="c3">XSMP</entry>
+        <entry>1</entry>
+        <entry>5</entry>
+        <entry>opcode</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">5</entry>
-        <entry namest="c3">opcode</entry>
+        <entry>1</entry>
+        <entry>DIALOG_TYPE</entry>
+        <entry>dialog type</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">DIALOG_TYPE</entry>
-        <entry namest="c3">dialog type</entry>
+        <entry>1</entry>
+        <entry></entry>
+        <entry>unused</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3">unused</entry>
+        <entry>4</entry>
+        <entry>0</entry>
+        <entry>length of remaining data in 8-byte units</entry>
       </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='5.0*'/>
+    <colspec colname='c3' colwidth='5.0*'/>
+    <thead>
       <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2">0</entry>
-        <entry namest="c3">length of remaining data in 8-byte units</entry>
+        <entry namest="c1" nameend="c3"><emphasis role="bold"><function>Interact</function></emphasis></entry>
       </row>
-
+    </thead>
+    <tbody>
       <row>
-        <entry spanname="messagename"><emphasis role="bold"><function>Interact</function></emphasis></entry>
+        <entry>1</entry>
+        <entry>?</entry>
+        <entry>XSMP</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">?</entry>
-        <entry namest="c3">XSMP</entry>
+        <entry>1</entry>
+        <entry>6</entry>
+        <entry>opcode</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">6</entry>
-        <entry namest="c3">opcode</entry>
+        <entry>2</entry>
+        <entry></entry>
+        <entry>unused</entry>
       </row>
       <row>
-        <entry namest="c1">2</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3">unused</entry>
+        <entry>4</entry>
+        <entry>0</entry>
+        <entry>length of remaining data in 8-byte units</entry>
       </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='5.0*'/>
+    <colspec colname='c3' colwidth='5.0*'/>
+    <thead>
       <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2">0</entry>
-        <entry namest="c3">length of remaining data in 8-byte units</entry>
+        <entry namest="c1" nameend="c3"><emphasis role="bold"><function>InteractDone</function></emphasis></entry>
       </row>
-
+    </thead>
+    <tbody>
       <row>
-        <entry spanname="messagename"><emphasis role="bold"><function>InteractDone</function></emphasis></entry>
+        <entry>1</entry>
+        <entry>?</entry>
+        <entry>XSMP</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">?</entry>
-        <entry namest="c3">XSMP</entry>
+        <entry>1</entry>
+        <entry>7</entry>
+        <entry>opcode</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">7</entry>
-        <entry namest="c3">opcode</entry>
+        <entry>1</entry>
+        <entry>BOOL</entry>
+        <entry>cancel-shutdown</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">BOOL</entry>
-        <entry namest="c3">cancel-shutdown</entry>
+        <entry>1</entry>
+        <entry></entry>
+        <entry>unused</entry>
       </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='5.0*'/>
+    <colspec colname='c3' colwidth='5.0*'/>
+    <thead>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3">unused</entry>
+        <entry namest="c1" nameend="c3"><emphasis role="bold"><function>InteractDone</function></emphasis></entry>
       </row>
-
+    </thead>
+    <tbody>
       <row>
-        <entry spanname="messagename"><emphasis role="bold"><function>InteractDone</function></emphasis></entry>
+        <entry>1</entry>
+        <entry>?</entry>
+        <entry>XSMP</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">?</entry>
-        <entry namest="c3">XSMP</entry>
+        <entry>1</entry>
+        <entry>7</entry>
+        <entry>opcode</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">7</entry>
-        <entry namest="c3">opcode</entry>
+        <entry>1</entry>
+        <entry>BOOL</entry>
+        <entry>cancel-shutdown</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">BOOL</entry>
-        <entry namest="c3">cancel-shutdown</entry>
+        <entry>1</entry>
+        <entry></entry>
+        <entry>unused</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3">unused</entry>
+        <entry>4</entry>
+        <entry>0</entry>
+        <entry>length of remaining data in 8-byte units</entry>
       </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='5.0*'/>
+    <colspec colname='c3' colwidth='5.0*'/>
+    <thead>
       <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2">0</entry>
-        <entry namest="c3">length of remaining data in 8-byte units</entry>
+        <entry namest="c1" nameend="c3"><emphasis role="bold"><function>SaveYourselfDone</function></emphasis></entry>
       </row>
-
+    </thead>
+    <tbody>
       <row>
-        <entry spanname="messagename"><emphasis role="bold"><function>SaveYourselfDone</function></emphasis></entry>
+        <entry>1</entry>
+        <entry>?</entry>
+        <entry>XSMP</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">?</entry>
-        <entry namest="c3">XSMP</entry>
+        <entry>1</entry>
+        <entry>8</entry>
+        <entry>opcode</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">8</entry>
-        <entry namest="c3">opcode</entry>
+        <entry>1</entry>
+        <entry>BOOL</entry>
+        <entry>success</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">BOOL</entry>
-        <entry namest="c3">success</entry>
+        <entry>1</entry>
+        <entry></entry>
+        <entry>unused</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3">unused</entry>
+        <entry>4</entry>
+        <entry>0</entry>
+        <entry>length of remaining data in 8-byte units</entry>
       </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='5.0*'/>
+    <colspec colname='c3' colwidth='5.0*'/>
+    <thead>
       <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2">0</entry>
-        <entry namest="c3">length of remaining data in 8-byte units</entry>
+        <entry namest="c1" nameend="c3"><emphasis role="bold"><function>Die</function></emphasis></entry>
       </row>
-
+    </thead>
+    <tbody>
       <row>
-        <entry spanname="messagename"><emphasis role="bold"><function>Die</function></emphasis></entry>
+        <entry>1</entry>
+        <entry>?</entry>
+        <entry>XSMP</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">?</entry>
-        <entry namest="c3">XSMP</entry>
+        <entry>1</entry>
+        <entry>9</entry>
+        <entry>opcode</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">9</entry>
-        <entry namest="c3">opcode</entry>
+        <entry>1</entry>
+        <entry></entry>
+        <entry>unused</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3">unused</entry>
+        <entry>4</entry>
+        <entry>0</entry>
+        <entry>length of remaining data in 8-byte units</entry>
       </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='5.0*'/>
+    <colspec colname='c3' colwidth='5.0*'/>
+    <thead>
       <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2">0</entry>
-        <entry namest="c3">length of remaining data in 8-byte units</entry>
+        <entry namest="c1" nameend="c3"><emphasis role="bold"><function>ShutdownCancelled</function></emphasis></entry>
       </row>
-
+    </thead>
+    <tbody>
       <row>
-        <entry spanname="messagename"><emphasis role="bold"><function>ShutdownCancelled</function></emphasis></entry>
+        <entry>1</entry>
+        <entry>?</entry>
+        <entry>XSMP</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">?</entry>
-        <entry namest="c3">XSMP</entry>
+        <entry>1</entry>
+        <entry>10</entry>
+        <entry>opcode</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">10</entry>
-        <entry namest="c3">opcode</entry>
+        <entry>2</entry>
+        <entry></entry>
+        <entry>unused</entry>
       </row>
       <row>
-        <entry namest="c1">2</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3">unused</entry>
+        <entry>4</entry>
+        <entry>0</entry>
+        <entry>length of remaining data in 8-byte units</entry>
       </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='5.0*'/>
+    <colspec colname='c3' colwidth='5.0*'/>
+    <thead>
       <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2">0</entry>
-        <entry namest="c3">length of remaining data in 8-byte units</entry>
+        <entry namest="c1" nameend="c3"><emphasis role="bold"><function>ConnectionClosed</function></emphasis></entry>
       </row>
-
+    </thead>
+    <tbody>
       <row>
-        <entry spanname="messagename"><emphasis role="bold"><function>ConnectionClosed</function></emphasis></entry>
+        <entry>1</entry>
+        <entry>?</entry>
+        <entry>XSMP</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">?</entry>
-        <entry namest="c3">XSMP</entry>
+        <entry>1</entry>
+        <entry>11</entry>
+        <entry>opcode</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">11</entry>
-        <entry namest="c3">opcode</entry>
+        <entry>2</entry>
+        <entry></entry>
+        <entry>unused</entry>
       </row>
       <row>
-        <entry namest="c1">2</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3">unused</entry>
+        <entry>4</entry>
+        <entry>a/8</entry>
+        <entry>length of remaining data in 8-byte units</entry>
       </row>
       <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2">a/8</entry>
-        <entry namest="c3">length of remaining data in 8-byte units</entry>
+        <entry>a</entry>
+        <entry>LISTofARRAY8</entry>
+        <entry>reason</entry>
       </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='5.0*'/>
+    <colspec colname='c3' colwidth='5.0*'/>
+    <thead>
       <row>
-        <entry namest="c1">a</entry>
-        <entry namest="c2">LISTofARRAY8</entry>
-        <entry namest="c3">reason</entry>
+        <entry namest="c1" nameend="c3"><emphasis role="bold"><function>SetProperties</function></emphasis></entry>
       </row>
-
+    </thead>
+    <tbody>
       <row>
-        <entry spanname="messagename"><emphasis role="bold"><function>SetProperties</function></emphasis></entry>
+        <entry>1</entry>
+        <entry>?</entry>
+        <entry>XSMP</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">?</entry>
-        <entry namest="c3">XSMP</entry>
+        <entry>1</entry>
+        <entry>12</entry>
+        <entry>opcode</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">12</entry>
-        <entry namest="c3">opcode</entry>
+        <entry>2</entry>
+        <entry></entry>
+        <entry>unused</entry>
       </row>
       <row>
-        <entry namest="c1">2</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3">unused</entry>
+        <entry>4</entry>
+        <entry>a/8</entry>
+        <entry>length of remaining data in 8-byte units</entry>
       </row>
       <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2">a/8</entry>
-        <entry namest="c3">length of remaining data in 8-byte units</entry>
+        <entry>a</entry>
+        <entry>LISTofPROPERTY</entry>
+        <entry>properties</entry>
       </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='5.0*'/>
+    <colspec colname='c3' colwidth='5.0*'/>
+    <thead>
       <row>
-        <entry namest="c1">a</entry>
-        <entry namest="c2">LISTofPROPERTY</entry>
-        <entry namest="c3">properties</entry>
+        <entry namest="c1" nameend="c3"><emphasis role="bold"><function>DeleteProperties</function></emphasis></entry>
       </row>
-
+    </thead>
+    <tbody>
       <row>
-        <entry spanname="messagename"><emphasis role="bold"><function>DeleteProperties</function></emphasis></entry>
+        <entry>1</entry>
+        <entry>?</entry>
+        <entry>XSMP</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">?</entry>
-        <entry namest="c3">XSMP</entry>
+        <entry>1</entry>
+        <entry>13</entry>
+        <entry>opcode</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">13</entry>
-        <entry namest="c3">opcode</entry>
+        <entry>2</entry>
+        <entry></entry>
+        <entry>unused</entry>
       </row>
       <row>
-        <entry namest="c1">2</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3">unused</entry>
+        <entry>4</entry>
+        <entry>a/8</entry>
+        <entry>length of remaining data in 8-byte units</entry>
       </row>
       <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2">a/8</entry>
-        <entry namest="c3">length of remaining data in 8-byte units</entry>
+        <entry>a</entry>
+        <entry>LISTofPROPERTY</entry>
+        <entry>properties</entry>
       </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='5.0*'/>
+    <colspec colname='c3' colwidth='5.0*'/>
+    <thead>
       <row>
-        <entry namest="c1">a</entry>
-        <entry namest="c2">LISTofPROPERTY</entry>
-        <entry namest="c3">properties</entry>
+        <entry namest="c1" nameend="c3"><emphasis role="bold"><function>GetProperties</function></emphasis></entry>
       </row>
-
+    </thead>
+    <tbody>
       <row>
-        <entry spanname="messagename"><emphasis role="bold"><function>GetProperties</function></emphasis></entry>
+        <entry>1</entry>
+        <entry>?</entry>
+        <entry>XSMP</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">?</entry>
-        <entry namest="c3">XSMP</entry>
+        <entry>1</entry>
+        <entry>14</entry>
+        <entry>opcode</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">14</entry>
-        <entry namest="c3">opcode</entry>
+        <entry>2</entry>
+        <entry></entry>
+        <entry>unused</entry>
       </row>
       <row>
-        <entry namest="c1">2</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3">unused</entry>
+        <entry>4</entry>
+        <entry>0</entry>
+        <entry>length of remaining data in 8-byte units</entry>
       </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='5.0*'/>
+    <colspec colname='c3' colwidth='5.0*'/>
+    <thead>
       <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2">0</entry>
-        <entry namest="c3">length of remaining data in 8-byte units</entry>
+        <entry namest="c1" nameend="c3"><emphasis role="bold"><function>GetPropertiesReply</function></emphasis></entry>
       </row>
-
+    </thead>
+    <tbody>
       <row>
-        <entry spanname="messagename"><emphasis role="bold"><function>GetPropertiesReply</function></emphasis></entry>
+        <entry>1</entry>
+        <entry>?</entry>
+        <entry>XSMP</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">?</entry>
-        <entry namest="c3">XSMP</entry>
+        <entry>1</entry>
+        <entry>15</entry>
+        <entry>opcode</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">15</entry>
-        <entry namest="c3">opcode</entry>
+        <entry>2</entry>
+        <entry></entry>
+        <entry>unused</entry>
       </row>
       <row>
-        <entry namest="c1">2</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3">unused</entry>
+        <entry>4</entry>
+        <entry>a/8</entry>
+        <entry>length of remaining data in 8-byte units</entry>
       </row>
       <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2">a/8</entry>
-        <entry namest="c3">length of remaining data in 8-byte units</entry>
+        <entry>a</entry>
+        <entry>LISTofPROPERTY</entry>
+        <entry>properties</entry>
       </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='5.0*'/>
+    <colspec colname='c3' colwidth='5.0*'/>
+    <thead>
       <row>
-        <entry namest="c1">a</entry>
-        <entry namest="c2">LISTofPROPERTY</entry>
-        <entry namest="c3">properties</entry>
+        <entry namest="c1" nameend="c3"><emphasis role="bold"><function>SaveYourselfPhase2Request</function></emphasis></entry>
       </row>
-
+    </thead>
+    <tbody>
       <row>
-        <entry spanname="messagename"><emphasis role="bold"><function>SaveYourselfPhase2Request</function></emphasis></entry>
+        <entry>1</entry>
+        <entry>?</entry>
+        <entry>XSMP</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">?</entry>
-        <entry namest="c3">XSMP</entry>
+        <entry>1</entry>
+        <entry>16</entry>
+        <entry>opcode</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">16</entry>
-        <entry namest="c3">opcode</entry>
+        <entry>2</entry>
+        <entry></entry>
+        <entry>unused</entry>
       </row>
       <row>
-        <entry namest="c1">2</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3">unused</entry>
+        <entry>4</entry>
+        <entry>0</entry>
+        <entry>length of remaining data in 8-byte units</entry>
       </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='5.0*'/>
+    <colspec colname='c3' colwidth='5.0*'/>
+    <thead>
       <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2">0</entry>
-        <entry namest="c3">length of remaining data in 8-byte units</entry>
+        <entry namest="c1" nameend="c3"><emphasis role="bold"><function>SaveYourselfPhase2</function></emphasis></entry>
       </row>
-
+    </thead>
+    <tbody>
       <row>
-        <entry spanname="messagename"><emphasis role="bold"><function>SaveYourselfPhase2</function></emphasis></entry>
+        <entry>1</entry>
+        <entry>?</entry>
+        <entry>XSMP</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">?</entry>
-        <entry namest="c3">XSMP</entry>
+        <entry>1</entry>
+        <entry>17</entry>
+        <entry>opcode</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">17</entry>
-        <entry namest="c3">opcode</entry>
+        <entry>2</entry>
+        <entry></entry>
+        <entry>unused</entry>
       </row>
       <row>
-        <entry namest="c1">2</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3">unused</entry>
+        <entry>4</entry>
+        <entry>0</entry>
+        <entry>length of remaining data in 8-byte units</entry>
       </row>
+    </tbody>
+  </tgroup>
+  <tgroup cols='3' align='left' colsep='0' rowsep='0'>
+    <?dbfo keep-together="always" ?>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='5.0*'/>
+    <colspec colname='c3' colwidth='5.0*'/>
+    <thead>
       <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2">0</entry>
-        <entry namest="c3">length of remaining data in 8-byte units</entry>
+        <entry namest="c1" nameend="c3"><emphasis role="bold"><function>SaveComplete</function></emphasis></entry>
       </row>
-
+    </thead>
+    <tbody>
       <row>
-        <entry spanname="messagename"><emphasis role="bold"><function>SaveComplete</function></emphasis></entry>
+        <entry>1</entry>
+        <entry>?</entry>
+        <entry>XSMP</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">?</entry>
-        <entry namest="c3">XSMP</entry>
+        <entry>1</entry>
+        <entry>18</entry>
+        <entry>opcode</entry>
       </row>
       <row>
-        <entry namest="c1">1</entry>
-        <entry namest="c2">18</entry>
-        <entry namest="c3">opcode</entry>
+        <entry>2</entry>
+        <entry></entry>
+        <entry>unused</entry>
       </row>
       <row>
-        <entry namest="c1">2</entry>
-        <entry namest="c2"></entry>
-        <entry namest="c3">unused</entry>
+        <entry>4</entry>
+        <entry>0</entry>
+        <entry>length of remaining data in 8-byte units</entry>
       </row>
-      <row>
-        <entry namest="c1">4</entry>
-        <entry namest="c2">0</entry>
-        <entry namest="c3">length of remaining data in 8-byte units</entry>
-      </row>
-     </tbody>
+    </tbody>
   </tgroup>
 </informaltable>
 
   </sect1>
 </chapter>
 
-<chapter id='predefined_properties'>
+<chapter id='Predefined_Properties'>
   <title>Predefined Properties</title>
   <para>
 All property values are stored in a LISTofARRAY8.  If the type of the
@@ -1977,14 +2201,14 @@ Clients may set, get, and delete nonstandard properties.  The lifetime
 of stored properties does not extend into subsequent sessions.
   </para>
 
-<informaltable pgwide='0' frame='none'>
-  <tgroup cols='4'>
-    <colspec colname='c1' align='left'  />
-    <colspec colname='c2' align='left'  />
-    <colspec colname='c3' align='left'  />
-    <colspec colname='c4' align='center'/>
+<informaltable frame='topbot'>
+  <tgroup cols='4' align='left' colsep='0' rowsep='0'>
+    <colspec colname='c1' colwidth='2.0*' />
+    <colspec colname='c2' colwidth='2.0*' />
+    <colspec colname='c3' colwidth='2.0*' />
+    <colspec colname='c4' colwidth='1.0*' />
     <thead>
-      <row>
+      <row rowsep='1'>
         <entry>Name</entry>
         <entry>Type</entry>
         <entry>Posix Type</entry>
@@ -2158,32 +2382,33 @@ specified, <function>RestartIfRunning</function> is assumed.  The
 possible values are as follows:
 	</para>
 
-<informaltable pgwide='0' frame='none'>
-  <tgroup cols='2'>
-    <colspec colname='c1' align='left'/>
-    <colspec colname='c2' align='right'/>
+<informaltable frame='topbot'>
+  <?dbfo keep-together="always" ?>
+  <tgroup cols='2' align='left' colsep='0' rowsep='0'>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='2.5*'/>
     <thead>
-      <row>
-        <entry namest="c1">Name</entry>
-        <entry namest="c2">Value</entry>
+      <row rowsep='1'>
+        <entry>Name</entry>
+        <entry>Value</entry>
       </row>
     </thead>
     <tbody>
       <row>
-        <entry namest="c1">RestartIfRunning</entry>
-        <entry namest="c2">0</entry>
+        <entry>RestartIfRunning</entry>
+        <entry>0</entry>
       </row>
       <row>
-        <entry namest="c1">RestartAnyway</entry>
-        <entry namest="c2">1</entry>
+        <entry>RestartAnyway</entry>
+        <entry>1</entry>
       </row>
       <row>
-        <entry namest="c1">RestartImmediately</entry>
-        <entry namest="c2">2</entry>
+        <entry>RestartImmediately</entry>
+        <entry>2</entry>
       </row>
       <row>
-        <entry namest="c1">RestartNever</entry>
-        <entry namest="c2">3</entry>
+        <entry>RestartNever</entry>
+        <entry>3</entry>
       </row>
     </tbody>
   </tgroup>
