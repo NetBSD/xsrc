@@ -36,7 +36,6 @@ LDADD = $(XFS_LIBS)
 
 xfs_SOURCES = \
 	difs/atom.c \
-	difs/cache.c \
 	difs/charinfo.c \
 	difs/difsutils.c \
 	difs/dispatch.c \
@@ -53,7 +52,6 @@ xfs_SOURCES = \
 	difs/tables.c \
 	os/access.c \
 	os/config.c \
-	os/config.h \
 	os/configstr.h \
 	os/connection.c \
 	os/daemon.c \
@@ -69,8 +67,6 @@ xfs_SOURCES = \
 	include/assert.h \
 	include/auth.h \
 	include/authstr.h \
-	include/cache.h \
-	include/cachestr.h \
 	include/client.h \
 	include/clientstr.h \
 	include/closestr.h \
@@ -92,7 +88,6 @@ xfs_SOURCES = \
 	include/swaprep.h \
 	include/swapreq.h
 
-EXTRA_DIST = xfs.def
 MAINTAINERCLEANFILES = ChangeLog INSTALL
 
 .PHONY: ChangeLog INSTALL
