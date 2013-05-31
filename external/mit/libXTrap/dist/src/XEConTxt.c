@@ -49,8 +49,6 @@ SOFTWARE.
 # define FALSE 0L
 #endif
 
-extern char *extensionData;
-
 static XETC     TC;
 
 /*
@@ -71,7 +69,7 @@ XETC *XECreateTC(Display *dpy, CARD32 valuemask, XETCValues *value)
     {   
         firsttime = False;
         /* The first Trap Context is the Template (default) TC */
-        (void)memset(tc,0L,sizeof(*tc));
+        memset(tc,0L,sizeof(*tc));
         tc->eventBase             = 0x7FFFFFFFL;
         tc->errorBase             = 0x7FFFFFFFL;
         tc->values.v.max_pkt_size = 0x7FFFL;
@@ -325,10 +323,6 @@ void XEFreeTC(XETC *tc)
         }
 
         XtFree((XtPointer)tc);
-        if (extensionData)
-        {
-            XtFree(extensionData);
-        }
     }
     return;
 }
@@ -342,7 +336,7 @@ int XETrapSetMaxPacket(XETC *tc, Bool set_flag, CARD16 size)
     XETCValues tcv;
     int status = True;
     
-    (void)memset((char *)&tcv,0L,sizeof(tcv));
+    memset((char *)&tcv,0L,sizeof(tcv));
     XETrapSetCfgFlagMaxPacket(&tcv, valid, True);
     XETrapSetCfgFlagMaxPacket(&tcv, data, set_flag);
     XETrapSetCfgMaxPktSize(&tcv, size);
@@ -355,7 +349,7 @@ int XETrapSetCommandKey(XETC *tc, Bool set_flag, KeySym cmd_key, Bool mod_flag)
     int status = True;
     KeyCode cmd_keycode;
 
-    (void)memset((char *)&tcv,0L,sizeof(tcv));
+    memset((char *)&tcv,0L,sizeof(tcv));
     XETrapSetCfgFlagCmd(&tcv, valid, True);
     XETrapSetCfgFlagCmd(&tcv, data, set_flag);
     if (set_flag == True)
@@ -389,7 +383,7 @@ int XETrapSetTimestamps(XETC *tc, Bool set_flag, Bool delta_flag)
     XETCValues tcv;
     int status = True;
     
-    (void)memset((char *)&tcv,0L,sizeof(tcv));
+    memset((char *)&tcv,0L,sizeof(tcv));
     XETrapSetCfgFlagTimestamp(&tcv, valid, True);
     XETrapSetCfgFlagTimestamp(&tcv, data, set_flag);
     XETrapSetValFlagDeltaTimes(&tcv, delta_flag);
@@ -402,7 +396,7 @@ int XETrapSetWinXY(XETC *tc, Bool set_flag)
     XETCValues tcv;
     int status = True;
     
-    (void)memset((char *)&tcv,0L,sizeof(tcv));
+    memset((char *)&tcv,0L,sizeof(tcv));
     XETrapSetCfgFlagWinXY(&tcv, valid, True);
     XETrapSetCfgFlagWinXY(&tcv, data, set_flag);
     status = XEChangeTC(tc, TCWinXY, &tcv);
@@ -414,7 +408,7 @@ int XETrapSetCursor(XETC *tc, Bool set_flag)
     XETCValues tcv;
     int status = True;
     
-    (void)memset((char *)&tcv,0L,sizeof(tcv));
+    memset((char *)&tcv,0L,sizeof(tcv));
     XETrapSetCfgFlagCursor(&tcv, valid, True);
     XETrapSetCfgFlagCursor(&tcv, data, set_flag);
     status = XEChangeTC(tc, TCCursor, &tcv);
@@ -426,7 +420,7 @@ int XETrapSetXInput(XETC *tc, Bool set_flag)
     XETCValues tcv;
     int status = True;
     
-    (void)memset((char *)&tcv,0L,sizeof(tcv));
+    memset((char *)&tcv,0L,sizeof(tcv));
     XETrapSetCfgFlagXInput(&tcv, valid, True);
     XETrapSetCfgFlagXInput(&tcv, data, set_flag);
     status = XEChangeTC(tc, TCXInput, &tcv);
@@ -438,7 +432,7 @@ int XETrapSetColorReplies(XETC *tc, Bool set_flag)
     XETCValues tcv;
     int status = True;
     
-    (void)memset((char *)&tcv,0L,sizeof(tcv));
+    memset((char *)&tcv,0L,sizeof(tcv));
     XETrapSetCfgFlagColorReplies(&tcv, valid, True);
     XETrapSetCfgFlagColorReplies(&tcv, data, set_flag);
     status = XEChangeTC(tc, TCColorReplies, &tcv);
@@ -450,7 +444,7 @@ int XETrapSetGrabServer(XETC *tc, Bool set_flag)
     XETCValues tcv;
     int status = True;
     
-    (void)memset((char *)&tcv,0L,sizeof(tcv));
+    memset((char *)&tcv,0L,sizeof(tcv));
     XETrapSetCfgFlagGrabServer(&tcv, valid, True);
     XETrapSetCfgFlagGrabServer(&tcv, data, set_flag);
     status = XEChangeTC(tc, TCGrabServer, &tcv);
@@ -462,7 +456,7 @@ int XETrapSetStatistics(XETC *tc, Bool set_flag)
     XETCValues tcv;
     int status = True;
     
-    (void)memset((char *)&tcv,0L,sizeof(tcv));
+    memset((char *)&tcv,0L,sizeof(tcv));
     XETrapSetCfgFlagStatistics(&tcv, valid, True);
     XETrapSetCfgFlagStatistics(&tcv, data, set_flag);
     status = XEChangeTC(tc, TCStatistics, &tcv);
@@ -475,7 +469,7 @@ int XETrapSetRequests(XETC *tc, Bool set_flag, ReqFlags requests)
     int status = True;
     int i;
     
-    (void)memset((char *)&tcv,0L,sizeof(tcv));
+    memset((char *)&tcv,0L,sizeof(tcv));
     XETrapSetCfgFlagRequest(&tcv, valid, True);
     XETrapSetCfgFlagRequest(&tcv, data, set_flag);
     for (i=0; i<256L; i++)
@@ -492,7 +486,7 @@ int XETrapSetEvents(XETC *tc, Bool set_flag, EventFlags events)
     int status = True;
     int i;
     
-    (void)memset((char *)&tcv,0L,sizeof(tcv));
+    memset((char *)&tcv,0L,sizeof(tcv));
     XETrapSetCfgFlagEvent(&tcv, valid, True);
     XETrapSetCfgFlagEvent(&tcv, data, set_flag);
     for (i=KeyPress; i<=MotionNotify; i++)
