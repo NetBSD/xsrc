@@ -1,5 +1,3 @@
-/* $Xorg: fntfilst.h,v 1.5 2001/02/09 02:04:04 xorgcvs Exp $ */
-
 /*
 
 Copyright 1991, 1998  The Open Group
@@ -25,7 +23,6 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/include/fntfilst.h,v 3.8 2002/12/09 17:30:00 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -127,34 +124,34 @@ typedef struct _FontDirectory {
 #define CAP_CHARSUBSETTING	0x2
 
 typedef struct _FontRenderer {
-    char    *fileSuffix;
+    const char    *fileSuffix;
     int	    fileSuffixLen;
-    int	    (*OpenBitmap)(FontPathElementPtr /* fpe */, 
+    int	    (*OpenBitmap)(FontPathElementPtr /* fpe */,
 			  FontPtr * /* pFont */,
-			  int /* flags */, 
-			  FontEntryPtr /* entry */, 
-			  char * /* fileName */, 
-			  fsBitmapFormat /* format */, 
+			  int /* flags */,
+			  FontEntryPtr /* entry */,
+			  char * /* fileName */,
+			  fsBitmapFormat /* format */,
 			  fsBitmapFormatMask /* mask */,
 			  FontPtr /* non_cachable_font */);
-    int	    (*OpenScalable)(FontPathElementPtr /* fpe */, 
-			    FontPtr * /* pFont */, 
-			    int /* flags */, 
-			    FontEntryPtr /* entry */, 
-			    char * /* fileName */, 
-			    FontScalablePtr /* vals */, 
-			    fsBitmapFormat /* format */, 
+    int	    (*OpenScalable)(FontPathElementPtr /* fpe */,
+			    FontPtr * /* pFont */,
+			    int /* flags */,
+			    FontEntryPtr /* entry */,
+			    char * /* fileName */,
+			    FontScalablePtr /* vals */,
+			    fsBitmapFormat /* format */,
 			    fsBitmapFormatMask /* fmask */,
 			    FontPtr /* non_cachable_font */);
-    int	    (*GetInfoBitmap)(FontPathElementPtr /* fpe */, 
-			     FontInfoPtr /* pFontInfo */, 
-			     FontEntryPtr /* entry */, 
+    int	    (*GetInfoBitmap)(FontPathElementPtr /* fpe */,
+			     FontInfoPtr /* pFontInfo */,
+			     FontEntryPtr /* entry */,
 			     char * /*fileName */);
-    int	    (*GetInfoScalable)(FontPathElementPtr /* fpe */, 
-			       FontInfoPtr /* pFontInfo */, 
-			       FontEntryPtr /* entry */, 
+    int	    (*GetInfoScalable)(FontPathElementPtr /* fpe */,
+			       FontInfoPtr /* pFontInfo */,
+			       FontEntryPtr /* entry */,
 			       FontNamePtr /* fontName */,
-			       char * /* fileName */, 
+			       char * /* fileName */,
 			       FontScalablePtr /* vals */);
     int	    number;
     int     capabilities;	/* Bitmap components defined above */

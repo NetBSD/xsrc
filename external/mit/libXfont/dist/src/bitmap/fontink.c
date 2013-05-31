@@ -1,5 +1,3 @@
-/* $Xorg: fontink.c,v 1.4 2001/02/09 02:04:02 xorgcvs Exp $ */
-
 /*
 
 Copyright 1990, 1998  The Open Group
@@ -27,7 +25,6 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/fontink.c,v 1.6 2001/01/17 19:43:27 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -101,7 +98,7 @@ FontCharInkMetrics(FontPtr pFont, CharInfoPtr pCI, xCharInfo *pInk)
 found_ascent:
     pInk->ascent = vpos - descent + 1;
 
-    p = ((unsigned char *) pCI->bits) + bitmapByteWidthPadded * 
+    p = ((unsigned char *) pCI->bits) + bitmapByteWidthPadded *
 	(descent + ascent - 1) + bitmapByteWidth;
 
     for (vpos = descent + ascent; --vpos >= 0;) {

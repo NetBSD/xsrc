@@ -1,6 +1,4 @@
 /*
- * Id: file.c,v 1.2 1999/11/02 06:16:47 keithp Exp $
- *
  * Copyright 1999 SuSE, Inc.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -17,12 +15,11 @@
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL SuSE
  * BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
- * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN 
+ * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  * Author:  Keith Packard, SuSE, Inc.
  */
-/* $XFree86: xc/lib/font/builtins/file.c,v 1.3 1999/12/30 02:29:49 robin Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -86,7 +83,7 @@ static int
 BuiltinClose (BufFilePtr f, int unused)
 {
     BuiltinIOPtr    io = ((BuiltinIOPtr) f->private);
-    
+
     free (io);
     return 1;
 }

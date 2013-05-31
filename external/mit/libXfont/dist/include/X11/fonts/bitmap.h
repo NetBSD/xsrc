@@ -1,5 +1,3 @@
-/* $Xorg: bitmap.h,v 1.4 2001/02/09 02:04:04 xorgcvs Exp $ */
-
 /*
 
 Copyright 1990, 1998  The Open Group
@@ -27,7 +25,6 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/include/bitmap.h,v 1.9 2001/01/17 19:43:31 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -77,10 +74,10 @@ typedef struct _BitmapFont {
 #define NUM_SEGMENTS(n) \
   (((n)+BITMAP_FONT_SEGMENT_SIZE-1)/BITMAP_FONT_SEGMENT_SIZE)
 
-extern int bitmapGetGlyphs ( FontPtr pFont, unsigned long count, 
-			     unsigned char *chars, FontEncoding charEncoding, 
+extern int bitmapGetGlyphs ( FontPtr pFont, unsigned long count,
+			     unsigned char *chars, FontEncoding charEncoding,
 			     unsigned long *glyphCount, CharInfoPtr *glyphs );
-extern int bitmapGetMetrics ( FontPtr pFont, unsigned long count, 
+extern int bitmapGetMetrics ( FontPtr pFont, unsigned long count,
 			      unsigned char *chars, FontEncoding charEncoding,
 			      unsigned long *glyphCount, xCharInfo **glyphs );
 
@@ -91,14 +88,14 @@ extern int bitmapComputeWeight ( FontPtr pFont );
 
 extern void BitmapRegisterFontFileFunctions ( void );
 
-extern int BitmapOpenScalable ( FontPathElementPtr fpe, FontPtr *pFont, 
+extern int BitmapOpenScalable ( FontPathElementPtr fpe, FontPtr *pFont,
 				int flags, FontEntryPtr entry, char *fileName,
-				FontScalablePtr vals, fsBitmapFormat format, 
-				fsBitmapFormatMask fmask, 
+				FontScalablePtr vals, fsBitmapFormat format,
+				fsBitmapFormatMask fmask,
 				FontPtr non_cachable_font );
-extern int BitmapGetInfoScalable ( FontPathElementPtr fpe, 
-				   FontInfoPtr pFontInfo, FontEntryPtr entry, 
-				   FontNamePtr fontName, char *fileName, 
+extern int BitmapGetInfoScalable ( FontPathElementPtr fpe,
+				   FontInfoPtr pFontInfo, FontEntryPtr entry,
+				   FontNamePtr fontName, char *fileName,
 				   FontScalablePtr vals );
 
 #endif				/* _BITMAP_H_ */

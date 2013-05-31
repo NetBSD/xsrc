@@ -23,7 +23,6 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/fontfile/renderers.c,v 1.7 2002/12/09 17:30:00 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -65,7 +64,7 @@ FontFilePriorityRegisterRenderer (FontRendererPtr renderer, int priority)
     }
 
     for (i = 0; i < renderers.number; i++) {
-	if (!strcasecmp (renderers.renderers[i].renderer->fileSuffix, 
+	if (!strcasecmp (renderers.renderers[i].renderer->fileSuffix,
                          renderer->fileSuffix)) {
             if(renderers.renderers[i].priority >= priority) {
                 if(renderers.renderers[i].priority == priority) {
@@ -100,7 +99,7 @@ FontFileMatchRenderer (char *fileName)
     int			i;
     int			fileLen;
     FontRendererPtr	r;
-    
+
     fileLen = strlen (fileName);
     for (i = 0; i < renderers.number; i++)
     {

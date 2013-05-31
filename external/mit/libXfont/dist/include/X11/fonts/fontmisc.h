@@ -23,7 +23,6 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/include/fontmisc.h,v 3.16 2001/12/14 19:56:54 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -53,7 +52,7 @@ in this Software without prior written authorization from The Open Group.
 #define FALSE 0
 #endif
 
-extern Atom MakeAtom ( char *string, unsigned len, int makeit );
+extern Atom MakeAtom ( const char *string, unsigned len, int makeit );
 extern int ValidAtom ( Atom atom );
 extern char *NameForAtom (Atom atom);
 
@@ -82,11 +81,11 @@ FourByteSwap(
 
 extern int
 RepadBitmap (
-    char*, 
     char*,
-    unsigned, 
+    char*,
     unsigned,
-    int, 
+    unsigned,
+    int,
     int
 );
 

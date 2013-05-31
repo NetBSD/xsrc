@@ -19,7 +19,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-/* $XFree86: xc/lib/font/fontfile/fontencc.c,v 1.1 2001/08/13 21:46:47 dawes Exp $ */
 
 /* Binary compatibility code. */
 
@@ -49,7 +48,7 @@ font_encoding_find(const char *encoding_name, const char *filename)
 }
 
 unsigned
-font_encoding_recode(unsigned code, 
+font_encoding_recode(unsigned code,
                      FontEncPtr encoding, FontMapPtr mapping)
 {
     if(encoding != mapping->encoding) {

@@ -1,5 +1,3 @@
-/* $Xorg: bitmapfunc.c,v 1.5 2001/02/09 02:04:02 xorgcvs Exp $ */
-
 /*
 
 Copyright 1991, 1998  The Open Group
@@ -25,8 +23,6 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-
-/* $XFree86: xc/lib/font/bitmap/bitmapfunc.c,v 3.17 2002/09/19 13:21:58 tsi Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -60,10 +56,10 @@ in this Software without prior written authorization from The Open Group.
 #include "snfstr.h"
 
 typedef struct _BitmapFileFunctions {
-    int         (*ReadFont) (FontPtr /* pFont */, FontFilePtr /* file */,  
-			     int /* bit */, int /* byte */, 
+    int         (*ReadFont) (FontPtr /* pFont */, FontFilePtr /* file */,
+			     int /* bit */, int /* byte */,
 			     int /* glyph */, int /* scan */);
-    int         (*ReadInfo) (  FontInfoPtr /* pFontInfo */, 
+    int         (*ReadInfo) (  FontInfoPtr /* pFontInfo */,
 			       FontFilePtr /* file */ );
 }           BitmapFileFunctionsRec, *BitmapFileFunctionsPtr;
 
@@ -111,8 +107,8 @@ static BitmapFileFunctionsRec readers[] = {
 #define CAPABILITIES (CAP_MATRIX | CAP_CHARSUBSETTING)
 
 static int
-BitmapOpenBitmap (FontPathElementPtr fpe, FontPtr *ppFont, int flags, 
-		  FontEntryPtr entry, char *fileName, 
+BitmapOpenBitmap (FontPathElementPtr fpe, FontPtr *ppFont, int flags,
+		  FontEntryPtr entry, char *fileName,
 		  fsBitmapFormat format, fsBitmapFormatMask fmask,
 		  FontPtr non_cachable_font) /* We don't do licensing */
 {
@@ -156,7 +152,7 @@ BitmapOpenBitmap (FontPathElementPtr fpe, FontPtr *ppFont, int flags,
 }
 
 static int
-BitmapGetInfoBitmap (FontPathElementPtr fpe, FontInfoPtr pFontInfo, 
+BitmapGetInfoBitmap (FontPathElementPtr fpe, FontInfoPtr pFontInfo,
 		     FontEntryPtr entry, char *fileName)
 {
     FontFilePtr file;
