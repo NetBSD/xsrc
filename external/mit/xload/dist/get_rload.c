@@ -1,4 +1,3 @@
-/* $XFree86: xc/programs/xload/get_rload.c,v 1.4 2002/01/07 20:38:31 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/Intrinsic.h>
