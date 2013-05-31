@@ -1,4 +1,3 @@
-/* $Xorg: xkbconfig.c,v 1.4 2000/08/17 19:46:43 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 
@@ -7,24 +6,23 @@
  fee is hereby granted, provided that the above copyright
  notice appear in all copies and that both that copyright
  notice and this permission notice appear in supporting
- documentation, and that the name of Silicon Graphics not be 
- used in advertising or publicity pertaining to distribution 
+ documentation, and that the name of Silicon Graphics not be
+ used in advertising or publicity pertaining to distribution
  of the software without specific prior written permission.
- Silicon Graphics makes no representation about the suitability 
+ Silicon Graphics makes no representation about the suitability
  of this software for any purpose. It is provided "as is"
  without any express or implied warranty.
- 
- SILICON GRAPHICS DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS 
- SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY 
+
+ SILICON GRAPHICS DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS
+ SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
  AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL SILICON
- GRAPHICS BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL 
- DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, 
- DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE 
+ GRAPHICS BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL
+ DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
+ DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
  OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/lib/xkbfile/xkbconfig.c,v 3.7 2001/11/30 12:11:51 eich Exp $ */
 
 #ifdef HAVE_DIX_CONFIG_H
 #include <dix-config.h>
@@ -51,7 +49,6 @@
 #else
 
 #include <X11/X.h>
-#define	NEED_EVENTS
 #include <X11/keysym.h>
 #include <X11/Xproto.h>
 #include "misc.h"
@@ -104,7 +101,7 @@ int	ch,nInBuf;
 		else if ( ch == '0' ) {
 		    int tmp,stop;
 		    ch = stop = 0;
-		    if (((tmp=getc(file))!=EOF) && (isdigit(tmp)) && 
+		    if (((tmp=getc(file))!=EOF) && (isdigit(tmp)) &&
 						(tmp!='8') && (tmp!='9')) {
 			ch= (ch*8)+(tmp-'0');
 		    }
@@ -112,7 +109,7 @@ int	ch,nInBuf;
 			stop= 1;
 			ungetc(tmp,file);
 		    }
-		    if ((!stop) && ((tmp=getc(file))!=EOF) && (isdigit(tmp)) && 
+		    if ((!stop) && ((tmp=getc(file))!=EOF) && (isdigit(tmp)) &&
 						(tmp!='8') && (tmp!='9')) {
 			ch= (ch*8)+(tmp-'0');
 		    }
@@ -120,7 +117,7 @@ int	ch,nInBuf;
 			stop= 1;
 			ungetc(tmp,file);
 		    }
-		    if ((!stop) && ((tmp=getc(file))!=EOF) && (isdigit(tmp)) && 
+		    if ((!stop) && ((tmp=getc(file))!=EOF) && (isdigit(tmp)) &&
 						(tmp!='8') && (tmp!='9')) {
 			ch= (ch*8)+(tmp-'0');
 		    }
@@ -133,7 +130,7 @@ int	ch,nInBuf;
 	    else return XkbCF_EOF;
 	}
 
-	if ( nInBuf < XKBCF_MAX_STR_LEN-1 ) 
+	if ( nInBuf < XKBCF_MAX_STR_LEN-1 )
 	    _XkbCF_rtrn[nInBuf++] = ch;
     }
     if ( ch == quote ) {
@@ -158,7 +155,7 @@ int	i;
     return XkbCF_Unknown;
 }
 
-int 
+int
 XkbCFScan(FILE *file,XkbCFScanResultPtr val_rtrn,XkbConfigRtrnPtr rtrn)
 {
 int	ch;
@@ -223,7 +220,7 @@ int	ch;
 #define	_XkbCF_Layout			10
 #define	_XkbCF_Variant			11
 #define	_XkbCF_Options			12
-	
+
 #define	_XkbCF_InitialMods	 	13
 #define	_XkbCF_InitialCtrls	 	14
 
@@ -735,7 +732,7 @@ unsigned		what;
 		}
 	    }
 	    break;
-	case _XkbCF_ClickVolume:	
+	case _XkbCF_ClickVolume:
 	    if (!pival) {
 		pival= &rtrn->click_volume;
 		onoff= 100;
@@ -755,31 +752,31 @@ unsigned		what;
 	    if (!pival)
 		pival= &rtrn->repeat_delay;
 	case _XkbCF_RepeatInterval:
-	    if (!pival) 
+	    if (!pival)
 		pival= &rtrn->repeat_interval;
 	case _XkbCF_SlowKeysDelay:
-	    if (!pival) 
+	    if (!pival)
 		pival= &rtrn->slow_keys_delay;
 	case _XkbCF_DebounceDelay:
-	    if (!pival) 
+	    if (!pival)
 		pival= &rtrn->debounce_delay;
 	case _XkbCF_MouseKeysDelay:
-	    if (!pival) 
+	    if (!pival)
 		pival= &rtrn->mk_delay;
 	case _XkbCF_MouseKeysInterval:
-	    if (!pival) 
+	    if (!pival)
 		pival= &rtrn->mk_interval;
 	case _XkbCF_MouseKeysTimeToMax:
-	    if (!pival) 
+	    if (!pival)
 		pival= &rtrn->mk_time_to_max;
 	case _XkbCF_MouseKeysMaxSpeed:
-	    if (!pival) 
+	    if (!pival)
 		pival= &rtrn->mk_max_speed;
 	case _XkbCF_MouseKeysCurve:
-	    if (!pival) 
+	    if (!pival)
 		pival= &rtrn->mk_curve;
 	case _XkbCF_AccessXTimeout:
-	    if (!pival) 
+	    if (!pival)
 		pival= &rtrn->ax_timeout;
 	    if (tok!=XkbCF_Equals) {
 		rtrn->error= XkbCF_MissingEquals;
@@ -855,7 +852,7 @@ unsigned		what;
 	default:
 	    rtrn->error= XkbCF_ExpectedInteger;
 	    goto BAILOUT;
-	    
+
     }
     return True;
 BAILOUT:
@@ -1174,7 +1171,7 @@ XkbConfigFieldsPtr	pNew;
     return pNew;
 }
 
-XkbConfigFieldsPtr 
+XkbConfigFieldsPtr
 XkbCFFree(XkbConfigFieldsPtr fields,Bool all)
 {
 XkbConfigFieldsPtr	next;
@@ -1310,7 +1307,7 @@ BAILOUT:
 void
 XkbCFReportError(FILE *file,char *name,int error,int line)
 {
-char *	msg;
+const char *msg;
 
     switch(error) {
 	case XkbCF_BadAlloc:

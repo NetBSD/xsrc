@@ -1,4 +1,3 @@
-/* $Xorg: xkbout.c,v 1.3 2000/08/17 19:46:44 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -7,24 +6,23 @@
  fee is hereby granted, provided that the above copyright
  notice appear in all copies and that both that copyright
  notice and this permission notice appear in supporting
- documentation, and that the name of Silicon Graphics not be 
- used in advertising or publicity pertaining to distribution 
+ documentation, and that the name of Silicon Graphics not be
+ used in advertising or publicity pertaining to distribution
  of the software without specific prior written permission.
- Silicon Graphics makes no representation about the suitability 
+ Silicon Graphics makes no representation about the suitability
  of this software for any purpose. It is provided "as is"
  without any express or implied warranty.
- 
- SILICON GRAPHICS DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS 
- SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY 
+
+ SILICON GRAPHICS DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS
+ SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
  AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL SILICON
- GRAPHICS BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL 
- DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, 
- DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE 
+ GRAPHICS BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL
+ DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
+ DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
  OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/lib/xkbfile/xkbout.c,v 3.9 2001/10/28 03:32:47 tsi Exp $ */
 
 #ifdef HAVE_DIX_CONFIG_H
 #include <dix-config.h>
@@ -49,7 +47,6 @@
 #else
 
 #include <X11/X.h>
-#define	NEED_EVENTS
 #include <X11/keysym.h>
 #include <X11/Xproto.h>
 #include "misc.h"
@@ -132,7 +129,7 @@ Atom			kcName;
 register unsigned 	i;
 XkbDescPtr		xkb;
 Display *		dpy;
-char *			alternate;
+const char *		alternate;
 
     xkb= result->xkb;
     if ((!xkb)||(!xkb->names)||(!xkb->names->keys)) {
@@ -159,7 +156,7 @@ char *			alternate;
     }
     if (xkb->indicators!=NULL) {
 	for (i=0;i<XkbNumIndicators;i++) {
-	    char *type;
+	    const char *type;
 	    if (xkb->indicators->phys_indicators&(1<<i))
 			type= "    ";
 	    else	type= "    virtual ";
@@ -224,7 +221,7 @@ XkbDescPtr		xkb;
 								XkbXKBFile));
 	entry= type->map;
 	for (n=0;n<type->map_count;n++,entry++) {
-	    char *str;	
+	    char *str;
 	    str=XkbVModMaskText(dpy,xkb,entry->mods.real_mods,entry->mods.vmods,
 								XkbXKBFile);
 	    fprintf(file,"        map[%s]= Level%d;\n",str,entry->level+1);
@@ -331,7 +328,7 @@ XkbDescPtr		xkb;
     fprintf(file,"    interpret.locking= False;\n");
     interp= xkb->compat->sym_interpret;
     for (i=0;i<xkb->compat->num_si;i++,interp++) {
-	fprintf(file,"    interpret %s+%s(%s) {\n",	
+	fprintf(file,"    interpret %s+%s(%s) {\n",
 				((interp->sym==NoSymbol)?"Any":
 					XkbKeysymText(interp->sym,XkbXKBFile)),
 				XkbSIMatchText(interp->match,XkbXKBFile),
@@ -436,7 +433,7 @@ Bool			showActions;
 	   						(showImplicit)) {
 		int 	typeNdx,g;
 		Bool	multi;
-		char *	comment="  ";
+		const char *	comment="  ";
 
 		if ((srv->explicit[i]&XkbExplicitKeyTypesMask)==0)
 		    comment= "//";
@@ -515,7 +512,7 @@ Bool			showActions;
 	    ((srv->explicit[i]&XkbExplicitInterpretMask)!=0))
 	     showActions= XkbKeyHasActions(xkb,i);
 	else showActions= False;
-	
+
 	if (((unsigned)XkbKeyNumGroups(xkb,i)>1)||showActions)
 	    simple= False;
 	if (simple) {
