@@ -246,7 +246,7 @@ _IceRead (
 
 		return (0);
 	    }
-	    else 
+	    else
 	    {
 		/*
 		 * Fatal IO error.  First notify each protocol's IceIOErrorProc

@@ -217,15 +217,15 @@ extern IcePaAuthStatus _IcePaMagicCookie1Proc (
 
 /*
  * Write pad bytes.  Used to force 32 or 64 bit alignment.
- * A maxium of 7 pad bytes can be specified.
+ * A maximum of 7 pad bytes can be specified.
  */
 
 #define IceWritePad(_iceConn, _bytes) \
 { \
     if ((_iceConn->outbufptr + (_bytes)) > _iceConn->outbufmax) \
     { \
-        char _dummy[7]; \
-	IceFlush (_iceConn); \
+        char _dummy[7] = { 0 }; \
+        IceFlush (_iceConn); \
         _IceWrite (_iceConn, (unsigned long) (_bytes), _dummy); \
     } \
     else \

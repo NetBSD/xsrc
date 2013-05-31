@@ -171,7 +171,7 @@ IceLockAuthFile (
 	    unlink (link_name);
 	}
     }
-    
+
     while (retries > 0)
     {
 	if (creat_fd == -1)
@@ -338,9 +338,9 @@ IceWriteAuthFileEntry (
 
 IceAuthFileEntry *
 IceGetAuthFileEntry (
-	char	*protocol_name,
-	char	*network_id,
-	char	*auth_name
+	const char	*protocol_name,
+	const char	*network_id,
+	const char	*auth_name
 )
 {
     FILE    		*auth_file;
@@ -406,18 +406,18 @@ read_string (FILE *file, char **stringp)
 	return (0);
 
     data = malloc ((unsigned) len + 1);
-    
+
     if (!data)
 	    return (0);
-    
-    if (len != 0) 
+
+    if (len != 0)
     {
 	if (fread (data, (int) sizeof (char), (int) len, file) != len)
 	{
 	    free (data);
 	    return (0);
 	}
-	
+
     }
     data[len] = '\0';
 

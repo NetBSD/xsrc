@@ -1,26 +1,28 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd"
+[
+<!ENTITY % defs SYSTEM "defs.ent"> %defs;
+]>
 
 
-
-<book id="icelib">
+<book id="ICElib">
 
 <bookinfo>
    <title>Inter-Client Exchange Library</title>
    <subtitle>X Consortium Standard</subtitle>
-   <releaseinfo>X Version 11, Release 6.4</releaseinfo>
+   <releaseinfo>X Version 11, Release &fullrelvers;</releaseinfo>
+   <releaseinfo>Version 1.0</releaseinfo>
    <authorgroup>
      <author>
        <firstname>Ralph</firstname><surname>Mor</surname>
        <affiliation><orgname>X Consortium</orgname></affiliation>
      </author>
    </authorgroup>
-   <corpname>X Consortium Standard</corpname>
-   <copyright><year>1993</year><holder>X Consortium</holder></copyright>
-   <copyright><year>1994</year><holder>X Consortium</holder></copyright>
-   <copyright><year>1996</year><holder>X Consortium</holder></copyright>
-   <revhistory><revision><revnumber>1.0</revnumber><date></date></revision></revhistory>
+   <copyright>
+     <year>1993</year><year>1994</year><year>1996</year>
+     <holder>X Consortium</holder>
+   </copyright>
 
 <legalnotice>
 <para>
@@ -55,7 +57,7 @@ in this Software without prior written authorization from the X Consortium.
 </legalnotice>
 </bookinfo>
 
-<chapter id='overview_of_ice'>
+<chapter id='Overview_of_ICE'>
 <title>Overview of ICE</title>
 
 <para>
@@ -68,7 +70,7 @@ mechanisms and to be multiplexed over a single transport connection.
 </para>
 </chapter>
 
-<chapter id='the_ice_library__c_language_interface_to'>
+<chapter id='The_ICE_Library___C_Language_Interface_to_ICE'>
 <title>The ICE Library - C Language Interface to ICE</title>
 
 <para>
@@ -105,7 +107,7 @@ particular message.
 </para>
 </chapter>
 
-<chapter id='intended_audience'>
+<chapter id='Intended_Audience'>
 <title>Intended Audience</title>
 
 <para>This document is intended primarily for implementors of protocol libraries
@@ -118,7 +120,7 @@ clients).  But in general, protocol libraries should be designed to hide
 the inner details of ICE from applications.</para>
 </chapter>
 
-<chapter id='header_files_and_library_name'>
+<chapter id='Header_Files_and_Library_Name'>
 <title>Header Files and Library Name</title>
 
 
@@ -136,7 +138,7 @@ the header file
 <para>Applications should link against ICElib using -lICE.</para>
 </chapter>
 
-<chapter id='note_on_prefixes'>
+<chapter id='Note_on_Prefixes'>
 <title>Note on Prefixes</title>
 
 
@@ -159,7 +161,7 @@ responds with a
 </itemizedlist>
 </chapter>
 
-<chapter id='protocol_registration'>
+<chapter id='Protocol_Registration'>
 <title>Protocol Registration</title>
 
 <para>
@@ -198,24 +200,23 @@ condition.
 
 
 <para>
-The <function>IceRegisterForProtocolSetup</function>
+The <xref linkend='IceRegisterForProtocolSetup' xrefstyle='select: title'/>
 function should be called for the client that initiates a
 <function>ProtocolSetup</function>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceRegisterForProtocolSetup'>
 <funcprototype>
   <funcdef>int <function>IceRegisterForProtocolSetup</function></funcdef>
-    <paramdef>char<parameter> *protocol_name</parameter></paramdef>
-    <paramdef>char<parameter> *vendor</parameter></paramdef>
-    <paramdef>char<parameter> *release</parameter></paramdef>
-    <paramdef>int<parameter> *version_count</parameter></paramdef>
-    <paramdef>int<parameter> *version_count</parameter></paramdef>
+    <paramdef>const char<parameter> *protocol_name</parameter></paramdef>
+    <paramdef>const char<parameter> *vendor</parameter></paramdef>
+    <paramdef>const char<parameter> *release</parameter></paramdef>
+    <paramdef>int<parameter> version_count</parameter></paramdef>
     <paramdef>IcePoVersionRec<parameter> *version_recs</parameter></paramdef>
-    <paramdef>int<parameter> auth_names</parameter></paramdef>
+    <paramdef>int<parameter> auth_count</parameter></paramdef>
     <paramdef>char<parameter> **auth_names</parameter></paramdef>
     <paramdef>IcePoAuthProc<parameter> *auth_procs</parameter></paramdef>
-    <paramdef>IceIOErrorProc<parameter> *io_error_proc</parameter></paramdef>
+    <paramdef>IceIOErrorProc<parameter> io_error_proc</parameter></paramdef>
 </funcprototype>
 </funcsynopsis>
 
@@ -283,9 +284,9 @@ The list of authentication callbacks, one for each authentication method.
 
 
 <para>
-<function>IceRegisterForProtocolSetup</function> returns the major
+<xref linkend='IceRegisterForProtocolSetup' xrefstyle='select: title'/> returns the major
 opcode reserved or -1 if an error occurred.  In order to actually activate
-the protocol, the <function>IceProtocolSetup</function>
+the protocol, the <xref linkend='IceProtocolSetup' xrefstyle='select: title'/>
 function needs to be called with this major opcode.  Once the protocol is
 activated, all messages for the protocol should be sent using this major
 opcode.
@@ -315,8 +316,8 @@ received by the client that initiated the
 <function>ProtocolSetup</function>
 For further information,
 see
-<link linkend="callbacks_for_processing_messages">
-<xref linkend="callbacks_for_processing_messages"></xref></link>.</para>
+<xref linkend='Callbacks_for_Processing_Messages' xrefstyle='select: title'/>
+</para>
 
 <para>Authentication may be required before the protocol can become active.
 The protocol library must register the authentication methods that it
@@ -326,32 +327,41 @@ and callbacks that are  prioritized in decreasing order of preference.
 For information on the
 <function>IcePoAuthProc</function>
 callback, see
-<link linkend="authentication_methods">
-<xref linkend="authentication_methods"></xref></link>
+<xref linkend='Authentication_Methods' xrefstyle='select: title'/>
 </para>
 
 <para>The
-<function>IceIOErrorProc</function>
+<xref linkend='IceIOErrorProc' xrefstyle='select: title'/>
 callback is invoked if the ICE connection unexpectedly breaks.
 You should pass NULL for io_error_proc if not interested in being notified.
 For further information,
-<link linkend="error_handling">
-<xref linkend="error_handling"></xref></link>
+<xref linkend='Error_Handling' xrefstyle='select: title'/>
 </para>
 
 
 <para>The
-<function>IceRegisterForProtocolReply</function>
+<xref linkend='IceRegisterForProtocolReply' xrefstyle='select: title'/>
 function should be called for the client that responds to a
 <function>ProtocolSetup</function>
 with a
 <function>ProtocolReply</function></para>
 
 
-<funcsynopsis>
+<funcsynopsis id='IceRegisterForProtocolReply'>
 <funcprototype>
   <funcdef>Bool <function>IceRegisterForProtocolReply</function></funcdef>
-    <paramdef>char<parameter> *host_name</parameter></paramdef>
+    <paramdef>const char<parameter> *protocol_name</parameter></paramdef>
+    <paramdef>const char<parameter> *vendor</parameter></paramdef>
+    <paramdef>const char<parameter> *release</parameter></paramdef>
+    <paramdef>int<parameter> version_count</parameter></paramdef>
+    <paramdef>IcePoVersionRec<parameter> *version_recs</parameter></paramdef>
+    <paramdef>int<parameter> auth_count</parameter></paramdef>
+    <paramdef>const char<parameter> **auth_names</parameter></paramdef>
+    <paramdef>IcePoAuthProc<parameter> *auth_procs</parameter></paramdef>
+    <paramdef>IceHostBasedAuthProc<parameter> host_based_auth_proc</parameter></paramdef>
+    <paramdef>IceProtocolSetupProc<parameter> protocol_setup_proc</parameter></paramdef>
+    <paramdef>IceProtocolActivateProc<parameter> protocol_activate_proc</parameter></paramdef>
+    <paramdef>IceIOErrorProc<parameter> io_error_proc</parameter></paramdef>
 </funcprototype>
 </funcsynopsis>
 
@@ -435,7 +445,7 @@ is sent.</para>
 </variablelist>
 
 
-<para><function>IceRegisterForProtocolReply</function>
+<para><xref linkend='IceRegisterForProtocolReply' xrefstyle='select: title'/>
 returns the major opcode reserved or -1 if an error occurred.  The major
 opcode should be used in all subsequent messages sent for this protocol.</para>
 
@@ -456,14 +466,13 @@ typedef struct {
 
 
 <para>The
-<function>IcePaProcessMsgProc</function>
+<xref linkend='IcePaProcessMsgProc' xrefstyle='select: title'/>
 callback is responsible for processing the set of messages that can be
 received by the client that accepted the
 <function>ProtocolSetup</function>
 For further information,
 see
-<link linkend="callbacks_for_processing_messages">
-<xref linkend="callbacks_for_processing_messages"></xref></link>
+<xref linkend='Callbacks_for_Processing_Messages' xrefstyle='select: title'/>
 </para>
 
 <para>Authentication may be required before the protocol can become active.
@@ -474,8 +483,7 @@ and callbacks that are prioritized in decreasing order of preference.
 For information on the
 <function>IcePaAuthProc</function>,
 See
-<link linkend="authentication_methods">
-<xref linkend="authentication_methods"></xref></link>
+<xref linkend='Authentication_Methods' xrefstyle='select: title'/>
 
 </para>
 
@@ -548,7 +556,7 @@ library intends to generate a message immediately following the
 You should pass NULL for protocol_activate_proc if not interested
 in this callback.</para>
 
-<funcsynopsis>
+<funcsynopsis id='ProtocolSetupProc'>
 <funcprototype>
   <funcdef>Status <function>ProtocolSetupProc</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -608,7 +616,7 @@ in this callback.</para>
 
 <para>The pointer stored in the client_data_ret argument will be passed
 to the
-<function>IcePaProcessMsgProc</function>
+<xref linkend='IcePaProcessMsgProc' xrefstyle='select: title'/>
 callback whenever a message has arrived for this protocol on the
 ICE connection.</para>
 
@@ -626,7 +634,7 @@ The ICE library will be responsible for freeing this memory.</para>
 <function>IceProtocolActivateProc</function>
 callback is defined as follows:</para>
 
-<funcsynopsis>
+<funcsynopsis id='ProtocolActivateProc'>
 <funcprototype>
   <funcdef>void <function>ProtocolActivateProc</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -651,29 +659,27 @@ The client data set in the <function>IceProtocolSetupProc</function> callback.
 
 
 <para>The
-<function>IceIOErrorProc</function>
+<xref linkend='IceIOErrorProc' xrefstyle='select: title'/>
 callback is invoked if the ICE connection unexpectedly breaks.
 You should pass NULL for io_error_proc if not interested in being notified.
 For further information,
 see
-<link linkend="error_handling">
-<xref linkend="error_handling"></xref></link>
+<xref linkend='Error_Handling' xrefstyle='select: title'/>
 </para>
 
-<sect1 id='callbacks_for_processing_messages'>
+<sect1 id='Callbacks_for_Processing_Messages'>
 <title>Callbacks for Processing Messages</title>
 
 <para>When an application detects that there is new data to read on an ICE
 connection (via
 <function>select</function>
 it calls the
-<function>IceProcessMessages</function>
+<xref linkend='IceProcessMessages' xrefstyle='select: title'/>
 function
-<link linkend="processing_messages">
-<xref linkend="processing_messages"></xref></link>.
+<xref linkend='Processing_Messages' xrefstyle='select: title'/>
 
 When
-<function>IceProcessMessages</function>
+<xref linkend='IceProcessMessages' xrefstyle='select: title'/>
 reads an ICE message header with a major opcode other than
 zero (reserved for the ICE protocol), it needs to call a function that will
 read the rest of the message, unpack it, and process it accordingly.</para>
@@ -684,7 +690,7 @@ the
 <function>IcePoProcessMsgProc</function>
 callback is invoked.</para>
 
-<funcsynopsis>
+<funcsynopsis id='PoProcessMsgProc'>
 <funcprototype>
   <funcdef>void <function>PoProcessMsgProc</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -746,11 +752,11 @@ a reply is ready.</para>
 <para>If the message arrives at the client that accepted the
 <function>ProtocolSetup</function>
 the
-<function>IcePaProcessMsgProc</function>
+<xref linkend='IcePaProcessMsgProc' xrefstyle='select: title'/>
 callback is invoked.</para>
 
 
-<funcsynopsis>
+<funcsynopsis id='IcePaProcessMsgProc'>
 <funcprototype>
   <funcdef>void <function>IcePaProcessMsgProc</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -795,8 +801,7 @@ callback is invoked.</para>
 
 <para>In order to read the message, both of these callbacks should use the
 macros defined for this purpose (see
-<link linkend="reading_ice_messages">
-<xref linkend="reading_ice_messages"></xref></link>.).
+<xref linkend='Reading_ICE_Messages' xrefstyle='select: title'/>.).
 Note that byte swapping may be necessary.
 As a convenience, the length field in the ICE header will be swapped by ICElib
 if necessary.</para>
@@ -808,9 +813,9 @@ time.
 In the case of
 <function>IcePoProcessMsgProc</function>
 the client data was set in the call to
-<function>IceProtocolSetup</function>
+<xref linkend='IceProtocolSetup' xrefstyle='select: title'/>
 In the case of
-<function>IcePaProcessMsgProc</function>
+<xref linkend='IcePaProcessMsgProc' xrefstyle='select: title'/>
 the client data was set in the
 <function>IceProtocolSetupProc</function>
 callback.</para>
@@ -881,14 +886,14 @@ then care must be taken not to store any value in reply_ready_ret,
 because this pointer may also be NULL.</para>
 
 <para>The
-<function>IcePaProcessMsgProc</function>
+<xref linkend='IcePaProcessMsgProc' xrefstyle='select: title'/>
 callback, on the other hand, should always pass
 the message to the client via a callback.  For example, if this is a Session
 Management "Interact Request" message, this function should notify the
 client of the "Interact Request" via a callback.</para>
 
 <para>The reason the
-<function>IcePaProcessMsgProc</function>
+<xref linkend='IcePaProcessMsgProc' xrefstyle='select: title'/>
 callback does not have a reply_wait, like
 <function>IcePoProcessMsgProc</function>
 does, is because a process that is acting as
@@ -897,7 +902,7 @@ occur if the connecting client does not act properly, denying access
 to other clients).</para>
 </sect1>
 
-<sect1 id='authentication_methods'>
+<sect1 id='Authentication_Methods'>
 <title>Authentication Methods</title>
 
 <para>As already stated, a protocol library must register the authentication
@@ -924,7 +929,7 @@ to the initial "Authentication Required" message or subsequent
 "Authentication Next Phase" messages sent by the other client.</para>
 
 
-<funcsynopsis>
+<funcsynopsis id='IcePoAuthStatus'>
 <funcprototype>
   <funcdef>IcePoAuthStatus <function>IcePoAuthStatus </function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -1051,7 +1056,7 @@ should return one of four values:</para>
 is the callback invoked for the client that received the
 <function>ProtocolSetup</function></para>
 
-<funcsynopsis>
+<funcsynopsis id='PoAuthStatus'>
 <funcprototype>
   <funcdef>IcePoAuthStatus <function>PoAuthStatus </function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -1177,7 +1182,7 @@ The <function>IcePaAuthProc</function> should return one of four values:
 
 </chapter>
 
-<chapter id='ice_connections'>
+<chapter id='ICE_Connections'>
 <title>ICE Connections</title>
 
 <para>
@@ -1186,16 +1191,16 @@ waiting for connections, and the other client has to initiate the connection.
 Most clients will initiate connections, so we discuss that first.
 </para>
 
-<sect1 id='opening_an_ice_connection'>
+<sect1 id='Opening_an_ICE_Connection'>
 <title>Opening an ICE Connection</title>
 
 
 <para>
 To open an ICE connection with another client (that is, waiting
-for connections), use <function>IceOpenConnection</function>
+for connections), use <xref linkend='IceOpenConnection' xrefstyle='select: title'/>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceOpenConnection'>
 <funcprototype>
   <funcdef>IceConn <function>IceOpenConnection</function></funcdef>
     <paramdef>char<parameter> *network_ids_list</parameter></paramdef>
@@ -1261,7 +1266,7 @@ are used.
 
 
 <para>
-<function>IceOpenConnection</function>
+<xref linkend='IceOpenConnection' xrefstyle='select: title'/>
 returns an opaque ICE connection object if it succeeds;
 otherwise, it returns NULL.
 </para>
@@ -1273,26 +1278,23 @@ that fails, an attempt will be made using the second network ID, and so on.
 Each network ID has the following format:
 </para>
 
-<informaltable pgwide='0' frame='none'>
-  <tgroup cols='3' align='center'>
-    <colspec colname='c1'/>
-    <colspec colname='c2'/>
-    <colspec colname='c3'/>
+<informaltable frame='none'>
+  <?dbfo keep-together="always" ?>
+  <tgroup cols='2' align='left' colsep='0' rowsep='0'>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='2.0*'/>
     <tbody>
       <row>
-        <entry align='left'></entry>
-        <entry align='left'>tcp/&lt;hostname&gt;:&lt;portnumber&gt;</entry>
-        <entry align='left'>or</entry>
+        <entry>tcp/&lt;hostname&gt;:&lt;portnumber&gt;</entry>
+        <entry>or</entry>
       </row>
       <row>
-        <entry align='left'></entry>
-        <entry align='left'>decnet/&lt;hostname&gt;::&lt;objname&gt;</entry>
-        <entry align='left'>or</entry>
+        <entry>decnet/&lt;hostname&gt;::&lt;objname&gt;</entry>
+        <entry>or</entry>
       </row>
       <row>
-        <entry align='left'></entry>
-        <entry align='left'>local/&lt;hostname&gt;:&lt;path&gt;</entry>
-        <entry align='left'></entry>
+        <entry>local/&lt;hostname&gt;:&lt;path&gt;</entry>
+        <entry></entry>
       </row>
     </tbody>
   </tgroup>
@@ -1301,9 +1303,9 @@ Each network ID has the following format:
 
 <para>Most protocol libraries will have some sort of open function that should
 internally make a call into
-<function>IceOpenConnection</function>
+<xref linkend='IceOpenConnection' xrefstyle='select: title'/>
 When
-<function>IceOpenConnection</function>
+<xref linkend='IceOpenConnection' xrefstyle='select: title'/>
 is called, it may be possible to use a previously opened ICE connection (if
 the target client is the same).  However, there are cases in which shared
 ICE connections are not desired.</para>
@@ -1330,40 +1332,40 @@ Appendix A).
   </para></footnote> </para>
 
 <para>After
-<function>IceOpenConnection</function>
+<xref linkend='IceOpenConnection' xrefstyle='select: title'/>
 is called, the client is ready to send a
 <function>ProtocolSetup</function>
 (provided that
-<function>IceRegisterForProtocolSetup</function>
+<xref linkend='IceRegisterForProtocolSetup' xrefstyle='select: title'/>
 was called) or receive a
 <function>ProtocolSetup</function>
 (provided that
-<function>IceRegisterForProtocolReply</function>
+<xref linkend='IceRegisterForProtocolReply' xrefstyle='select: title'/>
 was called).</para>
 </sect1>
 
-<sect1 id='listening_for_ice_connections'>
+<sect1 id='Listening_for_ICE_Connections'>
 <title>Listening for ICE Connections</title>
 
 <para>Clients wishing to accept ICE connections must first call
-<function>IceListenForConnections</function>
+<xref linkend='IceListenForConnections' xrefstyle='select: title'/>
 or
-<function>IceListenForWellKnownConnections</function>
+<xref linkend='IceListenForWellKnownConnections' xrefstyle='select: title'/>
 so that they can listen for connections.  A list of opaque "listen" objects are
 returned, one for each type of transport method that is available
 (for example, Unix Domain, TCP, DECnet, and so on).</para>
 
 <para>Normally clients will let ICElib allocate an available name in each
 transport and return listen objects.  Such a client will then use
-<function>IceComposeNetworkIdList</function>
+<xref linkend='IceComposeNetworkIdList' xrefstyle='select: title'/>
 to extract the chosen names and make them
 available to other clients for opening the connection.  In certain
 cases it may be necessary for a client to listen for connections
 on pre-arranged transport object names.  Such a client may use
-<function>IceListenForWellKnownConnections</function>
+<xref linkend='IceListenForWellKnownConnections' xrefstyle='select: title'/>
 to specify the names for the listen objects.</para>
 
-<funcsynopsis>
+<funcsynopsis id='IceListenForConnections'>
 <funcprototype>
   <funcdef>Status <function>IceListenForConnections</function></funcdef>
     <paramdef>int<parameter> *count_ret</parameter></paramdef>
@@ -1400,10 +1402,10 @@ No more than error_length bytes are used.</para>
 
 
 <para>The return value of
-<function>IceListenForConnections</function>
+<xref linkend='IceListenForConnections' xrefstyle='select: title'/>
 is zero for failure and a positive value for success.</para>
 
-<funcsynopsis>
+<funcsynopsis id='IceListenForWellKnownConnections'>
 <funcprototype>
   <funcdef>Status <function>IceListenForWellKnownConnections</function></funcdef>
     <paramdef>char<parameter> *port_id</parameter></paramdef>
@@ -1467,27 +1469,27 @@ points to user supplied memory.  No more than error_length bytes are used.
 </variablelist>
 
 <para>
-<function>IceListenForWellKnownConnections</function> constructs a list
+<xref linkend='IceListenForWellKnownConnections' xrefstyle='select: title'/> constructs a list
 of network IDs by prepending each known transport to port_id and then
 attempts to create listen objects for the result.  Port_id is the portnumber,
 objname, or path portion of the ICE network ID. If a listen object for
 a particular network ID cannot be created the network ID is ignored.
 If no listen objects are created
-<function>IceListenForWellKnownConnections</function>
+<xref linkend='IceListenForWellKnownConnections' xrefstyle='select: title'/>
 returns failure.
 </para>
 
 <para>
-The return value of <function>IceListenForWellKnownConnections</function>
+The return value of <xref linkend='IceListenForWellKnownConnections' xrefstyle='select: title'/>
 is zero for failure and a positive value for success.
 </para>
 
 <para>
 To close and free the listen objects, use
-<function>IceFreeListenObjs</function>
+<xref linkend='IceFreeListenObjs' xrefstyle='select: title'/>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceFreeListenObjs'>
 <funcprototype>
   <funcdef>void <function>IceFreeListenObjs</function></funcdef>
     <paramdef>int<parameter> count</parameter></paramdef>
@@ -1519,10 +1521,10 @@ the listen object.
 
 <para>
 To obtain the descriptor, use
-<function>IceGetListenConnectionNumber</function>
+<xref linkend='IceGetListenConnectionNumber' xrefstyle='select: title'/>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceGetListenConnectionNumber'>
 <funcprototype>
   <funcdef>int <function>IceGetListenConnectionNumber</function></funcdef>
     <paramdef>IceListenObj<parameter> *listen_objs</parameter></paramdef>
@@ -1540,11 +1542,11 @@ To obtain the descriptor, use
 
 <para>
 To obtain the network ID string associated with a listen object, use
-<function>IceGetListenConnectionString</function>
+<xref linkend='IceGetListenConnectionString' xrefstyle='select: title'/>
 </para>
 
 
-<funcsynopsis>
+<funcsynopsis id='IceGetListenConnectionString'>
 <funcprototype>
   <funcdef>char <function>IceGetListenConnectionString</function></funcdef>
     <paramdef>IceListenObj<parameter> listen_obj</parameter></paramdef>
@@ -1562,26 +1564,23 @@ To obtain the network ID string associated with a listen object, use
 
 <para>A network ID has the following format:</para>
 
-<informaltable pgwide='0' frame='none'>
-  <tgroup cols='3' align='center'>
-    <colspec colname='c1'/>
-    <colspec colname='c2'/>
-    <colspec colname='c3'/>
+<informaltable frame='none'>
+  <?dbfo keep-together="always" ?>
+  <tgroup cols='2' align='left' colsep='0' rowsep='0'>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='2.0*'/>
     <tbody>
       <row>
-        <entry align='left'></entry>
-        <entry align='left'>tcp/&lt;hostname&gt;:&lt;portnumber&gt;</entry>
-        <entry align='left'>or</entry>
+        <entry>tcp/&lt;hostname&gt;:&lt;portnumber&gt;</entry>
+        <entry>or</entry>
       </row>
       <row>
-        <entry align='left'></entry>
-        <entry align='left'>decnet/&lt;hostname&gt;::&lt;objname&gt;</entry>
-        <entry align='left'>or</entry>
+        <entry>decnet/&lt;hostname&gt;::&lt;objname&gt;</entry>
+        <entry>or</entry>
       </row>
       <row>
-        <entry align='left'></entry>
-        <entry align='left'>local/&lt;hostname&gt;:&lt;path&gt;</entry>
-        <entry align='left'></entry>
+        <entry>local/&lt;hostname&gt;:&lt;path&gt;</entry>
+        <entry></entry>
       </row>
     </tbody>
   </tgroup>
@@ -1589,11 +1588,11 @@ To obtain the network ID string associated with a listen object, use
 
 <para>
 To compose a string containing a list of network IDs separated by commas
-(the format recognized by <function>IceOpenConnection</function>
-use <function>IceComposeNetworkIdList</function>
+(the format recognized by <xref linkend='IceOpenConnection' xrefstyle='select: title'/>
+use <xref linkend='IceComposeNetworkIdList' xrefstyle='select: title'/>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceComposeNetworkIdList'>
 <funcprototype>
   <funcdef>char <function>IceComposeNetworkIdList</function></funcdef>
     <paramdef>int<parameter> count</parameter></paramdef>
@@ -1618,7 +1617,7 @@ use <function>IceComposeNetworkIdList</function>
 
 </sect1>
 
-<sect1 id='host_based_authentication_for_ice_connec'>
+<sect1 id='Host_Based_Authentication_for_ICE_Connections'>
 <title>Host Based Authentication for ICE Connections</title>
 
 <para>
@@ -1627,11 +1626,11 @@ ICE connection and the initiating client has not required authentication,
 a host based authentication procedure may be invoked to provide
 a last chance for the client to connect.  Each listen object has such a
 callback associated with it, and this callback is set using the
-<function>IceSetHostBasedAuthProc</function>
+<xref linkend='IceSetHostBasedAuthProc' xrefstyle='select: title'/>
 function.
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceSetHostBasedAuthProc'>
 <funcprototype>
   <funcdef>void <function>IceSetHostBasedAuthProc</function></funcdef>
     <paramdef>IceListenObj<parameter> listen_obj</parameter></paramdef>
@@ -1662,7 +1661,7 @@ host based authentication if it was previously set.
 </para>
 
 
-<funcsynopsis>
+<funcsynopsis id='HostBasedAuthProc'>
 <funcprototype>
   <funcdef>Bool <function>HostBasedAuthProc</function></funcdef>
     <paramdef>char<parameter> *host_name</parameter></paramdef>
@@ -1702,25 +1701,24 @@ which always returns <function>True</function>
 Host based authentication is also allowed at
 <function>ProtocolSetup</function> time.
 The callback is specified in the
-<function>IceRegisterForProtocolReply</function>
+<xref linkend='IceRegisterForProtocolReply' xrefstyle='select: title'/>
 function (see
-<link linkend="protocol_registration">
-<xref linkend="protocol_registration"></xref></link>).
+<xref linkend='Protocol_Registration' xrefstyle='select: title'/>).
 </para>
 </sect1>
 
-<sect1 id='accepting_ice_connections'>
+<sect1 id='Accepting_ICE_Connections'>
 <title>Accepting ICE Connections</title>
 
 
 <para>
 After a connection attempt is detected on a listen object returned by
-<function>IceListenForConnections</function>
-you should call <function>IceAcceptConnection</function>
+<xref linkend='IceListenForConnections' xrefstyle='select: title'/>
+you should call <xref linkend='IceAcceptConnection' xrefstyle='select: title'/>
 This returns a new opaque ICE connection object.
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceAcceptConnection'>
 <funcprototype>
   <funcdef>IceConn <function>IceAcceptConnection</function></funcdef>
     <paramdef>IceListenObj<parameter> listen_obj</parameter></paramdef>
@@ -1768,9 +1766,9 @@ and the function returns a new connection object.</para>
 <function>select</function>
 on the file descriptors associated with the listen objects.
 When a new connection is detected, the
-<function>IceAcceptConnection</function>
+<xref linkend='IceAcceptConnection' xrefstyle='select: title'/>
 function should be called.
-<function>IceAcceptConnection</function>
+<xref linkend='IceAcceptConnection' xrefstyle='select: title'/>
 may return a new ICE connection that is in a pending state.  This is because
 before the connection can become valid, authentication may be necessary.
 Because the ICE library cannot block and wait for the connection to
@@ -1831,31 +1829,31 @@ else
 </literallayout>
 
 <para>After
-<function>IceAcceptConnection</function>
+<xref linkend='IceAcceptConnection' xrefstyle='select: title'/>
 is called and the connection has been
 validated, the client is ready to receive a
 <function>ProtocolSetup</function>
 (provided
 that
-<function>IceRegisterForProtocolReply</function>
+<xref linkend='IceRegisterForProtocolReply' xrefstyle='select: title'/>
 was called) or send a
 <function>ProtocolSetup</function>
 (provided that
-<function>IceRegisterForProtocolSetup</function>
+<xref linkend='IceRegisterForProtocolSetup' xrefstyle='select: title'/>
 was called).</para>
 </sect1>
 
-<sect1 id='closing_ice_connections'>
+<sect1 id='Closing_ICE_Connections'>
 <title>Closing ICE Connections</title>
 
 <para>To close an ICE connection created with
-<function>IceOpenConnection</function>
+<xref linkend='IceOpenConnection' xrefstyle='select: title'/>
 or
-<function>IceAcceptConnection</function>
+<xref linkend='IceAcceptConnection' xrefstyle='select: title'/>
 use
-<function>IceCloseConnection</function></para>
+<xref linkend='IceCloseConnection' xrefstyle='select: title'/></para>
 
-<funcsynopsis>
+<funcsynopsis id='IceCloseConnection'>
 <funcprototype>
   <funcdef>IceCloseStatus <function>IceCloseConnection</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -1878,17 +1876,17 @@ must be met:</para>
   <listitem>
 <para>The <emphasis remap='I'>open reference count</emphasis> must have reached zero on this ICE connection.
 When
-<function>IceOpenConnection</function>
+<xref linkend='IceOpenConnection' xrefstyle='select: title'/>
 is called, it tries to use a previously opened
 ICE connection.  If it is able to use an existing connection, it increments
 the open reference count on the connection by one.
 So, to close an ICE connection, each call to
-<function>IceOpenConnection</function>
+<xref linkend='IceOpenConnection' xrefstyle='select: title'/>
 must be matched with a call to
-<function>IceCloseConnection</function>
+<xref linkend='IceCloseConnection' xrefstyle='select: title'/>
 The connection can be closed only
 on the last call to
-<function>IceCloseConnection</function></para>
+<xref linkend='IceCloseConnection' xrefstyle='select: title'/></para>
   </listitem>
   <listitem>
 <para>The <emphasis remap='I'>active protocol count</emphasis> must have reached zero.  Each time a
@@ -1896,18 +1894,17 @@ on the last call to
 succeeds on the connection, the active protocol count
 is incremented by one.  When the client no longer expects to use the
 protocol on the connection, the
-<function>IceProtocolShutdown</function>
+<xref linkend='IceProtocolShutdown' xrefstyle='select: title'/>
 function should be called, which decrements the active protocol count
 by one (see
-<link linkend="protocol_setup_and_shutdown">
-<xref linkend="protocol_setup_and_shutdown"></xref></link>).
+<xref linkend='Protocol_Setup_and_Shutdown' xrefstyle='select: title'/>).
 </para>
   </listitem>
   <listitem>
 <para>If shutdown negotiation is enabled on the connection, the client on the other
 side of the ICE connection must agree to have the connection closed.</para>
 
-<para><function>IceCloseConnection</function>
+<para><xref linkend='IceCloseConnection' xrefstyle='select: title'/>
 returns one of the following values:</para>
   </listitem>
   <listitem>
@@ -1918,12 +1915,12 @@ invoked and the connection was freed.</para>
   <listitem>
 <para><function>IceClosedASAP</function>
 - an IO error had occurred on the connection, but
-<function>IceCloseConnection</function>
+<xref linkend='IceCloseConnection' xrefstyle='select: title'/>
 is being called within a nested
-<function>IceProcessMessages</function>
+<xref linkend='IceProcessMessages' xrefstyle='select: title'/>
 The watch procedures have been invoked at this time, but the connection
 will be freed as soon as possible (when the nesting level reaches zero and
-<function>IceProcessMessages</function>
+<xref linkend='IceProcessMessages' xrefstyle='select: title'/>
 returns a status of
 <function>IceProcessMessagesConnectionClosed</function></para>
   </listitem>
@@ -1937,7 +1934,7 @@ other active protocols.</para>
 - the connection was not closed at this time and shutdown negotiation started
 with the client on the other side of the ICE connection.  When the connection
 is actually closed,
-<function>IceProcessMessages</function>
+<xref linkend='IceProcessMessages' xrefstyle='select: title'/>
 will return a status of
 <function>IceProcessMessagesConnectionClosed</function></para>
   </listitem>
@@ -1945,12 +1942,12 @@ will return a status of
 
 <para>When it is known that the client on the other side of the ICE connection
 has terminated the connection without initiating shutdown negotiation, the
-<function>IceSetShutdownNegotiation</function>
+<xref linkend='IceSetShutdownNegotiation' xrefstyle='select: title'/>
 function should be called to turn off shutdown negotiation.  This will prevent
-<function>IceCloseConnection</function>
+<xref linkend='IceCloseConnection' xrefstyle='select: title'/>
 from writing to a broken connection.</para>
 
-<funcsynopsis>
+<funcsynopsis id='IceSetShutdownNegotiation'>
 <funcprototype>
   <funcdef>void <function>IceSetShutdownNegotiation</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -1976,9 +1973,9 @@ shutdown negotiating will be turned off.</para>
 </variablelist>
 
 <para>To check the shutdown negotiation status of an ICE connection, use
-<function>IceCheckShutdownNegotiation</function></para>
+<xref linkend='IceCheckShutdownNegotiation' xrefstyle='select: title'/></para>
 
-<funcsynopsis>
+<funcsynopsis id='IceCheckShutdownNegotiation'>
 <funcprototype>
   <funcdef>Bool <function>IceCheckShutdownNegotiation</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -1995,7 +1992,7 @@ shutdown negotiating will be turned off.</para>
 </variablelist>
 
 
-<para><function>IceCheckShutdownNegotiation</function>
+<para><xref linkend='IceCheckShutdownNegotiation' xrefstyle='select: title'/>
 returns
 <function>True</function>
 if shutdown negotiation will take place on the connection;
@@ -2003,24 +2000,24 @@ otherwise, it returns
 <function>False</function>
 Negotiation is on by default for a connection.  It
 can only be changed with the
-<function>IceSetShutdownNegotiation</function>
+<xref linkend='IceSetShutdownNegotiation' xrefstyle='select: title'/>
 function.</para>
 </sect1>
 
-<sect1 id='connection_watch_procedures'>
+<sect1 id='Connection_Watch_Procedures'>
 <title>Connection Watch Procedures</title>
 
 <para>To add a watch procedure that will be called
 each time ICElib opens a new connection via
-<function>IceOpenConnection</function>
+<xref linkend='IceOpenConnection' xrefstyle='select: title'/>
 or
-<function>IceAcceptConnection</function>
+<xref linkend='IceAcceptConnection' xrefstyle='select: title'/>
 or closes a connection via
-<function>IceCloseConnection</function>
+<xref linkend='IceCloseConnection' xrefstyle='select: title'/>
 use
-<function>IceAddConnectionWatch</function></para>
+<xref linkend='IceAddConnectionWatch' xrefstyle='select: title'/></para>
 
-<funcsynopsis>
+<funcsynopsis id='IceAddConnectionWatch'>
 <funcprototype>
   <funcdef>Status <function>IceAddConnectionWatch</function></funcdef>
     <paramdef>IceWatchProc<parameter> watch_proc</parameter></paramdef>
@@ -2047,16 +2044,16 @@ The watch procedure to invoke when ICElib opens or closes a connection.
 
 
 <para>
-The return value of <function>IceAddConnectionWatch</function>
+The return value of <xref linkend='IceAddConnectionWatch' xrefstyle='select: title'/>
 is zero for failure, and a positive value for success.
 </para>
 
 <para>
-Note that several calls to <function>IceOpenConnection</function>
+Note that several calls to <xref linkend='IceOpenConnection' xrefstyle='select: title'/>
 might share the same ICE connection.  In such a case, the watch procedure
 is only invoked when the connection is first created (after authentication
 succeeds).  Similarly, because connections might be shared, the
-watch procedure is called only if <function>IceCloseConnection</function>
+watch procedure is called only if <xref linkend='IceCloseConnection' xrefstyle='select: title'/>
 actually closes the connection (right before the IceConn is freed).
 </para>
 
@@ -2085,7 +2082,7 @@ set to <function>True</function>
 The watch procedure is of type <function>IceWatchProc</function>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='WatchProc'>
 <funcprototype>
   <funcdef>void <function>WatchProc</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -2111,7 +2108,7 @@ to get the file descriptor associated with this connection.
     <listitem>
       <para>
 Client data specified in the call to
-<function>IceAddConnectionWatch</function>
+<xref linkend='IceAddConnectionWatch' xrefstyle='select: title'/>
       </para>
     </listitem>
   </varlistentry>
@@ -2141,10 +2138,10 @@ is closed and the watch procedure is invoked again with opening set to
 
 <para>
 To remove a watch procedure, use
-<function>IceRemoveConnectionWatch</function>
+<xref linkend='IceRemoveConnectionWatch' xrefstyle='select: title'/>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceRemoveConnectionWatch'>
 <funcprototype>
   <funcdef>void <function>IceRemoveConnectionWatch</function></funcdef>
     <paramdef>IceWatchProc<parameter> watch_proc</parameter></paramdef>
@@ -2158,7 +2155,7 @@ To remove a watch procedure, use
     <listitem>
       <para>
 The watch procedure that was passed to
-<function>IceAddConnectionWatch</function>
+<xref linkend='IceAddConnectionWatch' xrefstyle='select: title'/>
       </para>
     </listitem>
   </varlistentry>
@@ -2167,7 +2164,7 @@ The watch procedure that was passed to
     <listitem>
       <para>
 The client_data pointer that was passed to
-<function>IceAddConnectionWatch</function>
+<xref linkend='IceAddConnectionWatch' xrefstyle='select: title'/>
       </para>
     </listitem>
   </varlistentry>
@@ -2176,15 +2173,15 @@ The client_data pointer that was passed to
 </sect1>
 </chapter>
 
-<chapter id='protocol_setup_and_shutdown'>
+<chapter id='Protocol_Setup_and_Shutdown'>
 <title>Protocol Setup and Shutdown</title>
 
 <para>
 To activate a protocol on a given ICE connection, use
-<function>IceProtocolSetup</function>
+<xref linkend='IceProtocolSetup' xrefstyle='select: title'/>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceProtocolSetup'>
 <funcprototype>
   <funcdef>IceProtocolSetupStatus <function>IceProtocolSetup</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -2212,7 +2209,7 @@ To activate a protocol on a given ICE connection, use
     <listitem>
       <para>
 The major opcode of the protocol to be set up, as returned by
-<function>IceRegisterForProtocolSetup</function>
+<xref linkend='IceRegisterForProtocolSetup' xrefstyle='select: title'/>
       </para>
     </listitem>
   </varlistentry>
@@ -2284,7 +2281,7 @@ The vendor_ret and release_ret strings should be freed with
 </para>
 
 <para>
-<function>IceProtocolSetup</function> returns one of the following values:
+<xref linkend='IceProtocolSetup' xrefstyle='select: title'/> returns one of the following values:
 </para>
 
 <itemizedlist>
@@ -2314,10 +2311,10 @@ are not set.
 
 <para>
 To notify the ICE library when a given protocol will no longer be used
-on an ICE connection, use <function>IceProtocolShutdown</function>
+on an ICE connection, use <xref linkend='IceProtocolShutdown' xrefstyle='select: title'/>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceProtocolShutdown'>
 <funcprototype>
   <funcdef>Status <function>IceProtocolShutdown</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -2342,7 +2339,7 @@ on an ICE connection, use <function>IceProtocolShutdown</function>
 
 
 <para>
-The return value of <function>IceProtocolShutdown</function>
+The return value of <xref linkend='IceProtocolShutdown' xrefstyle='select: title'/>
 is zero for failure and a positive value for success.
 </para>
 
@@ -2355,14 +2352,14 @@ protocol shutdown.
 </para>
 </chapter>
 
-<chapter id='processing_messages'>
+<chapter id='Processing_Messages'>
 <title>Processing Messages</title>
 
 
 <para>To process incoming messages on an ICE connection, use
-<function>IceProcessMessages</function></para>
+<xref linkend='IceProcessMessages' xrefstyle='select: title'/></para>
 
-<funcsynopsis>
+<funcsynopsis id='IceProcessMessages'>
 <funcprototype>
   <funcdef>IceProcessMessagesStatus <function>IceProcessMessages</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -2395,19 +2392,19 @@ If set to <function>True</function> on return, a reply is ready.
 </variablelist>
 
 <para>
-<function>IceProcessMessages</function> is used in two ways:
+<xref linkend='IceProcessMessages' xrefstyle='select: title'/> is used in two ways:
 </para>
 
 <itemizedlist>
   <listitem>
     <para>
 In the first, a client may generate a message and block by calling
-<function>IceProcessMessages</function> repeatedly until it gets its reply.
+<xref linkend='IceProcessMessages' xrefstyle='select: title'/> repeatedly until it gets its reply.
     </para>
   </listitem>
   <listitem>
     <para>
-In the second, a client calls <function>IceProcessMessages</function>
+In the second, a client calls <xref linkend='IceProcessMessages' xrefstyle='select: title'/>
 with reply_wait set to NULL in response to <function>select</function>
 showing that there is data to read on the ICE connection.
 The ICE library may process zero or more complete messages.
@@ -2450,7 +2447,7 @@ typedef struct {
 
 <para>
 If reply_wait is not NULL and
-<function>IceProcessMessages</function>
+<xref linkend='IceProcessMessages' xrefstyle='select: title'/>
 has a reply or error to return in response to this reply_wait
 (that is, no callback was generated), then the reply_ready_ret argument
 will be set to <function>True</function>
@@ -2463,7 +2460,7 @@ this pointer.
 </para>
 
 <para>
-<function>IceProcessMessages</function> returns one of the following values:
+<xref linkend='IceProcessMessages' xrefstyle='select: title'/> returns one of the following values:
 </para>
 
 <itemizedlist>
@@ -2476,7 +2473,7 @@ this pointer.
     <para>
 <function>IceProcessMessagesIOError</function> - an IO error occurred,
 and the caller must explicitly close the connection by calling
-<function>IceCloseConnection</function>
+<xref linkend='IceCloseConnection' xrefstyle='select: title'/>
     </para>
   </listitem>
   <listitem>
@@ -2484,7 +2481,7 @@ and the caller must explicitly close the connection by calling
 <function>IceProcessMessagesConnectionClosed</function>
 - the ICE connection has been closed (closing of the connection was deferred
 because of shutdown negotiation, or because the
-<function>IceProcessMessages</function>
+<xref linkend='IceProcessMessages' xrefstyle='select: title'/>
 nesting level was not zero).  Do not attempt
 to access the ICE connection at this point, since it has been freed.
     </para>
@@ -2493,15 +2490,15 @@ to access the ICE connection at this point, since it has been freed.
 
 </chapter>
 
-<chapter id='ping'>
+<chapter id='Ping'>
 <title>Ping</title>
 
 <para>
 To send a "Ping" message to the client on the other side of the
-ICE connection, use <function>IcePing</function>
+ICE connection, use <xref linkend='IcePing' xrefstyle='select: title'/>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IcePing'>
 <funcprototype>
   <funcdef>Status <function>IcePing</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -2527,7 +2524,7 @@ ICE connection, use <function>IcePing</function>
     <term><emphasis remap='I'>client_data</emphasis></term>
     <listitem>
       <para>
-This pointer will be passed to the <function>IcePingReplyProc</function>
+This pointer will be passed to the <olink targetdoc='SMlib' targetptr='IcePingReplyProc'><function>IcePingReplyProc</function></olink>
 callback.
       </para>
     </listitem>
@@ -2535,16 +2532,16 @@ callback.
 </variablelist>
 
 
-<para><function>IcePing</function>
+<para><xref linkend='IcePing' xrefstyle='select: title'/>
 returns zero for failure and a positive value for success.</para>
 
 <para>When
-<function>IceProcessMessages</function>
+<xref linkend='IceProcessMessages' xrefstyle='select: title'/>
 processes the Ping reply, it will invoke the
-<function>IcePingReplyProc</function>
+<olink targetdoc='SMlib' targetptr='IcePingReplyProc'><function>IcePingReplyProc</function></olink>
 callback.</para>
 
-<funcsynopsis>
+<funcsynopsis id='PingReplyProc'>
 <funcprototype>
   <funcdef>void <function>PingReplyProc</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -2563,24 +2560,24 @@ callback.</para>
   <term><emphasis remap='I'>client_data</emphasis></term>
   <listitem>
 <para>The client data specified in the call to
-<function>IcePing</function></para>
+<xref linkend='IcePing' xrefstyle='select: title'/></para>
   </listitem>
   </varlistentry>
 </variablelist>
 
 </chapter>
 
-<chapter id='using_icelib_informational_functions'>
+<chapter id='Using_ICElib_Informational_Functions'>
 <title>Using ICElib Informational Functions</title>
 
-<funcsynopsis>
+<funcsynopsis id='IceConnectionStatus'>
 <funcprototype>
   <funcdef>IceConnectStatus <function>IceConnectionStatus</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
 </funcprototype>
 </funcsynopsis>
 
-<para><function>IceConnectionStatus</function>
+<para><xref linkend='IceConnectionStatus' xrefstyle='select: title'/>
 returns the status of an ICE connection.  The possible return values are:</para>
 
 <itemizedlist>
@@ -2588,19 +2585,19 @@ returns the status of an ICE connection.  The possible return values are:</para>
 <para><function>IceConnectPending</function>
 - the connection is not valid yet (that is, authentication is taking place).
 This is only relevant to connections created by
-<function>IceAcceptConnection</function></para>
+<xref linkend='IceAcceptConnection' xrefstyle='select: title'/></para>
   </listitem>
   <listitem>
 <para><function>IceConnectAccepted</function>
 - the connection has been accepted.
 This is only relevant to connections created by
-<function>IceAcceptConnection</function></para>
+<xref linkend='IceAcceptConnection' xrefstyle='select: title'/></para>
   </listitem>
   <listitem>
 <para><function>IceConnectRejected</function>
 - the connection had been rejected  (that is, authentication failed).
 This is only relevant to connections created by
-<function>IceAcceptConnection</function></para>
+<xref linkend='IceAcceptConnection' xrefstyle='select: title'/></para>
   </listitem>
   <listitem>
 <para><function>IceConnectIOError</function>
@@ -2608,7 +2605,7 @@ This is only relevant to connections created by
   </listitem>
 </itemizedlist>
 
-<funcsynopsis>
+<funcsynopsis id='IceVendor'>
 <funcprototype>
   <funcdef>char <function> *IceVendor</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -2622,7 +2619,7 @@ The string should be freed with a call to
 <function>free</function>
 when no longer needed.</para>
 
-<funcsynopsis>
+<funcsynopsis id='IceRelease'>
 <funcprototype>
   <funcdef>char <function> *IceRelease</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -2636,17 +2633,17 @@ The string should be freed with a call to
 <function>free</function>
 when no longer needed.</para>
 
-<funcsynopsis>
+<funcsynopsis id='IceProtocolVersion'>
 <funcprototype>
   <funcdef>int <function> IceProtocolVersion</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
 </funcprototype>
 </funcsynopsis>
 
-<para><function>IceProtocolVersion</function>
+<para><xref linkend='IceProtocolVersion' xrefstyle='select: title'/>
 returns the major version of the ICE protocol on this connection.</para>
 
-<funcsynopsis>
+<funcsynopsis id='IceProtocolRevision'>
 <funcprototype>
   <funcdef>int <function> IceProtocolRevision</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -2654,7 +2651,7 @@ returns the major version of the ICE protocol on this connection.</para>
 </funcsynopsis>
 
 
-<para><function>IceProtocolRevision</function>
+<para><xref linkend='IceProtocolRevision' xrefstyle='select: title'/>
 returns the minor version of the ICE protocol on this connection.</para>
 
 <funcsynopsis>
@@ -2668,7 +2665,7 @@ returns the minor version of the ICE protocol on this connection.</para>
 <para><function>IceConnectionNumber</function>
 returns the file descriptor of this ICE connection.</para>
 
-<funcsynopsis>
+<funcsynopsis id='IceConnectionString'>
 <funcprototype>
   <funcdef>char <function> *IceConnectionString</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -2681,7 +2678,7 @@ accepted this connection.  The string should be freed with a call to
 <function>free</function>
 when no longer needed.</para>
 
-<funcsynopsis>
+<funcsynopsis id='IceLastSentSequenceNumber'>
 <funcprototype>
   <funcdef>unsigned long <function> IceLastSentSequenceNumber</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -2689,7 +2686,7 @@ when no longer needed.</para>
 </funcsynopsis>
 
 
-<para><function>IceLastSentSequenceNumber</function>
+<para><xref linkend='IceLastSentSequenceNumber' xrefstyle='select: title'/>
 returns the sequence number of the last message sent on this ICE connection.</para>
 
 <funcsynopsis>
@@ -2703,7 +2700,7 @@ returns the sequence number of the last message sent on this ICE connection.</pa
 returns the sequence number of the last message received on this
 ICE connection.</para>
 
-<funcsynopsis>
+<funcsynopsis id='IceSwapping'>
 <funcprototype>
   <funcdef>Bool <function> IceSwapping</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -2711,24 +2708,24 @@ ICE connection.</para>
 </funcsynopsis>
 
 
-<para><function>IceSwapping</function>
+<para><xref linkend='IceSwapping' xrefstyle='select: title'/>
 returns
 <function>True</function>
 if byte swapping is necessary when reading messages on the ICE connection.</para>
 
-<funcsynopsis>
+<funcsynopsis id='IceGetContext'>
 <funcprototype>
   <funcdef>IcePointer <function> IceGetContext</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
 </funcprototype>
 </funcsynopsis>
 
-<para><function>IceGetContext</function>
+<para><xref linkend='IceGetContext' xrefstyle='select: title'/>
 returns the context associated with a connection created by
-<function>IceOpenConnection</function></para>
+<xref linkend='IceOpenConnection' xrefstyle='select: title'/></para>
 </chapter>
 
-<chapter id='ice_messages'>
+<chapter id='ICE_Messages'>
 <title>ICE Messages</title>
 
 <para>
@@ -2749,7 +2746,7 @@ The 3rd and 4th bytes of the message header can be used as needed.
 The length field is specified in units of 8 bytes.
 </para>
 
-<sect1 id='sending_ice_messages'>
+<sect1 id='Sending_ICE_Messages'>
 <title>Sending ICE Messages</title>
 
 <para>
@@ -2761,17 +2758,16 @@ together and flush the output buffer at appropriate times.
 <para>
 If an IO error has occurred on an ICE connection, all write operations
 will be ignored.  For further information, see
-<link linkend="error_handling">
-<xref linkend="error_handling"></xref></link>.
+<xref linkend='Error_Handling' xrefstyle='select: title'/>.
 </para>
 
 
 <para>
 To get the size of the ICE output buffer, use
-<function>IceGetOutBufSize</function>
+<xref linkend='IceGetOutBufSize' xrefstyle='select: title'/>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceGetOutBufSize'>
 <funcprototype>
   <funcdef>int <function> IceGetOutBufSize</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -2789,10 +2785,10 @@ To get the size of the ICE output buffer, use
 
 
 <para>
-To flush the ICE output buffer, use <function>IceFlush</function>
+To flush the ICE output buffer, use <xref linkend='IceFlush' xrefstyle='select: title'/>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceFlush'>
 <funcprototype>
   <funcdef>int <function> IceFlush</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -2815,7 +2811,7 @@ insufficient space to generate a message.
 
 <para>The following macros can be used to generate ICE messages:</para>
 
-<funcsynopsis>
+<funcsynopsis id='IceGetHeader'>
 <funcprototype>
   <funcdef><function> IceGetHeader</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -2870,7 +2866,7 @@ library can store data in the message header.
 
 
 <para>
-<function>IceGetHeader</function>
+<xref linkend='IceGetHeader' xrefstyle='select: title'/>
 is used to set up a message header on an ICE connection.
 It sets the major and minor opcodes of the message, and initializes
 the message's length to the length of the header.  If additional
@@ -2879,7 +2875,7 @@ updated.
 </para>
 
 
-<funcsynopsis>
+<funcsynopsis id='IceGetHeaderExtra'>
 <funcprototype>
   <funcdef><function> IceGetHeaderExtra</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -2955,13 +2951,13 @@ in the ICE output buffer, pdata is set to NULL.
 
 
 <para>
-<function>IceGetHeaderExtra</function>
+<xref linkend='IceGetHeaderExtra' xrefstyle='select: title'/>
 is used to generate a message with a fixed (and relatively small) amount
 of variable length data.  The complete message must fit in the ICE output
 buffer.
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceSimpleMessage'>
 <funcprototype>
   <funcdef><function> IceSimpleMessage</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -2992,12 +2988,12 @@ buffer.
 </variablelist>
 
 <para>
-<function>IceSimpleMessage</function>
+<xref linkend='IceSimpleMessage' xrefstyle='select: title'/>
 is used to generate a message that is identical
 in size to the ICE header message, and has no additional data.
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceErrorHeader'>
 <funcprototype>
   <funcdef><function> IceErrorHeader</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -3067,7 +3063,7 @@ Length of data (in 8-byte units) to be written after the header.
 </variablelist>
 
 <para>
-<function>IceErrorHeader</function> sets up an error message header.
+<xref linkend='IceErrorHeader' xrefstyle='select: title'/> sets up an error message header.
 </para>
 
 <para>
@@ -3084,26 +3080,27 @@ See the <emphasis remap='I'>Inter-Client Exchange Protocol</emphasis>
 standard for more details.
 </para>
 
-<informaltable pgwide='0' frame='none'>
-  <tgroup cols='2' align='center'>
-    <colspec colname='c1'/>
-    <colspec colname='c2'/>
+<informaltable frame='none'>
+  <?dbfo keep-together="always" ?>
+  <tgroup cols='2' align='left' colsep='0' rowsep='0'>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='2.0*'/>
     <tbody>
       <row>
-        <entry align='left'>IceBadMinor</entry>
-        <entry align='left'>0x8000</entry>
+        <entry>IceBadMinor</entry>
+        <entry>0x8000</entry>
       </row>
       <row>
-        <entry align='left'>IceBadState</entry>
-        <entry align='left'>0x8001</entry>
+        <entry>IceBadState</entry>
+        <entry>0x8001</entry>
       </row>
       <row>
-        <entry align='left'>IceBadLength</entry>
-        <entry align='left'>0x8002</entry>
+        <entry>IceBadLength</entry>
+        <entry>0x8002</entry>
       </row>
       <row>
-        <entry align='left'>IceBadValue</entry>
-        <entry align='left'>0x8003</entry>
+        <entry>IceBadValue</entry>
+        <entry>0x8003</entry>
       </row>
     </tbody>
   </tgroup>
@@ -3113,18 +3110,18 @@ standard for more details.
 
 <para>
 To write data to an ICE connection, use the
-<function>IceWriteData</function> macro.  If the data fits into the
+<xref linkend='IceWriteData' xrefstyle='select: title'/> macro.  If the data fits into the
 ICE output buffer, it is copied there.  Otherwise, the ICE output buffer
 is flushed and the data is directly sent.
 </para>
 
 <para>
 This macro is used in conjunction with
-<function>IceGetHeader</function> and
-<function>IceErrorHeader</function>
+<xref linkend='IceGetHeader' xrefstyle='select: title'/> and
+<xref linkend='IceErrorHeader' xrefstyle='select: title'/>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceWriteData'>
 <funcprototype>
   <funcdef><function> IceWriteData</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -3156,10 +3153,10 @@ This macro is used in conjunction with
 
 
 <para>
-To write data as 16-bit quantities, use <function>IceWriteData16</function>
+To write data as 16-bit quantities, use <xref linkend='IceWriteData16' xrefstyle='select: title'/>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceWriteData16'>
 <funcprototype>
   <funcdef><function> IceWriteData16</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -3190,11 +3187,11 @@ To write data as 16-bit quantities, use <function>IceWriteData16</function>
 </variablelist>
 
 <para>
-To write data as 32-bit quantities, use <function>IceWriteData32</function>
+To write data as 32-bit quantities, use <xref linkend='IceWriteData32' xrefstyle='select: title'/>
 </para>
 
 
-<funcsynopsis>
+<funcsynopsis id='IceWriteData32'>
 <funcprototype>
   <funcdef><function> IceWriteData32</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -3225,16 +3222,16 @@ To write data as 32-bit quantities, use <function>IceWriteData32</function>
 </variablelist>
 
 <para>
-To write data as 32-bit quantities, use <function>IceWriteData32</function>
+To write data as 32-bit quantities, use <xref linkend='IceWriteData32' xrefstyle='select: title'/>
 </para>
 
 <para>
 To bypass copying data to the ICE output buffer, use
-<function>IceSendData</function> to directly send data over the network
+<xref linkend='IceSendData' xrefstyle='select: title'/> to directly send data over the network
 connection.  If necessary, the ICE output buffer is first flushed.
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceSendData'>
 <funcprototype>
   <funcdef><function> IceSendData</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -3266,11 +3263,11 @@ connection.  If necessary, the ICE output buffer is first flushed.
 
 
 <para>
-To force 32-bit or 64-bit alignment, use <function>IceWritePad</function>
+To force 32-bit or 64-bit alignment, use <xref linkend='IceWritePad' xrefstyle='select: title'/>
 A maximum of 7 pad bytes can be specified.
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceWritePad'>
 <funcprototype>
   <funcdef><function> IceWritePad</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -3302,7 +3299,7 @@ A maximum of 7 pad bytes can be specified.
 
 </sect1>
 
-<sect1 id='reading_ice_messages'>
+<sect1 id='Reading_ICE_Messages'>
 <title>Reading ICE Messages</title>
 
 
@@ -3319,10 +3316,10 @@ the data is not already present in the input buffer.
 
 <para>
 To get the size of the ICE input buffer, use
-<function>IceGetInBufSize</function>
+<xref linkend='IceGetInBufSize' xrefstyle='select: title'/>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceGetInBufSize'>
 <funcprototype>
   <funcdef>int<function> IceGetInBufSize</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -3342,16 +3339,15 @@ To get the size of the ICE input buffer, use
 When reading messages, care must be taken to check for IO errors.  If
 any IO error occurs in reading any part of a message, the message should
 be thrown out.  After using any of the macros described below for reading
-messages, the <function>IceValidIO</function>
+messages, the <xref linkend='IceValidIO' xrefstyle='select: title'/>
 macro can be used to check if an IO error occurred on the
 connection.  After an IO error has occurred on an ICE connection, all
 read operations will be ignored.  For further information, see
-<link linkend="error_handling">
-<xref linkend="error_handling"></xref></link>.
+<xref linkend='Error_Handling' xrefstyle='select: title'/>.
 </para>
 
 
-<funcsynopsis>
+<funcsynopsis id='IceValidIO'>
 <funcprototype>
   <funcdef>Bool<function> IceValidIO</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -3369,7 +3365,7 @@ read operations will be ignored.  For further information, see
 
 <para>The following macros can be used to read ICE messages.</para>
 
-<funcsynopsis>
+<funcsynopsis id='IceReadSimpleMessage'>
 <funcprototype>
   <funcdef><function> IceReadSimpleMessage</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -3399,11 +3395,11 @@ read operations will be ignored.  For further information, see
 </variablelist>
 
 <para>
-<function>IceReadSimpleMessage</function>
+<xref linkend='IceReadSimpleMessage' xrefstyle='select: title'/>
 is used for messages that are identical in size to the 8-byte ICE header, but
 use the spare 2 bytes in the header to encode additional data.  Note that the
 ICE library always reads in these first 8 bytes, so it can obtain the major
-opcode of the message.  <function>IceReadSimpleMessage</function>
+opcode of the message.  <xref linkend='IceReadSimpleMessage' xrefstyle='select: title'/>
 simply returns a pointer to these 8 bytes; it does not actually read any data
 into the input buffer.
 </para>
@@ -3411,16 +3407,16 @@ into the input buffer.
 <para>
 For a message with variable length data, there are two ways of reading
 the message.  One method involves reading the complete message in one
-pass using <function>IceReadCompleteMessage</function>
+pass using <xref linkend='IceReadCompleteMessage' xrefstyle='select: title'/>
 The second method involves reading the message header (note that this may
 be larger than the 8-byte ICE header), then reading
 the variable length data in chunks (see
-<function>IceReadMessageHeader</function> and
-<function>IceReadData</function>
+<xref linkend='IceReadMessageHeader' xrefstyle='select: title'/> and
+<xref linkend='IceReadData' xrefstyle='select: title'/>
 </para>
 
 
-<funcsynopsis>
+<funcsynopsis id='IceReadCompleteMessage'>
 <funcprototype>
   <funcdef><function> IceReadCompleteMessage</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -3467,7 +3463,7 @@ This pointer is set to the variable length data of the message.
 
 <para>
 If the ICE input buffer has sufficient space,
-<function>IceReadCompleteMessage</function>
+<xref linkend='IceReadCompleteMessage' xrefstyle='select: title'/>
 will read the complete message into the
 ICE input buffer.  Otherwise, a buffer will be allocated to hold the
 variable length data.  After the call, the pdata argument should
@@ -3476,13 +3472,13 @@ to allocate the buffer.
 </para>
 
 <para>
-After calling <function>IceReadCompleteMessage</function>
-and processing the message, <function>IceDisposeCompleteMessage</function>
+After calling <xref linkend='IceReadCompleteMessage' xrefstyle='select: title'/>
+and processing the message, <xref linkend='IceDisposeCompleteMessage' xrefstyle='select: title'/>
 should be called.
 </para>
 
 
-<funcsynopsis>
+<funcsynopsis id='IceDisposeCompleteMessage'>
 <funcprototype>
   <funcdef><function> IceDisposeCompleteMessage</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -3502,7 +3498,7 @@ should be called.
     <listitem>
       <para>
 The pointer to the variable length data returned in
-<function>IceReadCompleteMessage</function>
+<xref linkend='IceReadCompleteMessage' xrefstyle='select: title'/>
       </para>
     </listitem>
   </varlistentry>
@@ -3514,7 +3510,7 @@ it did not fit in the ICE input buffer), it is freed here by ICElib.
 </para>
 
 
-<funcsynopsis>
+<funcsynopsis id='IceReadMessageHeader'>
 <funcprototype>
   <funcdef><function> IceReadMessageHeader</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -3551,9 +3547,9 @@ it did not fit in the ICE input buffer), it is freed here by ICElib.
 </variablelist>
 
 <para>
-<function>IceReadMessageHeader</function> reads just the message header.
+<xref linkend='IceReadMessageHeader' xrefstyle='select: title'/> reads just the message header.
 The rest of the data should be read with the
-<function>IceReadData</function>
+<xref linkend='IceReadData' xrefstyle='select: title'/>
 family of macros.  This method of reading a message should be used when the
 variable length data must be read in chunks.
 </para>
@@ -3561,10 +3557,10 @@ variable length data must be read in chunks.
 
 <para>
 To read data directly into a user supplied buffer, use
-<function>IceReadData</function>
+<xref linkend='IceReadData' xrefstyle='select: title'/>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceReadData'>
 <funcprototype>
   <funcdef><function> IceReadData</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -3596,10 +3592,10 @@ To read data directly into a user supplied buffer, use
 
 
 <para>
-To read data as 16-bit quantities, use <function>IceReadData16</function>
+To read data as 16-bit quantities, use <xref linkend='IceReadData16' xrefstyle='select: title'/>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceReadData16'>
 <funcprototype>
   <funcdef><function> IceReadData16</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -3640,10 +3636,10 @@ If <function>True,</function> the values will be byte swapped.
 
 
 <para>
-To read data as 32-bit quantities, use <function>IceReadData32</function>
+To read data as 32-bit quantities, use <xref linkend='IceReadData32' xrefstyle='select: title'/>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceReadData32'>
 <funcprototype>
   <funcdef><function> IceReadData32</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -3683,10 +3679,10 @@ If <function>True,</function> the values will be byte swapped.
 </variablelist>
 
 <para>To force 32-bit or 64-bit alignment, use
-<function>IceReadPad</function>
+<xref linkend='IceReadPad' xrefstyle='select: title'/>
 A maximum of 7 pad bytes can be specified.</para>
 
-<funcsynopsis>
+<funcsynopsis id='IceReadPad'>
 <funcprototype>
   <funcdef><function> IceReadPad</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -3712,7 +3708,7 @@ A maximum of 7 pad bytes can be specified.</para>
 </sect1>
 </chapter>
 
-<chapter id='error_handling'>
+<chapter id='Error_Handling'>
 <title>Error Handling</title>
 
 
@@ -3737,10 +3733,10 @@ prefer your own error handling and can be changed as often as you like.
 
 
 <para>
-To set the ICE error handler, use <function>IceSetErrorHandler</function>
+To set the ICE error handler, use <xref linkend='IceSetErrorHandler' xrefstyle='select: title'/>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceSetErrorHandler'>
 <funcprototype>
   <funcdef><function> IceSetErrorHandler</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -3760,7 +3756,7 @@ The ICE error handler.  You should pass NULL to restore the default handler.
 </variablelist>
 
 <para>
-<function>IceSetErrorHandler</function> returns the previous error handler.
+<xref linkend='IceSetErrorHandler' xrefstyle='select: title'/> returns the previous error handler.
 </para>
 
 <para>
@@ -3781,10 +3777,10 @@ should have their own error handlers).
 </para>
 
 <para>
-An ICE error handler has the type of <function>IceErrorHandler</function>
+An ICE error handler has the type of <xref linkend='IceErrorHandler' xrefstyle='select: title'/>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceErrorHandler'>
 <funcprototype>
   <funcdef>void<function> IceErrorHandler</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -3875,11 +3871,11 @@ the <emphasis remap='I'>Inter-Client Exchange Protocol</emphasis> standard.
 
 
 <para>
-To handle fatal I/O errors, use <function>IceSetIOErrorHandler</function>
+To handle fatal I/O errors, use <xref linkend='IceSetIOErrorHandler' xrefstyle='select: title'/>
 </para>
 
 
-<funcsynopsis>
+<funcsynopsis id='IceSetIOErrorHandler'>
 <funcprototype>
   <funcdef>IceIOErrorHandler<function> IceSetIOErrorHandler</function></funcdef>
     <paramdef>IceIOErrorHandler<parameter> handler</parameter></paramdef>
@@ -3898,16 +3894,16 @@ The I/O error handler.  You should pass NULL to restore the default handler.
 </variablelist>
 
 <para>
-<function>IceSetIOErrorHandler</function> returns the previous
+<xref linkend='IceSetIOErrorHandler' xrefstyle='select: title'/> returns the previous
 IO error handler.
 </para>
 
 <para>
 An ICE I/O error handler has the type of
-<function>IceIOErrorHandler</function>
+<xref linkend='IceIOErrorHandler' xrefstyle='select: title'/>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceIOErrorHandler'>
 <funcprototype>
   <funcdef>void<function> IceIOErrorHandler</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -3929,20 +3925,20 @@ An ICE I/O error handler has the type of
     <para>
 In the first, the IO error handler does whatever is necessary
 to respond to the IO error and then returns, but it does not call
-<function>IceCloseConnection</function>
+<xref linkend='IceCloseConnection' xrefstyle='select: title'/>
 The ICE connection is given a "bad IO" status, and all future reads
 and writes to the connection are ignored.  The next time
-<function>IceProcessMessages</function>
+<xref linkend='IceProcessMessages' xrefstyle='select: title'/>
 is called it will return a status of
 <function>IceProcessMessagesIOError</function>
 At that time, the application should call
-<function>IceCloseConnection</function>
+<xref linkend='IceCloseConnection' xrefstyle='select: title'/>
     </para>
   </listitem>
   <listitem>
     <para>
 In the second, the IO error handler does call
-<function>IceCloseConnection</function>
+<xref linkend='IceCloseConnection' xrefstyle='select: title'/>
 and then uses the <function>longjmp</function>
 call to get back to the application's main event loop.  The
 <function>setjmp</function> and
@@ -3957,15 +3953,15 @@ Therefore, this second model is less desirable.
 <para>
 Before the application I/O error handler is invoked, protocol libraries
 that were interested in being notified of I/O errors will have their
-<function>IceIOErrorProc</function>
+<xref linkend='IceIOErrorProc' xrefstyle='select: title'/>
 handlers invoked.  This handler is set up in the protocol registration
-functions (see <function>IceRegisterForProtocolSetup</function> and
-<function>IceRegisterForProtocolReply</function>
+functions (see <xref linkend='IceRegisterForProtocolSetup' xrefstyle='select: title'/> and
+<xref linkend='IceRegisterForProtocolReply' xrefstyle='select: title'/>
 and could be used to clean up state specific to the protocol.
 </para>
 
 
-<funcsynopsis>
+<funcsynopsis id='IceIOErrorProc'>
 <funcprototype>
   <funcdef>void<function> IceIOErrorProc</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -3980,14 +3976,14 @@ and could be used to clean up state specific to the protocol.
 </variablelist>
 
 <para>
-Note that every <function>IceIOErrorProc</function>
+Note that every <xref linkend='IceIOErrorProc' xrefstyle='select: title'/>
 callback must return.  This is required
 because each active protocol must be notified of the broken connection,
 and the application IO error handler must be invoked afterwards.
 </para>
 </chapter>
 
-<chapter id='multithreading_support'>
+<chapter id='Multi_Threading_Support'>
 <title>Multi-Threading Support</title>
 
 
@@ -4017,14 +4013,14 @@ sections of code that access an ICE connection (for example, when
 generating messages).  Two calls, which are generally implemented as
 macros, are provided:</para>
 
-<funcsynopsis>
+<funcsynopsis id='IceLockConn'>
 <funcprototype>
   <funcdef>void<function> IceLockConn</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
 </funcprototype>
 </funcsynopsis>
 
-<funcsynopsis>
+<funcsynopsis id='IceUnlockConn'>
 <funcprototype>
   <funcdef>void<function> IceUnlockConn</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -4039,11 +4035,11 @@ macros, are provided:</para>
 </variablelist>
 
 <para>To keep an ICE connection locked across several ICElib calls, applications use
-<function>IceAppLockConn</function>
+<xref linkend='IceAppLockConn' xrefstyle='select: title'/>
 and
-<function>IceAppUnlockConn</function></para>
+<xref linkend='IceAppUnlockConn' xrefstyle='select: title'/></para>
 
-<funcsynopsis>
+<funcsynopsis id='IceAppLockConn'>
 <funcprototype>
   <funcdef>void<function> IceAppLockConn</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -4059,18 +4055,18 @@ and
 
 
 <para>The
-<function>IceAppLockConn</function>
+<xref linkend='IceAppLockConn' xrefstyle='select: title'/>
 function completely locks out other threads using the connection
 until
-<function>IceAppUnlockConn</function>
+<xref linkend='IceAppUnlockConn' xrefstyle='select: title'/>
 is called.  Other threads attempting to use ICElib
 calls on the connection will block.
 If the program has not previously called
 <function>IceInitThreads</function>
-<function>IceAppLockConn</function>
+<xref linkend='IceAppLockConn' xrefstyle='select: title'/>
 has no effect.</para>
 
-<funcsynopsis>
+<funcsynopsis id='IceAppUnlockConn'>
 <funcprototype>
   <funcdef>void<function> IceAppUnlockConn</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -4085,17 +4081,17 @@ has no effect.</para>
 </variablelist>
 
 <para>The
-<function>IceAppUnlockConn</function>
+<xref linkend='IceAppUnlockConn' xrefstyle='select: title'/>
 function allows other threads to complete ICElib
 calls on the connection that were blocked by a previous call to
-<function>IceAppLockConn</function>
+<xref linkend='IceAppLockConn' xrefstyle='select: title'/>
 from this thread.  If the program has not previously called
 <function>IceInitThreads</function>
-<function>IceAppUnlockConn</function>
+<xref linkend='IceAppUnlockConn' xrefstyle='select: title'/>
 has no effect.</para>
 </chapter>
 
-<chapter id='miscellaneous_functions'>
+<chapter id='Miscellaneous_Functions'>
 <title>Miscellaneous Functions</title>
 
 
@@ -4110,7 +4106,7 @@ The contents of the scratch space is not guaranteed to be preserved
 after any ICElib function is called.</para>
 
 
-<funcsynopsis>
+<funcsynopsis id='IceAllocScratch'>
 <funcprototype>
   <funcdef>char<function> *IceAllocScratch</function></funcdef>
     <paramdef>IceConn<parameter> ice_conn</parameter></paramdef>
@@ -4135,7 +4131,7 @@ should not be freed by the caller.
 The ICE library will free the memory when the ICE connection is closed.</para>
 </chapter>
 
-<chapter id='acknowledgements'>
+<chapter id='Acknowledgements'>
 <title>Acknowledgements</title>
 
 
@@ -4235,26 +4231,23 @@ authentication (for example, the network ID of a session manager).
 A network ID has the following form:
 </para>
 
-<informaltable pgwide='0' frame='none'>
-  <tgroup cols='3' align='center'>
-    <colspec colname='c1'/>
-    <colspec colname='c2'/>
-    <colspec colname='c3'/>
+<informaltable frame='none'>
+  <?dbfo keep-together="always" ?>
+  <tgroup cols='2' align='left' colsep='0' rowsep='0'>
+    <colspec colname='c1' colwidth='1.0*'/>
+    <colspec colname='c2' colwidth='2.0*'/>
     <tbody>
       <row>
-        <entry align='left'></entry>
-        <entry align='left'>tcp/&lt;hostname&gt;:&lt;portnumber&gt;</entry>
-        <entry align='left'>or</entry>
+        <entry>tcp/&lt;hostname&gt;:&lt;portnumber&gt;</entry>
+        <entry>or</entry>
       </row>
       <row>
-        <entry align='left'></entry>
-        <entry align='left'>decnet/&lt;hostname&gt;::&lt;objname&gt;</entry>
-        <entry align='left'>or</entry>
+        <entry>decnet/&lt;hostname&gt;::&lt;objname&gt;</entry>
+        <entry>or</entry>
       </row>
       <row>
-        <entry align='left'></entry>
-        <entry align='left'>local/&lt;hostname&gt;:&lt;path&gt;</entry>
-        <entry align='left'></entry>
+        <entry>local/&lt;hostname&gt;:&lt;path&gt;</entry>
+        <entry></entry>
       </row>
     </tbody>
   </tgroup>
@@ -4284,13 +4277,13 @@ This name is statically allocated and should not be freed.
 <para>
 To synchronously update the authorization file, the file must
 be locked with a call to
-<function>IceLockAuthFile</function>
+<xref linkend='IceLockAuthFile' xrefstyle='select: title'/>
 This function takes advantage of the fact that the
 <function>link</function>
 system call will fail if the name of the new link already exists.
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceLockAuthFile'>
 <funcprototype>
   <funcdef>int<function> IceLockAuthFile</function></funcdef>
     <paramdef>char<parameter> *file_name</parameter></paramdef>
@@ -4352,10 +4345,10 @@ retries failed.
 </itemizedlist>
 
 <para>
-To unlock an authorization file, use <function>IceUnlockAuthFile</function>
+To unlock an authorization file, use <xref linkend='IceUnlockAuthFile' xrefstyle='select: title'/>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceUnlockAuthFile'>
 <funcprototype>
   <funcdef>int<function> IceUnlockAuthFile</function></funcdef>
     <paramdef>char<parameter> *file_name</parameter></paramdef>
@@ -4374,7 +4367,7 @@ To read the next entry in an authorization file, use
 <function>IceReadAuthFileEntry</function>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceReadAuthFileEntry'>
 <funcprototype>
   <funcdef>IceAuthFileEntry<function> *IceReadAuthFileEntry</function></funcdef>
     <paramdef>FILE<parameter> *auth_file</parameter></paramdef>
@@ -4396,15 +4389,15 @@ or there are no more entries to read, NULL is returned.
 
 <para>
 Entries should be free with a call to
-<function>IceFreeAuthFileEntry</function>
+<xref linkend='IceFreeAuthFileEntry' xrefstyle='select: title'/>
 </para>
 
 <para>
 To write an entry in an authorization file, use
-<function>IceWriteAuthFileEntry</function>
+<xref linkend='IceWriteAuthFileEntry' xrefstyle='select: title'/>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceWriteAuthFileEntry'>
 <funcprototype>
   <funcdef>Status<function> IceWriteAuthFileEntry</function></funcdef>
     <paramdef>FILE<parameter> *auth_file</parameter></paramdef>
@@ -4436,12 +4429,12 @@ protocol_name/network_id/auth_name tuple, use
 <function>IceGetAuthFileEntry</function>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceGetAuthFileEntry'>
 <funcprototype>
   <funcdef>IceAuthFileEntry<function> *IceGetAuthFileEntry</function></funcdef>
-    <paramdef>char<parameter> *protocol_name</parameter></paramdef>
-    <paramdef>char<parameter> *network_id</parameter></paramdef>
-    <paramdef>char<parameter> *auth_name</parameter></paramdef>
+    <paramdef>const char *<parameter>protocol_name</parameter></paramdef>
+    <paramdef>const char *<parameter>network_id</parameter></paramdef>
+    <paramdef>const char *<parameter>auth_name</parameter></paramdef>
 </funcprototype>
 </funcsynopsis>
 
@@ -4474,10 +4467,10 @@ fails to find such an entry, NULL is returned.
 To free an entry returned by
 <function>IceReadAuthFileEntry</function> or
 <function>IceGetAuthFileEntry</function> use
-<function>IceFreeAuthFileEntry</function>
+<xref linkend='IceFreeAuthFileEntry' xrefstyle='select: title'/>
 </para>
 
-<funcsynopsis>
+<funcsynopsis id='IceFreeAuthFileEntry'>
 <funcprototype>
   <funcdef>void<function> IceFreeAuthFileEntry</function></funcdef>
     <paramdef>IceAuthFileEntry<parameter> *entry</parameter></paramdef>
@@ -4511,13 +4504,13 @@ magic cookie in the user's .ICEauthority file on a remote machine.</para>
 
 <para>In addition to storing the magic cookie in the .ICEauthority file, the
 application needs to call the
-<function>IceSetPaAuthData</function>
+<xref linkend='IceSetPaAuthData' xrefstyle='select: title'/>
 function in order to store the magic cookie in memory.  When it comes time
 for the MIT-MAGIC-COOKIE-1 authentication procedure to accept or reject the
 connection, it will compare the magic cookie presented by the requestor to
 the magic cookie in memory.</para>
 
-<funcsynopsis>
+<funcsynopsis id='IceGenerateMagicCookie'>
 <funcprototype>
   <funcdef>char<function> *IceGenerateMagicCookie</function></funcdef>
     <paramdef>int<parameter> length</parameter></paramdef>
@@ -4539,12 +4532,12 @@ Otherwise, the magic cookie should be freed with a call to
 
 
 <para>To store the authentication data in memory, use
-<function>IceSetPaAuthData</function>
+<xref linkend='IceSetPaAuthData' xrefstyle='select: title'/>
 Currently, this function is only used for MIT-MAGIC-COOKIE-1
 authentication, but it may be used for additional authentication
 methods in the future.</para>
 
-<funcsynopsis>
+<funcsynopsis id='IceSetPaAuthData'>
 <funcprototype>
   <funcdef>void<function> IceSetPaAuthData</function></funcdef>
     <paramdef>int<parameter> num_entries</parameter></paramdef>
