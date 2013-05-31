@@ -16,13 +16,13 @@ included in all copies or substantial portions of the Software.
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL Kaleb S. KEITHLEY BE LIABLE FOR ANY CLAIM, DAMAGES 
+IN NO EVENT SHALL Kaleb S. KEITHLEY BE LIABLE FOR ANY CLAIM, DAMAGES
 OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 
-Except as contained in this notice, the name of Kaleb S. KEITHLEY 
-shall not be used in advertising or otherwise to promote the sale, use 
+Except as contained in this notice, the name of Kaleb S. KEITHLEY
+shall not be used in advertising or otherwise to promote the sale, use
 or other dealings in this Software without prior written authorization
 from Kaleb S. KEITHLEY.
 
@@ -30,11 +30,27 @@ from Kaleb S. KEITHLEY.
 
 /* THIS IS NOT AN X CONSORTIUM STANDARD */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <X11/Xlibint.h>
 #include <X11/extensions/xf86vmproto.h>
 #include <X11/extensions/xf86vmode.h>
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
+#include <limits.h>
+
+#ifndef HAVE__XEATDATAWORDS
+static inline void _XEatDataWords(Display *dpy, unsigned long n)
+{
+# ifndef LONG64
+    if (n >= (ULONG_MAX >> 2))
+        _XIOError(dpy);
+# endif
+    _XEatData (dpy, n << 2);
+}
+#endif
 
 #ifdef DEBUG
 #include <stdio.h>
@@ -46,7 +62,7 @@ from Kaleb S. KEITHLEY.
 
 static XExtensionInfo _xf86vidmode_info_data;
 static XExtensionInfo *xf86vidmode_info = &_xf86vidmode_info_data;
-static char *xf86vidmode_extension_name = XF86VIDMODENAME;
+static const char *xf86vidmode_extension_name = XF86VIDMODENAME;
 
 #define XF86VidModeCheckExtension(dpy,i,val) \
   XextCheckExtension (dpy, i, xf86vidmode_extension_name, val)
@@ -72,9 +88,9 @@ static /* const */ XExtensionHooks xf86vidmode_extension_hooks = {
     NULL,				/* error_string */
 };
 
-static XEXT_GENERATE_FIND_DISPLAY (find_display, xf86vidmode_info, 
-				   xf86vidmode_extension_name, 
-				   &xf86vidmode_extension_hooks, 
+static XEXT_GENERATE_FIND_DISPLAY (find_display, xf86vidmode_info,
+				   xf86vidmode_extension_name,
+				   &xf86vidmode_extension_hooks,
 				   0, NULL)
 
 static XEXT_GENERATE_CLOSE_DISPLAY (close_display, xf86vidmode_info)
@@ -203,6 +219,7 @@ XF86VidModeGetModeLine(Display* dpy, int screen, int* dotclock,
     xXF86OldVidModeGetModeLineReply oldrep;
     xXF86VidModeGetModeLineReq *req;
     int majorVersion, minorVersion;
+    Bool result = True;
 
     XF86VidModeCheckExtension (dpy, info, False);
     XF86VidModeQueryVersion(dpy, &majorVersion, &minorVersion);
@@ -212,9 +229,9 @@ XF86VidModeGetModeLine(Display* dpy, int screen, int* dotclock,
     req->reqType = info->codes->major_opcode;
     req->xf86vidmodeReqType = X_XF86VidModeGetModeLine;
     req->screen = screen;
-    
+
     if (majorVersion < 2) {
-	if (!_XReply(dpy, (xReply *)&oldrep, 
+	if (!_XReply(dpy, (xReply *)&oldrep,
             (SIZEOF(xXF86OldVidModeGetModeLineReply) - SIZEOF(xReply)) >> 2, xFalse)) {
 	    UnlockDisplay(dpy);
 	    SyncHandle();
@@ -233,7 +250,7 @@ XF86VidModeGetModeLine(Display* dpy, int screen, int* dotclock,
 	modeline->flags      = oldrep.flags;
 	modeline->privsize   = oldrep.privsize;
     } else {
-	if (!_XReply(dpy, (xReply *)&rep, 
+	if (!_XReply(dpy, (xReply *)&rep,
             (SIZEOF(xXF86VidModeGetModeLineReply) - SIZEOF(xReply)) >> 2, xFalse)) {
 	    UnlockDisplay(dpy);
 	    SyncHandle();
@@ -252,20 +269,24 @@ XF86VidModeGetModeLine(Display* dpy, int screen, int* dotclock,
 	modeline->flags      = rep.flags;
 	modeline->privsize   = rep.privsize;
     }
-    
+
     if (modeline->privsize > 0) {
-	if (!(modeline->private = Xcalloc(modeline->privsize, sizeof(INT32)))) {
-	    _XEatData(dpy, (modeline->privsize) * sizeof(INT32));
-	    Xfree(modeline->private);
-	    return False;
-	}
-	_XRead(dpy, (char*)modeline->private, modeline->privsize * sizeof(INT32));
+	if (modeline->privsize < (INT_MAX / sizeof(INT32)))
+	    modeline->private = Xcalloc(modeline->privsize, sizeof(INT32));
+	else
+	    modeline->private = NULL;
+	if (modeline->private == NULL) {
+	    _XEatDataWords(dpy, rep.length -
+		((SIZEOF(xXF86VidModeGetModeLineReply) - SIZEOF(xReply)) >> 2));
+	    result = False;
+	} else
+	    _XRead(dpy, (char*)modeline->private, modeline->privsize * sizeof(INT32));
     } else {
 	modeline->private = NULL;
     }
     UnlockDisplay(dpy);
     SyncHandle();
-    return True;
+    return result;
 }
 
 Bool
@@ -299,13 +320,13 @@ XF86VidModeGetAllModeLines(Display* dpy, int screen, int* modecount,
 		minorVersion);
 #endif
     }
-    
+
     LockDisplay(dpy);
     GetReq(XF86VidModeGetAllModeLines, req);
     req->reqType = info->codes->major_opcode;
     req->xf86vidmodeReqType = X_XF86VidModeGetAllModeLines;
     req->screen = screen;
-    if (!_XReply(dpy, (xReply *)&rep, 
+    if (!_XReply(dpy, (xReply *)&rep,
         (SIZEOF(xXF86VidModeGetAllModeLinesReply) - SIZEOF(xReply)) >> 2, xFalse)) {
         UnlockDisplay(dpy);
 	SyncHandle();
@@ -317,11 +338,10 @@ XF86VidModeGetAllModeLines(Display* dpy, int screen, int* modecount,
     if (!(modelines = (XF86VidModeModeInfo **) Xcalloc(rep.modecount,
                                           sizeof(XF86VidModeModeInfo *)
                                           +sizeof(XF86VidModeModeInfo)))) {
-	if (majorVersion < 2)
-            _XEatData(dpy, (rep.modecount) * sizeof(xXF86OldVidModeModeInfo));
-	else
-            _XEatData(dpy, (rep.modecount) * sizeof(xXF86VidModeModeInfo));
-        Xfree(modelines);
+	_XEatDataWords(dpy, rep.length -
+	    ((SIZEOF(xXF86VidModeGetAllModeLinesReply) - SIZEOF(xReply)) >> 2));
+	UnlockDisplay(dpy);
+	SyncHandle();
         return False;
     }
     mdinfptr = (XF86VidModeModeInfo *) (
@@ -352,8 +372,7 @@ XF86VidModeGetAllModeLines(Display* dpy, int screen, int* modecount,
 		if (oldxmdline.privsize > 0) {
 	            if (!(modelines[i]->private =
 			    Xcalloc(oldxmdline.privsize, sizeof(INT32)))) {
-			_XEatData(dpy, (oldxmdline.privsize) * sizeof(INT32));
-			Xfree(modelines[i]->private);
+			_XEatDataWords(dpy, oldxmdline.privsize);
 		    } else {
 			_XRead(dpy, (char*)modelines[i]->private,
 			     oldxmdline.privsize * sizeof(INT32));
@@ -383,8 +402,7 @@ XF86VidModeGetAllModeLines(Display* dpy, int screen, int* modecount,
 		if (xmdline.privsize > 0) {
 		    if (!(modelines[i]->private =
 			    Xcalloc(xmdline.privsize, sizeof(INT32)))) {
-			_XEatData(dpy, (xmdline.privsize) * sizeof(INT32));
-			Xfree(modelines[i]->private);
+			_XEatDataWords(dpy, xmdline.privsize);
 		    } else {
 			_XRead(dpy, (char*)modelines[i]->private,
 			     xmdline.privsize * sizeof(INT32));
@@ -746,7 +764,7 @@ XF86VidModeSwitchMode(Display* dpy, int screen, int zoom)
     SyncHandle();
     return True;
 }
-    
+
 Bool
 XF86VidModeSwitchToMode(Display* dpy, int screen, XF86VidModeModeInfo* modeline)
 {
@@ -774,7 +792,7 @@ XF86VidModeSwitchToMode(Display* dpy, int screen, XF86VidModeModeInfo* modeline)
 		minorVersion);
 #endif
     }
-    
+
     LockDisplay(dpy);
     if (majorVersion < 2) {
 	GetOldReq(XF86VidModeSwitchToMode, XF86OldVidModeSwitchToMode, oldreq);
@@ -832,7 +850,7 @@ XF86VidModeSwitchToMode(Display* dpy, int screen, XF86VidModeModeInfo* modeline)
     SyncHandle();
     return True;
 }
-    
+
 Bool
 XF86VidModeLockModeSwitch(Display* dpy, int screen, int lock)
 {
@@ -851,7 +869,7 @@ XF86VidModeLockModeSwitch(Display* dpy, int screen, int lock)
     SyncHandle();
     return True;
 }
-    
+
 Bool
 XF86VidModeGetMonitor(Display* dpy, int screen, XF86VidModeMonitor* monitor)
 {
@@ -860,6 +878,7 @@ XF86VidModeGetMonitor(Display* dpy, int screen, XF86VidModeMonitor* monitor)
     xXF86VidModeGetMonitorReq *req;
     CARD32 syncrange;
     int i;
+    Bool result = True;
 
     XF86VidModeCheckExtension (dpy, info, False);
 
@@ -879,63 +898,57 @@ XF86VidModeGetMonitor(Display* dpy, int screen, XF86VidModeMonitor* monitor)
     monitor->bandwidth = (float)rep.bandwidth / 1e6;
 #endif
     if (rep.vendorLength) {
-	if (!(monitor->vendor = (char *)Xcalloc(rep.vendorLength + 1, 1))) {
-	    _XEatData(dpy, (rep.nhsync + rep.nvsync) * 4 +
-		      ((rep.vendorLength+3) & ~3) + ((rep.modelLength+3) & ~3));
-	    return False;
-	}
+	monitor->vendor = Xcalloc(rep.vendorLength + 1, 1);
+	if (monitor->vendor == NULL)
+	    result = False;
     } else {
 	monitor->vendor = NULL;
     }
-    if (rep.modelLength) {
-	if (!(monitor->model = Xcalloc(rep.modelLength + 1, 1))) {
-	    _XEatData(dpy, (rep.nhsync + rep.nvsync) * 4 +
-		      ((rep.vendorLength+3) & ~3) + ((rep.modelLength+3) & ~3));
-	    if (monitor->vendor)
-		Xfree(monitor->vendor);
-	    return False;
-	}
+    if (result && rep.modelLength) {
+	monitor->model = Xcalloc(rep.modelLength + 1, 1);
+	if (monitor->model == NULL)
+	    result = False;
     } else {
 	monitor->model = NULL;
     }
-    if (!(monitor->hsync = Xcalloc(rep.nhsync, sizeof(XF86VidModeSyncRange)))) {
-	_XEatData(dpy, (rep.nhsync + rep.nvsync) * 4 +
-		  ((rep.vendorLength+3) & ~3) + ((rep.modelLength+3) & ~3));
-	
-	if (monitor->vendor)
-	    Xfree(monitor->vendor);
-	if (monitor->model)
-	    Xfree(monitor->model);
-	return False;
+    if (result) {
+	monitor->hsync = Xcalloc(rep.nhsync, sizeof(XF86VidModeSyncRange));
+	monitor->vsync = Xcalloc(rep.nvsync, sizeof(XF86VidModeSyncRange));
+	if ((monitor->hsync == NULL) || (monitor->vsync == NULL))
+	    result = False;
+    } else {
+	monitor->hsync = monitor->vsync = NULL;
     }
-    if (!(monitor->vsync = Xcalloc(rep.nvsync, sizeof(XF86VidModeSyncRange)))) {
-	_XEatData(dpy, (rep.nhsync + rep.nvsync) * 4 +
-		  ((rep.vendorLength+3) & ~3) + ((rep.modelLength+3) & ~3));
-	if (monitor->vendor)
-	    Xfree(monitor->vendor);
-	if (monitor->model)
-	    Xfree(monitor->model);
+    if (result == False) {
+	_XEatDataWords(dpy, rep.length);
+	Xfree(monitor->vendor);
+	monitor->vendor = NULL;
+	Xfree(monitor->model);
+	monitor->model = NULL;
 	Xfree(monitor->hsync);
-	return False;
+	monitor->hsync = NULL;
+	Xfree(monitor->vsync);
+	monitor->vsync = NULL;
     }
-    for (i = 0; i < rep.nhsync; i++) {
-	_XRead(dpy, (char *)&syncrange, 4);
-	monitor->hsync[i].lo = (float)(syncrange & 0xFFFF) / 100.0;
-	monitor->hsync[i].hi = (float)(syncrange >> 16) / 100.0;
+    else {
+	for (i = 0; i < rep.nhsync; i++) {
+	    _XRead(dpy, (char *)&syncrange, 4);
+	    monitor->hsync[i].lo = (float)(syncrange & 0xFFFF) / 100.0;
+	    monitor->hsync[i].hi = (float)(syncrange >> 16) / 100.0;
+	}
+	for (i = 0; i < rep.nvsync; i++) {
+	    _XRead(dpy, (char *)&syncrange, 4);
+	    monitor->vsync[i].lo = (float)(syncrange & 0xFFFF) / 100.0;
+	    monitor->vsync[i].hi = (float)(syncrange >> 16) / 100.0;
+	}
+	if (rep.vendorLength)
+	    _XReadPad(dpy, monitor->vendor, rep.vendorLength);
+	if (rep.modelLength)
+	    _XReadPad(dpy, monitor->model, rep.modelLength);
     }
-    for (i = 0; i < rep.nvsync; i++) {
-	_XRead(dpy, (char *)&syncrange, 4);
-	monitor->vsync[i].lo = (float)(syncrange & 0xFFFF) / 100.0;
-	monitor->vsync[i].hi = (float)(syncrange >> 16) / 100.0;
-    }
-    if (rep.vendorLength)
-	_XReadPad(dpy, monitor->vendor, rep.vendorLength);
-    if (rep.modelLength)
-	_XReadPad(dpy, monitor->model, rep.modelLength);
-	
     UnlockDisplay(dpy);
     SyncHandle();
-    return True;
+    return result;
 }
 
 Bool
@@ -1018,6 +1031,7 @@ XF86VidModeGetDotClocks(Display* dpy, int screen, int *flagsPtr,
     xXF86VidModeGetDotClocksReq *req;
     int i, *dotclocks;
     CARD32 dotclk;
+    Bool result = True;
 
     XF86VidModeCheckExtension (dpy, info, False);
 
@@ -1026,7 +1040,7 @@ XF86VidModeGetDotClocks(Display* dpy, int screen, int *flagsPtr,
     req->reqType = info->codes->major_opcode;
     req->xf86vidmodeReqType = X_XF86VidModeGetDotClocks;
     req->screen = screen;
-    if (!_XReply(dpy, (xReply *)&rep, 
+    if (!_XReply(dpy, (xReply *)&rep,
         (SIZEOF(xXF86VidModeGetDotClocksReply) - SIZEOF(xReply)) >> 2, xFalse))
     {
         UnlockDisplay(dpy);
@@ -1037,20 +1051,22 @@ XF86VidModeGetDotClocks(Display* dpy, int screen, int *flagsPtr,
     *maxclocksPtr = rep.maxclocks;
     *flagsPtr     = rep.flags;
 
-    if (!(dotclocks = (int*) Xcalloc(rep.clocks, sizeof(int)))) {
-        _XEatData(dpy, (rep.clocks) * 4);
-        Xfree(dotclocks);
-        return False;
+    dotclocks = Xcalloc(rep.clocks, sizeof(int));
+    if (dotclocks == NULL) {
+        _XEatDataWords(dpy, rep.length -
+	    ((SIZEOF(xXF86VidModeGetDotClocksReply) - SIZEOF(xReply)) >> 2));
+        result = False;
     }
-
-    for (i = 0; i < rep.clocks; i++) {
-        _XRead(dpy, (char*)&dotclk, 4);
-	dotclocks[i] = dotclk;
+    else {
+	for (i = 0; i < rep.clocks; i++) {
+	    _XRead(dpy, (char*)&dotclk, 4);
+	    dotclocks[i] = dotclk;
+	}
     }
     *clocksPtr = dotclocks;
     UnlockDisplay(dpy);
     SyncHandle();
-    return True;
+    return result;
 }
 
 Bool
@@ -1097,7 +1113,8 @@ XF86VidModeGetGammaRamp (
     XExtDisplayInfo *info = find_display (dpy);
     xXF86VidModeGetGammaRampReq *req;
     xXF86VidModeGetGammaRampReply rep;
-  
+    Bool result = True;
+
     XF86VidModeCheckExtension (dpy, info, False);
 
     LockDisplay(dpy);
@@ -1107,19 +1124,23 @@ XF86VidModeGetGammaRamp (
     req->screen = screen;
     req->size = size;
     if (!_XReply (dpy, (xReply *) &rep, 0, xFalse)) {
-        UnlockDisplay (dpy);
-        SyncHandle ();
-        return False;
+        result = False;
     }
-    if(rep.size) {
-	_XRead(dpy, (char*)red, rep.size << 1);
-	_XRead(dpy, (char*)green, rep.size << 1);
-	_XRead(dpy, (char*)blue, rep.size << 1);
+    else if (rep.size) {
+	if (rep.size <= size) {
+	    _XRead(dpy, (char*)red, rep.size << 1);
+	    _XRead(dpy, (char*)green, rep.size << 1);
+	    _XRead(dpy, (char*)blue, rep.size << 1);
+	}
+	else {
+	    _XEatDataWords(dpy, rep.length);
+	    result = False;
+	}
     }
 
     UnlockDisplay(dpy);
     SyncHandle();
-    return True;
+    return result;
 }
 
 Bool XF86VidModeGetGammaRampSize(
@@ -1131,7 +1152,7 @@ Bool XF86VidModeGetGammaRampSize(
     XExtDisplayInfo *info = find_display (dpy);
     xXF86VidModeGetGammaRampSizeReq *req;
     xXF86VidModeGetGammaRampSizeReply rep;
-  
+
     *size = 0;
 
     XF86VidModeCheckExtension (dpy, info, False);
@@ -1144,7 +1165,7 @@ Bool XF86VidModeGetGammaRampSize(
     if (!_XReply (dpy, (xReply *) &rep, 0, xTrue)) {
         UnlockDisplay (dpy);
         SyncHandle ();
-        return False; 
+        return False;
     }
     *size = rep.size;
     UnlockDisplay(dpy);
@@ -1161,7 +1182,7 @@ Bool XF86VidModeGetPermissions(
     XExtDisplayInfo *info = find_display (dpy);
     xXF86VidModeGetPermissionsReq *req;
     xXF86VidModeGetPermissionsReply rep;
-  
+
     *permissions = 0;
 
     XF86VidModeCheckExtension (dpy, info, False);
@@ -1174,7 +1195,7 @@ Bool XF86VidModeGetPermissions(
     if (!_XReply (dpy, (xReply *) &rep, 0, xTrue)) {
         UnlockDisplay (dpy);
         SyncHandle ();
-        return False; 
+        return False;
     }
     *permissions = rep.permissions;
     UnlockDisplay(dpy);
