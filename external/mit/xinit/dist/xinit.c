@@ -49,10 +49,8 @@ in this Software without prior written authorization from The Open Group.
 #endif
 
 /* For PRIO_PROCESS and setpriority() */
-#ifdef __DragonFly__
 #include <sys/time.h>
 #include <sys/resource.h>
-#endif /* __DragonFly__ */
 
 #include <stdlib.h>
 

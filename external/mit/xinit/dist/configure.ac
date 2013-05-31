@@ -22,7 +22,7 @@ dnl Process this file with autoconf to create configure.
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([xinit], [1.3.1],
+AC_INIT([xinit], [1.3.2],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg], [xinit])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
@@ -101,6 +101,9 @@ AC_ARG_WITH(launchd,            AS_HELP_STRING([--with-launchd], [Build with sup
 AC_ARG_WITH(launchagents-dir,   AS_HELP_STRING([--with-launchagents-dir=PATH], [Path to launchd's LaunchAgents directory (default: /Library/LaunchAgents)]),
                                 [ launchagentsdir="${withval}" ],
                                 [ launchagentsdir="/Library/LaunchAgents" ])
+AC_ARG_WITH(launchagent-xserver, AS_HELP_STRING([--with-launchagent-xserver=PATH], [Path to the X server which the LaunchAgent should start (if not provided, let startx decide)"]),
+                                 [ launchagentxserver="${withval}" ],
+                                 [ launchagentxserver="no" ])
 AC_ARG_WITH(launchdaemons-dir,  AS_HELP_STRING([--with-launchdaemons-dir=PATH], [Path to launchd's LaunchDaemonss directory (default: /Library/LaunchDaemons)]),
                                 [ launchdaemonsdir="${withval}" ],
                                 [ launchdaemonsdir="/Library/LaunchDaemons" ])
@@ -126,17 +129,16 @@ if test "x$LAUNCHD" = "xyes" ; then
         AC_CHECK_FUNC(dispatch_async,
                               AC_DEFINE([HAVE_LIBDISPATCH], 1, [Define to 1 if you have the libdispatch (GCD) available]),
                               [])
-else
-        launchagentsdir=""
-        launchdaemonsdir=""
 fi
 
 AC_DEFINE_UNQUOTED(BUNDLE_ID_PREFIX, "$bundleidprefix", [Prefix to use for launchd identifiers])
 AC_SUBST([launchagentsdir])
 AC_SUBST([launchdaemonsdir])
 AC_SUBST([bundleidprefix])
+AC_SUBST([launchagentxserver])
 AM_CONDITIONAL(LAUNCHD, [test "x$LAUNCHD" = "xyes"])
 AM_CONDITIONAL(TIGER_LAUNCHD, [test "x$TIGER_LAUNCHD" = "xyes"])
+AM_CONDITIONAL(LAUNCHAGENT_XSERVER, [test "x$launchagentxserver" != "xno"])
 
 # Checks for pkg-config packages
 PKG_CHECK_MODULES(XINIT, x11)
