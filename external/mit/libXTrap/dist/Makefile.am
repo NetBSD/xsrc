@@ -1,6 +1,4 @@
 # 
-#  $Id: Makefile.am,v 1.1.1.1 2008/07/30 02:44:17 mrg Exp $
-# 
 #  Copyright © 2003 Keith Packard, Noah Levitt
 # 
 #  Permission to use, copy, modify, distribute, and sell this software and its
@@ -21,11 +19,17 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 #  PERFORMANCE OF THIS SOFTWARE.
 
-AM_CFLAGS = $(XTRAP_CFLAGS)
-
 SUBDIRS = src
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = xtrap.pc
 
-EXTRA_DIST = xtrap.pc.in autogen.sh
+EXTRA_DIST = xtrap.pc.in ChangeLog
+MAINTAINERCLEANFILES = ChangeLog
+
+.PHONY: ChangeLog
+
+ChangeLog:
+	$(CHANGELOG_CMD)
+
+dist-hook: ChangeLog

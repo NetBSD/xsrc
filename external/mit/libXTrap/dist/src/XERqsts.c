@@ -153,8 +153,8 @@ int XEGetVersionRequest(XETC *tc, XETrapGetVersRep *ret)
     reqptr->minor_opcode = XETrap_GetVersion;
     reqptr->protocol = XETrapProtocol;
     status = _XReply(dpy,(xReply *)&rep,numlongs,xTrue); 
-    SyncHandle(); 
     UnlockDisplay(dpy); 
+    SyncHandle();
     memcpy((char *)ret,&(rep.data),sizeof(XETrapGetVersRep)); 
     return(status);
 }
@@ -173,8 +173,8 @@ int XEGetAvailableRequest(XETC *tc, XETrapGetAvailRep *ret)
     reqptr->minor_opcode = XETrap_GetAvailable;
     reqptr->protocol = XETrapProtocol;
     status = _XReply(dpy,(xReply *)&rep,numlongs,xTrue); 
-    SyncHandle(); 
     UnlockDisplay(dpy); 
+    SyncHandle();
     memcpy((char *)ret,&(rep.data),sizeof(XETrapGetAvailRep)); 
     return(status);
 }
@@ -249,8 +249,8 @@ int XEGetLastInpTimeRequest(XETC *tc, XETrapGetLastInpTimeRep *ret)
     GetReq(XTrap,reqptr);
     reqptr->minor_opcode = XETrap_GetLastInpTime;
     status = _XReply(dpy,(xReply *)&rep,numlongs,xTrue); 
-    SyncHandle(); 
     UnlockDisplay(dpy); 
+    SyncHandle();
 
     ret->last_time=rep.data_last_time;
 
@@ -347,8 +347,8 @@ int XEGetCurrentRequest(XETC *tc, XETrapGetCurRep *ret)
         {
             status = _XReply(dpy,(xReply *)&rep,numlongs,xTrue); 
         }
-        SyncHandle();
         UnlockDisplay(dpy); 
+        SyncHandle();
 
     memcpy((char *)ret->state_flags,rep.data_state_flags,2);
     memcpy((char *)ret->config.flags.valid,rep.data_config_flags_valid,4);
@@ -404,8 +404,8 @@ int XEGetStatisticsRequest(XETC *tc, XETrapGetStatsRep *ret)
                 status = _XRead(dpy, (char *)&rep.data, numbytes);
             }
         }
-        SyncHandle(); 
         UnlockDisplay(dpy); 
+        SyncHandle();
         memcpy(ret,&(rep.data),sizeof(XETrapGetStatsRep)); 
     }
     return(status);
