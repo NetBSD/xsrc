@@ -1,6 +1,4 @@
 dnl 
-dnl  $Id: configure.ac,v 1.1.1.1 2008/07/30 02:44:23 mrg Exp $
-dnl 
 dnl  Copyright © 2003 Keith Packard, Noah Levitt
 dnl 
 dnl  Permission to use, copy, modify, distribute, and sell this software and its
@@ -25,22 +23,28 @@ dnl Process this file with autoconf to create configure.
 
 AC_PREREQ([2.57])
 
-AC_INIT(libXTrap, 1.0.0, [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg], libXTrap)
-AM_INIT_AUTOMAKE([dist-bzip2])
+AC_INIT(libXTrap, 1.0.1, [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg], libXTrap)
+AM_INIT_AUTOMAKE([foreign dist-bzip2])
 AM_MAINTAINER_MODE
 
-AM_CONFIG_HEADER(config.h)
+# Require xorg-macros: XORG_COMPILER_FLAGS, XORG_CHANGELOG
+m4_ifndef([XORG_MACROS_VERSION], [AC_FATAL([must install xorg-macros 1.17 or later before running autoconf/autogen])])
+XORG_MACROS_VERSION(1.17)
+AC_CONFIG_HEADERS([config.h])
 
 # Check for progs
 AC_PROG_CC
 AC_PROG_LIBTOOL
+XORG_COMPILER_FLAGS
 
 # Check for dependencies
 PKG_CHECK_MODULES(XTRAP, x11 xt trapproto xext xextproto)
+XTRAP_CFLAGS="$BASE_CFLAGS $XTRAP_CFLAGS"
 AC_SUBST(XTRAP_CFLAGS)
 AC_SUBST(XTRAP_LIBS)
 
 XORG_RELEASE_VERSION
+XORG_CHANGELOG
 
 AC_OUTPUT([Makefile
 	   src/Makefile
