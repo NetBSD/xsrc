@@ -25,21 +25,37 @@
 
 /* Connection management: the core of XCB. */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <netinet/in.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <limits.h>
 
 #include "xcb.h"
 #include "xcbint.h"
 #if USE_POLL
 #include <poll.h>
-#else
+#elif !defined _WIN32
 #include <sys/select.h>
+#endif
+
+#ifdef _WIN32
+#include "xcb_windefs.h"
+#else
+#include <sys/socket.h>
+#include <netinet/in.h>
+#endif /* _WIN32 */
+
+/* SHUT_RDWR is fairly recent and is not available on all platforms */
+#if !defined(SHUT_RDWR)
+#define SHUT_RDWR 2
 #endif
 
 typedef struct {
@@ -48,10 +64,24 @@ typedef struct {
     uint16_t length;
 } xcb_setup_generic_t;
 
-static const int error_connection = 1;
+static const int xcb_con_error = XCB_CONN_ERROR;
+static const int xcb_con_closed_mem_er = XCB_CONN_CLOSED_MEM_INSUFFICIENT;
+static const int xcb_con_closed_parse_er = XCB_CONN_CLOSED_PARSE_ERR;
+static const int xcb_con_closed_screen_er = XCB_CONN_CLOSED_INVALID_SCREEN;
 
 static int set_fd_flags(const int fd)
 {
+/* Win32 doesn't have file descriptors and the fcntl function. This block sets the socket in non-blocking mode */
+
+#ifdef _WIN32
+   u_long iMode = 1; /* non-zero puts it in non-blocking mode, 0 in blocking mode */   
+   int ret = 0;
+
+   ret = ioctlsocket(fd, FIONBIO, &iMode);
+   if(ret != 0) 
+       return 0;
+   return 1;
+#else
     int flags = fcntl(fd, F_GETFL, 0);
     if(flags == -1)
         return 0;
@@ -61,6 +91,7 @@ static int set_fd_flags(const int fd)
     if(fcntl(fd, F_SETFD, FD_CLOEXEC) == -1)
         return 0;
     return 1;
+#endif /* _WIN32 */
 }
 
 static int write_setup(xcb_connection_t *c, xcb_auth_info_t *auth_info)
@@ -153,12 +184,44 @@ static int write_vec(xcb_connection_t *c, struct iovec **vector, int *count)
 {
     int n;
     assert(!c->out.queue_len);
-    n = writev(c->fd, *vector, *count);
+
+#ifdef _WIN32
+    int i = 0;
+    int ret = 0,err = 0;
+    struct iovec *vec;
+    n = 0;
+
+    /* Could use the WSASend win32 function for scatter/gather i/o but setting up the WSABUF struct from
+       an iovec would require more work and I'm not sure of the benefit....works for now */
+    vec = *vector;
+    while(i < *count)
+    {         	 
+         ret = send(c->fd,vec->iov_base,vec->iov_len,0);	 
+         if(ret == SOCKET_ERROR)
+         {
+             err  = WSAGetLastError();
+             if(err == WSAEWOULDBLOCK)
+             {
+                 return 1;
+             }
+         }
+         n += ret;
+         *vec++;
+         i++;
+    }
+#else
+    n = *count;
+    if (n > IOV_MAX)
+	n = IOV_MAX;
+
+    n = writev(c->fd, *vector, n);
     if(n < 0 && errno == EAGAIN)
         return 1;
+#endif /* _WIN32 */    
+
     if(n <= 0)
     {
-        _xcb_conn_shutdown(c);
+        _xcb_conn_shutdown(c, XCB_CONN_ERROR);
         return 0;
     }
 
@@ -207,18 +270,20 @@ xcb_connection_t *xcb_connect_to_fd(int fd, xcb_auth_info_t *auth_info)
 {
     xcb_connection_t* c;
 
+#ifndef _WIN32
 #ifndef USE_POLL
     if(fd >= FD_SETSIZE) /* would overflow in FD_SET */
     {
         close(fd);
-        return (xcb_connection_t *) &error_connection;
+        return _xcb_conn_ret_error(XCB_CONN_ERROR);
     }
 #endif
+#endif /* !_WIN32*/
 
     c = calloc(1, sizeof(xcb_connection_t));
     if(!c) {
         close(fd);
-        return (xcb_connection_t *) &error_connection;
+        return _xcb_conn_ret_error(XCB_CONN_CLOSED_MEM_INSUFFICIENT) ;
     }
 
     c->fd = fd;
@@ -235,7 +300,7 @@ xcb_connection_t *xcb_connect_to_fd(int fd, xcb_auth_info_t *auth_info)
         ))
     {
         xcb_disconnect(c);
-        return (xcb_connection_t *) &error_connection;
+        return _xcb_conn_ret_error(XCB_CONN_ERROR);
     }
 
     return c;
@@ -247,6 +312,9 @@ void xcb_disconnect(xcb_connection_t *c)
         return;
 
     free(c->setup);
+
+    /* disallow further sends and receives */
+    shutdown(c->fd, SHUT_RDWR);
     close(c->fd);
 
     pthread_mutex_destroy(&c->iolock);
@@ -257,13 +325,46 @@ void xcb_disconnect(xcb_connection_t *c)
     _xcb_xid_destroy(c);
 
     free(c);
+
+#ifdef _WIN32
+    WSACleanup();
+#endif
 }
 
 /* Private interface */
 
-void _xcb_conn_shutdown(xcb_connection_t *c)
+void _xcb_conn_shutdown(xcb_connection_t *c, int err)
 {
-    c->has_error = 1;
+    c->has_error = err;
+}
+
+/* Return connection error state.
+ * To make thread-safe, I need a seperate static
+ * variable for every possible error.
+ */
+xcb_connection_t *_xcb_conn_ret_error(int err)
+{
+
+    switch(err)
+    {
+        case XCB_CONN_CLOSED_MEM_INSUFFICIENT:
+        {
+            return (xcb_connection_t *) &xcb_con_closed_mem_er;
+        }
+        case XCB_CONN_CLOSED_PARSE_ERR:
+        {
+            return (xcb_connection_t *) &xcb_con_closed_parse_er;
+        }
+        case XCB_CONN_CLOSED_INVALID_SCREEN:
+        {
+            return (xcb_connection_t *) &xcb_con_closed_screen_er;
+        }
+        case XCB_CONN_ERROR:
+        default:
+        {
+            return (xcb_connection_t *) &xcb_con_error;
+        }
+    }
 }
 
 int _xcb_conn_wait(xcb_connection_t *c, pthread_cond_t *cond, struct iovec **vector, int *count)
@@ -311,23 +412,40 @@ int _xcb_conn_wait(xcb_connection_t *c, pthread_cond_t *cond, struct iovec **vec
     do {
 #if USE_POLL
         ret = poll(&fd, 1, -1);
+        /* If poll() returns an event we didn't expect, such as POLLNVAL, treat
+         * it as if it failed. */
+        if(ret >= 0 && (fd.revents & ~fd.events))
+        {
+            ret = -1;
+            break;
+        }
 #else
         ret = select(c->fd + 1, &rfds, &wfds, 0, 0);
 #endif
     } while (ret == -1 && errno == EINTR);
     if(ret < 0)
     {
-        _xcb_conn_shutdown(c);
+        _xcb_conn_shutdown(c, XCB_CONN_ERROR);
         ret = 0;
     }
     pthread_mutex_lock(&c->iolock);
 
     if(ret)
     {
+        /* The code allows two threads to call select()/poll() at the same time.
+         * First thread just wants to read, a second thread wants to write, too.
+         * We have to make sure that we don't steal the reading thread's reply
+         * and let it get stuck in select()/poll().
+         * So a thread may read if either:
+         * - There is no other thread that wants to read (the above situation
+         *   did not occur).
+         * - It is the reading thread (above situation occurred).
+         */
+        int may_read = c->in.reading == 1 || !count;
 #if USE_POLL
-        if((fd.revents & POLLIN) == POLLIN)
+        if(may_read && (fd.revents & POLLIN) == POLLIN)
 #else
-        if(FD_ISSET(c->fd, &rfds))
+        if(may_read && FD_ISSET(c->fd, &rfds))
 #endif
             ret = ret && _xcb_in_read(c);
 
