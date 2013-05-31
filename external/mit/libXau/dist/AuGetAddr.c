@@ -1,5 +1,3 @@
-/* $Xorg: AuGetAddr.c,v 1.4 2001/02/09 02:03:42 xorgcvs Exp $ */
-
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -25,7 +23,6 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xau/AuGetAddr.c,v 1.5 2001/12/14 19:54:36 dawes Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -33,14 +30,7 @@ in this Software without prior written authorization from The Open Group.
 #include <X11/Xauth.h>
 #include <X11/Xos.h>
 
-static int
-binaryEqual (_Xconst char *a, _Xconst char *b, int len)
-{
-    while (len--)
-	if (*a++ != *b++)
-	    return 0;
-    return 1;
-}
+#define binaryEqual(a, b, len) (memcmp(a, b, len) == 0)
 
 Xauth *
 XauGetAuthByAddr (
@@ -97,13 +87,13 @@ _Xconst char*	name)
 	if ((family == FamilyWild || entry->family == FamilyWild ||
 	     (entry->family == family &&
 	      address_length == entry->address_length &&
-	      binaryEqual (entry->address, address, (int)address_length))) &&
+	      binaryEqual (entry->address, address, address_length))) &&
 	    (number_length == 0 || entry->number_length == 0 ||
 	     (number_length == entry->number_length &&
-	      binaryEqual (entry->number, number, (int)number_length))) &&
+	      binaryEqual (entry->number, number, number_length))) &&
 	    (name_length == 0 || entry->name_length == 0 ||
 	     (entry->name_length == name_length &&
- 	      binaryEqual (entry->name, name, (int)name_length))))
+	      binaryEqual (entry->name, name, name_length))))
 	    break;
 	XauDisposeAuth (entry);
     }
