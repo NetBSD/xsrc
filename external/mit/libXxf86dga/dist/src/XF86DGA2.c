@@ -6,6 +6,9 @@ Copyright (c) 1995,1996  The XFree86 Project, Inc
 */
 
 /* THIS IS NOT AN X CONSORTIUM STANDARD */
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #ifdef __UNIXOS2__ /* needed here to override certain constants in X headers */
 #define INCL_DOS
@@ -21,16 +24,29 @@ Copyright (c) 1995,1996  The XFree86 Project, Inc
 #include <X11/extensions/extutil.h>
 #include <stdio.h>
 
+#include <stdint.h>
+#include <limits.h>
+
+#ifndef HAVE__XEATDATAWORDS
+static inline void _XEatDataWords(Display *dpy, unsigned long n)
+{
+# ifndef LONG64
+    if (n >= (ULONG_MAX >> 2))
+        _XIOError(dpy);
+# endif
+    _XEatData (dpy, n << 2);
+}
+#endif
 
 /* If you change this, change the Bases[] array below as well */
 #define MAX_HEADS 16
 
-char *xdga_extension_name = XF86DGANAME;
+const char *xdga_extension_name = XF86DGANAME;
 
 static XExtensionInfo _xdga_info_data;
 static XExtensionInfo *xdga_info = &_xdga_info_data;
 
- 
+
 Bool XDGAMapFramebuffer(int, char *, unsigned char*, CARD32, CARD32, CARD32);
 void XDGAUnmapFramebuffer(int);
 unsigned char* XDGAGetMappedMemory(int);
@@ -66,9 +82,9 @@ static XEXT_GENERATE_CLOSE_DISPLAY (xdga_close_display, xdga_info)
 
 
 XExtDisplayInfo* xdga_find_display(Display*);
-XEXT_GENERATE_FIND_DISPLAY (xdga_find_display, xdga_info, 
-				   "XFree86-DGA", 
-				   &xdga_extension_hooks, 
+XEXT_GENERATE_FIND_DISPLAY (xdga_find_display, xdga_info,
+				   "XFree86-DGA",
+				   &xdga_extension_hooks,
 				   0, NULL)
 
 
@@ -154,7 +170,7 @@ Bool XDGAQueryExtension (
 
 Bool XDGAQueryVersion(
     Display *dpy,
-    int *majorVersion, 
+    int *majorVersion,
     int *minorVersion
 ){
     XExtDisplayInfo *info = xdga_find_display (dpy);
@@ -182,7 +198,7 @@ Bool XDGAQueryVersion(
 
 	for (i = 0, j = info->codes->first_event;
 	     i < XF86DGANumberEvents;
-	     i++, j++) 
+	     i++, j++)
 	{
 	    XESetWireToEvent (dpy, j, xdga_wire_to_event);
 	    XESetEventToWire (dpy, j, xdga_event_to_wire);
@@ -234,17 +250,22 @@ Bool XDGAOpenFramebuffer(
 	return False;
     }
 
-    if(rep.length) {
-	deviceName = Xmalloc(rep.length << 2);
-	_XRead(dpy, deviceName, rep.length << 2);
+    if (rep.length) {
+	if (rep.length < (INT_MAX >> 2)) {
+	    unsigned long size = rep.length << 2;
+	    deviceName = Xmalloc(size);
+	    _XRead(dpy, deviceName, size);
+	    deviceName[size - 1] = '\0';
+	} else
+	    _XEatDataWords(dpy, rep.length);
     }
 
     ret = XDGAMapFramebuffer(screen, deviceName,
-				(unsigned char*)(long)rep.mem1, 
+				(unsigned char*)(long)rep.mem1,
 				rep.size, rep.offset, rep.extra);
 
     if(deviceName)
-	Xfree(deviceName);	
+	Xfree(deviceName);
 
     UnlockDisplay(dpy);
     SyncHandle();
@@ -296,21 +317,26 @@ XDGAMode* XDGAQueryModes(
     if (_XReply(dpy, (xReply *)&rep, 0, xFalse)) {
 	if(rep.length) {
 	   xXDGAModeInfo info;
-	   int i, size;
+	   unsigned long size = 0;
 	   char *offset;
 
-	   size = rep.length << 2;
-	   size -= rep.number * sz_xXDGAModeInfo; /* find text size */
-	   modes = (XDGAMode*)Xmalloc((rep.number * sizeof(XDGAMode)) + size);
-	   offset = (char*)(&modes[rep.number]); /* start of text */
+	   if ((rep.length < (INT_MAX >> 2)) &&
+	       (rep.number < (INT_MAX / sizeof(XDGAMode)))) {
+	       size = rep.length << 2;
+	       if (size > (rep.number * sz_xXDGAModeInfo)) {
+		   size -= rep.number * sz_xXDGAModeInfo; /* find text size */
+		   modes = Xmalloc((rep.number * sizeof(XDGAMode)) + size);
+		   offset = (char*)(&modes[rep.number]);  /* start of text */
+	       }
+	   }
 
-
-	   if(modes) {	
+	   if (modes != NULL) {
+	      unsigned int i;
 	      for(i = 0; i < rep.number; i++) {
 		_XRead(dpy, (char*)(&info), sz_xXDGAModeInfo);
 
 		modes[i].num = info.num;
-		modes[i].verticalRefresh = 
+		modes[i].verticalRefresh =
 			(float)info.vsync_num / (float)info.vsync_den;
 		modes[i].flags = info.flags;
 		modes[i].imageWidth = info.image_width;
@@ -333,15 +359,22 @@ XDGAMode* XDGAQueryModes(
 		modes[i].maxViewportY = info.viewport_ymax;
 		modes[i].viewportFlags = info.viewport_flags;
 		modes[i].reserved1 = info.reserved1;
-		modes[i].reserved2 = info.reserved2;	
+		modes[i].reserved2 = info.reserved2;
 
-		_XRead(dpy, offset, info.name_size);
-		modes[i].name = offset;
-		offset += info.name_size;
+		if (info.name_size > 0 && info.name_size <= size) {
+		    _XRead(dpy, offset, info.name_size);
+		    modes[i].name = offset;
+		    modes[i].name[info.name_size - 1] = '\0';
+		    offset += info.name_size;
+		    size -= info.name_size;
+		} else {
+		    _XEatData(dpy, info.name_size);
+		    modes[i].name = NULL;
+		}
 	      }
 	      *num = rep.number;
 	   } else
-		_XEatData(dpy, rep.length << 2);
+		_XEatDataWords(dpy, rep.length);
 	}
     }
 
@@ -352,7 +385,7 @@ XDGAMode* XDGAQueryModes(
 }
 
 
-XDGADevice * 
+XDGADevice *
 XDGASetMode(
     Display	*dpy,
     int		screen,
@@ -373,22 +406,25 @@ XDGASetMode(
     req->screen = screen;
     req->mode = mode;
     req->pid = pid = XAllocID(dpy);
-    
+
     if (_XReply(dpy, (xReply *)&rep, 0, xFalse)) {
 	if(rep.length) {
 	   xXDGAModeInfo info;
-	   int size;
+	   unsigned long size;
 
-	   size = rep.length << 2;
-	   size -= sz_xXDGAModeInfo; /* get text size */
+	   if ((rep.length < (INT_MAX >> 2)) &&
+	       (rep.length > (sz_xXDGAModeInfo >> 2))) {
+	       size = rep.length << 2;
+	       size -= sz_xXDGAModeInfo; /* get text size */
 
-	   dev = (XDGADevice*)Xmalloc(sizeof(XDGADevice) + size);
-	    
+	       dev = Xmalloc(sizeof(XDGADevice) + size);
+	   }
+
 	   if(dev) {
 		_XRead(dpy, (char*)(&info), sz_xXDGAModeInfo);
 
 		dev->mode.num = info.num;
-		dev->mode.verticalRefresh = 
+		dev->mode.verticalRefresh =
 				(float)info.vsync_num / (float)info.vsync_den;
 		dev->mode.flags = info.flags;
 		dev->mode.imageWidth = info.image_width;
@@ -413,16 +449,24 @@ XDGASetMode(
 		dev->mode.reserved1 = info.reserved1;
 		dev->mode.reserved2 = info.reserved2;
 
-		dev->mode.name = (char*)(&dev[1]);	
-		_XRead(dpy, dev->mode.name, info.name_size);
+		if (info.name_size > 0 && info.name_size <= size) {
+		    dev->mode.name = (char*)(&dev[1]);
+		    _XRead(dpy, dev->mode.name, info.name_size);
+		    dev->mode.name[info.name_size - 1] = '\0';
+		} else {
+		    dev->mode.name = NULL;
+		    _XEatDataWords(dpy, rep.length);
+		}
 
 		dev->pixmap = (rep.flags & XDGAPixmap) ? pid : 0;
 		dev->data = XDGAGetMappedMemory(screen);
 
 		if(dev->data)
 		    dev->data += rep.offset;
-	   } 
+	   }
 	   /* not sure what to do if the allocation fails */
+	   else
+	       _XEatDataWords(dpy, rep.length);
 	}
     }
 
@@ -591,7 +635,7 @@ void XDGACopyTransparentArea(
 
 int XDGAGetViewportStatus(
     Display *dpy,
-    int screen 
+    int screen
 ){
     XExtDisplayInfo *info = xdga_find_display (dpy);
     xXDGAGetViewportStatusReply rep;
@@ -614,7 +658,7 @@ int XDGAGetViewportStatus(
 
 void XDGASync(
     Display *dpy,
-    int screen 
+    int screen
 ){
     XExtDisplayInfo *info = xdga_find_display (dpy);
     xXDGASyncReply rep;
@@ -638,7 +682,7 @@ void XDGAChangePixmapMode(
     int screen,
     int *x,
     int *y,
-    int mode 
+    int mode
 ){
     XExtDisplayInfo *info = xdga_find_display (dpy);
     xXDGAChangePixmapModeReq *req;
@@ -689,7 +733,7 @@ Colormap XDGACreateColormap(
 
 
 void XDGAKeyEventToXKeyEvent(
-    XDGAKeyEvent* dk, 
+    XDGAKeyEvent* dk,
     XKeyEvent* xk
 ){
     xk->type = dk->type;
@@ -710,7 +754,7 @@ void XDGAKeyEventToXKeyEvent(
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
-#if defined(ISC) 
+#if defined(ISC)
 # define HAS_SVR3_MMAP
 # include <sys/types.h>
 # include <errno.h>
@@ -760,7 +804,7 @@ typedef struct _DGAMapRec{
 } DGAMapRec, *DGAMapPtr;
 
 static Bool
-DGAMapPhysical(int, char*, unsigned char*, CARD32, CARD32, CARD32, DGAMapPtr); 
+DGAMapPhysical(int, const char*, unsigned char*, CARD32, CARD32, CARD32, DGAMapPtr);
 static void DGAUnmapPhysical(DGAMapPtr);
 
 static DGAMapPtr _Maps = NULL;
@@ -794,7 +838,7 @@ XDGAMapFramebuffer(
 ){
    DGAMapPtr pMap = _Maps;
    Bool result;
-   
+
    /* is it already mapped ? */
    while(pMap != NULL) {
      if(pMap->screen == screen)
@@ -815,9 +859,9 @@ XDGAMapFramebuffer(
    if(result) {
       pMap->next = _Maps;
       _Maps = pMap;
-   } else 
+   } else
       Xfree(pMap);
-   
+
    return result;
 }
 
@@ -852,7 +896,7 @@ XDGAUnmapFramebuffer(int screen)
 static Bool
 DGAMapPhysical(
    int screen,
-   char *name,			/* optional device name */
+   const char *name,		/* optional device name */
    unsigned char* base,		/* physical memory */
    CARD32 size,			/* size */
    CARD32 offset,		/* optional offset */
@@ -866,7 +910,7 @@ DGAMapPhysical(
     ULONG action;
     HFILE hfd;
 #endif
-  
+
     base += offset;
 
     pMap->screen = screen;
@@ -927,8 +971,8 @@ DGAMapPhysical(
 	    name = DEV_MEM;
     if ((pMap->fd = open(name, O_RDWR)) < 0)
 	return False;
-    pMap->virtual = mmap(NULL, size, PROT_READ | PROT_WRITE, 
-			MAP_FILE | MAP_SHARED, pMap->fd, (off_t)base);
+    pMap->virtual = mmap(NULL, size, PROT_READ | PROT_WRITE,
+			MAP_FILE | MAP_SHARED, pMap->fd, (off_t)(uintptr_t)base);
     if (pMap->virtual == (void *)-1)
 	return False;
     mprotect(pMap->virtual, size, PROT_READ | PROT_WRITE);
