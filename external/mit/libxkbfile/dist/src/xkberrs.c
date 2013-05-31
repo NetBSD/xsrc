@@ -1,4 +1,3 @@
-/* $Xorg: xkberrs.c,v 1.3 2000/08/17 19:46:44 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +23,6 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/lib/xkbfile/xkberrs.c,v 3.4 2001/07/29 05:01:13 tsi Exp $ */
 
 #ifdef HAVE_DIX_CONFIG_H
 #include <dix-config.h>
@@ -43,7 +41,7 @@
 #include <X11/XKBlib.h>
 #include <X11/extensions/XKBfile.h>
 
-char *		_XkbErrMessages[] = {
+const char *	_XkbErrMessages[] = {
 	"success",				/* _XkbSuccess		     */
 	"key names not defined",		/* _XkbErrMissingNames	     */
 	"key types not defined",		/* _XkbErrMissingTypes	     */
@@ -74,6 +72,6 @@ char *		_XkbErrMessages[] = {
 };
 
 unsigned	_XkbErrCode;
-char *		_XkbErrLocation= NULL;
+const char *	_XkbErrLocation= NULL;
 unsigned	_XkbErrData;
 

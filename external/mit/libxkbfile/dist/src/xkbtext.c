@@ -1,4 +1,3 @@
-/* $Xorg: xkbtext.c,v 1.3 2000/08/17 19:46:44 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -7,24 +6,23 @@
  fee is hereby granted, provided that the above copyright
  notice appear in all copies and that both that copyright
  notice and this permission notice appear in supporting
- documentation, and that the name of Silicon Graphics not be 
- used in advertising or publicity pertaining to distribution 
+ documentation, and that the name of Silicon Graphics not be
+ used in advertising or publicity pertaining to distribution
  of the software without specific prior written permission.
- Silicon Graphics makes no representation about the suitability 
+ Silicon Graphics makes no representation about the suitability
  of this software for any purpose. It is provided "as is"
  without any express or implied warranty.
- 
- SILICON GRAPHICS DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS 
- SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY 
+
+ SILICON GRAPHICS DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS
+ SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
  AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL SILICON
- GRAPHICS BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL 
- DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, 
- DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE 
+ GRAPHICS BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL
+ DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
+ DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
  OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/lib/xkbfile/xkbtext.c,v 3.11 2002/12/21 18:49:02 paulo Exp $ */
 
 #ifdef HAVE_DIX_CONFIG_H
 #include <dix-config.h>
@@ -50,7 +48,6 @@
 #else
 
 #include <X11/X.h>
-#define	NEED_EVENTS
 #include <X11/Xproto.h>
 #include "misc.h"
 #include "inputstr.h"
@@ -202,7 +199,7 @@ char *str,buf[BUFFER_SIZE];
 	str= buf;
     }
     else str= NULL;
-    if (mm)	
+    if (mm)
 	len= strlen(mm);
     else	len= 0;
     if (str)
@@ -232,7 +229,7 @@ char *str,buf[BUFFER_SIZE];
     return rtrn;
 }
 
-static char *modNames[XkbNumModifiers] = {
+static const char *modNames[XkbNumModifiers] = {
     "Shift", "Lock", "Control", "Mod1", "Mod2", "Mod3", "Mod4", "Mod5"
 };
 
@@ -426,7 +423,7 @@ char *rtrn;
 
 /***====================================================================***/
 
-static char *imWhichNames[]= {
+static const char *imWhichNames[]= {
 	"base",
 	"latched",
 	"locked",
@@ -480,7 +477,8 @@ char *		buf;
 char *
 XkbAccessXDetailText(unsigned state,unsigned format)
 {
-char *buf,*prefix;
+char *buf;
+const char *prefix;
 
     buf= tbGetBuffer(32);
     if (format==XkbMessage)	prefix= "";
@@ -498,7 +496,7 @@ char *buf,*prefix;
     return buf;
 }
 
-static char *nknNames[] = {
+static const char *nknNames[] = {
 	"keycodes", "geometry", "deviceID"
 };
 #define	NUM_NKN	(sizeof(nknNames)/sizeof(char *))
@@ -506,14 +504,15 @@ static char *nknNames[] = {
 char *
 XkbNKNDetailMaskText(unsigned detail,unsigned format)
 {
-char *buf,*prefix,*suffix;
+char *buf;
+const char *prefix,*suffix;
 register int 		i;
 register unsigned	bit;
 int			len,plen,slen;
 
 
     if ((detail&XkbAllNewKeyboardEventsMask)==0) {
-	char *tmp = "";
+	const char *tmp = "";
 	if (format==XkbCFile)			tmp= "0";
 	else if (format==XkbMessage)		tmp= "none";
 	buf=  tbGetBuffer(strlen(tmp)+1);
@@ -521,7 +520,7 @@ int			len,plen,slen;
 	return buf;
     }
     else if ((detail&XkbAllNewKeyboardEventsMask)==XkbAllNewKeyboardEventsMask){
-	char *	tmp;
+	const char *	tmp;
 	if (format==XkbCFile)		tmp= "XkbAllNewKeyboardEventsMask";
 	else 				tmp= "all";
 	buf=  tbGetBuffer(strlen(tmp)+1);
@@ -571,7 +570,7 @@ int			len,plen,slen;
     return buf;
 }
 
-static char *ctrlNames[] = {
+static const char *ctrlNames[] = {
 	"repeatKeys",
 	"slowKeys",
 	"bounceKeys",
@@ -740,14 +739,14 @@ char *	buf;
 }
 
 static char *actionTypeNames[XkbSA_NumActions]= {
-    "NoAction", 
-    "SetMods",      "LatchMods",    "LockMods", 
+    "NoAction",
+    "SetMods",      "LatchMods",    "LockMods",
     "SetGroup",     "LatchGroup",   "LockGroup",
     "MovePtr",
     "PtrBtn",       "LockPtrBtn",
     "SetPtrDflt",
     "ISOLock",
-    "Terminate",    "SwitchScreen", 
+    "Terminate",    "SwitchScreen",
     "SetControls",  "LockControls",
     "ActionMessage",
     "RedirectKey",
@@ -775,7 +774,7 @@ char *rtrn;
 /***====================================================================***/
 
 static int
-TryCopyStr(char *to,char *from,int *pLeft)
+TryCopyStr(char *to,const char *from,int *pLeft)
 {
 register int len;
     if (*pLeft>0) {
