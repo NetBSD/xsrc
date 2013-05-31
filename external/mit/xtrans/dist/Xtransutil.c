@@ -91,7 +91,7 @@ TRANS(ConvertAddress)(int *familyp, int *addrlenp, Xtransaddr **addrp)
 
 {
 
-    PRMSG(2,"ConvertAddress(%d,%d,%x)\n",*familyp,*addrlenp,*addrp);
+    prmsg(2,"ConvertAddress(%d,%d,%p)\n",*familyp,*addrlenp,*addrp);
 
     switch( *familyp )
     {
@@ -142,7 +142,7 @@ TRANS(ConvertAddress)(int *familyp, int *addrlenp, Xtransaddr **addrp)
 	    {
 		*familyp=FamilyLocal;
 	    }
-	    else 
+	    else
 	    {
 		*familyp=FamilyInternet;
 		*addrlenp = sizeof (struct in_addr);
@@ -161,7 +161,7 @@ TRANS(ConvertAddress)(int *familyp, int *addrlenp, Xtransaddr **addrp)
 #endif /* defined(TCPCONN) || defined(STREAMSCONN) */
 
 
-#if defined(UNIXCONN) || defined(LOCALCONN) 
+#if defined(UNIXCONN) || defined(LOCALCONN)
     case AF_UNIX:
     {
 	*familyp=FamilyLocal;
@@ -178,8 +178,8 @@ TRANS(ConvertAddress)(int *familyp, int *addrlenp, Xtransaddr **addrp)
 #endif
 
     default:
-	PRMSG(1,"ConvertAddress: Unknown family type %d\n",
-	      *familyp, 0,0 );
+	prmsg(1,"ConvertAddress: Unknown family type %d\n",
+	      *familyp);
 	return -1;
     }
 
@@ -190,18 +190,18 @@ TRANS(ConvertAddress)(int *familyp, int *addrlenp, Xtransaddr **addrp)
 	 * In the case of a local connection, we need to get the
 	 * host name for authentication.
 	 */
-	
+
 	char hostnamebuf[256];
 	int len = TRANS(GetHostname) (hostnamebuf, sizeof hostnamebuf);
 
 	if (len > 0) {
 	    if (*addrp && *addrlenp < (len + 1))
 	    {
-		xfree ((char *) *addrp);
+		free (*addrp);
 		*addrp = NULL;
 	    }
 	    if (!*addrp)
-		*addrp = (Xtransaddr *) xalloc (len + 1);
+		*addrp = malloc (len + 1);
 	    if (*addrp) {
 		strcpy ((char *) *addrp, hostnamebuf);
 		*addrlenp = len;
@@ -212,7 +212,7 @@ TRANS(ConvertAddress)(int *familyp, int *addrlenp, Xtransaddr **addrp)
 	else
 	{
 	    if (*addrp)
-		xfree ((char *) *addrp);
+		free (*addrp);
 	    *addrp = NULL;
 	    *addrlenp = 0;
 	}
@@ -242,7 +242,7 @@ TRANS(GetMyNetworkId) (XtransConnInfo ciptr)
     char 	*addr = ciptr->addr;
     char	hostnamebuf[256];
     char 	*networkId = NULL;
-    char	*transName = ciptr->transptr->TransName;
+    const char	*transName = ciptr->transptr->TransName;
 
     if (gethostname (hostnamebuf, sizeof (hostnamebuf)) < 0)
     {
@@ -251,11 +251,11 @@ TRANS(GetMyNetworkId) (XtransConnInfo ciptr)
 
     switch (family)
     {
-#if defined(UNIXCONN) || defined(STREAMSCONN) || defined(LOCALCONN) 
+#if defined(UNIXCONN) || defined(STREAMSCONN) || defined(LOCALCONN)
     case AF_UNIX:
     {
 	struct sockaddr_un *saddr = (struct sockaddr_un *) addr;
-	networkId = (char *) xalloc (3 + strlen (transName) +
+	networkId = malloc (3 + strlen (transName) +
 	    strlen (hostnamebuf) + strlen (saddr->sun_path));
 	sprintf (networkId, "%s/%s:%s", transName,
 	    hostnamebuf, saddr->sun_path);
@@ -285,7 +285,7 @@ TRANS(GetMyNetworkId) (XtransConnInfo ciptr)
 	    portnum = ntohs (saddr->sin_port);
 
 	snprintf (portnumbuf, sizeof(portnumbuf), "%d", portnum);
-	networkId = (char *) xalloc (3 + strlen (transName) +
+	networkId = malloc (3 + strlen (transName) +
 	    strlen (hostnamebuf) + strlen (portnumbuf));
 	sprintf (networkId, "%s/%s:%s", transName, hostnamebuf, portnumbuf);
 	break;
@@ -316,7 +316,7 @@ int
 void
 #endif
 #endif
-nameserver_lost(int sig)
+nameserver_lost(int sig _X_UNUSED)
 {
   nameserver_timedout = 1;
   longjmp (env, -1);
@@ -341,7 +341,7 @@ TRANS(GetPeerNetworkId) (XtransConnInfo ciptr)
     switch (family)
     {
     case AF_UNSPEC:
-#if defined(UNIXCONN) || defined(STREAMSCONN) || defined(LOCALCONN) 
+#if defined(UNIXCONN) || defined(STREAMSCONN) || defined(LOCALCONN)
     case AF_UNIX:
     {
 	if (gethostname (addrbuf, sizeof (addrbuf)) == 0)
@@ -386,7 +386,7 @@ TRANS(GetPeerNetworkId) (XtransConnInfo ciptr)
 	 * Assume that if it does not respond in NAMESERVER_TIMEOUT seconds
 	 * that something is wrong and do not make the user wait.
 	 * gethostbyaddr will continue after a signal, so we have to
-	 * jump out of it. 
+	 * jump out of it.
 	 */
 
 	nameserver_timedout = 0;
@@ -418,8 +418,7 @@ TRANS(GetPeerNetworkId) (XtransConnInfo ciptr)
     }
 
 
-    hostname = (char *) xalloc (
-	strlen (ciptr->transptr->TransName) + strlen (addr) + 2);
+    hostname = malloc (strlen (ciptr->transptr->TransName) + strlen (addr) + 2);
     strcpy (hostname, ciptr->transptr->TransName);
     strcat (hostname, "/");
     if (addr)
@@ -431,13 +430,13 @@ TRANS(GetPeerNetworkId) (XtransConnInfo ciptr)
 #endif /* ICE_t */
 
 
-#if defined(WIN32) && defined(TCPCONN) 
+#if defined(WIN32) && defined(TCPCONN)
 int
 TRANS(WSAStartup) (void)
 {
     static WSADATA wsadata;
 
-    PRMSG (2,"WSAStartup()\n", 0, 0, 0);
+    prmsg (2,"WSAStartup()\n");
 
     if (!wsadata.wVersion && WSAStartup(MAKEWORD(2,2), &wsadata))
         return 1;
@@ -478,15 +477,15 @@ is_numeric (const char *str)
  * it's not save if the directory has non-root ownership or the sticky
  * bit cannot be set and fail.
  */
-static int 
+static int
 trans_mkdir(const char *path, int mode)
 {
     struct stat buf;
 
     if (lstat(path, &buf) != 0) {
 	if (errno != ENOENT) {
-	    PRMSG(1, "mkdir: ERROR: (l)stat failed for %s (%d)\n",
-		  path, errno, 0);
+	    prmsg(1, "mkdir: ERROR: (l)stat failed for %s (%d)\n",
+		  path, errno);
 	    return -1;
 	}
 	/* Dir doesn't exist. Try to create it */
@@ -499,15 +498,15 @@ trans_mkdir(const char *path, int mode)
 	 */
 	if (geteuid() != 0) {
 	    if (mode & 01000) {
-		PRMSG(1, "mkdir: ERROR: euid != 0,"
+		prmsg(1, "mkdir: ERROR: euid != 0,"
 		      "directory %s will not be created.\n",
-		      path, 0, 0);	    
+		      path);
 #ifdef FAIL_HARD
 		return -1;
 #endif
 	    } else {
-		PRMSG(1, "mkdir: Cannot create %s with root ownership\n",
-		      path, 0, 0);
+		prmsg(1, "mkdir: Cannot create %s with root ownership\n",
+		      path);
 	    }
 	}
 #endif
@@ -515,8 +514,8 @@ trans_mkdir(const char *path, int mode)
 #ifndef WIN32
 	if (mkdir(path, mode) == 0) {
 	    if (chmod(path, mode)) {
-		PRMSG(1, "mkdir: ERROR: Mode of %s should be set to %04o\n",
-		      path, mode, 0);
+		prmsg(1, "mkdir: ERROR: Mode of %s should be set to %04o\n",
+		      path, mode);
 #ifdef FAIL_HARD
 		return -1;
 #endif
@@ -525,13 +524,13 @@ trans_mkdir(const char *path, int mode)
 	if (mkdir(path) == 0) {
 #endif
 	} else {
-	    PRMSG(1, "mkdir: ERROR: Cannot create %s\n",
-		  path, 0, 0);
+	    prmsg(1, "mkdir: ERROR: Cannot create %s\n",
+		  path);
 	    return -1;
 	}
 
 	return 0;
-	
+
     } else {
 	if (S_ISDIR(buf.st_mode)) {
 	    int updateOwner = 0;
@@ -550,7 +549,7 @@ trans_mkdir(const char *path, int mode)
 	     */
 	    if ((~mode) & 0077 & buf.st_mode)
 		updateMode = 1;
-	    
+
 	    /*
 	     * If the directory is not writeable not everybody may
 	     * be able to create sockets. Therefore warn if mode
@@ -560,7 +559,7 @@ trans_mkdir(const char *path, int mode)
 		updateMode = 1;
 		status |= WARN_NO_ACCESS;
 	    }
-	    
+
 	    /*
 	     * If 'sticky' bit is requested fail if owner isn't root
 	     * as we assume the caller makes certain security implications
@@ -572,7 +571,7 @@ trans_mkdir(const char *path, int mode)
 		    updateMode = 1;
 		}
 	    }
-	    
+
 #ifdef HAS_FCHOWN
 	    /*
 	     * If fchown(2) and fchmod(2) are available, try to correct the
@@ -584,8 +583,9 @@ trans_mkdir(const char *path, int mode)
 		struct stat fbuf;
 		if ((fd = open(path, O_RDONLY)) != -1) {
 		    if (fstat(fd, &fbuf) == -1) {
-			PRMSG(1, "mkdir: ERROR: fstat failed for %s (%d)\n",
-			      path, errno, 0);
+			prmsg(1, "mkdir: ERROR: fstat failed for %s (%d)\n",
+			      path, errno);
+			close(fd);
 			return -1;
 		    }
 		    /*
@@ -595,8 +595,9 @@ trans_mkdir(const char *path, int mode)
 		    if (!S_ISDIR(fbuf.st_mode) ||
 			buf.st_dev != fbuf.st_dev ||
 			buf.st_ino != fbuf.st_ino) {
-			PRMSG(1, "mkdir: ERROR: inode for %s changed\n",
-			      path, 0, 0);
+			prmsg(1, "mkdir: ERROR: inode for %s changed\n",
+			      path);
+			close(fd);
 			return -1;
 		    }
 		    if (updateOwner && fchown(fd, 0, 0) == 0)
@@ -607,34 +608,33 @@ trans_mkdir(const char *path, int mode)
 		}
 	    }
 #endif
-	    
+
 	    if (updateOwner && !updatedOwner) {
 #ifdef FAIL_HARD
 		if (status & FAIL_IF_NOT_ROOT) {
-		    PRMSG(1, "mkdir: ERROR: Owner of %s must be set to root\n",
-			  path, 0, 0);
+		    prmsg(1, "mkdir: ERROR: Owner of %s must be set to root\n",
+			  path);
 		    return -1;
 		}
 #endif
 #if !defined(__APPLE_CC__) && !defined(__CYGWIN__)
-	  	PRMSG(1, "mkdir: Owner of %s should be set to root\n",
-		      path, 0, 0);
+		prmsg(1, "mkdir: Owner of %s should be set to root\n",
+		      path);
 #endif
 	    }
-	    
+
 	    if (updateMode && !updatedMode) {
 #ifdef FAIL_HARD
 		if (status & FAIL_IF_NOMODE) {
-		    PRMSG(1, "mkdir: ERROR: Mode of %s must be set to %04o\n",
-			  path, mode, 0);
+		    prmsg(1, "mkdir: ERROR: Mode of %s must be set to %04o\n",
+			  path, mode);
 		    return -1;
 		}
 #endif
-	  	PRMSG(1, "mkdir: Mode of %s should be set to %04o\n",
-		      path, mode, 0);
+		prmsg(1, "mkdir: Mode of %s should be set to %04o\n",
+		      path, mode);
 		if (status & WARN_NO_ACCESS) {
-		    PRMSG(1, "mkdir: this may cause subsequent errors\n",
-			  0, 0, 0);
+		    prmsg(1, "mkdir: this may cause subsequent errors\n");
 		}
 	    }
 	    return 0;
