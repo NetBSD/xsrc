@@ -1,3 +1,99 @@
+commit a1569179b99f6c8af86132030077439c1dbd52c2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 10 16:15:08 2013 -0800
+
+    xstdcmap 1.0.3
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit dcd3ef4f939077b032319508ea6f6107286dd39a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 13 12:50:21 2013 -0800
+
+    Constify some char * to fix gcc warnings
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d8f572a262c37f79d3fabc855543404b774c96b1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 13 12:46:49 2013 -0800
+
+    Combine usage message into single string
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 250cdac0bcc73e1dee9094ded8612f500370640c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 13 12:38:19 2013 -0800
+
+    Add -version option
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c6f15b6d67f4c8df2af07848d6277593e24f6352
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 13 12:35:40 2013 -0800
+
+    Replace sprintf with snprintf
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 06186d82c57b2545db2d6b1a6665f23d1b6a3cfd
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 13 12:29:03 2013 -0800
+
+    -help should not fail if display cannot be opened
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 701d5f797a77ba3b3ff2d8c25b7951563d7e4363
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 13 12:25:45 2013 -0800
+
+    Mark Exit() & usage() with _X_NORETURN, cleanup previous workarounds
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4b994408d260eb90d8c65739bc3cd6d56037b10a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 13 12:16:41 2013 -0800
+
+    config: Add missing AC_CONFIG_SRCDIR
+    
+    Regroup AC statements under the Autoconf initialization section.
+    Regroup AM statements under the Automake initialization section.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 88f027eb5caafea16925b44e8da77e9837b4988e
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jan 19 10:06:57 2011 -0500
+
+    config: move man pages into their own directory
+    
+    Use services provided by XORG_MANPAGE_SECTIONS.
+    Use standard Makefile for man pages.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit c2e66dced98d62bbfe013e54f2332b9950a268b9
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Jan 13 11:15:48 2011 -0500
+
+    man: remove trailing spaces and tabs
+    
+    Using s/[ \t]*$//
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit e6c2aa2cea7df267679414155434d7c1ee5f837d
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jan 12 16:28:02 2011 -0500
+
+    config: replace deprecated AM_CONFIG_HEADER with AC_CONFIG_HEADERS
+    
+    This silences an Autoconf warning
+
 commit 180893b7d452d31e1a64671292315abef8b7590e
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sun Sep 26 18:16:14 2010 -0700
