@@ -59,7 +59,7 @@ from The Open Group.
 
 static XExtensionInfo _xrecord_info_data;
 static XExtensionInfo *xrecord_info = &_xrecord_info_data;
-static const char *xrecord_extension_name = RECORD_NAME;
+static char *xrecord_extension_name = RECORD_NAME;
 
 #define XRecordCheckExtension(dpy,i,val) \
     XextCheckExtension(dpy, i, xrecord_extension_name, val)
