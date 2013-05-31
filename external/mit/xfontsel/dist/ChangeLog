@@ -1,3 +1,166 @@
+commit f8aaa4ffae00fd97a393d2589f9c9579b5bac5ad
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri May 17 18:00:41 2013 -0700
+
+    xfontsel 1.0.5
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8de6cf335b27e89866d9b443f7f44f33ace8fad9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jan 25 13:42:28 2013 -0800
+
+    Use C99 struct initializer for parseRec in GetFontNames()
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit afc3ec190b28caa4b470ca6617db7d9f009f586e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 19 18:24:21 2013 -0800
+
+    When font fails to load, grey out text instead of unmapping text widget
+    
+    Before if you selected a pattern that couldn't load, such as a strange
+    encoding, the text widget would simply stop updating, giving the user
+    no feedback that they weren't seeing the selected font, and leaving
+    repaint turds from menus in the text area.   Now we are more clear that
+    something is wrong, and clean up when menus overlap the text.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1c6e89d9dda4d41709abfed4522fd801799bfd30
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 19 17:13:28 2013 -0800
+
+    Remove extraneous braces left from commit 1d6970a838d4ed42a
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit bc51dd4cdf617ba44ed1231d411eb8d63616e371
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 26 22:58:14 2012 -0700
+
+    Prevent memory leak in GetFontNames if no fonts are matched
+    
+    Defer creating ParseRec until after we check for numFonts = 0 and return.
+    
+    Fixes error found by Parfait 0.5.0.2 bug checking tool:
+       Memory leak of pointer '<unknown>' allocated with XtMalloc(40)
+            at line 466 of app/xfontsel/xfontsel.c in function 'GetFontNames'.
+              pointer allocated at line 447 with XtMalloc(40).
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4faa8afa1856a015a63efb12a466b5fd060c1af5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Apr 14 01:08:43 2012 -0700
+
+    Combine usage message strings
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 67309809fee4ea1b7b4334d6245788ddea626dcf
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Mar 22 22:30:31 2012 -0700
+
+    xfontsel 1.0.4
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5815b461672845cf6de179f04c778354139f7834
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Sep 28 22:05:41 2011 -0700
+
+    Add const attribute to fieldP fix a gcc -Wwrite-strings warning
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d9200f965f056d3da49476dd9b8333ff47265f30
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Sep 28 22:00:50 2011 -0700
+
+    Strip trailing whitespace
+    
+    Performed with: find * -type f | xargs perl -i -p -e 's{[ \t]+$}{}'
+    git diff -w & git diff -b show no diffs from this change
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 561085a83a777fec4b42cfa16a8ba80e971d86fb
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Sep 16 19:04:30 2011 -0700
+
+    Convert sprintf calls to snprintf
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1d6970a838d4ed42a8c91a10cb5311f98ba959c3
+Author: Jesse Adkins <jesserayadkins@gmail.com>
+Date:   Tue Oct 26 16:06:24 2010 -0700
+
+    Remove USE_TEXT_WIDGET (bug 8966)
+    
+    It was included in the initial revision. The bug dates back to 2006, so I
+    think it's safe to say that this never worked.
+    
+    Signed-off-by: Jesse Adkins <jesserayadkins@gmail.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 19bcefb4c89e02833cb7fcffeb7fd3f7224db1c4
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jan 19 10:06:56 2011 -0500
+
+    config: move man pages into their own directory
+    
+    Use services provided by XORG_MANPAGE_SECTIONS.
+    Use standard Makefile for man pages.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit f68420e9698d9a3b3e18cbefb96a3ccf9d555c65
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Jan 13 17:15:36 2011 -0500
+
+    man: replace hard coded man page section with substitution strings
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 63f5e107b12fb8a78946e54e36e99f2ec64a5bac
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Jan 13 11:15:47 2011 -0500
+
+    man: remove trailing spaces and tabs
+    
+    Using s/[ \t]*$//
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 1fe1686bbe8d3830a3e7531dda4318c81f6d7405
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jan 12 16:28:02 2011 -0500
+
+    config: replace deprecated AM_CONFIG_HEADER with AC_CONFIG_HEADERS
+    
+    This silences an Autoconf warning
+
+commit 284bc2ff3e5a852f44ca08cb4fcab5ee64a08e54
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jan 12 15:29:50 2011 -0500
+
+    config: replace deprecated AC_HELP_STRING with AS_HELP_STRING
+    
+    This silences an Automake warning.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 0799a10d39b4240bdc043a5fcdd25f571338be24
+Author: Jesse Adkins <jesserayadkins@gmail.com>
+Date:   Tue Sep 28 13:29:49 2010 -0700
+
+    Purge cvs tags.
+    
+    Signed-off-by: Jesse Adkins <jesserayadkins@gmail.com>
+
 commit 3aaccefa18e0eb37393642823b2e8454b1de20fd
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sun Sep 26 17:24:50 2010 -0700
