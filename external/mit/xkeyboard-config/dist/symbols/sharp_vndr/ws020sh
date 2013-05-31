@@ -1,4 +1,4 @@
-// $NetBSD: ws020sh,v 1.1 2010/05/25 13:12:51 nonaka Exp $
+// $NetBSD: ws020sh,v 1.1.1.1 2013/05/31 23:20:03 mrg Exp $
 
 partial default alphanumeric_keys
 xkb_symbols "basic" {
