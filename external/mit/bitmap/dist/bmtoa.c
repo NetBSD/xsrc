@@ -44,25 +44,22 @@ from The Open Group.
 
 #include <stdlib.h>
 #include <unistd.h>
-#ifndef HAS_MKSTEMP
+#ifndef HAVE_MKSTEMP
 extern char *mktemp();
 #endif
 
 static char *ProgramName;
 
-static void print_scanline (unsigned int width, unsigned int height, 
-			    unsigned char *data, char *chars);
+static void print_scanline (unsigned int width, unsigned int height,
+			    unsigned const char *data, const char *chars);
 
-static void 
+static void _X_NORETURN
 usage (void)
 {
-    fprintf (stderr, "usage:  %s [-options ...] [filename]\n\n",
-	     ProgramName);
-    fprintf (stderr, 
-	"where options include:\n");
-    fprintf (stderr,
+    fprintf (stderr, "usage:  %s [-options ...] [filename]\n\n%s\n",
+	     ProgramName,
+	"where options include:\n"
 	"    -chars cc        chars to use for 0 and 1 bits, respectively\n");
-    fprintf (stderr, "\n");
     exit (1);
 }
 
@@ -75,28 +72,23 @@ copy_stdin (void)
     static char tmpfilename[] = "/tmp/bmtoa.XXXXXX";
 #endif
     char buf[BUFSIZ];
-    FILE *fp;
+    FILE *fp = NULL;
     int nread, nwritten;
 
-#ifndef HAS_MKSTEMP
-    if (mktemp (tmpfilename) == NULL) {
-	fprintf (stderr,
-		 "%s:  unable to genererate temporary file name for stdin.\n",
-		 ProgramName);
-	exit (1);
-    }
-    fp = fopen (tmpfilename, "w");
+#ifndef HAVE_MKSTEMP
+    if (mktemp (tmpfilename) != NULL)
+	fp = fopen (tmpfilename, "w");
 #else
     int fd;
-
-    if ((fd = mkstemp(tmpfilename)) < 0) {
+    if ((fd = mkstemp(tmpfilename)) >= 0)
+	fp = fdopen(fd, "w");
+#endif
+    if (fp == NULL) {
 	fprintf (stderr,
-		 "%s:  unable to genererate temporary file name for stdin.\n",
+		 "%s:  unable to generate temporary file for stdin.\n",
 		 ProgramName);
 	exit (1);
     }
-    fp = fdopen(fd, "w");
-#endif
     while (1) {
 	buf[0] = '\0';
 	nread = fread (buf, 1, sizeof buf, stdin);
@@ -116,11 +108,11 @@ copy_stdin (void)
 }
 
 int
-main (int argc, char *argv[]) 
+main (int argc, char *argv[])
 {
-    char *filename = NULL;
+    const char *filename = NULL;
     int isstdin = 0;
-    char *chars = "-#";
+    const char *chars = "-#";
     int i;
     unsigned int width, height;
     unsigned char *data;
@@ -130,7 +122,7 @@ main (int argc, char *argv[])
     ProgramName = argv[0];
 
     for (i = 1; i < argc; i++) {
-	char *arg = argv[i];
+	const char *arg = argv[i];
 
 	if (arg[0] == '-') {
 	    switch (arg[1]) {
@@ -175,23 +167,16 @@ main (int argc, char *argv[])
 }
 
 static void
-print_scanline (unsigned int width, 
-		unsigned int height, 
-		unsigned char *data, 
-		char *chars)
+print_scanline (unsigned int width,
+		unsigned int height,
+		unsigned const char *data,
+		const char *chars)
 {
-    char *scanline = (char *) malloc (width + 1);
-    unsigned char *dp = data;
+    unsigned const char *dp = data;
     int row, column;
-    static unsigned char masktable[] = {
+    static unsigned const char masktable[] = {
 	0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 };
     int padded = ((width & 7) != 0);
-
-    if (!scanline) {
-	fprintf (stderr, "%s:  unable to allocate %d bytes for scanline\n",
-		 ProgramName, width + 1);
-	exit (1);
-    }
 
     for (row = 0; row < height; row++) {
 	for (column = 0; column < width; column++) {
