@@ -71,7 +71,7 @@ IceAddConnectionWatch (
     /*
      * Invoke the watch proc with any previously opened ICE connections.
      */
-     
+
     for (i = 0; i < _IceConnectionCount; i++)
     {
 	_IceWatchedConnection *newWatchedConn = (_IceWatchedConnection *)

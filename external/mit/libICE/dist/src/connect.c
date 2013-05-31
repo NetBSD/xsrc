@@ -83,7 +83,7 @@ IceOpenConnection (
      * connection if the specified 'context' is equal to the context
      * associated with the ICE connection, or if the context associated
      * with the ICE connection is NULL.
-     * 
+     *
      * If 'majorOpcodeCheck' is non-zero, it will contain a protocol major
      * opcode that we should make sure is not already active on the ICE
      * connection.  Some clients will want two seperate connections for the
@@ -471,7 +471,7 @@ ConnectToPeer (char *networkIdsList, char **actualConnectionRet)
     {
        address = malloc (len + 1);
        address_size = len;
-    }    
+    }
 
     while (ptr < endptr && !madeConnection)
     {
@@ -513,18 +513,18 @@ ConnectToPeer (char *networkIdsList, char **actualConnectionRet)
 	}
     }
 
-    if (madeConnection) 
+    if (madeConnection)
     {
 	/*
 	 * We need to return the actual network connection string
 	 */
 
 	*actualConnectionRet = strdup(address);
-	
+
 	/*
 	 * Return the file descriptor
 	 */
-    } 
+    }
     else trans_conn = NULL;
 
     if (address != addrbuf) free (address);

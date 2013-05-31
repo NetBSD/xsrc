@@ -145,7 +145,7 @@ IceCloseConnection (
     IO	       free-      dispatch   protocol   shutdown
     error      asap bit   level      refcount   negotiation     ACTION
     occured    set        reached 0  reached 0
-    
+
         0          0          0          0          0		N
         0          0          0          0          1		N
         0          0          0          1          0		AB
