@@ -130,7 +130,7 @@ reopen:
 	msg[0] = 0x02;
 	msg[1] = len;
 
-	if (atomicio(write, fd, msg, sizeof(msg)) != sizeof(msg)) {
+	if (atomicio((ssize_t (*)(int, void *, size_t))write, fd, msg, sizeof(msg)) != sizeof(msg)) {
 		if (errno == EPIPE && errors < 10) {
 			close(fd);
 			errors++;
