@@ -273,12 +273,12 @@ _SmsDefaultErrorHandler(SmsConn smsConn, Bool swap, int offendingMinorOpcode,
 
 
 
-/* 
+/*
  * This procedure sets the Smc error handler to be the specified
  * routine.  If NULL is passed in the default error handler is restored.
  * The function's return value is the previous error handler.
  */
- 
+
 SmcErrorHandler
 SmcSetErrorHandler(SmcErrorHandler handler)
 {
@@ -294,12 +294,12 @@ SmcSetErrorHandler(SmcErrorHandler handler)
 
 
 
-/* 
+/*
  * This procedure sets the Sms error handler to be the specified
  * routine.  If NULL is passed in the default error handler is restored.
  * The function's return value is the previous error handler.
  */
- 
+
 SmsErrorHandler
 SmsSetErrorHandler(SmsErrorHandler handler)
 {
