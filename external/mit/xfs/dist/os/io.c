@@ -46,16 +46,14 @@ in this Software without prior written authorization from The Open Group.
  * THIS SOFTWARE.
  */
 
-#include	"xfs-config.h"
+#include	"config.h"
 
 #include	<X11/Xtrans/Xtrans.h>
 #include	<stdio.h>
 #include	<errno.h>
 #include	<sys/types.h>
 #include	<sys/param.h>
-#ifndef __UNIXOS2__
 #include	<sys/uio.h>
-#endif
 
 #include	<X11/fonts/FSproto.h>
 #include	"clientstr.h"
