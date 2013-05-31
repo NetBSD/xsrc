@@ -62,8 +62,6 @@ xkb_symbols "basic" {
     key <AB09> {  [     Arabic_zain,         period       ]     };
     key <AB10> {  [      Arabic_zah, Arabic_question_mark ]     };
 
-    include "level3(ralt_switch)"
-
     // End alphanumeric section
 };
 
@@ -273,4 +271,11 @@ xkb_symbols "olpc" {
     key <AB05> {  [     Arabic_thal,      asciicircum ] };
 
     include "group(olpc)"
+};
+
+// EXTRAS:
+
+partial alphanumeric_keys
+	xkb_symbols "sun_type6" {
+	include "sun_vndr/ara(sun_type6)"
 };

@@ -169,10 +169,13 @@ xkb_symbols "mac" {
 
     key <AE02> {	[               2,              at,         EuroSign	]	};
     key <AE03> {	[               3,        sterling,       numbersign	]	};
+    key <TLDE> {	[         section,       plusminus ]	};
+    key <LSGT> {	[           grave,      asciitilde ]	};
 
     // End alphanumeric section
     
     include "level3(ralt_switch)"
+    include "level3(enter_switch)"
 };
 
 
@@ -196,4 +199,11 @@ xkb_symbols "mac_intl" {
     key <LSGT>  { [ dead_grave,        dead_tilde,          brokenbar,        bar ] };
 
     include "level3(ralt_switch)"
+};
+
+// EXTRAS:
+
+partial alphanumeric_keys
+	xkb_symbols "sun_type6" {
+	include "sun_vndr/gb(sun_type6)"
 };
