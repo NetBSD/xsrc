@@ -6,10 +6,10 @@
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
  * documentation.
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -17,7 +17,7 @@
  * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  * Except as contained in this notice, the name of The Open Group shall
  * not be used in advertising or otherwise to promote the sale, use or
  * other dealings in this Software without prior written authorization
@@ -25,7 +25,8 @@
  *
  */
 
-/* Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
+/*
+ * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -66,26 +67,12 @@
 # include <sys/param.h>
 #endif
 
-#ifndef HAVE_LASTLOG_H
-# define NO_LASTLOG
-#endif
-
-#ifndef NO_LASTLOG
-# ifdef CSRG_BASED
-#  if (BSD < 199103)
-#   include	<lastlog.h>
-#  endif
-# else
-#  include	<lastlog.h>
+#if defined(HAVE_STRUCT_LASTLOG) && defined(HAVE_PWD_H)
+# ifdef HAVE_LASTLOG_H
+#  include <lastlog.h>
 # endif
-# include	<pwd.h>
-#endif
-
-#ifdef CSRG_BASED
-#if !defined(__FreeBSD__) && !defined(__OpenBSD__)
-/* *BSD doesn't like a ':0' type entry in utmp */
-#define NO_UTMP
-#endif
+# include <pwd.h>
+# define USE_LASTLOG
 #endif
 
 #ifndef WTMP_FILE
@@ -95,15 +82,6 @@
 #  define WTMP_FILE	"/usr/adm/wtmp"
 # endif
 #endif
-
-#ifndef WTMPX_FILE
-# ifdef _PATH_WTMPX
-#  define WTMPX_FILE	_PATH_WTMPX
-# else
-#  define WTMPX_FILE	"/usr/adm/wtmpx"
-# endif
-#endif
-
 #ifndef UTMP_FILE
 # ifdef _PATH_UTMP
 #  define UTMP_FILE	_PATH_UTMP
@@ -111,27 +89,20 @@
 #  define UTMP_FILE	"/etc/utmp"
 # endif
 #endif
-
-#ifndef UTMPX_FILE
-# ifdef _PATH_UTMPX
-#  define UTMPX_FILE	_PATH_UTMPX
+#ifndef LLOG_FILE
+# ifdef _PATH_LASTLOG
+#  define LLOG_FILE	_PATH_LASTLOG
 # else
-#  define UTMPX_FILE	"/etc/utmpx"
+#  define LLOG_FILE	"/usr/adm/lastlog"
 # endif
+#endif
+#ifndef TTYS_FILE
+# define TTYS_FILE	"/etc/ttys"
 #endif
 
-#ifndef NO_LASTLOG
-# ifndef LLOG_FILE
-#  ifdef _PATH_LASTLOG
-#   define LLOG_FILE	_PATH_LASTLOG
-#  else
-#   define LLOG_FILE	"/usr/adm/lastlog"
-#  endif
-# endif
+#ifndef WTMPX_FILE
+# define WTMPX_FILE	_PATH_WTMPX
 #endif
-#ifndef SYSV
-# ifndef TTYS_FILE
-#  define TTYS_FILE	"/etc/ttys"
-# endif
+#ifndef UTMPX_FILE
+# define UTMPX_FILE	_PATH_UTMPX
 #endif
-
