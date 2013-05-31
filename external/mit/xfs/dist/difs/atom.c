@@ -48,7 +48,7 @@ in this Software without prior written authorization from The Open Group.
  *
  */
 
-#include "xfs-config.h"
+#include "config.h"
 
 #include "misc.h"
 #include "fsresource.h"
@@ -71,7 +71,7 @@ static unsigned long tableLength;
 static NodePtr *nodeTable;
 
 Atom
-MakeAtom(char *string, unsigned int len, Bool makeit)
+MakeAtom(const char *string, unsigned int len, Bool makeit)
 {
     register NodePtr *np;
     unsigned    i;
@@ -89,7 +89,7 @@ MakeAtom(char *string, unsigned int len, Bool makeit)
 	else if (fp > (*np)->fingerPrint)
 	    np = &((*np)->right);
 	else {			/* now start testing the strings */
-	    comp = strncmp(string, (*np)->string, (int) len);
+	    comp = strncmp(string, (*np)->string, len);
 	    if ((comp < 0) || ((comp == 0) && (len < strlen((*np)->string))))
 		np = &((*np)->left);
 	    else if (comp > 0)
@@ -115,7 +115,7 @@ MakeAtom(char *string, unsigned int len, Bool makeit)
 		fsfree(nd);
 		return BAD_RESOURCE;
 	    }
-	    strncpy(nd->string, string, (int) len);
+	    strncpy(nd->string, string, len);
 	    nd->string[len] = 0;
 	}
 	if ((lastAtom + 1) >= tableLength) {
