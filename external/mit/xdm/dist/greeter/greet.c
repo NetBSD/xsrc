@@ -26,7 +26,7 @@ from The Open Group.
 
 */
 /*
- * Copyright © 2006 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -93,7 +93,6 @@ from The Open Group.
 extern int getdomainname(char *name, size_t len);
 #endif
 
-#ifdef GREET_LIB
 /*
  * Function pointers filled in by the initial call ito the library
  */
@@ -120,7 +119,7 @@ void    (*__xdm_LogOutOfMem)(const char * fmt, ...) = NULL;
 void    (*__xdm_setgrent)(void) = NULL;
 struct group    *(*__xdm_getgrent)(void) = NULL;
 void    (*__xdm_endgrent)(void) = NULL;
-# ifdef USESHADOW
+# ifdef HAVE_GETSPNAM
 struct spwd   *(*__xdm_getspnam)(GETSPNAM_ARGS) = NULL;
 #  ifndef QNX4
 void   (*__xdm_endspent)(void) = NULL;
@@ -135,8 +134,6 @@ char     *(*__xdm_crypt)(CRYPT_ARGS) = NULL;
 pam_handle_t **(*__xdm_thepamhp)(void) = NULL;
 # endif
 
-#endif
-
 #ifdef SECURE_RPC
 # include <rpc/rpc.h>
 # include <rpc/key_prot.h>
@@ -145,8 +142,6 @@ pam_handle_t **(*__xdm_thepamhp)(void) = NULL;
 #ifdef K5AUTH
 # include <krb5/krb5.h>
 #endif
-
-extern Display	*dpy;
 
 static int	done, code;
 #ifndef USE_PAM
@@ -315,7 +310,7 @@ InitGreet (struct display *d)
 
     if (d->pingInterval)
     {
-    	pingTimeout = XtAppAddTimeOut (context, d->pingInterval * 60 * 1000,
+	pingTimeout = XtAppAddTimeOut (context, d->pingInterval * 60 * 1000,
 				       GreetPingServer, (XtPointer) d);
     }
     return dpy;
@@ -356,7 +351,7 @@ static int
 Greet (struct display *d, struct greet_info *greet)
 {
     XEvent		event;
-    Arg		arglist[3];
+    Arg		arglist[1];
 
     XtSetArg (arglist[0], XtNallowAccess, False);
     XtSetValues (login, arglist, 1);
@@ -399,9 +394,7 @@ Greet (struct display *d, struct greet_info *greet)
 	greet->password = password;
 #endif  /* USE_PAM */
 	XtSetArg (arglist[0], XtNsessionArgument, (char *) &(greet->string));
-	XtSetArg (arglist[1], XtNallowNullPasswd, (char *) &(greet->allow_null_passwd));
-	XtSetArg (arglist[2], XtNallowRootLogin, (char *) &(greet->allow_root_login));
-	XtGetValues (login, arglist, 3);
+	XtGetValues (login, arglist, 1);
 	Debug ("sessionArgument: %s\n", greet->string ? greet->string : "<NULL>");
     }
     return code;
@@ -409,11 +402,9 @@ Greet (struct display *d, struct greet_info *greet)
 
 
 static void
-FailedLogin (struct display *d, struct greet_info *greet)
+FailedLogin (struct display *d, const char *username)
 {
 #ifdef USE_SYSLOG
-    const char *username = greet->name;
-
     if (username == NULL)
 	username = "username unavailable";
 
@@ -422,10 +413,6 @@ FailedLogin (struct display *d, struct greet_info *greet)
 	   d->name, username);
 #endif
     DrawFail (login);
-#ifndef USE_PAM
-    bzero (greet->name, strlen(greet->name));
-    bzero (greet->password, strlen(greet->password));
-#endif
 }
 
 _X_EXPORT
@@ -437,8 +424,8 @@ greet_user_rtn GreetUser(
     struct dlfuncs        *dlfuncs)
 {
     int i;
+    Arg		arglist[2];
 
-#ifdef GREET_LIB
 /*
  * These must be set before they are used.
  */
@@ -464,7 +451,7 @@ greet_user_rtn GreetUser(
     __xdm_setgrent = dlfuncs->_setgrent;
     __xdm_getgrent = dlfuncs->_getgrent;
     __xdm_endgrent = dlfuncs->_endgrent;
-# ifdef USESHADOW
+# ifdef HAVE_GETSPNAM
     __xdm_getspnam = dlfuncs->_getspnam;
 #  ifndef QNX4
     __xdm_endspent = dlfuncs->_endspent;
@@ -478,7 +465,6 @@ greet_user_rtn GreetUser(
 # ifdef USE_PAM
     __xdm_thepamhp = dlfuncs->_thepamhp;
 # endif
-#endif
 
     *dpy = InitGreet (d);
     /*
@@ -492,6 +478,12 @@ greet_user_rtn GreetUser(
 	exit (RESERVER_DISPLAY);
     }
 
+    XtSetArg (arglist[0], XtNallowNullPasswd,
+	      (char *) &(greet->allow_null_passwd));
+    XtSetArg (arglist[1], XtNallowRootLogin,
+	      (char *) &(greet->allow_root_login));
+    XtGetValues (login, arglist, 2);
+
     for (;;) {
 #ifdef USE_PAM
 
@@ -502,7 +494,6 @@ greet_user_rtn GreetUser(
 	struct myconv_data pcd		= { d, greet, NULL };
 	struct pam_conv   pc 		= { pamconv, &pcd };
 	const char *	  pam_fname;
-	char *		  username	= NULL;
 	const char *	  login_prompt;
 
 
@@ -544,8 +535,25 @@ greet_user_rtn GreetUser(
 					(*pamhp, PAM_RHOST, hostname));
 		free(hostname);
 	    }
-	} else
-	    RUN_AND_CHECK_PAM_ERROR(pam_set_item, (*pamhp, PAM_TTY, d->name));
+	} else {			/* Displaying on local host */
+	    const char *ttyname = NULL;
+
+#ifdef __sun
+	    /* Solaris PAM & auditing insist this is a device file that can
+	       be found under /dev, so we can't use the display name */
+	    char vtpath[16];
+
+	    if ((d->windowPath) && !(strchr(d->windowPath, ':'))) {
+		/* if path is simply a VT, with no intermediaries, use it */
+		snprintf(vtpath, sizeof(vtpath), "/dev/vt/%s", d->windowPath);
+		ttyname = vtpath;
+	    }
+#else
+	    /* On all other OS'es we just pass the display name for PAM_TTY */
+	    ttyname = d->name;
+#endif
+	    RUN_AND_CHECK_PAM_ERROR(pam_set_item, (*pamhp, PAM_TTY, ttyname));
+	}
 
 	if (!greet->allow_null_passwd) {
 	    pam_flags |= PAM_DISALLOW_NULL_AUTHTOK;
@@ -571,12 +579,16 @@ greet_user_rtn GreetUser(
 
 	RUN_AND_CHECK_PAM_ERROR(pam_setcred,
 				(*pamhp, 0));
-	RUN_AND_CHECK_PAM_ERROR(pam_get_item,
-				(*pamhp, PAM_USER, (void *) &username));
-	if (username != NULL) {
-	    Debug("PAM_USER: %s\n", username);
-	    greet->name = username;
-	    greet->password = NULL;
+	{
+	    char *username	= NULL;
+
+	    RUN_AND_CHECK_PAM_ERROR(pam_get_item,
+				    (*pamhp, PAM_USER, (void *) &username));
+	    if (username != NULL) {
+		Debug("PAM_USER: %s\n", username);
+		greet->name = username;
+		greet->password = NULL;
+	    }
 	}
 
       pam_done:
@@ -591,15 +603,14 @@ greet_user_rtn GreetUser(
 	    break;
 	} else {
 	    /* Try to fill in username for failed login error log */
-	    if (greet->name == NULL) {
-		if (username == NULL) {
-		    RUN_AND_CHECK_PAM_ERROR(pam_get_item,
-					    (*pamhp, PAM_USER,
-					     (void *) &username));
-		}
-		greet->name = username;
+	    char *username = greet->name;
+
+	    if (username == NULL) {
+		RUN_AND_CHECK_PAM_ERROR(pam_get_item,
+					(*pamhp, PAM_USER,
+					 (void *) &username));
 	    }
-	    FailedLogin (d, greet);
+	    FailedLogin (d, username);
 	    RUN_AND_CHECK_PAM_ERROR(pam_end,
 				    (*pamhp, pam_error));
 	}
@@ -619,7 +630,11 @@ greet_user_rtn GreetUser(
 	if (Verify (d, greet, verify))
 	    break;
 	else
-	    FailedLogin (d, greet);
+	{
+	    FailedLogin (d, greet->name);
+	    bzero (greet->name, strlen(greet->name));
+	    bzero (greet->password, strlen(greet->password));
+	}
 #endif
     }
     DeleteXloginResources (d, *dpy);

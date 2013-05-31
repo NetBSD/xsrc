@@ -1,19 +1,20 @@
-if DYNAMIC_GREETER
 xdmlibdir = $(XDMLIBDIR)
 
 xdmlib_LTLIBRARIES = libXdmGreet.la
 
 libXdmGreet_la_SOURCES = \
 		  Login.c \
+		  Login.h \
+		  LoginP.h \
 		  greet.c \
 		  verify.c
 
 libXdmGreet_la_LIBADD = $(XDMGREET_LIBS)
 
-AM_CFLAGS = $(CWARNFLAGS) $(XDMGREET_CFLAGS) -I$(top_srcdir)
+AM_CPPFLAGS = -I$(top_srcdir)/include
+AM_CFLAGS = $(CWARNFLAGS) $(XDMGREET_CFLAGS) -DGREET_LIB
 
 libXdmGreet_la_LDFLAGS = -module -avoid-version
-endif
 
 if LINT
 ALL_LINT_FLAGS=$(LINT_FLAGS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \

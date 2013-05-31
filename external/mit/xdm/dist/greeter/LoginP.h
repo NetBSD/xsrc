@@ -26,7 +26,7 @@ from The Open Group.
 
 */
 /*
- * Copyright © 2006 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -72,12 +72,12 @@ from The Open Group.
 typedef void (*LoginFunc)(LoginWidget, LoginData *, int);
 
 typedef struct {
-    	char *		promptText;	/* Prompt displayed */
-    	const char *	defaultPrompt;	/* Default text for prompt */
-    	char *		valueText;	/* Value entered for prompt */
-   	size_t		valueTextMax;	/* Size of valueText buffer */
-    	int		valueShownStart;/* Amount of string shown if too */
-    	int		valueShownEnd;	/*  long to fit in field */
+	char *		promptText;	/* Prompt displayed */
+	const char *	defaultPrompt;	/* Default text for prompt */
+	char *		valueText;	/* Value entered for prompt */
+	size_t		valueTextMax;	/* Size of valueText buffer */
+	int		valueShownStart;/* Amount of string shown if too */
+	int		valueShownEnd;	/*  long to fit in field */
 	int		cursor;		/* current cursor position */
 	loginPromptState state;
 } loginPromptData;
@@ -109,9 +109,9 @@ typedef struct {
 	char		*unsecure_greet;/* message displayed when insecure */
 	char		*namePrompt;	/* name prompt */
 	char		*passwdPrompt;	/* password prompt */
-    	char		*failMsg;	/* failure message */
+	char		*failMsg;	/* failure message */
 	char		*fail;		/* current error message */
-    	char		*passwdChangeMsg; /* message when passwd expires */
+	char		*passwdChangeMsg; /* message when passwd expires */
 # ifndef USE_XFT
 	XFontStruct	*textFont;	/* font for text */
 	XFontStruct	*promptFont;	/* font for prompts */
@@ -119,7 +119,7 @@ typedef struct {
 	XFontStruct	*failFont;	/* font for failure message */
 # endif /* USE_XFT */
 	int		state;		/* state */
-    	int		activePrompt;	/* which prompt is active */
+	int		activePrompt;	/* which prompt is active */
 	int		failUp;		/* failure message displayed */
 	LoginData	data;		/* name/passwd */
 	char		*sessionArg;	/* argument passed to session */
@@ -130,11 +130,13 @@ typedef struct {
 	Boolean		allow_access;	/* disable access control on login */
 	Boolean		allow_null_passwd; /* allow null password on login */
 	Boolean		allow_root_login; /* allow root login */
-	/* show password as asterisks, i.e. '**...' */
+	/* option to display characters such as asterisks, i.e. '**...'
+	   for no-echo prompts like passwords */
 	Boolean		echo_passwd;
+	char *		echo_passwd_char;
 	XIC		xic;		/* input method of input context */
 	loginPromptData	prompts[NUM_PROMPTS];
-    	time_t 		msgTimeout;
+	time_t 		msgTimeout;
 
 # ifdef DANCING
 	/*caolan begin*/

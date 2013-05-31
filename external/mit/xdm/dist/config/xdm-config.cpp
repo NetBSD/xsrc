@@ -16,7 +16,7 @@ DisplayManager.keyFile:		XDMCONFIGDIR/xdm-keys
 DisplayManager.servers:		XDMCONFIGDIR/Xservers
 DisplayManager.accessFile:	XDMCONFIGDIR/Xaccess
 DisplayManager*resources:	XDMCONFIGDIR/Xresources
-DisplayManager.willing:		SU nobody -c XDMSCRIPTDIR/Xwilling
+DisplayManager.willing:		SU nobody -s /bin/sh -c XDMSCRIPTDIR/Xwilling
 ! All displays should use authorization, but we cannot be sure
 ! X terminals may not be configured that way, so they will require
 ! individual resource settings.
