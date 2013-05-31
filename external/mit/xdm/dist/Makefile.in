@@ -15,9 +15,9 @@
 
 @SET_MAKE@
 
-# 
+#
 #  Copyright 2005  Red Hat, Inc.
-# 
+#
 #  Permission to use, copy, modify, distribute, and sell this software and its
 #  documentation for any purpose is hereby granted without fee, provided that
 #  the above copyright notice appear in all copies and that both that
@@ -27,7 +27,7 @@
 #  specific, written prior permission.  Red Hat makes no
 #  representations about the suitability of this software for any purpose.  It
 #  is provided "as is" without express or implied warranty.
-# 
+#
 #  RED HAT DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
 #  INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
 #  EVENT SHALL RED HAT BE LIABLE FOR ANY SPECIAL, INDIRECT OR
@@ -35,11 +35,6 @@
 #  DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 #  PERFORMANCE OF THIS SOFTWARE.
-
-#							-*- Makefile -*-
-# Rules for generating files using the C pre-processor
-# (Replaces CppFileTarget from Imake)
-
 
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
@@ -60,37 +55,14 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = xdm$(EXEEXT) xdmshell$(EXEEXT)
-xdmlib_PROGRAMS = chooser$(EXEEXT)
-@HAS_XDM_AUTH_TRUE@am__append_1 = -DHASXDMAUTH
-@HAS_XDM_AUTH_TRUE@am__append_2 = xdmauth.c
-@HAS_ARC4_RANDOM_FALSE@am__append_3 = prngc.c
-@HAS_SECURE_RPC_TRUE@am__append_4 = -DSECURE_RPC
-@HAS_SECURE_RPC_TRUE@am__append_5 = rpcauth.c
-@HAS_KERBEROS_FIVE_TRUE@am__append_6 = krb5auth.c
-
-#
-# greeter
-#
-@DYNAMIC_GREETER_FALSE@am__append_7 = \
-@DYNAMIC_GREETER_FALSE@	greeter/greet.c		\
-@DYNAMIC_GREETER_FALSE@	greeter/Login.c		\
-@DYNAMIC_GREETER_FALSE@	greeter/Login.h		\
-@DYNAMIC_GREETER_FALSE@	greeter/LoginP.h	\
-@DYNAMIC_GREETER_FALSE@	greeter/verify.c
-
-@DYNAMIC_GREETER_FALSE@am__append_8 = $(XDMGREET_CFLAGS)
+subdir = .
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/config.h.in \
-	$(top_srcdir)/configure $(top_srcdir)/cpprules.in AUTHORS \
-	COPYING ChangeLog INSTALL compile config.guess config.sub \
-	depcomp install-sh ltmain.sh missing
-subdir = .
+	$(top_srcdir)/configure AUTHORS COPYING ChangeLog INSTALL \
+	config.guess config.sub depcomp install-sh ltmain.sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/ac_define_dir.m4 \
-	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
-	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
-	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/m4/ax_define_dir.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
@@ -99,84 +71,14 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(xdmlibdir)" \
-	"$(DESTDIR)$(appdefaultdir)" "$(DESTDIR)$(appmandir)"
-PROGRAMS = $(bin_PROGRAMS) $(xdmlib_PROGRAMS)
-am_chooser_OBJECTS = chooser-chooser.$(OBJEXT)
-chooser_OBJECTS = $(am_chooser_OBJECTS)
-am__DEPENDENCIES_1 =
-chooser_DEPENDENCIES = $(am__DEPENDENCIES_1)
-AM_V_lt = $(am__v_lt_$(V))
-am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
-am__v_lt_0 = --silent
-chooser_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(chooser_CFLAGS) \
-	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-am__xdm_SOURCES_DIST = auth.c daemon.c server.c dpylist.c dm.c error.c \
-	file.c netaddr.c reset.c resource.c protodpy.c policy.c \
-	session.c socket.c streams.c util.c xdmcp.c mitauth.c \
-	genauth.c access.c choose.c dm_auth.h dm_error.h dm.h \
-	dm_socket.h greet.h xdmauth.c prngc.c rpcauth.c krb5auth.c \
-	greeter/greet.c greeter/Login.c greeter/Login.h \
-	greeter/LoginP.h greeter/verify.c
-@HAS_XDM_AUTH_TRUE@am__objects_1 = xdm-xdmauth.$(OBJEXT)
-@HAS_ARC4_RANDOM_FALSE@am__objects_2 = xdm-prngc.$(OBJEXT)
-@HAS_SECURE_RPC_TRUE@am__objects_3 = xdm-rpcauth.$(OBJEXT)
-@HAS_KERBEROS_FIVE_TRUE@am__objects_4 = xdm-krb5auth.$(OBJEXT)
-@DYNAMIC_GREETER_FALSE@am__objects_5 = xdm-greet.$(OBJEXT) \
-@DYNAMIC_GREETER_FALSE@	xdm-Login.$(OBJEXT) \
-@DYNAMIC_GREETER_FALSE@	xdm-verify.$(OBJEXT)
-am_xdm_OBJECTS = xdm-auth.$(OBJEXT) xdm-daemon.$(OBJEXT) \
-	xdm-server.$(OBJEXT) xdm-dpylist.$(OBJEXT) xdm-dm.$(OBJEXT) \
-	xdm-error.$(OBJEXT) xdm-file.$(OBJEXT) xdm-netaddr.$(OBJEXT) \
-	xdm-reset.$(OBJEXT) xdm-resource.$(OBJEXT) \
-	xdm-protodpy.$(OBJEXT) xdm-policy.$(OBJEXT) \
-	xdm-session.$(OBJEXT) xdm-socket.$(OBJEXT) \
-	xdm-streams.$(OBJEXT) xdm-util.$(OBJEXT) xdm-xdmcp.$(OBJEXT) \
-	xdm-mitauth.$(OBJEXT) xdm-genauth.$(OBJEXT) \
-	xdm-access.$(OBJEXT) xdm-choose.$(OBJEXT) $(am__objects_1) \
-	$(am__objects_2) $(am__objects_3) $(am__objects_4) \
-	$(am__objects_5)
-xdm_OBJECTS = $(am_xdm_OBJECTS)
-xdm_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
-xdm_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(xdm_CFLAGS) $(CFLAGS) \
-	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-am_xdmshell_OBJECTS = xdmshell-xdmshell.$(OBJEXT)
-xdmshell_OBJECTS = $(am_xdmshell_OBJECTS)
-xdmshell_LDADD = $(LDADD)
-xdmshell_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(xdmshell_CFLAGS) \
-	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-DEFAULT_INCLUDES = -I.@am__isrc@
-depcomp = $(SHELL) $(top_srcdir)/depcomp
-am__depfiles_maybe = depfiles
-am__mv = mv -f
-COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
-	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) \
-	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
-	$(AM_CFLAGS) $(CFLAGS)
-AM_V_CC = $(am__v_CC_$(V))
-am__v_CC_ = $(am__v_CC_$(AM_DEFAULT_VERBOSITY))
-am__v_CC_0 = @echo "  CC    " $@;
-AM_V_at = $(am__v_at_$(V))
-am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
-am__v_at_0 = @
-CCLD = $(CC)
-LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-AM_V_CCLD = $(am__v_CCLD_$(V))
-am__v_CCLD_ = $(am__v_CCLD_$(AM_DEFAULT_VERBOSITY))
-am__v_CCLD_0 = @echo "  CCLD  " $@;
 AM_V_GEN = $(am__v_GEN_$(V))
 am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
 am__v_GEN_0 = @echo "  GEN   " $@;
-SOURCES = $(chooser_SOURCES) $(xdm_SOURCES) $(xdmshell_SOURCES)
-DIST_SOURCES = $(chooser_SOURCES) $(am__xdm_SOURCES_DIST) \
-	$(xdmshell_SOURCES)
+AM_V_at = $(am__v_at_$(V))
+am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
+am__v_at_0 = @
+SOURCES =
+DIST_SOURCES =
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	html-recursive info-recursive install-data-recursive \
 	install-dvi-recursive install-exec-recursive \
@@ -205,7 +107,8 @@ am__nobase_list = $(am__nobase_strip_setup); \
 am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
-DATA = $(appdefault_DATA) $(appman_DATA)
+am__installdirs = "$(DESTDIR)$(systemdsystemunitdir)"
+DATA = $(systemdsystemunit_DATA)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 AM_RECURSIVE_TARGETS = $(RECURSIVE_TARGETS:-recursive=) \
@@ -260,7 +163,6 @@ APPDEFS_LIBS = @APPDEFS_LIBS@
 APP_MAN_DIR = @APP_MAN_DIR@
 APP_MAN_SUFFIX = @APP_MAN_SUFFIX@
 AR = @AR@
-AS = @AS@
 AUTH_CFLAGS = @AUTH_CFLAGS@
 AUTH_LIBS = @AUTH_LIBS@
 AUTOCONF = @AUTOCONF@
@@ -290,6 +192,7 @@ DEF_SYSTEM_SHELL = @DEF_SYSTEM_SHELL@
 DEF_USER_PATH = @DEF_USER_PATH@
 DEF_XDM_CONFIG = @DEF_XDM_CONFIG@
 DEPDIR = @DEPDIR@
+DEV_RANDOM = @DEV_RANDOM@
 DLLTOOL = @DLLTOOL@
 DMCP_CFLAGS = @DMCP_CFLAGS@
 DMCP_LIBS = @DMCP_LIBS@
@@ -306,6 +209,7 @@ FGREP = @FGREP@
 FILE_MAN_DIR = @FILE_MAN_DIR@
 FILE_MAN_SUFFIX = @FILE_MAN_SUFFIX@
 GREP = @GREP@
+HAVE_ARC4RANDOM = @HAVE_ARC4RANDOM@
 INSTALL = @INSTALL@
 INSTALL_CMD = @INSTALL_CMD@
 INSTALL_DATA = @INSTALL_DATA@
@@ -326,6 +230,8 @@ LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
+MANIFEST_TOOL = @MANIFEST_TOOL@
+MAN_SUBSTS = @MAN_SUBSTS@
 MISC_MAN_DIR = @MISC_MAN_DIR@
 MISC_MAN_SUFFIX = @MISC_MAN_SUFFIX@
 MKDIR_P = @MKDIR_P@
@@ -345,15 +251,17 @@ PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
-RANDOMMANDEFS = @RANDOMMANDEFS@
+PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
+PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 RANLIB = @RANLIB@
 RAWCPP = @RAWCPP@
 RAWCPPFLAGS = @RAWCPPFLAGS@
-SED = sed
+SED = @SED@
 SERVERSTYPE = @SERVERSTYPE@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 SHELL_CMD = @SHELL_CMD@
+STRICT_CFLAGS = @STRICT_CFLAGS@
 STRIP = @STRIP@
 SU = @SU@
 UTMP_FILE = @UTMP_FILE@
@@ -371,18 +279,18 @@ XDMSHELL_LIBS = @XDMSHELL_LIBS@
 XDMXAUTHDIR = @XDMXAUTHDIR@
 XDM_BWPIXMAP = @XDM_BWPIXMAP@
 XDM_CFLAGS = @XDM_CFLAGS@
-XDM_LDFLAGS = @XDM_LDFLAGS@
 XDM_LIBS = @XDM_LIBS@
 XDM_PIXMAP = @XDM_PIXMAP@
 XDM_PIXMAPDIR = @XDM_PIXMAPDIR@
-XDM_PRINT_CFLAGS = @XDM_PRINT_CFLAGS@
-XDM_PRINT_LIBS = @XDM_PRINT_LIBS@
+XDM_TOOLKIT_CFLAGS = @XDM_TOOLKIT_CFLAGS@
+XDM_TOOLKIT_LIBS = @XDM_TOOLKIT_LIBS@
 XFT_CFLAGS = @XFT_CFLAGS@
 XFT_LIBS = @XFT_LIBS@
 XINERAMA_CFLAGS = @XINERAMA_CFLAGS@
 XINERAMA_LIBS = @XINERAMA_LIBS@
 XLIB_CFLAGS = @XLIB_CFLAGS@
 XLIB_LIBS = @XLIB_LIBS@
+XORG_MAN_PAGE = @XORG_MAN_PAGE@
 XPM_CFLAGS = @XPM_CFLAGS@
 XPM_LIBS = @XPM_LIBS@
 XRDB_PROGRAM = @XRDB_PROGRAM@
@@ -392,6 +300,7 @@ abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 am__include = @am__include@
@@ -425,7 +334,6 @@ libdir = @libdir@
 libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
-lt_ECHO = @lt_ECHO@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
@@ -437,109 +345,33 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
 sysconfdir = @sysconfdir@
+systemdsystemunitdir = @systemdsystemunitdir@
 target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = config greeter
-xdmlibdir = $(XDMLIBDIR)
-AM_CFLAGS = $(CWARNFLAGS)
+SUBDIRS = app-defaults chooser config greeter include man xdm xdmshell
+ACLOCAL_AMFLAGS = -I m4
 
-#
-# xdm
-#
-xdm_CFLAGS = $(XDM_CFLAGS) $(am__append_1) $(am__append_4) \
-	$(am__append_8)
-xdm_LDADD = $(XDM_LIBS) $(XDM_LDFLAGS)
-xdm_SOURCES = auth.c daemon.c server.c dpylist.c dm.c error.c file.c \
-	netaddr.c reset.c resource.c protodpy.c policy.c session.c \
-	socket.c streams.c util.c xdmcp.c mitauth.c genauth.c access.c \
-	choose.c dm_auth.h dm_error.h dm.h dm_socket.h greet.h \
-	$(am__append_2) $(am__append_3) $(am__append_5) \
-	$(am__append_6) $(am__append_7)
+# This ensures distcheck is performed in a location where user has write access
+DISTCHECK_CONFIGURE_FLAGS = \
+	--with-appdefaultdir=\$${datadir}/X11/app-defaults \
+	--with-systemdsystemunitdir=\$${libdir}/systemd/system
 
-#
-#  xdm man page 
-#
-appmandir = $(APP_MAN_DIR)
-appman_PRE = xdm.man.cpp
-appman_DATA = $(appman_PRE:man.cpp=@APP_MAN_SUFFIX@)
-MAINTAINERCLEANFILES = ChangeLog INSTALL
-CLEANFILES = $(appman_DATA) $(APPDEFAULTFILES)
-EXTRA_DIST = $(appman_PRE) $(APPDEFAULTFILES:%=%.ad)
-SUFFIXES = .cpp .$(APP_MAN_SUFFIX) .man.cpp .ad
-WCHAR32_FLAGS = -DWCHAR32=@WCHAR32@
-
-# Translate XCOMM into pound sign with sed, rather than passing -DXCOMM=XCOMM
-# to cpp, because that trick does not work on all ANSI C preprocessors.
-# Delete line numbers from the cpp output (-P is not portable, I guess).
-# Allow XCOMM to be preceded by whitespace and provide a means of generating
-# output lines with trailing backslashes.
-# Allow XHASH to always be substituted, even in cases where XCOMM isn't.
-CPP_SED_MAGIC = $(SED) -e '/^\#  *[0-9][0-9]*  *.*$$/d' \
-                       -e '/^\#line  *[0-9][0-9]*  *.*$$/d' \
-                       -e '/^[         ]*XCOMM$$/s/XCOMM/\#/' \
-                       -e '/^[         ]*XCOMM[^a-zA-Z0-9_]/s/XCOMM/\#/' \
-                       -e '/^[         ]*XHASH/s/XHASH/\#/' \
-                       -e '/\@\@$$/s/\@\@$$/\\/'
-
-
-# Support for automake 1.11 AM_SILENT_RULES
-@HAVE_AM_SILENT_RULES_TRUE@cpp_verbose = $(cpp_verbose_$(V))
-@HAVE_AM_SILENT_RULES_TRUE@cpp_verbose_ = $(cpp_verbose_$(AM_DEFAULT_VERBOSITY))
-@HAVE_AM_SILENT_RULES_TRUE@cpp_verbose_0 = @echo "  CPP   " $@;
-XORGRELSTRING = @PACKAGE_STRING@
-XORGMANNAME = X Version 11
-MANDEFS = \
-	-D__xorgversion__="\"$(XORGRELSTRING)\" \"$(XORGMANNAME)\"" \
-	-DCHOOSERPATH="$(xdmlibdir)/chooser" -DXDMLOGDIR="$(XDMLOGDIR)" \
-	-DXDMDIR="$(XDMCONFIGDIR)" -DBINDIR="$(bindir)" \
-	-DXDMPIDDIR="$(XDMPIDDIR)" -DXDMXAUTHDIR="$(XDMXAUTHDIR)" \
-	-DDEF_USER_PATH="$(DEF_USER_PATH)" \
-	-DDEF_SYSTEM_PATH="$(DEF_SYSTEM_PATH)" \
-	-DDEF_GREETER_LIB="$(DEF_GREETER_LIB)" \
-	-D__appmansuffix__=$(APP_MAN_SUFFIX) \
-	-D__filemansuffix__=$(FILE_MAN_SUFFIX) \
-	-D__libmansuffix__=$(LIB_MAN_SUFFIX) \
-	-D__miscmansuffix__=$(MISC_MAN_SUFFIX) \
-	-D__drivermansuffix__=$(DRIVER_MAN_SUFFIX) \
-	-D__adminmansuffix__=$(ADMIN_MAN_SUFFIX) 
-
-CPP_FILES_FLAGS = $(MANDEFS) $(RANDOMMANDEFS) $(EXTRAMANDEFS)
-
-#
-#  xdmshell
-#
-xdmshell_CFLAGS = $(XDMSHELL_CFLAGS) -DBINDIR="\"$(bindir)\""
-xdmshell_SOURCES = \
-        xdmshell.c
-
-
-#
-#  chooser
-#
-chooser_CFLAGS = $(CHOOSER_CFLAGS)
-chooser_LDADD = $(CHOOSER_LIBS)
-chooser_SOURCES = \
-	chooser.c
-
-
-# App default files  (*.ad)
-DISTCHECK_CONFIGURE_FLAGS = --with-appdefaultdir=\$${datadir}/X11/app-defaults
-APPDEFAULTFILES = app-defaults/Chooser
-appdefault_DATA = $(APPDEFAULTFILES)
 @LINT_TRUE@ALL_LINT_FLAGS = $(LINT_FLAGS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 @LINT_TRUE@		$(AM_CPPFLAGS) $(CPPFLAGS)
 
-ACLOCAL_AMFLAGS = -I m4
+@HAVE_SYSTEMD_TRUE@systemdsystemunit_DATA = xdm.service
+CLEANFILES = xdm.service
+EXTRA_DIST = xdm.service.in
+MAINTAINERCLEANFILES = ChangeLog INSTALL
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
 .SUFFIXES:
-.SUFFIXES: .cpp .$(APP_MAN_SUFFIX) .man.cpp .ad .c .lo .o .obj
 am--refresh:
 	@:
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(top_srcdir)/cpprules.in $(am__configure_deps)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -588,642 +420,6 @@ $(srcdir)/config.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 
 distclean-hdr:
 	-rm -f config.h stamp-h1
-install-binPROGRAMS: $(bin_PROGRAMS)
-	@$(NORMAL_INSTALL)
-	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
-	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
-	for p in $$list; do echo "$$p $$p"; done | \
-	sed 's/$(EXEEXT)$$//' | \
-	while read p p1; do if test -f $$p || test -f $$p1; \
-	  then echo "$$p"; echo "$$p"; else :; fi; \
-	done | \
-	sed -e 'p;s,.*/,,;n;h' -e 's|.*|.|' \
-	    -e 'p;x;s,.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/' | \
-	sed 'N;N;N;s,\n, ,g' | \
-	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1 } \
-	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
-	    if ($$2 == $$4) files[d] = files[d] " " $$1; \
-	    else { print "f", $$3 "/" $$4, $$1; } } \
-	  END { for (d in files) print "f", d, files[d] }' | \
-	while read type dir files; do \
-	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
-	    test -z "$$files" || { \
-	    echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(bindir)$$dir'"; \
-	    $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(bindir)$$dir" || exit $$?; \
-	    } \
-	; done
-
-uninstall-binPROGRAMS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
-	files=`for p in $$list; do echo "$$p"; done | \
-	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
-	      -e 's/$$/$(EXEEXT)/' `; \
-	test -n "$$list" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(bindir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(bindir)" && rm -f $$files
-
-clean-binPROGRAMS:
-	@list='$(bin_PROGRAMS)'; test -n "$$list" || exit 0; \
-	echo " rm -f" $$list; \
-	rm -f $$list || exit $$?; \
-	test -n "$(EXEEXT)" || exit 0; \
-	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
-	echo " rm -f" $$list; \
-	rm -f $$list
-install-xdmlibPROGRAMS: $(xdmlib_PROGRAMS)
-	@$(NORMAL_INSTALL)
-	test -z "$(xdmlibdir)" || $(MKDIR_P) "$(DESTDIR)$(xdmlibdir)"
-	@list='$(xdmlib_PROGRAMS)'; test -n "$(xdmlibdir)" || list=; \
-	for p in $$list; do echo "$$p $$p"; done | \
-	sed 's/$(EXEEXT)$$//' | \
-	while read p p1; do if test -f $$p || test -f $$p1; \
-	  then echo "$$p"; echo "$$p"; else :; fi; \
-	done | \
-	sed -e 'p;s,.*/,,;n;h' -e 's|.*|.|' \
-	    -e 'p;x;s,.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/' | \
-	sed 'N;N;N;s,\n, ,g' | \
-	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1 } \
-	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
-	    if ($$2 == $$4) files[d] = files[d] " " $$1; \
-	    else { print "f", $$3 "/" $$4, $$1; } } \
-	  END { for (d in files) print "f", d, files[d] }' | \
-	while read type dir files; do \
-	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
-	    test -z "$$files" || { \
-	    echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(xdmlibdir)$$dir'"; \
-	    $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(xdmlibdir)$$dir" || exit $$?; \
-	    } \
-	; done
-
-uninstall-xdmlibPROGRAMS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(xdmlib_PROGRAMS)'; test -n "$(xdmlibdir)" || list=; \
-	files=`for p in $$list; do echo "$$p"; done | \
-	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
-	      -e 's/$$/$(EXEEXT)/' `; \
-	test -n "$$list" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(xdmlibdir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(xdmlibdir)" && rm -f $$files
-
-clean-xdmlibPROGRAMS:
-	@list='$(xdmlib_PROGRAMS)'; test -n "$$list" || exit 0; \
-	echo " rm -f" $$list; \
-	rm -f $$list || exit $$?; \
-	test -n "$(EXEEXT)" || exit 0; \
-	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
-	echo " rm -f" $$list; \
-	rm -f $$list
-chooser$(EXEEXT): $(chooser_OBJECTS) $(chooser_DEPENDENCIES) 
-	@rm -f chooser$(EXEEXT)
-	$(AM_V_CCLD)$(chooser_LINK) $(chooser_OBJECTS) $(chooser_LDADD) $(LIBS)
-xdm$(EXEEXT): $(xdm_OBJECTS) $(xdm_DEPENDENCIES) 
-	@rm -f xdm$(EXEEXT)
-	$(AM_V_CCLD)$(xdm_LINK) $(xdm_OBJECTS) $(xdm_LDADD) $(LIBS)
-xdmshell$(EXEEXT): $(xdmshell_OBJECTS) $(xdmshell_DEPENDENCIES) 
-	@rm -f xdmshell$(EXEEXT)
-	$(AM_V_CCLD)$(xdmshell_LINK) $(xdmshell_OBJECTS) $(xdmshell_LDADD) $(LIBS)
-
-mostlyclean-compile:
-	-rm -f *.$(OBJEXT)
-
-distclean-compile:
-	-rm -f *.tab.c
-
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chooser-chooser.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-Login.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-access.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-auth.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-choose.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-daemon.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-dm.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-dpylist.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-error.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-file.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-genauth.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-greet.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-krb5auth.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-mitauth.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-netaddr.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-policy.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-prngc.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-protodpy.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-reset.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-resource.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-rpcauth.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-server.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-session.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-socket.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-streams.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-util.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-verify.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-xdmauth.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdm-xdmcp.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xdmshell-xdmshell.Po@am__quote@
-
-.c.o:
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c $<
-
-.c.obj:
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
-
-.c.lo:
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
-
-chooser-chooser.o: chooser.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chooser_CFLAGS) $(CFLAGS) -MT chooser-chooser.o -MD -MP -MF $(DEPDIR)/chooser-chooser.Tpo -c -o chooser-chooser.o `test -f 'chooser.c' || echo '$(srcdir)/'`chooser.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/chooser-chooser.Tpo $(DEPDIR)/chooser-chooser.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='chooser.c' object='chooser-chooser.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chooser_CFLAGS) $(CFLAGS) -c -o chooser-chooser.o `test -f 'chooser.c' || echo '$(srcdir)/'`chooser.c
-
-chooser-chooser.obj: chooser.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chooser_CFLAGS) $(CFLAGS) -MT chooser-chooser.obj -MD -MP -MF $(DEPDIR)/chooser-chooser.Tpo -c -o chooser-chooser.obj `if test -f 'chooser.c'; then $(CYGPATH_W) 'chooser.c'; else $(CYGPATH_W) '$(srcdir)/chooser.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/chooser-chooser.Tpo $(DEPDIR)/chooser-chooser.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='chooser.c' object='chooser-chooser.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chooser_CFLAGS) $(CFLAGS) -c -o chooser-chooser.obj `if test -f 'chooser.c'; then $(CYGPATH_W) 'chooser.c'; else $(CYGPATH_W) '$(srcdir)/chooser.c'; fi`
-
-xdm-auth.o: auth.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-auth.o -MD -MP -MF $(DEPDIR)/xdm-auth.Tpo -c -o xdm-auth.o `test -f 'auth.c' || echo '$(srcdir)/'`auth.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-auth.Tpo $(DEPDIR)/xdm-auth.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='auth.c' object='xdm-auth.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-auth.o `test -f 'auth.c' || echo '$(srcdir)/'`auth.c
-
-xdm-auth.obj: auth.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-auth.obj -MD -MP -MF $(DEPDIR)/xdm-auth.Tpo -c -o xdm-auth.obj `if test -f 'auth.c'; then $(CYGPATH_W) 'auth.c'; else $(CYGPATH_W) '$(srcdir)/auth.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-auth.Tpo $(DEPDIR)/xdm-auth.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='auth.c' object='xdm-auth.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-auth.obj `if test -f 'auth.c'; then $(CYGPATH_W) 'auth.c'; else $(CYGPATH_W) '$(srcdir)/auth.c'; fi`
-
-xdm-daemon.o: daemon.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-daemon.o -MD -MP -MF $(DEPDIR)/xdm-daemon.Tpo -c -o xdm-daemon.o `test -f 'daemon.c' || echo '$(srcdir)/'`daemon.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-daemon.Tpo $(DEPDIR)/xdm-daemon.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daemon.c' object='xdm-daemon.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-daemon.o `test -f 'daemon.c' || echo '$(srcdir)/'`daemon.c
-
-xdm-daemon.obj: daemon.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-daemon.obj -MD -MP -MF $(DEPDIR)/xdm-daemon.Tpo -c -o xdm-daemon.obj `if test -f 'daemon.c'; then $(CYGPATH_W) 'daemon.c'; else $(CYGPATH_W) '$(srcdir)/daemon.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-daemon.Tpo $(DEPDIR)/xdm-daemon.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daemon.c' object='xdm-daemon.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-daemon.obj `if test -f 'daemon.c'; then $(CYGPATH_W) 'daemon.c'; else $(CYGPATH_W) '$(srcdir)/daemon.c'; fi`
-
-xdm-server.o: server.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-server.o -MD -MP -MF $(DEPDIR)/xdm-server.Tpo -c -o xdm-server.o `test -f 'server.c' || echo '$(srcdir)/'`server.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-server.Tpo $(DEPDIR)/xdm-server.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='server.c' object='xdm-server.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-server.o `test -f 'server.c' || echo '$(srcdir)/'`server.c
-
-xdm-server.obj: server.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-server.obj -MD -MP -MF $(DEPDIR)/xdm-server.Tpo -c -o xdm-server.obj `if test -f 'server.c'; then $(CYGPATH_W) 'server.c'; else $(CYGPATH_W) '$(srcdir)/server.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-server.Tpo $(DEPDIR)/xdm-server.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='server.c' object='xdm-server.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-server.obj `if test -f 'server.c'; then $(CYGPATH_W) 'server.c'; else $(CYGPATH_W) '$(srcdir)/server.c'; fi`
-
-xdm-dpylist.o: dpylist.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-dpylist.o -MD -MP -MF $(DEPDIR)/xdm-dpylist.Tpo -c -o xdm-dpylist.o `test -f 'dpylist.c' || echo '$(srcdir)/'`dpylist.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-dpylist.Tpo $(DEPDIR)/xdm-dpylist.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='dpylist.c' object='xdm-dpylist.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-dpylist.o `test -f 'dpylist.c' || echo '$(srcdir)/'`dpylist.c
-
-xdm-dpylist.obj: dpylist.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-dpylist.obj -MD -MP -MF $(DEPDIR)/xdm-dpylist.Tpo -c -o xdm-dpylist.obj `if test -f 'dpylist.c'; then $(CYGPATH_W) 'dpylist.c'; else $(CYGPATH_W) '$(srcdir)/dpylist.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-dpylist.Tpo $(DEPDIR)/xdm-dpylist.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='dpylist.c' object='xdm-dpylist.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-dpylist.obj `if test -f 'dpylist.c'; then $(CYGPATH_W) 'dpylist.c'; else $(CYGPATH_W) '$(srcdir)/dpylist.c'; fi`
-
-xdm-dm.o: dm.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-dm.o -MD -MP -MF $(DEPDIR)/xdm-dm.Tpo -c -o xdm-dm.o `test -f 'dm.c' || echo '$(srcdir)/'`dm.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-dm.Tpo $(DEPDIR)/xdm-dm.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='dm.c' object='xdm-dm.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-dm.o `test -f 'dm.c' || echo '$(srcdir)/'`dm.c
-
-xdm-dm.obj: dm.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-dm.obj -MD -MP -MF $(DEPDIR)/xdm-dm.Tpo -c -o xdm-dm.obj `if test -f 'dm.c'; then $(CYGPATH_W) 'dm.c'; else $(CYGPATH_W) '$(srcdir)/dm.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-dm.Tpo $(DEPDIR)/xdm-dm.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='dm.c' object='xdm-dm.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-dm.obj `if test -f 'dm.c'; then $(CYGPATH_W) 'dm.c'; else $(CYGPATH_W) '$(srcdir)/dm.c'; fi`
-
-xdm-error.o: error.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-error.o -MD -MP -MF $(DEPDIR)/xdm-error.Tpo -c -o xdm-error.o `test -f 'error.c' || echo '$(srcdir)/'`error.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-error.Tpo $(DEPDIR)/xdm-error.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='error.c' object='xdm-error.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-error.o `test -f 'error.c' || echo '$(srcdir)/'`error.c
-
-xdm-error.obj: error.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-error.obj -MD -MP -MF $(DEPDIR)/xdm-error.Tpo -c -o xdm-error.obj `if test -f 'error.c'; then $(CYGPATH_W) 'error.c'; else $(CYGPATH_W) '$(srcdir)/error.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-error.Tpo $(DEPDIR)/xdm-error.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='error.c' object='xdm-error.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-error.obj `if test -f 'error.c'; then $(CYGPATH_W) 'error.c'; else $(CYGPATH_W) '$(srcdir)/error.c'; fi`
-
-xdm-file.o: file.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-file.o -MD -MP -MF $(DEPDIR)/xdm-file.Tpo -c -o xdm-file.o `test -f 'file.c' || echo '$(srcdir)/'`file.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-file.Tpo $(DEPDIR)/xdm-file.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='file.c' object='xdm-file.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-file.o `test -f 'file.c' || echo '$(srcdir)/'`file.c
-
-xdm-file.obj: file.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-file.obj -MD -MP -MF $(DEPDIR)/xdm-file.Tpo -c -o xdm-file.obj `if test -f 'file.c'; then $(CYGPATH_W) 'file.c'; else $(CYGPATH_W) '$(srcdir)/file.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-file.Tpo $(DEPDIR)/xdm-file.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='file.c' object='xdm-file.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-file.obj `if test -f 'file.c'; then $(CYGPATH_W) 'file.c'; else $(CYGPATH_W) '$(srcdir)/file.c'; fi`
-
-xdm-netaddr.o: netaddr.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-netaddr.o -MD -MP -MF $(DEPDIR)/xdm-netaddr.Tpo -c -o xdm-netaddr.o `test -f 'netaddr.c' || echo '$(srcdir)/'`netaddr.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-netaddr.Tpo $(DEPDIR)/xdm-netaddr.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='netaddr.c' object='xdm-netaddr.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-netaddr.o `test -f 'netaddr.c' || echo '$(srcdir)/'`netaddr.c
-
-xdm-netaddr.obj: netaddr.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-netaddr.obj -MD -MP -MF $(DEPDIR)/xdm-netaddr.Tpo -c -o xdm-netaddr.obj `if test -f 'netaddr.c'; then $(CYGPATH_W) 'netaddr.c'; else $(CYGPATH_W) '$(srcdir)/netaddr.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-netaddr.Tpo $(DEPDIR)/xdm-netaddr.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='netaddr.c' object='xdm-netaddr.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-netaddr.obj `if test -f 'netaddr.c'; then $(CYGPATH_W) 'netaddr.c'; else $(CYGPATH_W) '$(srcdir)/netaddr.c'; fi`
-
-xdm-reset.o: reset.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-reset.o -MD -MP -MF $(DEPDIR)/xdm-reset.Tpo -c -o xdm-reset.o `test -f 'reset.c' || echo '$(srcdir)/'`reset.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-reset.Tpo $(DEPDIR)/xdm-reset.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='reset.c' object='xdm-reset.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-reset.o `test -f 'reset.c' || echo '$(srcdir)/'`reset.c
-
-xdm-reset.obj: reset.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-reset.obj -MD -MP -MF $(DEPDIR)/xdm-reset.Tpo -c -o xdm-reset.obj `if test -f 'reset.c'; then $(CYGPATH_W) 'reset.c'; else $(CYGPATH_W) '$(srcdir)/reset.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-reset.Tpo $(DEPDIR)/xdm-reset.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='reset.c' object='xdm-reset.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-reset.obj `if test -f 'reset.c'; then $(CYGPATH_W) 'reset.c'; else $(CYGPATH_W) '$(srcdir)/reset.c'; fi`
-
-xdm-resource.o: resource.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-resource.o -MD -MP -MF $(DEPDIR)/xdm-resource.Tpo -c -o xdm-resource.o `test -f 'resource.c' || echo '$(srcdir)/'`resource.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-resource.Tpo $(DEPDIR)/xdm-resource.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='resource.c' object='xdm-resource.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-resource.o `test -f 'resource.c' || echo '$(srcdir)/'`resource.c
-
-xdm-resource.obj: resource.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-resource.obj -MD -MP -MF $(DEPDIR)/xdm-resource.Tpo -c -o xdm-resource.obj `if test -f 'resource.c'; then $(CYGPATH_W) 'resource.c'; else $(CYGPATH_W) '$(srcdir)/resource.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-resource.Tpo $(DEPDIR)/xdm-resource.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='resource.c' object='xdm-resource.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-resource.obj `if test -f 'resource.c'; then $(CYGPATH_W) 'resource.c'; else $(CYGPATH_W) '$(srcdir)/resource.c'; fi`
-
-xdm-protodpy.o: protodpy.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-protodpy.o -MD -MP -MF $(DEPDIR)/xdm-protodpy.Tpo -c -o xdm-protodpy.o `test -f 'protodpy.c' || echo '$(srcdir)/'`protodpy.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-protodpy.Tpo $(DEPDIR)/xdm-protodpy.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='protodpy.c' object='xdm-protodpy.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-protodpy.o `test -f 'protodpy.c' || echo '$(srcdir)/'`protodpy.c
-
-xdm-protodpy.obj: protodpy.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-protodpy.obj -MD -MP -MF $(DEPDIR)/xdm-protodpy.Tpo -c -o xdm-protodpy.obj `if test -f 'protodpy.c'; then $(CYGPATH_W) 'protodpy.c'; else $(CYGPATH_W) '$(srcdir)/protodpy.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-protodpy.Tpo $(DEPDIR)/xdm-protodpy.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='protodpy.c' object='xdm-protodpy.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-protodpy.obj `if test -f 'protodpy.c'; then $(CYGPATH_W) 'protodpy.c'; else $(CYGPATH_W) '$(srcdir)/protodpy.c'; fi`
-
-xdm-policy.o: policy.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-policy.o -MD -MP -MF $(DEPDIR)/xdm-policy.Tpo -c -o xdm-policy.o `test -f 'policy.c' || echo '$(srcdir)/'`policy.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-policy.Tpo $(DEPDIR)/xdm-policy.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='policy.c' object='xdm-policy.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-policy.o `test -f 'policy.c' || echo '$(srcdir)/'`policy.c
-
-xdm-policy.obj: policy.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-policy.obj -MD -MP -MF $(DEPDIR)/xdm-policy.Tpo -c -o xdm-policy.obj `if test -f 'policy.c'; then $(CYGPATH_W) 'policy.c'; else $(CYGPATH_W) '$(srcdir)/policy.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-policy.Tpo $(DEPDIR)/xdm-policy.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='policy.c' object='xdm-policy.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-policy.obj `if test -f 'policy.c'; then $(CYGPATH_W) 'policy.c'; else $(CYGPATH_W) '$(srcdir)/policy.c'; fi`
-
-xdm-session.o: session.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-session.o -MD -MP -MF $(DEPDIR)/xdm-session.Tpo -c -o xdm-session.o `test -f 'session.c' || echo '$(srcdir)/'`session.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-session.Tpo $(DEPDIR)/xdm-session.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='session.c' object='xdm-session.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-session.o `test -f 'session.c' || echo '$(srcdir)/'`session.c
-
-xdm-session.obj: session.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-session.obj -MD -MP -MF $(DEPDIR)/xdm-session.Tpo -c -o xdm-session.obj `if test -f 'session.c'; then $(CYGPATH_W) 'session.c'; else $(CYGPATH_W) '$(srcdir)/session.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-session.Tpo $(DEPDIR)/xdm-session.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='session.c' object='xdm-session.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-session.obj `if test -f 'session.c'; then $(CYGPATH_W) 'session.c'; else $(CYGPATH_W) '$(srcdir)/session.c'; fi`
-
-xdm-socket.o: socket.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-socket.o -MD -MP -MF $(DEPDIR)/xdm-socket.Tpo -c -o xdm-socket.o `test -f 'socket.c' || echo '$(srcdir)/'`socket.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-socket.Tpo $(DEPDIR)/xdm-socket.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='socket.c' object='xdm-socket.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-socket.o `test -f 'socket.c' || echo '$(srcdir)/'`socket.c
-
-xdm-socket.obj: socket.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-socket.obj -MD -MP -MF $(DEPDIR)/xdm-socket.Tpo -c -o xdm-socket.obj `if test -f 'socket.c'; then $(CYGPATH_W) 'socket.c'; else $(CYGPATH_W) '$(srcdir)/socket.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-socket.Tpo $(DEPDIR)/xdm-socket.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='socket.c' object='xdm-socket.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-socket.obj `if test -f 'socket.c'; then $(CYGPATH_W) 'socket.c'; else $(CYGPATH_W) '$(srcdir)/socket.c'; fi`
-
-xdm-streams.o: streams.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-streams.o -MD -MP -MF $(DEPDIR)/xdm-streams.Tpo -c -o xdm-streams.o `test -f 'streams.c' || echo '$(srcdir)/'`streams.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-streams.Tpo $(DEPDIR)/xdm-streams.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='streams.c' object='xdm-streams.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-streams.o `test -f 'streams.c' || echo '$(srcdir)/'`streams.c
-
-xdm-streams.obj: streams.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-streams.obj -MD -MP -MF $(DEPDIR)/xdm-streams.Tpo -c -o xdm-streams.obj `if test -f 'streams.c'; then $(CYGPATH_W) 'streams.c'; else $(CYGPATH_W) '$(srcdir)/streams.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-streams.Tpo $(DEPDIR)/xdm-streams.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='streams.c' object='xdm-streams.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-streams.obj `if test -f 'streams.c'; then $(CYGPATH_W) 'streams.c'; else $(CYGPATH_W) '$(srcdir)/streams.c'; fi`
-
-xdm-util.o: util.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-util.o -MD -MP -MF $(DEPDIR)/xdm-util.Tpo -c -o xdm-util.o `test -f 'util.c' || echo '$(srcdir)/'`util.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-util.Tpo $(DEPDIR)/xdm-util.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='util.c' object='xdm-util.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-util.o `test -f 'util.c' || echo '$(srcdir)/'`util.c
-
-xdm-util.obj: util.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-util.obj -MD -MP -MF $(DEPDIR)/xdm-util.Tpo -c -o xdm-util.obj `if test -f 'util.c'; then $(CYGPATH_W) 'util.c'; else $(CYGPATH_W) '$(srcdir)/util.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-util.Tpo $(DEPDIR)/xdm-util.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='util.c' object='xdm-util.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-util.obj `if test -f 'util.c'; then $(CYGPATH_W) 'util.c'; else $(CYGPATH_W) '$(srcdir)/util.c'; fi`
-
-xdm-xdmcp.o: xdmcp.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-xdmcp.o -MD -MP -MF $(DEPDIR)/xdm-xdmcp.Tpo -c -o xdm-xdmcp.o `test -f 'xdmcp.c' || echo '$(srcdir)/'`xdmcp.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-xdmcp.Tpo $(DEPDIR)/xdm-xdmcp.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='xdmcp.c' object='xdm-xdmcp.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-xdmcp.o `test -f 'xdmcp.c' || echo '$(srcdir)/'`xdmcp.c
-
-xdm-xdmcp.obj: xdmcp.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-xdmcp.obj -MD -MP -MF $(DEPDIR)/xdm-xdmcp.Tpo -c -o xdm-xdmcp.obj `if test -f 'xdmcp.c'; then $(CYGPATH_W) 'xdmcp.c'; else $(CYGPATH_W) '$(srcdir)/xdmcp.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-xdmcp.Tpo $(DEPDIR)/xdm-xdmcp.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='xdmcp.c' object='xdm-xdmcp.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-xdmcp.obj `if test -f 'xdmcp.c'; then $(CYGPATH_W) 'xdmcp.c'; else $(CYGPATH_W) '$(srcdir)/xdmcp.c'; fi`
-
-xdm-mitauth.o: mitauth.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-mitauth.o -MD -MP -MF $(DEPDIR)/xdm-mitauth.Tpo -c -o xdm-mitauth.o `test -f 'mitauth.c' || echo '$(srcdir)/'`mitauth.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-mitauth.Tpo $(DEPDIR)/xdm-mitauth.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mitauth.c' object='xdm-mitauth.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-mitauth.o `test -f 'mitauth.c' || echo '$(srcdir)/'`mitauth.c
-
-xdm-mitauth.obj: mitauth.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-mitauth.obj -MD -MP -MF $(DEPDIR)/xdm-mitauth.Tpo -c -o xdm-mitauth.obj `if test -f 'mitauth.c'; then $(CYGPATH_W) 'mitauth.c'; else $(CYGPATH_W) '$(srcdir)/mitauth.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-mitauth.Tpo $(DEPDIR)/xdm-mitauth.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mitauth.c' object='xdm-mitauth.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-mitauth.obj `if test -f 'mitauth.c'; then $(CYGPATH_W) 'mitauth.c'; else $(CYGPATH_W) '$(srcdir)/mitauth.c'; fi`
-
-xdm-genauth.o: genauth.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-genauth.o -MD -MP -MF $(DEPDIR)/xdm-genauth.Tpo -c -o xdm-genauth.o `test -f 'genauth.c' || echo '$(srcdir)/'`genauth.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-genauth.Tpo $(DEPDIR)/xdm-genauth.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='genauth.c' object='xdm-genauth.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-genauth.o `test -f 'genauth.c' || echo '$(srcdir)/'`genauth.c
-
-xdm-genauth.obj: genauth.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-genauth.obj -MD -MP -MF $(DEPDIR)/xdm-genauth.Tpo -c -o xdm-genauth.obj `if test -f 'genauth.c'; then $(CYGPATH_W) 'genauth.c'; else $(CYGPATH_W) '$(srcdir)/genauth.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-genauth.Tpo $(DEPDIR)/xdm-genauth.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='genauth.c' object='xdm-genauth.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-genauth.obj `if test -f 'genauth.c'; then $(CYGPATH_W) 'genauth.c'; else $(CYGPATH_W) '$(srcdir)/genauth.c'; fi`
-
-xdm-access.o: access.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-access.o -MD -MP -MF $(DEPDIR)/xdm-access.Tpo -c -o xdm-access.o `test -f 'access.c' || echo '$(srcdir)/'`access.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-access.Tpo $(DEPDIR)/xdm-access.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='access.c' object='xdm-access.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-access.o `test -f 'access.c' || echo '$(srcdir)/'`access.c
-
-xdm-access.obj: access.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-access.obj -MD -MP -MF $(DEPDIR)/xdm-access.Tpo -c -o xdm-access.obj `if test -f 'access.c'; then $(CYGPATH_W) 'access.c'; else $(CYGPATH_W) '$(srcdir)/access.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-access.Tpo $(DEPDIR)/xdm-access.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='access.c' object='xdm-access.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-access.obj `if test -f 'access.c'; then $(CYGPATH_W) 'access.c'; else $(CYGPATH_W) '$(srcdir)/access.c'; fi`
-
-xdm-choose.o: choose.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-choose.o -MD -MP -MF $(DEPDIR)/xdm-choose.Tpo -c -o xdm-choose.o `test -f 'choose.c' || echo '$(srcdir)/'`choose.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-choose.Tpo $(DEPDIR)/xdm-choose.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='choose.c' object='xdm-choose.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-choose.o `test -f 'choose.c' || echo '$(srcdir)/'`choose.c
-
-xdm-choose.obj: choose.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-choose.obj -MD -MP -MF $(DEPDIR)/xdm-choose.Tpo -c -o xdm-choose.obj `if test -f 'choose.c'; then $(CYGPATH_W) 'choose.c'; else $(CYGPATH_W) '$(srcdir)/choose.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-choose.Tpo $(DEPDIR)/xdm-choose.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='choose.c' object='xdm-choose.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-choose.obj `if test -f 'choose.c'; then $(CYGPATH_W) 'choose.c'; else $(CYGPATH_W) '$(srcdir)/choose.c'; fi`
-
-xdm-xdmauth.o: xdmauth.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-xdmauth.o -MD -MP -MF $(DEPDIR)/xdm-xdmauth.Tpo -c -o xdm-xdmauth.o `test -f 'xdmauth.c' || echo '$(srcdir)/'`xdmauth.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-xdmauth.Tpo $(DEPDIR)/xdm-xdmauth.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='xdmauth.c' object='xdm-xdmauth.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-xdmauth.o `test -f 'xdmauth.c' || echo '$(srcdir)/'`xdmauth.c
-
-xdm-xdmauth.obj: xdmauth.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-xdmauth.obj -MD -MP -MF $(DEPDIR)/xdm-xdmauth.Tpo -c -o xdm-xdmauth.obj `if test -f 'xdmauth.c'; then $(CYGPATH_W) 'xdmauth.c'; else $(CYGPATH_W) '$(srcdir)/xdmauth.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-xdmauth.Tpo $(DEPDIR)/xdm-xdmauth.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='xdmauth.c' object='xdm-xdmauth.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-xdmauth.obj `if test -f 'xdmauth.c'; then $(CYGPATH_W) 'xdmauth.c'; else $(CYGPATH_W) '$(srcdir)/xdmauth.c'; fi`
-
-xdm-prngc.o: prngc.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-prngc.o -MD -MP -MF $(DEPDIR)/xdm-prngc.Tpo -c -o xdm-prngc.o `test -f 'prngc.c' || echo '$(srcdir)/'`prngc.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-prngc.Tpo $(DEPDIR)/xdm-prngc.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='prngc.c' object='xdm-prngc.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-prngc.o `test -f 'prngc.c' || echo '$(srcdir)/'`prngc.c
-
-xdm-prngc.obj: prngc.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-prngc.obj -MD -MP -MF $(DEPDIR)/xdm-prngc.Tpo -c -o xdm-prngc.obj `if test -f 'prngc.c'; then $(CYGPATH_W) 'prngc.c'; else $(CYGPATH_W) '$(srcdir)/prngc.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-prngc.Tpo $(DEPDIR)/xdm-prngc.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='prngc.c' object='xdm-prngc.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-prngc.obj `if test -f 'prngc.c'; then $(CYGPATH_W) 'prngc.c'; else $(CYGPATH_W) '$(srcdir)/prngc.c'; fi`
-
-xdm-rpcauth.o: rpcauth.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-rpcauth.o -MD -MP -MF $(DEPDIR)/xdm-rpcauth.Tpo -c -o xdm-rpcauth.o `test -f 'rpcauth.c' || echo '$(srcdir)/'`rpcauth.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-rpcauth.Tpo $(DEPDIR)/xdm-rpcauth.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpcauth.c' object='xdm-rpcauth.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-rpcauth.o `test -f 'rpcauth.c' || echo '$(srcdir)/'`rpcauth.c
-
-xdm-rpcauth.obj: rpcauth.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-rpcauth.obj -MD -MP -MF $(DEPDIR)/xdm-rpcauth.Tpo -c -o xdm-rpcauth.obj `if test -f 'rpcauth.c'; then $(CYGPATH_W) 'rpcauth.c'; else $(CYGPATH_W) '$(srcdir)/rpcauth.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-rpcauth.Tpo $(DEPDIR)/xdm-rpcauth.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpcauth.c' object='xdm-rpcauth.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-rpcauth.obj `if test -f 'rpcauth.c'; then $(CYGPATH_W) 'rpcauth.c'; else $(CYGPATH_W) '$(srcdir)/rpcauth.c'; fi`
-
-xdm-krb5auth.o: krb5auth.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-krb5auth.o -MD -MP -MF $(DEPDIR)/xdm-krb5auth.Tpo -c -o xdm-krb5auth.o `test -f 'krb5auth.c' || echo '$(srcdir)/'`krb5auth.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-krb5auth.Tpo $(DEPDIR)/xdm-krb5auth.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='krb5auth.c' object='xdm-krb5auth.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-krb5auth.o `test -f 'krb5auth.c' || echo '$(srcdir)/'`krb5auth.c
-
-xdm-krb5auth.obj: krb5auth.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-krb5auth.obj -MD -MP -MF $(DEPDIR)/xdm-krb5auth.Tpo -c -o xdm-krb5auth.obj `if test -f 'krb5auth.c'; then $(CYGPATH_W) 'krb5auth.c'; else $(CYGPATH_W) '$(srcdir)/krb5auth.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-krb5auth.Tpo $(DEPDIR)/xdm-krb5auth.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='krb5auth.c' object='xdm-krb5auth.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-krb5auth.obj `if test -f 'krb5auth.c'; then $(CYGPATH_W) 'krb5auth.c'; else $(CYGPATH_W) '$(srcdir)/krb5auth.c'; fi`
-
-xdm-greet.o: greeter/greet.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-greet.o -MD -MP -MF $(DEPDIR)/xdm-greet.Tpo -c -o xdm-greet.o `test -f 'greeter/greet.c' || echo '$(srcdir)/'`greeter/greet.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-greet.Tpo $(DEPDIR)/xdm-greet.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='greeter/greet.c' object='xdm-greet.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-greet.o `test -f 'greeter/greet.c' || echo '$(srcdir)/'`greeter/greet.c
-
-xdm-greet.obj: greeter/greet.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-greet.obj -MD -MP -MF $(DEPDIR)/xdm-greet.Tpo -c -o xdm-greet.obj `if test -f 'greeter/greet.c'; then $(CYGPATH_W) 'greeter/greet.c'; else $(CYGPATH_W) '$(srcdir)/greeter/greet.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-greet.Tpo $(DEPDIR)/xdm-greet.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='greeter/greet.c' object='xdm-greet.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-greet.obj `if test -f 'greeter/greet.c'; then $(CYGPATH_W) 'greeter/greet.c'; else $(CYGPATH_W) '$(srcdir)/greeter/greet.c'; fi`
-
-xdm-Login.o: greeter/Login.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-Login.o -MD -MP -MF $(DEPDIR)/xdm-Login.Tpo -c -o xdm-Login.o `test -f 'greeter/Login.c' || echo '$(srcdir)/'`greeter/Login.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-Login.Tpo $(DEPDIR)/xdm-Login.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='greeter/Login.c' object='xdm-Login.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-Login.o `test -f 'greeter/Login.c' || echo '$(srcdir)/'`greeter/Login.c
-
-xdm-Login.obj: greeter/Login.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-Login.obj -MD -MP -MF $(DEPDIR)/xdm-Login.Tpo -c -o xdm-Login.obj `if test -f 'greeter/Login.c'; then $(CYGPATH_W) 'greeter/Login.c'; else $(CYGPATH_W) '$(srcdir)/greeter/Login.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-Login.Tpo $(DEPDIR)/xdm-Login.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='greeter/Login.c' object='xdm-Login.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-Login.obj `if test -f 'greeter/Login.c'; then $(CYGPATH_W) 'greeter/Login.c'; else $(CYGPATH_W) '$(srcdir)/greeter/Login.c'; fi`
-
-xdm-verify.o: greeter/verify.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-verify.o -MD -MP -MF $(DEPDIR)/xdm-verify.Tpo -c -o xdm-verify.o `test -f 'greeter/verify.c' || echo '$(srcdir)/'`greeter/verify.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-verify.Tpo $(DEPDIR)/xdm-verify.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='greeter/verify.c' object='xdm-verify.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-verify.o `test -f 'greeter/verify.c' || echo '$(srcdir)/'`greeter/verify.c
-
-xdm-verify.obj: greeter/verify.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -MT xdm-verify.obj -MD -MP -MF $(DEPDIR)/xdm-verify.Tpo -c -o xdm-verify.obj `if test -f 'greeter/verify.c'; then $(CYGPATH_W) 'greeter/verify.c'; else $(CYGPATH_W) '$(srcdir)/greeter/verify.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdm-verify.Tpo $(DEPDIR)/xdm-verify.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='greeter/verify.c' object='xdm-verify.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdm_CFLAGS) $(CFLAGS) -c -o xdm-verify.obj `if test -f 'greeter/verify.c'; then $(CYGPATH_W) 'greeter/verify.c'; else $(CYGPATH_W) '$(srcdir)/greeter/verify.c'; fi`
-
-xdmshell-xdmshell.o: xdmshell.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdmshell_CFLAGS) $(CFLAGS) -MT xdmshell-xdmshell.o -MD -MP -MF $(DEPDIR)/xdmshell-xdmshell.Tpo -c -o xdmshell-xdmshell.o `test -f 'xdmshell.c' || echo '$(srcdir)/'`xdmshell.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdmshell-xdmshell.Tpo $(DEPDIR)/xdmshell-xdmshell.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='xdmshell.c' object='xdmshell-xdmshell.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdmshell_CFLAGS) $(CFLAGS) -c -o xdmshell-xdmshell.o `test -f 'xdmshell.c' || echo '$(srcdir)/'`xdmshell.c
-
-xdmshell-xdmshell.obj: xdmshell.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdmshell_CFLAGS) $(CFLAGS) -MT xdmshell-xdmshell.obj -MD -MP -MF $(DEPDIR)/xdmshell-xdmshell.Tpo -c -o xdmshell-xdmshell.obj `if test -f 'xdmshell.c'; then $(CYGPATH_W) 'xdmshell.c'; else $(CYGPATH_W) '$(srcdir)/xdmshell.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xdmshell-xdmshell.Tpo $(DEPDIR)/xdmshell-xdmshell.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='xdmshell.c' object='xdmshell-xdmshell.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xdmshell_CFLAGS) $(CFLAGS) -c -o xdmshell-xdmshell.obj `if test -f 'xdmshell.c'; then $(CYGPATH_W) 'xdmshell.c'; else $(CYGPATH_W) '$(srcdir)/xdmshell.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -1233,46 +429,26 @@ clean-libtool:
 
 distclean-libtool:
 	-rm -f libtool config.lt
-install-appdefaultDATA: $(appdefault_DATA)
+install-systemdsystemunitDATA: $(systemdsystemunit_DATA)
 	@$(NORMAL_INSTALL)
-	test -z "$(appdefaultdir)" || $(MKDIR_P) "$(DESTDIR)$(appdefaultdir)"
-	@list='$(appdefault_DATA)'; test -n "$(appdefaultdir)" || list=; \
+	test -z "$(systemdsystemunitdir)" || $(MKDIR_P) "$(DESTDIR)$(systemdsystemunitdir)"
+	@list='$(systemdsystemunit_DATA)'; test -n "$(systemdsystemunitdir)" || list=; \
 	for p in $$list; do \
 	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
 	  echo "$$d$$p"; \
 	done | $(am__base_list) | \
 	while read files; do \
-	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(appdefaultdir)'"; \
-	  $(INSTALL_DATA) $$files "$(DESTDIR)$(appdefaultdir)" || exit $$?; \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(systemdsystemunitdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(systemdsystemunitdir)" || exit $$?; \
 	done
 
-uninstall-appdefaultDATA:
+uninstall-systemdsystemunitDATA:
 	@$(NORMAL_UNINSTALL)
-	@list='$(appdefault_DATA)'; test -n "$(appdefaultdir)" || list=; \
+	@list='$(systemdsystemunit_DATA)'; test -n "$(systemdsystemunitdir)" || list=; \
 	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
 	test -n "$$files" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(appdefaultdir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(appdefaultdir)" && rm -f $$files
-install-appmanDATA: $(appman_DATA)
-	@$(NORMAL_INSTALL)
-	test -z "$(appmandir)" || $(MKDIR_P) "$(DESTDIR)$(appmandir)"
-	@list='$(appman_DATA)'; test -n "$(appmandir)" || list=; \
-	for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  echo "$$d$$p"; \
-	done | $(am__base_list) | \
-	while read files; do \
-	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(appmandir)'"; \
-	  $(INSTALL_DATA) $$files "$(DESTDIR)$(appmandir)" || exit $$?; \
-	done
-
-uninstall-appmanDATA:
-	@$(NORMAL_UNINSTALL)
-	@list='$(appman_DATA)'; test -n "$(appmandir)" || list=; \
-	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	test -n "$$files" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(appmandir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(appmandir)" && rm -f $$files
+	echo " ( cd '$(DESTDIR)$(systemdsystemunitdir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(systemdsystemunitdir)" && rm -f $$files
 
 # This directory's subdirectories are mostly independent; you can cd
 # into them and run `make' without going through this Makefile.
@@ -1589,10 +765,10 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-recursive
-all-am: Makefile $(PROGRAMS) $(DATA) config.h
+all-am: Makefile $(DATA) config.h
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(xdmlibdir)" "$(DESTDIR)$(appdefaultdir)" "$(DESTDIR)$(appmandir)"; do \
+	for dir in "$(DESTDIR)$(systemdsystemunitdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-recursive
@@ -1624,15 +800,13 @@ maintainer-clean-generic:
 	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
 clean: clean-recursive
 
-clean-am: clean-binPROGRAMS clean-generic clean-libtool \
-	clean-xdmlibPROGRAMS mostlyclean-am
+clean-am: clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
-distclean-am: clean-am distclean-compile distclean-generic \
-	distclean-hdr distclean-libtool distclean-tags
+distclean-am: clean-am distclean-generic distclean-hdr \
+	distclean-libtool distclean-tags
 
 dvi: dvi-recursive
 
@@ -1646,14 +820,13 @@ info: info-recursive
 
 info-am:
 
-install-data-am: install-appdefaultDATA install-appmanDATA \
-	install-xdmlibPROGRAMS
+install-data-am: install-systemdsystemunitDATA
 
 install-dvi: install-dvi-recursive
 
 install-dvi-am:
 
-install-exec-am: install-binPROGRAMS
+install-exec-am:
 
 install-html: install-html-recursive
 
@@ -1678,14 +851,12 @@ installcheck-am:
 maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
 mostlyclean: mostlyclean-recursive
 
-mostlyclean-am: mostlyclean-compile mostlyclean-generic \
-	mostlyclean-libtool
+mostlyclean-am: mostlyclean-generic mostlyclean-libtool
 
 pdf: pdf-recursive
 
@@ -1695,49 +866,38 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am: uninstall-appdefaultDATA uninstall-appmanDATA \
-	uninstall-binPROGRAMS uninstall-xdmlibPROGRAMS
+uninstall-am: uninstall-systemdsystemunitDATA
 
 .MAKE: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) all \
 	ctags-recursive install-am install-strip tags-recursive
 
 .PHONY: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) CTAGS GTAGS \
-	all all-am am--refresh check check-am clean clean-binPROGRAMS \
-	clean-generic clean-libtool clean-xdmlibPROGRAMS ctags \
-	ctags-recursive dist dist-all dist-bzip2 dist-gzip dist-hook \
-	dist-lzma dist-shar dist-tarZ dist-xz dist-zip distcheck \
-	distclean distclean-compile distclean-generic distclean-hdr \
+	all all-am am--refresh check check-am clean clean-generic \
+	clean-libtool ctags ctags-recursive dist dist-all dist-bzip2 \
+	dist-gzip dist-hook dist-lzma dist-shar dist-tarZ dist-xz \
+	dist-zip distcheck distclean distclean-generic distclean-hdr \
 	distclean-libtool distclean-tags distcleancheck distdir \
 	distuninstallcheck dvi dvi-am html html-am info info-am \
-	install install-am install-appdefaultDATA install-appmanDATA \
-	install-binPROGRAMS install-data install-data-am install-dvi \
+	install install-am install-data install-data-am install-dvi \
 	install-dvi-am install-exec install-exec-am install-html \
 	install-html-am install-info install-info-am install-man \
 	install-pdf install-pdf-am install-ps install-ps-am \
-	install-strip install-xdmlibPROGRAMS installcheck \
+	install-strip install-systemdsystemunitDATA installcheck \
 	installcheck-am installdirs installdirs-am maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-recursive uninstall uninstall-am \
-	uninstall-appdefaultDATA uninstall-appmanDATA \
-	uninstall-binPROGRAMS uninstall-xdmlibPROGRAMS
+	maintainer-clean-generic mostlyclean mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-recursive \
+	uninstall uninstall-am uninstall-systemdsystemunitDATA
 
-
-.cpp:
-	$(cpp_verbose)$(RAWCPP) $(RAWCPPFLAGS) $(CPP_FILES_FLAGS) < $< | $(CPP_SED_MAGIC) > $@
-
-.man.cpp.$(APP_MAN_SUFFIX):
-	$(cpp_verbose)$(RAWCPP) $(RAWCPPFLAGS) $(CPP_FILES_FLAGS) < $< | $(CPP_SED_MAGIC) > $@
-
-.ad:
-	[ -d app-defaults ] || mkdir app-defaults
-	cp $< $@
 
 @LINT_TRUE@lint:
 @LINT_TRUE@	$(LINT) $(ALL_LINT_FLAGS) $(xdm_CFLAGS) $(xdm_SOURCES) $(xdm_LIBS)
-@LINT_TRUE@	$(LINT) $(ALL_LINT_FLAGS) $(xdmshell_CFLAGS) $(xdmshell_SOURCES)
-@LINT_TRUE@	$(LINT) $(ALL_LINT_FLAGS) $(chooser_CFLAGS) $(chooser_SOURCES) $(chooser_LDADD)
+@LINT_TRUE@	(cd xdm && $(MAKE) $(AM_MAKEFLAGS) lint)
+@LINT_TRUE@	(cd xdmshell && $(MAKE) $(AM_MAKEFLAGS) lint)
 @LINT_TRUE@	(cd greeter && $(MAKE) $(AM_MAKEFLAGS) lint)
+@LINT_TRUE@	(cd chooser && $(MAKE) $(AM_MAKEFLAGS) lint)
+
+@HAVE_SYSTEMD_TRUE@xdm.service: xdm.service.in
+@HAVE_SYSTEMD_TRUE@	$(AM_V_GEN)$(SED) -e 's|BINDIR|$(bindir)|g' < $< > $@
 
 .PHONY: ChangeLog INSTALL
 

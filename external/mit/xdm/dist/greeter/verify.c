@@ -43,7 +43,7 @@ from The Open Group.
 #if defined(USE_PAM)
 # include	<security/pam_appl.h>
 # include	<stdlib.h>
-#elif defined(USESHADOW)
+#elif defined(HAVE_GETSPNAM)
 # include	<shadow.h>
 # include	<errno.h>
 #elif defined(USE_BSDAUTH)
@@ -326,7 +326,7 @@ Verify (struct display *d, struct greet_info *greet, struct verify_info *verify)
 {
 	struct passwd	*p;
 # ifndef USE_PAM
-#  ifdef USESHADOW
+#  ifdef HAVE_GETSPNAM
 	struct spwd	*sp;
 #  endif
 	char		*user_pass = NULL;
@@ -345,6 +345,16 @@ Verify (struct display *d, struct greet_info *greet, struct verify_info *verify)
 
 	if (!p || strlen (greet->name) == 0) {
 		Debug ("getpwnam() failed.\n");
+		if (greet->password != NULL)
+		    bzero(greet->password, strlen(greet->password));
+		return 0;
+	}
+
+	/*
+	 * Only accept root logins if allowRootLogin resource is not false
+	 */
+	if ((p->pw_uid == 0) && !greet->allow_root_login) {
+		Debug("root logins not allowed\n");
 		if (greet->password != NULL)
 		    bzero(greet->password, strlen(greet->password));
 		return 0;
@@ -379,7 +389,7 @@ Verify (struct display *d, struct greet_info *greet, struct verify_info *verify)
                         Debug("Not on system console\n");
 			if (greet->password != NULL)
 			    bzero(greet->password, strlen(greet->password));
-             		free(console);
+			free(console);
 	                return 0;
                 }
 		free(console);
@@ -440,7 +450,7 @@ Verify (struct display *d, struct greet_info *greet, struct verify_info *verify)
 		}
 	}
 #  endif
-#  ifdef USESHADOW
+#  ifdef HAVE_GETSPNAM
 	errno = 0;
 	sp = getspnam(greet->name);
 	if (sp == NULL) {
@@ -451,7 +461,7 @@ Verify (struct display *d, struct greet_info *greet, struct verify_info *verify)
 #   ifndef QNX4
 	endspent();
 #   endif  /* QNX4 doesn't need endspent() to end shadow passwd ops */
-#  endif /* USESHADOW */
+#  endif /* HAVE_GETSPNAM */
 #  if defined(ultrix) || defined(__ultrix__)
 	if (authenticate_user(p, greet->password, NULL) < 0)
 #  else
@@ -467,7 +477,6 @@ Verify (struct display *d, struct greet_info *greet, struct verify_info *verify)
 #  ifdef KERBEROS
 done:
 #  endif
-#  ifdef __OpenBSD__
 	/*
 	 * Only accept root logins if allowRootLogin resource is set
 	 */
@@ -476,6 +485,7 @@ done:
 		bzero(greet->password, strlen(greet->password));
 		return 0;
 	}
+#  ifdef __OpenBSD__
 	/*
 	 * Shell must be in /etc/shells
 	 */
