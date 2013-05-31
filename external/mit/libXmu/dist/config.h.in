@@ -3,9 +3,6 @@
 /* Define to 1 if `struct sockaddr_in' has a `sin_len' member */
 #undef BSD44SOCKETS
 
-/* Whether we have snprintf() */
-#undef HAS_SNPRINTF
-
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
