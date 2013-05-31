@@ -26,8 +26,7 @@ MapPageNumberToFileMap (DviWidget dw, int number)
 }
 
 void
-DestroyFileMap (m)
-	DviFileMap	*m;
+DestroyFileMap (DviFileMap *m)
 {
 	DviFileMap	*next;
 
@@ -38,17 +37,14 @@ DestroyFileMap (m)
 }
 
 void
-ForgetPagePositions (dw)
-	DviWidget	dw;
+ForgetPagePositions (DviWidget dw)
 {
 	DestroyFileMap (dw->dvi.file_map);
-	dw->dvi.file_map = 0;
+	dw->dvi.file_map = NULL;
 }
 
 void
-RememberPagePosition(dw, number)
-	DviWidget	dw;
-	int		number;
+RememberPagePosition(DviWidget dw, int number)
 {
 	DviFileMap	*m;
 
@@ -65,9 +61,7 @@ RememberPagePosition(dw, number)
 }
 
 long
-SearchPagePosition (dw, number)
-	DviWidget	dw;
-	int		number;
+SearchPagePosition (DviWidget dw, int number)
 {
 	DviFileMap	*m;
 
@@ -77,9 +71,7 @@ SearchPagePosition (dw, number)
 }
 
 void
-FileSeek(dw, position)
-DviWidget	dw;
-long		position;
+FileSeek(DviWidget dw, long position)
 {
 	if (dw->dvi.tmpFile) {
 		dw->dvi.readingTmp = 1;

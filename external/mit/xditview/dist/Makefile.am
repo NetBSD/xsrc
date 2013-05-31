@@ -19,9 +19,10 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 #  PERFORMANCE OF THIS SOFTWARE.
 
+SUBDIRS = man
 bin_PROGRAMS = xditview
 
-xditview_CFLAGS = $(XDITVIEW_CFLAGS)
+AM_CFLAGS = $(XDITVIEW_CFLAGS)
 xditview_LDADD = $(XDITVIEW_LIBS) -lm
 
 xditview_SOURCES =	\
@@ -40,60 +41,30 @@ xditview_SOURCES =	\
         XFontName.c \
         XFontName.h
 
-appman_PRE = \
-        xditview.man
+# App default files
 
-# App default files  (*.ad)
+DISTCHECK_CONFIGURE_FLAGS = --with-appdefaultdir=\$${datadir}/X11/app-defaults
 
 appdefaultdir = @appdefaultdir@
 
-APPDEFAULTFILES = \
-        Xditview \
-        Xditview-chrtr
+dist_appdefault_DATA = \
+        app-defaults/Xditview \
+        app-defaults/Xditview-chrtr
 
 # Bitmaps referenced at runtime
 bitmapdir = $(includedir)/X11/bitmaps
 dist_bitmap_DATA = ldblarrow rdblarrow
 
-SUFFIXES = .ad
+EXTRA_DIST = xdit.bm xdit_mask.bm
 
-.ad:
-	cp $< $@
+MAINTAINERCLEANFILES = ChangeLog INSTALL
 
-appdefault_DATA = $(APPDEFAULTFILES)
+.PHONY: ChangeLog INSTALL
 
-EXTRA_DIST = $(APPDEFAULTFILES:%=%.ad) xdit.bm xdit_mask.bm
+INSTALL:
+	$(INSTALL_CMD)
 
-CLEANFILES = $(APPDEFAULTFILES)
+ChangeLog:
+	$(CHANGELOG_CMD)
 
-
-appmandir = $(APP_MAN_DIR)
-
-appman_DATA = $(appman_PRE:man=@APP_MAN_SUFFIX@)
-
-EXTRA_DIST += $(appman_PRE)
-CLEANFILES += $(appman_DATA)
-
-SED = sed
-
-# Strings to replace in man pages
-XORGRELSTRING = @PACKAGE_STRING@
-  XORGMANNAME = X Version 11
-
-MAN_SUBSTS = \
-	-e 's|__vendorversion__|"$(XORGRELSTRING)" "$(XORGMANNAME)"|' \
-	-e 's|__xorgversion__|"$(XORGRELSTRING)" "$(XORGMANNAME)"|' \
-	-e 's|__xservername__|Xorg|g' \
-	-e 's|__xconfigfile__|xorg.conf|g' \
-	-e 's|__projectroot__|$(prefix)|g' \
-	-e 's|__apploaddir__|$(appdefaultdir)|' \
-	-e 's|__appmansuffix__|$(APP_MAN_SUFFIX)|g' \
-	-e 's|__libmansuffix__|$(LIB_MAN_SUFFIX)|g' \
-	-e 's|__adminmansuffix__|$(ADMIN_MAN_SUFFIX)|g' \
-	-e 's|__miscmansuffix__|$(MISC_MAN_SUFFIX)|g' \
-	-e 's|__filemansuffix__|$(FILE_MAN_SUFFIX)|g'
-
-SUFFIXES += .$(APP_MAN_SUFFIX) .man
-
-.man.$(APP_MAN_SUFFIX):
-	sed $(MAN_SUBSTS) < $< > $@
+dist-hook: ChangeLog INSTALL
