@@ -1,30 +1,35 @@
 /* xtermcfg.h.  Generated automatically by configure.  */
-/* $XTermId: xtermcfg.hin,v 1.180 2010/04/21 00:19:23 tom Exp $ */
+/* $XTermId: xtermcfg.hin,v 1.199 2013/05/27 21:05:23 tom Exp $ */
 
-/************************************************************
-
-Copyright 1997-2009,2010 by Thomas E. Dickey
-
-                        All Rights Reserved
-
-Permission to use, copy, modify, and distribute this software and its
-documentation for any purpose and without fee is hereby granted,
-provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in
-supporting documentation, and that the name of the above listed
-copyright holder(s) not be used in advertising or publicity pertaining
-to distribution of the software without specific, written prior
-permission.
-
-THE ABOVE LISTED COPYRIGHT HOLDER(S) DISCLAIM ALL WARRANTIES WITH REGARD
-TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS, IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE
-LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
-********************************************************/
+/*
+ * Copyright 1997-2012,2013 by Thomas E. Dickey
+ *
+ *                         All Rights Reserved
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Except as contained in this notice, the name(s) of the above copyright
+ * holders shall not be used in advertising or otherwise to promote the
+ * sale, use or other dealings in this Software without prior written
+ * authorization.
+ */
 
 #ifndef included_xtermcfg_h
 #define included_xtermcfg_h 1
@@ -36,28 +41,39 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define CC_HAS_PROTOS 1		/* CF_ANSI_CC */
 /* #undef CSRG_BASED */		/* CF_TYPE_FD_MASK */
 /* #undef DECL_ERRNO */		/* CF_ERRNO */
+#define DEFDELETE_DEL Maybe		/* AC_ARG_ENABLE(delete-is-del) */
+#define DEF_ALT_SENDS_ESC False	/* CF_ARG_ENABLE(alt-sends-esc) */
+#define DEF_BACKARO_BS True		/* CF_ARG_DISABLE(backarrow-key) */
+#define DEF_BACKARO_ERASE False	/* CF_ARG_ENABLE(backarrow-is-erase) */
+#define DEF_META_SENDS_ESC False	/* CF_ARG_ENABLE(meta-sends-esc) */
 /* #undef DFT_COLORMODE */		/* AC_ARG_WITH(default-color-mode) */
-#define DFT_DECID "100"		/* AC_ARG_WITH(default-terminal-id) */
+#define DFT_DECID "420"		/* AC_ARG_WITH(default-terminal-id) */
 #define DFT_TERMTYPE "xterm"		/* AC_ARG_WITH(default-term-type) */
 /* #undef DISABLE_SETGID */		/* CF_ARG_DISABLE(setgid) */
 /* #undef DISABLE_SETUID */		/* CF_ARG_DISABLE(setuid) */
 #define HAVE_GETHOSTNAME 1		/* AC_CHECK_FUNCS(gethostname) */
 #define HAVE_GETLOGIN 1		/* AC_CHECK_FUNCS(getlogin) */
+#define HAVE_GRANTPT 1		/* CF_FUNC_GRANTPT */
+/* #undef HAVE_GRANTPT_PTY_ISATTY */	/* CF_FUNC_GRANTPT */
 #define HAVE_LANGINFO_CODESET 1	/* AM_LANGINFO_CODESET */
 /* #undef HAVE_LASTLOG_H */		/* CF_LASTLOG */
+#define HAVE_LIBXPM 1		/* CF_WITH_XPM */
 /* #undef HAVE_LIB_NEXTAW */		/* CF_X_ATHENA(--with-neXtaw) */
 /* #undef HAVE_LIB_PCRE */		/* CF_WITH_PCRE */
 #define HAVE_LIB_XAW 1		/* CF_X_ATHENA */
 /* #undef HAVE_LIB_XAW3D */		/* CF_X_ATHENA(--with-Xaw3d) */
 /* #undef HAVE_LIB_XAWPLUS */		/* CF_X_ATHENA(--with-XawPlus) */
+/* #undef HAVE_NCURSES_CURSES_H */	/* AC_CHECK_HEADERS(ncurses/curses.h) */
 /* #undef HAVE_NCURSES_TERM_H */	/* AC_CHECK_HEADERS(ncurses/term.h) */
 #define HAVE_PATHS_H 1		/* CF_LASTLOG */
 /* #undef HAVE_PCREPOSIX_H */		/* CF_WITH_PCRE */
+#define HAVE_POSIX_OPENPT 1	/* CF_FUNC_GRANTPT */
 #define HAVE_POSIX_SAVED_IDS 1	/* CF_POSIX_SAVED_IDS */
+#define HAVE_PTSNAME 1		/* CF_FUNC_GRANTPT */
 #define HAVE_PUTENV 1		/* AC_CHECK_FUNCS(putenv) */
 #define HAVE_SCHED_YIELD 1		/* AC_CHECK_FUNCS(sched_yield) */
+#define HAVE_SETPGID 1		/* AC_CHECK_FUNCS(setpgid) */
 #define HAVE_STDLIB_H 1		/* AC_CHECK_HEADERS(stdlib.h) */
-#define HAVE_STRERROR 1		/* AC_CHECK_FUNCS(strerror) */
 #define HAVE_STRFTIME 1		/* AC_CHECK_FUNCS(strftime) */
 /* #undef HAVE_SYS_TIME_H */		/* AC_HEADER_TIME */
 #define HAVE_SYS_TTYDEFAULTS_H 1	/* AC_CHECK_HEADERS(sys/ttydefaults.h) */
@@ -69,6 +85,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define HAVE_TERM_H 1		/* AC_CHECK_HEADERS(term.h) */
 #define HAVE_TIGETSTR 1		/* AC_CHECK_FUNCS(tigetstr) */
 #define HAVE_UNISTD_H 1		/* AC_CHECK_HEADERS(unistd.h) */
+#define HAVE_UNSETENV 1		/* AC_CHECK_FUNCS(unsetenv) */
 /* #undef HAVE_USE_EXTENDED_NAMES */	/* AC_CHECK_FUNCS(use_extended_names) */
 #define HAVE_UTMP 1		/* CF_UTMP */
 #define HAVE_UTMP_UT_HOST 1	/* CF_UTMP_UT_HOST */
@@ -88,6 +105,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define HAVE_X11_XPOLL_H 1		/* AC_CHECK_HEADERS(X11/Xpoll.h) */
 #define HAVE_XFTDRAWSETCLIP 1	/* CF_X_FREETYPE */
 #define HAVE_XFTDRAWSETCLIPRECTANGLES 1 /* CF_X_FREETYPE */
+#define HAVE_XKBKEYCODETOKEYSYM 1	/* AC_CHECK_FUNCS(XkbKeycodeToKeysym) */
 #define HAVE_XKBQUERYEXTENSION 1	/* AC_CHECK_FUNCS(XkbQueryExtension) */
 #define HAVE_XKB_BELL_EXT 1	/* CF_XKB_BELL_EXT */
 /* #undef LUIT_PATH */		/* CF_ARG_ENABLE(luit) */
@@ -106,6 +124,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /* #undef OPT_DABBREV */		/* CF_ARG_ENABLE(dabbrev) */
 /* #undef OPT_DEC_CHRSET */		/* CF_ARG_DISABLE(doublechars) */
 /* #undef OPT_DEC_LOCATOR */		/* CF_ARG_ENABLE(dec-locator) */
+/* #undef OPT_DOUBLE_BUFFER */	/* CF_ARG_ENABLE(double-buffer) */
 #define OPT_DEC_RECTOPS 1		/* CF_ARG_ENABLE(rectangles) */
 /* #undef OPT_EXEC_XTERM */		/* CF_ARG_ENABLE(exec-xterm) */
 #define OPT_FIFO_LINES 1		/* CF_ARG_ENABLE(fifo-lines) */
@@ -126,6 +145,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /* #undef OPT_READLINE */		/* CF_ARG_ENABLE(readline-mouse) */
 /* #undef OPT_SAME_NAME */		/* CF_ARG_DISABLE(samename) */
 /* #undef OPT_SCO_FUNC_KEYS */	/* CF_ARG_ENABLE(sco-fkeys) */
+/* #undef OPT_SELECTION_OPS */	/* CF_ARG_DISABLE(selection-ops) */
 #define OPT_SELECT_REGEX 1		/* CF_ARG_DISABLE(regex) */
 /* #undef OPT_SESSION_MGT */		/* CF_ARG_DISABLE(session-mgt) */
 /* #undef OPT_SUN_FUNC_KEYS */	/* CF_ARG_ENABLE(sun-fkeys) */
@@ -136,7 +156,6 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /* #undef OPT_VT52_MODE */		/* CF_ARG_DISABLE(vt52) */
 /* #undef OPT_WIDER_ICHAR */		/* CF_ARG_ENABLE(16bit-chars) */
 /* #undef OPT_WIDE_CHARS */		/* CF_ARG_OPTION(wide-chars) */
-#define OPT_WIDE_CHARS 1		/* CF_ARG_OPTION(wide-chars) */
 /* #undef OPT_XMC_GLITCH */		/* CF_ARG_ENABLE(xmc-glitch) */
 /* #undef OPT_ZICONBEEP */		/* CF_ARG_DISABLE(ziconbeep) */
 /* #undef OWN_TERMINFO_DIR */		/* AC_ARG_WITH(own-terminfo) */
@@ -148,8 +167,6 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define TIME_WITH_SYS_TIME 1	/* AC_HEADER_TIME */
 #define TTY_GROUP_NAME "tty"		/* CF_TTY_GROUP */
 /* #undef USE_LASTLOG */		/* CF_LASTLOG */
-/* #undef USE_MY_MEMMOVE */		/* CF_FUNC_MEMMOVE */
-/* #undef USE_OK_BCOPY */		/* CF_FUNC_MEMMOVE */
 #define USE_POSIX_WAIT 1		/* CF_POSIX_WAIT */
 /* #undef USE_STRUCT_LASTLOG */	/* CF_STRUCT_LASTLOG */
 #define USE_SYSV_UTMP 1		/* CF_UTMP */
@@ -161,12 +178,11 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /* #undef USE_UTMP_SETGID */		/* AC_ARG_WITH(utmp-setgid) */
 #define UTMPX_FOR_UTMP 1		/* CF_UTMP */
 #define XRENDERFONT 1		/* CF_X_FREETYPE */
-/* #undef const */			/* AC_CONST */
+/* #undef cc_t */			/* CF_TYPE_CC_T */
 /* #undef gid_t */			/* AC_TYPE_UID_T */
 /* #undef mode_t */			/* AC_TYPE_MODE_T */
 /* #undef off_t */			/* AC_TYPE_OFF_T */
 /* #undef pid_t */			/* AC_TYPE_PID_T */
-/* #undef size_t */			/* AC_TYPE_SIZE_T */
 /* #undef time_t */			/* AC_CHECK_TYPE(time_t, long) */
 /* #undef uid_t */			/* AC_TYPE_UID_T */
 /* #undef ut_name */			/* CF_UTMP */
@@ -187,21 +203,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #ifndef __cplusplus
 /* #undef GCC_PRINTF */
 /* #undef GCC_PRINTFLIKE */
+/* #undef GCC_NORETURN */
 /* #undef GCC_UNUSED */
-#endif
-
-#ifdef USE_OK_BCOPY
-#define memmove(d,s,n) bcopy(s,d,n)
-#endif
-
-#ifdef USE_MY_MEMMOVE
-#define memmove(d,s,n) my_memmove(d,s,n)
-extern void * my_memmove(void * s1, void * s2, size_t n);
-#endif
-
-#ifndef HAVE_STRERROR
-#define strerror(n) my_strerror(n)
-extern char *my_strerror(int n);
 #endif
 
 #ifndef HAVE_X11_XPOLL_H
