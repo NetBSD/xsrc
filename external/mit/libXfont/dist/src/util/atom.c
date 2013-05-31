@@ -1,5 +1,3 @@
-/* $Xorg: atom.c,v 1.5 2001/02/09 02:04:04 xorgcvs Exp $ */
-
 /*
 
 Copyright 1990, 1994, 1998  The Open Group
@@ -25,7 +23,6 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/util/atom.c,v 1.9 2002/09/19 13:22:00 tsi Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -57,7 +54,7 @@ static int	    reverseMapSize;
 static Atom	    lastAtom;
 
 static int
-Hash(char *string, int len)
+Hash(const char *string, int len)
 {
     int	h;
 
@@ -149,8 +146,8 @@ NameEqual (const char *a, const char *b, int l)
 #pragma weak MakeAtom
 #endif
 
-weak Atom 
-MakeAtom(char *string, unsigned len, int makeit)
+weak Atom
+MakeAtom(const char *string, unsigned len, int makeit)
 {
     AtomListPtr	a;
     int		hash;
@@ -226,7 +223,7 @@ MakeAtom(char *string, unsigned len, int makeit)
 #pragma weak ValidAtom
 #endif
 
-weak int 
+weak int
 ValidAtom(Atom atom)
 {
     return (atom != None) && (atom <= lastAtom);

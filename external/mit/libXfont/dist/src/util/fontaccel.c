@@ -1,5 +1,3 @@
-/* $Xorg: fontaccel.c,v 1.4 2001/02/09 02:04:04 xorgcvs Exp $ */
-
 /*
 
 Copyright 1990, 1998  The Open Group
@@ -27,7 +25,6 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/util/fontaccel.c,v 1.6 2001/01/17 19:43:33 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -85,7 +82,7 @@ FontComputeInfoAccelerators(FontInfoPtr pFontInfo)
 	pFontInfo->inkInside = FALSE;
 }
 
-int 
+int
 FontCouldBeTerminal(FontInfoPtr pFontInfo)
 {
     if ((pFontInfo->minbounds.leftSideBearing >= 0) &&
@@ -98,7 +95,7 @@ FontCouldBeTerminal(FontInfoPtr pFontInfo)
 	     pFontInfo->minbounds.ascent != pFontInfo->fontAscent ||
 	     pFontInfo->minbounds.descent != pFontInfo->fontDescent)) {
 	/* blow off font with nothing but a SPACE */
-	if (pFontInfo->maxbounds.ascent == 0 && 
+	if (pFontInfo->maxbounds.ascent == 0 &&
 	    pFontInfo->maxbounds.descent == 0)
 		return FALSE;
 	return TRUE;

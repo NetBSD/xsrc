@@ -1,4 +1,3 @@
-/* $Xorg: pcfwrite.c,v 1.5 2001/02/09 02:04:02 xorgcvs Exp $ */
 /*
 
 Copyright 1990, 1994, 1998  The Open Group
@@ -26,7 +25,6 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/pcfwrite.c,v 1.11 2003/11/17 22:20:22 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -238,7 +236,8 @@ pcfWriteFont(FontPtr pFont, FontFilePtr file)
     }
     offsetProps = malloc(pFont->info.nprops * sizeof(FontPropRec));
     if (!offsetProps) {
-      pcfError("pcfWriteFont(): Couldn't allocate offsetProps (%d*%d)", pFont->info.nprops, sizeof(FontPropRec));
+	pcfError("pcfWriteFont(): Couldn't allocate offsetProps (%d*%d)",
+		 pFont->info.nprops, (int) sizeof(FontPropRec));
 	return AllocError;
     }
     prop_string_size = 0;
@@ -432,8 +431,8 @@ pcfWriteFont(FontPtr pFont, FontFilePtr file)
 	    pcfPutINT16(file, format, pFont->info.defaultCh);
 	    for (i = 0; i < nencodings; i++) {
 		if (ACCESSENCODING(bitmapFont->encoding,i))
-		    pcfPutINT16(file, format, 
-                                ACCESSENCODING(bitmapFont->encoding, i) - 
+		    pcfPutINT16(file, format,
+                                ACCESSENCODING(bitmapFont->encoding, i) -
                                   bitmapFont->metrics);
 		else
 		    pcfPutINT16(file, format, 0xFFFF);

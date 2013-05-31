@@ -1,5 +1,3 @@
-/* $Xorg: fontxlfd.c,v 1.4 2001/02/09 02:04:04 xorgcvs Exp $ */
-
 /*
 
 Copyright 1990, 1998  The Open Group
@@ -27,7 +25,6 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/util/fontxlfd.c,v 3.16tsi Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -73,7 +70,7 @@ GetInt(char *ptr, int *val)
 #ifndef NO_LOCALE
 static struct lconv *locale = 0;
 #endif
-static char *radix = ".", *plus = "+", *minus = "-";
+static const char *radix = ".", *plus = "+", *minus = "-";
 
 static char *
 readreal(char *ptr, double *result)
@@ -119,7 +116,6 @@ readreal(char *ptr, double *result)
 static char *
 xlfd_double_to_text(double value, char *buffer, int space_required)
 {
-    char formatbuf[40];
     register char *p1;
     int ndigits, exponent;
 
@@ -135,14 +131,12 @@ xlfd_double_to_text(double value, char *buffer, int space_required)
 	    minus = locale->negative_sign;
     }
 #endif
-    /* Compute a format to use to render the number */
-    sprintf(formatbuf, "%%.%dle", XLFD_NDIGITS);
 
     if (space_required)
 	*buffer++ = ' ';
 
     /* Render the number using printf's idea of formatting */
-    sprintf(buffer, formatbuf, value);
+    sprintf(buffer, "%.*le", XLFD_NDIGITS, value);
 
     /* Find and read the exponent value */
     for (p1 = buffer + strlen(buffer);
@@ -159,16 +153,14 @@ xlfd_double_to_text(double value, char *buffer, int space_required)
     if (exponent >= XLFD_NDIGITS || ndigits - exponent > XLFD_NDIGITS + 1)
     {
 	/* Scientific */
-	sprintf(formatbuf, "%%.%dle", ndigits - 1);
-	sprintf(buffer, formatbuf, value);
+	sprintf(buffer, "%.*le", ndigits - 1, value);
     }
     else
     {
 	/* Fixed */
 	ndigits -= exponent + 1;
 	if (ndigits < 0) ndigits = 0;
-	sprintf(formatbuf, "%%.%dlf", ndigits);
-	sprintf(buffer, formatbuf, value);
+	sprintf(buffer, "%.*lf", ndigits, value);
 	if (exponent < 0)
 	{
 	    p1 = buffer;
@@ -268,10 +260,9 @@ xlfd_round_double(double x)
 	 * If not IEEE 754:  Let printf() do it for you.
 	 */
 
-	char formatbuf[40], buffer[40];
+	char buffer[40];
 
-	sprintf(formatbuf, "%%.%dlg", XLFD_NDIGITS);
-	sprintf(buffer, formatbuf, x);
+	sprintf(buffer, "%.*lg", XLFD_NDIGITS, x);
 	return atof(buffer);
     }
 }
