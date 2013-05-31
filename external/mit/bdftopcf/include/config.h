@@ -7,9 +7,6 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
-/* Define to 1 if you have the `mkstemp' function. */
-#define HAVE_MKSTEMP 1
-
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
 
@@ -32,25 +29,25 @@
 #define HAVE_UNISTD_H 1
 
 /* Name of package */
-#define PACKAGE "imake"
+#define PACKAGE "bdftopcf"
 
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT "https://bugs.freedesktop.org/enter_bug.cgi?product=xorg"
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME "imake"
+#define PACKAGE_NAME "bdftopcf"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "imake 1.0.5"
+#define PACKAGE_STRING "bdftopcf 1.0.4"
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "imake"
+#define PACKAGE_TARNAME "bdftopcf"
 
 /* Define to the home page for this package. */
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.0.5"
+#define PACKAGE_VERSION "1.0.4"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
@@ -59,10 +56,10 @@
 #define PACKAGE_VERSION_MINOR 0
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 5
+#define PACKAGE_VERSION_PATCHLEVEL 4
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "1.0.5"
+#define VERSION "1.0.4"
