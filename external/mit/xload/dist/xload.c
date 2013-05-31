@@ -1,5 +1,3 @@
-/* $XConsortium: xload.c,v 1.37 94/04/17 20:43:44 converse Exp $ */
-/* $XFree86: xc/programs/xload/xload.c,v 1.6tsi Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -181,7 +179,7 @@ main(int argc, char **argv)
     Arg args[1];
     Pixmap icon_pixmap = None;
     char *label, host[256];
-    char *domaindir;
+    const char *domaindir;
 
     XtSetLanguageProc ( NULL, NULL, NULL );
 
@@ -230,7 +228,7 @@ main(int argc, char **argv)
 	XrmValue    int_value;
 	Bool	    found = False;
 
-	(void) sprintf (name, "%s.paned.load.update", XtName(toplevel));
+	snprintf (name, sizeof(name), "%s.paned.load.update", XtName(toplevel));
 	found = XrmGetResource (XtScreenDatabase(XtScreen(toplevel)),
 				name, "XLoad.Paned.StripChart.Interval",
 				&type, &db_value);
