@@ -1,3 +1,189 @@
+commit 632b2054421d43ad8cc63203412d4ee0209f27e3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Mar 22 22:43:58 2012 -0700
+
+    xload 1.1.1
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c32c291c02cfd299d42e6d0b6560adcdabba7808
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jan 17 20:21:41 2012 -0800
+
+    Solaris: use getloadavg from libc instead of kstats
+    
+    The simpler interface (based on the BSD function) has been in libc since
+    Solaris 7, and avoids datasize bugs like the previous fix, so might as
+    well use it.
+    
+    Purge all the other ancient Solaris & SunOS support variants as well.
+    
+    This does mean if you want to keep running xload on a Sun OS version from
+    before 1998 you will need to use a branch of xload from before 2012 (such
+    as the one included in those old releases).
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4a54dee95260d36d0c8b5f8a35ac905f36b36f17
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jan 17 20:05:45 2012 -0800
+
+    Solaris: Read avenrun_1min kstat as a uint32, not a long
+    
+    Fixes garbage data & crashes when built as a 64-bit binary on
+    Solaris SPARC, since the high 32-bits was being filled with randomness.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Arvind Umrao <arvind.umrao@oracle.com>
+    Reviewed-by: Jay Cotton <jay.cotton@oracle.com>
+
+commit 1918be9695e0e912cb536373dd3da385473ab9e5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Dec 20 18:35:17 2011 -0800
+
+    Remove DG/UX support
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f2b4a35060e6ebe55846b62780ca01c6d519c84f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Dec 20 18:26:38 2011 -0800
+
+    Convert sprintf to snprintf
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit fad963fc4d1d8dc0a860ee3c7e3280a13124e296
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Dec 20 18:04:26 2011 -0800
+
+    Mark domaindir variable as const char * for gcc -Wwrite-strings
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 7cccec04962741b0d37bc92e580e1029b2d49849
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Dec 20 18:01:35 2011 -0800
+
+    Mark xload_error as noreturn
+    
+    Silences a gcc warning
+    Raises the minimum version of xproto needed to build to 7.0.17
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6ec57ead120a3d42afcb76da012109dd713f12d9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Dec 20 17:55:39 2011 -0800
+
+    Mark string arguments to xload_error as const char * for gcc -Wwrite-strings
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a53164911c182e73a03eb2eceaa5dfa81f4f98c3
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jan 19 10:06:56 2011 -0500
+
+    config: move man pages into their own directory
+    
+    Use services provided by XORG_MANPAGE_SECTIONS.
+    Use standard Makefile for man pages.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 822065fd4d359f0a0147168a3056ffe2acc485f7
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Jan 13 17:15:36 2011 -0500
+
+    man: replace hard coded man page section with substitution strings
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 26201189d66f48451bd6cc31288a38d8c7378720
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Jan 13 11:15:47 2011 -0500
+
+    man: remove trailing spaces and tabs
+    
+    Using s/[ \t]*$//
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 6f4a03f20a9d268850727dc330e83978cdba2253
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jan 12 15:29:50 2011 -0500
+
+    config: replace deprecated AC_HELP_STRING with AS_HELP_STRING
+    
+    This silences an Automake warning.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit b6e677512cf4ef9999846492100824c9e2a68ab6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 20 19:37:11 2010 -0800
+
+    Purge RCS/CVS version tags
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 83746b56b235a0bc4d30dcfd470f6d536333a502
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 20 19:33:28 2010 -0800
+
+    Remove ancient Domain/OS support (unifdef -Uapollo)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a3725bfb525de82b7c27d02476a2486e1fe343fd
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 20 19:31:32 2010 -0800
+
+    Remove ancient A/UX support (unifdef -UmacII)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5d8db8b359c13b8a48060cbaa0fda358913c8b36
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 20 19:26:28 2010 -0800
+
+    config: replace deprecated AM_CONFIG_HEADER with AC_CONFIG_HEADERS
+    
+    Regroup AC statements under the Autoconf initialization section.
+    Regroup AM statements under the Automake initialization section.
+    Add missing AC_CONFIG_SRCDIR
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e25648983336d4ed3b56ba3d295208f265f95ce2
+Author: Yaakov Selkowitz <yselkowitz@users.sourceforge.net>
+Date:   Mon Oct 4 22:00:57 2010 -0500
+
+    Fix old-style function definitions on Cygwin
+    
+    get_load.c: In function ‘InitLoadPoint’:
+    get_load.c:74:6: warning: old-style function definition
+    get_load.c: In function ‘GetLoadPoint’:
+    get_load.c:92:6: warning: old-style function definition
+    
+    Signed-off-by: Yaakov Selkowitz <yselkowitz@users.sourceforge.net>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Jon TURNEY <jon.turney@dronecode.org.uk>
+    Tested-by: Jon TURNEY <jon.turney@dronecode.org.uk>
+
+commit 1652442c2f82d30d0ed4d9cfbd6d3725b09f4a29
+Author: Yaakov Selkowitz <yselkowitz@users.sourceforge.net>
+Date:   Mon Oct 4 21:43:47 2010 -0500
+
+    Avoid excess Win32 includes on Cygwin
+    
+    Fixes compilation errors due to recent w32api <winspool.h>, which is
+    not needed to compile xload.
+    
+    Signed-off-by: Yaakov Selkowitz <yselkowitz@users.sourceforge.net>
+    Reviewed-by: Jon TURNEY <jon.turney@dronecode.org.uk>
+    Tested-by: Jon TURNEY <jon.turney@dronecode.org.uk>
+
 commit 600c46eaccd89417a5e44e86d18f9c733af64dc9
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sun Sep 26 13:06:17 2010 -0700
