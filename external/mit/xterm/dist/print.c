@@ -1,36 +1,34 @@
-/* $XTermId: print.c,v 1.138 2011/07/14 23:49:10 tom Exp $ */
+/* $XTermId: print.c,v 1.150 2013/05/27 00:55:47 tom Exp $ */
 
-/************************************************************
-
-Copyright 1997-2010,2011 by Thomas E. Dickey
-
-                        All Rights Reserved
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be included
-in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-Except as contained in this notice, the name(s) of the above copyright
-holders shall not be used in advertising or otherwise to promote the
-sale, use or other dealings in this Software without prior written
-authorization.
-
-********************************************************/
+/*
+ * Copyright 1997-2012,2013 by Thomas E. Dickey
+ *
+ *                         All Rights Reserved
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Except as contained in this notice, the name(s) of the above copyright
+ * holders shall not be used in advertising or otherwise to promote the
+ * sale, use or other dealings in this Software without prior written
+ * authorization.
+ */
 
 #include <xterm.h>
 #include <data.h>
@@ -76,7 +74,7 @@ static void send_SGR(XtermWidget /* xw */ ,
 static void stringToPrinter(XtermWidget /* xw */ ,
 			    const char * /*str */ );
 
-void
+static void
 closePrinter(XtermWidget xw GCC_UNUSED)
 {
     if (xtermHasPrinter(xw) != 0) {
@@ -89,19 +87,22 @@ closePrinter(XtermWidget xw GCC_UNUSED)
 #endif
 
 	if (SPS.fp != 0) {
-	    fclose(SPS.fp);
+	    DEBUG_MSG("closePrinter\n");
+	    pclose(SPS.fp);
 	    TRACE(("closed printer, waiting...\n"));
 #ifdef VMS			/* This is a quick hack, really should use
 				   spawn and check status or system services
 				   and go straight to the queue */
 	    (void) system(pcommand);
 #else /* VMS */
-	    while (nonblocking_wait() > 0)
-#endif /* VMS */
+	    while (nonblocking_wait() > 0) {
 		;
+	    }
+#endif /* VMS */
 	    SPS.fp = 0;
 	    SPS.isOpen = False;
 	    TRACE(("closed printer\n"));
+	    DEBUG_MSG("...closePrinter (done)\n");
 	}
     }
 }
@@ -303,6 +304,7 @@ xtermPrintEverything(XtermWidget xw, PrinterFlags * p)
     int save_which = screen->whichBuf;
     int done_which = 0;
 
+    DEBUG_MSG("xtermPrintEverything\n");
     if (p->print_everything) {
 	if (p->print_everything & 8) {
 	    printLines(xw, -screen->savedlines, -(screen->topline + 1), p);
@@ -439,6 +441,7 @@ charToPrinter(XtermWidget xw, unsigned chr)
 		    SysError(ERROR_FORK);
 
 		if (my_pid == 0) {
+		    DEBUG_MSG("charToPrinter: subprocess for printer\n");
 		    TRACE_CLOSE();
 		    close(my_pipe[1]);	/* printer is silent */
 		    close(screen->respond);
@@ -456,19 +459,39 @@ charToPrinter(XtermWidget xw, unsigned chr)
 			exit(1);
 
 		    SPS.fp = popen(SPS.printer_command, "w");
-		    input = fdopen(my_pipe[0], "r");
-		    while ((c = fgetc(input)) != EOF) {
-			fputc(c, SPS.fp);
-			if (isForm(c))
-			    fflush(SPS.fp);
+		    if (SPS.fp != 0) {
+			DEBUG_MSG("charToPrinter: opened pipe to printer\n");
+			input = fdopen(my_pipe[0], "r");
+			clearerr(input);
+			for (;;) {
+			    if (ferror(input)) {
+				DEBUG_MSG("charToPrinter: break on ferror\n");
+				break;
+			    } else if (feof(input)) {
+				DEBUG_MSG("charToPrinter: break on feof\n");
+				break;
+			    } else if ((c = fgetc(input)) == EOF) {
+				DEBUG_MSG("charToPrinter: break on EOF\n");
+				break;
+			    }
+			    fputc(c, SPS.fp);
+			    if (isForm(c))
+				fflush(SPS.fp);
+			}
+			DEBUG_MSG("charToPrinter: calling pclose\n");
+			pclose(SPS.fp);
 		    }
-		    pclose(SPS.fp);
 		    exit(0);
 		} else {
 		    close(my_pipe[0]);	/* won't read from printer */
-		    SPS.fp = fdopen(my_pipe[1], "w");
-		    TRACE(("opened printer from pid %d/%d\n",
-			   (int) getpid(), (int) my_pid));
+		    if ((SPS.fp = fdopen(my_pipe[1], "w")) != 0) {
+			DEBUG_MSG("charToPrinter: opened printer in parent\n");
+			TRACE(("opened printer from pid %d/%d\n",
+			       (int) getpid(), (int) my_pid));
+		    } else {
+			TRACE(("failed to open printer:%s\n", strerror(errno)));
+			DEBUG_MSG("charToPrinter: could not open in parent\n");
+		    }
 		}
 	    }
 #endif
@@ -643,13 +666,37 @@ xtermPrinterControl(XtermWidget xw, int chr)
 
 /*
  * If there is no printer command, we will ignore printer controls.
+ *
+ * If we do have a printer command, we still have to verify that it will
+ * (perhaps) work if we pass it to popen().  At a minimum, the program
+ * must exist and be executable.  If not, warn and disable the feature.
  */
 Bool
 xtermHasPrinter(XtermWidget xw)
 {
     TScreen *screen = TScreenOf(xw);
+    Bool result = SPS.printer_checked;
 
-    return (strlen(SPS.printer_command) != 0);
+    if (strlen(SPS.printer_command) != 0 && !result) {
+	char **argv = x_splitargs(SPS.printer_command);
+	if (argv) {
+	    if (argv[0]) {
+		char *myShell = xtermFindShell(argv[0], False);
+		if (myShell == 0) {
+		    xtermWarning("No program found for printerCommand: %s\n", SPS.printer_command);
+		    SPS.printer_command = x_strdup("");
+		} else {
+		    free(myShell);
+		    SPS.printer_checked = True;
+		    result = True;
+		}
+	    }
+	    x_freeargs(argv);
+	}
+	TRACE(("xtermHasPrinter:%d\n", result));
+    }
+
+    return result;
 }
 
 #define showPrinterControlMode(mode) \

@@ -1,10 +1,10 @@
-/* $XTermId: trace.c,v 1.125 2011/07/12 09:31:05 tom Exp $ */
+/* $XTermId: trace.c,v 1.146 2013/04/21 00:37:00 tom Exp $ */
 
 /*
- * Copyright 1997-2010,2011 by Thomas E. Dickey
- * 
+ * Copyright 1997-2012,2013 by Thomas E. Dickey
+ *
  *                         All Rights Reserved
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -28,7 +28,6 @@
  * holders shall not be used in advertising or otherwise to promote the
  * sale, use or other dealings in this Software without prior written
  * authorization.
- * 
  */
 
 /*
@@ -36,6 +35,7 @@
  */
 
 #include <xterm.h>		/* for definition of GCC_UNUSED */
+#include <version.h>
 
 #if OPT_TRACE
 
@@ -86,6 +86,7 @@ Trace(const char *fmt,...)
     trace_out = trace_who;
 
     if (!trace_fp) {
+	unsigned oldmask = umask(077);
 	char name[BUFSIZ];
 #if 0				/* usually I do not want unique names */
 	int unique;
@@ -107,9 +108,12 @@ Trace(const char *fmt,...)
 	    fprintf(trace_fp, "%s\n", xtermVersion());
 	    TraceIds(NULL, 0);
 	}
+	if (!trace_fp) {
+	    xtermWarning("Cannot open \"%s\"\n", name);
+	    exit(EXIT_FAILURE);
+	}
+	(void) umask(oldmask);
     }
-    if (!trace_fp)
-	abort();
 
     va_start(ap, fmt);
     vfprintf(trace_fp, fmt, ap);
@@ -146,6 +150,17 @@ TraceIds(const char *fname, int lnum)
 	time_t now = time((time_t *) 0);
 	Trace("-- %s", ctime(&now));
     }
+}
+
+void
+TraceTime(const char *fname, int lnum)
+{
+    time_t now;
+    if (fname != 0) {
+	Trace("datetime (%s@%d) ", fname, lnum);
+    }
+    now = time((time_t *) 0);
+    Trace("-- %s", ctime(&now));
 }
 
 static void
@@ -363,6 +378,19 @@ visibleEventType(int type)
 }
 
 const char *
+visibleNotifyMode(int code)
+{
+    const char *result = "?";
+    switch (code) {
+	CASETYPE(NotifyNormal);
+	CASETYPE(NotifyGrab);
+	CASETYPE(NotifyUngrab);
+	CASETYPE(NotifyWhileGrabbed);
+    }
+    return result;
+}
+
+const char *
 visibleNotifyDetail(int code)
 {
     const char *result = "?";
@@ -491,6 +519,77 @@ LineTstFlag(LineData ld, int flag)
 }
 #endif /* OPT_TRACE_FLAGS */
 
+/*
+ * Trace the normal or alternate screen, showing color values up to 16, e.g.,
+ * for debugging with vttest.
+ */
+void
+TraceScreen(XtermWidget xw, int whichBuf)
+{
+    TScreen *screen = TScreenOf(xw);
+    int row, col;
+
+    if (screen->editBuf_index[whichBuf]) {
+	TRACE(("TraceScreen %d:\n", whichBuf));
+	for (row = 0; row <= screen->max_row; ++row) {
+	    LineData *ld = getLineData(screen, row);
+	    TRACE((" %3d:", row));
+	    if (ld != 0) {
+		for (col = 0; col < ld->lineSize; ++col) {
+		    int ch = (int) ld->charData[col];
+		    if (ch < ' ')
+			ch = ' ';
+		    if (ch >= 127)
+			ch = '#';
+		    TRACE(("%c", ch));
+		}
+		TRACE((":\n"));
+
+		TRACE(("  xx:"));
+		for (col = 0; col < ld->lineSize; ++col) {
+		    unsigned attrs = ld->attribs[col];
+		    char ch;
+		    if (attrs & PROTECTED) {
+			ch = '*';
+		    } else if (attrs & BLINK) {
+			ch = 'B';
+		    } else if (attrs & CHARDRAWN) {
+			ch = '+';
+		    } else {
+			ch = ' ';
+		    }
+		    TRACE(("%c", ch));
+		}
+		TRACE((":\n"));
+
+#if 0
+		TRACE(("  fg:"));
+		for (col = 0; col < ld->lineSize; ++col) {
+		    unsigned fg = extract_fg(xw, ld->color[col], ld->attribs[col]);
+		    if (fg > 15)
+			fg = 15;
+		    TRACE(("%1x", fg));
+		}
+		TRACE((":\n"));
+
+		TRACE(("  bg:"));
+		for (col = 0; col < ld->lineSize; ++col) {
+		    unsigned bg = extract_bg(xw, ld->color[col], ld->attribs[col]);
+		    if (bg > 15)
+			bg = 15;
+		    TRACE(("%1x", bg));
+		}
+		TRACE((":\n"));
+#endif
+	    } else {
+		TRACE(("null lineData\n"));
+	    }
+	}
+    } else {
+	TRACE(("TraceScreen %d is nil\n", whichBuf));
+    }
+}
+
 void
 TraceFocus(Widget w, XEvent * ev)
 {
@@ -502,7 +601,7 @@ TraceFocus(Widget w, XEvent * ev)
 	{
 	    XFocusChangeEvent *event = (XFocusChangeEvent *) ev;
 	    TRACE(("\tdetail: %s\n", visibleNotifyDetail(event->detail)));
-	    TRACE(("\tmode:   %d\n", event->mode));
+	    TRACE(("\tmode:   %s\n", visibleNotifyMode(event->mode)));
 	    TRACE(("\twindow: %#lx\n", event->window));
 	}
 	break;
@@ -511,7 +610,7 @@ TraceFocus(Widget w, XEvent * ev)
 	{
 	    XCrossingEvent *event = (XCrossingEvent *) ev;
 	    TRACE(("\tdetail:    %s\n", visibleNotifyDetail(event->detail)));
-	    TRACE(("\tmode:      %d\n", event->mode));
+	    TRACE(("\tmode:      %s\n", visibleNotifyMode(event->mode)));
 	    TRACE(("\twindow:    %#lx\n", event->window));
 	    TRACE(("\tfocus:     %d\n", event->focus));
 	    TRACE(("\troot:      %#lx\n", event->root));
@@ -555,6 +654,83 @@ TraceSizeHints(XSizeHints * hints)
 	TRACE(("   gravity    %d\n", hints->win_gravity));
 }
 
+static void
+TraceEventMask(const char *tag, long mask)
+{
+#define DATA(name) { name##Mask, #name }
+    /* *INDENT-OFF* */
+    static struct {
+	long mask;
+	const char *name;
+    } table[] = {
+	DATA(KeyPress),
+	DATA(KeyRelease),
+	DATA(ButtonPress),
+	DATA(ButtonRelease),
+	DATA(EnterWindow),
+	DATA(LeaveWindow),
+	DATA(PointerMotion),
+	DATA(PointerMotionHint),
+	DATA(Button1Motion),
+	DATA(Button2Motion),
+	DATA(Button3Motion),
+	DATA(Button4Motion),
+	DATA(Button5Motion),
+	DATA(ButtonMotion),
+	DATA(KeymapState),
+	DATA(Exposure),
+	DATA(VisibilityChange),
+	DATA(StructureNotify),
+	DATA(ResizeRedirect),
+	DATA(SubstructureNotify),
+	DATA(SubstructureRedirect),
+	DATA(FocusChange),
+	DATA(PropertyChange),
+	DATA(ColormapChange),
+	DATA(OwnerGrabButton),
+    };
+#undef DATA
+    Cardinal n;
+    /* *INDENT-ON* */
+
+    for (n = 0; n < XtNumber(table); ++n) {
+	if (table[n].mask & mask) {
+	    TRACE(("%s %s\n", tag, table[n].name));
+	}
+    }
+}
+
+void
+TraceWindowAttributes(XWindowAttributes * attrs)
+{
+    TRACE(("window attributes:\n"));
+    TRACE(("   position     %d,%d\n", attrs->y, attrs->x));
+    TRACE(("   size         %dx%d\n", attrs->height, attrs->width));
+    TRACE(("   border       %d\n", attrs->border_width));
+    TRACE(("   depth        %d\n", attrs->depth));
+    TRACE(("   bit_gravity  %d\n", attrs->bit_gravity));
+    TRACE(("   win_gravity  %d\n", attrs->win_gravity));
+    TRACE(("   root         %#lx\n", (long) attrs->root));
+    TRACE(("   class        %s\n", ((attrs->class == InputOutput)
+				    ? "InputOutput"
+				    : ((attrs->class == InputOnly)
+				       ? "InputOnly"
+				       : "unknown"))));
+    TRACE(("   map_state    %s\n", ((attrs->map_state == IsUnmapped)
+				    ? "IsUnmapped"
+				    : ((attrs->map_state == IsUnviewable)
+				       ? "IsUnviewable"
+				       : ((attrs->map_state == IsViewable)
+					  ? "IsViewable"
+					  : "unknown")))));
+    TRACE(("   all_events\n"));
+    TraceEventMask("        ", attrs->all_event_masks);
+    TRACE(("   your_events\n"));
+    TraceEventMask("        ", attrs->your_event_mask);
+    TRACE(("   no_propagate\n"));
+    TraceEventMask("        ", attrs->do_not_propagate_mask);
+}
+
 void
 TraceWMSizeHints(XtermWidget xw)
 {
@@ -574,6 +750,29 @@ static int
 no_error(Display * dpy GCC_UNUSED, XErrorEvent * event GCC_UNUSED)
 {
     return 1;
+}
+
+const char *
+ModifierName(unsigned modifier)
+{
+    const char *s = "";
+    if (modifier & ShiftMask)
+	s = " Shift";
+    else if (modifier & LockMask)
+	s = " Lock";
+    else if (modifier & ControlMask)
+	s = " Control";
+    else if (modifier & Mod1Mask)
+	s = " Mod1";
+    else if (modifier & Mod2Mask)
+	s = " Mod2";
+    else if (modifier & Mod3Mask)
+	s = " Mod3";
+    else if (modifier & Mod4Mask)
+	s = " Mod4";
+    else if (modifier & Mod5Mask)
+	s = " Mod5";
+    return s;
 }
 
 void
@@ -603,17 +802,20 @@ TraceTranslations(const char *name, Widget w)
     XSetErrorHandler(save);
 }
 
-int
+XtGeometryResult
 TraceResizeRequest(const char *fn, int ln, Widget w,
 		   unsigned reqwide,
 		   unsigned reqhigh,
 		   Dimension * gotwide,
 		   Dimension * gothigh)
 {
-    int rc;
+    XtGeometryResult rc;
 
     TRACE(("%s@%d ResizeRequest %ux%u\n", fn, ln, reqhigh, reqwide));
-    rc = XtMakeResizeRequest((Widget) w, reqwide, reqhigh, gotwide, gothigh);
+    rc = XtMakeResizeRequest((Widget) w,
+			     (Dimension) reqwide,
+			     (Dimension) reqhigh,
+			     gotwide, gothigh);
     TRACE(("... ResizeRequest -> "));
     if (gothigh && gotwide)
 	TRACE(("%dx%d ", *gothigh, *gotwide));
@@ -633,6 +835,7 @@ TraceXtermResources(void)
     Trace("XTERM_RESOURCE settings:\n");
     XRES_S(icon_geometry);
     XRES_S(title);
+    XRES_S(icon_hint);
     XRES_S(icon_name);
     XRES_S(term_name);
     XRES_S(tty_modes);
@@ -672,6 +875,7 @@ TraceXtermResources(void)
     XRES_B(useInsertMode);
 #if OPT_ZICONBEEP
     XRES_I(zIconBeep);
+    XRES_S(zIconFormat);
 #endif
 #if OPT_PTY_HANDSHAKE
     XRES_B(wait_for_map);

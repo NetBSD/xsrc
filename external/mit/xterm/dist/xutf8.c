@@ -1,26 +1,27 @@
-/* $XTermId: xutf8.c,v 1.10 2011/07/04 13:51:08 tom Exp $ */
+/* $XTermId: xutf8.c,v 1.13 2012/05/09 20:56:09 tom Exp $ */
 
 /*
-Copyright (c) 2001 by Juliusz Chroboczek
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-*/
+ * Copyright (c) 2001 by Juliusz Chroboczek
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
 
 #include <xterm.h>
 
@@ -67,7 +68,7 @@ utf8countBytes(int c)
 }
 
 static void
-utf8insert(char *dest, int c, int *len_return)
+utf8insert(char *dest, int c, size_t *len_return)
 {
     if (c < 0)
 	return;
@@ -94,10 +95,10 @@ utf8insert(char *dest, int c, int *len_return)
 }
 
 static int
-l1countUtf8Bytes(char *s, int len)
+l1countUtf8Bytes(char *s, size_t len)
 {
     int l = 0;
-    while (len > 0) {
+    while (len != 0) {
 	if ((*s & 0x80) == 0)
 	    l++;
 	else
@@ -109,12 +110,12 @@ l1countUtf8Bytes(char *s, int len)
 }
 
 static void
-l1utf8copy(char *d, char *s, int len)
+l1utf8copy(char *d, char *s, size_t len)
 {
-    int l;
-    while (len > 0) {
+    size_t l;
+    while (len != 0) {
 	utf8insert(d, (*s) & 0xFF, &l);
-	d += l;
+	d += (int) l;
 	s++;
 	len--;
     }
@@ -333,7 +334,7 @@ Xutf8LookupString(XIC ic GCC_UNUSED,
     int rc;
     KeySym keysym;
     int codepoint;
-    int len;
+    size_t len;
 
     rc = XLookupString(ev, buffer, nbytes, &keysym, NULL);
 
@@ -366,7 +367,7 @@ Xutf8LookupString(XIC ic GCC_UNUSED,
     } else {
 	*status_return = XLookupChars;
     }
-    return len;
+    return (int) len;
 }
 #else /* X_HAVE_UTF8_STRING */
 /* Silence the compiler */
