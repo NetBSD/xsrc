@@ -1,3 +1,227 @@
+commit b980cacaa342cbbaa3012f06ffc2c9a9c21d33ee
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon May 20 18:48:42 2013 -0700
+
+    xdpyinfo 1.3.1
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit fa36071570461e73b57583e490d794334b038f48
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 10 19:50:21 2013 -0800
+
+    Mark num_known_extensions as a const, since the size is fixed at compile time
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 57a45f3b7bb745a082e459d965bee2b11e3bd7b6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 10 19:29:05 2013 -0800
+
+    Convert sprintf calls to snprintf
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f08b3613b2fd6995da264ea0a39c6d48dd28bf97
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 10 19:10:57 2013 -0800
+
+    Rename i & count in inner loop to avoid shadowing same named vars in outer loop
+    
+    xdpyinfo.c: In function `print_dmx_info':
+    xdpyinfo.c:1282: warning: declaration of 'count' shadows a previous local
+    xdpyinfo.c:1231: warning: shadowed declaration is here
+    xdpyinfo.c:1282: warning: declaration of 'i' shadows a previous local
+    xdpyinfo.c:1232: warning: shadowed declaration is here
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 97db6f80f06b753c84de0276db093205ee34b0b0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 21 23:15:04 2013 -0800
+
+    Add xrandr to SEE ALSO section of man page
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1b9a3d5459f61abf6285df81e4a75cb472e2a40c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 21 23:13:03 2013 -0800
+
+    Add -version option to print version number
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 27c57ec56abbd175c7a3ea7c50d85e91e1940c87
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 21 23:08:43 2013 -0800
+
+    Combine usage messages into a single string
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f407231c855bc0349d0f8543a9dfe9dff4b2508b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 21 23:03:48 2013 -0800
+
+    Declare 'len' as size_t to avoid unneccessary back-and-forth conversions
+    
+    Fixes clang warnings:
+    
+    xdpyinfo.c:1463:12: warning: implicit conversion loses integer precision: 'size_t' (aka 'unsigned long') to 'int' [-Wshorten-64-to-32]
+            int len = strlen(arg);
+                ~~~   ^~~~~~~~~~~
+    xdpyinfo.c:1465:32: warning: implicit conversion changes signedness: 'int' to 'size_t' (aka 'unsigned long') [-Wsign-conversion]
+            if (!strncmp("-display", arg, len)) {
+                 ~~~~~~~                  ^~~
+    xdpyinfo.c:1468:47: warning: implicit conversion changes signedness: 'int' to 'size_t' (aka 'unsigned long') [-Wsign-conversion]
+            } else if (!strncmp("-queryExtensions", arg, len)) {
+                        ~~~~~~~                          ^~~
+    xdpyinfo.c:1470:35: warning: implicit conversion changes signedness: 'int' to 'size_t' (aka 'unsigned long') [-Wsign-conversion]
+            } else if (!strncmp("-ext", arg, len)) {
+                        ~~~~~~~              ^~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ee596f7f67b203d04974fce16deadfcd122d0441
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 21 23:02:57 2013 -0800
+
+    Mark usage() as _X_NORETURN
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5509502647a997959ec056fec23d471b73eddb5f
+Author: Jon TURNEY <jon.turney@dronecode.org.uk>
+Date:   Wed Jan 4 18:21:51 2012 +0000
+
+    Include Xwindows.h on WIN32 to avoid type clashes
+    
+    Signed-off-by: Jon TURNEY <jon.turney@dronecode.org.uk>
+    Reviewed-by: Yaakov Selkowitz <yselkowitz@users.sourceforge.net>
+
+commit 02376118fb58c05067054be3f2e469f461f81757
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Oct 21 21:34:32 2011 -0700
+
+    xdpyinfo 1.3.0
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0b97213aa640aa6a05b9cb298349e45403bf7958
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Sep 28 20:52:30 2011 -0700
+
+    Silence gcc complaint about being unable to check printf format string
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1ac4dd6c7abe6fe185c0dafb3bb592720128a737
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Sep 28 20:50:02 2011 -0700
+
+    Remove unused function hasExtension
+    
+    Leftover from the Xprint code removed in commit 889264a52a6cf988
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 24c9341f0e7b0fb7aee326a72982e59e535055e1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Sep 28 20:48:58 2011 -0700
+
+    Add const attributes to fix gcc -Wwrite-strings warnings
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 794e32074cbf13434375afe62b86b57f266a749f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Sep 28 20:41:57 2011 -0700
+
+    Strip trailing whitespace
+    
+    Performed with: find * -type f | xargs perl -i -p -e 's{[ \t]+$}{}'
+    git diff -w & git diff -b show no diffs from this change
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c80c86499b3e47bcba68960bcba1bd33d9394fc5
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jan 19 10:06:56 2011 -0500
+
+    config: move man pages into their own directory
+    
+    Use services provided by XORG_MANPAGE_SECTIONS.
+    Use standard Makefile for man pages.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 9ea60417e477a333ff0fb6074032e8e7006c7f5b
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Jan 13 11:15:47 2011 -0500
+
+    man: remove trailing spaces and tabs
+    
+    Using s/[ \t]*$//
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 7cccede7fbe736b40c7de56d1e3304cad61489a3
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jan 12 16:28:02 2011 -0500
+
+    config: replace deprecated AM_CONFIG_HEADER with AC_CONFIG_HEADERS
+    
+    This silences an Autoconf warning
+
+commit e95f61e453354b0f31d18cc873a4be8b1911b098
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jan 12 15:29:50 2011 -0500
+
+    config: replace deprecated AC_HELP_STRING with AS_HELP_STRING
+    
+    This silences an Automake warning.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 7807192aa448d57ad8d903c445a7ba91c917b8d6
+Author: Jesse Adkins <jesserayadkins@gmail.com>
+Date:   Tue Sep 28 13:29:49 2010 -0700
+
+    Purge cvs tags.
+    
+    Signed-off-by: Jesse Adkins <jesserayadkins@gmail.com>
+
+commit 072fc46b2af370e78fa53426626ca3c33b74bdf2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Oct 3 11:47:07 2010 -0700
+
+    Use xcb for -queryExt instead of a round-trip per extension
+    
+    On a system with 30 extensions listed by xdpyinfo, truss -c
+    reports this saves quite a few system calls by batching the
+    QueryExtension requests instead of a round-trip for each one:
+    
+                          Xlib      xcb
+    writev                  40       11
+    poll                    80       22
+    recv                   117       29
+    total (*)              464      296
+    
+    (*) total includes all system calls, including many not shown since
+    their count did not change significantly.   There was one additional
+    set of open/mmap/close etc. for loading the added libX11-xcb library.
+    
+    Over a tcp connection, this reduced both the number of packets,
+    and due to tcp packet header overhead, the overall amount of data:
+    
+                          Xlib      xcb
+    TCP packets             93       35
+    TCP bytes            11554     7726
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Jamey Sharp <jamey@minilop.net>
+
 commit 30bc4b0ada659809c64f6a8292cbde3166267e8d
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sun Oct 3 10:51:09 2010 -0700
