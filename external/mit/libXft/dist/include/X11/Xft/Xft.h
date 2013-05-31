@@ -29,8 +29,8 @@
  */
 /* #undef will be substituted by configure */
 #define XFT_MAJOR 2
-#define XFT_MINOR 2
-#define XFT_REVISION 0
+#define XFT_MINOR 3
+#define XFT_REVISION 1
 
 #define XFT_VERSION	((XFT_MAJOR * 10000) + (XFT_MINOR * 100) + (XFT_REVISION))
 #define XftVersion	XFT_VERSION
@@ -105,7 +105,7 @@ typedef struct _XftGlyphFontSpec {
 
 _XFUNCPROTOBEGIN
 
-    
+
 /* xftcolor.c */
 Bool
 XftColorAllocName (Display  *dpy,
@@ -130,13 +130,13 @@ XftColorFree (Display	*dpy,
 /* xftdpy.c */
 Bool
 XftDefaultHasRender (Display *dpy);
-    
+
 Bool
 XftDefaultSet (Display *dpy, FcPattern *defaults);
 
 void
 XftDefaultSubstitute (Display *dpy, int screen, FcPattern *pattern);
-    
+
 /* xftdraw.c */
 
 XftDraw *
@@ -150,7 +150,7 @@ XftDrawCreateBitmap (Display  *dpy,
 		     Pixmap   bitmap);
 
 XftDraw *
-XftDrawCreateAlpha (Display *dpy, 
+XftDrawCreateAlpha (Display *dpy,
 		    Pixmap  pixmap,
 		    int	    depth);
 
@@ -192,7 +192,7 @@ void
 XftDrawString8 (XftDraw		    *draw,
 		_Xconst XftColor    *color,
 		XftFont		    *pub,
-		int		    x, 
+		int		    x,
 		int		    y,
 		_Xconst FcChar8	    *string,
 		int		    len);
@@ -219,7 +219,7 @@ void
 XftDrawStringUtf8 (XftDraw	    *draw,
 		   _Xconst XftColor *color,
 		   XftFont	    *pub,
-		   int		    x, 
+		   int		    x,
 		   int		    y,
 		   _Xconst FcChar8  *string,
 		   int		    len);
@@ -263,7 +263,7 @@ XftDrawGlyphFontSpec (XftDraw			*draw,
 void
 XftDrawRect (XftDraw		*draw,
 	     _Xconst XftColor	*color,
-	     int		x, 
+	     int		x,
 	     int		y,
 	     unsigned int	width,
 	     unsigned int	height);
@@ -297,35 +297,35 @@ XftGlyphExtents (Display	    *dpy,
 void
 XftTextExtents8 (Display	    *dpy,
 		 XftFont	    *pub,
-		 _Xconst FcChar8    *string, 
+		 _Xconst FcChar8    *string,
 		 int		    len,
 		 XGlyphInfo	    *extents);
 
 void
 XftTextExtents16 (Display	    *dpy,
 		  XftFont	    *pub,
-		  _Xconst FcChar16  *string, 
+		  _Xconst FcChar16  *string,
 		  int		    len,
 		  XGlyphInfo	    *extents);
 
 void
 XftTextExtents32 (Display	    *dpy,
 		  XftFont	    *pub,
-		  _Xconst FcChar32  *string, 
+		  _Xconst FcChar32  *string,
 		  int		    len,
 		  XGlyphInfo	    *extents);
-    
+
 void
 XftTextExtentsUtf8 (Display	    *dpy,
 		    XftFont	    *pub,
-		    _Xconst FcChar8 *string, 
+		    _Xconst FcChar8 *string,
 		    int		    len,
 		    XGlyphInfo	    *extents);
 
 void
 XftTextExtentsUtf16 (Display		*dpy,
 		     XftFont		*pub,
-		     _Xconst FcChar8	*string, 
+		     _Xconst FcChar8	*string,
 		     FcEndian		endian,
 		     int		len,
 		     XGlyphInfo		*extents);
@@ -367,8 +367,8 @@ FcBool
 XftFontInfoEqual (_Xconst XftFontInfo *a, _Xconst XftFontInfo *b);
 
 XftFont *
-XftFontOpenInfo (Display	*dpy, 
-		 FcPattern	*pattern, 
+XftFontOpenInfo (Display	*dpy,
+		 FcPattern	*pattern,
 		 XftFontInfo	*fi);
 
 XftFont *
@@ -411,12 +411,12 @@ FcBool
 XftCharExists (Display	    *dpy,
 	       XftFont	    *pub,
 	       FcChar32    ucs4);
-    
+
 FT_UInt
-XftCharIndex (Display	    *dpy, 
+XftCharIndex (Display	    *dpy,
 	      XftFont	    *pub,
 	      FcChar32	    ucs4);
-    
+
 /* xftinit.c */
 FcBool
 XftInit (_Xconst char *config);
@@ -432,7 +432,7 @@ XftListFonts (Display	*dpy,
 	      ...) _X_SENTINEL(0);
 
 /* xftname.c */
-FcPattern 
+FcPattern
 *XftNameParse (_Xconst char *name);
 
 /* xftrender.c */
@@ -466,7 +466,7 @@ XftCharSpecRender (Display		*dpy,
 		   Picture		src,
 		   XftFont		*pub,
 		   Picture		dst,
-		   int			srcx, 
+		   int			srcx,
 		   int			srcy,
 		   _Xconst XftCharSpec	*chars,
 		   int			len);
@@ -612,7 +612,7 @@ XftTextRenderUtf16 (Display	    *dpy,
 /* xftxlfd.c */
 FcPattern *
 XftXlfdParse (_Xconst char *xlfd_orig, Bool ignore_scalable, Bool complete);
-    
+
 _XFUNCPROTOEND
 
 #endif /* _XFT_H_ */
