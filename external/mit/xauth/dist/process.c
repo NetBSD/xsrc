@@ -1894,7 +1894,10 @@ do_generate(const char *inputfilename, int lineno, int argc, const char **argv)
 	 auth_in->name = DEFAULT_PROTOCOL;
     }
     else
-	auth_in->name = protoname;
+#ifndef __UNCONST
+# define __UNCONST(x) x
+#endif
+	auth_in->name = __UNCONST(protoname);
     auth_in->name_length = strlen(auth_in->name);
     auth_in->data = authdata;
     auth_in->data_length = authdatalen;
