@@ -36,7 +36,6 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @BUILD_SXPM_TRUE@bin_PROGRAMS = sxpm$(EXEEXT)
-@BUILD_SXPM_TRUE@@USE_GETTEXT_TRUE@am__append_1 = sxpm.po
 subdir = sxpm
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -48,7 +47,7 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(appmandir)"
+am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__sxpm_SOURCES_DIST = sxpm.c
 @BUILD_SXPM_TRUE@am_sxpm_OBJECTS = sxpm.$(OBJEXT)
@@ -88,28 +87,7 @@ am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
 am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(sxpm_SOURCES)
 DIST_SOURCES = $(am__sxpm_SOURCES_DIST)
-am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
-am__vpath_adj = case $$p in \
-    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
-    *) f=$$p;; \
-  esac;
-am__strip_dir = f=`echo $$p | sed -e 's|^.*/||'`;
-am__install_max = 40
-am__nobase_strip_setup = \
-  srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*|]/\\\\&/g'`
-am__nobase_strip = \
-  for p in $$list; do echo "$$p"; done | sed -e "s|$$srcdirstrip/||"
-am__nobase_list = $(am__nobase_strip_setup); \
-  for p in $$list; do echo "$$p $$p"; done | \
-  sed "s| $$srcdirstrip/| |;"' / .*\//!s/ .*/ ./; s,\( .*\)/[^/]*$$,\1,' | \
-  $(AWK) 'BEGIN { files["."] = "" } { files[$$2] = files[$$2] " " $$1; \
-    if (++n[$$2] == $(am__install_max)) \
-      { print $$2, files[$$2]; n[$$2] = 0; files[$$2] = "" } } \
-    END { for (dir in files) print dir, files[dir] }'
-am__base_list = \
-  sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
-  sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
-DATA = $(appman_DATA) $(noinst_DATA)
+DATA = $(noinst_DATA)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -125,6 +103,7 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+BASE_CFLAGS = @BASE_CFLAGS@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
@@ -135,6 +114,7 @@ CWARNFLAGS = @CWARNFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DLLTOOL = @DLLTOOL@
 DRIVER_MAN_DIR = @DRIVER_MAN_DIR@
 DRIVER_MAN_SUFFIX = @DRIVER_MAN_SUFFIX@
 DSYMUTIL = @DSYMUTIL@
@@ -167,6 +147,7 @@ LOCALEDIR = @LOCALEDIR@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
+MANIFEST_TOOL = @MANIFEST_TOOL@
 MAN_SUBSTS = @MAN_SUBSTS@
 MISC_MAN_DIR = @MISC_MAN_DIR@
 MISC_MAN_SUFFIX = @MISC_MAN_SUFFIX@
@@ -190,6 +171,7 @@ RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
+STRICT_CFLAGS = @STRICT_CFLAGS@
 STRIP = @STRIP@
 SXPM_CFLAGS = @SXPM_CFLAGS@
 SXPM_LIBS = @SXPM_LIBS@
@@ -201,6 +183,7 @@ abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 am__include = @am__include@
@@ -252,24 +235,17 @@ top_srcdir = @top_srcdir@
 @BUILD_SXPM_TRUE@AM_CFLAGS = $(CWARNFLAGS) $(SXPM_CFLAGS)
 @BUILD_SXPM_TRUE@sxpm_SOURCES = sxpm.c
 @BUILD_SXPM_TRUE@LDADD = $(SXPM_LIBS) $(top_builddir)/src/libXpm.la
-
-# Man page
-@BUILD_SXPM_TRUE@appmandir = $(APP_MAN_DIR)
-@BUILD_SXPM_TRUE@appman_PRE = sxpm.man
-@BUILD_SXPM_TRUE@appman_DATA = $(appman_PRE:man=@APP_MAN_SUFFIX@)
-@BUILD_SXPM_TRUE@CLEANFILES = $(appman_DATA) $(am__append_1)
-@BUILD_SXPM_TRUE@SUFFIXES = .$(APP_MAN_SUFFIX) .man
 @BUILD_SXPM_TRUE@@USE_GETTEXT_TRUE@noinst_DATA = sxpm.po
+@BUILD_SXPM_TRUE@@USE_GETTEXT_TRUE@CLEANFILES = sxpm.po
 EXTRA_DIST = \
 	plaid_ext.xpm \
 	plaid_mask.xpm \
-	plaid.xpm \
-	sxpm.man
+	plaid.xpm
 
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .$(APP_MAN_SUFFIX) .man .c .lo .o .obj
+.SUFFIXES: .c .lo .o .obj
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -384,26 +360,6 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
-install-appmanDATA: $(appman_DATA)
-	@$(NORMAL_INSTALL)
-	test -z "$(appmandir)" || $(MKDIR_P) "$(DESTDIR)$(appmandir)"
-	@list='$(appman_DATA)'; test -n "$(appmandir)" || list=; \
-	for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  echo "$$d$$p"; \
-	done | $(am__base_list) | \
-	while read files; do \
-	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(appmandir)'"; \
-	  $(INSTALL_DATA) $$files "$(DESTDIR)$(appmandir)" || exit $$?; \
-	done
-
-uninstall-appmanDATA:
-	@$(NORMAL_UNINSTALL)
-	@list='$(appman_DATA)'; test -n "$(appmandir)" || list=; \
-	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	test -n "$$files" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(appmandir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(appmandir)" && rm -f $$files
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
@@ -491,7 +447,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(PROGRAMS) $(DATA)
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(appmandir)"; do \
+	for dir in "$(DESTDIR)$(bindir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -542,7 +498,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-appmanDATA
+install-data-am:
 
 install-dvi: install-dvi-am
 
@@ -588,7 +544,7 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-appmanDATA uninstall-binPROGRAMS
+uninstall-am: uninstall-binPROGRAMS
 
 .MAKE: install-am install-strip
 
@@ -596,21 +552,16 @@ uninstall-am: uninstall-appmanDATA uninstall-binPROGRAMS
 	clean-generic clean-libtool ctags distclean distclean-compile \
 	distclean-generic distclean-libtool distclean-tags distdir dvi \
 	dvi-am html html-am info info-am install install-am \
-	install-appmanDATA install-binPROGRAMS install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-appmanDATA \
+	install-binPROGRAMS install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am tags uninstall uninstall-am \
 	uninstall-binPROGRAMS
 
-
-# String replacements in MAN_SUBSTS now come from xorg-macros.m4 via configure
-@BUILD_SXPM_TRUE@.man.$(APP_MAN_SUFFIX):
-@BUILD_SXPM_TRUE@	$(AM_V_GEN)$(SED) $(MAN_SUBSTS) < $< > $@
 
 @BUILD_SXPM_TRUE@@USE_GETTEXT_TRUE@sxpm.po: $(sxpm_SOURCES:%=$(srcdir)/%)
 @BUILD_SXPM_TRUE@@USE_GETTEXT_TRUE@	$(AM_V_GEN)xgettext -c"L10N_Comments" -d sxpm -n $(sxpm_SOURCES:%=$(srcdir)/%)
