@@ -1,76 +1,77 @@
+/* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Define to 1 if you have the <inttypes.h> header file. */
-#undef HAVE_INTTYPES_H
+#define HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the `lrint' function. */
-#undef HAVE_LRINT
+#define HAVE_LRINT 1
 
 /* Define to 1 if you have the <memory.h> header file. */
-#undef HAVE_MEMORY_H
+#define HAVE_MEMORY_H 1
 
 /* Define to 1 if you have the `nanosleep' function. */
-#undef HAVE_NANOSLEEP
+#define HAVE_NANOSLEEP 1
 
 /* Define to 1 if you have the `poll' function. */
-#undef HAVE_POLL
+#define HAVE_POLL 1
 
 /* Define to 1 if you have the `select' function. */
-#undef HAVE_SELECT
+#define HAVE_SELECT 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
-#undef HAVE_STDINT_H
+#define HAVE_STDINT_H 1
 
 /* Define to 1 if you have the <stdlib.h> header file. */
-#undef HAVE_STDLIB_H
+#define HAVE_STDLIB_H 1
 
 /* Define to 1 if you have the <strings.h> header file. */
-#undef HAVE_STRINGS_H
+#define HAVE_STRINGS_H 1
 
 /* Define to 1 if you have the <string.h> header file. */
-#undef HAVE_STRING_H
+#define HAVE_STRING_H 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
-#undef HAVE_SYS_STAT_H
+#define HAVE_SYS_STAT_H 1
 
 /* Define to 1 if you have the <sys/types.h> header file. */
-#undef HAVE_SYS_TYPES_H
+#define HAVE_SYS_TYPES_H 1
 
 /* Define to 1 if you have the <unistd.h> header file. */
-#undef HAVE_UNISTD_H
+#define HAVE_UNISTD_H 1
 
 /* Name of package */
-#undef PACKAGE
+#define PACKAGE "xmag"
 
 /* Define to the address where bug reports for this package should be sent. */
-#undef PACKAGE_BUGREPORT
+#define PACKAGE_BUGREPORT "https://bugs.freedesktop.org/enter_bug.cgi?product=xorg"
 
 /* Define to the full name of this package. */
-#undef PACKAGE_NAME
+#define PACKAGE_NAME "xmag"
 
 /* Define to the full name and version of this package. */
-#undef PACKAGE_STRING
+#define PACKAGE_STRING "xmag 1.0.5"
 
 /* Define to the one symbol short name of this package. */
-#undef PACKAGE_TARNAME
+#define PACKAGE_TARNAME "xmag"
 
 /* Define to the home page for this package. */
-#undef PACKAGE_URL
+#define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#undef PACKAGE_VERSION
+#define PACKAGE_VERSION "1.0.5"
 
 /* Major version of this package */
-#undef PACKAGE_VERSION_MAJOR
+#define PACKAGE_VERSION_MAJOR 1
 
 /* Minor version of this package */
-#undef PACKAGE_VERSION_MINOR
+#define PACKAGE_VERSION_MINOR 0
 
 /* Patch version of this package */
-#undef PACKAGE_VERSION_PATCHLEVEL
+#define PACKAGE_VERSION_PATCHLEVEL 5
 
 /* Define to 1 if you have the ANSI C header files. */
-#undef STDC_HEADERS
+#define STDC_HEADERS 1
 
 /* Version number of package */
-#undef VERSION
+#define VERSION "1.0.5"
