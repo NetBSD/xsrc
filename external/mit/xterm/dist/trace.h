@@ -1,8 +1,7 @@
-/* $XTermId: trace.h,v 1.57 2011/07/08 10:51:08 tom Exp $ */
+/* $XTermId: trace.h,v 1.68 2013/02/06 09:52:14 tom Exp $ */
 
 /*
- *
- * Copyright 1997-2009,2010 by Thomas E. Dickey
+ * Copyright 1997-2011,2012 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -29,7 +28,6 @@
  * holders shall not be used in advertising or otherwise to promote the
  * sale, use or other dealings in this Software without prior written
  * authorization.
- *
  */
 
 /*
@@ -37,6 +35,7 @@
  */
 #ifndef	included_trace_h
 #define	included_trace_h
+/* *INDENT-OFF* */
 
 #include <xterm.h>
 
@@ -62,6 +61,7 @@ extern	char *	visibleIChars (IChar * /* buf */, unsigned /* len */);
 extern	const char * visibleChrsetName(unsigned /* chrset */);
 extern	const char * visibleEventType (int);
 extern	const char * visibleNotifyDetail(int /* code */);
+extern	const char * visibleNotifyMode (int /* code */);
 extern	const char * visibleSelectionTarget(Display * /* d */, Atom /* a */);
 extern	const char * visibleXError (int /* code */);
 
@@ -85,6 +85,10 @@ extern	void	TraceIds(const char * /* fname */, int  /* lnum */);
 #undef  TRACE_IDS
 #define	TRACE_IDS TraceIds(__FILE__, __LINE__)
 
+extern	void	TraceTime(const char * /* fname */, int  /* lnum */);
+#undef  TRACE_TIME
+#define	TRACE_TIME TraceTime(__FILE__, __LINE__)
+
 extern	void	TraceOptions(OptionHelp * /* options */, XrmOptionDescRec * /* resources */, Cardinal  /* count */);
 #undef  TRACE_OPTS
 #define	TRACE_OPTS(opts,ress,lens) TraceOptions(opts,ress,lens)
@@ -92,6 +96,10 @@ extern	void	TraceOptions(OptionHelp * /* options */, XrmOptionDescRec * /* resou
 extern	void	TraceTranslations(const char *, Widget);
 #undef  TRACE_TRANS
 #define	TRACE_TRANS(name,w) TraceTranslations(name,w)
+
+extern	void	TraceWindowAttributes(XWindowAttributes *);
+#undef  TRACE_WIN_ATTRS
+#define	TRACE_WIN_ATTRS(a) TraceWindowAttributes(a)
 
 extern	void	TraceWMSizeHints(XtermWidget);
 #undef  TRACE_WM_HINTS
@@ -101,12 +109,24 @@ extern	void	TraceXtermResources(void);
 #undef  TRACE_XRES
 #define	TRACE_XRES() TraceXtermResources()
 
-extern	int	TraceResizeRequest(const char * /* fn */, int  /* ln */, Widget  /* w */, unsigned  /* reqwide */, unsigned  /* reqhigh */, Dimension * /* gotwide */, Dimension * /* gothigh */);
+extern	XtGeometryResult TraceResizeRequest(const char * /* fn */, int  /* ln */, Widget  /* w */, unsigned  /* reqwide */, unsigned  /* reqhigh */, Dimension * /* gotwide */, Dimension * /* gothigh */);
 #undef  REQ_RESIZE
 #define REQ_RESIZE(w, reqwide, reqhigh, gotwide, gothigh) \
 	TraceResizeRequest(__FILE__, __LINE__, w, \
 			   (reqwide), (reqhigh), \
 			   (gotwide), (gothigh))
+
+extern const char * ModifierName(unsigned /* modifier */);
+#define FMT_MODIFIER_NAMES "%s%s%s%s%s%s%s%s"
+#define ARG_MODIFIER_NAMES(state) \
+	   ModifierName(state & ShiftMask), \
+	   ModifierName(state & LockMask), \
+	   ModifierName(state & ControlMask), \
+	   ModifierName(state & Mod1Mask), \
+	   ModifierName(state & Mod2Mask), \
+	   ModifierName(state & Mod3Mask), \
+	   ModifierName(state & Mod4Mask), \
+	   ModifierName(state & Mod5Mask)
 
 #else
 
@@ -116,6 +136,8 @@ extern	int	TraceResizeRequest(const char * /* fn */, int  /* ln */, Widget  /* w
 			    (gotwide), (gothigh))
 
 #endif
+
+extern void TraceScreen(XtermWidget /* xw */, int /* whichBuf */);
 
 /*
  * The whole wnew->screen struct is zeroed in VTInitialize.  Use these macros
@@ -127,6 +149,9 @@ extern	int	TraceResizeRequest(const char * /* fn */, int  /* ln */, Widget  /* w
 #define init_Bres(name) \
 	TRACE(("init " #name " = %s\n", \
 		BtoS(wnew->name = request->name)))
+#define init_Dres(name) \
+	TRACE(("init " #name " = %f\n", \
+		wnew->name = request->name))
 #define init_Dres2(name,i) \
 	TRACE(("init " #name "[%d] = %f\n", i, \
 		wnew->name[i] = request->name[i]))
@@ -146,6 +171,7 @@ extern	int	TraceResizeRequest(const char * /* fn */, int  /* ln */, Widget  /* w
 		fill_Tres(wnew, request, offset)))
 #else
 #define init_Bres(name)    wnew->name = request->name
+#define init_Dres(name)    wnew->name = request->name
 #define init_Dres2(name,i) wnew->name[i] = request->name[i]
 #define init_Ires(name)    wnew->name = request->name
 #define init_Sres(name)    wnew->name = x_strtrim(request->name)
@@ -153,5 +179,6 @@ extern	int	TraceResizeRequest(const char * /* fn */, int  /* ln */, Widget  /* w
 #define init_Tres(offset)  fill_Tres(wnew, request, offset)
 #endif
 
+/* *INDENT-ON* */
 
-#endif	/* included_trace_h */
+#endif /* included_trace_h */

@@ -1,8 +1,8 @@
-dnl $XTermId: aclocal.m4,v 1.309 2011/07/14 23:36:54 tom Exp $
+dnl $XTermId: aclocal.m4,v 1.365 2013/05/27 22:36:25 tom Exp $
 dnl
 dnl ---------------------------------------------------------------------------
 dnl
-dnl Copyright 1997-2010,2011 by Thomas E. Dickey
+dnl Copyright 1997-2012,2013 by Thomas E. Dickey
 dnl
 dnl                         All Rights Reserved
 dnl
@@ -13,10 +13,10 @@ dnl without limitation the rights to use, copy, modify, merge, publish,
 dnl distribute, sublicense, and/or sell copies of the Software, and to
 dnl permit persons to whom the Software is furnished to do so, subject to
 dnl the following conditions:
-dnl 
+dnl
 dnl The above copyright notice and this permission notice shall be included
 dnl in all copies or substantial portions of the Software.
-dnl 
+dnl
 dnl THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 dnl OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 dnl MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -24,7 +24,7 @@ dnl IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
 dnl CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 dnl TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 dnl SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-dnl 
+dnl
 dnl Except as contained in this notice, the name(s) of the above copyright
 dnl holders shall not be used in advertising or otherwise to promote the
 dnl sale, use or other dealings in this Software without prior written
@@ -58,27 +58,28 @@ AC_DEFUN([AM_LANGINFO_CODESET],
   fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_ACVERSION_CHECK version: 2 updated: 2011/05/08 11:22:03
+dnl CF_ACVERSION_CHECK version: 4 updated: 2013/03/04 19:52:56
 dnl ------------------
 dnl Conditionally generate script according to whether we're using a given autoconf.
 dnl
 dnl $1 = version to compare against
 dnl $2 = code to use if AC_ACVERSION is at least as high as $1.
 dnl $3 = code to use if AC_ACVERSION is older than $1.
-define(CF_ACVERSION_CHECK,
+define([CF_ACVERSION_CHECK],
 [
+ifdef([AC_ACVERSION], ,[m4_copy([m4_PACKAGE_VERSION],[AC_ACVERSION])])dnl
 ifdef([m4_version_compare],
 [m4_if(m4_version_compare(m4_defn([AC_ACVERSION]), [$1]), -1, [$3], [$2])],
 [CF_ACVERSION_COMPARE(
 AC_PREREQ_CANON(AC_PREREQ_SPLIT([$1])),
 AC_PREREQ_CANON(AC_PREREQ_SPLIT(AC_ACVERSION)), AC_ACVERSION, [$2], [$3])])])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_ACVERSION_COMPARE version: 2 updated: 2011/04/14 20:56:50
+dnl CF_ACVERSION_COMPARE version: 3 updated: 2012/10/03 18:39:53
 dnl --------------------
 dnl CF_ACVERSION_COMPARE(MAJOR1, MINOR1, TERNARY1,
 dnl                      MAJOR2, MINOR2, TERNARY2,
 dnl                      PRINTABLE2, not FOUND, FOUND)
-define(CF_ACVERSION_COMPARE,
+define([CF_ACVERSION_COMPARE],
 [ifelse(builtin([eval], [$2 < $5]), 1,
 [ifelse([$8], , ,[$8])],
 [ifelse([$9], , ,[$9])])])dnl
@@ -200,79 +201,6 @@ LIBS=`echo "$LIBS" | sed -e "s/[[ 	]][[ 	]]*/ /g" -e "s,$1 ,$1 $2 ," -e 's/  / /
 CF_VERBOSE(...after  $LIBS)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_ANSI_CC_CHECK version: 11 updated: 2011/07/01 19:47:45
-dnl ----------------
-dnl This was originally adapted from the macros 'fp_PROG_CC_STDC' and
-dnl 'fp_C_PROTOTYPES' in the sharutils 4.2 distribution.
-AC_DEFUN([CF_ANSI_CC_CHECK],
-[
-# This should have been defined by AC_PROG_CC
-: ${CC:=cc}
-
-# Check for user's environment-breakage by stuffing CFLAGS/CPPFLAGS content
-# into CC.  This will not help with broken scripts that wrap the compiler with
-# options, but eliminates a more common category of user confusion.
-AC_MSG_CHECKING(\$CC variable)
-case "$CC" in #(vi
-*[[\ \	]]-[[IUD]]*)
-	AC_MSG_RESULT(broken)
-	AC_MSG_WARN(your environment misuses the CC variable to hold CFLAGS/CPPFLAGS options)
-	# humor him...
-	cf_flags=`echo "$CC" | sed -e 's/^[[^ 	]]*[[ 	]]//'`
-	CC=`echo "$CC" | sed -e 's/[[ 	]].*//'`
-	CF_ADD_CFLAGS($cf_flags)
-	;;
-*)
-	AC_MSG_RESULT(ok)
-	;;
-esac
-
-AC_CACHE_CHECK(for ${CC:-cc} option to accept ANSI C, cf_cv_ansi_cc,[
-cf_cv_ansi_cc=no
-cf_save_CFLAGS="$CFLAGS"
-cf_save_CPPFLAGS="$CPPFLAGS"
-# Don't try gcc -ansi; that turns off useful extensions and
-# breaks some systems' header files.
-# AIX			-qlanglvl=ansi
-# Ultrix and OSF/1	-std1
-# HP-UX			-Aa -D_HPUX_SOURCE
-# SVR4			-Xc
-# UnixWare 1.2		(cannot use -Xc, since ANSI/POSIX clashes)
-for cf_arg in "-DCC_HAS_PROTOS" \
-	"" \
-	-qlanglvl=ansi \
-	-std1 \
-	-Ae \
-	"-Aa -D_HPUX_SOURCE" \
-	-Xc
-do
-	CF_ADD_CFLAGS($cf_arg)
-	AC_TRY_COMPILE(
-[
-#ifndef CC_HAS_PROTOS
-#if !defined(__STDC__) || (__STDC__ != 1)
-choke me
-#endif
-#endif
-],[
-	int test (int i, double x);
-	struct s1 {int (*f) (int a);};
-	struct s2 {int (*f) (double a);};],
-	[cf_cv_ansi_cc="$cf_arg"; break])
-done
-CFLAGS="$cf_save_CFLAGS"
-CPPFLAGS="$cf_save_CPPFLAGS"
-])
-
-if test "$cf_cv_ansi_cc" != "no"; then
-if test ".$cf_cv_ansi_cc" != ".-DCC_HAS_PROTOS"; then
-	CF_ADD_CFLAGS($cf_cv_ansi_cc)
-else
-	AC_DEFINE(CC_HAS_PROTOS)
-fi
-fi
-])dnl
-dnl ---------------------------------------------------------------------------
 dnl CF_ARG_DISABLE version: 3 updated: 1999/03/30 17:24:31
 dnl --------------
 dnl Allow user to disable a normally-on option.
@@ -308,7 +236,33 @@ ifelse([$3],,[    :]dnl
 ])dnl
   ])])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_CHECK_CACHE version: 11 updated: 2008/03/23 14:45:59
+dnl CF_CC_ENV_FLAGS version: 1 updated: 2012/10/03 05:25:49
+dnl ---------------
+dnl Check for user's environment-breakage by stuffing CFLAGS/CPPFLAGS content
+dnl into CC.  This will not help with broken scripts that wrap the compiler with
+dnl options, but eliminates a more common category of user confusion.
+AC_DEFUN([CF_CC_ENV_FLAGS],
+[
+# This should have been defined by AC_PROG_CC
+: ${CC:=cc}
+
+AC_MSG_CHECKING(\$CC variable)
+case "$CC" in #(vi
+*[[\ \	]]-[[IUD]]*)
+	AC_MSG_RESULT(broken)
+	AC_MSG_WARN(your environment misuses the CC variable to hold CFLAGS/CPPFLAGS options)
+	# humor him...
+	cf_flags=`echo "$CC" | sed -e 's/^[[^ 	]]*[[ 	]]//'`
+	CC=`echo "$CC" | sed -e 's/[[ 	]].*//'`
+	CF_ADD_CFLAGS($cf_flags)
+	;;
+*)
+	AC_MSG_RESULT(ok)
+	;;
+esac
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_CHECK_CACHE version: 12 updated: 2012/10/02 20:55:03
 dnl --------------
 dnl Check if we're accidentally using a cache from a different machine.
 dnl Derive the system name, as a check for reusing the autoconf cache.
@@ -331,7 +285,7 @@ else
 		system_name="`(hostname) 2>/dev/null`"
 	fi
 fi
-test -n "$system_name" && AC_DEFINE_UNQUOTED(SYSTEM_NAME,"$system_name")
+test -n "$system_name" && AC_DEFINE_UNQUOTED(SYSTEM_NAME,"$system_name",[Define to the system name.])
 AC_CACHE_VAL(cf_cv_system_name,[cf_cv_system_name="$system_name"])
 
 test -z "$system_name" && system_name="$cf_cv_system_name"
@@ -422,6 +376,39 @@ fi
 
 ])dnl
 dnl ---------------------------------------------------------------------------
+dnl CF_CLANG_COMPILER version: 1 updated: 2012/06/16 14:55:39
+dnl -----------------
+dnl Check if the given compiler is really clang.  clang's C driver defines
+dnl __GNUC__ (fooling the configure script into setting $GCC to yes) but does
+dnl not ignore some gcc options.
+dnl
+dnl This macro should be run "soon" after AC_PROG_CC or AC_PROG_CPLUSPLUS, to
+dnl ensure that it is not mistaken for gcc/g++.  It is normally invoked from
+dnl the wrappers for gcc and g++ warnings.
+dnl
+dnl $1 = GCC (default) or GXX
+dnl $2 = INTEL_COMPILER (default) or INTEL_CPLUSPLUS
+dnl $3 = CFLAGS (default) or CXXFLAGS
+AC_DEFUN([CF_CLANG_COMPILER],[
+ifelse([$2],,CLANG_COMPILER,[$2])=no
+
+if test "$ifelse([$1],,[$1],GCC)" = yes ; then
+	AC_MSG_CHECKING(if this is really Clang ifelse([$1],GXX,C++,C) compiler)
+	cf_save_CFLAGS="$ifelse([$3],,CFLAGS,[$3])"
+	ifelse([$3],,CFLAGS,[$3])="$ifelse([$3],,CFLAGS,[$3]) -Qunused-arguments"
+	AC_TRY_COMPILE([],[
+#ifdef __clang__
+#else
+make an error
+#endif
+],[ifelse([$2],,CLANG_COMPILER,[$2])=yes
+cf_save_CFLAGS="$cf_save_CFLAGS -Qunused-arguments"
+],[])
+	ifelse([$3],,CFLAGS,[$3])="$cf_save_CFLAGS"
+	AC_MSG_RESULT($ifelse([$2],,CLANG_COMPILER,[$2]))
+fi
+])
+dnl ---------------------------------------------------------------------------
 dnl CF_DISABLE_DESKTOP version: 2 updated: 2011/04/22 05:17:37
 dnl ------------------
 dnl Handle a configure option "--disable-desktop", which sets a shell
@@ -452,7 +439,7 @@ test "$desktop_utils" = yes && desktop_utils= || desktop_utils="#"
 AC_SUBST(DESKTOP_FLAGS)
 ])
 dnl ---------------------------------------------------------------------------
-dnl CF_DISABLE_ECHO version: 11 updated: 2009/12/13 13:16:57
+dnl CF_DISABLE_ECHO version: 12 updated: 2012/10/06 16:30:28
 dnl ---------------
 dnl You can always use "make -n" to see the actual options, but it's hard to
 dnl pick out/analyze warning messages when the compile-line is long.
@@ -467,7 +454,7 @@ dnl
 AC_DEFUN([CF_DISABLE_ECHO],[
 AC_MSG_CHECKING(if you want to see long compiling messages)
 CF_ARG_DISABLE(echo,
-	[  --disable-echo          display "compiling" commands],
+	[  --disable-echo          do not display "compiling" commands],
 	[
     ECHO_LT='--silent'
     ECHO_LD='@echo linking [$]@;'
@@ -487,6 +474,29 @@ AC_SUBST(ECHO_LD)
 AC_SUBST(RULE_CC)
 AC_SUBST(SHOW_CC)
 AC_SUBST(ECHO_CC)
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_DISABLE_LEAKS version: 7 updated: 2012/10/02 20:55:03
+dnl ----------------
+dnl Combine no-leak checks with the libraries or tools that are used for the
+dnl checks.
+AC_DEFUN([CF_DISABLE_LEAKS],[
+
+AC_REQUIRE([CF_WITH_DMALLOC])
+AC_REQUIRE([CF_WITH_DBMALLOC])
+AC_REQUIRE([CF_WITH_VALGRIND])
+
+AC_MSG_CHECKING(if you want to perform memory-leak testing)
+AC_ARG_ENABLE(leaks,
+	[  --disable-leaks         test: free permanent memory, analyze leaks],
+	[if test "x$enableval" = xno; then with_no_leaks=yes; else with_no_leaks=no; fi],
+	: ${with_no_leaks:=no})
+AC_MSG_RESULT($with_no_leaks)
+
+if test "$with_no_leaks" = yes ; then
+	AC_DEFINE(NO_LEAKS,1,[Define to 1 if you want to perform memory-leak testing.])
+	AC_DEFINE(YY_NO_LEAKS,1,[Define to 1 if you want to perform memory-leak testing.])
+fi
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_DISABLE_RPATH_HACK version: 2 updated: 2011/02/13 13:31:33
@@ -543,38 +553,155 @@ AC_DEFUN([CF_ERRNO],
 CF_CHECK_ERRNO(errno)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_FUNC_MEMMOVE version: 7 updated: 2006/12/16 12:33:30
+dnl CF_FUNC_GRANTPT version: 10 updated: 2013/04/17 05:31:24
 dnl ---------------
-dnl Check for memmove, or a bcopy that can handle overlapping copy.  If neither
-dnl is found, add our own version of memmove to the list of objects.
-AC_DEFUN([CF_FUNC_MEMMOVE],
-[
-AC_CHECK_FUNC(memmove,,[
-AC_CHECK_FUNC(bcopy,[
-	AC_CACHE_CHECK(if bcopy does overlapping moves,cf_cv_good_bcopy,[
-		AC_TRY_RUN([
-int main() {
-	static char data[] = "abcdefghijklmnopqrstuwwxyz";
-	char temp[40];
-	bcopy(data, temp, sizeof(data));
-	bcopy(temp+10, temp, 15);
-	bcopy(temp+5, temp+15, 10);
-	${cf_cv_main_return:-return} (strcmp(temp, "klmnopqrstuwwxypqrstuwwxyz"));
+dnl Check for grantpt versus openpty, as well as functions that "should" be
+dnl available if grantpt is available.
+AC_DEFUN([CF_FUNC_GRANTPT],[
+
+AC_CHECK_HEADERS( \
+stropts.h \
+)
+
+cf_func_grantpt="grantpt ptsname"
+case $host_os in #(vi
+darwin[[0-9]].*) #(vi
+	;;
+*)
+	cf_func_grantpt="$cf_func_grantpt posix_openpt"
+	;;
+esac
+
+AC_CHECK_FUNCS($cf_func_grantpt)
+
+cf_grantpt_opts=
+if test "x$ac_cv_func_grantpt" = "xyes" ; then
+	AC_MSG_CHECKING(if grantpt really works)
+	AC_TRY_LINK(CF__GRANTPT_HEAD,CF__GRANTPT_BODY,[
+	AC_TRY_RUN(CF__GRANTPT_HEAD
+int main(void)
+{
+CF__GRANTPT_BODY
 }
-		],
-		[cf_cv_good_bcopy=yes],
-		[cf_cv_good_bcopy=no],
-		[cf_cv_good_bcopy=unknown])
-		])
-	],[cf_cv_good_bcopy=no])
-	if test "$cf_cv_good_bcopy" = yes ; then
-		AC_DEFINE(USE_OK_BCOPY)
-	else
-		AC_DEFINE(USE_MY_MEMMOVE)
+,
+,ac_cv_func_grantpt=no
+,ac_cv_func_grantpt=maybe)
+	],ac_cv_func_grantpt=no)
+	AC_MSG_RESULT($ac_cv_func_grantpt)
+
+	if test "x$ac_cv_func_grantpt" != "xno" ; then
+
+		if test "x$ac_cv_func_grantpt" = "xyes" ; then
+			AC_MSG_CHECKING(for pty features)
+dnl if we have no stropts.h, skip the checks for streams modules
+			if test "x$ac_cv_header_stropts_h" = xyes
+			then
+				cf_pty_this=0
+			else
+				cf_pty_this=3
+			fi
+
+			cf_pty_defines=
+			while test $cf_pty_this != 6
+			do
+
+				cf_pty_feature=
+				cf_pty_next=`expr $cf_pty_this + 1`
+				CF_MSG_LOG(pty feature test $cf_pty_next:5)
+				AC_TRY_RUN(#define CONFTEST $cf_pty_this
+$cf_pty_defines
+CF__GRANTPT_HEAD
+int main(void)
+{
+CF__GRANTPT_BODY
+}
+,
+[
+				case $cf_pty_next in #(vi
+				1) #(vi - streams
+					cf_pty_feature=ptem
+					;;
+				2) #(vi - streams
+					cf_pty_feature=ldterm
+					;;
+				3) #(vi - streams
+					cf_pty_feature=ttcompat
+					;;
+				4) #(vi
+					cf_pty_feature=pty_isatty
+					;;
+				5) #(vi
+					cf_pty_feature=pty_tcsetattr
+					;;
+				6) #(vi
+					cf_pty_feature=tty_tcsetattr
+					;;
+				esac
+],[
+				case $cf_pty_next in #(vi
+				1|2|3)
+					CF_MSG_LOG(skipping remaining streams features $cf_pty_this..2)
+					cf_pty_next=3
+					;;
+				esac
+])
+				if test -n "$cf_pty_feature"
+				then
+					cf_pty_defines="$cf_pty_defines
+#define CONFTEST_$cf_pty_feature 1
+"
+					cf_grantpt_opts="$cf_grantpt_opts $cf_pty_feature"
+				fi
+
+				cf_pty_this=$cf_pty_next
+			done
+			AC_MSG_RESULT($cf_grantpt_opts)
+			cf_grantpt_opts=`echo "$cf_grantpt_opts" | sed -e 's/ isatty//'`
+		fi
 	fi
-])])dnl
+fi
+
+dnl If we found grantpt, but no features, e.g., for streams or if we are not
+dnl able to use tcsetattr, then give openpty a try.  In particular, Darwin 10.7
+dnl has a more functional openpty than posix_openpt.
+dnl
+dnl There is no configure run-test for openpty, since older implementations do
+dnl not always run properly as a non-root user.  For that reason, we also allow
+dnl the configure script to suppress this check entirely with $disable_openpty.
+if test "x$disable_openpty" != "xyes" || test -z "$cf_grantpt_opts" ; then
+	AC_CHECK_LIB(util, openpty, [cf_have_openpty=yes],[cf_have_openpty=no])
+	if test "$cf_have_openpty" = yes ; then
+		ac_cv_func_grantpt=no
+		LIBS="-lutil $LIBS"
+		AC_DEFINE(HAVE_OPENPTY,1,[Define to 1 if you have the openpty function])
+		AC_CHECK_HEADERS( \
+			util.h \
+			libutil.h \
+			pty.h \
+		)
+	fi
+fi
+
+dnl If we did not settle on using openpty, fill in the definitions for grantpt.
+if test "x$ac_cv_func_grantpt" != xno
+then
+	CF_VERBOSE(will rely upon grantpt)
+	AC_DEFINE(HAVE_WORKING_GRANTPT,1,[Define to 1 if the grantpt function seems to work])
+	for cf_feature in $cf_grantpt_opts
+	do
+		cf_feature=`echo "$cf_feature" | sed -e 's/ //g'`
+		CF_UPPER(cf_FEATURE,$cf_feature)
+		AC_DEFINE_UNQUOTED(HAVE_GRANTPT_$cf_FEATURE)
+	done
+elif test "x$cf_have_openpty" = xno
+then
+	CF_VERBOSE(will rely upon BSD-pseudoterminals)
+else
+	CF_VERBOSE(will rely upon openpty)
+fi
+])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_FUNC_TGETENT version: 17 updated: 2011/07/14 19:34:47
+dnl CF_FUNC_TGETENT version: 19 updated: 2012/10/04 20:12:20
 dnl ---------------
 dnl Check for tgetent function in termcap library.  If we cannot find this,
 dnl we'll use the $LINES and $COLUMNS environment variables to pass screen
@@ -621,7 +748,7 @@ AC_CACHE_CHECK(for $cf_test_message function,cf_cv_lib_tgetent,[
 cf_save_LIBS="$LIBS"
 cf_cv_lib_tgetent=no
 if test "$cf_full_tgetent" = yes ; then
-	cf_TERMLIB="termcap termlib ncurses curses"
+	cf_TERMLIB="otermcap termcap termlib ncurses curses"
 	cf_TERMTST="buffer[[0]] == 0"
 else
 	cf_TERMLIB="termlib ncurses curses"
@@ -660,7 +787,7 @@ LIBS="$cf_save_LIBS"
 # they are not executed when a cached value exists.)
 if test "x$cf_cv_lib_tgetent" != xno ; then
 	test "x$cf_cv_lib_tgetent" != xyes && CF_ADD_LIBS($cf_cv_lib_tgetent)
-	AC_DEFINE(USE_TERMCAP)
+	AC_DEFINE(USE_TERMCAP,1,[Define 1 to indicate that working tgetent is found])
 	if test "$cf_full_tgetent" = no ; then
 		AC_TRY_COMPILE([
 #include <termcap.h>],[
@@ -694,12 +821,12 @@ else
 
                 # If this is linking against ncurses, we'll trigger the
                 # ifdef in resize.c that turns the termcap stuff back off.
-		AC_DEFINE(USE_TERMINFO)
+		AC_DEFINE(USE_TERMINFO,1,[Define to 1 to indicate that terminfo provides the tgetent interface])
 	fi
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_GCC_ATTRIBUTES version: 14 updated: 2010/10/23 15:52:32
+dnl CF_GCC_ATTRIBUTES version: 16 updated: 2012/10/02 20:55:03
 dnl -----------------
 dnl Test for availability of useful gcc __attribute__ directives to quiet
 dnl compiler warnings.  Though useful, not all are supported -- and contrary
@@ -777,27 +904,27 @@ EOF
 			test -n "$verbose" && AC_MSG_RESULT(... $cf_attribute)
 			cat conftest.h >>confdefs.h
 			case $cf_attribute in #(vi
+			noreturn) #(vi
+				AC_DEFINE_UNQUOTED(GCC_NORETURN,$cf_directive,[Define to noreturn-attribute for gcc])
+				;;
 			printf) #(vi
-				if test "$cf_printf_attribute" = no ; then
-					cat >>confdefs.h <<EOF
-#define GCC_PRINTFLIKE(fmt,var) /* nothing */
-EOF
-				else
-					cat >>confdefs.h <<EOF
-#define GCC_PRINTFLIKE(fmt,var) __attribute__((format(printf,fmt,var)))
-EOF
+				cf_value='/* nothing */'
+				if test "$cf_printf_attribute" != no ; then
+					cf_value='__attribute__((format(printf,fmt,var)))'
+					AC_DEFINE(GCC_PRINTF,1,[Define to 1 if the compiler supports gcc-like printf attribute.])
 				fi
+				AC_DEFINE_UNQUOTED(GCC_PRINTFLIKE(fmt,var),$cf_value,[Define to printf-attribute for gcc])
 				;;
 			scanf) #(vi
-				if test "$cf_scanf_attribute" = no ; then
-					cat >>confdefs.h <<EOF
-#define GCC_SCANFLIKE(fmt,var) /* nothing */
-EOF
-				else
-					cat >>confdefs.h <<EOF
-#define GCC_SCANFLIKE(fmt,var)  __attribute__((format(scanf,fmt,var)))
-EOF
+				cf_value='/* nothing */'
+				if test "$cf_scanf_attribute" != no ; then
+					cf_value='__attribute__((format(scanf,fmt,var)))'
+					AC_DEFINE(GCC_SCANF,1,[Define to 1 if the compiler supports gcc-like scanf attribute.])
 				fi
+				AC_DEFINE_UNQUOTED(GCC_SCANFLIKE(fmt,var),$cf_value,[Define to sscanf-attribute for gcc])
+				;;
+			unused) #(vi
+				AC_DEFINE_UNQUOTED(GCC_UNUSED,$cf_directive,[Define to unused-attribute for gcc])
 				;;
 			esac
 		fi
@@ -809,7 +936,7 @@ rm -rf conftest*
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_GCC_VERSION version: 5 updated: 2010/04/24 11:02:31
+dnl CF_GCC_VERSION version: 7 updated: 2012/10/18 06:46:33
 dnl --------------
 dnl Find version of gcc
 AC_DEFUN([CF_GCC_VERSION],[
@@ -817,13 +944,13 @@ AC_REQUIRE([AC_PROG_CC])
 GCC_VERSION=none
 if test "$GCC" = yes ; then
 	AC_MSG_CHECKING(version of $CC)
-	GCC_VERSION="`${CC} --version 2>/dev/null | sed -e '2,$d' -e 's/^.*(GCC) //' -e 's/^[[^0-9.]]*//' -e 's/[[^0-9.]].*//'`"
+	GCC_VERSION="`${CC} --version 2>/dev/null | sed -e '2,$d' -e 's/^.*(GCC[[^)]]*) //' -e 's/^.*(Debian[[^)]]*) //' -e 's/^[[^0-9.]]*//' -e 's/[[^0-9.]].*//'`"
 	test -z "$GCC_VERSION" && GCC_VERSION=unknown
 	AC_MSG_RESULT($GCC_VERSION)
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_GCC_WARNINGS version: 27 updated: 2010/10/23 15:52:32
+dnl CF_GCC_WARNINGS version: 29 updated: 2012/06/16 14:55:39
 dnl ---------------
 dnl Check if the compiler supports useful warning options.  There's a few that
 dnl we don't use, simply because they're too noisy:
@@ -846,6 +973,7 @@ AC_DEFUN([CF_GCC_WARNINGS],
 [
 AC_REQUIRE([CF_GCC_VERSION])
 CF_INTEL_COMPILER(GCC,INTEL_COMPILER,CFLAGS)
+CF_CLANG_COMPILER(GCC,CLANG_COMPILER,CFLAGS)
 
 cat > conftest.$ac_ext <<EOF
 #line __oline__ "${as_me:-configure}"
@@ -917,6 +1045,13 @@ then
 			Winline) #(vi
 				case $GCC_VERSION in
 				[[34]].*)
+					CF_VERBOSE(feature is broken in gcc $GCC_VERSION)
+					continue;;
+				esac
+				;;
+			Wpointer-arith) #(vi
+				case $GCC_VERSION in
+				[[12]].*)
 					CF_VERBOSE(feature is broken in gcc $GCC_VERSION)
 					continue;;
 				esac
@@ -1155,7 +1290,7 @@ AC_TRY_LINK([
 [cf_cv_input_method=no])])
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_INTEL_COMPILER version: 4 updated: 2010/05/26 05:38:42
+dnl CF_INTEL_COMPILER version: 5 updated: 2013/02/10 10:41:05
 dnl -----------------
 dnl Check if the given compiler is really the Intel compiler for Linux.  It
 dnl tries to imitate gcc, but does not return an error when it finds a mismatch
@@ -1169,6 +1304,7 @@ dnl $1 = GCC (default) or GXX
 dnl $2 = INTEL_COMPILER (default) or INTEL_CPLUSPLUS
 dnl $3 = CFLAGS (default) or CXXFLAGS
 AC_DEFUN([CF_INTEL_COMPILER],[
+AC_REQUIRE([AC_CANONICAL_HOST])
 ifelse([$2],,INTEL_COMPILER,[$2])=no
 
 if test "$ifelse([$1],,[$1],GCC)" = yes ; then
@@ -1192,7 +1328,7 @@ cf_save_CFLAGS="$cf_save_CFLAGS -we147 -no-gcc"
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_LASTLOG version: 4 updated: 2002/10/27 23:21:42
+dnl CF_LASTLOG version: 5 updated: 2012/10/04 20:12:20
 dnl ----------
 dnl Check for header defining _PATH_LASTLOG, or failing that, see if the lastlog
 dnl file exists.
@@ -1216,10 +1352,10 @@ AC_TRY_COMPILE([
 		cf_cv_path_lastlog=no
 	fi])
 ])
-test $cf_cv_path_lastlog != no && AC_DEFINE(USE_LASTLOG)
+test $cf_cv_path_lastlog != no && AC_DEFINE(USE_LASTLOG,1,[Define to 1 if we can define lastlog pathname])
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_LD_RPATH_OPT version: 4 updated: 2011/06/04 20:09:13
+dnl CF_LD_RPATH_OPT version: 5 updated: 2011/07/17 14:48:41
 dnl ---------------
 dnl For the given system and compiler, find the compiler flags to pass to the
 dnl loader to use the "rpath" feature.
@@ -1243,7 +1379,7 @@ linux*|gnu*|k*bsd*-gnu) #(vi
 openbsd[[2-9]].*|mirbsd*) #(vi
 	LD_RPATH_OPT="-Wl,-rpath,"
 	;;
-freebsd*) #(vi
+dragonfly*|freebsd*) #(vi
 	LD_RPATH_OPT="-rpath "
 	;;
 netbsd*) #(vi
@@ -1310,7 +1446,7 @@ AC_SUBST(MAKE_UPPER_TAGS)
 AC_SUBST(MAKE_LOWER_TAGS)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_MIXEDCASE_FILENAMES version: 3 updated: 2003/09/20 17:07:55
+dnl CF_MIXEDCASE_FILENAMES version: 4 updated: 2012/10/02 20:55:03
 dnl ----------------------
 dnl Check if the file-system supports mixed-case filenames.  If we're able to
 dnl create a lowercase name and see it as uppercase, it doesn't support that.
@@ -1337,7 +1473,7 @@ else
 	rm -f conftest CONFTEST
 fi
 ])
-test "$cf_cv_mixedcase" = yes && AC_DEFINE(MIXEDCASE_FILENAMES)
+test "$cf_cv_mixedcase" = yes && AC_DEFINE(MIXEDCASE_FILENAMES,1,[Define to 1 if filesystem supports mixed-case filenames.])
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_MSG_LOG version: 5 updated: 2010/10/23 15:52:32
@@ -1348,20 +1484,52 @@ AC_DEFUN([CF_MSG_LOG],[
 echo "${as_me:-configure}:__oline__: testing $* ..." 1>&AC_FD_CC
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_PATHSEP version: 5 updated: 2010/05/26 05:38:42
+dnl CF_NO_LEAKS_OPTION version: 5 updated: 2012/10/02 20:55:03
+dnl ------------------
+dnl see CF_WITH_NO_LEAKS
+AC_DEFUN([CF_NO_LEAKS_OPTION],[
+AC_MSG_CHECKING(if you want to use $1 for testing)
+AC_ARG_WITH($1,
+	[$2],
+	[AC_DEFINE_UNQUOTED($3,1,"Define to 1 if you want to use $1 for testing.")ifelse([$4],,[
+	 $4
+])
+	: ${with_cflags:=-g}
+	: ${with_no_leaks:=yes}
+	 with_$1=yes],
+	[with_$1=])
+AC_MSG_RESULT(${with_$1:-no})
+
+case .$with_cflags in #(vi
+.*-g*)
+	case .$CFLAGS in #(vi
+	.*-g*) #(vi
+		;;
+	*)
+		CF_ADD_CFLAGS([-g])
+		;;
+	esac
+	;;
+esac
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_PATHSEP version: 6 updated: 2012/09/29 18:38:12
 dnl ----------
-dnl Provide a value for the $PATH and similar separator
+dnl Provide a value for the $PATH and similar separator (or amend the value
+dnl as provided in autoconf 2.5x).
 AC_DEFUN([CF_PATHSEP],
 [
+	AC_MSG_CHECKING(for PATH separator)
 	case $cf_cv_system_name in
 	os2*)	PATH_SEPARATOR=';'  ;;
-	*)	PATH_SEPARATOR=':'  ;;
+	*)	${PATH_SEPARATOR:=':'}  ;;
 	esac
 ifelse([$1],,,[$1=$PATH_SEPARATOR])
 	AC_SUBST(PATH_SEPARATOR)
+	AC_MSG_RESULT($PATH_SEPARATOR)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_PATH_PROG version: 8 updated: 2010/10/23 16:12:25
+dnl CF_PATH_PROG version: 9 updated: 2012/10/04 20:12:20
 dnl ------------
 dnl Check for a given program, defining corresponding symbol.
 dnl	$1 = environment variable, which is suffixed by "_PATH" in the #define.
@@ -1400,12 +1568,12 @@ IFS="$cf_save_ifs"
 
 if test -n "$cf_path_prog" ; then
 	CF_MSG_LOG(defining path for ${cf_path_prog})
-	AC_DEFINE_UNQUOTED($1_PATH,"$cf_path_prog")
-	test -n "$cf_path_args" && AC_DEFINE_UNQUOTED($1_ARGS,"$cf_path_args")
+	AC_DEFINE_UNQUOTED($1_PATH,"$cf_path_prog",Define to pathname $1)
+	test -n "$cf_path_args" && AC_DEFINE_UNQUOTED($1_ARGS,"$cf_path_args",Define to provide args for $1)
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_PATH_SYNTAX version: 13 updated: 2010/05/26 05:38:42
+dnl CF_PATH_SYNTAX version: 14 updated: 2012/06/19 20:58:54
 dnl --------------
 dnl Check the argument to see that it looks like a pathname.  Rewrite it if it
 dnl begins with one of the prefix/exec_prefix variables, and then again if the
@@ -1425,7 +1593,7 @@ case ".[$]$1" in #(vi
   ;;
 .[[a-zA-Z]]:[[\\/]]*) #(vi OS/2 EMX
   ;;
-.\[$]{*prefix}*) #(vi
+.\[$]{*prefix}*|.\[$]{*dir}*) #(vi
   eval $1="[$]$1"
   case ".[$]$1" in #(vi
   .NONE/*)
@@ -1549,7 +1717,7 @@ fi
 
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_POSIX_SAVED_IDS version: 7 updated: 2007/03/14 16:43:53
+dnl CF_POSIX_SAVED_IDS version: 8 updated: 2012/10/04 20:12:20
 dnl ------------------
 dnl
 dnl Check first if saved-ids are always supported.  Some systems
@@ -1597,10 +1765,10 @@ int main()
 ])
 ])
 
-test "$cf_cv_posix_saved_ids" = yes && AC_DEFINE(HAVE_POSIX_SAVED_IDS)
+test "$cf_cv_posix_saved_ids" = yes && AC_DEFINE(HAVE_POSIX_SAVED_IDS,1,[Define to 1 if POSIX saved-ids are supported])
 ])
 dnl ---------------------------------------------------------------------------
-dnl CF_POSIX_WAIT version: 2 updated: 2000/05/29 16:16:04
+dnl CF_POSIX_WAIT version: 3 updated: 2012/10/04 20:12:20
 dnl -------------
 dnl Check for POSIX wait support
 AC_DEFUN([CF_POSIX_WAIT],
@@ -1622,7 +1790,7 @@ AC_TRY_LINK([
 [cf_cv_posix_wait=yes],
 [cf_cv_posix_wait=no])
 ])
-test "$cf_cv_posix_wait" = yes && AC_DEFINE(USE_POSIX_WAIT)
+test "$cf_cv_posix_wait" = yes && AC_DEFINE(USE_POSIX_WAIT,1,[Define to 1 if we have POSIX wait functions])
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_PROCFS_CWD version: 2 updated: 2007/03/12 20:39:04
@@ -1645,57 +1813,39 @@ done
 ])
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_PROG_CC_U_D version: 1 updated: 2005/07/14 16:59:30
-dnl --------------
-dnl Check if C (preprocessor) -U and -D options are processed in the order
-dnl given rather than by type of option.  Some compilers insist on apply all
-dnl of the -U options after all of the -D options.  Others allow mixing them,
-dnl and may predefine symbols that conflict with those we define.
-AC_DEFUN([CF_PROG_CC_U_D],
-[
-AC_CACHE_CHECK(if $CC -U and -D options work together,cf_cv_cc_u_d_options,[
-	cf_save_CPPFLAGS="$CPPFLAGS"
-	CPPFLAGS="-UU_D_OPTIONS -DU_D_OPTIONS -DD_U_OPTIONS -UD_U_OPTIONS"
-	AC_TRY_COMPILE([],[
-#ifndef U_D_OPTIONS
-make an undefined-error
-#endif
-#ifdef  D_U_OPTIONS
-make a defined-error
-#endif
-	],[
-	cf_cv_cc_u_d_options=yes],[
-	cf_cv_cc_u_d_options=no])
-	CPPFLAGS="$cf_save_CPPFLAGS"
-])
+dnl CF_PROG_CC version: 3 updated: 2012/10/06 15:31:55
+dnl ----------
+dnl standard check for CC, plus followup sanity checks
+dnl $1 = optional parameter to pass to AC_PROG_CC to specify compiler name
+AC_DEFUN([CF_PROG_CC],[
+ifelse($1,,[AC_PROG_CC],[AC_PROG_CC($1)])
+CF_GCC_VERSION
+CF_ACVERSION_CHECK(2.52,
+	[AC_PROG_CC_STDC],
+	[CF_ANSI_CC_REQD])
+CF_CC_ENV_FLAGS 
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_PROG_EXT version: 10 updated: 2004/01/03 19:28:18
-dnl -----------
-dnl Compute $PROG_EXT, used for non-Unix ports, such as OS/2 EMX.
-AC_DEFUN([CF_PROG_EXT],
-[
-AC_REQUIRE([CF_CHECK_CACHE])
-case $cf_cv_system_name in
-os2*)
-    CFLAGS="$CFLAGS -Zmt"
-    CPPFLAGS="$CPPFLAGS -D__ST_MT_ERRNO__"
-    CXXFLAGS="$CXXFLAGS -Zmt"
-    # autoconf's macro sets -Zexe and suffix both, which conflict:w
-    LDFLAGS="$LDFLAGS -Zmt -Zcrtdll"
-    ac_cv_exeext=.exe
-    ;;
-esac
-
-AC_EXEEXT
-AC_OBJEXT
-
-PROG_EXT="$EXEEXT"
-AC_SUBST(PROG_EXT)
-test -n "$PROG_EXT" && AC_DEFINE_UNQUOTED(PROG_EXT,"$PROG_EXT")
+dnl CF_PROG_GROFF version: 1 updated: 2013/01/02 20:37:18
+dnl -------------
+dnl Check if groff is available, for cases (such as html output) where nroff
+dnl is not enough.
+AC_DEFUN([CF_PROG_GROFF],[
+AC_PATH_PROG(GROFF_PATH,groff,no)
+if test "x$GROFF_PATH" = xno
+then
+	NROFF_NOTE=
+	GROFF_NOTE="#"
+else
+	NROFF_NOTE="#"
+	GROFF_NOTE=
+fi
+AC_SUBST(GROFF_PATH)
+AC_SUBST(GROFF_NOTE)
+AC_SUBST(NROFF_NOTE)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_REGEX version: 8 updated: 2010/08/07 14:09:44
+dnl CF_REGEX version: 10 updated: 2012/10/04 20:12:20
 dnl --------
 dnl Attempt to determine if we've got one of the flavors of regular-expression
 dnl code that we can support.
@@ -1707,7 +1857,7 @@ cf_regex_func=no
 cf_regex_libs="regex re"
 case $host_os in #(vi
 mingw*)
-	cf_regex_libs="regex.dll $cf_regex_libs"
+	cf_regex_libs="gnurx $cf_regex_libs"
 	;;
 esac
 
@@ -1769,9 +1919,9 @@ esac
 
 case $cf_cv_regex_hdrs in #(vi
     no)	       AC_MSG_WARN(no regular expression header found) ;; #(vi
-    regex.h)   AC_DEFINE(HAVE_REGEX_H_FUNCS) ;; #(vi
-    regexp.h)  AC_DEFINE(HAVE_REGEXP_H_FUNCS) ;; #(vi
-    regexpr.h) AC_DEFINE(HAVE_REGEXPR_H_FUNCS) ;;
+    regex.h)   AC_DEFINE(HAVE_REGEX_H_FUNCS,1,[Define to 1 to include regex.h for regular expressions]) ;; #(vi
+    regexp.h)  AC_DEFINE(HAVE_REGEXP_H_FUNCS,1,[Define to 1 to include regexp.h for regular expressions]) ;; #(vi
+    regexpr.h) AC_DEFINE(HAVE_REGEXPR_H_FUNCS,1,[Define to 1 to include regexpr.h for regular expressions]) ;;
 esac
 ])dnl
 dnl ---------------------------------------------------------------------------
@@ -1966,7 +2116,7 @@ done
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_SIG_ATOMIC_T version: 2 updated: 2005/09/18 17:27:12
+dnl CF_SIG_ATOMIC_T version: 3 updated: 2012/10/04 20:12:20
 dnl ---------------
 dnl signal handler, but there are some gcc depedencies in that recommendation.
 dnl Try anyway.
@@ -1998,32 +2148,10 @@ static void handler(int sig)
 	done
 	])
 AC_MSG_RESULT($cf_cv_sig_atomic_t)
-test "$cf_cv_sig_atomic_t" != no && AC_DEFINE_UNQUOTED(SIG_ATOMIC_T, $cf_cv_sig_atomic_t)
+test "$cf_cv_sig_atomic_t" != no && AC_DEFINE_UNQUOTED(SIG_ATOMIC_T, $cf_cv_sig_atomic_t,[Define to signal global datatype])
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_SIZE_T version: 4 updated: 2000/01/22 00:19:54
-dnl ---------
-dnl	On both Ultrix and CLIX, I find size_t defined in <stdio.h>
-AC_DEFUN([CF_SIZE_T],
-[
-AC_MSG_CHECKING(for size_t in <sys/types.h> or <stdio.h>)
-AC_CACHE_VAL(cf_cv_type_size_t,[
-	AC_TRY_COMPILE([
-#include <sys/types.h>
-#ifdef STDC_HEADERS
-#include <stdlib.h>
-#include <stddef.h>
-#endif
-#include <stdio.h>],
-		[size_t x],
-		[cf_cv_type_size_t=yes],
-		[cf_cv_type_size_t=no])
-	])
-AC_MSG_RESULT($cf_cv_type_size_t)
-test $cf_cv_type_size_t = no && AC_DEFINE(size_t, unsigned)
-])dnl
-dnl ---------------------------------------------------------------------------
-dnl CF_STRUCT_LASTLOG version: 1 updated: 2006/03/12 17:46:43
+dnl CF_STRUCT_LASTLOG version: 2 updated: 2012/10/04 20:12:20
 dnl -----------------
 dnl Check for header defining struct lastlog, ensure that its .ll_time member
 dnl is compatible with time().
@@ -2045,10 +2173,10 @@ cf_cv_struct_lastlog=yes],[
 cf_cv_struct_lastlog=no],[
 cf_cv_struct_lastlog=unknown])])
 
-test $cf_cv_struct_lastlog != no && AC_DEFINE(USE_STRUCT_LASTLOG)
+test $cf_cv_struct_lastlog != no && AC_DEFINE(USE_STRUCT_LASTLOG,1,[Define to 1 if we have struct lastlog])
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_SVR4 version: 3 updated: 2000/05/31 10:16:52
+dnl CF_SVR4 version: 5 updated: 2012/10/04 05:24:07
 dnl -------
 dnl Check if this is an SVR4 system.  We need the definition for xterm
 AC_DEFUN([CF_SVR4],
@@ -2056,6 +2184,9 @@ AC_DEFUN([CF_SVR4],
 AC_CHECK_LIB(elf, elf_begin,[
 AC_CACHE_CHECK(if this is an SVR4 system, cf_cv_svr4,[
 AC_TRY_COMPILE([
+#if defined(__CYGWIN__)
+make an error
+#endif
 #include <elf.h>
 #include <sys/termio.h>
 ],[
@@ -2074,10 +2205,10 @@ static struct termio d_tio;
 [cf_cv_svr4=no])
 ])
 ])
-test "$cf_cv_svr4" = yes && AC_DEFINE(SVR4)
+test "$cf_cv_svr4" = yes && AC_DEFINE(SVR4,1,[Define to 1 if this is an SVR4 system])
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_SYSV version: 13 updated: 2006/08/20 14:55:37
+dnl CF_SYSV version: 15 updated: 2012/10/04 05:24:07
 dnl -------
 dnl Check if this is a SYSV platform, e.g., as used in <X11/Xos.h>, and whether
 dnl defining it will be helpful.  The following features are used to check:
@@ -2110,12 +2241,12 @@ AC_TRY_COMPILE([
 #ifdef HAVE_X11_INTRINSIC_H
 #include <X11/Intrinsic.h>	/* Intrinsic.h has other traps... */
 #endif
-#ifdef HAVE_TERMIOS_H		/* needed for HPUX 10.20 */ 
-#include <termios.h> 
-#define STRUCT_TERMIOS struct termios 
-#else 
-#define STRUCT_TERMIOS struct termio 
-#endif 
+#ifdef HAVE_TERMIOS_H		/* needed for HPUX 10.20 */
+#include <termios.h>
+#define STRUCT_TERMIOS struct termios
+#else
+#define STRUCT_TERMIOS struct termio
+#endif
 #include <curses.h>
 #include <term.h>		/* eliminate most BSD hacks */
 #include <errno.h>		/* declare sys_errlist on older systems */
@@ -2137,10 +2268,10 @@ sys_errlist[0] = "";		/* Cygwin mis-declares this */
 [cf_cv_sysv=yes],
 [cf_cv_sysv=no])
 ])
-test "$cf_cv_sysv" = yes && AC_DEFINE(SYSV)
+test "$cf_cv_sysv" = yes && AC_DEFINE(SYSV,1,[Define to 1 if this is an SYSV system])
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_SYSV_UTMP version: 5 updated: 2001/12/27 12:55:07
+dnl CF_SYSV_UTMP version: 6 updated: 2012/10/04 20:12:20
 dnl ------------
 dnl Check if this is a SYSV flavor of UTMP
 AC_DEFUN([CF_SYSV_UTMP],
@@ -2158,7 +2289,7 @@ struct $cf_cv_have_utmp x;
 	[cf_cv_sysv_utmp=yes],
 	[cf_cv_sysv_utmp=no])
 ])
-test $cf_cv_sysv_utmp = yes && AC_DEFINE(USE_SYSV_UTMP)
+test $cf_cv_sysv_utmp = yes && AC_DEFINE(USE_SYSV_UTMP,1,[Define to 1 if utmp is SYSV flavor])
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_SYS_ERRLIST version: 6 updated: 2001/12/30 13:03:23
@@ -2172,7 +2303,7 @@ AC_DEFUN([CF_SYS_ERRLIST],
     CF_CHECK_ERRNO(sys_errlist)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_TERMIO_C_ISPEED version: 2 updated: 2000/05/29 16:16:04
+dnl CF_TERMIO_C_ISPEED version: 3 updated: 2012/10/04 20:12:20
 dnl ------------------
 dnl Check for SGI's broken redefinition of baud rates introduced in IRIX 6.5
 dnl (there doesn't appear to be a useful predefined symbol).
@@ -2188,7 +2319,7 @@ foo.c_ospeed = B9600;
 ],[cf_cv_termio_c_ispeed=yes
 ],[cf_cv_termio_c_ispeed=no])
 ])
-test "$cf_cv_termio_c_ispeed" = yes && AC_DEFINE(HAVE_TERMIO_C_ISPEED)
+test "$cf_cv_termio_c_ispeed" = yes && AC_DEFINE(HAVE_TERMIO_C_ISPEED,1,[define 1 if we have IRIX 6.5 baud-rate redefinitions])
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_TRY_PKG_CONFIG version: 4 updated: 2010/06/14 17:42:30
@@ -2216,7 +2347,46 @@ else
 fi
 ])
 dnl ---------------------------------------------------------------------------
-dnl CF_TTY_GROUP version: 7 updated: 2007/03/14 16:43:59
+dnl CF_TRY_XOPEN_SOURCE version: 1 updated: 2011/10/30 17:09:50
+dnl -------------------
+dnl If _XOPEN_SOURCE is not defined in the compile environment, check if we
+dnl can define it successfully.
+AC_DEFUN([CF_TRY_XOPEN_SOURCE],[
+AC_CACHE_CHECK(if we should define _XOPEN_SOURCE,cf_cv_xopen_source,[
+	AC_TRY_COMPILE([
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+],[
+#ifndef _XOPEN_SOURCE
+make an error
+#endif],
+	[cf_cv_xopen_source=no],
+	[cf_save="$CPPFLAGS"
+	 CPPFLAGS="$CPPFLAGS -D_XOPEN_SOURCE=$cf_XOPEN_SOURCE"
+	 AC_TRY_COMPILE([
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+],[
+#ifdef _XOPEN_SOURCE
+make an error
+#endif],
+	[cf_cv_xopen_source=no],
+	[cf_cv_xopen_source=$cf_XOPEN_SOURCE])
+	CPPFLAGS="$cf_save"
+	])
+])
+
+if test "$cf_cv_xopen_source" != no ; then
+	CF_REMOVE_DEFINE(CFLAGS,$CFLAGS,_XOPEN_SOURCE)
+	CF_REMOVE_DEFINE(CPPFLAGS,$CPPFLAGS,_XOPEN_SOURCE)
+	cf_temp_xopen_source="-D_XOPEN_SOURCE=$cf_cv_xopen_source"
+	CF_ADD_CFLAGS($cf_temp_xopen_source)
+fi
+])
+dnl ---------------------------------------------------------------------------
+dnl CF_TTY_GROUP version: 8 updated: 2012/10/04 20:12:20
 dnl ------------
 dnl Check if the system has a tty-group defined.  This is used in xterm when
 dnl setting pty ownership.
@@ -2283,10 +2453,10 @@ fi
 cf_tty_group="$cf_cv_tty_group_name"
 else
 	# if configure option, always do this
-	AC_DEFINE(USE_TTY_GROUP)
+	AC_DEFINE(USE_TTY_GROUP,1,[Define to 1 if we have a tty groupname])
 fi
 
-AC_DEFINE_UNQUOTED(TTY_GROUP_NAME,"$cf_tty_group")
+AC_DEFINE_UNQUOTED(TTY_GROUP_NAME,"$cf_tty_group",[Define to the name use for tty group])
 
 # This is only a double-check that the group-name we obtained above really
 # does apply to the device.  We cannot perform this test if we are in batch
@@ -2335,7 +2505,31 @@ else
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_TYPE_FD_MASK version: 2 updated: 2008/03/25 20:59:57
+dnl CF_TYPE_CC_T version: 2 updated: 2012/10/04 20:12:20
+dnl ------------
+dnl	Check for cc_t type, used in termio.
+AC_DEFUN([CF_TYPE_CC_T],
+[
+AC_MSG_CHECKING(for cc_t in <termios.h> or <termio.h>)
+AC_CACHE_VAL(cf_cv_type_cc_t,[
+	AC_TRY_COMPILE([
+#include <sys/types.h>
+#if defined(HAVE_TERMIOS_H)
+#include <termios.h>
+#else
+#include <termio.h>
+#include <sys/ioctl.h>
+#endif
+],
+		[cc_t x],
+		[cf_cv_type_cc_t=yes],
+		[cf_cv_type_cc_t=no])
+	])
+AC_MSG_RESULT($cf_cv_type_cc_t)
+test $cf_cv_type_cc_t = no && AC_DEFINE(cc_t, unsigned char,[Define to cc_t type used in termio])
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_TYPE_FD_MASK version: 3 updated: 2012/10/04 06:57:36
 dnl ---------------
 dnl Check for the declaration of fd_mask, which is like fd_set, associated
 dnl with select().  The check for fd_set should have pulled in this as well,
@@ -2360,11 +2554,11 @@ AC_CACHE_CHECK(for declaration of fd_mask,cf_cv_type_fd_mask,[
     fi
 ])
 if test x$cf_cv_type_fd_mask = xCSRG_BASED ; then
-    AC_DEFINE(CSRG_BASED)
+    AC_DEFINE(CSRG_BASED,1,[Define to 1 if needed for declaring fd_mask()])
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_TYPE_FD_SET version: 4 updated: 2008/03/25 20:56:03
+dnl CF_TYPE_FD_SET version: 5 updated: 2012/10/04 20:12:20
 dnl --------------
 dnl Check for the declaration of fd_set.  Some platforms declare it in
 dnl <sys/types.h>, and some in <sys/select.h>, which requires <sys/types.h>.
@@ -2395,7 +2589,7 @@ AC_TRY_COMPILE([
 	[cf_cv_type_fd_set=sys/select.h],
 	[cf_cv_type_fd_set=unknown])])])])
 if test $cf_cv_type_fd_set = sys/select.h ; then
-	AC_DEFINE(USE_SYS_SELECT_H)
+	AC_DEFINE(USE_SYS_SELECT_H,1,[Define to 1 to include sys/select.h to declare fd_set])
 fi
 ])
 dnl ---------------------------------------------------------------------------
@@ -2421,7 +2615,7 @@ AC_DEFUN([CF_UPPER],
 $1=`echo "$2" | sed y%abcdefghijklmnopqrstuvwxyz./-%ABCDEFGHIJKLMNOPQRSTUVWXYZ___%`
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_UTEMPTER version: 3 updated: 2010/06/02 05:03:05
+dnl CF_UTEMPTER version: 4 updated: 2012/10/04 20:12:20
 dnl -----------
 dnl Try to link with utempter library
 AC_DEFUN([CF_UTEMPTER],
@@ -2440,12 +2634,12 @@ AC_TRY_LINK([
 LIBS="$cf_save_LIBS"
 ])
 if test "$cf_cv_have_utempter" = yes ; then
-	AC_DEFINE(USE_UTEMPTER)
+	AC_DEFINE(USE_UTEMPTER,1,[Define to 1 if we can/should link with utempter])
 	CF_ADD_LIB(utempter)
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_UTMP version: 9 updated: 2008/01/25 17:18:00
+dnl CF_UTMP version: 10 updated: 2012/10/04 20:12:20
 dnl -------
 dnl Check for UTMP/UTMPX headers
 AC_DEFUN([CF_UTMP],
@@ -2481,8 +2675,8 @@ done
 ])
 
 if test $cf_cv_have_utmp != no ; then
-	AC_DEFINE(HAVE_UTMP)
-	test $cf_cv_have_utmp = utmpx && AC_DEFINE(UTMPX_FOR_UTMP)
+	AC_DEFINE(HAVE_UTMP,1,[Define to 1 if the utmp interface is available])
+	test $cf_cv_have_utmp = utmpx && AC_DEFINE(UTMPX_FOR_UTMP,1,[Define if we have utmpx interface])
 	CF_UTMP_UT_HOST
 	CF_UTMP_UT_SYSLEN
 	CF_UTMP_UT_NAME
@@ -2541,7 +2735,7 @@ else
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_UTMP_UT_HOST version: 7 updated: 2007/03/13 19:17:11
+dnl CF_UTMP_UT_HOST version: 8 updated: 2012/10/04 20:12:20
 dnl ---------------
 dnl Check if UTMP/UTMPX struct defines ut_host member
 AC_DEFUN([CF_UTMP_UT_HOST],
@@ -2557,11 +2751,11 @@ AC_CACHE_VAL(cf_cv_have_utmp_ut_host,[
 	[cf_cv_have_utmp_ut_host=no])
 	])
 AC_MSG_RESULT($cf_cv_have_utmp_ut_host)
-test $cf_cv_have_utmp_ut_host != no && AC_DEFINE(HAVE_UTMP_UT_HOST)
+test $cf_cv_have_utmp_ut_host != no && AC_DEFINE(HAVE_UTMP_UT_HOST,1,[Define to 1 if UTMP/UTMPX struct defines ut_host member])
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_UTMP_UT_NAME version: 4 updated: 2007/03/13 19:17:11
+dnl CF_UTMP_UT_NAME version: 5 updated: 2012/10/04 20:12:20
 dnl ---------------
 dnl Check if UTMP/UTMPX struct defines ut_name member
 AC_DEFUN([CF_UTMP_UT_NAME],
@@ -2592,13 +2786,13 @@ no) #(vi
 	AC_MSG_ERROR(Cannot find declaration for ut.ut_name)
 	;;
 ut_user)
-	AC_DEFINE(ut_name,ut_user)
+	AC_DEFINE(ut_name,ut_user,[Define to rename UTMP/UTMPX struct ut_name member])
 	;;
 esac
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_UTMP_UT_SESSION version: 5 updated: 2007/03/13 19:17:11
+dnl CF_UTMP_UT_SESSION version: 6 updated: 2012/10/04 20:12:20
 dnl ------------------
 dnl Check if UTMP/UTMPX struct defines ut_session member
 AC_DEFUN([CF_UTMP_UT_SESSION],
@@ -2613,12 +2807,12 @@ AC_CACHE_CHECK(if ${cf_cv_have_utmp}.ut_session is declared, cf_cv_have_utmp_ut_
 	[cf_cv_have_utmp_ut_session=no])
 ])
 if test $cf_cv_have_utmp_ut_session != no ; then
-	AC_DEFINE(HAVE_UTMP_UT_SESSION)
+	AC_DEFINE(HAVE_UTMP_UT_SESSION,1,[Define to 1 if UTMP/UTMPX struct defines ut_session member])
 fi
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_UTMP_UT_SYSLEN version: 1 updated: 2008/01/25 17:18:00
+dnl CF_UTMP_UT_SYSLEN version: 2 updated: 2012/10/04 20:12:20
 dnl -----------------
 dnl Check if UTMP/UTMPX struct defines ut_syslen member
 AC_DEFUN([CF_UTMP_UT_SYSLEN],
@@ -2634,11 +2828,11 @@ AC_CACHE_VAL(cf_cv_have_utmp_ut_syslen,[
 	[cf_cv_have_utmp_ut_syslen=no])
 	])
 AC_MSG_RESULT($cf_cv_have_utmp_ut_syslen)
-test $cf_cv_have_utmp_ut_syslen != no && AC_DEFINE(HAVE_UTMP_UT_SYSLEN)
+test $cf_cv_have_utmp_ut_syslen != no && AC_DEFINE(HAVE_UTMP_UT_SYSLEN,1,[Define to 1 if UTMP/UTMPX struct defines ut_syslen member])
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_UTMP_UT_XSTATUS version: 3 updated: 2001/12/27 12:55:07
+dnl CF_UTMP_UT_XSTATUS version: 4 updated: 2012/10/04 20:12:20
 dnl ------------------
 dnl Check for known variants on the UTMP/UTMPX struct's exit-status as reported
 dnl by various people:
@@ -2670,13 +2864,13 @@ AC_TRY_COMPILE([
 done
 ])
 if test $cf_cv_have_utmp_ut_xstatus != no ; then
-	AC_DEFINE(HAVE_UTMP_UT_XSTATUS)
-	AC_DEFINE_UNQUOTED(ut_xstatus,$cf_cv_have_utmp_ut_xstatus)
+	AC_DEFINE(HAVE_UTMP_UT_XSTATUS,1,[Define to 1 if UTMP/UTMPX has exit-status member])
+	AC_DEFINE_UNQUOTED(ut_xstatus,$cf_cv_have_utmp_ut_xstatus,[Define if needed to rename member ut_xstatus of UTMP/UTMPX])
 fi
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_UTMP_UT_XTIME version: 7 updated: 2007/03/13 19:17:11
+dnl CF_UTMP_UT_XTIME version: 9 updated: 2012/10/04 20:12:20
 dnl ----------------
 dnl Check if UTMP/UTMPX struct defines ut_xtime member
 AC_DEFUN([CF_UTMP_UT_XTIME],
@@ -2697,9 +2891,9 @@ AC_CACHE_CHECK(if ${cf_cv_have_utmp}.ut_xtime is declared, cf_cv_have_utmp_ut_xt
 	])
 ])
 if test $cf_cv_have_utmp_ut_xtime != no ; then
-	AC_DEFINE(HAVE_UTMP_UT_XTIME)
+	AC_DEFINE(HAVE_UTMP_UT_XTIME,1,[Define to 1 if UTMP/UTMPX struct defines ut_xtime member])
 	if test $cf_cv_have_utmp_ut_xtime = define ; then
-		AC_DEFINE(ut_xtime,ut_tv.tv_sec)
+		AC_DEFINE(ut_xtime,ut_tv.tv_sec,[Define if needed to alternate name for utmpx.ut_xtime member])
 	fi
 fi
 fi
@@ -2713,13 +2907,13 @@ AC_DEFUN([CF_VERBOSE],
 CF_MSG_LOG([$1])
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_WITH_APP_CLASS version: 1 updated: 2011/07/08 04:54:40
+dnl CF_WITH_APP_CLASS version: 2 updated: 2012/10/04 04:29:52
 dnl -----------------
 dnl Handle configure option "--with-app-class", setting the $APP_CLASS
 dnl variable, used for X resources.
 dnl
 dnl $1 = default value.
-AC_DEFUN(CF_WITH_APP_CLASS,[
+AC_DEFUN([CF_WITH_APP_CLASS],[
 AC_MSG_CHECKING(for X applications class)
 AC_ARG_WITH(app-class,
 	[  --with-app-class=XXX    override X applications class (default $1)],
@@ -2744,27 +2938,104 @@ AC_MSG_RESULT($APP_CLASS)
 AC_SUBST(APP_CLASS)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_WITH_APP_DEFAULTS version: 1 updated: 2011/04/21 18:12:37
+dnl CF_WITH_APP_DEFAULTS version: 5 updated: 2012/10/04 04:29:52
 dnl --------------------
 dnl Handle configure option "--with-app-defaults", setting these shell
 dnl variables:
-dnl $appsdir is the option value, used for installing app-defaults files.
+dnl
+dnl $APPSDIR is the option value, used for installing app-defaults files.
 dnl $no_appsdir is a "#" (comment) if "--without-app-defaults" is given.
-AC_DEFUN(CF_WITH_APP_DEFAULTS,[
+dnl
+dnl Most Linux's use this:
+dnl 	/usr/share/X11/app-defaults
+dnl Debian uses this:
+dnl 	/etc/X11/app-defaults
+dnl DragonFlyBSD ports uses this:
+dnl 	/usr/pkg/lib/X11/app-defaults
+dnl FreeBSD ports use these:
+dnl 	/usr/local/lib/X11/app-defaults
+dnl 	/usr/local/share/X11/app-defaults
+dnl Mandriva has these:
+dnl 	/usr/lib/X11/app-defaults
+dnl 	/usr/lib64/X11/app-defaults
+dnl NetBSD has these
+dnl 	/usr/X11R7/lib/X11/app-defaults
+dnl OpenSolaris uses
+dnl 	32-bit:
+dnl 	/usr/X11/etc/X11/app-defaults
+dnl 	/usr/X11/share/X11/app-defaults
+dnl 	/usr/X11/lib/X11/app-defaults
+dnl	64-bit:
+dnl 	/usr/X11/etc/X11/app-defaults
+dnl 	/usr/X11/share/X11/app-defaults (I mkdir'd this)
+dnl 	/usr/X11/lib/amd64/X11/app-defaults
+dnl Solaris10 uses (in this order):
+dnl 	/usr/openwin/lib/X11/app-defaults
+dnl 	/usr/X11/lib/X11/app-defaults
+AC_DEFUN([CF_WITH_APP_DEFAULTS],[
 AC_MSG_CHECKING(for directory to install resource files)
-CF_WITH_PATH(app-defaults,
-	[  --with-app-defaults=DIR directory in which to install resource files],
-	[appsdir],[EPREFIX/lib/X11/app-defaults],
-	['\$(exec_prefix)/lib/X11/app-defaults'])
-AC_MSG_RESULT($appsdir)
-AC_SUBST(appsdir)
+AC_ARG_WITH(app-defaults,
+	[  --with-app-defaults=DIR directory in which to install resource files (EPREFIX/lib/X11/app-defaults)],
+	[APPSDIR=$withval],
+	[APPSDIR='${exec_prefix}/lib/X11/app-defaults'])
+
+if test "x[$]APPSDIR" = xauto
+then
+	APPSDIR='${exec_prefix}/lib/X11/app-defaults'
+	for cf_path in \
+		/usr/share/X11/app-defaults \
+		/usr/X11/share/X11/app-defaults \
+		/usr/X11/lib/X11/app-defaults \
+		/usr/lib/X11/app-defaults \
+		/etc/X11/app-defaults \
+		/usr/pkg/lib/X11/app-defaults \
+		/usr/X11R7/lib/X11/app-defaults \
+		/usr/X11R6/lib/X11/app-defaults \
+		/usr/X11R5/lib/X11/app-defaults \
+		/usr/X11R4/lib/X11/app-defaults \
+		/usr/local/lib/X11/app-defaults \
+		/usr/local/share/X11/app-defaults \
+		/usr/lib64/X11/app-defaults
+	do
+		if test -d "$cf_path" ; then
+			APPSDIR="$cf_path"
+			break
+		fi
+	done
+else
+	cf_path=$APPSDIR
+	CF_PATH_SYNTAX(cf_path)
+fi
+
+AC_MSG_RESULT($APPSDIR)
+AC_SUBST(APPSDIR)
 
 no_appsdir=
-test "$appsdir" = no && no_appsdir="#"
+if test "$APPSDIR" = no
+then
+	no_appsdir="#"
+else
+	EXTRA_INSTALL_DIRS="$EXTRA_INSTALL_DIRS \$(APPSDIR)"
+fi
 AC_SUBST(no_appsdir)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_WITH_DESKTOP_CATEGORY version: 2 updated: 2011/07/02 10:22:07
+dnl CF_WITH_DBMALLOC version: 7 updated: 2010/06/21 17:26:47
+dnl ----------------
+dnl Configure-option for dbmalloc.  The optional parameter is used to override
+dnl the updating of $LIBS, e.g., to avoid conflict with subsequent tests.
+AC_DEFUN([CF_WITH_DBMALLOC],[
+CF_NO_LEAKS_OPTION(dbmalloc,
+	[  --with-dbmalloc         test: use Conor Cahill's dbmalloc library],
+	[USE_DBMALLOC])
+
+if test "$with_dbmalloc" = yes ; then
+	AC_CHECK_HEADER(dbmalloc.h,
+		[AC_CHECK_LIB(dbmalloc,[debug_malloc]ifelse([$1],,[],[,$1]))])
+fi
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_WITH_DESKTOP_CATEGORY version: 4 updated: 2013/01/01 10:50:14
 dnl ------------------------
 dnl Taking into account the absence of standardization of desktop categories
 dnl take a look to see whether other applications on the current system are
@@ -2774,7 +3045,9 @@ dnl $1 = program name
 dnl $2 = case-pattern to match comparable desktop files to obtain category
 dnl      This pattern may contain wildcards.
 dnl $3 = suggested categories, also a case-pattern but without wildcards,
-dnl      since it doubles as a default value.
+dnl      since it doubles as a default value for a shell case-statement.
+dnl $4 = categories to use if no match is found on the build-machine for the
+dnl      --with-desktop-category "auto" setting.
 dnl
 dnl The macro tells the configure script to substitute the $DESKTOP_CATEGORY
 dnl value.
@@ -2836,31 +3109,290 @@ then
 			done
 			cf_desktop_want=`cat conftest.2 | tr '\n' ';'`
 		fi
+		if test -n "$cf_desktop_want"
+		then
+			if test "$cf_desktop_want" = auto
+			then
+				cf_desktop_want=
+			else
+				# do a sanity check on the semicolon-separated list, ignore on failure
+				cf_desktop_test=`echo "$cf_desktop_want" | sed -e 's/[[^;]]//g'`
+				test -z "$cf_desktop_test" && cf_desktop_want=
+				cf_desktop_test=`echo "$cf_desktop_want" | sed -e 's/^.*;$/./g'`
+				test -z "$cf_desktop_test" && cf_desktop_want=
+			fi
+		fi
+		if test -z "$cf_desktop_want"
+		then
+			cf_desktop_want="ifelse([$4],,ifelse([$3],,[Application;],[`echo "$3" | sed -e 's/\*//g' -e 's/|/;/g' -e 's/[[;]]*$/;/g'`]),[$4])"
+			CF_VERBOSE(no usable value found for desktop category, using $cf_desktop_want)
+		fi
 	fi
 	DESKTOP_CATEGORY=`echo "$cf_desktop_want" | sed -e 's/[[ ,]]/;/g'`
-	CF_VERBOSE(resulting category=$DESKTOP_CATEGORY)
+	CF_VERBOSE(will use Categories=$DESKTOP_CATEGORY)
 	AC_SUBST(DESKTOP_CATEGORY)
 fi
 ])
 dnl ---------------------------------------------------------------------------
-dnl CF_WITH_ICONDIR version: 1 updated: 2011/04/21 18:12:37
+dnl CF_WITH_DMALLOC version: 7 updated: 2010/06/21 17:26:47
 dnl ---------------
-dnl Handle configure option "--with-icondir", setting these shell
-dnl variables:
-dnl $icondir is the option value, used for installing icon/pixmap files.
+dnl Configure-option for dmalloc.  The optional parameter is used to override
+dnl the updating of $LIBS, e.g., to avoid conflict with subsequent tests.
+AC_DEFUN([CF_WITH_DMALLOC],[
+CF_NO_LEAKS_OPTION(dmalloc,
+	[  --with-dmalloc          test: use Gray Watson's dmalloc library],
+	[USE_DMALLOC])
+
+if test "$with_dmalloc" = yes ; then
+	AC_CHECK_HEADER(dmalloc.h,
+		[AC_CHECK_LIB(dmalloc,[dmalloc_debug]ifelse([$1],,[],[,$1]))])
+fi
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_WITH_ICONDIR version: 5 updated: 2012/07/22 09:18:02
+dnl ---------------
+dnl Handle configure option "--with-icondir", setting these shell variables:
+dnl
+dnl $ICONDIR is the option value, used for installing icon files.
 dnl $no_icondir is a "#" (comment) if "--without-icondir" is given.
 AC_DEFUN([CF_WITH_ICONDIR],[
 AC_MSG_CHECKING(for directory to install icons)
-CF_WITH_PATH(icondir,
-	[  --with-icondir=DIR      directory in which to install icons],
-	[icondir],[EPREFIX/share/pixmaps],
-	['\$(exec_prefix)/share/pixmaps'])
-AC_MSG_RESULT($icondir)
-AC_SUBST(icondir)
+AC_ARG_WITH(icondir,
+	[  --with-icondir=DIR      directory in which to install icons for desktop],
+	[ICONDIR=$withval],
+	[test -z "$ICONDIR" && ICONDIR=no])
+
+if test "x[$]ICONDIR" = xauto
+then
+	ICONDIR='${datadir}/icons'
+	for cf_path in \
+		/usr/share/icons \
+		/usr/X11R6/share/icons
+	do
+		if test -d "$cf_path" ; then
+			ICONDIR="$cf_path"
+			break
+		fi
+	done
+else
+	cf_path=$ICONDIR
+	CF_PATH_SYNTAX(cf_path)
+fi
+AC_MSG_RESULT($ICONDIR)
+AC_SUBST(ICONDIR)
 
 no_icondir=
-test "$icondir" = no && no_icondir="#"
+if test "$ICONDIR" = no
+then
+	no_icondir="#"
+else
+	EXTRA_INSTALL_DIRS="$EXTRA_INSTALL_DIRS \$(ICONDIR)"
+fi
 AC_SUBST(no_icondir)
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_WITH_ICON_NAME version: 2 updated: 2013/05/27 18:34:42
+dnl -----------------
+dnl Allow a default icon-name to be overridden.
+dnl $1 = default icon name
+AC_DEFUN([CF_WITH_ICON_NAME],[
+AC_MSG_CHECKING(for the icon name)
+AC_ARG_WITH(icon-name,
+	[  --with-icon-name=XXXX   override icon name (default: $1)],
+	[ICON_NAME="$withval"],
+	[ICON_NAME=$1])
+case "x$ICON_NAME" in
+xyes|xno|x)
+	ICON_NAME=$1
+	;;
+esac
+AC_SUBST(ICON_NAME)
+AC_MSG_RESULT($ICON_NAME)
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_WITH_ICON_SYMLINK version: 1 updated: 2013/05/27 18:34:42
+dnl --------------------
+dnl Workaround for systems which are (mis)configured to map all icon references
+dnl for xterm into "xterm" name.  For instance, recent (2013) KDE ignores both
+dnl the name given in the .desktop file (xterm-color) and the application name
+dnl (xterm-dev).
+dnl
+dnl $1 = default icon name to use if symlink is wanted
+AC_DEFUN([CF_WITH_ICON_SYMLINK],[
+AC_MSG_CHECKING(for icon symlink to use)
+AC_ARG_WITH(icon-symlink,
+	[  --with-icon-symlink=XXX make symbolic link for icon name (default: $1)],
+	[ICON_SYMLINK="$withval"],
+	[ICON_SYMLINK=NONE])
+case "x$ICON_SYMLINK" in
+xyes)
+	ICON_SYMLINK=$1
+	;;
+xno|x)
+	ICON_SYMLINK=NONE
+	;;
+esac
+AC_SUBST(ICON_SYMLINK)
+AC_MSG_RESULT($ICON_SYMLINK)
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_WITH_ICON_THEME version: 9 updated: 2013/04/17 05:31:24
+dnl ------------------
+dnl If asked, check for prerequisites and setup symbols to permit installing
+dnl one or more application icons in the Red Hat icon-theme directory
+dnl hierarchy. 
+dnl
+dnl If the prerequisites are missing, give a warning and revert to the long-
+dnl standing pixmaps directory.
+dnl
+dnl Parameters:
+dnl
+dnl $1 = application icon.  This can be a list, and is not optional.
+dnl $2 = default theme (defaults to hicolor)
+dnl $3 = formats (defaults to list [.svg .png .xpm])
+dnl $4 = alternate icon if no theme is used (defaults to $1).
+dnl
+dnl Result:
+dnl ICON_NAME = basename of first item in $1
+dnl ICON_LIST = reprocessed $1
+dnl ICON_THEME = reprocessed $2
+dnl ICON_FORMAT = reprocessed $3
+AC_DEFUN([CF_WITH_ICON_THEME],
+[
+ifelse([$1],,[
+	AC_MSG_ERROR([macro [CF_WITH_ICON_THEME] requires application-icon name])
+],[
+
+CF_WITH_PIXMAPDIR
+CF_WITH_ICONDIR
+
+AC_MSG_CHECKING(if icon theme should be used)
+AC_ARG_WITH(icon-theme,
+	[  --with-icon-theme=XXX   install icons into desktop theme (hicolor)],
+	[ICON_THEME=$withval],
+	[ICON_THEME=no])
+
+case "x$ICON_THEME" in #(vi
+xno) #(vi
+	;;
+x|xyes)
+	ICON_THEME=ifelse([$2],,hicolor,$2)
+	;;
+esac
+AC_MSG_RESULT($ICON_THEME)
+
+if test "x$ICON_THEME" = xno
+then
+	if test "x$ICONDIR" != xno
+	then
+		CF_VERBOSE(ignoring icondir without theme)
+		no_icondir="#"
+	fi
+else
+	if test "x$ICONDIR" = xno
+	then
+		AC_MSG_ERROR(icondir must be set for icon theme)
+	fi
+fi
+
+: ${ICON_FORMAT:=ifelse([$3],,[".svg .png .xpm"],[$3])}
+
+# ICON_NAME=
+ICON_LIST=
+
+ifelse([$4],,[cf_icon_list=$1],[
+if test "x$ICON_THEME" != xno
+then
+	cf_icon_list="$1"
+else
+	cf_icon_list="$4"
+fi
+])
+
+AC_MSG_CHECKING([for icon(s) to install])
+for cf_name in $cf_icon_list
+do
+	CF_VERBOSE(using $ICON_FORMAT)
+	for cf_suffix in $ICON_FORMAT
+	do
+		cf_icon="${cf_name}${cf_suffix}"
+		cf_left=`echo "$cf_icon" | sed -e 's/:.*//'`
+		if test ! -f "${cf_left}"
+		then
+			if test "x$srcdir" != "x."
+			then
+				cf_icon="${srcdir}/${cf_left}"
+				cf_left=`echo "$cf_icon" | sed -e 's/:.*//'`
+				if test ! -f "${cf_left}"
+				then
+					continue
+				fi
+			else
+				continue
+			fi
+		fi
+		if test "x$ICON_THEME" != xno
+		then
+			cf_base=`basename $cf_left`
+			cf_trim=`echo "$cf_base" | sed -e 's/_[[0-9]][[0-9]]x[[0-9]][[0-9]]\././'`
+			case "x${cf_base}" in #(vi
+			*:*) #(vi
+				cf_next=$cf_base
+				# user-defined mapping
+				;;
+			*.png) #(vi
+				cf_size=`file "$cf_left"|sed -e 's/^[[^:]]*://' -e 's/^.*[[^0-9]]\([[0-9]][[0-9]]* x [[0-9]][[0-9]]*\)[[^0-9]].*$/\1/' -e 's/ //g'`
+				if test -z "$cf_size"
+				then
+					AC_MSG_WARN(cannot determine size of $cf_left)
+					continue
+				fi
+				cf_next="$cf_size/apps/$cf_trim"
+				;;
+			*.svg) #(vi
+				cf_next="scalable/apps/$cf_trim"
+				;;
+			*.xpm)
+				CF_VERBOSE(ignored XPM file in icon theme)
+				continue
+				;;
+			*_[[0-9]][[0-9]]*x[[0-9]][[0-9]]*.*) #(vi
+				cf_size=`echo "$cf_left"|sed -e 's/^.*_\([[0-9]][[0-9]]*x[[0-9]][[0-9]]*\)\..*$/\1/'`
+				cf_left=`echo "$cf_left"|sed -e 's/^\(.*\)_\([[0-9]][[0-9]]*x[[0-9]][[0-9]]*\)\(\..*\)$/\1\3/'`
+				cf_next="$cf_size/apps/$cf_base"
+				;;
+			esac
+			CF_VERBOSE(adding $cf_next)
+			cf_icon="${cf_icon}:${cf_next}"
+		fi
+		test -n "$ICON_LIST" && ICON_LIST="$ICON_LIST "
+		ICON_LIST="$ICON_LIST${cf_icon}"
+		if test -z "$ICON_NAME"
+		then
+			ICON_NAME=`basename $cf_icon | sed -e 's/[[.:]].*//'`
+		fi
+	done
+done
+
+if test -n "$verbose"
+then
+	AC_MSG_CHECKING(result)
+fi
+AC_MSG_RESULT($ICON_LIST)
+
+if test -z "$ICON_LIST"
+then
+	AC_MSG_ERROR(no icons found)
+fi
+])
+
+AC_MSG_CHECKING(for icon name)
+AC_MSG_RESULT($ICON_NAME)
+
+AC_SUBST(ICON_FORMAT)
+AC_SUBST(ICON_THEME)
+AC_SUBST(ICON_LIST)
+AC_SUBST(ICON_NAME)
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_WITH_IMAKE_CFLAGS version: 9 updated: 2010/05/26 05:38:42
@@ -2939,28 +3471,7 @@ else
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_WITH_PATH version: 10 updated: 2010/10/23 15:44:18
-dnl ------------
-dnl Wrapper for AC_ARG_WITH to ensure that user supplies a pathname, not just
-dnl defaulting to yes/no.
-dnl
-dnl $1 = option name
-dnl $2 = help-text
-dnl $3 = environment variable to set
-dnl $4 = default value, shown in the help-message, must be a constant
-dnl $5 = default value, if it's an expression & cannot be in the help-message
-dnl
-AC_DEFUN([CF_WITH_PATH],
-[AC_ARG_WITH($1,[$2 ](default: ifelse([$4],,empty,[$4])),,
-ifelse([$4],,[withval="${$3}"],[withval="${$3:-ifelse([$5],,[$4],[$5])}"]))dnl
-if ifelse([$5],,true,[test -n "$5"]) ; then
-CF_PATH_SYNTAX(withval)
-fi
-$3="$withval"
-AC_SUBST($3)dnl
-])dnl
-dnl ---------------------------------------------------------------------------
-dnl CF_WITH_PCRE version: 8 updated: 2010/06/05 11:30:21
+dnl CF_WITH_PCRE version: 10 updated: 2012/10/04 20:12:20
 dnl ------------
 dnl Add PCRE (Perl-compatible regular expressions) to the build if it is
 dnl available and the user requests it.  Assume the application will otherwise
@@ -2982,17 +3493,17 @@ if test "$with_pcre" != no ; then
 		AC_CHECK_LIB(pcre,pcre_compile,,
 			AC_MSG_ERROR(Cannot find PCRE library))])
 
-		AC_DEFINE(HAVE_LIB_PCRE)
+		AC_DEFINE(HAVE_LIB_PCRE,1,[Define to 1 if we can/should compile with the PCRE library])
 
 		case $LIBS in #(vi
 		*pcreposix*) #(vi
 			;;
 		*)
 			AC_CHECK_LIB(pcreposix,pcreposix_regcomp,
-				[AC_DEFINE(HAVE_PCREPOSIX_H)
+				[AC_DEFINE(HAVE_PCREPOSIX_H,1,[Define to 1 if we should include pcreposix.h])
 				 CF_ADD_LIB(pcreposix)],
 				[AC_CHECK_LIB(pcreposix,regcomp,[
-					AC_DEFINE(HAVE_PCREPOSIX_H)
+					AC_DEFINE(HAVE_PCREPOSIX_H,1,[Define to 1 if we should include pcreposix.h])
 					CF_ADD_LIB(pcreposix)],
 					AC_MSG_ERROR(Cannot find PCRE POSIX library)]))
 			;;
@@ -3000,7 +3511,122 @@ if test "$with_pcre" != no ; then
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_XKB_BELL_EXT version: 3 updated: 2009/02/13 16:00:39
+dnl CF_WITH_PIXMAPDIR version: 3 updated: 2012/07/22 09:18:02
+dnl -----------------
+dnl Handle configure option "--with-pixmapdir", setting these shell variables:
+dnl
+dnl $PIXMAPDIR is the option value, used for installing pixmap files.
+dnl $no_pixmapdir is a "#" (comment) if "--without-pixmapdir" is given.
+AC_DEFUN([CF_WITH_PIXMAPDIR],[
+AC_MSG_CHECKING(for directory to install pixmaps)
+AC_ARG_WITH(pixmapdir,
+	[  --with-pixmapdir=DIR    directory in which to install pixmaps (DATADIR/pixmaps)],
+	[PIXMAPDIR=$withval],
+	[test -z "$PIXMAPDIR" && PIXMAPDIR='${datadir}/pixmaps'])
+
+if test "x[$]PIXMAPDIR" = xauto
+then
+	PIXMAPDIR='${datadir}/pixmaps'
+	for cf_path in \
+		/usr/share/pixmaps \
+		/usr/X11R6/share/pixmaps
+	do
+		if test -d "$cf_path" ; then
+			PIXMAPDIR="$cf_path"
+			break
+		fi
+	done
+else
+	cf_path=$PIXMAPDIR
+	CF_PATH_SYNTAX(cf_path)
+fi
+AC_MSG_RESULT($PIXMAPDIR)
+AC_SUBST(PIXMAPDIR)
+
+no_pixmapdir=
+if test "$PIXMAPDIR" = no
+then
+	no_pixmapdir="#"
+else
+	EXTRA_INSTALL_DIRS="$EXTRA_INSTALL_DIRS \$(PIXMAPDIR)"
+fi
+AC_SUBST(no_pixmapdir)
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_WITH_VALGRIND version: 1 updated: 2006/12/14 18:00:21
+dnl ----------------
+AC_DEFUN([CF_WITH_VALGRIND],[
+CF_NO_LEAKS_OPTION(valgrind,
+	[  --with-valgrind         test: use valgrind],
+	[USE_VALGRIND])
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_WITH_XPM version: 3 updated: 2012/10/04 06:57:36
+dnl -----------
+dnl Test for Xpm library, update compiler/loader flags if it is wanted and
+dnl found.
+dnl
+dnl Also sets ICON_SUFFIX
+AC_DEFUN([CF_WITH_XPM],
+[
+ICON_SUFFIX=.xbm
+
+cf_save_cppflags="${CPPFLAGS}"
+cf_save_ldflags="${LDFLAGS}"
+
+AC_MSG_CHECKING(if you want to use the Xpm library for colored icon)
+AC_ARG_WITH(xpm,
+[  --with-xpm=DIR          use Xpm library for colored icon, may specify path],
+	[cf_Xpm_library="$withval"],
+	[cf_Xpm_library=yes])
+AC_MSG_RESULT($cf_Xpm_library)
+
+if test "$cf_Xpm_library" != no ; then
+    if test "$cf_Xpm_library" != yes ; then
+	CPPFLAGS="$CPPFLAGS -I$withval/include"
+	LDFLAGS="$LDFLAGS -L$withval/lib"
+    fi
+    AC_CHECK_HEADER(X11/xpm.h,[
+	AC_CHECK_LIB(Xpm, XpmCreatePixmapFromData,[
+	    AC_DEFINE(HAVE_LIBXPM,1,[Define to 1 if we should use Xpm library])
+	    ICON_SUFFIX=.xpm
+	    LIBS="-lXpm $LIBS"],
+	    [CPPFLAGS="${cf_save_cppflags}" LDFLAGS="${cf_save_ldflags}"],
+	    [-lX11 $X_LIBS])],
+	[CPPFLAGS="${cf_save_cppflags}" LDFLAGS="${cf_save_ldflags}"])
+fi
+
+AC_SUBST(ICON_SUFFIX)
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_XBOOL_RESULT version: 2 updated: 2012/10/04 06:57:36
+dnl ---------------
+dnl Translate an autoconf boolean yes/no into X11's booleans, e.g., True/False.
+dnl Allow for more than two values, e.g., "maybe", still using the same leading
+dnl capital convention.
+dnl
+dnl $1 = symbol to define
+dnl $2 = symbol holding value
+dnl $3 = description
+define([CF_XBOOL_RESULT],[
+AC_MSG_RESULT([$]$2)
+case [$]$2 in #(vi
+yes) #(vi
+	$2=true
+	;;
+no) #(vi
+	$2=false
+	;;
+esac
+cf_xbool1=`echo "[$]$2"|sed -e 's/^\(.\).*/\1/'`
+CF_UPPER(cf_xbool1,$cf_xbool1)
+cf_xbool2=`echo "[$]$2"|sed -e 's/^.//'`
+$2=${cf_xbool1}${cf_xbool2}
+AC_DEFINE_UNQUOTED($1,[$]$2,$3)
+AC_SUBST($2)
+])
+dnl ---------------------------------------------------------------------------
+dnl CF_XKB_BELL_EXT version: 4 updated: 2012/10/04 20:12:20
 dnl ---------------
 dnl Check for XKB bell extension
 AC_DEFUN([CF_XKB_BELL_EXT],[
@@ -3015,10 +3641,69 @@ AC_TRY_LINK([
 	XkbBell((Display *)0, (Widget)0, 0, y);
 ],[cf_cv_xkb_bell_ext=yes],[cf_cv_xkb_bell_ext=no])
 ])
-test "$cf_cv_xkb_bell_ext" = yes && AC_DEFINE(HAVE_XKB_BELL_EXT)
+test "$cf_cv_xkb_bell_ext" = yes && AC_DEFINE(HAVE_XKB_BELL_EXT,1,[Define 1 if we have XKB Bell extension])
 ])
 dnl ---------------------------------------------------------------------------
-dnl CF_XOPEN_SOURCE version: 36 updated: 2011/07/02 15:36:04
+dnl CF_XKB_KEYCODE_TO_KEYSYM version: 2 updated: 2012/09/28 20:23:33
+dnl ------------------------
+dnl Some older vendor-unix systems made a practice of delivering fragments of
+dnl Xkb, requiring test-compiles.
+AC_DEFUN([CF_XKB_KEYCODE_TO_KEYSYM],[
+AC_CACHE_CHECK(if we can use XkbKeycodeToKeysym, cf_cv_xkb_keycode_to_keysym,[
+AC_TRY_COMPILE([
+#include <X11/Xlib.h>
+#include <X11/XKBlib.h>
+],[
+    KeySym keysym = XkbKeycodeToKeysym((Display *)0, 0, 0, 0);
+],[
+cf_cv_xkb_keycode_to_keysym=yes
+],[
+cf_cv_xkb_keycode_to_keysym=no
+])
+])
+
+if test $cf_cv_xkb_keycode_to_keysym = yes
+then
+	AC_CHECK_FUNCS(XkbKeycodeToKeysym)
+fi
+])
+dnl ---------------------------------------------------------------------------
+dnl CF_XKB_QUERY_EXTENSION version: 2 updated: 2012/09/28 20:23:46
+dnl ----------------------
+dnl see ifdef in scrollbar.c - iron out here
+AC_DEFUN([CF_XKB_QUERY_EXTENSION],[
+AC_CACHE_CHECK(if we can use XkbQueryExtension, cf_cv_xkb_query_extension,[
+AC_TRY_COMPILE([
+#include <X11/Xlib.h>
+#include <X11/extensions/XKB.h>
+#include <X11/XKBlib.h>
+],[
+	int xkbmajor = XkbMajorVersion;
+	int xkbminor = XkbMinorVersion;
+	int xkbopcode, xkbevent, xkberror;
+
+	if (XkbLibraryVersion(&xkbmajor, &xkbminor)
+	    && XkbQueryExtension((Display *)0,
+				 &xkbopcode,
+				 &xkbevent,
+				 &xkberror,
+				 &xkbmajor,
+				 &xkbminor))
+		 return 0;
+],[
+cf_cv_xkb_query_extension=yes
+],[
+cf_cv_xkb_query_extension=no
+])
+])
+
+if test $cf_cv_xkb_query_extension = yes
+then
+	AC_CHECK_FUNCS(XkbQueryExtension)
+fi
+])
+dnl ---------------------------------------------------------------------------
+dnl CF_XOPEN_SOURCE version: 43 updated: 2013/02/10 10:41:05
 dnl ---------------
 dnl Try to get _XOPEN_SOURCE defined properly that we can use POSIX functions,
 dnl or adapt to the vendor's definitions to get equivalent functionality,
@@ -3028,6 +3713,7 @@ dnl Parameters:
 dnl	$1 is the nominal value for _XOPEN_SOURCE
 dnl	$2 is the nominal value for _POSIX_C_SOURCE
 AC_DEFUN([CF_XOPEN_SOURCE],[
+AC_REQUIRE([AC_CANONICAL_HOST])
 
 cf_XOPEN_SOURCE=ifelse([$1],,500,[$1])
 cf_POSIX_C_SOURCE=ifelse([$2],,199506L,[$2])
@@ -3045,6 +3731,7 @@ darwin[[0-8]].*) #(vi
 	;;
 darwin*) #(vi
 	cf_xopen_source="-D_DARWIN_C_SOURCE"
+	cf_XOPEN_SOURCE=
 	;;
 freebsd*|dragonfly*) #(vi
 	# 5.x headers associate
@@ -3062,15 +3749,23 @@ hpux*) #(vi
 	;;
 irix[[56]].*) #(vi
 	cf_xopen_source="-D_SGI_SOURCE"
+	cf_XOPEN_SOURCE=
 	;;
 linux*|gnu*|mint*|k*bsd*-gnu) #(vi
 	CF_GNU_SOURCE
 	;;
 mirbsd*) #(vi
-	# setting _XOPEN_SOURCE or _POSIX_SOURCE breaks <arpa/inet.h>
+	# setting _XOPEN_SOURCE or _POSIX_SOURCE breaks <sys/select.h> and other headers which use u_int / u_short types
+	cf_XOPEN_SOURCE=
+	CF_POSIX_C_SOURCE($cf_POSIX_C_SOURCE)
 	;;
 netbsd*) #(vi
-	# setting _XOPEN_SOURCE breaks IPv6 for lynx on NetBSD 1.6, breaks xterm, is not needed for ncursesw
+	cf_xopen_source="-D_NETBSD_SOURCE" # setting _XOPEN_SOURCE breaks IPv6 for lynx on NetBSD 1.6, breaks xterm, is not needed for ncursesw
+	;;
+openbsd[[4-9]]*) #(vi
+	# setting _XOPEN_SOURCE lower than 500 breaks g++ compile with wchar.h, needed for ncursesw
+	cf_xopen_source="-D_BSD_SOURCE"
+	cf_XOPEN_SOURCE=600
 	;;
 openbsd*) #(vi
 	# setting _XOPEN_SOURCE breaks xterm on OpenBSD 2.8, is not needed for ncursesw
@@ -3084,42 +3779,46 @@ nto-qnx*) #(vi
 sco*) #(vi
 	# setting _XOPEN_SOURCE breaks Lynx on SCO Unix / OpenServer
 	;;
-solaris2.1[[0-9]]) #(vi
-	cf_xopen_source="-D__EXTENSIONS__ -D_XOPEN_SOURCE=$cf_XOPEN_SOURCE"
-	;;
-solaris2.[[1-9]]) #(vi
+solaris2.*) #(vi
 	cf_xopen_source="-D__EXTENSIONS__"
 	;;
 *)
-	AC_CACHE_CHECK(if we should define _XOPEN_SOURCE,cf_cv_xopen_source,[
-	AC_TRY_COMPILE([#include <sys/types.h>],[
-#ifndef _XOPEN_SOURCE
-make an error
-#endif],
-	[cf_cv_xopen_source=no],
-	[cf_save="$CPPFLAGS"
-	 CPPFLAGS="$CPPFLAGS -D_XOPEN_SOURCE=$cf_XOPEN_SOURCE"
-	 AC_TRY_COMPILE([#include <sys/types.h>],[
-#ifdef _XOPEN_SOURCE
-make an error
-#endif],
-	[cf_cv_xopen_source=no],
-	[cf_cv_xopen_source=$cf_XOPEN_SOURCE])
-	CPPFLAGS="$cf_save"
-	])
-])
-	if test "$cf_cv_xopen_source" != no ; then
-		CF_REMOVE_DEFINE(CFLAGS,$CFLAGS,_XOPEN_SOURCE)
-		CF_REMOVE_DEFINE(CPPFLAGS,$CPPFLAGS,_XOPEN_SOURCE)
-		cf_temp_xopen_source="-D_XOPEN_SOURCE=$cf_cv_xopen_source"
-		CF_ADD_CFLAGS($cf_temp_xopen_source)
-	fi
+	CF_TRY_XOPEN_SOURCE
 	CF_POSIX_C_SOURCE($cf_POSIX_C_SOURCE)
 	;;
 esac
 
 if test -n "$cf_xopen_source" ; then
 	CF_ADD_CFLAGS($cf_xopen_source)
+fi
+
+dnl In anything but the default case, we may have system-specific setting
+dnl which is still not guaranteed to provide all of the entrypoints that
+dnl _XOPEN_SOURCE would yield.
+if test -n "$cf_XOPEN_SOURCE" && test -z "$cf_cv_xopen_source" ; then
+	AC_MSG_CHECKING(if _XOPEN_SOURCE really is set)
+	AC_TRY_COMPILE([#include <stdlib.h>],[
+#ifndef _XOPEN_SOURCE
+make an error
+#endif],
+	[cf_XOPEN_SOURCE_set=yes],
+	[cf_XOPEN_SOURCE_set=no])
+	AC_MSG_RESULT($cf_XOPEN_SOURCE_set)
+	if test $cf_XOPEN_SOURCE_set = yes
+	then
+		AC_TRY_COMPILE([#include <stdlib.h>],[
+#if (_XOPEN_SOURCE - 0) < $cf_XOPEN_SOURCE
+make an error
+#endif],
+		[cf_XOPEN_SOURCE_set_ok=yes],
+		[cf_XOPEN_SOURCE_set_ok=no])
+		if test $cf_XOPEN_SOURCE_set_ok = no
+		then
+			AC_MSG_WARN(_XOPEN_SOURCE is lower than requested)
+		fi
+	else
+		CF_TRY_XOPEN_SOURCE
+	fi
 fi
 ])
 dnl ---------------------------------------------------------------------------
@@ -3261,7 +3960,7 @@ elif test "$cf_x_athena_inc" != default ; then
 fi
 ])
 dnl ---------------------------------------------------------------------------
-dnl CF_X_ATHENA_LIBS version: 10 updated: 2011/02/13 13:31:33
+dnl CF_X_ATHENA_LIBS version: 12 updated: 2011/07/17 19:55:02
 dnl ----------------
 dnl Normally invoked by CF_X_ATHENA, with $1 set to the appropriate flavor of
 dnl the Athena widgets, e.g., Xaw, Xaw3d, neXtaw.
@@ -3277,19 +3976,24 @@ for cf_path in default \
 	/usr/local
 do
 	for cf_lib in \
-		"-l$cf_x_athena_root -lXmu" \
-		"-l$cf_x_athena_root -lXpm -lXmu" \
-		"-l${cf_x_athena_root}_s -lXmu_s"
+		${cf_x_athena_root} \
+		${cf_x_athena_root}7 \
+		${cf_x_athena_root}6
+	do
+	for cf_libs in \
+		"-l$cf_lib -lXmu" \
+		"-l$cf_lib -lXpm -lXmu" \
+		"-l${cf_lib}_s -lXmu_s"
 	do
 		if test -z "$cf_x_athena_lib" ; then
 			cf_save="$LIBS"
 			cf_test=XawSimpleMenuAddGlobalActions
 			if test $cf_path != default ; then
-				CF_ADD_LIBS(-L$cf_path/lib $cf_lib)
-				AC_MSG_CHECKING(for $cf_lib in $cf_path)
+				CF_ADD_LIBS(-L$cf_path/lib $cf_libs)
+				AC_MSG_CHECKING(for $cf_libs in $cf_path)
 			else
-				CF_ADD_LIBS($cf_lib)
-				AC_MSG_CHECKING(for $cf_test in $cf_lib)
+				CF_ADD_LIBS($cf_libs)
+				AC_MSG_CHECKING(for $cf_test in $cf_libs)
 			fi
 			AC_TRY_LINK([
 #include <X11/Intrinsic.h>
@@ -3300,12 +4004,14 @@ $cf_test((XtAppContext) 0)],
 				[cf_result=no])
 			AC_MSG_RESULT($cf_result)
 			if test "$cf_result" = yes ; then
-				cf_x_athena_lib="$cf_lib"
+				cf_x_athena_lib="$cf_libs"
 				break
 			fi
 			LIBS="$cf_save"
 		fi
-	done
+	done # cf_libs
+		test -n "$cf_x_athena_lib" && break
+	done # cf_lib
 done
 
 if test -z "$cf_x_athena_lib" ; then
@@ -3359,7 +4065,7 @@ fi
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_X_FREETYPE version: 23 updated: 2010/11/08 20:19:21
+dnl CF_X_FREETYPE version: 26 updated: 2012/10/04 20:12:20
 dnl -------------
 dnl Check for X FreeType headers and libraries (XFree86 4.x, etc).
 dnl
@@ -3376,44 +4082,75 @@ AC_DEFUN([CF_X_FREETYPE],
 [
 AC_REQUIRE([CF_PKG_CONFIG])
 
+cf_cv_x_freetype_incs=no
+cf_cv_x_freetype_libs=no
 cf_extra_freetype_libs=
 FREETYPE_CONFIG=none
 FREETYPE_PARAMS=
 
-AC_MSG_CHECKING(if you specified -D/-I options for FreeType)
-AC_ARG_WITH(freetype-cflags,
-	[  --with-freetype-cflags  -D/-I options for compiling with FreeType],
-	[cf_cv_x_freetype_incs="$with_freetype_cflags"],
-	[cf_cv_x_freetype_incs=no])
-AC_MSG_RESULT($cf_cv_x_freetype_incs)
+AC_MSG_CHECKING(for FreeType configuration script)
+AC_ARG_WITH(freetype-config,
+	[  --with-freetype-config  configure script to use for FreeType],
+	[cf_cv_x_freetype_cfgs="$withval"],
+	[cf_cv_x_freetype_cfgs=auto])
+test -z $cf_cv_x_freetype_cfgs && cf_cv_x_freetype_cfgs=auto
+test $cf_cv_x_freetype_cfgs = no && cf_cv_x_freetype_cfgs=none
+AC_MSG_RESULT($cf_cv_x_freetype_cfgs)
 
+case $cf_cv_x_freetype_cfgs in
+none) #(vi
+	AC_MSG_CHECKING(if you specified -D/-I options for FreeType)
+	AC_ARG_WITH(freetype-cflags,
+		[  --with-freetype-cflags  -D/-I options for compiling with FreeType],
+		[cf_cv_x_freetype_incs="$with_freetype_cflags"],
+		[cf_cv_x_freetype_incs=no])
+	AC_MSG_RESULT($cf_cv_x_freetype_incs)
 
-AC_MSG_CHECKING(if you specified -L/-l options for FreeType)
-AC_ARG_WITH(freetype-libs,
-	[  --with-freetype-libs    -L/-l options to link FreeType],
-	[cf_cv_x_freetype_libs="$with_freetype_libs"],
-	[cf_cv_x_freetype_libs=no])
-AC_MSG_RESULT($cf_cv_x_freetype_libs)
-
-if test "$PKG_CONFIG" != none && "$PKG_CONFIG" --exists xft; then
-	FREETYPE_CONFIG=$PKG_CONFIG
-	FREETYPE_PARAMS=xft
-else
-	AC_PATH_PROG(FREETYPE_XFT_CONFIG, xft-config, none)
+	AC_MSG_CHECKING(if you specified -L/-l options for FreeType)
+	AC_ARG_WITH(freetype-libs,
+		[  --with-freetype-libs    -L/-l options to link FreeType],
+		[cf_cv_x_freetype_libs="$with_freetype_libs"],
+		[cf_cv_x_freetype_libs=no])
+	AC_MSG_RESULT($cf_cv_x_freetype_libs)
+	;;
+auto) #(vi
+	if test "$PKG_CONFIG" != none && "$PKG_CONFIG" --exists xft; then
+		FREETYPE_CONFIG=$PKG_CONFIG
+		FREETYPE_PARAMS=xft
+	else
+		AC_PATH_PROG(FREETYPE_CONFIG, freetype-config, none)
+		if test "$FREETYPE_CONFIG" != none; then
+			FREETYPE_CONFIG=$FREETYPE_CONFIG
+			cf_extra_freetype_libs="-lXft"
+		else
+			AC_PATH_PROG(FREETYPE_OLD_CONFIG, xft-config, none)
+			if test "$FREETYPE_OLD_CONFIG" != none; then
+				FREETYPE_CONFIG=$FREETYPE_OLD_CONFIG
+			fi
+		fi
+	fi
+	;;
+pkg*) #(vi
+	if test "$PKG_CONFIG" != none && "$PKG_CONFIG" --exists xft; then
+		FREETYPE_CONFIG=$cf_cv_x_freetype_cfgs
+		FREETYPE_PARAMS=xft
+	else
+		AC_MSG_WARN(cannot find pkg-config for Xft)
+	fi
+	;;
+*) #(vi
+	AC_PATH_PROG(FREETYPE_XFT_CONFIG, $cf_cv_x_freetype_cfgs, none)
 	if test "$FREETYPE_XFT_CONFIG" != none; then
 		FREETYPE_CONFIG=$FREETYPE_XFT_CONFIG
 	else
-		cf_extra_freetype_libs="-lXft"
-		AC_PATH_PROG(FREETYPE_OLD_CONFIG, freetype-config, none)
-		if test "$FREETYPE_OLD_CONFIG" != none; then
-			FREETYPE_CONFIG=$FREETYPE_OLD_CONFIG
-		fi
+		AC_MSG_WARN(cannot find config script for Xft)
 	fi
-fi
-AC_MSG_CHECKING(for FreeType config)
-AC_MSG_RESULT($FREETYPE_CONFIG $FREETYPE_PARAMS)
+	;;
+esac
 
 if test "$FREETYPE_CONFIG" != none ; then
+	AC_MSG_CHECKING(for FreeType config)
+	AC_MSG_RESULT($FREETYPE_CONFIG $FREETYPE_PARAMS)
 
 	if test "$cf_cv_x_freetype_incs" = no ; then
 		AC_MSG_CHECKING(for $FREETYPE_CONFIG cflags)
@@ -3426,7 +4163,6 @@ if test "$FREETYPE_CONFIG" != none ; then
 		cf_cv_x_freetype_libs="$cf_extra_freetype_libs `$FREETYPE_CONFIG $FREETYPE_PARAMS --libs 2>/dev/null`"
 		AC_MSG_RESULT($cf_cv_x_freetype_libs)
 	fi
-
 fi
 
 if test "$cf_cv_x_freetype_incs" = no ; then
@@ -3460,7 +4196,7 @@ CPPFLAGS="$cf_save_INCS"
 if test "$cf_cv_found_freetype" = yes ; then
 	CF_ADD_LIBS($cf_cv_x_freetype_libs)
 	CF_ADD_CFLAGS($cf_cv_x_freetype_incs)
-	AC_DEFINE(XRENDERFONT)
+	AC_DEFINE(XRENDERFONT,1,[Define to 1 if we can/should link with FreeType libraries])
 
 AC_CHECK_FUNCS( \
 	XftDrawCharSpec \
@@ -3478,7 +4214,7 @@ AC_SUBST(HAVE_TYPE_FCCHAR32)
 AC_SUBST(HAVE_TYPE_XFTCHARSPEC)
 ])
 dnl ---------------------------------------------------------------------------
-dnl CF_X_TOOLKIT version: 20 updated: 2010/11/19 05:43:04
+dnl CF_X_TOOLKIT version: 21 updated: 2012/10/04 06:57:36
 dnl ------------
 dnl Check for X Toolkit libraries
 dnl
@@ -3552,7 +4288,7 @@ AC_TRY_LINK([
 
 	AC_CHECK_FUNC(XtAppInitialize,,[
 	AC_CHECK_LIB(Xt, XtAppInitialize,
-		[AC_DEFINE(HAVE_LIBXT)
+		[AC_DEFINE(HAVE_LIBXT,1,[Define to 1 if we can compile with the Xt library])
 		 cf_have_X_LIBS=Xt
 		 LIBS="-lXt $X_PRE_LIBS $LIBS $X_EXTRA_LIBS"],,
 		[$X_PRE_LIBS $LIBS $X_EXTRA_LIBS])])
@@ -3565,3 +4301,99 @@ test program.  You will have to check and add the proper libraries by hand
 to makefile.])
 fi
 ])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF__GRANTPT_BODY version: 4 updated: 2012/05/07 19:39:45
+dnl ----------------
+dnl Body for workability check of grantpt.
+define([CF__GRANTPT_BODY],[
+	int code = 0;
+	int rc;
+	int pty;
+	int tty;
+	char *slave;
+	struct termios tio;
+
+	signal(SIGALRM, my_timeout);
+
+	if (alarm(2) == 9)
+		failed(9);
+	else if ((pty = posix_openpt(O_RDWR)) < 0)
+		failed(1);
+	else if ((rc = grantpt(pty)) < 0)
+		failed(2);
+	else if ((rc = unlockpt(pty)) < 0)
+		failed(3);
+	else if ((slave = ptsname(pty)) == 0)
+		failed(4);
+#if (CONFTEST == 3) || defined(CONFTEST_isatty)
+	else if (!isatty(pty))
+		failed(4);
+#endif
+#if CONFTEST >= 4
+    else if ((rc = tcgetattr(pty, &tio)) < 0)
+		failed(20);
+    else if ((rc = tcsetattr(pty, TCSAFLUSH, &tio)) < 0)
+		failed(21);
+#endif
+	/* BSD posix_openpt does not treat pty as a terminal until slave is opened.
+	 * Linux does treat it that way.
+	 */
+	else if ((tty = open(slave, O_RDWR)) < 0)
+		failed(5);
+#ifdef CONFTEST
+#ifdef I_PUSH
+#if (CONFTEST == 0) || defined(CONFTEST_ptem)
+    else if ((rc = ioctl(tty, I_PUSH, "ptem")) < 0)
+		failed(10);
+#endif
+#if (CONFTEST == 1) || defined(CONFTEST_ldterm)
+    else if ((rc = ioctl(tty, I_PUSH, "ldterm")) < 0)
+		failed(11);
+#endif
+#if (CONFTEST == 2) || defined(CONFTEST_ttcompat)
+    else if ((rc = ioctl(tty, I_PUSH, "ttcompat")) < 0)
+		failed(12);
+#endif
+#endif /* I_PUSH */
+#if CONFTEST >= 5
+    else if ((rc = tcgetattr(tty, &tio)) < 0)
+		failed(30);
+    else if ((rc = tcsetattr(tty, TCSAFLUSH, &tio)) < 0)
+		failed(31);
+#endif
+#endif /* CONFTEST */
+
+	${cf_cv_main_return:-return}(code);
+])
+dnl ---------------------------------------------------------------------------
+dnl CF__GRANTPT_HEAD version: 3 updated: 2012/01/29 17:13:14
+dnl ----------------
+dnl Headers for workability check of grantpt.
+define([CF__GRANTPT_HEAD],[
+#include <stdlib.h>
+#include <termios.h>
+#include <unistd.h>
+#include <signal.h>
+#include <fcntl.h>
+#include <errno.h>
+
+#ifndef HAVE_POSIX_OPENPT
+#undef posix_openpt
+#define posix_openpt(mode) open("/dev/ptmx", mode)
+#endif
+
+#ifdef HAVE_STROPTS_H
+#include <stropts.h>
+#endif
+
+static void failed(int code)
+{
+	perror("conftest");
+	exit(code);
+}
+
+static void my_timeout(int sig)
+{
+	exit(99);
+}
+])
