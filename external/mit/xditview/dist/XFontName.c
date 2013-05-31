@@ -21,13 +21,13 @@ extractStringField (
 	char	*buf = buffer;
 
 	if (!*name)
-		return 0;
+		return NULL;
 	while (*name && *name != '-' && size > 0) {
 		*buf++ = *name++;
 		--size;
 	}
 	if (size <= 0)
-		return 0;
+		return NULL;
 	*buf = '\0';
 	if (buffer[0] != '*' || buffer[1] != '\0')
 		*attrp |= bit;
@@ -49,13 +49,13 @@ extractUnsignedField (
 
 	name = extractStringField (name, buf, sizeof (buf), attrp, bit);
 	if (!name)
-		return 0;
+		return NULL;
 	if (!(*attrp & bit))
 		return name;
 	i = 0;
 	for (c = buf; *c; c++) {
 		if (!isdigit (*c))
-			return 0;
+			return NULL;
 		i = i * 10 + (*c - '0');
 	}
 	*result = i;
@@ -63,10 +63,8 @@ extractUnsignedField (
 }
 
 Bool
-XParseFontName (fontNameString, fontName, fontNameAttributes)
-	XFontNameString	fontNameString;
-	XFontName	*fontName;
-	unsigned int	*fontNameAttributes;
+XParseFontName (XFontNameString fontNameString, XFontName *fontName,
+		unsigned int *fontNameAttributes)
 {
 	char		*name = fontNameString;
 	XFontName	temp;
@@ -126,10 +124,8 @@ utoa (
 }
 
 Bool
-XFormatFontName (fontName, fontNameAttributes, fontNameString)
-	XFontName	*fontName;
-	unsigned int	fontNameAttributes;
-	XFontNameString	fontNameString;
+XFormatFontName (XFontName *fontName, unsigned int fontNameAttributes,
+		 XFontNameString fontNameString)
 {
 	XFontNameString	tmp;
 	char		*name = tmp, *f;

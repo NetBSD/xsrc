@@ -20,7 +20,7 @@ savestr (char *s)
 	char	*n;
 
 	if (!s)
-		return 0;
+		return NULL;
 	n = XtMalloc (strlen (s) + 1);
 	if (n)
 		strcpy (n, s);
@@ -41,7 +41,7 @@ LookupFontByPosition (DviWidget dw, int position)
 static DviFontSizeList *
 LookupFontSizeBySize (DviWidget dw, DviFontList *f, int size)
 {
-    DviFontSizeList *fs, *best = 0;
+    DviFontSizeList *fs, *best = NULL;
     int		    bestdist;
     char	    fontNameString[2048];
     XFontName	    fontName;
@@ -80,7 +80,7 @@ LookupFontSizeBySize (DviWidget dw, DviFontList *f, int size)
 	}
 #endif
 	best->doesnt_exist = 0;
-	best->font = 0;
+	best->font = NULL;
 	f->sizes = best;
     }
     else
@@ -105,7 +105,7 @@ SkipFontNameElement (char *n)
 {
 	while (*n != '-')
 		if (!*++n)
-			return 0;
+			return NULL;
 	return n+1;
 }
 
@@ -135,7 +135,7 @@ ConvertFontNameToEncoding (char *n)
 	for (i = 0; i < EncodingPosition; i++) {
 		n = SkipFontNameElement (n);
 		if (!n)
-			return 0;
+			return NULL;
 	}
 	return n;
 }
@@ -172,7 +172,7 @@ ResetFonts (DviWidget dw)
 	if (f->initialized)
 	{
 	    DisposeFontSizes (dw, f->sizes);
-	    f->sizes = 0;
+	    f->sizes = NULL;
 	    f->initialized = FALSE;
 	    f->scalable = FALSE;
 	}
@@ -180,9 +180,9 @@ ResetFonts (DviWidget dw)
     /* 
      * force requery of fonts
      */
-    dw->dvi.font = 0;
+    dw->dvi.font = NULL;
     dw->dvi.font_number = -1;
-    dw->dvi.cache.font = 0;
+    dw->dvi.cache.font = NULL;
     dw->dvi.cache.font_number = -1;
 }
 
@@ -200,13 +200,13 @@ InstallFontSizes (DviWidget dw, char *x_name, Boolean *scalablep)
 #endif
     DviFontSizeList *sizes;
 
-    sizes = 0;
+    sizes = NULL;
 #ifdef USE_XFT
     *scalablep = TRUE;
 #else
     *scalablep = FALSE;
     if (!XParseFontName (x_name, &fontName, &fontNameAttributes))
-	return 0;
+	return NULL;
     
     fontNameAttributes &= ~(FontNamePixelSize|FontNamePointSize);
     fontNameAttributes |= FontNameResolutionX;
@@ -221,7 +221,7 @@ InstallFontSizes (DviWidget dw, char *x_name, Boolean *scalablep)
 	{
 	    DisposeFontSizes (dw, sizes);
 	    *scalablep = TRUE;
-	    sizes = 0;
+	    sizes = NULL;
 	    break;
 	}
 	if (size != -1) {
@@ -230,7 +230,7 @@ InstallFontSizes (DviWidget dw, char *x_name, Boolean *scalablep)
 	    new->size = size;
 	    new->x_name = savestr (fonts[i]);
 	    new->doesnt_exist = 0;
-	    new->font = 0;
+	    new->font = NULL;
 	    sizes = new;
 	}
     }
@@ -267,19 +267,19 @@ InstallFont (DviWidget dw, int position, char *dvi_name, char *x_name)
     f->dvi_name = savestr (dvi_name);
     f->x_name = savestr (x_name);
     f->dvi_number = position;
-    f->sizes = 0;
+    f->sizes = NULL;
     f->scalable = FALSE;
     if (f->x_name) {
 	encoding = ConvertFontNameToEncoding (f->x_name);
 	f->char_map = DviFindMap (encoding);
     } else
-	f->char_map = 0;
+	f->char_map = NULL;
     /* 
      * force requery of fonts
      */
-    dw->dvi.font = 0;
+    dw->dvi.font = NULL;
     dw->dvi.font_number = -1;
-    dw->dvi.cache.font = 0;
+    dw->dvi.cache.font = NULL;
     dw->dvi.cache.font_number = -1;
     return f;
 }
@@ -303,9 +303,7 @@ MapDviNameToXName (DviWidget dw, char *dvi_name)
 
 #ifdef NOTUSED
 static char *
-MapXNameToDviName (dw, x_name)
-	DviWidget	dw;
-	char		*x_name;
+MapXNameToDviName (DviWidget dw, char *x_name)
 {
     DviFontMap	*fm;
     
@@ -317,8 +315,7 @@ MapXNameToDviName (dw, x_name)
 #endif
 
 void
-ParseFontMap (dw)
-	DviWidget	dw;
+ParseFontMap (DviWidget dw)
 {
     char		dvi_name[1024];
     char		x_name[2048];
@@ -327,7 +324,7 @@ ParseFontMap (dw)
 
     if (dw->dvi.font_map)
 	    DestroyFontMap (dw->dvi.font_map);
-    fm = 0;
+    fm = NULL;
     m = dw->dvi.font_map_string;
     while (*m) {
 	s = m;
@@ -353,8 +350,7 @@ ParseFontMap (dw)
 }
 
 void
-DestroyFontMap (font_map)
-    DviFontMap	*font_map;
+DestroyFontMap (DviFontMap *font_map)
 {
     DviFontMap	*next;
 
@@ -370,11 +366,7 @@ DestroyFontMap (font_map)
 
 /*ARGSUSED*/
 void
-SetFontPosition (dw, position, dvi_name, extra)
-    DviWidget	dw;
-    int		position;
-    char	*dvi_name;
-    char	*extra;	/* unused */
+SetFontPosition (DviWidget dw, int position, char *dvi_name, char *extra)
 {
     char	*x_name;
 
@@ -387,10 +379,7 @@ XftFont *
 #else
 XFontStruct *
 #endif
-QueryFont (dw, position, size)
-    DviWidget	dw;
-    int		position;
-    int		size;
+QueryFont (DviWidget dw, int position, int size)
 {
     DviFontList	*f;
     DviFontSizeList	*fs;
@@ -439,9 +428,7 @@ QueryFont (dw, position, size)
 }
 
 DviCharNameMap *
-QueryFontMap (dw, position)
-	DviWidget	dw;
-	int		position;
+QueryFontMap (DviWidget dw, int position)
 {
 	DviFontList	*f;
 
@@ -449,13 +436,11 @@ QueryFontMap (dw, position)
 	if (f)
 	    return f->char_map;
 	else
-	    return 0;
+	    return NULL;
 }
 
 unsigned char *
-DviCharIsLigature (map, name)
-    DviCharNameMap  *map;
-    char	    *name;
+DviCharIsLigature (DviCharNameMap *map, char *name)
 {
     int	    i;
 
@@ -465,14 +450,11 @@ DviCharIsLigature (map, name)
 	if (!strcmp (name, map->ligatures[i][0]))
 	    return (unsigned char *) map->ligatures[i][1];
     }
-    return 0;
+    return NULL;
 }
 
 #if 0
-LoadFont (dw, position, size)
-	DviWidget	dw;
-	int		position;
-	int		size;
+LoadFont (DviWidget dw, int position, int size)
 {
 	XFontStruct	*font;
 

@@ -8,9 +8,7 @@
 #include "DviP.h"
 
 int
-DviGetAndPut(dw, cp)
-    DviWidget	dw;
-    int		*cp;
+DviGetAndPut(DviWidget dw, int *cp)
 {
     if (dw->dvi.ungot)
     {
@@ -26,10 +24,7 @@ DviGetAndPut(dw, cp)
 }
 
 char *
-GetLine(dw, Buffer, Length)
-	DviWidget	dw;
-	char	*Buffer;
-	int	Length;
+GetLine(DviWidget dw, char *Buffer, int Length)
 {
 	int 	i = 0, c;
 	char	*p = Buffer;
@@ -51,10 +46,7 @@ GetLine(dw, Buffer, Length)
 }
 
 char *
-GetWord(dw, Buffer, Length)
-	DviWidget	dw;
-	char	*Buffer;
-	int	Length;
+GetWord(DviWidget dw, char *Buffer, int Length)
 {
 	int 	i = 0, c;
 	char	*p = Buffer;
@@ -75,8 +67,7 @@ GetWord(dw, Buffer, Length)
 }
 
 int
-GetNumber(dw)
-	DviWidget	dw;
+GetNumber(DviWidget dw)
 {
 	int	i = 0,  c;
 

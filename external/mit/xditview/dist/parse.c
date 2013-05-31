@@ -71,8 +71,7 @@ charWidth (DviWidget dw, XftFont *font, char c)
 #endif
     
 int
-ParseInput(dw)
-    DviWidget	dw;
+ParseInput(DviWidget dw)
 {
 	int		n, k;
 	int		c;
@@ -240,8 +239,7 @@ ParseInput(dw)
 }
 
 static void
-push_env(dw)
-	DviWidget	dw;
+push_env(DviWidget dw)
 {
 	DviState	*new;
 
@@ -261,8 +259,7 @@ push_env(dw)
 }
 
 static void
-pop_env(dw)
-	DviWidget	dw;
+pop_env(DviWidget dw)
 {
 	DviState	*old;
 
@@ -292,10 +289,7 @@ SetFont (DviWidget dw)
 }
 
 static void
-PutCharacters (dw, src, len)
-    DviWidget	    dw;
-    unsigned char   *src;
-    int		    len;
+PutCharacters (DviWidget dw, unsigned char *src, int len)
 {
     int	    xx, yx;
     int	    fx, fy;
@@ -391,9 +385,7 @@ PutCharacters (dw, src, len)
 }
 
 static void
-ParseDrawFunction(dw, buf)
-	DviWidget	dw;
-	char		*buf;
+ParseDrawFunction(DviWidget dw, char *buf)
 {
     int	n, m, n1, m1;
 
@@ -435,8 +427,7 @@ ParseDrawFunction(dw, buf)
 extern int LastPage, CurrentPage;
 
 static void
-ParseDeviceControl(dw)				/* Parse the x commands */
-	DviWidget	dw;
+ParseDeviceControl(DviWidget dw)	/* Parse the x commands */
 {
     char str[20], str1[50];
     int c, n;
