@@ -33,6 +33,10 @@
 /* 'Unlocked stdio' */
 #undef HAVE_UNLOCKED_STDIO
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
 /* Do not have 'strcasecmp'. */
 #undef NEED_STRCASECMP
 
@@ -50,6 +54,9 @@
 
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
