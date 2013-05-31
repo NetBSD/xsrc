@@ -1,4 +1,3 @@
-/* $Xorg: snfread.c,v 1.5 2001/02/09 02:04:02 xorgcvs Exp $ */
 /************************************************************************
 Copyright 1989 by Digital Equipment Corporation, Maynard, Massachusetts.
 
@@ -49,7 +48,6 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/snfread.c,v 1.12 2003/11/17 22:20:22 dawes Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -62,7 +60,7 @@ from The Open Group.
 
 #include <stdarg.h>
 
-static void
+static void _X_ATTRIBUTE_PRINTF(1, 2)
 snfError(const char* message, ...)
 {
     va_list args;
@@ -73,7 +71,7 @@ snfError(const char* message, ...)
     vfprintf(stderr, message, args);
     va_end(args);
 }
-              
+
 static void snfUnloadFont(FontPtr pFont);
 
 static int
@@ -213,7 +211,7 @@ SnfGetFormat (int *bit, int *byte, int *glyph, int *scan)
 }
 
 int
-snfReadFont(FontPtr pFont, FontFilePtr file, 
+snfReadFont(FontPtr pFont, FontFilePtr file,
 	    int bit, int byte, int glyph, int scan)
 {
     snfFontInfoRec fi;
@@ -241,7 +239,7 @@ snfReadFont(FontPtr pFont, FontFilePtr file,
     /*
      * we'll allocate one chunk of memory and split it among the various parts
      * of the font:
-     * 
+     *
      * BitmapFontRec CharInfoRec's Glyphs Encoding DIX Properties Ink CharInfoRec's
      *
      * If the glyphpad is not the same as the font file, then the glyphs
@@ -255,7 +253,7 @@ snfReadFont(FontPtr pFont, FontFilePtr file,
     metrics_off = bytestoalloc;
     bytestoalloc += num_chars * sizeof(CharInfoRec);	/* metrics */
     encoding_off = bytestoalloc;
-    bytestoalloc += NUM_SEGMENTS(num_chars) * sizeof(CharInfoPtr**);	
+    bytestoalloc += NUM_SEGMENTS(num_chars) * sizeof(CharInfoPtr**);
                                                 /* encoding */
     props_off = bytestoalloc;
     bytestoalloc += fi.nProps * sizeof(FontPropRec);	/* props */
@@ -301,7 +299,7 @@ snfReadFont(FontPtr pFont, FontFilePtr file,
      */
 
     ret = Successful;
-    memset(bitmapFont->encoding, 0, 
+    memset(bitmapFont->encoding, 0,
            NUM_SEGMENTS(num_chars)*sizeof(CharInfoPtr*));
     for (i = 0; ret == Successful && i < num_chars; i++) {
 	ret = snfReadCharInfo(file, &bitmapFont->metrics[i], bitmaps);
@@ -456,12 +454,14 @@ snfReadFontInfo(FontInfoPtr pFontInfo, FontFilePtr file)
 
     pFontInfo->props = malloc(fi.nProps * sizeof(FontPropRec));
     if (!pFontInfo->props) {
-      snfError("snfReadFontInfo(): Couldn't allocate props (%d*%d)\n", fi.nProps, sizeof(FontPropRec));
+	snfError("snfReadFontInfo(): Couldn't allocate props (%d*%d)\n",
+		 fi.nProps, (int) sizeof(FontPropRec));
 	return AllocError;
     }
     pFontInfo->isStringProp = malloc(fi.nProps * sizeof(char));
     if (!pFontInfo->isStringProp) {
-      snfError("snfReadFontInfo(): Couldn't allocate isStringProp (%d*%d)\n", fi.nProps, sizeof(char));
+	snfError("snfReadFontInfo(): Couldn't allocate isStringProp (%d*%d)\n",
+		 fi.nProps, (int) sizeof(char));
 	free(pFontInfo->props);
 	return AllocError;
     }

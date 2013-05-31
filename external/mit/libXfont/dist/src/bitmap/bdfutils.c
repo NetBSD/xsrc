@@ -1,4 +1,3 @@
-/* $Xorg: bdfutils.c,v 1.5 2001/02/09 02:04:02 xorgcvs Exp $ */
 /************************************************************************
 Copyright 1989 by Digital Equipment Corporation, Maynard, Massachusetts.
 
@@ -49,7 +48,6 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/bdfutils.c,v 1.10 2001/12/14 19:56:45 dawes Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -70,7 +68,7 @@ int bdfFileLineNum;
 /***====================================================================***/
 
 void
-bdfError(char* message, ...)
+bdfError(const char* message, ...)
 {
     va_list args;
 
@@ -83,7 +81,7 @@ bdfError(char* message, ...)
 /***====================================================================***/
 
 void
-bdfWarning(char *message, ...)
+bdfWarning(const char *message, ...)
 {
     va_list args;
 
@@ -129,7 +127,7 @@ bdfGetLine(FontFilePtr file, unsigned char *buf, int len)
 /***====================================================================***/
 
 Atom
-bdfForceMakeAtom(char *str, int *size)
+bdfForceMakeAtom(const char *str, int *size)
 {
     register int len = strlen(str);
     Atom the_atom;
@@ -176,8 +174,9 @@ bdfGetPropertyValue(char *s)
     s++;
     pp = p = malloc((unsigned) strlen(s) + 1);
     if (pp == NULL) {
-  bdfError("Couldn't allocate property value string (%d)\n", strlen(s) + 1);
-  return None;
+	bdfError("Couldn't allocate property value string (%d)\n",
+		 (int) strlen(s) + 1);
+	return None;
     }
     while (*s) {
 	if (*s == '"') {
@@ -193,7 +192,7 @@ bdfGetPropertyValue(char *s)
 	*p++ = *s++;
     }
     free (pp);
-    bdfError("unterminated quoted string property: %s\n", (pointer) orig_s);
+    bdfError("unterminated quoted string property: %s\n", orig_s);
     return None;
 }
 
@@ -251,7 +250,7 @@ bdfHexByte(unsigned char *s)
  * check for known special property values
  */
 
-static char *SpecialAtoms[] = {
+static const char *SpecialAtoms[] = {
     "FONT_ASCENT",
 #define BDF_FONT_ASCENT	0
     "FONT_DESCENT",
@@ -278,11 +277,11 @@ static char *SpecialAtoms[] = {
 };
 
 Bool
-bdfSpecialProperty(FontPtr pFont, FontPropPtr prop, 
+bdfSpecialProperty(FontPtr pFont, FontPropPtr prop,
 		   char isString, bdfFileState *bdfState)
 {
-    char      **special;
-    char       *name;
+    const char      **special;
+    const char       *name;
 
     name = NameForAtom(prop->name);
     for (special = SpecialAtoms; *special; special++)

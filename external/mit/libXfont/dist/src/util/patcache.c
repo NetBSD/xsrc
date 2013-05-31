@@ -1,5 +1,3 @@
-/* $Xorg: patcache.c,v 1.4 2001/02/09 02:04:04 xorgcvs Exp $ */
-
 /*
 
 Copyright 1991, 1998  The Open Group
@@ -25,7 +23,6 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/util/patcache.c,v 3.4 2001/01/17 19:43:33 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -69,7 +66,7 @@ void
 EmptyFontPatternCache (FontPatternCachePtr cache)
 {
     int	    i;
-    
+
     for (i = 0; i < NBUCKETS; i++)
 	cache->buckets[i] = 0;
     for (i = 0; i < NENTRIES; i++)
@@ -130,9 +127,9 @@ Hash (const char *string, int len)
 
 /* add entry */
 void
-CacheFontPattern (FontPatternCachePtr cache, 
-		  char *pattern, 
-		  int patlen, 
+CacheFontPattern (FontPatternCachePtr cache,
+		  char *pattern,
+		  int patlen,
 		  FontPtr pFont)
 {
     FontPatternCacheEntryPtr	e;
@@ -176,8 +173,8 @@ CacheFontPattern (FontPatternCachePtr cache,
 
 /* find matching entry */
 FontPtr
-FindCachedFontPattern (FontPatternCachePtr cache, 
-		       char *pattern, 
+FindCachedFontPattern (FontPatternCachePtr cache,
+		       char *pattern,
 		       int patlen)
 {
     int				hash;
@@ -198,7 +195,7 @@ FindCachedFontPattern (FontPatternCachePtr cache,
 }
 
 void
-RemoveCachedFontPattern (FontPatternCachePtr cache, 
+RemoveCachedFontPattern (FontPatternCachePtr cache,
 			 FontPtr pFont)
 {
     FontPatternCacheEntryPtr	e;

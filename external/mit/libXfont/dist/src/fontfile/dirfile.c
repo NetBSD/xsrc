@@ -1,5 +1,3 @@
-/* $Xorg: dirfile.c,v 1.4 2001/02/09 02:04:03 xorgcvs Exp $ */
-
 /*
 
 Copyright 1991, 1998  The Open Group
@@ -25,7 +23,6 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/fontfile/dirfile.c,v 3.17 2004/02/08 01:52:27 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -93,7 +90,7 @@ FontFileReadDirectory (char *directory, FontDirectoryPtr *pdir)
     strcat(dir_file, FontDirFile);
     file = fopen(dir_file, "rt");
     if (file) {
-#ifndef WIN32        
+#ifndef WIN32
 	if (fstat (fileno(file), &statb) == -1)
 #else
 	if (stat (dir_file, &statb) == -1)
@@ -138,7 +135,7 @@ FontFileReadDirectory (char *directory, FontDirectoryPtr *pdir)
 	    FontFileAddFontFile (dir, font_name, file_name);
 	}
 	fclose(file);
-	
+
     } else if (errno != ENOENT) {
 	return BadFontPath;
     }
@@ -191,7 +188,7 @@ FontFileDirectoryChanged(FontDirectoryPtr dir)
 	return TRUE;
     return FALSE;
 }
-    
+
 /*
  * Make each of the file names an automatic alias for each of the files.
  */
@@ -215,7 +212,7 @@ AddFileNameAliases(FontDirectoryPtr dir)
 	renderer = FontFileMatchRenderer (fileName);
 	if (!renderer)
 	    continue;
-	
+
 	len = strlen (fileName) - renderer->fileSuffixLen;
 	if (len >= sizeof(copy))
 	    continue;

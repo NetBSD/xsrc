@@ -1,5 +1,4 @@
 /*
- * Id: builtin.h,v 1.2 1999/11/02 06:16:47 keithp Exp $
  *
  * Copyright 1999 SuSE, Inc.
  *
@@ -17,12 +16,11 @@
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL SuSE
  * BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
- * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN 
+ * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  * Author:  Keith Packard, SuSE, Inc.
  */
-/* $XFree86: xc/lib/font/builtins/builtin.h,v 1.3 1999/12/30 02:29:49 robin Exp $ */
 
 #include <X11/Xdefs.h>
 #include <X11/fonts/font.h>
@@ -38,7 +36,7 @@ typedef struct _BuiltinFile {
 } BuiltinFileRec, *BuiltinFilePtr;
 
 typedef struct _BuiltinDir {
-    char	*file_name;
+    const char	*file_name;
     char	*font_name;
 } BuiltinDirRec, *BuiltinDirPtr;
 

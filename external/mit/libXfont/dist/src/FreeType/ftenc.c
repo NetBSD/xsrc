@@ -1,15 +1,15 @@
-/* 
+/*
 Copyright (c) 1998-2003 by Juliusz Chroboczek
- 
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions: 
- 
+furnished to do so, subject to the following conditions:
+
 The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software. 
+all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -19,7 +19,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-/* $XFree86: xc/lib/font/FreeType/ftenc.c,v 1.24 2003/10/19 18:53:49 dawes Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -44,13 +43,13 @@ THE SOFTWARE.
 static int find_cmap(int, int, int, FT_Face, FT_CharMap *);
 
 static int
-FTEncFontSpecific(char *encoding)
+FTEncFontSpecific(const char *encoding)
 {
-    char *p = encoding;
+    const char *p = encoding;
 
     if(strcasecmp(encoding, "microsoft-symbol") == 0)
         return 1;
-       
+
     while(*p != '-') {
         if(*p == '\0')
             return 0;
@@ -70,7 +69,7 @@ FTPickMapping(char *xlfd, int length, char *filename, FT_Face face,
     int ftrc;
     int symbol = 0;
     const char *enc, *reg;
-    char *encoding_name = 0;
+    const char *encoding_name = 0;
     char buf[20];
 
     if(xlfd)
@@ -124,9 +123,9 @@ FTPickMapping(char *xlfd, int length, char *filename, FT_Face face,
             }
         }
     }
-    
+
     for(mapping = encoding->mappings; mapping; mapping = mapping->next) {
-        if(find_cmap(mapping->type, mapping->pid, mapping->eid, face, 
+        if(find_cmap(mapping->type, mapping->pid, mapping->eid, face,
                      &cmap)) {
             tm->named = 0;
             tm->cmap = cmap;
@@ -145,7 +144,7 @@ FTPickMapping(char *xlfd, int length, char *filename, FT_Face face,
             return Successful;
         }
     }
-    
+
     return BadFontFormat;
 
   native:
@@ -156,7 +155,7 @@ FTPickMapping(char *xlfd, int length, char *filename, FT_Face face,
     return Successful;
 }
 
-static int 
+static int
 find_cmap(int type, int pid, int eid, FT_Face face, FT_CharMap *cmap_return)
 {
     int i, n;
@@ -178,7 +177,7 @@ find_cmap(int type, int pid, int eid, FT_Face face, FT_CharMap *cmap_return)
         /* prefer Microsoft Unicode */
         for(i=0; i<n; i++) {
             cmap = face->charmaps[i];
-            if(cmap->platform_id == TT_PLATFORM_MICROSOFT && 
+            if(cmap->platform_id == TT_PLATFORM_MICROSOFT &&
                cmap->encoding_id == TT_MS_ID_UNICODE_CS) {
                 *cmap_return = cmap;
                 return 1;
@@ -208,7 +207,7 @@ find_cmap(int type, int pid, int eid, FT_Face face, FT_CharMap *cmap_return)
     return 0;
 }
 
-unsigned 
+unsigned
 FTRemap(FT_Face face, FTMappingPtr tm, unsigned code)
 {
     unsigned index;
