@@ -1,5 +1,3 @@
-/* $Xorg: AuLock.c,v 1.4 2001/02/09 02:03:42 xorgcvs Exp $ */
-
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -25,7 +23,6 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xau/AuLock.c,v 3.6 2002/05/31 18:45:43 dawes Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -36,18 +33,12 @@ in this Software without prior written authorization from The Open Group.
 #include <errno.h>
 #include <time.h>
 #define Time_t time_t
-#ifndef X_NOT_POSIX
-#include <unistd.h>
-#else
-#ifndef WIN32
-extern unsigned	sleep ();
-#else
-#include <X11/Xwindows.h>
-#define link rename
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
 #endif
-#endif
-#ifdef __UNIXOS2__
-#define link rename
+#ifdef WIN32
+# include <X11/Xwindows.h>
+# define link rename
 #endif
 
 int
@@ -64,10 +55,8 @@ long	dead)
 
     if (strlen (file_name) > 1022)
 	return LOCK_ERROR;
-    (void) strcpy (creat_name, file_name);
-    (void) strcat (creat_name, "-c");
-    (void) strcpy (link_name, file_name);
-    (void) strcat (link_name, "-l");
+    snprintf (creat_name, sizeof(creat_name), "%s-c", file_name);
+    snprintf (link_name, sizeof(link_name), "%s-l", file_name);
     if (stat (creat_name, &statb) != -1) {
 	now = time ((Time_t *) 0);
 	/*
@@ -75,22 +64,22 @@ long	dead)
 	 * case a 0 deadtime to force lock removal
 	 */
 	if (dead == 0 || now - statb.st_ctime > dead) {
-	    (void) unlink (creat_name);
-	    (void) unlink (link_name);
+	    (void) remove (creat_name);
+	    (void) remove (link_name);
 	}
     }
-    
+
     while (retries > 0) {
 	if (creat_fd == -1) {
 	    creat_fd = open (creat_name, O_WRONLY | O_CREAT | O_EXCL, 0600);
 	    if (creat_fd == -1) {
-		if (errno != EACCES)
+		if (errno != EACCES && errno != EEXIST)
 		    return LOCK_ERROR;
 	    } else
 		(void) close (creat_fd);
 	}
 	if (creat_fd != -1) {
-#ifndef X_NOT_POSIX
+#ifdef HAVE_PATHCONF
 	    /* The file system may not support hard links, and pathconf should tell us that. */
 	    if (1 == pathconf(creat_name, _PC_LINK_MAX)) {
 		if (-1 == rename(creat_name, link_name)) {
@@ -99,8 +88,9 @@ long	dead)
 		} else {
 		    return LOCK_SUCCESS;
 		}
-	    } else {
+	    } else
 #endif
+	    {
 	    	if (link (creat_name, link_name) != -1)
 		    return LOCK_SUCCESS;
 		if (errno == ENOENT) {
@@ -109,9 +99,7 @@ long	dead)
 	    	}
 	    	if (errno != EEXIST)
 		    return LOCK_ERROR;
-#ifndef X_NOT_POSIX
 	   }
-#endif
 	}
 	(void) sleep ((unsigned) timeout);
 	--retries;
