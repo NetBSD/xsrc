@@ -83,13 +83,8 @@ in this Software without prior written authorization from The Open Group.
 #include	<X11/Xlocale.h>
 #include	<errno.h>	/* for StringToDirectoryString */
 
-#ifdef __UNIXOS2__
-#define IsNewline(str) ((str) == '\n' || (str) == '\r')
-#define IsWhitespace(str) ((str)== ' ' || (str) == '\t' || (str) == '\r')
-#else
 #define IsNewline(str) ((str) == '\n')
 #define IsWhitespace(str) ((str)== ' ' || (str) == '\t')
-#endif
 
 static const String XtNwrongParameters = "wrongParameters";
 static const String XtNconversionError = "conversionError";
@@ -122,11 +117,7 @@ static XrmQuark  XtQGravity;
 static XrmQuark  XtQInt;
 static XrmQuark  XtQPixel;
 static XrmQuark  XtQPosition;
-#ifdef __UNIXOS2__
-XrmQuark  _XtQString = 0;
-#else
 XrmQuark  _XtQString;
-#endif
 
 void _XtConvertInitialize(void)
 {
@@ -257,7 +248,7 @@ void XtStringConversionWarning(
 		    params,&num_params);
 }
 
-static int CompareISOLatin1(char *, char *);
+static int CompareISOLatin1(const char *, const char *);
 
 
 static Boolean IsInteger(
@@ -270,11 +261,7 @@ static Boolean IsInteger(
     int val = 0;
     char ch;
     /* skip leading whitespace */
-#ifndef __UNIXOS2__
     while ((ch = *string) == ' ' || ch == '\t') string++;
-#else
-    while ((ch = *string) == ' ' || ch == '\t' || ch == '\r') string++;
-#endif
     while ((ch = *string++)) {
 	if (ch >= '0' && ch <= '9') {
 	    val *= 10;
@@ -1379,11 +1366,12 @@ void LowerCase(register char  *source, register *dest)
 }
 #endif
 
-static int CompareISOLatin1 (char *first, char *second)
+static int CompareISOLatin1 (const char *first, const char *second)
 {
-    register unsigned char *ap, *bp;
+    register const unsigned char *ap, *bp;
 
-    for (ap = (unsigned char *) first, bp = (unsigned char *) second;
+    for (ap = (const unsigned char *) first,
+	 bp = (const unsigned char *) second;
 	 *ap && *bp; ap++, bp++) {
 	register unsigned char a, b;
 
@@ -1410,11 +1398,10 @@ static int CompareISOLatin1 (char *first, char *second)
     return (((int) *bp) - ((int) *ap));
 }
 
-static void CopyISOLatin1Lowered(char *dst, char *src)
+static void CopyISOLatin1Lowered(char *dst, const char *src)
 {
-    unsigned char *dest, *source;
-
-    dest = (unsigned char *) dst; source = (unsigned char *) src;
+    unsigned char *dest = (unsigned char *) dst;
+    const unsigned char *source = (const unsigned char *) src;
 
     for ( ; *source; source++, dest++) {
 	if (*source >= XK_A  && *source <= XK_Z)
@@ -1735,7 +1722,7 @@ Boolean XtCvtStringToGravity (
 {
     static struct _namepair {
 	XrmQuark quark;
-	char *name;
+	const char *name;
 	int gravity;
     } names[] = {
 	{ NULLQUARK, "forget",		ForgetGravity },
