@@ -258,7 +258,7 @@ GetBuffer(Widget w, XtPointer closure, XtPointer callData)
 int 
 main(int argc, char *argv[])
 {
-    char label[100];
+    char *label;
     Widget box, button;
     XtAppContext appcon;
     Widget shell;
@@ -288,19 +288,21 @@ main(int argc, char *argv[])
 	XtAddCallback( button, XtNcallback, Quit, NULL );
 
     /* %%% hack alert... */
-    sprintf(label, "*label:copy %s to %d",
+    XtAsprintf(&label, "*label:copy %s to %d",
 	    options.selection_name,
 	    options.buffer);
     XrmPutLineResource( &rdb, label );
+    XtFree(label);
 
     button =
 	XtCreateManagedWidget("sel-cut", commandWidgetClass, box, NULL, ZERO);
 	XtAddCallback( button, XtNcallback, GetSelection, NULL );
 
-    sprintf(label, "*label:copy %d to %s",
+    XtAsprintf(&label, "*label:copy %d to %s",
 	    options.buffer,
 	    options.selection_name);
     XrmPutLineResource( &rdb, label );
+    XtFree(label);
 
     button =
 	XtCreateManagedWidget("cut-sel", commandWidgetClass, box, NULL, ZERO);

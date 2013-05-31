@@ -22,7 +22,7 @@ dnl
 dnl Process this file with autoconf to create configure.
 
 AC_PREREQ([2.60])
-AC_INIT([xclipboard], [1.1.1],
+AC_INIT([xclipboard], [1.1.2],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg], [xclipboard])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
@@ -42,15 +42,18 @@ PKG_CHECK_EXISTS([xkbfile], [XKBPKG="xkbfile"], [XKBPKG=""])
 if test x$XKBPKG = xxkbfile ; then
     AC_DEFINE([XKB], [1], [Define to use libxkbfile calls like XKBStdBell()])
 fi
-PKG_CHECK_MODULES(XCLIPBOARD, [xaw7 xmu xt x11 ${XKBPKG}])
+PKG_CHECK_MODULES(XCLIPBOARD, [xaw7 xmu xt >= 1.1 x11 ${XKBPKG}])
 
 PKG_CHECK_MODULES(APPDEFS, xt)
 xt_appdefaultdir=`$PKG_CONFIG --variable=appdefaultdir xt`
 AC_ARG_WITH(appdefaultdir,
-	AC_HELP_STRING([--with-appdefaultdir=<pathname>],
+	AS_HELP_STRING([--with-appdefaultdir=<pathname>],
 	  [specify directory for app-defaults files (default is autodetected)]),
 	[appdefaultdir="$withval"], [appdefaultdir="${xt_appdefaultdir}"])
 AC_SUBST(appdefaultdir)
 
 
-AC_OUTPUT([Makefile])
+AC_CONFIG_FILES([
+	Makefile
+	man/Makefile])
+AC_OUTPUT
