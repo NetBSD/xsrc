@@ -36,7 +36,7 @@ in this Software without prior written authorization from the X Consortium.
 
 static XExtensionInfo _screen_saver_info_data;
 static XExtensionInfo *screen_saver_info = &_screen_saver_info_data;
-static const char *screen_saver_extension_name = ScreenSaverName;
+static char *screen_saver_extension_name = ScreenSaverName;
 
 #define ScreenSaverCheckExtension(dpy,i,val) \
   XextCheckExtension (dpy, i, screen_saver_extension_name, val)
