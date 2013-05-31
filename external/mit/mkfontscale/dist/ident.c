@@ -144,8 +144,8 @@ fontFileSeek(fontFile *ff, z_off_t offset, int whence)
 	    break;
 	  default:
 	    return -1;
-	} 
-	
+	}
+
 	while (n > BUFSIZ) {
 	    if (BZ2_bzread(ff->f.bz2, buf, BUFSIZ) != BUFSIZ)
 		return -1;
@@ -223,7 +223,7 @@ getInt32(fontFile *f, int format)
     }
 }
 
-int 
+int
 bitmapIdentify(const char *filename, char **name)
 {
     fontFile ff;
@@ -272,7 +272,7 @@ pcfIdentify(fontFile *f, char **name)
     rc = fontFileSeek(f, prop_position, SEEK_SET);
     if(rc < 0)
         goto fail;
-    
+
     format = getLSB32(f);
     if((format & 0xFFFFFF00) != 0)
         goto fail;
@@ -430,7 +430,7 @@ bdfIdentify(fontFile *f, char **name)
     while(1) {
         if(!eol) {
             rc = bdfskip(f);
-            if(rc < 0) 
+            if(rc < 0)
                 goto fail;
         }
         k = getKeyword(f, &eol);
