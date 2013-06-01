@@ -28,23 +28,20 @@
 #include "xf86.h"
 #include "xf86_OSproc.h"
 
-#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6 
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86Resources.h"
 #endif
 
 #include "compiler.h"
-#include "xf86PciInfo.h"
 #include "xf86Pci.h"
-#include "xf86fbman.h"
 #include "regionstr.h"
 
-#ifdef XF86DRI
+#ifdef HAVE_DRI
 
-#include "via.h"
+#include "via_drmclient.h"
 #include "via_drm.h"
 #include "via_dri.h"
 #include "via_driver.h"
-#include "via_id.h"
 
 #include "xf86xv.h"
 #include "fourcc.h"
@@ -56,14 +53,12 @@
 #include "xf86xvmc.h"
 #include <X11/extensions/Xv.h>
 #include <X11/extensions/XvMC.h>
-#include "xaa.h"
-#include "xaalocal.h"
 #include "dixstruct.h"
 #include "via_xvmc.h"
 #include "dristruct.h"
 #include "dri.h"
 #include "via_xvpriv.h"
-#include "via_video.h"
+#include "via_xv.h"
 
 #define MAKE_ATOM(a) MakeAtom(a, strlen(a), TRUE)
 
@@ -71,7 +66,7 @@
 /*
  * List of attributes for the XvMC extension to handle.
  * As long as the attribute is supported by the Xv adaptor, it needs only
- * to be added here to be supported also by XvMC. 
+ * to be added here to be supported also by XvMC.
  * Currently, only colorkey seems to be supported by Xv for Putimage.
  */
 static char *attrXvMC[VIA_NUM_XVMC_ATTRIBUTES] = { "XV_COLORKEY",
@@ -151,7 +146,7 @@ cleanupViaXvMC(ViaXvMCPtr vXvMC, XF86VideoAdaptorPtr * XvAdaptors,
     for (i = 0; i < VIA_XVMC_MAX_CONTEXTS; ++i) {
         vXvMC->contexts[i] = 0;
         if (vXvMC->cPrivs[i]) {
-            xfree(vXvMC->cPrivs[i]);
+            free(vXvMC->cPrivs[i]);
             vXvMC->cPrivs[i] = 0;
         }
     }
@@ -159,7 +154,7 @@ cleanupViaXvMC(ViaXvMCPtr vXvMC, XF86VideoAdaptorPtr * XvAdaptors,
     for (i = 0; i < VIA_XVMC_MAX_SURFACES; ++i) {
         vXvMC->surfaces[i] = 0;
         if (vXvMC->sPrivs[i]) {
-            xfree(vXvMC->sPrivs[i]);
+            free(vXvMC->sPrivs[i]);
             vXvMC->sPrivs[i] = 0;
         }
     }
@@ -267,10 +262,10 @@ static XF86ImagePtr Via_subpicture_list[2] = {
     (XF86ImagePtr) & ai44_subpicture
 };
 
-/* 
- * Filling in the device dependent adaptor record. 
+/*
+ * Filling in the device dependent adaptor record.
  * This is named "VIA Video Overlay" because this code falls under the
- * XV extenstion, the name must match or it won't be used.
+ * XV extension, the name must match or it won't be used.
  *
  * For surface and subpicture, see above.
  * The function pointers point to functions below.
@@ -316,7 +311,7 @@ mpegDisable(VIAPtr pVia, CARD32 val)
 void
 ViaInitXVMC(ScreenPtr pScreen)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     VIAPtr pVia = VIAPTR(pScrn);
     ViaXvMCPtr vXvMC = &(pVia->xvmc);
     volatile ViaXvMCSAreaPriv *saPriv;
@@ -325,16 +320,17 @@ ViaInitXVMC(ScreenPtr pScreen)
 
     if ((pVia->Chipset == VIA_KM400) ||
         (pVia->Chipset == VIA_CX700) ||
+        (pVia->Chipset == VIA_K8M890) ||
+        (pVia->Chipset == VIA_P4M900) ||
         (pVia->Chipset == VIA_VX800) ||
         (pVia->Chipset == VIA_VX855) ||
-        (pVia->Chipset == VIA_K8M890) ||
-        (pVia->Chipset == VIA_P4M900)) {
+        (pVia->Chipset == VIA_VX900)) {
         xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
                    "[XvMC] XvMC is not supported on this chipset.\n");
         return;
     }
 
-    if (!pVia->directRenderingEnabled) {
+    if (!pVia->directRenderingType) {
         xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
                    "[XvMC] Cannot use XvMC without DRI!\n");
         return;
@@ -354,7 +350,7 @@ ViaInitXVMC(ScreenPtr pScreen)
 
     vXvMC->mmioBase = pVia->registerHandle;
 
-    if (drmAddMap(pVia->drmFD,
+    if (drmAddMap(pVia->drmmode.fd,
                   (drm_handle_t) pVia->FrameBufferBase,
                   pVia->videoRambytes, DRM_FRAME_BUFFER, 0,
                   &(vXvMC->fbBase)) < 0) {
@@ -369,7 +365,7 @@ ViaInitXVMC(ScreenPtr pScreen)
                                          ? ppAdapt_pga : ppAdapt))) {
         xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
                    "[XvMC] XvMCScreenInit failed. Disabling XvMC.\n");
-        drmRmMap(pVia->drmFD, vXvMC->fbBase);
+        drmRmMap(pVia->drmmode.fd, vXvMC->fbBase);
         return;
     }
 #if (XvMCVersion > 1) || (XvMCRevision > 0)
@@ -413,7 +409,7 @@ ViaCleanupXVMC(ScrnInfoPtr pScrn, XF86VideoAdaptorPtr * XvAdaptors,
 
     if (pVia->XvMCEnabled) {
         mpegDisable(pVia, 0);
-        drmRmMap(pVia->drmFD, vXvMC->mmioBase);
+        drmRmMap(pVia->drmmode.fd, vXvMC->mmioBase);
         cleanupViaXvMC(vXvMC, XvAdaptors, XvAdaptorCount);
     }
     for (i = 0; i < XvAdaptorCount; ++i) {
@@ -424,7 +420,7 @@ ViaCleanupXVMC(ScrnInfoPtr pScrn, XF86VideoAdaptorPtr * XvAdaptors,
             viaPortPrivPtr pPriv = XvAdaptors[i]->pPortPrivates[j].ptr;
 
             if (pPriv->xvmc_priv)
-                xfree(pPriv->xvmc_priv);
+                free(pPriv->xvmc_priv);
         }
     }
     pVia->XvMCEnabled = 0;
@@ -460,7 +456,7 @@ ViaXvMCCreateContext(ScrnInfoPtr pScrn, XvMCContextPtr pContext,
         return BadAlloc;
     }
 
-    *priv = xcalloc(1, sizeof(ViaXvMCCreateContextRec));
+    *priv = calloc(1, sizeof(ViaXvMCCreateContextRec));
     contextRec = (ViaXvMCCreateContextRec *) * priv;
 
     if (!*priv) {
@@ -475,12 +471,12 @@ ViaXvMCCreateContext(ScrnInfoPtr pScrn, XvMCContextPtr pContext,
             break;
     }
 
-    cPriv = (ViaXvMCContextPriv *) xcalloc(1, sizeof(ViaXvMCContextPriv));
+    cPriv = (ViaXvMCContextPriv *) calloc(1, sizeof(ViaXvMCContextPriv));
 
     if (!cPriv) {
         xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
                    "[XvMC] ViaXvMCCreateContext: Unable to allocate memory!\n");
-        xfree(*priv);
+        free(*priv);
         *num_priv = 0;
         return BadAlloc;
     }
@@ -504,7 +500,7 @@ ViaXvMCCreateContext(ScrnInfoPtr pScrn, XvMCContextPtr pContext,
                            (pVia->Chipset == VIA_PM800) ||
                            (pVia->Chipset == VIA_P4M900)));
     contextRec->chipId = pVia->ChipId;
-    contextRec->screen = pScrn->pScreen->myNum;
+    contextRec->screen = pScrn->scrnIndex;
     contextRec->depth = pScrn->bitsPerPixel;
     contextRec->stride = pVia->Bpp * pScrn->virtualX;
 
@@ -525,6 +521,7 @@ ViaXvMCCreateSurface(ScrnInfoPtr pScrn, XvMCSurfacePtr pSurf,
     ViaXvMCSurfacePriv *sPriv;
     XvMCContextPtr ctx;
     unsigned bufSize, yBufSize;
+    void *buf;
 
     if (VIA_XVMC_MAX_SURFACES == vXvMC->nSurfaces) {
         xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
@@ -532,7 +529,7 @@ ViaXvMCCreateSurface(ScrnInfoPtr pScrn, XvMCSurfacePtr pSurf,
         return BadAlloc;
     }
 
-    sPriv = (ViaXvMCSurfacePriv *) xcalloc(1, sizeof(ViaXvMCSurfacePriv));
+    sPriv = (ViaXvMCSurfacePriv *) calloc(1, sizeof(ViaXvMCSurfacePriv));
 
     if (!sPriv) {
         xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
@@ -566,13 +563,13 @@ ViaXvMCCreateSurface(ScrnInfoPtr pScrn, XvMCSurfacePtr pSurf,
 #endif
     *num_priv = numBuffers + 2;
 
-    *priv = (INT32 *) xcalloc(*num_priv, sizeof(INT32));
+    *priv = (INT32 *) calloc(*num_priv, sizeof(INT32));
 
     if (!*priv) {
         xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
                    "[XvMC] ViaXvMCCreateSurface: Unable to allocate memory!\n");
         *num_priv = 0;
-        xfree(sPriv);
+        free(sPriv);
         return BadAlloc;
     }
 
@@ -585,28 +582,30 @@ ViaXvMCCreateSurface(ScrnInfoPtr pScrn, XvMCSurfacePtr pSurf,
 
     ctx = pSurf->context;
     bufSize = size_yuv420(ctx->width, ctx->height);
-    sPriv->memory_ref.pool = 0;
-    if (VIAAllocLinear(&(sPriv->memory_ref), pScrn,
-                       numBuffers * bufSize + 32)) {
-        xfree(*priv);
-        xfree(sPriv);
+    sPriv->memory_ref = drm_bo_alloc(pScrn, numBuffers * bufSize,
+                                    32, TTM_PL_FLAG_VRAM);
+    if (!sPriv->memory_ref) {
+        free(*priv);
+        free(sPriv);
         xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "[XvMC] ViaXvMCCreateSurface: "
                    "Unable to allocate frambuffer memory!\n");
         return BadAlloc;
     }
+    buf = drm_bo_map(pScrn, sPriv->memory_ref);
 
     (*priv)[1] = numBuffers;
-    (*priv)[2] = sPriv->offsets[0] = ALIGN_TO(sPriv->memory_ref.base, 32);
+    (*priv)[2] = sPriv->offsets[0] = sPriv->memory_ref->offset;
     for (i = 1; i < numBuffers; ++i) {
         (*priv)[i + 2] = sPriv->offsets[i] = sPriv->offsets[i - 1] + bufSize;
     }
 
     yBufSize = stride(ctx->width) * ctx->height;
     for (i = 0; i < numBuffers; ++i) {
-        memset((CARD8 *) (pVia->FBBase) + sPriv->offsets[i], 0, yBufSize);
-        memset((CARD8 *) (pVia->FBBase) + sPriv->offsets[i] + yBufSize, 0x80,
-               yBufSize >> 1);
+        memset(buf, 0, yBufSize);
+        memset(buf + yBufSize, 0x80, yBufSize >> 1);
+        buf += bufSize;
     }
+    drm_bo_unmap(pScrn, sPriv->memory_ref);
 
     vXvMC->sPrivs[srfNo] = sPriv;
     vXvMC->surfaces[srfNo] = pSurf->surface_id;
@@ -631,7 +630,7 @@ ViaXvMCCreateSubpicture(ScrnInfoPtr pScrn, XvMCSubpicturePtr pSubp,
         return BadAlloc;
     }
 
-    sPriv = (ViaXvMCSurfacePriv *) xcalloc(1, sizeof(ViaXvMCSurfacePriv));
+    sPriv = (ViaXvMCSurfacePriv *) calloc(1, sizeof(ViaXvMCSurfacePriv));
 
     if (!sPriv) {
         xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "[XvMC] ViaXvMCCreateSubpicture:"
@@ -640,13 +639,13 @@ ViaXvMCCreateSubpicture(ScrnInfoPtr pScrn, XvMCSubpicturePtr pSubp,
         return BadAlloc;
     }
 
-    *priv = (INT32 *) xcalloc(3, sizeof(INT32));
+    *priv = (INT32 *) calloc(3, sizeof(INT32));
 
     if (!*priv) {
         xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "[XvMC] ViaXvMCCreateSubpicture:"
                    " Unable to allocate memory!\n");
         *num_priv = 0;
-        xfree(sPriv);
+        free(sPriv);
         return BadAlloc;
     }
 
@@ -661,15 +660,15 @@ ViaXvMCCreateSubpicture(ScrnInfoPtr pScrn, XvMCSubpicturePtr pSubp,
 
     ctx = pSubp->context;
     bufSize = size_xx44(ctx->width, ctx->height);
-    sPriv->memory_ref.pool = 0;
-    if (VIAAllocLinear(&(sPriv->memory_ref), pScrn, 1 * bufSize + 32)) {
-        xfree(*priv);
-        xfree(sPriv);
+    sPriv->memory_ref = drm_bo_alloc(pScrn, 1 * bufSize, 32, TTM_PL_FLAG_VRAM);
+    if (!sPriv->memory_ref) {
+        free(*priv);
+        free(sPriv);
         xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "[XvMC] ViaXvMCCreateSubpicture:"
                    " Unable to allocate framebuffer memory!\n");
         return BadAlloc;
     }
-    (*priv)[1] = sPriv->offsets[0] = ALIGN_TO(sPriv->memory_ref.base, 32);
+    (*priv)[1] = sPriv->offsets[0] = sPriv->memory_ref->offset;
 
     vXvMC->sPrivs[srfNo] = sPriv;
     vXvMC->surfaces[srfNo] = pSubp->subpicture_id;
@@ -701,7 +700,7 @@ ViaXvMCDestroyContext(ScrnInfoPtr pScrn, XvMCContextPtr pContext)
                 vx->ctxDisplaying = 0;
             }
 
-            xfree(vXvMC->cPrivs[i]);
+            free(vXvMC->cPrivs[i]);
             vXvMC->cPrivs[i] = 0;
             vXvMC->nContexts--;
             vXvMC->contexts[i] = 0;
@@ -734,9 +733,8 @@ ViaXvMCDestroySurface(ScrnInfoPtr pScrn, XvMCSurfacePtr pSurf)
                 if (!__ret)
                     ViaOverlayHide(pScrn);
             }
-
-            VIAFreeLinear(&(vXvMC->sPrivs[i]->memory_ref));
-            xfree(vXvMC->sPrivs[i]);
+            drm_bo_free(pScrn, vXvMC->sPrivs[i]->memory_ref);
+            free(vXvMC->sPrivs[i]);
             vXvMC->nSurfaces--;
             vXvMC->sPrivs[i] = 0;
             vXvMC->surfaces[i] = 0;
@@ -770,15 +768,15 @@ ViaXvMCDestroySubpicture(ScrnInfoPtr pScrn, XvMCSubpicturePtr pSubp)
                         i | VIA_XVMC_VALID, 0, __ret);
                 if (!__ret) {
                     /* Turn subpicture off. */
-                    while (VIDInD(V_COMPOSE_MODE) &
+                    while (VIAGETREG(V_COMPOSE_MODE) &
                            (V1_COMMAND_FIRE | V3_COMMAND_FIRE)) ;
-                    VIDOutD(SUBP_CONTROL_STRIDE,
-                            VIDInD(SUBP_CONTROL_STRIDE) & ~SUBP_HQV_ENABLE);
+                    VIASETREG(SUBP_CONTROL_STRIDE,
+                            VIAGETREG(SUBP_CONTROL_STRIDE) & ~SUBP_HQV_ENABLE);
                 }
             }
 
-            VIAFreeLinear(&(vXvMC->sPrivs[i]->memory_ref));
-            xfree(vXvMC->sPrivs[i]);
+            drm_bo_free(pScrn, vXvMC->sPrivs[i]->memory_ref);
+            free(vXvMC->sPrivs[i]);
             vXvMC->nSurfaces--;
             vXvMC->sPrivs[i] = 0;
             vXvMC->surfaces[i] = 0;
@@ -809,10 +807,10 @@ viaXvMCSetDisplayLock(ScrnInfoPtr pScrn, ViaXvMCXVPriv * vx)
 
         if (sAPriv->XvMCSubPicOn[vx->xvmc_port] & VIA_XVMC_VALID) {
             sAPriv->XvMCSubPicOn[vx->xvmc_port] = 0;
-            while (VIDInD(V_COMPOSE_MODE) &
+            while (VIAGETREG(V_COMPOSE_MODE) &
                    (V1_COMMAND_FIRE | V3_COMMAND_FIRE)) ;
-            VIDOutD(SUBP_CONTROL_STRIDE,
-                    VIDInD(SUBP_CONTROL_STRIDE) & ~SUBP_HQV_ENABLE);
+            VIASETREG(SUBP_CONTROL_STRIDE,
+                    VIAGETREG(SUBP_CONTROL_STRIDE) & ~SUBP_HQV_ENABLE);
         }
     }
     return 0;
@@ -828,7 +826,7 @@ viaXvMCInitXv(ScrnInfoPtr pScrn, XF86VideoAdaptorPtr XvAdapt)
     for (j = 0; j < XvAdapt->nPorts; ++j) {
         pPriv = (viaPortPrivPtr) XvAdapt->pPortPrivates[j].ptr;
 
-        if (NULL == (pPriv->xvmc_priv = xcalloc(1, sizeof(ViaXvMCXVPriv))))
+        if (NULL == (pPriv->xvmc_priv = calloc(1, sizeof(ViaXvMCXVPriv))))
             return BadAlloc;
 
         for (i = 0; i < VIA_NUM_XVMC_ATTRIBUTES; ++i) {
@@ -996,4 +994,4 @@ viaXvMCPutImageSize(ScrnInfoPtr pScrn)
     return 0;
 }
 
-#endif /* XF86DRI */
+#endif /* HAVE_DRI */

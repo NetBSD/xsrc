@@ -25,15 +25,7 @@
 
 #include "vgaHW.h"
 
-/* not used currently */
-/*
 CARD8 ViaVgahwIn(vgaHWPtr hwp, int address);
-void ViaVgahwOut(vgaHWPtr hwp, int address, CARD8 value);
-
-CARD8 ViaVgahwRead(vgaHWPtr hwp, int indexaddress, CARD8 index, 
-		   int valueaddress);
-*/
-
 void ViaVgahwWrite(vgaHWPtr hwp, int indexaddress, CARD8 index,
 		  int valueaddress, CARD8 value);
 
@@ -43,6 +35,9 @@ void ViaVgahwMask(vgaHWPtr hwp, int indexaddress, CARD8 index,
 void ViaCrtcMask(vgaHWPtr hwp, CARD8 index, CARD8 value, CARD8 mask);
 void ViaSeqMask(vgaHWPtr hwp, CARD8 index, CARD8 value, CARD8 mask);
 void ViaGrMask(vgaHWPtr hwp, CARD8 index, CARD8 value, CARD8 mask);
+
+void VIASave(ScrnInfoPtr pScrn);
+void VIARestore(ScrnInfoPtr pScrn);
 
 #ifdef HAVE_DEBUG
 void ViaVgahwPrint(vgaHWPtr hwp);

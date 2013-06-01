@@ -28,43 +28,56 @@
 #endif
 
 #include "via_driver.h"
-#include "via_vgahw.h"
 #include "via_vt162x.h"
-#include "via_id.h"
 
 static void
-ViaSetTVClockSource(ScrnInfoPtr pScrn)
+ViaSetTVClockSource(xf86CrtcPtr crtc)
 {
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ViaSetTVClockSource\n"));
+	drmmode_crtc_private_ptr iga = crtc->driver_private;
+	ScrnInfoPtr pScrn = crtc->scrn;
+	VIAPtr pVia = VIAPTR(pScrn);
+	VIABIOSInfoPtr pBIOSInfo = pVia->pBIOSInfo;
+	vgaHWPtr hwp = VGAHWPTR(pScrn);
 
-    VIAPtr pVia = VIAPTR(pScrn);
-    VIABIOSInfoPtr pBIOSInfo = pVia->pBIOSInfo;
-    vgaHWPtr hwp = VGAHWPTR(pScrn);
+	DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ViaSetTVClockSource\n"));
 
-    /* External TV: */
-    switch(pVia->Chipset) {
-        case VIA_CX700:
-        case VIA_VX800:
-            if (pBIOSInfo->FirstCRTC->IsActive) {
-                if(pBIOSInfo->TVDIPort == VIA_DI_PORT_DVP1)
-                    ViaCrtcMask(hwp, 0x6C, 0xB0, 0xF0);
-                else if(pBIOSInfo->TVDIPort == VIA_DI_PORT_DVP0)
-                    ViaCrtcMask(hwp, 0x6C, 0x90, 0xF0);
-            } else {
-                /* IGA2 */
-                if(pBIOSInfo->TVDIPort == VIA_DI_PORT_DVP1)
-                    ViaCrtcMask(hwp, 0x6C, 0x0B, 0x0F);
-                else if(pBIOSInfo->TVDIPort == VIA_DI_PORT_DVP0)
-                    ViaCrtcMask(hwp, 0x6C, 0x09, 0x0F);
+    switch(pBIOSInfo->TVEncoder) {
+        case VIA_VT1625:
+            /* External TV: */
+            switch(pVia->Chipset) {
+                case VIA_CX700:
+                case VIA_VX800:
+                case VIA_VX855:
+					/* IGA1 */
+                    if (!iga->index) {
+                        if(pBIOSInfo->TVDIPort == VIA_DI_PORT_DVP1)
+                            ViaCrtcMask(hwp, 0x6C, 0xB0, 0xF0);
+                        else if(pBIOSInfo->TVDIPort == VIA_DI_PORT_DVP0)
+                            ViaCrtcMask(hwp, 0x6C, 0x90, 0xF0);
+                    } else {
+                        /* IGA2 */
+                        if(pBIOSInfo->TVDIPort == VIA_DI_PORT_DVP1)
+                            ViaCrtcMask(hwp, 0x6C, 0x0B, 0x0F);
+                        else if(pBIOSInfo->TVDIPort == VIA_DI_PORT_DVP0)
+                            ViaCrtcMask(hwp, 0x6C, 0x09, 0x0F);
+                    }
+                    break;
+                default:
+                    if (!iga->index)
+                        ViaCrtcMask(hwp, 0x6C, 0x21, 0x21);
+                    else
+                        ViaCrtcMask(hwp, 0x6C, 0xA1, 0xA1);
+                    break;
             }
             break;
         default:
-            if (pBIOSInfo->FirstCRTC->IsActive)
-                ViaCrtcMask(hwp, 0x6C, 0x21, 0x21);
-            else
-                ViaCrtcMask(hwp, 0x6C, 0xA1, 0xA1);
+			if (!iga->index)
+				ViaCrtcMask(hwp, 0x6C, 0x50, 0xF0);
+			else
+				ViaCrtcMask(hwp, 0x6C, 0x05, 0x0F);
             break;
     }
+
 }
 
 static void
@@ -197,21 +210,43 @@ VT162xDACSenseI2C(I2CDevPtr pDev)
 }
 
 /*
- * VT1625 moves DACa through DACd from bits 0-3 to 2-5.
+ * VT1625/VT1625S sense connected TV outputs.
+ *
+ * The lower six bits of the return byte stand for each of the six DACs:
+ *  - bit 0: DACf (Cb)
+ *  - bit 1: DACe (Cr)
+ *  - bit 2: DACd (Y)
+ *  - bit 3: DACc (Composite)
+ *  - bit 4: DACb (S-Video C)
+ *  - bit 5: DACa (S-Video Y)
+ *
+ * If a bit is 0 it means a cable is connected. Note the VT1625S only has
+ * four DACs, corresponding to bit 0-3 above.
  */
 static CARD8
 VT1625DACSenseI2C(I2CDevPtr pDev)
 {
-    CARD8 save, sense;
+    CARD8 power, status, overflow, dacPresent;
 
-    xf86I2CReadByte(pDev, 0x0E, &save);
-    xf86I2CWriteByte(pDev, 0x0E, 0x00);
-    xf86I2CWriteByte(pDev, 0x0E, 0x80);
-    xf86I2CWriteByte(pDev, 0x0E, 0x00);
-    xf86I2CReadByte(pDev, 0x0F, &sense);
-    xf86I2CWriteByte(pDev, 0x0E, save);
+    xf86I2CReadByte(pDev, 0x0E, &power);     // save power state
 
-    return (sense & 0x3F);
+    // VT1625S will always report 0 for bits 4 and 5 of the status register as
+    // it only has four DACs instead of six. This will result in a false
+    // positive for the S-Video cable. It will also do this on the power
+    // register, which is abused to check which DACs are actually present.
+    xf86I2CWriteByte(pDev, 0x0E, 0xFF);
+    xf86I2CReadByte(pDev, 0x0E, &dacPresent);
+
+    xf86I2CWriteByte(pDev, 0x0E, 0x00);      // power on DACs/circuits
+    xf86I2CReadByte(pDev, 0x1C, &overflow);  // save overflow reg
+                                             // (DAC sense bit should be off)
+    xf86I2CWriteByte(pDev, 0x1C, 0x80);      // enable DAC sense bit
+    xf86I2CWriteByte(pDev, 0x1C, overflow);  // disable DAC sense bit
+    xf86I2CReadByte(pDev, 0x0F, &status);    // read connection status
+    xf86I2CWriteByte(pDev, 0x0E, power);     // restore power state
+    status |= ~dacPresent;
+
+    return (status & 0x3F);
 }
 
 /*
@@ -591,12 +626,13 @@ VT1621ModeI2C(ScrnInfoPtr pScrn, DisplayModePtr mode)
 }
 
 static void
-VT1621ModeCrtc(ScrnInfoPtr pScrn, DisplayModePtr mode)
+VT1621ModeCrtc(xf86CrtcPtr crtc, DisplayModePtr mode)
 {
-    vgaHWPtr hwp = VGAHWPTR(pScrn);
-    VIAPtr pVia = VIAPTR(pScrn);
-    VIABIOSInfoPtr pBIOSInfo = pVia->pBIOSInfo;
-    struct VT1621TableRec Table = VT1621Table[VT1621ModeIndex(pScrn, mode)];
+	ScrnInfoPtr pScrn = crtc->scrn;
+	vgaHWPtr hwp = VGAHWPTR(pScrn);
+	VIAPtr pVia = VIAPTR(pScrn);
+	VIABIOSInfoPtr pBIOSInfo = pVia->pBIOSInfo;
+	struct VT1621TableRec Table = VT1621Table[VT1621ModeIndex(pScrn, mode)];
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VT1621ModeCrtc\n"));
 
@@ -724,12 +760,13 @@ VT1622ModeI2C(ScrnInfoPtr pScrn, DisplayModePtr mode)
  * Also suited for VT1622A, VT1623, VT1625.
  */
 static void
-VT1622ModeCrtc(ScrnInfoPtr pScrn, DisplayModePtr mode)
+VT1622ModeCrtc(xf86CrtcPtr crtc, DisplayModePtr mode)
 {
-    vgaHWPtr hwp = VGAHWPTR(pScrn);
-    VIAPtr pVia = VIAPTR(pScrn);
-    VIABIOSInfoPtr pBIOSInfo = pVia->pBIOSInfo;
-    struct VT162XTableRec Table;
+	ScrnInfoPtr pScrn = crtc->scrn;
+	vgaHWPtr hwp = VGAHWPTR(pScrn);
+	VIAPtr pVia = VIAPTR(pScrn);
+	VIABIOSInfoPtr pBIOSInfo = pVia->pBIOSInfo;
+	struct VT162XTableRec Table;
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VT1622ModeCrtc\n"));
 
@@ -774,7 +811,7 @@ VT1622ModeCrtc(ScrnInfoPtr pScrn, DisplayModePtr mode)
     }
     pBIOSInfo->ClockExternal = TRUE;
     ViaCrtcMask(hwp, 0x6A, 0x40, 0x40);
-    ViaSetTVClockSource(pScrn);
+    ViaSetTVClockSource(crtc);
 }
 
 
@@ -835,6 +872,7 @@ ViaVT162xInit(ScrnInfoPtr pScrn)
             pBIOSInfo->TVModeCrtc = VT1621ModeCrtc;
             pBIOSInfo->TVPower = VT1621Power;
             pBIOSInfo->TVModes = VT1621Modes;
+            pBIOSInfo->TVNumModes = sizeof(VT1621Modes) / sizeof(DisplayModeRec);
             pBIOSInfo->TVPrintRegs = VT162xPrintRegs;
             pBIOSInfo->TVNumRegs = 0x68;
             break;
@@ -847,6 +885,7 @@ ViaVT162xInit(ScrnInfoPtr pScrn)
             pBIOSInfo->TVModeCrtc = VT1622ModeCrtc;
             pBIOSInfo->TVPower = VT1622Power;
             pBIOSInfo->TVModes = VT1622Modes;
+            pBIOSInfo->TVNumModes = sizeof(VT1622Modes) / sizeof(DisplayModeRec);
             pBIOSInfo->TVPrintRegs = VT162xPrintRegs;
             pBIOSInfo->TVNumRegs = 0x68;
             break;
@@ -859,6 +898,7 @@ ViaVT162xInit(ScrnInfoPtr pScrn)
             pBIOSInfo->TVModeCrtc = VT1622ModeCrtc;
             pBIOSInfo->TVPower = VT1622Power;
             pBIOSInfo->TVModes = VT1623Modes;
+            pBIOSInfo->TVNumModes = sizeof(VT1623Modes) / sizeof(DisplayModeRec);
             pBIOSInfo->TVPrintRegs = VT162xPrintRegs;
             pBIOSInfo->TVNumRegs = 0x6C;
             break;
@@ -871,8 +911,9 @@ ViaVT162xInit(ScrnInfoPtr pScrn)
             pBIOSInfo->TVModeCrtc = VT1622ModeCrtc;
             pBIOSInfo->TVPower = VT1625Power;
             pBIOSInfo->TVModes = VT1625Modes;
+            pBIOSInfo->TVNumModes = sizeof(VT1625Modes) / sizeof(DisplayModeRec);
             pBIOSInfo->TVPrintRegs = VT162xPrintRegs;
-            pBIOSInfo->TVNumRegs = 0x6C;
+            pBIOSInfo->TVNumRegs = 0x82;
             break;
         default:
             break;
