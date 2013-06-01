@@ -519,7 +519,7 @@ Bool VIADRIBufferInit(ScrnInfoPtr pScrn);
 
 #endif /* HAVE_DRI */
 
-int viaOffScreenLinear(VIAMemPtr mem, ScrnInfoPtr pScrn, unsigned long size);
+int viaOffScreenLinear(struct buffer_object *obj, ScrnInfoPtr pScrn, unsigned long size);
 void viaShowCursor(ScrnInfoPtr pScrn);
 void viaHideCursor(ScrnInfoPtr pScrn);
 Bool viaHWCursorInit(ScreenPtr pScreen);
