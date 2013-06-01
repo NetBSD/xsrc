@@ -3,17 +3,29 @@
 
 #include "xorg-server.h"
 
+/* Use Damage extension */
+/* #undef DAMAGE */
+
 /* Enable debug support */
 /* #undef HAVE_DEBUG */
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
+/* DRI is available */
+#define HAVE_DRI 1
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
+/* libudev support */
+/* #undef HAVE_LIBUDEV */
+
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
+
+/* libpciacces available */
+#define HAVE_PCIACCESS 1
 
 /* Define to 1 if you have the <pthread.h> header file. */
 #define HAVE_PTHREAD_H 1
@@ -51,38 +63,51 @@
 /* xextproto 7.1 available */
 #define HAVE_XEXTPROTO_71 1
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#define LT_OBJDIR ".libs/"
+
 /* Name of package */
 #define PACKAGE "xf86-video-openchrome"
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "http://www.openchrome.org/trac/report/1"
+#define PACKAGE_BUGREPORT "https://bugs.freedesktop.org/enter_bug.cgi?product=xorg&component=Driver/openchrome"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "xf86-video-openchrome"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-video-openchrome 0.2.904"
+#define PACKAGE_STRING "xf86-video-openchrome 0.3.3"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-video-openchrome"
 
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
+
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.2.904"
+#define PACKAGE_VERSION "0.3.3"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
+/* Enable build of registers dumper tool */
+/* #undef TOOLS */
+
 /* Version number of package */
-#define VERSION "0.2.904"
+#define VERSION "0.3.3"
+
+/* Major version */
+#define VIA_MAJOR_VERSION 0
+
+/* Minor version */
+#define VIA_MINOR_VERSION 3
+
+/* Patch version */
+#define VIA_PATCHLEVEL 3
 
 /* Enable DRI driver support */
 #define XF86DRI 1
-
-/* Enable developmental DRI driver support */
-#define XF86DRI_DEVEL 1
-
-/* Enable libpciaccess */
-#define XSERVER_LIBPCIACCESS 1
 
 /* Enable XVideo debug support */
 /* #undef XV_DEBUG */
@@ -98,3 +123,14 @@
 
 /* Compatibility define for older Xen */
 #define X_USE_REGION_NULL 1
+
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+/* #undef _FILE_OFFSET_BITS */
+
+/* Define for large files, on AIX-style hosts. */
+/* #undef _LARGE_FILES */
