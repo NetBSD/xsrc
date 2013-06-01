@@ -36,10 +36,12 @@ in this Software without prior written authorization from The Open Group.
 #include <X11/extensions/cupproto.h>
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
+#include <limits.h>
+#include "eat.h"
 
 static XExtensionInfo _xcup_info_data;
 static XExtensionInfo *xcup_info = &_xcup_info_data;
-static char *xcup_extension_name = XCUPNAME;
+static const char *xcup_extension_name = XCUPNAME;
 
 /*****************************************************************************
  *                                                                           *
@@ -62,9 +64,9 @@ static /* const */ XExtensionHooks xcup_extension_hooks = {
     NULL,				/* error_string */
 };
 
-static XEXT_GENERATE_FIND_DISPLAY (find_display, xcup_info, 
-				   xcup_extension_name, 
-				   &xcup_extension_hooks, 
+static XEXT_GENERATE_FIND_DISPLAY (find_display, xcup_info,
+				   xcup_extension_name,
+				   &xcup_extension_hooks,
 				   0, NULL)
 
 static XEXT_GENERATE_CLOSE_DISPLAY (close_display, xcup_info)
@@ -111,7 +113,7 @@ XcupQueryVersion(
 #define TYP_RESERVED_ENTRIES 20
 #endif
 
-Status 
+Status
 XcupGetReservedColormapEntries(
     Display* dpy,
     int screen,
@@ -133,18 +135,22 @@ XcupGetReservedColormapEntries(
     req->xcupReqType = X_XcupGetReservedColormapEntries;
     req->screen = screen;
     if (_XReply(dpy, (xReply *)&rep, 0, xFalse)) {
-	long nbytes;
+	unsigned long nbytes;
 	xColorItem* rbufp;
-	int nentries = rep.length / 3;
+	unsigned int nentries = rep.length / 3;
 
-	nbytes = nentries * SIZEOF (xColorItem);
-	if (nentries > TYP_RESERVED_ENTRIES)
-	    rbufp = (xColorItem*) Xmalloc (nbytes);
-	else
-	    rbufp = rbuf;
+	if (nentries < (INT_MAX / SIZEOF (xColorItem))) {
+	    nbytes = nentries * SIZEOF (xColorItem);
+
+	    if (nentries > TYP_RESERVED_ENTRIES)
+		rbufp = Xmalloc (nbytes);
+	    else
+		rbufp = rbuf;
+	} else
+	    rbufp = NULL;
 
 	if (rbufp == NULL) {
-	    _XEatData (dpy, (unsigned long) nbytes);
+	    _XEatDataWords(dpy, rep.length);
 	    UnlockDisplay (dpy);
 	    SyncHandle ();
 	    return False;
@@ -213,27 +219,24 @@ XcupStoreColors(
     }
 
     if (_XReply(dpy, (xReply *)&rep, 0, xFalse)) {
-	long nbytes;
+	unsigned long nbytes;
 	xColorItem* rbufp;
 	xColorItem* cs;
-	int nentries = rep.length / 3;
+	unsigned int nentries = rep.length / 3;
 
-	nbytes = nentries * SIZEOF (xColorItem);
+	if ((nentries == ncolors) &&
+	    (nentries < (INT_MAX / SIZEOF (xColorItem)))) {
+	    nbytes = nentries * SIZEOF (xColorItem);
 
-	if (nentries != ncolors) {
-	    _XEatData (dpy, (unsigned long) nbytes);
-	    UnlockDisplay (dpy);
-	    SyncHandle ();
-	    return False;
-	}
-
-	if (ncolors > 256)
-	    rbufp = (xColorItem*) Xmalloc (nbytes);
-	else
-	    rbufp = rbuf;
+	    if (ncolors > 256)
+		rbufp = Xmalloc (nbytes);
+	    else
+		rbufp = rbuf;
+	} else
+	    rbufp = NULL;
 
 	if (rbufp == NULL) {
-	    _XEatData (dpy, (unsigned long) nbytes);
+	    _XEatDataWords(dpy, rep.length);
 	    UnlockDisplay (dpy);
 	    SyncHandle ();
 	    return False;
