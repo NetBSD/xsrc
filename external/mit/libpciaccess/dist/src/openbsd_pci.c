@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 Mark Kettenis
+ * Copyright (c) 2008, 2011 Mark Kettenis
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -394,6 +394,141 @@ pci_device_openbsd_probe(struct pci_device *device)
 	return 0;
 }
 
+#if defined(__i386__) || defined(__amd64__)
+#include <machine/sysarch.h>
+#include <machine/pio.h>
+#endif
+
+static struct pci_io_handle *
+pci_device_openbsd_open_legacy_io(struct pci_io_handle *ret,
+    struct pci_device *dev, pciaddr_t base, pciaddr_t size)
+{
+#if defined(__i386__)
+	struct i386_iopl_args ia;
+
+	ia.iopl = 1;
+	if (sysarch(I386_IOPL, &ia))
+		return NULL;
+
+	ret->base = base;
+	ret->size = size;
+	return ret;
+#elif defined(__amd64__)
+	struct amd64_iopl_args ia;
+
+	ia.iopl = 1;
+	if (sysarch(AMD64_IOPL, &ia))
+		return NULL;
+
+	ret->base = base;
+	ret->size = size;
+	return ret;
+#elif defined(PCI_MAGIC_IO_RANGE)
+	ret->memory = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED,
+	    aperturefd, PCI_MAGIC_IO_RANGE + base);
+	if (ret->memory == MAP_FAILED)
+		return NULL;
+
+	ret->base = base;
+	ret->size = size;
+	return ret;
+#else
+	return NULL;
+#endif
+}
+
+static uint32_t
+pci_device_openbsd_read32(struct pci_io_handle *handle, uint32_t reg)
+{
+#if defined(__i386__) || defined(__amd64__)
+	return inl(handle->base + reg);
+#else
+	return *(uint32_t *)((uintptr_t)handle->memory + reg);
+#endif
+}
+
+static uint16_t
+pci_device_openbsd_read16(struct pci_io_handle *handle, uint32_t reg)
+{
+#if defined(__i386__) || defined(__amd64__)
+	return inw(handle->base + reg);
+#else
+	return *(uint16_t *)((uintptr_t)handle->memory + reg);
+#endif
+}
+
+static uint8_t
+pci_device_openbsd_read8(struct pci_io_handle *handle, uint32_t reg)
+{
+#if defined(__i386__) || defined(__amd64__)
+	return inb(handle->base + reg);
+#else
+	return *(uint8_t *)((uintptr_t)handle->memory + reg);
+#endif
+}
+
+static void
+pci_device_openbsd_write32(struct pci_io_handle *handle, uint32_t reg,
+    uint32_t data)
+{
+#if defined(__i386__) || defined(__amd64__)
+	outl(handle->base + reg, data);
+#else
+	*(uint16_t *)((uintptr_t)handle->memory + reg) = data;
+#endif
+}
+
+static void
+pci_device_openbsd_write16(struct pci_io_handle *handle, uint32_t reg,
+    uint16_t data)
+{
+#if defined(__i386__) || defined(__amd64__)
+	outw(handle->base + reg, data);
+#else
+	*(uint8_t *)((uintptr_t)handle->memory + reg) = data;
+#endif
+}
+
+static void
+pci_device_openbsd_write8(struct pci_io_handle *handle, uint32_t reg,
+    uint8_t data)
+{
+#if defined(__i386__) || defined(__amd64__)
+	outb(handle->base + reg, data);
+#else
+	*(uint32_t *)((uintptr_t)handle->memory + reg) = data;
+#endif
+}
+
+static int
+pci_device_openbsd_map_legacy(struct pci_device *dev, pciaddr_t base,
+    pciaddr_t size, unsigned map_flags, void **addr)
+{
+	struct pci_device_mapping map;
+	int err;
+
+	map.base = base;
+	map.size = size;
+	map.flags = map_flags;
+	map.memory = NULL;
+	err = pci_device_openbsd_map_range(dev, &map);
+	*addr = map.memory;
+
+	return err;
+}
+
+static int
+pci_device_openbsd_unmap_legacy(struct pci_device *dev, void *addr,
+    pciaddr_t size)
+{
+	struct pci_device_mapping map;
+
+	map.memory = addr;
+	map.size = size;
+	map.flags = 0;
+	return pci_device_openbsd_unmap_range(dev, &map);
+}
+
 static const struct pci_system_methods openbsd_pci_methods = {
 	pci_system_openbsd_destroy,
 	NULL,
@@ -403,7 +538,21 @@ static const struct pci_system_methods openbsd_pci_methods = {
 	pci_device_openbsd_unmap_range,
 	pci_device_openbsd_read,
 	pci_device_openbsd_write,
-	pci_fill_capabilities_generic
+	pci_fill_capabilities_generic,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	pci_device_openbsd_open_legacy_io,
+	NULL,
+	pci_device_openbsd_read32,
+	pci_device_openbsd_read16,
+	pci_device_openbsd_read8,
+	pci_device_openbsd_write32,
+	pci_device_openbsd_write16,
+	pci_device_openbsd_write8,
+	pci_device_openbsd_map_legacy,
+	pci_device_openbsd_unmap_legacy
 };
 
 int
@@ -419,7 +568,7 @@ pci_system_openbsd_create(void)
 
 	for (domain = 0; domain < sizeof(pcifd) / sizeof(pcifd[0]); domain++) {
 		snprintf(path, sizeof(path), "/dev/pci%d", domain);
-	        pcifd[domain] = open(path, O_RDWR);
+	        pcifd[domain] = open(path, O_RDWR | O_CLOEXEC);
 		if (pcifd[domain] == -1)
 			break;
 		ndomains++;
@@ -505,6 +654,10 @@ pci_system_openbsd_create(void)
 					device->base.subvendor_id = PCI_VENDOR(reg);
 					device->base.subdevice_id = PCI_PRODUCT(reg);
 
+					device->base.vgaarb_rsrc =
+					    VGA_ARB_RSRC_LEGACY_IO |
+					    VGA_ARB_RSRC_LEGACY_MEM;
+
 					device++;
 				}
 			}
@@ -518,4 +671,139 @@ void
 pci_system_openbsd_init_dev_mem(int fd)
 {
 	aperturefd = fd;
+}
+
+int
+pci_device_vgaarb_init(void)
+{
+	struct pci_device *dev = pci_sys->vga_target;
+	struct pci_device_iterator *iter;
+	struct pci_id_match vga_match = {
+		PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY,
+		(PCI_CLASS_DISPLAY << 16) | (PCI_SUBCLASS_DISPLAY_VGA << 8),
+		0x00ffff00
+	};
+	struct pci_vga pv;
+	int err;
+
+	pv.pv_sel.pc_bus = 0;
+	pv.pv_sel.pc_dev = 0;
+	pv.pv_sel.pc_func = 0;
+	err = ioctl(pcifd[0], PCIOCGETVGA, &pv);
+	if (err)
+		return err;
+
+	pci_sys->vga_target = pci_device_find_by_slot(0, pv.pv_sel.pc_bus,
+	    pv.pv_sel.pc_dev, pv.pv_sel.pc_func);
+
+	/* Count the number of VGA devices in domain 0. */
+	iter = pci_id_match_iterator_create(&vga_match);
+	if (iter == NULL)
+		return -1;
+	pci_sys->vga_count = 0;
+	while ((dev = pci_device_next(iter)) != NULL) {
+		if (dev->domain == 0)
+			pci_sys->vga_count++;
+	}
+	pci_iterator_destroy(iter);
+
+	return 0;
+}
+
+void
+pci_device_vgaarb_fini(void)
+{
+	struct pci_device *dev;
+	struct pci_vga pv;
+
+	if (pci_sys == NULL)
+		return;
+	dev = pci_sys->vga_target;
+	if (dev == NULL)
+		return;
+
+	pv.pv_sel.pc_bus = dev->bus;
+	pv.pv_sel.pc_dev = dev->dev;
+	pv.pv_sel.pc_func = dev->func;
+	pv.pv_lock = PCI_VGA_UNLOCK;
+	ioctl(pcifd[dev->domain], PCIOCSETVGA, &pv);
+}
+
+int
+pci_device_vgaarb_set_target(struct pci_device *dev)
+{
+	pci_sys->vga_target = dev;
+	return (0);
+}
+
+int
+pci_device_vgaarb_lock(void)
+{
+	struct pci_device *dev = pci_sys->vga_target;
+	struct pci_vga pv;
+
+	if (dev == NULL)
+		return -1;
+
+#if 0
+	if (dev->vgaarb_rsrc == 0 || pci_sys->vga_count == 1)
+		return 0;
+#else
+	if (pci_sys->vga_count == 1)
+		return 0;
+#endif
+
+	pv.pv_sel.pc_bus = dev->bus;
+	pv.pv_sel.pc_dev = dev->dev;
+	pv.pv_sel.pc_func = dev->func;
+	pv.pv_lock = PCI_VGA_LOCK;
+	return ioctl(pcifd[dev->domain], PCIOCSETVGA, &pv);
+}
+
+int
+pci_device_vgaarb_unlock(void)
+{
+	struct pci_device *dev = pci_sys->vga_target;
+	struct pci_vga pv;
+
+	if (dev == NULL)
+		return -1;
+
+#if 0
+	if (dev->vgaarb_rsrc == 0 || pci_sys->vga_count == 1)
+		return 0;
+#else
+	if (pci_sys->vga_count == 1)
+		return 0;
+#endif
+
+	pv.pv_sel.pc_bus = dev->bus;
+	pv.pv_sel.pc_dev = dev->dev;
+	pv.pv_sel.pc_func = dev->func;
+	pv.pv_lock = PCI_VGA_UNLOCK;
+	return ioctl(pcifd[dev->domain], PCIOCSETVGA, &pv);
+}
+
+int
+pci_device_vgaarb_get_info(struct pci_device *dev, int *vga_count,
+    int *rsrc_decodes)
+{
+	*vga_count = pci_sys->vga_count;
+
+	if (dev)
+		*rsrc_decodes = dev->vgaarb_rsrc;
+
+	return 0;
+}
+
+int
+pci_device_vgaarb_decodes(int rsrc_decodes)
+{
+	struct pci_device *dev = pci_sys->vga_target;
+
+	if (dev == NULL)
+		return -1;
+
+	dev->vgaarb_rsrc = rsrc_decodes;
+	return 0;
 }

@@ -90,10 +90,10 @@ struct freebsd_pci_system {
 
 /**
  * Map a memory region for a device using /dev/mem.
- * 
+ *
  * \param dev   Device whose memory region is to be mapped.
  * \param map   Parameters of the mapping that is to be created.
- * 
+ *
  * \return
  * Zero on success or an \c errno value on failure.
  */
@@ -101,14 +101,14 @@ static int
 pci_device_freebsd_map_range(struct pci_device *dev,
 			     struct pci_device_mapping *map)
 {
-    const int prot = ((map->flags & PCI_DEV_MAP_FLAG_WRITABLE) != 0) 
+    const int prot = ((map->flags & PCI_DEV_MAP_FLAG_WRITABLE) != 0)
         ? (PROT_READ | PROT_WRITE) : PROT_READ;
     struct mem_range_desc mrd;
     struct mem_range_op mro;
 
     int fd, err = 0;
 
-    fd = open("/dev/mem", O_RDWR);
+    fd = open("/dev/mem", O_RDWR | O_CLOEXEC);
     if (fd == -1)
 	return errno;
 
@@ -153,7 +153,7 @@ pci_device_freebsd_unmap_range( struct pci_device *dev,
     if ((map->flags & PCI_DEV_MAP_FLAG_CACHABLE) ||
 	(map->flags & PCI_DEV_MAP_FLAG_WRITE_COMBINE))
     {
-	fd = open("/dev/mem", O_RDWR);
+	fd = open("/dev/mem", O_RDWR | O_CLOEXEC);
 	if (fd != -1) {
 	    mrd.mr_base = map->base;
 	    mrd.mr_len = map->size;
@@ -200,7 +200,7 @@ pci_device_freebsd_read( struct pci_device * dev, void * data,
 	io.pi_reg = offset;
 	io.pi_width = toread;
 
-	if ( ioctl( freebsd_pci_sys->pcidev, PCIOCREAD, &io ) < 0 ) 
+	if ( ioctl( freebsd_pci_sys->pcidev, PCIOCREAD, &io ) < 0 )
 	    return errno;
 
 	memcpy(data, &io.pi_data, toread );
@@ -241,7 +241,7 @@ pci_device_freebsd_write( struct pci_device * dev, const void * data,
 	io.pi_width = towrite;
 	memcpy( &io.pi_data, data, towrite );
 
-	if ( ioctl( freebsd_pci_sys->pcidev, PCIOCWRITE, &io ) < 0 ) 
+	if ( ioctl( freebsd_pci_sys->pcidev, PCIOCWRITE, &io ) < 0 )
 	    return errno;
 
 	offset += towrite;
@@ -293,7 +293,7 @@ pci_device_freebsd_read_rom( struct pci_device * dev, void * buffer )
     }
 
     printf("Using rom_base = 0x%lx\n", (long)rom_base);
-    memfd = open( "/dev/mem", O_RDONLY );
+    memfd = open( "/dev/mem", O_RDONLY | O_CLOEXEC );
     if ( memfd == -1 )
 	return errno;
 
@@ -365,7 +365,7 @@ pci_device_freebsd_probe( struct pci_device * dev )
 
     for (i = 0; i < pci_device_freebsd_get_num_regions( dev ); i++) {
 	bar.pbi_reg = PCIR_BAR(i);
-	if ( ioctl( freebsd_pci_sys->pcidev, PCIOCGETBAR, &bar ) < 0 ) 
+	if ( ioctl( freebsd_pci_sys->pcidev, PCIOCGETBAR, &bar ) < 0 )
 	    continue;
 
 	if (PCI_BAR_IO(bar.pbi_base))
@@ -440,7 +440,7 @@ pci_device_freebsd_get_region_info( struct pci_device * dev, int region,
 
     /*
      * We are going to be doing evil things to the registers here
-     * so disable them via the command register first. 
+     * so disable them via the command register first.
      */
     err = pci_device_cfg_read_u16( dev, &cmd, PCIR_COMMAND );
     if (err != 0)
@@ -585,7 +585,7 @@ pci_system_freebsd_create( void )
     int i;
 
     /* Try to open the PCI device */
-    pcidev = open( "/dev/pci", O_RDWR );
+    pcidev = open( "/dev/pci", O_RDWR | O_CLOEXEC );
     if ( pcidev == -1 )
 	return ENXIO;
 

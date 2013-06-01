@@ -28,54 +28,28 @@
 #include "pciaccess.h"
 #include "pciaccess_private.h"
 
-static struct pci_io_handle *ios;
-static unsigned int num_ios;
-
 static struct pci_io_handle *
 new_io_handle(void)
 {
     struct pci_io_handle *new;
 
-    new = realloc(ios, sizeof(struct pci_io_handle) * (num_ios + 1));
+    new = malloc(sizeof(struct pci_io_handle));
     if (!new)
 	return NULL;
 
-    ios = new;
-    num_ios++;
-
-    return ios + num_ios - 1;
+    return new;
 }
 
 static void
 delete_io_handle(struct pci_io_handle *handle)
 {
-    struct pci_io_handle *new;
-    int i = 0;
-
-    if (!handle || !num_ios || (void *)handle < (void *)ios ||
-        (void *)handle > (void *)(ios + num_ios - 1))
-        return;
-
-    for (i = 0; i < num_ios; i++) {
-        if (ios + i == handle) {
-            memmove(&ios[i], &ios[i+1], sizeof(struct pci_io_handle) *
-                                        (num_ios - i - 1));
-            break;
-        }
-    }
-
-    new = realloc(ios, sizeof(struct pci_io_handle) * (num_ios - 1));
-    if (new)
-        ios = new;
-    num_ios--;
+    free(handle);
+    return;
 }
 
 _pci_hidden void
 pci_io_cleanup(void)
 {
-    free(ios);
-    ios = NULL;
-    num_ios = 0;
 }
 
 /**
@@ -109,7 +83,7 @@ pci_device_open_io(struct pci_device *dev, pciaddr_t base, pciaddr_t size)
 	ret = new_io_handle();
 	if (!ret)
 	    return NULL;
-	
+
 	if (!pci_sys->methods->open_device_io(ret, dev, bar, base, size)) {
 	    delete_io_handle(ret);
 	    return NULL;
