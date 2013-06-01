@@ -1,4 +1,4 @@
-# 
+#
 # (C) Copyright IBM Corporation 2006
 # All Rights Reserved.
 #
@@ -28,32 +28,32 @@ lib_LTLIBRARIES = libpciaccess.la
 
 if LINUX
 OS_SUPPORT = linux_sysfs.c linux_devmem.c linux_devmem.h
+VGA_ARBITER = common_vgaarb.c
 endif
 
 if FREEBSD
 OS_SUPPORT = freebsd_pci.c
+VGA_ARBITER = common_vgaarb_stub.c
 endif
 
 if NETBSD
 OS_SUPPORT = netbsd_pci.c
+VGA_ARBITER = common_vgaarb_stub.c
 endif
 
 if OPENBSD
 OS_SUPPORT = openbsd_pci.c
+# VGA Arbiter code is included in openbsd_pci.c
 endif
 
 if SOLARIS
 OS_SUPPORT = solx_devfs.c pci_tools.h
-endif
-
-if LINUX
-VGA_ARBITER = common_vgaarb.c
-else
 VGA_ARBITER = common_vgaarb_stub.c
 endif
 
 if GNU
 OS_SUPPORT = x86_pci.c
+VGA_ARBITER = common_vgaarb_stub.c
 endif
 
 libpciaccess_la_SOURCES = common_bridge.c \
@@ -70,4 +70,4 @@ libpciaccess_la_SOURCES = common_bridge.c \
 
 libpciaccess_la_LIBADD = $(PCIACCESS_LIBS)
 
-libpciaccess_la_LDFLAGS = -version-number 0:10:8 -no-undefined
+libpciaccess_la_LDFLAGS = -version-number 0:11:1 -no-undefined

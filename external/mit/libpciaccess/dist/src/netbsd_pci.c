@@ -94,7 +94,7 @@ pci_device_netbsd_map_range(struct pci_device *dev,
 	struct mtrr mtrr;
 	int fd, error, nmtrr, prot = PROT_READ;
 
-	if ((fd = open("/dev/mem", O_RDWR)) == -1)
+	if ((fd = open("/dev/mem", O_RDWR | O_CLOEXEC)) == -1)
 		return errno;
 
 	if (map->flags & PCI_DEV_MAP_FLAG_WRITABLE)
@@ -210,7 +210,7 @@ pci_device_netbsd_write(struct pci_device *dev, const void *data,
 		io.cfgreg.reg = offset;
 		memcpy(&io.cfgreg.val, data, 4);
 
-		if (ioctl(pcifd, PCI_IOC_BDF_CFGWRITE, &io) == -1) 
+		if (ioctl(pcifd, PCI_IOC_BDF_CFGWRITE, &io) == -1)
 			return errno;
 
 		offset += 4;
@@ -328,7 +328,7 @@ pci_system_netbsd_create(void)
 	int bus, dev, func, ndevs, nfuncs;
 	uint32_t reg;
 
-	pcifd = open("/dev/pci0", O_RDWR);
+	pcifd = open("/dev/pci0", O_RDWR | O_CLOEXEC);
 	if (pcifd == -1)
 		return ENXIO;
 
