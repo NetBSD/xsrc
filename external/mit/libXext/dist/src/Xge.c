@@ -76,7 +76,7 @@ static Bool _xgeCheckExtension(Display* dpy, XExtDisplayInfo* info);
 
 /* main extension information data */
 static XExtensionInfo *xge_info;
-static char xge_extension_name[] = GE_NAME;
+static const char xge_extension_name[] = GE_NAME;
 static XExtensionHooks xge_extension_hooks = {
     NULL,	        /* create_gc */
     NULL,	        /* copy_gc */
@@ -218,7 +218,15 @@ _xgeDpyClose(Display* dpy, XExtCodes* codes)
         XFree(xge_data);
     }
 
-    return XextRemoveDisplay(xge_info, dpy);
+    if(!XextRemoveDisplay(xge_info, dpy))
+        return 0;
+
+    if (xge_info->ndisplays == 0) {
+        XextDestroyExtension(xge_info);
+        xge_info = NULL;
+    }
+
+    return 1;
 }
 
 /*
