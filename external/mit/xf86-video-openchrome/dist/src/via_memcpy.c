@@ -25,9 +25,7 @@
 #include "config.h"
 #endif
 
-#include "via.h"
 #include "via_driver.h"
-#include "via_memcpy.h"
 #include "compiler.h"
 
 
@@ -525,7 +523,7 @@ cpuValid(const char *cpuinfo, char **flags)
 vidCopyFunc
 viaVidCopyInit(char *copyType, ScreenPtr pScreen)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 
 #ifdef linux
     char buf[BSIZ];
@@ -533,7 +531,7 @@ viaVidCopyInit(char *copyType, ScreenPtr pScreen)
     char *tmpBuf, *endBuf;
     int count, j, bestSoFar;
     unsigned best, tmp, testSize, alignSize, tmp2;
-    VIAMem tmpFbBuffer;
+    struct buffer_object *tmpFbBuffer;
     McFuncData *curData;
     FILE *cpuInfoFile;
     double cpuFreq;
@@ -572,30 +570,23 @@ viaVidCopyInit(char *copyType, ScreenPtr pScreen)
 
     alignSize = BSIZH * (BSIZA + (BSIZA >> 1));
     testSize = BSIZH * (BSIZW + (BSIZW >> 1));
-    tmpFbBuffer.pool = 0;
-
     /*
      * Allocate an area of offscreen FB memory, (buf1), a simulated video
-     * player buffer (buf2) and a pool of uninitialized "video" data (buf3). 
+     * player buffer (buf2) and a pool of uninitialized "video" data (buf3).
      */
-
-    if (VIAAllocLinear(&tmpFbBuffer, pScrn, alignSize + 31))
+    tmpFbBuffer = drm_bo_alloc(pScrn, alignSize, 32, TTM_PL_FLAG_VRAM);
+    if (!tmpFbBuffer)
         return libc_YUV42X;
-    if (NULL == (buf2 = (unsigned char *)xalloc(testSize))) {
-        VIAFreeLinear(&tmpFbBuffer);
-        return libc_YUV42X;
-    }
-    if (NULL == (buf3 = (unsigned char *)xalloc(testSize))) {
-        xfree(buf2);
-        VIAFreeLinear(&tmpFbBuffer);
+    if (NULL == (buf2 = (unsigned char *)malloc(testSize))) {
+        drm_bo_free(pScrn, tmpFbBuffer);
         return libc_YUV42X;
     }
-    buf1 = (unsigned char *)pVia->FBBase + tmpFbBuffer.base;
-
-    /* Align the frame buffer destination memory to a 32 byte boundary. */
-    if ((unsigned long)buf1 & 31)
-        buf1 += (32 - ((unsigned long)buf1 & 31));
-
+    if (NULL == (buf3 = (unsigned char *)malloc(testSize))) {
+        free(buf2);
+        drm_bo_free(pScrn, tmpFbBuffer);
+        return libc_YUV42X;
+    }
+    buf1 = drm_bo_map(pScrn, tmpFbBuffer);
     bestSoFar = 0;
     best = 0xFFFFFFFFU;
 
@@ -642,9 +633,10 @@ viaVidCopyInit(char *copyType, ScreenPtr pScreen)
                        curData->mName);
         }
     }
-    xfree(buf3);
-    xfree(buf2);
-    VIAFreeLinear(&tmpFbBuffer);
+    free(buf3);
+    free(buf2);
+    drm_bo_unmap(pScrn, tmpFbBuffer);
+    drm_bo_free(pScrn, tmpFbBuffer);
     xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
                "Using %s YUV42X copy for %s.\n",
                mcFunctions[bestSoFar].mName, copyType);
@@ -661,7 +653,7 @@ viaVidCopyInit(char *copyType, ScreenPtr pScreen)
 vidCopyFunc
 viaVidCopyInit(char *copyType, ScreenPtr pScreen)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 
     xf86DrvMsg(pScrn->scrnIndex, X_INFO,
                "Using default xfree86 memcpy for video.\n");

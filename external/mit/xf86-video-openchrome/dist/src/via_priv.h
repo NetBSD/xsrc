@@ -26,7 +26,7 @@
 #ifndef _VIA_PRIV_H_
 #define _VIA_PRIV_H_ 1
 
-#ifdef XF86DRI
+#ifdef HAVE_DRI
 #include "via_drm.h"
 #endif
 #include "exa.h"
@@ -129,38 +129,20 @@ typedef struct
     CARD32         dwMPEGProgressiveMode; /* default value : VIA_PROGRESSIVE */
     CARD32         dwHQVheapInfo;         /* video memory heap of the HQV buffer */
     CARD32         dwVideoControl;        /* video control flag */
-    CARD32         dwminifyH; 			   /* Horizontal minify factor */
+    CARD32         dwminifyH;			   /* Horizontal minify factor */
     CARD32         dwminifyV;			   /* Vertical minify factor */
     CARD32         dwMpegDecoded;
 } OVERLAYRECORD;
 
 #define MEM_BLOCKS		4
 
-typedef struct {
-    unsigned long   base;		/* Offset into fb */
-    int    pool;			/* Pool we drew from */
-#ifdef XF86DRI
-    int    drm_fd;			/* Fd in DRM mode */
-    drm_via_mem_t drm;			/* DRM management object */
-#endif
-    void  *pVia;			/* VIA driver pointer */
-    FBLinearPtr linear;			/* X linear pool info ptr */
-    ExaOffscreenArea *exa;
-    ScrnInfoPtr pScrn;
-} VIAMem;
-
-typedef VIAMem *VIAMemPtr;
-
-
-
 typedef struct  {
     unsigned long   gdwVideoFlagSW;
     unsigned long   gdwVideoFlagMPEG;
     unsigned long   gdwAlphaEnabled;		/* For Alpha blending use*/
 
-    VIAMem SWOVMem;
-    VIAMem HQVMem;
-    VIAMem SWfbMem;
+    struct buffer_object  *HQVMem;
+    struct buffer_object  *SWfbMem;
 
     CARD32 SrcFourCC;
     DDUPDATEOVERLAY UpdateOverlayBackup;    /* For HQVcontrol func use
@@ -170,9 +152,6 @@ typedef struct  {
     SWDEVICE   SWDevice;
     OVERLAYRECORD   overlayRecordV1;
     OVERLAYRECORD   overlayRecordV3;
-
-    BoxRec  AvailFBArea;
-    FBLinearPtr   SWOVlinear;
 
     Bool MPEG_ON;
     Bool SWVideo_ON;

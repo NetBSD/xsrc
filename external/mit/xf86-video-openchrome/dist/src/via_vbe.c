@@ -33,18 +33,17 @@
 #include "config.h"
 #endif
 
-#include "via.h"
 #include "via_driver.h"
 #include "vbe.h"
 #include "vbeModes.h"
 
-#define R16(v)                ((v) & 0xffff)
-
+#define R16(v)			((v) & 0xffff)
+#define VBE_DEFAULT_REFRESH	6000
 
 void
-ViaVbeAdjustFrame(int scrnIndex, int x, int y, int flags)
+ViaVbeAdjustFrame(ScrnInfoPtr pScrn, int x, int y)
 {
-    VIAPtr pVia = VIAPTR(xf86Screens[scrnIndex]);
+    VIAPtr pVia = VIAPTR(pScrn);
 
     VBESetDisplayStart(pVia->pVbe, x, y, TRUE);
 }
@@ -85,23 +84,22 @@ ViaVbeGetRefreshRateIndex(int maxRefresh)
 static int
 ViaVbeGetActiveDevices(ScrnInfoPtr pScrn)
 {
-    VIAPtr pVia = VIAPTR(pScrn);
-    VIABIOSInfoPtr pBIOSInfo = pVia->pBIOSInfo;
-
-    int activeDevices;
-
-    activeDevices = 0;
-
-    /* Set Active Device and translate BIOS byte definition. */
-    if (pBIOSInfo->CrtActive)
-        activeDevices = 0x01;
-    if (pBIOSInfo->Panel->IsActive)
-        activeDevices |= 0x02;
-    if (pBIOSInfo->TVActive)
-        activeDevices |= 0x04;
+	xf86CrtcConfigPtr xf86_config = XF86_CRTC_CONFIG_PTR(pScrn);
+    int activeDevices = 0, i;
 
     /* TODO: Add others devices. */
+	for (i = 0; i < xf86_config->num_output; i++) {
+		xf86OutputPtr output = xf86_config->output[i];
 
+		if (output->status == XF86OutputStatusConnected) {
+			if (!strncmp(output->name, "VGA", 3))
+				activeDevices = 0x01;
+			else if (!strncmp(output->name, "LVDS", 4))
+				activeDevices |= 0x02;
+			else if (!strncmp(output->name, "TV", 2))
+				activeDevices |= 0x04;
+		}
+	}
     return activeDevices;
 }
 
@@ -135,7 +133,7 @@ ViaVbeSetActiveDevices(ScrnInfoPtr pScrn, int mode, int refresh)
 /*
  * Sets the panel mode (expand or center).
  */
-static Bool
+Bool
 ViaVbeSetPanelMode(ScrnInfoPtr pScrn, Bool expand)
 {
     VIAPtr pVia = VIAPTR(pScrn);
@@ -192,11 +190,8 @@ ViaVbeSetMode(ScrnInfoPtr pScrn, DisplayModePtr pMode)
     VbeModeInfoData *data;
 
     pVia = VIAPTR(pScrn);
-    VIABIOSInfoPtr pBIOSInfo = pVia->pBIOSInfo;
     int mode;
     int refreshRate;
-
-    pVia->OverlaySupported = FALSE;
 
     data = (VbeModeInfoData *) pMode->Private;
 
@@ -230,7 +225,7 @@ ViaVbeSetMode(ScrnInfoPtr pScrn, DisplayModePtr pMode)
                 /* Some cards do not like setting the clock. */
                 xf86ErrorF("...but worked OK without customized "
                            "refresh and dotclock.\n");
-                xfree(data->block);
+                free(data->block);
                 data->block = NULL;
                 data->mode &= ~(1 << 11);
             } else {
@@ -240,18 +235,6 @@ ViaVbeSetMode(ScrnInfoPtr pScrn, DisplayModePtr pMode)
             }
         }
     } else {
-
-        if (pBIOSInfo->Panel->IsActive && !pVia->useLegacyVBE) {
-            /* 
-             * FIXME: Should we always set the panel expansion?
-             * Does it depend on the resolution?
-             */
-            if (!ViaVbeSetPanelMode(pScrn, !pBIOSInfo->Center)) {
-                xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
-                           "Unable to set the panel mode.\n");
-            }
-        }
-
         data->mode &= ~(1 << 11);
         if (VBESetVBEMode(pVia->pVbe, data->mode, NULL) == FALSE) {
             xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Set VBE Mode failed.\n");
@@ -267,8 +250,6 @@ ViaVbeSetMode(ScrnInfoPtr pScrn, DisplayModePtr pMode)
 
     if (data->data->XResolution != pScrn->displayWidth)
         VBESetLogicalScanline(pVia->pVbe, pScrn->displayWidth);
-
-    pScrn->vtSema = TRUE;
 
     return (TRUE);
 }
@@ -322,7 +303,7 @@ ViaVbeSaveRestore(ScrnInfoPtr pScrn, vbeSaveRestoreFunction function)
                 && (function == MODE_SAVE)) {
                 /* Do not rely on the memory not being touched. */
                 if (pVia->vbeMode.pstate == NULL)
-                    pVia->vbeMode.pstate = xalloc(pVia->vbeMode.stateSize);
+                    pVia->vbeMode.pstate = malloc(pVia->vbeMode.stateSize);
                 memcpy(pVia->vbeMode.pstate, pVia->vbeMode.state,
                        pVia->vbeMode.stateSize);
             }
@@ -396,7 +377,7 @@ ViaVbeModePreInit(ScrnInfoPtr pScrn)
     return TRUE;
 }
 
-static int
+int
 ViaVbePanelPower(vbeInfoPtr pVbe, int mode)
 {
     pVbe->pInt10->num = 0x10;
@@ -409,7 +390,7 @@ ViaVbePanelPower(vbeInfoPtr pVbe, int mode)
 }
 
 #if 0
-/* 
+/*
  * FIXME: This might be useful in the future. Otherwise feel free to remove. 
  * If mode=1, it sets the panel in a low-power, low-performance state;
  * if mode=0, then high performance.
@@ -428,22 +409,11 @@ ViaVbePanelLowPower(vbeInfoPtr pVbe, int mode)
 #endif
 
 void
-ViaVbeDoDPMS(ScrnInfoPtr pScrn, int mode)
+ViaVbeDPMS(ScrnInfoPtr pScrn, int mode)
 {
     VIAPtr pVia = VIAPTR(pScrn);
-    VIABIOSInfoPtr pBIOSInfo = pVia->pBIOSInfo;
 
-    if (pBIOSInfo->Panel->IsActive)
-        ViaVbePanelPower(pVia->pVbe, (mode == DPMSModeOn));
-
-    VBEDPMSSet(pVia->pVbe, mode);
-}
-
-void
-ViaVbeDPMS(ScrnInfoPtr pScrn, int mode, int flags)
-{
-    if (!pScrn->vtSema)
-        return;
-
-    ViaVbeDoDPMS(pScrn, mode);
+	if (!pScrn->vtSema)
+		return;
+	VBEDPMSSet(pVia->pVbe, mode);
 }
