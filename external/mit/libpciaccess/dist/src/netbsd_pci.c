@@ -537,7 +537,7 @@ pci_system_netbsd_create(void)
 	ndevs = 0;
 	nbuses = 0;
 	snprintf(netbsd_devname, 32, "/dev/pci%d", nbuses);
-	pcifd = open(netbsd_devname, O_RDWR);
+	pcifd = open(netbsd_devname, O_RDWR | O_CLOEXEC);
 	while (pcifd > 0) {
 		ioctl(pcifd, PCI_IOC_BUSINFO, &businfo);
 		buses[nbuses].fd = pcifd;
