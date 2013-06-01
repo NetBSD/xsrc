@@ -12,6 +12,7 @@ libXext_la_LDFLAGS = -version-number $(XEXT_SOREV) -no-undefined
 libXext_la_LIBADD = $(XEXT_LIBS)
 
 libXext_la_SOURCES = \
+	eat.h \
 	DPMS.c \
 	MITMisc.c \
 	XAppgroup.c \
@@ -61,5 +62,5 @@ lintlibdir = $(libdir)
 lintlib_DATA = $(LINTLIB)
 
 $(LINTLIB): $(libXext_la_SOURCES)
-	$(LINT) -y -oXext -x $(ALL_LINT_FLAGS) $(libXext_la_SOURCES) 
+	$(LINT) -y -oXext -x $(ALL_LINT_FLAGS) $(libXext_la_SOURCES)
 endif MAKE_LINT_LIB
