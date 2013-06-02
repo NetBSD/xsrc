@@ -15,8 +15,6 @@
 #include "config.h"
 #endif
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/cir_driver.c,v 1.67 2001/05/15 10:19:37 eich Exp $ */
-
 /* All drivers should typically include these */
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -25,9 +23,6 @@
 #include "xf86Resources.h"
 #endif
 /* All drivers need this */
-
-/* Drivers for PCI hardware need this */
-#include "xf86PciInfo.h"
 
 /* Drivers that need to access the PCI config space directly need this */
 #include "xf86Pci.h"
@@ -90,6 +85,8 @@ SymTabRec CIRChipsets[] = {
 	{ PCI_CHIP_GD5464BD,	"CL-GD5464BD" },
 	{ PCI_CHIP_GD5465,		"CL-GD5465" },
 	{ PCI_CHIP_GD7548,              "CL-GD7548" },
+	{ PCI_CHIP_GD7555,              "CL-GD7555" },
+	{ PCI_CHIP_GD7556,              "CL-GD7556" },
 	{-1,					NULL }
 };
 
@@ -107,6 +104,8 @@ _X_EXPORT PciChipsets CIRPciChipsets[] = {
 	{ PCI_CHIP_GD5464BD,PCI_CHIP_GD5464BD,	RES_SHARED_VGA },
 	{ PCI_CHIP_GD5465,	PCI_CHIP_GD5465,	RES_SHARED_VGA },
 	{ PCI_CHIP_GD7548,	PCI_CHIP_GD7548,	RES_SHARED_VGA },
+	{ PCI_CHIP_GD7555,	PCI_CHIP_GD7555,	RES_SHARED_VGA },
+	{ PCI_CHIP_GD7556,	PCI_CHIP_GD7556,	RES_SHARED_VGA },
 	{ -1,				-1,					RES_UNDEFINED}
 };
 
@@ -238,9 +237,10 @@ CIRProbe(DriverPtr drv, int flags)
 				    CIRChipsets, CIRPciChipsets, devSections,
  				    numDevSections, drv, &usedChips);
     /* Free it since we don't need that list after this */
-    xfree(devSections);
-    if (numUsed <= 0)
+    if (numUsed <= 0) {
+        free(devSections);
  	return FALSE;
+    }
     if (flags & PROBE_DETECT)
  	foundScreen = TRUE;
     else for (i = 0; i < numUsed; i++) {
@@ -250,6 +250,23 @@ CIRProbe(DriverPtr drv, int flags)
  	   they should be handled in this driver (as opposed to their
  	   own driver). */
 	pPci = xf86GetPciInfoForEntity(usedChips[i]);
+
+#ifdef XSERVER_LIBPCIACCESS
+    if (pci_device_has_kernel_driver(pPci)) {
+        xf86DrvMsg(0, X_ERROR,
+                   "cirrus: The PCI device 0x%x at %2.2d@%2.2d:%2.2d:%1.1d has a kernel module claiming it.\n",
+                   pPci->device_id, pPci->bus, pPci->domain, pPci->dev, pPci->func);
+        xf86DrvMsg(0, X_ERROR,
+                   "cirrus: This driver cannot operate until it has been unloaded.\n");
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 13
+	xf86UnclaimPciSlot(pPci);
+#else
+	xf86UnclaimPciSlot(pPci, devSections[0]);
+#endif
+        free(devSections);
+        return FALSE;
+    }
+#endif
 	pScrn = NULL;
  	if (pPci && (PCI_DEV_DEVICE_ID(pPci) == PCI_CHIP_GD5462 ||
 		     PCI_DEV_DEVICE_ID(pPci) == PCI_CHIP_GD5464 ||
@@ -280,7 +297,8 @@ CIRProbe(DriverPtr drv, int flags)
  	    pScrn->Probe	 = NULL;
  	}
     }
-    xfree(usedChips);
+    free(devSections);
+    free(usedChips);
      
     return foundScreen;
 }
