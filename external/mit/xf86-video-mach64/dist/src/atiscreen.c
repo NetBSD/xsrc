@@ -34,17 +34,17 @@
 #include "ati.h"
 #include "atibus.h"
 #include "atichip.h"
-#include "aticonsole.h"
 #include "aticursor.h"
 #include "atidac.h"
 #include "atidga.h"
 #include "atidri.h"
 #include "atimach64.h"
 #include "atimode.h"
-#include "atiscreen.h"
 #include "atistruct.h"
+#include "atiscreen.h"
 #include "atixv.h"
 #include "atimach64accel.h"
+#include "aticonsole.h"
 
 #ifdef XF86DRI_DEVEL
 #include "mach64_dri.h"
@@ -124,11 +124,10 @@ ATIMinBits
 static Bool
 ATIMach64SetupMemXAA_NoDRI
 (
-    int       iScreen,
+    ScrnInfoPtr pScreenInfo,
     ScreenPtr pScreen
 )
 {
-    ScrnInfoPtr  pScreenInfo = xf86Screens[iScreen];
     ATIPtr       pATI        = ATIPTR(pScreenInfo);
 
     int maxScanlines = ATIMach64MaxY;
@@ -166,11 +165,10 @@ ATIMach64SetupMemXAA_NoDRI
 static Bool
 ATIMach64SetupMemXAA
 (
-    int       iScreen,
+    ScrnInfoPtr pScreenInfo,
     ScreenPtr pScreen
 )
 {
-	ScrnInfoPtr  pScreenInfo = xf86Screens[iScreen];
 	ATIPtr       pATI        = ATIPTR(pScreenInfo);
 
 	ATIDRIServerInfoPtr pATIDRIServer = pATI->pDRIServerInfo;
@@ -276,7 +274,7 @@ ATIMach64SetupMemXAA
 	if (scanlines > ATIMach64MaxY) scanlines = ATIMach64MaxY;
 
 	if ( pATIDRIServer->IsPCI && pATIDRIServer->textureSize == 0 ) {
-	    xf86DrvMsg(iScreen, X_WARNING,
+	    xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
 		       "Not enough memory for local textures, disabling DRI\n");
 	    ATIDRICloseScreen(pScreen);
 	    pATI->directRenderingEnabled = FALSE;
@@ -322,13 +320,13 @@ ATIMach64SetupMemXAA
 
 	    }
 
-	    xf86DrvMsg(iScreen, X_INFO, "Will use %d kB of offscreen memory for XAA\n", 
+	    xf86DrvMsg(pScreenInfo->scrnIndex, X_INFO, "Will use %d kB of offscreen memory for XAA\n", 
 		       (offscreenBytes - pATIDRIServer->textureSize)/1024);
 
-	    xf86DrvMsg(iScreen, X_INFO, "Will use back buffer at offset 0x%x\n",
+	    xf86DrvMsg(pScreenInfo->scrnIndex, X_INFO, "Will use back buffer at offset 0x%x\n",
 		       pATIDRIServer->backOffset);
 
-	    xf86DrvMsg(iScreen, X_INFO, "Will use depth buffer at offset 0x%x\n",
+	    xf86DrvMsg(pScreenInfo->scrnIndex, X_INFO, "Will use depth buffer at offset 0x%x\n",
 		       pATIDRIServer->depthOffset);
 
 	    if (pATIDRIServer->textureSize > 0) {
@@ -350,15 +348,9 @@ ATIMach64SetupMemXAA
  * This function is called by DIX to initialise the screen.
  */
 Bool
-ATIScreenInit
-(
-    int       iScreen,
-    ScreenPtr pScreen,
-    int       argc,
-    char      **argv
-)
+ATIScreenInit(SCREEN_INIT_ARGS_DECL)
 {
-    ScrnInfoPtr  pScreenInfo = xf86Screens[iScreen];
+    ScrnInfoPtr  pScreenInfo = xf86ScreenToScrn(pScreen);
     ATIPtr       pATI        = ATIPTR(pScreenInfo);
     pointer      pFB;
     int          VisualMask;
@@ -411,7 +403,7 @@ ATIScreenInit
      * 3D triangle setup (the VERTEX_* registers)
      */
     if (pATI->Chip < ATI_CHIP_264GTPRO) {
-	xf86DrvMsg(iScreen, X_WARNING,
+	xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
 		   "Direct rendering is not supported for ATI chips earlier than "
 		   "the ATI 3D Rage Pro.\n");
 	pATI->directRenderingEnabled = FALSE;
@@ -428,13 +420,13 @@ ATIScreenInit
 	    + (pScreenInfo->virtualY * 2 / cpp);  /* depth buffer (always 16-bit) */
 
 	if (!pATI->OptionAccel) {
-	    xf86DrvMsg(iScreen, X_WARNING,
+	    xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
 		       "Acceleration disabled, not initializing the DRI\n");
 	    pATI->directRenderingEnabled = FALSE;
 	} else if ( maxY > requiredY ) {
 	    pATI->directRenderingEnabled = ATIDRIScreenInit(pScreen);
 	} else {
-	    xf86DrvMsg(iScreen, X_WARNING,
+	    xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
 		       "DRI static buffer allocation failed -- "
 		       "need at least %d kB video memory\n",
 		       (pScreenInfo->displayWidth * requiredY * cpp ) / 1024);
@@ -484,21 +476,11 @@ ATIScreenInit
         }
     }
 
-    /* If applicable, initialise RENDER extension */
+    /* initialise RENDER extension */
+    if (!fbPictureInit(pScreen, NULL, 0) && (serverGeneration == 1))
     {
-        if (pATI->OptionShadowFB)
-        {
-            if (serverGeneration == 1)
-                xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
-                    "RENDER extension not supported with a shadowed"
-                    " framebuffer.\n");
-        }
-        else if (!fbPictureInit(pScreen, NULL, 0) &&
-                 (serverGeneration == 1))
-        {
-            xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
-                "RENDER extension initialisation failed.\n");
-        }
+	xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
+	    "RENDER extension initialisation failed.\n");
     }
 
     xf86SetBlackWhitePixels(pScreen);
@@ -512,13 +494,13 @@ ATIScreenInit
 #ifdef XF86DRI_DEVEL
     if (pATI->directRenderingEnabled)
     {
-        if (!ATIMach64SetupMemXAA(iScreen, pScreen))
+        if (!ATIMach64SetupMemXAA(pScreenInfo, pScreen))
             return FALSE;
     }
     else
 #endif /* XF86DRI_DEVEL */
     {
-        if (!ATIMach64SetupMemXAA_NoDRI(iScreen, pScreen))
+        if (!ATIMach64SetupMemXAA_NoDRI(pScreenInfo, pScreen))
             return FALSE;
     }
 
@@ -550,7 +532,6 @@ ATIScreenInit
 #endif /* AVOID_DGA */
 
     /* Initialise backing store */
-    miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
 
     /* Initialise cursor */
@@ -588,7 +569,7 @@ ATIScreenInit
 #ifdef TV_OUT
     /* Fix-up TV out after ImpacTV probe */
     if (pATI->OptionTvOut && pATI->Chip < ATI_CHIP_264GTPRO)
-        ATISwitchMode(0, pScreenInfo->currentMode, 0);
+        ATISwitchMode(SWITCH_MODE_ARGS(pScreenInfo, pScreenInfo->currentMode));
 #endif /* TV_OUT */
 
 #ifdef XF86DRI_DEVEL
@@ -620,13 +601,9 @@ ATIScreenInit
  * This function is called by DIX to close the screen.
  */
 Bool
-ATICloseScreen
-(
-    int       iScreen,
-    ScreenPtr pScreen
-)
+ATICloseScreen (CLOSE_SCREEN_ARGS_DECL)
 {
-    ScrnInfoPtr pScreenInfo = xf86Screens[iScreen];
+    ScrnInfoPtr pScreenInfo = xf86ScreenToScrn(pScreen);
     ATIPtr      pATI        = ATIPTR(pScreenInfo);
 
 #ifdef XF86DRI_DEVEL
@@ -680,5 +657,5 @@ ATICloseScreen
     pScreenInfo->pScreen = NULL;
 
     pScreen->CloseScreen = pATI->CloseScreen;
-    return (*pScreen->CloseScreen)(iScreen, pScreen);
+    return (*pScreen->CloseScreen)(CLOSE_SCREEN_ARGS);
 }
