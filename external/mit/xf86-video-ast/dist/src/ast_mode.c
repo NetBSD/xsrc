@@ -45,7 +45,6 @@
 #include "xf86fbman.h"
 
 /* include xaa includes */
-#include "xaa.h"
 #include "xaarop.h"
 
 /* H/W cursor support */
@@ -203,23 +202,29 @@ VBIOS_ENHTABLE_STRUCT  Res1920x1200Table[] = {
 
 /* 16:10 */
 VBIOS_ENHTABLE_STRUCT  Res1280x800Table[] = {
+    {1440, 1280, 48, 32,  823,  800, 3, 6, VCLK71,	/* 60Hz RB */
+      (SyncNP | Charx8Dot | LineCompareOff | WideScreenMode), 60, 1, 35 },	
     {1680, 1280, 72,128,  831,  800, 3, 6, VCLK83_5,	/* 60Hz */
-      (SyncPN | Charx8Dot | LineCompareOff | WideScreenMode), 60, 1, 0x35 }, 
+      (SyncPN | Charx8Dot | LineCompareOff | WideScreenMode), 60, 2, 0x35 }, 
     {1680, 1280, 72,128,  831,  800, 3, 6, VCLK83_5,	/* 60Hz */
       (SyncPN | Charx8Dot | LineCompareOff | WideScreenMode), 0xFF, 1, 0x35 },   		
         		
 };
 
 VBIOS_ENHTABLE_STRUCT  Res1440x900Table[] = {
+    {1600, 1440, 48, 32,  926,  900, 3, 6, VCLK88_75,	/* 60Hz RB */
+      (SyncNP | Charx8Dot | LineCompareOff | WideScreenMode), 60, 1, 0x36 },   				
     {1904, 1440, 80,152,  934,  900, 3, 6, VCLK106_5,	/* 60Hz */
-      (SyncPN | Charx8Dot | LineCompareOff | WideScreenMode), 60, 1, 0x36 },
+      (SyncPN | Charx8Dot | LineCompareOff | WideScreenMode), 60, 2, 0x36 },
     {1904, 1440, 80,152,  934,  900, 3, 6, VCLK106_5,	/* 60Hz */
       (SyncPN | Charx8Dot | LineCompareOff | WideScreenMode), 0xFF, 1, 0x36 },   		         		
 };
 
 VBIOS_ENHTABLE_STRUCT  Res1680x1050Table[] = {
+    {1840, 1680, 48, 32, 1080, 1050, 3, 6, VCLK119,	/* 60Hz RB */
+      (SyncNP | Charx8Dot | LineCompareOff | WideScreenMode), 60, 1, 0x37 },   				
     {2240, 1680,104,176, 1089, 1050, 3, 6, VCLK146_25,	/* 60Hz */
-      (SyncPN | Charx8Dot | LineCompareOff | WideScreenMode), 60, 1, 0x37 },
+      (SyncPN | Charx8Dot | LineCompareOff | WideScreenMode), 60, 2, 0x37 },
     {2240, 1680,104,176, 1089, 1050, 3, 6, VCLK146_25,	/* 60Hz */
       (SyncPN | Charx8Dot | LineCompareOff | WideScreenMode), 0xFF, 1, 0x37 },   		         		
 };
@@ -253,7 +258,10 @@ VBIOS_DCLK_INFO DCLKTable [] = {
     {0xa7, 0x78, 0x80},					/* 11: VCLK83.5         */
     {0x28, 0x49, 0x80},					/* 12: VCLK106.5        */           
     {0x37, 0x49, 0x80},					/* 13: VCLK146.25       */           
-    {0x1f, 0x45, 0x80},					/* 14: VCLK148.5        */                                      
+    {0x1f, 0x45, 0x80},					/* 14: VCLK148.5        */
+    {0x47, 0x6c, 0x80},					/* 15: VCLK71           */
+    {0x25, 0x65, 0x80},					/* 16: VCLK88.75        */
+    {0x77, 0x58, 0x80},					/* 17: VCLK119          */
 };
 
 VBIOS_DCLK_INFO DCLKTable_AST2100 [] = {
@@ -277,7 +285,10 @@ VBIOS_DCLK_INFO DCLKTable_AST2100 [] = {
     {0x68, 0x6f, 0x80},					/* 11: VCLK83.5         */
     {0x28, 0x49, 0x80},					/* 12: VCLK106.5        */           
     {0x37, 0x49, 0x80},					/* 13: VCLK146.25       */           
-    {0x1f, 0x45, 0x80},					/* 14: VCLK148.5        */                                      
+    {0x1f, 0x45, 0x80},					/* 14: VCLK148.5        */
+    {0x47, 0x6c, 0x80},					/* 15: VCLK71           */
+    {0x25, 0x65, 0x80},					/* 16: VCLK88.75        */
+    {0x77, 0x58, 0x80},					/* 17: VCLK119          */
 };
 
 VBIOS_DAC_INFO DAC_TEXT[] = {
@@ -549,6 +560,13 @@ Bool bGetAST1000VGAModeInfo(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_
         }    
     }
 
+    /* parsing for wide scrren reduced blank mode */
+    if (pVGAModeInfo->pEnhTableEntry->Flags & WideScreenMode)
+    {
+        if ((mode->Flags & V_PVSYNC) && (mode->Flags & V_NHSYNC))	/* CVT */
+            pVGAModeInfo->pEnhTableEntry++;
+    }
+
     /* Update mode CRTC info */
     ulHBorder = (pVGAModeInfo->pEnhTableEntry->Flags & HBorder) ? 8:0;    
     ulVBorder = (pVGAModeInfo->pEnhTableEntry->Flags & VBorder) ? 8:0;    
@@ -798,6 +816,13 @@ void vSetExtReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAMod
     SetIndexRegMask(CRTC_PORT,0xA3, 0xF0, (UCHAR) jRegA3);                                
     SetIndexRegMask(CRTC_PORT,0xA8, 0xFD, (UCHAR) jRegA8);                                
 
+#if	defined(__sparc__)
+    UCHAR jRegA2 = 0x80;
+    if ((pScrn->bitsPerPixel == 15) || (pScrn->bitsPerPixel == 16) )
+        jRegA2 |= 0x40;
+    SetIndexRegMask(CRTC_PORT,0xA2, 0x3F, (UCHAR) jRegA2);
+#endif
+    
     /* Set Threshold */
     if (pAST->jChipType == AST2300)
     {

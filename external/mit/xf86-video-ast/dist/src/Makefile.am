@@ -42,4 +42,5 @@ ast_drv_la_SOURCES =	\
 	ast_pcirename.h \
 	ast_tool.c 	\
 	ast_vgatool.c 	\
-	ast_vgatool.h
+	ast_vgatool.h   \
+        compat-api.h

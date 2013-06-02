@@ -23,7 +23,13 @@
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef HAVE_XAA_H
+#include "xaa.h"
+#endif
+
 #include "ast_pcirename.h"
+
+#include "compat-api.h"
 
 /* Compiler Options */
 #define	Accel_2D
@@ -88,8 +94,18 @@ typedef CARD32  	ULONG;
 
 /* Data Structure Definition */
 typedef struct _ASTRegRec {
+	
     UCHAR 	ExtCRTC[0x50];
+
+    UCHAR 	MISC;	
+    UCHAR 	SEQ[4];
+    UCHAR 	CRTC[25];
+    UCHAR 	AR[20];	    
+    UCHAR 	GR[9];
+    UCHAR	DAC[256][3];
+ 
     ULONG	GFX[12];
+    
 } ASTRegRec, *ASTRegPtr;
 
 typedef struct _VIDEOMODE {
@@ -192,7 +208,9 @@ typedef struct _ASTRec {
     OptionInfoPtr 	Options;
     DisplayModePtr      ModePtr;		    
     FBLinearPtr 	pCMDQPtr;    
+#ifdef HAVE_XAA_H
     XAAInfoRecPtr	AccelInfoPtr;
+#endif
     xf86CursorInfoPtr   HWCInfoPtr;
     FBLinearPtr 	pHWCPtr;    
 
