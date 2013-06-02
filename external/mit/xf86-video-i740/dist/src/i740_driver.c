@@ -88,7 +88,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "xf86xv.h"
 #include <X11/extensions/Xv.h>
-#include <X11/Xos.h>
 
 #include "vbe.h"
 #include "i740_dga.h"
