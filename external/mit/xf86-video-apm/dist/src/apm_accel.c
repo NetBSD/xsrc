@@ -6,6 +6,7 @@
 #include "apm.h"
 #include "miline.h"
 
+#ifdef HAVE_XAA_H
 /* Defines */
 #define MAXLOOP 1000000
 
@@ -32,14 +33,7 @@ static unsigned char apmROP[] = {
 
 #include "apm_funcs.c"
 
-#define IOP_ACCESS
-#include "apm_funcs.c"
-
 #define PSZ	24
-#include "apm_funcs.c"
-
-#define PSZ	24
-#define IOP_ACCESS
 #include "apm_funcs.c"
 
 static void
@@ -213,7 +207,7 @@ void ApmAccelReserveSpace(ApmPtr pApm)
 {
     memType	mem, ScratchMemOffset;
 
-    mem			= xf86Screens[pApm->pScreen->myNum]->videoRam << 10;
+    mem			= xf86ScreenToScrn(pApm->pScreen)->videoRam << 10;
     /*
      * Reserve at least four lines for mono to color expansion
      */
@@ -231,7 +225,7 @@ void ApmAccelReserveSpace(ApmPtr pApm)
 int
 ApmAccelInit(ScreenPtr pScreen)
 {
-    ScrnInfoPtr		pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr		pScrn = xf86ScreenToScrn(pScreen);
     APMDECL(pScrn);
     XAAInfoRecPtr	pXAAinfo;
     BoxRec		AvailFBArea;
@@ -279,21 +273,11 @@ ApmAccelInit(ScreenPtr pScreen)
 	i = 4;
     else
 	i = 8;
-    if (pApm->noLinear) {
-	stat = RDXL_IOP(0x1FC);
-	while ((stat & (STATUS_HOSTBLTBUSY | STATUS_ENGINEBUSY)) ||
-		((stat & STATUS_FIFO) < i)) {
-	    WRXB_IOP(0x1FC, 0);
-	    stat = RDXL_IOP(0x1FC);
-	}
-    }
-    else {
+    stat = RDXL_M(0x1FC);
+    while ((stat & (STATUS_HOSTBLTBUSY | STATUS_ENGINEBUSY)) ||
+	    ((stat & STATUS_FIFO) < i)) {
+	WRXB_M(0x1FC, 0);
 	stat = RDXL_M(0x1FC);
-	while ((stat & (STATUS_HOSTBLTBUSY | STATUS_ENGINEBUSY)) ||
-		((stat & STATUS_FIFO) < i)) {
-	    WRXB_M(0x1FC, 0);
-	    stat = RDXL_M(0x1FC);
-	}
     }
 
     /* Setup current register values */
@@ -316,26 +300,14 @@ ApmAccelInit(ScreenPtr pScreen)
 
     ApmSetupXAAInfo(pApm, pXAAinfo);
 
-    if (!pApm->noLinear) {
-	pApm->SetupForSolidFill			= ApmSetupForSolidFill;
-	pApm->SubsequentSolidFillRect		= ApmSubsequentSolidFillRect;
-	pApm->SetupForSolidFill24		= ApmSetupForSolidFill24;
-	pApm->SubsequentSolidFillRect24		= ApmSubsequentSolidFillRect24;
-	pApm->SetupForScreenToScreenCopy	= ApmSetupForScreenToScreenCopy;
-	pApm->SubsequentScreenToScreenCopy	= ApmSubsequentScreenToScreenCopy;
-	pApm->SetupForScreenToScreenCopy24	= ApmSetupForScreenToScreenCopy24;
-	pApm->SubsequentScreenToScreenCopy24	= ApmSubsequentScreenToScreenCopy24;
-    }
-    else {
-	pApm->SetupForSolidFill			= ApmSetupForSolidFill_IOP;
-	pApm->SubsequentSolidFillRect		= ApmSubsequentSolidFillRect_IOP;
-	pApm->SetupForSolidFill24		= ApmSetupForSolidFill24_IOP;
-	pApm->SubsequentSolidFillRect24		= ApmSubsequentSolidFillRect24_IOP;
-	pApm->SetupForScreenToScreenCopy	= ApmSetupForScreenToScreenCopy_IOP;
-	pApm->SubsequentScreenToScreenCopy	= ApmSubsequentScreenToScreenCopy_IOP;
-	pApm->SetupForScreenToScreenCopy24	= ApmSetupForScreenToScreenCopy24_IOP;
-	pApm->SubsequentScreenToScreenCopy24	= ApmSubsequentScreenToScreenCopy24_IOP;
-    }
+    pApm->SetupForSolidFill		= ApmSetupForSolidFill;
+    pApm->SubsequentSolidFillRect	= ApmSubsequentSolidFillRect;
+    pApm->SetupForSolidFill24		= ApmSetupForSolidFill24;
+    pApm->SubsequentSolidFillRect24	= ApmSubsequentSolidFillRect24;
+    pApm->SetupForScreenToScreenCopy	= ApmSetupForScreenToScreenCopy;
+    pApm->SubsequentScreenToScreenCopy	= ApmSubsequentScreenToScreenCopy;
+    pApm->SetupForScreenToScreenCopy24	= ApmSetupForScreenToScreenCopy24;
+    pApm->SubsequentScreenToScreenCopy24= ApmSubsequentScreenToScreenCopy24;
 
     /*
      * Init Rush extension.
@@ -384,7 +356,7 @@ void ApmSetupXAAInfo(ApmPtr pApm, XAAInfoRecPtr pXAAinfo)
            pApm->CurrentLayout.Setup_DEC |= DEC_BITDEPTH_32;
            break;
       default:
-           xf86DrvMsg(xf86Screens[pApm->pScreen->myNum]->scrnIndex, X_WARNING,
+           xf86DrvMsg(xf86ScreenToScrn(pApm->pScreen)->scrnIndex, X_WARNING,
 		    "Cannot set up drawing engine control for bpp = %d\n",
 		    pApm->CurrentLayout.bitsPerPixel);
            break;
@@ -411,7 +383,7 @@ void ApmSetupXAAInfo(ApmPtr pApm, XAAInfoRecPtr pXAAinfo)
            pApm->CurrentLayout.Setup_DEC |= DEC_WIDTH_1600;
            break;
       default:
-           xf86DrvMsg(xf86Screens[pApm->pScreen->myNum]->scrnIndex, X_WARNING,
+           xf86DrvMsg(xf86ScreenToScrn(pApm->pScreen)->scrnIndex, X_WARNING,
 		       "Cannot set up drawing engine control "
 		       "for screen width = %d\n", pApm->CurrentLayout.displayWidth);
            break;
@@ -427,334 +399,169 @@ void ApmSetupXAAInfo(ApmPtr pApm, XAAInfoRecPtr pXAAinfo)
     pXAAinfo->CacheMonoStipple = ApmCacheMonoStipple;
 
     if (pApm->CurrentLayout.bitsPerPixel != 24) {
-	if (!pApm->noLinear) {
 #define	XAA(s)		pXAAinfo->s = Apm##s
-	    if (pApm->Chipset < AT24)
-		pXAAinfo->Sync = ApmSync6422;
-	    else
-		XAA(Sync);
+	if (pApm->Chipset < AT24)
+	    pXAAinfo->Sync = ApmSync6422;
+	else
+	    XAA(Sync);
 
-	    /* Accelerated filled rectangles */
-	    pXAAinfo->SolidFillFlags = NO_PLANEMASK;
-	    XAA(SetupForSolidFill);
-	    XAA(SubsequentSolidFillRect);
+	/* Accelerated filled rectangles */
+	pXAAinfo->SolidFillFlags = NO_PLANEMASK;
+	XAA(SetupForSolidFill);
+	XAA(SubsequentSolidFillRect);
 
-	    /* Accelerated screen to screen color expansion */
-	    pXAAinfo->ScreenToScreenColorExpandFillFlags = NO_PLANEMASK;
-	    XAA(SetupForScreenToScreenColorExpandFill);
-	    XAA(SubsequentScreenToScreenColorExpandFill);
-
-#if 0
-	    The constraints of the transfer range are incompatible with the
-	    XAA architecture. I rewrote the XAA functions using ImageWrite
-	    /* Accelerated CPU to screen color expansion */
-	    if ((pApm->Chipset == AT24 && pApm->ChipRev >= 4) ||
-		    pApm->Chipset == AT3D) {
-		pXAAinfo->CPUToScreenColorExpandFillFlags =
-		  NO_PLANEMASK | SCANLINE_PAD_DWORD | CPU_TRANSFER_PAD_QWORD
-		  | BIT_ORDER_IN_BYTE_MSBFIRST | LEFT_EDGE_CLIPPING |
-		  LEFT_EDGE_CLIPPING_NEGATIVE_X | SYNC_AFTER_COLOR_EXPAND;
-		XAA(SetupForCPUToScreenColorExpandFill);
-		XAA(SubsequentCPUToScreenColorExpandFill);
-		pXAAinfo->ColorExpandBase	= pApm->BltMap;
-		pXAAinfo->ColorExpandRange	= (pApm->Chipset >= AT3D) ? 32*1024 : 30*1024;
-	    }
-
-	    /* Accelerated image transfers */
-	    pXAAinfo->ImageWriteFlags	=
-			    LEFT_EDGE_CLIPPING | NO_PLANEMASK |
-			    SCANLINE_PAD_DWORD | CPU_TRANSFER_PAD_QWORD |
-			    LEFT_EDGE_CLIPPING_NEGATIVE_X |
-			    SYNC_AFTER_IMAGE_WRITE;
-	    pXAAinfo->ImageWriteBase	= pApm->BltMap;
-	    pXAAinfo->ImageWriteRange	= (pApm->Chipset >= AT3D) ? 32*1024 : 30*1024;
-	    XAA(SetupForImageWrite);
-	    XAA(SubsequentImageWriteRect);
-#endif
-	    pXAAinfo->WritePixmapFlags = LEFT_EDGE_CLIPPING | NO_PLANEMASK |
-			    LEFT_EDGE_CLIPPING_NEGATIVE_X;
-	    XAA(WritePixmap);
-	    pXAAinfo->FillImageWriteRectsFlags	=
-			    LEFT_EDGE_CLIPPING | NO_PLANEMASK |
-			    LEFT_EDGE_CLIPPING_NEGATIVE_X;
-	    XAA(FillImageWriteRects);
-	    pXAAinfo->WriteBitmapFlags = LEFT_EDGE_CLIPPING | NO_PLANEMASK |
-			    LEFT_EDGE_CLIPPING_NEGATIVE_X |
-			    BIT_ORDER_IN_BYTE_LSBFIRST;
-	    XAA(WriteBitmap);
-	    pXAAinfo->TEGlyphRendererFlags = LEFT_EDGE_CLIPPING | NO_PLANEMASK |
-			    LEFT_EDGE_CLIPPING_NEGATIVE_X;
-	    XAA(TEGlyphRenderer);
-
-	    /* Accelerated screen-screen bitblts */
-	    pXAAinfo->ScreenToScreenCopyFlags = NO_PLANEMASK;
-	    XAA(SetupForScreenToScreenCopy);
-	    XAA(SubsequentScreenToScreenCopy);
-
-	    /* Accelerated Line drawing */
-	    pXAAinfo->SolidLineFlags = NO_PLANEMASK | HARDWARE_CLIP_LINE;
-	    XAA(SetClippingRectangle);
-	    pXAAinfo->SolidBresenhamLineErrorTermBits = 15;
-
-	    if (pApm->Chipset >= AT24) {
-		XAA(SubsequentSolidBresenhamLine);
-
-		/* Pattern fill */
-		pXAAinfo->Mono8x8PatternFillFlags = NO_PLANEMASK |
-				HARDWARE_PATTERN_PROGRAMMED_BITS |
-				HARDWARE_PATTERN_SCREEN_ORIGIN;
-		XAA(SetupForMono8x8PatternFill);
-		XAA(SubsequentMono8x8PatternFillRect);
-		if (pApm->CurrentLayout.bitsPerPixel == 8) {
-		    pXAAinfo->Color8x8PatternFillFlags = NO_PLANEMASK |
-				    HARDWARE_PATTERN_SCREEN_ORIGIN;
-		    XAA(SetupForColor8x8PatternFill);
-		    XAA(SubsequentColor8x8PatternFillRect);
-		}
-	    }
-	    else
-		pXAAinfo->SubsequentSolidBresenhamLine =
-		    ApmSubsequentSolidBresenhamLine6422;
-#undef XAA
-	}
-	else {
-#define	XAA(s)		pXAAinfo->s = Apm##s##_IOP
-	    if (pApm->Chipset < AT24)
-		pXAAinfo->Sync = ApmSync6422_IOP;
-	    else
-		XAA(Sync);
-
-	    /* Accelerated filled rectangles */
-	    pXAAinfo->SolidFillFlags = NO_PLANEMASK;
-	    XAA(SetupForSolidFill);
-	    XAA(SubsequentSolidFillRect);
-
-	    /* Accelerated screen to screen color expansion */
-	    pXAAinfo->ScreenToScreenColorExpandFillFlags = NO_PLANEMASK;
-	    XAA(SetupForScreenToScreenColorExpandFill);
-	    XAA(SubsequentScreenToScreenColorExpandFill);
+	/* Accelerated screen to screen color expansion */
+	pXAAinfo->ScreenToScreenColorExpandFillFlags = NO_PLANEMASK;
+	XAA(SetupForScreenToScreenColorExpandFill);
+	XAA(SubsequentScreenToScreenColorExpandFill);
 
 #if 0
-	    The constraints of the transfer range are incompatible with the
-	    XAA architecture. I rewrote the XAA functions using ImageWrite
-	    /* Accelerated CPU to screen color expansion */
-	    if ((pApm->Chipset == AT24 && pApm->ChipRev >= 4) ||
-		    pApm->Chipset == AT3D) {
-		pXAAinfo->CPUToScreenColorExpandFillFlags =
-		  NO_PLANEMASK | SCANLINE_PAD_DWORD | CPU_TRANSFER_PAD_QWORD
-		  | BIT_ORDER_IN_BYTE_MSBFIRST | LEFT_EDGE_CLIPPING |
-		  LEFT_EDGE_CLIPPING_NEGATIVE_X | SYNC_AFTER_COLOR_EXPAND;
-		XAA(SetupForCPUToScreenColorExpandFill);
-		XAA(SubsequentCPUToScreenColorExpandFill);
-		pXAAinfo->ColorExpandBase	= pApm->BltMap;
-		pXAAinfo->ColorExpandRange	= (pApm->Chipset >= AT3D) ? 32*1024 : 30*1024;
-	    }
-
-	    /* Accelerated image transfers */
-	    pXAAinfo->ImageWriteFlags	=
-			    LEFT_EDGE_CLIPPING | NO_PLANEMASK |
-			    SCANLINE_PAD_DWORD | CPU_TRANSFER_PAD_QWORD;
-	    pXAAinfo->ImageWriteBase	= pApm->BltMap;
-	    pXAAinfo->ImageWriteRange	= (pApm->Chipset >= AT3D) ? 32*1024 : 30*1024;
-	    XAA(SetupForImageWrite);
-	    XAA(SubsequentImageWriteRect);
-#endif
-	    pXAAinfo->WritePixmapFlags = LEFT_EDGE_CLIPPING | NO_PLANEMASK |
-			    LEFT_EDGE_CLIPPING_NEGATIVE_X;
-	    XAA(WritePixmap);
-	    pXAAinfo->FillImageWriteRectsFlags	=
-			    LEFT_EDGE_CLIPPING | NO_PLANEMASK |
-			    LEFT_EDGE_CLIPPING_NEGATIVE_X;
-	    XAA(FillImageWriteRects);
-	    pXAAinfo->WriteBitmapFlags = LEFT_EDGE_CLIPPING | NO_PLANEMASK |
-			    LEFT_EDGE_CLIPPING_NEGATIVE_X |
-			    BIT_ORDER_IN_BYTE_LSBFIRST;
-	    XAA(WriteBitmap);
-	    pXAAinfo->TEGlyphRendererFlags = LEFT_EDGE_CLIPPING | NO_PLANEMASK |
-			    LEFT_EDGE_CLIPPING_NEGATIVE_X;
-	    XAA(TEGlyphRenderer);
-
-	    /* Accelerated screen-screen bitblts */
-	    pXAAinfo->ScreenToScreenCopyFlags = NO_PLANEMASK;
-	    XAA(SetupForScreenToScreenCopy);
-	    XAA(SubsequentScreenToScreenCopy);
-
-	    /* Accelerated Line drawing */
-	    pXAAinfo->SolidLineFlags = NO_PLANEMASK | HARDWARE_CLIP_LINE;
-	    XAA(SetClippingRectangle);
-	    pXAAinfo->SolidBresenhamLineErrorTermBits = 15;
-
-	    if (pApm->Chipset >= AT24) {
-		XAA(SubsequentSolidBresenhamLine);
-
-		/* Pattern fill */
-		pXAAinfo->Mono8x8PatternFillFlags = NO_PLANEMASK |
-				HARDWARE_PATTERN_PROGRAMMED_BITS |
-				HARDWARE_PATTERN_SCREEN_ORIGIN;
-		XAA(SetupForMono8x8PatternFill);
-		XAA(SubsequentMono8x8PatternFillRect);
-		if (pApm->CurrentLayout.bitsPerPixel == 8) {
-		    pXAAinfo->Color8x8PatternFillFlags = NO_PLANEMASK |
-				    HARDWARE_PATTERN_SCREEN_ORIGIN;
-		    XAA(SetupForColor8x8PatternFill);
-		    XAA(SubsequentColor8x8PatternFillRect);
-		}
-	    }
-	    else
-		pXAAinfo->SubsequentSolidBresenhamLine =
-		    ApmSubsequentSolidBresenhamLine6422_IOP;
-#undef XAA
+	The constraints of the transfer range are incompatible with the
+	XAA architecture. I rewrote the XAA functions using ImageWrite
+	/* Accelerated CPU to screen color expansion */
+	if ((pApm->Chipset == AT24 && pApm->ChipRev >= 4) ||
+		pApm->Chipset == AT3D) {
+	    pXAAinfo->CPUToScreenColorExpandFillFlags =
+	      NO_PLANEMASK | SCANLINE_PAD_DWORD | CPU_TRANSFER_PAD_QWORD
+	      | BIT_ORDER_IN_BYTE_MSBFIRST | LEFT_EDGE_CLIPPING |
+	      LEFT_EDGE_CLIPPING_NEGATIVE_X | SYNC_AFTER_COLOR_EXPAND;
+	    XAA(SetupForCPUToScreenColorExpandFill);
+	    XAA(SubsequentCPUToScreenColorExpandFill);
+	    pXAAinfo->ColorExpandBase	= pApm->BltMap;
+	    pXAAinfo->ColorExpandRange	= (pApm->Chipset >= AT3D) ? 32*1024 : 30*1024;
 	}
+
+	/* Accelerated image transfers */
+	pXAAinfo->ImageWriteFlags	=
+			LEFT_EDGE_CLIPPING | NO_PLANEMASK |
+			SCANLINE_PAD_DWORD | CPU_TRANSFER_PAD_QWORD |
+			LEFT_EDGE_CLIPPING_NEGATIVE_X |
+			SYNC_AFTER_IMAGE_WRITE;
+	pXAAinfo->ImageWriteBase	= pApm->BltMap;
+	pXAAinfo->ImageWriteRange	= (pApm->Chipset >= AT3D) ? 32*1024 : 30*1024;
+	XAA(SetupForImageWrite);
+	XAA(SubsequentImageWriteRect);
+#endif
+	pXAAinfo->WritePixmapFlags = LEFT_EDGE_CLIPPING | NO_PLANEMASK |
+			LEFT_EDGE_CLIPPING_NEGATIVE_X;
+	XAA(WritePixmap);
+	pXAAinfo->FillImageWriteRectsFlags	=
+			LEFT_EDGE_CLIPPING | NO_PLANEMASK |
+			LEFT_EDGE_CLIPPING_NEGATIVE_X;
+	XAA(FillImageWriteRects);
+	pXAAinfo->WriteBitmapFlags = LEFT_EDGE_CLIPPING | NO_PLANEMASK |
+			LEFT_EDGE_CLIPPING_NEGATIVE_X |
+			BIT_ORDER_IN_BYTE_LSBFIRST;
+	XAA(WriteBitmap);
+	pXAAinfo->TEGlyphRendererFlags = LEFT_EDGE_CLIPPING | NO_PLANEMASK |
+			LEFT_EDGE_CLIPPING_NEGATIVE_X;
+	XAA(TEGlyphRenderer);
+
+	/* Accelerated screen-screen bitblts */
+	pXAAinfo->ScreenToScreenCopyFlags = NO_PLANEMASK;
+	XAA(SetupForScreenToScreenCopy);
+	XAA(SubsequentScreenToScreenCopy);
+
+	/* Accelerated Line drawing */
+	pXAAinfo->SolidLineFlags = NO_PLANEMASK | HARDWARE_CLIP_LINE;
+	XAA(SetClippingRectangle);
+	pXAAinfo->SolidBresenhamLineErrorTermBits = 15;
+
+	if (pApm->Chipset >= AT24) {
+	    XAA(SubsequentSolidBresenhamLine);
+
+	    /* Pattern fill */
+	    pXAAinfo->Mono8x8PatternFillFlags = NO_PLANEMASK |
+			    HARDWARE_PATTERN_PROGRAMMED_BITS |
+			    HARDWARE_PATTERN_SCREEN_ORIGIN;
+	    XAA(SetupForMono8x8PatternFill);
+	    XAA(SubsequentMono8x8PatternFillRect);
+	    if (pApm->CurrentLayout.bitsPerPixel == 8) {
+		pXAAinfo->Color8x8PatternFillFlags = NO_PLANEMASK |
+				HARDWARE_PATTERN_SCREEN_ORIGIN;
+		XAA(SetupForColor8x8PatternFill);
+		XAA(SubsequentColor8x8PatternFillRect);
+	    }
+	}
+	else
+	    pXAAinfo->SubsequentSolidBresenhamLine =
+		ApmSubsequentSolidBresenhamLine6422;
+#undef XAA
     }
     else {
-	if (!pApm->noLinear) {
 #define	XAA(s)		pXAAinfo->s = Apm##s##24
-	    XAA(Sync);
+	XAA(Sync);
 
-	    /* Accelerated filled rectangles */
-	    pXAAinfo->SolidFillFlags = NO_PLANEMASK;
-	    XAA(SetupForSolidFill);
-	    XAA(SubsequentSolidFillRect);
-
-#if 0
-	    /* Accelerated screen to screen color expansion */
-	    pXAAinfo->ScreenToScreenColorExpandFillFlags = NO_PLANEMASK;
-	    XAA(SetupForScreenToScreenColorExpandFill);
-	    XAA(SubsequentScreenToScreenColorExpandFill);
+	/* Accelerated filled rectangles */
+	pXAAinfo->SolidFillFlags = NO_PLANEMASK;
+	XAA(SetupForSolidFill);
+	XAA(SubsequentSolidFillRect);
 
 #if 0
-	    The constraints of the transfer range are incompatible with the
-	    XAA architecture. I rewrote the XAA functions using ImageWrite
-	    /* Accelerated CPU to screen color expansion */
-	    if (pApm->Chipset == AT3D && pApm->ChipRev >= 4) {
-		pXAAinfo->CPUToScreenColorExpandFillFlags =
-		  NO_PLANEMASK | SCANLINE_PAD_DWORD | CPU_TRANSFER_PAD_QWORD
-		  | BIT_ORDER_IN_BYTE_MSBFIRST | LEFT_EDGE_CLIPPING |
-		  LEFT_EDGE_CLIPPING_NEGATIVE_X | SYNC_AFTER_COLOR_EXPAND;
-		XAA(SetupForCPUToScreenColorExpandFill);
-		XAA(SubsequentCPUToScreenColorExpandFill);
-		pXAAinfo->ColorExpandBase	= pApm->BltMap;
-		pXAAinfo->ColorExpandRange	= 32*1024;
-	    }
+	/* Accelerated screen to screen color expansion */
+	pXAAinfo->ScreenToScreenColorExpandFillFlags = NO_PLANEMASK;
+	XAA(SetupForScreenToScreenColorExpandFill);
+	XAA(SubsequentScreenToScreenColorExpandFill);
 
-	    /* Accelerated image transfers */
-	    pXAAinfo->ImageWriteFlags	=
-			    LEFT_EDGE_CLIPPING | NO_PLANEMASK |
-			    SCANLINE_PAD_DWORD | CPU_TRANSFER_PAD_QWORD |
-			    SYNC_AFTER_IMAGE_WRITE;
-	    pXAAinfo->ImageWriteBase	= pApm->BltMap;
-	    pXAAinfo->ImageWriteRange	= 32*1024;
-	    XAA(SetupForImageWrite);
-	    XAA(SubsequentImageWriteRect);
-#endif
-	    pXAAinfo->WritePixmapFlags = LEFT_EDGE_CLIPPING | NO_PLANEMASK |
-			    LEFT_EDGE_CLIPPING_NEGATIVE_X;
-	    XAA(WritePixmap);
-	    pXAAinfo->FillImageWriteRectsFlags	=
-			    LEFT_EDGE_CLIPPING | NO_PLANEMASK |
-			    LEFT_EDGE_CLIPPING_NEGATIVE_X;
-	    XAA(FillImageWriteRects);
-	    pXAAinfo->WriteBitmapFlags = LEFT_EDGE_CLIPPING | NO_PLANEMASK |
-			    LEFT_EDGE_CLIPPING_NEGATIVE_X |
-			    BIT_ORDER_IN_BYTE_LSBFIRST;
-	    XAA(WriteBitmap);
-	    pXAAinfo->TEGlyphRendererFlags = LEFT_EDGE_CLIPPING | NO_PLANEMASK |
-			    LEFT_EDGE_CLIPPING_NEGATIVE_X;
-	    XAA(TEGlyphRenderer);
-
-	    /* Accelerated Line drawing */
-	    pXAAinfo->SolidLineFlags = NO_PLANEMASK | HARDWARE_CLIP_LINE;
-	    XAA(SubsequentSolidBresenhamLine);
-	    XAA(SetClippingRectangle);
-	    pXAAinfo->SolidBresenhamLineErrorTermBits = 15;
-
-	    /* Pattern fill */
-	    pXAAinfo->Mono8x8PatternFillFlags = NO_PLANEMASK | NO_TRANSPARENCY |
-			    HARDWARE_PATTERN_PROGRAMMED_BITS |
-			    HARDWARE_PATTERN_SCREEN_ORIGIN;
-	    XAA(SetupForMono8x8PatternFill);
-	    XAA(SubsequentMono8x8PatternFillRect);
-#endif
-
-	    /* Accelerated screen-screen bitblts */
-	    pXAAinfo->ScreenToScreenCopyFlags = NO_PLANEMASK | NO_TRANSPARENCY;
-	    XAA(SetupForScreenToScreenCopy);
-	    XAA(SubsequentScreenToScreenCopy);
-#undef XAA
+#if 0
+	The constraints of the transfer range are incompatible with the
+	XAA architecture. I rewrote the XAA functions using ImageWrite
+	/* Accelerated CPU to screen color expansion */
+	if (pApm->Chipset == AT3D && pApm->ChipRev >= 4) {
+	    pXAAinfo->CPUToScreenColorExpandFillFlags =
+	      NO_PLANEMASK | SCANLINE_PAD_DWORD | CPU_TRANSFER_PAD_QWORD
+	      | BIT_ORDER_IN_BYTE_MSBFIRST | LEFT_EDGE_CLIPPING |
+	      LEFT_EDGE_CLIPPING_NEGATIVE_X | SYNC_AFTER_COLOR_EXPAND;
+	    XAA(SetupForCPUToScreenColorExpandFill);
+	    XAA(SubsequentCPUToScreenColorExpandFill);
+	    pXAAinfo->ColorExpandBase	= pApm->BltMap;
+	    pXAAinfo->ColorExpandRange	= 32*1024;
 	}
-	else {
-#define	XAA(s)		pXAAinfo->s = Apm##s##24##_IOP
-	    XAA(Sync);
 
-	    /* Accelerated filled rectangles */
-	    pXAAinfo->SolidFillFlags = NO_PLANEMASK;
-	    XAA(SetupForSolidFill);
-	    XAA(SubsequentSolidFillRect);
-
-#if 0
-	    /* Accelerated screen to screen color expansion */
-	    pXAAinfo->ScreenToScreenColorExpandFillFlags = NO_PLANEMASK;
-	    XAA(SetupForScreenToScreenColorExpandFill);
-	    XAA(SubsequentScreenToScreenColorExpandFill);
-
-#if 0
-	    The constraints of the transfer range are incompatible with the
-	    XAA architecture. I rewrote the XAA functions using ImageWrite
-	    /* Accelerated CPU to screen color expansion */
-	    if (pApm->Chipset == AT3D && pApm->ChipRev >= 4) {
-		pXAAinfo->CPUToScreenColorExpandFillFlags =
-		  NO_PLANEMASK | SCANLINE_PAD_DWORD | CPU_TRANSFER_PAD_QWORD
-		  | BIT_ORDER_IN_BYTE_MSBFIRST | LEFT_EDGE_CLIPPING |
-		  LEFT_EDGE_CLIPPING_NEGATIVE_X | SYNC_AFTER_COLOR_EXPAND;
-		XAA(SetupForCPUToScreenColorExpandFill);
-		XAA(SubsequentCPUToScreenColorExpandFill);
-		pXAAinfo->ColorExpandBase	= pApm->BltMap;
-		pXAAinfo->ColorExpandRange	= 32*1024;
-	    }
-
-	    /* Accelerated image transfers */
-	    pXAAinfo->ImageWriteFlags	=
-			    LEFT_EDGE_CLIPPING | NO_PLANEMASK |
-			    SCANLINE_PAD_DWORD | CPU_TRANSFER_PAD_QWORD;
-	    pXAAinfo->ImageWriteBase	= pApm->BltMap;
-	    pXAAinfo->ImageWriteRange	= 32*1024;
-	    XAA(SetupForImageWrite);
-	    XAA(SubsequentImageWriteRect);
+	/* Accelerated image transfers */
+	pXAAinfo->ImageWriteFlags	=
+			LEFT_EDGE_CLIPPING | NO_PLANEMASK |
+			SCANLINE_PAD_DWORD | CPU_TRANSFER_PAD_QWORD |
+			SYNC_AFTER_IMAGE_WRITE;
+	pXAAinfo->ImageWriteBase	= pApm->BltMap;
+	pXAAinfo->ImageWriteRange	= 32*1024;
+	XAA(SetupForImageWrite);
+	XAA(SubsequentImageWriteRect);
 #endif
-	    pXAAinfo->WritePixmapFlags = LEFT_EDGE_CLIPPING | NO_PLANEMASK |
-			    LEFT_EDGE_CLIPPING_NEGATIVE_X;
-	    XAA(WritePixmap);
-	    pXAAinfo->FillImageWriteRectsFlags	=
-			    LEFT_EDGE_CLIPPING | NO_PLANEMASK |
-			    LEFT_EDGE_CLIPPING_NEGATIVE_X;
-	    XAA(FillImageWriteRects);
-	    pXAAinfo->WriteBitmapFlags = LEFT_EDGE_CLIPPING | NO_PLANEMASK |
-			    LEFT_EDGE_CLIPPING_NEGATIVE_X |
-			    BIT_ORDER_IN_BYTE_LSBFIRST;
-	    XAA(WriteBitmap);
-	    pXAAinfo->TEGlyphRendererFlags = LEFT_EDGE_CLIPPING | NO_PLANEMASK |
-			    LEFT_EDGE_CLIPPING_NEGATIVE_X;
-	    XAA(TEGlyphRenderer);
+	pXAAinfo->WritePixmapFlags = LEFT_EDGE_CLIPPING | NO_PLANEMASK |
+			LEFT_EDGE_CLIPPING_NEGATIVE_X;
+	XAA(WritePixmap);
+	pXAAinfo->FillImageWriteRectsFlags	=
+			LEFT_EDGE_CLIPPING | NO_PLANEMASK |
+			LEFT_EDGE_CLIPPING_NEGATIVE_X;
+	XAA(FillImageWriteRects);
+	pXAAinfo->WriteBitmapFlags = LEFT_EDGE_CLIPPING | NO_PLANEMASK |
+			LEFT_EDGE_CLIPPING_NEGATIVE_X |
+			BIT_ORDER_IN_BYTE_LSBFIRST;
+	XAA(WriteBitmap);
+	pXAAinfo->TEGlyphRendererFlags = LEFT_EDGE_CLIPPING | NO_PLANEMASK |
+			LEFT_EDGE_CLIPPING_NEGATIVE_X;
+	XAA(TEGlyphRenderer);
 
-	    /* Accelerated Line drawing */
-	    pXAAinfo->SolidLineFlags = NO_PLANEMASK | HARDWARE_CLIP_LINE;
-	    XAA(SubsequentSolidBresenhamLine);
-	    XAA(SetClippingRectangle);
-	    pXAAinfo->SolidBresenhamLineErrorTermBits = 15;
+	/* Accelerated Line drawing */
+	pXAAinfo->SolidLineFlags = NO_PLANEMASK | HARDWARE_CLIP_LINE;
+	XAA(SubsequentSolidBresenhamLine);
+	XAA(SetClippingRectangle);
+	pXAAinfo->SolidBresenhamLineErrorTermBits = 15;
 
-	    /* Pattern fill */
-	    pXAAinfo->Mono8x8PatternFillFlags = NO_PLANEMASK | NO_TRANSPARENCY |
-			    HARDWARE_PATTERN_PROGRAMMED_BITS |
-			    HARDWARE_PATTERN_SCREEN_ORIGIN;
-	    XAA(SetupForMono8x8PatternFill);
-	    XAA(SubsequentMono8x8PatternFillRect);
+	/* Pattern fill */
+	pXAAinfo->Mono8x8PatternFillFlags = NO_PLANEMASK | NO_TRANSPARENCY |
+			HARDWARE_PATTERN_PROGRAMMED_BITS |
+			HARDWARE_PATTERN_SCREEN_ORIGIN;
+	XAA(SetupForMono8x8PatternFill);
+	XAA(SubsequentMono8x8PatternFillRect);
 #endif
 
-	    /* Accelerated screen-screen bitblts */
-	    pXAAinfo->ScreenToScreenCopyFlags = NO_PLANEMASK | NO_TRANSPARENCY;
-	    XAA(SetupForScreenToScreenCopy);
-	    XAA(SubsequentScreenToScreenCopy);
+	/* Accelerated screen-screen bitblts */
+	pXAAinfo->ScreenToScreenCopyFlags = NO_PLANEMASK | NO_TRANSPARENCY;
+	XAA(SetupForScreenToScreenCopy);
+	XAA(SubsequentScreenToScreenCopy);
 #undef XAA
-	}
     }
 }
+#endif
