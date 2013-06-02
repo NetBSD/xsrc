@@ -146,7 +146,7 @@ static const OptionInfoRec *	CHIPSAvailableOptions(int chipid, int busid);
 static void     CHIPSIdentify(int flags);
 static Bool     CHIPSPciProbe(DriverPtr drv, int entity_num,
 			      struct pci_device *dev, intptr_t match_data);
-#if defined(HAVE_ISA) || defined(XSERVER_LIBPCIACCESS)
+#if defined(HAVE_ISA)
 static Bool     CHIPSProbe(DriverPtr drv, int flags);
 #endif
 static Bool     CHIPSPreInit(ScrnInfoPtr pScrn, int flags);
@@ -525,7 +525,7 @@ _X_EXPORT DriverRec CHIPS = {
 	CHIPS_VERSION,
 	CHIPS_DRIVER_NAME,
 	CHIPSIdentify,
-#if defined(HAVE_ISA) || defined(XSERVER_LIBPCIACCESS)
+#if defined(HAVE_ISA)
 	CHIPSProbe,
 #else
 	NULL,
@@ -860,7 +860,7 @@ CHIPSPciProbe(DriverPtr drv, int entity_num, struct pci_device * dev,
     return (pScrn != NULL);
 }
 
-#if defined(HAVE_ISA) || defined(XSERVER_LIBPCIACCESS)
+#if defined(HAVE_ISA)
 static Bool
 CHIPSProbe(DriverPtr drv, int flags)
 {
@@ -869,7 +869,6 @@ CHIPSProbe(DriverPtr drv, int flags)
     Bool foundScreen = FALSE;
     int numDevSections, numUsed;
     GDevPtr *devSections;
-    int *usedChips;
     int i, chipset, entity;
     
     /*
@@ -898,26 +897,28 @@ CHIPSProbe(DriverPtr drv, int flags)
 		    continue;
 		}
 
+		pScrn = NULL;
+		entity = xf86ClaimFbSlot(drv, 0, devSections[i], TRUE);
+		pScrn = xf86ConfigFbEntity(NULL, 0, entity, NULL, NULL,
+		  NULL, NULL);
+		pScrn->driverVersion = CHIPS_VERSION;
+		pScrn->driverName    = CHIPS_DRIVER_NAME;
+		pScrn->name          = CHIPS_NAME;
+		pScrn->Probe         = CHIPSProbe;
+		pScrn->PreInit       = CHIPSPreInit;
+		pScrn->ScreenInit    = CHIPSScreenInit;
+		pScrn->SwitchMode    = CHIPSSwitchMode;
+		pScrn->AdjustFrame   = CHIPSAdjustFrame;
+		pScrn->EnterVT       = CHIPSEnterVT;
+		pScrn->LeaveVT       = CHIPSLeaveVT;
+		pScrn->FreeScreen    = CHIPSFreeScreen;
+		pScrn->ValidMode     = CHIPSValidMode;
+		if (!CHIPSGetRec(pScrn)) {
+		   return FALSE;
+		}
+		cPtr = CHIPSPTR(pScrn);
+		cPtr->Chipset = chipset;
 	    }
-	    free(usedChips);
-	}
-    }
-
-#ifdef HAVE_ISA 
-    /* Isa Bus */
-    numUsed = xf86MatchIsaInstances(CHIPS_NAME,CHIPSChipsets,CHIPSISAchipsets,
-				    drv,chipsFindIsaDevice,devSections,
-				    numDevSections,&usedChips);
-    if (numUsed > 0) {
-	if (flags & PROBE_DETECT)
-	    foundScreen = TRUE;
-	else for (i = 0; i < numUsed; i++) {
-	    ScrnInfoPtr pScrn = NULL;
-	    if ((pScrn = xf86ConfigIsaEntity(pScrn,0,
-						   usedChips[i],
-						   CHIPSISAchipsets,NULL,
-						   NULL,NULL,NULL,NULL))) {
-	    free(usedChips);
 	}
     }
     
