@@ -45,7 +45,6 @@
 #include "xf86fbman.h"
 
 /* include xaa includes */
-#include "xaa.h"
 #include "xaarop.h"
 
 /* H/W cursor support */
@@ -76,7 +75,7 @@ static void ASTSetCursorPosition_AST1180(ScrnInfoPtr pScrn, int x, int y);
 Bool
 ASTCursorInit(ScreenPtr pScreen)
 {
-    ScrnInfoPtr	pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr	pScrn = xf86ScreenToScrn(pScreen);
     ASTRecPtr 	pAST = ASTPTR(pScrn);
     xf86CursorInfoPtr infoPtr;
 
@@ -126,7 +125,7 @@ Bool bInitHWC(ScrnInfoPtr pScrn, ASTRecPtr pAST)
       	
     /* allocate HWC cache */  
     if (!pAST->pHWCPtr) {   	    		       
-        pScreen = screenInfo.screens[pScrn->scrnIndex];
+        pScreen = xf86ScrnToScreen(pScrn);
         pAST->pHWCPtr = xf86AllocateOffscreenLinear (pScreen, (HWC_SIZE+HWC_SIGNATURE_SIZE)*pAST->HWCInfo.HWC_NUM, HWC_ALIGN, NULL, NULL, NULL);
 
         if (!pAST->pHWCPtr) {   		  

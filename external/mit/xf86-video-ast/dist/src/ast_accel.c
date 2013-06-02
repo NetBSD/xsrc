@@ -45,7 +45,9 @@
 #include "xf86fbman.h"
 
 /* include xaa includes */
+#ifdef HAVE_XAA_H
 #include "xaa.h"
+#endif
 #include "xaarop.h"
 
 /* H/W cursor support */
@@ -103,6 +105,7 @@ extern Bool bGetLineTerm(_LINEInfo *LineInfo, LINEPARAM *dsLineParam);
 
 /* Prototype type declaration */
 Bool ASTAccelInit(ScreenPtr pScreen);
+#ifdef HAVE_XAA_H
 static void ASTSync(ScrnInfoPtr pScrn);
 static void ASTSetupForScreenToScreenCopy(ScrnInfoPtr pScrn, 
                                           int xdir, int ydir, int rop,
@@ -157,12 +160,14 @@ static void AIPSubsequentSolidTwoPointLine(ScrnInfoPtr pScrn,
 static void AIPSubsequentDashedTwoPointLine(ScrnInfoPtr pScrn,
                                             int x1, int y1, int x2, int y2,
                                             int flags, int phase);
+#endif
 
 Bool
 ASTAccelInit(ScreenPtr pScreen)
 {
+#ifdef HAVE_XAA_H
     XAAInfoRecPtr  infoPtr;
-    ScrnInfoPtr    pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr    pScrn = xf86ScreenToScrn(pScreen);
     ASTRecPtr      pAST = ASTPTR(pScrn);
 
     pAST->AccelInfoPtr = infoPtr = XAACreateInfoRec();
@@ -283,10 +288,12 @@ ASTAccelInit(ScreenPtr pScreen)
     }                		 
 
     return(XAAInit(pScreen, infoPtr));
-    
+#else
+    return TRUE;
+#endif
 } /* end of ASTAccelInit */
 
-
+#ifdef HAVE_XAA_H
 static void
 ASTSync(ScrnInfoPtr pScrn)
 {
@@ -1684,6 +1691,7 @@ AIPSubsequentDashedTwoPointLine(ScrnInfoPtr pScrn,
     }
                 	
 }
+#endif
 
 #ifdef	AstVideo
 /*
