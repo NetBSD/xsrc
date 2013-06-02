@@ -32,6 +32,9 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* Define to 1 if you have the <xaa.h> header file. */
+#undef HAVE_XAA_H
+
 /* xextproto 7.1 available */
 #undef HAVE_XEXTPROTO_71
 
@@ -74,3 +77,6 @@
 
 /* Version number of package */
 #undef VERSION
+
+/* XvReputImage takes more all coordinates */
+#undef XV_NEW_REPUT
