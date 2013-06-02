@@ -35,7 +35,6 @@
 #endif
 
 #include "ati.h"
-#include "atiadjust.h"
 #include "atiaudio.h"
 #include "atibus.h"
 #include "atichip.h"
@@ -57,6 +56,7 @@
 #include "atividmem.h"
 #include "atiwonderio.h"
 #include "atixv.h"
+#include "atiadjust.h"
 
 #include "vbe.h"
 #if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
