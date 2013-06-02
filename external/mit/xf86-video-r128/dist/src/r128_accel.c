@@ -88,7 +88,7 @@
 #include "r128.h"
 #include "r128_reg.h"
 #include "r128_probe.h"
-#ifdef XF86DRI
+#ifdef R128DRI
 #include "r128_sarea.h"
 #define _XF86DRI_SERVER_
 #include "r128_dri.h"
@@ -101,6 +101,7 @@
 				/* X and server generic header files */
 #include "xf86.h"
 
+#ifdef HAVE_XAA_H
 static struct {
     int rop;
     int pattern;
@@ -122,6 +123,7 @@ static struct {
     { R128_ROP3_DSan, R128_ROP3_DPan }, /* GXnand         */
     { R128_ROP3_ONE,  R128_ROP3_ONE  }  /* GXset          */
 };
+#endif
 
 extern int getR128EntityIndex(void);
 
@@ -187,7 +189,7 @@ void R128WaitForFifoFunction(ScrnInfoPtr pScrn, int entries)
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		   "FIFO timed out, resetting engine...\n");
 	R128EngineReset(pScrn);
-#ifdef XF86DRI
+#ifdef R128DRI
 	R128CCE_RESET(pScrn, info);
 	if (info->directRenderingEnabled) {
 	    R128CCE_START(pScrn, info);
@@ -220,11 +222,11 @@ void R128WaitForIdle(ScrnInfoPtr pScrn)
 		   INREG(R128_GUI_PROBE)));
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		   "Idle timed out, resetting engine...\n");
-#ifdef XF86DRI
+#ifdef R128DRI
         R128CCE_STOP(pScrn, info);
 #endif
 	R128EngineReset(pScrn);
-#ifdef XF86DRI
+#ifdef R128DRI
 	R128CCE_RESET(pScrn, info);
 	if (info->directRenderingEnabled) {
 	    R128CCE_START(pScrn, info);
@@ -233,7 +235,7 @@ void R128WaitForIdle(ScrnInfoPtr pScrn)
     }
 }
 
-#ifdef XF86DRI
+#ifdef R128DRI
 /* Wait until the CCE is completely idle: the FIFO has drained and the
  * CCE is idle.
  */
@@ -317,6 +319,7 @@ int R128CCEStop(ScrnInfoPtr pScrn)
 
 #endif
 
+#ifdef HAVE_XAA_H
 /* Setup for XAA SolidFill. */
 static void R128SetupForSolidFill(ScrnInfoPtr pScrn,
 				  int color, int rop, unsigned int planemask)
@@ -1006,6 +1009,7 @@ static void R128SubsequentImageWriteScanline(ScrnInfoPtr pScrn, int bufno)
 	}
     }
 }
+#endif
 
 /* Initialize the acceleration hardware. */
 void R128EngineInit(ScrnInfoPtr pScrn)
@@ -1069,7 +1073,7 @@ void R128EngineInit(ScrnInfoPtr pScrn)
     /* FIXME: this is a kludge for texture uploads in the 3D driver. Look at
      * how the radeon driver handles HOST_DATA_SWAP if you want to implement
      * CCE ImageWrite acceleration or anything needing this bit */
-#ifdef XF86DRI
+#ifdef R128DRI
     if (info->directRenderingEnabled)
 	OUTREGP(R128_DP_DATATYPE, 0, ~R128_HOST_BIG_ENDIAN_EN);
     else
@@ -1080,7 +1084,7 @@ void R128EngineInit(ScrnInfoPtr pScrn)
     OUTREGP(R128_DP_DATATYPE, 0, ~R128_HOST_BIG_ENDIAN_EN);
 #endif
 
-#ifdef XF86DRI
+#ifdef R128DRI
     info->sc_left         = 0x00000000;
     info->sc_right        = R128_DEFAULT_SC_RIGHT_MAX;
     info->sc_top          = 0x00000000;
@@ -1096,7 +1100,9 @@ void R128EngineInit(ScrnInfoPtr pScrn)
     R128WaitForIdle(pScrn);
 }
 
-#ifdef XF86DRI
+#ifdef R128DRI
+
+#ifdef HAVE_XAA_H
 
 /* Setup for XAA SolidFill. */
 static void R128CCESetupForSolidFill(ScrnInfoPtr pScrn,
@@ -1540,6 +1546,7 @@ static void R128CCESubsequentMono8x8PatternFillRect(ScrnInfoPtr pScrn,
 
     ADVANCE_RING();
 }
+#endif
 
 /* Get an indirect buffer for the CCE 2D acceleration commands.
  */
@@ -1658,6 +1665,7 @@ void R128CCEReleaseIndirect( ScrnInfoPtr pScrn )
                          &indirect, sizeof(drmR128Indirect));
 }
 
+#ifdef HAVE_XAA_H
 /* This callback is required for multihead cards using XAA */
 static
 void R128RestoreCCEAccelState(ScrnInfoPtr pScrn)
@@ -1743,7 +1751,9 @@ static void R128CCEAccelInit(ScrnInfoPtr pScrn, XAAInfoRecPtr a)
 
 }
 #endif
+#endif
 
+#ifdef HAVE_XAA_H
 /* This callback is required for multihead cards using XAA */
 static
 void R128RestoreAccelState(ScrnInfoPtr pScrn)
@@ -1804,7 +1814,7 @@ static void R128MMIOAccelInit(ScrnInfoPtr pScrn, XAAInfoRecPtr a)
 					       | LEFT_EDGE_CLIPPING_NEGATIVE_X;
     a->NumScanlineColorExpandBuffers   = 1;
     a->ScanlineColorExpandBuffers      = info->scratch_buffer;
-    info->scratch_save                 = xalloc(((pScrn->virtualX+31)/32*4)
+    info->scratch_save                 = malloc(((pScrn->virtualX+31)/32*4)
 					    + (pScrn->virtualX
 					    * info->CurrentLayout.pixel_bytes));
     info->scratch_buffer[0]            = info->scratch_save;
@@ -1857,18 +1867,52 @@ static void R128MMIOAccelInit(ScrnInfoPtr pScrn, XAAInfoRecPtr a)
     }
 
 }
+#endif
 
 /* Initialize XAA for supported acceleration and also initialize the
    graphics hardware for acceleration. */
 Bool R128AccelInit(ScreenPtr pScreen)
 {
-    ScrnInfoPtr   pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr   pScrn = xf86ScreenToScrn(pScreen);
     R128InfoPtr   info  = R128PTR(pScrn);
+
+#ifdef USE_EXA
+    if (info->useEXA) {
+        int errmaj = 0, errmin = 0;
+
+        info->exaReq.majorversion = EXA_VERSION_MAJOR;
+        info->exaReq.minorversion = EXA_VERSION_MINOR;
+
+        xf86DrvMsg(pScrn->scrnIndex,X_INFO,"Loading EXA module...\n");
+        if (!LoadSubModule(pScrn->module, "exa", NULL, NULL, NULL, &info->exaReq, &errmaj, &errmin)) {
+            LoaderErrorMsg(NULL, "exa", errmaj, errmin);
+            return FALSE;
+        }
+
+	/* Don't init EXA here because it'll be taken care of in mm init */
+	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Allocating EXA driver...\n");
+	info->ExaDriver = exaDriverAlloc();
+	if (!info->ExaDriver) {
+	    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Could not allocate EXA driver...\n");
+	    info->accelOn = FALSE;
+	}
+
+	return TRUE;
+    }
+#endif
+
+#ifndef HAVE_XAA_H
+    return FALSE;
+#else
     XAAInfoRecPtr a;
+
+    if (!info->useEXA) {
+        if (!xf86LoadSubModule(pScrn, "xaa")) return FALSE;
+    }
 
     if (!(a = info->accel = XAACreateInfoRec())) return FALSE;
 
-#ifdef XF86DRI
+#ifdef R128DRI
     if (info->directRenderingEnabled)
 	R128CCEAccelInit(pScrn, a);
     else
@@ -1877,4 +1921,5 @@ Bool R128AccelInit(ScreenPtr pScreen)
 
     R128EngineInit(pScrn);
     return XAAInit(pScreen, a);
+#endif
 }

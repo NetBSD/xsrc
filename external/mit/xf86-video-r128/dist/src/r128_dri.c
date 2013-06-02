@@ -77,7 +77,7 @@ static void R128DRIRefreshArea(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
    client. */
 static Bool R128InitVisualConfigs(ScreenPtr pScreen)
 {
-    ScrnInfoPtr       pScrn            = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr       pScrn            = xf86ScreenToScrn(pScreen);
     R128InfoPtr       info             = R128PTR(pScrn);
     int               numConfigs       = 0;
     __GLXvisualConfig *pConfigs        = NULL;
@@ -105,21 +105,21 @@ static Bool R128InitVisualConfigs(ScreenPtr pScreen)
 	if (R128_USE_DB)      numConfigs *= 2;
 
 	if (!(pConfigs
-	      = (__GLXvisualConfig*)xcalloc(sizeof(__GLXvisualConfig),
+	      = (__GLXvisualConfig*)calloc(sizeof(__GLXvisualConfig),
 					      numConfigs))) {
 	    return FALSE;
 	}
 	if (!(pR128Configs
-	      = (R128ConfigPrivPtr)xcalloc(sizeof(R128ConfigPrivRec),
+	      = (R128ConfigPrivPtr)calloc(sizeof(R128ConfigPrivRec),
 					     numConfigs))) {
-	    xfree(pConfigs);
+	    free(pConfigs);
 	    return FALSE;
 	}
 	if (!(pR128ConfigPtrs
-	      = (R128ConfigPrivPtr*)xcalloc(sizeof(R128ConfigPrivPtr),
+	      = (R128ConfigPrivPtr*)calloc(sizeof(R128ConfigPrivPtr),
 					      numConfigs))) {
-	    xfree(pConfigs);
-	    xfree(pR128Configs);
+	    free(pConfigs);
+	    free(pR128Configs);
 	    return FALSE;
 	}
 
@@ -188,21 +188,21 @@ static Bool R128InitVisualConfigs(ScreenPtr pScreen)
 	if (R128_USE_DB)      numConfigs *= 2;
 
 	if (!(pConfigs
-	      = (__GLXvisualConfig*)xcalloc(sizeof(__GLXvisualConfig),
+	      = (__GLXvisualConfig*)calloc(sizeof(__GLXvisualConfig),
 					      numConfigs))) {
 	    return FALSE;
 	}
 	if (!(pR128Configs
-	      = (R128ConfigPrivPtr)xcalloc(sizeof(R128ConfigPrivRec),
+	      = (R128ConfigPrivPtr)calloc(sizeof(R128ConfigPrivRec),
 					     numConfigs))) {
-	    xfree(pConfigs);
+	    free(pConfigs);
 	    return FALSE;
 	}
 	if (!(pR128ConfigPtrs
-	      = (R128ConfigPrivPtr*)xcalloc(sizeof(R128ConfigPrivPtr),
+	      = (R128ConfigPrivPtr*)calloc(sizeof(R128ConfigPrivPtr),
 					      numConfigs))) {
-	    xfree(pConfigs);
-	    xfree(pR128Configs);
+	    free(pConfigs);
+	    free(pR128Configs);
 	    return FALSE;
 	}
 
@@ -279,7 +279,7 @@ static Bool R128CreateContext(ScreenPtr pScreen, VisualPtr visual,
 			      drm_context_t hwContext, void *pVisualConfigPriv,
 			      DRIContextType contextStore)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     R128InfoPtr info = R128PTR(pScrn);
 
     info->drmCtx = hwContext;
@@ -301,10 +301,16 @@ static void R128DestroyContext(ScreenPtr pScreen, drm_context_t hwContext,
    can start/stop the engine. */
 static void R128EnterServer(ScreenPtr pScreen)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     R128InfoPtr info = R128PTR(pScrn);
 
+#ifdef HAVE_XAA_H
     if (info->accel) info->accel->NeedToSync = TRUE;
+#endif
+#ifdef USE_EXA
+    if (info->ExaDriver) exaMarkSync(pScreen);
+    info->state_2d.composite_setup = FALSE;
+#endif
 }
 
 /* Called when the X server goes to sleep to allow the X server's
@@ -315,7 +321,7 @@ static void R128EnterServer(ScreenPtr pScreen)
    can start/stop the engine. */
 static void R128LeaveServer(ScreenPtr pScreen)
 {
-    ScrnInfoPtr   pScrn     = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr   pScrn     = xf86ScreenToScrn(pScreen);
     R128InfoPtr   info      = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
 
@@ -356,11 +362,13 @@ static void R128DRIInitBuffers(WindowPtr pWin, RegionPtr prgn, CARD32 indx)
 {
     /* FIXME: This routine needs to have acceleration turned on */
     ScreenPtr   pScreen = pWin->drawable.pScreen;
-    ScrnInfoPtr pScrn   = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn   = xf86ScreenToScrn(pScreen);
     R128InfoPtr info    = R128PTR(pScrn);
+#ifdef HAVE_XAA_H
     BoxPtr      pbox, pboxSave;
     int         nbox, nboxSave;
     int         depth;
+#endif
 
     /* FIXME: Use accel when CCE 2D code is written
      * EA: What is this code kept for? Radeon doesn't have it and
@@ -369,7 +377,7 @@ static void R128DRIInitBuffers(WindowPtr pWin, RegionPtr prgn, CARD32 indx)
      */
     if (info->directRenderingEnabled)
 	return;
-
+#ifdef HAVE_XAA_H
     /* FIXME: This should be based on the __GLXvisualConfig info */
     switch (pScrn->bitsPerPixel) {
     case  8: depth = 0x000000ff; break;
@@ -413,6 +421,7 @@ static void R128DRIInitBuffers(WindowPtr pWin, RegionPtr prgn, CARD32 indx)
 						pbox->y2 - pbox->y1);
 
     info->accel->NeedToSync = TRUE;
+#endif
 }
 
 /* Copy the back and depth buffers when the X server moves a window. */
@@ -420,7 +429,7 @@ static void R128DRIMoveBuffers(WindowPtr pWin, DDXPointRec ptOldOrg,
 			       RegionPtr prgnSrc, CARD32 indx)
 {
     ScreenPtr   pScreen = pWin->drawable.pScreen;
-    ScrnInfoPtr pScrn   = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn   = xf86ScreenToScrn(pScreen);
     R128InfoPtr info   = R128PTR(pScrn);
 
     /* FIXME: This routine needs to have acceleration turned on */
@@ -905,7 +914,7 @@ static Bool R128DRIBufInit(R128InfoPtr info, ScreenPtr pScreen)
 
 static void R128DRIIrqInit(R128InfoPtr info, ScreenPtr pScreen)
 {
-   ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+   ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 
    if (!info->irq) {
       info->irq = drmGetInterruptFromBusID(
@@ -969,7 +978,7 @@ static void R128DRICCEInit(ScrnInfoPtr pScrn)
    create the DRI data structures and initialize the DRI state. */
 Bool R128DRIScreenInit(ScreenPtr pScreen)
 {
-    ScrnInfoPtr   pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr   pScrn = xf86ScreenToScrn(pScreen);
     R128InfoPtr   info = R128PTR(pScrn);
     DRIInfoPtr    pDRIInfo;
     R128DRIPtr    pR128DRI;
@@ -1026,7 +1035,7 @@ Bool R128DRIScreenInit(ScreenPtr pScreen)
     if (xf86LoaderCheckSymbol("DRICreatePCIBusID")) {
 	pDRIInfo->busIdString = DRICreatePCIBusID(info->PciInfo);
     } else {
-	pDRIInfo->busIdString            = xalloc(64);
+	pDRIInfo->busIdString            = malloc(64);
 	sprintf(pDRIInfo->busIdString,
 		"PCI:%d:%d:%d",
 		PCI_DEV_BUS(info->PciInfo),
@@ -1065,7 +1074,7 @@ Bool R128DRIScreenInit(ScreenPtr pScreen)
     pDRIInfo->SAREASize = SAREA_MAX;
 #endif
 
-    if (!(pR128DRI = (R128DRIPtr)xcalloc(sizeof(R128DRIRec),1))) {
+    if (!(pR128DRI = (R128DRIPtr)calloc(sizeof(R128DRIRec),1))) {
 	DRIDestroyInfoRec(info->pDRIInfo);
 	info->pDRIInfo = NULL;
 	return FALSE;
@@ -1091,7 +1100,7 @@ Bool R128DRIScreenInit(ScreenPtr pScreen)
     if (!DRIScreenInit(pScreen, pDRIInfo, &info->drmFD)) {
 	xf86DrvMsg(pScreen->myNum, X_ERROR,
                    "[dri] DRIScreenInit failed.  Disabling DRI.\n");
-	xfree(pDRIInfo->devPrivate);
+	free(pDRIInfo->devPrivate);
 	pDRIInfo->devPrivate = NULL;
 	DRIDestroyInfoRec(pDRIInfo);
 	pDRIInfo = NULL;
@@ -1206,7 +1215,7 @@ Bool R128DRIScreenInit(ScreenPtr pScreen)
    initialization. */
 Bool R128DRIFinishScreenInit(ScreenPtr pScreen)
 {
-    ScrnInfoPtr      pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr      pScrn = xf86ScreenToScrn(pScreen);
     R128InfoPtr      info  = R128PTR(pScrn);
     R128SAREAPrivPtr pSAREAPriv;
     R128DRIPtr       pR128DRI;
@@ -1291,7 +1300,7 @@ Bool R128DRIFinishScreenInit(ScreenPtr pScreen)
    resources used by the DRI. */
 void R128DRICloseScreen(ScreenPtr pScreen)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     R128InfoPtr info = R128PTR(pScrn);
     drmR128Init drmInfo;
 
@@ -1352,18 +1361,18 @@ void R128DRICloseScreen(ScreenPtr pScreen)
 				/* De-allocate all DRI data structures */
     if (info->pDRIInfo) {
 	if (info->pDRIInfo->devPrivate) {
-	    xfree(info->pDRIInfo->devPrivate);
+	    free(info->pDRIInfo->devPrivate);
 	    info->pDRIInfo->devPrivate = NULL;
 	}
 	DRIDestroyInfoRec(info->pDRIInfo);
 	info->pDRIInfo = NULL;
     }
     if (info->pVisualConfigs) {
-	xfree(info->pVisualConfigs);
+	free(info->pVisualConfigs);
 	info->pVisualConfigs = NULL;
     }
     if (info->pVisualConfigsPriv) {
-	xfree(info->pVisualConfigsPriv);
+	free(info->pVisualConfigsPriv);
 	info->pVisualConfigsPriv = NULL;
     }
 }
@@ -1389,6 +1398,7 @@ static void R128DRIRefreshArea(ScrnInfoPtr pScrn, int num, BoxPtr pbox)
     R128InfoPtr         info       = R128PTR(pScrn);
     int                 i;
     R128SAREAPrivPtr    pSAREAPriv = DRIGetSAREAPrivate(pScrn->pScreen);
+    PixmapPtr		pPix	   = pScrn->pScreen->GetScreenPixmap(pScrn->pScreen);
 
     /* Don't want to do this when no 3d is active and pages are
      * right-way-round
@@ -1396,43 +1406,87 @@ static void R128DRIRefreshArea(ScrnInfoPtr pScrn, int num, BoxPtr pbox)
     if (!pSAREAPriv->pfAllowPageFlip && pSAREAPriv->pfCurrentPage == 0)
 	return;
 
-    (*info->accel->SetupForScreenToScreenCopy)(pScrn,
+#ifdef HAVE_XAA_H
+    if (!info->useEXA) {
+	(*info->accel->SetupForScreenToScreenCopy)(pScrn,
 					       1, 1, GXcopy,
 					       (CARD32)(-1), -1);
+    }
+#endif
+#ifdef USE_EXA
+    if (info->useEXA) {
+        CARD32 src_pitch_offset, dst_pitch_offset, datatype;
+
+	R128GetPixmapOffsetPitch(pPix, &src_pitch_offset);
+	dst_pitch_offset = src_pitch_offset + (info->backOffset >> 5);
+	R128GetDatatypeBpp(pScrn->bitsPerPixel, &datatype);
+	info->xdir = info->ydir = 1;
+
+	R128DoPrepareCopy(pScrn, src_pitch_offset, dst_pitch_offset, datatype, GXcopy, ~0);
+    }
+#endif
 
     for (i = 0 ; i < num ; i++, pbox++) {
 	int xa = max(pbox->x1, 0), xb = min(pbox->x2, pScrn->virtualX-1);
 	int ya = max(pbox->y1, 0), yb = min(pbox->y2, pScrn->virtualY-1);
 
 	if (xa <= xb && ya <= yb) {
-	    (*info->accel->SubsequentScreenToScreenCopy)(pScrn, xa, ya,
+#ifdef HAVE_XAA_H
+	    if (!info->useEXA) {
+	        (*info->accel->SubsequentScreenToScreenCopy)(pScrn, xa, ya,
 							 xa + info->backX,
 							 ya + info->backY,
 							 xb - xa + 1,
 							 yb - ya + 1);
+	    }
+#endif
+#ifdef USE_EXA
+	    if (info->useEXA) {
+		(*info->ExaDriver->Copy)(pPix, xa, ya, xa, ya, xb - xa + 1, yb - ya + 1);
+	    }
+#endif
 	}
     }
 }
 
 static void R128EnablePageFlip(ScreenPtr pScreen)
 {
-    ScrnInfoPtr         pScrn      = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr         pScrn      = xf86ScreenToScrn(pScreen);
     R128InfoPtr         info       = R128PTR(pScrn);
     R128SAREAPrivPtr    pSAREAPriv = DRIGetSAREAPrivate(pScreen);
+    PixmapPtr		pPix	   = pScreen->GetScreenPixmap(pScreen);
 
     if (info->allowPageFlip) {
 	/* Duplicate the frontbuffer to the backbuffer */
-	(*info->accel->SetupForScreenToScreenCopy)(pScrn,
+#ifdef HAVE_XAA_H
+	if (!info->useEXA) {
+	    (*info->accel->SetupForScreenToScreenCopy)(pScrn,
 						   1, 1, GXcopy,
 						   (CARD32)(-1), -1);
 
-	(*info->accel->SubsequentScreenToScreenCopy)(pScrn,
+	    (*info->accel->SubsequentScreenToScreenCopy)(pScrn,
 						     0,
 						     0,
 						     info->backX,
 						     info->backY,
 						     pScrn->virtualX,
 						     pScrn->virtualY);
+	}
+#endif
+#ifdef USE_EXA
+	if (info->useEXA) {
+	    CARD32 src_pitch_offset, dst_pitch_offset, datatype;
+
+	    R128GetPixmapOffsetPitch(pPix, &src_pitch_offset);
+	    dst_pitch_offset = src_pitch_offset + (info->backOffset >> 5);
+	    R128GetDatatypeBpp(pScrn->bitsPerPixel, &datatype);
+	    info->xdir = info->ydir = 1;
+
+            R128DoPrepareCopy(pScrn, src_pitch_offset, dst_pitch_offset, datatype, GXcopy, ~0);
+
+	    (*info->ExaDriver->Copy)(pPix, 0, 0, 0, 0, pScrn->virtualX, pScrn->virtualY);
+	}
+#endif
 
 	pSAREAPriv->pfAllowPageFlip = 1;
     }
@@ -1462,7 +1516,7 @@ static void R128DRITransitionMultiToSingle3d(ScreenPtr pScreen)
 
 static void R128DRITransitionTo3d(ScreenPtr pScreen)
 {
-    ScrnInfoPtr    pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr    pScrn = xf86ScreenToScrn(pScreen);
     R128InfoPtr    info  = R128PTR(pScrn);
 
     R128EnablePageFlip(pScreen);
@@ -1475,7 +1529,7 @@ static void R128DRITransitionTo3d(ScreenPtr pScreen)
 
 static void R128DRITransitionTo2d(ScreenPtr pScreen)
 {
-    ScrnInfoPtr         pScrn      = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr         pScrn      = xf86ScreenToScrn(pScreen);
     R128InfoPtr         info       = R128PTR(pScrn);
     R128SAREAPrivPtr    pSAREAPriv = DRIGetSAREAPrivate(pScreen);
 
