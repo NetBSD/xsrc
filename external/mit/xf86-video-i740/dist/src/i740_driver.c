@@ -38,6 +38,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <string.h>
 #include <math.h>
+#include <unistd.h>
 
 /*
  * This server does not support these XFree86 4.0 features yet
@@ -106,25 +107,25 @@ static Bool I740Probe(DriverPtr drv, int flags);
 static Bool I740PreInit(ScrnInfoPtr pScrn, int flags);
 
 /* Initialize a screen */
-static Bool I740ScreenInit(int Index, ScreenPtr pScreen, int argc, char **argv);
+static Bool I740ScreenInit(SCREEN_INIT_ARGS_DECL);
 
 /* Enter from a virtual terminal */
-static Bool I740EnterVT(int scrnIndex, int flags);
+static Bool I740EnterVT(VT_FUNC_ARGS_DECL);
 
 /* Leave to a virtual terminal */
-static void I740LeaveVT(int scrnIndex, int flags);
+static void I740LeaveVT(VT_FUNC_ARGS_DECL);
 
 /* Close down each screen we initialized */
-static Bool I740CloseScreen(int scrnIndex, ScreenPtr pScreen);
+static Bool I740CloseScreen(CLOSE_SCREEN_ARGS_DECL);
 
 /* Change screensaver state */
 static Bool I740SaveScreen(ScreenPtr pScreen, int mode);
 
 /* Cleanup server private data */
-static void I740FreeScreen(int scrnIndex, int flags);
+static void I740FreeScreen(FREE_SCREEN_ARGS_DECL);
 
 /* Check if a mode is valid on the hardware */
-static ModeStatus I740ValidMode(int scrnIndex, DisplayModePtr mode,
+static ModeStatus I740ValidMode(SCRN_ARG_TYPE arg, DisplayModePtr mode,
 				Bool verbose, int flags);
 
 /* Switch to various Display Power Management System levels */
@@ -256,8 +257,7 @@ I740GetRec(ScrnInfoPtr pScrn) {
 static void
 I740FreeRec(ScrnInfoPtr pScrn) {
   if (!pScrn) return;
-  if (!pScrn->driverPrivate) return;
-  xfree(pScrn->driverPrivate);
+  free(pScrn->driverPrivate);
   pScrn->driverPrivate=0;
 }
 
@@ -371,8 +371,8 @@ I740Probe(DriverPtr drv, int flags) {
       }
   }
   
-  xfree(devSections);
-  xfree(usedChips);
+  free(devSections);
+  free(usedChips);
   
   return foundScreen;
 }
@@ -429,6 +429,7 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
 
   /* Allocate a vgaHWRec */
   if (!vgaHWGetHWRec(pScrn)) return FALSE;
+  vgaHWSetStdFuncs(VGAHWPTR(pScrn));
 
   pI740->PciInfo = xf86GetPciInfoForEntity(pI740->pEnt->index);
 #ifndef XSERVER_LIBPCIACCESS
@@ -487,7 +488,7 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
 
   /* Process the options */
   xf86CollectOptions(pScrn, NULL);
-  if (!(pI740->Options = xalloc(sizeof(I740Options))))
+  if (!(pI740->Options = malloc(sizeof(I740Options))))
     return FALSE;
   memcpy(pI740->Options, I740Options, sizeof(I740Options));
   xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pI740->Options);
@@ -674,7 +675,7 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
 	   if (I740_I2CInit(pScrn))
 	     {
 	       xf86MonPtr MonInfo;
-	       if ((MonInfo = xf86DoEDID_DDC2(pScrn->scrnIndex,pI740->rc_i2c))) {
+	       if ((MonInfo = xf86DoEDID_DDC2(XF86_SCRN_ARG(pScrn),pI740->rc_i2c))) {
 		 xf86DrvMsg(pScrn->scrnIndex, X_INFO, "DDC Monitor info: %p\n",
 			    MonInfo);
 		 xf86PrintEDID( MonInfo );
@@ -725,10 +726,11 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
     return FALSE;
   }
 
-  if (!xf86ReturnOptValBool(pI740->Options, OPTION_NOACCEL, FALSE)) {
+  pI740->NoAccel = xf86ReturnOptValBool(pI740->Options, OPTION_NOACCEL, FALSE);
+  if (!pI740->NoAccel) {
     if (!xf86LoadSubModule(pScrn, "xaa")) {
-      I740FreeRec(pScrn);
-      return FALSE;
+      xf86DrvMsg(pScrn->scrnIndex, X_WARNING, "No acceleration available\n");
+      pI740->NoAccel = 1;
     }
   }
 
@@ -1469,13 +1471,13 @@ I740LoadPalette24(ScrnInfoPtr pScrn, int numColors, int *indices, LOCO *colors,
 }
 
 static Bool
-I740ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv) {
+I740ScreenInit(SCREEN_INIT_ARGS_DECL) {
   ScrnInfoPtr pScrn;
   vgaHWPtr hwp;
   I740Ptr pI740;
   VisualPtr visual;
 
-  pScrn = xf86Screens[pScreen->myNum];
+  pScrn = xf86ScreenToScrn(pScreen);
   pI740 = I740PTR(pScrn);
   hwp = VGAHWPTR(pScrn);
 
@@ -1492,7 +1494,7 @@ I740ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv) {
   if (!I740ModeInit(pScrn, pScrn->currentMode)) return FALSE;
 
   I740SaveScreen(pScreen, SCREEN_SAVER_ON);
-  I740AdjustFrame(scrnIndex, pScrn->frameX0, pScrn->frameY0, 0);
+  I740AdjustFrame(ADJUST_FRAME_ARGS(pScrn, pScrn->frameX0, pScrn->frameY0));
 
   miClearVisualTypes();
 
@@ -1513,7 +1515,7 @@ I740ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv) {
       return FALSE;
     break;
   default:
-    xf86DrvMsg(scrnIndex, X_ERROR,
+    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 	       "Internal error: invalid bpp (%d) in I740ScrnInit\n",
 	       pScrn->bitsPerPixel);
     return FALSE;
@@ -1535,7 +1537,7 @@ I740ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv) {
     return FALSE;
   }
 
-  if (!xf86ReturnOptValBool(pI740->Options, OPTION_NOACCEL, FALSE)) {
+  if (!pI740->NoAccel) {
     if (!I740AccelInit(pScreen)) {
       xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		 "Hardware acceleration initialization failed\n");
@@ -1606,20 +1608,17 @@ I740ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv) {
 }
 
 Bool
-I740SwitchMode(int scrnIndex, DisplayModePtr mode, int flags) {
-  ScrnInfoPtr pScrn;
-
-  pScrn=xf86Screens[scrnIndex];
+I740SwitchMode(SWITCH_MODE_ARGS_DECL) {
+  SCRN_INFO_PTR(arg);
   return I740ModeInit(pScrn, mode);
 }
 
 void
-I740AdjustFrame(int scrnIndex, int x, int y, int flags) {
-  ScrnInfoPtr pScrn;
+I740AdjustFrame(ADJUST_FRAME_ARGS_DECL) {
+  SCRN_INFO_PTR(arg);
   int Base;
   vgaHWPtr hwp;
 
-  pScrn = xf86Screens[scrnIndex];
   hwp = VGAHWPTR(pScrn);
 
   Base = (y * pScrn->displayWidth + x) >> 2;
@@ -1650,34 +1649,32 @@ I740AdjustFrame(int scrnIndex, int x, int y, int flags) {
 }
 
 static Bool
-I740EnterVT(int scrnIndex, int flags) {
-  ScrnInfoPtr pScrn;
+I740EnterVT(VT_FUNC_ARGS_DECL) {
+  SCRN_INFO_PTR(arg);
 
-  pScrn = xf86Screens[scrnIndex];
   if (!I740ModeInit(pScrn, pScrn->currentMode)) return FALSE;
-  I740AdjustFrame(scrnIndex, pScrn->frameX0, pScrn->frameY0, 0);
+  I740AdjustFrame(ADJUST_FRAME_ARGS(pScrn, pScrn->frameX0, pScrn->frameY0));
   return TRUE;
 }
 
 static void
-I740LeaveVT(int scrnIndex, int flags) {
-  ScrnInfoPtr pScrn;
+I740LeaveVT(VT_FUNC_ARGS_DECL) {
+  SCRN_INFO_PTR(arg);
   vgaHWPtr hwp;
 
-  pScrn = xf86Screens[scrnIndex];
   hwp=VGAHWPTR(pScrn);
   I740Restore(pScrn);
   vgaHWLock(hwp);
 }
 
 static Bool
-I740CloseScreen(int scrnIndex, ScreenPtr pScreen)
+I740CloseScreen(CLOSE_SCREEN_ARGS_DECL)
 {
   ScrnInfoPtr pScrn;
   vgaHWPtr hwp;
   I740Ptr pI740;
 
-  pScrn = xf86Screens[scrnIndex];
+  pScrn = xf86ScreenToScrn(pScreen);
   hwp = VGAHWPTR(pScrn);
   pI740 = I740PTR(pScrn);
 
@@ -1688,30 +1685,34 @@ I740CloseScreen(int scrnIndex, ScreenPtr pScreen)
   
   I740UnmapMem(pScrn);
   vgaHWUnmapMem(pScrn);
+#ifdef HAVE_XAA_H
   if (pI740->AccelInfoRec)
     XAADestroyInfoRec(pI740->AccelInfoRec);
   pI740->AccelInfoRec=0;
+#endif
   if (pI740->CursorInfoRec)
     xf86DestroyCursorInfoRec(pI740->CursorInfoRec);
   pI740->CursorInfoRec=0;
   pScrn->vtSema=FALSE;
 
   pScreen->CloseScreen = pI740->CloseScreen;
-  return (*pScreen->CloseScreen)(scrnIndex, pScreen);
+  return (*pScreen->CloseScreen)(CLOSE_SCREEN_ARGS);
 }
 
 static void
-I740FreeScreen(int scrnIndex, int flags) {
-  I740FreeRec(xf86Screens[scrnIndex]);
+I740FreeScreen(FREE_SCREEN_ARGS_DECL) {
+  SCRN_INFO_PTR(arg);
+  I740FreeRec(pScrn);
   if (xf86LoaderCheckSymbol("vgaHWFreeHWRec"))
-    vgaHWFreeHWRec(xf86Screens[scrnIndex]);
+    vgaHWFreeHWRec(pScrn);
 }
 
 static ModeStatus
-I740ValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags) {
+I740ValidMode(SCRN_ARG_TYPE arg, DisplayModePtr mode, Bool verbose, int flags) {
+  SCRN_INFO_PTR(arg);
   if (mode->Flags & V_INTERLACE) {
     if (verbose) {
-      xf86DrvMsg(scrnIndex, X_PROBED, 
+      xf86DrvMsg(pScrn->scrnIndex, X_PROBED, 
 		 "Removing interlaced mode \"%s\"\n",
 		 mode->name);
     }
