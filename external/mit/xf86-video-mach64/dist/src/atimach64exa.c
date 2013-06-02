@@ -108,7 +108,7 @@ do {						\
 static void
 Mach64WaitMarker(ScreenPtr pScreenInfo, int Marker)
 {
-    ATIMach64Sync(xf86Screens[pScreenInfo->myNum]);
+    ATIMach64Sync(xf86ScreenToScrn(pScreenInfo));
 }
 
 static Bool
@@ -159,7 +159,7 @@ Mach64GetOffsetPitch(PixmapPtr pPix, int bpp, CARD32 *pitch_offset,
 		     unsigned int offset, unsigned int pitch)
 {
 #if 0
-    ScrnInfoPtr pScreenInfo = xf86Screens[pPix->drawable.pScreen->myNum];
+    ScrnInfoPtr pScreenInfo = xf86ScreenToScrn(pPix->drawable.pScreen);
     ATIPtr pATI = ATIPTR(pScreenInfo);
 
     if (pitch % pATI->pExa->pixmapPitchAlign != 0)
@@ -207,7 +207,7 @@ Mach64PrepareCopy
     Pixel     planemask
 )
 {
-    ScrnInfoPtr pScreenInfo = xf86Screens[pDstPixmap->drawable.pScreen->myNum];
+    ScrnInfoPtr pScreenInfo = xf86ScreenToScrn(pDstPixmap->drawable.pScreen);
     ATIPtr pATI = ATIPTR(pScreenInfo);
     CARD32 src_pitch_offset, dst_pitch_offset, dp_pix_width;
 
@@ -259,7 +259,7 @@ Mach64Copy
     int       h
 )
 {
-    ScrnInfoPtr pScreenInfo = xf86Screens[pDstPixmap->drawable.pScreen->myNum];
+    ScrnInfoPtr pScreenInfo = xf86ScreenToScrn(pDstPixmap->drawable.pScreen);
     ATIPtr pATI = ATIPTR(pScreenInfo);
 
     srcX *= pATI->XModifier;
@@ -319,7 +319,7 @@ Mach64PrepareSolid
     Pixel     fg
 )
 {
-    ScrnInfoPtr pScreenInfo = xf86Screens[pPixmap->drawable.pScreen->myNum];
+    ScrnInfoPtr pScreenInfo = xf86ScreenToScrn(pPixmap->drawable.pScreen);
     ATIPtr pATI = ATIPTR(pScreenInfo);
     CARD32 dst_pitch_offset, dp_pix_width;
 
@@ -358,7 +358,7 @@ Mach64Solid
     int       y2
 )
 {
-    ScrnInfoPtr pScreenInfo = xf86Screens[pPixmap->drawable.pScreen->myNum];
+    ScrnInfoPtr pScreenInfo = xf86ScreenToScrn(pPixmap->drawable.pScreen);
     ATIPtr pATI = ATIPTR(pScreenInfo);
 
     int x = x1;
@@ -387,60 +387,6 @@ Mach64Solid
 
 static void Mach64DoneSolid(PixmapPtr pPixmap) { }
 
-/*
- * Memcpy-based UTS.
- */
-static Bool
-Mach64UploadToScreen(PixmapPtr pDst, int x, int y, int w, int h,
-    char *src, int src_pitch)
-{
-    char  *dst        = pDst->devPrivate.ptr;
-    int    dst_pitch  = exaGetPixmapPitch(pDst);
-
-    int bpp    = pDst->drawable.bitsPerPixel;
-    int cpp    = (bpp + 7) / 8;
-    int wBytes = w * cpp;
-
-    exaWaitSync(pDst->drawable.pScreen);
-
-    dst += (x * cpp) + (y * dst_pitch);
-
-    while (h--) {
-        memcpy(dst, src, wBytes);
-        src += src_pitch;
-        dst += dst_pitch;
-    }
-
-    return TRUE;
-}
-
-/*
- * Memcpy-based DFS.
- */
-static Bool
-Mach64DownloadFromScreen(PixmapPtr pSrc, int x, int y, int w, int h,
-    char *dst, int dst_pitch)
-{
-    char  *src        = pSrc->devPrivate.ptr;
-    int    src_pitch  = exaGetPixmapPitch(pSrc);
-
-    int bpp    = pSrc->drawable.bitsPerPixel;
-    int cpp    = (bpp + 7) / 8;
-    int wBytes = w * cpp;
-
-    exaWaitSync(pSrc->drawable.pScreen);
-
-    src += (x * cpp) + (y * src_pitch);
-
-    while (h--) {
-        memcpy(dst, src, wBytes);
-        src += src_pitch;
-        dst += dst_pitch;
-    }
-
-    return TRUE;
-}
-
 #include "atimach64render.c"
 
 /* Compute log base 2 of val. */
@@ -468,7 +414,7 @@ static __inline__ int Mach64Log2(int val)
 static void
 Mach64SetupMemEXA(ScreenPtr pScreen)
 {
-    ScrnInfoPtr pScreenInfo = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScreenInfo = xf86ScreenToScrn(pScreen);
     ATIPtr pATI = ATIPTR(pScreenInfo);
 
     int cpp = (pScreenInfo->bitsPerPixel + 7) / 8;
@@ -634,7 +580,7 @@ Mach64SetupMemEXA(ScreenPtr pScreen)
 
 Bool ATIMach64ExaInit(ScreenPtr pScreen)
 {
-    ScrnInfoPtr pScreenInfo = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScreenInfo = xf86ScreenToScrn(pScreen);
     ATIPtr pATI = ATIPTR(pScreenInfo);
     ExaDriverPtr pExa;
 
@@ -658,12 +604,6 @@ Bool ATIMach64ExaInit(ScreenPtr pScreen)
     pExa->PrepareCopy = Mach64PrepareCopy;
     pExa->Copy = Mach64Copy;
     pExa->DoneCopy = Mach64DoneCopy;
-
-    /* EXA hits more optimized paths when it does not have to fallback because
-     * of missing UTS/DFS, hook memcpy-based UTS/DFS.
-     */
-    pExa->UploadToScreen = Mach64UploadToScreen;
-    pExa->DownloadFromScreen = Mach64DownloadFromScreen;
 
     if (pATI->RenderAccelEnabled) {
 	if (pATI->Chip >= ATI_CHIP_264GTPRO) {
