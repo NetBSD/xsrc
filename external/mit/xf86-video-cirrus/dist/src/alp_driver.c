@@ -15,8 +15,6 @@
 #include "config.h"
 #endif
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/alp_driver.c,v 1.35 2003/11/03 05:11:09 tsi Exp $ */
-
 /* All drivers should typically include these */
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -25,9 +23,6 @@
 
 /* Everything using inb/outb, etc needs "compiler.h" */
 #include "compiler.h"
-
-/* Drivers for PCI hardware need this */
-#include "xf86PciInfo.h"
 
 /* Drivers that need to access the PCI config space directly need this */
 #include "xf86Pci.h"
@@ -43,9 +38,6 @@
 
 /* All drivers initialising the SW cursor need this */
 #include "mipointer.h"
-
-/* All drivers implementing backing store need this */
-#include "mibstore.h"
 
 #include "micmap.h"
 
@@ -90,20 +82,20 @@ static void AlpProbeI2C(int scrnIndex);
 /* Mandatory functions */
 
 Bool AlpPreInit(ScrnInfoPtr pScrn, int flags);
-Bool AlpScreenInit(int Index, ScreenPtr pScreen, int argc, char **argv);
-Bool AlpEnterVT(int scrnIndex, int flags);
-void AlpLeaveVT(int scrnIndex, int flags);
-static Bool	AlpCloseScreen(int scrnIndex, ScreenPtr pScreen);
+Bool AlpScreenInit(SCREEN_INIT_ARGS_DECL);
+Bool AlpEnterVT(VT_FUNC_ARGS_DECL);
+void AlpLeaveVT(VT_FUNC_ARGS_DECL);
+static Bool	AlpCloseScreen(CLOSE_SCREEN_ARGS_DECL);
 static Bool	AlpSaveScreen(ScreenPtr pScreen, int mode);
 
 /* Required if the driver supports mode switching */
-Bool AlpSwitchMode(int scrnIndex, DisplayModePtr mode, int flags);
+Bool AlpSwitchMode(SWITCH_MODE_ARGS_DECL);
 /* Required if the driver supports moving the viewport */
-void AlpAdjustFrame(int scrnIndex, int x, int y, int flags);
+void AlpAdjustFrame(ADJUST_FRAME_ARGS_DECL);
 
 /* Optional functions */
-void AlpFreeScreen(int scrnIndex, int flags);
-ModeStatus AlpValidMode(int scrnIndex, DisplayModePtr mode,
+void AlpFreeScreen(FREE_SCREEN_ARGS_DECL);
+ModeStatus AlpValidMode(SCRN_ARG_TYPE arg, DisplayModePtr mode,
 			Bool verbose, int flags);
 /* Internally used functions */
 static void	AlpSave(ScrnInfoPtr pScrn);
@@ -118,6 +110,11 @@ static void AlpOffscreenAccelInit(ScrnInfoPtr pScrn);
 
 static void	AlpDisplayPowerManagementSet(ScrnInfoPtr pScrn,
 											int PowerManagementMode, int flags);
+
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
+static void PC98CIRRUS755xEnable(ScrnInfoPtr pScrn);
+static void PC98CIRRUS755xDisable(ScrnInfoPtr pScrn);
+#endif
 
 /*
  * This is intentionally screen-independent.  It indicates the binding
@@ -153,6 +150,8 @@ static int gd5430_MaxClocks[] = {  85500,  85500,  50000,  28500,      0 };
 static int gd5446_MaxClocks[] = { 135100, 135100,  85500,  85500,      0 };
 static int gd5480_MaxClocks[] = { 135100, 200000, 200000, 135100, 135100 };
 static int gd7548_MaxClocks[] = {  80100,  80100,  80100,  80100,  80100 };
+static int gd7555_MaxClocks[] = {  80100,  80100,  80100,  80100,  80100 };
+static int gd7556_MaxClocks[] = {  80100,  80100,  80100,  80100,  80100 };
 
 #ifdef XFree86LOADER
 
@@ -248,7 +247,7 @@ AlpFreeRec(ScrnInfoPtr pScrn)
 {
 	if (pScrn->driverPrivate == NULL)
 		return;
-	xfree(pScrn->driverPrivate);
+	free(pScrn->driverPrivate);
 	pScrn->driverPrivate = NULL;
 }
 
@@ -385,6 +384,11 @@ AlpCountRam(ScrnInfoPtr pScrn)
 			break;
 	}
 	break;
+
+    case PCI_CHIP_GD7555:
+    case PCI_CHIP_GD7556:
+	videoram = 2048;   /*  for PC-9821 La13 etc.  */
+	break;
     }
 
     /* UNMap the Alp memory and MMIO areas */
@@ -407,6 +411,8 @@ GetAccelPitchValues(ScrnInfoPtr pScrn)
 {
 	int *linePitches = NULL;
 	int i, n = 0;
+	int max_pitch;
+
 	CirPtr pCir = CIRPTR(pScrn);
 
 	/* XXX ajv - 512, 576, and 1536 may not be supported
@@ -423,8 +429,21 @@ GetAccelPitchValues(ScrnInfoPtr pScrn)
 							1280, 1536, 1600, 1920, 2048, 0 };
 #endif
 
+	switch (pCir->Chipset) {
+	case PCI_CHIP_GD5436:
+	case PCI_CHIP_GD5446:
+		max_pitch = 0x1ff << 3;
+		break;
+
+	default:
+		/* FIXME max_pitch for other chipsets? */
+		max_pitch = (pScrn->bitsPerPixel / 8) * 2048;
+		break;
+	}
+
 	for (i = 0; accelWidths[i] != 0; i++) {
-		if (accelWidths[i] % pCir->Rounding == 0) {
+		if ((accelWidths[i] % pCir->Rounding == 0)
+		 && ((accelWidths[i] * pScrn->bitsPerPixel / 8) <= max_pitch)) {
 			n++;
 			linePitches = xnfrealloc(linePitches, n * sizeof(int));
 			linePitches[n - 1] = accelWidths[i];
@@ -474,6 +493,7 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 	if (!vgaHWGetHWRec(pScrn))
 		return FALSE;
 	hwp = VGAHWPTR(pScrn);
+	vgaHWSetStdFuncs(hwp);
 	vgaHWGetIOBase(hwp);
 
 	/* Allocate the AlpRec driverPrivate */
@@ -482,12 +502,17 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 
 	pCir = CIRPTR(pScrn);
 	pCir->pScrn = pScrn;
+
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
 	pCir->PIOReg = hwp->PIOOffset + 0x3CE;
+#else
+	pCir->PIOReg = 0x3CE;
+#endif
 
 	/* Get the entity, and make sure it is PCI. */
 	pCir->pEnt = xf86GetEntityInfo(pScrn->entityList[0]);
 	if (pCir->pEnt->location.type != BUS_PCI) {
-		xfree(pCir->pEnt);
+		free(pCir->pEnt);
 		return FALSE;
 	}
 
@@ -498,7 +523,11 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 			      PCI_DEV_DEV(pCir->PciInfo),
 			      PCI_DEV_FUNC(pCir->PciInfo));
 
-    if (xf86LoadSubModule(pScrn, "int10")) {
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
+    if (!xf86IsPc98())
+#endif
+    if (xf86LoadSubModule(pScrn, "int10"))
+    {
 	xf86DrvMsg(pScrn->scrnIndex,X_INFO,"initializing int10\n");
 	pInt = xf86InitInt10(pCir->pEnt->index);
 	xf86FreeInt10(pInt);
@@ -509,7 +538,6 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 
 	PCI_WRITE_LONG(pCir->PciInfo, PCI_REGION_BASE(pCir->PciInfo, 0, REGION_MEM), 0x10);
 	PCI_WRITE_LONG(pCir->PciInfo, PCI_REGION_BASE(pCir->PciInfo, 1, REGION_MEM), 0x14);
-	
     }
 
     /* Set pScrn->monitor */
@@ -574,7 +602,7 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 	xf86CollectOptions(pScrn, NULL);
 
 	/* Process the options */
-	if (!(pCir->Options = xalloc(sizeof(CirOptions))))
+	if (!(pCir->Options = malloc(sizeof(CirOptions))))
 		return FALSE;
 	memcpy(pCir->Options, CirOptions, sizeof(CirOptions));
 	xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pCir->Options);
@@ -589,6 +617,16 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 
 	from = X_DEFAULT;
 	pCir->HWCursor = FALSE;
+
+	switch (pCir->Chipset) {
+	case PCI_CHIP_GD7555:
+	case PCI_CHIP_GD7556:
+	  pCir->HWCursor = TRUE;
+	  break;
+	default:
+	  break;
+	}
+
 	if (xf86GetOptValBool(pCir->Options, OPTION_HW_CURSOR, &pCir->HWCursor))
 		from = X_CONFIG;
 
@@ -733,7 +771,7 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
      }
      else
  	xf86SetDDCproperties(pScrn,xf86PrintEDID(
- 	    xf86DoEDID_DDC2(pScrn->scrnIndex,pCir->I2CPtr1)));
+		 xf86DoEDID_DDC2(XF86_SCRN_ARG(pScrn),pCir->I2CPtr1)));
  
      /* Probe the possible LCD display */
      AlpProbeLCD(pScrn);
@@ -863,10 +901,10 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 		case PCI_CHIP_GD5430:
 		case PCI_CHIP_GD5434_4:
 		case PCI_CHIP_GD5434_8:
-		case PCI_CHIP_GD5436:
 	/*	case PCI_CHIP_GD5440: */
 			p = gd5430_MaxClocks;
 			break;
+		case PCI_CHIP_GD5436:
 		case PCI_CHIP_GD5446:
 			p = gd5446_MaxClocks;
 			break;
@@ -875,6 +913,12 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 			break;
 		case PCI_CHIP_GD7548:
 		        p = gd7548_MaxClocks;
+                        break;
+		case PCI_CHIP_GD7555:
+		        p = gd7555_MaxClocks;
+                        break;
+		case PCI_CHIP_GD7556:
+		        p = gd7556_MaxClocks;
                         break;
 		}
 		if (!p)
@@ -1041,11 +1085,19 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 
 	/* Load XAA if needed */
 	if (!pCir->NoAccel) {
-		if (!xf86LoadSubModule(pScrn, "xaa")) {
-			AlpFreeRec(pScrn);
-			return FALSE;
+#ifdef HAVE_XAA_H
+		if (!xf86LoadSubModule(pScrn, "xaa"))
+#else
+		if (1)
+#endif
+                {
+			xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+				   "Falling back to shadowfb\n");
+			pCir->NoAccel = TRUE;
+			pCir->shadowFB = TRUE;
 		}
 	}
+
 
 	/* Load ramdac if needed */
 	if (pCir->HWCursor) {
@@ -1360,6 +1412,11 @@ AlpModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
 	vgaHWProtect(pScrn, FALSE);
 
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
+	if (xf86IsPc98())
+		PC98CIRRUS755xEnable(pScrn);
+#endif
+
 	return TRUE;
 }
 
@@ -1396,9 +1453,9 @@ AlpRestore(ScrnInfoPtr pScrn)
 /* This gets called at the start of each server generation */
 
 Bool
-AlpScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
+AlpScreenInit(SCREEN_INIT_ARGS_DECL)
 {
-	ScrnInfoPtr pScrn;
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 	vgaHWPtr hwp;
 	CirPtr pCir;
 	int i, ret;
@@ -1411,11 +1468,6 @@ AlpScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 #ifdef ALP_DEBUG
 	ErrorF("AlpScreenInit\n");
 #endif
-
-	/*
-	 * First get the ScrnInfoRec
-	 */
-	pScrn = xf86Screens[pScreen->myNum];
 
 	hwp = VGAHWPTR(pScrn);
 	pCir = CIRPTR(pScrn);
@@ -1452,7 +1504,7 @@ AlpScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	AlpSaveScreen(pScreen, SCREEN_SAVER_ON);
 
 	/* Set the viewport */
-	AlpAdjustFrame(scrnIndex, pScrn->frameX0, pScrn->frameY0, 0);
+	AlpAdjustFrame(ADJUST_FRAME_ARGS(pScrn, pScrn->frameX0, pScrn->frameY0));
 
 	/*
 	 * The next step is to setup the screen's visuals, and initialise the
@@ -1489,7 +1541,7 @@ AlpScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	
 	if(pCir->shadowFB) {
 	    pCir->ShadowPitch = BitmapBytePad(pScrn->bitsPerPixel * width);
-	    pCir->ShadowPtr = xalloc(pCir->ShadowPitch * height);
+	    pCir->ShadowPtr = malloc(pCir->ShadowPitch * height);
 	    displayWidth = pCir->ShadowPitch / (pScrn->bitsPerPixel >> 3);
 	    FbBase = pCir->ShadowPtr;
 	} else {
@@ -1530,7 +1582,7 @@ AlpScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	    init_picture = 1;
 	    break;
 	default:
-	    xf86DrvMsg(scrnIndex, X_ERROR,
+	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		       "X11: Internal error: invalid bpp (%d) in AlpScreenInit\n",
 		       pScrn->bitsPerPixel);
 	    ret = FALSE;
@@ -1562,8 +1614,6 @@ AlpScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	if (init_picture)
 		fbPictureInit (pScreen, 0, 0);
     
-	miInitializeBackingStore(pScreen);
-
 	/*
 	 * Set initial black & white colourmap indices.
 	 */
@@ -1601,10 +1651,12 @@ AlpScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
 	if (!pCir->NoAccel) { /* Initialize XAA functions */
 	    AlpOffscreenAccelInit(pScrn);
+#ifdef HAVE_XAA_H
 	    if (!(pCir->UseMMIO ? AlpXAAInitMMIO(pScreen) :
 		  AlpXAAInit(pScreen)))
 	      xf86DrvMsg(pScrn->scrnIndex, X_ERROR, 
 			 "Could not initialize XAA\n");
+#endif
 	}
 
 #if 1
@@ -1686,9 +1738,10 @@ AlpScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
 /* Usually mandatory */
 Bool
-AlpSwitchMode(int scrnIndex, DisplayModePtr mode, int flags)
+AlpSwitchMode(SWITCH_MODE_ARGS_DECL)
 {
-	return AlpModeInit(xf86Screens[scrnIndex], mode);
+	SCRN_INFO_PTR(arg);
+	return AlpModeInit(pScrn, mode);
 }
 
 
@@ -1698,13 +1751,12 @@ AlpSwitchMode(int scrnIndex, DisplayModePtr mode, int flags)
  */
 /* Usually mandatory */
 void
-AlpAdjustFrame(int scrnIndex, int x, int y, int flags)
+AlpAdjustFrame(ADJUST_FRAME_ARGS_DECL)
 {
-	ScrnInfoPtr pScrn;
+	SCRN_INFO_PTR(arg);
 	int Base, tmp;
 	vgaHWPtr hwp;
 
-	pScrn = xf86Screens[scrnIndex];
 	hwp = VGAHWPTR(pScrn);
 
 	Base = ((y * pScrn->displayWidth + x) / 8);
@@ -1742,9 +1794,9 @@ AlpAdjustFrame(int scrnIndex, int x, int y, int flags)
 
 /* Mandatory */
 Bool
-AlpEnterVT(int scrnIndex, int flags)
+AlpEnterVT(VT_FUNC_ARGS_DECL)
 {
-	ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
+	SCRN_INFO_PTR(arg);
 	CirPtr pCir = CIRPTR(pScrn);
 	Bool ret;
 
@@ -1772,9 +1824,9 @@ AlpEnterVT(int scrnIndex, int flags)
 
 /* Mandatory */
 void
-AlpLeaveVT(int scrnIndex, int flags)
+AlpLeaveVT(VT_FUNC_ARGS_DECL)
 {
-	ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
+	SCRN_INFO_PTR(arg);
 	vgaHWPtr hwp = VGAHWPTR(pScrn);
 #ifdef ALP_DEBUG
 	ErrorF("AlpLeaveVT\n");
@@ -1782,6 +1834,11 @@ AlpLeaveVT(int scrnIndex, int flags)
 
 	AlpRestore(pScrn);
 	vgaHWLock(hwp);
+
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
+	if (xf86IsPc98())
+		PC98CIRRUS755xDisable(pScrn);
+#endif
 }
 
 
@@ -1794,9 +1851,9 @@ AlpLeaveVT(int scrnIndex, int flags)
 
 /* Mandatory */
 static Bool
-AlpCloseScreen(int scrnIndex, ScreenPtr pScreen)
+AlpCloseScreen(CLOSE_SCREEN_ARGS_DECL)
 {
-	ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 	vgaHWPtr hwp = VGAHWPTR(pScrn);
 	CirPtr pCir = CIRPTR(pScrn);
 
@@ -1806,21 +1863,28 @@ AlpCloseScreen(int scrnIndex, ScreenPtr pScreen)
 	    CirUnmapMem(pCir, pScrn->scrnIndex);
 	}
 
+#ifdef HAVE_XAA_H
 	if (pCir->AccelInfoRec)
 		XAADestroyInfoRec(pCir->AccelInfoRec);
 	pCir->AccelInfoRec = NULL;
+#endif
 	if (pCir->CursorInfoRec)
 		xf86DestroyCursorInfoRec(pCir->CursorInfoRec);
 	pCir->CursorInfoRec = NULL;
 	if (pCir->DGAModes)
-		xfree(pCir->DGAModes);
+		free(pCir->DGAModes);
 	pCir->DGAnumModes = 0;
 	pCir->DGAModes = NULL;
 
 	pScrn->vtSema = FALSE;
 
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
+	if (xf86IsPc98())
+		PC98CIRRUS755xDisable(pScrn);
+#endif
+
 	pScreen->CloseScreen = pCir->CloseScreen;
-	return (*pScreen->CloseScreen)(scrnIndex, pScreen);
+	return (*pScreen->CloseScreen)(CLOSE_SCREEN_ARGS);
 }
 
 
@@ -1828,8 +1892,9 @@ AlpCloseScreen(int scrnIndex, ScreenPtr pScreen)
 
 /* Optional */
 void
-AlpFreeScreen(int scrnIndex, int flags)
+AlpFreeScreen(FREE_SCREEN_ARGS_DECL)
 {
+	SCRN_INFO_PTR(arg);
 #ifdef ALP_DEBUG
 	ErrorF("AlpFreeScreen\n");
 #endif
@@ -1838,8 +1903,8 @@ AlpFreeScreen(int scrnIndex, int flags)
 	 * get called routinely at the end of a server generation.
 	 */
 	if (xf86LoaderCheckSymbol("vgaHWFreeHWRec"))
-		vgaHWFreeHWRec(xf86Screens[scrnIndex]);
-	AlpFreeRec(xf86Screens[scrnIndex]);
+		vgaHWFreeHWRec(pScrn);
+	AlpFreeRec(pScrn);
 }
 
 
@@ -1847,7 +1912,7 @@ AlpFreeScreen(int scrnIndex, int flags)
 
 /* Optional */
 ModeStatus
-AlpValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
+AlpValidMode(SCRN_ARG_TYPE arg, DisplayModePtr mode, Bool verbose, int flags)
 {
 	int lace;
 
@@ -2081,3 +2146,53 @@ AlpOffscreenAccelInit(ScrnInfoPtr pScrn)
 		   box.y2 - pScrn->virtualY);
     }
 }
+
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
+static void
+PC98CIRRUS755xEnable(ScrnInfoPtr pScrn)  /*  enter_aile()  */
+{
+   unsigned int  index,data;
+   vgaHWPtr hwp = VGAHWPTR(pScrn);
+
+   outb(0xfac, 0x02);
+
+   outb(0x68, 0x0e);
+   outb(0x6a, 0x07);
+   outb(0x6a, 0x8f);
+   outb(0x6a, 0x06);
+
+   outw(VGA_SEQ_INDEX, 0x1206);         /*  unlock cirrus special  */
+
+   index = hwp->IOBase + VGA_CRTC_INDEX_OFFSET;
+   data  = hwp->IOBase + VGA_CRTC_DATA_OFFSET;
+   outb(index, 0x3c);
+   outb(data,  inb(data) & 0xef);
+   outb(index, 0x1a);
+   outb(data,  inb(data) & 0xf3);
+}
+
+static void
+PC98CIRRUS755xDisable(ScrnInfoPtr pScrn)  /*  leave_aile()  */
+{
+   unsigned int  index,data;
+   vgaHWPtr hwp = VGAHWPTR(pScrn);
+
+   outw(VGA_SEQ_INDEX, 0x1206);         /*  unlock cirrus special  */
+
+   index = hwp->IOBase + VGA_CRTC_INDEX_OFFSET;
+   data  = hwp->IOBase + VGA_CRTC_DATA_OFFSET;
+   outb(index, 0x3c);
+   outb(data,  0x71);
+   outb(index, 0x1a);
+   outb(data,  inb(data) | 0x0c);
+
+   outb(0xfac,0x00);
+
+   outb(0x68, 0x0f);
+   outb(0x6a, 0x07);
+   outb(0x6a, 0x8e);
+   outb(0x6a, 0x21);
+   outb(0x6a, 0x69);
+   outb(0x6a, 0x06);
+}
+#endif

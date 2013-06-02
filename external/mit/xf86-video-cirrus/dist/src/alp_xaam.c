@@ -1,6 +1,5 @@
 /* (c) Itai Nahshon */
 /* #define DEBUG */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/alp_xaam.c,v 1.7 2001/10/01 13:44:05 eich Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +10,6 @@
 #include "compiler.h"
 
 #include "xf86Pci.h"
-#include "xf86PciInfo.h"
 
 #include "vgaHW.h"
 
@@ -19,6 +17,7 @@
 #define _ALP_PRIVATE_
 #include "alp.h"
 
+#ifdef HAVE_XAA_H
 #ifdef DEBUG
 #define minb(p) \
         (ErrorF("minb(%X)\n", p),\
@@ -223,7 +222,7 @@ AlpAccelEngineInit(ScrnInfoPtr pScrn)
 Bool
 AlpXAAInitMMIO(ScreenPtr pScreen)
 {
-	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 	CirPtr pCir = CIRPTR(pScrn);
 	XAAInfoRecPtr XAAPtr;
 	
@@ -268,7 +267,4 @@ AlpXAAInitMMIO(ScreenPtr pScreen)
 	return TRUE;
 }
 
-
-
-
-
+#endif
