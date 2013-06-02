@@ -1,4 +1,3 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint.h,v 1.58tsi Exp $ */
 /*
  * Copyright 1997-2001 by Alan Hourihane <alanh@fairlite.demon.co.uk>
  *
@@ -36,21 +35,17 @@
 
 #include "glintpcirename.h"
 
+#ifdef HAVE_XAA_H
 #include "xaa.h"
+#endif
+#include "xf86fbman.h"
 #include "xf86RamDac.h"
 #include "xf86cmap.h"
 #include "xf86i2c.h"
 #include "xf86DDC.h"
 #include "xf86xv.h"
-#ifdef XF86DRI_DEVEL
-#include "xf86drm.h"
-#include "sarea.h"
-#define _XF86DRI_SERVER_
-#include "dri.h"
-#include "GL/glxint.h"
-#include "glint_dripriv.h"
-#endif
 
+#include "compat-api.h"
 #define GLINT_MAX_MULTI_DEVICES 2
 
 #define GLINT_VERSION 4000
@@ -150,7 +145,9 @@ typedef struct {
     CARD32		PixelWidth;
     RamDacRecPtr	RamDacRec;
     xf86CursorInfoPtr	CursorInfoRec;
+#ifdef HAVE_XAA_H
     XAAInfoRecPtr	AccelInfoRec;
+#endif
     CloseScreenProcPtr	CloseScreen;
     ScreenBlockHandlerProcPtr BlockHandler;
     GCPtr		CurrentGC;
@@ -174,21 +171,6 @@ typedef struct {
     void		(*VideoTimerCallback)(ScrnInfoPtr, Time);
     XF86VideoAdaptorPtr adaptor;
     int                 videoKey;
-#ifdef XF86DRI_DEVEL
-    Bool		directRenderingEnabled;
-    Bool		PCIMode;
-    DRIInfoPtr		pDRIInfo;
-    int			drmSubFD;
-    drmBufMapPtr        drmBufs;         /* Map of DMA buffers */
-    drmRegion		agp;
-    drmRegion		buffers;
-    int			numVisualConfigs;
-    __GLXvisualConfig*	pVisualConfigs;
-    GLINTConfigPrivPtr	pVisualConfigsPriv;
-    GLINTRegRec		DRContextRegs;
-    int			DRIctx;
-    unsigned char 	*buf2D;
-#endif
     OptionInfoPtr	Options;
     Bool		PM3_UsingSGRAM;
 } GLINTRec, *GLINTPtr;
@@ -200,29 +182,29 @@ typedef struct {
 #define PCI_VENDOR_TI_CHIP_PERMEDIA	\
 			((PCI_VENDOR_TI << 16) | PCI_CHIP_TI_PERMEDIA)
 #define PCI_VENDOR_3DLABS_CHIP_PERMEDIA	\
-			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_PERMEDIA)
+			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_3DLABS_PERMEDIA)
 #define PCI_VENDOR_3DLABS_CHIP_PERMEDIA2	\
-			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_PERMEDIA2)
+			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_3DLABS_PERMEDIA2)
 #define PCI_VENDOR_3DLABS_CHIP_PERMEDIA2V	\
-			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_PERMEDIA2V)
+			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_3DLABS_PERMEDIA2V)
 #define PCI_VENDOR_3DLABS_CHIP_PERMEDIA3	\
-			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_PERMEDIA3)
+			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_3DLABS_PERMEDIA3)
 #define PCI_VENDOR_3DLABS_CHIP_PERMEDIA4	\
-			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_PERMEDIA4)
+			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_3DLABS_PERMEDIA4)
 #define PCI_VENDOR_3DLABS_CHIP_R4		\
-			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_R4)
+			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_3DLABS_R4)
 #define PCI_VENDOR_3DLABS_CHIP_300SX	\
-			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_300SX)
+			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_3DLABS_300SX)
 #define PCI_VENDOR_3DLABS_CHIP_500TX	\
-			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_500TX)
+			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_3DLABS_500TX)
 #define PCI_VENDOR_3DLABS_CHIP_MX	\
-			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_MX)
+			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_3DLABS_MX)
 #define PCI_VENDOR_3DLABS_CHIP_GAMMA	\
-			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_GAMMA)
+			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_3DLABS_GAMMA)
 #define PCI_VENDOR_3DLABS_CHIP_GAMMA2	\
-			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_GAMMA2)
+			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_3DLABS_GAMMA2)
 #define PCI_VENDOR_3DLABS_CHIP_DELTA	\
-			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_DELTA)
+			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_3DLABS_DELTA)
 
 /* Prototypes */
 
@@ -339,22 +321,12 @@ void Permedia2vOutIndReg(ScrnInfoPtr pScrn,
 		   CARD32, unsigned char mask, unsigned char data);
 unsigned char Permedia2vInIndReg(ScrnInfoPtr pScrn, CARD32);
 
-Bool GLINTSwitchMode(int scrnIndex, DisplayModePtr mode, int flags);
-void GLINTAdjustFrame(int scrnIndex, int x, int y, int flags);
+Bool GLINTSwitchMode(SWITCH_MODE_ARGS_DECL);
+void GLINTAdjustFrame(ADJUST_FRAME_ARGS_DECL);
 
 extern int partprodPermedia[];
 
 Bool GLINTDGAInit(ScreenPtr pScreen);
-
-Bool GLINTDRIScreenInit(ScreenPtr pScreen);
-Bool GLINTDRIFinishScreenInit(ScreenPtr pScreen);
-void GLINTDRICloseScreen(ScreenPtr pScreen);
-Bool GLINTInitGLXVisuals(ScreenPtr pScreen);
-void GLINTDRIWakeupHandler(ScreenPtr pScreen);
-void GLINTDRIBlockHandler(ScreenPtr pScreen);
-void GLINTDRIInitBuffers(WindowPtr pWin, RegionPtr prgn, CARD32 index);
-void GLINTDRIMoveBuffers(WindowPtr pWin, DDXPointRec ptOldOrg, 
-		RegionPtr prgnSrc, CARD32 index);
 
 void GLINT_VERB_WRITE_REG(GLINTPtr, CARD32 v, int r, char *file, int line);
 CARD32 GLINT_VERB_READ_REG(GLINTPtr, CARD32 r, char *file, int line);
