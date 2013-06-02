@@ -1,3 +1,134 @@
+commit e4268d2775c95e03e0d319cb937522bfb3bab61d
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Jul 17 16:05:09 2012 +1000
+
+    xf86-video-ast: bump to version 0.97.0
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit 138d1ea01298aedbe414ecc48374e433d6960010
+Author: Dave Airlie <airlied@gmail.com>
+Date:   Fri Jul 13 14:33:47 2012 +1000
+
+    ast: deal with XAA removal.
+    
+    This deals with the removal of XAA from the server, should
+    fix tinderbox.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit eafaa2666fa43d6b06bec013feb254ea92759406
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Mon Jul 2 12:01:46 2012 +0100
+
+    ast: bump to 0.96.0 for release
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit 1af03ed39b6692231544e5c7b8325fa8d70c728d
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed Jun 6 12:00:14 2012 +0100
+
+    ast: port to new compat API.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit f981caeb7ebf53fea9d8f852edea6605d44d975e
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Thu May 17 10:27:50 2012 +0100
+
+    ast: don't bind to device if there is a loaded PCI driver.
+    
+    This stops this driver being used on top of the kernel modesetting
+    driver, so fallback works correctly.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit c954c0874b8f776fae7a38cb2ac7f4a311f90980
+Author: Y.C. Chen <yc_chen@aspeedtech.com>
+Date:   Wed Apr 4 04:21:55 2012 +0800
+
+    revert the code changed by Adam Jackson
+
+commit dc971ee25afb462f871ba1fb93f3bc996540ef51
+Author: Y.C. Chen <yc_chen@aspeedtech.com>
+Date:   Tue Apr 3 18:00:50 2012 +0800
+
+    fix segmentation fault issue if enable XEN
+
+commit 7a455573ff292819be90e086fbc1198d05a04910
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Apr 3 10:01:53 2012 +0100
+
+    Revert "xf86-video-ast-ast 0.95.00"
+    
+    This reverts commit 6f0b593c273979bc4a83e845e037ab35d4565b72.
+
+commit aba57046a9a38698a718629f0fde9d9a8dcc9012
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Apr 3 10:01:44 2012 +0100
+
+    Revert "xf86-video-ast-0.95.0"
+    
+    This reverts commit 20c578001a8024d3478a009c2b110056f0ddd1ca.
+
+commit 20c578001a8024d3478a009c2b110056f0ddd1ca
+Author: Y.C. Chen <yc_chen@aspeedtech.com>
+Date:   Tue Apr 3 15:01:23 2012 +0800
+
+    xf86-video-ast-0.95.0
+
+commit 6f0b593c273979bc4a83e845e037ab35d4565b72
+Author: root <root@localhost.localdomain>
+Date:   Tue Apr 3 19:58:42 2012 +0800
+
+    xf86-video-ast-ast 0.95.00
+
+commit 18c8547d4afdeb87120e2af7c0563f76c27dcdfe
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Mar 23 18:40:42 2012 -0700
+
+    xf86-video-ast 0.93.10
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d07efd4f80754d82540ebdaa7c2a062e68f229b9
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Mon Dec 19 17:45:12 2011 -0500
+
+    Fix for new vgaHW ABI
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit d5f706dc5a2b6665e2b57a547781f2b9364d4d83
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Mon Dec 19 16:15:49 2011 -0500
+
+    Make failure to XAA non-fatal
+    
+    No shadowfb support in this driver yet.
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 706f4931bfa8ade57b3fca119fd788fc9163dd43
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Thu Nov 17 15:51:42 2011 -0500
+
+    Check ABI major not encoded ABI
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 4a7eda24050b42072c77d527257609e743e8dc78
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed Nov 16 15:09:40 2011 -0500
+
+    Adapt to domain changes in videoabi 12
+    
+    This is a blind change, I don't have this hardware handy to test with.
+    It probably wants the same new API that tdfx wants.
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
 commit 59d994f46218b5909725ce690cd3fef089a88ba5
 Author: root <root@localhost.localdomain>
 Date:   Fri Jul 15 14:08:13 2011 +0800
@@ -363,7 +494,7 @@ Date:   Sat Mar 1 10:13:03 2008 +0800
     Make sure used symbols are of public visibility
 
 commit d5b5a0e603e47dd3782c41685e75c6bd2d9e1016
-Merge: 2d1b721... 486380c...
+Merge: 2d1b721 486380c
 Author: James Cloos <cloos@jhcloos.com>
 Date:   Mon Sep 3 06:06:32 2007 -0400
 

@@ -40,36 +40,38 @@
 #define DRAMTYPE_2Gx16		6
 #define DRAMTYPE_4Gx16		7
 
-#define AR_PORT_WRITE		(pAST->RelocateIO + 0x40)
-#define MISC_PORT_WRITE		(pAST->RelocateIO + 0x42)
-#define SEQ_PORT 		(pAST->RelocateIO + 0x44)
+#define AR_PORT_WRITE		(pAST->MMIOVirtualAddr + 0x3c0)
+#define MISC_PORT_WRITE		(pAST->MMIOVirtualAddr + 0x3c2)
+#define VGA_ENABLE_PORT		(pAST->MMIOVirtualAddr + 0x3c3)
+#define SEQ_PORT		(pAST->MMIOVirtualAddr + 0x3c4)
 #define DAC_INDEX_READ		(pAST->MMIOVirtualAddr + 0x3c7)
-#define DAC_INDEX_WRITE		(pAST->RelocateIO + 0x48)
-#define DAC_DATA		(pAST->RelocateIO + 0x49)
-#define GR_PORT			(pAST->RelocateIO + 0x4E)
-#define CRTC_PORT 		(pAST->RelocateIO + 0x54)
-#define INPUT_STATUS1_READ	(pAST->RelocateIO + 0x5A)
-#define MISC_PORT_READ		(pAST->RelocateIO + 0x4C)
+#define DAC_INDEX_WRITE		(pAST->MMIOVirtualAddr + 0x3c8)
+#define DAC_DATA		(pAST->MMIOVirtualAddr + 0x3c9)
+#define GR_PORT			(pAST->MMIOVirtualAddr + 0x3cE)
+#define CRTC_PORT		(pAST->MMIOVirtualAddr + 0x3d4)
+#define INPUT_STATUS1_READ	(pAST->MMIOVirtualAddr + 0x3dA)
+#define MISC_PORT_READ		(pAST->MMIOVirtualAddr + 0x3cc)
 
-#define GetReg(base)				inb(base)
-#define SetReg(base,val)			outb(base,val)
-#define GetIndexReg(base,index,val)			do {			\
-                      				outb(base,index);	\
-                      				val = inb(base+1);		\
-                    				} while (0)
-#define SetIndexReg(base,index, val)		do { \
-						outw(base, ((USHORT)(val) << 8) | index);	\
-						} while (0)
-#define GetIndexRegMask(base,index, and, val)	do {			\
-                      				outb(base,index);	\
-                      				val = (inb(base+1) & and);		\
-                    				} while (0)                    			
-#define SetIndexRegMask(base,index, and, val)  	do { \
-                      				UCHAR __Temp; 	\
-                      				outb(base,index);   	\
-                      				__Temp = (inb((base)+1)&(and))|(val); 	\
-                      				SetIndexReg(base,index,__Temp); 	\
-                    				} while (0)
+#define GetReg(base)				MMIO_IN8(base, 0)
+#define SetReg(base,val)			MMIO_OUT8(base, 0, val)
+#define GetIndexReg(base,index,val)		{ \
+						MMIO_OUT8(base, 0, index);	\
+						val = MMIO_IN8(base, 1);	\
+						}
+#define SetIndexReg(base,index, val)		{ \
+						MMIO_OUT8(base, 0, index);	\
+						MMIO_OUT8(base, 1, val);	\
+						}
+#define GetIndexRegMask(base,index, and, val)	{ \
+						MMIO_OUT8(base, 0, index);	\
+						val = MMIO_IN8(base, 1) & and;	\
+						}
+#define SetIndexRegMask(base,index, and, val)	{ \
+						UCHAR __Temp;	\
+						MMIO_OUT8(base, 0, index);	\
+						__Temp = (MMIO_IN8(base, 1)&(and))|(val);	\
+						SetIndexReg(base,index,__Temp);			\
+						}
 
 #define VGA_GET_PALETTE_INDEX(index, red, green, blue) \
 { \
@@ -82,6 +84,7 @@
    __junk = GetReg(SEQ_PORT);			\
    blue = GetReg(DAC_DATA);		\
    __junk = GetReg(SEQ_PORT);			\
+   (void)__junk;				\
 }
 
 #define VGA_LOAD_PALETTE_INDEX(index, red, green, blue) \
@@ -94,7 +97,8 @@
    SetReg(DAC_DATA,(UCHAR)(green));		\
    __junk = GetReg(SEQ_PORT);			\
    SetReg(DAC_DATA,(UCHAR)(blue));		\
-   __junk = GetReg(SEQ_PORT);      		\
+   __junk = GetReg(SEQ_PORT);			\
+   (void)__junk;				\
 }
 
 /* Reg. Definition */
