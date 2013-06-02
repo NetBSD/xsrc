@@ -10,7 +10,6 @@
  * Much of this code is inspired by the HW cursor code from XFree86
  * 3.3.3.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/lg_hwcurs.c,v 1.4 2000/12/06 15:35:17 eich Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -21,7 +20,6 @@
 #include "compiler.h"
 
 #include "xf86Pci.h"
-#include "xf86PciInfo.h"
 
 #include "vgaHW.h"
 
@@ -329,7 +327,7 @@ void LgShowCursor(ScrnInfoPtr pScrn)
  */
 static Bool LgUseHWCursor(ScreenPtr pScreen, CursorPtr pCurs)
 {
-  ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+  ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 
 #ifdef LG_CURSOR_DEBUG
   ErrorF("LgUseHWCursor\n");
@@ -347,7 +345,7 @@ static Bool LgUseHWCursor(ScreenPtr pScreen, CursorPtr pCurs)
  */
 Bool LgHWCursorInit(ScreenPtr pScreen)
 {
-  ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+  ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
   CirPtr pCir = CIRPTR(pScrn);
   xf86CursorInfoPtr infoPtr;
 

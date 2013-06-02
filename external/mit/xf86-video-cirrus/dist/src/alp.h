@@ -1,5 +1,3 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/alp.h,v 1.8 2001/10/01 13:44:05 eich Exp $ */
-
 /* (c) Itai Nahshon */
 
 #ifndef ALP_H
@@ -42,8 +40,10 @@ typedef struct {
 } AlpRegRec, *AlpRegPtr;
 
 extern Bool AlpHWCursorInit(ScreenPtr pScreen, int size);
+#ifdef HAVE_XAA_H
 extern Bool AlpXAAInit(ScreenPtr pScreen);
 extern Bool AlpXAAInitMMIO(ScreenPtr pScreen);
+#endif
 extern Bool AlpDGAInit(ScreenPtr pScreen);
 extern Bool AlpI2CInit(ScrnInfoPtr pScrn);
 
