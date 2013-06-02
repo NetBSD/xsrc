@@ -1912,7 +1912,7 @@ print_utf8 (const char *prefix, const char *u8str, size_t length, const char *su
 	    char *outp = convbuf;
 	    size_t outlen = sizeof(convbuf);
 
-	    convres = iconv (iconv_from_utf8, (const char **)&inp, &inlen, &outp, &outlen);
+	    convres = iconv (iconv_from_utf8, &inp, &inlen, &outp, &outlen);
 
 	    if ((convres == -1) && (errno == E2BIG)) {
 		done = False;
