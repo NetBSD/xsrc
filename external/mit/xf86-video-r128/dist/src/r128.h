@@ -43,8 +43,16 @@
 				/* PCI support */
 #include "xf86Pci.h"
 
+				/* EXA support */
+#ifdef USE_EXA
+#include "exa.h"
+#endif
+
 				/* XAA and Cursor Support */
+#ifdef HAVE_XAA_H
 #include "xaa.h"
+#endif
+#include "xf86fbman.h"
 #include "xf86Cursor.h"
 
 				/* DDC support */
@@ -53,17 +61,54 @@
 				/* Xv support */
 #include "xf86xv.h"
 
-#include "r128_probe.h"
-
 				/* DRI support */
-#ifdef XF86DRI
+#ifndef XF86DRI
+#undef R128DRI
+#endif
+
+#if R128DRI
 #define _XF86DRI_SERVER_
 #include "r128_dripriv.h"
 #include "dri.h"
 #include "GL/glxint.h"
 #endif
 
+#include "fb.h"
+
+#include "compat-api.h"
 #include "atipcirename.h"
+
+#include "r128_probe.h"
+
+#if HAVE_BYTESWAP_H
+#include <byteswap.h>
+#elif defined(USE_SYS_ENDIAN_H)
+#include <sys/endian.h>
+#else
+#define bswap_16(value)  \
+        ((((value) & 0xff) << 8) | ((value) >> 8))
+
+#define bswap_32(value) \
+        (((uint32_t)bswap_16((uint16_t)((value) & 0xffff)) << 16) | \
+        (uint32_t)bswap_16((uint16_t)((value) >> 16)))
+
+#define bswap_64(value) \
+        (((uint64_t)bswap_32((uint32_t)((value) & 0xffffffff)) \
+            << 32) | \
+        (uint64_t)bswap_32((uint32_t)((value) >> 32)))
+#endif
+
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+#define le32_to_cpu(x) bswap_32(x)
+#define le16_to_cpu(x) bswap_16(x)
+#define cpu_to_le32(x) bswap_32(x)
+#define cpu_to_le16(x) bswap_16(x)
+#else
+#define le32_to_cpu(x) (x)
+#define le16_to_cpu(x) (x)
+#define cpu_to_le32(x) (x)
+#define cpu_to_le16(x) (x)
+#endif
 
 #define R128_DEBUG          0   /* Turn off debugging output               */
 #define R128_IDLE_RETRY    32   /* Fall out of idle loops after this count */
@@ -73,6 +118,8 @@
 #define R128_VBIOS_SIZE 0x00010000
 
 #if R128_DEBUG
+#include "r128_version.h"
+
 #define R128TRACE(x)                                          \
     do {                                                      \
 	ErrorF("(**) %s(%d): ", R128_NAME, pScrn->scrnIndex); \
@@ -223,6 +270,34 @@ typedef enum
     MT_STV
 } R128MonitorType;
 
+#ifdef USE_EXA
+struct r128_2d_state {
+    Bool in_use;
+    Bool composite_setup;
+    uint32_t dst_pitch_offset;
+    uint32_t src_pitch_offset;
+    uint32_t dp_gui_master_cntl;
+    uint32_t dp_cntl;
+    uint32_t dp_write_mask;
+    uint32_t dp_brush_frgd_clr;
+    uint32_t dp_brush_bkgd_clr;
+    uint32_t dp_src_frgd_clr;
+    uint32_t dp_src_bkgd_clr;
+    uint32_t default_sc_bottom_right;
+#if defined(R128DRI) && defined(RENDER)
+    Bool has_mask;
+    int x_offset;
+    int y_offset;
+    int widths[2];
+    int heights[2];
+    Bool is_transform[2];
+    PictTransform *transform[2];
+    PixmapPtr src_pix;
+    PixmapPtr msk_pix;
+#endif
+};
+#endif
+
 typedef struct {
     EntityInfoPtr     pEnt;
     pciVideoPtr       PciInfo;
@@ -266,13 +341,24 @@ typedef struct {
 
     R128SaveRec       SavedReg;     /* Original (text) mode                  */
     R128SaveRec       ModeReg;      /* Current mode                          */
-    Bool              (*CloseScreen)(int, ScreenPtr);
-    void              (*BlockHandler)(int, pointer, pointer, pointer);
+    Bool              (*CloseScreen)(CLOSE_SCREEN_ARGS_DECL);
+    void              (*BlockHandler)(BLOCKHANDLER_ARGS_DECL);
 
     Bool              PaletteSavedOnVT; /* Palette saved on last VT switch   */
 
+#ifdef HAVE_XAA_H
     XAAInfoRecPtr     accel;
+#endif
     Bool              accelOn;
+
+    Bool	      useEXA;
+    Bool	      RenderAccel;
+#ifdef USE_EXA
+    ExaDriverPtr      ExaDriver;
+    XF86ModReqInfo    exaReq;
+    struct r128_2d_state state_2d;
+#endif
+
     xf86CursorInfoPtr cursor;
     unsigned long     cursor_start;
     unsigned long     cursor_end;
@@ -303,14 +389,14 @@ typedef struct {
     int               scanline_y;
     int               scanline_w;
     int               scanline_h;
-#ifdef XF86DRI
+#ifdef R128DRI
     int               scanline_hpass;
     int               scanline_x1clip;
     int               scanline_x2clip;
     int               scanline_rop;
     int               scanline_fg;
     int               scanline_bg;
-#endif /* XF86DRI */
+#endif /* R128DRI */
     int               scanline_words;
     int               scanline_direct;
     int               scanline_bpp; /* Only used for ImageWrite */
@@ -322,7 +408,7 @@ typedef struct {
     DGAFunctionRec    DGAFuncs;
 
     R128FBLayout      CurrentLayout;
-#ifdef XF86DRI
+#ifdef R128DRI
     Bool              directRenderingEnabled;
     DRIInfoPtr        pDRIInfo;
     int               drmFD;
@@ -474,7 +560,7 @@ extern int         R128MinBits(int val);
 
 extern void        R128InitVideo(ScreenPtr pScreen);
 
-#ifdef XF86DRI
+#ifdef R128DRI
 extern Bool        R128DRIScreenInit(ScreenPtr pScreen);
 extern void        R128DRICloseScreen(ScreenPtr pScreen);
 extern Bool        R128DRIFinishScreenInit(ScreenPtr pScreen);
@@ -516,6 +602,14 @@ extern void        R128CCEFlushIndirect(ScrnInfoPtr pScrn, int discard);
 extern void        R128CCEReleaseIndirect(ScrnInfoPtr pScrn);
 extern void        R128CCEWaitForIdle(ScrnInfoPtr pScrn);
 extern int         R128CCEStop(ScrnInfoPtr pScrn);
+
+#ifdef USE_EXA
+extern Bool	   R128EXAInit(ScreenPtr pScreen);
+extern Bool	   R128GetDatatypeBpp(int bpp, uint32_t *type);
+extern Bool	   R128GetPixmapOffsetPitch(PixmapPtr pPix, uint32_t *pitch_offset);
+extern void	   R128DoPrepareCopy(ScrnInfoPtr pScrn, uint32_t src_pitch_offset,
+				    uint32_t dst_pitch_offset, uint32_t datatype, int alu, Pixel planemask);
+#endif
 
 
 #define CCE_PACKET0( reg, n )						\
