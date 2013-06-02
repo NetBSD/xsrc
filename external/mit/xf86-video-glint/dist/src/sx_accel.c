@@ -28,7 +28,6 @@
  * 
  * GLINT 300SX accelerated options.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/sx_accel.c,v 1.7 2001/05/29 11:23:38 alanh Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -37,7 +36,6 @@
 #include "xf86.h"
 #include "xf86_OSproc.h"
 
-#include "xf86PciInfo.h"
 #include "xf86Pci.h"
 
 #include "fb.h"
@@ -47,6 +45,7 @@
 #include "glint_regs.h"
 #include "glint.h"
 
+#ifdef HAVE_XAA_H
 #include "xaalocal.h"	/* For replacements */
 
 static void SXSync(ScrnInfoPtr pScrn);
@@ -162,12 +161,13 @@ SXInitializeEngine(ScrnInfoPtr pScrn)
     GLINT_SLOW_WRITE_REG(0, dXSub);
     GLINT_SLOW_WRITE_REG(1<<16, dY);
 }
-
+#endif
 Bool
 SXAccelInit(ScreenPtr pScreen)
 {
+#ifdef HAVE_XAA_H
     XAAInfoRecPtr infoPtr;
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     GLINTPtr pGlint = GLINTPTR(pScrn);
     long memory = pGlint->FbMapSize;
     BoxRec AvailFBArea;
@@ -221,7 +221,7 @@ SXAccelInit(ScreenPtr pScreen)
 					       BIT_ORDER_IN_BYTE_LSBFIRST;
 
     infoPtr->NumScanlineColorExpandBuffers = 1;
-    pGlint->ScratchBuffer                 = xalloc(((pScrn->virtualX+62)/32*4)
+    pGlint->ScratchBuffer                 = malloc(((pScrn->virtualX+62)/32*4)
 					    + (pScrn->virtualX
 					    * pScrn->bitsPerPixel / 8));
     infoPtr->ScanlineColorExpandBuffers = 
@@ -254,8 +254,12 @@ SXAccelInit(ScreenPtr pScreen)
     xf86InitFBManager(pScreen, &AvailFBArea);
 
     return (XAAInit(pScreen, infoPtr));
+#else
+    return FALSE;
+#endif
 }
 
+#ifdef HAVE_XAA_H
 static void SXLoadCoord(
 	ScrnInfoPtr pScrn,
 	int x, int y,
@@ -873,3 +877,4 @@ SXSubsequentSolidBresenhamLine( ScrnInfoPtr pScrn,
                 (octant & YMAJOR) ? Y_AXIS : X_AXIS,
                 x, y,  e, dmin, -dmaj, len);
 }
+#endif

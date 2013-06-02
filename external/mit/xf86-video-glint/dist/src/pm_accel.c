@@ -28,7 +28,6 @@
  * 
  * Permedia accelerated options.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm_accel.c,v 1.24tsi Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -37,7 +36,6 @@
 #include "xf86.h"
 #include "xf86_OSproc.h"
 
-#include "xf86PciInfo.h"
 #include "xf86Pci.h"
 
 #include "fb.h"
@@ -45,6 +43,7 @@
 #include "glint_regs.h"
 #include "glint.h"
 
+#ifdef HAVE_XAA_H
 #include "miline.h"		/* for octants */
 #include "xaalocal.h"		/* For replacements */
 
@@ -178,12 +177,14 @@ PermediaInitializeEngine(ScrnInfoPtr pScrn)
     GLINT_WRITE_REG(0,dXDom);
     GLINT_WRITE_REG(1<<16,dY);
 }
+#endif
 
 Bool
 PermediaAccelInit(ScreenPtr pScreen)
 {
+#ifdef HAVE_XAA_H
     XAAInfoRecPtr infoPtr;
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     GLINTPtr pGlint = GLINTPTR(pScrn);
     BoxRec AvailFBArea;
 
@@ -241,9 +242,7 @@ PermediaAccelInit(ScreenPtr pScreen)
 					       BIT_ORDER_IN_BYTE_LSBFIRST;
 
     infoPtr->NumScanlineColorExpandBuffers = 1;
-    pGlint->ScratchBuffer                 = xalloc(((pScrn->virtualX+62)/32*4)
-					    + (pScrn->virtualX
-					    * pScrn->bitsPerPixel / 8));
+    pGlint->ScratchBuffer                 = malloc(((pScrn->virtualX + 62) / 32 * 4) + (pScrn->virtualX * pScrn->bitsPerPixel / 8));
     infoPtr->ScanlineColorExpandBuffers = 
 					pGlint->XAAScanlineColorExpandBuffers;
     pGlint->XAAScanlineColorExpandBuffers[0] = 
@@ -280,8 +279,12 @@ PermediaAccelInit(ScreenPtr pScreen)
     xf86InitFBManager(pScreen, &AvailFBArea);
 
     return (XAAInit(pScreen, infoPtr));
+#else
+    return FALSE;
+#endif
 }
 
+#ifdef HAVE_XAA_H
 static void PermediaLoadCoord(
 	ScrnInfoPtr pScrn,
 	int x, int y,
@@ -1199,3 +1202,4 @@ PermediaSubsequentSolidBresenhamLine( ScrnInfoPtr pScrn,
                 (octant & YMAJOR) ? Y_AXIS : X_AXIS,
                 x, y,  e, dmin, -dmaj, len);
 }
+#endif

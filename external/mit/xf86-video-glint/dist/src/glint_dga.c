@@ -21,7 +21,6 @@
  *
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint_dga.c,v 1.3 2001/04/10 20:33:30 dawes Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -30,10 +29,10 @@
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "xf86Pci.h"
-#include "xf86PciInfo.h"
-#include "xaa.h"
-#include "xaalocal.h"
 #include "glint.h"
+#ifdef HAVE_XAA_H
+#include "xaalocal.h"
+#endif
 #include "glint_regs.h"
 #include "dgaproc.h"
 
@@ -43,8 +42,10 @@ static Bool GLINT_SetMode(ScrnInfoPtr, DGAModePtr);
 static void GLINT_Sync(ScrnInfoPtr);
 static int  GLINT_GetViewport(ScrnInfoPtr);
 static void GLINT_SetViewport(ScrnInfoPtr, int, int, int);
+#ifdef HAVE_XAA_H
 static void GLINT_FillRect(ScrnInfoPtr, int, int, int, int, unsigned long);
 static void GLINT_BlitRect(ScrnInfoPtr, int, int, int, int, int, int);
+#endif
 
 static
 DGAFunctionRec GLINTDGAFuncs = {
@@ -54,15 +55,19 @@ DGAFunctionRec GLINTDGAFuncs = {
    GLINT_SetViewport,
    GLINT_GetViewport,
    GLINT_Sync,
+#ifdef HAVE_XAA_H
    GLINT_FillRect,
    GLINT_BlitRect,
+#else
+   NULL, NULL,
+#endif
    NULL
 };
 
 Bool
 GLINTDGAInit(ScreenPtr pScreen)
 {   
-   ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+   ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
    GLINTPtr pGlint = GLINTPTR(pScrn);
    DGAModePtr modes = NULL, newmodes = NULL, currentMode;
    DisplayModePtr pMode, firstMode;
@@ -75,15 +80,15 @@ GLINTDGAInit(ScreenPtr pScreen)
    while(pMode) {
 
 	if(0 /*pScrn->displayWidth != pMode->HDisplay*/) {
-	    newmodes = xrealloc(modes, (num + 2) * sizeof(DGAModeRec));
+	    newmodes = realloc(modes, (num + 2) * sizeof(DGAModeRec));
 	    oneMore = TRUE;
 	} else {
-	    newmodes = xrealloc(modes, (num + 1) * sizeof(DGAModeRec));
+	    newmodes = realloc(modes, (num + 1) * sizeof(DGAModeRec));
 	    oneMore = FALSE;
 	}
 
 	if(!newmodes) {
-	   xfree(modes);
+	   free(modes);
 	   return FALSE;
 	}
 	modes = newmodes;
@@ -95,8 +100,10 @@ SECOND_PASS:
 
 	currentMode->mode = pMode;
 	currentMode->flags = DGA_CONCURRENT_ACCESS | DGA_PIXMAP_AVAILABLE;
+#ifdef HAVE_XAA_H
 	if(!pGlint->NoAccel)
 	   currentMode->flags |= DGA_FILL_RECT | DGA_BLIT_RECT;
+#endif
 	if(pMode->Flags & V_DBLSCAN)
 	   currentMode->flags |= DGA_DOUBLESCAN;
 	if(pMode->Flags & V_INTERLACE)
@@ -169,7 +176,7 @@ GLINT_SetMode(
 	
 	pScrn->displayWidth = OldDisplayWidth[index];
 	
-        GLINTSwitchMode(index, pScrn->currentMode, 0);
+        GLINTSwitchMode(SWITCH_MODE_ARGS(pScrn, pScrn->currentMode));
 	pGlint->DGAactive = FALSE;
    } else {
 	if(!pGlint->DGAactive) {  /* save the old parameters */
@@ -181,7 +188,7 @@ GLINT_SetMode(
 	pScrn->displayWidth = pMode->bytesPerScanline / 
 			      (pMode->bitsPerPixel >> 3);
 
-        GLINTSwitchMode(index, pMode->mode, 0);
+        GLINTSwitchMode(SWITCH_MODE_ARGS(pScrn, pMode->mode));
    }
    
    return TRUE;
@@ -204,10 +211,11 @@ GLINT_SetViewport(
 ){
    GLINTPtr pGlint = GLINTPTR(pScrn);
 
-   GLINTAdjustFrame(pScrn->pScreen->myNum, x, y, flags);
+   GLINTAdjustFrame(ADJUST_FRAME_ARGS(pScrn, x, y));
    pGlint->DGAViewportStatus = 0;  /* GLINTAdjustFrame loops until finished */
 }
 
+#ifdef HAVE_XAA_H
 static void 
 GLINT_FillRect (
    ScrnInfoPtr pScrn, 
@@ -222,18 +230,21 @@ GLINT_FillRect (
 	SET_SYNC_FLAG(pGlint->AccelInfoRec);
     }
 }
+#endif
 
 static void 
 GLINT_Sync(
    ScrnInfoPtr pScrn
 ){
     GLINTPtr pGlint = GLINTPTR(pScrn);
-
+#ifdef HAVE_XAA_H
     if(pGlint->AccelInfoRec) {
 	(*pGlint->AccelInfoRec->Sync)(pScrn);
     }
+#endif
 }
 
+#ifdef HAVE_XAA_H
 static void 
 GLINT_BlitRect(
    ScrnInfoPtr pScrn, 
@@ -254,7 +265,7 @@ GLINT_BlitRect(
 	SET_SYNC_FLAG(pGlint->AccelInfoRec);
     }
 }
-
+#endif
 static Bool 
 GLINT_OpenFramebuffer(
    ScrnInfoPtr pScrn, 
