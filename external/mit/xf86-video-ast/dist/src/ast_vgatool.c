@@ -46,7 +46,6 @@
 #include "xf86fbman.h"
 
 /* include xaa includes */
-#include "xaa.h"
 #include "xaarop.h"
 
 /* H/W cursor support */
@@ -96,6 +95,11 @@ bASTRegInit(ScrnInfoPtr pScrn)
    /* Enable MMIO */
    SetIndexRegMask(CRTC_PORT,0xA1, 0xFF, 0x04);
 
+   /* Enable Big-Endian */
+#if	defined(__sparc__)
+   SetIndexRegMask(CRTC_PORT,0xA2, 0xFF, 0x80);
+#endif
+   
    return (TRUE);
    	
 }
@@ -628,7 +632,7 @@ Bool bIsVGAEnabled(ScrnInfoPtr pScrn)
     else    
     {
     	
-        ch = GetReg(pAST->RelocateIO+0x43);
+        ch = GetReg(VGA_ENABLE_PORT);
 
         if (ch)
         {
@@ -650,8 +654,8 @@ void vEnableVGA(ScrnInfoPtr pScrn)
    
     pAST = ASTPTR(pScrn);
 
-    SetReg(pAST->RelocateIO+0x43, 0x01);
-    SetReg(pAST->RelocateIO+0x42, 0x01);   
+    SetReg(VGA_ENABLE_PORT, 0x01);
+    SetReg(MISC_PORT_WRITE, 0x01);   
 	
 }	
 
@@ -1490,10 +1494,11 @@ void finetuneDQI(PAST2300DRAMParam  param)
 
 } /* finetuneDQI */
 
-void finetuneDQI_L(PAST2300DRAMParam  param)
+Bool finetuneDQI_L(PAST2300DRAMParam  param)
 {
-  ULONG gold_sadj[2], dllmin[16], dllmax[16], dlli, data, cnt, mask, passcnt;
+  ULONG gold_sadj[2], dllmin[16], dllmax[16], dlli, data, cnt, mask, passcnt, retry = 0;
   UCHAR *mmiobase;	
+  Bool status = FALSE;
 
   mmiobase = param->pjMMIOVirtualAddress;
 
@@ -1541,9 +1546,14 @@ void finetuneDQI_L(PAST2300DRAMParam  param)
       passcnt++;
     }
   }
+  if (retry++ > 10)
+      goto FINETUNE_DONE;
   if(passcnt != 16){
     goto FINETUNE_START;
   }
+  status = TRUE;
+ 
+FINETUNE_DONE:  
   gold_sadj[0] = gold_sadj[0] >> 4;
   gold_sadj[1] = gold_sadj[0];
 
@@ -1594,6 +1604,8 @@ void finetuneDQI_L(PAST2300DRAMParam  param)
   }
   MOutdwm(mmiobase, 0x1E6E0084, data);
 
+  return status;
+  
 } /* finetuneDQI_L */
 
 void finetuneDQI_L2(PAST2300DRAMParam  param)
@@ -1728,14 +1740,16 @@ void finetuneDQI_L2(PAST2300DRAMParam  param)
   
 } /* finetuneDQI_L2 */
 
-void CBRDLL2(PAST2300DRAMParam  param)
+Bool CBRDLL2(PAST2300DRAMParam  param)
 {
-  ULONG dllmin[2], dllmax[2], dlli, data, data2, passcnt;
+  ULONG dllmin[2], dllmax[2], dlli, data, data2, passcnt, retry=0;
   UCHAR *mmiobase;	
+  BOOL status = FALSE;
 
   mmiobase = param->pjMMIOVirtualAddress;
 
-  finetuneDQI_L(param);
+  if (finetuneDQI_L(param) == FALSE)
+      return status;
   finetuneDQI_L2(param);
 
   CBR_START2:
@@ -1776,12 +1790,17 @@ void CBRDLL2(PAST2300DRAMParam  param)
       break;
     }
   }
+  if (retry++ > 10)
+      goto CBR_DONE2;
   if(dllmax[0] == 0 || (dllmax[0]-dllmin[0]) < CBR_THRESHOLD){
     goto CBR_START2;
   }
   if(dllmax[1] == 0 || (dllmax[1]-dllmin[1]) < CBR_THRESHOLD){
     goto CBR_START2;
   }
+  status = TRUE;
+  
+CBR_DONE2:
   dlli  = (dllmin[1] + dllmax[1]) >> 1;
   dlli <<= 8;
   dlli += (dllmin[0] + dllmax[0]) >> 1;
@@ -1790,7 +1809,6 @@ void CBRDLL2(PAST2300DRAMParam  param)
   data  = (MIndwm(mmiobase, 0x1E6E0080) >> 24) & 0x1F;
   data2 = (MIndwm(mmiobase, 0x1E6E0018) & 0xff80ffff) | (data << 16);
   MOutdwm(mmiobase, 0x1E6E0018, data2);
-  MOutdwm(mmiobase, 0x1E6E0024, 0x8001 | (data << 1) | (param->DLL2_FINETUNE_STEP << 8));
 
   /* Wait DQSI latch phase calibration */
   MOutdwm(mmiobase, 0x1E6E0074, 0x00000010);
@@ -1804,6 +1822,9 @@ void CBRDLL2(PAST2300DRAMParam  param)
     data = MIndwm(mmiobase, 0x1E6E0070);
   }while(!(data & 0x00001000));
   MOutdwm(mmiobase, 0x1E6E0070, 0x00000000);
+  
+  return status;
+  
 } /* CBRDLL2 */
 
 void GetDDR2Info(PAST2300DRAMParam param)
@@ -1842,7 +1863,7 @@ void GetDDR2Info(PAST2300DRAMParam param)
                param->MADJ_MAX      = 138;
                param->DLL2_FINETUNE_STEP = 3;
                break;
-    case 336 : MOutdwm(mmiobase, 0x1E6E2020, 0x0190);
+    case 336 : MOutdwm(mmiobase, 0x1E6E2020, 0x0331);
                param->WODT          = 1;
                param->REG_AC1       = 0x22202613;
                param->REG_AC2       = 0xAA009016 | TRAP_AC2;
@@ -1850,11 +1871,29 @@ void GetDDR2Info(PAST2300DRAMParam param)
                param->REG_MRS       = 0x00000A02 | TRAP_MRS;
                param->REG_EMRS      = 0x00000040;
                param->REG_DRV       = 0x000000FA;
-               param->REG_IOZ       = 0x00000034;
+               param->REG_IOZ       = 0x00000013;
                param->REG_DQIDLY    = 0x00000074;
                param->REG_FREQ      = 0x00004DC0;
                param->MADJ_MAX      = 96;
                param->DLL2_FINETUNE_STEP = 3;
+               
+               switch (param->DRAM_ChipID)
+               {
+               case DRAMTYPE_512Mx16:	
+                   param->REG_AC2   = 0xAA009012 | TRAP_AC2;
+                   break;
+               default:    
+               case DRAMTYPE_1Gx16:	
+                   param->REG_AC2   = 0xAA009016 | TRAP_AC2;
+                   break;
+               case DRAMTYPE_2Gx16:	
+                   param->REG_AC2   = 0xAA009023 | TRAP_AC2;
+                   break;
+               case DRAMTYPE_4Gx16:	
+                   param->REG_AC2   = 0xAA00903B | TRAP_AC2;
+                   break;               	
+               }
+                
                break;
     default:
     case 396 : MOutdwm(mmiobase, 0x1E6E2020, 0x03F1);
@@ -2058,18 +2097,34 @@ void GetDDR3Info(PAST2300DRAMParam param)
   param->RODT		= 0;
 
   switch(param->DRAM_Freq){
-    case 336 : MOutdwm(mmiobase, 0x1E6E2020, 0x0190);
+    case 336 : MOutdwm(mmiobase, 0x1E6E2020, 0x0331);
                param->WODT   	    = 0;
                param->REG_AC1       = 0x22202725;
                param->REG_AC2       = 0xAA007613 | TRAP_AC2;
                param->REG_DQSIC     = 0x000000BA;
                param->REG_MRS       = 0x04001400 | TRAP_MRS;
                param->REG_EMRS      = 0x00000000;
-               param->REG_IOZ       = 0x00000034;
+               param->REG_IOZ       = 0x00000024;
                param->REG_DQIDLY    = 0x00000074;
                param->REG_FREQ      = 0x00004DC0;
                param->MADJ_MAX      = 96;
                param->DLL2_FINETUNE_STEP = 3;
+               
+               switch (param->DRAM_ChipID)
+               {
+               default:                   	
+               case DRAMTYPE_512Mx16:
+               case DRAMTYPE_1Gx16:	
+                   param->REG_AC2   = 0xAA007613 | TRAP_AC2;
+                   break;
+               case DRAMTYPE_2Gx16:	
+                   param->REG_AC2   = 0xAA00761c | TRAP_AC2;
+                   break;
+               case DRAMTYPE_4Gx16:	
+                   param->REG_AC2   = 0xAA007636 | TRAP_AC2;
+                   break;               	
+               }
+                
                break;
     default:
     case 396 : MOutdwm(mmiobase, 0x1E6E2020, 0x03F1);
@@ -2265,12 +2320,15 @@ void GetDDR3Info(PAST2300DRAMParam param)
 
 void DDR2_Init(PAST2300DRAMParam param)
 {
-  ULONG data, data2;
+  ULONG data, data2, retry = 0;
   UCHAR *mmiobase;
   
   mmiobase = param->pjMMIOVirtualAddress;
 
+DDR2_Init_Start:  
   MOutdwm(mmiobase, 0x1E6E0000, 0xFC600309);
+  MOutdwm(mmiobase, 0x1E6E0064, 0x00000000);
+  MOutdwm(mmiobase, 0x1E6E0034, 0x00000000);    
   MOutdwm(mmiobase, 0x1E6E0018, 0x00000100);
   MOutdwm(mmiobase, 0x1E6E0024, 0x00000000);
   MOutdwm(mmiobase, 0x1E6E0064, param->REG_MADJ);
@@ -2285,7 +2343,7 @@ void DDR2_Init(PAST2300DRAMParam param)
   MOutdwm(mmiobase, 0x1E6E0014, param->REG_AC2);
   MOutdwm(mmiobase, 0x1E6E0020, param->REG_DQSIC);
   MOutdwm(mmiobase, 0x1E6E0080, 0x00000000);
-  MOutdwm(mmiobase, 0x1E6E0084, 0x00000000);
+  MOutdwm(mmiobase, 0x1E6E0084, 0x00FFFFFF);
   MOutdwm(mmiobase, 0x1E6E0088, param->REG_DQIDLY);
   MOutdwm(mmiobase, 0x1E6E0018, 0x4040A130);
   MOutdwm(mmiobase, 0x1E6E0018, 0x20402330);                       
@@ -2390,7 +2448,9 @@ void DDR2_Init(PAST2300DRAMParam param)
     data = MIndwm(mmiobase, 0x1E6E0020);
   }while(!(data & 0x00000800));
   /* Calibrate the DQSI delay */
-  CBRDLL2(param);
+  if ((CBRDLL2(param)==FALSE) && (retry++ < 10))
+      goto DDR2_Init_Start;
+
 
   /* ECC Memory Initialization */
 #ifdef ECC
@@ -2407,15 +2467,17 @@ void DDR2_Init(PAST2300DRAMParam param)
 
 void DDR3_Init(PAST2300DRAMParam param)
 {
-  ULONG data, data2;
+  ULONG data, data2, retry = 0;
   UCHAR *mmiobase;
   
   mmiobase = param->pjMMIOVirtualAddress;
 
+DDR3_Init_Start:
   MOutdwm(mmiobase, 0x1E6E0000, 0xFC600309);
+  MOutdwm(mmiobase, 0x1E6E0064, 0x00000000);
+  MOutdwm(mmiobase, 0x1E6E0034, 0x00000000);    
   MOutdwm(mmiobase, 0x1E6E0018, 0x00000100);
   MOutdwm(mmiobase, 0x1E6E0024, 0x00000000);
-  MOutdwm(mmiobase, 0x1E6E0034, 0x00000000);
   usleep(10);
   MOutdwm(mmiobase, 0x1E6E0064, param->REG_MADJ);
   MOutdwm(mmiobase, 0x1E6E0068, param->REG_SADJ);
@@ -2429,7 +2491,7 @@ void DDR3_Init(PAST2300DRAMParam param)
   MOutdwm(mmiobase, 0x1E6E0014, param->REG_AC2);
   MOutdwm(mmiobase, 0x1E6E0020, param->REG_DQSIC);
   MOutdwm(mmiobase, 0x1E6E0080, 0x00000000);
-  MOutdwm(mmiobase, 0x1E6E0084, 0x00000000);
+  MOutdwm(mmiobase, 0x1E6E0084, 0x00FFFFFF);
   MOutdwm(mmiobase, 0x1E6E0088, param->REG_DQIDLY);
   MOutdwm(mmiobase, 0x1E6E0018, 0x4040A170);
   MOutdwm(mmiobase, 0x1E6E0018, 0x20402370);
@@ -2529,7 +2591,8 @@ void DDR3_Init(PAST2300DRAMParam param)
     data = MIndwm(mmiobase, 0x1E6E0020);
   }while(!(data & 0x00000800));
   /* Calibrate the DQSI delay */
-  CBRDLL2(param);
+  if ((CBRDLL2(param)==FALSE) && (retry++ < 10))
+      goto DDR3_Init_Start;
 
   MOutdwm(mmiobase, 0x1E6E0120, param->REG_FREQ);
   /* ECC Memory Initialization */
@@ -2974,8 +3037,9 @@ Bool bInitAST1180(ScrnInfoPtr pScrn)
     ReadAST1180SOC(AST1180_SCU_BASE+0x0c, ulData);	/* 2d clk */
     ulData &= 0xFFFFFFFD;
     WriteAST1180SOC(AST1180_SCU_BASE+0x0c, ulData);
-
-    return (TRUE);	
+	
+    return (TRUE);
+	
 } /* bInitAST1180 */
 	
 void GetAST1180DRAMInfo(ScrnInfoPtr pScrn)
@@ -3032,3 +3096,29 @@ void GetAST1180DRAMInfo(ScrnInfoPtr pScrn)
     pAST->ulMCLK = 200;
     
 } /* GetAST1180DRAMInfo */
+
+void vEnableASTVGAMMIO(ScrnInfoPtr pScrn)
+{
+    ASTRecPtr pAST = ASTPTR(pScrn);
+    ULONG ulData;
+    UCHAR jReg;
+    
+    if (!xf86IsPrimaryPci(pAST->PciInfo))
+    {
+       /* Enable PCI */
+       PCI_READ_LONG(pAST->PciInfo, &ulData, 0x04);
+       ulData |= 0x03;
+       PCI_WRITE_LONG(pAST->PciInfo, ulData, 0x04);
+
+       outb(pAST->RelocateIO + 0x43, 0x01);
+       outb(pAST->RelocateIO + 0x42, 0x01);	    
+    }	    
+    
+    jReg = GetReg(VGA_ENABLE_PORT);
+    if (jReg == 0xFF)	/* MMIO Access is disabled */
+    {
+       outw(pAST->RelocateIO + 0x54, 0xa880);
+       outw(pAST->RelocateIO + 0x54, 0x04a1);	    
+    }
+	    
+} /* vEnableASTVGAMMIO */
