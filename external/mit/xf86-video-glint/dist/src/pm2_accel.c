@@ -30,7 +30,6 @@
  * 
  * Permedia 2 accelerated options.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm2_accel.c,v 1.30 2001/05/30 11:41:53 alanh Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -40,7 +39,6 @@
 #include "xf86.h"
 #include "xf86_OSproc.h"
 
-#include "xf86PciInfo.h"
 #include "xf86Pci.h"
 
 #include "miline.h"
@@ -50,6 +48,7 @@
 #include "glint_regs.h"
 #include "glint.h"
 
+#ifdef HAVE_XAA_H
 #include "xaalocal.h"		/* For replacements */
 
 #define DEBUG 0
@@ -243,12 +242,14 @@ Permedia2InitializeEngine(ScrnInfoPtr pScrn)
 
     TRACE_EXIT("Permedia2InitializeEngine");
 }
+#endif
 
 Bool
 Permedia2AccelInit(ScreenPtr pScreen)
 {
+#ifdef HAVE_XAA_H
     XAAInfoRecPtr infoPtr;
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     GLINTPtr pGlint = GLINTPTR(pScrn);
     BoxRec AvailFBArea;
 
@@ -370,8 +371,12 @@ Permedia2AccelInit(ScreenPtr pScreen)
     xf86InitFBManager(pScreen, &AvailFBArea);
 
     return(XAAInit(pScreen, infoPtr));
+#else
+    return FALSE;
+#endif
 }
 
+#ifdef HAVE_XAA_H
 static void Permedia2LoadCoord(
 	ScrnInfoPtr pScrn,
 	int x, int y,
@@ -1503,3 +1508,4 @@ Permedia2WritePixmap32bpp(
     Permedia2DisableClipping(pScrn);
     SET_SYNC_FLAG(infoRec);
 }
+#endif

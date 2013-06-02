@@ -1,4 +1,3 @@
-/* $XdotOrg: driver/xf86-video-glint/src/pm3_accel.c,v 1.5 2005/07/11 02:29:49 ajax Exp $ */
 /*
  * Copyright 2000-2001 by Sven Luther <luther@dpt-info.u-strasbg.fr>.
  *
@@ -27,7 +26,6 @@
  * 
  * Permedia 3 accelerated options.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm3_accel.c,v 1.30 2002/05/21 14:38:04 alanh Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -37,7 +35,6 @@
 #include "xf86.h"
 #include "xf86_OSproc.h"
 
-#include "xf86PciInfo.h"
 #include "xf86Pci.h"
 
 #include "miline.h"
@@ -48,6 +45,7 @@
 #include "pm3_regs.h"
 #include "glint.h"
 
+#ifdef HAVE_XAA_H
 #include "xaalocal.h"		/* For replacements */
 
 #define DEBUG 0
@@ -67,7 +65,6 @@
 #define PM3_OTHERWRITEMASK \
   (pGlint->PM3_UsingSGRAM ? PM3FBSoftwareWriteMask : PM3FBHardwareWriteMask )
 
-#ifndef XF86DRI_DEVEL
 #define PM3_PLANEMASK(planemask)				\
 { 								\
 	if (planemask != pGlint->planemask) {			\
@@ -76,14 +73,6 @@
 		GLINT_WRITE_REG(planemask, PM3_WRITEMASK);	\
 	}							\
 } 
-#else
-#define PM3_PLANEMASK(planemask)				\
-	{							\
-		pGlint->planemask = planemask;			\
-		REPLICATE(planemask); 				\
-		GLINT_WRITE_REG(planemask, PM3_WRITEMASK);	\
-	}
-#endif
 
 /* Clipping */
 static void Permedia3SetClippingRectangle(ScrnInfoPtr pScrn, int x, int y,
@@ -392,12 +381,13 @@ Permedia3InitializeEngine(ScrnInfoPtr pScrn)
     	(*pGlint->AccelInfoRec->Sync)(pScrn);
     TRACE_EXIT("Permedia3InitializeEngine");
 }
-
+#endif
 Bool
 Permedia3AccelInit(ScreenPtr pScreen)
 {
+#ifdef HAVE_XAA_H
     XAAInfoRecPtr infoPtr;
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     GLINTPtr pGlint = GLINTPTR(pScrn);
 
     pGlint->AccelInfoRec = infoPtr = XAACreateInfoRec();
@@ -450,9 +440,7 @@ Permedia3AccelInit(ScreenPtr pScreen)
 						CPU_TRANSFER_PAD_DWORD;
 
     infoPtr->NumScanlineColorExpandBuffers = 1;
-    pGlint->ScratchBuffer                 = xalloc(((pScrn->virtualX+62)/32*4)
-					    + (pScrn->virtualX
-					    * pScrn->bitsPerPixel / 8));
+    pGlint->ScratchBuffer                 = malloc(((pScrn->virtualX + 62) / 32 * 4) + (pScrn->virtualX * pScrn->bitsPerPixel / 8));
     infoPtr->ScanlineColorExpandBuffers = 
 					pGlint->XAAScanlineColorExpandBuffers;
     pGlint->XAAScanlineColorExpandBuffers[0] = 
@@ -501,12 +489,15 @@ Permedia3AccelInit(ScreenPtr pScreen)
     Permedia3EnableOffscreen(pScreen);
 
     return(XAAInit(pScreen, infoPtr));
+#else
+    return FALSE;
+#endif
 }
 
 void
 Permedia3EnableOffscreen (ScreenPtr pScreen)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     GLINTPtr pGlint = GLINTPTR(pScrn);
     BoxRec AvailFBArea;
 
@@ -524,6 +515,9 @@ Permedia3EnableOffscreen (ScreenPtr pScreen)
 
     xf86InitFBManager(pScreen, &AvailFBArea);
 }
+
+#ifdef HAVE_XAA_H
+
 #define CHECKCLIPPING				\
 {						\
     if (pGlint->ClippingOn) {			\
@@ -1225,3 +1219,4 @@ Permedia3WriteBitmap(ScrnInfoPtr pScrn,
     Permedia3DisableClipping(pScrn);
     Permedia3Sync(pScrn);
 }
+#endif

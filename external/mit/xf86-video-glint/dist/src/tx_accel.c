@@ -28,7 +28,6 @@
  * 
  * GLINT 500TX / MX accelerated options.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/tx_accel.c,v 1.27 2001/05/29 11:23:38 alanh Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -37,7 +36,6 @@
 #include "xf86.h"
 #include "xf86_OSproc.h"
 
-#include "xf86PciInfo.h"
 #include "xf86Pci.h"
 
 #include "fb.h"
@@ -47,6 +45,7 @@
 #include "glint_regs.h"
 #include "glint.h"
 
+#ifdef HAVE_XAA_H
 #include "xaalocal.h"	/* For replacements */
 
 static void TXSync(ScrnInfoPtr pScrn);
@@ -189,12 +188,14 @@ TXInitializeEngine(ScrnInfoPtr pScrn)
     GLINT_SLOW_WRITE_REG(0, dXDom);
     GLINT_SLOW_WRITE_REG(1<<16, dY);
 }
+#endif
 
 Bool
 TXAccelInit(ScreenPtr pScreen)
 {
+#ifdef HAVE_XAA_H
     XAAInfoRecPtr infoPtr;
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     GLINTPtr pGlint = GLINTPTR(pScrn);
     long memory = pGlint->FbMapSize;
     BoxRec AvailFBArea;
@@ -254,9 +255,7 @@ TXAccelInit(ScreenPtr pScreen)
 					       BIT_ORDER_IN_BYTE_LSBFIRST;
 
     infoPtr->NumScanlineColorExpandBuffers = 1;
-    pGlint->ScratchBuffer                 = xalloc(((pScrn->virtualX+62)/32*4)
-					    + (pScrn->virtualX
-					    * pScrn->bitsPerPixel / 8));
+    pGlint->ScratchBuffer                 = malloc(((pScrn->virtualX + 62) / 32 * 4) + (pScrn->virtualX * pScrn->bitsPerPixel / 8));
     infoPtr->ScanlineColorExpandBuffers = 
 					pGlint->XAAScanlineColorExpandBuffers;
     pGlint->XAAScanlineColorExpandBuffers[0] = 
@@ -286,8 +285,12 @@ TXAccelInit(ScreenPtr pScreen)
     xf86InitFBManager(pScreen, &AvailFBArea);
 
     return (XAAInit(pScreen, infoPtr));
+#else
+    return FALSE;
+#endif
 }
 
+#ifdef HAVE_XAA_H
 static void TXLoadCoord(
 	ScrnInfoPtr pScrn,
 	int x, int y,
@@ -296,7 +299,6 @@ static void TXLoadCoord(
 ){
     GLINTPtr pGlint = GLINTPTR(pScrn);
     
-#ifndef XF86DRI_DEVEL
     if (w != pGlint->startxsub) {
     	GLINT_WRITE_REG(w<<16, StartXSub);
 	pGlint->startxsub = w;
@@ -321,20 +323,6 @@ static void TXLoadCoord(
     	GLINT_WRITE_REG(d<<16,dY);
 	pGlint->dy = d;
     }
-#else
-    	GLINT_WRITE_REG(w<<16, StartXSub);
-    	GLINT_WRITE_REG(x<<16,StartXDom);
-    	GLINT_WRITE_REG(y<<16,StartY);
-    	GLINT_WRITE_REG(h,GLINTCount);
-    	GLINT_WRITE_REG(a<<16,dXDom);
-    	GLINT_WRITE_REG(d<<16,dY);
-	pGlint->startxsub = w;
-	pGlint->startxdom = x;
-	pGlint->starty = y;
-	pGlint->count = h;
-	pGlint->dxdom = a;
-	pGlint->dy = d;
-#endif
 }
 
 static void
@@ -962,3 +950,4 @@ TXSubsequentSolidBresenhamLine( ScrnInfoPtr pScrn,
                 (octant & YMAJOR) ? Y_AXIS : X_AXIS,
                 x, y,  e, dmin, -dmaj, len);
 }
+#endif

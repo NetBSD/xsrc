@@ -22,7 +22,6 @@
  * Authors: Alan Hourihane, alanh@fairlite.demon.co.uk
  *          Sven Luther <luther@dpt-info.u-strasbg.fr>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm3_video.c,v 1.14tsi Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -31,7 +30,6 @@
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "compiler.h"
-#include "xf86PciInfo.h"
 #include "xf86Pci.h"
 #include "xf86fbman.h"
 #include "regionstr.h"
@@ -40,8 +38,6 @@
 #include "glint_regs.h"
 #include "pm3_regs.h"
 #include <X11/extensions/Xv.h>
-#include "xaa.h"
-#include "xaalocal.h"
 #include "dixstruct.h"
 #include "fourcc.h"
 
@@ -75,7 +71,7 @@ static Atom xvColorKey, xvDoubleBuffer, xvAutopaintColorKey, xvFilter;
 
 void Permedia3InitVideo(ScreenPtr pScreen)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     XF86VideoAdaptorPtr *adaptors, *newAdaptors = NULL;
     XF86VideoAdaptorPtr newAdaptor = NULL;
     GLINTPtr pGlint = GLINTPTR(pScrn);
@@ -98,7 +94,7 @@ void Permedia3InitVideo(ScreenPtr pScreen)
 	    adaptors = &newAdaptor;
 	} else {
 	    newAdaptors =  /* need to free this someplace */
-		xalloc((num_adaptors + 1) * sizeof(XF86VideoAdaptorPtr*));
+		malloc((num_adaptors + 1) * sizeof(XF86VideoAdaptorPtr *));
 	    if(newAdaptors) {
 		memcpy(newAdaptors, adaptors, num_adaptors * 
 					sizeof(XF86VideoAdaptorPtr));
@@ -112,8 +108,7 @@ void Permedia3InitVideo(ScreenPtr pScreen)
     if(num_adaptors)
         xf86XVScreenInit(pScreen, adaptors, num_adaptors);
 
-    if(newAdaptors)
-	xfree(newAdaptors);
+    free(newAdaptors);
 }
 
 /* client libraries expect an encoding */
@@ -283,12 +278,12 @@ void Permedia3ResetVideo(ScrnInfoPtr pScrn)
 static XF86VideoAdaptorPtr 
 Permedia3SetupImageVideo(ScreenPtr pScreen)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     GLINTPtr pGlint = GLINTPTR(pScrn);
     XF86VideoAdaptorPtr adapt;
     GLINTPortPrivPtr pPriv;
 
-    if(!(adapt = xcalloc(1, sizeof(XF86VideoAdaptorRec) +
+    if(!(adapt = calloc(1, sizeof(XF86VideoAdaptorRec) +
 			    sizeof(GLINTPortPrivRec) +
 			    sizeof(DevUnion))))
 	return NULL;
@@ -626,7 +621,7 @@ Permedia3AllocateMemory(ScrnInfoPtr pScrn, FBAreaPtr area, int width, int height
     xf86FreeOffscreenArea(area);
   }
 
-  pScreen = screenInfo.screens[pScrn->scrnIndex];
+  pScreen = xf86ScrnToScreen(pScrn);
 
   new_area = xf86AllocateOffscreenArea(pScreen, width, height, pScrn->bitsPerPixel / 8, NULL, NULL, NULL);
 
@@ -1030,12 +1025,12 @@ Permedia3AllocateSurface(
     surface->width = w;
     surface->height = h;
 
-    if(!(surface->offsets = xalloc(sizeof(int)))) {
+    if(!(surface->offsets = malloc(sizeof(int)))) {
 	xf86FreeOffscreenArea(area);
 	return BadAlloc;
     }
-    if(!(pPriv = xalloc(sizeof(OffscreenPrivRec)))) {
-	xfree(surface->offsets);
+    if(!(pPriv = malloc(sizeof(OffscreenPrivRec)))) {
+	free(surface->offsets);
 	xf86FreeOffscreenArea(area);
 	return BadAlloc;
     }
@@ -1080,9 +1075,9 @@ Permedia3FreeSurface(
     if(pPriv->isOn)
 	Permedia3StopSurface(surface);
     xf86FreeOffscreenArea(pPriv->area);
-    xfree(surface->pitches);
-    xfree(surface->offsets);
-    xfree(surface->devPrivate.ptr);
+    free(surface->pitches);
+    free(surface->offsets);
+    free(surface->devPrivate.ptr);
 
     return Success;
 }
@@ -1235,7 +1230,7 @@ Permedia3InitOffscreenImages(ScreenPtr pScreen)
     XF86OffscreenImagePtr offscreenImages;
 
     /* need to free this someplace */
-    if(!(offscreenImages = xalloc(sizeof(XF86OffscreenImageRec))))
+    if(!(offscreenImages = malloc(sizeof(XF86OffscreenImageRec))))
 	return;
 
     offscreenImages[0].image = &Images[0];
