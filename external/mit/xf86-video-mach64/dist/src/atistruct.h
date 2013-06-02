@@ -51,6 +51,7 @@
 
 #endif /* TV_OUT */
 
+#include "picturestr.h"
 #ifdef USE_EXA
 #include "exa.h"
 #endif
@@ -64,6 +65,8 @@
 #endif
 
 #include "atipcirename.h"
+
+#include "compat-api.h"
 
 #define CacheSlotOf(____Register) ((____Register) / UnitOf(DWORD_SELECT))
 
@@ -234,19 +237,19 @@ typedef struct _ATIRec
      * Processor I/O decoding definitions.
      */
     CARD8 CPIODecoding;
-    IOADDRESS CPIOBase;
+    unsigned long CPIOBase;
 
 #ifndef AVOID_CPIO
 
     /*
      * Processor I/O port definition for VGA.
      */
-    IOADDRESS CPIO_VGABase;
+    unsigned long CPIO_VGABase;
 
     /*
      * Processor I/O port definitions for VGA Wonder.
      */
-    IOADDRESS CPIO_VGAWonder;
+    unsigned long CPIO_VGAWonder;
 
 #endif /* AVOID_CPIO */
 
@@ -256,7 +259,7 @@ typedef struct _ATIRec
 
 #ifndef AVOID_CPIO
 
-    IOADDRESS CPIO_DAC_MASK, CPIO_DAC_DATA, CPIO_DAC_READ, CPIO_DAC_WRITE,
+    unsigned long CPIO_DAC_MASK, CPIO_DAC_DATA, CPIO_DAC_READ, CPIO_DAC_WRITE,
               CPIO_DAC_WAIT;
 
 #endif /* AVOID_CPIO */
