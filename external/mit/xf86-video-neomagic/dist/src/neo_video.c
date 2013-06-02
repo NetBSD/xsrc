@@ -38,8 +38,6 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define MAKE_ATOM(a)	MakeAtom(a, sizeof(a) - 1, TRUE)
 
 #include "dixstruct.h"
-#include "xaa.h"
-#include "xaalocal.h"
 
 static XF86VideoAdaptorPtr NEOSetupVideo(ScreenPtr);
 
@@ -78,7 +76,7 @@ static Atom xvColorKey, xvBrightness, xvInterlace;
 void
 NEOInitVideo(ScreenPtr pScreen)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     NEOPtr nPtr = NEOPTR(pScrn);
     XF86VideoAdaptorPtr *overlayAdaptors, *newAdaptors = NULL;
     XF86VideoAdaptorPtr newAdaptor = NULL;
@@ -99,7 +97,7 @@ NEOInitVideo(ScreenPtr pScreen)
 	    numAdaptors = 1;
 	    overlayAdaptors = &newAdaptor;
 	} else {
-	    newAdaptors = xalloc((numAdaptors + 1) 
+	    newAdaptors = malloc((numAdaptors + 1) 
 				 * sizeof(XF86VideoAdaptorPtr*));
 	    if (newAdaptors){
 		memcpy(newAdaptors, overlayAdaptors, 
@@ -114,7 +112,7 @@ NEOInitVideo(ScreenPtr pScreen)
 	xf86XVScreenInit(pScreen, overlayAdaptors, numAdaptors);
 
     if (newAdaptors)
-	xfree(newAdaptors);
+	free(newAdaptors);
 }
 
 static XF86VideoEncodingRec NEOVideoEncodings[] =
@@ -202,7 +200,7 @@ static XF86ImageRec NEOVideoImages[] =
 static XF86VideoAdaptorPtr
 NEOSetupVideo(ScreenPtr pScreen)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     NEOPtr nPtr = NEOPTR(pScrn);
     NEOPortPtr pPriv;
     XF86VideoAdaptorPtr overlayAdaptor;
@@ -211,7 +209,7 @@ NEOSetupVideo(ScreenPtr pScreen)
 #ifdef DEBUG
     xf86DrvMsg(pScrn->scrnIndex,X_INFO,"NEOSetupVideo\n");
 #endif
-    if ((overlayAdaptor = xcalloc(1, sizeof(XF86VideoAdaptorRec) +
+    if ((overlayAdaptor = calloc(1, sizeof(XF86VideoAdaptorRec) +
 			      sizeof(DevUnion) + 
 			      sizeof(NEOPortRec))) == NULL){
 	return (NULL);
@@ -916,9 +914,9 @@ NEOInitOffscreenImages(ScreenPtr pScreen)
     XF86OffscreenImagePtr offscreenImages;
 
 #ifdef DEBUG
-    xf86DrvMsg(xf86Screens[pScreen->myNum]->scrnIndex,X_INFO,"NEOInitOffscreenImages\n");
+    xf86DrvMsg(xf86ScreenToScrn(pScreen)->scrnIndex,X_INFO,"NEOInitOffscreenImages\n");
 #endif
-    if ((offscreenImages = xalloc(sizeof(XF86OffscreenImageRec))) == NULL){
+    if ((offscreenImages = malloc(sizeof(XF86OffscreenImageRec))) == NULL){
 	return;
     }
 
@@ -968,7 +966,7 @@ NEOAllocateMemory(ScrnInfoPtr pScrn, FBLinearPtr linear, int size)
     }
 
 
-    pScreen = screenInfo.screens[pScrn->scrnIndex];
+    pScreen = xf86ScrnToScreen(pScrn);
     if ((new_linear = xf86AllocateOffscreenLinear(pScreen, size, 16, NULL,
 						  NULL, NULL)) == NULL){
 	int max_size;
@@ -1017,19 +1015,19 @@ NEOAllocSurface(ScrnInfoPtr pScrn, int id,
 
     surface->width = width;
     surface->height = height;
-    if ((surface->pitches = xalloc(sizeof(int))) == NULL){
+    if ((surface->pitches = malloc(sizeof(int))) == NULL){
 	xf86FreeOffscreenLinear(linear);
 	return (BadAlloc);
     }
-    if ((surface->offsets = xalloc(sizeof(int))) == NULL){
-	xfree(surface->pitches);
+    if ((surface->offsets = malloc(sizeof(int))) == NULL){
+	free(surface->pitches);
 	xf86FreeOffscreenLinear(linear);
 	return (BadAlloc);
     }
 
-    if ((pPriv = xalloc(sizeof(NEOOffscreenRec))) == NULL){
-	xfree(surface->pitches);
-	xfree(surface->offsets);
+    if ((pPriv = malloc(sizeof(NEOOffscreenRec))) == NULL){
+	free(surface->pitches);
+	free(surface->offsets);
 	xf86FreeOffscreenLinear(linear);
 	return (BadAlloc);
     }
@@ -1057,9 +1055,9 @@ NEOFreeSurface(XF86SurfacePtr surface)
 	NEOStopSurface(surface);
 
     xf86FreeOffscreenLinear(pPriv->linear);
-    xfree(surface->pitches);
-    xfree(surface->offsets);
-    xfree(surface->devPrivate.ptr);
+    free(surface->pitches);
+    free(surface->offsets);
+    free(surface->devPrivate.ptr);
     return (Success);
 }
 
