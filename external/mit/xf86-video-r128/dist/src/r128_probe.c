@@ -39,7 +39,6 @@
  *   Kevin E. Martin <martin@valinux.com>
  */
 
-#include "r128_probe.h"
 #include "r128_version.h"
 #include "atipcirename.h"
 
@@ -50,6 +49,9 @@
 #if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86Resources.h"
 #endif
+
+#include "compat-api.h"
+#include "r128_probe.h"
 
 #ifndef XSERVER_LIBPCIACCESS
 static Bool R128Probe(DriverPtr drv, int flags);
@@ -298,7 +300,7 @@ r128_get_scrninfo(int entity_num)
         instance++;
     }
 
-    xfree(pEnt);
+    free(pEnt);
 
     return TRUE;
 }
@@ -340,8 +342,8 @@ R128Probe(DriverPtr drv, int flags)
 	    foundScreen = TRUE;
     }
 
-    xfree(usedChips);
-    xfree(devSections);
+    free(usedChips);
+    free(devSections);
 
     return foundScreen;
 }
