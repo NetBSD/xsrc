@@ -1,3 +1,93 @@
+commit 2beb25bd41508ab5e2af39c696485fcb5f0ca7d6
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Jul 17 16:05:09 2012 +1000
+
+    xf86-video-siliconmotion: bump to version 1.7.7
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit 4b4b8e9c047bd34c516ca8ab2b15fd1c541d05d5
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Jul 17 14:53:30 2012 +1000
+
+    smi: convert to new X server screen conversion apis.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit 1aad7b44e3e141bd8d3e589b7cd410e791050bd0
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Jul 17 02:01:07 2012 +0100
+
+    smi: port to compat-api for new server.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit 891ea02395079b1480faf701156185ad01405e6d
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Jul 17 01:52:45 2012 +0100
+
+    smi: fix build against XAA-less server
+
+commit e4660be7c12de53cac57c0b7d4e792a071b4fcfc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Mar 23 19:49:14 2012 -0700
+
+    xf86-video-siliconmotion 1.7.6
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 63afc35a662bc2dc460f6ff6fab65a8462aa5e76
+Author: Matt Turner <mattst88@gmail.com>
+Date:   Thu Feb 9 17:14:25 2012 -0500
+
+    Add &component=Driver/siliconmotion to Bugzilla link
+    
+    Signed-off-by: Matt Turner <mattst88@gmail.com>
+
+commit 12695ed1edd8c590252e76d530bcecaa0036e109
+Author: Matt Turner <mattst88@gmail.com>
+Date:   Thu Feb 9 16:21:59 2012 -0500
+
+    Don't check for randrproto or renderproto
+    
+    The driver supports neither randr or render.
+    
+    Signed-off-by: Matt Turner <mattst88@gmail.com>
+
+commit 0e7e9cd639196cb42b0a79b2671f6bacc558035f
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Mon Dec 19 17:26:34 2011 -0500
+
+    Fix for new vgaHW ABI
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 208a703776d6dfbd01babbe2f220a7198dea4f5c
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Mon Dec 19 17:25:39 2011 -0500
+
+    Make failure to XAA non-fatal
+    
+    No shadowfb support in this driver yet.
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 7d9c1a49b87df15cdb78c529db554ea82c77033f
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Thu Nov 17 15:53:51 2011 -0500
+
+    Check ABI major not encoded ABI
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 037b839c84ad6dcbe9aade420cf0d3bf06f23119
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed Nov 16 15:03:25 2011 -0500
+
+    Adapt to missing PIOOffset in videoabi 12
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
 commit 087226bf4e442b83985078f5df481eb91f4f65ed
 Author: Julien Cristau <jcristau@debian.org>
 Date:   Sun Feb 27 17:12:58 2011 +0100

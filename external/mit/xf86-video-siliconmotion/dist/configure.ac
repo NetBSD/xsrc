@@ -23,8 +23,8 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-video-siliconmotion],
-        [1.7.5],
-        [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
+        [1.7.7],
+        [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg&component=Driver/siliconmotion],
         [xf86-video-siliconmotion])
 
 # Require X.Org macros 1.8 or later for MAN_SUBSTS set by XORG_MANPAGE_SECTIONS
@@ -55,8 +55,6 @@ AC_ARG_WITH(xorg-module-dir,
             [moduledir="$libdir/xorg/modules"])
 
 # Store the list of server defined optional extensions in REQUIRED_MODULES
-XORG_DRIVER_CHECK_EXT(RANDR, randrproto)
-XORG_DRIVER_CHECK_EXT(RENDER, renderproto)
 XORG_DRIVER_CHECK_EXT(XV, videoproto)
 XORG_DRIVER_CHECK_EXT(DPMSExtension, xextproto)
 
@@ -86,6 +84,23 @@ AM_CONDITIONAL(XMODES, test "x$XMODES" = xyes)
 if test "x$XMODES" = xyes; then
     AC_DEFINE(HAVE_XMODES, 1, [X server has new mode code])
 fi
+AC_ARG_ENABLE(xaa,
+              AS_HELP_STRING([--enable-xaa],
+                             [Enable legacy X Acceleration Architecture (XAA) [default=auto]]),
+              [XAA="$enableval"],
+              [XAA=auto])
+if test "x$XAA" != xno; then
+        save_CFLAGS=$CFLAGS
+        save_CPPFLAGS=$CPPFLAGS
+        CFLAGS=$XORG_CFLAGS
+        CPPFLAGS="$XORG_CFLAGS"
+        AC_CHECK_HEADERS([xaa.h], XAA=yes, XAA=no)
+        CFLAGS=$save_CFLAGS
+        CPPFLAGS=$save_CPPFLAGS
+fi
+AC_MSG_CHECKING([whether to include XAA support])
+AM_CONDITIONAL(XAA, test "x$XAA" = xyes)
+AC_MSG_RESULT([$XAA])
 
 AC_SUBST([moduledir])
 
