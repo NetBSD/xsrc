@@ -25,6 +25,8 @@
 
 	<dir>@FC_DEFAULT_FONTS@</dir>
 	@FC_FONTPATH@
+	<dir prefix="xdg">fonts</dir>
+	<!-- the following element will be removed in the future -->
 	<dir>~/.fonts</dir>
 
 <!--
@@ -34,7 +36,7 @@
 		<test qual="any" name="family">
 			<string>mono</string>
 		</test>
-		<edit name="family" mode="assign">
+		<edit name="family" mode="assign" binding="same">
 			<string>monospace</string>
 		</edit>
 	</match>
@@ -46,7 +48,7 @@
 		<test qual="any" name="family">
 			<string>sans serif</string>
 		</test>
-		<edit name="family" mode="assign">
+		<edit name="family" mode="assign" binding="same">
 			<string>sans-serif</string>
 		</edit>
 	</match>
@@ -58,7 +60,7 @@
 		<test qual="any" name="family">
 			<string>sans</string>
 		</test>
-		<edit name="family" mode="assign">
+		<edit name="family" mode="assign" binding="same">
 			<string>sans-serif</string>
 		</edit>
 	</match>
@@ -66,11 +68,13 @@
 <!--
   Load local system customization file
 -->
-	<include ignore_missing="yes">conf.d</include>
+	<include ignore_missing="yes">@CONFIGDIR@</include>
 
 <!-- Font cache directory list -->
 
 	<cachedir>@FC_CACHEDIR@</cachedir>
+	<cachedir prefix="xdg">fontconfig</cachedir>
+	<!-- the following element will be removed in the future -->
 	<cachedir>~/.fontconfig</cachedir>
 
 	<config>

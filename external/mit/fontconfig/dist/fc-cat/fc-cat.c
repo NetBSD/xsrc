@@ -7,9 +7,9 @@
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
- * documentation, and that the name of Keith Packard not be used in
+ * documentation, and that the name of the author(s) not be used in
  * advertising or publicity pertaining to distribution of the software without
- * specific, written prior permission.  Keith Packard makes no
+ * specific, written prior permission.  The authors make no
  * representations about the suitability of this software for any purpose.  It
  * is provided "as is" without express or implied warranty.
  *
@@ -32,7 +32,7 @@
 #endif
 
 #include <fontconfig/fontconfig.h>
-#include "../fc-arch/fcarch.h"
+#include "../src/fcarch.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -150,11 +150,11 @@ usage (char *program, int error)
 {
     FILE *file = error ? stderr : stdout;
 #if HAVE_GETOPT_LONG
-    fprintf (file, "usage: %s [-rv] [--recurse] [--verbose] [*-%s.cache-2|directory]...\n",
+    fprintf (file, "usage: %s [-rv] [--recurse] [--verbose] [*-%s" FC_CACHE_SUFFIX "|directory]...\n",
 	     program, FC_ARCHITECTURE);
     fprintf (file, "       %s [-Vh] [--version] [--help]\n", program);
 #else
-    fprintf (file, "usage: %s [-rvVh] [*-%s.cache-2|directory]...\n",
+    fprintf (file, "usage: %s [-rvVh] [*-%s" FC_CACHE_SUFFIX "|directory]...\n",
 	     program, FC_ARCHITECTURE);
 #endif
     fprintf (file, "Reads font information cache from:\n");
@@ -194,11 +194,9 @@ file_base_name (const FcChar8 *cache, const FcChar8 *file)
 static FcBool
 cache_print_set (FcFontSet *set, FcStrSet *dirs, const FcChar8 *base_name, FcBool verbose)
 {
-    FcChar8	    *name, *dir;
-    const FcChar8   *file, *base;
-    int		    ret;
+    FcChar8	    *dir;
+    const FcChar8   *base;
     int		    n;
-    int		    id;
     int		    ndir = 0;
     FcStrList	    *list;
 
@@ -227,37 +225,22 @@ cache_print_set (FcFontSet *set, FcStrSet *dirs, const FcChar8 *base_name, FcBoo
     for (n = 0; n < set->nfont; n++)
     {
 	FcPattern   *font = set->fonts[n];
+	FcChar8 *s;
 
-	if (FcPatternGetString (font, FC_FILE, 0, (FcChar8 **) &file) != FcResultMatch)
-	    goto bail3;
-	base = file_base_name (base_name, file);
-	if (FcPatternGetInteger (font, FC_INDEX, 0, &id) != FcResultMatch)
-	    goto bail3;
-	if (!write_string (stdout, base))
-	    goto bail3;
-	if (PUTC (' ', stdout) == EOF)
-	    goto bail3;
-	if (!write_int (stdout, id))
-	    goto bail3;
-        if (PUTC (' ', stdout) == EOF)
-	    goto bail3;
-	name = FcNameUnparse (font);
-	if (!name)
-	    goto bail3;
-	ret = write_string (stdout, name);
-	FcStrFree (name);
-	if (!ret)
-	    goto bail3;
-	if (PUTC ('\n', stdout) == EOF)
-	    goto bail3;
+	s = FcPatternFormat (font, (const FcChar8 *) "%{=fccat}\n");
+	if (s)
+	{
+	    printf ("%s", s);
+	    FcStrFree (s);
+	}
     }
     if (verbose && !set->nfont && !ndir)
 	printf ("<empty>\n");
-    
+
     FcStrListDone (list);
 
     return FcTrue;
-    
+
 bail3:
     FcStrListDone (list);
 bail2:
@@ -404,5 +387,6 @@ main (int argc, char **argv)
 	    FcStrFree (cache_file);
     }
 
+    FcFini ();
     return 0;
 }

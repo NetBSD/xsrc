@@ -7,9 +7,9 @@
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
- * documentation, and that the name of Keith Packard not be used in
+ * documentation, and that the name of the author(s) not be used in
  * advertising or publicity pertaining to distribution of the software without
- * specific, written prior permission.  Keith Packard makes no
+ * specific, written prior permission.  The authors make no
  * representations about the suitability of this software for any purpose.  It
  * is provided "as is" without express or implied warranty.
  *
@@ -79,7 +79,7 @@ FcAtomicCreate (const FcChar8   *file)
     if (!atomic)
 	return 0;
     FcMemAlloc (FC_MEM_ATOMIC, total_len);
-    
+
     atomic->file = (FcChar8 *) (atomic + 1);
     strcpy ((char *) atomic->file, (char *) file);
 
@@ -99,12 +99,14 @@ FcAtomicCreate (const FcChar8   *file)
 FcBool
 FcAtomicLock (FcAtomic *atomic)
 {
-    int		fd = -1;
-    FILE	*f = 0;
     int		ret;
     struct stat	lck_stat;
 
 #ifdef HAVE_LINK
+    int		fd = -1;
+    FILE	*f = 0;
+    FcBool	no_link = FcFalse;
+
     strcpy ((char *) atomic->tmp, (char *) atomic->file);
     strcat ((char *) atomic->tmp, TMP_NAME);
     fd = mkstemp ((char *) atomic->tmp);
@@ -130,6 +132,14 @@ FcAtomicLock (FcAtomic *atomic)
 	return FcFalse;
     }
     ret = link ((char *) atomic->tmp, (char *) atomic->lck);
+    if (ret < 0 && errno == EPERM)
+    {
+	/* the filesystem where atomic->lck points to may not supports
+	 * the hard link. so better try to fallback
+	 */
+	ret = mkdir ((char *) atomic->lck, 0600);
+	no_link = FcTrue;
+    }
     (void) unlink ((char *) atomic->tmp);
 #else
     ret = mkdir ((char *) atomic->lck, 0600);
@@ -142,14 +152,22 @@ FcAtomicLock (FcAtomic *atomic)
 	 * machines sharing the same filesystem will have clocks
 	 * reasonably close to each other.
 	 */
-	if (FcStat ((char *) atomic->lck, &lck_stat) >= 0)
+	if (FcStat (atomic->lck, &lck_stat) >= 0)
 	{
 	    time_t  now = time (0);
 	    if ((long int) (now - lck_stat.st_mtime) > 10 * 60)
 	    {
 #ifdef HAVE_LINK
-		if (unlink ((char *) atomic->lck) == 0)
-		    return FcAtomicLock (atomic);
+		if (no_link)
+		{
+		    if (rmdir ((char *) atomic->lck) == 0)
+			return FcAtomicLock (atomic);
+		}
+		else
+		{
+		    if (unlink ((char *) atomic->lck) == 0)
+			return FcAtomicLock (atomic);
+		}
 #else
 		if (rmdir ((char *) atomic->lck) == 0)
 		    return FcAtomicLock (atomic);
@@ -178,7 +196,7 @@ FcBool
 FcAtomicReplaceOrig (FcAtomic *atomic)
 {
 #ifdef _WIN32
-    unlink (atomic->file);
+    unlink ((const char *) atomic->file);
 #endif
     if (rename ((char *) atomic->new, (char *) atomic->file) < 0)
 	return FcFalse;
@@ -195,7 +213,8 @@ void
 FcAtomicUnlock (FcAtomic *atomic)
 {
 #ifdef HAVE_LINK
-    unlink ((char *) atomic->lck);
+    if (unlink ((char *) atomic->lck) == -1)
+	rmdir ((char *) atomic->lck);
 #else
     rmdir ((char *) atomic->lck);
 #endif
@@ -206,7 +225,7 @@ FcAtomicDestroy (FcAtomic *atomic)
 {
     FcMemFree (FC_MEM_ATOMIC, sizeof (FcAtomic) +
 	       strlen ((char *) atomic->file) * 4 + 4 +
-	       sizeof (NEW_NAME) + sizeof (LCK_NAME) + 
+	       sizeof (NEW_NAME) + sizeof (LCK_NAME) +
 	       sizeof (TMP_NAME));
 
     free (atomic);
