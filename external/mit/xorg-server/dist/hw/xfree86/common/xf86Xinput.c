@@ -825,6 +825,7 @@ xf86NewInputDevice(InputInfoPtr pInfo, DeviceIntPtr *pdev, BOOL enable)
         {
             OsReleaseSignals();
             xf86Msg(X_ERROR, "Couldn't init device \"%s\"\n", pInfo->name);
+            RemoveDevice(dev, TRUE);
             rval = BadMatch;
             goto unwind;
         }
@@ -919,15 +920,16 @@ NewInputDeviceRequest (InputOption *options, InputAttributes *attrs,
         pInfo->attrs = DuplicateInputAttributes(attrs);
     }
 
-    if (!pInfo->driver || !pInfo->name) {
-        xf86Msg(X_INFO, "No input driver/identifier specified (ignoring)\n");
+    if (!pInfo->name) {
+        xf86Msg(X_INFO, "No identifier specified, ignoring this device.\n");
         rval = BadRequest;
         goto unwind;
     }
 
-    if (!pInfo->name) {
-        xf86Msg(X_ERROR, "No device identifier specified (ignoring)\n");
-        rval = BadMatch;
+    if (!pInfo->driver) {
+        xf86Msg(X_INFO, "No input driver specified, ignoring this device.\n");
+        xf86Msg(X_INFO, "This device may have been added with another device file.\n");
+        rval = BadRequest;
         goto unwind;
     }
 
