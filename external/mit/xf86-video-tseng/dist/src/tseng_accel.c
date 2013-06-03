@@ -115,7 +115,7 @@ tseng_terminate_acl(TsengPtr pTseng)
     }
 }
 
-static void 
+void 
 tseng_recover_timeout(TsengPtr pTseng)
 {
     if (pTseng->ChipType == ET4000) {

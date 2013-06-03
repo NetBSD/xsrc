@@ -95,7 +95,7 @@
 #define MAX_WAIT_CNT 500000	       /* how long we wait before we time out */
 #undef WAIT_VERBOSE		       /* if defined: print out how long we waited */
 
-static void tseng_recover_timeout(TsengPtr pTseng);
+void tseng_recover_timeout(TsengPtr pTseng);
 
 static __inline__ void 
 tseng_wait(TsengPtr pTseng, int reg, char *name, unsigned char mask)
