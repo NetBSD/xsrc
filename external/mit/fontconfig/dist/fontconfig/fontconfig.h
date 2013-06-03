@@ -7,9 +7,9 @@
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
- * documentation, and that the name of Keith Packard not be used in
+ * documentation, and that the name of the author(s) not be used in
  * advertising or publicity pertaining to distribution of the software without
- * specific, written prior permission.  Keith Packard makes no
+ * specific, written prior permission.  The authors make no
  * representations about the suitability of this software for any purpose.  It
  * is provided "as is" without express or implied warranty.
  *
@@ -27,7 +27,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <stdarg.h>
 
 #if defined(__GNUC__) && (__GNUC__ >= 4)
@@ -52,8 +51,8 @@ typedef int		FcBool;
  */
 
 #define FC_MAJOR	2
-#define FC_MINOR	8
-#define FC_REVISION	0
+#define FC_MINOR	10
+#define FC_REVISION	2
 
 #define FC_VERSION	((FC_MAJOR * 10000) + (FC_MINOR * 100) + (FC_REVISION))
 
@@ -86,6 +85,7 @@ typedef int		FcBool;
 #define FC_HINT_STYLE	    "hintstyle"		/* Int */
 #define FC_VERTICAL_LAYOUT  "verticallayout"	/* Bool (false) */
 #define FC_AUTOHINT	    "autohint"		/* Bool (false) */
+/* FC_GLOBAL_ADVANCE is deprecated. this is simply ignored on freetype 2.4.5 or later */
 #define FC_GLOBAL_ADVANCE   "globaladvance"	/* Bool (true) */
 #define FC_WIDTH	    "width"		/* Int */
 #define FC_FILE		    "file"		/* String */
@@ -112,10 +112,11 @@ typedef int		FcBool;
 #define FC_EMBEDDED_BITMAP  "embeddedbitmap"	/* Bool - true to enable embedded bitmaps */
 #define FC_DECORATIVE	    "decorative"	/* Bool - true if style is a decorative variant */
 #define FC_LCD_FILTER	    "lcdfilter"		/* Int */
+#define FC_NAMELANG	    "namelang"		/* String RFC 3866 langs */
 
-#define FC_CACHE_SUFFIX		    ".cache-"FC_CACHE_VERSION
-#define FC_DIR_CACHE_FILE	    "fonts.cache-"FC_CACHE_VERSION
-#define FC_USER_CACHE_FILE	    ".fonts.cache-"FC_CACHE_VERSION
+#define FC_CACHE_SUFFIX		    ".cache-" FC_CACHE_VERSION
+#define FC_DIR_CACHE_FILE	    "fonts.cache-" FC_CACHE_VERSION
+#define FC_USER_CACHE_FILE	    ".fonts.cache-" FC_CACHE_VERSION
 
 /* Adjust outline rasterizer */
 #define FC_CHAR_WIDTH	    "charwidth"	/* Int */
@@ -329,6 +330,12 @@ FcDirCacheUnlink (const FcChar8 *dir, FcConfig *config);
 FcPublic FcBool
 FcDirCacheValid (const FcChar8 *cache_file);
 
+FcPublic FcBool
+FcDirCacheClean (const FcChar8 *cache_dir, FcBool verbose);
+
+FcPublic void
+FcCacheCreateTagFile (const FcConfig *config);
+
 /* fccfg.c */
 FcPublic FcChar8 *
 FcConfigHome (void);
@@ -376,7 +383,7 @@ FcPublic FcBlanks *
 FcConfigGetBlanks (FcConfig *config);
 
 FcPublic FcStrList *
-FcConfigGetCacheDirs (FcConfig	*config);
+FcConfigGetCacheDirs (const FcConfig	*config);
 
 FcPublic int
 FcConfigGetRescanInterval (FcConfig *config);
@@ -423,6 +430,9 @@ FcCharSetDestroy (FcCharSet *fcs);
 
 FcPublic FcBool
 FcCharSetAddChar (FcCharSet *fcs, FcChar32 ucs4);
+
+FcPublic FcBool
+FcCharSetDelChar (FcCharSet *fcs, FcChar32 ucs4);
 
 FcPublic FcCharSet*
 FcCharSetCopy (FcCharSet *src);
@@ -488,6 +498,9 @@ FcPublic void
 FcFontSetPrint (const FcFontSet *s);
 
 /* fcdefault.c */
+FcPublic FcStrSet *
+FcGetDefaultLangs (void);
+
 FcPublic void
 FcDefaultSubstitute (FcPattern *pattern);
 
@@ -582,6 +595,9 @@ FcLangSetCopy (const FcLangSet *ls);
 FcPublic FcBool
 FcLangSetAdd (FcLangSet *ls, const FcChar8 *lang);
 
+FcPublic FcBool
+FcLangSetDel (FcLangSet *ls, const FcChar8 *lang);
+
 FcPublic FcLangResult
 FcLangSetHasLang (const FcLangSet *ls, const FcChar8 *lang);
 
@@ -599,6 +615,12 @@ FcLangSetHash (const FcLangSet *ls);
 
 FcPublic FcStrSet *
 FcLangSetGetLangs (const FcLangSet *ls);
+
+FcPublic FcLangSet *
+FcLangSetUnion (const FcLangSet *a, const FcLangSet *b);
+
+FcPublic FcLangSet *
+FcLangSetSubtract (const FcLangSet *a, const FcLangSet *b);
 
 /* fclist.c */
 FcPublic FcObjectSet *
@@ -728,10 +750,10 @@ FcPublic FcBool
 FcNameUnregisterConstants (const FcConstant *consts, int nconsts);
     
 FcPublic const FcConstant *
-FcNameGetConstant (FcChar8 *string);
+FcNameGetConstant (const FcChar8 *string);
 
 FcPublic FcBool
-FcNameConstant (FcChar8 *string, int *result);
+FcNameConstant (const FcChar8 *string, int *result);
 
 FcPublic FcPattern *
 FcNameParse (const FcChar8 *name);

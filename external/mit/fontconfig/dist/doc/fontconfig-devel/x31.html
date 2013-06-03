@@ -73,7 +73,7 @@ NAME="AEN31"
 >Datatypes</A
 ></H1
 ><P
->Fontconfig uses abstract datatypes to hide internal implementation details
+>Fontconfig uses abstract data types to hide internal implementation details
 for most data structures.  A few structures are exposed where appropriate.
   </P
 ><DIV
@@ -85,9 +85,9 @@ NAME="AEN34"
 >FcChar8, FcChar16, FcChar32, FcBool</A
 ></H2
 ><P
->These are primitive datatypes; the FcChar* types hold precisely the number
+>These are primitive data types; the FcChar* types hold precisely the number
 of bits stated (if supported by the C implementation).  FcBool holds
-one of two CPP symbols: FcFalse or FcTrue.
+one of two C preprocessor symbols: FcFalse or FcTrue.
     </P
 ></DIV
 ><DIV
@@ -128,7 +128,7 @@ NAME="AEN41"
 >FcCharSet</A
 ></H2
 ><P
->An FcCharSet is an abstract type that holds the set of encoded unicode chars
+>An FcCharSet is an abstract type that holds the set of encoded Unicode chars
 in a font.  Operations to build and compare these sets are provided.
     </P
 ></DIV
@@ -445,7 +445,7 @@ public entry points that need global data can take an optional FcConfig*
 argument; passing 0 uses the default configuration.  FcConfig objects hold two
 sets of fonts, the first contains those specified by the configuration, the
 second set holds those added by the application at run-time.  Interfaces
-that need to reference a particulat set use one of the FcSetName enumerated
+that need to reference a particular set use one of the FcSetName enumerated
 values.
     </P
 ></DIV
@@ -489,7 +489,7 @@ CLASS="PROGRAMLISTING"
         FcResultTypeMismatch    Object exists, but the type doesn't match
         FcResultNoId            Object exists, but has fewer values
                                 than specified
-        FcResultOutOfMemory     Malloc failed
+        FcResultOutOfMemory     malloc failed
     </PRE
 ></TD
 ></TR
@@ -506,7 +506,7 @@ NAME="AEN96"
 >FcAtomic</A
 ></H2
 ><P
->Used for locking access to config files.  Provides a safe way to update
+>Used for locking access to configuration files.  Provides a safe way to update
 configuration files.
     </P
 ></DIV

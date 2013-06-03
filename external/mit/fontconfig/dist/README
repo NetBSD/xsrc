@@ -1,11 +1,270 @@
                               Fontconfig
              Font configuration and customization library
-                              Version 2.8
-                              2009-11-18
+                            Version 2.10.2
+                              2012-03-11
 
 
 Check INSTALL for compilation and installation instructions.
 Report bugs to https://bugs.freedesktop.org in the fontconfig module.
+
+2.10.2
+
+Akira TAGOH (13):
+      Bug 53585 - Two highly-visible typos in src/fcxml.c
+      Fix for libtoolize's warnings
+      Bug 54138 - X_OK permission is invalid for win32 access(..) calls
+      Bug 52573 - patch required to build 2.10.x with oldish GNU C library headers
+      deal with warnings as errors for the previous change
+      Fix wrongly squashing for the network path on Win32.
+      Fix syntax errors in fonts.dtd.
+      autogen.sh: Add -I option to tell aclocal a place for external m4 files
+      Use automake variable instead of cleaning files in clean-local
+      Bug 56531 - autogen.sh fails due to missing 'm4' directory
+      Bug 57114 - regression on FcFontMatch with namelang
+      Update CaseFolding.txt to Unicode 6.2
+      Bug 57286 - Remove UnBatang and Baekmuk Batang from monospace in 65-nonlatin.conf
+
+Behdad Esfahbod (1):
+      Fix N'ko orthography
+
+Jeremy Huddleston Sequoia (1):
+      Remove _CONFIG_FIXUPS_H_ guards, so multiple includes of "config.h" result in the correct values
+
+2.10.1
+
+Akira TAGOH (2):
+      Fix a typo in fontconfig.pc
+      Install config files first
+
+2.10.0
+
+Akira TAGOH (5):
+      Bug 34266 - configs silently ignored if libxml2 doesn't support SAX1 interface
+      Update CaseFolding.txt to Unicode 6.1
+      Fix a build fail with gcc 2.95, not supporting the flexible array members.
+      Bump libtool revision
+      Update INSTALL
+
+2.9.92 (2.10 RC2)
+
+Akira TAGOH (9):
+      Bug 50835 - Deprecate FC_GLOBAL_ADVANCE
+      Fix a typo and build fail.
+      Fix a build fail on MINGW
+      Fix the fail of make install with --disable-shared on Win32
+      clean up the lock file properly on even hardlink-not-supported filesystem.
+      Rename configure.in to configure.ac
+      Bug 18726 - RFE: help write locale-specific tests
+      Bump libtool revision
+      Update INSTALL
+
+Marius Tolzmann (2):
+      Fix newline in warning about deprecated config includes
+      Fix warning about deprecated, non-existent config includes
+
+2.9.91 (2.10 RC1)
+
+Akira TAGOH (60):
+      [doc] Update the path for cache files and the version.
+      [doc] Update for cachedir.
+      Revert "Fix a build fail on some environment."
+      Revert "Fix a build fail on some environment"
+      Fix a build issue due to the use of non-portable variables
+      Get rid of the prerequisites from the sufix rules
+      Bug 39914 - Please tag the cache directory with CACHEDIR.TAG
+      fc-cache: improvement of the fix for Bug#39914.
+      fcmatch: Set FcResultMatch at the end if the return value is valid.
+      Bug 47703 - SimSun default family
+      Bug 17722 - Don't overwrite user's configurations in default config
+      Fix a memory leak in FcDirScanConfig()
+      Bug 17832 - Memory leaks due to FcStrStaticName use for external patterns
+      fcpat: Increase the number of buckets in the shared string hash table
+      Fix the hardcoded cache file suffix
+      Move workaround macros for fat binaries into the separate header file
+      Bug 48020 - Fix for src/makealias on Solaris 10
+      Bug 24729 - [ne_NP] Fix ortho file
+      doc: Add contains and not_contains operators and elements
+      Use AC_HELP_STRING instead of formatting manually
+      Use pkgconfig to check builddeps
+      Bug 29341 - Make some fontconfig paths configurable
+      Bug 22862 - <alias> ignores <match> <test>s
+      Bug 26830 - Add search for libiconv non-default directory
+      Bug 28491 - Allow matching on FC_FILE
+      Bug 48573 - platform without regex do not have also REG_XXX defines
+      Bug 27526 - Compatibility fix for old windows sytems
+      Add --with-expat, --with-expat-includes and --with-expat-lib back.
+      doc: Fix a typo of the environment variable name.
+      Bug 25151 - Move cleanCacheDirectory() from fc-cache.c into
+      Rework to avoid adding the unexpected value to ICONV_CFLAGS and ICONV_LIBS
+      Fix a build issue again when no regex functions available
+      C++11 requires a space between literal and identifier
+      Bug 47721 - Add ChromeOS fonts to 30-metric-aliases.conf
+      Create CACHEDIR.TAG when fc-cache is run or only when the cache directory is created at the runtime.
+      Add --enable-iconv option to configure
+      Bug 27765 - FcMatch() returns style in wrong language
+      Disable iconv support anyway...
+      Bug 39278 - make usage of mmap optional
+      Output more verbose debugging log to show where to insert the element into the value list
+      fonts.conf: keeps same binding for alternatives
+      fcarch.c: get rid of the duplicate definition of FC_MAX
+      Bug 19128 - Handling whitespace in aliases
+      Bug 20411 - fontconfig doesn't match FreeDesktop directories specs
+      Correct the example
+      Bug 33644 - Fontconfig doesn't match correctly in <test>
+      fcatomic: fallback to create a directory with FcAtomicLock
+      Move statfs/statvfs wrapper to fcstat.c and add a test for the mtime broken fs
+      Fix the build fail on Solaris
+      Fix a typo and polish the previous change
+      Fix the wrong estimation for the memory usage information in fontconfig
+      Bug 32853 - Export API to get the default language
+      fcdefault: fallback if the environment variables are empty
+      Add the default language to the pattern prior to do build the substitution
+      fcdefault: no need to set FC_LANG in FcDefaultSubstitute() anymore
+      fcdefault: Add the lang object at FcConfigSubstituteWithPat() only when kind is FcMatchPattern
+      Bug 50525 - superfluous whitespace in the style
+      Bump libtool revision
+      doc: Fix distcheck error again...
+      Generate bzip2-compressed tarball too
+
+Jeremy Huddleston (1):
+      fcarch: Check for architecture signature at compile time rather than configure time
+
+Keith Packard (3):
+      Use posix_fadvise to speed startup
+      Extra ',' in AC_ARG_WITH(arch causes arch to never be autodetected
+      Deal with architectures where ALIGNOF_DOUBLE < 4
+
+Mark Brand (1):
+      fix building for WIN32
+
+Mikhail Gusarov (2):
+      Move FcStat to separate compilation unit
+      Fix cache aging for fonts on FAT filesystem under Linux
+
+2.9
+
+Akira TAGOH (28):
+      Add charset editing feature.
+      add some document for range and charset.
+      Add the range support in blank element
+      Add editing langset feature.
+      add some documents
+      Bug 24744 - No n'ko orthography
+      Remove the unnecessary comment in ks.orth
+      Bug 32965 - Asturian (ast-ES) language matching missing ḷḷḥ
+      Add a missing file
+      Bug 35517 - Remove Apple Roman cmap support
+      Bug 40452 - Running 'fc-match --all' core dumps when no fonts are installed
+      Get rid of the unexpected family name
+      Bug 44826 - <alias> must contain only a single <family>
+      Bug 46169 - Pointer error in FcConfigGlobMatch
+      Do not update stream->pos when seeking is failed.
+      Bug 27385 - lcdfilter settings for freetype-2.3.12 not available in fontconfig-2.8.0
+      Add brx.orth and sat.orth
+      Bug 41694 - FcCache functions have random-number-generator side effects
+      Bug 23336 - unable to display bitmap-only (SFNT) TrueType or OpenType
+      Check null value for given object to avoid possibly segfaulting
+      Bug 19128 - Handling whitespace in aliases
+      Fix distcheck error
+      Update the version info
+      Update to detect the uncommited changes properly
+      Fix a build issue
+      Fix a build fail on some environment
+      Fix a build fail on some environment.
+      Get rid of $< from Makefile.am
+
+Alan Coopersmith (1):
+      Fix compiler warnings
+
+Behdad Esfahbod (54):
+      [fc-cache] Document -r argument in man page
+      [doc] Fix typo
+      Bug 25508 configure assumes bash > 2.0 is on system
+      Update INSTALL
+      Add note about autogen.sh to INSTALL
+      Fix doc typo
+      More doc typo fixes
+      Bug 18886 installation crashes if fontconfig already installed
+      Bug 26157 Solaris/Sun C 5.8: compilation of 2.8.0 and 2.7.3 fails
+      Bug 25152 Don't sleep(2) if all caches were uptodate
+      Don't include unistd.h in fontconfig.h
+      Accept TT_PLATFORM_MICROSOFT, TT_MS_ID_SYMBOL_CS from name table
+      Whitespace
+      More whitespace
+      Remove all training whitespaces
+      Fix comment
+      Add fc-pattern cmdline tool
+      Bug 29338 - fc-pattern.sgml, open para tag
+      Add comments
+      Bug 29995 - fc-cat does not invoke FcFini()
+      Add new public API: FcCharSetDelChar()
+      [fc-lang] Support excluding characters
+      Bug 24729 - [ne_NP] Fix ortho file
+      Add more copyright owners
+      Cleanup copyright notices to replace "Keith Packard" with "the author(s)"
+      Fix returned value
+      Bug 28958 - lang=en matches other langs
+      Make most generated-files cross-compiling-safe
+      Make fc-arch stuff cross-compiling-safe
+      Bump version
+      Allow editing charset and lang in target="scan"
+      Add <range> support for <blank> into the DTD
+      Skip <range> elements with begin > end
+      Doc nit
+      Fix assertion failure on le32d4
+      Remove AM_MAINTAINER_MODE
+      Update CaseFolding.txt to Unicode 6.0
+      Remove --enable-maintainer-mode from autogen.sh
+      Bug 20113 - Uighur (ug) orthography incomplete
+      Bug 30566 - fcformat.c:interpret_enumerate() passes uninitialized idx to FcPatternGetLangSet()
+      Mark constant strings as constant
+      More doc typo fixes
+      Always define FcStat as a function
+      Fix warning
+      Bug 35587 - Add padding to make valgrind and glibc not hate each other
+      [.gitignore] Update
+      Bug 36577 - Updating cache with no-bitmaps disables bitmap fonts...
+      Bug 26718 - "fc-match sans file" doesn't work
+      Switch fc-match to use FcPatternFormat()
+      Switch fc-cat to use FcPatternFormat()
+      Fix stupid bug in FcFontSort()
+      Bug 41171 - Invalid use of memset
+      Fix parallel build
+      Add FcPublic to FcLangSetUnion and FcLangSetSubtract
+
+Brad Hards (1):
+      Documentation fixes
+
+Jeremy Huddleston (2):
+      fontconfig.pc: Add variables for confdir and cachedir
+      fontconfig.pc.in: Add sysconfdir, localstatedir, and PACKAGE
+
+Jinkyu Yi (1):
+      Bug 42423 - make default Korean font from Un to Nanum
+
+MINAMI Hirokazu (1):
+      Bug 43406 - typo of Japanese font name in conf.d/65-nonlatin.conf
+
+Mike Frysinger (9):
+      FcStrPlus: optimize a little
+      delete unused variables
+      FcStat: change to FcChar8 for first arg
+      fc-cat: fix pointer warning
+      FcName{,Get}Constant: constify string input
+      fc-{list,match}: constify format string
+      fix build warnings when using --with-arch
+      FcObjectValidType: tweak -1 checking
+      makealias: handle missing funcs better
+
+Parag Nemade (2):
+      Bug 25651 - Add ortho file for locale brx_IN
+      Bug 25650 - Add ortho file for locale sat_IN
+
+Pravin Satpute (4):
+      Bug 27195 - need updates to ks.orth file
+      Bug 43321 - Required corrections in urdu.orth file
+      Bug 25653 - Add ortho file for locale doi_IN
+      Bug 25652 - Add ortho file for locale mni_IN
 
 2.8
 
@@ -104,7 +363,7 @@ Behdad Esfahbod (119):
       [doc] Add const decorator for FcPatternDuplicate()
       Add FcPatternFilter() (#13016)
       [doc] Document that a zero rescanInterval disables automatic checks (#17103)
-      Get rid of $Id: README,v 1.1.1.2 2010/11/21 06:35:29 mrg Exp $ tags
+      Get rid of $Id: README,v 1.1.1.3 2013/06/03 06:02:08 mrg Exp $ tags
       [doc] Fix signature of FcConfigHome()
       Fix docs re 'orig' argument of FcPatternBuild and family
       Update sr.orth to actul subset of Cyrillic used by Serbian (#17208)
