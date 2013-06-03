@@ -7,9 +7,9 @@
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
- * documentation, and that the name of Keith Packard not be used in
+ * documentation, and that the name of the author(s) not be used in
  * advertising or publicity pertaining to distribution of the software without
- * specific, written prior permission.  Keith Packard makes no
+ * specific, written prior permission.  The authors make no
  * representations about the suitability of this software for any purpose.  It
  * is provided "as is" without express or implied warranty.
  *
@@ -55,9 +55,23 @@
 #endif
 
 #ifdef _WIN32
-#define FC_SEARCH_PATH_SEPARATOR ';'
+#  ifndef _WIN32_WINNT
+#    define _WIN32_WINNT 0x0500
+#  endif
+#  define WIN32_LEAN_AND_MEAN
+#  define STRICT
+#  include <windows.h>
+typedef UINT (WINAPI *pfnGetSystemWindowsDirectory)(LPSTR, UINT);
+typedef HRESULT (WINAPI *pfnSHGetFolderPathA)(HWND, int, HANDLE, DWORD, LPSTR);
+extern pfnGetSystemWindowsDirectory pGetSystemWindowsDirectory;
+extern pfnSHGetFolderPathA pSHGetFolderPathA;
+#  define FC_SEARCH_PATH_SEPARATOR ';'
+#  define FC_DIR_SEPARATOR         '\\'
+#  define FC_DIR_SEPARATOR_S       "\\"
 #else
-#define FC_SEARCH_PATH_SEPARATOR ':'
+#  define FC_SEARCH_PATH_SEPARATOR ':'
+#  define FC_DIR_SEPARATOR         '/'
+#  define FC_DIR_SEPARATOR_S       "/"
 #endif
 
 #define FC_DBG_MATCH	1
@@ -103,9 +117,13 @@
 #define FC_MEM_VSTACK	    26
 #define FC_MEM_ATTR	    27
 #define FC_MEM_PSTACK	    28
-#define FC_MEM_STATICSTR    29
+#define FC_MEM_SHAREDSTR    29
 
 #define FC_MEM_NUM	    30
+
+#define _FC_ASSERT_STATIC1(_line, _cond) typedef int _static_assert_on_line_##_line##_failed[(_cond)?1:-1]
+#define _FC_ASSERT_STATIC0(_line, _cond) _FC_ASSERT_STATIC1 (_line, (_cond))
+#define FC_ASSERT_STATIC(_cond) _FC_ASSERT_STATIC0 (__LINE__, (_cond))
 
 #define FC_MIN(a,b) ((a) < (b) ? (a) : (b))
 #define FC_MAX(a,b) ((a) > (b) ? (a) : (b))
@@ -130,7 +148,7 @@ typedef enum _FcValueBinding {
  * Serialized data structures use only offsets instead of pointers
  * A low bit of 1 indicates an offset.
  */
- 
+
 /* Is the provided pointer actually an offset? */
 #define FcIsEncodedOffset(p)	((((intptr_t) (p)) & 1) != 0)
 
@@ -181,13 +199,13 @@ typedef struct _FcValueList {
 } FcValueList;
 
 #define FcValueListNext(vl)	FcPointerMember(vl,next,FcValueList)
-			     
+			
 typedef int FcObject;
 
 typedef struct _FcPatternElt *FcPatternEltPtr;
 
 /*
- * Pattern elts are stuck in a structure connected to the pattern, 
+ * Pattern elts are stuck in a structure connected to the pattern,
  * so they get moved around when the pattern is resized. Hence, the
  * values field must be a pointer/offset instead of just an offset
  */
@@ -216,13 +234,13 @@ struct _FcPattern {
 				 fs->fonts[i])
 						
 typedef enum _FcOp {
-    FcOpInteger, FcOpDouble, FcOpString, FcOpMatrix, FcOpBool, FcOpCharSet, 
+    FcOpInteger, FcOpDouble, FcOpString, FcOpMatrix, FcOpRange, FcOpBool, FcOpCharSet, FcOpLangSet,
     FcOpNil,
     FcOpField, FcOpConst,
-    FcOpAssign, FcOpAssignReplace, 
+    FcOpAssign, FcOpAssignReplace,
     FcOpPrependFirst, FcOpPrepend, FcOpAppend, FcOpAppendLast,
     FcOpQuest,
-    FcOpOr, FcOpAnd, FcOpEqual, FcOpNotEqual, 
+    FcOpOr, FcOpAnd, FcOpEqual, FcOpNotEqual,
     FcOpContains, FcOpListing, FcOpNotContains,
     FcOpLess, FcOpLessEqual, FcOpMore, FcOpMoreEqual,
     FcOpPlus, FcOpMinus, FcOpTimes, FcOpDivide,
@@ -230,17 +248,26 @@ typedef enum _FcOp {
     FcOpInvalid
 } FcOp;
 
+typedef enum _FcOpFlags {
+	FcOpFlagIgnoreBlanks = 1 << 0
+} FcOpFlags;
+
+#define FC_OP_GET_OP(_x_)	((_x_) & 0xffff)
+#define FC_OP_GET_FLAGS(_x_)	(((_x_) & 0xffff0000) >> 16)
+#define FC_OP(_x_,_f_)		(FC_OP_GET_OP (_x_) | ((_f_) << 16))
+
 typedef struct _FcExpr {
     FcOp   op;
     union {
 	int	    ival;
 	double	    dval;
-	FcChar8	    *sval;
+	const FcChar8	    *sval;
 	FcMatrix    *mval;
 	FcBool	    bval;
 	FcCharSet   *cval;
+	FcLangSet   *lval;
 	FcObject    object;
-	FcChar8	    *constant;
+	const FcChar8	    *constant;
 	struct {
 	    struct _FcExpr *left, *right;
 	} tree;
@@ -253,7 +280,7 @@ struct _FcExprPage {
   FcExprPage *next_page;
   FcExpr *next;
   FcExpr exprs[(1024 - 2/* two pointers */ - 2/* malloc overhead */) * sizeof (void *) / sizeof (FcExpr)];
-  FcExpr end[0];
+  FcExpr end[FLEXIBLE_ARRAY_MEMBER];
 };
 
 typedef enum _FcQual {
@@ -333,7 +360,7 @@ struct _FcCache {
     intptr_t	dirs;		    /* offset to subdirs */
     int		dirs_count;	    /* number of subdir strings */
     intptr_t	set;		    /* offset to font set */
-    int		mtime;		    /* low bits of directory mtime */
+    int		checksum;	    /* checksum of directory state */
 };
 
 #undef FcCacheDir
@@ -373,7 +400,7 @@ typedef struct _FcSerialize {
     void		*linear;
     FcSerializeBucket	*buckets[FC_SERIALIZE_HASH_SIZE];
 } FcSerialize;
-    
+
 /*
  * To map adobe glyph names to unicode values, a precomputed hash
  * table is used
@@ -387,14 +414,14 @@ typedef struct _FcGlyphName {
 /*
  * To perform case-insensitive string comparisons, a table
  * is used which holds three different kinds of folding data.
- * 
+ *
  * The first is a range of upper case values mapping to a range
  * of their lower case equivalents.  Within each range, the offset
  * between upper and lower case is constant.
  *
  * The second is a range of upper case values which are interleaved
  * with their lower case equivalents.
- * 
+ *
  * The third is a set of raw unicode values mapping to a list
  * of unicode values for comparison purposes.  This allows conversion
  * of ß to "ss" so that SS, ss and ß all match.  A separate array
@@ -448,7 +475,7 @@ struct _FcConfig {
     FcBlanks	*blanks;
     /*
      * List of directories containing fonts,
-     * built by recursively scanning the set 
+     * built by recursively scanning the set
      * of configured directories
      */
     FcStrSet	*fontDirs;
@@ -497,7 +524,7 @@ struct _FcConfig {
 
     FcExprPage *expr_pool;	    /* pool of FcExpr's */
 };
- 
+
 extern FcPrivate FcConfig	*_fcConfig;
 
 typedef struct _FcFileTime {
@@ -506,6 +533,20 @@ typedef struct _FcFileTime {
 } FcFileTime;
 
 typedef struct _FcCharMap FcCharMap;
+
+typedef struct _FcRange	    FcRange;
+
+struct _FcRange {
+    FcChar32 begin;
+    FcChar32 end;
+};
+
+typedef struct _FcStatFS    FcStatFS;
+
+struct _FcStatFS {
+    FcBool is_remote_fs;
+    FcBool is_mtime_broken;
+};
 
 /* fcblanks.c */
 
@@ -519,7 +560,10 @@ FcDirCacheBuild (FcFontSet *set, const FcChar8 *dir, struct stat *dir_stat, FcSt
 
 FcPrivate FcBool
 FcDirCacheWrite (FcCache *cache, FcConfig *config);
-    
+
+FcPrivate FcBool
+FcDirCacheCreateTagFile (const FcChar8 *cache_dir);
+
 FcPrivate void
 FcCacheObjectReference (void *object);
 
@@ -528,18 +572,20 @@ FcCacheObjectDereference (void *object);
 
 FcPrivate void
 FcCacheFini (void);
-    
+
 FcPrivate void
 FcDirCacheReference (FcCache *cache, int nref);
 
-#ifdef _WIN32
-FcPrivate int
-FcStat (const char *file, struct stat *statb);
-#else
-#define FcStat stat
-#endif
-
 /* fccfg.c */
+
+FcPrivate FcChar8 *
+FcConfigXdgCacheHome (void);
+
+FcPrivate FcChar8 *
+FcConfigXdgConfigHome (void);
+
+FcPrivate FcChar8 *
+FcConfigXdgDataHome (void);
 
 FcPrivate FcExpr *
 FcConfigAllocExpr (FcConfig *config);
@@ -606,13 +652,13 @@ FcPrivate FcFileTime
 FcConfigModifiedTime (FcConfig *config);
 
 FcPrivate FcBool
-FcConfigAddCache (FcConfig *config, FcCache *cache, 
+FcConfigAddCache (FcConfig *config, FcCache *cache,
 		  FcSetName set, FcStrSet *dirSet);
 
 /* fcserialize.c */
 FcPrivate intptr_t
 FcAlignSize (intptr_t size);
-    
+
 FcPrivate FcSerialize *
 FcSerializeCreate (void);
 
@@ -680,7 +726,13 @@ FcCharSetGetNumbers(const FcCharSet *c);
 
 /* fcdbg.c */
 FcPrivate void
-FcValueListPrint (const FcValueListPtr l);
+FcValuePrintWithPosition (const FcValue v, FcBool show_pos_mark);
+
+FcPrivate void
+FcValueListPrintWithPosition (FcValueListPtr l, const FcValueListPtr pos);
+
+FcPrivate void
+FcValueListPrint (FcValueListPtr l);
 
 FcPrivate void
 FcLangSetPrint (const FcLangSet *ls);
@@ -702,7 +754,7 @@ FcSubstPrint (const FcSubst *subst);
 
 FcPrivate void
 FcCharSetPrint (const FcCharSet *c);
-    
+
 extern FcPrivate int FcDebugVal;
 
 #define FcDebug() (FcDebugVal)
@@ -763,12 +815,15 @@ FcMemFree (int kind, int size);
 
 /* fclang.c */
 FcPrivate FcLangSet *
-FcFreeTypeLangSet (const FcCharSet  *charset, 
+FcFreeTypeLangSet (const FcCharSet  *charset,
 		   const FcChar8    *exclusiveLang);
+
+FcPrivate FcChar8 *
+FcLangNormalize (const FcChar8 *lang);
 
 FcPrivate FcLangResult
 FcLangCompare (const FcChar8 *s1, const FcChar8 *s2);
-    
+
 FcPrivate FcLangSet *
 FcLangSetPromote (const FcChar8 *lang);
 
@@ -815,7 +870,7 @@ FcListPatternMatchAny (const FcPattern *p,
 #define FC_HINTING_OBJECT	17
 #define FC_VERTICAL_LAYOUT_OBJECT	18
 #define FC_AUTOHINT_OBJECT	19
-#define FC_GLOBAL_ADVANCE_OBJECT	20
+#define FC_GLOBAL_ADVANCE_OBJECT	20	/* deprecated */
 #define FC_FILE_OBJECT		21
 #define FC_INDEX_OBJECT		22
 #define FC_RASTERIZER_OBJECT	23
@@ -837,7 +892,8 @@ FcListPatternMatchAny (const FcPattern *p,
 #define FC_EMBEDDED_BITMAP_OBJECT	39
 #define FC_DECORATIVE_OBJECT	40
 #define FC_LCD_FILTER_OBJECT	41
-#define FC_MAX_BASE_OBJECT	FC_LCD_FILTER_OBJECT
+#define FC_NAMELANG_OBJECT	42
+#define FC_MAX_BASE_OBJECT	FC_NAMELANG_OBJECT
 
 FcPrivate FcBool
 FcNameBool (const FcChar8 *v, FcBool *result);
@@ -867,14 +923,36 @@ FcObjectFini (void);
 FcPrivate FcValue
 FcValueCanonicalize (const FcValue *v);
 
+FcPrivate FcValueListPtr
+FcValueListCreate (void);
+
 FcPrivate void
 FcValueListDestroy (FcValueListPtr l);
+
+FcPrivate FcValueListPtr
+FcValueListPrepend (FcValueListPtr vallist,
+		    FcValue        value,
+		    FcValueBinding binding);
+
+FcPrivate FcValueListPtr
+FcValueListAppend (FcValueListPtr vallist,
+		   FcValue        value,
+		   FcValueBinding binding);
+
+FcPrivate FcValueListPtr
+FcValueListDuplicate(FcValueListPtr orig);
 
 FcPrivate FcPatternElt *
 FcPatternObjectFindElt (const FcPattern *p, FcObject object);
 
 FcPrivate FcPatternElt *
 FcPatternObjectInsertElt (FcPattern *p, FcObject object);
+
+FcPrivate FcBool
+FcPatternObjectListAdd (FcPattern	*p,
+			FcObject	object,
+			FcValueListPtr	list,
+			FcBool		append);
 
 FcPrivate FcBool
 FcPatternObjectAddWithBinding  (FcPattern	*p,
@@ -885,13 +963,13 @@ FcPatternObjectAddWithBinding  (FcPattern	*p,
 
 FcPrivate FcBool
 FcPatternObjectAdd (FcPattern *p, FcObject object, FcValue value, FcBool append);
-    
+
 FcPrivate FcBool
 FcPatternObjectAddWeak (FcPattern *p, FcObject object, FcValue value, FcBool append);
-    
+
 FcPrivate FcResult
 FcPatternObjectGet (const FcPattern *p, FcObject object, int id, FcValue *v);
-    
+
 FcPrivate FcBool
 FcPatternObjectDel (FcPattern *p, FcObject object);
 
@@ -940,14 +1018,14 @@ FcPatternObjectGetBool (const FcPattern *p, FcObject object, int n, FcBool *b);
 FcPrivate FcResult
 FcPatternObjectGetLangSet (const FcPattern *p, FcObject object, int n, FcLangSet **ls);
 
-FcPrivate void
-FcPatternFini (void);
-
 FcPrivate FcBool
 FcPatternAppend (FcPattern *p, FcPattern *s);
 
 FcPrivate const FcChar8 *
-FcStrStaticName (const FcChar8 *name);
+FcSharedStr (const FcChar8 *name);
+
+FcPrivate FcBool
+FcSharedStrFree (const FcChar8 *name);
 
 FcPrivate FcChar32
 FcStringHash (const FcChar8 *s);
@@ -973,7 +1051,24 @@ extern FcPrivate const FcMatrix    FcIdentityMatrix;
 FcPrivate void
 FcMatrixFree (FcMatrix *mat);
 
+/* fcstat.c */
+
+FcPrivate int
+FcStat (const FcChar8 *file, struct stat *statb);
+
+FcPrivate int
+FcStatChecksum (const FcChar8 *file, struct stat *statb);
+
+FcPrivate FcBool
+FcIsFsMmapSafe (int fd);
+
+FcPrivate FcBool
+FcIsFsMtimeBroken (const FcChar8 *dir);
+
 /* fcstr.c */
+FcPrivate FcBool
+FcStrSetAddLangs (FcStrSet *strs, const char *languages);
+
 FcPrivate void
 FcStrSetSort (FcStrSet * set);
 
@@ -1000,6 +1095,12 @@ FcStrBufData (FcStrBuf *buf, const FcChar8 *s, int len);
 
 FcPrivate int
 FcStrCmpIgnoreBlanksAndCase (const FcChar8 *s1, const FcChar8 *s2);
+
+FcPrivate FcBool
+FcStrRegexCmp (const FcChar8 *s, const FcChar8 *regex);
+
+FcPrivate FcBool
+FcStrRegexCmpIgnoreCase (const FcChar8 *s, const FcChar8 *regex);
 
 FcPrivate const FcChar8 *
 FcStrContainsIgnoreBlanksAndCase (const FcChar8 *s1, const FcChar8 *s2);

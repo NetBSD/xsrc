@@ -66,7 +66,7 @@ NAME="AEN102"
 >FUNCTIONS</A
 ></H1
 ><P
->These are grouped by functionality, often using the main datatype being
+>These are grouped by functionality, often using the main data type being
 manipulated.
   </P
 ><DIV
@@ -103,7 +103,7 @@ HREF="fcinit.html"
 ><A
 HREF="fcfini.html"
 >FcFini</A
->&nbsp;--&nbsp;finalize fonconfig library</DT
+>&nbsp;--&nbsp;finalize fontconfig library</DT
 ><DT
 ><A
 HREF="fcgetversion.html"
@@ -257,7 +257,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN1052"
+NAME="AEN1056"
 >FcFontSet</A
 ></H2
 ><DIV
@@ -319,7 +319,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN1279"
+NAME="AEN1283"
 >FcObjectSet</A
 ></H2
 ><DIV
@@ -353,7 +353,7 @@ HREF="fcobjectsetbuild.html"
 ></DIV
 ><P
 >An FcObjectSet holds a list of pattern property names; it is used to
-indiciate which properties are to be returned in the patterns from
+indicate which properties are to be returned in the patterns from
 FcFontList.
     </P
 ></DIV
@@ -362,7 +362,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN1389"
+NAME="AEN1393"
 >FreeType specific functions</A
 ></H2
 ><DIV
@@ -381,12 +381,12 @@ HREF="fcfreetypecharindex.html"
 ><A
 HREF="fcfreetypecharset.html"
 >FcFreeTypeCharSet</A
->&nbsp;--&nbsp;compute unicode coverage</DT
+>&nbsp;--&nbsp;compute Unicode coverage</DT
 ><DT
 ><A
 HREF="fcfreetypecharsetandspacing.html"
 >FcFreeTypeCharSetAndSpacing</A
->&nbsp;--&nbsp;compute unicode coverage and spacing type</DT
+>&nbsp;--&nbsp;compute Unicode coverage and spacing type</DT
 ><DT
 ><A
 HREF="fcfreetypequery.html"
@@ -410,7 +410,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN1518"
+NAME="AEN1522"
 >FcValue</A
 ></H2
 ><DIV
@@ -458,7 +458,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN1612"
+NAME="AEN1616"
 >FcCharSet</A
 ></H2
 ><DIV
@@ -482,6 +482,11 @@ HREF="fccharsetdestroy.html"
 ><A
 HREF="fccharsetaddchar.html"
 >FcCharSetAddChar</A
+>&nbsp;--&nbsp;Add a character to a charset</DT
+><DT
+><A
+HREF="fccharsetdelchar.html"
+>FcCharSetDelChar</A
 >&nbsp;--&nbsp;Add a character to a charset</DT
 ><DT
 ><A
@@ -561,7 +566,7 @@ HREF="fccharsetnew.html"
 ></DL
 ></DIV
 ><P
->An FcCharSet is a boolean array indicating a set of unicode chars.  Those
+>An FcCharSet is a boolean array indicating a set of Unicode chars.  Those
 associated with a font are marked constant and cannot be edited.
 FcCharSets may be reference counted internally to reduce memory consumption;
 this may be visible to applications as the result of FcCharSetCopy may
@@ -573,7 +578,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN2066"
+NAME="AEN2094"
 >FcLangSet</A
 ></H2
 ><DIV
@@ -605,6 +610,21 @@ HREF="fclangsetadd.html"
 >&nbsp;--&nbsp;add a language to a langset</DT
 ><DT
 ><A
+HREF="fclangsetdel.html"
+>FcLangSetDel</A
+>&nbsp;--&nbsp;delete a language from a langset</DT
+><DT
+><A
+HREF="fclangsetunion.html"
+>FcLangSetUnion</A
+>&nbsp;--&nbsp;Add langsets</DT
+><DT
+><A
+HREF="fclangsetsubtract.html"
+>FcLangSetSubtract</A
+>&nbsp;--&nbsp;Subtract langsets</DT
+><DT
+><A
 HREF="fclangsetcompare.html"
 >FcLangSetCompare</A
 >&nbsp;--&nbsp;compare language sets</DT
@@ -630,9 +650,9 @@ HREF="fclangsethaslang.html"
 >&nbsp;--&nbsp;test langset for language support</DT
 ><DT
 ><A
-HREF="fclangsetgetlangs.html"
->FcLangSetGetLangs</A
->&nbsp;--&nbsp;get the list of languages in the langset</DT
+HREF="fcgetdefaultlangs.html"
+>FcGetDefaultLangs</A
+>&nbsp;--&nbsp;Get the default languages list</DT
 ><DT
 ><A
 HREF="fcgetlangs.html"
@@ -658,7 +678,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN2360"
+NAME="AEN2463"
 >FcMatrix</A
 ></H2
 ><DIV
@@ -714,7 +734,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN2554"
+NAME="AEN2657"
 >FcConfig</A
 ></H2
 ><DIV
@@ -882,7 +902,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN3267"
+NAME="AEN3370"
 >FcObjectType</A
 ></H2
 ><DIV
@@ -910,7 +930,7 @@ HREF="fcnamegetobjecttype.html"
 ></DL
 ></DIV
 ><P
->Provides for applcation-specified font name object types so that new
+>Provides for application-specified font name object types so that new
 pattern elements can be generated from font names.
     </P
 ></DIV
@@ -919,7 +939,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN3340"
+NAME="AEN3443"
 >FcConstant</A
 ></H2
 ><DIV
@@ -960,7 +980,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN3438"
+NAME="AEN3541"
 >FcBlanks</A
 ></H2
 ><DIV
@@ -1005,7 +1025,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN3529"
+NAME="AEN3632"
 >FcAtomic</A
 ></H2
 ><DIV
@@ -1058,9 +1078,9 @@ HREF="fcatomicdestroy.html"
 ></DL
 ></DIV
 ><P
->These functions provide a safe way to update config files, allowing ongoing
-reading of the old config file while locked for writing and ensuring that a
-consistent and complete version of the config file is always available.
+>These functions provide a safe way to update configuration files, allowing ongoing
+reading of the old configuration file while locked for writing and ensuring that a
+consistent and complete version of the configuration file is always available.
     </P
 ></DIV
 ><DIV
@@ -1068,7 +1088,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN3706"
+NAME="AEN3809"
 >File and Directory routines</A
 ></H2
 ><DIV
@@ -1145,7 +1165,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN3979"
+NAME="AEN4082"
 >FcCache routines</A
 ></H2
 ><DIV
@@ -1205,6 +1225,22 @@ CLASS="PARAMETER"
 >cache</I
 ></TT
 >.</DT
+><DT
+><A
+HREF="fcdircacheclean.html"
+>FcDirCacheClean</A
+>&nbsp;--&nbsp;This tries to clean up the cache directory of <TT
+CLASS="PARAMETER"
+><I
+>cache_dir</I
+></TT
+>.
+This returns FcTrue if the operation is successfully complete. otherwise FcFalse.</DT
+><DT
+><A
+HREF="fccachecreatetagfile.html"
+>FcCacheCreateTagFile</A
+>&nbsp;--&nbsp;Create CACHEDIR.TAG at cache directory.</DT
 ></DL
 ></DIV
 ><P
@@ -1218,7 +1254,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN4098"
+NAME="AEN4247"
 >FcStrSet and FcStrList</A
 ></H2
 ><DIV
@@ -1290,7 +1326,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN4336"
+NAME="AEN4485"
 >String utilities</A
 ></H2
 ><DIV

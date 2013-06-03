@@ -2,7 +2,12 @@ Fontconfig is built with the traditional configure script:
 
 	$ ./configure --sysconfdir=/etc --prefix=/usr --mandir=/usr/share/man
 
-This should generate valid Makefiles, then:
+If you checked out from the git repository (as opposed to downloading a
+tarball), you need to run autogen.sh instead of configure:
+
+	$ ./autogen.sh --sysconfdir=/etc --prefix=/usr --mandir=/usr/share/man
+
+Either way, that should generate valid Makefiles, then:
 
 	$ make
 	$ make install
@@ -14,20 +19,20 @@ important steps:
  		sh new-version.sh 2.xx.xx
 		
  2. 	rebuild the configuration files with autogen.sh
- 		sh autogen.sh --sysconfdir=/etc --prefix=/usr --mandir=/usr/share/man --localstatedir=/var
+		./autogen.sh --sysconfdir=/etc --prefix=/usr --mandir=/usr/share/man --localstatedir=/var
 		
- 3.	make distcheck (NB: won't work without docbook-utils -PL)
+ 3.	make distcheck
  
  4.	Copy ChangeLog-2.x.y and fontconfig-2.x.y.tar.gz to
  
- 		freedesktop.org:/srv/fontconfig.freedesktop.org/www/release
+ 		freedesktop.org:/srv/www.freedesktop.org/www/software/fontconfig/release
 	
  5.	Update the Fontconfig Devel wiki page
  	http://fontconfig.org/wiki/Devel
 	
  6.	Update the fontconfig documentation
 
-		scp -rp doc/fontconfig-user.html doc/fontconfig-devel fontconfig.org:/srv/fontconfig.freedesktop.org/www
+		scp -rp doc/fontconfig-user.html doc/fontconfig-devel freedesktop.org:/srv/www.freedesktop.org/www/software/fontconfig
 
  7.	Compute md5sums for release files:
 		md5sum fontconfig-2.4.x.tar.gz ChangeLog-2.4.x
