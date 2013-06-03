@@ -15,14 +15,16 @@
 #include "xf86PciInfo.h"
 
 /* Drivers that use XAA need this */
-#include "xaa.h"
+#ifdef HAVE_XAA_H
 #include "xaalocal.h"
+#endif
 #include "xf86fbman.h"
 
 #include "miline.h"
 
 #include "tdfx.h"
 
+#ifdef HAVE_XAA_H
 #ifdef TDFX_DEBUG_CMDS
 static int cmdCnt=0;
 static int lastAddr=0;
@@ -77,11 +79,14 @@ static void TDFXSubsequentCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
                                                      int skipleft);
 static void TDFXSubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno);
 
+#endif
 void
 TDFXNeedSync(ScrnInfoPtr pScrn) {
   TDFXPtr pTDFX = TDFXPTR(pScrn);
   pTDFX->syncDone=FALSE;
+#ifdef HAVE_XAA_H
   pTDFX->AccelInfoRec->NeedToSync = TRUE;
+#endif
 }
 
 void
@@ -89,10 +94,10 @@ TDFXFirstSync(ScrnInfoPtr pScrn) {
   TDFXPtr pTDFX = TDFXPTR(pScrn);
 
   if (!pTDFX->syncDone) {
-#ifdef XF86DRI
+#ifdef TDFXDRI
     if (pTDFX->directRenderingEnabled) {
-      DRILock(screenInfo.screens[pScrn->scrnIndex], 0);
-      TDFXSwapContextFifo(screenInfo.screens[pScrn->scrnIndex]);
+      DRILock(xf86ScrnToScreen(pScrn), 0);
+      TDFXSwapContextFifo(xf86ScrnToScreen(pScrn));
     }
 #endif
     pTDFX->syncDone=TRUE;
@@ -107,9 +112,9 @@ TDFXCheckSync(ScrnInfoPtr pScrn) {
   if (pTDFX->syncDone) {
     pTDFX->sync(pScrn);
     pTDFX->syncDone=FALSE;
-#ifdef XF86DRI
+#ifdef TDFXDRI
     if (pTDFX->directRenderingEnabled) {
-      DRIUnlock(screenInfo.screens[pScrn->scrnIndex]);
+      DRIUnlock(xf86ScrnToScreen(pScrn));
     }
 #endif
   }
@@ -203,11 +208,13 @@ TDFXSetLFBConfig(TDFXPtr pTDFX) {
   }
 }
 
+
 Bool
 TDFXAccelInit(ScreenPtr pScreen)
 {
+#ifdef HAVE_XAA_H
   XAAInfoRecPtr infoPtr;
-  ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+  ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
   TDFXPtr pTDFX = TDFXPTR(pScrn);
   CARD32 commonFlags;
 
@@ -254,8 +261,8 @@ TDFXAccelInit(ScreenPtr pScreen)
   infoPtr->ScreenToScreenCopyFlags = commonFlags;
 
   /* When we're using the fifo we have to use indirect expansion */
-  pTDFX->scanlineColorExpandBuffers[0] = xalloc((pScrn->virtualX+62)/32*4);
-  pTDFX->scanlineColorExpandBuffers[1] = xalloc((pScrn->virtualX+62)/32*4);
+  pTDFX->scanlineColorExpandBuffers[0] = malloc((pScrn->virtualX+62)/32*4);
+  pTDFX->scanlineColorExpandBuffers[1] = malloc((pScrn->virtualX+62)/32*4);
   infoPtr->NumScanlineColorExpandBuffers=2;
   infoPtr->ScanlineColorExpandBuffers=pTDFX->scanlineColorExpandBuffers;
   infoPtr->SetupForScanlineCPUToScreenColorExpandFill =
@@ -302,6 +309,9 @@ TDFXAccelInit(ScreenPtr pScreen)
 
   /* Fill in acceleration functions */
   return XAAInit(pScreen, infoPtr);
+#else
+  return FALSE;
+#endif
 }
 
 static void TDFXMakeRoomNoProp(TDFXPtr pTDFX, int size) {
@@ -342,6 +352,9 @@ void TDFXSync(ScrnInfoPtr pScrn)
   } while (i<3);
   pTDFX->PciCnt=stat&0x1F;
 }
+
+#ifdef HAVE_XAA_H
+
 
 static void
 TDFXMatchState(TDFXPtr pTDFX)
@@ -933,3 +946,4 @@ static void TDFXSubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno)
   }
 }
 
+#endif

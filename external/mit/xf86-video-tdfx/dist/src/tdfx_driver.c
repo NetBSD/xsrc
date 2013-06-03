@@ -6,9 +6,6 @@
 #include <inttypes.h>
 #endif
 
-#define USE_INT10 1
-#define USE_PCIVGAIO 1
-
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -102,9 +99,12 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "xf86xv.h"
 #include <X11/extensions/Xv.h>
 
-#ifdef XF86DRI
+#ifdef TDFXDRI
 #include "dri.h"
 #endif
+
+#define USE_INT10 1
+#define USE_PCIVGAIO (GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12)
 
 /* Required Functions: */
 
@@ -124,28 +124,28 @@ static Bool TDFXProbe(DriverPtr drv, int flags);
 static Bool TDFXPreInit(ScrnInfoPtr pScrn, int flags);
 
 /* Initialize a screen */
-static Bool TDFXScreenInit(int Index, ScreenPtr pScreen, int argc, char **argv);
+static Bool TDFXScreenInit(SCREEN_INIT_ARGS_DECL);
 
 /* Enter from a virtual terminal */
-static Bool TDFXEnterVT(int scrnIndex, int flags);
+static Bool TDFXEnterVT(VT_FUNC_ARGS_DECL);
 
 /* Leave to a virtual terminal */
-static void TDFXLeaveVT(int scrnIndex, int flags);
+static void TDFXLeaveVT(VT_FUNC_ARGS_DECL);
 
 /* Close down each screen we initialized */
-static Bool TDFXCloseScreen(int scrnIndex, ScreenPtr pScreen);
+static Bool TDFXCloseScreen(CLOSE_SCREEN_ARGS_DECL);
 
 /* Change screensaver state */
 static Bool TDFXSaveScreen(ScreenPtr pScreen, int mode);
 
 /* Cleanup server private data */
-static void TDFXFreeScreen(int scrnIndex, int flags);
+static void TDFXFreeScreen(FREE_SCREEN_ARGS_DECL);
 
 /* Check if a mode is valid on the hardware */
-static ModeStatus TDFXValidMode(int scrnIndex, DisplayModePtr mode,
+static ModeStatus TDFXValidMode(SCRN_ARG_TYPE arg, DisplayModePtr mode,
 				Bool verbose, int flags);
 
-static void TDFXBlockHandler(int, pointer, pointer, pointer);
+static void TDFXBlockHandler(BLOCKHANDLER_ARGS_DECL);
 
 /* Switch to various Display Power Management System levels */
 static void TDFXDisplayPowerManagementSet(ScrnInfoPtr pScrn, 
@@ -306,7 +306,7 @@ static void
 TDFXFreeRec(ScrnInfoPtr pScrn) {
   if (!pScrn) return;
   if (!pScrn->driverPrivate) return;
-  xfree(pScrn->driverPrivate);
+  free(pScrn->driverPrivate);
   pScrn->driverPrivate=0;
 }
 
@@ -429,7 +429,7 @@ TDFXProbe(DriverPtr drv, int flags)
 				  devSections, numDevSections,
 				  drv, &usedChips);
 
-  xfree(devSections);
+  free(devSections);
   if (numUsed<=0) return FALSE;
 
   if (flags & PROBE_DETECT)
@@ -457,7 +457,7 @@ TDFXProbe(DriverPtr drv, int flags)
 	foundScreen = TRUE;
     }
   }
-  xfree(usedChips);
+  free(usedChips);
 
   return foundScreen;
 }
@@ -757,7 +757,7 @@ static xf86MonPtr doTDFXDDC(ScrnInfoPtr pScrn)
   reg = pTDFX->readLong(pTDFX, VIDSERIALPARALLELPORT);
   pTDFX->writeLong(pTDFX, VIDSERIALPARALLELPORT, reg | VSP_ENABLE_IIC0);
 
-  pMon = xf86DoEDID_DDC2(pScrn->scrnIndex, pTDFX->pI2CBus);
+  pMon = xf86DoEDID_DDC2(XF86_SCRN_ARG(pScrn), pTDFX->pI2CBus);
 
   if (pMon == NULL)
     xf86Msg(X_WARNING, "No DDC2 capable monitor found\n");
@@ -824,6 +824,7 @@ TDFXPreInit(ScrnInfoPtr pScrn, int flags)
 
   /* Allocate a vgaHWRec */
   if (!vgaHWGetHWRec(pScrn)) return FALSE;
+  vgaHWSetStdFuncs(VGAHWPTR(pScrn));
 
 #if USE_INT10
 #if !defined(__powerpc__)
@@ -927,7 +928,7 @@ TDFXPreInit(ScrnInfoPtr pScrn, int flags)
 
   /* Process the options */
   xf86CollectOptions(pScrn, NULL);
-  if (!(pTDFX->Options = xalloc(sizeof(TDFXOptions))))
+  if (!(pTDFX->Options = malloc(sizeof(TDFXOptions))))
     return FALSE;
   memcpy(pTDFX->Options, TDFXOptions, sizeof(TDFXOptions));
   xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pTDFX->Options);
@@ -1103,10 +1104,11 @@ TDFXPreInit(ScrnInfoPtr pScrn, int flags)
     return FALSE;
   }
 
-  if (!xf86ReturnOptValBool(pTDFX->Options, OPTION_NOACCEL, FALSE)) {
+  pTDFX->NoAccel = xf86ReturnOptValBool(pTDFX->Options, OPTION_NOACCEL, FALSE);
+  if (!pTDFX->NoAccel) {
     if (!xf86LoadSubModule(pScrn, "xaa")) {
-      TDFXFreeRec(pScrn);
-      return FALSE;
+      xf86DrvMsg(pScrn->scrnIndex, X_WARNING, "No acceleration available\n");
+      pTDFX->NoAccel = TRUE;
     }
   }
 
@@ -1228,7 +1230,7 @@ TDFXPreInit(ScrnInfoPtr pScrn, int flags)
   pTDFX->writeLong(pTDFX, MISCINIT0, pTDFX->ModeReg.miscinit0);
 #endif
 
-#ifdef XF86DRI
+#ifdef TDFXDRI
   /* Load the dri module if requested. */
   if (xf86ReturnOptValBool(pTDFX->Options, OPTION_DRI, FALSE)) {
     xf86LoadSubModule(pScrn, "dri");
@@ -1682,7 +1684,7 @@ TDFXInitWithBIOSData(ScrnInfoPtr pScrn)
   }
 
 #define T_B_SIZE (64 * 1024)
-  bios = xcalloc(T_B_SIZE, 1);
+  bios = calloc(T_B_SIZE, 1);
   if (!bios)
     return FALSE;
 
@@ -1692,7 +1694,7 @@ TDFXInitWithBIOSData(ScrnInfoPtr pScrn)
   if (!xf86ReadPciBIOS(0, pTDFX->PciTag[0], 1, bios, T_B_SIZE)) {
 #if 0
     xf86DrvMsg(pScrn->scrnIndex, X_WARNING, "Bad BIOS read.\n");
-    xfree(bios);
+    free(bios);
     return FALSE;
 #endif
   }
@@ -1700,7 +1702,7 @@ TDFXInitWithBIOSData(ScrnInfoPtr pScrn)
 
   if (bios[0] != 0x55 || bios[1] != 0xAA) {
     xf86DrvMsg(pScrn->scrnIndex, X_WARNING, "Bad BIOS signature.\n");
-    xfree(bios);
+    free(bios);
     return FALSE;
   }
 
@@ -1744,7 +1746,7 @@ TDFXInitWithBIOSData(ScrnInfoPtr pScrn)
   pTDFX->writeLong(pTDFX, MISCINIT0, 0xF3);
   pTDFX->writeLong(pTDFX, MISCINIT0, uint[1]);
 
-  xfree(bios);
+  free(bios);
   return TRUE;
 }
 #endif
@@ -1906,16 +1908,16 @@ TDFXModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     mode->CrtcHSkew=hskew;
   }    
 
-#ifdef XF86DRI
+#ifdef TDFXDRI
   if (pTDFX->directRenderingEnabled) {
-    DRILock(screenInfo.screens[pScrn->scrnIndex], 0);
-    TDFXSwapContextFifo(screenInfo.screens[pScrn->scrnIndex]);
+    DRILock(xf86ScrnToScreen(pScrn), 0);
+    TDFXSwapContextFifo(xf86ScrnToScreen(pScrn));
   }
 #endif
   DoRestore(pScrn, &hwp->ModeReg, &pTDFX->ModeReg, FALSE);
-#ifdef XF86DRI
+#ifdef TDFXDRI
   if (pTDFX->directRenderingEnabled) {
-    DRIUnlock(screenInfo.screens[pScrn->scrnIndex]);
+    DRIUnlock(xf86ScrnToScreen(pScrn));
   }
 #endif
 
@@ -2193,19 +2195,19 @@ static void allocateMemory(ScrnInfoPtr pScrn) {
 }
 
 static Bool
-TDFXScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv) {
+TDFXScreenInit(SCREEN_INIT_ARGS_DECL) {
   ScrnInfoPtr pScrn;
   vgaHWPtr hwp;
   TDFXPtr pTDFX;
   VisualPtr visual;
   BoxRec MemBox;
-#ifdef XF86DRI
+#ifdef TDFXDRI
   MessageType driFrom = X_DEFAULT;
 #endif
   int scanlines;
 
   TDFXTRACE("TDFXScreenInit start\n");
-  pScrn = xf86Screens[pScreen->myNum];
+  pScrn = xf86ScreenToScrn(pScreen);
   pTDFX = TDFXPTR(pScrn);
   hwp = VGAHWPTR(pScrn);
 
@@ -2306,8 +2308,7 @@ TDFXScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv) {
 
   miSetPixmapDepths ();
     
-  pTDFX->NoAccel=xf86ReturnOptValBool(pTDFX->Options, OPTION_NOACCEL, FALSE);
-#ifdef XF86DRI
+#ifdef TDFXDRI
   /*
    * Setup DRI after visuals have been established, but before fbScreenInit
    * is called.   fbScreenInit will eventually call into the drivers
@@ -2336,7 +2337,7 @@ TDFXScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv) {
       return FALSE;
     break;
   default:
-    xf86DrvMsg(scrnIndex, X_ERROR,
+    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 	       "Internal error: invalid bpp (%d) in TDFXScrnInit\n",
 	       pScrn->bitsPerPixel);
     return FALSE;
@@ -2397,7 +2398,7 @@ TDFXScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv) {
       return FALSE;
   }
 
-  TDFXAdjustFrame(scrnIndex, 0, 0, 0);
+  TDFXAdjustFrame(ADJUST_FRAME_ARGS(pScrn, 0, 0));
 
   xf86DPMSInit(pScreen, TDFXDisplayPowerManagementSet, 0);
 
@@ -2416,7 +2417,7 @@ TDFXScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv) {
    * in of TDFXCloseScreen() before the rest is unwrapped
    */
   
-#ifdef XF86DRI
+#ifdef TDFXDRI
   if (pTDFX->directRenderingEnabled) {
 	/* Now that mi, fb, drm and others have done their thing, 
          * complete the DRI setup.
@@ -2437,22 +2438,20 @@ TDFXScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv) {
 }
 
 Bool
-TDFXSwitchMode(int scrnIndex, DisplayModePtr mode, int flags) {
-  ScrnInfoPtr pScrn;
+TDFXSwitchMode(SWITCH_MODE_ARGS_DECL) {
+  SCRN_INFO_PTR(arg);
 
   TDFXTRACE("TDFXSwitchMode start\n");
-  pScrn=xf86Screens[scrnIndex];
   return TDFXModeInit(pScrn, mode);
 }
 
 void
-TDFXAdjustFrame(int scrnIndex, int x, int y, int flags) {
-  ScrnInfoPtr pScrn;
+TDFXAdjustFrame(ADJUST_FRAME_ARGS_DECL) {
+  SCRN_INFO_PTR(arg);
   TDFXPtr pTDFX;
   TDFXRegPtr tdfxReg;
 
   TDFXTRACE("TDFXAdjustFrame start\n");
-  pScrn = xf86Screens[scrnIndex];
   pTDFX = TDFXPTR(pScrn);
 
   if (pTDFX->ShowCache && y && pScrn->vtSema)
@@ -2467,45 +2466,43 @@ TDFXAdjustFrame(int scrnIndex, int x, int y, int flags) {
 }
 
 static Bool
-TDFXEnterVT(int scrnIndex, int flags) {
-  ScrnInfoPtr pScrn;
+TDFXEnterVT(VT_FUNC_ARGS_DECL) {
+  SCRN_INFO_PTR(arg);
   ScreenPtr pScreen;
-#ifdef XF86DRI
+#ifdef TDFXDRI
   TDFXPtr pTDFX;
 #endif
 
   TDFXTRACE("TDFXEnterVT start\n");
-  pScrn = xf86Screens[scrnIndex];
-  pScreen = screenInfo.screens[scrnIndex];
+  pScreen = xf86ScrnToScreen(pScrn);
   TDFXInitFifo(pScreen);
-#ifdef XF86DRI
+#ifdef TDFXDRI
   pTDFX = TDFXPTR(pScrn);
   if (pTDFX->directRenderingEnabled) {
     DRIUnlock(pScreen);
   }
 #endif
   if (!TDFXModeInit(pScrn, pScrn->currentMode)) return FALSE;
-  TDFXAdjustFrame(scrnIndex, pScrn->frameX0, pScrn->frameY0, 0);
+  TDFXAdjustFrame(ADJUST_FRAME_ARGS(pScrn, pScrn->frameX0, pScrn->frameY0));
   return TRUE;
 }
 
 static void
-TDFXLeaveVT(int scrnIndex, int flags) {
-  ScrnInfoPtr pScrn;
+TDFXLeaveVT(VT_FUNC_ARGS_DECL) {
+  SCRN_INFO_PTR(arg);
   vgaHWPtr hwp;
   ScreenPtr pScreen;
   TDFXPtr pTDFX;
 
   TDFXTRACE("TDFXLeaveVT start\n");
-  pScrn = xf86Screens[scrnIndex];
   hwp=VGAHWPTR(pScrn);
   TDFXRestore(pScrn);
   vgaHWLock(hwp);
-  pScreen = screenInfo.screens[scrnIndex];
+  pScreen = xf86ScrnToScreen(pScrn);
   pTDFX = TDFXPTR(pScrn);
   pTDFX->sync(pScrn);
   TDFXShutdownFifo(pScreen);
-#ifdef XF86DRI
+#ifdef TDFXDRI
   if (pTDFX->directRenderingEnabled) {
     DRILock(pScreen, 0);
   }
@@ -2513,18 +2510,18 @@ TDFXLeaveVT(int scrnIndex, int flags) {
 }
 
 static Bool
-TDFXCloseScreen(int scrnIndex, ScreenPtr pScreen)
+TDFXCloseScreen(CLOSE_SCREEN_ARGS_DECL)
 {
   ScrnInfoPtr pScrn;
   vgaHWPtr hwp;
   TDFXPtr pTDFX;
 
   TDFXTRACE("TDFXCloseScreen start\n");
-  pScrn = xf86Screens[scrnIndex];
+  pScrn = xf86ScreenToScrn(pScreen);
   hwp = VGAHWPTR(pScrn);
   pTDFX = TDFXPTR(pScrn);
 
-#ifdef XF86DRI
+#ifdef TDFXDRI
     if (pTDFX->directRenderingEnabled) {
 	TDFXDRICloseScreen(pScreen);
 	pTDFX->directRenderingEnabled=FALSE;
@@ -2540,48 +2537,50 @@ TDFXCloseScreen(int scrnIndex, ScreenPtr pScreen)
       vgaHWUnmapMem(pScrn);
   }
   
+#ifdef HAVE_XAA_H
   if (pTDFX->AccelInfoRec) XAADestroyInfoRec(pTDFX->AccelInfoRec);
   pTDFX->AccelInfoRec=0;
-  if (pTDFX->DGAModes) xfree(pTDFX->DGAModes);
+#endif
+  if (pTDFX->DGAModes) free(pTDFX->DGAModes);
   pTDFX->DGAModes=0;
   if (pTDFX->scanlineColorExpandBuffers[0])
-    xfree(pTDFX->scanlineColorExpandBuffers[0]);
+    free(pTDFX->scanlineColorExpandBuffers[0]);
   pTDFX->scanlineColorExpandBuffers[0]=0;
   if (pTDFX->scanlineColorExpandBuffers[1])
-    xfree(pTDFX->scanlineColorExpandBuffers[1]);
+    free(pTDFX->scanlineColorExpandBuffers[1]);
   pTDFX->scanlineColorExpandBuffers[1]=0;
   if (pTDFX->overlayAdaptor)
-    xfree(pTDFX->overlayAdaptor);
+    free(pTDFX->overlayAdaptor);
   pTDFX->overlayAdaptor=0;
   if (pTDFX->textureAdaptor)
-    xfree(pTDFX->textureAdaptor);
+    free(pTDFX->textureAdaptor);
   pTDFX->textureAdaptor=0;
 
   pScrn->vtSema=FALSE;
 
   pScreen->BlockHandler = pTDFX->BlockHandler;
   pScreen->CloseScreen = pTDFX->CloseScreen;
-  return (*pScreen->CloseScreen)(scrnIndex, pScreen);
+  return (*pScreen->CloseScreen)(CLOSE_SCREEN_ARGS);
 }
 
 static void
-TDFXFreeScreen(int scrnIndex, int flags) {
+TDFXFreeScreen(FREE_SCREEN_ARGS_DECL) {
+  SCRN_INFO_PTR(arg);
   TDFXTRACE("TDFXFreeScreen start\n");
-  TDFXFreeRec(xf86Screens[scrnIndex]);
+  TDFXFreeRec(pScrn);
   if (xf86LoaderCheckSymbol("vgaHWFreeHWRec"))
-    vgaHWFreeHWRec(xf86Screens[scrnIndex]);
+    vgaHWFreeHWRec(pScrn);
 }
 
 static ModeStatus
-TDFXValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags) {
-  ScrnInfoPtr pScrn;
+TDFXValidMode(SCRN_ARG_TYPE arg, DisplayModePtr mode, Bool verbose, int flags) {
+  SCRN_INFO_PTR(arg);
   TDFXPtr pTDFX;
 
   TDFXTRACE("TDFXValidMode start\n");
   if ((mode->HDisplay>2048) || (mode->VDisplay>1536)) 
     return MODE_BAD;
   /* Banshee doesn't support interlace, but Voodoo 3 and higher do. */
-  pScrn = xf86Screens[scrnIndex];
   pTDFX = TDFXPTR(pScrn);
   if (mode->Flags&V_INTERLACE) {
     switch (pTDFX->ChipType) {
@@ -2630,7 +2629,7 @@ TDFXBlankScreen(ScrnInfoPtr pScrn, Bool unblank)
 static Bool
 TDFXSaveScreen(ScreenPtr pScreen, int mode)
 {
-  ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+  ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
   Bool unblank;
 
   TDFXTRACE("TDFXSaveScreen start\n");
@@ -2647,14 +2646,14 @@ TDFXSaveScreen(ScreenPtr pScreen, int mode)
 }                                                                             
 
 static void
-TDFXBlockHandler(int i, pointer blockData, pointer pTimeout, pointer pReadmask)
+TDFXBlockHandler(BLOCKHANDLER_ARGS_DECL)
 {
-    ScreenPtr   pScreen = screenInfo.screens[i];
-    ScrnInfoPtr pScrn   = xf86Screens[i];
+    SCREEN_PTR(arg);
+    ScrnInfoPtr pScrn   = xf86ScreenToScrn(pScreen);
     TDFXPtr     pTDFX   = TDFXPTR(pScrn);
 
     pScreen->BlockHandler = pTDFX->BlockHandler;
-    (*pScreen->BlockHandler) (i, blockData, pTimeout, pReadmask);
+    (*pScreen->BlockHandler) (BLOCKHANDLER_ARGS);
     pScreen->BlockHandler = TDFXBlockHandler;
 
     if(pTDFX->VideoTimerCallback) {

@@ -18,7 +18,11 @@
 #include "xf86xv.h"
 #include "tdfxdefs.h"
 
-#ifdef XF86DRI
+#ifndef XF86DRI
+#undef TDFXDRI
+#endif
+
+#ifdef TDFXDRI
 #include "xf86drm.h"
 #include "sarea.h"
 #define _XF86DRI_SERVER_
@@ -78,7 +82,7 @@ extern void TDFXLostContext(ScreenPtr pScreen);
 extern Bool TDFXSetupSLI(ScrnInfoPtr pScrn, Bool sliEnable, int aaSamples);
 extern Bool TDFXDisableSLI(TDFXPtr pTDFX);
 
-#ifdef XF86DRI
+#ifdef TDFXDRI
 extern void FillPrivateDRI(TDFXPtr pTDFX, TDFXDRIPtr pTDFXDRI);
 #endif
 
@@ -116,8 +120,12 @@ extern void FillPrivateDRI(TDFXPtr pTDFX, TDFXDRIPtr pTDFXDRI);
 #define TDFXTRACEREG if(0) ErrorF
 #endif
 
+#ifdef HAVE_XAA_H
 #include "xaa.h"
+#endif
+#include "xf86fbman.h"
 #include "xf86Cursor.h"
+#include "compat-api.h"
 
 typedef void (*TDFXWriteIndexedByteFunc)(TDFXPtr pTDFX, int addr, 
 					 char index, char value);
@@ -191,7 +199,7 @@ typedef struct _TDFXRec {
   unsigned char *FbBase;
   unsigned char *myFbBase;
 #endif
-  IOADDRESS PIOBase[MAXCHIPS];
+  unsigned long PIOBase[MAXCHIPS];
   long FbMapSize;
   int pixelFormat;
   int stride;
@@ -221,7 +229,9 @@ typedef struct _TDFXRec {
   BoxRec prevBlitDest;
   TDFXRegRec SavedReg;
   TDFXRegRec ModeReg;
+#ifdef HAVE_XAA_H
   XAAInfoRecPtr AccelInfoRec;
+#endif
   xf86CursorInfoPtr CursorInfoRec;
   CloseScreenProcPtr CloseScreen;
   Bool usePIO;
@@ -250,7 +260,7 @@ typedef struct _TDFXRec {
   int scanlineWidth;
   unsigned char *scanlineColorExpandBuffers[2];
   PROPDATA
-#ifdef XF86DRI
+#ifdef TDFXDRI
   Bool directRenderingEnabled;
   DRIInfoPtr pDRIInfo;
   int drmSubFD;
@@ -333,8 +343,8 @@ extern void TDFXCursorGrabMemory(ScreenPtr pScreen);
 extern void TDFXSetLFBConfig(TDFXPtr pTDFX);
 extern void TDFXSendNOPFifo(ScrnInfoPtr pScrn);
 
-extern Bool TDFXSwitchMode(int scrnIndex, DisplayModePtr mode, int flags);
-extern void TDFXAdjustFrame(int scrnIndex, int x, int y, int flags);
+extern Bool TDFXSwitchMode(SWITCH_MODE_ARGS_DECL);
+extern void TDFXAdjustFrame(ADJUST_FRAME_ARGS_DECL);
 
 extern void TDFXSetPIOAccess(TDFXPtr pTDFX);
 extern void TDFXSetMMIOAccess(TDFXPtr pTDFX);
