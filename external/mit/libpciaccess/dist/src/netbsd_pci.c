@@ -285,6 +285,35 @@ pci_device_netbsd_boot_vga(struct pci_device *dev)
 	return 1;
 }
 
+static int
+pci_device_netbsd_map_legacy(struct pci_device *dev, pciaddr_t base,
+				  pciaddr_t size, unsigned map_flags, void **addr)
+{
+	struct pci_device_mapping map;
+	int err;
+
+	map.base = base;
+	map.size = size;
+	map.flags = map_flags;
+	map.memory = NULL;
+	err = pci_device_netbsd_map_range(dev, &map);
+	*addr = map.memory;
+
+	return err;
+}
+
+static int
+pci_device_netbsd_unmap_legacy(struct pci_device *dev, void *addr, pciaddr_t size)
+{
+	struct pci_device_mapping map;
+
+	map.memory = addr;
+	map.size = size;
+	map.flags = 0;
+	return pci_device_netbsd_unmap_range(dev, &map);
+}
+
+
 static void
 pci_system_netbsd_destroy(void)
 {
@@ -519,6 +548,8 @@ static const struct pci_system_methods netbsd_pci_methods = {
 	.write = pci_device_netbsd_write,
 	.fill_capabilities = pci_fill_capabilities_generic,
 	.boot_vga = pci_device_netbsd_boot_vga,
+	.map_legacy = pci_device_netbsd_map_legacy,
+	.unmap_legacy = pci_device_netbsd_unmap_legacy,
 };
 
 int
