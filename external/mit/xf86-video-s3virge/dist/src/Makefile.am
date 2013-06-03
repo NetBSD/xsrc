@@ -29,6 +29,7 @@ s3virge_drv_la_LDFLAGS = -module -avoid-version
 s3virge_drv_ladir = @moduledir@/drivers
 
 s3virge_drv_la_SOURCES = \
+         compat-api.h \
          newmmio.h \
          regs3v.h \
          s3v_accel.c \
@@ -39,6 +40,7 @@ s3virge_drv_la_SOURCES = \
          s3v_hwcurs.c \
          s3v_i2c.c \
          s3v_macros.h \
+	 s3v_pciids.h \
 	 s3v_pcirename.h \
          s3v_rop.h \
          s3v_shadow.c \

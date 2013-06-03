@@ -39,6 +39,7 @@ in this Software without prior written authorization from the XFree86 Project.
 
 
 #include "s3v.h"
+#include "s3v_pciids.h"
 
 /* protos */
 
@@ -231,7 +232,7 @@ S3VSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
 Bool 
 S3VHWCursorInit(ScreenPtr pScreen)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     S3VPtr ps3v = S3VPTR(pScrn);
     xf86CursorInfoPtr infoPtr;
 
