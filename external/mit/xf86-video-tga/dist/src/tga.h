@@ -21,14 +21,17 @@
  *
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tga/tga.h,v 1.18 2001/11/21 22:32:58 alanh Exp $ */
 
 #ifndef _TGA_H_
 #define _TGA_H_
 
 #include "tga_pcirename.h"
+#ifdef HAVE_XAA_H
 #include "xaa.h"
+#endif
 #include "xf86RamDac.h"
+
+#include "compat-api.h"
 
 typedef struct {
 	unsigned long tgaRegs[0x100];
@@ -71,7 +74,9 @@ typedef struct {
     TGARegRec		ModeReg;
     CARD32		AccelFlags;
     RamDacRecPtr	RamDacRec;
+#ifdef HAVE_XAA_H
     XAAInfoRecPtr	AccelInfoRec;
+#endif
     xf86CursorInfoPtr   CursorInfoRec;
     CloseScreenProcPtr	CloseScreen;
     int                 CardType;
