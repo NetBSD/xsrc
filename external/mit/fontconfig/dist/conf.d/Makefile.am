@@ -21,10 +21,12 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 #  PERFORMANCE OF THIS SOFTWARE.
 
-DOC_FILES= \
-	README
+BUILT_SOURCES = README
+DOC_SOURCES = README.in
+DOC_FILES = $(DOC_SOURCES:.in=)
 
 CONF_LINKS = \
+	10-scale-bitmap-fonts.conf \
 	20-unhint-small-vera.conf \
 	30-urw-aliases.conf \
 	30-metric-aliases.conf \
@@ -40,7 +42,8 @@ CONF_LINKS = \
 	80-delicious.conf \
 	90-synthetic.conf
 
-EXTRA_DIST = $(template_DATA) $(DOC_FILES)
+EXTRA_DIST = $(template_DATA) $(DOC_SOURCES)
+CLEANFILES = $(DOC_FILES)
 
 configdir=$(CONFIGDIR)
 config_DATA = $(DOC_FILES)
@@ -49,6 +52,7 @@ templatedir = $(TEMPLATEDIR)
 template_DATA =				\
 	10-autohint.conf		\
 	10-no-sub-pixel.conf		\
+	10-scale-bitmap-fonts.conf	\
 	10-sub-pixel-bgr.conf		\
 	10-sub-pixel-rgb.conf		\
 	10-sub-pixel-vbgr.conf		\
@@ -76,6 +80,9 @@ template_DATA =				\
 	80-delicious.conf		\
 	90-synthetic.conf
 
+README: $(srcdir)/README.in
+	sed "s|\@TEMPLATEDIR\@|$(templatedir)|" $< > $@
+
 install-data-hook:
 	mkdir -p $(DESTDIR)$(configdir)
 	@(echo cd $(DESTDIR)$(configdir);			\
@@ -92,3 +99,5 @@ uninstall-local:
 	    echo $(RM) $$i;					\
 	    $(RM) $$i;						\
 	  done)
+
+-include $(top_srcdir)/git.mk

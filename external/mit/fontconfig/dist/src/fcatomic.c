@@ -50,12 +50,12 @@
 #include "fcint.h"
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <time.h>
 
 #ifdef _WIN32
+#include <direct.h>
 #define mkdir(path,mode) _mkdir(path)
 #endif
 
@@ -78,7 +78,6 @@ FcAtomicCreate (const FcChar8   *file)
     FcAtomic	*atomic = malloc (total_len);
     if (!atomic)
 	return 0;
-    FcMemAlloc (FC_MEM_ATOMIC, total_len);
 
     atomic->file = (FcChar8 *) (atomic + 1);
     strcpy ((char *) atomic->file, (char *) file);
@@ -109,7 +108,7 @@ FcAtomicLock (FcAtomic *atomic)
 
     strcpy ((char *) atomic->tmp, (char *) atomic->file);
     strcat ((char *) atomic->tmp, TMP_NAME);
-    fd = mkstemp ((char *) atomic->tmp);
+    fd = FcMakeTempfile ((char *) atomic->tmp);
     if (fd < 0)
 	return FcFalse;
     f = fdopen (fd, "w");
@@ -223,11 +222,6 @@ FcAtomicUnlock (FcAtomic *atomic)
 void
 FcAtomicDestroy (FcAtomic *atomic)
 {
-    FcMemFree (FC_MEM_ATOMIC, sizeof (FcAtomic) +
-	       strlen ((char *) atomic->file) * 4 + 4 +
-	       sizeof (NEW_NAME) + sizeof (LCK_NAME) +
-	       sizeof (TMP_NAME));
-
     free (atomic);
 }
 #define __fcatomic__
