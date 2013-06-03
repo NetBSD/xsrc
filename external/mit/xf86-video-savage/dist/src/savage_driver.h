@@ -77,6 +77,8 @@
 #undef SAVAGEDRI
 #endif
 
+#include "compat-api.h"
+
 #ifdef SAVAGEDRI
 #define _XF86DRI_SERVER_
 #include "savage_dripriv.h"
@@ -84,8 +86,6 @@
 #include "dri.h"
 #include "GL/glxint.h"
 #include "xf86drm.h"
-
-#include "compat-api.h"
 
 /* Totals 2 Mbytes which equals 2^16 32-byte vertices divided among up
  * to 32 clients. */
