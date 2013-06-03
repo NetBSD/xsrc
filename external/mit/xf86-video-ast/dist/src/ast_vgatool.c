@@ -3099,7 +3099,7 @@ void GetAST1180DRAMInfo(ScrnInfoPtr pScrn)
 void vEnableASTVGAMMIO(ScrnInfoPtr pScrn)
 {
     ASTRecPtr pAST = ASTPTR(pScrn);
-    ULONG ulData;
+    uint32_t ulData;
     UCHAR jReg;
     
     if (!xf86IsPrimaryPci(pAST->PciInfo))
