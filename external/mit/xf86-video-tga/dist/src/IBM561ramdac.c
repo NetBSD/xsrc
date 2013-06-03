@@ -1,5 +1,3 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tga/IBM561ramdac.c,v 1.3 2001/02/15 11:03:58 alanh Exp $ */
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
