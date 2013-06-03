@@ -28,16 +28,18 @@ in this Software without prior written authorization from the XFree86 Project.
 #include "config.h"
 #endif
 
+#include <unistd.h>
 #include "s3v.h"
+#include "s3v_pciids.h"
 
 #include "miline.h"
 	/* fb includes are in s3v.h */
-#include "xaalocal.h"
 #include "xaarop.h"
 #include <X11/Xos.h>
 
 #include "servermd.h" /* LOG2_BYTES_PER_SCANLINE_PAD */
 
+#ifdef HAVE_XAA_H
 static void S3VWriteMask(CARD32*, int);
 
 static void S3VEngineReset(ScrnInfoPtr pScrn);
@@ -74,13 +76,14 @@ static void S3VPolylinesThinSolidWrapper(DrawablePtr, GCPtr, int, int,
 static void S3VPolySegmentThinSolidWrapper(DrawablePtr, GCPtr, int, xSegment*);
 #endif
 static void S3VNopAllCmdSets(ScrnInfoPtr pScrn);
-
+#endif
 
 Bool 
 S3VAccelInit(ScreenPtr pScreen)
 {
+#ifdef HAVE_XAA_H
     XAAInfoRecPtr infoPtr;
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     S3VPtr ps3v = S3VPTR(pScrn);
     BoxRec AvailFBArea;
 
@@ -231,8 +234,10 @@ S3VAccelInit(ScreenPtr pScreen)
     infoPtr->maxOffPixHeight = 2048;
 
     return (XAAInit(pScreen, infoPtr));
+#else
+    return FALSE;
+#endif
 } 
-
 
 Bool 
 S3VAccelInit32(ScreenPtr pScreen) 
@@ -536,6 +541,7 @@ S3VWriteMask(
    return;
 }
 
+#ifdef HAVE_XAA_H
 
 	/************************\
 	|  Solid Filled Rects    |
@@ -966,6 +972,7 @@ S3VSubsequentSolidHorVertLinePlaneMask(
     S3VWriteMask((CARD32*)ps3v->MapBaseDense, dwords);
 }
 
+#endif
 
 void
 S3VWaitFifoGX2(S3VPtr ps3v, int slots )
