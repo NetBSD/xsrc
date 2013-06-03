@@ -23,6 +23,8 @@
  */
 
 #include "fcint.h"
+#include <float.h>
+
 
 static double
 FcCompareNumber (FcValue *value1, FcValue *value2)
