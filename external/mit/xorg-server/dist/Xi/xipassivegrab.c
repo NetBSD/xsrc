@@ -140,10 +140,16 @@ ProcXIPassiveGrabDevice(ClientPtr client)
     memset(&param, 0, sizeof(param));
     param.grabtype = GRABTYPE_XI2;
     param.ownerEvents = stuff->owner_events;
-    param.this_device_mode = stuff->grab_mode;
-    param.other_devices_mode = stuff->paired_device_mode;
     param.grabWindow = stuff->grab_window;
     param.cursor = stuff->cursor;
+
+    if (IsKeyboardDevice(dev)) {
+        param.this_device_mode = stuff->grab_mode;
+        param.other_devices_mode = stuff->paired_device_mode;
+    } else {
+        param.this_device_mode = stuff->paired_device_mode;
+        param.other_devices_mode = stuff->grab_mode;
+    }
 
     if (stuff->cursor != None)
     {
@@ -264,9 +270,16 @@ ProcXIPassiveUngrabDevice(ClientPtr client)
     REQUEST(xXIPassiveUngrabDeviceReq);
     REQUEST_AT_LEAST_SIZE(xXIPassiveUngrabDeviceReq);
 
-    rc = dixLookupDevice(&dev, stuff->deviceid, client, DixGrabAccess);
-    if (rc != Success)
-	return rc;
+    if (stuff->deviceid == XIAllDevices)
+        dev = inputInfo.all_devices;
+    else if (stuff->deviceid == XIAllMasterDevices)
+        dev = inputInfo.all_master_devices;
+    else
+    {
+        rc = dixLookupDevice(&dev, stuff->deviceid, client, DixGrabAccess);
+        if (rc != Success)
+	    return rc;
+    }
 
     if (stuff->grab_type != XIGrabtypeButton &&
         stuff->grab_type != XIGrabtypeKeycode &&

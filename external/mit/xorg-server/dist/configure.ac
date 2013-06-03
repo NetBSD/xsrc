@@ -26,8 +26,8 @@ dnl
 dnl Process this file with autoconf to create configure.
 
 AC_PREREQ(2.57)
-AC_INIT([xorg-server], 1.10.3, [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg], xorg-server)
-RELEASE_DATE="2011-07-08"
+AC_INIT([xorg-server], 1.10.6, [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg], xorg-server)
+RELEASE_DATE="2012-02-10"
 AC_CONFIG_SRCDIR([Makefile.am])
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
 AM_MAINTAINER_MODE
@@ -311,19 +311,6 @@ AC_CHECK_HEADER([execinfo.h],[
         AC_DEFINE(HAVE_EXECINFO_H, 1, [Have execinfo.h])
     ])]
 )
-
-dnl ARM needs additional compiler flags for proper backtraces if GCC is
-dnl used. Compile a dummy program with the -mapcs-frame option. If it
-dnl succeeds, we know that we are building for ARM with GCC.
-old_CFLAGS="$CFLAGS"
-CFLAGS="-mapcs-frame"
-AC_COMPILE_IFELSE(
-        AC_LANG_PROGRAM([[ ]]),
-        ARM_BACKTRACE_CFLAGS="$CFLAGS",
-        ARM_BACKTRACE_CFLAGS=""
-)
-CFLAGS="$old_CFLAGS"
-AC_SUBST(ARM_BACKTRACE_CFLAGS)
 
 dnl ---------------------------------------------------------------------------
 dnl Bus options and CPU capabilities.  Replaces logic in
@@ -2073,12 +2060,10 @@ if test "$KDRIVE" = yes; then
         XEPHYR_REQUIRED_LIBS="$XEPHYR_REQUIRED_LIBS $LIBGL libdrm"
     fi
 
-    PKG_CHECK_MODULES(XEPHYR, $XEPHYR_REQUIRED_LIBS, [xephyr="yes"], [xephyr="no"])
     if test "x$XEPHYR" = xauto; then
-        XEPHYR=$xephyr
-    fi
-    if test "x$XEPHYR" = xyes && test "x$xephyr" = xno; then	
-        AC_MSG_ERROR([Xephyr dependencies missing])
+        PKG_CHECK_MODULES(XEPHYR, $XEPHYR_REQUIRED_LIBS, [XEPHYR="yes"], [XEPHYR="no"])
+    elif test "x$XEPHYR" = xyes ; then
+        PKG_CHECK_MODULES(XEPHYR, $XEPHYR_REQUIRED_LIBS)
     fi
 
     # Xephyr needs nanosleep() which is in librt on Solaris
