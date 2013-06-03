@@ -1311,9 +1311,10 @@ VESAMapVidMem(ScrnInfoPtr pScrn)
 #endif
 
     xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, DEBUG_VERB,
-		   "virtual address = %p,\n"
+		   "virtual address = %p, VGAbase = %p\n"
 		   "\tphysical address = 0x%lx, size = %ld\n",
-		   pVesa->base, pScrn->memPhysBase, pVesa->mapSize);
+		   pVesa->base, pVesa->VGAbase,
+		   pScrn->memPhysBase, pVesa->mapSize);
 
     return (pVesa->base != NULL);
 }
