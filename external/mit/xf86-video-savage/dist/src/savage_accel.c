@@ -24,7 +24,7 @@
 #include "savage_bci.h"
 #include "savage_streams.h"
 
-#ifdef XF86DRI
+#ifdef SAVAGEDRI
 #define _XF86DRI_SERVER_
 #include "savage_dri.h"
 #endif
@@ -1257,6 +1257,7 @@ void SavageSetGBD_2000(ScrnInfoPtr pScrn)
     OUTREG8(SEQ_DATA_REG,byte);
 }
 
+#if 0
 static
 void SavageRestoreAccelState(ScrnInfoPtr pScrn)
 {
@@ -1266,19 +1267,19 @@ void SavageRestoreAccelState(ScrnInfoPtr pScrn)
 
     return;
 }
+#endif
 
 /* Acceleration init function, sets up pointers to our accelerated functions */
 
 Bool 
 SavageInitAccel(ScreenPtr pScreen)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     SavagePtr psav = SAVPTR(pScrn);
 
-#ifdef XF86DRI
+#ifdef SAVAGEDRI
     if (psav->directRenderingEnabled) {
         SAVAGEDRIServerPrivatePtr pSAVAGEDRIServer = psav->DRIServerInfo;
-        BoxRec MemBox;
         int cpp = pScrn->bitsPerPixel / 8;
         int widthBytes = psav->lDelta;
         int bufferSize = ((pScrn->virtualY * widthBytes + SAVAGE_BUFFER_ALIGN)

@@ -55,7 +55,6 @@
 #include "xf86Resources.h"
 #endif
 #include "xf86Pci.h"
-#include "xf86PciInfo.h"
 #include "xf86_OSproc.h"
 #include "xf86Cursor.h"
 #include "mipointer.h"
@@ -64,20 +63,29 @@
 #include "fboverlay.h"
 #include "xf86cmap.h"
 #include "vbe.h"
+#ifdef HAVE_XAA_H
 #include "xaa.h"
+#endif
+#include "xf86fbman.h"
 #include "exa.h"
 #include "xf86xv.h"
 
 #include "savage_regs.h"
 #include "savage_vbe.h"
 
-#ifdef XF86DRI
+#ifndef XF86DRI
+#undef SAVAGEDRI
+#endif
+
+#ifdef SAVAGEDRI
 #define _XF86DRI_SERVER_
 #include "savage_dripriv.h"
 #include "savage_dri.h"
 #include "dri.h"
 #include "GL/glxint.h"
 #include "xf86drm.h"
+
+#include "compat-api.h"
 
 /* Totals 2 Mbytes which equals 2^16 32-byte vertices divided among up
  * to 32 clients. */
@@ -404,7 +412,7 @@ typedef struct _Savage {
     /* Support for shadowFB and rotation */
     unsigned char *	ShadowPtr;
     int			ShadowPitch;
-    void		(*PointerMoved)(int index, int x, int y);
+    void		(*PointerMoved)(SCRN_ARG_TYPE arg, int x, int y);
 
     /* support for EXA */
     ExaDriverPtr        EXADriverPtr;
@@ -416,7 +424,9 @@ typedef struct _Savage {
     unsigned long	sbd_high;
 
     /* Support for XAA acceleration */
+#ifdef HAVE_XAA_H
     XAAInfoRecPtr	AccelInfoRec;
+#endif
     xRectangle		Rect;
     unsigned int	SavedBciCmd;
     unsigned int	SavedFgColor;
@@ -458,7 +468,7 @@ typedef struct _Savage {
      int                 overlayDepth;
      int			primStreamBpp;
 
-#ifdef XF86DRI
+#ifdef SAVAGEDRI
     int 		LockHeld;
     Bool 		directRenderingEnabled;
     DRIInfoPtr 		pDRIInfo;
@@ -548,7 +558,7 @@ typedef struct _Savage {
 #define writescan savagewritescan
 
 /* add for support DRI */
-#ifdef XF86DRI
+#ifdef SAVAGEDRI
 
 #define SAVAGE_FRONT	0x1
 #define SAVAGE_BACK	0x2
@@ -559,20 +569,7 @@ Bool SAVAGEDRIScreenInit( ScreenPtr pScreen );
 Bool SAVAGEInitMC(ScreenPtr pScreen);
 void SAVAGEDRICloseScreen( ScreenPtr pScreen );
 Bool SAVAGEDRIFinishScreenInit( ScreenPtr pScreen );
-
-Bool SAVAGELockUpdate( ScrnInfoPtr pScrn, drmLockFlags flags );
-
-#if 0
-void SAVAGEGetQuiescence( ScrnInfoPtr pScrn );
-void SAVAGEGetQuiescenceShared( ScrnInfoPtr pScrn );
-#endif
-
-void SAVAGESelectBuffer(ScrnInfoPtr pScrn, int which);
-
-#if 0
-Bool SAVAGECleanupDma(ScrnInfoPtr pScrn);
-Bool SAVAGEInitDma(ScrnInfoPtr pScrn, int prim_size);
-#endif
+void SAVAGEDRIResume( ScreenPtr pScreen );
 
 #define SAVAGE_AGP_1X_MODE		0x01
 #define SAVAGE_AGP_2X_MODE		0x02
@@ -588,9 +585,9 @@ extern void SavageCommonCalcClock(long freq, int min_m, int min_n1,
 			int max_n1, int min_n2, int max_n2,
 			long freq_min, long freq_max,
 			unsigned char *mdiv, unsigned char *ndiv);
-void SavageAdjustFrame(int scrnIndex, int y, int x, int flags);
+void SavageAdjustFrame(ADJUST_FRAME_ARGS_DECL);
 void SavageDoAdjustFrame(ScrnInfoPtr pScrn, int y, int x, int crtc2);
-Bool SavageSwitchMode(int scrnIndex, DisplayModePtr mode, int flags);
+Bool SavageSwitchMode(SWITCH_MODE_ARGS_DECL);
 
 /* In savage_cursor.c. */
 
@@ -616,7 +613,7 @@ Bool SavageI2CInit(ScrnInfoPtr pScrn);
 
 /* In savage_shadow.c */
 
-void SavagePointerMoved(int index, int x, int y);
+void SavagePointerMoved(SCRN_ARG_TYPE arg, int x, int y);
 void SavageRefreshArea(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 void SavageRefreshArea8(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 void SavageRefreshArea16(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
@@ -635,6 +632,7 @@ ModeStatus SavageMatchBiosMode(ScrnInfoPtr pScrn,int width,int height,int refres
 
 unsigned short SavageGetBIOSModes( 
     SavagePtr psav,
+    VbeInfoBlock *vbe,
     int iDepth,
     SavageModeEntryPtr s3vModeTable );
 

@@ -15,7 +15,7 @@
 #include "savage_bci.h"
 #include "savage_streams.h"
 
-#ifdef XF86DRI
+#ifdef SAVAGEDRI
 #define _XF86DRI_SERVER_
 #include "savage_dri.h"
 #endif
@@ -102,7 +102,7 @@ static int SavageGetSolidROP(int rop) {
 Bool 
 SavageEXAInit(ScreenPtr pScreen)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     SavagePtr psav = SAVPTR(pScrn);
 
     if (!(psav->EXADriverPtr = exaDriverAlloc())) {
@@ -196,7 +196,7 @@ SavageEXAInit(ScreenPtr pScreen)
 static void
 SavageEXASync(ScreenPtr pScreen, int marker)
 {
-    SavagePtr psav = SAVPTR(xf86Screens[pScreen->myNum]);
+    SavagePtr psav = SAVPTR(xf86ScreenToScrn(pScreen));
     psav->WaitIdleEmpty(psav);
 }
 
@@ -248,7 +248,7 @@ SavageSetBD(SavagePtr psav, PixmapPtr pPixmap)
 static Bool
 SavagePrepareSolid(PixmapPtr pPixmap, int alu, Pixel planemask, Pixel fg)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmap->drawable.pScreen);
     SavagePtr psav = SAVPTR(pScrn);
     int cmd, rop;
     BCI_GET_PTR;
@@ -322,7 +322,7 @@ SavagePrepareSolid(PixmapPtr pPixmap, int alu, Pixel planemask, Pixel fg)
 static void
 SavageSolid(PixmapPtr pPixmap, int x1, int y1, int x2, int y2)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmap->drawable.pScreen);
     SavagePtr psav = SAVPTR(pScrn);
     int w = x2 - x1;
     int h = y2 - y1;
@@ -352,7 +352,7 @@ static Bool
 SavagePrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir, int ydir,
 					int alu, Pixel planemask)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pDstPixmap->drawable.pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pDstPixmap->drawable.pScreen);
     SavagePtr psav = SAVPTR(pScrn);
     int cmd;
     BCI_GET_PTR;
@@ -400,7 +400,7 @@ SavagePrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir, int ydir
 static void
 SavageCopy(PixmapPtr pDstPixmap, int srcX, int srcY, int dstX, int dstY, int width, int height)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pDstPixmap->drawable.pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pDstPixmap->drawable.pScreen);
     SavagePtr psav = SAVPTR(pScrn);
     BCI_GET_PTR;
 
@@ -435,13 +435,13 @@ SavageDoneCopy(PixmapPtr pDstPixmap)
 Bool
 SavageUploadToScreen(PixmapPtr pDst, int x, int y, int w, int h, char *src, int src_pitch)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pDst->drawable.pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pDst->drawable.pScreen);
     SavagePtr psav = SAVPTR(pScrn);
     BCI_GET_PTR;
     int i, j, dwords, queue, Bpp;
     unsigned int cmd;
     CARD32 * srcp;
-#ifdef XF86DRI
+#ifdef SAVAGEDRI
     unsigned int dst_pitch;
     unsigned int dst_yoffset;
     int agp_possible;
@@ -451,7 +451,7 @@ SavageUploadToScreen(PixmapPtr pDst, int x, int y, int w, int h, char *src, int 
 
     Bpp = pDst->drawable.bitsPerPixel / 8;
 
-#ifdef XF86DRI
+#ifdef SAVAGEDRI
     /* Test for conditions for AGP Mastered Image Transfer (MIT). AGP memory
        needs to be available, the XVideo AGP needs to be enabled, the 
        framebuffer destination must be a multiple of 32 bytes, and the source
@@ -508,7 +508,7 @@ SavageUploadToScreen(PixmapPtr pDst, int x, int y, int w, int h, char *src, int 
             return TRUE;
         }
     }
-#endif /* XF86DRI */
+#endif /* SAVAGEDRI */
 
     /* If we reach here, AGP transfer is not possible, or failed to drmMap() */
     psav->sbd_offset = exaGetPixmapOffset(pDst);
@@ -542,7 +542,7 @@ SavageUploadToScreen(PixmapPtr pDst, int x, int y, int w, int h, char *src, int 
 
 	if (4 * dwords <= queue) {
 	    /* WARNING: breaking BCI_PTR abstraction here */
-	    memcpy(bci_ptr, srcp, 4 * dwords);
+	    memcpy((CARD32 *)bci_ptr, srcp, 4 * dwords);
 	    bci_ptr += dwords;
 	    queue -= 4 * dwords;
 	} else {
@@ -567,7 +567,6 @@ SavageUploadToScreen(PixmapPtr pDst, int x, int y, int w, int h, char *src, int 
 Bool
 SavageDownloadFromScreen(PixmapPtr pSrc, int x, int y, int w, int h, char *dst, int dst_pitch)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pSrc->drawable.pScreen->myNum];
     unsigned char *src = pSrc->devPrivate.ptr;
     int	src_pitch = exaGetPixmapPitch(pSrc);
     int	bpp = pSrc->drawable.bitsPerPixel;
