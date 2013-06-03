@@ -29,7 +29,7 @@ FC_MATCH_SRC=${top_srcdir}/fc-match
 
 SGML = ${FC_MATCH_SRC}/fc-match.sgml
 
-INCLUDES=-I${top_srcdir} $(WARN_CFLAGS)
+AM_CPPFLAGS=-I${top_srcdir} $(WARN_CFLAGS)
 
 BUILT_MANS=fc-match.1
 
@@ -56,3 +56,5 @@ CLEANFILES += ${man_MANS}
 else
 all-local:
 endif
+
+-include $(top_srcdir)/git.mk

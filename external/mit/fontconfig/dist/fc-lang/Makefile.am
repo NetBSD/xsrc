@@ -1,8 +1,7 @@
 # -*- encoding: utf-8 -*-
 #
-# $Id $
-#
-# Copyright © 2003 Keith Packard
+# Copyright © 2003  Keith Packard
+# Copyright © 2013  Google, Inc.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -22,41 +21,14 @@
 # TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 #
+# Google Author(s): Behdad Esfahbod
 
-INCLUDES=-I${top_srcdir}/src -I${top_srcdir} $(WARN_CFLAGS)
+TAG = lang
+DEPS = $(ORTH)
+ARGS = -d $(srcdir) $(ORTH)
+DIST = $(ORTH)
 
-TMPL=fclang.tmpl.h
-STMPL=${top_srcdir}/fc-lang/fclang.tmpl.h
-TARG=fclang.h
-
-noinst_PROGRAMS=fc-lang
-
-noinst_MANS=fc-lang.man
-
-EXTRA_DIST = $(TARG) $(TMPL) $(ORTH)
-
-if CROSS_COMPILING
-$(TARG):$(ORTH) fc-lang.c $(STMPL)
-	@echo Warning: cannot rebuild $(TARG) when cross-compiling
-else
-$(TARG):$(ORTH) fc-lang${EXEEXT} $(STMPL)
-	$(AM_V_GEN) $(RM) $(TARG); \
-	./fc-lang${EXEEXT} -d ${srcdir} $(ORTH) < $(STMPL) > $(TARG).tmp && \
-	mv $(TARG).tmp $(TARG)
-endif
-
-ALIAS_FILES = fcalias.h fcaliastail.h
-
-BUILT_SOURCES = $(ALIAS_FILES) $(TARG)
-
-$(ALIAS_FILES):
-	touch $(ALIAS_FILES)
-
-CLEANFILES = $(ALIAS_FILES)
-
-DISTCLEANFILES = $(TARG)
-
-MAINTAINERCLEANFILES = $(TARG)
+include $(top_srcdir)/Tools.mk
 
 # NOTE:
 #
@@ -309,3 +281,5 @@ ORTH = \
 	doi.orth \
 	mni.orth
 #	^-------------- Add new orth files here
+
+-include $(top_srcdir)/git.mk

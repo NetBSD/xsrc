@@ -21,6 +21,8 @@
 # TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+EXTRA_DIST =
+
 if OS_WIN32
 
 export_symbols = -export-symbols fontconfig.def
@@ -29,8 +31,9 @@ fontconfig_def_dependency = fontconfig.def
 
 # gcc import library install/uninstall
 
-install-libtool-import-lib: 
-	$(INSTALL) .libs/libfontconfig.dll.a $(DESTDIR)$(libdir)
+install-libtool-import-lib: libfontconfig.la
+	$(MKDIR_P) $(DESTDIR)$(libdir)
+	$(INSTALL) .libs/libfontconfig.dll.a $(DESTDIR)$(libdir)/libfontconfig.dll.a
 	$(INSTALL) fontconfig.def $(DESTDIR)$(libdir)/fontconfig.def
 
 uninstall-libtool-import-lib:
@@ -67,7 +70,7 @@ uninstall-ms-import-lib:
 
 endif
 
-INCLUDES = 						\
+AM_CPPFLAGS = 						\
 	-I$(top_srcdir)					\
 	-I$(top_srcdir)/src				\
 	$(FREETYPE_CFLAGS)				\
@@ -78,16 +81,19 @@ INCLUDES = 						\
 	-DFC_CACHEDIR='"$(FC_CACHEDIR)"'                \
 	-DFONTCONFIG_PATH='"$(BASECONFIGDIR)"'
 
-EXTRA_DIST = makealias
+EXTRA_DIST += makealias
 
-noinst_HEADERS=fcint.h fcftint.h fcdeprecate.h
+noinst_HEADERS=fcint.h fcftint.h fcdeprecate.h fcstdint.h
 
 ALIAS_FILES = fcalias.h fcaliastail.h fcftalias.h fcftaliastail.h
 
 BUILT_SOURCES = $(ALIAS_FILES) \
 	../fc-case/fccase.h \
 	../fc-glyphname/fcglyphname.h \
-	../fc-lang/fclang.h
+	../fc-lang/fclang.h \
+	stamp-fcstdint \
+	fcobjshash.h \
+	fcobjshash.gperf
 
 noinst_PROGRAMS = fcarch
 
@@ -98,29 +104,57 @@ noinst_PROGRAMS = fcarch
 ../fc-lang/fclang.h:
 	cd ../fc-lang && $(MAKE) $(AM_MAKEFLAGS) fclang.h
 
+fcobjshash.gperf: fcobjshash.gperf.h fcobjs.h
+	$(AM_V_GEN) $(CPP) -I$(top_srcdir) $< | \
+	$(SED) 's/^ *//;s/ *, */,/' | \
+	$(GREP) '^[^#]' | \
+	awk ' \
+		/CUT_OUT_BEGIN/ { no_write=1; next; }; \
+		/CUT_OUT_END/ { no_write=0; next; }; \
+		{ if (!no_write) print; next; }; \
+	' - > $@.tmp && \
+	mv -f $@.tmp $@ || ( $(RM) $@.tmp && false )
+
+fcobjshash.h: fcobjshash.gperf
+	$(AM_V_GEN) $(GPERF) -m 100 $< > $@.tmp && \
+	mv -f $@.tmp $@ || ( $(RM) $@.tmp && false )
+
+EXTRA_DIST += \
+	fcobjshash.gperf.h \
+	fcobjshash.gperf \
+	fcobjshash.h
+
 libfontconfig_la_SOURCES = \
 	fcarch.h \
 	fcatomic.c \
+	fcatomic.h \
 	fcblanks.c \
 	fccache.c \
 	fccfg.c \
 	fccharset.c \
+	fccompat.c \
 	fcdbg.c \
 	fcdefault.c \
 	fcdir.c \
 	fcformat.c \
 	fcfreetype.c \
 	fcfs.c \
+	fchash.c \
 	fcinit.c \
 	fclang.c \
 	fclist.c \
 	fcmatch.c \
 	fcmatrix.c \
+	fcmutex.h \
 	fcname.c \
+	fcobjs.c \
+	fcobjs.h \
+	fcobjshash.h \
 	fcpat.c \
 	fcserialize.c \
 	fcstat.c \
 	fcstr.c \
+	fcwindows.h \
 	fcxml.c \
 	ftglue.h \
 	ftglue.c
@@ -158,14 +192,22 @@ fcftaliastail.h: fcftalias.h
 fcftalias.h: $(top_srcdir)/src/makealias $(PUBLIC_FT_FILES)
 	$(AM_V_GEN) sh $(top_srcdir)/src/makealias "$(top_srcdir)/src" fcftalias.h fcftaliastail.h $(PUBLIC_FT_FILES)
 
-CLEANFILES = $(ALIAS_FILES)
+stamp-fcstdint: $(top_builddir)/config.status
+	$(AM_V_GEN) cd $(top_builddir) &&	\
+	$(SHELL) ./config.status src/fcstdint.h
+	@touch $@
+
+CLEANFILES = $(ALIAS_FILES) fontconfig.def
+DISTCLEANFILES = stamp-fcstdint fcstdint.h
 
 fontconfig.def: $(PUBLIC_FILES) $(PUBLIC_FT_FILES)
 	echo Generating $@
 	(echo EXPORTS; \
 	(cat $(PUBLIC_FILES) $(PUBLIC_FT_FILES) || echo 'FcERROR ()' ) | \
-	grep '^Fc[^ ]* *(' | sed -e 's/ *(.*$$//' -e 's/^/	/' | \
+	$(GREP) '^Fc[^ ]* *(' | $(SED) -e 's/ *(.*$$//' -e 's/^/	/' | \
 	sort; \
 	echo LIBRARY libfontconfig-@LIBT_CURRENT_MINUS_AGE@.dll; \
 	echo VERSION @LIBT_CURRENT@.@LIBT_REVISION@) >$@
-	@ ! grep -q FcERROR $@ || ($(RM) $@; false)
+	@ ! $(GREP) -q FcERROR $@ || ($(RM) $@; false)
+
+-include $(top_srcdir)/git.mk

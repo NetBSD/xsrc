@@ -100,7 +100,6 @@ main (int argc, char **argv)
     FcChar8     *format = NULL;
     int		err = 0;
     int		i;
-    FcBlanks    *blanks;
 #if HAVE_GETOPT_LONG || HAVE_GETOPT
     int		c;
 
@@ -136,14 +135,6 @@ main (int argc, char **argv)
     if (i == argc)
 	usage (argv[0], 1);
 
-    if (!FcInit ())
-    {
-	fprintf (stderr, "Can't init font config library\n");
-	return 1;
-    }
-
-    blanks = FcConfigGetBlanks (NULL);
-
     for (; i < argc; i++)
     {
 	int index;
@@ -154,7 +145,7 @@ main (int argc, char **argv)
 	do {
 	    FcPattern *pat;
 
-	    pat = FcFreeTypeQuery ((FcChar8 *) argv[i], index, blanks, &count);
+	    pat = FcFreeTypeQuery ((FcChar8 *) argv[i], index, NULL, &count);
 	    if (pat)
 	    {
 		if (format)

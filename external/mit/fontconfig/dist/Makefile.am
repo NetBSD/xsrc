@@ -21,12 +21,13 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 #  PERFORMANCE OF THIS SOFTWARE.
 
-DOCSRC=@DOCSRC@
 SUBDIRS=fontconfig fc-case fc-lang fc-glyphname src \
 	fc-cache fc-cat fc-list fc-match fc-pattern fc-query fc-scan \
-	conf.d $(DOCSRC) test
+	fc-validate conf.d test
+if ENABLE_DOCS
+SUBDIRS += doc
+endif
 
-AUTOMAKE_OPTIONS = dist-bzip2
 ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST = \
@@ -52,9 +53,9 @@ MAINTAINERCLEANFILES = \
 	$(srcdir)/ltmain.sh \
 	$(srcdir)/missing \
 	$(srcdir)/mkinstalldirs \
+	$(srcdir)/test-driver \
 	`find "$(srcdir)" -type f -name Makefile.in -print`
 
-pkgconfigdir=$(libdir)/pkgconfig
 pkgconfig_DATA = fontconfig.pc
 
 baseconfigdir = $(BASECONFIGDIR)
@@ -76,7 +77,7 @@ EXTRA_DIST += ChangeLog
 ChangeLog: $(srcdir)/ChangeLog
 $(srcdir)/ChangeLog:
 	if test -d "$(srcdir)/.git"; then \
-	  (GIT_DIR=$(top_srcdir)/.git ./missing --run git log --stat) | fmt --split-only > $@.tmp \
+	  (GIT_DIR=$(top_srcdir)/.git $(GIT) log --stat) | fmt --split-only > $@.tmp \
 	  && mv -f $@.tmp $@ \
 	  || ($(RM) $@.tmp; \
 	      echo Failed to generate ChangeLog, your ChangeLog may be outdated >&2; \
@@ -148,3 +149,7 @@ debuild-dirs: distdir
 	$(RM) -r $(distdir).orig
 	cp -a $(distdir) $(distdir).orig
 	$(RM) -r $(distdir).orig/debian
+
+DISTCHECK_CONFIGURE_FLAGS =
+
+-include $(top_srcdir)/git.mk
