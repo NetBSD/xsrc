@@ -128,7 +128,7 @@ static void SISDRIMoveBuffers(WindowPtr pParent, DDXPointRec ptOldOrg,
 static Bool
 SISInitVisualConfigs(ScreenPtr pScreen)
 {
-  ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+  ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
   SISPtr pSIS = SISPTR(pScrn);
   int numConfigs = 0;
   __GLXvisualConfig *pConfigs = 0;
@@ -149,19 +149,19 @@ SISInitVisualConfigs(ScreenPtr pScreen)
   case 32:
     numConfigs = (useZ16) ? 8 : 16;
 
-    if(!(pConfigs = (__GLXvisualConfig*)xcalloc(sizeof(__GLXvisualConfig),
+    if(!(pConfigs = (__GLXvisualConfig*)calloc(sizeof(__GLXvisualConfig),
 						   numConfigs))) {
        return FALSE;
     }
-    if(!(pSISConfigs = (SISConfigPrivPtr)xcalloc(sizeof(SISConfigPrivRec),
+    if(!(pSISConfigs = (SISConfigPrivPtr)calloc(sizeof(SISConfigPrivRec),
 						    numConfigs))) {
-       xfree(pConfigs);
+       free(pConfigs);
        return FALSE;
     }
-    if(!(pSISConfigPtrs = (SISConfigPrivPtr*)xcalloc(sizeof(SISConfigPrivPtr),
+    if(!(pSISConfigPtrs = (SISConfigPrivPtr*)calloc(sizeof(SISConfigPrivPtr),
 							  numConfigs))) {
-       xfree(pConfigs);
-       xfree(pSISConfigs);
+       free(pConfigs);
+       free(pSISConfigs);
        return FALSE;
     }
     for(i=0; i<numConfigs; i++) pSISConfigPtrs[i] = &pSISConfigs[i];
@@ -263,7 +263,7 @@ SISInitVisualConfigs(ScreenPtr pScreen)
 Bool
 SISDRIScreenInit(ScreenPtr pScreen)
 {
-  ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+  ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
   SISPtr pSIS = SISPTR(pScrn);
   DRIInfoPtr pDRIInfo;
   SISDRIPtr pSISDRI;
@@ -319,7 +319,7 @@ SISDRIScreenInit(ScreenPtr pScreen)
      pDRIInfo->busIdString = DRICreatePCIBusID(pSIS->PciInfo);
   } else {
 #endif
-     pDRIInfo->busIdString = xalloc(64);
+     pDRIInfo->busIdString = malloc(64);
      sprintf(pDRIInfo->busIdString, "PCI:%d:%d:%d",
 	     pSIS->PciBus, pSIS->PciDevice, pSIS->PciFunc);
 #ifdef SISHAVECREATEBUSID
@@ -383,7 +383,7 @@ SISDRIScreenInit(ScreenPtr pScreen)
   pDRIInfo->SAREASize = SAREA_MAX;
 #endif
 
-  if(!(pSISDRI = (SISDRIPtr)xcalloc(sizeof(SISDRIRec), 1))) {
+  if(!(pSISDRI = (SISDRIPtr)calloc(sizeof(SISDRIRec), 1))) {
      DRIDestroyInfoRec(pSIS->pDRIInfo);
      pSIS->pDRIInfo = 0;
      return FALSE;
@@ -401,7 +401,7 @@ SISDRIScreenInit(ScreenPtr pScreen)
 
   if(!DRIScreenInit(pScreen, pDRIInfo, &pSIS->drmSubFD)) {
      xf86DrvMsg(pScreen->myNum, X_ERROR, "[dri] DRIScreenInit failed. Disabling the DRI.\n");
-     xfree(pDRIInfo->devPrivate);
+     free(pDRIInfo->devPrivate);
      pDRIInfo->devPrivate = 0;
      DRIDestroyInfoRec(pSIS->pDRIInfo);
      pSIS->pDRIInfo = 0;
@@ -664,7 +664,7 @@ SISDRIScreenInit(ScreenPtr pScreen)
 Bool
 SISDRIFinishScreenInit(ScreenPtr pScreen)
 {
-  ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+  ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
   SISPtr pSiS = SISPTR(pScrn);
   SISDRIPtr pSISDRI;
 
@@ -751,7 +751,7 @@ SISDRIFinishScreenInit(ScreenPtr pScreen)
 void
 SISDRICloseScreen(ScreenPtr pScreen)
 {
-  ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+  ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
   SISPtr pSIS = SISPTR(pScrn);
 
   switch(pSIS->VGAEngine) {
@@ -794,7 +794,7 @@ SISDRICloseScreen(ScreenPtr pScreen)
 
   if(pSIS->pDRIInfo) {
      if(pSIS->pDRIInfo->devPrivate) {
-	xfree(pSIS->pDRIInfo->devPrivate);
+	free(pSIS->pDRIInfo->devPrivate);
 	pSIS->pDRIInfo->devPrivate = NULL;
      }
      DRIDestroyInfoRec(pSIS->pDRIInfo);
@@ -802,12 +802,12 @@ SISDRICloseScreen(ScreenPtr pScreen)
   }
 
   if(pSIS->pVisualConfigs) {
-     xfree(pSIS->pVisualConfigs);
+     free(pSIS->pVisualConfigs);
      pSIS->pVisualConfigs = NULL;
   }
 
   if(pSIS->pVisualConfigsPriv) {
-     xfree(pSIS->pVisualConfigsPriv);
+     free(pSIS->pVisualConfigsPriv);
      pSIS->pVisualConfigsPriv = NULL;
   }
 
@@ -835,7 +835,7 @@ SISDRISwapContext(ScreenPtr pScreen, DRISyncType syncType,
            DRIContextType oldContextType, void *oldContext,
            DRIContextType newContextType, void *newContext)
 {
-  ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+  ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
   SISPtr pSiS = SISPTR(pScrn);
 
 #if 0
@@ -871,7 +871,7 @@ static void
 SISDRIInitBuffers(WindowPtr pWin, RegionPtr prgn, CARD32 index)
 {
   ScreenPtr pScreen = pWin->drawable.pScreen;
-  ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+  ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
   SISPtr pSiS = SISPTR(pScrn);
 
   switch(pSiS->VGAEngine) {
@@ -891,7 +891,7 @@ SISDRIMoveBuffers(WindowPtr pParent, DDXPointRec ptOldOrg,
            RegionPtr prgnSrc, CARD32 index)
 {
   ScreenPtr pScreen = pParent->drawable.pScreen;
-  ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+  ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
   SISPtr pSiS = SISPTR(pScrn);
 
   switch(pSiS->VGAEngine) {

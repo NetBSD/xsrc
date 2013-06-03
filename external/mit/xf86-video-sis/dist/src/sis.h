@@ -81,10 +81,17 @@
 #include "xf86Resources.h"
 #endif
 #include "xf86.h"
-#include "xf86PciInfo.h"
 #include "xf86Cursor.h"
 #include "xf86cmap.h"
 #include "vbe.h"
+
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
+#define _swapl(x, n) swapl(x,n)
+#define _swaps(x, n) swaps(x,n)
+#else
+#define _swapl(x, n) swapl(x)
+#define _swaps(x, n) swaps(x)
+#endif
 
 #define SIS_HaveDriverFuncs 0
 
@@ -173,7 +180,13 @@
 
 #undef SISHAVEDRMWRITE
 #undef SISNEWDRI
-#ifdef XF86DRI
+
+/* if the server was built without DRI support, force-disable DRI */
+#ifndef XF86DRI
+#undef SISDRI
+#endif
+
+#ifdef SISDRI
 #if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,2,99,3,0)
 #define SISHAVEDRMWRITE
 #endif
@@ -187,7 +200,7 @@
 #include "dri.h"
 #include "GL/glxint.h"
 #include "sis_dri.h"
-#endif /* XF86DRI */
+#endif /* SISDRI */
 
 /* Configurable stuff: ------------------------------------- */
 
@@ -213,7 +226,7 @@
 #define INCL_YUV_BLIT_ADAPTOR	/* Include support for YUV->RGB blit adaptors (VRAM queue mode only) */
 #endif
 
-#if 1
+#ifdef HAVE_XAA_H
 #define SIS_USE_XAA		/* Include code for XAA */
 #endif
 
@@ -251,10 +264,11 @@
 #endif
 
 /* Need that for SiSCtrl and Pseudo-Xinerama */
-#define NEED_REPLIES				/* ? */
 #define EXTENSION_PROC_ARGS void *
 #include "extnsionst.h" 			/* required */
 #include <X11/extensions/panoramiXproto.h> 	/* required */
+
+#include "compat-api.h"
 
 #undef SISCHECKOSSSE
 #ifdef XORG_VERSION_CURRENT
@@ -288,6 +302,41 @@
 #define SISVERBLEVEL 3
 #else
 #define SISVERBLEVEL 4
+#endif
+
+#ifndef _XF86_PCIINFO_H
+#define PCI_VENDOR_SIS			0x1039
+/* SiS */
+#define PCI_CHIP_SG86C201		0x0001
+#define PCI_CHIP_SG86C202		0x0002
+#define PCI_CHIP_SG85C503		0x0008
+#define PCI_CHIP_SIS5597		0x0200
+/* Agregado por Carlos Duclos & Manuel Jander */
+#define PCI_CHIP_SIS82C204		0x0204
+#define PCI_CHIP_SG86C205		0x0205
+#define PCI_CHIP_SG86C215		0x0215
+#define PCI_CHIP_SG86C225		0x0225
+#define PCI_CHIP_85C501			0x0406
+#define PCI_CHIP_85C496			0x0496
+#define PCI_CHIP_85C601			0x0601
+#define PCI_CHIP_85C5107		0x5107
+#define PCI_CHIP_85C5511		0x5511
+#define PCI_CHIP_85C5513		0x5513
+#define PCI_CHIP_SIS5571		0x5571
+#define PCI_CHIP_SIS5597_2		0x5597
+#define PCI_CHIP_SIS530			0x6306
+#define PCI_CHIP_SIS6326		0x6326
+#define PCI_CHIP_SIS7001		0x7001
+#define PCI_CHIP_SIS300			0x0300
+#define PCI_CHIP_SIS315H		0x0310
+#define PCI_CHIP_SIS315PRO		0x0325
+#define PCI_CHIP_SIS330			0x0330
+#define PCI_CHIP_SIS630			0x6300
+#define PCI_CHIP_SIS540			0x5300
+#define PCI_CHIP_SIS550			0x5315
+#define PCI_CHIP_SIS650			0x6325
+#define PCI_CHIP_SIS730			0x7300
+
 #endif
 
 /* For SiS315/550/650/740/330/660 - these should be moved elsewhere! */
@@ -805,7 +854,7 @@ typedef struct {
     ScrnInfoPtr		pScrn_2;
     UChar		*BIOS;
     struct SiS_Private	*SiS_Pr;
-#ifdef XF86DRI
+#ifdef SISDRI
     SISAGPHTYPE		agpHandle;
     ULong		agpAddr;
     UChar		*agpBase;
@@ -971,7 +1020,7 @@ typedef struct {
     void 		*RealFbBase;	/* Real VRAM virtual linear address (for DHM and SiS76x UMA skipping) */
     CARD32		IOAddress;	/* MMIO physical address */
     void		*IOBase;	/* MMIO linear address */
-    IOADDRESS		IODBase;	/* Base of PIO memory area */
+    unsigned long	IODBase;	/* Base of PIO memory area */
 #ifdef __alpha__
     void		*IOBaseDense;	/* MMIO for Alpha platform */
 #endif
@@ -1085,7 +1134,7 @@ typedef struct {
     unsigned int	cmdQueueSize_div2;
     unsigned int	cmdQueueSize_div4;
     unsigned int	cmdQueueSize_4_3;
-#ifdef XF86DRI
+#ifdef SISDRI
     SISAGPHTYPE		agpHandle;
     ULong		agpAddr;
     UChar 		*agpBase;
@@ -1131,7 +1180,7 @@ typedef struct {
     CARD32		ColorExpandBase;
 
     int			Rotate, Reflect;
-    void		(*PointerMoved)(int index, int x, int y);
+    void		(*PointerMoved)(SCRN_ARG_TYPE arg, int x, int y);
 
     /* ShadowFB support */
     Bool		ShadowFB;
@@ -1144,7 +1193,7 @@ typedef struct {
 
     /* DRI */
     Bool		loadDRI;
-#ifdef XF86DRI
+#ifdef SISDRI
     Bool		directRenderingEnabled;
     DRIInfoPtr 		pDRIInfo;
     int			drmSubFD;
@@ -1348,7 +1397,7 @@ typedef struct {
     Bool		skipswitchcheck;
     unsigned int	VBFlagsInit;
     DisplayModePtr	currentModeLast;
-    IOADDRESS		MyPIOOffset;
+    unsigned long	MyPIOOffset;
     Bool		OverruleRanges;
     Bool		BenchMemCpy;
     Bool		NeedCopyFastVidCpy;
