@@ -152,7 +152,7 @@ static CARD32 get_scanline_CRT1(SISPtr pSiS)
 
 void SIS6326InitVideo(ScreenPtr pScreen)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     XF86VideoAdaptorPtr *adaptors, *newAdaptors = NULL;
     XF86VideoAdaptorPtr newAdaptor = NULL;
     int num_adaptors;
@@ -170,7 +170,7 @@ void SIS6326InitVideo(ScreenPtr pScreen)
 		adaptors = &newAdaptor;
 	} else {
 		/* need to free this someplace */
-		newAdaptors = xalloc((num_adaptors + 1) * sizeof(XF86VideoAdaptorPtr*));
+		newAdaptors = malloc((num_adaptors + 1) * sizeof(XF86VideoAdaptorPtr*));
 		if(newAdaptors) {
 			memcpy(newAdaptors, adaptors, num_adaptors *
 				sizeof(XF86VideoAdaptorPtr));
@@ -185,7 +185,7 @@ void SIS6326InitVideo(ScreenPtr pScreen)
 	xf86XVScreenInit(pScreen, adaptors, num_adaptors);
 
     if(newAdaptors)
-	xfree(newAdaptors);
+	free(newAdaptors);
 }
 
 /* client libraries expect an encoding */
@@ -519,7 +519,7 @@ SIS6326ResetVideo(ScrnInfoPtr pScrn)
 static XF86VideoAdaptorPtr
 SIS6326SetupImageVideo(ScreenPtr pScreen)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     SISPtr pSiS = SISPTR(pScrn);
     XF86VideoAdaptorPtr adapt;
     SISPortPrivPtr pPriv;
@@ -531,7 +531,7 @@ SIS6326SetupImageVideo(ScreenPtr pScreen)
        return NULL;
 #endif
 
-    if(!(adapt = xcalloc(1, sizeof(XF86VideoAdaptorRec) +
+    if(!(adapt = calloc(1, sizeof(XF86VideoAdaptorRec) +
                             sizeof(SISPortPrivRec) +
                             sizeof(DevUnion))))
        return NULL;
