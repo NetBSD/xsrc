@@ -22,9 +22,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <string.h>
 #include "fcint.h"
 #include "fcftint.h"
+
+/* Objects MT-safe for readonly access. */
 
 typedef struct {
     const FcChar8    	lang[8];
@@ -51,7 +52,7 @@ static void
 FcLangSetBitSet (FcLangSet    *ls,
 		 unsigned int  id)
 {
-  int bucket;
+  unsigned int bucket;
 
   id = fcLangCharSetIndices[id];
   bucket = id >> 5;
@@ -65,7 +66,7 @@ static FcBool
 FcLangSetBitGet (const FcLangSet *ls,
 		 unsigned int     id)
 {
-  int bucket;
+  unsigned int bucket;
 
   id = fcLangCharSetIndices[id];
   bucket = id >> 5;
@@ -79,7 +80,7 @@ static void
 FcLangSetBitReset (FcLangSet    *ls,
 		   unsigned int  id)
 {
-  int bucket;
+  unsigned int bucket;
 
   id = fcLangCharSetIndices[id];
   bucket = id >> 5;
@@ -282,6 +283,9 @@ FcLangNormalize (const FcChar8 *lang)
 	else
 	{
 	    result = s;
+	    /* we'll miss the opportunity to reduce the correct size
+	     * of the allocated memory for the string after that.
+	     */
 	    s = NULL;
 	    goto bail1;
 	}
@@ -295,6 +299,9 @@ FcLangNormalize (const FcChar8 *lang)
 	else
 	{
 	    result = s;
+	    /* we'll miss the opportunity to reduce the correct size
+	     * of the allocated memory for the string after that.
+	     */
 	    s = NULL;
 	    goto bail1;
 	}
@@ -312,11 +319,14 @@ FcLangNormalize (const FcChar8 *lang)
     else
     {
 	result = s;
+	/* we'll miss the opportunity to reduce the correct size
+	 * of the allocated memory for the string after that.
+	 */
 	s = NULL;
     }
   bail1:
     if (orig)
-	free (orig);
+	FcStrFree (orig);
   bail0:
     if (s)
 	free (s);
@@ -443,7 +453,6 @@ FcLangSetCreate (void)
     ls = malloc (sizeof (FcLangSet));
     if (!ls)
 	return 0;
-    FcMemAlloc (FC_MEM_LANGSET, sizeof (FcLangSet));
     memset (ls->map, '\0', sizeof (ls->map));
     ls->map_size = NUM_LANG_SET_MAP;
     ls->extra = 0;
@@ -455,7 +464,6 @@ FcLangSetDestroy (FcLangSet *ls)
 {
     if (ls->extra)
 	FcStrSetDestroy (ls->extra);
-    FcMemFree (FC_MEM_LANGSET, sizeof (FcLangSet));
     free (ls);
 }
 
@@ -695,34 +703,38 @@ FcLangSetCompare (const FcLangSet *lsa, const FcLangSet *lsb)
 
 /*
  * Used in computing values -- mustn't allocate any storage
- * XXX Not thread-safe
  */
 FcLangSet *
-FcLangSetPromote (const FcChar8 *lang)
+FcLangSetPromote (const FcChar8 *lang, FcValuePromotionBuffer *vbuf)
 {
-    static FcLangSet	ls;
-    static FcStrSet	strs;
-    static FcChar8	*str;
-    int			id;
+    int		id;
+    typedef struct {
+	FcLangSet  ls;
+	FcStrSet   strs;
+	FcChar8   *str;
+    } FcLangSetPromotionBuffer;
+    FcLangSetPromotionBuffer *buf = (FcLangSetPromotionBuffer *) vbuf;
 
-    memset (ls.map, '\0', sizeof (ls.map));
-    ls.map_size = NUM_LANG_SET_MAP;
-    ls.extra = 0;
+    FC_ASSERT_STATIC (sizeof (FcLangSetPromotionBuffer) <= sizeof (FcValuePromotionBuffer));
+
+    memset (buf->ls.map, '\0', sizeof (buf->ls.map));
+    buf->ls.map_size = NUM_LANG_SET_MAP;
+    buf->ls.extra = 0;
     id = FcLangSetIndex (lang);
     if (id > 0)
     {
-	FcLangSetBitSet (&ls, id);
+	FcLangSetBitSet (&buf->ls, id);
     }
     else
     {
-	ls.extra = &strs;
-	strs.num = 1;
-	strs.size = 1;
-	strs.strs = &str;
-	strs.ref = 1;
-	str = (FcChar8 *) lang;
+	buf->ls.extra = &buf->strs;
+	buf->strs.num = 1;
+	buf->strs.size = 1;
+	buf->strs.strs = &buf->str;
+	FcRefInit (&buf->strs.ref, 1);
+	buf->str = (FcChar8 *) lang;
     }
-    return &ls;
+    return &buf->ls;
 }
 
 FcChar32
@@ -1015,9 +1027,11 @@ FcLangSetOperate(const FcLangSet	*a,
 						 const FcChar8	*s))
 {
     FcLangSet	*langset = FcLangSetCopy (a);
-    FcStrList	*sl = FcStrListCreate (FcLangSetGetLangs (b));
+    FcStrSet	*set = FcLangSetGetLangs (b);
+    FcStrList	*sl = FcStrListCreate (set);
     FcChar8	*str;
 
+    FcStrSetDestroy (set);
     while ((str = FcStrListNext (sl)))
     {
 	func (langset, str);

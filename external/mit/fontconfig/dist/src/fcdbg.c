@@ -27,54 +27,62 @@
 #include <stdlib.h>
 
 static void
-_FcValuePrint (const FcValue v)
+_FcValuePrintFile (FILE *f, const FcValue v)
 {
     switch (v.type) {
     case FcTypeVoid:
-	printf ("<void>");
+	fprintf (f, "<void>");
 	break;
     case FcTypeInteger:
-	printf ("%d(i)", v.u.i);
+	fprintf (f, "%d(i)", v.u.i);
 	break;
     case FcTypeDouble:
-	printf ("%g(f)", v.u.d);
+	fprintf (f, "%g(f)", v.u.d);
 	break;
     case FcTypeString:
-	printf ("\"%s\"", v.u.s);
+	fprintf (f, "\"%s\"", v.u.s);
 	break;
     case FcTypeBool:
-	printf ("%s", v.u.b ? "FcTrue" : "FcFalse");
+	fprintf (f, "%s", v.u.b ? "True" : "False");
 	break;
     case FcTypeMatrix:
-	printf ("(%f %f; %f %f)", v.u.m->xx, v.u.m->xy, v.u.m->yx, v.u.m->yy);
+	fprintf (f, "[%g %g; %g %g]", v.u.m->xx, v.u.m->xy, v.u.m->yx, v.u.m->yy);
 	break;
     case FcTypeCharSet:	/* XXX */
-	FcCharSetPrint (v.u.c);
+	if (f == stdout)
+	    FcCharSetPrint (v.u.c);
 	break;
     case FcTypeLangSet:
 	FcLangSetPrint (v.u.l);
 	break;
     case FcTypeFTFace:
-	printf ("face");
+	fprintf (f, "face");
 	break;
     }
+}
+
+void
+FcValuePrintFile (FILE *f, const FcValue v)
+{
+    fprintf (f, " ");
+    _FcValuePrintFile (f, v);
 }
 
 void
 FcValuePrint (const FcValue v)
 {
     printf (" ");
-    _FcValuePrint (v);
+    _FcValuePrintFile (stdout, v);
 }
 
 void
 FcValuePrintWithPosition (const FcValue v, FcBool show_pos_mark)
 {
     if (show_pos_mark)
-	printf (" [insert here] ");
+	printf (" [marker] ");
     else
 	printf (" ");
-    _FcValuePrint (v);
+    _FcValuePrintFile (stdout, v);
 }
 
 static void
@@ -102,7 +110,7 @@ FcValueListPrintWithPosition (FcValueListPtr l, const FcValueListPtr pos)
 	FcValueBindingPrint (l);
     }
     if (!pos)
-	printf (" [insert here]");
+	printf (" [marker]");
 }
 
 void
@@ -214,6 +222,8 @@ FcOpPrint (FcOp op_)
     case FcOpPrependFirst: printf ("PrependFirst"); break;
     case FcOpAppend: printf ("Append"); break;
     case FcOpAppendLast: printf ("AppendLast"); break;
+    case FcOpDelete: printf ("Delete"); break;
+    case FcOpDeleteAll: printf ("DeleteAll"); break;
     case FcOpQuest: printf ("Quest"); break;
     case FcOpOr: printf ("Or"); break;
     case FcOpAnd: printf ("And"); break;
@@ -249,11 +259,17 @@ FcExprPrint (const FcExpr *expr)
     case FcOpInteger: printf ("%d", expr->u.ival); break;
     case FcOpDouble: printf ("%g", expr->u.dval); break;
     case FcOpString: printf ("\"%s\"", expr->u.sval); break;
-    case FcOpMatrix: printf ("[%g %g %g %g]",
-			      expr->u.mval->xx,
-			      expr->u.mval->xy,
-			      expr->u.mval->yx,
-			      expr->u.mval->yy); break;
+    case FcOpMatrix:
+	printf ("[");
+	FcExprPrint (expr->u.mexpr->xx);
+	printf (" ");
+	FcExprPrint (expr->u.mexpr->xy);
+	printf ("; ");
+	FcExprPrint (expr->u.mexpr->yx);
+	printf (" ");
+	FcExprPrint (expr->u.mexpr->yy);
+	printf ("]");
+	break;
     case FcOpRange: break;
     case FcOpBool: printf ("%s", expr->u.bval ? "true" : "false"); break;
     case FcOpCharSet: printf ("charset\n"); break;
@@ -263,7 +279,16 @@ FcExprPrint (const FcExpr *expr)
 	printf ("\n");
 	break;
     case FcOpNil: printf ("nil\n"); break;
-    case FcOpField: printf ("%s", FcObjectName(expr->u.object)); break;
+    case FcOpField: printf ("%s ", FcObjectName(expr->u.name.object));
+      switch ((int) expr->u.name.kind) {
+      case FcMatchPattern:
+	  printf ("(pattern) ");
+	  break;
+      case FcMatchFont:
+	  printf ("(font) ");
+	  break;
+      }
+      break;
     case FcOpConst: printf ("%s", expr->u.constant); break;
     case FcOpQuest:
 	FcExprPrint (expr->u.tree.left);
@@ -432,15 +457,17 @@ int FcDebugVal;
 void
 FcInitDebug (void)
 {
-    char    *e;
+    if (!FcDebugVal) {
+	char    *e;
 
-    e = getenv ("FC_DEBUG");
-    if (e)
-    {
-        printf ("FC_DEBUG=%s\n", e);
-        FcDebugVal = atoi (e);
-        if (FcDebugVal < 0)
-   	    FcDebugVal = 0;
+	e = getenv ("FC_DEBUG");
+	if (e)
+	{
+	    printf ("FC_DEBUG=%s\n", e);
+	    FcDebugVal = atoi (e);
+	    if (FcDebugVal < 0)
+		FcDebugVal = 0;
+	}
     }
 }
 #define __fcdbg__

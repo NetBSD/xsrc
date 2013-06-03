@@ -36,7 +36,7 @@ uninstall-local:
 	-$(RM) -rf "$(DESTDIR)$(fc_cachedir)"
 endif
 
-INCLUDES=-I${top_srcdir} -I${top_srcdir}/src $(WARN_CFLAGS)
+AM_CPPFLAGS=-I${top_srcdir} -I${top_srcdir}/src $(WARN_CFLAGS)
 
 bin_PROGRAMS=fc-cache
 
@@ -65,3 +65,5 @@ CLEANFILES += ${man_MANS}
 else
 all-local:
 endif
+
+-include $(top_srcdir)/git.mk

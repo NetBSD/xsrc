@@ -33,7 +33,7 @@
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcCharSet * <function>FcCharSetCreate</function></funcdef>
@@ -88,7 +88,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>void <function>FcCharSetDestroy</function></funcdef>
@@ -144,7 +144,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcBool <function>FcCharSetAddChar</function></funcdef>
@@ -201,7 +201,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcBool <function>FcCharSetDelChar</function></funcdef>
@@ -258,7 +258,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcCharSet * <function>FcCharSetCopy</function></funcdef>
@@ -313,7 +313,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcBool <function>FcCharSetEqual</function></funcdef>
@@ -369,7 +369,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcCharSet * <function>FcCharSetIntersect</function></funcdef>
@@ -425,7 +425,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcCharSet * <function>FcCharSetUnion</function></funcdef>
@@ -480,7 +480,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcCharSet * <function>FcCharSetSubtract</function></funcdef>
@@ -535,7 +535,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcBool <function>FcCharSetMerge</function></funcdef>
@@ -596,7 +596,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcBool <function>FcCharSetHasChar</function></funcdef>
@@ -651,7 +651,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcChar32 <function>FcCharSetCount</function></funcdef>
@@ -705,7 +705,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcChar32 <function>FcCharSetIntersectCount</function></funcdef>
@@ -760,7 +760,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcChar32 <function>FcCharSetSubtractCount</function></funcdef>
@@ -815,7 +815,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcBool <function>FcCharSetIsSubset</function></funcdef>
@@ -870,7 +870,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcChar32 <function>FcCharSetFirstPage</function></funcdef>
@@ -928,7 +928,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcChar32 <function>FcCharSetNextPage</function></funcdef>
@@ -986,7 +986,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcChar32 <function>FcCharSetCoverage</function></funcdef>
@@ -1047,7 +1047,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcCharSet * <function>FcCharSetNew</function></funcdef>

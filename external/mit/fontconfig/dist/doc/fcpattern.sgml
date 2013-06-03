@@ -33,7 +33,7 @@
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcPattern * <function>FcPatternCreate</function></funcdef>
@@ -87,7 +87,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcPattern * <function>FcPatternDuplicate</function></funcdef>
@@ -143,7 +143,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>void <function>FcPatternReference</function></funcdef>
@@ -198,7 +198,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>void <function>FcPatternDestroy</function></funcdef>
@@ -253,7 +253,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcBool <function>FcPatternEqual</function></funcdef>
@@ -308,7 +308,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcBool <function>FcPatternEqualSubset</function></funcdef>
@@ -365,7 +365,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcPattern * <function>FcPatternFilter</function></funcdef>
@@ -423,7 +423,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcChar32 <function>FcPatternHash</function></funcdef>
@@ -478,7 +478,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcBool <function>FcPatternAdd</function></funcdef>
@@ -539,7 +539,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcBool <function>FcPatternAddWeak</function></funcdef>
@@ -604,7 +604,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcBool <function>FcPatternAddInteger</function></funcdef>
@@ -705,7 +705,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcResult <function>FcPatternGet</function></funcdef>
@@ -772,7 +772,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcResult <function>FcPatternGetInteger</function></funcdef>
@@ -882,7 +882,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcPattern * <function>FcPatternBuild</function></funcdef>
@@ -975,7 +975,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcBool <function>FcPatternDel</function></funcdef>
@@ -1031,7 +1031,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcBool <function>FcPatternRemove</function></funcdef>
@@ -1088,7 +1088,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>void <function>FcPatternPrint</function></funcdef>
@@ -1144,7 +1144,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>void <function>FcDefaultSubstitute</function></funcdef>
@@ -1210,7 +1210,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcPattern * <function>FcNameParse</function></funcdef>
@@ -1264,7 +1264,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcChar8 * <function>FcNameUnparse</function></funcdef>

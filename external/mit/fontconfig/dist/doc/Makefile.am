@@ -53,7 +53,10 @@ SUFFIXES =	\
 TESTS =				\
 	check-missing-doc	\
 	$(NULL)
-TESTS_ENVIRONMENT=top_srcdir=${top_srcdir} sh
+TESTS_ENVIRONMENT = \
+	top_srcdir=${top_srcdir}; export top_srcdir; \
+	$(NULL)
+LOG_COMPILER = sh
 #
 DOC2HTML = docbook2html
 DOC2TXT  = docbook2txt
@@ -118,6 +121,7 @@ noinst_PROGRAMS =	\
 edit_sgml_SOURCES =	\
 	edit-sgml.c	\
 	$(NULL)
+edit_sgml_CC = $(CC_FOR_BUILD)
 #
 check_SCRIPTS =			\
 	check-missing-doc	\
@@ -150,14 +154,9 @@ noinst_PROGRAMS +=	\
 htmldoc_DATA += $(HTML_DIR)/*
 
 ##
-if CROSS_COMPILING
-.fncs.sgml:
-	@echo Warning: cannot rebuild $@ when cross-compiling
-else
 .fncs.sgml:
 	$(AM_V_GEN) $(RM) $@; \
 	$(builddir)/edit-sgml$(EXEEXT) $(srcdir)/func.sgml < '$(srcdir)/$*.fncs' > $*.sgml
-endif
 .sgml.txt:
 	$(AM_V_GEN) $(RM) $@; \
 	$(DOC2TXT) $*.sgml
@@ -176,16 +175,11 @@ fonts-conf.5: local-fontconfig-user.sgml version.sgml confdir.sgml
 $(man3_MANS): func.refs
 func.refs: local-fontconfig-devel.sgml $(DOCS_DEPS)
 	$(AM_V_GEN) $(RM) $@; \
-	[ "x$(builddir)" != "x$(srcdir)" ] &&		\
-	for f in $(DOC_FUNCS_SGML); do			\
-		$(RM) $(builddir)/$$f || :;		\
-		$(LN_S) $(srcdir)/$$f $(builddir)/$$f;	\
-	done || :; \
 	$(DOC2MAN) -o devel-man local-fontconfig-devel.sgml && \
 	mv devel-man/manpage.refs func.refs &&	\
 	mv devel-man/*.3 . &&			\
 	$(RM) devel-man/manpage.* &&		\
-	rmdir devel-man
+	rmdir devel-man || rm $@ || :
 confdir.sgml: $(srcdir)/confdir.sgml.in
 	$(AM_V_GEN) sed -e 's,@CONFDIR\@,${CONFDIR},' $(srcdir)/$@.in | awk '{if (NR > 1) printf("\n"); printf("%s", $$0);}' > $@
 ##
@@ -207,9 +201,19 @@ local-fontconfig-devel.sgml: $(srcdir)/fontconfig-devel.sgml
 all-local: $(BUILT_DOCS) $(HTML_DIR)/*
 clean-local:
 	$(RM) -r $(HTML_DIR) devel-man
-	[ "x$(builddir)" != "x$(srcdir)" ] && $(RM) $(builddir)/fontconfig-user.sgml $(builddir)/fontconfig-devel.sgml || :
+	[ "x$(builddir)" != "x$(srcdir)" ] && $(RM) $(builddir)/*.sgml || :
+dist-local-check-docs-enabled:
+	@true
 else
 htmldoc_DATA += $(srcdir)/$(HTML_DIR)/*
 all-local:
 clean-local:
+dist-local-check-docs-enabled:
+	@echo "*** --enable-man must be used in order to make dist"
+	@false
 endif
+
+# force doc rebulid after configure
+dist-hook-local: dist-local-check-docs-enabled
+
+-include $(top_srcdir)/git.mk

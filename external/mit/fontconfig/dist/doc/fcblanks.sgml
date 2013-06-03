@@ -33,7 +33,7 @@
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcBlanks * <function>FcBlanksCreate</function></funcdef>
@@ -87,7 +87,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>void <function>FcBlanksDestroy</function></funcdef>
@@ -141,7 +141,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcBool <function>FcBlanksAdd</function></funcdef>
@@ -197,7 +197,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcBool <function>FcBlanksIsMember</function></funcdef>

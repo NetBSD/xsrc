@@ -44,9 +44,6 @@
 #endif
 
 #ifdef _WIN32
-
-#include <windows.h>
-
 #ifdef __GNUC__
 typedef long long INT64;
 #define EPOCH_OFFSET 11644473600ll
@@ -178,8 +175,9 @@ FcDirChecksum (const FcChar8 *dir, time_t *checksum)
 {
     struct Adler32 ctx;
     struct dirent **files;
-    int n, ret = 0;
+    int n;
 #ifndef HAVE_STRUCT_DIRENT_D_TYPE
+    int ret = 0;
     size_t len = strlen ((const char *)dir);
 #endif
 
@@ -229,8 +227,10 @@ FcDirChecksum (const FcChar8 *dir, time_t *checksum)
 	free (files[n]);
     }
     free (files);
+#ifndef HAVE_STRUCT_DIRENT_D_TYPE
     if (ret == -1)
 	return -1;
+#endif
 
     *checksum = Adler32Finish (&ctx);
 
@@ -265,10 +265,10 @@ FcFStatFs (int fd, FcStatFS *statb)
     int ret = -1;
     FcBool flag = FcFalse;
 
-    memset (statb, 0, sizeof (FcStatFS));
-
 #if defined(HAVE_FSTATVFS) && (defined(HAVE_STRUCT_STATVFS_F_BASETYPE) || defined(HAVE_STRUCT_STATVFS_F_FSTYPENAME))
     struct statvfs buf;
+
+    memset (statb, 0, sizeof (FcStatFS));
 
     if ((ret = fstatvfs (fd, &buf)) == 0)
     {
@@ -280,6 +280,8 @@ FcFStatFs (int fd, FcStatFS *statb)
     }
 #elif defined(HAVE_FSTATFS) && (defined(HAVE_STRUCT_STATFS_F_FLAGS) || defined(HAVE_STRUCT_STATFS_F_FSTYPENAME) || defined(__linux__))
     struct statfs buf;
+
+    memset (statb, 0, sizeof (FcStatFS));
 
     if ((ret = fstatfs (fd, &buf)) == 0)
     {
@@ -334,7 +336,7 @@ FcIsFsMmapSafe (int fd)
 FcBool
 FcIsFsMtimeBroken (const FcChar8 *dir)
 {
-    int fd = open ((const char *) dir, O_RDONLY);
+    int fd = FcOpen ((const char *) dir, O_RDONLY);
 
     if (fd != -1)
     {

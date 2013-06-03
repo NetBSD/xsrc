@@ -33,7 +33,7 @@
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcObjectSet * <function>FcObjectSetCreate</function></funcdef>
@@ -87,7 +87,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcBool <function>FcObjectSetAdd</function></funcdef>
@@ -143,7 +143,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>void <function>FcObjectSetDestroy</function></funcdef>
@@ -199,7 +199,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcObjectSet * <function>FcObjectSetBuild</function></funcdef>

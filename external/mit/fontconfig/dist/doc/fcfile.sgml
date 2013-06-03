@@ -33,7 +33,7 @@
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcBool <function>FcFileScan</function></funcdef>
@@ -102,7 +102,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcBool <function>FcFileIsDir</function></funcdef>
@@ -157,7 +157,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcBool <function>FcDirScan</function></funcdef>
@@ -221,7 +221,7 @@ Fontconfig version &version;
 	<refsynopsisdiv>
 	<funcsynopsis>
 	<funcsynopsisinfo>
-#include &lt;fontconfig.h&gt;
+#include &lt;fontconfig/fontconfig.h&gt;
 	</funcsynopsisinfo>
 	<funcprototype>
 	    <funcdef>FcBool <function>FcDirSave</function></funcdef>
