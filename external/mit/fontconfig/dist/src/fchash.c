@@ -194,10 +194,12 @@ FcHashGetSHA256Digest (const FcChar8 *input_strings,
     block[63 - 1] = (len >>  8) & 0xff;
     block[63 - 2] = (len >> 16) & 0xff;
     block[63 - 3] = (len >> 24) & 0xff;
+#ifdef _LP64
     block[63 - 4] = (len >> 32) & 0xff;
     block[63 - 5] = (len >> 40) & 0xff;
     block[63 - 6] = (len >> 48) & 0xff;
     block[63 - 7] = (len >> 56) & 0xff;
+#endif
     FcHashComputeSHA256Digest (ret, block);
 
     return FcHashSHA256ToString (ret);
@@ -243,10 +245,12 @@ FcHashGetSHA256DigestFromFile (const FcChar8 *filename)
 	    ibuf[63 - 1] = (v >>  8) & 0xff;
 	    ibuf[63 - 2] = (v >> 16) & 0xff;
 	    ibuf[63 - 3] = (v >> 24) & 0xff;
+#ifdef _LP64
 	    ibuf[63 - 4] = (v >> 32) & 0xff;
 	    ibuf[63 - 5] = (v >> 40) & 0xff;
 	    ibuf[63 - 6] = (v >> 48) & 0xff;
 	    ibuf[63 - 7] = (v >> 56) & 0xff;
+#endif
 	    FcHashComputeSHA256Digest (ret, ibuf);
 	    break;
 	}
@@ -302,10 +306,12 @@ FcHashGetSHA256DigestFromMemory (const char *fontdata,
 	    ibuf[63 - 1] = (v >>  8) & 0xff;
 	    ibuf[63 - 2] = (v >> 16) & 0xff;
 	    ibuf[63 - 3] = (v >> 24) & 0xff;
+#ifdef _LP64
 	    ibuf[63 - 4] = (v >> 32) & 0xff;
 	    ibuf[63 - 5] = (v >> 40) & 0xff;
 	    ibuf[63 - 6] = (v >> 48) & 0xff;
 	    ibuf[63 - 7] = (v >> 56) & 0xff;
+#endif
 	    FcHashComputeSHA256Digest (ret, ibuf);
 	    break;
 	}
