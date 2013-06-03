@@ -229,29 +229,40 @@ SavageFreeBIOSModeTable( SavagePtr psav, SavageModeTablePtr* ppTable )
     {
 	if( pMode->RefreshRate )
 	{
-	    xfree( pMode->RefreshRate );
+	    free( pMode->RefreshRate );
 	    pMode->RefreshRate = NULL;
 	}
 	pMode++;
     }
 
-    xfree( *ppTable );
+    free( *ppTable );
 }
 
 
 SavageModeTablePtr
 SavageGetBIOSModeTable( SavagePtr psav, int iDepth )
 {
-    int nModes = SavageGetBIOSModes( psav, iDepth, NULL );
+    VbeInfoBlock *vbe;
+    int nModes;
     SavageModeTablePtr pTable;
 
+    if( !psav->pVbe )
+	return 0;
+
+    if (!(vbe = VBEGetVBEInfo(psav->pVbe)))
+	return 0;
+
+    nModes = SavageGetBIOSModes( psav, vbe, iDepth, NULL );
+
     pTable = (SavageModeTablePtr) 
-	xcalloc( 1, sizeof(SavageModeTableRec) + 
+	calloc( 1, sizeof(SavageModeTableRec) + 
 		    (nModes-1) * sizeof(SavageModeEntry) );
     if( pTable ) {
 	pTable->NumModes = nModes;
-	SavageGetBIOSModes( psav, iDepth, pTable->Modes );
+	SavageGetBIOSModes( psav, vbe, iDepth, pTable->Modes );
     }
+
+    VBEFreeVBEInfo(vbe);
 
     return pTable;
 }
@@ -260,18 +271,15 @@ SavageGetBIOSModeTable( SavagePtr psav, int iDepth )
 unsigned short
 SavageGetBIOSModes( 
     SavagePtr psav,
+    VbeInfoBlock *vbe,
     int iDepth,
     SavageModeEntryPtr s3vModeTable )
 {
     unsigned short iModeCount = 0;
     unsigned short int *mode_list;
     pointer vbeLinear = NULL;
-    VbeInfoBlock *vbe;
     int vbeReal;
     struct vbe_mode_info_block * vmib;
-
-    if( !psav->pVbe )
-	return 0;
 
     vbeLinear = xf86Int10AllocPages( psav->pVbe->pInt10, 1, &vbeReal );
     if( !vbeLinear )
@@ -281,9 +289,6 @@ SavageGetBIOSModes(
     }
     vmib = (struct vbe_mode_info_block *) vbeLinear;
     
-    if (!(vbe = VBEGetVBEInfo(psav->pVbe)))
-	return 0;
-
     for (mode_list = vbe->VideoModePtr; *mode_list != 0xffff; mode_list++) {
 
 	/*
@@ -346,7 +351,7 @@ SavageGetBIOSModes(
 			if( s3vModeTable->RefreshRate )
 			{
 			    s3vModeTable->RefreshRate = (unsigned char *)
-				xrealloc( 
+				realloc( 
 				    s3vModeTable->RefreshRate,
 				    (iRefresh+8) * sizeof(unsigned char)
 				);
@@ -354,7 +359,7 @@ SavageGetBIOSModes(
 			else
 			{
 			    s3vModeTable->RefreshRate = (unsigned char *)
-				xcalloc( 
+				calloc( 
 				    sizeof(unsigned char),
 				    (iRefresh+8)
 				);
@@ -376,8 +381,6 @@ SavageGetBIOSModes(
 	    }
 	}
     }
-
-    VBEFreeVBEInfo(vbe);
 
     xf86Int10FreePages( psav->pVbe->pInt10, vbeLinear, 1 );
 
