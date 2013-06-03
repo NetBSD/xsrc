@@ -40,7 +40,7 @@ from The Open Group.
 
 static XExtensionInfo _xtest_info_data;
 static XExtensionInfo *xtest_info = &_xtest_info_data;
-static char *xtest_extension_name = XTestExtensionName;
+static const char *xtest_extension_name = XTestExtensionName;
 
 #define XTestCheckExtension(dpy,i,val) \
   XextCheckExtension (dpy, i, xtest_extension_name, val)

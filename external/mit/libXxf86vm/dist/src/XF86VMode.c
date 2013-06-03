@@ -62,7 +62,7 @@ static inline void _XEatDataWords(Display *dpy, unsigned long n)
 
 static XExtensionInfo _xf86vidmode_info_data;
 static XExtensionInfo *xf86vidmode_info = &_xf86vidmode_info_data;
-static char *xf86vidmode_extension_name = XF86VIDMODENAME;
+static const char *xf86vidmode_extension_name = XF86VIDMODENAME;
 
 #define XF86VidModeCheckExtension(dpy,i,val) \
   XextCheckExtension (dpy, i, xf86vidmode_extension_name, val)
