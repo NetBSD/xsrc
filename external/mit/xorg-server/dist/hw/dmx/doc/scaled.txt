@@ -6,8 +6,6 @@ Rickard E. Faith
 
    15 October 2003 (created 19 September 2003)
 
-   Abstract
-
    This document investigates the possibility of adding scaled
    window support to the DMX X server, thereby allowing a window
    or some selected part of the logical DMX area to be displayed
