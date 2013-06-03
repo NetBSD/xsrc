@@ -33,6 +33,7 @@ tga_drv_la_SOURCES = \
          BTramdac.c \
          IBM561ramdac.c \
          ICS1562.c \
+         compat-api.h \
          tga_accel.c \
          tga_cursor.c \
          tga_dac.c \

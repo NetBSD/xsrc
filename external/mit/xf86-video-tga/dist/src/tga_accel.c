@@ -1,5 +1,3 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tga/tga_accel.c,v 1.15 2001/11/21 22:32:59 alanh Exp $ */
-
 /*
  * Copyright 1996,1997 by Alan Hourihane, Wigan, England.
  *
@@ -46,6 +44,7 @@
 #include "BT.h"
 #include "tga.h"
 
+#ifdef HAVE_XAA_H
 /* defines */
 
 #define BLIT_FORWARDS 0
@@ -91,7 +90,7 @@ TGASubsequentScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
 static void
 TGASubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno);
 
-
+#endif
 /*
  * The following function sets up the supported acceleration. Call it
  * from the FbInit() function in the SVGA driver.
@@ -99,12 +98,13 @@ TGASubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno);
 Bool
 DEC21030AccelInit(ScreenPtr pScreen)
 {
+#ifdef HAVE_XAA_H
   XAAInfoRecPtr TGA_AccelInfoRec;
   BoxRec AvailFBArea;
   ScrnInfoPtr pScrn;
   TGAPtr pTga;
 
-  pScrn = xf86Screens[pScreen->myNum];
+  pScrn = xf86ScreenToScrn(pScreen);
   pTga = TGAPTR(pScrn);
 
   /*  ErrorF("DEC21030AccelInit called!"); */
@@ -194,8 +194,12 @@ DEC21030AccelInit(ScreenPtr pScreen)
 
   /* initialize XAA */
   return(XAAInit(pScreen, TGA_AccelInfoRec));
+#else
+  return FALSE;
+#endif
 }
 
+#ifdef HAVE_XAA_H
 static void
 TGASetupForScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
 					      int fg, int bg, int rop,
@@ -1570,3 +1574,4 @@ TGASubsequentClippedDashedLine(ScrnInfoPtr pScrn, int x1, int y1, int len,
 
   return;
 }
+#endif

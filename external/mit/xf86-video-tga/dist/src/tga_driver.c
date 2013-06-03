@@ -63,8 +63,7 @@
 #include "tga.h"
 
 #ifdef XFreeXDGA
-#define _XF86DGA_SERVER_
-#include <X11/extensions/xf86dgastr.h>
+#include <X11/extensions/xf86dgaproto.h>
 #endif
 
 #include "globals.h"
@@ -83,21 +82,20 @@ static const OptionInfoRec * TGAAvailableOptions(int chipid, int busid);
 static void	TGAIdentify(int flags);
 static Bool	TGAProbe(DriverPtr drv, int flags);
 static Bool	TGAPreInit(ScrnInfoPtr pScrn, int flags);
-static Bool	TGAScreenInit(int Index, ScreenPtr pScreen, int argc,
-			      char **argv);
-static Bool	TGAEnterVT(int scrnIndex, int flags);
-static void	TGALeaveVT(int scrnIndex, int flags);
-static Bool	TGACloseScreen(int scrnIndex, ScreenPtr pScreen);
+static Bool	TGAScreenInit(SCREEN_INIT_ARGS_DECL);
+static Bool	TGAEnterVT(VT_FUNC_ARGS_DECL);
+static void	TGALeaveVT(VT_FUNC_ARGS_DECL);
+static Bool	TGACloseScreen(CLOSE_SCREEN_ARGS_DECL);
 static Bool	TGASaveScreen(ScreenPtr pScreen, int mode);
 
 /* Required if the driver supports mode switching */
-static Bool	TGASwitchMode(int scrnIndex, DisplayModePtr mode, int flags);
+static Bool	TGASwitchMode(SWITCH_MODE_ARGS_DECL);
 /* Required if the driver supports moving the viewport */
-static void	TGAAdjustFrame(int scrnIndex, int x, int y, int flags);
+static void	TGAAdjustFrame(ADJUST_FRAME_ARGS_DECL);
 
 /* Optional functions */
-static void	TGAFreeScreen(int scrnIndex, int flags);
-static ModeStatus TGAValidMode(int scrnIndex, DisplayModePtr mode,
+static void	TGAFreeScreen(FREE_SCREEN_ARGS_DECL);
+static ModeStatus TGAValidMode(SCRN_ARG_TYPE arg, DisplayModePtr mode,
 			       Bool verbose, int flags);
 
 /* Internally used functions */
@@ -267,7 +265,7 @@ TGAFreeRec(ScrnInfoPtr pScrn)
     if(pTga->buffers[0])
       free(pTga->buffers[0]);
 
-    xfree(pScrn->driverPrivate);
+    free(pScrn->driverPrivate);
     pScrn->driverPrivate = NULL;
 
     return;
@@ -351,7 +349,7 @@ TGAProbe(DriverPtr drv, int flags)
 		   TGAChipsets, TGAPciChipsets, devSections, numDevSections,
 		   drv, &usedChips);
 				    
-    xfree(devSections);
+    free(devSections);
     if (numUsed <= 0)
 	return FALSE;
 
@@ -383,7 +381,7 @@ TGAProbe(DriverPtr drv, int flags)
 	    foundScreen = TRUE;
 	}
     }
-    xfree(usedChips);
+    free(usedChips);
     return foundScreen;
 }
 
@@ -541,7 +539,7 @@ TGAPreInit(ScrnInfoPtr pScrn, int flags)
     /* Collect all of the relevant option flags (fill in pScrn->options) */
     xf86CollectOptions(pScrn, NULL);
     /* Process the options */
-    if (!(pTga->Options = xalloc(sizeof(TGAOptions))))
+    if (!(pTga->Options = malloc(sizeof(TGAOptions))))
 	return FALSE;
     memcpy(pTga->Options, TGAOptions, sizeof(TGAOptions));
     xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pTga->Options);
@@ -1322,7 +1320,7 @@ TGARestore(ScrnInfoPtr pScrn)
 /* This gets called at the start of each server generation */
 
 static Bool
-TGAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
+TGAScreenInit(SCREEN_INIT_ARGS_DECL)
 {
     ScrnInfoPtr pScrn;
     TGAPtr pTga;
@@ -1332,7 +1330,7 @@ TGAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     /* 
      * First get the ScrnInfoRec
      */
-    pScrn = xf86Screens[pScreen->myNum];
+    pScrn = xf86ScreenToScrn(pScreen);
     pTga = TGAPTR(pScrn);
 
     /* Map the TGA memory and MMIO areas */
@@ -1423,7 +1421,7 @@ TGAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 			pScrn->displayWidth, pScrn->bitsPerPixel);
 	break;
     default:
-	xf86DrvMsg(scrnIndex, X_ERROR,
+	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		   "Internal error: invalid bpp (%d) in TGAScrnInit\n",
 		   pScrn->bitsPerPixel);
 	    ret = FALSE;
@@ -1546,9 +1544,10 @@ TGAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
 /* Usually mandatory */
 static Bool
-TGASwitchMode(int scrnIndex, DisplayModePtr mode, int flags)
+TGASwitchMode(SWITCH_MODE_ARGS_DECL)
 {
-    return TGAModeInit(xf86Screens[scrnIndex], mode);
+    SCRN_INFO_PTR(arg);
+    return TGAModeInit(pScrn, mode);
 }
 
 
@@ -1558,7 +1557,7 @@ TGASwitchMode(int scrnIndex, DisplayModePtr mode, int flags)
  */
 /* Usually mandatory */
 static void 
-TGAAdjustFrame(int scrnIndex, int x, int y, int flags)
+TGAAdjustFrame(ADJUST_FRAME_ARGS_DECL)
 {
     /* we don't support virtual desktops, because TGA doesn't have the
        ability to set the start of the visible framebuffer at an arbitrary
@@ -1575,9 +1574,9 @@ TGAAdjustFrame(int scrnIndex, int x, int y, int flags)
 
 /* Mandatory */
 static Bool
-TGAEnterVT(int scrnIndex, int flags)
+TGAEnterVT(VT_FUNC_ARGS_DECL)
 {
-    ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
+    SCRN_INFO_PTR(arg);
 
     /* Should we re-save the text mode on each VT enter? */
     if (!TGAModeInit(pScrn, pScrn->currentMode))
@@ -1596,9 +1595,9 @@ TGAEnterVT(int scrnIndex, int flags)
 
 /* Mandatory */
 static void
-TGALeaveVT(int scrnIndex, int flags)
+TGALeaveVT(VT_FUNC_ARGS_DECL)
 {
-    ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
+    SCRN_INFO_PTR(arg);
 /*     TGAPtr pTga = TGAPTR(pScrn); */
 
     TGARestore(pScrn);
@@ -1616,9 +1615,9 @@ TGALeaveVT(int scrnIndex, int flags)
 
 /* Mandatory */
 static Bool
-TGACloseScreen(int scrnIndex, ScreenPtr pScreen)
+TGACloseScreen(CLOSE_SCREEN_ARGS_DECL)
 {
-    ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     TGAPtr pTga = TGAPTR(pScrn);
 
     TGARestore(pScrn);
@@ -1626,12 +1625,14 @@ TGACloseScreen(int scrnIndex, ScreenPtr pScreen)
     TGASync(pScrn);
     TGAUnmapMem(pScrn);
 
+#ifdef HAVE_XAA_H
     if(pTga->AccelInfoRec)
 	XAADestroyInfoRec(pTga->AccelInfoRec);
+#endif
     pScrn->vtSema = FALSE;
     
     pScreen->CloseScreen = pTga->CloseScreen;
-    return (*pScreen->CloseScreen)(scrnIndex, pScreen);
+    return (*pScreen->CloseScreen)(CLOSE_SCREEN_ARGS);
 }
 
 
@@ -1639,10 +1640,11 @@ TGACloseScreen(int scrnIndex, ScreenPtr pScreen)
 
 /* Optional */
 static void
-TGAFreeScreen(int scrnIndex, int flags)
+TGAFreeScreen(FREE_SCREEN_ARGS_DECL)
 {
-    RamDacFreeRec(xf86Screens[scrnIndex]);
-    TGAFreeRec(xf86Screens[scrnIndex]);
+    SCRN_INFO_PTR(arg);
+    RamDacFreeRec(pScrn);
+    TGAFreeRec(pScrn);
 }
 
 
@@ -1650,7 +1652,7 @@ TGAFreeScreen(int scrnIndex, int flags)
 
 /* Optional */
 static ModeStatus
-TGAValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
+TGAValidMode(SCRN_ARG_TYPE arg, DisplayModePtr mode, Bool verbose, int flags)
 {
     if (mode->Flags & V_INTERLACE)
 	return(MODE_BAD);
@@ -1672,7 +1674,7 @@ TGASaveScreen(ScreenPtr pScreen, int mode)
     int valid_reg = 0;
     Bool unblank;
 
-    pScrn = xf86Screens[pScreen->myNum];
+    pScrn = xf86ScreenToScrn(pScreen);
     pTga = TGAPTR(pScrn);
     valid_reg = TGA_READ_REG(TGA_VALID_REG);
     valid_reg &= 0xFFFFFFFC;

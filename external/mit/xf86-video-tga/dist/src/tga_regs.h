@@ -21,7 +21,6 @@
  *
  * Author:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tga/tga_regs.h,v 1.11 2000/10/20 12:57:26 alanh Exp $ */
 
 /* TGA hardware description (minimal)
  *
