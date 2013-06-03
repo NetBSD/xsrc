@@ -49,7 +49,10 @@ authorization from the XFree86 Project and Silicon Motion.
 
 #include "fb.h"
 
+#ifdef HAVE_XAA_H
 #include "xaa.h"
+#endif
+#include "xf86fbman.h"
 #include "exa.h"
 #include "xf86cmap.h"
 #include "xf86i2c.h"
@@ -60,12 +63,7 @@ authorization from the XFree86 Project and Silicon Motion.
 #include "xf86xv.h"
 #include <X11/extensions/Xv.h>
 
-#ifndef __BYTE_ORDER
-#define __BYTE_ORDER BYTE_ORDER
-#define __BIG_ENDIAN BIG_ENDIAN
-#define __LITTLE_ENDIAN LITTLE_ENDIAN
-#endif
-
+#include "compat-api.h"
 /******************************************************************************/
 /*			D E F I N I T I O N S				      */
 /******************************************************************************/
@@ -245,7 +243,9 @@ typedef struct
 					   printed using a counter */
 
     Bool		useBIOS;	/* Use BIOS for mode sets */
+#ifdef HAVE_XAA_H
     XAAInfoRecPtr	XAAInfoRec;	/* XAA info Rec */
+#endif
 
     /* EXA */
     ExaDriverPtr	EXADriverPtr;

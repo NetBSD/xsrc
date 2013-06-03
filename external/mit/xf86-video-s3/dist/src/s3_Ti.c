@@ -29,6 +29,8 @@
 #include "config.h"
 #endif
 
+#include <unistd.h>
+
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include <X11/Xos.h>
@@ -724,7 +726,7 @@ static void S3TiLoadCursorImage(ScrnInfoPtr pScrn, unsigned char *image)
 
 static Bool S3TiUseHWCursor(ScreenPtr pScreen, CursorPtr pCurs)
 {
-	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 	S3Ptr pS3 = S3PTR(pScrn);
 	return (pS3->hwCursor);
 }       
@@ -733,7 +735,7 @@ static Bool S3TiUseHWCursor(ScreenPtr pScreen, CursorPtr pCurs)
 
 Bool S3Ti_CursorInit(ScreenPtr pScreen)
 {
-        ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+        ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
         S3Ptr pS3 = S3PTR(pScrn);
         xf86CursorInfoPtr pCurs;      
         
