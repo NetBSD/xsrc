@@ -1,5 +1,3 @@
-/* $XFree86: $ */
-
 /*
  * Copyright 1999 by Matthew Grossman, Seattle, USA.
  *
@@ -44,12 +42,13 @@
 #include "pixmapstr.h"
 #include "miline.h"
 #include "xf86str.h"
-#include "xaa.h"
-#include "xaalocal.h"
 
 /*  #include "tga.h" */
 #include "tga_regs.h"
 
+#ifdef HAVE_XAA_H
+#include "xaa.h"
+#include "xaalocal.h"
 /* line functions */
 extern void
 TGASetupForSolidLine(ScrnInfoPtr pScrn, int color, int rop,
@@ -634,3 +633,4 @@ TGAPolySegment(
 }
 
     
+#endif

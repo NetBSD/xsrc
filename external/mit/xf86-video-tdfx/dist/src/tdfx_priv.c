@@ -192,14 +192,14 @@ Bool TDFXInitFifo(ScreenPtr pScreen)
   ScrnInfoPtr pScrn;
   TDFXPtr pTDFX;
 
-  pScrn = xf86Screens[pScreen->myNum];
+  pScrn = xf86ScreenToScrn(pScreen);
   pTDFX=TDFXPTR(pScrn);
 #ifdef DEBUG_FIFO
   pTDFX->fifoMirrorBase=0;
 #endif
   pTDFX->fifoBase = (uint32*)(pTDFX->FbBase+pTDFX->fifoOffset);
 #ifdef DEBUG_FIFO
-  pTDFX->fifoMirrorBase = xalloc(pTDFX->fifoSize);
+  pTDFX->fifoMirrorBase = malloc(pTDFX->fifoSize);
   pTDFX->fifoMirrorPtr = pTDFX->fifoMirrorBase;
 #endif
   pTDFX->sync=TDFXSyncFifo;
@@ -212,12 +212,12 @@ void TDFXShutdownFifo(ScreenPtr pScreen)
   ScrnInfoPtr pScrn;
   TDFXPtr pTDFX;
 
-  pScrn = xf86Screens[pScreen->myNum];
+  pScrn = xf86ScreenToScrn(pScreen);
   pTDFX=TDFXPTR(pScrn);
   TDFXWriteLongMMIO(pTDFX, SST_FIFO_BASESIZE0, 0);
   pTDFX->sync=TDFXSync;
 #ifdef DEBUG_FIFO
-  if (pTDFX->fifoMirrorBase) xfree(pTDFX->fifoMirrorBase);
+  if (pTDFX->fifoMirrorBase) free(pTDFX->fifoMirrorBase);
   pTDFX->fifoMirrorBase=0;
 #endif
 }
@@ -234,7 +234,7 @@ GetReadPtr(TDFXPtr pTDFX)
   return read_ptr;
 }
 
-#ifdef XF86DRI
+#ifdef TDFXDRI
 void TDFXSwapContextFifo(ScreenPtr pScreen)
 {
   ScrnInfoPtr pScrn;
@@ -242,7 +242,7 @@ void TDFXSwapContextFifo(ScreenPtr pScreen)
   int dummy, readPos;
   TDFXSAREAPriv *sPriv;
 
-  pScrn = xf86Screens[pScreen->myNum];
+  pScrn = xf86ScreenToScrn(pScreen);
   pTDFX=TDFXPTR(pScrn);
   sPriv=(TDFXSAREAPriv*)DRIGetSAREAPrivate(pScreen);
   /* if (sPriv)
