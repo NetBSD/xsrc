@@ -74,7 +74,7 @@ static inline void _XEatDataWords(Display *dpy, unsigned long n)
 
 static XExtensionInfo _xrecord_info_data;
 static XExtensionInfo *xrecord_info = &_xrecord_info_data;
-static char *xrecord_extension_name = RECORD_NAME;
+static const char *xrecord_extension_name = RECORD_NAME;
 
 #define XRecordCheckExtension(dpy,i,val) \
     XextCheckExtension(dpy, i, xrecord_extension_name, val)

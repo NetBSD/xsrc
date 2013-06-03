@@ -27,7 +27,7 @@ static inline void _XEatDataWords(Display *dpy, unsigned long n)
 
 static XExtensionInfo _xres_ext_info_data;
 static XExtensionInfo *xres_ext_info = &_xres_ext_info_data;
-static char *xres_extension_name = XRES_NAME;
+static const char *xres_extension_name = XRES_NAME;
 
 #define XResCheckExtension(dpy,i,val) \
   XextCheckExtension (dpy, i, xres_extension_name, val)
