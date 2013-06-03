@@ -1002,8 +1002,12 @@ iga1_crtc_gamma_set(xf86CrtcPtr crtc, CARD16 *red, CARD16 *green, CARD16 *blue,
     vgaHWPtr hwp = VGAHWPTR(pScrn);
     VIAPtr pVia = VIAPTR(pScrn);
     int SR1A, SR1B, CR67, CR6A;
-    LOCO colors[size];
+    LOCO *colors;
     int i;
+
+    colors = malloc(size * sizeof(*colors));
+    if (colors == NULL)
+	return;
 
     for (i = 0; i < size; i++) {
         colors[i].red = red[i] >> 8;
@@ -1039,6 +1043,7 @@ iga1_crtc_gamma_set(xf86CrtcPtr crtc, CARD16 *red, CARD16 *green, CARD16 *blue,
             hwp->writeDacData(hwp, colors[i].blue);
         }
     }
+    free(colors);
 }
 
 static void *
@@ -1413,8 +1418,12 @@ iga2_crtc_gamma_set(xf86CrtcPtr crtc, CARD16 *red, CARD16 *green, CARD16 *blue,
     vgaHWPtr hwp = VGAHWPTR(pScrn);
     VIAPtr pVia = VIAPTR(pScrn);
     int SR1A, SR1B, CR67, CR6A;
-    LOCO colors[size];
     int i;
+    LOCO *colors;
+
+    colors = malloc(size * sizeof(*colors));
+    if (colors == NULL)
+	return;
 
     for (i = 0; i < size; i++) {
         colors[i].red = red[i] >> 8;
@@ -1473,6 +1482,7 @@ iga2_crtc_gamma_set(xf86CrtcPtr crtc, CARD16 *red, CARD16 *green, CARD16 *blue,
             hwp->writeDacData(hwp, colors[i].blue);
         }
     }
+    free(colors);
 }
 
 static void *
