@@ -33,8 +33,11 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
+/* Define to 1 if you have the <xaa.h> header file. */
+#define HAVE_XAA_H 1
+
 /* xextproto 7.1 available */
-/* #undef HAVE_XEXTPROTO_71 */
+#define HAVE_XEXTPROTO_71 1
 
 /* X server has new mode code */
 #define HAVE_XMODES 1
@@ -49,13 +52,13 @@
 #define PACKAGE_NAME "xf86-video-siliconmotion"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-video-siliconmotion 1.7.5"
+#define PACKAGE_STRING "xf86-video-siliconmotion 1.7.7"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-video-siliconmotion"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.7.5"
+#define PACKAGE_VERSION "1.7.7"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
@@ -64,10 +67,10 @@
 #define PACKAGE_VERSION_MINOR 7
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 5
+#define PACKAGE_VERSION_PATCHLEVEL 7
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "1.7.5"
+#define VERSION "1.7.7"
