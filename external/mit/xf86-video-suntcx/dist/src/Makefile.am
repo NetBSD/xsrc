@@ -29,6 +29,7 @@ suntcx_drv_la_LDFLAGS = -module -avoid-version
 suntcx_drv_ladir = @moduledir@/drivers
 
 suntcx_drv_la_SOURCES = \
+         compat-api.h \
          tcx_cursor.c \
          tcx_driver.c \
          tcx.h \
