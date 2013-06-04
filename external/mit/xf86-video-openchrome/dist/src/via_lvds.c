@@ -1470,7 +1470,7 @@ static const xf86OutputFuncsRec via_lvds_funcs = {
 static void
 ViaPanelGetNativeModeFromOption(ScrnInfoPtr pScrn, ViaPanelInfoPtr panel, char *name)
 {
-    char aux[strlen(name) + 1];
+    char aux[256];
     CARD8 length, index;
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
@@ -1480,8 +1480,8 @@ ViaPanelGetNativeModeFromOption(ScrnInfoPtr pScrn, ViaPanelInfoPtr panel, char *
     length = sizeof(ViaPanelNativeModes) / sizeof(ViaPanelModeRec);
 
     for (index = 0; index < length; index++) {
-        sprintf(aux, "%dx%d", ViaPanelNativeModes[index].Width,
-                ViaPanelNativeModes[index].Height);
+        snprintf(aux, sizeof(aux), "%dx%d", ViaPanelNativeModes[index].Width,
+                 ViaPanelNativeModes[index].Height);
         if (!xf86NameCmp(name, aux)) {
             panel->NativeModeIndex = index;
             panel->NativeWidth = ViaPanelNativeModes[index].Width;
