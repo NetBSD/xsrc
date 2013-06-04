@@ -520,14 +520,7 @@ Bool VIADRIBufferInit(ScrnInfoPtr pScrn);
 #endif /* HAVE_DRI */
 
 int viaOffScreenLinear(struct buffer_object *obj, ScrnInfoPtr pScrn, unsigned long size);
-void viaShowCursor(ScrnInfoPtr pScrn);
-void viaHideCursor(ScrnInfoPtr pScrn);
-Bool viaHWCursorInit(ScreenPtr pScreen);
-void ViaDisplaySetStreamOnCRT(ScrnInfoPtr pScrn, Bool primary);
 void ViaDisplaySetStreamOnDFP(ScrnInfoPtr pScrn, Bool primary);
-void ViaDisplaySetStreamOnDVO(ScrnInfoPtr pScrn, int port, Bool primary);
 void ViaDisplayEnableSimultaneous(ScrnInfoPtr pScrn);
-void ViaDisplayEnableCRT(ScrnInfoPtr pScrn);
-void ViaDisplayEnableDVO(ScrnInfoPtr pScrn, int port);
 
 #endif /* _VIA_DRIVER_H_ */
