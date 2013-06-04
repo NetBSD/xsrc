@@ -20,7 +20,6 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunleo/leo_accel.c,v 1.2tsi Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -35,14 +34,17 @@
 #include	<X11/fonts/fontstruct.h>
 #include	"dixfontstr.h"
 #include	"fb.h"
-#include	"mibstore.h"
 #include	"mifillarc.h"
 #include	"miwideline.h"
 #include	"mi.h"
 
 #include	"leo.h"
 
+#if HAS_DEVPRIVATEKEYREC
+DevPrivateKeyRec LeoGCPrivateIndex;
+#else
 int LeoGCPrivateIndex;
+#endif
 
 int	leoRopTable[16] = {
 	LEO_ATTR_RGBE_ENABLE|LEO_ROP_ZERO,		/* GXclear */
@@ -65,7 +67,7 @@ int	leoRopTable[16] = {
 
 void LeoVtChange (ScreenPtr pScreen, int enter)
 {
-	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 	LeoPtr pLeo = GET_LEO_FROM_SCRN (pScrn); 
 	LeoCommand0 *lc0 = pLeo->lc0;
 	LeoDraw *ld0 = pLeo->ld0;
@@ -105,11 +107,14 @@ Bool LeoAccelInit (ScreenPtr pScreen, LeoPtr pLeo)
 	}
 	if (!AllocateGCPrivate(pScreen, LeoGCPrivateIndex, sizeof(LeoPrivGCRec)))
 		return FALSE;
+#elif HAS_DIXREGISTERPRIVATEKEY
+        if (!dixRegisterPrivateKey(&LeoGCPrivateIndex, PRIVATE_GC, sizeof(LeoPrivGCRec)))
+		return FALSE;
 #else
 	if (!dixRequestPrivate(&LeoGCPrivateIndex, sizeof(LeoPrivGCRec)))
 		return FALSE;
 #endif
-	
+
 	pLeo->lc0 = lc0 = (LeoCommand0 *) ((char *)pLeo->fb + LEO_LC0_VOFF);
 	pLeo->ld0 = ld0 = (LeoDraw *) ((char *)pLeo->fb + LEO_LD0_VOFF);
 
