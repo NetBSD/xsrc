@@ -1,0 +1,470 @@
+commit b30b17be6ee46594759e58ffc5efb7ee7ec70604
+Author: Matt Turner <mattst88@gmail.com>
+Date:   Mon Jan 21 22:53:05 2013 -0800
+
+    xf86-video-suntcx 1.1.2
+
+commit 77541b5f65a4cfa7d11f8054da045788379d5ffa
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue Sep 25 08:54:58 2012 -0400
+
+    Remove mibstore.h
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit b2ff02eb88241583bad4b76d2369a388beade927
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Thu Jun 7 18:55:10 2012 +0100
+
+    suntcx: port to new compat API.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit 431e56e06b456ad9bd95dc2b5416708625d91b0a
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Sat Oct 29 20:00:00 2011 -0700
+
+    Use malloc/calloc/realloc/free directly
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit 1abbc496b1eeeb9311c3694057e8f5130738ec16
+Author: Jesse Adkins <jesserayadkins@gmail.com>
+Date:   Tue Sep 28 13:29:52 2010 -0700
+
+    Purge cvs tags.
+    
+    Signed-off-by: Jesse Adkins <jesserayadkins@gmail.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2a7a8eca78afa47d4931c75bc7bc882fa85fd27d
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jul 21 16:49:04 2010 -0400
+
+    config: add comments for main statements
+
+commit 068846f7fe964b85bc7141a81d71157550219eb2
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jul 21 16:07:00 2010 -0400
+
+    config: replace deprecated use of AC_OUTPUT with AC_CONFIG_FILES
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit cbdbe0198afa0e10f80de09c448241502d4b1c6d
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jul 21 14:37:42 2010 -0400
+
+    config: replace deprecated AC_HELP_STRING with AS_HELP_STRING
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 7a3f252092bb9d6a99e740e447ebabd9a7942f06
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jul 21 14:05:23 2010 -0400
+
+    config: replace deprecated AM_CONFIG_HEADER with AC_CONFIG_HEADERS
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 8a286b483b473bfb00896117539e84240d4d155e
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jul 21 09:27:42 2010 -0400
+
+    config: complete AC_INIT m4 quoting
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit e456fd843a33ca8428b45bc8fff5c5a20374a3e6
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Jul 20 21:44:58 2010 -0400
+
+    config: remove unrequired AC_SUBST([XORG_CFLAGS])
+    
+    This macro is called by PKG_CHECK_MODULES
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 2b7a2b84c0057cbc76c3a26393bc8a841c877e9d
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Jul 20 20:24:42 2010 -0400
+
+    config: remove unrequired AC_HEADER_STDC
+    
+    Autoconf says:
+    "This macro is obsolescent, as current systems have conforming
+    header files. New programs need not use this macro".
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit c96de181d3107b83ddba2abc347f8a8c526793ba
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Jul 20 19:41:31 2010 -0400
+
+    config: remove AC_PROG_CC as it overrides AC_PROG_C_C99
+    
+    XORG_STRICT_OPTION from XORG_DEFAULT_OPTIONS calls
+    AC_PROG_C_C99. This sets gcc with -std=gnu99.
+    If AC_PROG_CC macro is called afterwards, it resets CC to gcc.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 576c17c19d9b4085bef78c8654fb7403085cf30e
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Jul 20 18:45:19 2010 -0400
+
+    config: update AC_PREREQ statement to 2.60
+    
+    Unrelated to the previous patches, the new value simply reflects
+    the reality that the minimum level for autoconf to configure
+    all x.org modules is 2.60 dated June 2006.
+    
+    ftp://ftp.gnu.org/gnu/autoconf/autoconf-2.60.tar.gz
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 5d6bcfc6a8bd7a1b2162b6dfec2bf4f3534490ce
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Jul 20 16:15:30 2010 -0400
+
+    config: upgrade to util-macros 1.8 for additional man page support
+    
+    Use MAN_SUBST now supplied in XORG_MANPAGE_SECTIONS
+    The value of MAN_SUBST is the same for all X.Org packages.
+
+commit c2a1bb15dc48e705eb396de9596569210ab2ca46
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Jun 13 11:22:42 2010 -0400
+
+    COPYING: replace stub file with actual Copyright notices.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 94cd018a037e35054920d6c543a17f4d6883cf4f
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Fri Jan 15 13:53:38 2010 -0800
+
+    Update Sun license notices to current X.Org standard form
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit 69010149fe43ccab5a686bfb5c521b0575e3f27b
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Dec 15 22:01:02 2009 -0500
+
+    configure.ac: remove unused sdkdir=$(pkg-config...) statement
+    
+    The sdkdir variable isn't use, so remove the statement.
+    
+    Acked-by: Dan Nicholson <dbn.lists@gmail.com>
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit d5dea6d4f96879f301f76f6ac4614d24949690f3
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Mon Nov 23 09:25:06 2009 -0500
+
+    Makefile.am: add ChangeLog and INSTALL on MAINTAINERCLEANFILES
+    
+    Now that the INSTALL file is generated.
+    Allows running make maintainer-clean.
+
+commit a206dec50ec1546938c4fee619f00984e298bb16
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Oct 28 14:41:41 2009 -0400
+
+    INSTALL, NEWS, README or AUTHORS files are missing/incorrect #24206
+    
+    Automake 'foreign' option is specified in configure.ac.
+    Remove from Makefile.am
+
+commit f36bcb933f071fea74a5d08d4374b7eeca1cf274
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Oct 28 14:09:09 2009 -0400
+
+    INSTALL, NEWS, README or AUTHORS files are missing/incorrect #24206
+    
+    Add missing INSTALL file. Use standard GNU file on building tarball
+    README may have been updated
+    Remove AUTHORS file as it is empty and no content available yet.
+    Remove NEWS file as it is empty and no content available yet.
+
+commit def31cb27a0ff247d3c16e2a23eed80f31f410be
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Mon Oct 26 12:54:22 2009 -0400
+
+    Several driver modules do not have a ChangeLog target in Makefile.am #23814
+    
+    The git generated ChangeLog replaces the hand written one.
+    Update configure.ac to xorg-macros level 1.3.
+    Use XORG_DEFAULT_OPTIONS which replaces four XORG_* macros
+    Update Makefile.am to add ChangeLog target if missing
+    Remove ChangeLog from EXTRA_DIST or *CLEAN variables
+    This is a pre-req for the INSTALL_CMD
+
+commit dd0f8a920546c0a35e79a54786169276bf35260b
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Oct 22 12:34:18 2009 -0400
+
+    .gitignore: use common defaults with custom section # 24239
+    
+    Using common defaults will reduce errors and maintenance.
+    Only the very small or inexistent custom section need periodic maintenance
+    when the structure of the component changes. Do not edit defaults.
+
+commit 2999e7e1adc5fc77574a5a134aed70c11cff41b2
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Mon Sep 7 11:12:13 2009 -0400
+
+    xf86-video-suntcx: Remove unused .cvsignore file #23776
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 2efd07e26ceeb065e8a9609b2129879259e51119
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Mon May 4 16:26:36 2009 +0200
+
+    Bump to 1.1.1
+
+commit 3def10bc709942cdc0d741053dde8ced94fa2139
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Fri Jan 30 21:04:23 2009 -0800
+
+    Add README with pointers to mailing list, bugzilla & git repos
+
+commit fd3334fbf8e499c6bb236d8734c92c1690735089
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Fri Jan 9 16:36:36 2009 -0800
+
+    Remove xorgconfig & xorgcfg from See Also list in man page
+
+commit 1dc35256ba1b845a002e9815793031f85f590380
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue Aug 19 10:26:16 2008 -0400
+
+    Uninclude xf86Version.h
+
+commit fa9fce27d8f77b0ad08cb84a775c8ad3030f680b
+Author: Matthieu Herrb <matthieu.herrb@laas.fr>
+Date:   Sat Mar 8 23:59:11 2008 +0100
+
+    Makefile.am: nuke RCS Id
+
+commit b55d0f6473fccff328bcd8febc9d376ade564b2d
+Author: Brice Goglin <bgoglin@debian.org>
+Date:   Tue Aug 7 13:50:48 2007 +0200
+
+    Define TCX_*_VERSION using PACKAGE_VERSION*
+
+commit 94880920a17e3345cd9bff2276c2671f54fff915
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Thu Mar 1 11:07:15 2007 -0800
+
+    renamed: .cvsignore -> .gitignore
+
+commit 4e1f16c2f2b5285cbc36a7458895dceafe43173d
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Thu Mar 1 11:06:47 2007 -0800
+
+    modified: man/suntcx.man
+
+commit 41c0df572fa1ab1cb50304d69a1ac3da50103c9b
+Author: Adam Jackson <ajax@nwnk.net>
+Date:   Fri Apr 7 21:31:45 2006 +0000
+
+    Unlibcwrap. Bump server version requirement. Bump to 1.1.0.
+
+commit b23bc8a174f7bb356fcf27d88595db9e1233bc6f
+Author: Kevin E Martin <kem@kem.org>
+Date:   Wed Dec 21 02:30:03 2005 +0000
+
+    Update package version for X11R7 release.
+
+commit a600d2cdeb0985fc280610731c026e99cb31ee5a
+Author: Adam Jackson <ajax@nwnk.net>
+Date:   Mon Dec 19 16:25:55 2005 +0000
+
+    Stub COPYING files
+
+commit d0af2d2e80bb9ca2fcbc6ed542f4f3b25c482681
+Author: Kevin E Martin <kem@kem.org>
+Date:   Thu Dec 15 00:24:20 2005 +0000
+
+    Update package version number for final X11R7 release candidate.
+
+commit 65c63811002d0b084fe71ac77586bbddc28e7499
+Author: Kevin E Martin <kem@kem.org>
+Date:   Tue Dec 6 22:48:39 2005 +0000
+
+    Change *man_SOURCES ==> *man_PRE to fix autotools warnings.
+
+commit 042e683c2283a2617a61ae381458411d8d0623f0
+Author: Kevin E Martin <kem@kem.org>
+Date:   Sat Dec 3 05:49:36 2005 +0000
+
+    Update package version number for X11R7 RC3 release.
+
+commit 9e88bf8c92c46fc30c90abc0871e71d9c8ddb3a7
+Author: Kevin E Martin <kem@kem.org>
+Date:   Fri Dec 2 02:16:11 2005 +0000
+
+    Remove extraneous AC_MSG_RESULT.
+
+commit 37a54d8d8717d2c934c78c348abc29c88532549c
+Author: Adam Jackson <ajax@nwnk.net>
+Date:   Tue Nov 29 23:30:05 2005 +0000
+
+    Only build dlloader modules by default.
+
+commit e94fb748eaa2bbdf7a7fd2a73f7cf4ce76a9d065
+Author: Alan Coopersmith <Alan.Coopersmith@sun.com>
+Date:   Mon Nov 28 22:04:13 2005 +0000
+
+    Change *mandir targets to use new *_MAN_DIR variables set by xorg-macros.m4
+        update to fix bug #5167 (Linux prefers *.1x man pages in man1 subdir)
+
+commit f8c2fd8ff1f8d1bcec8ebc9ec236d17fa2eb792f
+Author: Eric Anholt <anholt@freebsd.org>
+Date:   Mon Nov 21 10:49:20 2005 +0000
+
+    Add .cvsignores for drivers.
+
+commit b550be51b992dd7bffadd63d6d265a76ac9bfcab
+Author: Kevin E Martin <kem@kem.org>
+Date:   Wed Nov 9 21:15:21 2005 +0000
+
+    Update package version number for X11R7 RC2 release.
+
+commit 5b327f150ca2d7ceeed2a6f72cb8608d75de233a
+Author: Kevin E Martin <kem@kem.org>
+Date:   Tue Nov 1 15:08:55 2005 +0000
+
+    Update pkgcheck depedencies to work with separate build roots.
+
+commit 21082b34bf5eb152f8cdb30801c0058afcb1f171
+Author: Kevin E Martin <kem@kem.org>
+Date:   Wed Oct 19 02:48:05 2005 +0000
+
+    Update package version number for RC1 release.
+
+commit 72ccaa0026a60836373e1ac3237d0c92724dbfa1
+Author: Alan Coopersmith <Alan.Coopersmith@sun.com>
+Date:   Tue Oct 18 00:01:54 2005 +0000
+
+    Use @DRIVER_MAN_SUFFIX@ instead of $(DRIVER_MAN_SUFFIX) in macro
+        substitutions to work better with BSD make
+
+commit e36e228619c9376ccc9cefd23bce58b995108e54
+Author: Adam Jackson <ajax@nwnk.net>
+Date:   Mon Oct 17 22:57:37 2005 +0000
+
+    More 1.7 braindamage: define EXTRA_DIST in terms of @DRIVER_NAME@ instead
+        of indirectly
+
+commit e6fccae540843fa60253978f08b0e871439a4147
+Author: Alan Coopersmith <Alan.Coopersmith@sun.com>
+Date:   Mon Oct 17 00:09:07 2005 +0000
+
+    Use sed & cpp to substitute variables in driver man pages
+
+commit acfeedf269f5d5607a014793f35a83dde16fb1f1
+Author: Daniel Stone <daniel@fooishbar.org>
+Date:   Thu Aug 18 09:03:51 2005 +0000
+
+    Update autogen.sh to one that does objdir != srcdir.
+
+commit 7cce782fbb29532916da4ce298a102da4a4436b1
+Author: Kevin E Martin <kem@kem.org>
+Date:   Fri Jul 29 21:22:45 2005 +0000
+
+    Various changes preparing packages for RC0:
+    - Verify and update package version numbers as needed
+    - Implement versioning scheme
+    - Change bug address to point to bugzilla bug entry form
+    - Disable loadable i18n in libX11 by default (use --enable-loadable-i18n to
+        reenable it)
+    - Fix makedepend to use pkgconfig and pass distcheck
+    - Update build script to build macros first
+    - Update modular Xorg version
+
+commit 52b9af8285107d48b3d41a2a915a2417978c3510
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Date:   Tue Jul 26 23:45:57 2005 +0000
+
+    Build system for suntcx
+
+commit dfcf6ff50177ea431a4d1c09b137aa5c38a9dfc5
+Author: Adam Jackson <ajax@nwnk.net>
+Date:   Mon Jul 11 02:30:01 2005 +0000
+
+    Prep for modular builds by adding guarded #include "config.h" everywhere.
+
+commit 3029aa5f0ab310e4b3d7e62cd3e6f383681bde94
+Author: Adam Jackson <ajax@nwnk.net>
+Date:   Sat Jun 25 21:16:57 2005 +0000
+
+    Bug #3626: _X_EXPORT tags for video and input drivers.
+
+commit 6bd60940eeaec5dc9530a21efd168ec164dde706
+Author: Daniel Stone <daniel@fooishbar.org>
+Date:   Wed Apr 20 12:25:30 2005 +0000
+
+    Fix includes right throughout the Xserver tree:
+    change "foo.h" to <X11/foo.h> for core headers, e.g. X.h, Xpoll.h;
+    change "foo.h", "extensions/foo.h" and "X11/foo.h" to
+        <X11/extensions/foo.h> for extension headers, e.g. Xv.h;
+    change "foo.[ch]" to <X11/Xtrans/foo.[ch]> for Xtrans files.
+
+commit aa5e47a77d2e387f53966eae40e2f9d2fa40d683
+Author: Eric Anholt <anholt@freebsd.org>
+Date:   Wed Jun 16 09:24:00 2004 +0000
+
+    DRI XFree86-4_3_99_12-merge import
+
+commit ec3d2a021a091ab7ea3a33f169aca1a1d10423b8
+Author: Egbert Eich <eich@suse.de>
+Date:   Fri Apr 23 19:49:23 2004 +0000
+
+    Merging XORG-CURRENT into trunk
+
+commit 41ba5536d67b07a98e346cf5c23530cc3828cb1b
+Author: Egbert Eich <eich@suse.de>
+Date:   Sun Mar 14 08:33:37 2004 +0000
+
+    Importing vendor version xf86-4_4_99_1 on Sun Mar 14 00:26:39 PST 2004
+
+commit d00581116fd53c767d52d8c4f9d8f75624698db4
+Author: Egbert Eich <eich@suse.de>
+Date:   Wed Mar 3 12:12:25 2004 +0000
+
+    Importing vendor version xf86-4_4_0 on Wed Mar 3 04:09:24 PST 2004
+
+commit 7a7e5d2a4e996abebb8c8926ebe4e0708db3fa49
+Author: Egbert Eich <eich@suse.de>
+Date:   Thu Feb 26 13:35:55 2004 +0000
+
+    readding XFree86's cvs IDs
+
+commit a7a0de515a712f1ccc1f49c9f66d8b9da03bde63
+Author: Egbert Eich <eich@suse.de>
+Date:   Thu Feb 26 09:23:27 2004 +0000
+
+    Importing vendor version xf86-4_3_99_903 on Wed Feb 26 01:21:00 PST 2004
+
+commit da74602a39476aa144c788269a69dae73ff60b8e
+Author: Kaleb Keithley <kaleb@freedesktop.org>
+Date:   Tue Nov 25 19:28:43 2003 +0000
+
+    XFree86 4.3.99.16 Bring the tree up to date for the Cygwin folks
+
+commit 050f7e31e95a0ac6c4ea5543ee087324fdcaaca2
+Author: Kaleb Keithley <kaleb@freedesktop.org>
+Date:   Fri Nov 14 16:48:55 2003 +0000
+
+    XFree86 4.3.0.1
+
+commit eb2028ee2e1734694c5c13d32bf60ab30a435d11
+Author: Kaleb Keithley <kaleb@freedesktop.org>
+Date:   Fri Nov 14 16:48:55 2003 +0000
+
+    Initial revision
