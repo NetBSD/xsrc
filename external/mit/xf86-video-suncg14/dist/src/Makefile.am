@@ -29,5 +29,6 @@ suncg14_drv_la_LDFLAGS = -module -avoid-version
 suncg14_drv_ladir = @moduledir@/drivers
 
 suncg14_drv_la_SOURCES = \
+         compat-api.h \
          cg14_driver.c \
          cg14.h
