@@ -23,7 +23,6 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
-/* $XFree86:$ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -125,7 +124,7 @@ TCXSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
 Bool 
 TCXHWCursorInit(ScreenPtr pScreen)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     TcxPtr pTcx;
     xf86CursorInfoPtr infoPtr;
 
