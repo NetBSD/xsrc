@@ -20,7 +20,6 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suntcx/tcx.h,v 1.1 2000/06/30 17:15:16 dawes Exp $ */
 
 #ifndef TCX_H
 #define TCX_H
@@ -34,6 +33,7 @@
 #include "exa.h"
 #include "tcx_regs.h"
 
+#include "compat-api.h"
 /* Various offsets in virtual (ie. mmap()) spaces Linux and Solaris support. */
 #define TCX_RAM8_VOFF		0x00000000
 #define TCX_RAM24_VOFF		0x01000000
