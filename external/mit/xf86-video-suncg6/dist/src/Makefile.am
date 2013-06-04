@@ -32,4 +32,5 @@ suncg6_drv_la_SOURCES = \
          cg6_cursor.c \
          cg6_driver.c \
          cg6.h \
-         cg6_regs.h
+         cg6_regs.h \
+         compat-api.h
