@@ -20,7 +20,6 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunleo/leo.h,v 1.3 2000/12/01 00:24:35 dawes Exp $ */
 
 #ifndef LEO_H
 #define LEO_H
@@ -33,6 +32,7 @@
 #include "leo_regs.h"
 #include "xf86sbusBus.h"
 
+#include "compat-api.h"
 /* Various offsets in virtual (ie. mmap()) spaces Linux and Solaris support. */
 #define LEO_FB0_VOFF		0x00000000
 #define LEO_LC0_VOFF		0x00800000
@@ -86,13 +86,16 @@ typedef struct {
 
 #define GET_LEO_FROM_SCRN(p)    ((LeoPtr)((p)->driverPrivate))
 
+#if HAS_DEVPRIVATEKEYREC
+extern DevPrivateKeyRec LeoGCPrivateIndex;
+#else
+extern int LeoGCPrivateIndex;
+#endif
 
 #define LEO_OLDPRIV (GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 4)
 #if LEO_OLDPRIV
-extern int LeoGCPrivateIndex;
 #define LeoGetGCPrivate(g) (g)->devPrivates[LeoGCPrivateIndex].ptr
 #else
-extern DevPrivateKeyRec LeoGCPrivateIndex;
 #define LeoGetGCPrivate(g) dixLookupPrivate(&(g)->devPrivates, &LeoGCPrivateIndex)
 #endif
 
