@@ -1,46 +1,540 @@
-2006-04-07  Adam Jackson  <ajax@freedesktop.org>
+commit 9117889527adc34273b308a240fa94b9f248776f
+Author: Matt Turner <mattst88@gmail.com>
+Date:   Mon Jan 21 22:50:09 2013 -0800
 
-	* configure.ac:
-	* src/leo.h:
-	* src/leo_driver.c:
-	Unlibcwrap.  Bump server version requirement.  Bump to 1.1.0.
+    xf86-video-sunleo 1.2.1
 
-2005-12-20  Kevin E. Martin  <kem-at-freedesktop-dot-org>
+commit b5437f02ee45c60d07380c74ccb80e476d1b3a1b
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue Sep 25 08:54:57 2012 -0400
 
-	* configure.ac:
-	Update package version for X11R7 release.
+    Remove mibstore.h
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
 
-2005-12-14  Kevin E. Martin  <kem-at-freedesktop-dot-org>
+commit cd785a9303d12f1862f5c2fff0ad87fa73a0da3a
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Thu Jun 7 19:02:43 2012 +0100
 
-	* configure.ac:
-	Update package version number for final X11R7 release candidate.
+    sunleo: port to new compat API.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
 
-2005-12-06  Kevin E. Martin  <kem-at-freedesktop-dot-org>
+commit 4ab11d54c1fb012feda8c3c59f97734431f009bb
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Sat May 12 14:43:20 2012 +0200
 
-	* man/Makefile.am:
-	Change *man_SOURCES ==> *man_PRE to fix autotools warnings.
+    Drop unused acceleration code
+    
+    Looks like this has been dead code since the switch from cfb to fb.
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
 
-2005-12-03  Kevin E. Martin  <kem-at-freedesktop-dot-org>
+commit 68516ee7434c895dfa6edf4a54e54a5880cb8fcb
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Sun Oct 30 11:40:56 2011 -0700
 
-	* configure.ac:
-	Update package version number for X11R7 RC3 release.
+    Adjust to DevPrivate API changes
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
 
-2005-12-01  Kevin E. Martin  <kem-at-freedesktop-dot-org>
+commit 9d552e5d9edfdda14cb1f4cfcf4197307d4e4a54
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Sat Oct 29 19:53:16 2011 -0700
 
-	* configure.ac:
-	Remove extraneous AC_MSG_RESULT.
+    Use malloc/calloc/realloc/free directly
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
 
-2005-11-29  Adam Jackson  <ajax@freedesktop.org>
+commit 8b2e9978f408701f9aebc5678e63e7dfea145f34
+Author: Jesse Adkins <jesserayadkins@gmail.com>
+Date:   Tue Sep 28 13:29:51 2010 -0700
 
-	* configure.ac:
-	Only build dlloader modules by default.
+    Purge cvs tags.
+    
+    Signed-off-by: Jesse Adkins <jesserayadkins@gmail.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
-2005-11-09  Kevin E. Martin  <kem-at-freedesktop-dot-org>
+commit 45c93a35baa0413a20231b9ff95805ff7bd2bd90
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jul 21 16:49:04 2010 -0400
 
-	* configure.ac:
-	Update package version number for X11R7 RC2 release.
+    config: add comments for main statements
 
-2005-11-01  Kevin E. Martin  <kem-at-freedesktop-dot-org>
+commit 25278fe70ee11372989e95449dd646200f95038d
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jul 21 16:07:00 2010 -0400
 
-	* configure.ac:
-	Update pkgcheck dependencies to work with separate build roots.
+    config: replace deprecated use of AC_OUTPUT with AC_CONFIG_FILES
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 15c422784484f645ae484014d55d7f7dd6fd9eaf
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jul 21 14:37:41 2010 -0400
+
+    config: replace deprecated AC_HELP_STRING with AS_HELP_STRING
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 7dedf16e9b7f72f9da79142b86b4792950878260
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jul 21 14:05:23 2010 -0400
+
+    config: replace deprecated AM_CONFIG_HEADER with AC_CONFIG_HEADERS
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 7f5d4d759b411d0a2079a838ce51c40c5e2d31a8
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jul 21 09:27:42 2010 -0400
+
+    config: complete AC_INIT m4 quoting
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 5c4a35c87b7218115c664fddba397cabf72a47ec
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Jul 20 21:44:58 2010 -0400
+
+    config: remove unrequired AC_SUBST([XORG_CFLAGS])
+    
+    This macro is called by PKG_CHECK_MODULES
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 51287ec5da67ef1b7da5304507ab7a368d32a8e8
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Jul 20 20:24:42 2010 -0400
+
+    config: remove unrequired AC_HEADER_STDC
+    
+    Autoconf says:
+    "This macro is obsolescent, as current systems have conforming
+    header files. New programs need not use this macro".
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 50721b46aff3ec54041dc05390120cccfe44f882
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Jul 20 19:41:31 2010 -0400
+
+    config: remove AC_PROG_CC as it overrides AC_PROG_C_C99
+    
+    XORG_STRICT_OPTION from XORG_DEFAULT_OPTIONS calls
+    AC_PROG_C_C99. This sets gcc with -std=gnu99.
+    If AC_PROG_CC macro is called afterwards, it resets CC to gcc.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 618b36463d1592e7ca2480275aaa9e580447cec3
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Jul 20 18:45:19 2010 -0400
+
+    config: update AC_PREREQ statement to 2.60
+    
+    Unrelated to the previous patches, the new value simply reflects
+    the reality that the minimum level for autoconf to configure
+    all x.org modules is 2.60 dated June 2006.
+    
+    ftp://ftp.gnu.org/gnu/autoconf/autoconf-2.60.tar.gz
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit b0169305a9d9e93c200eab07126ec4aa254c13e1
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Jul 20 16:15:30 2010 -0400
+
+    config: upgrade to util-macros 1.8 for additional man page support
+    
+    Use MAN_SUBST now supplied in XORG_MANPAGE_SECTIONS
+    The value of MAN_SUBST is the same for all X.Org packages.
+
+commit 85d6813792d8a90464f955c73f35af678ee4018b
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Jun 13 11:20:36 2010 -0400
+
+    COPYING: replace stub file with actual Copyright notices.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit b8af632ac4d15a20cb7d34c413c2d918eae4d115
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Fri Jan 15 15:15:27 2010 -0800
+
+    Update Sun license notices to current X.Org standard form
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit daea399a8d20dfe3087d6e5ffa28a6673f90710a
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Dec 15 22:01:02 2009 -0500
+
+    configure.ac: remove unused sdkdir=$(pkg-config...) statement
+    
+    The sdkdir variable isn't use, so remove the statement.
+    
+    Acked-by: Dan Nicholson <dbn.lists@gmail.com>
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 021401b7fb40399f2482f0e094e1db62c1865c39
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Mon Nov 23 09:25:06 2009 -0500
+
+    Makefile.am: add ChangeLog and INSTALL on MAINTAINERCLEANFILES
+    
+    Now that the INSTALL file is generated.
+    Allows running make maintainer-clean.
+
+commit f5ffe8655f1f51a7b0f480c8dfe9b68d589875d4
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Oct 28 14:41:41 2009 -0400
+
+    INSTALL, NEWS, README or AUTHORS files are missing/incorrect #24206
+    
+    Automake 'foreign' option is specified in configure.ac.
+    Remove from Makefile.am
+
+commit 8150844778f0077dfb75141c2b9ba39f4d880aca
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Oct 28 14:09:09 2009 -0400
+
+    INSTALL, NEWS, README or AUTHORS files are missing/incorrect #24206
+    
+    Add missing INSTALL file. Use standard GNU file on building tarball
+    README may have been updated
+    Remove AUTHORS file as it is empty and no content available yet.
+    Remove NEWS file as it is empty and no content available yet.
+
+commit 228d11b936311e4f08b0374a00f627e7dcfdadeb
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Mon Oct 26 12:54:22 2009 -0400
+
+    Several driver modules do not have a ChangeLog target in Makefile.am #23814
+    
+    The git generated ChangeLog replaces the hand written one.
+    Update configure.ac to xorg-macros level 1.3.
+    Use XORG_DEFAULT_OPTIONS which replaces four XORG_* macros
+    Update Makefile.am to add ChangeLog target if missing
+    Remove ChangeLog from EXTRA_DIST or *CLEAN variables
+    This is a pre-req for the INSTALL_CMD
+
+commit 559e247783e17d6a3e874a9151a87acde672fb3e
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Oct 22 12:34:18 2009 -0400
+
+    .gitignore: use common defaults with custom section # 24239
+    
+    Using common defaults will reduce errors and maintenance.
+    Only the very small or inexistent custom section need periodic maintenance
+    when the structure of the component changes. Do not edit defaults.
+
+commit 648e34c02fe6cc604f7762a212c2238c7b027f2a
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Mon Sep 7 11:12:13 2009 -0400
+
+    xf86-video-sunleo: Remove unused .cvsignore file #23776
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 7e879ec9af963499980e4ddb908e7f72e22eace1
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Fri Jan 30 21:04:22 2009 -0800
+
+    Add README with pointers to mailing list, bugzilla & git repos
+
+commit d4b14fb45edb1394f39a6ce987e3568646c3fde9
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Fri Jan 9 16:36:14 2009 -0800
+
+    Remove xorgconfig & xorgcfg from See Also list in man page
+
+commit 5a3a1ddbc32d24f67d4f7bf7742115bc97baa087
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed Sep 3 17:56:28 2008 -0400
+
+    sunleo 1.2.0
+
+commit 1802e3bb1478de88592594d67121489b7a8db193
+Author: Eamon Walsh <ewalsh@tycho.nsa.gov>
+Date:   Tue Aug 26 22:43:04 2008 -0400
+
+    Change GC private key back to an integer variable.
+    
+    Prepares for a devPrivates system that will store an index.
+
+commit 832e0cd293f1f1572d70774d4b4254dcc7a3dcd4
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue Aug 19 10:26:04 2008 -0400
+
+    Uninclude xf86Version.h
+
+commit 2a9e73bc6cf37aea24fa590596aba47063613bd0
+Author: Dennis Gilmore <dennis@ausil.us>
+Date:   Tue May 27 19:54:15 2008 +0300
+
+    Remove usage of ALLOCATE_LOCAL
+    
+    Replace with xalloc, as {,DE}ALLOCATE_LOCAL were removed in 1.5.
+
+commit 53022f9dfd9bd01d5fc1d1ce27165f89fc96cc98
+Author: Matthieu Herrb <matthieu.herrb@laas.fr>
+Date:   Sat Mar 8 23:58:26 2008 +0100
+
+    Makefile.am: nuke RCS Id
+
+commit 84f95546ccbf9cc3ef6b06288dd415eef534c40c
+Author: Eamon Walsh <ewalsh@tycho.nsa.gov>
+Date:   Wed Jan 23 21:21:55 2008 -0500
+
+    Support old and new devPrivates API in this driver.
+
+commit 970867a0ec6c0f28165ae0246b52f34062013107
+Author: David S. Miller <davem@davemloft.net>
+Date:   Fri Dec 28 23:55:49 2007 +0200
+
+    Remove screen/window privates to fix build after devPrivates rework
+    
+    The screen private isn't needed, neither is the window
+    private, so remove those.
+    
+    Convert LEO's GC private over to the new devprivate APIs.
+    
+    Signed-off-by: David S. Miller <davem@davemloft.net>
+
+commit 5d7e721d55c7cf7aa44017c2616ce88b2efb524e
+Author: Brice Goglin <bgoglin@debian.org>
+Date:   Tue Aug 7 13:53:13 2007 +0200
+
+    Define LEO_*_VERSION using PACKAGE_VERSION*
+
+commit 52e5fb1df625f38a33eb0732386f246b6d386077
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Thu Mar 1 11:05:47 2007 -0800
+
+    renamed: .cvsignore -> .gitignore
+
+commit fe5af18d4bc8fc095e3b12d1030b6e5765c7e3a4
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Thu Mar 1 11:05:03 2007 -0800
+
+    Replace references to XFree86/XF86Config in man page
+
+commit 32ff105536420649ed75f3c9b5df44241844fc12
+Author: Adam Jackson <ajax@nwnk.net>
+Date:   Fri Apr 7 21:29:15 2006 +0000
+
+    Unlibcwrap. Bump server version requirement. Bump to 1.1.0.
+
+commit 8737c8a2415a5b217acf644f081b3bfdcf67a20d
+Author: Kevin E Martin <kem@kem.org>
+Date:   Wed Dec 21 02:30:03 2005 +0000
+
+    Update package version for X11R7 release.
+
+commit 63a0eeaf8aca481fca2865f7de54a1aeb334031d
+Author: Adam Jackson <ajax@nwnk.net>
+Date:   Mon Dec 19 16:25:55 2005 +0000
+
+    Stub COPYING files
+
+commit 4e89b7b64753ad56ce7527ac8d0806750ff3d9d5
+Author: Kevin E Martin <kem@kem.org>
+Date:   Thu Dec 15 00:24:20 2005 +0000
+
+    Update package version number for final X11R7 release candidate.
+
+commit 0fc678d8777c2135838bf572c02763950fb4c4d6
+Author: Kevin E Martin <kem@kem.org>
+Date:   Tue Dec 6 22:48:39 2005 +0000
+
+    Change *man_SOURCES ==> *man_PRE to fix autotools warnings.
+
+commit f5384ea0b8cbf03df836f4962170ca5e407619fa
+Author: Kevin E Martin <kem@kem.org>
+Date:   Sat Dec 3 05:49:36 2005 +0000
+
+    Update package version number for X11R7 RC3 release.
+
+commit 45b199eba0f08d5856636bed435651504c34da80
+Author: Kevin E Martin <kem@kem.org>
+Date:   Fri Dec 2 02:16:11 2005 +0000
+
+    Remove extraneous AC_MSG_RESULT.
+
+commit 96f0933a19d17803dd0ace65b02554389f0af7a7
+Author: Adam Jackson <ajax@nwnk.net>
+Date:   Tue Nov 29 23:30:05 2005 +0000
+
+    Only build dlloader modules by default.
+
+commit 03315c3d9accea2c04a0125bd73d044f6e8858ff
+Author: Alan Coopersmith <Alan.Coopersmith@sun.com>
+Date:   Mon Nov 28 22:04:13 2005 +0000
+
+    Change *mandir targets to use new *_MAN_DIR variables set by xorg-macros.m4
+        update to fix bug #5167 (Linux prefers *.1x man pages in man1 subdir)
+
+commit ffa28fd37f50f1f732c007cc23c07000ee97923d
+Author: Eric Anholt <anholt@freebsd.org>
+Date:   Mon Nov 21 10:49:20 2005 +0000
+
+    Add .cvsignores for drivers.
+
+commit 654e04303c09125f0812de556902718c835a1608
+Author: Kevin E Martin <kem@kem.org>
+Date:   Wed Nov 9 21:15:21 2005 +0000
+
+    Update package version number for X11R7 RC2 release.
+
+commit 51e2ae1a6d9af6ee0947c287a223285c438e0de5
+Author: Kevin E Martin <kem@kem.org>
+Date:   Tue Nov 1 15:08:55 2005 +0000
+
+    Update pkgcheck depedencies to work with separate build roots.
+
+commit 485eb362f5138dd23d764ac7311c22e2e54b56fd
+Author: Kevin E Martin <kem@kem.org>
+Date:   Wed Oct 19 02:48:05 2005 +0000
+
+    Update package version number for RC1 release.
+
+commit 56e39cd1d5035b9ac8604d50151ad1d78feb6fc7
+Author: Alan Coopersmith <Alan.Coopersmith@sun.com>
+Date:   Tue Oct 18 00:01:54 2005 +0000
+
+    Use @DRIVER_MAN_SUFFIX@ instead of $(DRIVER_MAN_SUFFIX) in macro
+        substitutions to work better with BSD make
+
+commit b514a4ff8cd41df23ba85f5efc19ad5926892dcd
+Author: Adam Jackson <ajax@nwnk.net>
+Date:   Mon Oct 17 22:57:37 2005 +0000
+
+    More 1.7 braindamage: define EXTRA_DIST in terms of @DRIVER_NAME@ instead
+        of indirectly
+
+commit 6e2f704f7dd62088e327ea750e71241bba5d2f27
+Author: Alan Coopersmith <Alan.Coopersmith@sun.com>
+Date:   Mon Oct 17 00:09:07 2005 +0000
+
+    Use sed & cpp to substitute variables in driver man pages
+
+commit fa04f124cf7438fc1f18422298e1803434df557f
+Author: Daniel Stone <daniel@fooishbar.org>
+Date:   Thu Aug 18 09:03:51 2005 +0000
+
+    Update autogen.sh to one that does objdir != srcdir.
+
+commit a1f1387eb8a28fc450885a02ea9a2749ec76c9ff
+Author: Kevin E Martin <kem@kem.org>
+Date:   Fri Jul 29 21:22:45 2005 +0000
+
+    Various changes preparing packages for RC0:
+    - Verify and update package version numbers as needed
+    - Implement versioning scheme
+    - Change bug address to point to bugzilla bug entry form
+    - Disable loadable i18n in libX11 by default (use --enable-loadable-i18n to
+        reenable it)
+    - Fix makedepend to use pkgconfig and pass distcheck
+    - Update build script to build macros first
+    - Update modular Xorg version
+
+commit 38992a849dd82d3bf0907bc675d38cb1fe304544
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Date:   Tue Jul 26 23:44:54 2005 +0000
+
+    Build system for sunleo
+
+commit 4d7a6340a40f508f8a0ab249eb3dd4c260240b12
+Author: Adam Jackson <ajax@nwnk.net>
+Date:   Mon Jul 11 02:30:01 2005 +0000
+
+    Prep for modular builds by adding guarded #include "config.h" everywhere.
+
+commit 0752519dbac8def14c8d51b559695386e2253f1f
+Author: Daniel Stone <daniel@fooishbar.org>
+Date:   Sun Jul 3 07:01:27 2005 +0000
+
+    Add Xtrans definitions (FONT_t, TRANS_CLIENT) to clean up warnings.
+    Add XSERV_t, TRANS_SERVER, TRANS_REOPEN to quash warnings.
+    Add #include <dix-config.h> or <xorg-config.h>, as appropriate, to all
+        source files in the xserver/xorg tree, predicated on defines of
+        HAVE_{DIX,XORG}_CONFIG_H. Change all Xfont includes to
+        <X11/fonts/foo.h>.
+
+commit d7805c0599b51410341847fd1608591181cc2dab
+Author: Adam Jackson <ajax@nwnk.net>
+Date:   Sat Jun 25 21:16:57 2005 +0000
+
+    Bug #3626: _X_EXPORT tags for video and input drivers.
+
+commit 3f9e6dde5c5511a7204be8ba94953790d7eaf165
+Author: Daniel Stone <daniel@fooishbar.org>
+Date:   Wed Apr 20 12:25:30 2005 +0000
+
+    Fix includes right throughout the Xserver tree:
+    change "foo.h" to <X11/foo.h> for core headers, e.g. X.h, Xpoll.h;
+    change "foo.h", "extensions/foo.h" and "X11/foo.h" to
+        <X11/extensions/foo.h> for extension headers, e.g. Xv.h;
+    change "foo.[ch]" to <X11/Xtrans/foo.[ch]> for Xtrans files.
+
+commit b2e16e8d8aa582ad2486a3c36fbecc2ec409eabe
+Author: Adam Jackson <ajax@nwnk.net>
+Date:   Fri Jan 14 06:20:17 2005 +0000
+
+    Bug #1259: Convert sunleo(4) to fb.
+
+commit 68bec674d9ec554379bbd18d4539b34f63eef19c
+Author: Eric Anholt <anholt@freebsd.org>
+Date:   Wed Jun 16 09:24:00 2004 +0000
+
+    DRI XFree86-4_3_99_12-merge import
+
+commit deabb160fb20e71b47c758ff6c737ac94bef88b4
+Author: Egbert Eich <eich@suse.de>
+Date:   Fri Apr 23 19:48:50 2004 +0000
+
+    Merging XORG-CURRENT into trunk
+
+commit f5b71945c039c0c64e4c74f223c561333eca3e16
+Author: Egbert Eich <eich@suse.de>
+Date:   Sun Mar 14 08:33:37 2004 +0000
+
+    Importing vendor version xf86-4_4_99_1 on Sun Mar 14 00:26:39 PST 2004
+
+commit 5b396b0eadf5c17f78843829e33a376af09fca72
+Author: Egbert Eich <eich@suse.de>
+Date:   Wed Mar 3 12:12:25 2004 +0000
+
+    Importing vendor version xf86-4_4_0 on Wed Mar 3 04:09:24 PST 2004
+
+commit 4da3e5b0ca4c70a0823ee4f7189a7c20d81d1ac8
+Author: Egbert Eich <eich@suse.de>
+Date:   Thu Feb 26 13:35:55 2004 +0000
+
+    readding XFree86's cvs IDs
+
+commit e0e9b92a7dc8df5e71491782f2ed111763d267ff
+Author: Egbert Eich <eich@suse.de>
+Date:   Thu Feb 26 09:23:27 2004 +0000
+
+    Importing vendor version xf86-4_3_99_903 on Wed Feb 26 01:21:00 PST 2004
+
+commit cee769c87c686faf003a52aeea6caa513b0ddb5a
+Author: Kaleb Keithley <kaleb@freedesktop.org>
+Date:   Tue Nov 25 19:28:43 2003 +0000
+
+    XFree86 4.3.99.16 Bring the tree up to date for the Cygwin folks
+
+commit 9d34bf61ab7b6427d63878042290d97c0643dcc5
+Author: Kaleb Keithley <kaleb@freedesktop.org>
+Date:   Fri Nov 14 16:48:55 2003 +0000
+
+    XFree86 4.3.0.1
+
+commit 5bae453e013714717370c788d0a92ecf41a900ec
+Author: Kaleb Keithley <kaleb@freedesktop.org>
+Date:   Fri Nov 14 16:48:55 2003 +0000
+
+    Initial revision
