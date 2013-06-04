@@ -23,7 +23,6 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
-/* $XFree86:$ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
