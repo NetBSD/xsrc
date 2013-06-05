@@ -1,4 +1,0 @@
-Refer to the following files for the up-to-date protcol specification.
-
-http://cgit.freedesktop.org/xorg/proto/inputproto/tree/XIproto.txt
-http://cgit.freedesktop.org/xorg/proto/inputproto/tree/XI2proto.txt
