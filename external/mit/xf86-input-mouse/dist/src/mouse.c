@@ -282,7 +282,7 @@ MouseCommonOptions(InputInfoPtr pInfo)
     MessageType buttons_from = X_CONFIG;
     char *s;
     int origButtons;
-    int btn;
+    int i;
 
     pMse = pInfo->private;
 
