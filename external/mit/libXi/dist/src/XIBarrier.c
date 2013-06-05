@@ -21,7 +21,8 @@
  * DEALINGS IN THE SOFTWARE.
  *
  */
-#ifdef HAVE_CONFIG_H
+
+#if HAVE_CONFIG_H
 #include <config.h>
 #endif
 
@@ -32,34 +33,49 @@
 #include <X11/extensions/extutil.h>
 #include "XIint.h"
 
-Status
-XIGetFocus(Display *dpy, int deviceid, Window *focus_return)
+void
+XIBarrierReleasePointers(Display *dpy,
+                         XIBarrierReleasePointerInfo *barriers,
+                         int num_barriers)
 {
-    xXIGetFocusReq   *req;
-    xXIGetFocusReply reply;
+    XExtDisplayInfo	        *info = XInput_find_display(dpy);
+    xXIBarrierReleasePointerReq *req;
+    int extra = 0;
+    int i;
+    xXIBarrierReleasePointerInfo *b;
 
-    XExtDisplayInfo *extinfo = XInput_find_display(dpy);
+    if (!num_barriers)
+        return;
 
-    LockDisplay(dpy);
-    if (_XiCheckExtInit(dpy, XInput_2_0, extinfo) == -1)
-	return (NoSuchExtension);
+    extra = (num_barriers * sizeof(xXIBarrierReleasePointerInfo));
 
-    GetReq(XIGetFocus, req);
-    req->reqType  = extinfo->codes->major_opcode;
-    req->ReqType  = X_XIGetFocus;
-    req->deviceid = deviceid;
+    LockDisplay (dpy);
+    GetReqExtra (XIBarrierReleasePointer, extra, req);
+    req->reqType = info->codes->major_opcode;
+    req->ReqType = X_XIBarrierReleasePointer;
+    req->num_barriers = num_barriers;
 
-    if (!_XReply(dpy, (xReply*) &reply, 0, xFalse)) {
-        UnlockDisplay(dpy);
-        SyncHandle();
-        return False;
+    b = (xXIBarrierReleasePointerInfo *) &req[1];
+    for (i = 0; i < num_barriers; i++, b++) {
+        b->deviceid = barriers[i].deviceid;
+        b->eventid = barriers[i].eventid;
+        b->barrier = barriers[i].barrier;
     }
 
-    *focus_return = reply.focus;
-
-    UnlockDisplay(dpy);
-    SyncHandle();
-    return Success;
-
+    UnlockDisplay (dpy);
+    SyncHandle ();
 }
 
+void
+XIBarrierReleasePointer(Display *dpy,
+                        int            deviceid,
+                        PointerBarrier barrier,
+                        BarrierEventID eventid)
+{
+    XIBarrierReleasePointerInfo info;
+    info.deviceid = deviceid;
+    info.barrier = barrier;
+    info.eventid = eventid;
+
+    XIBarrierReleasePointers(dpy, &info, 1);
+}

@@ -25,6 +25,7 @@ libmandir = $(LIB_MAN_DIR)
 
 # Source files for X Input v2 man pages
 XI2_txt = 					\
+	XIBarrierReleasePointer.txt 		\
 	XIChangeHierarchy.txt			\
 	XIDefineCursor.txt			\
 	XIGrabButton.txt			\
@@ -76,6 +77,7 @@ libman_xml = $(libman_txt:.txt=.xml)
 # They are created by the xmlto command when generating man pages from DocBook
 # The shadow man page contains a gtroff .so request to include the main man page
 XI2_shadows = 					\
+	XIBarrierReleasePointers.man 		\
 	XIUndefineCursor.man			\
 	XIUngrabButton.man			\
 	XIGrabKeycode.man			\
@@ -89,7 +91,9 @@ XI2_shadows = 					\
 	XIGetSelectedEvents.man			\
 	XIDeleteProperty.man			\
 	XIGetProperty.man			\
-	XIFreeDeviceInfo.man
+	XIFreeDeviceInfo.man			\
+	XIGrabTouchBegin.man			\
+	XIUngrabTouchBegin.man
 
 libman_shadows =				\
 	XGetDeviceDontPropagateList.man		\
@@ -141,7 +145,7 @@ XDeleteDeviceProperty.man: XGetDeviceProperty.man
 
 # Dependencies for X Input v2 shadow pages
 XIUndefineCursor.man: XIDefineCursor.man
-XIUngrabButton.man XIGrabKeycode.man XIUngrabKeycode.man: XIGrabButton.man
+XIUngrabButton.man XIGrabKeycode.man XIUngrabKeycode.man XIGrabTouchBegin.man XIUngrabTouchBegin.man: XIGrabButton.man
 XIGetClientPointer.man: XISetClientPointer.man
 XIGetFocus.man: XISetFocus.man
 XIUngrabDevice.man: XIGrabDevice.man
@@ -150,10 +154,18 @@ XIDeleteProperty.man: XIChangeProperty.man
 XIUngrabEnter.man XIGrabFocusIn.man XIUngrabFocusIn.man: XIGrabEnter.man
 XIGetSelectedEvents.man: XISelectEvents.man
 XIFreeDeviceInfo.man: XIQueryDevice.man
+XIBarrierReleasePointers.man: XIBarrierReleasePointer.man
 
 # String replacements in MAN_SUBSTS now come from xorg-macros.m4 via configure
 # Unable to use __libmansuffix__ as underscores are lost in txt --> xml conversion
 MAN_SUBSTS += -e 's/libmansuffix/$(LIB_MAN_SUFFIX)/g'
+
+# asciidoc is generating [FIXME...] values in the .TH line we should fix.
+MAN_SUBSTS += -e 's/\[FIXME: source\]/$(XORG_MAN_PAGE)/'
+MAN_SUBSTS += -e 's/\[FIXME: manual\]/XINPUT FUNCTIONS/'
+
+# asciidoc generates shadow page references without the man section directory
+MAN_SUBSTS += -e 's/^\.so X/.so man$(LIB_MAN_SUFFIX)\/X/'
 
 SUFFIXES = .man .$(LIB_MAN_SUFFIX)
 .man.$(LIB_MAN_SUFFIX):
@@ -166,13 +178,13 @@ SUFFIXES += .txt .xml
 	$(AM_V_GEN)$(ASCIIDOC) -b docbook -d manpage -o $@ $<
 .xml.man:
 	$(AM_V_GEN)$(XMLTO) man $<
-	$(AM_V_GEN)mv -f $(@:.man=.libmansuffix) $@
+	$(AM_V_at)mv -f $(@:.man=.libmansuffix) $@
 
 # Invoke asciidoc/xmlto main man page generation for shadow pages
 $(libman_shadows):
 	@if test ! -f $(@:.man=.libmansuffix); then \
-	  $(AM_V_GEN)rm -f $<; \
-	  $(AM_V_GEN)$(MAKE) $(AM_MAKEFLAGS) $< || exit 1; \
+	  rm -f $<; \
+	  $(MAKE) $(AM_MAKEFLAGS) $< || exit 1; \
 	fi
-	$(AM_V_GEN)mv -f $(@:.man=.libmansuffix) $@
+	$(AM_V_at)mv -f $(@:.man=.libmansuffix) $@
 endif

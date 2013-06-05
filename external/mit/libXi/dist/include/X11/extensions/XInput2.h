@@ -30,6 +30,7 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/XI2.h>
 #include <X11/extensions/Xge.h>
+#include <X11/extensions/Xfixes.h> /* PointerBarrier */
 
 /*******************************************************************
  *
@@ -133,6 +134,25 @@ typedef struct
     int         mode;
 } XIValuatorClassInfo;
 
+/* new in XI 2.1 */
+typedef struct
+{
+    int         type;
+    int         sourceid;
+    int         number;
+    int         scroll_type;
+    double      increment;
+    int         flags;
+} XIScrollClassInfo;
+
+typedef struct
+{
+    int         type;
+    int         sourceid;
+    int         mode;
+    int         num_touches;
+} XITouchClassInfo;
+
 typedef struct
 {
     int                 deviceid;
@@ -149,6 +169,15 @@ typedef struct
     int                 modifiers;
     int                 status;
 } XIGrabModifiers;
+
+typedef unsigned int BarrierEventID;
+
+typedef struct
+{
+    int                 deviceid;
+    PointerBarrier      barrier;
+    BarrierEventID      eventid;
+} XIBarrierReleasePointerInfo;
 
 /**
  * Generic XI2 event. All XI2 events have the same header.
@@ -292,6 +321,45 @@ typedef struct {
     int           what;
 } XIPropertyEvent;
 
+typedef struct {
+    int           type;         /* GenericEvent */
+    unsigned long serial;       /* # of last request processed by server */
+    Bool          send_event;   /* true if this came from a SendEvent request */
+    Display       *display;     /* Display the event was read from */
+    int           extension;    /* XI extension offset */
+    int           evtype;
+    Time          time;
+    int           deviceid;
+    int           sourceid;
+    unsigned int  touchid;
+    Window        root;
+    Window        event;
+    Window        child;
+    int           flags;
+} XITouchOwnershipEvent;
+
+typedef struct {
+    int           type;         /* GenericEvent */
+    unsigned long serial;       /* # of last request processed by server */
+    Bool          send_event;   /* true if this came from a SendEvent request */
+    Display       *display;     /* Display the event was read from */
+    int           extension;    /* XI extension offset */
+    int           evtype;
+    Time          time;
+    int           deviceid;
+    int           sourceid;
+    Window        event;
+    Window        root;
+    double        root_x;
+    double        root_y;
+    double        dx;
+    double        dy;
+    int           dtime;
+    int           flags;
+    PointerBarrier barrier;
+    BarrierEventID eventid;
+} XIBarrierEvent;
+
 _XFUNCPROTOBEGIN
 
 extern Bool     XIQueryPointer(
@@ -415,6 +483,14 @@ extern Status XIAllowEvents(
     Time                time
 );
 
+extern Status XIAllowTouchEvents(
+    Display*            display,
+    int                 deviceid,
+    unsigned int        touchid,
+    Window              grab_window,
+    int                 event_mode
+);
+
 extern int XIGrabButton(
     Display*            display,
     int                 deviceid,
@@ -466,6 +542,17 @@ extern int XIGrabFocusIn(
     int                 num_modifiers,
     XIGrabModifiers     *modifiers_inout
 );
+
+extern int XIGrabTouchBegin(
+    Display*            display,
+    int                 deviceid,
+    Window              grab_window,
+    int                 owner_events,
+    XIEventMask         *mask,
+    int                 num_modifiers,
+    XIGrabModifiers     *modifiers_inout
+);
+
 extern Status XIUngrabButton(
     Display*            display,
     int                 deviceid,
@@ -500,6 +587,13 @@ extern Status XIUngrabFocusIn(
     XIGrabModifiers     *modifiers
 );
 
+extern Status XIUngrabTouchBegin(
+    Display*            display,
+    int                 deviceid,
+    Window              grab_window,
+    int                 num_modifiers,
+    XIGrabModifiers     *modifiers
+);
 
 extern Atom *XIListProperties(
     Display*            display,
@@ -539,6 +633,21 @@ XIGetProperty(
     unsigned long       *num_items_return,
     unsigned long       *bytes_after_return,
     unsigned char       **data
+);
+
+extern void
+XIBarrierReleasePointers(
+    Display*                    display,
+    XIBarrierReleasePointerInfo *barriers,
+    int                         num_barriers
+);
+
+extern void
+XIBarrierReleasePointer(
+    Display*                    display,
+    int                         deviceid,
+    PointerBarrier              barrier,
+    BarrierEventID              eventid
 );
 
 extern void XIFreeDeviceInfo(XIDeviceInfo       *info);

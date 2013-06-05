@@ -50,6 +50,10 @@ SOFTWARE.
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <X11/extensions/XI.h>
 #include <X11/extensions/XIproto.h>
 #include <X11/Xlibint.h>
@@ -177,18 +181,18 @@ XGetFeedbackControl(
 	    }
 	    case IntegerFeedbackClass:
 	    {
-		xIntegerFeedbackState *i;
+		xIntegerFeedbackState *ifs;
 		XIntegerFeedbackState *I;
 
-		i = (xIntegerFeedbackState *) f;
+		ifs = (xIntegerFeedbackState *) f;
 		I = (XIntegerFeedbackState *) Feedback;
 
-		I->class = i->class;
+		I->class = ifs->class;
 		I->length = sizeof(XIntegerFeedbackState);
-		I->id = i->id;
-		I->resolution = i->resolution;
-		I->minVal = i->min_value;
-		I->maxVal = i->max_value;
+		I->id = ifs->id;
+		I->resolution = ifs->resolution;
+		I->minVal = ifs->min_value;
+		I->maxVal = ifs->max_value;
 		break;
 	    }
 	    case StringFeedbackClass:
