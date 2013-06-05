@@ -22,6 +22,11 @@
  *
  */
 
+
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdint.h>
 #include <X11/Xlibint.h>
 #include <X11/extensions/XI2proto.h>
@@ -55,15 +60,15 @@ _xiQueryVersion(Display * dpy, int *major, int *minor, XExtDisplayInfo *info)
     if (_XiCheckExtInit(dpy, XInput_2_0, info) == -1)
     {
         XExtensionVersion *ext;
-        XExtDisplayInfo *info = XInput_find_display(dpy);
+        XExtDisplayInfo *extinfo = XInput_find_display(dpy);
 
-        if (!info || !info->data) {
+        if (!extinfo || !extinfo->data) {
             *major = 0;
             *minor = 0;
             return BadRequest;
         }
 
-        ext = ((XInputData*)info->data)->vers;
+        ext = ((XInputData*)extinfo->data)->vers;
 
         *major = ext->major_version;
         *minor = ext->minor_version;
