@@ -1,3 +1,160 @@
+commit ec3ccb22d4e7348ac537100fcb1b7ddc07df57b8
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed Mar 27 11:13:18 2013 +1000
+
+    keyboard 1.7.0
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit ad2a1dd1aa19999eb777f330242d46254b29b9cb
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Fri Aug 17 14:07:12 2012 +1000
+
+    Use sigsafe logging for keyboard debug messages
+    
+    This changes the log format to simple hex display, the server's signal-safe
+    printf implementation doesn't handle %2.2x.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 4a954bc6a8fbc4aa50dfcabec011274252713204
+Author: Colin Walters <walters@verbum.org>
+Date:   Wed Jan 4 17:37:06 2012 -0500
+
+    autogen.sh: Implement GNOME Build API
+    
+    http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 9522f28a8f90680942e42902678c963c6981b0d1
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed Jan 16 13:11:11 2013 -0500
+
+    configure: Drop AM_MAINTAINER_MODE
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 6e51df6dd4255cbe311ec98e21a1cc94975271a1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jul 23 22:04:45 2012 -0700
+
+    xf86-input-keyboard 1.6.2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8d3edb688115d3100d7ac6fa9ed407494e435c43
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu May 24 21:36:17 2012 -0700
+
+    Link with $(XORG_LIBS) to support no-undefined linking
+    
+    Will be empty on most platforms, set to the -z parent=Xorg flag on
+    Solaris if building with the support for enforcing no undefined symbols.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit dd6f110c4568dc0922bae47530906b01396e2d41
+Author: François Tigeot <ftigeot@wolfpond.org>
+Date:   Sat May 5 13:12:10 2012 +0200
+
+    Recognize DragonFly as a BSD system.
+    
+    This patch has actually been present for more than 4 years in the
+    pkgsrc tree.
+    
+    Originally-from: Jörg Sonnenberger
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit da5ccb256acf6cbb817d68499e0d9f533f750628
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Apr 30 19:34:44 2012 -0700
+
+    Solaris: ensure "Device" option is set, even if HAL didn't set it for us
+    
+    Handles fallback to default /dev/kbd when AutoAddDevices is False and
+    Device option is not manually set in xorg.conf, so that xinput device
+    node property can be correctly set to it.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e63cb5ecc5ab7239c9c285920244cc89e5853920
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Apr 27 17:51:22 2012 -0700
+
+    Set XI_PROP_DEVICE_NODE property to string from "Device" option
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Alexandr Shadchin <alexandr.shadchin@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit ed35abe0da1a9134ee126df88608b33892ae4313
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Jan 18 18:13:08 2012 -0800
+
+    Solaris: Use uchar_t, not int, for led masks in KIOCSLED/KIOCGLED ioctls
+    
+    Avoids checking/setting the wrong bits on big endian machines like SPARC.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a6a0dee4178600a5a9403f69c22bd4eb483fbd34
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed Jan 4 10:45:09 2012 +1000
+
+    keyboard 1.6.1
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 45f9f4552c4dab2efc29fd4d3d5c1a9dcd7c34b3
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Oct 4 09:16:17 2011 +1000
+
+    man: link to xkeyboard-config(7) (#14494)
+    
+    X.Org Bug 14494 <http://bugs.freedesktop.org/show_bug.cgi?id=14494>
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Gaetan Nadon <memsize@videotron.ca>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 20beb15d24b5f8ab194b94f7e29f49e91ea38a8b
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Mon Sep 26 09:56:17 2011 +1000
+
+    Remove calls to xf86IsPc98()
+    
+    This call is being removed from the server and this isn't worth keeping
+    ifdefs around for.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Matthieu Herrb <matthieu.herrb@laas.fr>
+    Tested-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 38e4defe795776479594825859e101cd7cb5aa17
+Author: Terry Lambert <tlambert@chromium.org>
+Date:   Fri Jul 15 17:23:22 2011 -0700
+
+    Return proper default for unknown values in pInfo->device_control.
+    
+    Signed-off-by: Terry Lambert <tlambert@chromium.org>
+    Reviewed-by: Stephane Marchesin <marcheu@chromium.org>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit e8aa2ff0629111fbc32d71bbbc46b469c0c9a996
+Author: Matthieu Herrb <matthieu.herrb@laas.fr>
+Date:   Sat Jun 11 10:26:46 2011 +0200
+
+    man: update "rules" default value for xkeyboard-config.
+    
+    xkeyboard-config is using "base" not "xorg" as default rules.
+    While there remove references to unmaintained PC98 settings.
+    
+    Signed-off-by: Matthieu Herrb <matthieu.herrb@laas.fr>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 0b9cd5121e1025e95a7e32addb675ab874bc6cb1
 Author: Peter Hutterer <peter.hutterer@who-t.net>
 Date:   Tue Mar 8 09:38:29 2011 +1000

@@ -40,7 +40,7 @@ are supported:
 .TP 7
 .BI "Option \*qDevice\*q \*q" string \*q
 Specify the keyboard device.  Default: the OS's default console keyboard
-input source.
+input source.  Property: "Device Node" (read-only).
 .TP 7
 .BI "Option \*qProtocol\*q \*q" string \*q
 Specify the keyboard protocol.  Valid protocol types include:
@@ -67,21 +67,19 @@ specifies which XKB rules file to use for interpreting the
 .BR XkbVariant ,
 and
 .B XkbOptions
-settings.  Default: "xorg" for most platforms, but "xfree98" for the
-Japanese PC-98 platforms. If you use the "xorg" value then you can
+settings.  Default: "base" for most platforms.
+If you use the "base" value then you can
 find listing of all valid values for these four options in the
 .I
-__xkb_path__/rules/xorg.lst
+__xkb_path__/rules/base.lst
 file.
 .TP 7
 .BI "Option \*qXkbModel\*q \*q" modelname \*q
-specifies the XKB keyboard model name.  Default: "pc105" for most platforms,
-but "pc98" for the Japanese PC-98 platforms.
+specifies the XKB keyboard model name.  Default: "pc105" for most platforms.
 .TP 7
 .BI "Option \*qXkbLayout\*q \*q" layoutname \*q
 specifies the XKB keyboard layout name.  This is usually the country or
-language type of the keyboard.  Default: "us" for most platforms, but
-"jp" for the Japanese PC-98 platforms.
+language type of the keyboard.  Default: "us" for most platforms.
 .TP 7
 .BI "Option \*qXkbVariant\*q \*q" variants \*q
 specifies the XKB keyboard variant components.  These can be used to
@@ -90,6 +88,9 @@ enhance the keyboard layout details.  Default: not set.
 .BI "Option \*qXkbOptions\*q \*q" options \*q
 specifies the XKB keyboard option components.  These can be used to
 enhance the keyboard behaviour.  Default: not set.
+.PP
+For a list of available XKB options, see
+.B xkeyboard-config(__miscmansuffix__).
 .SH EXAMPLE
 The following xorg.conf fragment ensures that user will be able to switch between
 .I us
@@ -117,7 +118,7 @@ Section \*qInputDevice\*q
 Identifier   "Generic Keyboard"
 Driver       "kbd"
 Option       "CoreKeyboard"
-Option       "XkbRules"      "xorg"
+Option       "XkbRules"      "base"
 Option       "XkbModel"      "pc105"
 Option       "XkbLayout"     "us,sk"
 Option       "XkbVariant"    ",qwerty"
@@ -131,3 +132,5 @@ __xservername__(__appmansuffix__), __xconfigfile__(__filemansuffix__),
 Xserver(__appmansuffix__), X(__miscmansuffix__).
 
 hal(__miscmansuffix__), hald(__adminmansuffix__), fdi(__filemansuffix__).
+
+xkeyboard-config(__miscmansuffix__).
