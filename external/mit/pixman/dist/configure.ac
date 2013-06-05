@@ -53,8 +53,8 @@ AC_PREREQ([2.57])
 #
 
 m4_define([pixman_major], 0)
-m4_define([pixman_minor], 28)
-m4_define([pixman_micro], 2)
+m4_define([pixman_minor], 30)
+m4_define([pixman_micro], 0)
 
 m4_define([pixman_version],[pixman_major.pixman_minor.pixman_micro])
 
@@ -64,7 +64,7 @@ AM_INIT_AUTOMAKE([foreign dist-bzip2])
 # Suppress verbose compile lines
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS(config.h)
 
 AC_CANONICAL_HOST
 
@@ -845,6 +845,13 @@ if test x$have_gettimeofday = xyes && test x$have_sys_time_h = xyes; then
 fi
 
 dnl =====================================
+dnl Check for missing sqrtf() as, e.g., for Solaris 9
+
+AC_SEARCH_LIBS([sqrtf], [m], [],
+               [AC_DEFINE([sqrtf], [sqrt],
+                          [Define to sqrt if you do not have the `sqrtf' function.])])
+
+dnl =====================================
 dnl Thread local storage
 
 AC_MSG_CHECKING(for thread local storage (TLS) support)
@@ -967,6 +974,22 @@ fi
 
 AC_MSG_RESULT($support_for_attribute_constructor)
 AC_SUBST(TOOLCHAIN_SUPPORTS_ATTRIBUTE_CONSTRUCTOR)
+
+dnl =====================================
+dnl __float128
+
+support_for_float128=no
+
+AC_MSG_CHECKING(for __float128)
+AC_LINK_IFELSE([AC_LANG_SOURCE([[
+__float128 a = 1.0Q, b = 2.0Q; int main (void) { return a + b; }
+]])], support_for_float128=yes)
+
+if test x$support_for_float128 = xyes; then
+   AC_DEFINE([HAVE_FLOAT128], [], [Whether the tool chain supports __float128])
+fi
+
+AC_MSG_RESULT($support_for_float128)
 
 dnl ==================
 dnl libpng
