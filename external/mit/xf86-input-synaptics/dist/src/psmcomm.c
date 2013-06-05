@@ -45,34 +45,26 @@
 #include <errno.h>
 #include <string.h>
 #include "synproto.h"
-#include "synaptics.h"
 #include "synapticsstr.h"
-#include "ps2comm.h"			    /* ps2_print_ident() */
+#include "ps2comm.h"            /* ps2_print_ident() */
 #include <xf86.h>
 
 #define SYSCALL(call) while (((call) == -1) && (errno == EINTR))
-
-struct SynapticsHwInfo {
-    unsigned int model_id;		    /* Model-ID */
-    unsigned int capabilities;		    /* Capabilities */
-    unsigned int ext_cap;		    /* Extended Capabilities */
-    unsigned int identity;		    /* Identification */
-};
 
 /*
  * Identify Touchpad
  * See also the SYN_ID_* macros
  */
 static Bool
-psm_synaptics_identify(int fd, synapticshw_t *ident)
+psm_synaptics_identify(int fd, synapticshw_t * ident)
 {
     int ret;
 
     SYSCALL(ret = ioctl(fd, MOUSE_SYN_GETHWINFO, ident));
     if (ret == 0)
-	return TRUE;
+        return TRUE;
     else
-	return FALSE;
+        return FALSE;
 }
 
 /* This define is used in a ioctl but not in mouse.h :/ */
@@ -91,88 +83,85 @@ PSMQueryIsSynaptics(InputInfoPtr pInfo)
      */
     SYSCALL(ret = ioctl(pInfo->fd, MOUSE_SETLEVEL, &level));
     if (ret != 0) {
-	xf86Msg(X_ERROR, "%s Can't set native mode\n", pInfo->name);
-	return FALSE;
+        xf86IDrvMsg(pInfo, X_ERROR, "%s Can't set native mode\n", pInfo->name);
+        return FALSE;
     }
     SYSCALL(ret = ioctl(pInfo->fd, MOUSE_GETHWINFO, &mhw));
     if (ret != 0) {
-	xf86Msg(X_ERROR, "%s Can't get hardware info\n", pInfo->name);
-	return FALSE;
+        xf86IDrvMsg(pInfo, X_ERROR, "%s Can't get hardware info\n",
+                    pInfo->name);
+        return FALSE;
     }
 
     if (mhw.model == MOUSE_MODEL_SYNAPTICS) {
-	return TRUE;
-    } else {
-	xf86Msg(X_ERROR, "%s Found no Synaptics, found Mouse model %d instead\n",
-		pInfo->name, mhw.model);
-	return FALSE;
+        return TRUE;
+    }
+    else {
+        xf86IDrvMsg(pInfo, X_ERROR,
+                    "%s Found no Synaptics, found Mouse model %d instead\n",
+                    pInfo->name, mhw.model);
+        return FALSE;
     }
 }
 
 static void
-convert_hw_info(const synapticshw_t *psm_ident, struct SynapticsHwInfo *synhw)
+convert_hw_info(const synapticshw_t * psm_ident,
+                struct PS2SynapticsHwInfo *synhw)
 {
     memset(synhw, 0, sizeof(*synhw));
     synhw->model_id = ((psm_ident->infoRot180 << 23) |
-		       (psm_ident->infoPortrait << 22) |
-		       (psm_ident->infoSensor << 16) |
-		       (psm_ident->infoHardware << 9) |
-		       (psm_ident->infoNewAbs << 7) |
-		       (psm_ident->capPen << 6) |
-		       (psm_ident->infoSimplC << 5) |
-		       (psm_ident->infoGeometry));
+                       (psm_ident->infoPortrait << 22) |
+                       (psm_ident->infoSensor << 16) |
+                       (psm_ident->infoHardware << 9) |
+                       (psm_ident->infoNewAbs << 7) |
+                       (psm_ident->capPen << 6) |
+                       (psm_ident->infoSimplC << 5) |
+                       (psm_ident->infoGeometry));
     synhw->capabilities = ((psm_ident->capExtended << 23) |
-			   (psm_ident->capPassthrough << 7) |
-			   (psm_ident->capSleep << 4) |
-			   (psm_ident->capFourButtons << 3) |
-			   (psm_ident->capMultiFinger << 1) |
-			   (psm_ident->capPalmDetect));
+                           (psm_ident->capPassthrough << 7) |
+                           (psm_ident->capSleep << 4) |
+                           (psm_ident->capFourButtons << 3) |
+                           (psm_ident->capMultiFinger << 1) |
+                           (psm_ident->capPalmDetect));
     synhw->ext_cap = 0;
     synhw->identity = ((psm_ident->infoMajor) |
-		       (0x47 << 8) |
-		       (psm_ident->infoMinor << 16));
+                       (0x47 << 8) | (psm_ident->infoMinor << 16));
 }
 
 static Bool
 PSMQueryHardware(InputInfoPtr pInfo)
 {
     synapticshw_t psm_ident;
-    struct SynapticsHwInfo *synhw;
+    struct PS2SynapticsHwInfo *synhw;
     SynapticsPrivate *priv;
 
-    priv = (SynapticsPrivate *)pInfo->private;
+    priv = (SynapticsPrivate *) pInfo->private;
 
-    if(!priv->proto_data)
-        priv->proto_data = calloc(1, sizeof(struct SynapticsHwInfo));
-    synhw = (struct SynapticsHwInfo*)priv->proto_data;
+    if (!priv->proto_data)
+        priv->proto_data = calloc(1, sizeof(struct PS2SynapticsHwInfo));
+    synhw = (struct PS2SynapticsHwInfo *) priv->proto_data;
 
     /* is the synaptics touchpad active? */
     if (!PSMQueryIsSynaptics(pInfo))
-	return FALSE;
+        return FALSE;
 
-    xf86Msg(X_PROBED, "%s synaptics touchpad found\n", pInfo->name);
+    xf86IDrvMsg(pInfo, X_PROBED, "synaptics touchpad found\n");
 
     if (!psm_synaptics_identify(pInfo->fd, &psm_ident))
-	return FALSE;
+        return FALSE;
 
     convert_hw_info(&psm_ident, synhw);
 
-    ps2_print_ident(synhw);
+    ps2_print_ident(pInfo, synhw);
 
     return TRUE;
 }
 
 static Bool
 PSMReadHwState(InputInfoPtr pInfo,
-	       struct SynapticsProtocolOperations *proto_ops,
-	       struct CommData *comm, struct SynapticsHwState *hwRet)
+               struct CommData *comm, struct SynapticsHwState *hwRet)
 {
-    return psaux_proto_operations.ReadHwState(pInfo, proto_ops, comm, hwRet);
-}
-
-static Bool PSMAutoDevProbe(InputInfoPtr pInfo)
-{
-    return FALSE;
+    return PS2ReadHwStateProto(pInfo, &psm_proto_operations, comm, hwRet);
 }
 
 struct SynapticsProtocolOperations psm_proto_operations = {
@@ -180,6 +169,6 @@ struct SynapticsProtocolOperations psm_proto_operations = {
     NULL,
     PSMQueryHardware,
     PSMReadHwState,
-    PSMAutoDevProbe,
-    SynapticsDefaultDimensions
+    NULL,
+    NULL
 };

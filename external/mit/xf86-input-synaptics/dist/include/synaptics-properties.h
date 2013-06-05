@@ -35,7 +35,7 @@
 /* 32 bit, 4 values, left, right, top, bottom */
 #define SYNAPTICS_PROP_EDGES "Synaptics Edges"
 
-/* 32 bit, 3 values, low, high, press */
+/* 32 bit, 3 values, low, high, <deprecated> */
 #define SYNAPTICS_PROP_FINGER "Synaptics Finger"
 
 /* 32 bit */
@@ -47,6 +47,9 @@
 /* 32 bit, 3 values, single touch timeout, max tapping time for double
  * taps, duration of a single click  */
 #define SYNAPTICS_PROP_TAP_DURATIONS "Synaptics Tap Durations"
+
+/* 8 bit (BOOL) */
+#define SYNAPTICS_PROP_CLICKPAD "Synaptics ClickPad"
 
 /* 8 bit (BOOL) */
 #define SYNAPTICS_PROP_TAP_FAST "Synaptics Tap FastTap"
@@ -69,17 +72,8 @@
 /* 8 bit (BOOL), 2 values, vertical, horizontal */
 #define SYNAPTICS_PROP_SCROLL_TWOFINGER "Synaptics Two-Finger Scrolling"
 
-/* FLOAT, 4 values, min, max, accel, trackstick */
+/* FLOAT, 4 values, min, max, accel, <deprecated> */
 #define SYNAPTICS_PROP_SPEED "Synaptics Move Speed"
-
-/* 32 bit, 2 values, min, max */
-#define SYNAPTICS_PROP_EDGEMOTION_PRESSURE "Synaptics Edge Motion Pressure"
-
-/* 32 bit, 2 values, min, max */
-#define SYNAPTICS_PROP_EDGEMOTION_SPEED "Synaptics Edge Motion Speed"
-
-/* 8 bit (BOOL) */
-#define SYNAPTICS_PROP_EDGEMOTION "Synaptics Edge Motion Always"
 
 /* 8 bit (BOOL), 2 values, updown, leftright */
 #define SYNAPTICS_PROP_BUTTONSCROLLING "Synaptics Button Scrolling"
@@ -122,9 +116,6 @@
 #define SYNAPTICS_PROP_CIRCULAR_SCROLLING_TRIGGER "Synaptics Circular Scrolling Trigger"
 
 /* 8 bit (BOOL) */
-#define SYNAPTICS_PROP_CIRCULAR_PAD "Synaptics Circular Pad"
-
-/* 8 bit (BOOL) */
 #define SYNAPTICS_PROP_PALM_DETECT "Synaptics Palm Detection"
 
 /* 32 bit, 2 values, width, z */
@@ -133,7 +124,7 @@
 /* FLOAT, 2 values, speed, friction */
 #define SYNAPTICS_PROP_COASTING_SPEED "Synaptics Coasting Speed"
 
-/* 32 bit, 2 values, min, max */
+/* CARD32, 2 values, min, max */
 #define SYNAPTICS_PROP_PRESSURE_MOTION "Synaptics Pressure Motion"
 
 /* FLOAT, 2 values, min, max */
@@ -155,7 +146,10 @@
 /* 32 bit, 4 values, left, right, top, bottom */
 #define SYNAPTICS_PROP_AREA "Synaptics Area"
 
+/* 32 bit, 4 values, left, right, top, buttom */
+#define SYNAPTICS_PROP_SOFTBUTTON_AREAS "Synaptics Soft Button Areas"
+
 /* 32 Bit Integer, 2 values, horizontal hysteresis, vertical hysteresis */
 #define SYNAPTICS_PROP_NOISE_CANCELLATION "Synaptics Noise Cancellation"
 
-#endif /* _SYNAPTICS_PROPERTIES_H_ */
+#endif                          /* _SYNAPTICS_PROPERTIES_H_ */
