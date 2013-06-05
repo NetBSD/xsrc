@@ -38,6 +38,10 @@
 #include "xf86OSKbd.h"
 #include "compiler.h"
 
+#include "exevents.h"
+#include <X11/Xatom.h>
+#include "xserver-properties.h"
+
 #include "xkbstr.h"
 #include "xkbsrv.h"
 
@@ -93,14 +97,6 @@ static const char *kbdDefaults[] = {
     "XkbRules",		"base",
     "XkbModel",		"pc105",
     "XkbLayout",	"us",
-    NULL
-};
-
-static const char *kbd98Defaults[] = {
-    "Protocol",		"standard",
-    "XkbRules",		"xfree98",
-    "XkbModel",		"pc98",
-    "XkbLayout",	"jp",
     NULL
 };
 
@@ -166,10 +162,7 @@ KbdPreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
     pInfo->fd = -1;
     pInfo->dev = NULL;
 
-    if (!xf86IsPc98())
-        defaults = kbdDefaults;
-    else
-        defaults = kbd98Defaults;
+    defaults = kbdDefaults;
     xf86CollectInputOptions(pInfo, defaults
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 12
             , NULL
@@ -347,6 +340,21 @@ KbdProc(DeviceIntPtr device, int what)
                  return BadValue;
              }
          }
+# ifdef XI_PROP_DEVICE_NODE
+         {
+             const char *device_node =
+                 xf86CheckStrOption(pInfo->options, "Device", NULL);
+
+             if (device_node)
+             {
+                 Atom prop_device = MakeAtom(XI_PROP_DEVICE_NODE,
+                                             strlen(XI_PROP_DEVICE_NODE), TRUE);
+                 XIChangeDeviceProperty(device, prop_device, XA_STRING, 8,
+                                        PropModeReplace, strlen(device_node),
+                                        device_node, FALSE);
+             }
+         }
+# endif /* XI_PROP_DEVICE_NODE */
 #else
          {
              XkbComponentNamesRec xkbnames;
@@ -393,6 +401,9 @@ KbdProc(DeviceIntPtr device, int what)
     pKbd->KbdOff(pInfo, what);
     device->public.on = FALSE;
     break;
+
+  default:
+    return BadValue;
   }
   return (Success);
 }
@@ -404,11 +415,12 @@ PostKbdEvent(InputInfoPtr pInfo, unsigned int scanCode, Bool down)
   KbdDevPtr    pKbd = (KbdDevPtr) pInfo->private;
   DeviceIntPtr device = pInfo->dev;
   KeyClassRec  *keyc = device->key;
+  int state;
 
 #ifdef DEBUG
-  ErrorF("kbd driver rec scancode: 0x02%x %s\n", scanCode, down?"down":"up");
+  LogMessageVerbSigSafe(X_INFO, -1, "kbd driver rec scancode: 0x%x %s\n", scanCode, down ? "down" : "up");
 #endif
-	  
+
   /*
    * First do some special scancode remapping ...
    */
@@ -430,16 +442,12 @@ PostKbdEvent(InputInfoPtr pInfo, unsigned int scanCode, Bool down)
    * physical keyboard key.
    */
 
-  if (!xf86IsPc98()) {
-    int state;
+  state = XkbStateFieldFromRec(&keyc->xkbInfo->state);
 
-    state = XkbStateFieldFromRec(&keyc->xkbInfo->state);
-
-    if (((state & AltMask) == AltMask) && (scanCode == KEY_SysReqest))
-      scanCode = KEY_Print;
-    else if (scanCode == KEY_Break)
-      scanCode = KEY_Pause;
-  }
+  if (((state & AltMask) == AltMask) && (scanCode == KEY_SysReqest))
+    scanCode = KEY_Print;
+  else if (scanCode == KEY_Break)
+    scanCode = KEY_Pause;
 
   xf86PostKeyboardEvent(device, scanCode + MIN_KEYCODE, down);
 }
