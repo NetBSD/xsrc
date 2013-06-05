@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    ANSI-specific configuration file (specification only).               */
 /*                                                                         */
-/*  Copyright 1996-2004, 2006-2008, 2010-2011 by                           */
+/*  Copyright 1996-2004, 2006-2008, 2010-2011, 2013 by                     */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -95,10 +95,6 @@ FT_BEGIN_HEADER
 #endif
 
 
-  /* Preferred alignment of data */
-#define FT_ALIGNMENT  8
-
-
   /* FT_UNUSED is a macro used to indicate that a given parameter is not  */
   /* used -- this is only used to get rid of unpleasant compiler warnings */
 #ifndef FT_UNUSED
@@ -124,8 +120,7 @@ FT_BEGIN_HEADER
   /*   This is the only necessary change, so it is defined here instead    */
   /*   providing a new configuration file.                                 */
   /*                                                                       */
-#if ( defined( __APPLE__ ) && !defined( DARWIN_NO_CARBON ) ) || \
-    ( defined( __MWERKS__ ) && defined( macintosh )        )
+#if defined( __APPLE__ ) || ( defined( __MWERKS__ ) && defined( macintosh ) )
   /* no Carbon frameworks for 64bit 10.4.x */
   /* AvailabilityMacros.h is available since Mac OS X 10.2,        */
   /* so guess the system version by maximum errno before inclusion */
@@ -135,9 +130,7 @@ FT_BEGIN_HEADER
 #endif
 #if defined( __LP64__ ) && \
     ( MAC_OS_X_VERSION_MIN_REQUIRED <= MAC_OS_X_VERSION_10_4 )
-#define DARWIN_NO_CARBON 1
-#else
-#define FT_MACINTOSH 1
+#undef FT_MACINTOSH
 #endif
 
 #elif defined( __SC__ ) || defined( __MRC__ )
@@ -206,6 +199,18 @@ FT_BEGIN_HEADER
   /*    the configuration.                                                 */
   /*                                                                       */
   typedef unsigned XXX  FT_UInt32;
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* <Type>                                                                */
+  /*    FT_Int64                                                           */
+  /*                                                                       */
+  /*    A typedef for a 64bit signed integer type.  The size depends on    */
+  /*    the configuration.  Only defined if there is real 64bit support;   */
+  /*    otherwise, it gets emulated with a structure (if necessary).       */
+  /*                                                                       */
+  typedef signed XXX  FT_Int64;
 
   /* */
 
@@ -300,6 +305,10 @@ FT_BEGIN_HEADER
 
 #endif /* FT_LONG64 && !FT_CONFIG_OPTION_FORCE_INT64 */
 
+#ifdef FT_LONG64
+  typedef FT_INT64  FT_Int64;
+#endif
+
 
 #define FT_BEGIN_STMNT  do {
 #define FT_END_STMNT    } while ( 0 )
@@ -362,7 +371,8 @@ FT_BEGIN_HEADER
       "mov    %0, %1, lsr #16\n\t"      /* %0  = %1 >> 16 */
       "orr    %0, %0, %2, lsl #16\n\t"  /* %0 |= %2 << 16 */
       : "=r"(a), "=&r"(t2), "=&r"(t)
-      : "r"(a), "r"(b) );
+      : "r"(a), "r"(b)
+      : "cc" );
     return a;
   }
 
