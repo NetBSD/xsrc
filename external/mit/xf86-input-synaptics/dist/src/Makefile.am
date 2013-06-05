@@ -24,26 +24,34 @@
 # -avoid-version prevents gratuitous .0.0.0 version numbers on the end
 # _ladir passes a dummy rpath to libtool so the thing will actually link
 # TODO: -nostdlib/-Bstatic/-lgcc platform magic, not installing the .a, etc.
-@DRIVER_NAME@_drv_la_LTLIBRARIES = @DRIVER_NAME@_drv.la
-@DRIVER_NAME@_drv_la_LDFLAGS = -module -avoid-version
-@DRIVER_NAME@_drv_ladir = @inputdir@
+synaptics_drv_la_LTLIBRARIES = synaptics_drv.la
+synaptics_drv_la_LDFLAGS = -module -avoid-version
+synaptics_drv_ladir = @inputdir@
 
 AM_CPPFLAGS = -I$(top_srcdir)/include
 AM_CFLAGS = $(XORG_CFLAGS)
 
-@DRIVER_NAME@_drv_la_SOURCES = @DRIVER_NAME@.c synapticsstr.h \
-	alpscomm.c alpscomm.h \
-	ps2comm.c ps2comm.h \
+synaptics_drv_la_SOURCES = \
+	synaptics.c \
+	synapticsstr.h \
+	synproto.c \
 	synproto.h \
 	properties.c
 
+if BUILD_PS2COMM
+synaptics_drv_la_SOURCES += \
+	alpscomm.c \
+	ps2comm.c ps2comm.h
+endif
+
 if BUILD_EVENTCOMM
-@DRIVER_NAME@_drv_la_SOURCES += \
+synaptics_drv_la_SOURCES += \
 	eventcomm.c eventcomm.h
+synaptics_drv_la_LIBADD = \
+	$(MTDEV_LIBS)
 endif
 
 if BUILD_PSMCOMM
-@DRIVER_NAME@_drv_la_SOURCES += \
+synaptics_drv_la_SOURCES += \
 	psmcomm.c
 endif
-
