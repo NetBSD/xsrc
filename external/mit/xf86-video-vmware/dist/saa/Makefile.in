@@ -34,8 +34,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@BUILD_VMWARECTRL_TRUE@bin_PROGRAMS = vmwarectrl$(EXEEXT)
-subdir = vmwarectrl
+subdir = saa
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -45,17 +44,23 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am__installdirs = "$(DESTDIR)$(bindir)"
-PROGRAMS = $(bin_PROGRAMS)
-am__vmwarectrl_SOURCES_DIST = vmwarectrl.c libvmwarectrl.c \
-	libvmwarectrl.h
-@BUILD_VMWARECTRL_TRUE@am_vmwarectrl_OBJECTS = vmwarectrl.$(OBJEXT) \
-@BUILD_VMWARECTRL_TRUE@	libvmwarectrl.$(OBJEXT)
-vmwarectrl_OBJECTS = $(am_vmwarectrl_OBJECTS)
-vmwarectrl_LDADD = $(LDADD)
+LTLIBRARIES = $(noinst_LTLIBRARIES)
+libsaa_la_LIBADD =
+am__libsaa_la_SOURCES_DIST = saa.c saa_pixmap.c saa_unaccel.c \
+	saa_priv.h saa_render.c saa_accel.c saa.h
+@BUILD_VMWGFX_TRUE@am_libsaa_la_OBJECTS = libsaa_la-saa.lo \
+@BUILD_VMWGFX_TRUE@	libsaa_la-saa_pixmap.lo \
+@BUILD_VMWGFX_TRUE@	libsaa_la-saa_unaccel.lo \
+@BUILD_VMWGFX_TRUE@	libsaa_la-saa_render.lo \
+@BUILD_VMWGFX_TRUE@	libsaa_la-saa_accel.lo
+libsaa_la_OBJECTS = $(am_libsaa_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
+libsaa_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libsaa_la_CFLAGS) \
+	$(CFLAGS) $(libsaa_la_LDFLAGS) $(LDFLAGS) -o $@
+@BUILD_VMWGFX_TRUE@am_libsaa_la_rpath =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -82,8 +87,8 @@ am__v_CCLD_0 = @echo "  CCLD  " $@;
 AM_V_GEN = $(am__v_GEN_@AM_V@)
 am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
 am__v_GEN_0 = @echo "  GEN   " $@;
-SOURCES = $(vmwarectrl_SOURCES)
-DIST_SOURCES = $(am__vmwarectrl_SOURCES_DIST)
+SOURCES = $(libsaa_la_SOURCES)
+DIST_SOURCES = $(am__libsaa_la_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -236,10 +241,18 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-@BUILD_VMWARECTRL_TRUE@AM_CPPFLAGS = -I$(top_srcdir)/src
-@BUILD_VMWARECTRL_TRUE@AM_CFLAGS = $(X11_CFLAGS)
-@BUILD_VMWARECTRL_TRUE@AM_LDFLAGS = $(X11_LIBS)
-@BUILD_VMWARECTRL_TRUE@vmwarectrl_SOURCES = vmwarectrl.c libvmwarectrl.c libvmwarectrl.h
+@BUILD_VMWGFX_TRUE@noinst_LTLIBRARIES = libsaa.la
+@BUILD_VMWGFX_TRUE@libsaa_la_CFLAGS = $(CWARNFLAGS) $(XORG_CFLAGS)
+@BUILD_VMWGFX_TRUE@libsaa_la_LDFLAGS = -static
+@BUILD_VMWGFX_TRUE@libsaa_la_SOURCES = \
+@BUILD_VMWGFX_TRUE@	saa.c \
+@BUILD_VMWGFX_TRUE@	saa_pixmap.c \
+@BUILD_VMWGFX_TRUE@	saa_unaccel.c \
+@BUILD_VMWGFX_TRUE@	saa_priv.h \
+@BUILD_VMWGFX_TRUE@	saa_render.c \
+@BUILD_VMWGFX_TRUE@	saa_accel.c \
+@BUILD_VMWGFX_TRUE@	saa.h
+
 all: all-am
 
 .SUFFIXES:
@@ -253,9 +266,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign vmwarectrl/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign saa/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign vmwarectrl/Makefile
+	  $(AUTOMAKE) --foreign saa/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -274,52 +287,17 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
-install-binPROGRAMS: $(bin_PROGRAMS)
-	@$(NORMAL_INSTALL)
-	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
-	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
-	for p in $$list; do echo "$$p $$p"; done | \
-	sed 's/$(EXEEXT)$$//' | \
-	while read p p1; do if test -f $$p || test -f $$p1; \
-	  then echo "$$p"; echo "$$p"; else :; fi; \
-	done | \
-	sed -e 'p;s,.*/,,;n;h' -e 's|.*|.|' \
-	    -e 'p;x;s,.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/' | \
-	sed 'N;N;N;s,\n, ,g' | \
-	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1 } \
-	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
-	    if ($$2 == $$4) files[d] = files[d] " " $$1; \
-	    else { print "f", $$3 "/" $$4, $$1; } } \
-	  END { for (d in files) print "f", d, files[d] }' | \
-	while read type dir files; do \
-	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
-	    test -z "$$files" || { \
-	    echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(bindir)$$dir'"; \
-	    $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(bindir)$$dir" || exit $$?; \
-	    } \
-	; done
 
-uninstall-binPROGRAMS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
-	files=`for p in $$list; do echo "$$p"; done | \
-	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
-	      -e 's/$$/$(EXEEXT)/' `; \
-	test -n "$$list" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(bindir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(bindir)" && rm -f $$files
-
-clean-binPROGRAMS:
-	@list='$(bin_PROGRAMS)'; test -n "$$list" || exit 0; \
-	echo " rm -f" $$list; \
-	rm -f $$list || exit $$?; \
-	test -n "$(EXEEXT)" || exit 0; \
-	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
-	echo " rm -f" $$list; \
-	rm -f $$list
-vmwarectrl$(EXEEXT): $(vmwarectrl_OBJECTS) $(vmwarectrl_DEPENDENCIES) $(EXTRA_vmwarectrl_DEPENDENCIES) 
-	@rm -f vmwarectrl$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(vmwarectrl_OBJECTS) $(vmwarectrl_LDADD) $(LIBS)
+clean-noinstLTLIBRARIES:
+	-test -z "$(noinst_LTLIBRARIES)" || rm -f $(noinst_LTLIBRARIES)
+	@list='$(noinst_LTLIBRARIES)'; for p in $$list; do \
+	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
+	  test "$$dir" != "$$p" || dir=.; \
+	  echo "rm -f \"$${dir}/so_locations\""; \
+	  rm -f "$${dir}/so_locations"; \
+	done
+libsaa.la: $(libsaa_la_OBJECTS) $(libsaa_la_DEPENDENCIES) $(EXTRA_libsaa_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(libsaa_la_LINK) $(am_libsaa_la_rpath) $(libsaa_la_OBJECTS) $(libsaa_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -327,8 +305,11 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libvmwarectrl.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vmwarectrl.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsaa_la-saa.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsaa_la-saa_accel.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsaa_la-saa_pixmap.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsaa_la-saa_render.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsaa_la-saa_unaccel.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -350,6 +331,41 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
+
+libsaa_la-saa.lo: saa.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libsaa_la_CFLAGS) $(CFLAGS) -MT libsaa_la-saa.lo -MD -MP -MF $(DEPDIR)/libsaa_la-saa.Tpo -c -o libsaa_la-saa.lo `test -f 'saa.c' || echo '$(srcdir)/'`saa.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libsaa_la-saa.Tpo $(DEPDIR)/libsaa_la-saa.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='saa.c' object='libsaa_la-saa.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libsaa_la_CFLAGS) $(CFLAGS) -c -o libsaa_la-saa.lo `test -f 'saa.c' || echo '$(srcdir)/'`saa.c
+
+libsaa_la-saa_pixmap.lo: saa_pixmap.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libsaa_la_CFLAGS) $(CFLAGS) -MT libsaa_la-saa_pixmap.lo -MD -MP -MF $(DEPDIR)/libsaa_la-saa_pixmap.Tpo -c -o libsaa_la-saa_pixmap.lo `test -f 'saa_pixmap.c' || echo '$(srcdir)/'`saa_pixmap.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libsaa_la-saa_pixmap.Tpo $(DEPDIR)/libsaa_la-saa_pixmap.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='saa_pixmap.c' object='libsaa_la-saa_pixmap.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libsaa_la_CFLAGS) $(CFLAGS) -c -o libsaa_la-saa_pixmap.lo `test -f 'saa_pixmap.c' || echo '$(srcdir)/'`saa_pixmap.c
+
+libsaa_la-saa_unaccel.lo: saa_unaccel.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libsaa_la_CFLAGS) $(CFLAGS) -MT libsaa_la-saa_unaccel.lo -MD -MP -MF $(DEPDIR)/libsaa_la-saa_unaccel.Tpo -c -o libsaa_la-saa_unaccel.lo `test -f 'saa_unaccel.c' || echo '$(srcdir)/'`saa_unaccel.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libsaa_la-saa_unaccel.Tpo $(DEPDIR)/libsaa_la-saa_unaccel.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='saa_unaccel.c' object='libsaa_la-saa_unaccel.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libsaa_la_CFLAGS) $(CFLAGS) -c -o libsaa_la-saa_unaccel.lo `test -f 'saa_unaccel.c' || echo '$(srcdir)/'`saa_unaccel.c
+
+libsaa_la-saa_render.lo: saa_render.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libsaa_la_CFLAGS) $(CFLAGS) -MT libsaa_la-saa_render.lo -MD -MP -MF $(DEPDIR)/libsaa_la-saa_render.Tpo -c -o libsaa_la-saa_render.lo `test -f 'saa_render.c' || echo '$(srcdir)/'`saa_render.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libsaa_la-saa_render.Tpo $(DEPDIR)/libsaa_la-saa_render.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='saa_render.c' object='libsaa_la-saa_render.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libsaa_la_CFLAGS) $(CFLAGS) -c -o libsaa_la-saa_render.lo `test -f 'saa_render.c' || echo '$(srcdir)/'`saa_render.c
+
+libsaa_la-saa_accel.lo: saa_accel.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libsaa_la_CFLAGS) $(CFLAGS) -MT libsaa_la-saa_accel.lo -MD -MP -MF $(DEPDIR)/libsaa_la-saa_accel.Tpo -c -o libsaa_la-saa_accel.lo `test -f 'saa_accel.c' || echo '$(srcdir)/'`saa_accel.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libsaa_la-saa_accel.Tpo $(DEPDIR)/libsaa_la-saa_accel.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='saa_accel.c' object='libsaa_la-saa_accel.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libsaa_la_CFLAGS) $(CFLAGS) -c -o libsaa_la-saa_accel.lo `test -f 'saa_accel.c' || echo '$(srcdir)/'`saa_accel.c
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -441,11 +457,8 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(PROGRAMS)
+all-am: Makefile $(LTLIBRARIES)
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)"; do \
-	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
-	done
 install: install-am
 install-exec: install-exec-am
 install-data: install-data-am
@@ -478,7 +491,8 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
+clean-am: clean-generic clean-libtool clean-noinstLTLIBRARIES \
+	mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -504,7 +518,7 @@ install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am: install-binPROGRAMS
+install-exec-am:
 
 install-html: install-html-am
 
@@ -544,23 +558,22 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS
+uninstall-am:
 
 .MAKE: install-am install-strip
 
-.PHONY: CTAGS GTAGS all all-am check check-am clean clean-binPROGRAMS \
-	clean-generic clean-libtool ctags distclean distclean-compile \
-	distclean-generic distclean-libtool distclean-tags distdir dvi \
-	dvi-am html html-am info info-am install install-am \
-	install-binPROGRAMS install-data install-data-am install-dvi \
+.PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
+	clean-libtool clean-noinstLTLIBRARIES ctags distclean \
+	distclean-compile distclean-generic distclean-libtool \
+	distclean-tags distdir dvi dvi-am html html-am info info-am \
+	install install-am install-data install-data-am install-dvi \
 	install-dvi-am install-exec install-exec-am install-html \
 	install-html-am install-info install-info-am install-man \
 	install-pdf install-pdf-am install-ps install-ps-am \
 	install-strip installcheck installcheck-am installdirs \
 	maintainer-clean maintainer-clean-generic mostlyclean \
 	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am tags uninstall uninstall-am \
-	uninstall-binPROGRAMS
+	pdf pdf-am ps ps-am tags uninstall uninstall-am
 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
