@@ -23,7 +23,7 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-input-mouse],
-        [1.7.1],
+        [1.9.0],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
         [xf86-input-mouse])
 AC_CONFIG_SRCDIR([Makefile.am])
@@ -32,7 +32,6 @@ AC_CONFIG_AUX_DIR(.)
 
 # Initialize Automake
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
-AM_MAINTAINER_MODE
 
 # Initialize libtool
 AC_DISABLE_STATIC
@@ -46,7 +45,7 @@ XORG_DEFAULT_OPTIONS
 XORG_WITH_LINT
 
 # Obtain compiler/linker options from server and required extensions
-PKG_CHECK_MODULES(XORG, [xorg-server >= 1.5.99.901] xproto inputproto)
+PKG_CHECK_MODULES(XORG, [xorg-server >= 1.7] xproto inputproto)
 
 # Define a configure option for an alternate input module directory
 AC_ARG_WITH(xorg-module-dir,
@@ -56,6 +55,16 @@ AC_ARG_WITH(xorg-module-dir,
             [moduledir="$libdir/xorg/modules"])
 inputdir=${moduledir}/input
 AC_SUBST(inputdir)
+
+# X Server SDK location is required to install xf86-mouse-properties.h
+# This location is also relayed in the xorg-mouse.pc file
+sdkdir=`$PKG_CONFIG --variable=sdkdir xorg-server`
+
+# Workaround overriding sdkdir to be able to create a tarball when user has no
+# write permission in sdkdir. See DISTCHECK_CONFIGURE_FLAGS in Makefile.am
+AC_ARG_WITH([sdkdir], [], [sdkdir="$withval"])
+AC_SUBST([sdkdir])
+
 
 # Work out which OS mouse driver we need to build
 case $host_os in
@@ -78,6 +87,8 @@ DRIVER_NAME=mouse
 AC_SUBST([DRIVER_NAME])
 
 AC_CONFIG_FILES([Makefile
+                 xorg-mouse.pc
+                 include/Makefile
                  src/Makefile
                  man/Makefile])
 AC_OUTPUT
