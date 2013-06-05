@@ -18,7 +18,13 @@
 #  IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-SUBDIRS = include src man tools conf
+# During distcheck, system locations (as provided by pkg-config) may
+# not be writable; provide instead relative locations.
+DISTCHECK_CONFIGURE_FLAGS = \
+	--with-sdkdir='$${includedir}/xorg' \
+	--with-xorg-conf-dir='$${datadir}/X11/xorg.conf.d'
+
+SUBDIRS = include src man tools conf test
 MAINTAINERCLEANFILES = ChangeLog INSTALL
 
 pkgconfigdir = $(libdir)/pkgconfig

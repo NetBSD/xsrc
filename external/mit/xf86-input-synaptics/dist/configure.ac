@@ -23,7 +23,7 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-input-synaptics],
-        [1.4.1],
+        [1.7.1],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
         [xf86-input-synaptics])
 AC_CONFIG_SRCDIR([Makefile.am])
@@ -38,28 +38,28 @@ AM_MAINTAINER_MODE
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
 
-# Initialize X.Org macros 1.8 or later for MAN_SUBSTS set by XORG_MANPAGE_SECTIONS
+# Initialize X.Org macros 1.13 or later for XORG_ENABLE_UNIT_TESTS
 m4_ifndef([XORG_MACROS_VERSION],
-          [m4_fatal([must install xorg-macros 1.8 or later before running autoconf/autogen])])
-XORG_MACROS_VERSION(1.8)
+          [m4_fatal([must install xorg-macros 1.13 or later before running autoconf/autogen])])
+XORG_MACROS_VERSION(1.13)
 XORG_DEFAULT_OPTIONS
+XORG_ENABLE_UNIT_TESTS
 
 # Checks for libraries.
 AC_CHECK_LIB([m], [rint])
 
 # Store the list of server defined optional extensions in REQUIRED_MODULES
+m4_ifndef([XORG_DRIVER_CHECK_EXT],
+          [m4_fatal([must install xorg-server development files before running autoconf/autogen])])
 XORG_DRIVER_CHECK_EXT(RANDR, randrproto)
 
 # Obtain compiler/linker options for the Synaptics driver dependencies
-PKG_CHECK_MODULES(XORG, [xorg-server >= 1.6] xproto inputproto $REQUIRED_MODULES)
+PKG_CHECK_MODULES(XORG, [inputproto >= 2.1.99.3] [xorg-server >= 1.12] xproto inputproto $REQUIRED_MODULES)
 
 # X Server SDK location is required to install Synaptics header files
 # This location is also relayed in the xorg-synaptics.pc file
 sdkdir=`$PKG_CONFIG --variable=sdkdir xorg-server`
 AC_SUBST([sdkdir])
-
-DRIVER_NAME=synaptics
-AC_SUBST([DRIVER_NAME])
 
 # -----------------------------------------------------------------------------
 #			Configuration options
@@ -98,21 +98,38 @@ AM_CONDITIONAL(DEBUG, [test "x$DEBUGGING" = xyes])
 AC_MSG_CHECKING([which optional backends will be build])
 case "${host}" in
 *linux*)
-	AC_MSG_RESULT([eventcomm])
+	AC_MSG_RESULT([ps2comm alpscomm eventcomm])
+	BUILD_PS2COMM="yes"
 	BUILD_EVENTCOMM="yes"
-	AC_DEFINE(BUILD_EVENTCOMM, 1, [Optional backend eventcomm enabled])
 	;;
-*freebsd* | *openbsd* | *netbsd* | *dragonfly*)
-	AC_MSG_RESULT([psmcomm])
+*freebsd* | *netbsd* | *dragonfly*)
+	AC_MSG_RESULT([ps2comm alpscomm psmcomm])
+	BUILD_PS2COMM="yes"
 	BUILD_PSMCOMM="yes"
-	AC_DEFINE(BUILD_PSMCOMM, 1, [Optional backend psmcomm enabled])
+	;;
+*solaris* | *gnu*)
+	AC_MSG_RESULT([ps2comm alpscomm])
+	BUILD_PS2COMM="yes"
 	;;
 *)
-	AC_MSG_RESULT([none])
+	AC_MSG_ERROR([Cannot find suitable backends for this platform.])
 	;;
 esac
+if test "x$BUILD_EVENTCOMM" = xyes; then
+    AC_DEFINE(BUILD_EVENTCOMM, 1, [Optional backend eventcomm enabled])
+
+    # Obtain compiler/linker options for mtdev
+    PKG_CHECK_MODULES(MTDEV, mtdev)
+fi
+if test "x$BUILD_PSMCOMM" = xyes; then
+    AC_DEFINE(BUILD_PSMCOMM, 1, [Optional backend psmcomm enabled])
+fi
+if test "x$BUILD_PS2COMM" = xyes; then
+    AC_DEFINE(BUILD_PS2COMM, 1, [Optional backend ps2comm and alpscomm enabled])
+fi
 AM_CONDITIONAL([BUILD_EVENTCOMM], [test "x${BUILD_EVENTCOMM}" = "xyes"])
 AM_CONDITIONAL([BUILD_PSMCOMM], [test "x${BUILD_PSMCOMM}" = "xyes"])
+AM_CONDITIONAL([BUILD_PS2COMM], [test "x${BUILD_PS2COMM}" = "xyes"])
 
 # -----------------------------------------------------------------------------
 #			Dependencies for synclient and syndaemon
@@ -133,12 +150,17 @@ if test "x$have_libxtst" = "xyes" ; then
 fi
 # -----------------------------------------------------------------------------
 
+# Workaround overriding sdkdir to be able to create a tarball when user has no
+# write permission in sdkdir. See DISTCHECK_CONFIGURE_FLAGS in Makefile.am
+AC_ARG_WITH([sdkdir], [], [sdkdir="$withval"])
+
 AC_CONFIG_FILES([Makefile
                 src/Makefile
                 man/Makefile
                 tools/Makefile
                 conf/Makefile
                 include/Makefile
+                test/Makefile
                 xorg-synaptics.pc])
 AC_OUTPUT
 
