@@ -65,11 +65,16 @@
 #include "xf86Xinput.h"
 #include "xf86_OSproc.h"
 #include "xf86OSmouse.h"
+#include "xf86Priv.h"
 #include "compiler.h"
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 #include <xserver-properties.h>
 #include "exevents.h"
+#endif
+
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 18
+#define LogMessageVerbSigSafe xf86MsgVerb
 #endif
 
 #include "xisb.h"
@@ -228,11 +233,40 @@ static char reverseMap[32] = { 0,  4,  2,  6,  1,  5,  3,  7,
 #define reverseBits(map, b)	(((b) & ~0x0f) | map[(b) & 0x0f])
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 14
+
+static InputOption*
+input_option_new(InputOption *list, char *key, char *value)
+{
+   InputOption *new;
+
+   new = calloc(1, sizeof(InputOption));
+   new->key = key;
+   new->value = value;
+   new->next = list;
+   return new;
+}
+
+static void
+input_option_free_list(InputOption **opts)
+{
+   InputOption *tmp = *opts;
+   while(*opts)
+   {
+      tmp = (*opts)->next;
+      free((*opts)->key);
+      free((*opts)->value);
+      free((*opts));
+      *opts = tmp;
+   }
+}
+#endif
+
 static int
 VMMouseInitPassthru(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 {
    InputAttributes *attrs = NULL;
-   InputOption *input_options = NULL, *tmp, *opts;
+   InputOption *input_options = NULL;
    pointer options;
    DeviceIntPtr dev;
    int rc;
@@ -241,25 +275,15 @@ VMMouseInitPassthru(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
    options = xf86ReplaceStrOption(options, "Driver", "mouse");
 
    while(options) {
-      tmp = calloc(1, sizeof(InputOption));
-      tmp->key = xf86OptionName(options);
-      tmp->value = xf86OptionValue(options);
-      tmp->next = input_options;
-      input_options = tmp;
+      input_options = input_option_new(input_options,
+                                       xf86OptionName(options),
+                                       xf86OptionValue(options));
       options = xf86NextOption(options);
    }
 
    rc = NewInputDeviceRequest(input_options, attrs, &dev);
 
-   opts = input_options;
-   tmp = opts;
-   while(opts) {
-      tmp = opts->next;
-      free(opts->key);
-      free(opts->value);
-      free(opts);
-      opts = tmp;
-   }
+   input_option_free_list(&input_options);
 
    return rc;
 }
@@ -318,6 +342,16 @@ VMMousePreInit(InputDriverPtr drv, IDevPtr dev, int flags)
       return FALSE;
 }
 #endif
+
+   /*
+    * enable hardware access
+    */
+   if (!xorgHWAccess) {
+      if (xf86EnableIO())
+          xorgHWAccess = TRUE;
+      else
+          return NULL;
+   }
 
    /*
     * try to enable vmmouse here
@@ -379,6 +413,16 @@ VMMousePreInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
    MouseDevPtr pMse = NULL;
    VMMousePrivPtr mPriv = NULL;
    int rc = Success;
+
+   /* Enable hardware access. */
+   if (!xorgHWAccess) {
+      if (xf86EnableIO())
+          xorgHWAccess = TRUE;
+      else {
+          rc = BadValue;
+          goto error;
+      }
+   }
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 12
    /* For ABI < 12, we need to return the wrapped driver's pInfo (see
@@ -685,19 +729,14 @@ static void
 MouseCommonOptions(InputInfoPtr pInfo)
 {
    MouseDevPtr pMse;
-   MessageType from = X_DEFAULT;
    char *s;
-   int origButtons;
 
    pMse = pInfo->private;
 
    pMse->buttons = xf86SetIntOption(pInfo->options, "Buttons", 0);
-   from = X_CONFIG;
    if (!pMse->buttons) {
       pMse->buttons = MSE_DFLTBUTTONS;
-      from = X_DEFAULT;
    }
-   origButtons = pMse->buttons;
 
    /*
     * "emulate3Buttons" and "Drag Lock" is not supported
@@ -746,13 +785,6 @@ MouseCommonOptions(InputInfoPtr pInfo)
 		 pInfo->name, s);
       }
    }
-
-   /*
-    * Emulatewheel is not supported
-    */
-   if (origButtons != pMse->buttons)
-      from = X_CONFIG;
-
 }
 
 
@@ -803,7 +835,6 @@ VMMouseDeviceControl(DeviceIntPtr device, int mode)
 {
    InputInfoPtr pInfo;
    MouseDevPtr pMse;
-   VMMousePrivPtr mPriv;
    unsigned char map[MSE_MAXBUTTONS + 1];
    int i;
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
@@ -814,7 +845,6 @@ VMMouseDeviceControl(DeviceIntPtr device, int mode)
    pInfo = device->public.devicePrivate;
    pMse = pInfo->private;
    pMse->device = device;
-   mPriv = (VMMousePrivPtr)pMse->mousePriv;
 
    switch (mode){
    case DEVICE_INIT:
@@ -1023,7 +1053,7 @@ VMMouseReadInput(InputInfoPtr pInfo)
        */
       VMMouseClient_RequestAbsolute();
       mPriv->absoluteRequested = TRUE;
-      xf86Msg(X_INFO, "VMWARE(0): vmmouse enable absolute mode\n");
+      LogMessageVerbSigSafe(X_INFO, -1, "VMWARE(0): vmmouse enable absolute mode\n");
    }
 
    /*
@@ -1080,17 +1110,17 @@ GetVMMouseMotionEvent(InputInfoPtr pInfo){
    VMMousePrivPtr mPriv;
    int buttons, dx, dy, dz, dw;
    VMMOUSE_INPUT_DATA  vmmouseInput;
-   int ps2Buttons = 0;
    int numPackets;
 
    pMse = pInfo->private;
    mPriv = (VMMousePrivPtr)pMse->mousePriv;
    while((numPackets = VMMouseClient_GetInput(&vmmouseInput))){
+      int ps2Buttons = 0;
       if (numPackets == VMMOUSE_ERROR) {
          VMMouseClient_Disable();
          VMMouseClient_Enable();
          VMMouseClient_RequestAbsolute();
-         xf86Msg(X_INFO, "VMWARE(0): re-requesting absolute mode after reset\n");
+         LogMessageVerbSigSafe(X_INFO, -1, "VMWARE(0): re-requesting absolute mode after reset\n");
          break;
       }
 

@@ -1,3 +1,178 @@
+commit a2e4aa9d2002dad6e976d9e4d3f129ad3127be81
+Author: Zack Rusin <zackr@vmware.com>
+Date:   Tue Jan 15 12:03:28 2013 -0800
+
+    vmmouse release 13.0.0
+    
+    Signed-off-by: Zack Rusin <zackr@vmware.com>
+
+commit 1b40f1e1f61b5f44836ba5cd5d487cf57f6608ac
+Author: Zack Rusin <zackr@vmware.com>
+Date:   Thu Dec 6 16:37:19 2012 -0500
+
+    vmmouse 12.9.99.901
+    
+    Internal release for QE testing
+    
+    Signed-off-by: Zack Rusin <zackr@vmware.com>
+
+commit cabf4cb7c0ba3e535068ebb1d80108a26dddddaa
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Aug 21 14:03:55 2012 +1000
+
+    Fix compiler warnings about unused variables
+    
+    vmmouse.c: In function 'MouseCommonOptions':
+    vmmouse.c:732:16: warning: variable 'from' set but not used
+    [-Wunused-but-set-variable]
+    
+    vmmouse.c: In function 'MouseCommonOptions':
+    vmmouse.c:733:8: warning: variable 'origButtons' set but not used
+    [-Wunused-but-set-variable]
+    
+    vmmouse.c: In function 'VMMouseDeviceControl':
+    vmmouse.c:838:19: warning: variable 'mPriv' set but not used
+    [-Wunused-but-set-variable]
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Thomas Hellstrom <thellstrom@vmware.com>
+
+commit 393880d2e6fe7f744e6c701a4fde6116a7278325
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Aug 21 14:03:54 2012 +1000
+
+    Use sigsafe logging in ReadInput path
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Thomas Hellstrom <thellstrom@vmware.com>
+
+commit dba73cebb527bb36a3d17d67b1e8e1892852b240
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Sun Aug 5 08:12:15 2012 +1000
+
+    Fetch the udev dir from udev.pc instead of guessing based on prefix
+    
+    Reviewed-by: Gaetan Nadon<memsize@videotron.ca>
+    Reviewed-by: Jakob Bornecrantz <jakob@vmware.com>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Jakob Bornecrantz <jakob@vmware.com>
+
+commit 3c8ccf5eec3177ed8976ed5ff04795a20287d2d8
+Author: Stephen Brooks <nightbikeman@gmail.com>
+Date:   Wed May 18 22:48:34 2011 +0100
+
+    Reset ps2buttons to avoid button messages from being discarded.
+    
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Jakob Bornecrantz <jakob@vmware.com>
+    Signed-off-by: Jakob Bornecrantz <jakob@vmware.com>
+    Signed-off-by: Stephen Brooks <nightbikeman@gmail.com>
+
+commit 3a828d876772d05577b9372e8f6dc068794f4704
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Tue May 22 20:14:25 2012 +0200
+
+    vmmouse 12.8.0
+    
+    Signed-off-by: Jakob Bornecrantz <jakob@vmware.com>
+
+commit 2a321a39350aa020a8103813bed61ff559088195
+Author: Zack Rusin <zackr@vmware.com>
+Date:   Thu May 10 19:55:01 2012 -0400
+
+    Revert "Adjust the kernel name in the udev file."
+    
+    This reverts commit 189dc266a66485d48303acbc1a4fbe4642c75e9f.
+    
+    It seems that for some reason the device routing is breaking with this.
+    Possibly related to Win7 x64 hosts because it's not reproducible on
+    GNU/Linux hosts. Semantially we'd still like to match only on mouse
+    kernel but for the time being this seems to cause more problems
+    than it solves. Hence the revert.
+
+commit 55efac85ca9bd2041240ca29316ca716ddc2185d
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue May 1 16:20:59 2012 -0400
+
+    config: replace obsolete AM_CONFIG_HEADER with AC_CONFIG_HEADERS
+    
+    Moved up in the autoconf init section.
+    It has been removed from Automake 1.12.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+    Signed-off-by: Zack Rusin <zackr@vmware.com>
+
+commit 840dcbf947dd9d1383777c3cd811ff680cef5f16
+Author: Michal Srb <msrb@suse.com>
+Date:   Thu May 3 17:55:24 2012 +0200
+
+    Enable hardware access during vmmouse preinit.
+    
+    Vmmouse driver uses outl calls but never requests hardware access.
+    In case there are no other drivers that requests it, vmmouse
+    initialization will fail. (Found on KVM virtual machine with fbdev
+    graphics driver and vmmouse input driver.)
+    
+    Request hardware access in same way xf86-input-keyboard does.
+    
+    Signed-off-by: Zack Rusin <zackr@vmware.com>
+
+commit e925b2e6e9d548db5a6646a76d513fb6881f69b4
+Author: Zack Rusin <zackr@vmware.com>
+Date:   Thu Mar 8 09:51:48 2012 -0500
+
+    vmmouse 12.8.0
+    
+    bump the version number for the new release
+    
+    Signed-off-by: Zack Rusin <zackr@vmware.com>
+
+commit 189dc266a66485d48303acbc1a4fbe4642c75e9f
+Author: Zack Rusin <zackr@vmware.com>
+Date:   Wed Mar 7 23:22:35 2012 -0500
+
+    Adjust the kernel name in the udev file.
+    
+    Some distros (most notable OpenSuSE) are unable to match on the
+    'event' devices, since we should be using 'mouse' kernel anyway
+    (because that's what the 'udevadm info' reports) switch to it in the
+    rules file.
+    
+    Signed-off-by: Zack Rusin <zackr@vmware.com>
+    Reviewed-by: Jakob Bornecrantz <jakob@vmware.com>
+
+commit 3960dd29b4e839d224b9da4e28ab4302832e906f
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Sat Nov 12 14:08:13 2011 +1000
+
+    Deal with opaque InputOption types in ABI 14
+    
+    Tested-by: Jakob Bornecrantz <jakob@vmware.com>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Jakob Bornecrantz <jakob@vmware.com>
+
+commit fd140bfbea9fac8f05ad525dd798a5ca39f68c44
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Tue Apr 5 14:42:37 2011 +0200
+
+    Make the fdi script work with FreeBSD
+    
+    The key "input.originating_device" is not present on FreeBSD.
+    Use "freebsd.driver" instead.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Michel Dänzer <daenzer@vmware.com>
+
+commit de2b5ca7a76f1ffac1e8d4ed88408dda0f77a83c
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Mar 2 11:50:12 2011 +0100
+
+    vmmouse 12.7.0
+    
+    Remove trailing zero from version number.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+
 commit cfaffd24413a31ebd7ae766ac39ed366902e38e5
 Author: Thomas Hellstrom <thellstrom@vmware.com>
 Date:   Wed Mar 2 09:06:47 2011 +0100
