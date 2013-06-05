@@ -18,7 +18,6 @@
 #include "xf86.h"
 #include "xf86_OSproc.h"
 
-
 #include <X11/extensions/panoramiXproto.h>
 
 #ifdef XSERVER_LIBPCIACCESS
@@ -29,7 +28,6 @@
 
 #include "compiler.h"	        /* inb/outb */
 
-#include "xf86PciInfo.h"	/* pci vendor id */
 #include "xf86Pci.h"		/* pci */
 #include "xf86Cursor.h"		/* hw cursor */
 #include "cursorstr.h"          /* xhot/yhot */
@@ -42,6 +40,16 @@
 #include "vm_basic_types.h"
 #include "svga_reg.h"
 #include "svga_struct.h"
+#include "vmware_bootstrap.h"
+#include <xf86Module.h>
+
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
+#define _swapl(x, n) swapl(x,n)
+#define _swaps(x, n) swaps(x,n)
+#else
+#define _swapl(x, n) (void) n; swapl(x)
+#define _swaps(x, n) (void) n; swaps(x)
+#endif
 
 /*
  * The virtual hardware's cursor limits are pretty big. Some VMware
@@ -142,7 +150,7 @@ typedef struct {
         uint32 sourcePixmap[SVGA_PIXMAP_SIZE(MAX_CURS, MAX_CURS, 32)];
     } hwcur;
 
-    IOADDRESS indexReg, valueReg;
+    unsigned long indexReg, valueReg;
 
     ScreenRec ScrnFuncs;
 
@@ -166,10 +174,6 @@ typedef struct {
 } VMWARERec, *VMWAREPtr;
 
 #define VMWAREPTR(p) ((VMWAREPtr)((p)->driverPrivate))
-
-static __inline ScrnInfoPtr infoFromScreen(ScreenPtr s) {
-    return xf86Screens[s->myNum];
-}
 
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #define MAX(a,b) ((a)>(b)?(a):(b))
@@ -199,15 +203,6 @@ static __inline ScrnInfoPtr infoFromScreen(ScreenPtr s) {
     }
 
 #define MOUSE_ID 1
-
-/*#define DEBUG_LOGGING*/
-#ifdef DEBUG_LOGGING
-# define VmwareLog(args) ErrorF args
-# define TRACEPOINT VmwareLog(("%s : %s\n", __FUNCTION__, __FILE__));
-#else
-# define VmwareLog(args)
-# define TRACEPOINT
-#endif
 
 /* Undefine this to kill all acceleration */
 #define ACCELERATE_OPS
@@ -313,7 +308,9 @@ void vmwareCheckVideoSanity(
    );
 
 /* vmwaremode.c */
-void vmwareGetSupportedModelines(
-   DisplayModePtr *monitorModes
+void vmwareAddDefaultMode(
+   ScrnInfoPtr pScrn,
+   uint32 dwidth,
+   uint32 dheight
    );
 #endif
