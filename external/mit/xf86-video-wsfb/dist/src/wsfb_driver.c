@@ -219,7 +219,6 @@ static const char *ramdacSymbols[] = {
 };
 #endif
 
-#ifdef XFree86LOADER
 static XF86ModuleVersionInfo WsfbVersRec = {
 	"wsfb",
 	MODULEVENDORSTRING,
