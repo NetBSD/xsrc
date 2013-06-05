@@ -1,6 +1,5 @@
-/* $OpenBSD: wsfb_driver.c,v 1.16 2009/09/13 19:33:49 matthieu Exp $ */
 /*
- * Copyright (c) 2001 Matthieu Herrb
+ * Copyright © 2001-2012 Matthieu Herrb
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,6 +41,8 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/time.h>
@@ -110,9 +111,7 @@ extern int priv_open_device(const char *);
 #endif
 
 /* Prototypes */
-#ifdef XFree86LOADER
 static pointer WsfbSetup(pointer, pointer, int *, int *);
-#endif
 static Bool WsfbGetRec(ScrnInfoPtr);
 static void WsfbFreeRec(ScrnInfoPtr);
 static const OptionInfoRec * WsfbAvailableOptions(int, int);
@@ -145,7 +144,7 @@ static Bool WsfbDriverFunc(ScrnInfoPtr pScrn, xorgDriverFuncOp op,
 				pointer ptr);
 
 /* Helper functions */
-static int wsfb_open(char *);
+static int wsfb_open(const char *);
 static pointer wsfb_mmap(size_t, off_t, int);
 
 enum { WSFB_ROTATE_NONE = 0,
@@ -155,7 +154,7 @@ enum { WSFB_ROTATE_NONE = 0,
 };
 
 /*
- * This is intentionally screen-independent. 
+ * This is intentionally screen-independent.
  * It indicates the binding choice made in the first PreInit.
  */
 static int pix24bpp = 0;
@@ -195,6 +194,7 @@ static const OptionInfoRec WsfbOptions[] = {
 	{ -1, NULL, OPTV_NONE, {0}, FALSE}
 };
 
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) <= 6
 /* Symbols needed from other modules */
 static const char *fbSymbols[] = {
 	"fbPictureInit",
@@ -217,6 +217,7 @@ static const char *ramdacSymbols[] = {
 	"xf86InitCursor",
 	NULL
 };
+#endif
 
 #ifdef XFree86LOADER
 static XF86ModuleVersionInfo WsfbVersRec = {
@@ -225,8 +226,8 @@ static XF86ModuleVersionInfo WsfbVersRec = {
 	MODINFOSTRING1,
 	MODINFOSTRING2,
 	XORG_VERSION_CURRENT,
-	PACKAGE_VERSION_MAJOR, 
-	PACKAGE_VERSION_MINOR, 
+	PACKAGE_VERSION_MAJOR,
+	PACKAGE_VERSION_MINOR,
 	PACKAGE_VERSION_PATCHLEVEL,
 	ABI_CLASS_VIDEODRV,
 	ABI_VIDEODRV_VERSION,
@@ -264,7 +265,6 @@ WsfbSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 		return NULL;
 	}
 }
-#endif /* XFree86LOADER */
 
 static Bool
 WsfbGetRec(ScrnInfoPtr pScrn)
@@ -283,7 +283,7 @@ WsfbFreeRec(ScrnInfoPtr pScrn)
 
 	if (pScrn->driverPrivate == NULL)
 		return;
-	xfree(pScrn->driverPrivate);
+	free(pScrn->driverPrivate);
 	pScrn->driverPrivate = NULL;
 }
 
@@ -302,11 +302,11 @@ WsfbIdentify(int flags)
 
 /* Open the framebuffer device. */
 static int
-wsfb_open(char *dev)
+wsfb_open(const char *dev)
 {
 	int fd = -1;
 
-	/* Try argument from XF86Config first. */
+	/* Try argument from xorg.conf first. */
 	if (dev == NULL || ((fd = priv_open_device(dev)) == -1)) {
 		/* Second: environment variable. */
 		dev = getenv("XDEVICE");
@@ -356,7 +356,7 @@ WsfbProbe(DriverPtr drv, int flags)
 	int i, fd, entity;
        	GDevPtr *devSections;
 	int numDevSections;
-	char *dev;
+	const char *dev;
 	Bool foundScreen = FALSE;
 
 	TRACE("probe start");
@@ -397,7 +397,7 @@ WsfbProbe(DriverPtr drv, int flags)
 			}
 		}
 	}
-	xfree(devSections);
+	free(devSections);
 	TRACE("probe done");
 	return foundScreen;
 }
@@ -407,8 +407,8 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 {
 	WsfbPtr fPtr;
 	int default_depth, wstype;
-	char *dev, *s;
-	char *mod = NULL;
+	const char *dev;
+	char *mod = NULL, *s;
 	const char *reqSym = NULL;
 	Gamma zeros = {0.0, 0.0, 0.0};
 	DisplayModePtr mode;
@@ -506,7 +506,7 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 	 */
 	if (fPtr->fbi.fbi_pixeltype == WSFB_CI) {
 		fPtr->saved_cmap.red =
-		    (unsigned char *)xalloc(fPtr->fbi.fbi_subtype.fbi_cmapinfo.cmap_entries);
+		    (unsigned char *)malloc(fPtr->fbi.fbi_subtype.fbi_cmapinfo.cmap_entries);
 		if (fPtr->saved_cmap.red == NULL) {
 			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 			    "Cannot malloc %d bytes\n",
@@ -514,22 +514,22 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 			return FALSE;
 		}
 		fPtr->saved_cmap.green =
-		    (unsigned char *)xalloc(fPtr->fbi.fbi_subtype.fbi_cmapinfo.cmap_entries);
+		    (unsigned char *)malloc(fPtr->fbi.fbi_subtype.fbi_cmapinfo.cmap_entries);
 		if (fPtr->saved_cmap.green == NULL) {
 			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 			    "Cannot malloc %d bytes\n",
 			    fPtr->fbi.fbi_subtype.fbi_cmapinfo.cmap_entries);
-			xfree(fPtr->saved_cmap.red);
+			free(fPtr->saved_cmap.red);
 			return FALSE;
 		}
 		fPtr->saved_cmap.blue =
-		    (unsigned char *)xalloc(fPtr->fbi.fbi_subtype.fbi_cmapinfo.cmap_entries);
+		    (unsigned char *)malloc(fPtr->fbi.fbi_subtype.fbi_cmapinfo.cmap_entries);
 		if (fPtr->saved_cmap.blue == NULL) {
 			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 			    "Cannot malloc %d bytes\n",
 			    fPtr->fbi.fbi_subtype.fbi_cmapinfo.cmap_entries);
-			xfree(fPtr->saved_cmap.red);
-			xfree(fPtr->saved_cmap.green);
+			free(fPtr->saved_cmap.red);
+			free(fPtr->saved_cmap.green);
 			return FALSE;
 		}
 	}
@@ -545,7 +545,7 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 	if (pScrn->bitsPerPixel != fPtr->fbi.fbi_bitsperpixel) {
 		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		    "specified depth (%d) or bpp (%d) doesn't match "
-		    "framebuffer depth (%d)\n", pScrn->depth, 
+		    "framebuffer depth (%d)\n", pScrn->depth,
 		    pScrn->bitsPerPixel, fPtr->fbi.fbi_bitsperpixel);
 		return FALSE;
 	}
@@ -613,7 +613,8 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 
 	/* Handle options. */
 	xf86CollectOptions(pScrn, NULL);
-	if (!(fPtr->Options = xalloc(sizeof(WsfbOptions))))
+	fPtr->Options = (OptionInfoRec *)malloc(sizeof(WsfbOptions));
+	if (fPtr->Options == NULL)
 		return FALSE;
 	memcpy(fPtr->Options, WsfbOptions, sizeof(WsfbOptions));
 	xf86ProcessOptions(pScrn->scrnIndex, fPtr->pEnt->device->options,
@@ -664,9 +665,9 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 			    "Option \"Rotate\" ignored on depth < 8");
 		}
 	}
-	
+
 	/* Fake video mode struct. */
-	mode = (DisplayModePtr)xalloc(sizeof(DisplayModeRec));
+	mode = (DisplayModePtr)malloc(sizeof(DisplayModeRec));
 	mode->prev = mode;
 	mode->next = mode;
 	mode->name = "wsfb current mode";
@@ -885,7 +886,7 @@ WsfbScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	if (!miSetPixmapDepths())
 		return FALSE;
 
-	if (fPtr->rotate == WSFB_ROTATE_CW 
+	if (fPtr->rotate == WSFB_ROTATE_CW
 	    || fPtr->rotate == WSFB_ROTATE_CCW) {
 		int tmp = pScrn->virtualX;
 		pScrn->virtualX = pScrn->displayWidth = pScrn->virtualY;
@@ -910,9 +911,9 @@ WsfbScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 #endif
 
 	if (fPtr->shadowFB) {
-		fPtr->shadow = xcalloc(1, pScrn->virtualX * pScrn->virtualY *
-		    pScrn->bitsPerPixel);
-		
+		fPtr->shadow = calloc(1, pScrn->virtualX * pScrn->virtualY *
+		    pScrn->bitsPerPixel/8);
+
 		if (!fPtr->shadow) {
 			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 			    "Failed to allocate shadow framebuffer\n");
@@ -975,9 +976,9 @@ WsfbScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	}
 
 #ifdef XFreeXDGA
-	if (!fPtr->rotate) 
+	if (!fPtr->rotate)
 		WsfbDGAInit(pScrn, pScreen);
-	else 
+	else
 		xf86DrvMsg(scrnIndex, X_INFO, "Rotated display, "
 		    "disabling DGA\n");
 #endif
@@ -985,8 +986,8 @@ WsfbScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 		xf86DrvMsg(scrnIndex, X_INFO, "Enabling Driver Rotation, "
 		    "disabling RandR\n");
 		xf86DisableRandR();
-		if (pScrn->bitsPerPixel == 24) 
-			xf86DrvMsg(scrnIndex, X_WARNING, 
+		if (pScrn->bitsPerPixel == 24)
+			xf86DrvMsg(scrnIndex, X_WARNING,
 			    "Rotation might be broken in 24 bpp\n");
 	}
 
@@ -1072,7 +1073,7 @@ WsfbCloseScreen(int scrnIndex, ScreenPtr pScreen)
 	}
 #ifdef XFreeXDGA
 	if (fPtr->pDGAMode) {
-		xfree(fPtr->pDGAMode);
+		free(fPtr->pDGAMode);
 		fPtr->pDGAMode = NULL;
 		fPtr->nDGAMode = 0;
 	}
@@ -1434,7 +1435,7 @@ WsfbDGAAddModes(ScrnInfoPtr pScrn)
 	DGAModePtr pDGAMode;
 
 	do {
-		pDGAMode = xrealloc(fPtr->pDGAMode,
+		pDGAMode = realloc(fPtr->pDGAMode,
 				    (fPtr->nDGAMode + 1) * sizeof(DGAModeRec));
 		if (!pDGAMode)
 			break;
@@ -1503,7 +1504,7 @@ WsfbDriverFunc(ScrnInfoPtr pScrn, xorgDriverFuncOp op,
     pointer ptr)
 {
 	xorgHWFlags *flag;
-	
+
 	switch (op) {
 	case GET_REQUIRED_HW_INTERFACES:
 		flag = (CARD32*)ptr;
