@@ -3,14 +3,14 @@
 
 #include "xorg-server.h"
 
+/* Building the vmwgfx driver path */
+#undef BUILD_VMWGFX
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
-
-/* Has libdrm */
-#undef HAVE_LIBDRM
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
@@ -36,11 +36,11 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
-/* Has version 1.0.99.901 or greater of the Xserver */
-#define HAVE_XORG_SERVER_1_0_99_901 1
-
 /* Has version 1.1.0 or greater of the Xserver */
 #define HAVE_XORG_SERVER_1_1_0 1
+
+/* Has version 1.12.0 or greater of the Xserver */
+#undef HAVE_XORG_SERVER_1_12_0
 
 /* Has version 1.2.0 or greater of the Xserver */
 #define HAVE_XORG_SERVER_1_2_0 1
@@ -65,25 +65,34 @@
 #define PACKAGE_NAME "xf86-video-vmware"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-video-vmware 11.0.3"
+#define PACKAGE_STRING "xf86-video-vmware 13.0.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-video-vmware"
 
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "11.0.3"
+#define PACKAGE_VERSION "11.0.1"
 
 /* Major version of this package */
-#define PACKAGE_VERSION_MAJOR 11
+#define PACKAGE_VERSION_MAJOR 13
 
 /* Minor version of this package */
 #define PACKAGE_VERSION_MINOR 0
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 3
+#define PACKAGE_VERSION_PATCHLEVEL 1
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "11.0.3"
+#define VERSION "13.0.1"
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+#undef _FILE_OFFSET_BITS
+
+/* Define for large files, on AIX-style hosts. */
+#undef _LARGE_FILES
