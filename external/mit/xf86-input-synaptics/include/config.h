@@ -4,6 +4,9 @@
 /* Optional backend eventcomm enabled */
 /* #undef BUILD_EVENTCOMM */
 
+/* Optional backend ps2comm and alpscomm enabled */
+#define BUILD_PS2COMM 1
+
 /* Optional backend psmcomm enabled */
 #define BUILD_PSMCOMM 1
 
@@ -60,7 +63,7 @@
 #define PACKAGE_NAME "xf86-input-synaptics"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-input-synaptics 1.3.0"
+#define PACKAGE_STRING "xf86-input-synaptics 1.7.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-input-synaptics"
@@ -69,19 +72,19 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.3.0"
+#define PACKAGE_VERSION "1.7.1"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
 
 /* Minor version of this package */
-#define PACKAGE_VERSION_MINOR 3
+#define PACKAGE_VERSION_MINOR 7
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 0
+#define PACKAGE_VERSION_PATCHLEVEL 1
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "1.3.0"
+#define VERSION "1.7.1"
