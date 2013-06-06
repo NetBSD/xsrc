@@ -1089,13 +1089,15 @@ static void GetIncludeFile(
     XrmDatabase db,
     _Xconst char *base,
     _Xconst char *fname,
-    int fnamelen);
+    int fnamelen,
+    int depth);
 
 static void GetDatabase(
     XrmDatabase db,
     _Xconst register char *str,
     _Xconst char *filename,
-    Bool doall)
+    Bool doall,
+    int depth)
 {
     char *rhs;
     char *lhs, lhs_s[DEF_BUFF_SIZE];
@@ -1205,7 +1207,8 @@ static void GetDatabase(
 		    } while (c != '"' && !is_EOL(bits));
 		    /* must have an ending " */
 		    if (c == '"')
-			GetIncludeFile(db, filename, fname, str - len - fname);
+			GetIncludeFile(db, filename, fname, str - len - fname,
+			    depth);
 		}
 	    }
 	    /* spin to next newline */
@@ -1546,7 +1549,7 @@ XrmPutLineResource(
 {
     if (!*pdb) *pdb = NewDatabase();
     _XLockMutex(&(*pdb)->linfo);
-    GetDatabase(*pdb, line, (char *)NULL, False);
+    GetDatabase(*pdb, line, (char *)NULL, False, 0);
     _XUnlockMutex(&(*pdb)->linfo);
 }
 
@@ -1558,7 +1561,7 @@ XrmGetStringDatabase(
 
     db = NewDatabase();
     _XLockMutex(&db->linfo);
-    GetDatabase(db, data, (char *)NULL, True);
+    GetDatabase(db, data, (char *)NULL, True, 0);
     _XUnlockMutex(&db->linfo);
     return db;
 }
@@ -1629,13 +1632,16 @@ GetIncludeFile(
     XrmDatabase db,
     _Xconst char *base,
     _Xconst char *fname,
-    int fnamelen)
+    int fnamelen,
+    int depth)
 {
     int len;
     char *str;
     char realfname[BUFSIZ];
 
     if (fnamelen <= 0 || fnamelen >= BUFSIZ)
+	return;
+    if (depth >= MAXDBDEPTH)
 	return;
     if (*fname != '/' && base && (str = strrchr(base, '/'))) {
 	len = str - base + 1;
@@ -1650,7 +1656,7 @@ GetIncludeFile(
     }
     if (!(str = ReadInFile(realfname)))
 	return;
-    GetDatabase(db, str, realfname, True);
+    GetDatabase(db, str, realfname, True, depth + 1);
     Xfree(str);
 }
 
@@ -1666,7 +1672,7 @@ XrmGetFileDatabase(
 
     db = NewDatabase();
     _XLockMutex(&db->linfo);
-    GetDatabase(db, str, filename, True);
+    GetDatabase(db, str, filename, True, 0);
     _XUnlockMutex(&db->linfo);
     Xfree(str);
     return db;
@@ -1690,7 +1696,7 @@ XrmCombineFileDatabase(
     } else
 	db = NewDatabase();
     _XLockMutex(&db->linfo);
-    GetDatabase(db, str, filename, True);
+    GetDatabase(db, str, filename, True, 0);
     _XUnlockMutex(&db->linfo);
     Xfree(str);
     if (!override)

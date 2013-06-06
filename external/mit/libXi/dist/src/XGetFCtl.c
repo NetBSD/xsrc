@@ -60,6 +60,7 @@ SOFTWARE.
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/extutil.h>
 #include "XIint.h"
+#include <limits.h>
 
 XFeedbackState *
 XGetFeedbackControl(dpy, dev, num_feedbacks)
@@ -67,8 +68,6 @@ XGetFeedbackControl(dpy, dev, num_feedbacks)
     XDevice *dev;
     int *num_feedbacks;
 {
-    int size = 0;
-    int nbytes, i;
     XFeedbackState *Feedback = NULL;
     XFeedbackState *Sav = NULL;
     xFeedbackState *f = NULL;
@@ -86,25 +85,32 @@ XGetFeedbackControl(dpy, dev, num_feedbacks)
     req->ReqType = X_GetFeedbackControl;
     req->deviceid = dev->device_id;
 
-    if (!_XReply(dpy, (xReply *) & rep, 0, xFalse)) {
-	UnlockDisplay(dpy);
-	SyncHandle();
-	return (XFeedbackState *) NULL;
-    }
+    if (!_XReply(dpy, (xReply *) & rep, 0, xFalse))
+	goto out;
+
     if (rep.length > 0) {
+	unsigned long nbytes;
+	size_t size = 0;
+	int i;
+
 	*num_feedbacks = rep.num_feedbacks;
-	nbytes = (long)rep.length << 2;
-	f = (xFeedbackState *) Xmalloc((unsigned)nbytes);
+
+	if (rep.length < (INT_MAX >> 2)) {
+	    nbytes = rep.length << 2;
+	    f = Xmalloc(nbytes);
+	}
 	if (!f) {
 	    _XEatData(dpy, (unsigned long)nbytes);
-	    UnlockDisplay(dpy);
-	    SyncHandle();
-	    return (XFeedbackState *) NULL;
+	    goto out;
 	}
 	sav = f;
 	_XRead(dpy, (char *)f, nbytes);
 
 	for (i = 0; i < *num_feedbacks; i++) {
+	    if (f->length > nbytes)
+		goto out;
+	    nbytes -= f->length;
+
 	    switch (f->class) {
 	    case KbdFeedbackClass:
 		size += sizeof(XKbdFeedbackState);
@@ -119,6 +125,8 @@ XGetFeedbackControl(dpy, dev, num_feedbacks)
 	    {
 		xStringFeedbackState *strf = (xStringFeedbackState *) f;
 
+		if (strf->num_syms_supported >= (INT_MAX / sizeof(KeySym)))
+		    goto out;
 		size += sizeof(XStringFeedbackState) +
 		    (strf->num_syms_supported * sizeof(KeySym));
 	    }
@@ -133,15 +141,15 @@ XGetFeedbackControl(dpy, dev, num_feedbacks)
 		size += f->length;
 		break;
 	    }
+	    if (size > INT_MAX)
+		goto out;
 	    f = (xFeedbackState *) ((char *)f + f->length);
 	}
 
 	Feedback = (XFeedbackState *) Xmalloc((unsigned)size);
-	if (!Feedback) {
-	    UnlockDisplay(dpy);
-	    SyncHandle();
-	    return (XFeedbackState *) NULL;
-	}
+	if (!Feedback)
+	    goto out;
+
 	Sav = Feedback;
 
 	f = sav;
@@ -256,8 +264,9 @@ XGetFeedbackControl(dpy, dev, num_feedbacks)
 	    f = (xFeedbackState *) ((char *)f + f->length);
 	    Feedback = (XFeedbackState *) ((char *)Feedback + Feedback->length);
 	}
-	XFree((char *)sav);
     }
+out:
+    XFree((char *)sav);
 
     UnlockDisplay(dpy);
     SyncHandle();

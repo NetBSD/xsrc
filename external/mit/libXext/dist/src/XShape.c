@@ -37,6 +37,7 @@ in this Software without prior written authorization from The Open Group.
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
 #include <X11/extensions/shapestr.h>
+#include <limits.h>
 
 static XExtensionInfo _shape_info_data;
 static XExtensionInfo *shape_info = &_shape_info_data;
@@ -444,7 +445,7 @@ XRectangle *XShapeGetRectangles (
     xShapeGetRectanglesReply	    rep;
     XRectangle			    *rects;
     xRectangle			    *xrects;
-    int				    i;
+    unsigned int		    i;
 
     ShapeCheckExtension (dpy, info, (XRectangle *)NULL);
 
@@ -462,20 +463,23 @@ XRectangle *XShapeGetRectangles (
     *count = rep.nrects;
     *ordering = rep.ordering;
     rects = NULL;
-    if (*count) {
-	xrects = (xRectangle *) Xmalloc (*count * sizeof (xRectangle));
-	rects = (XRectangle *) Xmalloc (*count * sizeof (XRectangle));
+    if (rep.nrects) {
+	if (rep.nrects < (INT_MAX / sizeof (XRectangle))) {
+	    xrects = Xmalloc (rep.nrects * sizeof (xRectangle));
+	    rects = Xmalloc (rep.nrects * sizeof (XRectangle));
+	} else {
+	    xrects = NULL;
+	    rects = NULL;
+	}
 	if (!xrects || !rects) {
-	    if (xrects)
-		Xfree (xrects);
-	    if (rects)
-		Xfree (rects);
-	    _XEatData (dpy, *count * sizeof (xRectangle));
+	    Xfree (xrects);
+	    Xfree (rects);
+ 	    _XEatData(dpy, rep.length << 2);
 	    rects = NULL;
 	    *count = 0;
 	} else {
-	    _XRead (dpy, (char *) xrects, *count * sizeof (xRectangle));
-	    for (i = 0; i < *count; i++) {
+	    _XRead (dpy, (char *) xrects, rep.nrects * sizeof (xRectangle));
+	    for (i = 0; i < rep.nrects; i++) {
 	    	rects[i].x = (short) cvtINT16toInt (xrects[i].x);
 	    	rects[i].y = (short) cvtINT16toInt (xrects[i].y);
 	    	rects[i].width = xrects[i].width;
