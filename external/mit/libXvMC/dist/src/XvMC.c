@@ -16,6 +16,7 @@
 #include <sys/time.h>
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
+#include <limits.h>
 
 static XExtensionInfo _xvmc_info_data;
 static XExtensionInfo *xvmc_info = &_xvmc_info_data;
@@ -111,8 +112,8 @@ XvMCSurfaceInfo * XvMCListSurfaceTypes(Display *dpy, XvPortID port, int *num)
     }
 
     if(rep.num > 0) {
-	surface_info =
-	    (XvMCSurfaceInfo*)Xmalloc(rep.num * sizeof(XvMCSurfaceInfo));
+        if (rep.num < (INT_MAX / sizeof(XvMCSurfaceInfo)))
+            surface_info = Xmalloc(rep.num * sizeof(XvMCSurfaceInfo));
 
         if(surface_info) {
 	    xvmcSurfaceInfo sinfo;
@@ -172,8 +173,8 @@ XvImageFormatValues * XvMCListSubpictureTypes (
     }
 
     if(rep.num > 0) {
-        ret =
-	   (XvImageFormatValues*)Xmalloc(rep.num * sizeof(XvImageFormatValues));
+        if (rep.num < (INT_MAX / sizeof(XvImageFormatValues)))
+            ret = Xmalloc(rep.num * sizeof(XvImageFormatValues));
 
         if(ret) {
             xvImageFormatInfo Info;
@@ -484,7 +485,6 @@ Status XvMCGetDRInfo(Display *dpy, XvPortID port,
     XExtDisplayInfo *info = xvmc_find_display(dpy);
     xvmcGetDRInfoReply rep;
     xvmcGetDRInfoReq  *req;
-    char *tmpBuf = NULL;
     CARD32 magic;
 
 #ifdef HAVE_SHMAT
@@ -494,6 +494,9 @@ Status XvMCGetDRInfo(Display *dpy, XvPortID port,
     here.tz_minuteswest = 0;
     here.tz_dsttime = 0;
 #endif
+
+    *name = NULL;
+    *busID = NULL;
 
     XvMCCheckExtension (dpy, info, BadImplementation);
 
@@ -553,31 +556,31 @@ Status XvMCGetDRInfo(Display *dpy, XvPortID port,
 #endif
 
     if (rep.length > 0) {
+	unsigned long realSize = 0;
+	char *tmpBuf = NULL;
 
-        int realSize = rep.length << 2;
-
-	tmpBuf = (char *) Xmalloc(realSize);
-	if (tmpBuf) {
-	    *name = (char *) Xmalloc(rep.nameLen);
-	    if (*name) {
-		*busID = (char *) Xmalloc(rep.busIDLen);
-		if (! *busID) {
-		    XFree(*name);
-		    XFree(tmpBuf);
-		}
-	    } else {
-		XFree(tmpBuf);
+	if (rep.length < (INT_MAX >> 2)) {
+	    realSize = rep.length << 2;
+	    if (realSize >= (rep.nameLen + rep.busIDLen)) {
+		tmpBuf = Xmalloc(realSize);
+		*name = Xmalloc(rep.nameLen);
+		*busID = Xmalloc(rep.busIDLen);
 	    }
 	}
 
 	if (*name && *busID && tmpBuf) {
-
 	    _XRead(dpy, tmpBuf, realSize);
 	    strncpy(*name,tmpBuf,rep.nameLen);
+	    name[rep.nameLen - 1] = '\0';
 	    strncpy(*busID,tmpBuf+rep.nameLen,rep.busIDLen);
+	    busID[rep.busIDLen - 1] = '\0';
 	    XFree(tmpBuf);
-
 	} else {
+	    XFree(*name);
+	    *name = NULL;
+	    XFree(*busID);
+	    *name = NULL;
+	    XFree(tmpBuf);
 
 	    _XEatData(dpy, realSize);
 	    UnlockDisplay (dpy);
