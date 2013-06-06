@@ -185,6 +185,9 @@ int			tmp;
 	    return tmp;
     }
     if (rep->nBtnsWanted>0) {
+	if (((unsigned short) rep->firstBtnWanted + rep->nBtnsWanted)
+	    >= devi->num_btns)
+	    goto BAILOUT;
 	act= &devi->btn_acts[rep->firstBtnWanted];
 	bzero((char *)act,(rep->nBtnsWanted*sizeof(XkbAction)));
     }
@@ -194,6 +197,9 @@ int			tmp;
 	goto BAILOUT;
     if (rep->nBtnsRtrn>0) {
 	int size;
+	if (((unsigned short) rep->firstBtnRtrn + rep->nBtnsRtrn)
+	    >= devi->num_btns)
+	    goto BAILOUT;
 	act= &devi->btn_acts[rep->firstBtnRtrn];
 	size= rep->nBtnsRtrn*SIZEOF(xkbActionWireDesc);
 	if (!_XkbCopyFromReadBuffer(&buf,(char *)act,size))

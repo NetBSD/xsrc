@@ -1146,6 +1146,7 @@ XF86VidModeGetGammaRamp (
     XExtDisplayInfo *info = find_display (dpy);
     xXF86VidModeGetGammaRampReq *req;
     xXF86VidModeGetGammaRampReply rep;
+    Bool result = True;
   
     XF86VidModeCheckExtension (dpy, info, False);
 
@@ -1156,19 +1157,23 @@ XF86VidModeGetGammaRamp (
     req->screen = screen;
     req->size = size;
     if (!_XReply (dpy, (xReply *) &rep, 0, xFalse)) {
-        UnlockDisplay (dpy);
-        SyncHandle ();
-        return False;
+        result = False;
     }
-    if(rep.size) {
-	_XRead(dpy, (char*)red, rep.size << 1);
-	_XRead(dpy, (char*)green, rep.size << 1);
-	_XRead(dpy, (char*)blue, rep.size << 1);
+    else if (rep.size) {
+	if (rep.size <= size) {
+	    _XRead(dpy, (char*)red, rep.size << 1);
+	    _XRead(dpy, (char*)green, rep.size << 1);
+	    _XRead(dpy, (char*)blue, rep.size << 1);
+	}
+	else {
+	    _XEatData(dpy, rep.length << 2);
+	    result = False;
+	}
     }
 
     UnlockDisplay(dpy);
     SyncHandle();
-    return True;
+    return result;
 }
 
 Bool XF86VidModeGetGammaRampSize(

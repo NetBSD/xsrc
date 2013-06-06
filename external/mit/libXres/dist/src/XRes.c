@@ -15,6 +15,7 @@
 #include <X11/extensions/extutil.h>
 #include <X11/extensions/XResproto.h>
 #include <X11/extensions/XRes.h>
+#include <limits.h>
 
 
 static XExtensionInfo _xres_ext_info_data;
@@ -121,7 +122,12 @@ Status XResQueryClients (
     }
 
     if(rep.num_clients) {
-        if((clnts = Xmalloc(sizeof(XResClient) * rep.num_clients))) {
+        if (rep.num_clients < (INT_MAX / sizeof(XResClient)))
+            clnts = Xmalloc(sizeof(XResClient) * rep.num_clients);
+        else
+            clnts = NULL;
+
+        if (clnts != NULL) {
             xXResClient scratch;
             int i;
 
@@ -173,7 +179,12 @@ Status XResQueryClientResources (
     }
 
     if(rep.num_types) {
-        if((typs = Xmalloc(sizeof(XResType) * rep.num_types))) {
+        if (rep.num_types < (INT_MAX / sizeof(XResType)))
+            typs = Xmalloc(sizeof(XResType) * rep.num_types);
+        else
+            typs = NULL;
+
+        if (typs != NULL) {
             xXResType scratch;
             int i;
 
