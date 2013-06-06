@@ -43,6 +43,7 @@ OR PERFORMANCE OF THIS SOFTWARE.
 #include "Ximint.h"
 #include <sys/stat.h>
 #include <stdio.h>
+#include <limits.h>
 
 extern int _Xmbstowcs(
     wchar_t	*wstr,
@@ -664,6 +665,8 @@ _XimParseStringFile(
 
     if (fstat (fileno (fp), &st) != -1) {
 	unsigned long size = (unsigned long) st.st_size;
+	if (st.st_size >= INT_MAX)
+	    return;
 	if (size <= sizeof tb) tbp = tb;
 	else tbp = malloc (size);
 

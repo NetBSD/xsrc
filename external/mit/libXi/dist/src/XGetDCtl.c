@@ -60,6 +60,7 @@ SOFTWARE.
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/extutil.h>
 #include "XIint.h"
+#include <limits.h>
 
 XDeviceControl *
 XGetDeviceControl(dpy, dev, control)
@@ -67,8 +68,6 @@ XGetDeviceControl(dpy, dev, control)
     XDevice *dev;
     int control;
 {
-    int size = 0;
-    int nbytes, i;
     XDeviceControl *Device = NULL;
     XDeviceControl *Sav = NULL;
     xDeviceState *d = NULL;
@@ -93,8 +92,12 @@ XGetDeviceControl(dpy, dev, control)
 	return (XDeviceControl *) NULL;
     }
     if (rep.length > 0) {
-	nbytes = (long)rep.length << 2;
-	d = (xDeviceState *) Xmalloc((unsigned)nbytes);
+	unsigned long nbytes;
+	size_t size = 0;
+	if (rep.length < (INT_MAX >> 2)) {
+	    nbytes = (unsigned long) rep.length << 2;
+	    d = Xmalloc(nbytes);
+	}
 	if (!d) {
 	    _XEatData(dpy, (unsigned long)nbytes);
 	    UnlockDisplay(dpy);
@@ -155,6 +158,7 @@ XGetDeviceControl(dpy, dev, control)
 	    int *iptr, *iptr2;
 	    xDeviceResolutionState *r;
 	    XDeviceResolutionState *R;
+	    unsigned int i;
 
 	    r = (xDeviceResolutionState *) d;
 	    R = (XDeviceResolutionState *) Device;

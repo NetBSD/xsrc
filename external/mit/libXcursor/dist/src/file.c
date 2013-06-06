@@ -1,5 +1,5 @@
 /*
- * $Id: file.c,v 1.1.1.1 2008/07/30 02:45:53 mrg Exp $
+ * $Id: file.c,v 1.1.1.1.2.1 2013/06/06 16:38:18 riz Exp $
  *
  * Copyright © 2002 Keith Packard
  *
@@ -207,7 +207,7 @@ _XcursorFileHeaderDestroy (XcursorFileHeader *fileHeader)
 }
 
 static XcursorFileHeader *
-_XcursorFileHeaderCreate (int ntoc)
+_XcursorFileHeaderCreate (XcursorUInt ntoc)
 {
     XcursorFileHeader	*fileHeader;
 
