@@ -31,6 +31,7 @@
 #include <X11/extensions/render.h>
 #include <X11/extensions/Xrender.h>
 #include "Xrandrint.h"
+#include <limits.h>
 
 Atom *
 XRRListOutputProperties (Display *dpy, RROutput output, int *nprop)
@@ -84,7 +85,7 @@ XRRQueryOutputProperty (Display *dpy, RROutput output, Atom property)
     XExtDisplayInfo		*info = XRRFindDisplay(dpy);
     xRRQueryOutputPropertyReply rep;
     xRRQueryOutputPropertyReq	*req;
-    int				rbytes, nbytes;
+    unsigned int		rbytes, nbytes;
     XRRPropertyInfo		*prop_info;
 
     RRCheckExtension (dpy, info, NULL);
@@ -102,10 +103,14 @@ XRRQueryOutputProperty (Display *dpy, RROutput output, Atom property)
 	return NULL;
     }
 
-    rbytes = sizeof (XRRPropertyInfo) + rep.length * sizeof (long);
-    nbytes = rep.length << 2;
+    if (rep.length < ((INT_MAX / sizeof(long)) - sizeof (XRRPropertyInfo))) {
+        rbytes = sizeof (XRRPropertyInfo) + (rep.length * sizeof (long));
+        nbytes = rep.length << 2;
 
-    prop_info = (XRRPropertyInfo *) Xmalloc (rbytes);
+        prop_info = Xmalloc (rbytes);
+    } else
+        prop_info = NULL;
+
     if (prop_info == NULL) {
 	_XEatData (dpy, nbytes);
 	UnlockDisplay (dpy);
@@ -252,7 +257,7 @@ XRRGetOutputProperty (Display *dpy, RROutput output,
     XExtDisplayInfo		*info = XRRFindDisplay(dpy);
     xRRGetOutputPropertyReply	rep;
     xRRGetOutputPropertyReq	*req;
-    long    			nbytes, rbytes;
+    unsigned long		nbytes, rbytes;
 
     RRCheckExtension (dpy, info, 1);
 
@@ -277,34 +282,40 @@ XRRGetOutputProperty (Display *dpy, RROutput output,
 
     *prop = (unsigned char *) NULL;
     if (rep.propertyType != None) {
+	int format = rep.format;
+
+	/*
+	 * Protect against both integer overflow and just plain oversized
+	 * memory allocation - no server should ever return this many props.
+	 */
+	if (rep.nItems >= (INT_MAX >> 4))
+	    format = -1;        /* fall through to default error case */
+
 	/*
 	 * One extra byte is malloced than is needed to contain the property
 	 * data, but this last byte is null terminated and convenient for
 	 * returning string properties, so the client doesn't then have to
 	 * recopy the string to make it null terminated.
 	 */
-	switch (rep.format) {
+	switch (format) {
 	case 8:
 	    nbytes = rep.nItems;
 	    rbytes = rep.nItems + 1;
-	    if (rbytes > 0 &&
-		(*prop = (unsigned char *) Xmalloc ((unsigned)rbytes)))
+	    if (rbytes > 0 && (*prop = Xmalloc (rbytes)))
 		_XReadPad (dpy, (char *) *prop, nbytes);
 	    break;
 
 	case 16:
 	    nbytes = rep.nItems << 1;
 	    rbytes = rep.nItems * sizeof (short) + 1;
-	    if (rbytes > 0 &&
-		(*prop = (unsigned char *) Xmalloc ((unsigned)rbytes)))
+	    if (rbytes > 0 && (*prop = Xmalloc (rbytes)))
 		_XRead16Pad (dpy, (short *) *prop, nbytes);
 	    break;
 
 	case 32:
 	    nbytes = rep.nItems << 2;
 	    rbytes = rep.nItems * sizeof (long) + 1;
-	    if (rbytes > 0 &&
-		(*prop = (unsigned char *) Xmalloc ((unsigned)rbytes)))
+	    if (rbytes > 0 && (*prop = Xmalloc (rbytes)))
 		_XRead32 (dpy, (long *) *prop, nbytes);
 	    break;
 

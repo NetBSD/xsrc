@@ -359,9 +359,12 @@ XdbeScreenVisualInfo *XdbeGetVisualInfo (
        *num_screens = rep.m;
 
     /* allocate list of visual information to be returned */
-    if (!(scrVisInfo =
-        (XdbeScreenVisualInfo *)Xmalloc(
-        (unsigned)(*num_screens * sizeof(XdbeScreenVisualInfo))))) {
+    if ((*num_screens > 0) && (*num_screens < 65536))
+        scrVisInfo = Xmalloc(*num_screens * sizeof(XdbeScreenVisualInfo));
+    else
+        scrVisInfo = NULL;
+    if (scrVisInfo == NULL) {
+        _XEatData(dpy, rep.length << 2);
         UnlockDisplay (dpy);
         SyncHandle ();
         return NULL;
@@ -369,25 +372,27 @@ XdbeScreenVisualInfo *XdbeGetVisualInfo (
 
     for (i = 0; i < *num_screens; i++)
     {
-        int nbytes;
         int j;
-        long c;
+        unsigned long c;
 
-        _XRead32 (dpy, &c, sizeof(CARD32));
-        scrVisInfo[i].count = c;
+        _XRead32 (dpy, (long *) &c, sizeof(CARD32));
 
-        nbytes = scrVisInfo[i].count * sizeof(XdbeVisualInfo);
+        if (c < 65536) {
+            scrVisInfo[i].count = c;
+            scrVisInfo[i].visinfo = Xmalloc(c * sizeof(XdbeVisualInfo));
+        } else
+            scrVisInfo[i].visinfo = NULL;
 
         /* if we can not allocate the list of visual/depth info
          * then free the lists that we already allocate as well
          * as the visual info list itself
          */
-        if (!(scrVisInfo[i].visinfo = (XdbeVisualInfo *)Xmalloc(
-            (unsigned)nbytes))) {
+        if (scrVisInfo[i].visinfo == NULL) {
             for (j = 0; j < i; j++) {
                 Xfree ((char *)scrVisInfo[j].visinfo);
             }
             Xfree ((char *)scrVisInfo);
+            _XEatData(dpy, rep.length << 2);
             UnlockDisplay (dpy);
             SyncHandle ();
             return NULL;

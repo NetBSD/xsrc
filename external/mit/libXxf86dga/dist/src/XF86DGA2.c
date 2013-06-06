@@ -23,6 +23,7 @@ Copyright (c) 1995,1996  The XFree86 Project, Inc
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
 #include <stdio.h>
+#include <limits.h>
 
 
 /* If you change this, change the Bases[] array below as well */
@@ -299,16 +300,21 @@ XDGAMode* XDGAQueryModes(
     if (_XReply(dpy, (xReply *)&rep, 0, xFalse)) {
 	if(rep.length) {
 	   xXDGAModeInfo info;
-	   int i, size;
+	   unsigned long size = 0;
 	   char *offset;
 
-	   size = rep.length << 2;
-	   size -= rep.number * sz_xXDGAModeInfo; /* find text size */
-	   modes = (XDGAMode*)Xmalloc((rep.number * sizeof(XDGAMode)) + size);
-	   offset = (char*)(&modes[rep.number]); /* start of text */
+	   if ((rep.length < (INT_MAX >> 2)) &&
+	       (rep.number < (INT_MAX / sizeof(XDGAMode)))) {
+	       size = rep.length << 2;
+	       if (size > (rep.number * sz_xXDGAModeInfo)) {
+		   size -= rep.number * sz_xXDGAModeInfo; /* find text size */
+		   modes = Xmalloc((rep.number * sizeof(XDGAMode)) + size);
+		   offset = (char*)(&modes[rep.number]);  /* start of text */
+	       }
+	   }
 
-
-	   if(modes) {	
+	   if (modes != NULL) {
+	      unsigned int i;
 	      for(i = 0; i < rep.number; i++) {
 		_XRead(dpy, (char*)(&info), sz_xXDGAModeInfo);
 
@@ -338,9 +344,16 @@ XDGAMode* XDGAQueryModes(
 		modes[i].reserved1 = info.reserved1;
 		modes[i].reserved2 = info.reserved2;	
 
-		_XRead(dpy, offset, info.name_size);
-		modes[i].name = offset;
-		offset += info.name_size;
+		if (info.name_size > 0 && info.name_size <= size) {
+		    _XRead(dpy, offset, info.name_size);
+		    modes[i].name = offset;
+		    modes[i].name[info.name_size - 1] = '\0';
+		    offset += info.name_size;
+		    size -= info.name_size;
+		} else {
+		    _XEatData(dpy, info.name_size);
+		    modes[i].name = NULL;
+		}
 	      }
 	      *num = rep.number;
 	   } else
@@ -380,12 +393,15 @@ XDGASetMode(
     if (_XReply(dpy, (xReply *)&rep, 0, xFalse)) {
 	if(rep.length) {
 	   xXDGAModeInfo info;
-	   int size;
+	   unsigned long size;
 
-	   size = rep.length << 2;
-	   size -= sz_xXDGAModeInfo; /* get text size */
+	   if ((rep.length < (INT_MAX >> 2)) &&
+	       (rep.length > (sz_xXDGAModeInfo >> 2))) {
+	       size = rep.length << 2;
+	       size -= sz_xXDGAModeInfo; /* get text size */
 
-	   dev = (XDGADevice*)Xmalloc(sizeof(XDGADevice) + size);
+	       dev = Xmalloc(sizeof(XDGADevice) + size);
+	   }
 	    
 	   if(dev) {
 		_XRead(dpy, (char*)(&info), sz_xXDGAModeInfo);
@@ -416,8 +432,14 @@ XDGASetMode(
 		dev->mode.reserved1 = info.reserved1;
 		dev->mode.reserved2 = info.reserved2;
 
-		dev->mode.name = (char*)(&dev[1]);	
-		_XRead(dpy, dev->mode.name, info.name_size);
+		if (info.name_size > 0 && info.name_size <= size) {
+		    dev->mode.name = (char*)(&dev[1]);
+		    _XRead(dpy, dev->mode.name, info.name_size);
+		    dev->mode.name[info.name_size - 1] = '\0';
+		} else {
+		    dev->mode.name = NULL;
+		    _XEatData(dpy, rep.length << 2);
+		}
 
 		dev->pixmap = (rep.flags & XDGAPixmap) ? pid : 0;
 		dev->data = XDGAGetMappedMemory(screen);
@@ -426,6 +448,8 @@ XDGASetMode(
 		    dev->data += rep.offset;
 	   } 
 	   /* not sure what to do if the allocation fails */
+	   else
+	       _XEatData(dpy, rep.length << 2);
 	}
     }
 
