@@ -56,6 +56,7 @@ SOFTWARE.
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/extutil.h>
 #include "XIint.h"
+#include <limits.h>
 
 #ifdef MIN	/* some systems define this in <sys/param.h> */
 #undef MIN
@@ -71,7 +72,6 @@ XGetDeviceButtonMapping(
 {
     int status = 0;
     unsigned char mapping[256];	/* known fixed size */
-    long nbytes;
     XExtDisplayInfo *info = XInput_find_display(dpy);
 
     register xGetDeviceButtonMappingReq *req;
@@ -88,13 +88,18 @@ XGetDeviceButtonMapping(
 
     status = _XReply(dpy, (xReply *) & rep, 0, xFalse);
     if (status == 1) {
-	nbytes = (long)rep.length << 2;
-	_XRead(dpy, (char *)mapping, nbytes);
+	if (rep.length <= (sizeof(mapping) >> 2)) {
+	    unsigned long nbytes = rep.length << 2;
+	    _XRead(dpy, (char *)mapping, nbytes);
 
-	/* don't return more data than the user asked for. */
-	if (rep.nElts)
-	    memcpy((char *)map, (char *)mapping, MIN((int)rep.nElts, nmap));
-	status = rep.nElts;
+	    /* don't return more data than the user asked for. */
+	    if (rep.nElts)
+		memcpy(map, mapping, MIN((int)rep.nElts, nmap));
+	    status = rep.nElts;
+	} else {
+	    _XEatData(dpy, rep.length << 2);
+	    status = 0;
+	}
     } else
 	status = 0;
     UnlockDisplay(dpy);
