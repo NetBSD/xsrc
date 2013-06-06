@@ -46,6 +46,7 @@
 #include <config.h>
 #endif
 #include "Xfixesint.h"
+#include <limits.h>
 
 void
 XFixesSelectCursorInput (Display	*dpy,
@@ -73,9 +74,9 @@ XFixesGetCursorImage (Display *dpy)
     XFixesExtDisplayInfo		*info = XFixesFindDisplay (dpy);
     xXFixesGetCursorImageAndNameReq	*req;
     xXFixesGetCursorImageAndNameReply	rep;
-    int					npixels;
-    int					nbytes_name;
-    int					nbytes, nread, rlength;
+    size_t				npixels;
+    size_t				nbytes_name;
+    size_t				nbytes, nread, rlength;
     XFixesCursorImage			*image;
     char				*name;
 
@@ -100,16 +101,21 @@ XFixesGetCursorImage (Display *dpy)
     }
     npixels = rep.width * rep.height;
     nbytes_name = rep.nbytes;
-    /* reply data length */
-    nbytes = (long) rep.length << 2;
-    /* bytes of actual data in the reply */
-    nread = (npixels << 2) + nbytes_name;
-    /* size of data returned to application */
-    rlength = (sizeof (XFixesCursorImage) + 
-	       npixels * sizeof (unsigned long) +
-	       nbytes_name + 1);
-
-    image = (XFixesCursorImage *) Xmalloc (rlength);
+    if ((rep.length < (INT_MAX >> 2)) &&
+	npixels < (((INT_MAX >> 3) - sizeof (XFixesCursorImage) - 1)
+		   - nbytes_name)) {
+	/* reply data length */
+	nbytes = (size_t) rep.length << 2;
+	/* bytes of actual data in the reply */
+	nread = (npixels << 2) + nbytes_name;
+	/* size of data returned to application */
+	rlength = (sizeof (XFixesCursorImage) +
+		   npixels * sizeof (unsigned long) +
+		   nbytes_name + 1);
+ 
+	image = Xmalloc (rlength);
+    } else
+	image = NULL;
     if (!image)
     {
 	_XEatData (dpy, nbytes);
