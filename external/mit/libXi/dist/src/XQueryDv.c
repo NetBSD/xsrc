@@ -59,6 +59,7 @@ SOFTWARE.
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/extutil.h>
 #include "XIint.h"
+#include <limits.h>
 
 XDeviceState *
 XQueryDeviceState(
@@ -66,8 +67,8 @@ XQueryDeviceState(
     XDevice		*dev)
 {
     int i, j;
-    int rlen;
-    int size = 0;
+    unsigned long rlen;
+    size_t size = 0;
     xQueryDeviceStateReq *req;
     xQueryDeviceStateReply rep;
     XDeviceState *state = NULL;
@@ -87,9 +88,11 @@ XQueryDeviceState(
     if (!_XReply(dpy, (xReply *) & rep, 0, xFalse))
         goto out;
 
-    rlen = rep.length << 2;
-    if (rlen > 0) {
-	data = Xmalloc(rlen);
+    if (rep.length > 0) {
+	if (rep.length < (INT_MAX >> 2)) {
+	    rlen = (unsigned long) rep.length << 2;
+	    data = Xmalloc(rlen);
+	}
 	if (!data) {
 	    _XEatData(dpy, (unsigned long)rlen);
 	    goto out;
@@ -97,6 +100,10 @@ XQueryDeviceState(
 	_XRead(dpy, data, rlen);
 
 	for (i = 0, any = (XInputClass *) data; i < (int)rep.num_classes; i++) {
+	    if (any->length > rlen)
+		goto out;
+	    rlen -= any->length;
+
 	    switch (any->class) {
 	    case KeyClass:
 		size += sizeof(XKeyState);

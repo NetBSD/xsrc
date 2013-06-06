@@ -60,6 +60,7 @@ SOFTWARE.
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/extutil.h>
 #include "XIint.h"
+#include <limits.h>
 
 XEventClass *
 XGetDeviceDontPropagateList(
@@ -89,11 +90,12 @@ XGetDeviceDontPropagateList(
     }
     *count = rep.count;
 
-    if (*count) {
+    if (rep.length != 0) {
+	if ((rep.count != 0) && (rep.length < (INT_MAX / sizeof(XEventClass))))
+	    list = Xmalloc(rep.length * sizeof(XEventClass));
 	rlen = rep.length << 2;
-	list = (XEventClass *) Xmalloc(rep.length * sizeof(XEventClass));
 	if (list) {
-	    int i;
+	    unsigned int i;
 	    CARD32 ec;
 
 	    /* read and assign each XEventClass separately because
