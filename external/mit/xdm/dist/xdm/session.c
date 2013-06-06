@@ -340,10 +340,15 @@ ManageSession (struct display *d)
      */
     LoadXloginResources (d);
 
+#ifndef STATIC_GREETER_LIB
     Debug ("ManageSession: loading greeter library %s\n", greeterLib);
     greet_lib_handle = dlopen(greeterLib, RTLD_NOW);
     if (greet_lib_handle != NULL)
 	greet_user_proc = (GreetUserProc)dlsym(greet_lib_handle, "GreetUser");
+#else
+    greet_user_proc = (GreetUserProc)GreetUser;
+#endif
+
     if (greet_user_proc == NULL) {
 	LogError ("%s while loading %s\n", dlerror(), greeterLib);
 	exit(UNMANAGE_DISPLAY);
