@@ -1524,7 +1524,7 @@ crtc_set_transform (crtc_t *crtc, transform_t *transform)
     if (major > 1 || (major == 1 && minor >= 3))
 	XRRSetCrtcTransform (dpy, crtc->crtc.xid,
 			     &transform->transform,
-			     __UNCONST(transform->filter),
+			     transform->filter,
 			     transform->params,
 			     transform->nparams);
 }
