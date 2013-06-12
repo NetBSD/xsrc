@@ -75,7 +75,7 @@ static int nbuses = 0;		/* number of buses found */
  * With all this we should be able to use any PCI graphics device on any PCI
  * bus on any architecture as long as Xorg has a driver, without allowing
  * arbitrary mappings via /dev/mem and without userland having to know or care
- * about translating bus addresses to physical addresses or the other way 
+ * about translating bus addresses to physical addresses or the other way
  * around.
  */
 
@@ -503,10 +503,10 @@ pci_device_netbsd_read_rom(struct pci_device *dev, void *buffer)
 	}
     }
 
-    fprintf(stderr, "Using rom_base = 0x%lx 0x%lx (pci_rom=%d)\n", 
+    fprintf(stderr, "Using rom_base = 0x%lx 0x%lx (pci_rom=%d)\n",
         (long)rom_base, (long)rom_size, pci_rom);
 
-    bios = mmap(NULL, rom_size, PROT_READ, MAP_SHARED, buses[dev->domain].fd, 
+    bios = mmap(NULL, rom_size, PROT_READ, MAP_SHARED, buses[dev->domain].fd,
         (off_t)rom_base);
     if (bios == MAP_FAILED) {
 	int serrno = errno;
