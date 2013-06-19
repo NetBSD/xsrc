@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_cursor.c,v 1.1 2011/04/14 16:48:59 macallan Exp $ */
+/* $NetBSD: cg14_cursor.c,v 1.2 2013/06/19 13:20:05 macallan Exp $ */
 /*
  * Copyright (c) 2005 Michael Lorenz
  * All rights reserved.
@@ -30,10 +30,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/time.h>
-#include <sys/endian.h>
-#include <dev/wscons/wsconsio.h>
-#include <errno.h>
 
 /* all driver need this */
 #include "xf86.h"
