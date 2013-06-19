@@ -99,11 +99,15 @@ _X_EXPORT DriverRec SUNCG14 = {
 typedef enum {
 	OPTION_SHADOW_FB,
 	OPTION_HW_CURSOR,
-	OPTION_SW_CURSOR
+	OPTION_SW_CURSOR,
+	OPTION_ACCEL,
+	OPTION_XRENDER
 } CG14Opts;
 
 static const OptionInfoRec CG14Options[] = {
-    { OPTION_SHADOW_FB, "ShadowFB", OPTV_BOOLEAN, {0}, TRUE},
+    { OPTION_SHADOW_FB,	"ShadowFB", OPTV_BOOLEAN, {0}, TRUE},
+    { OPTION_ACCEL, 	"Accel",    OPTV_BOOLEAN, {0}, TRUE},
+    { OPTION_XRENDER,	"XRender",  OPTV_BOOLEAN, {0}, FALSE},
     { -1,			NULL,		OPTV_NONE,	{0}, FALSE }
 };
 
@@ -342,6 +346,13 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
     if (psdp == NULL)
 	return FALSE;
 
+    pCg14->memsize = 4 * 1024 * 1024;	/* always safe */
+    if ((psdp->height * psdp->width * 4) > 0x00400000)
+    	 pCg14->memsize = 0x00800000;
+    if (psdp->size > pCg14->memsize)
+    	pCg14->memsize = psdp->size;
+    xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "found %d MB video memory\n",
+      pCg14->memsize >> 20);
     /*********************
     deal with depth
     *********************/
@@ -370,6 +381,10 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
     xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pCg14->Options);
     pCg14->use_shadow = xf86ReturnOptValBool(pCg14->Options, OPTION_SHADOW_FB,
         TRUE);
+    pCg14->use_accel = xf86ReturnOptValBool(pCg14->Options, OPTION_ACCEL,
+        TRUE);
+    pCg14->use_xrender = xf86ReturnOptValBool(pCg14->Options, OPTION_XRENDER,
+        FALSE);
 
     /*
      * This must happen after pScrn->display has been set because
@@ -505,7 +520,7 @@ CG14ScreenInit(SCREEN_INIT_ARGS_DECL)
     ScrnInfoPtr pScrn;
     Cg14Ptr pCg14;
     VisualPtr visual;
-    int ret;
+    int ret, have_accel = 0;
 
     /* 
      * First get the ScrnInfoRec
@@ -515,13 +530,28 @@ CG14ScreenInit(SCREEN_INIT_ARGS_DECL)
     pCg14 = GET_CG14_FROM_SCRN(pScrn);
 
     /* Map the CG14 memory */
-    pCg14->fb = xf86MapSbusMem (pCg14->psdp, CG14_BGR_VOFF, 4 *
-				(pCg14->psdp->width * pCg14->psdp->height));
+    pCg14->fb = xf86MapSbusMem (pCg14->psdp, CG14_DIRECT_VOFF, pCg14->memsize);
     pCg14->x32 = xf86MapSbusMem (pCg14->psdp, CG14_X32_VOFF,
 				 (pCg14->psdp->width * pCg14->psdp->height));
     pCg14->xlut = xf86MapSbusMem (pCg14->psdp, CG14_XLUT_VOFF, 4096);
     pCg14->curs = xf86MapSbusMem (pCg14->psdp, CG14_CURSOR_VOFF, 4096);
 
+    pCg14->sxreg = xf86MapSbusMem (pCg14->psdp, CG14_SXREG_VOFF, 4096);
+    pCg14->sxio = xf86MapSbusMem (pCg14->psdp, CG14_SXIO_VOFF, 0x04000000);
+    have_accel = (pCg14->sxreg != NULL) && (pCg14->sxio != NULL);
+
+    if (have_accel) {
+    	xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+    	  "found kernel support for SX acceleration\n");
+    }
+    have_accel = have_accel & pCg14->use_accel;
+    if (have_accel) {
+    	xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "using acceleration\n");
+    	if (pCg14->use_shadow)
+    	    xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "disabling shadow\n");
+    	pCg14->use_shadow = FALSE;
+    }
+    	
     pCg14->width = pCg14->psdp->width;
     pCg14->height = pCg14->psdp->height;
 
@@ -582,18 +612,16 @@ CG14ScreenInit(SCREEN_INIT_ARGS_DECL)
     if (!ret)
 	return FALSE;
 
-#if 0
     /* must be after RGB ordering fixed */
     fbPictureInit (pScreen, 0, 0);
 
     if (pCg14->use_shadow && !CG14ShadowInit(pScreen)) {
-	xf86DrvMsg(scrnIndex, X_ERROR,
+	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		    "shadow framebuffer initialization failed\n");
 	return FALSE;
     }
 
     miInitializeBackingStore(pScreen);
-#endif
 
     xf86SetBackingStore(pScreen);
     xf86SetSilkenMouse(pScreen);
@@ -614,6 +642,24 @@ CG14ScreenInit(SCREEN_INIT_ARGS_DECL)
 	    }
 	}
     }
+
+    /* setup acceleration */
+    if (have_accel) {
+	XF86ModReqInfo req;
+	int errmaj, errmin;
+
+	memset(&req, 0, sizeof(XF86ModReqInfo));
+	req.majorversion = 2;
+	req.minorversion = 0;
+	if (!LoadSubModule(pScrn->module, "exa", NULL, NULL, NULL, &req,
+	    &errmaj, &errmin)) {
+		LoaderErrorMsg(NULL, "exa", errmaj, errmin);
+		return FALSE;
+	}
+	if (!CG14InitAccel(pScreen))
+	    have_accel = FALSE;
+    }
+
 
     /* Initialise cursor functions */
     miDCInitialize (pScreen, xf86GetPointerScreenFuncs());

@@ -30,6 +30,7 @@
 #include <X11/Xmd.h>
 #include "gcstruct.h"
 #include "xf86sbusBus.h"
+#include "exa.h"
 
 /* Various offsets in virtual (ie. mmap()) spaces Linux and Solaris support. */
 #define CG14_REGS_VOFF		0x00000000	/* registers */
@@ -49,6 +50,11 @@
 #define CG14_B32_VOFF		0xa0000000
 #define CG14_G32_VOFF		0xb0000000
 #define CG14_R32_VOFF		0xc0000000
+
+/* these two are NetBSD specific */
+#define CG14_SXREG_VOFF		0x00010000	/* SX userspace registers */
+#define CG14_SXIO_VOFF		0xd0000000
+
 
 /* Hardware cursor map */
 #define CG14_CURS_SIZE		32
@@ -76,6 +82,7 @@ typedef struct {
 	int		width;
 	int		height;
 	int		use_shadow;
+	int		memsize;
 	int		HWCursor;
 	void *		shadow;
 	sbusDevicePtr	psdp;
@@ -83,9 +90,21 @@ typedef struct {
 	CreateScreenResourcesProcPtr CreateScreenResources;
 	OptionInfoPtr	Options;
 	xf86CursorInfoPtr	CursorInfoRec;
+	/* SX accel stuff */
+	void		*sxreg, *sxio;
+	int		use_accel, use_xrender;
+	uint32_t	last_mask;
+	uint32_t	last_rop;
+	uint32_t	srcoff, srcpitch, mskoff, mskpitch;
+	uint32_t	srcformat, dstformat, mskformat;
+	uint32_t	fillcolour;
+	int		op;
+	int		xdir, ydir;	
+	ExaDriverPtr 	pExa;
 } Cg14Rec, *Cg14Ptr;
 
 Bool CG14SetupCursor(ScreenPtr);
+Bool CG14InitAccel(ScreenPtr);
 
 #define GET_CG14_FROM_SCRN(p)    ((Cg14Ptr)((p)->driverPrivate))
 
