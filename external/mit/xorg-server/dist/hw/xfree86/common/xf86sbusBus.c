@@ -75,6 +75,7 @@ CheckSbusDevice(const char *device, int fbNum)
     psdp->device = xnfstrdup(device);
     psdp->width = fbattr.fbtype.fb_width;
     psdp->height = fbattr.fbtype.fb_height;
+    psdp->size = fbattr.fbtype.fb_size;
     psdp->fd = -1;
 }
 

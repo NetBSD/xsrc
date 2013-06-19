@@ -52,7 +52,7 @@ typedef struct sbus_device {
     int			devId;
     int			fbNum;
     int			fd;
-    int			width, height;
+    int			width, height, size;
     sbusPromNode	node;
     char		*descr;
     char		*device;
