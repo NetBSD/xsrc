@@ -99,12 +99,49 @@ typedef struct {
 	uint32_t	srcformat, dstformat, mskformat;
 	uint32_t	fillcolour;
 	int		op;
+	Bool		source_is_solid;
 	int		xdir, ydir;	
 	ExaDriverPtr 	pExa;
 } Cg14Rec, *Cg14Ptr;
 
+/* SX stuff */
+/* write an SX register */
+static inline void
+write_sx_reg(Cg14Ptr p, int reg, uint32_t val)
+{
+	*(volatile uint32_t *)(p->sxreg + reg) = val;
+}
+
+/* read an SX register */
+static inline uint32_t
+read_sx_reg(Cg14Ptr p, int reg)
+{
+	return *(volatile uint32_t *)(p->sxreg + reg);
+}
+
+/* write a memory referencing instruction */
+static inline void
+write_sx_io(Cg14Ptr p, int reg, uint32_t val)
+{
+	*(volatile uint32_t *)(p->sxio + reg) = val;
+}
+
 Bool CG14SetupCursor(ScreenPtr);
 Bool CG14InitAccel(ScreenPtr);
+
+/* xrender ops */
+void CG14Comp_Over8Solid(Cg14Ptr, uint32_t, uint32_t, uint32_t, uint32_t,
+                   int, int);
+void CG14Comp_Over32Solid(Cg14Ptr, uint32_t, uint32_t, uint32_t, uint32_t,
+                   int, int);
+void CG14Comp_Over32(Cg14Ptr, uint32_t, uint32_t, uint32_t, uint32_t,
+                   int, int);
+void CG14Comp_Over32Mask(Cg14Ptr, uint32_t, uint32_t, uint32_t, uint32_t,
+                   uint32_t, uint32_t, int, int);
+void CG14Comp_Add8(Cg14Ptr, uint32_t, uint32_t, uint32_t, uint32_t,
+                   int, int);
+void CG14Comp_Add32(Cg14Ptr, uint32_t, uint32_t, uint32_t, uint32_t,
+                   int, int);
 
 #define GET_CG14_FROM_SCRN(p)    ((Cg14Ptr)((p)->driverPrivate))
 

@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.1 2013/06/19 13:26:01 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.2 2013/06/25 12:26:57 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -60,29 +60,6 @@ uint32_t sx_rop[] = { 0x00, 0x88, 0x44, 0xcc, 0x22, 0xaa, 0x66, 0xee,
 int src_formats[] = {PICT_a8r8g8b8, PICT_x8r8g8b8,
 		     PICT_a8b8g8r8, PICT_x8b8g8r8, PICT_a8};
 int tex_formats[] = {PICT_a8r8g8b8, PICT_a8b8g8r8, PICT_a8};
-
-char c[8] = " .,:+*oX";
-
-/* write an SX register */
-static inline void
-write_sx_reg(Cg14Ptr p, int reg, uint32_t val)
-{
-	*(volatile uint32_t *)(p->sxreg + reg) = val;
-}
-
-/* read an SX register */
-static inline uint32_t
-read_sx_reg(Cg14Ptr p, int reg)
-{
-	return *(volatile uint32_t *)(p->sxreg + reg);
-}
-
-/* write a memory referencing instruction */
-static inline void
-write_sx_io(Cg14Ptr p, int reg, uint32_t val)
-{
-	*(volatile uint32_t *)(p->sxio + reg) = val;
-}
 
 static inline void
 CG14Wait(Cg14Ptr p)
@@ -565,7 +542,7 @@ CG14CheckComposite(int op, PicturePtr pSrcPicture,
 	 * over time and likely have to spill over into its own source file.
 	 */
 	
-	if ((op != PictOpOver) && (op != PictOpAdd)) {
+	if ((op != PictOpOver) && (op != PictOpAdd) && (op != PictOpSrc)) {
 		xf86Msg(X_ERROR, "%s: rejecting %d\n", __func__, op);
 		return FALSE;
 	}
@@ -581,7 +558,7 @@ CG14CheckComposite(int op, PicturePtr pSrcPicture,
 		return FALSE;
 	}
 
-	DPRINTF(X_ERROR, "src is %x %d %d\n", pSrcPicture->format,
+	DPRINTF(X_ERROR, "src is %x, %d: %d %d\n", pSrcPicture->format, op,
 	    pSrcPicture->pDrawable->width, pSrcPicture->pDrawable->height);
 
 	if (pMaskPicture != NULL) {
@@ -605,11 +582,17 @@ CG14PrepareComposite(int op, PicturePtr pSrcPicture,
 
 	ENTER;
 
+	if (pSrcPicture->format == PICT_a1) {
+		xf86Msg(X_ERROR, "src mono, dst %x, op %d\n", pDstPicture->format, op);
+		if (pMaskPicture != NULL) {
+			xf86Msg(X_ERROR, "msk %x\n", pMaskPicture->format);
+		}
+	} 
 	if (pSrcPicture->pSourcePict != NULL) {
 		if (pSrcPicture->pSourcePict->type == SourcePictTypeSolidFill) {
 			p->fillcolour =
 			    pSrcPicture->pSourcePict->solidFill.color;
-			DPRINTF(X_ERROR, "%s: solid src %08x\n",
+			xf86Msg(X_ERROR, "%s: solid src %08x\n",
 			    __func__, p->fillcolour);
 		}
 	}
@@ -618,7 +601,7 @@ CG14PrepareComposite(int op, PicturePtr pSrcPicture,
 		    SourcePictTypeSolidFill) {
 			p->fillcolour = 
 			   pMaskPicture->pSourcePict->solidFill.color;
-			DPRINTF(X_ERROR, "%s: solid mask %08x\n",
+			xf86Msg(X_ERROR, "%s: solid mask %08x\n",
 			    __func__, p->fillcolour);
 		}
 	}
@@ -626,12 +609,21 @@ CG14PrepareComposite(int op, PicturePtr pSrcPicture,
 		p->mskoff = exaGetPixmapOffset(pMask);		
 		p->mskpitch = exaGetPixmapPitch(pMask);
 		p->mskformat = pMaskPicture->format;
+	} else {
+		p->mskoff = 0;		
+		p->mskpitch = 0;
+		p->mskformat = 0;
 	}
+	p->source_is_solid = 
+	   ((pSrc->drawable.width == 1) && (pSrc->drawable.height == 1));
 	p->srcoff = exaGetPixmapOffset(pSrc);		
 	p->srcpitch = exaGetPixmapPitch(pSrc);		
 	p->srcformat = pSrcPicture->format;
 	p->dstformat = pDstPicture->format;
 	p->op = op;
+	if (op == PictOpSrc) {
+		CG14PrepareCopy(pSrc, pDst, 1, 1, GXcopy, 0xffffffff);
+	}
 #ifdef SX_DEBUG
 	DPRINTF(X_ERROR, "%x %x -> %x\n", p->srcoff, p->mskoff,
 	    *(uint32_t *)(p->fb + p->srcoff));	
@@ -639,7 +631,7 @@ CG14PrepareComposite(int op, PicturePtr pSrcPicture,
 	return TRUE;
 }
 
-void CG14Comp_Over32(Cg14Ptr p,
+void CG14Comp_Over32Solid(Cg14Ptr p,
                    uint32_t src, uint32_t srcpitch,
                    uint32_t dst, uint32_t dstpitch,
                    int width, int height)
@@ -737,240 +729,6 @@ void CG14Comp_Over32(Cg14Ptr p,
 	}
 }
 
-void CG14Comp_Over8(Cg14Ptr p,
-                   uint32_t src, uint32_t srcpitch,
-                   uint32_t dst, uint32_t dstpitch,
-                   int width, int height)
-{
-	uint32_t msk = src, mskx, dstx, m;
-	int line, x, i;
-#ifdef SX_DEBUG
-	char buffer[256];
-#endif
-	ENTER;
-
-	/* first get the source colour */
-	write_sx_io(p, p->srcoff, SX_LDUQ0(8, 0, p->srcoff & 7));
-	write_sx_reg(p, SX_QUEUED(8), 0xff);
-	DPRINTF(X_ERROR, "src: %d %d %d, %08x\n", read_sx_reg(p, SX_QUEUED(9)),
-	    read_sx_reg(p, SX_QUEUED(10)), read_sx_reg(p, SX_QUEUED(11)),
-	    *(uint32_t *)(p->fb + p->srcoff));
-	for (line = 0; line < height; line++) {
-		mskx = msk;
-		dstx = dst;
-#ifdef SX_SINGLE
-
-		for (x = 0; x < width; x++) {
-			m = *(volatile uint8_t *)(p->fb + mskx);
-#ifdef SX_DEBUG
-			buffer[x] = c[m >> 5];
-#endif
-			if (m == 0) {
-				/* nothing to do - all transparent */
-			} else if (m == 0xff) {
-				/* all opaque */
-				write_sx_io(p, dstx, SX_STUQ0(8, 0, dstx & 7));
-			} else {
-				/* fetch alpha value, stick it into scam */
-				/* mask is in R[12:15] */
-				/*write_sx_io(p, mskx & ~7, 
-				    SX_LDB(12, 0, mskx & 7));*/
-				write_sx_reg(p, SX_QUEUED(12), m);
-				/* fetch dst pixel */
-				write_sx_io(p, dstx, SX_LDUQ0(20, 0, dstx & 7));
-				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_ORV(12, 0, R_SCAM, 0));
-				/*
-				 * src * alpha + R0
-				 * R[9:11] * SCAM + R0 -> R[17:19]
-				 */
-				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_SAXP16X16SR8(9, 0, 17, 2));
-			
-				/* invert SCAM */
-				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_XORV(12, 8, R_SCAM, 0));
-#ifdef SX_DEBUG
-				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_XORV(12, 8, 13, 0));
-#endif
-				/* dst * (1 - alpha) + R[13:15] */
-				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_SAXP16X16SR8(21, 17, 25, 2));
-				write_sx_io(p, dstx,
-				    SX_STUQ0C(24, 0, dstx & 7));
-			}
-			dstx += 4;
-			mskx += 1;
-		}
-#ifdef SX_DEBUG
-		buffer[x] = 0;
-		xf86Msg(X_ERROR, "%s\n", buffer);
-#endif
-#else
-		for (x = 0; x < width; x += 4) {
-			/* fetch 4 mask values */
-			write_sx_io(p, mskx, SX_LDB(12, 3, mskx & 7));
-			/* fetch destination pixels */
-			write_sx_io(p, dstx, SX_LDUQ0(60, 3, dstx & 7));
-			/* duplicate them for all channels */
-			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 12, 13, 2));			
-			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 16, 17, 2));			
-			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 20, 21, 2));			
-			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 24, 25, 2));
-			/* generate inverted alpha */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_XORS(12, 8, 28, 15));
-			/* multiply source */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_MUL16X16SR8(8, 12, 44, 3));
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_MUL16X16SR8(8, 16, 48, 3));
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_MUL16X16SR8(8, 20, 52, 3));
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_MUL16X16SR8(8, 24, 56, 3));
-			/* multiply dest */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_MUL16X16SR8(28, 60, 76, 15));
-			/* add up */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_ADDV(44, 76, 92, 15));
-			/* write back */
-			write_sx_io(p, dstx, SX_STUQ0C(92, 3, dstx & 7));
-			dstx += 16;
-			mskx += 4;
-		}
-#endif
-		dst += dstpitch;
-		msk += srcpitch;
-	}
-}
-
-void CG14Comp_Add32(Cg14Ptr p,
-                   uint32_t src, uint32_t srcpitch,
-                   uint32_t dst, uint32_t dstpitch,
-                   int width, int height)
-{
-	int line;
-	uint32_t srcx, dstx;
-	int full, part, x;
-
-	ENTER;
-	full = width >> 3;	/* chunks of 8 */
-	part = width & 7;	/* leftovers */
-	/* we do this up to 8 pixels at a time */
-	for (line = 0; line < height; line++) {
-		srcx = src;
-		dstx = dst;
-		for (x = 0; x < full; x++) {
-			write_sx_io(p, srcx, SX_LDUQ0(8, 31, srcx & 7));
-			write_sx_io(p, dstx, SX_LDUQ0(40, 31, dstx & 7));
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_ADDV(8, 40, 72, 15));
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_ADDV(24, 56, 88, 15));
-			write_sx_io(p, dstx, SX_STUQ0(72, 31, dstx & 7));
-			srcx += 128;
-			dstx += 128;
-		}
-
-		/* do leftovers */
-		write_sx_io(p, srcx, SX_LDUQ0(8, part - 1, srcx & 7));
-		write_sx_io(p, dstx, SX_LDUQ0(40, part - 1, dstx & 7));
-		if (part & 16) {
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_ADDV(8, 40, 72, 15));
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_ADDV(24, 56, 88, part - 17));
-		} else {
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_ADDV(8, 40, 72, part - 1));
-		}
-		write_sx_io(p, dstx, SX_STUQ0(72, part - 1, dstx & 7));
-		
-		/* next line */
-		src += srcpitch;
-		dst += dstpitch;
-	}
-}
-
-void CG14Comp_Add8(Cg14Ptr p,
-                   uint32_t src, uint32_t srcpitch,
-                   uint32_t dst, uint32_t dstpitch,
-                   int width, int height)
-{
-	int line;
-	uint32_t srcx, dstx, srcoff, dstoff;
-	int pre, full, part, x;
-	uint8_t *d;
-	char buffer[256];
-	ENTER;
-
-	srcoff = src & 7;
-	src &= ~7;
-	dstoff = dst & 7;
-	dst &= ~7;
-	full = width >> 5;	/* chunks of 32 */
-	part = width & 31;	/* leftovers */
-
-#ifdef SX_DEBUG
-	xf86Msg(X_ERROR, "%d %d, %d x %d, %d %d\n", srcpitch, dstpitch,
-	    width, height, full, part);
-#endif
-	/* we do this up to 32 pixels at a time */
-	for (line = 0; line < height; line++) {
-		srcx = src;
-		dstx = dst;
-#ifdef SX_ADD_SOFTWARE
-		uint8_t *s = (uint8_t *)(p->fb + srcx + srcoff); 
-		d = (uint8_t *)(p->fb + dstx + dstoff); 
-		for (x = 0; x < width; x++) {
-			d[x] = min(255, s[x] + d[x]);
-		}
-#else
-		for (x = 0; x < full; x++) {
-			write_sx_io(p, srcx, SX_LDB(8, 31, srcoff));
-			write_sx_io(p, dstx, SX_LDB(40, 31, dstoff));
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_ADDV(8, 40, 72, 15));
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_ADDV(24, 56, 88, 15));
-			write_sx_io(p, dstx, SX_STBC(72, 31, dstoff));
-			srcx += 32;
-			dstx += 32;
-		}
-
-		if (part > 0) {
-			/* do leftovers */
-			write_sx_io(p, srcx, SX_LDB(8, part - 1, srcoff));
-			write_sx_io(p, dstx, SX_LDB(40, part - 1, dstoff));
-			if (part > 16) {
-				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_ADDV(8, 40, 72, 15));
-				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_ADDV(24, 56, 88, part - 17));
-			} else {
-				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_ADDV(8, 40, 72, part - 1));
-			}
-			write_sx_io(p, dstx, SX_STBC(72, part - 1, dstoff));
-		}
-#endif
-#ifdef SX_DEBUG
-		d = (uint8_t *)(p->fb + src + srcoff);
-		for (x = 0; x < width; x++) {
-			buffer[x] = c[d[x]>>5];
-		}
-		buffer[x] = 0;
-		xf86Msg(X_ERROR, "%s\n", buffer);
-#endif
-		/* next line */
-		src += srcpitch;
-		dst += dstpitch;
-	}
-}
-
 void
 CG14Composite(PixmapPtr pDst, int srcX, int srcY,
                               int maskX, int maskY,
@@ -991,25 +749,67 @@ CG14Composite(PixmapPtr pDst, int srcX, int srcY,
 			dst = dstoff + (dstY * dstpitch) + (dstX << 2);
 			DPRINTF(X_ERROR, "Over %08x %08x, %d %d\n",
 			    p->mskformat, p->dstformat, srcX, srcY);
-			switch (p->mskformat) {
-				case PICT_a8:
-					msk = p->mskoff + 
-					    (maskY * p->mskpitch) + maskX;
-					CG14Comp_Over8(p, msk, p->mskpitch,
-					    dst, dstpitch, width, height);
-					break;
-				case PICT_a8r8g8b8:
-				case PICT_a8b8g8r8:
-					msk = p->mskoff + 
-					    (maskY * p->mskpitch) + 
-					    (maskX << 2);
-					CG14Comp_Over32(p, msk, p->mskpitch,
-					    dst, dstpitch, width, height);
-					break;
-				default:
-					xf86Msg(X_ERROR,
-					    "unsupported mask format\n");
-			}				
+			if (p->source_is_solid) {
+				switch (p->mskformat) {
+					case PICT_a8:
+						msk = p->mskoff + 
+						    (maskY * p->mskpitch) +
+						    maskX;
+						CG14Comp_Over8Solid(p,
+						    msk, p->mskpitch,
+						    dst, dstpitch,
+						    width, height);
+						break;
+					case PICT_a8r8g8b8:
+					case PICT_a8b8g8r8:
+						msk = p->mskoff + 
+						    (maskY * p->mskpitch) + 
+						    (maskX << 2);
+						CG14Comp_Over32Solid(p,
+						    msk, p->mskpitch,
+						    dst, dstpitch,
+						    width, height);
+						break;
+					default:
+						xf86Msg(X_ERROR,
+						    "unsupported mask format\n");
+				}
+			} else {
+				DPRINTF(X_ERROR, "non-solid over with msk %x\n", p->mskformat);
+				switch (p->srcformat) {
+					case PICT_a8r8g8b8:
+					case PICT_a8b8g8r8:
+						src = p->srcoff +
+						    (srcY * p->srcpitch) +
+						    (srcX << 2);
+						dst = dstoff +
+						    (dstY * dstpitch) +
+						    (dstX << 2);
+						if (p->mskformat == PICT_a8) {
+							msk = p->mskoff + 
+							    (maskY * p->mskpitch) +
+							    maskX;	
+							CG14Comp_Over32Mask(p, 
+							    src, p->srcpitch,
+							    msk, p->mskpitch,
+							    dst, dstpitch,
+							    width, height);
+						} else {
+							CG14Comp_Over32(p, 
+							    src, p->srcpitch,
+							    dst, dstpitch,
+							    width, height);
+						}
+						break;
+					case PICT_x8r8g8b8:
+					case PICT_x8b8g8r8:
+						xf86Msg(X_ERROR, "alpha better be separate\n");
+						break;
+					default:
+						xf86Msg(X_ERROR, "%s: format %x in non-solid Over op\n",
+						    __func__, p->srcformat);
+				}
+			}
 			break;
 		case PictOpAdd:
 			DPRINTF(X_ERROR, "Add %08x %08x\n",
@@ -1035,6 +835,11 @@ CG14Composite(PixmapPtr pDst, int srcX, int srcY,
 					xf86Msg(X_ERROR,
 					    "unsupported src format\n");
 			}
+			break;
+		case PictOpSrc:
+			DPRINTF(X_ERROR, "Src %08x %08x\n",
+			    p->srcformat, p->dstformat);
+			CG14Copy(pDst, srcX, srcY, dstX, dstY, width, height);
 			break;
 		default:
 			xf86Msg(X_ERROR, "unsupported op %d\n", p->op);
