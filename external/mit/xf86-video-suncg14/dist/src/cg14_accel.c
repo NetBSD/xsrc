@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.2 2013/06/25 12:26:57 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.3 2013/06/25 12:31:29 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -629,104 +629,6 @@ CG14PrepareComposite(int op, PicturePtr pSrcPicture,
 	    *(uint32_t *)(p->fb + p->srcoff));	
 #endif
 	return TRUE;
-}
-
-void CG14Comp_Over32Solid(Cg14Ptr p,
-                   uint32_t src, uint32_t srcpitch,
-                   uint32_t dst, uint32_t dstpitch,
-                   int width, int height)
-{
-	uint32_t msk = src, mskx, dstx, m;
-	int line, x, i;
-
-	ENTER;
-	/* first get the source colour */
-	write_sx_io(p, p->srcoff, SX_LDUQ0(8, 0, p->srcoff & 7));
-	write_sx_reg(p, SX_QUEUED(8), 0xff);
-	for (line = 0; line < height; line++) {
-		mskx = msk;
-		dstx = dst;
-#ifdef SX_SINGLE
-
-		for (x = 0; x < width; x++) {
-			m = *(volatile uint32_t *)(p->fb + mskx);
-			m = m >> 24;
-			if (m == 0) {
-				/* nothing to do - all transparent */
-			} else if (m == 0xff) {
-				/* all opaque */
-				write_sx_io(p, dstx, SX_STUQ0(8, 0, dstx & 7));
-			} else {
-				/* fetch alpha value, stick it into scam */
-				/* mask is in R[12:15] */
-				/*write_sx_io(p, mskx,
-				    SX_LDUQ0(12, 0, mskx & 7));*/
-				write_sx_reg(p, SX_QUEUED(12), m);
-				/* fetch dst pixel */
-				write_sx_io(p, dstx, SX_LDUQ0(20, 0, dstx & 7));
-				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_ORV(12, 0, R_SCAM, 0));
-				/*
-				 * src * alpha + R0
-				 * R[9:11] * SCAM + R0 -> R[17:19]
-				 */
-				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_SAXP16X16SR8(9, 0, 17, 2));
-			
-				/* invert SCAM */
-				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_XORV(12, 8, R_SCAM, 0));
-#ifdef SX_DEBUG
-				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_XORV(12, 8, 13, 0));
-#endif
-				/* dst * (1 - alpha) + R[13:15] */
-				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_SAXP16X16SR8(21, 17, 25, 2));
-				write_sx_io(p, dstx,
-				    SX_STUQ0C(24, 0, dstx & 7));
-			}
-			dstx += 4;
-			mskx += 4;
-		}
-#else
-		for (x = 0; x < width; x += 4) {
-			/* fetch 4 mask values */
-			write_sx_io(p, mskx, SX_LDUQ0(12, 3, mskx & 7));
-			/* fetch destination pixels */
-			write_sx_io(p, dstx, SX_LDUQ0(60, 3, dstx & 7));
-			/* duplicate them for all channels */
-			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 12, 13, 2));			
-			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 16, 17, 2));			
-			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 20, 21, 2));			
-			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 24, 25, 2));
-			/* generate inverted alpha */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_XORS(12, 8, 28, 15));
-			/* multiply source */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_MUL16X16SR8(8, 12, 44, 3));
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_MUL16X16SR8(8, 16, 48, 3));
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_MUL16X16SR8(8, 20, 52, 3));
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_MUL16X16SR8(8, 24, 56, 3));
-			/* multiply dest */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_MUL16X16SR8(28, 60, 76, 15));
-			/* add up */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_ADDV(44, 76, 92, 15));
-			/* write back */
-			write_sx_io(p, dstx, SX_STUQ0C(92, 3, dstx & 7));
-			dstx += 16;
-			mskx += 16;
-		}
-#endif
-		dst += dstpitch;
-		msk += srcpitch;
-	}
 }
 
 void
