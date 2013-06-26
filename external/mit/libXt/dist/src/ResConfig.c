@@ -892,7 +892,7 @@ _XtResourceConfigurationEH (
 	int		actual_format;
 	unsigned long	nitems;
 	unsigned long	leftover;
-	unsigned char	*data = NULL;
+	char		*data = NULL;
 	unsigned long	resource_len;
 	char		*data_ptr;
 	char		*resource;
@@ -952,7 +952,7 @@ _XtResourceConfigurationEH (
 		pd->rcm_data, 0L, 8192L,
 		TRUE, XA_STRING,
 		&actual_type, &actual_format, &nitems, &leftover,
-		&data ) == Success && actual_type == XA_STRING
+		(unsigned char **)&data ) == Success && actual_type == XA_STRING
 			   && actual_format == 8) {
 	/*
 	 *      data format is:
