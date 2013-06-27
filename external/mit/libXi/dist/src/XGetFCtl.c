@@ -125,9 +125,6 @@ XGetFeedbackControl(
 	    case StringFeedbackClass:
 	    {
 		xStringFeedbackState *strf = (xStringFeedbackState *) f;
-
-		if (strf->num_syms_supported >= (INT_MAX / sizeof(KeySym)))
-		    goto out;
 		size += sizeof(XStringFeedbackState) +
 		    (strf->num_syms_supported * sizeof(KeySym));
 	    }
