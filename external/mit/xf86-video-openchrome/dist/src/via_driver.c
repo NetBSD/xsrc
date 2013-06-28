@@ -825,7 +825,7 @@ via_xf86crtc_resize(ScrnInfoPtr scrn, int width, int height)
         goto fail;
 
     xf86DrvMsg(scrn->scrnIndex, X_INFO,
-                "Allocate new frame buffer %dx%d stride %d\n",
+                "Allocate new frame buffer %dx%d stride %lu\n",
                 width, height, new_front->pitch);
 
     new_pixels = drm_bo_map(scrn, new_front);
