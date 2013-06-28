@@ -194,7 +194,7 @@ GreetDone (
     LoginData	*data,
     int		status)
 {
-    Debug ("GreetDone: %s, (password is %d long)\n",
+    Debug ("GreetDone: %s, (password is %zu long)\n",
 	    data->name, strlen (data->passwd));
     switch (status) {
     case NOTIFY_OK:
