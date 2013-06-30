@@ -77,7 +77,7 @@ XRRGetProviderResources(Display *dpy, Window window)
     xrpr->nproviders = rep.nProviders;
     xrpr->providers = (RRProvider *)(xrpr + 1);
 
-    _XRead32(dpy, (RRProvider *)xrpr->providers, rep.nProviders << 2);
+    _XRead32(dpy, xrpr->providers, rep.nProviders << 2);
 
     if (nbytes > nbytesRead)
       _XEatData (dpy, (unsigned long) (nbytes - nbytesRead));
@@ -156,7 +156,7 @@ XRRGetProviderInfo(Display *dpy, XRRScreenResources *resources, RRProvider provi
     _XRead32(dpy, xpi->outputs, rep.nOutputs << 2);
 
     _XRead32(dpy, xpi->associated_providers, rep.nAssociatedProviders << 2);
-    _XRead32(dpy, (RRProvider *)xpi->associated_capability, rep.nAssociatedProviders << 2);
+    _XRead32(dpy, (long int *)xpi->associated_capability, rep.nAssociatedProviders << 2);
 
     _XReadPad(dpy, xpi->name, rep.nameLength);
     xpi->name[rep.nameLength] = '\0';
