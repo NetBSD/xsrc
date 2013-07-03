@@ -99,7 +99,7 @@ typedef struct {
 	uint32_t	srcformat, dstformat, mskformat;
 	uint32_t	fillcolour;
 	int		op;
-	Bool		source_is_solid;
+	Bool		source_is_solid, no_source_pixmap;
 	int		xdir, ydir;	
 	ExaDriverPtr 	pExa;
 } Cg14Rec, *Cg14Ptr;

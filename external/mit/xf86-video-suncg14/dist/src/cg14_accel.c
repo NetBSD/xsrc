@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.4 2013/07/03 02:05:52 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.5 2013/07/03 15:29:34 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -583,19 +583,24 @@ CG14PrepareComposite(int op, PicturePtr pSrcPicture,
 
 	ENTER;
 
+	p->no_source_pixmap = FALSE;
+	p->source_is_solid = FALSE;
+
 	if (pSrcPicture->format == PICT_a1) {
 		xf86Msg(X_ERROR, "src mono, dst %x, op %d\n",
 		    pDstPicture->format, op);
 		if (pMaskPicture != NULL) {
 			xf86Msg(X_ERROR, "msk %x\n", pMaskPicture->format);
 		}
-	} 
+	}
 	if (pSrcPicture->pSourcePict != NULL) {
 		if (pSrcPicture->pSourcePict->type == SourcePictTypeSolidFill) {
 			p->fillcolour =
 			    pSrcPicture->pSourcePict->solidFill.color;
-			xf86Msg(X_ERROR, "%s: solid src %08x\n",
+			DPRINTF(X_ERROR, "%s: solid src %08x\n",
 			    __func__, p->fillcolour);
+			p->no_source_pixmap = TRUE;
+			p->source_is_solid = TRUE;
 		}
 	}
 	if ((pMaskPicture != NULL) && (pMaskPicture->pSourcePict != NULL)) {
@@ -616,12 +621,43 @@ CG14PrepareComposite(int op, PicturePtr pSrcPicture,
 		p->mskpitch = 0;
 		p->mskformat = 0;
 	}
-	p->source_is_solid = 
-	   ((pSrc->drawable.width == 1) && (pSrc->drawable.height == 1));
-	p->srcoff = exaGetPixmapOffset(pSrc);		
-	p->srcpitch = exaGetPixmapPitch(pSrc);		
+	if (pSrc != NULL) {
+		p->source_is_solid = 
+		   ((pSrc->drawable.width == 1) && (pSrc->drawable.height == 1));
+		p->srcoff = exaGetPixmapOffset(pSrc);
+		p->srcpitch = exaGetPixmapPitch(pSrc);
+		if (p->source_is_solid) {
+			p->fillcolour = *(uint32_t *)(p->fb + p->srcoff);
+		}
+	}
 	p->srcformat = pSrcPicture->format;
 	p->dstformat = pDstPicture->format;
+	
+	if (p->source_is_solid) {
+		uint32_t temp;
+
+		/* stuff source colour into SX registers, swap as needed */
+		temp = p->fillcolour;
+		switch (p->srcformat) {
+			case PICT_a8r8g8b8:
+			case PICT_x8r8g8b8:
+				write_sx_reg(p, SX_QUEUED(9), temp & 0xff);
+				temp = temp >> 8;
+				write_sx_reg(p, SX_QUEUED(10), temp & 0xff);
+				temp = temp >> 8;
+				write_sx_reg(p, SX_QUEUED(11), temp & 0xff);
+				break;
+			case PICT_a8b8g8r8:
+			case PICT_x8b8g8r8:
+				write_sx_reg(p, SX_QUEUED(11), temp & 0xff);
+				temp = temp >> 8;
+				write_sx_reg(p, SX_QUEUED(10), temp & 0xff);
+				temp = temp >> 8;
+				write_sx_reg(p, SX_QUEUED(9), temp & 0xff);
+				break;
+		}
+		write_sx_reg(p, SX_QUEUED(8), 0xff);
+	}
 	p->op = op;
 	if (op == PictOpSrc) {
 		CG14PrepareCopy(pSrc, pDst, 1, 1, GXcopy, 0xffffffff);
