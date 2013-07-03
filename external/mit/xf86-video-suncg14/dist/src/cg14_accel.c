@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.3 2013/06/25 12:31:29 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.4 2013/07/03 02:05:52 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -293,7 +293,8 @@ CG14PrepareSolid(PixmapPtr pPixmap, int alu, Pixel planemask, Pixel fg)
 	Cg14Ptr p = GET_CG14_FROM_SCRN(pScrn);
 
 	ENTER;
-	DPRINTF(X_ERROR, "bits per pixel: %d\n", pPixmap->drawable.bitsPerPixel);
+	DPRINTF(X_ERROR, "bits per pixel: %d\n",
+	    pPixmap->drawable.bitsPerPixel);
 	write_sx_reg(p, SX_QUEUED(8), fg);
 	write_sx_reg(p, SX_QUEUED(9), fg);
 	if (planemask != p->last_mask) {
@@ -583,7 +584,8 @@ CG14PrepareComposite(int op, PicturePtr pSrcPicture,
 	ENTER;
 
 	if (pSrcPicture->format == PICT_a1) {
-		xf86Msg(X_ERROR, "src mono, dst %x, op %d\n", pDstPicture->format, op);
+		xf86Msg(X_ERROR, "src mono, dst %x, op %d\n",
+		    pDstPicture->format, op);
 		if (pMaskPicture != NULL) {
 			xf86Msg(X_ERROR, "msk %x\n", pMaskPicture->format);
 		}
@@ -674,10 +676,11 @@ CG14Composite(PixmapPtr pDst, int srcX, int srcY,
 						break;
 					default:
 						xf86Msg(X_ERROR,
-						    "unsupported mask format\n");
+						  "unsupported mask format\n");
 				}
 			} else {
-				DPRINTF(X_ERROR, "non-solid over with msk %x\n", p->mskformat);
+				DPRINTF(X_ERROR, "non-solid over with msk %x\n",
+				    p->mskformat);
 				switch (p->srcformat) {
 					case PICT_a8r8g8b8:
 					case PICT_a8b8g8r8:
@@ -705,7 +708,24 @@ CG14Composite(PixmapPtr pDst, int srcX, int srcY,
 						break;
 					case PICT_x8r8g8b8:
 					case PICT_x8b8g8r8:
-						xf86Msg(X_ERROR, "alpha better be separate\n");
+						src = p->srcoff +
+						    (srcY * p->srcpitch) +
+						    (srcX << 2);
+						dst = dstoff +
+						    (dstY * dstpitch) +
+						    (dstX << 2);
+						if (p->mskformat == PICT_a8) {
+							msk = p->mskoff + 
+							    (maskY * p->mskpitch) +
+							    maskX;	
+							CG14Comp_Over32Mask_noalpha(p, 
+							    src, p->srcpitch,
+							    msk, p->mskpitch,
+							    dst, dstpitch,
+							    width, height);
+						} else {
+							xf86Msg(X_ERROR, "no src alpha, mask is %x\n", p->mskformat);
+						}
 						break;
 					default:
 						xf86Msg(X_ERROR, "%s: format %x in non-solid Over op\n",
