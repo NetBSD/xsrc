@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_render.c,v 1.3 2013/07/03 02:05:52 macallan Exp $ */
+/* $NetBSD: cg14_render.c,v 1.4 2013/07/03 15:29:34 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -63,9 +63,7 @@ void CG14Comp_Over32Solid(Cg14Ptr p,
 	int line, x, i;
 
 	ENTER;
-	/* first get the source colour */
-	write_sx_io(p, p->srcoff, SX_LDUQ0(8, 0, p->srcoff & 7));
-	write_sx_reg(p, SX_QUEUED(8), 0xff);
+
 	for (line = 0; line < height; line++) {
 		mskx = msk;
 		dstx = dst;
@@ -164,9 +162,6 @@ void CG14Comp_Over8Solid(Cg14Ptr p,
 #endif
 	ENTER;
 
-	/* first get the source colour */
-	write_sx_io(p, p->srcoff, SX_LDUQ0(8, 0, p->srcoff & 7));
-	write_sx_reg(p, SX_QUEUED(8), 0xff);
 	DPRINTF(X_ERROR, "src: %d %d %d, %08x\n", read_sx_reg(p, SX_QUEUED(9)),
 	    read_sx_reg(p, SX_QUEUED(10)), read_sx_reg(p, SX_QUEUED(11)),
 	    *(uint32_t *)(p->fb + p->srcoff));
@@ -447,10 +442,13 @@ void CG14Comp_Over32Mask(Cg14Ptr p,
 			write_sx_io(p, mskx & (~7), SX_LDB(9, 0, mskx & 7));
 			/* fetch dst pixel */
 			write_sx_io(p, dstx, SX_LDUQ0(20, 0, dstx & 7));
-			/* apply mask */
+			/* stick mask alpha into SCAM */
 			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_ANDS(12, 9, 16, 3));
+			    SX_ORS(9, 0, R_SCAM, 0));
+			/* apply mask */
 			/* src is premultiplied with alpha */
+			write_sx_reg(p, SX_INSTRUCTIONS,
+			    SX_SAXP16X16SR8(12, 0, 16, 3));
 			/* write inverted alpha into SCAM */
 			write_sx_reg(p, SX_INSTRUCTIONS,
 			    SX_XORV(16, 8, R_SCAM, 0));
