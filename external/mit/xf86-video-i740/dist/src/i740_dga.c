@@ -67,7 +67,7 @@ static DGAFunctionRec I740DGAFuncs = {
    NULL
 #endif
 #else
-   NULL, NULL, NULL
+   NULL, NULL, NULL, NULL
 #endif
 };
 
