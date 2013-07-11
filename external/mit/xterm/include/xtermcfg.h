@@ -108,7 +108,7 @@
 #define HAVE_XKBKEYCODETOKEYSYM 1	/* AC_CHECK_FUNCS(XkbKeycodeToKeysym) */
 #define HAVE_XKBQUERYEXTENSION 1	/* AC_CHECK_FUNCS(XkbQueryExtension) */
 #define HAVE_XKB_BELL_EXT 1	/* CF_XKB_BELL_EXT */
-/* #undef LUIT_PATH */		/* CF_ARG_ENABLE(luit) */
+#define LUIT_PATH "/usr/X11R7/bin/luit"	/* CF_ARG_ENABLE(luit) */
 /* #undef NO_ACTIVE_ICON */		/* CF_ARG_DISABLE(active-icon) */
 /* #undef NO_LEAKS */			/* CF_ARG_DISABLE(leaks) */
 /* #undef OPT_256_COLORS */		/* CF_ARG_ENABLE(256-color) */
@@ -135,7 +135,7 @@
 /* #undef OPT_INPUT_METHOD */		/* CF_ARG_DISABLE(input-method) */
 /* #undef OPT_ISO_COLORS */		/* CF_ARG_DISABLE(ansi-color) */
 /* #undef OPT_LOAD_VTFONTS */		/* CF_ARG_ENABLE(load-vt-fonts) */
-/* #undef OPT_LUIT_PROG */		/* CF_ARG_ENABLE(luit) */
+#define OPT_LUIT_PROG 1			/* CF_ARG_ENABLE(luit) */
 /* #undef OPT_MAXIMIZE */		/* CF_ARG_DISABLE(maximize) */
 /* #undef OPT_MINI_LUIT */		/* CF_ARG_ENABLE(mini-luit) */
 /* #undef OPT_NUM_LOCK */		/* CF_ARG_DISABLE(num-lock) */
@@ -155,7 +155,7 @@
 /* #undef OPT_TOOLBAR */		/* CF_ARG_ENABLE(toolbar) */
 /* #undef OPT_VT52_MODE */		/* CF_ARG_DISABLE(vt52) */
 /* #undef OPT_WIDER_ICHAR */		/* CF_ARG_ENABLE(16bit-chars) */
-/* #undef OPT_WIDE_CHARS */		/* CF_ARG_OPTION(wide-chars) */
+#define OPT_WIDE_CHARS 1		/* CF_ARG_OPTION(wide-chars) */
 /* #undef OPT_XMC_GLITCH */		/* CF_ARG_ENABLE(xmc-glitch) */
 /* #undef OPT_ZICONBEEP */		/* CF_ARG_DISABLE(ziconbeep) */
 /* #undef OWN_TERMINFO_DIR */		/* AC_ARG_WITH(own-terminfo) */
@@ -178,6 +178,7 @@
 /* #undef USE_UTMP_SETGID */		/* AC_ARG_WITH(utmp-setgid) */
 #define UTMPX_FOR_UTMP 1		/* CF_UTMP */
 #define XRENDERFONT 1		/* CF_X_FREETYPE */
+#define XFREE86_FT2 1
 /* #undef cc_t */			/* CF_TYPE_CC_T */
 /* #undef gid_t */			/* AC_TYPE_UID_T */
 /* #undef mode_t */			/* AC_TYPE_MODE_T */
