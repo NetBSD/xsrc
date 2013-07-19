@@ -120,17 +120,13 @@ static char *filename = NULL;
 #ifdef PATHETICCPP
 static Bool need_real_defines = False;
 static char tmpname2[32];
+#endif
 #ifdef WIN32
 static char tmpname3[32];
-#endif
 #endif
 static int oper = OPLOAD;
 static char *editFile = NULL;
 static const char *cpp_program = NULL;
-#ifndef CPP_ARGS
-#define CPP_ARGS	NULL
-#endif
-static const char *cpp_args = CPP_ARGS;
 static const char* const cpp_locations[] = { CPP };
 static char *backup_suffix = BACKUP_SUFFIX;
 static Bool dont_execute = False;
@@ -424,7 +420,7 @@ AddDef(String *buff, char *title, char *value)
 #ifdef PATHETICCPP
     if (need_real_defines) {
 	addstring(buff, "\n#define ");
-	addstring(buff, title);
+	addtokstring(buff, title);
 	if (value && (value[0] != '\0')) {
 	    addstring(buff, " ");
 	    addstring(buff, value);
@@ -747,7 +743,7 @@ Syntax (void)
 	     " -Dname[=value], -Uname, -Idirectory    passed to preprocessor\n"
 	     "\n"
 	     "A - or no input filename represents stdin.\n",
-	     ProgramName, CPP, BACKUP_SUFFIX);
+	     ProgramName, cpp_program ? cpp_program : "", BACKUP_SUFFIX);
     exit (1);
 }
 
@@ -859,11 +855,19 @@ main(int argc, char *argv[])
 	int j;
 
 	for (j = 0; j < number_of_elements; j++) {
-	    if (access(cpp_locations[j], X_OK) == 0) {
+	    char *end, *dup;
+	    /* cut off arguments */
+	    dup = strdup(cpp_locations[j]);
+	    end = strchr(dup,' ');
+	    if (end)
+		*end = '\0';
+	    if (access(dup, X_OK) == 0) {
 		cpp_program = cpp_locations[j];
+		free(dup);
 		break;
 	    }
-	} 
+	    free(dup);
+	}
     }
 
     /* needs to be replaced with XrmParseCommand */
@@ -889,10 +893,6 @@ main(int argc, char *argv[])
 	    } else if (isabbreviation ("-cpp", arg, 2)) {
 		if (++i >= argc) Syntax ();
 		cpp_program = argv[i];
-		continue;
-	    } else if (isabbreviation ("-cppargs", arg, 2)) {
-		if (++i >= argc) Syntax ();
-		cpp_args = argv[i];
 		continue;
 	    } else if (!strcmp ("-n", arg)) {
 		dont_execute = True;
@@ -1238,10 +1238,7 @@ Process(int scrno, Bool doScreen, Bool execute)
 	    fprintf(input, "\n#include \"%s\"\n", filename);
 	    fclose(input);
 	    (void) mktemp(tmpname3);
-	    if (asprintf(&cmd, "%s%s%s -P%s %s > %s", cpp_program,
-		         cpp_args ? " " : "",
-		         cpp_args ? cpp_args : "",
-			 includes.val,
+	    if (asprintf(&cmd, "%s -P%s %s > %s", cpp_program, includes.val,
 			 tmpname2, tmpname3) == -1)
 		fatal("%s: Out of memory\n", ProgramName);
 	    if (system(cmd) < 0)
@@ -1256,10 +1253,7 @@ Process(int scrno, Bool doScreen, Bool execute)
 	    fprintf(stdin, "\n#include \"%s\"\n", filename);
 	    fflush(stdin);
 	    fseek(stdin, 0, 0);
-	    if (asprintf(&cmd, "%s%s%s -P%s", cpp_program,
-		         cpp_args ? " " : "",
-		         cpp_args ? cpp_args : "",
-			 includes.val) == -1)
+	    if (asprintf(&cmd, "%s -P%s", cpp_program, includes.val) == -1)
 		fatal("%s: Out of memory\n", ProgramName);
 	    if (!(input = popen(cmd, "r")))
 		fatal("%s: cannot run '%s'\n", ProgramName, cmd);
@@ -1274,9 +1268,7 @@ Process(int scrno, Bool doScreen, Bool execute)
 	if (cpp_program) {
 #ifdef WIN32
 	    (void) mktemp(tmpname3);
-	    if (asprintf(&cmd, "%s%s%s -P%s %s %s > %s", cpp_program,
-		         cpp_args ? " " : "",
-		         cpp_args ? cpp_args : "",
+	    if (asprintf(&cmd, "%s -P%s %s %s > %s", cpp_program,
 			 includes.val, defines.val,
 			 filename ? filename : "", tmpname3) == -1)
 		fatal("%s: Out of memory\n", ProgramName);
@@ -1286,9 +1278,7 @@ Process(int scrno, Bool doScreen, Bool execute)
 	    if (!(input = fopen(tmpname3, "r")))
 		fatal("%s: can't open file '%s'\n", ProgramName, tmpname3);
 #else
-	    if (asprintf(&cmd, "%s%s%s -P%s %s %s", cpp_program,
-		         cpp_args ? " " : "",
-		         cpp_args ? cpp_args : "",
+	    if (asprintf(&cmd, "%s -P%s %s %s", cpp_program,
 			 includes.val, defines.val,
 			 filename ? filename : "") == -1)
 		fatal("%s: Out of memory\n", ProgramName);
