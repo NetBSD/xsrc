@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.5 2013/07/03 15:29:34 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.6 2013/07/25 17:37:30 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -755,6 +755,16 @@ CG14Composite(PixmapPtr pDst, int srcX, int srcY,
 							    (maskY * p->mskpitch) +
 							    maskX;	
 							CG14Comp_Over32Mask_noalpha(p, 
+							    src, p->srcpitch,
+							    msk, p->mskpitch,
+							    dst, dstpitch,
+							    width, height);
+						} else if ((p->mskformat == PICT_a8r8g8b8) ||
+							   (p->mskformat == PICT_a8b8g8r8)) {
+							msk = p->mskoff + 
+							    (maskY * p->mskpitch) +
+							    (maskX << 2);	
+							CG14Comp_Over32Mask32_noalpha(p, 
 							    src, p->srcpitch,
 							    msk, p->mskpitch,
 							    dst, dstpitch,
