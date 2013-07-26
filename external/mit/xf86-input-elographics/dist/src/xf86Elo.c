@@ -725,21 +725,15 @@ xf86EloControl(DeviceIntPtr	dev,
 			       priv->min_x, priv->max_x,
 			       9500,
 			       0     /* min_res */,
-			       9500  /* max_res */
-#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,9,99,0,0)
-			       , Absolute
-#endif
-			       );
+			       9500  /* max_res */,
+			       Absolute);
 	InitValuatorAxisStruct(dev, 1,
 			       axis_labels[1],
 			       priv->min_y, priv->max_y,
 			       10500,
 			       0     /* min_res */,
-			       10500 /* max_res */
-#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,9,99,0,0)
-			       , Absolute
-#endif
-			       );
+			       10500 /* max_res */,
+			       Absolute);
       }
 
       if (InitFocusClassDeviceStruct(dev) == FALSE) {
