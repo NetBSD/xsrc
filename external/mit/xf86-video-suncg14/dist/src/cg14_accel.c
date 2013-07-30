@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.6 2013/07/25 17:37:30 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.7 2013/07/30 21:49:38 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -613,11 +613,11 @@ CG14PrepareComposite(int op, PicturePtr pSrcPicture,
 		}
 	}
 	if (pMaskPicture != NULL) {
-		p->mskoff = exaGetPixmapOffset(pMask);		
+		p->mskoff = exaGetPixmapOffset(pMask);
 		p->mskpitch = exaGetPixmapPitch(pMask);
 		p->mskformat = pMaskPicture->format;
 	} else {
-		p->mskoff = 0;		
+		p->mskoff = 0;
 		p->mskpitch = 0;
 		p->mskformat = 0;
 	}
@@ -807,6 +807,8 @@ CG14Composite(PixmapPtr pDst, int srcX, int srcY,
 		case PictOpSrc:
 			DPRINTF(X_ERROR, "Src %08x %08x\n",
 			    p->srcformat, p->dstformat);
+			if (p->mskformat != 0)
+				xf86Msg(X_ERROR, "Src mask %08x\n", p->mskformat);
 			CG14Copy(pDst, srcX, srcY, dstX, dstY, width, height);
 			break;
 		default:
