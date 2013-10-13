@@ -1544,6 +1544,7 @@ doImageText(client, c)
 	    GC *pGC;
 	    unsigned char *data;
 	    ITclosurePtr new_closure;
+	    ITclosurePtr old_closure;
 
 	    /* We're putting the client to sleep.  We need to
 	       save some state.  Similar problem to that handled
@@ -1556,6 +1557,7 @@ doImageText(client, c)
 		err = BadAlloc;
 		goto bail;
 	    }
+	    old_closure = c;
 	    *new_closure = *c;
 	    c = new_closure;
 
@@ -1563,6 +1565,7 @@ doImageText(client, c)
 	    if (!data)
 	    {
 		xfree(c);
+		c = old_closure;
 		err = BadAlloc;
 		goto bail;
 	    }
@@ -1574,6 +1577,7 @@ doImageText(client, c)
 	    {
 		xfree(c->data);
 		xfree(c);
+		c = old_closure;
 		err = BadAlloc;
 		goto bail;
 	    }
@@ -1587,6 +1591,7 @@ doImageText(client, c)
 		FreeScratchGC(pGC);
 		xfree(c->data);
 		xfree(c);
+		c = old_closure;
 		err = BadAlloc;
 		goto bail;
 	    }
