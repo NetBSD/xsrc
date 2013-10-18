@@ -234,7 +234,7 @@ XdmGetKey(struct protoDisplay *pdpy, ARRAY8Ptr displayID)
 	if (line[0] == '#' || sscanf (line, "%s %s", id, key) != 2)
 	    continue;
 	bzero(line, sizeof(line));
-	Debug ("Key entry for \"%s\" %zd bytes\n", id, strlen(key));
+	Debug ("Key entry for \"%s\" %zu bytes\n", id, strlen(key));
 	if (strlen (id) == displayID->length &&
 	    !strncmp (id, (char *)displayID->data, displayID->length))
 	{
