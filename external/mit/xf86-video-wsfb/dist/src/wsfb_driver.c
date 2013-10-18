@@ -575,8 +575,10 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 			msk = msk << fPtr->fbi.fbi_subtype.fbi_rgbmasks.blue_size;
 			msk = ~msk;
 			masks.blue = msk << fPtr->fbi.fbi_subtype.fbi_rgbmasks.blue_offset; 
-			xf86Msg(X_INFO, "masks generated: %08x %08x %08x\n",
-			    masks.red, masks.green, masks.blue);
+			xf86Msg(X_INFO, "masks generated: %08lx %08lx %08lx\n",
+			    (unsigned long)masks.red,
+			    (unsigned long)masks.green,
+			    (unsigned long)masks.blue);
 		} else {
 			masks.red = 0;
 			masks.green = 0;
