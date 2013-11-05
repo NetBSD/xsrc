@@ -1,4 +1,4 @@
-/* $NetBSD: crime_driver.c,v 1.10 2011/05/19 03:05:19 christos Exp $ */
+/* $NetBSD: crime_driver.c,v 1.11 2013/11/05 11:28:09 macallan Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -171,7 +171,7 @@ static const char *ramdacSymbols[] = {
 #ifdef XFree86LOADER
 static XF86ModuleVersionInfo CrimeVersRec = {
 	"crime",
-	MODULEVENDORSTRING,
+	"The NetBSD Foundation",
 	MODINFOSTRING1,
 	MODINFOSTRING2,
 	XORG_VERSION_CURRENT,
@@ -542,7 +542,7 @@ CrimeScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	CrimePtr fPtr = CRIMEPTR(pScrn);
 	VisualPtr visual;
 	int ret, flags, width, height, i, j;
-	int wsmode = WSDISPLAYIO_MODE_DUMBFB;
+	int wsmode = WSDISPLAYIO_MODE_MAPPED;
 	size_t len;
 
 #ifdef CRIME_DEBUG
