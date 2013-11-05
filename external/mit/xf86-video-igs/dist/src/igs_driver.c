@@ -1,5 +1,5 @@
 /* $OpenBSD: wsfb_driver.c,v 1.19 2003/04/27 16:42:32 matthieu Exp $ */
-/* $NetBSD: igs_driver.c,v 1.9 2011/12/14 23:58:54 macallan Exp $ */
+/* $NetBSD: igs_driver.c,v 1.10 2013/11/05 11:26:43 macallan Exp $ */
 /*
  * Copyright (c) 2001 Matthieu Herrb
  *		 2009 Michael Lorenz
@@ -651,7 +651,7 @@ IgsScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	IgsPtr fPtr = IGSPTR(pScrn);
 	VisualPtr visual;
 	int ret, flags, ncolors;
-	int wsmode = WSDISPLAYIO_MODE_DUMBFB;
+	int wsmode = WSDISPLAYIO_MODE_MAPPED;
 	size_t len;
 
 	TRACE_ENTER("IgsScreenInit");
