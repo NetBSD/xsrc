@@ -272,6 +272,7 @@ I810InitVisualConfigs(ScreenPtr pScreen)
    pI810->pVisualConfigs = pConfigs;
    pI810->pVisualConfigsPriv = pI810Configs;
    GlxSetVisualConfigs(numConfigs, pConfigs, (void **)pI810ConfigPtrs);
+   xfree(pI810ConfigPtrs);
    return TRUE;
 }
 
