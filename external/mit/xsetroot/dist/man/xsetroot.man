@@ -58,7 +58,7 @@ Only one of the background color/tiling changing options
 The various options are as follows:
 .IP \fB-help\fP
 Print a usage message and exit.
-.IP \fB-verson\fP
+.IP \fB-version\fP
 Print a version message and exit.
 .IP \fB-def\fP
 Reset unspecified attributes to the default values.  (Restores the background
