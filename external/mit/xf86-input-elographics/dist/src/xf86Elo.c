@@ -103,6 +103,7 @@ static Model SupportedModels[] =
  ***************************************************************************
  */
 #define ELO_PACKET_SIZE		10
+#define ELO_UNFRAMED_SIZE	8
 
 #define ELO_SYNC_BYTE		'U'	/* Sync byte. First of a packet.	*/
 #define ELO_TOUCH		'T'	/* Report of touchs and motions. Not	*
@@ -196,6 +197,8 @@ typedef struct _EloPrivateRec {
   int		swap_axes;		/* Swap X an Y axes if != 0 */
   unsigned char	packet_buf[ELO_PACKET_SIZE]; /* Assembly buffer				*/
   int		model;			/* one of MODEL_...				*/
+  Bool		no_framing;		/* Whether packets are framed */
+
 } EloPrivateRec, *EloPrivatePtr;
 
 /*
@@ -303,6 +306,45 @@ xf86EloGetPacket(unsigned char	*buffer,
   }
 }
 
+/*
+ ***************************************************************************
+ *
+ * xf86EloGetUnframedPacket --
+ *	Read an unframed packet from the port
+ *      The packet structure read by this function is as follow:
+ *		Byte 0 : ELO_TOUCH
+ *		Byte 1
+ *		...
+ *		Byte 8 : packet data
+ *
+ *	This function returns if a valid packet has been assembled in
+ *	buffer or if no more data is available.
+ *
+ *
+ ***************************************************************************
+ */
+static Bool
+xf86EloGetUnframedPacket(unsigned char	*buffer,
+		 int		fd)
+{
+  int	num_bytes;
+  Bool	ok;
+
+  SYSCALL(num_bytes = read(fd,
+			   (char *) (buffer),
+			   ELO_UNFRAMED_SIZE));
+
+  /*
+   * Okay, give up.
+   */
+  if (num_bytes != ELO_UNFRAMED_SIZE) {
+    Error("System error while reading from Elographics touchscreen.");
+    return !Success;
+  }
+  DBG(4, ErrorF("Read %d bytes\n", num_bytes));
+
+  return Success;
+}
 
 /*
  ***************************************************************************
@@ -343,12 +385,17 @@ xf86EloReadInput(InputInfoPtr	pInfo)
    * one packet worth of data in the OS buffer.
    */
   do {
-      if(xf86EloGetPacket(priv->packet_buf,
+      if (priv->no_framing) {
+        if(xf86EloGetUnframedPacket(&priv->packet_buf[1],
+                       pInfo->fd) != Success)
+            continue;
+      } else {
+        if(xf86EloGetPacket(priv->packet_buf,
 		       &priv->packet_buf_p,
 		       &priv->checksum,
 		       pInfo->fd) != Success)
           continue;
-
+      }
       /*
        * Process only ELO_TOUCHs here.
        */
@@ -917,7 +964,7 @@ xf86EloAllocate(InputDriverPtr drv, InputInfoPtr pInfo)
   priv->checksum = ELO_INIT_CHECKSUM;
   priv->packet_buf_p = 0;
   priv->swap_axes = 0;
-
+  priv->no_framing = 0;
   pInfo->device_control = xf86EloControl;
   pInfo->read_input   = xf86EloReadInput;
   pInfo->control_proc = NULL;
@@ -1023,6 +1070,8 @@ xf86EloInit(InputDriverPtr	drv,
   if (priv->swap_axes) {
     xf86Msg(X_CONFIG, "Elographics device will work with X and Y axes swapped\n");
   }
+  priv->no_framing = xf86SetIntOption(pInfo->options, "NoFraming", 0);
+  xf86Msg(X_CONFIG, "Elographics no framing: %d\n", priv->no_framing);
   debug_level = xf86SetIntOption(pInfo->options, "DebugLevel", 0);
   if (debug_level) {
 #if DEBUG
