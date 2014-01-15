@@ -1525,7 +1525,7 @@ inl(unsigned short port)
 #      define asm __asm
 #     endif
 #    endif
-#     if !defined(__SUNPRO_C)
+#     if !defined(__SUNPRO_C) && !defined(__lint__)
 #      include <sys/inline.h>
 #     endif
 #    if !defined(__HIGHC__) && !defined(__SUNPRO_C) || \
