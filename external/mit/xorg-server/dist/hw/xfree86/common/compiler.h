@@ -1529,7 +1529,7 @@ inl(unsigned short port)
 #      include <sys/inline.h>
 #     endif
 #    if !defined(__HIGHC__) && !defined(__SUNPRO_C) || \
-	defined(__USLC__)
+	defined(__USLC__) && !defined(__lint__)
 #     pragma asm partial_optimization outl
 #     pragma asm partial_optimization outw
 #     pragma asm partial_optimization outb
