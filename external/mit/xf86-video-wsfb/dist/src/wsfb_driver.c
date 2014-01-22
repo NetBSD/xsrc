@@ -191,6 +191,7 @@ typedef enum {
 static const OptionInfoRec WsfbOptions[] = {
 	{ OPTION_SHADOW_FB, "ShadowFB", OPTV_BOOLEAN, {0}, FALSE},
 	{ OPTION_ROTATE, "Rotate", OPTV_STRING, {0}, FALSE},
+	{ OPTION_HW_CURSOR, "HWCursor", OPTV_BOOLEAN, {1}, FALSE},
 	{ -1, NULL, OPTV_NONE, {0}, FALSE}
 };
 
