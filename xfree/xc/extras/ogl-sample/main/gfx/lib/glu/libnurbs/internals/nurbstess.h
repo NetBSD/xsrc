@@ -35,8 +35,8 @@
 /*
  * nurbstess.h
  *
- * $Date: 2001/06/09 15:20:52 $ $Revision: 1.1.1.1 $
- * $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/Attic/nurbstess.h,v 1.1.1.1 2001/06/09 15:20:52 tron Exp $
+ * $Date: 2014/01/23 04:05:15 $ $Revision: 1.2 $
+ * $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/Attic/nurbstess.h,v 1.2 2014/01/23 04:05:15 christos Exp $
  */
 
 #ifndef __glunurbstess_h_
@@ -114,7 +114,7 @@ protected:
 private:
 
     void		resetObjects( void );
-    int			do_check_knots( Knotvector *, char * );
+    int			do_check_knots( Knotvector *, const char * );
     void		do_nurbserror( int );
     void		do_bgncurve( O_curve * );
     void		do_endcurve( void );

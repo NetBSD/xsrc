@@ -35,8 +35,8 @@
 /*
  *  bufpool.c++
  *
- * $Date: 2001/06/09 15:20:50 $ $Revision: 1.1.1.1 $
- * $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/Attic/bufpool.cc,v 1.1.1.1 2001/06/09 15:20:50 tron Exp $
+ * $Date: 2014/01/23 04:05:15 $ $Revision: 1.2 $
+ * $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/Attic/bufpool.cc,v 1.2 2014/01/23 04:05:15 christos Exp $
  */
 
 #include "glimports.h"
@@ -48,7 +48,7 @@
  * Pool - allocate a new pool of buffers
  *-----------------------------------------------------------------------------
  */
-Pool::Pool( int _buffersize, int initpoolsize, char *n )
+Pool::Pool( int _buffersize, int initpoolsize, const char *n )
 {
     buffersize= (_buffersize < sizeof(Buffer)) ? sizeof(Buffer)	: _buffersize;
     initsize	= initpoolsize * buffersize;
