@@ -35,8 +35,8 @@
 /*
  * knotvector.h
  *
- * $Date: 2001/06/09 15:20:51 $ $Revision: 1.1.1.1 $
- * $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/Attic/knotvector.h,v 1.1.1.1 2001/06/09 15:20:51 tron Exp $
+ * $Date: 2014/01/23 04:05:15 $ $Revision: 1.2 $
+ * $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/Attic/knotvector.h,v 1.2 2014/01/23 04:05:15 christos Exp $
  */
 
 #ifndef __gluknotvector_h_
@@ -49,7 +49,7 @@ struct Knotvector { /* a knot vector */
 			~Knotvector( void );
     void		init( long, long, long, INREAL * );
     int			validate( void );
-    void 		show( char * );
+    void 		show( const char * );
 
     long		order;		/* order of spline  */
     long		knotcount;	/* number of knots  */
