@@ -361,8 +361,8 @@ static EventKey events[] = {
 #ifdef DEBUG
 # ifdef notdef
 {"Timer",	    NULLQUARK, _XtTimerEventType,ParseNone,	NULL},
-# endif /* notdef */
 {"EventTimer",	    NULLQUARK, _XtEventTimerEventType,ParseNone,NULL},
+# endif /* notdef */
 #endif /* DEBUG */
 
 /* Event Name,	  Quark, Event Type,	Detail Parser, Closure */
