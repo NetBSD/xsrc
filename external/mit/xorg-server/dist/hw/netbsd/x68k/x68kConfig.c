@@ -1,4 +1,4 @@
-/* $NetBSD: x68kConfig.c,v 1.1 2014/03/01 19:34:47 tsutsui Exp $ */
+/* $NetBSD: x68kConfig.c,v 1.2 2014/03/02 05:52:45 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -109,7 +109,7 @@ x68kRegisterPixmapFormats(ScreenInfo *pScreenInfo)
  * function "x68kConfig"
  *
  *  purpose:  process general configuration by reading "X68kConfig" file
- *            /usr/X11R6/lib/X11/ is the default location of this file
+ *            <X11_LIBDIR> is the default location of this file
  *  argument: nothing
  *  returns:  the number of screens
  *-----------------------------------------------------------------------*/
