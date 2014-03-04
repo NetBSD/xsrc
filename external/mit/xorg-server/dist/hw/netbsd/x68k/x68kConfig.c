@@ -1,4 +1,4 @@
-/* $NetBSD: x68kConfig.c,v 1.2 2014/03/02 05:52:45 tsutsui Exp $ */
+/* $NetBSD: x68kConfig.c,v 1.3 2014/03/04 12:11:59 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -181,7 +181,7 @@ getToken(void)
     static int line = 1;
     Token *ret;
     
-    ret = (Token *)xalloc(sizeof(Token));
+    ret = (Token *)malloc(sizeof(Token));
     if (ret == NULL)
         FatalError("Out of memory");
     while (TRUE) {
@@ -207,7 +207,7 @@ getToken(void)
     /* is a symbol? */
     if (isalpha(c)) {
         int i = 0;
-        ret->content.symbol = (char *)xalloc(32 * sizeof(char));
+        ret->content.symbol = (char *)malloc(32 * sizeof(char));
         if (ret->content.symbol == NULL)
             FatalError("Out of memory");
         do {
@@ -288,7 +288,7 @@ parseCommand(void)
         return FALSE;
     if (token->type != TOKEN_OPEN_PARENTHESIS)
         parseError(token->line, "missing parenthesis");
-    xfree(token);
+    free(token);
 
     /* get command name and arguments */
     while (TRUE) {
@@ -296,11 +296,11 @@ parseCommand(void)
         if (token->type == TOKEN_EOF)
             parseError(token->line, "reached EOF");
         if (token->type == TOKEN_CLOSE_PARENTHESIS) {
-            xfree(token);
+            free(token);
             break;
         }
         argc++;
-        argv = (Token **)xrealloc(argv, sizeof(Token *) * argc);
+        argv = (Token **)realloc(argv, sizeof(Token *) * argc);
         if (argv == NULL)
             FatalError("Out of memory");
         argv[argc-1] = token;
@@ -325,10 +325,10 @@ parseCommand(void)
     /* free arguments */
     for (i = 0; i < argc; i++) {
         if (argv[i]->type == TOKEN_SYMBOL)
-            xfree(argv[i]->content.symbol);
-        xfree(argv[i]);
+            free(argv[i]->content.symbol);
+        free(argv[i]);
     }
-    xfree(argv);
+    free(argv);
     return TRUE;
 }
 
@@ -400,7 +400,7 @@ parseModeDef(int argc, Token **argv)
     
     checkArguments(18, argtype, argc-1, argv);
 
-    mode = (Mode *)xalloc(sizeof(Mode));
+    mode = (Mode *)malloc(sizeof(Mode));
     if (mode == NULL)
         FatalError("Out of memory");
     mode->name = strdup(argv[1]->content.symbol);
@@ -550,7 +550,7 @@ parseMode(int argc, Token **argv)
             x68kFbProc[0].open = x68kGraphOpen;
             x68kFbProc[0].init = x68kGraphInit;
             x68kFbProc[0].close = x68kGraphClose;
-	    x68kFormat = (PixmapFormatRec*) xalloc (sizeof(PixmapFormatRec));
+	    x68kFormat = (PixmapFormatRec*) malloc (sizeof(PixmapFormatRec));
 	    x68kFormat->scanlinePad = BITMAP_SCANLINE_PAD;
             x68kFormat->bitsPerPixel = 16;
             switch (mode->depth) {

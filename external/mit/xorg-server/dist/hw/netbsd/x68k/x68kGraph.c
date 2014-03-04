@@ -1,4 +1,4 @@
-/* $NetBSD: x68kGraph.c,v 1.1 2014/03/01 19:34:47 tsutsui Exp $ */
+/* $NetBSD: x68kGraph.c,v 1.2 2014/03/04 12:11:59 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -270,13 +270,13 @@ x68kCfbFinishScreenInit(
 
         ndepths = 1;
         nvisuals = 1;
-        depths = (DepthPtr)xalloc( sizeof(DepthRec) );
-        visuals = (VisualPtr)xalloc( sizeof(VisualRec) );
-        vid = (VisualID *)xalloc( sizeof(VisualID) );
+        depths = (DepthPtr)malloc( sizeof(DepthRec) );
+        visuals = (VisualPtr)malloc( sizeof(VisualRec) );
+        vid = (VisualID *)malloc( sizeof(VisualID) );
         if( !depths || !visuals || !vid ) {
-            xfree( depths );
-            xfree( visuals );
-            xfree( vid );
+            free( depths );
+            free( visuals );
+            free( vid );
             return FALSE;
         }
         depths[0].depth = 15;
@@ -302,13 +302,13 @@ x68kCfbFinishScreenInit(
         
         ndepths = 1;
         nvisuals = 1;
-        depths = (DepthPtr)xalloc( sizeof(DepthRec) );
-        visuals = (VisualPtr)xalloc( sizeof(VisualRec) );
-        vid = (VisualID *)xalloc( sizeof(VisualID) );
+        depths = (DepthPtr)malloc( sizeof(DepthRec) );
+        visuals = (VisualPtr)malloc( sizeof(VisualRec) );
+        vid = (VisualID *)malloc( sizeof(VisualID) );
         if( !depths || !visuals || !vid ) {
-            xfree( depths );
-            xfree( visuals );
-            xfree( vid );
+            free( depths );
+            free( visuals );
+            free( vid );
             return FALSE;
         }
         depths[0].depth = 4;
