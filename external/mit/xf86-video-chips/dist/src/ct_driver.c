@@ -2166,7 +2166,7 @@ chipsPreInitHiQV(ScrnInfoPtr pScrn, int flags)
 	    /* Only alter the memory clock if the desired memory clock differs
 	     * by 50kHz from the one currently being used.
 	     */
-	    if (abs(mclk - MemClk->ProbedClk) > 50) {
+	    if ((mclk - MemClk->ProbedClk) > 50U) {
 		unsigned char vclk[3];
 
 		MemClk->Clk = mclk;
@@ -5406,7 +5406,7 @@ chipsModeInitHiQV(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	    ChipsNew->XR[0x80] &= ~0x80;
     }
 
-    if (abs(cPtr->MemClock.Clk - cPtr->MemClock.ProbedClk) > 50) {
+    if ((cPtr->MemClock.Clk - cPtr->MemClock.ProbedClk) > 50U) {
 	/* set mem clk */
 	ChipsNew->XR[0xCC] = cPtr->MemClock.xrCC;
 	ChipsNew->XR[0xCD] = cPtr->MemClock.xrCD;
@@ -6278,7 +6278,7 @@ chipsModeInit655xx(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	     * better will be used.
 	     */
 
-	    if (ChipsNew->XR[0x2C]  < abs((cPtr->PanelSize.VTotal -
+	    if ((unsigned)ChipsNew->XR[0x2C]  < ((cPtr->PanelSize.VTotal -
 		    cPtr->PanelSize.VRetraceStart - tmp - 1) -
 		    ChipsNew->XR[0x2C]))
 	        ChipsNew->XR[0x2F] |= 0x80;   /* turn FLM delay off */
