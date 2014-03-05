@@ -204,7 +204,7 @@ static void TAG(sis6326_draw_line_mmio)(sisContextPtr smesa, char *verts)
    sisVertexPtr v1 = (sisVertexPtr)(verts + smesa->vertex_size * 4);
    GLint dwPrimitiveSet = smesa->dwPrimitiveSet;
 
-   if (abs(v0->v.y - v1->v.y) > abs(v0->v.x - v1->v.x))
+   if (fabsf(v0->v.y - v1->v.y) > fabsf(v0->v.x - v1->v.x))
    {
       dwPrimitiveSet |= OP_3D_DIRECTION_VERTICAL;
       if (v0->v.y > v1->v.y)
