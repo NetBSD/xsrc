@@ -204,7 +204,7 @@ XListInputDevices(
 	    slist = list = Xmalloc(rlen);
 	}
 	if (!slist) {
-	    _XEatData(dpy, (unsigned long)rlen);
+	    _XEatDataWords(dpy, rep.length);
 	    UnlockDisplay(dpy);
 	    SyncHandle();
 	    return (XDeviceInfo *) NULL;

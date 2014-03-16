@@ -130,7 +130,7 @@ XGetDeviceProperty(Display* dpy, XDevice* dev,
 	    ret = BadImplementation;
 	}
 	if (! *prop) {
-	    _XEatData(dpy, (unsigned long) nbytes);
+	    _XEatDataWords(dpy, rep.length);
 	    if (ret == Success)
 		ret = BadAlloc;
 	    goto out;
