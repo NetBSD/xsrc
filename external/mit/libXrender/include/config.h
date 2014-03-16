@@ -31,6 +31,9 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
+/* Define to 1 if you have the `_XEatDataWords' function. */
+#undef HAVE__XEATDATAWORDS
+
 /* Name of package */
 #define PACKAGE "libXrender"
 
@@ -41,13 +44,13 @@
 #define PACKAGE_NAME "libXrender"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libXrender 0.9.6"
+#define PACKAGE_STRING "libXrender 0.9.8"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libXrender"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.9.6"
+#define PACKAGE_VERSION "0.9.8"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 0
@@ -56,10 +59,10 @@
 #define PACKAGE_VERSION_MINOR 9
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 6
+#define PACKAGE_VERSION_PATCHLEVEL 8
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "0.9.6"
+#define VERSION "0.9.8"
