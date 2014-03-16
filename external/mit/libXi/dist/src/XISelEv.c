@@ -42,6 +42,7 @@ in this Software without prior written authorization from the author.
 #include <X11/extensions/ge.h>
 #include <X11/extensions/geproto.h>
 #include "XIint.h"
+#include <limits.h>
 
 int
 XISelectEvents(Display* dpy, Window win, XIEventMask* masks, int num_masks)
@@ -52,6 +53,8 @@ XISelectEvents(Display* dpy, Window win, XIEventMask* masks, int num_masks)
     int i;
     int len = 0;
     int r = Success;
+    int max_mask_len = 0;
+    char *buff;
 
     XExtDisplayInfo *info = XInput_find_display(dpy);
     LockDisplay(dpy);
@@ -59,6 +62,26 @@ XISelectEvents(Display* dpy, Window win, XIEventMask* masks, int num_masks)
         r = NoSuchExtension;
         goto out;
     }
+
+    for (i = 0; i < num_masks; i++) {
+        current = &masks[i];
+        if (current->mask_len > INT_MAX - 3 ||
+            (current->mask_len + 3)/4 >= 0xffff) {
+            r = -1;
+            goto out;
+        }
+        if (current->mask_len > max_mask_len)
+            max_mask_len = current->mask_len;
+    }
+
+    /* max_mask_len is in bytes, but we need 4-byte units on the wire,
+     * and they need to be padded with 0 */
+    buff = calloc(4, ((max_mask_len + 3)/4));
+    if (!buff) {
+        r = -1;
+        goto out;
+    }
+
     GetReq(XISelectEvents, req);
 
     req->reqType = info->codes->major_opcode;
@@ -78,19 +101,17 @@ XISelectEvents(Display* dpy, Window win, XIEventMask* masks, int num_masks)
 
     for (i = 0; i < num_masks; i++)
     {
-        char *buff;
         current = &masks[i];
         mask.deviceid = current->deviceid;
         mask.mask_len = (current->mask_len + 3)/4;
-        /* masks.mask_len is in bytes, but we need 4-byte units on the wire,
-         * and they need to be padded with 0 */
-        buff = calloc(1, mask.mask_len * 4);
+
+        memset(buff, 0, max_mask_len);
         memcpy(buff, current->mask, current->mask_len);
         Data(dpy, (char*)&mask, sizeof(xXIEventMask));
         Data(dpy, buff, mask.mask_len * 4);
-        free(buff);
     }
 
+    free(buff);
 out:
     UnlockDisplay(dpy);
     SyncHandle();
@@ -101,13 +122,14 @@ out:
 XIEventMask*
 XIGetSelectedEvents(Display* dpy, Window win, int *num_masks_return)
 {
-    int i, len = 0;
+    unsigned int i, len = 0;
     unsigned char *mask;
     XIEventMask *mask_out = NULL;
     xXIEventMask *mask_in = NULL, *mi;
     xXIGetSelectedEventsReq *req;
     xXIGetSelectedEventsReply reply;
     XExtDisplayInfo *info = XInput_find_display(dpy);
+    size_t rbytes;
 
     *num_masks_return = -1;
     LockDisplay(dpy);
@@ -129,21 +151,38 @@ XIGetSelectedEvents(Display* dpy, Window win, int *num_masks_return)
         goto out;
     }
 
-    mask_in = Xmalloc(reply.length * 4);
-    if (!mask_in)
+    if (reply.length < (INT_MAX >> 2)) {
+        rbytes = (unsigned long) reply.length << 2;
+        mask_in = Xmalloc(rbytes);
+    }
+    if (!mask_in) {
+        _XEatDataWords(dpy, reply.length);
         goto out;
+    }
 
-    _XRead(dpy, (char*)mask_in, reply.length * 4);
+    _XRead(dpy, (char*)mask_in, rbytes);
 
-    /* Memory layout of the XIEventMask for a 3 mask reply:
-     * [struct a][struct b][struct c][masks a][masks b][masks c]
+    /*
+     * This function takes interleaved xXIEventMask structs & masks off
+     * the wire, such as this 3 mask reply:
+     *   [struct a][masks a][struct b][masks b][struct c][masks c]
+     * And generates a memory buffer to be returned to callers in which
+     * they are not interleaved, so that callers can treat the returned
+     * pointer as a simple array of XIEventMask structs, such as:
+     *   [struct a][struct b][struct c][masks a][masks b][masks c]
      */
     len = reply.num_masks * sizeof(XIEventMask);
 
     for (i = 0, mi = mask_in; i < reply.num_masks; i++)
     {
-        len += mi->mask_len * 4;
-        mi = (xXIEventMask*)((char*)mi + mi->mask_len * 4);
+        unsigned int mask_bytes = mi->mask_len * 4;
+        len += mask_bytes;
+        if (len > INT_MAX)
+            goto out;
+        if ((sizeof(xXIEventMask) + mask_bytes) > rbytes)
+            goto out;
+        rbytes -= (sizeof(xXIEventMask) + mask_bytes);
+        mi = (xXIEventMask*)((char*)mi + mask_bytes);
         mi++;
     }
 
