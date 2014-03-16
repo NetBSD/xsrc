@@ -90,7 +90,7 @@ XRenderQueryFilters (Display *dpy, Drawable drawable)
 
     if (!filters)
     {
-	_XEatData (dpy, (unsigned long) rep.length << 2);
+	_XEatDataWords(dpy, rep.length);
 	UnlockDisplay (dpy);
 	SyncHandle ();
 	return NULL;

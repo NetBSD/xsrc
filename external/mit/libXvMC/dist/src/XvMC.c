@@ -18,6 +18,17 @@
 #include <X11/extensions/extutil.h>
 #include <limits.h>
 
+#ifndef HAVE__XEATDATAWORDS
+static inline void _XEatDataWords(Display *dpy, unsigned long n)
+{
+# ifndef LONG64
+    if (n >= (ULONG_MAX >> 2))
+        _XIOError(dpy);
+# endif
+    _XEatData (dpy, n << 2);
+}
+#endif
+
 static XExtensionInfo _xvmc_info_data;
 static XExtensionInfo *xvmc_info = &_xvmc_info_data;
 static const char *xvmc_extension_name = XvMCName;
@@ -135,7 +146,7 @@ XvMCSurfaceInfo * XvMCListSurfaceTypes(Display *dpy, XvPortID port, int *num)
 	       surface_info[i].flags = sinfo.flags;
 	    }
 	} else
-	   _XEatData(dpy, rep.length << 2);
+	   _XEatDataWords(dpy, rep.length);
     }
 
     UnlockDisplay (dpy);
@@ -208,7 +219,7 @@ XvImageFormatValues * XvMCListSubpictureTypes (
               ret[i].scanline_order = Info.scanline_order;
             }
         } else
-	   _XEatData(dpy, rep.length << 2);
+	   _XEatDataWords(dpy, rep.length);
     }
 
     UnlockDisplay (dpy);
@@ -274,12 +285,13 @@ Status _xvmc_create_context (
     context->flags = rep.flags_return;
 
     if(rep.length) {
-	*priv_data = Xmalloc(rep.length << 2);
+	if (rep.length < (INT_MAX >> 2))
+	    *priv_data = Xmalloc(rep.length << 2);
 	if(*priv_data) {
             _XRead(dpy, (char*)(*priv_data), rep.length << 2);
 	    *priv_count = rep.length;
 	} else
-	    _XEatData(dpy, rep.length << 2);
+	    _XEatDataWords(dpy, rep.length);
     }
 
     UnlockDisplay (dpy);
@@ -355,12 +367,13 @@ Status _xvmc_create_surface (
     }
 
     if(rep.length) {
-        *priv_data = Xmalloc(rep.length << 2);
+        if (rep.length < (INT_MAX >> 2))
+            *priv_data = Xmalloc(rep.length << 2);
         if(*priv_data) {
             _XRead(dpy, (char*)(*priv_data), rep.length << 2);
             *priv_count = rep.length;
         } else
-            _XEatData(dpy, rep.length << 2);
+            _XEatDataWords(dpy, rep.length);
     }
 
     UnlockDisplay (dpy);
@@ -445,12 +458,13 @@ Status _xvmc_create_subpicture (
     subpicture->component_order[3] = rep.component_order[3];
 
     if(rep.length) {
-        *priv_data = Xmalloc(rep.length << 2);
+        if (rep.length < (INT_MAX >> 2))
+            *priv_data = Xmalloc(rep.length << 2);
         if(*priv_data) {
             _XRead(dpy, (char*)(*priv_data), rep.length << 2);
             *priv_count = rep.length;
         } else
-            _XEatData(dpy, rep.length << 2);
+            _XEatDataWords(dpy, rep.length);
     }
 
     UnlockDisplay (dpy);
@@ -559,7 +573,9 @@ Status XvMCGetDRInfo(Display *dpy, XvPortID port,
 	unsigned long realSize = 0;
 	char *tmpBuf = NULL;
 
-	if (rep.length < (INT_MAX >> 2)) {
+	if ((rep.length < (INT_MAX >> 2)) &&
+	    /* protect against overflow in strncpy below */
+	    (rep.nameLen + rep.busIDLen > rep.nameLen)) {
 	    realSize = rep.length << 2;
 	    if (realSize >= (rep.nameLen + rep.busIDLen)) {
 		tmpBuf = Xmalloc(realSize);
@@ -571,18 +587,18 @@ Status XvMCGetDRInfo(Display *dpy, XvPortID port,
 	if (*name && *busID && tmpBuf) {
 	    _XRead(dpy, tmpBuf, realSize);
 	    strncpy(*name,tmpBuf,rep.nameLen);
-	    name[rep.nameLen - 1] = NULL;
+	    (*name)[rep.nameLen - 1] = '\0';
 	    strncpy(*busID,tmpBuf+rep.nameLen,rep.busIDLen);
-	    busID[rep.busIDLen - 1] = NULL;
+	    (*busID)[rep.busIDLen - 1] = '\0';
 	    XFree(tmpBuf);
 	} else {
 	    XFree(*name);
 	    *name = NULL;
 	    XFree(*busID);
-	    *name = NULL;
+	    *busID = NULL;
 	    XFree(tmpBuf);
 
-	    _XEatData(dpy, realSize);
+	    _XEatDataWords(dpy, rep.length);
 	    UnlockDisplay (dpy);
 	    SyncHandle ();
 	    return -1;
