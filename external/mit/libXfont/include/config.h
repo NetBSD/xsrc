@@ -25,6 +25,9 @@
 /* Define to 1 if you have the <poll.h> header file. */
 #define HAVE_POLL_H 1
 
+/* Define to 1 if you have the `readlink' function. */
+#undef HAVE_READLINK
+
 /* Define to 1 if the system has the type `socklen_t'. */
 #define HAVE_SOCKLEN_T 1
 
@@ -58,6 +61,10 @@
 /* Support os-specific local connections */
 /* #undef LOCALCONN */
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
 /* Name of package */
 #define PACKAGE "libXfont"
 
@@ -68,13 +75,16 @@
 #define PACKAGE_NAME "libXfont"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libXfont 1.4.1"
+#define PACKAGE_STRING "libXfont 1.4.7"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libXfont"
 
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.4.1"
+#define PACKAGE_VERSION "1.4.7"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
@@ -83,10 +93,7 @@
 #define PACKAGE_VERSION_MINOR 4
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 1
-
-/* Define as the return type of signal handlers (`int' or `void'). */
-#define RETSIGTYPE void
+#define PACKAGE_VERSION_PATCHLEVEL 7
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -96,6 +103,28 @@
 
 /* Support UNIX socket connections */
 #define UNIXCONN 1
+
+/* Enable extensions on AIX 3, Interix.  */
+#ifndef _ALL_SOURCE
+# undef _ALL_SOURCE
+#endif
+/* Enable GNU extensions on systems that have them.  */
+#ifndef _GNU_SOURCE
+# undef _GNU_SOURCE
+#endif
+/* Enable threading extensions on Solaris.  */
+#ifndef _POSIX_PTHREAD_SEMANTICS
+# undef _POSIX_PTHREAD_SEMANTICS
+#endif
+/* Enable extensions on HP NonStop.  */
+#ifndef _TANDEM_SOURCE
+# undef _TANDEM_SOURCE
+#endif
+/* Enable general extensions on Solaris.  */
+#ifndef __EXTENSIONS__
+# undef __EXTENSIONS__
+#endif
+
 
 /* Version number of package */
 #define VERSION "1.4.1"
@@ -129,3 +158,16 @@
 
 /* Support gzip for bitmap fonts */
 #define X_GZIP_FONT_COMPRESSION 1
+
+/* Define to 1 if on MINIX. */
+#undef _MINIX
+
+/* Define to 2 if the system does not provide POSIX.1 features except with
+   this defined. */
+#undef _POSIX_1_SOURCE
+
+/* Define to 1 if you need to in order for `stat' and other things to work. */
+#undef _POSIX_SOURCE
+
+/* Defined if needed to expose struct msghdr.msg_control */
+#undef _XOPEN_SOURCE
