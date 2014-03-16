@@ -32,7 +32,7 @@
 #define HAVE_UNISTD_H 1
 
 /* Define to 1 if you have the `_XEatDataWords' function. */
-#undef HAVE__XEATDATAWORDS
+#define HAVE__XEATDATAWORDS 1
 
 /* Name of package */
 #define PACKAGE "libXrender"
