@@ -66,14 +66,14 @@ int *actualCount)	/* RETURN */
 
     if (rep.nFonts) {
 	flist = Xmalloc (rep.nFonts * sizeof(char *));
-	if (rep.length < (LONG_MAX >> 2)) {
+	if (rep.length < (INT_MAX >> 2)) {
 	    rlen = rep.length << 2;
 	    ch = Xmalloc(rlen + 1);
 	    /* +1 to leave room for last null-terminator */
 	}
 
 	if ((! flist) || (! ch)) {
-	    if (flist) Xfree((char *) flist);
+	    if (flist) Xfree(flist);
 	    if (ch) Xfree(ch);
 	    _XEatDataWords(dpy, rep.length);
 	    *actualCount = 0;
@@ -116,7 +116,7 @@ XFreeFontNames(char **list)
 				Xfree (*names);
 		}
 		Xfree (list[0]-1);
-		Xfree ((char *)list);
+		Xfree (list);
 	}
 	return 1;
 }

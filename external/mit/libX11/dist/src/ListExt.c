@@ -55,15 +55,15 @@ char **XListExtensions(
 
 	if (rep.nExtensions) {
 	    list = Xmalloc (rep.nExtensions * sizeof (char *));
-	    if (rep.length < (LONG_MAX >> 2)) {
+	    if (rep.length < (INT_MAX >> 2)) {
 		rlen = rep.length << 2;
 		ch = Xmalloc (rlen + 1);
                 /* +1 to leave room for last null-terminator */
 	    }
 
 	    if ((!list) || (!ch)) {
-		if (list) Xfree((char *) list);
-		if (ch)   Xfree((char *) ch);
+		if (list) Xfree(list);
+		if (ch)   Xfree(ch);
 		_XEatDataWords(dpy, rep.length);
 		UnlockDisplay(dpy);
 		SyncHandle();
@@ -99,7 +99,7 @@ XFreeExtensionList (char **list)
 {
 	if (list != NULL) {
 	    Xfree (list[0]-1);
-	    Xfree ((char *)list);
+	    Xfree (list);
 	}
 	return 1;
 }
