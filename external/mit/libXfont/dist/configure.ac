@@ -21,14 +21,18 @@
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([libXfont], [1.4.5],
+AC_INIT([libXfont], [1.4.7],
 	[https://bugs.freedesktop.org/enter_bug.cgi?product=xorg], [libXfont])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h include/X11/fonts/fontconf.h])
 
 # Initialize Automake
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
-AM_MAINTAINER_MODE
+
+# Set common system defines for POSIX extensions, such as _GNU_SOURCE
+# Must be called before any macros that run the compiler (like
+# AC_PROG_LIBTOOL) to avoid autoconf errors.
+AC_USE_SYSTEM_EXTENSIONS
 
 # Initialize libtool
 AC_PROG_LIBTOOL
@@ -47,7 +51,7 @@ XORG_CHECK_SGML_DOCTOOLS(1.7)
 AC_CHECK_HEADERS([endian.h poll.h sys/poll.h])
 
 # Checks for library functions.
-AC_CHECK_FUNCS([poll])
+AC_CHECK_FUNCS([poll readlink])
 
 # If the first PKG_CHECK_MODULES appears inside a conditional, pkg-config
 # must first be located explicitly.
