@@ -342,7 +342,7 @@ byteM_parse_codeset(
 	    continue;
 
         for (j = 0; j < codeset->length; j++) {
-	    ch = *((unsigned char *)(inbufptr + j));
+	    ch = *((const unsigned char *)(inbufptr + j));
 	    byteM_rec = byteM[j];
 	    byteinfo = byteM_rec.byteinfo;
 
@@ -764,11 +764,6 @@ mbstowcs_org(
         return( 0 );
     }
 
-#ifdef notdef
-    if (*from_left > *to_left)
-        *from_left = *to_left;
-#endif
-
     while (*from_left && *to_left) {
 
 	ch = *inbufptr++;
@@ -922,11 +917,6 @@ wcstombs_org(
     const char *default_string = XLC_PUBLIC(lcd, default_string);
     int defstr_len = strlen(default_string);
 
-
-#ifdef notdef
-    if (*from_left > *to_left)
-        *from_left = *to_left;
-#endif
 
     while (*from_left && *to_left) {
 
@@ -1084,11 +1074,6 @@ wcstocts(
     int from_size = *from_left;
     char *ext_seg_len = NULL;
 
-#ifdef notdef
-    if (*from_left > *to_left)
-        *from_left = *to_left;
-#endif
-
     while (*from_left && *to_left) {
 
         wc = *inbufptr++;
@@ -1239,7 +1224,7 @@ stdc_wcstocts(
 
 ret:
     if (buf)
-	Xfree((char *)buf);
+	Xfree(buf);
 
     return (unconv_num1 + unconv_num2);
 }
@@ -1277,11 +1262,6 @@ ctstowcs(
 	_XlcResetConverter(conv);
         return( 0 );
     }
-
-#ifdef notdef
-    if (*from_left > *to_left)
-        *from_left = *to_left;
-#endif
 
     while (*from_left && *to_left) {
 
@@ -1564,7 +1544,7 @@ stdc_ctstowcs(
 
 ret:
     if (buf)
-	Xfree((char *)buf);
+	Xfree(buf);
 
     return (unconv_num1 + unconv_num2);
 }
@@ -1600,7 +1580,7 @@ stdc_cstowcs(
 
 ret:
     if (buf)
-	Xfree((char *)buf);
+	Xfree(buf);
 
     return (unconv_num1 + unconv_num2);
 }
@@ -1636,7 +1616,7 @@ mbstocts(
 
 ret:
     if (buf)
-	Xfree((char *)buf);
+	Xfree(buf);
 
     return (unconv_num1 + unconv_num2);
 }
@@ -1673,11 +1653,6 @@ mbstostr(
 	_XlcResetConverter(conv);
         return( 0 );
     }
-
-#ifdef notdef
-    if (*from_left > *to_left)
-        *from_left = *to_left;
-#endif
 
     while (*from_left && *to_left) {
 
@@ -1966,12 +1941,6 @@ wcstostr(
     const char *default_string = XLC_PUBLIC(lcd, default_string);
     int defstr_len = strlen(default_string);
 
-
-#ifdef notdef
-    if (*from_left > *to_left)
-        *from_left = *to_left;
-#endif
-
     while (*from_left && *to_left) {
 
         wc = *inbufptr++;
@@ -2094,7 +2063,7 @@ stdc_wcstostr(
 
 ret:
     if (buf)
-	Xfree((char *)buf);
+	Xfree(buf);
 
     return (unconv_num1 + unconv_num2);
 }
@@ -2125,11 +2094,6 @@ wctocs(
     const wchar_t *inbufptr = (const wchar_t *) *from;
     char *outbufptr = *to;
     int from_size = *from_left;
-
-#ifdef notdef
-    if (*from_left > *to_left)
-        *from_left = *to_left;
-#endif
 
     if (*from_left && *to_left) {
 
@@ -2374,7 +2338,7 @@ ctstombs(
 
 ret:
     if (buf)
-	Xfree((char *)buf);
+	Xfree(buf);
 
     return (unconv_num1 + unconv_num2);
 }
@@ -2410,7 +2374,7 @@ cstombs(
 
 ret:
     if (buf)
-	Xfree((char *)buf);
+	Xfree(buf);
 
     return (unconv_num1 + unconv_num2);
 }
@@ -2440,11 +2404,6 @@ strtombs(
     const char *inbufptr = *from;
     char *outbufptr = *to;
     int from_size = *from_left;
-
-#ifdef notdef
-    if (*from_left > *to_left)
-        *from_left = *to_left;
-#endif
 
     while (*from_left && *to_left) {
 
@@ -2553,11 +2512,6 @@ strtowcs(
     wchar_t *outbufptr = (wchar_t *)*to;
     int from_size = *from_left;
 
-#ifdef notdef
-    if (*from_left > *to_left)
-        *from_left = *to_left;
-#endif
-
     while (*from_left && *to_left) {
 
         ch = *inbufptr++;
@@ -2629,7 +2583,7 @@ stdc_strtowcs(
 
 ret:
     if (buf)
-	Xfree((char *)buf);
+	Xfree(buf);
 
     return (unconv_num1 + unconv_num2);
 }
@@ -2643,14 +2597,14 @@ close_converter(
     XlcConv conv)
 {
     if (conv->state) {
-	Xfree((char *) conv->state);
+	Xfree(conv->state);
     }
 
     if (conv->methods) {
-	Xfree((char *) conv->methods);
+	Xfree(conv->methods);
     }
 
-    Xfree((char *) conv);
+    Xfree(conv);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -2665,11 +2619,11 @@ create_conv(
     XlcConv conv;
     State state;
 
-    conv = (XlcConv) Xcalloc(1, sizeof(XlcConvRec));
+    conv = Xcalloc(1, sizeof(XlcConvRec));
     if (conv == NULL)
 	return (XlcConv) NULL;
 
-    conv->methods = (XlcConvMethods) Xmalloc(sizeof(XlcConvMethodsRec));
+    conv->methods = Xmalloc(sizeof(XlcConvMethodsRec));
     if (conv->methods == NULL)
 	goto err;
     *conv->methods = *methods;
