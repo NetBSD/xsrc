@@ -69,7 +69,6 @@ XGetDeviceDontPropagateList(
     int			*count)
 {
     XEventClass *list = NULL;
-    int rlen;
     xGetDeviceDontPropagateListReq *req;
     xGetDeviceDontPropagateListReply rep;
     XExtDisplayInfo *info = XInput_find_display(dpy);
@@ -93,7 +92,6 @@ XGetDeviceDontPropagateList(
     if (rep.length != 0) {
 	if ((rep.count != 0) && (rep.length < (INT_MAX / sizeof(XEventClass))))
 	    list = Xmalloc(rep.length * sizeof(XEventClass));
-	rlen = rep.length << 2;
 	if (list) {
 	    unsigned int i;
 	    CARD32 ec;
@@ -106,8 +104,10 @@ XGetDeviceDontPropagateList(
 		_XRead(dpy, (char *)(&ec), sizeof(CARD32));
 		list[i] = (XEventClass) ec;
 	    }
-	} else
-	    _XEatData(dpy, (unsigned long)rlen);
+	} else {
+            *count = 0;
+	    _XEatDataWords(dpy, rep.length);
+        }
     }
 
     UnlockDisplay(dpy);

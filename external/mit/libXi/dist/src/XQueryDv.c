@@ -94,7 +94,7 @@ XQueryDeviceState(
 	    data = Xmalloc(rlen);
 	}
 	if (!data) {
-	    _XEatData(dpy, (unsigned long)rlen);
+	    _XEatDataWords(dpy, rep.length);
 	    goto out;
 	}
 	_XRead(dpy, data, rlen);
