@@ -43,6 +43,10 @@
 #include <stdint.h>
 #include <drm.h>
 
+#if defined(__cplusplus) || defined(c_plusplus)
+extern "C" {
+#endif
+
 #ifndef DRM_MAX_MINOR
 #define DRM_MAX_MINOR   16
 #endif
@@ -92,8 +96,14 @@
 typedef unsigned int  drmSize,     *drmSizePtr;	    /**< For mapped regions */
 typedef void          *drmAddress, **drmAddressPtr; /**< For mapped regions */
 
+#if (__GNUC__ >= 3)
+#define DRM_PRINTFLIKE(f, a) __attribute__ ((format(__printf__, f, a)))
+#else
+#define DRM_PRINTFLIKE(f, a)
+#endif
+
 typedef struct _drmServerInfo {
-  int (*debug_print)(const char *format, va_list ap);
+  int (*debug_print)(const char *format, va_list ap) DRM_PRINTFLIKE(1,0);
   int (*load_module)(const char *name);
   void (*get_perms)(gid_t *, mode_t *);
 } drmServerInfo, *drmServerInfoPtr;
@@ -300,12 +310,15 @@ typedef struct _drmTextureRegion {
 typedef enum {
     DRM_VBLANK_ABSOLUTE = 0x0,	/**< Wait for specific vblank sequence number */
     DRM_VBLANK_RELATIVE = 0x1,	/**< Wait for given number of vblanks */
+    /* bits 1-6 are reserved for high crtcs */
+    DRM_VBLANK_HIGH_CRTC_MASK = 0x0000003e,
     DRM_VBLANK_EVENT = 0x4000000,	/**< Send event instead of blocking */
     DRM_VBLANK_FLIP = 0x8000000,	/**< Scheduled buffer swap should flip */
     DRM_VBLANK_NEXTONMISS = 0x10000000,	/**< If missed, wait for next vblank */
     DRM_VBLANK_SECONDARY = 0x20000000,	/**< Secondary display controller */
     DRM_VBLANK_SIGNAL   = 0x40000000	/* Send signal instead of blocking */
 } drmVBlankSeqType;
+#define DRM_VBLANK_HIGH_CRTC_SHIFT 1
 
 typedef struct _drmVBlankReq {
 	drmVBlankSeqType type;
@@ -551,6 +564,7 @@ extern int drmOpenControl(int minor);
 extern int           drmClose(int fd);
 extern drmVersionPtr drmGetVersion(int fd);
 extern drmVersionPtr drmGetLibVersion(int fd);
+extern int           drmGetCap(int fd, uint64_t capability, uint64_t *value);
 extern void          drmFreeVersion(drmVersionPtr);
 extern int           drmGetMagic(int fd, drm_magic_t * magic);
 extern char          *drmGetBusid(int fd);
@@ -610,6 +624,8 @@ extern int           drmUpdateDrawableInfo(int fd, drm_drawable_t handle,
 					   unsigned int num, void *data);
 extern int           drmCtlInstHandler(int fd, int irq);
 extern int           drmCtlUninstHandler(int fd);
+extern int           drmSetClientCap(int fd, uint64_t capability,
+				     uint64_t value);
 
 /* General user-level programmer's API: authenticated client and/or X */
 extern int           drmMap(int fd,
@@ -727,5 +743,12 @@ typedef struct _drmEventContext {
 extern int drmHandleEvent(int fd, drmEventContextPtr evctx);
 
 extern char *drmGetDeviceNameFromFd(int fd);
+
+extern int drmPrimeHandleToFD(int fd, uint32_t handle, uint32_t flags, int *prime_fd);
+extern int drmPrimeFDToHandle(int fd, int prime_fd, uint32_t *handle);
+
+#if defined(__cplusplus) || defined(c_plusplus)
+}
+#endif
 
 #endif
