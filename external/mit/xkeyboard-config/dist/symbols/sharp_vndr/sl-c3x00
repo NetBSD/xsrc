@@ -1,4 +1,4 @@
-// $NetBSD: sl-c3x00,v 1.1.1.2 2014/03/17 08:32:02 mrg Exp $
+// $NetBSD: sl-c3x00,v 1.2 2014/03/17 08:35:48 mrg Exp $
 // $OpenBSD: zaurus,v 1.2 2008/03/05 17:24:55 matthieu Exp $
 
 partial default alphanumeric_keys
