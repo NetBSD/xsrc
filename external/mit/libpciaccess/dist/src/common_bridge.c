@@ -29,7 +29,7 @@
  * \author Ian Romanick <idr@us.ibm.com>
  */
 
-#if defined(HAVE_CONFIG_H)
+#ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
@@ -324,6 +324,8 @@ pci_device_get_bridge_buses(struct pci_device * dev, int *primary_bus,
 
 #define PCI_CLASS_BRIDGE 0x06
 #define PCI_SUBCLASS_BRIDGE_PCI 0x04
+#define PCI_CLASS_MASK 0xFF
+#define PCI_SUBCLASS_MASK 0xFF
 
 struct pci_device *
 pci_device_get_parent_bridge(struct pci_device *dev)
@@ -331,7 +333,7 @@ pci_device_get_parent_bridge(struct pci_device *dev)
     struct pci_id_match bridge_match = {
         PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY,
         (PCI_CLASS_BRIDGE << 16) | (PCI_SUBCLASS_BRIDGE_PCI << 8),
-        0
+        (PCI_CLASS_MASK << 16) | (PCI_SUBCLASS_MASK << 8)
     };
 
     struct pci_device *bridge;
