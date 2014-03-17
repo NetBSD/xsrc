@@ -60,8 +60,6 @@ static int PMversionCount = 1;
 static IcePoVersionRec PMversions[] =
                 {{PM_MAJOR_VERSION, PM_MINOR_VERSION, PMprocessMessages}};
 
-static XtAppContext appContext;
-
 typedef struct {
     int		status;
     char	*addr;
@@ -70,11 +68,12 @@ typedef struct {
 
 
 static int 
-cvthexkey(char *hexstr, char **ptrp)	/* turn hex key string into octets */
+cvthexkey(const char *hexstr, char **ptrp) /* turn hex key string into octets */
 {
-    int i;
-    int len = 0;
-    char *retval, *s;
+    unsigned int i;
+    unsigned int len = 0;
+    char *retval;
+    const char *s;
     unsigned char *us;
     char c;
     char savec = '\0';
@@ -93,7 +92,7 @@ cvthexkey(char *hexstr, char **ptrp)	/* turn hex key string into octets */
 
     /* now we know that the input is good */
     len >>= 1;
-    retval = (char *) malloc (len);
+    retval = malloc (len);
     if (!retval)
 	return -1;
 
@@ -101,7 +100,7 @@ cvthexkey(char *hexstr, char **ptrp)	/* turn hex key string into octets */
 	c = *hexstr;
 	if (isspace(c)) continue;	 /* already know it is ascii */
 	if (isupper(c))
-	    c = tolower(c);
+	    c = (char) tolower(c);
 	if (savec) {
 #define atoh(c) ((c) - (((c) >= '0' && (c) <= '9') ? '0' : ('a'-10)))
 	    *us = (unsigned char)((atoh(savec) << 4) + atoh(c));
@@ -114,19 +113,21 @@ cvthexkey(char *hexstr, char **ptrp)	/* turn hex key string into octets */
 	}
     }
     *ptrp = retval;
-    return len;
+    return (int) len;
 }
 
 int
 main(int argc, char *argv[])
 {
+    static XtAppContext 	appContext;
     IceConn			iceConn;
     IceProtocolSetupStatus	setupstat;
     char			*vendor = NULL;
     char			*release = NULL;
     pmGetProxyAddrMsg		*pMsg;
     char 			*pData;
-    int				len, i;
+    int				i;
+    size_t			len;
     IceReplyWaitInfo		replyWait;
     GetProxyAddrReply		reply;
     int				majorVersion, minorVersion;
@@ -291,7 +292,7 @@ main(int argc, char *argv[])
 	SIZEOF (pmGetProxyAddrMsg), WORD64COUNT (len),
 	pmGetProxyAddrMsg, pMsg, pData);
 
-    pMsg->authLen = authLen;
+    pMsg->authLen = (CARD16) authLen;
 
     STORE_STRING (pData, serviceName);
     STORE_STRING (pData, serverAddress);
