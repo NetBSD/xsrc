@@ -47,7 +47,7 @@
 #define HAVE_POSIX_MEMALIGN 1
 
 /* Whether pthreads is supported */
-/* #undef HAVE_PTHREADS */
+#define HAVE_PTHREADS 1
 
 /* Whether we have sigaction() */
 #define HAVE_SIGACTION 1
