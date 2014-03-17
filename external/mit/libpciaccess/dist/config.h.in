@@ -9,6 +9,12 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* Define to 1 if you have the <machine/mtrr.h> header file. */
+#undef HAVE_MACHINE_MTRR_H
+
+/* Define to 1 if you have the <machine/sysarch.h> header file. */
+#undef HAVE_MACHINE_SYSARCH_H
+
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
