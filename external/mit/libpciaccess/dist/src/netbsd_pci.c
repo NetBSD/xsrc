@@ -21,10 +21,25 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifdef HAVE_MTRR
 #include <machine/sysarch.h>
 #include <machine/mtrr.h>
+#ifdef _X86_SYSARCH_L
+/* NetBSD 5.x and newer */
 #define netbsd_set_mtrr(mr, num)	_X86_SYSARCH_L(set_mtrr)(mr, num)
+#else
+/* NetBSD 4.x and older */
+#ifdef __i386__
+#define netbsd_set_mtrr(mr, num)	i386_set_mtrr((mr), (num))
+#endif
+#ifdef __amd64__
+#define netbsd_set_mtrr(mr, num)	x86_64_set_mtrr((mr), (num))
+#endif
+#endif
 #endif
 
 #include <dev/pci/pcidevs.h>
@@ -248,6 +263,7 @@ pci_device_netbsd_write(struct pci_device *dev, const void *data,
 	return 0;
 }
 
+#if defined(WSDISPLAYIO_GET_BUSID)
 static int
 pci_device_netbsd_boot_vga(struct pci_device *dev)
 {
@@ -284,35 +300,7 @@ pci_device_netbsd_boot_vga(struct pci_device *dev)
 
 	return 1;
 }
-
-static int
-pci_device_netbsd_map_legacy(struct pci_device *dev, pciaddr_t base,
-				  pciaddr_t size, unsigned map_flags, void **addr)
-{
-	struct pci_device_mapping map;
-	int err;
-
-	map.base = base;
-	map.size = size;
-	map.flags = map_flags;
-	map.memory = NULL;
-	err = pci_device_netbsd_map_range(dev, &map);
-	*addr = map.memory;
-
-	return err;
-}
-
-static int
-pci_device_netbsd_unmap_legacy(struct pci_device *dev, void *addr, pciaddr_t size)
-{
-	struct pci_device_mapping map;
-
-	map.memory = addr;
-	map.size = size;
-	map.flags = 0;
-	return pci_device_netbsd_unmap_range(dev, &map);
-}
-
+#endif
 
 static void
 pci_system_netbsd_destroy(void)
@@ -537,6 +525,322 @@ pci_device_netbsd_read_rom(struct pci_device *dev, void *buffer)
     return 0;
 }
 
+#if defined(__i386__) || defined(__amd64__)
+#include <machine/sysarch.h>
+
+/*
+ * Functions to provide access to x86 programmed I/O instructions.
+ *
+ * The in[bwl]() and out[bwl]() functions are split into two varieties: one to
+ * use a small, constant, 8-bit port number, and another to use a large or
+ * variable port number.  The former can be compiled as a smaller instruction.
+ */
+
+
+#ifdef __OPTIMIZE__
+
+#define	__use_immediate_port(port) \
+	(__builtin_constant_p((port)) && (port) < 0x100)
+
+#else
+
+#define	__use_immediate_port(port)	0
+
+#endif
+
+
+#define	inb(port) \
+    (/* CONSTCOND */ __use_immediate_port(port) ? __inbc(port) : __inb(port))
+
+static __inline u_int8_t
+__inbc(unsigned port)
+{
+	u_int8_t data;
+	__asm __volatile("inb %w1,%0" : "=a" (data) : "id" (port));
+	return data;
+}
+
+static __inline u_int8_t
+__inb(unsigned port)
+{
+	u_int8_t data;
+	__asm __volatile("inb %w1,%0" : "=a" (data) : "d" (port));
+	return data;
+}
+
+static __inline void
+insb(unsigned port, void *addr, int cnt)
+{
+	void *dummy1;
+	int dummy2;
+	__asm __volatile("cld\n\trepne\n\tinsb"			:
+			 "=D" (dummy1), "=c" (dummy2) 		:
+			 "d" (port), "0" (addr), "1" (cnt)	:
+			 "memory");
+}
+
+#define	inw(port) \
+    (/* CONSTCOND */ __use_immediate_port(port) ? __inwc(port) : __inw(port))
+
+static __inline u_int16_t
+__inwc(unsigned port)
+{
+	u_int16_t data;
+	__asm __volatile("inw %w1,%0" : "=a" (data) : "id" (port));
+	return data;
+}
+
+static __inline u_int16_t
+__inw(unsigned port)
+{
+	u_int16_t data;
+	__asm __volatile("inw %w1,%0" : "=a" (data) : "d" (port));
+	return data;
+}
+
+static __inline void
+insw(unsigned port, void *addr, int cnt)
+{
+	void *dummy1;
+	int dummy2;
+	__asm __volatile("cld\n\trepne\n\tinsw"			:
+			 "=D" (dummy1), "=c" (dummy2)		:
+			 "d" (port), "0" (addr), "1" (cnt)	:
+			 "memory");
+}
+
+#define	inl(port) \
+    (/* CONSTCOND */ __use_immediate_port(port) ? __inlc(port) : __inl(port))
+
+static __inline u_int32_t
+__inlc(unsigned port)
+{
+	u_int32_t data;
+	__asm __volatile("inl %w1,%0" : "=a" (data) : "id" (port));
+	return data;
+}
+
+static __inline u_int32_t
+__inl(unsigned port)
+{
+	u_int32_t data;
+	__asm __volatile("inl %w1,%0" : "=a" (data) : "d" (port));
+	return data;
+}
+
+static __inline void
+insl(unsigned port, void *addr, int cnt)
+{
+	void *dummy1;
+	int dummy2;
+	__asm __volatile("cld\n\trepne\n\tinsl"			:
+			 "=D" (dummy1), "=c" (dummy2)		:
+			 "d" (port), "0" (addr), "1" (cnt)	:
+			 "memory");
+}
+
+#define	outb(port, data) \
+    (/* CONSTCOND */__use_immediate_port(port) ? __outbc(port, data) : \
+						__outb(port, data))
+
+static __inline void
+__outbc(unsigned port, u_int8_t data)
+{
+	__asm __volatile("outb %0,%w1" : : "a" (data), "id" (port));
+}
+
+static __inline void
+__outb(unsigned port, u_int8_t data)
+{
+	__asm __volatile("outb %0,%w1" : : "a" (data), "d" (port));
+}
+
+static __inline void
+outsb(unsigned port, const void *addr, int cnt)
+{
+	void *dummy1;
+	int dummy2;
+	__asm __volatile("cld\n\trepne\n\toutsb"		:
+			 "=S" (dummy1), "=c" (dummy2)		:
+			 "d" (port), "0" (addr), "1" (cnt));
+}
+
+#define	outw(port, data) \
+    (/* CONSTCOND */ __use_immediate_port(port) ? __outwc(port, data) : \
+						__outw(port, data))
+
+static __inline void
+__outwc(unsigned port, u_int16_t data)
+{
+	__asm __volatile("outw %0,%w1" : : "a" (data), "id" (port));
+}
+
+static __inline void
+__outw(unsigned port, u_int16_t data)
+{
+	__asm __volatile("outw %0,%w1" : : "a" (data), "d" (port));
+}
+
+static __inline void
+outsw(unsigned port, const void *addr, int cnt)
+{
+	void *dummy1;
+	int dummy2;
+	__asm __volatile("cld\n\trepne\n\toutsw"		:
+			 "=S" (dummy1), "=c" (dummy2)		:
+			 "d" (port), "0" (addr), "1" (cnt));
+}
+
+#define	outl(port, data) \
+    (/* CONSTCOND */ __use_immediate_port(port) ? __outlc(port, data) : \
+						__outl(port, data))
+
+static __inline void
+__outlc(unsigned port, u_int32_t data)
+{
+	__asm __volatile("outl %0,%w1" : : "a" (data), "id" (port));
+}
+
+static __inline void
+__outl(unsigned port, u_int32_t data)
+{
+	__asm __volatile("outl %0,%w1" : : "a" (data), "d" (port));
+}
+
+static __inline void
+outsl(unsigned port, const void *addr, int cnt)
+{
+	void *dummy1;
+	int dummy2;
+	__asm __volatile("cld\n\trepne\n\toutsl"		:
+			 "=S" (dummy1), "=c" (dummy2)		:
+			 "d" (port), "0" (addr), "1" (cnt));
+}
+
+#endif
+
+
+static struct pci_io_handle *
+pci_device_netbsd_open_legacy_io(struct pci_io_handle *ret,
+    struct pci_device *dev, pciaddr_t base, pciaddr_t size)
+{
+#if defined(__i386__)
+	struct i386_iopl_args ia;
+
+	ia.iopl = 1;
+	if (sysarch(I386_IOPL, &ia))
+		return NULL;
+
+	ret->base = base;
+	ret->size = size;
+	return ret;
+#elif defined(__amd64__)
+	struct x86_64_iopl_args ia;
+
+	ia.iopl = 1;
+	if (sysarch(X86_64_IOPL, &ia))
+		return NULL;
+
+	ret->base = base;
+	ret->size = size;
+	return ret;
+#else
+	return NULL;
+#endif
+}
+
+static uint32_t
+pci_device_netbsd_read32(struct pci_io_handle *handle, uint32_t reg)
+{
+#if defined(__i386__) || defined(__amd64__)
+	return inl(handle->base + reg);
+#else
+	return *(uint32_t *)((uintptr_t)handle->memory + reg);
+#endif
+}
+
+static uint16_t
+pci_device_netbsd_read16(struct pci_io_handle *handle, uint32_t reg)
+{
+#if defined(__i386__) || defined(__amd64__)
+	return inw(handle->base + reg);
+#else
+	return *(uint16_t *)((uintptr_t)handle->memory + reg);
+#endif
+}
+
+static uint8_t
+pci_device_netbsd_read8(struct pci_io_handle *handle, uint32_t reg)
+{
+#if defined(__i386__) || defined(__amd64__)
+	return inb(handle->base + reg);
+#else
+	return *(uint8_t *)((uintptr_t)handle->memory + reg);
+#endif
+}
+
+static void
+pci_device_netbsd_write32(struct pci_io_handle *handle, uint32_t reg,
+    uint32_t data)
+{
+#if defined(__i386__) || defined(__amd64__)
+	outl(handle->base + reg, data);
+#else
+	*(uint16_t *)((uintptr_t)handle->memory + reg) = data;
+#endif
+}
+
+static void
+pci_device_netbsd_write16(struct pci_io_handle *handle, uint32_t reg,
+    uint16_t data)
+{
+#if defined(__i386__) || defined(__amd64__)
+	outw(handle->base + reg, data);
+#else
+	*(uint8_t *)((uintptr_t)handle->memory + reg) = data;
+#endif
+}
+
+static void
+pci_device_netbsd_write8(struct pci_io_handle *handle, uint32_t reg,
+    uint8_t data)
+{
+#if defined(__i386__) || defined(__amd64__)
+	outb(handle->base + reg, data);
+#else
+	*(uint32_t *)((uintptr_t)handle->memory + reg) = data;
+#endif
+}
+
+static int
+pci_device_netbsd_map_legacy(struct pci_device *dev, pciaddr_t base,
+    pciaddr_t size, unsigned map_flags, void **addr)
+{
+	struct pci_device_mapping map;
+	int err;
+
+	map.base = base;
+	map.size = size;
+	map.flags = map_flags;
+	map.memory = NULL;
+	err = pci_device_netbsd_map_range(dev, &map);
+	*addr = map.memory;
+
+	return err;
+}
+
+static int
+pci_device_netbsd_unmap_legacy(struct pci_device *dev, void *addr,
+    pciaddr_t size)
+{
+	struct pci_device_mapping map;
+
+	map.memory = addr;
+	map.size = size;
+	map.flags = 0;
+	return pci_device_netbsd_unmap_range(dev, &map);
+}
+
 static const struct pci_system_methods netbsd_pci_methods = {
 	.destroy = pci_system_netbsd_destroy,
 	.destroy_device = NULL,
@@ -547,7 +851,18 @@ static const struct pci_system_methods netbsd_pci_methods = {
 	.read = pci_device_netbsd_read,
 	.write = pci_device_netbsd_write,
 	.fill_capabilities = pci_fill_capabilities_generic,
+#if defined(WSDISPLAYIO_GET_BUSID)
 	.boot_vga = pci_device_netbsd_boot_vga,
+#else
+	.boot_vga = NULL,
+#endif
+	.open_legacy_io = pci_device_netbsd_open_legacy_io,
+	.read32 = pci_device_netbsd_read32,
+	.read16 = pci_device_netbsd_read16,
+	.read8 = pci_device_netbsd_read8,
+	.write32 = pci_device_netbsd_write32,
+	.write16 = pci_device_netbsd_write16,
+	.write8 = pci_device_netbsd_write8,
 	.map_legacy = pci_device_netbsd_map_legacy,
 	.unmap_legacy = pci_device_netbsd_unmap_legacy,
 };
