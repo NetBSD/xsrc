@@ -28,7 +28,9 @@
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
 #include "pixman-private.h"
 
 typedef double (* kernel_func_t) (double x);
@@ -273,7 +275,7 @@ create_1d_filter (int             *width,
 	    }
 
 	    total += c;
-            *p++ = (pixman_fixed_t)(c * 65535.0 + 0.5);
+            *p++ = (pixman_fixed_t)(c * 65536.0 + 0.5);
         }
 
 	/* Normalize */
