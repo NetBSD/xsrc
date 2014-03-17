@@ -21,11 +21,18 @@ dnl  PERFORMANCE OF THIS SOFTWARE.
 dnl
 dnl Process this file with autoconf to create configure.
 
+# Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xmodmap],
-	[1.0.5],
+	[1.0.8],
 	[https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
 	[xmodmap])
+AC_CONFIG_SRCDIR([Makefile.am])
+AC_CONFIG_HEADERS([config.h])
+# Needed for asprintf on GNU libc
+AC_USE_SYSTEM_EXTENSIONS
+
+# Initialize Automake
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
 AM_MAINTAINER_MODE
 
@@ -35,12 +42,10 @@ m4_ifndef([XORG_MACROS_VERSION],
 XORG_MACROS_VERSION(1.8)
 XORG_DEFAULT_OPTIONS
 
-AM_CONFIG_HEADER(config.h)
-
-AC_CHECK_FUNCS([strncasecmp])
+AC_CHECK_FUNCS([strncasecmp asprintf])
 
 # Checks for pkg-config packages
-PKG_CHECK_MODULES(XMODMAP, x11)
+PKG_CHECK_MODULES(XMODMAP, x11 xproto >= 7.0.17)
 
 dnl Allow checking code with lint, sparse, etc.
 XORG_WITH_LINT
