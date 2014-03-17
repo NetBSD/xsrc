@@ -1,3 +1,202 @@
+commit e09a9195be80bd29c59f56e641dda52789d837b5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 8 10:05:00 2013 -0700
+
+    xmodmap 1.0.8
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0a0818fd69cf7711e70a686758b8714f39ae1df1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 8 10:02:26 2013 -0700
+
+    Add missing copyright dates from xmodmap.man to COPYING
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2d288dfa7fd5f9f88939f2842202e1b7eb7aca87
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Sep 6 15:56:02 2013 -0700
+
+    Allow printing -help & -grammar messages without a valid DISPLAY
+    
+    If a user just wants to see syntax hints, don't require XOpenDisplay()
+    to succeed when we're not going to use it.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit bf4620e2d78d2a4766948f136f2372a596ac275d
+Author: Stéphane Aulery <lkppo@free.fr>
+Date:   Sun Jun 30 01:50:58 2013 +0200
+
+    error in manpage example about swapping Control_L/Caps_Lock keys
+    
+    Reported by Luca Capello at
+    http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=641588
+    
+    Signed-off-by: Luca Capello <luca@pca.it>
+    Signed-off-by: Stéphane Aulery <lkppo@free.fr>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f784ef30fdbd1b32aacf44537d9e7c85d268465b
+Author: Jon TURNEY <jon.turney@dronecode.org.uk>
+Date:   Wed Jan 4 19:07:03 2012 +0000
+
+    Include X11/Xwindows.h on WIN32
+    
+    Signed-off-by: Jon TURNEY <jon.turney@dronecode.org.uk>
+    Reviewed-by: Yaakov Selkowitz <yselkowitz@users.sourceforge.net>
+
+commit 42f99a7a7b836f6f9704a7b1747eb722c93446ec
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Apr 23 07:28:39 2012 -0700
+
+    include config.h before stdio.h & other system headers
+    
+    Ensures definitions like _GNU_SOURCE are visible when needed.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit f857804dd904c69de447f4117220db149d9239ec
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Apr 20 14:09:31 2012 -0700
+
+    xmodmap 1.0.7
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5d24213a01231345848d378cb55186fbe7996504
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Apr 14 14:37:55 2012 -0700
+
+    Add AC_USE_SYSTEM_EXTENSIONS to expose asprintf() in GNU libc headers
+    
+    Fixes https://bugs.freedesktop.org/show_bug.cgi?id=48696
+    
+    Reported-by: Dominique Leuenberger
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Julien Cristau <jcristau@debian.org>
+
+commit 1aebb2e8b358c26b36ca4a9c063180479ee38557
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Apr 14 14:34:39 2012 -0700
+
+    config: Add missing AC_CONFIG_SRCDIR
+    
+    Regroup AC statements under the Autoconf initialization section.
+    Regroup AM statements under the Automake initialization section.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b355a23e6787f348db97faaa48085428277c659b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Mar 22 23:04:32 2012 -0700
+
+    xmodmap 1.0.6
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d0dfd2128e6111b967c51136d97093d3b53ee6d6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Nov 11 21:07:30 2011 -0800
+
+    Replace chk_malloc + sprintf with asprintf
+    
+    Includes local private copy of asprintf for OS'es without it in libc.
+    Removes chk_malloc as no callers remain anymore.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit fecb1f5a0c2121de6d9209fc9525ac7d9b9555ea
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Nov 11 20:46:00 2011 -0800
+
+    Free copy of input line at end of process_line instead of leaking it
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit 66c09c83aa2f64b31dc657f90447c269621545b7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Nov 11 20:40:18 2011 -0800
+
+    Fix gcc -Wwrite-strings warnings
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit 8751095511c7d9065ab12a40e90e38bdd9d728e4
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Fri Nov 11 11:22:43 2011 -0800
+
+    Add missing _X_NORETURN to functions that need it
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit c71811ebe193cecc4add4c2d9cec751fc721343b
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Fri Nov 11 11:21:45 2011 -0800
+
+    Include strings.h for strcasecmp
+    
+    Our minimum requirement for X11 is currently Unix98.  Unix98 provides
+    strcasecmp in <strings.h>.  This commit fixes implicit declarations
+    of this function on systems that closely adhere to the standard.
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit b6b5bc9e9874934dd1c1b80a1aa0c0b1c454eab2
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Sat May 7 22:05:16 2011 -0700
+
+    Improve error handling in copy_to_scratch
+    
+    handle.c:95:5: warning: Array access (from variable 'buf') results in a null pointer dereference
+        buf[len] = '\0';
+        ^~~
+    
+    Found-by: clang static analyzer
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit 1f801eea5f4d17b83aee1170423d65a74e01a138
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Sat May 7 21:45:22 2011 -0700
+
+    Dead code removal
+    
+    xmodmap.c:159:5: warning: Value stored to 'status' is never read
+        status = 0;
+        ^        ~
+    
+    Found-by: clang static analyzer
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit d427337286e0a8ac061d5acbc326e7bdb8b056a3
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Mar 4 20:50:41 2011 -0500
+
+    man: replace hard coded section with __appmansuffix__
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 65011e8a86f64d5f7e9f39052e04e5ee7e57ce1b
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jan 12 16:28:02 2011 -0500
+
+    config: replace deprecated AM_CONFIG_HEADER with AC_CONFIG_HEADERS
+    
+    This silences an Autoconf warning
+
+commit ec2cab2dc9b6e7c804984320d8f560adbc3477ff
+Author: Jesse Adkins <jesserayadkins@gmail.com>
+Date:   Tue Sep 28 13:29:50 2010 -0700
+
+    Purge cvs tags.
+    
+    Signed-off-by: Jesse Adkins <jesserayadkins@gmail.com>
+
 commit 3fe64746bb6c3ede67c9967ebd216a8a39cdb2ea
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Fri Sep 24 11:53:40 2010 -0700
