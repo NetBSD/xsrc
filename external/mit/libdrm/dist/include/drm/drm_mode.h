@@ -42,20 +42,31 @@
 
 /* Video mode flags */
 /* bit compatible with the xorg definitions. */
-#define DRM_MODE_FLAG_PHSYNC	(1<<0)
-#define DRM_MODE_FLAG_NHSYNC	(1<<1)
-#define DRM_MODE_FLAG_PVSYNC	(1<<2)
-#define DRM_MODE_FLAG_NVSYNC	(1<<3)
-#define DRM_MODE_FLAG_INTERLACE	(1<<4)
-#define DRM_MODE_FLAG_DBLSCAN	(1<<5)
-#define DRM_MODE_FLAG_CSYNC	(1<<6)
-#define DRM_MODE_FLAG_PCSYNC	(1<<7)
-#define DRM_MODE_FLAG_NCSYNC	(1<<8)
-#define DRM_MODE_FLAG_HSKEW	(1<<9) /* hskew provided */
-#define DRM_MODE_FLAG_BCAST	(1<<10)
-#define DRM_MODE_FLAG_PIXMUX	(1<<11)
-#define DRM_MODE_FLAG_DBLCLK	(1<<12)
-#define DRM_MODE_FLAG_CLKDIV2	(1<<13)
+#define DRM_MODE_FLAG_PHSYNC			(1<<0)
+#define DRM_MODE_FLAG_NHSYNC			(1<<1)
+#define DRM_MODE_FLAG_PVSYNC			(1<<2)
+#define DRM_MODE_FLAG_NVSYNC			(1<<3)
+#define DRM_MODE_FLAG_INTERLACE			(1<<4)
+#define DRM_MODE_FLAG_DBLSCAN			(1<<5)
+#define DRM_MODE_FLAG_CSYNC			(1<<6)
+#define DRM_MODE_FLAG_PCSYNC			(1<<7)
+#define DRM_MODE_FLAG_NCSYNC			(1<<8)
+#define DRM_MODE_FLAG_HSKEW			(1<<9) /* hskew provided */
+#define DRM_MODE_FLAG_BCAST			(1<<10)
+#define DRM_MODE_FLAG_PIXMUX			(1<<11)
+#define DRM_MODE_FLAG_DBLCLK			(1<<12)
+#define DRM_MODE_FLAG_CLKDIV2			(1<<13)
+#define DRM_MODE_FLAG_3D_MASK			(0x1f<<14)
+#define  DRM_MODE_FLAG_3D_NONE			(0<<14)
+#define  DRM_MODE_FLAG_3D_FRAME_PACKING		(1<<14)
+#define  DRM_MODE_FLAG_3D_FIELD_ALTERNATIVE	(2<<14)
+#define  DRM_MODE_FLAG_3D_LINE_ALTERNATIVE	(3<<14)
+#define  DRM_MODE_FLAG_3D_SIDE_BY_SIDE_FULL	(4<<14)
+#define  DRM_MODE_FLAG_3D_L_DEPTH		(5<<14)
+#define  DRM_MODE_FLAG_3D_L_DEPTH_GFX_GFX_DEPTH	(6<<14)
+#define  DRM_MODE_FLAG_3D_TOP_AND_BOTTOM	(7<<14)
+#define  DRM_MODE_FLAG_3D_SIDE_BY_SIDE_HALF	(8<<14)
+
 
 /* DPMS flags */
 /* bit compatible with the xorg definitions. */
@@ -118,6 +129,43 @@ struct drm_mode_crtc {
 	__u32 gamma_size;
 	__u32 mode_valid;
 	struct drm_mode_modeinfo mode;
+};
+
+#define DRM_MODE_PRESENT_TOP_FIELD     (1<<0)
+#define DRM_MODE_PRESENT_BOTTOM_FIELD  (1<<1)
+
+/* Planes blend with or override other bits on the CRTC */
+struct drm_mode_set_plane {
+	__u32 plane_id;
+	__u32 crtc_id;
+	__u32 fb_id; /* fb object contains surface format type */
+	__u32 flags;
+
+	/* Signed dest location allows it to be partially off screen */
+	__s32 crtc_x, crtc_y;
+	__u32 crtc_w, crtc_h;
+
+	/* Source values are 16.16 fixed point */
+	__u32 src_x, src_y;
+	__u32 src_h, src_w;
+};
+
+struct drm_mode_get_plane {
+	__u32 plane_id;
+
+	__u32 crtc_id;
+	__u32 fb_id;
+
+	__u32 possible_crtcs;
+	__u32 gamma_size;
+
+	__u32 count_format_types;
+	__u64 format_type_ptr;
+};
+
+struct drm_mode_get_plane_res {
+	__u64 plane_id_ptr;
+	__u32 count_planes;
 };
 
 #define DRM_MODE_ENCODER_NONE	0
@@ -189,6 +237,7 @@ struct drm_mode_get_connector {
 #define DRM_MODE_PROP_IMMUTABLE	(1<<2)
 #define DRM_MODE_PROP_ENUM	(1<<3) /* enumerated type with text strings */
 #define DRM_MODE_PROP_BLOB	(1<<4)
+#define DRM_MODE_PROP_BITMASK	(1<<5) /* bitmask of enumerated types */
 
 struct drm_mode_property_enum {
 	__u64 value;
@@ -213,6 +262,30 @@ struct drm_mode_connector_set_property {
 	__u32 connector_id;
 };
 
+#define DRM_MODE_OBJECT_CRTC 0xcccccccc
+#define DRM_MODE_OBJECT_CONNECTOR 0xc0c0c0c0
+#define DRM_MODE_OBJECT_ENCODER 0xe0e0e0e0
+#define DRM_MODE_OBJECT_MODE 0xdededede
+#define DRM_MODE_OBJECT_PROPERTY 0xb0b0b0b0
+#define DRM_MODE_OBJECT_FB 0xfbfbfbfb
+#define DRM_MODE_OBJECT_BLOB 0xbbbbbbbb
+#define DRM_MODE_OBJECT_PLANE 0xeeeeeeee
+
+struct drm_mode_obj_get_properties {
+	__u64 props_ptr;
+	__u64 prop_values_ptr;
+	__u32 count_props;
+	__u32 obj_id;
+	__u32 obj_type;
+};
+
+struct drm_mode_obj_set_property {
+	__u64 value;
+	__u32 prop_id;
+	__u32 obj_id;
+	__u32 obj_type;
+};
+
 struct drm_mode_get_blob {
 	__u32 blob_id;
 	__u32 length;
@@ -227,6 +300,33 @@ struct drm_mode_fb_cmd {
 	__u32 depth;
 	/* driver specific handle */
 	__u32 handle;
+};
+
+#define DRM_MODE_FB_INTERLACED (1<<0) /* for interlaced framebuffers */
+
+struct drm_mode_fb_cmd2 {
+	__u32 fb_id;
+	__u32 width, height;
+	__u32 pixel_format; /* fourcc code from drm_fourcc.h */
+	__u32 flags;
+
+	/*
+	 * In case of planar formats, this ioctl allows up to 4
+	 * buffer objects with offsets and pitches per plane.
+	 * The pitch and offset order is dictated by the fourcc,
+	 * e.g. NV12 (http://fourcc.org/yuv.php#NV12) is described as:
+	 *
+	 *   YUV 4:2:0 image with a plane of 8 bit Y samples
+	 *   followed by an interleaved U/V plane containing
+	 *   8 bit 2x2 subsampled colour difference samples.
+	 *
+	 * So it would consist of Y as offset[0] and UV as
+	 * offset[1].  Note that offset[0] will generally
+	 * be 0.
+	 */
+	__u32 handles[4];
+	__u32 pitches[4]; /* pitch for each plane */
+	__u32 offsets[4]; /* offset of each plane */
 };
 
 #define DRM_MODE_FB_DIRTY_ANNOTATE_COPY 0x01
@@ -301,6 +401,19 @@ struct drm_mode_cursor {
 	__u32 handle;
 };
 
+struct drm_mode_cursor2 {
+	__u32 flags;
+	__u32 crtc_id;
+	__s32 x;
+	__s32 y;
+	__u32 width;
+	__u32 height;
+	/* driver specific handle */
+	__u32 handle;
+	__s32 hot_x;
+	__s32 hot_y;
+};
+
 struct drm_mode_crtc_lut {
 	__u32 crtc_id;
 	__u32 gamma_size;
@@ -312,7 +425,8 @@ struct drm_mode_crtc_lut {
 };
 
 #define DRM_MODE_PAGE_FLIP_EVENT 0x01
-#define DRM_MODE_PAGE_FLIP_FLAGS DRM_MODE_PAGE_FLIP_EVENT
+#define DRM_MODE_PAGE_FLIP_ASYNC 0x02
+#define DRM_MODE_PAGE_FLIP_FLAGS (DRM_MODE_PAGE_FLIP_EVENT|DRM_MODE_PAGE_FLIP_ASYNC)
 
 /*
  * Request a page flip on the specified crtc.
@@ -342,6 +456,35 @@ struct drm_mode_crtc_page_flip {
 	__u32 flags;
 	__u32 reserved;
 	__u64 user_data;
+};
+
+/* create a dumb scanout buffer */
+struct drm_mode_create_dumb {
+        __u32 height;
+        __u32 width;
+        __u32 bpp;
+        __u32 flags;
+        /* handle, pitch, size will be returned */
+        __u32 handle;
+        __u32 pitch;
+        __u64 size;
+};
+
+/* set up for mmap of a dumb scanout buffer */
+struct drm_mode_map_dumb {
+        /** Handle for the object being mapped. */
+        __u32 handle;
+        __u32 pad;
+        /**
+         * Fake offset to use for subsequent mmap call
+         *
+         * This is a fixed-size type for 32/64 compatibility.
+         */
+        __u64 offset;
+};
+
+struct drm_mode_destroy_dumb {
+	__u32 handle;
 };
 
 #endif

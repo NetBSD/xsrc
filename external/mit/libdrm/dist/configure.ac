@@ -18,24 +18,34 @@
 #  IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-AC_PREREQ(2.60)
-AC_INIT([libdrm], 2.4.23, [dri-devel@lists.sourceforge.net], libdrm)
-AC_USE_SYSTEM_EXTENSIONS
+AC_PREREQ([2.63])
+AC_INIT([libdrm],
+        [2.4.52],
+        [https://bugs.freedesktop.org/enter_bug.cgi?product=DRI],
+        [libdrm])
+
+AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_SRCDIR([Makefile.am])
-AM_INIT_AUTOMAKE([dist-bzip2])
+AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_AUX_DIR([build-aux])
 
-AM_CONFIG_HEADER([config.h])
-
-AC_DISABLE_STATIC
-AC_PROG_LIBTOOL
-AC_PROG_CC
-
-AC_HEADER_STDC
-AC_SYS_LARGEFILE
-AC_FUNC_ALLOCA
+AM_INIT_AUTOMAKE([1.10 foreign dist-bzip2])
+AM_MAINTAINER_MODE([enable])
 
 # Enable quiet compiles on automake 1.11.
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
+# Check for programs
+AC_PROG_CC
+
+AC_USE_SYSTEM_EXTENSIONS
+AC_SYS_LARGEFILE
+AC_FUNC_ALLOCA
+
+# Initialize libtool
+LT_PREREQ([2.2])
+LT_INIT([disable-static])
+
 
 PKG_CHECK_MODULES(PTHREADSTUBS, pthread-stubs)
 AC_SUBST(PTHREADSTUBS_CFLAGS)
@@ -43,9 +53,10 @@ AC_SUBST(PTHREADSTUBS_LIBS)
 
 pkgconfigdir=${libdir}/pkgconfig
 AC_SUBST(pkgconfigdir)
-AC_ARG_ENABLE(udev,	AS_HELP_STRING([--enable-udev],
-				[Enable support for using udev instead of mknod (default: disabled)]),
-				[UDEV=$enableval], [UDEV=no])
+AC_ARG_ENABLE([udev],
+              [AS_HELP_STRING([--enable-udev],
+                              [Enable support for using udev instead of mknod (default: disabled)])],
+              [UDEV=$enableval], [UDEV=no])
 
 AC_ARG_ENABLE(libkms,
 	      AS_HELP_STRING([--disable-libkms],
@@ -62,16 +73,35 @@ AC_ARG_ENABLE(radeon,
 	      [Enable support for radeon's KMS API (default: auto)]),
 	      [RADEON=$enableval], [RADEON=auto])
 
-AC_ARG_ENABLE(vmwgfx-experimental-api,
-	      AS_HELP_STRING([--enable-vmwgfx-experimental-api],
-	      [Install vmwgfx's experimental kernel API header (default: disabled)]),
-	      [VMWGFX=$enableval], [VMWGFX=no])
+AC_ARG_ENABLE(nouveau,
+	      AS_HELP_STRING([--disable-nouveau],
+	      [Enable support for nouveau's KMS API (default: auto)]),
+	      [NOUVEAU=$enableval], [NOUVEAU=auto])
 
-AC_ARG_ENABLE(nouveau-experimental-api,
-	      AS_HELP_STRING([--enable-nouveau-experimental-api],
-	      [Enable support for nouveau's experimental API (default: disabled)]),
-	      [NOUVEAU=$enableval], [NOUVEAU=no])
+AC_ARG_ENABLE(vmwgfx,
+	      AS_HELP_STRING([--disable-vmwgfx],
+	      [Enable support for vmwgfx's KMS API (default: yes)]),
+	      [VMWGFX=$enableval], [VMWGFX=yes])
 
+AC_ARG_ENABLE(omap-experimental-api,
+	      AS_HELP_STRING([--enable-omap-experimental-api],
+	      [Enable support for OMAP's experimental API (default: disabled)]),
+	      [OMAP=$enableval], [OMAP=no])
+
+AC_ARG_ENABLE(exynos-experimental-api,
+	      AS_HELP_STRING([--enable-exynos-experimental-api],
+	      [Enable support for EXYNOS's experimental API (default: disabled)]),
+	      [EXYNOS=$enableval], [EXYNOS=no])
+
+AC_ARG_ENABLE(freedreno-experimental-api,
+	      AS_HELP_STRING([--enable-freedreno-experimental-api],
+	      [Enable support for freedreno's experimental API (default: disabled)]),
+	      [FREEDRENO=$enableval], [FREEDRENO=no])
+
+AC_ARG_ENABLE(install-test-programs,
+		  AS_HELP_STRING([--enable-install-test-programs],
+		  [Install test programs (default: no)]),
+		  [INSTALL_TESTS=$enableval], [INSTALL_TESTS=no])
 
 dnl ===========================================================================
 dnl check compiler flags
@@ -81,7 +111,7 @@ AC_DEFUN([LIBDRM_CC_TRY_FLAG], [
   libdrm_save_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS $1"
 
-  AC_COMPILE_IFELSE([ ], [libdrm_cc_flag=yes], [libdrm_cc_flag=no])
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([ ])], [libdrm_cc_flag=yes], [libdrm_cc_flag=no])
   CFLAGS="$libdrm_save_CFLAGS"
 
   if test "x$libdrm_cc_flag" = "xyes"; then
@@ -99,6 +129,8 @@ AC_CHECK_FUNCS([clock_gettime], [CLOCK_LIB=],
                              [AC_MSG_ERROR([Couldn't find clock_gettime])])])
 AC_SUBST([CLOCK_LIB])
 
+AC_CHECK_FUNCS([open_memstream], [HAVE_OPEN_MEMSTREAM=yes])
+
 dnl Use lots of warning flags with with gcc and compatible compilers
 
 dnl Note: if you change the following variable, the cache is automatically
@@ -111,7 +143,7 @@ MAYBE_WARN="-Wall -Wextra \
 -Wpointer-arith -Wwrite-strings -Wstrict-prototypes \
 -Wmissing-prototypes -Wmissing-declarations -Wnested-externs \
 -Wpacked -Wswitch-enum -Wmissing-format-attribute \
--Wstrict-aliasing=2 -Winit-self -Wunsafe-loop-optimizations \
+-Wstrict-aliasing=2 -Winit-self \
 -Wdeclaration-after-statement -Wold-style-definition \
 -Wno-missing-field-initializers -Wno-unused-parameter \
 -Wno-attributes -Wno-long-long -Winline"
@@ -169,11 +201,43 @@ if test "x$NOUVEAU" = xyes; then
 	AC_DEFINE(HAVE_NOUVEAU, 1, [Have nouveau (nvidia) support])
 fi
 
-PKG_CHECK_MODULES(CAIRO, cairo, [HAVE_CAIRO=yes], [HAVE_CAIRO=no])
-if test "x$HAVE_CAIRO" = xyes; then
-	AC_DEFINE(HAVE_CAIRO, 1, [Have cairo support])
+AM_CONDITIONAL(HAVE_OMAP, [test "x$OMAP" = xyes])
+if test "x$OMAP" = xyes; then
+	AC_DEFINE(HAVE_OMAP, 1, [Have OMAP support])
 fi
-AM_CONDITIONAL(HAVE_CAIRO, [test "x$HAVE_CAIRO" = xyes])
+
+AM_CONDITIONAL(HAVE_EXYNOS, [test "x$EXYNOS" = xyes])
+if test "x$EXYNOS" = xyes; then
+	AC_DEFINE(HAVE_EXYNOS, 1, [Have EXYNOS support])
+fi
+
+AM_CONDITIONAL(HAVE_FREEDRENO, [test "x$FREEDRENO" = xyes])
+if test "x$FREEDRENO" = xyes; then
+	AC_DEFINE(HAVE_FREEDRENO, 1, [Have freedreno support])
+fi
+
+AM_CONDITIONAL(HAVE_INSTALL_TESTS, [test "x$INSTALL_TESTS" = xyes])
+if test "x$INSTALL_TESTS" = xyes; then
+	AC_DEFINE(HAVE_INSTALL_TESTS, 1, [Install test programs])
+fi
+
+AC_ARG_ENABLE([cairo-tests],
+              [AS_HELP_STRING([--enable-cairo-tests],
+                              [Enable support for Cairo rendering in tests (default: auto)])],
+              [CAIRO=$enableval], [CAIRO=auto])
+PKG_CHECK_MODULES(CAIRO, cairo, [HAVE_CAIRO=yes], [HAVE_CAIRO=no])
+AC_MSG_CHECKING([whether to enable Cairo tests])
+if test "x$CAIRO" = xauto; then
+	CAIRO="$HAVE_CAIRO"
+fi
+if test "x$CAIRO" = xyes; then
+	if ! test "x$HAVE_CAIRO" = xyes; then
+		AC_MSG_ERROR([Cairo support required but not present])
+	fi
+	AC_DEFINE(HAVE_CAIRO, 1, [Have Cairo support])
+fi
+AC_MSG_RESULT([$CAIRO])
+AM_CONDITIONAL(HAVE_CAIRO, [test "x$CAIRO" = xyes])
 
 # For enumerating devices in test case
 PKG_CHECK_MODULES(LIBUDEV, libudev, [HAVE_LIBUDEV=yes], [HAVE_LIBUDEV=no])
@@ -182,18 +246,38 @@ if test "x$HAVE_LIBUDEV" = xyes; then
 fi
 AM_CONDITIONAL(HAVE_LIBUDEV, [test "x$HAVE_LIBUDEV" = xyes])
 
-if test "x$INTEL" != "xno" -o "x$RADEON" != "xno"; then
+# xsltproc for docbook manpages
+AC_ARG_ENABLE([manpages],
+              AS_HELP_STRING([--disable-manpages], [disable manpages @<:@default=enabled@:>@]),
+              [MANS=$enableval], [MANS=auto])
+AC_PATH_PROG(XSLTPROC, xsltproc)
+AM_CONDITIONAL([BUILD_MANPAGES], [test "x$XSLTPROC" != "x" -a "x$MANS" != "xno"])
+
+# check for offline man-pages stylesheet
+AC_MSG_CHECKING([for docbook manpages stylesheet])
+MANPAGES_STYLESHEET="http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl"
+AC_PATH_PROGS_FEATURE_CHECK([XSLTPROC_TMP], [xsltproc],
+                            AS_IF([`"$ac_path_XSLTPROC_TMP" --nonet "$MANPAGES_STYLESHEET" > /dev/null 2>&1`],
+                                  [HAVE_MANPAGES_STYLESHEET=yes]))
+if test "x$HAVE_MANPAGES_STYLESHEET" = "xyes"; then
+        AC_SUBST(MANPAGES_STYLESHEET)
+        AC_MSG_RESULT([yes])
+else
+        AC_MSG_RESULT([no])
+fi
+AM_CONDITIONAL([HAVE_MANPAGES_STYLESHEET], [test "x$HAVE_MANPAGES_STYLESHEET" = "xyes"])
+
+if test "x$INTEL" != "xno" -o "x$RADEON" != "xno" -o "x$NOUVEAU" != "xno" -o "x$OMAP" != "xno" -o "x$FREEDRENO" != "xno"; then
     # Check for atomic intrinsics
     AC_CACHE_CHECK([for native atomic primitives], drm_cv_atomic_primitives,
     [
 	    drm_cv_atomic_primitives="none"
 
-	    AC_TRY_LINK([
+	    AC_LINK_IFELSE([AC_LANG_PROGRAM([[
     int atomic_add(int i) { return __sync_fetch_and_add (&i, 1); }
     int atomic_cmpxchg(int i, int j, int k) { return __sync_val_compare_and_swap (&i, j, k); }
-    ], [],
-	      drm_cv_atomic_primitives="Intel"
-	      )
+                                            ]],[[]])],
+                           [drm_cv_atomic_primitives="Intel"],[])
 
 	    if test "x$drm_cv_atomic_primitives" = "xnone"; then
 		    AC_CHECK_HEADER([atomic_ops.h], drm_cv_atomic_primitives="libatomic-ops")
@@ -231,19 +315,47 @@ if test "x$INTEL" != "xno" -o "x$RADEON" != "xno"; then
                    AC_MSG_WARN([Disabling libdrm_radeon. It depends on atomic operations, which were not found for your compiler/cpu. Try compiling with -march=native, or install the libatomics-op-dev package.])
                    RADEON=no
            fi
-
+           if test "x$NOUVEAU" != "xauto"; then
+                   if test "x$NOUVEAU" != "xno"; then
+                        AC_MSG_ERROR([libdrm_nouveau depends upon atomic operations, which were not found for your compiler/cpu. Try compiling with -march=native, or install the libatomics-op-dev package, or, failing both of those, disable support for NVIDIA GPUs by passing --disable-nouveau to ./configure])
+                   fi
+           else
+                   AC_MSG_WARN([Disabling libdrm_nouveau. It depends on atomic operations, which were not found for your compiler/cpu. Try compiling with -march=native, or install the libatomics-op-dev package.])
+                   NOUVEAU=no
+           fi
     else
            if test "x$INTEL" != "xno"; then
-                   INTEL=yes
+                   case $host_cpu in
+                           i?86|x86_64) INTEL=yes ;;
+                           *) INTEL=no ;;
+                   esac
            fi
            if test "x$RADEON" != "xno"; then
                    RADEON=yes
            fi
+           if test "x$NOUVEAU" != "xno"; then
+                   NOUVEAU=yes
+           fi
     fi
+fi
+
+if test "x$INTEL" != "xno"; then
+	PKG_CHECK_MODULES(PCIACCESS, [pciaccess >= 0.10])
+fi
+AC_SUBST(PCIACCESS_CFLAGS)
+AC_SUBST(PCIACCESS_LIBS)
+
+PKG_CHECK_MODULES(VALGRIND, [valgrind], [have_valgrind=yes], [have_valgrind=no])
+if test "x$have_valgrind" = "xyes"; then
+	AC_DEFINE([HAVE_VALGRIND], 1, [Use valgrind intrinsics to suppress false warnings])
 fi
 
 AM_CONDITIONAL(HAVE_INTEL, [test "x$INTEL" != "xno"])
 AM_CONDITIONAL(HAVE_RADEON, [test "x$RADEON" != "xno"])
+AM_CONDITIONAL(HAVE_NOUVEAU, [test "x$NOUVEAU" != "xno"])
+if test "x$RADEON" = xyes; then
+	AC_DEFINE(HAVE_RADEON, 1, [Have radeon support])
+fi
 
 AC_ARG_WITH([kernel-source],
             [AS_HELP_STRING([--with-kernel-source],
@@ -252,7 +364,7 @@ AC_ARG_WITH([kernel-source],
 AC_SUBST(kernel_source)
 
 AC_SUBST(WARN_CFLAGS)
-AC_OUTPUT([
+AC_CONFIG_FILES([
 	Makefile
 	libkms/Makefile
 	libkms/libkms.pc
@@ -262,14 +374,24 @@ AC_OUTPUT([
 	radeon/libdrm_radeon.pc
 	nouveau/Makefile
 	nouveau/libdrm_nouveau.pc
+	omap/Makefile
+	omap/libdrm_omap.pc
+	exynos/Makefile
+	exynos/libdrm_exynos.pc
+	freedreno/Makefile
+	freedreno/libdrm_freedreno.pc
 	tests/Makefile
 	tests/modeprint/Makefile
 	tests/modetest/Makefile
 	tests/kmstest/Makefile
+	tests/radeon/Makefile
 	tests/vbltest/Makefile
+	tests/exynos/Makefile
 	include/Makefile
 	include/drm/Makefile
+	man/Makefile
 	libdrm.pc])
+AC_OUTPUT
 
 echo ""
 echo "$PACKAGE_STRING will be compiled with:"
@@ -279,4 +401,7 @@ echo "  Intel API      $INTEL"
 echo "  vmwgfx API     $VMWGFX"
 echo "  Radeon API     $RADEON"
 echo "  Nouveau API    $NOUVEAU"
+echo "  OMAP API       $OMAP"
+echo "  EXYNOS API     $EXYNOS"
+echo "  Freedreno API  $FREEDRENO"
 echo ""

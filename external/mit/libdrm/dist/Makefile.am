@@ -18,9 +18,7 @@
 #  IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-AUTOMAKE_OPTIONS = foreign
-
-DISTCHECK_CONFIGURE_FLAGS = --enable-nouveau-experimental-api --enable-radeon-experimental-api
+ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 
 pkgconfigdir = @pkgconfigdir@
 pkgconfig_DATA = libdrm.pc
@@ -41,7 +39,19 @@ if HAVE_RADEON
 RADEON_SUBDIR = radeon
 endif
 
-SUBDIRS = . $(LIBKMS_SUBDIR) $(INTEL_SUBDIR) $(NOUVEAU_SUBDIR) $(RADEON_SUBDIR) tests include
+if HAVE_OMAP
+OMAP_SUBDIR = omap
+endif
+
+if HAVE_EXYNOS
+EXYNOS_SUBDIR = exynos
+endif
+
+if HAVE_FREEDRENO
+FREEDRENO_SUBDIR = freedreno
+endif
+
+SUBDIRS = . $(LIBKMS_SUBDIR) $(INTEL_SUBDIR) $(NOUVEAU_SUBDIR) $(RADEON_SUBDIR) $(OMAP_SUBDIR) $(EXYNOS_SUBDIR) $(FREEDRENO_SUBDIR) tests include man
 
 libdrm_la_LTLIBRARIES = libdrm.la
 libdrm_ladir = $(libdir)
@@ -49,6 +59,8 @@ libdrm_la_LDFLAGS = -version-number 2:4:0 -no-undefined
 libdrm_la_LIBADD = @CLOCK_LIB@
 
 libdrm_la_CPPFLAGS = -I$(top_srcdir)/include/drm
+AM_CFLAGS = \
+	$(VALGRIND_CFLAGS)
 
 libdrm_la_SOURCES =				\
 	xf86drm.c				\
