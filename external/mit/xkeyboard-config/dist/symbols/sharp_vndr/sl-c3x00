@@ -1,18 +1,17 @@
-// $NetBSD: sl-c3x00,v 1.1.1.1 2013/05/31 23:20:03 mrg Exp $
+// $NetBSD: sl-c3x00,v 1.1.1.2 2014/03/17 08:32:02 mrg Exp $
 // $OpenBSD: zaurus,v 1.2 2008/03/05 17:24:55 matthieu Exp $
 
 partial default alphanumeric_keys
 xkb_symbols "basic" {
 	name[Group1]= "Sharp SL-C3x00";
 
-	// Upper row
 	key <AE01> { [ 1, exclam ] };
 	key <AE02> { [ 2, quotedbl ] };
 	key <AE03> { [ 3, numbersign ] };
 	key <AE04> { [ 4, dollar ] };
 	key <AE05> { [ 5, percent ] };
 	key <AE06> { [ 6, ampersand ] };
-	key <AE07> { [ 7, quoteright ] };
+	key <AE07> { [ 7, apostrophe ] };
 	key <AE08> { [ 8, parenleft ] };
 	key <AE09> { [ 9, parenright ] };
 	key <AE10> { [ 0, asciitilde ] };
@@ -34,7 +33,7 @@ xkb_symbols "basic" {
 
 	key <AC01> { [ a, A ] };
 	key <AC02> { [ s, S ] };
-	key <AC03> { [ d, D, quoteleft ] };
+	key <AC03> { [ d, D, grave ] };
 	key <AC04> { [ f, F, backslash ] };
 	key <AC05> { [ g, G, semicolon ] };
 	key <AC06> { [ h, H, colon ] };
@@ -60,9 +59,7 @@ xkb_symbols "basic" {
 	key <SPCE> { [ space ] };
 	key <AB08> { [ comma, slash, less ] };
 	key <AB09> { [ period, question, greater ] };
-	// End alphanumeric section
 	
-	// keypad
 	key <UP> { [ Up, Up, Prior ] };
 	key <LEFT> { [ Left, Left, Home ] };
 	key <DOWN> { [ Down, Down, Next ] };

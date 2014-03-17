@@ -257,7 +257,7 @@
         <variant>
           <configItem>
             <name>crd</name>
-            <_description>Couer D'alene Salish</_description>
+            <_description>Coeur d'Alene Salish</_description>
             <languageList><iso639Id>crd</iso639Id></languageList>
           </configItem>
         </variant>
@@ -275,6 +275,12 @@
           <configItem>
             <name>sun_type6</name>
             <_description>English (US, Sun Type 6/7)</_description>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>norman</name>
+            <_description>English (Norman)</_description>
           </configItem>
         </variant>
       </variantList>
@@ -301,7 +307,7 @@
         </variant>
         <variant>
           <configItem>
-            <name>type6</name>
+            <name>sun_type6</name>
             <_description>Polish (Sun Type 6/7)</_description>
           </configItem>
         </variant>
@@ -333,7 +339,7 @@
         </variant>
         <variant>
           <configItem>
-            <name>type6</name>
+            <name>sun_type6</name>
             <_description>Romanian (Sun Type 6/7)</_description>
           </configItem>
         </variant>
@@ -381,7 +387,7 @@
         </variant>
         <variant>
           <configItem>
-            <name>type6</name>
+            <name>sun_type6</name>
             <_description>Russian (Sun Type 6/7)</_description>
           </configItem>
         </variant>
@@ -679,16 +685,16 @@
         <name>se</name>
         <_shortDescription>sv</_shortDescription>
         <_description>Swedish</_description>
-	  </configItem>
-	  <variantList>
+      </configItem>
+      <variantList>
         <variant>
           <configItem>
             <name>sun_type6</name>
             <_description>Swedish (Sun Type 6/7)</_description>
           </configItem>
         </variant>
-	  </variantList>
-	</layout>
+      </variantList>
+    </layout>
     <layout>
       <configItem>
         <name>ch</name>

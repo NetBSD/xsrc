@@ -5,7 +5,7 @@
 //
 // Original authors:
 //  Danilo Segan (Данило Шеган) <danilo@kvota.net>
-//  Chusslove Illich (Часлав Илић) <chaslav@sezampro.yu>
+//  Chusslove Illich (Часлав Илић) <caslav.ilic@gmx.net>
 //
 // Danilo Segan <danilo@kvota.net>:
 // - Modified for inclusion in XFree86
@@ -13,7 +13,7 @@
 //   and Slovenian in xkeyboard-config
 //  
 
-default partial alphanumeric_keys
+default  partial alphanumeric_keys
 xkb_symbols "basic" {
 
   name[Group1]= "Serbian";
@@ -56,7 +56,7 @@ xkb_symbols "common" {
 
   key.type[Group1] = "FOUR_LEVEL";
 
-  key <TLDE> {   [ quoteleft,           asciitilde,    any,any ]   }; //
+  key <TLDE> {   [ grave,               asciitilde,    any,any ]   }; //
   key <AE01> {   [ 1,                   exclam,        any,any ]   }; //
   key <AE02> {   [ 2,                   quotedbl,      any,any ]   }; //
   key <AE03> {   [ 3,                   numbersign,    any,any ]   }; //
@@ -300,30 +300,28 @@ xkb_symbols "latinalternatequotes" {
 };
 
 xkb_symbols "rue" {
-  // Homophonic layout for Pannonian Rusyn (spoken mainly in Serbia and
-  // Croatia by the Rusyn people), based on Ukrainian homophonic.
-  // Author: Ljubomir J. Papuga (Любомир Я. Папуґа) <papuga.rs@gmail.com>
+  // Layout for Pannonian Rusyn (spoken mainly in Serbia and
+  // Croatia by the Rusyn people), based on Serbian Cyrillic layout.
+  // Authors:
+  //   Ljubomir J. Papuga (Любомир Я. Папуґа) <papuga@zoho.com>
+  //   Mihajlo Hornjak <smeceiotpad@gmail.com>
 
-  name[Group1]= "Pannonian Rusyn (homophonic)";
+  name[Group1]= "Pannonian Rusyn";
 
-  include "ua(homophonic)"
+  include "rs(basic)"
 
-  key <TLDE> { [ grave, asciitilde ] };
-  key <AE03> { [ 3, doublelowquotemark ] };
-  key <AE04> { [ 4, rightdoublequotemark ] };
-  key <AE07> { [ 7, EuroSign ] };
-  key <AE11> { [ 0x002D, emdash ] };
-  key <AE12> { [ equal, plus ] };
+  key <TLDE> {   [ Cyrillic_softsign,         Cyrillic_SOFTSIGN         ]   }; // `
 
-  key <AD02> { [ Ukrainian_ie, Ukrainian_IE ] };
-  key <AD06> { [ Cyrillic_yu, Cyrillic_YU ] };
-  key <AD08> { [ Cyrillic_i, Cyrillic_I ] };
-  key <AD11> { [ Cyrillic_sha, Cyrillic_SHA ] };
-  key <AD12> { [ Cyrillic_shcha, Cyrillic_SHCHA ] };
+  key <AD01> {   [ Cyrillic_ya,               Cyrillic_YA               ]   }; // q
+  key <AD02> {   [ Ukrainian_ie,              Ukrainian_IE              ]   }; // w
+  key <AD12> {   [ Cyrillic_shcha,            Cyrillic_SHCHA            ]   }; // ]
 
-  key <LSGT> { [ Ukrainian_yi, Ukrainian_YI ] };
-  key <AB08> { [ comma, semicolon ] };
-  key <AB09> { [ period, colon ] };
+  key <AC05> {   [ Ukrainian_ghe_with_upturn, Ukrainian_GHE_WITH_UPTURN ]   }; // g
+  key <AC07> {   [ Cyrillic_shorti,           Cyrillic_SHORTI           ]   }; // j
+  key <AC11> {   [ Cyrillic_ghe,              Cyrillic_GHE              ]   }; // '
+
+  key <AB01> {   [ Cyrillic_yu,               Cyrillic_YU               ]   }; // z
+  key <AB02> {   [ Ukrainian_yi,              Ukrainian_YI              ]   }; // x
 };
 
 // EXTRAS:
