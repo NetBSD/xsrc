@@ -1,10 +1,10 @@
 // Nazar Annagurban <nazar_xg@hotmail.com>, 2009
 
 // Default layout (based on Vista Turkmen layout)
-default partial
+default  partial
 xkb_symbols "basic" {
     name[Group1]="Turkmen";
-    
+
     include "us"
     key <TLDE> {	[    zcaron, 	Zcaron,		grave,	asciitilde	]	};
 
