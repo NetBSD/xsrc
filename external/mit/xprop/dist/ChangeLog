@@ -1,3 +1,89 @@
+commit 9e0f57f6a271313d1b49b5019753b4410f407cc5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Aug 8 20:04:00 2013 -0700
+
+    xprop 1.2.2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b150b99c56bc4c98bf416be66764fb49dce425dc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jul 19 18:38:25 2013 -0700
+
+    Mark usage() as noreturn, as suggested by gcc -Wmissing-noreturn
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 7ed5afd77941f89467e57ec8562992dd27ea3e7f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jul 19 18:36:17 2013 -0700
+
+    Fix const conversion warnings from gcc
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6f16b22c4a6a878ca0f07e57da50f7ac04fef306
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 20 13:21:57 2013 -0800
+
+    Add unicode argument to Format_Len_String to reduce code duplication
+    
+    Allows us to get rid of a second copy of the code that differed only
+    in the unicode argument passed on to Format_String.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 0384b1c6567d3f90975665ed4e7b3a09947cabee
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 20 13:03:15 2013 -0800
+
+    Replace strlen/malloc/memcpy set with strdup
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 7dba9bf178878e09aaad09be9ed9bdccb60c08b9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 20 12:56:43 2013 -0800
+
+    Mark FatalError() as taking printf-style arguments
+    
+    Silences -Wformat-nonliteral warnings about passing through
+    unknown format arguments to vfprintf.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit db9c65f2b12b25a56f4e364ec6dd2dac0412413d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jan 20 12:52:18 2013 -0800
+
+    config: Add missing AC_CONFIG_SRCDIR
+    
+    Regroup AC statements under the Autoconf initialization section.
+    Regroup AM statements under the Automake initialization section.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0d069c0edae83f70ac10fab1a3c04d8197e277c4
+Author: lolilolicon <lolilolicon@gmail.com>
+Date:   Tue Jan 10 23:39:04 2012 -0500
+
+    Enable setting property of type UTF8_STRING.
+    
+    Fix "bad format character: u" error for format '8u', e.g.:
+        xprop -root -f _NET_WM_NAME 8u -set _NET_WM_NAME LG3D
+    
+    Signed-off-by: James Cloos <cloos@jhcloos.com>
+
+commit 3e7b1528b1d8aa4b999789bccc5513ed5c3451f8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Jun 29 21:16:32 2011 -0700
+
+    Expand description in README a little
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit d59bc81ec9af03c172e4894eb7f3bad4c76dc34b
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Wed Jun 29 21:09:22 2011 -0700
