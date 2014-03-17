@@ -1,3 +1,79 @@
+commit c74119a641e3c4fc74deaf8f47d3faf589d0d196
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Sep 7 23:40:55 2013 -0700
+
+    xfindproxy 1.0.3
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 542ddcf6812ca4d8764caf40ae91a23675bdd1b0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Sep 5 23:51:53 2013 -0700
+
+    Fix some clang integer conversion warnings in cvthexkey()
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b6952a032618af81238050de1e8f21da66546f55
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Sep 5 23:41:54 2013 -0700
+
+    Mark input string to cvthexkey() as const
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 43ac18d7189f149d41f46bbd9d9d40d48687ad14
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Sep 5 23:35:02 2013 -0700
+
+    Move global appContext into main() to avoid shadow warnings
+    
+    All other uses of appContext rely on the arguments passed to functions,
+    so move this one to the only scope it's needed in.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 514d1326a2f89bdd5de9616cabc334bc6e39b7dc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Aug 2 22:47:06 2013 -0700
+
+    Stop casting malloc return values
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e7cc00f1f390f2516b077fd1286e798351094fc9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Jan 16 08:45:37 2013 -0800
+
+    Fix some clang warnings about implicit integer size/sign conversions
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5737e77061a36b004d815aaff9cb0fff914e1e47
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Aug 24 21:07:30 2012 -0700
+
+    Convert STRING_BYTES & STORE_STRING from macros to inline functions
+    
+    Solves gcc errors from passing an auto-allocated array in some of the calls:
+    xfindproxy.c:288:20: error: the address of ‘authName’ will always evaluate as ‘true’
+    xfindproxy.c:288:20: error: the address of ‘authName’ will always evaluate as ‘true’
+    xfindproxy.c:302:2: error: the address of ‘authName’ will always evaluate as ‘true’
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c03c2264ada7c3edc06f7f2f759fcf5f38c2bd1b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Aug 16 16:03:59 2011 -0700
+
+    xfindproxy only depends on xproto, not x11
+    
+    It includes <X11/Xos.h>, <X11/Xmd.h>, and <X11/Xfuncs.h>, but
+    does not include any headers or call any functions from libX11.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by; Jeremy Huddleston <jeremyhu@apple.com>
+
 commit ba2545d4f5b5a6389be424c50b34eeaf19d46f09
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Fri Jan 7 17:54:49 2011 -0800

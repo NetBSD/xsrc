@@ -31,7 +31,7 @@ from The Open Group.
  * Pad to a 64 bit boundary
  */
 
-#define PAD64(_bytes) ((8 - ((unsigned int) (_bytes) % 8)) % 8)
+#define PAD64(_bytes) ((8 - ((size_t) (_bytes) % 8)) % 8)
 
 #define PADDED_BYTES64(_bytes) (_bytes + PAD64 (_bytes))
 
@@ -40,16 +40,18 @@ from The Open Group.
  * Number of 8 byte units in _bytes.
  */
 
-#define WORD64COUNT(_bytes) (((unsigned int) ((_bytes) + 7)) >> 3)
+#define WORD64COUNT(_bytes) (((size_t) ((_bytes) + 7)) >> 3)
 
 
 /*
  * Compute the number of bytes for a STRING representation
  */
 
-#define STRING_BYTES(_str) (2 + (_str ? strlen (_str) : 0) + \
-		     PAD64 (2 + (_str ? strlen (_str) : 0)))
-
+static inline size_t
+STRING_BYTES(const char *string) {
+    size_t len = string ? strlen (string) : 0;
+    return (2 + len + PAD64 (2 + len));
+}
 
 
 #define SKIP_STRING(_pBuf, _swap) \
@@ -71,18 +73,21 @@ from The Open Group.
     _pBuf += 2; \
 }
 
-#define STORE_STRING(_pBuf, _string) \
-{ \
-    int _len = _string ? strlen (_string) : 0; \
-    STORE_CARD16 (_pBuf, _len); \
-    if (_len) { \
-        memcpy (_pBuf, _string, _len); \
-        _pBuf += _len; \
-    } \
-    if (PAD64 (2 + _len)) \
-        _pBuf += PAD64 (2 + _len); \
+static inline char *
+store_string(char *pBuf, const char *string)
+{
+    size_t len = string ? strlen (string) : 0;
+    STORE_CARD16 (pBuf, (CARD16) len);
+    if (len) {
+        memcpy (pBuf, string, len);
+        pBuf += len;
+    }
+    if (PAD64 (2 + len))
+        pBuf += PAD64 (2 + len);
+    return pBuf;
 }
 
+#define STORE_STRING(_pBuf, _string) _pBuf = store_string(_pBuf, _string)
 
 /*
  * EXTRACT macros
@@ -100,7 +105,7 @@ from The Open Group.
 { \
     CARD16 _len; \
     EXTRACT_CARD16 (_pBuf, _swap, _len); \
-    _string = (char *) malloc (_len + 1); \
+    _string = malloc (_len + 1); \
     memcpy (_string, _pBuf, _len); \
     _string[_len] = '\0'; \
     _pBuf += _len; \

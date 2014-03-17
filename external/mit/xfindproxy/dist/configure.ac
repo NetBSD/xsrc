@@ -23,7 +23,7 @@ dnl Process this file with autoconf to create configure.
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([xfindproxy], [1.0.2],
+AC_INIT([xfindproxy], [1.0.3],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
         [xfindproxy])
 AC_CONFIG_SRCDIR([Makefile.am])
@@ -40,6 +40,6 @@ XORG_MACROS_VERSION(1.8)
 XORG_DEFAULT_OPTIONS
 
 # Checks for pkg-config packages
-PKG_CHECK_MODULES(XFINDPROXY, x11 ice xt xproxymngproto)
+PKG_CHECK_MODULES(XFINDPROXY, xproto ice xt xproxymngproto)
 
 AC_OUTPUT([Makefile])
