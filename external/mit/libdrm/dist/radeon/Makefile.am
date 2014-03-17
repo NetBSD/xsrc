@@ -31,7 +31,7 @@ AM_CFLAGS = \
 
 libdrm_radeon_la_LTLIBRARIES = libdrm_radeon.la
 libdrm_radeon_ladir = $(libdir)
-libdrm_radeon_la_LDFLAGS = -version-number 1:0:0 -no-undefined
+libdrm_radeon_la_LDFLAGS = -version-number 1:0:1 -no-undefined
 libdrm_radeon_la_LIBADD = ../libdrm.la @PTHREADSTUBS_LIBS@
 
 libdrm_radeon_la_SOURCES = \
@@ -40,6 +40,7 @@ libdrm_radeon_la_SOURCES = \
 	radeon_cs_space.c \
 	radeon_bo.c \
 	radeon_cs.c \
+	radeon_surface.c \
 	bof.c \
 	bof.h
 
@@ -47,10 +48,12 @@ libdrm_radeonincludedir = ${includedir}/libdrm
 libdrm_radeoninclude_HEADERS = \
 	radeon_bo.h \
 	radeon_cs.h \
+	radeon_surface.h \
 	radeon_bo_gem.h \
 	radeon_cs_gem.h \
 	radeon_bo_int.h \
-	radeon_cs_int.h
+	radeon_cs_int.h \
+	r600_pci_ids.h
 
 pkgconfigdir = @pkgconfigdir@
 pkgconfig_DATA = libdrm_radeon.pc
