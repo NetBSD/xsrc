@@ -7,8 +7,14 @@
 /* Whether we have alarm() */
 #define HAVE_ALARM 1
 
+/* Whether the compiler supports __builtin_clz */
+#define HAVE_BUILTIN_CLZ 1
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
+
+/* Whether the tool chain supports __float128 */
+#undef HAVE_FLOAT128
 
 /* Define to 1 if you have the `getisax' function. */
 /* #undef HAVE_GETISAX */
@@ -25,6 +31,9 @@
 /* Define to 1 if you have the `pixman-1' library (-lpixman-1). */
 /* #undef HAVE_LIBPIXMAN_1 */
 
+/* Whether we have libpng */
+#undef HAVE_LIBPNG
+
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
@@ -37,8 +46,8 @@
 /* Whether we have posix_memalign() */
 #define HAVE_POSIX_MEMALIGN 1
 
-/* Whether pthread_setspecific() is supported */
-/* #undef HAVE_PTHREAD_SETSPECIFIC */
+/* Whether pthreads is supported */
+/* #undef HAVE_PTHREADS */
 
 /* Whether we have sigaction() */
 #define HAVE_SIGACTION 1
@@ -67,6 +76,10 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
 /* Name of package */
 #define PACKAGE "pixman"
 
@@ -81,6 +94,9 @@
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "pixman"
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
 
 /* Define to the home page for this package. */
 #define PACKAGE_URL ""
@@ -99,11 +115,14 @@
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
+/* The compiler supported TLS storage class */
+#undef TLS
+
 /* Whether the tool chain supports __attribute__((constructor)) */
 #define TOOLCHAIN_SUPPORTS_ATTRIBUTE_CONSTRUCTOR /**/
 
-/* Whether the tool chain supports __thread */
-#undef TOOLCHAIN_SUPPORTS__THREAD /**/
+/* use ARM IWMMXT compiler intrinsics */
+/* #undef USE_ARM_IWMMXT */
 
 /* use ARM NEON assembly optimizations */
 /* #undef USE_ARM_NEON */
@@ -114,24 +133,29 @@
 /* use GNU-style inline assembler */
 #define USE_GCC_INLINE_ASM 1
 
-#if defined(__i386__) || defined(__x86_64__)
-/* use MMX compiler intrinsics */
-#define USE_MMX 1
-#endif
+/* use Loongson Multimedia Instructions */
+/* #undef USE_LOONGSON_MMI */
+
+/* use MIPS DSPr2 assembly optimizations */
+/* #undef USE_MIPS_DSPR2 */
 
 /* use OpenMP in the test suite */
 #define USE_OPENMP 1
 
-#if defined(__x86_64__) && 0 /* GCC generates unaligned accesses; see PR 44159 */
 /* use SSE2 compiler intrinsics */
-#define USE_SSE2 1
-#endif
+/* #undef USE_SSE2 */
+
+/* use SSSE3 compiler intrinsics */
+/* #undef USE_SSSE3 */
 
 /* use VMX compiler intrinsics */
 /* #undef USE_VMX */
 
+/* use x86 MMX compiler intrinsics */
+/* #undef USE_X86_MMX */
+
 /* Version number of package */
-#define VERSION "0.28.2"
+#define VERSION "0.32.4"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
@@ -145,3 +169,6 @@
 #ifndef __cplusplus
 /* #undef inline */
 #endif
+
+/* Define to sqrt if you do not have the `sqrtf' function. */
+#undef sqrtf
