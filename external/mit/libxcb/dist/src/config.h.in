@@ -27,6 +27,9 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
+/* Define if your platform supports sendmsg */
+#undef HAVE_SENDMSG
+
 /* Have the sockaddr_un.sun_len member. */
 #undef HAVE_SOCKADDR_SUN_LEN
 
@@ -125,3 +128,6 @@
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 #undef _POSIX_SOURCE
+
+/* Defined if needed to expose struct msghdr.msg_control */
+#undef _XOPEN_SOURCE
