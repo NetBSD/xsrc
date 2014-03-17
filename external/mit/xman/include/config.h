@@ -1,6 +1,9 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Define to 1 if you have the groff package. */
+#define HAS_GROFF 1
+
 /* Define to 1 if you have the "mkstemp" function. */
 #define HAS_MKSTEMP 1
 
@@ -59,7 +62,7 @@
 #define PACKAGE_NAME "xman"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xman 1.1.1"
+#define PACKAGE_STRING "xman 1.1.2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xman"
@@ -68,7 +71,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.1.1"
+#define PACKAGE_VERSION "1.1.2"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
@@ -77,7 +80,7 @@
 #define PACKAGE_VERSION_MINOR 1
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 1
+#define PACKAGE_VERSION_PATCHLEVEL 2
 
 /* Release version string if set */
 /* #undef RELEASE_VERSION */
@@ -89,4 +92,4 @@
 /* #undef SYSMANPATH */
 
 /* Version number of package */
-#define VERSION "1.1.1"
+#define VERSION "1.1.2"
