@@ -1,6 +1,6 @@
 
 dnl  Copyright 2005 Red Hat, Inc.
-dnl 
+dnl
 dnl  Permission to use, copy, modify, distribute, and sell this software and its
 dnl  documentation for any purpose is hereby granted without fee, provided that
 dnl  the above copyright notice appear in all copies and that both that
@@ -10,7 +10,7 @@ dnl  advertising or publicity pertaining to distribution of the software without
 dnl  specific, written prior permission.  Red Hat makes no
 dnl  representations about the suitability of this software for any purpose.  It
 dnl  is provided "as is" without express or implied warranty.
-dnl 
+dnl
 dnl  RED HAT DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
 dnl  INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
 dnl  EVENT SHALL RED HAT BE LIABLE FOR ANY SPECIAL, INDIRECT OR
@@ -21,11 +21,16 @@ dnl  PERFORMANCE OF THIS SOFTWARE.
 dnl
 dnl Process this file with autoconf to create configure.
 
+# Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xconsole],
-	[1.0.4],
+	[1.0.6],
 	[https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
 	[xconsole])
+AC_CONFIG_SRCDIR([Makefile.am])
+AC_CONFIG_HEADERS([config.h])
+
+# Initialize Automake
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
 AM_MAINTAINER_MODE
 
@@ -35,15 +40,13 @@ m4_ifndef([XORG_MACROS_VERSION],
 XORG_MACROS_VERSION(1.8)
 XORG_DEFAULT_OPTIONS
 
-AM_CONFIG_HEADER(config.h)
-
 # Checks for pkg-config packages
-PKG_CHECK_MODULES(XCONSOLE, xaw7 xmu xt x11)
+PKG_CHECK_MODULES(XCONSOLE, xaw7 xmu xt >= 1.0 x11 xproto >= 7.0.17)
 
 PKG_CHECK_MODULES(APPDEFS, xt)
 xt_appdefaultdir=`$PKG_CONFIG --variable=appdefaultdir xt`
 AC_ARG_WITH(appdefaultdir,
-	AC_HELP_STRING([--with-appdefaultdir=<pathname>],
+	AS_HELP_STRING([--with-appdefaultdir=<pathname>],
 	  [specify directory for app-defaults files (default is autodetected)]),
 	[appdefaultdir="$withval"], [appdefaultdir="${xt_appdefaultdir}"])
 AC_SUBST(appdefaultdir)
@@ -51,10 +54,13 @@ AC_SUBST(appdefaultdir)
 AC_SEARCH_LIBS(openpty, [util])
 AC_CHECK_FUNC(openpty, [HAS_OPENPTY="yes"])
 if test "x$HAS_OPENPTY" = "xyes" ; then
-	AC_DEFINE([HAS_OPENPTY], 1, 
+	AC_DEFINE([HAS_OPENPTY], 1,
 		[Define to 1 if you have the 'openpty' function.])
-	AC_CHECK_HEADERS([util.h pty.h], [break])
+	AC_CHECK_HEADERS([util.h libutil.h pty.h], [break])
 fi
 
 
-AC_OUTPUT([Makefile])
+AC_CONFIG_FILES([
+	Makefile
+	man/Makefile])
+AC_OUTPUT
