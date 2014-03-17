@@ -1,3 +1,105 @@
+commit b71cda30549b7259e337bd05d499c5921ed34f19
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Aug 8 21:12:15 2013 -0700
+
+    xwd 1.0.6
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 02d3b987ad0007b2b6627d97056d0d77fb607039
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jul 20 00:08:51 2013 -0700
+
+    Strip trailing whitespace
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit cc51f7fce1cefb7a2318c624a2e1ebc124775ec8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jul 20 00:07:30 2013 -0700
+
+    Fix some clang warnings about integer size/sign conversions
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e89c0797e8b21b543a228fb56957ba3a1e91c38e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jul 19 23:45:05 2013 -0700
+
+    Quiet gcc warnings about potentially uninitialized variables
+    
+    It should have been impossible for these to be used without being
+    initialized, but following the logic to prove that was trickier
+    than the compiler was willing to unravel.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2bc7b34f2868f7d340c36c20a715d9c36495f236
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jul 19 23:41:56 2013 -0700
+
+    Remove unused bitmap_unit variable from ReadRegionsInList()
+    
+    multiVis.c: In function ‘ReadRegionsInList’:
+    multiVis.c:389:25: warning: variable ‘bitmap_unit’ set but not used [-Wunused-but-set-variable]
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ad99aa119875151b182c6e3d463d3c297ae3d56b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jul 19 23:40:37 2013 -0700
+
+    Rename new_list variable to not shadow new_list function
+    
+    Silences gcc warning:
+    list.c: In function ‘dup_list_head’:
+    list.c:104:14: warning: declaration of ‘new_list’ shadows a global
+     declaration [-Wshadow]
+    list.c:80:10: warning: shadowed declaration is here [-Wshadow]
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 94731abadcd06995c28f140aaffde456a7750807
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jul 19 23:38:46 2013 -0700
+
+    Add printf attributes as suggested by gcc -Wmissing-format-attribute
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9c9ae7363d216933394e6ccd2ba6e0196845a6c6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jul 19 23:33:19 2013 -0700
+
+    Fix gcc warnings about discarding const qualifiers
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c22c121262efcaca5f58774072ac84e1006e43aa
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Mar 19 13:16:20 2012 -0700
+
+    Optionally enable existing code to call XkbStdBell from libxkbfile
+    
+    Copied from similar check in oclock/configure.ac
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit 091e5f0fc73d7cdda2dcb72fbe198a0103476d77
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Mar 19 13:09:52 2012 -0700
+
+    Move Pixel typedef from xwd.c to wsutils.h
+    
+    Removes need for including <X11/Intrinsic.h> in multiVis.c just to get
+    the Pixel typedef, which resolves
+    https://bugs.freedesktop.org/show_bug.cgi?id=47462 without adding a
+    dependency on libXt.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Jeremy Huddleston <jeremyhu@apple.com>
+
 commit 431918bd9644dd5db2216e8ab61959e9a4b74bc0
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Wed Feb 22 20:19:03 2012 -0800
