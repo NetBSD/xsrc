@@ -22,6 +22,16 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
+.de EX
+.RS
+.nf
+.ft CW
+..
+.de EE
+.ft
+.fi
+.RE
+..
 .TH IMAKE 1 __xorgversion__
 .SH NAME
 imake \- C preprocessor interface to the make utility
@@ -90,13 +100,13 @@ that it is using to generate the \fIMakefile\fP.
 \fIImake\fP invokes \fIcpp\fP with any \fI\-I\fP or \fI\-D\fP flags passed
 on the command line and passes the name of a file containing the
 following 3 lines:
-.sp
-.nf
+.EX
+
 \&		#define IMAKE_TEMPLATE "Imake.tmpl"
 \&		#define INCLUDE_IMAKEFILE <Imakefile>
 \&		#include IMAKE_TEMPLATE
-.fi
-.sp
+
+.EE
 where \fIImake.tmpl\fP and \fIImakefile\fP may be overridden by the
 \fI\-T\fP and \fI\-f\fP command options, respectively.
 .PP
@@ -128,23 +138,23 @@ configured according to the current platform.  \fIImake\fP replaces
 any occurrences of the string ``@@'' with a newline to allow macros that
 generate more than one line of \fImake\fP rules.
 For example, the macro
-.ta 1i 1.6i 5i
-.nf
+.EX
 
-\& #define	program_target(program, objlist)	@@\e
- program:	objlist		@@\e
-	$(CC)  \-o  $@  objlist  $(LDFLAGS)
+\& #define      program_target(program, objlist)        @@\e
+program:        objlist         @@\e
+        $(CC)  \-o  $@  objlist  $(LDFLAGS)
 
-.fi
+
+.EE
 when called with
 .I "program_target(foo, foo1.o  foo2.o)"
 will expand to
-.nf
+.EX
 
- foo:	foo1.o  foo2.o
-	$(CC)  \-o  $@  foo1.o  foo2.o  $(LDFLAGS)
+foo:    foo1.o  foo2.o
+        $(CC)  \-o  $@  foo1.o  foo2.o  $(LDFLAGS)
 
-.fi
+.EE
 .PP
 \fIImake\fP also replaces any occurrences of the word ``XCOMM'' with
 the character ``#'' to permit placing comments in the Makefile without
@@ -176,12 +186,11 @@ variables, \fITOPDIR\fP and \fICURDIR,\fP are set to make referencing files
 using relative path names easier.  For example, the following command is
 generated automatically to build the \fIMakefile\fP in the directory
 \fIlib/X/\fP (relative to the top of the sources):
-.sp
-.nf
+.EX
+
 	%  ../.././config/imake  \-I../.././config  \\
 		\-DTOPDIR=../../.   \-DCURDIR=./lib/X
-.fi
-.sp
+.EE
 When building X programs outside the source tree, a special symbol
 \fIUseInstalled\fP is defined and \fITOPDIR\fP and
 \fICURDIR\fP are omitted.  If the configuration files have been
@@ -191,22 +200,21 @@ Here is a summary of the files read by
 .I imake
 as used by X.
 The indentation shows what files include what other files.
-.nf
-.sp
-.ta 3i
-    Imake.tmpl	generic variables
-        site.def	site-specific, BeforeVendorCF defined
-        *.cf	machine-specific
-            *Lib.rules	shared library rules
-        site.def	site-specific, AfterVendorCF defined
-        Imake.rules	rules
-        Project.tmpl	X-specific variables
-            *Lib.tmpl	shared library variables
+.EX
+    Imake.tmpl  generic variables
+        site.def        site-specific, BeforeVendorCF defined
+        *.cf    machine-specific
+            *Lib.rules  shared library rules
+        site.def        site-specific, AfterVendorCF defined
+        Imake.rules     rules
+        Project.tmpl    X-specific variables
+            *Lib.tmpl   shared library variables
         Imakefile
-            Library.tmpl	library rules
-            Server.tmpl	server rules
-            Threads.tmpl	multi-threaded rules
-.fi
+            Library.tmpl        library rules
+            Server.tmpl server rules
+            Threads.tmpl        multi-threaded rules
+
+.EE
 .LP
 Note that \fIsite.def\fP gets included twice, once before the
 \fI*.cf\fP file and once after.  Although most site customizations
@@ -219,30 +227,30 @@ is defined, and the second time, the variable AfterVendorCF is
 defined.  All code in \fIsite.def\fP should be inside an #ifdef for
 one of these symbols.
 .SH FILES
-.ta 3i
-Imakefile.c	temporary input file for cpp
-.br
-/tmp/Imf.XXXXXX	temporary Makefile for -s
-.br
-/tmp/IIf.XXXXXX	temporary Imakefile if specified Imakefile uses # comments
-.br
-__cpp__	default C preprocessor
-.DT
+.TP
+Imakefile.c
+temporary input file for cpp
+.TP
+/tmp/Imf.XXXXXX
+temporary Makefile for -s
+.TP
+/tmp/IIf.XXXXXX
+temporary Imakefile if specified Imakefile uses # comments
+.TP
+__cpp__
+default C preprocessor
 .SH "SEE ALSO"
 make(1), xmkmf(1)
-.br
-Paul DuBois,
-.I
+.TP
+Paul DuBois
 imake-Related Software and Documentation,
 http://www.snake.net/software/imake-stuff/
-.br
-Paul DuBois,
-.I
+.TP
+Paul DuBois
 Software Portability with imake, Second Edition,
 O'Reilly & Associates, 1996.
-.br
+.TP
 S. I. Feldman,
-.I
 Make \(em A Program for Maintaining Computer Programs
 .SH "ENVIRONMENT VARIABLES"
 The following environment variables may be set, however their use is not

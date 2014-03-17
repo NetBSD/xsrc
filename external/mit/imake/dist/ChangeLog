@@ -1,3 +1,87 @@
+commit 89494a51d006c20d16d3f08225a0345fecaae546
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jul 22 21:52:56 2013 -0700
+
+    imake 1.0.6
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit bb9cbad3cfaee60bf88ef50b5a165ed9321d4548
+Author: Eric S. Raymond <esr@thyrsus.com>
+Date:   Thu Jun 6 16:11:33 2013 -0400
+
+    Avoid use of low-level troff markup that can't be lifted structurally.
+
+commit 4db5afc933064ab165cd081c0d5a83bef87b770e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jan 19 09:15:52 2013 -0800
+
+    config: replace deprecated AM_CONFIG_HEADER with AC_CONFIG_HEADERS
+    
+    Regroup AC statements under the Autoconf initialization section.
+    Regroup AM statements under the Automake initialization section.
+    Add missing AC_CONFIG_SRCDIR
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6cb46d6d9c7ce6fbf32381edec5bfa993f8bdda9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jan 4 19:59:14 2013 -0800
+
+    unifdef -U__UNIXOS2__
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1675120e31e1e54f184da2c0cce9d6f6ddb0c892
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Dec 27 17:00:43 2012 -0800
+
+    Let configure pick cpp path on Solaris, instead of hardcoding in imakemdep.h
+    
+    Simply removing the definition lets the path found by configure be used,
+    seems to be the simplest way to handle the move from /usr/ccs/lib/cpp on
+    Solaris 10 and older to /usr/lib/cpp on Solaris 11 & later.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5a9246d6804ab8a6f2f23f3f4ace84a415140937
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Aug 25 11:19:39 2012 -0700
+
+    Ensure inFile is always closed on error in cppit()
+    
+    Another instance of the can-return-in-rare-cases nature of LogFatal()
+    raising red flags in static analysis.
+    
+    Resolves warning from Parfait 1.0.1:
+    Error: File Leak
+       File Leak: Leaked File inFile
+            at line 1719 of imake.c in function 'cppit'.
+              inFile initialized at line 1699 with fopen
+              inFile leaks when inFile != NULL at line 1700
+                  and fprintf(inFile, "%s\n", "/* imake - temporary file */") < 0 at line 1702.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 464ba911c3b84abb0140e9f66756d1cc887f78ad
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Aug 25 11:10:46 2012 -0700
+
+    Avoid closing inFile twice in CheckImakefileC if LogFatal returns
+    
+    Imake's LogFatal() checks if it's being re-entered and if so, returns,
+    so we can't mark it NORETURN, leading to static analyzers believing it
+    can return even in call paths it shouldn't.
+    
+    Resolves warning from Parfait 1.0.1:
+    Error: File Invalid
+       File not Initialized: The value inFile is not initialized as a file.
+            at line 748 of imake.c in function 'CheckImakefileC'.
+              inFile initialized at line 738 with fopen(masterc, "r").
+              inFile destroyed at line 745 with fclose(inFile).
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 061960e38cb0d6873bda2550f6a8952668193888
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Wed Mar 7 21:47:27 2012 -0800
