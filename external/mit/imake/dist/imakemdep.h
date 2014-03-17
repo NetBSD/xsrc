@@ -31,9 +31,6 @@ in this Software without prior written authorization from The Open Group.
  * definitions.  In general you should *not* edit ccimake.c or imake.c!
  */
 
-#ifdef __UNIXOS2__
-# define lstat stat
-#endif
 
 #ifdef CCIMAKE
 /*
@@ -201,11 +198,6 @@ in this Software without prior written authorization from The Open Group.
 #  define imake_ccflags "-DNOSTDHDRS"
 # endif
 
-/* this is for OS/2 under UNIXOS2. This won't work with DOS */
-# if defined(__UNIXOS2__)
-#  define imake_ccflags "-DBSD43"
-# endif
-
 # if defined(__QNX__) && !defined(__QNXNTO__)
 #  define imake_ccflags "-D__QNX__ -D_i386"
 # endif
@@ -237,7 +229,7 @@ in this Software without prior written authorization from The Open Group.
  *     all colons).  One way to tell if you need this is to see whether or not
  *     your Makefiles have no tabs in them and lots of @@ strings.
  */
-#  if defined(sun) || defined(SYSV) || defined(SVR4) || defined(hcx) || defined(WIN32) || defined(__SCO__) || (defined(AMOEBA) && defined(CROSS_COMPILE)) || defined(__QNX__) || defined(__sgi) || defined(__UNIXOS2__) || defined(__UNIXWARE__)
+#  if defined(sun) || defined(SYSV) || defined(SVR4) || defined(hcx) || defined(WIN32) || defined(__SCO__) || (defined(AMOEBA) && defined(CROSS_COMPILE)) || defined(__QNX__) || defined(__sgi) || defined(__UNIXWARE__)
 #   define FIXUP_CPP_WHITESPACE
 #  endif
 #  ifdef WIN32
@@ -294,9 +286,6 @@ in this Software without prior written authorization from The Open Group.
 #   if defined(_IBMR2) && !defined(DEFAULT_CPP)
 #    define DEFAULT_CPP "/usr/ccs/lib/cpp"
 #   endif
-#   if defined(sun) && (defined(SVR4) || defined(__svr4__) || defined(__SVR4) || defined(__sol__))
-#    define DEFAULT_CPP "/usr/ccs/lib/cpp"
-#   endif
 #   ifdef __bsdi__
 #    define DEFAULT_CPP "/usr/bin/cpp"
 #   endif
@@ -323,10 +312,6 @@ in this Software without prior written authorization from The Open Group.
 #   endif
 #   ifdef __minix_vmd
 #    define DEFAULT_CPP "/usr/lib/cpp"
-#   endif
-#   if defined(__UNIXOS2__)
-/* expects cpp in PATH */
-#    define DEFAULT_CPP "cpp"
 #   endif
 #   ifdef __CYGWIN__
 #    define DEFAULT_CC "gcc"
@@ -711,10 +696,6 @@ const char *cpp_argv[ARGUMENTS] = {
 	"-Dminix",
 #   endif
 
-#   if defined(__UNIXOS2__)
-	"-traditional",
-	"-Demxos2",
-#   endif
 #   ifdef MetroLink
 	"-DMetroLink",
 #    ifdef SVR4
@@ -1314,9 +1295,6 @@ struct symtab	predefs[] = {
 #   endif
 #   ifdef __ELF__
 	{"__ELF__", "1"},
-#   endif
-#   ifdef __UNIXOS2__
-	{"__UNIXOS2__", "1"},
 #   endif
 #   if defined(__QNX__)
         {"__QNX__", "1"},
