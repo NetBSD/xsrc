@@ -26,6 +26,7 @@ klibdrmincludedir = ${includedir}/libdrm
 klibdrminclude_HEADERS = \
 	drm.h \
 	drm_mode.h \
+	drm_fourcc.h \
 	drm_sarea.h \
 	i915_drm.h \
 	mga_drm.h \
@@ -35,8 +36,8 @@ klibdrminclude_HEADERS = \
 	savage_drm.h \
 	sis_drm.h \
 	via_drm.h \
-	mach64_drm.h
-
+	mach64_drm.h \
+	qxl_drm.h
 
 if HAVE_VMWGFX
 klibdrminclude_HEADERS += vmwgfx_drm.h

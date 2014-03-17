@@ -68,7 +68,7 @@ linux_name_from_sysfs(int fd, char **out)
 
 	ret = fstat(fd, &buffer);
 	if (ret)
-		return ret;
+		return -EINVAL;
 
 	if (!S_ISCHR(buffer.st_mode))
 		return -EINVAL;
@@ -110,6 +110,14 @@ linux_from_sysfs(int fd, struct kms_driver **out)
 #ifdef HAVE_NOUVEAU
 	else if (!strcmp(name, "nouveau"))
 		ret = nouveau_create(fd, out);
+#endif
+#ifdef HAVE_RADEON
+	else if (!strcmp(name, "radeon"))
+		ret = radeon_create(fd, out);
+#endif
+#ifdef HAVE_EXYNOS
+	else if (!strcmp(name, "exynos"))
+		ret = exynos_create(fd, out);
 #endif
 	else
 		ret = -ENOSYS;
@@ -212,6 +220,9 @@ linux_from_udev(int fd, struct kms_driver **out)
 int
 linux_create(int fd, struct kms_driver **out)
 {
+	if (!dumb_create(fd, out))
+		return 0;
+
 	if (!linux_from_udev(fd, out))
 		return 0;
 

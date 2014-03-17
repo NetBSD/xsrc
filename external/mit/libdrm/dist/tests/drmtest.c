@@ -62,6 +62,7 @@ int drm_open_matching(const char *pci_glob, int flags)
 	struct udev_device *device, *parent;
         struct udev_list_entry *entry;
 	const char *pci_id, *path;
+	const char *usub, *dnode;
 	int fd;
 
 	udev = udev_new();
@@ -78,13 +79,17 @@ int drm_open_matching(const char *pci_glob, int flags)
 		path = udev_list_entry_get_name(entry);
 		device = udev_device_new_from_syspath(udev, path);
 		parent = udev_device_get_parent(device);
+		usub = udev_device_get_subsystem(parent);
 		/* Filter out KMS output devices. */
-		if (strcmp(udev_device_get_subsystem(parent), "pci") != 0)
+		if (!usub || (strcmp(usub, "pci") != 0))
 			continue;
 		pci_id = udev_device_get_property_value(parent, "PCI_ID");
 		if (fnmatch(pci_glob, pci_id, 0) != 0)
 			continue;
-		fd = open(udev_device_get_devnode(device), O_RDWR);
+		dnode = udev_device_get_devnode(device);
+		if (strstr(dnode, "control"))
+			continue;
+		fd = open(dnode, O_RDWR);
 		if (fd < 0)
 			continue;
 		if ((flags & DRM_TEST_MASTER) && !is_master(fd)) {
@@ -107,7 +112,7 @@ int drm_open_any(void)
 
 	if (fd < 0) {
 		fprintf(stderr, "failed to open any drm device\n");
-		abort();
+		exit(0);
 	}
 
 	return fd;
@@ -122,7 +127,7 @@ int drm_open_any_master(void)
 
 	if (fd < 0) {
 		fprintf(stderr, "failed to open any drm device\n");
-		abort();
+		exit(0);
 	}
 
 	return fd;
