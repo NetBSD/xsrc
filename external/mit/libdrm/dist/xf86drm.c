@@ -811,6 +811,25 @@ drmVersionPtr drmGetLibVersion(int fd)
     return (drmVersionPtr)version;
 }
 
+int drmGetCap(int fd, uint64_t capability, uint64_t *value)
+{
+	struct drm_get_cap cap = { capability, 0 };
+	int ret;
+
+	ret = drmIoctl(fd, DRM_IOCTL_GET_CAP, &cap);
+	if (ret)
+		return ret;
+
+	*value = cap.value;
+	return 0;
+}
+
+int drmSetClientCap(int fd, uint64_t capability, uint64_t value)
+{
+	struct drm_set_client_cap cap  = { capability, value };
+
+	return drmIoctl(fd, DRM_IOCTL_SET_CLIENT_CAP, &cap);
+}
 
 /**
  * Free the bus ID information.
@@ -965,7 +984,7 @@ int drmAddMap(int fd, drm_handle_t offset, drmSize size, drmMapType type,
     if (drmIoctl(fd, DRM_IOCTL_ADD_MAP, &map))
 	return -errno;
     if (handle)
-	*handle = (drm_handle_t)map.handle;
+	*handle = (drm_handle_t)(uintptr_t)map.handle;
     return 0;
 }
 
@@ -973,7 +992,7 @@ int drmRmMap(int fd, drm_handle_t handle)
 {
     drm_map_t map;
 
-    map.handle = (void *)handle;
+    map.handle = (void *)(uintptr_t)handle;
 
     if(drmIoctl(fd, DRM_IOCTL_RM_MAP, &map))
 	return -errno;
@@ -1935,7 +1954,7 @@ int drmWaitVBlank(int fd, drmVBlankPtr vbl)
 
     ret = clock_gettime(CLOCK_MONOTONIC, &timeout);
     if (ret < 0) {
-	fprintf(stderr, "clock_gettime failed: %s\n", strerror(ret));
+	fprintf(stderr, "clock_gettime failed: %s\n", strerror(errno));
 	goto out;
     }
     timeout.tv_sec++;
@@ -2109,7 +2128,7 @@ int drmAddContextPrivateMapping(int fd, drm_context_t ctx_id,
     drm_ctx_priv_map_t map;
 
     map.ctx_id = ctx_id;
-    map.handle = (void *)handle;
+    map.handle = (void *)(uintptr_t)handle;
 
     if (drmIoctl(fd, DRM_IOCTL_SET_SAREA_CTX, &map))
 	return -errno;
@@ -2126,7 +2145,7 @@ int drmGetContextPrivateMapping(int fd, drm_context_t ctx_id,
     if (drmIoctl(fd, DRM_IOCTL_GET_SAREA_CTX, &map))
 	return -errno;
     if (handle)
-	*handle = (drm_handle_t)map.handle;
+	*handle = (drm_handle_t)(uintptr_t)map.handle;
 
     return 0;
 }
@@ -2531,3 +2550,34 @@ char *drmGetDeviceNameFromFd(int fd)
 
 	return strdup(name);
 }
+
+int drmPrimeHandleToFD(int fd, uint32_t handle, uint32_t flags, int *prime_fd)
+{
+	struct drm_prime_handle args;
+	int ret;
+
+	args.handle = handle;
+	args.flags = flags;
+	ret = drmIoctl(fd, DRM_IOCTL_PRIME_HANDLE_TO_FD, &args);
+	if (ret)
+		return ret;
+
+	*prime_fd = args.fd;
+	return 0;
+}
+
+int drmPrimeFDToHandle(int fd, int prime_fd, uint32_t *handle)
+{
+	struct drm_prime_handle args;
+	int ret;
+
+	args.fd = prime_fd;
+	args.flags = 0;
+	ret = drmIoctl(fd, DRM_IOCTL_PRIME_FD_TO_HANDLE, &args);
+	if (ret)
+		return ret;
+
+	*handle = args.handle;
+	return 0;
+}
+
