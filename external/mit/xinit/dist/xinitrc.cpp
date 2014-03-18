@@ -84,7 +84,6 @@ fi
 XCOMM This is the fallback case if nothing else is executed above
 #endif /* !defined(__SCO__)  && !defined(__UNIXWARE__) */
 
-XCOMM do not use slash-star in the glob; slash-questionmark-star is equivalent
 if [ -d XINITDIR/xinitrc.d ] ; then
 	for f in XINITDIR/xinitrc.d/?*.sh ; do
 		[ -x "$f" ] && . "$f"
