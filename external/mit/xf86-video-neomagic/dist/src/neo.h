@@ -261,6 +261,7 @@ typedef struct neoRec
     vbeInfoPtr          pVbe;
     unsigned char * ShadowPtr;
     int ShadowPitch;
+    CreateScreenResourcesProcPtr CreateScreenResources;
     RefreshAreaFuncPtr refreshArea;
     void	(*PointerMoved)(SCRN_ARG_TYPE arg, int x, int y);
     int rotate;
@@ -320,3 +321,14 @@ typedef struct {
 #define PROBED_NM2097	0x83
 #define PROBED_NM2160	0x44
 #define PROBED_NM2200	0x45
+
+#define PCI_VENDOR_NEOMAGIC		0x10C8
+#define PCI_CHIP_NM2070			0x0001
+#define PCI_CHIP_NM2090			0x0002
+#define PCI_CHIP_NM2093			0x0003
+#define PCI_CHIP_NM2097			0x0083
+#define PCI_CHIP_NM2160			0x0004
+#define PCI_CHIP_NM2200			0x0005
+#define PCI_CHIP_NM2230			0x0025
+#define PCI_CHIP_NM2360			0x0006
+#define PCI_CHIP_NM2380			0x0016

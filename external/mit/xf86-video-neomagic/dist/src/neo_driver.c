@@ -60,9 +60,6 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "xf86RAC.h"
 #endif
 
-/* Drivers for PCI hardware need this */
-#include "xf86PciInfo.h"
-
 /* Drivers that need to access the PCI config space directly need this */
 #include "xf86Pci.h"
 
@@ -71,9 +68,6 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 /* All drivers initialising the SW cursor need this */
 #include "mipointer.h"
-
-/* All drivers implementing backing store need this */
-#include "mibstore.h"
 
 /* All drivers using the mi colormap manipulation need this */
 #include "micmap.h"
@@ -1407,6 +1401,44 @@ NEOLoadPalette(
    } 
 }
 
+static Bool
+NEOCreateScreenResources(ScreenPtr pScreen)
+{
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
+	NEOPtr pNeo = NEOPTR(pScrn);
+	PixmapPtr pPixmap;
+	Bool ret;
+
+	pScreen->CreateScreenResources = pNeo->CreateScreenResources;
+	ret = pScreen->CreateScreenResources(pScreen);
+	pScreen->CreateScreenResources = NEOCreateScreenResources;
+
+	if (!ret)
+		return FALSE;
+
+	pPixmap = pScreen->GetScreenPixmap(pScreen);
+
+	if (!shadowAdd(pScreen, pPixmap, neoShadowUpdate,
+		NULL, 0, NULL)) {
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static Bool
+NEOShadowInit(ScreenPtr pScreen)
+{
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
+	NEOPtr pNeo = NEOPTR(pScrn);
+
+	if (!shadowSetup(pScreen))
+		return FALSE;
+	pNeo->CreateScreenResources = pScreen->CreateScreenResources;
+	pScreen->CreateScreenResources = NEOCreateScreenResources;
+
+	return TRUE;
+}
+
 /* Mandatory */
 static Bool
 NEOScreenInit(SCREEN_INIT_ARGS_DECL)
@@ -1621,7 +1653,6 @@ NEOScreenInit(SCREEN_INIT_ARGS_DECL)
                    "Acceleration %s Initialized\n",ret ? "" : "not");
     } 
 
-    miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
     xf86SetSilkenMouse(pScreen);
 
@@ -1658,7 +1689,7 @@ NEOScreenInit(SCREEN_INIT_ARGS_DECL)
 #if 0
 	ShadowFBInit(pScreen, nPtr->refreshArea);
 #else
-	shadowInit (pScreen, neoShadowUpdate, 0);
+	NEOShadowInit (pScreen);
 #endif
     }
     
