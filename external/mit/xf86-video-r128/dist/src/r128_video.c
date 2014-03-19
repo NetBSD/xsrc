@@ -673,7 +673,7 @@ R128DisplayVideo422(
         v_inc_shift++;
     if (pScrn->currentMode->Flags & V_DBLSCAN)
         v_inc_shift--;
-    
+
     rmx_active = INREG(R128_FP_VERT_STRETCH) & R128_VERT_STRETCH_ENABLE;
     if (rmx_active) {
         v_inc = ((src_h * pScrn->currentMode->CrtcVDisplay / info->PanelYRes) << v_inc_shift) / drw_h;
@@ -757,7 +757,7 @@ R128DisplayVideo420(
         v_inc_shift++;
     if (pScrn->currentMode->Flags & V_DBLSCAN)
         v_inc_shift--;
-    
+
     rmx_active = INREG(R128_FP_VERT_STRETCH) & R128_VERT_STRETCH_ENABLE;
     if (rmx_active) {
         v_inc = ((src_h * pScrn->currentMode->CrtcVDisplay / info->PanelYRes) << v_inc_shift) / drw_h;
