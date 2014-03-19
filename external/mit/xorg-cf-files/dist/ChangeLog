@@ -1,3 +1,76 @@
+commit 2e0400cfc1d946f22efd40a6780a830d2210c83d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jul 22 22:23:02 2013 -0700
+
+    xorg-cf-files 1.0.5
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6028282ab3270b392ca5139bf2ddb66fee683a25
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 7 17:39:05 2013 -0700
+
+    sun.cf: stop linking libraries merged into libc in later Solaris releases
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f39ce4263c1fdc9ebd56ad721bf34736a861066e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jun 30 12:46:18 2013 -0700
+
+    Remove xprint_host.def
+    
+    Was used for controlling build of Xprint server & components in the
+    old monolithic tree, not relevant for imake's remaining tasks of
+    building old X programs/libraries from outside the monolith that
+    haven't yet moved to a newer build system.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 31f5bd379984f78bbbecf493e6344664ef1d83df
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jun 30 12:41:15 2013 -0700
+
+    Trim trailing whitespace
+    
+    Performed with: perl -i -p -e 's{[\t ]+$}{}' *
+    Verified with: git diff --ignore-space-at-eol
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0d1be73c26f3636e024637d12c3befd8a9956cfc
+Author: Riku Voipio <riku.voipio@linaro.org>
+Date:   Mon Apr 22 14:24:13 2013 +0300
+
+    Add Aarch64 support
+    
+    This patch is based on follow patch by Dirk Müller <dirk@dmllr.de> :
+    
+    https://build.opensuse.org/package/view_file?expand=1&file=aarch64-support.diff&package=xorg-cf-files&project=devel%3AARM%3AAArch64%3A12.3
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6630dfc049ab9a00807befe9e1d9853dbc703050
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Aug 6 21:56:07 2012 -0700
+
+    Update xorgversion.def from 7.6 to 7.7
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 509259ea17285eda77bdc07161298af767447e67
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Aug 2 17:55:47 2012 -0700
+
+    On Solaris 11 & later, use /usr/gnu/bin/install for InstallCmd
+    
+    Older Solaris releases use /usr/ucb/install from the SunOS 4 compatibility
+    packages, but the EOL of that package has been announced now that it has
+    been 20 years since the SunOS 4.x -> Solaris 2.x transition.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Jay Cotton <jay.cotton@oracle.com>
+
 commit a724e4438e76438a9524ea7b112adc9d8e075ccb
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Wed Jan 5 20:31:00 2011 -0800

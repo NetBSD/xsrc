@@ -71,7 +71,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 /* Mkstemp is there since 1.2 (at least) */
 #if (!(OSMajorVersion == 0 || \
-       (OSMajorVersion == 1 && OSMinorVersion < 2))) 
+       (OSMajorVersion == 1 && OSMinorVersion < 2)))
 #define HasMkstemp		YES
 #endif
 /* But the standalone mktemp doesn't exist before NetBSD 1.5*/
@@ -87,7 +87,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # endif
 #endif
 
-#if (OSMajorVersion == 1 && OSMinorVersion >= 5 || OSMajorVersion > 1) 
+#if (OSMajorVersion == 1 && OSMinorVersion >= 5 || OSMajorVersion > 1)
 #define HasGetIfAddrs		YES
 #endif
 
@@ -130,7 +130,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # endif
 # define SystemMTDefines	-D_REENTRANT
 # define MTSafeAPIDefines	-DXUSE_MTSAFE_API -DXNO_MTSAFE_PWDAPI
-#else 
+#else
 # define ThreadedX		NO
 #endif
 
@@ -192,7 +192,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  * XXX May not be correct on NetBSD/pmax (ELF, but might not have
  * working shared libs).
  *
- * Disabled for NetBSD/vax until I figure out the scheme. --CS 
+ * Disabled for NetBSD/vax until I figure out the scheme. --CS
  */
 #if ((OSMajorVersion > 0) && defined(i386Architecture)) || \
     defined(PpcArchitecture) || defined(AMD64Architecture)
@@ -212,7 +212,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 /* All ELF NetBSD systems support Weak symbols */
-#define HasWeakSymbols		UseElfFormat 
+#define HasWeakSymbols		UseElfFormat
 
 #ifdef i386Architecture
 # ifndef DefaultGcc2i386Opt
@@ -254,7 +254,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # ifndef XFree86ConsoleDefines
 #  if (OSMajorVersion == 1 && ((OSMinorVersion == 3 && OSTeenyVersion >= 6) \
 	                       || OSMinorVersion >= 4) \
-       || OSMajorVersion >= 2)  
+       || OSMajorVersion >= 2)
 #   define XFree86ConsoleDefines -DPCCONS_SUPPORT -DPCVT_SUPPORT -DWSCONS_SUPPORT
 #  else
 #   define XFree86ConsoleDefines -DPCCONS_SUPPORT -DPCVT_SUPPORT
@@ -327,7 +327,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #ifndef HasZlib
 #define HasZlib			  YES
 #endif
-#endif 
+#endif
 
 #define	AdmDir			/var/log
 
@@ -336,7 +336,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 /* NetBSD doesn't have gperf in the base install */
 #define DontRebuildGperfOutput	YES
 
-/* 
+/*
  * NetBSD doesn't have perl in default system
  * you may override this in host.def if you installed perl from the packages
  */
@@ -453,8 +453,8 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 /*
  * ForceSubdirs - force make to build subdirectories
- * 
- * For BSD 4.4 make 
+ *
+ * For BSD 4.4 make
  */
 #define ForceSubdirs(dirs)						@@\
 dirs:	.EXEC								@@\
@@ -577,7 +577,7 @@ InstallManPageAliasesBase(file,destdir,aliases)
 
 #ifndef HasSharedLibraries
 #define HasSharedLibraries	NO
-#endif 
+#endif
 
 /*
  * Unresolved references are fatal on NetBSD 1.5 for libGL, which is
@@ -618,9 +618,9 @@ InstallManPageAliasesBase(file,destdir,aliases)
 #endif
 
 /*
- * XFree86 uses its own (more portable) database routines to speed up 
+ * XFree86 uses its own (more portable) database routines to speed up
  * the RGB database lookups
- * However, if you want to use ndbm anyway, you can set that to NO in 
+ * However, if you want to use ndbm anyway, you can set that to NO in
  * site.def
  */
 #ifndef UseRgbTxt
@@ -675,9 +675,9 @@ sed 's/\.[0-9]*$$//'`
 #define BuildServer	NO
 #endif
 
-/* 
- * General settings for all platforms 
- */ 
+/*
+ * General settings for all platforms
+ */
 #ifndef SharedLibXdmGreet
 #define SharedLibXdmGreet NO
 #endif

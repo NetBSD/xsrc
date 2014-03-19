@@ -95,7 +95,7 @@ install.man::                                                           @@\
 # define DefaultCDebugFlags     DefaultGcc2i386Opt
 # define OptimizedCDebugFlags   DefaultGcc2i386Opt
 #else
-# define DefaultCCOptions       -dy 
+# define DefaultCCOptions       -dy
 # define CcCmd                  cc
 # define ExtraLoadOptions       -b elf
 # define DefaultCDebugFlags     -O2
@@ -120,12 +120,12 @@ install.man::                                                           @@\
 #endif
 
 #ifndef ForceNormalLib
-# define ForceNormalLib         YES 
+# define ForceNormalLib         YES
 #endif
 
 #define SharedLibXmu            NO
 #define SystemV                 YES
-#define LdCombineFlags          -r 
+#define LdCombineFlags          -r
 
 #define HasLdRunPath            YES
 #define HasPoll                 YES

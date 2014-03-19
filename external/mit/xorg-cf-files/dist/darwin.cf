@@ -311,7 +311,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 /*
  * BundleProgramTarget - Generate rules for compiling, linking and
- * installing a bundle executable. 
+ * installing a bundle executable.
  */
 #ifndef BundleProgramTarget
 #define BundleProgramTarget(program,loader,subdirs,objs,deplib,syslib,dstdir) @@\

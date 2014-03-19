@@ -44,10 +44,10 @@ XCOMM platform:  $XFree86: xc/config/cf/QNX4.cf,v 1.3 2000/07/07 20:06:56 tsi Ex
 #define LibraryCCOptions	-5s -Otx -Wc,-r -b -j -Wc,-ei -zp4 -mf
 #define ServerCCOptions		-5s -Otx -Wc,-r -T1 -M -N4096000 -j -b -mf -Wc,-ei -Wc,-s -zp4 -llibmalloc
 #define LocalLibraries
-#define ExtraLibraries		-lsocket -lunix 
+#define ExtraLibraries		-lsocket -lunix
 #define CLibrary
 #define PosixLibraries
-#define ConnectionFlags 	-DUNIXCONN -DTCPCONN 
+#define ConnectionFlags 	-DUNIXCONN -DTCPCONN
 #define CppCmd			/usr/X11R6/bin/cpp
 
 #define HasShadowPasswd		YES
@@ -89,9 +89,9 @@ XCOMM platform:  $XFree86: xc/config/cf/QNX4.cf,v 1.3 2000/07/07 20:06:56 tsi Ex
 
 #define StandardCppDefines	-traditional StandardDefines
 #define StandardDefines OSDefines SourceDefines
-#define ServerOSDefines -DDDXTIME XFree86ServerOSDefines 
+#define ServerOSDefines -DDDXTIME XFree86ServerOSDefines
 #define ServerExtraDefines XFree86ServerDefines
-#define ExtraFilesToClean       *.err *.map 
+#define ExtraFilesToClean       *.err *.map
 
 #include <QNX4.rules>
 #include <xorg.cf>

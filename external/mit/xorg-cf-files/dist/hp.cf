@@ -19,12 +19,12 @@ XCOMM operating system:  OSName (OSMajorVersion.OSMinorVersion.OSTeenyVersion)
 #define YaccFlags -Nm15000
 
 /*
- * C++ compiler setup.  This file knows what options to use with 
+ * C++ compiler setup.  This file knows what options to use with
  * certain compilers, including HP C++ and CenterLine C++.
- * 
- * For HP C++, define HasHPCplusplus to YES in site.def.  
+ *
+ * For HP C++, define HasHPCplusplus to YES in site.def.
  * For CenterLine C++, define HasCenterLineCplusplus to YES in site.def.
- * For other compilers, define HasCplusplus to YES in site.def, and 
+ * For other compilers, define HasCplusplus to YES in site.def, and
  *    check to see if you need to provide values for CplusplusOptions
  *    and/or DefaultCplusplusOptions.
  *
@@ -44,7 +44,7 @@ XCOMM operating system:  OSName (OSMajorVersion.OSMinorVersion.OSTeenyVersion)
 # ifndef  CplusplusCmd
 #  define CplusplusCmd 			/opt/CC/bin/CC
 # endif
-# ifndef  CplusplusDependIncludes 
+# ifndef  CplusplusDependIncludes
 #  define CplusplusDependIncludes	-I/opt/CC/include/CC
 # endif
 #endif
@@ -69,7 +69,7 @@ XCOMM operating system:  OSName (OSMajorVersion.OSMinorVersion.OSTeenyVersion)
 # ifndef OptimizedCplusplusDebugFlags
 #  define OptimizedCplusplusDebugFlags	-O
 # endif
-# ifndef CplusplusDependIncludes 
+# ifndef CplusplusDependIncludes
 #  define CplusplusDependIncludes -I/usr/local/CenterLine/clc++/pa-hpux8/incl
 # endif
 #endif

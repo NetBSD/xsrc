@@ -1,6 +1,6 @@
 XCOMM $XFree86: xc/config/cf/cygwin.tmpl,v 3.18 2003/10/19 08:27:05 herrb Exp $
 
-#define SharedX11Reqs 
+#define SharedX11Reqs
 #define SharedXlibi18nReqs	$(LDPRELIB) $(XONLYLIB)
 #define SharedOldXReqs		$(LDPRELIB) $(XONLYLIB)
 #define SharedXReqs		$(XTOOLLIB) $(XPLIB) $(XLIB) $(LDPOSTLIBS)
@@ -19,7 +19,7 @@ XCOMM $XFree86: xc/config/cf/cygwin.tmpl,v 3.18 2003/10/19 08:27:05 herrb Exp $
 #define SharedGLUReqs		$(LDPRELIB) $(XLIB) $(GLXLIB)
 #define SharedXfontReqs		$(LDPRELIB) $(FONTSTUBLIB) GzipLibrary $(FREETYPE2LIB)
 #define SharedFontencReqs	$(LDPRELIB) GzipLibrary
-#define SharedXxf86vmReqs	$(LDPRELIB) $(XLIB) 
+#define SharedXxf86vmReqs	$(LDPRELIB) $(XLIB)
 #define SharedXxf86miscReqs	$(LDPRELIB) $(XLIB)
 #define SharedXpmReqs		$(LDPRELIB) $(XLIB)
 #define SharedXxf86dgaReqs	$(LDPRELIB) $(XLIB)
@@ -39,7 +39,7 @@ XCOMM $XFree86: xc/config/cf/cygwin.tmpl,v 3.18 2003/10/19 08:27:05 herrb Exp $
 #define SharedxkbuiReqs		$(LDPRELIB) $(XKBFILELIB) $(XONLYLIB)
 #define SharedXmuuReqs		$(LDPRELIB) $(XTOOLLIB) $(XLIB)
 #define SharedXrandrReqs	$(LDPRELIB) $(XRENDERLIB) $(XLIB)
-#define SharedXcursorReqs	$(LDPRELIB) $(XRENDERLIB) $(XLIB) 
+#define SharedXcursorReqs	$(LDPRELIB) $(XRENDERLIB) $(XLIB)
 #define SharedXfixesReqs	$(LDPRELIB) $(XLIB)
 #define SharedXdamageReqs	$(LDPRELIB) $(XFIXESLIB) $(XLIB)
 #define SharedXcompositeReqs	$(LDPRELIB) $(XDAMAGELIB) $(XFIXESLIB) $(XLIB)

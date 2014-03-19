@@ -46,7 +46,7 @@ XCOMM $XFree86: xc/config/cf/bsdLib.rules,v 3.27 2003/11/20 00:41:37 dawes Exp $
 #define InstallSharedLibrary(libname,rev,dest)				@@\
 install:: Concat(lib,libname.so.rev)					@@\
 	MakeDir($(DESTDIR)dest)						@@\
-	$(INSTALL) -c $(INSTLIBFLAGS) Concat(lib,libname.so.rev) $(DESTDIR)dest 
+	$(INSTALL) -c $(INSTLIBFLAGS) Concat(lib,libname.so.rev) $(DESTDIR)dest
 @@\
 
 #endif /* InstallSharedLibrary */
@@ -494,7 +494,7 @@ clean::									@@\
 #define InstallAoutSharedLibrary(libname,rev,dest)			@@\
 install:: Concat(aout/lib,libname.so.rev)				@@\
 	MakeDir($(DESTDIR)dest)						@@\
-	$(INSTALL) -c $(INSTLIBFLAGS) Concat(aout/lib,libname.so.rev) $(DESTDIR)dest 
+	$(INSTALL) -c $(INSTLIBFLAGS) Concat(aout/lib,libname.so.rev) $(DESTDIR)dest
 @@\
 
 #endif /* InstallAoutSharedLibrary */

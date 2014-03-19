@@ -8,7 +8,7 @@ XCOMM operating system:  OSName
 #define OSMajorVersion		9
 #endif
 #ifndef OSMinorVersion
-#define OSMinorVersion		0 
+#define OSMinorVersion		0
 #endif
 #ifndef VersionNumber
 #define VersionNumber 		0.0.0.0
@@ -25,8 +25,8 @@ XCOMM operating system:  OSName
 #define InstKmemFlags		-g kmem -m 2711 -v $(VERSION)
 #define InstScriptFlags		-m 0755 -g bin
 #define InstManFlags		-m 0444 -g bin
-#define DefaultCCOptions    	-fn -tm c1 
-#define LibraryCCOptions        -fx -tm c1 
+#define DefaultCCOptions    	-fn -tm c1
+#define LibraryCCOptions        -fx -tm c1
 #define StripFlags		-r -x
 #define HasSecureOS		YES
 #define BuildExamples		YES

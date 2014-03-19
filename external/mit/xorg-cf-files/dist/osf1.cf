@@ -67,8 +67,8 @@ XCOMM operating system: OSName (OSMajorVersion.OSMinorVersion)
  * for shared libraries first, then, if it can't find a shared lib, it
  * will use a static lib. By using -oldstyle_liblookup the linker will
  * follow "normal" semantics for linking libraries and will get the
- * static libraries we really want. By 3.2 they no longer have libXdmcp 
- * and libXau as shared libraries and we can omit -oldstyle_liblookup. 
+ * static libraries we really want. By 3.2 they no longer have libXdmcp
+ * and libXau as shared libraries and we can omit -oldstyle_liblookup.
  * (What did they have in 3.1?)
  */
 #if OSMajorVersion == 3 && OSMinorVersion == 0
@@ -88,27 +88,27 @@ XCOMM operating system: OSName (OSMajorVersion.OSMinorVersion)
 /*
  * C++ compiler setup.  This file knows what options to use with the
  * DEC C++ compiler, and may learn about other compilers in the future.
- * 
- * For DEC C++, define HasDECCplusplus to YES in site.def.  
+ *
+ * For DEC C++, define HasDECCplusplus to YES in site.def.
  *
  * For g++ 2.6.x, define HasGcc2ForCplusplus to YES in site.def.
  *
- * For other compilers, define HasCplusplus to YES in site.def, and 
+ * For other compilers, define HasCplusplus to YES in site.def, and
  *    check to see if you need to provide values for CplusplusOptions
  *    and/or DefaultCplusplusOptions.
  *
  * In any case, you may also need to set CplusplusDependIncludes.
  *
- * Note: For DEC C++, the -call_shared option really only needs to 
+ * Note: For DEC C++, the -call_shared option really only needs to
  * appear when linking C++ executables, not when actually compiling
  * the C++ sources.  But since there's no imake variable that lets
  * us insert flags only into the C++ link stage, we use -call_shared
- * on all compilations when building executables.  This could be 
+ * on all compilations when building executables.  This could be
  * considered a deficiency in the current imake configuration
  */
 
 #if HasDECCplusplus
-#ifndef HasCplusplus 
+#ifndef HasCplusplus
 #define HasCplusplus YES
 #endif
 #ifndef CplusplusCmd
@@ -117,7 +117,7 @@ XCOMM operating system: OSName (OSMajorVersion.OSMinorVersion)
 #ifndef CplusplusFilt
 # define CplusplusFilt /usr/bin/demangle
 #endif
-#ifndef CplusplusDependIncludes 
+#ifndef CplusplusDependIncludes
 #define CplusplusDependIncludes -D__DECCXX -I/usr/include/cxx
 #endif
 #ifndef CplusplusLibDir
@@ -135,7 +135,7 @@ XCOMM operating system: OSName (OSMajorVersion.OSMinorVersion)
 #if HasGcc2ForCplusplus
 #ifndef CplusplusLibC
 #define CplusplusLibC `$(CXX) -print-libgcc-file-name`
-#endif 
+#endif
 #endif /* HasGcc2ForCplusplus */
 
 #ifdef CplusplusLibDir

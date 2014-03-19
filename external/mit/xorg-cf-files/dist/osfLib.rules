@@ -55,7 +55,7 @@ install:: Concat(lib,libname.so.rev) 					@@\
 #ifndef PackageName(libname)
 #if ModernOSF1
 #define PackageName(libname) /**/
-#define Objects(objlist) -all objlist -none 
+#define Objects(objlist) -all objlist -none
 #else
 #define PackageName(libname) -package libname
 #define Objects(objlist) objlist

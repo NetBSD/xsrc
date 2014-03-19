@@ -198,7 +198,7 @@ install:: Concat(lib,libname.so)					@@\
  * build it into a different name so that the we do not hose people by having
  * the library gone for long periods.
  *
- * IBM uses an unusual shared object file name (shr4.o) in some libraries. 
+ * IBM uses an unusual shared object file name (shr4.o) in some libraries.
  * Duplicate this behavior to preserve compatibility with IBM's libraries.
  */
 #if OSMajorVersion < 5

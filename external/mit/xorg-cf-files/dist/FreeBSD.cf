@@ -101,8 +101,8 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define HasWeakSymbols		UseElfFormat
 
 /*
- * Multi-thread safe libs 
- */	
+ * Multi-thread safe libs
+ */
 /* 2.2.7 and later has libc_r (POSIX threads) */
 #if OSMajorVersion == 2 && OSMinorVersion == 2 && OSTeenyVersion >= 7 || \
     OSMajorVersion >= 3
@@ -257,7 +257,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 /*
- * SSE and 3DNow will be autodetected, so binutils is the only 
+ * SSE and 3DNow will be autodetected, so binutils is the only
  * requirement for enabling this.  By 4.2 they were all supported.
  */
 #if defined(AMD64Architecture) || defined(i386Architecture) && \
@@ -273,37 +273,37 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define HasSSESupport		NO
 #endif
 
-/* 
+/*
  * This doesn't work the way it does on every other system. On FreeBSD it's
- * only a "hint, not a demand", whatever that means. Note that this is not 
+ * only a "hint, not a demand", whatever that means. Note that this is not
  * what it says in the ld and ld.so man pages, which are rather vague on the
  * matter.
  *
- * But we do know that if a) you do what the X Project team does and set your 
- * ProjectRoot to something like "/X11", and b) you have other X libraries, 
- * e.g. in /usr/X11R6/lib, and you have added /usr/X11R6/lib to your 
+ * But we do know that if a) you do what the X Project team does and set your
+ * ProjectRoot to something like "/X11", and b) you have other X libraries,
+ * e.g. in /usr/X11R6/lib, and you have added /usr/X11R6/lib to your
  * ld.so.cache with ldconfig, then any programs linked with this "hint" will
- * find that ld.so ignores the "hint" at runtime and loads the libraries in 
+ * find that ld.so ignores the "hint" at runtime and loads the libraries in
  * the ld.so.cache, i.e.the wrong ones, instead! Empirically we find that
  * the run-path is only used as a last resort to find the libraries, after
  * the LD_LIBRARY_PATH and ld.so.cache.
  *
  * N. B. to FreeBSD users who are not familiar with the semantics of the run-
- * path on other systems. The run-path is akin to a per-program ld.so.cache. 
- * If a program is linked with a run-path, that run-path should take 
- * precedence over _everything_ else! In my opinion ldconfig and the 
+ * path on other systems. The run-path is akin to a per-program ld.so.cache.
+ * If a program is linked with a run-path, that run-path should take
+ * precedence over _everything_ else! In my opinion ldconfig and the
  * ld.so.cache should be deprecated immediately now that FreeBSD has run-
- * paths. Any program that needs libraries that are outside the "well known" 
+ * paths. Any program that needs libraries that are outside the "well known"
  * locations should be linked with a run-path.
  *
  * All of which begs the question: If this option doesn't work in any useful
  * way, why did they (FreeBSD) bother to add it? It would be nice if FreeBSD
  * would fix ld.so so that run-paths are truly useful.
  *
- * Using run-paths is added with the intent that vendors who ship X for 
- * FreeBSD should use it too. Once everyone uses it then there will be no 
- * reason for FreeBSD to assume that it knows where X libraries are installed 
- * and they can remove it from the list of directories they add to ld.so.cache 
+ * Using run-paths is added with the intent that vendors who ship X for
+ * FreeBSD should use it too. Once everyone uses it then there will be no
+ * reason for FreeBSD to assume that it knows where X libraries are installed
+ * and they can remove it from the list of directories they add to ld.so.cache
  * in their /etc/rc file.
  */
 
@@ -528,7 +528,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 #define ServerExtraSysLibs	IoLibrary
- 
+
 #ifndef PamLibraries
 #define PamLibraries		-lpam DlLibrary
 #endif

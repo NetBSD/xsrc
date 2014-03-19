@@ -93,7 +93,7 @@ objs:	depends								@@\
 
 
 /*
- * SpecialDebuggedAndProfiledObjectRule - generate rules to compile a file 
+ * SpecialDebuggedAndProfiledObjectRule - generate rules to compile a file
  * with special flags and to make debuggable and profiled versions.
  */
 #ifndef SpecialDebuggedAndProfiledObjectRule

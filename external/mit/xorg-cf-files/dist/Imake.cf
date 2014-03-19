@@ -2,14 +2,14 @@ XCOMM $XdotOrg: xc/config/cf/Imake.cf,v 1.7 2005/03/02 11:20:29 gisburn Exp $
 XCOMM $Xorg: Imake.cf,v 1.4 2000/08/17 19:41:45 cpqbld Exp $
 /*
  * To add support for another platform:
- * 
- *     1.  Identify a machine-specific cpp symbol.  If your preprocessor 
+ *
+ *     1.  Identify a machine-specific cpp symbol.  If your preprocessor
  *         does not have any built in, you will need to add the symbol to the
  *         cpp_argv table in config/imake/imakemdep.h and rebuild imake with
  *         the BOOTSTRAPCFLAGS variable set (see the macII for an example).
  *
  *     2.  Add all machine-specific cpp symbols (either defined by you or by
- *         the preprocessor or compiler) to the predefs table in 
+ *         the preprocessor or compiler) to the predefs table in
  *         config/imake/imakemdep.h.
  *
  *     3.  But a new #ifdef block below that defines MacroIncludeFile and
@@ -174,7 +174,7 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.88 2003/12/16 21:30:21 herrb Exp $
 #   define Mvme68kArchitecture
 #   undef mvme68k
 #  endif
-#  if defined(sun3) 
+#  if defined(sun3)
 #   define Sun3Architecture
 #   undef sun3
 #  endif
@@ -618,7 +618,7 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.88 2003/12/16 21:30:21 herrb Exp $
 #ifdef MOTOROLA
 # define MacroIncludeFile <moto.cf>
 # define MacroFile moto.cf
-# undef MOTOROLA	
+# undef MOTOROLA
 # ifdef SYSV
 #  define MotoR3Architecture
 # endif
@@ -646,8 +646,8 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.88 2003/12/16 21:30:21 herrb Exp $
 # ifdef i386
 # undef i386
 #  ifdef ISC
-#   define i386Architecture	
-#   define i386SVR3Architecture	
+#   define i386Architecture
+#   define i386SVR3Architecture
 #   define MacroIncludeFile <isc.cf>
 #   define MacroFile isc.cf
 #   define i386IscArchitecture
@@ -689,8 +689,8 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.88 2003/12/16 21:30:21 herrb Exp $
 #  undef SVR4
 # else /* ! SVR4 */
 #  ifdef ISC
-#   define i386Architecture	
-#   define i386SVR3Architecture	
+#   define i386Architecture
+#   define i386SVR3Architecture
 #   define MacroIncludeFile <isc.cf>
 #   define MacroFile isc.cf
 #   define i386IscArchitecture
@@ -945,9 +945,9 @@ XCOMM Keep cpp from replacing path elements containing i486/i586/i686
 #  endif
 #  undef __sparc__
 # endif
-# ifdef ia64 
+# ifdef ia64
 #  define ia64Architecture
-#  undef ia64 
+#  undef ia64
 # endif
 # ifdef __ia64__
 #  ifndef ia64Architecture
@@ -1022,6 +1022,10 @@ XCOMM Keep cpp from replacing path elements containing i486/i586/i686
 #   define AMD64Architecture
 #  endif
 # endif
+# if defined(__aarch64__)
+#   define AArch64Architecture
+#   undef __aarch64__
+# endif
 #endif /* linux || __GLIBC__ */
 
 #if (defined(__Lynx__) || defined(Lynx)) && (defined(i386) || defined(__i386__) || defined(__x86__) || defined(__powerpc__) || defined(__sparc__) || defined(sparc))
@@ -1093,7 +1097,7 @@ XCOMM Keep cpp from replacing path elements containing i486/i586/i686
 # define NecArchitecture
 #endif
 
-#ifdef minix 
+#ifdef minix
 #define MacroIncludeFile <minix.cf>
 #define MacroFile minix.cf
 #undef minix

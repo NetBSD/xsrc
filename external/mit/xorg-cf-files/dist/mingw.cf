@@ -118,7 +118,7 @@
 # endif
 # ifndef DefaultCCOptions
 #  if defined(UseInstalled)
-#   define DefaultCCOptions 
+#   define DefaultCCOptions
 #  else
 #   define DefaultCCOptions GccWarningOptions
 #  endif
@@ -148,7 +148,7 @@
 #define HasSnprintf		NO
 
 #define HasFfs			NO
-                                  
+
 #ifndef HasMakefileSafeInclude
 # define HasMakefileSafeInclude YES
 #endif
@@ -289,8 +289,8 @@
 
 /*
  * -DFD_SETSIZE=256 is needed for xfs and the xserver. cygwin defines the
- * FD_SETSIZE as 64 but some code expects it to be larger. 
- */ 
+ * FD_SETSIZE as 64 but some code expects it to be larger.
+ */
 #define StandardDefines		-D__i386__ -DWIN32_LEAN_AND_MEAN -DX_LOCALE \
 				-D_X86_ -DWIN32 -D_XOPEN_SOURCE \
 				-D_POSIX_C_SOURCE=199309L -D_BSD_SOURCE \
@@ -319,7 +319,7 @@
 #define BuildLBX		NO
 
 /*
- * This requires the pthreads-win32 library 
+ * This requires the pthreads-win32 library
  * It is available from http://www.sourceware.org/pthreads-win32
  */
 #ifndef HasPThreads
@@ -331,7 +331,7 @@
 # define BuildServersOnly	YES
 #endif
 
-/* Enable those parts that do work and are required for running Xming */ 
+/* Enable those parts that do work and are required for running Xming */
 #ifndef BuildXextLib
 # define BuildXextLib		YES
 #endif
@@ -387,43 +387,43 @@
 #if BuildXWinClipboard
 # define XWinClipboardDefines	-DXWIN_CLIPBOARD
 #else
-# define XWinClipboardDefines 
+# define XWinClipboardDefines
 #endif /* BuildXWinClipboard */
 #if BuildXWinEmulatePseudo
 # define XWinEmulatePseudoDefines -DXWIN_EMULATEPSEUDO
 #else
-# define XWinEmulatePseudoDefines 
+# define XWinEmulatePseudoDefines
 #endif /* BuildXWinEmulatePseudo */
 #if BuildXWinMultiWindow
 # define XWinMultiWindowDefines	-DXWIN_MULTIWINDOW
 #else
-# define XWinMultiWindowDefines 
+# define XWinMultiWindowDefines
 #endif /* BuildXWinMultiWindow */
 #if BuildXWinMultiWindowExtWM
 # define BuildRootless		YES
 # define XWinMultiWindowExtWMDefines -DXWIN_MULTIWINDOWEXTWM
 #else /* BuildXWinMultiWindowExtWM */
-# define XWinMultiWindowExtWMDefines 
+# define XWinMultiWindowExtWMDefines
 #endif /* BuildXWinMultiWindowExtWM */
 #if BuildXWinNativeGDI
 # define XWinNativeGDIDefines	-DXWIN_NATIVEGDI
 #else
-# define XWinNativeGDIDefines 
+# define XWinNativeGDIDefines
 #endif /* BuildXWinNativeGDI */
 #if BuildXWinPrimaryFB
 # define XWinPrimaryFBDefines	-DXWIN_PRIMARYFB
 #else
-# define XWinPrimaryFBDefines 
+# define XWinPrimaryFBDefines
 #endif /* BuildXWinPrimaryFB */
 #if BuildXWinUpdateStats
 # define XWinUpdateStatsDefines	-DXWIN_UPDATESTATS
 #else
-# define XWinUpdateStatsDefines 
+# define XWinUpdateStatsDefines
 #endif /* BuildXWinUpdateStats */
 #if BuildXWinXF86Config
 # define XWinXF86ConfigDefines	-DXWIN_XF86CONFIG
 #else
-# define XWinXF86ConfigDefines 
+# define XWinXF86ConfigDefines
 #endif /* BuildXWinXF86Config */
 
 #if HasPThreads
@@ -454,7 +454,7 @@
 #define ServerExtraDefines	-DGCCUSESGAS XWinServerDefines \
 				AllocateLocalDefines
 #define ConnectionFlags		-DTCPCONN
-#define ExtraLibraries 
+#define ExtraLibraries
 #define InstUidFlags		-m 4711
 #define UseRgbTxt		YES
 #define ExtraFilesToClean	*.obj *.orig *.rej junk.c *.exe *.dll *.lib *~

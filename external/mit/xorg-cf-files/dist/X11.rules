@@ -11,9 +11,9 @@ XCOMM $XFree86: xc/config/cf/X11.rules,v 1.6 2001/01/17 16:22:31 dawes Exp $
 # define X11IsTopLevelProject	NO
 #endif
 
-/* 
+/*
  * If no clues are given assume X11 is in the tree, otherwise
- * UseInstalled overrides UseImports.  Do not do both. 
+ * UseInstalled overrides UseImports.  Do not do both.
  */
 #ifndef UseInstalledX11
 # define UseInstalledX11	NO
@@ -37,7 +37,7 @@ XCOMM $XFree86: xc/config/cf/X11.rules,v 1.6 2001/01/17 16:22:31 dawes Exp $
 
 #if defined(X11ProjectRoot)
 # define XBinDir	$(XPROJECTROOT)/bin
-#elif defined(ProjectRoot) 
+#elif defined(ProjectRoot)
 # define XBinDir	$(PROJECTROOT)/bin
 #else
 # define XBinDir	$(BINDIR)
@@ -80,7 +80,7 @@ XCOMM $XFree86: xc/config/cf/X11.rules,v 1.6 2001/01/17 16:22:31 dawes Exp $
 #define LdPostLibs	LdPostLib XLdPostLibs
 
 #ifndef TopXInclude
-# if ImportX11 
+# if ImportX11
 #  define TopXInclude	-I$(TOP)/imports/x11/include
 # elif !UseInstalledX11
 #  define TopXInclude	-I$(TOP)/exports/include
@@ -131,6 +131,6 @@ XCOMM $XFree86: xc/config/cf/X11.rules,v 1.6 2001/01/17 16:22:31 dawes Exp $
 
 #if  XtransFailSoft
 # define XtransFailDefine /**/
-#else 
+#else
 # define XtransFailDefine -DFAIL_HARD
 #endif

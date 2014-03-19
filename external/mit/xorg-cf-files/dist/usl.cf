@@ -52,7 +52,7 @@ XCOMM operating system: OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 #endif
 
 #ifndef LibraryCCOptions
-# define LibraryCCOptions	-D_REENTRANT -DFD_SETSIZE=16384 
+# define LibraryCCOptions	-D_REENTRANT -DFD_SETSIZE=16384
 #endif
 
 #define BootstrapCFlags		/* none needed */
@@ -94,7 +94,7 @@ XCOMM operating system: OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 #endif
 
 #define ServerExtraDefines	XFree86ServerDefines
-#ifndef ServerExtraSysLibs 
+#ifndef ServerExtraSysLibs
 # define ServerExtraSysLibs	$(CBRT) -lm USLDynamicFlags
 #endif
 
@@ -187,10 +187,10 @@ XCOMM operating system: OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 #ifndef UseSmartScheduler
 # define UseSmartScheduler	NO
 #endif
- 
+
 #define SharedLibXmu            YES
 
-#ifndef NothingOutsideProjectRoot 
+#ifndef NothingOutsideProjectRoot
 # define NothingOutsideProjectRoot YES
 #endif
 
@@ -219,7 +219,7 @@ XCOMM operating system: OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 
 #define HasPerl			YES
 #define HasPerl5		YES
- 
+
 /*
  * When generating templates the UnixWare 2.02 C++ compiler leaves
  * protected .i files behind.  Remove them so other people can

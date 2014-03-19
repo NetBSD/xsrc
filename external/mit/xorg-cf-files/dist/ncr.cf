@@ -56,7 +56,7 @@ XCOMM #define ExtensionOSDefines	-DXTESTEXT1
 #define ExtraFilesToClean	*.z
 
 /* Create man pages properly */
- 
+
 #define BookFormatManPages	YES
 #define ManDirectoryRoot	/usr/catman/X115
 #define ManSuffix		1X

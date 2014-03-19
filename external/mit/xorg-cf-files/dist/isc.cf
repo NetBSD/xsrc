@@ -110,7 +110,7 @@ XCOMM platform:  $XFree86: xc/config/cf/isc.cf,v 3.15 1999/07/10 12:17:09 dawes 
 # define UsePosix		YES
 #endif
 
-/* ISC 4.1Mu 
+/* ISC 4.1Mu
 #define IscCompileVersion	410
 */
 
@@ -132,19 +132,19 @@ XCOMM platform:  $XFree86: xc/config/cf/isc.cf,v 3.15 1999/07/10 12:17:09 dawes 
 #endif
 
 #if defined(UseXwctomb)
-# define XwctombDefine	-DUSE_XMBTOWC 
+# define XwctombDefine	-DUSE_XMBTOWC
 #else
-# define XwctombDefine	
-#endif 
+# define XwctombDefine
+#endif
 
 #if defined(UseChmod)
 # define IscCompatDefines	XwctombDefine -DUSE_CHMOD
 #else
 # define IscCompatDefines	XwctombDefine
-#endif 
+#endif
 
 #ifdef UsePosix
-# define PosixDefines		-posix -D_SYSV3 -D_POSIX_SOURCE 
+# define PosixDefines		-posix -D_SYSV3 -D_POSIX_SOURCE
 #else
 # define PosixDefines
 #endif
@@ -260,7 +260,7 @@ XCOMM operating system: OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 #endif
 
 #if HasGcc2
-# define CcCmd gcc 
+# define CcCmd gcc
 #endif
 
 #ifndef DefaultCplusplusOptions
@@ -268,7 +268,7 @@ XCOMM operating system: OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 #endif
 
 #ifndef ConnectionFlags
-#define ConnectionFlags -DLOCALCONN -DTCPCONN 
+#define ConnectionFlags -DLOCALCONN -DTCPCONN
 /* -DSTREAMSCONN -DUNIXCONN -- does not work on ISC SVR3 */
 #endif
 
