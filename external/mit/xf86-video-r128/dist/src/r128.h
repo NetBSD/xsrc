@@ -606,6 +606,7 @@ extern void        R128CCEFlushIndirect(ScrnInfoPtr pScrn, int discard);
 extern void        R128CCEReleaseIndirect(ScrnInfoPtr pScrn);
 extern void        R128CCEWaitForIdle(ScrnInfoPtr pScrn);
 extern int         R128CCEStop(ScrnInfoPtr pScrn);
+extern void	   R128CopySwap(uint8_t *dst, uint8_t *src, unsigned int size, int swap);
 
 #ifdef USE_EXA
 extern Bool	   R128EXAInit(ScreenPtr pScreen);
