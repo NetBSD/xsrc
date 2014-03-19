@@ -1,4 +1,3 @@
-/* $Xorg: xkill.c,v 1.5 2001/02/09 02:05:54 xorgcvs Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -26,7 +25,6 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xkill/xkill.c,v 1.5 2001/04/01 14:00:22 tsi Exp $ */
 
 /*
  * xkill - simple program for destroying unwanted clients
@@ -36,6 +34,10 @@ from The Open Group.
 /*
  * Warning, this is a very dangerous client....
  */
+
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,23 +50,21 @@ from The Open Group.
 
 #include <X11/Xmu/WinUtil.h>
 
-static Display *dpy = NULL;
 static char *ProgramName;
 
 #define SelectButtonAny (-1)
 #define SelectButtonFirst (-2)
 
 static int parse_button ( char *s, int *buttonp );
-static XID parse_id ( char *s );
-static XID get_window_id ( Display *dpy, int screen, int button, char *msg );
+static XID get_window_id ( Display *dpy, int screen, int button, const char *msg );
 static int catch_window_errors ( Display *dpy, XErrorEvent *ev );
 static int kill_all_windows ( Display *dpy, int screenno, Bool top );
 static int verify_okay_to_kill ( Display *dpy, int screenno );
 static Bool wm_state_set ( Display *dpy, Window win );
 static Bool wm_running ( Display *dpy, int screenno );
 
-static void
-Exit(int code)
+static void _X_NORETURN
+Exit(int code, Display *dpy)
 {
     if (dpy) {
 	XCloseDisplay (dpy);
@@ -72,32 +72,29 @@ Exit(int code)
     exit (code);
 }
 
-static void
+static void _X_NORETURN
 usage(void)
 {
-    static char *options[] = {
-"where options include:",
-"    -display displayname    X server to contact",
-"    -id resource            resource whose client is to be killed",
-"    -frame                  don't ignore window manager frames",
-"    -button number          specific button to be pressed to select window",
-"    -all                    kill all clients with top level windows",
-"",
-NULL};
-    char **cpp;
+    const char *options =
+"where options include:\n"
+"    -display displayname    X server to contact\n"
+"    -id resource            resource whose client is to be killed\n"
+"    -frame                  don't ignore window manager frames\n"
+"    -button number          specific button to be pressed to select window\n"
+"    -all                    kill all clients with top level windows\n"
+"    -version                print version and exit\n"
+"\n";
 
-    fprintf (stderr, "usage:  %s [-option ...]\n",
-	     ProgramName);
-    for (cpp = options; *cpp; cpp++) {
-	fprintf (stderr, "%s\n", *cpp);
-    }
-    Exit (1);
+    fprintf (stderr, "usage:  %s [-option ...]\n%s",
+	     ProgramName, options);
+    Exit (1, NULL);
 }
 
 int
 main(int argc, char *argv[])
 {
     int i;				/* iterator, temp variable */
+    Display *dpy = NULL;
     char *displayname = NULL;		/* name of server to contact */
     int screenno;			/* screen number of dpy */
     XID id = None;			/* resource to kill */
@@ -120,7 +117,12 @@ main(int argc, char *argv[])
 		continue;
 	      case 'i':			/* -id resourceid */
 		if (++i >= argc) usage ();
-		id = parse_id (argv[i]);
+		id = strtoul (argv[i], NULL, 0);
+		if (id == 0 || id >= 0xFFFFFFFFU) {
+		    fprintf (stderr, "%s:  invalid id \"%s\"\n",
+			     ProgramName, argv[i]);
+		    Exit (1, dpy);
+		}
 		continue;
 	      case 'b':			/* -button number */
 		if (++i >= argc) usage ();
@@ -132,6 +134,9 @@ main(int argc, char *argv[])
 	      case 'a':			/* -all */
 		kill_all = True;
 		continue;
+              case 'v':
+                puts(PACKAGE_STRING);
+                exit(0);
 	      default:
 		usage ();
 	    }
@@ -144,14 +149,14 @@ main(int argc, char *argv[])
     if (!dpy) {
 	fprintf (stderr, "%s:  unable to open display \"%s\"\n",
 		 ProgramName, XDisplayName (displayname));
-	Exit (1);
+	Exit (1, dpy);
     }
     screenno = DefaultScreen (dpy);
 
     if (kill_all) {
 	if (verify_okay_to_kill (dpy, screenno)) 
 	  kill_all_windows (dpy, screenno, top);
-	Exit (0);
+	Exit (0, dpy);
     }
 
     /*
@@ -165,7 +170,7 @@ main(int argc, char *argv[])
 	if (button_name && !parse_button (button_name, &button)) {
 	    fprintf (stderr, "%s:  invalid button specification \"%s\"\n",
 		     ProgramName, button_name);
-	    Exit (1);
+	    Exit (1, dpy);
 	}
 
 	if (button >= 0 || button == SelectButtonFirst) {
@@ -179,7 +184,7 @@ main(int argc, char *argv[])
 		fprintf (stderr, 
 			 "%s:  no pointer mapping, can't select window\n",
 			 ProgramName);
-		Exit (1);
+		Exit (1, dpy);
 	    }
 
 	    if (button >= 0) {			/* check button */
@@ -190,7 +195,7 @@ main(int argc, char *argv[])
 		    fprintf (stderr,
 	 "%s:  no button number %u in pointer map, can't select window\n",
 			     ProgramName, ub);
-		    Exit (1);
+		    Exit (1, dpy);
 	        }
 	    } else {				/* get first entry */
 		button = (int) ((unsigned int) pointer_map[0]);
@@ -222,7 +227,7 @@ main(int argc, char *argv[])
 	XSync (dpy, 0);
     }
 
-    Exit (0);
+    Exit (0, dpy);
     /*NOTREACHED*/
     return 0;
 }
@@ -236,9 +241,9 @@ parse_button(char *s, int *buttonp)
     for (cp = s; *cp; cp++) {
 	if (isascii (*cp) && isupper (*cp)) {
 #ifdef _tolower
-	    *cp = _tolower (*cp);
+	    *cp = (char) _tolower (*cp);
 #else
-	    *cp = tolower (*cp);
+	    *cp = (char) tolower (*cp);
 #endif /* _tolower */
 	}
     }
@@ -257,23 +262,8 @@ parse_button(char *s, int *buttonp)
     return (1);
 }
 
-
 static XID 
-parse_id(char *s)
-{
-    XID retval = None;
-    char *fmt = "%ld";			/* since XID is long */
-
-    if (s) {
-	if (*s == '0') s++, fmt = "%lo";
-	if (*s == 'x' || *s == 'X') s++, fmt = "%lx";
-	sscanf (s, fmt, &retval);
-    }
-    return (retval);
-}
-
-static XID 
-get_window_id(Display *dpy, int screen, int button, char *msg)
+get_window_id(Display *dpy, int screen, int button, const char *msg)
 {
     Cursor cursor;		/* cursor to use when selecting */
     Window root;		/* the current root */
@@ -288,7 +278,7 @@ get_window_id(Display *dpy, int screen, int button, char *msg)
     if (cursor == None) {
 	fprintf (stderr, "%s:  unable to create selection cursor\n",
 		 ProgramName);
-	Exit (1);
+	Exit (1, dpy);
     }
 
     printf ("Select %s with ", msg);
@@ -302,7 +292,7 @@ get_window_id(Display *dpy, int screen, int button, char *msg)
     if (XGrabPointer (dpy, root, False, MASK, GrabModeSync, GrabModeAsync, 
     		      None, cursor, CurrentTime) != GrabSuccess) {
 	fprintf (stderr, "%s:  unable to grab cursor\n", ProgramName);
-	Exit (1);
+	Exit (1, dpy);
     }
 
     /* from dsimple.c in xwininfo */
@@ -335,7 +325,7 @@ get_window_id(Display *dpy, int screen, int button, char *msg)
 
 
 static int 
-catch_window_errors(Display *dpy, XErrorEvent *ev)
+catch_window_errors(_X_UNUSED Display *dpy, _X_UNUSED XErrorEvent *ev)
 {
     return 0;
 }
@@ -386,7 +376,7 @@ verify_okay_to_kill(Display *dpy, int screenno)
     int count = XGetPointerMapping (dpy, pointer_map, 256);
     int i;
     int button;
-    static char *msg = "the root window";
+    const char *msg = "the root window";
     Window root = RootWindow (dpy, screenno);
     int okay = 0;
 
