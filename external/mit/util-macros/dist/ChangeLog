@@ -1,3 +1,161 @@
+commit 9bc8e154e53ee0ff8d09cc621ba762486f3e93fa
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Mon Dec 2 18:43:36 2013 -0500
+
+    Version bump: 1.18.0
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit fae36763f91f38dc9c4c388f267532889bb428ff
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Mon Dec 2 18:12:39 2013 -0500
+
+    XORG_TESTSET_CFLAG: add -fd which is the SUNCC -Wold-style-definition
+    
+    Seen in the XCB configuration and found missing in xorg.
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 71dc85d04b67dc9579de47ec9e51c3ae6dde91ce
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Dec 1 17:05:47 2013 -0500
+
+    XORG_WITH_DOXYGEN: check for the dot graphics utility
+    
+    It is part of the graphviz package and it may be used by doxygen if
+    the HAVE_DOT is set to "yes" in the doxygen configuration file.
+    
+    The calling module handles if the tool is mandatory or not.
+    Doxygen will work fine without it, but no fancy graphics.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 4846869cce5aafb0d2d2980f508ae320b599ac92
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Dec 1 10:07:50 2013 -0500
+
+    CWARNFLAGS: comment out -Wcast-qual
+    
+    On a full X build, this warning accounts for the 5,888 warnings on a total
+    of 12,042. The line is moved to the "noisy" section of warnings.
+    
+    There is a discussion about the pros and cons here:
+    http://lists.x.org/archives/xorg-devel/2013-November/039069.html
+    
+    Reviewed-by: Keith Packard <keithp@keithp.com>
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 72fdc868b56fe2b7bdc9a69872651baeca728fb6
+Author: Ross Burton <ross.burton@intel.com>
+Date:   Thu Oct 10 17:23:04 2013 +0100
+
+    xorg-macros.m4.in: use the autoconf cache for XORG_CHECK_MALLOC_ZERO
+    
+    Improve configure speed by checking the autoconf cache before compiling and
+    running the test.
+    
+    As this means cross-compilation environments can trivially seed this cache as
+    appropriate, remove the cross-compiling value (which for embedded systems using
+    uclibc is wrong).
+    
+    Reviewed-by: Gaetan Nadon <memsize@videotron.ca>
+    Signed-off-by: Ross Burton <ross.burton@intel.com>
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 52ed34418492c1538b8022a830a79fbc50ba3605
+Author: Bart Massey <bart@cs.pdx.edu>
+Date:   Thu Sep 12 01:33:25 2013 -0700
+
+    Revert "Interleaved C code and declarations is no longer a portability issue."
+    
+    This reverts commit 689ea0ec5d8b7594ba2fa9e27b2458cea8a58724.
+    
+    Community consensus is that, while this style is no longer a
+    portability issue, it's a style issue.
+
+commit 689ea0ec5d8b7594ba2fa9e27b2458cea8a58724
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Thu Aug 29 11:06:14 2013 +0900
+
+    Interleaved C code and declarations is no longer a portability issue.
+    
+    This was only supported from GCC 3.0 and OpenBSD was still using GCC 2.95
+    until recently.
+    
+    Signed-off-by: Arnaud Fontaine <arnau@debian.org>
+
+commit 052fa1dc1779de34ba69f68b7dc32b3c733c823e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Sep 6 23:34:33 2013 -0700
+
+    Version bump: 1.17.1
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e6a41a0c6a84b34c6dc173a0a41089d0ebaddac0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Sep 6 23:30:00 2013 -0700
+
+    Strip trailing whitespace
+    
+    sed -i 's/[[:space:]]*$//' *
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3683c2b2d0b5e7d57374860147ca827da596bad5
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Aug 5 16:00:20 2013 +0100
+
+    Use the right variable names for the compiler flags in XORG_TESTSET_CFLAG
+    
+    Whilst populating the xorg_cv_ cache entries, and the subsequent
+    xorg_testset_, we always include the FLAG_PREFIX in the name, to
+    distinguish between C and C++ iterations. However, in the body of the
+    test function, we dropped the FLAG_PREFIX expansion and so always used
+    the empty string and hence did not correctly detect incorrect flags.
+    
+    The bug was introduced with
+    commit 51f69514e65637f575df901ef942515e70314f6a
+    Author: Chase Douglas <chase.douglas@canonical.com>
+    Date:   Mon Mar 12 11:49:28 2012 -0700
+    
+        Separate unknown warning options by language
+    
+    Reported-and-tested-by: Sedat Dilek <sedat.dilek@gmail.com>
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+    Cc: Sedat Dilek <sedat.dilek@gmail.com>
+    Cc: Chase Douglas <chase.douglas@canonical.com>
+    Cc: Gaetan Nadon<memsize@videotron.ca>
+    Acked-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c98b41de5596c675c603ef43ae9570133f1a9921
+Author: Colin Walters <walters@verbum.org>
+Date:   Wed Jan 4 17:37:06 2012 -0500
+
+    autogen.sh: Implement GNOME Build API
+    
+    http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit bd25ef721dff995096efffef4dcc9275cea43d4f
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue Jan 15 13:44:31 2013 -0500
+
+    configure: Remove AM_MAINTAINER_MODE
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 0890e4003aacfa7113ab3f4e3ad7c5636f8e922a
+Author: Yaakov Selkowitz <yselkowitz@users.sourceforge.net>
+Date:   Tue Apr 3 18:43:02 2012 -0500
+
+    Fix spacing in XORG_TESTSET_CFLAG
+    
+    Signed-off-by: Yaakov Selkowitz <yselkowitz@users.sourceforge.net>
+    Reviewed-by: Gaetan Nadon <memsize@videotron.ca>
+
 commit c0c42057e0d357c144e7933ee413b522950a0f17
 Author: Gaetan Nadon <memsize@videotron.ca>
 Date:   Tue Mar 13 19:45:12 2012 -0400
