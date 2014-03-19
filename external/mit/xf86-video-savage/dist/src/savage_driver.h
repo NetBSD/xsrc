@@ -85,8 +85,6 @@
 #include "GL/glxint.h"
 #include "xf86drm.h"
 
-#include "compat-api.h"
-
 /* Totals 2 Mbytes which equals 2^16 32-byte vertices divided among up
  * to 32 clients. */
 #define SAVAGE_NUM_BUFFERS 32
@@ -152,6 +150,8 @@ typedef struct _server{
 } SAVAGEDRIServerPrivateRec, *SAVAGEDRIServerPrivatePtr;
 
 #endif
+
+#include "compat-api.h"
 
 typedef enum {
     MT_NONE,
