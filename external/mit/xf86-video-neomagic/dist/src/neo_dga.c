@@ -29,7 +29,6 @@
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "xf86Pci.h"
-#include "xf86PciInfo.h"
 #include "neo.h"
 #include "neo_reg.h"
 #include "dgaproc.h"
@@ -38,10 +37,10 @@
 static Bool NEO_OpenFramebuffer(ScrnInfoPtr, char **, unsigned char **, 
 					int *, int *, int *);
 static Bool NEO_SetMode(ScrnInfoPtr, DGAModePtr);
-static void NEO_Sync(ScrnInfoPtr);
 static int  NEO_GetViewport(ScrnInfoPtr);
 static void NEO_SetViewport(ScrnInfoPtr, int, int, int);
 #ifdef HAVE_XAA_H
+static void NEO_Sync(ScrnInfoPtr);
 static void NEO_FillRect(ScrnInfoPtr, int, int, int, int, unsigned long);
 static void NEO_BlitRect(ScrnInfoPtr, int, int, int, int, int, int);
 #if 0
@@ -57,8 +56,8 @@ DGAFunctionRec NEODGAFuncs = {
    NEO_SetMode,
    NEO_SetViewport,
    NEO_GetViewport,
-   NEO_Sync,
 #ifdef HAVE_XAA_H
+   NEO_Sync,
    NEO_FillRect,
    NEO_BlitRect,
 #if 0
@@ -219,17 +218,14 @@ NEO_FillRect (
     }
 }
 
-
 static void 
 NEO_Sync(
    ScrnInfoPtr pScrn
 ){
     NEOPtr pNEO = NEOPTR(pScrn);
-#ifdef HAVE_XAA_H
     if(pNEO->AccelInfoRec) {
 	(*pNEO->AccelInfoRec->Sync)(pScrn);
     }
-#endif
 }
 
 static void 
