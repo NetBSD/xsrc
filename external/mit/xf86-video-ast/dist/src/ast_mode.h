@@ -23,7 +23,7 @@
 /* Mode Limitation */
 #define MAX_HResolution		1920
 #define MAX_VResolution		1200
- 
+
 /* Std. Table Index Definition */
 #define TextModeIndex 		0
 #define EGAModeIndex 		1
@@ -57,6 +57,8 @@
 #define VCLK71      		0x15
 #define VCLK88_75   		0x16
 #define VCLK119     		0x17
+#define VCLK85_5     		0x18
+#define VCLK97_75     		0x19
 
 /* Flags Definition */
 #define Charx8Dot               0x00000001
@@ -69,7 +71,8 @@
 #define SyncNN                  0x000000C0
 #define HBorder                 0x00000020
 #define VBorder                 0x00000010
-#define WideScreenMode		0x00000100
+#define WideScreenMode		    0x00000100
+#define NewModeInfo		        0x00000200
 
 /* DAC Definition */
 #define DAC_NUM_TEXT		64
@@ -78,17 +81,17 @@
 
 /* Data Structure decalration for internal use */
 typedef struct {
-	
-    UCHAR MISC;	
+
+    UCHAR MISC;
     UCHAR SEQ[4];
     UCHAR CRTC[25];
-    UCHAR AR[20];	    
+    UCHAR AR[20];
     UCHAR GR[9];
-    
+
 } VBIOS_STDTABLE_STRUCT, *PVBIOS_STDTABLE_STRUCT;
 
 typedef struct {
-	
+
     ULONG HT;
     ULONG HDE;
     ULONG HFP;
@@ -97,29 +100,29 @@ typedef struct {
     ULONG VDE;
     ULONG VFP;
     ULONG VSYNC;
-    ULONG DCLKIndex;        
+    ULONG DCLKIndex;
     ULONG Flags;
 
     ULONG ulRefreshRate;
     ULONG ulRefreshRateIndex;
     ULONG ulModeID;
-        
+
 } VBIOS_ENHTABLE_STRUCT, *PVBIOS_ENHTABLE_STRUCT;
 
 typedef struct {
     UCHAR Param1;
     UCHAR Param2;
-    UCHAR Param3;	
+    UCHAR Param3;
 } VBIOS_DCLK_INFO, *PVBIOS_DCLK_INFO;
 
 typedef struct {
     UCHAR DACR;
     UCHAR DACG;
-    UCHAR DACB;	
+    UCHAR DACB;
 } VBIOS_DAC_INFO, *PVBIOS_DAC_INFO;
 
 typedef struct {
     PVBIOS_STDTABLE_STRUCT pStdTableEntry;
     PVBIOS_ENHTABLE_STRUCT pEnhTableEntry;
-    	
+
 } VBIOS_MODE_INFO, *PVBIOS_MODE_INFO;

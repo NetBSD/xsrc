@@ -19,6 +19,13 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+/* Compiler Options */
+#define	Accel_2D
+/* #define MMIO_2D */
+#define HWC
+#define AstVideo
+/* #define PATCH_ABI_VERSION */
+#define Support_ShadowFB
 
 #include <string.h>
 #include <stdlib.h>
@@ -31,20 +38,17 @@
 
 #include "compat-api.h"
 
-/* Compiler Options */
-#define	Accel_2D
-/* #define MMIO_2D */
-#define HWC
-#define AstVideo
-/* #define PATCH_ABI_VERSION */
+#ifdef	Support_ShadowFB
+#include "shadow.h"
+#endif
 
 /* Vendor & Device Info */
 #ifndef PCI_VENDOR_AST
-#define PCI_VENDOR_AST			0x1A03	
-#endif	
+#define PCI_VENDOR_AST			0x1A03
+#endif
 
 #ifndef	PCI_CHIP_AST2000
-#define PCI_CHIP_AST2000		0x2000		
+#define PCI_CHIP_AST2000		0x2000
 #endif
 
 #ifndef	PCI_CHIP_AST2100
@@ -94,18 +98,20 @@ typedef CARD32  	ULONG;
 
 /* Data Structure Definition */
 typedef struct _ASTRegRec {
-	
+
     UCHAR 	ExtCRTC[0x50];
 
-    UCHAR 	MISC;	
+    UCHAR 	MISC;
     UCHAR 	SEQ[4];
     UCHAR 	CRTC[25];
-    UCHAR 	AR[20];	    
+    UCHAR 	AR[20];
     UCHAR 	GR[9];
     UCHAR	DAC[256][3];
- 
+
     ULONG	GFX[12];
-    
+
+    UCHAR	REGA4;
+    ULONG	ENG8044;
 } ASTRegRec, *ASTRegPtr;
 
 typedef struct _VIDEOMODE {
@@ -114,30 +120,30 @@ typedef struct _VIDEOMODE {
     int			ScreenHeight;
     int			bitsPerPixel;
     int			ScreenPitch;
-    	
+
 } VIDEOMODE, *PVIDEOMODE;
 
 typedef struct {
 
     ULONG		ulCMDQSize;
     ULONG		ulCMDQType;
-    
+
     ULONG		ulCMDQOffsetAddr;
-    UCHAR       	*pjCMDQVirtualAddr;
-    
-    UCHAR       	*pjCmdQBasePort;
-    UCHAR       	*pjWritePort;    
-    UCHAR       	*pjReadPort;     
-    UCHAR       	*pjEngStatePort;
-          
+    UCHAR       *pjCMDQVirtualAddr;
+
+    UCHAR       *pjCmdQBasePort;
+    UCHAR       *pjWritePort;
+    UCHAR       *pjReadPort;
+    UCHAR       *pjEngStatePort;
+
     ULONG		ulCMDQMask;
     ULONG		ulCurCMDQueueLen;
-                
+
     ULONG		ulWritePointer;
     ULONG		ulReadPointer;
-    
+
     ULONG		ulReadPointer_OK;		/* for Eng_DBGChk */
-    
+
 } CMDQINFO, *PCMDQINFO;
 
 typedef struct {
@@ -146,18 +152,18 @@ typedef struct {
     int			HWC_NUM_Next;
 
     ULONG		ulHWCOffsetAddr;
-    UCHAR       	*pjHWCVirtualAddr;
-    
+    UCHAR       *pjHWCVirtualAddr;
+
     USHORT		cursortype;
     USHORT		width;
-    USHORT   		height;   
+    USHORT   	height;
     USHORT		offset_x;
-    USHORT   		offset_y;
+    USHORT   	offset_y;
     ULONG		fg;
     ULONG		bg;
 
-    UCHAR               cursorpattern[1024];    
-        
+    UCHAR       cursorpattern[1024];
+
 } HWCINFO, *PHWCINFO;
 
 typedef struct _ASTPortPrivRec{
@@ -177,7 +183,7 @@ typedef struct _ASTPortPrivRec{
     INT32           contrast;
     INT32           saturation;
     INT32           hue;
-    
+
     INT32           gammaR;
     INT32           gammaG;
     INT32           gammaB;
@@ -188,7 +194,7 @@ typedef struct _ASTPortPrivRec{
     CARD32          videoStatus;
     Time            offTime;
     Time            freeTime;
-	
+
     CARD32          displayMode;
 
     int             pitch;
@@ -196,9 +202,9 @@ typedef struct _ASTPortPrivRec{
 } ASTPortPrivRec, *ASTPortPrivPtr;
 
 typedef struct _ASTRec {
-	
+
     EntityInfoPtr 	pEnt;
-#ifndef XSERVER_LIBPCIACCESS	
+#ifndef XSERVER_LIBPCIACCESS
 	pciVideoPtr		PciInfo;
 	PCITAG			PciTag;
 #else
@@ -206,13 +212,13 @@ typedef struct _ASTRec {
 #endif
 
     OptionInfoPtr 	Options;
-    DisplayModePtr      ModePtr;		    
-    FBLinearPtr 	pCMDQPtr;    
+    DisplayModePtr  ModePtr;
+    FBLinearPtr 	pCMDQPtr;
 #ifdef HAVE_XAA_H
     XAAInfoRecPtr	AccelInfoPtr;
 #endif
     xf86CursorInfoPtr   HWCInfoPtr;
-    FBLinearPtr 	pHWCPtr;    
+    FBLinearPtr 	pHWCPtr;
 
     CloseScreenProcPtr CloseScreen;
     ScreenBlockHandlerProcPtr BlockHandler;
@@ -223,48 +229,58 @@ typedef struct _ASTRec {
     ULONG		ulDRAMSize;
     ULONG		ulVRAMSize;
     ULONG		ulVRAMBase;
-    ULONG               ulMCLK;
-             
+    ULONG       ulMCLK;
+
     Bool 		noAccel;
     Bool 		noHWC;
     Bool 		MMIO2D;
     int			ENGCaps;
     int			DBGSelect;
     Bool		VGA2Clone;
-              	
+    Bool		SupportWideScreen;
+
     ULONG     		FBPhysAddr;		/* Frame buffer physical address     */
     ULONG     		MMIOPhysAddr;     	/* MMIO region physical address      */
     ULONG     		BIOSPhysAddr;     	/* BIOS physical address             */
-    
+
     UCHAR     		*FBVirtualAddr;   	/* Map of frame buffer               */
     UCHAR     		*MMIOVirtualAddr; 	/* Map of MMIO region                */
 
     unsigned long	FbMapSize;
     unsigned long	MMIOMapSize;
-       
+
     IOADDRESS		IODBase;        	/* Base of PIO memory area */
     IOADDRESS		PIOOffset;
     IOADDRESS		RelocateIO;
-    
+
     VIDEOMODE 		VideoModeInfo;
-    ASTRegRec           SavedReg;
+    ASTRegRec       SavedReg;
     CMDQINFO		CMDQInfo;
     HWCINFO    		HWCInfo;
-    ULONG		ulCMDReg;   
-    Bool		EnableClip;
+    ULONG			ulCMDReg;
+    Bool			EnableClip;
 
-    int			clip_left;    
-    int			clip_top;
-    int			clip_right;    
-    int			clip_bottom;    	
+    int				clip_left;
+    int				clip_top;
+    int				clip_right;
+    int				clip_bottom;
 
-    int			mon_h_active;		/* Monitor Info. */
-    int			mon_v_active;
+    int				mon_h_active;		/* Monitor Info. */
+    int				mon_v_active;
 
 #ifdef AstVideo
     XF86VideoAdaptorPtr adaptor;
     Atom        	xvBrightness, xvContrast, xvColorKey, xvHue, xvSaturation;
-    Atom		xvGammaRed, xvGammaGreen, xvGammaBlue;
+    Atom			xvGammaRed, xvGammaGreen, xvGammaBlue;
+#endif
+
+#ifdef	Support_ShadowFB
+    Bool			shadowFB;
+    Bool			shadowFB_validation;
+    void            *shadow;
+    ShadowUpdateProc update;
+    ShadowWindowProc window;
+    CreateScreenResourcesProcPtr CreateScreenResources;
 #endif
 
 } ASTRec, *ASTRecPtr, *ASTPtr;
