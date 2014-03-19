@@ -153,6 +153,8 @@ typedef struct _server{
 
 #endif
 
+#include "compat-api.h"
+
 typedef enum {
     MT_NONE,
     MT_CRT,
