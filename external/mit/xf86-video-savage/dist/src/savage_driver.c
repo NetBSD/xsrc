@@ -1266,6 +1266,7 @@ static Bool SavagePreInit(ScrnInfoPtr pScrn, int flags)
     if(!psav->NoAccel) {
         from = X_DEFAULT;
 	char *strptr;
+#ifdef HAVE_XAA_H
         if((strptr = (char *)xf86GetOptValString(psav->Options, OPTION_ACCELMETHOD))) {
 	    if(!xf86NameCmp(strptr,"XAA")) {
 	        from = X_CONFIG;
@@ -1274,7 +1275,10 @@ static Bool SavagePreInit(ScrnInfoPtr pScrn, int flags)
 	       from = X_CONFIG;
 	       psav->useEXA = TRUE;
 	    }
-       }
+        }
+#else
+	psav->useEXA = TRUE;
+#endif
        xf86DrvMsg(pScrn->scrnIndex, from, "Using %s acceleration architecture\n",
 		psav->useEXA ? "EXA" : "XAA");
     }
@@ -2239,7 +2243,7 @@ static void SavageLeaveVT(VT_FUNC_ARGS_DECL)
     ScreenPtr pScreen;
 #endif
 
-    TRACE(("SavageLeaveVT(%d)\n", flags));
+    TRACE(("SavageLeaveVT()\n"));
     gpScrn = pScrn;
 
 #ifdef SAVAGEDRI
@@ -3408,7 +3412,6 @@ static Bool SavageScreenInit(SCREEN_INIT_ARGS_DECL)
 	SavageInitAccel(pScreen);
     }
 
-    miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
 
     if( !psav->shadowFB && !psav->useEXA )
