@@ -22,7 +22,7 @@ XCOMM $XFree86: xc/config/cf/scoLib.rules,v 1.10 2003/12/18 16:38:34 dawes Exp $
 /*
  * SharedLibraryTarget3 - generate rules to create a shared library;
  * build it into a different name so that we do not hose people by having
- * the library gone for long periods.  
+ * the library gone for long periods.
  *
  * Work around SCO sh enviroment size problem.
  */

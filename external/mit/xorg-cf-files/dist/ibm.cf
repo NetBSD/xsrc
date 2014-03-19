@@ -103,7 +103,7 @@ XCOMM operating system:  OSName (OSMajorVersion.OSMinorVersion.OSTeenyVersion)
 /*
  * IBM's xlC refuses to compile files unless their names end in ".C".
  * As an alternative to this fix, one could edit /etc/xlC.cfg
- * to change the suffix accepted by the compiler, but we prefer not 
+ * to change the suffix accepted by the compiler, but we prefer not
  * requiring users to reconfigure their C++ compilers to make them work.
  * We also have to override the default SUFFIXES to defeat the use of
  * the builtin .C -> .o file, which doesn't use the right flags.

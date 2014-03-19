@@ -1,6 +1,6 @@
 XCOMM platform:  $XFree86: xc/config/cf/DGUX.cf,v 1.5 2000/07/07 20:06:56 tsi Exp $
 /* Copyright Takis Psarogiannakopoulos <takis@pmms.cam.ac.uk>
- * This is the DG/ux configuration file of X11R6.3 
+ * This is the DG/ux configuration file of X11R6.3
  */
 #define	OSName	DG/ux R4.20MU03
 #define i386Architecture
@@ -43,7 +43,7 @@ XCOMM platform:  $XFree86: xc/config/cf/DGUX.cf,v 1.5 2000/07/07 20:06:56 tsi Ex
 #define YaccCmd         /usr/bin/yacc
 #define InstallCmd      /usr/bin/install   /* I use gnu install-sh */
 #define LnCmd           ln -s
-#define RanlibCmd true                         /* Or make a link ranlib->true */ 
+#define RanlibCmd true                         /* Or make a link ranlib->true */
 #define CplusplusCmd    /usr/local/bin/g++
 
 
@@ -128,7 +128,7 @@ XCOMM platform:  $XFree86: xc/config/cf/DGUX.cf,v 1.5 2000/07/07 20:06:56 tsi Ex
 
 
 
-/* Manual pages installed under their full names */ 
+/* Manual pages installed under their full names */
 
 #define ExpandManNames          YES
 #define CompressManPages        YES

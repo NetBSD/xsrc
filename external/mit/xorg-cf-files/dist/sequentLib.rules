@@ -263,7 +263,7 @@ install.man::								@@\
 #define InstallMultipleMan(list,dest)					@@\
 	InstallMultipleManSuffix(list,dest,man)
 
-/* 
+/*
  * InstallMotifManPage relies on the fact that all the
  * Imakefiles where it is used (or Makefile default value)
  * will correctly define MANSUFFIX which may be
@@ -291,7 +291,7 @@ install.man:: file.$(MANSUFFIX).z					@@\
 	MakeDir($(DESTDIR)$(MANDIR))					@@\
 	$(INSTALL) -c $(INSTMANFLAGS) file.$(MANSUFFIX).z $(DESTDIR)$(MANDIR)/file.$(MANSUFFIX).z
 
-/* 
+/*
  * The Real_MessageCatalogRule defined in Motif.rules does not
  * install the generated catalog file.  This rule adds an install
  * clause to do that.

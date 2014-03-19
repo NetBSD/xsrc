@@ -1,6 +1,6 @@
 /*
  * Set version numbers before making makefiles.
- * 
+ *
  * X11r5 only builds using the berkeley libraries and compiler.  Make
  * sure your path includes /bsd43/bin before /bin/ or /usr/bin.
  */

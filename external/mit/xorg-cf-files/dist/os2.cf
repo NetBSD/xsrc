@@ -28,7 +28,7 @@ XCOMM hv: but in future a separate system)
 /* you must have installed groff! */
 #define TblCmd		tbl
 #define ColCmd		cat
-#define NeqnCmd		eqn 
+#define NeqnCmd		eqn
 #define NroffCmd	groff -Tascii
 #define	EqnCmd 		eqn -Tascii
 #define HasGroff	YES
@@ -130,7 +130,7 @@ XCOMM hv: but in future a separate system)
 #define ModuleAsCmd		as_elf
 #define ModuleLdCmd		ld_elf
 #define ModuleLdCombineFlags	-X -r
-#define ModuleArCmd		ar_elf cq 
+#define ModuleArCmd		ar_elf cq
 #define NeedModuleRanlib	YES
 #define ModuleRanlibCmd		ranlib_elf
 #define HasPerl5		YES
@@ -187,7 +187,7 @@ XCOMM hv: but in future a separate system)
  */
 
 #define AvoidNullMakeCommand 	YES
-_NULLCMD_ = 
+_NULLCMD_ =
 #define NullMakeCommand
 #define StripInstalledPrograms	NO
 #define CompressAllFonts	YES
@@ -209,4 +209,4 @@ _NULLCMD_ =
 
 # include <xorg.cf>
 
-	
+

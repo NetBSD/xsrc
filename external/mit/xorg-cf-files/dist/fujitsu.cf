@@ -71,7 +71,7 @@ XCOMM operating system: OSName (OSMajorVersion./**/OSMinorVersion)
 
 #define LnCmd              ln
 
-#define DoRanlibCmd        NO 
+#define DoRanlibCmd        NO
 #define DefaultCCOptions   +Z384
 #define ExtraLibraries     -lXbsd -lsocket -lu
 #define TermcapLibrary     -lcurses

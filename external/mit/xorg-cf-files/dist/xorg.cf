@@ -19,7 +19,7 @@ XCOMM $Xorg: xfree86.cf,v 1.4 2000/08/17 19:41:49 cpqbld Exp $
 # if XORG_VERSION_SNAP == 0
 #  if XORG_VERSION_PATCH == 0
 #   define XorgVersionString `echo XORG_VERSION_MAJOR XORG_VERSION_MINOR | sed 's/ /./g'`
-#  else 
+#  else
 #   define XorgVersionString `echo XORG_VERSION_MAJOR XORG_VERSION_MINOR XORG_VERSION_PATCH | sed 's/ /./g'`
 #  endif
 # else
@@ -193,7 +193,7 @@ RELEASE_VERSION = ReleaseVersion
 #else
 #define MakeDllModules		NO
 #endif
-#endif 
+#endif
 
 /*
  * Default settings for which X Servers to build.
@@ -600,8 +600,8 @@ RELEASE_VERSION = ReleaseVersion
 # endif
 /*
  *  Glide is available for Alpha, therefore build tdfx DRM module.
- *  SiS is 64-bit unclean as of this writing. 
- */  
+ *  SiS is 64-bit unclean as of this writing.
+ */
 # ifndef DriDrivers
 #  define DriDrivers		tdfx mga r128 radeon r200
 # endif
@@ -753,7 +753,7 @@ RELEASE_VERSION = ReleaseVersion
 
 # ifndef DevelDrivers
 #  if XFree86Devel
-#   define DevelDrivers		
+#   define DevelDrivers
 #  else
 #   define DevelDrivers		/* */
 #  endif
@@ -1198,7 +1198,7 @@ IPLAN2P8_DEFS = -DUSE_IPLAN2P8
 #endif
 
 /*
- * Build the X-Resource Extension 
+ * Build the X-Resource Extension
  */
 #ifndef BuildXResExt
 # define BuildXResExt                   YES
@@ -1644,7 +1644,7 @@ XFREE86JAPANESEDOCDIR = $(DOCDIR)/Japanese
 # ifndef Has3DNowSupport
 #  define Has3DNowSupport NO
 # endif
-#else 
+#else
 # ifndef HasX86Support
 #  define HasX86Support NO
 # endif
@@ -1665,7 +1665,7 @@ XFREE86JAPANESEDOCDIR = $(DOCDIR)/Japanese
   || defined (ia64Architecture) \
   || defined (PpcArchitecture) \
   || defined (SparcArchitecture) \
-  || defined (s390xArchitecture) 
+  || defined (s390xArchitecture)
 #  define StaticNeedsPicForShared YES
 # else
 #  define StaticNeedsPicForShared NO

@@ -146,8 +146,8 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #  endif
 # endif
 #else
-# define CplusplusCmd		g++ 
-# define CcCmd			gcc 
+# define CplusplusCmd		g++
+# define CcCmd			gcc
 # define DefaultCCOptions	-ansi GccWarningOptions
 # define GccGasOption		-DGCCUSESGAS /* For SuperProbe */
 #endif
@@ -173,7 +173,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define HasFlex			YES
 /* On LynxOS AT 2.3.0 /lib/libm.a is a symbolic link to /lib/libc.a, so we
  * screw up some POSIX functionality when -lm comes before -lc_p in our
- * ld argument list. For LynxOS-AT we don't need -lm but for others we 
+ * ld argument list. For LynxOS-AT we don't need -lm but for others we
  * do (e.g. SPARC)
  */
 #if OSMajorVersion == 2 && OSMinorVersion == 3
@@ -396,9 +396,9 @@ install.man:: list                                                      @@\
 # define BuildXF86MiscExt		NO
 # define BuildXF86VidModeExt		NO
 /*
- * XFree86 uses its own (more portable) database routines to speed up 
+ * XFree86 uses its own (more portable) database routines to speed up
  * the RGB database lookups
- * However, if you want to use ndbm anyway, you can set that to NO in 
+ * However, if you want to use ndbm anyway, you can set that to NO in
  * site.def
  */
 # ifndef UseRgbTxt

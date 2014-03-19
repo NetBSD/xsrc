@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/nto.rules,v 1.7 2003/10/09 22:43:18 herrb Exp $ 
+XCOMM $XFree86: xc/config/cf/nto.rules,v 1.7 2003/10/09 22:43:18 herrb Exp $
 XCOMM Rules for QNX/Neutrino
 XCOMM Note that some of these will disappear when we stop cross-compiling
 
@@ -69,7 +69,7 @@ depend:: dst.S							@@\
 clean::								@@\
 	RemoveFile(dst.S)
 
-XCOMM Special rule ComplexHostProgramTarget needed to compile 
+XCOMM Special rule ComplexHostProgramTarget needed to compile
 XCOMM our utilities locally because we are cross-compiling...
 XCOMM
 
@@ -100,7 +100,7 @@ XCOMM
          SRCS = program.c					@@\
 								@@\
 ComplexHostProgramTarget(program)
-	
+
 
 #ifndef FixupLibReferences
 #define FixupLibReferences()						@@\

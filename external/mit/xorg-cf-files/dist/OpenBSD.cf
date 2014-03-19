@@ -131,7 +131,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 /* OpenBSD 3.0 has libusb, next versions have libusbhid */
-#if OSMajorVersion >= 3 
+#if OSMajorVersion >= 3
 # define HasLibUsb		YES
 # ifndef HasLibUsbHid
 #  if OSMajorVersion == 3 && OSMinorVersion > 0 || OSMajorVersion > 3
@@ -478,12 +478,12 @@ install:: fonts.alias							@@\
 #  define DoLoadableServer	YES
 # endif
 
-/* Direct rendering (OpenBSD 3.3 and up). */ 
+/* Direct rendering (OpenBSD 3.3 and up). */
 # if OSMajorVersion > 3 || (OSMajorVersion == 3 && OSMinorVersion > 2)
 #  ifndef BuildXF86DRI
 #   define BuildXF86DRI			NO
-#  endif 
-# endif 
+#  endif
+# endif
 
 # define HasWeakSymbols		YES
 
@@ -501,15 +501,15 @@ install:: fonts.alias							@@\
 #  endif
 # endif
 
-/* 
- * agpgart support (OpenBSD 3.2 and up) 
- */ 
+/*
+ * agpgart support (OpenBSD 3.2 and up)
+ */
 # if OSMajorVersion > 3 || (OSMajorVersion == 3 && OSMinorVersion > 1)
-#  ifndef HasAgpGart 
-#   define HasAgpGart   YES 
-#  endif 
-# endif 
- 
+#  ifndef HasAgpGart
+#   define HasAgpGart   YES
+#  endif
+# endif
+
 
 # ifndef DefaultGcc2i386Opt
 #   if (OSMajorVersion == 2 && OSMinorVersion >= 3) || OSMajorVersion > 2
@@ -564,7 +564,7 @@ install:: fonts.alias							@@\
 # define PositionIndependentCFlags -fpic -fno-function-cse
 # define BuildGlxExt		NO
 # define BuildGLXLibrary	YES
- 
+
 #endif /* Mc68020Architecture */
 
 
@@ -713,7 +713,7 @@ install:: fonts.alias							@@\
 #endif /* PmaxArchitecture */
 
 /*
- * Definitions for the PowerPC architecture 
+ * Definitions for the PowerPC architecture
  */
 #ifdef PpcArchitecture
 
@@ -753,7 +753,7 @@ install:: fonts.alias							@@\
 				DevelDrivers vga \
 				XF86OSCardDrivers XF86ExtraCardDrivers
 #   endif
-#   ifndef DevelDrivers 
+#   ifndef DevelDrivers
 #    define DevelDrivers nv
 #   endif
 
@@ -773,7 +773,7 @@ install:: fonts.alias							@@\
 
 # if OSMajorVersion > 3 || OSMajorVersion == 3 && OSMinorVersion >= 2
 #  define HasWeakSymbols	YES
-#endif 
+#endif
 
 # if OSMajorVersion == 2 || OSMajorVersion == 3 && OSMinorVersion < 2
 #  define ServerOSDefines 	-DDDXOSINIT
@@ -783,7 +783,7 @@ install:: fonts.alias							@@\
 #  define XOrgServer		NO
 # else
 #  define XorgServer		YES
-# endif 
+# endif
 
 # if !XorgServer
 
@@ -890,7 +890,7 @@ install:: fonts.alias							@@\
 # include <xorg.cf>
 
 #endif /* VaxArchitecture */
- 
+
 /* End or architecture specific section */
 
 /*
@@ -899,7 +899,7 @@ install:: fonts.alias							@@\
  */
 
 #ifndef StandardDefines
-# define StandardDefines	-DCSRG_BASED 
+# define StandardDefines	-DCSRG_BASED
 #endif
 
 #if !defined(OptimizedCDebugFlags)
@@ -919,8 +919,8 @@ install:: fonts.alias							@@\
 #endif
 
 /*
- * Multi-thread safe libs 
- */	
+ * Multi-thread safe libs
+ */
 #if HasWeakSymbols == YES && (OSMajorVersion == 2 && OSMinorVersion >= 6 || OSMajorVersion >= 3)
 #  define HasPosixThreads		YES
 #  define ThreadedX			YES

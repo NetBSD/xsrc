@@ -331,7 +331,7 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 # endif
 #endif
 
-/* 
+/*
  * Let the OS restore console fonts instead of the generic VGA
  * layer. This exists for Linux only at the moment so put it
  * here.
@@ -578,7 +578,7 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 #define MkdirHierCmd		mkdir -p
 
 #ifndef HaveLib64
-# if defined (AMD64Architecture) || defined (s390xArchitecture) || defined (Ppc64Architecture)
+# if defined (AMD64Architecture) || defined (s390xArchitecture) || defined (Ppc64Architecture) || defined (AArch64Architecture)
 #  define HaveLib64	YES
 # else
 #  define HaveLib64	NO
@@ -898,7 +898,7 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 #endif /* Ppc64Architecture */
 
 #ifdef PpcArchitecture
-# define DefaultCCOptions	
+# define DefaultCCOptions
 # ifndef OptimizedCDebugFlags
 #  define OptimizedCDebugFlags	DefaultGcc2PpcOpt
 # endif
@@ -948,7 +948,7 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 #  else
 #   define SuperHArchOptFlags	-m3
 #  endif
-# endif 
+# endif
 # ifndef SuperHebArchitecture
 #  ifdef SuperHebArchitecture
 #   define SuperHEndianFlags	-mb
@@ -975,6 +975,15 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 # define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
 # define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines -D_XSERVER64
 #endif /* AMD64Architecture */
+
+#ifdef AArch64Architecture
+# ifndef OptimizedCDebugFlags
+#  define OptimizedCDebugFlags DefaultGcc2AArch64Opt
+# endif
+# define LinuxMachineDefines   -D__aarch64__
+# define ServerOSDefines   XFree86ServerOSDefines -DDDXTIME
+# define ServerExtraDefines    -DGCCUSESGAS XFree86ServerDefines -D_XSERVER64
+#endif /* AArch64Architecture */
 
 #ifndef StandardDefines
 # ifdef __linux__

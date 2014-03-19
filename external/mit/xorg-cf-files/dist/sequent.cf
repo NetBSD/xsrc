@@ -54,7 +54,7 @@ XCOMM operating system:  OSName V/**/OSMajorVersion./**/OSMinorVersion./**/OSTee
 
 #define SystemV4		YES
 #define SequentVersionDefines	-DSVR4
-#define ExtraLibraries		
+#define ExtraLibraries
 #define ForceNormalLib		YES
 #define HasRequiredLibs		YES
 #define NeedBerklib		NO	/* gettimeofday in libc */
@@ -79,7 +79,7 @@ XCOMM operating system:  OSName V/**/OSMajorVersion./**/OSMinorVersion./**/OSTee
  * Macros defined later may use these definitions.
  */
 
-/* 
+/*
  * Threads.tmpl cpp macros.
  * Sequent overrides the Threads.tmpl defaults with the values below.
  * Sequent has native threads for ptx 4.5.0 and higher.
@@ -99,7 +99,7 @@ XCOMM operating system:  OSName V/**/OSMajorVersion./**/OSMinorVersion./**/OSTee
 
 /*
  * THREADS macro and environment variable used with Sequent commands only.
- * We use THREADS rather than the generic X11 THREADS_CFLAGS because we 
+ * We use THREADS rather than the generic X11 THREADS_CFLAGS because we
  * want to ensure that the macro is defined for all compiles and not just
  * those Makefiles built from a Imakefile that includes Threads.tmpl.
  *
@@ -116,7 +116,7 @@ XCOMM operating system:  OSName V/**/OSMajorVersion./**/OSMinorVersion./**/OSTee
 
 #endif /* ptx 4.5.0 or greater has threads */
 
-/* 
+/*
  * Imake.tmpl cpp macros.
  * Sequent overrides the Imake.tmpl defaults with the values below.
  */
@@ -156,7 +156,7 @@ XCOMM operating system:  OSName V/**/OSMajorVersion./**/OSMinorVersion./**/OSTee
 #define ToolkitStringsABIOptions -intelabi
 
 
-/* 
+/*
  * X11.tmpl cpp macros.
  * Sequent overrides the X11.tmpl defaults with the values below.
  */
@@ -193,7 +193,7 @@ XCOMM operating system:  OSName V/**/OSMajorVersion./**/OSMinorVersion./**/OSTee
 #define XF86GLINTServer		NO
 #define XF86REALimageServer	NO
 
-/* 
+/*
  * Motif.tmpl cpp macros.
  * Sequent overrides the Motif.tmpl default with the values below.
  */
@@ -207,9 +207,9 @@ XCOMM operating system:  OSName V/**/OSMajorVersion./**/OSMinorVersion./**/OSTee
  * #endif
  */
 
-/* 
+/*
  * Sequent added cpp macros.
- * 
+ *
  * The following cpp macro defines have been introduced by Sequent.
  * They will be referenced in Sequent patches sent to TOG.
  * They may be moved above if accepted by TOG or X.org.
@@ -221,7 +221,7 @@ XCOMM operating system:  OSName V/**/OSMajorVersion./**/OSMinorVersion./**/OSTee
 #define UseHidesymsLists	  YES
 #define XlbiffMailPath		  /usr/mail/%s	/* used by contrib xlbiff */
 
-/* 
+/*
  * Imake.tmpl, X11.tmpl, or other order dependent cpp defines.
  *
  * The following cpp macro defines are order dependent.
@@ -239,7 +239,7 @@ XCOMM operating system:  OSName V/**/OSMajorVersion./**/OSMinorVersion./**/OSTee
 #endif
 #define XmanSearchPath		ManDirectoryRoot /* for X11R5 xman */
 
-/* 
+/*
  * Sequent configuration environment specific to building X11 and Motif.
  * This environment is only available when UseInstalled is not defined.
  * Therefore this environment is not used by customers using xmkmf.
@@ -406,8 +406,8 @@ XCOMM Sequent unique make macros.
 # define HsAcppPath HsAcppLocalPath:HsAcppSystemPath
 # endif /* UseInstalled */
 #endif
-/* 
- * note: -DABI_SHARED_OBJECT requires a temporary fix added to 
+/*
+ * note: -DABI_SHARED_OBJECT requires a temporary fix added to
  * Xt/Error.c to provide missing _abi_* routines not in libc.so.1.
  * When the base adds those missing _abi_* to libc.so.1,
  * then the code in Xt/Error.c can be removed and the corresponding

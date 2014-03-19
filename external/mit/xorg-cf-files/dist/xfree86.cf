@@ -177,7 +177,7 @@ XCOMM $Xorg: xfree86.cf,v 1.4 2000/08/17 19:41:49 cpqbld Exp $
 #endif
 #ifndef DoLoadableServer
 #define DoLoadableServer	NO
-#endif 
+#endif
 
 /*
  * Default settings for which X Servers to build.
@@ -1218,7 +1218,7 @@ XCOMM $Xorg: xfree86.cf,v 1.4 2000/08/17 19:41:49 cpqbld Exp $
 
 # ifndef DevelDrivers
 #  if XFree86Devel
-#   define DevelDrivers		
+#   define DevelDrivers
 #  else
 #   define DevelDrivers		/* */
 #  endif
@@ -1231,7 +1231,7 @@ XCOMM $Xorg: xfree86.cf,v 1.4 2000/08/17 19:41:49 cpqbld Exp $
 				XF86OSCardDrivers XF86ExtraCardDrivers
 # endif
 # if HasGlide3
-#  define TdfxDriDriver		
+#  define TdfxDriDriver
 # else
 #  define TdfxDriDriver		/**/
 # endif
@@ -1659,7 +1659,7 @@ IPLAN2P8_DEFS = -DUSE_IPLAN2P8
 #endif
 
 /*
- * Build the X-Resource Extension 
+ * Build the X-Resource Extension
  */
 #ifndef BuildXResExt
 # define BuildXResExt                   YES
@@ -2022,6 +2022,12 @@ XFREE86JAPANESEDOCDIR = $(DOCDIR)/Japanese
 # endif
 #endif
 
+#if HasGcc2 && defined(AArch64Architecture)
+# ifndef DefaultGcc2AArch64Opt
+#  define DefaultGcc2AArch64Opt -O2 GccAliasingArgs
+# endif
+#endif
+
 #if HasGcc2 && defined(AlphaArchitecture)
 # ifndef DefaultGcc2AxpOpt
 #  define DefaultGcc2AxpOpt -O2 GccAliasingArgs
@@ -2093,7 +2099,7 @@ XFREE86JAPANESEDOCDIR = $(DOCDIR)/Japanese
 # ifndef Has3DNowSupport
 #  define Has3DNowSupport NO
 # endif
-#else 
+#else
 # ifndef HasX86Support
 #  define HasX86Support NO
 # endif
@@ -2114,7 +2120,7 @@ XFREE86JAPANESEDOCDIR = $(DOCDIR)/Japanese
   || defined (ia64Architecture) \
   || defined (PpcArchitecture) \
   || defined (SparcArchitecture) \
-  || defined (s390xArchitecture) 
+  || defined (s390xArchitecture)
 #  define StaticNeedsPicForShared YES
 # else
 #  define StaticNeedsPicForShared NO

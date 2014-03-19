@@ -120,7 +120,7 @@ XCOMM $XdotOrg: xc/config/cf/sco5.cf,v 1.5 2004/09/02 01:10:28 kem Exp $
 #ifndef SCOHasGWXLIBS
 # define SCOHasGWXLIBS		YES
 #endif
- 
+
 #ifndef LogDirectory
 # define LogDirectory		/var/adm
 #endif
@@ -219,7 +219,7 @@ XCOMM $XdotOrg: xc/config/cf/sco5.cf,v 1.5 2004/09/02 01:10:28 kem Exp $
 #ifndef CompressManPages
 # define CompressManPages	NO
 #endif
- 
+
 #ifndef HasLibCrypt
 # define HasLibCrypt		YES
 # define SpecialLibCrypt	-lcrypt
@@ -230,12 +230,12 @@ XCOMM $XdotOrg: xc/config/cf/sco5.cf,v 1.5 2004/09/02 01:10:28 kem Exp $
 #endif
 
 #ifndef ForceNormalLib
-# define ForceNormalLib		NO 
+# define ForceNormalLib		NO
 #endif
 
 #define SharedLibXmu		YES
 #define SystemV			YES
-#define LdCombineFlags		-r 
+#define LdCombineFlags		-r
 
 #define AvoidNullMakeCommand	YES
 #define PatheticCpp		YES
@@ -307,7 +307,7 @@ XCOMM $XdotOrg: xc/config/cf/sco5.cf,v 1.5 2004/09/02 01:10:28 kem Exp $
 # define DefaultSystemPath	/etc:/bin:/usr/bin:$(BINDIR):/usr/bin/X11
 #endif
 
-#define ConnectionFlags		-DLOCALCONN -DTCPCONN -DUNIXCONN 
+#define ConnectionFlags		-DLOCALCONN -DTCPCONN -DUNIXCONN
 
 #define ExportListGenSource	elistgen.usl
 #define ShlibExportListOpt(filename)	Concat(-Bexport:,filename)
