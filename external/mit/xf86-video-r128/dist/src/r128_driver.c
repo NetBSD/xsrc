@@ -2269,7 +2269,7 @@ Bool R128ScreenInit(SCREEN_INIT_ARGS_DECL)
 #ifdef RENDER
     info->RenderAccel = xf86ReturnOptValBool(info->Options, OPTION_RENDERACCEL, TRUE);
     if (info->RenderAccel)
-        xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Acceleration of RENDER operations will be enabled"
+        xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Acceleration of RENDER operations will be enabled "
 					     "upon successful loading of DRI and EXA\n");
 #endif
 #endif
@@ -2701,7 +2701,6 @@ Bool R128ScreenInit(SCREEN_INIT_ARGS_DECL)
     R128DGAInit(pScreen);
 
 				/* Backing store setup */
-    miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
 
 				/* Set Silken Mouse */

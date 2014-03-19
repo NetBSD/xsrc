@@ -1869,6 +1869,43 @@ static void R128MMIOAccelInit(ScrnInfoPtr pScrn, XAAInfoRecPtr a)
 }
 #endif
 
+void R128CopySwap(uint8_t *dst, uint8_t *src, unsigned int size, int swap)
+{
+    switch(swap) {
+    case APER_0_BIG_ENDIAN_32BPP_SWAP:
+	{
+	    unsigned int *d = (unsigned int *)dst;
+	    unsigned int *s = (unsigned int *)src;
+	    unsigned int nwords = size >> 2;
+
+	    for (; nwords > 0; --nwords, ++d, ++s)
+#ifdef __powerpc__
+		asm volatile("stwbrx %0,0,%1" : : "r" (*s), "r" (d));
+#else
+		*d = ((*s >> 24) & 0xff) | ((*s >> 8) & 0xff00)
+			| ((*s & 0xff00) << 8) | ((*s & 0xff) << 24);
+#endif
+	    return;
+	}
+    case APER_0_BIG_ENDIAN_16BPP_SWAP:
+	{
+	    unsigned short *d = (unsigned short *)dst;
+	    unsigned short *s = (unsigned short *)src;
+	    unsigned int nwords = size >> 1;
+
+	    for (; nwords > 0; --nwords, ++d, ++s)
+#ifdef __powerpc__
+		asm volatile("sthbrx %0,0,%1" : : "r" (*s), "r" (d));
+#else
+	        *d = (*s >> 8) | (*s << 8);
+#endif
+	    return;
+	}
+    }
+    if (src != dst)
+	memcpy(dst, src, size);
+}
+
 /* Initialize XAA for supported acceleration and also initialize the
    graphics hardware for acceleration. */
 Bool R128AccelInit(ScreenPtr pScreen)
