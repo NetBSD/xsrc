@@ -19,7 +19,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
- 
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -27,7 +27,6 @@
 #include "xf86_OSproc.h"
 #include "xf86cmap.h"
 #include "compiler.h"
-#include "mibstore.h"
 #include "vgaHW.h"
 #include "mipointer.h"
 #include "micmap.h"
@@ -36,7 +35,6 @@
 #include "regionstr.h"
 #include "xf86xv.h"
 #include <X11/extensions/Xv.h>
-#include "vbe.h"
 
 #include "xf86PciInfo.h"
 #include "xf86Pci.h"
@@ -77,12 +75,12 @@ ASTMapMem(ScrnInfoPtr pScrn)
 				    PCI_DEV_MAP_FLAG_WRITABLE |
 				    PCI_DEV_MAP_FLAG_WRITE_COMBINE,
 				    result);
-     
-     if (err) 
+
+     if (err)
 			return FALSE;
    }
 #endif
-				 
+
    if (!pAST->FBVirtualAddr)
       return FALSE;
 
@@ -94,15 +92,15 @@ ASTUnmapMem(ScrnInfoPtr pScrn)
 {
    ASTRecPtr pAST = ASTPTR(pScrn);
 
-#ifndef XSERVER_LIBPCIACCESS 
+#ifndef XSERVER_LIBPCIACCESS
    xf86UnMapVidMem(pScrn->scrnIndex, (pointer) pAST->FBVirtualAddr,
 		   pAST->FbMapSize);
 #else
    pci_device_unmap_range(pAST->PciInfo, pAST->FBVirtualAddr, pAST->FbMapSize);
 #endif
-		   
+
    pAST->FBVirtualAddr = 0;
-   
+
    return TRUE;
 }
 
@@ -132,8 +130,8 @@ ASTMapMMIO(ScrnInfoPtr pScrn)
 				    pAST->MMIOMapSize,
 				    PCI_DEV_MAP_FLAG_WRITABLE,
 				    result);
-     
-     if (err) 
+
+     if (err)
 			return FALSE;
    }
 
@@ -156,7 +154,7 @@ ASTUnmapMMIO(ScrnInfoPtr pScrn)
    pci_device_unmap_range(pAST->PciInfo, pAST->MMIOVirtualAddr, pAST->MMIOMapSize);
 #endif
    pAST->MMIOVirtualAddr = 0;
-   
+
 }
  
 

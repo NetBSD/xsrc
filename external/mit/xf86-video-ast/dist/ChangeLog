@@ -1,3 +1,74 @@
+commit f7913400cd902aeced5e0fb994bd3c11c90a49b9
+Author: Y.C. Chen <yc_chen@aspeedtech.com>
+Date:   Sun Aug 18 19:49:06 2013 +0800
+
+    Bump version to 0.98.0
+
+commit c1580a0f4625155514cd427a4eb9aa972b7484bb
+Author: Y.C. Chen <yc_chen@aspeedtech.com>
+Date:   Wed Aug 7 14:49:47 2013 +0800
+
+    Support ShadowFB if no XAA
+
+commit 2e57123b7c68868d0b1fe1d591f6236a23c4f3aa
+Author: Y.C. Chen <yc_chen@aspeedtech.com>
+Date:   Wed Aug 7 13:39:29 2013 +0800
+
+    Fixed Display Abnormal Issue with GOP Driver
+
+commit 9ab60c6383055569874cff7f8c19973ef78bf0f9
+Author: Y.C. Chen <yc_chen@aspeedtech.com>
+Date:   Mon Aug 5 23:46:47 2013 +0800
+
+    Fixed S3 Resume Failed Issue
+
+commit 1e3dbbd8e96a12f38bb558f58bf43735292ccc4e
+Author: Y.C. Chen <yc_chen@aspeedtech.com>
+Date:   Fri Aug 2 00:12:11 2013 +0800
+
+    Modify for DRAM Initial Settings
+
+commit 996fdaed696c989fdafe12dc18e90639dfc96f87
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Jul 31 23:17:50 2013 -0700
+
+    Cleanup leading/trailing whitespace in source files
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 15b22ad50df0dff78a2db9fb4c536ab7faf92f07
+Author: Y.C. Chen <yc_chen@aspeedtech.com>
+Date:   Thu Aug 1 21:47:29 2013 +0800
+
+    Support 1360x768 and 1600x900 Resolutions
+
+commit 414341bd08353c4711cc9c39013ad5023a023738
+Author: Thomas Klausner <wiz@NetBSD.org>
+Date:   Sun Jun 2 23:36:52 2013 +0200
+
+    Use uint32_t for a variable that's passed to a function expecting a uint32_t.
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0833e0086b9712b1c29571919899d5d17fea8382
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue Sep 25 08:54:33 2012 -0400
+
+    Remove mibstore.h
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 358ef4a53e582a2176a163356c7754faf3192270
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed Aug 15 13:22:14 2012 -0400
+
+    Don't bother to include vbe.h
+    
+    This driver no longer uses VBE, so this can go.
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
 commit e4268d2775c95e03e0d319cb937522bfb3bab61d
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Tue Jul 17 16:05:09 2012 +1000

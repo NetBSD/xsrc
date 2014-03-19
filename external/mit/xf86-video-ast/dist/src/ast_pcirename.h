@@ -31,7 +31,7 @@
 
 enum region_type {
     REGION_MEM,
-    REGION_IO 
+    REGION_IO
 };
 
 #ifndef XSERVER_LIBPCIACCESS
