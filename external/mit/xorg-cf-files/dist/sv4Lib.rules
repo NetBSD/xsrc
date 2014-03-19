@@ -178,7 +178,7 @@ Concat(lib,libname.so.rev):  deplist $(EXTRALIBRARYDEPS)		@@\
 	LinkBuildLibraryMaybe(Concat(lib,libname.so),$(SOSYMLINK))	@@\
 									@@\
 clean::									@@\
-	$(RM) Concat(lib,libname.so.rev)				
+	$(RM) Concat(lib,libname.so.rev)
 #endif /* SharedDepCplusplusLibraryTarget */
 
 

@@ -1,4 +1,4 @@
-/* 
+/*
  *  @OSF_COPYRIGHT@
  *  COPYRIGHT NOTICE
  *  Copyright (c) 1990, 1991, 1992, 1993, 1998 The Open Group, Inc.
@@ -9,10 +9,10 @@
  * (c) Copyright 1996 Hewlett-Packard Company.
  * (c) Copyright 1996 International Business Machines Corp.
  * (c) Copyright 1996 Sun Microsystems, Inc.
- * (c) Copyright 1996 Novell, Inc. 
+ * (c) Copyright 1996 Novell, Inc.
  * (c) Copyright 1996 FUJITSU LIMITED.
  * (c) Copyright 1996 Hitachi.
- */ 
+ */
 XCOMM $Xorg: Motif.tmpl,v 1.3 2000/08/17 19:41:46 cpqbld Exp $
 
 /* Include the X11 project template file. */
@@ -131,9 +131,9 @@ XCOMM $Xorg: Motif.tmpl,v 1.3 2000/08/17 19:41:46 cpqbld Exp $
 #endif
 #if Automation
 # define TestExtraFilesToClean *.Dat *.Scr PurifyFilesToClean
-#else 
+#else
 # define TestExtraFilesToClean *.Dat PurifyFilesToClean
-#endif 
+#endif
 
 #ifndef UsrIncDir
 # define UsrIncDir IncRoot
@@ -321,7 +321,7 @@ XCOMM $Xorg: Motif.tmpl,v 1.3 2000/08/17 19:41:46 cpqbld Exp $
 # define XmClientDepLibs $(DEPXMLIB) $(DEPXTOOLLIB) $(DEPXPLIB) $(DEPXLIB)
 #endif
 
-#ifndef MrmClientLibs 
+#ifndef MrmClientLibs
 # define MrmClientLibs $(MRESOURCELIB) $(XMLIB) $(XTOOLLIB) $(XPLIB) $(XLIB) $(XMEXTRA_LIBS)
 #endif
 #ifndef MrmClientDepLibs
@@ -384,7 +384,7 @@ TOP_MOTIF_INCLUDES = -I$(MINCLUDESRC)
 # define BuildMessageCatalog	NO
 # define MessageCatalogDefines	-DNO_MESSAGE_CATALOG
 #else
-# define BuildMessageCatalog	YES 
+# define BuildMessageCatalog	YES
 # define MessageCatalogDefines	/**/
 #endif
 #ifndef MessageCatalogRule

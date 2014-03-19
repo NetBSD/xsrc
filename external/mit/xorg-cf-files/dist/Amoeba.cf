@@ -3,7 +3,7 @@ XCOMM platform:  $XFree86: xc/config/cf/Amoeba.cf,v 3.10tsi Exp $
 
 /*  The presence of this configuration file in the X distribution
  *  does not imply full support for the system it describes.
- *  Additional patches from The XFree86 Project, Inc. will be required to 
+ *  Additional patches from The XFree86 Project, Inc. will be required to
  *  compile the X distribution on Amoeba.  According to them, these patches
  *  will also be made available at the regular Amoeba ftp site
  *  ftp.am.cs.vu.nl.
@@ -162,7 +162,7 @@ XCOMM operating system:  OSName
 
 ATOP            = AmoebaTop
 ALIB            = AmoebaConf/$(ARCH).$(TOOLSET)/lib
-#if AckToolset 
+#if AckToolset
 /* The ACK toolset already links in the appropriate head.o by default */
 HEAD            =
 #else

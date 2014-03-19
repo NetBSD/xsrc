@@ -48,7 +48,7 @@ clean::								@@\
 
 /* This is the rule to make reloc. OMF objects. We use a little
  * trick which works only for OMF....
- * "catomf" can be downloaded from 
+ * "catomf" can be downloaded from
  * http://prdownloads.sourceforge.net/openqnx/catomf.tar.gz
  * or contact Rick Lake <rick@anp.nl>
  */
@@ -60,6 +60,6 @@ objname.Osuf: objlist $(EXTRALIBRARYDEPS)			@@\
 	/usr/local/bin/catomf -O $@ objlist
 
 
-	
+
 
 

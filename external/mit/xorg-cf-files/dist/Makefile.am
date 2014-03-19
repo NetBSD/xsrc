@@ -135,8 +135,7 @@ config_DATA = $(BUILT_DEFFILES)
 
 EXTRA_DIST = \
 	os2def.db \
-	site.sample \
-	xprint_host.def
+	site.sample
 
 all-local: $(BUILT_DEFFILES)
 

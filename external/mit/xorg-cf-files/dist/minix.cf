@@ -27,7 +27,7 @@ XCOMM platform:  $XFree86: xc/config/cf/minix.cf,v 3.5 1999/07/10 07:24:33 dawes
 
 #define ConnectionFlags		-DMNX_TCPCONN
 #define StandardDefines		-D_MINIX -DMINIX -D_POSIX_SOURCE
-#define StandardIncludes	
+#define StandardIncludes
 
 #define DoRanlibCmd		NO
 #define AvoidNullMakeCommand	YES

@@ -20,7 +20,7 @@ XCOMM platform:  $XFree86: xc/config/cf/sun.cf,v 3.70 2004/01/13 02:42:51 tsi Ex
 #endif
 XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVersion)
 
-/* For various reasons, Sun uses different settings when compiling the 
+/* For various reasons, Sun uses different settings when compiling the
  * X Window System packages included in Solaris than are normally used
  * by most people building the X.Org software releases.   Sun also has
  * two different X server hierarchies in Solaris - Xsun in /usr/openwin
@@ -30,7 +30,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  * add this setting to your host.def:
  *  #define BuildLikeSun YES
  *
- * If you're trying to match the openwin directory layout as well, you'll 
+ * If you're trying to match the openwin directory layout as well, you'll
  * need to also add:
  *  #define ProjectRoot /usr/openwin
  * otherwise it will use /usr/X11.  (Note that these settings match closer
@@ -64,7 +64,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 /* Flag passed to makestrs in Xt build to control string array names in the
- * libXt headers.   -solarisabinames matches those used in the libXt in 
+ * libXt headers.   -solarisabinames matches those used in the libXt in
  * Solaris, but not in other OS'es.
  */
 #ifndef SolarisABIFlag
@@ -76,22 +76,22 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 /*
- * Compiler setup.  This sun.cf file knows what options to use with 
- * certain compilers, including Sun C, CenterLine C, and gcc.  It 
+ * Compiler setup.  This sun.cf file knows what options to use with
+ * certain compilers, including Sun C, CenterLine C, and gcc.  It
  * also understands how to set some of the options for various C++
  * compilers, including Sun C++ and CenterLine C++.
  *
  * === C Compiler Setup ==========================================
  *
- * For SunPro C, define HasSunC to YES in site.def.  
+ * For SunPro C, define HasSunC to YES in site.def.
  * For CenterLine C, define HasCenterLineC to YES in site.def
  * For gcc, gcc2 or gcc3, define HasGcc, HasGcc2 or HasGcc3 to YES in site.def
- * For other compilers, define HasSunC to NO in site.def, then 
+ * For other compilers, define HasSunC to NO in site.def, then
  *    provide appropriate values for the various compiler related
  *    configuration varibles used here.
- * 
- * If you don't tell us which C compiler you have, we assume you have 
- * the SunPro C compiler under Solaris 2.x, and the bundled /bin/cc 
+ *
+ * If you don't tell us which C compiler you have, we assume you have
+ * the SunPro C compiler under Solaris 2.x, and the bundled /bin/cc
  * under SunOS 4.1.x
  *
  * === C++ Compiler Setup ==========================================
@@ -99,14 +99,14 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  * For SunPro C++, define HasSunCplusplus to YES in site.def
  * For CenterLine C++, define HasCenterLineCplusplus to YES in site.def
  * For Gnu g++ 2.6.x, define HasGcc2ForCplusplus to YES in site.def
- * For other compilers, define HasCplusplus to YES in site.def, and 
+ * For other compilers, define HasCplusplus to YES in site.def, and
  *    check to see if you need to provide values for CplusplusOptions
  *    and/or DefaultCplusplusOptions.
  *
  * In any case, you may also need to set CplusplusDependIncludes.
  *
- * If you say you have the SunPro C++ compiler, we assume you have 
- * version 3.0.x of the compiler.  If you have version 4.0.x instead, 
+ * If you say you have the SunPro C++ compiler, we assume you have
+ * version 3.0.x of the compiler.  If you have version 4.0.x instead,
  * define CplusplusCompilerMajorVersion as 4 in site.def.
  *
  */
@@ -129,7 +129,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # endif
 #endif
 
-#if HasSunC 
+#if HasSunC
 # ifndef CCompilerMajorVersion
 #  define CCompilerMajorVersion DefaultSunProCCompilerMajorVersion
 # endif
@@ -138,7 +138,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # endif
 XCOMM SunPro C CCompilerMajorVersion./**/CCompilerMinorVersion
 
-/* Choose some reasonable default optimizer flags based on compiler & 
+/* Choose some reasonable default optimizer flags based on compiler &
    OS versions */
 # ifndef OptimizedCDebugFlags
 #  if (CCompilerMajorVersion > 5) || \
@@ -149,7 +149,7 @@ XCOMM SunPro C CCompilerMajorVersion./**/CCompilerMinorVersion
 #  endif
 # endif
 # ifndef ArchOptimizedFlags
-#  if OSMajorVersion == 5 
+#  if OSMajorVersion == 5
 #   if defined(SparcArchitecture) && !defined(Sparc64Architecture)
 #    if OSMinorVersion > 9 /* Solaris 10 and later only run on UltraSPARC's */
 #     define ArchOptimizedFlags -xarch=v8plus
@@ -162,7 +162,7 @@ XCOMM SunPro C CCompilerMajorVersion./**/CCompilerMinorVersion
 /* -xregs=no%frameptr is required on x86 when compiling at -xO4 or higher to
  * avoid losing stack frame pointers so you can't get stack traces or debug.
  * This may lose a small bit of performance, so you can override by adding
- * #define FramePtrFlags -xregs=frameptr if you care about performance more 
+ * #define FramePtrFlags -xregs=frameptr if you care about performance more
  * than debuggability.
  */
 #     ifndef FramePtrFlags
@@ -226,7 +226,7 @@ XCOMM SunPro C CCompilerMajorVersion./**/CCompilerMinorVersion
 
 /* we used to have this here :
  *
- * #if HasSunC 
+ * #if HasSunC
  * # ifndef CCompilerMajorVersion
  * #  define CCompilerMajorVersion 3
  * #  define DefaultCDebugFlags	-xO3
@@ -297,7 +297,7 @@ XCOMM SunPro C++ CplusplusCompilerMajorVersion./**/CplusplusCompilerMinorVersion
 # define XawI18nDefines		-DUSE_XWCHAR_STRING -DUSE_XMBTOWC
 #endif
 
-#if OSMajorVersion == 4 
+#if OSMajorVersion == 4
 # if OSMinorVersion == 1
 #  define HasPoll		YES
 # endif
@@ -307,10 +307,10 @@ XCOMM SunPro C++ CplusplusCompilerMajorVersion./**/CplusplusCompilerMinorVersion
 # endif
 #endif
 
-/* The Xsun server was not building for SunOS 5.7 due to 
-   includes of <sys/cg2reg.h>. 
+/* The Xsun server was not building for SunOS 5.7 due to
+   includes of <sys/cg2reg.h>.
 */
-#if OSMajorVersion < 5 
+#if OSMajorVersion < 5
 # define IncludeCG2HeaderDefine	-DINCLUDE_CG2_HEADER
 #else
 # define IncludeCG2HeaderDefine /**/
@@ -322,7 +322,7 @@ XCOMM SunPro C++ CplusplusCompilerMajorVersion./**/CplusplusCompilerMinorVersion
 # endif
 #endif
 
-#if !HasGcc 
+#if !HasGcc
 # if HasSunC
 #  if defined(AMD64Architecture)
 #   define AsmArch amd64
@@ -414,7 +414,7 @@ XCOMM SunPro C++ CplusplusCompilerMajorVersion./**/CplusplusCompilerMinorVersion
 #   else
 #    define CplusplusDependIncludes	-I/opt/SUNWspro/SC2.0.1/include/CC
 #   endif
-#  endif 
+#  endif
 # endif /* HasSunC */
 
 # if HasSunC && (CCompilerMajorVersion < 3)
@@ -429,7 +429,9 @@ XCOMM SunPro C++ CplusplusCompilerMajorVersion./**/CplusplusCompilerMinorVersion
 #   define XawI18nDefines    -DHAS_WCHAR_H -DHAS_ISW_FUNCS
 #  endif
 # endif
-# if OSMinorVersion > 3
+# if OSMinorVersion > 10
+#  define InstallCmd	    /usr/gnu/bin/install
+# elif OSMinorVersion > 3
 #  define InstallCmd	    /usr/ucb/install
 # endif
 #ifndef LargefileDefines
@@ -455,25 +457,36 @@ XCOMM SunPro C++ CplusplusCompilerMajorVersion./**/CplusplusCompilerMinorVersion
 #  define StandardDefines	  -Dsun -Dsparc -DSVR4 -D__EXTENSIONS__ LargefileDefines
 #  define ToolkitStringsABIOptions	-sparcabi SolarisABIFlag
 # endif
-# define ExtraLibraries    -lsocket -lnsl
+/* Socket support was in separate libraries before 5.12, then merged to libc */
+# if (OSMajorVersion == 5) && (OSMinorVersion < 12)
+#  define ExtraLibraries -lsocket -lnsl
+# else
+#  define ExtraLibraries /**/
+# endif
 # define HasWeakSymbols	  YES
 # if OSMinorVersion > 1
 #  ifndef ThreadedX
 #   define ThreadedX	  YES
 #  endif
 #  define MTSafeAPIDefines	-DXUSE_MTSAFE_API -DXUSE_NETDB_R_API
-#  if HasSunC && CCompilerMajorVersion > 2
-#   define ThreadsCompileFlags -mt
-#  else
+/* Thread support was in separate library before 5.10, then merged to libc */
+#  if (OSMajorVersion == 5) && (OSMinorVersion < 10)
+#   if HasSunC && CCompilerMajorVersion > 2
+#    define ThreadsCompileFlags -mt
+#   else
+#    define ThreadsLibraries -lthread
+#   endif
+#   if HasSunCplusplus && CplusplusCompilerMajorVersion > 3
+#    define ThreadsCplusplusCompileFlags -mt
+#   else
+#    define ThreadsCplusplusLibraries -lthread
+#   endif
 #   define SystemMTDefines -D_REENTRANT
-#   define ThreadsLibraries -lthread
-#  endif
-#  if HasSunCplusplus && CplusplusCompilerMajorVersion > 3
-#   define ThreadsCplusplusCompileFlags -mt
 #  else
-#   define CplusplusSystemMTDefines -D_REENTRANT
-#   define ThreadsCplusplusLibraries -lthread
+   /* Solaris 10 & later */
+#   define SystemMTDefines -D_REENTRANT -D_POSIX_PTHREAD_SEMANTICS
 #  endif
+#  define CplusplusSystemMTDefines SystemMTDefines
 # endif 		/* OSMinorVersion > 1 */
 # ifndef UseExportLists
 #  if (OSMinorVersion > 4) && !HasGcc2
@@ -520,7 +533,7 @@ XCOMM SunPro C++ CplusplusCompilerMajorVersion./**/CplusplusCompilerMinorVersion
 # endif
 /* As is done in sco5.cf, we lie and say Solaris has NCURSES, since
  * the system curses is close enough for xorgcfg's purposes.  xorgcfg
- * should not depend on the NCURSES package but rather on a "capable curses", 
+ * should not depend on the NCURSES package but rather on a "capable curses",
  * of which NCURSES is just one.
  */
 #define	HasNCurses		YES
@@ -532,14 +545,14 @@ XCOMM SunPro C++ CplusplusCompilerMajorVersion./**/CplusplusCompilerMinorVersion
 
 /* Solaris 10 includes FreeType already.  It's also available in GNOME 2.0 for
  * Solaris 8 & 9, and in Solaris 9 4/03 and later, but there's no easy way to
- * detect that in imake, so users of those releases who want to use the 
+ * detect that in imake, so users of those releases who want to use the
  * installed FreeType instead of the one in this tree should copy the following
  * two settings to their host.def.  Those who want to use the in-tree copy
  * regardless of OS version should add "#define HasFreetype2 NO" to host.def.
  */
 #ifndef HasFreetype2
 # if (OSMajorVersion > 5) || ((OSMajorVersion == 5) && (OSMinorVersion >= 10))
-#  define HasFreetype2 YES 
+#  define HasFreetype2 YES
 #  ifndef Freetype2Dir
 #   define Freetype2Dir /usr/sfw
 #  endif
@@ -550,7 +563,7 @@ XCOMM SunPro C++ CplusplusCompilerMajorVersion./**/CplusplusCompilerMinorVersion
 
 #ifndef HasExpat
 # if (OSMajorVersion > 5) || ((OSMajorVersion == 5) && (OSMinorVersion >= 10))
-#  define HasExpat YES 
+#  define HasExpat YES
 #  ifndef ExpatDir
 #   define ExpatDir /usr/sfw
 #  endif
@@ -569,7 +582,7 @@ XCOMM SunPro C++ CplusplusCompilerMajorVersion./**/CplusplusCompilerMinorVersion
 /* libpng was in /usr/sfw/lib on Solaris 9, moved to /usr/lib in Solaris 10 */
 #ifndef HasLibpng
 # if (OSMajorVersion > 5) || ((OSMajorVersion == 5) && (OSMinorVersion >= 9))
-#  define HasLibpng YES 
+#  define HasLibpng YES
 #  if !defined(LibpngDir) && ((OSMajorVersion == 5) && (OSMinorVersion == 9))
 #   define LibpngDir /usr/sfw
 #  endif
@@ -618,7 +631,7 @@ XCOMM SunPro C++ CplusplusCompilerMajorVersion./**/CplusplusCompilerMinorVersion
 # endif
 # ifndef XorgServer
 #  define XorgServer	(!(Xsun24Server || XsunServer || XsunMonoServer))
-# endif 
+# endif
 # undef BuildXF86DRI
 # define BuildXF86DRI     NO
 # if (OSMajorVersion > 4)
@@ -742,8 +755,8 @@ XCOMM SunPro C++ CplusplusCompilerMajorVersion./**/CplusplusCompilerMinorVersion
 #      define SharedLibraryLoadFlags -G DefaultXArchOptions -z text $(EXTRA_LOAD_FLAGS)
 #     endif
 #    endif
-#   endif	
-#  endif	
+#   endif
+#  endif
 # endif
 
 /* Set compiler-dependent options for CenterLine C */
@@ -771,7 +784,7 @@ XCOMM SunPro C++ CplusplusCompilerMajorVersion./**/CplusplusCompilerMinorVersion
 # define LibraryCCOptions /* don't want special floating point */
 #else /* OSMajorVersion >= 5, i.e. Solaris 2.0 & later */
 /* Only load libraries when needed on Solaris 7 & later */
-# if OSMinorVersion >= 7 
+# if OSMinorVersion >= 7
 #  define LazyLoadFlag -z lazyload -z combreloc
 # else
 #  define LazyLoadFlag /* */

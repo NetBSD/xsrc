@@ -157,11 +157,11 @@ clean::									@@\
 
 /*
  * MakeDllProg
- */ 
-    
+ */
+
 #define MakeDLLProg(libname,solist,prog,rev)			        @@\
 	prog -shared -Wl,--out-implib=ImportLibraryName(libname,rev) -Wl,--enable-auto-import,--enable-runtime-pseudo-reloc -Wl,--exclude-libs,ALL -o SharedLibraryName(libname,rev) solist $(REQUIREDLIBS) -lws2_32
-    
+
 /*
  * MakeDll
  */

@@ -26,7 +26,7 @@ XCOMM $XFree86: xc/config/cf/os2Lib.tmpl,v 3.18 2003/11/12 00:10:23 dawes Exp $
 #define SharedXiReqs $(LDPRELIB) $(XLIB)
 #define SharedXrenderReqs $(LDPRELIB) $(XLIB)
 #define SharedXtstReqs $(LDPRELIB) $(XLIB)
-#define SharedSMReqs $(LDPRELIB) $(ICELIB) 
+#define SharedSMReqs $(LDPRELIB) $(ICELIB)
 #define SharedXpReqs $(LDPRELIB) $(XLIB)
 #define SharedXvReqs $(LDPRELIB) $(XLIB)
 #define SharedGLReqs $(LDPRELIB) $(XLIB)
@@ -143,66 +143,66 @@ XCOMM $XFree86: xc/config/cf/os2Lib.tmpl,v 3.18 2003/11/12 00:10:23 dawes Exp $
  * are using shared libraries, we really do not need to depend on anything
  */
 #if SharedLibXext
- DEPEXTENSIONLIB = 
+ DEPEXTENSIONLIB =
     EXTENSIONLIB = _Use(SDlibXExt,-L$(EXTENSIONSRC)/lib SDlibXExt)
 #endif
 #if SharedLibX11
-         DEPXLIB = 
+         DEPXLIB =
             XLIB = $(EXTENSIONLIB) _Use(SDlibX11,-L$(XLIBSRC) SDlibX11)
 #endif
 #if SharedLibXmu
-       DEPXMULIB = 
+       DEPXMULIB =
           XMULIB = _Use(SDlibXmu,-L$(XMUSRC) SDlibXmu) $(XLIB)
 #ifndef XawClientLibs
 #define XawClientLibs $(XAWLIB) $(XMULIB) $(XTOOLLIB) $(XPMLIB) $(EXTRAXAWCLIENTLIBS) $(XLIB)
 #endif
 #endif
 #if SharedOldX
-      DEPOLDXLIB = 
+      DEPOLDXLIB =
          OLDXLIB = _Use(-loldX,-L$(OLDXLIBSRC) -loldX)
 #endif
 #if SharedLibXt
-     DEPXTOOLLIB = 
+     DEPXTOOLLIB =
         XTOOLLIB = _Use(SDlibXt,-L$(TOOLKITSRC) SDlibXt)
 #endif
 #if SharedLibXaw
-       DEPXAWLIB = 
+       DEPXAWLIB =
           XAWLIB = _Use(SDlibXaw,-L$(AWIDGETSRC) SDlibXaw)
 #endif
 #if SharedLibXaw7
-      DEPXAW7LIB = 
+      DEPXAW7LIB =
          XAW7LIB = _Use(SDlibXaw7,-L$(AWIDGETSRC) SDlibXaw7)
 #endif
 #if SharedLibXaw6
-      DEPXAW6LIB = 
+      DEPXAW6LIB =
          XAW6LIB = _Use(SDlibXaw6,-L$(AWIDGETSRC) SDlibXaw6)
 #endif
 #if SharedLibXi
-        DEPXILIB = 
+        DEPXILIB =
            XILIB = _Use(SDlibXi,-L$(XILIBSRC) SDlibXi)
 #endif
 #if SharedLibXTest
-    DEPXTESTLIB = 
+    DEPXTESTLIB =
        XTESTLIB = _Use(SDlibXtst,-L$(EXTENSIONSRC)/lib/xtest SDlibXtst)
 #endif
 #if SharedLibXp
-       DEPXPLIB = 
+       DEPXPLIB =
           XPLIB = _Use(SDlibXp,-L$(EXTENSIONSRC)/lib SDlibXp)
 #endif
 #if SharedLibXv
-       DEPXVLIB = 
+       DEPXVLIB =
           XVLIB = _Use(SDlibXv,-L$(EXTENSIONSRC)/lib SDlibXv)
 #endif
 #if SharedLibGL
-       DEPGLLIB = 
+       DEPGLLIB =
           GLLIB = _Use(SDlibGL,-L$(EXTENSIONSRC)/lib SDlibGL)
 #endif
 #if SharedLibDPS
-      DEPDPSLIB = 
+      DEPDPSLIB =
          DPSLIB = _Use(SDlibDPS,-L$(EXTENSIONSRC)/lib SDlibDPS)
 #endif
 #if SharedLibDPSTK
-    DEPDPSTKLIB = 
+    DEPDPSTKLIB =
        DPSTKLIB = _Use(SDlibDPSTK,-L$(EXTENSIONSRC)/lib SDlibDPSTK)
 #endif
 
