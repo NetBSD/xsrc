@@ -30,7 +30,7 @@
 #define	ENG_CAP_Color8x8PatternFill		0x0040
 #define	ENG_CAP_CPUToScreenColorExpand		0x0080
 #define	ENG_CAP_ScreenToScreenColorExpand	0x0100
-#define	ENG_CAP_Clipping			0x0200	
+#define	ENG_CAP_Clipping			0x0200
 #define ENG_CAP_ALL	(ENG_CAP_Sync | ENG_CAP_ScreenToScreenCopy | ENG_CAP_SolidFill	|	\
                          ENG_CAP_SolidLine | ENG_CAP_DashedLine |				\
                          ENG_CAP_Mono8x8PatternFill | ENG_CAP_Color8x8PatternFill |		\
@@ -67,13 +67,13 @@ typedef struct  _PKT_SC
 {
     ULONG    PKT_SC_dwHeader;
     ULONG    PKT_SC_dwData[1];
-    
+
 } PKT_SC, *PPKT_SC;
 
 /* Packet CMD Scale */
 #define    PKT_TYPESCALE_LENGTH        		56
-#define    PKT_TYPESCALE_DATALENGTH    		(0xC<<16)	  
-#define    PKT_TYPESCALE_ADDRSTART     		0x00000000		  		  
+#define    PKT_TYPESCALE_DATALENGTH    		(0xC<<16)
+#define    PKT_TYPESCALE_ADDRSTART     		0x00000000
 
 typedef struct _BURSTSCALECMD
 {
@@ -97,7 +97,7 @@ typedef struct _BURSTSCALECMD
             USHORT   wDstPitch;       		/* 800E */
         };
         ULONG    dwDstHeightPitch;   		/* 800C */
-    };        
+    };
     union
     {
         struct
@@ -115,7 +115,7 @@ typedef struct _BURSTSCALECMD
             short    wSrcX;           		/* 8016 */
         };
         ULONG    dwSrcXY;            		/* 8014 */
-    };        
+    };
     union
     {
         struct
@@ -132,7 +132,7 @@ typedef struct _BURSTSCALECMD
 
     ULONG    dwCmd;             	    	/* 823C */
     ULONG    NullData[1];
-} BURSTSCALECMD, *PBURSTSCALECMD; 
+} BURSTSCALECMD, *PBURSTSCALECMD;
 
 /* Eng Reg. Limitation */
 #define	MAX_SRC_X				0x7FF
@@ -151,20 +151,20 @@ typedef struct _BURSTSCALECMD
 #define	MASK_RECT_HEIGHT			0x7FF
 #define MASK_CLIP				0xFFF
 
-#define MASK_LINE_X        			0xFFF   
+#define MASK_LINE_X        			0xFFF
 #define MASK_LINE_Y           			0xFFF
-#define MASK_LINE_ERR   			0x3FFFFF        
-#define MASK_LINE_WIDTH   			0x7FF        
-#define MASK_LINE_K1				0x3FFFFF           
+#define MASK_LINE_ERR   			0x3FFFFF
+#define MASK_LINE_WIDTH   			0x7FF
+#define MASK_LINE_K1				0x3FFFFF
 #define MASK_LINE_K2				0x3FFFFF
-#define MASK_AIPLINE_X        			0xFFF   
+#define MASK_AIPLINE_X        			0xFFF
 #define MASK_AIPLINE_Y         			0xFFF
 
 #define MAX_PATReg_Size				256
 
-/* Eng Reg. Definition */  
+/* Eng Reg. Definition */
 /* MMIO Reg */
-#define MMIOREG_SRC_BASE	(pAST->MMIOVirtualAddr + 0x8000)                
+#define MMIOREG_SRC_BASE	(pAST->MMIOVirtualAddr + 0x8000)
 #define MMIOREG_SRC_PITCH	(pAST->MMIOVirtualAddr + 0x8004)
 #define MMIOREG_DST_BASE	(pAST->MMIOVirtualAddr + 0x8008)
 #define MMIOREG_DST_PITCH	(pAST->MMIOVirtualAddr + 0x800C)
@@ -179,21 +179,21 @@ typedef struct _BURSTSCALECMD
 #define MMIOREG_MONO2		(pAST->MMIOVirtualAddr + 0x8030)
 #define MMIOREG_CLIP1		(pAST->MMIOVirtualAddr + 0x8034)
 #define MMIOREG_CLIP2		(pAST->MMIOVirtualAddr + 0x8038)
-#define MMIOREG_CMD		(pAST->MMIOVirtualAddr + 0x803C)    
-#define MMIOREG_PAT		(pAST->MMIOVirtualAddr + 0x8100)    
+#define MMIOREG_CMD		(pAST->MMIOVirtualAddr + 0x803C)
+#define MMIOREG_PAT		(pAST->MMIOVirtualAddr + 0x8100)
 
-#define MMIOREG_LINE_XY         (pAST->MMIOVirtualAddr + 0x8010)  
-#define MMIOREG_LINE_Err        (pAST->MMIOVirtualAddr + 0x8014)  
-#define MMIOREG_LINE_WIDTH      (pAST->MMIOVirtualAddr + 0x8018)  
-#define MMIOREG_LINE_K1         (pAST->MMIOVirtualAddr + 0x8024)  
-#define MMIOREG_LINE_K2         (pAST->MMIOVirtualAddr + 0x8028)  
-#define MMIOREG_LINE_STYLE1     (pAST->MMIOVirtualAddr + 0x802C)  
-#define MMIOREG_LINE_STYLE2     (pAST->MMIOVirtualAddr + 0x8030)  
+#define MMIOREG_LINE_XY         (pAST->MMIOVirtualAddr + 0x8010)
+#define MMIOREG_LINE_Err        (pAST->MMIOVirtualAddr + 0x8014)
+#define MMIOREG_LINE_WIDTH      (pAST->MMIOVirtualAddr + 0x8018)
+#define MMIOREG_LINE_K1         (pAST->MMIOVirtualAddr + 0x8024)
+#define MMIOREG_LINE_K2         (pAST->MMIOVirtualAddr + 0x8028)
+#define MMIOREG_LINE_STYLE1     (pAST->MMIOVirtualAddr + 0x802C)
+#define MMIOREG_LINE_STYLE2     (pAST->MMIOVirtualAddr + 0x8030)
 #define MMIOREG_LINE_XY2        (pAST->MMIOVirtualAddr + 0x8014)
-#define MMIOREG_LINE_NUMBER     (pAST->MMIOVirtualAddr + 0x8018)  
+#define MMIOREG_LINE_NUMBER     (pAST->MMIOVirtualAddr + 0x8018)
 
 /* CMDQ Reg */
-#define CMDQREG_SRC_BASE	(0x00 << 24)                       
+#define CMDQREG_SRC_BASE	(0x00 << 24)
 #define CMDQREG_SRC_PITCH	(0x01 << 24)
 #define CMDQREG_DST_BASE	(0x02 << 24)
 #define CMDQREG_DST_PITCH	(0x03 << 24)
@@ -211,15 +211,15 @@ typedef struct _BURSTSCALECMD
 #define CMDQREG_CMD		(0x0F << 24)
 #define CMDQREG_PAT		(0x40 << 24)
 
-#define CMDQREG_LINE_XY         (0x04 << 24) 
-#define CMDQREG_LINE_Err        (0x05 << 24)  
-#define CMDQREG_LINE_WIDTH      (0x06 << 24)    
-#define CMDQREG_LINE_K1         (0x09 << 24) 
+#define CMDQREG_LINE_XY         (0x04 << 24)
+#define CMDQREG_LINE_Err        (0x05 << 24)
+#define CMDQREG_LINE_WIDTH      (0x06 << 24)
+#define CMDQREG_LINE_K1         (0x09 << 24)
 #define CMDQREG_LINE_K2         (0x0A << 24)
-#define CMDQREG_LINE_STYLE1     (0x0B << 24) 
+#define CMDQREG_LINE_STYLE1     (0x0B << 24)
 #define CMDQREG_LINE_STYLE2     (0x0C << 24)
 #define CMDQREG_LINE_XY2        (0x05 << 24)
-#define CMDQREG_LINE_NUMBER     (0x06 << 24)    
+#define CMDQREG_LINE_NUMBER     (0x06 << 24)
 
 /* CMD Reg. Definition */
 #define   CMD_BITBLT                 		0x00000000
@@ -229,8 +229,8 @@ typedef struct _BURSTSCALECMD
 #define   CMD_TRANSPARENTBLT           		0x00000004
 #define   CMD_TYPE_SCALE                    	0x00000005
 #define   CMD_MASK            	        	0x00000007
-					
-#define   CMD_DISABLE_CLIP           		0x00000000   
+
+#define   CMD_DISABLE_CLIP           		0x00000000
 #define   CMD_ENABLE_CLIP            		0x00000008
 
 #define   CMD_COLOR_08               		0x00000000
@@ -248,10 +248,10 @@ typedef struct _BURSTSCALECMD
 #define   CMD_OPAQUE                 		0x00000000
 #define   CMD_FONT_TRANSPARENT          	0x00040000
 
-#define   CMD_X_INC				0x00000000	
+#define   CMD_X_INC				0x00000000
 #define   CMD_X_DEC				0x00200000
 
-#define   CMD_Y_INC				0x00000000	
+#define   CMD_Y_INC				0x00000000
 #define   CMD_Y_DEC				0x00100000
 
 #define   CMD_NT_LINE				0x00000000
@@ -293,16 +293,16 @@ typedef struct _LINEPARAM {
     ULONG	dwErrorTerm;
     ULONG	dwK1Term;
     ULONG	dwK2Term;
-    ULONG	dwLineAttributes;	
+    ULONG	dwLineAttributes;
 } LINEPARAM, *PLINEPARAM;
 
 typedef struct {
-	
+
     LONG X1;
     LONG Y1;
     LONG X2;
-    LONG Y2;	
-    
+    LONG Y2;
+
 } _LINEInfo;
 
 /* Macro */
@@ -324,7 +324,7 @@ typedef struct {
         do { \
            *(ULONG *)(MMIOREG_DST_BASE) = (ULONG)(base); \
         } while (*(volatile ULONG *)(MMIOREG_DST_BASE) != (ULONG)(base)); \
-      }      
+      }
 #define ASTSetupDSTPitchHeight_MMIO(pitch, height) \
       { \
         ULONG dstpitch; \
@@ -332,7 +332,7 @@ typedef struct {
         do { \
            *(ULONG *)(MMIOREG_DST_PITCH) = dstpitch; \
         } while (*(volatile ULONG *)(MMIOREG_DST_PITCH) != dstpitch); \
-      }      
+      }
 #define ASTSetupDSTXY_MMIO(x, y) \
       { \
         ULONG dstxy; \
@@ -340,7 +340,7 @@ typedef struct {
         do { \
            *(ULONG *)(MMIOREG_DST_XY) = dstxy; \
         } while (*(volatile ULONG *)(MMIOREG_DST_XY) != dstxy); \
-      }           
+      }
 #define ASTSetupSRCXY_MMIO(x, y) \
       { \
         ULONG srcxy; \
@@ -348,7 +348,7 @@ typedef struct {
         do { \
            *(ULONG *)(MMIOREG_SRC_XY) = srcxy; \
         } while (*(volatile ULONG *)(MMIOREG_SRC_XY) != srcxy); \
-      }             
+      }
 #define ASTSetupRECTXY_MMIO(x, y) \
       { \
         ULONG rectxy; \
@@ -356,13 +356,13 @@ typedef struct {
         do { \
            *(ULONG *)(MMIOREG_RECT_XY) = rectxy; \
         } while (*(volatile ULONG *)(MMIOREG_RECT_XY) != rectxy); \
-      }  
+      }
 #define ASTSetupFG_MMIO(color) \
       { \
         do { \
            *(ULONG *)(MMIOREG_FG) = (ULONG)(color); \
         } while (*(volatile ULONG *)(MMIOREG_FG) != (ULONG)(color)); \
-      } 
+      }
 #define ASTSetupBG_MMIO(color) \
       { \
         do { \
@@ -374,7 +374,7 @@ typedef struct {
         do { \
           *(ULONG *)(MMIOREG_MONO1) = (ULONG)(pat); \
         } while (*(volatile ULONG *)(MMIOREG_MONO1) != (ULONG)(pat)); \
-      } 
+      }
 #define ASTSetupMONO2_MMIO(pat) \
       { \
         do { \
@@ -388,7 +388,7 @@ typedef struct {
        do { \
           *(ULONG *)(MMIOREG_CLIP1) = clip1; \
        } while (*(volatile ULONG *)(MMIOREG_CLIP1) != clip1); \
-      } 
+      }
 #define ASTSetupCLIP2_MMIO(right, bottom) \
       { \
        ULONG clip2; \
@@ -396,7 +396,7 @@ typedef struct {
        do { \
           *(ULONG *)(MMIOREG_CLIP2) = clip2; \
        } while (*(volatile ULONG *)(MMIOREG_CLIP2) != clip2); \
-      }                                                                                               
+      }
 #define ASTSetupCMDReg_MMIO(reg) \
       { \
         *(ULONG *)(MMIOREG_CMD) = (ULONG)(reg);	\
@@ -406,8 +406,8 @@ typedef struct {
        do { \
           *(ULONG *)(MMIOREG_PAT + patreg*4) = (ULONG)(pat); \
        } while (*(volatile ULONG *)(MMIOREG_PAT + patreg*4) != (ULONG)(pat)); \
-      }      
-                                
+      }
+
 /* Line CMD */
 #define ASTSetupLineXY_MMIO(x, y) \
       { \
@@ -424,7 +424,7 @@ typedef struct {
         do { \
            *(ULONG *)(MMIOREG_LINE_Err) = lineerr; \
         } while (*(volatile ULONG *)(MMIOREG_LINE_Err) != lineerr); \
-      }      
+      }
 #define ASTSetupLineWidth_MMIO(width) \
       { \
         ULONG linewidth; \
@@ -438,7 +438,7 @@ typedef struct {
         do { \
           *(ULONG *)(MMIOREG_LINE_K1) = (ULONG)(err & MASK_LINE_K1); \
         } while (*(volatile ULONG *)(MMIOREG_LINE_K1) != (ULONG)(err & MASK_LINE_K1)); \
-      }            
+      }
 #define ASTSetupLineK2Term_MMIO(err) \
       { \
         do { \
@@ -450,13 +450,13 @@ typedef struct {
         do { \
            *(ULONG *)(MMIOREG_LINE_STYLE1) = (ULONG)(pat); \
         } while (*(volatile ULONG *)(MMIOREG_LINE_STYLE1) != (ULONG)(pat)); \
-      } 
+      }
 #define ASTSetupLineStyle2_MMIO(pat) \
       { \
         do { \
           *(ULONG *)(MMIOREG_LINE_STYLE2) = (ULONG)(pat); \
         } while (*(volatile ULONG *)(MMIOREG_LINE_STYLE2) != (ULONG)(pat)); \
-      }     
+      }
 
 /* AIP Line CMD */
 #define AIPSetupLineXY_MMIO(x, y) \
@@ -481,8 +481,8 @@ typedef struct {
            *(ULONG *)(MMIOREG_LINE_NUMBER) = (ULONG) no; \
         } while (*(volatile ULONG *)(MMIOREG_LINE_NUMBER) != (ULONG) no); \
       }
-                                
-/* CMDQ Mode Macro */ 
+
+/* CMDQ Mode Macro */
 #define mUpdateWritePointer *(ULONG *) (pAST->CMDQInfo.pjWritePort) = (pAST->CMDQInfo.ulWritePointer >>3)
 
 /* General CMD */
@@ -500,27 +500,27 @@ typedef struct {
       { \
         addr->PKT_SC_dwHeader  = (ULONG)(PKT_SINGLE_CMD_HEADER + CMDQREG_DST_BASE); 	\
         addr->PKT_SC_dwData[0] = (ULONG)(base);					\
-      }      
+      }
 #define ASTSetupDSTPitchHeight(addr, pitch, height) \
       { \
         addr->PKT_SC_dwHeader  = (ULONG)(PKT_SINGLE_CMD_HEADER + CMDQREG_DST_PITCH); 	\
         addr->PKT_SC_dwData[0] = (ULONG)((pitch << 16) + ((height) & MASK_DST_HEIGHT));					\
-      }      
+      }
 #define ASTSetupDSTXY(addr, x, y) \
       { \
         addr->PKT_SC_dwHeader  = (ULONG)(PKT_SINGLE_CMD_HEADER + CMDQREG_DST_XY); 	\
         addr->PKT_SC_dwData[0] = (ULONG)(((x & MASK_DST_X) << 16) + (y & MASK_DST_Y));					\
-      }           
+      }
 #define ASTSetupSRCXY(addr, x, y) \
       { \
         addr->PKT_SC_dwHeader  = (ULONG)(PKT_SINGLE_CMD_HEADER + CMDQREG_SRC_XY); 	\
         addr->PKT_SC_dwData[0] = (ULONG)(((x & MASK_SRC_X) << 16) + (y & MASK_SRC_Y));					\
-      }             
+      }
 #define ASTSetupRECTXY(addr, x, y) \
       { \
         addr->PKT_SC_dwHeader  = (ULONG)(PKT_SINGLE_CMD_HEADER + CMDQREG_RECT_XY); 	\
         addr->PKT_SC_dwData[0] = (ULONG)(((x & MASK_RECT_WIDTH) << 16) + (y & MASK_RECT_WIDTH));					\
-      }  
+      }
 #define ASTSetupFG(addr, color) \
       { \
         addr->PKT_SC_dwHeader  = (ULONG)(PKT_SINGLE_CMD_HEADER + CMDQREG_FG); 	\
@@ -535,22 +535,22 @@ typedef struct {
       { \
         addr->PKT_SC_dwHeader  = (ULONG)(PKT_SINGLE_CMD_HEADER + CMDQREG_MONO1); 	\
         addr->PKT_SC_dwData[0] = (ULONG)(pat);				\
-      }            
+      }
 #define ASTSetupMONO2(addr, pat) \
       { \
         addr->PKT_SC_dwHeader  = (ULONG)(PKT_SINGLE_CMD_HEADER + CMDQREG_MONO2); 	\
         addr->PKT_SC_dwData[0] = (ULONG)(pat);				\
-      }     
+      }
 #define ASTSetupCLIP1(addr, left, top) \
       { \
         addr->PKT_SC_dwHeader  = (ULONG)(PKT_SINGLE_CMD_HEADER + CMDQREG_CLIP1); 	\
         addr->PKT_SC_dwData[0] = (ULONG)(((left & MASK_CLIP) << 16) + (top & MASK_CLIP));	\
-      }            
+      }
 #define ASTSetupCLIP2(addr, right, bottom) \
       { \
         addr->PKT_SC_dwHeader  = (ULONG)(PKT_SINGLE_CMD_HEADER + CMDQREG_CLIP2); 	\
         addr->PKT_SC_dwData[0] = (ULONG)(((right & MASK_CLIP) << 16) + (bottom & MASK_CLIP));	\
-      }                                                                                                    
+      }
 #define ASTSetupCMDReg(addr, reg) \
       { \
         addr->PKT_SC_dwHeader  = (ULONG)(PKT_SINGLE_CMD_HEADER + CMDQREG_CMD); 	\
@@ -560,7 +560,7 @@ typedef struct {
       { \
         addr->PKT_SC_dwHeader  = (ULONG)(PKT_SINGLE_CMD_HEADER + (CMDQREG_PAT + (patreg << 24))); 	\
         addr->PKT_SC_dwData[0] = (ULONG)(pat);				\
-      }    
+      }
 
 /* Line CMD */
 #define ASTSetupLineXY(addr, x, y) \
@@ -572,32 +572,32 @@ typedef struct {
       { \
         addr->PKT_SC_dwHeader  = (ULONG)(PKT_SINGLE_CMD_HEADER + CMDQREG_LINE_Err); 	\
         addr->PKT_SC_dwData[0] = (ULONG)((xm << 24) + (err & MASK_LINE_ERR));					\
-      }      
+      }
 #define ASTSetupLineWidth(addr, width) \
       { \
         addr->PKT_SC_dwHeader  = (ULONG)(PKT_SINGLE_CMD_HEADER + CMDQREG_LINE_WIDTH); 	\
         addr->PKT_SC_dwData[0] = (ULONG)((width & MASK_LINE_WIDTH) << 16);				\
-      }            
+      }
 #define ASTSetupLineK1Term(addr, err) \
       { \
         addr->PKT_SC_dwHeader  = (ULONG)(PKT_SINGLE_CMD_HEADER + CMDQREG_LINE_K1); 	\
         addr->PKT_SC_dwData[0] = (ULONG)(err & MASK_LINE_K1);				\
-      }            
+      }
 #define ASTSetupLineK2Term(addr, err) \
       { \
         addr->PKT_SC_dwHeader  = (ULONG)(PKT_SINGLE_CMD_HEADER + CMDQREG_LINE_K2); 	\
         addr->PKT_SC_dwData[0] = (ULONG)(err & MASK_LINE_K2);				\
-      }     
+      }
 #define ASTSetupLineStyle1(addr, pat) \
       { \
         addr->PKT_SC_dwHeader  = (ULONG)(PKT_SINGLE_CMD_HEADER + CMDQREG_LINE_STYLE1); 	\
         addr->PKT_SC_dwData[0] = (ULONG)(pat);				\
-      }            
+      }
 #define ASTSetupLineStyle2(addr, pat) \
       { \
         addr->PKT_SC_dwHeader  = (ULONG)(PKT_SINGLE_CMD_HEADER + CMDQREG_LINE_STYLE2); 	\
         addr->PKT_SC_dwData[0] = (ULONG)(pat);				\
-      }     
+      }
 
 #define ASTSetupNULLCMD(addr) \
       { \
