@@ -1,3 +1,55 @@
+commit ccdfcf5c05ccade823c9734212dcb865d8958cbb
+Author: Tormod Volden <debian.tormod@gmail.com>
+Date:   Wed Oct 2 20:36:38 2013 +0200
+
+    r128: bump to version 6.9.2
+    
+    Signed-off-by: Tormod Volden <debian.tormod@gmail.com>
+
+commit 255cf857af35e4024486cbc2693872d020f09a29
+Author: Connor Behan <connor.behan@gmail.com>
+Date:   Mon Sep 30 23:24:54 2013 -0700
+
+    Specify NULL for the platform probe function
+    
+    Apparently this has been required by the ABI since server 1.13.
+    
+    Signed-off-by: Connor Behan <connor.behan@gmail.com>
+
+commit a98077959a65dfda1db900373969bd08479d3e43
+Author: Connor Behan <connor.behan@gmail.com>
+Date:   Mon Sep 30 21:12:20 2013 -0700
+
+    Minor spacing changes
+    
+    A log message needed a space added, two source files needed whitespace
+    removed.
+    
+    Signed-off-by: Connor Behan <connor.behan@gmail.com>
+
+commit aca6aa127f43deeed42c4d3bef8d1e6a735b4c50
+Author: Connor Behan <connor.behan@gmail.com>
+Date:   Fri Mar 8 01:02:22 2013 -0800
+
+    Swap pixmap bytes for a solid picture on big endian host
+    
+    Some PowerPC users were reporting color errors that only happened with
+    EXA+DRI. This implements a recent bugfix in the Radeon driver which will
+    solve at least one of these problems.
+    
+    Signed-off-by: Connor Behan <connor.behan@gmail.com>
+
+commit 24f28a78fdcd056357f137650ca7f0f01c257d97
+Author: Connor Behan <connor.behan@gmail.com>
+Date:   Wed Dec 19 10:41:14 2012 -0800
+
+    Remove call to obsolete miInitializeBackingStore()
+    
+    Definition was deleted from Xorg during 1.14 merge window, but has been
+    a no-op since 1.10 merge window.
+    
+    Signed-off-by: Connor Behan <connor.behan@gmail.com>
+
 commit ef4467b4aac70b9a8a1ef1194eb02d7551be2602
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Fri Sep 28 11:25:17 2012 +1000

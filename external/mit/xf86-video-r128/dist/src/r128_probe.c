@@ -379,6 +379,9 @@ _X_EXPORT DriverRec R128 =
     NULL,
 #ifdef XSERVER_LIBPCIACCESS
     r128_device_match,
-    r128_pci_probe
+    r128_pci_probe,
+#endif
+#ifdef XSERVER_PLATFORM_BUS
+    NULL
 #endif
 };
