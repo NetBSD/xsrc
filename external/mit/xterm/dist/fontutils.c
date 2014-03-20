@@ -1,7 +1,7 @@
-/* $XTermId: fontutils.c,v 1.387 2013/05/15 00:31:56 tom Exp $ */
+/* $XTermId: fontutils.c,v 1.400 2013/12/09 12:20:31 tom Exp $ */
 
 /*
- * Copyright 1998-2011,2012 by Thomas E. Dickey
+ * Copyright 1998-2012,2013 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -59,22 +59,22 @@
 			     (((cs)->rbearing|(cs)->lbearing| \
 			       (cs)->ascent|(cs)->descent) == 0))
 
-#define CI_GET_CHAR_INFO_1D(fs,col,def,cs) \
+#define CI_GET_CHAR_INFO_1D(fs,col,cs) \
 { \
-    cs = def; \
+    cs = 0; \
     if (col >= fs->min_char_or_byte2 && col <= fs->max_char_or_byte2) { \
 	if (fs->per_char == NULL) { \
 	    cs = &fs->min_bounds; \
 	} else { \
 	    cs = &fs->per_char[(col - fs->min_char_or_byte2)]; \
-	    if (CI_NONEXISTCHAR(cs)) cs = def; \
 	} \
+	if (CI_NONEXISTCHAR(cs)) cs = 0; \
     } \
 }
 
-#define CI_GET_CHAR_INFO_2D(fs,row,col,def,cs) \
+#define CI_GET_CHAR_INFO_2D(fs,row,col,cs) \
 { \
-    cs = def; \
+    cs = 0; \
     if (row >= fs->min_byte1 && row <= fs->max_byte1 && \
 	col >= fs->min_char_or_byte2 && col <= fs->max_char_or_byte2) { \
 	if (fs->per_char == NULL) { \
@@ -84,8 +84,8 @@
 				(fs->max_char_or_byte2 - \
 				 fs->min_char_or_byte2 + 1)) + \
 			       (col - fs->min_char_or_byte2)]; \
-	    if (CI_NONEXISTCHAR(cs)) cs = def; \
 	} \
+	if (CI_NONEXISTCHAR(cs)) cs = 0; \
     } \
 }
 
@@ -122,7 +122,7 @@ static void fillInFaceSize(XtermWidget, int);
 static int lookupOneFontSize(XtermWidget, int);
 #endif
 
-#if OPT_WIDE_CHARS
+#if OPT_REPORT_FONTS || OPT_WIDE_CHARS
 static unsigned
 countGlyphs(XFontStruct * fp)
 {
@@ -130,7 +130,7 @@ countGlyphs(XFontStruct * fp)
 
     if (fp != 0) {
 	if (fp->min_byte1 == 0 && fp->max_byte1 == 0) {
-	    count = fp->max_char_or_byte2 - fp->min_char_or_byte2;
+	    count = fp->max_char_or_byte2 - fp->min_char_or_byte2 + 1;
 	} else if (fp->min_char_or_byte2 < 256
 		   && fp->max_char_or_byte2 < 256) {
 	    unsigned first = (fp->min_byte1 << 8) + fp->min_char_or_byte2;
@@ -140,7 +140,9 @@ countGlyphs(XFontStruct * fp)
     }
     return count;
 }
+#endif
 
+#if OPT_WIDE_CHARS
 /*
  * Verify that the wide-bold font is at least a bold font with roughly as many
  * glyphs as the wide font.  The counts should be the same, but settle for
@@ -253,7 +255,7 @@ check_fontname(const char *name)
  * or NULL on error.
  */
 static FontNameProperties *
-get_font_name_props(Display * dpy, XFontStruct * fs, char **result)
+get_font_name_props(Display *dpy, XFontStruct * fs, char **result)
 {
     static FontNameProperties props;
     static char *last_name;
@@ -465,7 +467,7 @@ widebold_font_name(FontNameProperties * props)
  * fonts we double the pixel-size and Y-resolution
  */
 char *
-xtermSpecialFont(TScreen * screen, unsigned atts, unsigned chrset)
+xtermSpecialFont(TScreen *screen, unsigned atts, unsigned chrset)
 {
 #if OPT_TRACE
     static char old_spacing[80];
@@ -580,7 +582,7 @@ same_font_name(const char *pattern, const char *match)
  * offset.
  */
 static int
-got_bold_font(Display * dpy, XFontStruct * fs, String requested)
+got_bold_font(Display *dpy, XFontStruct * fs, String requested)
 {
     char *actual = 0;
     int got;
@@ -661,7 +663,7 @@ is_double_width_font(XFontStruct * fs)
 #define FULL_WIDTH_CHAR2  0xAC00	/* Korean script syllable 'Ka' */
 
 static Bool
-is_double_width_font_xft(Display * dpy, XftFont * font)
+is_double_width_font_xft(Display *dpy, XftFont * font)
 {
     XGlyphInfo gi1, gi2;
     FcChar32 c1 = HALF_WIDTH_CHAR1, c2 = HALF_WIDTH_CHAR2;
@@ -726,7 +728,7 @@ xtermFontName(const char *normal)
 }
 
 static void
-cache_menu_font_name(TScreen * screen, int fontnum, int which, const char *name)
+cache_menu_font_name(TScreen *screen, int fontnum, int which, const char *name)
 {
     if (name != 0) {
 	char *last = (char *) screen->menu_font_names[fontnum][which];
@@ -859,6 +861,84 @@ xtermFreeFontInfo(XTermFonts * target)
     }
     target->fs = 0;
 }
+
+#if OPT_REPORT_FONTS
+static void
+reportXCharStruct(const char *tag, XCharStruct * cs)
+{
+    printf("\t\t%s:\n", tag);
+    printf("\t\t\tlbearing: %d\n", cs->lbearing);
+    printf("\t\t\trbearing: %d\n", cs->rbearing);
+    printf("\t\t\twidth:    %d\n", cs->width);
+    printf("\t\t\tascent:   %d\n", cs->ascent);
+    printf("\t\t\tdescent:  %d\n", cs->descent);
+}
+
+static void
+reportOneVTFont(const char *tag,
+		XTermFonts * fnt)
+{
+    if (!IsEmpty(fnt->fn)) {
+	XFontStruct *fs = fnt->fs;
+	unsigned missing = 0;
+	unsigned first_char = 0;
+	unsigned last_char = 0;
+	unsigned ch;
+
+	if (fs->max_byte1 == 0) {
+	    first_char = fs->min_char_or_byte2;
+	    last_char = fs->max_char_or_byte2;
+	} else {
+	    first_char = (fs->min_byte1 * 256) + fs->min_char_or_byte2;
+	    last_char = (fs->max_byte1 * 256) + fs->max_char_or_byte2;
+	}
+
+	for (ch = first_char; ch <= last_char; ++ch) {
+	    if (xtermMissingChar(ch, fnt)) {
+		++missing;
+	    }
+	}
+
+	printf("\t%s: %s\n", tag, NonNull(fnt->fn));
+	printf("\t\tall chars:     %s\n", fs->all_chars_exist ? "yes" : "no");
+	printf("\t\tdefault char:  %d\n", fs->default_char);
+	printf("\t\tdirection:     %d\n", fs->direction);
+	printf("\t\tascent:        %d\n", fs->ascent);
+	printf("\t\tdescent:       %d\n", fs->descent);
+	printf("\t\tfirst char:    %u\n", first_char);
+	printf("\t\tlast char:     %u\n", last_char);
+	printf("\t\tmaximum-chars: %u\n", countGlyphs(fs));
+	printf("\t\tmissing-chars: %u\n", missing);
+	printf("\t\tpresent-chars: %u\n", countGlyphs(fs) - missing);
+	printf("\t\tmin_byte1:     %d\n", fs->min_byte1);
+	printf("\t\tmax_byte1:     %d\n", fs->max_byte1);
+	printf("\t\tproperties:    %d\n", fs->n_properties);
+	reportXCharStruct("min_bounds", &(fs->min_bounds));
+	reportXCharStruct("max_bounds", &(fs->max_bounds));
+	/* TODO: report fs->properties and fs->per_char */
+    }
+}
+
+static void
+reportVTFontInfo(XtermWidget xw, int fontnum)
+{
+    if (resource.reportFonts) {
+	TScreen *screen = TScreenOf(xw);
+
+	if (fontnum) {
+	    printf("Loaded VTFonts(font%d)\n", fontnum);
+	} else {
+	    printf("Loaded VTFonts(default)\n");
+	}
+	reportOneVTFont("fNorm", &screen->fnts[fNorm]);
+	reportOneVTFont("fBold", &screen->fnts[fBold]);
+#if OPT_WIDE_CHARS
+	reportOneVTFont("fWide", &screen->fnts[fWide]);
+	reportOneVTFont("fWBold", &screen->fnts[fWBold]);
+#endif
+    }
+}
+#endif
 
 int
 xtermLoadFont(XtermWidget xw,
@@ -1202,6 +1282,11 @@ xtermLoadFont(XtermWidget xw,
     {
 	unsigned ch;
 
+	TRACE(("normal font is %scomplete\n",
+	       FontIsIncomplete(&fnts[fNorm]) ? "in" : ""));
+	TRACE(("bold font is %scomplete\n",
+	       FontIsIncomplete(&fnts[fBold]) ? "in" : ""));
+
 	for (ch = 1; ch < 32; ch++) {
 	    unsigned n = ch;
 #if OPT_WIDE_CHARS
@@ -1257,6 +1342,9 @@ xtermLoadFont(XtermWidget xw,
     set_cursor_gcs(xw);
     xtermUpdateFontInfo(xw, doresize);
     TRACE(("Success Cgs - xtermLoadFont\n"));
+#if OPT_REPORT_FONTS
+    reportVTFontInfo(xw, fontnum);
+#endif
     return 1;
 
   bad:
@@ -1530,7 +1618,7 @@ xtermLoadDefaultFonts(XtermWidget xw)
 void
 HandleLoadVTFonts(Widget w,
 		  XEvent * event GCC_UNUSED,
-		  String * params GCC_UNUSED,
+		  String *params GCC_UNUSED,
 		  Cardinal *param_count GCC_UNUSED)
 {
     static char empty[] = "";	/* appease strict compilers */
@@ -1580,7 +1668,7 @@ HandleLoadVTFonts(Widget w,
  * Set the limits for the box that outlines the cursor.
  */
 void
-xtermSetCursorBox(TScreen * screen)
+xtermSetCursorBox(TScreen *screen)
 {
     static XPoint VTbox[NBOX];
     XPoint *vp;
@@ -1614,7 +1702,6 @@ xtermSetCursorBox(TScreen * screen)
 
 #if OPT_RENDERFONT
 
-#if OPT_TRACE > 1
 static FcChar32
 xtermXftFirstChar(XftFont * xft)
 {
@@ -1627,7 +1714,7 @@ xtermXftFirstChar(XftFont * xft)
     for (i = 0; i < FC_CHARSET_MAP_SIZE; i++)
 	if (map[i]) {
 	    FcChar32 bits = map[i];
-	    first += i * 32;
+	    first += (FcChar32) i *32;
 	    while (!(bits & 0x1)) {
 		bits >>= 1;
 		first++;
@@ -1646,11 +1733,11 @@ xtermXftLastChar(XftFont * xft)
     last = FcCharSetFirstPage(xft->charset, map, &next);
     while ((this = FcCharSetNextPage(xft->charset, map, &next)) != FC_CHARSET_DONE)
 	last = this;
-    last &= ~0xff;
+    last &= (FcChar32) ~ 0xff;
     for (i = FC_CHARSET_MAP_SIZE - 1; i >= 0; i--)
 	if (map[i]) {
 	    FcChar32 bits = map[i];
-	    last += i * 32 + 31;
+	    last += (FcChar32) i *32 + 31;
 	    while (!(bits & 0x80000000)) {
 		last--;
 		bits <<= 1;
@@ -1660,6 +1747,7 @@ xtermXftLastChar(XftFont * xft)
     return (long) last;
 }
 
+#if OPT_TRACE > 1
 static void
 dumpXft(XtermWidget xw, XTermXftFonts * data)
 {
@@ -1728,6 +1816,43 @@ checkXft(XtermWidget xw, XTermXftFonts * data, XftFont * xft)
     data->map.mixed = (data->map.max_width >= (data->map.min_width + 1));
 }
 
+static void
+reportXftFonts(XtermWidget xw,
+	       XftFont * fp,
+	       const char *name,
+	       const char *tag,
+	       XftPattern * match)
+{
+    if (resource.reportFonts) {
+	char buffer[1024];
+	FcChar32 first_char = xtermXftFirstChar(fp);
+	FcChar32 last_char = xtermXftLastChar(fp);
+	FcChar32 ch;
+	unsigned missing = 0;
+
+	printf("Loaded XftFonts(%s:%s)\n", name, tag);
+
+	for (ch = first_char; ch <= last_char; ++ch) {
+	    if (xtermXftMissing(xw, fp, ch)) {
+		++missing;
+	    }
+	}
+	printf("\t\tfirst char:    %u\n", first_char);
+	printf("\t\tlast char:     %u\n", last_char);
+	printf("\t\tmissing-chars: %u\n", missing);
+	printf("\t\tpresent-chars: %u\n", (last_char - first_char) + 1 - missing);
+
+	if (XftNameUnparse(match, buffer, (int) sizeof(buffer))) {
+	    char *target;
+	    char *source = buffer;
+	    while ((target = strtok(source, ":")) != 0) {
+		printf("\t%s\n", target);
+		source = 0;
+	    }
+	}
+    }
+}
+
 static XftFont *
 xtermOpenXft(XtermWidget xw, const char *name, XftPattern * pat, const char *tag)
 {
@@ -1743,6 +1868,7 @@ xtermOpenXft(XtermWidget xw, const char *name, XftPattern * pat, const char *tag
 	    result = XftFontOpenPattern(dpy, match);
 	    if (result != 0) {
 		TRACE(("...matched %s font\n", tag));
+		reportXftFonts(xw, result, name, tag, match);
 	    } else {
 		TRACE(("...could did not open %s font\n", tag));
 		XftPatternDestroy(match);
@@ -1795,7 +1921,7 @@ dimSquareRoot(double value)
  * rule.
  */
 static void
-setRenderFontsize(TScreen * screen, VTwin * win, XftFont * font, const char *tag)
+setRenderFontsize(TScreen *screen, VTwin * win, XftFont * font, const char *tag)
 {
     if (font != 0) {
 	int width, height, ascent, descent;
@@ -1852,7 +1978,7 @@ checkFontInfo(int value, const char *tag)
 
 #if OPT_RENDERFONT
 void
-xtermCloseXft(TScreen * screen, XTermXftFonts * pub)
+xtermCloseXft(TScreen *screen, XTermXftFonts * pub)
 {
     if (pub->font != 0) {
 	XftFontClose(screen->display, pub->font);
@@ -2142,7 +2268,7 @@ xtermComputeFontInfo(XtermWidget xw,
 
 /* save this information as a side-effect for double-sized characters */
 void
-xtermSaveFontInfo(TScreen * screen, XFontStruct * font)
+xtermSaveFontInfo(TScreen *screen, XFontStruct * font)
 {
     screen->fnt_wide = (Dimension) (font->max_bounds.width);
     screen->fnt_high = (Dimension) (font->ascent + font->descent);
@@ -2183,7 +2309,7 @@ xtermUpdateFontInfo(XtermWidget xw, Bool doresize)
     xtermSetCursorBox(screen);
 }
 
-#if OPT_BOX_CHARS
+#if OPT_BOX_CHARS || OPT_REPORT_FONTS
 
 /*
  * Returns true if the given character is missing from the specified font.
@@ -2193,37 +2319,36 @@ xtermMissingChar(unsigned ch, XTermFonts * font)
 {
     Bool result = False;
     XFontStruct *fs = font->fs;
-    static XCharStruct dft, *tmp = &dft, *pc = 0;
+    XCharStruct *pc = 0;
 
     if (fs->max_byte1 == 0) {
 #if OPT_WIDE_CHARS
-	if (ch > 255) {
-	    TRACE(("xtermMissingChar %#04x (row)\n", ch));
-	    return True;
-	}
+	if (ch < 256)
 #endif
-	CI_GET_CHAR_INFO_1D(fs, E2A(ch), tmp, pc);
+	{
+	    CI_GET_CHAR_INFO_1D(fs, E2A(ch), pc);
+	}
     }
 #if OPT_WIDE_CHARS
     else {
-	CI_GET_CHAR_INFO_2D(fs, HI_BYTE(ch), LO_BYTE(ch), tmp, pc);
+	unsigned row = (ch >> 8);
+	unsigned col = (ch & 0xff);
+	CI_GET_CHAR_INFO_2D(fs, row, col, pc);
     }
-#else
-
-    if (!pc)
-	return False;		/* Urgh! */
 #endif
 
-    if (CI_NONEXISTCHAR(pc)) {
+    if (pc == 0 || CI_NONEXISTCHAR(pc)) {
 	TRACE(("xtermMissingChar %#04x (!exists)\n", ch));
 	result = True;
     }
-    if (ch < 256) {
+    if (ch < KNOWN_MISSING) {
 	font->known_missing[ch] = (Char) (result ? 2 : 1);
     }
     return result;
 }
+#endif
 
+#if OPT_BOX_CHARS
 /*
  * The grid is arbitrary, enough resolution that nothing's lost in
  * initialization.
@@ -2593,6 +2718,7 @@ xtermDrawBoxChar(XtermWidget xw,
 		       font_height - 1);
     }
 }
+#endif /* OPT_BOX_CHARS */
 
 #if OPT_RENDERFONT
 
@@ -2620,9 +2746,7 @@ xtermXftMissing(XtermWidget xw, XftFont * font, unsigned wc)
     }
     return result;
 }
-#endif /* OPT_RENDERFONT && OPT_WIDE_CHARS */
-
-#endif /* OPT_BOX_CHARS */
+#endif /* OPT_RENDERFONT */
 
 #if OPT_WIDE_CHARS
 #define MY_UCS(ucs,dec) case ucs: result = dec; break
@@ -2963,7 +3087,7 @@ lookupRelativeFontSize(XtermWidget xw, int old, int relative)
 void
 HandleLargerFont(Widget w GCC_UNUSED,
 		 XEvent * event GCC_UNUSED,
-		 String * params GCC_UNUSED,
+		 String *params GCC_UNUSED,
 		 Cardinal *param_count GCC_UNUSED)
 {
     XtermWidget xw;
@@ -2988,7 +3112,7 @@ HandleLargerFont(Widget w GCC_UNUSED,
 void
 HandleSmallerFont(Widget w GCC_UNUSED,
 		  XEvent * event GCC_UNUSED,
-		  String * params GCC_UNUSED,
+		  String *params GCC_UNUSED,
 		  Cardinal *param_count GCC_UNUSED)
 {
     XtermWidget xw;
@@ -3058,7 +3182,7 @@ xtermGetFont(const char *param)
 void
 HandleSetFont(Widget w GCC_UNUSED,
 	      XEvent * event GCC_UNUSED,
-	      String * params,
+	      String *params,
 	      Cardinal *param_count)
 {
     XtermWidget xw;
