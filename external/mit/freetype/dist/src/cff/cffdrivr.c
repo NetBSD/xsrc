@@ -38,6 +38,7 @@
 #include FT_SERVICE_XFREE86_NAME_H
 #include FT_SERVICE_GLYPH_DICT_H
 #include FT_SERVICE_PROPERTIES_H
+#include FT_CFF_DRIVER_H
 
 
   /*************************************************************************/
@@ -162,6 +163,8 @@
 
     if ( !slot )
       return FT_THROW( Invalid_Slot_Handle );
+
+    FT_TRACE1(( "cff_glyph_load: glyph index %d\n", glyph_index ));
 
     /* check whether we want a scaled outline or bitmap */
     if ( !size )
@@ -585,12 +588,48 @@
     CFF_Driver  driver = (CFF_Driver)module;
 
 
-    if ( !ft_strcmp( property_name, "hinting-engine" ) )
+    if ( !ft_strcmp( property_name, "darkening-parameters" ) )
+    {
+      FT_Int*  darken_params = (FT_Int*)value;
+
+      FT_Int  x1 = darken_params[0];
+      FT_Int  y1 = darken_params[1];
+      FT_Int  x2 = darken_params[2];
+      FT_Int  y2 = darken_params[3];
+      FT_Int  x3 = darken_params[4];
+      FT_Int  y3 = darken_params[5];
+      FT_Int  x4 = darken_params[6];
+      FT_Int  y4 = darken_params[7];
+
+
+      if ( x1 < 0   || x2 < 0   || x3 < 0   || x4 < 0   ||
+           y1 < 0   || y2 < 0   || y3 < 0   || y4 < 0   ||
+           x1 > x2  || x2 > x3  || x3 > x4              ||
+           y1 > 500 || y2 > 500 || y3 > 500 || y4 > 500 )
+        return FT_THROW( Invalid_Argument );
+
+      driver->darken_params[0] = x1;
+      driver->darken_params[1] = y1;
+      driver->darken_params[2] = x2;
+      driver->darken_params[3] = y2;
+      driver->darken_params[4] = x3;
+      driver->darken_params[5] = y3;
+      driver->darken_params[6] = x4;
+      driver->darken_params[7] = y4;
+
+      return error;
+    }
+    else if ( !ft_strcmp( property_name, "hinting-engine" ) )
     {
       FT_UInt*  hinting_engine = (FT_UInt*)value;
 
 
-      driver->hinting_engine = *hinting_engine;
+#ifndef CFF_CONFIG_OPTION_OLD_ENGINE
+      if ( *hinting_engine != FT_CFF_HINTING_ADOBE )
+        error = FT_ERR( Unimplemented_Feature );
+      else
+#endif
+        driver->hinting_engine = *hinting_engine;
 
       return error;
     }
@@ -618,13 +657,28 @@
     FT_Error    error  = FT_Err_Ok;
     CFF_Driver  driver = (CFF_Driver)module;
 
-    FT_UInt  hinting_engine    = driver->hinting_engine;
-    FT_Bool  no_stem_darkening = driver->no_stem_darkening;
 
-
-    if ( !ft_strcmp( property_name, "hinting-engine" ) )
+    if ( !ft_strcmp( property_name, "darkening-parameters" ) )
     {
-      FT_UInt*  val = (FT_UInt*)value;
+      FT_Int*  darken_params = driver->darken_params;
+      FT_Int*  val           = (FT_Int*)value;
+
+
+      val[0] = darken_params[0];
+      val[1] = darken_params[1];
+      val[2] = darken_params[2];
+      val[3] = darken_params[3];
+      val[4] = darken_params[4];
+      val[5] = darken_params[5];
+      val[6] = darken_params[6];
+      val[7] = darken_params[7];
+
+      return error;
+    }
+    else if ( !ft_strcmp( property_name, "hinting-engine" ) )
+    {
+      FT_UInt   hinting_engine    = driver->hinting_engine;
+      FT_UInt*  val               = (FT_UInt*)value;
 
 
       *val = hinting_engine;
@@ -633,7 +687,8 @@
     }
     else if ( !ft_strcmp( property_name, "no-stem-darkening" ) )
     {
-      FT_Bool*  val = (FT_Bool*)value;
+      FT_Bool   no_stem_darkening = driver->no_stem_darkening;
+      FT_Bool*  val               = (FT_Bool*)value;
 
 
       *val = no_stem_darkening;
@@ -764,9 +819,6 @@
     cff_size_done,
     cff_slot_init,
     cff_slot_done,
-
-    ft_stub_set_char_sizes,  /* FT_CONFIG_OPTION_OLD_INTERNALS */
-    ft_stub_set_pixel_sizes, /* FT_CONFIG_OPTION_OLD_INTERNALS */
 
     cff_glyph_load,
 

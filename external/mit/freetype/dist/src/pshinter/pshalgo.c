@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    PostScript hinting algorithm (body).                                 */
 /*                                                                         */
-/*  Copyright 2001-2010, 2012, 2013 by                                     */
+/*  Copyright 2001-2010, 2012-2014 by                                      */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used        */
@@ -401,13 +401,13 @@
                    FT_Fixed        delta,
                    FT_Int          dimension )
   {
-    PSH_Hint  hint;
-    FT_UInt   count;
+    FT_UInt  count;
 
 
     for ( count = 0; count < table->max_hints; count++ )
     {
-      hint = table->hints + count;
+      PSH_Hint  hint = table->hints + count;
+
 
       hint->cur_pos = FT_MulFix( hint->org_pos, scale ) + delta;
       hint->cur_len = FT_MulFix( hint->org_len, scale );
@@ -1406,7 +1406,6 @@
 
       point  = first;
       before = point;
-      after  = point;
 
       do
       {
@@ -2079,8 +2078,6 @@
       start = first;
       do
       {
-        point = first;
-
         /* skip consecutive fitted points */
         for (;;)
         {

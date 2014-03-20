@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    A new `perfect' anti-aliasing renderer (body).                       */
 /*                                                                         */
-/*  Copyright 2000-2003, 2005-2013 by                                      */
+/*  Copyright 2000-2003, 2005-2014 by                                      */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -24,8 +24,8 @@
   /*                                                                       */
   /* - copy `src/smooth/ftgrays.c' (this file) to your current directory   */
   /*                                                                       */
-  /* - copy `include/freetype/ftimage.h' and `src/smooth/ftgrays.h' to the */
-  /*   same directory                                                      */
+  /* - copy `include/ftimage.h' and `src/smooth/ftgrays.h' to the same     */
+  /*   directory                                                           */
   /*                                                                       */
   /* - compile `ftgrays' with the _STANDALONE_ macro defined, as in        */
   /*                                                                       */
@@ -310,6 +310,40 @@ typedef ptrdiff_t  FT_PtrDist;
 #endif
 
 
+  /* Compute `dividend / divisor' and return both its quotient and     */
+  /* remainder, cast to a specific type.  This macro also ensures that */
+  /* the remainder is always positive.                                 */
+#define FT_DIV_MOD( type, dividend, divisor, quotient, remainder ) \
+  FT_BEGIN_STMNT                                                   \
+    (quotient)  = (type)( (dividend) / (divisor) );                \
+    (remainder) = (type)( (dividend) % (divisor) );                \
+    if ( (remainder) < 0 )                                         \
+    {                                                              \
+      (quotient)--;                                                \
+      (remainder) += (type)(divisor);                              \
+    }                                                              \
+  FT_END_STMNT
+
+#ifdef  __arm__
+  /* Work around a bug specific to GCC which make the compiler fail to */
+  /* optimize a division and modulo operation on the same parameters   */
+  /* into a single call to `__aeabi_idivmod'.  See                     */
+  /*                                                                   */
+  /*  http://gcc.gnu.org/bugzilla/show_bug.cgi?id=43721                */
+#undef FT_DIV_MOD
+#define FT_DIV_MOD( type, dividend, divisor, quotient, remainder ) \
+  FT_BEGIN_STMNT                                                   \
+    (quotient)  = (type)( (dividend) / (divisor) );                \
+    (remainder) = (type)( (dividend) - (quotient) * (divisor) );   \
+    if ( (remainder) < 0 )                                         \
+    {                                                              \
+      (quotient)--;                                                \
+      (remainder) += (type)(divisor);                              \
+    }                                                              \
+  FT_END_STMNT
+#endif /* __arm__ */
+
+
   /*************************************************************************/
   /*                                                                       */
   /*   TYPE DEFINITIONS                                                    */
@@ -358,6 +392,14 @@ typedef ptrdiff_t  FT_PtrDist;
   } TCell;
 
 
+#if defined( _MSC_VER )      /* Visual C++ (and Intel C++) */
+  /* We disable the warning `structure was padded due to   */
+  /* __declspec(align())' in order to compile cleanly with */
+  /* the maximum level of warnings.                        */
+#pragma warning( push )
+#pragma warning( disable : 4324 )
+#endif /* _MSC_VER */
+
   typedef struct  gray_TWorker_
   {
     TCoord  ex, ey;
@@ -404,6 +446,10 @@ typedef ptrdiff_t  FT_PtrDist;
     TPos       ycount;
 
   } gray_TWorker, *gray_PWorker;
+
+#if defined( _MSC_VER )
+#pragma warning( pop )
+#endif
 
 
 #ifndef FT_STATIC_RASTER
@@ -536,7 +582,7 @@ typedef ptrdiff_t  FT_PtrDist;
   static void
   gray_record_cell( RAS_ARG )
   {
-    if ( !ras.invalid && ( ras.area | ras.cover ) )
+    if ( ras.area | ras.cover )
     {
       PCell  cell = gray_find_cell( RAS_VAR );
 
@@ -585,10 +631,10 @@ typedef ptrdiff_t  FT_PtrDist;
 
       ras.area  = 0;
       ras.cover = 0;
+      ras.ex    = ex;
+      ras.ey    = ey;
     }
 
-    ras.ex      = ex;
-    ras.ey      = ey;
     ras.invalid = ( (unsigned)ey >= (unsigned)ras.count_ey ||
                               ex >= ras.count_ex           );
   }
@@ -630,7 +676,7 @@ typedef ptrdiff_t  FT_PtrDist;
                                  TPos    x2,
                                  TCoord  y2 )
   {
-    TCoord  ex1, ex2, fx1, fx2, delta, mod, lift, rem;
+    TCoord  ex1, ex2, fx1, fx2, delta, mod;
     long    p, first, dx;
     int     incr;
 
@@ -674,13 +720,7 @@ typedef ptrdiff_t  FT_PtrDist;
       dx    = -dx;
     }
 
-    delta = (TCoord)( p / dx );
-    mod   = (TCoord)( p % dx );
-    if ( mod < 0 )
-    {
-      delta--;
-      mod += (TCoord)dx;
-    }
+    FT_DIV_MOD( TCoord, p, dx, delta, mod );
 
     ras.area  += (TArea)(( fx1 + first ) * delta);
     ras.cover += delta;
@@ -691,14 +731,11 @@ typedef ptrdiff_t  FT_PtrDist;
 
     if ( ex1 != ex2 )
     {
-      p    = ONE_PIXEL * ( y2 - y1 + delta );
-      lift = (TCoord)( p / dx );
-      rem  = (TCoord)( p % dx );
-      if ( rem < 0 )
-      {
-        lift--;
-        rem += (TCoord)dx;
-      }
+      TCoord  lift, rem;
+
+
+      p = ONE_PIXEL * ( y2 - y1 + delta );
+      FT_DIV_MOD( TCoord, p, dx, lift, rem );
 
       mod -= (int)dx;
 
@@ -747,9 +784,6 @@ typedef ptrdiff_t  FT_PtrDist;
 
     dx = to_x - ras.x;
     dy = to_y - ras.y;
-
-    /* XXX: we should do something about the trivial case where dx == 0, */
-    /*      as it happens very often!                                    */
 
     /* perform vertical clipping */
     {
@@ -829,13 +863,7 @@ typedef ptrdiff_t  FT_PtrDist;
       dy    = -dy;
     }
 
-    delta = (int)( p / dy );
-    mod   = (int)( p % dy );
-    if ( mod < 0 )
-    {
-      delta--;
-      mod += (TCoord)dy;
-    }
+    FT_DIV_MOD( int, p, dy, delta, mod );
 
     x = ras.x + delta;
     gray_render_scanline( RAS_VAR_ ey1, ras.x, fy1, x, (TCoord)first );
@@ -846,13 +874,7 @@ typedef ptrdiff_t  FT_PtrDist;
     if ( ey1 != ey2 )
     {
       p     = ONE_PIXEL * dx;
-      lift  = (int)( p / dy );
-      rem   = (int)( p % dy );
-      if ( rem < 0 )
-      {
-        lift--;
-        rem += (int)dy;
-      }
+      FT_DIV_MOD( int, p, dy, lift, rem );
       mod -= (int)dy;
 
       while ( ey1 != ey2 )
@@ -1156,7 +1178,8 @@ typedef ptrdiff_t  FT_PtrDist;
 
 
     /* record current cell, if any */
-    gray_record_cell( RAS_VAR );
+    if ( !ras.invalid )
+      gray_record_cell( RAS_VAR );
 
     /* start to a new position */
     x = UPSCALE( to->x );
@@ -1257,9 +1280,7 @@ typedef ptrdiff_t  FT_PtrDist;
                        TPos    area,
                        TCoord  acount )
   {
-    FT_Span*  span;
-    int       count;
-    int       coverage;
+    int  coverage;
 
 
     /* compute the coverage line's coverage, depending on the    */
@@ -1301,6 +1322,10 @@ typedef ptrdiff_t  FT_PtrDist;
 
     if ( coverage )
     {
+      FT_Span*  span;
+      int       count;
+
+
       /* see whether we can add this span to the current list */
       count = ras.num_gray_spans;
       span  = ras.gray_spans + count - 1;
@@ -1339,7 +1364,6 @@ typedef ptrdiff_t  FT_PtrDist;
         ras.num_gray_spans = 0;
         ras.span_y         = (int)y;
 
-        count = 0;
         span  = ras.gray_spans;
       }
       else
@@ -1764,7 +1788,8 @@ typedef ptrdiff_t  FT_PtrDist;
     if ( ft_setjmp( ras.jump_buffer ) == 0 )
     {
       error = FT_Outline_Decompose( &ras.outline, &func_interface, &ras );
-      gray_record_cell( RAS_VAR );
+      if ( !ras.invalid )
+        gray_record_cell( RAS_VAR );
     }
     else
       error = FT_THROW( Memory_Overflow );
