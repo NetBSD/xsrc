@@ -21,6 +21,7 @@
 #include FT_INTERNAL_STREAM_H
 #include FT_TRUETYPE_TAGS_H
 #include FT_INTERNAL_SFNT_H
+#include FT_TRUETYPE_DRIVER_H
 
 #include "ttgload.h"
 #include "ttpload.h"
@@ -149,20 +150,21 @@
   tt_check_trickyness_family( FT_String*  name )
   {
 
-#define TRICK_NAMES_MAX_CHARACTERS  16
-#define TRICK_NAMES_COUNT            8
+#define TRICK_NAMES_MAX_CHARACTERS  19
+#define TRICK_NAMES_COUNT            9
 
     static const char trick_names[TRICK_NAMES_COUNT]
                                  [TRICK_NAMES_MAX_CHARACTERS + 1] =
     {
-      "DFKaiSho-SB",     /* dfkaisb.ttf */
+      "DFKaiSho-SB",        /* dfkaisb.ttf */
       "DFKaiShu",
-      "DFKai-SB",        /* kaiu.ttf */
-      "HuaTianKaiTi?",   /* htkt2.ttf */
-      "HuaTianSongTi?",  /* htst3.ttf */
-      "MingLiU",         /* mingliu.ttf & mingliu.ttc */
-      "PMingLiU",        /* mingliu.ttc */
-      "MingLi43",        /* mingli.ttf */
+      "DFKai-SB",           /* kaiu.ttf */
+      "HuaTianKaiTi?",      /* htkt2.ttf */
+      "HuaTianSongTi?",     /* htst3.ttf */
+      "Ming(for ISO10646)", /* hkscsiic.ttf & iicore.ttf */
+      "MingLiU",            /* mingliu.ttf & mingliu.ttc */
+      "PMingLiU",           /* mingliu.ttc */
+      "MingLi43",           /* mingli.ttf */
     };
 
     int  nn;
@@ -531,6 +533,10 @@
 
     /* check that we have a valid TrueType file */
     error = sfnt->init_face( stream, face, face_index, num_params, params );
+
+    /* Stream may have changed. */
+    stream = face->root.stream;
+
     if ( error )
       goto Exit;
 
@@ -1259,11 +1265,17 @@
     if ( !TT_New_Context( driver ) )
       return FT_THROW( Could_Not_Find_Context );
 
+#ifdef TT_CONFIG_OPTION_SUBPIXEL_HINTING
+    driver->interpreter_version = TT_INTERPRETER_VERSION_38;
 #else
+    driver->interpreter_version = TT_INTERPRETER_VERSION_35;
+#endif
+
+#else /* !TT_USE_BYTECODE_INTERPRETER */
 
     FT_UNUSED( ttdriver );
 
-#endif
+#endif /* !TT_USE_BYTECODE_INTERPRETER */
 
     return FT_Err_Ok;
   }
