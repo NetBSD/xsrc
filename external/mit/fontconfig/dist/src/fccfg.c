@@ -1546,19 +1546,19 @@ FcConfigSubstituteWithPat (FcConfig    *config,
     }
 
     nobjs = FC_MAX_BASE_OBJECT + config->maxObjects + 2;
-    value = (FcValueList **) malloc (SIZEOF_VOID_P * nobjs);
+    value = (FcValueList **) malloc (sizeof(void *) * nobjs);
     if (!value)
     {
 	retval = FcFalse;
 	goto bail1;
     }
-    elt = (FcPatternElt **) malloc (SIZEOF_VOID_P * nobjs);
+    elt = (FcPatternElt **) malloc (sizeof(void *) * nobjs);
     if (!elt)
     {
 	retval = FcFalse;
 	goto bail1;
     }
-    tst = (FcTest **) malloc (SIZEOF_VOID_P * nobjs);
+    tst = (FcTest **) malloc (sizeof(void *) * nobjs);
     if (!tst)
     {
 	retval = FcFalse;
