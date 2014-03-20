@@ -37,6 +37,7 @@
 #include <ctype.h>
 #include <assert.h>
 #include <errno.h>
+#include <limits.h>
 #include <unistd.h>
 #include <stddef.h>
 #include <sys/types.h>
@@ -85,7 +86,7 @@ extern pfnSHGetFolderPathA pSHGetFolderPathA;
 #define FC_DBG_CONFIG	1024
 #define FC_DBG_LANGSET	2048
 
-#define _FC_ASSERT_STATIC1(_line, _cond) typedef int _static_assert_on_line_##_line##_failed[(_cond)?1:-1]
+#define _FC_ASSERT_STATIC1(_line, _cond) typedef int _static_assert_on_line_##_line##_failed[(_cond)?1:-1] FC_UNUSED
 #define _FC_ASSERT_STATIC0(_line, _cond) _FC_ASSERT_STATIC1 (_line, (_cond))
 #define FC_ASSERT_STATIC(_cond) _FC_ASSERT_STATIC0 (__LINE__, (_cond))
 
@@ -107,7 +108,9 @@ extern pfnSHGetFolderPathA pSHGetFolderPathA;
 FC_ASSERT_STATIC (sizeof (FcRef) == sizeof (int));
 
 typedef enum _FcValueBinding {
-    FcValueBindingWeak, FcValueBindingStrong, FcValueBindingSame
+    FcValueBindingWeak, FcValueBindingStrong, FcValueBindingSame,
+    /* to make sure sizeof (FcValueBinding) == 4 even with -fshort-enums */
+    FcValueBindingEnd = INT_MAX
 } FcValueBinding;
 
 #define FcStrdup(s) ((FcChar8 *) strdup ((const char *) (s)))
@@ -170,6 +173,12 @@ typedef struct _FcValueList {
 #define FcValueListNext(vl)	FcPointerMember(vl,next,FcValueList)
 			
 typedef int FcObject;
+
+/* The 1024 is to leave some room for future added internal objects, such
+ * that caches from newer fontconfig can still be used with older fontconfig
+ * without getting confused. */
+#define FC_EXT_OBJ_INDEX	1024
+#define FC_OBJ_ID(_n_)	((_n_) & (~FC_EXT_OBJ_INDEX))
 
 typedef struct _FcPatternElt *FcPatternEltPtr;
 
@@ -271,7 +280,6 @@ typedef enum _FcQual {
 #define FcMatchDefault	((FcMatchKind) -1)
 
 typedef struct _FcTest {
-    struct _FcTest	*next;
     FcMatchKind		kind;
     FcQual		qual;
     FcObject		object;
@@ -280,17 +288,28 @@ typedef struct _FcTest {
 } FcTest;
 
 typedef struct _FcEdit {
-    struct _FcEdit *next;
     FcObject	    object;
     FcOp	    op;
     FcExpr	    *expr;
     FcValueBinding  binding;
 } FcEdit;
 
+typedef enum _FcRuleType {
+    FcRuleUnknown, FcRuleTest, FcRuleEdit
+} FcRuleType;
+
+typedef struct _FcRule {
+    struct _FcRule *next;
+    FcRuleType      type;
+    union {
+	FcTest *test;
+	FcEdit *edit;
+    } u;
+} FcRule;
+
 typedef struct _FcSubst {
     struct _FcSubst	*next;
-    FcTest		*test;
-    FcEdit		*edit;
+    FcRule		*rule;
 } FcSubst;
 
 typedef struct _FcCharLeaf {
@@ -610,10 +629,9 @@ FcPrivate FcBool
 FcConfigAddBlank (FcConfig	*config,
 		  FcChar32    	blank);
 
-FcPrivate FcBool
-FcConfigAddEdit (FcConfig	*config,
-		 FcTest		*test,
-		 FcEdit		*edit,
+FcBool
+FcConfigAddRule (FcConfig	*config,
+		 FcRule		*rule,
 		 FcMatchKind	kind);
 
 FcPrivate void
@@ -623,7 +641,7 @@ FcConfigSetFonts (FcConfig	*config,
 
 FcPrivate FcBool
 FcConfigCompareValue (const FcValue *m,
-		      FcOp	    op,
+		      unsigned int   op_,
 		      const FcValue *v);
 
 FcPrivate FcBool
@@ -730,6 +748,9 @@ FcMakeTempfile (char *template);
 FcPrivate int32_t
 FcRandom (void);
 
+FcPrivate FcBool
+FcMakeDirectory (const FcChar8 *dir);
+
 /* fcdbg.c */
 
 FcPrivate void
@@ -788,6 +809,9 @@ FcPrivate FcBool
 FcFileIsLink (const FcChar8 *file);
 
 FcPrivate FcBool
+FcFileIsFile (const FcChar8 *file);
+
+FcPrivate FcBool
 FcFileScanConfig (FcFontSet	*set,
 		  FcStrSet	*dirs,
 		  FcBlanks	*blanks,
@@ -839,6 +863,9 @@ FcTestDestroy (FcTest *test);
 
 FcPrivate void
 FcEditDestroy (FcEdit *e);
+
+void
+FcRuleDestroy (FcRule *rule);
 
 /* fclang.c */
 FcPrivate FcLangSet *
