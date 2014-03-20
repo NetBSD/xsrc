@@ -39,6 +39,21 @@ typedef struct {
    struct termios kbdtty;
 } BsdKbdPrivRec, *BsdKbdPrivPtr;
 
+#ifdef WSCONS_SUPPORT
+static Bool
+WSSetVersion(int fd, const char *name)
+{
+#ifdef WSKBDIO_SETVERSION
+    int version = WSKBDIO_EVENT_VERSION;
+    if (ioctl(fd, WSKBDIO_SETVERSION, &version) == -1) {
+        xf86Msg(X_WARNING, "%s: cannot set version\n", name);
+        return FALSE;
+    }
+#endif
+    return TRUE;
+}
+#endif
+
 static
 int KbdInit(InputInfoPtr pInfo, int what)
 {
@@ -54,7 +69,7 @@ int KbdInit(InputInfoPtr pInfo, int what)
 #if defined WSCONS_SUPPORT
             case WSCONS:
 #endif
- 	         tcgetattr(pInfo->fd, &(priv->kbdtty));
+		tcgetattr(pInfo->fd, &(priv->kbdtty));
 #endif
 	         break;
         }
@@ -173,8 +188,8 @@ KbdOn(InputInfoPtr pInfo, int what)
 			 xf86Msg(X_ERROR, "KbdOn: tcsetattr: %s\n",
 			     strerror(errno));
 		 }
-                 break; 
-#endif 
+                 break;
+#endif
         }
 #if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT) || defined (WSCONS_SUPPORT)
         switch (pKbd->consType) {
@@ -208,18 +223,17 @@ KbdOn(InputInfoPtr pInfo, int what)
         switch (pKbd->consType) {
 #ifdef WSCONS_SUPPORT
             case WSCONS:
-            	 if ((pKbd->wsKbdDev[0] != 0) && (pInfo->fd == -1)) {
-            	 	xf86Msg(X_INFO, "opening %s\n", pKbd->wsKbdDev);
-            	 	pInfo->fd = open(pKbd->wsKbdDev, O_RDONLY | O_NONBLOCK | O_EXCL);
-#ifdef WSKBDIO_SETVERSION
-		       int version = WSKBDIO_EVENT_VERSION;
-		       if (ioctl(pInfo->fd, WSKBDIO_SETVERSION, &version) == -1) {
-		           xf86Msg(X_WARNING, "%s: cannot set version\n", pInfo->name);
-		           return FALSE;
-		       }
-#endif 
-            	 }
-	     break;
+		if ((pKbd->wsKbdDev[0] != 0) && (pInfo->fd == -1)) {
+			xf86Msg(X_INFO, "opening %s\n", pKbd->wsKbdDev);
+			pInfo->fd = open(pKbd->wsKbdDev, O_RDONLY | O_NONBLOCK | O_EXCL);
+			if (pInfo->fd == -1) {
+				xf86Msg(X_ERROR, "cannot open \"%s\"\n", pKbd->wsKbdDev);
+				return FALSE;
+			}
+			if (WSSetVersion(pInfo->fd, pInfo->name) == FALSE)
+				return FALSE;
+		}
+		break;
 #endif
 	}
     }
@@ -261,15 +275,15 @@ KbdOff(InputInfoPtr pInfo, int what)
 #ifdef WSCONS_SUPPORT
             case WSCONS:
                  if ((pKbd->wsKbdDev[0] != 0) && (pInfo->fd != -1)) {
-                 	xf86Msg(X_INFO, "closing %s\n", pKbd->wsKbdDev);
-                 	/* need to close the fd while we're gone */
-                 	close(pInfo->fd);
-                 	pInfo->fd = -1;
+			xf86Msg(X_INFO, "closing %s\n", pKbd->wsKbdDev);
+			/* need to close the fd while we're gone */
+			close(pInfo->fd);
+			pInfo->fd = -1;
                  }
 	         break;
 #endif
         }
-    }   	
+    }
     return Success;
 }
 
@@ -282,7 +296,7 @@ SoundBell(InputInfoPtr pInfo, int loudness, int pitch, int duration)
 #endif
 
     if (loudness && pitch) {
-    	switch (pKbd->consType) {
+	switch (pKbd->consType) {
 #ifdef PCCONS_SUPPORT
 	    case PCCONS:
 	         { int data[2];
@@ -352,9 +366,9 @@ WSReadInput(InputInfoPtr pInfo)
 }
 
 static void
-printWsType(const char *type, char *name)
+printWsType(const char *type, const char *name)
 {
-    xf86Msg(X_PROBED, "%s: Keyboard type: %s\n", name, type); 
+    xf86Msg(X_PROBED, "%s: Keyboard type: %s\n", name, type);
 }
 #endif
 
@@ -375,7 +389,7 @@ OpenKeyboard(InputInfoPtr pInfo)
     }
 
     switch (prot) {
-    	case PROT_STD:
+	case PROT_STD:
            pInfo->read_input = stdReadInput;
            break;
 #ifdef WSCONS_SUPPORT
@@ -390,9 +404,9 @@ OpenKeyboard(InputInfoPtr pInfo)
     }
     free(s);
 
-    if (prot == PROT_WSCONS) {
+    if (prot == PROT_WSCONS)
 	s = xf86SetStrOption(pInfo->options, "Device", "/dev/wskbd");
-    } else
+    else
 	s = xf86SetStrOption(pInfo->options, "Device", NULL);
 
     if (s == NULL) {
@@ -416,13 +430,8 @@ OpenKeyboard(InputInfoPtr pInfo)
 #ifdef WSCONS_SUPPORT
     if( prot == PROT_WSCONS) {
        pKbd->consType = WSCONS;
-#ifdef WSKBDIO_SETVERSION
-       int version = WSKBDIO_EVENT_VERSION;
-       if (ioctl(pInfo->fd, WSKBDIO_SETVERSION, &version) == -1) {
-           xf86Msg(X_WARNING, "%s: cannot set version\n", pInfo->name);
-           return FALSE;
-       }
-#endif 
+       if (WSSetVersion(pInfo->fd, pInfo->name) == FALSE)
+	   return FALSE;
        /* Find out keyboard type */
        if (ioctl(pInfo->fd, WSKBDIO_GTYPE, &(pKbd->wsKbdType)) == -1) {
            xf86Msg(X_ERROR, "%s: cannot get keyboard type", pInfo->name);
@@ -442,6 +451,12 @@ OpenKeyboard(InputInfoPtr pInfo)
            case WSKBD_TYPE_PC_AT:
                printWsType("AT", pInfo->name);
                break;
+           case 0:
+               /* If wsKbdType==0, no keyboard attached to the mux. Assume USB. */
+               xf86Msg(X_WARNING, "%s: No keyboard attached, assuming USB\n",
+                                  pInfo->name);
+               pKbd->wsKbdType = WSKBD_TYPE_USB;
+               /* FALLTHROUGH */
            case WSKBD_TYPE_USB:
                printWsType("USB", pInfo->name);
                break;
@@ -478,16 +493,6 @@ OpenKeyboard(InputInfoPtr pInfo)
        }
     }
 #endif
-
-#if 0	/* no more vtSwitchSupported in xf86-input-keyboard-1.6.0 */
-#if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT) || defined (WSCONS_SUPPORT)
-    if ((pKbd->isConsole &&
-         ((pKbd->consType == SYSCONS) || (pKbd->consType == PCVT))) ||
-	(pKbd->consType == WSCONS))
-        pKbd->vtSwitchSupported = TRUE;
-#endif
-#endif
-
     return TRUE;
 }
 
