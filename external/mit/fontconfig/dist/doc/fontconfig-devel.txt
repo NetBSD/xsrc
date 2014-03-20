@@ -1,4 +1,4 @@
-                Fontconfig Developers Reference, Version 2.10.93
+                Fontconfig Developers Reference, Version 2.11.0
 
    Copyright © 2002 Keith Packard
 
@@ -124,7 +124,7 @@ FUNCTIONAL OVERVIEW
                                                   the file
     ftface         FC_FT_FACE             FT_Face Use the specified FreeType
                                                   face object
-    rasterizer     FC_RASTERIZER          String  Which rasterizer is in use
+    rasterizer     FC_RASTERIZER          String  Which rasterizer is in use (deprecated)
     outline        FC_OUTLINE             Bool    Whether the glyphs are outlines
     scalable       FC_SCALABLE            Bool    Whether glyphs can be scaled
     scale          FC_SCALE               Double  Scale factor for point->pixel
@@ -150,6 +150,9 @@ FUNCTIONAL OVERVIEW
                                                   default value of familylang,
                                                   stylelang and fullnamelang
     prgname        FC_PRGNAME             String  Name of the running program
+    hash           FC_HASH                String  SHA256 hash value of the font data
+                                                  with "sha256:" prefix.
+    postscriptname FC_POSTSCRIPT_NAME     String  Font name in PostScript
 
 
    --------------------------------------------------------------------------
@@ -451,7 +454,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                             FcInitLoadConfigAndFonts
 
@@ -473,7 +476,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                      FcInit
 
@@ -497,7 +500,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                      FcFini
 
@@ -521,7 +524,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                   FcGetVersion
 
@@ -542,7 +545,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcInitReinitialize
 
@@ -567,7 +570,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                               FcInitBringUptoDate
 
@@ -591,7 +594,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
    --------------------------------------------------------------------------
 
@@ -666,7 +669,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcPatternDuplicate
 
@@ -688,7 +691,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcPatternReference
 
@@ -710,7 +713,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcPatternDestroy
 
@@ -732,7 +735,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcPatternEqual
 
@@ -753,7 +756,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                               FcPatternEqualSubset
 
@@ -776,7 +779,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcPatternFilter
 
@@ -798,7 +801,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcPatternHash
 
@@ -820,7 +823,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                   FcPatternAdd
 
@@ -846,7 +849,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcPatternAddWeak
 
@@ -869,7 +872,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcPatternAdd-Type
 
@@ -914,7 +917,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                   FcPatternGet
 
@@ -938,7 +941,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcPatternGet-Type
 
@@ -987,7 +990,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcPatternBuild
 
@@ -1033,7 +1036,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                   FcPatternDel
 
@@ -1055,7 +1058,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcPatternRemove
 
@@ -1079,7 +1082,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcPatternPrint
 
@@ -1102,7 +1105,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                               FcDefaultSubstitute
 
@@ -1131,7 +1134,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                   FcNameParse
 
@@ -1153,7 +1156,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcNameUnparse
 
@@ -1176,7 +1179,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcPatternFormat
 
@@ -1387,7 +1390,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
    --------------------------------------------------------------------------
 
@@ -1433,7 +1436,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcFontSetDestroy
 
@@ -1455,7 +1458,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                   FcFontSetAdd
 
@@ -1479,7 +1482,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcFontSetList
 
@@ -1504,7 +1507,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcFontSetMatch
 
@@ -1531,7 +1534,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcFontSetPrint
 
@@ -1555,7 +1558,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcFontSetSort
 
@@ -1591,7 +1594,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                               FcFontSetSortDestroy
 
@@ -1614,7 +1617,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
    --------------------------------------------------------------------------
 
@@ -1653,7 +1656,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcObjectSetAdd
 
@@ -1676,7 +1679,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcObjectSetDestroy
 
@@ -1697,7 +1700,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcObjectSetBuild
 
@@ -1726,7 +1729,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
    --------------------------------------------------------------------------
 
@@ -1773,7 +1776,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcFreeTypeCharSet
 
@@ -1798,7 +1801,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                           FcFreeTypeCharSetAndSpacing
 
@@ -1828,7 +1831,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcFreeTypeQuery
 
@@ -1852,7 +1855,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                               FcFreeTypeQueryFace
 
@@ -1876,7 +1879,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
    --------------------------------------------------------------------------
 
@@ -1917,7 +1920,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                   FcValueSave
 
@@ -1939,7 +1942,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                   FcValuePrint
 
@@ -1962,7 +1965,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                   FcValueEqual
 
@@ -1985,7 +1988,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
    --------------------------------------------------------------------------
 
@@ -2058,7 +2061,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcCharSetDestroy
 
@@ -2080,7 +2083,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcCharSetAddChar
 
@@ -2103,7 +2106,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcCharSetDelChar
 
@@ -2126,7 +2129,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcCharSetCopy
 
@@ -2148,7 +2151,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcCharSetEqual
 
@@ -2169,7 +2172,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcCharSetIntersect
 
@@ -2190,7 +2193,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcCharSetUnion
 
@@ -2211,7 +2214,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcCharSetSubtract
 
@@ -2232,7 +2235,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcCharSetMerge
 
@@ -2256,7 +2259,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcCharSetHasChar
 
@@ -2277,7 +2280,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcCharSetCount
 
@@ -2298,7 +2301,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                             FcCharSetIntersectCount
 
@@ -2319,7 +2322,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                              FcCharSetSubtractCount
 
@@ -2340,7 +2343,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcCharSetIsSubset
 
@@ -2361,7 +2364,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcCharSetFirstPage
 
@@ -2379,12 +2382,24 @@ Synopsis
 
 Description
 
-   Builds an array of bits marking the first page of Unicode coverage of a.
-   Returns the base of the array. next contains the next page in the font.
+   Builds an array of bits in map marking the first page of Unicode coverage
+   of a. *next is set to contains the base code point for the next page in a.
+   Returns the base code point for the page, or FC_CHARSET_DONE if a contains
+   no pages. As an example, if FcCharSetFirstPage returns 0x300 and fills map
+   with
+
+0xffffffff 0xffffffff 0x01000008 0x44300002 0xffffd7f0 0xfffffffb 0xffff7fff 0xffff0003
+
+   Then the page contains code points 0x300 through 0x33f (the first 64 code
+   points on the page) because map[0] and map[1] both have all their bits
+   set. It also contains code points 0x343 (0x300 + 32*2 + (4-1)) and 0x35e
+   (0x300 + 32*2 + (31-1)) because map[2] has the 4th and 31st bits set. The
+   code points represented by map[3] and later are left as an excercise for
+   the reader ;).
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcCharSetNextPage
 
@@ -2402,12 +2417,15 @@ Synopsis
 
 Description
 
-   Builds an array of bits marking the Unicode coverage of a for page *next.
-   Returns the base of the array. next contains the next page in the font.
+   Builds an array of bits in map marking the Unicode coverage of a for page
+   containing *next (see the FcCharSetFirstPage description for details).
+   *next is set to contains the base code point for the next page in a.
+   Returns the base of code point for the page, or FC_CHARSET_DONE if a does
+   not contain *next.
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcCharSetCoverage
 
@@ -2431,7 +2449,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                   FcCharSetNew
 
@@ -2452,7 +2470,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
    --------------------------------------------------------------------------
 
@@ -2517,7 +2535,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcLangSetDestroy
 
@@ -2539,7 +2557,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcLangSetCopy
 
@@ -2561,7 +2579,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                   FcLangSetAdd
 
@@ -2583,7 +2601,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                   FcLangSetDel
 
@@ -2606,7 +2624,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcLangSetUnion
 
@@ -2627,7 +2645,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcLangSetSubtract
 
@@ -2650,7 +2668,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcLangSetCompare
 
@@ -2676,7 +2694,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcLangSetContains
 
@@ -2699,7 +2717,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcLangSetEqual
 
@@ -2721,7 +2739,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcLangSetHash
 
@@ -2745,7 +2763,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcLangSetHasLang
 
@@ -2770,7 +2788,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcGetDefaultLangs
 
@@ -2794,7 +2812,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                    FcGetLangs
 
@@ -2815,7 +2833,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcLangNormalize
 
@@ -2836,7 +2854,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcLangGetCharSet
 
@@ -2857,7 +2875,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
    --------------------------------------------------------------------------
 
@@ -2900,7 +2918,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                   FcMatrixCopy
 
@@ -2921,7 +2939,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcMatrixEqual
 
@@ -2943,7 +2961,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcMatrixMultiply
 
@@ -2966,7 +2984,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcMatrixRotate
 
@@ -2991,7 +3009,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcMatrixScale
 
@@ -3016,7 +3034,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcMatrixShear
 
@@ -3041,7 +3059,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
    --------------------------------------------------------------------------
 
@@ -3135,7 +3153,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcConfigReference
 
@@ -3160,7 +3178,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcConfigDestroy
 
@@ -3184,7 +3202,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcConfigSetCurrent
 
@@ -3206,7 +3224,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcConfigGetCurrent
 
@@ -3227,7 +3245,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcConfigUptoDate
 
@@ -3250,7 +3268,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                   FcConfigHome
 
@@ -3272,7 +3290,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcConfigEnableHome
 
@@ -3297,7 +3315,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcConfigBuildFonts
 
@@ -3321,7 +3339,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                              FcConfigGetConfigDirs
 
@@ -3344,7 +3362,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                               FcConfigGetFontDirs
 
@@ -3367,7 +3385,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                              FcConfigGetConfigFiles
 
@@ -3389,7 +3407,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcConfigGetCache
 
@@ -3411,7 +3429,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                               FcConfigGetCacheDirs
 
@@ -3436,7 +3454,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcConfigGetFonts
 
@@ -3459,7 +3477,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcConfigGetBlanks
 
@@ -3483,7 +3501,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                            FcConfigGetRescanInterval
 
@@ -3508,7 +3526,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                            FcConfigSetRescanInterval
 
@@ -3532,7 +3550,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                              FcConfigAppFontAddFile
 
@@ -3555,7 +3573,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                              FcConfigAppFontAddDir
 
@@ -3579,7 +3597,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                               FcConfigAppFontClear
 
@@ -3601,7 +3619,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                            FcConfigSubstituteWithPat
 
@@ -3629,7 +3647,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcConfigSubstitute
 
@@ -3654,7 +3672,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                   FcFontMatch
 
@@ -3679,7 +3697,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                    FcFontSort
 
@@ -3714,7 +3732,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                               FcFontRenderPrepare
 
@@ -3739,7 +3757,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                    FcFontList
 
@@ -3763,7 +3781,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcConfigFilename
 
@@ -3794,7 +3812,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                               FcConfigParseAndLoad
 
@@ -3822,7 +3840,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcConfigGetSysRoot
 
@@ -3843,7 +3861,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcConfigSetSysRoot
 
@@ -3867,7 +3885,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
    --------------------------------------------------------------------------
 
@@ -3903,7 +3921,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                           FcNameUnregisterObjectTypes
 
@@ -3924,7 +3942,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                               FcNameGetObjectType
 
@@ -3945,7 +3963,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
    --------------------------------------------------------------------------
 
@@ -3982,7 +4000,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                            FcNameUnregisterConstants
 
@@ -4003,7 +4021,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcNameGetConstant
 
@@ -4024,7 +4042,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcNameConstant
 
@@ -4046,7 +4064,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
    --------------------------------------------------------------------------
 
@@ -4087,7 +4105,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcBlanksDestroy
 
@@ -4108,7 +4126,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                   FcBlanksAdd
 
@@ -4130,7 +4148,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcBlanksIsMember
 
@@ -4152,7 +4170,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
    --------------------------------------------------------------------------
 
@@ -4204,7 +4222,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                   FcAtomicLock
 
@@ -4226,7 +4244,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcAtomicNewFile
 
@@ -4248,7 +4266,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcAtomicOrigFile
 
@@ -4269,7 +4287,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                               FcAtomicReplaceOrig
 
@@ -4292,7 +4310,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcAtomicDeleteNew
 
@@ -4313,7 +4331,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcAtomicUnlock
 
@@ -4334,7 +4352,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcAtomicDestroy
 
@@ -4355,7 +4373,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
    --------------------------------------------------------------------------
 
@@ -4415,7 +4433,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                   FcFileIsDir
 
@@ -4436,7 +4454,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                    FcDirScan
 
@@ -4462,7 +4480,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                    FcDirSave
 
@@ -4486,7 +4504,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcDirCacheUnlink
 
@@ -4509,7 +4527,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcDirCacheValid
 
@@ -4531,7 +4549,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcDirCacheLoad
 
@@ -4555,7 +4573,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcDirCacheRead
 
@@ -4579,7 +4597,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcDirCacheLoadFile
 
@@ -4602,7 +4620,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcDirCacheUnload
 
@@ -4624,7 +4642,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
    --------------------------------------------------------------------------
 
@@ -4671,7 +4689,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcCacheCopySet
 
@@ -4693,7 +4711,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcCacheSubdir
 
@@ -4716,7 +4734,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcCacheNumSubdir
 
@@ -4737,7 +4755,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcCacheNumFont
 
@@ -4759,7 +4777,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcDirCacheClean
 
@@ -4782,7 +4800,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                               FcCacheCreateTagFile
 
@@ -4804,7 +4822,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
    --------------------------------------------------------------------------
 
@@ -4828,9 +4846,11 @@ Version
 
    [170]FcStrListCreate -- create a string iterator
 
-   [171]FcStrListNext -- get next string in iteration
+   [171]FcStrListFirst -- get first string in iteration
 
-   [172]FcStrListDone -- destroy a string iterator
+   [172]FcStrListNext -- get next string in iteration
+
+   [173]FcStrListDone -- destroy a string iterator
 
    A data structure for enumerating strings, used to list directories while
    scanning the configuration as directories are added while scanning.
@@ -4854,7 +4874,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcStrSetMember
 
@@ -4875,7 +4895,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcStrSetEqual
 
@@ -4897,7 +4917,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                   FcStrSetAdd
 
@@ -4918,7 +4938,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                               FcStrSetAddFilename
 
@@ -4941,7 +4961,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                   FcStrSetDel
 
@@ -4962,7 +4982,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcStrSetDestroy
 
@@ -4983,7 +5003,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                 FcStrListCreate
 
@@ -5004,7 +5024,28 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
+
+                                 FcStrListFirst
+
+Name
+
+   FcStrListFirst -- get first string in iteration
+
+Synopsis
+
+   #include <fontconfig/fontconfig.h>
+
+
+   void FcStrListFirst(FcStrList *list);
+
+Description
+
+   Returns the first string in list.
+
+Version
+
+   Fontconfig version 2.11.0
 
                                  FcStrListNext
 
@@ -5021,11 +5062,11 @@ Synopsis
 
 Description
 
-   Returns the next string in set.
+   Returns the next string in list.
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcStrListDone
 
@@ -5046,7 +5087,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
    --------------------------------------------------------------------------
 
@@ -5054,43 +5095,43 @@ Version
 
    Table of Contents
 
-   [173]FcUtf8ToUcs4 -- convert UTF-8 to UCS4
+   [174]FcUtf8ToUcs4 -- convert UTF-8 to UCS4
 
-   [174]FcUcs4ToUtf8 -- convert UCS4 to UTF-8
+   [175]FcUcs4ToUtf8 -- convert UCS4 to UTF-8
 
-   [175]FcUtf8Len -- count UTF-8 encoded chars
+   [176]FcUtf8Len -- count UTF-8 encoded chars
 
-   [176]FcUtf16ToUcs4 -- convert UTF-16 to UCS4
+   [177]FcUtf16ToUcs4 -- convert UTF-16 to UCS4
 
-   [177]FcUtf16Len -- count UTF-16 encoded chars
+   [178]FcUtf16Len -- count UTF-16 encoded chars
 
-   [178]FcIsLower -- check for lower case ASCII character
+   [179]FcIsLower -- check for lower case ASCII character
 
-   [179]FcIsUpper -- check for upper case ASCII character
+   [180]FcIsUpper -- check for upper case ASCII character
 
-   [180]FcToLower -- convert upper case ASCII to lower case
+   [181]FcToLower -- convert upper case ASCII to lower case
 
-   [181]FcStrCopy -- duplicate a string
+   [182]FcStrCopy -- duplicate a string
 
-   [182]FcStrDowncase -- create a lower case translation of a string
+   [183]FcStrDowncase -- create a lower case translation of a string
 
-   [183]FcStrCopyFilename -- create a complete path from a filename
+   [184]FcStrCopyFilename -- create a complete path from a filename
 
-   [184]FcStrCmp -- compare UTF-8 strings
+   [185]FcStrCmp -- compare UTF-8 strings
 
-   [185]FcStrCmpIgnoreCase -- compare UTF-8 strings ignoring case
+   [186]FcStrCmpIgnoreCase -- compare UTF-8 strings ignoring case
 
-   [186]FcStrStr -- locate UTF-8 substring
+   [187]FcStrStr -- locate UTF-8 substring
 
-   [187]FcStrStrIgnoreCase -- locate UTF-8 substring ignoring ASCII case
+   [188]FcStrStrIgnoreCase -- locate UTF-8 substring ignoring ASCII case
 
-   [188]FcStrPlus -- concatenate two strings
+   [189]FcStrPlus -- concatenate two strings
 
-   [189]FcStrFree -- free a string
+   [190]FcStrFree -- free a string
 
-   [190]FcStrDirname -- directory part of filename
+   [191]FcStrDirname -- directory part of filename
 
-   [191]FcStrBasename -- last component of filename
+   [192]FcStrBasename -- last component of filename
 
    Fontconfig manipulates many UTF-8 strings represented with the FcChar8
    type. These functions are exposed to help applications deal with these
@@ -5116,7 +5157,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                   FcUcs4ToUtf8
 
@@ -5138,7 +5179,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                    FcUtf8Len
 
@@ -5162,7 +5203,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcUtf16ToUcs4
 
@@ -5185,7 +5226,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                    FcUtf16Len
 
@@ -5211,7 +5252,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                    FcIsLower
 
@@ -5232,7 +5273,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                    FcIsUpper
 
@@ -5253,7 +5294,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                    FcToLower
 
@@ -5275,7 +5316,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                    FcStrCopy
 
@@ -5297,7 +5338,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcStrDowncase
 
@@ -5319,7 +5360,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcStrCopyFilename
 
@@ -5346,7 +5387,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                     FcStrCmp
 
@@ -5367,7 +5408,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcStrCmpIgnoreCase
 
@@ -5389,7 +5430,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                     FcStrStr
 
@@ -5411,7 +5452,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                FcStrStrIgnoreCase
 
@@ -5434,7 +5475,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                    FcStrPlus
 
@@ -5456,7 +5497,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                    FcStrFree
 
@@ -5478,7 +5519,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                   FcStrDirname
 
@@ -5500,7 +5541,7 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
                                  FcStrBasename
 
@@ -5523,199 +5564,200 @@ Description
 
 Version
 
-   Fontconfig version 2.10.93
+   Fontconfig version 2.11.0
 
 References
 
    Visible links
-   1. file:///tmp/html-eJSsR7#AEN16
-   2. file:///tmp/html-eJSsR7#AEN19
-   3. file:///tmp/html-eJSsR7#AEN31
-   4. file:///tmp/html-eJSsR7#AEN102
-   5. file:///tmp/html-eJSsR7#FCINITLOADCONFIG
-   6. file:///tmp/html-eJSsR7#FCINITLOADCONFIGANDFONTS
-   7. file:///tmp/html-eJSsR7#FCINIT
-   8. file:///tmp/html-eJSsR7#FCFINI
-   9. file:///tmp/html-eJSsR7#FCGETVERSION
-  10. file:///tmp/html-eJSsR7#FCINITREINITIALIZE
-  11. file:///tmp/html-eJSsR7#FCINITBRINGUPTODATE
-  12. file:///tmp/html-eJSsR7#FCPATTERNCREATE
-  13. file:///tmp/html-eJSsR7#FCPATTERNDUPLICATE
-  14. file:///tmp/html-eJSsR7#FCPATTERNREFERENCE
-  15. file:///tmp/html-eJSsR7#FCPATTERNDESTROY
-  16. file:///tmp/html-eJSsR7#FCPATTERNEQUAL
-  17. file:///tmp/html-eJSsR7#FCPATTERNEQUALSUBSET
-  18. file:///tmp/html-eJSsR7#FCPATTERNFILTER
-  19. file:///tmp/html-eJSsR7#FCPATTERNHASH
-  20. file:///tmp/html-eJSsR7#FCPATTERNADD
-  21. file:///tmp/html-eJSsR7#FCPATTERNADDWEAK
-  22. file:///tmp/html-eJSsR7#FCPATTERNADD-TYPE
-  23. file:///tmp/html-eJSsR7#FCPATTERNGET
-  24. file:///tmp/html-eJSsR7#FCPATTERNGET-TYPE
-  25. file:///tmp/html-eJSsR7#FCPATTERNBUILD
-  26. file:///tmp/html-eJSsR7#FCPATTERNDEL
-  27. file:///tmp/html-eJSsR7#FCPATTERNREMOVE
-  28. file:///tmp/html-eJSsR7#FCPATTERNPRINT
-  29. file:///tmp/html-eJSsR7#FCDEFAULTSUBSTITUTE
-  30. file:///tmp/html-eJSsR7#FCNAMEPARSE
-  31. file:///tmp/html-eJSsR7#FCNAMEUNPARSE
-  32. file:///tmp/html-eJSsR7#FCPATTERNFORMAT
-  33. file:///tmp/html-eJSsR7#FCFONTSETCREATE
-  34. file:///tmp/html-eJSsR7#FCFONTSETDESTROY
-  35. file:///tmp/html-eJSsR7#FCFONTSETADD
-  36. file:///tmp/html-eJSsR7#FCFONTSETLIST
-  37. file:///tmp/html-eJSsR7#FCFONTSETMATCH
-  38. file:///tmp/html-eJSsR7#FCFONTSETPRINT
-  39. file:///tmp/html-eJSsR7#FCFONTSETSORT
-  40. file:///tmp/html-eJSsR7#FCFONTSETSORTDESTROY
-  41. file:///tmp/html-eJSsR7#FCOBJECTSETCREATE
-  42. file:///tmp/html-eJSsR7#FCOBJECTSETADD
-  43. file:///tmp/html-eJSsR7#FCOBJECTSETDESTROY
-  44. file:///tmp/html-eJSsR7#FCOBJECTSETBUILD
-  45. file:///tmp/html-eJSsR7#FCFREETYPECHARINDEX
-  46. file:///tmp/html-eJSsR7#FCFREETYPECHARSET
-  47. file:///tmp/html-eJSsR7#FCFREETYPECHARSETANDSPACING
-  48. file:///tmp/html-eJSsR7#FCFREETYPEQUERY
-  49. file:///tmp/html-eJSsR7#FCFREETYPEQUERYFACE
-  50. file:///tmp/html-eJSsR7#FCVALUEDESTROY
-  51. file:///tmp/html-eJSsR7#FCVALUESAVE
-  52. file:///tmp/html-eJSsR7#FCVALUEPRINT
-  53. file:///tmp/html-eJSsR7#FCVALUEEQUAL
-  54. file:///tmp/html-eJSsR7#FCCHARSETCREATE
-  55. file:///tmp/html-eJSsR7#FCCHARSETDESTROY
-  56. file:///tmp/html-eJSsR7#FCCHARSETADDCHAR
-  57. file:///tmp/html-eJSsR7#FCCHARSETDELCHAR
-  58. file:///tmp/html-eJSsR7#FCCHARSETCOPY
-  59. file:///tmp/html-eJSsR7#FCCHARSETEQUAL
-  60. file:///tmp/html-eJSsR7#FCCHARSETINTERSECT
-  61. file:///tmp/html-eJSsR7#FCCHARSETUNION
-  62. file:///tmp/html-eJSsR7#FCCHARSETSUBTRACT
-  63. file:///tmp/html-eJSsR7#FCCHARSETMERGE
-  64. file:///tmp/html-eJSsR7#FCCHARSETHASCHAR
-  65. file:///tmp/html-eJSsR7#FCCHARSETCOUNT
-  66. file:///tmp/html-eJSsR7#FCCHARSETINTERSECTCOUNT
-  67. file:///tmp/html-eJSsR7#FCCHARSETSUBTRACTCOUNT
-  68. file:///tmp/html-eJSsR7#FCCHARSETISSUBSET
-  69. file:///tmp/html-eJSsR7#FCCHARSETFIRSTPAGE
-  70. file:///tmp/html-eJSsR7#FCCHARSETNEXTPAGE
-  71. file:///tmp/html-eJSsR7#FCCHARSETCOVERAGE
-  72. file:///tmp/html-eJSsR7#FCCHARSETNEW
-  73. file:///tmp/html-eJSsR7#FCLANGSETCREATE
-  74. file:///tmp/html-eJSsR7#FCLANGSETDESTROY
-  75. file:///tmp/html-eJSsR7#FCLANGSETCOPY
-  76. file:///tmp/html-eJSsR7#FCLANGSETADD
-  77. file:///tmp/html-eJSsR7#FCLANGSETDEL
-  78. file:///tmp/html-eJSsR7#FCLANGSETUNION
-  79. file:///tmp/html-eJSsR7#FCLANGSETSUBTRACT
-  80. file:///tmp/html-eJSsR7#FCLANGSETCOMPARE
-  81. file:///tmp/html-eJSsR7#FCLANGSETCONTAINS
-  82. file:///tmp/html-eJSsR7#FCLANGSETEQUAL
-  83. file:///tmp/html-eJSsR7#FCLANGSETHASH
-  84. file:///tmp/html-eJSsR7#FCLANGSETHASLANG
-  85. file:///tmp/html-eJSsR7#FCGETDEFAULTLANGS
-  86. file:///tmp/html-eJSsR7#FCGETLANGS
-  87. file:///tmp/html-eJSsR7#FCLANGNORMALIZE
-  88. file:///tmp/html-eJSsR7#FCLANGGETCHARSET
-  89. file:///tmp/html-eJSsR7#FCMATRIXINIT
-  90. file:///tmp/html-eJSsR7#FCMATRIXCOPY
-  91. file:///tmp/html-eJSsR7#FCMATRIXEQUAL
-  92. file:///tmp/html-eJSsR7#FCMATRIXMULTIPLY
-  93. file:///tmp/html-eJSsR7#FCMATRIXROTATE
-  94. file:///tmp/html-eJSsR7#FCMATRIXSCALE
-  95. file:///tmp/html-eJSsR7#FCMATRIXSHEAR
-  96. file:///tmp/html-eJSsR7#FCCONFIGCREATE
-  97. file:///tmp/html-eJSsR7#FCCONFIGREFERENCE
-  98. file:///tmp/html-eJSsR7#FCCONFIGDESTROY
-  99. file:///tmp/html-eJSsR7#FCCONFIGSETCURRENT
- 100. file:///tmp/html-eJSsR7#FCCONFIGGETCURRENT
- 101. file:///tmp/html-eJSsR7#FCCONFIGUPTODATE
- 102. file:///tmp/html-eJSsR7#FCCONFIGHOME
- 103. file:///tmp/html-eJSsR7#FCCONFIGENABLEHOME
- 104. file:///tmp/html-eJSsR7#FCCONFIGBUILDFONTS
- 105. file:///tmp/html-eJSsR7#FCCONFIGGETCONFIGDIRS
- 106. file:///tmp/html-eJSsR7#FCCONFIGGETFONTDIRS
- 107. file:///tmp/html-eJSsR7#FCCONFIGGETCONFIGFILES
- 108. file:///tmp/html-eJSsR7#FCCONFIGGETCACHE
- 109. file:///tmp/html-eJSsR7#FCCONFIGGETCACHEDIRS
- 110. file:///tmp/html-eJSsR7#FCCONFIGGETFONTS
- 111. file:///tmp/html-eJSsR7#FCCONFIGGETBLANKS
- 112. file:///tmp/html-eJSsR7#FCCONFIGGETRESCANINTERVAL
- 113. file:///tmp/html-eJSsR7#FCCONFIGSETRESCANINTERVAL
- 114. file:///tmp/html-eJSsR7#FCCONFIGAPPFONTADDFILE
- 115. file:///tmp/html-eJSsR7#FCCONFIGAPPFONTADDDIR
- 116. file:///tmp/html-eJSsR7#FCCONFIGAPPFONTCLEAR
- 117. file:///tmp/html-eJSsR7#FCCONFIGSUBSTITUTEWITHPAT
- 118. file:///tmp/html-eJSsR7#FCCONFIGSUBSTITUTE
- 119. file:///tmp/html-eJSsR7#FCFONTMATCH
- 120. file:///tmp/html-eJSsR7#FCFONTSORT
- 121. file:///tmp/html-eJSsR7#FCFONTRENDERPREPARE
- 122. file:///tmp/html-eJSsR7#FCFONTLIST
- 123. file:///tmp/html-eJSsR7#FCCONFIGFILENAME
- 124. file:///tmp/html-eJSsR7#FCCONFIGPARSEANDLOAD
- 125. file:///tmp/html-eJSsR7#FCCONFIGGETSYSROOT
- 126. file:///tmp/html-eJSsR7#FCCONFIGSETSYSROOT
- 127. file:///tmp/html-eJSsR7#FCNAMEREGISTEROBJECTTYPES
- 128. file:///tmp/html-eJSsR7#FCNAMEUNREGISTEROBJECTTYPES
- 129. file:///tmp/html-eJSsR7#FCNAMEGETOBJECTTYPE
- 130. file:///tmp/html-eJSsR7#FCNAMEREGISTERCONSTANTS
- 131. file:///tmp/html-eJSsR7#FCNAMEUNREGISTERCONSTANTS
- 132. file:///tmp/html-eJSsR7#FCNAMEGETCONSTANT
- 133. file:///tmp/html-eJSsR7#FCNAMECONSTANT
- 134. file:///tmp/html-eJSsR7#FCBLANKSCREATE
- 135. file:///tmp/html-eJSsR7#FCBLANKSDESTROY
- 136. file:///tmp/html-eJSsR7#FCBLANKSADD
- 137. file:///tmp/html-eJSsR7#FCBLANKSISMEMBER
- 138. file:///tmp/html-eJSsR7#FCATOMICCREATE
- 139. file:///tmp/html-eJSsR7#FCATOMICLOCK
- 140. file:///tmp/html-eJSsR7#FCATOMICNEWFILE
- 141. file:///tmp/html-eJSsR7#FCATOMICORIGFILE
- 142. file:///tmp/html-eJSsR7#FCATOMICREPLACEORIG
- 143. file:///tmp/html-eJSsR7#FCATOMICDELETENEW
- 144. file:///tmp/html-eJSsR7#FCATOMICUNLOCK
- 145. file:///tmp/html-eJSsR7#FCATOMICDESTROY
- 146. file:///tmp/html-eJSsR7#FCFILESCAN
- 147. file:///tmp/html-eJSsR7#FCFILEISDIR
- 148. file:///tmp/html-eJSsR7#FCDIRSCAN
- 149. file:///tmp/html-eJSsR7#FCDIRSAVE
- 150. file:///tmp/html-eJSsR7#FCDIRCACHEUNLINK
- 151. file:///tmp/html-eJSsR7#FCDIRCACHEVALID
- 152. file:///tmp/html-eJSsR7#FCDIRCACHELOAD
- 153. file:///tmp/html-eJSsR7#FCDIRCACHEREAD
- 154. file:///tmp/html-eJSsR7#FCDIRCACHELOADFILE
- 155. file:///tmp/html-eJSsR7#FCDIRCACHEUNLOAD
- 156. file:///tmp/html-eJSsR7#FCCACHEDIR
- 157. file:///tmp/html-eJSsR7#FCCACHECOPYSET
- 158. file:///tmp/html-eJSsR7#FCCACHESUBDIR
- 159. file:///tmp/html-eJSsR7#FCCACHENUMSUBDIR
- 160. file:///tmp/html-eJSsR7#FCCACHENUMFONT
- 161. file:///tmp/html-eJSsR7#FCDIRCACHECLEAN
- 162. file:///tmp/html-eJSsR7#FCCACHECREATETAGFILE
- 163. file:///tmp/html-eJSsR7#FCSTRSETCREATE
- 164. file:///tmp/html-eJSsR7#FCSTRSETMEMBER
- 165. file:///tmp/html-eJSsR7#FCSTRSETEQUAL
- 166. file:///tmp/html-eJSsR7#FCSTRSETADD
- 167. file:///tmp/html-eJSsR7#FCSTRSETADDFILENAME
- 168. file:///tmp/html-eJSsR7#FCSTRSETDEL
- 169. file:///tmp/html-eJSsR7#FCSTRSETDESTROY
- 170. file:///tmp/html-eJSsR7#FCSTRLISTCREATE
- 171. file:///tmp/html-eJSsR7#FCSTRLISTNEXT
- 172. file:///tmp/html-eJSsR7#FCSTRLISTDONE
- 173. file:///tmp/html-eJSsR7#FCUTF8TOUCS4
- 174. file:///tmp/html-eJSsR7#FCUCS4TOUTF8
- 175. file:///tmp/html-eJSsR7#FCUTF8LEN
- 176. file:///tmp/html-eJSsR7#FCUTF16TOUCS4
- 177. file:///tmp/html-eJSsR7#FCUTF16LEN
- 178. file:///tmp/html-eJSsR7#FCISLOWER
- 179. file:///tmp/html-eJSsR7#FCISUPPER
- 180. file:///tmp/html-eJSsR7#FCTOLOWER
- 181. file:///tmp/html-eJSsR7#FCSTRCOPY
- 182. file:///tmp/html-eJSsR7#FCSTRDOWNCASE
- 183. file:///tmp/html-eJSsR7#FCSTRCOPYFILENAME
- 184. file:///tmp/html-eJSsR7#FCSTRCMP
- 185. file:///tmp/html-eJSsR7#FCSTRCMPIGNORECASE
- 186. file:///tmp/html-eJSsR7#FCSTRSTR
- 187. file:///tmp/html-eJSsR7#FCSTRSTRIGNORECASE
- 188. file:///tmp/html-eJSsR7#FCSTRPLUS
- 189. file:///tmp/html-eJSsR7#FCSTRFREE
- 190. file:///tmp/html-eJSsR7#FCSTRDIRNAME
- 191. file:///tmp/html-eJSsR7#FCSTRBASENAME
+   1. file:///tmp/html-6vSr2R#AEN16
+   2. file:///tmp/html-6vSr2R#AEN19
+   3. file:///tmp/html-6vSr2R#AEN31
+   4. file:///tmp/html-6vSr2R#AEN102
+   5. file:///tmp/html-6vSr2R#FCINITLOADCONFIG
+   6. file:///tmp/html-6vSr2R#FCINITLOADCONFIGANDFONTS
+   7. file:///tmp/html-6vSr2R#FCINIT
+   8. file:///tmp/html-6vSr2R#FCFINI
+   9. file:///tmp/html-6vSr2R#FCGETVERSION
+  10. file:///tmp/html-6vSr2R#FCINITREINITIALIZE
+  11. file:///tmp/html-6vSr2R#FCINITBRINGUPTODATE
+  12. file:///tmp/html-6vSr2R#FCPATTERNCREATE
+  13. file:///tmp/html-6vSr2R#FCPATTERNDUPLICATE
+  14. file:///tmp/html-6vSr2R#FCPATTERNREFERENCE
+  15. file:///tmp/html-6vSr2R#FCPATTERNDESTROY
+  16. file:///tmp/html-6vSr2R#FCPATTERNEQUAL
+  17. file:///tmp/html-6vSr2R#FCPATTERNEQUALSUBSET
+  18. file:///tmp/html-6vSr2R#FCPATTERNFILTER
+  19. file:///tmp/html-6vSr2R#FCPATTERNHASH
+  20. file:///tmp/html-6vSr2R#FCPATTERNADD
+  21. file:///tmp/html-6vSr2R#FCPATTERNADDWEAK
+  22. file:///tmp/html-6vSr2R#FCPATTERNADD-TYPE
+  23. file:///tmp/html-6vSr2R#FCPATTERNGET
+  24. file:///tmp/html-6vSr2R#FCPATTERNGET-TYPE
+  25. file:///tmp/html-6vSr2R#FCPATTERNBUILD
+  26. file:///tmp/html-6vSr2R#FCPATTERNDEL
+  27. file:///tmp/html-6vSr2R#FCPATTERNREMOVE
+  28. file:///tmp/html-6vSr2R#FCPATTERNPRINT
+  29. file:///tmp/html-6vSr2R#FCDEFAULTSUBSTITUTE
+  30. file:///tmp/html-6vSr2R#FCNAMEPARSE
+  31. file:///tmp/html-6vSr2R#FCNAMEUNPARSE
+  32. file:///tmp/html-6vSr2R#FCPATTERNFORMAT
+  33. file:///tmp/html-6vSr2R#FCFONTSETCREATE
+  34. file:///tmp/html-6vSr2R#FCFONTSETDESTROY
+  35. file:///tmp/html-6vSr2R#FCFONTSETADD
+  36. file:///tmp/html-6vSr2R#FCFONTSETLIST
+  37. file:///tmp/html-6vSr2R#FCFONTSETMATCH
+  38. file:///tmp/html-6vSr2R#FCFONTSETPRINT
+  39. file:///tmp/html-6vSr2R#FCFONTSETSORT
+  40. file:///tmp/html-6vSr2R#FCFONTSETSORTDESTROY
+  41. file:///tmp/html-6vSr2R#FCOBJECTSETCREATE
+  42. file:///tmp/html-6vSr2R#FCOBJECTSETADD
+  43. file:///tmp/html-6vSr2R#FCOBJECTSETDESTROY
+  44. file:///tmp/html-6vSr2R#FCOBJECTSETBUILD
+  45. file:///tmp/html-6vSr2R#FCFREETYPECHARINDEX
+  46. file:///tmp/html-6vSr2R#FCFREETYPECHARSET
+  47. file:///tmp/html-6vSr2R#FCFREETYPECHARSETANDSPACING
+  48. file:///tmp/html-6vSr2R#FCFREETYPEQUERY
+  49. file:///tmp/html-6vSr2R#FCFREETYPEQUERYFACE
+  50. file:///tmp/html-6vSr2R#FCVALUEDESTROY
+  51. file:///tmp/html-6vSr2R#FCVALUESAVE
+  52. file:///tmp/html-6vSr2R#FCVALUEPRINT
+  53. file:///tmp/html-6vSr2R#FCVALUEEQUAL
+  54. file:///tmp/html-6vSr2R#FCCHARSETCREATE
+  55. file:///tmp/html-6vSr2R#FCCHARSETDESTROY
+  56. file:///tmp/html-6vSr2R#FCCHARSETADDCHAR
+  57. file:///tmp/html-6vSr2R#FCCHARSETDELCHAR
+  58. file:///tmp/html-6vSr2R#FCCHARSETCOPY
+  59. file:///tmp/html-6vSr2R#FCCHARSETEQUAL
+  60. file:///tmp/html-6vSr2R#FCCHARSETINTERSECT
+  61. file:///tmp/html-6vSr2R#FCCHARSETUNION
+  62. file:///tmp/html-6vSr2R#FCCHARSETSUBTRACT
+  63. file:///tmp/html-6vSr2R#FCCHARSETMERGE
+  64. file:///tmp/html-6vSr2R#FCCHARSETHASCHAR
+  65. file:///tmp/html-6vSr2R#FCCHARSETCOUNT
+  66. file:///tmp/html-6vSr2R#FCCHARSETINTERSECTCOUNT
+  67. file:///tmp/html-6vSr2R#FCCHARSETSUBTRACTCOUNT
+  68. file:///tmp/html-6vSr2R#FCCHARSETISSUBSET
+  69. file:///tmp/html-6vSr2R#FCCHARSETFIRSTPAGE
+  70. file:///tmp/html-6vSr2R#FCCHARSETNEXTPAGE
+  71. file:///tmp/html-6vSr2R#FCCHARSETCOVERAGE
+  72. file:///tmp/html-6vSr2R#FCCHARSETNEW
+  73. file:///tmp/html-6vSr2R#FCLANGSETCREATE
+  74. file:///tmp/html-6vSr2R#FCLANGSETDESTROY
+  75. file:///tmp/html-6vSr2R#FCLANGSETCOPY
+  76. file:///tmp/html-6vSr2R#FCLANGSETADD
+  77. file:///tmp/html-6vSr2R#FCLANGSETDEL
+  78. file:///tmp/html-6vSr2R#FCLANGSETUNION
+  79. file:///tmp/html-6vSr2R#FCLANGSETSUBTRACT
+  80. file:///tmp/html-6vSr2R#FCLANGSETCOMPARE
+  81. file:///tmp/html-6vSr2R#FCLANGSETCONTAINS
+  82. file:///tmp/html-6vSr2R#FCLANGSETEQUAL
+  83. file:///tmp/html-6vSr2R#FCLANGSETHASH
+  84. file:///tmp/html-6vSr2R#FCLANGSETHASLANG
+  85. file:///tmp/html-6vSr2R#FCGETDEFAULTLANGS
+  86. file:///tmp/html-6vSr2R#FCGETLANGS
+  87. file:///tmp/html-6vSr2R#FCLANGNORMALIZE
+  88. file:///tmp/html-6vSr2R#FCLANGGETCHARSET
+  89. file:///tmp/html-6vSr2R#FCMATRIXINIT
+  90. file:///tmp/html-6vSr2R#FCMATRIXCOPY
+  91. file:///tmp/html-6vSr2R#FCMATRIXEQUAL
+  92. file:///tmp/html-6vSr2R#FCMATRIXMULTIPLY
+  93. file:///tmp/html-6vSr2R#FCMATRIXROTATE
+  94. file:///tmp/html-6vSr2R#FCMATRIXSCALE
+  95. file:///tmp/html-6vSr2R#FCMATRIXSHEAR
+  96. file:///tmp/html-6vSr2R#FCCONFIGCREATE
+  97. file:///tmp/html-6vSr2R#FCCONFIGREFERENCE
+  98. file:///tmp/html-6vSr2R#FCCONFIGDESTROY
+  99. file:///tmp/html-6vSr2R#FCCONFIGSETCURRENT
+ 100. file:///tmp/html-6vSr2R#FCCONFIGGETCURRENT
+ 101. file:///tmp/html-6vSr2R#FCCONFIGUPTODATE
+ 102. file:///tmp/html-6vSr2R#FCCONFIGHOME
+ 103. file:///tmp/html-6vSr2R#FCCONFIGENABLEHOME
+ 104. file:///tmp/html-6vSr2R#FCCONFIGBUILDFONTS
+ 105. file:///tmp/html-6vSr2R#FCCONFIGGETCONFIGDIRS
+ 106. file:///tmp/html-6vSr2R#FCCONFIGGETFONTDIRS
+ 107. file:///tmp/html-6vSr2R#FCCONFIGGETCONFIGFILES
+ 108. file:///tmp/html-6vSr2R#FCCONFIGGETCACHE
+ 109. file:///tmp/html-6vSr2R#FCCONFIGGETCACHEDIRS
+ 110. file:///tmp/html-6vSr2R#FCCONFIGGETFONTS
+ 111. file:///tmp/html-6vSr2R#FCCONFIGGETBLANKS
+ 112. file:///tmp/html-6vSr2R#FCCONFIGGETRESCANINTERVAL
+ 113. file:///tmp/html-6vSr2R#FCCONFIGSETRESCANINTERVAL
+ 114. file:///tmp/html-6vSr2R#FCCONFIGAPPFONTADDFILE
+ 115. file:///tmp/html-6vSr2R#FCCONFIGAPPFONTADDDIR
+ 116. file:///tmp/html-6vSr2R#FCCONFIGAPPFONTCLEAR
+ 117. file:///tmp/html-6vSr2R#FCCONFIGSUBSTITUTEWITHPAT
+ 118. file:///tmp/html-6vSr2R#FCCONFIGSUBSTITUTE
+ 119. file:///tmp/html-6vSr2R#FCFONTMATCH
+ 120. file:///tmp/html-6vSr2R#FCFONTSORT
+ 121. file:///tmp/html-6vSr2R#FCFONTRENDERPREPARE
+ 122. file:///tmp/html-6vSr2R#FCFONTLIST
+ 123. file:///tmp/html-6vSr2R#FCCONFIGFILENAME
+ 124. file:///tmp/html-6vSr2R#FCCONFIGPARSEANDLOAD
+ 125. file:///tmp/html-6vSr2R#FCCONFIGGETSYSROOT
+ 126. file:///tmp/html-6vSr2R#FCCONFIGSETSYSROOT
+ 127. file:///tmp/html-6vSr2R#FCNAMEREGISTEROBJECTTYPES
+ 128. file:///tmp/html-6vSr2R#FCNAMEUNREGISTEROBJECTTYPES
+ 129. file:///tmp/html-6vSr2R#FCNAMEGETOBJECTTYPE
+ 130. file:///tmp/html-6vSr2R#FCNAMEREGISTERCONSTANTS
+ 131. file:///tmp/html-6vSr2R#FCNAMEUNREGISTERCONSTANTS
+ 132. file:///tmp/html-6vSr2R#FCNAMEGETCONSTANT
+ 133. file:///tmp/html-6vSr2R#FCNAMECONSTANT
+ 134. file:///tmp/html-6vSr2R#FCBLANKSCREATE
+ 135. file:///tmp/html-6vSr2R#FCBLANKSDESTROY
+ 136. file:///tmp/html-6vSr2R#FCBLANKSADD
+ 137. file:///tmp/html-6vSr2R#FCBLANKSISMEMBER
+ 138. file:///tmp/html-6vSr2R#FCATOMICCREATE
+ 139. file:///tmp/html-6vSr2R#FCATOMICLOCK
+ 140. file:///tmp/html-6vSr2R#FCATOMICNEWFILE
+ 141. file:///tmp/html-6vSr2R#FCATOMICORIGFILE
+ 142. file:///tmp/html-6vSr2R#FCATOMICREPLACEORIG
+ 143. file:///tmp/html-6vSr2R#FCATOMICDELETENEW
+ 144. file:///tmp/html-6vSr2R#FCATOMICUNLOCK
+ 145. file:///tmp/html-6vSr2R#FCATOMICDESTROY
+ 146. file:///tmp/html-6vSr2R#FCFILESCAN
+ 147. file:///tmp/html-6vSr2R#FCFILEISDIR
+ 148. file:///tmp/html-6vSr2R#FCDIRSCAN
+ 149. file:///tmp/html-6vSr2R#FCDIRSAVE
+ 150. file:///tmp/html-6vSr2R#FCDIRCACHEUNLINK
+ 151. file:///tmp/html-6vSr2R#FCDIRCACHEVALID
+ 152. file:///tmp/html-6vSr2R#FCDIRCACHELOAD
+ 153. file:///tmp/html-6vSr2R#FCDIRCACHEREAD
+ 154. file:///tmp/html-6vSr2R#FCDIRCACHELOADFILE
+ 155. file:///tmp/html-6vSr2R#FCDIRCACHEUNLOAD
+ 156. file:///tmp/html-6vSr2R#FCCACHEDIR
+ 157. file:///tmp/html-6vSr2R#FCCACHECOPYSET
+ 158. file:///tmp/html-6vSr2R#FCCACHESUBDIR
+ 159. file:///tmp/html-6vSr2R#FCCACHENUMSUBDIR
+ 160. file:///tmp/html-6vSr2R#FCCACHENUMFONT
+ 161. file:///tmp/html-6vSr2R#FCDIRCACHECLEAN
+ 162. file:///tmp/html-6vSr2R#FCCACHECREATETAGFILE
+ 163. file:///tmp/html-6vSr2R#FCSTRSETCREATE
+ 164. file:///tmp/html-6vSr2R#FCSTRSETMEMBER
+ 165. file:///tmp/html-6vSr2R#FCSTRSETEQUAL
+ 166. file:///tmp/html-6vSr2R#FCSTRSETADD
+ 167. file:///tmp/html-6vSr2R#FCSTRSETADDFILENAME
+ 168. file:///tmp/html-6vSr2R#FCSTRSETDEL
+ 169. file:///tmp/html-6vSr2R#FCSTRSETDESTROY
+ 170. file:///tmp/html-6vSr2R#FCSTRLISTCREATE
+ 171. file:///tmp/html-6vSr2R#FCSTRLISTFIRST
+ 172. file:///tmp/html-6vSr2R#FCSTRLISTNEXT
+ 173. file:///tmp/html-6vSr2R#FCSTRLISTDONE
+ 174. file:///tmp/html-6vSr2R#FCUTF8TOUCS4
+ 175. file:///tmp/html-6vSr2R#FCUCS4TOUTF8
+ 176. file:///tmp/html-6vSr2R#FCUTF8LEN
+ 177. file:///tmp/html-6vSr2R#FCUTF16TOUCS4
+ 178. file:///tmp/html-6vSr2R#FCUTF16LEN
+ 179. file:///tmp/html-6vSr2R#FCISLOWER
+ 180. file:///tmp/html-6vSr2R#FCISUPPER
+ 181. file:///tmp/html-6vSr2R#FCTOLOWER
+ 182. file:///tmp/html-6vSr2R#FCSTRCOPY
+ 183. file:///tmp/html-6vSr2R#FCSTRDOWNCASE
+ 184. file:///tmp/html-6vSr2R#FCSTRCOPYFILENAME
+ 185. file:///tmp/html-6vSr2R#FCSTRCMP
+ 186. file:///tmp/html-6vSr2R#FCSTRCMPIGNORECASE
+ 187. file:///tmp/html-6vSr2R#FCSTRSTR
+ 188. file:///tmp/html-6vSr2R#FCSTRSTRIGNORECASE
+ 189. file:///tmp/html-6vSr2R#FCSTRPLUS
+ 190. file:///tmp/html-6vSr2R#FCSTRFREE
+ 191. file:///tmp/html-6vSr2R#FCSTRDIRNAME
+ 192. file:///tmp/html-6vSr2R#FCSTRBASENAME

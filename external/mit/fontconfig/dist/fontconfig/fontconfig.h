@@ -51,8 +51,8 @@ typedef int		FcBool;
  */
 
 #define FC_MAJOR	2
-#define FC_MINOR	10
-#define FC_REVISION	93
+#define FC_MINOR	11
+#define FC_REVISION	0
 
 #define FC_VERSION	((FC_MAJOR * 10000) + (FC_MINOR * 100) + (FC_REVISION))
 
@@ -91,7 +91,7 @@ typedef int		FcBool;
 #define FC_FILE		    "file"		/* String */
 #define FC_INDEX	    "index"		/* Int */
 #define FC_FT_FACE	    "ftface"		/* FT_Face */
-#define FC_RASTERIZER	    "rasterizer"	/* String */
+#define FC_RASTERIZER	    "rasterizer"	/* String (deprecated) */
 #define FC_OUTLINE	    "outline"		/* Bool */
 #define FC_SCALABLE	    "scalable"		/* Bool */
 #define FC_SCALE	    "scale"		/* double */
@@ -185,6 +185,7 @@ typedef int		FcBool;
 #define FC_LCD_LEGACY	    3
 
 typedef enum _FcType {
+    FcTypeUnknown = -1,
     FcTypeVoid,
     FcTypeInteger,
     FcTypeDouble,
@@ -972,6 +973,9 @@ FcStrSetDestroy (FcStrSet *set);
 
 FcPublic FcStrList *
 FcStrListCreate (FcStrSet *set);
+
+FcPublic void
+FcStrListFirst (FcStrList *list);
 
 FcPublic FcChar8 *
 FcStrListNext (FcStrList *list);

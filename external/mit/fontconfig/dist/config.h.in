@@ -148,6 +148,13 @@
 /* Define to 1 if you have the `regfree' function. */
 #undef HAVE_REGFREE
 
+/* Define to 1 if you have the 'scandir' function. */
+#undef HAVE_SCANDIR
+
+/* Define to 1 if you have the 'scandir' function with int (* compar)(const
+   void *, const void *) */
+#undef HAVE_SCANDIR_VOID_P
+
 /* Define to 1 if you have the <sched.h> header file. */
 #undef HAVE_SCHED_H
 
