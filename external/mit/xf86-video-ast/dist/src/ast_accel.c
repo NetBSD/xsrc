@@ -54,6 +54,8 @@
 /* Driver specific headers */
 #include "ast.h"
 
+extern UCHAR *pjRequestCMDQ(ASTRecPtr pAST, ULONG ulDataLen);
+
 #ifdef	Accel_2D
 
 #ifdef HAVE_XAA_H
@@ -100,7 +102,6 @@ int ASTXAAPatternROP[16]=
 
 /* extern function */
 extern void vWaitEngIdle(ScrnInfoPtr pScrn, ASTRecPtr pAST);
-extern UCHAR *pjRequestCMDQ(ASTRecPtr pAST, ULONG ulDataLen);
 extern Bool bGetLineTerm(_LINEInfo *LineInfo, LINEPARAM *dsLineParam);
 
 /* Prototype type declaration */
