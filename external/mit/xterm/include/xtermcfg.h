@@ -1,8 +1,8 @@
 /* xtermcfg.h.  Generated automatically by configure.  */
-/* $XTermId: xtermcfg.hin,v 1.199 2013/05/27 21:05:23 tom Exp $ */
+/* $XTermId: xtermcfg.hin,v 1.203 2014/01/16 01:45:00 tom Exp $ */
 
 /*
- * Copyright 1997-2012,2013 by Thomas E. Dickey
+ * Copyright 1997-2013,2014 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -54,6 +54,7 @@
 #define HAVE_GETHOSTNAME 1		/* AC_CHECK_FUNCS(gethostname) */
 #define HAVE_GETLOGIN 1		/* AC_CHECK_FUNCS(getlogin) */
 #define HAVE_GRANTPT 1		/* CF_FUNC_GRANTPT */
+#define HAVE_INITGROUPS 1		/* AC_CHECK_FUNCS(initgroups) */
 /* #undef HAVE_GRANTPT_PTY_ISATTY */	/* CF_FUNC_GRANTPT */
 #define HAVE_LANGINFO_CODESET 1	/* AM_LANGINFO_CODESET */
 /* #undef HAVE_LASTLOG_H */		/* CF_LASTLOG */
@@ -63,6 +64,8 @@
 #define HAVE_LIB_XAW 1		/* CF_X_ATHENA */
 /* #undef HAVE_LIB_XAW3D */		/* CF_X_ATHENA(--with-Xaw3d) */
 /* #undef HAVE_LIB_XAWPLUS */		/* CF_X_ATHENA(--with-XawPlus) */
+#define HAVE_LIB_XCURSOR 1		/* AC_CHECK_LIB(Xcursor) */
+#define HAVE_MKDTEMP 1		/* AC_CHECK_FUNCS(mkdtemp) */
 /* #undef HAVE_NCURSES_CURSES_H */	/* AC_CHECK_HEADERS(ncurses/curses.h) */
 /* #undef HAVE_NCURSES_TERM_H */	/* AC_CHECK_HEADERS(ncurses/term.h) */
 #define HAVE_PATHS_H 1		/* CF_LASTLOG */
@@ -148,6 +151,7 @@
 /* #undef OPT_SELECTION_OPS */	/* CF_ARG_DISABLE(selection-ops) */
 #define OPT_SELECT_REGEX 1		/* CF_ARG_DISABLE(regex) */
 /* #undef OPT_SESSION_MGT */		/* CF_ARG_DISABLE(session-mgt) */
+/* #undef OPT_SIXEL_GRAPHICS */	/* CF_ARG_ENABLE(sixel-graphics) */
 /* #undef OPT_SUN_FUNC_KEYS */	/* CF_ARG_ENABLE(sun-fkeys) */
 #define OPT_TCAP_FKEYS 1		/* CF_ARG_ENABLE(tcap-fkeys) */
 #define OPT_TCAP_QUERY 1		/* CF_ARG_ENABLE(tcap-query) */
