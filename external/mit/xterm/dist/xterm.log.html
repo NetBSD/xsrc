@@ -2,7 +2,7 @@
  *****************************************************************************
  * this file is part of xterm                                                *
  *                                                                           *
- * Copyright 1997-2012,2013 by Thomas E. Dickey                              *
+ * Copyright 1997-2013,2014 by Thomas E. Dickey                              *
  *                                                                           *
  * All Rights Reserved                                                       *
  *                                                                           *
@@ -30,7 +30,7 @@
  * sale, use or other dealings in this Software without prior written        *
  * authorization.                                                            *
  *****************************************************************************
-  $XTermId: xterm.log.html,v 1.1351 2013/05/28 00:01:55 tom Exp $
+  $XTermId: xterm.log.html,v 1.1443 2014/03/07 02:47:00 tom Exp $
   -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
 
@@ -43,6 +43,9 @@
   <link rev="MADE" href="mailto:dickey@invisible-island.net">
   <meta http-equiv="Content-Type" content=
   "text/html; charset=us-ascii">
+  <meta name="keywords" content="xterm, change log">
+  <meta name="description" content=
+  "This is the xterm change-log, distributed with xterm, with items listed by patch-number and date">
   <link rel="SHORTCUT ICON" href="/img/icons/xterm.ico" type=
   "image/x-icon">
 </head>
@@ -50,7 +53,7 @@
 <body>
   <hr>
 
-  <p>Copyright &copy; 1997-2012,2013 by <a href=
+  <p>Copyright &copy; 1997-2013,2014 by <a href=
   "mailto:dickey@invisible-island.net">Thomas E. Dickey</a></p>
   <hr>
 
@@ -69,6 +72,26 @@
   CHANGELOG</a>).</p>
 
   <ul>
+    <li><a href="#xterm_303">Patch #303 - 2014/03/06</a></li>
+
+    <li><a href="#xterm_302">Patch #302 - 2014/03/02</a></li>
+
+    <li><a href="#xterm_301">Patch #301 - 2014/01/19</a></li>
+
+    <li><a href="#xterm_300">Patch #300 - 2013/12/03</a></li>
+
+    <li><a href="#xterm_299">Patch #299 - 2013/12/01</a></li>
+
+    <li><a href="#xterm_298">Patch #298 - 2013/11/27</a></li>
+
+    <li><a href="#xterm_297">Patch #297 - 2013/09/10</a></li>
+
+    <li><a href="#xterm_296">Patch #296 - 2013/07/10</a></li>
+
+    <li><a href="#xterm_295">Patch #295 - 2013/07/06</a></li>
+
+    <li><a href="#xterm_294">Patch #294 - 2013/07/05</a></li>
+
     <li><a href="#xterm_293">Patch #293 - 2013/05/27</a></li>
 
     <li><a href="#xterm_292">Patch #292 - 2013/04/25</a></li>
@@ -868,6 +891,338 @@
     <li><a href="#xterm_01">Patch #1 - 1996/1/6</a></li>
   </ul>
 
+  <h1><a name="xterm_303" id="xterm_303">Patch #303 -
+  2014/03/06</a></h1>
+
+  <ul>
+    <li>improve check for <code>/etc/shells</code> to allow its
+    entries to be symbolic links.</li>
+
+    <li>fix a regression in <a href="#xterm_302">patch #302</a>
+    fixes relating to interaction of <code>SHELL</code> and
+    <code>XTERM_SHELL</code> variables (Debian #740919).</li>
+
+    <li>improve manpage discussion of use of
+    <code>/etc/shells</code> for validating the <code>SHELL</code>
+    environment variable.</li>
+
+    <li>further improve the approximation for color map by ignoring
+    bits which would not be applied by the rgb masks for the
+    current visual (report by Joe Peterson).</li>
+
+    <li>add <code>-report-colors</code> to usage-message (report by
+    Joe Peterson).</li>
+  </ul>
+
+  <h1><a name="xterm_302" id="xterm_302">Patch #302 -
+  2014/03/02</a></h1>
+
+  <ul>
+    <li>amend approximation for color map introduced in <a href=
+    "#xterm_277">patch #277</a> to make that apply only to
+    <code>TrueColor</code> (adapted from patch by Joe
+    Peterson).</li>
+
+    <li>add <code>-report-colors</code> option, to show colors as
+    they are allocated.</li>
+
+    <li>fix some gcc <code>-Wcast-qual</code> warnings.</li>
+
+    <li>correct app-defaults location for CentOS-4 in
+    xterm.spec</li>
+
+    <li>improve check in <code>minstall.sh</code> for X manpage's
+    section number; add sample dependencies for the relevant
+    documentation package to packaging test-scripts (prompted by
+    Novell #779474).</li>
+
+    <li>modify sample build-scripts for dpkg and rpm to ensure that
+    <code>vttests</code> scripts are uncompressed and
+    executable.</li>
+
+    <li>modify Perl scripts in <code>vttests</code> to use
+    <code>env</code> to find Perl rather than relying on
+    <code>/usr/bin/perl</code> This makes the sample scripts usable
+    with NetBSD and other systems using <em>pkgsrc</em>.</li>
+
+    <li>amend check from <a href="#xterm_301">patch #301</a> for
+    valid shell to permit existing <code>SHELL</code> value to
+    specify the shell; clarify the behavior in the manpage (report
+    by Emmanuel Thom&eacute;).</li>
+
+    <li>amend change to wide-character processing from <a href=
+    "#xterm_257">patch #257</a> to allow switching to/from UTF-8
+    encoding if the <code>utf8</code> resource was not set to
+    &ldquo;always&rdquo; (report by Honza Maly).</li>
+
+    <li>fix incorrect free from <a href="#xterm_301">patch #301</a>
+    changes, if explicit program without <code>-e</code> option is
+    a valid shell (patch by Romain Francoise).</li>
+  </ul>
+
+  <h1><a name="xterm_301" id="xterm_301">Patch #301 -
+  2014/01/19</a></h1>
+
+  <ul>
+    <li>OSC&nbsp;104 and 105 did not accept parameter to reset a
+    specific color (patch by Egmont Koblinger).</li>
+
+    <li>add configure check for <code>initgroups</code>, and use
+    that function to complement its use of <code>setgid</code>
+    (prompted by patch by Miroslav Lichvar).</li>
+
+    <li>improve manpage description of scrollbar translations
+    versus the vt100 translations (Debian #723573).</li>
+
+    <li>add a few paragraphs to manpage explaining the implications
+    of xterm's reliance on X Toolkit for command-line parsing.</li>
+
+    <li>modify cursor-theme logic to check if the environment
+    variable <code>XCURSOR_THEME</code> is set to a nonempty value
+    before constructing a dummy them (prompted by similar check
+    added in OpenBSD CVS).</li>
+
+    <li>add check for a case where TrueType bold font is missing a
+    glyph where the non-bold font has it. Temporarily switch to the
+    non-bold font to draw the glyph (report by David
+    Demelier).</li>
+
+    <li>minor documentation fixes for ctlseqs.ms</li>
+
+    <li>only set <code>SHELL</code> environment variable to
+    programs found in <code>/etc/shells</code> (prompted by
+    patch/report by Al Poole).</li>
+
+    <li>build-fix, when <code>--disable-wide-chars</code>
+    <code>--disable-boxchar</code> is used (prompted by patch by
+    Andrey Panov).</li>
+  </ul>
+
+  <h1><a name="xterm_300" id="xterm_300">Patch #300 -
+  2013/12/03</a></h1>
+
+  <ul>
+    <li>amend workaround for <code>Xcursor</code> library from
+    <a href="#xterm_298">patch #298</a>; the suggested solution for
+    Debian #466704 fell afoul of a bug in <code>Xcursor</code>
+    which treated an empty value for <code>Inherits=</code> as a
+    valid theme&mdash;and resulted in a stack overflow due to
+    unbounded recursion. Certain environments such as XFCE4 exposed
+    the bug. A related report in Debian #531679 was closed without
+    following the recommendation to limit stack recursion in this
+    library (reported by Sergey V Dyatko, Debian #731269).</li>
+  </ul>
+
+  <h1><a name="xterm_299" id="xterm_299">Patch #299 -
+  2013/12/01</a></h1>
+
+  <ul>
+    <li>fix regression in line-drawing from <a href=
+    "#xterm_297">patch #297</a> changes for NRCS exposed by change
+    to <code>assumeAllChars</code> resource in <a href=
+    "#xterm_298">patch #298</a> (report by Markus Waldeck).</li>
+  </ul>
+
+  <h1><a name="xterm_298" id="xterm_298">Patch #298 -
+  2013/11/27</a></h1>
+
+  <ul>
+    <li>quiet a warning about ambiguity when <code>-h</code>
+    command-line option is parsed, since <code>-help</code> is used
+    rather than the options mentioned in the message. This warning
+    was caused by fixes in <a href="#xterm_272">patch
+    #272</a>.</li>
+
+    <li>remove an extra check for keypad-mode which interfered with
+    the <a href="#xterm_280">patch #280</a>
+    <code>modifyKeyboard</code> feature for the numeric keypad
+    (report by David Conners).</li>
+
+    <li>change default for <code>assumeAllChars</code> resource
+    (Debian #725682). There are unresolved issues with Terminus
+    fonts, e.g., Debian #722017.</li>
+
+    <li>add <code>-report-fonts</code> command-line option and
+    <code>reportFonts</code> resource to optionally report the
+    fonts which are loaded, and their metrics such as the number of
+    missing glyphs.</li>
+
+    <li>work around <code>Xcursor</code> library to make
+    <code>pointerColor</code> resource work as documented (Debian
+    #466704, analysis by Vincent Lef&egrave;vre).</li>
+
+    <li>amend change from <a href="#xterm_297">patch #297</a> for
+    ASCII-equivalents to ensure that missing characters which
+    happen to be double-width are padded to the expected number of
+    columns. Also, correct the choice between normal/wide Xft fonts
+    used when checking for missing characters (reported by WU Yue,
+    Debian #728949, Gentoo #491334).</li>
+
+    <li>modify sixel-graphics drawing to account for scrollbar
+    width (report by Mario Edelmann).</li>
+
+    <li>fix remaining issue with <code>DECNRCM</code>; the British
+    character set was confused with ISO Latin-1 (report by Hayaki
+    Saito).</li>
+
+    <li>build-fix for <code>--disable-boxchars</code> configure
+    option.</li>
+
+    <li>updated configure macros, from ongoing work on lynx and
+    ncurses.</li>
+
+    <li>update config.guess, config.sub</li>
+  </ul>
+
+  <h1><a name="xterm_297" id="xterm_297">Patch #297 -
+  2013/09/10</a></h1>
+
+  <ul>
+    <li>modify check for missing cells in bitmap font to work
+    around terminus 10646 encoding, which is mostly missing, add
+    <code>assumeAllChars</code> resource to provide the older
+    behavior.</li>
+
+    <li>modify macros used to check for missing cells in bitmap
+    fonts to pick up a long-overlooked improvement made to xfd in
+    XFree86.</li>
+
+    <li>improve workaround for groff versus ASCII-equivalents;
+    <a href="#xterm_185">patch #185</a> had overlooked Xft
+    configuration (reported by anonymous user on Arch Linux
+    forum).</li>
+
+    <li>review/extend <code>DECNRCM</code> support (prompted by
+    report by Hayaki Saito asking about the two "A" codes).
+
+      <ul>
+        <li>make pasting of DECNRCM data work by translating the
+        pasted data into the selected encoding.</li>
+
+        <li>limit mode changes to VT220 and up.</li>
+
+        <li>ignore SCS for National Replacement Characters if
+        <code>DECNRCM</code> is not set.</li>
+
+        <li>add tables and logic to decode SCS controls ending with
+        "%" and one additional character. This expects the parsing
+        of SCS to VT320.</li>
+
+        <li>also added parsing for SCS of DEC Supplemental and DEC
+        Technical, which are for VT2xx and VT3xx respectively.</li>
+
+        <li>implement VT220 Multinational character set "GR" aka
+        "DEC Supplemental Graphic".</li>
+
+        <li>DEC Technical character set based on <a href=
+        "http://www.vt100.net/charsets/technical.html">vt100.net
+        description</a>.</li>
+
+        <li>implement Portuguese NRC.</li>
+
+        <li>provide for temporarily switching to/from NRC mode from
+        UTF-8 mode when <code>DECNRCM</code> is set or reset.</li>
+      </ul>
+    </li>
+
+    <li>minor fix to assert's found while testing examples from
+    <a href="https://gist.github.com/ttdoda">ttdoda's
+    slrm-test1.txt</a>.</li>
+
+    <li>modify <code>DECLRMM</code> to not update the cursor
+    position (report by Iwamoto Kouichi forwarded by Hayaki
+    Saito).</li>
+
+    <li>modify cursor-position report to take origin-mode into
+    account (report by Hayaki Saito, see also <a href=
+    "https://github.com/gnachman/iTerm2/pull/129">iTerm2 pull
+    request 129</a>).</li>
+
+    <li>correct off-by-one comparison in when handling
+    carriage-return at left margin (patch by Iwamoto Kouichi,
+    forwarded by Hayaki Saito).</li>
+
+    <li>improve handling of <code>faceName</code> resource when a
+    "size=" property is embedded in it, by using that size to
+    replace the default <code>faceSize</code> resource. This lets
+    xterm honor the other faceSize resources (report by Jens
+    Schweikhardt).</li>
+
+    <li>improve OSC&nbsp;52 selection-data by setting its timestamp
+    to correspond to the most-recent event received by xterm, to
+    ensure that calls to <code>XtOwnSelect</code> succeed even if
+    the selection is manipulated solely through the keyboard
+    (prompted by patch by Richard Tollerton).</li>
+
+    <li>change configure-script defaults for "luit" and
+    "wide-chars" options to match the values used in the imake
+    configuration, to lessen user surprise if they are accustomed
+    to building xterm using imake(report by Andries E
+    Brouwer).</li>
+
+    <li>improve the imake-related configuration's check if xterm is
+    started in a locale that uses UTF-8 encoding. Before, this
+    checked the locale settings only for "UTF-8", now it checks
+    ignoring case for "UTF-8" and "UTF-8" (report by Andries E
+    Brouwer).</li>
+  </ul>
+
+  <h1><a name="xterm_296" id="xterm_296">Patch #296 -
+  2013/07/10</a></h1>
+
+  <ul>
+    <li>improve experimental sixel feature (patch by Ross
+    Combs).</li>
+
+    <li>modify delimiter in configure macro used to add a library
+    after a given library to avoid confusion with <code>-Wl</code>
+    pass-through options to linker (NetBSD #48031).</li>
+
+    <li>fix quoting in expression used to trim extra libraries from
+    <a href="#xterm_295">patch #295</a> changes (report by Thomas
+    Klausner).</li>
+  </ul>
+
+  <h1><a name="xterm_295" id="xterm_295">Patch #295 -
+  2013/07/06</a></h1>
+
+  <ul>
+    <li>adjust order of libraries to work around incomplete symbol
+    resolution when using <code>--as-needed</code> option
+    (ArchLinux #36047).</li>
+
+    <li>minor fix for <code>plink.sh</code>, for IRIX64.</li>
+  </ul>
+
+  <h1><a name="xterm_294" id="xterm_294">Patch #294 -
+  2013/07/05</a></h1>
+
+  <ul>
+    <li>add note in ctlseqs.ms for CPR response pointing out a
+    potential point of confusion with the string sent by a modified
+    F1 key (suggested by Bram Moolenaar).</li>
+
+    <li>improve <code>plink.sh</code> by checking if the linker
+    supports the <code>--as-needed</code> option (suggested by
+    David Philippi).</li>
+
+    <li>improve clearing for private mode 1049 when switching to
+    the alternate screen (Debian #711758).</li>
+
+    <li>amend fix from <a href="#xterm_292">patch #292</a> by
+    removing now-unneeded chunk which introduced problem in
+    selection (Debian #714527).</li>
+
+    <li>add definition to optionally override compiled-in class for
+    xterm from makefile, needed for test-packages.</li>
+
+    <li>add configure option
+    <code>--enable-sixel-graphics</code></li>
+
+    <li>add experimental support for sixel graphics (patch by Ross
+    Combs).</li>
+  </ul>
+
   <h1><a name="xterm_293" id="xterm_293">Patch #293 -
   2013/05/27</a></h1>
 
@@ -1001,8 +1356,8 @@
     by Peder Stray).</li>
 
     <li>fix inconsistent use of noreturn-attribute in
-    <code>Exit</code> function which interfered with analysis by
-    clang.</li>
+    <code>Exit</code> function which interfered with clang
+    --analyze.</li>
 
     <li>remove incorrect <code>free</code> used in computation of
     <code>XTERM_SHELL</code> variable, from Coverity fixes in
@@ -1127,9 +1482,9 @@
     <li>modify the handling of focus-change events to ignore those
     whose detail is <code>NotifyPointer</code>, since those are
     sent in addition to focus-change events directed to the old/new
-    windows having focus (prompted by patch by Balazs Kezes to
-    prevent the urgency-hint from being reset in this
-    scenario).</li>
+    windows having focus. In particular, this prevents the
+    urgency-hint from being reset inadvertantly (prompted by patch
+    by Balazs Kezes).</li>
 
     <li>modify description of <code>iconName</code> in manpage to
     make it clearer that this resource does not specify the
@@ -1219,7 +1574,7 @@
     existing uses of the <code>iconName</code> resource in the
     <code>Shell</code> widget (report by Emanuel Haupt).</li>
 
-    <li>fix documentation errata (reports by Miroslav Lichvar):
+    <li>fix documentation errata reported by Miroslav Lichvar:
 
       <ul>
         <li>correct manpage default for <code>allowTcapOps</code>
@@ -8528,7 +8883,7 @@ Klanderman).
     Smith).</li>
 
     <li>modify terminfo entry for <code>xterm-xfree86</code> to
-    reflect modifiers for shift and control which (from a patch by
+    reflect modifiers for shift and control (from a patch by
     Alexander V Lukyanov).</li>
 
     <li>modify terminfo entry for <code>xterm-sun</code> to match
