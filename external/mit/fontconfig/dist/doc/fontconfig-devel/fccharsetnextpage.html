@@ -75,7 +75,7 @@ NAME="FCCHARSETNEXTPAGE"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN2019"
+NAME="AEN2037"
 ></A
 ><H2
 >Name</H2
@@ -83,7 +83,7 @@ NAME="AEN2019"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN2022"
+NAME="AEN2040"
 ></A
 ><H2
 >Synopsis</H2
@@ -92,7 +92,7 @@ CLASS="FUNCSYNOPSIS"
 ><P
 ></P
 ><A
-NAME="AEN2023"
+NAME="AEN2041"
 ></A
 ><TABLE
 BORDER="0"
@@ -139,40 +139,72 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN2034"
+NAME="AEN2052"
 ></A
 ><H2
 >Description</H2
 ><P
->Builds an array of bits marking the Unicode coverage of <TT
+>Builds an array of bits in <TT
+CLASS="PARAMETER"
+><I
+>map</I
+></TT
+> marking the
+Unicode coverage of <TT
 CLASS="PARAMETER"
 ><I
 >a</I
 ></TT
-> for page
+> for page containing
 <TT
 CLASS="PARAMETER"
 ><I
 >*next</I
 ></TT
->. Returns the base of the array. <TT
+> (see the
+<TT
+CLASS="FUNCTION"
+>FcCharSetFirstPage</TT
+> description for details).
+<TT
 CLASS="PARAMETER"
 ><I
->next</I
+>*next</I
 ></TT
-> contains the next page in
-the font.
+> is set to contains the base code point
+for the next page in <TT
+CLASS="PARAMETER"
+><I
+>a</I
+></TT
+>.  Returns the base of
+code point for the page, or <CODE
+CLASS="CONSTANT"
+>FC_CHARSET_DONE</CODE
+> if
+<TT
+CLASS="PARAMETER"
+><I
+>a</I
+></TT
+> does not contain
+<TT
+CLASS="PARAMETER"
+><I
+>*next</I
+></TT
+>.
 	    </P
 ></DIV
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN2040"
+NAME="AEN2064"
 ></A
 ><H2
 >Version</H2
 ><P
->Fontconfig version 2.10.93
+>Fontconfig version 2.11.0
 
 	    </P
 ></DIV

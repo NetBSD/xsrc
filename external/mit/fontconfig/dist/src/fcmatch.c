@@ -245,6 +245,8 @@ typedef enum _FcMatcherPriorityDummy {
 typedef enum _FcMatcherPriority {
     PRI1(HASH),
     PRI1(FILE),
+    PRI1(FONTFORMAT),
+    PRI1(SCALABLE),
     PRI1(FOUNDRY),
     PRI1(CHARSET),
     PRI_FAMILY_STRONG,
@@ -550,14 +552,16 @@ FcFontRenderPrepare (FcConfig	    *config,
 
 		continue;
 	    }
+	    FcPatternObjectAdd (new, fe->object, v, FcFalse);
 	}
 	else
 	{
 	    if (fel)
 		goto copy_lang;
-	    v = FcValueCanonicalize(&FcPatternEltValues (fe)->value);
+	    FcPatternObjectListAdd (new, fe->object,
+				    FcValueListDuplicate (FcPatternEltValues (fe)),
+				    FcTrue);
 	}
-	FcPatternObjectAdd (new, fe->object, v, FcFalse);
     }
     for (i = 0; i < pat->num; i++)
     {

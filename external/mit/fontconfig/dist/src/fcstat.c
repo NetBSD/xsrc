@@ -20,9 +20,6 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 #include "fcint.h"
 #include "fcarch.h"
 #include <dirent.h>
@@ -164,11 +161,21 @@ FcDirChecksumScandirFilter(const struct dirent *entry)
 }
 #endif
 
+#ifdef HAVE_SCANDIR
 static int
 FcDirChecksumScandirSorter(const struct dirent **lhs, const struct dirent **rhs)
 {
     return strcmp((*lhs)->d_name, (*rhs)->d_name);
 }
+#elif HAVE_SCANDIR_VOID_P
+static int
+FcDirChecksumScandirSorter(const void *a, const void *b)
+{
+    const struct dirent *lhs = a, *rhs = b;
+
+    return strcmp(lhs->d_name, rhs->d_name);
+}
+#endif
 
 static int
 FcDirChecksum (const FcChar8 *dir, time_t *checksum)

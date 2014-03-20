@@ -33,7 +33,7 @@ dnl This is the package version number, not the shared library
 dnl version.  This same version number must appear in fontconfig/fontconfig.h
 dnl Yes, it is a pain to synchronize version numbers.  Unfortunately, it's
 dnl not possible to extract the version number here from fontconfig.h
-AC_INIT([fontconfig], [2.10.93], [https://bugs.freedesktop.org/enger_bug.cgi?product=fontconfig])
+AC_INIT([fontconfig], [2.11.0], [https://bugs.freedesktop.org/enter_bug.cgi?product=fontconfig])
 AM_INIT_AUTOMAKE([1.11 parallel-tests dist-bzip2])
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
@@ -42,17 +42,20 @@ dnl libtool versioning
 dnl bump revision when fixing bugs
 dnl bump current and age, reset revision to zero when adding APIs
 dnl bump current, leave age, reset revision to zero when changing/removing APIS
-LIBT_CURRENT=8
+LIBT_CURRENT=9
 LIBT_REVISION=0
 AC_SUBST(LIBT_CURRENT)
 AC_SUBST(LIBT_REVISION)
-LIBT_AGE=7
+LIBT_AGE=8
 
 LIBT_VERSION_INFO="$LIBT_CURRENT:$LIBT_REVISION:$LIBT_AGE"
 AC_SUBST(LIBT_VERSION_INFO)
 
 LIBT_CURRENT_MINUS_AGE=`expr $LIBT_CURRENT - $LIBT_AGE`
 AC_SUBST(LIBT_CURRENT_MINUS_AGE)
+
+PKGCONFIG_REQUIRES=
+PKGCONFIG_REQUIRES_PRIVATELY=
 
 dnl ==========================================================================
 
@@ -161,6 +164,37 @@ AC_LINK_IFELSE([AC_LANG_SOURCE([[
 		AC_MSG_RESULT([yes])
 		AC_DEFINE([HAVE_POSIX_FADVISE], [1], [Define to 1 if you have the 'posix_fadvise' function.])
 	],[AC_MSG_RESULT([no])])
+if test "$os_win32" = "no"; then
+	AC_MSG_CHECKING([for scandir])
+	AC_LINK_IFELSE([AC_LANG_SOURCE([[
+		#include <dirent.h>
+		int comp(const struct dirent **, const struct dirent **);
+		int comp(const struct dirent **a, const struct dirent **b) { return 0; }
+		int main(void) {
+		    struct dirent **d;
+		    return scandir(".", &d, 0, &comp) >= 0;
+		}
+		]])],[
+			AC_MSG_RESULT([yes])
+			AC_DEFINE([HAVE_SCANDIR], [1], [Define to 1 if you have the 'scandir' function.])
+		],[
+			AC_LINK_IFELSE([AC_LANG_SOURCE([[
+				#include <dirent.h>
+				int comp(const void *, const void *);
+				int comp(const void *a, const void *b) { return 0; }
+				int main(void) {
+				    struct dirent **d;
+				    return scandir(".", &d, 0, &comp) >= 0;
+				}
+			]])],[
+				AC_MSG_RESULT([yes])
+				AC_DEFINE([HAVE_SCANDIR_VOID_P], [1], [Define to 1 if you have the 'scandir' function with int (* compar)(const void *, const void *)])
+			],[
+				AC_MSG_ERROR([
+*** No scandir function available.])
+			])
+		])
+fi
 CFLAGS="$fc_saved_CFLAGS"
 
 #
@@ -251,13 +285,14 @@ if test "x$enable_iconv" != "xno"; then
 		AC_TRY_LINK([#include <iconv.h>],
 			[iconv_open ("from", "to");],
 			[iconv_type="libiconv"
-			 use_iconv=1],
+			 use_iconv=1
+			 ICONV_CFLAGS="$libiconv_cflags"
+			 ICONV_LIBS="$libiconv_libs"
+			 ],
 			[use_iconv=0])
 
 		CFLAGS="$iconvsaved_CFLAGS"
 		LIBS="$iconvsaved_LIBS"
-		ICONV_CFLAGS="$libiconv_cflags"
-		ICONV_LIBS="$libiconv_libs"
 	fi
 	if test "x$use_iconv" = "x0"; then
 		AC_TRY_LINK([#include <iconv.h>],
@@ -277,6 +312,7 @@ AC_DEFINE_UNQUOTED(USE_ICONV,$use_iconv,[Use iconv.])
 # Checks for FreeType
 #
 PKG_CHECK_MODULES(FREETYPE, freetype2)
+PKGCONFIG_REQUIRES="$PKGCONFIG_REQUIRES freetype2"
 
 AC_SUBST(FREETYPE_LIBS)
 AC_SUBST(FREETYPE_CFLAGS)
@@ -336,6 +372,8 @@ if test "$enable_libxml2" != "yes"; then
 		else
 			EXPAT_LIBS="-lexpat"
 		fi
+	else
+		PKGCONFIG_REQUIRES_PRIVATELY="$PKGCONFIG_REQUIRES_PRIVATELY expat"
 	fi
 
 	expatsaved_CPPFLAGS="$CPPFLAGS"
@@ -377,6 +415,7 @@ AC_ARG_ENABLE(libxml2,
 
 if test "$enable_libxml2" = "yes"; then
     PKG_CHECK_MODULES([LIBXML2], [libxml-2.0 >= 2.6])
+    PKGCONFIG_REQUIRES_PRIVATELY="$PKGCONFIG_REQUIRES_PRIVATELY libxml-2.0"
     AC_DEFINE_UNQUOTED(ENABLE_LIBXML2,1,[Use libxml2 instead of Expat])
 
     AC_SUBST(LIBXML2_CFLAGS)
@@ -549,7 +588,7 @@ no|yes)
 esac
 case "$configdir" in
 no|yes)
-	configdir='${baseconfigdir}'/conf.d
+	configdir='${BASECONFIGDIR}'/conf.d
 	;;
 *)
 	;;
@@ -566,13 +605,9 @@ TEMPLATEDIR=${templatedir}
 BASECONFIGDIR=${baseconfigdir}
 CONFIGDIR=${configdir}
 XMLDIR=${xmldir}
-AC_SUBST(templatedir)
 AC_SUBST(TEMPLATEDIR)
-AC_SUBST(baseconfigdir)
 AC_SUBST(BASECONFIGDIR)
-AC_SUBST(configdir)
 AC_SUBST(CONFIGDIR)
-AC_SUBST(xmldir)
 AC_SUBST(XMLDIR)
 
 
@@ -684,6 +719,12 @@ dnl include the header file for workaround of miscalculating size on autoconf
 dnl particularly for fat binaries
 AH_BOTTOM([#include "config-fixups.h"])
 
+dnl
+dnl
+AC_SUBST(PKGCONFIG_REQUIRES)
+AC_SUBST(PKGCONFIG_REQUIRES_PRIVATELY)
+
+dnl
 AC_CONFIG_FILES([
 Makefile
 fontconfig/Makefile
