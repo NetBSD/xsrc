@@ -1,7 +1,7 @@
-/* $XTermId: main.c,v 1.727 2013/05/27 22:11:11 tom Exp $ */
+/* $XTermId: main.c,v 1.751 2014/03/07 02:35:39 tom Exp $ */
 
 /*
- * Copyright 2002-2012,2013 by Thomas E. Dickey
+ * Copyright 2002-2013,2014 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -180,7 +180,6 @@ static void HsSysError(int) GCC_NORETURN;
 #if defined(__GLIBC__) && !defined(linux)
 #define USE_SYSV_PGRP
 #define WTMP
-#define HAS_BSD_GROUPS
 #endif
 
 #if defined(USE_TTY_GROUP) || defined(USE_UTMP_SETGID)
@@ -222,12 +221,7 @@ static void HsSysError(int) GCC_NORETURN;
 /*
  * now get system-specific includes
  */
-#ifdef CRAY
-#define HAS_BSD_GROUPS
-#endif
-
 #ifdef macII
-#define HAS_BSD_GROUPS
 #include <sys/ttychars.h>
 #undef USE_SYSV_ENVVARS
 #undef FIOCLEX
@@ -238,18 +232,15 @@ static void HsSysError(int) GCC_NORETURN;
 #endif
 
 #ifdef __hpux
-#define HAS_BSD_GROUPS
 #include <sys/ptyio.h>
 #endif /* __hpux */
 
 #ifdef __osf__
-#define HAS_BSD_GROUPS
 #undef  USE_SYSV_PGRP
 #define setpgrp setpgid
 #endif
 
 #ifdef __sgi
-#define HAS_BSD_GROUPS
 #include <sys/sysmacros.h>
 #endif /* __sgi */
 
@@ -290,9 +281,6 @@ ttyslot(void)
 #include <resource.h>
 #else
 #include <sys/resource.h>
-#endif
-#ifndef __INTERIX
-#define HAS_BSD_GROUPS
 #endif
 #endif /* !VMS */
 #endif /* !linux */
@@ -456,7 +444,7 @@ static int pty_search(int * /* pty */ );
 
 static int get_pty(int *pty, char *from);
 static void resize_termcap(XtermWidget xw);
-static void set_owner(char *device, uid_t uid, gid_t gid, mode_t mode);
+static void set_owner(char *device, unsigned uid, unsigned gid, unsigned mode);
 
 static Bool added_utmp_entry = False;
 
@@ -883,6 +871,12 @@ static XtResource application_resources[] =
     Bres("ptyHandshake", "PtyHandshake", ptyHandshake, True),
     Bres("ptySttySize", "PtySttySize", ptySttySize, DEF_PTY_STTY_SIZE),
 #endif
+#if OPT_REPORT_COLORS
+    Bres("reportColors", "ReportColors", reportColors, False),
+#endif
+#if OPT_REPORT_FONTS
+    Bres("reportFonts", "ReportFonts", reportFonts, False),
+#endif
 #if OPT_SAME_NAME
     Bres("sameName", "SameName", sameName, True),
 #endif
@@ -1017,6 +1011,12 @@ static XrmOptionDescRec optionDescList[] = {
 {"+s",		"*multiScroll",	XrmoptionNoArg,		(XPointer) "off"},
 {"-sb",		"*scrollBar",	XrmoptionNoArg,		(XPointer) "on"},
 {"+sb",		"*scrollBar",	XrmoptionNoArg,		(XPointer) "off"},
+#if OPT_REPORT_COLORS
+{"-report-colors","*reportColors", XrmoptionNoArg,	(XPointer) "on"},
+#endif
+#if OPT_REPORT_FONTS
+{"-report-fonts","*reportFonts", XrmoptionNoArg,	(XPointer) "on"},
+#endif
 #ifdef SCROLLBAR_RIGHT
 {"-leftbar",	"*rightScrollBar", XrmoptionNoArg,	(XPointer) "off"},
 {"-rightbar",	"*rightScrollBar", XrmoptionNoArg,	(XPointer) "on"},
@@ -1203,6 +1203,12 @@ static OptionHelp xtermOptions[] = {
 { "-/+rw",                 "turn on/off reverse wraparound" },
 { "-/+s",                  "turn on/off multiscroll" },
 { "-/+sb",                 "turn on/off scrollbar" },
+#if OPT_REPORT_COLORS
+{ "-report-colors",        "report colors as they are allocated" },
+#endif
+#if OPT_REPORT_FONTS
+{ "-report-fonts",         "report fonts as loaded to stdout" },
+#endif
 #ifdef SCROLLBAR_RIGHT
 { "-rightbar",             "force scrollbar right (default left)" },
 { "-leftbar",              "force scrollbar left" },
@@ -1466,7 +1472,7 @@ parseArg(int *num, char **argv, char **valuep)
 
 	TRACE(("parseArg %s\n", option));
 	if ((value = argv[(*num) + 1]) != 0) {
-	    have_value = (Boolean) ! isOption(value);
+	    have_value = (Boolean) !isOption(value);
 	}
 	for (inlist = 0; inlist < limit; ++inlist) {
 	    XrmOptionDescRec *check = ITEM(inlist);
@@ -1503,6 +1509,10 @@ parseArg(int *num, char **argv, char **valuep)
 	    if (test > 0
 		&& ITEM(inlist)->argKind >= XrmoptionSkipArg) {
 		atbest = (int) inlist;
+		if (ITEM(inlist)->argKind == XrmoptionSkipNArgs) {
+		    /* in particular, silence a warning about ambiguity */
+		    exact = 1;
+		}
 		break;
 	    }
 	    if (test > best) {
@@ -1632,7 +1642,7 @@ ConvertConsoleSelection(Widget w GCC_UNUSED,
 static void
 DeleteWindow(Widget w,
 	     XEvent * event GCC_UNUSED,
-	     String * params GCC_UNUSED,
+	     String *params GCC_UNUSED,
 	     Cardinal *num_params GCC_UNUSED)
 {
 #if OPT_TEK4014
@@ -1652,7 +1662,7 @@ DeleteWindow(Widget w,
 static void
 KeyboardMapping(Widget w GCC_UNUSED,
 		XEvent * event,
-		String * params GCC_UNUSED,
+		String *params GCC_UNUSED,
 		Cardinal *num_params GCC_UNUSED)
 {
     switch (event->type) {
@@ -1941,7 +1951,7 @@ main(int argc, char *argv[]ENVP_ARG)
     Dimension menu_high;
     TScreen *screen;
     int mode;
-    char *my_class = DEFCLASS;
+    char *my_class = x_strdup(DEFCLASS);
     Window winToEmbedInto = None;
 
     ProgramName = argv[0];
@@ -2024,6 +2034,7 @@ main(int argc, char *argv[]ENVP_ARG)
 		Help();
 		quit = True;
 	    } else if (!strcmp(option_ptr->option, "-class")) {
+		free(my_class);
 		if ((my_class = x_strdup(option_value)) == 0) {
 		    Help();
 		    quit = True;
@@ -2177,6 +2188,7 @@ main(int argc, char *argv[]ENVP_ARG)
 	setEffectiveUser(save_ruid);
 	TRACE_IDS;
 #endif
+	init_colored_cursor();
 
 	toplevel = xtermOpenApplication(&app_con,
 					my_class,
@@ -2722,7 +2734,7 @@ get_pty(int *pty, char *from GCC_UNUSED)
 }
 
 static void
-set_pty_permissions(uid_t uid, gid_t gid, mode_t mode)
+set_pty_permissions(uid_t uid, unsigned gid, unsigned mode)
 {
 #ifdef USE_TTY_GROUP
     struct group *ttygrp;
@@ -3043,7 +3055,7 @@ HsSysError(int error)
 
 #ifndef VMS
 static void
-set_owner(char *device, uid_t uid, gid_t gid, mode_t mode)
+set_owner(char *device, unsigned uid, unsigned gid, unsigned mode)
 {
     int why;
 
@@ -3139,6 +3151,93 @@ find_utmp(struct UTMP_STR *tofind)
 #else
 #define USE_NO_DEV_TTY 0
 #endif
+
+static int
+same_leaf(char *a, char *b)
+{
+    char *p = x_basename(a);
+    char *q = x_basename(b);
+    return !strcmp(p, q);
+}
+
+/*
+ * "good enough" (inode wouldn't port to Cygwin)
+ */
+static int
+same_file(const char *a, const char *b)
+{
+    struct stat asb;
+    struct stat bsb;
+    int result = 0;
+
+    if ((stat(a, &asb) == 0)
+	&& (stat(b, &bsb) == 0)
+	&& ((asb.st_mode & S_IFMT) == S_IFREG)
+	&& ((bsb.st_mode & S_IFMT) == S_IFREG)
+	&& (asb.st_mtime == bsb.st_mtime)
+	&& (asb.st_size == bsb.st_size)) {
+	result = 1;
+    }
+    return result;
+}
+
+/*
+ * Only set $SHELL for paths found in the standard location.
+ */
+static Boolean
+validShell(const char *pathname)
+{
+    Boolean result = False;
+    const char *ok_shells = "/etc/shells";
+    char *blob;
+    struct stat sb;
+    size_t rc;
+    FILE *fp;
+
+    if (validProgram(pathname)
+	&& stat(ok_shells, &sb) == 0
+	&& (sb.st_mode & S_IFMT) == S_IFREG
+	&& (sb.st_size != 0)
+	&& (blob = calloc((size_t) sb.st_size + 2, sizeof(char))) != 0) {
+	if ((fp = fopen(ok_shells, "r")) != 0) {
+	    rc = fread(blob, sizeof(char), (size_t) sb.st_size, fp);
+	    if (rc == (size_t) sb.st_size) {
+		char *p = blob;
+		char *q, *r;
+		blob[rc] = '\0';
+		while (!result && (q = strtok(p, "\n")) != 0) {
+		    if ((r = x_strtrim(q)) != 0) {
+			TRACE(("...test \"%s\"\n", q));
+			if (!strcmp(q, pathname)) {
+			    result = True;
+			} else if (same_leaf(q, (char *) pathname) &&
+				   same_file(q, pathname)) {
+			    result = True;
+			}
+			free(r);
+		    }
+		    p = 0;
+		}
+	    }
+	    fclose(fp);
+	}
+	free(blob);
+    }
+    TRACE(("validShell %s ->%d\n", NonNull(pathname), result));
+    return result;
+}
+
+static char *
+resetShell(char *oldPath)
+{
+    char *newPath = x_strdup("/bin/sh");
+    char *envPath = getenv("SHELL");
+    if (oldPath != 0)
+	free(oldPath);
+    if (!IsEmpty(envPath))
+	xtermSetenv("SHELL", newPath);
+    return newPath;
+}
 
 /*
  *  Inits pty and tty and forks a login process.
@@ -3681,8 +3780,7 @@ spawnXTerm(XtermWidget xw)
 		/* we don't need the socket, or the pty master anymore */
 		close(ConnectionNumber(screen->display));
 #ifndef __MVS__
-		if (screen->respond >= 0)
-		    close(screen->respond);
+		close(screen->respond);
 #endif /* __MVS__ */
 
 		/* Now is the time to set up our process group and
@@ -4064,6 +4162,11 @@ spawnXTerm(XtermWidget xw)
 	     * GTK applications.
 	     */
 	    xtermUnsetenv("DESKTOP_STARTUP_ID");
+	    /*
+	     * We set this temporarily to work around poor design of Xcursor.
+	     * Unset it here to avoid confusion.
+	     */
+	    xtermUnsetenv("XCURSOR_PATH");
 
 	    xtermSetenv("TERM", resource.term_name);
 	    if (!resource.term_name)
@@ -4368,7 +4471,7 @@ spawnXTerm(XtermWidget xw)
 
 	    IGNORE_RC(setgid(screen->gid));
 	    TRACE_IDS;
-#ifdef HAS_BSD_GROUPS
+#ifdef HAVE_INITGROUPS
 	    if (geteuid() == 0 && OkPasswd(&pw)) {
 		if (initgroups(login_name, pw.pw_gid)) {
 		    perror("initgroups failed");
@@ -4499,31 +4602,38 @@ spawnXTerm(XtermWidget xw)
 	    signal(SIGHUP, SIG_DFL);
 
 	    /*
-	     * If we have an explicit program to run, make that set $SHELL.
+	     * If we have an explicit shell to run, make that set $SHELL.
+	     * Next, allow an existing setting of $SHELL, for absolute paths.
 	     * Otherwise, if $SHELL is not set, determine it from the user's
 	     * password information, if possible.
 	     *
 	     * Incidentally, our setting of $SHELL tells luit to use that
 	     * program rather than choosing between $SHELL and "/bin/sh".
 	     */
-	    if ((shell_path = explicit_shname) == NULL) {
-		if ((shell_path = x_getenv("SHELL")) == NULL) {
-		    if ((!OkPasswd(&pw) && !x_getpwuid(screen->uid, &pw))
-			|| *(shell_path = x_strdup(pw.pw_shell)) == 0) {
-			if (shell_path)
-			    free(shell_path);
-			shell_path = x_strdup("/bin/sh");
-		    } else if (shell_path != 0) {
-			xtermSetenv("SHELL", shell_path);
-		    }
-		}
-	    } else {
+	    if (validShell(explicit_shname)) {
 		xtermSetenv("SHELL", explicit_shname);
+	    } else if (validProgram(shell_path = x_getenv("SHELL"))) {
+		if (!validShell(shell_path)) {
+		    xtermUnsetenv("SHELL");
+		}
+	    } else if ((!OkPasswd(&pw) && !x_getpwuid(screen->uid, &pw))
+		       || *(shell_path = x_strdup(pw.pw_shell)) == 0) {
+		shell_path = resetShell(shell_path);
+	    } else if (validShell(shell_path)) {
+		xtermSetenv("SHELL", shell_path);
+	    } else {
+		shell_path = resetShell(shell_path);
 	    }
-	    if (access(shell_path, X_OK) != 0) {
-		xtermPerror("Cannot use '%s' as shell", shell_path);
-		free(shell_path);
-		shell_path = x_strdup("/bin/sh");
+
+	    /*
+	     * Set $XTERM_SHELL, which is not necessarily a valid shell, but
+	     * is executable.
+	     */
+	    if (validProgram(explicit_shname)) {
+		shell_path = explicit_shname;
+	    } else if (shell_path == 0) {
+		/* this could happen if the explicit shname lost a race */
+		shell_path = resetShell(shell_path);
 	    }
 	    xtermSetenv("XTERM_SHELL", shell_path);
 
@@ -4873,6 +4983,8 @@ Exit(int n)
     }
 #endif /* USE_SYSV_UTMP */
 #endif /* HAVE_UTMP */
+
+    cleanup_colored_cursor();
 
     /*
      * Flush pending data before releasing ownership, so nobody else can write

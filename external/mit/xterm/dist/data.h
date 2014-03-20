@@ -1,7 +1,7 @@
-/* $XTermId: data.h,v 1.121 2012/10/14 18:51:30 tom Exp $ */
+/* $XTermId: data.h,v 1.124 2014/03/02 12:01:26 tom Exp $ */
 
 /*
- * Copyright 2002-2011,2012 by Thomas E. Dickey
+ * Copyright 2002-2013,2014 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -141,6 +141,10 @@ extern Atom wm_delete_window;
 extern int mapstate;
 #endif /* HANDLE_STRUCT_NOTIFY */
 
+#ifdef HAVE_LIB_XCURSOR
+extern char *xterm_cursor_theme;
+#endif
+
 typedef struct XTERM_RESOURCE {
     char *icon_geometry;
     char *title;
@@ -200,6 +204,12 @@ typedef struct XTERM_RESOURCE {
     Boolean wait_for_map0;	/* ...initial value of .wait_for_map */
     Boolean ptyHandshake;	/* use pty-handshaking */
     Boolean ptySttySize;	/* reset TTY size after pty handshake */
+#endif
+#if OPT_REPORT_COLORS
+    Boolean reportColors;	/* show color information as allocated */
+#endif
+#if OPT_REPORT_FONTS
+    Boolean reportFonts;	/* show bitmap-font information as loaded */
 #endif
 #if OPT_SAME_NAME
     Boolean sameName;		/* Don't change the title or icon name if it is
