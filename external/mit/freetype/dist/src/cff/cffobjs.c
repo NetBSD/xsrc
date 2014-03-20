@@ -405,7 +405,7 @@
   remove_subset_prefix( FT_String*  name )
   {
     FT_Int32  idx             = 0;
-    FT_Int32  length          = strlen( name ) + 1;
+    FT_Int32  length          = (FT_Int32)strlen( name ) + 1;
     FT_Bool   continue_search = 1;
 
 
@@ -442,8 +442,8 @@
     FT_Int32  family_name_length, style_name_length;
 
 
-    family_name_length = strlen( family_name );
-    style_name_length  = strlen( style_name );
+    family_name_length = (FT_Int32)strlen( family_name );
+    style_name_length  = (FT_Int32)strlen( style_name );
 
     if ( family_name_length > style_name_length )
     {
@@ -866,7 +866,7 @@
           flags |= FT_FACE_FLAG_KERNING;
 #endif
 
-        cffface->face_flags = flags;
+        cffface->face_flags |= flags;
 
         /*******************************************************************/
         /*                                                                 */
@@ -1055,9 +1055,22 @@
     CFF_Driver  driver = (CFF_Driver)module;
 
 
-    /* set default property values */
+    /* set default property values, cf `ftcffdrv.h' */
+#ifdef CFF_CONFIG_OPTION_OLD_ENGINE
     driver->hinting_engine    = FT_CFF_HINTING_FREETYPE;
+#else
+    driver->hinting_engine    = FT_CFF_HINTING_ADOBE;
+#endif
     driver->no_stem_darkening = FALSE;
+
+    driver->darken_params[0] =  500;
+    driver->darken_params[1] =  400;
+    driver->darken_params[2] = 1000;
+    driver->darken_params[3] =  275;
+    driver->darken_params[4] = 1667;
+    driver->darken_params[5] =  275;
+    driver->darken_params[6] = 2333;
+    driver->darken_params[7] =    0;
 
     return FT_Err_Ok;
   }

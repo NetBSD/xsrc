@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Debugging and logging component for amiga (body).                    */
 /*                                                                         */
-/*  Copyright 1996-2001, 2002, 2004, 2005, 2013 by                         */
+/*  Copyright 1996-2002, 2004, 2005, 2013 by                               */
 /*  David Turner, Robert Wilhelm, Werner Lemberg and Detlef Würkner.       */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -176,7 +176,7 @@
   /* the memory and stream components which are set to 7 and 5,            */
   /* respectively.                                                         */
   /*                                                                       */
-  /* See the file <include/freetype/internal/fttrace.h> for details of the */
+  /* See the file <include/internal/fttrace.h> for details of the          */
   /* available toggle names.                                               */
   /*                                                                       */
   /* The level must be between 0 and 7; 0 means quiet (except for serious  */
@@ -208,6 +208,9 @@
         while ( *p && *p != ':' )
           p++;
 
+        if ( !*p )
+          break;
+
         if ( *p == ':' && p > q )
         {
           FT_Int  n, i, len = (FT_Int)( p - q );
@@ -236,7 +239,7 @@
           p++;
           if ( *p )
           {
-            level = *p++ - '0';
+            level = *p - '0';
             if ( level < 0 || level > 7 )
               level = -1;
           }

@@ -152,7 +152,7 @@
   /* the memory and stream components which are set to 7 and 5,            */
   /* respectively.                                                         */
   /*                                                                       */
-  /* See the file <include/freetype/internal/fttrace.h> for details of the */
+  /* See the file <include/internal/fttrace.h> for details of the          */
   /* available toggle names.                                               */
   /*                                                                       */
   /* The level must be between 0 and 7; 0 means quiet (except for serious  */
@@ -180,6 +180,9 @@
         q = p;
         while ( *p && *p != ':' )
           p++;
+
+        if ( !*p )
+          break;
 
         if ( *p == ':' && p > q )
         {
@@ -209,7 +212,7 @@
           p++;
           if ( *p )
           {
-            level = *p++ - '0';
+            level = *p - '0';
             if ( level < 0 || level > 7 )
               level = -1;
           }

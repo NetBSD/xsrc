@@ -92,7 +92,7 @@ THE SOFTWARE.
     PCF_Toc    toc = &face->toc;
     PCF_Table  tables;
 
-    FT_Memory  memory = FT_FACE(face)->memory;
+    FT_Memory  memory = FT_FACE( face )->memory;
     FT_UInt    n;
 
 
@@ -402,7 +402,7 @@ THE SOFTWARE.
     FT_ULong           nprops, i;
     FT_ULong           format, size;
     FT_Error           error;
-    FT_Memory          memory     = FT_FACE(face)->memory;
+    FT_Memory          memory     = FT_FACE( face )->memory;
     FT_ULong           string_size;
     FT_String*         strings    = 0;
 
@@ -566,10 +566,10 @@ THE SOFTWARE.
   pcf_get_metrics( FT_Stream  stream,
                    PCF_Face   face )
   {
-    FT_Error    error    = FT_Err_Ok;
-    FT_Memory   memory   = FT_FACE(face)->memory;
+    FT_Error    error;
+    FT_Memory   memory  = FT_FACE( face )->memory;
     FT_ULong    format, size;
-    PCF_Metric  metrics  = 0;
+    PCF_Metric  metrics = 0;
     FT_ULong    nmetrics, i;
 
 
@@ -663,8 +663,8 @@ THE SOFTWARE.
   pcf_get_bitmaps( FT_Stream  stream,
                    PCF_Face   face )
   {
-    FT_Error   error   = FT_Err_Ok;
-    FT_Memory  memory  = FT_FACE(face)->memory;
+    FT_Error   error;
+    FT_Memory  memory  = FT_FACE( face )->memory;
     FT_Long*   offsets = NULL;
     FT_Long    bitmapSizes[GLYPHPADOPTIONS];
     FT_ULong   format, size;
@@ -765,8 +765,8 @@ THE SOFTWARE.
   pcf_get_encodings( FT_Stream  stream,
                      PCF_Face   face )
   {
-    FT_Error      error  = FT_Err_Ok;
-    FT_Memory     memory = FT_FACE(face)->memory;
+    FT_Error      error;
+    FT_Memory     memory = FT_FACE( face )->memory;
     FT_ULong      format, size;
     int           firstCol, lastCol;
     int           firstRow, lastRow;
@@ -914,7 +914,7 @@ THE SOFTWARE.
                  FT_ULong   type )
   {
     FT_ULong   format, size;
-    FT_Error   error = FT_Err_Ok;
+    FT_Error   error;
     PCF_Accel  accel = &face->accel;
 
 
@@ -1014,20 +1014,20 @@ THE SOFTWARE.
          ( *(prop->value.atom) == 'B' || *(prop->value.atom) == 'b' ) )
     {
       face->style_flags |= FT_STYLE_FLAG_BOLD;
-      strings[1] = (char *)"Bold";
+      strings[1] = (char*)"Bold";
     }
 
     prop = pcf_find_property( pcf, "SETWIDTH_NAME" );
     if ( prop && prop->isString                                        &&
          *(prop->value.atom)                                           &&
          !( *(prop->value.atom) == 'N' || *(prop->value.atom) == 'n' ) )
-      strings[3] = (char *)(prop->value.atom);
+      strings[3] = (char*)( prop->value.atom );
 
     prop = pcf_find_property( pcf, "ADD_STYLE_NAME" );
     if ( prop && prop->isString                                        &&
          *(prop->value.atom)                                           &&
          !( *(prop->value.atom) == 'N' || *(prop->value.atom) == 'n' ) )
-      strings[0] = (char *)(prop->value.atom);
+      strings[0] = (char*)( prop->value.atom );
 
     for ( len = 0, nn = 0; nn < 4; nn++ )
     {
@@ -1041,7 +1041,7 @@ THE SOFTWARE.
 
     if ( len == 0 )
     {
-      strings[0] = (char *)"Regular";
+      strings[0] = (char*)"Regular";
       lengths[0] = ft_strlen( strings[0] );
       len        = lengths[0] + 1;
     }
@@ -1079,7 +1079,7 @@ THE SOFTWARE.
 
 
           for ( mm = 0; mm < len; mm++ )
-            if (s[mm] == ' ')
+            if ( s[mm] == ' ' )
               s[mm] = '-';
         }
 
@@ -1096,8 +1096,8 @@ THE SOFTWARE.
   pcf_load_font( FT_Stream  stream,
                  PCF_Face   face )
   {
-    FT_Error   error  = FT_Err_Ok;
-    FT_Memory  memory = FT_FACE(face)->memory;
+    FT_Error   error;
+    FT_Memory  memory = FT_FACE( face )->memory;
     FT_Bool    hasBDFAccelerators;
 
 
@@ -1153,9 +1153,10 @@ THE SOFTWARE.
 
       root->num_faces  = 1;
       root->face_index = 0;
-      root->face_flags = FT_FACE_FLAG_FIXED_SIZES |
-                         FT_FACE_FLAG_HORIZONTAL  |
-                         FT_FACE_FLAG_FAST_GLYPHS;
+
+      root->face_flags |= FT_FACE_FLAG_FIXED_SIZES |
+                          FT_FACE_FLAG_HORIZONTAL  |
+                          FT_FACE_FLAG_FAST_GLYPHS;
 
       if ( face->accel.constantWidth )
         root->face_flags |= FT_FACE_FLAG_FIXED_WIDTH;

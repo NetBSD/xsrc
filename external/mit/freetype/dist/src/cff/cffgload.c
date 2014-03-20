@@ -41,6 +41,8 @@
 #define FT_COMPONENT  trace_cffgload
 
 
+#ifdef CFF_CONFIG_OPTION_OLD_ENGINE
+
   typedef enum  CFF_Operator_
   {
     cff_op_unknown = 0,
@@ -210,6 +212,8 @@
     4, /* sbw */
     2  /* setcurrentpoint */
   };
+
+#endif /* CFF_CONFIG_OPTION_OLD_ENGINE */
 
 
   /*************************************************************************/
@@ -430,7 +434,7 @@
         goto Exit;
       }
 
-      FT_TRACE3(( "glyph index %d (subfont %d):\n", glyph_index, fd_index ));
+      FT_TRACE3(( "  in subfont %d:\n", fd_index ));
 
       sub = cff->subfonts[fd_index];
 
@@ -443,10 +447,6 @@
         builder->hints_globals = (void *)internal->subfonts[fd_index];
       }
     }
-#ifdef FT_DEBUG_LEVEL_TRACE
-    else
-      FT_TRACE3(( "glyph index %d:\n", glyph_index ));
-#endif
 
     decoder->num_locals    = sub->local_subrs_index.count;
     decoder->locals        = sub->local_subrs;
@@ -485,22 +485,24 @@
 
     if ( builder->load_points )
     {
-      CFF_Driver  driver  = (CFF_Driver)FT_FACE_DRIVER( builder->face );
-
       FT_Vector*  point   = outline->points + outline->n_points;
       FT_Byte*    control = (FT_Byte*)outline->tags + outline->n_points;
 
+#ifdef CFF_CONFIG_OPTION_OLD_ENGINE
+      CFF_Driver  driver  = (CFF_Driver)FT_FACE_DRIVER( builder->face );
 
-      if ( driver->hinting_engine == FT_CFF_HINTING_ADOBE )
+
+      if ( driver->hinting_engine == FT_CFF_HINTING_FREETYPE )
+      {
+        point->x = x >> 16;
+        point->y = y >> 16;
+      }
+      else
+#endif
       {
         /* cf2_decoder_parse_charstrings uses 16.16 coordinates */
         point->x = x >> 10;
         point->y = y >> 10;
-      }
-      else
-      {
-        point->x = x >> 16;
-        point->y = y >> 16;
       }
       *control = (FT_Byte)( flag ? FT_CURVE_TAG_ON : FT_CURVE_TAG_CUBIC );
     }
@@ -721,6 +723,8 @@
     }
   }
 
+
+#ifdef CFF_CONFIG_OPTION_OLD_ENGINE
 
   static FT_Error
   cff_operator_seac( CFF_Decoder*  decoder,
@@ -2518,6 +2522,8 @@
     return FT_THROW( Stack_Overflow );
   }
 
+#endif /* CFF_CONFIG_OPTION_OLD_ENGINE */
+
 
   /*************************************************************************/
   /*************************************************************************/
@@ -2711,16 +2717,9 @@
                                                      &advance );
           glyph->root.linearHoriAdvance = advance;
 
-#ifdef FT_CONFIG_OPTION_OLD_INTERNALS
-          has_vertical_info = FT_BOOL(
-                                face->vertical_info                   &&
-                                face->vertical.number_Of_VMetrics > 0 &&
-                                face->vertical.long_metrics           );
-#else
           has_vertical_info = FT_BOOL(
                                 face->vertical_info                   &&
                                 face->vertical.number_Of_VMetrics > 0 );
-#endif
 
           /* get the vertical metrics from the vtmx table if we have one */
           if ( has_vertical_info )
@@ -2801,7 +2800,10 @@
     glyph->root.format = FT_GLYPH_FORMAT_OUTLINE;  /* by default */
 
     {
+#ifdef CFF_CONFIG_OPTION_OLD_ENGINE
       CFF_Driver  driver = (CFF_Driver)FT_FACE_DRIVER( face );
+#endif
+
 
       FT_Byte*  charstring;
       FT_ULong  charstring_len;
@@ -2826,19 +2828,35 @@
       if ( error )
         goto Glyph_Build_Finished;
 
+#ifdef CFF_CONFIG_OPTION_OLD_ENGINE
       /* choose which CFF renderer to use */
-      if ( driver->hinting_engine == FT_CFF_HINTING_ADOBE )
+      if ( driver->hinting_engine == FT_CFF_HINTING_FREETYPE )
+        error = cff_decoder_parse_charstrings( &decoder,
+                                               charstring,
+                                               charstring_len );
+      else
+#endif
+      {
         error = cf2_decoder_parse_charstrings( &decoder,
                                                charstring,
                                                charstring_len );
 
-      /* Adobe's engine uses 16.16 numbers everywhere;              */
-      /* as a consequence, glyphs larger than 2000ppem get rejected */
-      if ( FT_ERR_EQ( error, Glyph_Too_Big )                 ||
-           driver->hinting_engine == FT_CFF_HINTING_FREETYPE )
-        error = cff_decoder_parse_charstrings( &decoder,
-                                               charstring,
-                                               charstring_len );
+        /* Adobe's engine uses 16.16 numbers everywhere;              */
+        /* as a consequence, glyphs larger than 2000ppem get rejected */
+        if ( FT_ERR_EQ( error, Glyph_Too_Big ) )
+        {
+          /* this time, we retry unhinted and scale up the glyph later on */
+          /* (the engine uses and sets the hardcoded value 0x10000 / 64 = */
+          /* 0x400 for both `x_scale' and `y_scale' in this case)         */
+          hinting       = FALSE;
+          force_scaling = TRUE;
+          glyph->hint   = hinting;
+
+          error = cf2_decoder_parse_charstrings( &decoder,
+                                                 charstring,
+                                                 charstring_len );
+        }
+      }
 
       cff_free_glyph_data( face, &charstring, charstring_len );
 
@@ -2936,14 +2954,8 @@
         glyph->root.linearHoriAdvance           = decoder.glyph_width;
         glyph->root.internal->glyph_transformed = 0;
 
-#ifdef FT_CONFIG_OPTION_OLD_INTERNALS
-        has_vertical_info = FT_BOOL( face->vertical_info                   &&
-                                     face->vertical.number_Of_VMetrics > 0 &&
-                                     face->vertical.long_metrics           );
-#else
         has_vertical_info = FT_BOOL( face->vertical_info                   &&
                                      face->vertical.number_Of_VMetrics > 0 );
-#endif
 
         /* get the vertical metrics from the vtmx table if we have one */
         if ( has_vertical_info )
