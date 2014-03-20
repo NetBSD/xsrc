@@ -49,9 +49,6 @@
 /* All drivers initialising the SW cursor need this */
 #include "mipointer.h"
 
-/* All drivers implementing backing store need this */
-#include "mibstore.h"
-
 /* Colormap handling */
 #include "micmap.h"
 #include "xf86cmap.h"
@@ -841,16 +838,15 @@ VESAPreInit(ScrnInfoPtr pScrn, int flags)
     xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pVesa->Options);
 
     /* Use shadow by default */
-    if (xf86ReturnOptValBool(pVesa->Options, OPTION_SHADOW_FB, TRUE)) 
-	pVesa->shadowFB = TRUE;
+    pVesa->shadowFB = xf86ReturnOptValBool(pVesa->Options, OPTION_SHADOW_FB,
+                                           TRUE);
 
     if (xf86ReturnOptValBool(pVesa->Options, OPTION_DFLT_REFRESH, FALSE))
 	pVesa->defaultRefresh = TRUE;
 
-    pVesa->ModeSetClearScreen = FALSE;
-    if (xf86ReturnOptValBool(pVesa->Options, OPTION_MODESET_CLEAR_SCREEN, 
-			     FALSE))
-	pVesa->ModeSetClearScreen = TRUE;
+    pVesa->ModeSetClearScreen =
+        xf86ReturnOptValBool(pVesa->Options,
+                             OPTION_MODESET_CLEAR_SCREEN, FALSE);
 
     if (!pVesa->defaultRefresh && !pVesa->strict_validation)
 	VBESetModeParameters(pScrn, pVesa->pVbe);
@@ -1081,7 +1077,6 @@ VESAScreenInit(SCREEN_INIT_ARGS_DECL)
     VESADGAInit(pScrn, pScreen);
 
     xf86SetBlackWhitePixels(pScreen);
-    miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
 
     /* software cursor */
@@ -1626,7 +1621,7 @@ VESASaveRestore(ScrnInfoPtr pScrn, vbeSaveRestoreFunction function)
 {
     VESAPtr pVesa;
 
-    if (MODE_QUERY < 0 || function > MODE_RESTORE)
+    if (function < MODE_QUERY || function > MODE_RESTORE)
 	return (FALSE);
 
     pVesa = VESAGetRec(pScrn);
