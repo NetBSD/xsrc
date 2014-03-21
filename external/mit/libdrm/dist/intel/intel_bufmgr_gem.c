@@ -1271,12 +1271,10 @@ map_gtt(drm_intel_bo *bo)
 		}
 
 		/* and mmap it */
-		bo_gem->gtt_virtual = mmap(0, bo->size, PROT_READ | PROT_WRITE,
-					   MAP_SHARED, bufmgr_gem->fd,
-					   mmap_arg.offset);
-		if (bo_gem->gtt_virtual == MAP_FAILED) {
+		ret = drmMap(bufmgr_gem->fd, mmap_arg.offset, bo->size,
+		    &bo_gem->gtt_virtual);
+		if (ret) {
 			bo_gem->gtt_virtual = NULL;
-			ret = -errno;
 			DBG("%s:%d: Error mapping buffer %d (%s): %s .\n",
 			    __FILE__, __LINE__,
 			    bo_gem->gem_handle, bo_gem->name,
