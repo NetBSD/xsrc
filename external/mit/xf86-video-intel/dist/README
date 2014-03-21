@@ -13,6 +13,8 @@ Intel graphics chipsets including:
 	915G/GM,945G/GM/GME,946GZ
 	G/GM/GME/Q965,
 	G/Q33,G/Q35,G41,G/Q43,G/GM/Q45
+	PineView-M (Atom N400 series)
+	PineView-D (Atom D400/D500 series)
 
 Where to get more information about the driver
 ----------------------------------------------
@@ -31,7 +33,7 @@ documentation can be read with the following command:
 Mailing list for communication with users and developers of
 xf86-video-intel:
 
-	intel-gfx@lists.freedesktop.org.
+	intel-gfx@lists.freedesktop.org
 
 	Note: Subscription is required before posting, but anyone is
 	free to subscribe. See instructions (and archives) here:
