@@ -774,6 +774,22 @@ int drmCheckModesettingSupported(const char *busid)
 	if (found)
 		return 0;
 #endif
+#ifdef __NetBSD__
+	int fd;
+	static const struct drm_mode_card_res zero_res;
+	struct drm_mode_card_res res = zero_res;
+	int ret;
+
+	fd = drmOpen(NULL, busid);
+	if (fd == -1)
+		return -EINVAL;
+	if (drmIoctl(fd, DRM_IOCTL_MODE_GETRESOURCES, &res))
+		ret = -errno;
+	else
+		ret = 0;
+	drmClose(fd);
+	return ret;
+#endif
 	return -ENOSYS;
 
 }
