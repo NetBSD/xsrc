@@ -1138,6 +1138,10 @@ int drmClose(int fd)
 int drmMap(int fd, drm_handle_t handle, drmSize size, drmAddressPtr address)
 {
     static unsigned long pagesize_mask = 0;
+#ifdef __NetBSD__		/* XXX */
+    static const struct drm_mmap zero_mmap_req;
+    struct drm_mmap mmap_req = zero_mmap_req;
+#endif
 
     if (fd < 0)
 	return -EINVAL;
@@ -1147,9 +1151,20 @@ int drmMap(int fd, drm_handle_t handle, drmSize size, drmAddressPtr address)
 
     size = (size + pagesize_mask) & ~pagesize_mask;
 
+#ifdef __NetBSD__
+    mmap_req.dnm_addr = NULL;
+    mmap_req.dnm_size = size;
+    mmap_req.dnm_prot = (PROT_READ | PROT_WRITE);
+    mmap_req.dnm_flags = MAP_SHARED;
+    mmap_req.dnm_offset = handle;
+    if (drmIoctl(fd, DRM_IOCTL_MMAP, &mmap_req) == -1)
+	return -errno;
+    *address = mmap_req.dnm_addr;
+#else
     *address = mmap(0, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, handle);
     if (*address == MAP_FAILED)
 	return -errno;
+#endif
     return 0;
 }
 
