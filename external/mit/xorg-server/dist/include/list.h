@@ -69,7 +69,7 @@ list_del(struct list *entry)
 }
 
 static inline Bool
-list_is_empty(struct list *head)
+list_is_empty(const struct list *head)
 {
     return head->next == head;
 }
