@@ -773,8 +773,7 @@ int drmCheckModesettingSupported(const char *busid)
 	closedir(sysdir);
 	if (found)
 		return 0;
-#endif
-#ifdef __NetBSD__
+#else
 	int fd;
 	static const struct drm_mode_card_res zero_res;
 	struct drm_mode_card_res res = zero_res;
@@ -790,8 +789,6 @@ int drmCheckModesettingSupported(const char *busid)
 	drmClose(fd);
 	return ret;
 #endif
-	return -ENOSYS;
-
 }
 
 int drmModeCrtcGetGamma(int fd, uint32_t crtc_id, uint32_t size,
