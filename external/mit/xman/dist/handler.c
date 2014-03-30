@@ -320,8 +320,10 @@ SaveFormattedPage(Widget w, XEvent * event, String * params,
  * If we are not active then take no action.
  */
 
+#if ARRAY_COMPARISON_TO_NULL_POINTER_MAKES_SENSE
     if (man_globals->tempfile == NULL)
         return;
+#endif
 
     switch (params[0][0]) {
     case 'S':
