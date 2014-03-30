@@ -83,7 +83,7 @@ XSetModifierMapping(
     req->length += mapSize >> 2;
     req->numKeyPerModifier = modifier_map->max_keypermod;
 
-    Data(dpy, modifier_map->modifiermap, mapSize);
+    Data(dpy, (char *)modifier_map->modifiermap, mapSize);
 
     (void) _XReply(dpy, (xReply *) & rep,
 	(SIZEOF(xSetModifierMappingReply) - SIZEOF(xReply)) >> 2, xTrue);
