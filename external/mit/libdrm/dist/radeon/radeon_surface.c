@@ -281,7 +281,7 @@ static int r6_surface_init_linear(struct radeon_surface_manager *surf_man,
         surf_minify(surf, surf->level+i, surf->bpe, i, xalign, yalign, zalign, offset);
         /* level0 and first mipmap need to have alignment */
         offset = surf->bo_size;
-        if ((i == 0)) {
+        if (i == 0) {
             offset = ALIGN(offset, surf->bo_alignment);
         }
     }
@@ -309,7 +309,7 @@ static int r6_surface_init_linear_aligned(struct radeon_surface_manager *surf_ma
         surf_minify(surf, surf->level+i, surf->bpe, i, xalign, yalign, zalign, offset);
         /* level0 and first mipmap need to have alignment */
         offset = surf->bo_size;
-        if ((i == 0)) {
+        if (i == 0) {
             offset = ALIGN(offset, surf->bo_alignment);
         }
     }
@@ -342,7 +342,7 @@ static int r6_surface_init_1d(struct radeon_surface_manager *surf_man,
         surf_minify(surf, surf->level+i, surf->bpe, i, xalign, yalign, zalign, offset);
         /* level0 and first mipmap need to have alignment */
         offset = surf->bo_size;
-        if ((i == 0)) {
+        if (i == 0) {
             offset = ALIGN(offset, surf->bo_alignment);
         }
     }
@@ -383,7 +383,7 @@ static int r6_surface_init_2d(struct radeon_surface_manager *surf_man,
         }
         /* level0 and first mipmap need to have alignment */
         offset = surf->bo_size;
-        if ((i == 0)) {
+        if (i == 0) {
             offset = ALIGN(offset, surf->bo_alignment);
         }
     }
@@ -631,7 +631,7 @@ static int eg_surface_init_1d(struct radeon_surface_manager *surf_man,
         surf_minify(surf, level+i, bpe, i, xalign, yalign, zalign, offset);
         /* level0 and first mipmap need to have alignment */
         offset = surf->bo_size;
-        if ((i == 0)) {
+        if (i == 0) {
             offset = ALIGN(offset, surf->bo_alignment);
         }
     }
@@ -684,7 +684,7 @@ static int eg_surface_init_2d(struct radeon_surface_manager *surf_man,
         }
         /* level0 and first mipmap need to have alignment */
         offset = surf->bo_size;
-        if ((i == 0)) {
+        if (i == 0) {
             offset = ALIGN(offset, surf->bo_alignment);
         }
     }
@@ -1523,7 +1523,7 @@ static int si_surface_init_linear_aligned(struct radeon_surface_manager *surf_ma
         si_surf_minify(surf, surf->level+i, surf->bpe, i, xalign, yalign, zalign, slice_align, offset);
         /* level0 and first mipmap need to have alignment */
         offset = surf->bo_size;
-        if ((i == 0)) {
+        if (i == 0) {
             offset = ALIGN(offset, surf->bo_alignment);
         }
         if (surf->flags & RADEON_SURF_HAS_TILE_MODE_INDEX) {
@@ -1566,7 +1566,7 @@ static int si_surface_init_1d(struct radeon_surface_manager *surf_man,
         si_surf_minify(surf, level+i, bpe, i, xalign, yalign, zalign, slice_align, offset);
         /* level0 and first mipmap need to have alignment */
         offset = surf->bo_size;
-        if ((i == 0)) {
+        if (i == 0) {
             offset = ALIGN(offset, alignment);
         }
         if (surf->flags & RADEON_SURF_HAS_TILE_MODE_INDEX) {
@@ -1668,7 +1668,7 @@ static int si_surface_init_2d(struct radeon_surface_manager *surf_man,
         }
         /* level0 and first mipmap need to have alignment */
         aligned_offset = offset = surf->bo_size;
-        if ((i == 0)) {
+        if (i == 0) {
             aligned_offset = ALIGN(aligned_offset, surf->bo_alignment);
         }
         if (surf->flags & RADEON_SURF_HAS_TILE_MODE_INDEX) {
