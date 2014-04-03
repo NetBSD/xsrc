@@ -1103,10 +1103,17 @@ I810DRIMoveBuffers(WindowPtr pParent, DDXPointRec ptOldOrg,
 	    while ((pboxNext >= pbox) && (pboxBase->y1 == pboxNext->y1))
 	       pboxNext--;
 	    pboxTmp = pboxNext + 1;
-	    pptTmp = pptSrc + (pboxTmp - pbox);
-	    while (pboxTmp <= pboxBase) {
-	       *pboxNew1++ = *pboxTmp++;
-	       *pptNew1++ = *pptTmp++;
+	    if (pptSrc == &ptOldOrg) {
+		if (pboxTmp <= pboxBase) {
+	          *pboxNew1++ = *pboxTmp;
+	          *pptNew1++ = *pptSrc;
+		}
+	    } else {
+	       pptTmp = pptSrc + (pboxTmp - pbox);
+	       while (pboxTmp <= pboxBase) {
+	          *pboxNew1++ = *pboxTmp++;
+	          *pptNew1++ = *pptTmp++;
+	       }
 	    }
 	    pboxBase = pboxNext;
 	 }
