@@ -322,6 +322,7 @@ static void *__kgem_bo_map__gtt(struct kgem *kgem, struct kgem_bo *bo)
 {
 	struct drm_i915_gem_mmap_gtt mmap_arg;
 	void *ptr;
+	int err;
 
 	DBG(("%s(handle=%d, size=%d)\n", __FUNCTION__,
 	     bo->handle, bytes(bo)));
@@ -333,7 +334,7 @@ retry_gtt:
 	VG_CLEAR(mmap_arg);
 	mmap_arg.handle = bo->handle;
 	if (drmIoctl(kgem->fd, DRM_IOCTL_I915_GEM_MMAP_GTT, &mmap_arg)) {
-		int err = errno;
+		err = errno;
 
 		assert(err != EINVAL);
 
@@ -352,11 +353,8 @@ retry_gtt:
 	}
 
 retry_mmap:
-	ptr = mmap(0, bytes(bo), PROT_READ | PROT_WRITE, MAP_SHARED,
-		   kgem->fd, mmap_arg.offset);
-	if (ptr == MAP_FAILED) {
-		int err = errno;
-
+	err = -drmMap(kgem->fd, mmap_arg.offset, bytes(bo), &ptr);
+	if (err) {
 		assert(err != EINVAL);
 
 		if (__kgem_throttle_retire(kgem, 0))
