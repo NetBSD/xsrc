@@ -782,13 +782,13 @@ int drmCheckModesettingSupported(const char *busid)
 	fd = drmOpen(NULL, busid);
 	if (fd == -1)
 		return -EINVAL;
-	if (drmIoctl(fd, DRM_IOCTL_MODE_GETRESOURCES, &res))
-		ret = -errno;
-	else
-		ret = 0;
+	ret = drmIoctl(fd, DRM_IOCTL_MODE_GETRESOURCES, &res);
 	drmClose(fd);
-	return ret;
+	if (ret == 0)
+		return 0;
 #endif
+	return -ENOSYS;
+
 }
 
 int drmModeCrtcGetGamma(int fd, uint32_t crtc_id, uint32_t size,
