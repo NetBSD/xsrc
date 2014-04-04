@@ -1195,6 +1195,17 @@ static void test_page_flip(struct device *dev, struct pipe_arg *pipes, unsigned 
 
 #define min(a, b)	((a) < (b) ? (a) : (b))
 
+/* XXX local definition of GNUism for expedience */
+static char *
+strchrnul(const char *s, int c)
+{
+
+	while ((*s != c) && (*s != '\0'))
+		s++;
+
+	return __UNCONST(s);
+}
+
 static int parse_connector(struct pipe_arg *pipe, const char *arg)
 {
 	unsigned int len;
