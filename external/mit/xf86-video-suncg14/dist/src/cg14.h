@@ -123,7 +123,7 @@ read_sx_reg(Cg14Ptr p, int reg)
 static inline void
 write_sx_io(Cg14Ptr p, int reg, uint32_t val)
 {
-	*(volatile uint32_t *)(p->sxio + reg) = val;
+	*(volatile uint32_t *)(p->sxio + (reg & ~7)) = val;
 }
 
 Bool CG14SetupCursor(ScreenPtr);
