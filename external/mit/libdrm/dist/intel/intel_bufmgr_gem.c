@@ -386,13 +386,13 @@ drm_intel_gem_dump_validation_list(drm_intel_bufmgr_gem *bufmgr_gem)
 			    (drm_intel_bo_gem *) target_bo;
 
 			DBG("%2d: %d (%s)@0x%08llx -> "
-			    "%d (%s)@0x%08lx + 0x%08x\n",
+			    "%d (%s)@0x%08llx + 0x%08x\n",
 			    i,
 			    bo_gem->gem_handle, bo_gem->name,
 			    (unsigned long long)bo_gem->relocs[j].offset,
 			    target_gem->gem_handle,
 			    target_gem->name,
-			    target_bo->offset64,
+			    (unsigned long long)target_bo->offset64,
 			    bo_gem->relocs[j].delta);
 		}
 	}
@@ -1858,8 +1858,9 @@ drm_intel_update_buffer_offsets(drm_intel_bufmgr_gem *bufmgr_gem)
 
 		/* Update the buffer offset */
 		if (bufmgr_gem->exec_objects[i].offset != bo->offset64) {
-			DBG("BO %d (%s) migrated: 0x%08lx -> 0x%08llx\n",
-			    bo_gem->gem_handle, bo_gem->name, bo->offset64,
+			DBG("BO %d (%s) migrated: 0x%08llx -> 0x%08llx\n",
+			    bo_gem->gem_handle, bo_gem->name,
+			    (unsigned long long)bo->offset64,
 			    (unsigned long long)bufmgr_gem->exec_objects[i].
 			    offset);
 			bo->offset64 = bufmgr_gem->exec_objects[i].offset;
@@ -1879,8 +1880,9 @@ drm_intel_update_buffer_offsets2 (drm_intel_bufmgr_gem *bufmgr_gem)
 
 		/* Update the buffer offset */
 		if (bufmgr_gem->exec2_objects[i].offset != bo->offset64) {
-			DBG("BO %d (%s) migrated: 0x%08lx -> 0x%08llx\n",
-			    bo_gem->gem_handle, bo_gem->name, bo->offset64,
+			DBG("BO %d (%s) migrated: 0x%08llx -> 0x%08llx\n",
+			    bo_gem->gem_handle, bo_gem->name,
+			    (unsigned long long)bo->offset64,
 			    (unsigned long long)bufmgr_gem->exec2_objects[i].offset);
 			bo->offset64 = bufmgr_gem->exec2_objects[i].offset;
 			bo->offset = bufmgr_gem->exec2_objects[i].offset;
