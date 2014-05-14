@@ -120,6 +120,10 @@ _fs_convert_props(fsPropInfo *pi, fsPropOffset *po, pointer pd,
     for (i = 0; i < nprops; i++, dprop++, is_str++) 
     {
 	memcpy(&local_off, off_adr, SIZEOF(fsPropOffset));
+	if ((local_off.name.position >= pi->data_len) ||
+		(local_off.name.length >
+		(pi->data_len - local_off.name.position)))
+	    goto bail; 
 	dprop->name = MakeAtom(&pdc[local_off.name.position],
 			       local_off.name.length, 1);
 	if (local_off.type != PropTypeString) {
@@ -127,10 +131,15 @@ _fs_convert_props(fsPropInfo *pi, fsPropOffset *po, pointer pd,
 	    dprop->value = local_off.value.position;
 	} else {
 	    *is_str = TRUE;
+	    if ((local_off.name.position >= pi->data_len) ||
+		    (local_off.name.length >
+		    (pi->data_len - local_off.name.position)))
+		goto bail; 
 	    dprop->value = (INT32) MakeAtom(&pdc[local_off.value.position],
 					    local_off.value.length, 1);
 	    if (dprop->value == BAD_RESOURCE)
 	    {
+	      bail:
 		xfree (pfi->props);
 		pfi->nprops = 0;
 		pfi->props = 0;
@@ -750,7 +759,12 @@ fs_alloc_glyphs (FontPtr pFont, int size)
     FSGlyphPtr	glyphs;
     FSFontPtr	fsfont = (FSFontPtr) pFont->fontPrivate;
 
-    glyphs = xalloc (sizeof (FSGlyphRec) + size);
+    if (size < (INT_MAX - sizeof (FSGlyphRec)))
+	glyphs = xalloc (sizeof (FSGlyphRec) + size);
+    else
+        glyphs = NULL;
+    if (glyphs == NULL)
+        return NULL;
     glyphs->next = fsfont->glyphs;
     fsfont->glyphs = glyphs;
     return (pointer) (glyphs + 1);
