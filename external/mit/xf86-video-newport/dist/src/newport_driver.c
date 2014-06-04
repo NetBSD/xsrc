@@ -799,7 +799,8 @@ NewportModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
 	width = mode->HDisplay;
 	height = mode->VDisplay;
-	if (width != 1280 || height != 1024) {
+	if ((width > 1280) || (width < 1024) ||
+	    (height < 768) || (height > 1024)) {
 		xf86DrvMsg(pScrn->scrnIndex, X_ERROR, \
 		"Width = %d and height = %d is not supported by by this driver\n", width, height);
 		return FALSE;
