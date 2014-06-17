@@ -68,7 +68,7 @@ main(int argc, char *argv[])
     /* Connect to Server */
     appW = XtAppInitialize(&app,"XTrap",NULL,(Cardinal)0L,
         (int *)&argc, (String *)argv, (String *)NULL, (ArgList)&tmp,
-        (Cardinal)NULL);
+        (Cardinal)0);
     dpy = XtDisplay(appW);
 #ifdef DEBUG
     XSynchronize(dpy, True);
