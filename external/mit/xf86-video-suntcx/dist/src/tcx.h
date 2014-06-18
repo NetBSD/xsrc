@@ -37,6 +37,8 @@
 /* Various offsets in virtual (ie. mmap()) spaces Linux and Solaris support. */
 #define TCX_RAM8_VOFF		0x00000000
 #define TCX_RAM24_VOFF		0x01000000
+#define	TCX_STIP_VOFF		0x10000000
+#define	TCX_BLIT_VOFF		0x20000000
 #define TCX_CPLANE_VOFF		0x28000000
 #define	TCX_RSTIP_VOFF		0x30000000
 #define	TCX_RBLIT_VOFF		0x38000000
@@ -56,6 +58,7 @@ typedef struct {
 	sbusDevicePtr	psdp;
 	CloseScreenProcPtr CloseScreen;
 	Bool		HWCursor;
+	Bool		Is8bit;
 	uint64_t	*rblit;
 	uint64_t	*rstip;
 	xf86CursorInfoPtr CursorInfoRec;
