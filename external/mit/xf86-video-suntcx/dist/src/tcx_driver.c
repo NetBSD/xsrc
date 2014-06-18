@@ -341,12 +341,13 @@ TCXPreInit(ScrnInfoPtr pScrn, int flags)
     **********************/
     hwCursor = 0;
     lowDepth = 1;
-    if (sparcPromInit() >= 0) {
-	hwCursor = sparcPromGetBool(&psdp->node, "hw-cursor");
-	lowDepth = sparcPromGetBool(&psdp->node, "tcx-8-bit");
-	sparcPromClose();
+     if (sparcPromInit() >= 0) {
+ 	hwCursor = sparcPromGetBool(&psdp->node, "hw-cursor");
+ 	lowDepth = sparcPromGetBool(&psdp->node, "tcx-8-bit");
+ 	sparcPromClose();
     }
 
+    pTcx->Is8bit = (lowDepth != 0); 
     /* all S24 support a hardware cursor */
     if (!lowDepth)
 	hwCursor = 1;
@@ -357,7 +358,7 @@ TCXPreInit(ScrnInfoPtr pScrn, int flags)
     deal with depth
     *********************/
     
-    if (!xf86SetDepthBpp(pScrn, 0, 0, 0,
+    if (!xf86SetDepthBpp(pScrn, lowDepth ? 8 : 0, 0, 0,
 			 lowDepth ? NoDepth24Support : Support32bppFb)) {
 	return FALSE;
     } else {
@@ -524,15 +525,30 @@ TCXScreenInit(SCREEN_INIT_ARGS_DECL)
 	    return FALSE;
     }
 
-    pTcx->rblit = xf86MapSbusMem(pTcx->psdp, TCX_RBLIT_VOFF, 8 * 1024 * 1024);
-    if (pTcx->rblit == NULL) {
-	xf86Msg(X_ERROR, "Couldn't map RBLIT space\n");
-	return FALSE;
-    }
-    pTcx->rstip = xf86MapSbusMem(pTcx->psdp, TCX_RSTIP_VOFF, 8 * 1024 * 1024);
-    if (pTcx->rstip == NULL) {
-	xf86Msg(X_ERROR, "Couldn't map RSTIP space\n");
-	return FALSE;
+    if (pTcx->Is8bit) {
+    	/* use STIP and BLIT on tcx */
+        pTcx->rblit = xf86MapSbusMem(pTcx->psdp, TCX_BLIT_VOFF, 8 * 1024 * 1024);
+        if (pTcx->rblit == NULL) {
+	    xf86Msg(X_ERROR, "Couldn't map BLIT space\n");
+	    return FALSE;
+        }
+        pTcx->rstip = xf86MapSbusMem(pTcx->psdp, TCX_STIP_VOFF, 8 * 1024 * 1024);
+        if (pTcx->rstip == NULL) {
+	    xf86Msg(X_ERROR, "Couldn't map STIP space\n");
+	    return FALSE;
+	}
+    } else {
+    	/* use RSTIP and RBLIT on S24 */
+        pTcx->rblit = xf86MapSbusMem(pTcx->psdp, TCX_RBLIT_VOFF, 8 * 1024 * 1024);
+        if (pTcx->rblit == NULL) {
+	    xf86Msg(X_ERROR, "Couldn't map RBLIT space\n");
+	    return FALSE;
+        }
+        pTcx->rstip = xf86MapSbusMem(pTcx->psdp, TCX_RSTIP_VOFF, 8 * 1024 * 1024);
+        if (pTcx->rstip == NULL) {
+	    xf86Msg(X_ERROR, "Couldn't map RSTIP space\n");
+	    return FALSE;
+	}
     }
 
     if (! pTcx->fb)
@@ -605,9 +621,7 @@ TCXScreenInit(SCREEN_INIT_ARGS_DECL)
     fbPictureInit (pScreen, 0, 0);
 #endif
 
-#if 0
-    if (!pTcx->NoAccel)
-    {
+    if (!pTcx->NoAccel) {
         XF86ModReqInfo req;
         int errmaj, errmin;
 
@@ -625,7 +639,7 @@ TCXScreenInit(SCREEN_INIT_ARGS_DECL)
     }
 
     miInitializeBackingStore(pScreen);
-#endif
+
     xf86SetBackingStore(pScreen);
     xf86SetSilkenMouse(pScreen);
 
