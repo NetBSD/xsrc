@@ -117,7 +117,7 @@ promGetProperty(const char *prop, int *lenp)
     ofio.of_buf = of_buf;
     ofio.of_buflen = sizeof(of_buf);
 
-    if (ioctl(promFd, OFIOCNEXTPROP, &ofio) < 0)
+    if (ioctl(promFd, OFIOCGET, &ofio) < 0)
 	return 0;
 
     of_buf[ofio.of_buflen] = '\0';
@@ -137,10 +137,9 @@ promGetBool(const char *prop)
     ofio.of_buf = of_buf;
     ofio.of_buflen = sizeof(of_buf);
 
-    if (ioctl(promFd, OFIOCNEXTPROP, &ofio) < 0)
+    if (ioctl(promFd, OFIOCGET, &ofio) < 0)
 	return 0;
-
-    if (!ofio.of_buflen)
+    if (ofio.of_buflen < 0)
 	return 0;
 
     return 1;
@@ -160,12 +159,15 @@ promSetNode(sbusPromNodePtr pnode)
 
     if (!pnode->node || pnode->node == -1)
 	return -1;
+
     if (pnode->cookie[0] & PROM_NODE_SIBLING)
 	node = promGetSibling(pnode->cookie[1]);
     else
 	node = promGetChild(pnode->cookie[1]);
+
     if (pnode->node != node)
 	return -1;
+
     return 0;
 }
 
@@ -197,14 +199,17 @@ sparcPromInit(void)
 	promOpenCount++;
 	return 0;
     }
+
     promFd = open("/dev/openprom", O_RDONLY, 0);
     if (promFd == -1)
 	return -1;
+
     promRootNode = promGetSibling(0);
     if (!promRootNode) {
 	sparcPromClose();
 	return -1;
     }
+
     promIsP1275();
     promOpenCount++;
 
@@ -214,17 +219,19 @@ sparcPromInit(void)
 char *
 sparcPromGetProperty(sbusPromNodePtr pnode, const char *prop, int *lenp)
 {
-    if (promSetNode(pnode))
+     if (promSetNode(pnode))
 	return NULL;
-    return promGetProperty(prop, lenp);
+
+     return promGetProperty(prop, lenp);
 }
 
 int
 sparcPromGetBool(sbusPromNodePtr pnode, const char *prop)
 {
-    if (promSetNode(pnode))
+     if (promSetNode(pnode))
 	return 0;
-    return promGetBool(prop);
+
+     return promGetBool(prop);
 }
 
 static void
@@ -242,14 +249,18 @@ promWalkAssignNodes(int node, int oldnode, int flags, sbusDevicePtr *devicePtrs)
 	    prop = promGetProperty("name", &len);
 	    if (!prop || len <= 0)
 		break;
+
 	    while ((*prop >= 'A' && *prop <= 'Z') || *prop == ',')
 		prop++;
+
 	    for (i = 0; sbusDeviceTable[i].devId; i++)
 		if (!strcmp(prop, sbusDeviceTable[i].promName))
 		    break;
+
 	    devId = sbusDeviceTable[i].devId;
-	    if (!devId)
+	    if(!devId)
 		break;
+
 	    if (!sbus) {
 		if (devId == SBUS_DEVICE_FFB) {
 		    /*
@@ -261,13 +272,16 @@ promWalkAssignNodes(int node, int oldnode, int flags, sbusDevicePtr *devicePtrs)
 		} else if (devId != SBUS_DEVICE_CG14)
 		    break;
 	    }
+
 	    for (i = 0; i < 32; i++) {
 		if (!devicePtrs[i] || devicePtrs[i]->devId != devId)
 		    continue;
+
 		if (devicePtrs[i]->node.node) {
 		    if ((devicePtrs[i]->node.cookie[0] & ~PROM_NODE_SIBLING) <=
 			(flags & ~PROM_NODE_SIBLING))
 			continue;
+
 		    for (j = i + 1, pNode = devicePtrs[i]->node; j < 32; j++) {
 			if (!devicePtrs[j] || devicePtrs[j]->devId != devId)
 			    continue;
