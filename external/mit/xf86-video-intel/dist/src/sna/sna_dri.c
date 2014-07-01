@@ -2287,8 +2287,11 @@ static const char *dri_driver_name(struct sna *sna)
 			return has_i830_dri() ? "i830" : "i915";
 		else if (sna->kgem.gen < 040)
 			return "i915";
-		else
+		/* XXX No Ivy Bridge yet in our version of Mesa.  */
+		else if (sna->kgem.gen < 070)
 			return "i965";
+		else
+			return NULL;
 	}
 
 	return s;
@@ -2321,6 +2324,11 @@ bool sna_dri_open(struct sna *sna, ScreenPtr screen)
 	memset(&info, '\0', sizeof(info));
 	info.fd = sna->kgem.fd;
 	info.driverName = dri_driver_name(sna);
+	if (info.driverName == NULL) {
+		xf86DrvMsg(sna->scrn->scrnIndex, X_WARNING,
+			   "no DRI2 on NetBSD for this device yet");
+		return false;
+	}
 	info.deviceName = intel_get_device_name(sna->scrn);
 
 	DBG(("%s: loading dri driver '%s' [gen=%d] for device '%s'\n",
