@@ -292,7 +292,7 @@ TCXPreInit(ScrnInfoPtr pScrn, int flags)
     TcxPtr pTcx;
     sbusDevicePtr psdp = NULL;
     MessageType from;
-    int i;
+    int i, prom;
     int hwCursor, lowDepth;
 
     if (flags & PROBE_DETECT) return FALSE;
@@ -341,18 +341,34 @@ TCXPreInit(ScrnInfoPtr pScrn, int flags)
     **********************/
     hwCursor = 0;
     lowDepth = 1;
-     if (sparcPromInit() >= 0) {
- 	hwCursor = sparcPromGetBool(&psdp->node, "hw-cursor");
- 	lowDepth = sparcPromGetBool(&psdp->node, "tcx-8-bit");
- 	sparcPromClose();
-    }
+
+    prom = sparcPromInit();
+    hwCursor = sparcPromGetBool(&psdp->node, "hw-cursor");
+    lowDepth = sparcPromGetBool(&psdp->node, "tcx-8-bit");
 
     pTcx->Is8bit = (lowDepth != 0); 
     /* all S24 support a hardware cursor */
-    if (!lowDepth)
+    if (!lowDepth) {
 	hwCursor = 1;
+	pTcx->vramsize = 0x100000;	/* size of the 8bit fb */
+    } else {
+	char *b;
+	int len = 4, v = 0;
 
-	xf86Msg(X_ERROR, "hw-cursor: %d\n", hwCursor);
+    	/* see if we have more than 1MB vram */
+	pTcx->vramsize = 0x100000;
+	if ((b = sparcPromGetProperty(&psdp->node, "vram", &len)) != NULL) {
+	    memcpy(&v, b, 4);
+	    if ((v > 0) && (v < 3))
+	    	pTcx->vramsize = 0x100000 * v;
+	}
+	xf86Msg(X_ERROR, "found %d MB video memory\n", v);
+    	    
+    }
+    if (prom)
+    	sparcPromClose();
+
+    xf86Msg(X_ERROR, "hw-cursor: %d\n", hwCursor);
 
     /*********************
     deal with depth
@@ -508,7 +524,7 @@ TCXScreenInit(SCREEN_INIT_ARGS_DECL)
     /* Map the TCX memory */
     if (pScrn->depth == 8) {
 	pTcx->fb =
-	    xf86MapSbusMem (pTcx->psdp, TCX_RAM8_VOFF, 1024 * 1024);
+	    xf86MapSbusMem (pTcx->psdp, TCX_RAM8_VOFF, pTcx->vramsize);
 	pTcx->pitchshift = 0;
     } else {
 	pTcx->fb =
@@ -527,12 +543,12 @@ TCXScreenInit(SCREEN_INIT_ARGS_DECL)
 
     if (pTcx->Is8bit) {
     	/* use STIP and BLIT on tcx */
-        pTcx->rblit = xf86MapSbusMem(pTcx->psdp, TCX_BLIT_VOFF, 8 * 1024 * 1024);
+        pTcx->rblit = xf86MapSbusMem(pTcx->psdp, TCX_BLIT_VOFF, 8 * pTcx->vramsize);
         if (pTcx->rblit == NULL) {
 	    xf86Msg(X_ERROR, "Couldn't map BLIT space\n");
 	    return FALSE;
         }
-        pTcx->rstip = xf86MapSbusMem(pTcx->psdp, TCX_STIP_VOFF, 8 * 1024 * 1024);
+        pTcx->rstip = xf86MapSbusMem(pTcx->psdp, TCX_STIP_VOFF, 8 * pTcx->vramsize);
         if (pTcx->rstip == NULL) {
 	    xf86Msg(X_ERROR, "Couldn't map STIP space\n");
 	    return FALSE;

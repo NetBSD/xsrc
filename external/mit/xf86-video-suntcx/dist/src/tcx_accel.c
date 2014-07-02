@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: tcx_accel.c,v 1.7 2013/06/04 22:58:31 mrg Exp $ */
+/* $NetBSD: tcx_accel.c,v 1.8 2014/07/02 11:54:48 macallan Exp $ */
 
 #include <sys/types.h>
 
@@ -341,13 +341,13 @@ TcxInitAccel(ScreenPtr pScreen)
 
     /*
      * The S24 can display both 8 and 24bit data at the same time, and in
-     * 24bit we can choose between gamma corrected ad direct. No idea how that
+     * 24bit we can choose between gamma corrected and direct. No idea how that
      * would map to EXA - we'd have to pick the right framebuffer to draw into
      * and Solid() would need to know what kind of pixels to write
      */
     pExa->memoryBase = pTcx->fb;
     if (pScrn->depth == 8) {
-	pExa->memorySize = 1024 * 1024;
+	pExa->memorySize = pTcx->vramsize;
 	pExa->offScreenBase = pTcx->psdp->width * pTcx->psdp->height;
 	pExa->pixmapOffsetAlign = 1;
 	pExa->pixmapPitchAlign = 1;

@@ -59,6 +59,7 @@ typedef struct {
 	CloseScreenProcPtr CloseScreen;
 	Bool		HWCursor;
 	Bool		Is8bit;
+	int		vramsize;	/* size of the 8bit fb */
 	uint64_t	*rblit;
 	uint64_t	*rstip;
 	xf86CursorInfoPtr CursorInfoRec;
