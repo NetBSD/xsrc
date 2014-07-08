@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: tcx_accel.c,v 1.8 2014/07/02 11:54:48 macallan Exp $ */
+/* $NetBSD: tcx_accel.c,v 1.9 2014/07/08 17:05:26 macallan Exp $ */
 
 #include <sys/types.h>
 
@@ -178,22 +178,29 @@ TcxPrepareSolid(
 {
     ScrnInfoPtr pScreenInfo = xf86Screens[pPixmap->drawable.pScreen->myNum];
     TcxPtr pTcx = GET_TCX_FROM_SCRN(pScreenInfo);
+    uint32_t hwfg;
 
     ENTER;
+
     /* weed out the cases we can't accelerate */
-    if (alu != GXcopy)
+    if (pTcx->HasStipROP) {
+    	hwfg = alu << 28;
+    } else if (alu == GXcopy) {
+        hwfg = 0x30000000;
+    } else 
     	return FALSE;
+
     if ((planemask != 0xffffffff) && (planemask != 0x00ffffff))
 	return FALSE;
     if (exaGetPixmapOffset(pPixmap) != 0)
 	return FALSE;
     pTcx->fg = (fg & 0x00ffffff);
-    if (pTcx->pitchshift == 0) {
-    	pTcx->fg |= 0x30000000;
-    } else 
-	pTcx->fg |= 0x33000000;
+    /* set colour space ID if we're in 24bit mode */
+    if (pTcx->pitchshift != 0)
+    	hwfg |= 0x03000000;
+    pTcx->fg |= hwfg;
 #ifdef DEBUG
-    xf86Msg(X_ERROR, "fg: %08x\n", fg);
+    xf86Msg(X_ERROR, "fg: %08x\n", hwfg);
 #endif
     LEAVE;
     return TRUE;
