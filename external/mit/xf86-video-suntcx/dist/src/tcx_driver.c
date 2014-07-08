@@ -345,7 +345,9 @@ TCXPreInit(ScrnInfoPtr pScrn, int flags)
     prom = sparcPromInit();
     hwCursor = sparcPromGetBool(&psdp->node, "hw-cursor");
     lowDepth = sparcPromGetBool(&psdp->node, "tcx-8-bit");
-
+    if (pTcx->HasStipROP = sparcPromGetBool(&psdp->node, "stip-rop")) {
+	xf86Msg(X_PROBED, "stipple space supports ROPs\n");
+    }
     pTcx->Is8bit = (lowDepth != 0); 
     /* all S24 support a hardware cursor */
     if (!lowDepth) {
@@ -362,13 +364,14 @@ TCXPreInit(ScrnInfoPtr pScrn, int flags)
 	    if ((v > 0) && (v < 3))
 	    	pTcx->vramsize = 0x100000 * v;
 	}
-	xf86Msg(X_ERROR, "found %d MB video memory\n", v);
+	xf86Msg(X_PROBED, "found %d MB video memory\n", v);
     	    
     }
     if (prom)
     	sparcPromClose();
 
-    xf86Msg(X_ERROR, "hw-cursor: %d\n", hwCursor);
+    xf86Msg(X_PROBED, "hardware cursor support %s\n",
+      hwCursor ? "found" : "not found");
 
     /*********************
     deal with depth
