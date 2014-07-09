@@ -1239,7 +1239,7 @@ _swrast_write_rgba_span( struct gl_context *ctx, SWspan *span)
             }
             else {
                if (rb->DataType == GL_UNSIGNED_BYTE) {
-                  span->array->rgba = span->array->rgba8;
+                  span->array->rgba = (void *) span->array->rgba8;
                }
                else if (rb->DataType == GL_UNSIGNED_SHORT) {
                   span->array->rgba = (void *) span->array->rgba16;
