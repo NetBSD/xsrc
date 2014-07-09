@@ -50,17 +50,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define DBG 0
 
-#if defined(BYTE_ORDER) && defined(BIG_ENDIAN) && BYTE_ORDER == BIG_ENDIAN
-#if defined(__linux__)
-#include <byteswap.h>
-#define CPU_TO_LE16( x )	bswap_16( x )
-#define LE16_TO_CPU( x )	bswap_16( x )
-#endif /* __linux__ */
-#else
-#define CPU_TO_LE16( x )	( x )
-#define LE16_TO_CPU( x )	( x )
-#endif
-
 static void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb);
 
 
