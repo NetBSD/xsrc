@@ -5,7 +5,7 @@ include $(TOP)/configs/current
 
 LIBNAME = unichrome_dri.so
 
-MINIGLX_SOURCES = server/via_dri.c 
+include ../Makefile.defines
 
 DRIVER_SOURCES = \
 	via_context.c \
@@ -27,5 +27,5 @@ C_SOURCES = \
 ASM_SOURCES = 
 
 
-include ../Makefile.template
+include ../Makefile.targets
 

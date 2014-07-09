@@ -5,8 +5,7 @@ include $(TOP)/configs/current
 
 LIBNAME = savage_dri.so
 
-# Doesn't exist yet.
-#MINIGLX_SOURCES = server/savage_dri.c 
+include ../Makefile.defines
 
 DRIVER_SOURCES = \
 	savage_xmesa.c \
@@ -25,5 +24,5 @@ C_SOURCES = \
 ASM_SOURCES = 
 
 
-include ../Makefile.template
+include ../Makefile.targets
 

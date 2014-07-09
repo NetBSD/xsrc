@@ -32,6 +32,7 @@
 #include "bufferobj.h"
 #include "context.h"
 #include "pixelstore.h"
+#include "mfeatures.h"
 #include "mtypes.h"
 
 
@@ -228,7 +229,7 @@ _mesa_PixelStoref( GLenum pname, GLfloat param )
  * Initialize the context's pixel store state.
  */
 void
-_mesa_init_pixelstore( GLcontext *ctx )
+_mesa_init_pixelstore( struct gl_context *ctx )
 {
    /* Pixel transfer */
    ctx->Pack.Alignment = 4;

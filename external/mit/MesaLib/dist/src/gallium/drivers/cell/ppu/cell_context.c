@@ -36,8 +36,8 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_format.h"
 #include "util/u_memory.h"
-#include "util/u_simple_screen.h"
 #include "pipe/p_screen.h"
+#include "util/u_inlines.h"
 
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
@@ -62,6 +62,11 @@ static void
 cell_destroy_context( struct pipe_context *pipe )
 {
    struct cell_context *cell = cell_context(pipe);
+   unsigned i;
+
+   for (i = 0; i < cell->num_vertex_buffers; i++) {
+      pipe_resource_reference(&cell->vertex_buffer[i].buffer, NULL);
+   }
 
    util_delete_keymap(cell->fragment_ops_cache, NULL);
 
@@ -89,38 +94,16 @@ cell_draw_create(struct cell_context *cell)
 
 
 static const struct debug_named_value cell_debug_flags[] = {
-   {"checker", CELL_DEBUG_CHECKER},/**< modulate tile clear color by SPU ID */
-   {"asm", CELL_DEBUG_ASM},        /**< dump SPU asm code */
-   {"sync", CELL_DEBUG_SYNC},      /**< SPUs do synchronous DMA */
-   {"fragops", CELL_DEBUG_FRAGMENT_OPS}, /**< SPUs emit fragment ops debug messages*/
-   {"fragopfallback", CELL_DEBUG_FRAGMENT_OP_FALLBACK}, /**< SPUs use reference implementation for fragment ops*/
-   {"cmd", CELL_DEBUG_CMD},       /**< SPUs dump command buffer info */
-   {"cache", CELL_DEBUG_CACHE},   /**< report texture cache stats on exit */
-   {NULL, 0}
+   {"checker", CELL_DEBUG_CHECKER, NULL},/**< modulate tile clear color by SPU ID */
+   {"asm", CELL_DEBUG_ASM, NULL},        /**< dump SPU asm code */
+   {"sync", CELL_DEBUG_SYNC, NULL},      /**< SPUs do synchronous DMA */
+   {"fragops", CELL_DEBUG_FRAGMENT_OPS, NULL}, /**< SPUs emit fragment ops debug messages*/
+   {"fragopfallback", CELL_DEBUG_FRAGMENT_OP_FALLBACK, NULL}, /**< SPUs use reference implementation for fragment ops*/
+   {"cmd", CELL_DEBUG_CMD, NULL},       /**< SPUs dump command buffer info */
+   {"cache", CELL_DEBUG_CACHE, NULL},   /**< report texture cache stats on exit */
+   DEBUG_NAMED_VALUE_END
 };
 
-static unsigned int
-cell_is_texture_referenced( struct pipe_context *pipe,
-			    struct pipe_texture *texture,
-			    unsigned face, unsigned level)
-{
-   /**
-    * FIXME: Optimize.
-    */
-
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-}
-
-static unsigned int
-cell_is_buffer_referenced( struct pipe_context *pipe,
-			   struct pipe_buffer *buf)
-{
-   /**
-    * FIXME: Optimize.
-    */
-
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-}
 
 struct pipe_context *
 cell_create_context(struct pipe_screen *screen,
@@ -137,16 +120,13 @@ cell_create_context(struct pipe_screen *screen,
    memset(cell, 0, sizeof(*cell));
 
    cell->winsys = NULL;		/* XXX: fixme - get this from screen? */
-   cell->pipe.winsys = screen->winsys;
+   cell->pipe.winsys = NULL;
    cell->pipe.screen = screen;
    cell->pipe.priv = priv;
    cell->pipe.destroy = cell_destroy_context;
 
    cell->pipe.clear = cell_clear;
    cell->pipe.flush = cell_flush;
-
-   cell->pipe.is_texture_referenced = cell_is_texture_referenced;
-   cell->pipe.is_buffer_referenced = cell_is_buffer_referenced;
 
 #if 0
    cell->pipe.begin_query = cell_begin_query;
@@ -159,6 +139,7 @@ cell_create_context(struct pipe_screen *screen,
    cell_init_shader_functions(cell);
    cell_init_surface_functions(cell);
    cell_init_vertex_functions(cell);
+   cell_init_texture_transfer_funcs(cell);
 
    cell->draw = cell_draw_create(cell);
 

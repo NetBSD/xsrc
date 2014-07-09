@@ -410,26 +410,19 @@ int rbug_send_texture_read_reply(struct rbug_connection *__con,
 
 struct rbug_proto_texture_list * rbug_demarshal_texture_list(struct rbug_proto_header *header)
 {
-	uint32_t len = 0;
-	uint32_t pos = 0;
-	uint8_t *data =  NULL;
 	struct rbug_proto_texture_list *ret;
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_TEXTURE_LIST)
+	if (header->opcode != (int32_t)RBUG_OP_TEXTURE_LIST)
 		return NULL;
 
-	pos = 0;
-	len = header->length * 4;
-	data = (uint8_t*)&header[1];
 	ret = MALLOC(sizeof(*ret));
 	if (!ret)
 		return NULL;
 
 	ret->header.__message = header;
 	ret->header.opcode = header->opcode;
-
 
 	return ret;
 }
@@ -443,7 +436,7 @@ struct rbug_proto_texture_info * rbug_demarshal_texture_info(struct rbug_proto_h
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_TEXTURE_INFO)
+	if (header->opcode != (int32_t)RBUG_OP_TEXTURE_INFO)
 		return NULL;
 
 	pos = 0;
@@ -470,7 +463,7 @@ struct rbug_proto_texture_write * rbug_demarshal_texture_write(struct rbug_proto
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_TEXTURE_WRITE)
+	if (header->opcode != (int32_t)RBUG_OP_TEXTURE_WRITE)
 		return NULL;
 
 	pos = 0;
@@ -506,7 +499,7 @@ struct rbug_proto_texture_read * rbug_demarshal_texture_read(struct rbug_proto_h
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_TEXTURE_READ)
+	if (header->opcode != (int32_t)RBUG_OP_TEXTURE_READ)
 		return NULL;
 
 	pos = 0;
@@ -540,7 +533,7 @@ struct rbug_proto_texture_list_reply * rbug_demarshal_texture_list_reply(struct 
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_TEXTURE_LIST_REPLY)
+	if (header->opcode != (int32_t)RBUG_OP_TEXTURE_LIST_REPLY)
 		return NULL;
 
 	pos = 0;
@@ -568,7 +561,7 @@ struct rbug_proto_texture_info_reply * rbug_demarshal_texture_info_reply(struct 
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_TEXTURE_INFO_REPLY)
+	if (header->opcode != (int32_t)RBUG_OP_TEXTURE_INFO_REPLY)
 		return NULL;
 
 	pos = 0;
@@ -606,7 +599,7 @@ struct rbug_proto_texture_read_reply * rbug_demarshal_texture_read_reply(struct 
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_TEXTURE_READ_REPLY)
+	if (header->opcode != (int32_t)RBUG_OP_TEXTURE_READ_REPLY)
 		return NULL;
 
 	pos = 0;

@@ -3,11 +3,9 @@
 TOP = ../../../../..
 include $(TOP)/configs/current
 
-CFLAGS += $(RADEON_CFLAGS)
-
 LIBNAME = r300_dri.so
 
-MINIGLX_SOURCES = server/radeon_dri.c
+include ../Makefile.defines
 
 ifeq ($(RADEON_LDFLAGS),)
 CS_SOURCES = radeon_cs_space_drm.c radeon_bo.c radeon_cs.c
@@ -15,7 +13,7 @@ endif
 
 COMMON_SOURCES = \
 	../../common/driverfuncs.c \
-	../common/mm.c \
+	../common/drirenderbuffer.c \
 	../common/utils.c \
 	../common/texmem.c \
 	../common/vblank.c \
@@ -33,10 +31,13 @@ RADEON_COMMON_SOURCES = \
 	radeon_fbo.c \
 	radeon_lock.c \
 	radeon_mipmap_tree.c \
-	radeon_span.c \
+	radeon_pixel_read.c \
 	radeon_queryobj.c \
+	radeon_span.c \
 	radeon_texture.c \
-	radeon_tex_copy.c
+	radeon_tex_copy.c \
+	radeon_tex_getimage.c \
+	radeon_tile.c
 
 DRIVER_SOURCES = \
 		 radeon_screen.c \
@@ -63,6 +64,7 @@ C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
 DRIVER_DEFINES = -DRADEON_R300
 #	-DRADEON_BO_TRACK \
 
+INCLUDES += $(RADEON_CFLAGS)
 DRI_LIB_DEPS += $(RADEON_LDFLAGS)
 
 SUBDIRS = compiler
@@ -72,5 +74,5 @@ EXTRA_MODULES = compiler/libr300compiler.a
 
 ##### TARGETS #####
 
-include ../Makefile.template
+include ../Makefile.targets
 

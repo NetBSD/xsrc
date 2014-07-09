@@ -47,9 +47,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #define insert_at_tail_if(atom_list, atom) \
    do { \
-      struct radeon_state_atom* __atom = (atom); \
-      if (__atom->check) \
-	 insert_at_tail((atom_list), __atom); \
+      struct radeon_state_atom* current_atom = (atom); \
+      if (current_atom->check) \
+	 insert_at_tail((atom_list), current_atom); \
    } while(0)
 
 void r200SetUpAtomList( r200ContextPtr rmesa )
@@ -167,7 +167,7 @@ static void r200FireEB(r200ContextPtr rmesa, int vertex_count, int type)
 	}
 }
 
-void r200FlushElts(GLcontext *ctx)
+void r200FlushElts(struct gl_context *ctx)
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    int nr, elt_used = rmesa->tcl.elt_used;

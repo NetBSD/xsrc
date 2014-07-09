@@ -32,8 +32,8 @@
  */
 
 #include "main/imports.h"
-#include "shader/prog_parameter.h"
-#include "shader/prog_print.h"
+#include "program/prog_parameter.h"
+#include "program/prog_print.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -44,7 +44,6 @@
 #include "st_atom.h"
 #include "st_atom_constbuf.h"
 #include "st_program.h"
-#include "st_inlines.h"
 
 
 /**
@@ -57,24 +56,31 @@ void st_upload_constants( struct st_context *st,
                           unsigned shader_type)
 {
    struct pipe_context *pipe = st->pipe;
-   struct pipe_buffer **cbuf = &st->state.constants[shader_type];
 
    assert(shader_type == PIPE_SHADER_VERTEX ||
-          shader_type == PIPE_SHADER_FRAGMENT);
+          shader_type == PIPE_SHADER_FRAGMENT ||
+          shader_type == PIPE_SHADER_GEOMETRY);
 
    /* update constants */
    if (params && params->NumParameters) {
+      struct pipe_resource *cbuf;
       const uint paramBytes = params->NumParameters * sizeof(GLfloat) * 4;
 
+      /* Update the constants which come from fixed-function state, such as
+       * transformation matrices, fog factors, etc.  The rest of the values in
+       * the parameters list are explicitly set by the user with glUniform,
+       * glProgramParameter(), etc.
+       */
       _mesa_load_state_parameters(st->ctx, params);
 
       /* We always need to get a new buffer, to keep the drivers simple and
        * avoid gratuitous rendering synchronization.
+       * Let's use a user buffer to avoid an unnecessary copy.
        */
-      pipe_buffer_reference(cbuf, NULL );
-      *cbuf = pipe_buffer_create(pipe->screen, 16,
-                                        PIPE_BUFFER_USAGE_CONSTANT,
-					paramBytes );
+      cbuf = pipe_user_buffer_create(pipe->screen,
+                                     params->ParameterValues,
+                                     paramBytes,
+                                     PIPE_BIND_CONSTANT_BUFFER);
 
       if (ST_DEBUG & DEBUG_CONSTANTS) {
 	 debug_printf("%s(shader=%d, numParams=%d, stateFlags=0x%x)\n", 
@@ -83,16 +89,16 @@ void st_upload_constants( struct st_context *st,
          _mesa_print_parameter_list(params);
       }
 
-      /* load Mesa constants into the constant buffer */
-      if (cbuf)
-         st_no_flush_pipe_buffer_write(st, *cbuf,
-				       0, paramBytes,
-				       params->ParameterValues);
+      st->pipe->set_constant_buffer(st->pipe, shader_type, 0, cbuf);
+      pipe_resource_reference(&cbuf, NULL);
 
-      st->pipe->set_constant_buffer(st->pipe, shader_type, 0, *cbuf);
+      st->state.constants[shader_type].ptr = params->ParameterValues;
+      st->state.constants[shader_type].size = paramBytes;
    }
-   else {
-      st->constants.tracked_state[shader_type].dirty.mesa = 0x0;
+   else if (st->state.constants[shader_type].ptr) {
+      st->state.constants[shader_type].ptr = NULL;
+      st->state.constants[shader_type].size = 0;
+      st->pipe->set_constant_buffer(st->pipe, shader_type, 0, NULL);
    }
 }
 
@@ -141,3 +147,24 @@ const struct st_tracked_state st_update_fs_constants = {
    update_fs_constants					/* update */
 };
 
+/* Geometry shader:
+ */
+static void update_gs_constants(struct st_context *st )
+{
+   struct st_geometry_program *gp = st->gp;
+   struct gl_program_parameter_list *params;
+
+   if (gp) {
+      params = gp->Base.Base.Parameters;
+      st_upload_constants( st, params, PIPE_SHADER_GEOMETRY );
+   }
+}
+
+const struct st_tracked_state st_update_gs_constants = {
+   "st_update_gs_constants",				/* name */
+   {							/* dirty */
+      (_NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS),          /* mesa */
+      ST_NEW_GEOMETRY_PROGRAM,				/* st */
+   },
+   update_gs_constants					/* update */
+};

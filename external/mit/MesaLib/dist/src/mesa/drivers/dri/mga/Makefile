@@ -5,7 +5,7 @@ include $(TOP)/configs/current
 
 LIBNAME = mga_dri.so
 
-MINIGLX_SOURCES = server/mga_dri.c 
+include ../Makefile.defines
 
 DRIVER_SOURCES = \
 	mgadd.c \
@@ -29,5 +29,5 @@ C_SOURCES = \
 
 ASM_SOURCES = 
 
-include ../Makefile.template
+include ../Makefile.targets
 

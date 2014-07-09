@@ -1,9 +1,37 @@
+/**************************************************************************
+ *
+ * Copyright 2009-2010 Chia-I Wu <olvaffe@gmail.com>
+ * All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sub license, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial portions
+ * of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
+ **************************************************************************/
+
+
 #include <stdlib.h>
 #include <string.h>
-#include "eglglobals.h"
 #include "egllog.h"
 #include "eglmutex.h"
 #include "eglcurrent.h"
+#include "eglglobals.h"
 
 
 /* This should be kept in sync with _eglInitThreadInfo() */
@@ -14,33 +42,7 @@
 static _EGLThreadInfo dummy_thread = _EGL_THREAD_INFO_INITIALIZER;
 
 
-#ifdef GLX_USE_TLS
-static __thread const _EGLThreadInfo *_egl_TSD
-   __attribute__ ((tls_model("initial-exec")));
-
-static INLINE void _eglSetTSD(const _EGLThreadInfo *t)
-{
-   _egl_TSD = t;
-}
-
-static INLINE _EGLThreadInfo *_eglGetTSD(void)
-{
-   return (_EGLThreadInfo *) _egl_TSD;
-}
-
-static INLINE void _eglFiniTSD(void)
-{
-}
-
-static INLINE EGLBoolean _eglInitTSD(void (*dtor)(_EGLThreadInfo *))
-{
-   /* TODO destroy TSD */
-   (void) dtor;
-   (void) _eglFiniTSD;
-   return EGL_TRUE;
-}
-
-#elif PTHREADS
+#if PTHREADS
 #include <pthread.h>
 
 static _EGL_DECLARE_MUTEX(_egl_TSDMutex);
@@ -48,14 +50,26 @@ static EGLBoolean _egl_TSDInitialized;
 static pthread_key_t _egl_TSD;
 static void (*_egl_FreeTSD)(_EGLThreadInfo *);
 
+#ifdef GLX_USE_TLS
+static __thread const _EGLThreadInfo *_egl_TLS
+   __attribute__ ((tls_model("initial-exec")));
+#endif
+
 static INLINE void _eglSetTSD(const _EGLThreadInfo *t)
 {
    pthread_setspecific(_egl_TSD, (const void *) t);
+#ifdef GLX_USE_TLS
+   _egl_TLS = t;
+#endif
 }
 
 static INLINE _EGLThreadInfo *_eglGetTSD(void)
 {
+#ifdef GLX_USE_TLS
+   return (_EGLThreadInfo *) _egl_TLS;
+#else
    return (_EGLThreadInfo *) pthread_getspecific(_egl_TSD);
+#endif
 }
 
 static INLINE void _eglFiniTSD(void)
@@ -300,14 +314,19 @@ _eglError(EGLint errCode, const char *msg)
       case EGL_BAD_SURFACE:
          s = "EGL_BAD_SURFACE";
          break;
+      case EGL_NOT_INITIALIZED:
+         s = "EGL_NOT_INITIALIZED";
+         break;
+#ifdef EGL_MESA_screen_surface
       case EGL_BAD_SCREEN_MESA:
          s = "EGL_BAD_SCREEN_MESA";
          break;
       case EGL_BAD_MODE_MESA:
          s = "EGL_BAD_MODE_MESA";
          break;
+#endif
       default:
-         s = "other";
+         s = "other EGL error";
       }
       _eglLog(_EGL_DEBUG, "EGL user error 0x%x (%s) in %s\n", errCode, s, msg);
    }

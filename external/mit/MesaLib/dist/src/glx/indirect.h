@@ -37,7 +37,7 @@
  * \author Ian Romanick <idr@us.ibm.com>
  */
 
-#  if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590)) && defined(__ELF__)
+#  if (defined(__GNUC__) && !defined(__CYGWIN__) && !defined(__MINGW32__)) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590) && defined(__ELF__))
 #    define HIDDEN  __attribute__((visibility("hidden")))
 #  else
 #    define HIDDEN
@@ -59,15 +59,15 @@ extern HIDDEN NOINLINE CARD32 __glXReadReply( Display *dpy, size_t size,
     void * dest, GLboolean reply_is_always_array );
 
 extern HIDDEN NOINLINE void __glXReadPixelReply( Display *dpy,
-    __GLXcontext * gc, unsigned max_dim, GLint width, GLint height,
+    struct glx_context * gc, unsigned max_dim, GLint width, GLint height,
     GLint depth, GLenum format, GLenum type, void * dest,
     GLboolean dimensions_in_reply );
 
 extern HIDDEN NOINLINE FASTCALL GLubyte * __glXSetupSingleRequest(
-    __GLXcontext * gc, GLint sop, GLint cmdlen );
+    struct glx_context * gc, GLint sop, GLint cmdlen );
 
 extern HIDDEN NOINLINE FASTCALL GLubyte * __glXSetupVendorRequest(
-    __GLXcontext * gc, GLint code, GLint vop, GLint cmdlen );
+    struct glx_context * gc, GLint code, GLint vop, GLint cmdlen );
 
 extern HIDDEN void __indirect_glNewList(GLuint list, GLenum mode);
 extern HIDDEN void __indirect_glEndList(void);
@@ -440,6 +440,7 @@ extern HIDDEN void __indirect_glGetConvolutionParameteriv(GLenum target, GLenum 
 extern HIDDEN void gl_dispatch_stub_358(GLenum target, GLenum pname, GLint * params);
 extern HIDDEN void __indirect_glGetSeparableFilter(GLenum target, GLenum format, GLenum type, GLvoid * row, GLvoid * column, GLvoid * span);
 extern HIDDEN void gl_dispatch_stub_359(GLenum target, GLenum format, GLenum type, GLvoid * row, GLvoid * column, GLvoid * span);
+#define gl_dispatch_stub_GetSeparableFilterEXT gl_dispatch_stub_359
 extern HIDDEN void __indirect_glSeparableFilter2D(GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid * row, const GLvoid * column);
 extern HIDDEN void __indirect_glGetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid * values);
 extern HIDDEN void gl_dispatch_stub_361(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid * values);
@@ -572,6 +573,7 @@ extern HIDDEN void __indirect_glGetQueryObjectuivARB(GLuint id, GLenum pname, GL
 extern HIDDEN void __indirect_glGetQueryivARB(GLenum target, GLenum pname, GLint * params);
 extern HIDDEN GLboolean __indirect_glIsQueryARB(GLuint id);
 extern HIDDEN void __indirect_glDrawBuffersARB(GLsizei n, const GLenum * bufs);
+extern HIDDEN void __indirect_glClampColorARB(GLenum target, GLenum clamp);
 extern HIDDEN void __indirect_glRenderbufferStorageMultisample(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);
 extern HIDDEN void __indirect_glSampleMaskSGIS(GLclampf value, GLboolean invert);
 extern HIDDEN void __indirect_glSamplePatternSGIS(GLenum pattern);
@@ -600,7 +602,7 @@ extern HIDDEN void __indirect_glSecondaryColor3uivEXT(const GLuint * v);
 extern HIDDEN void __indirect_glSecondaryColor3usEXT(GLushort red, GLushort green, GLushort blue);
 extern HIDDEN void __indirect_glSecondaryColor3usvEXT(const GLushort * v);
 extern HIDDEN void __indirect_glSecondaryColorPointerEXT(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer);
-extern HIDDEN void __indirect_glMultiDrawArraysEXT(GLenum mode, GLint * first, GLsizei * count, GLsizei primcount);
+extern HIDDEN void __indirect_glMultiDrawArraysEXT(GLenum mode, const GLint * first, const GLsizei * count, GLsizei primcount);
 extern HIDDEN void __indirect_glMultiDrawElementsEXT(GLenum mode, const GLsizei * count, GLenum type, const GLvoid ** indices, GLsizei primcount);
 extern HIDDEN void __indirect_glFogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid * pointer);
 extern HIDDEN void __indirect_glFogCoorddEXT(GLdouble coord);
@@ -640,8 +642,8 @@ extern HIDDEN void __indirect_glGetVertexAttribfvNV(GLuint index, GLenum pname, 
 extern HIDDEN void __indirect_glGetVertexAttribivNV(GLuint index, GLenum pname, GLint * params);
 extern HIDDEN GLboolean __indirect_glIsProgramNV(GLuint program);
 extern HIDDEN void __indirect_glLoadProgramNV(GLenum target, GLuint id, GLsizei len, const GLubyte * program);
-extern HIDDEN void __indirect_glProgramParameters4dvNV(GLenum target, GLuint index, GLuint num, const GLdouble * params);
-extern HIDDEN void __indirect_glProgramParameters4fvNV(GLenum target, GLuint index, GLuint num, const GLfloat * params);
+extern HIDDEN void __indirect_glProgramParameters4dvNV(GLenum target, GLuint index, GLsizei num, const GLdouble * params);
+extern HIDDEN void __indirect_glProgramParameters4fvNV(GLenum target, GLuint index, GLsizei num, const GLfloat * params);
 extern HIDDEN void __indirect_glRequestResidentProgramsNV(GLsizei n, const GLuint * ids);
 extern HIDDEN void __indirect_glTrackMatrixNV(GLenum target, GLuint address, GLenum matrix, GLenum transform);
 extern HIDDEN void __indirect_glVertexAttrib1dNV(GLuint index, GLdouble x);
@@ -713,6 +715,10 @@ extern HIDDEN GLboolean __indirect_glIsRenderbufferEXT(GLuint renderbuffer);
 extern HIDDEN void __indirect_glRenderbufferStorageEXT(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
 extern HIDDEN void __indirect_glBlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
 extern HIDDEN void __indirect_glFramebufferTextureLayerEXT(GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer);
+
+#ifdef GLX_SHARED_GLAPI
+extern HIDDEN void (*__indirect_get_proc_address(const char *name))(void);
+#endif
 
 #  undef HIDDEN
 #  undef FASTCALL

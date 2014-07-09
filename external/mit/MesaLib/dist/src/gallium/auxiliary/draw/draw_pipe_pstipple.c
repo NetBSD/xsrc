@@ -27,8 +27,9 @@
 
 /**
  * Polygon stipple stage:  implement polygon stipple with texture map and
- * fragment program.  The fragment program samples the texture and does
- * a fragment kill for the stipple-failing fragments.
+ * fragment program.  The fragment program samples the texture using the
+ * fragment window coordinate register and does a fragment kill for the
+ * stipple-failing fragments.
  *
  * Authors:  Brian Paul
  */
@@ -42,6 +43,7 @@
 #include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_sampler.h"
 
 #include "tgsi/tgsi_transform.h"
 #include "tgsi/tgsi_dump.h"
@@ -74,9 +76,10 @@ struct pstip_stage
    struct draw_stage stage;
 
    void *sampler_cso;
-   struct pipe_texture *texture;
+   struct pipe_resource *texture;
+   struct pipe_sampler_view *sampler_view;
    uint num_samplers;
-   uint num_textures;
+   uint num_sampler_views;
 
    /*
     * Currently bound state
@@ -84,7 +87,7 @@ struct pstip_stage
    struct pstip_fragment_shader *fs;
    struct {
       void *samplers[PIPE_MAX_SAMPLERS];
-      struct pipe_texture *textures[PIPE_MAX_SAMPLERS];
+      struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
       const struct pipe_poly_stipple *stipple;
    } state;
 
@@ -98,8 +101,9 @@ struct pstip_stage
 
    void (*driver_bind_sampler_states)(struct pipe_context *, unsigned, void **);
 
-   void (*driver_set_sampler_textures)(struct pipe_context *, unsigned,
-                                       struct pipe_texture **);
+   void (*driver_set_sampler_views)(struct pipe_context *,
+                                    unsigned,
+                                    struct pipe_sampler_view **);
 
    void (*driver_set_polygon_stipple)(struct pipe_context *,
                                       const struct pipe_poly_stipple *);
@@ -111,7 +115,8 @@ struct pstip_stage
 
 /**
  * Subclass of tgsi_transform_context, used for transforming the
- * user's fragment shader to add the special AA instructions.
+ * user's fragment shader to add the extra texture sample and fragment kill
+ * instructions.
  */
 struct pstip_transform_context {
    struct tgsi_transform_context base;
@@ -360,8 +365,12 @@ generate_pstip_fs(struct pstip_stage *pstip)
    assert(pstip->fs->sampler_unit < PIPE_MAX_SAMPLERS);
 
    pstip->fs->pstip_fs = pstip->driver_create_fs_state(pstip->pipe, &pstip_fs);
-
+   
    FREE((void *)pstip_fs.tokens);
+
+   if (!pstip->fs->pstip_fs)
+      return FALSE;
+
    return TRUE;
 }
 
@@ -374,19 +383,14 @@ pstip_update_texture(struct pstip_stage *pstip)
 {
    static const uint bit31 = 1 << 31;
    struct pipe_context *pipe = pstip->pipe;
-   struct pipe_screen *screen = pipe->screen;
    struct pipe_transfer *transfer;
    const uint *stipple = pstip->state.stipple->stipple;
    uint i, j;
    ubyte *data;
 
-   /* XXX: want to avoid flushing just because we use stipple: 
-    */
-   pipe->flush( pipe, PIPE_FLUSH_TEXTURE_CACHE, NULL );
-
-   transfer = screen->get_tex_transfer(screen, pstip->texture, 0, 0, 0,
-                                       PIPE_TRANSFER_WRITE, 0, 0, 32, 32);
-   data = screen->transfer_map(screen, transfer);
+   transfer = pipe_get_transfer(pipe, pstip->texture, 0, 0,
+                                PIPE_TRANSFER_WRITE, 0, 0, 32, 32);
+   data = pipe->transfer_map(pipe, transfer);
 
    /*
     * Load alpha texture.
@@ -408,8 +412,8 @@ pstip_update_texture(struct pstip_stage *pstip)
    }
 
    /* unmap */
-   screen->transfer_unmap(screen, transfer);
-   screen->tex_transfer_destroy(transfer);
+   pipe->transfer_unmap(pipe, transfer);
+   pipe->transfer_destroy(pipe, transfer);
 }
 
 
@@ -421,7 +425,8 @@ pstip_create_texture(struct pstip_stage *pstip)
 {
    struct pipe_context *pipe = pstip->pipe;
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_texture texTemp;
+   struct pipe_resource texTemp;
+   struct pipe_sampler_view viewTempl;
 
    memset(&texTemp, 0, sizeof(texTemp));
    texTemp.target = PIPE_TEXTURE_2D;
@@ -430,10 +435,22 @@ pstip_create_texture(struct pstip_stage *pstip)
    texTemp.width0 = 32;
    texTemp.height0 = 32;
    texTemp.depth0 = 1;
+   texTemp.array_size = 1;
+   texTemp.bind = PIPE_BIND_SAMPLER_VIEW;
 
-   pstip->texture = screen->texture_create(screen, &texTemp);
+   pstip->texture = screen->resource_create(screen, &texTemp);
    if (pstip->texture == NULL)
       return FALSE;
+
+   u_sampler_view_default_template(&viewTempl,
+                                   pstip->texture,
+                                   pstip->texture->format);
+   pstip->sampler_view = pipe->create_sampler_view(pipe,
+                                                   pstip->texture,
+                                                   &viewTempl);
+   if (!pstip->sampler_view) {
+      return FALSE;
+   }
 
    return TRUE;
 }
@@ -513,19 +530,19 @@ pstip_first_tri(struct draw_stage *stage, struct prim_header *header)
 
    /* how many samplers? */
    /* we'll use sampler/texture[pstip->sampler_unit] for the stipple */
-   num_samplers = MAX2(pstip->num_textures, pstip->num_samplers);
+   num_samplers = MAX2(pstip->num_sampler_views, pstip->num_samplers);
    num_samplers = MAX2(num_samplers, pstip->fs->sampler_unit + 1);
 
    /* plug in our sampler, texture */
    pstip->state.samplers[pstip->fs->sampler_unit] = pstip->sampler_cso;
-   pipe_texture_reference(&pstip->state.textures[pstip->fs->sampler_unit],
-                          pstip->texture);
+   pipe_sampler_view_reference(&pstip->state.sampler_views[pstip->fs->sampler_unit],
+                               pstip->sampler_view);
 
    assert(num_samplers <= PIPE_MAX_SAMPLERS);
 
    draw->suspend_flushing = TRUE;
    pstip->driver_bind_sampler_states(pipe, num_samplers, pstip->state.samplers);
-   pstip->driver_set_sampler_textures(pipe, num_samplers, pstip->state.textures);
+   pstip->driver_set_sampler_views(pipe, num_samplers, pstip->state.sampler_views);
    draw->suspend_flushing = FALSE;
 
    /* now really draw first triangle */
@@ -549,8 +566,9 @@ pstip_flush(struct draw_stage *stage, unsigned flags)
    pstip->driver_bind_fs_state(pipe, pstip->fs->driver_fs);
    pstip->driver_bind_sampler_states(pipe, pstip->num_samplers,
                                      pstip->state.samplers);
-   pstip->driver_set_sampler_textures(pipe, pstip->num_textures,
-                                      pstip->state.textures);
+   pstip->driver_set_sampler_views(pipe,
+                                   pstip->num_sampler_views,
+                                   pstip->state.sampler_views);
    draw->suspend_flushing = FALSE;
 }
 
@@ -569,24 +587,31 @@ pstip_destroy(struct draw_stage *stage)
    uint i;
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      pipe_texture_reference(&pstip->state.textures[i], NULL);
+      pipe_sampler_view_reference(&pstip->state.sampler_views[i], NULL);
    }
 
    pstip->pipe->delete_sampler_state(pstip->pipe, pstip->sampler_cso);
 
-   pipe_texture_reference(&pstip->texture, NULL);
+   pipe_resource_reference(&pstip->texture, NULL);
+
+   if (pstip->sampler_view) {
+      pipe_sampler_view_reference(&pstip->sampler_view, NULL);
+   }
 
    draw_free_temp_verts( stage );
    FREE( stage );
 }
 
 
+/** Create a new polygon stipple drawing stage object */
 static struct pstip_stage *
-draw_pstip_stage(struct draw_context *draw)
+draw_pstip_stage(struct draw_context *draw, struct pipe_context *pipe)
 {
    struct pstip_stage *pstip = CALLOC_STRUCT(pstip_stage);
+   if (pstip == NULL)
+      goto fail;
 
-   draw_alloc_temp_verts( &pstip->stage, 8 );
+   pstip->pipe = pipe;
 
    pstip->stage.draw = draw;
    pstip->stage.name = "pstip";
@@ -598,7 +623,16 @@ draw_pstip_stage(struct draw_context *draw)
    pstip->stage.reset_stipple_counter = pstip_reset_stipple_counter;
    pstip->stage.destroy = pstip_destroy;
 
+   if (!draw_alloc_temp_verts( &pstip->stage, 8 ))
+      goto fail;
+
    return pstip;
+
+fail:
+   if (pstip)
+      pstip->stage.destroy( &pstip->stage );
+
+   return NULL;
 }
 
 
@@ -619,16 +653,16 @@ pstip_create_fs_state(struct pipe_context *pipe,
                        const struct pipe_shader_state *fs)
 {
    struct pstip_stage *pstip = pstip_stage_from_pipe(pipe);
-   struct pstip_fragment_shader *aafs = CALLOC_STRUCT(pstip_fragment_shader);
+   struct pstip_fragment_shader *pstipfs = CALLOC_STRUCT(pstip_fragment_shader);
 
-   if (aafs) {
-      aafs->state = *fs;
+   if (pstipfs) {
+      pstipfs->state = *fs;
 
       /* pass-through */
-      aafs->driver_fs = pstip->driver_create_fs_state(pstip->pipe, fs);
+      pstipfs->driver_fs = pstip->driver_create_fs_state(pstip->pipe, fs);
    }
 
-   return aafs;
+   return pstipfs;
 }
 
 
@@ -636,12 +670,12 @@ static void
 pstip_bind_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct pstip_stage *pstip = pstip_stage_from_pipe(pipe);
-   struct pstip_fragment_shader *aafs = (struct pstip_fragment_shader *) fs;
+   struct pstip_fragment_shader *pstipfs = (struct pstip_fragment_shader *) fs;
    /* save current */
-   pstip->fs = aafs;
+   pstip->fs = pstipfs;
    /* pass-through */
    pstip->driver_bind_fs_state(pstip->pipe,
-                               (aafs ? aafs->driver_fs : NULL));
+                               (pstipfs ? pstipfs->driver_fs : NULL));
 }
 
 
@@ -649,14 +683,14 @@ static void
 pstip_delete_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct pstip_stage *pstip = pstip_stage_from_pipe(pipe);
-   struct pstip_fragment_shader *aafs = (struct pstip_fragment_shader *) fs;
+   struct pstip_fragment_shader *pstipfs = (struct pstip_fragment_shader *) fs;
    /* pass-through */
-   pstip->driver_delete_fs_state(pstip->pipe, aafs->driver_fs);
+   pstip->driver_delete_fs_state(pstip->pipe, pstipfs->driver_fs);
 
-   if (aafs->pstip_fs)
-      pstip->driver_delete_fs_state(pstip->pipe, aafs->pstip_fs);
+   if (pstipfs->pstip_fs)
+      pstip->driver_delete_fs_state(pstip->pipe, pstipfs->pstip_fs);
 
-   FREE(aafs);
+   FREE(pstipfs);
 }
 
 
@@ -680,24 +714,25 @@ pstip_bind_sampler_states(struct pipe_context *pipe,
 
 
 static void
-pstip_set_sampler_textures(struct pipe_context *pipe,
-                           unsigned num, struct pipe_texture **texture)
+pstip_set_sampler_views(struct pipe_context *pipe,
+                        unsigned num,
+                        struct pipe_sampler_view **views)
 {
    struct pstip_stage *pstip = pstip_stage_from_pipe(pipe);
    uint i;
 
    /* save current */
    for (i = 0; i < num; i++) {
-      pipe_texture_reference(&pstip->state.textures[i], texture[i]);
+      pipe_sampler_view_reference(&pstip->state.sampler_views[i], views[i]);
    }
    for (; i < PIPE_MAX_SAMPLERS; i++) {
-      pipe_texture_reference(&pstip->state.textures[i], NULL);
+      pipe_sampler_view_reference(&pstip->state.sampler_views[i], NULL);
    }
 
-   pstip->num_textures = num;
+   pstip->num_sampler_views = num;
 
    /* pass-through */
-   pstip->driver_set_sampler_textures(pstip->pipe, num, texture);
+   pstip->driver_set_sampler_views(pstip->pipe, num, views);
 }
 
 
@@ -733,13 +768,11 @@ draw_install_pstipple_stage(struct draw_context *draw,
    /*
     * Create / install pgon stipple drawing / prim stage
     */
-   pstip = draw_pstip_stage( draw );
+   pstip = draw_pstip_stage( draw, pipe );
    if (pstip == NULL)
       goto fail;
 
    draw->pipeline.pstipple = &pstip->stage;
-
-   pstip->pipe = pipe;
 
    /* create special texture, sampler state */
    if (!pstip_create_texture(pstip))
@@ -754,7 +787,7 @@ draw_install_pstipple_stage(struct draw_context *draw,
    pstip->driver_delete_fs_state = pipe->delete_fs_state;
 
    pstip->driver_bind_sampler_states = pipe->bind_fragment_sampler_states;
-   pstip->driver_set_sampler_textures = pipe->set_fragment_sampler_textures;
+   pstip->driver_set_sampler_views = pipe->set_fragment_sampler_views;
    pstip->driver_set_polygon_stipple = pipe->set_polygon_stipple;
 
    /* override the driver's functions */
@@ -763,7 +796,7 @@ draw_install_pstipple_stage(struct draw_context *draw,
    pipe->delete_fs_state = pstip_delete_fs_state;
 
    pipe->bind_fragment_sampler_states = pstip_bind_sampler_states;
-   pipe->set_fragment_sampler_textures = pstip_set_sampler_textures;
+   pipe->set_fragment_sampler_views = pstip_set_sampler_views;
    pipe->set_polygon_stipple = pstip_set_polygon_stipple;
 
    return TRUE;

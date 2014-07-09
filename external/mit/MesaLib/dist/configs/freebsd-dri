@@ -30,9 +30,11 @@ ASM_SOURCES =
 MESA_ASM_SOURCES = 
 
 # Library/program dependencies
+MESA_MODULES  = $(TOP)/src/mesa/libmesa.a
+
 LIBDRM_CFLAGS = `pkg-config --cflags libdrm`
 LIBDRM_LIB = `pkg-config --libs libdrm`
-DRI_LIB_DEPS = -L/usr/local/lib -lm -pthread -lexpat $(LIBDRM_LIB)
+DRI_LIB_DEPS = $(MESA_MODULES) -L/usr/local/lib -lm -pthread -lexpat $(LIBDRM_LIB)
 GL_LIB_DEPS = -L/usr/local/lib -lX11 -lXext -lXxf86vm -lXdamage -lXfixes \
 	-lm -pthread $(LIBDRM_LIB)
 
@@ -41,10 +43,8 @@ GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -L/usr/local/lib -lGL -lXt -lX11
 
 
 # Directories
-SRC_DIRS = glx gallium mesa glu glut/glx glew glw
+SRC_DIRS = glx gallium mesa glu glut/glx glw
 DRIVER_DIRS = dri
-PROGRAM_DIRS = 
-WINDOW_SYSTEM=dri
 
 DRM_SOURCE_PATH=$(TOP)/../drm
 

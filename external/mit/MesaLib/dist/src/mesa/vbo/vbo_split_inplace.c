@@ -41,7 +41,7 @@
  * that.
  */
 struct split_context {
-   GLcontext *ctx;
+   struct gl_context *ctx;
    const struct gl_client_array **array;
    const struct _mesa_prim *prim;
    GLuint nr_prims;
@@ -178,6 +178,7 @@ static void split_prims( struct split_context *split)
 	    outprim->end = (nr == remaining && prim->end);
 	    outprim->start = prim->start + j;
 	    outprim->count = nr;
+            outprim->num_instances = prim->num_instances;
 
 	    update_index_bounds(split, outprim);
 
@@ -221,6 +222,7 @@ static void split_prims( struct split_context *split)
 	 tmpprim.indexed = 1;
 	 tmpprim.start = 0;
 	 tmpprim.count = count;
+         tmpprim.num_instances = 1;
 
 	 flush_vertex(split);
 
@@ -249,7 +251,7 @@ static void split_prims( struct split_context *split)
 }
 
 
-void vbo_split_inplace( GLcontext *ctx,
+void vbo_split_inplace( struct gl_context *ctx,
 			const struct gl_client_array *arrays[],
 			const struct _mesa_prim *prim,
 			GLuint nr_prims,

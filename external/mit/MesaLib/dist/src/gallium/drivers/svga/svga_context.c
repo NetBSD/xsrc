@@ -34,14 +34,22 @@
 
 #include "svga_context.h"
 #include "svga_screen.h"
-#include "svga_screen_texture.h"
-#include "svga_screen_buffer.h"
+#include "svga_surface.h"
+#include "svga_resource_texture.h"
+#include "svga_resource_buffer.h"
+#include "svga_resource.h"
 #include "svga_winsys.h"
 #include "svga_swtnl.h"
 #include "svga_draw.h"
 #include "svga_debug.h"
 #include "svga_state.h"
 
+DEBUG_GET_ONCE_BOOL_OPTION(no_swtnl, "SVGA_NO_SWTNL", FALSE)
+DEBUG_GET_ONCE_BOOL_OPTION(force_swtnl, "SVGA_FORCE_SWTNL", FALSE);
+DEBUG_GET_ONCE_BOOL_OPTION(use_min_mipmap, "SVGA_USE_MIN_MIPMAP", FALSE);
+DEBUG_GET_ONCE_NUM_OPTION(disable_shader, "SVGA_DISABLE_SHADER", ~0);
+DEBUG_GET_ONCE_BOOL_OPTION(no_line_width, "SVGA_NO_LINE_WIDTH", FALSE);
+DEBUG_GET_ONCE_BOOL_OPTION(force_hw_line_stipple, "SVGA_FORCE_HW_LINE_STIPPLE", FALSE);
 
 static void svga_destroy( struct pipe_context *pipe )
 {
@@ -66,64 +74,11 @@ static void svga_destroy( struct pipe_context *pipe )
    util_bitmask_destroy( svga->fs_bm );
 
    for(shader = 0; shader < PIPE_SHADER_TYPES; ++shader)
-      pipe_buffer_reference( &svga->curr.cb[shader], NULL );
+      pipe_resource_reference( &svga->curr.cb[shader], NULL );
 
    FREE( svga );
 }
 
-static unsigned int
-svga_is_texture_referenced( struct pipe_context *pipe,
-			    struct pipe_texture *texture,
-			    unsigned face, unsigned level)
-{
-   struct svga_texture *tex = svga_texture(texture);
-   struct svga_screen *ss = svga_screen(pipe->screen);
-
-   /**
-    * The screen does not cache texture writes.
-    */
-
-   if (!tex->handle || ss->sws->surface_is_flushed(ss->sws, tex->handle))
-      return PIPE_UNREFERENCED;
-
-   /**
-    * sws->surface_is_flushed() does not distinguish between read references
-    * and write references. So assume a reference is both.
-    */
-
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-}
-
-static unsigned int
-svga_is_buffer_referenced( struct pipe_context *pipe,
-			   struct pipe_buffer *buf)
-
-{
-   struct svga_screen *ss = svga_screen(pipe->screen);
-   struct svga_buffer *sbuf = svga_buffer(buf);
-
-   /**
-    * XXX: Check this.
-    * The screen may cache buffer writes, but when we map, we map out
-    * of those cached writes, so we don't need to set a
-    * PIPE_REFERENCED_FOR_WRITE flag for cached buffers.
-    */
-
-   if (!sbuf->handle || ss->sws->surface_is_flushed(ss->sws, sbuf->handle))
-     return PIPE_UNREFERENCED;
-
-   /**
-    * sws->surface_is_flushed() does not distinguish between read references
-    * and write references. So assume a reference is both,
-    * however, we make an exception for index- and vertex buffers, to avoid
-    * a flush in st_bufferobj_get_subdata, during display list replay.
-    */
-
-   if (sbuf->base.usage & (PIPE_BUFFER_USAGE_VERTEX | PIPE_BUFFER_USAGE_INDEX))
-      return PIPE_REFERENCED_FOR_READ;
-
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-}
 
 
 struct pipe_context *svga_context_create( struct pipe_screen *screen,
@@ -143,13 +98,11 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen,
    svga->pipe.destroy = svga_destroy;
    svga->pipe.clear = svga_clear;
 
-   svga->pipe.is_texture_referenced = svga_is_texture_referenced;
-   svga->pipe.is_buffer_referenced = svga_is_buffer_referenced;
-
    svga->swc = svgascreen->sws->context_create(svgascreen->sws);
    if(!svga->swc)
       goto no_swc;
 
+   svga_init_resource_functions(svga);
    svga_init_blend_functions(svga);
    svga_init_blit_functions(svga);
    svga_init_depth_stencil_functions(svga);
@@ -163,15 +116,16 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen,
    svga_init_vertex_functions(svga);
    svga_init_constbuffer_functions(svga);
    svga_init_query_functions(svga);
+   svga_init_surface_functions(svga);
+
 
    /* debug */
-   svga->debug.no_swtnl = debug_get_bool_option("SVGA_NO_SWTNL", FALSE);
-   svga->debug.force_swtnl = debug_get_bool_option("SVGA_FORCE_SWTNL", FALSE);
-   svga->debug.use_min_mipmap = debug_get_bool_option("SVGA_USE_MIN_MIPMAP", FALSE);
-   svga->debug.disable_shader = debug_get_num_option("SVGA_DISABLE_SHADER", ~0);
-
-   if (!svga_init_swtnl(svga))
-      goto no_swtnl;
+   svga->debug.no_swtnl = debug_get_option_no_swtnl();
+   svga->debug.force_swtnl = debug_get_option_force_swtnl();
+   svga->debug.use_min_mipmap = debug_get_option_use_min_mipmap();
+   svga->debug.disable_shader = debug_get_option_disable_shader();
+   svga->debug.no_line_width = debug_get_option_no_line_width();
+   svga->debug.force_hw_line_stipple = debug_get_option_force_hw_line_stipple();
 
    svga->fs_bm = util_bitmask_create();
    if (svga->fs_bm == NULL)
@@ -181,17 +135,17 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen,
    if (svga->vs_bm == NULL)
       goto no_vs_bm;
 
-   svga->upload_ib = u_upload_create( svga->pipe.screen,
+   svga->upload_ib = u_upload_create( &svga->pipe,
                                       32 * 1024,
                                       16,
-                                      PIPE_BUFFER_USAGE_INDEX );
+                                      PIPE_BIND_INDEX_BUFFER );
    if (svga->upload_ib == NULL)
       goto no_upload_ib;
 
-   svga->upload_vb = u_upload_create( svga->pipe.screen,
+   svga->upload_vb = u_upload_create( &svga->pipe,
                                       128 * 1024,
                                       16,
-                                      PIPE_BUFFER_USAGE_VERTEX );
+                                      PIPE_BIND_VERTEX_BUFFER );
    if (svga->upload_vb == NULL)
       goto no_upload_vb;
 
@@ -201,6 +155,8 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen,
    if (svga->hwtnl == NULL)
       goto no_hwtnl;
 
+   if (!svga_init_swtnl(svga))
+      goto no_swtnl;
 
    ret = svga_emit_initial_state( svga );
    if (ret)
@@ -223,6 +179,8 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen,
    return &svga->pipe;
 
 no_state:
+   svga_destroy_swtnl(svga);
+no_swtnl:
    svga_hwtnl_destroy( svga->hwtnl );
 no_hwtnl:
    u_upload_destroy( svga->upload_vb );
@@ -233,8 +191,6 @@ no_upload_ib:
 no_vs_bm:
    util_bitmask_destroy( svga->fs_bm );
 no_fs_bm:
-   svga_destroy_swtnl(svga);
-no_swtnl:
    svga->swc->destroy(svga->swc);
 no_swc:
    FREE(svga);
@@ -247,29 +203,37 @@ void svga_context_flush( struct svga_context *svga,
                          struct pipe_fence_handle **pfence )
 {
    struct svga_screen *svgascreen = svga_screen(svga->pipe.screen);
+   struct pipe_fence_handle *fence = NULL;
 
    svga->curr.nr_fbs = 0;
 
-   /* Unmap upload manager buffers: 
-    */
-   u_upload_flush(svga->upload_vb);
-   u_upload_flush(svga->upload_ib);
-
-   /* Flush screen, to ensure that texture dma uploads are processed
+   /* Ensure that texture dma uploads are processed
     * before submitting commands.
     */
-   svga_screen_flush(svgascreen, NULL);
-   
    svga_context_flush_buffers(svga);
 
    /* Flush pending commands to hardware:
     */
-   svga->swc->flush(svga->swc, pfence);
+   svga->swc->flush(svga->swc, &fence);
+
+   svga_screen_cache_flush(svgascreen, fence);
+
+   /* To force the re-emission of rendertargets and texture sampler bindings on
+    * the next command buffer.
+    */
+   svga->rebind.rendertargets = TRUE;
+   svga->rebind.texture_samplers = TRUE;
 
    if (SVGA_DEBUG & DEBUG_SYNC) {
-      if (pfence && *pfence)
-         svga->pipe.screen->fence_finish( svga->pipe.screen, *pfence, 0);
+      if (fence)
+         svga->pipe.screen->fence_finish( svga->pipe.screen, fence,
+                                          PIPE_TIMEOUT_INFINITE);
    }
+
+   if(pfence)
+      *pfence = fence;
+   else
+      svgascreen->sws->fence_reference(svgascreen->sws, &fence, NULL);
 }
 
 
@@ -286,3 +250,32 @@ void svga_hwtnl_flush_retry( struct svga_context *svga )
    assert(ret == 0);
 }
 
+
+/* Emit all operations pending on host surfaces.
+ */ 
+void svga_surfaces_flush(struct svga_context *svga)
+{
+   unsigned i;
+
+   /* Emit buffered drawing commands.
+    */
+   svga_hwtnl_flush_retry( svga );
+
+   /* Emit back-copy from render target view to texture.
+    */
+   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
+      if (svga->curr.framebuffer.cbufs[i])
+         svga_propagate_surface(svga, svga->curr.framebuffer.cbufs[i]);
+   }
+
+   if (svga->curr.framebuffer.zsbuf)
+      svga_propagate_surface(svga, svga->curr.framebuffer.zsbuf);
+
+}
+
+
+struct svga_winsys_context *
+svga_winsys_context( struct pipe_context *pipe )
+{
+   return svga_context( pipe )->swc;
+}

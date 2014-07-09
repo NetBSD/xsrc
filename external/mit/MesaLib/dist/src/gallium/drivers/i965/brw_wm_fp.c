@@ -678,7 +678,7 @@ static void precalc_tex( struct brw_wm_compile *c,
 			 struct brw_fp_src src0,
 			 struct brw_fp_src sampler )
 {
-   struct brw_fp_src coord = src_undef();
+   struct brw_fp_src coord;
    struct brw_fp_dst tmp = dst_undef();
 
    assert(unit < BRW_MAX_TEX_UNIT);
@@ -812,7 +812,7 @@ static void precalc_tex( struct brw_wm_compile *c,
    }
 
    /* XXX: add GL_EXT_texture_swizzle support to gallium -- by
-    * generating shader varients in mesa state tracker.
+    * generating shader variants in mesa state tracker.
     */
 
    /* Release this temp if we ended up allocating it:

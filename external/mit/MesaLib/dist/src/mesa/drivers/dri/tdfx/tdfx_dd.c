@@ -41,9 +41,6 @@
 #include "main/context.h"
 
 
-#define DRIVER_DATE	"20061113"
-
-
 /* These are used in calls to FX_grColorMaskv() */
 const GLboolean false4[4] = { GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE };
 const GLboolean true4[4] = { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE };
@@ -54,7 +51,7 @@ const GLboolean true4[4] = { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE };
  * checks for this rather than doing a glGet(GL_MAX_TEXTURE_SIZE).
  * Why?
  */
-static const GLubyte *tdfxDDGetString( GLcontext *ctx, GLenum name )
+static const GLubyte *tdfxDDGetString( struct gl_context *ctx, GLenum name )
 {
    tdfxContextPtr fxMesa = (tdfxContextPtr) ctx->DriverCtx;
 
@@ -91,7 +88,7 @@ static const GLubyte *tdfxDDGetString( GLcontext *ctx, GLenum name )
 	 }
       }
 
-      (void) driGetRendererString(buffer, hardware, DRIVER_DATE, 0);
+      (void) driGetRendererString(buffer, hardware, 0);
       return (const GLubyte *) buffer;
    }
    case GL_VENDOR:
@@ -103,7 +100,7 @@ static const GLubyte *tdfxDDGetString( GLcontext *ctx, GLenum name )
 
 
 static void
-tdfxBeginQuery(GLcontext *ctx, struct gl_query_object *q)
+tdfxBeginQuery(struct gl_context *ctx, struct gl_query_object *q)
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
@@ -119,7 +116,7 @@ tdfxBeginQuery(GLcontext *ctx, struct gl_query_object *q)
 
 
 static void
-tdfxEndQuery(GLcontext *ctx, struct gl_query_object *q)
+tdfxEndQuery(struct gl_context *ctx, struct gl_query_object *q)
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    FxI32 total_pixels;
@@ -157,7 +154,7 @@ tdfxEndQuery(GLcontext *ctx, struct gl_query_object *q)
     (vis->blueBits == b) &&                        \
     (vis->alphaBits == a))
 
-void tdfxDDInitDriverFuncs( const __GLcontextModes *visual,
+void tdfxDDInitDriverFuncs( const struct gl_config *visual,
                             struct dd_function_table *functions )
 {
    if ( MESA_VERBOSE & VERBOSE_DRIVER ) {
@@ -187,7 +184,7 @@ void tdfxDDInitDriverFuncs( const __GLcontextModes *visual,
  */
 
 void
-FX_grColorMaskv(GLcontext *ctx, const GLboolean rgba[4])
+FX_grColorMaskv(struct gl_context *ctx, const GLboolean rgba[4])
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    LOCK_HARDWARE(fxMesa);
@@ -207,7 +204,7 @@ FX_grColorMaskv(GLcontext *ctx, const GLboolean rgba[4])
 }
 
 void
-FX_grColorMaskv_NoLock(GLcontext *ctx, const GLboolean rgba[4])
+FX_grColorMaskv_NoLock(struct gl_context *ctx, const GLboolean rgba[4])
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    if (ctx->Visual.redBits == 8) {

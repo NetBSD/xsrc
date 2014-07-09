@@ -34,25 +34,29 @@
 #include "brw_vs.h"
 #include "brw_util.h"
 #include "brw_state.h"
-#include "shader/prog_print.h"
-#include "shader/prog_parameter.h"
+#include "program/prog_print.h"
+#include "program/prog_parameter.h"
 
-
+#include "../glsl/ralloc.h"
 
 static void do_vs_prog( struct brw_context *brw, 
 			struct brw_vertex_program *vp,
 			struct brw_vs_prog_key *key )
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    GLuint program_size;
    const GLuint *program;
    struct brw_vs_compile c;
+   void *mem_ctx;
    int aux_size;
+   int i;
 
    memset(&c, 0, sizeof(c));
    memcpy(&c.key, key, sizeof(*key));
 
-   brw_init_compile(brw, &c.func);
+   mem_ctx = ralloc_context(NULL);
+
+   brw_init_compile(brw, &c.func, mem_ctx);
    c.vp = vp;
 
    c.prog_data.outputs_written = vp->program.Base.OutputsWritten;
@@ -63,10 +67,21 @@ static void do_vs_prog( struct brw_context *brw,
       c.prog_data.inputs_read |= 1<<VERT_ATTRIB_EDGEFLAG;
    }
 
-   if (0)
-      _mesa_print_program(&c.vp->program.Base);
+   /* Put dummy slots into the VUE for the SF to put the replaced
+    * point sprite coords in.  We shouldn't need these dummy slots,
+    * which take up precious URB space, but it would mean that the SF
+    * doesn't get nice aligned pairs of input coords into output
+    * coords, which would be a pain to handle.
+    */
+   for (i = 0; i < 8; i++) {
+      if (c.key.point_coord_replace & (1 << i))
+	 c.prog_data.outputs_written |= BITFIELD64_BIT(VERT_RESULT_TEX0 + i);
+   }
 
-
+   if (0) {
+      _mesa_fprint_program_opt(stdout, &c.vp->program.Base, PROG_PRINT_DEBUG,
+			       GL_TRUE);
+   }
 
    /* Emit GEN4 code.
     */
@@ -84,28 +99,28 @@ static void do_vs_prog( struct brw_context *brw,
 	  sizeof(c.prog_data));
    assert(ctx->Const.VertexProgram.MaxNativeParameters ==
 	  ARRAY_SIZE(c.constant_map));
+   (void) ctx;
 
    aux_size = sizeof(c.prog_data);
-   if (c.vp->use_const_buffer)
-      aux_size += c.vp->program.Base.Parameters->NumParameters;
+   /* constant_map */
+   aux_size += c.vp->program.Base.Parameters->NumParameters;
 
-   dri_bo_unreference(brw->vs.prog_bo);
-   brw->vs.prog_bo = brw_upload_cache_with_auxdata(&brw->cache, BRW_VS_PROG,
-						   &c.key, sizeof(c.key),
-						   NULL, 0,
-						   program, program_size,
-						   &c.prog_data,
-						   aux_size,
-						   &brw->vs.prog_data);
+   brw_upload_cache(&brw->cache, BRW_VS_PROG,
+		    &c.key, sizeof(c.key),
+		    program, program_size,
+		    &c.prog_data, aux_size,
+		    &brw->vs.prog_offset, &brw->vs.prog_data);
+   ralloc_free(mem_ctx);
 }
 
 
 static void brw_upload_vs_prog(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct brw_vs_prog_key key;
    struct brw_vertex_program *vp = 
       (struct brw_vertex_program *)brw->vertex_program;
+   int i;
 
    memset(&key, 0, sizeof(key));
 
@@ -116,16 +131,32 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    key.nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
    key.copy_edgeflag = (ctx->Polygon.FrontMode != GL_FILL ||
 			ctx->Polygon.BackMode != GL_FILL);
+   key.two_side_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
 
-   /* Make an early check for the key.
-    */
-   dri_bo_unreference(brw->vs.prog_bo);
-   brw->vs.prog_bo = brw_search_cache(&brw->cache, BRW_VS_PROG,
-				      &key, sizeof(key),
-				      NULL, 0,
-				      &brw->vs.prog_data);
-   if (brw->vs.prog_bo == NULL)
+   /* _NEW_LIGHT | _NEW_BUFFERS */
+   key.clamp_vertex_color = ctx->Light._ClampVertexColor;
+
+   /* _NEW_POINT */
+   if (ctx->Point.PointSprite) {
+      for (i = 0; i < 8; i++) {
+	 if (ctx->Point.CoordReplace[i])
+	    key.point_coord_replace |= (1 << i);
+      }
+   }
+
+   /* BRW_NEW_VERTICES */
+   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+      if (vp->program.Base.InputsRead & (1 << i) &&
+	  brw->vb.inputs[i].glarray->Type == GL_FIXED) {
+	 key.gl_fixed_input_size[i] = brw->vb.inputs[i].glarray->Size;
+      }
+   }
+
+   if (!brw_search_cache(&brw->cache, BRW_VS_PROG,
+			 &key, sizeof(key),
+			 &brw->vs.prog_offset, &brw->vs.prog_data)) {
       do_vs_prog(brw, vp, &key);
+   }
    brw->vs.constant_map = ((int8_t *)brw->vs.prog_data +
 			   sizeof(*brw->vs.prog_data));
 }
@@ -135,8 +166,10 @@ static void brw_upload_vs_prog(struct brw_context *brw)
  */
 const struct brw_tracked_state brw_vs_prog = {
    .dirty = {
-      .mesa  = _NEW_TRANSFORM | _NEW_POLYGON,
-      .brw   = BRW_NEW_VERTEX_PROGRAM,
+      .mesa  = (_NEW_TRANSFORM | _NEW_POLYGON | _NEW_POINT | _NEW_LIGHT |
+		_NEW_BUFFERS),
+      .brw   = (BRW_NEW_VERTEX_PROGRAM |
+		BRW_NEW_VERTICES),
       .cache = 0
    },
    .prepare = brw_upload_vs_prog

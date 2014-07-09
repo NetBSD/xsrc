@@ -31,8 +31,6 @@
 #include "main/mtypes.h"
 #include "main/formats.h"
 #include "intel_context.h"
-#include "texmem.h"
-
 
 void intelInitTextureFuncs(struct dd_function_table *functions);
 
@@ -42,8 +40,7 @@ void intelInitTextureSubImageFuncs(struct dd_function_table *functions);
 
 void intelInitTextureCopyImageFuncs(struct dd_function_table *functions);
 
-gl_format intelChooseTextureFormat(GLcontext *ctx, GLint internalFormat,
-                                   GLenum format, GLenum type);
+GLenum intel_mesa_format_to_rb_datatype(gl_format format);
 
 void intelSetTexBuffer(__DRIcontext *pDRICtx,
 		       GLint target, __DRIdrawable *pDraw);
@@ -67,5 +64,13 @@ void intel_tex_unmap_images(struct intel_context *intel,
                             struct intel_texture_object *intelObj);
 
 int intel_compressed_num_bytes(GLuint mesaFormat);
+
+GLboolean intel_copy_texsubimage(struct intel_context *intel,
+                                 GLenum target,
+                                 struct intel_texture_image *intelImage,
+                                 GLenum internalFormat,
+                                 GLint dstx, GLint dsty,
+                                 GLint x, GLint y,
+                                 GLsizei width, GLsizei height);
 
 #endif

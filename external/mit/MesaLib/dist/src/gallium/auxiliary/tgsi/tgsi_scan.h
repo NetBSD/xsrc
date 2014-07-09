@@ -45,23 +45,35 @@ struct tgsi_shader_info
    ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS]; /**< TGSI_SEMANTIC_x */
    ubyte input_semantic_index[PIPE_MAX_SHADER_INPUTS];
    ubyte input_interpolate[PIPE_MAX_SHADER_INPUTS];
+   ubyte input_centroid[PIPE_MAX_SHADER_INPUTS];
+   ubyte input_usage_mask[PIPE_MAX_SHADER_INPUTS];
    ubyte input_cylindrical_wrap[PIPE_MAX_SHADER_INPUTS];
    ubyte output_semantic_name[PIPE_MAX_SHADER_OUTPUTS]; /**< TGSI_SEMANTIC_x */
    ubyte output_semantic_index[PIPE_MAX_SHADER_OUTPUTS];
+
+   ubyte num_system_values;
+   ubyte system_value_semantic_name[PIPE_MAX_SHADER_INPUTS];
 
    uint file_mask[TGSI_FILE_COUNT];  /**< bitmask of declared registers */
    uint file_count[TGSI_FILE_COUNT];  /**< number of declared registers */
    int file_max[TGSI_FILE_COUNT];  /**< highest index of declared registers */
 
    uint immediate_count; /**< number of immediates declared */
+   uint num_instructions;
 
    uint opcode_count[TGSI_OPCODE_LAST];  /**< opcode histogram */
 
    boolean writes_z;  /**< does fragment shader write Z value? */
+   boolean writes_stencil; /**< does fragment shader write stencil value? */
    boolean writes_edgeflag; /**< vertex shader outputs edgeflag */
    boolean uses_kill;  /**< KIL or KILP instruction used? */
-   boolean uses_fogcoord; /**< fragment shader uses fog coord? */
-   boolean uses_frontfacing; /**< fragment shader uses front/back-face flag? */
+   boolean uses_instanceid;
+
+   /**
+    * Bitmask indicating which register files are accessed with
+    * indirect addressing.  The bits are (1 << TGSI_FILE_x), etc.
+    */
+   unsigned indirect_files;
 
    struct {
       unsigned name;

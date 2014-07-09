@@ -32,6 +32,8 @@
 #include "context.h"
 #include "feedback.h"
 #include "macros.h"
+#include "mfeatures.h"
+#include "mtypes.h"
 #include "rastpos.h"
 #include "state.h"
 #include "main/dispatch.h"
@@ -545,10 +547,10 @@ _mesa_init_rastpos_dispatch(struct _glapi_table *disp)
  * \param ctx GL context.
  *
  * Initialize the current raster position information in
- * __GLcontextRec::Current, and adds the extension entry points to the
+ * __struct gl_contextRec::Current, and adds the extension entry points to the
  * dispatcher.
  */
-void _mesa_init_rastpos( GLcontext * ctx )
+void _mesa_init_rastpos( struct gl_context * ctx )
 {
    int i;
 

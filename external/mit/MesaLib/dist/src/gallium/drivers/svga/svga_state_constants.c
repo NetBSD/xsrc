@@ -40,9 +40,12 @@
 
 /* Convert from PIPE_SHADER_* to SVGA3D_SHADERTYPE_*
  */
-static int svga_shader_type( int unit )
+static int svga_shader_type( int shader )
 {
-   return unit + 1;
+   assert(PIPE_SHADER_VERTEX + 1 == SVGA3D_SHADERTYPE_VS);
+   assert(PIPE_SHADER_FRAGMENT + 1 == SVGA3D_SHADERTYPE_PS);
+   assert(shader <= PIPE_SHADER_FRAGMENT);
+   return shader + 1;
 }
 
 
@@ -82,7 +85,7 @@ static int emit_consts( struct svga_context *svga,
                         int offset,
                         int unit )
 {
-   struct pipe_screen *screen = svga->pipe.screen;
+   struct pipe_transfer *transfer = NULL;
    unsigned count;
    const float (*data)[4] = NULL;
    unsigned i;
@@ -91,11 +94,12 @@ static int emit_consts( struct svga_context *svga,
    if (svga->curr.cb[unit] == NULL)
       goto done;
 
-   count = svga->curr.cb[unit]->size / (4 * sizeof(float));
+   count = svga->curr.cb[unit]->width0 / (4 * sizeof(float));
 
-   data = (const float (*)[4])pipe_buffer_map(screen,
+   data = (const float (*)[4])pipe_buffer_map(&svga->pipe,
                                               svga->curr.cb[unit],
-                                              PIPE_BUFFER_USAGE_CPU_READ);
+                                              PIPE_TRANSFER_READ,
+					      &transfer);
    if (data == NULL) {
       ret = PIPE_ERROR_OUT_OF_MEMORY;
       goto done;
@@ -109,7 +113,7 @@ static int emit_consts( struct svga_context *svga,
 
 done:
    if (data)
-      pipe_buffer_unmap(screen, svga->curr.cb[unit]);
+      pipe_buffer_unmap(&svga->pipe, transfer);
 
    return ret;
 }
@@ -137,7 +141,7 @@ static int emit_fs_consts( struct svga_context *svga,
 
       for (i = 0; i < key->num_textures; i++) {
          if (key->tex[i].unnormalized) {
-            struct pipe_texture *tex = svga->curr.texture[i];
+            struct pipe_resource *tex = svga->curr.sampler_views[i]->texture;
             float data[4];
 
             data[0] = 1.0 / (float)tex->width0;

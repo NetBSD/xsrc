@@ -28,8 +28,8 @@
 #include "radeon_mesa_to_rc.h"
 
 #include "main/mtypes.h"
-#include "shader/prog_instruction.h"
-#include "shader/prog_parameter.h"
+#include "program/prog_instruction.h"
+#include "program/prog_parameter.h"
 
 #include "compiler/radeon_compiler.h"
 #include "compiler/radeon_program.h"
@@ -128,7 +128,6 @@ static void translate_dstreg(struct rc_dst_register * dest, struct prog_dst_regi
 {
 	dest->File = translate_register_file(src->File);
 	dest->Index = src->Index;
-	dest->RelAddr = src->RelAddr;
 	dest->WriteMask = src->WriteMask;
 }
 
@@ -171,6 +170,7 @@ static void translate_instruction(struct radeon_compiler * c,
 		dest->U.I.TexSrcUnit = src->TexSrcUnit;
 		dest->U.I.TexSrcTarget = translate_tex_target(src->TexSrcTarget);
 		dest->U.I.TexShadow = src->TexShadow;
+		dest->U.I.TexSwizzle = RC_SWIZZLE_XYZW;
 	}
 }
 

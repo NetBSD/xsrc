@@ -25,8 +25,11 @@
 #ifndef TEXCOMPRESS_FXT1_H
 #define TEXCOMPRESS_FXT1_H
 
-#include "main/mtypes.h"
+#include "glheader.h"
+#include "mfeatures.h"
 #include "texstore.h"
+
+struct gl_texture_image;
 
 #if FEATURE_texture_fxt1
 

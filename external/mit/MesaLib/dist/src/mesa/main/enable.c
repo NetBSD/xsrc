@@ -29,10 +29,12 @@
 
 
 #include "glheader.h"
+#include "clip.h"
 #include "context.h"
 #include "enable.h"
 #include "light.h"
 #include "simple_list.h"
+#include "mfeatures.h"
 #include "mtypes.h"
 #include "enums.h"
 #include "api_arrayelt.h"
@@ -42,9 +44,7 @@
 
 #define CHECK_EXTENSION(EXTNAME, CAP)					\
    if (!ctx->Extensions.EXTNAME) {					\
-      _mesa_error(ctx, GL_INVALID_ENUM, "gl%sClientState(0x%x)",	\
-                  state ? "Enable" : "Disable", CAP);			\
-      return;								\
+      goto invalid_enum_error;						\
    }
 
 
@@ -52,7 +52,7 @@
  * Helper to enable/disable client-side state.
  */
 static void
-client_state(GLcontext *ctx, GLenum cap, GLboolean state)
+client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
 {
    struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
    GLuint flag;
@@ -126,10 +126,17 @@ client_state(GLcontext *ctx, GLenum cap, GLboolean state)
          break;
 #endif /* FEATURE_NV_vertex_program */
 
+      /* GL_NV_primitive_restart */
+      case GL_PRIMITIVE_RESTART_NV:
+	 if (!ctx->Extensions.NV_primitive_restart) {
+            goto invalid_enum_error;
+         }
+         var = &ctx->Array.PrimitiveRestart;
+         flag = 0;
+         break;
+
       default:
-         _mesa_error( ctx, GL_INVALID_ENUM,
-                      "glEnable/DisableClientState(0x%x)", cap);
-         return;
+         goto invalid_enum_error;
    }
 
    if (*var == state)
@@ -150,6 +157,12 @@ client_state(GLcontext *ctx, GLenum cap, GLboolean state)
    if (ctx->Driver.Enable) {
       ctx->Driver.Enable( ctx, cap, state );
    }
+
+   return;
+
+invalid_enum_error:
+   _mesa_error(ctx, GL_INVALID_ENUM, "gl%sClientState(0x%x)",
+               state ? "Enable" : "Disable", cap);
 }
 
 
@@ -188,16 +201,12 @@ _mesa_DisableClientState( GLenum cap )
 #undef CHECK_EXTENSION
 #define CHECK_EXTENSION(EXTNAME, CAP)					\
    if (!ctx->Extensions.EXTNAME) {					\
-      _mesa_error(ctx, GL_INVALID_ENUM, "gl%s(0x%x)",			\
-                  state ? "Enable" : "Disable", CAP);			\
-      return;								\
+      goto invalid_enum_error;						\
    }
 
 #define CHECK_EXTENSION2(EXT1, EXT2, CAP)				\
    if (!ctx->Extensions.EXT1 && !ctx->Extensions.EXT2) {		\
-      _mesa_error(ctx, GL_INVALID_ENUM, "gl%s(0x%x)",			\
-                  state ? "Enable" : "Disable", CAP);			\
-      return;								\
+      goto invalid_enum_error;						\
    }
 
 
@@ -205,11 +214,11 @@ _mesa_DisableClientState( GLenum cap )
 /**
  * Return pointer to current texture unit for setting/getting coordinate
  * state.
- * Note that we'll set GL_INVALID_OPERATION if the active texture unit is
- * higher than the number of supported coordinate units.  And we'll return NULL.
+ * Note that we'll set GL_INVALID_OPERATION and return NULL if the active
+ * texture unit is higher than the number of supported coordinate units.
  */
 static struct gl_texture_unit *
-get_texcoord_unit(GLcontext *ctx)
+get_texcoord_unit(struct gl_context *ctx)
 {
    if (ctx->Texture.CurrentUnit >= ctx->Const.MaxTextureCoordUnits) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glEnable/Disable(texcoord unit)");
@@ -227,7 +236,7 @@ get_texcoord_unit(GLcontext *ctx)
  * \return GL_TRUE if state is changing or GL_FALSE if no change
  */
 static GLboolean
-enable_texture(GLcontext *ctx, GLboolean state, GLbitfield texBit)
+enable_texture(struct gl_context *ctx, GLboolean state, GLbitfield texBit)
 {
    struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
    const GLbitfield newenabled = state
@@ -255,7 +264,7 @@ enable_texture(GLcontext *ctx, GLboolean state, GLbitfield texBit)
  * dd_function_table::Enable.
  */
 void
-_mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
+_mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 {
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "%s %s (newstate is %x)\n",
@@ -278,7 +287,8 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          break;
       case GL_BLEND:
          {
-            GLbitfield newEnabled = state * ((1 << ctx->Const.MaxDrawBuffers) - 1);
+            GLbitfield newEnabled =
+               state * ((1 << ctx->Const.MaxDrawBuffers) - 1);
             if (newEnabled != ctx->Color.BlendEnabled) {
                FLUSH_VERTICES(ctx, _NEW_COLOR);
                ctx->Color.BlendEnabled = newEnabled;
@@ -295,24 +305,15 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          {
             const GLuint p = cap - GL_CLIP_PLANE0;
 
-            if ((ctx->Transform.ClipPlanesEnabled & (1 << p)) == ((GLuint) state << p))
+            if ((ctx->Transform.ClipPlanesEnabled & (1 << p))
+                == ((GLuint) state << p))
                return;
 
             FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
 
             if (state) {
                ctx->Transform.ClipPlanesEnabled |= (1 << p);
-
-               if (_math_matrix_is_dirty(ctx->ProjectionMatrixStack.Top))
-                  _math_matrix_analyse( ctx->ProjectionMatrixStack.Top );
-
-               /* This derived state also calculated in clip.c and
-                * from _mesa_update_state() on changes to EyeUserPlane
-                * and ctx->ProjectionMatrix respectively.
-                */
-               _mesa_transform_vector( ctx->Transform._ClipUserPlane[p],
-                                    ctx->Transform.EyeUserPlane[p],
-                                    ctx->ProjectionMatrixStack.Top->inv );
+               _mesa_update_clip_plane(ctx, p);
             }
             else {
                ctx->Transform.ClipPlanesEnabled &= ~(1 << p);
@@ -337,13 +338,6 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          FLUSH_VERTICES(ctx, _NEW_POLYGON);
          ctx->Polygon.CullFlag = state;
          break;
-      case GL_CULL_VERTEX_EXT:
-         CHECK_EXTENSION(EXT_cull_vertex, cap);
-         if (ctx->Transform.CullVertexFlag == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
-         ctx->Transform.CullVertexFlag = state;
-         break;
       case GL_DEPTH_TEST:
          if (ctx->Depth.Test == state)
             return;
@@ -351,9 +345,6 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          ctx->Depth.Test = state;
          break;
       case GL_DITHER:
-         if (ctx->NoDither) {
-            state = GL_FALSE; /* MESA_NO_DITHER env var */
-         }
          if (ctx->Color.DitherFlag == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_COLOR);
@@ -364,13 +355,6 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
             return;
          FLUSH_VERTICES(ctx, _NEW_FOG);
          ctx->Fog.Enabled = state;
-         break;
-      case GL_HISTOGRAM:
-         CHECK_EXTENSION(EXT_histogram, cap);
-         if (ctx->Pixel.HistogramEnabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.HistogramEnabled = state;
          break;
       case GL_LIGHT0:
       case GL_LIGHT1:
@@ -536,12 +520,6 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          FLUSH_VERTICES(ctx, _NEW_EVAL);
          ctx->Eval.Map2Vertex4 = state;
          break;
-      case GL_MINMAX:
-         if (ctx->Pixel.MinMaxEnabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.MinMaxEnabled = state;
-         break;
       case GL_NORMALIZE:
          if (ctx->Transform.Normalize == state)
             return;
@@ -627,13 +605,17 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
             return;
          }
          break;
+      case GL_TEXTURE_GEN_S:
+      case GL_TEXTURE_GEN_T:
+      case GL_TEXTURE_GEN_R:
       case GL_TEXTURE_GEN_Q:
          {
             struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
             if (texUnit) {
-               GLuint newenabled = texUnit->TexGenEnabled & ~Q_BIT;
+               GLbitfield coordBit = S_BIT << (cap - GL_TEXTURE_GEN_S);
+               GLbitfield newenabled = texUnit->TexGenEnabled & ~coordBit;
                if (state)
-                  newenabled |= Q_BIT;
+                  newenabled |= coordBit;
                if (texUnit->TexGenEnabled == newenabled)
                   return;
                FLUSH_VERTICES(ctx, _NEW_TEXTURE);
@@ -641,13 +623,17 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
             }
          }
          break;
-      case GL_TEXTURE_GEN_R:
-         {
+
+#if FEATURE_ES1
+      case GL_TEXTURE_GEN_STR_OES:
+	 /* disable S, T, and R at the same time */
+	 {
             struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
             if (texUnit) {
-               GLuint newenabled = texUnit->TexGenEnabled & ~R_BIT;
+               GLuint newenabled =
+		  texUnit->TexGenEnabled & ~STR_BITS;
                if (state)
-                  newenabled |= R_BIT;
+                  newenabled |= STR_BITS;
                if (texUnit->TexGenEnabled == newenabled)
                   return;
                FLUSH_VERTICES(ctx, _NEW_TEXTURE);
@@ -655,34 +641,7 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
             }
          }
          break;
-      case GL_TEXTURE_GEN_S:
-         {
-            struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
-            if (texUnit) {
-               GLuint newenabled = texUnit->TexGenEnabled & ~S_BIT;
-               if (state)
-                  newenabled |= S_BIT;
-               if (texUnit->TexGenEnabled == newenabled)
-                  return;
-               FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-               texUnit->TexGenEnabled = newenabled;
-            }
-         }
-         break;
-      case GL_TEXTURE_GEN_T:
-         {
-            struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
-            if (texUnit) {
-               GLuint newenabled = texUnit->TexGenEnabled & ~T_BIT;
-               if (state)
-                  newenabled |= T_BIT;
-               if (texUnit->TexGenEnabled == newenabled)
-                  return;
-               FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-               texUnit->TexGenEnabled = newenabled;
-            }
-         }
-         break;
+#endif
 
       /*
        * CLIENT STATE!!!
@@ -698,59 +657,6 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
       case GL_POINT_SIZE_ARRAY_OES:
          client_state( ctx, cap, state );
          return;
-
-      /* GL_SGI_color_table */
-      case GL_COLOR_TABLE_SGI:
-         CHECK_EXTENSION(SGI_color_table, cap);
-         if (ctx->Pixel.ColorTableEnabled[COLORTABLE_PRECONVOLUTION] == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.ColorTableEnabled[COLORTABLE_PRECONVOLUTION] = state;
-         break;
-      case GL_POST_CONVOLUTION_COLOR_TABLE_SGI:
-         CHECK_EXTENSION(SGI_color_table, cap);
-         if (ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCONVOLUTION] == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCONVOLUTION] = state;
-         break;
-      case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
-         CHECK_EXTENSION(SGI_color_table, cap);
-         if (ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCOLORMATRIX] == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCOLORMATRIX] = state;
-         break;
-      case GL_TEXTURE_COLOR_TABLE_SGI:
-         CHECK_EXTENSION(SGI_texture_color_table, cap);
-         if (ctx->Texture.Unit[ctx->Texture.CurrentUnit].ColorTableEnabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-         ctx->Texture.Unit[ctx->Texture.CurrentUnit].ColorTableEnabled = state;
-         break;
-
-      /* GL_EXT_convolution */
-      case GL_CONVOLUTION_1D:
-         CHECK_EXTENSION(EXT_convolution, cap);
-         if (ctx->Pixel.Convolution1DEnabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.Convolution1DEnabled = state;
-         break;
-      case GL_CONVOLUTION_2D:
-         CHECK_EXTENSION(EXT_convolution, cap);
-         if (ctx->Pixel.Convolution2DEnabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.Convolution2DEnabled = state;
-         break;
-      case GL_SEPARABLE_2D:
-         CHECK_EXTENSION(EXT_convolution, cap);
-         if (ctx->Pixel.Separable2DEnabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.Separable2DEnabled = state;
-         break;
 
       /* GL_ARB_texture_cube_map */
       case GL_TEXTURE_CUBE_MAP_ARB:
@@ -979,18 +885,55 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
 
       case GL_TEXTURE_CUBE_MAP_SEAMLESS:
 	 CHECK_EXTENSION(ARB_seamless_cube_map, cap);
-	 ctx->Texture.CubeMapSeamless = state;
+	 if (ctx->Texture.CubeMapSeamless != state) {
+	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	    ctx->Texture.CubeMapSeamless = state;
+	 }
 	 break;
 
+#if FEATURE_EXT_transform_feedback
+      case GL_RASTERIZER_DISCARD:
+	 CHECK_EXTENSION(EXT_transform_feedback, cap);
+         if (ctx->TransformFeedback.RasterDiscard != state) {
+            FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
+            ctx->TransformFeedback.RasterDiscard = state;
+         }
+         break;
+#endif
+
+      /* GL 3.1 primitive restart.  Note: this enum is different from
+       * GL_PRIMITIVE_RESTART_NV (which is client state).
+       */
+      case GL_PRIMITIVE_RESTART:
+         if (ctx->VersionMajor * 10 + ctx->VersionMinor < 31) {
+            goto invalid_enum_error;
+         }
+         if (ctx->Array.PrimitiveRestart != state) {
+            FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
+            ctx->Array.PrimitiveRestart = state;
+         }
+         break;
+
+      /* GL3.0 - GL_framebuffer_sRGB */
+      case GL_FRAMEBUFFER_SRGB_EXT:
+         CHECK_EXTENSION(EXT_framebuffer_sRGB, cap);
+         FLUSH_VERTICES(ctx, _NEW_BUFFERS);
+         ctx->Color.sRGBEnabled = state;
+         break;
+
       default:
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                     "%s(0x%x)", state ? "glEnable" : "glDisable", cap);
-         return;
+         goto invalid_enum_error;
    }
 
    if (ctx->Driver.Enable) {
       ctx->Driver.Enable( ctx, cap, state );
    }
+
+   return;
+
+invalid_enum_error:
+   _mesa_error(ctx, GL_INVALID_ENUM, "gl%s(0x%x)",
+               state ? "Enable" : "Disable", cap);
 }
 
 
@@ -1027,13 +970,14 @@ _mesa_Disable( GLenum cap )
  * Enable/disable an indexed state var.
  */
 void
-_mesa_set_enablei(GLcontext *ctx, GLenum cap, GLuint index, GLboolean state)
+_mesa_set_enablei(struct gl_context *ctx, GLenum cap,
+                  GLuint index, GLboolean state)
 {
    ASSERT(state == 0 || state == 1);
    switch (cap) {
    case GL_BLEND:
       if (!ctx->Extensions.EXT_draw_buffers2) {
-         goto bad_cap_error;
+         goto invalid_enum_error;
       }
       if (index >= ctx->Const.MaxDrawBuffers) {
          _mesa_error(ctx, GL_INVALID_VALUE, "%s(index=%u)",
@@ -1049,11 +993,11 @@ _mesa_set_enablei(GLcontext *ctx, GLenum cap, GLuint index, GLboolean state)
       }
       break;
    default:
-      goto bad_cap_error;
+      goto invalid_enum_error;
    }
    return;
 
-bad_cap_error:
+invalid_enum_error:
     _mesa_error(ctx, GL_INVALID_ENUM, "%s(cap=%s)",
                 state ? "glEnablei" : "glDisablei",
                 _mesa_lookup_enum_by_nr(cap));
@@ -1082,6 +1026,7 @@ GLboolean GLAPIENTRY
 _mesa_IsEnabledIndexed( GLenum cap, GLuint index )
 {
    GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
    switch (cap) {
    case GL_BLEND:
       if (index >= ctx->Const.MaxDrawBuffers) {
@@ -1103,15 +1048,13 @@ _mesa_IsEnabledIndexed( GLenum cap, GLuint index )
 #undef CHECK_EXTENSION
 #define CHECK_EXTENSION(EXTNAME)			\
    if (!ctx->Extensions.EXTNAME) {			\
-      _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled");	\
-      return GL_FALSE;					\
+      goto invalid_enum_error;				\
    }
 
 #undef CHECK_EXTENSION2
 #define CHECK_EXTENSION2(EXT1, EXT2)				\
    if (!ctx->Extensions.EXT1 && !ctx->Extensions.EXT2) {	\
-      _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled");		\
-      return GL_FALSE;						\
+      goto invalid_enum_error;					\
    }
 
 
@@ -1119,7 +1062,7 @@ _mesa_IsEnabledIndexed( GLenum cap, GLuint index )
  * Helper function to determine whether a texture target is enabled.
  */
 static GLboolean
-is_texture_enabled(GLcontext *ctx, GLbitfield bit)
+is_texture_enabled(struct gl_context *ctx, GLbitfield bit)
 {
    const struct gl_texture_unit *const texUnit =
        &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
@@ -1140,6 +1083,8 @@ GLboolean GLAPIENTRY
 _mesa_IsEnabled( GLenum cap )
 {
    GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
+
    switch (cap) {
       case GL_ALPHA_TEST:
          return ctx->Color.AlphaEnabled;
@@ -1248,38 +1193,28 @@ _mesa_IsEnabled( GLenum cap )
          return is_texture_enabled(ctx, TEXTURE_2D_BIT);
       case GL_TEXTURE_3D:
          return is_texture_enabled(ctx, TEXTURE_3D_BIT);
+      case GL_TEXTURE_GEN_S:
+      case GL_TEXTURE_GEN_T:
+      case GL_TEXTURE_GEN_R:
       case GL_TEXTURE_GEN_Q:
          {
             const struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
             if (texUnit) {
-               return (texUnit->TexGenEnabled & Q_BIT) ? GL_TRUE : GL_FALSE;
+               GLbitfield coordBit = S_BIT << (cap - GL_TEXTURE_GEN_S);
+               return (texUnit->TexGenEnabled & coordBit) ? GL_TRUE : GL_FALSE;
             }
          }
          return GL_FALSE;
-      case GL_TEXTURE_GEN_R:
-         {
+#if FEATURE_ES1
+      case GL_TEXTURE_GEN_STR_OES:
+	 {
             const struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
             if (texUnit) {
-               return (texUnit->TexGenEnabled & R_BIT) ? GL_TRUE : GL_FALSE;
+               return (texUnit->TexGenEnabled & STR_BITS) == STR_BITS
+                  ? GL_TRUE : GL_FALSE;
             }
          }
-         return GL_FALSE;
-      case GL_TEXTURE_GEN_S:
-         {
-            const struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
-            if (texUnit) {
-               return (texUnit->TexGenEnabled & S_BIT) ? GL_TRUE : GL_FALSE;
-            }
-         }
-         return GL_FALSE;
-      case GL_TEXTURE_GEN_T:
-         {
-            const struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
-            if (texUnit) {
-               return (texUnit->TexGenEnabled & T_BIT) ? GL_TRUE : GL_FALSE;
-            }
-         }
-         return GL_FALSE;
+#endif
 
       /*
        * CLIENT STATE!!!
@@ -1293,7 +1228,8 @@ _mesa_IsEnabled( GLenum cap )
       case GL_INDEX_ARRAY:
          return (ctx->Array.ArrayObj->Index.Enabled != 0);
       case GL_TEXTURE_COORD_ARRAY:
-         return (ctx->Array.ArrayObj->TexCoord[ctx->Array.ActiveTexture].Enabled != 0);
+         return (ctx->Array.ArrayObj->TexCoord[ctx->Array.ActiveTexture]
+                 .Enabled != 0);
       case GL_EDGE_FLAG_ARRAY:
          return (ctx->Array.ArrayObj->EdgeFlag.Enabled != 0);
       case GL_FOG_COORDINATE_ARRAY_EXT:
@@ -1306,41 +1242,6 @@ _mesa_IsEnabled( GLenum cap )
       case GL_POINT_SIZE_ARRAY_OES:
          return (ctx->Array.ArrayObj->PointSize.Enabled != 0);
 #endif
-
-      /* GL_EXT_histogram */
-      case GL_HISTOGRAM:
-         CHECK_EXTENSION(EXT_histogram);
-         return ctx->Pixel.HistogramEnabled;
-      case GL_MINMAX:
-         CHECK_EXTENSION(EXT_histogram);
-         return ctx->Pixel.MinMaxEnabled;
-
-      /* GL_SGI_color_table */
-      case GL_COLOR_TABLE_SGI:
-         CHECK_EXTENSION(SGI_color_table);
-         return ctx->Pixel.ColorTableEnabled[COLORTABLE_PRECONVOLUTION];
-      case GL_POST_CONVOLUTION_COLOR_TABLE_SGI:
-         CHECK_EXTENSION(SGI_color_table);
-         return ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCONVOLUTION];
-      case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
-         CHECK_EXTENSION(SGI_color_table);
-         return ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCOLORMATRIX];
-
-      /* GL_SGI_texture_color_table */
-      case GL_TEXTURE_COLOR_TABLE_SGI:
-         CHECK_EXTENSION(SGI_texture_color_table);
-         return ctx->Texture.Unit[ctx->Texture.CurrentUnit].ColorTableEnabled;
-
-      /* GL_EXT_convolution */
-      case GL_CONVOLUTION_1D:
-         CHECK_EXTENSION(EXT_convolution);
-         return ctx->Pixel.Convolution1DEnabled;
-      case GL_CONVOLUTION_2D:
-         CHECK_EXTENSION(EXT_convolution);
-         return ctx->Pixel.Convolution2DEnabled;
-      case GL_SEPARABLE_2D:
-         CHECK_EXTENSION(EXT_convolution);
-         return ctx->Pixel.Separable2DEnabled;
 
       /* GL_ARB_texture_cube_map */
       case GL_TEXTURE_CUBE_MAP_ARB:
@@ -1493,8 +1394,38 @@ _mesa_IsEnabled( GLenum cap )
 	 CHECK_EXTENSION(ARB_seamless_cube_map);
 	 return ctx->Texture.CubeMapSeamless;
 
+#if FEATURE_EXT_transform_feedback
+      case GL_RASTERIZER_DISCARD:
+	 CHECK_EXTENSION(EXT_transform_feedback);
+         return ctx->TransformFeedback.RasterDiscard;
+#endif
+
+      /* GL_NV_primitive_restart */
+      case GL_PRIMITIVE_RESTART_NV:
+	 if (!ctx->Extensions.NV_primitive_restart) {
+            goto invalid_enum_error;
+         }
+         return ctx->Array.PrimitiveRestart;
+
+      /* GL 3.1 primitive restart */
+      case GL_PRIMITIVE_RESTART:
+         if (ctx->VersionMajor * 10 + ctx->VersionMinor < 31) {
+            goto invalid_enum_error;
+         }
+         return ctx->Array.PrimitiveRestart;
+
+      /* GL3.0 - GL_framebuffer_sRGB */
+      case GL_FRAMEBUFFER_SRGB_EXT:
+	 CHECK_EXTENSION(EXT_framebuffer_sRGB);
+	 return ctx->Color.sRGBEnabled;
+
       default:
-         _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled(0x%x)", (int) cap);
-	 return GL_FALSE;
+         goto invalid_enum_error;
    }
+
+   return GL_FALSE;
+
+invalid_enum_error:
+   _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled(0x%x)", (int) cap);
+   return GL_FALSE;
 }

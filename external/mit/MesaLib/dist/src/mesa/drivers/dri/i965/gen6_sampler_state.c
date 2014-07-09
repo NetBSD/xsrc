@@ -36,36 +36,23 @@ upload_sampler_state_pointers(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
 
    BEGIN_BATCH(4);
-   OUT_BATCH(CMD_3D_SAMPLER_STATE_POINTERS << 16 |
+   OUT_BATCH(_3DSTATE_SAMPLER_STATE_POINTERS << 16 |
 	     VS_SAMPLER_STATE_CHANGE |
 	     GS_SAMPLER_STATE_CHANGE |
 	     PS_SAMPLER_STATE_CHANGE |
 	     (4 - 2));
    OUT_BATCH(0); /* VS */
    OUT_BATCH(0); /* GS */
-   if (brw->wm.sampler_bo)
-      OUT_RELOC(brw->wm.sampler_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
-   else
-      OUT_BATCH(0);
-
+   OUT_BATCH(brw->wm.sampler_offset);
    ADVANCE_BATCH();
-
-   intel_batchbuffer_emit_mi_flush(intel->batch);
-}
-
-
-static void
-prepare_sampler_state_pointers(struct brw_context *brw)
-{
-   brw_add_validated_bo(brw, brw->wm.sampler_bo);
 }
 
 const struct brw_tracked_state gen6_sampler_state = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_BATCH,
+      .brw = (BRW_NEW_BATCH |
+	      BRW_NEW_STATE_BASE_ADDRESS),
       .cache = CACHE_NEW_SAMPLER
    },
-   .prepare = prepare_sampler_state_pointers,
    .emit = upload_sampler_state_pointers,
 };

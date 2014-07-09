@@ -33,24 +33,50 @@
  */
 
 #include "pipe/p_compiler.h"
+#include "os/os_thread.h"
+#include "u_string.h"
 
 #include "u_debug.h"
 #include "u_debug_symbol.h"
+#include "u_hash_table.h"
 
-#if defined(PIPE_SUBSYSTEM_WINDOWS_USER) && defined(PIPE_ARCH_X86)
+#if defined(PIPE_OS_WINDOWS) && defined(PIPE_ARCH_X86)
    
 #include <windows.h>
 #include <stddef.h>
-#include <imagehlp.h>
 
-/*
- * TODO: Cleanup code.
- * TODO: Support x86_64 
- */
+#include "dbghelp.h"
+
 
 static BOOL bSymInitialized = FALSE;
 
-static HMODULE hModule_Imagehlp = NULL;
+static HMODULE hModule_Dbghelp = NULL;
+
+
+static
+FARPROC WINAPI __GetProcAddress(LPCSTR lpProcName)
+{
+#ifdef PIPE_CC_GCC
+   if (!hModule_Dbghelp) {
+      /*
+       * bfdhelp.dll is a dbghelp.dll look-alike replacement, which is able to
+       * understand MinGW symbols using BFD library.  It is available from
+       * http://people.freedesktop.org/~jrfonseca/bfdhelp/ for now.
+       */
+      hModule_Dbghelp = LoadLibraryA("bfdhelp.dll");
+   }
+#endif
+
+   if (!hModule_Dbghelp) {
+      hModule_Dbghelp = LoadLibraryA("dbghelp.dll");
+      if (!hModule_Dbghelp) {
+         return NULL;
+      }
+   }
+
+   return GetProcAddress(hModule_Dbghelp, lpProcName);
+}
+
 
 typedef BOOL (WINAPI *PFNSYMINITIALIZE)(HANDLE, LPSTR, BOOL);
 static PFNSYMINITIALIZE pfnSymInitialize = NULL;
@@ -59,25 +85,9 @@ static
 BOOL WINAPI j_SymInitialize(HANDLE hProcess, PSTR UserSearchPath, BOOL fInvadeProcess)
 {
    if(
-      (hModule_Imagehlp || (hModule_Imagehlp = LoadLibraryA("IMAGEHLP.DLL"))) &&
-      (pfnSymInitialize || (pfnSymInitialize = (PFNSYMINITIALIZE) GetProcAddress(hModule_Imagehlp, "SymInitialize")))
+      (pfnSymInitialize || (pfnSymInitialize = (PFNSYMINITIALIZE) __GetProcAddress("SymInitialize")))
    )
       return pfnSymInitialize(hProcess, UserSearchPath, fInvadeProcess);
-   else
-      return FALSE;
-}
-
-typedef BOOL (WINAPI *PFNSYMCLEANUP)(HANDLE);
-static PFNSYMCLEANUP pfnSymCleanup = NULL;
-
-static
-BOOL WINAPI j_SymCleanup(HANDLE hProcess)
-{
-   if(
-      (hModule_Imagehlp || (hModule_Imagehlp = LoadLibraryA("IMAGEHLP.DLL"))) &&
-      (pfnSymCleanup || (pfnSymCleanup = (PFNSYMCLEANUP) GetProcAddress(hModule_Imagehlp, "SymCleanup")))
-   )
-      return pfnSymCleanup(hProcess);
    else
       return FALSE;
 }
@@ -89,162 +99,145 @@ static
 DWORD WINAPI j_SymSetOptions(DWORD SymOptions)
 {
    if(
-      (hModule_Imagehlp || (hModule_Imagehlp = LoadLibraryA("IMAGEHLP.DLL"))) &&
-      (pfnSymSetOptions || (pfnSymSetOptions = (PFNSYMSETOPTIONS) GetProcAddress(hModule_Imagehlp, "SymSetOptions")))
+      (pfnSymSetOptions || (pfnSymSetOptions = (PFNSYMSETOPTIONS) __GetProcAddress("SymSetOptions")))
    )
       return pfnSymSetOptions(SymOptions);
    else
       return FALSE;
 }
 
-typedef BOOL (WINAPI *PFNSYMUNDNAME)(PIMAGEHLP_SYMBOL, PSTR, DWORD);
-static PFNSYMUNDNAME pfnSymUnDName = NULL;
+typedef BOOL (WINAPI *PFNSYMGETSYMFROMADDR)(HANDLE, DWORD64, PDWORD64, PSYMBOL_INFO);
+static PFNSYMGETSYMFROMADDR pfnSymFromAddr = NULL;
 
 static
-BOOL WINAPI j_SymUnDName(PIMAGEHLP_SYMBOL Symbol, PSTR UnDecName, DWORD UnDecNameLength)
+BOOL WINAPI j_SymFromAddr(HANDLE hProcess, DWORD64 Address, PDWORD64 Displacement, PSYMBOL_INFO Symbol)
 {
    if(
-      (hModule_Imagehlp || (hModule_Imagehlp = LoadLibraryA("IMAGEHLP.DLL"))) &&
-      (pfnSymUnDName || (pfnSymUnDName = (PFNSYMUNDNAME) GetProcAddress(hModule_Imagehlp, "SymUnDName")))
+      (pfnSymFromAddr || (pfnSymFromAddr = (PFNSYMGETSYMFROMADDR) __GetProcAddress("SymFromAddr")))
    )
-      return pfnSymUnDName(Symbol, UnDecName, UnDecNameLength);
-   else
-      return FALSE;
-}
-
-typedef PFUNCTION_TABLE_ACCESS_ROUTINE PFNSYMFUNCTIONTABLEACCESS;
-static PFNSYMFUNCTIONTABLEACCESS pfnSymFunctionTableAccess = NULL;
-
-static
-PVOID WINAPI j_SymFunctionTableAccess(HANDLE hProcess, DWORD AddrBase)
-{
-   if(
-      (hModule_Imagehlp || (hModule_Imagehlp = LoadLibraryA("IMAGEHLP.DLL"))) &&
-      (pfnSymFunctionTableAccess || (pfnSymFunctionTableAccess = (PFNSYMFUNCTIONTABLEACCESS) GetProcAddress(hModule_Imagehlp, "SymFunctionTableAccess")))
-   )
-      return pfnSymFunctionTableAccess(hProcess, AddrBase);
-   else
-      return NULL;
-}
-
-typedef PGET_MODULE_BASE_ROUTINE PFNSYMGETMODULEBASE;
-static PFNSYMGETMODULEBASE pfnSymGetModuleBase = NULL;
-
-static
-DWORD WINAPI j_SymGetModuleBase(HANDLE hProcess, DWORD dwAddr)
-{
-   if(
-      (hModule_Imagehlp || (hModule_Imagehlp = LoadLibraryA("IMAGEHLP.DLL"))) &&
-      (pfnSymGetModuleBase || (pfnSymGetModuleBase = (PFNSYMGETMODULEBASE) GetProcAddress(hModule_Imagehlp, "SymGetModuleBase")))
-   )
-      return pfnSymGetModuleBase(hProcess, dwAddr);
-   else
-      return 0;
-}
-
-typedef BOOL (WINAPI *PFNSTACKWALK)(DWORD, HANDLE, HANDLE, LPSTACKFRAME, LPVOID, PREAD_PROCESS_MEMORY_ROUTINE, PFUNCTION_TABLE_ACCESS_ROUTINE, PGET_MODULE_BASE_ROUTINE, PTRANSLATE_ADDRESS_ROUTINE);
-static PFNSTACKWALK pfnStackWalk = NULL;
-
-static
-BOOL WINAPI j_StackWalk(
-   DWORD MachineType, 
-   HANDLE hProcess, 
-   HANDLE hThread, 
-   LPSTACKFRAME StackFrame, 
-   PVOID ContextRecord, 
-   PREAD_PROCESS_MEMORY_ROUTINE ReadMemoryRoutine,  
-   PFUNCTION_TABLE_ACCESS_ROUTINE FunctionTableAccessRoutine,
-   PGET_MODULE_BASE_ROUTINE GetModuleBaseRoutine, 
-   PTRANSLATE_ADDRESS_ROUTINE TranslateAddress 
-)
-{
-   if(
-      (hModule_Imagehlp || (hModule_Imagehlp = LoadLibraryA("IMAGEHLP.DLL"))) &&
-      (pfnStackWalk || (pfnStackWalk = (PFNSTACKWALK) GetProcAddress(hModule_Imagehlp, "StackWalk")))
-   )
-      return pfnStackWalk(
-         MachineType, 
-         hProcess, 
-         hThread, 
-         StackFrame, 
-         ContextRecord, 
-         ReadMemoryRoutine,  
-         FunctionTableAccessRoutine,
-         GetModuleBaseRoutine, 
-         TranslateAddress 
-      );
-   else
-      return FALSE;
-}
-
-typedef BOOL (WINAPI *PFNSYMGETSYMFROMADDR)(HANDLE, DWORD, LPDWORD, PIMAGEHLP_SYMBOL);
-static PFNSYMGETSYMFROMADDR pfnSymGetSymFromAddr = NULL;
-
-static
-BOOL WINAPI j_SymGetSymFromAddr(HANDLE hProcess, DWORD Address, PDWORD Displacement, PIMAGEHLP_SYMBOL Symbol)
-{
-   if(
-      (hModule_Imagehlp || (hModule_Imagehlp = LoadLibraryA("IMAGEHLP.DLL"))) &&
-      (pfnSymGetSymFromAddr || (pfnSymGetSymFromAddr = (PFNSYMGETSYMFROMADDR) GetProcAddress(hModule_Imagehlp, "SymGetSymFromAddr")))
-   )
-      return pfnSymGetSymFromAddr(hProcess, Address, Displacement, Symbol);
-   else
-      return FALSE;
-}
-
-typedef BOOL (WINAPI *PFNSYMGETLINEFROMADDR)(HANDLE, DWORD, LPDWORD, PIMAGEHLP_LINE);
-static PFNSYMGETLINEFROMADDR pfnSymGetLineFromAddr = NULL;
-
-static
-BOOL WINAPI j_SymGetLineFromAddr(HANDLE hProcess, DWORD dwAddr, PDWORD pdwDisplacement, PIMAGEHLP_LINE Line)
-{
-   if(
-      (hModule_Imagehlp || (hModule_Imagehlp = LoadLibraryA("IMAGEHLP.DLL"))) &&
-      (pfnSymGetLineFromAddr || (pfnSymGetLineFromAddr = (PFNSYMGETLINEFROMADDR) GetProcAddress(hModule_Imagehlp, "SymGetLineFromAddr")))
-   )
-      return pfnSymGetLineFromAddr(hProcess, dwAddr, pdwDisplacement, Line);
+      return pfnSymFromAddr(hProcess, Address, Displacement, Symbol);
    else
       return FALSE;
 }
 
 
-static INLINE boolean
-debug_symbol_print_imagehlp(const void *addr)
+static INLINE void
+debug_symbol_name_dbghelp(const void *addr, char* buf, unsigned size)
 {
    HANDLE hProcess;
    BYTE symbolBuffer[1024];
-   PIMAGEHLP_SYMBOL pSymbol = (PIMAGEHLP_SYMBOL) symbolBuffer;
-   DWORD dwDisplacement = 0;  /* Displacement of the input address, relative to the start of the symbol */
+   PSYMBOL_INFO pSymbol = (PSYMBOL_INFO) symbolBuffer;
+   DWORD64 dwDisplacement = 0;  /* Displacement of the input address, relative to the start of the symbol */
 
    hProcess = GetCurrentProcess();
 
+   memset(pSymbol, 0, sizeof *pSymbol);
    pSymbol->SizeOfStruct = sizeof(symbolBuffer);
-   pSymbol->MaxNameLength = sizeof(symbolBuffer) - offsetof(IMAGEHLP_SYMBOL, Name);
+   pSymbol->MaxNameLen = sizeof(symbolBuffer) - offsetof(SYMBOL_INFO, Name);
 
    if(!bSymInitialized) {
       j_SymSetOptions(/* SYMOPT_UNDNAME | */ SYMOPT_LOAD_LINES);
       if(j_SymInitialize(hProcess, NULL, TRUE))
          bSymInitialized = TRUE;
    }
-      
-   if(!j_SymGetSymFromAddr(hProcess, (DWORD)addr, &dwDisplacement, pSymbol))
-      return FALSE;
 
-   debug_printf("\t%s\n", pSymbol->Name);
-
-   return TRUE;
-   
+   if(!j_SymFromAddr(hProcess, (DWORD64)(uintptr_t)addr, &dwDisplacement, pSymbol))
+      buf[0] = 0;
+   else
+   {
+      strncpy(buf, pSymbol->Name, size);
+      buf[size - 1] = 0;
+   }
 }
 #endif
 
+#ifdef __GLIBC__
+#include <execinfo.h>
+
+/* This can only provide dynamic symbols, or binary offsets into a file.
+ *
+ * To fix this, post-process the output with tools/addr2line.sh
+ */
+static INLINE void
+debug_symbol_name_glibc(const void *addr, char* buf, unsigned size)
+{
+   char** syms = backtrace_symbols((void**)&addr, 1);
+   strncpy(buf, syms[0], size);
+   buf[size - 1] = 0;
+   free(syms);
+}
+#endif
+
+void
+debug_symbol_name(const void *addr, char* buf, unsigned size)
+{
+#if defined(PIPE_OS_WINDOWS) && defined(PIPE_ARCH_X86)
+   debug_symbol_name_dbghelp(addr, buf, size);
+   if(buf[0])
+      return;
+#endif
+
+#ifdef __GLIBC__
+   debug_symbol_name_glibc(addr, buf, size);
+   if(buf[0])
+      return;
+#endif
+
+   util_snprintf(buf, size, "%p", addr);
+   buf[size - 1] = 0;
+}
 
 void
 debug_symbol_print(const void *addr)
 {
-#if defined(PIPE_SUBSYSTEM_WINDOWS_USER) && defined(PIPE_ARCH_X86)
-   if(debug_symbol_print_imagehlp(addr))
-      return;
+   char buf[1024];
+   debug_symbol_name(addr, buf, sizeof(buf));
+   debug_printf("\t%s\n", buf);
+}
+
+struct util_hash_table* symbols_hash;
+pipe_static_mutex(symbols_mutex);
+
+static unsigned hash_ptr(void* p)
+{
+   return (unsigned)(uintptr_t)p;
+}
+
+static int compare_ptr(void* a, void* b)
+{
+   if(a == b)
+      return 0;
+   else if(a < b)
+      return -1;
+   else
+      return 1;
+}
+
+const char*
+debug_symbol_name_cached(const void *addr)
+{
+   const char* name;
+#ifdef PIPE_SUBSYSTEM_WINDOWS_USER
+   static boolean first = TRUE;
+
+   if (first) {
+      pipe_mutex_init(symbols_mutex);
+      first = FALSE;
+   }
 #endif
-   
-   debug_printf("\t%p\n", addr);
+
+   pipe_mutex_lock(symbols_mutex);
+   if(!symbols_hash)
+      symbols_hash = util_hash_table_create(hash_ptr, compare_ptr);
+   name = util_hash_table_get(symbols_hash, (void*)addr);
+   if(!name)
+   {
+      char buf[1024];
+      debug_symbol_name(addr, buf, sizeof(buf));
+      name = strdup(buf);
+
+      util_hash_table_set(symbols_hash, (void*)addr, (void*)name);
+   }
+   pipe_mutex_unlock(symbols_mutex);
+   return name;
 }

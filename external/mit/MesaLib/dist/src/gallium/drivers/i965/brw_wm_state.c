@@ -70,9 +70,9 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
       key->max_threads = 1;
    else {
       /* WM maximum threads is number of EUs times number of threads per EU. */
-      if (BRW_IS_IGDNG(brw))
+      if (brw->gen == 5)
          key->max_threads = 12 * 6;
-      else if (BRW_IS_G4X(brw))
+      else if (brw->is_g4x)
 	 key->max_threads = 10 * 5;
       else
 	 key->max_threads = 8 * 4;
@@ -128,8 +128,9 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    key->line_stipple = brw->curr.rast->templ.line_stipple_enable;
 
 
-   key->offset_enable = (brw->curr.rast->templ.offset_cw ||
-			 brw->curr.rast->templ.offset_ccw);
+   key->offset_enable = (brw->curr.rast->templ.offset_point ||
+			 brw->curr.rast->templ.offset_line ||
+			 brw->curr.rast->templ.offset_tri);
 
    key->offset_units = brw->curr.rast->templ.offset_units;
    key->offset_factor = brw->curr.rast->templ.offset_scale;
@@ -154,7 +155,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
    wm.thread1.depth_coef_urb_read_offset = 1;
    wm.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
 
-   if (BRW_IS_IGDNG(brw))
+   if (brw->gen == 5)
       wm.thread1.binding_table_entry_count = 0; /* hardware requirement */
    else
       wm.thread1.binding_table_entry_count = key->nr_surfaces;
@@ -173,7 +174,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
    wm.thread3.const_urb_entry_read_length = key->curb_entry_read_length;
    wm.thread3.const_urb_entry_read_offset = key->curbe_offset * 2;
 
-   if (BRW_IS_IGDNG(brw)) 
+   if (brw->gen == 5) 
       wm.wm4.sampler_count = 0; /* hardware requirement */
    else
       wm.wm4.sampler_count = (key->sampler_count + 1) / 4;
@@ -276,7 +277,7 @@ static enum pipe_error upload_wm_unit( struct brw_context *brw )
    grf_reg_count = (align(key.total_grf, 16) / 16 - 1);
    per_thread_scratch_space = key.total_scratch / 1024 - 1;
    stats_enable = (BRW_DEBUG & DEBUG_STATS) || key.stats_wm;
-   sampler_count = BRW_IS_IGDNG(brw) ? 0 :(key.sampler_count + 1) / 4;
+   sampler_count = brw->gen == 5 ? 0 :(key.sampler_count + 1) / 4;
 
    /* Emit WM program relocation */
    make_reloc(&reloc[nr_reloc++],

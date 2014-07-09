@@ -49,7 +49,7 @@ static GLuint check_size( const GLfloat *attr )
 }
 
 
-static void init_legacy_currval(GLcontext *ctx)
+static void init_legacy_currval(struct gl_context *ctx)
 {
    struct vbo_context *vbo = vbo_context(ctx);
    struct gl_client_array *arrays = vbo->legacy_currval;
@@ -72,13 +72,14 @@ static void init_legacy_currval(GLcontext *ctx)
       cl->Type = GL_FLOAT;
       cl->Format = GL_RGBA;
       cl->Ptr = (const void *)ctx->Current.Attrib[i];
+      cl->_ElementSize = cl->Size * sizeof(GLfloat);
       _mesa_reference_buffer_object(ctx, &cl->BufferObj,
                                     ctx->Shared->NullBufferObj);
    }
 }
 
 
-static void init_generic_currval(GLcontext *ctx)
+static void init_generic_currval(struct gl_context *ctx)
 {
    struct vbo_context *vbo = vbo_context(ctx);
    struct gl_client_array *arrays = vbo->generic_currval;
@@ -98,13 +99,14 @@ static void init_generic_currval(GLcontext *ctx)
       cl->Stride = 0;
       cl->StrideB = 0;
       cl->Enabled = 1;
+      cl->_ElementSize = cl->Size * sizeof(GLfloat);
       _mesa_reference_buffer_object(ctx, &cl->BufferObj,
                                     ctx->Shared->NullBufferObj);
    }
 }
 
 
-static void init_mat_currval(GLcontext *ctx)
+static void init_mat_currval(struct gl_context *ctx)
 {
    struct vbo_context *vbo = vbo_context(ctx);
    struct gl_client_array *arrays = vbo->mat_currval;
@@ -143,13 +145,14 @@ static void init_mat_currval(GLcontext *ctx)
       cl->Stride = 0;
       cl->StrideB = 0;
       cl->Enabled = 1;
+      cl->_ElementSize = cl->Size * sizeof(GLfloat);
       _mesa_reference_buffer_object(ctx, &cl->BufferObj,
                                     ctx->Shared->NullBufferObj);
    }
 }
 
 
-GLboolean _vbo_CreateContext( GLcontext *ctx )
+GLboolean _vbo_CreateContext( struct gl_context *ctx )
 {
    struct vbo_context *vbo = CALLOC_STRUCT(vbo_context);
 
@@ -198,9 +201,8 @@ GLboolean _vbo_CreateContext( GLcontext *ctx )
     * vtxfmt mechanism can be removed now.
     */
    vbo_exec_init( ctx );
-#if FEATURE_dlist
-   vbo_save_init( ctx );
-#endif
+   if (ctx->API == API_OPENGL)
+      vbo_save_init( ctx );
 
    _math_init_eval();
 
@@ -208,14 +210,13 @@ GLboolean _vbo_CreateContext( GLcontext *ctx )
 }
 
 
-void _vbo_InvalidateState( GLcontext *ctx, GLuint new_state )
+void _vbo_InvalidateState( struct gl_context *ctx, GLuint new_state )
 {
-   _ae_invalidate_state(ctx, new_state);
    vbo_exec_invalidate_state(ctx, new_state);
 }
 
 
-void _vbo_DestroyContext( GLcontext *ctx )
+void _vbo_DestroyContext( struct gl_context *ctx )
 {
    struct vbo_context *vbo = vbo_context(ctx);
 
@@ -232,16 +233,15 @@ void _vbo_DestroyContext( GLcontext *ctx )
       }
 
       vbo_exec_destroy(ctx);
-#if FEATURE_dlist
-      vbo_save_destroy(ctx);
-#endif
+      if (ctx->API == API_OPENGL)
+         vbo_save_destroy(ctx);
       FREE(vbo);
       ctx->swtnl_im = NULL;
    }
 }
 
 
-void vbo_set_draw_func(GLcontext *ctx, vbo_draw_func func)
+void vbo_set_draw_func(struct gl_context *ctx, vbo_draw_func func)
 {
    struct vbo_context *vbo = vbo_context(ctx);
    vbo->draw_prims = func;

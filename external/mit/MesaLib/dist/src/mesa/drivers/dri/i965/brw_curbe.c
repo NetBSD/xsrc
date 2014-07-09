@@ -35,9 +35,9 @@
 #include "main/context.h"
 #include "main/macros.h"
 #include "main/enums.h"
-#include "shader/prog_parameter.h"
-#include "shader/prog_print.h"
-#include "shader/prog_statevars.h"
+#include "program/prog_parameter.h"
+#include "program/prog_print.h"
+#include "program/prog_statevars.h"
 #include "intel_batchbuffer.h"
 #include "intel_regions.h"
 #include "brw_context.h"
@@ -55,7 +55,7 @@
  */
 static void calculate_curbe_offsets( struct brw_context *brw )
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    /* CACHE_NEW_WM_PROG */
    const GLuint nr_fp_regs = (brw->wm.prog_data->nr_params + 15) / 16;
    
@@ -146,22 +146,24 @@ const struct brw_tracked_state brw_curbe_offsets = {
  */
 void brw_upload_cs_urb_state(struct brw_context *brw)
 {
-   struct brw_cs_urb_state cs_urb;
-   memset(&cs_urb, 0, sizeof(cs_urb));
+   struct intel_context *intel = &brw->intel;
 
+   BEGIN_BATCH(2);
    /* It appears that this is the state packet for the CS unit, ie. the
     * urb entries detailed here are housed in the CS range from the
     * URB_FENCE command.
     */
-   cs_urb.header.opcode = CMD_CS_URB_STATE;
-   cs_urb.header.length = sizeof(cs_urb)/4 - 2;
+   OUT_BATCH(CMD_CS_URB_STATE << 16 | (2-2));
 
    /* BRW_NEW_URB_FENCE */
-   cs_urb.bits0.nr_urb_entries = brw->urb.nr_cs_entries;
-   cs_urb.bits0.urb_entry_size = brw->urb.csize - 1;
-
-   assert(brw->urb.nr_cs_entries);
-   BRW_CACHED_BATCH_STRUCT(brw, &cs_urb);
+   if (brw->urb.csize == 0) {
+      OUT_BATCH(0);
+   } else {
+      /* BRW_NEW_URB_FENCE */
+      assert(brw->urb.nr_cs_entries);
+      OUT_BATCH((brw->urb.csize - 1) << 4 | brw->urb.nr_cs_entries);
+   }
+   CACHED_BATCH();
 }
 
 static GLfloat fixed_plane[6][4] = {
@@ -179,36 +181,30 @@ static GLfloat fixed_plane[6][4] = {
  */
 static void prepare_constant_buffer(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    const struct brw_vertex_program *vp =
       brw_vertex_program_const(brw->vertex_program);
-   const struct brw_fragment_program *fp =
-      brw_fragment_program_const(brw->fragment_program);
    const GLuint sz = brw->curbe.total_size;
    const GLuint bufsz = sz * 16 * sizeof(GLfloat);
    GLfloat *buf;
    GLuint i;
 
    if (sz == 0) {
-      if (brw->curbe.last_buf) {
-	 free(brw->curbe.last_buf);
-	 brw->curbe.last_buf = NULL;
-	 brw->curbe.last_bufsz  = 0;
-      }
+      brw->curbe.last_bufsz  = 0;
       return;
    }
 
-   buf = (GLfloat *) calloc(1, bufsz);
+   buf = brw->curbe.next_buf;
 
    /* fragment shader constants */
    if (brw->curbe.wm_size) {
       GLuint offset = brw->curbe.wm_start * 16;
 
-      _mesa_load_state_parameters(ctx, fp->program.Base.Parameters); 
-
       /* copy float constants */
-      for (i = 0; i < brw->wm.prog_data->nr_params; i++) 
-	 buf[offset + i] = *brw->wm.prog_data->param[i];
+      for (i = 0; i < brw->wm.prog_data->nr_params; i++) {
+	 buf[offset + i] = convert_param(brw->wm.prog_data->param_convert[i],
+					 *brw->wm.prog_data->param[i]);
+      }
    }
 
 
@@ -248,29 +244,13 @@ static void prepare_constant_buffer(struct brw_context *brw)
       GLuint offset = brw->curbe.vs_start * 16;
       GLuint nr = brw->vs.prog_data->nr_params / 4;
 
-      if (brw->vertex_program->IsNVProgram)
-	 _mesa_load_tracked_matrices(ctx);
-
-      /* Updates the ParamaterValues[i] pointers for all parameters of the
-       * basic type of PROGRAM_STATE_VAR.
+      /* Load the subset of push constants that will get used when
+       * we also have a pull constant buffer.
        */
-      _mesa_load_state_parameters(ctx, vp->program.Base.Parameters); 
-
-      if (vp->use_const_buffer) {
-	 /* Load the subset of push constants that will get used when
-	  * we also have a pull constant buffer.
-	  */
-	 for (i = 0; i < vp->program.Base.Parameters->NumParameters; i++) {
-	    if (brw->vs.constant_map[i] != -1) {
-	       assert(brw->vs.constant_map[i] <= nr);
-	       memcpy(buf + offset + brw->vs.constant_map[i] * 4,
-		      vp->program.Base.Parameters->ParameterValues[i],
-		      4 * sizeof(float));
-	    }
-	 }
-      } else {
-	 for (i = 0; i < nr; i++) {
-	    memcpy(buf + offset + i * 4,
+      for (i = 0; i < vp->program.Base.Parameters->NumParameters; i++) {
+	 if (brw->vs.constant_map[i] != -1) {
+	    assert(brw->vs.constant_map[i] <= nr);
+	    memcpy(buf + offset + brw->vs.constant_map[i] * 4,
 		   vp->program.Base.Parameters->ParameterValues[i],
 		   4 * sizeof(float));
 	 }
@@ -289,25 +269,22 @@ static void prepare_constant_buffer(struct brw_context *brw)
    }
 
    if (brw->curbe.curbe_bo != NULL &&
-       brw->curbe.last_buf &&
        bufsz == brw->curbe.last_bufsz &&
        memcmp(buf, brw->curbe.last_buf, bufsz) == 0) {
       /* constants have not changed */
-      free(buf);
-   } 
-   else {
-      /* constants have changed */
-      if (brw->curbe.last_buf)
-	 free(brw->curbe.last_buf);
-
-      brw->curbe.last_buf = buf;
+   } else {
+      /* Update the record of what our last set of constants was.  We
+       * don't just flip the pointers because we don't fill in the
+       * data in the padding between the entries.
+       */
+      memcpy(brw->curbe.last_buf, buf, bufsz);
       brw->curbe.last_bufsz = bufsz;
 
       if (brw->curbe.curbe_bo != NULL &&
 	  brw->curbe.curbe_next_offset + bufsz > brw->curbe.curbe_bo->size)
       {
 	 drm_intel_gem_bo_unmap_gtt(brw->curbe.curbe_bo);
-	 dri_bo_unreference(brw->curbe.curbe_bo);
+	 drm_intel_bo_unreference(brw->curbe.curbe_bo);
 	 brw->curbe.curbe_bo = NULL;
       }
 
@@ -315,10 +292,11 @@ static void prepare_constant_buffer(struct brw_context *brw)
 	 /* Allocate a single page for CURBE entries for this batchbuffer.
 	  * They're generally around 64b.
 	  */
-	 brw->curbe.curbe_bo = dri_bo_alloc(brw->intel.bufmgr, "CURBE",
-					    4096, 1 << 6);
+	 brw->curbe.curbe_bo = drm_intel_bo_alloc(brw->intel.bufmgr, "CURBE",
+						  4096, 1 << 6);
 	 brw->curbe.curbe_next_offset = 0;
 	 drm_intel_gem_bo_map_gtt(brw->curbe.curbe_bo);
+	 assert(bufsz < 4096);
       }
 
       brw->curbe.curbe_offset = brw->curbe.curbe_next_offset;

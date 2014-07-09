@@ -50,19 +50,19 @@
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 #include "util/u_string.h"
+#include "util/u_math.h"
+#include "util/u_format.h"
 
 #include "tr_dump.h"
 #include "tr_screen.h"
 #include "tr_texture.h"
-#include "tr_buffer.h"
 
 
 static struct os_stream *stream = NULL;
 static unsigned refcount = 0;
-static pipe_mutex call_mutex;
+pipe_static_mutex(call_mutex);
 static long unsigned call_no = 0;
 static boolean dumping = FALSE;
-static boolean initialized = FALSE;
 
 
 static INLINE void
@@ -224,25 +224,12 @@ trace_dump_trace_close(void)
       stream = NULL;
       refcount = 0;
       call_no = 0;
-      pipe_mutex_destroy(call_mutex);
    }
-}
-
-void trace_dump_init()
-{
-   if (initialized)
-      return;
-
-   pipe_mutex_init(call_mutex);
-   dumping = FALSE;
-   initialized = TRUE;
 }
 
 boolean trace_dump_trace_begin()
 {
    const char *filename;
-
-   assert(initialized);
 
    filename = debug_get_option("GALLIUM_TRACE", NULL);
    if(!filename)
@@ -471,6 +458,25 @@ void trace_dump_bytes(const void *data,
    trace_dump_writes("</bytes>");
 }
 
+void trace_dump_box_bytes(const void *data,
+			  enum pipe_format format,
+			  const struct pipe_box *box,
+			  unsigned stride,
+			  unsigned slice_stride)
+{
+   size_t size;
+
+   if (slice_stride)
+      size = box->depth * slice_stride;
+   else if (stride)
+      size = util_format_get_nblocksy(format, box->height) * stride;
+   else {
+      size = util_format_get_nblocksx(format, box->width) * util_format_get_blocksize(format);
+   }
+
+   trace_dump_bytes(data, size);
+}
+
 void trace_dump_string(const char *str)
 {
    if (!dumping)
@@ -574,27 +580,15 @@ void trace_dump_ptr(const void *value)
       trace_dump_null();
 }
 
-void trace_dump_buffer_ptr(struct pipe_buffer *_buffer)
+
+void trace_dump_resource_ptr(struct pipe_resource *_resource)
 {
    if (!dumping)
       return;
 
-   if (_buffer) {
-      struct trace_buffer *tr_buf = trace_buffer(_buffer);
-      trace_dump_ptr(tr_buf->buffer);
-   } else {
-      trace_dump_null();
-   }
-}
-
-void trace_dump_texture_ptr(struct pipe_texture *_texture)
-{
-   if (!dumping)
-      return;
-
-   if (_texture) {
-      struct trace_texture *tr_tex = trace_texture(_texture);
-      trace_dump_ptr(tr_tex->texture);
+   if (_resource) {
+      struct trace_resource *tr_resource = trace_resource(_resource);
+      trace_dump_ptr(tr_resource->resource);
    } else {
       trace_dump_null();
    }

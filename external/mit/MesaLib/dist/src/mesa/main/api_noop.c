@@ -30,6 +30,7 @@
 #include "context.h"
 #include "light.h"
 #include "macros.h"
+#include "mfeatures.h"
 #include "dlist.h"
 #include "eval.h"
 #include "main/dispatch.h"
@@ -679,6 +680,16 @@ static void GLAPIENTRY _mesa_noop_End( void )
 }
 
 
+/***
+ * PrimitiveRestart called outside glBegin()/End(): raise an error
+ */
+static void GLAPIENTRY _mesa_noop_PrimitiveRestartNV( void )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glPrimitiveRestartNV(no glBegin)");
+}
+
+
 /**
  * Execute a glRectf() function.  This is not suitable for GL_COMPILE
  * modes (as the test for outside begin/end is not compiled),
@@ -881,6 +892,8 @@ _mesa_noop_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
    GLfloat u, du;
    GLenum prim;
 
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
    switch (mode) {
    case GL_POINT:
       prim = GL_POINTS;
@@ -918,6 +931,8 @@ _mesa_noop_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
    GET_CURRENT_CONTEXT(ctx);
    GLfloat u, du, v, dv, v1, u1;
    GLint i, j;
+
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (mode) {
    case GL_POINT:
@@ -1006,6 +1021,8 @@ _mesa_noop_vtxfmt_init( GLvertexformat *vfmt )
    vfmt->Color4fv = _mesa_noop_Color4fv;
    vfmt->EdgeFlag = _mesa_noop_EdgeFlag;
    vfmt->End = _mesa_noop_End;
+
+   vfmt->PrimitiveRestartNV = _mesa_noop_PrimitiveRestartNV;
 
    _MESA_INIT_EVAL_VTXFMT(vfmt, _mesa_noop_);
 

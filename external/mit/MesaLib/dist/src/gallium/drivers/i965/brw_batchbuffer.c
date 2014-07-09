@@ -64,13 +64,11 @@ brw_batchbuffer_reset(struct brw_batchbuffer *batch)
 }
 
 struct brw_batchbuffer *
-brw_batchbuffer_alloc(struct brw_winsys_screen *sws,
-                      struct brw_chipset chipset)
+brw_batchbuffer_alloc(struct brw_winsys_screen *sws)
 {
    struct brw_batchbuffer *batch = CALLOC_STRUCT(brw_batchbuffer);
 
    batch->sws = sws;
-   batch->chipset = chipset;
    brw_batchbuffer_reset(batch);
 
    return batch;
@@ -161,8 +159,8 @@ brw_batchbuffer_emit_reloc(struct brw_batchbuffer *batch,
    int ret;
 
    if (batch->ptr - batch->map > batch->buf->size) {
-      debug_printf("bad relocation ptr %p map %p offset %d size %d\n",
-		   batch->ptr, batch->map, batch->ptr - batch->map, batch->buf->size);
+      debug_printf("bad relocation ptr %p map %p offset %li size %i\n",
+		   batch->ptr, batch->map, (long) (batch->ptr - batch->map), batch->buf->size);
 
       return PIPE_ERROR_OUT_OF_MEMORY;
    }

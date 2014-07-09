@@ -35,6 +35,8 @@
 #include "context.h"
 #include "colormac.h"
 #include "enums.h"
+#include "macros.h"
+#include "mtypes.h"
 #include "state.h"
 
 
@@ -76,20 +78,90 @@ _mesa_ClearColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   tmp[0] = CLAMP(red,   0.0F, 1.0F);
-   tmp[1] = CLAMP(green, 0.0F, 1.0F);
-   tmp[2] = CLAMP(blue,  0.0F, 1.0F);
-   tmp[3] = CLAMP(alpha, 0.0F, 1.0F);
+   tmp[0] = red;
+   tmp[1] = green;
+   tmp[2] = blue;
+   tmp[3] = alpha;
+
+   if (TEST_EQ_4V(tmp, ctx->Color.ClearColorUnclamped))
+      return; /* no change */
+
+   FLUSH_VERTICES(ctx, _NEW_COLOR);
+   COPY_4V(ctx->Color.ClearColorUnclamped, tmp);
+
+   ctx->Color.ClearColor[0] = CLAMP(tmp[0], 0.0F, 1.0F);
+   ctx->Color.ClearColor[1] = CLAMP(tmp[1], 0.0F, 1.0F);
+   ctx->Color.ClearColor[2] = CLAMP(tmp[2], 0.0F, 1.0F);
+   ctx->Color.ClearColor[3] = CLAMP(tmp[3], 0.0F, 1.0F);
+
+   if (ctx->Driver.ClearColor) {
+      /* it's OK to call glClearColor in CI mode but it should be a NOP */
+      /* we pass the clamped color, since all drivers that need this don't
+       * support GL_ARB_color_buffer_float
+       */
+      (*ctx->Driver.ClearColor)(ctx, ctx->Color.ClearColor);
+   }
+}
+
+
+/**
+ * GL_EXT_texture_integer
+ */
+void GLAPIENTRY
+_mesa_ClearColorIiEXT(GLint r, GLint g, GLint b, GLint a)
+{
+   GLfloat tmp[4];
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   tmp[0] = (GLfloat) r;
+   tmp[1] = (GLfloat) g;
+   tmp[2] = (GLfloat) b;
+   tmp[3] = (GLfloat) a;
 
    if (TEST_EQ_4V(tmp, ctx->Color.ClearColor))
       return; /* no change */
 
    FLUSH_VERTICES(ctx, _NEW_COLOR);
+
+   /* XXX we should eventually have a float/int/uint union for
+    * the ctx->Color.ClearColor state.
+    */
    COPY_4V(ctx->Color.ClearColor, tmp);
 
    if (ctx->Driver.ClearColor) {
-      /* it's OK to call glClearColor in CI mode but it should be a NOP */
-      (*ctx->Driver.ClearColor)(ctx, ctx->Color.ClearColor);
+      ctx->Driver.ClearColor(ctx, ctx->Color.ClearColor);
+   }
+}
+
+
+/**
+ * GL_EXT_texture_integer
+ */
+void GLAPIENTRY
+_mesa_ClearColorIuiEXT(GLuint r, GLuint g, GLuint b, GLuint a)
+{
+   GLfloat tmp[4];
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   tmp[0] = (GLfloat) r;
+   tmp[1] = (GLfloat) g;
+   tmp[2] = (GLfloat) b;
+   tmp[3] = (GLfloat) a;
+
+   if (TEST_EQ_4V(tmp, ctx->Color.ClearColor))
+      return; /* no change */
+
+   FLUSH_VERTICES(ctx, _NEW_COLOR);
+
+   /* XXX we should eventually have a float/int/uint union for
+    * the ctx->Color.ClearColor state.
+    */
+   COPY_4V(ctx->Color.ClearColor, tmp);
+
+   if (ctx->Driver.ClearColor) {
+      ctx->Driver.ClearColor(ctx, ctx->Color.ClearColor);
    }
 }
 
@@ -99,7 +171,7 @@ _mesa_ClearColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
  * 
  * \param mask bit-mask indicating the buffers to be cleared.
  *
- * Flushes the vertices and verifies the parameter. If __GLcontextRec::NewState
+ * Flushes the vertices and verifies the parameter. If __struct gl_contextRec::NewState
  * is set then calls _mesa_update_state() to update gl_frame_buffer::_Xmin,
  * etc. If the rasterization mode is set to GL_RENDER then requests the driver
  * to clear the buffers, via the dd_function_table::Clear callback.
@@ -190,7 +262,7 @@ _mesa_Clear( GLbitfield mask )
  * Return INVALID_MASK if the drawbuffer value is invalid.
  */
 static GLbitfield
-make_color_buffer_mask(GLcontext *ctx, GLint drawbuffer)
+make_color_buffer_mask(struct gl_context *ctx, GLint drawbuffer)
 {
    const struct gl_renderbuffer_attachment *att = ctx->DrawBuffer->Attachment;
    GLbitfield mask = 0x0;
@@ -341,7 +413,7 @@ _mesa_ClearBufferuiv(GLenum buffer, GLint drawbuffer, const GLuint *value)
       {
          const GLbitfield mask = make_color_buffer_mask(ctx, drawbuffer);
          if (mask == INVALID_MASK) {
-            _mesa_error(ctx, GL_INVALID_VALUE, "glClearBufferiv(drawbuffer=%d)",
+            _mesa_error(ctx, GL_INVALID_VALUE, "glClearBufferuiv(drawbuffer=%d)",
                         drawbuffer);
             return;
          }

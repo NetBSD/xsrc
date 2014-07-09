@@ -30,6 +30,12 @@
 #define ST_GEN_MIPMAP_H
 
 
+#include "main/glheader.h"
+
+struct gl_context;
+struct gl_texture_object;
+struct st_context;
+
 extern void
 st_init_generate_mipmap(struct st_context *st);
 
@@ -39,7 +45,7 @@ st_destroy_generate_mipmap(struct st_context *st);
 
 
 extern void
-st_generate_mipmap(GLcontext *ctx, GLenum target,
+st_generate_mipmap(struct gl_context *ctx, GLenum target,
                    struct gl_texture_object *texObj);
 
 

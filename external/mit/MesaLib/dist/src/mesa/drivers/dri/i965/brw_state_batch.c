@@ -29,71 +29,48 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
      
-
-
 #include "brw_state.h"
 #include "intel_batchbuffer.h"
 #include "main/imports.h"
 
-
-
-/* A facility similar to the data caching code above, which aims to
- * prevent identical commands being issued repeatedly.
+/**
+ * Allocates a block of space in the batchbuffer for indirect state.
+ *
+ * We don't want to allocate separate BOs for every bit of indirect
+ * state in the driver.  It means overallocating by a significant
+ * margin (4096 bytes, even if the object is just a 20-byte surface
+ * state), and more buffers to walk and count for aperture size checking.
+ *
+ * However, due to the restrictions inposed by the aperture size
+ * checking performance hacks, we can't have the batch point at a
+ * separate indirect state buffer, because once the batch points at
+ * it, no more relocations can be added to it.  So, we sneak these
+ * buffers in at the top of the batchbuffer.
  */
-GLboolean brw_cached_batch_struct( struct brw_context *brw,
-				   const void *data,
-				   GLuint sz )
+void *
+brw_state_batch(struct brw_context *brw,
+		int size,
+		int alignment,
+		uint32_t *out_offset)
 {
-   struct brw_cached_batch_item *item = brw->cached_batch_items;
-   struct header *newheader = (struct header *)data;
+   struct intel_batchbuffer *batch = &brw->intel.batch;
+   uint32_t offset;
 
-   if (brw->emit_state_always) {
-      intel_batchbuffer_data(brw->intel.batch, data, sz);
-      return GL_TRUE;
+   assert(size < batch->bo->size);
+   offset = ROUND_DOWN_TO(batch->state_batch_offset - size, alignment);
+
+   /* If allocating from the top would wrap below the batchbuffer, or
+    * if the batch's used space (plus the reserved pad) collides with our
+    * space, then flush and try again.
+    */
+   if (batch->state_batch_offset < size ||
+       offset < 4*batch->used + batch->reserved_space) {
+      intel_batchbuffer_flush(&brw->intel);
+      offset = ROUND_DOWN_TO(batch->state_batch_offset - size, alignment);
    }
 
-   while (item) {
-      if (item->header->opcode == newheader->opcode) {
-	 if (item->sz == sz && memcmp(item->header, newheader, sz) == 0)
-	    return GL_FALSE;
-	 if (item->sz != sz) {
-	    free(item->header);
-	    item->header = malloc(sz);
-	    item->sz = sz;
-	 }
-	 goto emit;
-      }
-      item = item->next;
-   }
+   batch->state_batch_offset = offset;
 
-   assert(!item);
-   item = CALLOC_STRUCT(brw_cached_batch_item);
-   item->header = malloc(sz);
-   item->sz = sz;
-   item->next = brw->cached_batch_items;
-   brw->cached_batch_items = item;
-
- emit:
-   memcpy(item->header, newheader, sz);
-   intel_batchbuffer_data(brw->intel.batch, data, sz);
-   return GL_TRUE;
-}
-
-void brw_clear_batch_cache( struct brw_context *brw )
-{
-   struct brw_cached_batch_item *item = brw->cached_batch_items;
-
-   while (item) {
-      struct brw_cached_batch_item *next = item->next;
-      free((void *)item->header);
-      free(item);
-      item = next;
-   }
-
-   brw->cached_batch_items = NULL;
-}
-
-void brw_destroy_batch_cache( struct brw_context *brw )
-{
-   brw_clear_batch_cache(brw);
+   *out_offset = offset;
+   return batch->map + (offset>>2);
 }

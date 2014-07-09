@@ -34,6 +34,8 @@
 #include "main/context.h"
 #include "main/enums.h"
 #include "main/macros.h"
+#include "main/mtypes.h"
+#include "main/state.h"
 #include "main/texenv.h"
 #include "main/texstate.h"
 
@@ -44,7 +46,7 @@
 
 /** Set texture env mode */
 static void
-set_env_mode(GLcontext *ctx,
+set_env_mode(struct gl_context *ctx,
              struct gl_texture_unit *texUnit,
              GLenum mode)
 {
@@ -89,25 +91,24 @@ set_env_mode(GLcontext *ctx,
 
 
 static void
-set_env_color(GLcontext *ctx,
+set_env_color(struct gl_context *ctx,
               struct gl_texture_unit *texUnit,
               const GLfloat *color)
 {
-   GLfloat tmp[4];
-   tmp[0] = CLAMP(color[0], 0.0F, 1.0F);
-   tmp[1] = CLAMP(color[1], 0.0F, 1.0F);
-   tmp[2] = CLAMP(color[2], 0.0F, 1.0F);
-   tmp[3] = CLAMP(color[3], 0.0F, 1.0F);
-   if (TEST_EQ_4V(tmp, texUnit->EnvColor))
+   if (TEST_EQ_4V(color, texUnit->EnvColorUnclamped))
       return;
    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-   COPY_4FV(texUnit->EnvColor, tmp);
+   COPY_4FV(texUnit->EnvColorUnclamped, color);
+   texUnit->EnvColor[0] = CLAMP(color[0], 0.0F, 1.0F);
+   texUnit->EnvColor[1] = CLAMP(color[1], 0.0F, 1.0F);
+   texUnit->EnvColor[2] = CLAMP(color[2], 0.0F, 1.0F);
+   texUnit->EnvColor[3] = CLAMP(color[3], 0.0F, 1.0F);
 }
 
 
 /** Set an RGB or A combiner mode/function */
 static void
-set_combiner_mode(GLcontext *ctx,
+set_combiner_mode(struct gl_context *ctx,
                   struct gl_texture_unit *texUnit,
                   GLenum pname, GLenum mode)
 {
@@ -181,7 +182,7 @@ set_combiner_mode(GLcontext *ctx,
 
 /** Set an RGB or A combiner source term */
 static void
-set_combiner_source(GLcontext *ctx,
+set_combiner_source(struct gl_context *ctx,
                     struct gl_texture_unit *texUnit,
                     GLenum pname, GLenum param)
 {
@@ -196,53 +197,30 @@ set_combiner_source(GLcontext *ctx,
 
    /*
     * Translate pname to (term, alpha).
+    *
+    * The enums were given sequential values for a reason.
     */
    switch (pname) {
    case GL_SOURCE0_RGB:
-      term = 0;
-      alpha = GL_FALSE;
-      break;
    case GL_SOURCE1_RGB:
-      term = 1;
-      alpha = GL_FALSE;
-      break;
    case GL_SOURCE2_RGB:
-      term = 2;
-      alpha = GL_FALSE;
-      break;
    case GL_SOURCE3_RGB_NV:
-      if (ctx->Extensions.NV_texture_env_combine4) {
-         term = 3;
-         alpha = GL_FALSE;
-      }
-      else {
-         TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
-         return;
-      }
+      term = pname - GL_SOURCE0_RGB;
+      alpha = GL_FALSE;
       break;
    case GL_SOURCE0_ALPHA:
-      term = 0;
-      alpha = GL_TRUE;
-      break;
    case GL_SOURCE1_ALPHA:
-      term = 1;
-      alpha = GL_TRUE;
-      break;
    case GL_SOURCE2_ALPHA:
-      term = 2;
-      alpha = GL_TRUE;
-      break;
    case GL_SOURCE3_ALPHA_NV:
-      if (ctx->Extensions.NV_texture_env_combine4) {
-         term = 3;
-         alpha = GL_TRUE;
-      }
-      else {
-         TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
-         return;
-      }
+      term = pname - GL_SOURCE0_ALPHA;
+      alpha = GL_TRUE;
       break;
    default:
+      TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
+      return;
+   }
+
+   if ((term == 3) && !ctx->Extensions.NV_texture_env_combine4) {
       TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
       return;
    }
@@ -297,7 +275,7 @@ set_combiner_source(GLcontext *ctx,
 
 /** Set an RGB or A combiner operand term */
 static void
-set_combiner_operand(GLcontext *ctx,
+set_combiner_operand(struct gl_context *ctx,
                      struct gl_texture_unit *texUnit,
                      GLenum pname, GLenum param)
 {
@@ -310,64 +288,29 @@ set_combiner_operand(GLcontext *ctx,
       return;
    }
 
+   /* The enums were given sequential values for a reason.
+    */
    switch (pname) {
    case GL_OPERAND0_RGB:
-      term = 0;
-      alpha = GL_FALSE;
-      break;
    case GL_OPERAND1_RGB:
-      term = 1;
-      alpha = GL_FALSE;
-      break;
    case GL_OPERAND2_RGB:
-      if (ctx->Extensions.ARB_texture_env_combine) {
-         term = 2;
-         alpha = GL_FALSE;
-      }
-      else {
-         TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
-         return;
-      }
-      break;
    case GL_OPERAND3_RGB_NV:
-      if (ctx->Extensions.NV_texture_env_combine4) {
-         term = 3;
-         alpha = GL_FALSE;
-      }
-      else {
-         TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
-         return;
-      }
+      term = pname - GL_OPERAND0_RGB;
+      alpha = GL_FALSE;
       break;
    case GL_OPERAND0_ALPHA:
-      term = 0;
-      alpha = GL_TRUE;
-      break;
    case GL_OPERAND1_ALPHA:
-      term = 1;
-      alpha = GL_TRUE;
-      break;
    case GL_OPERAND2_ALPHA:
-      if (ctx->Extensions.ARB_texture_env_combine) {
-         term = 2;
-         alpha = GL_TRUE;
-      }
-      else {
-         TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
-         return;
-      }
-      break;
    case GL_OPERAND3_ALPHA_NV:
-      if (ctx->Extensions.NV_texture_env_combine4) {
-         term = 3;
-         alpha = GL_TRUE;
-      }
-      else {
-         TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
-         return;
-      }
+      term = pname - GL_OPERAND0_ALPHA;
+      alpha = GL_TRUE;
       break;
    default:
+      TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
+      return;
+   }
+
+   if ((term == 3) && !ctx->Extensions.NV_texture_env_combine4) {
       TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
       return;
    }
@@ -380,10 +323,23 @@ set_combiner_operand(GLcontext *ctx,
    switch (param) {
    case GL_SRC_COLOR:
    case GL_ONE_MINUS_SRC_COLOR:
-      legal = !alpha;
+      /* The color input can only be used with GL_OPERAND[01]_RGB in the EXT
+       * version.  In the ARB and NV versions they can be used for any RGB
+       * operand.
+       */
+      legal = !alpha
+	 && ((term < 2) || ctx->Extensions.ARB_texture_env_combine
+	     || ctx->Extensions.NV_texture_env_combine4);
+      break;
+   case GL_ONE_MINUS_SRC_ALPHA:
+      /* GL_ONE_MINUS_SRC_ALPHA can only be used with
+       * GL_OPERAND[01]_(RGB|ALPHA) in the EXT version.  In the ARB and NV
+       * versions it can be used for any operand.
+       */
+      legal = (term < 2) || ctx->Extensions.ARB_texture_env_combine
+	 || ctx->Extensions.NV_texture_env_combine4;
       break;
    case GL_SRC_ALPHA:
-   case GL_ONE_MINUS_SRC_ALPHA:
       legal = GL_TRUE;
       break;
    default:
@@ -405,7 +361,7 @@ set_combiner_operand(GLcontext *ctx,
 
 
 static void
-set_combiner_scale(GLcontext *ctx,
+set_combiner_scale(struct gl_context *ctx,
                    struct gl_texture_unit *texUnit,
                    GLenum pname, GLfloat scale)
 {
@@ -455,13 +411,15 @@ set_combiner_scale(GLcontext *ctx,
 void GLAPIENTRY
 _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 {
-   GLuint maxUnit;
-   GET_CURRENT_CONTEXT(ctx);
+   const GLint iparam0 = (GLint) param[0];
    struct gl_texture_unit *texUnit;
+   GLuint maxUnit;
+
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    maxUnit = (target == GL_POINT_SPRITE_NV && pname == GL_COORD_REPLACE_NV)
-      ? ctx->Const.MaxTextureCoordUnits : ctx->Const.MaxTextureImageUnits;
+      ? ctx->Const.MaxTextureCoordUnits : ctx->Const.MaxCombinedTextureImageUnits;
    if (ctx->Texture.CurrentUnit >= maxUnit) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glTexEnvfv(current unit)");
       return;
@@ -472,14 +430,14 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
    if (target == GL_TEXTURE_ENV) {
       switch (pname) {
       case GL_TEXTURE_ENV_MODE:
-         set_env_mode(ctx, texUnit, (GLenum) (GLint) param[0]);
+         set_env_mode(ctx, texUnit, (GLenum) iparam0);
          break;
       case GL_TEXTURE_ENV_COLOR:
          set_env_color(ctx, texUnit, param);
          break;
       case GL_COMBINE_RGB:
       case GL_COMBINE_ALPHA:
-         set_combiner_mode(ctx, texUnit, pname, (GLenum) (GLint) param[0]);
+         set_combiner_mode(ctx, texUnit, pname, (GLenum) iparam0);
 	 break;
       case GL_SOURCE0_RGB:
       case GL_SOURCE1_RGB:
@@ -489,7 +447,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
       case GL_SOURCE1_ALPHA:
       case GL_SOURCE2_ALPHA:
       case GL_SOURCE3_ALPHA_NV:
-         set_combiner_source(ctx, texUnit, pname, (GLenum) (GLint) param[0]);
+         set_combiner_source(ctx, texUnit, pname, (GLenum) iparam0);
 	 break;
       case GL_OPERAND0_RGB:
       case GL_OPERAND1_RGB:
@@ -499,7 +457,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
       case GL_OPERAND1_ALPHA:
       case GL_OPERAND2_ALPHA:
       case GL_OPERAND3_ALPHA_NV:
-         set_combiner_operand(ctx, texUnit, pname, (GLenum) (GLint) param[0]);
+         set_combiner_operand(ctx, texUnit, pname, (GLenum) iparam0);
 	 break;
       case GL_RGB_SCALE:
       case GL_ALPHA_SCALE:
@@ -510,19 +468,19 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	    _mesa_error( ctx, GL_INVALID_ENUM, "glTexEnv(pname=0x%x)", pname );
 	    return;
 	 }
-	 if (((GLenum) (GLint) param[0] < GL_TEXTURE0) ||
-	 ((GLenum) (GLint) param[0] > GL_TEXTURE31)) {
+	 if ((iparam0 < GL_TEXTURE0) ||
+             (iparam0 > GL_TEXTURE31)) {
 	    /* spec doesn't say this but it seems logical */
-	    _mesa_error( ctx, GL_INVALID_ENUM, "glTexEnv(param=0x%x)", (GLenum) (GLint) param[0]);
+	    _mesa_error( ctx, GL_INVALID_ENUM, "glTexEnv(param=0x%x)", iparam0);
 	    return;
 	 }
-	 if (!((1 << ((GLenum) (GLint) param[0] - GL_TEXTURE0)) & ctx->Const.SupportedBumpUnits)) {
-	    _mesa_error( ctx, GL_INVALID_VALUE, "glTexEnv(param=0x%x)", (GLenum) (GLint) param[0]);
+	 if (!((1 << (iparam0 - GL_TEXTURE0)) & ctx->Const.SupportedBumpUnits)) {
+	    _mesa_error( ctx, GL_INVALID_VALUE, "glTexEnv(param=0x%x)", iparam0);
 	    return;
 	 }
 	 else {
 	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-	    texUnit->BumpTarget = (GLenum) (GLint) param[0];
+	    texUnit->BumpTarget = iparam0;
 	 }
 	 break;
       default:
@@ -555,19 +513,18 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	 return;
       }
       if (pname == GL_COORD_REPLACE_NV) {
-         const GLenum value = (GLenum) param[0];
-         if (value == GL_TRUE || value == GL_FALSE) {
+         if (iparam0 == GL_TRUE || iparam0 == GL_FALSE) {
             /* It's kind of weird to set point state via glTexEnv,
              * but that's what the spec calls for.
              */
-            const GLboolean state = (GLboolean) value;
+            const GLboolean state = (GLboolean) iparam0;
             if (ctx->Point.CoordReplace[ctx->Texture.CurrentUnit] == state)
                return;
             FLUSH_VERTICES(ctx, _NEW_POINT);
             ctx->Point.CoordReplace[ctx->Texture.CurrentUnit] = state;
          }
          else {
-            _mesa_error( ctx, GL_INVALID_VALUE, "glTexEnv(param=0x%x)", value);
+            _mesa_error( ctx, GL_INVALID_VALUE, "glTexEnv(param=0x%x)", iparam0);
             return;
          }
       }
@@ -586,7 +543,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
                   _mesa_lookup_enum_by_nr(target),
                   _mesa_lookup_enum_by_nr(pname),
                   *param,
-                  _mesa_lookup_enum_by_nr((GLenum) (GLint) *param));
+                  _mesa_lookup_enum_by_nr((GLenum) iparam0));
 
    /* Tell device driver about the new texture environment */
    if (ctx->Driver.TexEnv) {
@@ -640,7 +597,7 @@ _mesa_TexEnviv( GLenum target, GLenum pname, const GLint *param )
  * \return  value of queried pname or -1 if error.
  */
 static GLint
-get_texenvi(GLcontext *ctx, const struct gl_texture_unit *texUnit,
+get_texenvi(struct gl_context *ctx, const struct gl_texture_unit *texUnit,
             GLenum pname)
 {
    switch (pname) {
@@ -774,7 +731,8 @@ get_texenvi(GLcontext *ctx, const struct gl_texture_unit *texUnit,
       break;
 
    default:
-      ;
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexEnvfv(pname)");
+      break;
    }
 
    return -1; /* error */
@@ -791,7 +749,7 @@ _mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    maxUnit = (target == GL_POINT_SPRITE_NV && pname == GL_COORD_REPLACE_NV)
-      ? ctx->Const.MaxTextureCoordUnits : ctx->Const.MaxTextureImageUnits;
+      ? ctx->Const.MaxTextureCoordUnits : ctx->Const.MaxCombinedTextureImageUnits;
    if (ctx->Texture.CurrentUnit >= maxUnit) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexEnvfv(current unit)");
       return;
@@ -801,7 +759,12 @@ _mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
 
    if (target == GL_TEXTURE_ENV) {
       if (pname == GL_TEXTURE_ENV_COLOR) {
-         COPY_4FV( params, texUnit->EnvColor );
+         if(ctx->NewState & (_NEW_BUFFERS | _NEW_FRAG_CLAMP))
+            _mesa_update_state(ctx);
+         if(ctx->Color._ClampFragmentColor)
+            COPY_4FV( params, texUnit->EnvColor );
+         else
+            COPY_4FV( params, texUnit->EnvColorUnclamped );
       }
       else {
          GLint val = get_texenvi(ctx, texUnit, pname);
@@ -855,7 +818,7 @@ _mesa_GetTexEnviv( GLenum target, GLenum pname, GLint *params )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    maxUnit = (target == GL_POINT_SPRITE_NV && pname == GL_COORD_REPLACE_NV)
-      ? ctx->Const.MaxTextureCoordUnits : ctx->Const.MaxTextureImageUnits;
+      ? ctx->Const.MaxTextureCoordUnits : ctx->Const.MaxCombinedTextureImageUnits;
    if (ctx->Texture.CurrentUnit >= maxUnit) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexEnviv(current unit)");
       return;
