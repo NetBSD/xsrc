@@ -266,13 +266,16 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
 #else /*__linux__ */
 #include <sys/endian.h>
 #define CPU_TO_LE32( x )	bswap32( x )
+#define CPU_TO_LE16( x )	bswap16( x )
 #endif /*__linux__*/
 #define MESA_BIG_ENDIAN 1
 #else
 #define CPU_TO_LE32( x )	( x )
+#define CPU_TO_LE16( x )	( x )
 #define MESA_LITTLE_ENDIAN 1
 #endif
 #define LE32_TO_CPU( x )	CPU_TO_LE32( x )
+#define LE16_TO_CPU( x )	CPU_TO_LE16( x )
 
 
 
