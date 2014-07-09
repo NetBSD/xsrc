@@ -126,6 +126,7 @@ intel_batchbuffer_advance(struct intel_context *intel)
 }
 
 void intel_batchbuffer_cached_advance(struct intel_context *intel);
+void intel_emit_depth_stall_flushes(struct intel_context *intel);
 
 /* Here are the crusty old macros, to be removed:
  */
