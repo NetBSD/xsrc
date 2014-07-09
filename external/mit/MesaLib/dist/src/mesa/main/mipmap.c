@@ -1976,7 +1976,7 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
    GLuint row;
    GLint components;
    GLuint temp_src_stride, temp_dst_stride; /* in bytes */
-   GLchan *temp_src = NULL, *temp_dst = NULL;
+   GLubyte *temp_src = NULL, *temp_dst = NULL;
 
    /* Choose the format we will do _mesa_generate_mipmap_level() in,
     * and uncompress the firstImage into a temporary of that format.
@@ -2010,7 +2010,7 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
    /* allocate storage for uncompressed GL_RGB or GL_RGBA images */
    temp_src_stride = _mesa_format_row_stride(temp_format, srcImage->Width);
    /* 20 extra bytes, just be safe when calling last FetchTexel */
-   temp_src = (GLubyte *) malloc(temp_src_stride * srcImage->Height + 20);
+   temp_src = malloc(temp_src_stride * srcImage->Height + 20);
    if (!temp_src) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
       return;
@@ -2053,7 +2053,7 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
 
       temp_dst_stride = _mesa_format_row_stride(temp_format, dstWidth);
       if (!temp_dst) {
-	 temp_dst = (GLubyte *) malloc(temp_dst_stride * dstHeight);
+	 temp_dst = malloc(temp_dst_stride * dstHeight);
 	 if (!temp_dst) {
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
 	    break;
@@ -2087,7 +2087,7 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
 
       /* swap src and dest pointers */
       {
-	 GLchan *temp = temp_src;
+	 GLubyte *temp = temp_src;
 	 temp_src = temp_dst;
 	 temp_dst = temp;
 
@@ -2095,7 +2095,7 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
       }
    } /* loop over mipmap levels */
 
-   free((void *) temp_src);
+   free(temp_src);
    free(temp_dst);
 }
 
