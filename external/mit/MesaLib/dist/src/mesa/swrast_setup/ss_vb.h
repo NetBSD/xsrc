@@ -29,10 +29,9 @@
 #ifndef SS_VB_H
 #define SS_VB_H
 
-#include "main/mtypes.h"
-#include "swrast_setup.h"
+struct gl_context;
 
-void _swsetup_vb_init( GLcontext *ctx );
-void _swsetup_choose_rastersetup_func( GLcontext *ctx );
+void _swsetup_vb_init( struct gl_context *ctx );
+void _swsetup_choose_rastersetup_func( struct gl_context *ctx );
 
 #endif

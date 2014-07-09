@@ -40,7 +40,6 @@
 #include "i915_reg.h"
 #include "i915_program.h"
 
-#include "intel_tris.h"
 #include "intel_span.h"
 
 /***************************************
@@ -50,7 +49,7 @@
 /* Override intel default.
  */
 static void
-i915InvalidateState(GLcontext * ctx, GLuint new_state)
+i915InvalidateState(struct gl_context * ctx, GLuint new_state)
 {
    _swrast_InvalidateState(ctx, new_state);
    _swsetup_InvalidateState(ctx, new_state);
@@ -70,8 +69,6 @@ i915InvalidateState(GLcontext * ctx, GLuint new_state)
          p->params_uptodate = 0;
    }
 
-   if (new_state & (_NEW_FOG | _NEW_HINT | _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS))
-      i915_update_fog(ctx);
    if (new_state & (_NEW_STENCIL | _NEW_BUFFERS | _NEW_POLYGON))
       i915_update_stencil(ctx);
    if (new_state & (_NEW_LIGHT))
@@ -94,7 +91,8 @@ i915InitDriverFunctions(struct dd_function_table *functions)
 extern const struct tnl_pipeline_stage *intel_pipeline[];
 
 GLboolean
-i915CreateContext(const __GLcontextModes * mesaVis,
+i915CreateContext(int api,
+		  const struct gl_config * mesaVis,
                   __DRIcontext * driContextPriv,
                   void *sharedContextPrivate)
 {
@@ -102,19 +100,16 @@ i915CreateContext(const __GLcontextModes * mesaVis,
    struct i915_context *i915 =
       (struct i915_context *) CALLOC_STRUCT(i915_context);
    struct intel_context *intel = &i915->intel;
-   GLcontext *ctx = &intel->ctx;
+   struct gl_context *ctx = &intel->ctx;
 
    if (!i915)
       return GL_FALSE;
-
-   if (0)
-      printf("\ntexmem-0-3 branch\n\n");
 
    i915InitVtbl(i915);
 
    i915InitDriverFunctions(&functions);
 
-   if (!intelInitContext(intel, mesaVis, driContextPriv,
+   if (!intelInitContext(intel, api, mesaVis, driContextPriv,
                          sharedContextPrivate, &functions)) {
       FREE(i915);
       return GL_FALSE;
@@ -171,7 +166,37 @@ i915CreateContext(const __GLcontextModes * mesaVis,
       MIN2(ctx->Const.FragmentProgram.MaxNativeParameters,
 	   ctx->Const.FragmentProgram.MaxEnvParams);
 
+   /* i915 stores all values in single-precision floats.  Values aren't set
+    * for other program targets because software is used for those targets.
+    */
+   ctx->Const.FragmentProgram.MediumFloat.RangeMin = 127;
+   ctx->Const.FragmentProgram.MediumFloat.RangeMax = 127;
+   ctx->Const.FragmentProgram.MediumFloat.Precision = 23;
+   ctx->Const.FragmentProgram.LowFloat = ctx->Const.FragmentProgram.HighFloat =
+      ctx->Const.FragmentProgram.MediumFloat;
+   ctx->Const.FragmentProgram.MediumInt.RangeMin = 24;
+   ctx->Const.FragmentProgram.MediumInt.RangeMax = 24;
+   ctx->Const.FragmentProgram.MediumInt.Precision = 0;
+   ctx->Const.FragmentProgram.LowInt = ctx->Const.FragmentProgram.HighInt =
+      ctx->Const.FragmentProgram.MediumInt;
+
    ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
+
+   /* FINISHME: Are there other options that should be enabled for software
+    * FINISHME: vertex shaders?
+    */
+   ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].EmitCondCodes = GL_TRUE;
+
+   struct gl_shader_compiler_options *const fs_options =
+      & ctx->ShaderCompilerOptions[MESA_SHADER_FRAGMENT];
+   fs_options->EmitNoIfs = GL_TRUE;
+   fs_options->EmitNoNoise = GL_TRUE;
+   fs_options->EmitNoPow = GL_TRUE;
+   fs_options->EmitNoMainReturn = GL_TRUE;
+   fs_options->EmitNoIndirectInput = GL_TRUE;
+   fs_options->EmitNoIndirectOutput = GL_TRUE;
+   fs_options->EmitNoIndirectUniform = GL_TRUE;
+   fs_options->EmitNoIndirectTemp = GL_TRUE;
 
    ctx->Const.MaxDrawBuffers = 1;
 
@@ -181,6 +206,12 @@ i915CreateContext(const __GLcontextModes * mesaVis,
    intel->verts = TNL_CONTEXT(ctx)->clipspace.vertex_buf;
 
    i915InitState(i915);
+
+   /* Always enable pixel fog.  Vertex fog using fog coord will conflict
+    * with fog code appended onto fragment program.
+    */
+   _tnl_allow_vertex_fog(ctx, 0);
+   _tnl_allow_pixel_fog(ctx, 1);
 
    return GL_TRUE;
 }

@@ -25,12 +25,10 @@
 #define R300_STATE_INLINES_H
 
 #include "draw/draw_vertex.h"
-
 #include "pipe/p_format.h"
-
 #include "util/u_format.h"
-
 #include "r300_reg.h"
+#include <stdio.h>
 
 /* Some maths. These should probably find their way to u_math, if needed. */
 
@@ -40,23 +38,24 @@ static INLINE int pack_float_16_6x(float f) {
 
 /* Blend state. */
 
-static INLINE uint32_t r300_translate_blend_function(int blend_func)
+static INLINE uint32_t r300_translate_blend_function(int blend_func,
+                                                     boolean clamp)
 {
     switch (blend_func) {
-        case PIPE_BLEND_ADD:
-            return R300_COMB_FCN_ADD_CLAMP;
-        case PIPE_BLEND_SUBTRACT:
-            return R300_COMB_FCN_SUB_CLAMP;
-        case PIPE_BLEND_REVERSE_SUBTRACT:
-            return R300_COMB_FCN_RSUB_CLAMP;
-        case PIPE_BLEND_MIN:
-            return R300_COMB_FCN_MIN;
-        case PIPE_BLEND_MAX:
-            return R300_COMB_FCN_MAX;
-        default:
-            debug_printf("r300: Unknown blend function %d\n", blend_func);
-            assert(0);
-            break;
+    case PIPE_BLEND_ADD:
+        return clamp ? R300_COMB_FCN_ADD_CLAMP : R300_COMB_FCN_ADD_NOCLAMP;
+    case PIPE_BLEND_SUBTRACT:
+        return clamp ? R300_COMB_FCN_SUB_CLAMP : R300_COMB_FCN_SUB_NOCLAMP;
+    case PIPE_BLEND_REVERSE_SUBTRACT:
+        return clamp ? R300_COMB_FCN_RSUB_CLAMP : R300_COMB_FCN_RSUB_NOCLAMP;
+    case PIPE_BLEND_MIN:
+        return R300_COMB_FCN_MIN;
+    case PIPE_BLEND_MAX:
+        return R300_COMB_FCN_MAX;
+    default:
+        fprintf(stderr, "r300: Unknown blend function %d\n", blend_func);
+        assert(0);
+        break;
     }
     return 0;
 }
@@ -100,13 +99,13 @@ static INLINE uint32_t r300_translate_blend_factor(int blend_fact)
         case PIPE_BLENDFACTOR_SRC1_ALPHA:
         case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
         case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:
-            debug_printf("r300: Implementation error: "
+            fprintf(stderr, "r300: Implementation error: "
                 "Bad blend factor %d not supported!\n", blend_fact);
             assert(0);
             break;
 
         default:
-            debug_printf("r300: Unknown blend factor %d\n", blend_fact);
+            fprintf(stderr, "r300: Unknown blend factor %d\n", blend_fact);
             assert(0);
             break;
     }
@@ -135,7 +134,7 @@ static INLINE uint32_t r300_translate_depth_stencil_function(int zs_func)
         case PIPE_FUNC_ALWAYS:
             return R300_ZS_ALWAYS;
         default:
-            debug_printf("r300: Unknown depth/stencil function %d\n",
+            fprintf(stderr, "r300: Unknown depth/stencil function %d\n",
                 zs_func);
             assert(0);
             break;
@@ -163,7 +162,7 @@ static INLINE uint32_t r300_translate_stencil_op(int s_op)
         case PIPE_STENCIL_OP_INVERT:
             return R300_ZS_INVERT;
         default:
-            debug_printf("r300: Unknown stencil op %d", s_op);
+            fprintf(stderr, "r300: Unknown stencil op %d", s_op);
             assert(0);
             break;
     }
@@ -190,7 +189,7 @@ static INLINE uint32_t r300_translate_alpha_function(int alpha_func)
         case PIPE_FUNC_ALWAYS:
             return R300_FG_ALPHA_FUNC_ALWAYS;
         default:
-            debug_printf("r300: Unknown alpha function %d", alpha_func);
+            fprintf(stderr, "r300: Unknown alpha function %d", alpha_func);
             assert(0);
             break;
     }
@@ -209,7 +208,7 @@ r300_translate_polygon_mode_front(unsigned mode) {
             return R300_GA_POLY_MODE_FRONT_PTYPE_POINT;
 
         default:
-            debug_printf("r300: Bad polygon mode %i in %s\n", mode,
+            fprintf(stderr, "r300: Bad polygon mode %i in %s\n", mode,
                 __FUNCTION__);
             return R300_GA_POLY_MODE_FRONT_PTYPE_TRI;
     }
@@ -227,7 +226,7 @@ r300_translate_polygon_mode_back(unsigned mode) {
             return R300_GA_POLY_MODE_BACK_PTYPE_POINT;
 
         default:
-            debug_printf("r300: Bad polygon mode %i in %s\n", mode,
+            fprintf(stderr, "r300: Bad polygon mode %i in %s\n", mode,
                 __FUNCTION__);
             return R300_GA_POLY_MODE_BACK_PTYPE_TRI;
     }
@@ -253,60 +252,58 @@ static INLINE uint32_t r300_translate_wrap(int wrap)
         case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
             return R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
         case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
-            return R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
+            return R300_TX_CLAMP_TO_BORDER | R300_TX_MIRRORED;
         default:
-            debug_printf("r300: Unknown texture wrap %d", wrap);
+            fprintf(stderr, "r300: Unknown texture wrap %d", wrap);
             assert(0);
             return 0;
     }
 }
 
 static INLINE uint32_t r300_translate_tex_filters(int min, int mag, int mip,
-                                                  int is_anisotropic)
+                                                  boolean is_anisotropic)
 {
     uint32_t retval = 0;
-    if (is_anisotropic)
-        retval |= R300_TX_MIN_FILTER_ANISO | R300_TX_MAG_FILTER_ANISO;
-    else {
-        switch (min) {
-        case PIPE_TEX_FILTER_NEAREST:
-            retval |= R300_TX_MIN_FILTER_NEAREST;
-            break;
-        case PIPE_TEX_FILTER_LINEAR:
-            retval |= R300_TX_MIN_FILTER_LINEAR;
-            break;
-        default:
-            debug_printf("r300: Unknown texture filter %d\n", min);
-            assert(0);
-            break;
-        }
-        switch (mag) {
-        case PIPE_TEX_FILTER_NEAREST:
-            retval |= R300_TX_MAG_FILTER_NEAREST;
-            break;
-        case PIPE_TEX_FILTER_LINEAR:
-            retval |= R300_TX_MAG_FILTER_LINEAR;
-            break;
-        default:
-            debug_printf("r300: Unknown texture filter %d\n", mag);
-            assert(0);
-            break;
-        }
+
+    switch (min) {
+    case PIPE_TEX_FILTER_NEAREST:
+        retval |= R300_TX_MIN_FILTER_NEAREST;
+        break;
+    case PIPE_TEX_FILTER_LINEAR:
+        retval |= is_anisotropic ? R300_TX_MIN_FILTER_ANISO :
+                                   R300_TX_MIN_FILTER_LINEAR;
+        break;
+    default:
+        fprintf(stderr, "r300: Unknown texture filter %d\n", min);
+        assert(0);
     }
+
+    switch (mag) {
+    case PIPE_TEX_FILTER_NEAREST:
+        retval |= R300_TX_MAG_FILTER_NEAREST;
+        break;
+    case PIPE_TEX_FILTER_LINEAR:
+        retval |= is_anisotropic ? R300_TX_MAG_FILTER_ANISO :
+                                   R300_TX_MAG_FILTER_LINEAR;
+        break;
+    default:
+        fprintf(stderr, "r300: Unknown texture filter %d\n", mag);
+        assert(0);
+    }
+
     switch (mip) {
-        case PIPE_TEX_MIPFILTER_NONE:
-            retval |= R300_TX_MIN_FILTER_MIP_NONE;
-            break;
-        case PIPE_TEX_MIPFILTER_NEAREST:
-            retval |= R300_TX_MIN_FILTER_MIP_NEAREST;
-            break;
-        case PIPE_TEX_MIPFILTER_LINEAR:
-            retval |= R300_TX_MIN_FILTER_MIP_LINEAR;
-            break;
-        default:
-            debug_printf("r300: Unknown texture filter %d\n", mip);
-            assert(0);
-            break;
+    case PIPE_TEX_MIPFILTER_NONE:
+        retval |= R300_TX_MIN_FILTER_MIP_NONE;
+        break;
+    case PIPE_TEX_MIPFILTER_NEAREST:
+        retval |= R300_TX_MIN_FILTER_MIP_NEAREST;
+        break;
+    case PIPE_TEX_MIPFILTER_LINEAR:
+        retval |= R300_TX_MIN_FILTER_MIP_LINEAR;
+        break;
+    default:
+        fprintf(stderr, "r300: Unknown texture filter %d\n", mip);
+        assert(0);
     }
 
     return retval;
@@ -327,52 +324,16 @@ static INLINE uint32_t r300_anisotropy(unsigned max_aniso)
     }
 }
 
-/* Non-CSO state. (For now.) */
-
-static INLINE uint32_t r300_translate_gb_pipes(int pipe_count)
+static INLINE uint32_t r500_anisotropy(unsigned max_aniso)
 {
-    switch (pipe_count) {
-        case 1:
-            return R300_GB_TILE_PIPE_COUNT_RV300;
-            break;
-        case 2:
-            return R300_GB_TILE_PIPE_COUNT_R300;
-            break;
-        case 3:
-            return R300_GB_TILE_PIPE_COUNT_R420_3P;
-            break;
-        case 4:
-            return R300_GB_TILE_PIPE_COUNT_R420;
-            break;
+    if (!max_aniso) {
+        return 0;
     }
-    return 0;
-}
+    max_aniso -= 1;
 
-/* Utility function to count the number of components in RGBAZS formats.
- * XXX should go to util or p_format.h */
-static INLINE unsigned pf_component_count(enum pipe_format format) {
-    unsigned count = 0;
-
-    if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 0)) {
-        count++;
-    }
-    if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 1)) {
-        count++;
-    }
-    if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 2)) {
-        count++;
-    }
-    if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 3)) {
-        count++;
-    }
-    if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 0)) {
-        count++;
-    }
-    if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 1)) {
-        count++;
-    }
-
-    return count;
+    // Map the range [0, 15] to [0, 63].
+    return R500_TX_MAX_ANISO(MIN2((unsigned)(max_aniso*4.2001), 63)) |
+           R500_TX_ANISO_HIGH_QUALITY;
 }
 
 /* Translate pipe_formats into PSC vertex types. */
@@ -380,70 +341,67 @@ static INLINE uint16_t
 r300_translate_vertex_data_type(enum pipe_format format) {
     uint32_t result = 0;
     const struct util_format_description *desc;
-    unsigned components = pf_component_count(format);
+    unsigned i;
 
     desc = util_format_description(format);
 
     if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN) {
-        debug_printf("r300: Bad format %s in %s:%d\n", util_format_name(format),
-            __FUNCTION__, __LINE__);
-        assert(0);
+        return R300_INVALID_FORMAT;
     }
 
-    switch (desc->channel[0].type) {
+    /* Find the first non-VOID channel. */
+    for (i = 0; i < 4; i++) {
+        if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
+            break;
+        }
+    }
+
+    switch (desc->channel[i].type) {
         /* Half-floats, floats, doubles */
         case UTIL_FORMAT_TYPE_FLOAT:
-            switch (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 0)) {
+            switch (desc->channel[i].size) {
                 case 16:
-                    /* XXX Supported only on RV350 and later. */
-                    if (components > 2) {
+                    /* Supported only on RV350 and later. */
+                    if (desc->nr_channels > 2) {
                         result = R300_DATA_TYPE_FLT16_4;
                     } else {
                         result = R300_DATA_TYPE_FLT16_2;
                     }
                     break;
                 case 32:
-                    result = R300_DATA_TYPE_FLOAT_1 + (components - 1);
+                    result = R300_DATA_TYPE_FLOAT_1 + (desc->nr_channels - 1);
                     break;
                 default:
-                    debug_printf("r300: Bad format %s in %s:%d\n",
-                        util_format_name(format), __FUNCTION__, __LINE__);
-                    assert(0);
+                    return R300_INVALID_FORMAT;
             }
             break;
         /* Unsigned ints */
         case UTIL_FORMAT_TYPE_UNSIGNED:
         /* Signed ints */
         case UTIL_FORMAT_TYPE_SIGNED:
-            switch (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 0)) {
+            switch (desc->channel[i].size) {
                 case 8:
                     result = R300_DATA_TYPE_BYTE;
                     break;
                 case 16:
-                    if (components > 2) {
+                    if (desc->nr_channels > 2) {
                         result = R300_DATA_TYPE_SHORT_4;
                     } else {
                         result = R300_DATA_TYPE_SHORT_2;
                     }
                     break;
                 default:
-                    debug_printf("r300: Bad format %s in %s:%d\n",
-                        util_format_name(format), __FUNCTION__, __LINE__);
-                    debug_printf("r300: util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 0) == %d\n",
-                        util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 0));
-                    assert(0);
+                    return R300_INVALID_FORMAT;
             }
             break;
         default:
-            debug_printf("r300: Bad format %s in %s:%d\n",
-                util_format_name(format), __FUNCTION__, __LINE__);
-            assert(0);
+            return R300_INVALID_FORMAT;
     }
 
-    if (desc->channel[0].type == UTIL_FORMAT_TYPE_SIGNED) {
+    if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
         result |= R300_SIGNED;
     }
-    if (desc->channel[0].normalized) {
+    if (desc->channel[i].normalized) {
         result |= R300_NORMALIZE;
     }
 
@@ -453,20 +411,29 @@ r300_translate_vertex_data_type(enum pipe_format format) {
 static INLINE uint16_t
 r300_translate_vertex_data_swizzle(enum pipe_format format) {
     const struct util_format_description *desc = util_format_description(format);
+    unsigned i, swizzle = 0;
 
     assert(format);
 
     if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN) {
-        debug_printf("r300: Bad format %s in %s:%d\n",
-            util_format_name(format), __FUNCTION__, __LINE__);
+        fprintf(stderr, "r300: Bad format %s in %s:%d\n",
+            util_format_short_name(format), __FUNCTION__, __LINE__);
         return 0;
     }
 
-    return ((desc->swizzle[0] << R300_SWIZZLE_SELECT_X_SHIFT) |
-            (desc->swizzle[1] << R300_SWIZZLE_SELECT_Y_SHIFT) |
-            (desc->swizzle[2] << R300_SWIZZLE_SELECT_Z_SHIFT) |
-            (desc->swizzle[3] << R300_SWIZZLE_SELECT_W_SHIFT) |
-            (0xf << R300_WRITE_ENA_SHIFT));
+    for (i = 0; i < desc->nr_channels; i++) {
+        swizzle |=
+            MIN2(desc->swizzle[i], R300_SWIZZLE_SELECT_FP_ONE) << (3*i);
+    }
+    /* Set (0,0,0,1) in unused components. */
+    for (; i < 3; i++) {
+        swizzle |= R300_SWIZZLE_SELECT_FP_ZERO << (3*i);
+    }
+    for (; i < 4; i++) {
+        swizzle |= R300_SWIZZLE_SELECT_FP_ONE << (3*i);
+    }
+
+    return swizzle | (0xf << R300_WRITE_ENA_SHIFT);
 }
 
 #endif /* R300_STATE_INLINES_H */

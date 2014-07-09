@@ -42,7 +42,7 @@
 #include "brw_state.h"
 #include "brw_gs.h"
 
-
+#include "../glsl/ralloc.h"
 
 static void compile_gs_prog( struct brw_context *brw,
 			     struct brw_gs_prog_key *key )
@@ -50,7 +50,14 @@ static void compile_gs_prog( struct brw_context *brw,
    struct intel_context *intel = &brw->intel;
    struct brw_gs_compile c;
    const GLuint *program;
+   void *mem_ctx;
    GLuint program_size;
+
+   /* Gen6: VF has already converted into polygon, and LINELOOP is
+    * converted to LINESTRIP at the beginning of the 3D pipeline.
+    */
+   if (intel->gen >= 6)
+      return;
 
    memset(&c, 0, sizeof(c));
    
@@ -60,17 +67,18 @@ static void compile_gs_prog( struct brw_context *brw,
     */
    c.nr_attrs = brw_count_bits(c.key.attrs);
 
-   if (intel->gen == 5)
+   if (intel->gen >= 5)
        c.nr_regs = (c.nr_attrs + 1) / 2 + 3;  /* are vertices packed, or reg-aligned? */
    else
        c.nr_regs = (c.nr_attrs + 1) / 2 + 1;  /* are vertices packed, or reg-aligned? */
 
    c.nr_bytes = c.nr_regs * REG_SIZE;
 
+   mem_ctx = NULL;
    
    /* Begin the compilation:
     */
-   brw_init_compile(brw, &c.func);
+   brw_init_compile(brw, &c.func, mem_ctx);
 
    c.func.single_program_flow = 1;
 
@@ -83,6 +91,7 @@ static void compile_gs_prog( struct brw_context *brw,
    /* Note that primitives which don't require a GS program have
     * already been weeded out by this stage:
     */
+
    switch (key->primitive) {
    case GL_QUADS:
       brw_gs_quads( &c, key );
@@ -93,28 +102,8 @@ static void compile_gs_prog( struct brw_context *brw,
    case GL_LINE_LOOP:
       brw_gs_lines( &c );
       break;
-   case GL_LINES:
-      if (key->hint_gs_always)
-	 brw_gs_lines( &c );
-      else {
-	 return;
-      }
-      break;
-   case GL_TRIANGLES:
-      if (key->hint_gs_always)
-	 brw_gs_tris( &c );
-      else {
-	 return;
-      }
-      break;
-   case GL_POINTS:
-      if (key->hint_gs_always)
-	 brw_gs_points( &c );
-      else {
-	 return;
-      }
-      break;      
    default:
+      ralloc_free(mem_ctx);
       return;
    }
 
@@ -122,16 +111,22 @@ static void compile_gs_prog( struct brw_context *brw,
     */
    program = brw_get_program(&c.func, &program_size);
 
-   /* Upload
-    */
-   dri_bo_unreference(brw->gs.prog_bo);
-   brw->gs.prog_bo = brw_upload_cache_with_auxdata(&brw->cache, BRW_GS_PROG,
-						   &c.key, sizeof(c.key),
-						   NULL, 0,
-						   program, program_size,
-						   &c.prog_data,
-						   sizeof(c.prog_data),
-						   &brw->gs.prog_data);
+   if (unlikely(INTEL_DEBUG & DEBUG_GS)) {
+      int i;
+
+      printf("gs:\n");
+      for (i = 0; i < program_size / sizeof(struct brw_instruction); i++)
+	 brw_disasm(stdout, &((struct brw_instruction *)program)[i],
+		    intel->gen);
+      printf("\n");
+    }
+
+   brw_upload_cache(&brw->cache, BRW_GS_PROG,
+		    &c.key, sizeof(c.key),
+		    program, program_size,
+		    &c.prog_data, sizeof(c.prog_data),
+		    &brw->gs.prog_offset, &brw->gs.prog_data);
+   ralloc_free(mem_ctx);
 }
 
 static const GLenum gs_prim[GL_POLYGON+1] = {  
@@ -150,7 +145,9 @@ static const GLenum gs_prim[GL_POLYGON+1] = {
 static void populate_key( struct brw_context *brw,
 			  struct brw_gs_prog_key *key )
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
+   struct intel_context *intel = &brw->intel;
+
    memset(key, 0, sizeof(*key));
 
    /* CACHE_NEW_VS_PROG */
@@ -159,15 +156,20 @@ static void populate_key( struct brw_context *brw,
    /* BRW_NEW_PRIMITIVE */
    key->primitive = gs_prim[brw->primitive];
 
-   key->hint_gs_always = 0;	/* debug code? */
-   
    /* _NEW_LIGHT */
    key->pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);
+   if (key->primitive == GL_QUADS && ctx->Light.ShadeModel != GL_FLAT) {
+      /* Provide consistent primitive order with brw_set_prim's
+       * optimization of single quads to trifans.
+       */
+      key->pv_first = GL_TRUE;
+   }
 
-   key->need_gs_prog = (key->hint_gs_always ||
-			brw->primitive == GL_QUADS ||
-			brw->primitive == GL_QUAD_STRIP ||
-			brw->primitive == GL_LINE_LOOP);
+   key->need_gs_prog = (intel->gen >= 6)
+      ? 0
+      : (brw->primitive == GL_QUADS ||
+	 brw->primitive == GL_QUAD_STRIP ||
+	 brw->primitive == GL_LINE_LOOP);
 }
 
 /* Calculate interpolants for triangle and line rasterization.
@@ -185,13 +187,11 @@ static void prepare_gs_prog(struct brw_context *brw)
    }
 
    if (brw->gs.prog_active) {
-      dri_bo_unreference(brw->gs.prog_bo);
-      brw->gs.prog_bo = brw_search_cache(&brw->cache, BRW_GS_PROG,
-					 &key, sizeof(key),
-					 NULL, 0,
-					 &brw->gs.prog_data);
-      if (brw->gs.prog_bo == NULL)
+      if (!brw_search_cache(&brw->cache, BRW_GS_PROG,
+			    &key, sizeof(key),
+			    &brw->gs.prog_offset, &brw->gs.prog_data)) {
 	 compile_gs_prog( brw, &key );
+      }
    }
 }
 

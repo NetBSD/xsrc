@@ -51,8 +51,9 @@
 #include <drm.h>
 #include <drm_sarea.h>
 #include <xf86drm.h>
+#include "xmlconfig.h"
 #include "main/glheader.h"
-#include "GL/internal/glcore.h"
+#include "main/mtypes.h"
 #include "GL/internal/dri_interface.h"
 
 #define GLX_BAD_CONTEXT                    5
@@ -68,8 +69,8 @@ extern const __DRIdri2Extension driDRI2Extension;
 extern const __DRIextension driReadDrawableExtension;
 extern const __DRIcopySubBufferExtension driCopySubBufferExtension;
 extern const __DRIswapControlExtension driSwapControlExtension;
-extern const __DRIframeTrackingExtension driFrameTrackingExtension;
 extern const __DRImediaStreamCounterExtension driMediaStreamCounterExtension;
+extern const __DRI2configQueryExtension dri2ConfigQueryExtension;
 
 /**
  * Used by DRI_VALIDATE_DRAWABLE_INFO
@@ -146,8 +147,9 @@ struct __DriverAPIRec {
     /**
      * Context creation callback
      */	    	    
-    GLboolean (*CreateContext)(const __GLcontextModes *glVis,
-                               __DRIcontext *driContextPriv,
+    GLboolean (*CreateContext)(gl_api api,
+			       const struct gl_config *glVis,
+			       __DRIcontext *driContextPriv,
                                void *sharedContextPrivate);
 
     /**
@@ -160,7 +162,7 @@ struct __DriverAPIRec {
      */
     GLboolean (*CreateBuffer)(__DRIscreen *driScrnPriv,
                               __DRIdrawable *driDrawPriv,
-                              const __GLcontextModes *glVis,
+                              const struct gl_config *glVis,
                               GLboolean pixmapBuffer);
     
     /**
@@ -221,6 +223,12 @@ struct __DriverAPIRec {
 
     /* DRI2 Entry point */
     const __DRIconfig **(*InitScreen2) (__DRIscreen * priv);
+
+    __DRIbuffer *(*AllocateBuffer) (__DRIscreen *screenPrivate,
+				    unsigned int attachment,
+				    unsigned int format,
+				    int width, int height);
+    void (*ReleaseBuffer) (__DRIscreen *screenPrivate, __DRIbuffer *buffer);
 };
 
 extern const struct __DriverAPIRec driDriverAPI;
@@ -399,11 +407,6 @@ struct __DRIcontextRec {
     void *driverPrivate;
 
     /**
-     * Pointer back to the \c __DRIcontext that contains this structure.
-     */
-    __DRIcontext *pctx;
-
-    /**
      * Pointer to drawable currently bound to this context for drawing.
      */
     __DRIdrawable *driDrawablePriv;
@@ -511,28 +514,15 @@ struct __DRIscreenRec {
     /*@}*/
 
     /**
-     * Dummy context to which drawables are bound when not bound to any
-     * other context. 
-     *
-     * A dummy hHWContext is created for this context, and is used by the GL
-     * core when a hardware lock is required but the drawable is not currently
-     * bound (e.g., potentially during a SwapBuffers request).  The dummy
-     * context is created when the first "real" context is created on this
-     * screen.
-     */
-    __DRIcontext dummyContextPriv;
-
-    /**
      * Device-dependent private information (not stored in the SAREA).
      * 
      * This pointer is never touched by the DRI layer.
      */
+#ifdef __cplusplus
+    void *priv;
+#else
     void *private;
-
-    /**
-     * Pointer back to the \c __DRIscreen that contains this structure.
-     */
-    __DRIscreen *psc;
+#endif
 
     /* Extensions provided by the loader. */
     const __DRIgetDrawableInfoExtension *getDrawableInfo;
@@ -545,15 +535,17 @@ struct __DRIscreenRec {
 	int enabled;
 	__DRIdri2LoaderExtension *loader;
 	__DRIimageLookupExtension *image;
+	__DRIuseInvalidateExtension *useInvalidate;
     } dri2;
 
     /* The lock actually in use, old sarea or DRI2 */
     drmLock *lock;
+
+    driOptionCache optionInfo;
+    driOptionCache optionCache;
+   unsigned int api_mask;
+   void *loaderPrivate;
 };
-
-extern void
-__driUtilMessage(const char *f, ...);
-
 
 extern void
 __driUtilUpdateDrawableInfo(__DRIdrawable *pdp);

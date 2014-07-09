@@ -33,7 +33,7 @@
  *
  * We basically convert the VBO's vertex attribute/array information into
  * Gallium vertex state, bind the vertex buffer objects and call
- * pipe->draw_elements(), pipe->draw_range_elements() or pipe->draw_arrays().
+ * pipe->draw_vbo().
  *
  * Authors:
  *   Keith Whitwell <keith@tungstengraphics.com>
@@ -42,8 +42,10 @@
 
 #include "main/imports.h"
 #include "main/image.h"
+#include "main/bufferobj.h"
 #include "main/macros.h"
-#include "shader/prog_uniform.h"
+#include "main/mfeatures.h"
+#include "program/prog_uniform.h"
 
 #include "vbo/vbo.h"
 
@@ -57,6 +59,10 @@
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 #include "util/u_format.h"
+#include "util/u_prim.h"
+#include "util/u_draw_quad.h"
+#include "draw/draw_context.h"
+#include "cso_cache/cso_context.h"
 
 
 static GLuint double_types[4] = {
@@ -71,6 +77,13 @@ static GLuint float_types[4] = {
    PIPE_FORMAT_R32G32_FLOAT,
    PIPE_FORMAT_R32G32B32_FLOAT,
    PIPE_FORMAT_R32G32B32A32_FLOAT
+};
+
+static GLuint half_float_types[4] = {
+   PIPE_FORMAT_R16_FLOAT,
+   PIPE_FORMAT_R16G16_FLOAT,
+   PIPE_FORMAT_R16G16B16_FLOAT,
+   PIPE_FORMAT_R16G16B16A16_FLOAT
 };
 
 static GLuint uint_types_norm[4] = {
@@ -169,12 +182,12 @@ static GLuint fixed_types[4] = {
 /**
  * Return a PIPE_FORMAT_x for the given GL datatype and size.
  */
-GLuint
+enum pipe_format
 st_pipe_vertex_format(GLenum type, GLuint size, GLenum format,
                       GLboolean normalized)
 {
    assert((type >= GL_BYTE && type <= GL_DOUBLE) ||
-          type == GL_FIXED);
+          type == GL_FIXED || type == GL_HALF_FLOAT);
    assert(size >= 1);
    assert(size <= 4);
    assert(format == GL_RGBA || format == GL_BGRA);
@@ -183,13 +196,14 @@ st_pipe_vertex_format(GLenum type, GLuint size, GLenum format,
       /* this is an odd-ball case */
       assert(type == GL_UNSIGNED_BYTE);
       assert(normalized);
-      return PIPE_FORMAT_A8R8G8B8_UNORM;
+      return PIPE_FORMAT_B8G8R8A8_UNORM;
    }
 
    if (normalized) {
       switch (type) {
       case GL_DOUBLE: return double_types[size-1];
       case GL_FLOAT: return float_types[size-1];
+      case GL_HALF_FLOAT: return half_float_types[size-1];
       case GL_INT: return int_types_norm[size-1];
       case GL_SHORT: return short_types_norm[size-1];
       case GL_BYTE: return byte_types_norm[size-1];
@@ -198,12 +212,13 @@ st_pipe_vertex_format(GLenum type, GLuint size, GLenum format,
       case GL_UNSIGNED_BYTE: return ubyte_types_norm[size-1];
       case GL_FIXED: return fixed_types[size-1];
       default: assert(0); return 0;
-      }      
+      }
    }
    else {
       switch (type) {
       case GL_DOUBLE: return double_types[size-1];
       case GL_FLOAT: return float_types[size-1];
+      case GL_HALF_FLOAT: return half_float_types[size-1];
       case GL_INT: return int_types_scale[size-1];
       case GL_SHORT: return short_types_scale[size-1];
       case GL_BYTE: return byte_types_scale[size-1];
@@ -212,106 +227,74 @@ st_pipe_vertex_format(GLenum type, GLuint size, GLenum format,
       case GL_UNSIGNED_BYTE: return ubyte_types_scale[size-1];
       case GL_FIXED: return fixed_types[size-1];
       default: assert(0); return 0;
-      }      
+      }
    }
-   return 0; /* silence compiler warning */
+   return PIPE_FORMAT_NONE; /* silence compiler warning */
 }
 
 
-
-
-
 /**
- * Examine the active arrays to determine if we have interleaved
- * vertex arrays all living in one VBO, or all living in user space.
- * \param userSpace  returns whether the arrays are in user space.
+ * This is very similar to vbo_all_varyings_in_vbos() but we test
+ * the stride.  See bug 38626.
  */
 static GLboolean
-is_interleaved_arrays(const struct st_vertex_program *vp,
-                      const struct st_vp_varient *vpv,
-                      const struct gl_client_array **arrays,
-                      GLboolean *userSpace)
+all_varyings_in_vbos(const struct gl_client_array *arrays[])
 {
-   GLuint attr;
-   const struct gl_buffer_object *firstBufObj = NULL;
-   GLint firstStride = -1;
-   GLuint num_client_arrays = 0;
-   const GLubyte *client_addr = NULL;
-
-   for (attr = 0; attr < vpv->num_inputs; attr++) {
-      const GLuint mesaAttr = vp->index_to_input[attr];
-      const struct gl_buffer_object *bufObj = arrays[mesaAttr]->BufferObj;
-      const GLsizei stride = arrays[mesaAttr]->StrideB; /* in bytes */
-
-      if (firstStride < 0) {
-         firstStride = stride;
-      }
-      else if (firstStride != stride) {
-         return GL_FALSE;
-      }
-         
-      if (!bufObj || !bufObj->Name) {
-         num_client_arrays++;
-         /* Try to detect if the client-space arrays are
-          * "close" to each other.
-          */
-         if (!client_addr) {
-            client_addr = arrays[mesaAttr]->Ptr;
-         }
-         else if (abs(arrays[mesaAttr]->Ptr - client_addr) > firstStride) {
-            /* arrays start too far apart */
-            return GL_FALSE;
-         }
-      }
-      else if (!firstBufObj) {
-         firstBufObj = bufObj;
-      }
-      else if (bufObj != firstBufObj) {
-         return GL_FALSE;
-      }
-   }
-
-   *userSpace = (num_client_arrays == vpv->num_inputs);
-   /* printf("user space: %d (%d %d)\n", (int) *userSpace,num_client_arrays,vp->num_inputs); */
+   GLuint i;
+   
+   for (i = 0; i < VERT_ATTRIB_MAX; i++)
+      if (arrays[i]->StrideB && !_mesa_is_bufferobj(arrays[i]->BufferObj))
+	 return GL_FALSE;
 
    return GL_TRUE;
 }
 
 
 /**
- * Compute the memory range occupied by the arrays.
+ * Examine the active arrays to determine if we have interleaved
+ * vertex arrays all living in one VBO, or all living in user space.
  */
-static void
-get_arrays_bounds(const struct st_vertex_program *vp,
-                  const struct st_vp_varient *vpv,
-                  const struct gl_client_array **arrays,
-                  GLuint max_index,
-                  const GLubyte **low, const GLubyte **high)
+static GLboolean
+is_interleaved_arrays(const struct st_vertex_program *vp,
+                      const struct st_vp_variant *vpv,
+                      const struct gl_client_array **arrays)
 {
-   const GLubyte *low_addr = NULL;
-   const GLubyte *high_addr = NULL;
    GLuint attr;
+   const struct gl_buffer_object *firstBufObj = NULL;
+   GLint firstStride = -1;
+   const GLubyte *firstPtr = NULL;
+   GLboolean userSpaceBuffer = GL_FALSE;
 
    for (attr = 0; attr < vpv->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
-      const GLint stride = arrays[mesaAttr]->StrideB;
-      const GLubyte *start = arrays[mesaAttr]->Ptr;
-      const unsigned sz = (arrays[mesaAttr]->Size * 
-                           _mesa_sizeof_type(arrays[mesaAttr]->Type));
-      const GLubyte *end = start + (max_index * stride) + sz;
+      const struct gl_client_array *array = arrays[mesaAttr];
+      const struct gl_buffer_object *bufObj = array->BufferObj;
+      const GLsizei stride = array->StrideB; /* in bytes */
 
       if (attr == 0) {
-         low_addr = start;
-         high_addr = end;
+         /* save info about the first array */
+         firstStride = stride;
+         firstPtr = array->Ptr;         
+         firstBufObj = bufObj;
+         userSpaceBuffer = !bufObj || !bufObj->Name;
       }
       else {
-         low_addr = MIN2(low_addr, start);
-         high_addr = MAX2(high_addr, end);
+         /* check if other arrays interleave with the first, in same buffer */
+         if (stride != firstStride)
+            return GL_FALSE; /* strides don't match */
+
+         if (bufObj != firstBufObj)
+            return GL_FALSE; /* arrays in different VBOs */
+
+         if (abs(array->Ptr - firstPtr) > firstStride)
+            return GL_FALSE; /* arrays start too far apart */
+
+         if ((!bufObj || !_mesa_is_bufferobj(bufObj)) != userSpaceBuffer)
+            return GL_FALSE; /* mix of VBO and user-space arrays */
       }
    }
 
-   *low = low_addr;
-   *high = high_addr;
+   return GL_TRUE;
 }
 
 
@@ -322,58 +305,74 @@ get_arrays_bounds(const struct st_vertex_program *vp,
  * \param velements  returns vertex element info
  */
 static void
-setup_interleaved_attribs(GLcontext *ctx,
+setup_interleaved_attribs(struct gl_context *ctx,
                           const struct st_vertex_program *vp,
-                          const struct st_vp_varient *vpv,
+                          const struct st_vp_variant *vpv,
                           const struct gl_client_array **arrays,
-                          GLuint max_index,
-                          GLboolean userSpace,
                           struct pipe_vertex_buffer *vbuffer,
-                          struct pipe_vertex_element velements[])
+                          struct pipe_vertex_element velements[],
+                          unsigned max_index,
+                          unsigned num_instances)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
    GLuint attr;
-   const GLubyte *offset0 = NULL;
+   const GLubyte *low_addr = NULL;
+
+   /* Find the lowest address of the arrays we're drawing */
+   if (vpv->num_inputs) {
+      low_addr = arrays[vp->index_to_input[0]]->Ptr;
+
+      for (attr = 1; attr < vpv->num_inputs; attr++) {
+         const GLubyte *start = arrays[vp->index_to_input[attr]]->Ptr;
+         low_addr = MIN2(low_addr, start);
+      }
+   }
 
    for (attr = 0; attr < vpv->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
-      struct gl_buffer_object *bufobj = arrays[mesaAttr]->BufferObj;
+      const struct gl_client_array *array = arrays[mesaAttr];
+      struct gl_buffer_object *bufobj = array->BufferObj;
       struct st_buffer_object *stobj = st_buffer_object(bufobj);
-      GLsizei stride = arrays[mesaAttr]->StrideB;
+      unsigned src_offset = (unsigned) (array->Ptr - low_addr);
+      GLuint element_size = array->_ElementSize;
+      GLsizei stride = array->StrideB;
 
-      /*printf("stobj %u = %p\n", attr, (void*)stobj);*/
+      assert(element_size == array->Size * _mesa_sizeof_type(array->Type));
 
       if (attr == 0) {
-         const GLubyte *low, *high;
-
-         get_arrays_bounds(vp, vpv, arrays, max_index, &low, &high);
-         /*printf("buffer range: %p %p  %d\n", low, high, high-low);*/
-
-         offset0 = low;
-         if (userSpace) {
-            vbuffer->buffer =
-               pipe_user_buffer_create(pipe->screen, (void *) low, high - low);
-            vbuffer->buffer_offset = 0;
+         if (bufobj && _mesa_is_bufferobj(bufobj)) {
+            vbuffer->buffer = NULL;
+            pipe_resource_reference(&vbuffer->buffer, stobj->buffer);
+            vbuffer->buffer_offset = pointer_to_offset(low_addr);
          }
          else {
-            vbuffer->buffer = NULL;
-            pipe_buffer_reference(&vbuffer->buffer, stobj->buffer);
-            vbuffer->buffer_offset = pointer_to_offset(low);
+            uint divisor = array->InstanceDivisor;
+            uint last_index = divisor ? num_instances / divisor : max_index;
+            uint bytes = src_offset + stride * last_index + element_size;
+
+            vbuffer->buffer = pipe_user_buffer_create(pipe->screen,
+                                                      (void*) low_addr,
+                                                      bytes,
+                                                      PIPE_BIND_VERTEX_BUFFER);
+            vbuffer->buffer_offset = 0;
+
+            /* Track user vertex buffers. */
+            pipe_resource_reference(&st->user_attrib[0].buffer, vbuffer->buffer);
+            st->user_attrib[0].element_size = element_size;
+            st->user_attrib[0].stride = stride;
+            st->num_user_attribs = 1;
          }
          vbuffer->stride = stride; /* in bytes */
-         vbuffer->max_index = max_index;
       }
 
-      velements[attr].src_offset =
-         (unsigned) (arrays[mesaAttr]->Ptr - offset0);
-      velements[attr].instance_divisor = 0;
+      velements[attr].src_offset = src_offset;
+      velements[attr].instance_divisor = array->InstanceDivisor;
       velements[attr].vertex_buffer_index = 0;
-      velements[attr].nr_components = arrays[mesaAttr]->Size;
-      velements[attr].src_format =
-         st_pipe_vertex_format(arrays[mesaAttr]->Type,
-                               arrays[mesaAttr]->Size,
-                               arrays[mesaAttr]->Format,
-                               arrays[mesaAttr]->Normalized);
+      velements[attr].src_format = st_pipe_vertex_format(array->Type,
+                                                         array->Size,
+                                                         array->Format,
+                                                         array->Normalized);
       assert(velements[attr].src_format);
    }
 }
@@ -386,88 +385,134 @@ setup_interleaved_attribs(GLcontext *ctx,
  * \param velements  returns vertex element info
  */
 static void
-setup_non_interleaved_attribs(GLcontext *ctx,
+setup_non_interleaved_attribs(struct gl_context *ctx,
                               const struct st_vertex_program *vp,
-                              const struct st_vp_varient *vpv,
+                              const struct st_vp_variant *vpv,
                               const struct gl_client_array **arrays,
-                              GLuint max_index,
-                              GLboolean *userSpace,
                               struct pipe_vertex_buffer vbuffer[],
-                              struct pipe_vertex_element velements[])
+                              struct pipe_vertex_element velements[],
+                              unsigned max_index,
+                              unsigned num_instances)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
    GLuint attr;
 
    for (attr = 0; attr < vpv->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
-      struct gl_buffer_object *bufobj = arrays[mesaAttr]->BufferObj;
-      GLsizei stride = arrays[mesaAttr]->StrideB;
+      const struct gl_client_array *array = arrays[mesaAttr];
+      struct gl_buffer_object *bufobj = array->BufferObj;
+      GLuint element_size = array->_ElementSize;
+      GLsizei stride = array->StrideB;
 
-      *userSpace = GL_FALSE;
+      assert(element_size == array->Size * _mesa_sizeof_type(array->Type));
 
-      if (bufobj && bufobj->Name) {
+      if (bufobj && _mesa_is_bufferobj(bufobj)) {
          /* Attribute data is in a VBO.
           * Recall that for VBOs, the gl_client_array->Ptr field is
           * really an offset from the start of the VBO, not a pointer.
           */
          struct st_buffer_object *stobj = st_buffer_object(bufobj);
          assert(stobj->buffer);
-         /*printf("stobj %u = %p\n", attr, (void*) stobj);*/
 
          vbuffer[attr].buffer = NULL;
-         pipe_buffer_reference(&vbuffer[attr].buffer, stobj->buffer);
-         vbuffer[attr].buffer_offset = pointer_to_offset(arrays[mesaAttr]->Ptr);
-         velements[attr].src_offset = 0;
+         pipe_resource_reference(&vbuffer[attr].buffer, stobj->buffer);
+         vbuffer[attr].buffer_offset = pointer_to_offset(array->Ptr);
       }
       else {
-         /* attribute data is in user-space memory, not a VBO */
-         uint bytes;
-         /*printf("user-space array %d stride %d\n", attr, stride);*/
-	
-         *userSpace = GL_TRUE;
-
          /* wrap user data */
-         if (arrays[mesaAttr]->Ptr) {
-            /* user's vertex array */
-            if (arrays[mesaAttr]->StrideB) {
-               bytes = arrays[mesaAttr]->StrideB * (max_index + 1);
-            }
-            else {
-               bytes = arrays[mesaAttr]->Size
-                  * _mesa_sizeof_type(arrays[mesaAttr]->Type);
-            }
-            vbuffer[attr].buffer = pipe_user_buffer_create(pipe->screen,
-                           (void *) arrays[mesaAttr]->Ptr, bytes);
+         uint bytes;
+         void *ptr;
+
+         if (array->Ptr) {
+            uint divisor = array->InstanceDivisor;
+            uint last_index = divisor ? num_instances / divisor : max_index;
+
+            bytes = stride * last_index + element_size;
+
+            ptr = (void *) array->Ptr;
          }
          else {
             /* no array, use ctx->Current.Attrib[] value */
-            bytes = sizeof(ctx->Current.Attrib[0]);
-            vbuffer[attr].buffer = pipe_user_buffer_create(pipe->screen,
-                           (void *) ctx->Current.Attrib[mesaAttr], bytes);
+            bytes = element_size = sizeof(ctx->Current.Attrib[0]);
+            ptr = (void *) ctx->Current.Attrib[mesaAttr];
             stride = 0;
          }
 
-         vbuffer[attr].buffer_offset = 0;
-         velements[attr].src_offset = 0;
-      }
+         assert(ptr);
+         assert(bytes);
 
-      assert(velements[attr].src_offset <= 2048); /* 11-bit field */
+         vbuffer[attr].buffer =
+            pipe_user_buffer_create(pipe->screen, ptr, bytes,
+                                    PIPE_BIND_VERTEX_BUFFER);
+
+         vbuffer[attr].buffer_offset = 0;
+
+         /* Track user vertex buffers. */
+         pipe_resource_reference(&st->user_attrib[attr].buffer, vbuffer[attr].buffer);
+         st->user_attrib[attr].element_size = element_size;
+         st->user_attrib[attr].stride = stride;
+         st->num_user_attribs = MAX2(st->num_user_attribs, attr + 1);
+      }
 
       /* common-case setup */
       vbuffer[attr].stride = stride; /* in bytes */
-      vbuffer[attr].max_index = max_index;
-      velements[attr].instance_divisor = 0;
+
+      velements[attr].src_offset = 0;
+      velements[attr].instance_divisor = array->InstanceDivisor;
       velements[attr].vertex_buffer_index = attr;
-      velements[attr].nr_components = arrays[mesaAttr]->Size;
-      velements[attr].src_format
-         = st_pipe_vertex_format(arrays[mesaAttr]->Type,
-                                 arrays[mesaAttr]->Size,
-                                 arrays[mesaAttr]->Format,
-                                 arrays[mesaAttr]->Normalized);
+      velements[attr].src_format = st_pipe_vertex_format(array->Type,
+                                                         array->Size,
+                                                         array->Format,
+                                                         array->Normalized);
       assert(velements[attr].src_format);
    }
 }
 
+
+static void
+setup_index_buffer(struct gl_context *ctx,
+                   const struct _mesa_index_buffer *ib,
+                   struct pipe_index_buffer *ibuffer)
+{
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
+
+   memset(ibuffer, 0, sizeof(*ibuffer));
+   if (ib) {
+      struct gl_buffer_object *bufobj = ib->obj;
+
+      switch (ib->type) {
+      case GL_UNSIGNED_INT:
+         ibuffer->index_size = 4;
+         break;
+      case GL_UNSIGNED_SHORT:
+         ibuffer->index_size = 2;
+         break;
+      case GL_UNSIGNED_BYTE:
+         ibuffer->index_size = 1;
+         break;
+      default:
+         assert(0);
+	 return;
+      }
+
+      /* get/create the index buffer object */
+      if (bufobj && _mesa_is_bufferobj(bufobj)) {
+         /* elements/indexes are in a real VBO */
+         struct st_buffer_object *stobj = st_buffer_object(bufobj);
+         pipe_resource_reference(&ibuffer->buffer, stobj->buffer);
+         ibuffer->offset = pointer_to_offset(ib->ptr);
+      }
+      else {
+         /* element/indicies are in user space memory */
+         ibuffer->buffer =
+            pipe_user_buffer_create(pipe->screen, (void *) ib->ptr,
+                                    ib->count * ibuffer->index_size,
+                                    PIPE_BIND_INDEX_BUFFER);
+      }
+   }
+}
 
 
 /**
@@ -476,13 +521,23 @@ setup_non_interleaved_attribs(GLcontext *ctx,
  * issue a warning.
  */
 static void
-check_uniforms(GLcontext *ctx)
+check_uniforms(struct gl_context *ctx)
 {
-   const struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
-   if (shProg && shProg->LinkStatus) {
-      GLuint i;
-      for (i = 0; i < shProg->Uniforms->NumUniforms; i++) {
-         const struct gl_uniform *u = &shProg->Uniforms->Uniforms[i];
+   struct gl_shader_program *shProg[3] = {
+      ctx->Shader.CurrentVertexProgram,
+      ctx->Shader.CurrentGeometryProgram,
+      ctx->Shader.CurrentFragmentProgram,
+   };
+   unsigned j;
+
+   for (j = 0; j < 3; j++) {
+      unsigned i;
+
+      if (shProg[j] == NULL || !shProg[j]->LinkStatus)
+	 continue;
+
+      for (i = 0; i < shProg[j]->Uniforms->NumUniforms; i++) {
+         const struct gl_uniform *u = &shProg[j]->Uniforms->Uniforms[i];
          if (!u->Initialized) {
             _mesa_warning(ctx,
                           "Using shader with uninitialized uniform: %s",
@@ -493,10 +548,21 @@ check_uniforms(GLcontext *ctx)
 }
 
 
-static unsigned translate_prim( GLcontext *ctx,
-                                unsigned prim )
+/**
+ * Translate OpenGL primtive type (GL_POINTS, GL_TRIANGLE_STRIP, etc) to
+ * the corresponding Gallium type.
+ */
+static unsigned
+translate_prim(const struct gl_context *ctx, unsigned prim)
 {
+   /* GL prims should match Gallium prims, spot-check a few */
+   assert(GL_POINTS == PIPE_PRIM_POINTS);
+   assert(GL_QUADS == PIPE_PRIM_QUADS);
+   assert(GL_TRIANGLE_STRIP_ADJACENCY == PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY);
+
    /* Avoid quadstrips if it's easy to do so:
+    * Note: it's important to do the correct trimming if we change the
+    * prim type!  We do that wherever this function is called.
     */
    if (prim == GL_QUAD_STRIP &&
        ctx->Light.ShadeModel != GL_FLAT &&
@@ -507,13 +573,74 @@ static unsigned translate_prim( GLcontext *ctx,
    return prim;
 }
 
+
+static void
+st_validate_varrays(struct gl_context *ctx,
+                    const struct gl_client_array **arrays,
+                    unsigned max_index,
+                    unsigned num_instances)
+{
+   struct st_context *st = st_context(ctx);
+   const struct st_vertex_program *vp;
+   const struct st_vp_variant *vpv;
+   struct pipe_vertex_buffer vbuffer[PIPE_MAX_SHADER_INPUTS];
+   struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
+   unsigned num_vbuffers, num_velements;
+   GLuint attr;
+   unsigned i;
+
+   /* must get these after state validation! */
+   vp = st->vp;
+   vpv = st->vp_variant;
+
+   memset(velements, 0, sizeof(struct pipe_vertex_element) * vpv->num_inputs);
+
+   /* Unreference any user vertex buffers. */
+   for (i = 0; i < st->num_user_attribs; i++) {
+      pipe_resource_reference(&st->user_attrib[i].buffer, NULL);
+   }
+   st->num_user_attribs = 0;
+
+   /*
+    * Setup the vbuffer[] and velements[] arrays.
+    */
+   if (is_interleaved_arrays(vp, vpv, arrays)) {
+      setup_interleaved_attribs(ctx, vp, vpv, arrays, vbuffer, velements,
+                                max_index, num_instances);
+
+      num_vbuffers = 1;
+      num_velements = vpv->num_inputs;
+      if (num_velements == 0)
+         num_vbuffers = 0;
+   }
+   else {
+      setup_non_interleaved_attribs(ctx, vp, vpv, arrays,
+                                    vbuffer, velements, max_index,
+                                    num_instances);
+      num_vbuffers = vpv->num_inputs;
+      num_velements = vpv->num_inputs;
+   }
+
+   cso_set_vertex_buffers(st->cso_context, num_vbuffers, vbuffer);
+   cso_set_vertex_elements(st->cso_context, num_velements, velements);
+
+   /* unreference buffers (frees wrapped user-space buffer objects)
+    * This is OK, because the pipe driver should reference buffers by itself
+    * in set_vertex_buffers. */
+   for (attr = 0; attr < num_vbuffers; attr++) {
+      pipe_resource_reference(&vbuffer[attr].buffer, NULL);
+      assert(!vbuffer[attr].buffer);
+   }
+}
+
+
 /**
  * This function gets plugged into the VBO module and is called when
  * we have something to render.
  * Basically, translate the information into the format expected by gallium.
  */
 void
-st_draw_vbo(GLcontext *ctx,
+st_draw_vbo(struct gl_context *ctx,
             const struct gl_client_array **arrays,
             const struct _mesa_prim *prims,
             GLuint nr_prims,
@@ -522,190 +649,149 @@ st_draw_vbo(GLcontext *ctx,
             GLuint min_index,
             GLuint max_index)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
-   const struct st_vertex_program *vp;
-   const struct st_vp_varient *vpv;
-   struct pipe_vertex_buffer vbuffer[PIPE_MAX_SHADER_INPUTS];
-   GLuint attr;
-   struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
-   unsigned num_vbuffers, num_velements;
-   GLboolean userSpace = GL_FALSE;
-   GLboolean vertDataEdgeFlags;
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
+   struct pipe_index_buffer ibuffer;
+   struct pipe_draw_info info;
+   unsigned i, num_instances = 1;
+   GLboolean new_array =
+      st->dirty.st &&
+      (st->dirty.mesa & (_NEW_ARRAY | _NEW_PROGRAM | _NEW_BUFFER_OBJECT)) != 0;
 
    /* Mesa core state should have been validated already */
    assert(ctx->NewState == 0x0);
 
-   /* Gallium probably doesn't want this in some cases. */
-   if (!index_bounds_valid)
-      if (!vbo_all_varyings_in_vbos(arrays))
-	 vbo_get_minmax_index(ctx, prims, ib, &min_index, &max_index);
-
-   /* sanity check for pointer arithmetic below */
-   assert(sizeof(arrays[0]->Ptr[0]) == 1);
-
-   vertDataEdgeFlags = arrays[VERT_ATTRIB_EDGEFLAG]->BufferObj &&
-                       arrays[VERT_ATTRIB_EDGEFLAG]->BufferObj->Name;
-   if (vertDataEdgeFlags != ctx->st->vertdata_edgeflags) {
-      ctx->st->vertdata_edgeflags = vertDataEdgeFlags;
-      ctx->st->dirty.st |= ST_NEW_EDGEFLAGS_DATA;
-   }
-
-   st_validate_state(ctx->st);
-
-   /* must get these after state validation! */
-   vp = ctx->st->vp;
-   vpv = ctx->st->vp_varient;
-
-#if 0
-   if (MESA_VERBOSE & VERBOSE_GLSL) {
-      check_uniforms(ctx);
-   }
-#else
-   (void) check_uniforms;
-#endif
-
-   /*
-    * Setup the vbuffer[] and velements[] arrays.
-    */
-   if (is_interleaved_arrays(vp, vpv, arrays, &userSpace)) {
-      /*printf("Draw interleaved\n");*/
-      setup_interleaved_attribs(ctx, vp, vpv, arrays, max_index, userSpace,
-                                vbuffer, velements);
-      num_vbuffers = 1;
-      num_velements = vpv->num_inputs;
-      if (num_velements == 0)
-         num_vbuffers = 0;
-   }
-   else {
-      /*printf("Draw non-interleaved\n");*/
-      setup_non_interleaved_attribs(ctx, vp, vpv, arrays, max_index,
-                                    &userSpace, vbuffer, velements);
-      num_vbuffers = vpv->num_inputs;
-      num_velements = vpv->num_inputs;
-   }
-
-#if 0
-   {
-      GLuint i;
-      for (i = 0; i < num_vbuffers; i++) {
-         printf("buffers[%d].stride = %u\n", i, vbuffer[i].stride);
-         printf("buffers[%d].max_index = %u\n", i, vbuffer[i].max_index);
-         printf("buffers[%d].buffer_offset = %u\n", i, vbuffer[i].buffer_offset);
-         printf("buffers[%d].buffer = %p\n", i, (void*) vbuffer[i].buffer);
-      }
-      for (i = 0; i < num_velements; i++) {
-         printf("vlements[%d].vbuffer_index = %u\n", i, velements[i].vertex_buffer_index);
-         printf("vlements[%d].src_offset = %u\n", i, velements[i].src_offset);
-         printf("vlements[%d].nr_comps = %u\n", i, velements[i].nr_components);
-         printf("vlements[%d].format = %s\n", i, util_format_name(velements[i].src_format));
-      }
-   }
-#endif
-
-   pipe->set_vertex_buffers(pipe, num_vbuffers, vbuffer);
-   pipe->set_vertex_elements(pipe, num_velements, velements);
-
-   if (num_vbuffers == 0 || num_velements == 0)
-      return;
-
-   /* do actual drawing */
    if (ib) {
-      /* indexed primitive */
-      struct gl_buffer_object *bufobj = ib->obj;
-      struct pipe_buffer *indexBuf = NULL;
-      unsigned indexSize, indexOffset, i;
-      unsigned prim;
-
-      switch (ib->type) {
-      case GL_UNSIGNED_INT:
-         indexSize = 4;
-         break;
-      case GL_UNSIGNED_SHORT:
-         indexSize = 2;
-         break;
-      case GL_UNSIGNED_BYTE:
-         indexSize = 1;
-         break;
-      default:
-         assert(0);
-	 return;
-      }
-
-      /* get/create the index buffer object */
-      if (bufobj && bufobj->Name) {
-         /* elements/indexes are in a real VBO */
-         struct st_buffer_object *stobj = st_buffer_object(bufobj);
-         pipe_buffer_reference(&indexBuf, stobj->buffer);
-         indexOffset = pointer_to_offset(ib->ptr) / indexSize;
-      }
-      else {
-         /* element/indicies are in user space memory */
-         indexBuf = pipe_user_buffer_create(pipe->screen, (void *) ib->ptr,
-                                            ib->count * indexSize);
-         indexOffset = 0;
-      }
-
-      /* draw */
-      if (pipe->draw_range_elements && min_index != ~0 && max_index != ~0) {
-         /* XXX: exercise temporary path to pass min/max directly
-          * through to driver & draw module.  These interfaces still
-          * need a bit of work...
-          */
-         for (i = 0; i < nr_prims; i++) {
-            prim = translate_prim( ctx, prims[i].mode );
-
-            pipe->draw_range_elements(pipe, indexBuf, indexSize,
-                                      min_index, max_index, prim,
-                                      prims[i].start + indexOffset, prims[i].count);
-         }
-      }
-      else {
-         for (i = 0; i < nr_prims; i++) {
-            prim = translate_prim( ctx, prims[i].mode );
-            
-            pipe->draw_elements(pipe, indexBuf, indexSize,
-                                prim,
-                                prims[i].start + indexOffset, prims[i].count);
-         }
-      }
-
-      pipe_buffer_reference(&indexBuf, NULL);
-   }
-   else {
-      /* non-indexed */
-      GLuint i;
-      GLuint prim;
+      /* Gallium probably doesn't want this in some cases. */
+      if (!index_bounds_valid)
+         if (!all_varyings_in_vbos(arrays))
+            vbo_get_minmax_index(ctx, prims, ib, &min_index, &max_index);
 
       for (i = 0; i < nr_prims; i++) {
-         prim = translate_prim( ctx, prims[i].mode );
+         num_instances = MAX2(num_instances, prims[i].num_instances);
+      }
+   }
+   else {
+      /* Get min/max index for non-indexed drawing. */
+      min_index = ~0;
+      max_index = 0;
 
-         pipe->draw_arrays(pipe, prim, prims[i].start, prims[i].count);
+      for (i = 0; i < nr_prims; i++) {
+         min_index = MIN2(min_index, prims[i].start);
+         max_index = MAX2(max_index, prims[i].start + prims[i].count - 1);
+         num_instances = MAX2(num_instances, prims[i].num_instances);
       }
    }
 
-   /* unreference buffers (frees wrapped user-space buffer objects) */
-   for (attr = 0; attr < num_vbuffers; attr++) {
-      pipe_buffer_reference(&vbuffer[attr].buffer, NULL);
-      assert(!vbuffer[attr].buffer);
+   /* Validate state. */
+   if (st->dirty.st) {
+      GLboolean vertDataEdgeFlags;
+
+      /* sanity check for pointer arithmetic below */
+      assert(sizeof(arrays[0]->Ptr[0]) == 1);
+
+      vertDataEdgeFlags = arrays[VERT_ATTRIB_EDGEFLAG]->BufferObj &&
+                          arrays[VERT_ATTRIB_EDGEFLAG]->BufferObj->Name;
+      if (vertDataEdgeFlags != st->vertdata_edgeflags) {
+         st->vertdata_edgeflags = vertDataEdgeFlags;
+         st->dirty.st |= ST_NEW_EDGEFLAGS_DATA;
+      }
+
+      st_validate_state(st);
+
+      if (new_array) {
+         st_validate_varrays(ctx, arrays, max_index, num_instances);
+      }
+
+#if 0
+      if (MESA_VERBOSE & VERBOSE_GLSL) {
+         check_uniforms(ctx);
+      }
+#else
+      (void) check_uniforms;
+#endif
    }
 
-   if (userSpace) 
-   {
-      pipe->set_vertex_buffers(pipe, 0, NULL);
+   /* Notify the driver that the content of user buffers may have been
+    * changed. */
+   assert(max_index >= min_index);
+   if (!new_array && st->num_user_attribs) {
+      for (i = 0; i < st->num_user_attribs; i++) {
+         if (st->user_attrib[i].buffer) {
+            unsigned element_size = st->user_attrib[i].element_size;
+            unsigned stride = st->user_attrib[i].stride;
+            unsigned min_offset = min_index * stride;
+            unsigned max_offset = max_index * stride + element_size;
+
+            assert(max_offset > min_offset);
+
+            pipe->redefine_user_buffer(pipe, st->user_attrib[i].buffer,
+                                       min_offset,
+                                       max_offset - min_offset);
+         }
+      }
    }
+
+   setup_index_buffer(ctx, ib, &ibuffer);
+   pipe->set_index_buffer(pipe, &ibuffer);
+
+   util_draw_init_info(&info);
+   if (ib) {
+      info.indexed = TRUE;
+      if (min_index != ~0 && max_index != ~0) {
+         info.min_index = min_index;
+         info.max_index = max_index;
+      }
+   }
+
+   info.primitive_restart = ctx->Array.PrimitiveRestart;
+   info.restart_index = ctx->Array.RestartIndex;
+
+   /* do actual drawing */
+   for (i = 0; i < nr_prims; i++) {
+      info.mode = translate_prim( ctx, prims[i].mode );
+      info.start = prims[i].start;
+      info.count = prims[i].count;
+      info.instance_count = prims[i].num_instances;
+      info.index_bias = prims[i].basevertex;
+      if (!ib) {
+         info.min_index = info.start;
+         info.max_index = info.start + info.count - 1;
+      }
+
+      if (u_trim_pipe_prim(info.mode, &info.count))
+         pipe->draw_vbo(pipe, &info);
+   }
+
+   pipe_resource_reference(&ibuffer.buffer, NULL);
 }
 
 
-void st_init_draw( struct st_context *st )
+void
+st_init_draw(struct st_context *st)
 {
-   GLcontext *ctx = st->ctx;
+   struct gl_context *ctx = st->ctx;
 
    vbo_set_draw_func(ctx, st_draw_vbo);
+
+#if FEATURE_feedback || FEATURE_rastpos
+   st->draw = draw_create(st->pipe); /* for selection/feedback */
+
+   /* Disable draw options that might convert points/lines to tris, etc.
+    * as that would foul-up feedback/selection mode.
+    */
+   draw_wide_line_threshold(st->draw, 1000.0f);
+   draw_wide_point_threshold(st->draw, 1000.0f);
+   draw_enable_line_stipple(st->draw, FALSE);
+   draw_enable_point_sprites(st->draw, FALSE);
+#endif
 }
 
 
-void st_destroy_draw( struct st_context *st )
+void
+st_destroy_draw(struct st_context *st)
 {
+#if FEATURE_feedback || FEATURE_rastpos
+   draw_destroy(st->draw);
+#endif
 }
-
-

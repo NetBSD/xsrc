@@ -72,13 +72,9 @@ and create a window, you must do the following to use the X/Mesa interface:
 extern "C" {
 #endif
 
-#ifdef XFree86Server
-#include "xmesa_xf86.h"
-#else
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include "xmesa_x.h"
-#endif
 #include "GL/gl.h"
 
 #ifdef AMIWIN
@@ -180,19 +176,6 @@ extern XMesaContext XMesaCreateContext( XMesaVisual v,
 extern void XMesaDestroyContext( XMesaContext c );
 
 
-#ifdef XFree86Server
-/*
- * These are the extra routines required for integration with XFree86.
- * None of these routines should be user visible. -KEM
- */
-extern GLboolean XMesaForceCurrent( XMesaContext c );
-
-extern GLboolean XMesaLoseCurrent( XMesaContext c );
-
-extern GLboolean XMesaCopyContext( XMesaContext src,
-				   XMesaContext dst,
-				   GLuint mask );
-#endif /* XFree86Server */
 
 
 /*
@@ -341,7 +324,7 @@ extern const char *XMesaGetString( XMesaContext c, int name );
  *
  * New in Mesa 2.3.
  */
-extern void XMesaGarbageCollect( void );
+extern void XMesaGarbageCollect( XMesaDisplay* dpy );
 
 
 

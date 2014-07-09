@@ -31,8 +31,9 @@
  */
 
 #include "svga_winsys.h"
-#include "svga_screen_buffer.h"
-#include "svga_screen_texture.h"
+#include "svga_resource_buffer.h"
+#include "svga_resource_texture.h"
+#include "svga_surface.h"
 #include "svga_cmd.h"
 
 /*
@@ -45,10 +46,10 @@
  *      to have allocated the fifo space before converting.
  *
  * Results:
- *      id is filld out.
+ *      id is filled out.
  *
  * Side effects:
- *      One surface relocation is preformed for texture handle.
+ *      One surface relocation is performed for texture handle.
  *
  *----------------------------------------------------------------------
  */
@@ -66,7 +67,7 @@ void surface_to_surfaceid(struct svga_winsys_context *swc, // IN
       id->mipmap = s->real_level;
    }
    else {
-      id->sid = SVGA3D_INVALID_ID;
+      swc->surface_relocation(swc, &id->sid, NULL, flags);
       id->face = 0;
       id->mipmap = 0;
    }
@@ -223,7 +224,7 @@ SVGA3D_DestroyContext(struct svga_winsys_context *swc)  // IN
  *      containers for host VRAM objects like textures, vertex
  *      buffers, and depth/stencil buffers.
  *
- *      Surfaces are hierarchial:
+ *      Surfaces are hierarchical:
  *
  *        - Surface may have multiple faces (for cube maps)
  *
@@ -279,7 +280,7 @@ SVGA3D_BeginDefineSurface(struct svga_winsys_context *swc,
    if(!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
-   swc->surface_relocation(swc, &cmd->sid, sid, PIPE_BUFFER_USAGE_GPU_WRITE);
+   swc->surface_relocation(swc, &cmd->sid, sid, SVGA_RELOC_WRITE);
    cmd->surfaceFlags = flags;
    cmd->format = format;
 
@@ -365,7 +366,7 @@ SVGA3D_DestroySurface(struct svga_winsys_context *swc,
    if(!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
    
-   swc->surface_relocation(swc, &cmd->sid, sid, PIPE_BUFFER_USAGE_GPU_READ);
+   swc->surface_relocation(swc, &cmd->sid, sid, SVGA_RELOC_READ);
    swc->commit(swc);;
    
    return PIPE_OK;
@@ -375,11 +376,9 @@ SVGA3D_DestroySurface(struct svga_winsys_context *swc,
 /*
  *----------------------------------------------------------------------
  *
- * SVGA3D_BeginSurfaceDMA--
+ * SVGA3D_SurfaceDMA--
  *
- *      Begin a SURFACE_DMA command. This reserves space for it in
- *      the FIFO, and returns a pointer to the command's box array.
- *      This function must be paired with SVGA_FIFOCommitAll().
+ *      Emit a SURFACE_DMA command.
  *
  *      When the SVGA3D device asynchronously processes this FIFO
  *      command, a DMA operation is performed between host VRAM and
@@ -421,9 +420,10 @@ SVGA3D_SurfaceDMA(struct svga_winsys_context *swc,
                   struct svga_transfer *st,         // IN
                   SVGA3dTransferType transfer,      // IN
                   const SVGA3dCopyBox *boxes,       // IN
-                  uint32 numBoxes)                  // IN
+                  uint32 numBoxes,                  // IN
+                  SVGA3dSurfaceDMAFlags flags)      // IN
 {
-   struct svga_texture *texture = svga_texture(st->base.texture); 
+   struct svga_texture *texture = svga_texture(st->base.resource); 
    SVGA3dCmdSurfaceDMA *cmd;
    SVGA3dCmdSurfaceDMASuffix *pSuffix;
    uint32 boxesSize = sizeof *boxes * numBoxes;
@@ -431,12 +431,12 @@ SVGA3D_SurfaceDMA(struct svga_winsys_context *swc,
    unsigned surface_flags;
    
    if(transfer == SVGA3D_WRITE_HOST_VRAM) {
-      region_flags = PIPE_BUFFER_USAGE_GPU_READ;
-      surface_flags = PIPE_BUFFER_USAGE_GPU_WRITE;
+      region_flags = SVGA_RELOC_READ;
+      surface_flags = SVGA_RELOC_WRITE;
    }
    else if(transfer == SVGA3D_READ_HOST_VRAM) {
-      region_flags = PIPE_BUFFER_USAGE_GPU_WRITE;
-      surface_flags = PIPE_BUFFER_USAGE_GPU_READ;
+      region_flags = SVGA_RELOC_WRITE;
+      surface_flags = SVGA_RELOC_READ;
    }
    else {
       assert(0);
@@ -454,7 +454,7 @@ SVGA3D_SurfaceDMA(struct svga_winsys_context *swc,
    cmd->guest.pitch = st->base.stride;
 
    swc->surface_relocation(swc, &cmd->host.sid, texture->handle, surface_flags);
-   cmd->host.face = st->base.face; /* PIPE_TEX_FACE_* and SVGA3D_CUBEFACE_* match */
+   cmd->host.face = st->face; /* PIPE_TEX_FACE_* and SVGA3D_CUBEFACE_* match */
    cmd->host.mipmap = st->base.level;
 
    cmd->transfer = transfer;
@@ -464,7 +464,7 @@ SVGA3D_SurfaceDMA(struct svga_winsys_context *swc,
    pSuffix = (SVGA3dCmdSurfaceDMASuffix *)((uint8_t*)cmd + sizeof *cmd + boxesSize);
    pSuffix->suffixSize = sizeof *pSuffix;
    pSuffix->maximumOffset = st->hw_nblocksy*st->base.stride;
-   memset(&pSuffix->flags, 0, sizeof pSuffix->flags);
+   pSuffix->flags = flags;
 
    swc->commit(swc);
 
@@ -489,12 +489,12 @@ SVGA3D_BufferDMA(struct svga_winsys_context *swc,
    unsigned surface_flags;
    
    if(transfer == SVGA3D_WRITE_HOST_VRAM) {
-      region_flags = PIPE_BUFFER_USAGE_GPU_READ;
-      surface_flags = PIPE_BUFFER_USAGE_GPU_WRITE;
+      region_flags = SVGA_RELOC_READ;
+      surface_flags = SVGA_RELOC_WRITE;
    }
    else if(transfer == SVGA3D_READ_HOST_VRAM) {
-      region_flags = PIPE_BUFFER_USAGE_GPU_WRITE;
-      surface_flags = PIPE_BUFFER_USAGE_GPU_READ;
+      region_flags = SVGA_RELOC_WRITE;
+      surface_flags = SVGA_RELOC_READ;
    }
    else {
       assert(0);
@@ -584,7 +584,7 @@ SVGA3D_SetRenderTarget(struct svga_winsys_context *swc,
 
    cmd->type = type;
 
-   surface_to_surfaceid(swc, surface, &cmd->target, PIPE_BUFFER_USAGE_GPU_WRITE);
+   surface_to_surfaceid(swc, surface, &cmd->target, SVGA_RELOC_WRITE);
 
    swc->commit(swc);
 
@@ -1000,8 +1000,8 @@ SVGA3D_BeginSurfaceCopy(struct svga_winsys_context *swc,
    if(!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
-   surface_to_surfaceid(swc, src, &cmd->src, PIPE_BUFFER_USAGE_GPU_READ);
-   surface_to_surfaceid(swc, dest, &cmd->dest, PIPE_BUFFER_USAGE_GPU_WRITE);
+   surface_to_surfaceid(swc, src, &cmd->src, SVGA_RELOC_READ);
+   surface_to_surfaceid(swc, dest, &cmd->dest, SVGA_RELOC_WRITE);
    *boxes = (SVGA3dCopyBox*) &cmd[1];
 
    memset(*boxes, 0, boxesSize);
@@ -1043,8 +1043,8 @@ SVGA3D_SurfaceStretchBlt(struct svga_winsys_context *swc,
    if(!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
-   surface_to_surfaceid(swc, src, &cmd->src, PIPE_BUFFER_USAGE_GPU_READ);
-   surface_to_surfaceid(swc, dest, &cmd->dest, PIPE_BUFFER_USAGE_GPU_WRITE);
+   surface_to_surfaceid(swc, src, &cmd->src, SVGA_RELOC_READ);
+   surface_to_surfaceid(swc, dest, &cmd->dest, SVGA_RELOC_WRITE);
    cmd->boxSrc = *boxSrc;
    cmd->boxDest = *boxDest;
    cmd->mode = mode;
@@ -1373,7 +1373,7 @@ SVGA3D_EndQuery(struct svga_winsys_context *swc,
    cmd->type = type;
 
    swc->region_relocation(swc, &cmd->guestResult, buffer, 0,
-                          PIPE_BUFFER_USAGE_GPU_WRITE);
+                          SVGA_RELOC_WRITE);
 
    swc->commit(swc);
    
@@ -1420,7 +1420,7 @@ SVGA3D_WaitForQuery(struct svga_winsys_context *swc,
    cmd->type = type;
    
    swc->region_relocation(swc, &cmd->guestResult, buffer, 0,
-                          PIPE_BUFFER_USAGE_GPU_WRITE);
+                          SVGA_RELOC_WRITE);
 
    swc->commit(swc);
    

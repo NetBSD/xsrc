@@ -351,7 +351,7 @@ struct brw_vs_prog_data {
 
 /* Size == 0 if output either not written, or always [0,0,0,1]
  */
-struct brw_vs_ouput_sizes {
+struct brw_vs_output_sizes {
    GLubyte output_size[PIPE_MAX_SHADER_OUTPUTS];
 };
 
@@ -529,7 +529,14 @@ struct brw_query_object {
 struct brw_context 
 {
    struct pipe_context base;
-   struct brw_chipset chipset;
+   int gen;
+   boolean has_negative_rhw_bug;
+   boolean needs_ff_sync;
+   boolean is_g4x;
+
+   int urb_size;
+   int vs_max_threads;
+   int wm_max_threads;
 
    struct brw_winsys_screen *sws;
 
@@ -546,15 +553,14 @@ struct brw_context
       const struct brw_blend_state *blend;
       const struct brw_rasterizer_state *rast;
       const struct brw_depth_stencil_state *zstencil;
+      const struct brw_vertex_element_packet *velems;
 
       const struct brw_sampler *sampler[PIPE_MAX_SAMPLERS];
       unsigned num_samplers;
 
-      struct pipe_texture *texture[PIPE_MAX_SAMPLERS];
+      struct pipe_sampler_view *fragment_sampler_views[PIPE_MAX_SAMPLERS];
       struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
-      struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
-      unsigned num_vertex_elements;
-      unsigned num_textures;
+      unsigned num_fragment_sampler_views;
       unsigned num_vertex_buffers;
 
       struct pipe_scissor_state scissor;
@@ -562,8 +568,8 @@ struct brw_context
       struct pipe_stencil_ref stencil_ref;
       struct pipe_framebuffer_state fb;
       struct pipe_clip_state ucp;
-      struct pipe_buffer *vertex_constants;
-      struct pipe_buffer *fragment_constants;
+      struct pipe_resource *vertex_constants;
+      struct pipe_resource *fragment_constants;
 
       struct brw_blend_constant_color bcc;
       struct brw_cc1 cc1_stencil_ref;
@@ -575,8 +581,9 @@ struct brw_context
        *
        * Updates are signaled by PIPE_NEW_INDEX_BUFFER.
        */
-      struct pipe_buffer *index_buffer;
+      struct pipe_resource *index_buffer;
       unsigned index_size;
+      unsigned index_offset;
 
       /* Updates are signalled by PIPE_NEW_INDEX_RANGE:
        */
@@ -821,6 +828,7 @@ void brw_pipe_sampler_cleanup( struct brw_context *brw );
 void brw_pipe_shader_cleanup( struct brw_context *brw );
 void brw_pipe_vertex_cleanup( struct brw_context *brw );
 void brw_pipe_clear_cleanup( struct brw_context *brw );
+void brw_pipe_surface_init( struct brw_context *brw );
 
 void brw_hw_cc_init( struct brw_context *brw );
 void brw_hw_cc_cleanup( struct brw_context *brw );
@@ -852,12 +860,6 @@ brw_context( struct pipe_context *ctx )
 {
    return (struct brw_context *)ctx;
 }
-
-
-#define BRW_IS_965(brw)    ((brw)->chipset.is_965)
-#define BRW_IS_IGDNG(brw)  ((brw)->chipset.is_igdng)
-#define BRW_IS_G4X(brw)    ((brw)->chipset.is_g4x)
-
 
 #endif
 

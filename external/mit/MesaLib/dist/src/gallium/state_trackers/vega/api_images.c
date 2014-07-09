@@ -31,14 +31,14 @@
 #include "vg_context.h"
 #include "vg_translate.h"
 #include "api_consts.h"
-#include "image.h"
+#include "api.h"
+#include "handle.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"
 #include "util/u_inlines.h"
-#include "util/u_blit.h"
 #include "util/u_tile.h"
-#include "util/u_memory.h"
+#include "util/u_math.h"
 
 static INLINE VGboolean supported_image_format(VGImageFormat format)
 {
@@ -92,9 +92,9 @@ static INLINE VGboolean supported_image_format(VGImageFormat format)
    return VG_FALSE;
 }
 
-VGImage vgCreateImage(VGImageFormat format,
-                      VGint width, VGint height,
-                      VGbitfield allowedQuality)
+VGImage vegaCreateImage(VGImageFormat format,
+                        VGint width, VGint height,
+                        VGbitfield allowedQuality)
 {
    struct vg_context *ctx = vg_current_context();
 
@@ -106,12 +106,12 @@ VGImage vgCreateImage(VGImageFormat format,
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return VG_INVALID_HANDLE;
    }
-   if (width > vgGeti(VG_MAX_IMAGE_WIDTH) ||
-       height > vgGeti(VG_MAX_IMAGE_HEIGHT)) {
+   if (width > vegaGeti(VG_MAX_IMAGE_WIDTH) ||
+       height > vegaGeti(VG_MAX_IMAGE_HEIGHT)) {
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return VG_INVALID_HANDLE;
    }
-   if (width * height > vgGeti(VG_MAX_IMAGE_PIXELS)) {
+   if (width * height > vegaGeti(VG_MAX_IMAGE_PIXELS)) {
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return VG_INVALID_HANDLE;
    }
@@ -123,28 +123,28 @@ VGImage vgCreateImage(VGImageFormat format,
       return VG_INVALID_HANDLE;
    }
 
-   return (VGImage)image_create(format, width, height);
+   return image_to_handle(image_create(format, width, height));
 }
 
-void vgDestroyImage(VGImage image)
+void vegaDestroyImage(VGImage image)
 {
    struct vg_context *ctx = vg_current_context();
-   struct vg_image *img = (struct vg_image *)image;
+   struct vg_image *img = handle_to_image(image);
 
    if (image == VG_INVALID_HANDLE) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
-   if (!vg_object_is_valid((void*)image, VG_OBJECT_IMAGE)) {
+   if (!vg_object_is_valid(image, VG_OBJECT_IMAGE)) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
    image_destroy(img);
 }
 
-void vgClearImage(VGImage image,
-                  VGint x, VGint y,
-                  VGint width, VGint height)
+void vegaClearImage(VGImage image,
+                    VGint x, VGint y,
+                    VGint width, VGint height)
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_image *img;
@@ -158,7 +158,7 @@ void vgClearImage(VGImage image,
       return;
    }
 
-   img = (struct vg_image*)image;
+   img = handle_to_image(image);
 
    if (x + width < 0 || y + height < 0)
       return;
@@ -167,12 +167,12 @@ void vgClearImage(VGImage image,
 
 }
 
-void vgImageSubData(VGImage image,
-                    const void * data,
-                    VGint dataStride,
-                    VGImageFormat dataFormat,
-                    VGint x, VGint y,
-                    VGint width, VGint height)
+void vegaImageSubData(VGImage image,
+                      const void * data,
+                      VGint dataStride,
+                      VGImageFormat dataFormat,
+                      VGint x, VGint y,
+                      VGint width, VGint height)
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_image *img;
@@ -190,17 +190,17 @@ void vgImageSubData(VGImage image,
       return;
    }
 
-   img = (struct vg_image*)(image);
+   img = handle_to_image(image);
    image_sub_data(img, data, dataStride, dataFormat,
                   x, y, width, height);
 }
 
-void vgGetImageSubData(VGImage image,
-                       void * data,
-                       VGint dataStride,
-                       VGImageFormat dataFormat,
-                       VGint x, VGint y,
-                       VGint width, VGint height)
+void vegaGetImageSubData(VGImage image,
+                         void * data,
+                         VGint dataStride,
+                         VGImageFormat dataFormat,
+                         VGint x, VGint y,
+                         VGint width, VGint height)
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_image *img;
@@ -217,21 +217,21 @@ void vgGetImageSubData(VGImage image,
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return;
    }
-   img = (struct vg_image*)image;
+   img = handle_to_image(image);
    image_get_sub_data(img, data, dataStride, dataFormat,
                       x, y, width, height);
 }
 
-VGImage vgChildImage(VGImage parent,
-                     VGint x, VGint y,
-                     VGint width, VGint height)
+VGImage vegaChildImage(VGImage parent,
+                       VGint x, VGint y,
+                       VGint width, VGint height)
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_image *p;
 
    if (parent == VG_INVALID_HANDLE ||
-       !vg_context_is_object_valid(ctx, VG_OBJECT_IMAGE, (void*)parent) ||
-       !vg_object_is_valid((void*)parent, VG_OBJECT_IMAGE)) {
+       !vg_context_is_object_valid(ctx, VG_OBJECT_IMAGE, parent) ||
+       !vg_object_is_valid(parent, VG_OBJECT_IMAGE)) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return VG_INVALID_HANDLE;
    }
@@ -239,7 +239,7 @@ VGImage vgChildImage(VGImage parent,
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return VG_INVALID_HANDLE;
    }
-   p = (struct vg_image *)parent;
+   p = handle_to_image(parent);
    if (x > p->width  || y > p->height) {
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return VG_INVALID_HANDLE;
@@ -249,10 +249,10 @@ VGImage vgChildImage(VGImage parent,
       return VG_INVALID_HANDLE;
    }
 
-   return (VGImage)image_child_image(p, x, y, width, height);
+   return image_to_handle(image_child_image(p, x, y, width, height));
 }
 
-VGImage vgGetParent(VGImage image)
+VGImage vegaGetParent(VGImage image)
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_image *img;
@@ -262,17 +262,17 @@ VGImage vgGetParent(VGImage image)
       return VG_INVALID_HANDLE;
    }
 
-   img = (struct vg_image*)image;
+   img = handle_to_image(image);
    if (img->parent)
-      return (VGImage)img->parent;
+      return image_to_handle(img->parent);
    else
       return image;
 }
 
-void vgCopyImage(VGImage dst, VGint dx, VGint dy,
-                 VGImage src, VGint sx, VGint sy,
-                 VGint width, VGint height,
-                 VGboolean dither)
+void vegaCopyImage(VGImage dst, VGint dx, VGint dy,
+                   VGImage src, VGint sx, VGint sy,
+                   VGint width, VGint height,
+                   VGboolean dither)
 {
    struct vg_context *ctx = vg_current_context();
 
@@ -286,12 +286,12 @@ void vgCopyImage(VGImage dst, VGint dx, VGint dy,
       return;
    }
    vg_validate_state(ctx);
-   image_copy((struct vg_image*)dst, dx, dy,
-              (struct vg_image*)src, sx, sy,
+   image_copy(handle_to_image(dst), dx, dy,
+              handle_to_image(src), sx, sy,
               width, height, dither);
 }
 
-void vgDrawImage(VGImage image)
+void vegaDrawImage(VGImage image)
 {
    struct vg_context *ctx = vg_current_context();
 
@@ -304,12 +304,13 @@ void vgDrawImage(VGImage image)
    }
 
    vg_validate_state(ctx);
-   image_draw((struct vg_image*)image);
+   image_draw(handle_to_image(image),
+         &ctx->state.vg.image_user_to_surface_matrix);
 }
 
-void vgSetPixels(VGint dx, VGint dy,
-                 VGImage src, VGint sx, VGint sy,
-                 VGint width, VGint height)
+void vegaSetPixels(VGint dx, VGint dy,
+                   VGImage src, VGint sx, VGint sy,
+                   VGint width, VGint height)
 {
    struct vg_context *ctx = vg_current_context();
 
@@ -323,13 +324,13 @@ void vgSetPixels(VGint dx, VGint dy,
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return;
    }
-   image_set_pixels(dx, dy, (struct vg_image*)src, sx, sy, width,
+   image_set_pixels(dx, dy, handle_to_image(src), sx, sy, width,
                     height);
 }
 
-void vgGetPixels(VGImage dst, VGint dx, VGint dy,
-                 VGint sx, VGint sy,
-                 VGint width, VGint height)
+void vegaGetPixels(VGImage dst, VGint dx, VGint dy,
+                   VGint sx, VGint sy,
+                   VGint width, VGint height)
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_image *img;
@@ -343,19 +344,18 @@ void vgGetPixels(VGImage dst, VGint dx, VGint dy,
       return;
    }
 
-   img = (struct vg_image*)dst;
+   img = handle_to_image(dst);
 
    image_get_pixels(img, dx, dy,
                     sx, sy, width, height);
 }
 
-void vgWritePixels(const void * data, VGint dataStride,
-                   VGImageFormat dataFormat,
-                   VGint dx, VGint dy,
-                   VGint width, VGint height)
+void vegaWritePixels(const void * data, VGint dataStride,
+                     VGImageFormat dataFormat,
+                     VGint dx, VGint dy,
+                     VGint width, VGint height)
 {
    struct vg_context *ctx = vg_current_context();
-   struct pipe_context *pipe = ctx->pipe;
 
    if (!supported_image_format(dataFormat)) {
       vg_set_error(ctx, VG_UNSUPPORTED_IMAGE_FORMAT_ERROR);
@@ -386,26 +386,21 @@ void vgWritePixels(const void * data, VGint dataStride,
 #endif
       image_destroy(img);
    }
-   /* make sure rendering has completed */
-   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 }
 
-void vgReadPixels(void * data, VGint dataStride,
-                  VGImageFormat dataFormat,
-                  VGint sx, VGint sy,
-                  VGint width, VGint height)
+void vegaReadPixels(void * data, VGint dataStride,
+                    VGImageFormat dataFormat,
+                    VGint sx, VGint sy,
+                    VGint width, VGint height)
 {
    struct vg_context *ctx = vg_current_context();
    struct pipe_context *pipe = ctx->pipe;
-   struct pipe_screen *screen = pipe->screen;
 
    struct st_framebuffer *stfb = ctx->draw_buffer;
    struct st_renderbuffer *strb = stfb->strb;
-   struct pipe_framebuffer_state *fb = &ctx->state.g3d.fb;
 
    VGfloat temp[VEGA_MAX_IMAGE_WIDTH][4];
    VGfloat *df = (VGfloat*)temp;
-   VGint y = (fb->height - sy) - 1, yStep = -1;
    VGint i;
    VGubyte *dst = (VGubyte *)data;
    VGint xoffset = 0, yoffset = 0;
@@ -423,8 +418,6 @@ void vgReadPixels(void * data, VGint dataStride,
       return;
    }
 
-   /* make sure rendering has completed */
-   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
    if (sx < 0) {
       xoffset = -sx;
       xoffset *= _vega_size_for_format(dataFormat);
@@ -433,42 +426,50 @@ void vgReadPixels(void * data, VGint dataStride,
    }
    if (sy < 0) {
       yoffset = -sy;
+      yoffset *= dataStride;
       height += sy;
       sy = 0;
-      y = (fb->height - sy) - 1;
-      yoffset *= dataStride;
+   }
+
+   if (sx + width > stfb->width || sy + height > stfb->height) {
+      width = stfb->width - sx;
+      height = stfb->height - sy;
+      /* nothing to read */
+      if (width <= 0 || height <= 0)
+         return;
    }
 
    {
+      VGint y = (stfb->height - sy) - 1, yStep = -1;
       struct pipe_transfer *transfer;
 
-      transfer = screen->get_tex_transfer(screen, strb->texture,  0, 0, 0,
-                                          PIPE_TRANSFER_READ,
-                                          0, 0, width, height);
+      transfer = pipe_get_transfer(pipe, strb->texture,  0, 0,
+                                   PIPE_TRANSFER_READ,
+                                   0, 0, sx + width, stfb->height - sy);
 
       /* Do a row at a time to flip image data vertically */
       for (i = 0; i < height; i++) {
 #if 0
          debug_printf("%d-%d  == %d\n", sy, height, y);
 #endif
-         pipe_get_tile_rgba(transfer, sx, y, width, 1, df);
+         pipe_get_tile_rgba(pipe, transfer, sx, y, width, 1, df);
          y += yStep;
          _vega_pack_rgba_span_float(ctx, width, temp, dataFormat,
                                     dst + yoffset + xoffset);
          dst += dataStride;
       }
 
-      screen->tex_transfer_destroy(transfer);
+      pipe->transfer_destroy(pipe, transfer);
    }
 }
 
-void vgCopyPixels(VGint dx, VGint dy,
-                  VGint sx, VGint sy,
-                  VGint width, VGint height)
+void vegaCopyPixels(VGint dx, VGint dy,
+                    VGint sx, VGint sy,
+                    VGint width, VGint height)
 {
    struct vg_context *ctx = vg_current_context();
-   struct pipe_framebuffer_state *fb = &ctx->state.g3d.fb;
-   struct st_renderbuffer *strb = ctx->draw_buffer->strb;
+   struct st_framebuffer *stfb = ctx->draw_buffer;
+   struct st_renderbuffer *strb = stfb->strb;
 
    if (width <= 0 || height <= 0) {
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
@@ -476,13 +477,13 @@ void vgCopyPixels(VGint dx, VGint dy,
    }
 
    /* do nothing if we copy from outside the fb */
-   if (dx >= (VGint)fb->width || dy >= (VGint)fb->height ||
-       sx >= (VGint)fb->width || sy >= (VGint)fb->height)
+   if (dx >= (VGint)stfb->width || dy >= (VGint)stfb->height ||
+       sx >= (VGint)stfb->width || sy >= (VGint)stfb->height)
       return;
 
    vg_validate_state(ctx);
    /* make sure rendering has completed */
-   vgFinish();
+   vegaFinish();
 
    vg_copy_surface(ctx, strb->surface, dx, dy,
                    strb->surface, sx, sy, width, height);

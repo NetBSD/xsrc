@@ -147,7 +147,8 @@ static INLINE void make_reloc(struct brw_winsys_reloc *reloc,
 
 struct brw_winsys_screen {
 
-
+   unsigned pci_id;
+   int gen;
    /**
     * Buffer functions.
     */
@@ -161,6 +162,16 @@ struct brw_winsys_screen {
                                unsigned size,
                                unsigned alignment,
                                struct brw_winsys_buffer **bo_out);
+
+   enum pipe_error (*bo_from_handle)(struct brw_winsys_screen *sws,
+                                     struct winsys_handle *whandle,
+                                     unsigned *stride,
+                                     unsigned *tiling,
+                                     struct brw_winsys_buffer **bo_out);
+
+   enum pipe_error (*bo_get_handle)(struct brw_winsys_buffer *buffer,
+                                    struct winsys_handle *whandle,
+                                    unsigned stride);
 
    /* Destroy a buffer when our refcount goes to zero:
     */
@@ -251,34 +262,6 @@ bo_reference(struct brw_winsys_buffer **ptr, struct brw_winsys_buffer *buf)
 }
 
 
-/**
- * Create brw pipe_screen.
- */
-struct pipe_screen *brw_create_screen(struct brw_winsys_screen *iws, unsigned pci_id);
-
-
-/**
- * Get the brw_winsys buffer backing the texture.
- *
- * TODO UGLY
- */
-struct pipe_texture;
-boolean brw_texture_get_winsys_buffer(struct pipe_texture *texture,
-                                      struct brw_winsys_buffer **buffer,
-                                      unsigned *stride);
-
-/**
- * Wrap a brw_winsys buffer with a texture blanket.
- *
- * TODO UGLY
- */
-struct pipe_texture * 
-brw_texture_blanket_winsys_buffer(struct pipe_screen *screen,
-                                  const struct pipe_texture *template,
-                                  unsigned pitch,
-				  unsigned tiling,
-                                  struct brw_winsys_buffer *buffer);
-
 
 /*************************************************************************
  * Cooperative dumping between winsys and driver.  TODO: make this
@@ -299,7 +282,7 @@ void brw_dump_data( unsigned pci_id,
 		    enum brw_buffer_data_type data_type,
 		    unsigned offset,
 		    const void *data,
-		    size_t size );
+		    size_t size, int gen );
 
 
 #endif

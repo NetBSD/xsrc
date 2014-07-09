@@ -43,7 +43,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/teximage.h"
 #include "main/texobj.h"
 #include "main/imports.h"
-#include "main/texobj.h"
+#include "main/macros.h"
 
 #include "xmlpool.h"
 
@@ -162,9 +162,9 @@ static r128TexObjPtr r128AllocTexObj( struct gl_texture_object *texObj )
   
       make_empty_list( (driTextureObject *) t );
 
-      r128SetTexWrap( t, texObj->WrapS, texObj->WrapT );
-      r128SetTexFilter( t, texObj->MinFilter, texObj->MagFilter );
-      r128SetTexBorderColor( t, texObj->BorderColor.f );
+      r128SetTexWrap( t, texObj->Sampler.WrapS, texObj->Sampler.WrapT );
+      r128SetTexFilter( t, texObj->Sampler.MinFilter, texObj->Sampler.MagFilter );
+      r128SetTexBorderColor( t, texObj->Sampler.BorderColor.f );
    }
 
    return t;
@@ -173,7 +173,7 @@ static r128TexObjPtr r128AllocTexObj( struct gl_texture_object *texObj )
 
 /* Called by the _mesa_store_teximage[123]d() functions. */
 static gl_format
-r128ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
+r128ChooseTextureFormat( struct gl_context *ctx, GLint internalFormat,
                          GLenum format, GLenum type )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
@@ -287,7 +287,7 @@ r128ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
 }
 
 
-static void r128TexImage1D( GLcontext *ctx, GLenum target, GLint level,
+static void r128TexImage1D( struct gl_context *ctx, GLenum target, GLint level,
 			    GLint internalFormat,
 			    GLint width, GLint border,
 			    GLenum format, GLenum type, const GLvoid *pixels,
@@ -317,7 +317,7 @@ static void r128TexImage1D( GLcontext *ctx, GLenum target, GLint level,
 }
 
 
-static void r128TexSubImage1D( GLcontext *ctx,
+static void r128TexSubImage1D( struct gl_context *ctx,
 			       GLenum target,
 			       GLint level,
 			       GLint xoffset,
@@ -350,7 +350,7 @@ static void r128TexSubImage1D( GLcontext *ctx,
 }
 
 
-static void r128TexImage2D( GLcontext *ctx, GLenum target, GLint level,
+static void r128TexImage2D( struct gl_context *ctx, GLenum target, GLint level,
 			    GLint internalFormat,
 			    GLint width, GLint height, GLint border,
 			    GLenum format, GLenum type, const GLvoid *pixels,
@@ -380,7 +380,7 @@ static void r128TexImage2D( GLcontext *ctx, GLenum target, GLint level,
 }
 
 
-static void r128TexSubImage2D( GLcontext *ctx,
+static void r128TexSubImage2D( struct gl_context *ctx,
 			       GLenum target,
 			       GLint level,
 			       GLint xoffset, GLint yoffset,
@@ -412,7 +412,7 @@ static void r128TexSubImage2D( GLcontext *ctx,
 }
 
 
-static void r128TexEnv( GLcontext *ctx, GLenum target,
+static void r128TexEnv( struct gl_context *ctx, GLenum target,
 			  GLenum pname, const GLfloat *param )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
@@ -500,7 +500,7 @@ static void r128TexEnv( GLcontext *ctx, GLenum target,
 }
 
 
-static void r128TexParameter( GLcontext *ctx, GLenum target,
+static void r128TexParameter( struct gl_context *ctx, GLenum target,
                               struct gl_texture_object *tObj,
                               GLenum pname, const GLfloat *params )
 {
@@ -519,18 +519,18 @@ static void r128TexParameter( GLcontext *ctx, GLenum target,
    case GL_TEXTURE_MIN_FILTER:
    case GL_TEXTURE_MAG_FILTER:
       if ( t->base.bound ) FLUSH_BATCH( rmesa );
-      r128SetTexFilter( t, tObj->MinFilter, tObj->MagFilter );
+      r128SetTexFilter( t, tObj->Sampler.MinFilter, tObj->Sampler.MagFilter );
       break;
 
    case GL_TEXTURE_WRAP_S:
    case GL_TEXTURE_WRAP_T:
       if ( t->base.bound ) FLUSH_BATCH( rmesa );
-      r128SetTexWrap( t, tObj->WrapS, tObj->WrapT );
+      r128SetTexWrap( t, tObj->Sampler.WrapS, tObj->Sampler.WrapT );
       break;
 
    case GL_TEXTURE_BORDER_COLOR:
       if ( t->base.bound ) FLUSH_BATCH( rmesa );
-      r128SetTexBorderColor( t, tObj->BorderColor.f );
+      r128SetTexBorderColor( t, tObj->Sampler.BorderColor.f );
       break;
 
    case GL_TEXTURE_BASE_LEVEL:
@@ -551,7 +551,7 @@ static void r128TexParameter( GLcontext *ctx, GLenum target,
    }
 }
 
-static void r128BindTexture( GLcontext *ctx, GLenum target,
+static void r128BindTexture( struct gl_context *ctx, GLenum target,
 			       struct gl_texture_object *tObj )
 {
    if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
@@ -564,7 +564,7 @@ static void r128BindTexture( GLcontext *ctx, GLenum target,
 }
 
 
-static void r128DeleteTexture( GLcontext *ctx,
+static void r128DeleteTexture( struct gl_context *ctx,
 				 struct gl_texture_object *tObj )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
@@ -588,7 +588,7 @@ static void r128DeleteTexture( GLcontext *ctx,
  * texture object from the core mesa gl_texture_object.  Not done at this time.
  */
 static struct gl_texture_object *
-r128NewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
+r128NewTextureObject( struct gl_context *ctx, GLuint name, GLenum target )
 {
    struct gl_texture_object *obj;
    obj = _mesa_new_texture_object(ctx, name, target);

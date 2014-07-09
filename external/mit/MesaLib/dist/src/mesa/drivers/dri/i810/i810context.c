@@ -67,9 +67,7 @@ int I810_DEBUG = (0);
 PUBLIC const char __driConfigOptions[] = { 0 };
 const GLuint __driNConfigOptions = 0;
 
-#define DRIVER_DATE                     "20050821"
-
-static const GLubyte *i810GetString( GLcontext *ctx, GLenum name )
+static const GLubyte *i810GetString( struct gl_context *ctx, GLenum name )
 {
    static char buffer[128];
 
@@ -88,7 +86,7 @@ static const GLubyte *i810GetString( GLcontext *ctx, GLenum name )
       default:                  chipset = "Unknown i810-class Chipset"; break;
       }
 
-      (void) driGetRendererString( buffer, chipset, DRIVER_DATE, 0 );
+      (void) driGetRendererString( buffer, chipset, 0 );
       return (GLubyte *) buffer;
    }
    default:
@@ -96,7 +94,7 @@ static const GLubyte *i810GetString( GLcontext *ctx, GLenum name )
    }
 }
 
-static void i810BufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
+static void i810BufferSize(struct gl_framebuffer *buffer, GLuint *width, GLuint *height)
 {
    GET_CURRENT_CONTEXT(ctx);
    i810ContextPtr imesa = I810_CONTEXT(ctx);
@@ -127,7 +125,6 @@ static const struct dri_extension card_extensions[] =
     { "GL_EXT_texture_rectangle",          NULL },
     { "GL_MESA_ycbcr_texture",             NULL },
     { "GL_NV_blend_square",                NULL },
-    { "GL_SGIS_generate_mipmap",           NULL },
     { NULL,                                NULL }
 };
 
@@ -166,11 +163,12 @@ static const struct dri_debug_control debug_control[] =
 };
 
 GLboolean
-i810CreateContext( const __GLcontextModes *mesaVis,
+i810CreateContext( gl_api api,
+		   const struct gl_config *mesaVis,
                    __DRIcontext *driContextPriv,
                    void *sharedContextPrivate )
 {
-   GLcontext *ctx, *shareCtx;
+   struct gl_context *ctx, *shareCtx;
    i810ContextPtr imesa;
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    i810ScreenPrivate *i810Screen = (i810ScreenPrivate *)sPriv->private;
@@ -204,7 +202,7 @@ i810CreateContext( const __GLcontextModes *mesaVis,
       shareCtx = ((i810ContextPtr) sharedContextPrivate)->glCtx;
    else
       shareCtx = NULL;
-   imesa->glCtx = _mesa_create_context(mesaVis, shareCtx,
+   imesa->glCtx = _mesa_create_context(API_OPENGL, mesaVis, shareCtx,
                                        &functions, (void*) imesa);
    if (!imesa->glCtx) {
       FREE(imesa);
@@ -268,7 +266,7 @@ i810CreateContext( const __GLcontextModes *mesaVis,
    ctx->Const.PointSizeGranularity = 1.0;
 
    /* reinitialize the context point state.
-    * It depend on constants in __GLcontextRec::Const
+    * It depend on constants in __struct gl_contextRec::Const
     */
    _mesa_init_point(ctx);
 
@@ -453,8 +451,8 @@ i810MakeCurrent(__DRIcontext *driContextPriv,
       imesa->driDrawable = driDrawPriv;
 
       _mesa_make_current(imesa->glCtx,
-                         (GLframebuffer *) driDrawPriv->driverPrivate,
-                         (GLframebuffer *) driReadPriv->driverPrivate);
+                         (struct gl_framebuffer *) driDrawPriv->driverPrivate,
+                         (struct gl_framebuffer *) driReadPriv->driverPrivate);
 
       /* Are these necessary?
        */
@@ -470,7 +468,7 @@ i810MakeCurrent(__DRIcontext *driContextPriv,
 static void
 i810UpdatePageFlipping( i810ContextPtr imesa )
 {
-   GLcontext *ctx = imesa->glCtx;
+   struct gl_context *ctx = imesa->glCtx;
    int front = 0;
 
    /* Determine current color drawing buffer */
@@ -552,7 +550,7 @@ i810SwapBuffers( __DRIdrawable *dPriv )
 {
    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
       i810ContextPtr imesa;
-      GLcontext *ctx;
+      struct gl_context *ctx;
       imesa = (i810ContextPtr) dPriv->driContextPriv->driverPrivate;
       ctx = imesa->glCtx;
       if (ctx->Visual.doubleBufferMode) {

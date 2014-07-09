@@ -37,10 +37,13 @@
 
 #include "tgsi/tgsi_scan.h"
 
+#include "util/u_slab.h"
+#include "util/u_blitter.h"
 
-struct intel_winsys;
-struct intel_buffer;
-struct intel_batchbuffer;
+
+struct i915_winsys;
+struct i915_winsys_buffer;
+struct i915_winsys_batchbuffer;
 
 
 #define I915_TEX_UNITS 8
@@ -99,6 +102,8 @@ struct i915_fragment_shader
 
    struct tgsi_shader_info info;
 
+   struct draw_fragment_shader *draw_data;
+
    uint *program;
    uint program_len;
 
@@ -121,6 +126,12 @@ struct i915_fragment_shader
     * Else, the bitmask indicates which components are occupied by immediates.
     */
    ubyte constant_flags[I915_MAX_CONSTANT];
+
+   /**
+    * The mapping between generics and hw texture coords.
+    * We need to share this between the vertex and fragment stages.
+    **/
+   int generic_mapping[I915_TEX_UNITS];
 };
 
 
@@ -134,7 +145,6 @@ struct i915_state
    unsigned immediate[I915_MAX_IMMEDIATE];
    unsigned dynamic[I915_MAX_DYNAMIC];
 
-   float constants[PIPE_SHADER_TYPES][I915_MAX_CONSTANT][4];
    /** number of constants passed in through a constant buffer */
    uint num_user_constants[PIPE_SHADER_TYPES];
 
@@ -148,7 +158,16 @@ struct i915_state
 
    /** Describes the current hardware vertex layout */
    struct vertex_info vertex_info;
-   
+
+   /* static state (dst/depth buffer state) */
+   struct i915_winsys_buffer *cbuf_bo;
+   unsigned cbuf_flags;
+   struct i915_winsys_buffer *depth_bo;
+   unsigned depth_flags;
+   unsigned dst_buf_vars;
+   uint32_t draw_offset;
+   uint32_t draw_size;
+
    unsigned id;			/* track lost context events */
 };
 
@@ -175,7 +194,7 @@ struct i915_rasterizer_state {
    unsigned LIS7;
    unsigned sc[1];
 
-   const struct pipe_rasterizer_state *templ;
+   struct pipe_rasterizer_state templ;
 
    union { float f; unsigned u; } ds[2];
 };
@@ -187,38 +206,16 @@ struct i915_sampler_state {
    unsigned maxlod;
 };
 
-struct i915_texture {
-   struct pipe_texture base;
-
-   /* Derived from the above:
-    */
-   unsigned stride;
-   unsigned depth_stride;          /* per-image on i945? */
-   unsigned total_nblocksy;
-
-   unsigned sw_tiled; /**< tiled with software flags */
-   unsigned hw_tiled; /**< tiled with hardware fences */
-
-   unsigned nr_images[PIPE_MAX_TEXTURE_LEVELS];
-
-   /* Explicitly store the offset of each image for each cube face or
-    * depth value.  Pretty much have to accept that hardware formats
-    * are going to be so diverse that there is no unified way to
-    * compute the offsets of depth/cube images within a mipmap level,
-    * so have to store them as a lookup table:
-    */
-   unsigned *image_offset[PIPE_MAX_TEXTURE_LEVELS];   /**< array [depth] of offsets */
-
-   /* The data is held here:
-    */
-   struct intel_buffer *buffer;
+struct i915_velems_state {
+   unsigned count;
+   struct pipe_vertex_element velem[PIPE_MAX_ATTRIBS];
 };
 
-struct i915_context
-{
+
+struct i915_context {
    struct pipe_context base;
 
-   struct intel_winsys *iws;
+   struct i915_winsys *iws;
 
    struct draw_context *draw;
 
@@ -234,33 +231,60 @@ struct i915_context
    struct pipe_blend_color blend_color;
    struct pipe_stencil_ref stencil_ref;
    struct pipe_clip_state clip;
-   /* XXX unneded */
-   struct pipe_buffer *constants[PIPE_SHADER_TYPES];
+   struct pipe_resource *constants[PIPE_SHADER_TYPES];
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
-   struct i915_texture *texture[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_view *fragment_sampler_views[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
-   struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+   struct pipe_index_buffer index_buffer;
 
    unsigned dirty;
 
    unsigned num_samplers;
-   unsigned num_textures;
-   unsigned num_vertex_elements;
-   unsigned num_vertex_buffers;
+   unsigned num_fragment_sampler_views;
 
-   struct intel_batchbuffer *batch;
+   struct i915_winsys_batchbuffer *batch;
 
    /** Vertex buffer */
-   struct intel_buffer *vbo;
+   struct i915_winsys_buffer *vbo;
    size_t vbo_offset;
    unsigned vbo_flushed;
 
    struct i915_state current;
    unsigned hardware_dirty;
-   
-   unsigned debug;
+   unsigned immediate_dirty : I915_MAX_IMMEDIATE;
+   unsigned dynamic_dirty : I915_MAX_DYNAMIC;
+   unsigned static_dirty : 4;
+   unsigned flush_dirty : 2;
+
+   struct i915_winsys_buffer *validation_buffers[2 + 1 + I915_TEX_UNITS];
+   int num_validation_buffers;
+
+   struct util_slab_mempool transfer_pool;
+   struct util_slab_mempool texture_transfer_pool;
+
+   int vertices_since_last_flush;
+
+   /** blitter/hw-clear */
+   struct blitter_context* blitter;
+
+   /** State tracking needed by u_blitter for save/restore. */
+   void *saved_fs;
+   void (*saved_bind_fs_state)(struct pipe_context *pipe, void *shader);
+   void *saved_vs;
+   struct pipe_clip_state saved_clip;
+   struct i915_velems_state *saved_velems;
+   unsigned saved_nr_vertex_buffers;
+   struct pipe_vertex_buffer saved_vertex_buffers[PIPE_MAX_ATTRIBS];
+   unsigned saved_nr_samplers;
+   void *saved_samplers[PIPE_MAX_SAMPLERS];
+   void (*saved_bind_sampler_states)(struct pipe_context *pipe,
+                                     unsigned num, void **sampler);
+   unsigned saved_nr_sampler_views;
+   struct pipe_sampler_view *saved_sampler_views[PIPE_MAX_SAMPLERS];
+   void (*saved_set_sampler_views)(struct pipe_context *pipe,
+                                   unsigned num, struct pipe_sampler_view **views);
 };
 
 /* A flag for each state_tracker state object:
@@ -276,10 +300,12 @@ struct i915_context
 #define I915_NEW_ALPHA_TEST    0x100
 #define I915_NEW_DEPTH_STENCIL 0x200
 #define I915_NEW_SAMPLER       0x400
-#define I915_NEW_TEXTURE       0x800
-#define I915_NEW_CONSTANTS     0x1000
-#define I915_NEW_VBO           0x2000
-#define I915_NEW_VS            0x4000
+#define I915_NEW_SAMPLER_VIEW  0x800
+#define I915_NEW_VS_CONSTANTS  0x1000
+#define I915_NEW_FS_CONSTANTS  0x2000
+#define I915_NEW_GS_CONSTANTS  0x4000
+#define I915_NEW_VBO           0x8000
+#define I915_NEW_VS            0x10000
 
 
 /* Driver's internally generated state flags:
@@ -296,7 +322,25 @@ struct i915_context
 #define I915_HW_PROGRAM           (1<<I915_CACHE_PROGRAM)
 #define I915_HW_CONSTANTS         (1<<I915_CACHE_CONSTANTS)
 #define I915_HW_IMMEDIATE         (1<<(I915_MAX_CACHE+0))
-#define I915_HW_INVARIENT         (1<<(I915_MAX_CACHE+1))
+#define I915_HW_INVARIANT         (1<<(I915_MAX_CACHE+1))
+#define I915_HW_FLUSH             (1<<(I915_MAX_CACHE+1))
+
+/* hw flush handling */
+#define I915_FLUSH_CACHE		1
+#define I915_PIPELINE_FLUSH		2
+
+/* split up static state */
+#define I915_DST_BUF_COLOR              1
+#define I915_DST_BUF_DEPTH              2
+#define I915_DST_VARS                   4
+#define I915_DST_RECT                   8
+
+static INLINE
+void i915_set_flush_dirty(struct i915_context *i915, unsigned flush)
+{
+   i915->hardware_dirty |= I915_HW_FLUSH;
+   i915->flush_dirty |= flush;
+}
 
 
 /***********************************************************************
@@ -321,16 +365,20 @@ void i915_emit_hardware_state(struct i915_context *i915 );
 /***********************************************************************
  * i915_clear.c: 
  */
-void i915_clear( struct pipe_context *pipe, unsigned buffers, const float *rgba,
-                 double depth, unsigned stencil);
+void i915_clear_blitter(struct pipe_context *pipe, unsigned buffers, const float *rgba,
+                        double depth, unsigned stencil);
+void i915_clear_render(struct pipe_context *pipe, unsigned buffers, const float *rgba,
+                       double depth, unsigned stencil);
+void i915_clear_emit(struct pipe_context *pipe, unsigned buffers, const float *rgba,
+                     double depth, unsigned stencil,
+                     unsigned destx, unsigned desty, unsigned width, unsigned height);
 
 
 /***********************************************************************
- * i915_surface.c: 
+ * 
  */
-void i915_init_surface_functions( struct i915_context *i915 );
-
 void i915_init_state_functions( struct i915_context *i915 );
+void i915_init_fixup_state_functions( struct i915_context *i915 );
 void i915_init_flush_functions( struct i915_context *i915 );
 void i915_init_string_functions( struct i915_context *i915 );
 
@@ -351,7 +399,6 @@ i915_context( struct pipe_context *pipe )
 {
    return (struct i915_context *)pipe;
 }
-
 
 
 #endif

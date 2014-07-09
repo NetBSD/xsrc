@@ -27,23 +27,23 @@
  * Shared-context state
  */
 
-
-
 #include "imports.h"
+#include "mfeatures.h"
 #include "mtypes.h"
 #include "hash.h"
-#include "arrayobj.h"
+#if FEATURE_ATI_fragment_shader
+#include "atifragshader.h"
+#endif
 #include "bufferobj.h"
 #include "shared.h"
-#include "shader/program.h"
-#include "shader/shader_api.h"
+#include "program/program.h"
 #include "dlist.h"
-#if FEATURE_ATI_fragment_shader
-#include "shader/atifragshader.h"
+#if FEATURE_ARB_sampler_objects
+#include "samplerobj.h"
 #endif
-#if FEATURE_ARB_sync
+#include "shaderobj.h"
 #include "syncobj.h"
-#endif
+
 
 /**
  * Allocate and initialize a shared context state structure.
@@ -55,7 +55,7 @@
  * failure.
  */
 struct gl_shared_state *
-_mesa_alloc_shared_state(GLcontext *ctx)
+_mesa_alloc_shared_state(struct gl_context *ctx)
 {
    struct gl_shared_state *shared;
    GLuint i;
@@ -93,6 +93,11 @@ _mesa_alloc_shared_state(GLcontext *ctx)
    shared->BufferObjects = _mesa_NewHashTable();
 #endif
 
+#if FEATURE_ARB_sampler_objects
+   /* GL_ARB_sampler_objects */
+   shared->SamplerObjects = _mesa_NewHashTable();
+#endif
+
    /* Allocate the default buffer object */
    shared->NullBufferObj = ctx->Driver.NewBufferObject(ctx, 0, 0);
 
@@ -100,6 +105,7 @@ _mesa_alloc_shared_state(GLcontext *ctx)
    for (i = 0; i < NUM_TEXTURE_TARGETS; i++) {
       /* NOTE: the order of these enums matches the TEXTURE_x_INDEX values */
       static const GLenum targets[NUM_TEXTURE_TARGETS] = {
+         GL_TEXTURE_BUFFER,
          GL_TEXTURE_2D_ARRAY_EXT,
          GL_TEXTURE_1D_ARRAY_EXT,
          GL_TEXTURE_CUBE_MAP,
@@ -108,6 +114,7 @@ _mesa_alloc_shared_state(GLcontext *ctx)
          GL_TEXTURE_2D,
          GL_TEXTURE_1D
       };
+      assert(Elements(targets) == NUM_TEXTURE_TARGETS);
       shared->DefaultTex[i] = ctx->Driver.NewTextureObject(ctx, 0, targets[i]);
    }
 
@@ -123,9 +130,7 @@ _mesa_alloc_shared_state(GLcontext *ctx)
    shared->RenderBuffers = _mesa_NewHashTable();
 #endif
 
-#if FEATURE_ARB_sync
    make_empty_list(& shared->SyncObjects);
-#endif
 
    return shared;
 }
@@ -138,7 +143,7 @@ static void
 delete_displaylist_cb(GLuint id, void *data, void *userData)
 {
    struct gl_display_list *list = (struct gl_display_list *) data;
-   GLcontext *ctx = (GLcontext *) userData;
+   struct gl_context *ctx = (struct gl_context *) userData;
    _mesa_delete_list(ctx, list);
 }
 
@@ -150,7 +155,7 @@ static void
 delete_texture_cb(GLuint id, void *data, void *userData)
 {
    struct gl_texture_object *texObj = (struct gl_texture_object *) data;
-   GLcontext *ctx = (GLcontext *) userData;
+   struct gl_context *ctx = (struct gl_context *) userData;
    ctx->Driver.DeleteTexture(ctx, texObj);
 }
 
@@ -162,7 +167,7 @@ static void
 delete_program_cb(GLuint id, void *data, void *userData)
 {
    struct gl_program *prog = (struct gl_program *) data;
-   GLcontext *ctx = (GLcontext *) userData;
+   struct gl_context *ctx = (struct gl_context *) userData;
    if(prog != &_mesa_DummyProgram) {
       ASSERT(prog->RefCount == 1); /* should only be referenced by hash table */
       prog->RefCount = 0;  /* now going away */
@@ -180,7 +185,7 @@ static void
 delete_fragshader_cb(GLuint id, void *data, void *userData)
 {
    struct ati_fragment_shader *shader = (struct ati_fragment_shader *) data;
-   GLcontext *ctx = (GLcontext *) userData;
+   struct gl_context *ctx = (struct gl_context *) userData;
    _mesa_delete_ati_fragment_shader(ctx, shader);
 }
 #endif
@@ -193,7 +198,7 @@ static void
 delete_bufferobj_cb(GLuint id, void *data, void *userData)
 {
    struct gl_buffer_object *bufObj = (struct gl_buffer_object *) data;
-   GLcontext *ctx = (GLcontext *) userData;
+   struct gl_context *ctx = (struct gl_context *) userData;
    if (_mesa_bufferobj_mapped(bufObj)) {
       ctx->Driver.UnmapBuffer(ctx, 0, bufObj);
       bufObj->Pointer = NULL;
@@ -209,7 +214,7 @@ delete_bufferobj_cb(GLuint id, void *data, void *userData)
 static void
 free_shader_program_data_cb(GLuint id, void *data, void *userData)
 {
-   GLcontext *ctx = (GLcontext *) userData;
+   struct gl_context *ctx = (struct gl_context *) userData;
    struct gl_shader_program *shProg = (struct gl_shader_program *) data;
 
    if (shProg->Type == GL_SHADER_PROGRAM_MESA) {
@@ -225,15 +230,15 @@ free_shader_program_data_cb(GLuint id, void *data, void *userData)
 static void
 delete_shader_cb(GLuint id, void *data, void *userData)
 {
-   GLcontext *ctx = (GLcontext *) userData;
+   struct gl_context *ctx = (struct gl_context *) userData;
    struct gl_shader *sh = (struct gl_shader *) data;
    if (sh->Type == GL_FRAGMENT_SHADER || sh->Type == GL_VERTEX_SHADER) {
-      _mesa_free_shader(ctx, sh);
+      ctx->Driver.DeleteShader(ctx, sh);
    }
    else {
       struct gl_shader_program *shProg = (struct gl_shader_program *) data;
       ASSERT(shProg->Type == GL_SHADER_PROGRAM_MESA);
-      _mesa_free_shader_program(ctx, shProg);
+      ctx->Driver.DeleteShaderProgram(ctx, shProg);
    }
 }
 
@@ -272,6 +277,20 @@ delete_renderbuffer_cb(GLuint id, void *data, void *userData)
 }
 
 
+#if FEATURE_ARB_sampler_objects
+/**
+ * Callback for deleting a sampler object. Called by _mesa_HashDeleteAll()
+ */
+static void
+delete_sampler_object_cb(GLuint id, void *data, void *userData)
+{
+   struct gl_context *ctx = (struct gl_context *) userData;
+   struct gl_sampler_object *sampObj = (struct gl_sampler_object *) data;
+   _mesa_reference_sampler_object(ctx, &sampObj, NULL);
+}
+#endif
+
+
 /**
  * Deallocate a shared state object and all children structures.
  *
@@ -285,9 +304,13 @@ delete_renderbuffer_cb(GLuint id, void *data, void *userData)
  * \sa alloc_shared_state().
  */
 static void
-free_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
+free_shared_state(struct gl_context *ctx, struct gl_shared_state *shared)
 {
    GLuint i;
+
+   /* Free the dummy/fallback texture object */
+   if (shared->FallbackTex)
+      ctx->Driver.DeleteTexture(ctx, shared->FallbackTex);
 
    /*
     * Free display lists
@@ -334,7 +357,6 @@ free_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
    _mesa_reference_buffer_object(ctx, &shared->NullBufferObj, NULL);
 #endif
 
-#if FEATURE_ARB_sync
    {
       struct simple_node *node;
       struct simple_node *temp;
@@ -343,6 +365,10 @@ free_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
 	 _mesa_unref_sync_object(ctx, (struct gl_sync_object *) node);
       }
    }
+
+#if FEATURE_ARB_sampler_objects
+   _mesa_HashDeleteAll(shared->SamplerObjects, delete_sampler_object_cb, ctx);
+   _mesa_DeleteHashTable(shared->SamplerObjects);
 #endif
 
    /*
@@ -376,7 +402,8 @@ free_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
  * \sa free_shared_state().
  */
 void
-_mesa_release_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
+_mesa_release_shared_state(struct gl_context *ctx,
+                           struct gl_shared_state *shared)
 {
    GLint RefCount;
 

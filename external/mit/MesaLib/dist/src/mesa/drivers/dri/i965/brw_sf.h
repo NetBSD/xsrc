@@ -34,7 +34,7 @@
 #define BRW_SF_H
 
 
-#include "shader/program.h"
+#include "program/program.h"
 #include "brw_context.h"
 #include "brw_eu.h"
 
@@ -52,7 +52,6 @@ struct brw_sf_prog_key {
    GLuint do_flat_shading:1;
    GLuint frontface_ccw:1;
    GLuint do_point_sprite:1;
-   GLuint linear_color:1;  /**< linear interp vs. perspective interp */
    GLuint sprite_origin_lower_left:1;
    GLuint pad:24;
 };

@@ -29,17 +29,28 @@
 #define INTELCONTEXT_INC
 
 
-
+#include <stdbool.h>
 #include "main/mtypes.h"
 #include "main/mm.h"
-#include "texmem.h"
-#include "dri_metaops.h"
+
+#ifdef __cplusplus
+extern "C" {
+	/* Evil hack for using libdrm in a c++ compiler. */
+	#define virtual virt
+#endif
+
 #include "drm.h"
 #include "intel_bufmgr.h"
 
 #include "intel_screen.h"
 #include "intel_tex_obj.h"
 #include "i915_drm.h"
+
+#ifdef __cplusplus
+	#undef virtual
+}
+#endif
+
 #include "tnl/t_vertex.h"
 
 #define TAG(x) intel##x
@@ -86,6 +97,16 @@ extern void intelFallback(struct intel_context *intel, GLbitfield bit,
 
 #define INTEL_MAX_FIXUP 64
 
+#ifndef likely
+#ifdef __GNUC__
+#define likely(expr) (__builtin_expect(expr, 1))
+#define unlikely(expr) (__builtin_expect(expr, 0))
+#else
+#define likely(expr) (expr)
+#define unlikely(expr) (expr)
+#endif
+#endif
+
 struct intel_sync_object {
    struct gl_sync_object Base;
 
@@ -94,11 +115,11 @@ struct intel_sync_object {
 };
 
 /**
- * intel_context is derived from Mesa's context class: GLcontext.
+ * intel_context is derived from Mesa's context class: struct gl_context.
  */
 struct intel_context
 {
-   GLcontext ctx;  /**< base class, must be first field */
+   struct gl_context ctx;  /**< base class, must be first field */
 
    struct
    {
@@ -115,6 +136,7 @@ struct intel_context
                                struct intel_region * draw_regions[],
                                struct intel_region * depth_region,
 			       GLuint num_regions);
+      void (*update_draw_buffer)(struct intel_context *intel);
 
       void (*reduced_primitive_state) (struct intel_context * intel,
                                        GLenum rprim);
@@ -127,9 +149,12 @@ struct intel_context
       void (*assert_not_dirty) (struct intel_context *intel);
 
       void (*debug_batch)(struct intel_context *intel);
-   } vtbl;
+      bool (*render_target_supported)(gl_format format);
 
-   struct dri_metaops meta;
+      /** Can HiZ be enabled on a depthbuffer of the given format? */
+      bool (*is_hiz_depth_format)(struct intel_context *intel,
+	                          gl_format format);
+   } vtbl;
 
    GLbitfield Fallback;  /**< mask of INTEL_FALLBACK_x bits */
    GLuint NewGLState;
@@ -146,38 +171,65 @@ struct intel_context
    GLboolean is_945;
    GLboolean has_luminance_srgb;
    GLboolean has_xrgb_textures;
+   GLboolean has_separate_stencil;
+   GLboolean must_use_separate_stencil;
+   GLboolean has_hiz;
 
    int urb_size;
 
-   struct intel_batchbuffer *batch;
+   struct intel_batchbuffer {
+      /** Current batchbuffer being queued up. */
+      drm_intel_bo *bo;
+      /** Last BO submitted to the hardware.  Used for glFinish(). */
+      drm_intel_bo *last_bo;
+      /** BO for post-sync nonzero writes for gen6 workaround. */
+      drm_intel_bo *workaround_bo;
+      bool need_workaround_flush;
+
+      struct cached_batch_item *cached_items;
+
+      uint16_t emit, total;
+      uint16_t used, reserved_space;
+      uint32_t map[8192];
+#define BATCH_SZ (8192*sizeof(uint32_t))
+
+      uint32_t state_batch_offset;
+      bool is_blit;
+   } batch;
+
    drm_intel_bo *first_post_swapbuffers_batch;
+   GLboolean need_throttle;
    GLboolean no_batch_wrap;
-   GLboolean using_dri2_swapbuffers;
+   bool tnl_pipeline_running; /**< Set while i915's _tnl_run_pipeline. */
 
    struct
    {
       GLuint id;
+      uint32_t start_ptr; /**< for i8xx */
       uint32_t primitive;	/**< Current hardware primitive type */
       void (*flush) (struct intel_context *);
-      GLubyte *start_ptr; /**< for i8xx */
-      dri_bo *vb_bo;
+      drm_intel_bo *vb_bo;
       uint8_t *vb;
       unsigned int start_offset; /**< Byte offset of primitive sequence */
       unsigned int current_offset; /**< Byte offset of next vertex */
       unsigned int count;	/**< Number of vertices in current primitive */
    } prim;
 
+   struct {
+      drm_intel_bo *bo;
+      GLuint offset;
+      uint32_t buffer_len;
+      uint32_t buffer_offset;
+      char buffer[4096];
+   } upload;
+
    GLuint stats_wm;
-   GLboolean locked;
-   char *prevLockFile;
-   int prevLockLine;
 
    /* Offsets of fields within the current vertex:
     */
    GLuint coloroffset;
    GLuint specoffset;
    GLuint wpos_offset;
-   GLuint wpos_size;
 
    struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
    GLuint vertex_attr_count;
@@ -188,7 +240,6 @@ struct intel_context
    GLboolean hw_stipple;
    GLboolean depth_buffer_is_float;
    GLboolean no_rast;
-   GLboolean no_hw;
    GLboolean always_flush_batch;
    GLboolean always_flush_cache;
 
@@ -243,10 +294,9 @@ struct intel_context
    int driFd;
 
    __DRIcontext *driContext;
-   __DRIdrawable *driDrawable;
-   __DRIdrawable *driReadDrawable;
-   __DRIscreen *driScreen;
    struct intel_screen *intelScreen;
+   void (*saved_viewport)(struct gl_context * ctx,
+			  GLint x, GLint y, GLsizei width, GLsizei height);
 
    /**
     * Configuration cache
@@ -261,7 +311,33 @@ extern char *__progname;
 #define SUBPIXEL_Y 0.125
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
-#define ALIGN(value, alignment)  ((value + alignment - 1) & ~(alignment - 1))
+
+/**
+ * Align a value up to an alignment value
+ *
+ * If \c value is not already aligned to the requested alignment value, it
+ * will be rounded up.
+ *
+ * \param value  Value to be rounded
+ * \param alignment  Alignment value to be used.  This must be a power of two.
+ *
+ * \sa ROUND_DOWN_TO()
+ */
+#define ALIGN(value, alignment)  (((value) + alignment - 1) & ~(alignment - 1))
+
+/**
+ * Align a value down to an alignment value
+ *
+ * If \c value is not already aligned to the requested alignment value, it
+ * will be rounded down.
+ *
+ * \param value  Value to be rounded
+ * \param alignment  Alignment value to be used.  This must be a power of two.
+ *
+ * \sa ALIGN()
+ */
+#define ROUND_DOWN_TO(value, alignment) ((value) & ~(alignment - 1))
+
 #define IS_POWER_OF_TWO(val) (((val) & (val - 1)) == 0)
 
 static INLINE uint32_t
@@ -328,12 +404,12 @@ extern int INTEL_DEBUG;
 #define DEBUG_BUFMGR    0x200
 #define DEBUG_REGION    0x400
 #define DEBUG_FBO       0x800
-#define DEBUG_LOCK      0x1000
+#define DEBUG_GS        0x1000
 #define DEBUG_SYNC	0x2000
 #define DEBUG_PRIMS	0x4000
 #define DEBUG_VERTS	0x8000
 #define DEBUG_DRI       0x10000
-#define DEBUG_DMA       0x20000
+#define DEBUG_SF        0x20000
 #define DEBUG_SANITY    0x40000
 #define DEBUG_SLEEP     0x80000
 #define DEBUG_STATS     0x100000
@@ -342,10 +418,16 @@ extern int INTEL_DEBUG;
 #define DEBUG_WM        0x800000
 #define DEBUG_URB       0x1000000
 #define DEBUG_VS        0x2000000
+#define DEBUG_CLIP      0x8000000
 
 #define DBG(...) do {						\
-	if (INTEL_DEBUG & FILE_DEBUG_FLAG)			\
+	if (unlikely(INTEL_DEBUG & FILE_DEBUG_FLAG))		\
 		printf(__VA_ARGS__);			\
+} while(0)
+
+#define fallback_debug(...) do {				\
+	if (unlikely(INTEL_DEBUG & DEBUG_FALLBACKS))		\
+		printf(__VA_ARGS__);				\
 } while(0)
 
 #define PCI_CHIP_845_G			0x2562
@@ -367,14 +449,14 @@ extern int INTEL_DEBUG;
  */
 
 extern GLboolean intelInitContext(struct intel_context *intel,
-                                  const __GLcontextModes * mesaVis,
+				  int api,
+                                  const struct gl_config * mesaVis,
                                   __DRIcontext * driContextPriv,
                                   void *sharedContextPrivate,
                                   struct dd_function_table *functions);
 
-extern void intelFinish(GLcontext * ctx);
-extern void intelFlush(GLcontext * ctx);
-extern void intel_flush(GLcontext * ctx, GLboolean needs_mi_flush);
+extern void intelFinish(struct gl_context * ctx);
+extern void intel_flush(struct gl_context * ctx);
 
 extern void intelInitDriverFunctions(struct dd_function_table *functions);
 
@@ -449,9 +531,6 @@ extern int intel_translate_stencil_op(GLenum op);
 extern int intel_translate_blend_factor(GLenum factor);
 extern int intel_translate_logic_op(GLenum opcode);
 
-void intel_viewport(GLcontext * ctx, GLint x, GLint y,
-		    GLsizei width, GLsizei height);
-
 void intel_update_renderbuffers(__DRIcontext *context,
 				__DRIdrawable *drawable);
 void intel_prepare_render(struct intel_context *intel);
@@ -464,7 +543,7 @@ void i915_set_buf_info_for_region(uint32_t *state, struct intel_region *region,
  * These are better-typed than the macros used previously:
  */
 static INLINE struct intel_context *
-intel_context(GLcontext * ctx)
+intel_context(struct gl_context * ctx)
 {
    return (struct intel_context *) ctx;
 }

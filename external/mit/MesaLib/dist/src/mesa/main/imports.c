@@ -46,6 +46,7 @@
 
 #include "imports.h"
 #include "context.h"
+#include "mtypes.h"
 #include "version.h"
 
 #ifdef _GNU_SOURCE
@@ -88,7 +89,8 @@ _mesa_align_malloc(size_t bytes, unsigned long alignment)
 #if defined(HAVE_POSIX_MEMALIGN)
    void *mem;
    int err = posix_memalign(& mem, alignment, bytes);
-   (void) err;
+   if (err)
+      return NULL;
    return mem;
 #elif defined(_WIN32) && defined(_MSC_VER)
    return _aligned_malloc(bytes, alignment);
@@ -242,41 +244,6 @@ _mesa_memset16( unsigned short *dst, unsigned short val, size_t n )
 /**********************************************************************/
 /** \name Math */
 /*@{*/
-
-/** Wrapper around sin() */
-double
-_mesa_sin(double a)
-{
-   return sin(a);
-}
-
-/** Single precision wrapper around sin() */
-float
-_mesa_sinf(float a)
-{
-   return (float) sin((double) a);
-}
-
-/** Wrapper around cos() */
-double
-_mesa_cos(double a)
-{
-   return cos(a);
-}
-
-/** Single precision wrapper around asin() */
-float
-_mesa_asinf(float x)
-{
-   return (float) asin((double) x);
-}
-
-/** Single precision wrapper around atan() */
-float
-_mesa_atanf(float x)
-{
-   return (float) atan((double) x);
-}
 
 /** Wrapper around sqrt() */
 double
@@ -486,15 +453,7 @@ _mesa_inv_sqrtf(float n)
 #endif
 }
 
-
-/** Wrapper around pow() */
-double
-_mesa_pow(double x, double y)
-{
-   return pow(x, y);
-}
-
-
+#ifndef __GNUC__
 /**
  * Find the first bit set in a word.
  */
@@ -538,9 +497,6 @@ _mesa_ffs(int32_t i)
 int
 _mesa_ffsll(int64_t val)
 {
-#ifdef ffsll
-   return ffsll(val);
-#else
    int bit;
 
    assert(sizeof(val) == 8);
@@ -554,27 +510,24 @@ _mesa_ffsll(int64_t val)
       return 32 + bit;
 
    return 0;
-#endif
 }
+#endif
 
-
+#if !defined(__GNUC__) ||\
+   ((_GNUC__ == 3 && __GNUC_MINOR__ < 4) && __GNUC__ < 4)
 /**
  * Return number of bits set in given GLuint.
  */
 unsigned int
 _mesa_bitcount(unsigned int n)
 {
-#if defined(__GNUC__) && \
-	((_GNUC__ == 3 && __GNUC_MINOR__ >= 4) || __GNUC__ >= 4)
-   return __builtin_popcount(n);
-#else
    unsigned int bits;
    for (bits = 0; n > 0; n = n >> 1) {
       bits += (n & 1);
    }
    return bits;
-#endif
 }
+#endif
 
 
 /**
@@ -800,7 +753,7 @@ _mesa_strdup( const char *s )
 float
 _mesa_strtof( const char *s, char **end )
 {
-#ifdef _GNU_SOURCE
+#if defined(_GNU_SOURCE) && !defined(__CYGWIN__) && !defined(__FreeBSD__)
    static locale_t loc = NULL;
    if (!loc) {
       loc = newlocale(LC_CTYPE_MASK, "C", NULL);
@@ -926,7 +879,7 @@ error_string( GLenum error )
  * previous errors which were accumulated.
  */
 static void
-flush_delayed_errors( GLcontext *ctx )
+flush_delayed_errors( struct gl_context *ctx )
 {
    char s[MAXSTRING];
 
@@ -950,7 +903,7 @@ flush_delayed_errors( GLcontext *ctx )
  * \param fmtString printf()-like format string.
  */
 void
-_mesa_warning( GLcontext *ctx, const char *fmtString, ... )
+_mesa_warning( struct gl_context *ctx, const char *fmtString, ... )
 {
    char str[MAXSTRING];
    va_list args;
@@ -973,18 +926,24 @@ _mesa_warning( GLcontext *ctx, const char *fmtString, ... )
  * \param fmtString problem description string.
  */
 void
-_mesa_problem( const GLcontext *ctx, const char *fmtString, ... )
+_mesa_problem( const struct gl_context *ctx, const char *fmtString, ... )
 {
    va_list args;
    char str[MAXSTRING];
+   static int numCalls = 0;
+
    (void) ctx;
 
-   va_start( args, fmtString );  
-   vsnprintf( str, MAXSTRING, fmtString, args );
-   va_end( args );
+   if (numCalls < 50) {
+      numCalls++;
 
-   fprintf(stderr, "Mesa %s implementation error: %s\n", MESA_VERSION_STRING, str);
-   fprintf(stderr, "Please report at bugzilla.freedesktop.org\n");
+      va_start( args, fmtString );  
+      vsnprintf( str, MAXSTRING, fmtString, args );
+      va_end( args );
+      fprintf(stderr, "Mesa %s implementation error: %s\n",
+              MESA_VERSION_STRING, str);
+      fprintf(stderr, "Please report at bugs.freedesktop.org\n");
+   }
 }
 
 
@@ -1001,7 +960,7 @@ _mesa_problem( const GLcontext *ctx, const char *fmtString, ... )
  * \param fmtString printf() style format string, followed by optional args
  */
 void
-_mesa_error( GLcontext *ctx, GLenum error, const char *fmtString, ... )
+_mesa_error( struct gl_context *ctx, GLenum error, const char *fmtString, ... )
 {
    static GLint debug = -1;
 
@@ -1058,7 +1017,7 @@ _mesa_error( GLcontext *ctx, GLenum error, const char *fmtString, ... )
  * \param fmtString printf()-style format string, followed by optional args.
  */
 void
-_mesa_debug( const GLcontext *ctx, const char *fmtString, ... )
+_mesa_debug( const struct gl_context *ctx, const char *fmtString, ... )
 {
 #ifdef DEBUG
    char s[MAXSTRING];

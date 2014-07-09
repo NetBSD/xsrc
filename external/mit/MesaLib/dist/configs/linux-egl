@@ -38,20 +38,21 @@ MESA_ASM_SOURCES =
 # Library/program dependencies
 EXTRA_LIB_PATH=-L/usr/X11R6/lib
 
+MESA_MODULES  = $(TOP)/src/mesa/libmesa.a
+
 LIBDRM_CFLAGS = $(shell pkg-config --cflags libdrm)
 LIBDRM_LIB = $(shell pkg-config --libs libdrm)
-DRI_LIB_DEPS  = $(EXTRA_LIB_PATH) -lm -lpthread -lexpat -ldl $(LIBDRM_LIB)
+DRI_LIB_DEPS  = $(MESA_MODULES) $(EXTRA_LIB_PATH) -lm -lpthread -lexpat -ldl $(LIBDRM_LIB)
 GL_LIB_DEPS   = $(EXTRA_LIB_PATH) -lX11 -lXext -lXxf86vm -lXdamage -lXfixes \
 		-lm -lpthread -ldl \
                 $(LIBDRM_LIB)
 
 
 # Directories
-SRC_DIRS = gallium mesa gallium/winsys glu egl
-PROGRAM_DIRS = egl
+SRC_DIRS = gallium mesa gallium/winsys gallium/targets glu egl
 
 DRIVER_DIRS = dri
-WINDOW_SYSTEM = dri
 GALLIUM_WINSYS_DIRS = egl_drm
+GALLIUM_TARGET_DIRS =
 
 DRI_DIRS = intel 

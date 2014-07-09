@@ -34,7 +34,6 @@
 #include <string.h>
 #include "GL/glx.h"
 #include "glapi/glapi.h"
-#include "pipe/p_compiler.h"
 
 
 struct name_address_pair {
@@ -168,6 +167,9 @@ static struct name_address_pair GLX_functions[] = {
 
    /*** GLX_ARB_get_proc_address ***/
    { "glXGetProcAddressARB", (__GLXextFuncPtr) glXGetProcAddressARB },
+
+   /*** GLX_ARB_create_context ***/
+   { "glXCreateContextAttribsARB", (__GLXextFuncPtr) glXCreateContextAttribsARB },
 
    /*** GLX_EXT_texture_from_pixmap ***/
    { "glXBindTexImageEXT", (__GLXextFuncPtr) glXBindTexImageEXT },

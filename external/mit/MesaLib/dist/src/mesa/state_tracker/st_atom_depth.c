@@ -33,6 +33,8 @@
   */
  
 
+#include <assert.h>
+
 #include "st_context.h"
 #include "st_atom.h"
 #include "pipe/p_context.h"
@@ -95,7 +97,7 @@ update_depth_stencil_alpha(struct st_context *st)
 {
    struct pipe_depth_stencil_alpha_state *dsa = &st->state.depth_stencil;
    struct pipe_stencil_ref sr;
-   GLcontext *ctx = st->ctx;
+   struct gl_context *ctx = st->ctx;
 
    memset(dsa, 0, sizeof(*dsa));
    memset(&sr, 0, sizeof(sr));
@@ -140,7 +142,7 @@ update_depth_stencil_alpha(struct st_context *st)
    if (ctx->Color.AlphaEnabled) {
       dsa->alpha.enabled = 1;
       dsa->alpha.func = st_compare_func_to_pipe(ctx->Color.AlphaFunc);
-      dsa->alpha.ref_value = ctx->Color.AlphaRef;
+      dsa->alpha.ref_value = ctx->Color.AlphaRefUnclamped;
    }
 
    cso_set_depth_stencil_alpha(st->cso_context, dsa);

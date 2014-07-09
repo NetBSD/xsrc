@@ -44,7 +44,7 @@ void trace_dump_format(enum pipe_format format)
 }
 
 
-void trace_dump_template(const struct pipe_texture *templat)
+void trace_dump_resource_template(const struct pipe_resource *templat)
 {
    if (!trace_dumping_enabled_locked())
       return;
@@ -54,7 +54,7 @@ void trace_dump_template(const struct pipe_texture *templat)
       return;
    }
 
-   trace_dump_struct_begin("pipe_texture");
+   trace_dump_struct_begin("pipe_resource");
 
    trace_dump_member(int, templat, target);
    trace_dump_member(format, templat, format);
@@ -71,8 +71,37 @@ void trace_dump_template(const struct pipe_texture *templat)
    trace_dump_uint(templat->depth0);
    trace_dump_member_end();
 
+   trace_dump_member_begin("array_size");
+   trace_dump_uint(templat->array_size);
+   trace_dump_member_end();
+
    trace_dump_member(uint, templat, last_level);
-   trace_dump_member(uint, templat, tex_usage);
+   trace_dump_member(uint, templat, usage);
+   trace_dump_member(uint, templat, bind);
+   trace_dump_member(uint, templat, flags);
+
+   trace_dump_struct_end();
+}
+
+
+void trace_dump_box(const struct pipe_box *box)
+{
+   if (!trace_dumping_enabled_locked())
+      return;
+
+   if(!box) {
+      trace_dump_null();
+      return;
+   }
+
+   trace_dump_struct_begin("pipe_box");
+
+   trace_dump_member(uint, box, x);
+   trace_dump_member(uint, box, y);
+   trace_dump_member(uint, box, z);
+   trace_dump_member(uint, box, width);
+   trace_dump_member(uint, box, height);
+   trace_dump_member(uint, box, depth);
 
    trace_dump_struct_end();
 }
@@ -92,12 +121,13 @@ void trace_dump_rasterizer_state(const struct pipe_rasterizer_state *state)
 
    trace_dump_member(bool, state, flatshade);
    trace_dump_member(bool, state, light_twoside);
-   trace_dump_member(uint, state, front_winding);
-   trace_dump_member(uint, state, cull_mode);
-   trace_dump_member(uint, state, fill_cw);
-   trace_dump_member(uint, state, fill_ccw);
-   trace_dump_member(bool, state, offset_cw);
-   trace_dump_member(bool, state, offset_ccw);
+   trace_dump_member(uint, state, front_ccw);
+   trace_dump_member(uint, state, cull_face);
+   trace_dump_member(uint, state, fill_front);
+   trace_dump_member(uint, state, fill_back);
+   trace_dump_member(bool, state, offset_point);
+   trace_dump_member(bool, state, offset_line);
+   trace_dump_member(bool, state, offset_tri);
    trace_dump_member(bool, state, scissor);
    trace_dump_member(bool, state, poly_smooth);
    trace_dump_member(bool, state, poly_stipple_enable);
@@ -291,8 +321,29 @@ void trace_dump_depth_stencil_alpha_state(const struct pipe_depth_stencil_alpha_
    trace_dump_struct_end();
 }
 
+static void trace_dump_rt_blend_state(const struct pipe_rt_blend_state *state)
+{
+   trace_dump_struct_begin("pipe_rt_blend_state");
+
+   trace_dump_member(uint, state, blend_enable);
+
+   trace_dump_member(uint, state, rgb_func);
+   trace_dump_member(uint, state, rgb_src_factor);
+   trace_dump_member(uint, state, rgb_dst_factor);
+
+   trace_dump_member(uint, state, alpha_func);
+   trace_dump_member(uint, state, alpha_src_factor);
+   trace_dump_member(uint, state, alpha_dst_factor);
+
+   trace_dump_member(uint, state, colormask);
+
+   trace_dump_struct_end();
+}
+
 void trace_dump_blend_state(const struct pipe_blend_state *state)
 {
+   unsigned valid_entries = 1;
+
    if (!trace_dumping_enabled_locked())
       return;
 
@@ -301,7 +352,22 @@ void trace_dump_blend_state(const struct pipe_blend_state *state)
       return;
    }
 
-   trace_dump_bytes(state, sizeof *state);
+   trace_dump_struct_begin("pipe_blend_state");
+
+   trace_dump_member(bool, state, dither);
+
+   trace_dump_member(bool, state, logicop_enable);
+   trace_dump_member(uint, state, logicop_func);
+
+   trace_dump_member(bool, state, independent_blend_enable);
+
+   trace_dump_member_begin("rt");
+   if (state->independent_blend_enable)
+      valid_entries = PIPE_MAX_COLOR_BUFS;
+   trace_dump_struct_array(rt_blend_state, state->rt, valid_entries);
+   trace_dump_member_end();
+
+   trace_dump_struct_end();
 }
 
 
@@ -387,7 +453,54 @@ void trace_dump_sampler_state(const struct pipe_sampler_state *state)
 }
 
 
-void trace_dump_surface(const struct pipe_surface *state)
+void trace_dump_sampler_view_template(const struct pipe_sampler_view *state,
+                                      enum pipe_texture_target target)
+{
+   if (!trace_dumping_enabled_locked())
+      return;
+
+   if(!state) {
+      trace_dump_null();
+      return;
+   }
+
+   trace_dump_struct_begin("pipe_sampler_view");
+
+   trace_dump_member(format, state, format);
+
+   trace_dump_member_begin("u");
+   trace_dump_struct_begin(""); /* anonymous */
+   if (target == PIPE_BUFFER) {
+      trace_dump_member_begin("buf");
+      trace_dump_struct_begin(""); /* anonymous */
+      trace_dump_member(uint, &state->u.buf, first_element);
+      trace_dump_member(uint, &state->u.buf, last_element);
+      trace_dump_struct_end(); /* anonymous */
+      trace_dump_member_end(); /* buf */
+   } else {
+      trace_dump_member_begin("tex");
+      trace_dump_struct_begin(""); /* anonymous */
+      trace_dump_member(uint, &state->u.tex, first_layer);
+      trace_dump_member(uint, &state->u.tex, last_layer);
+      trace_dump_member(uint, &state->u.tex, first_level);
+      trace_dump_member(uint, &state->u.tex, last_level);
+      trace_dump_struct_end(); /* anonymous */
+      trace_dump_member_end(); /* tex */
+   }
+   trace_dump_struct_end(); /* anonymous */
+   trace_dump_member_end(); /* u */
+
+   trace_dump_member(uint, state, swizzle_r);
+   trace_dump_member(uint, state, swizzle_g);
+   trace_dump_member(uint, state, swizzle_b);
+   trace_dump_member(uint, state, swizzle_a);
+
+   trace_dump_struct_end();
+}
+
+
+void trace_dump_surface_template(const struct pipe_surface *state,
+                                 enum pipe_texture_target target)
 {
    if (!trace_dumping_enabled_locked())
       return;
@@ -403,14 +516,28 @@ void trace_dump_surface(const struct pipe_surface *state)
    trace_dump_member(uint, state, width);
    trace_dump_member(uint, state, height);
 
-   trace_dump_member(uint, state, layout);
-   trace_dump_member(uint, state, offset);
    trace_dump_member(uint, state, usage);
 
-   trace_dump_member(ptr, state, texture);
-   trace_dump_member(uint, state, face);
-   trace_dump_member(uint, state, level);
-   trace_dump_member(uint, state, zslice);
+   trace_dump_member_begin("u");
+   trace_dump_struct_begin(""); /* anonymous */
+   if (target == PIPE_BUFFER) {
+      trace_dump_member_begin("buf");
+      trace_dump_struct_begin(""); /* anonymous */
+      trace_dump_member(uint, &state->u.buf, first_element);
+      trace_dump_member(uint, &state->u.buf, last_element);
+      trace_dump_struct_end(); /* anonymous */
+      trace_dump_member_end(); /* buf */
+   } else {
+      trace_dump_member_begin("tex");
+      trace_dump_struct_begin(""); /* anonymous */
+      trace_dump_member(uint, &state->u.tex, level);
+      trace_dump_member(uint, &state->u.tex, first_layer);
+      trace_dump_member(uint, &state->u.tex, last_layer);
+      trace_dump_struct_end(); /* anonymous */
+      trace_dump_member_end(); /* tex */
+   }
+   trace_dump_struct_end(); /* anonymous */
+   trace_dump_member_end(); /* u */
 
    trace_dump_struct_end();
 }
@@ -428,16 +555,18 @@ void trace_dump_transfer(const struct pipe_transfer *state)
 
    trace_dump_struct_begin("pipe_transfer");
 
-   trace_dump_member(uint, state, width);
-   trace_dump_member(uint, state, height);
+   trace_dump_member(uint, state, box.x);
+   trace_dump_member(uint, state, box.y);
+   trace_dump_member(uint, state, box.z);
+   trace_dump_member(uint, state, box.width);
+   trace_dump_member(uint, state, box.height);
+   trace_dump_member(uint, state, box.depth);
 
    trace_dump_member(uint, state, stride);
+   trace_dump_member(uint, state, layer_stride);
    trace_dump_member(uint, state, usage);
 
-   trace_dump_member(ptr, state, texture);
-   trace_dump_member(uint, state, face);
-   trace_dump_member(uint, state, level);
-   trace_dump_member(uint, state, zslice);
+   trace_dump_member(ptr, state, resource);
 
    trace_dump_struct_end();
 }
@@ -456,9 +585,28 @@ void trace_dump_vertex_buffer(const struct pipe_vertex_buffer *state)
    trace_dump_struct_begin("pipe_vertex_buffer");
 
    trace_dump_member(uint, state, stride);
-   trace_dump_member(uint, state, max_index);
    trace_dump_member(uint, state, buffer_offset);
-   trace_dump_member(buffer_ptr, state, buffer);
+   trace_dump_member(resource_ptr, state, buffer);
+
+   trace_dump_struct_end();
+}
+
+
+void trace_dump_index_buffer(const struct pipe_index_buffer *state)
+{
+   if (!trace_dumping_enabled_locked())
+      return;
+
+   if(!state) {
+      trace_dump_null();
+      return;
+   }
+
+   trace_dump_struct_begin("pipe_index_buffer");
+
+   trace_dump_member(uint, state, index_size);
+   trace_dump_member(uint, state, offset);
+   trace_dump_member(resource_ptr, state, buffer);
 
    trace_dump_struct_end();
 }
@@ -479,9 +627,37 @@ void trace_dump_vertex_element(const struct pipe_vertex_element *state)
    trace_dump_member(uint, state, src_offset);
 
    trace_dump_member(uint, state, vertex_buffer_index);
-   trace_dump_member(uint, state, nr_components);
 
    trace_dump_member(format, state, src_format);
+
+   trace_dump_struct_end();
+}
+
+
+void trace_dump_draw_info(const struct pipe_draw_info *state)
+{
+   if (!trace_dumping_enabled_locked())
+      return;
+
+   if(!state) {
+      trace_dump_null();
+      return;
+   }
+
+   trace_dump_struct_begin("pipe_draw_info");
+
+   trace_dump_member(bool, state, indexed);
+
+   trace_dump_member(uint, state, mode);
+   trace_dump_member(uint, state, start);
+   trace_dump_member(uint, state, count);
+
+   trace_dump_member(uint, state, start_instance);
+   trace_dump_member(uint, state, instance_count);
+
+   trace_dump_member(int,  state, index_bias);
+   trace_dump_member(uint, state, min_index);
+   trace_dump_member(uint, state, max_index);
 
    trace_dump_struct_end();
 }

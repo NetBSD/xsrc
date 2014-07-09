@@ -31,25 +31,21 @@
 #include "main/mipmap.h"
 #include "main/queryobj.h"
 #include "main/renderbuffer.h"
+#include "main/shaderobj.h"
 #include "main/texcompress.h"
 #include "main/texformat.h"
 #include "main/texgetimage.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
 #include "main/texstore.h"
-#if FEATURE_ARB_vertex_buffer_object
 #include "main/bufferobj.h"
-#endif
-#if FEATURE_EXT_framebuffer_object
 #include "main/fbobject.h"
-#include "main/texrender.h"
-#endif
-#if FEATURE_ARB_sync
+#include "main/samplerobj.h"
 #include "main/syncobj.h"
-#endif
+#include "main/texturebarrier.h"
+#include "main/transformfeedback.h"
 
-#include "shader/program.h"
-#include "shader/shader_api.h"
+#include "program/program.h"
 #include "tnl/tnl.h"
 #include "swrast/swrast.h"
 
@@ -127,8 +123,6 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    /* imaging */
    driver->CopyColorTable = _mesa_meta_CopyColorTable;
    driver->CopyColorSubTable = _mesa_meta_CopyColorSubTable;
-   driver->CopyConvolutionFilter1D = _mesa_meta_CopyConvolutionFilter1D;
-   driver->CopyConvolutionFilter2D = _mesa_meta_CopyConvolutionFilter2D;
 
    /* Vertex/fragment programs */
    driver->BindProgram = NULL;
@@ -178,40 +172,35 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->TexParameter = NULL;
    driver->Viewport = NULL;
 
-   /* state queries */
-   driver->GetBooleanv = NULL;
-   driver->GetDoublev = NULL;
-   driver->GetFloatv = NULL;
-   driver->GetIntegerv = NULL;
-   driver->GetInteger64v = NULL;
-   driver->GetPointerv = NULL;
-   
    /* buffer objects */
    _mesa_init_buffer_object_functions(driver);
 
    /* query objects */
    _mesa_init_query_object_functions(driver);
 
-#if FEATURE_ARB_sync
    _mesa_init_sync_object_functions(driver);
-#endif
 
-#if FEATURE_EXT_framebuffer_object
    driver->NewFramebuffer = _mesa_new_framebuffer;
    driver->NewRenderbuffer = _mesa_new_soft_renderbuffer;
-   driver->RenderTexture = _mesa_render_texture;
-   driver->FinishRenderTexture = _mesa_finish_render_texture;
+   driver->RenderTexture = _swrast_render_texture;
+   driver->FinishRenderTexture = _swrast_finish_render_texture;
    driver->FramebufferRenderbuffer = _mesa_framebuffer_renderbuffer;
-#endif
+   driver->ValidateFramebuffer = _mesa_validate_framebuffer;
 
-#if FEATURE_EXT_framebuffer_blit
    driver->BlitFramebuffer = _swrast_BlitFramebuffer;
-#endif
+
+   _mesa_init_texture_barrier_functions(driver);
 
    /* APPLE_vertex_array_object */
    driver->NewArrayObject = _mesa_new_array_object;
    driver->DeleteArrayObject = _mesa_delete_array_object;
    driver->BindArrayObject = NULL;
+
+   _mesa_init_shader_object_functions(driver);
+
+   _mesa_init_transform_feedback_functions(driver);
+
+   _mesa_init_sampler_object_functions(driver);
 
    /* T&L stuff */
    driver->NeedValidate = GL_FALSE;
@@ -232,10 +221,6 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->EndList = NULL;
    driver->BeginCallList = NULL;
    driver->EndCallList = NULL;
-
-
-   /* XXX temporary here */
-   _mesa_init_glsl_driver_functions(driver);
 }
 
 
@@ -245,20 +230,21 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
  * Only the Intel drivers use this so far.
  */
 void
-_mesa_init_driver_state(GLcontext *ctx)
+_mesa_init_driver_state(struct gl_context *ctx)
 {
    ctx->Driver.AlphaFunc(ctx, ctx->Color.AlphaFunc, ctx->Color.AlphaRef);
 
    ctx->Driver.BlendColor(ctx, ctx->Color.BlendColor);
 
    ctx->Driver.BlendEquationSeparate(ctx,
-                                     ctx->Color.BlendEquationRGB,
-                                     ctx->Color.BlendEquationA);
+                                     ctx->Color.Blend[0].EquationRGB,
+                                     ctx->Color.Blend[0].EquationA);
 
    ctx->Driver.BlendFuncSeparate(ctx,
-                                 ctx->Color.BlendSrcRGB,
-                                 ctx->Color.BlendDstRGB,
-                                 ctx->Color.BlendSrcA, ctx->Color.BlendDstA);
+                                 ctx->Color.Blend[0].SrcRGB,
+                                 ctx->Color.Blend[0].DstRGB,
+                                 ctx->Color.Blend[0].SrcA,
+                                 ctx->Color.Blend[0].DstA);
 
    if (ctx->Driver.ColorMaskIndexed) {
       GLuint i;

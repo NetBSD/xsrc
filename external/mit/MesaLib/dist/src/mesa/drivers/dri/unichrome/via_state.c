@@ -78,7 +78,7 @@ static GLuint viaComputeLodBias(GLfloat bias)
 
 void viaEmitState(struct via_context *vmesa)
 {
-   GLcontext *ctx = vmesa->glCtx;
+   struct gl_context *ctx = vmesa->glCtx;
    GLuint i = 0;
    GLuint j = 0;
    RING_VARS;
@@ -523,7 +523,7 @@ static INLINE GLuint viaPackColor(GLuint bpp,
    }
 }
 
-static void viaBlendEquationSeparate(GLcontext *ctx,
+static void viaBlendEquationSeparate(struct gl_context *ctx,
 				     GLenum rgbMode, 
 				     GLenum aMode)
 {
@@ -545,14 +545,14 @@ static void viaBlendEquationSeparate(GLcontext *ctx,
               ctx->Color.LogicOp != GL_COPY));
 }
 
-static void viaBlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
+static void viaBlendFunc(struct gl_context *ctx, GLenum sfactor, GLenum dfactor)
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
     GLboolean fallback = GL_FALSE;
     if (VIA_DEBUG & DEBUG_STATE) 
        fprintf(stderr, "%s in\n", __FUNCTION__);
 
-    switch (ctx->Color.BlendSrcRGB) {
+    switch (ctx->Color.Blend[0].SrcRGB) {
     case GL_SRC_ALPHA_SATURATE:  
     case GL_CONSTANT_COLOR:
     case GL_ONE_MINUS_CONSTANT_COLOR:
@@ -564,7 +564,7 @@ static void viaBlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
         break;
     }
 
-    switch (ctx->Color.BlendDstRGB) {
+    switch (ctx->Color.Blend[0].DstRGB) {
     case GL_CONSTANT_COLOR:
     case GL_ONE_MINUS_CONSTANT_COLOR:
     case GL_CONSTANT_ALPHA:
@@ -580,7 +580,7 @@ static void viaBlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
 
 /* Shouldn't be called as the extension is disabled.
  */
-static void viaBlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB,
+static void viaBlendFuncSeparate(struct gl_context *ctx, GLenum sfactorRGB,
                                  GLenum dfactorRGB, GLenum sfactorA,
                                  GLenum dfactorA)
 {
@@ -597,7 +597,7 @@ static void viaBlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB,
 /* =============================================================
  * Hardware clipping
  */
-static void viaScissor(GLcontext *ctx, GLint x, GLint y,
+static void viaScissor(struct gl_context *ctx, GLint x, GLint y,
                        GLsizei w, GLsizei h)
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
@@ -619,7 +619,7 @@ static void viaScissor(GLcontext *ctx, GLint x, GLint y,
     vmesa->scissorRect.y2 = vmesa->driDrawable->h - y;
 }
 
-static void viaEnable(GLcontext *ctx, GLenum cap, GLboolean state)
+static void viaEnable(struct gl_context *ctx, GLenum cap, GLboolean state)
 {
    struct via_context *vmesa = VIA_CONTEXT(ctx);
 
@@ -637,13 +637,13 @@ static void viaEnable(GLcontext *ctx, GLenum cap, GLboolean state)
 
 /* Fallback to swrast for select and feedback.
  */
-static void viaRenderMode(GLcontext *ctx, GLenum mode)
+static void viaRenderMode(struct gl_context *ctx, GLenum mode)
 {
     FALLBACK(VIA_CONTEXT(ctx), VIA_FALLBACK_RENDERMODE, (mode != GL_RENDER));
 }
 
 
-static void viaDrawBuffer(GLcontext *ctx, GLenum mode)
+static void viaDrawBuffer(struct gl_context *ctx, GLenum mode)
 {
    struct via_context *vmesa = VIA_CONTEXT(ctx);
 
@@ -678,7 +678,7 @@ static void viaDrawBuffer(GLcontext *ctx, GLenum mode)
    viaXMesaWindowMoved(vmesa);
 }
 
-static void viaClearColor(GLcontext *ctx, const GLfloat color[4])
+static void viaClearColor(struct gl_context *ctx, const GLfloat color[4])
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
     GLubyte pcolor[4];
@@ -696,7 +696,7 @@ static void viaClearColor(GLcontext *ctx, const GLfloat color[4])
 #define WRITEMASK_GREEN_SHIFT 29
 #define WRITEMASK_BLUE_SHIFT  28
 
-static void viaColorMask(GLcontext *ctx,
+static void viaColorMask(struct gl_context *ctx,
 			 GLboolean r, GLboolean g,
 			 GLboolean b, GLboolean a)
 {
@@ -716,7 +716,7 @@ static void viaColorMask(GLcontext *ctx,
 /* This hardware just isn't capable of private back buffers without
  * glitches and/or a hefty locking scheme.
  */
-void viaCalcViewport(GLcontext *ctx)
+void viaCalcViewport(struct gl_context *ctx)
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
     __DRIdrawable *dPriv = vmesa->driDrawable;
@@ -733,20 +733,20 @@ void viaCalcViewport(GLcontext *ctx)
     m[MAT_TZ] =   v[MAT_TZ] * (1.0 / vmesa->depth_max);
 }
 
-static void viaViewport(GLcontext *ctx,
+static void viaViewport(struct gl_context *ctx,
                         GLint x, GLint y,
                         GLsizei width, GLsizei height)
 {
     viaCalcViewport(ctx);
 }
 
-static void viaDepthRange(GLcontext *ctx,
+static void viaDepthRange(struct gl_context *ctx,
                           GLclampd nearval, GLclampd farval)
 {
     viaCalcViewport(ctx);
 }
 
-void viaInitState(GLcontext *ctx)
+void viaInitState(struct gl_context *ctx)
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
 
@@ -757,14 +757,14 @@ void viaInitState(GLcontext *ctx)
     */
 
    ctx->Driver.BlendEquationSeparate( ctx, 
-				      ctx->Color.BlendEquationRGB,
-				      ctx->Color.BlendEquationA);
+				      ctx->Color.Blend[0].EquationRGB,
+				      ctx->Color.Blend[0].EquationA);
 
    ctx->Driver.BlendFuncSeparate( ctx,
-				  ctx->Color.BlendSrcRGB,
-				  ctx->Color.BlendDstRGB,
-				  ctx->Color.BlendSrcA,
-				  ctx->Color.BlendDstA);
+				  ctx->Color.Blend[0].SrcRGB,
+				  ctx->Color.Blend[0].DstRGB,
+				  ctx->Color.Blend[0].SrcA,
+				  ctx->Color.Blend[0].DstA);
 
    ctx->Driver.Scissor( ctx, ctx->Scissor.X, ctx->Scissor.Y,
 			ctx->Scissor.Width, ctx->Scissor.Height );
@@ -865,7 +865,7 @@ get_minmag_filter( GLenum min, GLenum mag )
 }
 
 
-static GLboolean viaChooseTextureState(GLcontext *ctx) 
+static GLboolean viaChooseTextureState(struct gl_context *ctx) 
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
     struct gl_texture_unit *texUnit0 = &ctx->Texture.Unit[0];
@@ -877,21 +877,21 @@ static GLboolean viaChooseTextureState(GLcontext *ctx)
         if (texUnit0->_ReallyEnabled) {
             struct gl_texture_object *texObj = texUnit0->_Current;
    
-	    vmesa->regHTXnTB[0] = get_minmag_filter( texObj->MinFilter,
-						    texObj->MagFilter );
+	    vmesa->regHTXnTB[0] = get_minmag_filter( texObj->Sampler.MinFilter,
+						    texObj->Sampler.MagFilter );
 
 	    vmesa->regHTXnMPMD[0] &= ~(HC_HTXnMPMD_SMASK | HC_HTXnMPMD_TMASK);
-	    vmesa->regHTXnMPMD[0] |= get_wrap_mode( texObj->WrapS,
-						   texObj->WrapT );
+	    vmesa->regHTXnMPMD[0] |= get_wrap_mode( texObj->Sampler.WrapS,
+						   texObj->Sampler.WrapT );
 
 	    vmesa->regHTXnTB[0] &= ~(HC_HTXnTB_TBC_S | HC_HTXnTB_TBC_T);
             if (texObj->Image[0][texObj->BaseLevel]->Border > 0) {
 	       vmesa->regHTXnTB[0] |= (HC_HTXnTB_TBC_S | HC_HTXnTB_TBC_T);
 	       vmesa->regHTXnTBC[0] = 
-		  PACK_COLOR_888(FLOAT_TO_UBYTE(texObj->BorderColor.f[0]),
-				 FLOAT_TO_UBYTE(texObj->BorderColor.f[1]),
-				 FLOAT_TO_UBYTE(texObj->BorderColor.f[2]));
-	       vmesa->regHTXnTRAH[0] = FLOAT_TO_UBYTE(texObj->BorderColor.f[3]);
+		  PACK_COLOR_888(FLOAT_TO_UBYTE(texObj->Sampler.BorderColor.f[0]),
+				 FLOAT_TO_UBYTE(texObj->Sampler.BorderColor.f[1]),
+				 FLOAT_TO_UBYTE(texObj->Sampler.BorderColor.f[2]));
+	       vmesa->regHTXnTRAH[0] = FLOAT_TO_UBYTE(texObj->Sampler.BorderColor.f[3]);
             }
 
 	    if (texUnit0->LodBias != 0.0f) {
@@ -911,20 +911,20 @@ static GLboolean viaChooseTextureState(GLcontext *ctx)
         if (texUnit1->_ReallyEnabled) {
             struct gl_texture_object *texObj = texUnit1->_Current;
 
-	    vmesa->regHTXnTB[1] = get_minmag_filter( texObj->MinFilter,
-						    texObj->MagFilter );
+	    vmesa->regHTXnTB[1] = get_minmag_filter( texObj->Sampler.MinFilter,
+						    texObj->Sampler.MagFilter );
 	    vmesa->regHTXnMPMD[1] &= ~(HC_HTXnMPMD_SMASK | HC_HTXnMPMD_TMASK);
-	    vmesa->regHTXnMPMD[1] |= get_wrap_mode( texObj->WrapS,
-						   texObj->WrapT );
+	    vmesa->regHTXnMPMD[1] |= get_wrap_mode( texObj->Sampler.WrapS,
+						   texObj->Sampler.WrapT );
 
 	    vmesa->regHTXnTB[1] &= ~(HC_HTXnTB_TBC_S | HC_HTXnTB_TBC_T);
             if (texObj->Image[0][texObj->BaseLevel]->Border > 0) {
 	       vmesa->regHTXnTB[1] |= (HC_HTXnTB_TBC_S | HC_HTXnTB_TBC_T);
 	       vmesa->regHTXnTBC[1] = 
-		  PACK_COLOR_888(FLOAT_TO_UBYTE(texObj->BorderColor.f[0]),
-				 FLOAT_TO_UBYTE(texObj->BorderColor.f[1]),
-				 FLOAT_TO_UBYTE(texObj->BorderColor.f[2]));
-	       vmesa->regHTXnTRAH[1] = FLOAT_TO_UBYTE(texObj->BorderColor.f[3]);
+		  PACK_COLOR_888(FLOAT_TO_UBYTE(texObj->Sampler.BorderColor.f[0]),
+				 FLOAT_TO_UBYTE(texObj->Sampler.BorderColor.f[1]),
+				 FLOAT_TO_UBYTE(texObj->Sampler.BorderColor.f[2]));
+	       vmesa->regHTXnTRAH[1] = FLOAT_TO_UBYTE(texObj->Sampler.BorderColor.f[3]);
             }
 
 
@@ -950,11 +950,11 @@ static GLboolean viaChooseTextureState(GLcontext *ctx)
     return GL_TRUE;
 }
 
-static void viaChooseColorState(GLcontext *ctx) 
+static void viaChooseColorState(struct gl_context *ctx) 
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
-    GLenum s = ctx->Color.BlendSrcRGB;
-    GLenum d = ctx->Color.BlendDstRGB;
+    GLenum s = ctx->Color.Blend[0].SrcRGB;
+    GLenum d = ctx->Color.Blend[0].DstRGB;
 
     /* The HW's blending equation is:
      * (Ca * FCa + Cbias + Cb * FCb) << Cshift
@@ -1246,7 +1246,7 @@ static void viaChooseColorState(GLcontext *ctx)
         vmesa->regEnable &= ~HC_HenAW_MASK;
 }
 
-static void viaChooseFogState(GLcontext *ctx) 
+static void viaChooseFogState(struct gl_context *ctx) 
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
 
@@ -1271,7 +1271,7 @@ static void viaChooseFogState(GLcontext *ctx)
     }
 }
 
-static void viaChooseDepthState(GLcontext *ctx) 
+static void viaChooseDepthState(struct gl_context *ctx) 
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
     if (ctx->Depth.Test) {
@@ -1295,7 +1295,7 @@ static void viaChooseDepthState(GLcontext *ctx)
     }
 }
 
-static void viaChooseLineState(GLcontext *ctx) 
+static void viaChooseLineState(struct gl_context *ctx) 
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
 
@@ -1309,7 +1309,7 @@ static void viaChooseLineState(GLcontext *ctx)
     }
 }
 
-static void viaChoosePolygonState(GLcontext *ctx) 
+static void viaChoosePolygonState(struct gl_context *ctx) 
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
 
@@ -1335,7 +1335,7 @@ static void viaChoosePolygonState(GLcontext *ctx)
     }
 }
 
-static void viaChooseStencilState(GLcontext *ctx) 
+static void viaChooseStencilState(struct gl_context *ctx) 
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
     
@@ -1421,7 +1421,7 @@ static void viaChooseStencilState(GLcontext *ctx)
 
 
 
-static void viaChooseTriangle(GLcontext *ctx) 
+static void viaChooseTriangle(struct gl_context *ctx) 
 {       
     struct via_context *vmesa = VIA_CONTEXT(ctx);
 
@@ -1445,7 +1445,7 @@ static void viaChooseTriangle(GLcontext *ctx)
     }
 }
 
-void viaValidateState( GLcontext *ctx )
+void viaValidateState( struct gl_context *ctx )
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
 
@@ -1492,7 +1492,7 @@ void viaValidateState( GLcontext *ctx )
     vmesa->newState = 0;
 }
 
-static void viaInvalidateState(GLcontext *ctx, GLuint newState)
+static void viaInvalidateState(struct gl_context *ctx, GLuint newState)
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
 
@@ -1505,7 +1505,7 @@ static void viaInvalidateState(GLcontext *ctx, GLuint newState)
     _tnl_InvalidateState(ctx, newState);
 }
 
-void viaInitStateFuncs(GLcontext *ctx)
+void viaInitStateFuncs(struct gl_context *ctx)
 {
     /* Callbacks for internal Mesa events.
      */

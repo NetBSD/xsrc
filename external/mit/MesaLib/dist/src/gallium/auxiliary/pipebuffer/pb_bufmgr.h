@@ -50,8 +50,7 @@
 #define PB_BUFMGR_H_
 
 
-#include "pipe/p_compiler.h"
-#include "pipe/p_defines.h"
+#include "pb_buffer.h"
 
 
 #ifdef __cplusplus
@@ -60,7 +59,6 @@ extern "C" {
 
 
 struct pb_desc;
-struct pipe_buffer;
 
 
 /** 
@@ -84,6 +82,10 @@ struct pb_manager
     */
    void
    (*flush)( struct pb_manager *mgr );
+
+   boolean
+   (*is_buffer_busy)( struct pb_manager *mgr,
+                      struct pb_buffer *buf );
 };
 
 

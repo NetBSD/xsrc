@@ -41,13 +41,17 @@
 
 #include "glheader.h"
 #include "hash.h"
+#include "image.h"
 #include "imports.h"
 #include "context.h"
+#include "mfeatures.h"
 #if FEATURE_ARB_vertex_buffer_object
 #include "bufferobj.h"
 #endif
 #include "arrayobj.h"
 #include "macros.h"
+#include "mtypes.h"
+#include "varray.h"
 #include "main/dispatch.h"
 
 
@@ -61,7 +65,7 @@
  */
 
 static INLINE struct gl_array_object *
-lookup_arrayobj(GLcontext *ctx, GLuint id)
+lookup_arrayobj(struct gl_context *ctx, GLuint id)
 {
    if (id == 0)
       return NULL;
@@ -77,7 +81,7 @@ lookup_arrayobj(GLcontext *ctx, GLuint id)
  * This is done just prior to array object destruction.
  */
 static void
-unbind_array_object_vbos(GLcontext *ctx, struct gl_array_object *obj)
+unbind_array_object_vbos(struct gl_context *ctx, struct gl_array_object *obj)
 {
    GLuint i;
 
@@ -109,7 +113,7 @@ unbind_array_object_vbos(GLcontext *ctx, struct gl_array_object *obj)
  * \c dd_function_table::NewArrayObject.
  */
 struct gl_array_object *
-_mesa_new_array_object( GLcontext *ctx, GLuint name )
+_mesa_new_array_object( struct gl_context *ctx, GLuint name )
 {
    struct gl_array_object *obj = CALLOC_STRUCT(gl_array_object);
    if (obj)
@@ -125,7 +129,7 @@ _mesa_new_array_object( GLcontext *ctx, GLuint name )
  * \c dd_function_table::DeleteArrayObject.
  */
 void
-_mesa_delete_array_object( GLcontext *ctx, struct gl_array_object *obj )
+_mesa_delete_array_object( struct gl_context *ctx, struct gl_array_object *obj )
 {
    (void) ctx;
    unbind_array_object_vbos(ctx, obj);
@@ -138,7 +142,7 @@ _mesa_delete_array_object( GLcontext *ctx, struct gl_array_object *obj )
  * Set ptr to arrayObj w/ reference counting.
  */
 void
-_mesa_reference_array_object(GLcontext *ctx,
+_mesa_reference_array_object(struct gl_context *ctx,
                              struct gl_array_object **ptr,
                              struct gl_array_object *arrayObj)
 {
@@ -193,7 +197,7 @@ _mesa_reference_array_object(GLcontext *ctx,
 
 
 static void
-init_array(GLcontext *ctx,
+init_array(struct gl_context *ctx,
            struct gl_client_array *array, GLint size, GLint type)
 {
    array->Size = size;
@@ -204,6 +208,7 @@ init_array(GLcontext *ctx,
    array->Ptr = NULL;
    array->Enabled = GL_FALSE;
    array->Normalized = GL_FALSE;
+   array->_ElementSize = size * _mesa_sizeof_type(type);
 #if FEATURE_ARB_vertex_buffer_object
    /* Vertex array buffers */
    _mesa_reference_buffer_object(ctx, &array->BufferObj,
@@ -216,7 +221,7 @@ init_array(GLcontext *ctx,
  * Initialize a gl_array_object's arrays.
  */
 void
-_mesa_initialize_array_object( GLcontext *ctx,
+_mesa_initialize_array_object( struct gl_context *ctx,
 			       struct gl_array_object *obj,
 			       GLuint name )
 {
@@ -232,7 +237,7 @@ _mesa_initialize_array_object( GLcontext *ctx,
    init_array(ctx, &obj->Weight, 1, GL_FLOAT);
    init_array(ctx, &obj->Normal, 3, GL_FLOAT);
    init_array(ctx, &obj->Color, 4, GL_FLOAT);
-   init_array(ctx, &obj->SecondaryColor, 4, GL_FLOAT);
+   init_array(ctx, &obj->SecondaryColor, 3, GL_FLOAT);
    init_array(ctx, &obj->FogCoord, 1, GL_FLOAT);
    init_array(ctx, &obj->Index, 1, GL_FLOAT);
    for (i = 0; i < Elements(obj->TexCoord); i++) {
@@ -253,7 +258,7 @@ _mesa_initialize_array_object( GLcontext *ctx,
  * Add the given array object to the array object pool.
  */
 static void
-save_array_object( GLcontext *ctx, struct gl_array_object *obj )
+save_array_object( struct gl_context *ctx, struct gl_array_object *obj )
 {
    if (obj->Name > 0) {
       /* insert into hash table */
@@ -267,7 +272,7 @@ save_array_object( GLcontext *ctx, struct gl_array_object *obj )
  * Do not deallocate the array object though.
  */
 static void
-remove_array_object( GLcontext *ctx, struct gl_array_object *obj )
+remove_array_object( struct gl_context *ctx, struct gl_array_object *obj )
 {
    if (obj->Name > 0) {
       /* remove from hash table */
@@ -278,46 +283,16 @@ remove_array_object( GLcontext *ctx, struct gl_array_object *obj )
 
 
 /**
- * Compute the index of the last array element that can be safely accessed
- * in a vertex array.  We can really only do this when the array lives in
- * a VBO.
- * The array->_MaxElement field will be updated.
- * Later in glDrawArrays/Elements/etc we can do some bounds checking.
- */
-static void
-compute_max_element(struct gl_client_array *array)
-{
-   if (array->BufferObj->Name) {
-      /* Compute the max element we can access in the VBO without going
-       * out of bounds.
-       */
-      array->_MaxElement = ((GLsizeiptrARB) array->BufferObj->Size
-                            - (GLsizeiptrARB) array->Ptr + array->StrideB
-                            - array->_ElementSize) / array->StrideB;
-      if (0)
-         printf("%s Object %u  Size %u  MaxElement %u\n",
-		__FUNCTION__,
-		array->BufferObj->Name,
-		(GLuint) array->BufferObj->Size,
-		array->_MaxElement);
-   }
-   else {
-      /* user-space array, no idea how big it is */
-      array->_MaxElement = 2 * 1000 * 1000 * 1000; /* just a big number */
-   }
-}
-
-
-/**
  * Helper for update_arrays().
  * \return  min(current min, array->_MaxElement).
  */
 static GLuint
 update_min(GLuint min, struct gl_client_array *array)
 {
-   compute_max_element(array);
-   if (array->Enabled)
+   if (array->Enabled) {
+      _mesa_update_array_max_element(array);
       return MIN2(min, array->_MaxElement);
+   }
    else
       return min;
 }
@@ -327,7 +302,7 @@ update_min(GLuint min, struct gl_client_array *array)
  * Examine vertex arrays to update the gl_array_object::_MaxElement field.
  */
 void
-_mesa_update_array_object_max_element(GLcontext *ctx,
+_mesa_update_array_object_max_element(struct gl_context *ctx,
                                       struct gl_array_object *arrayObj)
 {
    GLuint i, min = ~0;
@@ -364,7 +339,7 @@ _mesa_update_array_object_max_element(GLcontext *ctx,
  *                     glGenVertexArrays().
  */
 static void
-bind_vertex_array(GLcontext *ctx, GLuint id, GLboolean genRequired)
+bind_vertex_array(struct gl_context *ctx, GLuint id, GLboolean genRequired)
 {
    struct gl_array_object * const oldObj = ctx->Array.ArrayObj;
    struct gl_array_object *newObj = NULL;
@@ -495,7 +470,8 @@ _mesa_DeleteVertexArraysAPPLE(GLsizei n, const GLuint *ids)
  * \param vboOnly Will arrays have to reside in VBOs?
  */
 static void 
-gen_vertex_arrays(GLcontext *ctx, GLsizei n, GLuint *arrays, GLboolean vboOnly)
+gen_vertex_arrays(struct gl_context *ctx, GLsizei n, GLuint *arrays,
+                  GLboolean vboOnly)
 {
    GLuint first;
    GLint i;

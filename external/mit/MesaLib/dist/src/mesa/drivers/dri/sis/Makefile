@@ -5,9 +5,7 @@ include $(TOP)/configs/current
 
 LIBNAME = sis_dri.so
 
-
-# Not yet
-# MINIGLX_SOURCES = server/sis_dri.c 
+include ../Makefile.defines
 
 DRIVER_SOURCES = \
 	sis6326_state.c \
@@ -32,5 +30,5 @@ C_SOURCES = \
 
 ASM_SOURCES = 
 
-include ../Makefile.template
+include ../Makefile.targets
 

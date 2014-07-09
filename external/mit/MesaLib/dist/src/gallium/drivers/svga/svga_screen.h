@@ -39,8 +39,6 @@ struct svga_winsys_screen;
 struct svga_winsys_context;
 struct SVGACmdMemory;
 
-#define SVGA_COMBINE_USERBUFFERS 1
-
 /**
  * Subclass of pipe_screen
  */
@@ -48,6 +46,8 @@ struct svga_screen
 {
    struct pipe_screen screen;
    struct svga_winsys_screen *sws;
+
+   SVGA3dHardwareVersion hw_version;
 
    unsigned use_ps30;
    unsigned use_vs30;
@@ -60,14 +60,11 @@ struct svga_screen
       boolean no_sampler_view;
    } debug;
 
-   /* The screen needs its own context */
-   struct svga_winsys_context *swc;
-   struct SVGACmdMemory *fifo;
-
    unsigned texture_timestamp;
    pipe_mutex tex_mutex; 
-   pipe_mutex swc_mutex; /* Protects the use of swc and dirty_buffers */
-   
+
+   pipe_mutex swc_mutex; /* Used for buffer uploads */
+
    struct svga_host_surface_cache cache;
 };
 
@@ -82,8 +79,5 @@ svga_screen(struct pipe_screen *pscreen)
 struct svga_screen *
 svga_screen(struct pipe_screen *screen);
 #endif
-
-void svga_screen_flush( struct svga_screen *svga_screen, 
-                        struct pipe_fence_handle **pfence );
 
 #endif /* SVGA_SCREEN_H */

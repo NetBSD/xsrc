@@ -5,8 +5,7 @@ include $(TOP)/configs/current
 
 LIBNAME = tdfx_dri.so
 
-# not yet
-# MINIGLX_SOURCES = server/tdfx_dri.c 
+include ../Makefile.defines
 
 DRIVER_SOURCES = \
 	tdfx_context.c \
@@ -30,6 +29,6 @@ C_SOURCES = \
 
 ASM_SOURCES = 
 
-include ../Makefile.template
+include ../Makefile.targets
 
 

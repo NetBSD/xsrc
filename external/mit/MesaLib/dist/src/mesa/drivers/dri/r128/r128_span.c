@@ -135,7 +135,7 @@ do {									\
    r128WriteDepthSpanLocked( rmesa, n,					\
 			     x + dPriv->x,				\
 			     y + dPriv->y,				\
-			     depth, mask );				\
+			     (const GLuint *) depth, mask );            \
 } while (0)
 
 #define WRITE_DEPTH_PIXELS()						\
@@ -146,7 +146,7 @@ do {									\
       ox[i] = x[i] + dPriv->x;						\
       oy[i] = Y_FLIP( y[i] ) + dPriv->y;				\
    }									\
-   r128WriteDepthPixelsLocked( rmesa, n, ox, oy, depth, mask );		\
+   r128WriteDepthPixelsLocked( rmesa, n, ox, oy, (const GLuint *) depth, mask ); \
 } while (0)
 
 #define READ_DEPTH_SPAN()						\
@@ -400,7 +400,7 @@ do {									\
 #include "stenciltmp.h"
 
 static void
-r128SpanRenderStart( GLcontext *ctx )
+r128SpanRenderStart( struct gl_context *ctx )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    FLUSH_BATCH(rmesa);
@@ -409,7 +409,7 @@ r128SpanRenderStart( GLcontext *ctx )
 }
 
 static void
-r128SpanRenderFinish( GLcontext *ctx )
+r128SpanRenderFinish( struct gl_context *ctx )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    _swrast_flush( ctx );
@@ -417,7 +417,7 @@ r128SpanRenderFinish( GLcontext *ctx )
    UNLOCK_HARDWARE( rmesa );
 }
 
-void r128DDInitSpanFuncs( GLcontext *ctx )
+void r128DDInitSpanFuncs( struct gl_context *ctx )
 {
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
    swdd->SpanRenderStart	= r128SpanRenderStart;
@@ -429,7 +429,7 @@ void r128DDInitSpanFuncs( GLcontext *ctx )
  * Plug in the Get/Put routines for the given driRenderbuffer.
  */
 void
-r128SetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+r128SetSpanFunctions(driRenderbuffer *drb, const struct gl_config *vis)
 {
    if (drb->Base.Format == MESA_FORMAT_RGB565) {
       r128InitPointers_RGB565(&drb->Base);
