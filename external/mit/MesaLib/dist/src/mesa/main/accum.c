@@ -27,6 +27,7 @@
 #include "context.h"
 #include "imports.h"
 #include "macros.h"
+#include "mfeatures.h"
 #include "state.h"
 #include "GL/glext.h"
 #include "mtypes.h"
@@ -51,7 +52,6 @@ _mesa_ClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
    if (TEST_EQ_4V(tmp, ctx->Accum.ClearColor))
       return;
 
-   FLUSH_VERTICES(ctx, _NEW_ACCUM);
    COPY_4FV( ctx->Accum.ClearColor, tmp );
 }
 
@@ -116,7 +116,7 @@ _mesa_init_accum_dispatch(struct _glapi_table *disp)
 
 
 void 
-_mesa_init_accum( GLcontext *ctx )
+_mesa_init_accum( struct gl_context *ctx )
 {
    /* Accumulate buffer group */
    ASSIGN_4V( ctx->Accum.ClearColor, 0.0, 0.0, 0.0, 0.0 );
