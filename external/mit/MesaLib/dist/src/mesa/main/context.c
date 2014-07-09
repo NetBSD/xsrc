@@ -383,10 +383,10 @@ _glthread_DECLARE_STATIC_MUTEX(OneTimeLock);
  *
  * \sa _math_init().
  */
+static GLbitfield api_init_mask = 0x0;
 static void
 one_time_init( struct gl_context *ctx )
 {
-   static GLbitfield api_init_mask = 0x0;
 
    _glthread_LOCK_MUTEX(OneTimeLock);
 
@@ -441,12 +441,14 @@ one_time_init( struct gl_context *ctx )
 
    _glthread_UNLOCK_MUTEX(OneTimeLock);
 
-   /* Hopefully atexit() is widely available.  If not, we may need some
-    * #ifdef tests here.
-    */
-   atexit(_mesa_destroy_shader_compiler);
-
    dummy_enum_func();
+}
+
+static void __attribute__((__destructor__))
+one_time_fini(void)
+{
+  if (api_init_mask)
+    _mesa_destroy_shader_compiler();
 }
 
 
