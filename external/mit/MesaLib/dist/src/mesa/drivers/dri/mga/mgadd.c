@@ -35,15 +35,12 @@
 #include "mga_xmesa.h"
 #include "utils.h"
 
-#define DRIVER_DATE	"20071017"
-
-
 /***************************************
  * Mesa's Driver Functions
  ***************************************/
 
 
-static const GLubyte *mgaGetString( GLcontext *ctx, GLenum name )
+static const GLubyte *mgaGetString( struct gl_context *ctx, GLenum name )
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
    static char buffer[128];
@@ -57,7 +54,6 @@ static const GLubyte *mgaGetString( GLcontext *ctx, GLenum name )
       offset = driGetRendererString( buffer, 
 				     MGA_IS_G400(mmesa) ? "G400" :
 				     MGA_IS_G200(mmesa) ? "G200" : "MGA",
-				     DRIVER_DATE,
 				     mmesa->mgaScreen->agpMode );
 
       return (GLubyte *)buffer;

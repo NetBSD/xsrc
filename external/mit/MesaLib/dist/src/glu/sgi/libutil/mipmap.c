@@ -5552,7 +5552,7 @@ static void shove233rev(const GLfloat shoveComponents[],
 static void extract565(int isSwap,
 		       const void *packedPixel, GLfloat extractComponents[])
 {
-   GLushort ushort= *(const GLushort *)packedPixel;
+   GLushort ushort;
 
    if (isSwap) {
      ushort= __GLU_SWAP_2_BYTES(packedPixel);
@@ -5593,7 +5593,7 @@ static void shove565(const GLfloat shoveComponents[],
 static void extract565rev(int isSwap,
 			  const void *packedPixel, GLfloat extractComponents[])
 {
-   GLushort ushort= *(const GLushort *)packedPixel;
+   GLushort ushort;
 
    if (isSwap) {
      ushort= __GLU_SWAP_2_BYTES(packedPixel);
@@ -6648,7 +6648,7 @@ static void gluTexImage3D( GLenum target, GLint level,
 	 pTexImage3D = (TexImage3Dproc) wglGetProcAddress("glTexImage3DEXT");
 #else
       void *libHandle = dlopen("libgl.so", RTLD_LAZY);
-      pTexImage3D = TexImage3Dproc) dlsym(libHandle, "glTexImage3D" );
+      pTexImage3D = (TexImage3Dproc) dlsym(libHandle, "glTexImage3D" );
       if (!pTexImage3D)
 	 pTexImage3D = (TexImage3Dproc) dlsym(libHandle,"glTexImage3DEXT");
       dlclose(libHandle);

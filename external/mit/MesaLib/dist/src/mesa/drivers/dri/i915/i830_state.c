@@ -31,6 +31,7 @@
 #include "main/macros.h"
 #include "main/enums.h"
 #include "main/dd.h"
+#include "main/state.h"
 
 #include "texmem.h"
 
@@ -47,7 +48,7 @@
 #define FILE_DEBUG_FLAG DEBUG_STATE
 
 static void
-i830StencilFuncSeparate(GLcontext * ctx, GLenum face, GLenum func, GLint ref,
+i830StencilFuncSeparate(struct gl_context * ctx, GLenum face, GLenum func, GLint ref,
                         GLuint mask)
 {
    struct i830_context *i830 = i830_context(ctx);
@@ -72,7 +73,7 @@ i830StencilFuncSeparate(GLcontext * ctx, GLenum face, GLenum func, GLint ref,
 }
 
 static void
-i830StencilMaskSeparate(GLcontext * ctx, GLenum face, GLuint mask)
+i830StencilMaskSeparate(struct gl_context * ctx, GLenum face, GLuint mask)
 {
    struct i830_context *i830 = i830_context(ctx);
 
@@ -87,7 +88,7 @@ i830StencilMaskSeparate(GLcontext * ctx, GLenum face, GLuint mask)
 }
 
 static void
-i830StencilOpSeparate(GLcontext * ctx, GLenum face, GLenum fail, GLenum zfail,
+i830StencilOpSeparate(struct gl_context * ctx, GLenum face, GLenum fail, GLenum zfail,
                       GLenum zpass)
 {
    struct i830_context *i830 = i830_context(ctx);
@@ -199,7 +200,7 @@ i830StencilOpSeparate(GLcontext * ctx, GLenum face, GLenum fail, GLenum zfail,
 }
 
 static void
-i830AlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref)
+i830AlphaFunc(struct gl_context * ctx, GLenum func, GLfloat ref)
 {
    struct i830_context *i830 = i830_context(ctx);
    int test = intel_translate_compare_func(func);
@@ -228,13 +229,13 @@ i830AlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref)
  * I'm not sure which is correct.
  */
 static void
-i830EvalLogicOpBlendState(GLcontext * ctx)
+i830EvalLogicOpBlendState(struct gl_context * ctx)
 {
    struct i830_context *i830 = i830_context(ctx);
 
    I830_STATECHANGE(i830, I830_UPLOAD_CTX);
 
-   if (RGBA_LOGICOP_ENABLED(ctx)) {
+   if (_mesa_rgba_logicop_enabled(ctx)) {
       i830->state.Ctx[I830_CTXREG_ENABLES_1] &= ~(ENABLE_COLOR_BLEND |
                                                   ENABLE_LOGIC_OP_MASK);
       i830->state.Ctx[I830_CTXREG_ENABLES_1] |= (DISABLE_COLOR_BLEND |
@@ -255,7 +256,7 @@ i830EvalLogicOpBlendState(GLcontext * ctx)
 }
 
 static void
-i830BlendColor(GLcontext * ctx, const GLfloat color[4])
+i830BlendColor(struct gl_context * ctx, const GLfloat color[4])
 {
    struct i830_context *i830 = i830_context(ctx);
    GLubyte r, g, b, a;
@@ -279,7 +280,7 @@ i830BlendColor(GLcontext * ctx, const GLfloat color[4])
  * change the interpretation of the blend function.
  */
 static void
-i830_set_blend_state(GLcontext * ctx)
+i830_set_blend_state(struct gl_context * ctx)
 {
    struct i830_context *i830 = i830_context(ctx);
    int funcA;
@@ -291,10 +292,10 @@ i830_set_blend_state(GLcontext * ctx)
 
 
    funcRGB =
-      SRC_BLND_FACT(intel_translate_blend_factor(ctx->Color.BlendSrcRGB))
-      | DST_BLND_FACT(intel_translate_blend_factor(ctx->Color.BlendDstRGB));
+      SRC_BLND_FACT(intel_translate_blend_factor(ctx->Color.Blend[0].SrcRGB))
+      | DST_BLND_FACT(intel_translate_blend_factor(ctx->Color.Blend[0].DstRGB));
 
-   switch (ctx->Color.BlendEquationRGB) {
+   switch (ctx->Color.Blend[0].EquationRGB) {
    case GL_FUNC_ADD:
       eqnRGB = BLENDFUNC_ADD;
       break;
@@ -314,15 +315,15 @@ i830_set_blend_state(GLcontext * ctx)
       break;
    default:
       fprintf(stderr, "[%s:%u] Invalid RGB blend equation (0x%04x).\n",
-              __FUNCTION__, __LINE__, ctx->Color.BlendEquationRGB);
+              __FUNCTION__, __LINE__, ctx->Color.Blend[0].EquationRGB);
       return;
    }
 
 
-   funcA = SRC_ABLEND_FACT(intel_translate_blend_factor(ctx->Color.BlendSrcA))
-      | DST_ABLEND_FACT(intel_translate_blend_factor(ctx->Color.BlendDstA));
+   funcA = SRC_ABLEND_FACT(intel_translate_blend_factor(ctx->Color.Blend[0].SrcA))
+      | DST_ABLEND_FACT(intel_translate_blend_factor(ctx->Color.Blend[0].DstA));
 
-   switch (ctx->Color.BlendEquationA) {
+   switch (ctx->Color.Blend[0].EquationA) {
    case GL_FUNC_ADD:
       eqnA = BLENDFUNC_ADD;
       break;
@@ -342,7 +343,7 @@ i830_set_blend_state(GLcontext * ctx)
       break;
    default:
       fprintf(stderr, "[%s:%u] Invalid alpha blend equation (0x%04x).\n",
-              __FUNCTION__, __LINE__, ctx->Color.BlendEquationA);
+              __FUNCTION__, __LINE__, ctx->Color.Blend[0].EquationA);
       return;
    }
 
@@ -385,7 +386,7 @@ i830_set_blend_state(GLcontext * ctx)
 
 
 static void
-i830BlendEquationSeparate(GLcontext * ctx, GLenum modeRGB, GLenum modeA)
+i830BlendEquationSeparate(struct gl_context * ctx, GLenum modeRGB, GLenum modeA)
 {
    DBG("%s -> %s, %s\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(modeRGB),
@@ -398,7 +399,7 @@ i830BlendEquationSeparate(GLcontext * ctx, GLenum modeRGB, GLenum modeA)
 
 
 static void
-i830BlendFuncSeparate(GLcontext * ctx, GLenum sfactorRGB,
+i830BlendFuncSeparate(struct gl_context * ctx, GLenum sfactorRGB,
                       GLenum dfactorRGB, GLenum sfactorA, GLenum dfactorA)
 {
    DBG("%s -> RGB(%s, %s) A(%s, %s)\n", __FUNCTION__,
@@ -417,7 +418,7 @@ i830BlendFuncSeparate(GLcontext * ctx, GLenum sfactorRGB,
 
 
 static void
-i830DepthFunc(GLcontext * ctx, GLenum func)
+i830DepthFunc(struct gl_context * ctx, GLenum func)
 {
    struct i830_context *i830 = i830_context(ctx);
    int test = intel_translate_compare_func(func);
@@ -431,7 +432,7 @@ i830DepthFunc(GLcontext * ctx, GLenum func)
 }
 
 static void
-i830DepthMask(GLcontext * ctx, GLboolean flag)
+i830DepthMask(struct gl_context * ctx, GLboolean flag)
 {
    struct i830_context *i830 = i830_context(ctx);
 
@@ -449,18 +450,16 @@ i830DepthMask(GLcontext * ctx, GLboolean flag)
 
 /** Called from ctx->Driver.Viewport() */
 static void
-i830Viewport(GLcontext * ctx,
+i830Viewport(struct gl_context * ctx,
               GLint x, GLint y, GLsizei width, GLsizei height)
 {
    intelCalcViewport(ctx);
-
-   intel_viewport(ctx, x, y, width, height);
 }
 
 
 /** Called from ctx->Driver.DepthRange() */
 static void
-i830DepthRange(GLcontext * ctx, GLclampd nearval, GLclampd farval)
+i830DepthRange(struct gl_context * ctx, GLclampd nearval, GLclampd farval)
 {
    intelCalcViewport(ctx);
 }
@@ -472,7 +471,7 @@ i830DepthRange(GLcontext * ctx, GLclampd nearval, GLclampd farval)
  * Fortunately stipple is usually a repeating pattern.
  */
 static void
-i830PolygonStipple(GLcontext * ctx, const GLubyte * mask)
+i830PolygonStipple(struct gl_context * ctx, const GLubyte * mask)
 {
    struct i830_context *i830 = i830_context(ctx);
    const GLubyte *m = mask;
@@ -528,7 +527,7 @@ i830PolygonStipple(GLcontext * ctx, const GLubyte * mask)
  * Hardware clipping
  */
 static void
-i830Scissor(GLcontext * ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+i830Scissor(struct gl_context * ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
    struct i830_context *i830 = i830_context(ctx);
    int x1, y1, x2, y2;
@@ -568,7 +567,7 @@ i830Scissor(GLcontext * ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 }
 
 static void
-i830LogicOp(GLcontext * ctx, GLenum opcode)
+i830LogicOp(struct gl_context * ctx, GLenum opcode)
 {
    struct i830_context *i830 = i830_context(ctx);
    int tmp = intel_translate_logic_op(opcode);
@@ -583,7 +582,7 @@ i830LogicOp(GLcontext * ctx, GLenum opcode)
 
 
 static void
-i830CullFaceFrontFace(GLcontext * ctx, GLenum unused)
+i830CullFaceFrontFace(struct gl_context * ctx, GLenum unused)
 {
    struct i830_context *i830 = i830_context(ctx);
    GLuint mode;
@@ -611,7 +610,7 @@ i830CullFaceFrontFace(GLcontext * ctx, GLenum unused)
 }
 
 static void
-i830LineWidth(GLcontext * ctx, GLfloat widthf)
+i830LineWidth(struct gl_context * ctx, GLfloat widthf)
 {
    struct i830_context *i830 = i830_context(ctx);
    int width;
@@ -632,7 +631,7 @@ i830LineWidth(GLcontext * ctx, GLfloat widthf)
 }
 
 static void
-i830PointSize(GLcontext * ctx, GLfloat size)
+i830PointSize(struct gl_context * ctx, GLfloat size)
 {
    struct i830_context *i830 = i830_context(ctx);
    GLint point_size = (int) size;
@@ -652,7 +651,7 @@ i830PointSize(GLcontext * ctx, GLfloat size)
  */
 
 static void
-i830ColorMask(GLcontext * ctx,
+i830ColorMask(struct gl_context * ctx,
               GLboolean r, GLboolean g, GLboolean b, GLboolean a)
 {
    struct i830_context *i830 = i830_context(ctx);
@@ -674,21 +673,21 @@ i830ColorMask(GLcontext * ctx,
 }
 
 static void
-update_specular(GLcontext * ctx)
+update_specular(struct gl_context * ctx)
 {
    struct i830_context *i830 = i830_context(ctx);
 
    I830_STATECHANGE(i830, I830_UPLOAD_CTX);
    i830->state.Ctx[I830_CTXREG_ENABLES_1] &= ~ENABLE_SPEC_ADD_MASK;
 
-   if (NEED_SECONDARY_COLOR(ctx))
+   if (_mesa_need_secondary_color(ctx))
       i830->state.Ctx[I830_CTXREG_ENABLES_1] |= ENABLE_SPEC_ADD;
    else
       i830->state.Ctx[I830_CTXREG_ENABLES_1] |= DISABLE_SPEC_ADD;
 }
 
 static void
-i830LightModelfv(GLcontext * ctx, GLenum pname, const GLfloat * param)
+i830LightModelfv(struct gl_context * ctx, GLenum pname, const GLfloat * param)
 {
    DBG("%s\n", __FUNCTION__);
    
@@ -700,7 +699,7 @@ i830LightModelfv(GLcontext * ctx, GLenum pname, const GLfloat * param)
 /* In Mesa 3.5 we can reliably do native flatshading.
  */
 static void
-i830ShadeModel(GLcontext * ctx, GLenum mode)
+i830ShadeModel(struct gl_context * ctx, GLenum mode)
 {
    struct i830_context *i830 = i830_context(ctx);
    I830_STATECHANGE(i830, I830_UPLOAD_CTX);
@@ -729,7 +728,7 @@ i830ShadeModel(GLcontext * ctx, GLenum mode)
  * Fog
  */
 static void
-i830Fogfv(GLcontext * ctx, GLenum pname, const GLfloat * param)
+i830Fogfv(struct gl_context * ctx, GLenum pname, const GLfloat * param)
 {
    struct i830_context *i830 = i830_context(ctx);
 
@@ -750,7 +749,7 @@ i830Fogfv(GLcontext * ctx, GLenum pname, const GLfloat * param)
  */
 
 static void
-i830Enable(GLcontext * ctx, GLenum cap, GLboolean state)
+i830Enable(struct gl_context * ctx, GLenum cap, GLboolean state)
 {
    struct i830_context *i830 = i830_context(ctx);
 
@@ -1069,7 +1068,7 @@ i830_init_packets(struct i830_context *i830)
 }
 
 void
-i830_update_provoking_vertex(GLcontext * ctx)
+i830_update_provoking_vertex(struct gl_context * ctx)
 {
    struct i830_context *i830 = i830_context(ctx);
 
@@ -1121,7 +1120,7 @@ i830InitStateFuncs(struct dd_function_table *functions)
 void
 i830InitState(struct i830_context *i830)
 {
-   GLcontext *ctx = &i830->intel.ctx;
+   struct gl_context *ctx = &i830->intel.ctx;
 
    i830_init_packets(i830);
 

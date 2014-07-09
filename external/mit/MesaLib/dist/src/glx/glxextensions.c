@@ -83,23 +83,21 @@ static const struct extension_info known_glx_extensions[] = {
    { GLX(EXT_visual_info),             VER(0,0), Y, Y, N, N },
 #endif
    { GLX(EXT_visual_rating),           VER(0,0), Y, Y, N, N },
+   { GLX(EXT_framebuffer_sRGB),        VER(0,0), Y, Y, N, N },
 #ifdef GLX_USE_APPLEGL
    { GLX(MESA_agp_offset),             VER(0,0), N, N, N, N }, /* Deprecated */
-   { GLX(MESA_allocate_memory),        VER(0,0), N, N, N, N },
    { GLX(MESA_copy_sub_buffer),        VER(0,0), N, N, N, N },
 #else
    { GLX(MESA_agp_offset),             VER(0,0), N, N, N, Y }, /* Deprecated */
-   { GLX(MESA_allocate_memory),        VER(0,0), Y, N, N, Y },
    { GLX(MESA_copy_sub_buffer),        VER(0,0), Y, N, N, N },
 #endif
+   { GLX(MESA_multithread_makecurrent),VER(0,0), Y, N, Y, N },
    { GLX(MESA_pixmap_colormap),        VER(0,0), N, N, N, N }, /* Deprecated */
    { GLX(MESA_release_buffers),        VER(0,0), N, N, N, N }, /* Deprecated */
 #ifdef GLX_USE_APPLEGL
    { GLX(MESA_swap_control),           VER(0,0), N, N, N, N },
-   { GLX(MESA_swap_frame_usage),       VER(0,0), N, N, N, N },
 #else
    { GLX(MESA_swap_control),           VER(0,0), Y, N, N, Y },
-   { GLX(MESA_swap_frame_usage),       VER(0,0), Y, N, N, Y },
 #endif
    { GLX(NV_float_buffer),             VER(0,0), N, N, N, N },
    { GLX(NV_render_depth_texture),     VER(0,0), N, N, N, N },
@@ -141,7 +139,7 @@ static const struct extension_info known_glx_extensions[] = {
    { GLX(SGIX_visual_select_group),    VER(0,0), Y, Y, N, N },
    { GLX(EXT_texture_from_pixmap),     VER(0,0), Y, N, N, N },
 #endif
-   { GLX(INTEL_swap_event),            VER(1,4), Y, Y, N, N },
+   { GLX(INTEL_swap_event),            VER(1,4), Y, N, N, N },
    { NULL }
 };
 
@@ -169,6 +167,7 @@ static const struct extension_info known_gl_extensions[] = {
    { GL(ARB_texture_mirrored_repeat),    VER(1,4), Y, N, N, N },
    { GL(ARB_texture_non_power_of_two),   VER(1,5), Y, N, N, N },
    { GL(ARB_texture_rectangle),          VER(0,0), Y, N, N, N },
+   { GL(ARB_texture_rg),                 VER(0,0), Y, N, N, N },
    { GL(ARB_transpose_matrix),           VER(1,3), Y, N, Y, N },
    { GL(ARB_vertex_buffer_object),       VER(1,5), N, N, N, N },
    { GL(ARB_vertex_program),             VER(0,0), Y, N, N, N },
@@ -192,6 +191,7 @@ static const struct extension_info known_gl_extensions[] = {
    { GL(EXT_framebuffer_blit),           VER(0,0), Y, N, N, N },
    { GL(EXT_framebuffer_multisample),    VER(0,0), Y, N, N, N },
    { GL(EXT_framebuffer_object),         VER(0,0), Y, N, N, N },
+   { GL(EXT_framebuffer_sRGB),           VER(0,0), Y, N, N, N },
    { GL(EXT_multi_draw_arrays),          VER(1,4), Y, N, Y, N },
    { GL(EXT_packed_depth_stencil),       VER(0,0), Y, N, N, N },
    { GL(EXT_packed_pixels),              VER(1,2), Y, N, N, N },
@@ -316,7 +316,7 @@ static const unsigned gl_minor = 4;
 static const char *__glXGLXClientExtensions = NULL;
 
 static void __glXExtensionsCtr(void);
-static void __glXExtensionsCtrScreen(__GLXscreenConfigs * psc);
+static void __glXExtensionsCtrScreen(struct glx_screen * psc);
 static void __glXProcessServerString(const struct extension_info *ext,
                                      const char *server_string,
                                      unsigned char *server_support);
@@ -400,7 +400,7 @@ __glXProcessServerString(const struct extension_info *ext,
 }
 
 void
-__glXEnableDirectExtension(__GLXscreenConfigs * psc, const char *name)
+__glXEnableDirectExtension(struct glx_screen * psc, const char *name)
 {
    __glXExtensionsCtr();
    __glXExtensionsCtrScreen(psc);
@@ -478,7 +478,7 @@ __glXExtensionsCtr(void)
  */
 
 static void
-__glXExtensionsCtrScreen(__GLXscreenConfigs * psc)
+__glXExtensionsCtrScreen(struct glx_screen * psc)
 {
    if (psc->ext_list_first_time) {
       psc->ext_list_first_time = GL_FALSE;
@@ -498,7 +498,7 @@ __glXExtensionsCtrScreen(__GLXscreenConfigs * psc)
  *          \c NULL, then \c GL_FALSE is returned.
  */
 GLboolean
-__glXExtensionBitIsEnabled(__GLXscreenConfigs * psc, unsigned bit)
+__glXExtensionBitIsEnabled(struct glx_screen * psc, unsigned bit)
 {
    GLboolean enabled = GL_FALSE;
 
@@ -517,7 +517,7 @@ __glXExtensionBitIsEnabled(__GLXscreenConfigs * psc, unsigned bit)
  *
  */
 GLboolean
-__glExtensionBitIsEnabled(const __GLXcontext * gc, unsigned bit)
+__glExtensionBitIsEnabled(struct glx_context *gc, unsigned bit)
 {
    GLboolean enabled = GL_FALSE;
 
@@ -598,7 +598,7 @@ __glXGetClientExtensions(void)
  */
 
 void
-__glXCalculateUsableExtensions(__GLXscreenConfigs * psc,
+__glXCalculateUsableExtensions(struct glx_screen * psc,
                                GLboolean display_is_direct_capable,
                                int minor_version)
 {
@@ -679,7 +679,7 @@ __glXCalculateUsableExtensions(__GLXscreenConfigs * psc,
  */
 
 void
-__glXCalculateUsableGLExtensions(__GLXcontext * gc,
+__glXCalculateUsableGLExtensions(struct glx_context * gc,
                                  const char *server_string,
                                  int major_version, int minor_version)
 {

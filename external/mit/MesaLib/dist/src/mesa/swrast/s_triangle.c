@@ -34,8 +34,9 @@
 #include "main/colormac.h"
 #include "main/imports.h"
 #include "main/macros.h"
-#include "main/texformat.h"
-#include "shader/prog_instruction.h"
+#include "main/mtypes.h"
+#include "main/state.h"
+#include "program/prog_instruction.h"
 
 #include "s_aatriangle.h"
 #include "s_context.h"
@@ -49,7 +50,7 @@
  * \return GL_TRUE if the triangle is to be culled, GL_FALSE otherwise.
  */
 GLboolean
-_swrast_culltriangle( GLcontext *ctx,
+_swrast_culltriangle( struct gl_context *ctx,
                       const SWvertex *v0,
                       const SWvertex *v1,
                       const SWvertex *v2 )
@@ -256,7 +257,7 @@ ilerp_2d(GLint ia, GLint ib, GLint v00, GLint v10, GLint v01, GLint v11)
  * texture env modes.
  */
 static INLINE void
-affine_span(GLcontext *ctx, SWspan *span,
+affine_span(struct gl_context *ctx, SWspan *span,
             struct affine_info *info)
 {
    GLchan sample[4];  /* the filtered texture sample */
@@ -539,7 +540,7 @@ affine_span(GLcontext *ctx, SWspan *span,
    info.smask = texImg->Width - 1;					\
    info.tmask = texImg->Height - 1;					\
    info.format = texImg->TexFormat;					\
-   info.filter = obj->MinFilter;					\
+   info.filter = obj->Sampler.MinFilter;				\
    info.envmode = unit->EnvMode;					\
    info.er = 0;					\
    info.eg = 0;					\
@@ -591,7 +592,7 @@ struct persp_info
 
 
 static INLINE void
-fast_persp_span(GLcontext *ctx, SWspan *span,
+fast_persp_span(struct gl_context *ctx, SWspan *span,
 		struct persp_info *info)
 {
    GLchan sample[4];  /* the filtered texture sample */
@@ -804,7 +805,7 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
    info.smask = texImg->Width - 1;					\
    info.tmask = texImg->Height - 1;					\
    info.format = texImg->TexFormat;					\
-   info.filter = obj->MinFilter;					\
+   info.filter = obj->Sampler.MinFilter;				\
    info.envmode = unit->EnvMode;					\
    info.er = 0;					\
    info.eg = 0;					\
@@ -903,7 +904,7 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
 
 
 static void
-nodraw_triangle( GLcontext *ctx,
+nodraw_triangle( struct gl_context *ctx,
                  const SWvertex *v0,
                  const SWvertex *v1,
                  const SWvertex *v2 )
@@ -919,7 +920,7 @@ nodraw_triangle( GLcontext *ctx,
  * Inefficient, but seldom needed.
  */
 void
-_swrast_add_spec_terms_triangle(GLcontext *ctx, const SWvertex *v0,
+_swrast_add_spec_terms_triangle(struct gl_context *ctx, const SWvertex *v0,
                                 const SWvertex *v1, const SWvertex *v2)
 {
    SWvertex *ncv0 = (SWvertex *)v0; /* drop const qualifier */
@@ -992,7 +993,7 @@ do {						\
  * remove tests to this code.
  */
 void
-_swrast_choose_triangle( GLcontext *ctx )
+_swrast_choose_triangle( struct gl_context *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
@@ -1032,7 +1033,7 @@ _swrast_choose_triangle( GLcontext *ctx )
       if (ctx->Texture._EnabledCoordUnits ||
           ctx->FragmentProgram._Current ||
           ctx->ATIFragmentShader._Enabled ||
-          NEED_SECONDARY_COLOR(ctx) ||
+          _mesa_need_secondary_color(ctx) ||
           swrast->_FogEnabled) {
          /* Ugh, we do a _lot_ of tests to pick the best textured tri func */
          const struct gl_texture_object *texObj2D;
@@ -1043,8 +1044,8 @@ _swrast_choose_triangle( GLcontext *ctx )
 
          texImg = texObj2D ? texObj2D->Image[0][texObj2D->BaseLevel] : NULL;
          format = texImg ? texImg->TexFormat : MESA_FORMAT_NONE;
-         minFilter = texObj2D ? texObj2D->MinFilter : GL_NONE;
-         magFilter = texObj2D ? texObj2D->MagFilter : GL_NONE;
+         minFilter = texObj2D ? texObj2D->Sampler.MinFilter : GL_NONE;
+         magFilter = texObj2D ? texObj2D->Sampler.MagFilter : GL_NONE;
          envMode = ctx->Texture.Unit[0].EnvMode;
 
          /* First see if we can use an optimized 2-D texture function */
@@ -1053,8 +1054,8 @@ _swrast_choose_triangle( GLcontext *ctx )
              && !ctx->ATIFragmentShader._Enabled
              && ctx->Texture._EnabledUnits == 0x1
              && ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT
-             && texObj2D->WrapS == GL_REPEAT
-             && texObj2D->WrapT == GL_REPEAT
+             && texObj2D->Sampler.WrapS == GL_REPEAT
+             && texObj2D->Sampler.WrapT == GL_REPEAT
              && texObj2D->_Swizzle == SWIZZLE_NOOP
              && texImg->_IsPowerOfTwo
              && texImg->Border == 0
@@ -1113,7 +1114,7 @@ _swrast_choose_triangle( GLcontext *ctx )
       }
       else {
          ASSERT(!swrast->_FogEnabled);
-         ASSERT(!NEED_SECONDARY_COLOR(ctx));
+         ASSERT(!_mesa_need_secondary_color(ctx));
 	 if (ctx->Light.ShadeModel==GL_SMOOTH) {
 	    /* smooth shaded, no texturing, stippled or some raster ops */
 #if CHAN_BITS != 8

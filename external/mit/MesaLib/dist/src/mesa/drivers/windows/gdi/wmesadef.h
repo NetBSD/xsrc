@@ -1,16 +1,16 @@
 #ifndef WMESADEF_H
 #define WMESADEF_H
-#ifdef __MINGW32__
+
 #include <windows.h>
-#endif
-#include "context.h"
+
+#include "main/context.h"
 
 
 /**
- * The Windows Mesa rendering context, derived from GLcontext.
+ * The Windows Mesa rendering context, derived from struct gl_context.
  */
 struct wmesa_context {
-    GLcontext           gl_ctx;	        /* The core GL/Mesa context */
+    struct gl_context           gl_ctx;	        /* The core GL/Mesa context */
     HDC                 hDC;
     COLORREF		clearColorRef;
     HPEN                clearPen;

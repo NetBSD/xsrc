@@ -37,9 +37,9 @@
 #include "brw_wm.h"
 #include "brw_util.h"
 
-#include "shader/prog_parameter.h"
-#include "shader/prog_print.h"
-#include "shader/prog_statevars.h"
+#include "program/prog_parameter.h"
+#include "program/prog_print.h"
+#include "program/prog_statevars.h"
 
 
 /** An invalid texture target */
@@ -88,6 +88,9 @@ static struct prog_src_register src_reg(GLuint file, GLuint idx)
    reg.RelAddr = 0;
    reg.Negate = NEGATE_NONE;
    reg.Abs = 0;
+   reg.HasIndex2 = 0;
+   reg.RelAddr2 = 0;
+   reg.Index2 = 0;
    return reg;
 }
 
@@ -335,6 +338,14 @@ static struct prog_src_register get_delta_xy( struct brw_wm_compile *c )
 
 static struct prog_src_register get_pixel_w( struct brw_wm_compile *c )
 {
+   /* This is called for producing 1/w in pre-gen6 interp.  for gen6,
+    * the interp opcodes don't use this argument.  But to keep the
+    * nr_args = 3 expectations of pinterp happy, just stuff delta_xy
+    * into the slot.
+    */
+   if (c->func.brw->intel.gen >= 6)
+      return c->delta_xy;
+
    if (src_is_undef(c->pixel_w)) {
       struct prog_dst_register pixel_w = get_temp(c);
       struct prog_src_register deltas = get_delta_xy(c);
@@ -362,7 +373,9 @@ static void emit_interp( struct brw_wm_compile *c,
 {
    struct prog_dst_register dst = dst_reg(PROGRAM_INPUT, idx);
    struct prog_src_register interp = src_reg(PROGRAM_PAYLOAD, idx);
-   struct prog_src_register deltas = get_delta_xy(c);
+   struct prog_src_register deltas;
+
+   deltas = get_delta_xy(c);
 
    /* Need to use PINTERP on attributes which have been
     * multiplied by 1/W in the SF program, and LINTERP on those
@@ -404,25 +417,14 @@ static void emit_interp( struct brw_wm_compile *c,
 		 src_undef());
       }
       else {
-         if (c->key.linear_color) {
-            emit_op(c,
-                    WM_LINTERP,
-                    dst,
-                    0,
-                    interp,
-                    deltas,
-                    src_undef());
-         }
-         else {
-            /* perspective-corrected color interpolation */
-            emit_op(c,
-                    WM_PINTERP,
-                    dst,
-                    0,
-                    interp,
-                    deltas,
-                    get_pixel_w(c));
-         }
+	 /* perspective-corrected color interpolation */
+	 emit_op(c,
+		 WM_PINTERP,
+		 dst,
+		 0,
+		 interp,
+		 deltas,
+		 get_pixel_w(c));
       }
       break;
    case FRAG_ATTRIB_FOGC:
@@ -519,12 +521,6 @@ static struct prog_src_register search_or_add_param5(struct brw_wm_compile *c,
    tokens[2] = s2;
    tokens[3] = s3;
    tokens[4] = s4;
-   
-   for (idx = 0; idx < paramList->NumParameters; idx++) {
-      if (paramList->Parameters[idx].Type == PROGRAM_STATE_VAR &&
-	  memcmp(paramList->Parameters[idx].StateIndexes, tokens, sizeof(tokens)) == 0)
-	 return src_reg(PROGRAM_STATE_VAR, idx);
-   }
 
    idx = _mesa_add_state_reference( paramList, tokens );
 
@@ -542,28 +538,18 @@ static struct prog_src_register search_or_add_const4f( struct brw_wm_compile *c,
    GLfloat values[4];
    GLuint idx;
    GLuint swizzle;
+   struct prog_src_register reg;
 
    values[0] = s0;
    values[1] = s1;
    values[2] = s2;
    values[3] = s3;
 
-   /* Have to search, otherwise multiple compilations will each grow
-    * the parameter list.
-    */
-   for (idx = 0; idx < paramList->NumParameters; idx++) {
-      if (paramList->Parameters[idx].Type == PROGRAM_CONSTANT &&
-	  memcmp(paramList->ParameterValues[idx], values, sizeof(values)) == 0)
-
-	 /* XXX: this mimics the mesa bug which puts all constants and
-	  * parameters into the "PROGRAM_STATE_VAR" category:
-	  */
-	 return src_reg(PROGRAM_STATE_VAR, idx);
-   }
-   
    idx = _mesa_add_unnamed_constant( paramList, values, 4, &swizzle );
-   assert(swizzle == SWIZZLE_NOOP); /* Need to handle swizzle in reg setup */
-   return src_reg(PROGRAM_STATE_VAR, idx);
+   reg = src_reg(PROGRAM_STATE_VAR, idx);
+   reg.Swizzle = swizzle;
+
+   return reg;
 }
 
 
@@ -577,13 +563,14 @@ static void precalc_dst( struct brw_wm_compile *c,
    struct prog_src_register src0 = inst->SrcReg[0];
    struct prog_src_register src1 = inst->SrcReg[1];
    struct prog_dst_register dst = inst->DstReg;
-   
+   struct prog_dst_register temp = get_temp(c);
+
    if (dst.WriteMask & WRITEMASK_Y) {      
       /* dst.y = mul src0.y, src1.y
        */
       emit_op(c,
 	      OPCODE_MUL,
-	      dst_mask(dst, WRITEMASK_Y),
+	      dst_mask(temp, WRITEMASK_Y),
 	      inst->SaturateMode,
 	      src0,
 	      src1,
@@ -598,7 +585,7 @@ static void precalc_dst( struct brw_wm_compile *c,
        */
       swz = emit_op(c,
 		    OPCODE_SWZ,
-		    dst_mask(dst, WRITEMASK_XZ),
+		    dst_mask(temp, WRITEMASK_XZ),
 		    inst->SaturateMode,
 		    src_swizzle(src0, SWIZZLE_ONE, z, z, z),
 		    src_undef(),
@@ -611,12 +598,26 @@ static void precalc_dst( struct brw_wm_compile *c,
        */
       emit_op(c,
 	      OPCODE_MOV,
-	      dst_mask(dst, WRITEMASK_W),
+	      dst_mask(temp, WRITEMASK_W),
 	      inst->SaturateMode,
 	      src1,
 	      src_undef(),
 	      src_undef());
    }
+
+   /* This will get optimized out in general, but it ensures that we
+    * don't overwrite src operands in our channel-wise splitting
+    * above.  See piglit fp-dst-aliasing-[12].
+    */
+   emit_op(c,
+	   OPCODE_MOV,
+	   dst,
+	   0,
+	   src_reg_from_dst(temp),
+	   src_undef(),
+	   src_undef());
+
+   release_temp(c, temp);
 }
 
 
@@ -625,7 +626,17 @@ static void precalc_lit( struct brw_wm_compile *c,
 {
    struct prog_src_register src0 = inst->SrcReg[0];
    struct prog_dst_register dst = inst->DstReg;
-   
+
+   if (dst.WriteMask & WRITEMASK_YZ) {
+      emit_op(c,
+	      OPCODE_LIT,
+	      dst_mask(dst, WRITEMASK_YZ),
+	      inst->SaturateMode,
+	      src0,
+	      src_undef(),
+	      src_undef());
+   }
+
    if (dst.WriteMask & WRITEMASK_XW) {
       struct prog_instruction *swz;
 
@@ -641,16 +652,6 @@ static void precalc_lit( struct brw_wm_compile *c,
       /* Avoid letting the negation flag of src0 affect our 1 constant. */
       swz->SrcReg[0].Negate = NEGATE_NONE;
    }
-
-   if (dst.WriteMask & WRITEMASK_YZ) {
-      emit_op(c,
-	      OPCODE_LIT,
-	      dst_mask(dst, WRITEMASK_YZ),
-	      inst->SaturateMode,
-	      src0,
-	      src_undef(),
-	      src_undef());
-   }
 }
 
 
@@ -664,7 +665,7 @@ static void precalc_tex( struct brw_wm_compile *c,
 			 const struct prog_instruction *inst )
 {
    struct prog_src_register coord;
-   struct prog_dst_register tmpcoord;
+   struct prog_dst_register tmpcoord = { 0 };
    const GLuint unit = c->fp->program.Base.SamplerUnits[inst->TexSrcUnit];
 
    assert(unit < BRW_MAX_TEX_UNIT);
@@ -964,35 +965,31 @@ static void emit_render_target_writes( struct brw_wm_compile *c )
    struct prog_src_register outcolor;
    GLuint i;
 
-   struct prog_instruction *inst, *last_inst;
+   struct prog_instruction *inst = NULL;
 
    /* The inst->Aux field is used for FB write target and the EOT marker */
 
-   if (c->key.nr_color_regions > 1) {
-      for (i = 0 ; i < c->key.nr_color_regions; i++) {
-         outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_DATA0 + i);
-         last_inst = inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(), 0),
-                                    0, outcolor, payload_r0_depth, outdepth);
-         inst->Aux = INST_AUX_TARGET(i);
-         if (c->fp_fragcolor_emitted) {
-            outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_COLOR);
-            last_inst = inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(), 0),
-                                       0, outcolor, payload_r0_depth, outdepth);
-            inst->Aux = INST_AUX_TARGET(i);
-         }
+   for (i = 0; i < c->key.nr_color_regions; i++) {
+      if (c->fp->program.Base.OutputsWritten & (1 << FRAG_RESULT_COLOR)) {
+	 outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_COLOR);
+      } else {
+	 outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_DATA0 + i);
       }
-      last_inst->Aux |= INST_AUX_EOT;
+      inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(), 0),
+		     0, outcolor, payload_r0_depth, outdepth);
+      inst->Aux = INST_AUX_TARGET(i);
    }
-   else {
-      /* if gl_FragData[0] is written, use it, else use gl_FragColor */
-      if (c->fp->program.Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DATA0))
-         outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_DATA0);
-      else 
-         outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_COLOR);
 
-      inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(),0),
-                     0, outcolor, payload_r0_depth, outdepth);
-      inst->Aux = INST_AUX_EOT | INST_AUX_TARGET(0);
+   /* Mark the last FB write as final, or emit a dummy write if we had
+    * no render targets bound.
+    */
+   if (c->key.nr_color_regions != 0) {
+      inst->Aux |= INST_AUX_EOT;
+   } else {
+      inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(), 0),
+		     0, src_reg(PROGRAM_OUTPUT, FRAG_RESULT_COLOR),
+		     payload_r0_depth, outdepth);
+      inst->Aux = INST_AUX_TARGET(0) | INST_AUX_EOT;
    }
 }
 
@@ -1018,16 +1015,6 @@ static void validate_src_regs( struct brw_wm_compile *c,
       }
    }
 }
-	 
-static void validate_dst_regs( struct brw_wm_compile *c,
-			       const struct prog_instruction *inst )
-{
-   if (inst->DstReg.File == PROGRAM_OUTPUT) {
-      GLuint idx = inst->DstReg.Index;
-      if (idx == FRAG_RESULT_COLOR)
-         c->fp_fragcolor_emitted = 1;
-   }
-}
 
 static void print_insns( const struct prog_instruction *insn,
 			 GLuint nr )
@@ -1036,13 +1023,12 @@ static void print_insns( const struct prog_instruction *insn,
    for (i = 0; i < nr; i++, insn++) {
       printf("%3d: ", i);
       if (insn->Opcode < MAX_OPCODE)
-	 _mesa_print_instruction(insn);
+	 _mesa_fprint_instruction_opt(stdout, insn, 0, PROG_PRINT_DEBUG, NULL);
       else if (insn->Opcode < MAX_WM_OPCODE) {
 	 GLuint idx = insn->Opcode - MAX_OPCODE;
 
-	 _mesa_print_alu_instruction(insn,
-				     wm_opcode_strings[idx],
-				     3);
+	 _mesa_fprint_alu_instruction(stdout, insn, wm_opcode_strings[idx],
+				      3, PROG_PRINT_DEBUG, NULL);
       }
       else 
 	 printf("965 Opcode %d\n", insn->Opcode);
@@ -1056,17 +1042,26 @@ static void print_insns( const struct prog_instruction *insn,
  */
 void brw_wm_pass_fp( struct brw_wm_compile *c )
 {
+   struct intel_context *intel = &c->func.brw->intel;
    struct brw_fragment_program *fp = c->fp;
    GLuint insn;
 
-   if (INTEL_DEBUG & DEBUG_WM) {
+   if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       printf("pre-fp:\n");
-      _mesa_print_program(&fp->program.Base); 
+      _mesa_fprint_program_opt(stdout, &fp->program.Base, PROG_PRINT_DEBUG,
+			       GL_TRUE);
       printf("\n");
    }
 
    c->pixel_xy = src_undef();
-   c->delta_xy = src_undef();
+   if (intel->gen >= 6) {
+      /* The interpolation deltas come in as the perspective pixel
+       * location barycentric params.
+       */
+      c->delta_xy = src_reg(PROGRAM_PAYLOAD, PAYLOAD_DEPTH);
+   } else {
+      c->delta_xy = src_undef();
+   }
    c->pixel_w = src_undef();
    c->nr_fp_insns = 0;
    c->fp->tex_units_used = 0x0;
@@ -1078,7 +1073,6 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
    for (insn = 0; insn < fp->program.Base.NumInstructions; insn++) {
       const struct prog_instruction *inst = &fp->program.Base.Instructions[insn];
       validate_src_regs(c, inst);
-      validate_dst_regs(c, inst);
    }
 
    /* Loop over all instructions doing assorted simplifications and
@@ -1126,6 +1120,11 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
 	 precalc_lit(c, inst);
 	 break;
 
+      case OPCODE_RSQ:
+	 out = emit_scalar_insn(c, inst);
+	 out->SrcReg[0].Abs = GL_TRUE;
+	 break;
+
       case OPCODE_TEX:
 	 precalc_tex(c, inst);
 	 break;
@@ -1167,7 +1166,7 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
       }
    }
 
-   if (INTEL_DEBUG & DEBUG_WM) {
+   if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       printf("pass_fp:\n");
       print_insns( c->prog_instructions, c->nr_fp_insns );
       printf("\n");

@@ -307,7 +307,7 @@ fi
 #
 case $ARCH in
 
-    'Linux' | 'OpenBSD' | 'DragonFly' | 'GNU' | GNU/*)
+    'Linux' | 'OpenBSD' | 'DragonFly' | 'GNU' | GNU/* | 'NetBSD')
 	# we assume gcc
 
 	if [ "x$LINK" = "x" ] ; then
@@ -494,13 +494,16 @@ case $ARCH in
 		OPTS="${OPTS} -Wl,-Mmapfile.scope"
 	    fi
 
-	    # Check if objects are SPARC v9
+	    # Check if objects are 64-bit
 	    # file says: ELF 64-bit MSB relocatable SPARCV9 Version 1
 	    set ${OBJECTS}
 	    if [ ${LINK} = "cc" -o ${LINK} = "CC" ] ; then
-		SPARCV9=`file $1 | grep SPARCV9`
-		if [ "${SPARCV9}" ] ; then
-		    OPTS="${OPTS} -xarch=v9"
+		ABI64=`file $1 | grep "ELF 64-bit"`
+		if [ "${ABI64}" ] ; then
+		    case `uname -p` in
+			sparc)	    OPTS="${OPTS} -xarch=v9" ;;
+			i386)	    OPTS="${OPTS} -xarch=amd64" ;;
+		    esac
 		fi
 	    fi
             if [ "${ALTOPTS}" ] ; then
@@ -568,20 +571,6 @@ case $ARCH in
 	    ${LINK} ${OPTS} ${LDFLAGS} -o ${SHLIB} ${OBJECTS} ${DEPS}
 	    ln -sf ${SHLIB} "lib${LIBNAME}.so"
 	    FINAL_LIBS="${SHLIB} lib${LIBNAME}.so"
-	fi
-	;;
-
-    'NetBSD')
-        if [ $STATIC = 1 ] ; then
-	    LIBNAME="lib${LIBNAME}_pic.a"
-	    echo "mklib: Making NetBSD PIC static library: " ${LIBNAME}
-	    FINAL_LIBS=`make_ar_static_lib cq 1 ${LIBNAME} ${OBJECTS}`
-	else
-	    LIBNAME="lib${LIBNAME}.so.${MAJOR}.${MINOR}"
-	    echo "mklib: Making NetBSD PIC shared library: " ${LIBNAME}
-	    rm -f ${LIBNAME}
-	    ld -x -Bshareable -Bforcearchive -o ${LIBNAME} ${OBJECTS}
-	    FINAL_LIBS=${LIBNAME}
 	fi
 	;;
 
@@ -778,9 +767,8 @@ case $ARCH in
                 OPTS="${OPTS} -exported_symbols_list ${EXPORTS}"
             fi
 
-            LINKNAME="lib${LIBNAME}.${MAJOR}.${LIBSUFFIX}"
-            LINKNAME2="lib${LIBNAME}.${LIBSUFFIX}"
-            LIBNAME="lib${LIBNAME}.${MAJOR}.${MINOR}.${LIBSUFFIX}"
+            LINKNAME="lib${LIBNAME}.${LIBSUFFIX}"
+            LIBNAME="lib${LIBNAME}.${MAJOR}.${LIBSUFFIX}"
 
 	    # examine first object to determine ABI
     	    set ${OBJECTS}
@@ -793,9 +781,6 @@ case $ARCH in
                 OPTS=${ALTOPTS}
             fi
 
-	    # XXX can we always add -isysroot /Developer/SDKs/MacOSX10.4u.sdk
-	    # to OPTS here?
-
 	    # determine linker
 	    if [ $CPLUSPLUS = 1 ] ; then
 		LINK="g++"
@@ -807,8 +792,7 @@ case $ARCH in
 
             ${LINK} ${OPTS} ${LDFLAGS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
             ln -s ${LIBNAME} ${LINKNAME}
-            ln -s ${LIBNAME} ${LINKNAME2}
-            FINAL_LIBS="${LIBNAME} ${LINKNAME} ${LINKNAME2}"
+            FINAL_LIBS="${LIBNAME} ${LINKNAME}"
         fi
         ;;
 
@@ -927,6 +911,16 @@ case $ARCH in
 
      CYGWIN*)
 	# GCC-based environment
+
+	if [ "x$LINK" = "x" ] ; then
+	    # -linker was not specified so set default link command now
+            if [ $CPLUSPLUS = 1 ] ; then
+                LINK=g++
+            else
+                LINK=gcc
+            fi
+	fi
+
 	if [ $NOPREFIX = 1 ] ; then
 	    # No "lib" or ".so" part
 	    echo "mklib: Making CYGWIN shared library: " ${LIBNAME}
@@ -935,7 +929,7 @@ case $ARCH in
                 OPTS=${ALTOPTS}
             fi
 	    rm -f ${LIBNAME}
-	    ${LINK} ${OPTS} ${LDFLAGS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
+	    ${LINK} ${OPTS} ${LDFLAGS} -o ${LIBNAME} ${OBJECTS} ${DEPS} || exit $?
 	    FINAL_LIBS=${LIBNAME}
         else
 	CYGNAME="cyg${LIBNAME}"     # prefix with "cyg"
@@ -943,7 +937,7 @@ case $ARCH in
 
         if [ $STATIC = 1 ] ; then
 	    LIBNAME=${LIBNAME}.a
-            echo "mklib: Making" $ARCH "static library: " ${LIBNAME}
+            echo "mklib: Making CYGWIN static library: " ${LIBNAME}
             OPTS="-ru"
             if [ "${ALTOPTS}" ] ; then
                 OPTS=${ALTOPTS}
@@ -961,13 +955,7 @@ case $ARCH in
             if [ "${ALTOPTS}" ] ; then
                 OPTS=${ALTOPTS}
             fi
-            echo "mklib: Making" $ARCH "shared library: " ${CYGNAME}-${MAJOR}.dll
-
-            if [ $CPLUSPLUS = 1 ] ; then
-                LINK="g++"
-            else
-                LINK="gcc"
-            fi
+            echo "mklib: Making CYGWIN shared library: " ${CYGNAME}-${MAJOR}.dll
 
             # rm any old libs
             rm -f ${CYGNAME}-${MAJOR}.dll
@@ -976,12 +964,7 @@ case $ARCH in
             rm -f ${LIBNAME}.a
 
             # make lib
-            ${LINK} ${OPTS} ${LDFLAGS} -o ${CYGNAME}-${MAJOR}.dll ${OBJECTS} ${DEPS}
-            # make build fail if link failed
-            es=$?
-            if [ "$es" -ne "0" ]; then
-                exit $es
-            fi
+            ${LINK} ${OPTS} ${LDFLAGS} -o ${CYGNAME}-${MAJOR}.dll ${OBJECTS} ${DEPS} || exit $?
             # make usual symlinks
             ln -s ${LIBNAME}-${MAJOR}.dll.a ${LIBNAME}.dll.a
             # finish up
@@ -1021,4 +1004,9 @@ if [ ${INSTALLDIR} != "." ] ; then
     echo "mklib: Installing" ${FINAL_LIBS} "in" ${INSTALLDIR}
     test -d ${INSTALLDIR} || mkdir -p ${INSTALLDIR}
     mv ${FINAL_LIBS} ${INSTALLDIR}/
+
+    if [ "x${FINAL_BINS}" != "x" ] ; then
+        echo "mklib: Installing" ${FINAL_BINS} "in" ${INSTALLDIR}
+        mv ${FINAL_BINS} ${INSTALLDIR}/
+    fi
 fi

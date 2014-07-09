@@ -62,14 +62,6 @@
  */
 struct intel_mipmap_level
 {
-   /**
-    * Byte offset to the base of this level.
-    *
-    * This is used for mipmap levels of 1D/2D/3D textures.  However, CUBE
-    * layouts spread images around the whole tree, so the level offset is
-    * always zero in that case.
-    */
-   GLuint level_offset;
    /** Offset to this miptree level, used in computing x_offset. */
    GLuint level_x;
    /** Offset to this miptree level, used in computing y_offset. */
@@ -81,8 +73,8 @@ struct intel_mipmap_level
    /** Number of images at this level: 1 for 1D/2D, 6 for CUBE, depth for 3D */
    GLuint nr_images;
 
-   /**
-    * Byte offset from level_offset to the image for each cube face or depth
+   /** @{
+    * offsets from level_[xy] to the image for each cube face or depth
     * level.
     *
     * Pretty much have to accept that hardware formats
@@ -91,6 +83,7 @@ struct intel_mipmap_level
     * so have to store them as a lookup table.
     */
    GLuint *x_offset, *y_offset;
+   /** @} */
 };
 
 struct intel_mipmap_tree
@@ -98,7 +91,7 @@ struct intel_mipmap_tree
    /* Effectively the key:
     */
    GLenum target;
-   GLenum internal_format;
+   gl_format format;
 
    GLuint first_level;
    GLuint last_level;
@@ -109,8 +102,7 @@ struct intel_mipmap_tree
 
    /* Derived from the above:
     */
-   GLuint pitch;
-   GLuint depth_pitch;          /* per-image on i945? */
+   GLuint total_width;
    GLuint total_height;
 
    /* Includes image offset tables:
@@ -121,6 +113,20 @@ struct intel_mipmap_tree
     */
    struct intel_region *region;
 
+   /**
+    * This points to an auxillary hiz region if all of the following hold:
+    *     1. The texture has been attached to an FBO as a depthbuffer.
+    *     2. The texture format is hiz compatible.
+    *     3. The intel context supports hiz.
+    *
+    * When a texture is attached to multiple FBO's, a separate renderbuffer
+    * wrapper is created for each attachment. This necessitates storing the
+    * hiz region in the texture itself instead of the renderbuffer wrapper.
+    *
+    * \see intel_fbo.c:intel_wrap_texture()
+    */
+   struct intel_region *hiz_region;
+
    /* These are also refcounted:
     */
    GLuint refcount;
@@ -130,26 +136,20 @@ struct intel_mipmap_tree
 
 struct intel_mipmap_tree *intel_miptree_create(struct intel_context *intel,
                                                GLenum target,
-                                               GLenum base_format,
-                                               GLenum internal_format,
+					       gl_format format,
                                                GLuint first_level,
                                                GLuint last_level,
                                                GLuint width0,
                                                GLuint height0,
                                                GLuint depth0,
-                                               GLuint cpp,
-                                               GLuint compress_byte,
 					       GLboolean expect_accelerated_upload);
 
 struct intel_mipmap_tree *
 intel_miptree_create_for_region(struct intel_context *intel,
 				GLenum target,
-				GLenum internal_format,
-				GLuint first_level,
-				GLuint last_level,
+				gl_format format,
 				struct intel_region *region,
-				GLuint depth0,
-				GLuint compress_byte);
+				GLuint depth0);
 
 int intel_miptree_pitch_align (struct intel_context *intel,
 			       struct intel_mipmap_tree *mt,

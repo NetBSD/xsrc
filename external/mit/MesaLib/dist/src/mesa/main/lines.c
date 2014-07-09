@@ -43,6 +43,9 @@ _mesa_LineWidth( GLfloat width )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glLineWidth %f\n", width);
+
    if (width<=0.0) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glLineWidth" );
       return;
@@ -53,11 +56,6 @@ _mesa_LineWidth( GLfloat width )
 
    FLUSH_VERTICES(ctx, _NEW_LINE);
    ctx->Line.Width = width;
-
-   if (width != 1.0F)
-      ctx->_TriangleCaps |= DD_LINE_WIDTH;
-   else
-      ctx->_TriangleCaps &= ~DD_LINE_WIDTH;
 
    if (ctx->Driver.LineWidth)
       ctx->Driver.LineWidth(ctx, width);
@@ -82,6 +80,9 @@ _mesa_LineStipple( GLint factor, GLushort pattern )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glLineStipple %d %u\n", factor, pattern);
+
    factor = CLAMP( factor, 1, 256 );
 
    if (ctx->Line.StippleFactor == factor &&
@@ -102,11 +103,11 @@ _mesa_LineStipple( GLint factor, GLushort pattern )
  *
  * \param ctx GL context.
  *
- * Initializes __GLcontextRec::Line and line related constants in
- * __GLcontextRec::Const.
+ * Initializes __struct gl_contextRec::Line and line related constants in
+ * __struct gl_contextRec::Const.
  */
 void GLAPIENTRY
-_mesa_init_line( GLcontext * ctx )
+_mesa_init_line( struct gl_context * ctx )
 {
    ctx->Line.SmoothFlag = GL_FALSE;
    ctx->Line.StippleFlag = GL_FALSE;

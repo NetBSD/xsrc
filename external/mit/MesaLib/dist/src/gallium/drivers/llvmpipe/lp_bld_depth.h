@@ -36,10 +36,14 @@
 #define LP_BLD_DEPTH_H
 
 
-#include <llvm-c/Core.h>  
+#include "pipe/p_compiler.h"
+#include "pipe/p_state.h"
+
+#include "gallivm/lp_bld.h"
 
  
 struct pipe_depth_state;
+struct gallivm_state;
 struct util_format_description;
 struct lp_type;
 struct lp_build_mask_context;
@@ -51,13 +55,37 @@ lp_depth_type(const struct util_format_description *format_desc,
 
 
 void
-lp_build_depth_test(LLVMBuilderRef builder,
-                    const struct pipe_depth_state *state,
-                    struct lp_type type,
-                    const struct util_format_description *format_desc,
-                    struct lp_build_mask_context *mask,
-                    LLVMValueRef src,
-                    LLVMValueRef dst_ptr);
+lp_build_depth_stencil_test(struct gallivm_state *gallivm,
+                            const struct pipe_depth_state *depth,
+                            const struct pipe_stencil_state stencil[2],
+                            struct lp_type type,
+                            const struct util_format_description *format_desc,
+                            struct lp_build_mask_context *mask,
+                            LLVMValueRef stencil_refs[2],
+                            LLVMValueRef zs_src,
+                            LLVMValueRef zs_dst_ptr,
+                            LLVMValueRef facing,
+                            LLVMValueRef *zs_value,
+                            boolean do_branch);
 
+void
+lp_build_depth_write(LLVMBuilderRef builder,
+                     const struct util_format_description *format_desc,
+                     LLVMValueRef zs_dst_ptr,
+                     LLVMValueRef zs_value);
+
+void
+lp_build_deferred_depth_write(struct gallivm_state *gallivm,
+                              struct lp_type z_src_type,
+                              const struct util_format_description *format_desc,
+                              struct lp_build_mask_context *mask,
+                              LLVMValueRef zs_dst_ptr,
+                              LLVMValueRef zs_value);
+
+void
+lp_build_occlusion_count(struct gallivm_state *gallivm,
+                         struct lp_type type,
+                         LLVMValueRef maskvalue,
+                         LLVMValueRef counter);
 
 #endif /* !LP_BLD_DEPTH_H */

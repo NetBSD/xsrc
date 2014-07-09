@@ -190,12 +190,12 @@ static void recalculate_urb_fence( struct brw_context *brw )
 	    exit(1);
 	 }
 	 
-	 if (INTEL_DEBUG & (DEBUG_URB|DEBUG_FALLBACKS))
+	 if (unlikely(INTEL_DEBUG & (DEBUG_URB|DEBUG_FALLBACKS)))
 	    printf("URB CONSTRAINED\n");
       }
 
 done:
-      if (INTEL_DEBUG & DEBUG_URB)
+      if (unlikely(INTEL_DEBUG & DEBUG_URB))
 	 printf("URB fence: %d ..VS.. %d ..GS.. %d ..CLP.. %d ..SF.. %d ..CS.. %d\n",
 		      brw->urb.vs_start,
 		      brw->urb.gs_start,
@@ -247,6 +247,14 @@ void brw_upload_urb_fence(struct brw_context *brw)
    uf.bits0.clp_fence = brw->urb.sf_start; 
    uf.bits1.sf_fence  = brw->urb.cs_start; 
    uf.bits1.cs_fence  = brw->urb.size;
+
+   /* erratum: URB_FENCE must not cross a 64byte cacheline */
+   if ((brw->intel.batch.used & 15) > 12) {
+      int pad = 16 - (brw->intel.batch.used & 15);
+      do
+	 brw->intel.batch.map[brw->intel.batch.used++] = MI_NOOP;
+      while (--pad);
+   }
 
    BRW_BATCH_STRUCT(brw, &uf);
 }

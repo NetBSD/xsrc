@@ -34,18 +34,22 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __VBO_EXEC_H__
 #define __VBO_EXEC_H__
 
+#include "main/mfeatures.h"
 #include "main/mtypes.h"
 #include "vbo.h"
 #include "vbo_attrib.h"
 
 
+/**
+ * Max number of primitives (number of glBegin/End pairs) per VBO.
+ */
 #define VBO_MAX_PRIM 64
 
-/* Wierd implementation stuff:
+
+/**
+ * Size of the VBO to use for glBegin/glVertex/glEnd-style rendering.
  */
 #define VBO_VERT_BUFFER_SIZE (1024*64)	/* bytes */
-#define VBO_MAX_ATTR_CODEGEN 16 
-#define ERROR_ATTRIB 16
 
 
 /** Current vertex program mode */
@@ -79,7 +83,7 @@ typedef void (*vbo_attrfv_func)( const GLfloat * );
 
 struct vbo_exec_context
 {
-   GLcontext *ctx;   
+   struct gl_context *ctx;   
    GLvertexformat vtxfmt;
 
    struct {
@@ -139,6 +143,9 @@ struct vbo_exec_context
       const struct gl_client_array *inputs[VERT_ATTRIB_MAX];
    } array;
 
+   /* Which flags to set in vbo_exec_BeginVertices() */
+   GLbitfield begin_vertices_flags;
+
 #ifdef DEBUG
    GLint flush_call_depth;
 #endif
@@ -148,13 +155,12 @@ struct vbo_exec_context
 
 /* External API:
  */
-void vbo_exec_init( GLcontext *ctx );
-void vbo_exec_destroy( GLcontext *ctx );
-void vbo_exec_invalidate_state( GLcontext *ctx, GLuint new_state );
-void vbo_exec_FlushVertices_internal( GLcontext *ctx, GLboolean unmap );
+void vbo_exec_init( struct gl_context *ctx );
+void vbo_exec_destroy( struct gl_context *ctx );
+void vbo_exec_invalidate_state( struct gl_context *ctx, GLuint new_state );
 
-void vbo_exec_BeginVertices( GLcontext *ctx );
-void vbo_exec_FlushVertices( GLcontext *ctx, GLuint flags );
+void vbo_exec_BeginVertices( struct gl_context *ctx );
+void vbo_exec_FlushVertices( struct gl_context *ctx, GLuint flags );
 
 
 /* Internal functions:
@@ -194,8 +200,5 @@ void vbo_exec_do_EvalCoord2f( struct vbo_exec_context *exec,
 
 void vbo_exec_do_EvalCoord1f( struct vbo_exec_context *exec,
 				     GLfloat u);
-
-extern GLboolean 
-vbo_validate_shaders(GLcontext *ctx);
 
 #endif

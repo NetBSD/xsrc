@@ -33,6 +33,8 @@
   */
  
 
+#include <assert.h>
+
 #include "st_context.h"
 #include "st_atom.h"
 #include "pipe/p_context.h"
@@ -62,17 +64,18 @@ invert_stipple(GLuint dest[32], const GLuint src[32], GLuint winHeight)
 static void 
 update_stipple( struct st_context *st )
 {
+   const struct gl_context *ctx = st->ctx;
    const GLuint sz = sizeof(st->state.poly_stipple);
-   assert(sz == sizeof(st->ctx->PolygonStipple));
+   assert(sz == sizeof(ctx->PolygonStipple));
 
-   if (memcmp(st->state.poly_stipple, st->ctx->PolygonStipple, sz)) {
+   if (memcmp(st->state.poly_stipple, ctx->PolygonStipple, sz)) {
       /* state has changed */
       struct pipe_poly_stipple newStipple;
 
-      memcpy(st->state.poly_stipple, st->ctx->PolygonStipple, sz);
+      memcpy(st->state.poly_stipple, ctx->PolygonStipple, sz);
 
-      invert_stipple(newStipple.stipple, st->ctx->PolygonStipple,
-                     st->ctx->DrawBuffer->Height);
+      invert_stipple(newStipple.stipple, ctx->PolygonStipple,
+                     ctx->DrawBuffer->Height);
 
       st->pipe->set_polygon_stipple(st->pipe, &newStipple);
    }

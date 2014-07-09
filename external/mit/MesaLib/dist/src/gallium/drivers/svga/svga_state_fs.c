@@ -131,13 +131,12 @@ static int make_fs_key( const struct svga_context *svga,
       /* SVGA_NEW_RAST
        */
       key->light_twoside = svga->curr.rast->templ.light_twoside;
-      key->front_cw = (svga->curr.rast->templ.front_winding == 
-                       PIPE_WINDING_CW);
+      key->front_ccw = svga->curr.rast->templ.front_ccw;
    }
 
    /* The blend workaround for simulating logicop xor behaviour
     * requires that the incoming fragment color be white.  This change
-    * achieves that by creating a varient of the current fragment
+    * achieves that by creating a variant of the current fragment
     * shader that overrides all output colors with 1,1,1,1
     *   
     * This will work for most shaders, including those containing
@@ -158,10 +157,11 @@ static int make_fs_key( const struct svga_context *svga,
     *
     * SVGA_NEW_TEXTURE_BINDING | SVGA_NEW_SAMPLER
     */
-   for (i = 0; i < svga->curr.num_textures; i++) {
-      if (svga->curr.texture[i]) {
+   for (i = 0; i < svga->curr.num_sampler_views; i++) {
+      if (svga->curr.sampler_views[i]) {
          assert(svga->curr.sampler[i]);
-         key->tex[i].texture_target = svga->curr.texture[i]->target;
+         assert(svga->curr.sampler_views[i]->texture);
+         key->tex[i].texture_target = svga->curr.sampler_views[i]->texture->target;
          if (!svga->curr.sampler[i]->normalized_coords) {
             key->tex[i].width_height_idx = idx++;
             key->tex[i].unnormalized = TRUE;
@@ -169,7 +169,7 @@ static int make_fs_key( const struct svga_context *svga,
          }
       }
    }
-   key->num_textures = svga->curr.num_textures;
+   key->num_textures = svga->curr.num_sampler_views;
 
    idx = 0;
    for (i = 0; i < svga->curr.num_samplers; ++i) {

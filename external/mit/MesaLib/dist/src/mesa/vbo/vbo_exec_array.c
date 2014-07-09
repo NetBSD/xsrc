@@ -30,7 +30,6 @@
 #include "main/context.h"
 #include "main/state.h"
 #include "main/api_validate.h"
-#include "main/api_noop.h"
 #include "main/varray.h"
 #include "main/bufferobj.h"
 #include "main/enums.h"
@@ -40,17 +39,60 @@
 
 
 /**
- * Compute min and max elements for glDraw[Range]Elements() calls.
+ * All vertex buffers should be in an unmapped state when we're about
+ * to draw.  This debug function checks that.
+ */
+static void
+check_buffers_are_unmapped(const struct gl_client_array **inputs)
+{
+#ifdef DEBUG
+   GLuint i;
+
+   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+      if (inputs[i]) {
+         struct gl_buffer_object *obj = inputs[i]->BufferObj;
+         assert(!_mesa_bufferobj_mapped(obj));
+         (void) obj;
+      }
+   }
+#endif
+}
+
+
+/**
+ * A debug function that may be called from other parts of Mesa as
+ * needed during debugging.
  */
 void
-vbo_get_minmax_index(GLcontext *ctx,
+vbo_check_buffers_are_unmapped(struct gl_context *ctx)
+{
+   struct vbo_context *vbo = vbo_context(ctx);
+   struct vbo_exec_context *exec = &vbo->exec;
+   /* check the current vertex arrays */
+   check_buffers_are_unmapped(exec->array.inputs);
+   /* check the current glBegin/glVertex/glEnd-style VBO */
+   assert(!_mesa_bufferobj_mapped(exec->vtx.bufferobj));
+}
+
+
+
+/**
+ * Compute min and max elements by scanning the index buffer for
+ * glDraw[Range]Elements() calls.
+ * If primitive restart is enabled, we need to ignore restart
+ * indexes when computing min/max.
+ */
+void
+vbo_get_minmax_index(struct gl_context *ctx,
 		     const struct _mesa_prim *prim,
 		     const struct _mesa_index_buffer *ib,
 		     GLuint *min_index, GLuint *max_index)
 {
-   GLuint i;
-   GLuint count = prim->count;
+   const GLboolean restart = ctx->Array.PrimitiveRestart;
+   const GLuint restartIndex = ctx->Array.RestartIndex;
+   const GLuint count = prim->count;
    const void *indices;
+   GLuint i;
 
    if (_mesa_is_bufferobj(ib->obj)) {
       const GLvoid *map =
@@ -64,11 +106,21 @@ vbo_get_minmax_index(GLcontext *ctx,
    switch (ib->type) {
    case GL_UNSIGNED_INT: {
       const GLuint *ui_indices = (const GLuint *)indices;
-      GLuint max_ui = ui_indices[count-1];
-      GLuint min_ui = ui_indices[0];
-      for (i = 0; i < count; i++) {
-	 if (ui_indices[i] > max_ui) max_ui = ui_indices[i];
-	 if (ui_indices[i] < min_ui) min_ui = ui_indices[i];
+      GLuint max_ui = 0;
+      GLuint min_ui = ~0U;
+      if (restart) {
+         for (i = 0; i < count; i++) {
+            if (ui_indices[i] != restartIndex) {
+               if (ui_indices[i] > max_ui) max_ui = ui_indices[i];
+               if (ui_indices[i] < min_ui) min_ui = ui_indices[i];
+            }
+         }
+      }
+      else {
+         for (i = 0; i < count; i++) {
+            if (ui_indices[i] > max_ui) max_ui = ui_indices[i];
+            if (ui_indices[i] < min_ui) min_ui = ui_indices[i];
+         }
       }
       *min_index = min_ui;
       *max_index = max_ui;
@@ -76,11 +128,21 @@ vbo_get_minmax_index(GLcontext *ctx,
    }
    case GL_UNSIGNED_SHORT: {
       const GLushort *us_indices = (const GLushort *)indices;
-      GLuint max_us = us_indices[count-1];
-      GLuint min_us = us_indices[0];
-      for (i = 0; i < count; i++) {
-	 if (us_indices[i] > max_us) max_us = us_indices[i];
-	 if (us_indices[i] < min_us) min_us = us_indices[i];
+      GLuint max_us = 0;
+      GLuint min_us = ~0U;
+      if (restart) {
+         for (i = 0; i < count; i++) {
+            if (us_indices[i] != restartIndex) {
+               if (us_indices[i] > max_us) max_us = us_indices[i];
+               if (us_indices[i] < min_us) min_us = us_indices[i];
+            }
+         }
+      }
+      else {
+         for (i = 0; i < count; i++) {
+            if (us_indices[i] > max_us) max_us = us_indices[i];
+            if (us_indices[i] < min_us) min_us = us_indices[i];
+         }
       }
       *min_index = min_us;
       *max_index = max_us;
@@ -88,11 +150,21 @@ vbo_get_minmax_index(GLcontext *ctx,
    }
    case GL_UNSIGNED_BYTE: {
       const GLubyte *ub_indices = (const GLubyte *)indices;
-      GLuint max_ub = ub_indices[count-1];
-      GLuint min_ub = ub_indices[0];
-      for (i = 0; i < count; i++) {
-	 if (ub_indices[i] > max_ub) max_ub = ub_indices[i];
-	 if (ub_indices[i] < min_ub) min_ub = ub_indices[i];
+      GLuint max_ub = 0;
+      GLuint min_ub = ~0U;
+      if (restart) {
+         for (i = 0; i < count; i++) {
+            if (ub_indices[i] != restartIndex) {
+               if (ub_indices[i] > max_ub) max_ub = ub_indices[i];
+               if (ub_indices[i] < min_ub) min_ub = ub_indices[i];
+            }
+         }
+      }
+      else {
+         for (i = 0; i < count; i++) {
+            if (ub_indices[i] > max_ub) max_ub = ub_indices[i];
+            if (ub_indices[i] < min_ub) min_ub = ub_indices[i];
+         }
       }
       *min_index = min_ub;
       *max_index = max_ub;
@@ -112,9 +184,10 @@ vbo_get_minmax_index(GLcontext *ctx,
 /**
  * Check that element 'j' of the array has reasonable data.
  * Map VBO if needed.
+ * For debugging purposes; not normally used.
  */
 static void
-check_array_data(GLcontext *ctx, struct gl_client_array *array,
+check_array_data(struct gl_context *ctx, struct gl_client_array *array,
                  GLuint attrib, GLuint j)
 {
    if (array->Enabled) {
@@ -160,7 +233,7 @@ check_array_data(GLcontext *ctx, struct gl_client_array *array,
  * Unmap the buffer object referenced by given array, if mapped.
  */
 static void
-unmap_array_buffer(GLcontext *ctx, struct gl_client_array *array)
+unmap_array_buffer(struct gl_context *ctx, struct gl_client_array *array)
 {
    if (array->Enabled &&
        _mesa_is_bufferobj(array->BufferObj) &&
@@ -172,9 +245,10 @@ unmap_array_buffer(GLcontext *ctx, struct gl_client_array *array)
 
 /**
  * Examine the array's data for NaNs, etc.
+ * For debug purposes; not normally used.
  */
 static void
-check_draw_elements_data(GLcontext *ctx, GLsizei count, GLenum elemType,
+check_draw_elements_data(struct gl_context *ctx, GLsizei count, GLenum elemType,
                          const void *elements, GLint basevertex)
 {
    struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
@@ -242,26 +316,29 @@ check_draw_elements_data(GLcontext *ctx, GLsizei count, GLenum elemType,
  * Check array data, looking for NaNs, etc.
  */
 static void
-check_draw_arrays_data(GLcontext *ctx, GLint start, GLsizei count)
+check_draw_arrays_data(struct gl_context *ctx, GLint start, GLsizei count)
 {
    /* TO DO */
 }
 
 
 /**
- * Print info/data for glDrawArrays().
+ * Print info/data for glDrawArrays(), for debugging.
  */
 static void
-print_draw_arrays(GLcontext *ctx, struct vbo_exec_context *exec,
+print_draw_arrays(struct gl_context *ctx,
                   GLenum mode, GLint start, GLsizei count)
 {
+   struct vbo_context *vbo = vbo_context(ctx);
+   struct vbo_exec_context *exec = &vbo->exec;
    int i;
 
    printf("vbo_exec_DrawArrays(mode 0x%x, start %d, count %d):\n",
 	  mode, start, count);
 
    for (i = 0; i < 32; i++) {
-      GLuint bufName = exec->array.inputs[i]->BufferObj->Name;
+      struct gl_buffer_object *bufObj = exec->array.inputs[i]->BufferObj;
+      GLuint bufName = bufObj->Name;
       GLint stride = exec->array.inputs[i]->Stride;
       printf("attr %2d: size %d stride %d  enabled %d  "
 	     "ptr %p  Bufobj %u\n",
@@ -274,9 +351,8 @@ print_draw_arrays(GLcontext *ctx, struct vbo_exec_context *exec,
 	     bufName);
 
       if (bufName) {
-         struct gl_buffer_object *buf = _mesa_lookup_bufferobj(ctx, bufName);
          GLubyte *p = ctx->Driver.MapBuffer(ctx, GL_ARRAY_BUFFER_ARB,
-                                            GL_READ_ONLY_ARB, buf);
+                                            GL_READ_ONLY_ARB, bufObj);
          int offset = (int) (GLintptr) exec->array.inputs[i]->Ptr;
          float *f = (float *) (p + offset);
          int *k = (int *) f;
@@ -288,17 +364,20 @@ print_draw_arrays(GLcontext *ctx, struct vbo_exec_context *exec,
          for (i = 0; i < n; i++) {
             printf("    float[%d] = 0x%08x %f\n", i, k[i], f[i]);
          }
-         ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER_ARB, buf);
+         ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER_ARB, bufObj);
       }
    }
 }
 
 
 /**
+ * Bind the VBO executor to the current vertex array object prior
+ * to drawing.
+ *
  * Just translate the arrayobj into a sane layout.
  */
 static void
-bind_array_obj(GLcontext *ctx)
+bind_array_obj(struct gl_context *ctx)
 {
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_exec_context *exec = &vbo->exec;
@@ -334,8 +413,16 @@ bind_array_obj(GLcontext *ctx)
 }
 
 
+/**
+ * Set the vbo->exec->inputs[] pointers to point to the enabled
+ * vertex arrays.  This depends on the current vertex program/shader
+ * being executed because of whether or not generic vertex arrays
+ * alias the conventional vertex arrays.
+ * For arrays that aren't enabled, we set the input[attrib] pointer
+ * to point at a zero-stride current value "array".
+ */
 static void
-recalculate_input_bindings(GLcontext *ctx)
+recalculate_input_bindings(struct gl_context *ctx)
 {
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_exec_context *exec = &vbo->exec;
@@ -374,6 +461,14 @@ recalculate_input_bindings(GLcontext *ctx)
 	 inputs[VERT_ATTRIB_GENERIC0 + i] = &vbo->generic_currval[i];
          const_inputs |= 1 << (VERT_ATTRIB_GENERIC0 + i);
       }
+
+      /* There is no need to make _NEW_ARRAY dirty here for the TnL program,
+       * because it already takes care of invalidating the state necessary
+       * to revalidate vertex arrays. Not marking the state as dirty also
+       * improves performance (quite significantly in some apps).
+       */
+      if (!ctx->VertexProgram._MaintainTnlProgram)
+         ctx->NewState |= _NEW_ARRAY;
       break;
 
    case VP_NV:
@@ -399,6 +494,8 @@ recalculate_input_bindings(GLcontext *ctx)
 	 inputs[i] = &vbo->generic_currval[i - VERT_ATTRIB_GENERIC0];
          const_inputs |= 1 << i;
       }
+
+      ctx->NewState |= _NEW_ARRAY;
       break;
 
    case VP_ARB:
@@ -434,8 +531,9 @@ recalculate_input_bindings(GLcontext *ctx)
 	    inputs[VERT_ATTRIB_GENERIC0 + i] = &vbo->generic_currval[i];
             const_inputs |= 1 << (VERT_ATTRIB_GENERIC0 + i);
          }
-
       }
+
+      ctx->NewState |= _NEW_ARRAY;
       break;
    }
 
@@ -451,36 +549,108 @@ recalculate_input_bindings(GLcontext *ctx)
  * must be done after this call.
  */
 static void
-bind_arrays(GLcontext *ctx)
+bind_arrays(struct gl_context *ctx)
 {
-#if 0
-   if (ctx->Array.ArrayObj.Name != exec->array.array_obj) {
-      bind_array_obj(ctx);
-      recalculate_input_bindings(ctx);
+   if (!ctx->Array.RebindArrays) {
+      return;
    }
-   else if (exec->array.program_mode != get_program_mode(ctx) ||
-	    exec->array.enabled_flags != ctx->Array.ArrayObj->_Enabled) {
-      recalculate_input_bindings(ctx);
-   }
-#else
+
    bind_array_obj(ctx);
    recalculate_input_bindings(ctx);
-#endif
+   ctx->Array.RebindArrays = GL_FALSE;
+}
+
+
+/**
+ * Helper function called by the other DrawArrays() functions below.
+ * This is where we handle primitive restart for drawing non-indexed
+ * arrays.  If primitive restart is enabled, it typically means
+ * splitting one DrawArrays() into two.
+ */
+static void
+vbo_draw_arrays(struct gl_context *ctx, GLenum mode, GLint start,
+                GLsizei count, GLuint numInstances)
+{
+   struct vbo_context *vbo = vbo_context(ctx);
+   struct vbo_exec_context *exec = &vbo->exec;
+   struct _mesa_prim prim[2];
+
+   bind_arrays(ctx);
+
+   /* Again... because we may have changed the bitmask of per-vertex varying
+    * attributes.  If we regenerate the fixed-function vertex program now
+    * we may be able to prune down the number of vertex attributes which we
+    * need in the shader.
+    */
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
+
+   /* init most fields to zero */
+   memset(prim, 0, sizeof(prim));
+   prim[0].begin = 1;
+   prim[0].end = 1;
+   prim[0].mode = mode;
+   prim[0].num_instances = numInstances;
+
+   /* Implement the primitive restart index */
+   if (ctx->Array.PrimitiveRestart && ctx->Array.RestartIndex < count) {
+      GLuint primCount = 0;
+
+      if (ctx->Array.RestartIndex == start) {
+         /* special case: RestartIndex at beginning */
+         if (count > 1) {
+            prim[0].start = start + 1;
+            prim[0].count = count - 1;
+            primCount = 1;
+         }
+      }
+      else if (ctx->Array.RestartIndex == start + count - 1) {
+         /* special case: RestartIndex at end */
+         if (count > 1) {
+            prim[0].start = start;
+            prim[0].count = count - 1;
+            primCount = 1;
+         }
+      }
+      else {
+         /* general case: RestartIndex in middle, split into two prims */
+         prim[0].start = start;
+         prim[0].count = ctx->Array.RestartIndex - start;
+
+         prim[1] = prim[0];
+         prim[1].start = ctx->Array.RestartIndex + 1;
+         prim[1].count = count - prim[1].start;
+
+         primCount = 2;
+      }
+
+      if (primCount > 0) {
+         /* draw one or two prims */
+         check_buffers_are_unmapped(exec->array.inputs);
+         vbo->draw_prims(ctx, exec->array.inputs, prim, primCount, NULL,
+                         GL_TRUE, start, start + count - 1);
+      }
+   }
+   else {
+      /* no prim restart */
+      prim[0].start = start;
+      prim[0].count = count;
+
+      check_buffers_are_unmapped(exec->array.inputs);
+      vbo->draw_prims(ctx, exec->array.inputs, prim, 1, NULL,
+                      GL_TRUE, start, start + count - 1);
+   }
 }
 
 
 
-/***********************************************************************
- * API functions.
+/**
+ * Called from glDrawArrays when in immediate mode (not display list mode).
  */
-
 static void GLAPIENTRY
 vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
 {
    GET_CURRENT_CONTEXT(ctx);
-   struct vbo_context *vbo = vbo_context(ctx);
-   struct vbo_exec_context *exec = &vbo->exec;
-   struct _mesa_prim prim[1];
 
    if (MESA_VERBOSE & VERBOSE_DRAW)
       _mesa_debug(ctx, "glDrawArrays(%s, %d, %d)\n",
@@ -495,48 +665,55 @@ vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
       return;
    }
 
-#if 0
-   check_draw_arrays_data(ctx, start, count);
-#else
-   (void) check_draw_arrays_data;
-#endif
+   if (0)
+      check_draw_arrays_data(ctx, start, count);
 
-   bind_arrays( ctx );
+   vbo_draw_arrays(ctx, mode, start, count, 1);
 
-   /* Again... because we may have changed the bitmask of per-vertex varying
-    * attributes.  If we regenerate the fixed-function vertex program now
-    * we may be able to prune down the number of vertex attributes which we
-    * need in the shader.
-    */
-   if (ctx->NewState)
-      _mesa_update_state( ctx );
+   if (0)
+      print_draw_arrays(ctx, mode, start, count);
+}
 
-   prim[0].begin = 1;
-   prim[0].end = 1;
-   prim[0].weak = 0;
-   prim[0].pad = 0;
-   prim[0].mode = mode;
-   prim[0].start = start;
-   prim[0].count = count;
-   prim[0].indexed = 0;
-   prim[0].basevertex = 0;
 
-   vbo->draw_prims( ctx, exec->array.inputs, prim, 1, NULL,
-                    GL_TRUE, start, start + count - 1 );
+/**
+ * Called from glDrawArraysInstanced when in immediate mode (not
+ * display list mode).
+ */
+static void GLAPIENTRY
+vbo_exec_DrawArraysInstanced(GLenum mode, GLint start, GLsizei count,
+                             GLsizei numInstances)
+{
+   GET_CURRENT_CONTEXT(ctx);
 
-#if 0
-   print_draw_arrays(ctx, exec, mode, start, count);
-#else
-   (void) print_draw_arrays;
-#endif
+   if (MESA_VERBOSE & VERBOSE_DRAW)
+      _mesa_debug(ctx, "glDrawArraysInstanced(%s, %d, %d, %d)\n",
+                  _mesa_lookup_enum_by_nr(mode), start, count, numInstances);
+
+   if (!_mesa_validate_DrawArraysInstanced(ctx, mode, start, count, numInstances))
+      return;
+
+   FLUSH_CURRENT( ctx, 0 );
+
+   if (!_mesa_valid_to_render(ctx, "glDrawArraysInstanced")) {
+      return;
+   }
+
+   if (0)
+      check_draw_arrays_data(ctx, start, count);
+
+   vbo_draw_arrays(ctx, mode, start, count, numInstances);
+
+   if (0)
+      print_draw_arrays(ctx, mode, start, count);
 }
 
 
 /**
  * Map GL_ELEMENT_ARRAY_BUFFER and print contents.
+ * For debugging.
  */
 static void
-dump_element_buffer(GLcontext *ctx, GLenum type)
+dump_element_buffer(struct gl_context *ctx, GLenum type)
 {
    const GLvoid *map = ctx->Driver.MapBuffer(ctx,
                                              GL_ELEMENT_ARRAY_BUFFER_ARB,
@@ -588,14 +765,18 @@ dump_element_buffer(GLcontext *ctx, GLenum type)
 }
 
 
-/* Inner support for both _mesa_DrawElements and _mesa_DrawRangeElements */
+/**
+ * Inner support for both _mesa_DrawElements and _mesa_DrawRangeElements.
+ * Do the rendering for a glDrawElements or glDrawRangeElements call after
+ * we've validated buffer bounds, etc.
+ */
 static void
-vbo_validated_drawrangeelements(GLcontext *ctx, GLenum mode,
+vbo_validated_drawrangeelements(struct gl_context *ctx, GLenum mode,
 				GLboolean index_bounds_valid,
 				GLuint start, GLuint end,
 				GLsizei count, GLenum type,
 				const GLvoid *indices,
-				GLint basevertex)
+				GLint basevertex, GLint numInstances)
 {
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_exec_context *exec = &vbo->exec;
@@ -628,6 +809,7 @@ vbo_validated_drawrangeelements(GLcontext *ctx, GLenum mode,
    prim[0].count = count;
    prim[0].indexed = 1;
    prim[0].basevertex = basevertex;
+   prim[0].num_instances = numInstances;
 
    /* Need to give special consideration to rendering a range of
     * indices starting somewhere above zero.  Typically the
@@ -660,10 +842,15 @@ vbo_validated_drawrangeelements(GLcontext *ctx, GLenum mode,
     * for the latter case elsewhere.
     */
 
+   check_buffers_are_unmapped(exec->array.inputs);
    vbo->draw_prims( ctx, exec->array.inputs, prim, 1, &ib,
 		    index_bounds_valid, start, end );
 }
 
+
+/**
+ * Called by glDrawRangeElementsBaseVertex() in immediate mode.
+ */
 static void GLAPIENTRY
 vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
 				     GLuint start, GLuint end,
@@ -713,7 +900,7 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
                        start, end, count, type, indices,
                        ctx->Array.ArrayObj->_MaxElement - 1,
                        ctx->Array.ElementArrayBufferObj->Name,
-                       ctx->Array.ElementArrayBufferObj->Size);
+                       (int) ctx->Array.ElementArrayBufferObj->Size);
       }
 
       if (0)
@@ -722,11 +909,10 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
       if (0)
          _mesa_print_arrays(ctx);
 
-#ifdef DEBUG
       /* 'end' was out of bounds, but now let's check the actual array
        * indexes to see if any of them are out of bounds.
        */
-      {
+      if (0) {
          GLuint max = _mesa_max_buffer_index(ctx, count, type, indices,
                                              ctx->Array.ElementArrayBufferObj);
          if (max >= ctx->Array.ArrayObj->_MaxElement) {
@@ -739,7 +925,7 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
                              start, end, count, type, indices, max,
                              ctx->Array.ArrayObj->_MaxElement - 1,
                              ctx->Array.ElementArrayBufferObj->Name,
-                             ctx->Array.ElementArrayBufferObj->Size);
+                             (int) ctx->Array.ElementArrayBufferObj->Size);
             }
          }
          /* XXX we could also find the min index and compare to 'start'
@@ -747,13 +933,17 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
           * upper bound wrong.
           */
       }
-#endif
 
       /* Set 'end' to the max possible legal value */
       assert(ctx->Array.ArrayObj->_MaxElement >= 1);
       end = ctx->Array.ArrayObj->_MaxElement - 1;
+
+      if (end < start) {
+         return;
+      }
    }
-   else if (0) {
+
+   if (0) {
       printf("glDraw[Range]Elements{,BaseVertex}"
 	     "(start %u, end %u, type 0x%x, count %d) ElemBuf %u, "
 	     "base %d\n",
@@ -769,10 +959,13 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
 #endif
 
    vbo_validated_drawrangeelements(ctx, mode, GL_TRUE, start, end,
-				   count, type, indices, basevertex);
+				   count, type, indices, basevertex, 1);
 }
 
 
+/**
+ * Called by glDrawRangeElements() in immediate mode.
+ */
 static void GLAPIENTRY
 vbo_exec_DrawRangeElements(GLenum mode, GLuint start, GLuint end,
                            GLsizei count, GLenum type, const GLvoid *indices)
@@ -790,6 +983,9 @@ vbo_exec_DrawRangeElements(GLenum mode, GLuint start, GLuint end,
 }
 
 
+/**
+ * Called by glDrawElements() in immediate mode.
+ */
 static void GLAPIENTRY
 vbo_exec_DrawElements(GLenum mode, GLsizei count, GLenum type,
                       const GLvoid *indices)
@@ -805,10 +1001,13 @@ vbo_exec_DrawElements(GLenum mode, GLsizei count, GLenum type,
       return;
 
    vbo_validated_drawrangeelements(ctx, mode, GL_FALSE, ~0, ~0,
-				   count, type, indices, 0);
+				   count, type, indices, 0, 1);
 }
 
 
+/**
+ * Called by glDrawElementsBaseVertex() in immediate mode.
+ */
 static void GLAPIENTRY
 vbo_exec_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type,
 				const GLvoid *indices, GLint basevertex)
@@ -825,13 +1024,64 @@ vbo_exec_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type,
       return;
 
    vbo_validated_drawrangeelements(ctx, mode, GL_FALSE, ~0, ~0,
-				   count, type, indices, basevertex);
+				   count, type, indices, basevertex, 1);
 }
 
 
-/** Inner support for both _mesa_DrawElements and _mesa_DrawRangeElements */
+/**
+ * Called by glDrawElementsInstanced() in immediate mode.
+ */
+static void GLAPIENTRY
+vbo_exec_DrawElementsInstanced(GLenum mode, GLsizei count, GLenum type,
+                               const GLvoid *indices, GLsizei numInstances)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (MESA_VERBOSE & VERBOSE_DRAW)
+      _mesa_debug(ctx, "glDrawElementsInstanced(%s, %d, %s, %p, %d)\n",
+                  _mesa_lookup_enum_by_nr(mode), count,
+                  _mesa_lookup_enum_by_nr(type), indices, numInstances);
+
+   if (!_mesa_validate_DrawElementsInstanced(ctx, mode, count, type, indices,
+                                             numInstances, 0))
+      return;
+
+   vbo_validated_drawrangeelements(ctx, mode, GL_FALSE, ~0, ~0,
+				   count, type, indices, 0, numInstances);
+}
+
+/**
+ * Called by glDrawElementsInstancedBaseVertex() in immediate mode.
+ */
+static void GLAPIENTRY
+vbo_exec_DrawElementsInstancedBaseVertex(GLenum mode, GLsizei count, GLenum type,
+                               const GLvoid *indices, GLsizei numInstances,
+                               GLint basevertex)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (MESA_VERBOSE & VERBOSE_DRAW)
+      _mesa_debug(ctx, "glDrawElementsInstancedBaseVertex(%s, %d, %s, %p, %d; %d)\n",
+                  _mesa_lookup_enum_by_nr(mode), count,
+                  _mesa_lookup_enum_by_nr(type), indices,
+                  numInstances, basevertex);
+
+   if (!_mesa_validate_DrawElementsInstanced(ctx, mode, count, type, indices,
+                                             numInstances, basevertex))
+      return;
+
+   vbo_validated_drawrangeelements(ctx, mode, GL_FALSE, ~0, ~0,
+				   count, type, indices, basevertex, numInstances);
+}
+
+
+/**
+ * Inner support for both _mesa_MultiDrawElements() and
+ * _mesa_MultiDrawRangeElements().
+ * This does the actual rendering after we've checked array indexes, etc.
+ */
 static void
-vbo_validated_multidrawelements(GLcontext *ctx, GLenum mode,
+vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
 				const GLsizei *count, GLenum type,
 				const GLvoid **indices, GLsizei primcount,
 				const GLint *basevertex)
@@ -861,7 +1111,8 @@ vbo_validated_multidrawelements(GLcontext *ctx, GLenum mode,
    }
 
    /* Decide if we can do this all as one set of primitives sharing the
-    * same index buffer, or if we have to reset the index pointer per primitive.
+    * same index buffer, or if we have to reset the index pointer per
+    * primitive.
     */
    bind_arrays( ctx );
 
@@ -894,6 +1145,8 @@ vbo_validated_multidrawelements(GLcontext *ctx, GLenum mode,
    /* Check if we can handle this thing as a bunch of index offsets from the
     * same index pointer.  If we can't, then we have to fall back to doing
     * a draw_prims per primitive.
+    * Check that the difference between each prim's indexes is a multiple of
+    * the index/element size.
     */
    if (index_type_size != 1) {
       for (i = 0; i < primcount; i++) {
@@ -926,12 +1179,14 @@ vbo_validated_multidrawelements(GLcontext *ctx, GLenum mode,
 	 prim[i].start = ((uintptr_t)indices[i] - min_index_ptr) / index_type_size;
 	 prim[i].count = count[i];
 	 prim[i].indexed = 1;
+         prim[i].num_instances = 1;
 	 if (basevertex != NULL)
 	    prim[i].basevertex = basevertex[i];
 	 else
 	    prim[i].basevertex = 0;
       }
 
+      check_buffers_are_unmapped(exec->array.inputs);
       vbo->draw_prims(ctx, exec->array.inputs, prim, primcount, &ib,
 		      GL_FALSE, ~0, ~0);
    } else {
@@ -950,11 +1205,13 @@ vbo_validated_multidrawelements(GLcontext *ctx, GLenum mode,
 	 prim[0].start = 0;
 	 prim[0].count = count[i];
 	 prim[0].indexed = 1;
+         prim[0].num_instances = 1;
 	 if (basevertex != NULL)
 	    prim[0].basevertex = basevertex[i];
 	 else
 	    prim[0].basevertex = 0;
 
+         check_buffers_are_unmapped(exec->array.inputs);
          vbo->draw_prims(ctx, exec->array.inputs, prim, 1, &ib,
                          GL_FALSE, ~0, ~0);
       }
@@ -1009,14 +1266,13 @@ vbo_exec_MultiDrawElementsBaseVertex(GLenum mode,
 }
 
 
-/***********************************************************************
- * Initialization
+/**
+ * Plug in the immediate-mode vertex array drawing commands into the
+ * givven vbo_exec_context object.
  */
-
 void
 vbo_exec_array_init( struct vbo_exec_context *exec )
 {
-#if 1
    exec->vtxfmt.DrawArrays = vbo_exec_DrawArrays;
    exec->vtxfmt.DrawElements = vbo_exec_DrawElements;
    exec->vtxfmt.DrawRangeElements = vbo_exec_DrawRangeElements;
@@ -1024,15 +1280,9 @@ vbo_exec_array_init( struct vbo_exec_context *exec )
    exec->vtxfmt.DrawElementsBaseVertex = vbo_exec_DrawElementsBaseVertex;
    exec->vtxfmt.DrawRangeElementsBaseVertex = vbo_exec_DrawRangeElementsBaseVertex;
    exec->vtxfmt.MultiDrawElementsBaseVertex = vbo_exec_MultiDrawElementsBaseVertex;
-#else
-   exec->vtxfmt.DrawArrays = _mesa_noop_DrawArrays;
-   exec->vtxfmt.DrawElements = _mesa_noop_DrawElements;
-   exec->vtxfmt.DrawRangeElements = _mesa_noop_DrawRangeElements;
-   exec->vtxfmt.MultiDrawElementsEXT = _mesa_noop_MultiDrawElements;
-   exec->vtxfmt.DrawElementsBaseVertex = _mesa_noop_DrawElementsBaseVertex;
-   exec->vtxfmt.DrawRangeElementsBaseVertex = _mesa_noop_DrawRangeElementsBaseVertex;
-   exec->vtxfmt.MultiDrawElementsBaseVertex = _mesa_noop_MultiDrawElementsBaseVertex;
-#endif
+   exec->vtxfmt.DrawArraysInstanced = vbo_exec_DrawArraysInstanced;
+   exec->vtxfmt.DrawElementsInstanced = vbo_exec_DrawElementsInstanced;
+   exec->vtxfmt.DrawElementsInstancedBaseVertex = vbo_exec_DrawElementsInstancedBaseVertex;
 }
 
 
@@ -1043,7 +1293,13 @@ vbo_exec_array_destroy( struct vbo_exec_context *exec )
 }
 
 
-/* This API entrypoint is not ordinarily used */
+
+/**
+ * The following functions are only used for OpenGL ES 1/2 support.
+ * And some aren't even supported (yet) in ES 1/2.
+ */
+
+
 void GLAPIENTRY
 _mesa_DrawArrays(GLenum mode, GLint first, GLsizei count)
 {
@@ -1051,13 +1307,13 @@ _mesa_DrawArrays(GLenum mode, GLint first, GLsizei count)
 }
 
 
-/* This API entrypoint is not ordinarily used */
 void GLAPIENTRY
 _mesa_DrawElements(GLenum mode, GLsizei count, GLenum type,
                    const GLvoid *indices)
 {
    vbo_exec_DrawElements(mode, count, type, indices);
 }
+
 
 void GLAPIENTRY
 _mesa_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type,
@@ -1067,7 +1323,6 @@ _mesa_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type,
 }
 
 
-/* This API entrypoint is not ordinarily used */
 void GLAPIENTRY
 _mesa_DrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count,
                         GLenum type, const GLvoid *indices)
@@ -1086,7 +1341,6 @@ _mesa_DrawRangeElementsBaseVertex(GLenum mode, GLuint start, GLuint end,
 }
 
 
-/* GL_EXT_multi_draw_arrays */
 void GLAPIENTRY
 _mesa_MultiDrawElementsEXT(GLenum mode, const GLsizei *count, GLenum type,
 			   const GLvoid **indices, GLsizei primcount)

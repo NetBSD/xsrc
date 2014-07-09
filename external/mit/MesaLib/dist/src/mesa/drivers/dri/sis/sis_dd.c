@@ -45,12 +45,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "utils.h"
 
-#define DRIVER_DATE	"20060710"
-
 /* Return the width and height of the given buffer.
  */
 static void
-sisGetBufferSize( GLframebuffer *buffer,
+sisGetBufferSize( struct gl_framebuffer *buffer,
 			      GLuint *width, GLuint *height )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -65,7 +63,7 @@ sisGetBufferSize( GLframebuffer *buffer,
 /* Return various strings for glGetString().
  */
 static const GLubyte *
-sisGetString( GLcontext *ctx, GLenum name )
+sisGetString( struct gl_context *ctx, GLenum name )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
    static char buffer[128];
@@ -78,7 +76,7 @@ sisGetString( GLcontext *ctx, GLenum name )
       return (GLubyte *)"Eric Anholt";
 
    case GL_RENDERER:
-      offset = driGetRendererString( buffer, "SiS", DRIVER_DATE, agp_mode );
+      offset = driGetRendererString( buffer, "SiS", agp_mode );
 
       return (GLubyte *)buffer;
 
@@ -90,7 +88,7 @@ sisGetString( GLcontext *ctx, GLenum name )
 /* Send all commands to the hardware.
  */
 static void
-sisFlush( GLcontext *ctx )
+sisFlush( struct gl_context *ctx )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
@@ -101,7 +99,7 @@ sisFlush( GLcontext *ctx )
  * completed processing.
  */
 static void
-sisFinish( GLcontext *ctx )
+sisFinish( struct gl_context *ctx )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
@@ -118,7 +116,7 @@ sisDeleteRenderbuffer(struct gl_renderbuffer *rb)
 }
 
 static GLboolean
-sisRenderbufferStorage(GLcontext *ctx, struct gl_renderbuffer *rb,
+sisRenderbufferStorage(struct gl_context *ctx, struct gl_renderbuffer *rb,
                        GLenum internalFormat, GLuint width, GLuint height)
 {
    rb->Width = width;

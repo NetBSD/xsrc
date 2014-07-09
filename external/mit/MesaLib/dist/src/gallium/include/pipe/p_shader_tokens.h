@@ -33,8 +33,6 @@
 extern "C" {
 #endif
 
-#include "p_compiler.h"
-
 
 struct tgsi_header
 {
@@ -65,17 +63,19 @@ struct tgsi_token
 };
 
 enum tgsi_file_type {
-   TGSI_FILE_NULL         =0,
-   TGSI_FILE_CONSTANT     =1,
-   TGSI_FILE_INPUT        =2,
-   TGSI_FILE_OUTPUT       =3,
-   TGSI_FILE_TEMPORARY    =4,
-   TGSI_FILE_SAMPLER      =5,
-   TGSI_FILE_ADDRESS      =6,
-   TGSI_FILE_IMMEDIATE    =7,
-   TGSI_FILE_LOOP         =8,
-   TGSI_FILE_PREDICATE    =9,
-   TGSI_FILE_SYSTEM_VALUE =10,
+   TGSI_FILE_NULL                =0,
+   TGSI_FILE_CONSTANT            =1,
+   TGSI_FILE_INPUT               =2,
+   TGSI_FILE_OUTPUT              =3,
+   TGSI_FILE_TEMPORARY           =4,
+   TGSI_FILE_SAMPLER             =5,
+   TGSI_FILE_ADDRESS             =6,
+   TGSI_FILE_IMMEDIATE           =7,
+   TGSI_FILE_PREDICATE           =8,
+   TGSI_FILE_SYSTEM_VALUE        =9,
+   TGSI_FILE_IMMEDIATE_ARRAY     =10,
+   TGSI_FILE_TEMPORARY_ARRAY     =11,
+   TGSI_FILE_RESOURCE            =12,
    TGSI_FILE_COUNT      /**< how many TGSI_FILE_ types */
 };
 
@@ -144,13 +144,22 @@ struct tgsi_declaration_dimension
 #define TGSI_SEMANTIC_EDGEFLAG   8
 #define TGSI_SEMANTIC_PRIMID     9
 #define TGSI_SEMANTIC_INSTANCEID 10
-#define TGSI_SEMANTIC_COUNT      11 /**< number of semantic values */
+#define TGSI_SEMANTIC_STENCIL    11
+#define TGSI_SEMANTIC_COUNT      12 /**< number of semantic values */
 
 struct tgsi_declaration_semantic
 {
    unsigned Name           : 8;  /**< one of TGSI_SEMANTIC_x */
    unsigned Index          : 16; /**< UINT */
    unsigned Padding        : 8;
+};
+
+struct tgsi_declaration_resource {
+   unsigned Resource    : 8; /**< one of TGSI_TEXTURE_ */
+   unsigned ReturnTypeX : 6; /**< one of enum pipe_type */
+   unsigned ReturnTypeY : 6; /**< one of enum pipe_type */
+   unsigned ReturnTypeZ : 6; /**< one of enum pipe_type */
+   unsigned ReturnTypeW : 6; /**< one of enum pipe_type */
 };
 
 #define TGSI_IMM_FLOAT32   0
@@ -160,9 +169,9 @@ struct tgsi_declaration_semantic
 struct tgsi_immediate
 {
    unsigned Type       : 4;  /**< TGSI_TOKEN_TYPE_IMMEDIATE */
-   unsigned NrTokens   : 8;  /**< UINT */
+   unsigned NrTokens   : 14; /**< UINT */
    unsigned DataType   : 4;  /**< one of TGSI_IMM_x */
-   unsigned Padding    : 16;
+   unsigned Padding    : 10;
 };
 
 union tgsi_immediate_data
@@ -174,10 +183,11 @@ union tgsi_immediate_data
 
 #define TGSI_PROPERTY_GS_INPUT_PRIM          0
 #define TGSI_PROPERTY_GS_OUTPUT_PRIM         1
-#define TGSI_PROPERTY_GS_MAX_VERTICES        2
+#define TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES 2
 #define TGSI_PROPERTY_FS_COORD_ORIGIN        3
 #define TGSI_PROPERTY_FS_COORD_PIXEL_CENTER  4
-#define TGSI_PROPERTY_COUNT                  5
+#define TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS 5
+#define TGSI_PROPERTY_COUNT                  6
 
 struct tgsi_property {
    unsigned Type         : 4;  /**< TGSI_TOKEN_TYPE_PROPERTY */
@@ -200,7 +210,7 @@ struct tgsi_property_data {
  * 
  * For more information on semantics of opcodes and
  * which APIs are known to use which opcodes, see
- * auxiliary/tgsi/tgsi-instruction-set.txt
+ * gallium/docs/source/tgsi.rst
  */
 #define TGSI_OPCODE_ARL                 0
 #define TGSI_OPCODE_MOV                 1
@@ -276,12 +286,10 @@ struct tgsi_property_data {
 #define TGSI_OPCODE_TXL                 72
 #define TGSI_OPCODE_BRK                 73
 #define TGSI_OPCODE_IF                  74
-#define TGSI_OPCODE_BGNFOR              75
-#define TGSI_OPCODE_REP                 76
+                                /* gap */
 #define TGSI_OPCODE_ELSE                77
 #define TGSI_OPCODE_ENDIF               78
-#define TGSI_OPCODE_ENDFOR              79
-#define TGSI_OPCODE_ENDREP              80
+                                /* gap */
 #define TGSI_OPCODE_PUSHA               81
 #define TGSI_OPCODE_POPA                82
 #define TGSI_OPCODE_CEIL                83
@@ -340,7 +348,22 @@ struct tgsi_property_data {
 #define TGSI_OPCODE_CASE                142
 #define TGSI_OPCODE_DEFAULT             143
 #define TGSI_OPCODE_ENDSWITCH           144
-#define TGSI_OPCODE_LAST                145
+
+/* resource related opcodes */
+#define TGSI_OPCODE_LOAD                145
+#define TGSI_OPCODE_LOAD_MS             146
+#define TGSI_OPCODE_SAMPLE              147
+#define TGSI_OPCODE_SAMPLE_B            148
+#define TGSI_OPCODE_SAMPLE_C            149
+#define TGSI_OPCODE_SAMPLE_C_LZ         150
+#define TGSI_OPCODE_SAMPLE_D            151
+#define TGSI_OPCODE_SAMPLE_L            152
+#define TGSI_OPCODE_GATHER4             153
+#define TGSI_OPCODE_RESINFO             154
+#define TGSI_OPCODE_SAMPLE_POS          155
+#define TGSI_OPCODE_SAMPLE_INFO         156
+
+#define TGSI_OPCODE_LAST                157
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */
@@ -407,7 +430,9 @@ struct tgsi_instruction_label
 #define TGSI_TEXTURE_SHADOW1D       6
 #define TGSI_TEXTURE_SHADOW2D       7
 #define TGSI_TEXTURE_SHADOWRECT     8
-#define TGSI_TEXTURE_COUNT          9
+#define TGSI_TEXTURE_1D_ARRAY       9
+#define TGSI_TEXTURE_2D_ARRAY      10
+#define TGSI_TEXTURE_COUNT         11
 
 struct tgsi_instruction_texture
 {

@@ -39,7 +39,7 @@
 #include "st_cb_flush.h"
 #include "st_cb_clear.h"
 #include "st_cb_fbo.h"
-#include "st_public.h"
+#include "st_manager.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
@@ -51,15 +51,10 @@
 static INLINE GLboolean
 is_front_buffer_dirty(struct st_context *st)
 {
-   if (st->frontbuffer_status == FRONT_STATUS_DIRTY) {
-      return GL_TRUE;
-   }
-   else {
-      GLframebuffer *fb = st->ctx->DrawBuffer;
-      struct st_renderbuffer *strb
-         = st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
-      return strb && strb->defined;
-   }
+   struct gl_framebuffer *fb = st->ctx->DrawBuffer;
+   struct st_renderbuffer *strb
+      = st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
+   return strb && strb->defined;
 }
 
 
@@ -69,26 +64,19 @@ is_front_buffer_dirty(struct st_context *st)
 static void
 display_front_buffer(struct st_context *st)
 {
-   GLframebuffer *fb = st->ctx->DrawBuffer;
+   struct gl_framebuffer *fb = st->ctx->DrawBuffer;
    struct st_renderbuffer *strb
       = st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
 
    if (strb) {
-      struct pipe_surface *front_surf = strb->surface;
-      
       /* Hook for copying "fake" frontbuffer if necessary:
        */
-      st->pipe->screen->flush_frontbuffer( st->pipe->screen, front_surf,
-                                           st->pipe->priv );
-
-      /*
-        st->frontbuffer_status = FRONT_STATUS_UNDEFINED;
-      */
+      st_manager_flush_frontbuffer(st);
    }
 }
 
 
-void st_flush( struct st_context *st, uint pipeFlushFlags,
+void st_flush( struct st_context *st,
                struct pipe_fence_handle **fence )
 {
    FLUSH_CURRENT(st->ctx, 0);
@@ -101,7 +89,7 @@ void st_flush( struct st_context *st, uint pipeFlushFlags,
    util_blit_flush(st->blit);
    util_gen_mipmap_flush(st->gen_mipmap);
 
-   st->pipe->flush( st->pipe, pipeFlushFlags, fence );
+   st->pipe->flush( st->pipe, fence );
 }
 
 
@@ -112,10 +100,11 @@ void st_finish( struct st_context *st )
 {
    struct pipe_fence_handle *fence = NULL;
 
-   st_flush(st, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, &fence);
+   st_flush(st, &fence);
 
    if(fence) {
-      st->pipe->screen->fence_finish(st->pipe->screen, fence, 0);
+      st->pipe->screen->fence_finish(st->pipe->screen, fence,
+                                     PIPE_TIMEOUT_INFINITE);
       st->pipe->screen->fence_reference(st->pipe->screen, &fence, NULL);
    }
 }
@@ -125,16 +114,16 @@ void st_finish( struct st_context *st )
 /**
  * Called via ctx->Driver.Flush()
  */
-static void st_glFlush(GLcontext *ctx)
+static void st_glFlush(struct gl_context *ctx)
 {
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
 
    /* Don't call st_finish() here.  It is not the state tracker's
     * responsibilty to inject sleeps in the hope of avoiding buffer
     * synchronization issues.  Calling finish() here will just hide
     * problems that need to be fixed elsewhere.
     */
-   st_flush(st, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, NULL);
+   st_flush(st, NULL);
 
    if (is_front_buffer_dirty(st)) {
       display_front_buffer(st);
@@ -145,9 +134,9 @@ static void st_glFlush(GLcontext *ctx)
 /**
  * Called via ctx->Driver.Finish()
  */
-static void st_glFinish(GLcontext *ctx)
+static void st_glFinish(struct gl_context *ctx)
 {
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
 
    st_finish(st);
 

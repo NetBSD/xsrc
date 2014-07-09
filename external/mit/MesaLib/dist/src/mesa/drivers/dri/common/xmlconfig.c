@@ -36,7 +36,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include "main/imports.h"
-#include "dri_util.h"
+#include "utils.h"
 #include "xmlconfig.h"
 
 #undef GET_PROGRAM_NAME
@@ -56,12 +56,33 @@ extern char *program_invocation_name, *program_invocation_short_name;
 #elif defined(__NetBSD__) && defined(__NetBSD_Version) && (__NetBSD_Version >= 106000100)
 #    include <stdlib.h>
 #    define GET_PROGRAM_NAME() getprogname()
+#elif defined(__APPLE__)
+#    include <stdlib.h>
+#    define GET_PROGRAM_NAME() getprogname()
 #elif defined(__sun)
 /* Solaris has getexecname() which returns the full path - return just
    the basename to match BSD getprogname() */
 #    include <stdlib.h>
 #    include <libgen.h>
-#    define GET_PROGRAM_NAME() basename(getexecname())
+
+static const char *__getProgramName () {
+    static const char *progname;
+
+    if (progname == NULL) {
+	const char *e = getexecname();
+	if (e != NULL) {
+	    /* Have to make a copy since getexecname can return a readonly
+	       string, but basename expects to be able to modify its arg. */
+	    char *n = strdup(e);
+	    if (n != NULL) {
+		progname = basename(n);
+	    }
+	}
+    }
+    return progname;
+}
+
+#    define GET_PROGRAM_NAME() __getProgramName()
 #endif
 
 #if !defined(GET_PROGRAM_NAME)
@@ -206,7 +227,7 @@ static GLint strToI (const XML_Char *string, const XML_Char **tail, int base) {
  *
  * Works similar to strtod. Leading space is NOT skipped. The input
  * number may have an optional sign. '.' is interpreted as decimal
- * point and may occor at most once. Optionally the number may end in
+ * point and may occur at most once. Optionally the number may end in
  * [eE]<exponent>, where <exponent> is an integer as recognized by
  * strToI. In that case the result is number * 10^exponent. After
  * returning tail points to the first character that is not part of
@@ -728,7 +749,7 @@ static void parseDeviceAttr (struct OptConfData *data, const XML_Char **attr) {
     for (i = 0; attr[i]; i += 2) {
 	if (!strcmp (attr[i], "driver")) driver = attr[i+1];
 	else if (!strcmp (attr[i], "screen")) screen = attr[i+1];
-	else XML_WARNING("unkown device attribute: %s.", attr[i]);
+	else XML_WARNING("unknown device attribute: %s.", attr[i]);
     }
     if (driver && strcmp (driver, data->driverName))
 	data->ignoringDevice = data->inDevice;
@@ -748,7 +769,7 @@ static void parseAppAttr (struct OptConfData *data, const XML_Char **attr) {
     for (i = 0; attr[i]; i += 2) {
 	if (!strcmp (attr[i], "name")) name = attr[i+1];
 	else if (!strcmp (attr[i], "executable")) exec = attr[i+1];
-	else XML_WARNING("unkown application attribute: %s.", attr[i]);
+	else XML_WARNING("unknown application attribute: %s.", attr[i]);
     }
     if (exec && strcmp (exec, data->execName))
 	data->ignoringApp = data->inApp;
@@ -761,7 +782,7 @@ static void parseOptConfAttr (struct OptConfData *data, const XML_Char **attr) {
     for (i = 0; attr[i]; i += 2) {
 	if (!strcmp (attr[i], "name")) name = attr[i+1];
 	else if (!strcmp (attr[i], "value")) value = attr[i+1];
-	else XML_WARNING("unkown option attribute: %s.", attr[i]);
+	else XML_WARNING("unknown option attribute: %s.", attr[i]);
     }
     if (!name) XML_WARNING1 ("name attribute missing in option.");
     if (!value) XML_WARNING1 ("value attribute missing in option.");

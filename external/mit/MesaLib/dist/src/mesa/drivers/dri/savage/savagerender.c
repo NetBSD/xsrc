@@ -33,6 +33,8 @@
 #include "main/imports.h"
 #include "main/mtypes.h"
 
+#include "math/m_xform.h"
+
 #include "tnl/t_context.h"
 
 #include "savagecontext.h"
@@ -140,7 +142,7 @@
 /*                          Render pipeline stage                     */
 /**********************************************************************/
 
-static GLboolean savage_run_render( GLcontext *ctx,
+static GLboolean savage_run_render( struct gl_context *ctx,
 				    struct tnl_pipeline_stage *stage )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
@@ -232,7 +234,7 @@ struct texnorm_stage_data {
 #define TEXNORM_STAGE_DATA(stage) ((struct texnorm_stage_data *)stage->privatePtr)
 
 
-static GLboolean run_texnorm_stage( GLcontext *ctx,
+static GLboolean run_texnorm_stage( struct gl_context *ctx,
 				    struct tnl_pipeline_stage *stage )
 {
    struct texnorm_stage_data *store = TEXNORM_STAGE_DATA(stage);
@@ -248,9 +250,9 @@ static GLboolean run_texnorm_stage( GLcontext *ctx,
       const GLbitfield reallyEnabled = ctx->Texture.Unit[i]._ReallyEnabled;
       if (reallyEnabled) {
          const struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
-         const GLboolean normalizeS = (texObj->WrapS == GL_REPEAT);
+         const GLboolean normalizeS = (texObj->Sampler.WrapS == GL_REPEAT);
          const GLboolean normalizeT = (reallyEnabled & TEXTURE_2D_BIT) &&
-            (texObj->WrapT == GL_REPEAT);
+            (texObj->Sampler.WrapT == GL_REPEAT);
          const GLfloat *in = (GLfloat *)VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]->data;
          const GLint instride = VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]->stride;
          GLfloat (*out)[4] = store->texcoord[i].data;
@@ -305,7 +307,7 @@ static GLboolean run_texnorm_stage( GLcontext *ctx,
 
 /* Called the first time stage->run() is invoked.
  */
-static GLboolean alloc_texnorm_data( GLcontext *ctx,
+static GLboolean alloc_texnorm_data( struct gl_context *ctx,
 				     struct tnl_pipeline_stage *stage )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
@@ -323,22 +325,22 @@ static GLboolean alloc_texnorm_data( GLcontext *ctx,
    return GL_TRUE;
 }
 
-static void validate_texnorm( GLcontext *ctx,
+static void validate_texnorm( struct gl_context *ctx,
 			      struct tnl_pipeline_stage *stage )
 {
    struct texnorm_stage_data *store = TEXNORM_STAGE_DATA(stage);
    GLuint flags = 0;
 
    if (((ctx->Texture.Unit[0]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) &&
-	(ctx->Texture.Unit[0]._Current->WrapS == GL_REPEAT)) ||
+	(ctx->Texture.Unit[0]._Current->Sampler.WrapS == GL_REPEAT)) ||
        ((ctx->Texture.Unit[0]._ReallyEnabled & TEXTURE_2D_BIT) &&
-	(ctx->Texture.Unit[0]._Current->WrapT == GL_REPEAT)))
+	(ctx->Texture.Unit[0]._Current->Sampler.WrapT == GL_REPEAT)))
       flags |= VERT_BIT_TEX0;
 
    if (((ctx->Texture.Unit[1]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) &&
-	(ctx->Texture.Unit[1]._Current->WrapS == GL_REPEAT)) ||
+	(ctx->Texture.Unit[1]._Current->Sampler.WrapS == GL_REPEAT)) ||
        ((ctx->Texture.Unit[1]._ReallyEnabled & TEXTURE_2D_BIT) &&
-	(ctx->Texture.Unit[1]._Current->WrapT == GL_REPEAT)))
+	(ctx->Texture.Unit[1]._Current->Sampler.WrapT == GL_REPEAT)))
       flags |= VERT_BIT_TEX1;
 
    store->active = (flags != 0);

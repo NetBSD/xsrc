@@ -29,23 +29,16 @@
 #include "main/enums.h"
 #include "main/image.h"
 #include "main/colormac.h"
+#include "main/condrender.h"
 #include "main/mtypes.h"
 #include "main/macros.h"
+#include "main/pbo.h"
 #include "main/bufferobj.h"
-#include "main/polygon.h"
-#include "main/pixelstore.h"
-#include "main/polygon.h"
 #include "main/state.h"
-#include "main/teximage.h"
 #include "main/texobj.h"
-#include "main/texstate.h"
-#include "main/texparam.h"
-#include "main/varray.h"
-#include "main/attrib.h"
-#include "main/enable.h"
-#include "main/viewport.h"
-#include "shader/arbprogram.h"
+#include "main/context.h"
 #include "swrast/swrast.h"
+#include "drivers/common/meta.h"
 
 #include "intel_screen.h"
 #include "intel_context.h"
@@ -67,7 +60,7 @@
  * PBO bitmaps.  I think they are probably pretty rare though - I
  * wonder if Xgl uses them?
  */
-static const GLubyte *map_pbo( GLcontext *ctx,
+static const GLubyte *map_pbo( struct gl_context *ctx,
 			       GLsizei width, GLsizei height,
 			       const struct gl_pixelstore_attrib *unpack,
 			       const GLubyte *bitmap )
@@ -76,7 +69,7 @@ static const GLubyte *map_pbo( GLcontext *ctx,
 
    if (!_mesa_validate_pbo_access(2, unpack, width, height, 1,
 				  GL_COLOR_INDEX, GL_BITMAP,
-				  (GLvoid *) bitmap)) {
+				  INT_MAX, (const GLvoid *) bitmap)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,"glBitmap(invalid PBO access)");
       return NULL;
    }
@@ -122,9 +115,8 @@ static GLuint get_bitmap_rect(GLsizei width, GLsizei height,
    GLint incr;
    GLuint count = 0;
 
-   if (INTEL_DEBUG & DEBUG_PIXEL)
-      printf("%s %d,%d %dx%d bitmap %dx%d skip %d src_offset %d mask %d\n",
-		   __FUNCTION__, x,y,w,h,width,height,unpack->SkipPixels, src_offset, mask);
+   DBG("%s %d,%d %dx%d bitmap %dx%d skip %d src_offset %d mask %d\n",
+       __FUNCTION__, x,y,w,h,width,height,unpack->SkipPixels, src_offset, mask);
 
    if (invert) {
       first = h-1;
@@ -176,14 +168,14 @@ y_flip(struct gl_framebuffer *fb, int y, int height)
  * Render a bitmap.
  */
 static GLboolean
-do_blit_bitmap( GLcontext *ctx, 
+do_blit_bitmap( struct gl_context *ctx, 
 		GLint dstx, GLint dsty,
 		GLsizei width, GLsizei height,
 		const struct gl_pixelstore_attrib *unpack,
 		const GLubyte *bitmap )
 {
    struct intel_context *intel = intel_context(ctx);
-   struct intel_region *dst = intel_drawbuf_region(intel);
+   struct intel_region *dst;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    GLfloat tmpColor[4];
    GLubyte ubcolor[4];
@@ -206,6 +198,9 @@ do_blit_bitmap( GLcontext *ctx,
       return GL_FALSE;
    }
 
+   intel_prepare_render(intel);
+   dst = intel_drawbuf_region(intel);
+
    if (!dst)
        return GL_FALSE;
 
@@ -217,7 +212,7 @@ do_blit_bitmap( GLcontext *ctx,
 
    COPY_4V(tmpColor, ctx->Current.RasterColor);
 
-   if (NEED_SECONDARY_COLOR(ctx)) {
+   if (_mesa_need_secondary_color(ctx)) {
        ADD_3V(tmpColor, tmpColor, ctx->Current.RasterSecondaryColor);
    }
 
@@ -233,8 +228,6 @@ do_blit_bitmap( GLcontext *ctx,
 
    if (!intel_check_blit_fragment_ops(ctx, tmpColor[3] == 1.0F))
       return GL_FALSE;
-
-   intel_prepare_render(intel);
 
    /* Clip to buffer bounds and scissor. */
    if (!_mesa_clip_to_region(fb->_Xmin, fb->_Ymin,
@@ -294,8 +287,8 @@ do_blit_bitmap( GLcontext *ctx,
    }
 out:
 
-   if (INTEL_DEBUG & DEBUG_SYNC)
-      intel_batchbuffer_flush(intel->batch);
+   if (unlikely(INTEL_DEBUG & DEBUG_SYNC))
+      intel_batchbuffer_flush(intel);
 
    if (_mesa_is_bufferobj(unpack->BufferObj)) {
       /* done with PBO so unmap it now */
@@ -308,177 +301,6 @@ out:
    return GL_TRUE;
 }
 
-static GLboolean
-intel_texture_bitmap(GLcontext * ctx,
-		     GLint dst_x, GLint dst_y,
-		     GLsizei width, GLsizei height,
-		     const struct gl_pixelstore_attrib *unpack,
-		     const GLubyte *bitmap)
-{
-   struct intel_context *intel = intel_context(ctx);
-   static const char *fp =
-      "!!ARBfp1.0\n"
-      "TEMP val;\n"
-      "PARAM color=program.local[0];\n"
-      "TEX val, fragment.texcoord[0], texture[0], 2D;\n"
-      "ADD val, val.wwww, {-.5, -.5, -.5, -.5};\n"
-      "KIL val;\n"
-      "MOV result.color, color;\n"
-      "END\n";
-   GLuint texname;
-   GLfloat vertices[4][4];
-   GLint old_active_texture;
-   GLubyte *a8_bitmap;
-   GLfloat dst_z;
-
-   /* We need a fragment program for the KIL effect */
-   if (!ctx->Extensions.ARB_fragment_program ||
-       !ctx->Extensions.ARB_vertex_program) {
-      if (INTEL_DEBUG & DEBUG_FALLBACKS)
-	 fprintf(stderr,
-		 "glBitmap fallback: No fragment/vertex program support\n");
-      return GL_FALSE;
-   }
-
-   /* We're going to mess with texturing with no regard to existing texture
-    * state, so if there is some set up we have to bail.
-    */
-   if (ctx->Texture._EnabledUnits != 0) {
-      if (INTEL_DEBUG & DEBUG_FALLBACKS)
-	 fprintf(stderr, "glBitmap fallback: texturing enabled\n");
-      return GL_FALSE;
-   }
-
-   /* Can't do textured DrawPixels with a fragment program, unless we were
-    * to generate a new program that sampled our texture and put the results
-    * in the fragment color before the user's program started.
-    */
-   if (ctx->FragmentProgram.Enabled) {
-      if (INTEL_DEBUG & DEBUG_FALLBACKS)
-	 fprintf(stderr, "glBitmap fallback: fragment program enabled\n");
-      return GL_FALSE;
-   }
-
-   if (ctx->VertexProgram.Enabled) {
-      if (INTEL_DEBUG & DEBUG_FALLBACKS)
-	 fprintf(stderr, "glBitmap fallback: vertex program enabled\n");
-      return GL_FALSE;
-   }
-
-   if (!ctx->Extensions.ARB_texture_non_power_of_two &&
-       (!is_power_of_two(width) || !is_power_of_two(height))) {
-      if (INTEL_DEBUG & DEBUG_FALLBACKS)
-	 fprintf(stderr,
-		 "glBitmap() fallback: NPOT texture\n");
-      return GL_FALSE;
-   }
-
-   if (ctx->Fog.Enabled) {
-      if (INTEL_DEBUG & DEBUG_FALLBACKS)
-	 fprintf(stderr, "glBitmap() fallback: fog\n");
-      return GL_FALSE;
-   }
-
-   /* Check that we can load in a texture this big. */
-   if (width > (1 << (ctx->Const.MaxTextureLevels - 1)) ||
-       height > (1 << (ctx->Const.MaxTextureLevels - 1))) {
-      if (INTEL_DEBUG & DEBUG_FALLBACKS)
-	 fprintf(stderr, "glBitmap fallback: bitmap too large (%dx%d)\n",
-		 width, height);
-      return GL_FALSE;
-   }
-
-   if (_mesa_is_bufferobj(unpack->BufferObj)) {
-      bitmap = map_pbo(ctx, width, height, unpack, bitmap);
-      if (bitmap == NULL)
-	 return GL_TRUE;	/* even though this is an error, we're done */
-   }
-
-   /* Convert the A1 bitmap to an A8 format suitable for glTexImage */
-   a8_bitmap = calloc(1, width * height);
-   _mesa_expand_bitmap(width, height, unpack, bitmap, a8_bitmap, width, 0xff);
-
-   if (_mesa_is_bufferobj(unpack->BufferObj)) {
-      /* done with PBO so unmap it now */
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                              unpack->BufferObj);
-   }
-
-   /* Save GL state before we start setting up our drawing */
-   _mesa_PushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_POLYGON_BIT |
-                    GL_TEXTURE_BIT | GL_VIEWPORT_BIT);
-   _mesa_PushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT |
-			  GL_CLIENT_PIXEL_STORE_BIT);
-   old_active_texture = ctx->Texture.CurrentUnit;
-
-   _mesa_Disable(GL_POLYGON_STIPPLE);
-   _mesa_PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-   /* Upload our bitmap data to an alpha texture */
-   _mesa_ActiveTextureARB(GL_TEXTURE0_ARB);
-   _mesa_Enable(GL_TEXTURE_2D);
-   _mesa_GenTextures(1, &texname);
-   _mesa_BindTexture(GL_TEXTURE_2D, texname);
-   _mesa_TexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-   _mesa_TexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-   _mesa_PixelStorei(GL_UNPACK_SWAP_BYTES, GL_FALSE);
-   _mesa_PixelStorei(GL_UNPACK_LSB_FIRST, GL_FALSE);
-   _mesa_PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-   _mesa_PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
-   _mesa_PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
-   _mesa_PixelStorei(GL_UNPACK_ALIGNMENT, 1);
-   _mesa_TexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, width, height, 0,
-		    GL_ALPHA, GL_UNSIGNED_BYTE, a8_bitmap);
-   free(a8_bitmap);
-
-   meta_set_fragment_program(&intel->meta, &intel->meta.bitmap_fp, fp);
-   _mesa_ProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 0,
-				     ctx->Current.RasterColor);
-   meta_set_passthrough_vertex_program(&intel->meta);
-   meta_set_passthrough_transform(&intel->meta);
-
-   /* convert rasterpos Z from [0,1] to NDC coord in [-1,1] */
-   dst_z = -1.0 + 2.0 * ctx->Current.RasterPos[2];
-
-   /* RasterPos[2] already takes into account the DepthRange mapping. */
-   _mesa_DepthRange(0.0, 1.0);
-
-   vertices[0][0] = dst_x;
-   vertices[0][1] = dst_y;
-   vertices[0][2] = dst_z;
-   vertices[0][3] = 1.0;
-   vertices[1][0] = dst_x + width;
-   vertices[1][1] = dst_y;
-   vertices[1][2] = dst_z;
-   vertices[1][3] = 1.0;
-   vertices[2][0] = dst_x + width;
-   vertices[2][1] = dst_y + height;
-   vertices[2][2] = dst_z;
-   vertices[2][3] = 1.0;
-   vertices[3][0] = dst_x;
-   vertices[3][1] = dst_y + height;
-   vertices[3][2] = dst_z;
-   vertices[3][3] = 1.0;
-
-   _mesa_VertexPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), &vertices);
-   _mesa_Enable(GL_VERTEX_ARRAY);
-   meta_set_default_texrect(&intel->meta);
-   _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-   meta_restore_texcoords(&intel->meta);
-   meta_restore_transform(&intel->meta);
-   meta_restore_fragment_program(&intel->meta);
-   meta_restore_vertex_program(&intel->meta);
-
-   _mesa_ActiveTextureARB(GL_TEXTURE0_ARB + old_active_texture);
-   _mesa_PopClientAttrib();
-   _mesa_PopAttrib();
-
-   _mesa_DeleteTextures(1, &texname);
-
-   return GL_TRUE;
-}
 
 /* There are a large number of possible ways to implement bitmap on
  * this hardware, most of them have some sort of drawback.  Here are a
@@ -501,22 +323,24 @@ intel_texture_bitmap(GLcontext * ctx,
  *    - Chop bitmap up into 32x32 squares and render w/polygon stipple.
  */
 void
-intelBitmap(GLcontext * ctx,
+intelBitmap(struct gl_context * ctx,
 	    GLint x, GLint y,
 	    GLsizei width, GLsizei height,
 	    const struct gl_pixelstore_attrib *unpack,
 	    const GLubyte * pixels)
 {
+   struct intel_context *intel = intel_context(ctx);
+
+   if (!_mesa_check_conditional_render(ctx))
+      return;
+
    if (do_blit_bitmap(ctx, x, y, width, height,
                           unpack, pixels))
       return;
 
-   if (intel_texture_bitmap(ctx, x, y, width, height,
-			    unpack, pixels))
-      return;
+   /* FIXME */
+   if (intel->gen == 6)
+       return _swrast_Bitmap(ctx, x, y, width, height, unpack, pixels);
 
-   if (INTEL_DEBUG & DEBUG_PIXEL)
-      printf("%s: fallback to swrast\n", __FUNCTION__);
-
-   _swrast_Bitmap(ctx, x, y, width, height, unpack, pixels);
+   _mesa_meta_Bitmap(ctx, x, y, width, height, unpack, pixels);
 }

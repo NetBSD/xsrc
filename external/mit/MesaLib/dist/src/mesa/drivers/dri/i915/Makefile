@@ -4,7 +4,7 @@ include $(TOP)/configs/current
 
 LIBNAME = i915_dri.so
 
-MINIGLX_SOURCES = server/intel_dri.c
+include ../Makefile.defines
 
 DRIVER_SOURCES = \
 	i830_context.c \
@@ -18,6 +18,7 @@ DRIVER_SOURCES = \
 	intel_batchbuffer.c \
 	intel_clear.c \
 	intel_extensions.c \
+	intel_extensions_es.c \
 	intel_mipmap_tree.c \
 	intel_tex_layout.c \
 	intel_tex_image.c \
@@ -57,14 +58,14 @@ C_SOURCES = \
 
 ASM_SOURCES = 
 
-DRIVER_DEFINES = -I../intel -I../intel/server -DI915 \
+DRIVER_DEFINES = -I../intel -DI915 \
 	$(shell pkg-config libdrm --atleast-version=2.3.1 \
 				&& echo "-DDRM_VBLANK_FLIP=DRM_VBLANK_FLIP")
 
 INCLUDES += $(INTEL_CFLAGS)
 DRI_LIB_DEPS += $(INTEL_LIBS)
 
-include ../Makefile.template
+include ../Makefile.targets
 
 intel_decode.o: ../intel/intel_decode.c
 

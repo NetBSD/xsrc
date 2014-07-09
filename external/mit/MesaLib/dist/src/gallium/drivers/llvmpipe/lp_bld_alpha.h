@@ -34,21 +34,24 @@
 #ifndef LP_BLD_ALPHA_H
 #define LP_BLD_ALPHA_H
 
+#include "pipe/p_compiler.h"
 
-#include <llvm-c/Core.h>  
+#include "gallivm/lp_bld.h"
 
 struct pipe_alpha_state;
+struct gallivm_state;
 struct lp_type;
 struct lp_build_mask_context;
 
 
 void
-lp_build_alpha_test(LLVMBuilderRef builder,
-                    const struct pipe_alpha_state *state,
+lp_build_alpha_test(struct gallivm_state *gallivm,
+                    unsigned func,
                     struct lp_type type,
                     struct lp_build_mask_context *mask,
                     LLVMValueRef alpha,
-                    LLVMValueRef ref);
+                    LLVMValueRef ref,
+                    boolean do_branch);
 
 
 #endif /* !LP_BLD_ALPHA_H */

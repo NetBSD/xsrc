@@ -29,18 +29,8 @@
 #define LP_BLD_BLEND_H
 
 
-/**
- * @file
- * LLVM IR building helpers interfaces.
- *
- * We use LLVM-C bindings for now. They are not documented, but follow the C++
- * interfaces very closely, and appear to be complete enough for code
- * genration. See
- * http://npcontemplation.blogspot.com/2008/06/secret-of-llvm-c-bindings.html
- * for a standalone example.
- */
-
-#include <llvm-c/Core.h>  
+#include "gallivm/lp_bld.h"
+#include "gallivm/lp_bld_init.h"
  
 #include "pipe/p_format.h"
 
@@ -72,9 +62,10 @@ lp_build_blend_func(struct lp_build_context *bld,
 
 
 LLVMValueRef
-lp_build_blend_aos(LLVMBuilderRef builder,
+lp_build_blend_aos(struct gallivm_state *gallivm,
                    const struct pipe_blend_state *blend,
                    struct lp_type type,
+                   unsigned rt,
                    LLVMValueRef src,
                    LLVMValueRef dst,
                    LLVMValueRef const_,
@@ -82,9 +73,10 @@ lp_build_blend_aos(LLVMBuilderRef builder,
 
 
 void
-lp_build_blend_soa(LLVMBuilderRef builder,
+lp_build_blend_soa(struct gallivm_state *gallivm,
                    const struct pipe_blend_state *blend,
                    struct lp_type type,
+                   unsigned rt,
                    LLVMValueRef src[4],
                    LLVMValueRef dst[4],
                    LLVMValueRef const_[4],

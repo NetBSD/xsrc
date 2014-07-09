@@ -1,494 +1,345 @@
-/*
- * Copyright 2008 Ben Skeggs
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
- * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
-#include "util/u_format.h"
 
 #include "nv50_context.h"
-#include "nouveau/nouveau_stateobj.h"
+#include "os/os_time.h"
 
 static void
-nv50_state_validate_fb(struct nv50_context *nv50)
+nv50_validate_fb(struct nv50_context *nv50)
 {
-	struct nouveau_grobj *tesla = nv50->screen->tesla;
-	struct nouveau_stateobj *so = so_new(32, 79, 18);
-	struct pipe_framebuffer_state *fb = &nv50->framebuffer;
-	unsigned i, w, h, gw = 0;
+   struct nouveau_channel *chan = nv50->screen->base.channel;
+   struct pipe_framebuffer_state *fb = &nv50->framebuffer;
+   unsigned i;
+   boolean serialize = FALSE;
 
-	/* Set nr of active RTs and select RT for each colour output.
-	 * FP result 0 always goes to RT[0], bits 4 - 6 are ignored.
-	 * Ambiguous assignment results in no rendering (no DATA_ERROR).
-	 */
-	so_method(so, tesla, NV50TCL_RT_CONTROL, 1);
-	so_data  (so, fb->nr_cbufs |
-		  (0 <<  4) | (1 <<  7) | (2 << 10) | (3 << 13) |
-		  (4 << 16) | (5 << 19) | (6 << 22) | (7 << 25));
+   nv50_bufctx_reset(nv50, NV50_BUFCTX_FRAME);
 
-	for (i = 0; i < fb->nr_cbufs; i++) {
-		struct pipe_texture *pt = fb->cbufs[i]->texture;
-		struct nouveau_bo *bo = nv50_miptree(pt)->base.bo;
+   BEGIN_RING(chan, RING_3D(RT_CONTROL), 1);
+   OUT_RING  (chan, (076543210 << 4) | fb->nr_cbufs);
+   BEGIN_RING(chan, RING_3D(SCREEN_SCISSOR_HORIZ), 2);
+   OUT_RING  (chan, fb->width << 16);
+   OUT_RING  (chan, fb->height << 16);
 
-		if (!gw) {
-			w = fb->cbufs[i]->width;
-			h = fb->cbufs[i]->height;
-			gw = 1;
-		} else {
-			assert(w == fb->cbufs[i]->width);
-			assert(h == fb->cbufs[i]->height);
-		}
+   MARK_RING(chan, 9 * fb->nr_cbufs, 2 * fb->nr_cbufs);
 
-		so_method(so, tesla, NV50TCL_RT_HORIZ(i), 2);
-		so_data  (so, fb->cbufs[i]->width);
-		so_data  (so, fb->cbufs[i]->height);
+   for (i = 0; i < fb->nr_cbufs; ++i) {
+      struct nv50_miptree *mt = nv50_miptree(fb->cbufs[i]->texture);
+      struct nv50_surface *sf = nv50_surface(fb->cbufs[i]);
+      struct nouveau_bo *bo = mt->base.bo;
+      uint32_t offset = sf->offset;
 
-		so_method(so, tesla, NV50TCL_RT_ADDRESS_HIGH(i), 5);
-		so_reloc (so, bo, fb->cbufs[i]->offset, NOUVEAU_BO_VRAM |
-			      NOUVEAU_BO_HIGH | NOUVEAU_BO_RDWR, 0, 0);
-		so_reloc (so, bo, fb->cbufs[i]->offset, NOUVEAU_BO_VRAM |
-			      NOUVEAU_BO_LOW | NOUVEAU_BO_RDWR, 0, 0);
-		switch (fb->cbufs[i]->format) {
-		case PIPE_FORMAT_B8G8R8A8_UNORM:
-			so_data(so, NV50TCL_RT_FORMAT_A8R8G8B8_UNORM);
-			break;
-		case PIPE_FORMAT_B8G8R8X8_UNORM:
-			so_data(so, NV50TCL_RT_FORMAT_X8R8G8B8_UNORM);
-			break;
-		case PIPE_FORMAT_B5G6R5_UNORM:
-			so_data(so, NV50TCL_RT_FORMAT_R5G6B5_UNORM);
-			break;
-		case PIPE_FORMAT_R16G16B16A16_SNORM:
-			so_data(so, NV50TCL_RT_FORMAT_R16G16B16A16_SNORM);
-			break;
-		case PIPE_FORMAT_R16G16B16A16_UNORM:
-			so_data(so, NV50TCL_RT_FORMAT_R16G16B16A16_UNORM);
-			break;
-		case PIPE_FORMAT_R32G32B32A32_FLOAT:
-			so_data(so, NV50TCL_RT_FORMAT_R32G32B32A32_FLOAT);
-			break;
-		case PIPE_FORMAT_R16G16_SNORM:
-			so_data(so, NV50TCL_RT_FORMAT_R16G16_SNORM);
-			break;
-		case PIPE_FORMAT_R16G16_UNORM:
-			so_data(so, NV50TCL_RT_FORMAT_R16G16_UNORM);
-			break;
-		default:
-			NOUVEAU_ERR("AIIII unknown format %s\n",
-			            util_format_name(fb->cbufs[i]->format));
-			so_data(so, NV50TCL_RT_FORMAT_X8R8G8B8_UNORM);
-			break;
-		}
-		so_data(so, nv50_miptree(pt)->
-				level[fb->cbufs[i]->level].tile_mode << 4);
-		so_data(so, 0x00000000);
+      BEGIN_RING(chan, RING_3D(RT_ADDRESS_HIGH(i)), 5);
+      OUT_RELOCh(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
+      OUT_RELOCl(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
+      OUT_RING  (chan, nv50_format_table[sf->base.format].rt);
+      OUT_RING  (chan, mt->level[sf->base.u.tex.level].tile_mode << 4);
+      OUT_RING  (chan, mt->layer_stride >> 2);
+      BEGIN_RING(chan, RING_3D(RT_HORIZ(i)), 2);
+      OUT_RING  (chan, sf->width);
+      OUT_RING  (chan, sf->height);
+      BEGIN_RING(chan, RING_3D(RT_ARRAY_MODE), 1);
+      OUT_RING  (chan, sf->depth);
 
-		so_method(so, tesla, NV50TCL_RT_ARRAY_MODE, 1);
-		so_data  (so, 1);
-	}
+      if (mt->base.status & NOUVEAU_BUFFER_STATUS_GPU_READING)
+         serialize = TRUE;
+      mt->base.status |= NOUVEAU_BUFFER_STATUS_GPU_WRITING;
+      mt->base.status &= NOUVEAU_BUFFER_STATUS_GPU_READING;
 
-	if (fb->zsbuf) {
-		struct pipe_texture *pt = fb->zsbuf->texture;
-		struct nouveau_bo *bo = nv50_miptree(pt)->base.bo;
+      /* only register for writing, otherwise we'd always serialize here */
+      nv50_bufctx_add_resident(nv50, NV50_BUFCTX_FRAME, &mt->base,
+                               NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+   }
 
-		if (!gw) {
-			w = fb->zsbuf->width;
-			h = fb->zsbuf->height;
-			gw = 1;
-		} else {
-			assert(w == fb->zsbuf->width);
-			assert(h == fb->zsbuf->height);
-		}
+   if (fb->zsbuf) {
+      struct nv50_miptree *mt = nv50_miptree(fb->zsbuf->texture);
+      struct nv50_surface *sf = nv50_surface(fb->zsbuf);
+      struct nouveau_bo *bo = mt->base.bo;
+      int unk = mt->base.base.target == PIPE_TEXTURE_2D;
+      uint32_t offset = sf->offset;
 
-		so_method(so, tesla, NV50TCL_ZETA_ADDRESS_HIGH, 5);
-		so_reloc (so, bo, fb->zsbuf->offset, NOUVEAU_BO_VRAM |
-			      NOUVEAU_BO_HIGH | NOUVEAU_BO_RDWR, 0, 0);
-		so_reloc (so, bo, fb->zsbuf->offset, NOUVEAU_BO_VRAM |
-			      NOUVEAU_BO_LOW | NOUVEAU_BO_RDWR, 0, 0);
-		switch (fb->zsbuf->format) {
-		case PIPE_FORMAT_Z24S8_UNORM:
-			so_data(so, NV50TCL_ZETA_FORMAT_S8Z24_UNORM);
-			break;
-		case PIPE_FORMAT_Z24X8_UNORM:
-			so_data(so, NV50TCL_ZETA_FORMAT_X8Z24_UNORM);
-			break;
-		case PIPE_FORMAT_S8Z24_UNORM:
-			so_data(so, NV50TCL_ZETA_FORMAT_Z24S8_UNORM);
-			break;
-		case PIPE_FORMAT_Z32_FLOAT:
-			so_data(so, NV50TCL_ZETA_FORMAT_Z32_FLOAT);
-			break;
-		default:
-			NOUVEAU_ERR("AIIII unknown format %s\n",
-			            util_format_name(fb->zsbuf->format));
-			so_data(so, NV50TCL_ZETA_FORMAT_S8Z24_UNORM);
-			break;
-		}
-		so_data(so, nv50_miptree(pt)->
-				level[fb->zsbuf->level].tile_mode << 4);
-		so_data(so, 0x00000000);
+      MARK_RING (chan, 12, 2);
+      BEGIN_RING(chan, RING_3D(ZETA_ADDRESS_HIGH), 5);
+      OUT_RELOCh(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
+      OUT_RELOCl(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
+      OUT_RING  (chan, nv50_format_table[fb->zsbuf->format].rt);
+      OUT_RING  (chan, mt->level[sf->base.u.tex.level].tile_mode << 4);
+      OUT_RING  (chan, mt->layer_stride >> 2);
+      BEGIN_RING(chan, RING_3D(ZETA_ENABLE), 1);
+      OUT_RING  (chan, 1);
+      BEGIN_RING(chan, RING_3D(ZETA_HORIZ), 3);
+      OUT_RING  (chan, sf->width);
+      OUT_RING  (chan, sf->height);
+      OUT_RING  (chan, (unk << 16) | sf->depth);
 
-		so_method(so, tesla, NV50TCL_ZETA_ENABLE, 1);
-		so_data  (so, 1);
-		so_method(so, tesla, NV50TCL_ZETA_HORIZ, 3);
-		so_data  (so, fb->zsbuf->width);
-		so_data  (so, fb->zsbuf->height);
-		so_data  (so, 0x00010001);
-	} else {
-		so_method(so, tesla, NV50TCL_ZETA_ENABLE, 1);
-		so_data  (so, 0);
-	}
+      if (mt->base.status & NOUVEAU_BUFFER_STATUS_GPU_READING)
+         serialize = TRUE;
+      mt->base.status |= NOUVEAU_BUFFER_STATUS_GPU_WRITING;
+      mt->base.status &= NOUVEAU_BUFFER_STATUS_GPU_READING;
 
-	so_method(so, tesla, NV50TCL_VIEWPORT_HORIZ(0), 2);
-	so_data  (so, w << 16);
-	so_data  (so, h << 16);
-	/* set window lower left corner */
-	so_method(so, tesla, NV50TCL_WINDOW_OFFSET_X, 2);
-	so_data  (so, 0);
-	so_data  (so, 0);
-	/* set screen scissor rectangle */
-	so_method(so, tesla, NV50TCL_SCREEN_SCISSOR_HORIZ, 2);
-	so_data  (so, w << 16);
-	so_data  (so, h << 16);
+      nv50_bufctx_add_resident(nv50, NV50_BUFCTX_FRAME, &mt->base,
+                               NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+   } else {
+      BEGIN_RING(chan, RING_3D(ZETA_ENABLE), 1);
+      OUT_RING  (chan, 0);
+   }
 
-	/* we set scissors to framebuffer size when they're 'turned off' */
-	nv50->dirty |= NV50_NEW_SCISSOR;
-	so_ref(NULL, &nv50->state.scissor);
+   BEGIN_RING(chan, RING_3D(VIEWPORT_HORIZ(0)), 2);
+   OUT_RING  (chan, fb->width << 16);
+   OUT_RING  (chan, fb->height << 16);
 
-	so_ref(so, &nv50->state.fb);
-	so_ref(NULL, &so);
+   if (serialize) {
+      BEGIN_RING(chan, RING_3D(SERIALIZE), 1);
+      OUT_RING  (chan, 0);
+   }
 }
 
 static void
-nv50_validate_samplers(struct nv50_context *nv50, struct nouveau_stateobj *so,
-		       unsigned p)
+nv50_validate_blend_colour(struct nv50_context *nv50)
 {
-	struct nouveau_grobj *eng2d = nv50->screen->eng2d;
-	unsigned i, j, dw = nv50->sampler_nr[p] * 8;
+   struct nouveau_channel *chan = nv50->screen->base.channel;
 
-	if (!dw)
-		return;
-	nv50_so_init_sifc(nv50, so, nv50->screen->tsc, NOUVEAU_BO_VRAM,
-			  p * (32 * 8 * 4), dw * 4);
-
-	so_method(so, eng2d, NV50_2D_SIFC_DATA | (2 << 29), dw);
-
-	for (i = 0; i < nv50->sampler_nr[p]; ++i) {
-		if (nv50->sampler[p][i])
-			so_datap(so, nv50->sampler[p][i]->tsc, 8);
-		else {
-			for (j = 0; j < 8; ++j) /* you get punished */
-				so_data(so, 0); /* ... for leaving holes */
-		}
-	}
+   BEGIN_RING(chan, RING_3D(BLEND_COLOR(0)), 4);
+   OUT_RINGf (chan, nv50->blend_colour.color[0]);
+   OUT_RINGf (chan, nv50->blend_colour.color[1]);
+   OUT_RINGf (chan, nv50->blend_colour.color[2]);
+   OUT_RINGf (chan, nv50->blend_colour.color[3]);    
 }
 
 static void
-nv50_state_emit(struct nv50_context *nv50)
+nv50_validate_stencil_ref(struct nv50_context *nv50)
 {
-	struct nv50_screen *screen = nv50->screen;
-	struct nouveau_channel *chan = screen->base.channel;
+   struct nouveau_channel *chan = nv50->screen->base.channel;
 
-	/* XXX: this is racy for multiple contexts active on separate
-	 * threads.
-	 */
-	if (screen->cur_ctx != nv50) {
-		if (nv50->state.fb)
-			nv50->state.dirty |= NV50_NEW_FRAMEBUFFER;
-		if (nv50->state.blend)
-			nv50->state.dirty |= NV50_NEW_BLEND;
-		if (nv50->state.zsa)
-			nv50->state.dirty |= NV50_NEW_ZSA;
-		if (nv50->state.vertprog)
-			nv50->state.dirty |= NV50_NEW_VERTPROG;
-		if (nv50->state.fragprog)
-			nv50->state.dirty |= NV50_NEW_FRAGPROG;
-		if (nv50->state.geomprog)
-			nv50->state.dirty |= NV50_NEW_GEOMPROG;
-		if (nv50->state.rast)
-			nv50->state.dirty |= NV50_NEW_RASTERIZER;
-		if (nv50->state.blend_colour)
-			nv50->state.dirty |= NV50_NEW_BLEND_COLOUR;
-		if (nv50->state.stencil_ref)
-			nv50->state.dirty |= NV50_NEW_STENCIL_REF;
-		if (nv50->state.stipple)
-			nv50->state.dirty |= NV50_NEW_STIPPLE;
-		if (nv50->state.scissor)
-			nv50->state.dirty |= NV50_NEW_SCISSOR;
-		if (nv50->state.viewport)
-			nv50->state.dirty |= NV50_NEW_VIEWPORT;
-		if (nv50->state.tsc_upload)
-			nv50->state.dirty |= NV50_NEW_SAMPLER;
-		if (nv50->state.tic_upload)
-			nv50->state.dirty |= NV50_NEW_TEXTURE;
-		if (nv50->state.vtxfmt && nv50->state.vtxbuf)
-			nv50->state.dirty |= NV50_NEW_ARRAYS;
-		screen->cur_ctx = nv50;
-	}
-
-	if (nv50->state.dirty & NV50_NEW_FRAMEBUFFER)
-		so_emit(chan, nv50->state.fb);
-	if (nv50->state.dirty & NV50_NEW_BLEND)
-		so_emit(chan, nv50->state.blend);
-	if (nv50->state.dirty & NV50_NEW_ZSA)
-		so_emit(chan, nv50->state.zsa);
-	if (nv50->state.dirty & NV50_NEW_VERTPROG)
-		so_emit(chan, nv50->state.vertprog);
-	if (nv50->state.dirty & NV50_NEW_FRAGPROG)
-		so_emit(chan, nv50->state.fragprog);
-	if (nv50->state.dirty & NV50_NEW_GEOMPROG && nv50->state.geomprog)
-		so_emit(chan, nv50->state.geomprog);
-	if (nv50->state.dirty & (NV50_NEW_FRAGPROG | NV50_NEW_VERTPROG |
-				 NV50_NEW_GEOMPROG | NV50_NEW_RASTERIZER))
-		so_emit(chan, nv50->state.fp_linkage);
-	if ((nv50->state.dirty & (NV50_NEW_VERTPROG | NV50_NEW_GEOMPROG))
-	    && nv50->state.gp_linkage)
-		so_emit(chan, nv50->state.gp_linkage);
-	if (nv50->state.dirty & NV50_NEW_RASTERIZER)
-		so_emit(chan, nv50->state.rast);
-	if (nv50->state.dirty & NV50_NEW_BLEND_COLOUR)
-		so_emit(chan, nv50->state.blend_colour);
-	if (nv50->state.dirty & NV50_NEW_STENCIL_REF)
-		so_emit(chan, nv50->state.stencil_ref);
-	if (nv50->state.dirty & NV50_NEW_STIPPLE)
-		so_emit(chan, nv50->state.stipple);
-	if (nv50->state.dirty & NV50_NEW_SCISSOR)
-		so_emit(chan, nv50->state.scissor);
-	if (nv50->state.dirty & NV50_NEW_VIEWPORT)
-		so_emit(chan, nv50->state.viewport);
-	if (nv50->state.dirty & NV50_NEW_SAMPLER)
-		so_emit(chan, nv50->state.tsc_upload);
-	if (nv50->state.dirty & NV50_NEW_TEXTURE)
-		so_emit(chan, nv50->state.tic_upload);
-	if (nv50->state.dirty & NV50_NEW_ARRAYS) {
-		so_emit(chan, nv50->state.vtxfmt);
-		so_emit(chan, nv50->state.vtxbuf);
-		if (nv50->state.vtxattr)
-			so_emit(chan, nv50->state.vtxattr);
-	}
-	nv50->state.dirty = 0;
+   BEGIN_RING(chan, RING_3D(STENCIL_FRONT_FUNC_REF), 1);
+   OUT_RING  (chan, nv50->stencil_ref.ref_value[0]);
+   BEGIN_RING(chan, RING_3D(STENCIL_BACK_FUNC_REF), 1);
+   OUT_RING  (chan, nv50->stencil_ref.ref_value[1]);
 }
 
-void
-nv50_state_flush_notify(struct nouveau_channel *chan)
+static void
+nv50_validate_stipple(struct nv50_context *nv50)
 {
-	struct nv50_context *nv50 = chan->user_private;
+   struct nouveau_channel *chan = nv50->screen->base.channel;
+   unsigned i;
 
-	if (nv50->state.tic_upload && !(nv50->dirty & NV50_NEW_TEXTURE))
-		so_emit(chan, nv50->state.tic_upload);
-
-	so_emit_reloc_markers(chan, nv50->state.fb);
-	so_emit_reloc_markers(chan, nv50->state.vertprog);
-	so_emit_reloc_markers(chan, nv50->state.fragprog);
-	so_emit_reloc_markers(chan, nv50->state.vtxbuf);
-	so_emit_reloc_markers(chan, nv50->screen->static_init);
-
-	if (nv50->state.instbuf)
-		so_emit_reloc_markers(chan, nv50->state.instbuf);
+   BEGIN_RING(chan, RING_3D(POLYGON_STIPPLE_PATTERN(0)), 32);
+   for (i = 0; i < 32; ++i)
+      OUT_RING(chan, util_bswap32(nv50->stipple.stipple[i]));
 }
+
+static void
+nv50_validate_scissor(struct nv50_context *nv50)
+{
+   struct nouveau_channel *chan = nv50->screen->base.channel;
+   struct pipe_scissor_state *s = &nv50->scissor;
+#ifdef NV50_SCISSORS_CLIPPING
+   struct pipe_viewport_state *vp = &nv50->viewport;
+   int minx, maxx, miny, maxy;
+
+   if (!(nv50->dirty &
+         (NV50_NEW_SCISSOR | NV50_NEW_VIEWPORT | NV50_NEW_FRAMEBUFFER)) &&
+       nv50->state.scissor == nv50->rast->pipe.scissor)
+      return;
+   nv50->state.scissor = nv50->rast->pipe.scissor;
+
+   if (nv50->state.scissor) {
+      minx = s->minx;
+      maxx = s->maxx;
+      miny = s->miny;
+      maxy = s->maxy;
+   } else {
+      minx = 0;
+      maxx = nv50->framebuffer.width;
+      miny = 0;
+      maxy = nv50->framebuffer.height;
+   }
+
+   minx = MAX2(minx, (int)(vp->translate[0] - fabsf(vp->scale[0])));
+   maxx = MIN2(maxx, (int)(vp->translate[0] + fabsf(vp->scale[0])));
+   miny = MAX2(miny, (int)(vp->translate[1] - fabsf(vp->scale[1])));
+   maxy = MIN2(maxy, (int)(vp->translate[1] + fabsf(vp->scale[1])));
+
+   BEGIN_RING(chan, RING_3D(SCISSOR_HORIZ(0)), 2);
+   OUT_RING  (chan, (maxx << 16) | minx);
+   OUT_RING  (chan, (maxy << 16) | miny);
+#else
+   BEGIN_RING(chan, RING_3D(SCISSOR_HORIZ(0)), 2);
+   OUT_RING  (chan, (s->maxx << 16) | s->minx);
+   OUT_RING  (chan, (s->maxy << 16) | s->miny);
+#endif
+}
+
+static void
+nv50_validate_viewport(struct nv50_context *nv50)
+{
+   struct nouveau_channel *chan = nv50->screen->base.channel;
+   float zmin, zmax;
+
+   BEGIN_RING(chan, RING_3D(VIEWPORT_TRANSLATE_X(0)), 3);
+   OUT_RINGf (chan, nv50->viewport.translate[0]);
+   OUT_RINGf (chan, nv50->viewport.translate[1]);
+   OUT_RINGf (chan, nv50->viewport.translate[2]);
+   BEGIN_RING(chan, RING_3D(VIEWPORT_SCALE_X(0)), 3);
+   OUT_RINGf (chan, nv50->viewport.scale[0]);
+   OUT_RINGf (chan, nv50->viewport.scale[1]);
+   OUT_RINGf (chan, nv50->viewport.scale[2]);
+
+   zmin = nv50->viewport.translate[2] - fabsf(nv50->viewport.scale[2]);
+   zmax = nv50->viewport.translate[2] + fabsf(nv50->viewport.scale[2]);
+
+#ifdef NV50_SCISSORS_CLIPPING
+   BEGIN_RING(chan, RING_3D(DEPTH_RANGE_NEAR(0)), 2);
+   OUT_RINGf (chan, zmin);
+   OUT_RINGf (chan, zmax);
+#endif
+}
+
+static void
+nv50_validate_clip(struct nv50_context *nv50)
+{
+   struct nouveau_channel *chan = nv50->screen->base.channel;
+   uint32_t clip;
+
+   if (nv50->clip.depth_clamp) {
+      clip =
+         NV50_3D_VIEW_VOLUME_CLIP_CTRL_DEPTH_CLAMP_NEAR |
+         NV50_3D_VIEW_VOLUME_CLIP_CTRL_DEPTH_CLAMP_FAR |
+         NV50_3D_VIEW_VOLUME_CLIP_CTRL_UNK12_UNK1;
+   } else {
+      clip = 0;
+   }
+
+#ifndef NV50_SCISSORS_CLIPPING
+   clip |=
+      NV50_3D_VIEW_VOLUME_CLIP_CTRL_UNK7 |
+      NV50_3D_VIEW_VOLUME_CLIP_CTRL_UNK12_UNK1;
+#endif
+
+   BEGIN_RING(chan, RING_3D(VIEW_VOLUME_CLIP_CTRL), 1);
+   OUT_RING  (chan, clip);
+
+   if (nv50->clip.nr) {
+      BEGIN_RING(chan, RING_3D(CB_ADDR), 1);
+      OUT_RING  (chan, (0 << 8) | NV50_CB_AUX);
+      BEGIN_RING_NI(chan, RING_3D(CB_DATA(0)), nv50->clip.nr * 4);
+      OUT_RINGp (chan, &nv50->clip.ucp[0][0], nv50->clip.nr * 4);
+   }
+
+   BEGIN_RING(chan, RING_3D(VP_CLIP_DISTANCE_ENABLE), 1);
+   OUT_RING  (chan, (1 << nv50->clip.nr) - 1);
+
+   if (nv50->vertprog && nv50->clip.nr > nv50->vertprog->vp.clpd_nr)
+      nv50->dirty |= NV50_NEW_VERTPROG;
+}
+
+static void
+nv50_validate_blend(struct nv50_context *nv50)
+{
+   struct nouveau_channel *chan = nv50->screen->base.channel;
+
+   WAIT_RING(chan, nv50->blend->size);
+   OUT_RINGp(chan, nv50->blend->state, nv50->blend->size);
+}
+
+static void
+nv50_validate_zsa(struct nv50_context *nv50)
+{
+   struct nouveau_channel *chan = nv50->screen->base.channel;
+
+   WAIT_RING(chan, nv50->zsa->size);
+   OUT_RINGp(chan, nv50->zsa->state, nv50->zsa->size);
+}
+
+static void
+nv50_validate_rasterizer(struct nv50_context *nv50)
+{
+   struct nouveau_channel *chan = nv50->screen->base.channel;
+
+   WAIT_RING(chan, nv50->rast->size);
+   OUT_RINGp(chan, nv50->rast->state, nv50->rast->size);
+}
+
+static void
+nv50_switch_pipe_context(struct nv50_context *ctx_to)
+{
+   struct nv50_context *ctx_from = ctx_to->screen->cur_ctx;
+
+   if (ctx_from)
+      ctx_to->state = ctx_from->state;
+
+   ctx_to->dirty = ~0;
+
+   if (!ctx_to->vertex)
+      ctx_to->dirty &= ~(NV50_NEW_VERTEX | NV50_NEW_ARRAYS);
+
+   if (!ctx_to->vertprog)
+      ctx_to->dirty &= ~NV50_NEW_VERTPROG;
+   if (!ctx_to->fragprog)
+      ctx_to->dirty &= ~NV50_NEW_FRAGPROG;
+
+   if (!ctx_to->blend)
+      ctx_to->dirty &= ~NV50_NEW_BLEND;
+   if (!ctx_to->rast)
+      ctx_to->dirty &= ~NV50_NEW_RASTERIZER;
+   if (!ctx_to->zsa)
+      ctx_to->dirty &= ~NV50_NEW_ZSA;
+
+   ctx_to->screen->base.channel->user_private = ctx_to->screen->cur_ctx =
+      ctx_to;
+}
+
+static struct state_validate {
+    void (*func)(struct nv50_context *);
+    uint32_t states;
+} validate_list[] = {
+    { nv50_validate_fb,            NV50_NEW_FRAMEBUFFER },
+    { nv50_validate_blend,         NV50_NEW_BLEND },
+    { nv50_validate_zsa,           NV50_NEW_ZSA },
+    { nv50_validate_rasterizer,    NV50_NEW_RASTERIZER },
+    { nv50_validate_blend_colour,  NV50_NEW_BLEND_COLOUR },
+    { nv50_validate_stencil_ref,   NV50_NEW_STENCIL_REF },
+    { nv50_validate_stipple,       NV50_NEW_STIPPLE },
+#ifdef NV50_SCISSORS_CLIPPING
+    { nv50_validate_scissor,       NV50_NEW_SCISSOR | NV50_NEW_VIEWPORT |
+                                   NV50_NEW_RASTERIZER |
+                                   NV50_NEW_FRAMEBUFFER },
+#else
+    { nv50_validate_scissor,       NV50_NEW_SCISSOR },
+#endif
+    { nv50_validate_viewport,      NV50_NEW_VIEWPORT },
+    { nv50_validate_clip,          NV50_NEW_CLIP },
+    { nv50_vertprog_validate,      NV50_NEW_VERTPROG },
+    { nv50_gmtyprog_validate,      NV50_NEW_GMTYPROG },
+    { nv50_fragprog_validate,      NV50_NEW_FRAGPROG },
+    { nv50_fp_linkage_validate,    NV50_NEW_FRAGPROG | NV50_NEW_VERTPROG |
+                                   NV50_NEW_GMTYPROG },
+    { nv50_gp_linkage_validate,    NV50_NEW_GMTYPROG | NV50_NEW_VERTPROG },
+    { nv50_validate_derived_rs,    NV50_NEW_FRAGPROG | NV50_NEW_RASTERIZER |
+                                   NV50_NEW_VERTPROG | NV50_NEW_GMTYPROG },
+    { nv50_constbufs_validate,     NV50_NEW_CONSTBUF },
+    { nv50_validate_textures,      NV50_NEW_TEXTURES },
+    { nv50_validate_samplers,      NV50_NEW_SAMPLERS },
+    { nv50_vertex_arrays_validate, NV50_NEW_VERTEX | NV50_NEW_ARRAYS }
+};
+#define validate_list_len (sizeof(validate_list) / sizeof(validate_list[0]))
 
 boolean
 nv50_state_validate(struct nv50_context *nv50)
 {
-	struct nouveau_grobj *tesla = nv50->screen->tesla;
-	struct nouveau_stateobj *so;
-	unsigned i;
+   unsigned i;
 
-	if (nv50->dirty & NV50_NEW_FRAMEBUFFER)
-		nv50_state_validate_fb(nv50);
+   if (nv50->screen->cur_ctx != nv50)
+      nv50_switch_pipe_context(nv50);
 
-	if (nv50->dirty & NV50_NEW_BLEND)
-		so_ref(nv50->blend->so, &nv50->state.blend);
+   if (nv50->dirty) {
+      for (i = 0; i < validate_list_len; ++i) {
+         struct state_validate *validate = &validate_list[i];
 
-	if (nv50->dirty & NV50_NEW_ZSA)
-		so_ref(nv50->zsa->so, &nv50->state.zsa);
+         if (nv50->dirty & validate->states)
+            validate->func(nv50);
+      }
+      nv50->dirty = 0;
+   }
 
-	if (nv50->dirty & (NV50_NEW_VERTPROG | NV50_NEW_VERTPROG_CB))
-		nv50_vertprog_validate(nv50);
+   nv50_bufctx_emit_relocs(nv50);
 
-	if (nv50->dirty & (NV50_NEW_FRAGPROG | NV50_NEW_FRAGPROG_CB))
-		nv50_fragprog_validate(nv50);
-
-	if (nv50->dirty & (NV50_NEW_GEOMPROG | NV50_NEW_GEOMPROG_CB))
-		nv50_geomprog_validate(nv50);
-
-	if (nv50->dirty & (NV50_NEW_FRAGPROG | NV50_NEW_VERTPROG |
-			   NV50_NEW_GEOMPROG | NV50_NEW_RASTERIZER))
-		nv50_fp_linkage_validate(nv50);
-
-	if (nv50->dirty & (NV50_NEW_GEOMPROG | NV50_NEW_VERTPROG))
-		nv50_gp_linkage_validate(nv50);
-
-	if (nv50->dirty & NV50_NEW_RASTERIZER)
-		so_ref(nv50->rasterizer->so, &nv50->state.rast);
-
-	if (nv50->dirty & NV50_NEW_BLEND_COLOUR) {
-		so = so_new(1, 4, 0);
-		so_method(so, tesla, NV50TCL_BLEND_COLOR(0), 4);
-		so_data  (so, fui(nv50->blend_colour.color[0]));
-		so_data  (so, fui(nv50->blend_colour.color[1]));
-		so_data  (so, fui(nv50->blend_colour.color[2]));
-		so_data  (so, fui(nv50->blend_colour.color[3]));
-		so_ref(so, &nv50->state.blend_colour);
-		so_ref(NULL, &so);
-	}
-
-	if (nv50->dirty & NV50_NEW_STENCIL_REF) {
-		so = so_new(2, 2, 0);
-		so_method(so, tesla, NV50TCL_STENCIL_FRONT_FUNC_REF, 1);
-		so_data  (so, nv50->stencil_ref.ref_value[0]);
-		so_method(so, tesla, NV50TCL_STENCIL_BACK_FUNC_REF, 1);
-		so_data  (so, nv50->stencil_ref.ref_value[1]);
-		so_ref(so, &nv50->state.stencil_ref);
-		so_ref(NULL, &so);
-	}
-
-	if (nv50->dirty & NV50_NEW_STIPPLE) {
-		so = so_new(1, 32, 0);
-		so_method(so, tesla, NV50TCL_POLYGON_STIPPLE_PATTERN(0), 32);
-		for (i = 0; i < 32; i++)
-			so_data(so, util_bswap32(nv50->stipple.stipple[i]));
-		so_ref(so, &nv50->state.stipple);
-		so_ref(NULL, &so);
-	}
-
-	if (nv50->dirty & (NV50_NEW_SCISSOR | NV50_NEW_RASTERIZER)) {
-		struct pipe_rasterizer_state *rast = &nv50->rasterizer->pipe;
-		struct pipe_scissor_state *s = &nv50->scissor;
-
-		if (nv50->state.scissor &&
-		    (rast->scissor == 0 && nv50->state.scissor_enabled == 0))
-			goto scissor_uptodate;
-		nv50->state.scissor_enabled = rast->scissor;
-
-		so = so_new(1, 2, 0);
-		so_method(so, tesla, NV50TCL_SCISSOR_HORIZ(0), 2);
-		if (nv50->state.scissor_enabled) {
-			so_data(so, (s->maxx << 16) | s->minx);
-			so_data(so, (s->maxy << 16) | s->miny);
-		} else {
-			so_data(so, (nv50->framebuffer.width << 16));
-			so_data(so, (nv50->framebuffer.height << 16));
-		}
-		so_ref(so, &nv50->state.scissor);
-		so_ref(NULL, &so);
-		nv50->state.dirty |= NV50_NEW_SCISSOR;
-	}
-scissor_uptodate:
-
-	if (nv50->dirty & (NV50_NEW_VIEWPORT | NV50_NEW_RASTERIZER)) {
-		if (nv50->state.viewport &&
-		    !(nv50->dirty & NV50_NEW_VIEWPORT))
-			goto viewport_uptodate;
-
-		so = so_new(5, 9, 0);
-		so_method(so, tesla, NV50TCL_VIEWPORT_TRANSLATE_X(0), 3);
-		so_data  (so, fui(nv50->viewport.translate[0]));
-		so_data  (so, fui(nv50->viewport.translate[1]));
-		so_data  (so, fui(nv50->viewport.translate[2]));
-		so_method(so, tesla, NV50TCL_VIEWPORT_SCALE_X(0), 3);
-		so_data  (so, fui(nv50->viewport.scale[0]));
-		so_data  (so, fui(nv50->viewport.scale[1]));
-		so_data  (so, fui(nv50->viewport.scale[2]));
-
-		so_method(so, tesla, NV50TCL_VIEWPORT_TRANSFORM_EN, 1);
-		so_data  (so, 1);
-		/* 0x0000 = remove whole primitive only (xyz)
-		 * 0x1018 = remove whole primitive only (xy), clamp z
-		 * 0x1080 = clip primitive (xyz)
-		 * 0x1098 = clip primitive (xy), clamp z
-		 */
-		so_method(so, tesla, NV50TCL_VIEW_VOLUME_CLIP_CTRL, 1);
-		so_data  (so, 0x1080);
-		/* no idea what 0f90 does */
-		so_method(so, tesla, 0x0f90, 1);
-		so_data  (so, 0);
-
-		so_ref(so, &nv50->state.viewport);
-		so_ref(NULL, &so);
-		nv50->state.dirty |= NV50_NEW_VIEWPORT;
-	}
-viewport_uptodate:
-
-	if (nv50->dirty & NV50_NEW_SAMPLER) {
-		unsigned nr = 0;
-
-		for (i = 0; i < PIPE_SHADER_TYPES; ++i)
-			nr += nv50->sampler_nr[i];
-
-		so = so_new(1 + 5 * PIPE_SHADER_TYPES,
-			    1 + 19 * PIPE_SHADER_TYPES + nr * 8,
-			    PIPE_SHADER_TYPES * 2);
-
-		nv50_validate_samplers(nv50, so, PIPE_SHADER_VERTEX);
-		nv50_validate_samplers(nv50, so, PIPE_SHADER_FRAGMENT);
-
-		so_method(so, tesla, 0x1334, 1); /* flush TSC */
-		so_data  (so, 0);
-
-		so_ref(so, &nv50->state.tsc_upload);
-		so_ref(NULL, &so);
-	}
-
-	if (nv50->dirty & (NV50_NEW_TEXTURE | NV50_NEW_SAMPLER))
-		nv50_tex_validate(nv50);
-
-	if (nv50->dirty & NV50_NEW_ARRAYS)
-		nv50_vbo_validate(nv50);
-
-	nv50->state.dirty |= nv50->dirty;
-	nv50->dirty = 0;
-	nv50_state_emit(nv50);
-
-	return TRUE;
-}
-
-void nv50_so_init_sifc(struct nv50_context *nv50,
-		       struct nouveau_stateobj *so,
-		       struct nouveau_bo *bo, unsigned reloc,
-		       unsigned offset, unsigned size)
-{
-	struct nouveau_grobj *eng2d = nv50->screen->eng2d;
-
-	reloc |= NOUVEAU_BO_WR;
-
-	so_method(so, eng2d, NV50_2D_DST_FORMAT, 2);
-	so_data  (so, NV50_2D_DST_FORMAT_R8_UNORM);
-	so_data  (so, 1);
-	so_method(so, eng2d, NV50_2D_DST_PITCH, 5);
-	so_data  (so, 262144);
-	so_data  (so, 65536);
-	so_data  (so, 1);
-	so_reloc (so, bo, offset, reloc | NOUVEAU_BO_HIGH, 0, 0);
-	so_reloc (so, bo, offset, reloc | NOUVEAU_BO_LOW, 0, 0);
-	so_method(so, eng2d, NV50_2D_SIFC_BITMAP_ENABLE, 2);
-	so_data  (so, 0);
-	so_data  (so, NV50_2D_SIFC_FORMAT_R8_UNORM);
-	so_method(so, eng2d, NV50_2D_SIFC_WIDTH, 10);
-	so_data  (so, size);
-	so_data  (so, 1);
-	so_data  (so, 0);
-	so_data  (so, 1);
-	so_data  (so, 0);
-	so_data  (so, 1);
-	so_data  (so, 0);
-	so_data  (so, 0);
-	so_data  (so, 0);
-	so_data  (so, 0);
+   return TRUE;
 }

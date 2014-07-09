@@ -28,7 +28,42 @@
 #define VARRAY_H
 
 
-#include "mtypes.h"
+#include "glheader.h"
+#include "mfeatures.h"
+
+struct gl_client_array;
+struct gl_context;
+
+
+/**
+ * Compute the index of the last array element that can be safely accessed in
+ * a vertex array.  We can really only do this when the array lives in a VBO.
+ * The array->_MaxElement field will be updated.
+ * Later in glDrawArrays/Elements/etc we can do some bounds checking.
+ */
+static INLINE void
+_mesa_update_array_max_element(struct gl_client_array *array)
+{
+   assert(array->Enabled);
+
+   if (array->BufferObj->Name) {
+      GLsizeiptrARB offset = (GLsizeiptrARB) array->Ptr;
+      GLsizeiptrARB bufSize = (GLsizeiptrARB) array->BufferObj->Size;
+
+      if (offset < bufSize) {
+	 array->_MaxElement = (bufSize - offset + array->StrideB
+                               - array->_ElementSize) / array->StrideB;
+      }
+      else {
+	 array->_MaxElement = 0;
+      }
+   }
+   else {
+      /* user-space array, no idea how big it is */
+      array->_MaxElement = 2 * 1000 * 1000 * 1000; /* just a big number */
+   }
+}
+
 
 #if _HAVE_FULL_GL
 
@@ -116,14 +151,50 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
                              GLboolean normalized, GLsizei stride,
                              const GLvoid *pointer);
 
+void GLAPIENTRY
+_mesa_VertexAttribIPointer(GLuint index, GLint size, GLenum type,
+                           GLsizei stride, const GLvoid *ptr);
+
+
+extern void GLAPIENTRY
+_mesa_EnableVertexAttribArrayARB(GLuint index);
+
+
+extern void GLAPIENTRY
+_mesa_DisableVertexAttribArrayARB(GLuint index);
+
+
+extern void GLAPIENTRY
+_mesa_GetVertexAttribdvARB(GLuint index, GLenum pname, GLdouble *params);
+
+
+extern void GLAPIENTRY
+_mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params);
+
+
+extern void GLAPIENTRY
+_mesa_GetVertexAttribivARB(GLuint index, GLenum pname, GLint *params);
+
+
+extern void GLAPIENTRY
+_mesa_GetVertexAttribIiv(GLuint index, GLenum pname, GLint *params);
+
+
+extern void GLAPIENTRY
+_mesa_GetVertexAttribIuiv(GLuint index, GLenum pname, GLuint *params);
+
+
+extern void GLAPIENTRY
+_mesa_GetVertexAttribPointervARB(GLuint index, GLenum pname, GLvoid **pointer);
+
 
 extern void GLAPIENTRY
 _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer);
 
 
 extern void GLAPIENTRY
-_mesa_MultiDrawArraysEXT( GLenum mode, GLint *first,
-                          GLsizei *count, GLsizei primcount );
+_mesa_MultiDrawArraysEXT( GLenum mode, const GLint *first,
+                          const GLsizei *count, GLsizei primcount );
 
 extern void GLAPIENTRY
 _mesa_MultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type,
@@ -174,21 +245,28 @@ _mesa_DrawRangeElementsBaseVertex(GLenum mode, GLuint start, GLuint end,
 				  const GLvoid *indices,
 				  GLint basevertex);
 
+extern void GLAPIENTRY
+_mesa_PrimitiveRestartIndex(GLuint index);
+
+
+extern void GLAPIENTRY
+_mesa_VertexAttribDivisor(GLuint index, GLuint divisor);
+
 
 extern void
-_mesa_copy_client_array(GLcontext *ctx,
+_mesa_copy_client_array(struct gl_context *ctx,
                         struct gl_client_array *dst,
                         struct gl_client_array *src);
 
 
 extern void
-_mesa_print_arrays(GLcontext *ctx);
+_mesa_print_arrays(struct gl_context *ctx);
 
 extern void
-_mesa_init_varray( GLcontext * ctx );
+_mesa_init_varray( struct gl_context * ctx );
 
 extern void 
-_mesa_free_varray_data(GLcontext *ctx);
+_mesa_free_varray_data(struct gl_context *ctx);
 
 #else
 

@@ -441,6 +441,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_VAP_GB_HORZ_CLIP_ADJ                   0x2228
 #define R300_VAP_GB_HORZ_DISC_ADJ                   0x222c
 
+#define R300_VAP_PVS_FLOW_CNTL_ADDRS_0      0x2230
+#define R300_PVS_FC_ACT_ADRS(x)             ((x) << 0)
+#define R300_PVS_FC_LOOP_CNT_JMP_INST(x)    ((x) << 8)
+#define R300_PVS_FC_LAST_INST(x)            ((x) << 16)
+#define R300_PVS_FC_RTN_INST(x)             ((x) << 24)
+
 /* gap */
 
 /* Sometimes, END_OF_PKT and 0x2284=0 are the only commands sent between
@@ -458,6 +464,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define VAP_PVS_VTX_TIMEOUT_REG             0x2288
 #       define R300_2288_R300                    0x00750000 /* -- nh */
 #       define R300_2288_RV350                   0x0000FFFF /* -- Vladimir */
+
+#define R300_VAP_PVS_FLOW_CNTL_LOOP_INDEX_0 0x2290
+#define R300_PVS_FC_LOOP_INIT_VAL(x)        ((x) << 0)
+#define R300_PVS_FC_LOOP_STEP_VAL(x)        ((x) << 8)
 
 /* gap */
 
@@ -489,6 +499,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_VAP_PVS_CODE_CNTL_1	    0x22D8
 #       define R300_PVS_LAST_VTX_SRC_INST_SHIFT  0
 #define R300_VAP_PVS_FLOW_CNTL_OPC          0x22DC
+#define R300_VAP_PVS_FC_OPC_JUMP(x)         (1 << (2 * (x)))
+#define R300_VAP_PVS_FC_OPC_LOOP(x)         (2 << (2 * (x)))
+#define R300_VAP_PVS_FC_OPC_JSR(x)          (3 << (2 * (x)))
 
 /* The entire range from 0x2300 to 0x2AC inclusive seems to be used for
  * immediate vertices
@@ -504,6 +517,14 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_VAP_VTX_POS_0_Z_2              0x24A8
 /* write 0 to indicate end of packet? */
 #define R300_VAP_VTX_END_OF_PKT             0x24AC
+
+#define R500_VAP_PVS_FLOW_CNTL_ADDRS_LW_0   0x2500
+#define R500_PVS_FC_ACT_ADRS(x)             ((x) << 0)
+#define R500_PVS_FC_LOOP_CNT_JMP_INST(x)    ((x) << 16)
+
+#define R500_VAP_PVS_FLOW_CNTL_ADDRS_UW_0   0x2504
+#define R500_PVS_FC_LAST_INST(x)            ((x) << 0)
+#define R500_PVS_FC_RTN_INST(x)             ((x) << 16)
 
 /* gap */
 
@@ -1637,6 +1658,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_PFS_CNTL_TEX_OFFSET_MASK     (31 << 13)
 #       define R300_PFS_CNTL_TEX_END_SHIFT       18
 #       define R300_PFS_CNTL_TEX_END_MASK        (31 << 18)
+#       define R400_PFS_CNTL_TEX_OFFSET_MSB_SHIFT 24
+#       define R400_PFS_CNTL_TEX_OFFSET_MSB_MASK (0xf << 24)
+#       define R400_PFS_CNTL_TEX_END_MSB_SHIFT   28
+#       define R400_PFS_CNTL_TEX_END_MSB_MASK    (0xf << 28)
 
 /* gap */
 
@@ -1661,6 +1686,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_TEX_SIZE_MASK           (31 << 17)
 #	define R300_RGBA_OUT                (1 << 22)
 #	define R300_W_OUT                   (1 << 23)
+#       define R400_TEX_START_MSB_SHIFT     24
+#       define R400_TEX_START_MSG_MASK      (0xf << 24)
+#       define R400_TEX_SIZE_MSB_SHIFT      28
+#       define R400_TEX_SIZE_MSG_MASK       (0xf << 28)
 
 /* TEX
  * As far as I can tell, texture instructions cannot write into output
@@ -1681,6 +1710,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #		define R300_TEX_OP_TXP	        3
 #		define R300_TEX_OP_TXB	        4
 #	define R300_TEX_INST_MASK               (7 << 15)
+#      define R400_SRC_ADDR_EXT_BIT         (1 << 19)
+#      define R400_DST_ADDR_EXT_BIT         (1 << 20)
 
 /* Output format from the unfied shader */
 #define R300_US_OUT_FMT                     0x46A4
@@ -1875,7 +1906,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_ALU_OUTC_D2A                (3 << 23)
 #       define R300_ALU_OUTC_MIN                (4 << 23)
 #       define R300_ALU_OUTC_MAX                (5 << 23)
-#       define R300_ALU_OUTC_CMPH               (7 << 23)
+#       define R300_ALU_OUTC_CND                (7 << 23)
 #       define R300_ALU_OUTC_CMP                (8 << 23)
 #       define R300_ALU_OUTC_FRC                (9 << 23)
 #       define R300_ALU_OUTC_REPL_ALPHA         (10 << 23)
@@ -1957,6 +1988,40 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #       define R300_ALU_OUTA_CLAMP              (1 << 30)
 /* END: Fragment program instruction set */
+
+/* R4xx extended fragment shader registers. */
+#define R400_US_ALU_EXT_ADDR_0              0x4ac0 /* up to 63 (0x4bbc) */
+#   define R400_ADDR_EXT_RGB_MSB_BIT(x)     (1 << (x))
+#   define R400_ADDRD_EXT_RGB_MSB_BIT       0x08
+#   define R400_ADDR_EXT_A_MSB_BIT(x)       (1 << ((x) + 4))
+#   define R400_ADDRD_EXT_A_MSB_BIT         0x80
+
+#define R400_US_CODE_BANK                   0x46b8
+#   define R400_BANK_SHIFT                  0
+#   define R400_BANK_MASK                   0xf
+#   define R400_R390_MODE_ENABLE            (1 << 4)
+#define R400_US_CODE_EXT                    0x46bc
+#   define R400_ALU_OFFSET_MSB_SHIFT        0
+#   define R400_ALU_OFFSET_MSB_MASK         (0x7 << 0)
+#   define R400_ALU_SIZE_MSB_SHIFT          3
+#   define R400_ALU_SIZE_MSB_MASK           (0x7 << 3)
+#   define R400_ALU_START0_MSB_SHIFT        6
+#   define R400_ALU_START0_MSB_MASK         (0x7 << 6)
+#   define R400_ALU_SIZE0_MSB_SHIFT         9
+#   define R400_ALU_SIZE0_MSB_MASK          (0x7 << 9)
+#   define R400_ALU_START1_MSB_SHIFT        12
+#   define R400_ALU_START1_MSB_MASK         (0x7 << 12)
+#   define R400_ALU_SIZE1_MSB_SHIFT         15
+#   define R400_ALU_SIZE1_MSB_MASK          (0x7 << 15)
+#   define R400_ALU_START2_MSB_SHIFT        18
+#   define R400_ALU_START2_MSB_MASK         (0x7 << 18)
+#   define R400_ALU_SIZE2_MSB_SHIFT         21
+#   define R400_ALU_SIZE2_MSB_MASK          (0x7 << 21)
+#   define R400_ALU_START3_MSB_SHIFT        24
+#   define R400_ALU_START3_MSB_MASK         (0x7 << 24)
+#   define R400_ALU_SIZE3_MSB_SHIFT         27
+#   define R400_ALU_SIZE3_MSB_MASK          (0x7 << 27)
+/* END: R4xx extended fragment shader registers. */
 
 /* Fog: Fog Blending Enable */
 #define R300_FG_FOG_BLEND                             0x4bc0
@@ -3066,8 +3131,8 @@ enum {
 #   define R500_FC_B_OP0_NONE				(0 << 24)
 #   define R500_FC_B_OP0_DECR				(1 << 24)
 #   define R500_FC_B_OP0_INCR				(2 << 24)
-#   define R500_FC_B_OP1_DECR				(0 << 26)
-#   define R500_FC_B_OP1_NONE				(1 << 26)
+#   define R500_FC_B_OP1_NONE				(0 << 26)
+#   define R500_FC_B_OP1_DECR				(1 << 26)
 #   define R500_FC_B_OP1_INCR				(2 << 26)
 #   define R500_FC_IGNORE_UNCOVERED			(1 << 28)
 #define R500_US_FC_INT_CONST_0				0x4c00

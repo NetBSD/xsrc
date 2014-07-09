@@ -24,8 +24,14 @@
 
 #include <stdio.h>
 
+#include "radeon_compiler_util.h"
 #include "radeon_dataflow.h"
+#include "radeon_emulate_branches.h"
+#include "radeon_emulate_loops.h"
 #include "radeon_program_alu.h"
+#include "radeon_program_tex.h"
+#include "radeon_rename_regs.h"
+#include "radeon_remove_constants.h"
 #include "r300_fragprog.h"
 #include "r300_fragprog_swizzle.h"
 #include "r500_fragprog.h"
@@ -42,12 +48,15 @@ static void dataflow_outputs_mark_use(void * userdata, void * data,
 	callback(data, c->OutputDepth, RC_MASK_W);
 }
 
-static void rewrite_depth_out(struct r300_fragment_program_compiler * c)
+static void rc_rewrite_depth_out(struct radeon_compiler *cc, void *user)
 {
+	struct r300_fragment_program_compiler *c = (struct r300_fragment_program_compiler*)cc;
 	struct rc_instruction *rci;
 
 	for (rci = c->Base.Program.Instructions.Next; rci != &c->Base.Program.Instructions; rci = rci->Next) {
 		struct rc_sub_instruction * inst = &rci->U.I;
+		unsigned i;
+		const struct rc_opcode_info *info = rc_get_opcode_info(inst->Opcode);
 
 		if (inst->DstReg.File != RC_FILE_OUTPUT || inst->DstReg.Index != c->OutputDepth)
 			continue;
@@ -59,130 +68,105 @@ static void rewrite_depth_out(struct r300_fragment_program_compiler * c)
 			continue;
 		}
 
-		switch (inst->Opcode) {
-			case RC_OPCODE_FRC:
-			case RC_OPCODE_MOV:
-				inst->SrcReg[0] = lmul_swizzle(RC_SWIZZLE_ZZZZ, inst->SrcReg[0]);
-				break;
-			case RC_OPCODE_ADD:
-			case RC_OPCODE_MAX:
-			case RC_OPCODE_MIN:
-			case RC_OPCODE_MUL:
-				inst->SrcReg[0] = lmul_swizzle(RC_SWIZZLE_ZZZZ, inst->SrcReg[0]);
-				inst->SrcReg[1] = lmul_swizzle(RC_SWIZZLE_ZZZZ, inst->SrcReg[1]);
-				break;
-			case RC_OPCODE_CMP:
-			case RC_OPCODE_MAD:
-				inst->SrcReg[0] = lmul_swizzle(RC_SWIZZLE_ZZZZ, inst->SrcReg[0]);
-				inst->SrcReg[1] = lmul_swizzle(RC_SWIZZLE_ZZZZ, inst->SrcReg[1]);
-				inst->SrcReg[2] = lmul_swizzle(RC_SWIZZLE_ZZZZ, inst->SrcReg[2]);
-				break;
-			default:
-				// Scalar instructions needn't be reswizzled
-				break;
+		if (!info->IsComponentwise) {
+			continue;
+		}
+
+		for (i = 0; i < info->NumSrcRegs; i++) {
+			inst->SrcReg[i] = lmul_swizzle(RC_SWIZZLE_ZZZZ, inst->SrcReg[i]);
 		}
 	}
 }
 
+static int radeon_saturate_output(
+		struct radeon_compiler * c,
+		struct rc_instruction * inst,
+		void* data)
+{
+	const struct rc_opcode_info *info = rc_get_opcode_info(inst->U.I.Opcode);
+
+	if (!info->HasDstReg || inst->U.I.DstReg.File != RC_FILE_OUTPUT)
+		return 0;
+
+	inst->U.I.SaturateMode = RC_SATURATE_ZERO_ONE;
+	return 1;
+}
+
 void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 {
-	rewrite_depth_out(c);
+	int is_r500 = c->Base.is_r500;
+	int opt = !c->Base.disable_optimizations;
+	int sat_out = c->state.frag_clamp;
 
-	if (c->is_r500) {
-		struct radeon_program_transformation transformations[] = {
-			{ &r500_transform_TEX, c },
-			{ &r500_transform_IF, 0 },
-			{ &radeonTransformALU, 0 },
-			{ &radeonTransformDeriv, 0 },
-			{ &radeonTransformTrigScale, 0 }
-		};
-		radeonLocalTransform(&c->Base, 5, transformations);
+	/* Lists of instruction transformations. */
+	struct radeon_program_transformation saturate_output[] = {
+		{ &radeon_saturate_output, c },
+		{ 0, 0 }
+	};
 
-		c->Base.SwizzleCaps = &r500_swizzle_caps;
-	} else {
-		struct radeon_program_transformation transformations[] = {
-			{ &r300_transform_TEX, c },
-			{ &radeonTransformALU, 0 },
-			{ &radeonTransformTrigSimple, 0 }
-		};
-		radeonLocalTransform(&c->Base, 3, transformations);
+	struct radeon_program_transformation rewrite_tex[] = {
+		{ &radeonTransformTEX, c },
+		{ 0, 0 }
+	};
 
-		c->Base.SwizzleCaps = &r300_swizzle_caps;
-	}
+	struct radeon_program_transformation rewrite_if[] = {
+		{ &r500_transform_IF, 0 },
+		{0, 0}
+	};
 
-	if (c->Base.Debug) {
-		fprintf(stderr, "Fragment Program: After native rewrite:\n");
-		rc_print_program(&c->Base.Program);
-		fflush(stderr);
-	}
+	struct radeon_program_transformation native_rewrite_r500[] = {
+		{ &radeonTransformALU, 0 },
+		{ &radeonTransformDeriv, 0 },
+		{ &radeonTransformTrigScale, 0 },
+		{ 0, 0 }
+	};
 
-	rc_dataflow_deadcode(&c->Base, &dataflow_outputs_mark_use, c);
-	if (c->Base.Error)
-		return;
+	struct radeon_program_transformation native_rewrite_r300[] = {
+		{ &radeonTransformALU, 0 },
+		{ &r300_transform_trig_simple, 0 },
+		{ 0, 0 }
+	};
 
-	if (c->Base.Debug) {
-		fprintf(stderr, "Fragment Program: After deadcode:\n");
-		rc_print_program(&c->Base.Program);
-		fflush(stderr);
-	}
+	/* List of compiler passes. */
+	struct radeon_compiler_pass fs_list[] = {
+		/* NAME				DUMP PREDICATE	FUNCTION			PARAM */
+		{"rewrite depth out",		1, 1,		rc_rewrite_depth_out,		NULL},
+		/* This transformation needs to be done before any of the IF
+		 * instructions are modified. */
+		{"transform KILP",		1, 1,		rc_transform_KILP,		NULL},
+		{"unroll loops",		1, is_r500,	rc_unroll_loops,		NULL},
+		{"transform loops",		1, !is_r500,	rc_transform_loops,		NULL},
+		{"emulate branches",		1, !is_r500,	rc_emulate_branches,		NULL},
+		{"saturate output writes",	1, sat_out,	rc_local_transform,		saturate_output},
+		{"transform TEX",		1, 1,		rc_local_transform,		rewrite_tex},
+		{"transform IF",		1, is_r500,	rc_local_transform,		rewrite_if},
+		{"native rewrite",		1, is_r500,	rc_local_transform,		native_rewrite_r500},
+		{"native rewrite",		1, !is_r500,	rc_local_transform,		native_rewrite_r300},
+		{"deadcode",			1, opt,		rc_dataflow_deadcode,		dataflow_outputs_mark_use},
+		{"emulate loops",		1, !is_r500,	rc_emulate_loops,		NULL},
+		{"dataflow optimize",		1, opt,		rc_optimize,			NULL},
+		{"dataflow swizzles",		1, 1,		rc_dataflow_swizzles,		NULL},
+		{"dead constants",		1, 1,		rc_remove_unused_constants,	&c->code->constants_remap_table},
+		/* This pass makes it easier for the scheduler to group TEX
+		 * instructions and reduces the chances of creating too
+		 * many texture indirections.*/
+		{"register rename",		1, !is_r500,	rc_rename_regs,			NULL},
+		{"pair translate",		1, 1,		rc_pair_translate,		NULL},
+		{"pair scheduling",		1, 1,		rc_pair_schedule,		NULL},
+		{"dead sources",		1, 1,		rc_pair_remove_dead_sources, NULL},
+		{"register allocation",		1, 1,		rc_pair_regalloc,		&opt},
+		{"final code validation",	0, 1,		rc_validate_final_shader,	NULL},
+		{"machine code generation",	0, is_r500,	r500BuildFragmentProgramHwCode,	NULL},
+		{"machine code generation",	0, !is_r500,	r300BuildFragmentProgramHwCode,	NULL},
+		{"dump machine code",		0, is_r500  && (c->Base.Debug & RC_DBG_LOG), r500FragmentProgramDump, NULL},
+		{"dump machine code",		0, !is_r500 && (c->Base.Debug & RC_DBG_LOG), r300FragmentProgramDump, NULL},
+		{NULL, 0, 0, NULL, NULL}
+	};
 
-	rc_dataflow_swizzles(&c->Base);
-	if (c->Base.Error)
-		return;
+	c->Base.type = RC_FRAGMENT_PROGRAM;
+	c->Base.SwizzleCaps = c->Base.is_r500 ? &r500_swizzle_caps : &r300_swizzle_caps;
 
-	if (c->Base.Debug) {
-		fprintf(stderr, "Compiler: after dataflow passes:\n");
-		rc_print_program(&c->Base.Program);
-		fflush(stderr);
-	}
-
-	rc_pair_translate(c);
-	if (c->Base.Error)
-		return;
-
-	if (c->Base.Debug) {
-		fprintf(stderr, "Compiler: after pair translate:\n");
-		rc_print_program(&c->Base.Program);
-		fflush(stderr);
-	}
-
-	rc_pair_schedule(c);
-	if (c->Base.Error)
-		return;
-
-	if (c->Base.Debug) {
-		fprintf(stderr, "Compiler: after pair scheduling:\n");
-		rc_print_program(&c->Base.Program);
-		fflush(stderr);
-	}
-
-	if (c->is_r500)
-		rc_pair_regalloc(c, 128);
-	else
-		rc_pair_regalloc(c, R300_PFS_NUM_TEMP_REGS);
-
-	if (c->Base.Error)
-		return;
-
-	if (c->Base.Debug) {
-		fprintf(stderr, "Compiler: after pair register allocation:\n");
-		rc_print_program(&c->Base.Program);
-		fflush(stderr);
-	}
-
-	if (c->is_r500) {
-		r500BuildFragmentProgramHwCode(c);
-	} else {
-		r300BuildFragmentProgramHwCode(c);
-	}
+	rc_run_compiler(&c->Base, fs_list);
 
 	rc_constants_copy(&c->code->constants, &c->Base.Program.Constants);
-
-	if (c->Base.Debug) {
-		if (c->is_r500) {
-			r500FragmentProgramDump(c->code);
-		} else {
-			r300FragmentProgramDump(c->code);
-		}
-	}
 }

@@ -116,6 +116,48 @@ typedef union { GLfloat f; GLint i; } fi_type;
 #endif
 
 
+/**
+ * \name Work-arounds for platforms that lack C99 math functions
+ */
+/*@{*/
+#if (!defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE < 600)) && !defined(_ISOC99_SOURCE) \
+   && (!defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L)) \
+   && (!defined(_MSC_VER) || (_MSC_VER < 1400))
+#define acosf(f) ((float) acos(f))
+#define asinf(f) ((float) asin(f))
+#define atan2f(x,y) ((float) atan2(x,y))
+#define atanf(f) ((float) atan(f))
+#define cielf(f) ((float) ciel(f))
+#define cosf(f) ((float) cos(f))
+#define coshf(f) ((float) cosh(f))
+#define expf(f) ((float) exp(f))
+#define exp2f(f) ((float) exp2(f))
+#define floorf(f) ((float) floor(f))
+#define logf(f) ((float) log(f))
+#define log2f(f) ((float) log2(f))
+#define powf(x,y) ((float) pow(x,y))
+#define sinf(f) ((float) sin(f))
+#define sinhf(f) ((float) sinh(f))
+#define sqrtf(f) ((float) sqrt(f))
+#define tanf(f) ((float) tan(f))
+#define tanhf(f) ((float) tanh(f))
+#define acoshf(f) ((float) acosh(f))
+#define asinhf(f) ((float) asinh(f))
+#define atanhf(f) ((float) atanh(f))
+#endif
+
+#if defined(_MSC_VER)
+static INLINE float truncf(float x) { return x < 0.0f ? ceilf(x) : floorf(x); }
+static INLINE float exp2f(float x) { return powf(2.0f, x); }
+static INLINE float log2f(float x) { return logf(x) * 1.442695041f; }
+static INLINE float asinhf(float x) { return logf(x + sqrtf(x * x + 1.0f)); }
+static INLINE float acoshf(float x) { return logf(x + sqrtf(x * x - 1.0f)); }
+static INLINE float atanhf(float x) { return (logf(1.0f + x) - logf(1.0f - x)) / 2.0f; }
+static INLINE int isblank(int ch) { return ch == ' ' || ch == '\t'; }
+#define strtoll(p, e, b) _strtoi64(p, e, b)
+#endif
+/*@}*/
+
 /***
  *** LOG2: Log base 2 of float
  ***/
@@ -444,40 +486,25 @@ _mesa_next_pow_two_64(uint64_t x)
 }
 
 
-/***
- *** UNCLAMPED_FLOAT_TO_UBYTE: clamp float to [0,1] and map to ubyte in [0,255]
- *** CLAMPED_FLOAT_TO_UBYTE: map float known to be in [0,1] to ubyte in [0,255]
- ***/
-#if defined(USE_IEEE) && !defined(DEBUG)
-#define IEEE_0996 0x3f7f0000	/* 0.996 or so */
-/* This function/macro is sensitive to precision.  Test very carefully
- * if you change it!
+/*
+ * Returns the floor form of binary logarithm for a 32-bit integer.
  */
-#define UNCLAMPED_FLOAT_TO_UBYTE(UB, F)					\
-        do {								\
-           fi_type __tmp;						\
-           __tmp.f = (F);						\
-           if (__tmp.i < 0)						\
-              UB = (GLubyte) 0;						\
-           else if (__tmp.i >= IEEE_0996)				\
-              UB = (GLubyte) 255;					\
-           else {							\
-              __tmp.f = __tmp.f * (255.0F/256.0F) + 32768.0F;		\
-              UB = (GLubyte) __tmp.i;					\
-           }								\
-        } while (0)
-#define CLAMPED_FLOAT_TO_UBYTE(UB, F)					\
-        do {								\
-           fi_type __tmp;						\
-           __tmp.f = (F) * (255.0F/256.0F) + 32768.0F;			\
-           UB = (GLubyte) __tmp.i;					\
-        } while (0)
+static INLINE GLuint
+_mesa_logbase2(GLuint n)
+{
+#if defined(__GNUC__) && \
+   ((__GNUC__ == 3 && __GNUC_MINOR__ >= 4) || __GNUC__ >= 4)
+   return (31 - __builtin_clz(n | 1));
 #else
-#define UNCLAMPED_FLOAT_TO_UBYTE(ub, f) \
-	ub = ((GLubyte) IROUND(CLAMP((f), 0.0F, 1.0F) * 255.0F))
-#define CLAMPED_FLOAT_TO_UBYTE(ub, f) \
-	ub = ((GLubyte) IROUND((f) * 255.0F))
+   GLuint pos = 0;
+   if (n >= 1<<16) { n >>= 16; pos += 16; }
+   if (n >= 1<< 8) { n >>=  8; pos +=  8; }
+   if (n >= 1<< 4) { n >>=  4; pos +=  4; }
+   if (n >= 1<< 2) { n >>=  2; pos +=  2; }
+   if (n >= 1<< 1) {           pos +=  1; }
+   return pos;
 #endif
+}
 
 
 /**
@@ -522,21 +549,6 @@ extern void
 _mesa_memset16( unsigned short *dst, unsigned short val, size_t n );
 
 extern double
-_mesa_sin(double a);
-
-extern float
-_mesa_sinf(float a);
-
-extern double
-_mesa_cos(double a);
-
-extern float
-_mesa_asinf(float x);
-
-extern float
-_mesa_atanf(float x);
-
-extern double
 _mesa_sqrtd(double x);
 
 extern float
@@ -548,9 +560,24 @@ _mesa_inv_sqrtf(float x);
 extern void
 _mesa_init_sqrt_table(void);
 
-extern double
-_mesa_pow(double x, double y);
+#ifdef __GNUC__
 
+#ifdef __MINGW32__
+#define ffs __builtin_ffs
+#define ffsll __builtin_ffsll
+#endif
+
+#define _mesa_ffs(i)  ffs(i)
+#define _mesa_ffsll(i)  ffsll(i)
+
+#if ((_GNUC__ == 3 && __GNUC_MINOR__ >= 4) || __GNUC__ >= 4)
+#define _mesa_bitcount(i) __builtin_popcount(i)
+#else
+extern unsigned int
+_mesa_bitcount(unsigned int n);
+#endif
+
+#else
 extern int
 _mesa_ffs(int32_t i);
 
@@ -559,6 +586,7 @@ _mesa_ffsll(int64_t i);
 
 extern unsigned int
 _mesa_bitcount(unsigned int n);
+#endif
 
 extern GLhalfARB
 _mesa_float_to_half(float f);
@@ -584,19 +612,27 @@ extern unsigned int
 _mesa_str_checksum(const char *str);
 
 extern int
-_mesa_snprintf( char *str, size_t size, const char *fmt, ... );
+_mesa_snprintf( char *str, size_t size, const char *fmt, ... ) PRINTFLIKE(3, 4);
+
+struct gl_context;
 
 extern void
-_mesa_warning( __GLcontext *gc, const char *fmtString, ... );
+_mesa_warning( struct gl_context *gc, const char *fmtString, ... ) PRINTFLIKE(2, 3);
 
 extern void
-_mesa_problem( const __GLcontext *ctx, const char *fmtString, ... );
+_mesa_problem( const struct gl_context *ctx, const char *fmtString, ... ) PRINTFLIKE(2, 3);
 
 extern void
-_mesa_error( __GLcontext *ctx, GLenum error, const char *fmtString, ... );
+_mesa_error( struct gl_context *ctx, GLenum error, const char *fmtString, ... ) PRINTFLIKE(3, 4);
 
 extern void
-_mesa_debug( const __GLcontext *ctx, const char *fmtString, ... );
+_mesa_debug( const struct gl_context *ctx, const char *fmtString, ... ) PRINTFLIKE(2, 3);
+
+
+#if defined(_MSC_VER) && !defined(snprintf)
+#define snprintf _snprintf
+#endif
+
 
 #ifdef __cplusplus
 }

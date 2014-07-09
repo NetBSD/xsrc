@@ -36,25 +36,14 @@
 #define _UTIL_CPU_DETECT_H
 
 #include "pipe/p_compiler.h"
-
-enum util_cpu_arch {
-   UTIL_CPU_ARCH_UNKNOWN = 0,
-   UTIL_CPU_ARCH_MIPS,
-   UTIL_CPU_ARCH_ALPHA,
-   UTIL_CPU_ARCH_SPARC,
-   UTIL_CPU_ARCH_X86,
-   UTIL_CPU_ARCH_POWERPC
-};
+#include "pipe/p_config.h"
 
 struct util_cpu_caps {
-   enum util_cpu_arch arch;
    unsigned nr_cpus;
 
    /* Feature flags */
    int x86_cpu_type;
    unsigned cacheline;
-
-   unsigned little_endian:1;
 
    unsigned has_tsc:1;
    unsigned has_mmx:1;
@@ -64,6 +53,8 @@ struct util_cpu_caps {
    unsigned has_sse3:1;
    unsigned has_ssse3:1;
    unsigned has_sse4_1:1;
+   unsigned has_sse4_2:1;
+   unsigned has_avx:1;
    unsigned has_3dnow:1;
    unsigned has_3dnow_ext:1;
    unsigned has_altivec:1;

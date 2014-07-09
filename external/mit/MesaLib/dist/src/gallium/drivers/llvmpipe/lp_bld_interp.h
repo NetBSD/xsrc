@@ -41,33 +41,54 @@
 #define LP_BLD_INTERP_H
 
 
-#include <llvm-c/Core.h>
+#include "gallivm/lp_bld.h"
+#include "gallivm/lp_bld_type.h"
 
 #include "tgsi/tgsi_exec.h"
 
-#include "lp_bld_type.h"
+/**
+ * Describes how to compute the interpolation coefficients (a0, dadx, dady)
+ * from the vertices passed into our triangle/line/point functions by the
+ * draw module.
+ *
+ * Vertices are treated as an array of float[4] values, indexed by
+ * src_index.
+ *
+ * LP_INTERP_COLOR is translated to either LP_INTERP_CONSTANT or
+ * LINEAR depending on flatshade state.
+ */
+enum lp_interp {
+   LP_INTERP_CONSTANT,
+   LP_INTERP_COLOR,
+   LP_INTERP_LINEAR,
+   LP_INTERP_PERSPECTIVE,
+   LP_INTERP_POSITION,
+   LP_INTERP_FACING
+};
 
-
-struct tgsi_token;
+struct lp_shader_input {
+   ushort interp:4;       /* enum lp_interp */
+   ushort usage_mask:4;   /* bitmask of TGSI_WRITEMASK_x flags */
+   ushort src_index:8;    /* where to find values in incoming vertices */
+};
 
 
 struct lp_build_interp_soa_context
 {
-   struct lp_build_context base;
+   /* QUAD_SIZE x float */
+   struct lp_build_context coeff_bld;
 
    unsigned num_attribs;
-   unsigned mask[1 + PIPE_MAX_SHADER_INPUTS];
-   unsigned mode[1 + PIPE_MAX_SHADER_INPUTS];
+   unsigned mask[1 + PIPE_MAX_SHADER_INPUTS]; /**< TGSI_WRITE_MASK_x */
+   enum lp_interp interp[1 + PIPE_MAX_SHADER_INPUTS];
 
-   LLVMValueRef a0  [1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
-   LLVMValueRef dadx[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
-   LLVMValueRef dady[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+   LLVMValueRef x;
+   LLVMValueRef y;
 
-   int xstep;
-   int ystep;
+   LLVMValueRef a   [1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+   LLVMValueRef dadq[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
 
-   /* Attribute values before perspective divide */
-   LLVMValueRef attribs_pre[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+   LLVMValueRef oow;
 
    LLVMValueRef attribs[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
 
@@ -81,19 +102,26 @@ struct lp_build_interp_soa_context
 
 void
 lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
-                         const struct tgsi_token *tokens,
+                         struct gallivm_state *gallivm,
+                         unsigned num_inputs,
+                         const struct lp_shader_input *inputs,
                          LLVMBuilderRef builder,
                          struct lp_type type,
                          LLVMValueRef a0_ptr,
                          LLVMValueRef dadx_ptr,
                          LLVMValueRef dady_ptr,
-                         LLVMValueRef x0,
-                         LLVMValueRef y0,
-                         int xstep,
-                         int ystep);
+                         LLVMValueRef x,
+                         LLVMValueRef y);
 
 void
-lp_build_interp_soa_update(struct lp_build_interp_soa_context *bld);
+lp_build_interp_soa_update_inputs(struct lp_build_interp_soa_context *bld,
+                                  struct gallivm_state *gallivm,
+                                  int quad_index);
+
+void
+lp_build_interp_soa_update_pos(struct lp_build_interp_soa_context *bld,
+                               struct gallivm_state *gallivm,
+                               int quad_index);
 
 
 #endif /* LP_BLD_INTERP_H */

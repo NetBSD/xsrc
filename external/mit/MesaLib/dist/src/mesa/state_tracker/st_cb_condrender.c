@@ -41,18 +41,22 @@
 #include "st_context.h"
 #include "st_cb_queryobj.h"
 #include "st_cb_condrender.h"
+#include "st_cb_bitmap.h"
 
 
 /**
  * Called via ctx->Driver.BeginConditionalRender()
  */
 static void
-st_BeginConditionalRender(GLcontext *ctx, struct gl_query_object *q,
+st_BeginConditionalRender(struct gl_context *ctx, struct gl_query_object *q,
                           GLenum mode)
 {
    struct st_query_object *stq = st_query_object(q);
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
    uint m;
+
+   st_flush_bitmap_cache(st);
 
    switch (mode) {
    case GL_QUERY_WAIT:
@@ -72,6 +76,9 @@ st_BeginConditionalRender(GLcontext *ctx, struct gl_query_object *q,
       m = PIPE_RENDER_COND_WAIT;
    }
 
+   st->render_condition = stq->pq;
+   st->condition_mode = m;
+
    pipe->render_condition(pipe, stq->pq, m);
 }
 
@@ -80,11 +87,16 @@ st_BeginConditionalRender(GLcontext *ctx, struct gl_query_object *q,
  * Called via ctx->Driver.BeginConditionalRender()
  */
 static void
-st_EndConditionalRender(GLcontext *ctx, struct gl_query_object *q)
+st_EndConditionalRender(struct gl_context *ctx, struct gl_query_object *q)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
    (void) q;
+
+   st_flush_bitmap_cache(st);
+
    pipe->render_condition(pipe, NULL, 0);
+   st->render_condition = NULL;
 }
 
 

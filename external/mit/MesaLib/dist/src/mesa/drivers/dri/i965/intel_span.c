@@ -1,6 +1,7 @@
 /**************************************************************************
  * 
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2011 Intel Corporation
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -23,261 +24,426 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 
+ * Authors:
+ *     Chad Versace <chad@chad-versace.us>
+ *
  **************************************************************************/
 
-#include "glheader.h"
-#include "macros.h"
-#include "mtypes.h"
-#include "colormac.h"
+#include <stdbool.h>
+#include <stdint.h>
+#include "main/glheader.h"
+#include "main/macros.h"
+#include "main/mtypes.h"
+#include "main/colormac.h"
+#include "main/renderbuffer.h"
 
+#include "intel_buffers.h"
+#include "intel_fbo.h"
 #include "intel_screen.h"
-#include "intel_regions.h"
 #include "intel_span.h"
-#include "intel_ioctl.h"
+#include "intel_regions.h"
 #include "intel_tex.h"
-#include "intel_batchbuffer.h"
+
 #include "swrast/swrast.h"
+
+static void
+intel_set_span_functions(struct intel_context *intel,
+			 struct gl_renderbuffer *rb);
 
 #undef DBG
 #define DBG 0
 
-#define LOCAL_VARS						\
-   struct intel_context *intel = intel_context(ctx);                    \
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;		\
-   driRenderbuffer *drb = (driRenderbuffer *) rb;		\
-   GLuint pitch = drb->pitch;					\
-   GLuint height = dPriv->h;					\
-   char *buf = (char *) drb->Base.Data +			\
-			dPriv->x * drb->cpp +			\
-			dPriv->y * pitch;			\
-   GLushort p;							\
-   (void) buf; (void) p
+#define LOCAL_VARS							\
+   struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
+   int minx = 0, miny = 0;						\
+   int maxx = rb->Width;						\
+   int maxy = rb->Height;						\
+   int pitch = rb->RowStride * irb->region->cpp;			\
+   void *buf = rb->Data;						\
+   GLuint p;								\
+   (void) p;
 
-#define LOCAL_DEPTH_VARS					\
-   struct intel_context *intel = intel_context(ctx);                    \
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;		\
-   driRenderbuffer *drb = (driRenderbuffer *) rb;		\
-   GLuint pitch = drb->pitch;					\
-   GLuint height = dPriv->h;					\
-   char *buf = (char *) drb->Base.Data +			\
-			dPriv->x * drb->cpp +			\
-			dPriv->y * pitch
+#define HW_CLIPLOOP()
+#define HW_ENDCLIPLOOP()
 
-#define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS 
-
-#define INIT_MONO_PIXEL(p,color)\
-	 p = INTEL_PACKCOLOR565(color[0],color[1],color[2])
-
-#define Y_FLIP(_y) (height - _y - 1)
+#define Y_FLIP(_y) (_y)
 
 #define HW_LOCK()
 
 #define HW_UNLOCK()
 
-/* 16 bit, 565 rgb color spanline and pixel functions
+/* r5g6b5 color span and pixel functions */
+#define SPANTMP_PIXEL_FMT GL_RGB
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5
+#define TAG(x) intel_##x##_RGB565
+#define TAG2(x,y) intel_##x##y_RGB565
+#include "spantmp2.h"
+
+/* a4r4g4b4 color span and pixel functions */
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_4_4_4_4_REV
+#define TAG(x) intel_##x##_ARGB4444
+#define TAG2(x,y) intel_##x##y_ARGB4444
+#include "spantmp2.h"
+
+/* a1r5g5b5 color span and pixel functions */
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_1_5_5_5_REV
+#define TAG(x) intel_##x##_ARGB1555
+#define TAG2(x,y) intel_##x##y##_ARGB1555
+#include "spantmp2.h"
+
+/* a8r8g8b8 color span and pixel functions */
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
+#define TAG(x) intel_##x##_ARGB8888
+#define TAG2(x,y) intel_##x##y##_ARGB8888
+#include "spantmp2.h"
+
+/* x8r8g8b8 color span and pixel functions */
+#define SPANTMP_PIXEL_FMT GL_BGR
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
+#define TAG(x) intel_##x##_xRGB8888
+#define TAG2(x,y) intel_##x##y##_xRGB8888
+#include "spantmp2.h"
+
+/* a8 color span and pixel functions */
+#define SPANTMP_PIXEL_FMT GL_ALPHA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_BYTE
+#define TAG(x) intel_##x##_A8
+#define TAG2(x,y) intel_##x##y##_A8
+#include "spantmp2.h"
+
+/* ------------------------------------------------------------------------- */
+/* s8 stencil span and pixel functions                                       */
+/* ------------------------------------------------------------------------- */
+
+/*
+ * HAVE_HW_STENCIL_SPANS determines if stencil buffer read/writes are done with
+ * memcpy or for loops. Since the stencil buffer is interleaved, memcpy won't
+ * work.
  */
-#define WRITE_RGBA( _x, _y, r, g, b, a )				\
-   *(GLushort *)(buf + _x*2 + _y*pitch)  = ( (((int)r & 0xf8) << 8) |	\
-		                             (((int)g & 0xfc) << 3) |	\
-		                             (((int)b & 0xf8) >> 3))
-#define WRITE_PIXEL( _x, _y, p )  \
-   *(GLushort *)(buf + _x*2 + _y*pitch) = p
+#define HAVE_HW_STENCIL_SPANS 0
 
-#define READ_RGBA( rgba, _x, _y )				\
-do {								\
-   GLushort p = *(GLushort *)(buf + _x*2 + _y*pitch);		\
-   rgba[0] = (((p >> 11) & 0x1f) * 255) / 31;			\
-   rgba[1] = (((p >>  5) & 0x3f) * 255) / 63;			\
-   rgba[2] = (((p >>  0) & 0x1f) * 255) / 31;			\
-   rgba[3] = 255;						\
-} while(0)
+#define LOCAL_STENCIL_VARS						\
+   (void) ctx;								\
+   int minx = 0;							\
+   int miny = 0;							\
+   int maxx = rb->Width;						\
+   int maxy = rb->Height;						\
+									\
+   /*									\
+    * Here we ignore rb->Data and rb->RowStride as set by		\
+    * intelSpanRenderStart. Since intel_offset_S8 decodes the W tile	\
+    * manually, the region's *real* base address and stride is		\
+    * required.								\
+    */									\
+   struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
+   uint8_t *buf = irb->region->buffer->virtual;				\
+   unsigned stride = irb->region->pitch;				\
+   bool flip = rb->Name == 0;						\
+   int y_scale = flip ? -1 : 1;						\
+   int y_bias = flip ? (rb->Height - 1) : 0;				\
 
-#define TAG(x) intel##x##_565
-#include "spantmp.h"
+#undef Y_FLIP
+#define Y_FLIP(y) (y_scale * (y) + y_bias)
 
-/* 15 bit, 555 rgb color spanline and pixel functions
+/**
+ * \brief Get pointer offset into stencil buffer.
+ *
+ * The stencil buffer is W tiled. Since the GTT is incapable of W fencing, we
+ * must decode the tile's layout in software.
+ *
+ * See
+ *   - PRM, 2011 Sandy Bridge, Volume 1, Part 2, Section 4.5.2.1 W-Major Tile
+ *     Format.
+ *   - PRM, 2011 Sandy Bridge, Volume 1, Part 2, Section 4.5.3 Tiling Algorithm
+ *
+ * Even though the returned offset is always positive, the return type is
+ * signed due to
+ *    commit e8b1c6d6f55f5be3bef25084fdd8b6127517e137
+ *    mesa: Fix return type of  _mesa_get_format_bytes() (#37351)
  */
-#define WRITE_RGBA( _x, _y, r, g, b, a )			\
-   *(GLushort *)(buf + _x*2 + _y*pitch)  = (((r & 0xf8) << 7) |	\
-		                            ((g & 0xf8) << 3) |	\
-                         		    ((b & 0xf8) >> 3))
+static inline intptr_t
+intel_offset_S8(uint32_t stride, uint32_t x, uint32_t y)
+{
+   uint32_t tile_size = 4096;
+   uint32_t tile_width = 64;
+   uint32_t tile_height = 64;
+   uint32_t row_size = 64 * stride;
 
-#define WRITE_PIXEL( _x, _y, p )  \
-   *(GLushort *)(buf + _x*2 + _y*pitch)  = p
+   uint32_t tile_x = x / tile_width;
+   uint32_t tile_y = y / tile_height;
 
-#define READ_RGBA( rgba, _x, _y )				\
-do {								\
-   GLushort p = *(GLushort *)(buf + _x*2 + _y*pitch);		\
-   rgba[0] = (p >> 7) & 0xf8;					\
-   rgba[1] = (p >> 3) & 0xf8;					\
-   rgba[2] = (p << 3) & 0xf8;					\
-   rgba[3] = 255;						\
-} while(0)
+   /* The byte's address relative to the tile's base addres. */
+   uint32_t byte_x = x % tile_width;
+   uint32_t byte_y = y % tile_height;
 
-#define TAG(x) intel##x##_555
-#include "spantmp.h"
+   uintptr_t u = tile_y * row_size
+               + tile_x * tile_size
+               + 512 * (byte_x / 8)
+               +  64 * (byte_y / 8)
+               +  32 * ((byte_y / 4) % 2)
+               +  16 * ((byte_x / 4) % 2)
+               +   8 * ((byte_y / 2) % 2)
+               +   4 * ((byte_x / 2) % 2)
+               +   2 * (byte_y % 2)
+               +   1 * (byte_x % 2);
 
-/* 16 bit depthbuffer functions.
- */
-#define WRITE_DEPTH( _x, _y, d ) \
-   *(GLushort *)(buf + (_x)*2 + (_y)*pitch)  = d;
+   /*
+    * Errata for Gen5:
+    *
+    * An additional offset is needed which is not documented in the PRM.
+    *
+    * if ((byte_x / 8) % 2 == 1) {
+    *    if ((byte_y / 8) % 2) == 0) {
+    *       u += 64;
+    *    } else {
+    *       u -= 64;
+    *    }
+    * }
+    *
+    * The offset is expressed more tersely as
+    * u += ((int) x & 0x8) * (8 - (((int) y & 0x8) << 1));
+    */
 
-#define READ_DEPTH( d, _x, _y )	\
-   d = *(GLushort *)(buf + (_x)*2 + (_y)*pitch);	 
-
-
-#define TAG(x) intel##x##_z16
-#include "depthtmp.h"
-
-
-#undef LOCAL_VARS
-#define LOCAL_VARS						\
-   struct intel_context *intel = intel_context(ctx);			\
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;		\
-   driRenderbuffer *drb = (driRenderbuffer *) rb;		\
-   GLuint pitch = drb->pitch;					\
-   GLuint height = dPriv->h;					\
-   char *buf = (char *)drb->Base.Data +				\
-			dPriv->x * drb->cpp +			\
-			dPriv->y * pitch;			\
-   GLuint p;							\
-   (void) buf; (void) p
-
-#undef INIT_MONO_PIXEL
-#define INIT_MONO_PIXEL(p,color)\
-	 p = INTEL_PACKCOLOR8888(color[0],color[1],color[2],color[3])
-
-/* 32 bit, 8888 argb color spanline and pixel functions
- */
-#define WRITE_RGBA(_x, _y, r, g, b, a)			\
-    *(GLuint *)(buf + _x*4 + _y*pitch) = ((r << 16) |	\
-					  (g << 8)  |	\
-					  (b << 0)  |	\
-					  (a << 24) )
-
-#define WRITE_PIXEL(_x, _y, p)			\
-    *(GLuint *)(buf + _x*4 + _y*pitch) = p
-
-
-#define READ_RGBA(rgba, _x, _y)					\
-    do {							\
-	GLuint p = *(GLuint *)(buf + _x*4 + _y*pitch);		\
-	rgba[0] = (p >> 16) & 0xff;				\
-	rgba[1] = (p >> 8)  & 0xff;				\
-	rgba[2] = (p >> 0)  & 0xff;				\
-	rgba[3] = (p >> 24) & 0xff;				\
-    } while (0)
-
-#define TAG(x) intel##x##_8888
-#include "spantmp.h"
-
-
-/* 24/8 bit interleaved depth/stencil functions
- */
-#define WRITE_DEPTH( _x, _y, d ) {			\
-   GLuint tmp = *(GLuint *)(buf + (_x)*4 + (_y)*pitch);	\
-   tmp &= 0xff000000;					\
-   tmp |= (d) & 0xffffff;				\
-   *(GLuint *)(buf + (_x)*4 + (_y)*pitch) = tmp;		\
+   return u;
 }
 
-#define READ_DEPTH( d, _x, _y )		\
-   d = *(GLuint *)(buf + (_x)*4 + (_y)*pitch) & 0xffffff;
-
-
-#define TAG(x) intel##x##_z24_s8
-#include "depthtmp.h"
-
-#define WRITE_STENCIL( _x, _y, d ) {			\
-   GLuint tmp = *(GLuint *)(buf + (_x)*4 + (_y)*pitch);	\
-   tmp &= 0xffffff;					\
-   tmp |= ((d)<<24);					\
-   *(GLuint *)(buf + (_x)*4 + (_y)*pitch) = tmp;		\
-}
-
-#define READ_STENCIL( d, _x, _y )			\
-   d = *(GLuint *)(buf + (_x)*4 + (_y)*pitch) >> 24;
-
-#define TAG(x) intel##x##_z24_s8
+#define WRITE_STENCIL(x, y, src)  buf[intel_offset_S8(stride, x, y)] = src;
+#define READ_STENCIL(dest, x, y) dest = buf[intel_offset_S8(stride, x, y)]
+#define TAG(x) intel_##x##_S8
 #include "stenciltmp.h"
 
+/* ------------------------------------------------------------------------- */
 
-/* Move locking out to get reasonable span performance.
- */
-void intelSpanRenderStart( GLcontext *ctx )
+void
+intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
 {
-   struct intel_context *intel = intel_context(ctx);
+   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
-   if (intel->need_flush) {
-      LOCK_HARDWARE(intel);
-      intel->vtbl.emit_flush(intel, 0);
-      intel_batchbuffer_flush(intel->batch);
-      intel->need_flush = 0;
-      UNLOCK_HARDWARE(intel);
-      intelFinish(&intel->ctx);
+   if (!irb)
+      return;
+
+   if (irb->wrapped_depth)
+      intel_renderbuffer_map(intel, irb->wrapped_depth);
+   if (irb->wrapped_stencil)
+      intel_renderbuffer_map(intel, irb->wrapped_stencil);
+
+   if (!irb->region)
+      return;
+
+   drm_intel_gem_bo_map_gtt(irb->region->buffer);
+
+   rb->Data = irb->region->buffer->virtual;
+   rb->RowStride = irb->region->pitch;
+
+   if (!rb->Name) {
+      /* Flip orientation of the window system buffer */
+      rb->Data += rb->RowStride * (irb->region->height - 1) * irb->region->cpp;
+      rb->RowStride = -rb->RowStride;
+   } else {
+      /* Adjust the base pointer of a texture image drawbuffer to the image
+       * within the miptree region (all else has draw_x/y = 0).
+       */
+      rb->Data += irb->draw_x * irb->region->cpp;
+      rb->Data += irb->draw_y * rb->RowStride * irb->region->cpp;
    }
 
-
-   LOCK_HARDWARE(intel);
-
-   /* Just map the framebuffer and all textures.  Bufmgr code will
-    * take care of waiting on the necessary fences:
-    */
-   intel_region_map(intel, intel->front_region);
-   intel_region_map(intel, intel->back_region);
-   intel_region_map(intel, intel->depth_region);
+   intel_set_span_functions(intel, rb);
 }
 
-void intelSpanRenderFinish( GLcontext *ctx )
+void
+intel_renderbuffer_unmap(struct intel_context *intel,
+			 struct gl_renderbuffer *rb)
 {
-   struct intel_context *intel = intel_context( ctx );
+   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
-   _swrast_flush( ctx );
+   if (!irb)
+      return;
 
-   /* Now unmap the framebuffer:
-    */
-   intel_region_unmap(intel, intel->front_region);
-   intel_region_unmap(intel, intel->back_region);
-   intel_region_unmap(intel, intel->depth_region);
+   if (irb->wrapped_depth)
+      intel_renderbuffer_unmap(intel, irb->wrapped_depth);
+   if (irb->wrapped_stencil)
+      intel_renderbuffer_unmap(intel, irb->wrapped_stencil);
 
-   UNLOCK_HARDWARE( intel );
+   if (!irb->region)
+      return;
+
+   drm_intel_gem_bo_unmap_gtt(irb->region->buffer);
+
+   rb->GetRow = NULL;
+   rb->PutRow = NULL;
+   rb->Data = NULL;
+   rb->RowStride = 0;
 }
 
-void intelInitSpanFuncs( GLcontext *ctx )
+static void
+intel_framebuffer_map(struct intel_context *intel, struct gl_framebuffer *fb)
+{
+   int i;
+
+   for (i = 0; i < BUFFER_COUNT; i++) {
+      intel_renderbuffer_map(intel, fb->Attachment[i].Renderbuffer);
+   }
+
+   intel_check_front_buffer_rendering(intel);
+}
+
+static void
+intel_framebuffer_unmap(struct intel_context *intel, struct gl_framebuffer *fb)
+{
+   int i;
+
+   for (i = 0; i < BUFFER_COUNT; i++) {
+      intel_renderbuffer_unmap(intel, fb->Attachment[i].Renderbuffer);
+   }
+}
+
+/**
+ * Prepare for software rendering.  Map current read/draw framebuffers'
+ * renderbuffes and all currently bound texture objects.
+ *
+ * Old note: Moved locking out to get reasonable span performance.
+ */
+void
+intelSpanRenderStart(struct gl_context * ctx)
+{
+   struct intel_context *intel = intel_context(ctx);
+   GLuint i;
+
+   intel_flush(&intel->ctx);
+   intel_prepare_render(intel);
+
+   for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
+      if (ctx->Texture.Unit[i]._ReallyEnabled) {
+         struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
+
+         intel_finalize_mipmap_tree(intel, i);
+         intel_tex_map_images(intel, intel_texture_object(texObj));
+      }
+   }
+
+   intel_framebuffer_map(intel, ctx->DrawBuffer);
+   if (ctx->ReadBuffer != ctx->DrawBuffer) {
+      intel_framebuffer_map(intel, ctx->ReadBuffer);
+   }
+}
+
+/**
+ * Called when done software rendering.  Unmap the buffers we mapped in
+ * the above function.
+ */
+void
+intelSpanRenderFinish(struct gl_context * ctx)
+{
+   struct intel_context *intel = intel_context(ctx);
+   GLuint i;
+
+   _swrast_flush(ctx);
+
+   for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
+      if (ctx->Texture.Unit[i]._ReallyEnabled) {
+         struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
+         intel_tex_unmap_images(intel, intel_texture_object(texObj));
+      }
+   }
+
+   intel_framebuffer_unmap(intel, ctx->DrawBuffer);
+   if (ctx->ReadBuffer != ctx->DrawBuffer) {
+      intel_framebuffer_unmap(intel, ctx->ReadBuffer);
+   }
+}
+
+
+void
+intelInitSpanFuncs(struct gl_context * ctx)
 {
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
    swdd->SpanRenderStart = intelSpanRenderStart;
-   swdd->SpanRenderFinish = intelSpanRenderFinish; 
+   swdd->SpanRenderFinish = intelSpanRenderFinish;
 }
 
+void
+intel_map_vertex_shader_textures(struct gl_context *ctx)
+{
+   struct intel_context *intel = intel_context(ctx);
+   int i;
+
+   if (ctx->VertexProgram._Current == NULL)
+      return;
+
+   for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
+      if (ctx->Texture.Unit[i]._ReallyEnabled &&
+	  ctx->VertexProgram._Current->Base.TexturesUsed[i] != 0) {
+         struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
+
+         intel_tex_map_images(intel, intel_texture_object(texObj));
+      }
+   }
+}
+
+void
+intel_unmap_vertex_shader_textures(struct gl_context *ctx)
+{
+   struct intel_context *intel = intel_context(ctx);
+   int i;
+
+   if (ctx->VertexProgram._Current == NULL)
+      return;
+
+   for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
+      if (ctx->Texture.Unit[i]._ReallyEnabled &&
+	  ctx->VertexProgram._Current->Base.TexturesUsed[i] != 0) {
+         struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
+
+         intel_tex_unmap_images(intel, intel_texture_object(texObj));
+      }
+   }
+}
+
+typedef void (*span_init_func)(struct gl_renderbuffer *rb);
+
+static span_init_func intel_span_init_funcs[MESA_FORMAT_COUNT] =
+{
+   [MESA_FORMAT_A8] = intel_InitPointers_A8,
+   [MESA_FORMAT_RGB565] = intel_InitPointers_RGB565,
+   [MESA_FORMAT_ARGB4444] = intel_InitPointers_ARGB4444,
+   [MESA_FORMAT_ARGB1555] = intel_InitPointers_ARGB1555,
+   [MESA_FORMAT_XRGB8888] = intel_InitPointers_xRGB8888,
+   [MESA_FORMAT_ARGB8888] = intel_InitPointers_ARGB8888,
+   [MESA_FORMAT_SARGB8] = intel_InitPointers_ARGB8888,
+   [MESA_FORMAT_Z16] = _mesa_set_renderbuffer_accessors,
+   [MESA_FORMAT_X8_Z24] = _mesa_set_renderbuffer_accessors,
+   [MESA_FORMAT_S8_Z24] = _mesa_set_renderbuffer_accessors,
+   [MESA_FORMAT_S8] = intel_InitStencilPointers_S8,
+   [MESA_FORMAT_R8] = _mesa_set_renderbuffer_accessors,
+   [MESA_FORMAT_RG88] = _mesa_set_renderbuffer_accessors,
+   [MESA_FORMAT_R16] = _mesa_set_renderbuffer_accessors,
+   [MESA_FORMAT_RG1616] = _mesa_set_renderbuffer_accessors,
+   [MESA_FORMAT_RGBA_FLOAT32] = _mesa_set_renderbuffer_accessors,
+   [MESA_FORMAT_RG_FLOAT32] = _mesa_set_renderbuffer_accessors,
+   [MESA_FORMAT_R_FLOAT32] = _mesa_set_renderbuffer_accessors,
+   [MESA_FORMAT_INTENSITY_FLOAT32] = _mesa_set_renderbuffer_accessors,
+   [MESA_FORMAT_LUMINANCE_FLOAT32] = _mesa_set_renderbuffer_accessors,
+};
+
+bool
+intel_span_supports_format(gl_format format)
+{
+   return intel_span_init_funcs[format] != NULL;
+}
 
 /**
- * Plug in the Get/Put routines for the given driRenderbuffer.
+ * Plug in appropriate span read/write functions for the given renderbuffer.
+ * These are used for the software fallbacks.
  */
-void
-intelSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+static void
+intel_set_span_functions(struct intel_context *intel,
+			 struct gl_renderbuffer *rb)
 {
-   if (drb->Base.InternalFormat == GL_RGBA) {
-      if (vis->redBits == 5 && vis->greenBits == 5 && vis->blueBits == 5) {
-         intelInitPointers_555(&drb->Base);
-      }
-      else if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
-         intelInitPointers_565(&drb->Base);
-      }
-      else {
-         assert(vis->redBits == 8);
-         assert(vis->greenBits == 8);
-         assert(vis->blueBits == 8);
-         intelInitPointers_8888(&drb->Base);
-      }
-   }
-   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
-      intelInitDepthPointers_z16(&drb->Base);
-   }
-   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
-      intelInitDepthPointers_z24_s8(&drb->Base);
-   }
-   else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
-      intelInitStencilPointers_z24_s8(&drb->Base);
-   }
+   struct intel_renderbuffer *irb = (struct intel_renderbuffer *) rb;
+
+   assert(intel_span_init_funcs[irb->Base.Format]);
+   intel_span_init_funcs[irb->Base.Format](rb);
 }

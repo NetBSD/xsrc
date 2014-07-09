@@ -28,11 +28,34 @@
 #ifndef TGSI_DUMP_H
 #define TGSI_DUMP_H
 
+#include "pipe/p_compiler.h"
+#include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
 
 #if defined __cplusplus
 extern "C" {
 #endif
+
+extern const char *
+tgsi_file_names[TGSI_FILE_COUNT];
+
+extern const char *
+tgsi_swizzle_names[4];
+
+extern const char *
+tgsi_texture_names[TGSI_TEXTURE_COUNT];
+
+extern const char *
+tgsi_property_names[TGSI_PROPERTY_COUNT];
+
+extern const char *
+tgsi_primitive_names[PIPE_PRIM_MAX];
+
+extern const char *
+tgsi_fs_coord_origin_names[2];
+
+extern const char *
+tgsi_fs_coord_pixel_center_names[2];
 
 void
 tgsi_dump_str(

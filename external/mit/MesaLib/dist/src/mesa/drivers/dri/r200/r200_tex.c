@@ -37,6 +37,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/context.h"
 #include "main/enums.h"
 #include "main/image.h"
+#include "main/mfeatures.h"
 #include "main/simple_list.h"
 #include "main/texstore.h"
 #include "main/teximage.h"
@@ -294,7 +295,7 @@ static void r200SetTexBorderColor( radeonTexObjPtr t, const GLfloat color[4] )
    t->pp_border_color = radeonPackColor( 4, c[0], c[1], c[2], c[3] );
 }
 
-static void r200TexEnv( GLcontext *ctx, GLenum target,
+static void r200TexEnv( struct gl_context *ctx, GLenum target,
 			  GLenum pname, const GLfloat *param )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
@@ -366,7 +367,7 @@ static void r200TexEnv( GLcontext *ctx, GLenum target,
  * next UpdateTextureState
  */
 
-static void r200TexParameter( GLcontext *ctx, GLenum target,
+static void r200TexParameter( struct gl_context *ctx, GLenum target,
 				struct gl_texture_object *texObj,
 				GLenum pname, const GLfloat *params )
 {
@@ -382,18 +383,18 @@ static void r200TexParameter( GLcontext *ctx, GLenum target,
    case GL_TEXTURE_MIN_FILTER:
    case GL_TEXTURE_MAG_FILTER:
    case GL_TEXTURE_MAX_ANISOTROPY_EXT:
-      r200SetTexMaxAnisotropy( t, texObj->MaxAnisotropy );
-      r200SetTexFilter( t, texObj->MinFilter, texObj->MagFilter );
+      r200SetTexMaxAnisotropy( t, texObj->Sampler.MaxAnisotropy );
+      r200SetTexFilter( t, texObj->Sampler.MinFilter, texObj->Sampler.MagFilter );
       break;
 
    case GL_TEXTURE_WRAP_S:
    case GL_TEXTURE_WRAP_T:
    case GL_TEXTURE_WRAP_R:
-      r200SetTexWrap( t, texObj->WrapS, texObj->WrapT, texObj->WrapR );
+      r200SetTexWrap( t, texObj->Sampler.WrapS, texObj->Sampler.WrapT, texObj->Sampler.WrapR );
       break;
 
    case GL_TEXTURE_BORDER_COLOR:
-      r200SetTexBorderColor( t, texObj->BorderColor.f );
+      r200SetTexBorderColor( t, texObj->Sampler.BorderColor.f );
       break;
 
    case GL_TEXTURE_BASE_LEVEL:
@@ -409,7 +410,7 @@ static void r200TexParameter( GLcontext *ctx, GLenum target,
 }
 
 
-static void r200DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
+static void r200DeleteTexture(struct gl_context * ctx, struct gl_texture_object *texObj)
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    radeonTexObj* t = radeon_tex_obj(texObj);
@@ -446,7 +447,7 @@ static void r200DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
  * Basically impossible to do this on the fly - just collect some
  * basic info & do the checks from ValidateState().
  */
-static void r200TexGen( GLcontext *ctx,
+static void r200TexGen( struct gl_context *ctx,
 			  GLenum coord,
 			  GLenum pname,
 			  const GLfloat *params )
@@ -464,7 +465,7 @@ static void r200TexGen( GLcontext *ctx,
  * allocate the default texture objects.
  * Fixup MaxAnisotropy according to user preference.
  */
-static struct gl_texture_object *r200NewTextureObject(GLcontext * ctx,
+static struct gl_texture_object *r200NewTextureObject(struct gl_context * ctx,
 						      GLuint name,
 						      GLenum target)
 {
@@ -478,13 +479,13 @@ static struct gl_texture_object *r200NewTextureObject(GLcontext * ctx,
 	   _mesa_lookup_enum_by_nr(target), t);
 
    _mesa_initialize_texture_object(&t->base, name, target);
-   t->base.MaxAnisotropy = rmesa->radeon.initialMaxAnisotropy;
+   t->base.Sampler.MaxAnisotropy = rmesa->radeon.initialMaxAnisotropy;
 
    /* Initialize hardware state */
-   r200SetTexWrap( t, t->base.WrapS, t->base.WrapT, t->base.WrapR );
-   r200SetTexMaxAnisotropy( t, t->base.MaxAnisotropy );
-   r200SetTexFilter(t, t->base.MinFilter, t->base.MagFilter);
-   r200SetTexBorderColor(t, t->base.BorderColor.f);
+   r200SetTexWrap( t, t->base.Sampler.WrapS, t->base.Sampler.WrapT, t->base.Sampler.WrapR );
+   r200SetTexMaxAnisotropy( t, t->base.Sampler.MaxAnisotropy );
+   r200SetTexFilter(t, t->base.Sampler.MinFilter, t->base.Sampler.MagFilter);
+   r200SetTexBorderColor(t, t->base.Sampler.BorderColor.f);
 
    return &t->base;
 }
@@ -536,6 +537,10 @@ void r200InitTextureFuncs( radeonContextPtr radeon, struct dd_function_table *fu
    functions->FreeTexImageData = radeonFreeTexImageData;
    functions->MapTexture = radeonMapTexture;
    functions->UnmapTexture = radeonUnmapTexture;
+
+#if FEATURE_OES_EGL_image
+   functions->EGLImageTargetTexture2D = radeon_image_target_texture_2d;
+#endif
 
    driInitTextureFormats();
 

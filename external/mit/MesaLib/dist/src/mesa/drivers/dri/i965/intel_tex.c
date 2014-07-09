@@ -1,315 +1,132 @@
-/**************************************************************************
- * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
- * All Rights Reserved.
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- * 
- * The above copyright notice and this permission notice (including the
- * next paragraph) shall be included in all copies or substantial portions
- * of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
- * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
- **************************************************************************/
-
-#include "mtypes.h"
-#include "image.h"
-#include "texstore.h"
-#include "texformat.h"
-#include "teximage.h"
-#include "texobj.h"
 #include "swrast/swrast.h"
-
-
+#include "main/renderbuffer.h"
+#include "main/texobj.h"
+#include "main/teximage.h"
+#include "main/mipmap.h"
+#include "drivers/common/meta.h"
 #include "intel_context.h"
-#include "intel_tex.h"
 #include "intel_mipmap_tree.h"
+#include "intel_tex.h"
 
+#define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
-static GLuint target_to_face( GLenum target )
+static struct gl_texture_image *
+intelNewTextureImage(struct gl_context * ctx)
 {
-   switch (target) {
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-      return ((GLuint) target - 
-	      (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X);
-   default:
-      return 0;
-   }
-}
-
-static void intelTexImage1D( GLcontext *ctx, GLenum target, GLint level,
-			    GLint internalFormat,
-			    GLint width, GLint border,
-			    GLenum format, GLenum type, const GLvoid *pixels,
-			    const struct gl_pixelstore_attrib *packing,
-			    struct gl_texture_object *texObj,
-			    struct gl_texture_image *texImage )
-{
-   struct intel_texture_object *intelObj = intel_texture_object(texObj);
-
-   _mesa_store_teximage1d( ctx, target, level, internalFormat,
-			   width, border, format, type,
-			   pixels, packing, texObj, texImage );
-
-   intelObj->dirty_images[0] |= (1 << level);
-   intelObj->dirty |= 1;
-}
-
-static void intelTexSubImage1D( GLcontext *ctx, 
-			       GLenum target,
-			       GLint level,	
-			       GLint xoffset,
-				GLsizei width,
-			       GLenum format, GLenum type,
-			       const GLvoid *pixels,
-			       const struct gl_pixelstore_attrib *packing,
-			       struct gl_texture_object *texObj,
-			       struct gl_texture_image *texImage )
-{
-   struct intel_texture_object *intelObj = intel_texture_object(texObj);
-
-   _mesa_store_texsubimage1d(ctx, target, level, xoffset, width, 
-			     format, type, pixels, packing, texObj,
-			     texImage);
-
-   intelObj->dirty_images[0] |= (1 << level);
-   intelObj->dirty |= 1;
+   DBG("%s\n", __FUNCTION__);
+   (void) ctx;
+   return (struct gl_texture_image *) CALLOC_STRUCT(intel_texture_image);
 }
 
 
-/* Handles 2D, CUBE, RECT:
- */
-static void intelTexImage2D( GLcontext *ctx, GLenum target, GLint level,
-			    GLint internalFormat,
-			    GLint width, GLint height, GLint border,
-			    GLenum format, GLenum type, const GLvoid *pixels,
-			    const struct gl_pixelstore_attrib *packing,
-			    struct gl_texture_object *texObj,
-			    struct gl_texture_image *texImage )
-{
-   struct intel_texture_object *intelObj = intel_texture_object(texObj);
-   GLuint face = target_to_face(target);
-
-   _mesa_store_teximage2d( ctx, target, level, internalFormat,
-			   width, height, border, format, type,
-			   pixels, packing, texObj, texImage );
-
-   intelObj->dirty_images[face] |= (1 << level);
-   intelObj->dirty |= 1 << face;
-}
-
-static void intelTexSubImage2D( GLcontext *ctx, 
-			       GLenum target,
-			       GLint level,	
-			       GLint xoffset, GLint yoffset,
-			       GLsizei width, GLsizei height,
-			       GLenum format, GLenum type,
-			       const GLvoid *pixels,
-			       const struct gl_pixelstore_attrib *packing,
-			       struct gl_texture_object *texObj,
-			       struct gl_texture_image *texImage )
-{
-   struct intel_texture_object *intelObj = intel_texture_object(texObj);
-   GLuint face = target_to_face(target);
-
-   _mesa_store_texsubimage2d(ctx, target, level, xoffset, yoffset, width, 
-			     height, format, type, pixels, packing, texObj,
-			     texImage);
-
-   intelObj->dirty_images[face] |= (1 << level);
-   intelObj->dirty |= 1 << face;
-}
-
-static void intelCompressedTexImage2D( GLcontext *ctx, GLenum target, GLint level,
-                              GLint internalFormat,
-                              GLint width, GLint height, GLint border,
-                              GLsizei imageSize, const GLvoid *data,
-                              struct gl_texture_object *texObj,
-                              struct gl_texture_image *texImage )
-{
-   struct intel_texture_object *intelObj = intel_texture_object(texObj);
-   GLuint face = target_to_face(target);
-
-   _mesa_store_compressed_teximage2d(ctx, target, level, internalFormat, width,
-				     height, border, imageSize, data, texObj, texImage);
-   
-   intelObj->dirty_images[face] |= (1 << level);
-   intelObj->dirty |= 1 << face;
-}
-
-
-static void intelCompressedTexSubImage2D( GLcontext *ctx, GLenum target, GLint level,
-                                 GLint xoffset, GLint yoffset,
-                                 GLsizei width, GLsizei height,
-                                 GLenum format,
-                                 GLsizei imageSize, const GLvoid *data,
-                                 struct gl_texture_object *texObj,
-                                 struct gl_texture_image *texImage )
-{
-   struct intel_texture_object *intelObj = intel_texture_object(texObj);
-   GLuint face = target_to_face(target);
-
-   _mesa_store_compressed_texsubimage2d(ctx, target, level, xoffset, yoffset, width,
-					height, format, imageSize, data, texObj, texImage);
-   
-   intelObj->dirty_images[face] |= (1 << level);
-   intelObj->dirty |= 1 << face;
-}
-
-
-static void intelTexImage3D( GLcontext *ctx, GLenum target, GLint level,
-                            GLint internalFormat,
-                            GLint width, GLint height, GLint depth,
-                            GLint border,
-                            GLenum format, GLenum type, const GLvoid *pixels,
-                            const struct gl_pixelstore_attrib *packing,
-                            struct gl_texture_object *texObj,
-                            struct gl_texture_image *texImage )
-{
-   struct intel_texture_object *intelObj = intel_texture_object(texObj);
-
-   _mesa_store_teximage3d(ctx, target, level, internalFormat,
-			  width, height, depth, border,
-			  format, type, pixels,
-			  &ctx->Unpack, texObj, texImage);
-   
-   intelObj->dirty_images[0] |= (1 << level);
-   intelObj->dirty |= 1 << 0;
-}
-
-
-static void
-intelTexSubImage3D( GLcontext *ctx, GLenum target, GLint level,
-                   GLint xoffset, GLint yoffset, GLint zoffset,
-                   GLsizei width, GLsizei height, GLsizei depth,
-                   GLenum format, GLenum type,
-                   const GLvoid *pixels,
-                   const struct gl_pixelstore_attrib *packing,
-                   struct gl_texture_object *texObj,
-                   struct gl_texture_image *texImage )
-{
-   struct intel_texture_object *intelObj = intel_texture_object(texObj);
-
-   _mesa_store_texsubimage3d(ctx, target, level, xoffset, yoffset, zoffset,
-                             width, height, depth,
-                             format, type, pixels, packing, texObj, texImage);
-
-   intelObj->dirty_images[0] |= (1 << level);
-   intelObj->dirty |= 1 << 0;
-}
-
-
-
-
-static struct gl_texture_object *intelNewTextureObject( GLcontext *ctx, 
-							GLuint name, 
-							GLenum target )
+static struct gl_texture_object *
+intelNewTextureObject(struct gl_context * ctx, GLuint name, GLenum target)
 {
    struct intel_texture_object *obj = CALLOC_STRUCT(intel_texture_object);
 
+   DBG("%s\n", __FUNCTION__);
    _mesa_initialize_texture_object(&obj->base, name, target);
 
    return &obj->base;
 }
 
-static GLboolean intelIsTextureResident(GLcontext *ctx,
-                                      struct gl_texture_object *texObj)
-{
-#if 0
-   struct intel_context *intel = intel_context(ctx);
-   struct intel_texture_object *intelObj = intel_texture_object(texObj);
-   
-   return 
-      intelObj->mt && 
-      intelObj->mt->region && 
-      intel_is_region_resident(intel, intelObj->mt->region);
-#endif
-   return 1;
-}
-
-
-
-static void intelTexParameter( GLcontext *ctx, 
-			       GLenum target,
-			       struct gl_texture_object *texObj,
-			       GLenum pname, 
-			       const GLfloat *params )
-{
-   struct intel_texture_object *intelObj = intel_texture_object(texObj);
- 
-   switch (pname) {
-      /* Anything which can affect the calculation of firstLevel and
-       * lastLevel, as changes to these may invalidate the miptree.
-       */
-   case GL_TEXTURE_MIN_FILTER:
-   case GL_TEXTURE_MAG_FILTER:
-   case GL_TEXTURE_BASE_LEVEL:
-   case GL_TEXTURE_MAX_LEVEL:
-   case GL_TEXTURE_MIN_LOD:
-   case GL_TEXTURE_MAX_LOD:
-      intelObj->dirty |= 1;
-      break;
-
-   default:
-      break;
-   }
-}
-
-
-static void
-intel_delete_texture_object( GLcontext *ctx, struct gl_texture_object *texObj )
+static void 
+intelDeleteTextureObject(struct gl_context *ctx,
+			 struct gl_texture_object *texObj)
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_object *intelObj = intel_texture_object(texObj);
 
    if (intelObj->mt)
-      intel_miptree_destroy(intel, intelObj->mt);
+      intel_miptree_release(intel, &intelObj->mt);
 
-   _mesa_delete_texture_object( ctx, texObj );
+   _mesa_delete_texture_object(ctx, texObj);
 }
 
-void intelInitTextureFuncs( struct dd_function_table *functions )
+
+static void
+intelFreeTextureImageData(struct gl_context * ctx, struct gl_texture_image *texImage)
 {
-   functions->NewTextureObject          = intelNewTextureObject;
-   functions->TexImage1D                = intelTexImage1D;
-   functions->TexImage2D                = intelTexImage2D;
-   functions->TexImage3D                = intelTexImage3D;
-   functions->TexSubImage1D             = intelTexSubImage1D;
-   functions->TexSubImage2D             = intelTexSubImage2D;
-   functions->TexSubImage3D             = intelTexSubImage3D;
-   functions->CopyTexImage1D            = _swrast_copy_teximage1d;
-   functions->CopyTexImage2D            = _swrast_copy_teximage2d;
-   functions->CopyTexSubImage1D         = _swrast_copy_texsubimage1d;
-   functions->CopyTexSubImage2D         = _swrast_copy_texsubimage2d;
-   functions->CopyTexSubImage3D         = _swrast_copy_texsubimage3d;
-   functions->DeleteTexture             = intel_delete_texture_object;
-   functions->UpdateTexturePalette      = NULL;
-   functions->IsTextureResident = intelIsTextureResident;
-   functions->TestProxyTexImage         = _mesa_test_proxy_teximage;
-   functions->CompressedTexImage2D      = intelCompressedTexImage2D;
-   functions->CompressedTexSubImage2D   = intelCompressedTexSubImage2D;
-   functions->TexParameter              = intelTexParameter;
+   struct intel_context *intel = intel_context(ctx);
+   struct intel_texture_image *intelImage = intel_texture_image(texImage);
+
+   DBG("%s\n", __FUNCTION__);
+
+   if (intelImage->mt) {
+      intel_miptree_release(intel, &intelImage->mt);
+   }
+
+   if (texImage->Data) {
+      _mesa_free_texmemory(texImage->Data);
+      texImage->Data = NULL;
+   }
+
+   if (intelImage->depth_rb) {
+      _mesa_reference_renderbuffer(&intelImage->depth_rb, NULL);
+   }
+
+   if (intelImage->stencil_rb) {
+      _mesa_reference_renderbuffer(&intelImage->stencil_rb, NULL);
+   }
+}
+
+/**
+ * Called via ctx->Driver.GenerateMipmap()
+ * This is basically a wrapper for _mesa_meta_GenerateMipmap() which checks
+ * if we'll be using software mipmap generation.  In that case, we need to
+ * map/unmap the base level texture image.
+ */
+static void
+intelGenerateMipmap(struct gl_context *ctx, GLenum target,
+                    struct gl_texture_object *texObj)
+{
+   if (_mesa_meta_check_generate_mipmap_fallback(ctx, target, texObj)) {
+      /* sw path: need to map texture images */
+      struct intel_context *intel = intel_context(ctx);
+      struct intel_texture_object *intelObj = intel_texture_object(texObj);
+      struct gl_texture_image *first_image = texObj->Image[0][texObj->BaseLevel];
+
+      fallback_debug("%s - fallback to swrast\n", __FUNCTION__);
+
+      intel_tex_map_level_images(intel, intelObj, texObj->BaseLevel);
+      _mesa_generate_mipmap(ctx, target, texObj);
+      intel_tex_unmap_level_images(intel, intelObj, texObj->BaseLevel);
+
+      if (!_mesa_is_format_compressed(first_image->TexFormat)) {
+         GLuint nr_faces = (texObj->Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
+         GLuint face, i;
+         /* Update the level information in our private data in the new images,
+          * since it didn't get set as part of a normal TexImage path.
+          */
+         for (face = 0; face < nr_faces; face++) {
+            for (i = texObj->BaseLevel + 1; i < texObj->MaxLevel; i++) {
+               struct intel_texture_image *intelImage =
+                  intel_texture_image(texObj->Image[face][i]);
+               if (!intelImage)
+                  break;
+               intelImage->level = i;
+               intelImage->face = face;
+               /* Unreference the miptree to signal that the new Data is a
+                * bare pointer from mesa.
+                */
+               intel_miptree_release(intel, &intelImage->mt);
+            }
+         }
+      }
+   }
+   else {
+      _mesa_meta_GenerateMipmap(ctx, target, texObj);
+   }
 }
 
 
+void
+intelInitTextureFuncs(struct dd_function_table *functions)
+{
+   functions->GenerateMipmap = intelGenerateMipmap;
 
-
-
+   functions->NewTextureObject = intelNewTextureObject;
+   functions->NewTextureImage = intelNewTextureImage;
+   functions->DeleteTexture = intelDeleteTextureObject;
+   functions->FreeTexImageData = intelFreeTextureImageData;
+}

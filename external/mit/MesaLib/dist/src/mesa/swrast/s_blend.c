@@ -70,15 +70,15 @@
  * Any chanType ok.
  */
 static void _BLENDAPI
-blend_noop(GLcontext *ctx, GLuint n, const GLubyte mask[],
+blend_noop(struct gl_context *ctx, GLuint n, const GLubyte mask[],
            GLvoid *src, const GLvoid *dst, GLenum chanType)
 {
    GLint bytes;
 
-   ASSERT(ctx->Color.BlendEquationRGB == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendEquationA == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendSrcRGB == GL_ZERO);
-   ASSERT(ctx->Color.BlendDstRGB == GL_ONE);
+   ASSERT(ctx->Color.Blend[0].EquationRGB == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].EquationA == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].SrcRGB == GL_ZERO);
+   ASSERT(ctx->Color.Blend[0].DstRGB == GL_ONE);
    (void) ctx;
 
    /* just memcpy */
@@ -98,13 +98,13 @@ blend_noop(GLcontext *ctx, GLuint n, const GLubyte mask[],
  * Any chanType ok.
  */
 static void _BLENDAPI
-blend_replace(GLcontext *ctx, GLuint n, const GLubyte mask[],
+blend_replace(struct gl_context *ctx, GLuint n, const GLubyte mask[],
               GLvoid *src, const GLvoid *dst, GLenum chanType)
 {
-   ASSERT(ctx->Color.BlendEquationRGB == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendEquationA == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendSrcRGB == GL_ONE);
-   ASSERT(ctx->Color.BlendDstRGB == GL_ZERO);
+   ASSERT(ctx->Color.Blend[0].EquationRGB == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].EquationA == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].SrcRGB == GL_ONE);
+   ASSERT(ctx->Color.Blend[0].DstRGB == GL_ZERO);
    (void) ctx;
    (void) n;
    (void) mask;
@@ -118,19 +118,19 @@ blend_replace(GLcontext *ctx, GLuint n, const GLubyte mask[],
  * glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA).
  */
 static void _BLENDAPI
-blend_transparency_ubyte(GLcontext *ctx, GLuint n, const GLubyte mask[],
+blend_transparency_ubyte(struct gl_context *ctx, GLuint n, const GLubyte mask[],
                          GLvoid *src, const GLvoid *dst, GLenum chanType)
 {
    GLubyte (*rgba)[4] = (GLubyte (*)[4]) src;
    const GLubyte (*dest)[4] = (const GLubyte (*)[4]) dst;
    GLuint i;
 
-   ASSERT(ctx->Color.BlendEquationRGB == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendEquationA == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendSrcRGB == GL_SRC_ALPHA);
-   ASSERT(ctx->Color.BlendSrcA == GL_SRC_ALPHA);
-   ASSERT(ctx->Color.BlendDstRGB == GL_ONE_MINUS_SRC_ALPHA);
-   ASSERT(ctx->Color.BlendDstA == GL_ONE_MINUS_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].EquationRGB == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].EquationA == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].SrcRGB == GL_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].SrcA == GL_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].DstRGB == GL_ONE_MINUS_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].DstA == GL_ONE_MINUS_SRC_ALPHA);
    ASSERT(chanType == GL_UNSIGNED_BYTE);
 
    (void) ctx;
@@ -163,19 +163,19 @@ blend_transparency_ubyte(GLcontext *ctx, GLuint n, const GLubyte mask[],
 
 
 static void _BLENDAPI
-blend_transparency_ushort(GLcontext *ctx, GLuint n, const GLubyte mask[],
+blend_transparency_ushort(struct gl_context *ctx, GLuint n, const GLubyte mask[],
                           GLvoid *src, const GLvoid *dst, GLenum chanType)
 {
    GLushort (*rgba)[4] = (GLushort (*)[4]) src;
    const GLushort (*dest)[4] = (const GLushort (*)[4]) dst;
    GLuint i;
 
-   ASSERT(ctx->Color.BlendEquationRGB == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendEquationA == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendSrcRGB == GL_SRC_ALPHA);
-   ASSERT(ctx->Color.BlendSrcA == GL_SRC_ALPHA);
-   ASSERT(ctx->Color.BlendDstRGB == GL_ONE_MINUS_SRC_ALPHA);
-   ASSERT(ctx->Color.BlendDstA == GL_ONE_MINUS_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].EquationRGB == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].EquationA == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].SrcRGB == GL_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].SrcA == GL_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].DstRGB == GL_ONE_MINUS_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].DstA == GL_ONE_MINUS_SRC_ALPHA);
    ASSERT(chanType == GL_UNSIGNED_SHORT);
 
    (void) ctx;
@@ -201,19 +201,19 @@ blend_transparency_ushort(GLcontext *ctx, GLuint n, const GLubyte mask[],
 
 
 static void _BLENDAPI
-blend_transparency_float(GLcontext *ctx, GLuint n, const GLubyte mask[],
+blend_transparency_float(struct gl_context *ctx, GLuint n, const GLubyte mask[],
                          GLvoid *src, const GLvoid *dst, GLenum chanType)
 {
    GLfloat (*rgba)[4] = (GLfloat (*)[4]) src;
    const GLfloat (*dest)[4] = (const GLfloat (*)[4]) dst;
    GLuint i;
 
-   ASSERT(ctx->Color.BlendEquationRGB == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendEquationA == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendSrcRGB == GL_SRC_ALPHA);
-   ASSERT(ctx->Color.BlendSrcA == GL_SRC_ALPHA);
-   ASSERT(ctx->Color.BlendDstRGB == GL_ONE_MINUS_SRC_ALPHA);
-   ASSERT(ctx->Color.BlendDstA == GL_ONE_MINUS_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].EquationRGB == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].EquationA == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].SrcRGB == GL_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].SrcA == GL_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].DstRGB == GL_ONE_MINUS_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].DstA == GL_ONE_MINUS_SRC_ALPHA);
    ASSERT(chanType == GL_FLOAT);
 
    (void) ctx;
@@ -243,15 +243,15 @@ blend_transparency_float(GLcontext *ctx, GLuint n, const GLubyte mask[],
  * Any chanType ok.
  */
 static void _BLENDAPI
-blend_add(GLcontext *ctx, GLuint n, const GLubyte mask[],
+blend_add(struct gl_context *ctx, GLuint n, const GLubyte mask[],
           GLvoid *src, const GLvoid *dst, GLenum chanType)
 {
    GLuint i;
 
-   ASSERT(ctx->Color.BlendEquationRGB == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendEquationA == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendSrcRGB == GL_ONE);
-   ASSERT(ctx->Color.BlendDstRGB == GL_ONE);
+   ASSERT(ctx->Color.Blend[0].EquationRGB == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].EquationA == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].SrcRGB == GL_ONE);
+   ASSERT(ctx->Color.Blend[0].DstRGB == GL_ONE);
    (void) ctx;
 
    if (chanType == GL_UNSIGNED_BYTE) {
@@ -309,12 +309,12 @@ blend_add(GLcontext *ctx, GLuint n, const GLubyte mask[],
  * Any chanType ok.
  */
 static void _BLENDAPI
-blend_min(GLcontext *ctx, GLuint n, const GLubyte mask[],
+blend_min(struct gl_context *ctx, GLuint n, const GLubyte mask[],
           GLvoid *src, const GLvoid *dst, GLenum chanType)
 {
    GLuint i;
-   ASSERT(ctx->Color.BlendEquationRGB == GL_MIN);
-   ASSERT(ctx->Color.BlendEquationA == GL_MIN);
+   ASSERT(ctx->Color.Blend[0].EquationRGB == GL_MIN);
+   ASSERT(ctx->Color.Blend[0].EquationA == GL_MIN);
    (void) ctx;
 
    if (chanType == GL_UNSIGNED_BYTE) {
@@ -362,12 +362,12 @@ blend_min(GLcontext *ctx, GLuint n, const GLubyte mask[],
  * Any chanType ok.
  */
 static void _BLENDAPI
-blend_max(GLcontext *ctx, GLuint n, const GLubyte mask[],
+blend_max(struct gl_context *ctx, GLuint n, const GLubyte mask[],
           GLvoid *src, const GLvoid *dst, GLenum chanType)
 {
    GLuint i;
-   ASSERT(ctx->Color.BlendEquationRGB == GL_MAX);
-   ASSERT(ctx->Color.BlendEquationA == GL_MAX);
+   ASSERT(ctx->Color.Blend[0].EquationRGB == GL_MAX);
+   ASSERT(ctx->Color.Blend[0].EquationA == GL_MAX);
    (void) ctx;
 
    if (chanType == GL_UNSIGNED_BYTE) {
@@ -416,7 +416,7 @@ blend_max(GLcontext *ctx, GLuint n, const GLubyte mask[],
  * Any chanType ok.
  */
 static void _BLENDAPI
-blend_modulate(GLcontext *ctx, GLuint n, const GLubyte mask[],
+blend_modulate(struct gl_context *ctx, GLuint n, const GLubyte mask[],
                GLvoid *src, const GLvoid *dst, GLenum chanType)
 {
    GLuint i;
@@ -471,7 +471,7 @@ blend_modulate(GLcontext *ctx, GLuint n, const GLubyte mask[],
  * \param dest  array of pixels from the dest color buffer
  */
 static void
-blend_general_float(GLcontext *ctx, GLuint n, const GLubyte mask[],
+blend_general_float(struct gl_context *ctx, GLuint n, const GLubyte mask[],
                     GLfloat rgba[][4], GLfloat dest[][4],
                     GLenum chanType)
 {
@@ -500,7 +500,7 @@ blend_general_float(GLcontext *ctx, GLuint n, const GLubyte mask[],
           */
 
          /* Source RGB factor */
-         switch (ctx->Color.BlendSrcRGB) {
+         switch (ctx->Color.Blend[0].SrcRGB) {
             case GL_ZERO:
                sR = sG = sB = 0.0F;
                break;
@@ -570,7 +570,7 @@ blend_general_float(GLcontext *ctx, GLuint n, const GLubyte mask[],
          }
 
          /* Source Alpha factor */
-         switch (ctx->Color.BlendSrcA) {
+         switch (ctx->Color.Blend[0].SrcA) {
             case GL_ZERO:
                sA = 0.0F;
                break;
@@ -624,7 +624,7 @@ blend_general_float(GLcontext *ctx, GLuint n, const GLubyte mask[],
          }
 
          /* Dest RGB factor */
-         switch (ctx->Color.BlendDstRGB) {
+         switch (ctx->Color.Blend[0].DstRGB) {
             case GL_ZERO:
                dR = dG = dB = 0.0F;
                break;
@@ -687,7 +687,7 @@ blend_general_float(GLcontext *ctx, GLuint n, const GLubyte mask[],
          }
 
          /* Dest Alpha factor */
-         switch (ctx->Color.BlendDstA) {
+         switch (ctx->Color.Blend[0].DstA) {
             case GL_ZERO:
                dA = 0.0F;
                break;
@@ -738,7 +738,7 @@ blend_general_float(GLcontext *ctx, GLuint n, const GLubyte mask[],
          }
 
          /* compute the blended RGB */
-         switch (ctx->Color.BlendEquationRGB) {
+         switch (ctx->Color.Blend[0].EquationRGB) {
          case GL_FUNC_ADD:
             r = Rs * sR + Rd * dR;
             g = Gs * sG + Gd * dG;
@@ -775,7 +775,7 @@ blend_general_float(GLcontext *ctx, GLuint n, const GLubyte mask[],
          }
 
          /* compute the blended alpha */
-         switch (ctx->Color.BlendEquationA) {
+         switch (ctx->Color.Blend[0].EquationA) {
          case GL_FUNC_ADD:
             a = As * sA + Ad * dA;
             break;
@@ -816,10 +816,19 @@ blend_general_float(GLcontext *ctx, GLuint n, const GLubyte mask[],
  * Do any blending operation, any chanType.
  */
 static void
-blend_general(GLcontext *ctx, GLuint n, const GLubyte mask[],
+blend_general(struct gl_context *ctx, GLuint n, const GLubyte mask[],
               void *src, const void *dst, GLenum chanType)
 {
-   GLfloat rgbaF[MAX_WIDTH][4], destF[MAX_WIDTH][4];
+   GLfloat (*rgbaF)[4], (*destF)[4];
+
+   rgbaF = (GLfloat (*)[4]) malloc(4 * n * sizeof(GLfloat));
+   destF = (GLfloat (*)[4]) malloc(4 * n * sizeof(GLfloat));
+   if (!rgbaF || !destF) {
+      free(rgbaF);
+      free(destF);
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "blending");
+      return;
+   }
 
    if (chanType == GL_UNSIGNED_BYTE) {
       GLubyte (*rgba)[4] = (GLubyte (*)[4]) src;
@@ -883,6 +892,9 @@ blend_general(GLcontext *ctx, GLuint n, const GLubyte mask[],
       blend_general_float(ctx, n, mask, (GLfloat (*)[4]) src,
                           (GLfloat (*)[4]) dst, chanType);
    }
+
+   free(rgbaF);
+   free(destF);
 }
 
 
@@ -892,16 +904,16 @@ blend_general(GLcontext *ctx, GLuint n, const GLubyte mask[],
  * Result: the ctx->Color.BlendFunc pointer is updated.
  */
 void
-_swrast_choose_blend_func(GLcontext *ctx, GLenum chanType)
+_swrast_choose_blend_func(struct gl_context *ctx, GLenum chanType)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   const GLenum eq = ctx->Color.BlendEquationRGB;
-   const GLenum srcRGB = ctx->Color.BlendSrcRGB;
-   const GLenum dstRGB = ctx->Color.BlendDstRGB;
-   const GLenum srcA = ctx->Color.BlendSrcA;
-   const GLenum dstA = ctx->Color.BlendDstA;
+   const GLenum eq = ctx->Color.Blend[0].EquationRGB;
+   const GLenum srcRGB = ctx->Color.Blend[0].SrcRGB;
+   const GLenum dstRGB = ctx->Color.Blend[0].DstRGB;
+   const GLenum srcA = ctx->Color.Blend[0].SrcA;
+   const GLenum dstA = ctx->Color.Blend[0].DstA;
 
-   if (ctx->Color.BlendEquationRGB != ctx->Color.BlendEquationA) {
+   if (ctx->Color.Blend[0].EquationRGB != ctx->Color.Blend[0].EquationA) {
       swrast->BlendFunc = blend_general;
    }
    else if (eq == GL_MIN) {
@@ -985,7 +997,7 @@ _swrast_choose_blend_func(GLcontext *ctx, GLenum chanType)
  * pixel coordinates.
  */
 void
-_swrast_blend_span(GLcontext *ctx, struct gl_renderbuffer *rb, SWspan *span)
+_swrast_blend_span(struct gl_context *ctx, struct gl_renderbuffer *rb, SWspan *span)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    void *rbPixels;

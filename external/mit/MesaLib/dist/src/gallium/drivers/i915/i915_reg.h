@@ -148,6 +148,7 @@
 /* p161 */
 #define _3DSTATE_DST_BUF_VARS_CMD	(CMD_3D | (0x1d<<24) | (0x85<<16))
 /* Dword 1 */
+#define CLASSIC_EARLY_DEPTH             (1<<31)
 #define TEX_DEFAULT_COLOR_OGL           (0<<30)
 #define TEX_DEFAULT_COLOR_D3D           (1<<30)
 #define ZR_EARLY_DEPTH                  (1<<29)
@@ -169,6 +170,13 @@
 #define COLOR_BUF_RGB555 		(1<<8)
 #define COLOR_BUF_RGB565 		(2<<8)
 #define COLOR_BUF_ARGB8888		(3<<8)
+#define COLOR_BUF_YCRCB_SWAP		(4<<8)
+#define COLOR_BUF_YCRCB_NORMAL		(5<<8)
+#define COLOR_BUF_YCRCB_SWAPUV		(6<<8)
+#define COLOR_BUF_YCRCB_SWAPUVY		(7<<8)
+#define COLOR_BUF_ARGB4444		(8<<8)
+#define COLOR_BUF_ARGB1555		(9<<8)
+#define COLOR_BUF_ARGB2101010		(10<<8)
 #define DEPTH_FRMT_16_FIXED		0
 #define DEPTH_FRMT_16_FLOAT		(1<<2)
 #define DEPTH_FRMT_24_FIXED_8_OTHER	(2<<2)
@@ -753,7 +761,7 @@
 #define    MT_COMPRESS_DXT1_RGB		   (4<<3)
 #define MS3_USE_FENCE_REGS              (1<<2)
 #define MS3_TILED_SURFACE             (1<<1)
-#define MS3_TILE_WALK                 (1<<0)
+#define MS3_TILE_WALK_Y                (1<<0)
 
 #define MS4_PITCH_SHIFT                 21
 #define MS4_CUBE_FACE_ENA_NEGX          (1<<20)
@@ -851,6 +859,7 @@
 #define MI_FLUSH                   ((0<<29)|(4<<23))
 #define FLUSH_MAP_CACHE            (1<<0)
 #define INHIBIT_FLUSH_RENDER_CACHE (1<<2)
+#define MI_NOOP                    0
 
 
 #define CMD_3D (0x3<<29)
@@ -973,6 +982,8 @@
 #define PCI_CHIP_G33_G			0x29C2
 #define PCI_CHIP_Q35_G			0x29B2
 #define PCI_CHIP_Q33_G			0x29D2
+#define PCI_CHIP_PINEVIEW_G		0xA001
+#define PCI_CHIP_PINEVIEW_M		0xA011
 
 
 #endif

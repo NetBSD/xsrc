@@ -38,6 +38,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/simple_list.h"
 #include "main/imports.h"
 #include "main/extensions.h"
+#include "main/mfeatures.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -51,7 +52,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_context.h"
 #include "r200_ioctl.h"
 #include "r200_state.h"
-#include "r200_pixel.h"
 #include "r200_tex.h"
 #include "r200_swtcl.h"
 #include "r200_tcl.h"
@@ -62,26 +62,29 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_span.h"
 
 #define need_GL_ARB_occlusion_query
+#define need_GL_ARB_vertex_array_object
 #define need_GL_ARB_vertex_program
+#define need_GL_APPLE_vertex_array_object
 #define need_GL_ATI_fragment_shader
 #define need_GL_EXT_blend_minmax
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_secondary_color
 #define need_GL_EXT_blend_equation_separate
 #define need_GL_EXT_blend_func_separate
+#define need_GL_EXT_gpu_program_parameters
 #define need_GL_NV_vertex_program
 #define need_GL_ARB_point_parameters
 #define need_GL_EXT_framebuffer_object
-#include "main/remap_helper.h"
+#define need_GL_OES_EGL_image
 
-#define DRIVER_DATE	"20060602"
+#include "main/remap_helper.h"
 
 #include "utils.h"
 #include "xmlpool.h" /* for symbolic values of enum-type options */
 
 /* Return various strings for glGetString().
  */
-static const GLubyte *r200GetString( GLcontext *ctx, GLenum name )
+static const GLubyte *r200GetString( struct gl_context *ctx, GLenum name )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    static char buffer[128];
@@ -94,8 +97,7 @@ static const GLubyte *r200GetString( GLcontext *ctx, GLenum name )
       return (GLubyte *)"Tungsten Graphics, Inc.";
 
    case GL_RENDERER:
-      offset = driGetRendererString( buffer, "R200", DRIVER_DATE,
-				     agp_mode );
+      offset = driGetRendererString( buffer, "R200", agp_mode );
 
       sprintf( & buffer[ offset ], " %sTCL",
 	       !(rmesa->radeon.TclFallback & R200_TCL_FALLBACK_TCL_DISABLE)
@@ -113,6 +115,7 @@ static const GLubyte *r200GetString( GLcontext *ctx, GLenum name )
  */
 static const struct dri_extension card_extensions[] =
 {
+    { "GL_ARB_half_float_pixel",           NULL },
     { "GL_ARB_multitexture",               NULL },
     { "GL_ARB_occlusion_query",		   GL_ARB_occlusion_query_functions},
     { "GL_ARB_texture_border_clamp",       NULL },
@@ -121,6 +124,7 @@ static const struct dri_extension card_extensions[] =
     { "GL_ARB_texture_env_dot3",           NULL },
     { "GL_ARB_texture_env_crossbar",       NULL },
     { "GL_ARB_texture_mirrored_repeat",    NULL },
+    { "GL_ARB_vertex_array_object",        GL_ARB_vertex_array_object_functions},
     { "GL_EXT_blend_minmax",               GL_EXT_blend_minmax_functions },
     { "GL_EXT_blend_subtract",             NULL },
     { "GL_EXT_fog_coord",                  GL_EXT_fog_coord_functions },
@@ -134,11 +138,14 @@ static const struct dri_extension card_extensions[] =
     { "GL_EXT_texture_lod_bias",           NULL },
     { "GL_EXT_texture_mirror_clamp",       NULL },
     { "GL_EXT_texture_rectangle",          NULL },
+    { "GL_APPLE_vertex_array_object",      GL_APPLE_vertex_array_object_functions },
     { "GL_ATI_texture_env_combine3",       NULL },
     { "GL_ATI_texture_mirror_once",        NULL },
     { "GL_MESA_pack_invert",               NULL },
     { "GL_NV_blend_square",                NULL },
-    { "GL_SGIS_generate_mipmap",           NULL },
+#if FEATURE_OES_EGL_image
+    { "GL_OES_EGL_image",                  GL_OES_EGL_image_functions },
+#endif
     { NULL,                                NULL }
 };
 
@@ -149,7 +156,9 @@ static const struct dri_extension blend_extensions[] = {
 };
 
 static const struct dri_extension ARB_vp_extension[] = {
-    { "GL_ARB_vertex_program",             GL_ARB_vertex_program_functions }
+    { "GL_ARB_vertex_program",             GL_ARB_vertex_program_functions },
+    { "GL_EXT_gpu_program_parameters",     GL_EXT_gpu_program_parameters_functions},
+    { NULL,                                NULL }
 };
 
 static const struct dri_extension NV_vp_extension[] = {
@@ -266,12 +275,14 @@ static void r200_init_vtbl(radeonContextPtr radeon)
    radeon->vtbl.emit_query_finish = r200_emit_query_finish;
    radeon->vtbl.check_blit = r200_check_blit;
    radeon->vtbl.blit = r200_blit;
+   radeon->vtbl.is_format_renderable = radeonIsFormatRenderable;
 }
 
 
 /* Create the device specific rendering context.
  */
-GLboolean r200CreateContext( const __GLcontextModes *glVisual,
+GLboolean r200CreateContext( gl_api api,
+			     const struct gl_config *glVisual,
 			     __DRIcontext *driContextPriv,
 			     void *sharedContextPrivate)
 {
@@ -279,7 +290,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    radeonScreenPtr screen = (radeonScreenPtr)(sPriv->private);
    struct dd_function_table functions;
    r200ContextPtr rmesa;
-   GLcontext *ctx;
+   struct gl_context *ctx;
    int i;
    int tcl_mode;
 
@@ -324,7 +335,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    _mesa_init_driver_functions(&functions);
    r200InitDriverFuncs(&functions);
    r200InitIoctlFuncs(&functions);
-   r200InitStateFuncs(&functions);
+   r200InitStateFuncs(&rmesa->radeon, &functions);
    r200InitTextureFuncs(&rmesa->radeon, &functions);
    r200InitShaderFuncs(&functions);
    radeonInitQueryObjFunctions(&functions);
@@ -452,7 +463,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
        driInitExtensions( ctx, blend_extensions, GL_FALSE );
    }
    if(rmesa->radeon.radeonScreen->drmSupportsVertexProgram)
-      driInitSingleExtension( ctx, ARB_vp_extension );
+      driInitExtensions( ctx, ARB_vp_extension, GL_FALSE );
    if(driQueryOptionb(&rmesa->radeon.optionCache, "nv_vertex_program"))
       driInitSingleExtension( ctx, NV_vp_extension );
 
@@ -473,7 +484,6 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    /* XXX these should really go right after _mesa_init_driver_functions() */
    radeon_fbo_init(&rmesa->radeon);
    radeonInitSpanFuncs( ctx );
-   r200InitPixelFuncs( ctx );
    r200InitTnlFuncs( ctx );
    r200InitState( rmesa );
    r200InitSwtcl( ctx );

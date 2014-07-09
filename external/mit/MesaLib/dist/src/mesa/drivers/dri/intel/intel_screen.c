@@ -25,28 +25,17 @@
  * 
  **************************************************************************/
 
+#include <errno.h>
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
 #include "main/hash.h"
 #include "main/fbobject.h"
+#include "main/mfeatures.h"
 
 #include "utils.h"
 #include "xmlpool.h"
-
-#include "intel_batchbuffer.h"
-#include "intel_buffers.h"
-#include "intel_bufmgr.h"
-#include "intel_chipset.h"
-#include "intel_fbo.h"
-#include "intel_screen.h"
-#include "intel_tex.h"
-#include "intel_regions.h"
-
-#include "i915_drm.h"
-
-#define DRI_CONF_TEXTURE_TILING(def) \
 
 PUBLIC const char __driConfigOptions[] =
    DRI_CONF_BEGIN
@@ -70,7 +59,7 @@ PUBLIC const char __driConfigOptions[] =
 	 DRI_CONF_DESC(en, "Enable early Z in classic mode (unstable, 945-only).")
       DRI_CONF_OPT_END
 
-      DRI_CONF_OPT_BEGIN(fragment_shader, bool, false)
+      DRI_CONF_OPT_BEGIN(fragment_shader, bool, true)
 	 DRI_CONF_DESC(en, "Enable limited ARB_fragment_shader support on 915/945.")
       DRI_CONF_OPT_END
 
@@ -92,6 +81,17 @@ DRI_CONF_END;
 
 const GLuint __driNConfigOptions = 11;
 
+#include "intel_batchbuffer.h"
+#include "intel_buffers.h"
+#include "intel_bufmgr.h"
+#include "intel_chipset.h"
+#include "intel_fbo.h"
+#include "intel_screen.h"
+#include "intel_tex.h"
+#include "intel_regions.h"
+
+#include "i915_drm.h"
+
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 #endif /*USE_NEW_INTERFACE */
@@ -105,37 +105,31 @@ static const __DRItexBufferExtension intelTexBufferExtension = {
 static void
 intelDRI2Flush(__DRIdrawable *drawable)
 {
-   struct intel_context *intel = drawable->driContextPriv->driverPrivate;
+   GET_CURRENT_CONTEXT(ctx);
+   struct intel_context *intel = intel_context(ctx);
 
    if (intel->gen < 4)
       INTEL_FIREVERTICES(intel);
 
-   if (intel->batch->map != intel->batch->ptr)
-      intel_batchbuffer_flush(intel->batch);
-}
+   intel->need_throttle = GL_TRUE;
 
-static void
-intelDRI2Invalidate(__DRIdrawable *drawable)
-{
-   struct intel_context *intel = drawable->driContextPriv->driverPrivate;
-
-   intel->using_dri2_swapbuffers = GL_TRUE;
-   dri2InvalidateDrawable(drawable);
+   if (intel->batch.used)
+      intel_batchbuffer_flush(intel);
 }
 
 static const struct __DRI2flushExtensionRec intelFlushExtension = {
     { __DRI2_FLUSH, __DRI2_FLUSH_VERSION },
     intelDRI2Flush,
-    intelDRI2Invalidate,
+    dri2InvalidateDrawable,
 };
 
 static __DRIimage *
-intel_create_image_from_name(__DRIcontext *context,
+intel_create_image_from_name(__DRIscreen *screen,
 			     int width, int height, int format,
 			     int name, int pitch, void *loaderPrivate)
 {
+    struct intel_screen *intelScreen = screen->private;
     __DRIimage *image;
-    struct intel_context *intel = context->driverPrivate;
     int cpp;
 
     image = CALLOC(sizeof *image);
@@ -166,7 +160,8 @@ intel_create_image_from_name(__DRIcontext *context,
     image->data = loaderPrivate;
     cpp = _mesa_get_format_bytes(image->format);
 
-    image->region = intel_region_alloc_for_handle(intel, cpp, width, height,
+    image->region = intel_region_alloc_for_handle(intelScreen,
+						  cpp, width, height,
 						  pitch, name, "image");
     if (image->region == NULL) {
        FREE(image);
@@ -213,11 +208,112 @@ intel_destroy_image(__DRIimage *image)
     FREE(image);
 }
 
+static __DRIimage *
+intel_create_image(__DRIscreen *screen,
+		   int width, int height, int format,
+		   unsigned int use,
+		   void *loaderPrivate)
+{
+   __DRIimage *image;
+   struct intel_screen *intelScreen = screen->private;
+   uint32_t tiling;
+   int cpp;
+
+   tiling = I915_TILING_X;
+   if (use & __DRI_IMAGE_USE_CURSOR) {
+      if (width != 64 || height != 64)
+	 return NULL;
+      tiling = I915_TILING_NONE;
+   }
+
+   image = CALLOC(sizeof *image);
+   if (image == NULL)
+      return NULL;
+
+   switch (format) {
+   case __DRI_IMAGE_FORMAT_RGB565:
+      image->format = MESA_FORMAT_RGB565;
+      image->internal_format = GL_RGB;
+      image->data_type = GL_UNSIGNED_BYTE;
+      break;
+   case __DRI_IMAGE_FORMAT_XRGB8888:
+      image->format = MESA_FORMAT_XRGB8888;
+      image->internal_format = GL_RGB;
+      image->data_type = GL_UNSIGNED_BYTE;
+      break;
+   case __DRI_IMAGE_FORMAT_ARGB8888:
+      image->format = MESA_FORMAT_ARGB8888;
+      image->internal_format = GL_RGBA;
+      image->data_type = GL_UNSIGNED_BYTE;
+      break;
+   default:
+      free(image);
+      return NULL;
+   }
+
+   image->data = loaderPrivate;
+   cpp = _mesa_get_format_bytes(image->format);
+
+   image->region =
+      intel_region_alloc(intelScreen, tiling,
+			 cpp, width, height, GL_TRUE);
+   if (image->region == NULL) {
+      FREE(image);
+      return NULL;
+   }
+   
+   return image;
+}
+
+static GLboolean
+intel_query_image(__DRIimage *image, int attrib, int *value)
+{
+   switch (attrib) {
+   case __DRI_IMAGE_ATTRIB_STRIDE:
+      *value = image->region->pitch * image->region->cpp;
+      return GL_TRUE;
+   case __DRI_IMAGE_ATTRIB_HANDLE:
+      *value = image->region->buffer->handle;
+      return GL_TRUE;
+   case __DRI_IMAGE_ATTRIB_NAME:
+      return intel_region_flink(image->region, (uint32_t *) value);
+   default:
+      return GL_FALSE;
+   }
+}
+
+static __DRIimage *
+intel_dup_image(__DRIimage *orig_image, void *loaderPrivate)
+{
+   __DRIimage *image;
+
+   image = CALLOC(sizeof *image);
+   if (image == NULL)
+      return NULL;
+
+   image->region = NULL;
+   intel_region_reference(&image->region, orig_image->region);
+   if (image->region == NULL) {
+      FREE(image);
+      return NULL;
+   }
+
+   image->internal_format = orig_image->internal_format;
+   image->format          = orig_image->format;
+   image->data_type       = orig_image->data_type;
+   image->data            = loaderPrivate;
+   
+   return image;
+}
+
 static struct __DRIimageExtensionRec intelImageExtension = {
     { __DRI_IMAGE, __DRI_IMAGE_VERSION },
     intel_create_image_from_name,
     intel_create_image_from_renderbuffer,
     intel_destroy_image,
+    intel_create_image,
+    intel_query_image,
+    intel_dup_image
 };
 
 static const __DRIextension *intelScreenExtensions[] = {
@@ -225,6 +321,7 @@ static const __DRIextension *intelScreenExtensions[] = {
     &intelTexBufferExtension.base,
     &intelFlushExtension.base,
     &intelImageExtension.base,
+    &dri2ConfigQueryExtension.base,
     NULL
 };
 
@@ -239,11 +336,19 @@ intel_get_param(__DRIscreen *psp, int param, int *value)
 
    ret = drmCommandWriteRead(psp->fd, DRM_I915_GETPARAM, &gp, sizeof(gp));
    if (ret) {
-      _mesa_warning(NULL, "drm_i915_getparam: %d", ret);
+      if (ret != -EINVAL)
+	 _mesa_warning(NULL, "drm_i915_getparam: %d", ret);
       return GL_FALSE;
    }
 
    return GL_TRUE;
+}
+
+static GLboolean
+intel_get_boolean(__DRIscreen *psp, int param)
+{
+   int value = 0;
+   return intel_get_param(psp, param, &value) && value;
 }
 
 static void
@@ -276,16 +381,15 @@ intelDestroyScreen(__DRIscreen * sPriv)
 static GLboolean
 intelCreateBuffer(__DRIscreen * driScrnPriv,
                   __DRIdrawable * driDrawPriv,
-                  const __GLcontextModes * mesaVis, GLboolean isPixmap)
+                  const struct gl_config * mesaVis, GLboolean isPixmap)
 {
    struct intel_renderbuffer *rb;
+   struct intel_screen *screen = (struct intel_screen*) driScrnPriv->private;
 
    if (isPixmap) {
       return GL_FALSE;          /* not implemented */
    }
    else {
-      GLboolean swStencil = (mesaVis->stencilBits > 0 &&
-                             mesaVis->depthBits != 24);
       gl_format rgbFormat;
 
       struct gl_framebuffer *fb = CALLOC_STRUCT(gl_framebuffer);
@@ -311,32 +415,53 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
          _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &rb->Base);
       }
 
+      /*
+       * Assert here that the gl_config has an expected depth/stencil bit
+       * combination: one of d24/s8, d16/s0, d0/s0. (See intelInitScreen2(),
+       * which constructs the advertised configs.)
+       */
       if (mesaVis->depthBits == 24) {
-	 if (mesaVis->stencilBits == 8) {
-	    /* combined depth/stencil buffer */
-	    struct intel_renderbuffer *depthStencilRb
-	       = intel_create_renderbuffer(MESA_FORMAT_S8_Z24);
-	    /* note: bind RB to two attachment points */
-	    _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthStencilRb->Base);
-	    _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &depthStencilRb->Base);
+	 assert(mesaVis->stencilBits == 8);
+
+	 if (screen->hw_has_separate_stencil
+	     && screen->dri2_has_hiz != INTEL_DRI2_HAS_HIZ_FALSE) {
+	    /*
+	     * Request a separate stencil buffer even if we do not yet know if
+	     * the screen supports it. (See comments for
+	     * enum intel_dri2_has_hiz).
+	     */
+	    rb = intel_create_renderbuffer(MESA_FORMAT_X8_Z24);
+	    _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base);
+	    rb = intel_create_renderbuffer(MESA_FORMAT_S8);
+	    _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base);
 	 } else {
-	    struct intel_renderbuffer *depthRb
-	       = intel_create_renderbuffer(MESA_FORMAT_X8_Z24);
-	    _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
+	    /*
+	     * Use combined depth/stencil. Note that the renderbuffer is
+	     * attached to two attachment points.
+	     */
+	    rb = intel_create_renderbuffer(MESA_FORMAT_S8_Z24);
+	    _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base);
+	    _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base);
 	 }
       }
       else if (mesaVis->depthBits == 16) {
+	 assert(mesaVis->stencilBits == 0);
          /* just 16-bit depth buffer, no hw stencil */
          struct intel_renderbuffer *depthRb
 	    = intel_create_renderbuffer(MESA_FORMAT_Z16);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
+      }
+      else {
+	 assert(mesaVis->depthBits == 0);
+	 assert(mesaVis->stencilBits == 0);
       }
 
       /* now add any/all software-based renderbuffers we may need */
       _mesa_add_soft_renderbuffers(fb,
                                    GL_FALSE, /* never sw color */
                                    GL_FALSE, /* never sw depth */
-                                   swStencil, mesaVis->accumRedBits > 0,
+                                   GL_FALSE, /* never sw stencil */
+                                   mesaVis->accumRedBits > 0,
                                    GL_FALSE, /* never sw alpha */
                                    GL_FALSE  /* never sw aux */ );
       driDrawPriv->driverPrivate = fb;
@@ -357,19 +482,22 @@ intelDestroyBuffer(__DRIdrawable * driDrawPriv)
  * init-designated function to register chipids and createcontext
  * functions.
  */
-extern GLboolean i830CreateContext(const __GLcontextModes * mesaVis,
+extern GLboolean i830CreateContext(const struct gl_config * mesaVis,
                                    __DRIcontext * driContextPriv,
                                    void *sharedContextPrivate);
 
-extern GLboolean i915CreateContext(const __GLcontextModes * mesaVis,
+extern GLboolean i915CreateContext(int api,
+				   const struct gl_config * mesaVis,
                                    __DRIcontext * driContextPriv,
                                    void *sharedContextPrivate);
-extern GLboolean brwCreateContext(const __GLcontextModes * mesaVis,
+extern GLboolean brwCreateContext(int api,
+				  const struct gl_config * mesaVis,
 				  __DRIcontext * driContextPriv,
 				  void *sharedContextPrivate);
 
 static GLboolean
-intelCreateContext(const __GLcontextModes * mesaVis,
+intelCreateContext(gl_api api,
+		   const struct gl_config * mesaVis,
                    __DRIcontext * driContextPriv,
                    void *sharedContextPrivate)
 {
@@ -379,7 +507,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
 #ifdef I915
    if (IS_9XX(intelScreen->deviceID)) {
       if (!IS_965(intelScreen->deviceID)) {
-	 return i915CreateContext(mesaVis, driContextPriv,
+	 return i915CreateContext(api, mesaVis, driContextPriv,
 				  sharedContextPrivate);
       }
    } else {
@@ -388,9 +516,10 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    }
 #else
    if (IS_965(intelScreen->deviceID))
-      return brwCreateContext(mesaVis, driContextPriv, sharedContextPrivate);
+      return brwCreateContext(api, mesaVis,
+			      driContextPriv, sharedContextPrivate);
 #endif
-   fprintf(stderr, "Unrecognized deviceID %x\n", intelScreen->deviceID);
+   fprintf(stderr, "Unrecognized deviceID 0x%x\n", intelScreen->deviceID);
    return GL_FALSE;
 }
 
@@ -400,10 +529,10 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
    __DRIscreen *spriv = intelScreen->driScrnPriv;
    int num_fences = 0;
 
-   intelScreen->no_hw = getenv("INTEL_NO_HW") != NULL;
+   intelScreen->no_hw = (getenv("INTEL_NO_HW") != NULL ||
+			 getenv("INTEL_DEVID_OVERRIDE") != NULL);
 
    intelScreen->bufmgr = intel_bufmgr_gem_init(spriv->fd, BATCH_SZ);
-   /* Otherwise, use the classic buffer manager. */
    if (intelScreen->bufmgr == NULL) {
       fprintf(stderr, "[%s:%u] Error initializing buffer manager.\n",
 	      __func__, __LINE__);
@@ -420,14 +549,66 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
 
    intelScreen->named_regions = _mesa_NewHashTable();
 
+   intelScreen->relaxed_relocations = 0;
+   intelScreen->relaxed_relocations |=
+      intel_get_boolean(spriv, I915_PARAM_HAS_RELAXED_DELTA) << 0;
+
    return GL_TRUE;
+}
+
+/**
+ * Override intel_screen.hw_has_hiz with environment variable INTEL_HIZ.
+ *
+ * Valid values for INTEL_HIZ are "0" and "1". If an invalid valid value is
+ * encountered, a warning is emitted and INTEL_HIZ is ignored.
+ */
+static void
+intel_override_hiz(struct intel_screen *intel)
+{
+   const char *s = getenv("INTEL_HIZ");
+   if (!s) {
+      return;
+   } else if (!strncmp("0", s, 2)) {
+      intel->hw_has_hiz = false;
+   } else if (!strncmp("1", s, 2)) {
+      intel->hw_has_hiz = true;
+   } else {
+      fprintf(stderr,
+	      "warning: env variable INTEL_HIZ=\"%s\" has invalid value "
+	      "and is ignored", s);
+   }
+}
+
+/**
+ * Override intel_screen.hw_has_separate_stencil with environment variable
+ * INTEL_SEPARATE_STENCIL.
+ *
+ * Valid values for INTEL_SEPARATE_STENCIL are "0" and "1". If an invalid
+ * valid value is encountered, a warning is emitted and INTEL_SEPARATE_STENCIL
+ * is ignored.
+ */
+static void
+intel_override_separate_stencil(struct intel_screen *screen)
+{
+   const char *s = getenv("INTEL_SEPARATE_STENCIL");
+   if (!s) {
+      return;
+   } else if (!strncmp("0", s, 2)) {
+      screen->hw_has_separate_stencil = false;
+   } else if (!strncmp("1", s, 2)) {
+      screen->hw_has_separate_stencil = true;
+   } else {
+      fprintf(stderr,
+	      "warning: env variable INTEL_SEPARATE_STENCIL=\"%s\" has "
+	      "invalid value and is ignored", s);
+   }
 }
 
 /**
  * This is the driver specific part of the createNewScreen entry point.
  * Called when using DRI2.
  *
- * \return the __GLcontextModes supported by this driver
+ * \return the struct gl_config supported by this driver
  */
 static const
 __DRIconfig **intelInitScreen2(__DRIscreen *psp)
@@ -435,6 +616,8 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    struct intel_screen *intelScreen;
    GLenum fb_format[3];
    GLenum fb_type[3];
+   unsigned int api_mask;
+   char *devid_override;
 
    static const GLenum back_buffer_modes[] = {
        GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
@@ -460,6 +643,53 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    if (!intel_get_param(psp, I915_PARAM_CHIPSET_ID,
 			&intelScreen->deviceID))
       return GL_FALSE;
+
+   /* Allow an override of the device ID for the purpose of making the
+    * driver produce dumps for debugging of new chipset enablement.
+    * This implies INTEL_NO_HW, to avoid programming your actual GPU
+    * incorrectly.
+    */
+   devid_override = getenv("INTEL_DEVID_OVERRIDE");
+   if (devid_override) {
+      intelScreen->deviceID = strtod(devid_override, NULL);
+   }
+
+   if (IS_GEN7(intelScreen->deviceID)) {
+      intelScreen->gen = 7;
+   } else if (IS_GEN6(intelScreen->deviceID)) {
+      intelScreen->gen = 6;
+   } else if (IS_GEN5(intelScreen->deviceID)) {
+      intelScreen->gen = 5;
+   } else if (IS_965(intelScreen->deviceID)) {
+      intelScreen->gen = 4;
+   } else if (IS_9XX(intelScreen->deviceID)) {
+      intelScreen->gen = 3;
+   } else {
+      intelScreen->gen = 2;
+   }
+
+   /*
+    * FIXME: The hiz and separate stencil fields need updating once the
+    * FIXME: features are completely implemented for a given chipset.
+    */
+   intelScreen->hw_has_separate_stencil = intelScreen->gen >= 7;
+   intelScreen->hw_must_use_separate_stencil = intelScreen->gen >= 7;
+   intelScreen->hw_has_hiz = false;
+   intelScreen->dri2_has_hiz = INTEL_DRI2_HAS_HIZ_UNKNOWN;
+
+   intel_override_hiz(intelScreen);
+   intel_override_separate_stencil(intelScreen);
+
+   api_mask = (1 << __DRI_API_OPENGL);
+#if FEATURE_ES1
+   api_mask |= (1 << __DRI_API_GLES);
+#endif
+#if FEATURE_ES2
+   api_mask |= (1 << __DRI_API_GLES2);
+#endif
+
+   if (IS_9XX(intelScreen->deviceID) || IS_965(intelScreen->deviceID))
+      psp->api_mask = api_mask;
 
    if (!intel_init_bufmgr(intelScreen))
        return GL_FALSE;
@@ -550,6 +780,131 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    return (const __DRIconfig **)configs;
 }
 
+struct intel_buffer {
+   __DRIbuffer base;
+   struct intel_region *region;
+};
+
+/**
+ * \brief Get tiling format for a DRI buffer.
+ *
+ * \param attachment is the buffer's attachmet point, such as
+ *        __DRI_BUFFER_DEPTH.
+ * \param out_tiling is the returned tiling format for buffer.
+ * \return false if attachment is unrecognized or is incompatible with screen.
+ */
+static bool
+intel_get_dri_buffer_tiling(struct intel_screen *screen,
+                            uint32_t attachment,
+                            uint32_t *out_tiling)
+{
+   if (screen->gen < 4) {
+      *out_tiling = I915_TILING_X;
+      return true;
+   }
+
+   switch (attachment) {
+   case __DRI_BUFFER_DEPTH:
+   case __DRI_BUFFER_DEPTH_STENCIL:
+   case __DRI_BUFFER_HIZ:
+      *out_tiling = I915_TILING_Y;
+      return true;
+   case __DRI_BUFFER_ACCUM:
+   case __DRI_BUFFER_FRONT_LEFT:
+   case __DRI_BUFFER_FRONT_RIGHT:
+   case __DRI_BUFFER_BACK_LEFT:
+   case __DRI_BUFFER_BACK_RIGHT:
+   case __DRI_BUFFER_FAKE_FRONT_LEFT:
+   case __DRI_BUFFER_FAKE_FRONT_RIGHT:
+      *out_tiling = I915_TILING_X;
+      return true;
+   case __DRI_BUFFER_STENCIL:
+      /* The stencil buffer is W tiled. However, we request from the kernel
+       * a non-tiled buffer because the GTT is incapable of W fencing.
+       */
+      *out_tiling = I915_TILING_NONE;
+      return true;
+   default:
+      if(unlikely(INTEL_DEBUG & DEBUG_DRI)) {
+	 fprintf(stderr, "error: %s: unrecognized DRI buffer attachment 0x%x\n",
+	         __FUNCTION__, attachment);
+      }
+       return false;
+   }
+}
+
+static __DRIbuffer *
+intelAllocateBuffer(__DRIscreen *screen,
+		    unsigned attachment, unsigned format,
+		    int width, int height)
+{
+   struct intel_buffer *intelBuffer;
+   struct intel_screen *intelScreen = screen->private;
+
+   uint32_t tiling;
+   uint32_t region_width;
+   uint32_t region_height;
+   uint32_t region_cpp;
+
+   bool ok = true;
+
+   ok = intel_get_dri_buffer_tiling(intelScreen, attachment, &tiling);
+   if (!ok)
+      return NULL;
+
+   intelBuffer = CALLOC(sizeof *intelBuffer);
+   if (intelBuffer == NULL)
+      return NULL;
+
+   if (attachment == __DRI_BUFFER_STENCIL) {
+      /* The stencil buffer has quirky pitch requirements.  From Vol 2a,
+       * 11.5.6.2.1 3DSTATE_STENCIL_BUFFER, field "Surface Pitch":
+       *    The pitch must be set to 2x the value computed based on width, as
+       *    the stencil buffer is stored with two rows interleaved.
+       * To accomplish this, we resort to the nasty hack of doubling the
+       * region's cpp and halving its height.
+       */
+      region_width = ALIGN(width, 64);
+      region_height = ALIGN(ALIGN(height, 2) / 2, 64);
+      region_cpp = format / 4;
+   } else {
+      region_width = width;
+      region_height = height;
+      region_cpp = format / 8;
+   }
+
+   intelBuffer->region = intel_region_alloc(intelScreen,
+                                            tiling,
+                                            region_cpp,
+                                            region_width,
+                                            region_height,
+                                            true);
+   
+   if (intelBuffer->region == NULL) {
+	   FREE(intelBuffer);
+	   return NULL;
+   }
+   
+   intel_region_flink(intelBuffer->region, &intelBuffer->base.name);
+
+   intelBuffer->base.attachment = attachment;
+   intelBuffer->base.cpp = intelBuffer->region->cpp;
+   intelBuffer->base.pitch =
+         intelBuffer->region->pitch * intelBuffer->region->cpp;
+
+   return &intelBuffer->base;
+}
+
+static void
+intelReleaseBuffer(__DRIscreen *screen, __DRIbuffer *buffer)
+{
+   struct intel_buffer *intelBuffer = (struct intel_buffer *) buffer;
+
+   intel_region_release(&intelBuffer->region);
+   free(intelBuffer);
+}
+
+
 const struct __DriverAPIRec driDriverAPI = {
    .DestroyScreen	 = intelDestroyScreen,
    .CreateContext	 = intelCreateContext,
@@ -559,6 +914,8 @@ const struct __DriverAPIRec driDriverAPI = {
    .MakeCurrent		 = intelMakeCurrent,
    .UnbindContext	 = intelUnbindContext,
    .InitScreen2		 = intelInitScreen2,
+   .AllocateBuffer       = intelAllocateBuffer,
+   .ReleaseBuffer        = intelReleaseBuffer
 };
 
 /* This is the table of extensions that the loader will dlsym() for. */

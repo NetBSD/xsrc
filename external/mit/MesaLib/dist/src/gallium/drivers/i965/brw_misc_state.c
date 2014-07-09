@@ -239,7 +239,7 @@ static int prepare_depthbuffer(struct brw_context *brw)
 static int emit_depthbuffer(struct brw_context *brw)
 {
    struct pipe_surface *surface = brw->curr.fb.zsbuf;
-   unsigned int len = (BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw)) ? 6 : 5;
+   unsigned int len = (brw->is_g4x || brw->gen == 5) ? 6 : 5;
 
    if (surface == NULL) {
       BEGIN_BATCH(len, IGNORE_CLIPRECTS);
@@ -250,7 +250,7 @@ static int emit_depthbuffer(struct brw_context *brw)
       OUT_BATCH(0);
       OUT_BATCH(0);
 
-      if (BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw))
+      if (brw->is_g4x || brw->gen == 5)
          OUT_BATCH(0);
 
       ADVANCE_BATCH();
@@ -266,7 +266,7 @@ static int emit_depthbuffer(struct brw_context *brw)
 	 cpp = 2;
 	 break;
       case PIPE_FORMAT_Z24X8_UNORM:
-      case PIPE_FORMAT_Z24S8_UNORM:
+      case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
 	 format = BRW_DEPTHFORMAT_D24_UNORM_S8_UINT;
 	 cpp = 4;
 	 break;
@@ -287,17 +287,18 @@ static int emit_depthbuffer(struct brw_context *brw)
       OUT_BATCH(((pitch * cpp) - 1) |
 		(format << 18) |
 		(BRW_TILEWALK_YMAJOR << 26) |
-		((surface->layout != PIPE_SURFACE_LAYOUT_LINEAR) << 27) |
+                /* always linear ?
+		((surface->layout != PIPE_SURFACE_LAYOUT_LINEAR) << 27) |*/
 		(BRW_SURFACE_2D << 29));
       OUT_RELOC(bo,
 		BRW_USAGE_DEPTH_BUFFER,
-		surface->offset);
+		brw_surface(surface)->offset);
       OUT_BATCH((BRW_SURFACE_MIPMAPLAYOUT_BELOW << 1) |
 		((pitch - 1) << 6) |
 		((surface->height - 1) << 19));
       OUT_BATCH(0);
 
-      if (BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw))
+      if (brw->is_g4x || brw->gen == 5)
          OUT_BATCH(0);
 
       ADVANCE_BATCH();
@@ -362,10 +363,10 @@ const struct brw_tracked_state brw_line_stipple = {
 
 
 /***********************************************************************
- * Misc invarient state packets
+ * Misc invariant state packets
  */
 
-static int upload_invarient_state( struct brw_context *brw )
+static int upload_invariant_state( struct brw_context *brw )
 {
    {
       /* 0x61040000  Pipeline Select */
@@ -373,7 +374,7 @@ static int upload_invarient_state( struct brw_context *brw )
       struct brw_pipeline_select ps;
 
       memset(&ps, 0, sizeof(ps));
-      if (BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw))
+      if (brw->is_g4x || brw->gen == 5)
 	 ps.header.opcode = CMD_PIPELINE_SELECT_GM45;
       else
 	 ps.header.opcode = CMD_PIPELINE_SELECT_965;
@@ -412,7 +413,7 @@ static int upload_invarient_state( struct brw_context *brw )
       struct brw_vf_statistics vfs;
       memset(&vfs, 0, sizeof(vfs));
 
-      if (BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw)) 
+      if (brw->is_g4x || brw->gen == 5)
 	 vfs.opcode = CMD_VF_STATISTICS_GM45;
       else 
 	 vfs.opcode = CMD_VF_STATISTICS_965;
@@ -423,7 +424,7 @@ static int upload_invarient_state( struct brw_context *brw )
       BRW_BATCH_STRUCT(brw, &vfs);
    }
    
-   if (!BRW_IS_965(brw))
+   if (!(brw->gen == 4))
    {
       struct brw_aa_line_parameters balp;
 
@@ -438,7 +439,7 @@ static int upload_invarient_state( struct brw_context *brw )
    {
       struct brw_polygon_stipple_offset bpso;
       
-      /* This is invarient state in gallium:
+      /* This is invariant state in gallium:
        */
       memset(&bpso, 0, sizeof(bpso));
       bpso.header.opcode = CMD_POLY_STIPPLE_OFFSET;
@@ -452,13 +453,13 @@ static int upload_invarient_state( struct brw_context *brw )
    return 0;
 }
 
-const struct brw_tracked_state brw_invarient_state = {
+const struct brw_tracked_state brw_invariant_state = {
    .dirty = {
       .mesa = 0,
       .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
-   .emit = upload_invarient_state
+   .emit = upload_invariant_state
 };
 
 
@@ -479,7 +480,7 @@ static int upload_state_base_address( struct brw_context *brw )
    /* Output the structure (brw_state_base_address) directly to the
     * batchbuffer, so we can emit relocations inline.
     */
-   if (BRW_IS_IGDNG(brw)) {
+   if (brw->gen == 5) {
        BEGIN_BATCH(8, IGNORE_CLIPRECTS);
        OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (8 - 2));
        OUT_BATCH(1); /* General state base address */

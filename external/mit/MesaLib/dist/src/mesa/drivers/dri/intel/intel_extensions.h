@@ -30,10 +30,13 @@
 
 
 extern void
-intelInitExtensions(GLcontext *ctx);
+intelInitExtensions(struct gl_context *ctx);
 
 extern void
-intelFlushDrawable(__DRIdrawable *drawable);
+intelInitExtensionsES1(struct gl_context *ctx);
+
+extern void
+intelInitExtensionsES2(struct gl_context *ctx);
 
 
 #endif

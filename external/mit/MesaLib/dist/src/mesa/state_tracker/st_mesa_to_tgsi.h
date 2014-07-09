@@ -29,20 +29,24 @@
 #ifndef ST_MESA_TO_TGSI_H
 #define ST_MESA_TO_TGSI_H
 
-#include "main/mtypes.h"
-#include "tgsi/tgsi_ureg.h"
-
-
 #if defined __cplusplus
 extern "C" {
 #endif
 
-struct tgsi_token;
+#include "main/glheader.h"
+
+#include "pipe/p_compiler.h"
+#include "pipe/p_defines.h"
+
+struct gl_context;
 struct gl_program;
+struct tgsi_token;
+struct ureg_program;
+
 
 enum pipe_error
 st_translate_mesa_program(
-   GLcontext *ctx,
+   struct gl_context *ctx,
    uint procType,
    struct ureg_program *ureg,
    const struct gl_program *program,
