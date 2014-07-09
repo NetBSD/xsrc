@@ -288,7 +288,7 @@ typedef GLUtesselator GLUtriangulatorObj;
 #endif
 
 /* Internal convenience typedefs */
-typedef void (GLAPIENTRYP _GLUfuncptr)();
+typedef void (GLAPIENTRYP _GLUfuncptr)(void);
 
 GLAPI void GLAPIENTRY gluBeginCurve (GLUnurbs* nurb);
 GLAPI void GLAPIENTRY gluBeginPolygon (GLUtesselator* tess);

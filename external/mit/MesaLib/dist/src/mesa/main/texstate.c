@@ -30,6 +30,7 @@
 
 #include "glheader.h"
 #include "mfeatures.h"
+#include "bufferobj.h"
 #include "colormac.h"
 #include "colortab.h"
 #include "context.h"
@@ -63,7 +64,7 @@ static const struct gl_tex_env_combine_state default_combine_state = {
  * Used by glXCopyContext to copy texture state from one context to another.
  */
 void
-_mesa_copy_texture_state( const GLcontext *src, GLcontext *dst )
+_mesa_copy_texture_state( const struct gl_context *src, struct gl_context *dst )
 {
    GLuint u, tex;
 
@@ -119,7 +120,7 @@ _mesa_copy_texture_state( const GLcontext *src, GLcontext *dst )
  * For debugging
  */
 void
-_mesa_print_texunit_state( GLcontext *ctx, GLuint unit )
+_mesa_print_texunit_state( struct gl_context *ctx, GLuint unit )
 {
    const struct gl_texture_unit *texUnit = ctx->Texture.Unit + unit;
    printf("Texture Unit %d\n", unit);
@@ -179,6 +180,8 @@ calculate_derived_texenv( struct gl_tex_env_combine_state *state,
       break;
 
    case GL_LUMINANCE:
+   case GL_RED:
+   case GL_RG:
    case GL_RGB:
    case GL_YCBCR_MESA:
    case GL_DUDV_ATI:
@@ -219,6 +222,8 @@ calculate_derived_texenv( struct gl_tex_env_combine_state *state,
       case GL_INTENSITY:
 	 state->SourceRGB[0] = GL_PREVIOUS;
 	 break;
+      case GL_RED:
+      case GL_RG:
       case GL_RGB:
       case GL_YCBCR_MESA:
       case GL_DUDV_ATI:
@@ -244,6 +249,8 @@ calculate_derived_texenv( struct gl_tex_env_combine_state *state,
 	 state->OperandA[2] = GL_SRC_ALPHA;
 	 /* FALLTHROUGH */
       case GL_LUMINANCE:
+      case GL_RED:
+      case GL_RG:
       case GL_RGB:
       case GL_LUMINANCE_ALPHA:
       case GL_RGBA:
@@ -357,7 +364,7 @@ _mesa_ClientActiveTextureARB(GLenum texture)
  * \param ctx GL context.
  */
 static void
-update_texture_matrices( GLcontext *ctx )
+update_texture_matrices( struct gl_context *ctx )
 {
    GLuint u;
 
@@ -380,7 +387,7 @@ update_texture_matrices( GLcontext *ctx )
  * Examine texture unit's combine/env state to update derived state.
  */
 static void
-update_tex_combine(GLcontext *ctx, struct gl_texture_unit *texUnit)
+update_tex_combine(struct gl_context *ctx, struct gl_texture_unit *texUnit)
 {
    struct gl_tex_env_combine_state *combine;
 
@@ -400,7 +407,7 @@ update_tex_combine(GLcontext *ctx, struct gl_texture_unit *texUnit)
       }
       else if (format == GL_DEPTH_COMPONENT ||
                format == GL_DEPTH_STENCIL_EXT) {
-         format = texObj->DepthMode;
+         format = texObj->Sampler.DepthMode;
       }
       calculate_derived_texenv(&texUnit->_EnvMode, texUnit->EnvMode, format);
       texUnit->_CurrentCombine = & texUnit->_EnvMode;
@@ -483,29 +490,34 @@ update_tex_combine(GLcontext *ctx, struct gl_texture_unit *texUnit)
  * \param ctx GL context.
  */
 static void
-update_texture_state( GLcontext *ctx )
+update_texture_state( struct gl_context *ctx )
 {
    GLuint unit;
    struct gl_fragment_program *fprog = NULL;
    struct gl_vertex_program *vprog = NULL;
    GLbitfield enabledFragUnits = 0x0;
 
-   if (ctx->Shader.CurrentProgram &&
-       ctx->Shader.CurrentProgram->LinkStatus) {
-      fprog = ctx->Shader.CurrentProgram->FragmentProgram;
-      vprog = ctx->Shader.CurrentProgram->VertexProgram;
+   if (ctx->Shader.CurrentVertexProgram &&
+       ctx->Shader.CurrentVertexProgram->LinkStatus) {
+      vprog = ctx->Shader.CurrentVertexProgram->VertexProgram;
+   } else if (ctx->VertexProgram._Enabled) {
+      /* XXX enable this if/when non-shader vertex programs get
+       * texture fetches:
+       vprog = ctx->VertexProgram.Current;
+       */
    }
-   else {
-      if (ctx->FragmentProgram._Enabled) {
-         fprog = ctx->FragmentProgram.Current;
-      }
-      if (ctx->VertexProgram._Enabled) {
-         /* XXX enable this if/when non-shader vertex programs get
-          * texture fetches:
-         vprog = ctx->VertexProgram.Current;
-         */
-      }
+
+   if (ctx->Shader.CurrentFragmentProgram &&
+       ctx->Shader.CurrentFragmentProgram->LinkStatus) {
+      fprog = ctx->Shader.CurrentFragmentProgram->FragmentProgram;
    }
+   else if (ctx->FragmentProgram._Enabled) {
+      fprog = ctx->FragmentProgram.Current;
+   }
+
+   /* FINISHME: Geometry shader texture accesses should also be considered
+    * FINISHME: here.
+    */
 
    /* TODO: only set this if there are actual changes */
    ctx->NewState |= _NEW_TEXTURE;
@@ -528,7 +540,7 @@ update_texture_state( GLcontext *ctx )
       /* Get the bitmask of texture target enables.
        * enableBits will be a mask of the TEXTURE_*_BIT flags indicating
        * which texture targets are enabled (fixed function) or referenced
-       * by a fragment shader/program.  When multiple flags are set, we'll
+       * by a fragment program/program.  When multiple flags are set, we'll
        * settle on the one with highest priority (see below).
        */
       if (vprog) {
@@ -647,7 +659,7 @@ update_texture_state( GLcontext *ctx )
  * Update texture-related derived state.
  */
 void
-_mesa_update_texture( GLcontext *ctx, GLuint new_state )
+_mesa_update_texture( struct gl_context *ctx, GLuint new_state )
 {
    if (new_state & _NEW_TEXTURE_MATRIX)
       update_texture_matrices( ctx );
@@ -672,7 +684,7 @@ _mesa_update_texture( GLcontext *ctx, GLuint new_state )
  * GL_FALSE.
  */
 static GLboolean
-alloc_proxy_textures( GLcontext *ctx )
+alloc_proxy_textures( struct gl_context *ctx )
 {
    static const GLenum targets[] = {
       GL_TEXTURE_1D,
@@ -681,7 +693,8 @@ alloc_proxy_textures( GLcontext *ctx )
       GL_TEXTURE_CUBE_MAP_ARB,
       GL_TEXTURE_RECTANGLE_NV,
       GL_TEXTURE_1D_ARRAY_EXT,
-      GL_TEXTURE_2D_ARRAY_EXT
+      GL_TEXTURE_2D_ARRAY_EXT,
+      GL_TEXTURE_BUFFER
    };
    GLint tgt;
 
@@ -710,7 +723,7 @@ alloc_proxy_textures( GLcontext *ctx )
  * \param unit texture unit number to be initialized.
  */
 static void
-init_texture_unit( GLcontext *ctx, GLuint unit )
+init_texture_unit( struct gl_context *ctx, GLuint unit )
 {
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    GLuint tex;
@@ -758,7 +771,7 @@ init_texture_unit( GLcontext *ctx, GLuint unit )
  * Initialize texture state for the given context.
  */
 GLboolean
-_mesa_init_texture(GLcontext *ctx)
+_mesa_init_texture(struct gl_context *ctx)
 {
    GLuint u;
 
@@ -782,6 +795,10 @@ _mesa_init_texture(GLcontext *ctx)
    if (!alloc_proxy_textures( ctx ))
       return GL_FALSE;
 
+   /* GL_ARB_texture_buffer_object */
+   _mesa_reference_buffer_object(ctx, &ctx->Texture.BufferObject,
+                                 ctx->Shared->NullBufferObj);
+
    return GL_TRUE;
 }
 
@@ -790,7 +807,7 @@ _mesa_init_texture(GLcontext *ctx)
  * Free dynamically-allocted texture data attached to the given context.
  */
 void
-_mesa_free_texture_data(GLcontext *ctx)
+_mesa_free_texture_data(struct gl_context *ctx)
 {
    GLuint u, tgt;
 
@@ -808,8 +825,14 @@ _mesa_free_texture_data(GLcontext *ctx)
    for (tgt = 0; tgt < NUM_TEXTURE_TARGETS; tgt++)
       ctx->Driver.DeleteTexture(ctx, ctx->Texture.ProxyTex[tgt]);
 
-   for (u = 0; u < Elements(ctx->Texture.Unit); u++)
-      _mesa_free_colortable_data(&ctx->Texture.Unit[u].ColorTable);
+   /* GL_ARB_texture_buffer_object */
+   _mesa_reference_buffer_object(ctx, &ctx->Texture.BufferObject, NULL);
+
+#if FEATURE_sampler_objects
+   for (u = 0; u < Elements(ctx->Texture.Unit); u++) {
+      _mesa_reference_sampler_object(ctx, &ctx->Texture.Unit[u].Sampler, NULL);
+   }
+#endif
 }
 
 
@@ -819,7 +842,7 @@ _mesa_free_texture_data(GLcontext *ctx)
  * shared state.
  */
 void
-_mesa_update_default_objects_texture(GLcontext *ctx)
+_mesa_update_default_objects_texture(struct gl_context *ctx)
 {
    GLuint u, tex;
 

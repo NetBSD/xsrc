@@ -3,12 +3,9 @@
 TOP = ../../../../..
 include $(TOP)/configs/current
 
-CFLAGS += $(shell pkg-config libdrm libdrm_nouveau --cflags)
-DRI_LIB_DEPS += $(shell pkg-config libdrm_nouveau --libs)
-
 LIBNAME = nouveau_vieux_dri.so
 
-MINIGLX_SOURCES =
+include ../Makefile.defines
 
 DRIVER_SOURCES = \
 	nouveau_screen.c \
@@ -21,6 +18,8 @@ DRIVER_SOURCES = \
 	nouveau_bo_state.c \
 	nouveau_texture.c \
 	nouveau_surface.c \
+	nouveau_scratch.c \
+	nouveau_array.c \
 	nv04_context.c \
 	nv04_render.c \
 	nv04_state_fb.c \
@@ -51,7 +50,9 @@ C_SOURCES = \
 
 ASM_SOURCES =
 
+INCLUDES += $(NOUVEAU_CFLAGS)
+DRI_LIB_DEPS += $(NOUVEAU_LIBS)
 
-include ../Makefile.template
+include ../Makefile.targets
 
 symlinks:

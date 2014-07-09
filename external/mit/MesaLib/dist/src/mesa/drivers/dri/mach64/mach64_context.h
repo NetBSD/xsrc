@@ -161,7 +161,7 @@ struct mach64_texture_object {
 typedef struct mach64_texture_object mach64TexObj, *mach64TexObjPtr;
 
 struct mach64_context {
-   GLcontext *glCtx;
+   struct gl_context *glCtx;
 
    /* Driver and hardware state management
     */
@@ -273,7 +273,8 @@ struct mach64_context {
 #define MACH64_CONTEXT(ctx)		((mach64ContextPtr)(ctx->DriverCtx))
 
 
-extern GLboolean mach64CreateContext( const __GLcontextModes *glVisual,
+extern GLboolean mach64CreateContext( gl_api api,
+				      const struct gl_config *glVisual,
 				      __DRIcontext *driContextPriv,
                                       void *sharedContextPrivate );
 
@@ -308,11 +309,11 @@ do {                                                                    \
    *(GLuint *)(x) = htole32( __tmp );                                  \
 } while (0)
 #else
-#ifndef __OpenBSD__
-#include <byteswap.h>
-#else
+#if defined(__OpenBSD__) || defined(__NetBSD__)
 #include <machine/endian.h>
 #define bswap_32 bswap32
+#else
+#include <byteswap.h>
 #endif
 
 #define LE32_IN( x )		bswap_32( *(GLuint *)(x) )
