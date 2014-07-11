@@ -70,7 +70,7 @@ in this Software without prior written authorization from The Open Group.
 #include	"fservestr.h"
 #include	<X11/fonts/fontutil.h>
 #include	<errno.h>
-#include        <limits.h>
+#include	<limits.h>
 
 #include	<time.h>
 #define Time_t time_t
@@ -96,10 +96,10 @@ in this Software without prior written authorization from The Open Group.
  * SIZEOF(r) is in bytes, length fields in the protocol are in 32-bit words,
  * so this converts for doing size comparisons.
  */
-#define LENGTHOF(r)    (SIZEOF(r) >> 2)
+#define LENGTHOF(r)	(SIZEOF(r) >> 2)
 
 /* Somewhat arbitrary limit on maximum reply size we'll try to read. */
-#define MAX_REPLY_LENGTH       ((64 * 1024 * 1024) >> 2)
+#define MAX_REPLY_LENGTH	((64 * 1024 * 1024) >> 2)
 
 extern void ErrorF(const char *f, ...);
 
@@ -631,11 +631,11 @@ fs_get_reply (FSFpePtr conn, int *error)
      */
     if (rep->length > MAX_REPLY_LENGTH)
     {
-        ErrorF("fserve: reply length %d > MAX_REPLY_LENGTH, disconnecting"
-               " from font server\n", rep->length);
-        _fs_connection_died (conn);
-        *error = FSIO_ERROR;
-        return 0;
+	ErrorF("fserve: reply length %d > MAX_REPLY_LENGTH, disconnecting"
+	       " from font server\n", rep->length);
+	_fs_connection_died (conn);
+	*error = FSIO_ERROR;
+	return 0;
     }
 
     ret = _fs_start_read (conn, rep->length << 2, &buf);
@@ -721,14 +721,14 @@ fs_read_open_font(FontPathElementPtr fpe, FSBlockDataPtr blockrec)
 
     rep = (fsOpenBitmapFontReply *) fs_get_reply (conn, &ret);
     if (!rep || rep->type == FS_Error ||
-       (rep->length != LENGTHOF(fsOpenBitmapFontReply)))
+	(rep->length != LENGTHOF(fsOpenBitmapFontReply)))
     {
 	if (ret == FSIO_BLOCK)
 	    return StillWorking;
 	if (rep)
 	    _fs_done_read (conn, rep->length << 2);
 	fs_cleanup_bfont (bfont);
-        _fs_reply_failed (rep, fsOpenBitmapFontReply, "!=");
+	_fs_reply_failed (rep, fsOpenBitmapFontReply, "!=");
 	return BadFontName;
     }
 
@@ -855,7 +855,7 @@ fs_read_query_info(FontPathElementPtr fpe, FSBlockDataPtr blockrec)
     FSFpePtr		conn = (FSFpePtr) fpe->private;
     fsQueryXInfoReply	*rep;
     char		*buf;
-    long                bufleft; /* length of reply left to use */
+    long		bufleft; /* length of reply left to use */
     fsPropInfo		*pi;
     fsPropOffset	*po;
     pointer		pd;
@@ -866,14 +866,14 @@ fs_read_query_info(FontPathElementPtr fpe, FSBlockDataPtr blockrec)
 
     rep = (fsQueryXInfoReply *) fs_get_reply (conn, &ret);
     if (!rep || rep->type == FS_Error ||
-       (rep->length < LENGTHOF(fsQueryXInfoReply)))
+	(rep->length < LENGTHOF(fsQueryXInfoReply)))
     {
 	if (ret == FSIO_BLOCK)
 	    return StillWorking;
 	if (rep)
 	    _fs_done_read (conn, rep->length << 2);
 	fs_cleanup_bfont (bfont);
-        _fs_reply_failed (rep, fsQueryXInfoReply, "<");
+	_fs_reply_failed (rep, fsQueryXInfoReply, "<");
 	return BadFontName;
     }
 
@@ -899,12 +899,12 @@ fs_read_query_info(FontPathElementPtr fpe, FSBlockDataPtr blockrec)
     /* Compute offsets into the reply */
     if (bufleft < SIZEOF(fsPropInfo))
     {
-        ret = -1;
+	ret = -1;
 #ifdef DEBUG
-        fprintf(stderr, "fsQueryXInfo: bufleft (%ld) < SIZEOF(fsPropInfo)\n",
-                bufleft);
+	fprintf(stderr, "fsQueryXInfo: bufleft (%ld) < SIZEOF(fsPropInfo)\n",
+		bufleft);
 #endif
-        goto bail;
+	goto bail;
     }
     pi = (fsPropInfo *) buf;
     buf += SIZEOF (fsPropInfo);
@@ -912,13 +912,13 @@ fs_read_query_info(FontPathElementPtr fpe, FSBlockDataPtr blockrec)
 
     if ((bufleft / SIZEOF(fsPropOffset)) < pi->num_offsets)
     {
-       ret = -1;
+	ret = -1;
 #ifdef DEBUG
-       fprintf(stderr,
-               "fsQueryXInfo: bufleft (%ld) / SIZEOF(fsPropOffset) < %d\n",
-               bufleft, pi->num_offsets);
+	fprintf(stderr,
+		"fsQueryXInfo: bufleft (%ld) / SIZEOF(fsPropOffset) < %d\n",
+		bufleft, pi->num_offsets);
 #endif
-       goto bail;
+	goto bail;
     }
     po = (fsPropOffset *) buf;
     buf += pi->num_offsets * SIZEOF(fsPropOffset);
@@ -926,13 +926,13 @@ fs_read_query_info(FontPathElementPtr fpe, FSBlockDataPtr blockrec)
 
     if (bufleft < pi->data_len)
     {
-       ret = -1;
+	ret = -1;
 #ifdef DEBUG
-       fprintf(stderr,
-               "fsQueryXInfo: bufleft (%ld) < data_len (%d)\n",
-               bufleft, pi->data_len);
+	fprintf(stderr,
+		"fsQueryXInfo: bufleft (%ld) < data_len (%d)\n",
+		bufleft, pi->data_len);
 #endif
-       goto bail;
+	goto bail;
     }
     pd = (pointer) buf;
     buf += pi->data_len;
@@ -1031,14 +1031,14 @@ fs_read_extent_info(FontPathElementPtr fpe, FSBlockDataPtr blockrec)
 
     rep = (fsQueryXExtents16Reply *) fs_get_reply (conn, &ret);
     if (!rep || rep->type == FS_Error ||
-       (rep->length < LENGTHOF(fsQueryXExtents16Reply)))
+	(rep->length < LENGTHOF(fsQueryXExtents16Reply)))
     {
 	if (ret == FSIO_BLOCK)
 	    return StillWorking;
 	if (rep)
 	    _fs_done_read (conn, rep->length << 2);
 	fs_cleanup_bfont (bfont);
-        _fs_reply_failed (rep, fsQueryXExtents16Reply, "<");
+	_fs_reply_failed (rep, fsQueryXExtents16Reply, "<");
 	return BadFontName;
     }
 
@@ -1053,24 +1053,24 @@ fs_read_extent_info(FontPathElementPtr fpe, FSBlockDataPtr blockrec)
     }
     if (numInfos >= (INT_MAX / sizeof(CharInfoRec))) {
 #ifdef DEBUG
-        fprintf(stderr,
-                "fsQueryXExtents16: numInfos (%d) >= %ld\n",
-                numInfos, (INT_MAX / sizeof(CharInfoRec)));
+	fprintf(stderr,
+		"fsQueryXExtents16: numInfos (%d) >= %ld\n",
+		numInfos, (INT_MAX / sizeof(CharInfoRec)));
 #endif
-        pCI = NULL;
+	pCI = NULL;
     }
     else if (numExtents > ((rep->length - LENGTHOF(fsQueryXExtents16Reply))
-                           / LENGTHOF(fsXCharInfo))) {
+			    / LENGTHOF(fsXCharInfo))) {
 #ifdef DEBUG
-        fprintf(stderr,
-                "fsQueryXExtents16: numExtents (%d) > (%d - %d) / %d\n",
-                numExtents, rep->length,
-                LENGTHOF(fsQueryXExtents16Reply), LENGTHOF(fsXCharInfo));
+	fprintf(stderr,
+		"fsQueryXExtents16: numExtents (%d) > (%d - %d) / %d\n",
+		numExtents, rep->length,
+		LENGTHOF(fsQueryXExtents16Reply), LENGTHOF(fsXCharInfo));
 #endif
-        pCI = NULL;
+	pCI = NULL;
     }
     else
-        pCI = malloc(sizeof(CharInfoRec) * numInfos);
+	pCI = malloc(sizeof(CharInfoRec) * numInfos);
 
     if (!pCI)
     {
@@ -1211,7 +1211,7 @@ fs_read_extent_info(FontPathElementPtr fpe, FSBlockDataPtr blockrec)
 }
 
 #ifdef DEBUG
-static char *fs_open_states[] = {
+static const char *fs_open_states[] = {
     "OPEN_REPLY  ",
     "INFO_REPLY  ",
     "EXTENT_REPLY",
@@ -1481,7 +1481,6 @@ fs_wakeup(FontPathElementPtr fpe, unsigned long *mask)
     {
 	FSBlockDataPtr	    blockrec;
 	FSBlockedFontPtr    bfont;
-	FSBlockedListPtr    blist;
 	static CARD32	    lastState;
 	static FSBlockDataPtr	lastBlock;
 
@@ -1505,7 +1504,6 @@ fs_wakeup(FontPathElementPtr fpe, unsigned long *mask)
 			 "<freed>");
 		break;
 	    case FS_LIST_FONTS:
-		blist = (FSBlockedListPtr) blockrec->data;
 		fprintf (stderr, "  Blocked list errcode %d sequence %d\n",
 			 blockrec->errcode, blockrec->sequenceNumber);
 		break;
@@ -1909,7 +1907,7 @@ fs_read_glyphs(FontPathElementPtr fpe, FSBlockDataPtr blockrec)
     FontInfoPtr		    pfi = &pfont->info;
     fsQueryXBitmaps16Reply  *rep;
     char		    *buf;
-    long                    bufleft; /* length of reply left to use */
+    long		    bufleft; /* length of reply left to use */
     fsOffset32		    *ppbits;
     fsOffset32		    local_off;
     char		    *off_adr;
@@ -1927,7 +1925,7 @@ fs_read_glyphs(FontPathElementPtr fpe, FSBlockDataPtr blockrec)
 
     rep = (fsQueryXBitmaps16Reply *) fs_get_reply (conn, &ret);
     if (!rep || rep->type == FS_Error ||
-       (rep->length < LENGTHOF(fsQueryXBitmaps16Reply)))
+	(rep->length < LENGTHOF(fsQueryXBitmaps16Reply)))
     {
 	if (ret == FSIO_BLOCK)
 	    return StillWorking;
@@ -1947,17 +1945,18 @@ fs_read_glyphs(FontPathElementPtr fpe, FSBlockDataPtr blockrec)
     if ((bufleft / SIZEOF (fsOffset32)) < rep->num_chars)
     {
 #ifdef DEBUG
-        fprintf(stderr,
-                "fsQueryXBitmaps16: num_chars (%d) > bufleft (%ld) / %d\n",
-                rep->num_chars, bufleft, SIZEOF (fsOffset32));
+	fprintf(stderr,
+		"fsQueryXBitmaps16: num_chars (%d) > bufleft (%ld) / %d\n",
+		rep->num_chars, bufleft, SIZEOF (fsOffset32));
 #endif
-        err = AllocError;
-        goto bail;
+	err = AllocError;
+	goto bail;
     }
     ppbits = (fsOffset32 *) buf;
     buf += SIZEOF (fsOffset32) * (rep->num_chars);
     bufleft -= SIZEOF (fsOffset32) * (rep->num_chars);
 
+#if 0
     if (bufleft < rep->nbytes)
     {
 #ifdef DEBUG
@@ -1968,7 +1967,18 @@ fs_read_glyphs(FontPathElementPtr fpe, FSBlockDataPtr blockrec)
         err = AllocError;
         goto bail;
     }
+#endif
 
+    if (bufleft < rep->nbytes)
+    {
+#ifdef DEBUG
+	fprintf(stderr,
+		"fsQueryXBitmaps16: nbytes (%d) > bufleft (%ld)\n",
+		rep->nbytes, bufleft);
+#endif
+	err = AllocError;
+	goto bail;
+    }
     pbitmaps = (pointer ) buf;
 
     if (blockrec->type == FS_LOAD_GLYPHS)
@@ -2027,8 +2037,8 @@ fs_read_glyphs(FontPathElementPtr fpe, FSBlockDataPtr blockrec)
 	    if (NONZEROMETRICS(&fsdata->encoding[minchar].metrics))
 	    {
 		if (local_off.length &&
-                    (local_off.position < rep->nbytes) &&
-                    (local_off.length <= (rep->nbytes - local_off.position)))
+		    (local_off.position < rep->nbytes) &&
+		    (local_off.length <= (rep->nbytes - local_off.position)))
 		{
 		    bits = allbits;
 		    allbits += local_off.length;
@@ -2358,7 +2368,7 @@ fs_read_list(FontPathElementPtr fpe, FSBlockDataPtr blockrec)
     FSBlockedListPtr	blist = (FSBlockedListPtr) blockrec->data;
     fsListFontsReply	*rep;
     char		*data;
-    long                dataleft; /* length of reply left to use */
+    long		dataleft; /* length of reply left to use */
     int			length,
 			i,
 			ret;
@@ -2366,7 +2376,7 @@ fs_read_list(FontPathElementPtr fpe, FSBlockDataPtr blockrec)
 
     rep = (fsListFontsReply *) fs_get_reply (conn, &ret);
     if (!rep || rep->type == FS_Error ||
-       (rep->length < LENGTHOF(fsListFontsReply)))
+	(rep->length < LENGTHOF(fsListFontsReply)))
     {
 	if (ret == FSIO_BLOCK)
 	    return StillWorking;
@@ -2382,19 +2392,19 @@ fs_read_list(FontPathElementPtr fpe, FSBlockDataPtr blockrec)
     /* copy data into FontPathRecord */
     for (i = 0; i < rep->nFonts; i++)
     {
-        if (dataleft < 1)
-            break;
+	if (dataleft < 1)
+	    break;
 	length = *(unsigned char *)data++;
-        dataleft--; /* used length byte */
-        if (length > dataleft) {
+	dataleft--; /* used length byte */
+	if (length > dataleft) {
 #ifdef DEBUG
-            fprintf(stderr,
-                    "fsListFonts: name length (%d) > dataleft (%ld)\n",
-                    length, dataleft);
+	    fprintf(stderr,
+		    "fsListFonts: name length (%d) > dataleft (%ld)\n",
+		    length, dataleft);
 #endif
-            err = BadFontName;
-            break;
-        }
+	    err = BadFontName;
+	    break;
+	}
 	err = AddFontNamesName(blist->names, data, length);
 	if (err != Successful)
 	    break;
@@ -2494,6 +2504,7 @@ fs_read_list_info(FontPathElementPtr fpe, FSBlockDataPtr blockrec)
     FSBlockedListInfoPtr	binfo = (FSBlockedListInfoPtr) blockrec->data;
     fsListFontsWithXInfoReply	*rep;
     char			*buf;
+    long			bufleft;
     FSFpePtr			conn = (FSFpePtr) fpe->private;
     fsPropInfo			*pi;
     fsPropOffset		*po;
@@ -2506,14 +2517,14 @@ fs_read_list_info(FontPathElementPtr fpe, FSBlockDataPtr blockrec)
 
     rep = (fsListFontsWithXInfoReply *) fs_get_reply (conn, &ret);
     if (!rep || rep->type == FS_Error ||
-       ((rep->nameLength != 0) &&
-        (rep->length < LENGTHOF(fsListFontsWithXInfoReply))))
+	((rep->nameLength != 0) &&
+	 (rep->length < LENGTHOF(fsListFontsWithXInfoReply))))
     {
 	if (ret == FSIO_BLOCK)
 	    return StillWorking;
 	binfo->status = FS_LFWI_FINISHED;
 	err = AllocError;
-        _fs_reply_failed (rep, fsListFontsWithXInfoReply, "<");
+	_fs_reply_failed (rep, fsListFontsWithXInfoReply, "<");
 	goto done;
     }
     /*
@@ -2530,6 +2541,7 @@ fs_read_list_info(FontPathElementPtr fpe, FSBlockDataPtr blockrec)
     }
 
     buf = (char *) rep + SIZEOF (fsListFontsWithXInfoReply);
+    bufleft = (rep->length << 2) - SIZEOF (fsListFontsWithXInfoReply);
 
     /*
      * The original FS implementation didn't match
@@ -2538,19 +2550,71 @@ fs_read_list_info(FontPathElementPtr fpe, FSBlockDataPtr blockrec)
      */
     if (conn->fsMajorVersion <= 1)
     {
+	if (rep->nameLength > bufleft) {
+#ifdef DEBUG
+	    fprintf(stderr,
+		    "fsListFontsWithXInfo: name length (%d) > bufleft (%ld)\n",
+		    (int) rep->nameLength, bufleft);
+#endif
+	    err = AllocError;
+	    goto done;
+	}
+	/* binfo->name is a 256 char array, rep->nameLength is a CARD8 */
 	memcpy (binfo->name, buf, rep->nameLength);
 	buf += _fs_pad_length (rep->nameLength);
+	bufleft -= _fs_pad_length (rep->nameLength);
     }
     pi = (fsPropInfo *) buf;
+    if (SIZEOF (fsPropInfo) > bufleft) {
+#ifdef DEBUG
+	fprintf(stderr,
+		"fsListFontsWithXInfo: PropInfo length (%d) > bufleft (%ld)\n",
+		(int) SIZEOF (fsPropInfo), bufleft);
+#endif
+	err = AllocError;
+	goto done;
+    }
+    bufleft -= SIZEOF (fsPropInfo);
     buf += SIZEOF (fsPropInfo);
     po = (fsPropOffset *) buf;
+    if (pi->num_offsets > (bufleft / SIZEOF (fsPropOffset))) {
+#ifdef DEBUG
+	fprintf(stderr,
+		"fsListFontsWithXInfo: offset length (%d * %d) > bufleft (%ld)\n",
+		pi->num_offsets, (int) SIZEOF (fsPropOffset), bufleft);
+#endif
+	err = AllocError;
+	goto done;
+    }
+    bufleft -= pi->num_offsets * SIZEOF (fsPropOffset);
     buf += pi->num_offsets * SIZEOF (fsPropOffset);
     pd = (pointer) buf;
+    if (pi->data_len > bufleft) {
+#ifdef DEBUG
+	fprintf(stderr,
+		"fsListFontsWithXInfo: data length (%d) > bufleft (%ld)\n",
+		pi->data_len, bufleft);
+#endif
+	err = AllocError;
+	goto done;
+    }
+    bufleft -= pi->data_len;
     buf += pi->data_len;
     if (conn->fsMajorVersion > 1)
     {
+	if (rep->nameLength > bufleft) {
+#ifdef DEBUG
+	    fprintf(stderr,
+		    "fsListFontsWithXInfo: name length (%d) > bufleft (%ld)\n",
+		    (int) rep->nameLength, bufleft);
+#endif
+	    err = AllocError;
+	    goto done;
+	}
+	/* binfo->name is a 256 char array, rep->nameLength is a CARD8 */
 	memcpy (binfo->name, buf, rep->nameLength);
 	buf += _fs_pad_length (rep->nameLength);
+	bufleft -= _fs_pad_length (rep->nameLength);
     }
 
 #ifdef DEBUG
@@ -2974,25 +3038,25 @@ _fs_recv_conn_setup (FSFpePtr conn)
 		{
 		    alts[i].subset = alt_names[0];
 		    alt_len = alt_names[1];
-                    if (alt_len >= alt_name_len) {
-                        /*
-                         * Length is longer than setup->alternate_len
-                         * told us to allocate room for, assume entire
-                         * alternate list is corrupted.
-                         */
+		    if (alt_len >= alt_name_len) {
+			/*
+			 * Length is longer than setup->alternate_len
+			 * told us to allocate room for, assume entire
+			 * alternate list is corrupted.
+			 */
 #ifdef DEBUG
-                        fprintf (stderr,
-                                 "invalid alt list (length %lx >= %lx)\n",
-                                 (long) alt_len, (long) alt_name_len);
+			fprintf (stderr,
+				 "invalid alt list (length %lx >= %lx)\n",
+				 (long) alt_len, (long) alt_name_len);
 #endif
-                        free(alts);
-                        return FSIO_ERROR;
-                    }
+			free(alts);
+			return FSIO_ERROR;
+		    }
 		    alts[i].name = alt_save;
 		    memcpy (alt_save, alt_names + 2, alt_len);
 		    alt_save[alt_len] = '\0';
 		    alt_save += alt_len + 1;
-                    alt_name_len -= alt_len + 1;
+		    alt_name_len -= alt_len + 1;
 		    alt_names += _fs_pad_length (alt_len + 2);
 		}
 		conn->numAlts = setup->num_alternates;
@@ -3130,6 +3194,7 @@ _fs_send_cat_sync (FSFpePtr conn)
      * by a bogus catalogue
      */
     lcreq.reqType = FS_ListCatalogues;
+    lcreq.data = 0;
     lcreq.length = (SIZEOF(fsListCataloguesReq)) >> 2;
     lcreq.maxNames = 0;
     lcreq.nbytes = 0;
