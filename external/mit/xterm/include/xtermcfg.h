@@ -1,5 +1,5 @@
 /* xtermcfg.h.  Generated automatically by configure.  */
-/* $XTermId: xtermcfg.hin,v 1.203 2014/01/16 01:45:00 tom Exp $ */
+/* $XTermId: xtermcfg.hin,v 1.205 2014/05/08 08:05:07 tom Exp $ */
 
 /*
  * Copyright 1997-2013,2014 by Thomas E. Dickey
@@ -151,6 +151,7 @@
 /* #undef OPT_SELECTION_OPS */	/* CF_ARG_DISABLE(selection-ops) */
 #define OPT_SELECT_REGEX 1		/* CF_ARG_DISABLE(regex) */
 /* #undef OPT_SESSION_MGT */		/* CF_ARG_DISABLE(session-mgt) */
+/* #undef OPT_REGIS_GRAPHICS */	/* CF_ARG_ENABLE(regis-graphics) */
 /* #undef OPT_SIXEL_GRAPHICS */	/* CF_ARG_ENABLE(sixel-graphics) */
 /* #undef OPT_SUN_FUNC_KEYS */	/* CF_ARG_ENABLE(sun-fkeys) */
 #define OPT_TCAP_FKEYS 1		/* CF_ARG_ENABLE(tcap-fkeys) */
@@ -159,6 +160,7 @@
 /* #undef OPT_TOOLBAR */		/* CF_ARG_ENABLE(toolbar) */
 /* #undef OPT_VT52_MODE */		/* CF_ARG_DISABLE(vt52) */
 /* #undef OPT_WIDER_ICHAR */		/* CF_ARG_ENABLE(16bit-chars) */
+#define OPT_WIDE_ATTRS 1		/* CF_ARG_OPTION(wide-attrs) */
 #define OPT_WIDE_CHARS 1		/* CF_ARG_OPTION(wide-chars) */
 /* #undef OPT_XMC_GLITCH */		/* CF_ARG_ENABLE(xmc-glitch) */
 /* #undef OPT_ZICONBEEP */		/* CF_ARG_DISABLE(ziconbeep) */
