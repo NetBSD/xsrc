@@ -105,8 +105,9 @@ DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
 	$(srcdir)/config.h.in $(srcdir)/libdrm.pc.in \
 	$(top_srcdir)/build-aux/depcomp $(libdrminclude_HEADERS) \
-	README build-aux/config.guess build-aux/config.sub \
-	build-aux/depcomp build-aux/install-sh build-aux/missing \
+	README config.guess build-aux/config.guess config.sub \
+	build-aux/config.sub depcomp build-aux/depcomp install-sh \
+	build-aux/install-sh missing build-aux/missing ltmain.sh \
 	build-aux/ltmain.sh $(top_srcdir)/build-aux/config.guess \
 	$(top_srcdir)/build-aux/config.sub \
 	$(top_srcdir)/build-aux/install-sh \
