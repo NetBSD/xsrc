@@ -1,3 +1,88 @@
+commit 9a54b858601bd305de2737b06e609084a2a114c2
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Mar 27 09:10:01 2014 -0400
+
+    Version bump: 1.19.0
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 0677da7ed48f74a54f9bfd12afea7f0d578d7d38
+Author: Hans de Goede <hdegoede@redhat.com>
+Date:   Thu Mar 27 12:45:43 2014 +0100
+
+    XORG_PROG_RAWCPP: Add TRADITIONALCPPFLAGS
+    
+    In some cases we may want to have -traditional for proper whitespace preserving
+    without -undef, as we actually want the system definitions to be in place
+    so we can #ifdef on them. IE in xinit various .cpp files contain things like
+     #ifdef __APPLE__ and #ifdef __linux__
+    
+    So this patch adds a TRADITIONALCPPFLAGS variable which contains just
+    -traditional where applicable without the other RAWCPPFLAGS for unsetting
+    the system definitions.
+    
+    Signed-off-by: Hans de Goede <hdegoede@redhat.com>
+    Reviewed-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 6768f12b4db660bb691337c6d238a32aae0475ff
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Mar 27 08:21:51 2014 -0400
+
+    Provide the automake INSTALL file at level 1.11
+    
+    Now that the minimum level for automake is 1.11, replace the current
+    INSTALL with the one from automake 1.11.
+    
+    Recall that the file in this package is installed in $pkgdatadir
+    and is copied by each xorg module through the make 'dist' target.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 7acde944f40dad08fa8c43bc2548205e343afcd1
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Sat Feb 8 10:31:39 2014 -0500
+
+    Add XORG_WITH_M4 macro
+    
+    Originally from XCB, this macro checks for the presence of m4 or gm4
+    which supports -I dir.
+    
+    The AC_PATH_PROGS_FEATURE_CHECK autoconf macro requires autoconf 2.62.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit a5092b6a9931c8a60813f4f8a038cc5d9771d212
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Feb 6 17:47:20 2014 -0500
+
+    Bump minimum Autoconf required version to 2.62
+    
+    The main motivation is to catch-up with the development reality and
+    allow use of features in Autoconf 2.62 as well as Automake 1.11.
+    
+    As usual this means no features found only in versions above those
+    specified are allowed.
+    
+    This is implementing the policy change which is described in:
+    http://www.x.org/wiki/Building_the_X_Window_System/?updated#index2h3
+    
+    Discussion on xorg minimum autotools requirements:
+    http://lists.x.org/archives/xorg-devel/2013-October/038325.html
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 72b211419977a211c871232d66e1a668e3cf702f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Dec 2 16:41:45 2013 -0800
+
+    XORG_COMPILER_FLAGS: Add -Wlogical-op to default warning set
+    
+    We've fixed several bugs it uncovered already, only one warning left that
+    it adds in a default build.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Gaetan Nadon <memsize@videotron.ca>
+
 commit 9bc8e154e53ee0ff8d09cc621ba762486f3e93fa
 Author: Gaetan Nadon <memsize@videotron.ca>
 Date:   Mon Dec 2 18:43:36 2013 -0500
