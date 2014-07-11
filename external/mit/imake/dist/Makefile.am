@@ -76,13 +76,13 @@ bin_SCRIPTS = \
 	$(MKHTMLINDEX)
 
 xmkmf: xmkmf.cpp
-	$(AM_V_GEN)$(RAWCPP) $(RAWCPPFLAGS) -DCONFIGDIRSPEC='"-I$(XCONFDIR)"' < $(srcdir)/xmkmf.cpp | $(SED) -e /^\#/d | $(SED) -e s/XCOMM/\#/ > $@
+	$(AM_V_GEN)$(RAWCPP) $(RAWCPPFLAGS) -DCONFIGDIRSPEC='"-I$(XCONFDIR)"' $(srcdir)/xmkmf.cpp | $(SED) -e /^\#/d | $(SED) -e s/XCOMM/\#/ > $@
 
 ccmakedep: mdepend.cpp
-	$(AM_V_GEN)$(RAWCPP) $(RAWCPPFLAGS) -DPREPROC='"$(PREPROCESSCMD_MKDEPEND)"' < $(srcdir)/mdepend.cpp | $(SED) -e /^\#/d | $(SED) -e s/XCOMM/\#/ > $@
+	$(AM_V_GEN)$(RAWCPP) $(RAWCPPFLAGS) -DPREPROC='"$(PREPROCESSCMD_MKDEPEND)"' $(srcdir)/mdepend.cpp | $(SED) -e /^\#/d | $(SED) -e s/XCOMM/\#/ > $@
 
 mergelib: mergelib.cpp
-	$(AM_V_GEN)$(RAWCPP) $(RAWCPPFLAGS) -DARCMD="$(ARCMD)" -DRANLIB="$(RANLIB)" < $(srcdir)/mergelib.cpp | $(SED) -e /^\#/d | $(SED) -e s/XCOMM/\#/ > $@
+	$(AM_V_GEN)$(RAWCPP) $(RAWCPPFLAGS) -DARCMD="$(ARCMD)" -DRANLIB="$(RANLIB)" $(srcdir)/mergelib.cpp | $(SED) -e /^\#/d | $(SED) -e s/XCOMM/\#/ > $@
 
 if HAS_PERL
 MKHTMLINDEX_SCRIPT = $(srcdir)/mkhtmlindex.pl

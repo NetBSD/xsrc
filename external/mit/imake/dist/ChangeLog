@@ -1,3 +1,37 @@
+commit 4063190bf2fd7e3c61b80e98d72e134609612bf8
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Wed May 21 20:51:03 2014 +0200
+
+    Bump to 1.0.7
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+
+commit 16e54de5d8c58a1d051a5f4bcb7357aa9f9facff
+Author: Greg Turner <gmt@be-evil.net>
+Date:   Mon Mar 24 20:37:15 2014 +0100
+
+    Pass files to cpp via CLI arg instead of stdin to workaround gcc 4.8 change
+    
+    Replicates Alan Coopersmith's fix for xinit.
+    
+    Bugzilla: https://bugs.freedesktop.org/show_bug.cgi?id=74031
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+
+commit f231ed52c4adeb071de0553af7a575687a6d3dc5
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Sat Aug 17 12:12:08 2013 +0200
+
+    Replace fprintf with fputs
+    
+    Fix build failure with -Werror=format-security:
+    imake.c:1008:5: error: format not a string literal and no format arguments [-Werror=format-security]
+         fprintf (inFile, command);
+         ^
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 89494a51d006c20d16d3f08225a0345fecaae546
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Mon Jul 22 21:52:56 2013 -0700
