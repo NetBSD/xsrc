@@ -1,3 +1,69 @@
+commit a57a7f62242e1ea972b81414741729bf3dbae0a4
+Author: Hans de Goede <hdegoede@redhat.com>
+Date:   Mon Mar 31 12:37:43 2014 +0200
+
+    xtrans 1.3.4
+    
+    Signed-off-by: Hans de Goede <hdegoede@redhat.com>
+
+commit 1cd9cbe9b404e6c3e73dc0239d11547a5e2c02c4
+Author: Mark Kettenis <kettenis@openbsd.org>
+Date:   Sat Mar 29 23:51:49 2014 +0100
+
+    Increase UNIX socket buffer size
+    
+    Some systems provide a really small default buffer size for UNIX sockets.
+    Bump it up to 64k if necessary such that large transfers (such as
+    XGetImage() on a 8-megapixel image) don't take tens of seconds.
+    
+    Signed-off-by: Hans de Goede <hdegoede@redhat.com>
+
+commit 68f60238c4224f954ff6556ae778c72e420175f0
+Author: Thomas Klausner <wiz@NetBSD.org>
+Date:   Wed Mar 26 13:21:49 2014 +0100
+
+    Add missing headers for free() and strlen().
+    
+    Reviewed-by: Mark Kettenis <kettenis@openbsd.org>
+    Signed-off-by: Thomas Klausner <wiz@NetBSD.org>
+
+commit 34463baacb3cafc096e0e0859bc10d6868cb2299
+Author: Thomas Klausner <wiz@NetBSD.org>
+Date:   Wed Mar 26 13:21:23 2014 +0100
+
+    Cast ctype(3) function arguments to unsigned char.
+    
+    Fixes warnings on at least NetBSD.
+    
+    Reviewed-by: Mark Kettenis <kettenis@openbsd.org>
+    Signed-off-by: Thomas Klausner <wiz@NetBSD.org>
+
+commit f20a9bb2ea25408ce9f1166b3b6e48759960fe86
+Author: Hans de Goede <hdegoede@redhat.com>
+Date:   Mon Mar 3 08:42:45 2014 +0100
+
+    configure: Also add -D_DEFAULT_SOURCE to .pc cflags to shut up glibc warnings
+    
+    The latest glibc considers _BSD_SOURCE deprecated, leading to the following
+    warning being issued for pretty much every C-file in the xserver:
+    
+    In file included from /usr/include/stdint.h:25:0,
+                     from /usr/lib/gcc/x86_64-redhat-linux/4.8.2/include/stdint.h:9,
+                     from ../include/misc.h:81,
+                     from miexpose.c:82:
+    /usr/include/features.h:145:3: warning: #warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE" [-Wcpp]
+     # warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE"
+       ^
+    
+    I've discussed this with the glibc developers and the prefered way of fixing
+    this is by also defining _DEFAULT_SOURCE which is the new way of stating
+    _BSD_SOURCE / _SVID_SOURCE .
+    
+    Signed-off-by: Hans de Goede <hdegoede@redhat.com>
+    Reviewed-by: Mark Kettenis <kettenis@openbsd.org>
+    Tested-by: Kristian Høgsberg <krh@bitplanet.net>
+    Reviewed-by: Kristian Høgsberg <krh@bitplanet.net>
+
 commit 3f0de269abe59353acbd7a5587d68ce0da91db67
 Author: Hans de Goede <hdegoede@redhat.com>
 Date:   Thu Jan 23 11:47:25 2014 +0100
