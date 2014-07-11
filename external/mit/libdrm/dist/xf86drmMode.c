@@ -723,7 +723,7 @@ int drmModeConnectorSetProperty(int fd, uint32_t connector_id, uint32_t property
 */
 int drmCheckModesettingSupported(const char *busid)
 {
-#ifdef __linux__
+#if defined (__linux__)
 	char pci_dev_dir[1024];
 	int domain, bus, dev, func;
 	DIR *sysdir;
@@ -773,12 +773,45 @@ int drmCheckModesettingSupported(const char *busid)
 	closedir(sysdir);
 	if (found)
 		return 0;
+#elif defined (__FreeBSD__) || defined (__FreeBSD_kernel__)
+	char kbusid[1024], sbusid[1024];
+	char oid[128];
+	int domain, bus, dev, func;
+	int i, modesetting, ret;
+	size_t len;
+
+	ret = sscanf(busid, "pci:%04x:%02x:%02x.%d", &domain, &bus, &dev,
+	    &func);
+	if (ret != 4)
+		return -EINVAL;
+	snprintf(kbusid, sizeof(kbusid), "pci:%04x:%02x:%02x.%d", domain, bus,
+	    dev, func);
+
+	/* How many GPUs do we expect in the machine ? */
+	for (i = 0; i < 16; i++) {
+		snprintf(oid, sizeof(oid), "hw.dri.%d.busid", i);
+		len = sizeof(sbusid);
+		ret = sysctlbyname(oid, sbusid, &len, NULL, 0);
+		if (ret == -1) {
+			if (errno == ENOENT)
+				continue;
+			return -EINVAL;
+		}
+		if (strcmp(sbusid, kbusid) != 0)
+			continue;
+		snprintf(oid, sizeof(oid), "hw.dri.%d.modesetting", i);
+		len = sizeof(modesetting);
+		ret = sysctlbyname(oid, &modesetting, &len, NULL, 0);
+		if (ret == -1 || len != sizeof(modesetting))
+			return -EINVAL;
+		return (modesetting ? 0 : -ENOSYS);
+	}
 #else
 	int fd;
 	static const struct drm_mode_card_res zero_res;
 	struct drm_mode_card_res res = zero_res;
 	int ret;
-
+ 
 	fd = drmOpen(NULL, busid);
 	if (fd == -1)
 		return -EINVAL;
@@ -886,7 +919,7 @@ int drmModePageFlip(int fd, uint32_t crtc_id, uint32_t fb_id,
 
 int drmModeSetPlane(int fd, uint32_t plane_id, uint32_t crtc_id,
 		    uint32_t fb_id, uint32_t flags,
-		    uint32_t crtc_x, uint32_t crtc_y,
+		    int32_t crtc_x, int32_t crtc_y,
 		    uint32_t crtc_w, uint32_t crtc_h,
 		    uint32_t src_x, uint32_t src_y,
 		    uint32_t src_w, uint32_t src_h)
