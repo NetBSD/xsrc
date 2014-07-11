@@ -20,7 +20,7 @@
 
 AC_PREREQ([2.63])
 AC_INIT([libdrm],
-        [2.4.52],
+        [2.4.54],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=DRI],
         [libdrm])
 
@@ -185,6 +185,9 @@ AC_CANONICAL_HOST
 if test "x$LIBKMS" = xauto ; then
 	case $host_os in
 		linux*)		LIBKMS="yes" ;;
+		freebsd* | kfreebsd*-gnu)
+				LIBKMS="yes" ;;
+		dragonfly*)	LIBKMS="yes" ;;
 		*)		LIBKMS="no" ;;
 	esac
 fi
