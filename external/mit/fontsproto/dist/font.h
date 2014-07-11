@@ -140,7 +140,7 @@ extern void		    EmptyFontPatternCache (
 
 extern void		    CacheFontPattern (
     FontPatternCachePtr /* cache */,
-    const char * /* pattern */,
+    char * /* pattern */,
     int /* patlen */,
     FontPtr /* pFont */
 );
@@ -150,7 +150,7 @@ extern FontResolutionPtr GetClientResolutions(
 
 extern FontPtr		    FindCachedFontPattern (
     FontPatternCachePtr /* cache */,
-    const char * /* pattern */,
+    char * /* pattern */,
     int /* patlen */
 );
 
