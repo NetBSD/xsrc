@@ -75,7 +75,7 @@
 #define PACKAGE_NAME "libXfont"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libXfont 1.4.7"
+#define PACKAGE_STRING "libXfont 1.4.8"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libXfont"
@@ -84,7 +84,7 @@
 #undef PACKAGE_URL
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.4.7"
+#define PACKAGE_VERSION "1.4.8"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
@@ -93,7 +93,7 @@
 #define PACKAGE_VERSION_MINOR 4
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 7
+#define PACKAGE_VERSION_PATCHLEVEL 8
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
