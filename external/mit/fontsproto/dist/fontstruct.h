@@ -122,14 +122,14 @@ typedef struct _Font {
     void        (*unload_font) (FontPtr         /* font */);
     void        (*unload_glyphs) (FontPtr         /* font */);
     FontPathElementPtr fpe;
-    void        *svrPrivate;
-    void        *fontPrivate;
-    void        *fpePrivate;
+    pointer     svrPrivate;
+    pointer     fontPrivate;
+    pointer     fpePrivate;
     int		maxPrivate;
-    void        **devPrivates;
+    pointer	*devPrivates;
 }           FontRec;
 
-#define FontGetPrivate(pFont,n) ((n) > (pFont)->maxPrivate ? (void *) 0 : \
+#define FontGetPrivate(pFont,n) ((n) > (pFont)->maxPrivate ? (pointer) 0 : \
 			     (pFont)->devPrivates[n])
 
 #define FontSetPrivate(pFont,n,ptr) ((n) > (pFont)->maxPrivate ? \
@@ -143,27 +143,23 @@ typedef struct _FontNames {
     char      **names;
 }           FontNamesRec;
 
-
 /* External view of font paths */
 typedef struct _FontPathElement {
     int         name_length;
-#if FONT_PATH_ELEMENT_NAME_CONST
-    const
-#endif
-    char        *name;
+    char       *name;
     int         type;
     int         refcount;
-    void        *private;
+    pointer     private;
 }           FontPathElementRec;
 
-typedef Bool (*NameCheckFunc) (const char *name);
+typedef Bool (*NameCheckFunc) (char *name);
 typedef int (*InitFpeFunc) (FontPathElementPtr fpe);
 typedef int (*FreeFpeFunc) (FontPathElementPtr fpe);
 typedef int (*ResetFpeFunc) (FontPathElementPtr fpe);
-typedef int (*OpenFontFunc) ( void *client,
+typedef int (*OpenFontFunc) ( pointer client,
 			      FontPathElementPtr fpe,
 			      Mask flags,
-			      const char* name,
+			      char* name,
 			      int namelen,
 			      fsBitmapFormat format,
 			      fsBitmapFormatMask fmask,
@@ -172,55 +168,55 @@ typedef int (*OpenFontFunc) ( void *client,
 			      char** aliasName,
 			      FontPtr non_cachable_font);
 typedef void (*CloseFontFunc) (FontPathElementPtr fpe, FontPtr pFont);
-typedef int (*ListFontsFunc) (void *client,
+typedef int (*ListFontsFunc) (pointer client,
 			      FontPathElementPtr fpe,
-			      const char* pat,
+			      char* pat,
 			      int len,
 			      int max,
 			      FontNamesPtr names);
 
-typedef int (*StartLfwiFunc) (void *client,
+typedef int (*StartLfwiFunc) (pointer client,
 			      FontPathElementPtr fpe,
-			      const char* pat,
+			      char* pat,
 			      int len,
 			      int max,
-			      void ** privatep);
+			      pointer* privatep);
 
-typedef int (*NextLfwiFunc) (void *client,
+typedef int (*NextLfwiFunc) (pointer client,
 			     FontPathElementPtr fpe,
 			     char** name,
 			     int* namelen,
 			     FontInfoPtr* info,
 			     int* numFonts,
-			     void *private);
+			     pointer private);
 
 typedef int (*WakeupFpeFunc) (FontPathElementPtr fpe,
 			      unsigned long* LastSelectMask);
 
-typedef void (*ClientDiedFunc) (void *client,
+typedef void (*ClientDiedFunc) (pointer client,
 			       FontPathElementPtr fpe);
 
-typedef int (*LoadGlyphsFunc) (void *client,
+typedef int (*LoadGlyphsFunc) (pointer client,
 			       FontPtr pfont,
 			       Bool range_flag,
 			       unsigned int nchars,
 			       int item_size,
 			       unsigned char* data);
 
-typedef int (*StartLaFunc) (void *client,
+typedef int (*StartLaFunc) (pointer client,
 			    FontPathElementPtr fpe,
-			    const char* pat,
+			    char* pat,
 			    int len,
 			    int max,
-			    void ** privatep);
+			    pointer* privatep);
 
-typedef int (*NextLaFunc) (void *client,
+typedef int (*NextLaFunc) (pointer client,
 			   FontPathElementPtr fpe,
 			   char** namep,
 			   int* namelenp,
 			   char** resolvedp,
 			   int* resolvedlenp,
-			   void *private);
+			   pointer private);
 
 typedef void (*SetPathFunc)(void);
 
