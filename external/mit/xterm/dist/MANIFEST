@@ -1,4 +1,4 @@
-MANIFEST for xterm-303, version xterm-303
+MANIFEST for xterm-308, version xterm-308
 --------------------------------------------------------------------------------
 MANIFEST                        this file
 256colres.h                     resource-definitions for 256-color mode
@@ -49,6 +49,10 @@ fontutils.h                     interface of fontutils.c
 gen-pc-fkeys.pl                 script to generate extended function-key terminfo
 graphics.c                      graphics support functions for 'xterm'
 graphics.h                      interface of graphics.c
+graphics_regis.c                support for ReGIS
+graphics_regis.h                interface of graphics_regis.c
+graphics_sixel.c                support for Sixels
+graphics_sixel.h                interface of graphics_sixel.c
 input.c                         VT100 key-symbol and function-key translation
 install-sh                      install-script (needed by configure)
 keysym2ucs.c                    lookup-table for UTF-8 to keysyms
@@ -96,6 +100,7 @@ wcwidth.h                       interface of wcwidth.c
 xcharmouse.h                    Jason Bacon's mouse-defs, cleaned up a little
 xstrings.c                      a few common string functions
 xstrings.h                      interface of xstrings.c
+xterm.appdata.xml               sample "appdata.xml" file
 xterm.dat                       application defaults for VMS port of 'xterm'
 xterm.desktop                   sample desktop file for xterm.
 xterm.h                         common includes, definitions and prototypes for 'xterm'

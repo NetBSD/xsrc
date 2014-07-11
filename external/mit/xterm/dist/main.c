@@ -1,4 +1,4 @@
-/* $XTermId: main.c,v 1.751 2014/03/07 02:35:39 tom Exp $ */
+/* $XTermId: main.c,v 1.758 2014/05/26 00:01:25 tom Exp $ */
 
 /*
  * Copyright 2002-2013,2014 by Thomas E. Dickey
@@ -91,6 +91,7 @@
 
 #include <xterm.h>
 #include <version.h>
+#include <graphics.h>
 
 #include <X11/cursorfont.h>
 #include <X11/Xlocale.h>
@@ -804,7 +805,7 @@ static sigjmp_buf env;
 		    *endptr = '\0'; \
 		} \
 	    } \
-	    strncpy(dst, host, sizeof(dst)); \
+	    copy_filled(dst, host, sizeof(dst)); \
 	}
 
 #ifdef HAVE_UTMP_UT_SYSLEN
@@ -1215,6 +1216,7 @@ static OptionHelp xtermOptions[] = {
 #endif
 { "-/+rvc",                "turn off/on display of reverse as color" },
 { "-/+sf",                 "turn on/off Sun Function Key escape codes" },
+{ "-sh number",            "scale line-height values by the given number" },
 { "-/+si",                 "turn on/off scroll-on-tty-output inhibit" },
 { "-/+sk",                 "turn on/off scroll-on-keypress" },
 { "-sl number",            "number of scrolled lines to save" },
@@ -1623,9 +1625,9 @@ Help(void)
 /* ARGSUSED */
 static Boolean
 ConvertConsoleSelection(Widget w GCC_UNUSED,
-			Atom * selection GCC_UNUSED,
-			Atom * target GCC_UNUSED,
-			Atom * type GCC_UNUSED,
+			Atom *selection GCC_UNUSED,
+			Atom *target GCC_UNUSED,
+			Atom *type GCC_UNUSED,
 			XtPointer *value GCC_UNUSED,
 			unsigned long *length GCC_UNUSED,
 			int *format GCC_UNUSED)
@@ -1641,7 +1643,7 @@ ConvertConsoleSelection(Widget w GCC_UNUSED,
 /* ARGSUSED */
 static void
 DeleteWindow(Widget w,
-	     XEvent * event GCC_UNUSED,
+	     XEvent *event GCC_UNUSED,
 	     String *params GCC_UNUSED,
 	     Cardinal *num_params GCC_UNUSED)
 {
@@ -1661,7 +1663,7 @@ DeleteWindow(Widget w,
 /* ARGSUSED */
 static void
 KeyboardMapping(Widget w GCC_UNUSED,
-		XEvent * event,
+		XEvent *event,
 		String *params GCC_UNUSED,
 		Cardinal *num_params GCC_UNUSED)
 {
@@ -3091,6 +3093,24 @@ set_owner(char *device, unsigned uid, unsigned gid, unsigned mode)
     }
 }
 
+/*
+ * utmp data may not be null-terminated; even if it is, there may be garbage
+ * after the null.  This fills the unused part of the result with nulls.
+ */
+static void
+copy_filled(char *target, const char *source, size_t len)
+{
+    size_t used = 0;
+    while (used < len) {
+	if ((target[used] = source[used]) == 0)
+	    break;
+	++used;
+    }
+    while (used < len) {
+	target[used++] = '\0';
+    }
+}
+
 #if defined(HAVE_UTMP) && defined(USE_SYSV_UTMP) && !defined(USE_UTEMPTER)
 /*
  * getutid() only looks at ut_type and ut_id.
@@ -3101,8 +3121,8 @@ init_utmp(int type, struct UTMP_STR *tofind)
 {
     memset(tofind, 0, sizeof(*tofind));
     tofind->ut_type = type;
-    (void) strncpy(tofind->ut_id, my_utmp_id(ttydev), sizeof(tofind->ut_id));
-    (void) strncpy(tofind->ut_line, my_pty_name(ttydev), sizeof(tofind->ut_line));
+    copy_filled(tofind->ut_id, my_utmp_id(ttydev), sizeof(tofind->ut_id));
+    copy_filled(tofind->ut_line, my_pty_name(ttydev), sizeof(tofind->ut_line));
 }
 
 /*
@@ -3118,19 +3138,13 @@ find_utmp(struct UTMP_STR *tofind)
     for (;;) {
 	memset(&working, 0, sizeof(working));
 	working.ut_type = tofind->ut_type;
-	strncpy(working.ut_id, tofind->ut_id, sizeof(tofind->ut_id));
+	copy_filled(working.ut_id, tofind->ut_id, sizeof(tofind->ut_id));
 #if defined(__digital__) && defined(__unix__) && (defined(OSMAJORVERSION) && OSMAJORVERSION < 5)
 	working.ut_type = 0;
 #endif
 	if ((result = call_getutid(&working)) == 0)
 	    break;
-	/*
-	 * ut_line may not be null-terminated, but if it is, there may be
-	 * garbage after the null.  Use strncpy to ensure that the value
-	 * we check is null-terminated (if there is enough space in the
-	 * buffer), and that unused space is nulled.
-	 */
-	strncpy(limited.ut_line, result->ut_line, sizeof(result->ut_line));
+	copy_filled(limited.ut_line, result->ut_line, sizeof(result->ut_line));
 	if (!memcmp(limited.ut_line, tofind->ut_line, sizeof(limited.ut_line)))
 	    break;
 	/*
@@ -3780,7 +3794,8 @@ spawnXTerm(XtermWidget xw)
 		/* we don't need the socket, or the pty master anymore */
 		close(ConnectionNumber(screen->display));
 #ifndef __MVS__
-		close(screen->respond);
+		if (screen->respond >= 0)
+		    close(screen->respond);
 #endif /* __MVS__ */
 
 		/* Now is the time to set up our process group and
@@ -4303,13 +4318,13 @@ spawnXTerm(XtermWidget xw)
 #ifdef HAVE_UTMP_UT_XSTATUS
 	    utmp.ut_xstatus = 2;
 #endif
-	    (void) strncpy(utmp.ut_user,
-			   (login_name != NULL) ? login_name : "????",
-			   sizeof(utmp.ut_user));
+	    copy_filled(utmp.ut_user,
+			(login_name != NULL) ? login_name : "????",
+			sizeof(utmp.ut_user));
 	    /* why are we copying this string again?  (see above) */
-	    (void) strncpy(utmp.ut_id, my_utmp_id(ttydev), sizeof(utmp.ut_id));
-	    (void) strncpy(utmp.ut_line,
-			   my_pty_name(ttydev), sizeof(utmp.ut_line));
+	    copy_filled(utmp.ut_id, my_utmp_id(ttydev), sizeof(utmp.ut_id));
+	    copy_filled(utmp.ut_line,
+			my_pty_name(ttydev), sizeof(utmp.ut_line));
 
 #ifdef HAVE_UTMP_UT_HOST
 	    SetUtmpHost(utmp.ut_host, screen);
@@ -4318,9 +4333,9 @@ spawnXTerm(XtermWidget xw)
 	    SetUtmpSysLen(utmp);
 #endif
 
-	    (void) strncpy(utmp.ut_name,
-			   (login_name) ? login_name : "????",
-			   sizeof(utmp.ut_name));
+	    copy_filled(utmp.ut_name,
+			(login_name) ? login_name : "????",
+			sizeof(utmp.ut_name));
 
 	    utmp.ut_pid = getpid();
 #if defined(HAVE_UTMP_UT_XTIME)
@@ -4371,11 +4386,11 @@ spawnXTerm(XtermWidget xw)
 		if (tslot > 0 && OkPasswd(&pw) && !resource.utmpInhibit &&
 		    (i = open(etc_utmp, O_WRONLY)) >= 0) {
 		    memset(&utmp, 0, sizeof(utmp));
-		    (void) strncpy(utmp.ut_line,
-				   my_pty_name(ttydev),
-				   sizeof(utmp.ut_line));
-		    (void) strncpy(utmp.ut_name, login_name,
-				   sizeof(utmp.ut_name));
+		    copy_filled(utmp.ut_line,
+				my_pty_name(ttydev),
+				sizeof(utmp.ut_line));
+		    copy_filled(utmp.ut_name, login_name,
+				sizeof(utmp.ut_name));
 #ifdef HAVE_UTMP_UT_HOST
 		    SetUtmpHost(utmp.ut_host, screen);
 #endif
@@ -4924,7 +4939,7 @@ Exit(int n)
 		if (xw->misc.login_shell)
 		    updwtmpx(WTMPX_FILE, utptr);
 #elif defined(linux) && defined(__GLIBC__) && (__GLIBC__ >= 2) && !(defined(__powerpc__) && (__GLIBC__ == 2) && (__GLIBC_MINOR__ == 0))
-		strncpy(utmp.ut_line, utptr->ut_line, sizeof(utmp.ut_line));
+		copy_filled(utmp.ut_line, utptr->ut_line, sizeof(utmp.ut_line));
 		if (xw->misc.login_shell)
 		    call_updwtmp(etc_wtmp, utptr);
 #else
@@ -4968,9 +4983,9 @@ Exit(int n)
 #ifdef WTMP
 	if (xw->misc.login_shell &&
 	    (wfd = open(etc_wtmp, O_WRONLY | O_APPEND)) >= 0) {
-	    (void) strncpy(utmp.ut_line,
-			   my_pty_name(ttydev),
-			   sizeof(utmp.ut_line));
+	    copy_filled(utmp.ut_line,
+			my_pty_name(ttydev),
+			sizeof(utmp.ut_line));
 	    utmp.ut_time = time((time_t *) 0);
 	    IGNORE_RC(write(wfd, (char *) &utmp, sizeof(utmp)));
 	    close(wfd);
@@ -5028,6 +5043,9 @@ Exit(int n)
 	sortedOpts(0, 0, 0);
 	noleaks_charproc();
 	noleaks_ptydata();
+#if OPT_GRAPHICS
+	noleaks_graphics();
+#endif
 #if OPT_WIDE_CHARS
 	noleaks_CharacterClass();
 #endif

@@ -1,6 +1,6 @@
--- $XTermId: INSTALL,v 1.149 2013/08/04 19:33:14 tom Exp $
+-- $XTermId: INSTALL,v 1.151 2014/05/08 07:58:06 tom Exp $
 -------------------------------------------------------------------------------
--- Copyright 1997-2012,2013 by Thomas E. Dickey
+-- Copyright 1997-2013,2014 by Thomas E. Dickey
 --
 --                         All Rights Reserved
 --
@@ -339,6 +339,14 @@ The options (in alphabetic order):
 
 	A genuine vt100 emulates a vt52.
 
+  --disable-wide-attrs    disable wide-attribute support
+
+	Xterm's base attributes include all of those used in DEC terminals.
+	ISO 6429 defines a few more which historically have found little use.
+	Some people find these amusing.
+
+	This is normally enabled.
+
   --disable-wide-chars    disable wide-character support
 
   	The wide-character code supports Unicode and UTF-8.
@@ -481,6 +489,10 @@ The options (in alphabetic order):
   --enable-sco-fkeys      enable support for SCO-style function keys
 
   	Compile-in code to support SCO-style function keys.
+
+  --enable-regis-graphics enable support for ReGIS graphics
+
+  	Compile-in code to support experimental ReGIS graphics
 
   --enable-sixel-graphics enable support for sixel-graphics
 
