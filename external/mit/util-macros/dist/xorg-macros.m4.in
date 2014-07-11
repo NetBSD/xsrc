@@ -87,6 +87,7 @@ if test `${RAWCPP} < conftest.$ac_ext | grep -c 'preserve   \"'` -eq 1 ; then
 	AC_MSG_RESULT([no])
 else
 	if test `${RAWCPP} -traditional < conftest.$ac_ext | grep -c 'preserve   \"'` -eq 1 ; then
+		TRADITIONALCPPFLAGS="-traditional"
 		RAWCPPFLAGS="${RAWCPPFLAGS} -traditional"
 		AC_MSG_RESULT([yes])
 	else
@@ -95,6 +96,7 @@ else
 fi
 rm -f conftest.$ac_ext
 AC_SUBST(RAWCPPFLAGS)
+AC_SUBST(TRADITIONALCPPFLAGS)
 ]) # XORG_PROG_RAWCPP
 
 # XORG_MANPAGE_SECTIONS()
@@ -882,6 +884,29 @@ fi])
 AM_CONDITIONAL([HAVE_FOP], [test "$have_fop" = yes])
 ]) # XORG_WITH_FOP
 
+# XORG_WITH_M4([MIN-VERSION])
+# ---------------------------
+# Minimum version: 1.19.0
+#
+# This macro attempts to locate an m4 macro processor which supports
+# -I option and is only useful for modules relying on M4 in order to
+# expand macros in source code files.
+#
+# Interface to module:
+# M4:	 	returns the path of the m4 program found
+#		returns the path set by the user in the environment
+#
+AC_DEFUN([XORG_WITH_M4], [
+AC_CACHE_CHECK([for m4 that supports -I option], [ac_cv_path_M4],
+   [AC_PATH_PROGS_FEATURE_CHECK([M4], [m4 gm4],
+       [[$ac_path_M4 -I. /dev/null > /dev/null 2>&1 && \
+         ac_cv_path_M4=$ac_path_M4 ac_path_M4_found=:]],
+   [AC_MSG_ERROR([could not find m4 that supports -I option])],
+   [$PATH:/usr/gnu/bin])])
+
+AC_SUBST([M4], [$ac_cv_path_M4])
+]) # XORG_WITH_M4
+
 # XORG_WITH_PS2PDF([DEFAULT])
 # ----------------
 # Minimum version: 1.6.0
@@ -1650,11 +1675,11 @@ XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wshadow])
 XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wmissing-noreturn])
 XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wmissing-format-attribute])
 XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wredundant-decls])
+XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wlogical-op])
 
 # These are currently disabled because they are noisy.  They will be enabled
 # in the future once the codebase is sufficiently modernized to silence
 # them.  For now, I don't want them to drown out the other warnings.
-# XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wlogical-op])
 # XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wparentheses])
 # XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wcast-align])
 # XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wcast-qual])
