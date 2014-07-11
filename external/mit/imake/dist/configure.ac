@@ -1,4 +1,3 @@
-
 dnl  Copyright 2005 Red Hat, Inc.
 dnl
 dnl  Permission to use, copy, modify, distribute, and sell this software and its
@@ -23,7 +22,7 @@ dnl Process this file with autoconf to create configure.
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([imake], [1.0.6],
+AC_INIT([imake], [1.0.7],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg], [imake])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])

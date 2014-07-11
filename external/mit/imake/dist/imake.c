@@ -1005,7 +1005,7 @@ get_libc_version(FILE *inFile)
     abort ();
 
   while (fgets (command, len, fp))
-    fprintf (inFile, command);
+    fputs (command, inFile);
 
   len = pclose (fp);
   remove (aout);
