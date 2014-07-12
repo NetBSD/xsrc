@@ -130,6 +130,8 @@ extern __typeof (FcDirSave) IA__FcDirSave __attribute((visibility("hidden")));
 #define FcDirSave IA__FcDirSave
 extern __typeof (FcDirCacheLoad) IA__FcDirCacheLoad __attribute((visibility("hidden")));
 #define FcDirCacheLoad IA__FcDirCacheLoad
+extern __typeof (FcDirCacheRescan) IA__FcDirCacheRescan __attribute((visibility("hidden")));
+#define FcDirCacheRescan IA__FcDirCacheRescan
 extern __typeof (FcDirCacheRead) IA__FcDirCacheRead __attribute((visibility("hidden")));
 #define FcDirCacheRead IA__FcDirCacheRead
 extern __typeof (FcDirCacheLoadFile) IA__FcDirCacheLoadFile __attribute((visibility("hidden")));
