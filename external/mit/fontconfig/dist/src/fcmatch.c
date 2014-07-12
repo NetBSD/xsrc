@@ -745,6 +745,7 @@ FcSortWalk (FcSortNode **n, int nnode, FcFontSet *fs, FcCharSet **csp, FcBool tr
 {
     FcBool ret = FcFalse;
     FcCharSet *cs;
+    int i;
 
     cs = 0;
     if (trim || csp)
@@ -754,7 +755,7 @@ FcSortWalk (FcSortNode **n, int nnode, FcFontSet *fs, FcCharSet **csp, FcBool tr
 	    goto bail;
     }
 
-    while (nnode--)
+    for (i = 0; i < nnode; i++)
     {
 	FcSortNode	*node = *n++;
 	FcBool		adds_chars = FcFalse;
@@ -778,7 +779,7 @@ FcSortWalk (FcSortNode **n, int nnode, FcFontSet *fs, FcCharSet **csp, FcBool tr
 	 * If this font isn't a subset of the previous fonts,
 	 * add it to the list
 	 */
-	if (!trim || adds_chars)
+	if (!i || !trim || adds_chars)
 	{
 	    FcPatternReference (node->pattern);
 	    if (FcDebug () & FC_DBG_MATCHV)
