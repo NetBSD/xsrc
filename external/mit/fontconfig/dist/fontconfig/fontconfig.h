@@ -52,7 +52,7 @@ typedef int		FcBool;
 
 #define FC_MAJOR	2
 #define FC_MINOR	11
-#define FC_REVISION	0
+#define FC_REVISION	1
 
 #define FC_VERSION	((FC_MAJOR * 10000) + (FC_MINOR * 100) + (FC_REVISION))
 
@@ -541,6 +541,9 @@ FcDirSave (FcFontSet *set, FcStrSet *dirs, const FcChar8 *dir);
 
 FcPublic FcCache *
 FcDirCacheLoad (const FcChar8 *dir, FcConfig *config, FcChar8 **cache_file);
+
+FcPublic FcCache *
+FcDirCacheRescan (const FcChar8 *dir, FcConfig *config);
     
 FcPublic FcCache *
 FcDirCacheRead (const FcChar8 *dir, FcBool force, FcConfig *config);
