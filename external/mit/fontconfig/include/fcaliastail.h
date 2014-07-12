@@ -148,6 +148,8 @@ extern __typeof (FcDirSave) FcDirSave __attribute((alias("IA__FcDirSave"), visib
 extern __typeof (FcDirCacheLoad) FcDirCacheLoad __attribute((alias("IA__FcDirCacheLoad"), visibility("default")));
 #endif /* __fccache__ */
 #ifdef __fcdir__
+# undef FcDirCacheRescan
+extern __typeof (FcDirCacheRescan) FcDirCacheRescan __attribute((alias("IA__FcDirCacheRescan"), visibility("default")));
 # undef FcDirCacheRead
 extern __typeof (FcDirCacheRead) FcDirCacheRead __attribute((alias("IA__FcDirCacheRead"), visibility("default")));
 #endif /* __fcdir__ */
