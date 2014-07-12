@@ -774,9 +774,9 @@ See Also
 
 Version
 
-   Fontconfig version 2.11.0
+   Fontconfig version 2.11.1
 
 References
 
    Visible links
-   1. file:///tmp/html-hMLhPT#DEBUG
+   1. file:///tmp/html-aJQR6X#DEBUG
