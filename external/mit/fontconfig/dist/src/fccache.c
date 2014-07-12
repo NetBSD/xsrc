@@ -28,6 +28,7 @@
 #include <dirent.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <assert.h>
 #if defined(HAVE_MMAP) || defined(__CYGWIN__)
 #  include <unistd.h>
@@ -572,7 +573,7 @@ FcDirCacheMapFd (int fd, struct stat *fd_stat, struct stat *dir_stat)
     {
 #if defined(HAVE_MMAP) || defined(__CYGWIN__)
 	cache = mmap (0, fd_stat->st_size, PROT_READ, MAP_SHARED, fd, 0);
-#ifdef HAVE_POSIX_FADVISE
+#if (HAVE_POSIX_FADVISE) && defined(POSIX_FADV_WILLNEED)
 	posix_fadvise (fd, 0, fd_stat->st_size, POSIX_FADV_WILLNEED);
 #endif
 	if (cache == MAP_FAILED)
@@ -825,6 +826,19 @@ bail2:
 bail1:
     FcSerializeDestroy (serialize);
     return NULL;
+}
+
+FcCache *
+FcDirCacheRebuild (FcCache *cache, struct stat *dir_stat, FcStrSet *dirs)
+{
+    FcCache *new;
+    FcFontSet *set = FcFontSetDeserialize (FcCacheSet (cache));
+    const FcChar8 *dir = FcCacheDir (cache);
+
+    new = FcDirCacheBuild (set, dir, dir_stat, dirs);
+    FcFontSetDestroy (set);
+
+    return new;
 }
 
 /* write serialized state to the cache file */
