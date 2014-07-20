@@ -498,7 +498,7 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 			fbi->fbi_subtype.fbi_cmapinfo.cmap_entries = info.cmsize;
 		}
 		fbi->fbi_flags = 0;
-		fbi->fbi_fbsize = info.width * lb;
+		fbi->fbi_fbsize = lb * info.height;
 
 	}
 	/*
