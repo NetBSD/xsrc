@@ -1186,7 +1186,8 @@ WsfbLeaveVT(int scrnIndex, int flags)
 	 *   we're backing off
 	 */
 
-	if (fPtr->fbi.fbi_pixeltype == WSFB_CI) {
+	if (fPtr->fbi.fbi_pixeltype == WSFB_CI &&
+	    fPtr->fbi.fbi_subtype.fbi_cmapinfo.cmap_entries > 0) {
 		/* reset colormap for text mode */
 		if (ioctl(fPtr->fd, WSDISPLAYIO_PUTCMAP,
 			  &(fPtr->saved_cmap)) == -1) {
