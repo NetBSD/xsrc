@@ -504,7 +504,8 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 	/*
 	 * Allocate room for saving the colormap.
 	 */
-	if (fPtr->fbi.fbi_pixeltype == WSFB_CI) {
+	if (fPtr->fbi.fbi_pixeltype == WSFB_CI &&
+	    fPtr->fbi.fbi_subtype.fbi_cmapinfo.cmap_entries > 0) {
 		fPtr->saved_cmap.red =
 		    (unsigned char *)malloc(fPtr->fbi.fbi_subtype.fbi_cmapinfo.cmap_entries);
 		if (fPtr->saved_cmap.red == NULL) {
@@ -1240,6 +1241,10 @@ WsfbLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indices,
 
 	TRACE_ENTER("LoadPalette");
 
+	/* nothing to do if there is no color palette support */
+	if (fPtr->fbi.fbi_subtype.fbi_cmapinfo.cmap_entries == 0)
+		return;
+
 	cmap.count   = 1;
 	cmap.red   = red;
 	cmap.green = green;
@@ -1319,6 +1324,10 @@ WsfbSave(ScrnInfoPtr pScrn)
 	if (fPtr->fbi.fbi_pixeltype != WSFB_CI)
 		return;
 
+	/* nothing to do if no color palette support */
+	if (fPtr->fbi.fbi_subtype.fbi_cmapinfo.cmap_entries == 0)
+		return;
+
 	fPtr->saved_cmap.index = 0;
 	fPtr->saved_cmap.count = fPtr->fbi.fbi_subtype.fbi_cmapinfo.cmap_entries;
 	if (ioctl(fPtr->fd, WSDISPLAYIO_GETCMAP,
@@ -1338,7 +1347,8 @@ WsfbRestore(ScrnInfoPtr pScrn)
 
 	TRACE_ENTER("WsfbRestore");
 
-	if (fPtr->fbi.fbi_pixeltype == WSFB_CI) {
+	if (fPtr->fbi.fbi_pixeltype == WSFB_CI &&
+	    fPtr->fbi.fbi_subtype.fbi_cmapinfo.cmap_entries > 0) {
 		/* reset colormap for text mode */
 		if (ioctl(fPtr->fd, WSDISPLAYIO_PUTCMAP,
 			  &(fPtr->saved_cmap)) == -1) {
