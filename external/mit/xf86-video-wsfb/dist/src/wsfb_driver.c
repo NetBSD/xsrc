@@ -406,7 +406,7 @@ static Bool
 WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 {
 	WsfbPtr fPtr;
-	int default_depth, wstype;
+	int default_depth, bitsperpixel, wstype;
 	const char *dev;
 	char *mod = NULL, *s;
 	const char *reqSym = NULL;
@@ -537,17 +537,34 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 
 	/* Handle depth */
 	default_depth = fPtr->fbi.fbi_bitsperpixel <= 24 ? fPtr->fbi.fbi_bitsperpixel : 24;
+	bitsperpixel = fPtr->fbi.fbi_bitsperpixel;
+#if defined(__NetBSD__) && defined(WSDISPLAY_TYPE_LUNA)
+	if (wstype == WSDISPLAY_TYPE_LUNA) {
+		/*
+		 * XXX
+		 * LUNA's color framebuffers support 4bpp or 8bpp
+		 * but they have multiple 1bpp VRAM planes like ancient VGA.
+		 * For now, Xorg server supports only the first one plane
+		 * as 1bpp monochrome server.
+		 *
+		 * Note OpenBSD/luna88k workarounds this by switching depth
+		 * and palette settings by WSDISPLAYIO_SETGFXMODE ioctl.
+		 */
+		default_depth = 1;
+		bitsperpixel = 1;
+	}
+#endif
 	if (!xf86SetDepthBpp(pScrn, default_depth, default_depth,
-		fPtr->fbi.fbi_bitsperpixel,
-		fPtr->fbi.fbi_bitsperpixel >= 24 ? Support24bppFb|Support32bppFb : 0))
+		bitsperpixel,
+		bitsperpixel >= 24 ? Support24bppFb|Support32bppFb : 0))
 		return FALSE;
 
 	/* Check consistency. */
-	if (pScrn->bitsPerPixel != fPtr->fbi.fbi_bitsperpixel) {
+	if (pScrn->bitsPerPixel != bitsperpixel) {
 		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		    "specified depth (%d) or bpp (%d) doesn't match "
 		    "framebuffer depth (%d)\n", pScrn->depth,
-		    pScrn->bitsPerPixel, fPtr->fbi.fbi_bitsperpixel);
+		    pScrn->bitsPerPixel, bitsperpixel);
 		return FALSE;
 	}
 	xf86PrintDepthBpp(pScrn);
@@ -1029,6 +1046,35 @@ WsfbScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	if(!xf86HandleColormaps(pScreen, ncolors, 8, WsfbLoadPalette,
 				NULL, flags))
 		return FALSE;
+
+#if defined(__NetBSD__) && defined(WSDISPLAY_TYPE_LUNA)
+	if (wstype == WSDISPLAY_TYPE_LUNA) {
+		ncolors = fPtr->fbi.fbi_subtype.fbi_cmapinfo.cmap_entries;
+		if (ncolors > 0) {
+			/*
+			 * Override palette to use 4bpp/8bpp framebuffers as
+			 * monochrome server by using only the first plane.
+			 * See also comment in WsfbPreInit().
+			 */
+			struct wsdisplay_cmap cmap;
+			uint8_t r[256], g[256], b[256];
+			int p;
+
+			for (p = 0; p < ncolors; p++)
+				r[p] = g[p] = b[p] = (p & 1) ? 0xff : 0;
+			cmap.index = 0;
+			cmap.count = ncolors;
+			cmap.red   = r;
+			cmap.green = g;
+			cmap.blue  = b;
+			if (ioctl(fPtr->fd, WSDISPLAYIO_PUTCMAP, &cmap) == -1) {
+				xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+				   "ioctl WSDISPLAYIO_PUTCMAP: %s\n",
+				   strerror(errno));
+			}
+		}
+	}
+#endif
 
 	pScreen->SaveScreen = WsfbSaveScreen;
 
