@@ -228,7 +228,7 @@ r600_set_render_target(ScrnInfoPtr pScrn, drmBufPtr ib, cb_config_t *cb_conf, ui
 
 
 #if defined(XF86DRM_MODE)
-    if (cb_conf->surface) {
+    if (info->cs && cb_conf->surface) {
 	switch (cb_conf->surface->level[0].mode) {
 	case RADEON_SURF_MODE_1D:
 		array_mode = 2;
@@ -626,7 +626,7 @@ r600_set_tex_resource(ScrnInfoPtr pScrn, drmBufPtr ib, tex_resource_t *tex_res, 
     uint32_t array_mode, pitch;
 
 #if defined(XF86DRM_MODE)
-    if (tex_res->surface) {
+    if (info->cs && tex_res->surface) {
 	switch (tex_res->surface->level[0].mode) {
 	case RADEON_SURF_MODE_1D:
 		array_mode = 2;

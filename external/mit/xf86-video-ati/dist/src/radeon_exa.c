@@ -498,7 +498,7 @@ void *RADEONEXACreatePixmap2(ScreenPtr pScreen, int width, int height,
     memset(&surface, 0, sizeof(struct radeon_surface));
 
 #ifdef XF86DRM_MODE
-    if (info->ChipFamily >= CHIP_FAMILY_R600 && info->surf_man) {
+    if (info->cs && info->ChipFamily >= CHIP_FAMILY_R600 && info->surf_man) {
 		if (width) {
 			surface.npix_x = width;
 			/* need to align height to 8 for old kernel */

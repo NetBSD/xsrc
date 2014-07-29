@@ -814,7 +814,7 @@ Bool FUNC_NAME(RADEONDrawInit)(ScreenPtr pScreen)
 	    info->accel_state->exa->DownloadFromScreen = RADEONDownloadFromScreenCP;
     }
 # if defined(XF86DRM_MODE)
-    else {
+    else if (info->cs) {
 	info->accel_state->exa->UploadToScreen = &RADEONUploadToScreenCS;
         info->accel_state->exa->DownloadFromScreen = &RADEONDownloadFromScreenCS;
     }
