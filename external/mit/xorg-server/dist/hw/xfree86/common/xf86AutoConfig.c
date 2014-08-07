@@ -309,12 +309,10 @@ listPossibleVideoDrivers(char *matches[], int nmatches)
      * Fallback to platform default frame buffer driver  if we didn't probe
      * anything useful
      */
-    if (i == 0) {
+    if (i < (nmatches - 1)) {
 #ifdef __NetBSD__
 #if defined(__i386__) || defined(__amd64__)
 	matches[i++] = xnfstrdup("vesa");
-#else
-	matches[i++] = xnfstrdup("wsfb");
 #endif
 #else /* !NetBSD */	
 #if !defined(__linux__) && defined(__sparc__)
@@ -329,6 +327,15 @@ listPossibleVideoDrivers(char *matches[], int nmatches)
 #endif
 #endif /* NetBSD */
     }
+
+#ifdef __NetBSD__
+    /*
+     * If we haven't found any suitable drivers, try to use wsfb.
+     */
+    if (i == 0) {
+	matches[i++] = xnfstrdup("wsfb");
+    }
+#endif
 }
 
 /* copy a screen section and enter the desired driver
