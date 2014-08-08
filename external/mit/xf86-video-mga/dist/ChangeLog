@@ -1,3 +1,486 @@
+commit f647727a2c1d4c2a9261c411cd3df71c3c9f0c06
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Thu Dec 5 12:09:27 2013 +1000
+
+    mga: bump release to 1.6.3
+
+commit 55525bdfc00b0b746401f6ea6ed289048e9d06eb
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Thu Dec 5 11:51:39 2013 +1000
+
+    mga: fix XAA runtime
+    
+    XAA->USE_XAA add USE_XAA.
+    
+    Tested-by: Avengence on #xorg-devel
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit 6aa94687233f55a8044efe83cac82b04ab19609f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 17 10:27:42 2013 -0800
+
+    Remove mga_esc.c vestigal stub
+    
+    Previously contained MGA HAL code, was left an empty shell by the
+    removal of USEMGAHAL in commit 94bbeb132c7eda.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Ian Romanick <ian.d.romanick@intel.com>
+
+commit e9109a0b04695d6971c94abe271dda2dc1a5e886
+Author: Tormod Volden <debian.tormod@gmail.com>
+Date:   Thu Oct 31 22:48:18 2013 +0100
+
+    mga: Use exaGetPixmapFirstPixel() instead of devPrivate.ptr
+    
+    Signed-off-by: Tormod Volden <debian.tormod@gmail.com>
+
+commit a77b9c5143591672fbe56f4428ced439c1f4d0f3
+Author: Egbert Eich <eich@freedesktop.org>
+Date:   Mon Jul 29 13:02:21 2013 +0200
+
+    Disable HW cursor by default on G200 server chips
+    
+    Disable HW cursor by default on G200 server chips as these chips a
+    re often used with a remote graphics link which cannot display
+    the HW cursor.
+    This can be overridden by a config option.
+    Most desktops today use ARGB cursors anyhow which are not
+    supported by this driver anyhow. Thus the performance penalty
+    should be irrelevant.
+    
+    Signed-off-by: Egbert Eich <eich@freedesktop.org>
+
+commit dba8778b9214dc3794198029fc6d59b3e97700d4
+Author: Egbert Eich <eich@freedesktop.org>
+Date:   Mon Jul 29 13:01:45 2013 +0200
+
+    Restructure code to make it more readable
+    
+    With the previous structure it wasn't immediately clear when SecondCrtc
+    and HWCursor were set to which value. Make the code more readable.
+    
+    Signed-off-by: Egbert Eich <eich@freedesktop.org>
+
+commit cbcee5de1ba02c8a58bae932a0cb98093dccefd9
+Author: Tormod Volden <debian.tormod@gmail.com>
+Date:   Thu Oct 17 22:01:20 2013 +0200
+
+    Fix dual head crash without XAA
+    
+    https://launchpad.net/bugs/1180986
+    
+    Signed-off-by: Tormod Volden <debian.tormod@gmail.com>
+    Reviewed-by: Robert Jacobs <robert.n.jacobs@gmail.com>
+    Tested-by: Robert Jacobs <robert.n.jacobs@gmail.com>
+
+commit 15815c8612694a89d0d8593b3e603fdcdeacdd05
+Author: Andy MacLean <andy-ub1@themacleans.org.uk>
+Date:   Thu Oct 17 19:51:36 2013 +0200
+
+    Unbreak dual head (xinerama)
+    
+    This patch has been used in Debian, Ubuntu and Gentoo for years.
+    
+    https://bugs.freedesktop.org/show_bug.cgi?id=18472
+    https://launchpad.net/bugs/292214
+    https://bugs.gentoo.org/show_bug.cgi?id=265100
+    
+    Signed-off-by: Andy MacLean <andy-ub1@themacleans.org.uk>
+    Reviewed-by: Cyril Brulebois <kibi@debian.org>
+    Reviewed-by: Robert Jacobs <robert.n.jacobs@gmail.com>
+    Tested-by: Robert Jacobs <robert.n.jacobs@gmail.com>
+
+commit 12af175fee1d3f6f17f8391ec642d904deca3783
+Author: Egbert Eich <eich@freedesktop.org>
+Date:   Tue Jun 7 19:31:16 2011 +0200
+
+    Disable Linear Expansion on BE
+    
+    Linear Expansion doesn't work on BE as the bit order in
+    a word is reversed. ScreenToScreenColorExpansion allows
+    to adjust the bit order in a byte, still the bytes have
+    the wrong order.
+    
+    Reviewed-by:  <wharms@bfs.de>
+    Signed-off-by: Egbert Eich <eich@freedesktop.org>
+
+commit 49381ff2c3aa98be5bb84494b2ad3f81a0d31bcc
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Mon Jan 7 23:04:36 2013 +0100
+
+    Restrict kernel driver matching to g200 server chips
+    
+    Otherwise we might catch devices handled by matroxfb, not the mgag200
+    kms driver.
+    
+    Debian bug#697532
+    
+    Reported-by: olafBuddenhagen@gmx.net
+    Reviewed-by: Dave Airlie <airlied@redhat.com>
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+
+commit fcd27b2b4ab2a181d5263296e71cda2d8772ba2d
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Fri Sep 28 11:36:44 2012 +1000
+
+    mga: bump release to 1.6.2
+
+commit 29de36da0ed031815bd302f55f2ef5cc0cce6cc6
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Fri Sep 28 10:54:00 2012 +1000
+
+    mga: bring dri1 back to life.
+    
+    we need to at least setup the memory manager bits so dri1 clients
+    get a backbuffer. this at least gets gears working again without XAA.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit e777a2845bfeefad386db35d694e4b1cd74a0dd5
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed Sep 26 15:18:44 2012 +1000
+
+    mga: add stub storm functions if not using XAA
+    
+    If we aren't using XAA just add stub storm init/sync functions.
+    
+    This lets the driver load yay.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit 220e06fefe77175d9827954e61549eadda245d9a
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue Sep 25 08:54:42 2012 -0400
+
+    Remove mibstore.h
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit cd41eacaeabf8227197d605b055713ca654633d5
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Jul 17 16:05:09 2012 +1000
+
+    xf86-video-mga: bump to version 1.6.1
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit f11a407ceb0857bb0d33811511117b490a8ae6ee
+Author: Dave Airlie <airlied@gmail.com>
+Date:   Sun Jul 15 19:41:28 2012 +1000
+
+    mga: fix after XAA removal
+    
+    Fix mga build after XAA removal.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit fa0f3092ed38ce71ba9f65156bde306eb63feaf8
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Mon Jul 2 12:08:05 2012 +0100
+
+    mga: bump to 1.6.0
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit 7b6dcc4d5768cc8d17a1f664155ebdc8ca8c042e
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed Jun 6 09:23:31 2012 +0100
+
+    mga: port to new compat API.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit 0cb8ba6dc5e7bf4179174f9f17e211df7d89bd41
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed May 23 23:40:32 2012 -0700
+
+    Add const qualifier to char *from in MGAdoDDC
+    
+    Only used to store arguments to pass as printf %s strings to xf86DrvMsg
+    
+    Fixes gcc warnings:
+    mga_driver.c: In function 'MGAdoDDC':
+    mga_driver.c:1338:7: warning: assignment discards qualifiers from pointer target type
+    mga_driver.c:1343:11: warning: assignment discards qualifiers from pointer target type
+    mga_driver.c:1351:8: warning: assignment discards qualifiers from pointer target type
+    mga_driver.c:1359:8: warning: assignment discards qualifiers from pointer target type
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Dave Airlie <airlied@redhat.com>
+
+commit 3d9631b819c5c6f64ebf9bda8aab93e1cc7f391f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed May 23 23:34:07 2012 -0700
+
+    Move PCI vendor/device id defines into mga.h instead of using xf86PciInfo.h
+    
+    Silences deprecation warnings from xf86PciInfo.h in current Xorg servers
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Dave Airlie <airlied@redhat.com>
+
+commit 0af7dba78559ce82b4c3eed0862415efcde51863
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Thu May 17 10:19:21 2012 +0100
+
+    mga: don't bind to device if there is a kernel driver
+    
+    this should only pick up KMS drivers and not old drm drivers.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit 3991971c23ebe596742c004b1e583dfb1aa14ec4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Mar 23 19:02:40 2012 -0700
+
+    xf86-video-mga 1.5.0
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4c4beaf628c9c5dd531605e40696ed31db0e97b8
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed Jan 4 15:15:07 2012 +1000
+
+    Untangle XF86DRI from the driver-specific DRI define
+    
+    XF86DRI is defined by xorg-server.h, so --disable-dri in the driver
+    itself does exactly nothing other than not fill in the CFLAGS
+    and thus stop the driver from compiling.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 9223c44a731f48c66c226eb88dcb6f9d574cb599
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Tue Jan 3 23:35:18 2012 +0100
+
+    When we can't load the xaa or exa modules, use shadowfb instead
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+
+commit cc9d2e808de20723c9035952242d966455d583b7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Dec 28 19:44:40 2011 -0800
+
+    Check MGAAllocAdaptor() for memory allocation failure
+    
+    If it couldn't allocate memory, don't attempt to write a bunch of values
+    to the NULL pointer before returning it, but just pass the NULL along
+    right away.
+    
+    Resolves parfait warnings of the form:
+    
+    Error: Null pointer dereference (CWE 476)
+       Write to null pointer 'adapt'
+            at line 322 of src/mga_video.c in function 'MGASetupImageVideoTexture'.
+              Function 'MGAAllocAdaptor' may return constant 'NULL' at line 237, called at line 320.
+              Null pointer introduced at line 237 in function 'MGAAllocAdaptor'.
+    
+    repeated for every line writing to the adapt pointer in each function.
+    
+    [ This bug was found by the Parfait 0.4.2 bug checking tool.
+      For more information see http://labs.oracle.com/projects/parfait/ ]
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Mark Kettenis <kettenis@openbsd.org>
+
+commit 644ba5d11049e63ea61b5cc4fb889b0f840965ff
+Author: Christian Toutant <ctoutant@matrox.com>
+Date:   Wed Dec 7 15:42:39 2011 -0500
+
+    Add support for Video Memory greater then 8M
+    
+    Expand memory mapping of framebuffer from 8 to 16MB
+    
+    Fix segfault on redhat distibution
+    
+    Signed-off-by: Christian Toutant <ctoutant@matrox.com>
+
+commit d9cf07a4f424b2beb844ea1b3ec5d468e79a747c
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Sat Oct 29 16:34:41 2011 -0700
+
+    Include "xf86Modes.h" for xf86ModeBandwidth
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit f9acf37be49844bea8165be9786afe37fd999229
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Sat Oct 29 16:31:08 2011 -0700
+
+    Include <unistd.h> for usleep
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit 07792ef41f33aa5419168263637e34ee614f26e2
+Author: Matt Turner <mattst88@gmail.com>
+Date:   Mon Sep 26 22:38:17 2011 -0400
+
+    Remove calls to xf86IsPc98()
+    
+    Reviewed-by: Jamey Sharp <jamey@minilop.net>
+    Signed-off-by: Matt Turner <mattst88@gmail.com>
+
+commit 560967b4ffdb103f95121c43708dd5fc680a5045
+Author: Matt Turner <mattst88@gmail.com>
+Date:   Mon Sep 26 22:37:04 2011 -0400
+
+    Fix printf format specifier warning
+    
+    Signed-off-by: Matt Turner <mattst88@gmail.com>
+
+commit 1036e32e006d496023553ea566cb13ae93933719
+Author: Matt Turner <mattst88@gmail.com>
+Date:   Mon Sep 26 22:35:48 2011 -0400
+
+    Remove if(E != NULL) checks around free(E)
+    
+    Reviewed-by: Jamey Sharp <jamey@minilop.net>
+    Signed-off-by: Matt Turner <mattst88@gmail.com>
+
+commit ee09a9a340f8946f2d4a71a431b64189dbb5c256
+Author: Matt Turner <mattst88@gmail.com>
+Date:   Mon Sep 26 22:22:09 2011 -0400
+
+    Remove xalloc/xcalloc/xrealloc/xfree
+    
+    Reviewed-by: Jamey Sharp <jamey@minilop.net>
+    Signed-off-by: Matt Turner <mattst88@gmail.com>
+
+commit 94bbeb132c7eda912d1b402a1a91ca7cbbf5e6a1
+Author: Jamey Sharp <jamey@minilop.net>
+Date:   Thu Sep 15 10:29:11 2011 -0500
+
+    Delete support for MGA's proprietary HAL: unifdef USEMGAHAL.
+    
+    This patch produced with:
+    	for f in `git grep -Fwl USEMGAHAL`; do
+    		unifdef -B -UUSEMGAHAL $f | sponge $f
+    	done
+    
+    Adam Jackson wrote:
+    
+    	Hey, so, remember back in the dark ages when dualhead was this
+    	insanely wild differentiating feature?  Matrox thought it was so
+    	special, in fact, that they hid most of the implementation of it
+    	(and a bunch of other stuff) in a binary-only blob called the
+    	HALlib.  As you'd expect it was pretty much a cut-and-paste of
+    	the relevant Windows code, and then some open glue to keep it
+    	working; clientlx.c is that glue.
+    
+    	I guess the theory was that if you don't tell people which
+    	registers to duplicate to implement a second pipe in their own
+    	hardware, they won't figure it out?  A pretty eyeroll-worthy
+    	idea even at the time, and definitely not something we should be
+    	condoning anymore.
+    
+    	Kill it with fire, but while you're at it, untangle the hideous
+    	mess of MGA_HAL() macros too.
+    
+    Signed-off-by: Jamey Sharp <jamey@minilop.net>
+    Cc: Adam Jackson <ajax@redhat.com>
+
+commit ae90c47503bc1015a50e7ea6d22ec10e5e0d4113
+Author: Jamey Sharp <jamey@minilop.net>
+Date:   Tue Sep 13 16:01:57 2011 -0500
+
+    Nothing uses clientlx.c, so delete it.
+    
+    Adam Jackson wrote:
+    
+    	Hey, so, remember back in the dark ages when dualhead was this
+    	insanely wild differentiating feature?  Matrox thought it was so
+    	special, in fact, that they hid most of the implementation of it
+    	(and a bunch of other stuff) in a binary-only blob called the
+    	HALlib.  As you'd expect it was pretty much a cut-and-paste of
+    	the relevant Windows code, and then some open glue to keep it
+    	working; clientlx.c is that glue.
+    
+    	I guess the theory was that if you don't tell people which
+    	registers to duplicate to implement a second pipe in their own
+    	hardware, they won't figure it out?  A pretty eyeroll-worthy
+    	idea even at the time, and definitely not something we should be
+    	condoning anymore.
+    
+    	Kill it with fire ...
+    
+    Signed-off-by: Jamey Sharp <jamey@minilop.net>
+    Reviewed-by: Jeremy Huddleston <jeremyhu@apple.com>
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+
+commit 01ca2186ea028b2549de509b51726aa08519fce0
+Author: Christian Toutant <ctoutant@matrox.com>
+Date:   Tue Sep 20 13:07:16 2011 -0400
+
+    Reset tagfifo for renesas.
+    
+    For renesas, we need to reset tagfifo after a mode switch.
+    
+    Signed-off-by: Christian Toutant <ctoutant@matrox.com>
+
+commit c083bf0a66bef9a4345847f39be5fb895c211f79
+Author: Christian Toutant <ctoutant@matrox.com>
+Date:   Wed Aug 3 09:45:13 2011 -0400
+
+    Added support for G200SE Pilot3
+    
+    Optimize use of bandwidth and increase maximum resolution to 1920x1200
+    
+    Signed-off-by: Christian Toutant <ctoutant@matrox.com>
+
+commit 43280e6521815582f219d42821d896093c9c0d5f
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed Jun 22 17:02:29 2011 -0400
+
+    Don't include xf86Priv.h
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 5f1b04e86e79938c8158055a777280a649f95510
+Author: Yannick Heneault <yheneaul@matrox.com>
+Date:   Fri Dec 17 09:00:46 2010 -0500
+
+    added support for G200ER.
+
+commit f7a2ef60e18e2cc464f69c1cad4681096c645651
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 30 09:38:31 2010 -0700
+
+    Sun's copyrights now belong to Oracle
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 636c3c88e7e9cb30010fe1731cd7356849f3f172
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Thu Oct 14 14:36:06 2010 -0400
+
+    Don't allow the config file to override BIOS location
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 0bd44fad450843b7f1c35c70ab356a2b250d107d
+Author: Jesse Adkins <jesserayadkins@gmail.com>
+Date:   Tue Sep 28 13:29:51 2010 -0700
+
+    Purge cvs tags.
+    
+    Signed-off-by: Jesse Adkins <jesserayadkins@gmail.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 951474c7fcd1b28d3178a6644d58958cb3bdf5a8
+Author: Yannick Heneault <yheneaul@matrox.com>
+Date:   Wed Aug 25 11:16:27 2010 -0400
+
+    modified G200SE conditionnal statement about revision register for products compatibility.
+
+commit c08b112bfe14fbfe713e4757eb0b704c8ed1f339
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue Aug 10 10:58:41 2010 -0400
+
+    xf86-video-mga 1.4.13
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
 commit 411570523550e1997bbd83815990bdda8cfd129c
 Author: Gaetan Nadon <memsize@videotron.ca>
 Date:   Wed Jul 21 16:49:04 2010 -0400

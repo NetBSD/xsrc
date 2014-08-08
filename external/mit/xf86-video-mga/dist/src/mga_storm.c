@@ -14,17 +14,16 @@
 /* Drivers that need to access the PCI config space directly need this */
 #include "xf86Pci.h"
 
-/* Drivers for PCI hardware need this */
-#include "xf86PciInfo.h"
-
 /* Drivers that use XAA need this */
+#ifdef HAVE_XAA_H
 #include "xaa.h"
 #include "xaalocal.h"
+#endif
 #include "xf86fbman.h"
 #include "miline.h"
 #include "servermd.h"
 
-#ifdef XF86DRI
+#ifdef MGADRI
 #include "GL/glxtokens.h"
 #endif
 
@@ -32,7 +31,7 @@
 #include "mga_reg.h"
 #include "mga_macros.h"
 
-#ifdef XF86DRI
+#ifdef MGADRI
 #include "mga_dri.h"
 #endif
 
@@ -62,6 +61,7 @@ do { \
   XAAMoveDWORDS((d),(s),(c)); \
 } while (0)
 
+#ifdef HAVE_XAA_H
 static void mgaSetupForSolidFill( ScrnInfoPtr pScrn, int color,
     int rop, unsigned int planemask );
 
@@ -572,22 +572,27 @@ MGASubsequentCPUToScreenTexture (
 
 
 #endif /* defined(RENDER) */
+#endif
 
 Bool mgaAccelInit( ScreenPtr pScreen )
 {
+#ifdef HAVE_XAA_H
     XAAInfoRecPtr infoPtr;
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+#endif
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     MGAPtr pMga = MGAPTR(pScrn);
     int maxFastBlitMem, maxlines;
     Bool doRender = FALSE;
     BoxRec AvailFBArea;
     int i;
 
-    pMga->ScratchBuffer = xalloc(((pScrn->displayWidth * pMga->CurrentLayout.bitsPerPixel) + 127) >> 3);
+    pMga->ScratchBuffer = malloc(((pScrn->displayWidth * pMga->CurrentLayout.bitsPerPixel) + 127) >> 3);
     if(!pMga->ScratchBuffer) return FALSE;
 
+#ifdef HAVE_XAA_H
     pMga->AccelInfoRec = infoPtr = XAACreateInfoRec();
     if(!infoPtr) return FALSE;
+#endif
 
     pMga->RenderTime = 0;
     pMga->LinearScratch = 0;
@@ -620,6 +625,7 @@ Bool mgaAccelInit( ScreenPtr pScreen )
 	pMga->AtypeNoBLK = MGAAtypeNoBLK;
     }
 
+#ifdef HAVE_XAA_H
     /* fill out infoPtr here */
     infoPtr->Flags = 	PIXMAP_CACHE |
 			OFFSCREEN_PIXMAPS |
@@ -704,7 +710,11 @@ Bool mgaAccelInit( ScreenPtr pScreen )
     /* screen to screen color expansion */
     if(pMga->AccelFlags & USE_LINEAR_EXPANSION) {
 	infoPtr->ScreenToScreenColorExpandFillFlags =
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+						BIT_ORDER_IN_BYTE_MSBFIRST;
+#else 
 						BIT_ORDER_IN_BYTE_LSBFIRST;
+#endif
 	infoPtr->SetupForScreenToScreenColorExpandFill =
 		mgaSetupForScreenToScreenColorExpandFill;
 	infoPtr->SubsequentScreenToScreenColorExpandFill =
@@ -785,6 +795,8 @@ Bool mgaAccelInit( ScreenPtr pScreen )
 	pMga->MaxFastBlitY = maxFastBlitMem / (pScrn->displayWidth * pMga->CurrentLayout.bitsPerPixel / 8);
     }
 
+#endif
+
     switch (pMga->Chipset) {
     case PCI_CHIP_MGAG200_SE_A_PCI:
     case PCI_CHIP_MGAG200_SE_B_PCI:
@@ -797,7 +809,7 @@ Bool mgaAccelInit( ScreenPtr pScreen )
 	break;
     }
 
-#ifdef XF86DRI
+#ifdef MGADRI
     if ( pMga->directRenderingEnabled ) {
        MGADRIServerPrivatePtr pMGADRIServer = pMga->DRIServerInfo;
        BoxRec MemBox;
@@ -899,7 +911,7 @@ Bool mgaAccelInit( ScreenPtr pScreen )
 		   pMGADRIServer->textureOffset );
     }
     else
-#endif /* defined(XF86DRI) */
+#endif /* defined(MGADRI) */
     {
        AvailFBArea.x1 = 0;
        AvailFBArea.x2 = pScrn->displayWidth;
@@ -920,6 +932,7 @@ Bool mgaAccelInit( ScreenPtr pScreen )
 
     }
 
+#ifdef HAVE_XAA_H
     for (i = 0; i < pScrn->numEntities; i++) {
 	if (xf86IsEntityShared(pScrn->entityList[i])) {
 	    infoPtr->RestoreAccelState = mgaRestoreAccelState;
@@ -952,9 +965,13 @@ Bool mgaAccelInit( ScreenPtr pScreen )
 #endif /* defined(RENDER) */
 
     return(XAAInit(pScreen, infoPtr));
+#else
+    return TRUE;
+#endif
 }
 
 
+#ifdef HAVE_XAA_H
 /* Support for multiscreen */
 static void mgaRestoreAccelState(ScrnInfoPtr pScrn)
 {
@@ -997,7 +1014,7 @@ static void mgaRestoreAccelState(ScrnInfoPtr pScrn)
    OUTREG(MGAREG_YBOT, 0x007FFFFF);    /* maxPixelPointer */
    pMga->AccelFlags &= ~CLIPPER_ON;
 }
-
+#endif
 
 CARD32 MGAAtype[16] = {
    MGADWG_RPL  | 0x00000000, MGADWG_RSTR | 0x00080000,
@@ -1083,9 +1100,11 @@ void MGAStormEngineInit( ScrnInfoPtr pScrn )
     opmode &= ~0x30000;
 #endif
 
+#ifdef HAVE_XAA_H
     pMga->SetupForSolidFill = mgaSetupForSolidFill;
     pMga->SubsequentSolidFillRect = mgaSubsequentSolidFillRect;
     pMga->RestoreAccelState = mgaRestoreAccelState;
+#endif
 
 
     pMga->fifoCount = 0;
@@ -1131,6 +1150,7 @@ void MGAStormEngineInit( ScrnInfoPtr pScrn )
     case PCI_CHIP_MGAG200_WINBOND_PCI:
     case PCI_CHIP_MGAG200_EV_PCI:
     case PCI_CHIP_MGAG200_EH_PCI:
+    case PCI_CHIP_MGAG200_ER_PCI:	
 	pMga->SrcOrg = 0;
 	OUTREG(MGAREG_SRCORG, pMga->realSrcOrg);
 	OUTREG(MGAREG_DSTORG, pMga->DstOrg);
@@ -1157,6 +1177,7 @@ void MGAStormEngineInit( ScrnInfoPtr pScrn )
 }
 
 
+#ifdef HAVE_XAA_H
 static void
 MGASetClippingRectangle(
    ScrnInfoPtr pScrn,
@@ -2339,7 +2360,7 @@ MGAValidatePolyArc(
    unsigned long changes,
    DrawablePtr pDraw
 ){
-   ScrnInfoPtr pScrn = xf86Screens[pGC->pScreen->myNum];
+   ScrnInfoPtr pScrn = xf86ScreenToScrn(pGC->pScreen);
    MGAPtr pMga = MGAPTR(pScrn);
    Bool fullPlanemask = TRUE;
 
@@ -2426,7 +2447,7 @@ MGAValidatePolyPoint(
    unsigned long changes,
    DrawablePtr pDraw
 ){
-   ScrnInfoPtr pScrn = xf86Screens[pGC->pScreen->myNum];
+   ScrnInfoPtr pScrn = xf86ScreenToScrn(pGC->pScreen);
    MGAPtr pMga = MGAPTR(pScrn);
    Bool fullPlanemask = TRUE;
 
@@ -2536,3 +2557,4 @@ MGAFillCacheBltRects(
 
     SET_SYNC_FLAG(infoRec);
 }
+#endif

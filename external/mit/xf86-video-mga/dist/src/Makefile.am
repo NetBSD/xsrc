@@ -32,8 +32,6 @@ mga_drv_la_LIBADD = $(noinst_LTLIBRARIES)
 mga_drv_la_SOURCES = \
          binding.h \
          client.h \
-         clientlx.c \
-         mga_arc.c \
          mga_bios.c \
          mga_common.h \
          mga_dac3026.c \
@@ -41,7 +39,6 @@ mga_drv_la_SOURCES = \
          mga_dga.c \
          mga_dh.c \
          mga_driver.c \
-         mga_esc.c \
          mga_g450pll.c \
          mga.h \
          mga_halmod.c \
@@ -56,7 +53,9 @@ mga_drv_la_SOURCES = \
          mga_shadow.c \
          mga_ucode.h \
 	 mga_vga.c \
-         mga_video.c
+         mga_video.c \
+         mga_storm.c \
+         compat-api.h
 
 if DRI
 mga_drv_la_SOURCES += \
@@ -70,7 +69,7 @@ mga_drv_la_SOURCES += \
     mga_exa.c
 endif
 
-if USE_XAA
+if XAA
 mga_drv_la_SOURCES += \
-    mga_storm.c
+    mga_arc.c
 endif
