@@ -10,8 +10,6 @@
 
 #include "compiler.h"
 
-/* Drivers for PCI hardware need this */
-#include "xf86PciInfo.h"
 #include "mga.h"
 #include "mga_macros.h"
 #include "mga_reg.h"
@@ -70,9 +68,9 @@ CopyModeNLink(ScrnInfoPtr pScrn, DisplayModePtr dest, DisplayModePtr i, DisplayM
     DisplayModePtr mode;
     int dx = 0,dy = 0;
     /* start with first node */
-    mode = xalloc(sizeof(DisplayModeRec));
+    mode = malloc(sizeof(DisplayModeRec));
     memcpy(mode,i, sizeof(DisplayModeRec));
-    mode->Private = xalloc(sizeof(MergedDisplayModeRec));
+    mode->Private = malloc(sizeof(MergedDisplayModeRec));
     ((MergedDisplayModePtr)mode->Private)->Monitor1 = i;
     ((MergedDisplayModePtr)mode->Private)->Monitor2 = j;
     ((MergedDisplayModePtr)mode->Private)->Monitor2Pos = srel;
@@ -236,13 +234,10 @@ MGAPreInitMergedFB(ScrnInfoPtr pScrn1, int flags)
     int i;
     char* s;
     ClockRangePtr clockRanges;
-#ifdef USEMGAHAL
-    ULONG status;
-#endif
     MgaScrn2Rel Monitor2Pos;
 
     xf86DrvMsg(pScrn1->scrnIndex, X_INFO, "==== Start of second screen initialization ====\n");
-    pScrn = xalloc(sizeof(ScrnInfoRec));
+    pScrn = malloc(sizeof(ScrnInfoRec));
     memcpy(pScrn,pScrn1,sizeof(ScrnInfoRec));
    
     pScrn->driverPrivate = NULL; 
@@ -252,9 +247,6 @@ MGAPreInitMergedFB(ScrnInfoPtr pScrn1, int flags)
     }
 
     pMga = MGAPTR(pScrn);
-#ifdef USEMGAHAL
-    pMga->pMgaModeInfo = NULL; /*will be allocated later if NULL*/ 
-#endif
     pMga1 = MGAPTR(pScrn1);
     pMga1->pScrn2 = pScrn;
   
@@ -276,7 +268,7 @@ MGAPreInitMergedFB(ScrnInfoPtr pScrn1, int flags)
 
     /* Set pScrn->monitor */
     {
-        pScrn->monitor = xalloc(sizeof(MonRec));
+        pScrn->monitor = malloc(sizeof(MonRec));
         /* copy everything we don't care about */
         memcpy(pScrn->monitor,pScrn1->monitor,sizeof(MonRec));
         pScrn->monitor->DDC = NULL;   /*FIXME:have to try this */ 
@@ -322,7 +314,7 @@ MGAPreInitMergedFB(ScrnInfoPtr pScrn1, int flags)
     pMga->Chipset = pMga1->Chipset;
     pMga->ChipRev = pMga1->ChipRev;
 
-#ifdef XF86DRI
+#ifdef MGADRI
     pMga->agpMode = pMga1->agpMode;
 #endif
 
@@ -363,6 +355,7 @@ MGAPreInitMergedFB(ScrnInfoPtr pScrn1, int flags)
     case PCI_CHIP_MGAG200_WINBOND_PCI:
     case PCI_CHIP_MGAG200_EV_PCI:
     case PCI_CHIP_MGAG200_EH_PCI:
+	case PCI_CHIP_MGAG200_ER_PCI:
     case PCI_CHIP_MGAG400:
     case PCI_CHIP_MGAG550:
 	MGAGSetupFuncs(pScrn);
@@ -390,7 +383,7 @@ MGAPreInitMergedFB(ScrnInfoPtr pScrn1, int flags)
     /*
      * Reset card if it isn't primary one
      */
-    if ( (!pMga->Primary && !pMga->FBDev) || xf86IsPc98() )
+    if ( (!pMga->Primary && !pMga->FBDev) )
         MGASoftReset(pScrn);
 
     
@@ -455,10 +448,6 @@ MGAPreInitMergedFB(ScrnInfoPtr pScrn1, int flags)
     clockRanges->clockIndex = -1;		/* programmable */
     clockRanges->interlaceAllowed = TRUE;
     clockRanges->doubleScanAllowed = TRUE;
-#ifdef USEMGAHAL
-    MGA_HAL(clockRanges->interlaceAllowed = FALSE);
-    MGA_HAL(clockRanges->doubleScanAllowed = FALSE);
-#endif
     clockRanges->interlaceAllowed = FALSE; /*no interlace on CRTC2 */
 
     clockRanges->ClockMulFactor = 1;
@@ -493,7 +482,7 @@ MGAPreInitMergedFB(ScrnInfoPtr pScrn1, int flags)
         switch(pMga->Chipset) {
 	case PCI_CHIP_MGA2064:
 	   if (!pMga->NoAccel) {
-		linePitches = xalloc(sizeof(Pitches1));
+		linePitches = malloc(sizeof(Pitches1));
 		memcpy(linePitches, Pitches1, sizeof(Pitches1));
 		minPitch = maxPitch = 0;
 	   }
@@ -502,7 +491,7 @@ MGAPreInitMergedFB(ScrnInfoPtr pScrn1, int flags)
 	case PCI_CHIP_MGA2164_AGP:
 	case PCI_CHIP_MGA1064:
 	   if (!pMga->NoAccel) {
-		linePitches = xalloc(sizeof(Pitches2));
+		linePitches = malloc(sizeof(Pitches2));
 		memcpy(linePitches, Pitches2, sizeof(Pitches2));
 		minPitch = maxPitch = 0;
 	   }
@@ -518,6 +507,7 @@ MGAPreInitMergedFB(ScrnInfoPtr pScrn1, int flags)
         case PCI_CHIP_MGAG200_WINBOND_PCI:
         case PCI_CHIP_MGAG200_EV_PCI:
         case PCI_CHIP_MGAG200_EH_PCI:
+	case PCI_CHIP_MGAG200_ER_PCI:		
 	case PCI_CHIP_MGAG400:
 	case PCI_CHIP_MGAG550:
 	   maxPitch = 4096;
@@ -536,8 +526,7 @@ MGAPreInitMergedFB(ScrnInfoPtr pScrn1, int flags)
 			      pMga->FbMapSize,
 			      LOOKUP_BEST_REFRESH);
         
-	if (linePitches)
-	   xfree(linePitches);
+	free(linePitches);
     }
 
 
@@ -560,30 +549,6 @@ MGAPreInitMergedFB(ScrnInfoPtr pScrn1, int flags)
 	MGAFreeRec(pScrn);
 	return FALSE;
     }
-#ifdef USEMGAHAL
-    MGA_HAL(
-
-    pMga->pBoard = pMga1->pBoard;
-    pMga->pClientStruct = pMga1->pClientStruct;
-    pMga->pMgaHwInfo = pMga1->pMgaHwInfo;
-
-
-    MGAFillModeInfoStruct(pScrn,NULL);
-    /* Fields usually handled by MGAFillModeInfoStruct, but are unavailable
-     * because no mode is given
-     */
-    pMga->pMgaModeInfo->ulDispWidth = pScrn->virtualX;
-    pMga->pMgaModeInfo->ulDispHeight = pScrn->virtualY;
-    
-    if((status = MGAValidateMode(pMga->pBoard,pMga->pMgaModeInfo)) != 0) {
-	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-		   "MGAValidateMode from HALlib found the mode to be invalid.\n"
-		   "\tError: 0x%lx\n", status);
-        return FALSE;
-    }
-    pScrn->displayWidth = pMga->pMgaModeInfo->ulFBPitch;
-    );	/* MGA_HAL */
-#endif
 
     /*
      * Set the CRTC parameters for all of the modes based on the type
@@ -593,9 +558,6 @@ MGAPreInitMergedFB(ScrnInfoPtr pScrn1, int flags)
      * driver and if the driver doesn't provide code to set them.  They
      * are not pre-initialised at all.
      */
-#ifdef USEMGAHAL
-    MGA_HAL(xf86SetCrtcForModes(pScrn, 0));
-#endif
     MGA_NOT_HAL(xf86SetCrtcForModes(pScrn, INTERLACE_HALVE_V));
 
     /* Set the current mode to the first in the list */
@@ -709,10 +671,10 @@ InRegion(int x, int y, region r) {
         low += test-hi; \
         hi = test; } }
  void 
-MGAMergePointerMoved(int scrnIndex, int x, int y)
+MGAMergePointerMoved(SCRN_ARG_TYPE arg, int x, int y)
 {
-  ScrnInfoPtr   pScr = xf86Screens[scrnIndex];
-  MGAPtr        pMga = MGAPTR(pScr);
+  SCRN_INFO_PTR(arg);
+  MGAPtr        pMga = MGAPTR(pScrn);
   ScrnInfoPtr   pScr2 = pMga->pScrn2;
 
   region out,in1,in2,f2,f1;
@@ -731,10 +693,10 @@ MGAMergePointerMoved(int scrnIndex, int x, int y)
 
 
   /*specify outer clipping region. crossing this causes all frames to move*/
-  out.x0 = pScr->frameX0;
-  out.x1 = pScr->frameX1+1;
-  out.y0 = pScr->frameY0;
-  out.y1 = pScr->frameY1+1;
+  out.x0 = pScrn->frameX0;
+  out.x1 = pScrn->frameX1+1;
+  out.y0 = pScrn->frameY0;
+  out.y1 = pScrn->frameY1+1;
 
   /* 
    * specify inner sliding window. beeing outsize both frames, and inside 
@@ -742,7 +704,7 @@ MGAMergePointerMoved(int scrnIndex, int x, int y)
    */
   in1 = out;
   in2 = out;
-  switch(((MergedDisplayModePtr)pScr->currentMode->Private)->Monitor2Pos) {
+  switch(((MergedDisplayModePtr)pScrn->currentMode->Private)->Monitor2Pos) {
       case mgaLeftOf : 
           in1.x0 = f1.x0; 
           in2.x1 = f2.x1; 
@@ -790,8 +752,8 @@ MGAMergePointerMoved(int scrnIndex, int x, int y)
         f1.x1 += deltax;
         f2.x0 += deltax;
         f2.x1 += deltax;
-        pScr->frameX0 += deltax;
-        pScr->frameX1 += deltax;
+        pScrn->frameX0 += deltax;
+        pScrn->frameX1 += deltax;
         
 
         if ( out.y0 > y) { 
@@ -804,8 +766,8 @@ MGAMergePointerMoved(int scrnIndex, int x, int y)
         f1.y1 += deltay;
         f2.y0 += deltay;
         f2.y1 += deltay;
-        pScr->frameY0 += deltay;
-        pScr->frameY1 += deltay;
+        pScrn->frameY0 += deltay;
+        pScrn->frameY1 += deltay;
     } 
 
     
@@ -817,19 +779,19 @@ MGAMergePointerMoved(int scrnIndex, int x, int y)
         pScr2->frameY0 = f2.y0;
 
         /*Adjust Granularity */
-        MGAAdjustGranularity(pScr,&pMga->M1frameX0,&pMga->M1frameY0);
-        MGAAdjustGranularity(pScr,&pScr2->frameX0,&pScr2->frameY0);
-        MGAAdjustGranularity(pScr,&pScr->frameX0,&pScr->frameY0);
+        MGAAdjustGranularity(pScrn,&pMga->M1frameX0,&pMga->M1frameY0);
+        MGAAdjustGranularity(pScrn,&pScr2->frameX0,&pScr2->frameY0);
+        MGAAdjustGranularity(pScrn,&pScrn->frameX0,&pScrn->frameY0);
         
-        pMga->M1frameX1 = pMga->M1frameX0 + MDMPTR(pScr)->Monitor1->HDisplay -1;
-        pMga->M1frameY1 = pMga->M1frameY0 + MDMPTR(pScr)->Monitor1->VDisplay -1;
-        pScr2->frameX1 = pScr2->frameX0 + MDMPTR(pScr)->Monitor2->HDisplay -1;
-        pScr2->frameY1 = pScr2->frameY0 + MDMPTR(pScr)->Monitor2->VDisplay -1;
-        pScr->frameX1 = pScr->frameX0 + pScr->currentMode->HDisplay -1;
-        pScr->frameY1 = pScr->frameY0 + pScr->currentMode->VDisplay -1;
+        pMga->M1frameX1 = pMga->M1frameX0 + MDMPTR(pScrn)->Monitor1->HDisplay -1;
+        pMga->M1frameY1 = pMga->M1frameY0 + MDMPTR(pScrn)->Monitor1->VDisplay -1;
+        pScr2->frameX1 = pScr2->frameX0 + MDMPTR(pScrn)->Monitor2->HDisplay -1;
+        pScr2->frameY1 = pScr2->frameY0 + MDMPTR(pScrn)->Monitor2->VDisplay -1;
+        pScrn->frameX1 = pScrn->frameX0 + pScrn->currentMode->HDisplay -1;
+        pScrn->frameY1 = pScrn->frameY0 + pScrn->currentMode->VDisplay -1;
         
-        MGAAdjustFrame(pScr->scrnIndex, pMga->M1frameX0, pMga->M1frameY0, 0);
-        MGAAdjustFrameCrtc2(pScr->scrnIndex, pScr2->frameX0, pScr2->frameY0, 0);
+        MGAAdjustFrame(ADJUST_FRAME_ARGS(pScrn, pMga->M1frameX0, pMga->M1frameY0));
+        MGAAdjustFrameCrtc2(ADJUST_FRAME_ARGS(pScrn, pScr2->frameX0, pScr2->frameY0));
     }
 
 /*  if(pMga->PointerMoved)  
@@ -839,8 +801,9 @@ MGAMergePointerMoved(int scrnIndex, int x, int y)
 
    
 void
-MGAAdjustMergeFrames(int scrnIndex, int x, int y, int flags) {
-    ScrnInfoPtr pScrn1 = xf86Screens[scrnIndex];
+MGAAdjustMergeFrames(ADJUST_FRAME_ARGS_DECL) {
+    SCRN_INFO_PTR(arg);
+    ScrnInfoPtr pScrn1 = pScrn;
     MGAPtr pMga = MGAPTR(pScrn1); 
     ScrnInfoPtr pScrn2 = pMga->pScrn2;
     int VTotal = pScrn1->currentMode->VDisplay; 
@@ -904,22 +867,22 @@ MGAAdjustMergeFrames(int scrnIndex, int x, int y, int flags) {
     pScrn1->frameX1 = pScrn1->frameX0 + pScrn1->currentMode->HDisplay -1;
     pScrn1->frameY1 = pScrn1->frameY0 + pScrn1->currentMode->VDisplay -1;
 
-    MGAAdjustFrame(scrnIndex, pMga->M1frameX0, pMga->M1frameY0, flags);
-    MGAAdjustFrameCrtc2(scrnIndex, pScrn2->frameX0, pScrn2->frameY0, flags);
+    MGAAdjustFrame(ADJUST_FRAME_ARGS(pScrn, pMga->M1frameX0, pMga->M1frameY0));
+    MGAAdjustFrameCrtc2(ADJUST_FRAME_ARGS(pScrn, pScrn2->frameX0, pScrn2->frameY0));
     return;
 }
 
 Bool
-MGACloseScreenMerged(int scrnIndex, ScreenPtr pScreen) {
-    ScrnInfoPtr pScrn1 = xf86Screens[scrnIndex];
+MGACloseScreenMerged(ScreenPtr pScreen) {
+    ScrnInfoPtr pScrn1 = xf86ScreenToScrn(pScreen);
     MGAPtr pMga = MGAPTR(pScrn1); 
     ScrnInfoPtr pScrn2 = pMga->pScrn2;
 
     if(pScrn2) {
-        xfree(pScrn2->monitor);
+        free(pScrn2->monitor);
         pScrn2->monitor = NULL;
 
-        xfree(pScrn2);
+        free(pScrn2);
         pMga->pScrn2 = NULL;
     }
 
@@ -927,9 +890,8 @@ MGACloseScreenMerged(int scrnIndex, ScreenPtr pScreen) {
         pScrn1->currentMode = pScrn1->modes;
         do {
             DisplayModePtr p = pScrn1->currentMode->next; 
-            if(pScrn1->currentMode->Private) 
-                xfree(pScrn1->currentMode->Private);
-            xfree(pScrn1->currentMode);
+            free(pScrn1->currentMode->Private);
+            free(pScrn1->currentMode);
             pScrn1->currentMode = p;
         }while( pScrn1->currentMode != pScrn1->modes);
     }
@@ -943,7 +905,7 @@ MGACloseScreenMerged(int scrnIndex, ScreenPtr pScreen) {
 Bool
 MGASaveScreenMerged(ScreenPtr pScreen, int mode)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     MGAPtr pMga = MGAPTR(pScrn); 
     BOOL on = xf86IsUnblank(mode);
     CARD8 reg;

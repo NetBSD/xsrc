@@ -41,11 +41,10 @@
 #include "mga_macros.h"
 
 #include "exa.h"
-#ifdef XF86DRI
+#ifdef MGADRI
 #include "mga_dri.h"
 #endif
 
-#include "xf86PciInfo.h"
 
 #if 0
 #define DEBUG_MSG(x)  ErrorF x
@@ -54,10 +53,10 @@
 #endif
 
 #define PMGA(x) \
-    MGAPtr pMga = xf86Screens[x->drawable.pScreen->myNum]->driverPrivate;
+    MGAPtr pMga = xf86ScreenToScrn(x->drawable.pScreen)->driverPrivate;
 
 #define QUIESCE_DMA(x) \
-    CHECK_DMA_QUIESCENT(pMga, xf86Screens[x->drawable.pScreen->myNum]);
+    CHECK_DMA_QUIESCENT(pMga, xf86ScreenToScrn(x->drawable.pScreen));
 
 /* stuff stolen from mga_storm.c */
 #define BLIT_LEFT   1
@@ -355,7 +354,7 @@ static Bool
 mgaCheckComposite(int op, PicturePtr pSrcPict, PicturePtr pMaskPict,
                   PicturePtr pDstPict)
 {
-    MGAPtr pMga = xf86Screens[pSrcPict->pDrawable->pScreen->myNum]->driverPrivate;
+    MGAPtr pMga = xf86ScreenToScrn(pSrcPict->pDrawable->pScreen)->driverPrivate;
 
     if (op >= sizeof(mgaBlendOp) / sizeof(mgaBlendOp[0])) {
         DEBUG_MSG(("unsupported op %x\n", op));
@@ -730,7 +729,7 @@ mgaDownloadFromScreen(PixmapPtr pSrc, int x, int y, int w, int h,
 {
     PMGA(pSrc);
 
-    char *src = pSrc->devPrivate.ptr;
+    char *src = (char *)(unsigned long) exaGetPixmapFirstPixel(pSrc);
     int src_pitch = exaGetPixmapPitch(pSrc);
 
     int cpp = (pSrc->drawable.bitsPerPixel + 7) / 8;
@@ -752,7 +751,7 @@ mgaDownloadFromScreen(PixmapPtr pSrc, int x, int y, int w, int h,
 static void
 mgaWaitMarker(ScreenPtr pScreen, int marker)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     MGAPtr pMga = pScrn->driverPrivate;
 
     WAITFIFO(1);
@@ -763,7 +762,7 @@ mgaWaitMarker(ScreenPtr pScreen, int marker)
     while (INREG (MGAREG_Status) & 0x10000);
 }
 
-#ifdef XF86DRI
+#ifdef MGADRI
 static void
 init_dri(ScrnInfoPtr pScrn)
 {
@@ -837,13 +836,13 @@ init_dri(ScrnInfoPtr pScrn)
                        MGA_BUFFER_ALIGN) & ~MGA_BUFFER_ALIGN;
     dri->backPitch = widthBytes;
 }
-#endif /* XF86DRI */
+#endif /* MGADRI */
 
 Bool
 mgaExaInit(ScreenPtr pScreen)
 {
     ExaDriverPtr pExa;
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     MGAPtr pMga = pScrn->driverPrivate;
 
     pExa = exaDriverAlloc();
@@ -865,7 +864,7 @@ mgaExaInit(ScreenPtr pScreen)
 
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "X %d Y %d bpp %d\n",
                pScrn->virtualX, pScrn->virtualY, pScrn->bitsPerPixel);
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Start at %p, size %x, osb %x\n",
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Start at %p, size %lx, osb %lx\n",
                pExa->memoryBase, pExa->memorySize, pExa->offScreenBase);
 
     /* In PW24 mode, we need to align to "3 64-bytes" */
@@ -898,7 +897,7 @@ mgaExaInit(ScreenPtr pScreen)
     pExa->UploadToScreen = mgaUploadToScreen;
     pExa->DownloadFromScreen = mgaDownloadFromScreen;
 
-#ifdef XF86DRI
+#ifdef MGADRI
     if (pMga->directRenderingEnabled)
         init_dri(pScrn);
 #endif
