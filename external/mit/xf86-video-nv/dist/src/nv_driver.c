@@ -935,11 +935,11 @@ NVPciProbe(DriverPtr drv, int entity, struct pci_device *dev, intptr_t data)
         if(name)
             xf86DrvMsg(0, X_WARNING,
                        NV_NAME ": Ignoring unsupported device 0x%"PRIx32" (%s) at %2.2d@%2.2d:%2.2d:%1.1d\n",
-                       id, name, dev->bus, dev->domain, dev->dev, dev->func);
+                       (uint32_t)id, name, dev->bus, dev->domain, dev->dev, dev->func);
         else
             xf86DrvMsg(0, X_WARNING,
                        NV_NAME ": Ignoring unsupported device 0x%"PRIx32" at %2.2d@%2.2d:%2.2d:%1.1d\n",
-                       id, dev->bus, dev->domain, dev->dev, dev->func);
+                       (uint32_t)id, dev->bus, dev->domain, dev->dev, dev->func);
         return FALSE;
     }
 
