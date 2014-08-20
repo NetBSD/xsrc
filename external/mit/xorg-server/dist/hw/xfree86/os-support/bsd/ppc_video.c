@@ -157,9 +157,10 @@ Bool xf86EnableIO()
         xf86MsgVerb(X_WARNING, 3, "xf86EnableIO %d\n", fd);
         if (ioBase == MAP_FAILED)
         {
-                ioBase=mmap(NULL, 0x10000, PROT_READ|PROT_WRITE, MAP_SHARED, fd,
+                ioBase = mmap(NULL, 0x10000, PROT_READ|PROT_WRITE, MAP_SHARED, fd,
                     PCI_MAGIC_IO_RANGE);
-                xf86MsgVerb(X_INFO, 3, "xf86EnableIO: %08x\n", ioBase);
+                xf86MsgVerb(X_INFO, 3, "xf86EnableIO: %08lx\n",
+                    (unsigned long)ioBase);
                 if (ioBase == MAP_FAILED) {
                         xf86MsgVerb(X_WARNING, 3, "Can't map IO space!\n");
 			return FALSE;
