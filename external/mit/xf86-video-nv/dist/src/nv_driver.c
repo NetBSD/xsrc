@@ -911,15 +911,23 @@ NVPciProbe(DriverPtr drv, int entity, struct pci_device *dev, intptr_t data)
                       NVGetPCIXpressChip(dev) : dev->vendor_id << 16 | dev->device_id;
     const char *name = xf86TokenToString(NVKnownChipsets, id);
 
+/*
+ * XXX
+ * disable this test for now since it's bogus
+ * it will trigger whenever there's a driver other than vga attached to the
+ * device we're trying to probe, yet this works fine on top of gffb or genfb
+ * might need to revisit this when we have working DRM on non-x86
+ */
+#if NV_TEST_FOR_KERNEL_DRIVER
     if (pci_device_has_kernel_driver(dev)) {
         xf86DrvMsg(0, X_ERROR,
                    NV_NAME ": The PCI device 0x%x (%s) at %2.2d@%2.2d:%2.2d:%1.1d has a kernel module claiming it.\n",
-                   (int)id, name, dev->bus, dev->domain, dev->dev, dev->func);
+                   id, name, dev->bus, dev->domain, dev->dev, dev->func);
         xf86DrvMsg(0, X_ERROR,
                    NV_NAME ": This driver cannot operate until it has been unloaded.\n");
         return FALSE;
     }
-
+#endif
     if(dev->vendor_id == PCI_VENDOR_NVIDIA && !name &&
        !NVIsSupported(id) && !NVIsG80(id)) {
         /* See if pci.ids knows what the heck this thing is */
@@ -927,11 +935,11 @@ NVPciProbe(DriverPtr drv, int entity, struct pci_device *dev, intptr_t data)
         if(name)
             xf86DrvMsg(0, X_WARNING,
                        NV_NAME ": Ignoring unsupported device 0x%x (%s) at %2.2d@%2.2d:%2.2d:%1.1d\n",
-                       (int)id, name, dev->bus, dev->domain, dev->dev, dev->func);
+                       id, name, dev->bus, dev->domain, dev->dev, dev->func);
         else
             xf86DrvMsg(0, X_WARNING,
                        NV_NAME ": Ignoring unsupported device 0x%x at %2.2d@%2.2d:%2.2d:%1.1d\n",
-                       (int)id, dev->bus, dev->domain, dev->dev, dev->func);
+                       id, dev->bus, dev->domain, dev->dev, dev->func);
         return FALSE;
     }
 
@@ -1212,7 +1220,7 @@ NVCloseScreen(CLOSE_SCREEN_ARGS_DECL)
             NVLockUnlock(pNv, 1);
         }
     }
-
+    
     NVUnmapMem(pScrn);
 #ifndef AVOID_VGAHW
     vgaHWUnmapMem(pScrn);
@@ -1260,7 +1268,6 @@ NVFreeScreen(FREE_SCREEN_ARGS_DECL)
      * This only gets called when a screen is being deleted.  It does not
      * get called routinely at the end of a server generation.
      */
-  
     if (xf86LoaderCheckSymbol("vgaHWFreeHWRec"))
 	vgaHWFreeHWRec(pScrn);
     NVFreeRec(pScrn);
