@@ -1,5 +1,5 @@
 /* $OpenBSD: wsfb_driver.c,v 1.19 2003/04/27 16:42:32 matthieu Exp $ */
-/* $NetBSD: igs_driver.c,v 1.10 2013/11/05 11:26:43 macallan Exp $ */
+/* $NetBSD: igs_driver.c,v 1.11 2014/08/25 15:27:00 macallan Exp $ */
 /*
  * Copyright (c) 2001 Matthieu Herrb
  *		 2009 Michael Lorenz
@@ -413,7 +413,7 @@ IgsProbe(DriverPtr drv, int flags)
 		cPtr->Chipset = chipset;
 		cPtr->fb_paddr =
 		    ((uint32_t)igs_ext_read(IGS_EXT_LINA_HI)) << 24;
-		xf86Msg(X_ERROR, "Aperture at %08x\n", cPtr->fb_paddr);
+		xf86Msg(X_ERROR, "Aperture at %08lx\n", cPtr->fb_paddr);
 	    }
 	}
     }

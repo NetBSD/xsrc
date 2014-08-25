@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: igs_accel.c,v 1.8 2011/12/14 23:58:54 macallan Exp $ */
+/* $NetBSD: igs_accel.c,v 1.9 2014/08/25 15:27:00 macallan Exp $ */
 
 #include <sys/types.h>
 
@@ -77,8 +77,8 @@ IgsWaitMarker(ScreenPtr pScreen, int Marker)
 
 	ENTER;
 	IgsWrite1(fPtr, IGS_COP_MAP_FMT_REG, fPtr->mapfmt);
-	while ((IgsRead1(fPtr,
-	    IGS_COP_CTL_REG) & (IGS_COP_CTL_BUSY | IGS_COP_CTL_HFEMPTZ) != 0)
+	while (((IgsRead1(fPtr,
+	    IGS_COP_CTL_REG) & (IGS_COP_CTL_BUSY | IGS_COP_CTL_HFEMPTZ)) != 0)
 	    && (bail > 0)) {
 		bail--;
 		IgsWrite1(fPtr, IGS_COP_MAP_FMT_REG, fPtr->mapfmt);
@@ -257,8 +257,8 @@ IgsUploadToScreen(PixmapPtr pDst, int x, int y, int w, int h,
 {
 	ScrnInfoPtr pScrn = xf86Screens[pDst->drawable.pScreen->myNum];
 	IgsPtr fPtr = IGSPTR(pScrn);
-	char  *dst        = fPtr->fbmem + exaGetPixmapOffset(pDst);
-	int    dst_pitch  = exaGetPixmapPitch(pDst);
+	unsigned char *dst = fPtr->fbmem + exaGetPixmapOffset(pDst);
+	int dst_pitch = exaGetPixmapPitch(pDst);
 
 	int bpp    = pDst->drawable.bitsPerPixel;
 	int cpp    = (bpp + 7) >> 3;
@@ -287,8 +287,8 @@ IgsDownloadFromScreen(PixmapPtr pSrc, int x, int y, int w, int h,
 {
 	ScrnInfoPtr pScrn = xf86Screens[pSrc->drawable.pScreen->myNum];
 	IgsPtr fPtr = IGSPTR(pScrn);
-	char  *src        = fPtr->fbmem + exaGetPixmapOffset(pSrc);
-	int    src_pitch  = exaGetPixmapPitch(pSrc);
+	unsigned char *src = fPtr->fbmem + exaGetPixmapOffset(pSrc);
+	int src_pitch = exaGetPixmapPitch(pSrc);
 
 	int bpp    = pSrc->drawable.bitsPerPixel;
 	int cpp    = (bpp + 7) >> 3;
@@ -347,7 +347,9 @@ IgsInitAccel(ScreenPtr pScreen)
 	pExa->pixmapOffsetAlign = 4;
 	pExa->pixmapPitchAlign = 4;
 
-	pExa->flags = EXA_OFFSCREEN_PIXMAPS;
+	pExa->flags = EXA_OFFSCREEN_PIXMAPS |
+		      EXA_SUPPORTS_OFFSCREEN_OVERLAPS |
+		      EXA_MIXED_PIXMAPS;
 
 	pExa->maxX = 2048;
 	pExa->maxY = 2048;	
