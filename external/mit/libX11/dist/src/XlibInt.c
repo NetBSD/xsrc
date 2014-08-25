@@ -1499,7 +1499,9 @@ _XIOError (
     else
 	_XDefaultIOError(dpy);
     exit (1);
+#ifndef __NetBSD__
     return 0;
+#endif
 }
 
 
