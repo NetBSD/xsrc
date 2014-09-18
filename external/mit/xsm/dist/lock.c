@@ -117,7 +117,7 @@ GetLockId(const char *session_name)
     snprintf (lock_file, sizeof(lock_file), "%s/.XSMlock-%s",
 	      path, session_name);
 
-    if ((fp = fopen (lock_file, "r")) == NULL)
+    if ((fp = fopen (lock_file, "re")) == NULL)
     {
 	return (NULL);
     }

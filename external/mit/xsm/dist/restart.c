@@ -531,11 +531,11 @@ StartDefaultApps (void)
 	home = ".";
     snprintf (filename, sizeof(filename), "%s/.xsmstartup", home);
 
-    f = fopen (filename, "r");
+    f = fopen (filename, "re");
 
     if (!f)
     {
-	f = fopen (SYSTEM_INIT_FILE, "r");
+	f = fopen (SYSTEM_INIT_FILE, "re");
 	if (!f)
 	{
 	    printf ("Could not find default apps file.  Make sure you did\n");

@@ -154,25 +154,25 @@ SetAuthentication(int count, IceListenObj *listenObjs,
     if ((addAuthFile = unique_filename (path, ".xsm")) == NULL)
 	goto bad;
 
-    if (!(addfp = fopen (addAuthFile, "w")))
+    if (!(addfp = fopen (addAuthFile, "we")))
 	goto bad;
 
     if ((remAuthFile = unique_filename (path, ".xsm")) == NULL)
 	goto bad;
 
-    if (!(removefp = fopen (remAuthFile, "w")))
+    if (!(removefp = fopen (remAuthFile, "we")))
 	goto bad;
 #else
     if ((addAuthFile = unique_filename (path, ".xsm", &fd)) == NULL)
 	goto bad;
     
-    if (!(addfp = fdopen(fd, "wb"))) 
+    if (!(addfp = fdopen(fd, "wbe"))) 
 	goto bad;
 
     if ((remAuthFile = unique_filename (path, ".xsm", &fd)) == NULL)
 	goto bad;
     
-    if (!(removefp = fdopen(fd, "wb"))) 
+    if (!(removefp = fdopen(fd, "wbe"))) 
 	goto bad;
 #endif
 

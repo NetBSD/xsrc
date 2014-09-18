@@ -65,7 +65,7 @@ ReadSave(const char *session_name, char **sm_id)
     int			state, i;
     int			version_number;
 
-    f = fopen(session_save_file, "r");
+    f = fopen(session_save_file, "re");
     if(!f) {
 	if (verbose)
 	    printf("No session save file.\n");
@@ -306,7 +306,7 @@ WriteSave(const char *sm_id)
     char *p, *c;
     int count;
 
-    f = fopen (session_save_file, "w");
+    f = fopen (session_save_file, "we");
 
     if (!f)
     {
@@ -427,7 +427,7 @@ DeleteSession(const char *session_name)
 
     snprintf (filename, sizeof(filename), "%s/.XSM-%s", dir, session_name);
 
-    f = fopen(filename, "r");
+    f = fopen(filename, "re");
     if(!f) {
 	return (0);
     }
