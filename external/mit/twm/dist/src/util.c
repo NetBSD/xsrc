@@ -589,17 +589,13 @@ GetFont(MyFont *font)
     int ascent;
     int descent;
     int fnum;
-    char *basename2;
 
     if (use_fontset) {
 	if (font->fontset != NULL){
 	    XFreeFontSet(dpy, font->fontset);
 	}
 
-	basename2 = malloc(strlen(font->name) + 3);
-	if (basename2) sprintf(basename2, "%s,*", font->name);
-	else basename2 = font->name;
-	if( (font->fontset = XCreateFontSet(dpy, basename2,
+	if( (font->fontset = XCreateFontSet(dpy, font->name,
 					    &missing_charset_list_return,
 					    &missing_charset_count_return,
 					    &def_string_return)) == NULL) {
@@ -607,7 +603,6 @@ GetFont(MyFont *font)
 			 ProgramName, font->name);
 	    exit(1);
 	}
-	if (basename2 != font->name) free(basename2);
 	for(i=0; i<missing_charset_count_return; i++){
 	    printf("%s: warning: font for charset %s is lacking.\n",
 		   ProgramName, missing_charset_list_return[i]);
