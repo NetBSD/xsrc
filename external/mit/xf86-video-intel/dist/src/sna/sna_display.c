@@ -438,14 +438,22 @@ static void *gem_mmap(int fd, int handle, int size)
 {
 	struct drm_i915_gem_mmap_gtt mmap_arg;
 	void *ptr;
+#ifdef __NetBSD__
+	int err;
+#endif
 
 	VG_CLEAR(mmap_arg);
 	mmap_arg.handle = handle;
 	if (drmIoctl(fd, DRM_IOCTL_I915_GEM_MMAP_GTT, &mmap_arg))
 		return NULL;
 
+#ifdef __NetBSD__
+	err = -drmMap(fd, mmap_arg.offset, size, &ptr);
+	if (err)
+#else
 	ptr = mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, mmap_arg.offset);
 	if (ptr == MAP_FAILED)
+#endif
 		return NULL;
 
 	return ptr;
