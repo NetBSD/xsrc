@@ -83,7 +83,7 @@ void backlight_init(struct backlight *b)
 	b->max = -1;
 }
 
-#ifdef __OpenBSD__
+#if defined(__OpenBSD__) || defined(__NetBSD__)
 
 #include <dev/wscons/wsconsio.h>
 #include <xf86Priv.h>
