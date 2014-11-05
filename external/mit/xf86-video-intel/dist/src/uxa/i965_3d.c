@@ -30,7 +30,6 @@
 #include "intel.h"
 #include "i965_reg.h"
 #include "brw_defines.h"
-#include "brw_structs.h"
 
 void
 gen6_upload_invariant_states(intel_screen_private *intel)

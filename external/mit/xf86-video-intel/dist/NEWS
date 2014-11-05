@@ -1,3 +1,574 @@
+Snapshot 2.99.916 (2014-09-08)
+==============================
+Quick update for MST in UXA - we need to hook up the RandR outputs for
+dynamicaly added connectors.
+
+
+Snapshot 2.99.915 (2014-09-08)
+==============================
+A significant change to UXA to enable MST and to keep it working on recent
+kernels needs some soaking before a major release, and the usual
+plethora of bugfixes. One other feature is the support for hardware
+rotations on very recent kernels.
+
+ * Handle rotated scanouts that are all clear correctly. The region to
+   update was not being computed correctly, overdrawing the wrong CRTC.
+   https://bugs.freedesktop.org/show_bug.cgi?id=81820
+
+ * Reset cursor images after rotation and size changes
+   https://bugs.freedesktop.org/show_bug.cgi?id=81886
+   https://bugs.freedesktop.org/show_bug.cgi?id=82273
+   https://bugs.freedesktop.org/show_bug.cgi?id=82337
+
+ * Handle stale DRI2 buffers and Client errors more gracefully
+
+ * Fallback if we fail to render a glyph onto a too-large surface, e.g.
+   direct rendering of glyphs onto extended desktops with gen2/gen3.
+   https://bugs.archlinux.org/task/40949
+
+ * Further work to enable tiled rendering onto large surfaces in
+   severely aperture and memory constrained devices (e.g. gen2/gen3)
+
+ * Honour the Primary option from xorg.conf and mark that as the RandR
+   primary.
+   https://bugs.freedesktop.org/show_bug.cgi?id=82193
+   https://bugs.freedesktop.org/show_bug.cgi?id=82205
+
+ * Fix another Client-Window DRI2 close race
+   https://bugs.freedesktop.org/show_bug.cgi?id=82979
+
+ * Fix incorrect discarding of GPU damage when copying over the TearFree
+   scanout - which caused a flicker in rapidly updated elements (like
+   simple video panes).
+   https://bugs.freedesktop.org/show_bug.cgi?id=81973
+
+
+Snapshot 2.99.914 (2014-07-23)
+==============================
+And a brown paper bag to hide the rebuilding from the tarball with
+'autoreconf -fi' error that arose from not distributing the libobj/
+directory.
+
+
+Snapshot 2.99.913 (2014-07-23)
+==============================
+This should be it... A few fixes from testing the new code, we should be
+ready for the final release. However, we do have one standout feature in
+this snapshot, we now officially recognise HD Graphics 5300/5500/5600,
+Iris Graphics 6100 and Iris Pro Graphics 6200/P6300 (formerly known as
+Broadwell).
+
+ * Check the window actually covers the CRTC before doing a single CRTC flip,
+   and then restore the right framebuffer after completing CRTC flips.
+   Otherwise we would detect an error and disable an output under TearFree
+   Regression in 2.99.912
+   https://bugs.freedesktop.org/show_bug.cgi?id=80191
+
+ * Fix framebuffer creation on kernels older than 3.11
+   Regression in 2.99.912
+
+ * Check that the damage still exists after implicit reduction
+   Regression in 2.99.912
+   https://bugs.freedesktop.org/show_bug.cgi?id=77436
+
+ * Fix direction flags for fallback composited CopyAreas which
+   caused scrolling corruption in a few configurations
+   Regression from 2.20.0
+   https://bugs.freedesktop.org/show_bug.cgi?id=79843
+
+ * Do not throw away damage if there is no redundant copy
+   https://bugs.freedesktop.org/show_bug.cgi?id=79992
+
+ * Check clipping on PolyRect before discarding the clipped damage
+   Regression from 2.99.903
+   https://bugs.freedesktop.org/show_bug.cgi?id=79992
+
+ * Fix hints for GLXPixmapa, as these are never swapped and so
+   miss invalidating the hints on SwapBuffers with the result
+   that they are often presumed blank
+   Regression in 2.99.912
+   https://bugs.freedesktop.org/show_bug.cgi?id=79999
+
+ * Fix incoherent choice of source bo when constructing 8x8 tiles,
+   incorrect pattern origin when extracting, and then fix the
+   alignment of colour patterns for BLT operations
+   https://bugs.freedesktop.org/show_bug.cgi?id=80033
+
+ * Disable blending with the render engine on snoopable buffers
+   https://bugs.freedesktop.org/show_bug.cgi?id=80253
+
+ * Restore throttling to prevent client lag under heavy GPU load
+   Regression from 2.21.10
+   https://bugs.freedesktop.org/show_bug.cgi?id=77436
+
+ * Use ClientGone for notifications on shared DRI2 windows to prevent
+   rare crashes due to use-after-free of the swap requests
+   https://bugs.freedesktop.org/show_bug.cgi?id=80157
+
+ * Ensure the mmaped CPU bo is idle before migrating damage
+   https://bugs.freedesktop.org/show_bug.cgi?id=80560
+
+ * Fix incorrect clipping by the render engine for large DRI2 windows
+
+ * Ensure that the aperture tiling fallbacks are bounded
+
+ * Validate parameter to xf86-video-intel-backlight-helper more carefully
+   (CVE-2014-4910)
+
+ * Fix slaved scanouts for reverse optimus, though rotated slaves will
+   require further patches to Xorg.
+   https://bugs.freedesktop.org/show_bug.cgi?id=81383
+
+ * Fix build without Composite extension.
+
+ * Fix build without gettline().
+
+ * UXA: Allocate and resize frontbuffer consistently to pass sanity checks
+   https://bugs.freedesktop.org/show_bug.cgi?id=80088
+
+ * UXA: Report cached backlight value when the output is off (like sna)
+   https://bugzilla.redhat.com/show_bug.cgi?id=1032978
+
+ * UXA: Mark outputs as off before the kernel does (like sna)
+   This will prevent the internal panel from starting up blank in some
+   multi-monitor configurations
+   https://bugzilla.redhat.com/show_bug.cgi?id=1103806
+
+Note that the DRI2 exchange mechanism introduced in 2.99.912 exposes bugs
+in some compositors, at least kwin and comptom, which discard DRI2 buffer
+invalidates rather than resourcing their texture. For example,
+https://bugs.kde.org/show_bug.cgi?id=336589
+
+Note that the improved triple buffering introduced in DRI2 requires a patch
+to Xorg (now released upstream) to prevent crashes with DRI_PRIME.
+https://bugs.freedesktop.org/show_bug.cgi?id=80001
+
+Note that DRI3/Present require tracking the relevant development trees for
+mesa and the xserver as they are very much still under early testing. Also
+be aware that Mesa provides no support for explicit fencing so Damage
+tracking between compositors and clients is unserialised.
+
+
+Snapshot 2.99.912 (2014-06-10)
+==============================
+A final round of features. We have everything from support for variable
+cursor sizes, support for the DRI3 and Present extensions, improved DRI2
+support, support for Xserver 1.16, userptr from kernel 3.16, and
+precursory support for DP multistream transport,
+
+ * Avoid discarding dirty pixels when promoting a migration to cover the
+   whole pixmap.
+   Regression in 2.99.911
+   https://bugs.freedesktop.org/show_bug.cgi?id=77063
+   https://bugs.freedesktop.org/show_bug.cgi?id=77178
+
+ * Avoid overextending degenerate lines (and consequentially accessing
+   pixels outside of our damaged area).
+   https://bugs.freedesktop.org/show_bug.cgi?id=77074
+
+ * Fix subpixel glyph rendering on gen2 devices (830-865 chipsets)
+   Regression in 2.99.911
+   https://bugs.freedesktop.org/show_bug.cgi?id=77201
+
+ * Share the global pixman glyph cache between ZaphodHeads
+   https://bugs.freedesktop.org/show_bug.cgi?id=54707
+
+ * Light up all connected outputs, even if their status is unknown, on
+   takeover from fbcon. This prevents loss of display after a resume
+   on recent kernels, for example.
+   https://bugs.freedesktop.org/show_bug.cgi?id=77768
+
+ * Show the video overlay (when supported by the hardware) across all
+   outputs.
+   https://bugs.freedesktop.org/show_bug.cgi?id=77802
+
+ * Do not discard damage when performing "BLT" spans inplace with the CPU.
+   Regression from 2.20.10
+
+ * Avoid discarding IO buffers too early during their preparation for a
+   new batch
+   https://bugs.freedesktop.org/show_bug.cgi?id=79238
+
+ * Fix fallback handling for displaying large scaled framebuffers (that
+   are too large to be scaled by the GPU in a single pass)
+   https://bugs.freedesktop.org/show_bug.cgi?id=79320
+
+ * Listen to external modifications of backlight value and propagate
+   the notifications to RandR clients. This should make the GUI report
+   ACPI keypresses to change the backlight correctly.
+   https://bugs.freedesktop.org/show_bug.cgi?id=79699
+
+ * UXA: fix pageflips with 3 heads.
+
+ * UXA: do not report a BadMatch error for DRI2GetMsc - as clients are
+   often unprepared and die when they get the unexpected error.
+
+
+Snapshot 2.99.911 (2014-03-19)
+==============================
+Hans de Geode has been working on making the Xserver work without
+privileges under the supervision of systemd/logind. This necessitated a
+few new features for us: server fds (where we are passed which fd to use
+to talk to our device by the Xserver who may in turn receive it from
+logind or other host) and a small backlight helper so that we can continue
+to provide a RandR backlight property when running without root privileges.
+
+ * Flush when changing blend modes on Ironlake, or else single glyphs
+   are sometimes rendered incorrectly
+   Regression from 2.20.15
+   https://bugs.freedesktop.org/show_bug.cgi?id=74882
+
+ * Fix pixmap offsets for pixman fallbacks onto Composite redirected
+   windows
+   https://bugs.freedesktop.org/show_bug.cgi?id=73811
+
+ * Fix blending onto 8-bit destinations, typically used for generating
+   masks in complex Render operations, on gen2
+   https://bugs.freedesktop.org/show_bug.cgi?id=75818
+
+ * Handle failure to create DRI bo more carefully. For example on gen3,
+   the DDX supports pixmaps that are much, much larger than OpenGL can
+   use and do not support the tiling modes that we request for OpenGL.
+   https://bugs.launchpad.net/ubuntu/+source/xserver-xorg-video-intel/+bug/1289049
+
+ * Fix a bookkeeping bug with proxy buffers that are marked active but
+   not actually inserted into a request (so they end up permanently
+   active and confuse everybody).
+   https://bugs.launchpad.net/ubuntu/+source/xserver-xorg-video-intel/+bug/1289923
+
+ * Actually turn off displays with DPMS off for UXA.
+   Regression from 2.99.903, but requires
+
+   kernel commit c9976dcf55c8aaa7037427b239f15e5acfc01a3a
+   Author: Chris Wilson <chris@chris-wilson.co.uk>
+   Date:   Sun Sep 29 19:15:07 2013 +0100
+
+       drm/i915: Only apply DPMS to the encoder if enabled
+
+   instead for correct behaviour on Haswell.
+   https://code.google.com/p/chromium/issues/detail?id=341135
+
+
+Snapshot 2.99.910 (2014-02-10)
+==============================
+Another latent bug exposed by recent changes merit another snapshot for
+final testing.
+
+  * Only discard damage when overwriting the dirty CPU bo, instead
+    of discarding damage that will be shown!
+
+  * Reset operation state when switching between glyph caches.
+    https://bugs.freedesktop.org/show_bug.cgi?id=74494
+
+  * Fully reinitialise pixmaps allocated from the freed cache. Fixes
+    a potential issue (crash or misrendering) when using some compositors.
+    https://bugs.freedesktop.org/show_bug.cgi?id=74550
+
+  * Do not expose the TexturedVideo adaptor in UXA when it is disabled
+    either due to a hung GPU or explicitly disabled by the user.
+
+  * Restore the pipe stall when changing CC state on gen6, otherwise
+    the GPU may not flush intermediate results from all EU resulting
+    in render corruption (usually the occasional black box).
+    Regression from 2.99.906
+    https://bugs.freedesktop.org/show_bug.cgi?id=7237
+
+
+Snapshot 2.99.909 (2014-02-01)
+==============================
+Pass the brown paper bag. Ridiculously stupid bug in last minute coding.
+
+  * Add Xv support using glamor acceleration in addition to adaptors
+    provided by the UXA backend.
+
+  * Fix overeager discarding of CPU damage
+    Regression in 2.99.908 :(
+    https://bugs.freedesktop.org/show_bug.cgi?id=74327
+
+
+Snapshot 2.99.908 (2014-01-31)
+==============================
+A couple of regressions dashed the hopes that .907 was to be the final
+release candidate, so time to start the cycle again after applying a few
+more bugfixes.
+
+  * Fix invalid pageflipping of GLXPixmaps by UXA.
+    https://bugs.freedesktop.org/show_bug.cgi?id=73282
+
+  * Consistently treat DPMS Suspend/Standy as Off, otherwise we may
+    incorrectly restore the backlight in UXA.
+
+  * Fix disabling the backlight in UXA when querying the value whilst off
+    https://bugs.freedesktop.org/show_bug.cgi?id=73181.
+
+  * Invalidate between every operation if rendering into the source or mask.
+    Fixes regression in 2.99.907 on Ivybridge (seen in KDE)
+    https://bugs.freedesktop.org/show_bug.cgi?id=73208
+
+  * Check for available batch buffer state before restoring state on gen4,
+    otherwise we overwrite surface state with commands and cause a GPU hang.
+    https://bugs.freedesktop.org/show_bug.cgi?id=73348
+
+  * Prevent an invalid free by TearFree
+    https://bugs.freedesktop.org/show_bug.cgi?id=73469
+
+  * Fix confusion in TearFree when it tried to pageflip to a stale bo
+    https://bugs.freedesktop.org/show_bug.cgi?id=70905
+
+  * Initialise TearFree contents with the current frontbuffer upon creation,
+    otherwise old content may be visible for significant fractions of a
+    second after resume or DPMS on
+    https://bugs.freedesktop.org/show_bug.cgi?id=73842
+
+  * Nullify the old pointer into a CPU mmapping of the bo when promoting it
+    on the GPU. Eventually that old pointer becomes invalid and will cause
+    the Xserver to crash.
+    Fixes regression in 2.99.906
+    https://bugs.freedesktop.org/show_bug.cgi?id=73351
+
+  * Restore the serialNumber on the GC correctly after falling back to
+    software. This was seen to cause corruption with Wine.
+    https://bugs.freedesktop.org/show_bug.cgi?id=73856
+
+  * Do not ignore CPU damage on a pixmap unless the Composite operation
+    will completely overwrite it. This was observed in xfce4.
+    https://bugs.freedesktop.org/show_bug.cgi?id=69528
+
+  * Skip fake outputs during initial probe as they can cause a NULL pointer
+    dereference.
+    https://bugs.freedesktop.org/show_bug.cgi?id=73981
+
+  * Fix rendering of dashed zero-width lines onto 24bit buffers
+    https://bugzilla.redhat.com/show_bug.cgi?id=1059152
+
+  * Cap the freed Pixmap cache and reuse it more often
+    Fixes a regression in 2.99.907 that caused the memory used by X to
+    grow until it was cleaned up during server regreneration
+    https://bugs.launchpad.net/ubuntu/+source/xserver-xorg-video-intel/+bug/1272338
+
+
+Snapshot 2.99.907 (2013-12-30)
+==============================
+The highlight here is that things seem to be quietening down on the bug
+reporting front. All is not quiet as you will see below, and maybe it is
+just the holiday season that is approaching*, but there has been a
+remarkable falloff in bug reports. Lets hope this trend holds and we can
+make a stable release shortly!
+
+* This was intended to be sent a couple of weeks ago and the holiday season
+has been very quiet....
+
+Oh, and acceleration support for Intel's next generation of
+integrated processor graphics has landed, codenamed Broadwell.
+
+ * Fix potential X server infinite recursion (crash) from a gen2 bug fix
+   Regression in 2.99.906
+   https://bugs.freedesktop.org/show_bug.cgi?id=71605
+
+ * Workaround a missing pipeline flush within Ivybridge, that would
+   leave black rectangles randomly over the output
+   https://bugs.freedesktop.org/show_bug.cgi?id=68410
+
+ * Fix tiled fills. gen2-3 and gen4+ had two different bugs that
+   both broke rendering with small 8x8 patterns in some circumstances
+   https://bugs.freedesktop.org/show_bug.cgi?id=71260
+
+ * Fix reads from a cropped video image using a packed pixel format.
+
+ * Another clear the clear hint after DRI2 SwapBuffers, like the bug fixed
+   in 2.99.903. Failure to clear the hint would cause read backs of the
+   frontbuffer (Xvnc) to be blank.
+   https://bugs.freedesktop.org/show_bug.cgi?id=72194
+
+ * Disable VSync on Baytrail
+   https://bugs.freedesktop.org/show_bug.cgi?id=69869
+
+ * Handle partial uploads with TearFree correctly
+   https://bugs.freedesktop.org/show_bug.cgi?id=72343
+   https://bugs.freedesktop.org/show_bug.cgi?id=72430
+
+ * Avoid recusing through DRI event handlers whilst processing TearFree,
+   leading to a double free (and memory corruption)
+   https://bugs.freedesktop.org/show_bug.cgi?id=72690
+
+ * Hide the gen4 render corruption by crippling the GPU
+   https://bugs.freedesktop.org/show_bug.cgi?id=55500
+
+
+Snapshot 2.99.906 (2013-11-13)
+==============================
+Several stability fixes required after the recent tweaking of the core
+mechanics to handle the updated TearFree and attempting to make static
+analyzers happy.
+
+ * Fix damage handling when rendering to a partially damaged GPU surface.
+   Regression in 2.99.905
+   https://bugs.freedesktop.org/show_bug.cgi?id=70527
+
+ * Use asprintf() instead of sprintf()
+   Regression in 2.99.905
+   https://bugs.freedesktop.org/show_bug.cgi?id=70835
+
+ * Improve accounting for fence overallocation on older gen2/3, and
+   improve the tiling mechanism to fit into the same aperture constraints
+   https://bugs.freedesktop.org/show_bug.cgi?id=70924
+
+ * Add an extra GPU flush on Sandybridge to fix some rare font corruption
+
+ * Rasterise lines through all clip boxes
+   https://bugs.freedesktop.org/show_bug.cgi?id=70802
+
+ * Fix regression from stricter handling of failures to move a GC to the GPU
+   Regression in 2.99.905
+   https://bugs.freedesktop.org/show_bug.cgi?id=71415
+
+ * Fix various fail along the memcpy_xor paths, including inadequate error
+   handling and integer overflow
+   https://bugs.freedesktop.org/show_bug.cgi?id=70527
+
+ * Fix outside-of-target stipple uploads
+   https://bugs.launchpad.net/bugs/1247785
+
+ * Fix clip detection for long glyphs
+   Incomplete bug fix (causing a regression) in 2.99.905
+   https://bugs.freedesktop.org/show_bug.cgi?id=70527
+
+ * Fix VSync for the render engine (Xv) on Haswell
+   https://bugs.freedesktop.org/show_bug.cgi?id=70527
+
+
+Snapshot 2.99.905 (2013-10-23)
+==============================
+The highlight for this snapshot is the extension of TearFree to support
+transformed outputs, along with some polishing to eliminate its impact
+upon input and output latency. As always, thanks to everyone who have
+been testing, reporting bugs and helping to improve the stability before
+release.
+
+ * Prevent a crash when starting with a user specified mode or position
+
+ * Prevent some crashes in UXA after allocation failure
+
+ * Stop marking the user's preferred backlight value as 0 if the
+   backlight property is queried whilst the connector is disabled
+   https://bugs.freedesktop.org/show_bug.cgi?id=70406
+
+ * Pad GETCONNECTOR ioctl for compatability between 32/64-bit userspace
+   and kernel
+
+ * Handle long glyph runs correctly
+   https://bugs.freedesktop.org/show_bug.cgi?id=70541
+
+ * Fix clipping of stippled rectangles against clip regions
+   https://bugs.freedesktop.org/show_bug.cgi?id=67865
+
+ * Support TearFree rendering of rotated outputs
+   https://bugs.freedesktop.org/show_bug.cgi?id=22969
+
+
+Snapshot 2.99.904 (2013-10-09)
+==============================
+There is one more feature planned to be completed for 3.0, so time for a
+snapshot beforehand to push out the bug fixes from the last week.
+
+ * Fix video output using sprites when changing the image size
+
+ * Apply more restrictive tile constaints for 915g class devices
+   https://bugs.launchpad.net/ubuntu/+source/xserver-xorg-video-intel/+bug/1232546
+
+ * Ensure all overlapping rectangles are drawn for XRenderFillRectangles
+   https://bugs.freedesktop.org/show_bug.cgi?id=66313
+
+ * Fix trapezoid clipping against the left-edge
+   https://bugs.freedesktop.org/show_bug.cgi?id=69469
+
+ * Prevent discarding active upload buffers, causing glitches in chromium
+   https://bugs.freedesktop.org/show_bug.cgi?id=66990
+
+ * Prevent specifying a negative timeout to select if the BlockHandler
+   takes too long to update the display
+
+ * Promote the Ironlake pipecontrol to be a full pipeline flush to
+   prevent render cache corruption
+   https://bugs.freedesktop.org/show_bug.cgi?id=51422
+
+ * Never pass an invalid trapezoid to pixman
+   https://bugs.launchpad.net/ubuntu/+source/xorg-server/+bug/1197921
+
+ * Prevent out-of-bounds access by overassigning work amongst threads
+   https://bugs.freedesktop.org/show_bug.cgi?id=70204
+
+ * Make sure the current mode is always listed amongst the output modes
+   https://bugs.freedesktop.org/show_bug.cgi?id=70132
+
+ * Build fixes for 1.14.99.2
+
+
+Snapshot 2.99.903 (2013-09-28)
+==============================
+Lots more stabilization work, not yet peaceful enough to christen 3.0. We
+have everything ranging from build fixes for systems like Suse Linux
+Enterprise Desktop that like to backport hardware enablement to ancient
+packages, to fixes for hardware enabling, and some more performance tuning.
+
+ * Fix VSync on Haswell.
+   https://bugs.freedesktop.org/show_bug.cgi?id=69119
+
+ * Disable Y-tiling on gen4 - it too frequently leads to instability.
+   https://bugs.launchpad.net/ubuntu/+source/xserver-xorg-video-intel/+bug/1222203
+
+ * Disable same EDID detection based on property id - the kernel likes
+   to reuse ids leading to a failure to detect the right modes on a monitor
+   change.
+
+ * Avoid issuing multiple DPMS requests to the same encoder (alised to
+   multiple connectors) to avoid upsetting Haswell and leaving the
+   screens blank.
+
+ * Honour the user preferrence for the initial mode, even if they are
+   being silly
+   https://bugzilla.novell.com/show_bug.cgi?id=841696
+
+ * Clear the clear hint when apply DRI updates - to prevent some
+   screenshots from GL windows being left blank.
+   https://bugs.freedesktop.org/show_bug.cgi?id=69730
+
+ * Prevent a NULL dereference from trying to undo an non-existent buffer
+   https://bugs.launchpad.net/ubuntu/+source/xserver-xorg-video-intel/+bug/1228677
+
+ * Handle out-of-memory conditions far more gracefully. If the system is
+   hard against the memory wall, then the kernel will start issuing
+   SIGBUS even for CPU mmaps. Untrapped these will cause X to die.
+   https://bugs.freedesktop.org/show_bug.cgi?id=67889
+
+
+Snapshot 2.99.902 (2013-09-07)
+==============================
+We do not condone or support Canonical in the course of action they have
+chosen, and will not carry XMir patches upstream.
+-The Management
+
+Snapshot 2.99.901 (2013-09-04)
+==============================
+What's this? A pre-release snapshot of an upcoming 3.0 major release?
+What could be the big new feature about to land? SNA by default!
+Not only that, we also have a preview of the XMir integration patches.
+
+Whilst we consider the SNA acceleration method to be ready to take over
+from UXA (the current acceleration method), it still remains possible to
+switch over to the old method with the following xorg.conf snippet:
+  Section "Device"
+    Identifier "Device0"
+    Driver "intel"
+    Option "AccelMethod" "UXA"
+  EndSection
+
+The promise of SNA is that it improves the user experience by providing a
+faster, more fluid, desktop, that is both more power efficient and less
+prone to crashes than UXA. If it still fails to meet your expections,
+please file bugs!
+
+
 Release 2.21.15 (2013-08-21)
 ============================
 Some build fixes for the BSDs and alternate compiler, and conflicting

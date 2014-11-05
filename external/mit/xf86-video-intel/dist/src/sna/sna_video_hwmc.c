@@ -81,12 +81,14 @@ static int create_context(XvPortPtr port, XvMCContextPtr ctx,
 		return BadAlloc;
 
 	if (sna->kgem.gen >= 040) {
+		int devid = intel_get_device_id(sna->scrn);
+
 		if (sna->kgem.gen >= 045)
 			priv->type = XVMC_I965_MPEG2_VLD;
 		else
 			priv->type = XVMC_I965_MPEG2_MC;
 		priv->i965.is_g4x = sna->kgem.gen == 045;
-		priv->i965.is_965_q = sna->PciInfo->device_id == PCI_CHIP_I965_Q;
+		priv->i965.is_965_q = devid == PCI_CHIP_I965_Q;
 		priv->i965.is_igdng = sna->kgem.gen == 050;
 	} else
 		priv->type = XVMC_I915_MPEG2_MC;
@@ -199,9 +201,14 @@ static XvMCSurfaceInfoPtr surface_info_vld[] = {
 void sna_video_xvmc_setup(struct sna *sna, ScreenPtr screen)
 {
 	XvMCAdaptorRec *adaptors;
+	struct pci_device *pci;
 	const char *name;
 	char bus[64];
 	int i;
+
+	pci = xf86GetPciInfoForEntity(sna->pEnt->index);
+	if (pci == NULL)
+		return;
 
 	if (!sna->xv.num_adaptors)
 		return;
@@ -253,8 +260,7 @@ void sna_video_xvmc_setup(struct sna *sna, ScreenPtr screen)
 	}
 
 	sprintf(bus, "pci:%04x:%02x:%02x.%d",
-		sna->PciInfo->domain,
-		sna->PciInfo->bus, sna->PciInfo->dev, sna->PciInfo->func);
+		pci->domain, pci->bus, pci->dev, pci->func);
 
 	xf86XvMCRegisterDRInfo(screen, (char *)SNA_XVMC_LIBNAME, bus,
 			       SNA_XVMC_MAJOR, SNA_XVMC_MINOR,

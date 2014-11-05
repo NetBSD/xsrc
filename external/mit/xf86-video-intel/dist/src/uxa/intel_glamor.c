@@ -31,6 +31,7 @@
 #include "config.h"
 #endif
 
+#include "xorg-server.h"
 #include <xf86.h>
 #define GLAMOR_FOR_XORG  1
 #include <glamor.h>
@@ -49,6 +50,17 @@ intel_glamor_exchange_buffers(struct intel_screen_private *intel,
 	if (!(intel->uxa_flags & UXA_USE_GLAMOR))
 		return;
 	glamor_egl_exchange_buffers(src, dst);
+}
+
+XF86VideoAdaptorPtr intel_glamor_xv_init(ScreenPtr screen, int num_ports)
+{
+	ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
+	intel_screen_private *intel = intel_get_screen_private(scrn);
+
+	if ((intel->uxa_flags & UXA_USE_GLAMOR) == 0)
+		return NULL;
+
+	return glamor_xv_init(screen, num_ports);
 }
 
 Bool
@@ -79,7 +91,7 @@ intel_glamor_enabled(intel_screen_private *intel)
 
 	s = xf86GetOptValString(intel->Options, OPTION_ACCEL_METHOD);
 	if (s == NULL)
-		return FALSE;
+		return IS_DEFAULT_ACCEL_METHOD(GLAMOR);
 
 	return strcasecmp(s, "glamor") == 0;
 }
@@ -94,12 +106,14 @@ intel_glamor_pre_init(ScrnInfoPtr scrn)
 	if (!intel_glamor_enabled(intel))
 		return TRUE;
 
+#if XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1,15,0,0,0)
 	if (!xf86LoaderCheckSymbol("glamor_egl_init")) {
 		xf86DrvMsg(scrn->scrnIndex,  X_ERROR,
 			   "glamor requires Load \"glamoregl\" in "
 			   "Section \"Module\", disabling.\n");
 		return TRUE;
 	}
+#endif
 
 	/* Load glamor module */
 	if ((glamor_module = xf86LoadSubModule(scrn, GLAMOR_EGL_MODULE_NAME))) {
@@ -204,7 +218,13 @@ intel_glamor_init(ScreenPtr screen)
 	if ((intel->uxa_flags & UXA_GLAMOR_EGL_INITIALIZED) == 0)
 		goto fail;
 
-	if (!glamor_init(screen, GLAMOR_INVERTED_Y_AXIS | GLAMOR_USE_EGL_SCREEN)) {
+	if (!glamor_init(screen,
+#if defined(GLAMOR_NO_DRI3)
+			 /* Not doing DRI3 yet, since Present support hasn't landed. */
+			 GLAMOR_NO_DRI3 |
+#endif
+			 GLAMOR_INVERTED_Y_AXIS |
+			 GLAMOR_USE_EGL_SCREEN)) {
 		xf86DrvMsg(scrn->scrnIndex, X_ERROR,
 			   "Failed to initialize glamor.\n");
 		goto fail;
@@ -227,7 +247,7 @@ intel_glamor_init(ScreenPtr screen)
 
   fail:
 	xf86DrvMsg(scrn->scrnIndex, X_INFO,
-		   "Use standard UXA acceleration.\n");
+		   "Use legacy UXA acceleration.\n");
 	return FALSE;
 }
 

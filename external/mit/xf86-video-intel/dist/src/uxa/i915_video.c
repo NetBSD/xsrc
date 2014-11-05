@@ -29,6 +29,7 @@
 #include "config.h"
 #endif
 
+#include "xorg-server.h"
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "xf86xv.h"
@@ -76,6 +77,11 @@ I915DisplayVideoTextured(ScrnInfoPtr scrn,
 					      CREATE_PIXMAP_USAGE_SCRATCH);
 		if (target == NULL)
 			return;
+
+		if (intel_get_pixmap_bo(target) == NULL) {
+			screen->DestroyPixmap(target);
+			return;
+		}
 
 		pix_xoff = -dxo;
 		pix_yoff = -dyo;

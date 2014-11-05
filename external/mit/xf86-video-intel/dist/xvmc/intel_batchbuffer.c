@@ -62,6 +62,15 @@ static void i965_end_batch(void)
 	xvmc_driver->batch.ptr += 4;
 }
 
+static void reset_batch(void)
+{
+	dri_bo *bo = xvmc_driver->batch.buf;
+
+	xvmc_driver->batch.ptr = xvmc_driver->batch.init_ptr = bo->virtual;
+	xvmc_driver->batch.size = bo->size;
+	xvmc_driver->batch.space = bo->size - 8;
+}
+
 Bool intelInitBatchBuffer(void)
 {
 	if ((xvmc_driver->batch.buf =
@@ -71,59 +80,50 @@ Bool intelInitBatchBuffer(void)
 		return False;
 	}
 
-	drm_intel_gem_bo_map_gtt(xvmc_driver->batch.buf);
+	if (drm_intel_gem_bo_map_gtt(xvmc_driver->batch.buf)) {
+		drm_intel_bo_unreference(xvmc_driver->batch.buf);
+		return False;
+	}
 
-	xvmc_driver->batch.init_ptr = xvmc_driver->batch.buf->virtual;
-	xvmc_driver->batch.size = BATCH_SIZE;
-	xvmc_driver->batch.space = BATCH_SIZE;
-	xvmc_driver->batch.ptr = xvmc_driver->batch.init_ptr;
+	reset_batch();
 	return True;
 }
 
 void intelFiniBatchBuffer(void)
 {
-	drm_intel_gem_bo_unmap_gtt(xvmc_driver->batch.buf);
+	if (xvmc_driver->batch.buf == NULL)
+		return;
 
 	drm_intel_bo_unreference(xvmc_driver->batch.buf);
 }
 
-void intelFlushBatch(Bool refill)
+void intelFlushBatch(void)
 {
-	i965_end_batch();
+	dri_bo *bo;
 
-	drm_intel_gem_bo_unmap_gtt(xvmc_driver->batch.buf);
+	i965_end_batch();
 
 	drm_intel_bo_exec(xvmc_driver->batch.buf,
 			  xvmc_driver->batch.ptr - xvmc_driver->batch.init_ptr,
 			  0, 0, 0);
 
-	drm_intel_bo_unreference(xvmc_driver->batch.buf);
-	if ((xvmc_driver->batch.buf =
-	     drm_intel_bo_alloc(xvmc_driver->bufmgr,
-				"batch buffer", BATCH_SIZE, 0x1000)) == NULL) {
-		fprintf(stderr, "unable to alloc batch buffer\n");
+	bo = drm_intel_bo_alloc(xvmc_driver->bufmgr,
+				"batch buffer", BATCH_SIZE, 0x1000);
+	if (bo != NULL && drm_intel_gem_bo_map_gtt(bo) == 0) {
+		drm_intel_bo_unreference(xvmc_driver->batch.buf);
+		xvmc_driver->batch.buf = bo;
+	} else {
+		if (bo != NULL)
+			drm_intel_bo_unreference(bo);
+		drm_intel_gem_bo_map_gtt(xvmc_driver->batch.buf);
 	}
 
-	drm_intel_gem_bo_map_gtt(xvmc_driver->batch.buf);
-
-	xvmc_driver->batch.init_ptr = xvmc_driver->batch.buf->virtual;
-	xvmc_driver->batch.size = BATCH_SIZE;
-	xvmc_driver->batch.space = BATCH_SIZE;
-	xvmc_driver->batch.ptr = xvmc_driver->batch.init_ptr;
-}
-
-void intelBatchbufferRequireSpace(int size)
-{
-	assert(xvmc_driver->batch.ptr - xvmc_driver->batch.init_ptr + size <
-	       xvmc_driver->batch.size - 8);
-	if (xvmc_driver->batch.ptr - xvmc_driver->batch.init_ptr + size
-	    >= xvmc_driver->batch.size - 8)
-		intelFlushBatch(1);
+	reset_batch();
 }
 
 void intelBatchbufferData(const void *data, unsigned bytes, unsigned flags)
 {
-	intelBatchbufferRequireSpace(bytes);
+	assert(bytes <= xvmc_driver->batch.space);
 	memcpy(xvmc_driver->batch.ptr, data, bytes);
 	xvmc_driver->batch.ptr += bytes;
 	xvmc_driver->batch.space -= bytes;

@@ -39,9 +39,12 @@
 #include <pixman.h>
 
 #if HAS_DEBUG_FULL
-#define DBG(x) ErrorF x
+void LogF(const char *f, ...);
+#define DBG(x) LogF x
+#define ERR(x) ErrorF x
 #else
 #define DBG(x)
+#define ERR(x)
 #endif
 
 #include "sfb.h"

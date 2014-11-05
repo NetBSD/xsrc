@@ -11,8 +11,6 @@ extern int VERBOSE;
 #define BEGIN_BATCH(n)                                                  \
     do {                                                                \
 	assert(xvmc_driver->batch.space >= (n) *4);			\
-        if (xvmc_driver->batch.space < (n)*4)                           \
-            intelFlushBatch(TRUE);                            		\
         batch_ptr = xvmc_driver->batch.ptr;                             \
     } while (0)
 
@@ -46,7 +44,7 @@ extern int VERBOSE;
         xvmc_driver->batch.ptr = batch_ptr;                              \
     } while(0)
 
-extern void intelFlushBatch(Bool);
+extern void intelFlushBatch(void);
 extern void intelBatchbufferData(const void *, unsigned, unsigned);
 extern Bool intelInitBatchBuffer(void);
 extern void intelFiniBatchBuffer(void);

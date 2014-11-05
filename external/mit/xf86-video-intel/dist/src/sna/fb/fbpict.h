@@ -28,6 +28,7 @@
 #include "config.h"
 #endif
 
+#include <xorg-server.h>
 #include <picturestr.h>
 
 #include "sfb.h"

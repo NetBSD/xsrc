@@ -103,21 +103,6 @@ unsigned int mb_bytes_420[] = {
 	768			/* 111111 */
 };
 
-void LOCK_HARDWARE(drm_context_t ctx)
-{
-	PPTHREAD_MUTEX_LOCK();
-	assert(!xvmc_driver->locked);
-
-	xvmc_driver->locked = 1;
-}
-
-void UNLOCK_HARDWARE(drm_context_t ctx)
-{
-	xvmc_driver->locked = 0;
-
-	PPTHREAD_MUTEX_UNLOCK();
-}
-
 static int
 dri2_connect(Display *display)
 {
@@ -313,6 +298,16 @@ _X_EXPORT Status XvMCCreateContext(Display * display, XvPortID port,
 	}
 	drm_intel_bufmgr_gem_enable_reuse(xvmc_driver->bufmgr);
 
+	if (!intelInitBatchBuffer()) {
+		XFree(priv_data);
+		context->privData = NULL;
+
+		dri_bufmgr_destroy(xvmc_driver->bufmgr);
+		xvmc_driver = NULL;
+
+		return BadAlloc;
+	}
+
 	/* call driver hook.
 	 * driver hook should free priv_data after return if success.*/
 	ret =
@@ -320,14 +315,24 @@ _X_EXPORT Status XvMCCreateContext(Display * display, XvPortID port,
 					   priv_data);
 	if (ret) {
 		XVMC_ERR("driver create context failed\n");
+		intelFiniBatchBuffer();
+
 		XFree(priv_data);
 		context->privData = NULL;
+
+		dri_bufmgr_destroy(xvmc_driver->bufmgr);
 		xvmc_driver = NULL;
 		return ret;
 	}
 
+	sigfillset(&xvmc_driver->sa_mask);
+	sigdelset(&xvmc_driver->sa_mask, SIGFPE);
+	sigdelset(&xvmc_driver->sa_mask, SIGILL);
+	sigdelset(&xvmc_driver->sa_mask, SIGSEGV);
+	sigdelset(&xvmc_driver->sa_mask, SIGBUS);
+	sigdelset(&xvmc_driver->sa_mask, SIGKILL);
 	pthread_mutex_init(&xvmc_driver->ctxmutex, NULL);
-	intelInitBatchBuffer();
+
 	intel_xvmc_dump_open();
 
 	return Success;
@@ -408,21 +413,18 @@ _X_EXPORT Status XvMCCreateSurface(Display * display, XvMCContext * context,
 
 	surface->privData = calloc(1, sizeof(struct intel_xvmc_surface));
 
-	if (!(intel_surf = surface->privData)) {
-		PPTHREAD_MUTEX_UNLOCK();
-		return BadAlloc;
-	}
+	if (!(intel_surf = surface->privData))
+		goto out_xvmc;
 
 	intel_surf->bo = drm_intel_bo_alloc(xvmc_driver->bufmgr,
 					      "surface",
 					      intel_ctx->surface_bo_size,
 					      GTT_PAGE_SIZE);
-	if (!intel_surf->bo) {
-		free(intel_surf);
-		return BadAlloc;
-	}
+	if (!intel_surf->bo)
+		goto out_surf;
 
-	drm_intel_bo_disable_reuse(intel_surf->bo);
+	if (drm_intel_bo_flink(intel_surf->bo, &intel_surf->gem_handle))
+		goto out_bo;
 
 	intel_surf = surface->privData;
 	intel_surf->context = context;
@@ -433,12 +435,18 @@ _X_EXPORT Status XvMCCreateSurface(Display * display, XvMCContext * context,
 					  surface->width, surface->height);
 	if (!intel_surf->image) {
 		XVMC_ERR("Can't create XvImage for surface\n");
-		free(intel_surf);
-		_xvmc_destroy_surface(display, surface);
-		return BadAlloc;
+		goto out_bo;
 	}
 
 	return Success;
+
+out_bo:
+	drm_intel_bo_unreference(intel_surf->bo);
+out_surf:
+	free(intel_surf);
+out_xvmc:
+	_xvmc_destroy_surface(display, surface);
+	return BadAlloc;
 }
 
 /*
@@ -632,7 +640,6 @@ _X_EXPORT Status XvMCPutSurface(Display * display, XvMCSurface * surface,
 				unsigned short destw, unsigned short desth,
 				int flags)
 {
-	Status ret = Success;
 	XvMCContext *context;
 	intel_xvmc_surface_ptr intel_surf;
 
@@ -640,8 +647,11 @@ _X_EXPORT Status XvMCPutSurface(Display * display, XvMCSurface * surface,
 		return XvMCBadSurface;
 
 	intel_surf = surface->privData;
+	if (!intel_surf)
+		return XvMCBadSurface;
+
 	context = intel_surf->context;
-	if (!context || !intel_surf)
+	if (!context)
 		return XvMCBadSurface;
 
 	if (intel_surf->gc_init == FALSE) {
@@ -653,12 +663,9 @@ _X_EXPORT Status XvMCPutSurface(Display * display, XvMCSurface * surface,
 	}
 	intel_surf->last_draw = draw;
 
-	drm_intel_bo_flink(intel_surf->bo, &intel_surf->gem_handle);
-
-	ret = XvPutImage(display, context->port, draw, intel_surf->gc,
-			 intel_surf->image, srcx, srcy, srcw, srch, destx,
-			 desty, destw, desth);
-	return ret;
+	return XvPutImage(display, context->port, draw, intel_surf->gc,
+			  intel_surf->image, srcx, srcy, srcw, srch, destx,
+			  desty, destw, desth);
 }
 
 /*

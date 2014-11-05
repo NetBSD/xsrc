@@ -20,7 +20,7 @@
 
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
-SUBDIRS = man xvmc src
+SUBDIRS = man libobj xvmc src tools
 
 MAINTAINERCLEANFILES = ChangeLog INSTALL
 
