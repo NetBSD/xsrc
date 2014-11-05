@@ -9,20 +9,25 @@ const OptionInfoRec intel_options[] = {
 	{OPTION_ACCEL_METHOD,	"AccelMethod",	OPTV_STRING,	{0},	0},
 	{OPTION_BACKLIGHT,	"Backlight",	OPTV_STRING,	{0},	0},
 	{OPTION_DRI,		"DRI",		OPTV_STRING,	{0},	0},
+	{OPTION_PRESENT,	"Present",	OPTV_BOOLEAN,	{0},	1},
 	{OPTION_COLOR_KEY,	"ColorKey",	OPTV_INTEGER,	{0},	0},
 	{OPTION_VIDEO_KEY,	"VideoKey",	OPTV_INTEGER,	{0},	0},
 	{OPTION_TILING_2D,	"Tiling",	OPTV_BOOLEAN,	{0},	1},
 	{OPTION_TILING_FB,	"LinearFramebuffer",	OPTV_BOOLEAN,	{0},	0},
+	{OPTION_VSYNC,		"VSync",	OPTV_BOOLEAN,	{0},	1},
+	{OPTION_PAGEFLIP,	"PageFlip",	OPTV_BOOLEAN,	{0},	1},
 	{OPTION_SWAPBUFFERS_WAIT, "SwapbuffersWait", OPTV_BOOLEAN,	{0},	1},
 	{OPTION_TRIPLE_BUFFER,	"TripleBuffer", OPTV_BOOLEAN,	{0},	1},
 	{OPTION_PREFER_OVERLAY, "XvPreferOverlay", OPTV_BOOLEAN, {0}, 0},
 	{OPTION_HOTPLUG,	"HotPlug",	OPTV_BOOLEAN,	{0},	1},
 	{OPTION_REPROBE,	"ReprobeOutputs", OPTV_BOOLEAN,	{0},	0},
+	{OPTION_DELETE_DP12,	"DeleteUnusedDP12Displays", OPTV_BOOLEAN,	{0},	0},
 #ifdef INTEL_XVMC
-	{OPTION_XVMC,	"XvMC",		OPTV_BOOLEAN,	{0},	1},
+	{OPTION_XVMC,		"XvMC",		OPTV_BOOLEAN,	{0},	1},
 #endif
 #ifdef USE_SNA
 	{OPTION_ZAPHOD,		"ZaphodHeads",	OPTV_STRING,	{0},	0},
+	{OPTION_VIRTUAL,	"VirtualHeads",	OPTV_INTEGER,	{0},	0},
 	{OPTION_TEAR_FREE,	"TearFree",	OPTV_BOOLEAN,	{0},	0},
 	{OPTION_CRTC_PIXMAPS,	"PerCrtcPixmaps", OPTV_BOOLEAN,	{0},	0},
 #endif

@@ -18,12 +18,12 @@
 #  IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-AM_CFLAGS = @CWARNFLAGS@ @XORG_CFLAGS@ @DRM_CFLAGS@ @PCIACCESS_CFLAGS@
-AM_CFLAGS += @UDEV_CFLAGS@ @DRM_CFLAGS@ @DRMINTEL_CFLAGS@
+AM_CFLAGS = @CWARNFLAGS@ $(XORG_CFLAGS) $(DRM_CFLAGS) $(PCIACCESS_CFLAGS)
+AM_CFLAGS += $(UDEV_CFLAGS) $(DRM_CFLAGS) $(DRMINTEL_CFLAGS)
 AM_CFLAGS += -I$(top_srcdir)/xvmc -I$(top_srcdir)/src -I$(top_srcdir)/src/render_program
 
 noinst_LTLIBRARIES = libuxa.la
-libuxa_la_LIBADD = @UDEV_LIBS@ @DRMINTEL_LIBS@ @DRM_LIBS@
+libuxa_la_LIBADD = $(UDEV_LIBS) $(DRMINTEL_LIBS) $(DRM_LIBS)
 libuxa_la_SOURCES = \
 	brw_defines.h \
 	brw_structs.h \
@@ -62,21 +62,34 @@ libuxa_la_SOURCES = \
 	$(NULL)
 
 if GLAMOR
-AM_CFLAGS += @LIBGLAMOR_CFLAGS@
-libuxa_la_LIBADD += @LIBGLAMOR_LIBS@
+AM_CFLAGS += $(LIBGLAMOR_CFLAGS)
+libuxa_la_LIBADD += $(LIBGLAMOR_LIBS)
 libuxa_la_SOURCES += \
 	 intel_glamor.c \
 	 $(NULL)
 endif
 
 if DRI2
-AM_CFLAGS += @DRI2_CFLAGS@
+AM_CFLAGS += $(DRI2_CFLAGS)
 libuxa_la_SOURCES += \
 	intel_dri.c \
 	$(NULL)
 libuxa_la_LIBADD += \
 	$(DRI2_LIBS) \
-	@CLOCK_GETTIME_LIBS@ \
+	$(CLOCK_GETTIME_LIBS) \
+	$(NULL)
+endif
+
+if DRI3
+libuxa_la_SOURCES += \
+	intel_dri3.c \
+	intel_sync.c \
+	$(NULL)
+endif
+
+if PRESENT
+libuxa_la_SOURCES += \
+	intel_present.c \
 	$(NULL)
 endif
 

@@ -55,6 +55,7 @@
 #include <assert.h>
 #include <errno.h>
 
+#include "xorg-server.h"
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "compiler.h"
@@ -77,6 +78,7 @@
 #define _INTEL_XVMC_SERVER_
 #include "intel_xvmc.h"
 #endif
+#include "intel_glamor.h"
 
 #define OFF_DELAY	250	/* milliseconds */
 
@@ -330,13 +332,13 @@ void I830InitVideo(ScreenPtr screen)
 	ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
 	intel_screen_private *intel = intel_get_screen_private(scrn);
 	XF86VideoAdaptorPtr *adaptors = NULL, *newAdaptors = NULL;
-	XF86VideoAdaptorPtr overlayAdaptor = NULL, texturedAdaptor = NULL;
+	XF86VideoAdaptorPtr overlayAdaptor = NULL, texturedAdaptor = NULL, glamorAdaptor = NULL;
 	int num_adaptors = xf86XVListGenericAdaptors(scrn, &adaptors);
 	/* Give our adaptor list enough space for the overlay and/or texture video
 	 * adaptors.
 	 */
 	newAdaptors = realloc(adaptors,
-			      (num_adaptors + 2) * sizeof(XF86VideoAdaptorPtr));
+			      (num_adaptors + 3) * sizeof(XF86VideoAdaptorPtr));
 	if (newAdaptors == NULL) {
 		free(adaptors);
 		return;
@@ -352,8 +354,10 @@ void I830InitVideo(ScreenPtr screen)
 	/* Set up textured video if we can do it at this depth and we are on
 	 * supported hardware.
 	 */
-	if (scrn->bitsPerPixel >= 16 &&
-	    INTEL_INFO(intel)->gen >= 030) {
+	if (!intel->force_fallback &&
+	    scrn->bitsPerPixel >= 16 &&
+	    INTEL_INFO(intel)->gen >= 030 &&
+	    INTEL_INFO(intel)->gen < 0100) {
 		texturedAdaptor = I830SetupImageVideoTextured(screen);
 		if (texturedAdaptor != NULL) {
 			xf86DrvMsg(scrn->scrnIndex, X_INFO,
@@ -377,11 +381,19 @@ void I830InitVideo(ScreenPtr screen)
 		}
 	}
 
+	glamorAdaptor = intel_glamor_xv_init(screen, 16);
+	if (glamorAdaptor != NULL)
+		xf86DrvMsg(scrn->scrnIndex, X_INFO,
+			   "Set up textured video using glamor\n");
+
 	if (overlayAdaptor && intel->XvPreferOverlay)
 		adaptors[num_adaptors++] = overlayAdaptor;
 
 	if (texturedAdaptor)
 		adaptors[num_adaptors++] = texturedAdaptor;
+
+	if (glamorAdaptor)
+		adaptors[num_adaptors++] = glamorAdaptor;
 
 	if (overlayAdaptor && !intel->XvPreferOverlay)
 		adaptors[num_adaptors++] = overlayAdaptor;

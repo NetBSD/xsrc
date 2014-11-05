@@ -24,19 +24,18 @@ AM_CFLAGS = \
 	@CWARNFLAGS@ \
 	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/src/render_program \
-	@XORG_CFLAGS@ \
-	@UDEV_CFLAGS@ \
-	@DRM_CFLAGS@ \
-	@NOWARNFLAGS@
+	$(XORG_CFLAGS) \
+	$(UDEV_CFLAGS) \
+	$(DRM_CFLAGS) \
 	$(NULL)
 
 if VALGRIND
-AM_CFLAGS += @VALGRIND_CFLAGS@
+AM_CFLAGS += $(VALGRIND_CFLAGS)
 endif
 
 noinst_LTLIBRARIES = libsna.la
 libsna_la_LDFLAGS = -pthread
-libsna_la_LIBADD = @UDEV_LIBS@ -lm @DRM_LIBS@ brw/libbrw.la fb/libfb.la
+libsna_la_LIBADD = $(UDEV_LIBS) -lm $(DRM_LIBS) brw/libbrw.la fb/libfb.la ../../libobj/libcompat.la
 
 libsna_la_SOURCES = \
 	atomic.h \
@@ -47,6 +46,7 @@ libsna_la_SOURCES = \
 	rop.h \
 	sna.h \
 	sna_accel.c \
+	sna_acpi.c \
 	sna_blt.c \
 	sna_composite.c \
 	sna_cpu.c \
@@ -65,7 +65,12 @@ libsna_la_SOURCES = \
 	sna_render_inline.h \
 	sna_reg.h \
 	sna_stream.c \
+	sna_trapezoids.h \
 	sna_trapezoids.c \
+	sna_trapezoids_boxes.c \
+	sna_trapezoids_imprecise.c \
+	sna_trapezoids_mono.c \
+	sna_trapezoids_precise.c \
 	sna_tiling.c \
 	sna_transform.c \
 	sna_threads.c \
@@ -79,6 +84,8 @@ libsna_la_SOURCES = \
 	gen2_render.h \
 	gen3_render.c \
 	gen3_render.h \
+	gen4_common.c \
+	gen4_common.h \
 	gen4_render.c \
 	gen4_render.h \
 	gen4_source.c \
@@ -87,16 +94,36 @@ libsna_la_SOURCES = \
 	gen4_vertex.h \
 	gen5_render.c \
 	gen5_render.h \
+	gen6_common.c \
+	gen6_common.h \
 	gen6_render.c \
 	gen6_render.h \
 	gen7_render.c \
 	gen7_render.h \
+	gen8_eu.c \
+	gen8_eu.h \
+	gen8_render.c \
+	gen8_render.h \
+	gen8_vertex.c \
+	gen8_vertex.h \
 	$(NULL)
 
 if DRI2
-AM_CFLAGS += @DRI2_CFLAGS@
-libsna_la_SOURCES += sna_dri.c
+AM_CFLAGS += $(DRI2_CFLAGS)
+libsna_la_SOURCES += sna_dri2.c
 libsna_la_LIBADD += $(DRI2_LIBS) @CLOCK_GETTIME_LIBS@
+endif
+
+if DRI3
+AM_CFLAGS += $(DRI3_CFLAGS)
+libsna_la_SOURCES += sna_dri3.c
+libsna_la_LIBADD += $(DRI3_LIBS)
+endif
+
+if PRESENT
+AM_CFLAGS += $(PRESENT_CFLAGS)
+libsna_la_SOURCES += sna_present.c
+libsna_la_LIBADD += $(PRESENT_LIBS)
 endif
 
 if XVMC
@@ -125,3 +152,5 @@ git_version.h: $(top_srcdir)/.git/HEAD $(shell sed -e '/ref:/!d' -e 's#ref: *#$(
 	@V=`git describe`; echo "static const char git_version[] = \"$$V\";" > git_version.h
 sna_driver.c: git_version.h
 endif
+
+AM_CFLAGS += @NOWARNFLAGS@

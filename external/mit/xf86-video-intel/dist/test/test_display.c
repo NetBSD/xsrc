@@ -16,18 +16,18 @@ static Window get_root(struct test_display *t)
 	 * can guarantee we do not get clipped by children.
 	 */
 	attr.override_redirect = 1;
-	w= XCreateWindow(t->dpy, DefaultRootWindow(t->dpy),
-			 0, 0, t->width, t->height, 0,
-			 DefaultDepth(t->dpy, DefaultScreen(t->dpy)),
-			 InputOutput,
-			 DefaultVisual(t->dpy, DefaultScreen(t->dpy)),
-			 CWOverrideRedirect, &attr);
+	w = XCreateWindow(t->dpy, DefaultRootWindow(t->dpy),
+			  0, 0, t->width, t->height, 0,
+			  DefaultDepth(t->dpy, DefaultScreen(t->dpy)),
+			  InputOutput,
+			  DefaultVisual(t->dpy, DefaultScreen(t->dpy)),
+			  CWOverrideRedirect, &attr);
 	XMapWindow(t->dpy, w);
 
 	return w;
 }
 
-static Display *real_display(int argc, char **argv)
+static Display *out_display(int argc, char **argv)
 {
 	Display *dpy;
 	const char *name = NULL;
@@ -52,7 +52,7 @@ static Display *real_display(int argc, char **argv)
 
 	dpy = XOpenDisplay(name);
 	if (dpy == NULL)
-		die("unable to open real display %s\n", name);
+		die("unable to open out display %s\n", name);
 
 	printf("Opened connection to %s for testing.\n", name);
 	return dpy;
@@ -97,10 +97,10 @@ static Display *ref_display(int width, int height, int depth)
 
 static void shm_setup(struct test_display *d)
 {
-	int major, minor, has_pixmaps;
+	int major, minor;
 	int size;
 
-	XShmQueryVersion(d->dpy, &major, &minor, &has_pixmaps);
+	XShmQueryVersion(d->dpy, &major, &minor, &d->has_shm_pixmaps);
 	if (major == 0 && minor == 0)
 		die("XSHM not supported\n");
 
@@ -125,28 +125,30 @@ static void default_setup(struct test_display *dpy)
 		XRenderFindVisualFormat(dpy->dpy,
 					DefaultVisual(dpy->dpy,
 						      DefaultScreen(dpy->dpy)));
+	dpy->depth = DefaultDepth(dpy->dpy, DefaultScreen(dpy->dpy));
 }
 
 static void test_get_displays(int argc, char **argv,
-			      struct test_display *real,
+			      struct test_display *out,
 			      struct test_display *ref)
 {
-	real->dpy = real_display(argc, argv);
-	default_setup(real);
-	shm_setup(real);
-	real->root = get_root(real);
+	out->dpy = out_display(argc, argv);
+	default_setup(out);
+	shm_setup(out);
+	out->root = get_root(out);
+	out->target = OUT;
 
-	ref->dpy = ref_display(real->width, real->height,
-			       DefaultDepth(real->dpy, DefaultScreen(real->dpy)));
+	ref->dpy = ref_display(out->width, out->height, out->depth);
 	default_setup(ref);
 	shm_setup(ref);
 	ref->root = get_root(ref);
+	ref->target = REF;
 }
 
 void test_init(struct test *test, int argc, char **argv)
 {
 	memset(test, 0, sizeof(*test));
-	test_get_displays(argc, argv, &test->real, &test->ref);
+	test_get_displays(argc, argv, &test->out, &test->ref);
 }
 
 void test_timer_start(struct test_display *t, struct timespec *tv)

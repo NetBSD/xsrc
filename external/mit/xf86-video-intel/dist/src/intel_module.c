@@ -28,9 +28,11 @@
 #include "config.h"
 #endif
 
+#include <xorg-server.h>
+#include <xorgVersion.h>
+
 #include <xf86.h>
 #include <xf86Parser.h>
-#include <xorgVersion.h>
 
 #if XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1,6,99,0,0)
 #include <xf86Resources.h>
@@ -46,6 +48,10 @@
 
 #ifdef XSERVER_PLATFORM_BUS
 #include <xf86platformBus.h>
+#endif
+
+#ifndef XF86_ALLOCATE_GPU_SCREEN
+#define XF86_ALLOCATE_GPU_SCREEN 0
 #endif
 
 static const struct intel_device_info intel_generic_info = {
@@ -108,6 +114,14 @@ static const struct intel_device_info intel_haswell_info = {
 	.gen = 075,
 };
 
+static const struct intel_device_info intel_broadwell_info = {
+	.gen = 0100,
+};
+
+static const struct intel_device_info intel_cherryview_info = {
+	.gen = 0101,
+};
+
 static const SymTabRec intel_chipsets[] = {
 	{PCI_CHIP_I810,				"i810"},
 	{PCI_CHIP_I810_DC100,			"i810-dc100"},
@@ -142,6 +156,9 @@ static const SymTabRec intel_chipsets[] = {
 	{PCI_CHIP_G41_G,			"G41"},
 	{PCI_CHIP_B43_G,			"B43"},
 	{PCI_CHIP_B43_G1,			"B43"},
+
+	{0, ""},
+
 	{PCI_CHIP_IRONLAKE_D_G,			"HD Graphics"},
 	{PCI_CHIP_IRONLAKE_M_G,			"HD Graphics"},
 	{PCI_CHIP_SANDYBRIDGE_GT1,		"HD Graphics 2000" },
@@ -202,21 +219,61 @@ static const SymTabRec intel_chipsets[] = {
 	{PCI_CHIP_HASWELL_CRW_E_GT1,		"HD Graphics" }, /* ??? */
 	{PCI_CHIP_HASWELL_CRW_E_GT2,		"HD Graphics" }, /* ??? */
 	{PCI_CHIP_HASWELL_CRW_E_GT3,		"Iris(TM) Pro Graphics 5200" },
-	{-1,					NULL}
+
+	/* Valleyview (Baytail) */
+	{0x0f30, "HD Graphics"},
+	{0x0f31, "HD Graphics"},
+	{0x0f32, "HD Graphics"},
+	{0x0f33, "HD Graphics"},
+	{0x0155, "HD Graphics"},
+	{0x0157, "HD Graphics"},
+
+	/* Broadwell Marketing names */
+	{0x1602, "HD graphics"},
+	{0x1606, "HD graphics"},
+	{0x160B, "HD graphics"},
+	{0x160A, "HD graphics"},
+	{0x160D, "HD graphics"},
+	{0x160E, "HD graphics"},
+	{0x1612, "HD graphics 5600"},
+	{0x1616, "HD graphics 5500"},
+	{0x161B, "HD graphics"},
+	{0x161A, "HD graphics"},
+	{0x161D, "HD graphics"},
+	{0x161E, "HD graphics 5300"},
+	{0x1622, "Iris Pro graphics 6200"},
+	{0x1626, "HD graphics 6000"},
+	{0x162B, "Iris graphics 6100"},
+	{0x162A, "Iris Pro graphics P6300"},
+	{0x162D, "HD graphics"},
+	{0x162E, "HD graphics"},
+	{0x1632, "HD graphics"},
+	{0x1636, "HD graphics"},
+	{0x163B, "HD graphics"},
+	{0x163A, "HD graphics"},
+	{0x163D, "HD graphics"},
+	{0x163E, "HD graphics"},
+
+	/* When adding new identifiers, also update:
+	 * 1. intel_identify()
+	 * 2. man/intel.man
+	 * 3. README
+	 */
+
+	{-1, NULL} /* Sentinel */
 };
-#define NUM_CHIPSETS (sizeof(intel_chipsets) / sizeof(intel_chipsets[0]))
 
 static const struct pci_id_match intel_device_match[] = {
-#if !KMS_ONLY
+#if UMS
 	INTEL_VGA_DEVICE(PCI_CHIP_I810, &intel_i81x_info),
 	INTEL_VGA_DEVICE(PCI_CHIP_I810_DC100, &intel_i81x_info),
 	INTEL_VGA_DEVICE(PCI_CHIP_I810_E, &intel_i81x_info),
 	INTEL_VGA_DEVICE(PCI_CHIP_I815, &intel_i81x_info),
 #endif
 
-#if !UMS_ONLY
+#if KMS
 	INTEL_I830_IDS(&intel_i830_info),
-	INTEL_I845G_IDS(&intel_i830_info),
+	INTEL_I845G_IDS(&intel_i845_info),
 	INTEL_I85X_IDS(&intel_i855_info),
 	INTEL_I865G_IDS(&intel_i865_info),
 
@@ -249,6 +306,11 @@ static const struct pci_id_match intel_device_match[] = {
 	INTEL_VLV_D_IDS(&intel_valleyview_info),
 	INTEL_VLV_M_IDS(&intel_valleyview_info),
 
+	INTEL_BDW_D_IDS(&intel_broadwell_info),
+	INTEL_BDW_M_IDS(&intel_broadwell_info),
+
+	INTEL_CHV_IDS(&intel_cherryview_info),
+
 	INTEL_VGA_DEVICE(PCI_MATCH_ANY, &intel_generic_info),
 #endif
 
@@ -256,23 +318,30 @@ static const struct pci_id_match intel_device_match[] = {
 };
 
 void
-intel_detect_chipset(ScrnInfoPtr scrn,
-		     EntityInfoPtr ent,
-		     struct pci_device *pci)
+intel_detect_chipset(ScrnInfoPtr scrn, EntityInfoPtr ent)
 {
 	MessageType from = X_PROBED;
 	const char *name = NULL;
+	int devid;
 	int i;
 
 	if (ent->device->chipID >= 0) {
 		xf86DrvMsg(scrn->scrnIndex, from = X_CONFIG,
 			   "ChipID override: 0x%04X\n",
 			   ent->device->chipID);
-		pci->device_id = ent->device->chipID;
+		devid = ent->device->chipID;
+	} else {
+		struct pci_device *pci;
+
+		pci = xf86GetPciInfoForEntity(ent->index);
+		if (pci != NULL)
+			devid = pci->device_id;
+		else
+			devid = intel_get_device_id(scrn);
 	}
 
 	for (i = 0; intel_chipsets[i].name != NULL; i++) {
-		if (pci->device_id == intel_chipsets[i].token) {
+		if (devid == intel_chipsets[i].token) {
 			name = intel_chipsets[i].name;
 			break;
 		}
@@ -281,20 +350,21 @@ intel_detect_chipset(ScrnInfoPtr scrn,
 		int gen = 0;
 
 		for (i = 0; intel_device_match[i].device_id != 0; i++) {
-			if (pci->device_id == intel_device_match[i].device_id) {
+			if (devid == intel_device_match[i].device_id) {
 				const struct intel_device_info *info = (void *)intel_device_match[i].match_data;
 				gen = info->gen >> 3;
 				break;
 			}
 		}
 
-		if(gen) {
+		if (gen) {
 			xf86DrvMsg(scrn->scrnIndex, from,
 				   "gen%d engineering sample\n", gen);
 		} else {
 			xf86DrvMsg(scrn->scrnIndex, X_WARNING,
 				   "Unknown chipset\n");
 		}
+
 		name = "unknown";
 	} else {
 		xf86DrvMsg(scrn->scrnIndex, from,
@@ -324,7 +394,7 @@ static void intel_identify(int flags)
 	xf86Msg(X_INFO, INTEL_NAME ": Driver for Intel(R) Integrated Graphics Chipsets:\n\t");
 	len = 8;
 
-	for (chipset = intel_chipsets; chipset->name; chipset++) {
+	for (chipset = intel_chipsets; chipset->token; chipset++) {
 		for (j = i; --j >= 0;)
 			if (strcmp(unique[j], chipset->name) == 0)
 				break;
@@ -366,6 +436,10 @@ static void intel_identify(int flags)
 	xf86ErrorF("\n");
 	if (unique != stack)
 		free(unique);
+
+	xf86Msg(X_INFO, INTEL_NAME ": Driver for Intel(R) HD Graphics: 2000-6000\n");
+	xf86Msg(X_INFO, INTEL_NAME ": Driver for Intel(R) Iris(TM) Graphics: 5100, 6100\n");
+	xf86Msg(X_INFO, INTEL_NAME ": Driver for Intel(R) Iris(TM) Pro Graphics: 5200, 6200, P6300\n");
 }
 
 static Bool intel_driver_func(ScrnInfoPtr pScrn,
@@ -377,9 +451,8 @@ static Bool intel_driver_func(ScrnInfoPtr pScrn,
 	switch (op) {
 	case GET_REQUIRED_HW_INTERFACES:
 		flag = (CARD32*)ptr;
-#ifdef KMS_ONLY
 		(*flag) = 0;
-#else
+#if UMS
 		(*flag) = HW_IO | HW_MMIO;
 #endif
 #ifdef HW_SKIP_CONSOLE
@@ -388,13 +461,19 @@ static Bool intel_driver_func(ScrnInfoPtr pScrn,
 #endif
 
 		return TRUE;
+
+#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,15,99,902,0)
+	case SUPPORTS_SERVER_FDS:
+		return TRUE;
+#endif
+
 	default:
 		/* Unknown or deprecated function */
 		return FALSE;
 	}
 }
 
-#if !UMS_ONLY
+#if KMS
 extern XF86ConfigPtr xf86configptr;
 
 static XF86ConfDevicePtr
@@ -410,7 +489,7 @@ _xf86findDriver(const char *ident, XF86ConfDevicePtr p)
 	return NULL;
 }
 
-static enum accel_method { UXA, SNA } get_accel_method(void)
+static enum accel_method { NOACCEL, SNA, UXA, GLAMOR } get_accel_method(void)
 {
 	enum accel_method accel_method = DEFAULT_ACCEL_METHOD;
 	XF86ConfDevicePtr dev;
@@ -424,12 +503,14 @@ static enum accel_method { UXA, SNA } get_accel_method(void)
 
 		s = xf86FindOptionValue(dev->dev_option_lst, "AccelMethod");
 		if (s ) {
-			if (strcasecmp(s, "sna") == 0)
+			if (strcasecmp(s, "none") == 0)
+				accel_method = NOACCEL;
+			else if (strcasecmp(s, "sna") == 0)
 				accel_method = SNA;
 			else if (strcasecmp(s, "uxa") == 0)
 				accel_method = UXA;
 			else if (strcasecmp(s, "glamor") == 0)
-				accel_method = UXA;
+				accel_method = GLAMOR;
 		}
 	}
 
@@ -445,6 +526,22 @@ intel_scrn_create(DriverPtr		driver,
 {
 	ScrnInfoPtr scrn;
 
+	if (match_data == 0) {
+		int devid = intel_entity_get_devid(entity_num), i;
+		if (devid == 0)
+			return FALSE;
+
+		for (i = 0; intel_device_match[i].device_id != 0; i++) {
+			if (devid == intel_device_match[i].device_id) {
+				match_data = (intptr_t)&intel_device_match[i];
+				break;
+			}
+		}
+
+		if (match_data == 0)
+			return FALSE;
+	}
+
 	scrn = xf86AllocateScreen(driver, flags);
 	if (scrn == NULL)
 		return FALSE;
@@ -452,25 +549,32 @@ intel_scrn_create(DriverPtr		driver,
 	scrn->driverVersion = INTEL_VERSION;
 	scrn->driverName = (char *)INTEL_DRIVER_NAME;
 	scrn->name = (char *)INTEL_NAME;
-	scrn->driverPrivate = (void *)(match_data | 1);
+	scrn->driverPrivate = (void *)(match_data | (flags & XF86_ALLOCATE_GPU_SCREEN) | 2);
 	scrn->Probe = NULL;
 
 	if (xf86IsEntitySharable(entity_num))
 		xf86SetEntityShared(entity_num);
 	xf86AddEntityToScreen(scrn, entity_num);
 
-#if !KMS_ONLY
+#if UMS
 	if ((unsigned)((struct intel_device_info *)match_data)->gen < 020)
 		return lg_i810_init(scrn);
 #endif
 
-#if !UMS_ONLY
+#if KMS
 	switch (get_accel_method()) {
 #if USE_SNA
-	case SNA: return sna_init_scrn(scrn, entity_num);
+	case NOACCEL:
+	case SNA:
+		return sna_init_scrn(scrn, entity_num);
 #endif
 #if USE_UXA
-	case UXA: return intel_init_scrn(scrn);
+#if !USE_SNA
+	case NOACCEL:
+#endif
+	case GLAMOR:
+	case UXA:
+		  return intel_init_scrn(scrn);
 #endif
 
 	default: break;
@@ -493,9 +597,7 @@ static Bool intel_pci_probe(DriverPtr		driver,
 			    intptr_t		match_data)
 {
 	if (intel_open_device(entity_num, pci, NULL) == -1) {
-#if KMS_ONLY
-		return FALSE;
-#else
+#if UMS
 		switch (pci->device_id) {
 		case PCI_CHIP_I810:
 		case PCI_CHIP_I810_DC100:
@@ -506,6 +608,8 @@ static Bool intel_pci_probe(DriverPtr		driver,
 		default:
 			return FALSE;
 		}
+#else
+		return FALSE;
 #endif
 	}
 
@@ -521,11 +625,7 @@ intel_platform_probe(DriverPtr driver,
 {
 	unsigned scrn_flags = 0;
 
-	if (!dev->pdev)
-		return FALSE;
-
-	if (intel_open_device(entity_num, dev->pdev,
-			      xf86_get_platform_device_attrib(dev, ODEV_ATTRIB_PATH)) == -1)
+	if (intel_open_device(entity_num, dev->pdev, dev) == -1)
 		return FALSE;
 
 	/* Allow ourselves to act as a slaved output if not primary */
@@ -563,7 +663,7 @@ static const OptionInfoRec *
 intel_available_options(int chipid, int busid)
 {
 	switch (chipid) {
-#if !KMS_ONLY
+#if UMS
 	case PCI_CHIP_I810:
 	case PCI_CHIP_I810_DC100:
 	case PCI_CHIP_I810_E:

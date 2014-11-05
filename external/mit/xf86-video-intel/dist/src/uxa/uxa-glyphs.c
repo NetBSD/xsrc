@@ -68,8 +68,6 @@
 #include "uxa-glamor.h"
 #include "common.h"
 
-#include "mipict.h"
-
 /* Width of the pixmaps we use for the caches; this should be less than
  * max texture size of the driver; this may need to actually come from
  * the driver.
@@ -148,7 +146,7 @@ static Bool uxa_realize_glyph_caches(ScreenPtr pScreen)
 		PIXMAN_a8,
 		PIXMAN_a8r8g8b8,
 	};
-	int i;
+	unsigned i;
 
 	if (uxa_screen->glyph_cache_initialized)
 		return TRUE;

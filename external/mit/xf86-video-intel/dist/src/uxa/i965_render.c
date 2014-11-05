@@ -34,6 +34,7 @@
 #endif
 
 #include <assert.h>
+#include "xorg-server.h"
 #include "xf86.h"
 #include "intel.h"
 #include "i830_reg.h"
@@ -1259,16 +1260,16 @@ static drm_intel_bo *gen4_create_cc_unit_state(intel_screen_private *intel)
 
 static uint32_t i965_get_card_format(PicturePtr picture)
 {
-	int i;
+	unsigned i;
 
 	for (i = 0; i < sizeof(i965_tex_formats) / sizeof(i965_tex_formats[0]);
-	     i++) {
+	     i++)
 		if (i965_tex_formats[i].fmt == picture->format)
-			break;
-	}
+			return i965_tex_formats[i].card_fmt;
+
 	assert(i != sizeof(i965_tex_formats) / sizeof(i965_tex_formats[0]));
 
-	return i965_tex_formats[i].card_fmt;
+	return 0;
 }
 
 static sampler_state_filter_t sampler_state_filter_from_picture(int filter)
@@ -2108,6 +2109,7 @@ i965_prepare_composite(int op, PicturePtr source_picture,
 	}
 
 	if (mask) {
+		assert(mask_picture != NULL);
 		if (mask_picture->componentAlpha &&
 		    PICT_FORMAT_RGB(mask_picture->format)) {
 			if (i965_blend_op[op].src_alpha) {

@@ -30,6 +30,8 @@
 #ifndef INTEL_GLAMOR_H
 #define INTEL_GLAMOR_H
 
+#include <xf86xv.h>
+
 #ifdef USE_GLAMOR
 
 Bool intel_glamor_pre_init(ScrnInfoPtr scrn);
@@ -45,6 +47,7 @@ void intel_glamor_destroy_pixmap(PixmapPtr pixmap);
 PixmapPtr intel_glamor_create_pixmap(ScreenPtr screen, int w, int h,
 				     int depth, unsigned int usage);
 void intel_glamor_exchange_buffers(struct intel_screen_private *intel, PixmapPtr src, PixmapPtr dst);
+XF86VideoAdaptorPtr intel_glamor_xv_init(ScreenPtr screen, int num_ports);
 #else
 
 static inline Bool intel_glamor_pre_init(ScrnInfoPtr scrn) { return TRUE; }
@@ -62,6 +65,7 @@ static inline PixmapPtr intel_glamor_create_pixmap(ScreenPtr screen, int w, int 
 						   int depth, unsigned int usage) { return NULL; }
 
 static inline void intel_glamor_exchange_buffers(struct intel_screen_private *intel, PixmapPtr src, PixmapPtr dst) {}
+static inline XF86VideoAdaptorPtr intel_glamor_xv_init(ScreenPtr screen, int num_ports) { return NULL; }
 #endif
 
 #endif /* INTEL_GLAMOR_H */
