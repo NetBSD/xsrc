@@ -988,7 +988,7 @@ _XtResourceConfigurationEH (
 				resource = XtNewString (data_ptr);
 				value = XtNewString (data_value);
 #ifdef DEBUG
-				fprintf (stderr, "resource_len=%d\n"
+				fprintf (stderr, "resource_len=%d\n",
 					 resource_len);
 				fprintf (stderr, "resource = %s\t value = %s\n",
 					 resource, value);
