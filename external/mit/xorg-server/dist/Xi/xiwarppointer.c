@@ -59,6 +59,8 @@ SProcXIWarpPointer(ClientPtr client)
     char n;
 
     REQUEST(xXIWarpPointerReq);
+    REQUEST_SIZE_MATCH(xXIWarpPointerReq);
+
     swaps(&stuff->length, n);
     swapl(&stuff->src_win, n);
     swapl(&stuff->dst_win, n);

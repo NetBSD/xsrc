@@ -64,6 +64,8 @@ SProcXIQueryPointer(ClientPtr client)
     char n;
 
     REQUEST(xXIQueryPointerReq);
+    REQUEST_SIZE_MATCH(xXIQueryPointerReq);
+
     swaps(&stuff->length, n);
     swaps(&stuff->deviceid, n);
     swapl(&stuff->win, n);

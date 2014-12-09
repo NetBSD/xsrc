@@ -1280,6 +1280,7 @@ SProcXvQueryExtension(ClientPtr client)
 {
   char n;
   REQUEST(xvQueryExtensionReq);
+  REQUEST_SIZE_MATCH(xvQueryExtensionReq);
   swaps(&stuff->length, n);
   return XvProcVector[xv_QueryExtension](client);
 }
@@ -1289,6 +1290,7 @@ SProcXvQueryAdaptors(ClientPtr client)
 {
   char n;
   REQUEST(xvQueryAdaptorsReq);
+  REQUEST_SIZE_MATCH(xvQueryAdaptorsReq);
   swaps(&stuff->length, n);
   swapl(&stuff->window, n);
   return XvProcVector[xv_QueryAdaptors](client);
@@ -1299,6 +1301,7 @@ SProcXvQueryEncodings(ClientPtr client)
 {
   char n;
   REQUEST(xvQueryEncodingsReq);
+  REQUEST_SIZE_MATCH(xvQueryEncodingsReq);
   swaps(&stuff->length, n);
   swapl(&stuff->port, n);
   return XvProcVector[xv_QueryEncodings](client);
@@ -1309,6 +1312,7 @@ SProcXvGrabPort(ClientPtr client)
 {
   char n;
   REQUEST(xvGrabPortReq);
+  REQUEST_SIZE_MATCH(xvGrabPortReq);
   swaps(&stuff->length, n);
   swapl(&stuff->port, n);
   swapl(&stuff->time, n);
@@ -1320,6 +1324,7 @@ SProcXvUngrabPort(ClientPtr client)
 {
   char n;
   REQUEST(xvUngrabPortReq);
+  REQUEST_SIZE_MATCH(xvUngrabPortReq);
   swaps(&stuff->length, n);
   swapl(&stuff->port, n);
   swapl(&stuff->time, n);
@@ -1331,6 +1336,7 @@ SProcXvPutVideo(ClientPtr client)
 {
   char n;
   REQUEST(xvPutVideoReq);
+  REQUEST_SIZE_MATCH(xvPutVideoReq);
   swaps(&stuff->length, n);
   swapl(&stuff->port, n);
   swapl(&stuff->drawable, n);
@@ -1351,6 +1357,7 @@ SProcXvPutStill(ClientPtr client)
 {
   char n;
   REQUEST(xvPutStillReq);
+  REQUEST_SIZE_MATCH(xvPutStillReq);
   swaps(&stuff->length, n);
   swapl(&stuff->port, n);
   swapl(&stuff->drawable, n);
@@ -1371,6 +1378,7 @@ SProcXvGetVideo(ClientPtr client)
 {
   char n;
   REQUEST(xvGetVideoReq);
+  REQUEST_SIZE_MATCH(xvGetVideoReq);
   swaps(&stuff->length, n);
   swapl(&stuff->port, n);
   swapl(&stuff->drawable, n);
@@ -1391,6 +1399,7 @@ SProcXvGetStill(ClientPtr client)
 {
   char n;
   REQUEST(xvGetStillReq);
+  REQUEST_SIZE_MATCH(xvGetStillReq);
   swaps(&stuff->length, n);
   swapl(&stuff->port, n);
   swapl(&stuff->drawable, n);
@@ -1411,6 +1420,7 @@ SProcXvPutImage(ClientPtr client)
 {
   char n;
   REQUEST(xvPutImageReq);
+  REQUEST_AT_LEAST_SIZE(xvPutImageReq);
   swaps(&stuff->length, n);
   swapl(&stuff->port, n);
   swapl(&stuff->drawable, n);
@@ -1435,6 +1445,7 @@ SProcXvShmPutImage(ClientPtr client)
 {
   char n;
   REQUEST(xvShmPutImageReq);
+  REQUEST_SIZE_MATCH(xvShmPutImageReq);
   swaps(&stuff->length, n);
   swapl(&stuff->port, n);
   swapl(&stuff->drawable, n);
@@ -1463,6 +1474,7 @@ SProcXvSelectVideoNotify(ClientPtr client)
 {
   char n;
   REQUEST(xvSelectVideoNotifyReq);
+  REQUEST_SIZE_MATCH(xvSelectVideoNotifyReq);
   swaps(&stuff->length, n);
   swapl(&stuff->drawable, n);
   return XvProcVector[xv_SelectVideoNotify](client);
@@ -1473,6 +1485,7 @@ SProcXvSelectPortNotify(ClientPtr client)
 {
   char n;
   REQUEST(xvSelectPortNotifyReq);
+  REQUEST_SIZE_MATCH(xvSelectPortNotifyReq);
   swaps(&stuff->length, n);
   swapl(&stuff->port, n);
   return XvProcVector[xv_SelectPortNotify](client);
@@ -1483,6 +1496,7 @@ SProcXvStopVideo(ClientPtr client)
 {
   char n;
   REQUEST(xvStopVideoReq);
+  REQUEST_SIZE_MATCH(xvStopVideoReq);
   swaps(&stuff->length, n);
   swapl(&stuff->port, n);
   swapl(&stuff->drawable, n);
@@ -1494,6 +1508,7 @@ SProcXvSetPortAttribute(ClientPtr client)
 {
   char n;
   REQUEST(xvSetPortAttributeReq);
+  REQUEST_SIZE_MATCH(xvSetPortAttributeReq);
   swaps(&stuff->length, n);
   swapl(&stuff->port, n);
   swapl(&stuff->attribute, n);
@@ -1506,6 +1521,7 @@ SProcXvGetPortAttribute(ClientPtr client)
 {
   char n;
   REQUEST(xvGetPortAttributeReq);
+  REQUEST_SIZE_MATCH(xvGetPortAttributeReq);
   swaps(&stuff->length, n);
   swapl(&stuff->port, n);
   swapl(&stuff->attribute, n);
@@ -1517,6 +1533,7 @@ SProcXvQueryBestSize(ClientPtr client)
 {
   char n;
   REQUEST(xvQueryBestSizeReq);
+  REQUEST_SIZE_MATCH(xvQueryBestSizeReq);
   swaps(&stuff->length, n);
   swapl(&stuff->port, n);
   swaps(&stuff->vid_w, n);
@@ -1531,6 +1548,7 @@ SProcXvQueryPortAttributes(ClientPtr client)
 {
   char n;
   REQUEST(xvQueryPortAttributesReq);
+  REQUEST_SIZE_MATCH(xvQueryPortAttributesReq);
   swaps(&stuff->length, n);
   swapl(&stuff->port, n);
   return XvProcVector[xv_QueryPortAttributes](client);
@@ -1541,6 +1559,7 @@ SProcXvQueryImageAttributes(ClientPtr client)
 {
   char n;
   REQUEST(xvQueryImageAttributesReq);
+  REQUEST_SIZE_MATCH(xvQueryImageAttributesReq);
   swaps(&stuff->length, n);
   swapl(&stuff->port, n);
   swapl(&stuff->id, n);
@@ -1554,6 +1573,7 @@ SProcXvListImageFormats(ClientPtr client)
 {
   char n;
   REQUEST(xvListImageFormatsReq);
+  REQUEST_SIZE_MATCH(xvListImageFormatsReq);
   swaps(&stuff->length, n);
   swapl(&stuff->port, n);
   return XvProcVector[xv_ListImageFormats](client);

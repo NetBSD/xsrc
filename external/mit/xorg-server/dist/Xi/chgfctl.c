@@ -471,6 +471,8 @@ ProcXChangeFeedbackControl(ClientPtr client)
 	xStringFeedbackCtl *f = ((xStringFeedbackCtl *) & stuff[1]);
 
 	if (client->swapped) {
+            if (len < bytes_to_int32(sizeof(xStringFeedbackCtl)))
+                return BadLength;
 	    swaps(&f->num_keysyms, n);
 	}
 	if (len != (bytes_to_int32(sizeof(xStringFeedbackCtl)) + f->num_keysyms))

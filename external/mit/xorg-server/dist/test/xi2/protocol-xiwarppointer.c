@@ -200,6 +200,9 @@ static void test_XIWarpPointer(void)
     request_XIWarpPointer(&client_request, &request, Success);
 
     /* FIXME: src_x/y checks */
+
+    client_request.req_len -= 2; /* invalid length */
+    request_XIWarpPointer(&client_request, &request, BadLength);
 }
 
 int main(int argc, char** argv)
