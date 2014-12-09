@@ -43,16 +43,10 @@
   (((a & 0xff000000U)>>24) | ((a & 0xff0000U)>>8) | \
    ((a & 0xff00U)<<8) | ((a & 0xffU)<<24))
 
-static int Map1Size( GLint k, GLint order)
-{
-    if (order <= 0 || k < 0) return -1;
-    return k * order;
-}
-
-int __glXMap1dReqSize( const GLbyte *pc, Bool swap )
+int __glXMap1dReqSize( const GLbyte *pc, Bool swap, int reqlen )
 {
     GLenum target;
-    GLint order, k;
+    GLint order;
 
     target = *(GLenum*) (pc + 16);
     order = *(GLint*) (pc + 20);
@@ -60,14 +54,15 @@ int __glXMap1dReqSize( const GLbyte *pc, Bool swap )
 	target = SWAPL( target );
 	order = SWAPL( order );
     }
-    k = __glMap1d_size( target );
-    return 8 * Map1Size( k, order );
+    if (order < 1)
+        return -1;
+    return safe_mul(8, safe_mul(__glMap1d_size(target), order));
 }
 
-int __glXMap1fReqSize( const GLbyte *pc, Bool swap )
+int __glXMap1fReqSize( const GLbyte *pc, Bool swap, int reqlen )
 {
     GLenum target;
-    GLint order, k;
+    GLint order;
 
     target = *(GLenum *)(pc + 0);
     order = *(GLint *)(pc + 12);
@@ -75,20 +70,22 @@ int __glXMap1fReqSize( const GLbyte *pc, Bool swap )
 	target = SWAPL( target );
 	order = SWAPL( order );
     }
-    k = __glMap1f_size(target);
-    return 4 * Map1Size(k, order);
+    if (order < 1)
+        return -1;
+    return safe_mul(4, safe_mul(__glMap1f_size(target), order));
 }
 
 static int Map2Size(int k, int majorOrder, int minorOrder)
 {
-    if (majorOrder <= 0 || minorOrder <= 0 || k < 0) return -1;
-    return k * majorOrder * minorOrder;
+    if (majorOrder < 1 || minorOrder < 1)
+         return -1;
+    return safe_mul(k, safe_mul(majorOrder, minorOrder));
 }
 
-int __glXMap2dReqSize( const GLbyte *pc, Bool swap )
+int __glXMap2dReqSize( const GLbyte *pc, Bool swap, int reqlen )
 {
     GLenum target;
-    GLint uorder, vorder, k;
+    GLint uorder, vorder;
 
     target = *(GLenum *)(pc + 32);
     uorder = *(GLint *)(pc + 36);
@@ -98,14 +95,13 @@ int __glXMap2dReqSize( const GLbyte *pc, Bool swap )
 	uorder = SWAPL( uorder );
 	vorder = SWAPL( vorder );
     }
-    k = __glMap2d_size( target );
-    return 8 * Map2Size( k, uorder, vorder );
+    return safe_mul(8, Map2Size(__glMap2d_size(target), uorder, vorder));
 }
 
-int __glXMap2fReqSize( const GLbyte *pc, Bool swap )
+int __glXMap2fReqSize( const GLbyte *pc, Bool swap, int reqlen )
 {
     GLenum target;
-    GLint uorder, vorder, k;
+    GLint uorder, vorder;
 
     target = *(GLenum *)(pc + 0);
     uorder = *(GLint *)(pc + 12);
@@ -115,8 +111,7 @@ int __glXMap2fReqSize( const GLbyte *pc, Bool swap )
 	uorder = SWAPL( uorder );
 	vorder = SWAPL( vorder );
     }
-    k = __glMap2f_size( target );
-    return 4 * Map2Size( k, uorder, vorder );
+    return safe_mul(4, Map2Size(__glMap2f_size(target), uorder, vorder));
 }
 
 /**
@@ -166,13 +161,16 @@ int __glXImageSize( GLenum format, GLenum type, GLenum target,
     GLint bytesPerElement, elementsPerGroup, groupsPerRow;
     GLint groupSize, rowSize, padding, imageSize;
 
+    if (w == 0 || h == 0 || d == 0)
+        return 0;
+
     if (w < 0 || h < 0 || d < 0 ||
 	(type == GL_BITMAP &&
 	 (format != GL_COLOR_INDEX && format != GL_STENCIL_INDEX))) {
 	return -1;
     }
-    if (w==0 || h==0 || d == 0) return 0;
 
+    /* proxy targets have no data */
     switch( target ) {
     case GL_PROXY_TEXTURE_1D:
     case GL_PROXY_TEXTURE_2D:
@@ -189,6 +187,12 @@ int __glXImageSize( GLenum format, GLenum type, GLenum target,
 	return 0;
     }
 
+    /* real data has to have real sizes */
+    if (imageHeight < 0 || rowLength < 0 || skipImages < 0 || skipRows < 0)
+        return -1;
+    if (alignment != 1 && alignment != 2 && alignment != 4 && alignment != 8)
+        return -1;
+
     if (type == GL_BITMAP) {
 	if (rowLength > 0) {
 	    groupsPerRow = rowLength;
@@ -196,11 +200,13 @@ int __glXImageSize( GLenum format, GLenum type, GLenum target,
 	    groupsPerRow = w;
 	}
 	rowSize = (groupsPerRow + 7) >> 3;
+	if (rowSize < 0)
+	    return -1;
 	padding = (rowSize % alignment);
 	if (padding) {
 	    rowSize += alignment - padding;
 	}
-	return ((h + skipRows) * rowSize);
+	return safe_mul(safe_add(h, skipRows), rowSize);
     } else {
 	switch(format) {
 	  case GL_COLOR_INDEX:
@@ -212,6 +218,11 @@ int __glXImageSize( GLenum format, GLenum type, GLenum target,
 	  case GL_ALPHA:
 	  case GL_LUMINANCE:
 	  case GL_INTENSITY:
+          case GL_RED_INTEGER_EXT:
+          case GL_GREEN_INTEGER_EXT:
+          case GL_BLUE_INTEGER_EXT:
+          case GL_ALPHA_INTEGER_EXT:
+          case GL_LUMINANCE_INTEGER_EXT:
 	    elementsPerGroup = 1;
 	    break;
 	  case GL_422_EXT:
@@ -222,14 +233,19 @@ int __glXImageSize( GLenum format, GLenum type, GLenum target,
 	  case GL_DEPTH_STENCIL_MESA:
 	  case GL_YCBCR_MESA:
 	  case GL_LUMINANCE_ALPHA:
+          case GL_LUMINANCE_ALPHA_INTEGER_EXT:
 	    elementsPerGroup = 2;
 	    break;
 	  case GL_RGB:
 	  case GL_BGR:
+          case GL_RGB_INTEGER_EXT:
+          case GL_BGR_INTEGER_EXT:
 	    elementsPerGroup = 3;
 	    break;
 	  case GL_RGBA:
 	  case GL_BGRA:
+          case GL_RGBA_INTEGER_EXT:
+          case GL_BGRA_INTEGER_EXT:
 	  case GL_ABGR_EXT:
 	    elementsPerGroup = 4;
 	    break;
@@ -281,23 +297,27 @@ int __glXImageSize( GLenum format, GLenum type, GLenum target,
 	  default:
 	    return -1;
 	}
+        /* known safe by the switches above, not checked */
 	groupSize = bytesPerElement * elementsPerGroup;
 	if (rowLength > 0) {
 	    groupsPerRow = rowLength;
 	} else {
 	    groupsPerRow = w;
 	}
-	rowSize = groupsPerRow * groupSize;
+        if ((rowSize = safe_mul(groupsPerRow, groupSize)) < 0)
+            return -1;
 	padding = (rowSize % alignment);
 	if (padding) {
 	    rowSize += alignment - padding;
 	}
-	if (imageHeight > 0) {
-	    imageSize = (imageHeight + skipRows) * rowSize;
-	} else {
-	    imageSize = (h + skipRows) * rowSize;
-	}
-	return ((d + skipImages) * imageSize);
+
+        if (imageHeight > 0)
+            h = imageHeight;
+        h = safe_add(h, skipRows);
+
+        imageSize = safe_mul(h, rowSize);
+
+        return safe_mul(safe_add(d, skipImages), imageSize);
     }
 }
 
@@ -318,13 +338,14 @@ int __glXTypeSize(GLenum enm)
   }
 }
 
-int __glXDrawArraysReqSize( const GLbyte *pc, Bool swap )
+int __glXDrawArraysReqSize( const GLbyte *pc, Bool swap, int reqlen )
 {
     __GLXdispatchDrawArraysHeader *hdr = (__GLXdispatchDrawArraysHeader *) pc;
     __GLXdispatchDrawArraysComponentHeader *compHeader;
     GLint numVertexes = hdr->numVertexes;
     GLint numComponents = hdr->numComponents;
     GLint arrayElementSize = 0;
+    GLint x, size;
     int i;
 
     if (swap) {
@@ -333,6 +354,13 @@ int __glXDrawArraysReqSize( const GLbyte *pc, Bool swap )
     }
 
     pc += sizeof(__GLXdispatchDrawArraysHeader);
+    reqlen -= sizeof(__GLXdispatchDrawArraysHeader);
+
+    size = safe_mul(sizeof(__GLXdispatchDrawArraysComponentHeader),
+                    numComponents);
+    if (size < 0 || reqlen < 0 || reqlen < size)
+        return -1;
+
     compHeader = (__GLXdispatchDrawArraysComponentHeader *) pc;
 
     for (i=0; i<numComponents; i++) {
@@ -381,11 +409,10 @@ int __glXDrawArraysReqSize( const GLbyte *pc, Bool swap )
 	pc += sizeof(__GLXdispatchDrawArraysComponentHeader);
     }
 
-    return ((numComponents * sizeof(__GLXdispatchDrawArraysComponentHeader)) +
-	    (numVertexes * arrayElementSize));
+    return safe_add(size, safe_mul(numVertexes, arrayElementSize));
 }
 
-int __glXSeparableFilter2DReqSize( const GLbyte *pc, Bool swap )
+int __glXSeparableFilter2DReqSize( const GLbyte *pc, Bool swap, int reqlen )
 {
     __GLXdispatchConvolutionFilterHeader *hdr =
 			(__GLXdispatchConvolutionFilterHeader *) pc;
@@ -410,9 +437,8 @@ int __glXSeparableFilter2DReqSize( const GLbyte *pc, Bool swap )
     /* XXX Should rowLength be used for either or both image? */
     image1size = __glXImageSize( format, type, 0, w, 1, 1,
 				 0, rowLength, 0, 0, alignment );
-    image1size = __GLX_PAD(image1size);
     image2size = __glXImageSize( format, type, 0, h, 1, 1,
 				 0, rowLength, 0, 0, alignment );
-    return image1size + image2size;
 
+    return safe_add(safe_pad(image1size), image2size);
 }
