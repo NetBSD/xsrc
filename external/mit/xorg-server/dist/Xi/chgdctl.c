@@ -81,7 +81,7 @@ SProcXChangeDeviceControl(ClientPtr client)
 
     REQUEST(xChangeDeviceControlReq);
     swaps(&stuff->length, n);
-    REQUEST_AT_LEAST_SIZE(xChangeDeviceControlReq);
+    REQUEST_AT_LEAST_EXTRA_SIZE(xChangeDeviceControlReq, sizeof(xDeviceCtl));
     swaps(&stuff->control, n);
     ctl = (xDeviceCtl*)&stuff[1];
     swaps(&ctl->control, n);
@@ -140,7 +140,7 @@ ProcXChangeDeviceControl(ClientPtr client)
     devicePresenceNotify dpn;
 
     REQUEST(xChangeDeviceControlReq);
-    REQUEST_AT_LEAST_SIZE(xChangeDeviceControlReq);
+    REQUEST_AT_LEAST_EXTRA_SIZE(xChangeDeviceControlReq, sizeof(xDeviceCtl));
 
     len = stuff->length - bytes_to_int32(sizeof(xChangeDeviceControlReq));
     ret = dixLookupDevice(&dev, stuff->deviceid, client, DixManageAccess);
@@ -248,6 +248,10 @@ ProcXChangeDeviceControl(ClientPtr client)
         break;
     case DEVICE_ENABLE:
         e = (xDeviceEnableCtl *)&stuff[1];
+        if ((len != bytes_to_int32(sizeof(xDeviceEnableCtl)))) {
+            ret = BadLength;
+            goto out;
+        }
 
         status = ChangeDeviceControl(client, dev, (xDeviceCtl *) e);
 
