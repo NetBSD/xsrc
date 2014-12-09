@@ -52,6 +52,8 @@ int DoSwapInterval(__GLXclientState *cl, GLbyte *pc, int do_swap)
     GLint interval;
 
 
+    REQUEST_FIXED_SIZE(xGLXVendorPrivateReq, 4);
+
     cx = __glXLookupContextByTag(cl, tag);
 
     LogMessage(X_ERROR, "%s: cx = %p, GLX screen = %p\n", __func__,
