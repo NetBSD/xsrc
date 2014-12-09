@@ -55,6 +55,7 @@ SProcXIQueryDevice(ClientPtr client)
     char n;
 
     REQUEST(xXIQueryDeviceReq);
+    REQUEST_SIZE_MATCH(xXIQueryDeviceReq);
 
     swaps(&stuff->length, n);
     swaps(&stuff->deviceid, n);

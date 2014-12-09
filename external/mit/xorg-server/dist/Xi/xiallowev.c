@@ -47,6 +47,7 @@ SProcXIAllowEvents(ClientPtr client)
     char n;
 
     REQUEST(xXIAllowEventsReq);
+    REQUEST_AT_LEAST_SIZE(xXIAllowEventsReq);
 
     swaps(&stuff->length, n);
     swaps(&stuff->deviceid, n);

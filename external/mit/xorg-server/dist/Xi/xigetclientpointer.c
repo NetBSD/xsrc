@@ -51,6 +51,7 @@ SProcXIGetClientPointer(ClientPtr client)
 {
     char n;
     REQUEST(xXIGetClientPointerReq);
+    REQUEST_SIZE_MATCH(xXIGetClientPointerReq);
 
     swaps(&stuff->length, n);
     swapl(&stuff->win, n);
