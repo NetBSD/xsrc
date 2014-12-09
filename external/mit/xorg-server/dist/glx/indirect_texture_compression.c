@@ -47,6 +47,8 @@ int __glXDisp_GetCompressedTexImageARB(struct __GLXclientStateRec *cl, GLbyte *p
     ClientPtr client = cl->client;
 
 
+    REQUEST_FIXED_SIZE(xGLXSingleReq, 8);
+
     pc += __GLX_SINGLE_HDR_SIZE;
     if ( cx != NULL ) {
 	const GLenum target = *(GLenum *)(pc + 0);
@@ -86,6 +88,8 @@ int __glXDispSwap_GetCompressedTexImageARB(struct __GLXclientStateRec *cl, GLbyt
     __GLXcontext * const cx = __glXForceCurrent( cl, bswap_32( req->contextTag ), & error );
     ClientPtr client = cl->client;
 
+
+    REQUEST_FIXED_SIZE(xGLXSingleReq, 8);
 
     pc += __GLX_SINGLE_HDR_SIZE;
     if ( cx != NULL ) {

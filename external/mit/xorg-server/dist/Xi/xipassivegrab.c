@@ -53,6 +53,7 @@ SProcXIPassiveGrabDevice(ClientPtr client)
     xXIModifierInfo *mods;
 
     REQUEST(xXIPassiveGrabDeviceReq);
+    REQUEST_AT_LEAST_SIZE(xXIPassiveGrabDeviceReq);
 
     swaps(&stuff->length, n);
     swaps(&stuff->deviceid, n);
@@ -63,6 +64,8 @@ SProcXIPassiveGrabDevice(ClientPtr client)
     swaps(&stuff->mask_len, n);
     swaps(&stuff->num_modifiers, n);
 
+    REQUEST_FIXED_SIZE(xXIPassiveGrabDeviceReq,
+        ((uint32_t) stuff->mask_len + stuff->num_modifiers) *4);
     mods = (xXIModifierInfo*)&stuff[1];
 
     for (i = 0; i < stuff->num_modifiers; i++, mods++)
@@ -91,7 +94,8 @@ ProcXIPassiveGrabDevice(ClientPtr client)
     int n;
 
     REQUEST(xXIPassiveGrabDeviceReq);
-    REQUEST_AT_LEAST_SIZE(xXIPassiveGrabDeviceReq);
+    REQUEST_FIXED_SIZE(xXIPassiveGrabDeviceReq,
+        ((uint32_t) stuff->mask_len + stuff->num_modifiers) * 4);
 
     if (stuff->deviceid == XIAllDevices)
         dev = inputInfo.all_devices;
@@ -237,6 +241,7 @@ SProcXIPassiveUngrabDevice(ClientPtr client)
     uint32_t *modifiers;
 
     REQUEST(xXIPassiveUngrabDeviceReq);
+    REQUEST_AT_LEAST_SIZE(xXIPassiveUngrabDeviceReq);
 
     swaps(&stuff->length, n);
     swapl(&stuff->grab_window, n);
@@ -244,6 +249,8 @@ SProcXIPassiveUngrabDevice(ClientPtr client)
     swapl(&stuff->detail, n);
     swaps(&stuff->num_modifiers, n);
 
+    REQUEST_FIXED_SIZE(xXIPassiveUngrabDeviceReq,
+                       ((uint32_t) stuff->num_modifiers) << 2);
     modifiers = (uint32_t*)&stuff[1];
 
     for (i = 0; i < stuff->num_modifiers; i++, modifiers++)
@@ -262,7 +269,8 @@ ProcXIPassiveUngrabDevice(ClientPtr client)
     int i, rc;
 
     REQUEST(xXIPassiveUngrabDeviceReq);
-    REQUEST_AT_LEAST_SIZE(xXIPassiveUngrabDeviceReq);
+    REQUEST_FIXED_SIZE(xXIPassiveUngrabDeviceReq,
+                       ((uint32_t) stuff->num_modifiers) << 2);
 
     rc = dixLookupDevice(&dev, stuff->deviceid, client, DixGrabAccess);
     if (rc != Success)
