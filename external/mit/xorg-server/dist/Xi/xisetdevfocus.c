@@ -46,6 +46,8 @@ SProcXISetFocus(ClientPtr client)
     char n;
 
     REQUEST(xXISetFocusReq);
+    REQUEST_AT_LEAST_SIZE(xXISetFocusReq);
+
     swaps(&stuff->length, n);
     swaps(&stuff->deviceid, n);
     swapl(&stuff->focus, n);
@@ -60,6 +62,8 @@ SProcXIGetFocus(ClientPtr client)
     char n;
 
     REQUEST(xXIGetFocusReq);
+    REQUEST_AT_LEAST_SIZE(xXIGetFocusReq);
+
     swaps(&stuff->length, n);
     swaps(&stuff->deviceid, n);
 

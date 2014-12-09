@@ -487,8 +487,8 @@ ProcDbeSwapBuffers(ClientPtr client)
     DbeSwapInfoPtr	swapInfo;
     xDbeSwapInfo	*dbeSwapInfo;
     int			error;
-    register int	i, j;
-    int			nStuff;
+    unsigned int i, j;
+    unsigned int nStuff;
 
 
     REQUEST_AT_LEAST_SIZE(xDbeSwapBuffersReq);
@@ -496,11 +496,13 @@ ProcDbeSwapBuffers(ClientPtr client)
 
     if (nStuff == 0)
     {
+        REQUEST_SIZE_MATCH(xDbeSwapBuffersReq);
         return Success;
     }
 
     if (nStuff > UINT32_MAX / sizeof(DbeSwapInfoRec))
 	    return BadAlloc;
+    REQUEST_FIXED_SIZE(xDbeSwapBuffersReq, nStuff * sizeof(xDbeSwapInfo));
 
     /* Get to the swap info appended to the end of the request. */
     dbeSwapInfo = (xDbeSwapInfo *)&stuff[1];
@@ -1035,7 +1037,7 @@ static int
 SProcDbeSwapBuffers(ClientPtr client)
 {
     REQUEST(xDbeSwapBuffersReq);
-    register int	i, n;
+    unsigned int	i, n;
     xDbeSwapInfo	*pSwapInfo;
 
 
@@ -1043,6 +1045,9 @@ SProcDbeSwapBuffers(ClientPtr client)
     REQUEST_AT_LEAST_SIZE(xDbeSwapBuffersReq);
 
     swapl(&stuff->n, n);
+    if (stuff->n > UINT32_MAX / sizeof(DbeSwapInfoRec))
+        return BadAlloc;
+    REQUEST_FIXED_SIZE(xDbeSwapBuffersReq, stuff->n * sizeof(xDbeSwapInfo));
 
     if (stuff->n != 0)
     { 
