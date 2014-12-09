@@ -205,6 +205,10 @@ static void test_XIQueryPointer(void)
     test_data.dev = devices.mouse;
     request.deviceid = devices.mouse->id;
     request_XIQueryPointer(&client_request, &request, Success);
+
+    /* test REQUEST_SIZE_MATCH */
+    client_request.req_len -= 4;
+    request_XIQueryPointer(&client_request, &request, BadLength);
 }
 
 int main(int argc, char** argv)
