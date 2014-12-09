@@ -2279,6 +2279,7 @@ hw/kdrive/fbdev/Makefile
 hw/kdrive/linux/Makefile
 hw/kdrive/src/Makefile
 test/Makefile
+test/xi1/Makefile
 test/xi2/Makefile
 xorg-server.pc
 ])

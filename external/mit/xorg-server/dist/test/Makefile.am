@@ -1,5 +1,5 @@
 if UNITTESTS
-SUBDIRS= . xi2
+SUBDIRS= . xi1 xi2
 check_PROGRAMS = xkb input xtest
 check_LTLIBRARIES = libxservertest.la
 

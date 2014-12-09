@@ -65,6 +65,7 @@ SProcXISelectEvents(ClientPtr client)
 {
     char n;
     int i;
+    int len;
     xXIEventMask* evmask;
 
     REQUEST(xXISelectEventsReq);
@@ -73,11 +74,18 @@ SProcXISelectEvents(ClientPtr client)
     swapl(&stuff->win, n);
     swaps(&stuff->num_masks, n);
 
+    len = stuff->length - bytes_to_int32(sizeof(xXISelectEventsReq));
     evmask = (xXIEventMask*)&stuff[1];
     for (i = 0; i < stuff->num_masks; i++)
     {
+        if (len < bytes_to_int32(sizeof(xXIEventMask)))
+            return BadLength;
+        len -= bytes_to_int32(sizeof(xXIEventMask));
         swaps(&evmask->deviceid, n);
         swaps(&evmask->mask_len, n);
+        if (len < evmask->mask_len)
+            return BadLength;
+        len -= evmask->mask_len;
         evmask = (xXIEventMask*)(((char*)&evmask[1]) + evmask->mask_len * 4);
     }
 
