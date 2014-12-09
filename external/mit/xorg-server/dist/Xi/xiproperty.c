@@ -839,10 +839,9 @@ SProcXListDeviceProperties (ClientPtr client)
 {
     char n;
     REQUEST(xListDevicePropertiesReq);
+    REQUEST_SIZE_MATCH(xListDevicePropertiesReq);
 
     swaps(&stuff->length, n);
-
-    REQUEST_SIZE_MATCH(xListDevicePropertiesReq);
     return (ProcXListDeviceProperties(client));
 }
 
@@ -865,10 +864,10 @@ SProcXDeleteDeviceProperty (ClientPtr client)
 {
     char n;
     REQUEST(xDeleteDevicePropertyReq);
+    REQUEST_SIZE_MATCH(xDeleteDevicePropertyReq);
 
     swaps(&stuff->length, n);
     swapl(&stuff->property, n);
-    REQUEST_SIZE_MATCH(xDeleteDevicePropertyReq);
     return (ProcXDeleteDeviceProperty(client));
 }
 
@@ -877,13 +876,13 @@ SProcXGetDeviceProperty (ClientPtr client)
 {
     char n;
     REQUEST(xGetDevicePropertyReq);
+    REQUEST_SIZE_MATCH(xGetDevicePropertyReq);
 
     swaps(&stuff->length, n);
     swapl(&stuff->property, n);
     swapl(&stuff->type, n);
     swapl(&stuff->longOffset, n);
     swapl(&stuff->longLength, n);
-    REQUEST_SIZE_MATCH(xGetDevicePropertyReq);
     return (ProcXGetDeviceProperty(client));
 }
 
