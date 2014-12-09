@@ -278,11 +278,11 @@ ProcRenderQueryVersion (ClientPtr client)
     xRenderQueryVersionReply rep;
     register int n;
     REQUEST(xRenderQueryVersionReq);
+    REQUEST_SIZE_MATCH(xRenderQueryVersionReq);
 
     pRenderClient->major_version = stuff->majorVersion;
     pRenderClient->minor_version = stuff->minorVersion;
 
-    REQUEST_SIZE_MATCH(xRenderQueryVersionReq);
     memset(&rep, 0, sizeof(xRenderQueryVersionReply));
     rep.type = X_Reply;
     rep.length = 0;
@@ -2064,6 +2064,7 @@ SProcRenderQueryVersion (ClientPtr client)
 {
     register int n;
     REQUEST(xRenderQueryVersionReq);
+    REQUEST_SIZE_MATCH(xRenderQueryVersionReq);
 
     swaps(&stuff->length, n);
     swapl(&stuff->majorVersion, n);
@@ -2076,6 +2077,7 @@ SProcRenderQueryPictFormats (ClientPtr client)
 {
     register int n;
     REQUEST(xRenderQueryPictFormatsReq);
+    REQUEST_SIZE_MATCH(xRenderQueryPictFormatsReq);
     swaps(&stuff->length, n);
     return (*ProcRenderVector[stuff->renderReqType]) (client);
 }
@@ -2085,6 +2087,7 @@ SProcRenderQueryPictIndexValues (ClientPtr client)
 {
     register int n;
     REQUEST(xRenderQueryPictIndexValuesReq);
+    REQUEST_AT_LEAST_SIZE(xRenderQueryPictIndexValuesReq);
     swaps(&stuff->length, n);
     swapl(&stuff->format, n);
     return (*ProcRenderVector[stuff->renderReqType]) (client);
@@ -2101,6 +2104,7 @@ SProcRenderCreatePicture (ClientPtr client)
 {
     register int n;
     REQUEST(xRenderCreatePictureReq);
+    REQUEST_AT_LEAST_SIZE(xRenderCreatePictureReq);
     swaps(&stuff->length, n);
     swapl(&stuff->pid, n);
     swapl(&stuff->drawable, n);
@@ -2115,6 +2119,7 @@ SProcRenderChangePicture (ClientPtr client)
 {
     register int n;
     REQUEST(xRenderChangePictureReq);
+    REQUEST_AT_LEAST_SIZE(xRenderChangePictureReq);
     swaps(&stuff->length, n);
     swapl(&stuff->picture, n);
     swapl(&stuff->mask, n);
@@ -2127,6 +2132,7 @@ SProcRenderSetPictureClipRectangles (ClientPtr client)
 {
     register int n;
     REQUEST(xRenderSetPictureClipRectanglesReq);
+    REQUEST_AT_LEAST_SIZE(xRenderSetPictureClipRectanglesReq);
     swaps(&stuff->length, n);
     swapl(&stuff->picture, n);
     swaps(&stuff->xOrigin, n);
@@ -2140,6 +2146,7 @@ SProcRenderFreePicture (ClientPtr client)
 {
     register int n;
     REQUEST(xRenderFreePictureReq);
+    REQUEST_SIZE_MATCH(xRenderFreePictureReq);
     swaps(&stuff->length, n);
     swapl(&stuff->picture, n);
     return (*ProcRenderVector[stuff->renderReqType]) (client);
@@ -2150,6 +2157,7 @@ SProcRenderComposite (ClientPtr client)
 {
     register int n;
     REQUEST(xRenderCompositeReq);
+    REQUEST_SIZE_MATCH(xRenderCompositeReq);
     swaps(&stuff->length, n);
     swapl(&stuff->src, n);
     swapl(&stuff->mask, n);
@@ -2170,6 +2178,7 @@ SProcRenderScale (ClientPtr client)
 {
     register int n;
     REQUEST(xRenderScaleReq);
+    REQUEST_SIZE_MATCH(xRenderScaleReq);
     swaps(&stuff->length, n);
     swapl(&stuff->src, n);
     swapl(&stuff->dst, n);
@@ -2275,6 +2284,7 @@ SProcRenderCreateGlyphSet (ClientPtr client)
 {
     register int n;
     REQUEST(xRenderCreateGlyphSetReq);
+    REQUEST_SIZE_MATCH(xRenderCreateGlyphSetReq);
     swaps(&stuff->length, n);
     swapl(&stuff->gsid, n);
     swapl(&stuff->format, n);
@@ -2286,6 +2296,7 @@ SProcRenderReferenceGlyphSet (ClientPtr client)
 {
     register int n;
     REQUEST(xRenderReferenceGlyphSetReq);
+    REQUEST_SIZE_MATCH(xRenderReferenceGlyphSetReq);
     swaps(&stuff->length, n);
     swapl(&stuff->gsid, n);
     swapl(&stuff->existing, n);
@@ -2297,6 +2308,7 @@ SProcRenderFreeGlyphSet (ClientPtr client)
 {
     register int n;
     REQUEST(xRenderFreeGlyphSetReq);
+    REQUEST_SIZE_MATCH(xRenderFreeGlyphSetReq);
     swaps(&stuff->length, n);
     swapl(&stuff->glyphset, n);
     return (*ProcRenderVector[stuff->renderReqType]) (client);
@@ -2311,6 +2323,7 @@ SProcRenderAddGlyphs (ClientPtr client)
     void    *end;
     xGlyphInfo *gi;
     REQUEST(xRenderAddGlyphsReq);
+    REQUEST_AT_LEAST_SIZE(xRenderAddGlyphsReq);
     swaps(&stuff->length, n);
     swapl(&stuff->glyphset, n);
     swapl(&stuff->nglyphs, n);
@@ -2347,6 +2360,7 @@ SProcRenderFreeGlyphs (ClientPtr client)
 {
     register int n;
     REQUEST(xRenderFreeGlyphsReq);
+    REQUEST_AT_LEAST_SIZE(xRenderFreeGlyphsReq);
     swaps(&stuff->length, n);
     swapl(&stuff->glyphset, n);
     SwapRestL(stuff);
@@ -2365,6 +2379,7 @@ SProcRenderCompositeGlyphs (ClientPtr client)
     int		size;
     
     REQUEST(xRenderCompositeGlyphsReq);
+    REQUEST_AT_LEAST_SIZE(xRenderCompositeGlyphsReq);
     
     switch (stuff->renderReqType) {
     default:			    size = 1; break;
