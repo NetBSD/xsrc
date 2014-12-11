@@ -174,7 +174,7 @@ extern __GLXprocPtr __glXProcTable[];
  */
 typedef struct {
     int bytes;
-    int (*varsize)(GLbyte *pc, Bool swap);
+    int (*varsize)(GLbyte *pc, Bool swap, int reqlen);
 } __GLXrenderSizeData;
 extern __GLXrenderSizeData __glXRenderSizeTable[];
 extern __GLXrenderSizeData __glXRenderSizeTable_EXT[];
@@ -220,6 +220,49 @@ extern void glxSwapQueryServerStringReply(ClientPtr client,
  * Routines for computing the size of variably-sized rendering commands.
  */
 
+#define _X_INLINE __inline__
+
+static _X_INLINE int
+safe_add(int a, int b)
+{
+    if (a < 0 || b < 0)
+        return -1;
+
+    if (INT_MAX - a < b)
+        return -1;
+
+    return a + b;
+}
+
+static _X_INLINE int
+safe_mul(int a, int b)
+{
+    if (a < 0 || b < 0)
+        return -1;
+
+    if (a == 0 || b == 0)
+        return 0;
+
+    if (a > INT_MAX / b)
+        return -1;
+
+    return a * b;
+}
+
+static _X_INLINE int
+safe_pad(int a)
+{
+    int ret;
+
+    if (a < 0)
+        return -1;
+
+    if ((ret = safe_add(a, 3)) < 0)
+        return -1;
+
+    return ret & (GLuint)~3;
+}
+
 extern int __glXTypeSize(GLenum enm);
 extern int __glXImageSize(GLenum format, GLenum type, GLsizei w, GLsizei h,
 			  GLint rowLength, GLint skipRows, GLint alignment);
@@ -229,48 +272,48 @@ extern int __glXImage3DSize(GLenum format, GLenum type,
 			    GLint skipImages, GLint skipRows,
 			    GLint alignment);
 
-extern int __glXCallListsReqSize(GLbyte *pc, Bool swap);
-extern int __glXBitmapReqSize(GLbyte *pc, Bool swap);
-extern int __glXFogfvReqSize(GLbyte *pc, Bool swap);
-extern int __glXFogivReqSize(GLbyte *pc, Bool swap);
-extern int __glXLightfvReqSize(GLbyte *pc, Bool swap);
-extern int __glXLightivReqSize(GLbyte *pc, Bool swap);
-extern int __glXLightModelfvReqSize(GLbyte *pc, Bool swap);
-extern int __glXLightModelivReqSize(GLbyte *pc, Bool swap);
-extern int __glXMaterialfvReqSize(GLbyte *pc, Bool swap);
-extern int __glXMaterialivReqSize(GLbyte *pc, Bool swap);
-extern int __glXTexParameterfvReqSize(GLbyte *pc, Bool swap);
-extern int __glXTexParameterivReqSize(GLbyte *pc, Bool swap);
-extern int __glXTexImage1DReqSize(GLbyte *pc, Bool swap);
-extern int __glXTexImage2DReqSize(GLbyte *pc, Bool swap);
-extern int __glXTexEnvfvReqSize(GLbyte *pc, Bool swap);
-extern int __glXTexEnvivReqSize(GLbyte *pc, Bool swap);
-extern int __glXTexGendvReqSize(GLbyte *pc, Bool swap);
-extern int __glXTexGenfvReqSize(GLbyte *pc, Bool swap);
-extern int __glXTexGenivReqSize(GLbyte *pc, Bool swap);
-extern int __glXMap1dReqSize(GLbyte *pc, Bool swap);
-extern int __glXMap1fReqSize(GLbyte *pc, Bool swap);
-extern int __glXMap2dReqSize(GLbyte *pc, Bool swap);
-extern int __glXMap2fReqSize(GLbyte *pc, Bool swap);
-extern int __glXPixelMapfvReqSize(GLbyte *pc, Bool swap);
-extern int __glXPixelMapuivReqSize(GLbyte *pc, Bool swap);
-extern int __glXPixelMapusvReqSize(GLbyte *pc, Bool swap);
-extern int __glXDrawPixelsReqSize(GLbyte *pc, Bool swap);
-extern int __glXDrawArraysSize(GLbyte *pc, Bool swap);
-extern int __glXPrioritizeTexturesReqSize(GLbyte *pc, Bool swap);
-extern int __glXTexSubImage1DReqSize(GLbyte *pc, Bool swap);
-extern int __glXTexSubImage2DReqSize(GLbyte *pc, Bool swap);
-extern int __glXTexImage3DReqSize(GLbyte *pc, Bool swap );
-extern int __glXTexSubImage3DReqSize(GLbyte *pc, Bool swap);
-extern int __glXConvolutionFilter1DReqSize(GLbyte *pc, Bool swap);
-extern int __glXConvolutionFilter2DReqSize(GLbyte *pc, Bool swap);
-extern int __glXConvolutionParameterivReqSize(GLbyte *pc, Bool swap);
-extern int __glXConvolutionParameterfvReqSize(GLbyte *pc, Bool swap);
-extern int __glXSeparableFilter2DReqSize(GLbyte *pc, Bool swap);
-extern int __glXColorTableReqSize(GLbyte *pc, Bool swap);
-extern int __glXColorSubTableReqSize(GLbyte *pc, Bool swap);
-extern int __glXColorTableParameterfvReqSize(GLbyte *pc, Bool swap);
-extern int __glXColorTableParameterivReqSize(GLbyte *pc, Bool swap);
+extern int __glXCallListsReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXBitmapReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXFogfvReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXFogivReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXLightfvReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXLightivReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXLightModelfvReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXLightModelivReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXMaterialfvReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXMaterialivReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXTexParameterfvReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXTexParameterivReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXTexImage1DReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXTexImage2DReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXTexEnvfvReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXTexEnvivReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXTexGendvReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXTexGenfvReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXTexGenivReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXMap1dReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXMap1fReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXMap2dReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXMap2fReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXPixelMapfvReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXPixelMapuivReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXPixelMapusvReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXDrawPixelsReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXDrawArraysSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXPrioritizeTexturesReqSize(GLbyte *pc, Bool swa, int reqlenp);
+extern int __glXTexSubImage1DReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXTexSubImage2DReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXTexImage3DReqSize(GLbyte *pc, Bool swap , int reqlen);
+extern int __glXTexSubImage3DReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXConvolutionFilter1DReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXConvolutionFilter2DReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXConvolutionParameterivReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXConvolutionParameterfvReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXSeparableFilter2DReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXColorTableReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXColorSubTableReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXColorTableParameterfvReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXColorTableParameterivReqSize(GLbyte *pc, Bool swap, int reqlen);
 
 /*
  * Routines for computing the size of returned data.
@@ -280,7 +323,7 @@ extern int __glXConvolutionParameterfvSize(GLenum pname);
 extern int __glXColorTableParameterfvSize(GLenum pname);
 extern int __glXColorTableParameterivSize(GLenum pname);
 
-extern int __glXPointParameterfvARBReqSize(GLbyte *pc, Bool swap);
-extern int __glXPointParameterivReqSize(GLbyte *pc, Bool swap);
+extern int __glXPointParameterfvARBReqSize(GLbyte *pc, Bool swap, int reqlen);
+extern int __glXPointParameterivReqSize(GLbyte *pc, Bool swap, int reqlen);
 
 #endif /* !__GLX_server_h__ */
