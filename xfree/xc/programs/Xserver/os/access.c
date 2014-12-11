@@ -1557,6 +1557,10 @@ GetHosts (
     {
 	nHosts++;
 	n += (((host->len + 3) >> 2) << 2) + sizeof(xHostEntry);
+        /* Could check for INT_MAX, but in reality having more than 1mb of
+           hostnames in the access list is ridiculous */
+        if (n >= 1048576)
+            break;
     }
     if (n)
     {
@@ -1568,6 +1572,8 @@ GetHosts (
         for (host = validhosts; host; host = host->next)
 	{
 	    len = host->len;
+            if ((ptr + sizeof(xHostEntry) + len) > ((unsigned char *) *data + n))
+                break;
 	    ((xHostEntry *)ptr)->family = host->family;
 	    ((xHostEntry *)ptr)->length = len;
 	    ptr += sizeof(xHostEntry);
