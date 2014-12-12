@@ -111,6 +111,8 @@ int ProcInitialConnection();
 #include "lbxserve.h"
 #endif
 
+#include <stdint.h>
+
 #define mskcnt ((MAXCLIENTS + 31) / 32)
 #define BITMASK(i) (1U << ((i) & 31))
 #define MASKIDX(i) ((i) >> 5)
@@ -2073,6 +2075,9 @@ ProcPutImage(client)
 
     tmpImage = (char *)&stuff[1];
     lengthProto = length;
+
+    if (lengthProto >= (INT32_MAX / stuff->height))
+        return BadLength;
 	
     if (((((lengthProto * stuff->height) + (unsigned)3) >> 2) + 
 	(sizeof(xPutImageReq) >> 2)) != client->req_len)

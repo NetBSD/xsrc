@@ -1427,7 +1427,7 @@ int __glXRender(__GLXclientState *cl, GLbyte *pc)
     left = (req->length << 2) - sz_xGLXRenderReq;
     while (left > 0) {
         __GLXrenderSizeData *entry;
-        int extra;
+        int extra = 0;
 	void (* proc)(GLbyte *);
 
 	/*
@@ -1464,22 +1464,19 @@ int __glXRender(__GLXclientState *cl, GLbyte *pc)
             client->errorValue = commandsDone;
             return __glXBadRenderRequest;
         }
+        if (cmdlen < entry->bytes) {
+            return BadLength;
+        }
         if (entry->varsize) {
             /* variable size command */
-            extra = (*entry->varsize)(pc + __GLX_RENDER_HDR_SIZE, False);
+            extra = (*entry->varsize)(pc + __GLX_RENDER_HDR_SIZE, False,
+                                      left - __GLX_RENDER_LARGE_HDR_SIZE);
             if (extra < 0) {
-                extra = 0;
-            }
-            if (cmdlen != __GLX_PAD(entry->bytes + extra)) {
-                return BadLength;
-            }
-        } else {
-            /* constant size command */
-            if (cmdlen != __GLX_PAD(entry->bytes)) {
                 return BadLength;
             }
         }
-	if (left < cmdlen) {
+
+        if (cmdlen != safe_pad(safe_add(entry->bytes, extra))) {
 	    return BadLength;
 	}
 
@@ -1513,6 +1510,8 @@ int __glXRenderLarge(__GLXclientState *cl, GLbyte *pc)
     int error;
     CARD16 opcode;
 
+    REQUEST_AT_LEAST_SIZE(xGLXRenderLargeReq);
+
     /*
     ** NOTE: much of this code also appears in the byteswapping version of this
     ** routine, __glXSwapRenderLarge().  Any changes made here should also be
@@ -1526,12 +1525,14 @@ int __glXRenderLarge(__GLXclientState *cl, GLbyte *pc)
 	__glXResetLargeCommandStatus(cl);
 	return error;
     }
+    if (safe_pad(req->dataBytes) < 0)
+        return BadLength;
     dataBytes = req->dataBytes;
 
     /*
     ** Check the request length.
     */
-    if ((req->length << 2) != __GLX_PAD(dataBytes) + sz_xGLXRenderLargeReq) {
+    if ((req->length << 2) != safe_pad(dataBytes) + sz_xGLXRenderLargeReq) {
 	client->errorValue = req->length;
 	/* Reset in case this isn't 1st request. */
 	__glXResetLargeCommandStatus(cl);
@@ -1541,7 +1542,9 @@ int __glXRenderLarge(__GLXclientState *cl, GLbyte *pc)
     
     if (cl->largeCmdRequestsSoFar == 0) {
 	__GLXrenderSizeData *entry;
-	int extra, cmdlen;
+	int cmdlen;
+	int extra = 0;
+	int left = (req->length << 2) - sz_xGLXRenderLargeReq;
 	/*
 	** This is the first request of a multi request command.
 	** Make enough space in the buffer, then copy the entire request.
@@ -1551,9 +1554,16 @@ int __glXRenderLarge(__GLXclientState *cl, GLbyte *pc)
 	    return __glXBadLargeRequest;
 	}
 
+	if (dataBytes < __GLX_RENDER_LARGE_HDR_SIZE)
+	    return BadLength;
+
 	hdr = (__GLXrenderLargeHeader *) pc;
-	cmdlen = hdr->length;
 	opcode = hdr->opcode;
+	if ((cmdlen = safe_pad(hdr->length)) < 0)
+	    return BadLength;
+
+        if (left < cmdlen)
+            return BadLength;
 
 	/*
 	** Check for core opcodes and grab entry data.
@@ -1583,20 +1593,18 @@ int __glXRenderLarge(__GLXclientState *cl, GLbyte *pc)
 	    ** be computed from its parameters), all the parameters needed
 	    ** will be in the 1st request, so it's okay to do this.
 	    */
-	    extra = (*entry->varsize)(pc + __GLX_RENDER_LARGE_HDR_SIZE, False);
+	    extra = (*entry->varsize)(pc + __GLX_RENDER_LARGE_HDR_SIZE, False,
+                                      left - __GLX_RENDER_HDR_SIZE);
 	    if (extra < 0) {
-		extra = 0;
-	    }
-	    /* large command's header is 4 bytes longer, so add 4 */
-	    if (cmdlen != __GLX_PAD(entry->bytes + 4 + extra)) {
-		return BadLength;
-	    }
-	} else {
-	    /* constant size command */
-	    if (cmdlen != __GLX_PAD(entry->bytes + 4)) {
 		return BadLength;
 	    }
 	}
+
+	/* the +4 is safe because we know entry.bytes is small */
+	if (cmdlen != safe_pad(safe_add(entry->bytes + 4, extra))) {
+            return BadLength;
+	}
+
 	/*
 	** Make enough space in the buffer, then copy the entire request.
 	*/
@@ -1625,6 +1633,7 @@ int __glXRenderLarge(__GLXclientState *cl, GLbyte *pc)
 	** We are receiving subsequent (i.e. not the first) requests of a
 	** multi request command.
 	*/
+	int bytesSoFar; /* including this packet */
 
 	/*
 	** Check the request number and the total request count.
@@ -1643,11 +1652,18 @@ int __glXRenderLarge(__GLXclientState *cl, GLbyte *pc)
 	/*
 	** Check that we didn't get too much data.
 	*/
-	if ((cl->largeCmdBytesSoFar + dataBytes) > cl->largeCmdBytesTotal) {
+	if ((bytesSoFar = safe_add(cl->largeCmdBytesSoFar, dataBytes)) < 0) {
 	    client->errorValue = dataBytes;
 	    __glXResetLargeCommandStatus(cl);
 	    return __glXBadLargeRequest;
 	}
+
+	if (bytesSoFar > cl->largeCmdBytesTotal) {
+	    client->errorValue = dataBytes;
+	    __glXResetLargeCommandStatus(cl);
+	    return __glXBadLargeRequest;
+	}
+
 	__glXMemcpy(cl->largeCmdBuf + cl->largeCmdBytesSoFar, pc, dataBytes);
 	cl->largeCmdBytesSoFar += dataBytes;
 	cl->largeCmdRequestsSoFar++;
@@ -1657,17 +1673,16 @@ int __glXRenderLarge(__GLXclientState *cl, GLbyte *pc)
 	    ** This is the last request; it must have enough bytes to complete
 	    ** the command.
 	    */
-	    /* NOTE: the two pad macros have been added below; they are needed
-	    ** because the client library pads the total byte count, but not
-	    ** the per-request byte counts.  The Protocol Encoding says the
-	    ** total byte count should not be padded, so a proposal will be 
-	    ** made to the ARB to relax the padding constraint on the total 
-	    ** byte count, thus preserving backward compatibility.  Meanwhile, 
-	    ** the padding done below fixes a bug that did not allow
-	    ** large commands of odd sizes to be accepted by the server.
+	    /* NOTE: the pad macro below is needed because the client library
+	    ** pads the total byte count, but not the per-request byte counts.
+	    ** The Protocol Encoding says the total byte count should not be
+	    ** padded, so a proposal will be made to the ARB to relax the
+	    ** padding constraint on the total byte count, thus preserving
+	    ** backward compatibility.  Meanwhile, the padding done below
+	    ** fixes a bug that did not allow large commands of odd sizes to
+	    ** be accepted by the server.
 	    */
-	    if (__GLX_PAD(cl->largeCmdBytesSoFar) !=
-		__GLX_PAD(cl->largeCmdBytesTotal)) {
+	    if (safe_pad(cl->largeCmdBytesSoFar) != cl->largeCmdBytesTotal) {
 		client->errorValue = dataBytes;
 		__glXResetLargeCommandStatus(cl);
 		return __glXBadLargeRequest;
