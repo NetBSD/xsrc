@@ -11,8 +11,9 @@
  * option) any later version.
  */
 
-#define HAVE_STDINT_H
-#define _FILE_OFFSET_BITS 64
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <errno.h>
 #include <stdio.h>

@@ -21,7 +21,9 @@
  * IN THE SOFTWARE.
  */
 
-#define _GNU_SOURCE
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <string.h>
 #include <stdlib.h>
@@ -30,10 +32,9 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/mman.h>
 #include <err.h>
 
-#include "config.h"
+#include "libdrm.h"
 #include "intel_bufmgr.h"
 #include "intel_chipset.h"
 
@@ -63,7 +64,7 @@ read_file(const char *filename, void **ptr, size_t *size)
 		errx(1, "couldn't stat `%s'", filename);
 
 	*size = st.st_size;
-	*ptr = mmap(NULL, st.st_size, PROT_READ, MAP_SHARED, fd, 0);
+	*ptr = drm_mmap(NULL, st.st_size, PROT_READ, MAP_SHARED, fd, 0);
 	if (*ptr == MAP_FAILED)
 		errx(1, "couldn't map `%s'", filename);
 

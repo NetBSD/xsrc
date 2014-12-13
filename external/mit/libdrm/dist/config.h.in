@@ -33,6 +33,9 @@
 /* Install test programs */
 #undef HAVE_INSTALL_TESTS
 
+/* Have intel support */
+#undef HAVE_INTEL
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
@@ -83,6 +86,9 @@
 
 /* Use valgrind intrinsics to suppress false warnings */
 #undef HAVE_VALGRIND
+
+/* Compiler has -fvisibility support */
+#undef HAVE_VISIBILITY
 
 /* Have vmwgfx kernel headers */
 #undef HAVE_VMWGFX

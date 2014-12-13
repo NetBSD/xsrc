@@ -100,19 +100,20 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = .
-DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
-	$(top_srcdir)/configure $(am__configure_deps) \
-	$(srcdir)/config.h.in $(srcdir)/libdrm.pc.in \
-	$(top_srcdir)/build-aux/depcomp $(libdrminclude_HEADERS) \
-	README config.guess build-aux/config.guess config.sub \
-	build-aux/config.sub depcomp build-aux/depcomp install-sh \
-	build-aux/install-sh missing build-aux/missing ltmain.sh \
+DIST_COMMON = $(srcdir)/Makefile.sources $(srcdir)/Makefile.in \
+	$(srcdir)/Makefile.am $(top_srcdir)/configure \
+	$(am__configure_deps) $(srcdir)/config.h.in \
+	$(srcdir)/libdrm.pc.in $(top_srcdir)/build-aux/depcomp \
+	$(am__klibdrminclude_HEADERS_DIST) $(libdrminclude_HEADERS) \
+	README build-aux/config.guess build-aux/config.sub \
+	build-aux/depcomp build-aux/install-sh build-aux/missing \
 	build-aux/ltmain.sh $(top_srcdir)/build-aux/config.guess \
 	$(top_srcdir)/build-aux/config.sub \
 	$(top_srcdir)/build-aux/install-sh \
 	$(top_srcdir)/build-aux/ltmain.sh \
 	$(top_srcdir)/build-aux/missing
+@HAVE_VMWGFX_TRUE@am__append_1 = $(LIBDRM_INCLUDE_VMWGFX_H_FILES)
+subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
@@ -154,12 +155,14 @@ am__uninstall_files_from_dir = { \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
 am__installdirs = "$(DESTDIR)$(libdrm_ladir)" \
-	"$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(libdrmincludedir)"
+	"$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(klibdrmincludedir)" \
+	"$(DESTDIR)$(libdrmincludedir)"
 LTLIBRARIES = $(libdrm_la_LTLIBRARIES)
 libdrm_la_DEPENDENCIES =
-am_libdrm_la_OBJECTS = libdrm_la-xf86drm.lo libdrm_la-xf86drmHash.lo \
+am__objects_1 = libdrm_la-xf86drm.lo libdrm_la-xf86drmHash.lo \
 	libdrm_la-xf86drmRandom.lo libdrm_la-xf86drmSL.lo \
 	libdrm_la-xf86drmMode.lo
+am_libdrm_la_OBJECTS = $(am__objects_1)
 libdrm_la_OBJECTS = $(am_libdrm_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -218,7 +221,15 @@ am__can_run_installinfo = \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
 DATA = $(pkgconfig_DATA)
-HEADERS = $(libdrminclude_HEADERS)
+am__klibdrminclude_HEADERS_DIST = include/drm/drm.h \
+	include/drm/drm_fourcc.h include/drm/drm_mode.h \
+	include/drm/drm_sarea.h include/drm/i915_drm.h \
+	include/drm/mach64_drm.h include/drm/mga_drm.h \
+	include/drm/nouveau_drm.h include/drm/qxl_drm.h \
+	include/drm/r128_drm.h include/drm/radeon_drm.h \
+	include/drm/savage_drm.h include/drm/sis_drm.h \
+	include/drm/via_drm.h include/drm/vmwgfx_drm.h
+HEADERS = $(klibdrminclude_HEADERS) $(libdrminclude_HEADERS)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 am__recursive_targets = \
@@ -249,7 +260,7 @@ ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
 DIST_SUBDIRS = . libkms intel nouveau radeon omap exynos freedreno \
-	tests include man
+	tests man
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -371,6 +382,7 @@ STRIP = @STRIP@
 VALGRIND_CFLAGS = @VALGRIND_CFLAGS@
 VALGRIND_LIBS = @VALGRIND_LIBS@
 VERSION = @VERSION@
+VISIBILITY_CFLAGS = @VISIBILITY_CFLAGS@
 WARN_CFLAGS = @WARN_CFLAGS@
 XSLTPROC = @XSLTPROC@
 abs_builddir = @abs_builddir@
@@ -427,6 +439,39 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+LIBDRM_FILES := \
+	xf86drm.c \
+	xf86drmHash.c \
+	xf86drmRandom.c \
+	xf86drmSL.c \
+	xf86drmMode.c \
+	xf86atomic.h \
+	libdrm.h \
+	libdrm_lists.h
+
+LIBDRM_H_FILES := \
+	xf86drm.h \
+	xf86drmMode.h
+
+LIBDRM_INCLUDE_H_FILES := \
+	include/drm/drm.h \
+	include/drm/drm_fourcc.h \
+	include/drm/drm_mode.h \
+	include/drm/drm_sarea.h \
+	include/drm/i915_drm.h \
+	include/drm/mach64_drm.h \
+	include/drm/mga_drm.h \
+	include/drm/nouveau_drm.h \
+	include/drm/qxl_drm.h \
+	include/drm/r128_drm.h \
+	include/drm/radeon_drm.h \
+	include/drm/savage_drm.h \
+	include/drm/sis_drm.h \
+	include/drm/via_drm.h
+
+LIBDRM_INCLUDE_VMWGFX_H_FILES := \
+	include/drm/vmwgfx_drm.h
+
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 pkgconfig_DATA = libdrm.pc
 @HAVE_LIBKMS_TRUE@LIBKMS_SUBDIR = libkms
@@ -436,7 +481,7 @@ pkgconfig_DATA = libdrm.pc
 @HAVE_OMAP_TRUE@OMAP_SUBDIR = omap
 @HAVE_EXYNOS_TRUE@EXYNOS_SUBDIR = exynos
 @HAVE_FREEDRENO_TRUE@FREEDRENO_SUBDIR = freedreno
-SUBDIRS = . $(LIBKMS_SUBDIR) $(INTEL_SUBDIR) $(NOUVEAU_SUBDIR) $(RADEON_SUBDIR) $(OMAP_SUBDIR) $(EXYNOS_SUBDIR) $(FREEDRENO_SUBDIR) tests include man
+SUBDIRS = . $(LIBKMS_SUBDIR) $(INTEL_SUBDIR) $(NOUVEAU_SUBDIR) $(RADEON_SUBDIR) $(OMAP_SUBDIR) $(EXYNOS_SUBDIR) $(FREEDRENO_SUBDIR) tests man
 libdrm_la_LTLIBRARIES = libdrm.la
 libdrm_ladir = $(libdir)
 libdrm_la_LDFLAGS = -version-number 2:4:0 -no-undefined
@@ -445,18 +490,12 @@ libdrm_la_CPPFLAGS = -I$(top_srcdir)/include/drm
 AM_CFLAGS = \
 	$(VALGRIND_CFLAGS)
 
-libdrm_la_SOURCES = \
-	xf86drm.c				\
-	xf86drmHash.c				\
-	xf86drmRandom.c				\
-	xf86drmSL.c				\
-	xf86drmMode.c				\
-	xf86atomic.h				\
-	libdrm_lists.h
-
+libdrm_la_SOURCES = $(LIBDRM_FILES)
 libdrmincludedir = ${includedir}
-libdrminclude_HEADERS = xf86drm.h xf86drmMode.h
-EXTRA_DIST = libdrm.pc.in include/drm/*
+libdrminclude_HEADERS = $(LIBDRM_H_FILES)
+EXTRA_DIST = Android.mk
+klibdrmincludedir = ${includedir}/libdrm
+klibdrminclude_HEADERS = $(LIBDRM_INCLUDE_H_FILES) $(am__append_1)
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -464,7 +503,7 @@ all: config.h
 .SUFFIXES: .c .lo .o .obj
 am--refresh: Makefile
 	@:
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(srcdir)/Makefile.sources $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -487,6 +526,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__depfiles_maybe)'; \
 	    cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__depfiles_maybe);; \
 	esac;
+$(srcdir)/Makefile.sources:
 
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	$(SHELL) ./config.status --recheck
@@ -649,6 +689,27 @@ uninstall-pkgconfigDATA:
 	@list='$(pkgconfig_DATA)'; test -n "$(pkgconfigdir)" || list=; \
 	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
 	dir='$(DESTDIR)$(pkgconfigdir)'; $(am__uninstall_files_from_dir)
+install-klibdrmincludeHEADERS: $(klibdrminclude_HEADERS)
+	@$(NORMAL_INSTALL)
+	@list='$(klibdrminclude_HEADERS)'; test -n "$(klibdrmincludedir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(klibdrmincludedir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(klibdrmincludedir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(klibdrmincludedir)'"; \
+	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(klibdrmincludedir)" || exit $$?; \
+	done
+
+uninstall-klibdrmincludeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(klibdrminclude_HEADERS)'; test -n "$(klibdrmincludedir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(klibdrmincludedir)'; $(am__uninstall_files_from_dir)
 install-libdrmincludeHEADERS: $(libdrminclude_HEADERS)
 	@$(NORMAL_INSTALL)
 	@list='$(libdrminclude_HEADERS)'; test -n "$(libdrmincludedir)" || list=; \
@@ -962,7 +1023,7 @@ check: check-recursive
 all-am: Makefile $(LTLIBRARIES) $(DATA) $(HEADERS) config.h
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(libdrm_ladir)" "$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(libdrmincludedir)"; do \
+	for dir in "$(DESTDIR)$(libdrm_ladir)" "$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(klibdrmincludedir)" "$(DESTDIR)$(libdrmincludedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-recursive
@@ -1019,8 +1080,9 @@ info: info-recursive
 
 info-am:
 
-install-data-am: install-libdrm_laLTLIBRARIES \
-	install-libdrmincludeHEADERS install-pkgconfigDATA
+install-data-am: install-klibdrmincludeHEADERS \
+	install-libdrm_laLTLIBRARIES install-libdrmincludeHEADERS \
+	install-pkgconfigDATA
 
 install-dvi: install-dvi-recursive
 
@@ -1068,8 +1130,9 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am: uninstall-libdrm_laLTLIBRARIES \
-	uninstall-libdrmincludeHEADERS uninstall-pkgconfigDATA
+uninstall-am: uninstall-klibdrmincludeHEADERS \
+	uninstall-libdrm_laLTLIBRARIES uninstall-libdrmincludeHEADERS \
+	uninstall-pkgconfigDATA
 
 .MAKE: $(am__recursive_targets) all install-am install-strip
 
@@ -1084,22 +1147,23 @@ uninstall-am: uninstall-libdrm_laLTLIBRARIES \
 	install install-am install-data install-data-am install-dvi \
 	install-dvi-am install-exec install-exec-am install-html \
 	install-html-am install-info install-info-am \
-	install-libdrm_laLTLIBRARIES install-libdrmincludeHEADERS \
-	install-man install-pdf install-pdf-am install-pkgconfigDATA \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs installdirs-am maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-am uninstall uninstall-am \
+	install-klibdrmincludeHEADERS install-libdrm_laLTLIBRARIES \
+	install-libdrmincludeHEADERS install-man install-pdf \
+	install-pdf-am install-pkgconfigDATA install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	installdirs-am maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
+	uninstall-am uninstall-klibdrmincludeHEADERS \
 	uninstall-libdrm_laLTLIBRARIES uninstall-libdrmincludeHEADERS \
 	uninstall-pkgconfigDATA
 
 
 copy-headers :
-	cp -r $(kernel_source)/usr/include/drm $(top_srcdir)/include
+	cp -r $(kernel_source)/include/uapi/drm/*.h $(top_srcdir)/include/drm/
 
 commit-headers : copy-headers
-	git add include
+	git add include/drm/*.h
 	git commit -am "Copy headers from kernel $$(GIT_DIR=$(kernel_source)/.git git describe)"
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

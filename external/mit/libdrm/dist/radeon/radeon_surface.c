@@ -26,15 +26,18 @@
  * Authors:
  *      Jérôme Glisse <jglisse@redhat.com>
  */
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 #include <stdbool.h>
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/mman.h>
 #include <sys/ioctl.h>
 #include "drm.h"
+#include "libdrm.h"
 #include "xf86drm.h"
 #include "radeon_drm.h"
 #include "radeon_surface.h"
@@ -282,7 +285,7 @@ static int r6_surface_init_linear(struct radeon_surface_manager *surf_man,
         surf_minify(surf, surf->level+i, surf->bpe, i, xalign, yalign, zalign, offset);
         /* level0 and first mipmap need to have alignment */
         offset = surf->bo_size;
-        if ((i == 0)) {
+        if (i == 0) {
             offset = ALIGN(offset, surf->bo_alignment);
         }
     }
@@ -310,7 +313,7 @@ static int r6_surface_init_linear_aligned(struct radeon_surface_manager *surf_ma
         surf_minify(surf, surf->level+i, surf->bpe, i, xalign, yalign, zalign, offset);
         /* level0 and first mipmap need to have alignment */
         offset = surf->bo_size;
-        if ((i == 0)) {
+        if (i == 0) {
             offset = ALIGN(offset, surf->bo_alignment);
         }
     }
@@ -343,7 +346,7 @@ static int r6_surface_init_1d(struct radeon_surface_manager *surf_man,
         surf_minify(surf, surf->level+i, surf->bpe, i, xalign, yalign, zalign, offset);
         /* level0 and first mipmap need to have alignment */
         offset = surf->bo_size;
-        if ((i == 0)) {
+        if (i == 0) {
             offset = ALIGN(offset, surf->bo_alignment);
         }
     }
@@ -384,7 +387,7 @@ static int r6_surface_init_2d(struct radeon_surface_manager *surf_man,
         }
         /* level0 and first mipmap need to have alignment */
         offset = surf->bo_size;
-        if ((i == 0)) {
+        if (i == 0) {
             offset = ALIGN(offset, surf->bo_alignment);
         }
     }
@@ -632,7 +635,7 @@ static int eg_surface_init_1d(struct radeon_surface_manager *surf_man,
         surf_minify(surf, level+i, bpe, i, xalign, yalign, zalign, offset);
         /* level0 and first mipmap need to have alignment */
         offset = surf->bo_size;
-        if ((i == 0)) {
+        if (i == 0) {
             offset = ALIGN(offset, surf->bo_alignment);
         }
     }
@@ -685,7 +688,7 @@ static int eg_surface_init_2d(struct radeon_surface_manager *surf_man,
         }
         /* level0 and first mipmap need to have alignment */
         offset = surf->bo_size;
-        if ((i == 0)) {
+        if (i == 0) {
             offset = ALIGN(offset, surf->bo_alignment);
         }
     }
@@ -1307,7 +1310,7 @@ static int si_surface_sanity(struct radeon_surface_manager *surf_man,
         /* default value */
         surf->mtilea = 1;
         surf->bankw = 1;
-        surf->bankw = 1;
+        surf->bankh = 1;
         surf->tile_split = 64;
         surf->stencil_tile_split = 64;
     }
@@ -1524,7 +1527,7 @@ static int si_surface_init_linear_aligned(struct radeon_surface_manager *surf_ma
         si_surf_minify(surf, surf->level+i, surf->bpe, i, xalign, yalign, zalign, slice_align, offset);
         /* level0 and first mipmap need to have alignment */
         offset = surf->bo_size;
-        if ((i == 0)) {
+        if (i == 0) {
             offset = ALIGN(offset, surf->bo_alignment);
         }
         if (surf->flags & RADEON_SURF_HAS_TILE_MODE_INDEX) {
@@ -1567,7 +1570,7 @@ static int si_surface_init_1d(struct radeon_surface_manager *surf_man,
         si_surf_minify(surf, level+i, bpe, i, xalign, yalign, zalign, slice_align, offset);
         /* level0 and first mipmap need to have alignment */
         offset = surf->bo_size;
-        if ((i == 0)) {
+        if (i == 0) {
             offset = ALIGN(offset, alignment);
         }
         if (surf->flags & RADEON_SURF_HAS_TILE_MODE_INDEX) {
@@ -1669,7 +1672,7 @@ static int si_surface_init_2d(struct radeon_surface_manager *surf_man,
         }
         /* level0 and first mipmap need to have alignment */
         aligned_offset = offset = surf->bo_size;
-        if ((i == 0)) {
+        if (i == 0) {
             aligned_offset = ALIGN(aligned_offset, surf->bo_alignment);
         }
         if (surf->flags & RADEON_SURF_HAS_TILE_MODE_INDEX) {
@@ -1914,7 +1917,7 @@ static void cik_get_2d_params(struct radeon_surface_manager *surf_man,
         sample_split = 1;
         break;
     case CIK__SAMPLE_SPLIT__2:
-        sample_split = 1;
+        sample_split = 2;
         break;
     case CIK__SAMPLE_SPLIT__4:
         sample_split = 4;
@@ -2134,7 +2137,7 @@ static int cik_surface_sanity(struct radeon_surface_manager *surf_man,
         /* default value */
         surf->mtilea = 1;
         surf->bankw = 1;
-        surf->bankw = 1;
+        surf->bankh = 1;
         surf->tile_split = 64;
         surf->stencil_tile_split = 64;
     }
@@ -2395,7 +2398,8 @@ static int cik_surface_best(struct radeon_surface_manager *surf_man,
 /* ===========================================================================
  * public API
  */
-struct radeon_surface_manager *radeon_surface_manager_new(int fd)
+drm_public struct radeon_surface_manager *
+radeon_surface_manager_new(int fd)
 {
     struct radeon_surface_manager *surf_man;
 
@@ -2443,7 +2447,8 @@ out_err:
     return NULL;
 }
 
-void radeon_surface_manager_free(struct radeon_surface_manager *surf_man)
+drm_public void
+radeon_surface_manager_free(struct radeon_surface_manager *surf_man)
 {
     free(surf_man);
 }
@@ -2515,8 +2520,9 @@ static int radeon_surface_sanity(struct radeon_surface_manager *surf_man,
     return 0;
 }
 
-int radeon_surface_init(struct radeon_surface_manager *surf_man,
-                        struct radeon_surface *surf)
+drm_public int
+radeon_surface_init(struct radeon_surface_manager *surf_man,
+                    struct radeon_surface *surf)
 {
     unsigned mode, type;
     int r;
@@ -2531,8 +2537,9 @@ int radeon_surface_init(struct radeon_surface_manager *surf_man,
     return surf_man->surface_init(surf_man, surf);
 }
 
-int radeon_surface_best(struct radeon_surface_manager *surf_man,
-                        struct radeon_surface *surf)
+drm_public int
+radeon_surface_best(struct radeon_surface_manager *surf_man,
+                    struct radeon_surface *surf)
 {
     unsigned mode, type;
     int r;

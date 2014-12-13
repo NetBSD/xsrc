@@ -24,6 +24,7 @@
 
 #include <xf86drm.h>
 
+#include "libdrm.h"
 #include "exynos_drm.h"
 #include "fimg2d_reg.h"
 #include "fimg2d.h"
@@ -158,8 +159,8 @@ static int g2d_flush(struct g2d_context *ctx)
 
 	memset(&cmdlist, 0, sizeof(struct drm_exynos_g2d_set_cmdlist));
 
-	cmdlist.cmd = (unsigned int)&ctx->cmd[0];
-	cmdlist.cmd_buf = (unsigned int)&ctx->cmd_buf[0];
+	cmdlist.cmd = (uint64_t)(uintptr_t)&ctx->cmd[0];
+	cmdlist.cmd_buf = (uint64_t)(uintptr_t)&ctx->cmd_buf[0];
 	cmdlist.cmd_nr = ctx->cmd_nr;
 	cmdlist.cmd_buf_nr = ctx->cmd_buf_nr;
 	cmdlist.event_type = G2D_EVENT_NOT;
@@ -184,7 +185,7 @@ static int g2d_flush(struct g2d_context *ctx)
  *
  * fd: a file descriptor to drm device driver opened.
  */
-struct g2d_context *g2d_init(int fd)
+drm_public struct g2d_context *g2d_init(int fd)
 {
 	struct drm_exynos_g2d_get_ver ver;
 	struct g2d_context *ctx;
@@ -212,7 +213,7 @@ struct g2d_context *g2d_init(int fd)
 	return ctx;
 }
 
-void g2d_fini(struct g2d_context *ctx)
+drm_public void g2d_fini(struct g2d_context *ctx)
 {
 	if (ctx)
 		free(ctx);
@@ -223,7 +224,7 @@ void g2d_fini(struct g2d_context *ctx)
  *
  * @ctx: a pointer to g2d_context structure.
  */
-int g2d_exec(struct g2d_context *ctx)
+drm_public int g2d_exec(struct g2d_context *ctx)
 {
 	struct drm_exynos_g2d_exec exec;
 	int ret;
@@ -255,7 +256,8 @@ int g2d_exec(struct g2d_context *ctx)
  * @w: width value to buffer filled with given color data.
  * @h: height value to buffer filled with given color data.
  */
-int g2d_solid_fill(struct g2d_context *ctx, struct g2d_image *img,
+drm_public int
+g2d_solid_fill(struct g2d_context *ctx, struct g2d_image *img,
 			unsigned int x, unsigned int y, unsigned int w,
 			unsigned int h)
 {
@@ -315,7 +317,8 @@ int g2d_solid_fill(struct g2d_context *ctx, struct g2d_image *img,
  * @w: width value to source and destination buffers.
  * @h: height value to source and destination buffers.
  */
-int g2d_copy(struct g2d_context *ctx, struct g2d_image *src,
+drm_public int
+g2d_copy(struct g2d_context *ctx, struct g2d_image *src,
 		struct g2d_image *dst, unsigned int src_x, unsigned int src_y,
 		unsigned int dst_x, unsigned dst_y, unsigned int w,
 		unsigned int h)
@@ -382,7 +385,7 @@ int g2d_copy(struct g2d_context *ctx, struct g2d_image *src,
 	g2d_add_cmd(ctx, DST_LEFT_TOP_REG, pt.val);
 	pt.val = 0;
 	pt.data.x = dst_x + w;
-	pt.data.y = dst_x + h;
+	pt.data.y = dst_y + h;
 	g2d_add_cmd(ctx, DST_RIGHT_BOTTOM_REG, pt.val);
 
 	rop4.val = 0;
@@ -414,7 +417,8 @@ int g2d_copy(struct g2d_context *ctx, struct g2d_image *src,
  * @negative: indicate that it uses color negative to source and
  *	destination buffers.
  */
-int g2d_copy_with_scale(struct g2d_context *ctx, struct g2d_image *src,
+drm_public int
+g2d_copy_with_scale(struct g2d_context *ctx, struct g2d_image *src,
 				struct g2d_image *dst, unsigned int src_x,
 				unsigned int src_y, unsigned int src_w,
 				unsigned int src_h, unsigned int dst_x,
@@ -451,7 +455,7 @@ int g2d_copy_with_scale(struct g2d_context *ctx, struct g2d_image *src,
 	else {
 		scale = 1;
 		scale_x = (double)src_w / (double)dst_w;
-		scale_y = (double)src_w / (double)dst_h;
+		scale_y = (double)src_h / (double)dst_h;
 	}
 
 	if (src_x + src_w > src->width)
@@ -526,7 +530,8 @@ int g2d_copy_with_scale(struct g2d_context *ctx, struct g2d_image *src,
  * @h: height value to source and destination buffer.
  * @op: blend operation type.
  */
-int g2d_blend(struct g2d_context *ctx, struct g2d_image *src,
+drm_public int
+g2d_blend(struct g2d_context *ctx, struct g2d_image *src,
 		struct g2d_image *dst, unsigned int src_x,
 		unsigned int src_y, unsigned int dst_x, unsigned int dst_y,
 		unsigned int w, unsigned int h, enum e_g2d_op op)

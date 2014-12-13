@@ -105,13 +105,13 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+DIST_COMMON = $(srcdir)/Makefile.sources $(srcdir)/Makefile.in \
+	$(srcdir)/Makefile.am $(srcdir)/libdrm_intel.pc.in \
+	$(top_srcdir)/build-aux/depcomp $(libdrm_intelinclude_HEADERS) \
+	$(top_srcdir)/build-aux/test-driver
 noinst_PROGRAMS = test_decode$(EXEEXT)
 TESTS = $(am__EXEEXT_1)
 subdir = intel
-DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
-	$(srcdir)/libdrm_intel.pc.in $(top_srcdir)/build-aux/depcomp \
-	$(libdrm_intelinclude_HEADERS) \
-	$(top_srcdir)/build-aux/test-driver
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
@@ -155,8 +155,9 @@ am__installdirs = "$(DESTDIR)$(libdrm_intel_ladir)" \
 	"$(DESTDIR)$(libdrm_intelincludedir)"
 LTLIBRARIES = $(libdrm_intel_la_LTLIBRARIES)
 libdrm_intel_la_DEPENDENCIES = ../libdrm.la
-am_libdrm_intel_la_OBJECTS = intel_bufmgr.lo intel_bufmgr_fake.lo \
+am__objects_1 = intel_bufmgr.lo intel_bufmgr_fake.lo \
 	intel_bufmgr_gem.lo intel_decode.lo mm.lo
+am_libdrm_intel_la_OBJECTS = $(am__objects_1)
 libdrm_intel_la_OBJECTS = $(am_libdrm_intel_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -492,6 +493,7 @@ STRIP = @STRIP@
 VALGRIND_CFLAGS = @VALGRIND_CFLAGS@
 VALGRIND_LIBS = @VALGRIND_LIBS@
 VERSION = @VERSION@
+VISIBILITY_CFLAGS = @VISIBILITY_CFLAGS@
 WARN_CFLAGS = @WARN_CFLAGS@
 XSLTPROC = @XSLTPROC@
 abs_builddir = @abs_builddir@
@@ -548,8 +550,24 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+LIBDRM_INTEL_FILES := \
+	intel_bufmgr.c \
+	intel_bufmgr_priv.h \
+	intel_bufmgr_fake.c \
+	intel_bufmgr_gem.c \
+	intel_decode.c \
+	intel_chipset.h \
+	mm.c \
+	mm.h
+
+LIBDRM_INTEL_H_FILES := \
+	intel_bufmgr.h \
+	intel_aub.h \
+	intel_debug.h
+
 AM_CFLAGS = \
 	$(WARN_CFLAGS) \
+	$(VISIBILITY_CFLAGS) \
 	-I$(top_srcdir) \
 	-I$(top_srcdir)/intel \
 	$(PTHREADSTUBS_CFLAGS) \
@@ -565,22 +583,10 @@ libdrm_intel_la_LIBADD = ../libdrm.la \
 	@PCIACCESS_LIBS@ \
 	@CLOCK_LIB@
 
-libdrm_intel_la_SOURCES = \
-	intel_bufmgr.c \
-	intel_bufmgr_priv.h \
-	intel_bufmgr_fake.c \
-	intel_bufmgr_gem.c \
-	intel_decode.c \
-	intel_chipset.h \
-	mm.c \
-	mm.h
-
+libdrm_intel_la_SOURCES = $(LIBDRM_INTEL_FILES)
 intel_bufmgr_gem_o_CFLAGS = $(AM_CFLAGS) -c99
 libdrm_intelincludedir = ${includedir}/libdrm
-libdrm_intelinclude_HEADERS = intel_bufmgr.h \
-			      intel_aub.h \
-			      intel_debug.h
-
+libdrm_intelinclude_HEADERS = $(LIBDRM_INTEL_H_FILES)
 BATCHES = \
 	tests/gen4-3d.batch \
 	tests/gm45-3d.batch \
@@ -594,7 +600,8 @@ EXTRA_DIST = \
 	$(BATCHES:.batch=.batch.sh) \
 	$(BATCHES:.batch=.batch-ref.txt) \
 	$(BATCHES:.batch=.batch-ref.txt) \
-	tests/test-batch.sh
+	tests/test-batch.sh \
+	Android.mk
 
 test_decode_LDADD = libdrm_intel.la ../libdrm.la
 pkgconfig_DATA = libdrm_intel.pc
@@ -602,7 +609,7 @@ all: all-am
 
 .SUFFIXES:
 .SUFFIXES: .c .lo .log .o .obj .test .test$(EXEEXT) .trs
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(srcdir)/Makefile.sources $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -623,6 +630,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)'; \
 	    cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe);; \
 	esac;
+$(srcdir)/Makefile.sources:
 
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh

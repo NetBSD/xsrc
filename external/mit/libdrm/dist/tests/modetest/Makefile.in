@@ -78,13 +78,13 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+DIST_COMMON = $(srcdir)/Makefile.sources $(srcdir)/Makefile.in \
+	$(srcdir)/Makefile.am $(top_srcdir)/build-aux/depcomp
 @HAVE_INSTALL_TESTS_TRUE@bin_PROGRAMS = modetest$(EXEEXT)
 @HAVE_INSTALL_TESTS_FALSE@noinst_PROGRAMS = modetest$(EXEEXT)
 @HAVE_CAIRO_TRUE@am__append_1 = $(CAIRO_CFLAGS)
 @HAVE_CAIRO_TRUE@am__append_2 = $(CAIRO_LIBS)
 subdir = tests/modetest
-DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
-	$(top_srcdir)/build-aux/depcomp
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
@@ -98,8 +98,8 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS) $(noinst_PROGRAMS)
-am_modetest_OBJECTS = buffers.$(OBJEXT) cursor.$(OBJEXT) \
-	modetest.$(OBJEXT)
+am__objects_1 = buffers.$(OBJEXT) cursor.$(OBJEXT) modetest.$(OBJEXT)
+am_modetest_OBJECTS = $(am__objects_1)
 modetest_OBJECTS = $(am_modetest_OBJECTS)
 am__DEPENDENCIES_1 =
 @HAVE_CAIRO_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
@@ -249,6 +249,7 @@ STRIP = @STRIP@
 VALGRIND_CFLAGS = @VALGRIND_CFLAGS@
 VALGRIND_LIBS = @VALGRIND_LIBS@
 VERSION = @VERSION@
+VISIBILITY_CFLAGS = @VISIBILITY_CFLAGS@
 WARN_CFLAGS = @WARN_CFLAGS@
 XSLTPROC = @XSLTPROC@
 abs_builddir = @abs_builddir@
@@ -305,21 +306,25 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+MODETEST_FILES := \
+	buffers.c \
+	buffers.h \
+	cursor.c \
+	cursor.h \
+	modetest.c
+
 AM_CFLAGS = $(filter-out -Wpointer-arith, $(WARN_CFLAGS)) \
 	-I$(top_srcdir)/include/drm -I$(top_srcdir)/libkms/ \
 	-I$(top_srcdir) $(am__append_1)
-modetest_SOURCES = \
-	buffers.c buffers.h \
-	cursor.c cursor.h \
-	modetest.c
-
+modetest_SOURCES = $(MODETEST_FILES)
 modetest_LDADD = $(top_builddir)/libdrm.la \
 	$(top_builddir)/libkms/libkms.la $(am__append_2)
+EXTRA_DIST = Android.mk
 all: all-am
 
 .SUFFIXES:
 .SUFFIXES: .c .lo .o .obj
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(srcdir)/Makefile.sources $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -340,6 +345,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)'; \
 	    cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe);; \
 	esac;
+$(srcdir)/Makefile.sources:
 
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
