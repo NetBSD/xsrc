@@ -806,6 +806,8 @@ int drmCheckModesettingSupported(const char *busid)
 			return -EINVAL;
 		return (modesetting ? 0 : -ENOSYS);
 	}
+#elif defined(__DragonFly__)
+	return 0;
 #else
 	int fd;
 	static const struct drm_mode_card_res zero_res;
@@ -819,8 +821,6 @@ int drmCheckModesettingSupported(const char *busid)
 	drmClose(fd);
 	if (ret == 0)
 		return 0;
-#elif defined(__DragonFly__)
-	return 0;
 #endif
 	return -ENOSYS;
 
