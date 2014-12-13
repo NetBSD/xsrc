@@ -26,6 +26,10 @@
  *    Rob Clark <robclark@freedesktop.org>
  */
 
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
 #include "kgsl_priv.h"
 
 
@@ -42,6 +46,9 @@ static int kgsl_pipe_get_param(struct fd_pipe *pipe,
 		return 0;
 	case FD_GMEM_SIZE:
 		*value = kgsl_pipe->devinfo.gmem_sizebytes;
+		return 0;
+	case FD_CHIP_ID:
+		*value = kgsl_pipe->devinfo.chip_id;
 		return 0;
 	default:
 		ERROR_MSG("invalid param id: %d", param);

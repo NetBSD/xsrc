@@ -104,10 +104,11 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = radeon
-DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
-	$(srcdir)/libdrm_radeon.pc.in $(top_srcdir)/build-aux/depcomp \
+DIST_COMMON = $(srcdir)/Makefile.sources $(srcdir)/Makefile.in \
+	$(srcdir)/Makefile.am $(srcdir)/libdrm_radeon.pc.in \
+	$(top_srcdir)/build-aux/depcomp \
 	$(libdrm_radeoninclude_HEADERS)
+subdir = radeon
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
@@ -151,9 +152,9 @@ am__installdirs = "$(DESTDIR)$(libdrm_radeon_ladir)" \
 	"$(DESTDIR)$(libdrm_radeonincludedir)"
 LTLIBRARIES = $(libdrm_radeon_la_LTLIBRARIES)
 libdrm_radeon_la_DEPENDENCIES = ../libdrm.la
-am_libdrm_radeon_la_OBJECTS = radeon_bo_gem.lo radeon_cs_gem.lo \
-	radeon_cs_space.lo radeon_bo.lo radeon_cs.lo radeon_surface.lo \
-	bof.lo
+am__objects_1 = radeon_bo_gem.lo radeon_cs_gem.lo radeon_cs_space.lo \
+	radeon_bo.lo radeon_cs.lo radeon_surface.lo bof.lo
+am_libdrm_radeon_la_OBJECTS = $(am__objects_1)
 libdrm_radeon_la_OBJECTS = $(am_libdrm_radeon_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -305,6 +306,7 @@ STRIP = @STRIP@
 VALGRIND_CFLAGS = @VALGRIND_CFLAGS@
 VALGRIND_LIBS = @VALGRIND_LIBS@
 VERSION = @VERSION@
+VISIBILITY_CFLAGS = @VISIBILITY_CFLAGS@
 WARN_CFLAGS = @WARN_CFLAGS@
 XSLTPROC = @XSLTPROC@
 abs_builddir = @abs_builddir@
@@ -361,18 +363,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CFLAGS = \
-	$(WARN_CFLAGS) \
-	-I$(top_srcdir) \
-	-I$(top_srcdir)/radeon \
-	$(PTHREADSTUBS_CFLAGS) \
-	-I$(top_srcdir)/include/drm
-
-libdrm_radeon_la_LTLIBRARIES = libdrm_radeon.la
-libdrm_radeon_ladir = $(libdir)
-libdrm_radeon_la_LDFLAGS = -version-number 1:0:1 -no-undefined
-libdrm_radeon_la_LIBADD = ../libdrm.la @PTHREADSTUBS_LIBS@
-libdrm_radeon_la_SOURCES = \
+LIBDRM_RADEON_FILES := \
 	radeon_bo_gem.c \
 	radeon_cs_gem.c \
 	radeon_cs_space.c \
@@ -382,8 +373,7 @@ libdrm_radeon_la_SOURCES = \
 	bof.c \
 	bof.h
 
-libdrm_radeonincludedir = ${includedir}/libdrm
-libdrm_radeoninclude_HEADERS = \
+LIBDRM_RADEON_H_FILES := \
 	radeon_bo.h \
 	radeon_cs.h \
 	radeon_surface.h \
@@ -393,13 +383,28 @@ libdrm_radeoninclude_HEADERS = \
 	radeon_cs_int.h \
 	r600_pci_ids.h
 
+AM_CFLAGS = \
+	$(WARN_CFLAGS) \
+	$(VISIBILITY_CFLAGS) \
+	-I$(top_srcdir) \
+	-I$(top_srcdir)/radeon \
+	$(PTHREADSTUBS_CFLAGS) \
+	-I$(top_srcdir)/include/drm
+
+libdrm_radeon_la_LTLIBRARIES = libdrm_radeon.la
+libdrm_radeon_ladir = $(libdir)
+libdrm_radeon_la_LDFLAGS = -version-number 1:0:1 -no-undefined
+libdrm_radeon_la_LIBADD = ../libdrm.la @PTHREADSTUBS_LIBS@
+libdrm_radeon_la_SOURCES = $(LIBDRM_RADEON_FILES)
+libdrm_radeonincludedir = ${includedir}/libdrm
+libdrm_radeoninclude_HEADERS = $(LIBDRM_RADEON_H_FILES)
 pkgconfig_DATA = libdrm_radeon.pc
-EXTRA_DIST = libdrm_radeon.pc.in
+EXTRA_DIST = Android.mk
 all: all-am
 
 .SUFFIXES:
 .SUFFIXES: .c .lo .o .obj
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(srcdir)/Makefile.sources $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -420,6 +425,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)'; \
 	    cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe);; \
 	esac;
+$(srcdir)/Makefile.sources:
 
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh

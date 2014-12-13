@@ -26,6 +26,10 @@
  *    Rob Clark <robclark@freedesktop.org>
  */
 
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
 #include "msm_priv.h"
 
 
@@ -40,6 +44,9 @@ static int msm_pipe_get_param(struct fd_pipe *pipe,
 		return 0;
 	case FD_GMEM_SIZE:
 		*value = msm_pipe->gmem;
+		return 0;
+	case FD_CHIP_ID:
+		*value = msm_pipe->chip_id;
 		return 0;
 	default:
 		ERROR_MSG("invalid param id: %d", param);
@@ -117,12 +124,14 @@ struct fd_pipe * msm_pipe_new(struct fd_device *dev, enum fd_pipe_id id)
 	msm_pipe->pipe = pipe_id[id];
 	msm_pipe->gpu_id = get_param(dev, pipe_id[id], MSM_PARAM_GPU_ID);
 	msm_pipe->gmem   = get_param(dev, pipe_id[id], MSM_PARAM_GMEM_SIZE);
+	msm_pipe->chip_id = get_param(dev, pipe_id[id], MSM_PARAM_CHIP_ID);
 
 	if (! msm_pipe->gpu_id)
 		goto fail;
 
 	INFO_MSG("Pipe Info:");
 	INFO_MSG(" GPU-id:          %d", msm_pipe->gpu_id);
+	INFO_MSG(" Chip-id:         0x%08x", msm_pipe->chip_id);
 	INFO_MSG(" GMEM size:       0x%08x", msm_pipe->gmem);
 
 	return pipe;

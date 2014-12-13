@@ -29,6 +29,10 @@
 #ifndef FREEDRENO_PRIV_H_
 #define FREEDRENO_PRIV_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
@@ -36,11 +40,11 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include <sys/mman.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <assert.h>
 
+#include "libdrm.h"
 #include "xf86drm.h"
 #include "xf86atomic.h"
 
@@ -134,6 +138,7 @@ struct fd_bo {
 	uint32_t size;
 	uint32_t handle;
 	uint32_t name;
+	int fd;          /* dmabuf handle */
 	void *map;
 	atomic_t refcnt;
 	struct fd_bo_funcs *funcs;
@@ -142,9 +147,6 @@ struct fd_bo {
 	struct list_head list;   /* bucket-list entry */
 	time_t free_time;        /* time when added to bucket-list */
 };
-
-struct fd_bo *fd_bo_from_handle(struct fd_device *dev,
-		uint32_t handle, uint32_t size);
 
 #define ALIGN(v,a) (((v) + (a) - 1) & ~((a) - 1))
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
