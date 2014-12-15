@@ -42,6 +42,8 @@
 #include "g_disptab.h"
 #include "g_disptab_EXT.h"
 
+#include <stdint.h>
+
 int __glXDisp_ReadPixels(__GLXclientState *cl, GLbyte *pc)
 {
     GLsizei width, height;
