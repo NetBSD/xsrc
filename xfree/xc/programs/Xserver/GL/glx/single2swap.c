@@ -42,6 +42,8 @@
 #include "g_disptab.h"
 #include "GL/glx_ansic.h"
 
+#include <stdint.h>
+
 int __glXDispSwap_FeedbackBuffer(__GLXclientState *cl, GLbyte *pc)
 {
     ClientPtr client = cl->client;

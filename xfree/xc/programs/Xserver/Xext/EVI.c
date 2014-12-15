@@ -33,6 +33,8 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "EVIstruct.h"
 #include "modinit.h"
 
+#include <stdint.h>
+
 #if 0
 static unsigned char XEVIReqCode = 0;
 #endif
