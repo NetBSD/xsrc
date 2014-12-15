@@ -51,6 +51,8 @@ from Kaleb S. KEITHLEY
 #include "xf86_ansic.h"
 #endif
 
+#include <stdint.h>
+
 static int VidModeErrorBase;
 static int VidModeGeneration = 0;
 static int VidModeClientPrivateIndex;
