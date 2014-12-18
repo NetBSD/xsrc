@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2006 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2006 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,13 +18,14 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 
  **************************************************************************/
 
+#include "main/accum.h"
 #include "main/enums.h"
 #include "main/state.h"
 #include "main/bufferobj.h"
@@ -38,7 +39,7 @@
 #define FILE_DEBUG_FLAG DEBUG_PIXEL
 
 static GLenum
-effective_func(GLenum func, GLboolean src_alpha_is_one)
+effective_func(GLenum func, bool src_alpha_is_one)
 {
    if (src_alpha_is_one) {
       if (func == GL_SRC_ALPHA)
@@ -54,15 +55,15 @@ effective_func(GLenum func, GLboolean src_alpha_is_one)
  * Check if any fragment operations are in effect which might effect
  * glDraw/CopyPixels.
  */
-GLboolean
-intel_check_blit_fragment_ops(struct gl_context * ctx, GLboolean src_alpha_is_one)
+bool
+intel_check_blit_fragment_ops(struct gl_context * ctx, bool src_alpha_is_one)
 {
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
    if (ctx->FragmentProgram._Enabled) {
       DBG("fallback due to fragment program\n");
-      return GL_FALSE;
+      return false;
    }
 
    if (ctx->Color.BlendEnabled &&
@@ -73,12 +74,12 @@ intel_check_blit_fragment_ops(struct gl_context * ctx, GLboolean src_alpha_is_on
 	effective_func(ctx->Color.Blend[0].DstA, src_alpha_is_one) != GL_ZERO ||
 	ctx->Color.Blend[0].EquationA != GL_FUNC_ADD)) {
       DBG("fallback due to blend\n");
-      return GL_FALSE;
+      return false;
    }
 
-   if (ctx->Texture._EnabledUnits) {
+   if (ctx->Texture._MaxEnabledTexImageUnit != -1) {
       DBG("fallback due to texturing\n");
-      return GL_FALSE;
+      return false;
    }
 
    if (!(ctx->Color.ColorMask[0][0] &&
@@ -86,83 +87,49 @@ intel_check_blit_fragment_ops(struct gl_context * ctx, GLboolean src_alpha_is_on
 	 ctx->Color.ColorMask[0][2] &&
 	 ctx->Color.ColorMask[0][3])) {
       DBG("fallback due to color masking\n");
-      return GL_FALSE;
+      return false;
    }
 
    if (ctx->Color.AlphaEnabled) {
       DBG("fallback due to alpha\n");
-      return GL_FALSE;
+      return false;
    }
 
    if (ctx->Depth.Test) {
       DBG("fallback due to depth test\n");
-      return GL_FALSE;
+      return false;
    }
 
    if (ctx->Fog.Enabled) {
       DBG("fallback due to fog\n");
-      return GL_FALSE;
+      return false;
    }
 
    if (ctx->_ImageTransferState) {
       DBG("fallback due to image transfer\n");
-      return GL_FALSE;
+      return false;
    }
 
    if (ctx->Stencil._Enabled) {
       DBG("fallback due to image stencil\n");
-      return GL_FALSE;
+      return false;
    }
 
    if (ctx->RenderMode != GL_RENDER) {
       DBG("fallback due to render mode\n");
-      return GL_FALSE;
+      return false;
    }
 
-   return GL_TRUE;
-}
-
-/* The intel_region struct doesn't really do enough to capture the
- * format of the pixels in the region.  For now this code assumes that
- * the region is a display surface and hence is either ARGB8888 or
- * RGB565.
- * XXX FBO: If we'd pass in the intel_renderbuffer instead of region, we'd
- * know the buffer's pixel format.
- *
- * \param format  as given to glDraw/ReadPixels
- * \param type  as given to glDraw/ReadPixels
- */
-GLboolean
-intel_check_blit_format(struct intel_region * region,
-                        GLenum format, GLenum type)
-{
-   if (region->cpp == 4 &&
-       (type == GL_UNSIGNED_INT_8_8_8_8_REV ||
-        type == GL_UNSIGNED_BYTE) && format == GL_BGRA) {
-      return GL_TRUE;
-   }
-
-   if (region->cpp == 2 &&
-       type == GL_UNSIGNED_SHORT_5_6_5_REV && format == GL_BGR) {
-      return GL_TRUE;
-   }
-
-   DBG("%s: bad format for blit (cpp %d, type %s format %s)\n",
-       __FUNCTION__, region->cpp,
-       _mesa_lookup_enum_by_nr(type), _mesa_lookup_enum_by_nr(format));
-
-   return GL_FALSE;
+   return true;
 }
 
 void
 intelInitPixelFuncs(struct dd_function_table *functions)
 {
-   functions->Accum = _swrast_Accum;
-   if (!getenv("INTEL_NO_BLIT")) {
-      functions->Bitmap = intelBitmap;
-      functions->CopyPixels = intelCopyPixels;
-      functions->DrawPixels = intelDrawPixels;
-   }
+   functions->Accum = _mesa_accum;
+   functions->Bitmap = intelBitmap;
+   functions->CopyPixels = intelCopyPixels;
+   functions->DrawPixels = intelDrawPixels;
    functions->ReadPixels = intelReadPixels;
 }
 

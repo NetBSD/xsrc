@@ -24,17 +24,20 @@
  *
  */
 
+#include <xf86drm.h>
+#include <nouveau_drm.h>
 #include "nouveau_driver.h"
 #include "nouveau_context.h"
 #include "nouveau_fbo.h"
 #include "nouveau_texture.h"
-#include "nouveau_drmif.h"
 #include "nv04_driver.h"
 #include "nv10_driver.h"
 #include "nv20_driver.h"
 
 #include "main/framebuffer.h"
+#include "main/fbobject.h"
 #include "main/renderbuffer.h"
+#include "swrast/s_renderbuffer.h"
 
 static const __DRIextension *nouveau_screen_extensions[];
 
@@ -51,24 +54,20 @@ nouveau_get_configs(void)
 	const uint8_t stencil_bits[] = { 0,  0,  0,  8 };
 	const uint8_t msaa_samples[] = { 0 };
 
-	const struct {
-		GLenum format;
-		GLenum type;
-	} fb_formats[] = {
-		{ GL_RGB , GL_UNSIGNED_SHORT_5_6_5     },
-		{ GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV },
-		{ GL_BGR , GL_UNSIGNED_INT_8_8_8_8_REV },
+	static const mesa_format formats[3] = {
+		MESA_FORMAT_B5G6R5_UNORM,
+		MESA_FORMAT_B8G8R8A8_UNORM,
+		MESA_FORMAT_B8G8R8X8_UNORM,
 	};
 
 	const GLenum back_buffer_modes[] = {
 		GLX_NONE, GLX_SWAP_UNDEFINED_OML
 	};
 
-	for (i = 0; i < Elements(fb_formats); i++) {
+	for (i = 0; i < Elements(formats); i++) {
 		__DRIconfig **config;
 
-		config = driCreateConfigs(fb_formats[i].format,
-					  fb_formats[i].type,
+		config = driCreateConfigs(formats[i],
 					  depth_bits, stencil_bits,
 					  Elements(depth_bits),
 					  back_buffer_modes,
@@ -78,8 +77,7 @@ nouveau_get_configs(void)
 					  GL_TRUE);
 		assert(config);
 
-		configs = configs ? driConcatConfigs(configs, config)
-			: config;
+		configs = driConcatConfigs(configs, config);
 	}
 
 	return (const __DRIconfig **)configs;
@@ -97,13 +95,8 @@ nouveau_init_screen2(__DRIscreen *dri_screen)
 	if (!screen)
 		return NULL;
 
-	dri_screen->private = screen;
-	dri_screen->extensions = nouveau_screen_extensions;
-	screen->dri_screen = dri_screen;
-
 	/* Open the DRM device. */
-	ret = nouveau_device_open_existing(&screen->device, 0, dri_screen->fd,
-					   0);
+	ret = nouveau_device_wrap(dri_screen->fd, 0, &screen->device);
 	if (ret) {
 		nouveau_error("Error opening the DRM device.\n");
 		goto fail;
@@ -113,16 +106,25 @@ nouveau_init_screen2(__DRIscreen *dri_screen)
 	switch (screen->device->chipset & 0xf0) {
 	case 0x00:
 		screen->driver = &nv04_driver;
+		dri_screen->max_gl_compat_version = 12;
 		break;
 	case 0x10:
 		screen->driver = &nv10_driver;
+		dri_screen->max_gl_compat_version = 12;
+		dri_screen->max_gl_es1_version = 10;
 		break;
 	case 0x20:
 		screen->driver = &nv20_driver;
+		dri_screen->max_gl_compat_version = 13;
+		dri_screen->max_gl_es1_version = 10;
 		break;
 	default:
 		assert(0);
 	}
+
+	dri_screen->driverPrivate = screen;
+	dri_screen->extensions = nouveau_screen_extensions;
+	screen->dri_screen = dri_screen;
 
 	configs = nouveau_get_configs();
 	if (!configs)
@@ -135,19 +137,81 @@ fail:
 
 }
 
+static int
+nouveau_query_renderer_integer(__DRIscreen *psp, int param,
+			       unsigned int *value)
+{
+	const struct nouveau_screen *const screen =
+		(struct nouveau_screen *) psp->driverPrivate;
+
+	switch (param) {
+	case __DRI2_RENDERER_VENDOR_ID:
+		value[0] = 0x10de;
+		return 0;
+	case __DRI2_RENDERER_DEVICE_ID: {
+		uint64_t device_id;
+
+		if (nouveau_getparam(screen->device,
+				     NOUVEAU_GETPARAM_PCI_DEVICE,
+				     &device_id)) {
+			nouveau_error("Error retrieving the device PCIID.\n");
+			device_id = -1;
+		}
+		value[0] = (unsigned int) device_id;
+		return 0;
+	}
+	case __DRI2_RENDERER_ACCELERATED:
+		value[0] = 1;
+		return 0;
+	case __DRI2_RENDERER_VIDEO_MEMORY:
+		/* XXX: return vram_size or vram_limit ? */
+		value[0] = screen->device->vram_size >> 20;
+		return 0;
+	case __DRI2_RENDERER_UNIFIED_MEMORY_ARCHITECTURE:
+		value[0] = 0;
+		return 0;
+	default:
+		return driQueryRendererIntegerCommon(psp, param, value);
+	}
+}
+
+static int
+nouveau_query_renderer_string(__DRIscreen *psp, int param, const char **value)
+{
+	const struct nouveau_screen *const screen =
+		(struct nouveau_screen *) psp->driverPrivate;
+
+	switch (param) {
+	case __DRI2_RENDERER_VENDOR_ID:
+		value[0] = nouveau_vendor_string;
+		return 0;
+	case __DRI2_RENDERER_DEVICE_ID:
+		value[0] = nouveau_get_renderer_string(screen->device->chipset);
+		return 0;
+	default:
+		return -1;
+   }
+}
+
+static const __DRI2rendererQueryExtension nouveau_renderer_query_extension = {
+	.base = { __DRI2_RENDERER_QUERY, 1 },
+
+	.queryInteger        = nouveau_query_renderer_integer,
+	.queryString         = nouveau_query_renderer_string
+};
+
 static void
 nouveau_destroy_screen(__DRIscreen *dri_screen)
 {
-	struct nouveau_screen *screen = dri_screen->private;
+	struct nouveau_screen *screen = dri_screen->driverPrivate;
 
 	if (!screen)
 		return;
 
-	if (screen->device)
-		nouveau_device_close(&screen->device);
+	nouveau_device_del(&screen->device);
 
-	FREE(screen);
-	dri_screen->private = NULL;
+	free(screen);
+	dri_screen->driverPrivate = NULL;
 }
 
 static GLboolean
@@ -200,9 +264,9 @@ nouveau_create_buffer(__DRIscreen *dri_screen,
 	}
 
 	/* Software renderbuffers. */
-	_mesa_add_soft_renderbuffers(fb, GL_FALSE, GL_FALSE, GL_FALSE,
-				     visual->accumRedBits > 0,
-				     GL_FALSE, GL_FALSE);
+	_swrast_add_soft_renderbuffers(fb, GL_FALSE, GL_FALSE, GL_FALSE,
+                                       visual->accumRedBits > 0,
+                                       GL_FALSE, GL_FALSE);
 
 	drawable->driverPrivate = fb;
 
@@ -222,26 +286,30 @@ nouveau_drawable_flush(__DRIdrawable *draw)
 }
 
 static const struct __DRI2flushExtensionRec nouveau_flush_extension = {
-    { __DRI2_FLUSH, __DRI2_FLUSH_VERSION },
-    nouveau_drawable_flush,
-    dri2InvalidateDrawable,
+   .base = { __DRI2_FLUSH, 3 },
+
+   .flush               = nouveau_drawable_flush,
+   .invalidate          = dri2InvalidateDrawable,
 };
 
 static const struct __DRItexBufferExtensionRec nouveau_texbuffer_extension = {
-    { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
-    NULL,
-    nouveau_set_texbuffer,
+   .base = { __DRI_TEX_BUFFER, 3 },
+
+   .setTexBuffer        = NULL,
+   .setTexBuffer2       = nouveau_set_texbuffer,
+   .releaseTexBuffer    = NULL,
 };
 
 static const __DRIextension *nouveau_screen_extensions[] = {
     &nouveau_flush_extension.base,
     &nouveau_texbuffer_extension.base,
+    &nouveau_renderer_query_extension.base,
     &dri2ConfigQueryExtension.base,
     NULL
 };
 
-const struct __DriverAPIRec driDriverAPI = {
-	.InitScreen2     = nouveau_init_screen2,
+const struct __DriverAPIRec nouveau_driver_api = {
+	.InitScreen      = nouveau_init_screen2,
 	.DestroyScreen   = nouveau_destroy_screen,
 	.CreateBuffer    = nouveau_create_buffer,
 	.DestroyBuffer   = nouveau_destroy_buffer,
@@ -251,9 +319,22 @@ const struct __DriverAPIRec driDriverAPI = {
 	.UnbindContext   = nouveau_context_unbind,
 };
 
+static const struct __DRIDriverVtableExtensionRec nouveau_vtable = {
+   .base = { __DRI_DRIVER_VTABLE, 1 },
+   .vtable = &nouveau_driver_api,
+};
+
 /* This is the table of extensions that the loader will dlsym() for. */
-PUBLIC const __DRIextension *__driDriverExtensions[] = {
+static const __DRIextension *nouveau_driver_extensions[] = {
 	&driCoreExtension.base,
 	&driDRI2Extension.base,
+	&nouveau_vtable.base,
 	NULL
 };
+
+PUBLIC const __DRIextension **__driDriverGetExtensions_nouveau_vieux(void)
+{
+   globalDriverAPI = &nouveau_driver_api;
+
+   return nouveau_driver_extensions;
+}

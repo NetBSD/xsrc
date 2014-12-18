@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -43,11 +43,12 @@ static INLINE struct st_framebuffer *
 st_ws_framebuffer(struct gl_framebuffer *fb)
 {
    /* FBO cannot be casted.  See st_new_framebuffer */
-   return (struct st_framebuffer *) ((fb && !fb->Name) ? fb : NULL);
+   if (fb && _mesa_is_winsys_fbo(fb))
+      return (struct st_framebuffer *) fb;
+   return NULL;
 }
 
-static void st_viewport(struct gl_context * ctx, GLint x, GLint y,
-                        GLsizei width, GLsizei height)
+static void st_viewport(struct gl_context *ctx)
 {
    struct st_context *st = ctx->st;
    struct st_framebuffer *stdraw;
@@ -56,13 +57,20 @@ static void st_viewport(struct gl_context * ctx, GLint x, GLint y,
    if (!st->invalidate_on_gl_viewport)
       return;
 
+   /*
+    * Normally we'd want the state tracker manager to mark the drawables
+    * invalid only when needed. This will force the state tracker manager
+    * to revalidate the drawable, rather than just update the context with
+    * the latest cached drawable info.
+    */
+
    stdraw = st_ws_framebuffer(st->ctx->DrawBuffer);
    stread = st_ws_framebuffer(st->ctx->ReadBuffer);
 
-   if (stdraw)
-      p_atomic_set(&stdraw->revalidate, TRUE);
-   if (stread && stread != stdraw)
-      p_atomic_set(&stread->revalidate, TRUE);
+   if (stdraw && stdraw->iface)
+      stdraw->iface_stamp = p_atomic_read(&stdraw->iface->stamp) - 1;
+   if (stread && stread != stdraw && stread->iface)
+      stread->iface_stamp = p_atomic_read(&stread->iface->stamp) - 1;
 }
 
 void st_init_viewport_functions(struct dd_function_table *functions)

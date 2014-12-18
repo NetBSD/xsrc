@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -192,20 +192,4 @@ intel_translate_logic_op(GLenum opcode)
    default:
       return LOGICOP_SET;
    }
-}
-
-/* Fallback to swrast for select and feedback.
- */
-static void
-intelRenderMode(struct gl_context *ctx, GLenum mode)
-{
-   struct intel_context *intel = intel_context(ctx);
-   FALLBACK(intel, INTEL_FALLBACK_RENDERMODE, (mode != GL_RENDER));
-}
-
-
-void
-intelInitStateFuncs(struct dd_function_table *functions)
-{
-   functions->RenderMode = intelRenderMode;
 }

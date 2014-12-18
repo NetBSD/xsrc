@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -53,244 +53,150 @@
 #include "intel_fbo.h"
 #include "intel_bufmgr.h"
 #include "intel_screen.h"
+#include "intel_mipmap_tree.h"
 
-#include "drirenderbuffer.h"
 #include "utils.h"
+#include "util/ralloc.h"
 
-
-#ifndef INTEL_DEBUG
 int INTEL_DEBUG = (0);
-#endif
 
+const char *const i915_vendor_string = "Intel Open Source Technology Center";
+
+const char *
+i915_get_renderer_string(unsigned deviceID)
+{
+   const char *chipset;
+   static char buffer[128];
+
+   switch (deviceID) {
+#undef CHIPSET
+#define CHIPSET(id, symbol, str) case id: chipset = str; break;
+#include "pci_ids/i915_pci_ids.h"
+   default:
+      chipset = "Unknown Intel Chipset";
+      break;
+   }
+
+   (void) driGetRendererString(buffer, chipset, 0);
+   return buffer;
+}
 
 static const GLubyte *
 intelGetString(struct gl_context * ctx, GLenum name)
 {
    const struct intel_context *const intel = intel_context(ctx);
-   const char *chipset;
-   static char buffer[128];
 
    switch (name) {
    case GL_VENDOR:
-      return (GLubyte *) "Tungsten Graphics, Inc";
-      break;
+      return (GLubyte *) i915_vendor_string;
 
    case GL_RENDERER:
-      switch (intel->intelScreen->deviceID) {
-      case PCI_CHIP_845_G:
-         chipset = "Intel(R) 845G";
-         break;
-      case PCI_CHIP_I830_M:
-         chipset = "Intel(R) 830M";
-         break;
-      case PCI_CHIP_I855_GM:
-         chipset = "Intel(R) 852GM/855GM";
-         break;
-      case PCI_CHIP_I865_G:
-         chipset = "Intel(R) 865G";
-         break;
-      case PCI_CHIP_I915_G:
-         chipset = "Intel(R) 915G";
-         break;
-      case PCI_CHIP_E7221_G:
-	 chipset = "Intel (R) E7221G (i915)";
-	 break;
-      case PCI_CHIP_I915_GM:
-         chipset = "Intel(R) 915GM";
-         break;
-      case PCI_CHIP_I945_G:
-         chipset = "Intel(R) 945G";
-         break;
-      case PCI_CHIP_I945_GM:
-         chipset = "Intel(R) 945GM";
-         break;
-      case PCI_CHIP_I945_GME:
-         chipset = "Intel(R) 945GME";
-         break;
-      case PCI_CHIP_G33_G:
-	 chipset = "Intel(R) G33";
-	 break;
-      case PCI_CHIP_Q35_G:
-	 chipset = "Intel(R) Q35";
-	 break;
-      case PCI_CHIP_Q33_G:
-	 chipset = "Intel(R) Q33";
-	 break;
-      case PCI_CHIP_IGD_GM:
-      case PCI_CHIP_IGD_G:
-	 chipset = "Intel(R) IGD";
-	 break;
-      case PCI_CHIP_I965_Q:
-	 chipset = "Intel(R) 965Q";
-	 break;
-      case PCI_CHIP_I965_G:
-      case PCI_CHIP_I965_G_1:
-	 chipset = "Intel(R) 965G";
-	 break;
-      case PCI_CHIP_I946_GZ:
-	 chipset = "Intel(R) 946GZ";
-	 break;
-      case PCI_CHIP_I965_GM:
-	 chipset = "Intel(R) 965GM";
-	 break;
-      case PCI_CHIP_I965_GME:
-	 chipset = "Intel(R) 965GME/GLE";
-	 break;
-      case PCI_CHIP_GM45_GM:
-	 chipset = "Mobile Intel® GM45 Express Chipset";
-	 break; 
-      case PCI_CHIP_IGD_E_G:
-	 chipset = "Intel(R) Integrated Graphics Device";
-	 break;
-      case PCI_CHIP_G45_G:
-         chipset = "Intel(R) G45/G43";
-         break;
-      case PCI_CHIP_Q45_G:
-         chipset = "Intel(R) Q45/Q43";
-         break;
-      case PCI_CHIP_G41_G:
-         chipset = "Intel(R) G41";
-         break;
-      case PCI_CHIP_B43_G:
-      case PCI_CHIP_B43_G1:
-         chipset = "Intel(R) B43";
-         break;
-      case PCI_CHIP_ILD_G:
-         chipset = "Intel(R) Ironlake Desktop";
-         break;
-      case PCI_CHIP_ILM_G:
-         chipset = "Intel(R) Ironlake Mobile";
-         break;
-      case PCI_CHIP_SANDYBRIDGE_GT1:
-      case PCI_CHIP_SANDYBRIDGE_GT2:
-      case PCI_CHIP_SANDYBRIDGE_GT2_PLUS:
-	 chipset = "Intel(R) Sandybridge Desktop";
-	 break;
-      case PCI_CHIP_SANDYBRIDGE_M_GT1:
-      case PCI_CHIP_SANDYBRIDGE_M_GT2:
-      case PCI_CHIP_SANDYBRIDGE_M_GT2_PLUS:
-	 chipset = "Intel(R) Sandybridge Mobile";
-	 break;
-      case PCI_CHIP_SANDYBRIDGE_S:
-	 chipset = "Intel(R) Sandybridge Server";
-	 break;
-      case PCI_CHIP_IVYBRIDGE_GT1:
-      case PCI_CHIP_IVYBRIDGE_GT2:
-	 chipset = "Intel(R) Ivybridge Desktop";
-	 break;
-      case PCI_CHIP_IVYBRIDGE_M_GT1:
-      case PCI_CHIP_IVYBRIDGE_M_GT2:
-	 chipset = "Intel(R) Ivybridge Mobile";
-	 break;
-      case PCI_CHIP_IVYBRIDGE_S_GT1:
-	 chipset = "Intel(R) Ivybridge Server";
-	 break;
-      default:
-         chipset = "Unknown Intel Chipset";
-         break;
-      }
-
-      (void) driGetRendererString(buffer, chipset, 0);
-      return (GLubyte *) buffer;
+      return
+         (GLubyte *) i915_get_renderer_string(intel->intelScreen->deviceID);
 
    default:
       return NULL;
    }
 }
 
+#define flushFront(screen)      ((screen)->image.loader ? (screen)->image.loader->flushFrontBuffer : (screen)->dri2.loader->flushFrontBuffer)
+
 static void
 intel_flush_front(struct gl_context *ctx)
 {
    struct intel_context *intel = intel_context(ctx);
     __DRIcontext *driContext = intel->driContext;
+    __DRIdrawable *driDrawable = driContext->driDrawablePriv;
     __DRIscreen *const screen = intel->intelScreen->driScrnPriv;
 
-   if ((ctx->DrawBuffer->Name == 0) && intel->front_buffer_dirty) {
-      if (screen->dri2.loader &&
-          (screen->dri2.loader->base.version >= 2)
-	  && (screen->dri2.loader->flushFrontBuffer != NULL) &&
-          driContext->driDrawablePriv &&
-	  driContext->driDrawablePriv->loaderPrivate) {
-	 (*screen->dri2.loader->flushFrontBuffer)(driContext->driDrawablePriv,
-						  driContext->driDrawablePriv->loaderPrivate);
+    if (intel->front_buffer_dirty && _mesa_is_winsys_fbo(ctx->DrawBuffer)) {
+      if (flushFront(screen) && 
+          driDrawable &&
+          driDrawable->loaderPrivate) {
+         flushFront(screen)(driDrawable, driDrawable->loaderPrivate);
 
 	 /* We set the dirty bit in intel_prepare_render() if we're
 	  * front buffer rendering once we get there.
 	  */
-	 intel->front_buffer_dirty = GL_FALSE;
+	 intel->front_buffer_dirty = false;
       }
    }
 }
 
+static void
+intel_update_image_buffers(struct intel_context *intel, __DRIdrawable *drawable);
+
 static unsigned
 intel_bits_per_pixel(const struct intel_renderbuffer *rb)
 {
-   return _mesa_get_format_bytes(rb->Base.Format) * 8;
+   return _mesa_get_format_bytes(intel_rb_format(rb)) * 8;
 }
 
 static void
-intel_query_dri2_buffers_no_separate_stencil(struct intel_context *intel,
-					     __DRIdrawable *drawable,
-					     __DRIbuffer **buffers,
-					     int *count);
+intel_query_dri2_buffers(struct intel_context *intel,
+			 __DRIdrawable *drawable,
+			 __DRIbuffer **buffers,
+			 int *count);
 
 static void
-intel_process_dri2_buffer_no_separate_stencil(struct intel_context *intel,
-					      __DRIdrawable *drawable,
-					      __DRIbuffer *buffer,
-					      struct intel_renderbuffer *rb,
-					      const char *buffer_name);
-
-static void
-intel_query_dri2_buffers_with_separate_stencil(struct intel_context *intel,
-					       __DRIdrawable *drawable,
-					       __DRIbuffer **buffers,
-					       unsigned **attachments,
-					       int *count);
-
-static void
-intel_process_dri2_buffer_with_separate_stencil(struct intel_context *intel,
-						__DRIdrawable *drawable,
-						__DRIbuffer *buffer,
-						struct intel_renderbuffer *rb,
-						const char *buffer_name);
-static void
-intel_verify_dri2_has_hiz(struct intel_context *intel,
+intel_process_dri2_buffer(struct intel_context *intel,
 			  __DRIdrawable *drawable,
-			  __DRIbuffer **buffers,
-			  unsigned **attachments,
-			  int *count);
+			  __DRIbuffer *buffer,
+			  struct intel_renderbuffer *rb,
+			  const char *buffer_name);
+
+static void
+intel_update_dri2_buffers(struct intel_context *intel, __DRIdrawable *drawable)
+{
+   __DRIbuffer *buffers = NULL;
+   int i, count;
+   const char *region_name;
+   struct intel_renderbuffer *rb;
+   struct gl_framebuffer *fb = drawable->driverPrivate;
+
+   intel_query_dri2_buffers(intel, drawable, &buffers, &count);
+
+   if (buffers == NULL)
+      return;
+
+   for (i = 0; i < count; i++) {
+      switch (buffers[i].attachment) {
+      case __DRI_BUFFER_FRONT_LEFT:
+         rb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);
+         region_name = "dri2 front buffer";
+         break;
+
+      case __DRI_BUFFER_FAKE_FRONT_LEFT:
+         rb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);
+         region_name = "dri2 fake front buffer";
+         break;
+
+      case __DRI_BUFFER_BACK_LEFT:
+         rb = intel_get_renderbuffer(fb, BUFFER_BACK_LEFT);
+         region_name = "dri2 back buffer";
+         break;
+
+      case __DRI_BUFFER_DEPTH:
+      case __DRI_BUFFER_HIZ:
+      case __DRI_BUFFER_DEPTH_STENCIL:
+      case __DRI_BUFFER_STENCIL:
+      case __DRI_BUFFER_ACCUM:
+      default:
+         fprintf(stderr,
+                 "unhandled buffer attach event, attachment type %d\n",
+                 buffers[i].attachment);
+         return;
+      }
+
+      intel_process_dri2_buffer(intel, drawable, &buffers[i], rb, region_name);
+   }
+}
 
 void
 intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 {
-   struct gl_framebuffer *fb = drawable->driverPrivate;
-   struct intel_renderbuffer *rb;
    struct intel_context *intel = context->driverPrivate;
-   __DRIbuffer *buffers = NULL;
-   unsigned *attachments = NULL;
-   int i, count;
-   const char *region_name;
-
-   bool try_separate_stencil =
-      intel->has_separate_stencil &&
-      intel->intelScreen->dri2_has_hiz != INTEL_DRI2_HAS_HIZ_FALSE &&
-      intel->intelScreen->driScrnPriv->dri2.loader != NULL &&
-      intel->intelScreen->driScrnPriv->dri2.loader->base.version > 2 &&
-      intel->intelScreen->driScrnPriv->dri2.loader->getBuffersWithFormat != NULL;
-
-   assert(!intel->must_use_separate_stencil || try_separate_stencil);
-
-   /* If we're rendering to the fake front buffer, make sure all the
-    * pending drawing has landed on the real front buffer.  Otherwise
-    * when we eventually get to DRI2GetBuffersWithFormat the stale
-    * real front buffer contents will get copied to the new fake front
-    * buffer.
-    */
-   if (intel->is_front_buffer_rendering) {
-      intel_flush(&intel->ctx);
-      intel_flush_front(&intel->ctx);
-   }
+   __DRIscreen *screen = intel->intelScreen->driScrnPriv;
 
    /* Set this up front, so that in case our buffers get invalidated
     * while we're getting new buffers, we don't clobber the stamp and
@@ -300,97 +206,10 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
    if (unlikely(INTEL_DEBUG & DEBUG_DRI))
       fprintf(stderr, "enter %s, drawable %p\n", __func__, drawable);
 
-   if (try_separate_stencil) {
-      intel_query_dri2_buffers_with_separate_stencil(intel, drawable, &buffers,
-						     &attachments, &count);
-   } else {
-      intel_query_dri2_buffers_no_separate_stencil(intel, drawable, &buffers,
-						   &count);
-   }
-
-   if (buffers == NULL)
-      return;
-
-   drawable->x = 0;
-   drawable->y = 0;
-   drawable->backX = 0;
-   drawable->backY = 0;
-   drawable->numClipRects = 1;
-   drawable->pClipRects[0].x1 = 0;
-   drawable->pClipRects[0].y1 = 0;
-   drawable->pClipRects[0].x2 = drawable->w;
-   drawable->pClipRects[0].y2 = drawable->h;
-   drawable->numBackClipRects = 1;
-   drawable->pBackClipRects[0].x1 = 0;
-   drawable->pBackClipRects[0].y1 = 0;
-   drawable->pBackClipRects[0].x2 = drawable->w;
-   drawable->pBackClipRects[0].y2 = drawable->h;
-
-   for (i = 0; i < count; i++) {
-       switch (buffers[i].attachment) {
-       case __DRI_BUFFER_FRONT_LEFT:
-	   rb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);
-	   region_name = "dri2 front buffer";
-	   break;
-
-       case __DRI_BUFFER_FAKE_FRONT_LEFT:
-	   rb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);
-	   region_name = "dri2 fake front buffer";
-	   break;
-
-       case __DRI_BUFFER_BACK_LEFT:
-	   rb = intel_get_renderbuffer(fb, BUFFER_BACK_LEFT);
-	   region_name = "dri2 back buffer";
-	   break;
-
-       case __DRI_BUFFER_DEPTH:
-	   rb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
-	   region_name = "dri2 depth buffer";
-	   break;
-
-       case __DRI_BUFFER_HIZ:
-	   /* The hiz region resides in the depth renderbuffer. */
-	   rb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
-	   region_name = "dri2 hiz buffer";
-	   break;
-
-       case __DRI_BUFFER_DEPTH_STENCIL:
-	   rb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
-	   region_name = "dri2 depth / stencil buffer";
-	   break;
-
-       case __DRI_BUFFER_STENCIL:
-	   rb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
-	   region_name = "dri2 stencil buffer";
-	   break;
-
-       case __DRI_BUFFER_ACCUM:
-       default:
-	   fprintf(stderr,
-		   "unhandled buffer attach event, attachment type %d\n",
-		   buffers[i].attachment);
-	   return;
-       }
-
-       if (try_separate_stencil) {
-	 intel_process_dri2_buffer_with_separate_stencil(intel, drawable,
-						         &buffers[i], rb,
-						         region_name);
-       } else {
-	 intel_process_dri2_buffer_no_separate_stencil(intel, drawable,
-						       &buffers[i], rb,
-						       region_name);
-       }
-   }
-
-   if (try_separate_stencil
-       && intel->intelScreen->dri2_has_hiz == INTEL_DRI2_HAS_HIZ_UNKNOWN) {
-      intel_verify_dri2_has_hiz(intel, drawable, &buffers, &attachments,
-				&count);
-   }
-
-   if (attachments)
-      free(attachments);
+   if (screen->image.loader)
+      intel_update_image_buffers(intel, drawable);
+   else
+      intel_update_dri2_buffers(intel, drawable);
 
    driUpdateFramebufferSize(&intel->ctx, drawable);
 }
@@ -409,7 +228,7 @@ intel_prepare_render(struct intel_context *intel)
    if (drawable && drawable->dri2.stamp != driContext->dri2.draw_stamp) {
       if (drawable->lastStamp != drawable->dri2.stamp)
 	 intel_update_renderbuffers(driContext, drawable);
-      intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
+      intel_draw_buffer(&intel->ctx);
       driContext->dri2.draw_stamp = drawable->dri2.stamp;
    }
 
@@ -425,7 +244,7 @@ intel_prepare_render(struct intel_context *intel)
     * mark it as dirty here.
     */
    if (intel->is_front_buffer_rendering)
-      intel->front_buffer_dirty = GL_TRUE;
+      intel->front_buffer_dirty = true;
 
    /* Wait for the swapbuffers before the one we just emitted, so we
     * don't get too many swaps outstanding for apps that are GPU-heavy
@@ -443,57 +262,52 @@ intel_prepare_render(struct intel_context *intel)
     * so we just us the first batch we emitted after the last swap.
     */
    if (intel->need_throttle && intel->first_post_swapbuffers_batch) {
-      drm_intel_bo_wait_rendering(intel->first_post_swapbuffers_batch);
+      if (!intel->disable_throttling)
+         drm_intel_bo_wait_rendering(intel->first_post_swapbuffers_batch);
       drm_intel_bo_unreference(intel->first_post_swapbuffers_batch);
       intel->first_post_swapbuffers_batch = NULL;
-      intel->need_throttle = GL_FALSE;
+      intel->need_throttle = false;
    }
 }
 
 static void
-intel_viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+intel_noninvalidate_viewport(struct gl_context *ctx)
 {
     struct intel_context *intel = intel_context(ctx);
     __DRIcontext *driContext = intel->driContext;
 
-    if (intel->saved_viewport)
-	intel->saved_viewport(ctx, x, y, w, h);
+    intelCalcViewport(ctx);
 
-    if (ctx->DrawBuffer->Name == 0) {
+    if (_mesa_is_winsys_fbo(ctx->DrawBuffer)) {
        dri2InvalidateDrawable(driContext->driDrawablePriv);
        dri2InvalidateDrawable(driContext->driReadablePriv);
     }
 }
 
+static void
+intel_viewport(struct gl_context *ctx)
+{
+    intelCalcViewport(ctx);
+}
+
 static const struct dri_debug_control debug_control[] = {
    { "tex",   DEBUG_TEXTURE},
    { "state", DEBUG_STATE},
-   { "ioctl", DEBUG_IOCTL},
    { "blit",  DEBUG_BLIT},
    { "mip",   DEBUG_MIPTREE},
-   { "fall",  DEBUG_FALLBACKS},
-   { "verb",  DEBUG_VERBOSE},
+   { "fall",  DEBUG_PERF},
+   { "perf",  DEBUG_PERF},
    { "bat",   DEBUG_BATCH},
    { "pix",   DEBUG_PIXEL},
    { "buf",   DEBUG_BUFMGR},
    { "reg",   DEBUG_REGION},
    { "fbo",   DEBUG_FBO},
-   { "gs",    DEBUG_GS},
+   { "fs",    DEBUG_WM },
    { "sync",  DEBUG_SYNC},
-   { "prim",  DEBUG_PRIMS },
-   { "vert",  DEBUG_VERTS },
    { "dri",   DEBUG_DRI },
-   { "sf",    DEBUG_SF },
-   { "san",   DEBUG_SANITY },
-   { "sleep", DEBUG_SLEEP },
    { "stats", DEBUG_STATS },
-   { "tile",  DEBUG_TILE },
-   { "sing",  DEBUG_SINGLE_THREAD },
-   { "thre",  DEBUG_SINGLE_THREAD },
    { "wm",    DEBUG_WM },
-   { "urb",   DEBUG_URB },
-   { "vs",    DEBUG_VS },
-   { "clip",  DEBUG_CLIP },
+   { "aub",   DEBUG_AUB },
    { NULL,    0 }
 };
 
@@ -503,7 +317,8 @@ intelInvalidateState(struct gl_context * ctx, GLuint new_state)
 {
     struct intel_context *intel = intel_context(ctx);
 
-   _swrast_InvalidateState(ctx, new_state);
+    if (ctx->swrast_context)
+       _swrast_InvalidateState(ctx, new_state);
    _vbo_InvalidateState(ctx, new_state);
 
    intel->NewGLState |= new_state;
@@ -513,18 +328,25 @@ intelInvalidateState(struct gl_context * ctx, GLuint new_state)
 }
 
 void
-intel_flush(struct gl_context *ctx)
+intel_flush_rendering_to_batch(struct gl_context *ctx)
 {
    struct intel_context *intel = intel_context(ctx);
 
    if (intel->Fallback)
       _swrast_flush(ctx);
 
-   if (intel->gen < 4)
-      INTEL_FIREVERTICES(intel);
+   INTEL_FIREVERTICES(intel);
+}
+
+void
+_intel_flush(struct gl_context *ctx, const char *file, int line)
+{
+   struct intel_context *intel = intel_context(ctx);
+
+   intel_flush_rendering_to_batch(ctx);
 
    if (intel->batch.used)
-      intel_batchbuffer_flush(intel);
+      _intel_batchbuffer_flush(intel, file, line);
 }
 
 static void
@@ -535,7 +357,7 @@ intel_glFlush(struct gl_context *ctx)
    intel_flush(ctx);
    intel_flush_front(ctx);
    if (intel->is_front_buffer_rendering)
-      intel->need_throttle = GL_TRUE;
+      intel->need_throttle = true;
 }
 
 void
@@ -564,7 +386,6 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    intelInitTextureImageFuncs(functions);
    intelInitTextureSubImageFuncs(functions);
    intelInitTextureCopyImageFuncs(functions);
-   intelInitStateFuncs(functions);
    intelInitClearFuncs(functions);
    intelInitBufferFuncs(functions);
    intelInitPixelFuncs(functions);
@@ -572,174 +393,74 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    intel_init_syncobj_functions(functions);
 }
 
-GLboolean
+bool
 intelInitContext(struct intel_context *intel,
-		 int api,
+                 int api,
+                 unsigned major_version,
+                 unsigned minor_version,
+                 uint32_t flags,
                  const struct gl_config * mesaVis,
                  __DRIcontext * driContextPriv,
                  void *sharedContextPrivate,
-                 struct dd_function_table *functions)
+                 struct dd_function_table *functions,
+                 unsigned *dri_ctx_error)
 {
    struct gl_context *ctx = &intel->ctx;
    struct gl_context *shareCtx = (struct gl_context *) sharedContextPrivate;
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
-   struct intel_screen *intelScreen = sPriv->private;
+   struct intel_screen *intelScreen = sPriv->driverPrivate;
    int bo_reuse_mode;
-   struct gl_config visual;
-
-   /* we can't do anything without a connection to the device */
-   if (intelScreen->bufmgr == NULL)
-      return GL_FALSE;
 
    /* Can't rely on invalidate events, fall back to glViewport hack */
-   if (!driContextPriv->driScreenPriv->dri2.useInvalidate) {
-      intel->saved_viewport = functions->Viewport;
+   if (!driContextPriv->driScreenPriv->dri2.useInvalidate)
+      functions->Viewport = intel_noninvalidate_viewport;
+   else
       functions->Viewport = intel_viewport;
-   }
 
-   if (mesaVis == NULL) {
-      memset(&visual, 0, sizeof visual);
-      mesaVis = &visual;
-   }
+   intel->intelScreen = intelScreen;
 
    if (!_mesa_initialize_context(&intel->ctx, api, mesaVis, shareCtx,
-                                 functions, (void *) intel)) {
+                                 functions)) {
+      *dri_ctx_error = __DRI_CTX_ERROR_NO_MEMORY;
       printf("%s: failed to init mesa context\n", __FUNCTION__);
-      return GL_FALSE;
+      return false;
    }
 
    driContextPriv->driverPrivate = intel;
-   intel->intelScreen = intelScreen;
    intel->driContext = driContextPriv;
    intel->driFd = sPriv->fd;
 
-   intel->has_xrgb_textures = GL_TRUE;
    intel->gen = intelScreen->gen;
-   if (IS_GEN7(intel->intelScreen->deviceID)) {
-      intel->needs_ff_sync = GL_TRUE;
-      intel->has_luminance_srgb = GL_TRUE;
-   } else if (IS_GEN6(intel->intelScreen->deviceID)) {
-      intel->needs_ff_sync = GL_TRUE;
-      intel->has_luminance_srgb = GL_TRUE;
-   } else if (IS_GEN5(intel->intelScreen->deviceID)) {
-      intel->needs_ff_sync = GL_TRUE;
-      intel->has_luminance_srgb = GL_TRUE;
-   } else if (IS_965(intel->intelScreen->deviceID)) {
-      if (IS_G4X(intel->intelScreen->deviceID)) {
-	  intel->has_luminance_srgb = GL_TRUE;
-	  intel->is_g4x = GL_TRUE;
-      }
-   } else if (IS_9XX(intel->intelScreen->deviceID)) {
-      if (IS_945(intel->intelScreen->deviceID)) {
-	 intel->is_945 = GL_TRUE;
-      }
-   } else {
-      if (intel->intelScreen->deviceID == PCI_CHIP_I830_M ||
-	  intel->intelScreen->deviceID == PCI_CHIP_845_G) {
-	 intel->has_xrgb_textures = GL_FALSE;
-      }
-   }
 
-   intel->has_separate_stencil = intel->intelScreen->hw_has_separate_stencil;
-   intel->must_use_separate_stencil = intel->intelScreen->hw_must_use_separate_stencil;
-   intel->has_hiz = intel->intelScreen->hw_has_hiz;
+   const int devID = intelScreen->deviceID;
 
-   memset(&ctx->TextureFormatSupported, 0,
-	  sizeof(ctx->TextureFormatSupported));
-   ctx->TextureFormatSupported[MESA_FORMAT_ARGB8888] = GL_TRUE;
-   if (intel->has_xrgb_textures)
-      ctx->TextureFormatSupported[MESA_FORMAT_XRGB8888] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_ARGB4444] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_ARGB1555] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_RGB565] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_L8] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_A8] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_I8] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_AL88] = GL_TRUE;
-   if (intel->gen >= 4)
-      ctx->TextureFormatSupported[MESA_FORMAT_AL1616] = GL_TRUE;
+   intel->is_945 = IS_945(devID);
 
-   /* Depth and stencil */
-   ctx->TextureFormatSupported[MESA_FORMAT_S8_Z24] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_X8_Z24] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_S8] = intel->has_separate_stencil;
+   intel->has_swizzling = intel->intelScreen->hw_has_swizzling;
 
-   /*
-    * This was disabled in initial FBO enabling to avoid combinations
-    * of depth+stencil that wouldn't work together.  We since decided
-    * that it was OK, since it's up to the app to come up with the
-    * combo that actually works, so this can probably be re-enabled.
-    */
-   /*
-   ctx->TextureFormatSupported[MESA_FORMAT_Z16] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_Z24] = GL_TRUE;
-   */
-
-   /* ctx->Extensions.MESA_ycbcr_texture */
-   ctx->TextureFormatSupported[MESA_FORMAT_YCBCR] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_YCBCR_REV] = GL_TRUE;
-
-   /* GL_3DFX_texture_compression_FXT1 */
-   ctx->TextureFormatSupported[MESA_FORMAT_RGB_FXT1] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_FXT1] = GL_TRUE;
-
-   /* GL_EXT_texture_compression_s3tc */
-   ctx->TextureFormatSupported[MESA_FORMAT_RGB_DXT1] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_DXT1] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_DXT3] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_DXT5] = GL_TRUE;
-
-#ifndef I915
-   /* GL_ARB_texture_compression_rgtc */
-   ctx->TextureFormatSupported[MESA_FORMAT_RED_RGTC1] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RED_RGTC1] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_RG_RGTC2] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RG_RGTC2] = GL_TRUE;
-
-   /* GL_ARB_texture_rg */
-   ctx->TextureFormatSupported[MESA_FORMAT_R8] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_R16] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_RG88] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_RG1616] = GL_TRUE;
-
-   /* GL_MESA_texture_signed_rgba / GL_EXT_texture_snorm */
-   ctx->TextureFormatSupported[MESA_FORMAT_DUDV8] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RGBA8888_REV] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_R8] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RG88_REV] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_R16] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_GR1616] = GL_TRUE;
-
-   /* GL_EXT_texture_sRGB */
-   ctx->TextureFormatSupported[MESA_FORMAT_SARGB8] = GL_TRUE;
-   if (intel->gen >= 5 || intel->is_g4x)
-      ctx->TextureFormatSupported[MESA_FORMAT_SRGB_DXT1] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_SRGBA_DXT1] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_SRGBA_DXT3] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_SRGBA_DXT5] = GL_TRUE;
-   if (intel->has_luminance_srgb) {
-      ctx->TextureFormatSupported[MESA_FORMAT_SL8] = GL_TRUE;
-      ctx->TextureFormatSupported[MESA_FORMAT_SLA8] = GL_TRUE;
-   }
-
-#ifdef TEXTURE_FLOAT_ENABLED
-   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_FLOAT32] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_RG_FLOAT32] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_R_FLOAT32] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_INTENSITY_FLOAT32] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_LUMINANCE_FLOAT32] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_ALPHA_FLOAT32] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32] = GL_TRUE;
-#endif
-
-#endif /* !I915 */
+   memset(&ctx->TextureFormatSupported,
+	  0, sizeof(ctx->TextureFormatSupported));
 
    driParseConfigFiles(&intel->optionCache, &intelScreen->optionCache,
-                       sPriv->myNum, (intel->gen >= 4) ? "i965" : "i915");
-   if (intel->gen < 4)
-      intel->maxBatchSize = 4096;
-   else
-      intel->maxBatchSize = sizeof(intel->batch.map);
+                       sPriv->myNum, "i915");
+   intel->maxBatchSize = 4096;
+
+   /* Estimate the size of the mappable aperture into the GTT.  There's an
+    * ioctl to get the whole GTT size, but not one to get the mappable subset.
+    * It turns out it's basically always 256MB, though some ancient hardware
+    * was smaller.
+    */
+   uint32_t gtt_size = 256 * 1024 * 1024;
+   if (intel->gen == 2)
+      gtt_size = 128 * 1024 * 1024;
+
+   /* We don't want to map two objects such that a memcpy between them would
+    * just fault one mapping in and then the other over and over forever.  So
+    * we would need to divide the GTT size by 2.  Additionally, some GTT is
+    * taken up by things like the framebuffer and the ringbuffer and such, so
+    * be more conservative.
+    */
+   intel->max_gtt_map_object_size = gtt_size / 4;
 
    intel->bufmgr = intelScreen->bufmgr;
 
@@ -752,33 +473,11 @@ intelInitContext(struct intel_context *intel,
       break;
    }
 
-   /* This doesn't yet catch all non-conformant rendering, but it's a
-    * start.
-    */
-   if (getenv("INTEL_STRICT_CONFORMANCE")) {
-      unsigned int value = atoi(getenv("INTEL_STRICT_CONFORMANCE"));
-      if (value > 0) {
-         intel->conformance_mode = value;
-      }
-      else {
-         intel->conformance_mode = 1;
-      }
-   }
-
-   if (intel->conformance_mode > 0) {
-      ctx->Const.MinLineWidth = 1.0;
-      ctx->Const.MinLineWidthAA = 1.0;
-      ctx->Const.MaxLineWidth = 1.0;
-      ctx->Const.MaxLineWidthAA = 1.0;
-      ctx->Const.LineWidthGranularity = 1.0;
-   }
-   else {
-      ctx->Const.MinLineWidth = 1.0;
-      ctx->Const.MinLineWidthAA = 1.0;
-      ctx->Const.MaxLineWidth = 5.0;
-      ctx->Const.MaxLineWidthAA = 5.0;
-      ctx->Const.LineWidthGranularity = 0.5;
-   }
+   ctx->Const.MinLineWidth = 1.0;
+   ctx->Const.MinLineWidthAA = 1.0;
+   ctx->Const.MaxLineWidth = 5.0;
+   ctx->Const.MaxLineWidthAA = 5.0;
+   ctx->Const.LineWidthGranularity = 0.5;
 
    ctx->Const.MinPointSize = 1.0;
    ctx->Const.MinPointSizeAA = 1.0;
@@ -786,85 +485,48 @@ intelInitContext(struct intel_context *intel,
    ctx->Const.MaxPointSizeAA = 3.0;
    ctx->Const.PointSizeGranularity = 1.0;
 
-   ctx->Const.MaxSamples = 1.0;
+   ctx->Const.StripTextureBorder = GL_TRUE;
 
    /* reinitialize the context point state.
     * It depend on constants in __struct gl_contextRec::Const
     */
    _mesa_init_point(ctx);
 
-   if (intel->gen >= 4) {
-      ctx->Const.sRGBCapable = GL_TRUE;
-      if (MAX_WIDTH > 8192)
-	 ctx->Const.MaxRenderbufferSize = 8192;
-   } else {
-      if (MAX_WIDTH > 2048)
-	 ctx->Const.MaxRenderbufferSize = 2048;
-   }
+   ctx->Const.MaxRenderbufferSize = 2048;
 
-   /* Initialize the software rasterizer and helper modules. */
    _swrast_CreateContext(ctx);
    _vbo_CreateContext(ctx);
-   _tnl_CreateContext(ctx);
-   _swsetup_CreateContext(ctx);
- 
-   /* Configure swrast to match hardware characteristics: */
-   _swrast_allow_pixel_fog(ctx, GL_FALSE);
-   _swrast_allow_vertex_fog(ctx, GL_TRUE);
+   if (ctx->swrast_context) {
+      _tnl_CreateContext(ctx);
+      _swsetup_CreateContext(ctx);
+
+      /* Configure swrast to match hardware characteristics: */
+      _swrast_allow_pixel_fog(ctx, false);
+      _swrast_allow_vertex_fog(ctx, true);
+   }
 
    _mesa_meta_init(ctx);
 
-   intel->hw_stencil = mesaVis->stencilBits && mesaVis->depthBits == 24;
+   intel->hw_stencil = mesaVis && mesaVis->stencilBits && mesaVis->depthBits == 24;
    intel->hw_stipple = 1;
-
-   /* XXX FBO: this doesn't seem to be used anywhere */
-   switch (mesaVis->depthBits) {
-   case 0:                     /* what to do in this case? */
-   case 16:
-      intel->polygon_offset_scale = 1.0;
-      break;
-   case 24:
-      intel->polygon_offset_scale = 2.0;     /* req'd to pass glean */
-      break;
-   default:
-      assert(0);
-      break;
-   }
-
-   if (intel->gen >= 4)
-      intel->polygon_offset_scale /= 0xffff;
 
    intel->RenderIndex = ~0;
 
-   switch (ctx->API) {
-   case API_OPENGL:
-      intelInitExtensions(ctx);
-      break;
-   case API_OPENGLES:
-      intelInitExtensionsES1(ctx);
-      break;
-   case API_OPENGLES2:
-      intelInitExtensionsES2(ctx);
-      break;
-   }
+   intelInitExtensions(ctx);
 
    INTEL_DEBUG = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
    if (INTEL_DEBUG & DEBUG_BUFMGR)
-      dri_bufmgr_set_debug(intel->bufmgr, GL_TRUE);
+      dri_bufmgr_set_debug(intel->bufmgr, true);
+   if (INTEL_DEBUG & DEBUG_PERF)
+      intel->perf_debug = true;
+
+   if (INTEL_DEBUG & DEBUG_AUB)
+      drm_intel_bufmgr_gem_set_aub_dump(intel->bufmgr, true);
 
    intel_batchbuffer_init(intel);
 
    intel_fbo_init(intel);
 
-   if (intel->ctx.Mesa_DXTn) {
-      _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
-      _mesa_enable_extension(ctx, "GL_S3_s3tc");
-   }
-   else if (driQueryOptionb(&intel->optionCache, "force_s3tc_enable")) {
-      _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
-   }
-   intel->use_texture_tiling = driQueryOptionb(&intel->optionCache,
-					       "texture_tiling");
    intel->use_early_z = driQueryOptionb(&intel->optionCache, "early_z");
 
    intel->prim.primitive = ~0;
@@ -885,7 +547,12 @@ intelInitContext(struct intel_context *intel,
       intel->always_flush_cache = 1;
    }
 
-   return GL_TRUE;
+   if (driQueryOptionb(&intel->optionCache, "disable_throttling")) {
+      fprintf(stderr, "disabling flush throttling\n");
+      intel->disable_throttling = 1;
+   }
+
+   return true;
 }
 
 void
@@ -893,20 +560,30 @@ intelDestroyContext(__DRIcontext * driContextPriv)
 {
    struct intel_context *intel =
       (struct intel_context *) driContextPriv->driverPrivate;
+   struct gl_context *ctx = &intel->ctx;
 
    assert(intel);               /* should never be null */
    if (intel) {
       INTEL_FIREVERTICES(intel);
 
+      /* Dump a final BMP in case the application doesn't call SwapBuffers */
+      if (INTEL_DEBUG & DEBUG_AUB) {
+         intel_batchbuffer_flush(intel);
+	 aub_dump_bmp(&intel->ctx);
+      }
+
       _mesa_meta_free(&intel->ctx);
 
       intel->vtbl.destroy(intel);
 
-      _swsetup_DestroyContext(&intel->ctx);
-      _tnl_DestroyContext(&intel->ctx);
+      if (ctx->swrast_context) {
+         _swsetup_DestroyContext(&intel->ctx);
+         _tnl_DestroyContext(&intel->ctx);
+      }
       _vbo_DestroyContext(&intel->ctx);
 
-      _swrast_DestroyContext(&intel->ctx);
+      if (ctx->swrast_context)
+         _swrast_DestroyContext(&intel->ctx);
       intel->Fallback = 0x0;      /* don't call _swrast_Flush later */
 
       intel_batchbuffer_free(intel);
@@ -923,7 +600,9 @@ intelDestroyContext(__DRIcontext * driContextPriv)
       /* free the Mesa context */
       _mesa_free_context_data(&intel->ctx);
 
-      FREE(intel);
+      _math_matrix_dtr(&intel->ViewportMatrix);
+
+      ralloc_free(intel);
       driContextPriv->driverPrivate = NULL;
    }
 }
@@ -934,7 +613,7 @@ intelUnbindContext(__DRIcontext * driContextPriv)
    /* Unset current context and dispath table */
    _mesa_make_current(NULL, NULL, NULL);
 
-   return GL_TRUE;
+   return true;
 }
 
 GLboolean
@@ -959,6 +638,7 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
    }
 
    if (driContextPriv) {
+      struct gl_context *ctx = &intel->ctx;
       struct gl_framebuffer *fb, *readFb;
       
       if (driDrawPriv == NULL && driReadPriv == NULL) {
@@ -972,19 +652,19 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
       }
 
       intel_prepare_render(intel);
-      _mesa_make_current(&intel->ctx, fb, readFb);
-      
+      _mesa_make_current(ctx, fb, readFb);
+
       /* We do this in intel_prepare_render() too, but intel->ctx.DrawBuffer
        * is NULL at that point.  We can't call _mesa_makecurrent()
        * first, since we need the buffer size for the initial
        * viewport.  So just call intel_draw_buffer() again here. */
-      intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
+      intel_draw_buffer(ctx);
    }
    else {
       _mesa_make_current(NULL, NULL, NULL);
    }
 
-   return GL_TRUE;
+   return true;
 }
 
 /**
@@ -994,8 +674,7 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
  * attached to the drawable's framebuffer. Then request the buffers with
  * DRI2GetBuffers() or DRI2GetBuffersWithFormat().
  *
- * This is called from intel_update_renderbuffers(). It is used only if either
- * the hardware or the X driver lacks separate stencil support.
+ * This is called from intel_update_renderbuffers().
  *
  * \param drawable      Drawable whose buffers are queried.
  * \param buffers       [out] List of buffers returned by DRI2 query.
@@ -1006,103 +685,67 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
  * \see DRI2GetBuffersWithFormat()
  */
 static void
-intel_query_dri2_buffers_no_separate_stencil(struct intel_context *intel,
-					     __DRIdrawable *drawable,
-					     __DRIbuffer **buffers,
-					     int *buffer_count)
+intel_query_dri2_buffers(struct intel_context *intel,
+			 __DRIdrawable *drawable,
+			 __DRIbuffer **buffers,
+			 int *buffer_count)
 {
-   assert(!intel->must_use_separate_stencil);
-
    __DRIscreen *screen = intel->intelScreen->driScrnPriv;
    struct gl_framebuffer *fb = drawable->driverPrivate;
+   int i = 0;
+   unsigned attachments[8];
 
-   if (screen->dri2.loader
-       && screen->dri2.loader->base.version > 2
-       && screen->dri2.loader->getBuffersWithFormat != NULL) {
+   struct intel_renderbuffer *front_rb;
+   struct intel_renderbuffer *back_rb;
 
-      int i = 0;
-      const int max_attachments = 4;
-      unsigned *attachments = calloc(2 * max_attachments, sizeof(unsigned));
+   front_rb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);
+   back_rb = intel_get_renderbuffer(fb, BUFFER_BACK_LEFT);
 
-      struct intel_renderbuffer *front_rb;
-      struct intel_renderbuffer *back_rb;
-      struct intel_renderbuffer *depth_rb;
-      struct intel_renderbuffer *stencil_rb;
+   memset(attachments, 0, sizeof(attachments));
+   if ((intel->is_front_buffer_rendering ||
+	intel->is_front_buffer_reading ||
+	!back_rb) && front_rb) {
+      /* If a fake front buffer is in use, then querying for
+       * __DRI_BUFFER_FRONT_LEFT will cause the server to copy the image from
+       * the real front buffer to the fake front buffer.  So before doing the
+       * query, we need to make sure all the pending drawing has landed in the
+       * real front buffer.
+       */
+      intel_flush(&intel->ctx);
+      intel_flush_front(&intel->ctx);
 
-      front_rb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);
-      back_rb = intel_get_renderbuffer(fb, BUFFER_BACK_LEFT);
-      depth_rb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
-      stencil_rb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
-
-      if ((intel->is_front_buffer_rendering ||
-	   intel->is_front_buffer_reading ||
-	   !back_rb) && front_rb) {
-	 attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
-	 attachments[i++] = intel_bits_per_pixel(front_rb);
-      }
-
-      if (back_rb) {
-	 attachments[i++] = __DRI_BUFFER_BACK_LEFT;
-	 attachments[i++] = intel_bits_per_pixel(back_rb);
-      }
-
-      if (depth_rb && stencil_rb) {
-	 attachments[i++] = __DRI_BUFFER_DEPTH_STENCIL;
-	 attachments[i++] = intel_bits_per_pixel(depth_rb);
-      } else if (depth_rb) {
-	 attachments[i++] = __DRI_BUFFER_DEPTH;
-	 attachments[i++] = intel_bits_per_pixel(depth_rb);
-      } else if (stencil_rb) {
-	 attachments[i++] = __DRI_BUFFER_STENCIL;
-	 attachments[i++] = intel_bits_per_pixel(stencil_rb);
-      }
-
-      assert(i <= 2 * max_attachments);
-
-      *buffers = screen->dri2.loader->getBuffersWithFormat(drawable,
-							   &drawable->w,
-							   &drawable->h,
-							   attachments, i / 2,
-							   buffer_count,
-							   drawable->loaderPrivate);
-      free(attachments);
-
-   } else if (screen->dri2.loader) {
-
-      int i = 0;
-      const int max_attachments = 4;
-      unsigned *attachments = calloc(max_attachments, sizeof(unsigned));
-
-      if (intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT))
-	 attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
-      if (intel_get_renderbuffer(fb, BUFFER_BACK_LEFT))
-	 attachments[i++] = __DRI_BUFFER_BACK_LEFT;
-      if (intel_get_renderbuffer(fb, BUFFER_DEPTH))
-	 attachments[i++] = __DRI_BUFFER_DEPTH;
-      if (intel_get_renderbuffer(fb, BUFFER_STENCIL))
-	 attachments[i++] = __DRI_BUFFER_STENCIL;
-
-      assert(i <= max_attachments);
-
-      *buffers = screen->dri2.loader->getBuffersWithFormat(drawable,
-							   &drawable->w,
-							   &drawable->h,
-							   attachments, i,
-							   buffer_count,
-							   drawable->loaderPrivate);
-      free(attachments);
-
-   } else {
-      *buffers = NULL;
-      *buffer_count = 0;
+      attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
+      attachments[i++] = intel_bits_per_pixel(front_rb);
+   } else if (front_rb && intel->front_buffer_dirty) {
+      /* We have pending front buffer rendering, but we aren't querying for a
+       * front buffer.  If the front buffer we have is a fake front buffer,
+       * the X server is going to throw it away when it processes the query.
+       * So before doing the query, make sure all the pending drawing has
+       * landed in the real front buffer.
+       */
+      intel_flush(&intel->ctx);
+      intel_flush_front(&intel->ctx);
    }
+
+   if (back_rb) {
+      attachments[i++] = __DRI_BUFFER_BACK_LEFT;
+      attachments[i++] = intel_bits_per_pixel(back_rb);
+   }
+
+   assert(i <= ARRAY_SIZE(attachments));
+
+   *buffers = screen->dri2.loader->getBuffersWithFormat(drawable,
+							&drawable->w,
+							&drawable->h,
+							attachments, i / 2,
+							buffer_count,
+							drawable->loaderPrivate);
 }
 
 /**
  * \brief Assign a DRI buffer's DRM region to a renderbuffer.
  *
- * This is called from intel_update_renderbuffers().  It is used only if
- * either the hardware or the X driver lacks separate stencil support.
+ * This is called from intel_update_renderbuffers().
  *
  * \par Note:
  *    DRI buffers whose attachment point is DRI2BufferStencil or
@@ -1113,25 +756,26 @@ intel_query_dri2_buffers_no_separate_stencil(struct intel_context *intel,
  *
  * \see intel_update_renderbuffers()
  * \see intel_region_alloc_for_handle()
- * \see intel_renderbuffer_set_region()
  */
 static void
-intel_process_dri2_buffer_no_separate_stencil(struct intel_context *intel,
-					      __DRIdrawable *drawable,
-					      __DRIbuffer *buffer,
-					      struct intel_renderbuffer *rb,
-					      const char *buffer_name)
+intel_process_dri2_buffer(struct intel_context *intel,
+			  __DRIdrawable *drawable,
+			  __DRIbuffer *buffer,
+			  struct intel_renderbuffer *rb,
+			  const char *buffer_name)
 {
-   assert(!intel->must_use_separate_stencil);
-
-   struct gl_framebuffer *fb = drawable->driverPrivate;
    struct intel_region *region = NULL;
-   struct intel_renderbuffer *depth_rb = NULL;
 
    if (!rb)
       return;
 
-   if (rb->region && rb->region->name == buffer->name)
+   /* We try to avoid closing and reopening the same BO name, because the first
+    * use of a mapping of the buffer involves a bunch of page faulting which is
+    * moderately expensive.
+    */
+   if (rb->mt &&
+       rb->mt->region &&
+       rb->mt->region->name == buffer->name)
       return;
 
    if (unlikely(INTEL_DEBUG & DEBUG_DRI)) {
@@ -1141,406 +785,118 @@ intel_process_dri2_buffer_no_separate_stencil(struct intel_context *intel,
 	      buffer->cpp, buffer->pitch);
    }
 
-   bool identify_depth_and_stencil = false;
-   if (buffer->attachment == __DRI_BUFFER_STENCIL) {
-      struct intel_renderbuffer *depth_rb =
-	 intel_get_renderbuffer(fb, BUFFER_DEPTH);
-      identify_depth_and_stencil = depth_rb && depth_rb->region;
-   }
+   intel_miptree_release(&rb->mt);
+   region = intel_region_alloc_for_handle(intel->intelScreen,
+                                          buffer->cpp,
+                                          drawable->w,
+                                          drawable->h,
+                                          buffer->pitch,
+                                          buffer->name,
+                                          buffer_name);
+   if (!region)
+      return;
 
-   if (identify_depth_and_stencil) {
-      if (unlikely(INTEL_DEBUG & DEBUG_DRI)) {
-	 fprintf(stderr, "(reusing depth buffer as stencil)\n");
-      }
-      intel_region_reference(&region, depth_rb->region);
-   } else {
-      region = intel_region_alloc_for_handle(intel->intelScreen,
-					     buffer->cpp,
-					     drawable->w,
-					     drawable->h,
-					     buffer->pitch / buffer->cpp,
-					     buffer->name,
-					     buffer_name);
-   }
-
-   intel_renderbuffer_set_region(intel, rb, region);
+   rb->mt = intel_miptree_create_for_dri2_buffer(intel,
+                                                 buffer->attachment,
+                                                 intel_rb_format(rb),
+                                                 region);
    intel_region_release(&region);
-
-   if (buffer->attachment == __DRI_BUFFER_DEPTH_STENCIL) {
-      struct intel_renderbuffer *stencil_rb =
-	 intel_get_renderbuffer(fb, BUFFER_STENCIL);
-
-      if (!stencil_rb)
-	 return;
-
-      if (stencil_rb->region && stencil_rb->region->name == buffer->name)
-	 return;
-
-      intel_renderbuffer_set_region(intel, stencil_rb, region);
-   }
 }
 
 /**
- * \brief Query DRI2 to obtain a DRIdrawable's buffers.
+ * \brief Query DRI Image loader to obtain a DRIdrawable's buffers.
  *
  * To determine which DRI buffers to request, examine the renderbuffers
  * attached to the drawable's framebuffer. Then request the buffers with
- * DRI2GetBuffersWithFormat().
+ * dri3
  *
- * This is called from intel_update_renderbuffers(). It is used when 1) the
- * hardware supports separate stencil and 2) the X driver's separate stencil
- * support has been verified to work or is still unknown.
+ * This is called from intel_update_renderbuffers().
  *
  * \param drawable      Drawable whose buffers are queried.
  * \param buffers       [out] List of buffers returned by DRI2 query.
  * \param buffer_count  [out] Number of buffers returned.
- * \param attachments   [out] List of pairs (attachment_point, bits_per_pixel)
- *                      that were submitted in the DRI2 query. Number of pairs
- *                      is same as buffer_count.
  *
  * \see intel_update_renderbuffers()
- * \see DRI2GetBuffersWithFormat()
- * \see enum intel_dri2_has_hiz
  */
+
 static void
-intel_query_dri2_buffers_with_separate_stencil(struct intel_context *intel,
-					       __DRIdrawable *drawable,
-					       __DRIbuffer **buffers,
-					       unsigned **attachments,
-					       int *count)
+intel_update_image_buffer(struct intel_context *intel,
+                          __DRIdrawable *drawable,
+                          struct intel_renderbuffer *rb,
+                          __DRIimage *buffer,
+                          enum __DRIimageBufferMask buffer_type)
 {
-   assert(intel->has_separate_stencil);
+   struct intel_region *region = buffer->region;
 
-   __DRIscreen *screen = intel->intelScreen->driScrnPriv;
-   struct gl_framebuffer *fb = drawable->driverPrivate;
-
-   const int max_attachments = 5;
-   int i = 0;
-
-   *attachments = calloc(2 * max_attachments, sizeof(unsigned));
-   if (!*attachments) {
-      *buffers = NULL;
-      *count = 0;
+   if (!rb || !region)
       return;
-   }
 
+   unsigned num_samples = rb->Base.Base.NumSamples;
+
+   if (rb->mt &&
+       rb->mt->region &&
+       rb->mt->region == region)
+      return;
+
+   intel_miptree_release(&rb->mt);
+   rb->mt = intel_miptree_create_for_image_buffer(intel,
+                                                  buffer_type,
+                                                  intel_rb_format(rb),
+                                                  num_samples,
+                                                  region);
+}
+
+
+static void
+intel_update_image_buffers(struct intel_context *intel, __DRIdrawable *drawable)
+{
+   struct gl_framebuffer *fb = drawable->driverPrivate;
+   __DRIscreen *screen = intel->intelScreen->driScrnPriv;
    struct intel_renderbuffer *front_rb;
    struct intel_renderbuffer *back_rb;
-   struct intel_renderbuffer *depth_rb;
-   struct intel_renderbuffer *stencil_rb;
+   struct __DRIimageList images;
+   unsigned int format;
+   uint32_t buffer_mask = 0;
 
    front_rb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);
    back_rb = intel_get_renderbuffer(fb, BUFFER_BACK_LEFT);
-   depth_rb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
-   stencil_rb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
 
-   if ((intel->is_front_buffer_rendering ||
-	intel->is_front_buffer_reading ||
-	!back_rb) && front_rb) {
-      (*attachments)[i++] = __DRI_BUFFER_FRONT_LEFT;
-      (*attachments)[i++] = intel_bits_per_pixel(front_rb);
-   }
-
-   if (back_rb) {
-      (*attachments)[i++] = __DRI_BUFFER_BACK_LEFT;
-      (*attachments)[i++] = intel_bits_per_pixel(back_rb);
-   }
-
-   /*
-    * We request a separate stencil buffer, and perhaps a hiz buffer too, even
-    * if we do not yet know if the X driver supports it. See the comments for
-    * 'enum intel_dri2_has_hiz'.
-    */
-
-   if (depth_rb) {
-      (*attachments)[i++] = __DRI_BUFFER_DEPTH;
-      (*attachments)[i++] = intel_bits_per_pixel(depth_rb);
-
-      if (intel->vtbl.is_hiz_depth_format(intel, depth_rb->Base.Format)) {
-	 /* Depth and hiz buffer have same bpp. */
-	 (*attachments)[i++] = __DRI_BUFFER_HIZ;
-	 (*attachments)[i++] = intel_bits_per_pixel(depth_rb);
-      }
-   }
-
-   if (stencil_rb) {
-      assert(stencil_rb->Base.Format == MESA_FORMAT_S8);
-      (*attachments)[i++] = __DRI_BUFFER_STENCIL;
-      (*attachments)[i++] = intel_bits_per_pixel(stencil_rb);
-   }
-
-   assert(i <= 2 * max_attachments);
-
-   *buffers = screen->dri2.loader->getBuffersWithFormat(drawable,
-							&drawable->w,
-							&drawable->h,
-							*attachments, i / 2,
-							count,
-							drawable->loaderPrivate);
-
-   if (!*buffers) {
-      free(*attachments);
-      *attachments = NULL;
-      *count = 0;
-   }
-}
-
-/**
- * \brief Assign a DRI buffer's DRM region to a renderbuffer.
- *
- * This is called from intel_update_renderbuffers().  It is used when 1) the
- * hardware supports separate stencil and 2) the X driver's separate stencil
- * support has been verified to work or is still unknown.
- *
- * \par Note:
- *    DRI buffers whose attachment point is DRI2BufferStencil or DRI2BufferHiz
- *    are handled as special cases.
- *
- * \param buffer_name is a human readable name, such as "dri2 front buffer",
- *        that is passed to intel_region_alloc_for_handle().
- *
- * \see intel_update_renderbuffers()
- * \see intel_region_alloc_for_handle()
- * \see intel_renderbuffer_set_region()
- * \see enum intel_dri2_has_hiz
- */
-static void
-intel_process_dri2_buffer_with_separate_stencil(struct intel_context *intel,
-						__DRIdrawable *drawable,
-						__DRIbuffer *buffer,
-						struct intel_renderbuffer *rb,
-						const char *buffer_name)
-{
-   assert(intel->has_separate_stencil);
-   assert(buffer->attachment != __DRI_BUFFER_DEPTH_STENCIL);
-
-   if (!rb)
+   if (back_rb)
+      format = intel_rb_format(back_rb);
+   else if (front_rb)
+      format = intel_rb_format(front_rb);
+   else
       return;
 
-   /* If the renderbuffer's and DRIbuffer's regions match, then continue. */
-   if ((buffer->attachment != __DRI_BUFFER_HIZ &&
-	rb->region &&
-	rb->region->name == buffer->name) ||
-       (buffer->attachment == __DRI_BUFFER_HIZ &&
-	rb->hiz_region &&
-	rb->hiz_region->name == buffer->name)) {
-      return;
+   if ((intel->is_front_buffer_rendering || intel->is_front_buffer_reading || !back_rb) && front_rb)
+      buffer_mask |= __DRI_IMAGE_BUFFER_FRONT;
+
+   if (back_rb)
+      buffer_mask |= __DRI_IMAGE_BUFFER_BACK;
+
+   (*screen->image.loader->getBuffers) (drawable,
+                                        driGLFormatToImageFormat(format),
+                                        &drawable->dri2.stamp,
+                                        drawable->loaderPrivate,
+                                        buffer_mask,
+                                        &images);
+
+   if (images.image_mask & __DRI_IMAGE_BUFFER_FRONT) {
+      drawable->w = images.front->width;
+      drawable->h = images.front->height;
+      intel_update_image_buffer(intel,
+                                drawable,
+                                front_rb,
+                                images.front,
+                                __DRI_IMAGE_BUFFER_FRONT);
    }
-
-   if (unlikely(INTEL_DEBUG & DEBUG_DRI)) {
-      fprintf(stderr,
-	      "attaching buffer %d, at %d, cpp %d, pitch %d\n",
-	      buffer->name, buffer->attachment,
-	      buffer->cpp, buffer->pitch);
-   }
-
-   int buffer_width;
-   int buffer_height;
-   if (buffer->attachment == __DRI_BUFFER_STENCIL) {
-      /* The stencil buffer has quirky pitch requirements.  From Section
-       * 2.11.5.6.2.1 3DSTATE_STENCIL_BUFFER, field "Surface Pitch":
-       *    The pitch must be set to 2x the value computed based on width, as
-       *    the stencil buffer is stored with two rows interleaved.
-       *
-       * To satisfy the pitch requirement, the X driver allocated the region
-       * with the following dimensions.
-       */
-       buffer_width = ALIGN(drawable->w, 64);
-       buffer_height = ALIGN(ALIGN(drawable->h, 2) / 2, 64);
-   } else {
-       buffer_width = drawable->w;
-       buffer_height = drawable->h;
-   }
-
-   struct intel_region *region =
-      intel_region_alloc_for_handle(intel->intelScreen,
-				    buffer->cpp,
-				    buffer_width,
-				    buffer_height,
-				    buffer->pitch / buffer->cpp,
-				    buffer->name,
-				    buffer_name);
-
-   if (buffer->attachment == __DRI_BUFFER_HIZ) {
-      intel_renderbuffer_set_hiz_region(intel, rb, region);
-   } else {
-      intel_renderbuffer_set_region(intel, rb, region);
-   }
-
-   intel_region_release(&region);
-}
-
-/**
- * \brief Verify that the X driver supports hiz and separate stencil.
- *
- * This implements the cleanup stage of the handshake described in the
- * comments for 'enum intel_dri2_has_hiz'.
- *
- * This should be called from intel_update_renderbuffers() after 1) the
- * DRIdrawable has been queried for its buffers via DRI2GetBuffersWithFormat()
- * and 2) the DRM region of each returned DRIbuffer has been assigned to the
- * appropriate intel_renderbuffer. Furthermore, this should be called *only*
- * when 1) intel_update_renderbuffers() tried to used the X driver's separate
- * stencil functionality and 2) it has not yet been determined if the X driver
- * supports separate stencil.
- *
- * If we determine that the X driver does have support, then we set
- * intel_screen.dri2_has_hiz to true and return.
- *
- * If we determine that the X driver lacks support, and we requested
- * a DRI2BufferDepth and DRI2BufferStencil, then we must remedy the mistake by
- * taking the following actions:
- *    1. Discard the framebuffer's stencil and depth renderbuffers.
- *    2. Create a combined depth/stencil renderbuffer and attach
- *       it to the framebuffer's depth and stencil attachment points.
- *    3. Query the drawable for a new set of buffers, which consists of the
- *       originally requested set plus DRI2BufferDepthStencil.
- *    4. Assign the DRI2BufferDepthStencil's DRM region to the new
- *       depth/stencil renderbuffer.
- *
- * \pre intel->intelScreen->dri2_has_hiz == INTEL_DRI2_HAS_HIZ_UNKNOWN
- *
- * \param drawable      Drawable whose buffers were queried.
- *
- * \param buffers       [in/out] As input, the buffer list returned by the
- *                      original DRI2 query. As output, the current buffer
- *                      list, which may have been altered by a new DRI2 query.
- *
- * \param attachments   [in/out] As input, the attachment list submitted
- *                      in the original DRI2 query. As output, the attachment
- *                      list that was submitted in the DRI2 query that
- *                      obtained the current buffer list, as returned in the
- *                      output parameter \c buffers.  (Note: If no new query
- *                      was made, then the list remains unaltered).
- *
- * \param count         [out] Number of buffers in the current buffer list, as
- *                      returned in the output parameter \c buffers.
- *
- * \see enum intel_dri2_has_hiz
- * \see struct intel_screen::dri2_has_hiz
- * \see intel_update_renderbuffers
- */
-static void
-intel_verify_dri2_has_hiz(struct intel_context *intel,
-			  __DRIdrawable *drawable,
-			  __DRIbuffer **buffers,
-			  unsigned **attachments,
-			  int *count)
-{
-   assert(intel->intelScreen->dri2_has_hiz == INTEL_DRI2_HAS_HIZ_UNKNOWN);
-
-   struct gl_framebuffer *fb = drawable->driverPrivate;
-   struct intel_renderbuffer *stencil_rb =
-      intel_get_renderbuffer(fb, BUFFER_STENCIL);
-
-   if (stencil_rb) {
-      /*
-       * We requested a DRI2BufferStencil without knowing if the X driver
-       * supports it. Now, check if X handled the request correctly and clean
-       * up if it did not. (See comments for 'enum intel_dri2_has_hiz').
-       */
-      struct intel_renderbuffer *depth_rb =
-	 intel_get_renderbuffer(fb, BUFFER_DEPTH);
-      assert(stencil_rb->Base.Format == MESA_FORMAT_S8);
-      assert(depth_rb && depth_rb->Base.Format == MESA_FORMAT_X8_Z24);
-
-      if (stencil_rb->region->tiling == I915_TILING_NONE) {
-	 /*
-	  * The stencil buffer is actually W tiled. The region's tiling is
-	  * I915_TILING_NONE, however, because the GTT is incapable of W
-	  * fencing.
-	  */
-	 intel->intelScreen->dri2_has_hiz = INTEL_DRI2_HAS_HIZ_TRUE;
-	 return;
-      } else {
-	 /*
-	  * Oops... the screen doesn't support separate stencil. Discard the
-	  * separate depth and stencil buffers and replace them with
-	  * a combined depth/stencil buffer. Discard the hiz buffer too.
-	  */
-	 intel->intelScreen->dri2_has_hiz = INTEL_DRI2_HAS_HIZ_FALSE;
-
-	 /* 1. Discard depth and stencil renderbuffers. */
-	 _mesa_remove_renderbuffer(fb, BUFFER_DEPTH);
-	 depth_rb = NULL;
-	 _mesa_remove_renderbuffer(fb, BUFFER_STENCIL);
-	 stencil_rb = NULL;
-
-	 /* 2. Create new depth/stencil renderbuffer. */
-	 struct intel_renderbuffer *depth_stencil_rb =
-	    intel_create_renderbuffer(MESA_FORMAT_S8_Z24);
-	 _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depth_stencil_rb->Base);
-	 _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &depth_stencil_rb->Base);
-
-	 /* 3. Append DRI2BufferDepthStencil to attachment list. */
-	 int old_count = *count;
-	 unsigned int *old_attachments = *attachments;
-	 *count = old_count + 1;
-	 *attachments = malloc(2 * (*count) * sizeof(unsigned));
-	 memcpy(*attachments, old_attachments, 2 * old_count * sizeof(unsigned));
-	 free(old_attachments);
-	 (*attachments)[2 * old_count + 0] = __DRI_BUFFER_DEPTH_STENCIL;
-	 (*attachments)[2 * old_count + 1] = intel_bits_per_pixel(depth_stencil_rb);
-
-	 /* 4. Request new set of DRI2 attachments. */
-	 __DRIscreen *screen = intel->intelScreen->driScrnPriv;
-	 *buffers = screen->dri2.loader->getBuffersWithFormat(drawable,
-							      &drawable->w,
-							      &drawable->h,
-							      *attachments,
-							      *count,
-							      count,
-							      drawable->loaderPrivate);
-	 if (!*buffers)
-	    return;
-
-	 /*
-	  * I don't know how to recover from the failure assertion below.
-	  * Rather than fail gradually and unexpectedly, we should just die
-	  * now.
-	  */
-	 assert(*count == old_count + 1);
-
-	 /* 5. Assign the DRI buffer's DRM region to the its renderbuffers. */
-	 __DRIbuffer *depth_stencil_buffer = NULL;
-	 for (int i = 0; i < *count; ++i) {
-	    if ((*buffers)[i].attachment == __DRI_BUFFER_DEPTH_STENCIL) {
-	       depth_stencil_buffer = &(*buffers)[i];
-	       break;
-	    }
-	 }
-	 struct intel_region *region =
-	    intel_region_alloc_for_handle(intel->intelScreen,
-					  depth_stencil_buffer->cpp,
-					  drawable->w,
-					  drawable->h,
-					  depth_stencil_buffer->pitch
-					     / depth_stencil_buffer->cpp,
-					  depth_stencil_buffer->name,
-					  "dri2 depth / stencil buffer");
-	 intel_renderbuffer_set_region(intel,
-				       intel_get_renderbuffer(fb, BUFFER_DEPTH),
-				       region);
-	 intel_renderbuffer_set_region(intel,
-				       intel_get_renderbuffer(fb, BUFFER_STENCIL),
-				       region);
-	 intel_region_release(&region);
-      }
-   }
-
-   if (intel_framebuffer_has_hiz(fb)) {
-      /*
-       * In the future, the driver may advertise a GL config with hiz
-       * compatible depth bits and 0 stencil bits (for example, when the
-       * driver gains support for float32 depth buffers). When that day comes,
-       * here we need to verify that the X driver does in fact support hiz and
-       * clean up if it doesn't.
-       *
-       * Presently, however, no verification or clean up is necessary, and
-       * execution should not reach here. If the framebuffer still has a hiz
-       * region, then we have already set dri2_has_hiz to true after
-       * confirming above that the stencil buffer is W tiled.
-       */
-      assert(0);
+   if (images.image_mask & __DRI_IMAGE_BUFFER_BACK) {
+      drawable->w = images.back->width;
+      drawable->h = images.back->height;
+      intel_update_image_buffer(intel,
+                                drawable,
+                                back_rb,
+                                images.back,
+                                __DRI_IMAGE_BUFFER_BACK);
    }
 }
