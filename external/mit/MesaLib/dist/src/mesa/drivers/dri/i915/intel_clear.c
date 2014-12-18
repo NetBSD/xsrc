@@ -1,9 +1,9 @@
 /**************************************************************************
- * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ *
+ * Copyright 2003 VMware, Inc.
  * Copyright 2009 Intel Corporation.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -11,19 +11,19 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 #include "main/glheader.h"
@@ -89,11 +89,8 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
    struct intel_renderbuffer *irb;
    int i;
 
-   if (!_mesa_check_conditional_render(ctx))
-      return;
-
    if (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_FRONT_RIGHT)) {
-      intel->front_buffer_dirty = GL_TRUE;
+      intel->front_buffer_dirty = true;
    }
 
    if (0)
@@ -118,12 +115,11 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
    /* HW color buffers (front, back, aux, generic FBO, etc) */
    if (colorMask == ~0) {
       /* clear all R,G,B,A */
-      /* XXX FBO: need to check if colorbuffers are software RBOs! */
       blit_mask |= (mask & BUFFER_BITS_COLOR);
    }
    else {
       /* glColorMask in effect */
-      tri_mask |= (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT));
+      tri_mask |= (mask & BUFFER_BITS_COLOR);
    }
 
    /* Make sure we have up to date buffers before we start looking at
@@ -144,12 +140,6 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
 	     */
             tri_mask |= BUFFER_BIT_STENCIL;
          }
-	 else if (intel->has_separate_stencil &&
-	       stencilRegion->tiling == I915_TILING_NONE) {
-	    /* The stencil buffer is actually W tiled, which the hardware
-	     * cannot blit to. */
-	    tri_mask |= BUFFER_BIT_STENCIL;
-	 }
          else {
             /* clearing all stencil bits, use blitting */
             blit_mask |= BUFFER_BIT_STENCIL;
@@ -172,7 +162,7 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
     * buffer with it.
     */
    if (mask & (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL)) {
-      int color_bit = _mesa_ffs(mask & BUFFER_BITS_COLOR);
+      int color_bit = ffs(mask & BUFFER_BITS_COLOR);
       if (color_bit != 0) {
 	 tri_mask |= blit_mask & (1 << (color_bit - 1));
 	 blit_mask &= ~(1 << (color_bit - 1));
@@ -189,7 +179,10 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
 
    if (tri_mask) {
       debug_mask("tri", tri_mask);
-      _mesa_meta_Clear(&intel->ctx, tri_mask);
+      if (ctx->API == API_OPENGLES)
+	 _mesa_meta_Clear(&intel->ctx, tri_mask);
+      else
+	 _mesa_meta_glsl_Clear(&intel->ctx, tri_mask);
    }
 }
 

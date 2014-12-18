@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -17,9 +16,10 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
  *    Gareth Hughes
@@ -305,8 +305,6 @@ enum { NIL = 0, ONE = 1, NEG = -1, VAR = 2 };
 #  define ALIGN16(type, array)	type array __attribute__ ((aligned (16)))
 #elif defined(_MSC_VER)
 #  define ALIGN16(type, array)	type array __declspec(align(16)) /* GH: Does this work? */
-#elif defined(__WATCOMC__)
-#  define ALIGN16(type, array)	                    /* Watcom does not support this */ 
 #elif defined(__xlC__)
 #  define ALIGN16(type, array)       type __align (16) array 
 #else

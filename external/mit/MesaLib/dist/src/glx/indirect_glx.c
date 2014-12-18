@@ -33,6 +33,8 @@
 #include "glapi.h"
 #include "glxclient.h"
 
+#ifndef GLX_USE_APPLEGL
+
 extern struct _glapi_table *__glXNewIndirectAPI(void);
 
 /*
@@ -43,31 +45,25 @@ static struct _glapi_table *IndirectAPI = NULL;
 static void
 indirect_destroy_context(struct glx_context *gc)
 {
-   if (!gc->imported && gc->xid)
-      glx_send_destroy_context(gc->psc->dpy, gc->xid);
-
    __glXFreeVertexArrayState(gc);
 
-   if (gc->vendor)
-      XFree((char *) gc->vendor);
-   if (gc->renderer)
-      XFree((char *) gc->renderer);
-   if (gc->version)
-      XFree((char *) gc->version);
-   if (gc->extensions)
-      XFree((char *) gc->extensions);
+   free((char *) gc->vendor);
+   free((char *) gc->renderer);
+   free((char *) gc->version);
+   free((char *) gc->extensions);
    __glFreeAttributeState(gc);
-   XFree((char *) gc->buf);
-   Xfree((char *) gc->client_state_private);
-   XFree((char *) gc);
+   free((char *) gc->buf);
+   free((char *) gc->client_state_private);
+   free((char *) gc);
 }
 
 static Bool
 SendMakeCurrentRequest(Display * dpy, CARD8 opcode,
                        GLXContextID gc_id, GLXContextTag gc_tag,
                        GLXDrawable draw, GLXDrawable read,
-                       xGLXMakeCurrentReply * reply)
+                       GLXContextTag *out_tag)
 {
+   xGLXMakeCurrentReply reply;
    Bool ret;
 
    LockDisplay(dpy);
@@ -119,7 +115,10 @@ SendMakeCurrentRequest(Display * dpy, CARD8 opcode,
       }
    }
 
-   ret = _XReply(dpy, (xReply *) reply, 0, False);
+   ret = _XReply(dpy, (xReply *) &reply, 0, False);
+
+   if (out_tag)
+      *out_tag = reply.contextTag;
 
    UnlockDisplay(dpy);
    SyncHandle();
@@ -131,11 +130,11 @@ static int
 indirect_bind_context(struct glx_context *gc, struct glx_context *old,
 		      GLXDrawable draw, GLXDrawable read)
 {
-   xGLXMakeCurrentReply reply;
    GLXContextTag tag;
    __GLXattribute *state;
    Display *dpy = gc->psc->dpy;
    int opcode = __glXSetupForCommand(dpy);
+   Bool sent;
 
    if (old != &dummyContext && !old->isDirect && old->psc->dpy == dpy) {
       tag = old->currentContextTag;
@@ -144,13 +143,13 @@ indirect_bind_context(struct glx_context *gc, struct glx_context *old,
       tag = 0;
    }
 
-   SendMakeCurrentRequest(dpy, opcode, gc->xid, tag, draw, read, &reply);
+   sent = SendMakeCurrentRequest(dpy, opcode, gc->xid, tag, draw, read,
+				 &gc->currentContextTag);
 
    if (!IndirectAPI)
       IndirectAPI = __glXNewIndirectAPI();
    _glapi_set_dispatch(IndirectAPI);
 
-   gc->currentContextTag = reply.contextTag;
    state = gc->client_state_private;
    if (state->array_state == NULL) {
       glGetString(GL_EXTENSIONS);
@@ -158,7 +157,7 @@ indirect_bind_context(struct glx_context *gc, struct glx_context *old,
       __glXInitVertexArrayState(gc);
    }
 
-   return Success;
+   return !sent;
 }
 
 static void
@@ -166,7 +165,6 @@ indirect_unbind_context(struct glx_context *gc, struct glx_context *new)
 {
    Display *dpy = gc->psc->dpy;
    int opcode = __glXSetupForCommand(dpy);
-   xGLXMakeCurrentReply reply;
 
    if (gc == new)
       return;
@@ -177,7 +175,7 @@ indirect_unbind_context(struct glx_context *gc, struct glx_context *new)
     */
    if (!new || new->isDirect || new->psc->dpy != dpy) {
       SendMakeCurrentRequest(dpy, opcode, None,
-			     gc->currentContextTag, None, None, &reply);
+			     gc->currentContextTag, None, None, NULL);
       gc->currentContextTag = 0;
    }
 }
@@ -327,21 +325,25 @@ indirect_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
 }
 
 static const struct glx_context_vtable indirect_context_vtable = {
-   indirect_destroy_context,
-   indirect_bind_context,
-   indirect_unbind_context,
-   indirect_wait_gl,
-   indirect_wait_x,
-   indirect_use_x_font,
-   indirect_bind_tex_image,
-   indirect_release_tex_image,
-   NULL, /* get_proc_address */
+   .destroy             = indirect_destroy_context,
+   .bind                = indirect_bind_context,
+   .unbind              = indirect_unbind_context,
+   .wait_gl             = indirect_wait_gl,
+   .wait_x              = indirect_wait_x,
+   .use_x_font          = indirect_use_x_font,
+   .bind_tex_image      = indirect_bind_tex_image,
+   .release_tex_image   = indirect_release_tex_image,
+   .get_proc_address    = NULL,
 };
 
 /**
  * \todo Eliminate \c __glXInitVertexArrayState.  Replace it with a new
  * function called \c __glXAllocateClientState that allocates the memory and
  * does all the initialization (including the pixel pack / unpack).
+ *
+ * \note
+ * This function is \b not the place to validate the context creation
+ * parameters.  It is just the allocator for the \c glx_context.
  */
 _X_HIDDEN struct glx_context *
 indirect_create_context(struct glx_screen *psc,
@@ -359,24 +361,24 @@ indirect_create_context(struct glx_screen *psc,
    }
 
    /* Allocate our context record */
-   gc = Xmalloc(sizeof *gc);
+   gc = calloc(1, sizeof *gc);
    if (!gc) {
       /* Out of memory */
       return NULL;
    }
-   memset(gc, 0, sizeof *gc);
 
    glx_context_init(gc, psc, mode);
    gc->isDirect = GL_FALSE;
    gc->vtable = &indirect_context_vtable;
-   state = Xmalloc(sizeof(struct __GLXattributeRec));
+   state = calloc(1, sizeof(struct __GLXattributeRec));
+   gc->renderType = renderType;
+
    if (state == NULL) {
       /* Out of memory */
-      Xfree(gc);
+      free(gc);
       return NULL;
    }
    gc->client_state_private = state;
-   memset(gc->client_state_private, 0, sizeof(struct __GLXattributeRec));
    state->NoDrawArraysProtocol = (getenv("LIBGL_NO_DRAWARRAYS") != NULL);
 
    /*
@@ -387,10 +389,10 @@ indirect_create_context(struct glx_screen *psc,
     */
 
    bufSize = (XMaxRequestSize(psc->dpy) * 4) - sz_xGLXRenderReq;
-   gc->buf = (GLubyte *) Xmalloc(bufSize);
+   gc->buf = malloc(bufSize);
    if (!gc->buf) {
-      Xfree(gc->client_state_private);
-      Xfree(gc);
+      free(gc->client_state_private);
+      free(gc);
       return NULL;
    }
    gc->bufSize = bufSize;
@@ -439,8 +441,39 @@ indirect_create_context(struct glx_screen *psc,
    return gc;
 }
 
-struct glx_screen_vtable indirect_screen_vtable = {
-   indirect_create_context
+_X_HIDDEN struct glx_context *
+indirect_create_context_attribs(struct glx_screen *base,
+				struct glx_config *config_base,
+				struct glx_context *shareList,
+				unsigned num_attribs,
+				const uint32_t *attribs,
+				unsigned *error)
+{
+   int renderType = GLX_RGBA_TYPE;
+   unsigned i;
+
+   /* The error parameter is only used on the server so that correct GLX
+    * protocol errors can be generated.  On the client, it can be ignored.
+    */
+   (void) error;
+
+   /* All of the attribute validation for indirect contexts is handled on the
+    * server, so there's not much to do here. Still, we need to parse the
+    * attributes to correctly set renderType.
+    */
+   for (i = 0; i < num_attribs; i++) {
+      if (attribs[i * 2] == GLX_RENDER_TYPE)
+         renderType = attribs[i * 2 + 1];
+   }
+
+   return indirect_create_context(base, config_base, shareList, renderType);
+}
+
+static const struct glx_screen_vtable indirect_screen_vtable = {
+   .create_context         = indirect_create_context,
+   .create_context_attribs = indirect_create_context_attribs,
+   .query_renderer_integer = NULL,
+   .query_renderer_string  = NULL,
 };
 
 _X_HIDDEN struct glx_screen *
@@ -448,13 +481,14 @@ indirect_create_screen(int screen, struct glx_display * priv)
 {
    struct glx_screen *psc;
 
-   psc = Xmalloc(sizeof *psc);
+   psc = calloc(1, sizeof *psc);
    if (psc == NULL)
       return NULL;
 
-   memset(psc, 0, sizeof *psc);
    glx_screen_init(psc, screen, priv);
    psc->vtable = &indirect_screen_vtable;
 
    return psc;
 }
+
+#endif

@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.5
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  * Copyright (C) 2009  VMware, Inc.   All Rights Reserved.
@@ -18,9 +17,10 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 
@@ -52,10 +52,6 @@
 #include "xfonts.h"
 #include "xmesaP.h"
 
-#ifdef __VMS
-#define sprintf sprintf
-#endif
-
 /* This indicates the client-side GLX API and GLX encoder version. */
 #define CLIENT_MAJOR_VERSION 1
 #define CLIENT_MINOR_VERSION 4  /* but don't have 1.3's pbuffers, etc yet */
@@ -67,7 +63,7 @@
 #define SERVER_MINOR_VERSION 4
 
 /* This is appended onto the glXGetClient/ServerString version strings. */
-#define MESA_GLX_VERSION "Mesa " MESA_VERSION_STRING
+#define MESA_GLX_VERSION "Mesa " PACKAGE_VERSION
 
 /* Who implemented this GLX? */
 #define VENDOR "Brian Paul"
@@ -84,21 +80,6 @@
    /*"GLX_SGI_video_sync "*/ \
    "GLX_SGIX_fbconfig " \
    "GLX_SGIX_pbuffer "
-
-/*
- * Our fake GLX context will contain a "real" GLX context and an XMesa context.
- *
- * Note that a pointer to a __GLXcontext is a pointer to a fake_glx_context,
- * and vice versa.
- *
- * We really just need this structure in order to make the libGL functions
- * glXGetCurrentContext(), glXGetCurrentDrawable() and glXGetCurrentDisplay()
- * work correctly.
- */
-struct fake_glx_context {
-   __GLXcontext glxContext;   /* this MUST be first! */
-   XMesaContext xmesaContext;
-};
 
 
 
@@ -201,7 +182,7 @@ GetOverlayInfo(Display *dpy, int screen, int *numOverlays)
    if (status != Success || actualType != overlayVisualsAtom ||
        actualFormat != 32 || sizeData < 4) {
       /* something went wrong */
-      XFree((void *) ovInfo);
+      free((void *) ovInfo);
       *numOverlays = 0;
       return NULL;
    }
@@ -239,18 +220,18 @@ level_of_visual( Display *dpy, XVisualInfo *vinfo )
          /* found the visual */
          if (/*ov->transparent_type==1 &&*/ ov->layer!=0) {
             int level = ov->layer;
-            XFree((void *) overlay_info);
+            free((void *) overlay_info);
             return level;
          }
          else {
-            XFree((void *) overlay_info);
+            free((void *) overlay_info);
             return 0;
          }
       }
    }
 
    /* The visual ID was not found in the overlay list. */
-   XFree((void *) overlay_info);
+   free((void *) overlay_info);
    return 0;
 }
 
@@ -428,7 +409,7 @@ create_glx_visual( Display *dpy, XVisualInfo *visinfo )
 			      GL_TRUE,   /* double */
 			      GL_FALSE,  /* stereo */
 			      zBits,
-			      STENCIL_BITS,
+			      8,       /* stencil bits */
 			      accBits, /* r */
 			      accBits, /* g */
 			      accBits, /* b */
@@ -497,19 +478,19 @@ transparent_pixel( XMesaVisual glxvis )
          /* found it! */
          if (ov->transparent_type == 0) {
             /* type 0 indicates no transparency */
-            XFree((void *) overlay_info);
+            free((void *) overlay_info);
             return -1;
          }
          else {
             /* ov->value is the transparent pixel */
-            XFree((void *) overlay_info);
+            free((void *) overlay_info);
             return ov->value;
          }
       }
    }
 
    /* The visual ID was not found in the overlay list. */
-   XFree((void *) overlay_info);
+   free((void *) overlay_info);
    return -1;
 }
 
@@ -554,7 +535,7 @@ get_visual( Display *dpy, int scr, unsigned int depth, int xclass )
          return vis;
       }
       else {
-         XFree((void *) vis);
+         free((void *) vis);
          return NULL;
       }
    }
@@ -779,9 +760,7 @@ choose_x_overlay_visual( Display *dpy, int scr,
 
       if (deepvis==NULL || vislist->depth > deepest) {
          /* YES!  found a satisfactory visual */
-         if (deepvis) {
-            XFree( deepvis );
-         }
+         free(deepvis);
          deepest = vislist->depth;
          deepvis = vislist;
          /* DEBUG  tt = ov->transparent_type;*/
@@ -916,6 +895,20 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
    parselist = list;
 
    while (*parselist) {
+
+      if (fbConfig &&
+          parselist[1] == GLX_DONT_CARE &&
+          parselist[0] != GLX_LEVEL) {
+         /* For glXChooseFBConfig(), skip attributes whose value is
+          * GLX_DONT_CARE (-1), unless it's GLX_LEVEL (which can legitimately be
+          * a negative value).
+          *
+          * From page 17 (23 of the pdf) of the GLX 1.4 spec:
+          * GLX DONT CARE may be specified for all attributes except GLX LEVEL.
+          */
+         parselist += 2;
+         continue;
+      }
 
       switch (*parselist) {
 	 case GLX_USE_GL:
@@ -1082,6 +1075,9 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
             else if (*parselist & GLX_COLOR_INDEX_BIT) {
                rgb_flag = GL_FALSE;
             }
+            else if (*parselist & (GLX_RGBA_FLOAT_BIT_ARB|GLX_RGBA_UNSIGNED_FLOAT_BIT_EXT)) {
+               rgb_flag = GL_TRUE;
+            }
             else if (*parselist == 0) {
                rgb_flag = GL_TRUE;
             }
@@ -1153,6 +1149,7 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
       return NULL;
 
    (void) caveat;
+   (void) min_ci;
 
    /*
     * Since we're only simulating the GLX extension this function will never
@@ -1174,7 +1171,7 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
          if (vis->depth <= 8)
 	    return NULL;
          depth_size = default_depth_bits();
-         stencil_size = STENCIL_BITS;
+         stencil_size = 8;
          /* XXX accum??? */
       }
    }
@@ -1215,7 +1212,7 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
 
       /* we only support one size of stencil and accum buffers. */
       if (stencil_size > 0)
-         stencil_size = STENCIL_BITS;
+         stencil_size = 8;
       if (accumRedSize > 0 || accumGreenSize > 0 || accumBlueSize > 0 ||
           accumAlphaSize > 0) {
          accumRedSize = 
@@ -1248,7 +1245,7 @@ Fake_glXChooseVisual( Display *dpy, int screen, int *list )
       return xmvis->vishandle;
 #else
       /* create a new vishandle - the cached one may be stale */
-      xmvis->vishandle = (XVisualInfo *) malloc(sizeof(XVisualInfo));
+      xmvis->vishandle = malloc(sizeof(XVisualInfo));
       if (xmvis->vishandle) {
          memcpy(xmvis->vishandle, xmvis->visinfo, sizeof(XVisualInfo));
       }
@@ -1260,38 +1257,14 @@ Fake_glXChooseVisual( Display *dpy, int screen, int *list )
 }
 
 
-/**
- * Init basic fields of a new fake_glx_context.
- */
-static void
-init_glx_context(struct fake_glx_context *glxCtx, Display *dpy)
-{
-   /* Always return True.  See if anyone's confused... */
-   GLboolean direct = GL_TRUE;
-
-   glxCtx->xmesaContext->direct = direct;
-   glxCtx->glxContext.isDirect = direct;
-   glxCtx->glxContext.currentDpy = dpy;
-   glxCtx->glxContext.xid = (XID) glxCtx;  /* self pointer */
-
-   assert((void *) glxCtx == (void *) &(glxCtx->glxContext));
-}
-
-
-
 static GLXContext
 Fake_glXCreateContext( Display *dpy, XVisualInfo *visinfo,
                        GLXContext share_list, Bool direct )
 {
    XMesaVisual xmvis;
-   struct fake_glx_context *glxCtx;
-   struct fake_glx_context *shareCtx = (struct fake_glx_context *) share_list;
+   XMesaContext xmesaCtx;
 
    if (!dpy || !visinfo)
-      return 0;
-
-   glxCtx = CALLOC_STRUCT(fake_glx_context);
-   if (!glxCtx)
       return 0;
 
    /* deallocate unused windows/buffers */
@@ -1304,22 +1277,13 @@ Fake_glXCreateContext( Display *dpy, XVisualInfo *visinfo,
       /* This visual wasn't found with glXChooseVisual() */
       xmvis = create_glx_visual( dpy, visinfo );
       if (!xmvis) {
-         /* unusable visual */
-         free(glxCtx);
          return NULL;
       }
    }
 
-   glxCtx->xmesaContext = XMesaCreateContext(xmvis,
-                                   shareCtx ? shareCtx->xmesaContext : NULL);
-   if (!glxCtx->xmesaContext) {
-      free(glxCtx);
-      return NULL;
-   }
+   xmesaCtx = XMesaCreateContext(xmvis, (XMesaContext) share_list);
 
-   init_glx_context(glxCtx, dpy);
-
-   return (GLXContext) glxCtx;
+   return (GLXContext) xmesaCtx;
 }
 
 
@@ -1336,11 +1300,9 @@ static Bool
 Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
                             GLXDrawable read, GLXContext ctx )
 {
-   struct fake_glx_context *glxCtx = (struct fake_glx_context *) ctx;
-
    if (ctx && draw && read) {
       XMesaBuffer drawBuffer, readBuffer;
-      XMesaContext xmctx = glxCtx->xmesaContext;
+      XMesaContext xmctx = (XMesaContext) ctx;
 
       /* Find the XMesaBuffer which corresponds to the GLXDrawable 'draw' */
       if (ctx == MakeCurrent_PrevContext
@@ -1357,9 +1319,6 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
             /* Out of memory, or context/drawable depth mismatch */
             return False;
          }
-#ifdef FX
-         FXcreateContext( xmctx->xm_visual, draw, xmctx, drawBuffer );
-#endif
       }
 
       /* Find the XMesaBuffer which corresponds to the GLXDrawable 'read' */
@@ -1377,9 +1336,6 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
             /* Out of memory, or context/drawable depth mismatch */
             return False;
          }
-#ifdef FX
-         FXcreateContext( xmctx->xm_visual, read, xmctx, readBuffer );
-#endif
       }
 
       MakeCurrent_PrevContext = ctx;
@@ -1389,15 +1345,7 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
       MakeCurrent_PrevReadBuffer = readBuffer;
 
       /* Now make current! */
-      if (XMesaMakeCurrent2(xmctx, drawBuffer, readBuffer)) {
-         ((__GLXcontext *) ctx)->currentDpy = dpy;
-         ((__GLXcontext *) ctx)->currentDrawable = draw;
-         ((__GLXcontext *) ctx)->currentReadable = read;
-         return True;
-      }
-      else {
-         return False;
-      }
+      return XMesaMakeCurrent2(xmctx, drawBuffer, readBuffer);
    }
    else if (!ctx && !draw && !read) {
       /* release current context w/out assigning new one. */
@@ -1491,15 +1439,13 @@ static void
 Fake_glXCopyContext( Display *dpy, GLXContext src, GLXContext dst,
                      unsigned long mask )
 {
-   struct fake_glx_context *fakeSrc = (struct fake_glx_context *) src;
-   struct fake_glx_context *fakeDst = (struct fake_glx_context *) dst;
-   XMesaContext xm_src = fakeSrc->xmesaContext;
-   XMesaContext xm_dst = fakeDst->xmesaContext;
+   XMesaContext xmSrc = (XMesaContext) src;
+   XMesaContext xmDst = (XMesaContext) dst;
    (void) dpy;
    if (MakeCurrent_PrevContext == src) {
       _mesa_Flush();
    }
-   _mesa_copy_context( &(xm_src->mesa), &(xm_dst->mesa), (GLuint) mask );
+   _mesa_copy_context( &xmSrc->mesa, &xmDst->mesa, (GLuint) mask );
 }
 
 
@@ -1529,25 +1475,24 @@ void _kw_ungrab_all( Display *dpy )
 static void
 Fake_glXDestroyContext( Display *dpy, GLXContext ctx )
 {
-   struct fake_glx_context *glxCtx = (struct fake_glx_context *) ctx;
-   (void) dpy;
-   MakeCurrent_PrevContext = 0;
-   MakeCurrent_PrevDrawable = 0;
-   MakeCurrent_PrevReadable = 0;
-   MakeCurrent_PrevDrawBuffer = 0;
-   MakeCurrent_PrevReadBuffer = 0;
-   XMesaDestroyContext( glxCtx->xmesaContext );
-   XMesaGarbageCollect(dpy);
-   free(glxCtx);
+   if (ctx) {
+      (void) dpy;
+      MakeCurrent_PrevContext = 0;
+      MakeCurrent_PrevDrawable = 0;
+      MakeCurrent_PrevReadable = 0;
+      MakeCurrent_PrevDrawBuffer = 0;
+      MakeCurrent_PrevReadBuffer = 0;
+      XMesaDestroyContext((XMesaContext) ctx);
+      XMesaGarbageCollect(dpy);
+   }
 }
 
 
 static Bool
 Fake_glXIsDirect( Display *dpy, GLXContext ctx )
 {
-   struct fake_glx_context *glxCtx = (struct fake_glx_context *) ctx;
-   (void) dpy;
-   return glxCtx->xmesaContext->direct;
+   XMesaContext xmCtx = (XMesaContext) ctx;
+   return xmCtx ? xmCtx->direct : False;
 }
 
 
@@ -1756,7 +1701,9 @@ get_config( XMesaVisual xmvis, int attrib, int *value, GLboolean fbconfig )
       case GLX_RENDER_TYPE_SGIX:
          if (!fbconfig)
             return GLX_BAD_ATTRIBUTE;
-         if (xmvis->mesa_visual.rgbMode)
+         if (xmvis->mesa_visual.floatMode)
+            *value = GLX_RGBA_FLOAT_BIT_ARB;
+         else if (xmvis->mesa_visual.rgbMode)
             *value = GLX_RGBA_BIT;
          else
             *value = GLX_COLOR_INDEX_BIT;
@@ -1852,6 +1799,13 @@ Fake_glXGetConfig( Display *dpy, XVisualInfo *visinfo,
 }
 
 
+static GLXContext
+Fake_glXGetCurrentContext(void)
+{
+   XMesaContext xmesa = XMesaGetCurrentContext();
+   return (GLXContext) xmesa;
+}
+
 static void
 Fake_glXWaitGL( void )
 {
@@ -1872,12 +1826,6 @@ Fake_glXWaitX( void )
 static const char *
 get_extensions( void )
 {
-#ifdef FX
-   const char *fx = _mesa_getenv("MESA_GLX_FX");
-   if (fx && fx[0] != 'd') {
-      return EXTENSIONS;
-   }
-#endif
    return EXTENSIONS + 23; /* skip "GLX_MESA_set_3dfx_mode" */
 }
 
@@ -1975,7 +1923,7 @@ Fake_glXGetFBConfigs( Display *dpy, int screen, int *nelements )
    visuals = XGetVisualInfo(dpy, visMask, &visTemplate, nelements);
    if (*nelements > 0) {
       XMesaVisual *results;
-      results = (XMesaVisual *) malloc(*nelements * sizeof(XMesaVisual));
+      results = malloc(*nelements * sizeof(XMesaVisual));
       if (!results) {
          *nelements = 0;
          return NULL;
@@ -1995,6 +1943,9 @@ Fake_glXChooseFBConfig( Display *dpy, int screen,
 {
    XMesaVisual xmvis;
 
+   /* register ourselves as an extension on this display */
+   register_with_display(dpy);
+
    if (!attribList || !attribList[0]) {
       /* return list of all configs (per GLX_SGIX_fbconfig spec) */
       return Fake_glXGetFBConfigs(dpy, screen, nitems);
@@ -2002,7 +1953,7 @@ Fake_glXChooseFBConfig( Display *dpy, int screen,
 
    xmvis = choose_visual(dpy, screen, attribList, GL_TRUE);
    if (xmvis) {
-      GLXFBConfig *config = (GLXFBConfig *) malloc(sizeof(XMesaVisual));
+      GLXFBConfig *config = malloc(sizeof(XMesaVisual));
       if (!config) {
          *nitems = 0;
          return NULL;
@@ -2027,7 +1978,7 @@ Fake_glXGetVisualFromFBConfig( Display *dpy, GLXFBConfig config )
       return xmvis->vishandle;
 #else
       /* create a new vishandle - the cached one may be stale */
-      xmvis->vishandle = (XVisualInfo *) malloc(sizeof(XVisualInfo));
+      xmvis->vishandle = malloc(sizeof(XVisualInfo));
       if (xmvis->vishandle) {
          memcpy(xmvis->vishandle, xmvis->visinfo, sizeof(XVisualInfo));
       }
@@ -2052,11 +2003,6 @@ Fake_glXCreateWindow( Display *dpy, GLXFBConfig config, Window win,
    xmbuf = XMesaCreateWindowBuffer(xmvis, win);
    if (!xmbuf)
       return 0;
-
-#ifdef FX
-   /* XXX this will segfault if actually called */
-   FXcreateContext(xmvis, win, NULL, xmbuf);
-#endif
 
    (void) dpy;
    (void) attribList;  /* Ignored in GLX 1.3 */
@@ -2234,13 +2180,13 @@ Fake_glXCreatePbuffer( Display *dpy, GLXFBConfig config,
    if (width == 0 || height == 0)
       return 0;
 
-   if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+   if (width > SWRAST_MAX_WIDTH || height > SWRAST_MAX_HEIGHT) {
       /* If allocation would have failed and GLX_LARGEST_PBUFFER is set,
        * allocate the largest possible buffer.
        */
       if (useLargest) {
-         width = MAX_WIDTH;
-         height = MAX_HEIGHT;
+         width = SWRAST_MAX_WIDTH;
+         height = SWRAST_MAX_HEIGHT;
       }
    }
 
@@ -2318,40 +2264,29 @@ static GLXContext
 Fake_glXCreateNewContext( Display *dpy, GLXFBConfig config,
                           int renderType, GLXContext shareList, Bool direct )
 {
-   struct fake_glx_context *glxCtx;
-   struct fake_glx_context *shareCtx = (struct fake_glx_context *) shareList;
+   XMesaContext xmCtx;
    XMesaVisual xmvis = (XMesaVisual) config;
 
    if (!dpy || !config ||
-       (renderType != GLX_RGBA_TYPE && renderType != GLX_COLOR_INDEX_TYPE))
-      return 0;
-
-   glxCtx = CALLOC_STRUCT(fake_glx_context);
-   if (!glxCtx)
+       (renderType != GLX_RGBA_TYPE &&
+        renderType != GLX_COLOR_INDEX_TYPE &&
+        renderType != GLX_RGBA_FLOAT_TYPE_ARB &&
+        renderType != GLX_RGBA_UNSIGNED_FLOAT_TYPE_EXT))
       return 0;
 
    /* deallocate unused windows/buffers */
    XMesaGarbageCollect(dpy);
 
-   glxCtx->xmesaContext = XMesaCreateContext(xmvis,
-                                   shareCtx ? shareCtx->xmesaContext : NULL);
-   if (!glxCtx->xmesaContext) {
-      free(glxCtx);
-      return NULL;
-   }
+   xmCtx = XMesaCreateContext(xmvis, (XMesaContext) shareList);
 
-   init_glx_context(glxCtx, dpy);
-
-   return (GLXContext) glxCtx;
+   return (GLXContext) xmCtx;
 }
 
 
 static int
 Fake_glXQueryContext( Display *dpy, GLXContext ctx, int attribute, int *value )
 {
-   struct fake_glx_context *glxCtx = (struct fake_glx_context *) ctx;
-   XMesaContext xmctx = glxCtx->xmesaContext;
-
+   XMesaContext xmctx = (XMesaContext) ctx;
    (void) dpy;
    (void) ctx;
 
@@ -2537,27 +2472,15 @@ Fake_glXCreateGLXPixmapWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config, Pixm
 static GLXContext
 Fake_glXCreateContextWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config, int render_type, GLXContext share_list, Bool direct)
 {
+   XMesaContext xmCtx;
    XMesaVisual xmvis = (XMesaVisual) config;
-   struct fake_glx_context *glxCtx;
-   struct fake_glx_context *shareCtx = (struct fake_glx_context *) share_list;
-
-   glxCtx = CALLOC_STRUCT(fake_glx_context);
-   if (!glxCtx)
-      return 0;
 
    /* deallocate unused windows/buffers */
    XMesaGarbageCollect(dpy);
 
-   glxCtx->xmesaContext = XMesaCreateContext(xmvis,
-                                   shareCtx ? shareCtx->xmesaContext : NULL);
-   if (!glxCtx->xmesaContext) {
-      free(glxCtx);
-      return NULL;
-   }
+   xmCtx = XMesaCreateContext(xmvis, (XMesaContext) share_list);
 
-   init_glx_context(glxCtx, dpy);
-
-   return (GLXContext) glxCtx;
+   return (GLXContext) xmCtx;
 }
 
 
@@ -2943,7 +2866,7 @@ _mesa_GetGLXDispatchTable(void)
    glx.DestroyContext = Fake_glXDestroyContext;
    glx.DestroyGLXPixmap = Fake_glXDestroyGLXPixmap;
    glx.GetConfig = Fake_glXGetConfig;
-   /*glx.GetCurrentContext = Fake_glXGetCurrentContext;*/
+   glx.GetCurrentContext = Fake_glXGetCurrentContext;
    /*glx.GetCurrentDrawable = Fake_glXGetCurrentDrawable;*/
    glx.IsDirect = Fake_glXIsDirect;
    glx.MakeCurrent = Fake_glXMakeCurrent;

@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 VMware, Inc.
  * Copyright 2009-2010 Chia-I Wu <olvaffe@gmail.com>
  * Copyright 2010-2011 LunarG, Inc.
  * All Rights Reserved.
@@ -90,8 +90,10 @@ _eglUpdateExtensionsString(_EGLDisplay *dpy)
    _EGL_CHECK_EXTENSION(MESA_copy_context);
    _EGL_CHECK_EXTENSION(MESA_drm_display);
    _EGL_CHECK_EXTENSION(MESA_drm_image);
+   _EGL_CHECK_EXTENSION(MESA_configless_context);
 
    _EGL_CHECK_EXTENSION(WL_bind_wayland_display);
+   _EGL_CHECK_EXTENSION(WL_create_wayland_buffer_from_image);
 
    _EGL_CHECK_EXTENSION(KHR_image_base);
    _EGL_CHECK_EXTENSION(KHR_image_pixmap);
@@ -107,12 +109,22 @@ _eglUpdateExtensionsString(_EGLDisplay *dpy)
    _EGL_CHECK_EXTENSION(KHR_reusable_sync);
    _EGL_CHECK_EXTENSION(KHR_fence_sync);
 
-   _EGL_CHECK_EXTENSION(KHR_surfaceless_gles1);
-   _EGL_CHECK_EXTENSION(KHR_surfaceless_gles2);
-   _EGL_CHECK_EXTENSION(KHR_surfaceless_opengl);
+   _EGL_CHECK_EXTENSION(KHR_surfaceless_context);
+   _EGL_CHECK_EXTENSION(KHR_create_context);
 
    _EGL_CHECK_EXTENSION(NOK_swap_region);
    _EGL_CHECK_EXTENSION(NOK_texture_from_pixmap);
+
+   _EGL_CHECK_EXTENSION(ANDROID_image_native_buffer);
+
+   _EGL_CHECK_EXTENSION(CHROMIUM_sync_control);
+
+   _EGL_CHECK_EXTENSION(EXT_create_context_robustness);
+   _EGL_CHECK_EXTENSION(EXT_buffer_age);
+   _EGL_CHECK_EXTENSION(EXT_swap_buffers_with_damage);
+   _EGL_CHECK_EXTENSION(EXT_image_dma_buf_import);
+
+   _EGL_CHECK_EXTENSION(NV_post_sub_buffer);
 #undef _EGL_CHECK_EXTENSION
 }
 
@@ -133,6 +145,9 @@ _eglUpdateAPIsString(_EGLDisplay *dpy)
 
    if (dpy->ClientAPIs & EGL_OPENGL_ES2_BIT)
       strcat(apis, "OpenGL_ES2 ");
+
+   if (dpy->ClientAPIs & EGL_OPENGL_ES3_BIT_KHR)
+      strcat(apis, "OpenGL_ES3 ");
 
    if (dpy->ClientAPIs & EGL_OPENVG_BIT)
       strcat(apis, "OpenVG ");

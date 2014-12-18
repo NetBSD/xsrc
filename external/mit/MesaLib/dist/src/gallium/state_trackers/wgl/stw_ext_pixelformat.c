@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -42,6 +42,7 @@
 #include <GL/wglext.h>
 
 #include "pipe/p_compiler.h"
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "stw_device.h"
 #include "stw_pixelformat.h"
@@ -55,7 +56,6 @@ stw_query_attrib(
    int *pvalue )
 {
    uint count;
-   uint index;
    const struct stw_pixelformat_info *pfi;
 
    count = stw_pixelformat_get_extended_count();
@@ -65,11 +65,10 @@ stw_query_attrib(
       return TRUE;
    }
 
-   index = (uint) iPixelFormat - 1;
-   if (index >= count)
+   pfi = stw_pixelformat_get_info( iPixelFormat );
+   if (!pfi) {
       return FALSE;
-
-   pfi = stw_pixelformat_get_info( index );
+   }
 
    switch (attrib) {
    case WGL_DRAW_TO_WINDOW_ARB:
@@ -149,7 +148,12 @@ stw_query_attrib(
    case WGL_PIXEL_TYPE_ARB:
       switch (pfi->pfd.iPixelType) {
       case PFD_TYPE_RGBA:
-         *pvalue = WGL_TYPE_RGBA_ARB;
+         if (util_format_is_float(pfi->stvis.color_format)) {
+            *pvalue = WGL_TYPE_RGBA_FLOAT_ARB;
+         }
+         else {
+            *pvalue = WGL_TYPE_RGBA_ARB;
+         }
          break;
       case PFD_TYPE_COLORINDEX:
          *pvalue = WGL_TYPE_COLORINDEX_ARB;
@@ -444,9 +448,11 @@ wglChoosePixelFormatARB(
     */
    for (i = 0; i < count; i++) {
       if (scores[i].points > 0) {
-         if (*nNumFormats < nMaxFormats)
-            piFormats[*nNumFormats] = scores[i].index + 1;
+	 piFormats[*nNumFormats] = scores[i].index + 1;
          (*nNumFormats)++;
+	 if (*nNumFormats >= nMaxFormats) {
+	    break;
+	 }
       }
    }
 

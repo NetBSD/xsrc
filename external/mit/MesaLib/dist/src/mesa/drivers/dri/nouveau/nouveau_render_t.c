@@ -56,21 +56,21 @@
  */
 #define EMIT_VBO(out, ctx, start, delta, n) do {			\
 		struct nouveau_render_state *render = to_render_state(ctx); \
-		int npush = n;						\
+		int _npush = n;						\
 									\
-		while (npush) {						\
-			int npack = MIN2(npush, MAX_PACKET * MAX_OUT_##out); \
-			npush -= npack;					\
+		while (_npush) {						\
+			int _npack = MIN2(_npush, MAX_PACKET * MAX_OUT_##out); \
+			_npush -= _npack;					\
 									\
-			BATCH_PACKET_##out((npack + MAX_OUT_##out - 1)	\
+			BATCH_PACKET_##out((_npack + MAX_OUT_##out - 1)	\
 					   / MAX_OUT_##out);		\
-			while (npack) {					\
-				int nout = MIN2(npack, MAX_OUT_##out);	\
-				npack -= nout;				\
+			while (_npack) {				\
+				int _nout = MIN2(_npack, MAX_OUT_##out);\
+				_npack -= _nout;			\
 									\
 				OUT_INDICES_##out(render, start, delta, \
-						  nout);		\
-				start += nout;				\
+						  _nout);		\
+				start += _nout;				\
 			}						\
 		}							\
 	} while (0)
@@ -97,52 +97,49 @@
 		}							\
 	} while (0)
 
+static void
+dispatch_l(struct gl_context *ctx, unsigned int start, int delta,
+	   unsigned int n)
+{
+	struct nouveau_pushbuf *push = context_push(ctx);
+	RENDER_LOCALS(ctx);
+
+	EMIT_VBO(L, ctx, start, delta, n);
+}
+
+static void
+dispatch_i32(struct gl_context *ctx, unsigned int start, int delta,
+	     unsigned int n)
+{
+	struct nouveau_pushbuf *push = context_push(ctx);
+	RENDER_LOCALS(ctx);
+
+	EMIT_VBO(I32, ctx, start, delta, n);
+}
+
+static void
+dispatch_i16(struct gl_context *ctx, unsigned int start, int delta,
+	     unsigned int n)
+{
+	struct nouveau_pushbuf *push = context_push(ctx);
+	RENDER_LOCALS(ctx);
+
+	EMIT_VBO(I32, ctx, start, delta, n & 1);
+	EMIT_VBO(I16, ctx, start, delta, n & ~1);
+}
+
 /*
  * Select an appropriate dispatch function for the given index buffer.
  */
 static dispatch_t
 get_array_dispatch(struct nouveau_array *a)
 {
-	if (!a->fields) {
-		auto void f(struct gl_context *, unsigned int, int, unsigned int);
-
-		void f(struct gl_context *ctx, unsigned int start, int delta,
-		       unsigned int n) {
-			struct nouveau_channel *chan = context_chan(ctx);
-			RENDER_LOCALS(ctx);
-
-			EMIT_VBO(L, ctx, start, delta, n);
-		};
-
-		return f;
-
-	} else if (a->type == GL_UNSIGNED_INT) {
-		auto void f(struct gl_context *, unsigned int, int, unsigned int);
-
-		void f(struct gl_context *ctx, unsigned int start, int delta,
-		       unsigned int n) {
-			struct nouveau_channel *chan = context_chan(ctx);
-			RENDER_LOCALS(ctx);
-
-			EMIT_VBO(I32, ctx, start, delta, n);
-		};
-
-		return f;
-
-	} else {
-		auto void f(struct gl_context *, unsigned int, int, unsigned int);
-
-		void f(struct gl_context *ctx, unsigned int start, int delta,
-		       unsigned int n) {
-			struct nouveau_channel *chan = context_chan(ctx);
-			RENDER_LOCALS(ctx);
-
-			EMIT_VBO(I32, ctx, start, delta, n & 1);
-			EMIT_VBO(I16, ctx, start, delta, n & ~1);
-		};
-
-		return f;
-	}
+	if (!a->fields)
+		return dispatch_l;
+	else if (a->type == GL_UNSIGNED_INT)
+		return dispatch_i32;
+	else
+		return dispatch_i16;
 }
 
 /*

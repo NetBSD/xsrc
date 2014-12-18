@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007-2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007-2008 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -35,27 +35,6 @@
 #if defined __cplusplus
 extern "C" {
 #endif
-
-extern const char *
-tgsi_file_names[TGSI_FILE_COUNT];
-
-extern const char *
-tgsi_swizzle_names[4];
-
-extern const char *
-tgsi_texture_names[TGSI_TEXTURE_COUNT];
-
-extern const char *
-tgsi_property_names[TGSI_PROPERTY_COUNT];
-
-extern const char *
-tgsi_primitive_names[PIPE_PRIM_MAX];
-
-extern const char *
-tgsi_fs_coord_origin_names[2];
-
-extern const char *
-tgsi_fs_coord_pixel_center_names[2];
 
 void
 tgsi_dump_str(
@@ -77,6 +56,13 @@ struct tgsi_full_property;
 void
 tgsi_dump_immediate(
    const struct tgsi_full_immediate *imm );
+
+void
+tgsi_dump_instruction_str(
+   const struct tgsi_full_instruction *inst,
+   uint instno,
+   char *str,
+   size_t size);
 
 void
 tgsi_dump_instruction(

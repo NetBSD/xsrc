@@ -1,8 +1,8 @@
 /*
  Copyright (C) Intel Corp.  2006.  All Rights Reserved.
- Intel funded Tungsten Graphics (http://www.tungstengraphics.com) to
+ Intel funded Tungsten Graphics to
  develop this 3D driver.
- 
+
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
  "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  distribute, sublicense, and/or sell copies of the Software, and to
  permit persons to whom the Software is furnished to do so, subject to
  the following conditions:
- 
+
  The above copyright notice and this permission notice (including the
  next paragraph) shall be included in all copies or substantial
  portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -22,16 +22,17 @@
  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- 
+
  **********************************************************************/
  /*
   * Authors:
-  *   Keith Whitwell <keith@tungstengraphics.com>
+  *   Keith Whitwell <keithw@vmware.com>
   */
-      
+
 #include "main/glheader.h"
 #include "main/macros.h"
 #include "main/enums.h"
+#include "main/transformfeedback.h"
 
 #include "intel_batchbuffer.h"
 
@@ -42,40 +43,24 @@
 #include "brw_state.h"
 #include "brw_gs.h"
 
-#include "../glsl/ralloc.h"
+#include "util/ralloc.h"
 
-static void compile_gs_prog( struct brw_context *brw,
-			     struct brw_gs_prog_key *key )
+static void compile_ff_gs_prog(struct brw_context *brw,
+                               struct brw_ff_gs_prog_key *key)
 {
-   struct intel_context *intel = &brw->intel;
-   struct brw_gs_compile c;
+   struct brw_ff_gs_compile c;
    const GLuint *program;
    void *mem_ctx;
    GLuint program_size;
 
-   /* Gen6: VF has already converted into polygon, and LINELOOP is
-    * converted to LINESTRIP at the beginning of the 3D pipeline.
-    */
-   if (intel->gen >= 6)
-      return;
-
    memset(&c, 0, sizeof(c));
-   
+
    c.key = *key;
-   /* Need to locate the two positions present in vertex + header.
-    * These are currently hardcoded:
-    */
-   c.nr_attrs = brw_count_bits(c.key.attrs);
+   c.vue_map = brw->vs.prog_data->base.vue_map;
+   c.nr_regs = (c.vue_map.num_slots + 1)/2;
 
-   if (intel->gen >= 5)
-       c.nr_regs = (c.nr_attrs + 1) / 2 + 3;  /* are vertices packed, or reg-aligned? */
-   else
-       c.nr_regs = (c.nr_attrs + 1) / 2 + 1;  /* are vertices packed, or reg-aligned? */
+   mem_ctx = ralloc_context(NULL);
 
-   c.nr_bytes = c.nr_regs * REG_SIZE;
-
-   mem_ctx = NULL;
-   
    /* Begin the compilation:
     */
    brw_init_compile(brw, &c.func, mem_ctx);
@@ -83,124 +68,188 @@ static void compile_gs_prog( struct brw_context *brw,
    c.func.single_program_flow = 1;
 
    /* For some reason the thread is spawned with only 4 channels
-    * unmasked.  
+    * unmasked.
     */
-   brw_set_mask_control(&c.func, BRW_MASK_DISABLE);
+   brw_set_default_mask_control(&c.func, BRW_MASK_DISABLE);
 
-
-   /* Note that primitives which don't require a GS program have
-    * already been weeded out by this stage:
-    */
-
-   switch (key->primitive) {
-   case GL_QUADS:
-      brw_gs_quads( &c, key );
-      break;
-   case GL_QUAD_STRIP:
-      brw_gs_quad_strip( &c, key );
-      break;
-   case GL_LINE_LOOP:
-      brw_gs_lines( &c );
-      break;
-   default:
-      ralloc_free(mem_ctx);
-      return;
+   if (brw->gen >= 6) {
+      unsigned num_verts;
+      bool check_edge_flag;
+      /* On Sandybridge, we use the GS for implementing transform feedback
+       * (called "Stream Out" in the PRM).
+       */
+      switch (key->primitive) {
+      case _3DPRIM_POINTLIST:
+         num_verts = 1;
+         check_edge_flag = false;
+	 break;
+      case _3DPRIM_LINELIST:
+      case _3DPRIM_LINESTRIP:
+      case _3DPRIM_LINELOOP:
+         num_verts = 2;
+         check_edge_flag = false;
+	 break;
+      case _3DPRIM_TRILIST:
+      case _3DPRIM_TRIFAN:
+      case _3DPRIM_TRISTRIP:
+      case _3DPRIM_RECTLIST:
+	 num_verts = 3;
+         check_edge_flag = false;
+         break;
+      case _3DPRIM_QUADLIST:
+      case _3DPRIM_QUADSTRIP:
+      case _3DPRIM_POLYGON:
+         num_verts = 3;
+         check_edge_flag = true;
+         break;
+      default:
+	 unreachable("Unexpected primitive type in Gen6 SOL program.");
+      }
+      gen6_sol_program(&c, key, num_verts, check_edge_flag);
+   } else {
+      /* On Gen4-5, we use the GS to decompose certain types of primitives.
+       * Note that primitives which don't require a GS program have already
+       * been weeded out by now.
+       */
+      switch (key->primitive) {
+      case _3DPRIM_QUADLIST:
+	 brw_ff_gs_quads( &c, key );
+	 break;
+      case _3DPRIM_QUADSTRIP:
+	 brw_ff_gs_quad_strip( &c, key );
+	 break;
+      case _3DPRIM_LINELOOP:
+	 brw_ff_gs_lines( &c );
+	 break;
+      default:
+	 ralloc_free(mem_ctx);
+	 return;
+      }
    }
+
+   brw_compact_instructions(&c.func, 0, 0, NULL);
 
    /* get the program
     */
    program = brw_get_program(&c.func, &program_size);
 
    if (unlikely(INTEL_DEBUG & DEBUG_GS)) {
-      int i;
-
-      printf("gs:\n");
-      for (i = 0; i < program_size / sizeof(struct brw_instruction); i++)
-	 brw_disasm(stdout, &((struct brw_instruction *)program)[i],
-		    intel->gen);
-      printf("\n");
+      fprintf(stderr, "gs:\n");
+      brw_disassemble(brw, c.func.store, 0, program_size, stderr);
+      fprintf(stderr, "\n");
     }
 
-   brw_upload_cache(&brw->cache, BRW_GS_PROG,
+   brw_upload_cache(&brw->cache, BRW_FF_GS_PROG,
 		    &c.key, sizeof(c.key),
 		    program, program_size,
 		    &c.prog_data, sizeof(c.prog_data),
-		    &brw->gs.prog_offset, &brw->gs.prog_data);
+		    &brw->ff_gs.prog_offset, &brw->ff_gs.prog_data);
    ralloc_free(mem_ctx);
 }
 
-static const GLenum gs_prim[GL_POLYGON+1] = {  
-   GL_POINTS,
-   GL_LINES,
-   GL_LINE_LOOP,
-   GL_LINES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_QUADS,
-   GL_QUAD_STRIP,
-   GL_TRIANGLES
-};
-
-static void populate_key( struct brw_context *brw,
-			  struct brw_gs_prog_key *key )
+static void populate_key(struct brw_context *brw,
+                         struct brw_ff_gs_prog_key *key)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
-   struct intel_context *intel = &brw->intel;
+   static const unsigned swizzle_for_offset[4] = {
+      BRW_SWIZZLE4(0, 1, 2, 3),
+      BRW_SWIZZLE4(1, 2, 3, 3),
+      BRW_SWIZZLE4(2, 3, 3, 3),
+      BRW_SWIZZLE4(3, 3, 3, 3)
+   };
+
+   struct gl_context *ctx = &brw->ctx;
 
    memset(key, 0, sizeof(*key));
 
-   /* CACHE_NEW_VS_PROG */
-   key->attrs = brw->vs.prog_data->outputs_written;
+   /* CACHE_NEW_VS_PROG (part of VUE map) */
+   key->attrs = brw->vs.prog_data->base.vue_map.slots_valid;
 
    /* BRW_NEW_PRIMITIVE */
-   key->primitive = gs_prim[brw->primitive];
+   key->primitive = brw->primitive;
 
    /* _NEW_LIGHT */
    key->pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);
-   if (key->primitive == GL_QUADS && ctx->Light.ShadeModel != GL_FLAT) {
+   if (key->primitive == _3DPRIM_QUADLIST && ctx->Light.ShadeModel != GL_FLAT) {
       /* Provide consistent primitive order with brw_set_prim's
        * optimization of single quads to trifans.
        */
-      key->pv_first = GL_TRUE;
+      key->pv_first = true;
    }
 
-   key->need_gs_prog = (intel->gen >= 6)
-      ? 0
-      : (brw->primitive == GL_QUADS ||
-	 brw->primitive == GL_QUAD_STRIP ||
-	 brw->primitive == GL_LINE_LOOP);
+   if (brw->gen >= 7) {
+      /* On Gen7 and later, we don't use GS (yet). */
+      key->need_gs_prog = false;
+   } else if (brw->gen == 6) {
+      /* On Gen6, GS is used for transform feedback. */
+      /* BRW_NEW_TRANSFORM_FEEDBACK */
+      if (_mesa_is_xfb_active_and_unpaused(ctx)) {
+         const struct gl_shader_program *shaderprog =
+            ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX];
+         const struct gl_transform_feedback_info *linked_xfb_info =
+            &shaderprog->LinkedTransformFeedback;
+         int i;
+
+         /* Make sure that the VUE slots won't overflow the unsigned chars in
+          * key->transform_feedback_bindings[].
+          */
+         STATIC_ASSERT(BRW_VARYING_SLOT_COUNT <= 256);
+
+         /* Make sure that we don't need more binding table entries than we've
+          * set aside for use in transform feedback.  (We shouldn't, since we
+          * set aside enough binding table entries to have one per component).
+          */
+         assert(linked_xfb_info->NumOutputs <= BRW_MAX_SOL_BINDINGS);
+
+         key->need_gs_prog = true;
+         key->num_transform_feedback_bindings = linked_xfb_info->NumOutputs;
+         for (i = 0; i < key->num_transform_feedback_bindings; ++i) {
+            key->transform_feedback_bindings[i] =
+               linked_xfb_info->Outputs[i].OutputRegister;
+            key->transform_feedback_swizzles[i] =
+               swizzle_for_offset[linked_xfb_info->Outputs[i].ComponentOffset];
+         }
+      }
+   } else {
+      /* Pre-gen6, GS is used to transform QUADLIST, QUADSTRIP, and LINELOOP
+       * into simpler primitives.
+       */
+      key->need_gs_prog = (brw->primitive == _3DPRIM_QUADLIST ||
+                           brw->primitive == _3DPRIM_QUADSTRIP ||
+                           brw->primitive == _3DPRIM_LINELOOP);
+   }
 }
 
 /* Calculate interpolants for triangle and line rasterization.
  */
-static void prepare_gs_prog(struct brw_context *brw)
+static void
+brw_upload_ff_gs_prog(struct brw_context *brw)
 {
-   struct brw_gs_prog_key key;
+   struct brw_ff_gs_prog_key key;
    /* Populate the key:
     */
    populate_key(brw, &key);
 
-   if (brw->gs.prog_active != key.need_gs_prog) {
-      brw->state.dirty.cache |= CACHE_NEW_GS_PROG;
-      brw->gs.prog_active = key.need_gs_prog;
+   if (brw->ff_gs.prog_active != key.need_gs_prog) {
+      brw->state.dirty.cache |= CACHE_NEW_FF_GS_PROG;
+      brw->ff_gs.prog_active = key.need_gs_prog;
    }
 
-   if (brw->gs.prog_active) {
-      if (!brw_search_cache(&brw->cache, BRW_GS_PROG,
+   if (brw->ff_gs.prog_active) {
+      if (!brw_search_cache(&brw->cache, BRW_FF_GS_PROG,
 			    &key, sizeof(key),
-			    &brw->gs.prog_offset, &brw->gs.prog_data)) {
-	 compile_gs_prog( brw, &key );
+			    &brw->ff_gs.prog_offset, &brw->ff_gs.prog_data)) {
+	 compile_ff_gs_prog( brw, &key );
       }
    }
 }
 
 
-const struct brw_tracked_state brw_gs_prog = {
+const struct brw_tracked_state brw_ff_gs_prog = {
    .dirty = {
-      .mesa  = _NEW_LIGHT,
-      .brw   = BRW_NEW_PRIMITIVE,
+      .mesa  = (_NEW_LIGHT),
+      .brw   = (BRW_NEW_PRIMITIVE |
+                BRW_NEW_TRANSFORM_FEEDBACK),
       .cache = CACHE_NEW_VS_PROG
    },
-   .prepare = prepare_gs_prog
+   .emit = brw_upload_ff_gs_prog
 };

@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.10
  *
  * Copyright (C) 2011 LunarG Inc.
  *
@@ -36,8 +35,5 @@ egl_st_create_api(enum st_api_type api);
 
 void
 egl_st_destroy_api(struct st_api *stapi);
-
-uint
-egl_st_get_profile_mask(enum st_api_type api);
 
 #endif /* _EGL_ST_H_ */

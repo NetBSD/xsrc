@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -27,12 +27,13 @@
 
  /*
   * Authors:
-  *   Keith Whitwell <keith@tungstengraphics.com>
+  *   Keith Whitwell <keithw@vmware.com>
   */
 
 #include "draw/draw_private.h"
 #include "draw/draw_pipe.h"
 #include "util/u_debug.h"
+#include "util/u_math.h"
 
 
 
@@ -193,7 +194,7 @@ static void do_triangle( struct draw_context *draw,
       do_point( draw, verts + stride * (i0) );  \
    } while (0)
 
-#define GET_ELT(idx) (elts[idx])
+#define GET_ELT(idx) (MIN2(elts[idx], max_index))
 
 #define FUNC pipe_run_elts
 #define FUNC_VARS                               \
@@ -203,7 +204,8 @@ static void do_triangle( struct draw_context *draw,
     struct vertex_header *vertices,             \
     unsigned stride,                            \
     const ushort *elts,                         \
-    unsigned count
+    unsigned count,                             \
+    unsigned max_index
 
 #include "draw_pt_decompose.h"
 
@@ -262,7 +264,8 @@ void draw_pipeline_run( struct draw_context *draw,
                     vert_info->verts,
                     vert_info->stride,
                     prim_info->elts + start,
-                    count);
+                    count,
+                    vert_info->count - 1);
    }
 
    draw->pipeline.verts = NULL;
@@ -344,5 +347,6 @@ void draw_pipeline_flush( struct draw_context *draw,
                           unsigned flags )
 {
    draw->pipeline.first->flush( draw->pipeline.first, flags );
-   draw->pipeline.first = draw->pipeline.validate;
+   if (flags & DRAW_FLUSH_STATE_CHANGE)
+      draw->pipeline.first = draw->pipeline.validate;
 }

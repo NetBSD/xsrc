@@ -5,8 +5,9 @@
 #include "util/u_memory.h"
 #include "target-helpers/inline_sw_helper.h"
 #include "target-helpers/inline_debug_helper.h"
-#include "state_tracker/xlib_sw_winsys.h"
+#include "state_tracker/xlibsw_api.h"
 #include "state_tracker/graw.h"
+#include "sw/xlib/xlib_sw_winsys.h"
 
 #include <X11/Xlib.h>
 #include <X11/Xlibint.h>
@@ -89,13 +90,13 @@ graw_create_window_and_screen( int x,
    if (visinfo->red_mask == 0xff0000 &&
        visinfo->green_mask == 0xff00 &&
        visinfo->blue_mask == 0xff) {
-      if (format != PIPE_FORMAT_B8G8R8A8_UNORM)
+      if (format != PIPE_FORMAT_BGRA8888_UNORM)
          goto fail;
    }
    else if (visinfo->red_mask == 0xff &&
             visinfo->green_mask == 0xff00 &&
             visinfo->blue_mask == 0xff0000) {
-      if (format != PIPE_FORMAT_R8G8B8A8_UNORM)
+      if (format != PIPE_FORMAT_RGBA8888_UNORM)
          goto fail;
    }
    else {
@@ -147,18 +148,16 @@ graw_create_window_and_screen( int x,
    if (screen == NULL)
       goto fail;
 
-   XFree(visinfo);
+   free(visinfo);
    return screen;
 
 fail:
    if (screen)
       screen->destroy(screen);
 
-   if (xlib_handle)
-      FREE(xlib_handle);
+   FREE(xlib_handle);
 
-   if (visinfo)
-      XFree(visinfo);
+   free(visinfo);
 
    if (win)
       XDestroyWindow(graw.display, win);

@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -56,6 +56,31 @@ i915_translate_compare_func(unsigned func)
       return COMPAREFUNC_ALWAYS;
    default:
       return COMPAREFUNC_ALWAYS;
+   }
+}
+
+static INLINE unsigned
+i915_translate_shadow_compare_func(unsigned func)
+{
+   switch (func) {
+   case PIPE_FUNC_NEVER:
+      return COMPAREFUNC_ALWAYS;
+   case PIPE_FUNC_LESS:
+      return COMPAREFUNC_LEQUAL;
+   case PIPE_FUNC_LEQUAL:
+      return COMPAREFUNC_LESS;
+   case PIPE_FUNC_GREATER:
+      return COMPAREFUNC_GEQUAL;
+   case PIPE_FUNC_GEQUAL:
+      return COMPAREFUNC_GREATER;
+   case PIPE_FUNC_NOTEQUAL:
+      return COMPAREFUNC_EQUAL;
+   case PIPE_FUNC_EQUAL:
+      return COMPAREFUNC_NOTEQUAL;
+   case PIPE_FUNC_ALWAYS:
+      return COMPAREFUNC_NEVER;
+   default:
+      return COMPAREFUNC_NEVER;
    }
 }
 

@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -132,7 +132,7 @@ sp_vbuf_unmap_vertices(struct vbuf_render *vbr,
 }
 
 
-static boolean
+static void
 sp_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
@@ -142,7 +142,6 @@ sp_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
 
    cvbr->softpipe->reduced_prim = u_reduced_prim(prim);
    cvbr->prim = prim;
-   return TRUE;
 }
 
 
@@ -381,11 +380,27 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
       }
       break;
 
+   case PIPE_PRIM_LINES_ADJACENCY:
+      for (i = 3; i < nr; i += 4) {
+         sp_setup_line( setup,
+                        get_vert(vertex_buffer, i-2, stride),
+                        get_vert(vertex_buffer, i-1, stride) );
+      }
+      break;
+
    case PIPE_PRIM_LINE_STRIP:
       for (i = 1; i < nr; i ++) {
          sp_setup_line( setup,
                      get_vert(vertex_buffer, i-1, stride),
                      get_vert(vertex_buffer, i-0, stride) );
+      }
+      break;
+
+   case PIPE_PRIM_LINE_STRIP_ADJACENCY:
+      for (i = 3; i < nr; i++) {
+         sp_setup_line( setup,
+                     get_vert(vertex_buffer, i-2, stride),
+                     get_vert(vertex_buffer, i-1, stride) );
       }
       break;
 
@@ -411,6 +426,15 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
       }
       break;
 
+   case PIPE_PRIM_TRIANGLES_ADJACENCY:
+      for (i = 5; i < nr; i += 6) {
+         sp_setup_tri( setup,
+                       get_vert(vertex_buffer, i-5, stride),
+                       get_vert(vertex_buffer, i-3, stride),
+                       get_vert(vertex_buffer, i-1, stride) );
+      }
+      break;
+
    case PIPE_PRIM_TRIANGLE_STRIP:
       if (flatshade_first) {
          for (i = 2; i < nr; i++) {
@@ -428,6 +452,27 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
                           get_vert(vertex_buffer, i+(i&1)-2, stride),
                           get_vert(vertex_buffer, i-(i&1)-1, stride),
                           get_vert(vertex_buffer, i-0, stride) );
+         }
+      }
+      break;
+
+   case PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY:
+      if (flatshade_first) {
+         for (i = 5; i < nr; i += 2) {
+            /* emit first triangle vertex as first triangle vertex */
+            sp_setup_tri( setup,
+                          get_vert(vertex_buffer, i-5, stride),
+                          get_vert(vertex_buffer, i+(i&1)*2-3, stride),
+                          get_vert(vertex_buffer, i-(i&1)*2-1, stride) );
+         }
+      }
+      else {
+         for (i = 5; i < nr; i += 2) {
+            /* emit last triangle vertex as last triangle vertex */
+            sp_setup_tri( setup,
+                          get_vert(vertex_buffer, i+(i&1)*2-5, stride),
+                          get_vert(vertex_buffer, i-(i&1)*2-3, stride),
+                          get_vert(vertex_buffer, i-1, stride) );
          }
       }
       break;
@@ -542,20 +587,45 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
    }
 }
 
+/*
+ * FIXME: it is unclear if primitives_storage_needed (which is generally
+ * the same as pipe query num_primitives_generated) should increase
+ * if SO is disabled for d3d10, but for GL we definitely need to
+ * increase num_primitives_generated and this is only called for active
+ * SO. If it must not increase for d3d10 need to disambiguate the counters
+ * in the driver and do some work for getting correct values, if it should
+ * increase too should call this from outside streamout code.
+ */
 static void
-sp_vbuf_so_info(struct vbuf_render *vbr, uint primitives, uint vertices)
+sp_vbuf_so_info(struct vbuf_render *vbr, uint primitives, uint prim_generated)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
    struct softpipe_context *softpipe = cvbr->softpipe;
-   unsigned i;
 
-   for (i = 0; i < softpipe->so_target.num_buffers; ++i) {
-      softpipe->so_target.so_count[i] += vertices;
-   }
+   softpipe->so_stats.num_primitives_written += primitives;
+   softpipe->so_stats.primitives_storage_needed += prim_generated;
+}
 
-   softpipe->so_stats.num_primitives_written = primitives;
-   softpipe->so_stats.primitives_storage_needed =
-      vertices * 4 /*sizeof(float|int32)*/ * 4 /*x,y,z,w*/;
+static void
+sp_vbuf_pipeline_statistics(
+   struct vbuf_render *vbr, 
+   const struct pipe_query_data_pipeline_statistics *stats)
+{
+   struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
+   struct softpipe_context *softpipe = cvbr->softpipe;
+
+   softpipe->pipeline_statistics.ia_vertices +=
+      stats->ia_vertices;
+   softpipe->pipeline_statistics.ia_primitives +=
+      stats->ia_primitives;
+   softpipe->pipeline_statistics.vs_invocations +=
+      stats->vs_invocations;
+   softpipe->pipeline_statistics.gs_invocations +=
+      stats->gs_invocations;
+   softpipe->pipeline_statistics.gs_primitives +=
+      stats->gs_primitives;
+   softpipe->pipeline_statistics.c_invocations +=
+      stats->c_invocations;
 }
 
 
@@ -592,6 +662,7 @@ sp_create_vbuf_backend(struct softpipe_context *sp)
    cvbr->base.draw_arrays = sp_vbuf_draw_arrays;
    cvbr->base.release_vertices = sp_vbuf_release_vertices;
    cvbr->base.set_stream_output_info = sp_vbuf_so_info;
+   cvbr->base.pipeline_statistics = sp_vbuf_pipeline_statistics;
    cvbr->base.destroy = sp_vbuf_destroy;
 
    cvbr->softpipe = sp;

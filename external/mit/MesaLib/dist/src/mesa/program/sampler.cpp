@@ -26,23 +26,15 @@
 #include "ir.h"
 #include "glsl_types.h"
 #include "ir_visitor.h"
+#include "../glsl/program.h"
+#include "program/hash_table.h"
+#include "ir_uniform.h"
 
 extern "C" {
 #include "main/compiler.h"
 #include "main/mtypes.h"
 #include "program/prog_parameter.h"
-}
-
-static void fail_link(struct gl_shader_program *prog, const char *fmt, ...) PRINTFLIKE(2, 3);
-
-static void fail_link(struct gl_shader_program *prog, const char *fmt, ...)
-{
-   va_list args;
-   va_start(args, fmt);
-   ralloc_vasprintf_append(&prog->InfoLog, fmt, args);
-   va_end(args);
-
-   prog->LinkStatus = GL_FALSE;
+#include "program/program.h"
 }
 
 class get_sampler_name : public ir_hierarchical_visitor
@@ -111,27 +103,45 @@ public:
    ir_dereference *last;
 };
 
-extern "C" {
-int
+
+extern "C" int
 _mesa_get_sampler_uniform_value(class ir_dereference *sampler,
 				struct gl_shader_program *shader_program,
 				const struct gl_program *prog)
 {
    get_sampler_name getname(sampler, shader_program);
 
+   GLuint shader = _mesa_program_enum_to_shader_stage(prog->Target);
+
    sampler->accept(&getname);
 
-   GLint index = _mesa_lookup_parameter_index(prog->Parameters, -1,
-					      getname.name);
-
-   if (index < 0) {
-      fail_link(shader_program,
-		"failed to find sampler named %s.\n", getname.name);
+   unsigned location;
+   if (!shader_program->UniformHash->get(location, getname.name)) {
+      linker_error(shader_program,
+		   "failed to find sampler named %s.\n", getname.name);
       return 0;
    }
 
-   index += getname.offset;
+   if (!shader_program->UniformStorage[location].sampler[shader].active) {
+      assert(0 && "cannot return a sampler");
+      linker_error(shader_program,
+		   "cannot return a sampler named %s, because it is not "
+                   "used in this shader stage. This is a driver bug.\n",
+                   getname.name);
+      return 0;
+   }
 
-   return prog->Parameters->ParameterValues[index][0];
+   return shader_program->UniformStorage[location].sampler[shader].index +
+          getname.offset;
 }
+
+
+extern "C" class ir_rvalue *
+_mesa_get_sampler_array_nonconst_index(class ir_dereference *sampler)
+{
+   ir_dereference_array *deref_arr = sampler->as_dereference_array();
+   if (!deref_arr || deref_arr->array_index->as_constant())
+      return NULL;
+
+   return deref_arr->array_index;
 }

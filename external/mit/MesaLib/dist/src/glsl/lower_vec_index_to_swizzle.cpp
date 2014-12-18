@@ -33,10 +33,13 @@
 #include "ir_visitor.h"
 #include "ir_optimization.h"
 #include "glsl_types.h"
+#include "main/macros.h"
 
 /**
  * Visitor class for replacing expressions with ir_constant values.
  */
+
+namespace {
 
 class ir_vec_index_to_swizzle_visitor : public ir_hierarchical_visitor {
 public:
@@ -45,7 +48,7 @@ public:
       progress = false;
    }
 
-   ir_rvalue *convert_vec_index_to_swizzle(ir_rvalue *val);
+   ir_rvalue *convert_vector_extract_to_swizzle(ir_rvalue *val);
 
    virtual ir_visitor_status visit_enter(ir_expression *);
    virtual ir_visitor_status visit_enter(ir_swizzle *);
@@ -57,27 +60,40 @@ public:
    bool progress;
 };
 
+} /* anonymous namespace */
+
 ir_rvalue *
-ir_vec_index_to_swizzle_visitor::convert_vec_index_to_swizzle(ir_rvalue *ir)
+ir_vec_index_to_swizzle_visitor::convert_vector_extract_to_swizzle(ir_rvalue *ir)
 {
-   ir_dereference_array *deref = ir->as_dereference_array();
-   ir_constant *ir_constant;
-
-   if (!deref)
+   ir_expression *const expr = ir->as_expression();
+   if (expr == NULL || expr->operation != ir_binop_vector_extract)
       return ir;
 
-   if (deref->array->type->is_matrix() || deref->array->type->is_array())
-      return ir;
-
-   assert(deref->array_index->type->base_type == GLSL_TYPE_INT);
-   ir_constant = deref->array_index->constant_expression_value();
-   if (!ir_constant)
+   ir_constant *const idx = expr->operands[1]->constant_expression_value();
+   if (idx == NULL)
       return ir;
 
    void *ctx = ralloc_parent(ir);
    this->progress = true;
-   return new(ctx) ir_swizzle(deref->array,
-			      ir_constant->value.i[0], 0, 0, 0, 1);
+
+   /* Page 40 of the GLSL 1.20 spec says:
+    *
+    *     "When indexing with non-constant expressions, behavior is undefined
+    *     if the index is negative, or greater than or equal to the size of
+    *     the vector."
+    *
+    * The quoted spec text mentions non-constant expressions, but this code
+    * operates on constants.  These constants are the result of non-constant
+    * expressions that have been optimized to constants.  The common case here
+    * is a loop counter from an unrolled loop that is used to index a vector.
+    *
+    * The ir_swizzle constructor gets angry if the index is negative or too
+    * large.  For simplicity sake, just clamp the index to [0, size-1].
+    */
+   const int i = CLAMP(idx->value.i[0], 0,
+                       (int) expr->operands[0]->type->vector_elements - 1);
+
+   return new(ctx) ir_swizzle(expr->operands[0], i, 0, 0, 0, 1);
 }
 
 ir_visitor_status
@@ -86,7 +102,7 @@ ir_vec_index_to_swizzle_visitor::visit_enter(ir_expression *ir)
    unsigned int i;
 
    for (i = 0; i < ir->get_num_operands(); i++) {
-      ir->operands[i] = convert_vec_index_to_swizzle(ir->operands[i]);
+      ir->operands[i] = convert_vector_extract_to_swizzle(ir->operands[i]);
    }
 
    return visit_continue;
@@ -99,7 +115,7 @@ ir_vec_index_to_swizzle_visitor::visit_enter(ir_swizzle *ir)
     * the result of indexing a vector is.  But maybe at some point we'll end up
     * using swizzling of scalars for vector construction.
     */
-   ir->val = convert_vec_index_to_swizzle(ir->val);
+   ir->val = convert_vector_extract_to_swizzle(ir->val);
 
    return visit_continue;
 }
@@ -107,8 +123,7 @@ ir_vec_index_to_swizzle_visitor::visit_enter(ir_swizzle *ir)
 ir_visitor_status
 ir_vec_index_to_swizzle_visitor::visit_enter(ir_assignment *ir)
 {
-   ir->set_lhs(convert_vec_index_to_swizzle(ir->lhs));
-   ir->rhs = convert_vec_index_to_swizzle(ir->rhs);
+   ir->rhs = convert_vector_extract_to_swizzle(ir->rhs);
 
    return visit_continue;
 }
@@ -116,9 +131,8 @@ ir_vec_index_to_swizzle_visitor::visit_enter(ir_assignment *ir)
 ir_visitor_status
 ir_vec_index_to_swizzle_visitor::visit_enter(ir_call *ir)
 {
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_rvalue *param = (ir_rvalue *)iter.get();
-      ir_rvalue *new_param = convert_vec_index_to_swizzle(param);
+   foreach_in_list_safe(ir_rvalue, param, &ir->actual_parameters) {
+      ir_rvalue *new_param = convert_vector_extract_to_swizzle(param);
 
       if (new_param != param) {
 	 param->replace_with(new_param);
@@ -132,7 +146,7 @@ ir_visitor_status
 ir_vec_index_to_swizzle_visitor::visit_enter(ir_return *ir)
 {
    if (ir->value) {
-      ir->value = convert_vec_index_to_swizzle(ir->value);
+      ir->value = convert_vector_extract_to_swizzle(ir->value);
    }
 
    return visit_continue;
@@ -141,7 +155,7 @@ ir_vec_index_to_swizzle_visitor::visit_enter(ir_return *ir)
 ir_visitor_status
 ir_vec_index_to_swizzle_visitor::visit_enter(ir_if *ir)
 {
-   ir->condition = convert_vec_index_to_swizzle(ir->condition);
+   ir->condition = convert_vector_extract_to_swizzle(ir->condition);
 
    return visit_continue;
 }

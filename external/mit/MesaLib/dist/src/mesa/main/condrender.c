@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.8
  *
  * Copyright (C) 2009  VMware, Inc.   All Rights Reserved.
  *
@@ -41,31 +40,31 @@
 void GLAPIENTRY
 _mesa_BeginConditionalRender(GLuint queryId, GLenum mode)
 {
-   struct gl_query_object *q;
+   struct gl_query_object *q = NULL;
    GET_CURRENT_CONTEXT(ctx);
 
-   if (!ctx->Extensions.NV_conditional_render || ctx->Query.CondRenderQuery ||
-       queryId == 0) {
+   /* Section 2.14 (Conditional Rendering) of the OpenGL 3.0 spec says:
+    *
+    *     "If BeginConditionalRender is called while conditional rendering is
+    *     in progress, or if EndConditionalRender is called while conditional
+    *     rendering is not in progress, the error INVALID_OPERATION is
+    *     generated."
+    */
+   if (!ctx->Extensions.NV_conditional_render || ctx->Query.CondRenderQuery) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glBeginConditionalRender()");
       return;
    }
 
    ASSERT(ctx->Query.CondRenderMode == GL_NONE);
 
-   switch (mode) {
-   case GL_QUERY_WAIT:
-   case GL_QUERY_NO_WAIT:
-   case GL_QUERY_BY_REGION_WAIT:
-   case GL_QUERY_BY_REGION_NO_WAIT:
-      /* OK */
-      break;
-   default:
-      _mesa_error(ctx, GL_INVALID_ENUM, "glBeginConditionalRender(mode=%s)",
-                  _mesa_lookup_enum_by_nr(mode));
-      return;
-   }
+   /* Section 2.14 (Conditional Rendering) of the OpenGL 3.0 spec says:
+    *
+    *     "The error INVALID_VALUE is generated if <id> is not the name of an
+    *     existing query object query."
+    */
+   if (queryId != 0)
+      q = _mesa_lookup_query_object(ctx, queryId);
 
-   q = _mesa_lookup_query_object(ctx, queryId);
    if (!q) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glBeginConditionalRender(bad queryId=%u)", queryId);
@@ -73,7 +72,34 @@ _mesa_BeginConditionalRender(GLuint queryId, GLenum mode)
    }
    ASSERT(q->Id == queryId);
 
-   if (q->Target != GL_SAMPLES_PASSED || q->Active) {
+   switch (mode) {
+   case GL_QUERY_WAIT:
+   case GL_QUERY_NO_WAIT:
+   case GL_QUERY_BY_REGION_WAIT:
+   case GL_QUERY_BY_REGION_NO_WAIT:
+      break; /* OK */
+   case GL_QUERY_WAIT_INVERTED:
+   case GL_QUERY_NO_WAIT_INVERTED:
+   case GL_QUERY_BY_REGION_WAIT_INVERTED:
+   case GL_QUERY_BY_REGION_NO_WAIT_INVERTED:
+      if (ctx->Extensions.ARB_conditional_render_inverted)
+         break; /* OK */
+      /* fallthrough - invalid */
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "glBeginConditionalRender(mode=%s)",
+                  _mesa_lookup_enum_by_nr(mode));
+      return;
+   }
+
+   /* Section 2.14 (Conditional Rendering) of the OpenGL 3.0 spec says:
+    *
+    *     "The error INVALID_OPERATION is generated if <id> is the name of a
+    *     query object with a target other than SAMPLES_PASSED, or <id> is the
+    *     name of a query currently in progress."
+    */
+   if ((q->Target != GL_SAMPLES_PASSED &&
+        q->Target != GL_ANY_SAMPLES_PASSED &&
+        q->Target != GL_ANY_SAMPLES_PASSED_CONSERVATIVE) || q->Active) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glBeginConditionalRender()");
       return;
    }
@@ -136,10 +162,25 @@ _mesa_check_conditional_render(struct gl_context *ctx)
          ctx->Driver.WaitQuery(ctx, q);
       }
       return q->Result > 0;
+   case GL_QUERY_BY_REGION_WAIT_INVERTED:
+      /* fall-through */
+   case GL_QUERY_WAIT_INVERTED:
+      if (!q->Ready) {
+         ctx->Driver.WaitQuery(ctx, q);
+      }
+      return q->Result == 0;
    case GL_QUERY_BY_REGION_NO_WAIT:
       /* fall-through */
    case GL_QUERY_NO_WAIT:
+      if (!q->Ready)
+         ctx->Driver.CheckQuery(ctx, q);
       return q->Ready ? (q->Result > 0) : GL_TRUE;
+   case GL_QUERY_BY_REGION_NO_WAIT_INVERTED:
+      /* fall-through */
+   case GL_QUERY_NO_WAIT_INVERTED:
+      if (!q->Ready)
+         ctx->Driver.CheckQuery(ctx, q);
+      return q->Ready ? (q->Result == 0) : GL_TRUE;
    default:
       _mesa_problem(ctx, "Bad cond render mode %s in "
                     " _mesa_check_conditional_render()",

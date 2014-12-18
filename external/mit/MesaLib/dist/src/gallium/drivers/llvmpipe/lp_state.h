@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,14 +18,14 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 
  **************************************************************************/
 
-/* Authors:  Keith Whitwell <keith@tungstengraphics.com>
+/* Authors:  Keith Whitwell <keithw@vmware.com>
  */
 
 #ifndef LP_STATE_H
@@ -51,7 +51,7 @@
 #define LP_NEW_SAMPLER_VIEW  0x800
 #define LP_NEW_VERTEX        0x1000
 #define LP_NEW_VS            0x2000
-#define LP_NEW_QUERY         0x4000
+#define LP_NEW_OCCLUSION_QUERY 0x4000
 #define LP_NEW_BLEND_COLOR   0x8000
 #define LP_NEW_GS            0x10000
 #define LP_NEW_SO            0x20000
@@ -65,17 +65,10 @@ struct llvmpipe_context;
 
 
 
-/** Subclass of pipe_shader_state */
-struct lp_vertex_shader
-{
-   struct pipe_shader_state shader;
-   struct draw_vertex_shader *draw_data;
-};
-
-/** Subclass of pipe_shader_state */
 struct lp_geometry_shader {
-   struct pipe_shader_state shader;
-   struct draw_geometry_shader *draw_data;
+   boolean no_tokens;
+   struct pipe_stream_output_info stream_output;
+   struct draw_geometry_shader *dgs;
 };
 
 /** Vertex element state */
@@ -86,7 +79,7 @@ struct lp_velems_state
 };
 
 struct lp_so_state {
-   struct pipe_stream_output_state base;
+   struct pipe_stream_output_info base;
 };
 
 
@@ -139,6 +132,14 @@ llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *ctx,
                                  struct pipe_sampler_view **views);
 void
 llvmpipe_cleanup_vertex_sampling(struct llvmpipe_context *ctx);
+
+
+void
+llvmpipe_prepare_geometry_sampling(struct llvmpipe_context *ctx,
+                                   unsigned num,
+                                   struct pipe_sampler_view **views);
+void
+llvmpipe_cleanup_geometry_sampling(struct llvmpipe_context *ctx);
 
 
 #endif

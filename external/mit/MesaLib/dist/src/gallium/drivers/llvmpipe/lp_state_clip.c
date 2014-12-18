@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,14 +18,14 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 
  **************************************************************************/
 
-/* Authors:  Keith Whitwell <keith@tungstengraphics.com>
+/* Authors:  Keith Whitwell <keithw@vmware.com>
  */
 #include "lp_context.h"
 #include "lp_state.h"
@@ -44,28 +44,39 @@ llvmpipe_set_clip_state(struct pipe_context *pipe,
 
 
 static void
-llvmpipe_set_viewport_state(struct pipe_context *pipe,
-                            const struct pipe_viewport_state *viewport)
+llvmpipe_set_viewport_states(struct pipe_context *pipe,
+                             unsigned start_slot,
+                             unsigned num_viewports,
+                             const struct pipe_viewport_state *viewports)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
 
    /* pass the viewport info to the draw module */
-   draw_set_viewport_state(llvmpipe->draw, viewport);
+   draw_set_viewport_states(llvmpipe->draw, start_slot, num_viewports,
+                            viewports);
 
-   llvmpipe->viewport = *viewport; /* struct copy */
+   memcpy(llvmpipe->viewports + start_slot, viewports,
+          sizeof(struct pipe_viewport_state) * num_viewports);
    llvmpipe->dirty |= LP_NEW_VIEWPORT;
 }
 
 
 static void
-llvmpipe_set_scissor_state(struct pipe_context *pipe,
-                           const struct pipe_scissor_state *scissor)
+llvmpipe_set_scissor_states(struct pipe_context *pipe,
+                            unsigned start_slot,
+                            unsigned num_scissors,
+                            const struct pipe_scissor_state *scissors)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
 
    draw_flush(llvmpipe->draw);
 
-   llvmpipe->scissor = *scissor; /* struct copy */
+   debug_assert(start_slot < PIPE_MAX_VIEWPORTS);
+   debug_assert((start_slot + num_scissors) <= PIPE_MAX_VIEWPORTS);
+
+   memcpy(llvmpipe->scissors + start_slot, scissors,
+          sizeof(struct pipe_scissor_state) * num_scissors);
+   
    llvmpipe->dirty |= LP_NEW_SCISSOR;
 }
 
@@ -89,6 +100,6 @@ llvmpipe_init_clip_funcs(struct llvmpipe_context *llvmpipe)
 {
    llvmpipe->pipe.set_clip_state = llvmpipe_set_clip_state;
    llvmpipe->pipe.set_polygon_stipple = llvmpipe_set_polygon_stipple;
-   llvmpipe->pipe.set_scissor_state = llvmpipe_set_scissor_state;
-   llvmpipe->pipe.set_viewport_state = llvmpipe_set_viewport_state;
+   llvmpipe->pipe.set_scissor_states = llvmpipe_set_scissor_states;
+   llvmpipe->pipe.set_viewport_states = llvmpipe_set_viewport_states;
 }

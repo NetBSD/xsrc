@@ -43,16 +43,10 @@ enum r300_zmask_compression {
 /* Structure containing all the possible information about a specific Radeon
  * in the R3xx, R4xx, and R5xx families. */
 struct r300_capabilities {
-    /* PCI ID */
-    uint32_t pci_id;
     /* Chipset family */
     int family;
     /* The number of vertex floating-point units */
     unsigned num_vert_fpus;
-    /* The number of fragment pipes */
-    unsigned num_frag_pipes;
-    /* The number of z pipes */
-    unsigned num_z_pipes;
     /* The number of texture units. */
     unsigned num_tex_units;
     /* Whether or not TCL is physically present */
@@ -61,6 +55,8 @@ struct r300_capabilities {
     int hiz_ram;
     /* Some chipsets have zmask ram per pipe some don't. */
     int zmask_ram;
+    /* CMASK is for MSAA colorbuffer compression and fast clear. */
+    boolean has_cmask;
     /* Compression mode for ZMASK. */
     enum r300_zmask_compression z_compress;
     /* Whether or not this is RV350 or newer, including all r400 and r500
@@ -94,33 +90,6 @@ struct r300_capabilities {
     boolean has_us_format;
 };
 
-/* Enumerations for legibility and telling which card we're running on. */
-enum {
-    CHIP_FAMILY_R300 = 0, /* R3xx-based cores. */
-    CHIP_FAMILY_R350,
-    CHIP_FAMILY_RV350,
-    CHIP_FAMILY_RV370,
-    CHIP_FAMILY_RV380,
-    CHIP_FAMILY_RS400,
-    CHIP_FAMILY_RC410,
-    CHIP_FAMILY_RS480,
-    CHIP_FAMILY_R420,     /* R4xx-based cores. */
-    CHIP_FAMILY_R423,
-    CHIP_FAMILY_R430,
-    CHIP_FAMILY_R480,
-    CHIP_FAMILY_R481,
-    CHIP_FAMILY_RV410,
-    CHIP_FAMILY_RS600,
-    CHIP_FAMILY_RS690,
-    CHIP_FAMILY_RS740,
-    CHIP_FAMILY_RV515,    /* R5xx-based cores. */
-    CHIP_FAMILY_R520,
-    CHIP_FAMILY_RV530,
-    CHIP_FAMILY_R580,
-    CHIP_FAMILY_RV560,
-    CHIP_FAMILY_RV570
-};
-
-void r300_parse_chipset(struct r300_capabilities* caps);
+void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps);
 
 #endif /* R300_CHIPSET_H */

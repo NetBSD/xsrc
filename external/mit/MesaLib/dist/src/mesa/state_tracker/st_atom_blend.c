@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -27,7 +27,7 @@
 
  /*
   * Authors:
-  *   Keith Whitwell <keith@tungstengraphics.com>
+  *   Keith Whitwell <keithw@vmware.com>
   *   Brian Paul
   */
  
@@ -78,10 +78,10 @@ translate_blend(GLenum blend)
       return PIPE_BLENDFACTOR_CONST_COLOR;
    case GL_CONSTANT_ALPHA:
       return PIPE_BLENDFACTOR_CONST_ALPHA;
-      /*
+   case GL_SRC1_COLOR:
       return PIPE_BLENDFACTOR_SRC1_COLOR;
+   case GL_SRC1_ALPHA:
       return PIPE_BLENDFACTOR_SRC1_ALPHA;
-      */
    case GL_ZERO:
       return PIPE_BLENDFACTOR_ZERO;
    case GL_ONE_MINUS_SRC_COLOR:
@@ -96,10 +96,10 @@ translate_blend(GLenum blend)
       return PIPE_BLENDFACTOR_INV_CONST_COLOR;
    case GL_ONE_MINUS_CONSTANT_ALPHA:
       return PIPE_BLENDFACTOR_INV_CONST_ALPHA;
-      /*
+   case GL_ONE_MINUS_SRC1_COLOR:
       return PIPE_BLENDFACTOR_INV_SRC1_COLOR;
+   case GL_ONE_MINUS_SRC1_ALPHA:
       return PIPE_BLENDFACTOR_INV_SRC1_ALPHA;
-      */
    default:
       assert("invalid GL token in translate_blend()" == NULL);
       return 0;
@@ -200,15 +200,7 @@ update_blend( struct st_context *st )
       num_state = ctx->Const.MaxDrawBuffers;
       blend->independent_blend_enable = 1;
    }
-   /* Note it is impossible to correctly deal with EXT_blend_logic_op and
-      EXT_draw_buffers2/EXT_blend_equation_separate at the same time.
-      These combinations would require support for per-rt logicop enables
-      and separate alpha/rgb logicop/blend support respectively. Neither
-      possible in gallium nor most hardware. Assume these combinations
-      don't happen. */
-   if (ctx->Color.ColorLogicOpEnabled ||
-       (ctx->Color.BlendEnabled &&
-        ctx->Color.Blend[0].EquationRGB == GL_LOGIC_OP)) {
+   if (ctx->Color.ColorLogicOpEnabled) {
       /* logicop enabled */
       blend->logicop_enable = 1;
       blend->logicop_func = translate_logicop(ctx->Color.LogicOp);
@@ -271,16 +263,13 @@ update_blend( struct st_context *st )
          blend->rt[i].colormask |= PIPE_MASK_A;
    }
 
-   if (ctx->Color.DitherFlag)
-      blend->dither = 1;
+   blend->dither = ctx->Color.DitherFlag;
 
    if (ctx->Multisample.Enabled) {
       /* unlike in gallium/d3d10 these operations are only performed
          if msaa is enabled */
-      if (ctx->Multisample.SampleAlphaToCoverage)
-         blend->alpha_to_coverage = 1;
-      if (ctx->Multisample.SampleAlphaToOne)
-         blend->alpha_to_one = 1;
+      blend->alpha_to_coverage = ctx->Multisample.SampleAlphaToCoverage;
+      blend->alpha_to_one = ctx->Multisample.SampleAlphaToOne;
    }
 
    cso_set_blend(st->cso_context, blend);

@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -30,7 +30,6 @@
 #include "main/mtypes.h"
 #include "main/simple_list.h"
 #include "main/enums.h"
-#include "main/texstore.h"
 #include "main/mm.h"
 
 #include "intel_screen.h"
@@ -119,7 +118,7 @@ GetTexelOp(GLint unit)
  * environments are treated identically.
  *
  * \todo
- * This function should return \c GLboolean.  When \c GL_FALSE is returned,
+ * This function should return \c bool.  When \c false is returned,
  * it means that an environment is selected that the hardware cannot do.  This
  * is the way the Radeon and R200 drivers work.
  * 
@@ -145,7 +144,7 @@ i830SetTexEnvCombine(struct i830_context * i830,
    GLuint args_A[3];
    GLuint rgb_shift;
    GLuint alpha_shift;
-   GLboolean need_factor = 0;
+   bool need_factor = 0;
    int i;
    unsigned used;
    static const GLuint tex_blend_rgb[3] = {
@@ -388,7 +387,7 @@ i830SetTexEnvCombine(struct i830_context * i830,
 
 static void
 emit_texblend(struct i830_context *i830, GLuint unit, GLuint blendUnit,
-              GLboolean last_stage)
+              bool last_stage)
 {
    struct gl_texture_unit *texUnit = &i830->intel.ctx.Texture.Unit[unit];
    GLuint tmp[I830_TEXBLEND_SIZE], tmp_sz;
@@ -414,7 +413,7 @@ emit_texblend(struct i830_context *i830, GLuint unit, GLuint blendUnit,
       i830->state.TexBlendWordsUsed[blendUnit] = tmp_sz;
    }
 
-   I830_ACTIVESTATE(i830, I830_UPLOAD_TEXBLEND(blendUnit), GL_TRUE);
+   I830_ACTIVESTATE(i830, I830_UPLOAD_TEXBLEND(blendUnit), true);
 }
 
 static void
@@ -434,27 +433,23 @@ emit_passthrough(struct i830_context *i830)
       i830->state.TexBlendWordsUsed[unit] = tmp_sz;
    }
 
-   I830_ACTIVESTATE(i830, I830_UPLOAD_TEXBLEND(unit), GL_TRUE);
+   I830_ACTIVESTATE(i830, I830_UPLOAD_TEXBLEND(unit), true);
 }
 
 void
 i830EmitTextureBlend(struct i830_context *i830)
 {
    struct gl_context *ctx = &i830->intel.ctx;
-   GLuint unit, last_stage = 0, blendunit = 0;
+   GLuint unit, blendunit = 0;
 
-   I830_ACTIVESTATE(i830, I830_UPLOAD_TEXBLEND_ALL, GL_FALSE);
+   I830_ACTIVESTATE(i830, I830_UPLOAD_TEXBLEND_ALL, false);
 
-   if (ctx->Texture._EnabledUnits) {
-      for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++)
-         if (ctx->Texture.Unit[unit]._ReallyEnabled)
-            last_stage = unit;
-
-      for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++)
-         if (ctx->Texture.Unit[unit]._ReallyEnabled)
-            emit_texblend(i830, unit, blendunit++, last_stage == unit);
-   }
-   else {
+   if (ctx->Texture._MaxEnabledTexImageUnit != -1) {
+      for (unit = 0; unit <= ctx->Texture._MaxEnabledTexImageUnit; unit++)
+         if (ctx->Texture.Unit[unit]._Current)
+            emit_texblend(i830, unit, blendunit++,
+                          unit == ctx->Texture._MaxEnabledTexImageUnit);
+   } else {
       emit_passthrough(i830);
    }
 }

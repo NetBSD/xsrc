@@ -96,8 +96,8 @@
     OUT_CS(CP_PACKET3(op, count))
 
 #define OUT_CS_TABLE(values, count) do { \
-    memcpy(cs_copy->buf + cs_copy->cdw, values, count * 4); \
-    cs_copy->cdw += count; \
+    memcpy(cs_copy->buf + cs_copy->cdw, (values), (count) * 4); \
+    cs_copy->cdw += (count); \
     CS_USED_DW(count); \
 } while (0)
 
@@ -109,8 +109,8 @@
 #define OUT_CS_RELOC(r) do { \
     assert((r)); \
     assert((r)->cs_buf); \
-    cs_winsys->cs_write_reloc(cs_copy, (r)->cs_buf); \
-    CS_USED_DW(2); \
+    OUT_CS(0xc0001000); /* PKT3_NOP */ \
+    OUT_CS(cs_winsys->cs_get_reloc(cs_copy, (r)->cs_buf) * 4); \
 } while (0)
 
 

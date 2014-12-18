@@ -27,6 +27,7 @@
 
 
 static void translate_ubyte_ushort( const void *in,
+                                    unsigned start,
                                     unsigned nr,
                                     void *out )
 {
@@ -34,40 +35,44 @@ static void translate_ubyte_ushort( const void *in,
    ushort *out_us = (ushort *)out;
    unsigned i;
    for (i = 0; i < nr; i++)
-      out_us[i] = (ushort) in_ub[i];
+      out_us[i] = (ushort) in_ub[i+start];
 }
 
 static void translate_memcpy_ushort( const void *in,
+                                     unsigned start,
                                      unsigned nr,
                                      void *out )
 {
-   memcpy(out, in, nr*sizeof(short));
+   memcpy(out, &((short *)in)[start], nr*sizeof(short));
 }
                               
 static void translate_memcpy_uint( const void *in,
+                                   unsigned start,
                                    unsigned nr,
                                    void *out )
 {
-   memcpy(out, in, nr*sizeof(int));
+   memcpy(out, &((int *)in)[start], nr*sizeof(int));
 }
 
 
-static void generate_linear_ushort( unsigned nr,
+static void generate_linear_ushort( unsigned start,
+                                    unsigned nr,
                                     void *out )
 {
    ushort *out_us = (ushort *)out;
    unsigned i;
    for (i = 0; i < nr; i++)
-      out_us[i] = (ushort) i;
+      out_us[i] = (ushort)(i + start);
 }
                               
-static void generate_linear_uint( unsigned nr,
+static void generate_linear_uint( unsigned start,
+                                  unsigned nr,
                                   void *out )
 {
    unsigned *out_ui = (unsigned *)out;
    unsigned i;
    for (i = 0; i < nr; i++)
-      out_ui[i] = i;
+      out_ui[i] = i + start;
 }
 
 
@@ -151,7 +156,14 @@ int u_unfilled_translator( unsigned prim,
 }
 
 
-
+/**
+ * Utility for converting unfilled polygons into points, lines, triangles.
+ * Few drivers have direct support for OpenGL's glPolygonMode.
+ * This function helps with converting triangles into points or lines
+ * when the front and back fill modes are the same.  When there's
+ * different front/back fill modes, that can be handled with the
+ * 'draw' module.
+ */
 int u_unfilled_generator( unsigned prim,
                           unsigned start,
                           unsigned nr,
