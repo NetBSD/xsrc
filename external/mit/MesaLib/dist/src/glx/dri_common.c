@@ -99,7 +99,11 @@ driOpenDriver(const char *driverName)
    int len;
 
    /* Attempt to make sure libGL symbols will be visible to the driver */
+#ifdef __NetBSD__ // base only, pkgsrc didn't get bumped for time_t
+   glhandle = dlopen("libGL.so.2", RTLD_NOW | RTLD_GLOBAL);
+#else
    glhandle = dlopen("libGL.so.1", RTLD_NOW | RTLD_GLOBAL);
+#endif
 
    libPaths = NULL;
    if (geteuid() == getuid()) {

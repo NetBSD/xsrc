@@ -321,7 +321,7 @@ TAG(normalize_normals)( const GLmatrix *mat,
       STRIDE_LOOP {
 	 const GLfloat x = from[0], y = from[1], z = from[2];
 	 GLdouble len = x * x + y * y + z * z;
-	 if (len > 1e-20) {
+	 if (len > 1e-50) {
 	    len = INV_SQRTF(len);
 	    out[i][0] = (GLfloat)(x * len);
 	    out[i][1] = (GLfloat)(y * len);

@@ -518,6 +518,9 @@ union gl_dlist_node
    GLenum e;
    GLfloat f;
    GLsizei si;
+#ifdef __NetBSD__
+   unsigned long long _dummy;
+#endif
 };
 
 
@@ -548,7 +551,8 @@ save_pointer(union gl_dlist_node *dest, void *src)
    unsigned i;
 
    STATIC_ASSERT(POINTER_DWORDS == 1 || POINTER_DWORDS == 2);
-   STATIC_ASSERT(sizeof(union gl_dlist_node) == 4);
+   STATIC_ASSERT(sizeof(union gl_dlist_node) == 4 ||
+                 sizeof(union gl_dlist_node) == 8);
 
    p.ptr = src;
 

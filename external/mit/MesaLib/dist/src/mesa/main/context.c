@@ -377,10 +377,10 @@ mtx_t OneTimeLock = _MTX_INITIALIZER_NP;
  *
  * \sa _math_init().
  */
-static GLbitfield api_init_mask = 0x0;
 static void
 one_time_init( struct gl_context *ctx )
 {
+   static GLbitfield api_init_mask = 0x0;
 
    mtx_lock(&OneTimeLock);
 
@@ -427,14 +427,12 @@ one_time_init( struct gl_context *ctx )
 
    mtx_unlock(&OneTimeLock);
 
-   dummy_enum_func();
-}
+   /* Hopefully atexit() is widely available.  If not, we may need some
+    * #ifdef tests here.
+    */
+   atexit(_mesa_destroy_shader_compiler);
 
-static void __attribute__((__destructor__))
-one_time_fini(void)
-{
-  if (api_init_mask)
-    _mesa_destroy_shader_compiler();
+   dummy_enum_func();
 }
 
 
