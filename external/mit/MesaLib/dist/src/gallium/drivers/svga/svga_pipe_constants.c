@@ -29,6 +29,7 @@
 #include "tgsi/tgsi_parse.h"
 
 #include "svga_context.h"
+#include "svga_resource_buffer.h"
 
 /***********************************************************************
  * Constant buffers 
@@ -45,20 +46,34 @@ struct svga_constbuf
 
 static void svga_set_constant_buffer(struct pipe_context *pipe,
                                      uint shader, uint index,
-                                     struct pipe_resource *buf)
+                                     struct pipe_constant_buffer *cb)
 {
    struct svga_context *svga = svga_context(pipe);
+   struct pipe_resource *buf = cb ? cb->buffer : NULL;
+
+   if (cb && cb->user_buffer) {
+      buf = svga_user_buffer_create(pipe->screen,
+                                    (void *) cb->user_buffer,
+                                    cb->buffer_size,
+                                    PIPE_BIND_CONSTANT_BUFFER);
+   }
 
    assert(shader < PIPE_SHADER_TYPES);
    assert(index == 0);
 
-   pipe_resource_reference( &svga->curr.cb[shader],
-                          buf );
+   pipe_resource_reference(&svga->curr.cbufs[shader].buffer, buf);
+   svga->curr.cbufs[shader].buffer_size = cb ? cb->buffer_size : 0;
+   svga->curr.cbufs[shader].buffer_offset = cb ? cb->buffer_offset : 0;
+   svga->curr.cbufs[shader].user_buffer = NULL; /* not used */
 
    if (shader == PIPE_SHADER_FRAGMENT)
       svga->dirty |= SVGA_NEW_FS_CONST_BUFFER;
    else
       svga->dirty |= SVGA_NEW_VS_CONST_BUFFER;
+
+   if (cb && cb->user_buffer) {
+      pipe_resource_reference(&buf, NULL);
+   }
 }
 
 

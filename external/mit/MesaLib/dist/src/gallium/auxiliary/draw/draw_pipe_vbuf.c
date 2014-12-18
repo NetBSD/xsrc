@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -29,8 +29,8 @@
  * \file
  * Vertex buffer drawing stage.
  * 
- * \author Jose Fonseca <jrfonsec@tungstengraphics.com>
- * \author Keith Whitwell <keith@tungstengraphics.com>
+ * \author Jose Fonseca <jfonseca@vmware.com>
+ * \author Keith Whitwell <keithw@vmware.com>
  */
 
 
@@ -130,7 +130,7 @@ static INLINE ushort
 emit_vertex( struct vbuf_stage *vbuf,
              struct vertex_header *vertex )
 {
-   if(vertex->vertex_id == UNDEFINED_VERTEX_ID) {      
+   if (vertex->vertex_id == UNDEFINED_VERTEX_ID && vbuf->vertex_ptr) {
       /* Hmm - vertices are emitted one at a time - better make sure
        * set_buffer is efficient.  Consider a special one-shot mode for
        * translate.
@@ -138,7 +138,7 @@ emit_vertex( struct vbuf_stage *vbuf,
       /* Note: we really do want data[0] here, not data[pos]: 
        */
       vbuf->translate->set_buffer(vbuf->translate, 0, vertex->data[0], 0, ~0);
-      vbuf->translate->run(vbuf->translate, 0, 1, 0, vbuf->vertex_ptr);
+      vbuf->translate->run(vbuf->translate, 0, 1, 0, 0, vbuf->vertex_ptr);
 
       if (0) draw_dump_emitted_vertex(vbuf->vinfo, (uint8_t *)vbuf->vertex_ptr);
       
@@ -250,7 +250,7 @@ vbuf_start_prim( struct vbuf_stage *vbuf, uint prim )
    }
 
    hw_key.nr_elements = vbuf->vinfo->num_attribs;
-   hw_key.output_stride = vbuf->vinfo->size * 4;
+   hw_key.output_stride = vbuf->vertex_size;
 
    /* Don't bother with caching at this stage:
     */
@@ -357,8 +357,10 @@ vbuf_flush_vertices( struct vbuf_stage *vbuf )
 static void 
 vbuf_alloc_vertices( struct vbuf_stage *vbuf )
 {
-   assert(!vbuf->nr_indices);
-   assert(!vbuf->vertices);
+   if (vbuf->vertex_ptr) {
+      assert(!vbuf->nr_indices);
+      assert(!vbuf->vertices);
+   }
    
    /* Allocate a new vertex buffer */
    vbuf->max_vertices = vbuf->render->max_vertex_buffer_bytes / vbuf->vertex_size;
@@ -437,7 +439,7 @@ struct draw_stage *draw_vbuf_stage( struct draw_context *draw,
    vbuf->stage.destroy = vbuf_destroy;
    
    vbuf->render = render;
-   vbuf->max_indices = MAX2(render->max_indices, UNDEFINED_VERTEX_ID-1);
+   vbuf->max_indices = MIN2(render->max_indices, UNDEFINED_VERTEX_ID-1);
 
    vbuf->indices = (ushort *) align_malloc( vbuf->max_indices * 
 					    sizeof(vbuf->indices[0]), 

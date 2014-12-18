@@ -30,7 +30,7 @@
  * Support for ARB_sync
  *
  * ARB_sync is implemented by flushing the current batchbuffer and keeping a
- * reference on it.  We can then check for completion or wait for compeltion
+ * reference on it.  We can then check for completion or wait for completion
  * using the normal buffer object mechanisms.  This does mean that if an
  * application is using many sync objects, it will emit small batchbuffers
  * which may end up being a significant overhead.  In other tests of removing
@@ -38,10 +38,9 @@
  * performance bottleneck, though.
  */
 
-#include "main/simple_list.h"
 #include "main/imports.h"
 
-#include "intel_context.h"
+#include "brw_context.h"
 #include "intel_batchbuffer.h"
 #include "intel_reg.h"
 
@@ -68,32 +67,24 @@ static void
 intel_fence_sync(struct gl_context *ctx, struct gl_sync_object *s,
 	       GLenum condition, GLbitfield flags)
 {
-   struct intel_context *intel = intel_context(ctx);
+   struct brw_context *brw = brw_context(ctx);
    struct intel_sync_object *sync = (struct intel_sync_object *)s;
 
    assert(condition == GL_SYNC_GPU_COMMANDS_COMPLETE);
-   intel_batchbuffer_emit_mi_flush(intel);
+   intel_batchbuffer_emit_mi_flush(brw);
 
-   sync->bo = intel->batch.bo;
+   sync->bo = brw->batch.bo;
    drm_intel_bo_reference(sync->bo);
 
-   intel_flush(ctx);
+   intel_batchbuffer_flush(brw);
 }
 
-/* We ignore the user-supplied timeout.  This is weaselly -- we're allowed to
- * round to an implementation-dependent accuracy, and right now our
- * implementation "rounds" to the wait-forever value.
- *
- * The fix would be a new kernel function to do the GTT transition with a
- * timeout.
- */
 static void intel_client_wait_sync(struct gl_context *ctx, struct gl_sync_object *s,
 				 GLbitfield flags, GLuint64 timeout)
 {
    struct intel_sync_object *sync = (struct intel_sync_object *)s;
 
-   if (sync->bo) {
-      drm_intel_bo_wait_rendering(sync->bo);
+   if (sync->bo && drm_intel_gem_bo_wait(sync->bo, timeout) == 0) {
       s->StatusFlag = 1;
       drm_intel_bo_unreference(sync->bo);
       sync->bo = NULL;

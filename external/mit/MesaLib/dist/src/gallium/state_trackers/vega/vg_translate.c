@@ -34,7 +34,7 @@ void _vega_pack_rgba_span_float(struct vg_context *ctx,
                                 VGImageFormat dstFormat,
                                 void *dstAddr)
 {
-   VGint i;
+   VGuint i;
 
    switch (dstFormat) {
    case VG_sRGBX_8888: {
@@ -131,10 +131,7 @@ void _vega_pack_rgba_span_float(struct vg_context *ctx,
    case VG_sL_8: {
       VGubyte *dst = (VGubyte *)dstAddr;
       for (i = 0; i < n; ++i) {
-         VGubyte r, g, b, a;
-         r = float_to_ubyte(rgba[i][0]);
-         g = float_to_ubyte(rgba[i][1]);
-         b = float_to_ubyte(rgba[i][2]);
+         VGubyte a;
          a = float_to_ubyte(rgba[i][3]);
 
          dst[i] =  a;
@@ -183,10 +180,7 @@ void _vega_pack_rgba_span_float(struct vg_context *ctx,
    case VG_lL_8: {
       VGubyte *dst = (VGubyte *)dstAddr;
       for (i = 0; i < n; ++i) {
-         VGubyte r, g, b ,a;
-         r = float_to_ubyte(rgba[i][0]);
-         g = float_to_ubyte(rgba[i][1]);
-         b = float_to_ubyte(rgba[i][2]);
+         VGubyte a;
          a = float_to_ubyte(rgba[i][3]);
          dst[i] = a;
       }
@@ -196,10 +190,7 @@ void _vega_pack_rgba_span_float(struct vg_context *ctx,
    case VG_A_8: {
       VGubyte *dst = (VGubyte *)dstAddr;
       for (i = 0; i < n; ++i) {
-         VGubyte r, g, b, a;
-         r = float_to_ubyte(rgba[i][0]);
-         g = float_to_ubyte(rgba[i][1]);
-         b = float_to_ubyte(rgba[i][2]);
+         VGubyte a;
          a = float_to_ubyte(rgba[i][3]);
 
          dst[i] = a;
@@ -227,10 +218,7 @@ void _vega_pack_rgba_span_float(struct vg_context *ctx,
    case VG_A_1: {
       VGshort *dst = (VGshort *)dstAddr;
       for (i = 0; i < n; ++i) {
-         VGubyte r, g, b, a;
-         r = float_to_ubyte(rgba[i][0]);
-         g = float_to_ubyte(rgba[i][1]);
-         b = float_to_ubyte(rgba[i][2]);
+         VGubyte a;
          a = float_to_ubyte(rgba[i][3]);
 
          dst[i] =   (a & (128));
@@ -241,11 +229,8 @@ void _vega_pack_rgba_span_float(struct vg_context *ctx,
    case VG_A_4: {
       VGshort *dst = (VGshort *)dstAddr;
       for (i = 0; i < n; ++i) {
-         VGubyte r, g, b, a;
+         VGubyte a;
          VGubyte res;
-         r = float_to_ubyte(rgba[i][0]);
-         g = float_to_ubyte(rgba[i][1]);
-         b = float_to_ubyte(rgba[i][2]);
          a = float_to_ubyte(rgba[i][3]);
 
          res = a/4;
@@ -473,7 +458,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
                                   VGImageFormat dataFormat,
                                   VGfloat rgba[][4])
 {
-   VGint i;
+   VGuint i;
    union util_color uc;
 
    switch (dataFormat) {
@@ -541,8 +526,8 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
       src += offset;
       for (i = 0; i < n; ++i) {
          VGfloat clr[4];
-         clr[0] = ((*src >> 10) & 31)/31.;
-         clr[1] = ((*src >>  5) & 95)/95.;
+         clr[0] = ((*src >> 11) & 31)/31.;
+         clr[1] = ((*src >>  5) & 63)/63.;
          clr[2] = ((*src >>  0) & 31)/31.;
          clr[3] = 1.f;
 
@@ -696,7 +681,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
       src += offset;
       for (i = 0; i < n; i += 8) {
          VGfloat clr[4];
-         VGint j;
+         VGuint j;
          for (j = 0; j < 8 && j < n ; ++j) {
             VGint shift = j;
             clr[0] = (((*src) & (1<<shift)) >> shift);
@@ -720,7 +705,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
       src += offset;
       for (i = 0; i < n; i += 8) {
          VGfloat clr[4];
-         VGint j;
+         VGuint j;
          for (j = 0; j < 8 && j < n ; ++j) {
             VGint shift = j;
             clr[0] = 0.f;
@@ -743,7 +728,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
       src += offset/2;
       for (i = 0; i < n; i += 2) {
          VGfloat clr[4];
-         VGint j;
+         VGuint j;
          for (j = 0; j < n && j < 2; ++j) {
             VGint bitter, shift;
             if (j == 0) {

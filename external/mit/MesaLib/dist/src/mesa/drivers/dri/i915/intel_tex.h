@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -28,18 +28,44 @@
 #ifndef INTELTEX_INC
 #define INTELTEX_INC
 
-#include "mtypes.h"
+#include "main/mtypes.h"
+#include "main/formats.h"
 #include "intel_context.h"
-#include "texmem.h"
 
+struct intel_renderbuffer;
 
-void intelInitTextureFuncs( struct dd_function_table *functions );
+void intelInitTextureFuncs(struct dd_function_table *functions);
 
-void intelDestroyTexObj( intelContextPtr intel, intelTextureObjectPtr t );
-int intelUploadTexImages( intelContextPtr intel, intelTextureObjectPtr t,
-			  GLuint face );
+void intelInitTextureImageFuncs(struct dd_function_table *functions);
 
-GLboolean 
-intel_driReinitTextureHeap( driTexHeap *heap,
-			    unsigned size );
+void intelInitTextureSubImageFuncs(struct dd_function_table *functions);
+
+void intelInitTextureCopyImageFuncs(struct dd_function_table *functions);
+
+void intelSetTexBuffer(__DRIcontext *pDRICtx,
+		       GLint target, __DRIdrawable *pDraw);
+void intelSetTexBuffer2(__DRIcontext *pDRICtx,
+			GLint target, GLint format, __DRIdrawable *pDraw);
+
+struct intel_mipmap_tree *
+intel_miptree_create_for_teximage(struct intel_context *intel,
+				  struct intel_texture_object *intelObj,
+				  struct intel_texture_image *intelImage,
+				  bool expect_accelerated_upload);
+
+GLuint intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit);
+
+void intel_tex_map_level_images(struct intel_context *intel,
+				struct intel_texture_object *intelObj,
+				int level,
+				GLbitfield mode);
+
+void intel_tex_unmap_level_images(struct intel_context *intel,
+				  struct intel_texture_object *intelObj,
+				  int level);
+
+bool
+intel_tex_image_s8z24_create_renderbuffers(struct intel_context *intel,
+					   struct intel_texture_image *image);
+
 #endif

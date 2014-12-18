@@ -30,8 +30,9 @@
  * \author Eric Anholt <eric@anholt.net>
  */
 
-#include "../glsl/glsl_types.h"
-#include "../glsl/ir.h"
+#include "glsl/glsl_types.h"
+#include "glsl/ir.h"
+#include "program/prog_instruction.h" /* For WRITEMASK_* */
 
 class brw_cubemap_normalize_visitor : public ir_hierarchical_visitor {
 public:
@@ -49,6 +50,9 @@ ir_visitor_status
 brw_cubemap_normalize_visitor::visit_leave(ir_texture *ir)
 {
    if (ir->sampler->type->sampler_dimensionality != GLSL_SAMPLER_DIM_CUBE)
+      return visit_continue;
+
+   if (!ir->coordinate)
       return visit_continue;
 
    void *mem_ctx = ralloc_parent(ir);
@@ -85,11 +89,18 @@ brw_cubemap_normalize_visitor::visit_leave(ir_texture *ir)
 				     glsl_type::float_type,
 				     expr, NULL);
 
-   deref = new(mem_ctx) ir_dereference_variable(var);
-   ir->coordinate = new(mem_ctx) ir_expression(ir_binop_mul,
-					       ir->coordinate->type,
-					       deref,
-					       expr);
+   /* coordinate.xyz *= expr */
+   assign = new(mem_ctx) ir_assignment(
+      new(mem_ctx) ir_dereference_variable(var),
+      new(mem_ctx) ir_swizzle(
+         new(mem_ctx) ir_expression(ir_binop_mul,
+                                    ir->coordinate->type,
+                                    new(mem_ctx) ir_dereference_variable(var),
+                                    expr),
+         0, 1, 2, 0, 3));
+   assign->write_mask = WRITEMASK_XYZ;
+   base_ir->insert_before(assign);
+   ir->coordinate = new(mem_ctx) ir_dereference_variable(var);
 
    progress = true;
    return visit_continue;
@@ -97,7 +108,7 @@ brw_cubemap_normalize_visitor::visit_leave(ir_texture *ir)
 
 extern "C" {
 
-GLboolean
+bool
 brw_do_cubemap_normalize(exec_list *instructions)
 {
    brw_cubemap_normalize_visitor v;

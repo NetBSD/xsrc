@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  * Copyright (c) 2008 VMware, Inc.
@@ -18,9 +17,10 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 
@@ -33,10 +33,16 @@
 #include "glheader.h"
 #include "imports.h"
 #include "colormac.h"
+#include "context.h"
 #include "formats.h"
-#include "mfeatures.h"
 #include "mtypes.h"
+#include "context.h"
 #include "texcompress.h"
+#include "texcompress_fxt1.h"
+#include "texcompress_rgtc.h"
+#include "texcompress_s3tc.h"
+#include "texcompress_etc.h"
+#include "texcompress_bptc.h"
 
 
 /**
@@ -72,28 +78,35 @@ _mesa_gl_compressed_format_base_format(GLenum format)
 {
    switch (format) {
    case GL_COMPRESSED_RED:
+   case GL_COMPRESSED_R11_EAC:
    case GL_COMPRESSED_RED_RGTC1:
+   case GL_COMPRESSED_SIGNED_R11_EAC:
    case GL_COMPRESSED_SIGNED_RED_RGTC1:
       return GL_RED;
 
    case GL_COMPRESSED_RG:
+   case GL_COMPRESSED_RG11_EAC:
    case GL_COMPRESSED_RG_RGTC2:
+   case GL_COMPRESSED_SIGNED_RG11_EAC:
    case GL_COMPRESSED_SIGNED_RG_RGTC2:
       return GL_RG;
 
    case GL_COMPRESSED_RGB:
    case GL_COMPRESSED_SRGB:
+   case GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB:
+   case GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB:
    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
    case GL_COMPRESSED_RGB_FXT1_3DFX:
    case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+   case GL_ETC1_RGB8_OES:
+   case GL_COMPRESSED_RGB8_ETC2:
+   case GL_COMPRESSED_SRGB8_ETC2:
       return GL_RGB;
 
    case GL_COMPRESSED_RGBA:
    case GL_COMPRESSED_SRGB_ALPHA:
    case GL_COMPRESSED_RGBA_BPTC_UNORM_ARB:
    case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB:
-   case GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB:
-   case GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB:
    case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
    case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
    case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
@@ -101,6 +114,10 @@ _mesa_gl_compressed_format_base_format(GLenum format)
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+   case GL_COMPRESSED_RGBA8_ETC2_EAC:
+   case GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
+   case GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+   case GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
       return GL_RGBA;
 
    case GL_COMPRESSED_ALPHA:
@@ -219,6 +236,12 @@ _mesa_gl_compressed_format_base_format(GLenum format)
  * GL_EXT_texture_compression_latc.  At the very least, Catalyst 11.6 does not
  * expose the 3dc formats through this mechanism.
  *
+ * The spec for GL_ARB_texture_compression_bptc doesn't mention whether it
+ * should be included in GL_COMPRESSED_TEXTURE_FORMATS. However as it takes a
+ * very long time to compress the textures in this format it's probably not
+ * very useful as a general format where the GL will have to compress it on
+ * the fly.
+ *
  * \param ctx  the GL context
  * \param formats  the resulting format list (may be NULL).
  *
@@ -247,44 +270,105 @@ _mesa_get_compressed_formats(struct gl_context *ctx, GLint *formats)
       else {
          n += 3;
       }
+
+      /* The ES and desktop GL specs diverge here.
+       *
+       * In desktop OpenGL, the driver can perform online compression of
+       * uncompressed texture data.  GL_NUM_COMPRESSED_TEXTURE_FORMATS and
+       * GL_COMPRESSED_TEXTURE_FORMATS give the application a list of
+       * formats that it could ask the driver to compress with some
+       * expectation of quality.  The GL_ARB_texture_compression spec
+       * calls this "suitable for general-purpose usage."  As noted
+       * above, this means GL_COMPRESSED_RGBA_S3TC_DXT1_EXT is not
+       * included in the list.
+       *
+       * In OpenGL ES, the driver never performs compression.
+       * GL_NUM_COMPRESSED_TEXTURE_FORMATS and
+       * GL_COMPRESSED_TEXTURE_FORMATS give the application a list of
+       * formats that the driver can receive from the application.  It
+       * is the *complete* list of formats.  The
+       * GL_EXT_texture_compression_s3tc spec says:
+       *
+       *     "New State for OpenGL ES 2.0.25 and 3.0.2 Specifications
+       *
+       *         The queries for NUM_COMPRESSED_TEXTURE_FORMATS and
+       *         COMPRESSED_TEXTURE_FORMATS include
+       *         COMPRESSED_RGB_S3TC_DXT1_EXT,
+       *         COMPRESSED_RGBA_S3TC_DXT1_EXT,
+       *         COMPRESSED_RGBA_S3TC_DXT3_EXT, and
+       *         COMPRESSED_RGBA_S3TC_DXT5_EXT."
+       *
+       * Note that the addition is only to the OpenGL ES specification!
+       */
+      if (_mesa_is_gles(ctx)) {
+         if (formats) {
+            formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+         } else {
+            n += 1;
+         }
+      }
    }
-   if (ctx->Extensions.S3_s3tc) {
+
+   /* The GL_OES_compressed_ETC1_RGB8_texture spec says:
+    *
+    *     "New State
+    *
+    *         The queries for NUM_COMPRESSED_TEXTURE_FORMATS and
+    *         COMPRESSED_TEXTURE_FORMATS include ETC1_RGB8_OES."
+    */
+   if (_mesa_is_gles(ctx)
+       && ctx->Extensions.OES_compressed_ETC1_RGB8_texture) {
       if (formats) {
-         formats[n++] = GL_RGB_S3TC;
-         formats[n++] = GL_RGB4_S3TC;
-         formats[n++] = GL_RGBA_S3TC;
-         formats[n++] = GL_RGBA4_S3TC;
+         formats[n++] = GL_ETC1_RGB8_OES;
       }
       else {
-         n += 4;
+         n += 1;
+      }
+   }
+
+   if (ctx->API == API_OPENGLES) {
+      if (formats) {
+	 formats[n++] = GL_PALETTE4_RGB8_OES;
+	 formats[n++] = GL_PALETTE4_RGBA8_OES;
+	 formats[n++] = GL_PALETTE4_R5_G6_B5_OES;
+	 formats[n++] = GL_PALETTE4_RGBA4_OES;
+	 formats[n++] = GL_PALETTE4_RGB5_A1_OES;
+	 formats[n++] = GL_PALETTE8_RGB8_OES;
+	 formats[n++] = GL_PALETTE8_RGBA8_OES;
+	 formats[n++] = GL_PALETTE8_R5_G6_B5_OES;
+	 formats[n++] = GL_PALETTE8_RGBA4_OES;
+	 formats[n++] = GL_PALETTE8_RGB5_A1_OES;
+      }
+      else {
+	 n += 10;
+      }
+   }
+
+   if (_mesa_is_gles3(ctx)) {
+      if (formats) {
+         formats[n++] = GL_COMPRESSED_RGB8_ETC2;
+         formats[n++] = GL_COMPRESSED_SRGB8_ETC2;
+         formats[n++] = GL_COMPRESSED_RGBA8_ETC2_EAC;
+         formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC;
+         formats[n++] = GL_COMPRESSED_R11_EAC;
+         formats[n++] = GL_COMPRESSED_RG11_EAC;
+         formats[n++] = GL_COMPRESSED_SIGNED_R11_EAC;
+         formats[n++] = GL_COMPRESSED_SIGNED_RG11_EAC;
+         formats[n++] = GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2;
+         formats[n++] = GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2;
+      }
+      else {
+         n += 10;
       }
    }
    return n;
-
-#if FEATURE_ES1 || FEATURE_ES2
-   if (formats) {
-      formats[n++] = GL_PALETTE4_RGB8_OES;
-      formats[n++] = GL_PALETTE4_RGBA8_OES;
-      formats[n++] = GL_PALETTE4_R5_G6_B5_OES;
-      formats[n++] = GL_PALETTE4_RGBA4_OES;
-      formats[n++] = GL_PALETTE4_RGB5_A1_OES;
-      formats[n++] = GL_PALETTE8_RGB8_OES;
-      formats[n++] = GL_PALETTE8_RGBA8_OES;
-      formats[n++] = GL_PALETTE8_R5_G6_B5_OES;
-      formats[n++] = GL_PALETTE8_RGBA4_OES;
-      formats[n++] = GL_PALETTE8_RGB5_A1_OES;
-   }
-   else {
-      n += 10;
-   }
-#endif
 }
 
 
 /**
  * Convert a compressed MESA_FORMAT_x to a GLenum.
  */
-gl_format
+mesa_format
 _mesa_glenum_to_compressed_format(GLenum format)
 {
    switch (format) {
@@ -316,23 +400,55 @@ _mesa_glenum_to_compressed_format(GLenum format)
       return MESA_FORMAT_SRGBA_DXT5;
 
    case GL_COMPRESSED_RED_RGTC1:
-      return MESA_FORMAT_RED_RGTC1;
+      return MESA_FORMAT_R_RGTC1_UNORM;
    case GL_COMPRESSED_SIGNED_RED_RGTC1:
-      return MESA_FORMAT_SIGNED_RED_RGTC1;
+      return MESA_FORMAT_R_RGTC1_SNORM;
    case GL_COMPRESSED_RG_RGTC2:
-      return MESA_FORMAT_RG_RGTC2;
+      return MESA_FORMAT_RG_RGTC2_UNORM;
    case GL_COMPRESSED_SIGNED_RG_RGTC2:
-      return MESA_FORMAT_SIGNED_RG_RGTC2;
+      return MESA_FORMAT_RG_RGTC2_SNORM;
 
    case GL_COMPRESSED_LUMINANCE_LATC1_EXT:
-      return MESA_FORMAT_L_LATC1;
+      return MESA_FORMAT_L_LATC1_UNORM;
    case GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT:
-      return MESA_FORMAT_SIGNED_L_LATC1;
+      return MESA_FORMAT_L_LATC1_SNORM;
    case GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
    case GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI:
-      return MESA_FORMAT_LA_LATC2;
+      return MESA_FORMAT_LA_LATC2_UNORM;
    case GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT:
-      return MESA_FORMAT_SIGNED_LA_LATC2;
+      return MESA_FORMAT_LA_LATC2_SNORM;
+
+   case GL_ETC1_RGB8_OES:
+      return MESA_FORMAT_ETC1_RGB8;
+   case GL_COMPRESSED_RGB8_ETC2:
+      return MESA_FORMAT_ETC2_RGB8;
+   case GL_COMPRESSED_SRGB8_ETC2:
+      return MESA_FORMAT_ETC2_SRGB8;
+   case GL_COMPRESSED_RGBA8_ETC2_EAC:
+      return MESA_FORMAT_ETC2_RGBA8_EAC;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
+      return MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC;
+   case GL_COMPRESSED_R11_EAC:
+      return MESA_FORMAT_ETC2_R11_EAC;
+   case GL_COMPRESSED_RG11_EAC:
+      return MESA_FORMAT_ETC2_RG11_EAC;
+   case GL_COMPRESSED_SIGNED_R11_EAC:
+      return MESA_FORMAT_ETC2_SIGNED_R11_EAC;
+   case GL_COMPRESSED_SIGNED_RG11_EAC:
+      return MESA_FORMAT_ETC2_SIGNED_RG11_EAC;
+   case GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+      return MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1;
+   case GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+      return MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1;
+
+   case GL_COMPRESSED_RGBA_BPTC_UNORM:
+      return MESA_FORMAT_BPTC_RGBA_UNORM;
+   case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM:
+      return MESA_FORMAT_BPTC_SRGB_ALPHA_UNORM;
+   case GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT:
+      return MESA_FORMAT_BPTC_RGB_SIGNED_FLOAT;
+   case GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT:
+      return MESA_FORMAT_BPTC_RGB_UNSIGNED_FLOAT;
 
    default:
       return MESA_FORMAT_NONE;
@@ -351,16 +467,13 @@ _mesa_glenum_to_compressed_format(GLenum format)
  * internal format unchanged.
  */
 GLenum
-_mesa_compressed_format_to_glenum(struct gl_context *ctx, GLuint mesaFormat)
+_mesa_compressed_format_to_glenum(struct gl_context *ctx, mesa_format mesaFormat)
 {
    switch (mesaFormat) {
-#if FEATURE_texture_fxt1
    case MESA_FORMAT_RGB_FXT1:
       return GL_COMPRESSED_RGB_FXT1_3DFX;
    case MESA_FORMAT_RGBA_FXT1:
       return GL_COMPRESSED_RGBA_FXT1_3DFX;
-#endif
-#if FEATURE_texture_s3tc
    case MESA_FORMAT_RGB_DXT1:
       return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
    case MESA_FORMAT_RGBA_DXT1:
@@ -369,7 +482,6 @@ _mesa_compressed_format_to_glenum(struct gl_context *ctx, GLuint mesaFormat)
       return GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
    case MESA_FORMAT_RGBA_DXT5:
       return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-#if FEATURE_EXT_texture_sRGB
    case MESA_FORMAT_SRGB_DXT1:
       return GL_COMPRESSED_SRGB_S3TC_DXT1_EXT;
    case MESA_FORMAT_SRGBA_DXT1:
@@ -378,26 +490,55 @@ _mesa_compressed_format_to_glenum(struct gl_context *ctx, GLuint mesaFormat)
       return GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT;
    case MESA_FORMAT_SRGBA_DXT5:
       return GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
-#endif
-#endif
-
-   case MESA_FORMAT_RED_RGTC1:
+   case MESA_FORMAT_R_RGTC1_UNORM:
       return GL_COMPRESSED_RED_RGTC1;
-   case MESA_FORMAT_SIGNED_RED_RGTC1:
+   case MESA_FORMAT_R_RGTC1_SNORM:
       return GL_COMPRESSED_SIGNED_RED_RGTC1;
-   case MESA_FORMAT_RG_RGTC2:
+   case MESA_FORMAT_RG_RGTC2_UNORM:
       return GL_COMPRESSED_RG_RGTC2;
-   case MESA_FORMAT_SIGNED_RG_RGTC2:
+   case MESA_FORMAT_RG_RGTC2_SNORM:
       return GL_COMPRESSED_SIGNED_RG_RGTC2;
 
-   case MESA_FORMAT_L_LATC1:
+   case MESA_FORMAT_L_LATC1_UNORM:
       return GL_COMPRESSED_LUMINANCE_LATC1_EXT;
-   case MESA_FORMAT_SIGNED_L_LATC1:
+   case MESA_FORMAT_L_LATC1_SNORM:
       return GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT;
-   case MESA_FORMAT_LA_LATC2:
+   case MESA_FORMAT_LA_LATC2_UNORM:
       return GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT;
-   case MESA_FORMAT_SIGNED_LA_LATC2:
+   case MESA_FORMAT_LA_LATC2_SNORM:
       return GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT;
+
+   case MESA_FORMAT_ETC1_RGB8:
+      return GL_ETC1_RGB8_OES;
+   case MESA_FORMAT_ETC2_RGB8:
+      return GL_COMPRESSED_RGB8_ETC2;
+   case MESA_FORMAT_ETC2_SRGB8:
+      return GL_COMPRESSED_SRGB8_ETC2;
+   case MESA_FORMAT_ETC2_RGBA8_EAC:
+      return GL_COMPRESSED_RGBA8_ETC2_EAC;
+   case MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC;
+   case MESA_FORMAT_ETC2_R11_EAC:
+      return GL_COMPRESSED_R11_EAC;
+   case MESA_FORMAT_ETC2_RG11_EAC:
+      return GL_COMPRESSED_RG11_EAC;
+   case MESA_FORMAT_ETC2_SIGNED_R11_EAC:
+      return GL_COMPRESSED_SIGNED_R11_EAC;
+   case MESA_FORMAT_ETC2_SIGNED_RG11_EAC:
+      return GL_COMPRESSED_SIGNED_RG11_EAC;
+   case MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1:
+      return GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2;
+   case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
+      return GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2;
+
+   case MESA_FORMAT_BPTC_RGBA_UNORM:
+      return GL_COMPRESSED_RGBA_BPTC_UNORM;
+   case MESA_FORMAT_BPTC_SRGB_ALPHA_UNORM:
+      return GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
+   case MESA_FORMAT_BPTC_RGB_SIGNED_FLOAT:
+      return GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
+   case MESA_FORMAT_BPTC_RGB_UNSIGNED_FLOAT:
+      return GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT;
 
    default:
       _mesa_problem(ctx, "Unexpected mesa texture format in"
@@ -419,7 +560,7 @@ _mesa_compressed_format_to_glenum(struct gl_context *ctx, GLuint mesaFormat)
  */
 GLubyte *
 _mesa_compressed_image_address(GLint col, GLint row, GLint img,
-                               gl_format mesaFormat,
+                               mesa_format mesaFormat,
                                GLsizei width, const GLubyte *image)
 {
    /* XXX only 2D images implemented, not 3D */
@@ -436,4 +577,81 @@ _mesa_compressed_image_address(GLint col, GLint row, GLint img,
    offset *= blockSize;
 
    return (GLubyte *) image + offset;
+}
+
+
+/**
+ * Return a texel-fetch function for the given format, or NULL if
+ * invalid format.
+ */
+compressed_fetch_func
+_mesa_get_compressed_fetch_func(mesa_format format)
+{
+   switch (format) {
+   case MESA_FORMAT_RGB_DXT1:
+   case MESA_FORMAT_RGBA_DXT1:
+   case MESA_FORMAT_RGBA_DXT3:
+   case MESA_FORMAT_RGBA_DXT5:
+   case MESA_FORMAT_SRGB_DXT1:
+   case MESA_FORMAT_SRGBA_DXT1:
+   case MESA_FORMAT_SRGBA_DXT3:
+   case MESA_FORMAT_SRGBA_DXT5:
+      return _mesa_get_dxt_fetch_func(format);
+   case MESA_FORMAT_RGB_FXT1:
+   case MESA_FORMAT_RGBA_FXT1:
+      return _mesa_get_fxt_fetch_func(format);
+   case MESA_FORMAT_R_RGTC1_UNORM:
+   case MESA_FORMAT_L_LATC1_UNORM:
+   case MESA_FORMAT_R_RGTC1_SNORM:
+   case MESA_FORMAT_L_LATC1_SNORM:
+   case MESA_FORMAT_RG_RGTC2_UNORM:
+   case MESA_FORMAT_LA_LATC2_UNORM:
+   case MESA_FORMAT_RG_RGTC2_SNORM:
+   case MESA_FORMAT_LA_LATC2_SNORM:
+      return _mesa_get_compressed_rgtc_func(format);
+   case MESA_FORMAT_ETC1_RGB8:
+      return _mesa_get_etc_fetch_func(format);
+   case MESA_FORMAT_BPTC_RGBA_UNORM:
+   case MESA_FORMAT_BPTC_SRGB_ALPHA_UNORM:
+   case MESA_FORMAT_BPTC_RGB_SIGNED_FLOAT:
+   case MESA_FORMAT_BPTC_RGB_UNSIGNED_FLOAT:
+      return _mesa_get_bptc_fetch_func(format);
+   default:
+      return NULL;
+   }
+}
+
+
+/**
+ * Decompress a compressed texture image, returning a GL_RGBA/GL_FLOAT image.
+ * \param srcRowStride  stride in bytes between rows of blocks in the
+ *                      compressed source image.
+ */
+void
+_mesa_decompress_image(mesa_format format, GLuint width, GLuint height,
+                       const GLubyte *src, GLint srcRowStride,
+                       GLfloat *dest)
+{
+   compressed_fetch_func fetch;
+   GLuint i, j;
+   GLuint bytes, bw, bh;
+   GLint stride;
+
+   bytes = _mesa_get_format_bytes(format);
+   _mesa_get_format_block_size(format, &bw, &bh);
+
+   fetch = _mesa_get_compressed_fetch_func(format);
+   if (!fetch) {
+      _mesa_problem(NULL, "Unexpected format in _mesa_decompress_image()");
+      return;
+   }
+ 
+   stride = srcRowStride * bh / bytes;
+
+   for (j = 0; j < height; j++) {
+      for (i = 0; i < width; i++) {
+         fetch(src, stride, i, j, dest);
+         dest += 4;
+      }
+   }
 }

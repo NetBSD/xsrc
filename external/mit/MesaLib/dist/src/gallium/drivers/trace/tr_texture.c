@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -74,7 +74,8 @@ trace_resource_destroy(struct trace_screen *tr_scr,
 
 
 struct pipe_surface *
-trace_surf_create(struct trace_resource *tr_res,
+trace_surf_create(struct trace_context *tr_ctx,
+                  struct trace_resource *tr_res,
                   struct pipe_surface *surface)
 {
    struct trace_surface *tr_surf;
@@ -89,6 +90,7 @@ trace_surf_create(struct trace_resource *tr_res,
       goto error;
 
    memcpy(&tr_surf->base, surface, sizeof(struct pipe_surface));
+   tr_surf->base.context = &tr_ctx->base;
 
    pipe_reference_init(&tr_surf->base.reference, 1);
    tr_surf->base.texture = NULL;
@@ -106,6 +108,7 @@ error:
 void
 trace_surf_destroy(struct trace_surface *tr_surf)
 {
+   trace_context_check(tr_surf->base.context);
    pipe_resource_reference(&tr_surf->base.texture, NULL);
    pipe_surface_reference(&tr_surf->surface, NULL);
    FREE(tr_surf);
@@ -139,7 +142,7 @@ trace_transfer_create(struct trace_context *tr_ctx,
    return &tr_trans->base;
 
 error:
-   tr_ctx->pipe->transfer_destroy(tr_ctx->pipe, transfer);
+   tr_ctx->pipe->transfer_unmap(tr_ctx->pipe, transfer);
    return NULL;
 }
 
@@ -148,11 +151,7 @@ void
 trace_transfer_destroy(struct trace_context *tr_context,
                        struct trace_transfer *tr_trans)
 {
-   struct pipe_context *context = tr_context->pipe;
-   struct pipe_transfer *transfer = tr_trans->transfer;
-
    pipe_resource_reference(&tr_trans->base.resource, NULL);
-   context->transfer_destroy(context, transfer);
    FREE(tr_trans);
 }
 

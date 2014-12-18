@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.9
  *
  * Copyright (C) 2010 LunarG Inc.
  *
@@ -75,7 +74,8 @@ fbdev_sw_winsys(struct sw_winsys *ws)
 static void
 fbdev_displaytarget_display(struct sw_winsys *ws,
                             struct sw_displaytarget *dt,
-                            void *winsys_private)
+                            void *winsys_private,
+                            struct pipe_box *box)
 {
    struct fbdev_sw_winsys *fbdev = fbdev_sw_winsys(ws);
    struct fbdev_sw_displaytarget *src = fbdev_sw_displaytarget(dt);

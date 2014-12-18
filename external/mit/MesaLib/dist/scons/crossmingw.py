@@ -41,25 +41,12 @@ import SCons.Builder
 import SCons.Tool
 import SCons.Util
 
-# This is what we search for to find mingw:
+# These are the mingw toolchain prefixes we search for:
+# (We only search for the mingw-w64 toolchain, and not the mingw.org one.)
 prefixes32 = SCons.Util.Split("""
-    mingw32-
-    mingw32msvc-
-    i386-mingw32-
-    i486-mingw32-
-    i586-mingw32-
-    i686-mingw32-
-    i386-mingw32msvc-
-    i486-mingw32msvc-
-    i586-mingw32msvc-
-    i686-mingw32msvc-
-    i686-pc-mingw32-
     i686-w64-mingw32-
 """)
 prefixes64 = SCons.Util.Split("""
-    amd64-mingw32-
-    amd64-mingw32msvc-
-    amd64-pc-mingw32-
     x86_64-w64-mingw32-
 """)
 
@@ -128,6 +115,8 @@ res_builder = SCons.Builder.Builder(action=res_action, suffix='.o',
                                     source_scanner=SCons.Tool.SourceFileScanner)
 SCons.Tool.SourceFileScanner.add_scanner('.rc', SCons.Defaults.CScan)
 
+
+
 def generate(env):
     mingw_prefix = find(env)
 
@@ -184,18 +173,6 @@ def generate(env):
     env['SHLIBSUFFIX']    = '.dll'
     env['LIBPREFIXES']    = [ 'lib', '' ]
     env['LIBSUFFIXES']    = [ '.a', '.lib' ]
-
-    # MinGW port of gdb does not handle well dwarf debug info which is the
-    # default in recent gcc versions
-    env.AppendUnique(CCFLAGS = ['-gstabs'])
-
-    env.AppendUnique(CPPDEFINES = [('__MSVCRT_VERSION__', '0x0700')])
-    #env.AppendUnique(LIBS = ['iberty'])
-    env.AppendUnique(SHLINKFLAGS = ['-Wl,--enable-stdcall-fixup'])
-    #env.AppendUnique(SHLINKFLAGS = ['-Wl,--kill-at'])
-
-    # Avoid depending on gcc runtime DLLs
-    env.AppendUnique(LINKFLAGS = ['-static-libgcc'])
 
 def exists(env):
     return find(env)

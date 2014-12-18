@@ -66,8 +66,8 @@ extern "C" {
 /*
  * Abort the program.
  */
-#if defined(DEBUG) || defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)
-#  define os_abort() os_break()
+#if defined(DEBUG)
+#  define os_abort() do { os_break(); abort(); } while(0)
 #else
 #  define os_abort() abort()
 #endif
@@ -85,6 +85,13 @@ os_log_message(const char *message);
  */
 const char *
 os_get_option(const char *name);
+
+
+/*
+ * Get the total amount of physical memory available on the system.
+ */
+bool
+os_get_total_physical_memory(uint64_t *size);
 
 
 #ifdef	__cplusplus

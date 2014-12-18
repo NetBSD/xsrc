@@ -35,11 +35,9 @@ struct svga_winsys_context;
 struct svga_screen;
 struct svga_context;
 struct pipe_resource;
-struct u_upload_mgr;
 
-struct svga_hwtnl *svga_hwtnl_create( struct svga_context *svga,
-                                      struct u_upload_mgr *upload_ib,
-                                      struct svga_winsys_context *swc );
+struct svga_hwtnl *
+svga_hwtnl_create(struct svga_context *svga);
 
 void svga_hwtnl_destroy( struct svga_hwtnl *hwtnl );
 
@@ -76,8 +74,15 @@ svga_hwtnl_draw_range_elements( struct svga_hwtnl *hwtnl,
                                 unsigned start, 
                                 unsigned count );
 
+boolean
+svga_hwtnl_is_buffer_referred( struct svga_hwtnl *hwtnl,
+                               struct pipe_resource *buffer );
+
 enum pipe_error
 svga_hwtnl_flush( struct svga_hwtnl *hwtnl );
+
+void svga_hwtnl_set_index_bias( struct svga_hwtnl *hwtnl,
+                                int index_bias);
 
 
 #endif /* SVGA_DRAW_H_ */

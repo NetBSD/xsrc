@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.9
  *
  * Copyright (C) 2010 LunarG Inc.
  *
@@ -27,7 +26,7 @@
  */
 
 #include "glapi/glapi.h"
-#include "mapi/u_current.h"
+#include "u_current.h"
 
 /*
  * Global variables, _glapi_get_context, and _glapi_get_dispatch are defined in
@@ -55,11 +54,11 @@ _glapi_check_multithread(void)
 void
 _glapi_set_context(void *context)
 {
-   u_current_set_user((const void *) context);
+   u_current_set_context((const void *) context);
 }
 
 void
 _glapi_set_dispatch(struct _glapi_table *dispatch)
 {
-   u_current_set((const struct mapi_table *) dispatch);
+   u_current_set_table((const struct mapi_table *) dispatch);
 }

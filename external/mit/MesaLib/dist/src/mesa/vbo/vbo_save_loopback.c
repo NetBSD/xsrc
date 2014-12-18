@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2005 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2005 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -29,15 +29,11 @@
 #include "main/glheader.h"
 #include "main/enums.h"
 #include "main/imports.h"
-#include "main/mfeatures.h"
 #include "main/mtypes.h"
 #include "main/dispatch.h"
 #include "glapi/glapi.h"
 
 #include "vbo_context.h"
-
-
-#if FEATURE_dlist
 
 
 typedef void (*attr_func)( struct gl_context *ctx, GLint target, const GLfloat * );
@@ -181,7 +177,7 @@ void vbo_loopback_vertex_list( struct gl_context *ctx,
 
    for (i = 0 ; i < prim_count ; i++) {
       if ((prim[i].mode & VBO_SAVE_PRIM_WEAK) &&
-	  (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END))
+          _mesa_inside_begin_end(ctx))
       {
 	 loopback_weak_prim( ctx, &prim[i] );
       }
@@ -191,6 +187,3 @@ void vbo_loopback_vertex_list( struct gl_context *ctx,
       }
    }
 }
-
-
-#endif /* FEATURE_dlist */

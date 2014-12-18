@@ -37,6 +37,8 @@
 #include "ir_optimization.h"
 #include "glsl_types.h"
 
+namespace {
+
 struct assignment_entry {
    exec_node link;
    int assignment_count;
@@ -54,6 +56,8 @@ public:
 
    exec_list list;
 };
+
+} /* unnamed namespace */
 
 static struct assignment_entry *
 get_assignment_entry(ir_variable *var, exec_list *list)
@@ -127,13 +131,14 @@ ir_constant_variable_visitor::visit_enter(ir_assignment *ir)
 ir_visitor_status
 ir_constant_variable_visitor::visit_enter(ir_call *ir)
 {
-   exec_list_iterator sig_iter = ir->get_callee()->parameters.iterator();
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_rvalue *param_rval = (ir_rvalue *)iter.get();
-      ir_variable *param = (ir_variable *)sig_iter.get();
+   /* Mark any out parameters as assigned to */
+   foreach_two_lists(formal_node, &ir->callee->parameters,
+                     actual_node, &ir->actual_parameters) {
+      ir_rvalue *param_rval = (ir_rvalue *) actual_node;
+      ir_variable *param = (ir_variable *) formal_node;
 
-      if (param->mode == ir_var_out ||
-	  param->mode == ir_var_inout) {
+      if (param->data.mode == ir_var_function_out ||
+	  param->data.mode == ir_var_function_inout) {
 	 ir_variable *var = param_rval->variable_referenced();
 	 struct assignment_entry *entry;
 
@@ -141,8 +146,18 @@ ir_constant_variable_visitor::visit_enter(ir_call *ir)
 	 entry = get_assignment_entry(var, &this->list);
 	 entry->assignment_count++;
       }
-      sig_iter.next();
    }
+
+   /* Mark the return storage as having been assigned to */
+   if (ir->return_deref != NULL) {
+      ir_variable *var = ir->return_deref->variable_referenced();
+      struct assignment_entry *entry;
+
+      assert(var);
+      entry = get_assignment_entry(var, &this->list);
+      entry->assignment_count++;
+   }
+
    return visit_continue;
 }
 
@@ -178,13 +193,10 @@ do_constant_variable_unlinked(exec_list *instructions)
 {
    bool progress = false;
 
-   foreach_iter(exec_list_iterator, iter, *instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
+   foreach_in_list(ir_instruction, ir, instructions) {
       ir_function *f = ir->as_function();
       if (f) {
-	 foreach_iter(exec_list_iterator, sigiter, *f) {
-	    ir_function_signature *sig =
-	       (ir_function_signature *) sigiter.get();
+	 foreach_in_list(ir_function_signature, sig, &f->signatures) {
 	    if (do_constant_variable(&sig->body))
 	       progress = true;
 	 }

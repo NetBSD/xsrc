@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Bismarck, ND., USA
+ * Copyright 2007 VMware, Inc., Bismarck, ND., USA
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -32,7 +32,7 @@
  */
 #include "pipe/p_compiler.h"
 #include "util/u_debug.h"
-#include "state_tracker/xlib_sw_winsys.h"
+#include "sw/xlib/xlib_sw_winsys.h"
 #include "xm_public.h"
 
 #include "state_tracker/st_gl_api.h"
@@ -42,7 +42,7 @@
 
 
 /* Helper function to build a subset of a driver stack consisting of
- * one of the software rasterizers (cell, llvmpipe, softpipe) and the
+ * one of the software rasterizers (llvmpipe, softpipe) and the
  * xlib winsys.
  */
 static struct pipe_screen *
@@ -114,7 +114,7 @@ extern void (*linker_foo(const unsigned char *procName))()
 #ifdef GLX_INDIRECT_RENDERING
 
 #define GL_GLEXT_PROTOTYPES
-#include "GL/gl.h"
+#include "main/glheader.h"
 #include "glapi/glapi.h"
 #include "glapi/glapitable.h"
 

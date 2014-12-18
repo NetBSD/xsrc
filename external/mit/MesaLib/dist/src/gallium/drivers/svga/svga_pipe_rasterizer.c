@@ -30,6 +30,7 @@
 #include "util/u_memory.h"
 
 #include "svga_context.h"
+#include "svga_screen.h"
 
 #include "svga_hw_reg.h"
 
@@ -66,6 +67,7 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
 {
    struct svga_context *svga = svga_context(pipe);
    struct svga_rasterizer_state *rast = CALLOC_STRUCT( svga_rasterizer_state );
+   struct svga_screen *screen = svga_screen(pipe->screen);
 
    /* need this for draw module. */
    rast->templ = *templ;
@@ -78,7 +80,7 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
    /* point_size_per_vertex  - ? */
    /* sprite_coord_mode      - ??? */
    /* flatshade_first        - handled by index translation */
-   /* gl_rasterization_rules - XXX - viewport code */
+   /* half_pixel_center      - XXX - viewport code */
    /* line_width             - draw module */
    /* fill_cw, fill_ccw      - draw module or index translation */
 
@@ -89,6 +91,7 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
    rast->multisampleantialias = templ->multisample;
    rast->antialiasedlineenable = templ->line_smooth;
    rast->lastpixel = templ->line_last_pixel;
+   rast->pointsprite = templ->sprite_coord_enable != 0x0;
    rast->pointsize = templ->point_size;
    rast->hw_unfilled = PIPE_POLYGON_MODE_FILL;
 
@@ -99,23 +102,28 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
       rast->need_pipeline_tris_str = "poly stipple";
    }
 
-   if (templ->line_width >= 1.5f &&
-       !svga->debug.no_line_width) {
+   if (screen->maxLineWidth > 1.0F) {
+      /* pass line width to device */
+      rast->linewidth = MAX2(1.0F, templ->line_width);
+   }
+   else if (svga->debug.no_line_width) {
+      /* nothing */
+   }
+   else {
+      /* use 'draw' pipeline for wide line */
       rast->need_pipeline |= SVGA_PIPELINE_FLAG_LINES;
       rast->need_pipeline_lines_str = "line width";
    }
 
    if (templ->line_stipple_enable) {
-      /* XXX: LinePattern not implemented on all backends, and there is no
-       * mechanism to query it.
-       */
-      if (!svga->debug.force_hw_line_stipple) {
+      if (screen->haveLineStipple || svga->debug.force_hw_line_stipple) {
          SVGA3dLinePattern lp;
          lp.repeat = templ->line_stipple_factor + 1;
          lp.pattern = templ->line_stipple_pattern;
          rast->linepattern = lp.uintValue;
       }
       else {
+         /* use 'draw' module to decompose into short line segments */
          rast->need_pipeline |= SVGA_PIPELINE_FLAG_LINES;
          rast->need_pipeline_lines_str = "line stipple";
       }
@@ -126,9 +134,16 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
       rast->need_pipeline_points_str = "smooth points";
    }
 
-   if (templ->line_smooth) {
+   if (templ->line_smooth && !screen->haveLineSmooth) {
+      /*
+       * XXX: Enabling the pipeline slows down performance immensely, so ignore
+       * line smooth state, where there is very little visual improvement.
+       * Smooth lines will still be drawn for wide lines.
+       */
+#if 0
       rast->need_pipeline |= SVGA_PIPELINE_FLAG_LINES;
       rast->need_pipeline_lines_str = "smooth lines";
+#endif
    }
 
    {
@@ -137,11 +152,11 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
       int fill = PIPE_POLYGON_MODE_FILL;
       boolean offset_front = util_get_offset(templ, fill_front);
       boolean offset_back = util_get_offset(templ, fill_back);
-      boolean offset  = 0;
+      boolean offset = FALSE;
 
       switch (templ->cull_face) {
       case PIPE_FACE_FRONT_AND_BACK:
-         offset = 0;
+         offset = FALSE;
          fill = PIPE_POLYGON_MODE_FILL;
          break;
 
@@ -227,6 +242,13 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
       rast->depthbias = 0;
    }
 
+   if (0 && rast->need_pipeline) {
+      debug_printf("svga: rast need_pipeline = 0x%x\n", rast->need_pipeline);
+      debug_printf(" pnts: %s \n", rast->need_pipeline_points_str);
+      debug_printf(" lins: %s \n", rast->need_pipeline_lines_str);
+      debug_printf(" tris: %s \n", rast->need_pipeline_tris_str);
+   }
+
    return rast;
 }
 
@@ -236,11 +258,11 @@ static void svga_bind_rasterizer_state( struct pipe_context *pipe,
    struct svga_context *svga = svga_context(pipe);
    struct svga_rasterizer_state *raster = (struct svga_rasterizer_state *)state;
 
-   svga->curr.rast = raster;
 
    draw_set_rasterizer_state(svga->swtnl.draw, raster ? &raster->templ : NULL,
                              state);
-   
+   svga->curr.rast = raster;
+
    svga->dirty |= SVGA_NEW_RAST;
 }
 

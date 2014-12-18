@@ -28,10 +28,13 @@
 #ifndef __VMWGFX_DRM_H__
 #define __VMWGFX_DRM_H__
 
+#ifndef __KERNEL__
+#include <drm.h>
+#endif
+
 #define DRM_VMW_MAX_SURFACE_FACES 6
 #define DRM_VMW_MAX_MIP_LEVELS 24
 
-#define DRM_VMW_EXT_NAME_LEN 128
 
 #define DRM_VMW_GET_PARAM            0
 #define DRM_VMW_ALLOC_DMABUF         1
@@ -48,11 +51,19 @@
 #define DRM_VMW_UNREF_SURFACE        10
 #define DRM_VMW_REF_SURFACE          11
 #define DRM_VMW_EXECBUF              12
-#define DRM_VMW_FIFO_DEBUG           13
+#define DRM_VMW_GET_3D_CAP           13
 #define DRM_VMW_FENCE_WAIT           14
-/* guarded by minor version >= 2 */
-#define DRM_VMW_UPDATE_LAYOUT        15
-
+#define DRM_VMW_FENCE_SIGNALED       15
+#define DRM_VMW_FENCE_UNREF          16
+#define DRM_VMW_FENCE_EVENT          17
+#define DRM_VMW_PRESENT              18
+#define DRM_VMW_PRESENT_READBACK     19
+#define DRM_VMW_UPDATE_LAYOUT        20
+#define DRM_VMW_CREATE_SHADER        21
+#define DRM_VMW_UNREF_SHADER         22
+#define DRM_VMW_GB_SURFACE_CREATE    23
+#define DRM_VMW_GB_SURFACE_REF       24
+#define DRM_VMW_SYNCCPU              25
 
 /*************************************************************************/
 /**
@@ -69,10 +80,23 @@
 #define DRM_VMW_PARAM_NUM_STREAMS      0
 #define DRM_VMW_PARAM_NUM_FREE_STREAMS 1
 #define DRM_VMW_PARAM_3D               2
-#define DRM_VMW_PARAM_FIFO_OFFSET      3
-#define DRM_VMW_PARAM_HW_CAPS          4
-#define DRM_VMW_PARAM_FIFO_CAPS        5
-#define DRM_VMW_PARAM_MAX_FB_SIZE      6
+#define DRM_VMW_PARAM_HW_CAPS          3
+#define DRM_VMW_PARAM_FIFO_CAPS        4
+#define DRM_VMW_PARAM_MAX_FB_SIZE      5
+#define DRM_VMW_PARAM_FIFO_HW_VERSION  6
+#define DRM_VMW_PARAM_MAX_SURF_MEMORY  7
+#define DRM_VMW_PARAM_3D_CAPS_SIZE     8
+#define DRM_VMW_PARAM_MAX_MOB_MEMORY   9
+#define DRM_VMW_PARAM_MAX_MOB_SIZE     10
+
+/**
+ * enum drm_vmw_handle_type - handle type for ref ioctls
+ *
+ */
+enum drm_vmw_handle_type {
+	DRM_VMW_HANDLE_LEGACY = 0,
+	DRM_VMW_HANDLE_PRIME = 1
+};
 
 /**
  * struct drm_vmw_getparam_arg
@@ -162,6 +186,7 @@ struct drm_vmw_surface_create_req {
  * struct drm_wmv_surface_arg
  *
  * @sid: Surface id of created surface or surface to destroy or reference.
+ * @handle_type: Handle type for DRM_VMW_REF_SURFACE Ioctl.
  *
  * Output data from the DRM_VMW_CREATE_SURFACE Ioctl.
  * Input argument to the DRM_VMW_UNREF_SURFACE Ioctl.
@@ -170,7 +195,7 @@ struct drm_vmw_surface_create_req {
 
 struct drm_vmw_surface_arg {
 	int32_t sid;
-	uint32_t pad64;
+	enum drm_vmw_handle_type handle_type;
 };
 
 /**
@@ -249,7 +274,7 @@ union drm_vmw_surface_reference_arg {
  * DRM_VMW_EXECBUF
  *
  * Submit a command buffer for execution on the host, and return a
- * fence sequence that when signaled, indicates that the command buffer has
+ * fence seqno that when signaled, indicates that the command buffer has
  * executed.
  */
 
@@ -271,21 +296,30 @@ union drm_vmw_surface_reference_arg {
  * Argument to the DRM_VMW_EXECBUF Ioctl.
  */
 
-#define DRM_VMW_EXECBUF_VERSION 0
+#define DRM_VMW_EXECBUF_VERSION 1
 
 struct drm_vmw_execbuf_arg {
 	uint64_t commands;
 	uint32_t command_size;
 	uint32_t throttle_us;
 	uint64_t fence_rep;
-	 uint32_t version;
-	 uint32_t flags;
+	uint32_t version;
+	uint32_t flags;
 };
 
 /**
  * struct drm_vmw_fence_rep
  *
- * @fence_seq: Fence sequence associated with a command submission.
+ * @handle: Fence object handle for fence associated with a command submission.
+ * @mask: Fence flags relevant for this fence object.
+ * @seqno: Fence sequence number in fifo. A fence object with a lower
+ * seqno will signal the EXEC flag before a fence object with a higher
+ * seqno. This can be used by user-space to avoid kernel calls to determine
+ * whether a fence has signaled the EXEC flag. Note that @seqno will
+ * wrap at 32-bit.
+ * @passed_seqno: The highest seqno number processed by the hardware
+ * so far. This can be used to mark user-space fence objects as signaled, and
+ * to determine whether a fence seqno might be stale.
  * @error: This member should've been set to -EFAULT on submission.
  * The following actions should be take on completion:
  * error == -EFAULT: Fence communication failed. The host is synchronized.
@@ -299,9 +333,12 @@ struct drm_vmw_execbuf_arg {
  */
 
 struct drm_vmw_fence_rep {
-	uint64_t fence_seq;
-	int32_t error;
+	uint32_t handle;
+	uint32_t mask;
+	uint32_t seqno;
+	uint32_t passed_seqno;
 	uint32_t pad64;
+	int32_t error;
 };
 
 /*************************************************************************/
@@ -388,39 +425,6 @@ union drm_vmw_alloc_dmabuf_arg {
 struct drm_vmw_unref_dmabuf_arg {
 	uint32_t handle;
 	uint32_t pad64;
-};
-
-/*************************************************************************/
-/**
- * DRM_VMW_FIFO_DEBUG - Get last FIFO submission.
- *
- * This IOCTL copies the last FIFO submission directly out of the FIFO buffer.
- */
-
-/**
- * struct drm_vmw_fifo_debug_arg
- *
- * @debug_buffer: User space address of a debug_buffer cast to an uint64_t //In
- * @debug_buffer_size: Size in bytes of debug buffer //In
- * @used_size: Number of bytes copied to the buffer // Out
- * @did_not_fit: Boolean indicating that the fifo contents did not fit. //Out
- *
- * Argument to the DRM_VMW_FIFO_DEBUG Ioctl.
- */
-
-struct drm_vmw_fifo_debug_arg {
-	uint64_t debug_buffer;
-	uint32_t debug_buffer_size;
-	uint32_t used_size;
-	int32_t did_not_fit;
-	uint32_t pad64;
-};
-
-struct drm_vmw_fence_wait_arg {
-	uint64_t sequence;
-	uint64_t kernel_cookie;
-	int32_t cookie_valid;
-	int32_t pad64;
 };
 
 /*************************************************************************/
@@ -547,26 +551,513 @@ struct drm_vmw_stream_arg {
 
 /*************************************************************************/
 /**
+ * DRM_VMW_GET_3D_CAP
+ *
+ * Read 3D capabilities from the FIFO
+ *
+ */
+
+/**
+ * struct drm_vmw_get_3d_cap_arg
+ *
+ * @buffer: Pointer to a buffer for capability data, cast to an uint64_t
+ * @size: Max size to copy
+ *
+ * Input argument to the DRM_VMW_GET_3D_CAP_IOCTL
+ * ioctls.
+ */
+
+struct drm_vmw_get_3d_cap_arg {
+	uint64_t buffer;
+	uint32_t max_size;
+	uint32_t pad64;
+};
+
+
+/*************************************************************************/
+/**
+ * DRM_VMW_FENCE_WAIT
+ *
+ * Waits for a fence object to signal. The wait is interruptible, so that
+ * signals may be delivered during the interrupt. The wait may timeout,
+ * in which case the calls returns -EBUSY. If the wait is restarted,
+ * that is restarting without resetting @cookie_valid to zero,
+ * the timeout is computed from the first call.
+ *
+ * The flags argument to the DRM_VMW_FENCE_WAIT ioctl indicates what to wait
+ * on:
+ * DRM_VMW_FENCE_FLAG_EXEC: All commands ahead of the fence in the command
+ * stream
+ * have executed.
+ * DRM_VMW_FENCE_FLAG_QUERY: All query results resulting from query finish
+ * commands
+ * in the buffer given to the EXECBUF ioctl returning the fence object handle
+ * are available to user-space.
+ *
+ * DRM_VMW_WAIT_OPTION_UNREF: If this wait option is given, and the
+ * fenc wait ioctl returns 0, the fence object has been unreferenced after
+ * the wait.
+ */
+
+#define DRM_VMW_FENCE_FLAG_EXEC   (1 << 0)
+#define DRM_VMW_FENCE_FLAG_QUERY  (1 << 1)
+
+#define DRM_VMW_WAIT_OPTION_UNREF (1 << 0)
+
+/**
+ * struct drm_vmw_fence_wait_arg
+ *
+ * @handle: Fence object handle as returned by the DRM_VMW_EXECBUF ioctl.
+ * @cookie_valid: Must be reset to 0 on first call. Left alone on restart.
+ * @kernel_cookie: Set to 0 on first call. Left alone on restart.
+ * @timeout_us: Wait timeout in microseconds. 0 for indefinite timeout.
+ * @lazy: Set to 1 if timing is not critical. Allow more than a kernel tick
+ * before returning.
+ * @flags: Fence flags to wait on.
+ * @wait_options: Options that control the behaviour of the wait ioctl.
+ *
+ * Input argument to the DRM_VMW_FENCE_WAIT ioctl.
+ */
+
+struct drm_vmw_fence_wait_arg {
+	uint32_t handle;
+	int32_t  cookie_valid;
+	uint64_t kernel_cookie;
+	uint64_t timeout_us;
+	int32_t lazy;
+	int32_t flags;
+	int32_t wait_options;
+	int32_t pad64;
+};
+
+/*************************************************************************/
+/**
+ * DRM_VMW_FENCE_SIGNALED
+ *
+ * Checks if a fence object is signaled..
+ */
+
+/**
+ * struct drm_vmw_fence_signaled_arg
+ *
+ * @handle: Fence object handle as returned by the DRM_VMW_EXECBUF ioctl.
+ * @flags: Fence object flags input to DRM_VMW_FENCE_SIGNALED ioctl
+ * @signaled: Out: Flags signaled.
+ * @sequence: Out: Highest sequence passed so far. Can be used to signal the
+ * EXEC flag of user-space fence objects.
+ *
+ * Input/Output argument to the DRM_VMW_FENCE_SIGNALED and DRM_VMW_FENCE_UNREF
+ * ioctls.
+ */
+
+struct drm_vmw_fence_signaled_arg {
+	 uint32_t handle;
+	 uint32_t flags;
+	 int32_t signaled;
+	 uint32_t passed_seqno;
+	 uint32_t signaled_flags;
+	 uint32_t pad64;
+};
+
+/*************************************************************************/
+/**
+ * DRM_VMW_FENCE_UNREF
+ *
+ * Unreferences a fence object, and causes it to be destroyed if there are no
+ * other references to it.
+ *
+ */
+
+/**
+ * struct drm_vmw_fence_arg
+ *
+ * @handle: Fence object handle as returned by the DRM_VMW_EXECBUF ioctl.
+ *
+ * Input/Output argument to the DRM_VMW_FENCE_UNREF ioctl..
+ */
+
+struct drm_vmw_fence_arg {
+	 uint32_t handle;
+	 uint32_t pad64;
+};
+
+
+/*************************************************************************/
+/**
+ * DRM_VMW_FENCE_EVENT
+ *
+ * Queues an event on a fence to be delivered on the drm character device
+ * when the fence has signaled the DRM_VMW_FENCE_FLAG_EXEC flag.
+ * Optionally the approximate time when the fence signaled is
+ * given by the event.
+ */
+
+/*
+ * The event type
+ */
+#define DRM_VMW_EVENT_FENCE_SIGNALED 0x80000000
+
+struct drm_vmw_event_fence {
+	struct drm_event base;
+	uint64_t user_data;
+	uint32_t tv_sec;
+	uint32_t tv_usec;
+};
+
+/*
+ * Flags that may be given to the command.
+ */
+/* Request fence signaled time on the event. */
+#define DRM_VMW_FE_FLAG_REQ_TIME (1 << 0)
+
+/**
+ * struct drm_vmw_fence_event_arg
+ *
+ * @fence_rep: Pointer to fence_rep structure cast to uint64_t or 0 if
+ * the fence is not supposed to be referenced by user-space.
+ * @user_info: Info to be delivered with the event.
+ * @handle: Attach the event to this fence only.
+ * @flags: A set of flags as defined above.
+ */
+struct drm_vmw_fence_event_arg {
+	uint64_t fence_rep;
+	uint64_t user_data;
+	uint32_t handle;
+	uint32_t flags;
+};
+
+
+/*************************************************************************/
+/**
+ * DRM_VMW_PRESENT
+ *
+ * Executes an SVGA present on a given fb for a given surface. The surface
+ * is placed on the framebuffer. Cliprects are given relative to the given
+ * point (the point disignated by dest_{x|y}).
+ *
+ */
+
+/**
+ * struct drm_vmw_present_arg
+ * @fb_id: framebuffer id to present / read back from.
+ * @sid: Surface id to present from.
+ * @dest_x: X placement coordinate for surface.
+ * @dest_y: Y placement coordinate for surface.
+ * @clips_ptr: Pointer to an array of clip rects cast to an uint64_t.
+ * @num_clips: Number of cliprects given relative to the framebuffer origin,
+ * in the same coordinate space as the frame buffer.
+ * @pad64: Unused 64-bit padding.
+ *
+ * Input argument to the DRM_VMW_PRESENT ioctl.
+ */
+
+struct drm_vmw_present_arg {
+	uint32_t fb_id;
+	uint32_t sid;
+	int32_t dest_x;
+	int32_t dest_y;
+	uint64_t clips_ptr;
+	uint32_t num_clips;
+	uint32_t pad64;
+};
+
+
+/*************************************************************************/
+/**
+ * DRM_VMW_PRESENT_READBACK
+ *
+ * Executes an SVGA present readback from a given fb to the dma buffer
+ * currently bound as the fb. If there is no dma buffer bound to the fb,
+ * an error will be returned.
+ *
+ */
+
+/**
+ * struct drm_vmw_present_arg
+ * @fb_id: fb_id to present / read back from.
+ * @num_clips: Number of cliprects.
+ * @clips_ptr: Pointer to an array of clip rects cast to an uint64_t.
+ * @fence_rep: Pointer to a struct drm_vmw_fence_rep, cast to an uint64_t.
+ * If this member is NULL, then the ioctl should not return a fence.
+ */
+
+struct drm_vmw_present_readback_arg {
+	 uint32_t fb_id;
+	 uint32_t num_clips;
+	 uint64_t clips_ptr;
+	 uint64_t fence_rep;
+};
+
+/*************************************************************************/
+/**
  * DRM_VMW_UPDATE_LAYOUT - Update layout
  *
- * Updates the prefered modes and connection status for connectors. The
- * command conisits of one drm_vmw_update_layout_arg pointing out a array
+ * Updates the preferred modes and connection status for connectors. The
+ * command consists of one drm_vmw_update_layout_arg pointing to an array
  * of num_outputs drm_vmw_rect's.
  */
 
 /**
  * struct drm_vmw_update_layout_arg
  *
- * @num_outputs: number of active
- * @rects: pointer to array of drm_vmw_rect
+ * @num_outputs: number of active connectors
+ * @rects: pointer to array of drm_vmw_rect cast to an uint64_t
  *
  * Input argument to the DRM_VMW_UPDATE_LAYOUT Ioctl.
  */
-
 struct drm_vmw_update_layout_arg {
 	uint32_t num_outputs;
 	uint32_t pad64;
 	uint64_t rects;
+};
+
+
+/*************************************************************************/
+/**
+ * DRM_VMW_CREATE_SHADER - Create shader
+ *
+ * Creates a shader and optionally binds it to a dma buffer containing
+ * the shader byte-code.
+ */
+
+/**
+ * enum drm_vmw_shader_type - Shader types
+ */
+enum drm_vmw_shader_type {
+	drm_vmw_shader_type_vs = 0,
+	drm_vmw_shader_type_ps,
+	drm_vmw_shader_type_gs
+};
+
+
+/**
+ * struct drm_vmw_shader_create_arg
+ *
+ * @shader_type: Shader type of the shader to create.
+ * @size: Size of the byte-code in bytes.
+ * where the shader byte-code starts
+ * @buffer_handle: Buffer handle identifying the buffer containing the
+ * shader byte-code
+ * @shader_handle: On successful completion contains a handle that
+ * can be used to subsequently identify the shader.
+ * @offset: Offset in bytes into the buffer given by @buffer_handle,
+ *
+ * Input / Output argument to the DRM_VMW_CREATE_SHADER Ioctl.
+ */
+struct drm_vmw_shader_create_arg {
+	enum drm_vmw_shader_type shader_type;
+	uint32_t size;
+	uint32_t buffer_handle;
+	uint32_t shader_handle;
+	uint64_t offset;
+};
+
+/*************************************************************************/
+/**
+ * DRM_VMW_UNREF_SHADER - Unreferences a shader
+ *
+ * Destroys a user-space reference to a shader, optionally destroying
+ * it.
+ */
+
+/**
+ * struct drm_vmw_shader_arg
+ *
+ * @handle: Handle identifying the shader to destroy.
+ *
+ * Input argument to the DRM_VMW_UNREF_SHADER ioctl.
+ */
+struct drm_vmw_shader_arg {
+	uint32_t handle;
+	uint32_t pad64;
+};
+
+/*************************************************************************/
+/**
+ * DRM_VMW_GB_SURFACE_CREATE - Create a host guest-backed surface.
+ *
+ * Allocates a surface handle and queues a create surface command
+ * for the host on the first use of the surface. The surface ID can
+ * be used as the surface ID in commands referencing the surface.
+ */
+
+/**
+ * enum drm_vmw_surface_flags
+ *
+ * @drm_vmw_surface_flag_shareable:     Whether the surface is shareable
+ * @drm_vmw_surface_flag_scanout:       Whether the surface is a scanout
+ *                                      surface.
+ * @drm_vmw_surface_flag_create_buffer: Create a backup buffer if none is
+ *                                      given.
+ */
+enum drm_vmw_surface_flags {
+	drm_vmw_surface_flag_shareable = (1 << 0),
+	drm_vmw_surface_flag_scanout = (1 << 1),
+	drm_vmw_surface_flag_create_buffer = (1 << 2)
+};
+
+/**
+ * struct drm_vmw_gb_surface_create_req
+ *
+ * @svga3d_flags:     SVGA3d surface flags for the device.
+ * @format:           SVGA3d format.
+ * @mip_level:        Number of mip levels for all faces.
+ * @drm_surface_flags Flags as described above.
+ * @multisample_count Future use. Set to 0.
+ * @autogen_filter    Future use. Set to 0.
+ * @buffer_handle     Buffer handle of backup buffer. SVGA3D_INVALID_ID
+ *                    if none.
+ * @base_size         Size of the base mip level for all faces.
+ *
+ * Input argument to the  DRM_VMW_GB_SURFACE_CREATE Ioctl.
+ * Part of output argument for the DRM_VMW_GB_SURFACE_REF Ioctl.
+ */
+struct drm_vmw_gb_surface_create_req {
+	uint32_t svga3d_flags;
+	uint32_t format;
+	uint32_t mip_levels;
+	enum drm_vmw_surface_flags drm_surface_flags;
+	uint32_t multisample_count;
+	uint32_t autogen_filter;
+	uint32_t buffer_handle;
+	uint32_t pad64;
+	struct drm_vmw_size base_size;
+};
+
+/**
+ * struct drm_vmw_gb_surface_create_rep
+ *
+ * @handle:            Surface handle.
+ * @backup_size:       Size of backup buffers for this surface.
+ * @buffer_handle:     Handle of backup buffer. SVGA3D_INVALID_ID if none.
+ * @buffer_size:       Actual size of the buffer identified by
+ *                     @buffer_handle
+ * @buffer_map_handle: Offset into device address space for the buffer
+ *                     identified by @buffer_handle.
+ *
+ * Part of output argument for the DRM_VMW_GB_SURFACE_REF ioctl.
+ * Output argument for the DRM_VMW_GB_SURFACE_CREATE ioctl.
+ */
+struct drm_vmw_gb_surface_create_rep {
+	uint32_t handle;
+	uint32_t backup_size;
+	uint32_t buffer_handle;
+	uint32_t buffer_size;
+	uint64_t buffer_map_handle;
+};
+
+/**
+ * union drm_vmw_gb_surface_create_arg
+ *
+ * @req: Input argument as described above.
+ * @rep: Output argument as described above.
+ *
+ * Argument to the DRM_VMW_GB_SURFACE_CREATE ioctl.
+ */
+union drm_vmw_gb_surface_create_arg {
+	struct drm_vmw_gb_surface_create_rep rep;
+	struct drm_vmw_gb_surface_create_req req;
+};
+
+/*************************************************************************/
+/**
+ * DRM_VMW_GB_SURFACE_REF - Reference a host surface.
+ *
+ * Puts a reference on a host surface with a given handle, as previously
+ * returned by the DRM_VMW_GB_SURFACE_CREATE ioctl.
+ * A reference will make sure the surface isn't destroyed while we hold
+ * it and will allow the calling client to use the surface handle in
+ * the command stream.
+ *
+ * On successful return, the Ioctl returns the surface information given
+ * to and returned from the DRM_VMW_GB_SURFACE_CREATE ioctl.
+ */
+
+/**
+ * struct drm_vmw_gb_surface_reference_arg
+ *
+ * @creq: The data used as input when the surface was created, as described
+ *        above at "struct drm_vmw_gb_surface_create_req"
+ * @crep: Additional data output when the surface was created, as described
+ *        above at "struct drm_vmw_gb_surface_create_rep"
+ *
+ * Output Argument to the DRM_VMW_GB_SURFACE_REF ioctl.
+ */
+struct drm_vmw_gb_surface_ref_rep {
+	struct drm_vmw_gb_surface_create_req creq;
+	struct drm_vmw_gb_surface_create_rep crep;
+};
+
+/**
+ * union drm_vmw_gb_surface_reference_arg
+ *
+ * @req: Input data as described above at "struct drm_vmw_surface_arg"
+ * @rep: Output data as described above at "struct drm_vmw_gb_surface_ref_rep"
+ *
+ * Argument to the DRM_VMW_GB_SURFACE_REF Ioctl.
+ */
+union drm_vmw_gb_surface_reference_arg {
+	struct drm_vmw_gb_surface_ref_rep rep;
+	struct drm_vmw_surface_arg req;
+};
+
+
+/*************************************************************************/
+/**
+ * DRM_VMW_SYNCCPU - Sync a DMA buffer / MOB for CPU access.
+ *
+ * Idles any previously submitted GPU operations on the buffer and
+ * by default blocks command submissions that reference the buffer.
+ * If the file descriptor used to grab a blocking CPU sync is closed, the
+ * cpu sync is released.
+ * The flags argument indicates how the grab / release operation should be
+ * performed:
+ */
+
+/**
+ * enum drm_vmw_synccpu_flags - Synccpu flags:
+ *
+ * @drm_vmw_synccpu_read: Sync for read. If sync is done for read only, it's a
+ * hint to the kernel to allow command submissions that references the buffer
+ * for read-only.
+ * @drm_vmw_synccpu_write: Sync for write. Block all command submissions
+ * referencing this buffer.
+ * @drm_vmw_synccpu_dontblock: Dont wait for GPU idle, but rather return
+ * -EBUSY should the buffer be busy.
+ * @drm_vmw_synccpu_allow_cs: Allow command submission that touches the buffer
+ * while the buffer is synced for CPU. This is similar to the GEM bo idle
+ * behavior.
+ */
+enum drm_vmw_synccpu_flags {
+	drm_vmw_synccpu_read = (1 << 0),
+	drm_vmw_synccpu_write = (1 << 1),
+	drm_vmw_synccpu_dontblock = (1 << 2),
+	drm_vmw_synccpu_allow_cs = (1 << 3)
+};
+
+/**
+ * enum drm_vmw_synccpu_op - Synccpu operations:
+ *
+ * @drm_vmw_synccpu_grab:    Grab the buffer for CPU operations
+ * @drm_vmw_synccpu_release: Release a previous grab.
+ */
+enum drm_vmw_synccpu_op {
+	drm_vmw_synccpu_grab,
+	drm_vmw_synccpu_release
+};
+
+/**
+ * struct drm_vmw_synccpu_arg
+ *
+ * @op:			     The synccpu operation as described above.
+ * @handle:		     Handle identifying the buffer object.
+ * @flags:		     Flags as described above.
+ */
+struct drm_vmw_synccpu_arg {
+	enum drm_vmw_synccpu_op op;
+	enum drm_vmw_synccpu_flags flags;
+	uint32_t handle;
+	uint32_t pad64;
 };
 
 #endif

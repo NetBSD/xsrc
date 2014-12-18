@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -40,7 +40,6 @@
 #include "main/imports.h"
 #include "main/context.h"
 #include "main/feedback.h"
-#include "main/mfeatures.h"
 
 #include "vbo/vbo.h"
 
@@ -54,8 +53,6 @@
 #include "draw/draw_context.h"
 #include "draw/draw_pipe.h"
 
-
-#if FEATURE_feedback
 
 /**
  * This is actually used for both feedback and selection.
@@ -88,9 +85,11 @@ feedback_vertex(struct gl_context *ctx, const struct draw_context *draw,
    const GLfloat *color, *texcoord;
    GLuint slot;
 
-   /* Recall that Y=0=Top of window for Gallium wincoords */
    win[0] = v->data[0][0];
-   win[1] = ctx->DrawBuffer->Height - v->data[0][1];
+   if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP)
+      win[1] = ctx->DrawBuffer->Height - v->data[0][1];
+   else
+      win[1] = v->data[0][1];
    win[2] = v->data[0][2];
    win[3] = 1.0F / v->data[0][3];
 
@@ -99,13 +98,13 @@ feedback_vertex(struct gl_context *ctx, const struct draw_context *draw,
     * color and texcoord attribs to use here.
     */
 
-   slot = st->vertex_result_to_slot[VERT_RESULT_COL0];
+   slot = st->vertex_result_to_slot[VARYING_SLOT_COL0];
    if (slot != ~0U)
       color = v->data[slot];
    else
       color = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
 
-   slot = st->vertex_result_to_slot[VERT_RESULT_TEX0];
+   slot = st->vertex_result_to_slot[VARYING_SLOT_TEX0];
    if (slot != ~0U)
       texcoord = v->data[slot];
    else
@@ -305,5 +304,3 @@ void st_init_feedback_functions(struct dd_function_table *functions)
 {
    functions->RenderMode = st_RenderMode;
 }
-
-#endif /* FEATURE_feedback */

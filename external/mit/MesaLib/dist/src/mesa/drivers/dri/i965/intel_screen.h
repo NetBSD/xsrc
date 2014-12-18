@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ *
+ * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,105 +10,119 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 #ifndef _INTEL_INIT_H_
 #define _INTEL_INIT_H_
 
+#include <stdbool.h>
 #include <sys/time.h>
 #include "dri_util.h"
+#include "intel_bufmgr.h"
+#include "intel_chipset.h"
+#include "brw_device_info.h"
+#include "i915_drm.h"
 #include "xmlconfig.h"
-#include "i830_common.h"
 
-/* XXX: change name or eliminate to avoid conflict with "struct
- * intel_region"!!!
- */
-typedef struct {
-   drm_handle_t handle;
-   drmSize size;        /* region size in bytes */
-   char *map;           /* memory map */
-   int offset;          /* from start of video mem, in bytes */
-   int pitch;           /* row stride, in pixels */
-   unsigned int tiled; 
-} intelRegion;
-
-typedef struct 
+struct intel_screen
 {
-   intelRegion front;
-   intelRegion back;
-   intelRegion rotated;
-   intelRegion depth;
-   intelRegion tex;
-   
    int deviceID;
-   int width;
-   int height;
-   int mem;         /* unused */
+   const struct brw_device_info *devinfo;
 
-   int cpp;         /* for front and back buffers */
-   int fbFormat;
+   __DRIscreen *driScrnPriv;
 
-   int logTextureGranularity;
-   
-   __DRIscreenPrivate *driScrnPriv;
-   unsigned int sarea_priv_offset;
+   bool no_hw;
 
-   int drmMinor;
+   bool hw_must_use_separate_stencil;
 
-   int irq_active;
-   int allow_batchbuffer;
-
-/*    struct matrix23 rotMatrix; */
-
-   int current_rotation;  /* 0, 90, 180 or 270 */
-   int rotatedWidth, rotatedHeight;
+   bool hw_has_swizzling;
 
    /**
-    * Configuration cache with default values for all contexts 
+    * Does the kernel support context reset notifications?
     */
+   bool has_context_reset_notification;
+
+   dri_bufmgr *bufmgr;
+
+   /**
+    * A unique ID for shader programs.
+    */
+   unsigned program_id;
+
+   int winsys_msaa_samples_override;
+
+   struct {
+      struct ra_regs *regs;
+
+      /**
+       * Array of the ra classes for the unaligned contiguous register
+       * block sizes used.
+       */
+      int *classes;
+
+      /**
+       * Mapping for register-allocated objects in *regs to the first
+       * GRF for that object.
+       */
+      uint8_t *ra_reg_to_grf;
+   } vec4_reg_set;
+
+   struct {
+      struct ra_regs *regs;
+
+      /**
+       * Array of the ra classes for the unaligned contiguous register
+       * block sizes used, indexed by register size.
+       */
+      int classes[16];
+
+      /**
+       * Mapping for register-allocated objects in *regs to the first
+       * GRF for that object.
+       */
+      uint8_t *ra_reg_to_grf;
+
+      /**
+       * ra class for the aligned pairs we use for PLN, which doesn't
+       * appear in *classes.
+       */
+      int aligned_pairs_class;
+   } wm_reg_sets[2];
+
+   /**
+   * Configuration cache with default values for all contexts
+   */
    driOptionCache optionCache;
-} intelScreenPrivate;
+};
 
+extern void intelDestroyContext(__DRIcontext * driContextPriv);
 
-extern GLboolean
-intelMapScreenRegions(__DRIscreenPrivate *sPriv);
+extern GLboolean intelUnbindContext(__DRIcontext * driContextPriv);
 
-extern void
-intelUnmapScreenRegions(intelScreenPrivate *intelScreen);
-
-extern void
-intelUpdateScreenFromSAREA(intelScreenPrivate *intelScreen,
-                           volatile drmI830Sarea *sarea);
-
-extern void
-intelDestroyContext(__DRIcontextPrivate *driContextPriv);
+PUBLIC const __DRIextension **__driDriverGetExtensions_i965(void);
 
 extern GLboolean
-intelUnbindContext(__DRIcontextPrivate *driContextPriv);
+intelMakeCurrent(__DRIcontext * driContextPriv,
+                 __DRIdrawable * driDrawPriv,
+                 __DRIdrawable * driReadPriv);
 
-extern GLboolean
-intelMakeCurrent(__DRIcontextPrivate *driContextPriv,
-                 __DRIdrawablePrivate *driDrawPriv,
-                 __DRIdrawablePrivate *driReadPriv);
+double get_time(void);
+void aub_dump_bmp(struct gl_context *ctx);
 
-extern void
-intelSwapBuffers(__DRIdrawablePrivate *dPriv);
-
-extern void 
-intelCopySubBuffer( __DRIdrawablePrivate *dPriv,
-		    int x, int y, int w, int h );
+const int*
+intel_supported_msaa_modes(const struct intel_screen  *screen);
 
 #endif

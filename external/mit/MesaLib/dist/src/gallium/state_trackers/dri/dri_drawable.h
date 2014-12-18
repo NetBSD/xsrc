@@ -29,47 +29,69 @@
 #define DRI_DRAWABLE_H
 
 #include "pipe/p_compiler.h"
+#include "pipe/p_format.h"
+#include "state_tracker/st_api.h"
 
 struct pipe_surface;
-struct pipe_fence_handle;
 struct st_framebuffer;
 struct dri_context;
 
-#define DRI_SWAP_FENCES_MAX  8
-#define DRI_SWAP_FENCES_MASK 7
+#define DRI_SWAP_FENCES_MAX 4
+#define DRI_SWAP_FENCES_MASK 3
+#define DRI_SWAP_FENCES_DEFAULT 1
 
 struct dri_drawable
 {
+   struct st_framebuffer_iface base;
+   struct st_visual stvis;
+
+   struct dri_screen *screen;
+
    /* dri */
    __DRIdrawable *dPriv;
    __DRIscreen *sPriv;
-
-   unsigned attachments[8];
-   unsigned num_attachments;
-
-   boolean is_pixmap;
 
    __DRIbuffer old[8];
    unsigned old_num;
    unsigned old_w;
    unsigned old_h;
 
-   /* gallium */
-   struct st_framebuffer *stfb;
+   struct pipe_resource *textures[ST_ATTACHMENT_COUNT];
+   struct pipe_resource *msaa_textures[ST_ATTACHMENT_COUNT];
+   unsigned int texture_mask, texture_stamp;
+
    struct pipe_fence_handle *swap_fences[DRI_SWAP_FENCES_MAX];
+   unsigned int cur_fences;
    unsigned int head;
    unsigned int tail;
    unsigned int desired_fences;
-   unsigned int cur_fences;
+   boolean flushing; /* prevents recursion in dri_flush */
 
-   enum pipe_format color_format;
-   enum pipe_format depth_stencil_format;
+   /* used only by DRISW */
+   struct pipe_surface *drisw_surface;
+
+   /* hooks filled in by dri2 & drisw */
+   void (*allocate_textures)(struct dri_context *ctx,
+                             struct dri_drawable *drawable,
+                             const enum st_attachment_type *statts,
+                             unsigned count);
+
+   void (*update_drawable_info)(struct dri_drawable *drawable);
+
+   void (*flush_frontbuffer)(struct dri_context *ctx,
+                             struct dri_drawable *drawable,
+                             enum st_attachment_type statt);
+
+   void (*update_tex_buffer)(struct dri_drawable *drawable,
+                             struct dri_context *ctx,
+                             struct pipe_resource *res);
 };
 
 static INLINE struct dri_drawable *
 dri_drawable(__DRIdrawable * driDrawPriv)
 {
-   return (struct dri_drawable *)driDrawPriv->driverPrivate;
+   return (struct dri_drawable *) (driDrawPriv)
+      ? driDrawPriv->driverPrivate : NULL;
 }
 
 /***********************************************************************
@@ -78,37 +100,29 @@ dri_drawable(__DRIdrawable * driDrawPriv)
 boolean
 dri_create_buffer(__DRIscreen * sPriv,
 		  __DRIdrawable * dPriv,
-		  const __GLcontextModes * visual, boolean isPixmap);
-
-void
-dri_update_buffer(struct pipe_screen *screen, void *context_private);
-
-void
-dri_flush_frontbuffer(struct pipe_screen *screen,
-		      struct pipe_surface *surf, void *context_private);
-
-void dri_swap_buffers(__DRIdrawable * dPriv);
-
-void
-dri_copy_sub_buffer(__DRIdrawable * dPriv, int x, int y, int w, int h);
-
-void dri_get_buffers(__DRIdrawable * dPriv);
+		  const struct gl_config * visual, boolean isPixmap);
 
 void dri_destroy_buffer(__DRIdrawable * dPriv);
 
-void dri2_set_tex_buffer2(__DRIcontext *pDRICtx, GLint target,
-                          GLint glx_texture_format, __DRIdrawable *dPriv);
-
-void dri2_set_tex_buffer(__DRIcontext *pDRICtx, GLint target,
-                         __DRIdrawable *dPriv);
+void
+dri_drawable_get_format(struct dri_drawable *drawable,
+                        enum st_attachment_type statt,
+                        enum pipe_format *format,
+                        unsigned *bind);
 
 void
-dri1_update_drawables(struct dri_context *ctx,
-		      struct dri_drawable *draw, struct dri_drawable *read);
+dri_pipe_blit(struct pipe_context *pipe,
+              struct pipe_resource *dst,
+              struct pipe_resource *src);
 
 void
-dri1_flush_frontbuffer(struct pipe_screen *screen,
-		       struct pipe_surface *surf, void *context_private);
+dri_flush(__DRIcontext *cPriv,
+          __DRIdrawable *dPriv,
+          unsigned flags,
+          enum __DRI2throttleReason reason);
+
+extern const __DRItexBufferExtension driTexBufferExtension;
+extern const __DRI2throttleExtension dri2ThrottleExtension;
 #endif
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */

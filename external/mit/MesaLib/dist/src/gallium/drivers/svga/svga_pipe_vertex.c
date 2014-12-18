@@ -23,6 +23,7 @@
  *
  **********************************************************/
 
+#include "util/u_helpers.h"
 #include "util/u_inlines.h"
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
@@ -36,32 +37,14 @@
 
 
 static void svga_set_vertex_buffers(struct pipe_context *pipe,
-                                    unsigned count,
+                                    unsigned start_slot, unsigned count,
                                     const struct pipe_vertex_buffer *buffers)
 {
    struct svga_context *svga = svga_context(pipe);
-   unsigned i;
-   boolean any_user_buffer = FALSE;
 
-   /* Check for no change */
-   if (count == svga->curr.num_vertex_buffers &&
-       memcmp(svga->curr.vb, buffers, count * sizeof buffers[0]) == 0)
-      return;
-
-   /* Adjust refcounts */
-   for (i = 0; i < count; i++) {
-      pipe_resource_reference(&svga->curr.vb[i].buffer, buffers[i].buffer);
-      if (svga_buffer_is_user_buffer(buffers[i].buffer))
-         any_user_buffer = TRUE;
-   }
-
-   for ( ; i < svga->curr.num_vertex_buffers; i++)
-      pipe_resource_reference(&svga->curr.vb[i].buffer, NULL);
-
-   /* Copy remaining data */
-   memcpy(svga->curr.vb, buffers, count * sizeof buffers[0]);
-   svga->curr.num_vertex_buffers = count;
-   svga->curr.any_user_vertex_buffers = any_user_buffer;
+   util_set_vertex_buffers_count(svga->curr.vb,
+                                 &svga->curr.num_vertex_buffers,
+                                 buffers, start_slot, count);
 
    svga->dirty |= SVGA_NEW_VBUFFER;
 }
@@ -85,6 +68,85 @@ static void svga_set_index_buffer(struct pipe_context *pipe,
 }
 
 
+/**
+ * Given a gallium vertex element format, return the corresponding SVGA3D
+ * format.  Return SVGA3D_DECLTYPE_MAX for unsupported gallium formats.
+ */
+static SVGA3dDeclType
+translate_vertex_format(enum pipe_format format)
+{
+   switch (format) {
+   case PIPE_FORMAT_R32_FLOAT:            return SVGA3D_DECLTYPE_FLOAT1;
+   case PIPE_FORMAT_R32G32_FLOAT:         return SVGA3D_DECLTYPE_FLOAT2;
+   case PIPE_FORMAT_R32G32B32_FLOAT:      return SVGA3D_DECLTYPE_FLOAT3;
+   case PIPE_FORMAT_R32G32B32A32_FLOAT:   return SVGA3D_DECLTYPE_FLOAT4;
+   case PIPE_FORMAT_B8G8R8A8_UNORM:       return SVGA3D_DECLTYPE_D3DCOLOR;
+   case PIPE_FORMAT_R8G8B8A8_USCALED:     return SVGA3D_DECLTYPE_UBYTE4;
+   case PIPE_FORMAT_R16G16_SSCALED:       return SVGA3D_DECLTYPE_SHORT2;
+   case PIPE_FORMAT_R16G16B16A16_SSCALED: return SVGA3D_DECLTYPE_SHORT4;
+   case PIPE_FORMAT_R8G8B8A8_UNORM:       return SVGA3D_DECLTYPE_UBYTE4N;
+   case PIPE_FORMAT_R16G16_SNORM:         return SVGA3D_DECLTYPE_SHORT2N;
+   case PIPE_FORMAT_R16G16B16A16_SNORM:   return SVGA3D_DECLTYPE_SHORT4N;
+   case PIPE_FORMAT_R16G16_UNORM:         return SVGA3D_DECLTYPE_USHORT2N;
+   case PIPE_FORMAT_R16G16B16A16_UNORM:   return SVGA3D_DECLTYPE_USHORT4N;
+   case PIPE_FORMAT_R10G10B10X2_USCALED:  return SVGA3D_DECLTYPE_UDEC3;
+   case PIPE_FORMAT_R10G10B10X2_SNORM:    return SVGA3D_DECLTYPE_DEC3N;
+   case PIPE_FORMAT_R16G16_FLOAT:         return SVGA3D_DECLTYPE_FLOAT16_2;
+   case PIPE_FORMAT_R16G16B16A16_FLOAT:   return SVGA3D_DECLTYPE_FLOAT16_4;
+
+   /* See attrib_needs_adjustment() and attrib_needs_w_to_1() below */
+   case PIPE_FORMAT_R8G8B8_SNORM:         return SVGA3D_DECLTYPE_UBYTE4N;
+
+   /* See attrib_needs_w_to_1() below */
+   case PIPE_FORMAT_R16G16B16_SNORM:      return SVGA3D_DECLTYPE_SHORT4N;
+   case PIPE_FORMAT_R16G16B16_UNORM:      return SVGA3D_DECLTYPE_USHORT4N;
+   case PIPE_FORMAT_R8G8B8_UNORM:         return SVGA3D_DECLTYPE_UBYTE4N;
+
+   default:
+      /* There are many formats without hardware support.  This case
+       * will be hit regularly, meaning we'll need swvfetch.
+       */
+      return SVGA3D_DECLTYPE_MAX;
+   }
+}
+
+
+/**
+ * Does the given vertex attrib format need range adjustment in the VS?
+ * Range adjustment scales and biases values from [0,1] to [-1,1].
+ * This lets us avoid the swtnl path.
+ */
+static boolean
+attrib_needs_range_adjustment(enum pipe_format format)
+{
+   switch (format) {
+   case PIPE_FORMAT_R8G8B8_SNORM:
+      return TRUE;
+   default:
+      return FALSE;
+   }
+}
+
+
+/**
+ * Does the given vertex attrib format need to have the W component set
+ * to one in the VS?
+ */
+static boolean
+attrib_needs_w_to_1(enum pipe_format format)
+{
+   switch (format) {
+   case PIPE_FORMAT_R8G8B8_SNORM:
+   case PIPE_FORMAT_R8G8B8_UNORM:
+   case PIPE_FORMAT_R16G16B16_SNORM:
+   case PIPE_FORMAT_R16G16B16_UNORM:
+      return TRUE;
+   default:
+      return FALSE;
+   }
+}
+
+
 static void *
 svga_create_vertex_elements_state(struct pipe_context *pipe,
                                   unsigned count,
@@ -94,8 +156,32 @@ svga_create_vertex_elements_state(struct pipe_context *pipe,
    assert(count <= PIPE_MAX_ATTRIBS);
    velems = (struct svga_velems_state *) MALLOC(sizeof(struct svga_velems_state));
    if (velems) {
+      unsigned i;
+
       velems->count = count;
       memcpy(velems->velem, attribs, sizeof(*attribs) * count);
+
+      velems->need_swvfetch = FALSE;
+      velems->adjust_attrib_range = 0x0;
+      velems->adjust_attrib_w_1 = 0x0;
+
+      /* Translate Gallium vertex format to SVGA3dDeclType */
+      for (i = 0; i < count; i++) {
+         enum pipe_format f = attribs[i].src_format;
+         velems->decl_type[i] = translate_vertex_format(f);
+         if (velems->decl_type[i] == SVGA3D_DECLTYPE_MAX) {
+            /* Unsupported format - use software fetch */
+            velems->need_swvfetch = TRUE;
+            break;
+         }
+
+         if (attrib_needs_range_adjustment(f)) {
+            velems->adjust_attrib_range |= (1 << i);
+         }
+         if (attrib_needs_w_to_1(f)) {
+            velems->adjust_attrib_w_1 |= (1 << i);
+         }
+      }
    }
    return velems;
 }

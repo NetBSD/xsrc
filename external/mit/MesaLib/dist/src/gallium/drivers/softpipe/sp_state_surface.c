@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,14 +18,14 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 
  **************************************************************************/
 
-/* Authors:  Keith Whitwell <keith@tungstengraphics.com>
+/* Authors:  Keith Whitwell <keithw@vmware.com>
  */
 
 #include "sp_context.h"
@@ -54,16 +54,18 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
    draw_flush(sp->draw);
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
+      struct pipe_surface *cb = i < fb->nr_cbufs ? fb->cbufs[i] : NULL;
+
       /* check if changing cbuf */
-      if (sp->framebuffer.cbufs[i] != fb->cbufs[i]) {
+      if (sp->framebuffer.cbufs[i] != cb) {
          /* flush old */
          sp_flush_tile_cache(sp->cbuf_cache[i]);
 
          /* assign new */
-         pipe_surface_reference(&sp->framebuffer.cbufs[i], fb->cbufs[i]);
+         pipe_surface_reference(&sp->framebuffer.cbufs[i], cb);
 
          /* update cache */
-         sp_tile_cache_set_surface(sp->cbuf_cache[i], fb->cbufs[i]);
+         sp_tile_cache_set_surface(sp->cbuf_cache[i], cb);
       }
    }
 
@@ -80,21 +82,14 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
       /* update cache */
       sp_tile_cache_set_surface(sp->zsbuf_cache, fb->zsbuf);
 
-      /* Tell draw module how deep the Z/depth buffer is */
-      if (sp->framebuffer.zsbuf) {
-         int depth_bits;
-         double mrd;
-         depth_bits = util_format_get_component_bits(sp->framebuffer.zsbuf->format,
-                                                     UTIL_FORMAT_COLORSPACE_ZS,
-                                                     0);
-         if (depth_bits > 16) {
-            mrd = 0.0000001;
-         }
-         else {
-            mrd = 0.00002;
-         }
-         draw_set_mrd(sp->draw, mrd);
-      }
+      /* Tell draw module how deep the Z/depth buffer is
+       *
+       * If no depth buffer is bound, send the utility function the
+       * format for no bound depth (PIPE_FORMAT_NONE).
+       */
+      draw_set_zs_format(sp->draw,
+                         (sp->framebuffer.zsbuf) ?
+                            sp->framebuffer.zsbuf->format : PIPE_FORMAT_NONE);
    }
 
    sp->framebuffer.width = fb->width;

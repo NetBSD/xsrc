@@ -17,9 +17,10 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 /**
@@ -32,13 +33,14 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/hash.h"
-#include "main/mfeatures.h"
 #include "main/mtypes.h"
+#include "main/shaderapi.h"
 #include "main/shaderobj.h"
+#include "main/uniforms.h"
 #include "program/program.h"
 #include "program/prog_parameter.h"
-#include "program/prog_uniform.h"
-#include "ralloc.h"
+#include "program/hash_table.h"
+#include "util/ralloc.h"
 
 /**********************************************************************/
 /*** Shader object functions                                        ***/
@@ -104,11 +106,11 @@ struct gl_shader *
 _mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type)
 {
    struct gl_shader *shader;
-   assert(type == GL_FRAGMENT_SHADER || type == GL_VERTEX_SHADER ||
-          type == GL_GEOMETRY_SHADER_ARB);
+   assert(_mesa_validate_shader_target(ctx, type));
    shader = rzalloc(NULL, struct gl_shader);
    if (shader) {
       shader->Type = type;
+      shader->Stage = _mesa_shader_enum_to_shader_stage(type);
       shader->Name = name;
       _mesa_init_shader(ctx, shader);
    }
@@ -123,8 +125,8 @@ _mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type)
 static void
 _mesa_delete_shader(struct gl_context *ctx, struct gl_shader *sh)
 {
-   if (sh->Source)
-      free((void *) sh->Source);
+   free((void *)sh->Source);
+   free(sh->Label);
    _mesa_reference_program(ctx, &sh->Program, NULL);
    ralloc_free(sh);
 }
@@ -238,12 +240,18 @@ _mesa_init_shader_program(struct gl_context *ctx, struct gl_shader_program *prog
 {
    prog->Type = GL_SHADER_PROGRAM_MESA;
    prog->RefCount = 1;
-   prog->Attributes = _mesa_new_parameter_list();
-#if FEATURE_ARB_geometry_shader4
+
+   prog->AttributeBindings = string_to_uint_map_ctor();
+   prog->FragDataBindings = string_to_uint_map_ctor();
+   prog->FragDataIndexBindings = string_to_uint_map_ctor();
+
    prog->Geom.VerticesOut = 0;
    prog->Geom.InputType = GL_TRIANGLES;
    prog->Geom.OutputType = GL_TRIANGLE_STRIP;
-#endif
+   prog->Geom.UsesEndPrimitive = false;
+   prog->Geom.UsesStreams = false;
+
+   prog->TransformFeedback.BufferMode = GL_INTERLEAVED_ATTRIBS;
 
    prog->InfoLog = ralloc_strdup(prog, "");
 }
@@ -272,18 +280,24 @@ void
 _mesa_clear_shader_program_data(struct gl_context *ctx,
                                 struct gl_shader_program *shProg)
 {
-   _mesa_reference_vertprog(ctx, &shProg->VertexProgram, NULL);
-   _mesa_reference_fragprog(ctx, &shProg->FragmentProgram, NULL);
-   _mesa_reference_geomprog(ctx, &shProg->GeometryProgram, NULL);
-
-   if (shProg->Uniforms) {
-      _mesa_free_uniform_list(shProg->Uniforms);
-      shProg->Uniforms = NULL;
+   if (shProg->UniformStorage) {
+      unsigned i;
+      for (i = 0; i < shProg->NumUserUniformStorage; ++i)
+         _mesa_uniform_detach_all_driver_storage(&shProg->UniformStorage[i]);
+      ralloc_free(shProg->UniformStorage);
+      shProg->NumUserUniformStorage = 0;
+      shProg->UniformStorage = NULL;
    }
 
-   if (shProg->Varying) {
-      _mesa_free_parameter_list(shProg->Varying);
-      shProg->Varying = NULL;
+   if (shProg->UniformRemapTable) {
+      ralloc_free(shProg->UniformRemapTable);
+      shProg->NumUniformRemapTable = 0;
+      shProg->UniformRemapTable = NULL;
+   }
+
+   if (shProg->UniformHash) {
+      string_to_uint_map_dtor(shProg->UniformHash);
+      shProg->UniformHash = NULL;
    }
 
    assert(shProg->InfoLog != NULL);
@@ -301,15 +315,25 @@ _mesa_free_shader_program_data(struct gl_context *ctx,
                                struct gl_shader_program *shProg)
 {
    GLuint i;
-   gl_shader_type sh;
+   gl_shader_stage sh;
 
    assert(shProg->Type == GL_SHADER_PROGRAM_MESA);
 
    _mesa_clear_shader_program_data(ctx, shProg);
 
-   if (shProg->Attributes) {
-      _mesa_free_parameter_list(shProg->Attributes);
-      shProg->Attributes = NULL;
+   if (shProg->AttributeBindings) {
+      string_to_uint_map_dtor(shProg->AttributeBindings);
+      shProg->AttributeBindings = NULL;
+   }
+
+   if (shProg->FragDataBindings) {
+      string_to_uint_map_dtor(shProg->FragDataBindings);
+      shProg->FragDataBindings = NULL;
+   }
+
+   if (shProg->FragDataIndexBindings) {
+      string_to_uint_map_dtor(shProg->FragDataIndexBindings);
+      shProg->FragDataIndexBindings = NULL;
    }
 
    /* detach shaders */
@@ -318,10 +342,8 @@ _mesa_free_shader_program_data(struct gl_context *ctx,
    }
    shProg->NumShaders = 0;
 
-   if (shProg->Shaders) {
-      free(shProg->Shaders);
-      shProg->Shaders = NULL;
-   }
+   free(shProg->Shaders);
+   shProg->Shaders = NULL;
 
    /* Transform feedback varying vars */
    for (i = 0; i < shProg->TransformFeedback.NumVarying; i++) {
@@ -332,12 +354,15 @@ _mesa_free_shader_program_data(struct gl_context *ctx,
    shProg->TransformFeedback.NumVarying = 0;
 
 
-   for (sh = 0; sh < MESA_SHADER_TYPES; sh++) {
+   for (sh = 0; sh < MESA_SHADER_STAGES; sh++) {
       if (shProg->_LinkedShaders[sh] != NULL) {
 	 ctx->Driver.DeleteShader(ctx, shProg->_LinkedShaders[sh]);
 	 shProg->_LinkedShaders[sh] = NULL;
       }
    }
+
+   free(shProg->Label);
+   shProg->Label = NULL;
 }
 
 

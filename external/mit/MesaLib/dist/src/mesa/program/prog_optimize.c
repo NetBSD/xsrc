@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.5
  *
  * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
@@ -115,7 +114,6 @@ get_src_arg_mask(const struct prog_instruction *inst,
    read_mask = 0x0;
    for (comp = 0; comp < 4; ++comp) {
       const GLuint coord = GET_SWZ(inst->SrcReg[arg].Swizzle, comp);
-      ASSERT(coord < 4);
       if (channel_mask & (1 << comp) && coord <= SWIZZLE_W)
          read_mask |= 1 << coord;
    }
@@ -260,7 +258,7 @@ _mesa_remove_dead_code_global(struct gl_program *prog)
       /*_mesa_print_program(prog);*/
    }
 
-   removeInst = (GLboolean *)
+   removeInst =
       calloc(1, prog->NumInstructions * sizeof(GLboolean));
 
    /* Determine which temps are read and written */
@@ -285,11 +283,11 @@ _mesa_remove_dead_code_global(struct gl_program *prog)
 
 	    for (comp = 0; comp < 4; comp++) {
 	       const GLuint swz = GET_SWZ(inst->SrcReg[j].Swizzle, comp);
-	       ASSERT(swz < 4);
-               if ((read_mask & (1 << swz)) == 0)
-		  continue;
-               if (swz <= SWIZZLE_W)
+               if (swz <= SWIZZLE_W) {
+                  if ((read_mask & (1 << swz)) == 0)
+                     continue;
                   tempRead[index][swz] = GL_TRUE;
+               }
 	    }
          }
       }
@@ -392,7 +390,6 @@ find_next_use(const struct gl_program *prog,
       switch (inst->Opcode) {
       case OPCODE_BGNLOOP:
       case OPCODE_BGNSUB:
-      case OPCODE_BRA:
       case OPCODE_CAL:
       case OPCODE_CONT:
       case OPCODE_IF:
@@ -439,7 +436,6 @@ _mesa_is_flow_control_opcode(enum prog_opcode opcode)
    switch (opcode) {
    case OPCODE_BGNLOOP:
    case OPCODE_BGNSUB:
-   case OPCODE_BRA:
    case OPCODE_CAL:
    case OPCODE_CONT:
    case OPCODE_IF:
@@ -472,8 +468,7 @@ can_downward_mov_be_modifed(const struct prog_instruction *mov)
       mov->SrcReg[0].HasIndex2 == 0 &&
       mov->SrcReg[0].RelAddr2 == 0 &&
       mov->DstReg.RelAddr == 0 &&
-      mov->DstReg.CondMask == COND_TR &&
-      mov->SaturateMode == SATURATE_OFF;
+      mov->DstReg.CondMask == COND_TR;
 }
 
 
@@ -482,7 +477,8 @@ can_upward_mov_be_modifed(const struct prog_instruction *mov)
 {
    return
       can_downward_mov_be_modifed(mov) &&
-      mov->DstReg.File == PROGRAM_TEMPORARY;
+      mov->DstReg.File == PROGRAM_TEMPORARY &&
+      mov->SaturateMode == SATURATE_OFF;
 }
 
 
@@ -604,7 +600,7 @@ _mesa_remove_dead_code_local(struct gl_program *prog)
    GLboolean *removeInst;
    GLuint i, arg, rem = 0;
 
-   removeInst = (GLboolean *)
+   removeInst =
       calloc(1, prog->NumInstructions * sizeof(GLboolean));
 
    for (i = 0; i < prog->NumInstructions; i++) {
@@ -656,6 +652,8 @@ _mesa_merge_mov_into_inst(struct prog_instruction *inst,
    /* Some components are not written by inst. We cannot remove the mov */
    if (mask != (inst->DstReg.WriteMask & mask))
       return GL_FALSE;
+
+   inst->SaturateMode |= mov->SaturateMode;
 
    /* Depending on the instruction, we may need to recompute the swizzles.
     * Also, some other instructions (like TEX) are not linear. We will only
@@ -743,7 +741,7 @@ _mesa_remove_extra_moves(struct gl_program *prog)
       _mesa_print_program(prog);
    }
 
-   removeInst = (GLboolean *)
+   removeInst =
       calloc(1, prog->NumInstructions * sizeof(GLboolean));
 
    /*
@@ -789,7 +787,6 @@ _mesa_remove_extra_moves(struct gl_program *prog)
             if (prevInst->DstReg.File == PROGRAM_TEMPORARY &&
                 prevInst->DstReg.Index == id &&
                 prevInst->DstReg.RelAddr == 0 &&
-                prevInst->DstReg.CondSrc == 0 && 
                 prevInst->DstReg.CondMask == COND_TR) {
 
                const GLuint dst_mask = prevInst->DstReg.WriteMask;
@@ -1356,6 +1353,8 @@ _mesa_optimize_program(struct gl_context *ctx, struct gl_program *program)
          any_change = GL_TRUE;
       if (_mesa_remove_dead_code_local(program))
          any_change = GL_TRUE;
+
+      any_change = _mesa_constant_fold(program) || any_change;
       _mesa_reallocate_registers(program);
    } while (any_change);
 }

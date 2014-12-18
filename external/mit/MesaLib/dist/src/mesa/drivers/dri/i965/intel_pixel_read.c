@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -29,16 +29,19 @@
 #include "main/enums.h"
 #include "main/mtypes.h"
 #include "main/macros.h"
+#include "main/fbobject.h"
 #include "main/image.h"
 #include "main/bufferobj.h"
+#include "main/readpix.h"
 #include "main/state.h"
-#include "swrast/swrast.h"
+#include "main/glformats.h"
 
+#include "brw_context.h"
 #include "intel_screen.h"
-#include "intel_context.h"
 #include "intel_blit.h"
 #include "intel_buffers.h"
-#include "intel_regions.h"
+#include "intel_fbo.h"
+#include "intel_mipmap_tree.h"
 #include "intel_pixel.h"
 #include "intel_buffer_objects.h"
 
@@ -66,101 +69,96 @@
  * any case.
  */
 
-static GLboolean
+static bool
 do_blit_readpixels(struct gl_context * ctx,
                    GLint x, GLint y, GLsizei width, GLsizei height,
                    GLenum format, GLenum type,
                    const struct gl_pixelstore_attrib *pack, GLvoid * pixels)
 {
-   struct intel_context *intel = intel_context(ctx);
-   struct intel_region *src = intel_readbuf_region(intel);
+   struct brw_context *brw = brw_context(ctx);
    struct intel_buffer_object *dst = intel_buffer_object(pack->BufferObj);
    GLuint dst_offset;
-   GLuint rowLength;
    drm_intel_bo *dst_buffer;
-   GLboolean all;
    GLint dst_x, dst_y;
    GLuint dirty;
 
    DBG("%s\n", __FUNCTION__);
 
-   if (!src)
-      return GL_FALSE;
+   assert(_mesa_is_bufferobj(pack->BufferObj));
 
-   if (!_mesa_is_bufferobj(pack->BufferObj)) {
-      /* PBO only for now:
-       */
-      DBG("%s - not PBO\n", __FUNCTION__);
-      return GL_FALSE;
-   }
+   struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
+   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
+   /* Currently this function only supports reading from color buffers. */
+   if (!_mesa_is_color_format(format))
+      return false;
+
+   assert(irb != NULL);
 
    if (ctx->_ImageTransferState ||
-       !intel_check_blit_format(src, format, type)) {
+       !_mesa_format_matches_format_and_type(irb->mt->format, format, type,
+                                             false)) {
       DBG("%s - bad format for blit\n", __FUNCTION__);
-      return GL_FALSE;
+      return false;
    }
 
-   if (pack->Alignment != 1 || pack->SwapBytes || pack->LsbFirst) {
+   if (pack->SwapBytes || pack->LsbFirst) {
       DBG("%s: bad packing params\n", __FUNCTION__);
-      return GL_FALSE;
+      return false;
    }
 
-   if (pack->RowLength > 0)
-      rowLength = pack->RowLength;
-   else
-      rowLength = width;
-
+   int dst_stride = _mesa_image_row_stride(pack, width, format, type);
+   bool dst_flip = false;
+   /* Mesa flips the dst_stride for pack->Invert, but we want our mt to have a
+    * normal dst_stride.
+    */
+   struct gl_pixelstore_attrib uninverted_pack = *pack;
    if (pack->Invert) {
-      DBG("%s: MESA_PACK_INVERT not done yet\n", __FUNCTION__);
-      return GL_FALSE;
-   }
-   else {
-      if (ctx->ReadBuffer->Name == 0)
-	 rowLength = -rowLength;
+      dst_stride = -dst_stride;
+      dst_flip = true;
+      uninverted_pack.Invert = false;
    }
 
-   dst_offset = (GLintptr) _mesa_image_address(2, pack, pixels, width, height,
-					       format, type, 0, 0, 0);
+   dst_offset = (GLintptr)pixels;
+   dst_offset += _mesa_image_offset(2, &uninverted_pack, width, height,
+				    format, type, 0, 0, 0);
 
    if (!_mesa_clip_copytexsubimage(ctx,
 				   &dst_x, &dst_y,
 				   &x, &y,
 				   &width, &height)) {
-      return GL_TRUE;
+      return true;
    }
 
-   dirty = intel->front_buffer_dirty;
-   intel_prepare_render(intel);
-   intel->front_buffer_dirty = dirty;
+   dirty = brw->front_buffer_dirty;
+   intel_prepare_render(brw);
+   brw->front_buffer_dirty = dirty;
 
-   all = (width * height * src->cpp == dst->Base.Size &&
-	  x == 0 && dst_offset == 0);
+   dst_buffer = intel_bufferobj_buffer(brw, dst,
+				       dst_offset, height * dst_stride);
 
-   dst_x = 0;
-   dst_y = 0;
+   struct intel_mipmap_tree *pbo_mt =
+      intel_miptree_create_for_bo(brw,
+                                  dst_buffer,
+                                  irb->mt->format,
+                                  dst_offset,
+                                  width, height,
+                                  dst_stride);
 
-   dst_buffer = intel_bufferobj_buffer(intel, dst,
-				       all ? INTEL_WRITE_FULL :
-				       INTEL_WRITE_PART);
-
-   if (ctx->ReadBuffer->Name == 0)
-      y = ctx->ReadBuffer->Height - (y + height);
-
-   if (!intelEmitCopyBlit(intel,
-			  src->cpp,
-			  src->pitch, src->buffer, 0, src->tiling,
-			  rowLength, dst_buffer, dst_offset, GL_FALSE,
-			  x, y,
-			  dst_x, dst_y,
-			  width, height,
-			  GL_COPY)) {
-      return GL_FALSE;
+   if (!intel_miptree_blit(brw,
+                           irb->mt, irb->mt_level, irb->mt_layer,
+                           x, y, _mesa_is_winsys_fbo(ctx->ReadBuffer),
+                           pbo_mt, 0, 0,
+                           0, 0, dst_flip,
+                           width, height, GL_COPY)) {
+      return false;
    }
+
+   intel_miptree_release(&pbo_mt);
 
    DBG("%s - DONE\n", __FUNCTION__);
 
-   return GL_TRUE;
+   return true;
 }
 
 void
@@ -169,36 +167,37 @@ intelReadPixels(struct gl_context * ctx,
                 GLenum format, GLenum type,
                 const struct gl_pixelstore_attrib *pack, GLvoid * pixels)
 {
-   struct intel_context *intel = intel_context(ctx);
-   GLboolean dirty;
+   struct brw_context *brw = brw_context(ctx);
+   bool dirty;
 
    DBG("%s\n", __FUNCTION__);
 
-   if (do_blit_readpixels
-       (ctx, x, y, width, height, format, type, pack, pixels))
-      return;
+   if (_mesa_is_bufferobj(pack->BufferObj)) {
+      /* Using PBOs, so try the BLT based path. */
+      if (do_blit_readpixels(ctx, x, y, width, height, format, type, pack,
+                             pixels)) {
+         return;
+      }
 
-   intel_flush(ctx);
+      perf_debug("%s: fallback to CPU mapping in PBO case\n", __FUNCTION__);
+   }
 
    /* glReadPixels() wont dirty the front buffer, so reset the dirty
     * flag after calling intel_prepare_render(). */
-   dirty = intel->front_buffer_dirty;
-   intel_prepare_render(intel);
-   intel->front_buffer_dirty = dirty;
+   dirty = brw->front_buffer_dirty;
+   intel_prepare_render(brw);
+   brw->front_buffer_dirty = dirty;
 
-   fallback_debug("%s: fallback to swrast\n", __FUNCTION__);
-
-   /* Update Mesa state before calling down into _swrast_ReadPixels, as
-    * the spans code requires the computed buffer states to be up to date,
-    * but _swrast_ReadPixels only updates Mesa state after setting up
-    * the spans code.
+   /* Update Mesa state before calling _mesa_readpixels().
+    * XXX this may not be needed since ReadPixels no longer uses the
+    * span code.
     */
 
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
-   _swrast_ReadPixels(ctx, x, y, width, height, format, type, pack, pixels);
+   _mesa_readpixels(ctx, x, y, width, height, format, type, pack, pixels);
 
    /* There's an intel_prepare_render() call in intelSpanRenderStart(). */
-   intel->front_buffer_dirty = dirty;
+   brw->front_buffer_dirty = dirty;
 }

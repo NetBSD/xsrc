@@ -36,44 +36,127 @@
 #include "xmlconfig.h"
 
 #include "pipe/p_compiler.h"
+#include "pipe/p_context.h"
+#include "pipe/p_state.h"
+#include "state_tracker/st_api.h"
+#include "postprocess/filters.h"
 
-#include "state_tracker/dri1_api.h"
+struct dri_context;
+struct dri_drawable;
+struct pipe_loader_device;
 
 struct dri_screen
 {
+   /* st_api */
+   struct st_manager base;
+   struct st_api *st_api;
+
+   /* on old libGL's invalidate doesn't get called as it should */
+   boolean broken_invalidate;
+
    /* dri */
    __DRIscreen *sPriv;
+   boolean throttling_enabled;
+   int default_throttle_frames;
 
-   /**
-    * Configuration cache with default values for all contexts
-    */
+   /** Configuration cache with default values for all contexts */
+   driOptionCache optionCacheDefaults;
+
+   /** The screen's effective configuration options */
    driOptionCache optionCache;
+
+   struct st_config_options options;
+
+   /* Which postprocessing filters are enabled. */
+   unsigned pp_enabled[PP_FILTERS];
 
    /* drm */
    int fd;
-   drmLock *drmLock;
+   boolean can_share_buffer;
+
+   struct pipe_loader_device *dev;
 
    /* gallium */
-   struct drm_api *api;
-   struct pipe_winsys *pipe_winsys;
-   struct pipe_screen *pipe_screen;
    boolean d_depth_bits_last;
    boolean sd_depth_bits_last;
    boolean auto_fake_front;
+   enum pipe_texture_target target;
+
+   /* hooks filled in by dri2 & drisw */
+   __DRIimage * (*lookup_egl_image)(struct dri_screen *ctx, void *handle);
 };
 
 /** cast wrapper */
 static INLINE struct dri_screen *
 dri_screen(__DRIscreen * sPriv)
 {
-   return (struct dri_screen *)sPriv->private;
+   return (struct dri_screen *)sPriv->driverPrivate;
 }
 
-/***********************************************************************
- * dri_screen.c
- */
+struct __DRIimageRec {
+   struct pipe_resource *texture;
+   unsigned level;
+   unsigned layer;
+   uint32_t dri_format;
+   uint32_t dri_components;
 
-extern struct dri1_api *__dri1_api_hooks;
+   void *loader_private;
+
+   /**
+    * Provided by EGL_EXT_image_dma_buf_import.
+    */
+   enum __DRIYUVColorSpace yuv_color_space;
+   enum __DRISampleRange sample_range;
+   enum __DRIChromaSiting horizontal_siting;
+   enum __DRIChromaSiting vertical_siting;
+
+};
+
+#ifndef __NOT_HAVE_DRM_H
+
+static INLINE boolean
+dri_with_format(__DRIscreen * sPriv)
+{
+   const __DRIdri2LoaderExtension *loader = sPriv->dri2.loader;
+
+   return loader
+       && (loader->base.version >= 3)
+       && (loader->getBuffersWithFormat != NULL);
+}
+
+#else
+
+static INLINE boolean
+dri_with_format(__DRIscreen * sPriv)
+{
+   return TRUE;
+}
+
+#endif
+
+void
+dri_fill_st_visual(struct st_visual *stvis, struct dri_screen *screen,
+                   const struct gl_config *mode);
+
+const __DRIconfig **
+dri_init_screen_helper(struct dri_screen *screen,
+                       struct pipe_screen *pscreen,
+                       const char* driver_name);
+
+void
+dri_destroy_screen_helper(struct dri_screen * screen);
+
+void
+dri_destroy_screen(__DRIscreen * sPriv);
+
+extern struct pipe_screen *kms_swrast_create_screen(int fd);
+extern const struct __DriverAPIRec dri_kms_driver_api;
+
+extern const struct __DriverAPIRec galliumdrm_driver_api;
+extern const __DRIextension *galliumdrm_driver_extensions[];
+extern const struct __DriverAPIRec galliumsw_driver_api;
+extern const __DRIextension *galliumsw_driver_extensions[];
+extern const __DRIconfigOptionsExtension gallium_config_options;
 
 #endif
 

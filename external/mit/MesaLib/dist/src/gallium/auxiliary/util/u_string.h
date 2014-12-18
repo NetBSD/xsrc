@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -29,13 +29,13 @@
  * @file
  * Platform independent functions for string manipulation.
  *
- * @author Jose Fonseca <jrfonseca@tungstengraphics.com>
+ * @author Jose Fonseca <jfonseca@vmware.com>
  */
 
 #ifndef U_STRING_H_
 #define U_STRING_H_
 
-#if !defined(WIN32) && !defined(XF86_LIBC_H)
+#if !defined(_MSC_VER) && !defined(XF86_LIBC_H)
 #include <stdio.h>
 #endif
 #include <stddef.h>
@@ -48,8 +48,23 @@
 extern "C" {
 #endif
 
+#ifdef _GNU_SOURCE
 
-#ifdef WIN32
+#define util_strchrnul strchrnul
+
+#else
+
+static INLINE char *
+util_strchrnul(const char *s, char c)
+{
+   for (; *s && *s != c; ++s);
+
+   return (char *)s;
+}
+
+#endif
+
+#ifdef _MSC_VER
 
 int util_vsnprintf(char *, size_t, const char *, va_list);
 int util_snprintf(char *str, size_t size, const char *format, ...);
@@ -72,12 +87,9 @@ util_sprintf(char *str, const char *format, ...)
 static INLINE char *
 util_strchr(const char *s, char c)
 {
-   while(*s) {
-      if(*s == c)
-	 return (char *)s;
-      ++s;
-   }
-   return NULL;
+   char *p = util_strchrnul(s, c);
+
+   return *p ? p : NULL;
 }
 
 static INLINE char*

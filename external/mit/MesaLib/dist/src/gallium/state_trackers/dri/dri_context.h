@@ -32,13 +32,14 @@
 #ifndef DRI_CONTEXT_H
 #define DRI_CONTEXT_H
 
-#include "pipe/p_compiler.h"
-#include "drm.h"
 #include "dri_util.h"
+#include "pipe/p_compiler.h"
+#include "hud/hud_context.h"
 
 struct pipe_context;
 struct pipe_fence;
-struct st_context;
+struct st_api;
+struct st_context_iface;
 struct dri_drawable;
 
 struct dri_context
@@ -49,56 +50,26 @@ struct dri_context
    __DRIdrawable *dPriv;
    __DRIdrawable *rPriv;
 
-   driOptionCache optionCache;
-
-   unsigned int d_stamp;
-   unsigned int r_stamp;
-
-   drmLock *lock;
-   boolean isLocked;
-   boolean stLostLock;
-   boolean wsLostLock;
-
    unsigned int bind_count;
 
    /* gallium */
-   struct st_context *st;
-   struct pipe_context *pipe;
+   struct st_api *stapi;
+   struct st_context_iface *st;
+   struct pp_queue_t *pp;
+   struct hud_context *hud;
 };
 
 static INLINE struct dri_context *
 dri_context(__DRIcontext * driContextPriv)
 {
+   if (!driContextPriv)
+     return NULL;
    return (struct dri_context *)driContextPriv->driverPrivate;
-}
-
-static INLINE void
-dri_lock(struct dri_context *ctx)
-{
-   drm_context_t hw_context = ctx->cPriv->hHWContext;
-   char ret = 0;
-
-   DRM_CAS(ctx->lock, hw_context, DRM_LOCK_HELD | hw_context, ret);
-   if (ret) {
-      drmGetLock(ctx->sPriv->fd, hw_context, 0);
-      ctx->stLostLock = TRUE;
-      ctx->wsLostLock = TRUE;
-   }
-   ctx->isLocked = TRUE;
-}
-
-static INLINE void
-dri_unlock(struct dri_context *ctx)
-{
-   ctx->isLocked = FALSE;
-   DRM_UNLOCK(ctx->sPriv->fd, ctx->lock, ctx->cPriv->hHWContext);
 }
 
 /***********************************************************************
  * dri_context.c
  */
-extern struct dri1_api_lock_funcs dri1_lf;
-
 void dri_destroy_context(__DRIcontext * driContextPriv);
 
 boolean dri_unbind_context(__DRIcontext * driContextPriv);
@@ -108,15 +79,19 @@ dri_make_current(__DRIcontext * driContextPriv,
 		 __DRIdrawable * driDrawPriv,
 		 __DRIdrawable * driReadPriv);
 
-boolean
-dri_create_context(const __GLcontextModes * visual,
-		   __DRIcontext * driContextPriv,
-		   void *sharedContextPrivate);
+struct dri_context *
+dri_get_current(__DRIscreen * driScreenPriv);
 
-/***********************************************************************
- * dri_extensions.c
- */
-void dri_init_extensions(struct dri_context *ctx);
+boolean
+dri_create_context(gl_api api,
+		   const struct gl_config * visual,
+		   __DRIcontext * driContextPriv,
+		   unsigned major_version,
+		   unsigned minor_version,
+		   uint32_t flags,
+		   bool notify_reset,
+		   unsigned *error,
+		   void *sharedContextPrivate);
 
 #endif
 

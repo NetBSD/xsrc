@@ -29,69 +29,131 @@
  * Author: Jakob Bornecrantz <wallbraker@gmail.com>
  */
 
+#include "utils.h"
+
 #include "dri_screen.h"
-
 #include "dri_drawable.h"
-#include "state_tracker/drm_api.h"
-#include "state_tracker/dri1_api.h"
-#include "state_tracker/st_public.h"
-#include "state_tracker/st_context.h"
-#include "pipe/p_context.h"
-
 #include "dri_context.h"
+#include "state_tracker/drm_driver.h"
 
-#include "util/u_memory.h"
+#include "pipe/p_context.h"
+#include "state_tracker/st_context.h"
 
 GLboolean
-dri_create_context(const __GLcontextModes * visual,
-		   __DRIcontext * cPriv, void *sharedContextPrivate)
+dri_create_context(gl_api api, const struct gl_config * visual,
+		   __DRIcontext * cPriv,
+		   unsigned major_version,
+		   unsigned minor_version,
+		   uint32_t flags,
+                   bool notify_reset,
+		   unsigned *error,
+		   void *sharedContextPrivate)
 {
    __DRIscreen *sPriv = cPriv->driScreenPriv;
    struct dri_screen *screen = dri_screen(sPriv);
+   struct st_api *stapi = screen->st_api;
    struct dri_context *ctx = NULL;
-   struct st_context *st_share = NULL;
+   struct st_context_iface *st_share = NULL;
+   struct st_context_attribs attribs;
+   enum st_context_error ctx_err = 0;
+
+   memset(&attribs, 0, sizeof(attribs));
+   switch (api) {
+   case API_OPENGLES:
+      attribs.profile = ST_PROFILE_OPENGL_ES1;
+      break;
+   case API_OPENGLES2:
+      attribs.profile = ST_PROFILE_OPENGL_ES2;
+      break;
+   case API_OPENGL_COMPAT:
+   case API_OPENGL_CORE:
+      attribs.profile = api == API_OPENGL_COMPAT ? ST_PROFILE_DEFAULT
+                                                 : ST_PROFILE_OPENGL_CORE;
+      attribs.major = major_version;
+      attribs.minor = minor_version;
+
+      if ((flags & __DRI_CTX_FLAG_DEBUG) != 0)
+	 attribs.flags |= ST_CONTEXT_FLAG_DEBUG;
+
+      if ((flags & __DRI_CTX_FLAG_FORWARD_COMPATIBLE) != 0)
+	 attribs.flags |= ST_CONTEXT_FLAG_FORWARD_COMPATIBLE;
+      break;
+   default:
+      *error = __DRI_CTX_ERROR_BAD_API;
+      goto fail;
+   }
+
+   if (flags & ~(__DRI_CTX_FLAG_DEBUG | __DRI_CTX_FLAG_FORWARD_COMPATIBLE)) {
+      *error = __DRI_CTX_ERROR_UNKNOWN_FLAG;
+      goto fail;
+   }
+
+   if (notify_reset) {
+      *error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;
+      goto fail;
+   }
 
    if (sharedContextPrivate) {
       st_share = ((struct dri_context *)sharedContextPrivate)->st;
    }
 
    ctx = CALLOC_STRUCT(dri_context);
-   if (ctx == NULL)
+   if (ctx == NULL) {
+      *error = __DRI_CTX_ERROR_NO_MEMORY;
       goto fail;
+   }
 
    cPriv->driverPrivate = ctx;
    ctx->cPriv = cPriv;
    ctx->sPriv = sPriv;
-   ctx->lock = screen->drmLock;
-   ctx->d_stamp = -1;
-   ctx->r_stamp = -1;
 
-   driParseConfigFiles(&ctx->optionCache,
-		       &screen->optionCache, sPriv->myNum, "dri");
-
-   ctx->pipe = screen->pipe_screen->context_create( screen->pipe_screen,
-						    ctx );
-
-   if (ctx->pipe == NULL)
+   attribs.options = screen->options;
+   dri_fill_st_visual(&attribs.visual, screen, visual);
+   ctx->st = stapi->create_context(stapi, &screen->base, &attribs, &ctx_err,
+				   st_share);
+   if (ctx->st == NULL) {
+      switch (ctx_err) {
+      case ST_CONTEXT_SUCCESS:
+	 *error = __DRI_CTX_ERROR_SUCCESS;
+	 break;
+      case ST_CONTEXT_ERROR_NO_MEMORY:
+	 *error = __DRI_CTX_ERROR_NO_MEMORY;
+	 break;
+      case ST_CONTEXT_ERROR_BAD_API:
+	 *error = __DRI_CTX_ERROR_BAD_API;
+	 break;
+      case ST_CONTEXT_ERROR_BAD_VERSION:
+	 *error = __DRI_CTX_ERROR_BAD_VERSION;
+	 break;
+      case ST_CONTEXT_ERROR_BAD_FLAG:
+	 *error = __DRI_CTX_ERROR_BAD_FLAG;
+	 break;
+      case ST_CONTEXT_ERROR_UNKNOWN_ATTRIBUTE:
+	 *error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;
+	 break;
+      case ST_CONTEXT_ERROR_UNKNOWN_FLAG:
+	 *error = __DRI_CTX_ERROR_UNKNOWN_FLAG;
+	 break;
+      }
       goto fail;
+   }
+   ctx->st->st_manager_private = (void *) ctx;
+   ctx->stapi = stapi;
 
-   ctx->st = st_create_context(ctx->pipe, visual, st_share);
-   if (ctx->st == NULL)
-      goto fail;
+   if (ctx->st->cso_context) {
+      ctx->pp = pp_init(ctx->st->pipe, screen->pp_enabled, ctx->st->cso_context);
+      ctx->hud = hud_create(ctx->st->pipe, ctx->st->cso_context);
+   }
 
-   dri_init_extensions(ctx);
-
+   *error = __DRI_CTX_ERROR_SUCCESS;
    return GL_TRUE;
 
  fail:
    if (ctx && ctx->st)
-      st_destroy_context(ctx->st);
+      ctx->st->destroy(ctx->st);
 
-   if (ctx && ctx->pipe)
-      ctx->pipe->destroy(ctx->pipe);
-
-   FREE(ctx);
-   return FALSE;
+   free(ctx);
+   return GL_FALSE;
 }
 
 void
@@ -99,37 +161,40 @@ dri_destroy_context(__DRIcontext * cPriv)
 {
    struct dri_context *ctx = dri_context(cPriv);
 
-   /* note: we are freeing values and nothing more because
-    * driParseConfigFiles allocated values only - the rest
-    * is owned by screen optionCache.
-    */
-   FREE(ctx->optionCache.values);
+   if (ctx->hud) {
+      hud_destroy(ctx->hud);
+   }
 
    /* No particular reason to wait for command completion before
-    * destroying a context, but it is probably worthwhile flushing it
+    * destroying a context, but we flush the context here
     * to avoid having to add code elsewhere to cope with flushing a
     * partially destroyed context.
     */
-   st_flush(ctx->st, 0, NULL);
+   ctx->st->flush(ctx->st, 0, NULL);
+   ctx->st->destroy(ctx->st);
 
-   /* Also frees ctx->pipe?
-    */
-   st_destroy_context(ctx->st);
+   if (ctx->pp)
+      pp_free(ctx->pp);
 
-   FREE(ctx);
+   free(ctx);
 }
 
 GLboolean
 dri_unbind_context(__DRIcontext * cPriv)
 {
-   if (cPriv) {
-      struct dri_context *ctx = dri_context(cPriv);
+   /* dri_util.c ensures cPriv is not null */
+   struct dri_screen *screen = dri_screen(cPriv->driScreenPriv);
+   struct dri_context *ctx = dri_context(cPriv);
+   struct st_api *stapi = screen->st_api;
 
-      if (--ctx->bind_count == 0) {
-	 if (ctx->st && ctx->st == st_get_current()) {
-	    st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
-	    st_make_current(NULL, NULL, NULL);
-	 }
+   if (--ctx->bind_count == 0) {
+      if (ctx->st == ctx->stapi->get_current(ctx->stapi)) {
+         /* For conformance, unbind is supposed to flush the context.
+          * However, if we do it here we might end up flushing a partially
+          * destroyed context. Instead, we flush in dri_make_current and
+          * in dri_destroy_context which should cover all the cases.
+          */
+         stapi->make_current(stapi, NULL, NULL, NULL);
       }
    }
 
@@ -141,77 +206,53 @@ dri_make_current(__DRIcontext * cPriv,
 		 __DRIdrawable * driDrawPriv,
 		 __DRIdrawable * driReadPriv)
 {
-   if (cPriv) {
-      struct dri_context *ctx = dri_context(cPriv);
-      struct dri_drawable *draw = dri_drawable(driDrawPriv);
-      struct dri_drawable *read = dri_drawable(driReadPriv);
-      struct st_context *old_st = st_get_current();
+   /* dri_util.c ensures cPriv is not null */
+   struct dri_context *ctx = dri_context(cPriv);
+   struct dri_drawable *draw = dri_drawable(driDrawPriv);
+   struct dri_drawable *read = dri_drawable(driReadPriv);
+   struct st_context_iface *old_st = ctx->stapi->get_current(ctx->stapi);
 
-      if (old_st && old_st != ctx->st)
-	 st_flush(old_st, PIPE_FLUSH_RENDER_CACHE, NULL);
+   /* Flush the old context here so we don't have to flush on unbind() */
+   if (old_st && old_st != ctx->st)
+      old_st->flush(old_st, ST_FLUSH_FRONT, NULL);
 
-      ++ctx->bind_count;
+   ++ctx->bind_count;
 
-      if (ctx->dPriv != driDrawPriv) {
-	 ctx->dPriv = driDrawPriv;
-	 ctx->d_stamp = driDrawPriv->lastStamp - 1;
-      }
-      if (ctx->rPriv != driReadPriv) {
-	 ctx->rPriv = driReadPriv;
-	 ctx->r_stamp = driReadPriv->lastStamp - 1;
-      }
+   if (!draw && !read)
+      return ctx->stapi->make_current(ctx->stapi, ctx->st, NULL, NULL);
+   else if (!draw || !read)
+      return GL_FALSE;
 
-      st_make_current(ctx->st, draw->stfb, read->stfb);
-
-      if (__dri1_api_hooks) {
-	 dri1_update_drawables(ctx, draw, read);
-      } else {
-	 dri_update_buffer(ctx->pipe->screen,
-			   ctx->pipe->priv);
-      }
-   } else {
-      st_make_current(NULL, NULL, NULL);
+   if (ctx->dPriv != driDrawPriv) {
+      ctx->dPriv = driDrawPriv;
+      draw->texture_stamp = driDrawPriv->lastStamp - 1;
    }
+   if (ctx->rPriv != driReadPriv) {
+      ctx->rPriv = driReadPriv;
+      read->texture_stamp = driReadPriv->lastStamp - 1;
+   }
+
+   ctx->stapi->make_current(ctx->stapi, ctx->st, &draw->base, &read->base);
+
+   // This is ok to call here. If they are already init, it's a no-op.
+   if (draw->textures[ST_ATTACHMENT_BACK_LEFT] && draw->textures[ST_ATTACHMENT_DEPTH_STENCIL]
+      && ctx->pp)
+         pp_init_fbos(ctx->pp, draw->textures[ST_ATTACHMENT_BACK_LEFT]->width0,
+            draw->textures[ST_ATTACHMENT_BACK_LEFT]->height0);
 
    return GL_TRUE;
 }
 
-static void
-st_dri_lock(struct pipe_context *pipe)
+struct dri_context *
+dri_get_current(__DRIscreen *sPriv)
 {
-   dri_lock((struct dri_context *)pipe->priv);
-}
+   struct dri_screen *screen = dri_screen(sPriv);
+   struct st_api *stapi = screen->st_api;
+   struct st_context_iface *st;
 
-static void
-st_dri_unlock(struct pipe_context *pipe)
-{
-   dri_unlock((struct dri_context *)pipe->priv);
-}
+   st = stapi->get_current(stapi);
 
-static boolean
-st_dri_is_locked(struct pipe_context *pipe)
-{
-   return ((struct dri_context *)pipe->priv)->isLocked;
+   return (struct dri_context *) st ? st->st_manager_private : NULL;
 }
-
-static boolean
-st_dri_lost_lock(struct pipe_context *pipe)
-{
-   return ((struct dri_context *)pipe->priv)->wsLostLock;
-}
-
-static void
-st_dri_clear_lost_lock(struct pipe_context *pipe)
-{
-   ((struct dri_context *)pipe->priv)->wsLostLock = FALSE;
-}
-
-struct dri1_api_lock_funcs dri1_lf = {
-   .lock = st_dri_lock,
-   .unlock = st_dri_unlock,
-   .is_locked = st_dri_is_locked,
-   .is_lock_lost = st_dri_lost_lock,
-   .clear_lost_lock = st_dri_clear_lost_lock
-};
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */

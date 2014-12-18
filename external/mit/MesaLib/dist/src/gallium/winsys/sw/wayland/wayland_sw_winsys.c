@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.11
  *
  * Copyright (C) 2011 Benjamin Franzke <benjaminfranzke@googlemail.com>
  *
@@ -76,7 +75,8 @@ wayland_sw_winsys(struct sw_winsys *ws)
 static void
 wayland_displaytarget_display(struct sw_winsys *ws,
                               struct sw_displaytarget *dt,
-                              void *context_private)
+                              void *context_private,
+                              struct pipe_box *box)
 {
 }
 
@@ -243,6 +243,7 @@ wayland_displaytarget_get_handle(struct sw_winsys *ws,
 
    whandle->fd = wldt->fd;
    whandle->stride = wldt->stride;
+   whandle->size = wldt->size;
 
    return TRUE;
 }

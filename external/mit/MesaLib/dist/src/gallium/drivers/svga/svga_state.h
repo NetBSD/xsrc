@@ -40,7 +40,7 @@ void svga_destroy_state( struct svga_context *svga );
 struct svga_tracked_state {
    const char *name;
    unsigned dirty;
-   int (*update)( struct svga_context *svga, unsigned dirty );
+   enum pipe_error (*update)( struct svga_context *svga, unsigned dirty );
 };
 
 /* NEED_SWTNL
@@ -64,9 +64,8 @@ extern struct svga_tracked_state svga_hw_tss;
 extern struct svga_tracked_state svga_hw_tss_binding;
 extern struct svga_tracked_state svga_hw_clip_planes;
 extern struct svga_tracked_state svga_hw_vdecl;
-extern struct svga_tracked_state svga_hw_fs_parameters;
-extern struct svga_tracked_state svga_hw_vs_parameters;
-extern struct svga_tracked_state svga_hw_update_zero_stride;
+extern struct svga_tracked_state svga_hw_fs_constants;
+extern struct svga_tracked_state svga_hw_vs_constants;
 
 /* SWTNL_DRAW
  */
@@ -95,5 +94,9 @@ enum pipe_error svga_emit_initial_state( struct svga_context *svga );
 enum pipe_error svga_reemit_framebuffer_bindings( struct svga_context *svga );
 
 enum pipe_error svga_reemit_tss_bindings( struct svga_context *svga );
+
+enum pipe_error svga_reemit_vs_bindings(struct svga_context *svga);
+
+enum pipe_error svga_reemit_fs_bindings(struct svga_context *svga);
 
 #endif

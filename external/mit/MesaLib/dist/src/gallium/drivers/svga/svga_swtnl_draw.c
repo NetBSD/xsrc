@@ -29,6 +29,7 @@
 #include "pipe/p_state.h"
 
 #include "svga_context.h"
+#include "svga_screen.h"
 #include "svga_swtnl.h"
 #include "svga_state.h"
 #include "svga_swtnl_private.h"
@@ -39,7 +40,7 @@ enum pipe_error
 svga_swtnl_draw_vbo(struct svga_context *svga,
                     const struct pipe_draw_info *info)
 {
-   struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
+   struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = { 0 };
    struct pipe_transfer *ib_transfer = NULL;
    struct pipe_transfer *cb_transfer = NULL;
    struct draw_context *draw = svga->swtnl.draw;
@@ -55,7 +56,7 @@ svga_swtnl_draw_vbo(struct svga_context *svga,
    svga->state.sw.in_swtnl_draw = TRUE;
 
    ret = svga_update_state(svga, SVGA_STATE_SWTNL_DRAW);
-   if (ret) {
+   if (ret != PIPE_OK) {
       svga_context_flush(svga, NULL);
       ret = svga_update_state(svga, SVGA_STATE_SWTNL_DRAW);
       svga->swtnl.new_vbuf = TRUE;
@@ -66,16 +67,15 @@ svga_swtnl_draw_vbo(struct svga_context *svga,
     * Map vertex buffers
     */
    for (i = 0; i < svga->curr.num_vertex_buffers; i++) {
-      map = pipe_buffer_map(&svga->pipe,
-                            svga->curr.vb[i].buffer,
-                            PIPE_TRANSFER_READ,
-			    &vb_transfer[i]);
+      if (svga->curr.vb[i].buffer) {
+         map = pipe_buffer_map(&svga->pipe,
+                               svga->curr.vb[i].buffer,
+                               PIPE_TRANSFER_READ,
+                               &vb_transfer[i]);
 
-      draw_set_mapped_vertex_buffer(draw, i, map);
+         draw_set_mapped_vertex_buffer(draw, i, map, ~0);
+      }
    }
-
-   /* TODO move this to update_swtnl_draw */
-   draw_set_index_buffer(draw, &svga->curr.ib);
 
    /* Map index buffer, if present */
    map = NULL;
@@ -83,19 +83,21 @@ svga_swtnl_draw_vbo(struct svga_context *svga,
       map = pipe_buffer_map(&svga->pipe, svga->curr.ib.buffer,
                             PIPE_TRANSFER_READ,
                             &ib_transfer);
+      draw_set_indexes(draw,
+                       (const ubyte *) map + svga->curr.ib.offset,
+                       svga->curr.ib.index_size, ~0);
    }
-   draw_set_mapped_index_buffer(draw, map);
 
-   if (svga->curr.cb[PIPE_SHADER_VERTEX]) {
+   if (svga->curr.cbufs[PIPE_SHADER_VERTEX].buffer) {
       map = pipe_buffer_map(&svga->pipe,
-                            svga->curr.cb[PIPE_SHADER_VERTEX],
+                            svga->curr.cbufs[PIPE_SHADER_VERTEX].buffer,
                             PIPE_TRANSFER_READ,
 			    &cb_transfer);
       assert(map);
       draw_set_mapped_constant_buffer(
          draw, PIPE_SHADER_VERTEX, 0,
          map,
-         svga->curr.cb[PIPE_SHADER_VERTEX]->width0);
+         svga->curr.cbufs[PIPE_SHADER_VERTEX].buffer->width0);
    }
 
    draw_vbo(draw, info);
@@ -109,16 +111,18 @@ svga_swtnl_draw_vbo(struct svga_context *svga,
     * unmap vertex/index buffers
     */
    for (i = 0; i < svga->curr.num_vertex_buffers; i++) {
-      pipe_buffer_unmap(&svga->pipe, vb_transfer[i]);
-      draw_set_mapped_vertex_buffer(draw, i, NULL);
+      if (svga->curr.vb[i].buffer) {
+         pipe_buffer_unmap(&svga->pipe, vb_transfer[i]);
+         draw_set_mapped_vertex_buffer(draw, i, NULL, 0);
+      }
    }
 
    if (ib_transfer) {
       pipe_buffer_unmap(&svga->pipe, ib_transfer);
-      draw_set_mapped_index_buffer(draw, NULL);
+      draw_set_indexes(draw, NULL, 0, 0);
    }
 
-   if (svga->curr.cb[PIPE_SHADER_VERTEX]) {
+   if (svga->curr.cbufs[PIPE_SHADER_VERTEX].buffer) {
       pipe_buffer_unmap(&svga->pipe, cb_transfer);
    }
 
@@ -134,6 +138,8 @@ svga_swtnl_draw_vbo(struct svga_context *svga,
 
 boolean svga_init_swtnl( struct svga_context *svga )
 {
+   struct svga_screen *screen = svga_screen(svga->pipe.screen);
+
    svga->swtnl.backend = svga_vbuf_render_create(svga);
    if(!svga->swtnl.backend)
       goto fail;
@@ -151,16 +157,40 @@ boolean svga_init_swtnl( struct svga_context *svga )
 
    draw_set_render(svga->swtnl.draw, svga->swtnl.backend);
 
-   draw_install_aaline_stage(svga->swtnl.draw, &svga->pipe);
-   draw_install_aapoint_stage(svga->swtnl.draw, &svga->pipe);
+   svga->blitter = util_blitter_create(&svga->pipe);
+   if (!svga->blitter)
+      goto fail;
+
+   /* must be done before installing Draw stages */
+   util_blitter_cache_all_shaders(svga->blitter);
+
+   if (!screen->haveLineSmooth)
+      draw_install_aaline_stage(svga->swtnl.draw, &svga->pipe);
+
+   /* always install polygon stipple stage */
    draw_install_pstipple_stage(svga->swtnl.draw, &svga->pipe);
 
+   /* enable/disable line stipple stage depending on device caps */
+   draw_enable_line_stipple(svga->swtnl.draw, !screen->haveLineStipple);
+
+   /* always install AA point stage */
+   draw_install_aapoint_stage(svga->swtnl.draw, &svga->pipe);
+
+   /* Set wide line threshold above device limit (so we'll never really use it)
+    */
+   draw_wide_line_threshold(svga->swtnl.draw,
+                            MAX2(screen->maxLineWidth,
+                                 screen->maxLineWidthAA));
+
    if (debug_get_bool_option("SVGA_SWTNL_FSE", FALSE))
-      draw_set_driver_clipping(svga->swtnl.draw, TRUE, TRUE);
+      draw_set_driver_clipping(svga->swtnl.draw, TRUE, TRUE, TRUE, FALSE);
 
    return TRUE;
 
 fail:
+   if (svga->blitter)
+      util_blitter_destroy(svga->blitter);
+
    if (svga->swtnl.backend)
       svga->swtnl.backend->destroy( svga->swtnl.backend );
 

@@ -34,6 +34,8 @@ find_matching_signature(const char *name, const exec_list *actual_parameters,
 			gl_shader **shader_list, unsigned num_shaders,
 			bool use_builtin);
 
+namespace {
+
 class call_link_visitor : public ir_hierarchical_visitor {
 public:
    call_link_visitor(gl_shader_program *prog, gl_shader *linked,
@@ -68,7 +70,7 @@ public:
        * Doing so will modify the original shader.  This may prevent that
        * shader from being linkable in other programs.
        */
-      const ir_function_signature *const callee = ir->get_callee();
+      const ir_function_signature *const callee = ir->callee;
       assert(callee != NULL);
       const char *const name = callee->function_name();
 
@@ -79,7 +81,7 @@ public:
 	 find_matching_signature(name, &callee->parameters, &linked, 1,
 				 ir->use_builtin);
       if (sig != NULL) {
-	 ir->set_callee(sig);
+	 ir->callee = sig;
 	 return visit_continue;
       }
 
@@ -104,17 +106,19 @@ public:
       if (f == NULL) {
 	 f = new(linked) ir_function(name);
 
-	 /* Add the new function to the linked IR.
+	 /* Add the new function to the linked IR.  Put it at the end
+          * so that it comes after any global variable declarations
+          * that it refers to.
 	  */
 	 linked->symbols->add_function(f);
-	 linked->ir->push_head(f);
+	 linked->ir->push_tail(f);
       }
 
       ir_function_signature *linked_sig =
-	 f->exact_matching_signature(&callee->parameters);
+	 f->exact_matching_signature(NULL, &callee->parameters);
       if ((linked_sig == NULL)
 	  || ((linked_sig != NULL)
-	      && (linked_sig->is_builtin != ir->use_builtin))) {
+	      && (linked_sig->is_builtin() != ir->use_builtin))) {
 	 linked_sig = new(linked) ir_function_signature(callee->return_type);
 	 f->add_signature(linked_sig);
       }
@@ -141,8 +145,7 @@ public:
       struct hash_table *ht = hash_table_ctor(0, hash_table_pointer_hash,
 					      hash_table_pointer_compare);
       exec_list formal_parameters;
-      foreach_list_const(node, &sig->parameters) {
-	 const ir_instruction *const original = (ir_instruction *) node;
+      foreach_in_list(const ir_instruction, original, &sig->parameters) {
 	 assert(const_cast<ir_instruction *>(original)->as_variable());
 
 	 ir_instruction *copy = original->clone(linked, ht);
@@ -151,14 +154,15 @@ public:
 
       linked_sig->replace_parameters(&formal_parameters);
 
-      foreach_list_const(node, &sig->body) {
-	 const ir_instruction *const original = (ir_instruction *) node;
+      if (sig->is_defined) {
+         foreach_in_list(const ir_instruction, original, &sig->body) {
+            ir_instruction *copy = original->clone(linked, ht);
+            linked_sig->body.push_tail(copy);
+         }
 
-	 ir_instruction *copy = original->clone(linked, ht);
-	 linked_sig->body.push_tail(copy);
+         linked_sig->is_defined = true;
       }
 
-      linked_sig->is_defined = true;
       hash_table_dtor(ht);
 
       /* Patch references inside the function to things outside the function
@@ -166,8 +170,41 @@ public:
        */
       linked_sig->accept(this);
 
-      ir->set_callee(linked_sig);
+      ir->callee = linked_sig;
 
+      return visit_continue;
+   }
+
+   virtual ir_visitor_status visit_leave(ir_call *ir)
+   {
+      /* Traverse list of function parameters, and for array parameters
+       * propagate max_array_access. Otherwise arrays that are only referenced
+       * from inside functions via function parameters will be incorrectly
+       * optimized. This will lead to incorrect code being generated (or worse).
+       * Do it when leaving the node so the children would propagate their
+       * array accesses first.
+       */
+
+      const exec_node *formal_param_node = ir->callee->parameters.get_head();
+      if (formal_param_node) {
+         const exec_node *actual_param_node = ir->actual_parameters.get_head();
+         while (!actual_param_node->is_tail_sentinel()) {
+            ir_variable *formal_param = (ir_variable *) formal_param_node;
+            ir_rvalue *actual_param = (ir_rvalue *) actual_param_node;
+
+            formal_param_node = formal_param_node->get_next();
+            actual_param_node = actual_param_node->get_next();
+
+            if (formal_param->type->is_array()) {
+               ir_dereference_variable *deref = actual_param->as_dereference_variable();
+               if (deref && deref->var && deref->var->type->is_array()) {
+                  deref->var->data.max_array_access =
+                     MAX2(formal_param->data.max_array_access,
+                         deref->var->data.max_array_access);
+               }
+            }
+         }
+      }
       return visit_continue;
    }
 
@@ -187,18 +224,32 @@ public:
 	    var = ir->var->clone(linked, NULL);
 	    linked->symbols->add_variable(var);
 	    linked->ir->push_head(var);
-	 } else if (var->type->is_array()) {
-	    /* It is possible to have a global array declared in multiple
-	     * shaders without a size.  The array is implicitly sized by the
-	     * maximal access to it in *any* shader.  Because of this, we
-	     * need to track the maximal access to the array as linking pulls
-	     * more functions in that access the array.
-	     */
-	    var->max_array_access =
-	       MAX2(var->max_array_access, ir->var->max_array_access);
+	 } else {
+            if (var->type->is_array()) {
+               /* It is possible to have a global array declared in multiple
+                * shaders without a size.  The array is implicitly sized by
+                * the maximal access to it in *any* shader.  Because of this,
+                * we need to track the maximal access to the array as linking
+                * pulls more functions in that access the array.
+                */
+               var->data.max_array_access =
+                  MAX2(var->data.max_array_access,
+                       ir->var->data.max_array_access);
 
-	    if (var->type->length == 0 && ir->var->type->length != 0)
-	       var->type = ir->var->type;
+               if (var->type->length == 0 && ir->var->type->length != 0)
+                  var->type = ir->var->type;
+            }
+            if (var->is_interface_instance()) {
+               /* Similarly, we need implicit sizes of arrays within interface
+                * blocks to be sized by the maximal access in *any* shader.
+                */
+               for (unsigned i = 0; i < var->get_interface_type()->length;
+                    i++) {
+                  var->max_ifc_array_access[i] =
+                     MAX2(var->max_ifc_array_access[i],
+                          ir->var->max_ifc_array_access[i]);
+               }
+            }
 	 }
 
 	 ir->var = var;
@@ -239,6 +290,7 @@ private:
    hash_table *locals;
 };
 
+} /* anonymous namespace */
 
 /**
  * Searches a list of shaders for a particular function definition
@@ -254,16 +306,18 @@ find_matching_signature(const char *name, const exec_list *actual_parameters,
       if (f == NULL)
 	 continue;
 
-      ir_function_signature *sig = f->matching_signature(actual_parameters);
+      ir_function_signature *sig =
+         f->matching_signature(NULL, actual_parameters, use_builtin);
 
-      if ((sig == NULL) || !sig->is_defined)
+      if ((sig == NULL) ||
+          (!sig->is_defined && !sig->is_intrinsic))
 	 continue;
 
       /* If this function expects to bind to a built-in function and the
        * signature that we found isn't a built-in, keep looking.  Also keep
        * looking if we expect a non-built-in but found a built-in.
        */
-      if (use_builtin != sig->is_builtin)
+      if (use_builtin != sig->is_builtin())
 	    continue;
 
       return sig;

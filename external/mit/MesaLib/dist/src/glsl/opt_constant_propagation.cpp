@@ -41,6 +41,8 @@
 #include "ir_optimization.h"
 #include "glsl_types.h"
 
+namespace {
+
 class acp_entry : public exec_node
 {
 public:
@@ -90,6 +92,7 @@ public:
    ir_constant_propagation_visitor()
    {
       progress = false;
+      killed_all = false;
       mem_ctx = ralloc_context(0);
       this->acp = new(mem_ctx) exec_list;
       this->kills = new(mem_ctx) exec_list;
@@ -169,8 +172,7 @@ ir_constant_propagation_visitor::handle_rvalue(ir_rvalue **rvalue)
 	 channel = i;
       }
 
-      foreach_iter(exec_list_iterator, iter, *this->acp) {
-	 acp_entry *entry = (acp_entry *)iter.get();
+      foreach_in_list(acp_entry, entry, this->acp) {
 	 if (entry->var == deref->var && entry->write_mask & (1 << channel)) {
 	    found = entry;
 	    break;
@@ -241,7 +243,26 @@ ir_constant_propagation_visitor::visit_leave(ir_assignment *ir)
    if (this->in_assignee)
       return visit_continue;
 
-   kill(ir->lhs->variable_referenced(), ir->write_mask);
+   unsigned kill_mask = ir->write_mask;
+   if (ir->lhs->as_dereference_array()) {
+      /* The LHS of the assignment uses an array indexing operator (e.g. v[i]
+       * = ...;).  Since we only try to constant propagate vectors and
+       * scalars, this means that either (a) array indexing is being used to
+       * select a vector component, or (b) the variable in question is neither
+       * a scalar or a vector, so we don't care about it.  In the former case,
+       * we want to kill the whole vector, since in general we can't predict
+       * which vector component will be selected by array indexing.  In the
+       * latter case, it doesn't matter what we do, so go ahead and kill the
+       * whole variable anyway.
+       *
+       * Note that if the array index is constant (e.g. v[2] = ...;), we could
+       * in principle be smarter, but we don't need to, because a future
+       * optimization pass will convert it to a simple assignment with the
+       * correct mask.
+       */
+      kill_mask = ~0;
+   }
+   kill(ir->lhs->variable_referenced(), kill_mask);
 
    add_constant(ir);
 
@@ -259,11 +280,12 @@ ir_visitor_status
 ir_constant_propagation_visitor::visit_enter(ir_call *ir)
 {
    /* Do constant propagation on call parameters, but skip any out params */
-   exec_list_iterator sig_param_iter = ir->get_callee()->parameters.iterator();
-   foreach_iter(exec_list_iterator, iter, ir->actual_parameters) {
-      ir_variable *sig_param = (ir_variable *)sig_param_iter.get();
-      ir_rvalue *param = (ir_rvalue *)iter.get();
-      if (sig_param->mode != ir_var_out && sig_param->mode != ir_var_inout) {
+   foreach_two_lists(formal_node, &ir->callee->parameters,
+                     actual_node, &ir->actual_parameters) {
+      ir_variable *sig_param = (ir_variable *) formal_node;
+      ir_rvalue *param = (ir_rvalue *) actual_node;
+      if (sig_param->data.mode != ir_var_function_out
+          && sig_param->data.mode != ir_var_function_inout) {
 	 ir_rvalue *new_param = param;
 	 handle_rvalue(&new_param);
          if (new_param != param)
@@ -271,7 +293,6 @@ ir_constant_propagation_visitor::visit_enter(ir_call *ir)
 	 else
 	    param->accept(this);
       }
-      sig_param_iter.next();
    }
 
    /* Since we're unlinked, we don't (necssarily) know the side effects of
@@ -295,8 +316,7 @@ ir_constant_propagation_visitor::handle_if_block(exec_list *instructions)
    this->killed_all = false;
 
    /* Populate the initial acp with a constant of the original */
-   foreach_iter(exec_list_iterator, iter, *orig_acp) {
-      acp_entry *a = (acp_entry *)iter.get();
+   foreach_in_list(acp_entry, a, orig_acp) {
       this->acp->push_tail(new(this->mem_ctx) acp_entry(a));
    }
 
@@ -311,8 +331,7 @@ ir_constant_propagation_visitor::handle_if_block(exec_list *instructions)
    this->acp = orig_acp;
    this->killed_all = this->killed_all || orig_killed_all;
 
-   foreach_iter(exec_list_iterator, iter, *new_kills) {
-      kill_entry *k = (kill_entry *)iter.get();
+   foreach_in_list(kill_entry, k, new_kills) {
       kill(k->var, k->write_mask);
    }
 }
@@ -356,8 +375,7 @@ ir_constant_propagation_visitor::visit_enter(ir_loop *ir)
    this->acp = orig_acp;
    this->killed_all = this->killed_all || orig_killed_all;
 
-   foreach_iter(exec_list_iterator, iter, *new_kills) {
-      kill_entry *k = (kill_entry *)iter.get();
+   foreach_in_list(kill_entry, k, new_kills) {
       kill(k->var, k->write_mask);
    }
 
@@ -375,9 +393,7 @@ ir_constant_propagation_visitor::kill(ir_variable *var, unsigned write_mask)
       return;
 
    /* Remove any entries currently in the ACP for this kill. */
-   foreach_iter(exec_list_iterator, iter, *this->acp) {
-      acp_entry *entry = (acp_entry *)iter.get();
-
+   foreach_in_list_safe(acp_entry, entry, this->acp) {
       if (entry->var == var) {
 	 entry->write_mask &= ~write_mask;
 	 if (entry->write_mask == 0)
@@ -388,9 +404,7 @@ ir_constant_propagation_visitor::kill(ir_variable *var, unsigned write_mask)
    /* Add this writemask of the variable to the list of killed
     * variables in this block.
     */
-   foreach_iter(exec_list_iterator, iter, *this->kills) {
-      kill_entry *entry = (kill_entry *)iter.get();
-
+   foreach_in_list(kill_entry, entry, this->kills) {
       if (entry->var == var) {
 	 entry->write_mask |= write_mask;
 	 return;
@@ -430,6 +444,8 @@ ir_constant_propagation_visitor::add_constant(ir_assignment *ir)
    entry = new(this->mem_ctx) acp_entry(deref->var, ir->write_mask, constant);
    this->acp->push_tail(entry);
 }
+
+} /* unnamed namespace */
 
 /**
  * Does a constant propagation pass on the code present in the instruction stream.

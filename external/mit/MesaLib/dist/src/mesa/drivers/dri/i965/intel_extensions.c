@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ *
+ * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,222 +10,147 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
-#include "main/mfeatures.h"
+#include "main/version.h"
 
-#include "intel_chipset.h"
-#include "intel_context.h"
-#include "intel_extensions.h"
+#include "brw_context.h"
+#include "intel_batchbuffer.h"
+#include "intel_reg.h"
 #include "utils.h"
 
-
-#define need_GL_ARB_ES2_compatibility
-#define need_GL_ARB_draw_elements_base_vertex
-#define need_GL_ARB_framebuffer_object
-#define need_GL_ARB_map_buffer_range
-#define need_GL_ARB_occlusion_query
-#define need_GL_ARB_point_parameters
-#define need_GL_ARB_shader_objects
-#define need_GL_ARB_sync
-#define need_GL_ARB_vertex_array_object
-#define need_GL_ARB_vertex_program
-#define need_GL_ARB_vertex_shader
-#define need_GL_ARB_window_pos
-#define need_GL_EXT_blend_color
-#define need_GL_EXT_blend_equation_separate
-#define need_GL_EXT_blend_func_separate
-#define need_GL_EXT_blend_minmax
-#define need_GL_EXT_draw_buffers2
-#define need_GL_EXT_fog_coord
-#define need_GL_EXT_framebuffer_blit
-#define need_GL_EXT_framebuffer_multisample
-#define need_GL_EXT_framebuffer_object
-#define need_GL_EXT_gpu_program_parameters
-#define need_GL_EXT_point_parameters
-#define need_GL_EXT_provoking_vertex
-#define need_GL_EXT_secondary_color
-#define need_GL_EXT_separate_shader_objects
-#define need_GL_EXT_stencil_two_side
-#define need_GL_EXT_timer_query
-#define need_GL_APPLE_vertex_array_object
-#define need_GL_APPLE_object_purgeable
-#define need_GL_ATI_separate_stencil
-#define need_GL_ATI_envmap_bumpmap
-#define need_GL_NV_point_sprite
-#define need_GL_NV_vertex_program
-#define need_GL_OES_EGL_image
-#define need_GL_VERSION_2_0
-#define need_GL_VERSION_2_1
-
-#include "main/remap_helper.h"
-
-
 /**
- * Extension strings exported by the intel driver.
+ * Test if we can use MI_LOAD_REGISTER_MEM from an untrusted batchbuffer.
  *
- * Extensions supported by all chips supported by i830_dri, i915_dri, or
- * i965_dri.
+ * Some combinations of hardware and kernel versions allow this feature,
+ * while others don't.  Instead of trying to enumerate every case, just
+ * try and write a register and see if works.
  */
-static const struct dri_extension card_extensions[] = {
-   { "GL_ARB_ES2_compatibility",          GL_ARB_ES2_compatibility_functions },
-   { "GL_ARB_draw_elements_base_vertex",  GL_ARB_draw_elements_base_vertex_functions },
-   { "GL_ARB_explicit_attrib_location",   NULL },
-   { "GL_ARB_framebuffer_object",         GL_ARB_framebuffer_object_functions},
-   { "GL_ARB_half_float_pixel",           NULL },
-   { "GL_ARB_map_buffer_range",           GL_ARB_map_buffer_range_functions },
-   { "GL_ARB_multitexture",               NULL },
-   { "GL_ARB_pixel_buffer_object",      NULL },
-   { "GL_ARB_point_parameters",           GL_ARB_point_parameters_functions },
-   { "GL_ARB_point_sprite",               NULL },
-   { "GL_ARB_sampler_objects",            NULL },
-   { "GL_ARB_shader_objects",             GL_ARB_shader_objects_functions },
-   { "GL_ARB_shading_language_100",       GL_VERSION_2_0_functions },
-   { "GL_ARB_sync",                       GL_ARB_sync_functions },
-   { "GL_ARB_texture_border_clamp",       NULL },
-   { "GL_ARB_texture_cube_map",           NULL },
-   { "GL_ARB_texture_env_add",            NULL },
-   { "GL_ARB_texture_env_combine",        NULL },
-   { "GL_ARB_texture_env_crossbar",       NULL },
-   { "GL_ARB_texture_env_dot3",           NULL },
-   { "GL_ARB_texture_mirrored_repeat",    NULL },
-   { "GL_ARB_texture_rectangle",          NULL },
-   { "GL_ARB_vertex_array_object",        GL_ARB_vertex_array_object_functions},
-   { "GL_ARB_vertex_program",             GL_ARB_vertex_program_functions },
-   { "GL_ARB_vertex_shader",              GL_ARB_vertex_shader_functions },
-   { "GL_ARB_window_pos",                 GL_ARB_window_pos_functions },
-   { "GL_EXT_blend_color",                GL_EXT_blend_color_functions },
-   { "GL_EXT_blend_equation_separate",    GL_EXT_blend_equation_separate_functions },
-   { "GL_EXT_blend_func_separate",        GL_EXT_blend_func_separate_functions },
-   { "GL_EXT_blend_minmax",               GL_EXT_blend_minmax_functions },
-   { "GL_EXT_blend_logic_op",             NULL },
-   { "GL_EXT_blend_subtract",             NULL },
-   { "GL_EXT_framebuffer_blit",         GL_EXT_framebuffer_blit_functions },
-   { "GL_EXT_framebuffer_object",       GL_EXT_framebuffer_object_functions },
-   { "GL_EXT_framebuffer_multisample",    GL_EXT_framebuffer_multisample_functions },
-   { "GL_EXT_fog_coord",                  GL_EXT_fog_coord_functions },
-   { "GL_EXT_gpu_program_parameters",     GL_EXT_gpu_program_parameters_functions },
-   { "GL_EXT_packed_depth_stencil",       NULL },
-   { "GL_EXT_provoking_vertex",           GL_EXT_provoking_vertex_functions },
-   { "GL_EXT_secondary_color",            GL_EXT_secondary_color_functions },
-   { "GL_EXT_separate_shader_objects",    GL_EXT_separate_shader_objects_functions },
-   { "GL_EXT_stencil_wrap",               NULL },
-   { "GL_EXT_texture_edge_clamp",         NULL },
-   { "GL_EXT_texture_env_combine",        NULL },
-   { "GL_EXT_texture_env_dot3",           NULL },
-   { "GL_EXT_texture_filter_anisotropic", NULL },
-   { "GL_EXT_texture_lod_bias",           NULL },
-   { "GL_3DFX_texture_compression_FXT1",  NULL },
-   { "GL_APPLE_client_storage",           NULL },
-   { "GL_APPLE_object_purgeable",         GL_APPLE_object_purgeable_functions },
-   { "GL_APPLE_vertex_array_object",      GL_APPLE_vertex_array_object_functions},
-   { "GL_MESA_pack_invert",               NULL },
-   { "GL_MESA_ycbcr_texture",             NULL },
-   { "GL_NV_blend_square",                NULL },
-   { "GL_NV_vertex_program",              GL_NV_vertex_program_functions },
-   { "GL_NV_vertex_program1_1",           NULL },
-#if FEATURE_OES_EGL_image
-   { "GL_OES_EGL_image",                  GL_OES_EGL_image_functions },
-#endif
-   { NULL, NULL }
-};
-
-
-/** i915 / i945-only extensions */
-static const struct dri_extension i915_extensions[] = {
-   { "GL_ARB_depth_texture",              NULL },
-   { "GL_ARB_fragment_program",           NULL },
-   { "GL_ARB_shadow",                     NULL },
-   { "GL_ARB_texture_non_power_of_two",   NULL },
-   { "GL_ATI_separate_stencil",           GL_ATI_separate_stencil_functions },
-   { "GL_ATI_texture_env_combine3",       NULL },
-   { "GL_EXT_shadow_funcs",               NULL },
-   { "GL_EXT_stencil_two_side",           GL_EXT_stencil_two_side_functions },
-   { "GL_NV_texture_env_combine4",        NULL },
-   { NULL,                                NULL }
-};
-
-
-/** i965-only extensions */
-static const struct dri_extension brw_extensions[] = {
-   { "GL_ARB_color_buffer_float",         NULL },
-   { "GL_ARB_depth_clamp",                NULL },
-   { "GL_ARB_depth_texture",              NULL },
-   { "GL_ARB_fragment_coord_conventions", NULL },
-   { "GL_ARB_fragment_program",           NULL },
-   { "GL_ARB_fragment_program_shadow",    NULL },
-   { "GL_ARB_fragment_shader",            NULL },
-   { "GL_ARB_half_float_vertex",          NULL },
-   { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions },
-   { "GL_ARB_point_sprite", 		  NULL },
-   { "GL_ARB_seamless_cube_map",          NULL },
-   { "GL_ARB_shader_texture_lod",         NULL },
-   { "GL_ARB_shadow",                     NULL },
-#ifdef TEXTURE_FLOAT_ENABLED
-   { "GL_ARB_texture_float",              NULL },
-#endif
-   { "GL_MESA_texture_signed_rgba",       NULL },
-   { "GL_ARB_texture_compression_rgtc",   NULL },
-   { "GL_ARB_texture_non_power_of_two",   NULL },
-   { "GL_ARB_texture_rg",                 NULL },
-   { "GL_EXT_draw_buffers2",              GL_EXT_draw_buffers2_functions },
-   { "GL_EXT_framebuffer_sRGB",           NULL },
-   { "GL_EXT_shadow_funcs",               NULL },
-   { "GL_EXT_stencil_two_side",           GL_EXT_stencil_two_side_functions },
-   { "GL_EXT_texture_sRGB",		  NULL },
-   { "GL_EXT_texture_sRGB_decode",	  NULL },
-   { "GL_EXT_texture_swizzle",		  NULL },
-   { "GL_EXT_vertex_array_bgra",	  NULL },
-   { "GL_ATI_envmap_bumpmap",             GL_ATI_envmap_bumpmap_functions },
-   { "GL_ATI_separate_stencil",           GL_ATI_separate_stencil_functions },
-   { "GL_ATI_texture_env_combine3",       NULL },
-   { "GL_NV_conditional_render",          NULL },
-   { "GL_NV_texture_env_combine4",        NULL },
-   { NULL,                                NULL }
-};
-
-static const struct dri_extension ironlake_extensions[] = {
-   { "GL_EXT_timer_query",                GL_EXT_timer_query_functions },
-};
-
-static const struct dri_extension arb_oq_extensions[] = {
-   { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions },
-   { NULL, NULL }
-};
-
-
-static const struct dri_extension fragment_shader_extensions[] = {
-   { "GL_ARB_fragment_shader",            NULL },
-   { NULL, NULL }
-};
-
-/**
- * \brief Get GLSL version from the environment.
- *
- * If the environment variable INTEL_GLSL_VERSION is set, convert its value
- * to an integer and return it. Otherwise, return the default version, 120.
- */
-static GLuint
-get_glsl_version()
+static bool
+can_do_pipelined_register_writes(struct brw_context *brw)
 {
-    const char * s = getenv("INTEL_GLSL_VERSION");
-    if (s == NULL)
-        return 120;
-    else
-        return (GLuint) atoi(s);
+   /* Supposedly, Broadwell just works. */
+   if (brw->gen >= 8)
+      return true;
+
+   /* We use SO_WRITE_OFFSET0 since you're supposed to write it (unlike the
+    * statistics registers), and we already reset it to zero before using it.
+    */
+   const int reg = GEN7_SO_WRITE_OFFSET(0);
+   const int expected_value = 0x1337d0d0;
+   const int offset = 100;
+
+   /* The register we picked only exists on Gen7+. */
+   assert(brw->gen == 7);
+
+   uint32_t *data;
+   /* Set a value in a BO to a known quantity.  The workaround BO already
+    * exists and doesn't contain anything important, so we may as well use it.
+    */
+   drm_intel_bo_map(brw->batch.workaround_bo, true);
+   data = brw->batch.workaround_bo->virtual;
+   data[offset] = 0xffffffff;
+   drm_intel_bo_unmap(brw->batch.workaround_bo);
+
+   /* Write the register. */
+   BEGIN_BATCH(3);
+   OUT_BATCH(MI_LOAD_REGISTER_IMM | (3 - 2));
+   OUT_BATCH(reg);
+   OUT_BATCH(expected_value);
+   ADVANCE_BATCH();
+
+   intel_batchbuffer_emit_mi_flush(brw);
+
+   /* Save the register's value back to the buffer. */
+   BEGIN_BATCH(3);
+   OUT_BATCH(MI_STORE_REGISTER_MEM | (3 - 2));
+   OUT_BATCH(reg);
+   OUT_RELOC(brw->batch.workaround_bo,
+             I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+             offset * sizeof(uint32_t));
+   ADVANCE_BATCH();
+
+   intel_batchbuffer_flush(brw);
+
+   /* Check whether the value got written. */
+   drm_intel_bo_map(brw->batch.workaround_bo, false);
+   data = brw->batch.workaround_bo->virtual;
+   bool success = data[offset] == expected_value;
+   drm_intel_bo_unmap(brw->batch.workaround_bo);
+
+   return success;
+}
+
+static bool
+can_write_oacontrol(struct brw_context *brw)
+{
+   if (brw->gen < 6 || brw->gen >= 8)
+      return false;
+
+   /* Set "Select Context ID" to a particular address (which is likely not a
+    * context), but leave all counting disabled.  This should be harmless.
+    */
+   const int expected_value = 0x31337000;
+   const int offset = 110;
+
+   uint32_t *data;
+   /* Set a value in a BO to a known quantity.  The workaround BO already
+    * exists and doesn't contain anything important, so we may as well use it.
+    */
+   drm_intel_bo_map(brw->batch.workaround_bo, true);
+   data = brw->batch.workaround_bo->virtual;
+   data[offset] = 0xffffffff;
+   drm_intel_bo_unmap(brw->batch.workaround_bo);
+
+   /* Write OACONTROL. */
+   BEGIN_BATCH(3);
+   OUT_BATCH(MI_LOAD_REGISTER_IMM | (3 - 2));
+   OUT_BATCH(OACONTROL);
+   OUT_BATCH(expected_value);
+   ADVANCE_BATCH();
+
+   intel_batchbuffer_emit_mi_flush(brw);
+
+   /* Save the register's value back to the buffer. */
+   BEGIN_BATCH(3);
+   OUT_BATCH(MI_STORE_REGISTER_MEM | (3 - 2));
+   OUT_BATCH(OACONTROL);
+   OUT_RELOC(brw->batch.workaround_bo,
+             I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+             offset * sizeof(uint32_t));
+   ADVANCE_BATCH();
+
+   intel_batchbuffer_emit_mi_flush(brw);
+
+   /* Set OACONTROL back to zero (everything off). */
+   BEGIN_BATCH(3);
+   OUT_BATCH(MI_LOAD_REGISTER_IMM | (3 - 2));
+   OUT_BATCH(OACONTROL);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+
+   intel_batchbuffer_flush(brw);
+
+   /* Check whether the value got written. */
+   drm_intel_bo_map(brw->batch.workaround_bo, false);
+   data = brw->batch.workaround_bo->virtual;
+   bool success = data[offset] == expected_value;
+   drm_intel_bo_unmap(brw->batch.workaround_bo);
+
+   return success;
 }
 
 /**
@@ -235,27 +160,179 @@ get_glsl_version()
 void
 intelInitExtensions(struct gl_context *ctx)
 {
-   struct intel_context *intel = intel_context(ctx);
+   struct brw_context *brw = brw_context(ctx);
 
-   driInitExtensions(ctx, card_extensions, GL_FALSE);
+   assert(brw->gen >= 4);
 
-   _mesa_map_function_array(GL_VERSION_2_1_functions);
+   ctx->Extensions.ARB_buffer_storage = true;
+   ctx->Extensions.ARB_clear_texture = true;
+   ctx->Extensions.ARB_copy_image = true;
+   ctx->Extensions.ARB_depth_buffer_float = true;
+   ctx->Extensions.ARB_depth_clamp = true;
+   ctx->Extensions.ARB_depth_texture = true;
+   ctx->Extensions.ARB_draw_elements_base_vertex = true;
+   ctx->Extensions.ARB_draw_instanced = true;
+   ctx->Extensions.ARB_ES2_compatibility = true;
+   ctx->Extensions.ARB_explicit_attrib_location = true;
+   ctx->Extensions.ARB_explicit_uniform_location = true;
+   ctx->Extensions.ARB_fragment_coord_conventions = true;
+   ctx->Extensions.ARB_fragment_program = true;
+   ctx->Extensions.ARB_fragment_program_shadow = true;
+   ctx->Extensions.ARB_fragment_shader = true;
+   ctx->Extensions.ARB_framebuffer_object = true;
+   ctx->Extensions.ARB_half_float_vertex = true;
+   ctx->Extensions.ARB_instanced_arrays = true;
+   ctx->Extensions.ARB_internalformat_query = true;
+   ctx->Extensions.ARB_map_buffer_range = true;
+   ctx->Extensions.ARB_occlusion_query = true;
+   ctx->Extensions.ARB_occlusion_query2 = true;
+   ctx->Extensions.ARB_point_sprite = true;
+   ctx->Extensions.ARB_seamless_cube_map = true;
+   ctx->Extensions.ARB_shader_bit_encoding = true;
+   ctx->Extensions.ARB_shader_texture_lod = true;
+   ctx->Extensions.ARB_shadow = true;
+   ctx->Extensions.ARB_sync = true;
+   ctx->Extensions.ARB_texture_border_clamp = true;
+   ctx->Extensions.ARB_texture_compression_rgtc = true;
+   ctx->Extensions.ARB_texture_cube_map = true;
+   ctx->Extensions.ARB_texture_env_combine = true;
+   ctx->Extensions.ARB_texture_env_crossbar = true;
+   ctx->Extensions.ARB_texture_env_dot3 = true;
+   ctx->Extensions.ARB_texture_float = true;
+   ctx->Extensions.ARB_texture_mirror_clamp_to_edge = true;
+   ctx->Extensions.ARB_texture_non_power_of_two = true;
+   ctx->Extensions.ARB_texture_rg = true;
+   ctx->Extensions.ARB_texture_rgb10_a2ui = true;
+   ctx->Extensions.ARB_vertex_program = true;
+   ctx->Extensions.ARB_vertex_shader = true;
+   ctx->Extensions.ARB_vertex_type_2_10_10_10_rev = true;
+   ctx->Extensions.ARB_vertex_type_10f_11f_11f_rev = true;
+   ctx->Extensions.EXT_blend_color = true;
+   ctx->Extensions.EXT_blend_equation_separate = true;
+   ctx->Extensions.EXT_blend_func_separate = true;
+   ctx->Extensions.EXT_blend_minmax = true;
+   ctx->Extensions.EXT_draw_buffers2 = true;
+   ctx->Extensions.EXT_framebuffer_sRGB = true;
+   ctx->Extensions.EXT_gpu_program_parameters = true;
+   ctx->Extensions.EXT_packed_float = true;
+   ctx->Extensions.EXT_pixel_buffer_object = true;
+   ctx->Extensions.EXT_point_parameters = true;
+   ctx->Extensions.EXT_provoking_vertex = true;
+   ctx->Extensions.EXT_texture_array = true;
+   ctx->Extensions.EXT_texture_env_dot3 = true;
+   ctx->Extensions.EXT_texture_filter_anisotropic = true;
+   ctx->Extensions.EXT_texture_integer = true;
+   ctx->Extensions.EXT_texture_shared_exponent = true;
+   ctx->Extensions.EXT_texture_snorm = true;
+   ctx->Extensions.EXT_texture_sRGB = true;
+   ctx->Extensions.EXT_texture_sRGB_decode = true;
+   ctx->Extensions.EXT_texture_swizzle = true;
+   ctx->Extensions.EXT_stencil_two_side = true;
+   ctx->Extensions.EXT_vertex_array_bgra = true;
+   ctx->Extensions.AMD_seamless_cubemap_per_texture = true;
+   ctx->Extensions.APPLE_object_purgeable = true;
+   ctx->Extensions.ATI_separate_stencil = true;
+   ctx->Extensions.ATI_texture_env_combine3 = true;
+   ctx->Extensions.MESA_pack_invert = true;
+   ctx->Extensions.NV_conditional_render = true;
+   ctx->Extensions.NV_primitive_restart = true;
+   ctx->Extensions.NV_texture_env_combine4 = true;
+   ctx->Extensions.NV_texture_rectangle = true;
+   ctx->Extensions.TDFX_texture_compression_FXT1 = true;
+   ctx->Extensions.OES_compressed_ETC1_RGB8_texture = true;
+   ctx->Extensions.OES_EGL_image = true;
+   ctx->Extensions.OES_draw_texture = true;
+   ctx->Extensions.OES_standard_derivatives = true;
+   ctx->Extensions.OES_EGL_image_external = true;
 
-   ctx->Const.GLSLVersion = get_glsl_version();
+   if (brw->gen >= 7)
+      ctx->Const.GLSLVersion = 330;
+   else if (brw->gen >= 6)
+      ctx->Const.GLSLVersion = 140;
+   else
+      ctx->Const.GLSLVersion = 120;
+   _mesa_override_glsl_version(&ctx->Const);
 
-   if (intel->gen >= 5)
-      driInitExtensions(ctx, ironlake_extensions, GL_FALSE);
+   if (brw->gen >= 6) {
+      uint64_t dummy;
 
-   if (intel->gen >= 4)
-      driInitExtensions(ctx, brw_extensions, GL_FALSE);
+      ctx->Extensions.EXT_framebuffer_multisample = true;
+      ctx->Extensions.EXT_transform_feedback = true;
+      if (brw->gen < 8)
+         ctx->Extensions.EXT_framebuffer_multisample_blit_scaled = true;
+      ctx->Extensions.ARB_blend_func_extended = !driQueryOptionb(&brw->optionCache, "disable_blend_func_extended");
+      ctx->Extensions.ARB_draw_buffers_blend = true;
+      ctx->Extensions.ARB_ES3_compatibility = true;
+      ctx->Extensions.ARB_uniform_buffer_object = true;
+      ctx->Extensions.ARB_shading_language_420pack = true;
+      ctx->Extensions.ARB_texture_buffer_object = true;
+      ctx->Extensions.ARB_texture_buffer_object_rgb32 = true;
+      ctx->Extensions.ARB_texture_buffer_range = true;
+      ctx->Extensions.ARB_texture_cube_map_array = true;
+      ctx->Extensions.OES_depth_texture_cube_map = true;
+      ctx->Extensions.ARB_shading_language_packing = true;
+      ctx->Extensions.ARB_texture_multisample = true;
+      ctx->Extensions.ARB_sample_shading = true;
+      ctx->Extensions.ARB_texture_gather = true;
+      ctx->Extensions.ARB_conditional_render_inverted = true;
 
-   if (intel->gen == 3) {
-      driInitExtensions(ctx, i915_extensions, GL_FALSE);
-
-      if (driQueryOptionb(&intel->optionCache, "fragment_shader"))
-	 driInitExtensions(ctx, fragment_shader_extensions, GL_FALSE);
-
-      if (driQueryOptionb(&intel->optionCache, "stub_occlusion_query"))
-	 driInitExtensions(ctx, arb_oq_extensions, GL_FALSE);
+      /* Test if the kernel has the ioctl. */
+      if (drm_intel_reg_read(brw->bufmgr, TIMESTAMP, &dummy) == 0)
+         ctx->Extensions.ARB_timer_query = true;
    }
+
+   if (brw->gen >= 5) {
+      ctx->Extensions.ARB_texture_query_lod = true;
+      ctx->Extensions.EXT_timer_query = true;
+      ctx->Extensions.EXT_shader_integer_mix = ctx->Const.GLSLVersion >= 130;
+      ctx->Extensions.ARB_texture_query_levels = ctx->Const.GLSLVersion >= 130;
+   }
+
+   if (brw->gen >= 7) {
+      ctx->Extensions.ARB_conservative_depth = true;
+      ctx->Extensions.ARB_texture_view = true;
+      ctx->Extensions.AMD_vertex_shader_layer = true;
+      if (can_do_pipelined_register_writes(brw)) {
+         ctx->Extensions.ARB_transform_feedback2 = true;
+         ctx->Extensions.ARB_transform_feedback3 = true;
+         ctx->Extensions.ARB_transform_feedback_instanced = true;
+         ctx->Extensions.ARB_draw_indirect = true;
+      }
+
+      /* Only enable this in core profile because other parts of Mesa behave
+       * slightly differently when the extension is enabled.
+       */
+      if (ctx->API == API_OPENGL_CORE) {
+         ctx->Extensions.ARB_viewport_array = true;
+         ctx->Extensions.AMD_vertex_shader_viewport_index = true;
+      }
+
+      ctx->Extensions.ARB_texture_compression_bptc = true;
+      ctx->Extensions.ARB_derivative_control = true;
+   }
+
+   if (brw->gen >= 8) {
+      ctx->Extensions.ARB_stencil_texturing = true;
+   }
+
+   if (brw->gen == 5 || can_write_oacontrol(brw)) {
+      ctx->Extensions.AMD_performance_monitor = true;
+      ctx->Extensions.INTEL_performance_query = true;
+   }
+
+   if (ctx->API == API_OPENGL_CORE)
+      ctx->Extensions.ARB_base_instance = true;
+   if (ctx->API != API_OPENGL_CORE)
+      ctx->Extensions.ARB_color_buffer_float = true;
+
+   if (ctx->Mesa_DXTn || driQueryOptionb(&brw->optionCache, "force_s3tc_enable"))
+      ctx->Extensions.EXT_texture_compression_s3tc = true;
+
+   ctx->Extensions.ANGLE_texture_compression_dxt = true;
+
+   if (brw->gen >= 7)
+      ctx->Extensions.ARB_shader_atomic_counters = true;
+
+   if (brw->gen == 7)
+      ctx->Extensions.ARB_gpu_shader5 = true;
 }

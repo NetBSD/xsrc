@@ -28,10 +28,13 @@
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_format.h"
-#include "vmw_screen.h"
 
+#include "vmw_context.h"
+#include "vmw_screen.h"
 #include "vmw_surface.h"
+#include "vmw_buffer.h"
 #include "svga_drm_public.h"
+#include "svga3d_surfacedefs.h"
 
 #include "state_tracker/drm_driver.h"
 
@@ -39,6 +42,7 @@
 #include <xf86drm.h>
 
 #include <stdio.h>
+#include <fcntl.h>
 
 struct dri1_api_version {
    int major;
@@ -50,15 +54,19 @@ static struct svga_winsys_surface *
 vmw_drm_surface_from_handle(struct svga_winsys_screen *sws,
 			    struct winsys_handle *whandle,
 			    SVGA3dSurfaceFormat *format);
+
+static struct svga_winsys_surface *
+vmw_drm_gb_surface_from_handle(struct svga_winsys_screen *sws,
+                               struct winsys_handle *whandle,
+                               SVGA3dSurfaceFormat *format);
 static boolean
 vmw_drm_surface_get_handle(struct svga_winsys_screen *sws,
 			   struct svga_winsys_surface *surface,
 			   unsigned stride,
 			   struct winsys_handle *whandle);
 
-static struct dri1_api_version drm_required = { 1, 0, 0 };
-static struct dri1_api_version drm_compat = { 1, 0, 0 };
-static struct dri1_api_version drm_scanout = { 0, 9, 0 };
+static struct dri1_api_version drm_required = { 2, 1, 0 };
+static struct dri1_api_version drm_compat = { 2, 0, 0 };
 
 static boolean
 vmw_dri1_check_version(const struct dri1_api_version *cur,
@@ -71,13 +79,12 @@ vmw_dri1_check_version(const struct dri1_api_version *cur,
    if (cur->major == required->major && cur->minor >= required->minor)
       return TRUE;
 
-   fprintf(stderr, "%s version failure.\n", component);
-   fprintf(stderr, "%s version is %d.%d.%d and this driver can only work\n"
-	   "with versions %d.%d.x through %d.x.x.\n",
-	   component,
-	   cur->major,
-	   cur->minor,
-	   cur->patch_level, required->major, required->minor, compat->major);
+   vmw_error("%s version failure.\n", component);
+   vmw_error("%s version is %d.%d.%d and this driver can only work\n"
+             "with versions %d.%d.x through %d.x.x.\n",
+             component,
+             cur->major, cur->minor, cur->patch_level,
+             required->major, required->minor, compat->major);
    return FALSE;
 }
 
@@ -88,8 +95,6 @@ struct svga_winsys_screen *
 svga_drm_winsys_screen_create(int fd)
 {
    struct vmw_winsys_screen *vws;
-   boolean use_old_scanout_flag = FALSE;
-
    struct dri1_api_version drm_ver;
    drmVersionPtr ver;
 
@@ -106,16 +111,13 @@ svga_drm_winsys_screen_create(int fd)
 			       &drm_compat, "vmwgfx drm driver"))
       return NULL;
 
-   if (!vmw_dri1_check_version(&drm_ver, &drm_scanout,
-			       &drm_compat, "use old scanout field (not a error)"))
-      use_old_scanout_flag = TRUE;
-
-   vws = vmw_winsys_create( fd, use_old_scanout_flag );
+   vws = vmw_winsys_create( fd, FALSE );
    if (!vws)
       goto out_no_vws;
 
    /* XXX do this properly */
-   vws->base.surface_from_handle = vmw_drm_surface_from_handle;
+   vws->base.surface_from_handle = vws->base.have_gb_objects ?
+      vmw_drm_gb_surface_from_handle : vmw_drm_surface_from_handle;
    vws->base.surface_get_handle = vmw_drm_surface_get_handle;
 
    return &vws->base;
@@ -156,30 +158,36 @@ vmw_dri1_intersect_src_bbox(struct drm_clip_rect *dst,
    return TRUE;
 }
 
+/**
+ * vmw_drm_gb_surface_from_handle - Create a shared surface
+ *
+ * @sws: Screen to register the surface with.
+ * @whandle: struct winsys_handle identifying the kernel surface object
+ * @format: On successful return points to a value describing the
+ * surface format.
+ *
+ * Returns a refcounted pointer to a struct svga_winsys_surface
+ * embedded in a struct vmw_svga_winsys_surface on success or NULL
+ * on failure.
+ */
 static struct svga_winsys_surface *
-vmw_drm_surface_from_handle(struct svga_winsys_screen *sws,
-			    struct winsys_handle *whandle,
-			    SVGA3dSurfaceFormat *format)
+vmw_drm_gb_surface_from_handle(struct svga_winsys_screen *sws,
+                               struct winsys_handle *whandle,
+                               SVGA3dSurfaceFormat *format)
 {
     struct vmw_svga_winsys_surface *vsrf;
     struct svga_winsys_surface *ssrf;
     struct vmw_winsys_screen *vws = vmw_winsys_screen(sws);
-    union drm_vmw_surface_reference_arg arg;
-    struct drm_vmw_surface_arg *req = &arg.req;
-    struct drm_vmw_surface_create_req *rep = &arg.rep;
+    SVGA3dSurfaceFlags flags;
+    uint32_t mip_levels;
+    struct vmw_buffer_desc desc;
+    struct pb_manager *provider = vws->pools.gmr;
+    struct pb_buffer *pb_buf;
+    uint32_t handle;
     int ret;
-    int i;
 
-    /**
-     * The vmware device specific handle is the hardware SID.
-     * FIXME: We probably want to move this to the ioctl implementations.
-     */
-
-    memset(&arg, 0, sizeof(arg));
-    req->sid = whandle->handle;
-
-    ret = drmCommandWriteRead(vws->ioctl.drm_fd, DRM_VMW_REF_SURFACE,
-			      &arg, sizeof(arg));
+    ret = vmw_ioctl_gb_surface_ref(vws, whandle, &flags, format,
+                                   &mip_levels, &handle, &desc.region);
 
     if (ret) {
 	fprintf(stderr, "Failed referencing shared surface. SID %d.\n"
@@ -188,18 +196,119 @@ vmw_drm_surface_from_handle(struct svga_winsys_screen *sws,
 	return NULL;
     }
 
+    if (mip_levels != 1) {
+       fprintf(stderr, "Incorrect number of mipmap levels on shared surface."
+               " SID %d, levels %d\n",
+               whandle->handle, mip_levels);
+       goto out_mip;
+    }
+
+    vsrf = CALLOC_STRUCT(vmw_svga_winsys_surface);
+    if (!vsrf)
+	goto out_mip;
+
+    pipe_reference_init(&vsrf->refcnt, 1);
+    p_atomic_set(&vsrf->validated, 0);
+    vsrf->screen = vws;
+    vsrf->sid = handle;
+    vsrf->size = vmw_region_size(desc.region);
+
+    /*
+     * Synchronize backing buffers of shared surfaces using the
+     * kernel, since we don't pass fence objects around between
+     * processes.
+     */
+    desc.pb_desc.alignment = 4096;
+    desc.pb_desc.usage = VMW_BUFFER_USAGE_SHARED | VMW_BUFFER_USAGE_SYNC;
+    pb_buf = provider->create_buffer(provider, vsrf->size, &desc.pb_desc);
+    vsrf->buf = vmw_svga_winsys_buffer_wrap(pb_buf);
+    if (!vsrf->buf)
+       goto out_no_buf;
+    ssrf = svga_winsys_surface(vsrf);
+
+    return ssrf;
+
+out_no_buf:
+    FREE(vsrf);
+out_mip:
+    vmw_ioctl_region_destroy(desc.region);
+    vmw_ioctl_surface_destroy(vws, whandle->handle);
+    return NULL;
+}
+
+static struct svga_winsys_surface *
+vmw_drm_surface_from_handle(struct svga_winsys_screen *sws,
+                            struct winsys_handle *whandle,
+			    SVGA3dSurfaceFormat *format)
+{
+    struct vmw_svga_winsys_surface *vsrf;
+    struct svga_winsys_surface *ssrf;
+    struct vmw_winsys_screen *vws = vmw_winsys_screen(sws);
+    union drm_vmw_surface_reference_arg arg;
+    struct drm_vmw_surface_arg *req = &arg.req;
+    struct drm_vmw_surface_create_req *rep = &arg.rep;
+    uint32_t handle = 0;
+    struct drm_vmw_size size;
+    SVGA3dSize base_size;
+    int ret;
+    int i;
+
+    switch (whandle->type) {
+    case DRM_API_HANDLE_TYPE_SHARED:
+    case DRM_API_HANDLE_TYPE_KMS:
+       handle = whandle->handle;
+       break;
+    case DRM_API_HANDLE_TYPE_FD:
+       ret = drmPrimeFDToHandle(vws->ioctl.drm_fd, whandle->handle,
+                                &handle);
+       if (ret) {
+	  vmw_error("Failed to get handle from prime fd %d.\n",
+		    (int) whandle->handle);
+	  return NULL;
+       }
+       break;
+    default:
+       vmw_error("Attempt to import unsupported handle type %d.\n",
+                 whandle->type);
+       return NULL;
+    }
+
+    memset(&arg, 0, sizeof(arg));
+    req->sid = handle;
+    rep->size_addr = (unsigned long)&size;
+
+    ret = drmCommandWriteRead(vws->ioctl.drm_fd, DRM_VMW_REF_SURFACE,
+			      &arg, sizeof(arg));
+
+    /*
+     * Need to close the handle we got from prime.
+     */
+    if (whandle->type == DRM_API_HANDLE_TYPE_FD)
+       vmw_ioctl_surface_destroy(vws, handle);
+
+    if (ret) {
+       /*
+        * Any attempt to share something other than a surface, like a dumb
+        * kms buffer, should fail here.
+        */
+       vmw_error("Failed referencing shared surface. SID %d.\n"
+                 "Error %d (%s).\n",
+                 handle, ret, strerror(-ret));
+       return NULL;
+    }
+
     if (rep->mip_levels[0] != 1) {
-	fprintf(stderr, "Incorrect number of mipmap levels on shared surface."
-		" SID %d, levels %d\n",
-		whandle->handle, rep->mip_levels[0]);
+        vmw_error("Incorrect number of mipmap levels on shared surface."
+                  " SID %d, levels %d\n",
+                  handle, rep->mip_levels[0]);
 	goto out_mip;
     }
 
     for (i=1; i < DRM_VMW_MAX_SURFACE_FACES; ++i) {
 	if (rep->mip_levels[i] != 0) {
-	    fprintf(stderr, "Incorrect number of faces levels on shared surface."
-		    " SID %d, face %d present.\n",
-		    whandle->handle, i);
+            vmw_error("Incorrect number of faces levels on shared surface."
+                      " SID %d, face %d present.\n",
+                      handle, i);
 	    goto out_mip;
 	}
    }
@@ -211,14 +320,24 @@ vmw_drm_surface_from_handle(struct svga_winsys_screen *sws,
     pipe_reference_init(&vsrf->refcnt, 1);
     p_atomic_set(&vsrf->validated, 0);
     vsrf->screen = vws;
-    vsrf->sid = whandle->handle;
+    vsrf->sid = handle;
     ssrf = svga_winsys_surface(vsrf);
     *format = rep->format;
+
+    /* Estimate usage, for early flushing. */
+
+    base_size.width = size.width;
+    base_size.height = size.height;
+    base_size.depth = size.depth;
+    vsrf->size = svga3dsurface_get_serialized_size(rep->format, base_size,
+                                                   rep->mip_levels[0],
+                                                   FALSE);
 
     return ssrf;
 
 out_mip:
-    vmw_ioctl_surface_destroy(vws, whandle->handle);
+    vmw_ioctl_surface_destroy(vws, handle);
+
     return NULL;
 }
 
@@ -228,7 +347,9 @@ vmw_drm_surface_get_handle(struct svga_winsys_screen *sws,
 			   unsigned stride,
 			   struct winsys_handle *whandle)
 {
+    struct vmw_winsys_screen *vws = vmw_winsys_screen(sws);
     struct vmw_svga_winsys_surface *vsrf;
+    int ret;
 
     if (!surface)
 	return FALSE;
@@ -236,6 +357,25 @@ vmw_drm_surface_get_handle(struct svga_winsys_screen *sws,
     vsrf = vmw_svga_winsys_surface(surface);
     whandle->handle = vsrf->sid;
     whandle->stride = stride;
+
+    switch (whandle->type) {
+    case DRM_API_HANDLE_TYPE_SHARED:
+    case DRM_API_HANDLE_TYPE_KMS:
+       whandle->handle = vsrf->sid;
+       break;
+    case DRM_API_HANDLE_TYPE_FD:
+       ret = drmPrimeHandleToFD(vws->ioctl.drm_fd, vsrf->sid, DRM_CLOEXEC,
+				(int *)&whandle->handle);
+       if (ret) {
+	  vmw_error("Failed to get file descriptor from prime.\n");
+	  return FALSE;
+       }
+       break;
+    default:
+       vmw_error("Attempt to export unsupported handle type %d.\n",
+		 whandle->type);
+       return FALSE;
+    }
 
     return TRUE;
 }

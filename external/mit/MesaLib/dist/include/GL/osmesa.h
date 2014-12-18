@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
  * 
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  * 
@@ -17,9 +16,10 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 
@@ -60,8 +60,8 @@ extern "C" {
 #include <GL/gl.h>
 
 
-#define OSMESA_MAJOR_VERSION 6
-#define OSMESA_MINOR_VERSION 5
+#define OSMESA_MAJOR_VERSION 10
+#define OSMESA_MINOR_VERSION 0
 #define OSMESA_PATCH_VERSION 0
 
 
@@ -99,11 +99,6 @@ extern "C" {
 
 
 typedef struct osmesa_context *OSMesaContext;
-
-
-#if defined(__BEOS__) || defined(__QUICKDRAW__)
-#pragma export on
-#endif
 
 
 /*
@@ -276,9 +271,18 @@ GLAPI void GLAPIENTRY
 OSMesaColorClamp(GLboolean enable);
 
 
-#if defined(__BEOS__) || defined(__QUICKDRAW__)
-#pragma export off
-#endif
+/**
+ * Enable/disable Gallium post-process filters.
+ * This should be called after a context is created, but before it is
+ * made current for the first time.  After a context has been made
+ * current, this function has no effect.
+ * If the enable_value param is zero, the filter is disabled.  Otherwise
+ * the filter is enabled, and the value may control the filter's quality.
+ * New in Mesa 10.0
+ */
+GLAPI void GLAPIENTRY
+OSMesaPostprocess(OSMesaContext osmesa, const char *filter,
+                  unsigned enable_value);
 
 
 #ifdef __cplusplus

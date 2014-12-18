@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -29,16 +29,28 @@
 #define INTELCONTEXT_INC
 
 
+#include <stdbool.h>
+#include <string.h>
+#include "main/mtypes.h"
+#include "main/mm.h"
 
-#include "mtypes.h"
+#ifdef __cplusplus
+extern "C" {
+	/* Evil hack for using libdrm in a c++ compiler. */
+	#define virtual virt
+#endif
+
 #include "drm.h"
-#include "mm.h"
-#include "texmem.h"
-#include "vblank.h"
+#include "intel_bufmgr.h"
 
 #include "intel_screen.h"
+#include "intel_tex_obj.h"
 #include "i915_drm.h"
-#include "i830_common.h"
+
+#ifdef __cplusplus
+	#undef virtual
+#endif
+
 #include "tnl/t_vertex.h"
 
 #define TAG(x) intel##x
@@ -48,167 +60,187 @@
 #define DV_PF_555  (1<<8)
 #define DV_PF_565  (2<<8)
 #define DV_PF_8888 (3<<8)
+#define DV_PF_4444 (8<<8)
+#define DV_PF_1555 (9<<8)
 
-#define INTEL_CONTEXT(ctx)	((intelContextPtr)(ctx))
+struct intel_region;
+struct intel_context;
 
-typedef struct intel_context intelContext;
-typedef struct intel_context *intelContextPtr;
-typedef struct intel_texture_object *intelTextureObjectPtr;
+typedef void (*intel_tri_func) (struct intel_context *, intelVertex *,
+                                intelVertex *, intelVertex *);
+typedef void (*intel_line_func) (struct intel_context *, intelVertex *,
+                                 intelVertex *);
+typedef void (*intel_point_func) (struct intel_context *, intelVertex *);
 
-typedef void (*intel_tri_func)(intelContextPtr, intelVertex *, intelVertex *,
-							  intelVertex *);
-typedef void (*intel_line_func)(intelContextPtr, intelVertex *, intelVertex *);
-typedef void (*intel_point_func)(intelContextPtr, intelVertex *);
-
+/**
+ * Bits for intel->Fallback field
+ */
+/*@{*/
 #define INTEL_FALLBACK_DRAW_BUFFER	 0x1
 #define INTEL_FALLBACK_READ_BUFFER	 0x2
-#define INTEL_FALLBACK_USER		 0x4
-#define INTEL_FALLBACK_NO_BATCHBUFFER	 0x8
-#define INTEL_FALLBACK_NO_TEXMEM	 0x10
+#define INTEL_FALLBACK_DEPTH_BUFFER      0x4
+#define INTEL_FALLBACK_STENCIL_BUFFER    0x8
+#define INTEL_FALLBACK_USER		 0x10
 #define INTEL_FALLBACK_RENDERMODE	 0x20
+#define INTEL_FALLBACK_TEXTURE   	 0x40
+#define INTEL_FALLBACK_DRIVER            0x1000  /**< first for drivers */
+/*@}*/
 
-extern void intelFallback( intelContextPtr intel, GLuint bit, GLboolean mode );
+extern void intelFallback(struct intel_context *intel, GLbitfield bit,
+                          bool mode);
 #define FALLBACK( intel, bit, mode ) intelFallback( intel, bit, mode )
 
 
-#define INTEL_TEX_MAXLEVELS 10
+#define INTEL_WRITE_PART  0x1
+#define INTEL_WRITE_FULL  0x2
+#define INTEL_READ        0x4
 
+#ifndef likely
+#ifdef __GNUC__
+#define likely(expr) (__builtin_expect(expr, 1))
+#define unlikely(expr) (__builtin_expect(expr, 0))
+#else
+#define likely(expr) (expr)
+#define unlikely(expr) (expr)
+#endif
+#endif
 
-struct intel_texture_object
-{
-   driTextureObject    base;	/* the parent class */
+struct intel_sync_object {
+   struct gl_sync_object Base;
 
-   GLuint texelBytes;
-   GLuint age;
-   GLuint Pitch;
-   GLuint Height;
-   GLuint TextureOffset;
-   GLubyte *BufAddr;   
-
-   GLuint min_level;
-   GLuint max_level;
-   GLuint depth_pitch;
-
-   struct {
-      const struct gl_texture_image *image;
-      GLuint offset;       /* into BufAddr */
-      GLuint height;
-      GLuint internalFormat;
-   } image[6][INTEL_TEX_MAXLEVELS];
-
-   GLuint dirty;
-   GLuint firstLevel,lastLevel;
+   /** Batch associated with this sync object */
+   drm_intel_bo *bo;
 };
 
+struct intel_batchbuffer {
+   /** Current batchbuffer being queued up. */
+   drm_intel_bo *bo;
+   /** Last BO submitted to the hardware.  Used for glFinish(). */
+   drm_intel_bo *last_bo;
 
+   uint16_t emit, total;
+   uint16_t used, reserved_space;
+   uint32_t *map;
+   uint32_t *cpu_map;
+#define BATCH_SZ (8192*sizeof(uint32_t))
+};
+
+/**
+ * intel_context is derived from Mesa's context class: struct gl_context.
+ */
 struct intel_context
 {
-   GLcontext ctx;		/* the parent class */
+   struct gl_context ctx;  /**< base class, must be first field */
 
-   struct {
-      void (*destroy)( intelContextPtr intel ); 
-      void (*emit_state)( intelContextPtr intel );
-      void (*lost_hardware)( intelContextPtr intel );
-      void (*update_texture_state)( intelContextPtr intel );
+   struct
+   {
+      void (*destroy) (struct intel_context * intel);
+      void (*emit_state) (struct intel_context * intel);
+      void (*finish_batch) (struct intel_context * intel);
+      void (*new_batch) (struct intel_context * intel);
+      void (*emit_invarient_state) (struct intel_context * intel);
+      void (*update_texture_state) (struct intel_context * intel);
 
-      void (*render_start)( intelContextPtr intel );
-      void (*set_color_region)( intelContextPtr intel, const intelRegion *reg );
-      void (*set_z_region)( intelContextPtr intel, const intelRegion *reg );
-      void (*update_color_z_regions)(intelContextPtr intel,
-                                     const intelRegion *colorRegion,
-                                     const intelRegion *depthRegion);
-      void (*emit_flush)( intelContextPtr intel );
-      void (*reduced_primitive_state)( intelContextPtr intel, GLenum rprim );
+      void (*render_start) (struct intel_context * intel);
+      void (*render_prevalidate) (struct intel_context * intel);
+      void (*set_draw_region) (struct intel_context * intel,
+                               struct intel_region * draw_regions[],
+                               struct intel_region * depth_region,
+			       GLuint num_regions);
+      void (*update_draw_buffer)(struct intel_context *intel);
 
-      GLboolean (*check_vertex_size)( intelContextPtr intel, GLuint expected );
+      void (*reduced_primitive_state) (struct intel_context * intel,
+                                       GLenum rprim);
 
-      void (*clear_with_tris)( intelContextPtr intel, GLbitfield mask,
-			       GLboolean all, 
-			       GLint cx, GLint cy, GLint cw, GLint ch);
+      bool (*check_vertex_size) (struct intel_context * intel,
+				      GLuint expected);
+      void (*invalidate_state) (struct intel_context *intel,
+				GLuint new_state);
 
-      void (*rotate_window)( intelContextPtr intel,
-                             __DRIdrawablePrivate *dPriv, GLuint srcBuf);
+      void (*assert_not_dirty) (struct intel_context *intel);
 
-      intelTextureObjectPtr (*alloc_tex_obj)( struct gl_texture_object *tObj );
-
+      void (*debug_batch)(struct intel_context *intel);
+      void (*annotate_aub)(struct intel_context *intel);
+      bool (*render_target_supported)(struct intel_context *intel,
+				      struct gl_renderbuffer *rb);
    } vtbl;
 
-   GLint refcount;   
-   GLuint Fallback;
+   GLbitfield Fallback;  /**< mask of INTEL_FALLBACK_x bits */
    GLuint NewGLState;
-   
-   struct {
-      GLuint start_offset;
-      GLint size;
-      GLint space;
-      GLubyte *ptr;
-      GLuint counter;
-      GLuint last_emit_state;
-      GLboolean contains_geometry;
-      const char *func;
-      GLuint last_swap;
-   } batch;
-      
-   struct {
-      void *ptr;
-      GLint size;
-      GLuint offset;
-      GLuint active_buf;
-      GLuint irq_emitted;
-   } alloc;
+ 
+   dri_bufmgr *bufmgr;
+   unsigned int maxBatchSize;
 
-   struct {
-      GLuint primitive;
-      GLubyte *start_ptr;      
-      void (*flush)( GLcontext * );
+   /**
+    * Generation number of the hardware: 2 is 8xx, 3 is 9xx pre-965, 4 is 965.
+    */
+   int gen;
+   bool is_945;
+   bool has_swizzling;
+
+   struct intel_batchbuffer batch;
+
+   drm_intel_bo *first_post_swapbuffers_batch;
+   bool need_throttle;
+   bool no_batch_wrap;
+   bool tnl_pipeline_running; /**< Set while i915's _tnl_run_pipeline. */
+
+   /**
+    * Set if we're either a debug context or the INTEL_DEBUG=perf environment
+    * variable is set, this is the flag indicating to do expensive work that
+    * might lead to a perf_debug() call.
+    */
+   bool perf_debug;
+
+   struct
+   {
+      GLuint id;
+      uint32_t start_ptr; /**< for i8xx */
+      uint32_t primitive;	/**< Current hardware primitive type */
+      void (*flush) (struct intel_context *);
+      drm_intel_bo *vb_bo;
+      uint8_t *vb;
+      unsigned int start_offset; /**< Byte offset of primitive sequence */
+      unsigned int current_offset; /**< Byte offset of next vertex */
+      unsigned int count;	/**< Number of vertices in current primitive */
    } prim;
 
-   GLboolean locked;
+   struct {
+      drm_intel_bo *bo;
+      GLuint offset;
+      uint32_t buffer_len;
+      uint32_t buffer_offset;
+      char buffer[4096];
+   } upload;
 
-   GLubyte clear_red;
-   GLubyte clear_green;
-   GLubyte clear_blue;
-   GLubyte clear_alpha;
-   GLuint ClearColor;
-   GLuint ClearDepth;
+   uint32_t max_gtt_map_object_size;
 
+   /* Offsets of fields within the current vertex:
+    */
    GLuint coloroffset;
    GLuint specoffset;
-
-   /* Support for duplicating XYZW as WPOS parameter (crutch for I915).
-    */
    GLuint wpos_offset;
-   GLuint wpos_size;
 
    struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
    GLuint vertex_attr_count;
 
-   GLfloat depth_scale;
-   GLfloat polygon_offset_scale; /* dependent on depth_scale, bpp */
-   GLuint depth_clear_mask;
-   GLuint stencil_clear_mask;
+   GLfloat polygon_offset_scale;        /* dependent on depth_scale, bpp */
 
-   GLboolean hw_stencil;
-   GLboolean hw_stipple;
-   
-   /* Texture object bookkeeping
-    */
-   GLuint                nr_heaps;
-   driTexHeap          * texture_heaps[1];
-   driTextureObject      swapped;
-   GLuint                lastStamp;
-
-   struct intel_texture_object *CurrentTexObj[MAX_TEXTURE_UNITS];
+   bool hw_stencil;
+   bool hw_stipple;
+   bool no_rast;
+   bool always_flush_batch;
+   bool always_flush_cache;
+   bool disable_throttling;
 
    /* State for intelvb.c and inteltris.c.
     */
    GLuint RenderIndex;
    GLmatrix ViewportMatrix;
    GLenum render_primitive;
-   GLenum reduced_primitive;
+   GLenum reduced_primitive; /*< Only gen < 6 */
    GLuint vertex_size;
-   unsigned char *verts;	   /* points to tnl->clipspace.vertex_buf */
-
+   GLubyte *verts;              /* points to tnl->clipspace.vertex_buf */
 
    /* Fallback rasterization functions 
     */
@@ -216,146 +248,44 @@ struct intel_context
    intel_line_func draw_line;
    intel_tri_func draw_tri;
 
-   /* Drawing buffer state
+   /**
+    * Set if rendering has occured to the drawable's front buffer.
+    *
+    * This is used in the DRI2 case to detect that glFlush should also copy
+    * the contents of the fake front buffer to the real front buffer.
     */
-   intelRegion *drawRegion;  /* current drawing buffer */
-   intelRegion *readRegion;  /* current reading buffer */
+   bool front_buffer_dirty;
 
-   int drawX;			/* origin of drawable in draw buffer */
-   int drawY;
-   GLuint numClipRects;		/* cliprects for that buffer */
-   drm_clip_rect_t *pClipRects;
+   /**
+    * Track whether front-buffer rendering is currently enabled
+    *
+    * A separate flag is used to track this in order to support MRT more
+    * easily.
+    */
+   bool is_front_buffer_rendering;
+   /**
+    * Track whether front-buffer is the current read target.
+    *
+    * This is closely associated with is_front_buffer_rendering, but may
+    * be set separately.  The DRI2 fake front buffer must be referenced
+    * either way.
+    */
+   bool is_front_buffer_reading;
 
-   int dirtyAge;
-   int perf_boxes;
+   bool use_early_z;
 
-   GLuint do_usleeps;
-   int do_irqs;
-   GLuint irqsEmitted;
-   drm_i915_irq_wait_t iw;
-
-   GLboolean scissor;
-   drm_clip_rect_t draw_rect;
-   drm_clip_rect_t scissor_rect;
-
-   drm_context_t hHWContext;
-   drmLock *driHwLock;
    int driFd;
 
-   __DRIdrawablePrivate *driDrawable;
-   __DRIscreenPrivate *driScreen;
-   intelScreenPrivate *intelScreen; 
-   drmI830Sarea *sarea; 
+   __DRIcontext *driContext;
+   struct intel_screen *intelScreen;
 
    /**
     * Configuration cache
     */
    driOptionCache optionCache;
-
-   /* VBI
-    */
-   GLuint vbl_seq;
-   GLuint vblank_flags;
-
-   int64_t swap_ust;
-   int64_t swap_missed_ust;
-
-   GLuint swap_count;
-   GLuint swap_missed_count;
-
-   GLuint swap_scheduled;
 };
 
-
-#define DEBUG_LOCKING	1
-
-#if DEBUG_LOCKING
-extern char *prevLockFile;
-extern int prevLockLine;
-
-#define DEBUG_LOCK()							\
-   do {									\
-      prevLockFile = (__FILE__);					\
-      prevLockLine = (__LINE__);					\
-   } while (0)
-
-#define DEBUG_RESET()							\
-   do {									\
-      prevLockFile = 0;							\
-      prevLockLine = 0;							\
-   } while (0)
-
-/* Slightly less broken way of detecting recursive locking in a
- * threaded environment.  The right way to do this would be to make
- * prevLockFile, prevLockLine thread-local.
- *
- * This technique instead checks to see if the same context is
- * requesting the lock twice -- this will not catch application
- * breakages where the same context is active in two different threads
- * at once, but it will catch driver breakages (recursive locking) in
- * threaded apps.
- */
-#define DEBUG_CHECK_LOCK()						\
-   do {									\
-      if ( *((volatile int *)intel->driHwLock) == 			\
-	   (DRM_LOCK_HELD | intel->hHWContext) ) {			\
-	 fprintf( stderr,						\
-		  "LOCK SET!\n\tPrevious %s:%d\n\tCurrent: %s:%d\n",	\
-		  prevLockFile, prevLockLine, __FILE__, __LINE__ );	\
-	 abort();							\
-      }									\
-   } while (0)
-
-#else
-
-#define DEBUG_LOCK()
-#define DEBUG_RESET()
-#define DEBUG_CHECK_LOCK()
-
-#endif
-
-
-
-
-/* Lock the hardware and validate our state.  
- */
-#define LOCK_HARDWARE( intel )				\
-do {							\
-    char __ret=0;					\
-    DEBUG_CHECK_LOCK();					\
-    assert(!(intel)->locked);				\
-    if ((intel)->swap_scheduled) {			\
-        drmVBlank vbl;					\
-        vbl.request.type = DRM_VBLANK_ABSOLUTE;		\
-        if ((intel)->vblank_flags &			\
-            VBLANK_FLAG_SECONDARY) {			\
-            vbl.request.type |= DRM_VBLANK_SECONDARY;	\
-        }						\
-        vbl.request.sequence = (intel)->vbl_seq;	\
-        drmWaitVBlank((intel)->driFd, &vbl);		\
-        (intel)->swap_scheduled = 0;			\
-    }							\
-    DRM_CAS((intel)->driHwLock, (intel)->hHWContext,	\
-        (DRM_LOCK_HELD|(intel)->hHWContext), __ret);	\
-    if (__ret)						\
-        intelGetLock( (intel), 0 );			\
-      DEBUG_LOCK();					\
-    (intel)->locked = 1;				\
-}while (0)
- 
-  
-  /* Unlock the hardware using the global current context 
-   */
-#define UNLOCK_HARDWARE(intel)						\
-do {									\
-   intel->locked = 0;							\
-   if (0) { 								\
-      intel->perf_boxes |= intel->sarea->perf_boxes;  			\
-      intel->sarea->perf_boxes = 0;					\
-   }									\
-   DRM_UNLOCK((intel)->driFd, (intel)->driHwLock, (intel)->hHWContext);	\
-   DEBUG_RESET();							\
-} while (0)
+extern char *__progname;
 
 
 #define SUBPIXEL_X 0.125
@@ -364,41 +294,16 @@ do {									\
 #define INTEL_FIREVERTICES(intel)		\
 do {						\
    if ((intel)->prim.flush)			\
-      (intel)->prim.flush(&(intel)->ctx);		\
+      (intel)->prim.flush(intel);		\
 } while (0)
-
-/* ================================================================
- * Color packing:
- */
-
-#define INTEL_PACKCOLOR4444(r,g,b,a) \
-  ((((a) & 0xf0) << 8) | (((r) & 0xf0) << 4) | ((g) & 0xf0) | ((b) >> 4))
-
-#define INTEL_PACKCOLOR1555(r,g,b,a) \
-  ((((r) & 0xf8) << 7) | (((g) & 0xf8) << 2) | (((b) & 0xf8) >> 3) | \
-    ((a) ? 0x8000 : 0))
-
-#define INTEL_PACKCOLOR565(r,g,b) \
-  ((((r) & 0xf8) << 8) | (((g) & 0xfc) << 3) | (((b) & 0xf8) >> 3))
-
-#define INTEL_PACKCOLOR8888(r,g,b,a) \
-  ((a<<24) | (r<<16) | (g<<8) | b)
-
-
-#define INTEL_PACKCOLOR(format, r,  g,  b, a)		\
-(format == DV_PF_555 ? INTEL_PACKCOLOR1555(r,g,b,a) :	\
- (format == DV_PF_565 ? INTEL_PACKCOLOR565(r,g,b) :	\
-  (format == DV_PF_8888 ? INTEL_PACKCOLOR8888(r,g,b,a) :	\
-   0)))
-
-
 
 /* ================================================================
  * From linux kernel i386 header files, copes with odd sizes better
  * than COPY_DWORDS would:
+ * XXX Put this in src/mesa/main/imports.h ???
  */
 #if defined(i386) || defined(__i386__)
-static __inline__ void * __memcpy(void * to, const void * from, size_t n)
+static INLINE void * __memcpy(void * to, const void * from, size_t n)
 {
    int d0, d1, d2;
    __asm__ __volatile__(
@@ -420,71 +325,103 @@ static __inline__ void * __memcpy(void * to, const void * from, size_t n)
 #endif
 
 
-
 /* ================================================================
  * Debugging:
  */
-#define DO_DEBUG		1
-#if DO_DEBUG
 extern int INTEL_DEBUG;
-#else
-#define INTEL_DEBUG		0
-#endif
 
 #define DEBUG_TEXTURE	0x1
 #define DEBUG_STATE	0x2
-#define DEBUG_IOCTL	0x4
-#define DEBUG_PRIMS	0x8
-#define DEBUG_VERTS	0x10
-#define DEBUG_FALLBACKS	0x20
-#define DEBUG_VERBOSE	0x40
-#define DEBUG_DRI       0x80
-#define DEBUG_DMA       0x100
-#define DEBUG_SANITY    0x200
-#define DEBUG_SYNC      0x400
-#define DEBUG_SLEEP     0x800
-#define DEBUG_PIXEL     0x1000
+#define DEBUG_BLIT	0x8
+#define DEBUG_MIPTREE   0x10
+#define DEBUG_PERF	0x20
+#define DEBUG_BATCH     0x80
+#define DEBUG_PIXEL     0x100
+#define DEBUG_BUFMGR    0x200
+#define DEBUG_REGION    0x400
+#define DEBUG_FBO       0x800
+#define DEBUG_SYNC	0x2000
+#define DEBUG_DRI       0x10000
+#define DEBUG_STATS     0x100000
+#define DEBUG_WM        0x400000
+#define DEBUG_AUB       0x4000000
 
+#ifdef HAVE_ANDROID_PLATFORM
+#define LOG_TAG "INTEL-MESA"
+#include <cutils/log.h>
+#ifndef ALOGW
+#define ALOGW LOGW
+#endif
+#define dbg_printf(...)	ALOGW(__VA_ARGS__)
+#else
+#define dbg_printf(...)	printf(__VA_ARGS__)
+#endif /* HAVE_ANDROID_PLATFORM */
 
-#define PCI_CHIP_845_G			0x2562
-#define PCI_CHIP_I830_M			0x3577
-#define PCI_CHIP_I855_GM		0x3582
-#define PCI_CHIP_I865_G			0x2572
-#define PCI_CHIP_I915_G			0x2582
-#define PCI_CHIP_I915_GM		0x2592
-#define PCI_CHIP_I945_G			0x2772
-#define PCI_CHIP_I945_GM		0x27A2
-#define PCI_CHIP_I945_GME		0x27AE
-#define PCI_CHIP_G33_G			0x29C2
-#define PCI_CHIP_Q35_G			0x29B2
-#define PCI_CHIP_Q33_G			0x29D2
+#define DBG(...) do {						\
+	if (unlikely(INTEL_DEBUG & FILE_DEBUG_FLAG))		\
+		dbg_printf(__VA_ARGS__);			\
+} while(0)
 
+#define perf_debug(...) do {					\
+   static GLuint msg_id = 0;                                    \
+   if (unlikely(INTEL_DEBUG & DEBUG_PERF))                      \
+      dbg_printf(__VA_ARGS__);                                  \
+   if (intel->perf_debug)                                       \
+      _mesa_gl_debug(&intel->ctx, &msg_id,                      \
+                     MESA_DEBUG_TYPE_PERFORMANCE,               \
+                     MESA_DEBUG_SEVERITY_MEDIUM,                \
+                     __VA_ARGS__);                              \
+} while(0)
+
+#define WARN_ONCE(cond, fmt...) do {                            \
+   if (unlikely(cond)) {                                        \
+      static bool _warned = false;                              \
+      static GLuint msg_id = 0;                                 \
+      if (!_warned) {                                           \
+         fprintf(stderr, "WARNING: ");                          \
+         fprintf(stderr, fmt);                                  \
+         _warned = true;                                        \
+                                                                \
+         _mesa_gl_debug(ctx, &msg_id,                           \
+                        MESA_DEBUG_TYPE_OTHER,                  \
+                        MESA_DEBUG_SEVERITY_HIGH, fmt);         \
+      }                                                         \
+   }                                                            \
+} while (0)
 
 /* ================================================================
  * intel_context.c:
  */
 
-extern void intelInitDriverFunctions( struct dd_function_table *functions );
+extern const char *const i915_vendor_string;
 
-extern GLboolean intelInitContext( intelContextPtr intel, 
-				   const __GLcontextModes *mesaVis,
-				   __DRIcontextPrivate *driContextPriv,
-				   void *sharedContextPrivate,
-				   struct dd_function_table *functions );
+extern const char *i915_get_renderer_string(unsigned deviceID);
 
-extern void intelGetLock(intelContextPtr intel, GLuint flags);
-extern void intelSetBackClipRects(intelContextPtr intel);
-extern void intelSetFrontClipRects(intelContextPtr intel);
-extern void intelWindowMoved( intelContextPtr intel );
+extern bool intelInitContext(struct intel_context *intel,
+                             int api,
+                             unsigned major_version,
+                             unsigned minor_version,
+                             uint32_t flags,
+                             const struct gl_config * mesaVis,
+                             __DRIcontext * driContextPriv,
+                             void *sharedContextPrivate,
+                             struct dd_function_table *functions,
+                             unsigned *dri_ctx_error);
 
-extern void intelInitState( GLcontext *ctx );
-extern const GLubyte *intelGetString( GLcontext *ctx, GLenum name );
+extern void intelFinish(struct gl_context * ctx);
+extern void intel_flush_rendering_to_batch(struct gl_context *ctx);
+extern void _intel_flush(struct gl_context * ctx, const char *file, int line);
+
+#define intel_flush(ctx) _intel_flush(ctx, __FILE__, __LINE__)
+
+extern void intelInitDriverFunctions(struct dd_function_table *functions);
+
+void intel_init_syncobj_functions(struct dd_function_table *functions);
 
 
 /* ================================================================
  * intel_state.c:
  */
-extern void intelInitStateFuncs( struct dd_function_table *functions );
 
 #define COMPAREFUNC_ALWAYS		0
 #define COMPAREFUNC_NEVER		0x1
@@ -538,27 +475,37 @@ extern void intelInitStateFuncs( struct dd_function_table *functions );
 #define BLENDFACT_INV_CONST_ALPHA	0x0f
 #define BLENDFACT_MASK          	0x0f
 
+enum {
+   DRI_CONF_BO_REUSE_DISABLED,
+   DRI_CONF_BO_REUSE_ALL
+};
 
-extern int intel_translate_compare_func( GLenum func );
-extern int intel_translate_stencil_op( GLenum op );
-extern int intel_translate_blend_factor( GLenum factor );
-extern int intel_translate_logic_op( GLenum opcode );
+extern int intel_translate_shadow_compare_func(GLenum func);
+extern int intel_translate_compare_func(GLenum func);
+extern int intel_translate_stencil_op(GLenum op);
+extern int intel_translate_blend_factor(GLenum factor);
+extern int intel_translate_logic_op(GLenum opcode);
 
+void intel_update_renderbuffers(__DRIcontext *context,
+				__DRIdrawable *drawable);
+void intel_prepare_render(struct intel_context *intel);
 
-/* ================================================================
- * intel_ioctl.c:
+void i915_set_buf_info_for_region(uint32_t *state, struct intel_region *region,
+				  uint32_t buffer_id);
+void intel_init_texture_formats(struct gl_context *ctx);
+
+/*======================================================================
+ * Inline conversion functions.  
+ * These are better-typed than the macros used previously:
  */
-extern void intel_dump_batchbuffer( long offset,
-				    int *ptr,
-				    int count );
+static INLINE struct intel_context *
+intel_context(struct gl_context * ctx)
+{
+   return (struct intel_context *) ctx;
+}
 
-
-/* ================================================================
- * intel_pixel.c:
- */	
-extern void intelInitPixelFuncs( struct dd_function_table *functions );
-
-
-
+#ifdef __cplusplus
+}
 #endif
 
+#endif

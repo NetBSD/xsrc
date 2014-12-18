@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -31,23 +31,27 @@
 #include "main/mtypes.h"
 #include "pipe/p_state.h"
 #include "state_tracker/st_api.h"
+#include "main/fbobject.h"
 
 struct bitmap_cache;
-struct blit_state;
 struct dd_function_table;
 struct draw_context;
 struct draw_stage;
 struct gen_mipmap_state;
 struct st_context;
 struct st_fragment_program;
+struct u_upload_mgr;
 
 
-#define ST_NEW_MESA                    0x1 /* Mesa state has changed */
-#define ST_NEW_FRAGMENT_PROGRAM        0x2
-#define ST_NEW_VERTEX_PROGRAM          0x4
-#define ST_NEW_FRAMEBUFFER             0x8
-#define ST_NEW_EDGEFLAGS_DATA          0x10
-#define ST_NEW_GEOMETRY_PROGRAM        0x20
+#define ST_NEW_MESA                    (1 << 0) /* Mesa state has changed */
+#define ST_NEW_FRAGMENT_PROGRAM        (1 << 1)
+#define ST_NEW_VERTEX_PROGRAM          (1 << 2)
+#define ST_NEW_FRAMEBUFFER             (1 << 3)
+/* gap, re-use it */
+#define ST_NEW_GEOMETRY_PROGRAM        (1 << 5)
+#define ST_NEW_VERTEX_ARRAYS           (1 << 6)
+#define ST_NEW_RASTERIZER              (1 << 7)
+#define ST_NEW_UNIFORM_BUFFER          (1 << 8)
 
 
 struct st_state_flags {
@@ -71,16 +75,29 @@ struct st_context
 
    struct pipe_context *pipe;
 
+   struct u_upload_mgr *uploader, *indexbuf_uploader, *constbuf_uploader;
+
    struct draw_context *draw;  /**< For selection/feedback/rastpos only */
    struct draw_stage *feedback_stage;  /**< For GL_FEEDBACK rendermode */
    struct draw_stage *selection_stage;  /**< For GL_SELECT rendermode */
    struct draw_stage *rastpos_stage;  /**< For glRasterPos */
+   GLboolean clamp_frag_color_in_shader;
+   GLboolean clamp_vert_color_in_shader;
+   boolean has_stencil_export; /**< can do shader stencil export? */
+   boolean has_time_elapsed;
+   boolean has_shader_model3;
+   boolean has_etc1;
+   boolean prefer_blit_based_texture_transfer;
 
+   boolean needs_texcoord_semantic;
+   boolean apply_texture_swizzle_to_border_color;
 
    /* On old libGL's for linux we need to invalidate the drawables
     * on glViewpport calls, this is set via a option.
     */
    boolean invalidate_on_gl_viewport;
+
+   boolean vertex_array_out_of_memory;
 
    /* Some state is contained in constant objects.
     * Other state is just parameter values.
@@ -89,26 +106,23 @@ struct st_context
       struct pipe_blend_state               blend;
       struct pipe_depth_stencil_alpha_state depth_stencil;
       struct pipe_rasterizer_state          rasterizer;
-      struct pipe_sampler_state             samplers[PIPE_MAX_SAMPLERS];
-      struct pipe_sampler_state             vertex_samplers[PIPE_MAX_VERTEX_SAMPLERS];
+      struct pipe_sampler_state samplers[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
+      GLuint num_samplers[PIPE_SHADER_TYPES];
+      struct pipe_sampler_view *sampler_views[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
+      GLuint num_sampler_views[PIPE_SHADER_TYPES];
       struct pipe_clip_state clip;
       struct {
          void *ptr;
          unsigned size;
       } constants[PIPE_SHADER_TYPES];
       struct pipe_framebuffer_state framebuffer;
-      struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
-      struct pipe_sampler_view *sampler_vertex_views[PIPE_MAX_VERTEX_SAMPLERS];
-      struct pipe_scissor_state scissor;
-      struct pipe_viewport_state viewport;
+      struct pipe_scissor_state scissor[PIPE_MAX_VIEWPORTS];
+      struct pipe_viewport_state viewport[PIPE_MAX_VIEWPORTS];
       unsigned sample_mask;
 
-      GLuint num_samplers;
-      GLuint num_vertex_samplers;
-      GLuint num_textures;
-      GLuint num_vertex_textures;
-
       GLuint poly_stipple[32];  /**< In OpenGL's bottom-to-top order */
+
+      GLuint fb_orientation;
    } state;
 
    char vendor[100];
@@ -118,8 +132,9 @@ struct st_context
 
    GLboolean missing_textures;
    GLboolean vertdata_edgeflags;
+   GLboolean edgeflag_culls_prims;
 
-   /** Mapping from VERT_RESULT_x to post-transformed vertex slot */
+   /** Mapping from VARYING_SLOT_x to post-transformed vertex slot */
    const GLuint *vertex_result_to_slot;
 
    struct st_vertex_program *vp;    /**< Currently bound vertex program */
@@ -150,9 +165,6 @@ struct st_context
       struct pipe_sampler_state samplers[2];
       enum pipe_format tex_format;
       void *vs;
-      float vertices[4][3][4];  /**< vertex pos + color + texcoord */
-      struct pipe_resource *vbuf;
-      unsigned vbuf_slot;       /* next free slot in vbuf */
       struct bitmap_cache *cache;
    } bitmap;
 
@@ -166,13 +178,10 @@ struct st_context
    struct {
       struct pipe_rasterizer_state raster;
       struct pipe_viewport_state viewport;
-      struct pipe_clip_state clip;
       void *vs;
       void *fs;
-      float vertices[4][2][4];  /**< vertex pos + color */
-      struct pipe_resource *vbuf;
-      unsigned vbuf_slot;
-      boolean enable_ds_separate;
+      void *vs_layered;
+      void *gs_layered;
    } clear;
 
    /** used for anything using util_draw_vertex_buffer */
@@ -181,29 +190,18 @@ struct st_context
    void *passthrough_fs;  /**< simple pass-through frag shader */
 
    enum pipe_texture_target internal_target;
-   struct gen_mipmap_state *gen_mipmap;
-   struct blit_state *blit;
 
    struct cso_context *cso_context;
 
-   int force_msaa;
    void *winsys_drawable_handle;
 
-   /* User vertex buffers. */
-   struct {
-      struct pipe_resource *buffer;
+   /* The number of vertex buffers from the last call of validate_arrays. */
+   unsigned last_num_vbuffers;
 
-      /** Element size */
-      GLuint element_size;
+   int32_t draw_stamp;
+   int32_t read_stamp;
 
-      /** Attribute stride */
-      GLsizei stride;
-   } user_attrib[PIPE_MAX_ATTRIBS];
-   unsigned num_user_attribs;
-
-   /* Active render condition. */
-   struct pipe_query *render_condition;
-   unsigned condition_mode;
+   struct st_config_options options;
 };
 
 
@@ -227,7 +225,8 @@ struct st_framebuffer
    struct st_framebuffer_iface *iface;
    enum st_attachment_type statts[ST_ATTACHMENT_COUNT];
    unsigned num_statts;
-   int32_t revalidate;
+   int32_t stamp;
+   int32_t iface_stamp;
 };
 
 
@@ -243,7 +242,7 @@ void st_invalidate_state(struct gl_context * ctx, GLuint new_state);
 static INLINE GLuint
 st_fb_orientation(const struct gl_framebuffer *fb)
 {
-   if (fb && fb->Name == 0) {
+   if (fb && _mesa_is_winsys_fbo(fb)) {
       /* Drawing into a window (on-screen buffer).
        *
        * Negate Y scale to flip image vertically.
@@ -269,13 +268,11 @@ st_fb_orientation(const struct gl_framebuffer *fb)
 #define ST_CALLOC_STRUCT(T)   (struct T *) calloc(1, sizeof(struct T))
 
 
-extern int
-st_get_msaa(void);
-
 extern struct st_context *
 st_create_context(gl_api api, struct pipe_context *pipe,
                   const struct gl_config *visual,
-                  struct st_context *share);
+                  struct st_context *share,
+                  const struct st_config_options *options);
 
 extern void
 st_destroy_context(struct st_context *st);
