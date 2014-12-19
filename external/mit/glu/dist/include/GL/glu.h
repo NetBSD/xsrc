@@ -281,7 +281,13 @@ typedef GLUquadric GLUquadricObj;
 typedef GLUtesselator GLUtesselatorObj;
 typedef GLUtesselator GLUtriangulatorObj;
 
+/* GLdouble is double in gl.h so we are DBL_MAX */
+#include <limits.h>	/* Not a good place to do that, but... */
+#ifndef DBL_MAX
 #define GLU_TESS_MAX_COORD 1.0e150
+#else
+#define GLU_TESS_MAX_COORD DBL_MAX
+#endif
 
 /* Internal convenience typedefs */
 typedef void (GLAPIENTRYP _GLUfuncptr)(void);
