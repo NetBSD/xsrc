@@ -263,8 +263,11 @@ util_fast_exp2(float x)
    float fpart, mpart;
    union fi epart;
 
-   if(x > 129.00000f)
-      return 3.402823466e+38f;
+#ifndef FLT_MAX
+#define FLT_MAX ((float)3.40282346638528860e+38)
+#endif
+   if (x > 129.00000f)
+      return FLT_MAX;
 
    if (x < -126.99999f)
       return 0.0f;
