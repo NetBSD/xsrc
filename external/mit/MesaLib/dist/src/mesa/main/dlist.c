@@ -505,6 +505,16 @@ typedef enum
  * sake of compact display lists.  We store 8-byte pointers in a pair of
  * these nodes using the save/get_pointer() functions below.
  */
+#if defined(__NetBSD__) && defined(_LP64) && !defined(__x86_64__)
+/*
+ * This pointer typ is returned with "node + 1", which ends up at an
+ * illegal offset for 64 bit values, such as pointers, which may be
+ * stored in the returned space.  As such, we have to force this
+ * structure to be 64-bit type aligned.  x86-64 is the only known
+ * platform that allows this.
+ */
+#define STRICT_DLIST_ALIGNMENT
+#endif
 union gl_dlist_node
 {
    OpCode opcode;
@@ -518,7 +528,7 @@ union gl_dlist_node
    GLenum e;
    GLfloat f;
    GLsizei si;
-#ifdef __NetBSD__
+#ifdef STRICT_DLIST_ALIGNMENT
    unsigned long long _dummy;
 #endif
 };
@@ -551,8 +561,12 @@ save_pointer(union gl_dlist_node *dest, void *src)
    unsigned i;
 
    STATIC_ASSERT(POINTER_DWORDS == 1 || POINTER_DWORDS == 2);
+#ifdef STRICT_DLIST_ALIGNMENT
    STATIC_ASSERT(sizeof(union gl_dlist_node) == 4 ||
                  sizeof(union gl_dlist_node) == 8);
+#else
+   STATIC_ASSERT(sizeof(union gl_dlist_node) == 4);
+#endif
 
    p.ptr = src;
 
