@@ -7,9 +7,9 @@
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
- * documentation, and that the name of Keith Packard not be used in
+ * documentation, and that the name of the author(s) not be used in
  * advertising or publicity pertaining to distribution of the software without
- * specific, written prior permission.  Keith Packard makes no
+ * specific, written prior permission.  The authors make no
  * representations about the suitability of this software for any purpose.  It
  * is provided "as is" without express or implied warranty.
  *
@@ -32,7 +32,6 @@ FcBlanksCreate (void)
     b = malloc (sizeof (FcBlanks));
     if (!b)
 	return 0;
-    FcMemAlloc (FC_MEM_BLANKS, sizeof (FcBlanks));
     b->nblank = 0;
     b->sblank = 0;
     b->blanks = 0;
@@ -43,11 +42,7 @@ void
 FcBlanksDestroy (FcBlanks *b)
 {
     if (b->blanks)
-    {
-	FcMemFree (FC_MEM_BLANKS, b->sblank * sizeof (FcChar32));
 	free (b->blanks);
-    }
-    FcMemFree (FC_MEM_BLANKS, sizeof (FcBlanks));
     free (b);
 }
 
@@ -70,9 +65,6 @@ FcBlanksAdd (FcBlanks *b, FcChar32 ucs4)
 	    c = (FcChar32 *) malloc (sblank * sizeof (FcChar32));
 	if (!c)
 	    return FcFalse;
-	if (b->sblank)
-	    FcMemFree (FC_MEM_BLANKS, b->sblank * sizeof (FcChar32));
-	FcMemAlloc (FC_MEM_BLANKS, sblank * sizeof (FcChar32));
 	b->sblank = sblank;
 	b->blanks = c;
     }

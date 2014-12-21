@@ -7,9 +7,9 @@
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
- * documentation, and that the name of Keith Packard not be used in
+ * documentation, and that the name of the author(s) not be used in
  * advertising or publicity pertaining to distribution of the software without
- * specific, written prior permission.  Keith Packard makes no
+ * specific, written prior permission.  The authors make no
  * representations about the suitability of this software for any purpose.  It
  * is provided "as is" without express or implied warranty.
  *
@@ -98,16 +98,16 @@ usage (char *program, int error)
 int
 main (int argc, char **argv)
 {
-    int		verbose = 0;
-    int		sort = 0, all = 0;
-    FcChar8     *format = NULL;
-    int		i;
-    FcObjectSet *os = 0;
-    FcFontSet	*fs;
-    FcPattern   *pat;
-    FcResult	result;
+    int			verbose = 0;
+    int			sort = 0, all = 0;
+    const FcChar8	*format = NULL;
+    int			i;
+    FcObjectSet		*os = 0;
+    FcFontSet		*fs;
+    FcPattern		*pat;
+    FcResult		result;
 #if HAVE_GETOPT_LONG || HAVE_GETOPT
-    int		c;
+    int			c;
 
 #if HAVE_GETOPT_LONG
     while ((c = getopt_long (argc, argv, "asvf:Vh", longopts, NULL)) != -1)
@@ -143,14 +143,14 @@ main (int argc, char **argv)
     i = 1;
 #endif
 
-    if (!FcInit ())
-    {
-	fprintf (stderr, "Can't init font config library\n");
-	return 1;
-    }
     if (argv[i])
     {
 	pat = FcNameParse ((FcChar8 *) argv[i]);
+	if (!pat)
+	{
+	    fputs ("Unable to parse the pattern\n", stderr);
+	    return 1;
+	}
 	while (argv[++i])
 	{
 	    if (!os)
@@ -175,6 +175,11 @@ main (int argc, char **argv)
 	int	j;
 	font_patterns = FcFontSort (0, pat, all ? FcFalse : FcTrue, 0, &result);
 
+	if (!font_patterns || font_patterns->nfont == 0)
+	{
+	    fputs("No fonts installed on the system\n", stderr);
+	    return 1;
+	}
 	for (j = 0; j < font_patterns->nfont; j++)
 	{
 	    FcPattern  *font_pattern;
@@ -195,6 +200,14 @@ main (int argc, char **argv)
     }
     FcPatternDestroy (pat);
 
+    if (!format)
+    {
+	if (os)
+	    format = (const FcChar8 *) "%{=unparse}\n";
+	else
+	    format = (const FcChar8 *) "%{=fcmatch}\n";
+    }
+
     if (fs)
     {
 	int	j;
@@ -209,7 +222,7 @@ main (int argc, char **argv)
 	    {
 		FcPatternPrint (font);
 	    }
-	    else if (format)
+	    else
 	    {
 	        FcChar8 *s;
 
@@ -217,36 +230,8 @@ main (int argc, char **argv)
 		if (s)
 		{
 		    printf ("%s", s);
-		    free (s);
+		    FcStrFree (s);
 		}
-	    }
-	    else if (os)
-	    {
-		FcChar8 *str;
-		str = FcNameUnparse (font);
-		printf ("%s\n", str);
-		free (str);
-	    }
-	    else
-	    {
-		FcChar8	*family;
-		FcChar8	*style;
-		FcChar8	*file;
-
-		if (FcPatternGetString (font, FC_FILE, 0, &file) != FcResultMatch)
-		    file = (FcChar8 *) "<unknown filename>";
-		else
-		{
-		    FcChar8 *slash = (FcChar8 *) strrchr ((char *) file, '/');
-		    if (slash)
-			file = slash+1;
-		}
-		if (FcPatternGetString (font, FC_FAMILY, 0, &family) != FcResultMatch)
-		    family = (FcChar8 *) "<unknown family>";
-		if (FcPatternGetString (font, FC_STYLE, 0, &style) != FcResultMatch)
-		    style = (FcChar8 *) "<unknown style>";
-
-		printf ("%s: \"%s\" \"%s\"\n", file, family, style);
 	    }
 
 	    FcPatternDestroy (font);

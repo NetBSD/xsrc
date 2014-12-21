@@ -7,9 +7,9 @@
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
- * documentation, and that the name of Keith Packard not be used in
+ * documentation, and that the name of the author(s) not be used in
  * advertising or publicity pertaining to distribution of the software without
- * specific, written prior permission.  Keith Packard makes no
+ * specific, written prior permission.  The authors make no
  * representations about the suitability of this software for any purpose.  It
  * is provided "as is" without express or implied warranty.
  *
@@ -27,9 +27,7 @@
 @TYPE2@		int%				@ARG2@		ntype
 @PURPOSE@	Register object types
 @DESC@
-Register <parameter>ntype</parameter> new object types. Returns FcFalse if
-some of the names cannot be
-registered (due to allocation failure). Otherwise returns FcTrue.
+Deprecated.  Does nothing.  Returns FcFalse.
 @@
 
 @RET@		FcBool
@@ -38,7 +36,7 @@ registered (due to allocation failure). Otherwise returns FcTrue.
 @TYPE2@		int% 				@ARG2@		ntype
 @PURPOSE@	Unregister object types
 @DESC@
-Unregister <parameter>ntype</parameter> object types. Returns FcTrue.
+Deprecated.  Does nothing.  Returns FcFalse.
 @@
 
 @RET@		const FcObjectType *

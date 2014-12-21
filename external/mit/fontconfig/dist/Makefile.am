@@ -7,9 +7,9 @@
 #  documentation for any purpose is hereby granted without fee, provided that
 #  the above copyright notice appear in all copies and that both that
 #  copyright notice and this permission notice appear in supporting
-#  documentation, and that the name of Keith Packard not be used in
+#  documentation, and that the name of the author(s) not be used in
 #  advertising or publicity pertaining to distribution of the software without
-#  specific, written prior permission.  Keith Packard makes no
+#  specific, written prior permission.  The authors make no
 #  representations about the suitability of this software for any purpose.  It
 #  is provided "as is" without express or implied warranty.
 # 
@@ -21,17 +21,23 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 #  PERFORMANCE OF THIS SOFTWARE.
 
-DOCSRC=@DOCSRC@
-SUBDIRS=fontconfig fc-case fc-lang fc-glyphname fc-arch src \
-	fc-cache fc-cat fc-list fc-match fc-query fc-scan conf.d $(DOCSRC) test
-	 
+SUBDIRS=fontconfig fc-case fc-lang fc-glyphname src \
+	fc-cache fc-cat fc-list fc-match fc-pattern fc-query fc-scan \
+	fc-validate conf.d test
+if ENABLE_DOCS
+SUBDIRS += doc
+endif
+
+ACLOCAL_AMFLAGS = -I m4
+
 EXTRA_DIST = \
         fontconfig.pc.in \
         fonts.conf.in \
 	fonts.dtd \
         fontconfig.spec.in \
         fontconfig.spec \
-	fontconfig-zip.in
+	fontconfig-zip.in \
+	config-fixups.h
 CLEANFILES = fonts.conf
 DISTCLEANFILES = config.cache doltcompile
 MAINTAINERCLEANFILES = \
@@ -47,13 +53,16 @@ MAINTAINERCLEANFILES = \
 	$(srcdir)/ltmain.sh \
 	$(srcdir)/missing \
 	$(srcdir)/mkinstalldirs \
+	$(srcdir)/test-driver \
 	`find "$(srcdir)" -type f -name Makefile.in -print`
 
-pkgconfigdir=$(libdir)/pkgconfig
 pkgconfig_DATA = fontconfig.pc
 
-configdir=$(CONFDIR)
-config_DATA=fonts.dtd
+baseconfigdir = $(BASECONFIGDIR)
+configdir = $(CONFIGDIR)
+
+xmldir = $(XMLDIR)
+xml_DATA = fonts.dtd
 
 if CROSS_COMPILING
   RUN_FC_CACHE_TEST=false
@@ -68,7 +77,7 @@ EXTRA_DIST += ChangeLog
 ChangeLog: $(srcdir)/ChangeLog
 $(srcdir)/ChangeLog:
 	if test -d "$(srcdir)/.git"; then \
-	  (GIT_DIR=$(top_srcdir)/.git ./missing --run git log --stat) | fmt --split-only > $@.tmp \
+	  (GIT_DIR=$(top_srcdir)/.git $(GIT) log --stat) | fmt --split-only > $@.tmp \
 	  && mv -f $@.tmp $@ \
 	  || ($(RM) $@.tmp; \
 	      echo Failed to generate ChangeLog, your ChangeLog may be outdated >&2; \
@@ -81,32 +90,35 @@ $(srcdir)/ChangeLog:
 
 .PHONY: ChangeLog
 
+FC_CONFIGDIR = $(subst $(BASECONFIGDIR)/,,$(CONFIGDIR))
+
 fonts.conf: fonts.conf.in Makefile
 	sed \
 		-e 's,@FC_CACHEDIR\@,$(FC_CACHEDIR),g' \
 		-e 's,@FC_DEFAULT_FONTS\@,$(FC_DEFAULT_FONTS),g' \
 		-e 's,@FC_FONTPATH\@,$(FC_FONTPATH),g' \
+		-e 's,@CONFIGDIR\@,$(FC_CONFIGDIR),g' \
 		-e 's,@PACKAGE\@,$(PACKAGE),g' \
 		-e 's,@VERSION\@,$(VERSION),g' \
-		$< > $@.tmp && \
+		$(srcdir)/$@.in > $@.tmp && \
 	mv $@.tmp $@
 
 install-data-local: fonts.conf
-	$(mkinstalldirs) $(DESTDIR)$(configdir) $(DESTDIR)$(fc_cachedir)
-	if [ -f $(DESTDIR)$(configdir)/fonts.conf ]; then \
-	  echo "backing up existing $(DESTDIR)$(configdir)/fonts.conf"; \
-	  mv $(DESTDIR)$(configdir)/fonts.conf $(DESTDIR)$(configdir)/fonts.conf.bak; \
+	$(mkinstalldirs) $(DESTDIR)$(baseconfigdir) $(DESTDIR)$(fc_cachedir)
+	if [ -f $(DESTDIR)$(baseconfigdir)/fonts.conf ]; then \
+	  echo "backing up existing $(DESTDIR)$(baseconfigdir)/fonts.conf"; \
+	  mv $(DESTDIR)$(baseconfigdir)/fonts.conf $(DESTDIR)$(baseconfigdir)/fonts.conf.bak; \
 	fi
 	if [ -f $(srcdir)/fonts.conf ]; then \
-	  echo " $(INSTALL_DATA) $(srcdir)/fonts.conf $(DESTDIR)$(configdir)/fonts.conf"; \
-	  $(INSTALL_DATA) $(srcdir)/fonts.conf $(DESTDIR)$(configdir)/fonts.conf; \
+	  echo " $(INSTALL_DATA) $(srcdir)/fonts.conf $(DESTDIR)$(baseconfigdir)/fonts.conf"; \
+	  $(INSTALL_DATA) $(srcdir)/fonts.conf $(DESTDIR)$(baseconfigdir)/fonts.conf; \
 	else if [ -f fonts.conf ]; then \
-	  echo " $(INSTALL_DATA) fonts.conf $(DESTDIR)$(configdir)/fonts.conf"; \
-	  $(INSTALL_DATA) fonts.conf $(DESTDIR)$(configdir)/fonts.conf; \
+	  echo " $(INSTALL_DATA) fonts.conf $(DESTDIR)$(baseconfigdir)/fonts.conf"; \
+	  $(INSTALL_DATA) fonts.conf $(DESTDIR)$(baseconfigdir)/fonts.conf; \
 	fi; fi
 	@(if $(RUN_FC_CACHE_TEST); then \
-	    echo " $(bindir)/fc-cache -s -f -v"; \
-	    $(bindir)/fc-cache -s -f -v; \
+	    echo "fc-cache$(EXEEXT) -s -f -v"; \
+	    fc-cache/fc-cache$(EXEEXT) -s -f -v; \
 	else \
 	    echo "***"; \
 	    echo "*** Warning: fonts.cache not built"; \
@@ -117,14 +129,14 @@ install-data-local: fonts.conf
 
 uninstall-local:
 	if [ -f $(srcdir)/fonts.conf ]; then \
-	  if cmp -s $(srcdir)/fonts.conf $(DESTDIR)$(configdir)/fonts.conf; then \
-	     echo " uninstall standard $(DESTDIR)$(configdir)/fonts.conf"; \
-	     rm -f $(DESTDIR)$(configdir)/fonts.conf; \
+	  if cmp -s $(srcdir)/fonts.conf $(DESTDIR)$(baseconfigdir)/fonts.conf; then \
+	     echo " uninstall standard $(DESTDIR)$(baseconfigdir)/fonts.conf"; \
+	     $(RM) $(DESTDIR)$(baseconfigdir)/fonts.conf; \
 	  fi; \
 	else if [ -f fonts.conf ]; then \
-	  if cmp -s fonts.conf $(DESTDIR)$(configdir)/fonts.conf; then \
-	     echo " uninstall standard $(DESTDIR)$(configdir)/fonts.conf"; \
-	     rm -f $(DESTDIR)$(configdir)/fonts.conf; \
+	  if cmp -s fonts.conf $(DESTDIR)$(baseconfigdir)/fonts.conf; then \
+	     echo " uninstall standard $(DESTDIR)$(baseconfigdir)/fonts.conf"; \
+	     $(RM) $(DESTDIR)$(baseconfigdir)/fonts.conf; \
 	  fi; \
 	fi; fi
 
@@ -135,7 +147,11 @@ debuild-unsigned: debuild-dirs
 	(cd $(distdir)/debian && debuild -us -uc)
 
 debuild-dirs: distdir
-	rm -f $(PACKAGE)_$(VERSION).orig.tar.gz
-	rm -rf $(distdir).orig
+	$(RM) $(PACKAGE)_$(VERSION).orig.tar.gz
+	$(RM) -r $(distdir).orig
 	cp -a $(distdir) $(distdir).orig
-	rm -rf $(distdir).orig/debian
+	$(RM) -r $(distdir).orig/debian
+
+DISTCHECK_CONFIGURE_FLAGS =
+
+-include $(top_srcdir)/git.mk

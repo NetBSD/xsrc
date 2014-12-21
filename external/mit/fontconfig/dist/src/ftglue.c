@@ -18,7 +18,7 @@ static void
 ftglue_log( const char*   format, ... )
 {
   va_list  ap;
- 
+
   va_start( ap, format );
   vfprintf( stderr, format, ap );
   va_end( ap );
@@ -84,15 +84,16 @@ ftglue_stream_seek( FT_Stream   stream,
 {
   FT_Error  error = 0;
 
-  stream->pos = pos;
   if ( stream->read )
   {
     if ( stream->read( stream, pos, 0, 0 ) )
       error = FT_Err_Invalid_Stream_Operation;
   }
-  else if ( pos > stream->size )
+  else if ( pos < 0 || (FT_ULong) pos > stream->size )
     error = FT_Err_Invalid_Stream_Operation;
 
+  if ( !error )
+    stream->pos = pos;
   LOG(( "ftglue:stream:seek(%ld) -> %d\n", pos, error ));
   return error;
 }
@@ -172,10 +173,10 @@ ftglue_face_goto_table( FT_Face    face,
   FT_Error  error;
 
   LOG(( "ftglue_face_goto_table( %p, %c%c%c%c, %p )\n",
-                face, 
-                (int)((the_tag >> 24) & 0xFF), 
-                (int)((the_tag >> 16) & 0xFF), 
-                (int)((the_tag >> 8) & 0xFF), 
+                face,
+                (int)((the_tag >> 24) & 0xFF),
+                (int)((the_tag >> 16) & 0xFF),
+                (int)((the_tag >> 8) & 0xFF),
                 (int)(the_tag & 0xFF),
                 stream ));
 
@@ -237,7 +238,7 @@ ftglue_face_goto_table( FT_Face    face,
 
       FT_UNUSED(checksum);
       FT_UNUSED(size);
-      
+
       if ( tag == the_tag )
       {
         LOG(( "TrueType table (start: %ld) (size: %ld)\n", start, size ));
@@ -253,11 +254,10 @@ ftglue_face_goto_table( FT_Face    face,
 
 Exit:
   LOG(( "TrueType error=%d\n", error ));
-  
+
   return error;
-}                        
+}
 
 #undef QALLOC
-#define __ftglue__
 #include "fcaliastail.h"
 #undef __ftglue__

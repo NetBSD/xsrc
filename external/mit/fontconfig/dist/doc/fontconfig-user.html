@@ -44,6 +44,8 @@ CLASS="SYNOPSIS"
 >   /etc/fonts/fonts.conf
    /etc/fonts/fonts.dtd
    /etc/fonts/conf.d
+   $XDG_CONFIG_HOME/fontconfig/conf.d
+   $XDG_CONFIG_HOME/fontconfig/fonts.conf
    ~/.fonts.conf.d
    ~/.fonts.conf</PRE
 ></TD
@@ -151,11 +153,11 @@ CLASS="PROGRAMLISTING"
   hintstyle       Int     Automatic hinting style
   verticallayout  Bool    Use vertical layout
   autohint        Bool    Use autohinter instead of normal hinter
-  globaladvance   Bool    Use font global advance data
+  globaladvance   Bool    Use font global advance data (deprecated)
   file            String  The filename holding the font
   index           Int     The index of the font within the file
   ftface          FT_Face Use the specified FreeType face object
-  rasterizer      String  Which rasterizer is in use
+  rasterizer      String  Which rasterizer is in use (deprecated)
   outline         Bool    Whether the glyphs are outlines
   scalable        Bool    Whether glyphs can be scaled
   scale           Double  Scale factor for point-&#62;pixel conversions
@@ -170,6 +172,8 @@ CLASS="PROGRAMLISTING"
   fontversion     Int     Version number of the font
   capability      String  List of layout capabilities in the font
   embolden        Bool    Rasterizer should synthetically embolden the font
+  fontfeatures    String  List of the feature tags in OpenType to be enabled
+  prgname         String  String  Name of the running program
     </PRE
 ></TD
 ></TR
@@ -300,9 +304,9 @@ CLASS="PROGRAMLISTING"
 ></TR
 ></TABLE
 ><P
->The '\', '-', ':' and ',' characters in family names must be preceeded by a
+>The '\', '-', ':' and ',' characters in family names must be preceded by a
 '\' character to avoid having them misinterpreted. Similarly, values
-containing '\', '=', '_', ':' and ',' must also have them preceeded by a
+containing '\', '=', '_', ':' and ',' must also have them preceded by a
 '\' character. The '\' characters are stripped out of the family name and
 values as the font name is read.
     </P
@@ -311,7 +315,7 @@ values as the font name is read.
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN43"
+NAME="DEBUG"
 ></A
 ><H2
 >Debugging Applications</H2
@@ -438,7 +442,7 @@ CLASS="LITERAL"
 >&#60;dir&#62;</TT
 >, <TT
 CLASS="LITERAL"
->&#60;cache&#62;</TT
+>&#60;cachedir&#62;</TT
 >, <TT
 CLASS="LITERAL"
 >&#60;include&#62;</TT
@@ -459,11 +463,11 @@ NAME="AEN67"
 ><H3
 ><TT
 CLASS="LITERAL"
->&#60;dir&#62;</TT
+>&#60;dir prefix="default"&#62;</TT
 ></H3
 ><P
 >This element contains a directory name which will be scanned for font files
-to include in the set of available fonts.
+to include in the set of available fonts. If 'prefix' is set to "xdg", the value in the XDG_DATA_HOME environment variable will be added as the path prefix. please see XDG Base Directory Specification for more details.
   </P
 ></DIV
 ><DIV
@@ -474,33 +478,41 @@ NAME="AEN71"
 ><H3
 ><TT
 CLASS="LITERAL"
->&#60;cache&#62;</TT
+>&#60;cachedir prefix="default"&#62;</TT
 ></H3
 ><P
->This element contains a file name for the per-user cache of font
-information.  If it starts with '~', it refers to a file in the users
-home directory.  This file is used to hold information about fonts that
-isn't present in the per-directory cache files.  It is automatically
-maintained by the fontconfig library.  The default for this file 
-is ``~/.fonts.cache-<TT
+>This element contains a directory name that is supposed to be stored or read
+the cache of font information.  If multiple elements are specified in
+the configuration file, the directory that can be accessed first in the list
+will be used to store the cache files.  If it starts with '~', it refers to
+a directory in the users home directory.  If 'prefix' is set to "xdg", the value in the XDG_CACHE_HOME environment variable will be added as the path prefix. please see XDG Base Directory Specification for more details.
+The default directory is ``$XDG_CACHE_HOME/fontconfig'' and it contains the cache files
+named ``<TT
+CLASS="LITERAL"
+>&#60;hash value&#62;</TT
+>-<TT
+CLASS="LITERAL"
+>&#60;architecture&#62;</TT
+>.cache-<TT
+CLASS="LITERAL"
+>&#60;version</TT
+>'',
+where <TT
 CLASS="LITERAL"
 >&#60;version&#62;</TT
->'', where <TT
-CLASS="LITERAL"
->&#60;version&#62;</TT
-> is the font configuration
-file version number (currently 2).
+> is the font configureation file
+version number (currently 3).
   </P
 ></DIV
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN77"
+NAME="AEN79"
 ></A
 ><H3
 ><TT
 CLASS="LITERAL"
->&#60;include ignore_missing="no"&#62;</TT
+>&#60;include ignore_missing="no" prefix="default"&#62;</TT
 ></H3
 ><P
 >This element contains the name of an additional configuration file or
@@ -510,13 +522,13 @@ the XML datatype is traversed by FcConfigParse, the contents of the file(s)
 will also be incorporated into the configuration by passing the filename(s) to
 FcConfigLoadAndParse.  If 'ignore_missing' is set to "yes" instead of the
 default "no", a missing file or directory will elicit no warning message from
-the library.
+the library.  If 'prefix' is set to "xdg", the value in the XDG_CONFIG_HOME environment variable will be added as the path prefix. please see XDG Base Directory Specification for more details.
   </P
 ></DIV
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN81"
+NAME="AEN83"
 ></A
 ><H3
 ><TT
@@ -541,7 +553,7 @@ order.
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN88"
+NAME="AEN90"
 ></A
 ><H3
 ><TT
@@ -565,7 +577,7 @@ the set of characters supported by the font.
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN94"
+NAME="AEN96"
 ></A
 ><H3
 ><TT
@@ -588,7 +600,7 @@ automatically rebuild the internal datastructures when this interval passes.
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN100"
+NAME="AEN102"
 ></A
 ><H3
 ><TT
@@ -603,7 +615,7 @@ against.  It holds acceptfont and rejectfont elements.
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN104"
+NAME="AEN106"
 ></A
 ><H3
 ><TT
@@ -621,7 +633,7 @@ elements which are used to match fonts.
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN108"
+NAME="AEN110"
 ></A
 ><H3
 ><TT
@@ -638,7 +650,7 @@ pattern elements which are used to match fonts.
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN112"
+NAME="AEN114"
 ></A
 ><H3
 ><TT
@@ -657,7 +669,7 @@ only apply to directories, not to individual fonts.
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN116"
+NAME="AEN118"
 ></A
 ><H3
 ><TT
@@ -676,7 +688,7 @@ Pattern elements include patelt elements.
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN120"
+NAME="AEN122"
 ></A
 ><H3
 ><TT
@@ -693,7 +705,7 @@ elements.
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN124"
+NAME="AEN126"
 ></A
 ><H3
 ><TT
@@ -719,7 +731,7 @@ build the fontconfig database.
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN130"
+NAME="AEN132"
 ></A
 ><H3
 ><TT
@@ -729,11 +741,12 @@ CLASS="LITERAL"
 ><P
 >This element contains a single value which is compared with the target
 ('pattern', 'font', 'scan' or 'default') property "property" (substitute any of the property names seen 
-above). 'compare' can be one of "eq", "not_eq", "less", "less_eq", "more", or
-"more_eq".  'qual' may either be the default, "any", in which case the match
+above). 'compare' can be one of "eq", "not_eq", "less", "less_eq", "more", "more_eq", "contains" or
+"not_contains".  'qual' may either be the default, "any", in which case the match
 succeeds if any value associated with the property matches the test value, or
 "all", in which case all of the values associated with the property must
-match the test value.  When used in a &#60;match target="font"&#62; element,
+match the test value.  'ignore-blanks' takes a boolean value. if 'ignore-blanks' is set "true", any blanks in the string will be ignored on its comparison. this takes effects only when compare="eq" or compare="not_eq".
+When used in a &#60;match target="font"&#62; element,
 the target= attribute in the &#60;test&#62; element selects between matching
 the original pattern or the font.  "default" selects whichever target the
 outer &#60;match&#62; element has selected.
@@ -742,7 +755,7 @@ outer &#60;match&#62; element has selected.
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN134"
+NAME="AEN136"
 ></A
 ><H3
 ><TT
@@ -777,6 +790,8 @@ CLASS="PROGRAMLISTING"
   "prepend_first"         Insert at head of list  Insert at head of list
   "append"                Append after matching   Append at end of list
   "append_last"           Append at end of list   Append at end of list
+  "delete"                Delete matching value   Delete all values
+  "delete_all"            Delete all values       Delete all values
     </PRE
 ></TD
 ></TR
@@ -787,7 +802,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN140"
+NAME="AEN142"
 ></A
 ><H3
 ><TT
@@ -818,7 +833,7 @@ instead of -.5).
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN148"
+NAME="AEN150"
 ></A
 ><H3
 ><TT
@@ -826,17 +841,72 @@ CLASS="LITERAL"
 >&#60;matrix&#62;</TT
 ></H3
 ><P
->This element holds the four <TT
+>This element holds four numerical expressions of an affine transformation.
+At their simplest these will be four <TT
 CLASS="LITERAL"
 >&#60;double&#62;</TT
-> elements of an affine
-transformation.
+> elements
+but they can also be more involved expressions.
   </P
 ></DIV
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN153"
+NAME="AEN155"
+></A
+><H3
+><TT
+CLASS="LITERAL"
+>&#60;range&#62;</TT
+></H3
+><P
+>This element holds the two <TT
+CLASS="LITERAL"
+>&#60;int&#62;</TT
+> elements of a range
+representation.
+  </P
+></DIV
+><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN160"
+></A
+><H3
+><TT
+CLASS="LITERAL"
+>&#60;charset&#62;</TT
+></H3
+><P
+>This element holds at least one <TT
+CLASS="LITERAL"
+>&#60;int&#62;</TT
+> element of
+an Unicode code point or more.
+  </P
+></DIV
+><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN165"
+></A
+><H3
+><TT
+CLASS="LITERAL"
+>&#60;langset&#62;</TT
+></H3
+><P
+>This element holds at least one <TT
+CLASS="LITERAL"
+>&#60;string&#62;</TT
+> element of
+a RFC-3066-style languages or more.
+  </P
+></DIV
+><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN170"
 ></A
 ><H3
 ><TT
@@ -845,13 +915,18 @@ CLASS="LITERAL"
 ></H3
 ><P
 >Holds a property name.  Evaluates to the first value from the property of
-the font, not the pattern.
+the pattern.  If the 'target' attribute is not present, it will default to
+'default', in which case the property is returned from the font pattern
+during a target="font" match, and to the pattern during a target="pattern"
+match.  The attribute can also take the values 'font' or 'pattern' to
+explicitly choose which pattern to use.  It is an error to use a target
+of 'font' in a match that has target="pattern".
   </P
 ></DIV
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN157"
+NAME="AEN174"
 ></A
 ><H3
 ><TT
@@ -925,7 +1000,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN162"
+NAME="AEN179"
 ></A
 ><H3
 ><TT
@@ -961,7 +1036,7 @@ CLASS="LITERAL"
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN173"
+NAME="AEN190"
 ></A
 ><H3
 ><TT
@@ -982,6 +1057,12 @@ CLASS="LITERAL"
 >, <TT
 CLASS="LITERAL"
 >&#60;more_eq&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>&#60;contains&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>&#60;not_contains</TT
 ></H3
 ><P
 >These elements compare two values, producing a boolean result.
@@ -990,7 +1071,7 @@ CLASS="LITERAL"
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN182"
+NAME="AEN201"
 ></A
 ><H3
 ><TT
@@ -1004,7 +1085,7 @@ CLASS="LITERAL"
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN186"
+NAME="AEN205"
 ></A
 ><H3
 ><TT
@@ -1020,7 +1101,7 @@ of the third.
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN190"
+NAME="AEN209"
 ></A
 ><H3
 ><TT
@@ -1070,7 +1151,7 @@ families to the end of the family list.
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN204"
+NAME="AEN223"
 ></A
 ><H3
 ><TT
@@ -1084,7 +1165,7 @@ CLASS="LITERAL"
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN208"
+NAME="AEN227"
 ></A
 ><H3
 ><TT
@@ -1111,14 +1192,14 @@ CLASS="LITERAL"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN216"
+NAME="AEN235"
 ></A
 ><H2
 >EXAMPLE CONFIGURATION FILE</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN218"
+NAME="AEN237"
 ></A
 ><H3
 >System configuration file</H3
@@ -1152,20 +1233,20 @@ CLASS="PROGRAMLISTING"
 &#60;/match&#62;
 
 &#60;!--
-	Names not including any well known alias are given 'sans'
+	Names not including any well known alias are given 'sans-serif'
 --&#62;
 &#60;match target="pattern"&#62;
-	&#60;test qual="all" name="family" mode="not_eq"&#62;sans&#60;/test&#62;
-	&#60;test qual="all" name="family" mode="not_eq"&#62;serif&#60;/test&#62;
-	&#60;test qual="all" name="family" mode="not_eq"&#62;monospace&#60;/test&#62;
-	&#60;edit name="family" mode="append_last"&#62;&#60;string&#62;sans&#60;/string&#62;&#60;/edit&#62;
+	&#60;test qual="all" name="family" mode="not_eq"&#62;&#60;string&#62;sans-serif&#60;/string&#62;&#60;/test&#62;
+	&#60;test qual="all" name="family" mode="not_eq"&#62;&#60;string&#62;serif&#60;/string&#62;&#60;/test&#62;
+	&#60;test qual="all" name="family" mode="not_eq"&#62;&#60;string&#62;monospace&#60;/string&#62;&#60;/test&#62;
+	&#60;edit name="family" mode="append_last"&#62;&#60;string&#62;sans-serif&#60;/string&#62;&#60;/edit&#62;
 &#60;/match&#62;
 
 &#60;!--
 	Load per-user customization file, but don't complain
 	if it doesn't exist
 --&#62;
-&#60;include ignore_missing="yes"&#62;~/.fonts.conf&#60;/include&#62;
+&#60;include ignore_missing="yes" prefix="xdg"&#62;fontconfig/fonts.conf&#60;/include&#62;
 
 &#60;!--
 	Load local customization files, but don't complain
@@ -1212,6 +1293,29 @@ CLASS="PROGRAMLISTING"
 	&#60;family&#62;monospace&#60;/family&#62;
 	&#60;prefer&#62;&#60;family&#62;Andale Mono&#60;/family&#62;&#60;/prefer&#62;
 &#60;/alias&#62;
+
+&#60;--
+	The example of the requirements of OR operator;
+	If the 'family' contains 'Courier New' OR 'Courier'
+	add 'monospace' as the alternative
+--&#62;
+&#60;match target="pattern"&#62;
+	&#60;test name="family" mode="eq"&#62;
+		&#60;string&#62;Courier New&#60;/string&#62;
+	&#60;/test&#62;
+	&#60;edit name="family" mode="prepend"&#62;
+		&#60;string&#62;monospace&#60;/string&#62;
+	&#60;/edit&#62;
+&#60;/match&#62;
+&#60;match target="pattern"&#62;
+	&#60;test name="family" mode="eq"&#62;
+		&#60;string&#62;Courier&#60;/string&#62;
+	&#60;/test&#62;
+	&#60;edit name="family" mode="prepend"&#62;
+		&#60;string&#62;monospace&#60;/string&#62;
+	&#60;/edit&#62;
+&#60;/match&#62;
+
 &#60;/fontconfig&#62;
     </PRE
 ></TD
@@ -1221,13 +1325,13 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN222"
+NAME="AEN241"
 ></A
 ><H3
 >User configuration file</H3
 ><P
 >This is an example of a per-user configuration file that lives in
-~/.fonts.conf
+$XDG_CONFIG_HOME/fontconfig/fonts.conf
     </P
 ><TABLE
 BORDER="0"
@@ -1239,13 +1343,13 @@ WIDTH="100%"
 CLASS="PROGRAMLISTING"
 >&#60;?xml version="1.0"?&#62;
 &#60;!DOCTYPE fontconfig SYSTEM "fonts.dtd"&#62;
-&#60;!-- ~/.fonts.conf for per-user font configuration --&#62;
+&#60;!-- $XDG_CONFIG_HOME/fontconfig/fonts.conf for per-user font configuration --&#62;
 &#60;fontconfig&#62;
 
 &#60;!--
 	Private font directory
 --&#62;
-&#60;dir&#62;~/.fonts&#60;/dir&#62;
+&#60;dir prefix="xdg"&#62;fonts&#60;/dir&#62;
 
 &#60;!--
 	use rgb sub-pixel ordering to improve glyph appearance on
@@ -1254,6 +1358,41 @@ CLASS="PROGRAMLISTING"
 --&#62;
 &#60;match target="font"&#62;
 	&#60;edit name="rgba" mode="assign"&#62;&#60;const&#62;rgb&#60;/const&#62;&#60;/edit&#62;
+&#60;/match&#62;
+&#60;!--
+	use WenQuanYi Zen Hei font when serif is requested for Chinese
+--&#62;
+&#60;match&#62;
+	&#60;!--
+		If you don't want to use WenQuanYi Zen Hei font for zh-tw etc,
+		you can use zh-cn instead of zh.
+		Please note, even if you set zh-cn, it still matches zh.
+		if you don't like it, you can use compare="eq"
+		instead of compare="contains".
+	--&#62;
+	&#60;test name="lang" compare="contains"&#62;
+		&#60;string&#62;zh&#60;/string&#62;
+	&#60;/test&#62;
+	&#60;test name="family"&#62;
+		&#60;string&#62;serif&#60;/string&#62;
+	&#60;/test&#62;
+	&#60;edit name="family" mode="prepend"&#62;
+		&#60;string&#62;WenQuanYi Zen Hei&#60;/string&#62;
+	&#60;/edit&#62;
+&#60;/match&#62;
+&#60;!--
+	use VL Gothic font when sans-serif is requested for Japanese
+--&#62;
+&#60;match&#62;
+	&#60;test name="lang" compare="contains"&#62;
+		&#60;string&#62;ja&#60;/string&#62;
+	&#60;/test&#62;
+	&#60;test name="family"&#62;
+		&#60;string&#62;sans-serif&#60;/string&#62;
+	&#60;/test&#62;
+	&#60;edit name="family" mode="prepend"&#62;
+		&#60;string&#62;VL Gothic&#60;/string&#62;
+	&#60;/edit&#62;
 &#60;/match&#62;
 &#60;/fontconfig&#62;
     </PRE
@@ -1265,7 +1404,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN226"
+NAME="AEN245"
 ></A
 ><H2
 >Files</H2
@@ -1277,7 +1416,7 @@ CLASS="EMPHASIS"
 contains configuration information for the fontconfig library
 consisting of directories to look at for font information as well as
 instructions on editing program specified font patterns before attempting to
-match the available fonts.  It is in xml format.
+match the available fonts.  It is in XML format.
   </P
 ><P
 ><I
@@ -1287,7 +1426,7 @@ CLASS="EMPHASIS"
 is the conventional name for a directory of additional configuration files
 managed by external applications or the local administrator.  The
 filenames starting with decimal digits are sorted in lexicographic order
-and used as additional configuration files.  All of these files are in xml
+and used as additional configuration files.  All of these files are in XML
 format.  The master fonts.conf file references this directory in an 
 &#60;include&#62; directive.
   </P
@@ -1301,33 +1440,81 @@ is a DTD that describes the format of the configuration files.
 ><P
 ><I
 CLASS="EMPHASIS"
+>$XDG_CONFIG_HOME/fontconfig/conf.d</I
+> and <I
+CLASS="EMPHASIS"
 >~/.fonts.conf.d</I
 >
 is the conventional name for a per-user directory of (typically
 auto-generated) configuration files, although the
-actual location is specified in the global fonts.conf file.
+actual location is specified in the global fonts.conf file. please note that ~/.fonts.conf.d is deprecated now. it will not be read by default in the future version.
   </P
 ><P
 ><I
+CLASS="EMPHASIS"
+>$XDG_CONFIG_HOME/fontconfig/fonts.conf</I
+> and <I
 CLASS="EMPHASIS"
 >~/.fonts.conf</I
 >
 is the conventional location for per-user font configuration, although the
-actual location is specified in the global fonts.conf file.
+actual location is specified in the global fonts.conf file. please note that ~/.fonts.conf is deprecated now. it will not be read by default in the future version.
   </P
 ><P
 ><I
 CLASS="EMPHASIS"
-> ~/.fonts.cache-*</I
+>$XDG_CACHE_HOME/fontconfig/*.cache-*</I
+> and <I
+CLASS="EMPHASIS"
+> ~/.fontconfig/*.cache-*</I
 >
 is the conventional repository of font information that isn't found in the
-per-directory caches.  This file is automatically maintained by fontconfig.
+per-directory caches.  This file is automatically maintained by fontconfig. please note that ~/.fontconfig/*.cache-* is deprecated now. it will not be read by default in the future version.
   </P
 ></DIV
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN240"
+NAME="AEN262"
+></A
+><H2
+>Environment variables</H2
+><P
+><I
+CLASS="EMPHASIS"
+>FONTCONFIG_FILE</I
+>
+is used to override the default configuration file.
+  </P
+><P
+><I
+CLASS="EMPHASIS"
+>FONTCONFIG_PATH</I
+>
+is used to override the default configuration directory.
+  </P
+><P
+><I
+CLASS="EMPHASIS"
+>FC_DEBUG</I
+>
+is used to output the detailed debugging messages. see <A
+HREF="#DEBUG"
+>Debugging Applications</A
+> section for more details.
+  </P
+><P
+><I
+CLASS="EMPHASIS"
+>FONTCONFIG_USE_MMAP</I
+>
+is used to control the use of mmap(2) for the cache files if available. this take a boolean value. fontconfig will checks if the cache files are stored on the filesystem that is safe to use mmap(2). explicitly setting this environment variable will causes skipping this check and enforce to use or not use mmap(2) anyway.
+  </P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN273"
 ></A
 ><H2
 >See Also</H2
@@ -1338,12 +1525,12 @@ NAME="AEN240"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN243"
+NAME="AEN276"
 ></A
 ><H2
 >Version</H2
 ><P
->Fontconfig version 2.8.0
+>Fontconfig version 2.11.1
 
 	    </P
 ></DIV

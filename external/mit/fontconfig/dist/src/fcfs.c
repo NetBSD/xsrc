@@ -7,9 +7,9 @@
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
- * documentation, and that the name of Keith Packard not be used in
+ * documentation, and that the name of the author(s) not be used in
  * advertising or publicity pertaining to distribution of the software without
- * specific, written prior permission.  Keith Packard makes no
+ * specific, written prior permission.  The authors make no
  * representations about the suitability of this software for any purpose.  It
  * is provided "as is" without express or implied warranty.
  *
@@ -33,7 +33,6 @@ FcFontSetCreate (void)
     s = (FcFontSet *) malloc (sizeof (FcFontSet));
     if (!s)
 	return 0;
-    FcMemAlloc (FC_MEM_FONTSET, sizeof (FcFontSet));
     s->nfont = 0;
     s->sfont = 0;
     s->fonts = 0;
@@ -48,11 +47,7 @@ FcFontSetDestroy (FcFontSet *s)
     for (i = 0; i < s->nfont; i++)
 	FcPatternDestroy (s->fonts[i]);
     if (s->fonts)
-    {
-	FcMemFree (FC_MEM_FONTPTR, s->sfont * sizeof (FcPattern *));
 	free (s->fonts);
-    }
-    FcMemFree (FC_MEM_FONTSET, sizeof (FcFontSet));
     free (s);
 }
 
@@ -61,7 +56,7 @@ FcFontSetAdd (FcFontSet *s, FcPattern *font)
 {
     FcPattern	**f;
     int		sfont;
-    
+
     if (s->nfont == s->sfont)
     {
 	sfont = s->sfont + 32;
@@ -71,9 +66,6 @@ FcFontSetAdd (FcFontSet *s, FcPattern *font)
 	    f = (FcPattern **) malloc (sfont * sizeof (FcPattern *));
 	if (!f)
 	    return FcFalse;
-	if (s->sfont)
-	    FcMemFree (FC_MEM_FONTPTR, s->sfont * sizeof (FcPattern *));
-	FcMemAlloc (FC_MEM_FONTPTR, sfont * sizeof (FcPattern *));
 	s->sfont = sfont;
 	s->fonts = f;
     }
@@ -85,7 +77,7 @@ FcBool
 FcFontSetSerializeAlloc (FcSerialize *serialize, const FcFontSet *s)
 {
     int i;
-    
+
     if (!FcSerializeAlloc (serialize, s, sizeof (FcFontSet)))
 	return FcFalse;
     if (!FcSerializeAlloc (serialize, s->fonts, s->nfont * sizeof (FcPattern *)))
@@ -111,7 +103,7 @@ FcFontSetSerialize (FcSerialize *serialize, const FcFontSet * s)
 	return NULL;
     *s_serialize = *s;
     s_serialize->sfont = s_serialize->nfont;
-    
+
     fonts_serialize = FcSerializePtr (serialize, s->fonts);
     if (!fonts_serialize)
 	return NULL;
@@ -130,6 +122,28 @@ FcFontSetSerialize (FcSerialize *serialize, const FcFontSet * s)
 
     return s_serialize;
 }
+
+FcFontSet *
+FcFontSetDeserialize (const FcFontSet *set)
+{
+    int i;
+    FcFontSet *new = FcFontSetCreate ();
+
+    if (!new)
+	return NULL;
+    for (i = 0; i < set->nfont; i++)
+    {
+	if (!FcFontSetAdd (new, FcPatternDuplicate (FcFontSetFont (set, i))))
+	    goto bail;
+    }
+
+    return new;
+bail:
+    FcFontSetDestroy (new);
+
+    return NULL;
+}
+
 #define __fcfs__
 #include "fcaliastail.h"
 #undef __fcfs__

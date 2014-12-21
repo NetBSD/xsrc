@@ -7,9 +7,9 @@
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
- * documentation, and that the name of Keith Packard not be used in
+ * documentation, and that the name of the author(s) not be used in
  * advertising or publicity pertaining to distribution of the software without
- * specific, written prior permission.  Keith Packard makes no
+ * specific, written prior permission.  The authors make no
  * representations about the suitability of this software for any purpose.  It
  * is provided "as is" without express or implied warranty.
  *
@@ -23,7 +23,10 @@
  */
 
 #include "fcint.h"
-#include <locale.h>
+#include <limits.h>
+#include <string.h>
+
+/* MT-safe */
 
 static const struct {
     FcObject	field;
@@ -39,91 +42,186 @@ static const struct {
 
 #define NUM_FC_BOOL_DEFAULTS	(int) (sizeof FcBoolDefaults / sizeof FcBoolDefaults[0])
 
+FcStrSet *default_langs;
+
+FcStrSet *
+FcGetDefaultLangs (void)
+{
+    FcStrSet *result;
+retry:
+    result = (FcStrSet *) fc_atomic_ptr_get (&default_langs);
+    if (!result)
+    {
+	char *langs;
+
+	result = FcStrSetCreate ();
+
+	langs = getenv ("FC_LANG");
+	if (!langs || !langs[0])
+	    langs = getenv ("LC_ALL");
+	if (!langs || !langs[0])
+	    langs = getenv ("LC_CTYPE");
+	if (!langs || !langs[0])
+	    langs = getenv ("LANG");
+	if (langs && langs[0])
+	{
+	    if (!FcStrSetAddLangs (result, langs))
+		FcStrSetAdd (result, (const FcChar8 *) "en");
+	}
+	else
+	    FcStrSetAdd (result, (const FcChar8 *) "en");
+
+	FcRefSetConst (&result->ref);
+	if (!fc_atomic_ptr_cmpexch (&default_langs, NULL, result)) {
+	    FcRefInit (&result->ref, 1);
+	    FcStrSetDestroy (result);
+	    goto retry;
+	}
+    }
+
+    return result;
+}
+
+static FcChar8 *default_lang; /* MT-safe */
+
 FcChar8 *
 FcGetDefaultLang (void)
 {
-    static char	lang_local [128] = {0};
-    char        *ctype;
-    char        *territory;
-    char        *after;
-    int         lang_len, territory_len;
-
-    if (lang_local [0])
-	return (FcChar8 *) lang_local;
-
-    ctype = setlocale (LC_CTYPE, NULL);
-
-    /*
-     * Check if setlocale (LC_ALL, "") has been called
-     */
-    if (!ctype || !strcmp (ctype, "C"))
+    FcChar8 *lang;
+retry:
+    lang = fc_atomic_ptr_get (&default_lang);
+    if (!lang)
     {
-	ctype = getenv ("LC_ALL");
-	if (!ctype)
-	{
-	    ctype = getenv ("LC_CTYPE");
-	    if (!ctype)
-		ctype = getenv ("LANG");
+	FcStrSet *langs = FcGetDefaultLangs ();
+	lang = FcStrdup (langs->strs[0]);
+	FcStrSetDestroy (langs);
+
+	if (!fc_atomic_ptr_cmpexch (&default_lang, NULL, lang)) {
+	    free (lang);
+	    goto retry;
 	}
     }
 
-    /* ignore missing or empty ctype */
-    if (ctype && *ctype != '\0')
+    return lang;
+}
+
+static FcChar8 *default_prgname;
+
+FcChar8 *
+FcGetPrgname (void)
+{
+    FcChar8 *prgname;
+retry:
+    prgname = fc_atomic_ptr_get (&default_prgname);
+    if (!prgname)
     {
-	territory = strchr (ctype, '_');
-	if (territory)
+#ifdef _WIN32
+	char buf[MAX_PATH+1];
+
+	/* TODO This is ASCII-only; fix it. */
+	if (GetModuleFileNameA (GetModuleHandle (NULL), buf, sizeof (buf) / sizeof (buf[0])) > 0)
 	{
-	    lang_len = territory - ctype;
-	    territory = territory + 1;
-	    after = strchr (territory, '.');
-	    if (!after)
+	    char *p;
+	    unsigned int len;
+
+	    p = strrchr (buf, '\\');
+	    if (p)
+		p++;
+	    else
+		p = buf;
+
+	    len = strlen (p);
+
+	    if (len > 4 && 0 == strcmp (p + len - 4, ".exe"))
 	    {
-		after = strchr (territory, '@');
-		if (!after)
-		    after = territory + strlen (territory);
+		len -= 4;
+		buf[len] = '\0';
 	    }
-	    territory_len = after - territory;
-	    if (lang_len + 1 + territory_len + 1 <= (int) sizeof (lang_local))
-	    {
-		strncpy (lang_local, ctype, lang_len);
-		lang_local[lang_len] = '-';
-		strncpy (lang_local + lang_len + 1, territory, territory_len);
-		lang_local[lang_len + 1 + territory_len] = '\0';
-	    }
+
+	    prgname = FcStrdup (p);
 	}
+#elif defined (HAVE_GETPROGNAME)
+	const char *q = getprogname ();
+	if (q)
+	    prgname = FcStrdup (q);
 	else
+	    prgname = FcStrdup ("");
+#else
+# if defined (HAVE_GETEXECNAME)
+	const char *p = getexecname ();
+# elif defined (HAVE_READLINK)
+	char buf[PATH_MAX + 1];
+	int len;
+	char *p = NULL;
+
+	len = readlink ("/proc/self/exe", buf, sizeof (buf) - 1);
+	if (len != -1)
 	{
-	    after = strchr (ctype, '.');
-	    if (!after)
-	    {
-		after = strchr (ctype, '@');
-		if (!after)
-		    after = ctype + strlen (ctype);
-	    }
-	    lang_len = after - ctype;
-	    if (lang_len + 1 <= (int) sizeof (lang_local))
-	    {
-		strncpy (lang_local, ctype, lang_len);
-		lang_local[lang_len] = '\0';
-	    }
+	    buf[len] = '\0';
+	    p = buf;
+	}
+# else
+	char *p = NULL;
+# endif
+	if (p)
+	{
+	    char *r = strrchr (p, '/');
+	    if (r)
+		r++;
+	    else
+		r = p;
+
+	    prgname = FcStrdup (r);
+	}
+
+	if (!prgname)
+	    prgname = FcStrdup ("");
+#endif
+
+	if (!fc_atomic_ptr_cmpexch (&default_prgname, NULL, prgname)) {
+	    free (prgname);
+	    goto retry;
 	}
     }
 
-    /* set default lang to en */
-    if (!lang_local [0])
-	strcpy (lang_local, "en");
+    if (prgname && !prgname[0])
+	return NULL;
 
-    return (FcChar8 *) lang_local;
+    return prgname;
+}
+
+void
+FcDefaultFini (void)
+{
+    FcChar8  *lang;
+    FcStrSet *langs;
+    FcChar8  *prgname;
+
+    lang = fc_atomic_ptr_get (&default_lang);
+    if (lang && fc_atomic_ptr_cmpexch (&default_lang, lang, NULL)) {
+	free (lang);
+    }
+
+    langs = fc_atomic_ptr_get (&default_langs);
+    if (langs && fc_atomic_ptr_cmpexch (&default_langs, langs, NULL)) {
+	FcRefInit (&langs->ref, 1);
+	FcStrSetDestroy (langs);
+    }
+
+    prgname = fc_atomic_ptr_get (&default_prgname);
+    if (prgname && fc_atomic_ptr_cmpexch (&default_prgname, prgname, NULL)) {
+	free (prgname);
+    }
 }
 
 void
 FcDefaultSubstitute (FcPattern *pattern)
 {
-    FcValue v;
+    FcValue v, namelang, v2;
     int	    i;
 
     if (FcPatternObjectGet (pattern, FC_WEIGHT_OBJECT, 0, &v) == FcResultNoMatch )
-	FcPatternObjectAddInteger (pattern, FC_WEIGHT_OBJECT, FC_WEIGHT_MEDIUM);
+	FcPatternObjectAddInteger (pattern, FC_WEIGHT_OBJECT, FC_WEIGHT_NORMAL);
 
     if (FcPatternObjectGet (pattern, FC_SLANT_OBJECT, 0, &v) == FcResultNoMatch)
 	FcPatternObjectAddInteger (pattern, FC_SLANT_OBJECT, FC_SLANT_ROMAN);
@@ -134,7 +232,7 @@ FcDefaultSubstitute (FcPattern *pattern)
     for (i = 0; i < NUM_FC_BOOL_DEFAULTS; i++)
 	if (FcPatternObjectGet (pattern, FcBoolDefaults[i].field, 0, &v) == FcResultNoMatch)
 	    FcPatternObjectAddBool (pattern, FcBoolDefaults[i].field, FcBoolDefaults[i].value);
-    
+
     if (FcPatternObjectGet (pattern, FC_PIXEL_SIZE_OBJECT, 0, &v) == FcResultNoMatch)
     {
 	double	dpi, size, scale;
@@ -162,10 +260,6 @@ FcDefaultSubstitute (FcPattern *pattern)
 	FcPatternObjectAddDouble (pattern, FC_PIXEL_SIZE_OBJECT, size);
     }
 
-    if (FcPatternObjectGet (pattern, FC_LANG_OBJECT, 0, &v) == FcResultNoMatch)
-    {
- 	FcPatternObjectAddString (pattern, FC_LANG_OBJECT, FcGetDefaultLang ());
-    }
     if (FcPatternObjectGet (pattern, FC_FONTVERSION_OBJECT, 0, &v) == FcResultNoMatch)
     {
 	FcPatternObjectAddInteger (pattern, FC_FONTVERSION_OBJECT, 0x7fffffff);
@@ -174,6 +268,47 @@ FcDefaultSubstitute (FcPattern *pattern)
     if (FcPatternObjectGet (pattern, FC_HINT_STYLE_OBJECT, 0, &v) == FcResultNoMatch)
     {
 	FcPatternObjectAddInteger (pattern, FC_HINT_STYLE_OBJECT, FC_HINT_FULL);
+    }
+    if (FcPatternObjectGet (pattern, FC_NAMELANG_OBJECT, 0, &v) == FcResultNoMatch)
+    {
+	FcPatternObjectAddString (pattern, FC_NAMELANG_OBJECT, FcGetDefaultLang ());
+    }
+    /* shouldn't be failed. */
+    FcPatternObjectGet (pattern, FC_NAMELANG_OBJECT, 0, &namelang);
+    /* Add a fallback to ensure the english name when the requested language
+     * isn't available. this would helps for the fonts that have non-English
+     * name at the beginning.
+     */
+    /* Set "en-us" instead of "en" to avoid giving higher score to "en".
+     * This is a hack for the case that the orth is not like ll-cc, because,
+     * if no namelang isn't explicitly set, it will has something like ll-cc
+     * according to current locale. which may causes FcLangDifferentTerritory
+     * at FcLangCompare(). thus, the English name is selected so that
+     * exact matched "en" has higher score than ll-cc.
+     */
+    v2.type = FcTypeString;
+    v2.u.s = (FcChar8 *) "en-us";
+    if (FcPatternObjectGet (pattern, FC_FAMILYLANG_OBJECT, 0, &v) == FcResultNoMatch)
+    {
+	FcPatternObjectAdd (pattern, FC_FAMILYLANG_OBJECT, namelang, FcTrue);
+	FcPatternObjectAddWithBinding (pattern, FC_FAMILYLANG_OBJECT, v2, FcValueBindingWeak, FcTrue);
+    }
+    if (FcPatternObjectGet (pattern, FC_STYLELANG_OBJECT, 0, &v) == FcResultNoMatch)
+    {
+	FcPatternObjectAdd (pattern, FC_STYLELANG_OBJECT, namelang, FcTrue);
+	FcPatternObjectAddWithBinding (pattern, FC_STYLELANG_OBJECT, v2, FcValueBindingWeak, FcTrue);
+    }
+    if (FcPatternObjectGet (pattern, FC_FULLNAMELANG_OBJECT, 0, &v) == FcResultNoMatch)
+    {
+	FcPatternObjectAdd (pattern, FC_FULLNAMELANG_OBJECT, namelang, FcTrue);
+	FcPatternObjectAddWithBinding (pattern, FC_FULLNAMELANG_OBJECT, v2, FcValueBindingWeak, FcTrue);
+    }
+
+    if (FcPatternObjectGet (pattern, FC_PRGNAME_OBJECT, 0, &v) == FcResultNoMatch)
+    {
+	FcChar8 *prgname = FcGetPrgname ();
+	if (prgname)
+	    FcPatternObjectAddString (pattern, FC_PRGNAME_OBJECT, prgname);
     }
 }
 #define __fcdefault__
