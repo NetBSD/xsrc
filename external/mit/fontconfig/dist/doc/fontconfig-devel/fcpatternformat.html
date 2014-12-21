@@ -10,7 +10,7 @@ REL="HOME"
 HREF="t1.html"><LINK
 REL="UP"
 TITLE="FcPattern"
-HREF="x102.html#AEN255"><LINK
+HREF="x102.html#AEN241"><LINK
 REL="PREVIOUS"
 TITLE="FcNameUnparse"
 HREF="fcnameunparse.html"></HEAD
@@ -68,7 +68,7 @@ NAME="FCPATTERNFORMAT"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN930"
+NAME="AEN877"
 ></A
 ><H2
 >Name</H2
@@ -76,7 +76,7 @@ NAME="AEN930"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN933"
+NAME="AEN880"
 ></A
 ><H2
 >Synopsis</H2
@@ -85,7 +85,7 @@ CLASS="FUNCSYNOPSIS"
 ><P
 ></P
 ><A
-NAME="AEN934"
+NAME="AEN881"
 ></A
 ><TABLE
 BORDER="0"
@@ -95,7 +95,7 @@ WIDTH="100%"
 ><TD
 ><PRE
 CLASS="FUNCSYNOPSISINFO"
->#include &#60;fontconfig.h&#62;
+>#include &#60;fontconfig/fontconfig.h&#62;
 	</PRE
 ></TD
 ></TR
@@ -127,7 +127,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN943"
+NAME="AEN890"
 ></A
 ><H2
 >Description</H2
@@ -152,7 +152,7 @@ CLASS="PARAMETER"
 ></TT
 > is invalid.&#13;</P
 ><P
->&#13;The format is loosely modelled after printf-style format string.
+>&#13;The format is loosely modeled after printf-style format string.
 The format string is composed of zero or more  directives: ordinary
 characters (not "%"), which are copied unchanged to the output stream;
 and tags which are interpreted to construct text from the pattern in a
@@ -164,7 +164,7 @@ literal).
 It is advisable to always escape curly braces that
 are meant to be copied to the output as ordinary characters.&#13;</P
 ><P
->&#13;Each tags is introduced by the character "%",
+>&#13;Each tag is introduced by the character "%",
 followed by an optional minimum field width,
 followed by tag contents in curly braces ({}).
 If the minimum field width value is provided the tag
@@ -186,7 +186,7 @@ CLASS="PARAMETER"
 >pattern</I
 ></TT
 > and the resulting list of values returned,
-joined together using comma.  For example, to print the family name and style the
+joined together using comma.  For example, to print the family name and style of the
 pattern, use the format "%{family} %{style}\n".  To extend the family column
 to forty characters use "%-40{family}%{style}\n".&#13;</P
 ><P
@@ -246,7 +246,7 @@ CLASS="FIRSTTERM"
 is one that expands a sub-expression.  The tag contents
 are the sub-expression to expand placed inside another set of curly braces.
 Sub-expression tags are useful for aligning an entire sub-expression, or to
-apply converters (explained later) on an entire sub-expression.
+apply converters (explained later) to the entire sub-expression output.
 For example, the format "%40{{%{family} %{style}}}" expands the sub-expression
 to construct the family name followed by the style, then takes the entire
 string and pads it on the left to be at least forty characters.&#13;</P
@@ -317,7 +317,7 @@ a single value for those elements, starting from the first value and
 continuing as long as any of those elements has a value.
 For example, the format "%{[]family,familylang{%{family} (%{familylang})\n}}"
 will expand the pattern "%{family} (%{familylang})\n" with a pattern
-having only the first value of the family and familylang elemtns, then expands
+having only the first value of the family and familylang elements, then expands
 it with the second values, then the third, etc.&#13;</P
 ><P
 >&#13;As a special case, if an enumerate tag has only one element, and that element
@@ -354,6 +354,13 @@ command on the pattern, without the final newline.</P
 ><DD
 ><P
 >Expands to the output of the default output format of the fc-list
+command on the pattern, without the final newline.</P
+></DD
+><DT
+>fccat</DT
+><DD
+><P
+>Expands to the output of the default output format of the fc-cat
 command on the pattern, without the final newline.</P
 ></DD
 ><DT
@@ -530,14 +537,12 @@ lower-cased and with spaces removed.
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1049"
+NAME="AEN1000"
 ></A
 ><H2
->Version</H2
+>Since</H2
 ><P
->Fontconfig version 2.8.0
-
-	    </P
+>version 2.9.0</P
 ></DIV
 ><DIV
 CLASS="NAVFOOTER"
@@ -585,7 +590,7 @@ WIDTH="34%"
 ALIGN="center"
 VALIGN="top"
 ><A
-HREF="x102.html#AEN255"
+HREF="x102.html#AEN241"
 ACCESSKEY="U"
 >Up</A
 ></TD

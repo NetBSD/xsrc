@@ -7,9 +7,9 @@
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
- * documentation, and that the name of Keith Packard not be used in
+ * documentation, and that the name of the author(s) not be used in
  * advertising or publicity pertaining to distribution of the software without
- * specific, written prior permission.  Keith Packard makes no
+ * specific, written prior permission.  The authors make no
  * representations about the suitability of this software for any purpose.  It
  * is provided "as is" without express or implied warranty.
  *
@@ -26,45 +26,37 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#ifdef _WIN32
-#include <windows.h>
+#ifdef HAVE_REGEX_H
+#include <regex.h>
 #endif
+
+
+/* Objects MT-safe for readonly access. */
 
 FcChar8 *
 FcStrCopy (const FcChar8 *s)
 {
-    int     len;
-    FcChar8 *r;
-
-    if (!s)
-	return 0;
-    len = strlen ((char *) s) + 1;
-    r = (FcChar8 *) malloc (len);
-    if (!r)
-	return 0;
-    FcMemAlloc (FC_MEM_STRING, len);
-    memcpy (r, s, len);
-    return r;
+    return FcStrdup (s);
 }
 
 FcChar8 *
 FcStrPlus (const FcChar8 *s1, const FcChar8 *s2)
 {
-    int	    l = strlen ((char *)s1) + strlen ((char *) s2) + 1;
+    int	    s1l = strlen ((char *) s1);
+    int	    s2l = strlen ((char *) s2);
+    int	    l = s1l + s2l + 1;
     FcChar8 *s = malloc (l);
 
     if (!s)
 	return 0;
-    FcMemAlloc (FC_MEM_STRING, l);
-    strcpy ((char *) s, (char *) s1);
-    strcat ((char *) s, (char *) s2);
+    memcpy (s, s1, s1l);
+    memcpy (s + s1l, s2, s2l + 1);
     return s;
 }
 
 void
 FcStrFree (FcChar8 *s)
 {
-    FcMemFree (FC_MEM_STRING, strlen ((char *) s) + 1);
     free (s);
 }
 
@@ -73,8 +65,6 @@ FcStrFree (FcChar8 *s)
 
 #define FcCaseFoldUpperCount(cf) \
     ((cf)->method == FC_CASE_FOLD_FULL ? 1 : (cf)->count)
-
-#define FC_STR_CANON_BUF_LEN	1024
 
 typedef struct _FcCaseWalker {
     const FcChar8   *read;
@@ -109,7 +99,7 @@ FcStrCaseWalkerLong (FcCaseWalker *w, FcChar8 r)
 	    int		mid = (min + max) >> 1;
 	    FcChar32    low = fcCaseFold[mid].upper;
 	    FcChar32    high = low + FcCaseFoldUpperCount (&fcCaseFold[mid]);
-	    
+	
 	    if (high <= ucs4)
 		min = mid + 1;
 	    else if (ucs4 < low)
@@ -147,27 +137,7 @@ FcStrCaseWalkerLong (FcCaseWalker *w, FcChar8 r)
 }
 
 static FcChar8
-FcStrCaseWalkerNext (FcCaseWalker *w)
-{
-    FcChar8	r;
-
-    if (w->read)
-    {
-	if ((r = *w->read++))
-	    return r;
-	w->read = 0;
-    }
-    r = *w->src++;
-    
-    if ((r & 0xc0) == 0xc0)
-	return FcStrCaseWalkerLong (w, r);
-    if ('A' <= r && r <= 'Z')
-        r = r - 'A' + 'a';
-    return r;
-}
-
-static FcChar8
-FcStrCaseWalkerNextIgnoreBlanks (FcCaseWalker *w)
+FcStrCaseWalkerNext (FcCaseWalker *w, const char *delims)
 {
     FcChar8	r;
 
@@ -180,8 +150,8 @@ FcStrCaseWalkerNextIgnoreBlanks (FcCaseWalker *w)
     do
     {
 	r = *w->src++;
-    } while (r == ' ');
-    
+    } while (r != 0 && delims && strchr (delims, r));
+
     if ((r & 0xc0) == 0xc0)
 	return FcStrCaseWalkerLong (w, r);
     if ('A' <= r && r <= 'Z')
@@ -197,14 +167,13 @@ FcStrDowncase (const FcChar8 *s)
     FcChar8	    *dst, *d;
 
     FcStrCaseWalkerInit (s, &w);
-    while (FcStrCaseWalkerNext (&w))
+    while (FcStrCaseWalkerNext (&w, NULL))
 	len++;
     d = dst = malloc (len + 1);
     if (!d)
 	return 0;
-    FcMemAlloc (FC_MEM_STRING, len + 1);
     FcStrCaseWalkerInit (s, &w);
-    while ((*d++ = FcStrCaseWalkerNext (&w)));
+    while ((*d++ = FcStrCaseWalkerNext (&w, NULL)));
     return dst;
 }
 
@@ -215,14 +184,14 @@ FcStrCmpIgnoreCase (const FcChar8 *s1, const FcChar8 *s2)
     FcChar8	    c1, c2;
 
     if (s1 == s2) return 0;
-    
+
     FcStrCaseWalkerInit (s1, &w1);
     FcStrCaseWalkerInit (s2, &w2);
-    
-    for (;;) 
+
+    for (;;)
     {
-	c1 = FcStrCaseWalkerNext (&w1);
-	c2 = FcStrCaseWalkerNext (&w2);
+	c1 = FcStrCaseWalkerNext (&w1, NULL);
+	c2 = FcStrCaseWalkerNext (&w2, NULL);
 	if (!c1 || (c1 != c2))
 	    break;
     }
@@ -232,18 +201,24 @@ FcStrCmpIgnoreCase (const FcChar8 *s1, const FcChar8 *s2)
 int
 FcStrCmpIgnoreBlanksAndCase (const FcChar8 *s1, const FcChar8 *s2)
 {
+    return FcStrCmpIgnoreCaseAndDelims (s1, s2, (const FcChar8 *)" ");
+}
+
+int
+FcStrCmpIgnoreCaseAndDelims (const FcChar8 *s1, const FcChar8 *s2, const FcChar8 *delims)
+{
     FcCaseWalker    w1, w2;
     FcChar8	    c1, c2;
 
     if (s1 == s2) return 0;
-    
+
     FcStrCaseWalkerInit (s1, &w1);
     FcStrCaseWalkerInit (s2, &w2);
-    
-    for (;;) 
+
+    for (;;)
     {
-	c1 = FcStrCaseWalkerNextIgnoreBlanks (&w1);
-	c2 = FcStrCaseWalkerNextIgnoreBlanks (&w2);
+	c1 = FcStrCaseWalkerNext (&w1, (const char *)delims);
+	c2 = FcStrCaseWalkerNext (&w2, (const char *)delims);
 	if (!c1 || (c1 != c2))
 	    break;
     }
@@ -254,10 +229,10 @@ int
 FcStrCmp (const FcChar8 *s1, const FcChar8 *s2)
 {
     FcChar8 c1, c2;
-    
+
     if (s1 == s2)
 	return 0;
-    for (;;) 
+    for (;;)
     {
 	c1 = *s1++;
 	c2 = *s2++;
@@ -265,6 +240,55 @@ FcStrCmp (const FcChar8 *s1, const FcChar8 *s2)
 	    break;
     }
     return (int) c1 - (int) c2;
+}
+
+#ifdef USE_REGEX
+static FcBool
+_FcStrRegexCmp (const FcChar8 *s, const FcChar8 *regex, int cflags, int eflags)
+{
+    int ret = -1;
+    regex_t reg;
+
+    if ((ret = regcomp (&reg, (const char *)regex, cflags)) != 0)
+    {
+	if (FcDebug () & FC_DBG_MATCHV)
+	{
+	    char buf[512];
+
+	    regerror (ret, &reg, buf, 512);
+	    printf("Regexp compile error: %s\n", buf);
+	}
+	return FcFalse;
+    }
+    ret = regexec (&reg, (const char *)s, 0, NULL, eflags);
+    if (ret != 0)
+    {
+	if (FcDebug () & FC_DBG_MATCHV)
+	{
+	    char buf[512];
+
+	    regerror (ret, &reg, buf, 512);
+	    printf("Regexp exec error: %s\n", buf);
+	}
+    }
+    regfree (&reg);
+
+    return ret == 0 ? FcTrue : FcFalse;
+}
+#else
+#  define _FcStrRegexCmp(_s_, _regex_, _cflags_, _eflags_)	(FcFalse)
+#endif
+
+FcBool
+FcStrRegexCmp (const FcChar8 *s, const FcChar8 *regex)
+{
+	return _FcStrRegexCmp (s, regex, REG_EXTENDED | REG_NOSUB, 0);
+}
+
+FcBool
+FcStrRegexCmpIgnoreCase (const FcChar8 *s, const FcChar8 *regex)
+{
+	return _FcStrRegexCmp (s, regex, REG_EXTENDED | REG_NOSUB | REG_ICASE, 0);
 }
 
 /*
@@ -279,7 +303,7 @@ FcStrHashIgnoreCase (const FcChar8 *s)
     FcChar8	    c;
 
     FcStrCaseWalkerInit (s, &w);
-    while ((c = FcStrCaseWalkerNext (&w)))
+    while ((c = FcStrCaseWalkerNext (&w, NULL)))
 	h = ((h << 3) ^ (h >> 3)) ^ c;
     return h;
 }
@@ -296,11 +320,11 @@ FcStrIsAtIgnoreBlanksAndCase (const FcChar8 *s1, const FcChar8 *s2)
 
     FcStrCaseWalkerInit (s1, &w1);
     FcStrCaseWalkerInit (s2, &w2);
-    
-    for (;;) 
+
+    for (;;)
     {
-	c1 = FcStrCaseWalkerNextIgnoreBlanks (&w1);
-	c2 = FcStrCaseWalkerNextIgnoreBlanks (&w2);
+	c1 = FcStrCaseWalkerNext (&w1, " ");
+	c2 = FcStrCaseWalkerNext (&w2, " ");
 	if (!c1 || (c1 != c2))
 	    break;
     }
@@ -355,11 +379,11 @@ FcStrIsAtIgnoreCase (const FcChar8 *s1, const FcChar8 *s2)
 
     FcStrCaseWalkerInit (s1, &w1);
     FcStrCaseWalkerInit (s2, &w2);
-    
-    for (;;) 
+
+    for (;;)
     {
-	c1 = FcStrCaseWalkerNext (&w1);
-	c2 = FcStrCaseWalkerNext (&w2);
+	c1 = FcStrCaseWalkerNext (&w1, NULL);
+	c2 = FcStrCaseWalkerNext (&w2, NULL);
 	if (!c1 || (c1 != c2))
 	    break;
     }
@@ -395,7 +419,7 @@ FcStrContainsWord (const FcChar8 *s1, const FcChar8 *s2)
 	
     while (s1len >= s2len)
     {
-	if (wordStart && 
+	if (wordStart &&
 	    FcStrIsAtIgnoreCase (s1, s2) &&
 	    (s1len == s2len || FcCharIsPunct (s1[s2len])))
 	{
@@ -410,6 +434,75 @@ FcStrContainsWord (const FcChar8 *s1, const FcChar8 *s2)
     return 0;
 }
 
+/*
+ * returns the number of strings (ignoring delimitors and case) being matched
+ */
+
+int
+FcStrMatchIgnoreCaseAndDelims (const FcChar8 *s1, const FcChar8 *s2, const FcChar8 *delims)
+{
+    FcCaseWalker    w1, w2;
+    FcChar8	    c1, c2;
+
+    if (s1 == s2) return 0;
+
+    FcStrCaseWalkerInit (s1, &w1);
+    FcStrCaseWalkerInit (s2, &w2);
+
+    for (;;)
+    {
+	c1 = FcStrCaseWalkerNext (&w1, (const char *)delims);
+	c2 = FcStrCaseWalkerNext (&w2, (const char *)delims);
+	if (!c1 || (c1 != c2))
+	    break;
+    }
+    return w1.src - s1 - 1;
+}
+
+FcBool
+FcStrGlobMatch (const FcChar8 *glob,
+		const FcChar8 *string)
+{
+    FcChar8	c;
+
+    while ((c = *glob++))
+    {
+	switch (c) {
+	case '*':
+	    /* short circuit common case */
+	    if (!*glob)
+		return FcTrue;
+	    /* short circuit another common case */
+	    if (strchr ((char *) glob, '*') == 0)
+	    {
+		size_t l1, l2;
+
+		l1 = strlen ((char *) string);
+		l2 = strlen ((char *) glob);
+		if (l1 < l2)
+		    return FcFalse;
+		string += (l1 - l2);
+	    }
+	    while (*string)
+	    {
+		if (FcStrGlobMatch (glob, string))
+		    return FcTrue;
+		string++;
+	    }
+	    return FcFalse;
+	case '?':
+	    if (*string++ == '\0')
+		return FcFalse;
+	    break;
+	default:
+	    if (*string++ != c)
+		return FcFalse;
+	    break;
+	}
+    }
+    return *string == '\0';
+}
+
 const FcChar8 *
 FcStrStrIgnoreCase (const FcChar8 *s1, const FcChar8 *s2)
 {
@@ -422,16 +515,16 @@ FcStrStrIgnoreCase (const FcChar8 *s1, const FcChar8 *s2)
 
     if (s1 == s2)
 	return s1;
-    
+
     FcStrCaseWalkerInit (s1, &w1);
     FcStrCaseWalkerInit (s2, &w2);
-    
-    c2 = FcStrCaseWalkerNext (&w2);
-    
+
+    c2 = FcStrCaseWalkerNext (&w2, NULL);
+
     for (;;)
     {
 	cur = w1.src;
-	c1 = FcStrCaseWalkerNext (&w1);
+	c1 = FcStrCaseWalkerNext (&w1, NULL);
 	if (!c1)
 	    break;
 	if (c1 == c2)
@@ -442,8 +535,8 @@ FcStrStrIgnoreCase (const FcChar8 *s1, const FcChar8 *s2)
 
 	    for (;;)
 	    {
-		c1t = FcStrCaseWalkerNext (&w1t);
-		c2t = FcStrCaseWalkerNext (&w2t);
+		c1t = FcStrCaseWalkerNext (&w1t, NULL);
+		c2t = FcStrCaseWalkerNext (&w2t, NULL);
 
 		if (!c2t)
 		    return cur;
@@ -474,7 +567,7 @@ again:
     if (!c2)
 	return 0;
 
-    for (;;) 
+    for (;;)
     {
 	p = s1;
 	c1 = *s1++;
@@ -517,15 +610,15 @@ FcUtf8ToUcs4 (const FcChar8 *src_orig,
 
     if (len == 0)
 	return 0;
-    
+
     s = *src++;
     len--;
-    
+
     if (!(s & 0x80))
     {
 	result = s;
 	extra = 0;
-    } 
+    }
     else if (!(s & 0x40))
     {
 	return -1;
@@ -561,7 +654,7 @@ FcUtf8ToUcs4 (const FcChar8 *src_orig,
     }
     if (extra > len)
 	return -1;
-    
+
     while (extra--)
     {
 	result <<= 6;
@@ -586,7 +679,7 @@ FcUtf8Len (const FcChar8    *string,
     int		clen;
     FcChar32	c;
     FcChar32	max;
-    
+
     n = 0;
     max = 0;
     while (len)
@@ -616,7 +709,7 @@ FcUcs4ToUtf8 (FcChar32	ucs4,
 {
     int	bits;
     FcChar8 *d = dest;
-    
+
     if      (ucs4 <       0x80) {  *d++=  ucs4;                         bits= -6; }
     else if (ucs4 <      0x800) {  *d++= ((ucs4 >>  6) & 0x1F) | 0xC0;  bits=  0; }
     else if (ucs4 <    0x10000) {  *d++= ((ucs4 >> 12) & 0x0F) | 0xE0;  bits=  6; }
@@ -647,11 +740,11 @@ FcUtf16ToUcs4 (const FcChar8	*src_orig,
 
     if (len < 2)
 	return 0;
-    
+
     a = GetUtf16 (src, endian); src += 2; len -= 2;
-    
-    /* 
-     * Check for surrogate 
+
+    /*
+     * Check for surrogate
      */
     if ((a & 0xfc00) == 0xd800)
     {
@@ -683,7 +776,7 @@ FcUtf16Len (const FcChar8   *string,
     int		clen;
     FcChar32	c;
     FcChar32	max;
-    
+
     n = 0;
     max = 0;
     while (len)
@@ -729,7 +822,6 @@ FcStrBufDestroy (FcStrBuf *buf)
 {
     if (buf->allocated)
     {
-	FcMemFree (FC_MEM_STRBUF, buf->size);
 	free (buf->buf);
 	FcStrBufInit (buf, 0, 0);
     }
@@ -746,7 +838,6 @@ FcStrBufDone (FcStrBuf *buf)
 	ret = malloc (buf->len + 1);
     if (ret)
     {
-	FcMemAlloc (FC_MEM_STRING, buf->len + 1);
 	memcpy (ret, buf->buf, buf->len);
 	ret[buf->len] = '\0';
     }
@@ -796,9 +887,6 @@ FcStrBufChar (FcStrBuf *buf, FcChar8 c)
 	    buf->failed = FcTrue;
 	    return FcFalse;
 	}
-	if (buf->size)
-	    FcMemFree (FC_MEM_STRBUF, buf->size);
-	FcMemAlloc (FC_MEM_STRBUF, size);
 	buf->size = size;
 	buf->buf = new;
     }
@@ -832,21 +920,83 @@ FcStrUsesHome (const FcChar8 *s)
 }
 
 FcChar8 *
+FcStrBuildFilename (const FcChar8 *path,
+		    ...)
+{
+    va_list ap;
+    FcStrSet *sset;
+    FcStrList *list;
+    FcChar8 *s, *ret = NULL, *p;
+    size_t len = 0;
+
+    if (!path)
+	return NULL;
+
+    sset = FcStrSetCreate ();
+    if (!sset)
+	return NULL;
+
+    if (!FcStrSetAdd (sset, path))
+	goto bail0;
+
+    va_start (ap, path);
+    while (1)
+    {
+	s = (FcChar8 *)va_arg (ap, FcChar8 *);
+	if (!s)
+	    break;
+	if (!FcStrSetAdd (sset, s))
+	    goto bail1;
+    }
+    list = FcStrListCreate (sset);
+    while ((s = FcStrListNext (list)))
+    {
+	len += strlen ((const char *)s) + 1;
+    }
+    list->n = 0;
+    ret = malloc (sizeof (FcChar8) * (len + 1));
+    if (!ret)
+	goto bail2;
+    p = ret;
+    while ((s = FcStrListNext (list)))
+    {
+	if (p != ret)
+	{
+	    p[0] = FC_DIR_SEPARATOR;
+	    p++;
+	}
+	len = strlen ((const char *)s);
+	memcpy (p, s, len);
+	p += len;
+    }
+    *p = 0;
+
+bail2:
+    FcStrListDone (list);
+bail1:
+    va_end (ap);
+bail0:
+    FcStrSetDestroy (sset);
+
+    return ret;
+}
+
+FcChar8 *
 FcStrCopyFilename (const FcChar8 *s)
 {
     FcChar8 *new;
-    
+
     if (*s == '~')
     {
 	FcChar8	*home = FcConfigHome ();
 	FcChar8	*full;
 	int	size;
 	if (!home)
-	    return 0;
+	    return NULL;
 	size = strlen ((char *) home) + strlen ((char *) s);
 	full = (FcChar8 *) malloc (size);
 	if (!full)
-	    return 0;
+	    return NULL;
 	strcpy ((char *) full, (char *) home);
 	strcat ((char *) full, (char *) s + 1);
 	new = FcStrCanonFilename (full);
@@ -854,6 +1004,7 @@ FcStrCopyFilename (const FcChar8 *s)
     }
     else
 	new = FcStrCanonFilename (s);
+
     return new;
 }
 
@@ -875,7 +1026,7 @@ FcStrLastSlash (const FcChar8  *path)
 
     return slash;
 }
-  
+
 FcChar8 *
 FcStrDirname (const FcChar8 *file)
 {
@@ -888,7 +1039,6 @@ FcStrDirname (const FcChar8 *file)
     dir = malloc ((slash - file) + 1);
     if (!dir)
 	return 0;
-    FcMemAlloc (FC_MEM_STRING, (slash - file) + 1);
     strncpy ((char *) dir, (const char *) file, slash - file);
     dir[slash - file] = '\0';
     return dir;
@@ -917,9 +1067,12 @@ FcStrCanonAbsoluteFilename (const FcChar8 *s)
     file = malloc (size);
     if (!file)
 	return NULL;
-    FcMemAlloc (FC_MEM_STRING, size);
     slash = NULL;
     f = file;
+#ifdef _WIN32
+    if (*s == '/' && *(s+1) == '/') /* Network path, do not squash // */
+	*f++ = *s++;
+#endif
     for (;;) {
 	if (*s == '/' || *s == '\0')
 	{
@@ -954,10 +1107,10 @@ FcStrCanonAbsoluteFilename (const FcChar8 *s)
     }
     return file;
 }
- 
+
 #ifdef _WIN32
 /*
- * Convert '\\' to '/' , remove double '/' 
+ * Convert '\\' to '/' , remove double '/'
  */
 static void
 FcConvertDosPath (char *str)
@@ -998,13 +1151,13 @@ FcStrCanonFilename (const FcChar8 *s)
 {
 #ifdef _WIN32
     FcChar8 full[FC_MAX_FILE_LEN + 2];
-    int size = GetFullPathName (s, sizeof (full) -1,
-				full, NULL);
+    int size = GetFullPathName ((LPCSTR) s, sizeof (full) -1,
+				(LPSTR) full, NULL);
 
     if (size == 0)
 	perror ("GetFullPathName");
 
-    FcConvertDosPath (full);
+    FcConvertDosPath ((char *) full);
     return FcStrCanonAbsoluteFilename (full);
 #else
     if (s[0] == '/')
@@ -1017,8 +1170,7 @@ FcStrCanonFilename (const FcChar8 *s)
 	FcChar8	cwd[FC_MAX_FILE_LEN + 2];
 	if (getcwd ((char *) cwd, FC_MAX_FILE_LEN) == NULL)
 	    return NULL;
-	strcat ((char *) cwd, "/");
-	full = FcStrPlus (cwd, s);
+	full = FcStrBuildFilename (cwd, s, NULL);
 	file = FcStrCanonAbsoluteFilename (full);
 	FcStrFree (full);
 	return file;
@@ -1033,8 +1185,7 @@ FcStrSetCreate (void)
     FcStrSet	*set = malloc (sizeof (FcStrSet));
     if (!set)
 	return 0;
-    FcMemAlloc (FC_MEM_STRSET, sizeof (FcStrSet));
-    set->ref = 1;
+    FcRefInit (&set->ref, 1);
     set->num = 0;
     set->size = 0;
     set->strs = 0;
@@ -1055,14 +1206,10 @@ _FcStrSetAppend (FcStrSet *set, FcChar8 *s)
 
 	if (!strs)
 	    return FcFalse;
-	FcMemAlloc (FC_MEM_STRSET, (set->size + 2) * sizeof (FcChar8 *));
 	if (set->num)
 	    memcpy (strs, set->strs, set->num * sizeof (FcChar8 *));
 	if (set->strs)
-	{
-	    FcMemFree (FC_MEM_STRSET, (set->size + 1) * sizeof (FcChar8 *));
 	    free (set->strs);
-	}
 	set->size = set->size + 1;
 	set->strs = strs;
     }
@@ -1123,6 +1270,50 @@ FcStrSetAddFilename (FcStrSet *set, const FcChar8 *s)
 }
 
 FcBool
+FcStrSetAddLangs (FcStrSet *strs, const char *languages)
+{
+    const char *p = languages, *next;
+    FcChar8 lang[128] = {0}, *normalized_lang;
+    size_t len;
+    FcBool ret = FcFalse;
+
+    if (!languages)
+	return FcFalse;
+
+    while ((next = strchr (p, ':')))
+    {
+	len = next - p;
+	len = FC_MIN (len, 127);
+	strncpy ((char *) lang, p, len);
+	lang[len] = 0;
+	/* ignore an empty item */
+	if (*lang)
+	{
+	    normalized_lang = FcLangNormalize ((const FcChar8 *) lang);
+	    if (normalized_lang)
+	    {
+		FcStrSetAdd (strs, normalized_lang);
+		FcStrFree (normalized_lang);
+		ret = FcTrue;
+	    }
+	}
+	p = next + 1;
+    }
+    if (*p)
+    {
+	normalized_lang = FcLangNormalize ((const FcChar8 *) p);
+	if (normalized_lang)
+	{
+	    FcStrSetAdd (strs, normalized_lang);
+	    FcStrFree (normalized_lang);
+	    ret = FcTrue;
+	}
+    }
+
+    return ret;
+}
+
+FcBool
 FcStrSetDel (FcStrSet *set, const FcChar8 *s)
 {
     int	i;
@@ -1135,7 +1326,7 @@ FcStrSetDel (FcStrSet *set, const FcChar8 *s)
 	     * copy remaining string pointers and trailing
 	     * NULL
 	     */
-	    memmove (&set->strs[i], &set->strs[i+1], 
+	    memmove (&set->strs[i], &set->strs[i+1],
 		     (set->num - i) * sizeof (FcChar8 *));
 	    set->num--;
 	    return FcTrue;
@@ -1143,23 +1334,34 @@ FcStrSetDel (FcStrSet *set, const FcChar8 *s)
     return FcFalse;
 }
 
+/* TODO Make public */
+static FcStrSet *
+FcStrSetReference (FcStrSet *set)
+{
+    if (FcRefIsConst (&set->ref))
+	return set;
+
+    FcRefInc (&set->ref);
+    return set;
+}
+
 void
 FcStrSetDestroy (FcStrSet *set)
 {
-    if (--set->ref == 0)
-    {
-	int	i;
-    
-	for (i = 0; i < set->num; i++)
-	    FcStrFree (set->strs[i]);
-	if (set->strs)
-	{
-	    FcMemFree (FC_MEM_STRSET, (set->size + 1) * sizeof (FcChar8 *));
-	    free (set->strs);
-	}
-	FcMemFree (FC_MEM_STRSET, sizeof (FcStrSet));
-	free (set);
-    }
+    int	i;
+
+    /* We rely on this in FcGetDefaultLangs for caching. */
+    if (FcRefIsConst (&set->ref))
+	return;
+
+    if (FcRefDec (&set->ref) != 1)
+	return;
+
+    for (i = 0; i < set->num; i++)
+	FcStrFree (set->strs[i]);
+    if (set->strs)
+	free (set->strs);
+    free (set);
 }
 
 FcStrList *
@@ -1170,11 +1372,16 @@ FcStrListCreate (FcStrSet *set)
     list = malloc (sizeof (FcStrList));
     if (!list)
 	return 0;
-    FcMemAlloc (FC_MEM_STRLIST, sizeof (FcStrList));
     list->set = set;
-    set->ref++;
+    FcStrSetReference (set);
     list->n = 0;
     return list;
+}
+
+void
+FcStrListFirst (FcStrList *list)
+{
+    list->n = 0;
 }
 
 FcChar8 *
@@ -1189,7 +1396,6 @@ void
 FcStrListDone (FcStrList *list)
 {
     FcStrSetDestroy (list->set);
-    FcMemFree (FC_MEM_STRLIST, sizeof (FcStrList));
     free (list);
 }
 

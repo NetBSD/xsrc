@@ -9,9 +9,9 @@
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
- * documentation, and that the name of Keith Packard not be used in
+ * documentation, and that the name of the author(s) not be used in
  * advertising or publicity pertaining to distribution of the software without
- * specific, written prior permission.  Keith Packard makes no
+ * specific, written prior permission.  The authors make no
  * representations about the suitability of this software for any purpose.  It
  * is provided "as is" without express or implied warranty.
  *
@@ -100,7 +100,6 @@ main (int argc, char **argv)
     FcChar8     *format = NULL;
     int		err = 0;
     int		i;
-    FcBlanks    *blanks;
 #if HAVE_GETOPT_LONG || HAVE_GETOPT
     int		c;
 
@@ -136,14 +135,6 @@ main (int argc, char **argv)
     if (i == argc)
 	usage (argv[0], 1);
 
-    if (!FcInit ())
-    {
-	fprintf (stderr, "Can't init font config library\n");
-	return 1;
-    }
-
-    blanks = FcConfigGetBlanks (NULL);
-
     for (; i < argc; i++)
     {
 	int index;
@@ -154,7 +145,7 @@ main (int argc, char **argv)
 	do {
 	    FcPattern *pat;
 
-	    pat = FcFreeTypeQuery ((FcChar8 *) argv[i], index, blanks, &count);
+	    pat = FcFreeTypeQuery ((FcChar8 *) argv[i], index, NULL, &count);
 	    if (pat)
 	    {
 		if (format)
@@ -165,7 +156,7 @@ main (int argc, char **argv)
 		    if (s)
 		    {
 			printf ("%s", s);
-			free (s);
+			FcStrFree (s);
 		    }
 		}
 		else

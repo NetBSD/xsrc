@@ -9,9 +9,9 @@
     documentation for any purpose is hereby granted without fee, provided that
     the above copyright notice appear in all copies and that both that
     copyright notice and this permission notice appear in supporting
-    documentation, and that the name of Keith Packard not be used in
+    documentation, and that the name of the author(s) not be used in
     advertising or publicity pertaining to distribution of the software without
-    specific, written prior permission.  Keith Packard makes no
+    specific, written prior permission.  The authors make no
     representations about the suitability of this software for any purpose.  It
     is provided "as is" without express or implied warranty.
    
@@ -37,6 +37,8 @@
    &confdir;/fonts.conf
    &confdir;/fonts.dtd
    &confdir;/conf.d
+   $XDG_CONFIG_HOME/fontconfig/conf.d
+   $XDG_CONFIG_HOME/fontconfig/fonts.conf
    ~/.fonts.conf.d
    ~/.fonts.conf
 </synopsis>
@@ -110,11 +112,11 @@ convenience for the applications' rendering mechanism.
   hintstyle       Int     Automatic hinting style
   verticallayout  Bool    Use vertical layout
   autohint        Bool    Use autohinter instead of normal hinter
-  globaladvance   Bool    Use font global advance data
+  globaladvance   Bool    Use font global advance data (deprecated)
   file            String  The filename holding the font
   index           Int     The index of the font within the file
   ftface          FT_Face Use the specified FreeType face object
-  rasterizer      String  Which rasterizer is in use
+  rasterizer      String  Which rasterizer is in use (deprecated)
   outline         Bool    Whether the glyphs are outlines
   scalable        Bool    Whether glyphs can be scaled
   scale           Double  Scale factor for point->pixel conversions
@@ -129,6 +131,8 @@ convenience for the applications' rendering mechanism.
   fontversion     Int     Version number of the font
   capability      String  List of layout capabilities in the font
   embolden        Bool    Rasterizer should synthetically embolden the font
+  fontfeatures    String  List of the feature tags in OpenType to be enabled
+  prgname         String  String  Name of the running program
     </programlisting>
   </refsect2>
   <refsect2>
@@ -216,15 +220,15 @@ Here are some examples:
                                   with artificial obliquing
     </programlisting>
     <para>
-The '\', '-', ':' and ',' characters in family names must be preceeded by a
+The '\', '-', ':' and ',' characters in family names must be preceded by a
 '\' character to avoid having them misinterpreted. Similarly, values
-containing '\', '=', '_', ':' and ',' must also have them preceeded by a
+containing '\', '=', '_', ':' and ',' must also have them preceded by a
 '\' character. The '\' characters are stripped out of the family name and
 values as the font name is read.
     </para>
   </refsect2>
 </refsect1>
-<refsect1><title>Debugging Applications</title>
+<refsect1 id="debug"><title>Debugging Applications</title>
   <para>
 To help diagnose font and applications problems, fontconfig is built with a
 large amount of internal debugging left enabled. It is controlled by means
@@ -297,22 +301,24 @@ following structure:
   </para>
 <refsect2><title><literal>&lt;fontconfig&gt;</literal></title><para>
 This is the top level element for a font configuration and can contain
-<literal>&lt;dir&gt;</literal>, <literal>&lt;cache&gt;</literal>, <literal>&lt;include&gt;</literal>, <literal>&lt;match&gt;</literal> and <literal>&lt;alias&gt;</literal> elements in any order.
+<literal>&lt;dir&gt;</literal>, <literal>&lt;cachedir&gt;</literal>, <literal>&lt;include&gt;</literal>, <literal>&lt;match&gt;</literal> and <literal>&lt;alias&gt;</literal> elements in any order.
   </para></refsect2>
-  <refsect2><title><literal>&lt;dir&gt;</literal></title><para>
+  <refsect2><title><literal>&lt;dir prefix="default"&gt;</literal></title><para>
 This element contains a directory name which will be scanned for font files
-to include in the set of available fonts.
+to include in the set of available fonts. If 'prefix' is set to "xdg", the value in the XDG_DATA_HOME environment variable will be added as the path prefix. please see XDG Base Directory Specification for more details.
   </para></refsect2>
-  <refsect2><title><literal>&lt;cache&gt;</literal></title><para>
-This element contains a file name for the per-user cache of font
-information.  If it starts with '~', it refers to a file in the users
-home directory.  This file is used to hold information about fonts that
-isn't present in the per-directory cache files.  It is automatically
-maintained by the fontconfig library.  The default for this file 
-is ``~/.fonts.cache-<literal>&lt;version&gt;</literal>'', where <literal>&lt;version&gt;</literal> is the font configuration
-file version number (currently 2).
+  <refsect2><title><literal>&lt;cachedir prefix="default"&gt;</literal></title><para>
+This element contains a directory name that is supposed to be stored or read
+the cache of font information.  If multiple elements are specified in
+the configuration file, the directory that can be accessed first in the list
+will be used to store the cache files.  If it starts with '~', it refers to
+a directory in the users home directory.  If 'prefix' is set to "xdg", the value in the XDG_CACHE_HOME environment variable will be added as the path prefix. please see XDG Base Directory Specification for more details.
+The default directory is ``$XDG_CACHE_HOME/fontconfig'' and it contains the cache files
+named ``<literal>&lt;hash value&gt;</literal>-<literal>&lt;architecture&gt;</literal>.cache-<literal>&lt;version</literal>'',
+where <literal>&lt;version&gt;</literal> is the font configureation file
+version number (currently 3).
   </para></refsect2>
-  <refsect2><title><literal>&lt;include ignore_missing="no"&gt;</literal></title><para>
+  <refsect2><title><literal>&lt;include ignore_missing="no" prefix="default"&gt;</literal></title><para>
 This element contains the name of an additional configuration file or
 directory.  If a directory, every file within that directory starting with an
 ASCII digit (U+0030 - U+0039) and ending with the string ``.conf'' will be processed in sorted order.  When
@@ -320,7 +326,7 @@ the XML datatype is traversed by FcConfigParse, the contents of the file(s)
 will also be incorporated into the configuration by passing the filename(s) to
 FcConfigLoadAndParse.  If 'ignore_missing' is set to "yes" instead of the
 default "no", a missing file or directory will elicit no warning message from
-the library.
+the library.  If 'prefix' is set to "xdg", the value in the XDG_CONFIG_HOME environment variable will be added as the path prefix. please see XDG Base Directory Specification for more details.
   </para></refsect2>
   <refsect2><title><literal>&lt;config&gt;</literal></title><para>
 This element provides a place to consolidate additional configuration
@@ -391,11 +397,12 @@ build the fontconfig database.
   <refsect2><title><literal>&lt;test qual="any" name="property" target="default" compare="eq"&gt;</literal></title><para>
 This element contains a single value which is compared with the target
 ('pattern', 'font', 'scan' or 'default') property "property" (substitute any of the property names seen 
-above). 'compare' can be one of "eq", "not_eq", "less", "less_eq", "more", or
-"more_eq".  'qual' may either be the default, "any", in which case the match
+above). 'compare' can be one of "eq", "not_eq", "less", "less_eq", "more", "more_eq", "contains" or
+"not_contains".  'qual' may either be the default, "any", in which case the match
 succeeds if any value associated with the property matches the test value, or
 "all", in which case all of the values associated with the property must
-match the test value.  When used in a &lt;match target="font"&gt; element,
+match the test value.  'ignore-blanks' takes a boolean value. if 'ignore-blanks' is set "true", any blanks in the string will be ignored on its comparison. this takes effects only when compare="eq" or compare="not_eq".
+When used in a &lt;match target="font"&gt; element,
 the target= attribute in the &lt;test&gt; element selects between matching
 the original pattern or the font.  "default" selects whichever target the
 outer &lt;match&gt; element has selected.
@@ -418,6 +425,8 @@ with "same" binding using the value from the matched pattern element.
   "prepend_first"         Insert at head of list  Insert at head of list
   "append"                Append after matching   Append at end of list
   "append_last"           Append at end of list   Append at end of list
+  "delete"                Delete matching value   Delete all values
+  "delete_all"            Delete all values       Delete all values
     </programlisting>
   </para></refsect2>
   <refsect2><title><literal>&lt;int&gt;</literal>, <literal>&lt;double&gt;</literal>, <literal>&lt;string&gt;</literal>, <literal>&lt;bool&gt;</literal></title><para>
@@ -429,12 +438,30 @@ zero for purely fractional values (e.g. use 0.5 instead of .5 and -0.5
 instead of -.5).
   </para></refsect2>
   <refsect2><title><literal>&lt;matrix&gt;</literal></title><para>
-This element holds the four <literal>&lt;double&gt;</literal> elements of an affine
-transformation.
+This element holds four numerical expressions of an affine transformation.
+At their simplest these will be four <literal>&lt;double&gt;</literal> elements
+but they can also be more involved expressions.
+  </para></refsect2>
+  <refsect2><title><literal>&lt;range&gt;</literal></title><para>
+This element holds the two <literal>&lt;int&gt;</literal> elements of a range
+representation.
+  </para></refsect2>
+  <refsect2><title><literal>&lt;charset&gt;</literal></title><para>
+This element holds at least one <literal>&lt;int&gt;</literal> element of
+an Unicode code point or more.
+  </para></refsect2>
+  <refsect2><title><literal>&lt;langset&gt;</literal></title><para>
+This element holds at least one <literal>&lt;string&gt;</literal> element of
+a RFC-3066-style languages or more.
   </para></refsect2>
   <refsect2><title><literal>&lt;name&gt;</literal></title><para>
 Holds a property name.  Evaluates to the first value from the property of
-the font, not the pattern.
+the pattern.  If the 'target' attribute is not present, it will default to
+'default', in which case the property is returned from the font pattern
+during a target="font" match, and to the pattern during a target="pattern"
+match.  The attribute can also take the values 'font' or 'pattern' to
+explicitly choose which pattern to use.  It is an error to use a target
+of 'font' in a match that has target="pattern".
   </para></refsect2>
   <refsect2><title><literal>&lt;const&gt;</literal></title><para>
 Holds the name of a constant; these are always integers and serve as
@@ -497,7 +524,7 @@ elements.  <literal>&lt;or&gt;</literal> and <literal>&lt;and&gt;</literal> are 
       </para>
     </refsect2>
   <refsect2>
-    <title><literal>&lt;eq&gt;</literal>, <literal>&lt;not_eq&gt;</literal>, <literal>&lt;less&gt;</literal>, <literal>&lt;less_eq&gt;</literal>, <literal>&lt;more&gt;</literal>, <literal>&lt;more_eq&gt;</literal></title>
+    <title><literal>&lt;eq&gt;</literal>, <literal>&lt;not_eq&gt;</literal>, <literal>&lt;less&gt;</literal>, <literal>&lt;less_eq&gt;</literal>, <literal>&lt;more&gt;</literal>, <literal>&lt;more_eq&gt;</literal>, <literal>&lt;contains&gt;</literal>, <literal>&lt;not_contains</literal></title>
     <para>
 These elements compare two values, producing a boolean result.
   </para></refsect2>
@@ -550,20 +577,20 @@ This is an example of a system-wide configuration file
 &lt;/match&gt;
 
 &lt;!--
-	Names not including any well known alias are given 'sans'
+	Names not including any well known alias are given 'sans-serif'
 --&gt;
 &lt;match target="pattern"&gt;
-	&lt;test qual="all" name="family" mode="not_eq"&gt;sans&lt;/test&gt;
-	&lt;test qual="all" name="family" mode="not_eq"&gt;serif&lt;/test&gt;
-	&lt;test qual="all" name="family" mode="not_eq"&gt;monospace&lt;/test&gt;
-	&lt;edit name="family" mode="append_last"&gt;&lt;string&gt;sans&lt;/string&gt;&lt;/edit&gt;
+	&lt;test qual="all" name="family" mode="not_eq"&gt;&lt;string&gt;sans-serif&lt;/string&gt;&lt;/test&gt;
+	&lt;test qual="all" name="family" mode="not_eq"&gt;&lt;string&gt;serif&lt;/string&gt;&lt;/test&gt;
+	&lt;test qual="all" name="family" mode="not_eq"&gt;&lt;string&gt;monospace&lt;/string&gt;&lt;/test&gt;
+	&lt;edit name="family" mode="append_last"&gt;&lt;string&gt;sans-serif&lt;/string&gt;&lt;/edit&gt;
 &lt;/match&gt;
 
 &lt;!--
 	Load per-user customization file, but don't complain
 	if it doesn't exist
 --&gt;
-&lt;include ignore_missing="yes"&gt;~/.fonts.conf&lt;/include&gt;
+&lt;include ignore_missing="yes" prefix="xdg"&gt;fontconfig/fonts.conf&lt;/include&gt;
 
 &lt;!--
 	Load local customization files, but don't complain
@@ -610,24 +637,47 @@ This is an example of a system-wide configuration file
 	&lt;family&gt;monospace&lt;/family&gt;
 	&lt;prefer&gt;&lt;family&gt;Andale Mono&lt;/family&gt;&lt;/prefer&gt;
 &lt;/alias&gt;
+
+&lt;--
+	The example of the requirements of OR operator;
+	If the 'family' contains 'Courier New' OR 'Courier'
+	add 'monospace' as the alternative
+--&gt;
+&lt;match target="pattern"&gt;
+	&lt;test name="family" mode="eq"&gt;
+		&lt;string&gt;Courier New&lt;/string&gt;
+	&lt;/test&gt;
+	&lt;edit name="family" mode="prepend"&gt;
+		&lt;string&gt;monospace&lt;/string&gt;
+	&lt;/edit&gt;
+&lt;/match&gt;
+&lt;match target="pattern"&gt;
+	&lt;test name="family" mode="eq"&gt;
+		&lt;string&gt;Courier&lt;/string&gt;
+	&lt;/test&gt;
+	&lt;edit name="family" mode="prepend"&gt;
+		&lt;string&gt;monospace&lt;/string&gt;
+	&lt;/edit&gt;
+&lt;/match&gt;
+
 &lt;/fontconfig&gt;
     </programlisting>
   </refsect2>
   <refsect2><title>User configuration file</title>
     <para>
 This is an example of a per-user configuration file that lives in
-~/.fonts.conf
+$XDG_CONFIG_HOME/fontconfig/fonts.conf
     </para>
     <programlisting>
 &lt;?xml version="1.0"?&gt;
 &lt;!DOCTYPE fontconfig SYSTEM "fonts.dtd"&gt;
-&lt;!-- ~/.fonts.conf for per-user font configuration --&gt;
+&lt;!-- $XDG_CONFIG_HOME/fontconfig/fonts.conf for per-user font configuration --&gt;
 &lt;fontconfig&gt;
 
 &lt;!--
 	Private font directory
 --&gt;
-&lt;dir&gt;~/.fonts&lt;/dir&gt;
+&lt;dir prefix="xdg"&gt;fonts&lt;/dir&gt;
 
 &lt;!--
 	use rgb sub-pixel ordering to improve glyph appearance on
@@ -636,6 +686,41 @@ This is an example of a per-user configuration file that lives in
 --&gt;
 &lt;match target="font"&gt;
 	&lt;edit name="rgba" mode="assign"&gt;&lt;const&gt;rgb&lt;/const&gt;&lt;/edit&gt;
+&lt;/match&gt;
+&lt;!--
+	use WenQuanYi Zen Hei font when serif is requested for Chinese
+--&gt;
+&lt;match&gt;
+	&lt;!--
+		If you don't want to use WenQuanYi Zen Hei font for zh-tw etc,
+		you can use zh-cn instead of zh.
+		Please note, even if you set zh-cn, it still matches zh.
+		if you don't like it, you can use compare="eq"
+		instead of compare="contains".
+	--&gt;
+	&lt;test name="lang" compare="contains"&gt;
+		&lt;string&gt;zh&lt;/string&gt;
+	&lt;/test&gt;
+	&lt;test name="family"&gt;
+		&lt;string&gt;serif&lt;/string&gt;
+	&lt;/test&gt;
+	&lt;edit name="family" mode="prepend"&gt;
+		&lt;string&gt;WenQuanYi Zen Hei&lt;/string&gt;
+	&lt;/edit&gt;
+&lt;/match&gt;
+&lt;!--
+	use VL Gothic font when sans-serif is requested for Japanese
+--&gt;
+&lt;match&gt;
+	&lt;test name="lang" compare="contains"&gt;
+		&lt;string&gt;ja&lt;/string&gt;
+	&lt;/test&gt;
+	&lt;test name="family"&gt;
+		&lt;string&gt;sans-serif&lt;/string&gt;
+	&lt;/test&gt;
+	&lt;edit name="family" mode="prepend"&gt;
+		&lt;string&gt;VL Gothic&lt;/string&gt;
+	&lt;/edit&gt;
 &lt;/match&gt;
 &lt;/fontconfig&gt;
     </programlisting>
@@ -647,14 +732,14 @@ This is an example of a per-user configuration file that lives in
 contains configuration information for the fontconfig library
 consisting of directories to look at for font information as well as
 instructions on editing program specified font patterns before attempting to
-match the available fonts.  It is in xml format.
+match the available fonts.  It is in XML format.
   </para>
   <para>
 <emphasis>conf.d</emphasis>
 is the conventional name for a directory of additional configuration files
 managed by external applications or the local administrator.  The
 filenames starting with decimal digits are sorted in lexicographic order
-and used as additional configuration files.  All of these files are in xml
+and used as additional configuration files.  All of these files are in XML
 format.  The master fonts.conf file references this directory in an 
 &lt;include&gt; directive.
   </para>
@@ -663,20 +748,38 @@ format.  The master fonts.conf file references this directory in an
 is a DTD that describes the format of the configuration files.
   </para>
   <para>
-<emphasis>~/.fonts.conf.d</emphasis>
+<emphasis>$XDG_CONFIG_HOME/fontconfig/conf.d</emphasis> and <emphasis>~/.fonts.conf.d</emphasis>
 is the conventional name for a per-user directory of (typically
 auto-generated) configuration files, although the
-actual location is specified in the global fonts.conf file.
+actual location is specified in the global fonts.conf file. please note that ~/.fonts.conf.d is deprecated now. it will not be read by default in the future version.
   </para>
   <para>
-<emphasis>~/.fonts.conf</emphasis>
+<emphasis>$XDG_CONFIG_HOME/fontconfig/fonts.conf</emphasis> and <emphasis>~/.fonts.conf</emphasis>
 is the conventional location for per-user font configuration, although the
-actual location is specified in the global fonts.conf file.
+actual location is specified in the global fonts.conf file. please note that ~/.fonts.conf is deprecated now. it will not be read by default in the future version.
   </para>
   <para>
-<emphasis> ~/.fonts.cache-*</emphasis>
+<emphasis>$XDG_CACHE_HOME/fontconfig/*.cache-*</emphasis> and <emphasis> ~/.fontconfig/*.cache-*</emphasis>
 is the conventional repository of font information that isn't found in the
-per-directory caches.  This file is automatically maintained by fontconfig.
+per-directory caches.  This file is automatically maintained by fontconfig. please note that ~/.fontconfig/*.cache-* is deprecated now. it will not be read by default in the future version.
+  </para>
+</refsect1>
+<refsect1><title>Environment variables</title>
+  <para>
+<emphasis>FONTCONFIG_FILE</emphasis>
+is used to override the default configuration file.
+  </para>
+  <para>
+<emphasis>FONTCONFIG_PATH</emphasis>
+is used to override the default configuration directory.
+  </para>
+  <para>
+<emphasis>FC_DEBUG</emphasis>
+is used to output the detailed debugging messages. see <link linkend="debug">Debugging Applications</link> section for more details.
+  </para>
+  <para>
+<emphasis>FONTCONFIG_USE_MMAP</emphasis>
+is used to control the use of mmap(2) for the cache files if available. this take a boolean value. fontconfig will checks if the cache files are stored on the filesystem that is safe to use mmap(2). explicitly setting this environment variable will causes skipping this check and enforce to use or not use mmap(2) anyway.
   </para>
 </refsect1>
 <refsect1><title>See Also</title>

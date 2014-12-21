@@ -1,15 +1,15 @@
+# -*- encoding: utf-8 -*-
 #
-# $Id $
-#
-# Copyright © 2003 Keith Packard
+# Copyright © 2003  Keith Packard
+# Copyright © 2013  Google, Inc.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
 # the above copyright notice appear in all copies and that both that
 # copyright notice and this permission notice appear in supporting
-# documentation, and that the name of Keith Packard not be used in
+# documentation, and that the name of the author(s) not be used in
 # advertising or publicity pertaining to distribution of the software without
-# specific, written prior permission.  Keith Packard makes no
+# specific, written prior permission.  The authors make no
 # representations about the suitability of this software for any purpose.  It
 # is provided "as is" without express or implied warranty.
 #
@@ -21,36 +21,14 @@
 # TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 #
+# Google Author(s): Behdad Esfahbod
 
-CC = @CC_FOR_BUILD@
-EXEEXT = @EXEEXT_FOR_BUILD@
-LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+TAG = lang
+DEPS = $(ORTH)
+ARGS = -d $(srcdir) $(ORTH)
+DIST = $(ORTH)
 
-INCLUDES=-I${top_srcdir}/src -I${top_srcdir} $(WARN_CFLAGS)
-
-TMPL=fclang.tmpl.h
-STMPL=${top_srcdir}/fc-lang/fclang.tmpl.h
-TARG=fclang.h
-
-noinst_PROGRAMS=fc-lang
-
-noinst_MANS=fc-lang.man
-
-EXTRA_DIST=$(TMPL) $(ORTH)
-
-$(TARG):$(ORTH) fc-lang${EXEEXT} $(STMPL)
-	$(AM_V_GEN) $(RM) $(TARG); \
-	./fc-lang${EXEEXT} -d ${srcdir} $(ORTH) < $(STMPL) > $(TARG).tmp && \
-	mv $(TARG).tmp $(TARG)
-
-ALIAS_FILES = fcalias.h fcaliastail.h
-
-BUILT_SOURCES = $(ALIAS_FILES) $(TARG)
-
-$(ALIAS_FILES): 
-	touch $(ALIAS_FILES)
-
-CLEANFILES = $(TARG) $(ALIAS_FILES)
+include $(top_srcdir)/Tools.mk
 
 # NOTE:
 #
@@ -285,6 +263,7 @@ ORTH = \
 	pap_an.orth \
 	pap_aw.orth \
 	qu.orth \
+	quz.orth \
 	rn.orth \
 	rw.orth \
 	sc.orth \
@@ -296,5 +275,12 @@ ORTH = \
 	ty.orth \
 	wal.orth \
 	za.orth \
-	lah.orth
+	lah.orth \
+	nqo.orth \
+	brx.orth \
+	sat.orth \
+	doi.orth \
+	mni.orth
 #	^-------------- Add new orth files here
+
+-include $(top_srcdir)/git.mk

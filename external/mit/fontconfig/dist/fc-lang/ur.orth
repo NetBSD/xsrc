@@ -8,9 +8,9 @@
 # documentation for any purpose is hereby granted without fee, provided that
 # the above copyright notice appear in all copies and that both that
 # copyright notice and this permission notice appear in supporting
-# documentation, and that the name of Keith Packard not be used in
+# documentation, and that the name of the author(s) not be used in
 # advertising or publicity pertaining to distribution of the software without
-# specific, written prior permission.  Keith Packard makes no
+# specific, written prior permission.  The authors make no
 # representations about the suitability of this software for any purpose.  It
 # is provided "as is" without express or implied warranty.
 #
@@ -34,9 +34,11 @@
 #
 # General forms:
 0621-0624
-0626-063a
+0626-0628
+063a
 0641-0642
-0644-0648
+0644-0646
+0648
 0679
 067e
 0686
@@ -47,6 +49,7 @@
 06af
 06ba
 06be
+06c3
 06cc
 06d2
 # Presentations forms:

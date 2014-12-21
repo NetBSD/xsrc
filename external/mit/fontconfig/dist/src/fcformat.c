@@ -7,9 +7,9 @@
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
- * documentation, and that the name of Keith Packard not be used in
+ * documentation, and that the name of the author(s) not be used in
  * advertising or publicity pertaining to distribution of the software without
- * specific, written prior permission.  Keith Packard makes no
+ * specific, written prior permission.  The authors make no
  * representations about the suitability of this software for any purpose.  It
  * is provided "as is" without express or implied warranty.
  *
@@ -62,6 +62,7 @@
  * unparse	FcNameUnparse
  * fcmatch	fc-match default
  * fclist	fc-list default
+ * fccat	fc-cat default
  * pkgkit	PackageKit package tag format
  *
  *
@@ -69,12 +70,14 @@
  *
  * - verbose builtin that is like FcPatternPrint
  * - allow indexing subexprs using '%{[idx]elt1,elt2{subexpr}}'
+ * - allow indexing in +, -, ? filtering?
  * - conditional/filtering/deletion on binding (using '(w)'/'(s)'/'(=)' notation)
  */
 
 
+#define FCCAT_FORMAT	"\"%{file|basename|cescape}\" %{index} \"%{-file{%{=unparse|cescape}}}\""
 #define FCMATCH_FORMAT	"%{file:-<unknown filename>|basename}: \"%{family[0]:-<unknown family>}\" \"%{style[0]:-<unknown style>}\""
-#define FCLIST_FORMAT	"%{?file{%{file}: }}%{=unparse}"
+#define FCLIST_FORMAT	"%{?file{%{file}: }}%{-file{%{=unparse}}}"
 #define PKGKIT_FORMAT	"%{[]family{font(%{family|downcase|delete( )})\n}}%{[]lang{font(:lang=%{lang|downcase|translate(_,-)})\n}}"
 
 
@@ -291,7 +294,7 @@ interpret_builtin (FcFormatContext *c,
 	if (new_str)
 	{
 	    FcStrBufString (buf, new_str);
-	    free (new_str);
+	    FcStrFree (new_str);
 	    return FcTrue;
 	}
 	else
@@ -303,6 +306,7 @@ interpret_builtin (FcFormatContext *c,
 #define BUILTIN(name, format) \
     else if (0 == strcmp ((const char *) c->word, name))\
 	ret = FcPatternFormatToBuf (pat, (const FcChar8 *) format, buf)
+    BUILTIN ("fccat",    FCCAT_FORMAT);
     BUILTIN ("fcmatch",  FCMATCH_FORMAT);
     BUILTIN ("fclist",   FCLIST_FORMAT);
     BUILTIN ("pkgkit",   PKGKIT_FORMAT);
@@ -349,13 +353,12 @@ skip_subexpr (FcFormatContext *c);
 static FcBool
 skip_percent (FcFormatContext *c)
 {
-    int width;
-
     if (!expect_char (c, '%'))
 	return FcFalse;
 
     /* skip an optional width specifier */
-    width = strtol ((const char *) c->format, (char **) &c->format, 10);
+    if (strtol ((const char *) c->format, (char **) &c->format, 10))
+        {/* don't care */}
 
     if (!expect_char (c, '{'))
 	return FcFalse;
@@ -436,6 +439,7 @@ interpret_filter_in (FcFormatContext *c,
 
     do
     {
+	/* XXX binding */
 	if (!read_word (c) ||
 	    !FcObjectSetAdd (os, (const char *) c->word))
 	{
@@ -608,7 +612,7 @@ interpret_enumerate (FcFormatContext *c,
     {
 	FcLangSet *langset;
 	if (FcResultMatch ==
-	    FcPatternGetLangSet (pat, os->objects[0], idx, &langset))
+	    FcPatternGetLangSet (pat, os->objects[0], 0, &langset))
 	{
 	    FcStrSet *ss;
 	    if (!(ss = FcLangSetGetLangs (langset)) ||
@@ -636,6 +640,7 @@ interpret_enumerate (FcFormatContext *c,
 	    FcPatternDel (subpat, os->objects[0]);
 	    if ((lang = FcStrListNext (lang_strs)))
 	    {
+		/* XXX binding? */
 		FcPatternAddString (subpat, os->objects[0], lang);
 		done = FcFalse;
 	    }
@@ -654,6 +659,7 @@ interpret_enumerate (FcFormatContext *c,
 		if (FcResultMatch ==
 		    FcPatternGet (pat, os->objects[i], idx, &v))
 		{
+		    /* XXX binding */
 		    FcPatternAdd (subpat, os->objects[i], v, FcFalse);
 		    done = FcFalse;
 		}
@@ -728,7 +734,7 @@ interpret_simple (FcFormatContext *c,
 	c->word = c->word + strlen ((const char *) c->word) + 1;
 	/* for now we just support 'default value' */
 	if (!expect_char (c, '-') ||
-	    !read_chars (c, '\0'))
+	    !read_chars (c, '|'))
 	{
 	    c->word = orig;
 	    return FcFalse;
@@ -763,14 +769,14 @@ interpret_simple (FcFormatContext *c,
 	    }
 	    if (l && idx == 0)
 	    {
-		if (!FcNameUnparseValue (buf, &l->value, '\0'))
+		if (!FcNameUnparseValue (buf, &l->value, NULL))
 		    return FcFalse;
 	    }
 	    else goto notfound;
         }
 	else if (l)
 	{
-	    FcNameUnparseValueList (buf, l, '\0');
+	    FcNameUnparseValueList (buf, l, NULL);
 	}
 	else
 	{
@@ -784,10 +790,12 @@ interpret_simple (FcFormatContext *c,
 }
 
 static FcBool
-cescape (FcFormatContext *c,
+cescape (FcFormatContext *c FC_UNUSED,
 	 const FcChar8   *str,
 	 FcStrBuf        *buf)
 {
+    /* XXX escape \n etc? */
+
     while(*str)
     {
 	switch (*str)
@@ -803,7 +811,7 @@ cescape (FcFormatContext *c,
 }
 
 static FcBool
-shescape (FcFormatContext *c,
+shescape (FcFormatContext *c FC_UNUSED,
 	  const FcChar8   *str,
 	  FcStrBuf        *buf)
 {
@@ -821,10 +829,12 @@ shescape (FcFormatContext *c,
 }
 
 static FcBool
-xmlescape (FcFormatContext *c,
+xmlescape (FcFormatContext *c FC_UNUSED,
 	   const FcChar8   *str,
 	   FcStrBuf        *buf)
 {
+    /* XXX escape \n etc? */
+
     while(*str)
     {
 	switch (*str)
@@ -1004,7 +1014,7 @@ interpret_convert (FcFormatContext *c,
 	if (new_str)
 	{
 	    FcStrBufString (buf, new_str);
-	    free (new_str);
+	    FcStrFree (new_str);
 	    return FcTrue;
 	}
 	else
@@ -1183,11 +1193,18 @@ FcPatternFormat (FcPattern *pat,
 {
     FcStrBuf        buf;
     FcChar8         buf_static[8192 - 1024];
+    FcPattern      *alloced = NULL;
     FcBool          ret;
+
+    if (!pat)
+	alloced = pat = FcPatternCreate ();
 
     FcStrBufInit (&buf, buf_static, sizeof (buf_static));
 
     ret = FcPatternFormatToBuf (pat, format, &buf);
+
+    if (alloced)
+      FcPatternDestroy (alloced);
 
     if (ret)
 	return FcStrBufDone (&buf);

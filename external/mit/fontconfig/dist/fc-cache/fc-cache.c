@@ -7,9 +7,9 @@
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
- * documentation, and that the name of Keith Packard not be used in
+ * documentation, and that the name of the author(s) not be used in
  * advertising or publicity pertaining to distribution of the software without
- * specific, written prior permission.  Keith Packard makes no
+ * specific, written prior permission.  The authors make no
  * representations about the suitability of this software for any purpose.  It
  * is provided "as is" without express or implied warranty.
  *
@@ -21,8 +21,6 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include "../fc-arch/fcarch.h"
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -70,6 +68,7 @@ const struct option longopts[] = {
     {"force", 0, 0, 'f'},
     {"quick", 0, 0, 'q'},
     {"really-force", 0, 0, 'r'},
+    {"sysroot", required_argument, 0, 'y'},
     {"system-only", 0, 0, 's'},
     {"version", 0, 0, 'V'},
     {"verbose", 0, 0, 'v'},
@@ -88,28 +87,30 @@ usage (char *program, int error)
 {
     FILE *file = error ? stderr : stdout;
 #if HAVE_GETOPT_LONG
-    fprintf (file, "usage: %s [-fqrsvVh] [--quick] [--force|--really-force] [--system-only] [--verbose] [--version] [--help] [dirs]\n",
+    fprintf (file, "usage: %s [-fqrsvVh] [--quick] [-y SYSROOT] [--force|--really-force] [--sysroot=SYSROOT] [--system-only] [--verbose] [--version] [--help] [dirs]\n",
 	     program);
 #else
-    fprintf (file, "usage: %s [-fqrsvVh] [dirs]\n",
+    fprintf (file, "usage: %s [-fqrsvVh] [-y SYSROOT] [dirs]\n",
 	     program);
 #endif
     fprintf (file, "Build font information caches in [dirs]\n"
 	     "(all directories in font configuration by default).\n");
     fprintf (file, "\n");
 #if HAVE_GETOPT_LONG
-    fprintf (file, "  -f, --force          scan directories with apparently valid caches\n");
-    fprintf (file, "  -q, --quick          don't sleep before exiting\n");
-    fprintf (file, "  -r, --really-force   erase all existing caches, then rescan\n");
-    fprintf (file, "  -s, --system-only    scan system-wide directories only\n");
-    fprintf (file, "  -v, --verbose        display status information while busy\n");
-    fprintf (file, "  -V, --version        display font config version and exit\n");
-    fprintf (file, "  -h, --help           display this help and exit\n");
+    fprintf (file, "  -f, --force              scan directories with apparently valid caches\n");
+    fprintf (file, "  -q, --quick              don't sleep before exiting\n");
+    fprintf (file, "  -r, --really-force       erase all existing caches, then rescan\n");
+    fprintf (file, "  -s, --system-only        scan system-wide directories only\n");
+    fprintf (file, "  -y, --sysroot=SYSROOT    prepend SYSROOT to all paths for scanning\n");
+    fprintf (file, "  -v, --verbose            display status information while busy\n");
+    fprintf (file, "  -V, --version            display font config version and exit\n");
+    fprintf (file, "  -h, --help               display this help and exit\n");
 #else
     fprintf (file, "  -f         (force)   scan directories with apparently valid caches\n");
     fprintf (file, "  -q         (quick)   don't sleep before exiting\n");
     fprintf (file, "  -r,   (really force) erase all existing caches, then rescan\n");
     fprintf (file, "  -s         (system)  scan system-wide directories only\n");
+    fprintf (file, "  -y SYSROOT (sysroot) prepend SYSROOT to all paths for scanning\n");
     fprintf (file, "  -v         (verbose) display status information while busy\n");
     fprintf (file, "  -V         (version) display font config version and exit\n");
     fprintf (file, "  -h         (help)    display this help and exit\n");
@@ -120,7 +121,7 @@ usage (char *program, int error)
 static FcStrSet *processed_dirs;
 
 static int
-scanDirs (FcStrList *list, FcConfig *config, FcBool force, FcBool really_force, FcBool verbose)
+scanDirs (FcStrList *list, FcConfig *config, FcBool force, FcBool really_force, FcBool verbose, FcBool recursive, int *changed, FcStrSet *updateDirs)
 {
     int		    ret = 0;
     const FcChar8   *dir;
@@ -139,18 +140,14 @@ scanDirs (FcStrList *list, FcConfig *config, FcBool force, FcBool really_force, 
     {
 	if (verbose)
 	{
-	    printf ("%s: ", dir);
+	    if (!recursive)
+		printf ("Re-scanning %s: ", dir);
+	    else
+		printf ("%s: ", dir);
 	    fflush (stdout);
 	}
 	
-	if (!dir)
-	{
-	    if (verbose)
-		printf ("skipping, no such directory\n");
-	    continue;
-	}
-	
-	if (FcStrSetMember (processed_dirs, dir))
+	if (recursive && FcStrSetMember (processed_dirs, dir))
 	{
 	    if (verbose)
 		printf ("skipping, looped directory detected\n");
@@ -193,7 +190,13 @@ scanDirs (FcStrList *list, FcConfig *config, FcBool force, FcBool really_force, 
 	
 	if (!cache)
 	{
-	    cache = FcDirCacheRead (dir, FcTrue, config);
+	    if (!recursive)
+		cache = FcDirCacheRescan (dir, config);
+	    else
+	    {
+		(*changed)++;
+		cache = FcDirCacheRead (dir, FcTrue, config);
+	    }
 	    if (!cache)
 	    {
 		fprintf (stderr, "%s: error scanning\n", dir);
@@ -221,122 +224,39 @@ scanDirs (FcStrList *list, FcConfig *config, FcBool force, FcBool really_force, 
 		ret++;
 	    }
 	}
-	
-	subdirs = FcStrSetCreate ();
-	if (!subdirs)
+
+	if (recursive)
 	{
-	    fprintf (stderr, "%s: Can't create subdir set\n", dir);
-	    ret++;
+	    subdirs = FcStrSetCreate ();
+	    if (!subdirs)
+	    {
+		fprintf (stderr, "%s: Can't create subdir set\n", dir);
+		ret++;
+		FcDirCacheUnload (cache);
+		continue;
+	    }
+	    for (i = 0; i < FcCacheNumSubdir (cache); i++)
+		FcStrSetAdd (subdirs, FcCacheSubdir (cache, i));
+	    if (updateDirs && FcCacheNumSubdir (cache) > 0)
+		FcStrSetAdd (updateDirs, dir);
+	
 	    FcDirCacheUnload (cache);
-	    continue;
-	}
-	for (i = 0; i < FcCacheNumSubdir (cache); i++)
-	    FcStrSetAdd (subdirs, FcCacheSubdir (cache, i));
 	
-	FcDirCacheUnload (cache);
-	
-	sublist = FcStrListCreate (subdirs);
-	FcStrSetDestroy (subdirs);
-	if (!sublist)
-	{
-	    fprintf (stderr, "%s: Can't create subdir list\n", dir);
-	    ret++;
-	    continue;
-	}
-	FcStrSetAdd (processed_dirs, dir);
-	ret += scanDirs (sublist, config, force, really_force, verbose);
-    }
-    FcStrListDone (list);
-    return ret;
-}
-
-static FcBool
-cleanCacheDirectory (FcConfig *config, FcChar8 *dir, FcBool verbose)
-{
-    DIR		*d;
-    struct dirent *ent;
-    FcChar8	*dir_base;
-    FcBool	ret = FcTrue;
-    FcBool	remove;
-    FcCache	*cache;
-    struct stat	target_stat;
-
-    dir_base = FcStrPlus (dir, (FcChar8 *) "/");
-    if (!dir_base)
-    {
-	fprintf (stderr, "%s: out of memory\n", dir);
-	return FcFalse;
-    }
-    if (access ((char *) dir, W_OK) != 0)
-    {
-	if (verbose)
-	    printf ("%s: not cleaning %s cache directory\n", dir,
-		    access ((char *) dir, F_OK) == 0 ? "unwritable" : "non-existent");
-	FcStrFree (dir_base);
-	return FcTrue;
-    }
-    if (verbose)
-	printf ("%s: cleaning cache directory\n", dir);
-    d = opendir ((char *) dir);
-    if (!d)
-    {
-	perror ((char *) dir);
-	FcStrFree (dir_base);
-	return FcFalse;
-    }
-    while ((ent = readdir (d)))
-    {
-	FcChar8	*file_name;
-	const FcChar8	*target_dir;
-
-	if (ent->d_name[0] == '.')
-	    continue;
-	/* skip cache files for different architectures and */
-	/* files which are not cache files at all */
-	if (strlen(ent->d_name) != 32 + strlen ("-" FC_ARCHITECTURE FC_CACHE_SUFFIX) ||
-	    strcmp(ent->d_name + 32, "-" FC_ARCHITECTURE FC_CACHE_SUFFIX))
-	    continue;
-	
-	file_name = FcStrPlus (dir_base, (FcChar8 *) ent->d_name);
-	if (!file_name)
-	{
-	    fprintf (stderr, "%s: allocation failure\n", dir);
-	    ret = FcFalse;
-	    break;
-	}
-	remove = FcFalse;
-	cache = FcDirCacheLoadFile (file_name, NULL);
-	if (!cache)
-	{
-	    if (verbose)
-		printf ("%s: invalid cache file: %s\n", dir, ent->d_name);
-	    remove = FcTrue;
+	    sublist = FcStrListCreate (subdirs);
+	    FcStrSetDestroy (subdirs);
+	    if (!sublist)
+	    {
+		fprintf (stderr, "%s: Can't create subdir list\n", dir);
+		ret++;
+		continue;
+	    }
+	    FcStrSetAdd (processed_dirs, dir);
+	    ret += scanDirs (sublist, config, force, really_force, verbose, recursive, changed, updateDirs);
+	    FcStrListDone (sublist);
 	}
 	else
-	{
-	    target_dir = FcCacheDir (cache);
-	    if (stat ((char *) target_dir, &target_stat) < 0)
-	    {
-		if (verbose)
-		    printf ("%s: %s: missing directory: %s \n",
-			    dir, ent->d_name, target_dir);
-		remove = FcTrue;
-	    }
-	}
-	if (remove)
-	{
-	    if (unlink ((char *) file_name) < 0)
-	    {
-		perror ((char *) file_name);
-		ret = FcFalse;
-	    }
-	}
-	FcDirCacheUnload (cache);
-        FcStrFree (file_name);
+	    FcDirCacheUnload (cache);
     }
-    
-    closedir (d);
-    FcStrFree (dir_base);
     return ret;
 }
 
@@ -351,7 +271,7 @@ cleanCacheDirectories (FcConfig *config, FcBool verbose)
 	return FcFalse;
     while ((cache_dir = FcStrListNext (cache_dirs)))
     {
-	if (!cleanCacheDirectory (config, cache_dir, verbose))
+	if (!FcDirCacheClean (cache_dir, verbose))
 	{
 	    ret = FcFalse;
 	    break;
@@ -364,7 +284,7 @@ cleanCacheDirectories (FcConfig *config, FcBool verbose)
 int
 main (int argc, char **argv)
 {
-    FcStrSet	*dirs;
+    FcStrSet	*dirs, *updateDirs;
     FcStrList	*list;
     FcBool    	verbose = FcFalse;
     FcBool      quick = FcFalse;
@@ -372,15 +292,17 @@ main (int argc, char **argv)
     FcBool	really_force = FcFalse;
     FcBool	systemOnly = FcFalse;
     FcConfig	*config;
+    FcChar8     *sysroot = NULL;
     int		i;
+    int		changed;
     int		ret;
 #if HAVE_GETOPT_LONG || HAVE_GETOPT
     int		c;
 
 #if HAVE_GETOPT_LONG
-    while ((c = getopt_long (argc, argv, "fqrsVvh", longopts, NULL)) != -1)
+    while ((c = getopt_long (argc, argv, "fqrsy:Vvh", longopts, NULL)) != -1)
 #else
-    while ((c = getopt (argc, argv, "fqrsVvh")) != -1)
+    while ((c = getopt (argc, argv, "fqrsy:Vvh")) != -1)
 #endif
     {
 	switch (c) {
@@ -395,6 +317,9 @@ main (int argc, char **argv)
 	    break;
 	case 's':
 	    systemOnly = FcTrue;
+	    break;
+	case 'y':
+	    sysroot = FcStrCopy ((const FcChar8 *)optarg);
 	    break;
 	case 'V':
 	    fprintf (stderr, "fontconfig version %d.%d.%d\n", 
@@ -416,7 +341,16 @@ main (int argc, char **argv)
 
     if (systemOnly)
 	FcConfigEnableHome (FcFalse);
-    config = FcInitLoadConfig ();
+    if (sysroot)
+    {
+	FcConfigSetSysRoot (NULL, sysroot);
+	FcStrFree (sysroot);
+	config = FcConfigGetCurrent();
+    }
+    else
+    {
+	config = FcInitLoadConfig ();
+    }
     if (!config)
     {
 	fprintf (stderr, "%s: Can't init font config library\n", argv[0]);
@@ -452,13 +386,33 @@ main (int argc, char **argv)
 	fprintf(stderr, "Cannot malloc\n");
 	return 1;
     }
-	
-    ret = scanDirs (list, config, force, really_force, verbose);
+
+    updateDirs = FcStrSetCreate ();
+    changed = 0;
+    ret = scanDirs (list, config, force, really_force, verbose, FcTrue, &changed, updateDirs);
+    /* Update the directory cache again to avoid the race condition as much as possible */
+    FcStrListDone (list);
+    list = FcStrListCreate (updateDirs);
+    if (list)
+    {
+	ret += scanDirs (list, config, FcTrue, really_force, verbose, FcFalse, &changed, NULL);
+	FcStrListDone (list);
+    }
+    FcStrSetDestroy (updateDirs);
+
+    /*
+     * Try to create CACHEDIR.TAG anyway.
+     * This expects the fontconfig cache directory already exists.
+     * If it doesn't, it won't be simply created.
+     */
+    FcCacheCreateTagFile (config);
 
     FcStrSetDestroy (processed_dirs);
 
     cleanCacheDirectories (config, verbose);
 
+    FcConfigDestroy (config);
+    FcFini ();
     /* 
      * Now we need to sleep a second  (or two, to be extra sure), to make
      * sure that timestamps for changes after this run of fc-cache are later
@@ -466,10 +420,9 @@ main (int argc, char **argv)
      * sleep(3) can't be interrupted by a signal here -- this isn't in the
      * library, and there aren't any signals flying around here.
      */
-    FcConfigDestroy (config);
-    FcFini ();
-    if (!quick)
-        sleep (2);
+    /* the resolution of mtime on FAT is 2 seconds */
+    if (!quick && changed)
+	sleep (2);
     if (verbose)
 	printf ("%s: %s\n", argv[0], ret ? "failed" : "succeeded");
     return ret;
