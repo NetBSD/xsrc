@@ -36,8 +36,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/mman.h>
 #include <errno.h>
+#include "libdrm.h"
 #include "xf86drm.h"
 #include "xf86atomic.h"
 #include "drm.h"
@@ -134,7 +134,7 @@ static struct radeon_bo *bo_unref(struct radeon_bo_int *boi)
         return (struct radeon_bo *)boi;
     }
     if (bo_gem->priv_ptr) {
-        munmap(bo_gem->priv_ptr, boi->size);
+        drm_munmap(bo_gem->priv_ptr, boi->size);
     }
 
     /* Zero out args to make valgrind happy */
@@ -197,7 +197,7 @@ static int bo_unmap(struct radeon_bo_int *boi)
     if (--bo_gem->map_count > 0) {
         return 0;
     }
-    //munmap(bo->ptr, bo->size);
+    //drm_munmap(bo->ptr, bo->size);
     boi->ptr = NULL;
     return 0;
 }
@@ -284,7 +284,7 @@ static struct radeon_bo_funcs bo_gem_funcs = {
     bo_is_busy,
 };
 
-struct radeon_bo_manager *radeon_bo_manager_gem_ctor(int fd)
+drm_public struct radeon_bo_manager *radeon_bo_manager_gem_ctor(int fd)
 {
     struct bo_manager_gem *bomg;
 
@@ -297,7 +297,7 @@ struct radeon_bo_manager *radeon_bo_manager_gem_ctor(int fd)
     return (struct radeon_bo_manager*)bomg;
 }
 
-void radeon_bo_manager_gem_dtor(struct radeon_bo_manager *bom)
+drm_public void radeon_bo_manager_gem_dtor(struct radeon_bo_manager *bom)
 {
     struct bo_manager_gem *bomg = (struct bo_manager_gem*)bom;
 
@@ -307,19 +307,22 @@ void radeon_bo_manager_gem_dtor(struct radeon_bo_manager *bom)
     free(bomg);
 }
 
-uint32_t radeon_gem_name_bo(struct radeon_bo *bo)
+drm_public uint32_t
+radeon_gem_name_bo(struct radeon_bo *bo)
 {
     struct radeon_bo_gem *bo_gem = (struct radeon_bo_gem*)bo;
     return bo_gem->name;
 }
 
-void *radeon_gem_get_reloc_in_cs(struct radeon_bo *bo)
+drm_public void *
+radeon_gem_get_reloc_in_cs(struct radeon_bo *bo)
 {
     struct radeon_bo_gem *bo_gem = (struct radeon_bo_gem*)bo;
     return &bo_gem->reloc_in_cs;
 }
 
-int radeon_gem_get_kernel_name(struct radeon_bo *bo, uint32_t *name)
+drm_public int
+radeon_gem_get_kernel_name(struct radeon_bo *bo, uint32_t *name)
 {
     struct radeon_bo_gem *bo_gem = (struct radeon_bo_gem*)bo;
     struct radeon_bo_int *boi = (struct radeon_bo_int *)bo;
@@ -340,7 +343,8 @@ int radeon_gem_get_kernel_name(struct radeon_bo *bo, uint32_t *name)
     return 0;
 }
 
-int radeon_gem_set_domain(struct radeon_bo *bo, uint32_t read_domains, uint32_t write_domain)
+drm_public int
+radeon_gem_set_domain(struct radeon_bo *bo, uint32_t read_domains, uint32_t write_domain)
 {
     struct radeon_bo_int *boi = (struct radeon_bo_int *)bo;
     struct drm_radeon_gem_set_domain args;
@@ -357,7 +361,7 @@ int radeon_gem_set_domain(struct radeon_bo *bo, uint32_t read_domains, uint32_t 
     return r;
 }
 
-int radeon_gem_prime_share_bo(struct radeon_bo *bo, int *handle)
+drm_public int radeon_gem_prime_share_bo(struct radeon_bo *bo, int *handle)
 {
     struct radeon_bo_gem *bo_gem = (struct radeon_bo_gem*)bo;
     int ret;
@@ -366,9 +370,8 @@ int radeon_gem_prime_share_bo(struct radeon_bo *bo, int *handle)
     return ret;
 }
 
-struct radeon_bo *radeon_gem_bo_open_prime(struct radeon_bo_manager *bom,
-					   int fd_handle,
-					   uint32_t size)
+drm_public struct radeon_bo *
+radeon_gem_bo_open_prime(struct radeon_bo_manager *bom, int fd_handle, uint32_t size)
 {
     struct radeon_bo_gem *bo;
     int r;

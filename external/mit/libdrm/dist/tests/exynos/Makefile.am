@@ -4,8 +4,15 @@ AM_CFLAGS = \
 	-I $(top_srcdir)/exynos \
 	-I $(top_srcdir)
 
+if HAVE_LIBKMS
+if HAVE_INSTALL_TESTS
+bin_PROGRAMS = \
+	exynos_fimg2d_test
+else
 noinst_PROGRAMS = \
 	exynos_fimg2d_test
+endif
+endif
 
 exynos_fimg2d_test_LDADD = \
 	$(top_builddir)/libdrm.la \
@@ -15,5 +22,3 @@ exynos_fimg2d_test_LDADD = \
 exynos_fimg2d_test_SOURCES = \
 	exynos_fimg2d_test.c
 
-run: exynos_fimg2d_test
-	./exynos_fimg2d_test

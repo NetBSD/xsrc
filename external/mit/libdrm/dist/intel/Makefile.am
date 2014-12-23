@@ -22,8 +22,11 @@
 # Authors:
 #    Eric Anholt <eric@anholt.net>
 
+include Makefile.sources
+
 AM_CFLAGS = \
 	$(WARN_CFLAGS) \
+	$(VISIBILITY_CFLAGS) \
 	-I$(top_srcdir) \
 	-I$(top_srcdir)/intel \
 	$(PTHREADSTUBS_CFLAGS) \
@@ -39,22 +42,12 @@ libdrm_intel_la_LIBADD = ../libdrm.la \
 	@PCIACCESS_LIBS@ \
 	@CLOCK_LIB@
 
-libdrm_intel_la_SOURCES = \
-	intel_bufmgr.c \
-	intel_bufmgr_priv.h \
-	intel_bufmgr_fake.c \
-	intel_bufmgr_gem.c \
-	intel_decode.c \
-	intel_chipset.h \
-	mm.c \
-	mm.h
+libdrm_intel_la_SOURCES = $(LIBDRM_INTEL_FILES)
 
 intel_bufmgr_gem_o_CFLAGS = $(AM_CFLAGS) -c99
 
 libdrm_intelincludedir = ${includedir}/libdrm
-libdrm_intelinclude_HEADERS = intel_bufmgr.h \
-			      intel_aub.h \
-			      intel_debug.h
+libdrm_intelinclude_HEADERS = $(LIBDRM_INTEL_H_FILES)
 
 # This may be interesting even outside of "make check", due to the -dump option.
 noinst_PROGRAMS = test_decode
@@ -75,7 +68,8 @@ EXTRA_DIST = \
 	$(BATCHES:.batch=.batch.sh) \
 	$(BATCHES:.batch=.batch-ref.txt) \
 	$(BATCHES:.batch=.batch-ref.txt) \
-	tests/test-batch.sh
+	tests/test-batch.sh \
+	Android.mk
 
 test_decode_LDADD = libdrm_intel.la ../libdrm.la
 
