@@ -1,0 +1,13 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: glw
+Description: Mesa OpenGL widget library
+Requires: gl
+Requires.private: x11 xt
+Version: @PACKAGE_VERSION@
+Libs: -L${libdir} -lGLw
+Libs.private: @GLW_PC_LIB_PRIV@
+Cflags: -I${includedir} @GLW_PC_CFLAGS@
