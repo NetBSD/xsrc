@@ -80,15 +80,16 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@HAVE_VMWGFX_TRUE@am__append_1 = vmwgfx.c
-@HAVE_NOUVEAU_TRUE@am__append_2 = nouveau.c
-@HAVE_RADEON_TRUE@am__append_3 = radeon.c
-@HAVE_EXYNOS_TRUE@am__append_4 = exynos.c
-@HAVE_EXYNOS_TRUE@am__append_5 = -I$(top_srcdir)/exynos
+DIST_COMMON = $(srcdir)/Makefile.sources $(srcdir)/Makefile.in \
+	$(srcdir)/Makefile.am $(srcdir)/libkms.pc.in \
+	$(top_srcdir)/build-aux/depcomp $(libkmsinclude_HEADERS)
+@HAVE_VMWGFX_TRUE@am__append_1 = $(LIBKMS_VMWGFX_FILES)
+@HAVE_INTEL_TRUE@am__append_2 = $(LIBKMS_INTEL_FILES)
+@HAVE_NOUVEAU_TRUE@am__append_3 = $(LIBKMS_NOUVEAU_FILES)
+@HAVE_RADEON_TRUE@am__append_4 = $(LIBKMS_RADEON_FILES)
+@HAVE_EXYNOS_TRUE@am__append_5 = $(LIBKMS_EXYNOS_FILES)
+@HAVE_EXYNOS_TRUE@am__append_6 = -I$(top_srcdir)/exynos
 subdir = libkms
-DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
-	$(srcdir)/libkms.pc.in $(top_srcdir)/build-aux/depcomp \
-	$(libkmsinclude_HEADERS)
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
@@ -131,15 +132,22 @@ am__installdirs = "$(DESTDIR)$(libkms_ladir)" \
 	"$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(libkmsincludedir)"
 LTLIBRARIES = $(libkms_la_LTLIBRARIES)
 libkms_la_DEPENDENCIES = ../libdrm.la
-am__libkms_la_SOURCES_DIST = internal.h linux.c intel.c dumb.c api.c \
-	vmwgfx.c nouveau.c radeon.c exynos.c
-@HAVE_VMWGFX_TRUE@am__objects_1 = vmwgfx.lo
-@HAVE_NOUVEAU_TRUE@am__objects_2 = nouveau.lo
-@HAVE_RADEON_TRUE@am__objects_3 = radeon.lo
-@HAVE_EXYNOS_TRUE@am__objects_4 = exynos.lo
-am_libkms_la_OBJECTS = linux.lo intel.lo dumb.lo api.lo \
-	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
-	$(am__objects_4)
+am__libkms_la_SOURCES_DIST = internal.h linux.c dumb.c api.c vmwgfx.c \
+	intel.c nouveau.c radeon.c exynos.c
+am__objects_1 = linux.lo dumb.lo api.lo
+am__objects_2 = vmwgfx.lo
+@HAVE_VMWGFX_TRUE@am__objects_3 = $(am__objects_2)
+am__objects_4 = intel.lo
+@HAVE_INTEL_TRUE@am__objects_5 = $(am__objects_4)
+am__objects_6 = nouveau.lo
+@HAVE_NOUVEAU_TRUE@am__objects_7 = $(am__objects_6)
+am__objects_8 = radeon.lo
+@HAVE_RADEON_TRUE@am__objects_9 = $(am__objects_8)
+am__objects_10 = exynos.lo
+@HAVE_EXYNOS_TRUE@am__objects_11 = $(am__objects_10)
+am_libkms_la_OBJECTS = $(am__objects_1) $(am__objects_3) \
+	$(am__objects_5) $(am__objects_7) $(am__objects_9) \
+	$(am__objects_11)
 libkms_la_OBJECTS = $(am_libkms_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -290,6 +298,7 @@ STRIP = @STRIP@
 VALGRIND_CFLAGS = @VALGRIND_CFLAGS@
 VALGRIND_LIBS = @VALGRIND_LIBS@
 VERSION = @VERSION@
+VISIBILITY_CFLAGS = @VISIBILITY_CFLAGS@
 WARN_CFLAGS = @WARN_CFLAGS@
 XSLTPROC = @XSLTPROC@
 abs_builddir = @abs_builddir@
@@ -346,8 +355,32 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+LIBKMS_FILES := \
+	internal.h \
+	linux.c \
+	dumb.c \
+	api.c
+
+LIBKMS_VMWGFX_FILES := \
+	vmwgfx.c
+
+LIBKMS_INTEL_FILES := \
+	intel.c
+
+LIBKMS_NOUVEAU_FILES := \
+	nouveau.c
+
+LIBKMS_RADEON_FILES := \
+	radeon.c
+
+LIBKMS_EXYNOS_FILES := \
+	exynos.c
+
+LIBKMS_H_FILES := \
+	libkms.h
+
 AM_CFLAGS = $(WARN_CFLAGS) -I$(top_srcdir)/include/drm -I$(top_srcdir) \
-	$(am__append_5)
+	$(am__append_6)
 libkms_la_LTLIBRARIES = libkms.la
 libkms_ladir = $(libdir)
 libkms_la_LDFLAGS = -version-number 1:0:0 -no-undefined
@@ -356,18 +389,17 @@ libkms_la_LIBADD = ../libdrm.la
 #if HAVE_LIBUDEV
 #libkms_la_LIBADD += $(LIBUDEV_LIBS)
 #endif
-libkms_la_SOURCES = internal.h linux.c intel.c dumb.c api.c \
-	$(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_4)
+libkms_la_SOURCES = $(LIBKMS_FILES) $(am__append_1) $(am__append_2) \
+	$(am__append_3) $(am__append_4) $(am__append_5)
 libkmsincludedir = ${includedir}/libkms
-libkmsinclude_HEADERS = libkms.h
+libkmsinclude_HEADERS = $(LIBKMS_H_FILES)
 pkgconfig_DATA = libkms.pc
-EXTRA_DIST = libkms.pc.in
+EXTRA_DIST = Android.mk
 all: all-am
 
 .SUFFIXES:
 .SUFFIXES: .c .lo .o .obj
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(srcdir)/Makefile.sources $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -388,6 +420,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)'; \
 	    cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe);; \
 	esac;
+$(srcdir)/Makefile.sources:
 
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh

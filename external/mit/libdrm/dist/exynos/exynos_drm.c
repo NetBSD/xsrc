@@ -38,6 +38,7 @@
 
 #include <xf86drm.h>
 
+#include "libdrm.h"
 #include "exynos_drm.h"
 #include "exynos_drmif.h"
 
@@ -48,7 +49,7 @@
  *
  * if true, return the device object else NULL.
  */
-struct exynos_device * exynos_device_create(int fd)
+drm_public struct exynos_device * exynos_device_create(int fd)
 {
 	struct exynos_device *dev;
 
@@ -69,7 +70,7 @@ struct exynos_device * exynos_device_create(int fd)
  *
  * @dev: exynos drm device object.
  */
-void exynos_device_destroy(struct exynos_device *dev)
+drm_public void exynos_device_destroy(struct exynos_device *dev)
 {
 	free(dev);
 }
@@ -87,8 +88,8 @@ void exynos_device_destroy(struct exynos_device *dev)
  *
  * if true, return a exynos buffer object else NULL.
  */
-struct exynos_bo * exynos_bo_create(struct exynos_device *dev,
-						size_t size, uint32_t flags)
+drm_public struct exynos_bo * exynos_bo_create(struct exynos_device *dev,
+					       size_t size, uint32_t flags)
 {
 	struct exynos_bo *bo;
 	struct drm_exynos_gem_create req = {
@@ -141,8 +142,8 @@ fail:
  *
  * if true, return 0 else negative.
  */
-int exynos_bo_get_info(struct exynos_device *dev, uint32_t handle,
-			size_t *size, uint32_t *flags)
+drm_public int exynos_bo_get_info(struct exynos_device *dev, uint32_t handle,
+				  size_t *size, uint32_t *flags)
 {
 	int ret;
 	struct drm_exynos_gem_info req = {
@@ -167,7 +168,7 @@ int exynos_bo_get_info(struct exynos_device *dev, uint32_t handle,
  *
  * @bo: a exynos buffer object to be destroyed.
  */
-void exynos_bo_destroy(struct exynos_bo *bo)
+drm_public void exynos_bo_destroy(struct exynos_bo *bo)
 {
 	if (!bo)
 		return;
@@ -199,7 +200,8 @@ void exynos_bo_destroy(struct exynos_bo *bo)
  * if true, return a exynos buffer object else NULL.
  *
  */
-struct exynos_bo * exynos_bo_from_name(struct exynos_device *dev, uint32_t name)
+drm_public struct exynos_bo *
+exynos_bo_from_name(struct exynos_device *dev, uint32_t name)
 {
 	struct exynos_bo *bo;
 	struct drm_gem_open req = {
@@ -241,7 +243,7 @@ err_free_bo:
  *
  * if true, return 0 else negative.
  */
-int exynos_bo_get_name(struct exynos_bo *bo, uint32_t *name)
+drm_public int exynos_bo_get_name(struct exynos_bo *bo, uint32_t *name)
 {
 	if (!bo->name) {
 		struct drm_gem_flink req = {
@@ -264,7 +266,7 @@ int exynos_bo_get_name(struct exynos_bo *bo, uint32_t *name)
 	return 0;
 }
 
-uint32_t exynos_bo_handle(struct exynos_bo *bo)
+drm_public uint32_t exynos_bo_handle(struct exynos_bo *bo)
 {
 	return bo->handle;
 }
@@ -277,7 +279,7 @@ uint32_t exynos_bo_handle(struct exynos_bo *bo)
  *
  * if true, user pointer mmaped else NULL.
  */
-void *exynos_bo_map(struct exynos_bo *bo)
+drm_public void *exynos_bo_map(struct exynos_bo *bo)
 {
 	if (!bo->vaddr) {
 		struct exynos_device *dev = bo->dev;
@@ -294,7 +296,7 @@ void *exynos_bo_map(struct exynos_bo *bo)
 			return NULL;
 		}
 
-		bo->vaddr = req.mapped;
+		bo->vaddr = (void *)(uintptr_t)req.mapped;
 	}
 
 	return bo->vaddr;
@@ -303,59 +305,31 @@ void *exynos_bo_map(struct exynos_bo *bo)
 /*
  * Export gem object to dmabuf as file descriptor.
  *
- * @dev: a exynos device object.
- * @handle: gem handle to be exported into dmabuf as file descriptor.
- * @fd: file descriptor to dmabuf exported from gem handle and
- *	returned by kernel side.
+ * @dev: exynos device object
+ * @handle: gem handle to export as file descriptor of dmabuf
+ * @fd: file descriptor returned from kernel
  *
- * if true, return 0 else negative.
+ * @return: 0 on success, -1 on error, and errno will be set
  */
-int exynos_prime_handle_to_fd(struct exynos_device *dev, uint32_t handle,
-					int *fd)
+drm_public int
+exynos_prime_handle_to_fd(struct exynos_device *dev, uint32_t handle, int *fd)
 {
-	int ret;
-	struct drm_prime_handle req = {
-		.handle	= handle,
-	};
-
-	ret = drmIoctl(dev->fd, DRM_IOCTL_PRIME_HANDLE_TO_FD, &req);
-	if (ret) {
-		fprintf(stderr, "failed to mmap[%s].\n",
-			strerror(errno));
-		return ret;
-	}
-
-	*fd = req.fd;
-	return 0;
+	return drmPrimeHandleToFD(dev->fd, handle, 0, fd);
 }
 
 /*
  * Import file descriptor into gem handle.
  *
- * @dev: a exynos device object.
- * @fd: file descriptor exported into dmabuf.
- * @handle: gem handle to gem object imported from file descriptor
- *	and returned by kernel side.
+ * @dev: exynos device object
+ * @fd: file descriptor of dmabuf to import
+ * @handle: gem handle returned from kernel
  *
- * if true, return 0 else negative.
+ * @return: 0 on success, -1 on error, and errno will be set
  */
-int exynos_prime_fd_to_handle(struct exynos_device *dev, int fd,
-					uint32_t *handle)
+drm_public int
+exynos_prime_fd_to_handle(struct exynos_device *dev, int fd, uint32_t *handle)
 {
-	int ret;
-	struct drm_prime_handle req = {
-		.fd	= fd,
-	};
-
-	ret = drmIoctl(dev->fd, DRM_IOCTL_PRIME_FD_TO_HANDLE, &req);
-	if (ret) {
-		fprintf(stderr, "failed to mmap[%s].\n",
-			strerror(errno));
-		return ret;
-	}
-
-	*handle = req.handle;
-	return 0;
+	return drmPrimeFDToHandle(dev->fd, fd, handle);
 }
 
 
@@ -375,13 +349,14 @@ int exynos_prime_fd_to_handle(struct exynos_device *dev, int fd,
  *
  * if true, return 0 else negative.
  */
-int exynos_vidi_connection(struct exynos_device *dev, uint32_t connect,
-				uint32_t ext, void *edid)
+drm_public int
+exynos_vidi_connection(struct exynos_device *dev, uint32_t connect,
+		       uint32_t ext, void *edid)
 {
 	struct drm_exynos_vidi_connection req = {
 		.connection	= connect,
 		.extensions	= ext,
-		.edid		= edid,
+		.edid		= (uint64_t)(uintptr_t)edid,
 	};
 	int ret;
 

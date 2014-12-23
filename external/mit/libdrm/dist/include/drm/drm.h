@@ -627,6 +627,14 @@ struct drm_get_cap {
  */
 #define DRM_CLIENT_CAP_STEREO_3D	1
 
+/**
+ * DRM_CLIENT_CAP_UNIVERSAL_PLANES
+ *
+ * if set to 1, the DRM core will expose the full universal plane list
+ * (including primary and cursor planes).
+ */
+#define DRM_CLIENT_CAP_UNIVERSAL_PLANES 2
+
 /** DRM_IOCTL_SET_CLIENT_CAP ioctl argument type */
 struct drm_set_client_cap {
 	__u64 capability;
@@ -750,20 +758,6 @@ struct drm_prime_handle {
 #define DRM_IOCTL_MODE_OBJ_GETPROPERTIES	DRM_IOWR(0xB9, struct drm_mode_obj_get_properties)
 #define DRM_IOCTL_MODE_OBJ_SETPROPERTY	DRM_IOWR(0xBA, struct drm_mode_obj_set_property)
 #define DRM_IOCTL_MODE_CURSOR2		DRM_IOWR(0xBB, struct drm_mode_cursor2)
-
-#ifdef __NetBSD__
-/*
- * Instrumenting mmap is trickier than just making an ioctl to do it.
- */
-struct drm_mmap {
-	void		*dnm_addr;  /* in/out */
-	size_t		dnm_size;   /* in */
-	int		dnm_prot;   /* in */
-	int		dnm_flags;  /* in */
-	off_t		dnm_offset; /* in */
-};
-#define	DRM_IOCTL_MMAP	DRM_IOWR(0xff, struct drm_mmap)
-#endif
 
 /**
  * Device specific ioctls should only be in their respective headers

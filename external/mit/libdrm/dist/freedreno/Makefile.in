@@ -80,11 +80,11 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = freedreno
-DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
-	$(srcdir)/libdrm_freedreno.pc.in \
+DIST_COMMON = $(srcdir)/Makefile.sources $(srcdir)/Makefile.in \
+	$(srcdir)/Makefile.am $(srcdir)/libdrm_freedreno.pc.in \
 	$(top_srcdir)/build-aux/depcomp \
 	$(libdrm_freedrenocommoninclude_HEADERS) README
+subdir = freedreno
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
@@ -129,11 +129,12 @@ am__installdirs = "$(DESTDIR)$(libdrm_freedreno_ladir)" \
 LTLIBRARIES = $(libdrm_freedreno_la_LTLIBRARIES)
 libdrm_freedreno_la_DEPENDENCIES = ../libdrm.la
 am__dirstamp = $(am__leading_dot)dirstamp
-am_libdrm_freedreno_la_OBJECTS = freedreno_device.lo freedreno_pipe.lo \
+am__objects_1 = freedreno_device.lo freedreno_pipe.lo \
 	freedreno_ringbuffer.lo freedreno_bo.lo kgsl/kgsl_bo.lo \
 	kgsl/kgsl_device.lo kgsl/kgsl_pipe.lo kgsl/kgsl_ringbuffer.lo \
 	msm/msm_bo.lo msm/msm_device.lo msm/msm_pipe.lo \
 	msm/msm_ringbuffer.lo
+am_libdrm_freedreno_la_OBJECTS = $(am__objects_1)
 libdrm_freedreno_la_OBJECTS = $(am_libdrm_freedreno_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -285,6 +286,7 @@ STRIP = @STRIP@
 VALGRIND_CFLAGS = @VALGRIND_CFLAGS@
 VALGRIND_LIBS = @VALGRIND_LIBS@
 VERSION = @VERSION@
+VISIBILITY_CFLAGS = @VISIBILITY_CFLAGS@
 WARN_CFLAGS = @WARN_CFLAGS@
 XSLTPROC = @XSLTPROC@
 abs_builddir = @abs_builddir@
@@ -342,18 +344,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = subdir-objects
-AM_CFLAGS = \
-	$(WARN_CFLAGS) \
-	-I$(top_srcdir) \
-	-I$(top_srcdir)/freedreno \
-	$(PTHREADSTUBS_CFLAGS) \
-	-I$(top_srcdir)/include/drm
-
-libdrm_freedreno_la_LTLIBRARIES = libdrm_freedreno.la
-libdrm_freedreno_ladir = $(libdir)
-libdrm_freedreno_la_LDFLAGS = -version-number 1:0:0 -no-undefined
-libdrm_freedreno_la_LIBADD = ../libdrm.la @PTHREADSTUBS_LIBS@
-libdrm_freedreno_la_SOURCES = \
+LIBDRM_FREEDRENO_FILES := \
 	freedreno_device.c \
 	freedreno_pipe.c \
 	freedreno_priv.h \
@@ -374,14 +365,32 @@ libdrm_freedreno_la_SOURCES = \
 	msm/msm_ringbuffer.c \
 	list.h
 
+LIBDRM_FREEDRENO_H_FILES := \
+	freedreno_drmif.h \
+	freedreno_ringbuffer.h
+
+AM_CFLAGS = \
+	$(WARN_CFLAGS) \
+	$(VISIBILITY_CFLAGS) \
+	-I$(top_srcdir) \
+	-I$(top_srcdir)/freedreno \
+	$(PTHREADSTUBS_CFLAGS) \
+	-I$(top_srcdir)/include/drm
+
+libdrm_freedreno_la_LTLIBRARIES = libdrm_freedreno.la
+libdrm_freedreno_ladir = $(libdir)
+libdrm_freedreno_la_LDFLAGS = -version-number 1:0:0 -no-undefined
+libdrm_freedreno_la_LIBADD = ../libdrm.la @PTHREADSTUBS_LIBS@
+libdrm_freedreno_la_SOURCES = $(LIBDRM_FREEDRENO_FILES)
 libdrm_freedrenocommonincludedir = ${includedir}/freedreno
-libdrm_freedrenocommoninclude_HEADERS = freedreno_drmif.h freedreno_ringbuffer.h
+libdrm_freedrenocommoninclude_HEADERS = $(LIBDRM_FREEDRENO_H_FILES)
 pkgconfig_DATA = libdrm_freedreno.pc
+EXTRA_DIST = Android.mk
 all: all-am
 
 .SUFFIXES:
 .SUFFIXES: .c .lo .o .obj
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(srcdir)/Makefile.sources $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -402,6 +411,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)'; \
 	    cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe);; \
 	esac;
+$(srcdir)/Makefile.sources:
 
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh

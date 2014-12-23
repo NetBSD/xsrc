@@ -48,7 +48,6 @@
 #include <sys/stat.h>
 #define stat_t struct stat
 #include <sys/ioctl.h>
-#include <sys/mman.h>
 #include <sys/time.h>
 #include <stdarg.h>
 
@@ -58,6 +57,7 @@
 #endif
 
 #include "xf86drm.h"
+#include "libdrm.h"
 
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
 #define DRM_MAJOR 145
@@ -542,19 +542,6 @@ static int drmOpenByName(const char *name)
     int           fd;
     drmVersionPtr version;
     char *        id;
-    
-    if (!drmAvailable()) {
-	if (!drm_server_info) {
-	    return -1;
-	}
-	else {
-	    /* try to load the kernel module now */
-	    if (!drm_server_info->load_module(name)) {
-		drmMsg("[drm] failed to load kernel module \"%s\"\n", name);
-		return -1;
-	    }
-	}
-    }
 
     /*
      * Open the first minor number that matches the driver name and isn't
@@ -1142,9 +1129,6 @@ int drmClose(int fd)
 int drmMap(int fd, drm_handle_t handle, drmSize size, drmAddressPtr address)
 {
     static unsigned long pagesize_mask = 0;
-#ifdef DRM_IOCTL_MMAP
-    struct drm_mmap mmap_req = {0};
-#endif
 
     if (fd < 0)
 	return -EINVAL;
@@ -1154,18 +1138,7 @@ int drmMap(int fd, drm_handle_t handle, drmSize size, drmAddressPtr address)
 
     size = (size + pagesize_mask) & ~pagesize_mask;
 
-#ifdef DRM_IOCTL_MMAP
-    mmap_req.dnm_addr = NULL;
-    mmap_req.dnm_size = size;
-    mmap_req.dnm_prot = (PROT_READ | PROT_WRITE);
-    mmap_req.dnm_flags = MAP_SHARED;
-    mmap_req.dnm_offset = handle;
-    if (drmIoctl(fd, DRM_IOCTL_MMAP, &mmap_req) == 0) {
-	*address = mmap_req.dnm_addr;
-	return 0;
-    }
-#endif
-    *address = mmap(0, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, handle);
+    *address = drm_mmap(0, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, handle);
     if (*address == MAP_FAILED)
 	return -errno;
     return 0;
@@ -1185,7 +1158,7 @@ int drmMap(int fd, drm_handle_t handle, drmSize size, drmAddressPtr address)
  */
 int drmUnmap(drmAddress address, drmSize size)
 {
-    return munmap(address, size);
+    return drm_munmap(address, size);
 }
 
 drmBufInfoPtr drmGetBufInfo(int fd)
@@ -1292,7 +1265,7 @@ int drmUnmapBufs(drmBufMapPtr bufs)
     int i;
 
     for (i = 0; i < bufs->count; i++) {
-	munmap(bufs->list[i].address, bufs->list[i].total);
+	drm_munmap(bufs->list[i].address, bufs->list[i].total);
     }
 
     drmFree(bufs->list);
@@ -2598,4 +2571,3 @@ int drmPrimeFDToHandle(int fd, int prime_fd, uint32_t *handle)
 	*handle = args.handle;
 	return 0;
 }
-

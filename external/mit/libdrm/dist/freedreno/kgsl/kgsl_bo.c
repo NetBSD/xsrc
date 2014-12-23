@@ -26,6 +26,10 @@
  *    Rob Clark <robclark@freedesktop.org>
  */
 
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
 #include "kgsl_priv.h"
 
 #include <linux/fb.h>
@@ -171,8 +175,8 @@ struct fd_bo * kgsl_bo_from_handle(struct fd_device *dev,
 	return bo;
 }
 
-struct fd_bo * fd_bo_from_fbdev(struct fd_pipe *pipe,
-		int fbfd, uint32_t size)
+drm_public struct fd_bo *
+fd_bo_from_fbdev(struct fd_pipe *pipe, int fbfd, uint32_t size)
 {
 	struct fd_bo *bo;
 
@@ -186,7 +190,7 @@ struct fd_bo * fd_bo_from_fbdev(struct fd_pipe *pipe,
 	 * thinks the buffer hasn't be allocate and fails
 	 */
 	if (bo) {
-		void *fbmem = mmap(NULL, size, PROT_READ | PROT_WRITE,
+		void *fbmem = drm_mmap(NULL, size, PROT_READ | PROT_WRITE,
 				MAP_SHARED, fbfd, 0);
 		struct kgsl_map_user_mem req = {
 				.memtype = KGSL_USER_MEM_TYPE_ADDR,

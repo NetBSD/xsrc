@@ -282,6 +282,7 @@ STRIP = @STRIP@
 VALGRIND_CFLAGS = @VALGRIND_CFLAGS@
 VALGRIND_LIBS = @VALGRIND_LIBS@
 VERSION = @VERSION@
+VISIBILITY_CFLAGS = @VISIBILITY_CFLAGS@
 WARN_CFLAGS = @WARN_CFLAGS@
 XSLTPROC = @XSLTPROC@
 abs_builddir = @abs_builddir@
@@ -340,6 +341,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CFLAGS = \
 	$(WARN_CFLAGS) \
+	$(VISIBILITY_CFLAGS) \
 	-I$(top_srcdir) \
 	-I$(top_srcdir)/exynos \
 	$(PTHREADSTUBS_CFLAGS) \
