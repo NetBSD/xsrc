@@ -26,10 +26,6 @@
 #ifndef _RHD_VIDEO_H
 #define _RHD_VIDEO_H
 
-/* seriously ?! @#$%% */
-# define uint32_t CARD32
-# define uint64_t CARD64
-
 enum RHDXvColorSpace {
     RHD_XV_COLOR_SPACE_AUTODETECT,
     RHD_XV_COLOR_SPACE_REC601,

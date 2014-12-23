@@ -153,8 +153,12 @@ struct local_i915_gem_userptr {
 	uint64_t user_ptr;
 	uint64_t user_size;
 	uint32_t flags;
+#ifndef I915_USERPTR_READ_ONLY
 #define I915_USERPTR_READ_ONLY (1<<0)
+#endif
+#ifndef I915_USERPTR_UNSYNCHRONIZED
 #define I915_USERPTR_UNSYNCHRONIZED (1<<31)
+#endif
 	uint32_t handle;
 };
 
