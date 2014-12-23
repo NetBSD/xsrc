@@ -3,10 +3,6 @@
 
 #include "xf86drm.h"
 
-/* seriously ?! @#$%% */
-# define uint32_t CARD32
-# define uint64_t CARD64
-
 /* r600_exa.c */
 Bool R6xxEXAInit(ScrnInfoPtr pScrn, ScreenPtr pScreen);
 void R6xxEXACloseScreen(ScreenPtr pScreen);
