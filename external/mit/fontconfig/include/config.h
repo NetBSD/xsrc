@@ -85,10 +85,10 @@
 /* Define to 1 if you have the `getprogname' function. */
 #define HAVE_GETPROGNAME 1
 
-//#if 0 // fontconfig 2.10, but we should have this in -current now
+#if 0 // This is in the Makefile
 /* Have Intel __sync_* atomic primitives */
 #define HAVE_INTEL_ATOMIC_PRIMITIVES 1
-//#endif
+#endif
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
