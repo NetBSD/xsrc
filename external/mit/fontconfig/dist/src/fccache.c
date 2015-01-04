@@ -297,7 +297,7 @@ free_lock (void)
   lock = fc_atomic_ptr_get (&cache_lock);
   if (lock && fc_atomic_ptr_cmpexch (&cache_lock, lock, NULL)) {
     FcMutexFinish (lock);
-    free (__UNVOLATILE(lock));
+    free (((void *)(uintptr_t)lock));
   }
 }
 
