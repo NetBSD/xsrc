@@ -34,6 +34,7 @@
 
 static void
 yyerror (YYLTYPE *locp, glcpp_parser_t *parser, const char *error);
+int yylex (YYSTYPE *yylval, YYLTYPE *locp, glcpp_parser_t *parser);
 
 static void
 _define_object_macro (glcpp_parser_t *parser,
