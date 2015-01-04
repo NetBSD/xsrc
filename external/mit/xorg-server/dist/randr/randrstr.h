@@ -448,6 +448,9 @@ RRDeliverScreenEvent (ClientPtr client, WindowPtr pWin, ScreenPtr pScreen);
 extern _X_EXPORT void
 RRTellChanged (ScreenPtr pScreen);
 
+extern _X_EXPORT void
+RRSetChanged (ScreenPtr pScreen);
+
 /*
  * Poll the driver for changed information
  */
