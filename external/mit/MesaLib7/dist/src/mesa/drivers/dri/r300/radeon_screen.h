@@ -142,4 +142,6 @@ struct __DRIimageRec {
 	((screen->chip_flags & RADEON_CLASS_MASK) == RADEON_CLASS_R600)
 
 extern void radeonDestroyBuffer(__DRIdrawable *driDrawPriv);
+const __DRIextension **__driDriverGetExtensions_r300(void);
+
 #endif /* __RADEON_SCREEN_H__ */

@@ -2213,3 +2213,11 @@ PUBLIC const __DRIextension *__driDriverExtensions[] = {
     &driDRI2Extension.base,
     NULL
 };
+
+#if defined(RADEON_R300)
+/* Forward support for Mesa 10.x */
+PUBLIC const __DRIextension **__driDriverGetExtensions_r300(void)
+{
+   return __driDriverExtensions;
+}
+#endif
