@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -17,9 +16,10 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 
@@ -45,7 +45,6 @@
  * \defgroup MatFlags MAT_FLAG_XXX-flags
  *
  * Bitmasks to indicate different kinds of 4x4 matrices in GLmatrix::flags
- * It would be nice to make all these flags private to m_matrix.c
  */
 /*@{*/
 #define MAT_FLAG_IDENTITY       0     /**< is an identity matrix flag.
@@ -296,19 +295,15 @@ static void print_matrix_floats( const GLfloat m[16] )
 void
 _math_matrix_print( const GLmatrix *m )
 {
+   GLfloat prod[16];
+
    _mesa_debug(NULL, "Matrix type: %s, flags: %x\n", types[m->type], m->flags);
    print_matrix_floats(m->m);
    _mesa_debug(NULL, "Inverse: \n");
-   if (m->inv) {
-      GLfloat prod[16];
-      print_matrix_floats(m->inv);
-      matmul4(prod, m->m, m->inv);
-      _mesa_debug(NULL, "Mat * Inverse:\n");
-      print_matrix_floats(prod);
-   }
-   else {
-      _mesa_debug(NULL, "  - not available\n");
-   }
+   print_matrix_floats(m->inv);
+   matmul4(prod, m->m, m->inv);
+   _mesa_debug(NULL, "Mat * Inverse:\n");
+   print_matrix_floats(prod);
 }
 
 /*@}*/
@@ -333,7 +328,7 @@ _math_matrix_print( const GLmatrix *m )
 /*@{*/
 
 /**
- * Swaps the values of two floating pointer variables.
+ * Swaps the values of two floating point variables.
  *
  * Used by invert_matrix_general() to swap the row pointers.
  */
@@ -513,7 +508,7 @@ static GLboolean invert_matrix_3d_general( GLmatrix *mat )
 
    det = pos + neg;
 
-   if (det*det < 1e-25)
+   if (FABSF(det) < 1e-25)
       return GL_FALSE;
 
    det = 1.0F / det;
@@ -861,7 +856,7 @@ _math_matrix_rotate( GLmatrix *mat,
    }
 
    if (!optimized) {
-      const GLfloat mag = SQRTF(x * x + y * y + z * z);
+      const GLfloat mag = sqrtf(x * x + y * y + z * z);
 
       if (mag <= 1.0e-4) {
          /* no rotation, leave mat as-is */
@@ -1115,15 +1110,16 @@ _math_matrix_translate( GLmatrix *mat, GLfloat x, GLfloat y, GLfloat z )
  * Transforms Normalized Device Coords to window/Z values.
  */
 void
-_math_matrix_viewport(GLmatrix *m, GLint x, GLint y, GLint width, GLint height,
-                      GLfloat zNear, GLfloat zFar, GLfloat depthMax)
+_math_matrix_viewport(GLmatrix *m, GLfloat x, GLfloat y,
+                      GLfloat width, GLfloat height,
+                      GLdouble zNear, GLdouble zFar, GLdouble depthMax)
 {
-   m->m[MAT_SX] = (GLfloat) width / 2.0F;
+   m->m[MAT_SX] = width / 2.0F;
    m->m[MAT_TX] = m->m[MAT_SX] + x;
-   m->m[MAT_SY] = (GLfloat) height / 2.0F;
+   m->m[MAT_SY] = height / 2.0F;
    m->m[MAT_TY] = m->m[MAT_SY] + y;
-   m->m[MAT_SZ] = depthMax * ((zFar - zNear) / 2.0F);
-   m->m[MAT_TZ] = depthMax * ((zFar - zNear) / 2.0F + zNear);
+   m->m[MAT_SZ] = (GLfloat) (depthMax * ((zFar - zNear) / 2.0));
+   m->m[MAT_TZ] = (GLfloat) (depthMax * ((zFar - zNear) / 2.0 + zNear));
    m->flags = MAT_FLAG_GENERAL_SCALE | MAT_FLAG_TRANSLATION;
    m->type = MATRIX_3D_NO_ROT;
 }
@@ -1141,9 +1137,7 @@ void
 _math_matrix_set_identity( GLmatrix *mat )
 {
    memcpy( mat->m, Identity, 16*sizeof(GLfloat) );
-
-   if (mat->inv)
-      memcpy( mat->inv, Identity, 16*sizeof(GLfloat) );
+   memcpy( mat->inv, Identity, 16*sizeof(GLfloat) );
 
    mat->type = MATRIX_IDENTITY;
    mat->flags &= ~(MAT_DIRTY_FLAGS|
@@ -1444,17 +1438,9 @@ void
 _math_matrix_copy( GLmatrix *to, const GLmatrix *from )
 {
    memcpy( to->m, from->m, sizeof(Identity) );
+   memcpy(to->inv, from->inv, 16 * sizeof(GLfloat));
    to->flags = from->flags;
    to->type = from->type;
-
-   if (to->inv != 0) {
-      if (from->inv == 0) {
-	 matrix_invert( to );
-      }
-      else {
-	 memcpy(to->inv, from->inv, sizeof(GLfloat)*16);
-      }
-   }
 }
 
 /**
@@ -1483,10 +1469,12 @@ _math_matrix_loadf( GLmatrix *mat, const GLfloat *m )
 void
 _math_matrix_ctr( GLmatrix *m )
 {
-   m->m = (GLfloat *) _mesa_align_malloc( 16 * sizeof(GLfloat), 16 );
+   m->m = _mesa_align_malloc( 16 * sizeof(GLfloat), 16 );
    if (m->m)
       memcpy( m->m, Identity, sizeof(Identity) );
-   m->inv = NULL;
+   m->inv = _mesa_align_malloc( 16 * sizeof(GLfloat), 16 );
+   if (m->inv)
+      memcpy( m->inv, Identity, sizeof(Identity) );
    m->type = MATRIX_IDENTITY;
    m->flags = 0;
 }
@@ -1501,31 +1489,11 @@ _math_matrix_ctr( GLmatrix *m )
 void
 _math_matrix_dtr( GLmatrix *m )
 {
-   if (m->m) {
-      _mesa_align_free( m->m );
-      m->m = NULL;
-   }
-   if (m->inv) {
-      _mesa_align_free( m->inv );
-      m->inv = NULL;
-   }
-}
+   _mesa_align_free( m->m );
+   m->m = NULL;
 
-/**
- * Allocate a matrix inverse.
- *
- * \param m matrix.
- *
- * Allocates the matrix inverse, GLmatrix::inv, and sets it to Identity.
- */
-void
-_math_matrix_alloc_inv( GLmatrix *m )
-{
-   if (!m->inv) {
-      m->inv = (GLfloat *) _mesa_align_malloc( 16 * sizeof(GLfloat), 16 );
-      if (m->inv)
-         memcpy( m->inv, Identity, 16 * sizeof(GLfloat) );
-   }
+   _mesa_align_free( m->inv );
+   m->inv = NULL;
 }
 
 /*@}*/

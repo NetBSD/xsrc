@@ -115,14 +115,10 @@ __glXFreeVertexArrayState(struct glx_context * gc)
    struct array_state_vector *arrays = state->array_state;
 
    if (arrays) {
-      if (arrays->stack) {
-         free(arrays->stack);
-         arrays->stack = NULL;
-      }
-      if (arrays->arrays) {
-         free(arrays->arrays);
-         arrays->arrays = NULL;
-      }
+      free(arrays->stack);
+      arrays->stack = NULL;
+      free(arrays->arrays);
+      arrays->arrays = NULL;
       free(arrays);
       state->array_state = NULL;
    }
@@ -139,9 +135,6 @@ __glXFreeVertexArrayState(struct glx_context * gc)
  * struct glx_context::server_minor, and __GLXcontext::server_major have been
  * initialized.  These values are used to determine what vertex arrays are
  * supported.
- *
- * \bug
- * Return values from malloc are not properly tested.
  */
 void
 __glXInitVertexArrayState(struct glx_context * gc)
@@ -158,7 +151,11 @@ __glXInitVertexArrayState(struct glx_context * gc)
 
 
    arrays = calloc(1, sizeof(struct array_state_vector));
-   state->array_state = arrays;
+
+   if (arrays == NULL) {
+      __glXSetError(gc, GL_OUT_OF_MEMORY);
+      return;
+   }
 
    arrays->old_DrawArrays_possible = !state->NoDrawArraysProtocol;
    arrays->new_DrawArrays_possible = GL_FALSE;
@@ -207,6 +204,12 @@ __glXInitVertexArrayState(struct glx_context * gc)
    array_count += texture_units + vertex_program_attribs;
    arrays->num_arrays = array_count;
    arrays->arrays = calloc(array_count, sizeof(struct array_state));
+
+   if (arrays->arrays == NULL) {
+      free(arrays);
+      __glXSetError(gc, GL_OUT_OF_MEMORY);
+      return;
+   }
 
    arrays->arrays[0].data_type = GL_FLOAT;
    arrays->arrays[0].count = 3;
@@ -293,6 +296,18 @@ __glXInitVertexArrayState(struct glx_context * gc)
    arrays->stack = malloc(sizeof(struct array_stack_state)
                           * arrays->num_arrays
                           * __GL_CLIENT_ATTRIB_STACK_DEPTH);
+
+   if (arrays->stack == NULL) {
+      free(arrays->arrays);
+      free(arrays);
+      __glXSetError(gc, GL_OUT_OF_MEMORY);
+      return;
+   }
+
+   /* Everything went ok so we put vertex array state in place
+    * in context.
+    */
+   state->array_state = arrays;
 }
 
 
@@ -1034,7 +1049,7 @@ __indirect_glDrawRangeElements(GLenum mode, GLuint start, GLuint end,
 
 
 void
-__indirect_glMultiDrawArraysEXT(GLenum mode, const GLint *first,
+__indirect_glMultiDrawArrays(GLenum mode, const GLint *first,
                                 const GLsizei *count, GLsizei primcount)
 {
    struct glx_context *gc = __glXGetCurrentContext();
@@ -1060,7 +1075,7 @@ __indirect_glMultiDrawArraysEXT(GLenum mode, const GLint *first,
 
 void
 __indirect_glMultiDrawElementsEXT(GLenum mode, const GLsizei * count,
-                                  GLenum type, const GLvoid ** indices,
+                                  GLenum type, const GLvoid * const * indices,
                                   GLsizei primcount)
 {
    struct glx_context *gc = __glXGetCurrentContext();
@@ -1466,7 +1481,7 @@ __indirect_glTexCoordPointer(GLint size, GLenum type, GLsizei stride,
 
 
 void
-__indirect_glSecondaryColorPointerEXT(GLint size, GLenum type, GLsizei stride,
+__indirect_glSecondaryColorPointer(GLint size, GLenum type, GLsizei stride,
                                       const GLvoid * pointer)
 {
    uint16_t opcode;
@@ -1526,7 +1541,7 @@ __indirect_glSecondaryColorPointerEXT(GLint size, GLenum type, GLsizei stride,
 
 
 void
-__indirect_glFogCoordPointerEXT(GLenum type, GLsizei stride,
+__indirect_glFogCoordPointer(GLenum type, GLsizei stride,
                                 const GLvoid * pointer)
 {
    uint16_t opcode;
@@ -1568,7 +1583,7 @@ __indirect_glFogCoordPointerEXT(GLenum type, GLsizei stride,
 
 
 void
-__indirect_glVertexAttribPointerARB(GLuint index, GLint size,
+__indirect_glVertexAttribPointer(GLuint index, GLint size,
                                     GLenum type, GLboolean normalized,
                                     GLsizei stride, const GLvoid * pointer)
 {
@@ -1705,7 +1720,7 @@ __indirect_glVertexAttribPointerNV(GLuint index, GLint size,
    case GL_SHORT:
    case GL_FLOAT:
    case GL_DOUBLE:
-      __indirect_glVertexAttribPointerARB(index, size, type,
+      __indirect_glVertexAttribPointer(index, size, type,
                                           normalized, stride, pointer);
       return;
    default:
@@ -1716,7 +1731,7 @@ __indirect_glVertexAttribPointerNV(GLuint index, GLint size,
 
 
 void
-__indirect_glClientActiveTextureARB(GLenum texture)
+__indirect_glClientActiveTexture(GLenum texture)
 {
    struct glx_context *const gc = __glXGetCurrentContext();
    __GLXattribute *const state =
@@ -1965,13 +1980,13 @@ __glXPopArrayState(__GLXattribute * state)
                                       stack[i].user_stride, stack[i].data);
          break;
       case GL_SECONDARY_COLOR_ARRAY:
-         __indirect_glSecondaryColorPointerEXT(stack[i].count,
+         __indirect_glSecondaryColorPointer(stack[i].count,
                                                stack[i].data_type,
                                                stack[i].user_stride,
                                                stack[i].data);
          break;
       case GL_FOG_COORDINATE_ARRAY:
-         __indirect_glFogCoordPointerEXT(stack[i].data_type,
+         __indirect_glFogCoordPointer(stack[i].data_type,
                                          stack[i].user_stride, stack[i].data);
          break;
 

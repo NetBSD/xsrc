@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -28,10 +28,11 @@
 /**
  * \brief  polygon offset state
  *
- * \author  Keith Whitwell <keith@tungstengraphics.com>
+ * \author  Keith Whitwell <keithw@vmware.com>
  * \author  Brian Paul
  */
 
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "draw_pipe.h"
@@ -43,6 +44,7 @@ struct offset_stage {
 
    float scale;
    float units;
+   float clamp;
 };
 
 
@@ -88,7 +90,31 @@ static void do_offset_tri( struct draw_stage *stage,
    float dzdx = fabsf(a * inv_det);
    float dzdy = fabsf(b * inv_det);
 
-   float zoffset = offset->units + MAX2(dzdx, dzdy) * offset->scale;
+   float zoffset, mult;
+
+   mult = MAX2(dzdx, dzdy) * offset->scale;
+
+   if (stage->draw->floating_point_depth) {
+      float bias;
+      union fi maxz;
+      maxz.f = MAX3(v0[2], v1[2], v2[2]);
+      /* just do the math directly on shifted number */
+      maxz.ui &= 0xff << 23;
+      maxz.i -= 23 << 23;
+      /* Clamping to zero means mrd will be zero for very small numbers,
+       * but specs do not indicate this should be prevented by clamping
+       * mrd to smallest normal number instead. */
+      maxz.i = MAX2(maxz.i, 0);
+
+      bias = offset->units * maxz.f;
+      zoffset = bias + mult;
+   } else {
+      zoffset = offset->units + mult;
+   }
+
+   if (offset->clamp)
+      zoffset = (offset->clamp < 0.0f) ? MAX2(zoffset, offset->clamp) :
+                                         MIN2(zoffset, offset->clamp);
 
    /*
     * Note: we're applying the offset and clamping per-vertex.
@@ -122,9 +148,54 @@ static void offset_first_tri( struct draw_stage *stage,
 			      struct prim_header *header )
 {
    struct offset_stage *offset = offset_stage(stage);
+   const struct pipe_rasterizer_state *rast = stage->draw->rasterizer;
+   unsigned fill_mode = rast->fill_front;
+   boolean do_offset;
 
-   offset->units = (float) (stage->draw->rasterizer->offset_units * stage->draw->mrd);
-   offset->scale = stage->draw->rasterizer->offset_scale;
+   if (rast->fill_back != rast->fill_front) {
+      /* Need to check for back-facing triangle */
+      boolean ccw = header->det < 0.0f;
+      if (ccw != rast->front_ccw)
+         fill_mode = rast->fill_back;
+   }
+
+   /* Now determine if we need to do offsetting for the point/line/fill mode */
+   switch (fill_mode) {
+   case PIPE_POLYGON_MODE_FILL:
+      do_offset = rast->offset_tri;
+      break;
+   case PIPE_POLYGON_MODE_LINE:
+      do_offset = rast->offset_line;
+      break;
+   case PIPE_POLYGON_MODE_POINT:
+      do_offset = rast->offset_point;
+      break;
+   default:
+      assert(!"invalid fill_mode in offset_first_tri()");
+      do_offset = rast->offset_tri;
+   }
+
+   if (do_offset) {
+      offset->scale = rast->offset_scale;
+      offset->clamp = rast->offset_clamp;
+
+      /*
+       * If depth is floating point, depth bias is calculated with respect
+       * to the primitive's maximum Z value. Retain the original depth bias
+       * value until that stage.
+       */
+      if (stage->draw->floating_point_depth) {
+         offset->units = (float) rast->offset_units;
+      } else {
+         offset->units = (float) (rast->offset_units * stage->draw->mrd);
+      }
+   }
+   else {
+      offset->scale = 0.0f;
+      offset->clamp = 0.0f;
+      offset->units = 0.0f;
+   }
+
 
    stage->tri = offset_tri;
    stage->tri( stage, header );

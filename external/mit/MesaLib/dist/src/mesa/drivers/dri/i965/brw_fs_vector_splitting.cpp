@@ -39,13 +39,12 @@
 
 extern "C" {
 #include "main/core.h"
-#include "intel_context.h"
+#include "brw_context.h"
 }
-#include "../glsl/ir.h"
-#include "../glsl/ir_visitor.h"
-#include "../glsl/ir_print_visitor.h"
-#include "../glsl/ir_rvalue_visitor.h"
-#include "../glsl/glsl_types.h"
+#include "glsl/ir.h"
+#include "glsl/ir_visitor.h"
+#include "glsl/ir_rvalue_visitor.h"
+#include "glsl/glsl_types.h"
 
 static bool debug = false;
 
@@ -56,7 +55,6 @@ public:
    {
       this->var = var;
       this->whole_vector_access = 0;
-      this->declaration = false;
       this->mem_ctx = NULL;
    }
 
@@ -64,8 +62,6 @@ public:
 
    /** Number of times the variable is referenced, including assignments. */
    unsigned whole_vector_access;
-
-   bool declaration; /* If the variable had a decl in the instruction stream */
 
    ir_variable *components[4];
 
@@ -108,13 +104,16 @@ ir_vector_reference_visitor::get_variable_entry(ir_variable *var)
    if (!var->type->is_vector())
       return NULL;
 
-   switch (var->mode) {
+   switch (var->data.mode) {
    case ir_var_uniform:
-   case ir_var_in:
-   case ir_var_out:
-   case ir_var_inout:
+   case ir_var_shader_in:
+   case ir_var_shader_out:
+   case ir_var_system_value:
+   case ir_var_function_in:
+   case ir_var_function_out:
+   case ir_var_function_inout:
       /* Can't split varyings or uniforms.  Function in/outs won't get split
-       * either, so don't care about the ambiguity.
+       * either.
        */
       return NULL;
    case ir_var_auto:
@@ -122,8 +121,7 @@ ir_vector_reference_visitor::get_variable_entry(ir_variable *var)
       break;
    }
 
-   foreach_iter(exec_list_iterator, iter, this->variable_list) {
-      variable_entry *entry = (variable_entry *)iter.get();
+   foreach_in_list(variable_entry, entry, &variable_list) {
       if (entry->var == var)
 	 return entry;
    }
@@ -137,10 +135,8 @@ ir_vector_reference_visitor::get_variable_entry(ir_variable *var)
 ir_visitor_status
 ir_vector_reference_visitor::visit(ir_variable *ir)
 {
-   variable_entry *entry = this->get_variable_entry(ir);
-
-   if (entry)
-      entry->declaration = true;
+   /* Make sure splitting looks at splitting this variable */
+   (void)this->get_variable_entry(ir);
 
    return visit_continue;
 }
@@ -209,12 +205,12 @@ public:
    virtual ir_visitor_status visit_leave(ir_assignment *);
 
    void handle_rvalue(ir_rvalue **rvalue);
-   struct variable_entry *get_splitting_entry(ir_variable *var);
+   variable_entry *get_splitting_entry(ir_variable *var);
 
    exec_list *variable_list;
 };
 
-struct variable_entry *
+variable_entry *
 ir_vector_splitting_visitor::get_splitting_entry(ir_variable *var)
 {
    assert(var);
@@ -222,8 +218,7 @@ ir_vector_splitting_visitor::get_splitting_entry(ir_variable *var)
    if (!var->type->is_vector())
       return NULL;
 
-   foreach_iter(exec_list_iterator, iter, *this->variable_list) {
-      variable_entry *entry = (variable_entry *)iter.get();
+   foreach_in_list(variable_entry, entry, variable_list) {
       if (entry->var == var) {
 	 return entry;
       }
@@ -316,8 +311,8 @@ ir_vector_splitting_visitor::visit_leave(ir_assignment *ir)
 	 elem = 3;
 	 break;
       default:
-	 ir->print();
-	 assert(!"not reached: non-channelwise dereference of LHS.");
+	 ir->fprint(stderr);
+	 unreachable("not reached: non-channelwise dereference of LHS.");
       }
 
       ir->lhs = new(mem_ctx) ir_dereference_variable(lhs->components[elem]);
@@ -341,16 +336,14 @@ brw_do_vector_splitting(exec_list *instructions)
    visit_list_elements(&refs, instructions);
 
    /* Trim out variables we can't split. */
-   foreach_iter(exec_list_iterator, iter, refs.variable_list) {
-      variable_entry *entry = (variable_entry *)iter.get();
-
+   foreach_in_list_safe(variable_entry, entry, &refs.variable_list) {
       if (debug) {
-	 printf("vector %s@%p: decl %d, whole_access %d\n",
-		entry->var->name, (void *) entry->var, entry->declaration,
-		entry->whole_vector_access);
+	 fprintf(stderr, "vector %s@%p: whole_access %d\n",
+                 entry->var->name, (void *) entry->var,
+                 entry->whole_vector_access);
       }
 
-      if (!entry->declaration || entry->whole_vector_access) {
+      if (entry->whole_vector_access) {
 	 entry->remove();
       }
    }
@@ -363,8 +356,7 @@ brw_do_vector_splitting(exec_list *instructions)
    /* Replace the decls of the vectors to be split with their split
     * components.
     */
-   foreach_iter(exec_list_iterator, iter, refs.variable_list) {
-      variable_entry *entry = (variable_entry *)iter.get();
+   foreach_in_list(variable_entry, entry, &refs.variable_list) {
       const struct glsl_type *type;
       type = glsl_type::get_instance(entry->var->type->base_type, 1, 1);
 

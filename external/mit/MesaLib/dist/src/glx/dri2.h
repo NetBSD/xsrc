@@ -33,6 +33,7 @@
 #ifndef _DRI2_H_
 #define _DRI2_H_
 
+#include <xf86drm.h>
 #include <X11/extensions/Xfixes.h>
 #include <X11/extensions/dri2tokens.h>
 
@@ -44,6 +45,8 @@ typedef struct
    unsigned int cpp;
    unsigned int flags;
 } DRI2Buffer;
+
+struct glx_screen;
 
 extern Bool
 DRI2QueryExtension(Display * display, int *eventBase, int *errorBase);
@@ -85,22 +88,20 @@ DRI2CopyRegion(Display * dpy, XID drawable,
                XserverRegion region,
                CARD32 dest, CARD32 src);
 
-extern void
-DRI2SwapBuffers(Display *dpy, XID drawable, CARD64 target_msc, CARD64 divisor,
-		CARD64 remainder, CARD64 *count);
+_X_HIDDEN int
+dri2_query_renderer_integer(struct glx_screen *base, int attribute,
+                            unsigned int *value);
 
-extern Bool
-DRI2GetMSC(Display *dpy, XID drawable, CARD64 *ust, CARD64 *msc, CARD64 *sbc);
+_X_HIDDEN int
+dri2_query_renderer_string(struct glx_screen *base, int attribute,
+                           const char **value);
 
-extern Bool
-DRI2WaitMSC(Display *dpy, XID drawable, CARD64 target_msc, CARD64 divisor,
-	    CARD64 remainder, CARD64 *ust, CARD64 *msc, CARD64 *sbc);
+_X_HIDDEN int
+dri3_query_renderer_integer(struct glx_screen *base, int attribute,
+                            unsigned int *value);
 
-extern Bool
-DRI2WaitSBC(Display *dpy, XID drawable, CARD64 target_sbc, CARD64 *ust,
-	    CARD64 *msc, CARD64 *sbc);
-
-extern void
-DRI2SwapInterval(Display *dpy, XID drawable, int interval);
+_X_HIDDEN int
+dri3_query_renderer_string(struct glx_screen *base, int attribute,
+                           const char **value);
 
 #endif

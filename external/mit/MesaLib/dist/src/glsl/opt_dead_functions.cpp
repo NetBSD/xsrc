@@ -32,6 +32,8 @@
 #include "ir_expression_flattening.h"
 #include "glsl_types.h"
 
+namespace {
+
 class signature_entry : public exec_node
 {
 public:
@@ -62,19 +64,17 @@ public:
 
    signature_entry *get_signature_entry(ir_function_signature *var);
 
-   bool (*predicate)(ir_instruction *ir);
-
    /* List of signature_entry */
    exec_list signature_list;
    void *mem_ctx;
 };
 
+} /* unnamed namespace */
 
 signature_entry *
 ir_dead_functions_visitor::get_signature_entry(ir_function_signature *sig)
 {
-   foreach_iter(exec_list_iterator, iter, this->signature_list) {
-      signature_entry *entry = (signature_entry *)iter.get();
+   foreach_in_list(signature_entry, entry, &this->signature_list) {
       if (entry->signature == sig)
 	 return entry;
    }
@@ -103,7 +103,7 @@ ir_dead_functions_visitor::visit_enter(ir_function_signature *ir)
 ir_visitor_status
 ir_dead_functions_visitor::visit_enter(ir_call *ir)
 {
-   signature_entry *entry = this->get_signature_entry(ir->get_callee());
+   signature_entry *entry = this->get_signature_entry(ir->callee);
 
    entry->used = true;
 
@@ -122,9 +122,7 @@ do_dead_functions(exec_list *instructions)
     * the unused ones, and remove function definitions that have no more
     * signatures.
     */
-    foreach_iter(exec_list_iterator, iter, v.signature_list) {
-      signature_entry *entry = (signature_entry *)iter.get();
-
+    foreach_in_list_safe(signature_entry, entry, &v.signature_list) {
       if (!entry->used) {
 	 entry->signature->remove();
 	 delete entry->signature;
@@ -136,8 +134,7 @@ do_dead_functions(exec_list *instructions)
    /* We don't just do this above when we nuked a signature because of
     * const pointers.
     */
-   foreach_iter(exec_list_iterator, iter, *instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
+   foreach_in_list_safe(ir_instruction, ir, instructions) {
       ir_function *func = ir->as_function();
 
       if (func && func->signatures.is_empty()) {

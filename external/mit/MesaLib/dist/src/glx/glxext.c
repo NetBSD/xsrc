@@ -42,16 +42,14 @@
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
 #ifdef GLX_USE_APPLEGL
-#include "apple_glx.h"
-#include "apple_visual.h"
+#include "apple/apple_glx.h"
+#include "apple/apple_visual.h"
 #endif
 #include "glxextensions.h"
 
-#ifdef USE_XCB
 #include <X11/Xlib-xcb.h>
 #include <xcb/xcb.h>
 #include <xcb/glx.h>
-#endif
 
 
 #ifdef DEBUG
@@ -83,6 +81,7 @@ static /* const */ char *error_list[] = {
    "GLXBadPbuffer",
    "GLXBadCurrentDrawable",
    "GLXBadWindow",
+   "GLXBadProfileARB",
 };
 
 #ifdef GLX_USE_APPLEGL
@@ -133,12 +132,21 @@ __glXWireToEvent(Display *dpy, XEvent *event, xEvent *wire)
    case GLX_BufferSwapComplete:
    {
       GLXBufferSwapComplete *aevent = (GLXBufferSwapComplete *)event;
-      xGLXBufferSwapComplete *awire = (xGLXBufferSwapComplete *)wire;
+      xGLXBufferSwapComplete2 *awire = (xGLXBufferSwapComplete2 *)wire;
+      struct glx_drawable *glxDraw = GetGLXDrawable(dpy, awire->drawable);
+
+      if (!glxDraw)
+	 return False;
+
       aevent->event_type = awire->event_type;
-      aevent->drawable = awire->drawable;
+      aevent->drawable = glxDraw->xDrawable;
       aevent->ust = ((CARD64)awire->ust_hi << 32) | awire->ust_lo;
       aevent->msc = ((CARD64)awire->msc_hi << 32) | awire->msc_lo;
-      aevent->sbc = ((CARD64)awire->sbc_hi << 32) | awire->sbc_lo;
+
+      if (awire->sbc < glxDraw->lastEventSbc)
+	 glxDraw->eventSbcWrap += 0x100000000;
+      glxDraw->lastEventSbc = awire->sbc;
+      aevent->sbc = awire->sbc + glxDraw->eventSbcWrap;
       return True;
    }
    default:
@@ -200,13 +208,13 @@ FreeScreenConfigs(struct glx_display * priv)
       if (psc->driScreen) {
          psc->driScreen->destroyScreen(psc);
       } else {
-	 Xfree(psc);
+	 free(psc);
       }
 #else
-      Xfree(psc);
+      free(psc);
 #endif
    }
-   XFree((char *) priv->screens);
+   free((char *) priv->screens);
    priv->screens = NULL;
 }
 
@@ -222,10 +230,10 @@ glx_display_free(struct glx_display *priv)
    }
 
    FreeScreenConfigs(priv);
-   if (priv->serverGLXvendor)
-      Xfree((char *) priv->serverGLXvendor);
-   if (priv->serverGLXversion)
-      Xfree((char *) priv->serverGLXversion);
+   free((char *) priv->serverGLXvendor);
+   free((char *) priv->serverGLXversion);
+
+   __glxHashDestroy(priv->glXDrawHash);
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    __glxHashDestroy(priv->drawHash);
@@ -235,6 +243,7 @@ glx_display_free(struct glx_display *priv)
       (*priv->driswDisplay->destroyDisplay) (priv->driswDisplay);
    priv->driswDisplay = NULL;
 
+#if defined (GLX_USE_DRM)
    if (priv->driDisplay)
       (*priv->driDisplay->destroyDisplay) (priv->driDisplay);
    priv->driDisplay = NULL;
@@ -242,9 +251,14 @@ glx_display_free(struct glx_display *priv)
    if (priv->dri2Display)
       (*priv->dri2Display->destroyDisplay) (priv->dri2Display);
    priv->dri2Display = NULL;
-#endif
 
-   Xfree((char *) priv);
+   if (priv->dri3Display)
+      (*priv->dri3Display->destroyDisplay) (priv->dri3Display);
+   priv->dri3Display = NULL;
+#endif /* GLX_USE_DRM */
+#endif /* GLX_DIRECT_RENDERING && !GLX_USE_APPLEGL */
+
+   free((char *) priv);
 }
 
 static int
@@ -262,7 +276,8 @@ __glXCloseDisplay(Display * dpy, XExtCodes * codes)
    }
    _XUnlockMutex(_Xglobal_lock);
 
-   glx_display_free(priv);
+   if (priv != NULL)
+      glx_display_free(priv);
 
    return 1;
 }
@@ -274,7 +289,6 @@ __glXCloseDisplay(Display * dpy, XExtCodes * codes)
 static Bool
 QueryVersion(Display * dpy, int opcode, int *major, int *minor)
 {
-#ifdef USE_XCB
    xcb_connection_t *c = XGetXCBConnection(dpy);
    xcb_glx_query_version_reply_t *reply = xcb_glx_query_version_reply(c,
                                                                       xcb_glx_query_version
@@ -282,6 +296,9 @@ QueryVersion(Display * dpy, int opcode, int *major, int *minor)
                                                                        GLX_MAJOR_VERSION,
                                                                        GLX_MINOR_VERSION),
                                                                       NULL);
+
+   if (!reply)
+     return GL_FALSE;
 
    if (reply->major_version != GLX_MAJOR_VERSION) {
       free(reply);
@@ -291,32 +308,6 @@ QueryVersion(Display * dpy, int opcode, int *major, int *minor)
    *minor = min(reply->minor_version, GLX_MINOR_VERSION);
    free(reply);
    return GL_TRUE;
-#else
-   xGLXQueryVersionReq *req;
-   xGLXQueryVersionReply reply;
-
-   /* Send the glXQueryVersion request */
-   LockDisplay(dpy);
-   GetReq(GLXQueryVersion, req);
-   req->reqType = opcode;
-   req->glxCode = X_GLXQueryVersion;
-   req->majorVersion = GLX_MAJOR_VERSION;
-   req->minorVersion = GLX_MINOR_VERSION;
-   _XReply(dpy, (xReply *) & reply, 0, False);
-   UnlockDisplay(dpy);
-   SyncHandle();
-
-   if (reply.majorVersion != GLX_MAJOR_VERSION) {
-      /*
-       ** The server does not support the same major release as this
-       ** client.
-       */
-      return GL_FALSE;
-   }
-   *major = reply.majorVersion;
-   *minor = min(reply.minorVersion, GLX_MINOR_VERSION);
-   return GL_TRUE;
-#endif /* USE_XCB */
 }
 
 /* 
@@ -354,6 +345,7 @@ __glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
                                     Bool fbconfig_style_tags)
 {
    int i;
+   GLint renderType = 0;
 
    if (!tagged_only) {
       /* Copy in the first set of properties */
@@ -390,6 +382,8 @@ __glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
       count -= __GLX_MIN_CONFIG_PROPS;
 #endif
    }
+
+   config->sRGBCapable = GL_FALSE;
 
    /*
     ** Additional properties may be in a list at the end
@@ -486,8 +480,8 @@ __glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
          config->drawableType |= GLX_WINDOW_BIT | GLX_PIXMAP_BIT | GLX_PBUFFER_BIT;              
 #endif
          break;
-      case GLX_RENDER_TYPE:
-         config->renderType = *bp++;
+      case GLX_RENDER_TYPE: /* fbconfig render type bits */
+         renderType = *bp++;
          break;
       case GLX_X_RENDERABLE:
          config->xRenderable = *bp++;
@@ -570,8 +564,27 @@ __glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
       }
    }
 
-   config->renderType =
-      (config->rgbMode) ? GLX_RGBA_BIT : GLX_COLOR_INDEX_BIT;
+   if (renderType != 0 && renderType != GLX_DONT_CARE) {
+      config->renderType = renderType;
+      config->floatMode = (renderType &
+         (GLX_RGBA_FLOAT_BIT_ARB|GLX_RGBA_UNSIGNED_FLOAT_BIT_EXT)) != 0;
+   } else {
+      /* If there wasn't GLX_RENDER_TYPE property, set it based on
+       * config->rgbMode.  The only way to communicate that the config is
+       * floating-point is via GLX_RENDER_TYPE, so this cannot be a float
+       * config.
+       */
+      config->renderType =
+         (config->rgbMode) ? GLX_RGBA_BIT : GLX_COLOR_INDEX_BIT;
+   }
+
+   /* The GLX_ARB_fbconfig_float spec says:
+    *
+    *     "Note that floating point rendering is only supported for
+    *     GLXPbuffer drawables."
+    */
+   if (config->floatMode)
+      config->drawableType &= ~(GLX_WINDOW_BIT|GLX_PIXMAP_BIT);
 }
 
 static struct glx_config *
@@ -601,7 +614,7 @@ createConfigsFromProperties(Display * dpy, int nvisuals, int nprops,
    if (prop_size <= sizeof(buf))
       props = buf;
    else
-      props = Xmalloc(prop_size);
+      props = malloc(prop_size);
 
    /* Read each config structure and convert it into our format */
    m = modes;
@@ -625,7 +638,7 @@ createConfigsFromProperties(Display * dpy, int nvisuals, int nprops,
    }
 
    if (props != buf)
-      Xfree(props);
+      free(props);
 
    return modes;
 }
@@ -670,6 +683,10 @@ static GLboolean
 
    psc->serverGLXexts =
       __glXQueryServerString(dpy, priv->majorOpcode, screen, GLX_EXTENSIONS);
+
+   if (psc->serverGLXexts == NULL) {
+      return GL_FALSE;
+   }
 
    LockDisplay(dpy);
 
@@ -727,15 +744,14 @@ glx_screen_cleanup(struct glx_screen *psc)
 {
    if (psc->configs) {
       glx_config_destroy_list(psc->configs);
-      if (psc->effectiveGLXexts)
-          Xfree(psc->effectiveGLXexts);
+      free(psc->effectiveGLXexts);
       psc->configs = NULL;   /* NOTE: just for paranoia */
    }
    if (psc->visuals) {
       glx_config_destroy_list(psc->visuals);
       psc->visuals = NULL;   /* NOTE: just for paranoia */
    }
-   Xfree((char *) psc->serverGLXexts);
+   free((char *) psc->serverGLXexts);
 }
 
 /*
@@ -752,7 +768,7 @@ AllocAndFetchScreenConfigs(Display * dpy, struct glx_display * priv)
     ** First allocate memory for the array of per screen configs.
     */
    screens = ScreenCount(dpy);
-   priv->screens = Xmalloc(screens * sizeof *priv->screens);
+   priv->screens = malloc(screens * sizeof *priv->screens);
    if (!priv->screens)
       return GL_FALSE;
 
@@ -766,13 +782,20 @@ AllocAndFetchScreenConfigs(Display * dpy, struct glx_display * priv)
    for (i = 0; i < screens; i++, psc++) {
       psc = NULL;
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-      if (priv->dri2Display)
+#if defined(GLX_USE_DRM)
+#if defined(HAVE_DRI3)
+      if (priv->dri3Display)
+         psc = (*priv->dri3Display->createScreen) (i, priv);
+#endif /* HAVE_DRI3 */
+      if (psc == NULL && priv->dri2Display)
 	 psc = (*priv->dri2Display->createScreen) (i, priv);
       if (psc == NULL && priv->driDisplay)
 	 psc = (*priv->driDisplay->createScreen) (i, priv);
+#endif /* GLX_USE_DRM */
       if (psc == NULL && priv->driswDisplay)
 	 psc = (*priv->driswDisplay->createScreen) (i, priv);
-#endif
+#endif /* GLX_DIRECT_RENDERING && !GLX_USE_APPLEGL */
+
 #if defined(GLX_USE_APPLEGL)
       if (psc == NULL)
          psc = applegl_create_screen(i, priv);
@@ -810,14 +833,13 @@ __glXInitialize(Display * dpy)
    /* Drop the lock while we create the display private. */
    _XUnlockMutex(_Xglobal_lock);
 
-   dpyPriv = Xcalloc(1, sizeof *dpyPriv);
+   dpyPriv = calloc(1, sizeof *dpyPriv);
    if (!dpyPriv)
       return NULL;
 
    dpyPriv->codes = XInitExtension(dpy, __glXExtensionName);
    if (!dpyPriv->codes) {
-      Xfree(dpyPriv);
-      _XUnlockMutex(_Xglobal_lock);
+      free(dpyPriv);
       return NULL;
    }
 
@@ -826,11 +848,13 @@ __glXInitialize(Display * dpy)
    dpyPriv->serverGLXvendor = 0x0;
    dpyPriv->serverGLXversion = 0x0;
 
-   /* See if the versions are compatible */
+   /* See if the versions are compatible.  This GLX implementation does not
+    * work with servers that only support GLX 1.0.
+    */
    if (!QueryVersion(dpy, dpyPriv->majorOpcode,
-		     &dpyPriv->majorVersion, &dpyPriv->minorVersion)) {
-      Xfree(dpyPriv);
-      _XUnlockMutex(_Xglobal_lock);
+		     &dpyPriv->majorVersion, &dpyPriv->minorVersion)
+       || (dpyPriv->majorVersion == 1 && dpyPriv->minorVersion < 1)) {
+      free(dpyPriv);
       return NULL;
    }
 
@@ -841,6 +865,8 @@ __glXInitialize(Display * dpy)
 
    XESetCloseDisplay(dpy, dpyPriv->codes->extension, __glXCloseDisplay);
    XESetErrorString (dpy, dpyPriv->codes->extension,__glXErrorString);
+
+   dpyPriv->glXDrawHash = __glxHashCreate();
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    glx_direct = (getenv("LIBGL_ALWAYS_INDIRECT") == NULL);
@@ -853,27 +879,32 @@ __glXInitialize(Display * dpy)
     ** Note: This _must_ be done before calling any other DRI routines
     ** (e.g., those called in AllocAndFetchScreenConfigs).
     */
+#if defined(GLX_USE_DRM)
    if (glx_direct && glx_accel) {
+#if defined(HAVE_DRI3)
+      if (!getenv("LIBGL_DRI3_DISABLE"))
+         dpyPriv->dri3Display = dri3_create_display(dpy);
+#endif /* HAVE_DRI3 */
       dpyPriv->dri2Display = dri2CreateDisplay(dpy);
       dpyPriv->driDisplay = driCreateDisplay(dpy);
    }
+#endif /* GLX_USE_DRM */
    if (glx_direct)
       dpyPriv->driswDisplay = driswCreateDisplay(dpy);
-#endif
+#endif /* GLX_DIRECT_RENDERING && !GLX_USE_APPLEGL */
 
 #ifdef GLX_USE_APPLEGL
    if (!applegl_create_display(dpyPriv)) {
-      Xfree(dpyPriv);
+      free(dpyPriv);
       return NULL;
    }
 #endif
    if (!AllocAndFetchScreenConfigs(dpy, dpyPriv)) {
-      Xfree(dpyPriv);
+      free(dpyPriv);
       return NULL;
    }
 
-   if (dpyPriv->majorVersion == 1 && dpyPriv->minorVersion >= 1)
-      __glXClientInfo(dpy, dpyPriv->majorOpcode);
+   __glX_send_client_info(dpyPriv);
 
    /* Grab the lock again and add the dispay private, unless somebody
     * beat us to initializing on this display in the meantime. */
@@ -890,7 +921,7 @@ __glXInitialize(Display * dpy)
    dpyPriv->next = glx_displays;
    glx_displays = dpyPriv;
 
-    _XUnlockMutex(_Xglobal_lock);
+   _XUnlockMutex(_Xglobal_lock);
 
    return dpyPriv;
 }
@@ -945,29 +976,12 @@ _X_HIDDEN GLubyte *
 __glXFlushRenderBuffer(struct glx_context * ctx, GLubyte * pc)
 {
    Display *const dpy = ctx->currentDpy;
-#ifdef USE_XCB
    xcb_connection_t *c = XGetXCBConnection(dpy);
-#else
-   xGLXRenderReq *req;
-#endif /* USE_XCB */
    const GLint size = pc - ctx->buf;
 
    if ((dpy != NULL) && (size > 0)) {
-#ifdef USE_XCB
       xcb_glx_render(c, ctx->currentContextTag, size,
                      (const uint8_t *) ctx->buf);
-#else
-      /* Send the entire buffer as an X request */
-      LockDisplay(dpy);
-      GetReq(GLXRender, req);
-      req->reqType = ctx->majorOpcode;
-      req->glxCode = X_GLXRender;
-      req->contextTag = ctx->currentContextTag;
-      req->length += (size + 3) >> 2;
-      _XSend(dpy, (char *) ctx->buf, size);
-      UnlockDisplay(dpy);
-      SyncHandle();
-#endif
    }
 
    /* Reset pointer and return it */
@@ -997,32 +1011,9 @@ __glXSendLargeChunk(struct glx_context * gc, GLint requestNumber,
                     GLint totalRequests, const GLvoid * data, GLint dataLen)
 {
    Display *dpy = gc->currentDpy;
-#ifdef USE_XCB
    xcb_connection_t *c = XGetXCBConnection(dpy);
    xcb_glx_render_large(c, gc->currentContextTag, requestNumber,
                         totalRequests, dataLen, data);
-#else
-   xGLXRenderLargeReq *req;
-
-   if (requestNumber == 1) {
-      LockDisplay(dpy);
-   }
-
-   GetReq(GLXRenderLarge, req);
-   req->reqType = gc->majorOpcode;
-   req->glxCode = X_GLXRenderLarge;
-   req->contextTag = gc->currentContextTag;
-   req->length += (dataLen + 3) >> 2;
-   req->requestNumber = requestNumber;
-   req->requestTotal = totalRequests;
-   req->dataBytes = dataLen;
-   Data(dpy, data, dataLen);
-
-   if (requestNumber == totalRequests) {
-      UnlockDisplay(dpy);
-      SyncHandle();
-   }
-#endif /* USE_XCB */
 }
 
 

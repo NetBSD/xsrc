@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  * Copyright 2009 VMware, Inc.  All Rights Reserved.
  * 
@@ -19,7 +19,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -28,18 +28,19 @@
 
  /*
   * Authors:
-  *   Keith Whitwell <keith@tungstengraphics.com>
+  *   Keith Whitwell <keithw@vmware.com>
   *   Brian Paul
   *   Michel Dänzer
   */
 
 #include "main/glheader.h"
+#include "main/accum.h"
 #include "main/formats.h"
 #include "main/macros.h"
+#include "main/glformats.h"
 #include "program/prog_instruction.h"
 #include "st_context.h"
 #include "st_atom.h"
-#include "st_cb_accum.h"
 #include "st_cb_clear.h"
 #include "st_cb_fbo.h"
 #include "st_format.h"
@@ -50,9 +51,11 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "util/u_format.h"
+#include "util/u_framebuffer.h"
 #include "util/u_inlines.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_draw_quad.h"
+#include "util/u_upload_mgr.h"
 
 #include "cso_cache/cso_context.h"
 
@@ -63,12 +66,11 @@
 void
 st_init_clear(struct st_context *st)
 {
-   struct pipe_screen *pscreen = st->pipe->screen;
-
    memset(&st->clear, 0, sizeof(st->clear));
 
-   st->clear.raster.gl_rasterization_rules = 1;
-   st->clear.enable_ds_separate = pscreen->get_param(pscreen, PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE);
+   st->clear.raster.half_pixel_center = 1;
+   st->clear.raster.bottom_edge_rule = 1;
+   st->clear.raster.depth_clip = 1;
 }
 
 
@@ -86,9 +88,13 @@ st_destroy_clear(struct st_context *st)
       cso_delete_vertex_shader(st->cso_context, st->clear.vs);
       st->clear.vs = NULL;
    }
-   if (st->clear.vbuf) {
-      pipe_resource_reference(&st->clear.vbuf, NULL);
-      st->clear.vbuf = NULL;
+   if (st->clear.vs_layered) {
+      cso_delete_vertex_shader(st->cso_context, st->clear.vs_layered);
+      st->clear.vs_layered = NULL;
+   }
+   if (st->clear.gs_layered) {
+      cso_delete_geometry_shader(st->cso_context, st->clear.gs_layered);
+      st->clear.gs_layered = NULL;
    }
 }
 
@@ -100,7 +106,10 @@ static INLINE void
 set_fragment_shader(struct st_context *st)
 {
    if (!st->clear.fs)
-      st->clear.fs = util_make_fragment_passthrough_shader(st->pipe);
+      st->clear.fs =
+         util_make_fragment_passthrough_shader(st->pipe, TGSI_SEMANTIC_GENERIC,
+                                               TGSI_INTERPOLATE_CONSTANT,
+                                               TRUE);
 
    cso_set_fragment_shader_handle(st->cso_context, st->clear.fs);
 }
@@ -118,7 +127,7 @@ set_vertex_shader(struct st_context *st)
    if (!st->clear.vs)
    {
       const uint semantic_names[] = { TGSI_SEMANTIC_POSITION,
-                                      TGSI_SEMANTIC_COLOR };
+                                      TGSI_SEMANTIC_GENERIC };
       const uint semantic_indexes[] = { 0, 0 };
       st->clear.vs = util_make_vertex_passthrough_shader(st->pipe, 2,
                                                          semantic_names,
@@ -126,6 +135,34 @@ set_vertex_shader(struct st_context *st)
    }
 
    cso_set_vertex_shader_handle(st->cso_context, st->clear.vs);
+   cso_set_geometry_shader_handle(st->cso_context, NULL);
+}
+
+
+static void
+set_vertex_shader_layered(struct st_context *st)
+{
+   struct pipe_context *pipe = st->pipe;
+
+   if (!pipe->screen->get_param(pipe->screen, PIPE_CAP_TGSI_INSTANCEID)) {
+      assert(!"Got layered clear, but VS instancing is unsupported");
+      set_vertex_shader(st);
+      return;
+   }
+
+   if (!st->clear.vs_layered) {
+      bool vs_layer =
+         pipe->screen->get_param(pipe->screen, PIPE_CAP_TGSI_VS_LAYER_VIEWPORT);
+      if (vs_layer) {
+         st->clear.vs_layered = util_make_layered_clear_vertex_shader(pipe);
+      } else {
+         st->clear.vs_layered = util_make_layered_clear_helper_vertex_shader(pipe);
+         st->clear.gs_layered = util_make_layered_clear_geometry_shader(pipe);
+      }
+   }
+
+   cso_set_vertex_shader_handle(st->cso_context, st->clear.vs_layered);
+   cso_set_geometry_shader_handle(st->cso_context, st->clear.gs_layered);
 }
 
 
@@ -136,76 +173,55 @@ set_vertex_shader(struct st_context *st)
 static void
 draw_quad(struct st_context *st,
           float x0, float y0, float x1, float y1, GLfloat z,
-          const GLfloat color[4])
+          unsigned num_instances,
+          const union pipe_color_union *color)
 {
-   struct pipe_context *pipe = st->pipe;
-
-   /* XXX: Need to improve buffer_write to allow NO_WAIT (as well as
-    * no_flush) updates to buffers where we know there is no conflict
-    * with previous data.  Currently using max_slots > 1 will cause
-    * synchronous rendering if the driver flushes its command buffers
-    * between one bitmap and the next.  Our flush hook below isn't
-    * sufficient to catch this as the driver doesn't tell us when it
-    * flushes its own command buffers.  Until this gets fixed, pay the
-    * price of allocating a new buffer for each bitmap cache-flush to
-    * avoid synchronous rendering.
-    */
-   const GLuint max_slots = 1; /* 1024 / sizeof(st->clear.vertices); */
+   struct cso_context *cso = st->cso_context;
+   struct pipe_vertex_buffer vb = {0};
    GLuint i;
+   float (*vertices)[2][4];  /**< vertex pos + color */
 
-   if (st->clear.vbuf_slot >= max_slots) {
-      pipe_resource_reference(&st->clear.vbuf, NULL);
-      st->clear.vbuf_slot = 0;
+   vb.stride = 8 * sizeof(float);
+
+   if (u_upload_alloc(st->uploader, 0, 4 * sizeof(vertices[0]),
+                      &vb.buffer_offset, &vb.buffer,
+                      (void **) &vertices) != PIPE_OK) {
+      return;
    }
 
-   if (!st->clear.vbuf) {
-      st->clear.vbuf = pipe_buffer_create(pipe->screen,
-                                          PIPE_BIND_VERTEX_BUFFER,
-                                          PIPE_USAGE_STREAM,
-                                          max_slots * sizeof(st->clear.vertices));
-   }
+   /* Convert Z from [0,1] to [-1,1] range */
+   z = z * 2.0f - 1.0f;
 
    /* positions */
-   st->clear.vertices[0][0][0] = x0;
-   st->clear.vertices[0][0][1] = y0;
+   vertices[0][0][0] = x0;
+   vertices[0][0][1] = y0;
 
-   st->clear.vertices[1][0][0] = x1;
-   st->clear.vertices[1][0][1] = y0;
+   vertices[1][0][0] = x1;
+   vertices[1][0][1] = y0;
 
-   st->clear.vertices[2][0][0] = x1;
-   st->clear.vertices[2][0][1] = y1;
+   vertices[2][0][0] = x1;
+   vertices[2][0][1] = y1;
 
-   st->clear.vertices[3][0][0] = x0;
-   st->clear.vertices[3][0][1] = y1;
+   vertices[3][0][0] = x0;
+   vertices[3][0][1] = y1;
 
    /* same for all verts: */
    for (i = 0; i < 4; i++) {
-      st->clear.vertices[i][0][2] = z;
-      st->clear.vertices[i][0][3] = 1.0;
-      st->clear.vertices[i][1][0] = color[0];
-      st->clear.vertices[i][1][1] = color[1];
-      st->clear.vertices[i][1][2] = color[2];
-      st->clear.vertices[i][1][3] = color[3];
+      vertices[i][0][2] = z;
+      vertices[i][0][3] = 1.0;
+      vertices[i][1][0] = color->f[0];
+      vertices[i][1][1] = color->f[1];
+      vertices[i][1][2] = color->f[2];
+      vertices[i][1][3] = color->f[3];
    }
 
-   /* put vertex data into vbuf */
-   pipe_buffer_write_nooverlap(st->pipe, st->clear.vbuf,
-                                           st->clear.vbuf_slot
-                                             * sizeof(st->clear.vertices),
-                                           sizeof(st->clear.vertices),
-                                           st->clear.vertices);
+   u_upload_unmap(st->uploader);
 
    /* draw */
-   util_draw_vertex_buffer(pipe,
-                           st->cso_context,
-                           st->clear.vbuf, 
-                           st->clear.vbuf_slot * sizeof(st->clear.vertices),
-                           PIPE_PRIM_TRIANGLE_FAN,
-                           4,  /* verts */
-                           2); /* attribs/vert */
-
-   /* Increment slot */
-   st->clear.vbuf_slot++;
+   cso_set_vertex_buffers(cso, cso_get_aux_vertex_buffer_slot(cso), 1, &vb);
+   cso_draw_arrays_instanced(cso, PIPE_PRIM_TRIANGLE_FAN, 0, 4,
+                             0, num_instances);
+   pipe_resource_reference(&vb.buffer, NULL);
 }
 
 
@@ -216,8 +232,7 @@ draw_quad(struct st_context *st,
  * ctx->DrawBuffer->_X/Ymin/max fields.
  */
 static void
-clear_with_quad(struct gl_context *ctx,
-                GLboolean color, GLboolean depth, GLboolean stencil)
+clear_with_quad(struct gl_context *ctx, unsigned clear_buffers)
 {
    struct st_context *st = st_context(ctx);
    const struct gl_framebuffer *fb = ctx->DrawBuffer;
@@ -227,7 +242,8 @@ clear_with_quad(struct gl_context *ctx,
    const GLfloat x1 = (GLfloat) ctx->DrawBuffer->_Xmax / fb_width * 2.0f - 1.0f;
    const GLfloat y0 = (GLfloat) ctx->DrawBuffer->_Ymin / fb_height * 2.0f - 1.0f;
    const GLfloat y1 = (GLfloat) ctx->DrawBuffer->_Ymax / fb_height * 2.0f - 1.0f;
-   float clearColor[4];
+   unsigned num_layers =
+      util_framebuffer_get_num_layers(&st->state.framebuffer);
 
    /*
    printf("%s %s%s%s %f,%f %f,%f\n", __FUNCTION__, 
@@ -242,30 +258,41 @@ clear_with_quad(struct gl_context *ctx,
    cso_save_stencil_ref(st->cso_context);
    cso_save_depth_stencil_alpha(st->cso_context);
    cso_save_rasterizer(st->cso_context);
+   cso_save_sample_mask(st->cso_context);
+   cso_save_min_samples(st->cso_context);
    cso_save_viewport(st->cso_context);
-   cso_save_clip(st->cso_context);
    cso_save_fragment_shader(st->cso_context);
+   cso_save_stream_outputs(st->cso_context);
    cso_save_vertex_shader(st->cso_context);
+   cso_save_geometry_shader(st->cso_context);
    cso_save_vertex_elements(st->cso_context);
-   cso_save_vertex_buffers(st->cso_context);
+   cso_save_aux_vertex_buffer_slot(st->cso_context);
 
    /* blend state: RGBA masking */
    {
       struct pipe_blend_state blend;
       memset(&blend, 0, sizeof(blend));
-      blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-      blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-      blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
-      blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-      if (color) {
-         if (ctx->Color.ColorMask[0][0])
-            blend.rt[0].colormask |= PIPE_MASK_R;
-         if (ctx->Color.ColorMask[0][1])
-            blend.rt[0].colormask |= PIPE_MASK_G;
-         if (ctx->Color.ColorMask[0][2])
-            blend.rt[0].colormask |= PIPE_MASK_B;
-         if (ctx->Color.ColorMask[0][3])
-            blend.rt[0].colormask |= PIPE_MASK_A;
+      if (clear_buffers & PIPE_CLEAR_COLOR) {
+         int num_buffers = ctx->Extensions.EXT_draw_buffers2 ?
+                           ctx->DrawBuffer->_NumColorDrawBuffers : 1;
+         int i;
+
+         blend.independent_blend_enable = num_buffers > 1;
+
+         for (i = 0; i < num_buffers; i++) {
+            if (!(clear_buffers & (PIPE_CLEAR_COLOR0 << i)))
+               continue;
+
+            if (ctx->Color.ColorMask[i][0])
+               blend.rt[i].colormask |= PIPE_MASK_R;
+            if (ctx->Color.ColorMask[i][1])
+               blend.rt[i].colormask |= PIPE_MASK_G;
+            if (ctx->Color.ColorMask[i][2])
+               blend.rt[i].colormask |= PIPE_MASK_B;
+            if (ctx->Color.ColorMask[i][3])
+               blend.rt[i].colormask |= PIPE_MASK_A;
+         }
+
          if (st->ctx->Color.DitherFlag)
             blend.dither = 1;
       }
@@ -276,13 +303,13 @@ clear_with_quad(struct gl_context *ctx,
    {
       struct pipe_depth_stencil_alpha_state depth_stencil;
       memset(&depth_stencil, 0, sizeof(depth_stencil));
-      if (depth) {
+      if (clear_buffers & PIPE_CLEAR_DEPTH) {
          depth_stencil.depth.enabled = 1;
          depth_stencil.depth.writemask = 1;
          depth_stencil.depth.func = PIPE_FUNC_ALWAYS;
       }
 
-      if (stencil) {
+      if (clear_buffers & PIPE_CLEAR_STENCIL) {
          struct pipe_stencil_ref stencil_ref;
          memset(&stencil_ref, 0, sizeof(stencil_ref));
          depth_stencil.stencil[0].enabled = 1;
@@ -300,7 +327,9 @@ clear_with_quad(struct gl_context *ctx,
    }
 
    cso_set_vertex_elements(st->cso_context, 2, st->velems_util_draw);
-
+   cso_set_stream_outputs(st->cso_context, 0, NULL, NULL);
+   cso_set_sample_mask(st->cso_context, ~0);
+   cso_set_min_samples(st->cso_context, 1);
    cso_set_rasterizer(st->cso_context, &st->clear.raster);
 
    /* viewport state: viewport matching window dims */
@@ -309,171 +338,111 @@ clear_with_quad(struct gl_context *ctx,
       struct pipe_viewport_state vp;
       vp.scale[0] = 0.5f * fb_width;
       vp.scale[1] = fb_height * (invert ? -0.5f : 0.5f);
-      vp.scale[2] = 1.0f;
+      vp.scale[2] = 0.5f;
       vp.scale[3] = 1.0f;
       vp.translate[0] = 0.5f * fb_width;
       vp.translate[1] = 0.5f * fb_height;
-      vp.translate[2] = 0.0f;
+      vp.translate[2] = 0.5f;
       vp.translate[3] = 0.0f;
       cso_set_viewport(st->cso_context, &vp);
    }
 
-   cso_set_clip(st->cso_context, &st->clear.clip);
    set_fragment_shader(st);
-   set_vertex_shader(st);
 
-   if (ctx->DrawBuffer->_ColorDrawBuffers[0]) {
-      st_translate_color(ctx->Color.ClearColorUnclamped,
-                         ctx->DrawBuffer->_ColorDrawBuffers[0]->_BaseFormat,
-                         clearColor);
-   }
+   if (num_layers > 1)
+      set_vertex_shader_layered(st);
+   else
+      set_vertex_shader(st);
+
+   /* We can't translate the clear color to the colorbuffer format,
+    * because different colorbuffers may have different formats.
+    */
 
    /* draw quad matching scissor rect */
-   draw_quad(st, x0, y0, x1, y1, (GLfloat) ctx->Depth.Clear, clearColor);
+   draw_quad(st, x0, y0, x1, y1, (GLfloat) ctx->Depth.Clear, num_layers,
+             (union pipe_color_union*)&ctx->Color.ClearColor);
 
    /* Restore pipe state */
    cso_restore_blend(st->cso_context);
    cso_restore_stencil_ref(st->cso_context);
    cso_restore_depth_stencil_alpha(st->cso_context);
    cso_restore_rasterizer(st->cso_context);
+   cso_restore_sample_mask(st->cso_context);
+   cso_restore_min_samples(st->cso_context);
    cso_restore_viewport(st->cso_context);
-   cso_restore_clip(st->cso_context);
    cso_restore_fragment_shader(st->cso_context);
    cso_restore_vertex_shader(st->cso_context);
+   cso_restore_geometry_shader(st->cso_context);
    cso_restore_vertex_elements(st->cso_context);
-   cso_restore_vertex_buffers(st->cso_context);
+   cso_restore_aux_vertex_buffer_slot(st->cso_context);
+   cso_restore_stream_outputs(st->cso_context);
 }
 
 
 /**
- * Determine if we need to clear the depth buffer by drawing a quad.
+ * Return if the scissor must be enabled during the clear.
  */
 static INLINE GLboolean
-check_clear_color_with_quad(struct gl_context *ctx, struct gl_renderbuffer *rb)
+is_scissor_enabled(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
-   if (ctx->Scissor.Enabled &&
-       (ctx->Scissor.X != 0 ||
-        ctx->Scissor.Y != 0 ||
-        ctx->Scissor.Width < rb->Width ||
-        ctx->Scissor.Height < rb->Height))
-      return GL_TRUE;
-
-   if (!ctx->Color.ColorMask[0][0] ||
-       !ctx->Color.ColorMask[0][1] ||
-       !ctx->Color.ColorMask[0][2] ||
-       !ctx->Color.ColorMask[0][3])
-      return GL_TRUE;
-
-   return GL_FALSE;
+   return (ctx->Scissor.EnableFlags & 1) &&
+          (ctx->Scissor.ScissorArray[0].X > 0 ||
+           ctx->Scissor.ScissorArray[0].Y > 0 ||
+           (unsigned) ctx->Scissor.ScissorArray[0].Width < rb->Width ||
+           (unsigned) ctx->Scissor.ScissorArray[0].Height < rb->Height);
 }
 
 
 /**
- * Determine if we need to clear the combiend depth/stencil buffer by
- * drawing a quad.
+ * Return if all of the color channels are masked.
  */
 static INLINE GLboolean
-check_clear_depth_stencil_with_quad(struct gl_context *ctx, struct gl_renderbuffer *rb)
+is_color_disabled(struct gl_context *ctx, int i)
+{
+   return !ctx->Color.ColorMask[i][0] &&
+          !ctx->Color.ColorMask[i][1] &&
+          !ctx->Color.ColorMask[i][2] &&
+          !ctx->Color.ColorMask[i][3];
+}
+
+
+/**
+ * Return if any of the color channels are masked.
+ */
+static INLINE GLboolean
+is_color_masked(struct gl_context *ctx, int i)
+{
+   return !ctx->Color.ColorMask[i][0] ||
+          !ctx->Color.ColorMask[i][1] ||
+          !ctx->Color.ColorMask[i][2] ||
+          !ctx->Color.ColorMask[i][3];
+}
+
+
+/**
+ * Return if all of the stencil bits are masked.
+ */
+static INLINE GLboolean
+is_stencil_disabled(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
    const GLuint stencilMax = 0xff;
-   GLboolean maskStencil
-      = (ctx->Stencil.WriteMask[0] & stencilMax) != stencilMax;
 
-   assert(rb->Format == MESA_FORMAT_S8 ||
-          rb->Format == MESA_FORMAT_Z24_S8 ||
-          rb->Format == MESA_FORMAT_S8_Z24);
-
-   if (ctx->Scissor.Enabled &&
-       (ctx->Scissor.X != 0 ||
-        ctx->Scissor.Y != 0 ||
-        ctx->Scissor.Width < rb->Width ||
-        ctx->Scissor.Height < rb->Height))
-      return GL_TRUE;
-
-   if (maskStencil)
-      return GL_TRUE;
-
-   return GL_FALSE;
+   assert(_mesa_get_format_bits(rb->Format, GL_STENCIL_BITS) > 0);
+   return (ctx->Stencil.WriteMask[0] & stencilMax) == 0;
 }
 
 
 /**
- * Determine if we need to clear the depth buffer by drawing a quad.
+ * Return if any of the stencil bits are masked.
  */
 static INLINE GLboolean
-check_clear_depth_with_quad(struct gl_context *ctx, struct gl_renderbuffer *rb,
-                            boolean ds_separate)
+is_stencil_masked(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
-   const struct st_renderbuffer *strb = st_renderbuffer(rb);
-   const GLboolean isDS = util_format_is_depth_and_stencil(strb->surface->format);
-
-   if (ctx->Scissor.Enabled &&
-       (ctx->Scissor.X != 0 ||
-        ctx->Scissor.Y != 0 ||
-        ctx->Scissor.Width < rb->Width ||
-        ctx->Scissor.Height < rb->Height))
-      return GL_TRUE;
-
-   if (!ds_separate && isDS && ctx->DrawBuffer->Visual.stencilBits > 0)
-      return GL_TRUE;
-
-   return GL_FALSE;
-}
-
-
-/**
- * Determine if we need to clear the stencil buffer by drawing a quad.
- */
-static INLINE GLboolean
-check_clear_stencil_with_quad(struct gl_context *ctx, struct gl_renderbuffer *rb,
-                              boolean ds_separate)
-{
-   const struct st_renderbuffer *strb = st_renderbuffer(rb);
-   const GLboolean isDS = util_format_is_depth_and_stencil(strb->surface->format);
    const GLuint stencilMax = 0xff;
-   const GLboolean maskStencil
-      = (ctx->Stencil.WriteMask[0] & stencilMax) != stencilMax;
 
-   assert(rb->Format == MESA_FORMAT_S8 ||
-          rb->Format == MESA_FORMAT_Z24_S8 ||
-          rb->Format == MESA_FORMAT_S8_Z24);
-
-   if (maskStencil) 
-      return GL_TRUE;
-
-   if (ctx->Scissor.Enabled &&
-       (ctx->Scissor.X != 0 ||
-        ctx->Scissor.Y != 0 ||
-        ctx->Scissor.Width < rb->Width ||
-        ctx->Scissor.Height < rb->Height))
-      return GL_TRUE;
-
-   /* This is correct, but it is necessary to look at the depth clear
-    * value held in the surface when it comes time to issue the clear,
-    * rather than taking depth and stencil clear values from the
-    * current state.
-    */
-   if (!ds_separate && isDS && ctx->DrawBuffer->Visual.depthBits > 0)
-      return GL_TRUE;
-
-   return GL_FALSE;
+   assert(_mesa_get_format_bits(rb->Format, GL_STENCIL_BITS) > 0);
+   return (ctx->Stencil.WriteMask[0] & stencilMax) != stencilMax;
 }
-
-
-
-/**
- * Called when we need to flush.
- */
-void
-st_flush_clear(struct st_context *st)
-{
-   /* Release vertex buffer to avoid synchronous rendering if we were
-    * to map it in the next frame.
-    */
-   pipe_resource_reference(&st->clear.vbuf, NULL);
-   st->clear.vbuf_slot = 0;
-}
- 
 
 
 /**
@@ -482,8 +451,6 @@ st_flush_clear(struct st_context *st)
 static void
 st_Clear(struct gl_context *ctx, GLbitfield mask)
 {
-   static const GLbitfield BUFFER_BITS_DS
-      = (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL);
    struct st_context *st = st_context(ctx);
    struct gl_renderbuffer *depthRb
       = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
@@ -498,99 +465,77 @@ st_Clear(struct gl_context *ctx, GLbitfield mask)
 
    if (mask & BUFFER_BITS_COLOR) {
       for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
-         GLuint b = ctx->DrawBuffer->_ColorDrawBufferIndexes[i];
+         GLint b = ctx->DrawBuffer->_ColorDrawBufferIndexes[i];
 
-         if (mask & (1 << b)) {
+         if (b >= 0 && mask & (1 << b)) {
             struct gl_renderbuffer *rb
                = ctx->DrawBuffer->Attachment[b].Renderbuffer;
             struct st_renderbuffer *strb = st_renderbuffer(rb);
+            int colormask_index = ctx->Extensions.EXT_draw_buffers2 ? i : 0;
 
             if (!strb || !strb->surface)
                continue;
 
-            if (check_clear_color_with_quad( ctx, rb ))
-               quad_buffers |= PIPE_CLEAR_COLOR;
+            if (is_color_disabled(ctx, colormask_index))
+               continue;
+
+            if (is_scissor_enabled(ctx, rb) ||
+                is_color_masked(ctx, colormask_index))
+               quad_buffers |= PIPE_CLEAR_COLOR0 << i;
             else
-               clear_buffers |= PIPE_CLEAR_COLOR;
+               clear_buffers |= PIPE_CLEAR_COLOR0 << i;
          }
       }
    }
 
-   if ((mask & BUFFER_BITS_DS) == BUFFER_BITS_DS && depthRb == stencilRb) {
-      /* clearing combined depth + stencil */
+   if (mask & BUFFER_BIT_DEPTH) {
       struct st_renderbuffer *strb = st_renderbuffer(depthRb);
 
-      if (strb->surface) {
-         if (check_clear_depth_stencil_with_quad(ctx, depthRb))
-            quad_buffers |= PIPE_CLEAR_DEPTHSTENCIL;
+      if (strb->surface && ctx->Depth.Mask) {
+         if (is_scissor_enabled(ctx, depthRb))
+            quad_buffers |= PIPE_CLEAR_DEPTH;
          else
-            clear_buffers |= PIPE_CLEAR_DEPTHSTENCIL;
+            clear_buffers |= PIPE_CLEAR_DEPTH;
       }
    }
-   else {
-      /* separate depth/stencil clears */
-      /* I don't think truly separate buffers are actually possible in gallium or hw? */
-      if (mask & BUFFER_BIT_DEPTH) {
-         struct st_renderbuffer *strb = st_renderbuffer(depthRb);
+   if (mask & BUFFER_BIT_STENCIL) {
+      struct st_renderbuffer *strb = st_renderbuffer(stencilRb);
 
-         if (strb->surface) {
-            if (check_clear_depth_with_quad(ctx, depthRb,
-                                            st->clear.enable_ds_separate))
-               quad_buffers |= PIPE_CLEAR_DEPTH;
-            else
-               clear_buffers |= PIPE_CLEAR_DEPTH;
-         }
-      }
-      if (mask & BUFFER_BIT_STENCIL) {
-         struct st_renderbuffer *strb = st_renderbuffer(stencilRb);
-
-         if (strb->surface) {
-            if (check_clear_stencil_with_quad(ctx, stencilRb,
-                                              st->clear.enable_ds_separate))
-               quad_buffers |= PIPE_CLEAR_STENCIL;
-            else
-               clear_buffers |= PIPE_CLEAR_STENCIL;
-         }
+      if (strb->surface && !is_stencil_disabled(ctx, stencilRb)) {
+         if (is_scissor_enabled(ctx, stencilRb) ||
+             is_stencil_masked(ctx, stencilRb))
+            quad_buffers |= PIPE_CLEAR_STENCIL;
+         else
+            clear_buffers |= PIPE_CLEAR_STENCIL;
       }
    }
 
-   /*
-    * If we're going to use clear_with_quad() for any reason, use it for
-    * everything possible.
+   /* Always clear depth and stencil together.
+    * This can only happen when the stencil writemask is not a full mask.
+    */
+   if (quad_buffers & PIPE_CLEAR_DEPTHSTENCIL &&
+       clear_buffers & PIPE_CLEAR_DEPTHSTENCIL) {
+      quad_buffers |= clear_buffers & PIPE_CLEAR_DEPTHSTENCIL;
+      clear_buffers &= ~PIPE_CLEAR_DEPTHSTENCIL;
+   }
+
+   /* Only use quad-based clearing for the renderbuffers which cannot
+    * use pipe->clear. We want to always use pipe->clear for the other
+    * renderbuffers, because it's likely to be faster.
     */
    if (quad_buffers) {
-      quad_buffers |= clear_buffers;
-      clear_with_quad(ctx,
-                      quad_buffers & PIPE_CLEAR_COLOR,
-                      quad_buffers & PIPE_CLEAR_DEPTH,
-                      quad_buffers & PIPE_CLEAR_STENCIL);
-   } else if (clear_buffers) {
-      /* driver cannot know it can clear everything if the buffer
-       * is a combined depth/stencil buffer but this wasn't actually
-       * required from the visual. Hence fix this up to avoid potential
-       * read-modify-write in the driver.
+      clear_with_quad(ctx, quad_buffers);
+   }
+   if (clear_buffers) {
+      /* We can't translate the clear color to the colorbuffer format,
+       * because different colorbuffers may have different formats.
        */
-      float clearColor[4];
-
-      if ((clear_buffers & PIPE_CLEAR_DEPTHSTENCIL) &&
-          ((clear_buffers & PIPE_CLEAR_DEPTHSTENCIL) != PIPE_CLEAR_DEPTHSTENCIL) &&
-          (depthRb == stencilRb) &&
-          (ctx->DrawBuffer->Visual.depthBits == 0 ||
-           ctx->DrawBuffer->Visual.stencilBits == 0))
-         clear_buffers |= PIPE_CLEAR_DEPTHSTENCIL;
-
-      if (ctx->DrawBuffer->_ColorDrawBuffers[0]) {
-         st_translate_color(ctx->Color.ClearColor,
-                            ctx->DrawBuffer->_ColorDrawBuffers[0]->_BaseFormat,
-                            clearColor);
-      }
-
-      st->pipe->clear(st->pipe, clear_buffers, ctx->Color.ClearColorUnclamped,
+      st->pipe->clear(st->pipe, clear_buffers,
+                      (union pipe_color_union*)&ctx->Color.ClearColor,
                       ctx->Depth.Clear, ctx->Stencil.Clear);
    }
    if (mask & BUFFER_BIT_ACCUM)
-      st_clear_accum_buffer(ctx,
-                            ctx->DrawBuffer->Attachment[BUFFER_ACCUM].Renderbuffer);
+      _mesa_clear_accum_buffer(ctx);
 }
 
 

@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2006 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2006 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -104,43 +104,6 @@ debug_backtrace(void)
 
 #endif
 
-
-
-/* XXX: Thread safety?
- */
-GLubyte *
-intel_region_map(struct intel_context *intel, struct intel_region *region)
-{
-   intel_flush(&intel->ctx);
-
-   _DBG("%s %p\n", __FUNCTION__, region);
-   if (!region->map_refcount++) {
-      if (region->pbo)
-         intel_region_cow(intel, region);
-
-      if (region->tiling != I915_TILING_NONE)
-	 drm_intel_gem_bo_map_gtt(region->buffer);
-      else
-	 drm_intel_bo_map(region->buffer, GL_TRUE);
-      region->map = region->buffer->virtual;
-   }
-
-   return region->map;
-}
-
-void
-intel_region_unmap(struct intel_context *intel, struct intel_region *region)
-{
-   _DBG("%s %p\n", __FUNCTION__, region);
-   if (!--region->map_refcount) {
-      if (region->tiling != I915_TILING_NONE)
-	 drm_intel_gem_bo_unmap_gtt(region->buffer);
-      else
-	 drm_intel_bo_unmap(region->buffer);
-      region->map = NULL;
-   }
-}
-
 static struct intel_region *
 intel_region_alloc_internal(struct intel_screen *screen,
 			    GLuint cpp,
@@ -158,9 +121,8 @@ intel_region_alloc_internal(struct intel_screen *screen,
    region->height = height;
    region->pitch = pitch;
    region->refcount = 1;
-   region->buffer = buffer;
+   region->bo = buffer;
    region->tiling = tiling;
-   region->screen = screen;
 
    _DBG("%s <-- %p\n", __FUNCTION__, region);
    return region;
@@ -170,7 +132,7 @@ struct intel_region *
 intel_region_alloc(struct intel_screen *screen,
 		   uint32_t tiling,
                    GLuint cpp, GLuint width, GLuint height,
-		   GLboolean expect_accelerated_upload)
+		   bool expect_accelerated_upload)
 {
    drm_intel_bo *buffer;
    unsigned long flags = 0;
@@ -187,7 +149,7 @@ intel_region_alloc(struct intel_screen *screen,
       return NULL;
 
    region = intel_region_alloc_internal(screen, cpp, width, height,
-                                        aligned_pitch / cpp, tiling, buffer);
+                                        aligned_pitch, tiling, buffer);
    if (region == NULL) {
       drm_intel_bo_unreference(buffer);
       return NULL;
@@ -196,20 +158,17 @@ intel_region_alloc(struct intel_screen *screen,
    return region;
 }
 
-GLboolean
+bool
 intel_region_flink(struct intel_region *region, uint32_t *name)
 {
    if (region->name == 0) {
-      if (drm_intel_bo_flink(region->buffer, &region->name))
-	 return GL_FALSE;
-      
-      _mesa_HashInsert(region->screen->named_regions,
-		       region->name, region);
+      if (drm_intel_bo_flink(region->bo, &region->name))
+	 return false;
    }
 
    *name = region->name;
 
-   return GL_TRUE;
+   return true;
 }
 
 struct intel_region *
@@ -218,24 +177,10 @@ intel_region_alloc_for_handle(struct intel_screen *screen,
 			      GLuint width, GLuint height, GLuint pitch,
 			      GLuint handle, const char *name)
 {
-   struct intel_region *region, *dummy;
+   struct intel_region *region;
    drm_intel_bo *buffer;
    int ret;
    uint32_t bit_6_swizzle, tiling;
-
-   region = _mesa_HashLookup(screen->named_regions, handle);
-   if (region != NULL) {
-      dummy = NULL;
-      if (region->width != width || region->height != height ||
-	  region->cpp != cpp || region->pitch != pitch) {
-	 fprintf(stderr,
-		 "Region for name %d already exists but is not compatible\n",
-		 handle);
-	 return NULL;
-      }
-      intel_region_reference(&dummy, region);
-      return dummy;
-   }
 
    buffer = intel_bo_gem_create_from_name(screen->bufmgr, name, handle);
    if (buffer == NULL)
@@ -256,7 +201,39 @@ intel_region_alloc_for_handle(struct intel_screen *screen,
    }
 
    region->name = handle;
-   _mesa_HashInsert(screen->named_regions, handle, region);
+
+   return region;
+}
+
+struct intel_region *
+intel_region_alloc_for_fd(struct intel_screen *screen,
+                          GLuint cpp,
+                          GLuint width, GLuint height, GLuint pitch,
+                          GLuint size,
+                          int fd, const char *name)
+{
+   struct intel_region *region;
+   drm_intel_bo *buffer;
+   int ret;
+   uint32_t bit_6_swizzle, tiling;
+
+   buffer = drm_intel_bo_gem_create_from_prime(screen->bufmgr, fd, size);
+   if (buffer == NULL)
+      return NULL;
+   ret = drm_intel_bo_get_tiling(buffer, &tiling, &bit_6_swizzle);
+   if (ret != 0) {
+      fprintf(stderr, "Couldn't get tiling of buffer (%s): %s\n",
+	      name, strerror(-ret));
+      drm_intel_bo_unreference(buffer);
+      return NULL;
+   }
+
+   region = intel_region_alloc_internal(screen, cpp,
+					width, height, pitch, tiling, buffer);
+   if (region == NULL) {
+      drm_intel_bo_unreference(buffer);
+      return NULL;
+   }
 
    return region;
 }
@@ -293,237 +270,84 @@ intel_region_release(struct intel_region **region_handle)
    region->refcount--;
 
    if (region->refcount == 0) {
-      assert(region->map_refcount == 0);
-
-      if (region->pbo)
-	 region->pbo->region = NULL;
-      region->pbo = NULL;
-      drm_intel_bo_unreference(region->buffer);
-
-      if (region->name > 0)
-	 _mesa_HashRemove(region->screen->named_regions, region->name);
+      drm_intel_bo_unreference(region->bo);
 
       free(region);
    }
    *region_handle = NULL;
 }
 
-/*
- * XXX Move this into core Mesa?
+/**
+ * This function computes masks that may be used to select the bits of the X
+ * and Y coordinates that indicate the offset within a tile.  If the region is
+ * untiled, the masks are set to 0.
  */
 void
-_mesa_copy_rect(GLubyte * dst,
-                GLuint cpp,
-                GLuint dst_pitch,
-                GLuint dst_x,
-                GLuint dst_y,
-                GLuint width,
-                GLuint height,
-                const GLubyte * src,
-                GLuint src_pitch, GLuint src_x, GLuint src_y)
+intel_region_get_tile_masks(struct intel_region *region,
+                            uint32_t *mask_x, uint32_t *mask_y,
+                            bool map_stencil_as_y_tiled)
 {
-   GLuint i;
+   int cpp = region->cpp;
+   uint32_t tiling = region->tiling;
 
-   dst_pitch *= cpp;
-   src_pitch *= cpp;
-   dst += dst_x * cpp;
-   src += src_x * cpp;
-   dst += dst_y * dst_pitch;
-   src += src_y * src_pitch;
-   width *= cpp;
+   if (map_stencil_as_y_tiled)
+      tiling = I915_TILING_Y;
 
-   if (width == dst_pitch && width == src_pitch)
-      memcpy(dst, src, height * width);
-   else {
-      for (i = 0; i < height; i++) {
-         memcpy(dst, src, width);
-         dst += dst_pitch;
-         src += src_pitch;
-      }
+   switch (tiling) {
+   default:
+      assert(false);
+   case I915_TILING_NONE:
+      *mask_x = *mask_y = 0;
+      break;
+   case I915_TILING_X:
+      *mask_x = 512 / cpp - 1;
+      *mask_y = 7;
+      break;
+   case I915_TILING_Y:
+      *mask_x = 128 / cpp - 1;
+      *mask_y = 31;
+      break;
    }
 }
 
-
-/* Upload data to a rectangular sub-region.  Lots of choices how to do this:
- *
- * - memcpy by span to current destination
- * - upload data as new buffer and blit
- *
- * Currently always memcpy.
+/**
+ * Compute the offset (in bytes) from the start of the region to the given x
+ * and y coordinate.  For tiled regions, caller must ensure that x and y are
+ * multiples of the tile size.
  */
-void
-intel_region_data(struct intel_context *intel,
-                  struct intel_region *dst,
-                  GLuint dst_offset,
-                  GLuint dstx, GLuint dsty,
-                  const void *src, GLuint src_pitch,
-                  GLuint srcx, GLuint srcy, GLuint width, GLuint height)
+uint32_t
+intel_region_get_aligned_offset(struct intel_region *region, uint32_t x,
+                                uint32_t y, bool map_stencil_as_y_tiled)
 {
-   _DBG("%s\n", __FUNCTION__);
+   int cpp = region->cpp;
+   uint32_t pitch = region->pitch;
+   uint32_t tiling = region->tiling;
 
-   if (intel == NULL)
-      return;
+   if (map_stencil_as_y_tiled) {
+      tiling = I915_TILING_Y;
 
-   if (dst->pbo) {
-      if (dstx == 0 &&
-          dsty == 0 && width == dst->pitch && height == dst->height)
-         intel_region_release_pbo(intel, dst);
-      else
-         intel_region_cow(intel, dst);
+      /* When mapping a W-tiled stencil buffer as Y-tiled, each 64-high W-tile
+       * gets transformed into a 32-high Y-tile.  Accordingly, the pitch of
+       * the resulting region is twice the pitch of the original region, since
+       * each row in the Y-tiled view corresponds to two rows in the actual
+       * W-tiled surface.  So we need to correct the pitch before computing
+       * the offsets.
+       */
+      pitch *= 2;
    }
 
-   intel_prepare_render(intel);
-
-   _mesa_copy_rect(intel_region_map(intel, dst) + dst_offset,
-                   dst->cpp,
-                   dst->pitch,
-                   dstx, dsty, width, height, src, src_pitch, srcx, srcy);
-
-   intel_region_unmap(intel, dst);
-}
-
-/* Copy rectangular sub-regions. Need better logic about when to
- * push buffers into AGP - will currently do so whenever possible.
- */
-GLboolean
-intel_region_copy(struct intel_context *intel,
-                  struct intel_region *dst,
-                  GLuint dst_offset,
-                  GLuint dstx, GLuint dsty,
-                  struct intel_region *src,
-                  GLuint src_offset,
-                  GLuint srcx, GLuint srcy, GLuint width, GLuint height,
-		  GLboolean flip,
-		  GLenum logicop)
-{
-   uint32_t src_pitch = src->pitch;
-
-   _DBG("%s\n", __FUNCTION__);
-
-   if (intel == NULL)
-      return GL_FALSE;
-
-   if (dst->pbo) {
-      if (dstx == 0 &&
-          dsty == 0 && width == dst->pitch && height == dst->height)
-         intel_region_release_pbo(intel, dst);
-      else
-         intel_region_cow(intel, dst);
+   switch (tiling) {
+   default:
+      assert(false);
+   case I915_TILING_NONE:
+      return y * pitch + x * cpp;
+   case I915_TILING_X:
+      assert((x % (512 / cpp)) == 0);
+      assert((y % 8) == 0);
+      return y * pitch + x / (512 / cpp) * 4096;
+   case I915_TILING_Y:
+      assert((x % (128 / cpp)) == 0);
+      assert((y % 32) == 0);
+      return y * pitch + x / (128 / cpp) * 4096;
    }
-
-   assert(src->cpp == dst->cpp);
-
-   if (flip)
-      src_pitch = -src_pitch;
-
-   return intelEmitCopyBlit(intel,
-			    dst->cpp,
-			    src_pitch, src->buffer, src_offset, src->tiling,
-			    dst->pitch, dst->buffer, dst_offset, dst->tiling,
-			    srcx, srcy, dstx, dsty, width, height,
-			    logicop);
-}
-
-/* Attach to a pbo, discarding our data.  Effectively zero-copy upload
- * the pbo's data.
- */
-void
-intel_region_attach_pbo(struct intel_context *intel,
-                        struct intel_region *region,
-                        struct intel_buffer_object *pbo)
-{
-   drm_intel_bo *buffer;
-
-   if (region->pbo == pbo)
-      return;
-
-   _DBG("%s %p %p\n", __FUNCTION__, region, pbo);
-
-   /* If there is already a pbo attached, break the cow tie now.
-    * Don't call intel_region_release_pbo() as that would
-    * unnecessarily allocate a new buffer we would have to immediately
-    * discard.
-    */
-   if (region->pbo) {
-      region->pbo->region = NULL;
-      region->pbo = NULL;
-   }
-
-   if (region->buffer) {
-      drm_intel_bo_unreference(region->buffer);
-      region->buffer = NULL;
-   }
-
-   /* make sure pbo has a buffer of its own */
-   buffer = intel_bufferobj_buffer(intel, pbo, INTEL_WRITE_FULL);
-
-   region->pbo = pbo;
-   region->pbo->region = region;
-   drm_intel_bo_reference(buffer);
-   region->buffer = buffer;
-   region->tiling = I915_TILING_NONE;
-}
-
-
-/* Break the COW tie to the pbo and allocate a new buffer.
- * The pbo gets to keep the data.
- */
-void
-intel_region_release_pbo(struct intel_context *intel,
-                         struct intel_region *region)
-{
-   _DBG("%s %p\n", __FUNCTION__, region);
-   assert(region->buffer == region->pbo->buffer);
-   region->pbo->region = NULL;
-   region->pbo = NULL;
-   drm_intel_bo_unreference(region->buffer);
-   region->buffer = NULL;
-
-   region->buffer = drm_intel_bo_alloc(intel->bufmgr, "region",
-				       region->pitch * region->cpp *
-				       region->height,
-				       64);
-}
-
-/* Break the COW tie to the pbo.  Both the pbo and the region end up
- * with a copy of the data.
- */
-void
-intel_region_cow(struct intel_context *intel, struct intel_region *region)
-{
-   struct intel_buffer_object *pbo = region->pbo;
-   GLboolean ok;
-
-   intel_region_release_pbo(intel, region);
-
-   assert(region->cpp * region->pitch * region->height == pbo->Base.Size);
-
-   _DBG("%s %p (%d bytes)\n", __FUNCTION__, region, (int)pbo->Base.Size);
-
-   /* Now blit from the texture buffer to the new buffer: 
-    */
-
-   intel_prepare_render(intel);
-   ok = intelEmitCopyBlit(intel,
-                          region->cpp,
-                          region->pitch, pbo->buffer, 0, region->tiling,
-                          region->pitch, region->buffer, 0, region->tiling,
-                          0, 0, 0, 0,
-                          region->pitch, region->height,
-                          GL_COPY);
-   assert(ok);
-}
-
-drm_intel_bo *
-intel_region_buffer(struct intel_context *intel,
-                    struct intel_region *region, GLuint flag)
-{
-   if (region->pbo) {
-      if (flag == INTEL_WRITE_PART)
-         intel_region_cow(intel, region);
-      else if (flag == INTEL_WRITE_FULL)
-         intel_region_release_pbo(intel, region);
-   }
-
-   return region->buffer;
 }

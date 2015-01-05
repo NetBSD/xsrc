@@ -1,6 +1,6 @@
 /*
  Copyright (C) Intel Corp.  2006.  All Rights Reserved.
- Intel funded Tungsten Graphics (http://www.tungstengraphics.com) to
+ Intel funded Tungsten Graphics to
  develop this 3D driver.
 
  Permission is hereby granted, free of charge, to any person obtaining
@@ -26,15 +26,81 @@
  **********************************************************************/
  /*
   * Authors:
-  *   Keith Whitwell <keith@tungstengraphics.com>
+  *   Keith Whitwell <keithw@vmware.com>
   */
 
 #include "main/mtypes.h"
-#include "main/texstore.h"
 #include "program/prog_parameter.h"
 
 #include "brw_context.h"
 #include "brw_state.h"
+#include "intel_buffer_objects.h"
+
+/**
+ * Creates a temporary BO containing the pull constant data for the shader
+ * stage, and the SURFACE_STATE struct that points at it.
+ *
+ * Pull constants are GLSL uniforms (and other constant data) beyond what we
+ * could fit as push constants, or that have variable-index array access
+ * (which is easiest to support using pull constants, and avoids filling
+ * register space with mostly-unused data).
+ *
+ * Compare this path to brw_curbe.c for gen4/5 push constants, and
+ * gen6_vs_state.c for gen6+ push constants.
+ */
+void
+brw_upload_pull_constants(struct brw_context *brw,
+                          GLbitfield brw_new_constbuf,
+                          const struct gl_program *prog,
+                          struct brw_stage_state *stage_state,
+                          const struct brw_stage_prog_data *prog_data,
+                          bool dword_pitch)
+{
+   int i;
+   uint32_t surf_index = prog_data->binding_table.pull_constants_start;
+
+   /* Updates the ParamaterValues[i] pointers for all parameters of the
+    * basic type of PROGRAM_STATE_VAR.
+    */
+   _mesa_load_state_parameters(&brw->ctx, prog->Parameters);
+
+   if (!prog_data->nr_pull_params) {
+      if (stage_state->surf_offset[surf_index]) {
+	 stage_state->surf_offset[surf_index] = 0;
+	 brw->state.dirty.brw |= brw_new_constbuf;
+      }
+      return;
+   }
+
+   /* CACHE_NEW_*_PROG | _NEW_PROGRAM_CONSTANTS */
+   uint32_t size = prog_data->nr_pull_params * 4;
+   drm_intel_bo *const_bo = NULL;
+   uint32_t const_offset;
+   gl_constant_value *constants = intel_upload_space(brw, size, 64,
+                                                     &const_bo, &const_offset);
+
+   STATIC_ASSERT(sizeof(gl_constant_value) == sizeof(float));
+
+   for (i = 0; i < prog_data->nr_pull_params; i++) {
+      constants[i] = *prog_data->pull_param[i];
+   }
+
+   if (0) {
+      for (i = 0; i < ALIGN(prog_data->nr_pull_params, 4) / 4; i++) {
+	 const gl_constant_value *row = &constants[i * 4];
+	 fprintf(stderr, "const surface %3d: %4.3f %4.3f %4.3f %4.3f\n",
+                 i, row[0].f, row[1].f, row[2].f, row[3].f);
+      }
+   }
+
+   brw_create_constant_surface(brw, const_bo, const_offset, size,
+                               &stage_state->surf_offset[surf_index],
+                               dword_pitch);
+   drm_intel_bo_unreference(const_bo);
+
+   brw->state.dirty.brw |= brw_new_constbuf;
+}
+
 
 /* Creates a new VS constant buffer reflecting the current VS program's
  * constants, if needed by the VS program.
@@ -43,164 +109,76 @@
  * state atom.
  */
 static void
-prepare_vs_constants(struct brw_context *brw)
+brw_upload_vs_pull_constants(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
-   struct intel_context *intel = &brw->intel;
-   struct brw_vertex_program *vp =
-      (struct brw_vertex_program *) brw->vertex_program;
-   const struct gl_program_parameter_list *params = vp->program.Base.Parameters;
-   const int size = params->NumParameters * 4 * sizeof(GLfloat);
-   int i;
-
-   if (vp->program.IsNVProgram)
-      _mesa_load_tracked_matrices(ctx);
-
-   /* Updates the ParamaterValues[i] pointers for all parameters of the
-    * basic type of PROGRAM_STATE_VAR.
-    */
-   _mesa_load_state_parameters(&brw->intel.ctx, vp->program.Base.Parameters);
+   struct brw_stage_state *stage_state = &brw->vs.base;
 
    /* BRW_NEW_VERTEX_PROGRAM */
-   if (!vp->use_const_buffer) {
-      if (brw->vs.const_bo) {
-	 drm_intel_bo_unreference(brw->vs.const_bo);
-	 brw->vs.const_bo = NULL;
-	 brw->state.dirty.brw |= BRW_NEW_VS_CONSTBUF;
-      }
-      return;
-   }
-
-   /* _NEW_PROGRAM_CONSTANTS */
-   drm_intel_bo_unreference(brw->vs.const_bo);
-   brw->vs.const_bo = drm_intel_bo_alloc(intel->bufmgr, "vp_const_buffer",
-					 size, 64);
-
-   drm_intel_gem_bo_map_gtt(brw->vs.const_bo);
-   for (i = 0; i < params->NumParameters; i++) {
-      memcpy(brw->vs.const_bo->virtual + i * 4 * sizeof(float),
-	     params->ParameterValues[i],
-	     4 * sizeof(float));
-   }
-
-   if (0) {
-      for (i = 0; i < params->NumParameters; i++) {
-	 float *row = (float *)brw->vs.const_bo->virtual + i * 4;
-	 printf("vs const surface %3d: %4.3f %4.3f %4.3f %4.3f\n",
-		i, row[0], row[1], row[2], row[3]);
-      }
-   }
-
-   drm_intel_gem_bo_unmap_gtt(brw->vs.const_bo);
-   brw->state.dirty.brw |= BRW_NEW_VS_CONSTBUF;
-}
-
-const struct brw_tracked_state brw_vs_constants = {
-   .dirty = {
-      .mesa = (_NEW_PROGRAM_CONSTANTS),
-      .brw = (BRW_NEW_VERTEX_PROGRAM),
-      .cache = 0
-   },
-   .prepare = prepare_vs_constants,
-};
-
-/**
- * Update the surface state for a VS constant buffer.
- *
- * Sets brw->vs.surf_bo[surf] and brw->vp->const_buffer.
- */
-static void
-brw_update_vs_constant_surface( struct gl_context *ctx,
-                                GLuint surf)
-{
-   struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = &brw->intel;
    struct brw_vertex_program *vp =
       (struct brw_vertex_program *) brw->vertex_program;
-   const struct gl_program_parameter_list *params = vp->program.Base.Parameters;
 
-   assert(surf == 0);
+   /* CACHE_NEW_VS_PROG */
+   const struct brw_stage_prog_data *prog_data = &brw->vs.prog_data->base.base;
 
-   /* If there's no constant buffer, then no surface BO is needed to point at
-    * it.
-    */
-   if (brw->vs.const_bo == NULL) {
-      brw->vs.surf_offset[surf] = 0;
-      return;
-   }
-
-   if (intel->gen >= 7) {
-      gen7_create_constant_surface(brw, brw->vs.const_bo, params->NumParameters,
-				  &brw->vs.surf_offset[surf]);
-   } else {
-      brw_create_constant_surface(brw, brw->vs.const_bo, params->NumParameters,
-				  &brw->vs.surf_offset[surf]);
-   }
+   /* _NEW_PROGRAM_CONSTANTS */
+   brw_upload_pull_constants(brw, BRW_NEW_VS_CONSTBUF, &vp->program.Base,
+                             stage_state, prog_data, false);
 }
 
+const struct brw_tracked_state brw_vs_pull_constants = {
+   .dirty = {
+      .mesa = (_NEW_PROGRAM_CONSTANTS),
+      .brw = (BRW_NEW_BATCH | BRW_NEW_VERTEX_PROGRAM),
+      .cache = CACHE_NEW_VS_PROG,
+   },
+   .emit = brw_upload_vs_pull_constants,
+};
 
 static void
-prepare_vs_surfaces(struct brw_context *brw)
+brw_upload_vs_ubo_surfaces(struct brw_context *brw)
 {
-   int nr_surfaces = 0;
+   struct gl_context *ctx = &brw->ctx;
+   /* _NEW_PROGRAM */
+   struct gl_shader_program *prog =
+      ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX];
 
-   if (brw->vs.const_bo) {
-      brw_add_validated_bo(brw, brw->vs.const_bo);
-      nr_surfaces = 1;
-   }
-
-   if (brw->vs.nr_surfaces != nr_surfaces) {
-      brw->state.dirty.brw |= BRW_NEW_NR_VS_SURFACES;
-      brw->vs.nr_surfaces = nr_surfaces;
-   }
-}
-
-/**
- * Vertex shader surfaces (constant buffer).
- *
- * This consumes the state updates for the constant buffer needing
- * to be updated, and produces BRW_NEW_NR_VS_SURFACES for the VS unit and
- * CACHE_NEW_SURF_BIND for the binding table upload.
- */
-static void upload_vs_surfaces(struct brw_context *brw)
-{
-   struct gl_context *ctx = &brw->intel.ctx;
-   uint32_t *bind;
-   int i;
-
-   /* BRW_NEW_NR_VS_SURFACES */
-   if (brw->vs.nr_surfaces == 0) {
-      if (brw->vs.bind_bo_offset) {
-	 brw->state.dirty.brw |= BRW_NEW_VS_BINDING_TABLE;
-      }
-      brw->vs.bind_bo_offset = 0;
+   if (!prog)
       return;
-   }
 
-   brw_update_vs_constant_surface(ctx, SURF_INDEX_VERT_CONST_BUFFER);
-
-   /* Might want to calculate nr_surfaces first, to avoid taking up so much
-    * space for the binding table. (once we have vs samplers)
-    */
-   bind = brw_state_batch(brw, sizeof(uint32_t) * BRW_VS_MAX_SURF,
-			  32, &brw->vs.bind_bo_offset);
-
-   for (i = 0; i < BRW_VS_MAX_SURF; i++) {
-      /* BRW_NEW_VS_CONSTBUF */
-      bind[i] = brw->vs.surf_offset[i];
-   }
-
-   brw->state.dirty.brw |= BRW_NEW_VS_BINDING_TABLE;
+   /* CACHE_NEW_VS_PROG */
+   brw_upload_ubo_surfaces(brw, prog->_LinkedShaders[MESA_SHADER_VERTEX],
+			   &brw->vs.base, &brw->vs.prog_data->base.base);
 }
 
-const struct brw_tracked_state brw_vs_surfaces = {
+const struct brw_tracked_state brw_vs_ubo_surfaces = {
    .dirty = {
-      .mesa = 0,
-      .brw = (BRW_NEW_VS_CONSTBUF |
-	      BRW_NEW_NR_VS_SURFACES |
-	      BRW_NEW_BATCH),
-      .cache = 0
+      .mesa = _NEW_PROGRAM,
+      .brw = BRW_NEW_BATCH | BRW_NEW_UNIFORM_BUFFER,
+      .cache = CACHE_NEW_VS_PROG,
    },
-   .prepare = prepare_vs_surfaces,
-   .emit = upload_vs_surfaces,
+   .emit = brw_upload_vs_ubo_surfaces,
+};
+
+static void
+brw_upload_vs_abo_surfaces(struct brw_context *brw)
+{
+   struct gl_context *ctx = &brw->ctx;
+   /* _NEW_PROGRAM */
+   struct gl_shader_program *prog =
+      ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX];
+
+   if (prog) {
+      /* CACHE_NEW_VS_PROG */
+      brw_upload_abo_surfaces(brw, prog, &brw->vs.base,
+                              &brw->vs.prog_data->base.base);
+   }
+}
+
+const struct brw_tracked_state brw_vs_abo_surfaces = {
+   .dirty = {
+      .mesa = _NEW_PROGRAM,
+      .brw = BRW_NEW_BATCH | BRW_NEW_ATOMIC_BUFFER,
+      .cache = CACHE_NEW_VS_PROG,
+   },
+   .emit = brw_upload_vs_abo_surfaces,
 };

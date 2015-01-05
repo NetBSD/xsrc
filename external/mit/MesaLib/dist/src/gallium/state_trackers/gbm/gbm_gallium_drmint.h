@@ -32,14 +32,13 @@
 
 #include "gbmint.h"
 
-#include "common.h"
 #include "common_drm.h"
 
 struct gbm_gallium_drm_device {
    struct gbm_drm_device base;
 
    struct pipe_screen *screen;
-   void *driver;
+   struct pipe_loader_device *dev;
 
    struct pipe_resource *(*lookup_egl_image)(void *data,
                                              void *egl_image);
@@ -64,11 +63,5 @@ gbm_gallium_drm_bo(struct gbm_bo *bo)
 {
    return (struct gbm_gallium_drm_bo *) bo;
 }
-
-struct gbm_device *
-gbm_gallium_drm_device_create(int fd);
-
-int
-gallium_screen_create(struct gbm_gallium_drm_device *gdrm);
 
 #endif

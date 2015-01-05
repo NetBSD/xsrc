@@ -108,6 +108,8 @@
 #include "glsl_types.h"
 #include "ir.h"
 
+namespace {
+
 class lower_discard_visitor : public ir_hierarchical_visitor {
 public:
    lower_discard_visitor()
@@ -120,6 +122,7 @@ public:
    bool progress;
 };
 
+} /* anonymous namespace */
 
 bool
 lower_discard(exec_list *instructions)
@@ -135,8 +138,8 @@ lower_discard(exec_list *instructions)
 static ir_discard *
 find_discard(exec_list &instructions)
 {
-   foreach_list(n, &instructions) {
-      ir_discard *ir = ((ir_instruction *) n)->as_discard();
+   foreach_in_list(ir_instruction, node, &instructions) {
+      ir_discard *ir = node->as_discard();
       if (ir != NULL)
 	 return ir;
    }

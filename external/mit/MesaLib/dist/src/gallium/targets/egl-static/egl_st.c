@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.10
  *
  * Copyright (C) 2011 LunarG Inc.
  *
@@ -54,8 +53,9 @@ dlopen_gl_lib_cb(const char *dir, size_t len, void *callback_data)
    int ret;
 
    if (len) {
+      assert(len <= INT_MAX && "path is insanely long!");
       ret = util_snprintf(path, sizeof(path), "%.*s/%s" UTIL_DL_EXT,
-            len, dir, name);
+            (int)len, dir, name);
    }
    else {
       ret = util_snprintf(path, sizeof(path), "%s" UTIL_DL_EXT, name);
@@ -164,33 +164,4 @@ egl_st_destroy_api(struct st_api *stapi)
 #else
    stapi->destroy(stapi);
 #endif
-}
-
-uint
-egl_st_get_profile_mask(enum st_api_type api)
-{
-   uint mask = 0x0;
-
-   switch (api) {
-   case ST_API_OPENGL:
-#if FEATURE_GL
-      mask |= ST_PROFILE_DEFAULT_MASK;
-#endif
-#if FEATURE_ES1
-      mask |= ST_PROFILE_OPENGL_ES1_MASK;
-#endif
-#if FEATURE_ES2
-      mask |= ST_PROFILE_OPENGL_ES2_MASK;
-#endif
-      break;
-   case ST_API_OPENVG:
-#if FEATURE_VG
-      mask |= ST_PROFILE_DEFAULT_MASK;
-#endif
-      break;
-   default:
-      break;
-   }
-
-   return mask;
 }

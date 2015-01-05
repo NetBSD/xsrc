@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -49,7 +49,7 @@ unsigned i915_debug = 0;
 
 DEBUG_GET_ONCE_FLAGS_OPTION(i915_debug, "I915_DEBUG", debug_options, 0)
 DEBUG_GET_ONCE_BOOL_OPTION(i915_no_tiling, "I915_NO_TILING", FALSE)
-DEBUG_GET_ONCE_BOOL_OPTION(i915_lie, "I915_LIE", FALSE)
+DEBUG_GET_ONCE_BOOL_OPTION(i915_lie, "I915_LIE", TRUE)
 DEBUG_GET_ONCE_BOOL_OPTION(i915_use_blitter, "I915_USE_BLITTER", FALSE)
 
 void i915_debug_init(struct i915_screen *is)
@@ -232,7 +232,7 @@ BITS(
                         ... )
 {
    va_list  args;
-   unsigned himask = ~0UL >> (31 - (hi));
+   unsigned himask = 0xFFFFFFFFUL >> (31 - (hi));
 
    PRINTF(stream, "\t\t ");
 
@@ -913,7 +913,7 @@ i915_dump_batchbuffer( struct i915_winsys_batchbuffer *batch )
       debug_printf( "\n\nBATCH: ???\n");
       return;
    }
-   
+
    debug_printf( "\n\nBATCH: (%d)\n", (int)bytes / 4);
 
    while (!done &&
@@ -922,8 +922,7 @@ i915_dump_batchbuffer( struct i915_winsys_batchbuffer *batch )
       if (!i915_debug_packet( &stream ))
 	 break;
 
-      assert(stream.offset <= bytes &&
-	     stream.offset >= 0);
+      assert(stream.offset <= bytes);
    }
 
    debug_printf( "END-BATCH\n\n\n");

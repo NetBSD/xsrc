@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
  *
  * Copyright (C) 2004-2007  Brian Paul   All Rights Reserved.
  *
@@ -17,9 +16,10 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 
@@ -32,9 +32,12 @@
 #include "main/mtypes.h"
 #include "program/ir_to_mesa.h"
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
 /**
  * Internal functions
  */
@@ -98,8 +101,8 @@ extern void
 _mesa_free_shader_state(struct gl_context *ctx);
 
 
-static INLINE gl_shader_type
-_mesa_shader_type_to_index(GLenum v)
+static inline gl_shader_stage
+_mesa_shader_enum_to_shader_stage(GLenum v)
 {
    switch (v) {
    case GL_VERTEX_SHADER:
@@ -108,25 +111,12 @@ _mesa_shader_type_to_index(GLenum v)
       return MESA_SHADER_FRAGMENT;
    case GL_GEOMETRY_SHADER:
       return MESA_SHADER_GEOMETRY;
+   case GL_COMPUTE_SHADER:
+      return MESA_SHADER_COMPUTE;
    default:
-      ASSERT(0 && "bad value in _mesa_shader_type_to_index()");
-      return MESA_SHADER_TYPES;
+      ASSERT(0 && "bad value in _mesa_shader_enum_to_shader_stage()");
+      return MESA_SHADER_VERTEX;
    }
-}
-
-
-static INLINE GLenum
-_mesa_shader_index_to_type(GLuint i)
-{
-   static const GLenum enums[MESA_SHADER_TYPES] = {
-      GL_VERTEX_SHADER,
-      GL_FRAGMENT_SHADER,
-      GL_GEOMETRY_SHADER ,
-   };
-   if (i >= MESA_SHADER_TYPES)
-      return 0;
-   else
-      return enums[i];
 }
 
 

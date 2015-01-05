@@ -1,7 +1,7 @@
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and
-                     Tungsten Graphics Inc., Cedar Park, Texas.
+                     VMware, Inc.
 
 All Rights Reserved.
 
@@ -29,7 +29,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * Authors:
- *   Keith Whitwell <keith@tungstengraphics.com>
+ *   Keith Whitwell <keithw@vmware.com>
  */
 
 #include "main/glheader.h"
@@ -47,44 +47,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_swtcl.h"
 #include "radeon_maos.h"
 #include "radeon_tcl.h"
-
-static void emit_vecfog(struct gl_context *ctx, struct radeon_aos *aos,
-			GLvoid *data, int stride, int count)
-{
-   int i;
-   uint32_t *out;
-   int size = 1;
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-
-   if (RADEON_DEBUG & RADEON_VERTS)
-      fprintf(stderr, "%s count %d stride %d\n",
-	      __FUNCTION__, count, stride);
-
-   if (stride == 0) {
-      radeonAllocDmaRegion( rmesa, &aos->bo, &aos->offset, size * 4, 32 );
-      count = 1;
-      aos->stride = 0;
-   }
-   else {
-      radeonAllocDmaRegion(rmesa, &aos->bo, &aos->offset, size * 4, 32);
-      aos->stride = size;
-   }
-
-   aos->components = size;
-   aos->count = count;
-
-
-   /* Emit the data
-    */
-   radeon_bo_map(aos->bo, 1);
-   out = (uint32_t*)((char*)aos->bo->ptr + aos->offset);
-   for (i = 0; i < count; i++) {
-      out[0] = radeonComputeFogBlendFactor( ctx, *(GLfloat *)data );
-      out++;
-      data += stride;
-   }
-   radeon_bo_unmap(aos->bo);
-}
 
 static void emit_s0_vec(uint32_t *out, GLvoid *data, int stride, int count)
 {
@@ -117,9 +79,6 @@ static void emit_stq_vec(uint32_t *out, GLvoid *data, int stride, int count)
       data += stride;
    }
 }
-
-
-
 
 static void emit_tex_vector(struct gl_context *ctx, struct radeon_aos *aos,
 			    GLvoid *data, int size, int stride, int count)
@@ -275,11 +234,11 @@ void radeonEmitArrays( struct gl_context *ctx, GLuint inputs )
    are emitted together but for secondary color not. */
    if (inputs & VERT_BIT_FOG) {
       if (!rmesa->tcl.fog.buf)
-	 emit_vecfog( ctx,
-		      &(rmesa->tcl.aos[nr]),
-		      (char *)VB->AttribPtr[_TNL_ATTRIB_FOG]->data,
-		      VB->AttribPtr[_TNL_ATTRIB_FOG]->stride,
-		      count);
+	 rcommon_emit_vecfog( ctx,
+			      &(rmesa->tcl.aos[nr]),
+			      (char *)VB->AttribPtr[_TNL_ATTRIB_FOG]->data,
+			      VB->AttribPtr[_TNL_ATTRIB_FOG]->stride,
+			      count);
 
       vfmt |= RADEON_CP_VC_FRMT_FPFOG;
       nr++;
@@ -310,7 +269,8 @@ void radeonEmitArrays( struct gl_context *ctx, GLuint inputs )
 	 if ( (ctx->Texture.Unit[unit].TexGenEnabled & (R_BIT | Q_BIT)) )
 	    vtx |= RADEON_Q_BIT(unit);
 	 else if ((VB->AttribPtr[_TNL_ATTRIB_TEX0 + unit]->size >= 3) &&
-	          ((ctx->Texture.Unit[unit]._ReallyEnabled & (TEXTURE_CUBE_BIT)) == 0)) {
+	          (!ctx->Texture.Unit[unit]._Current ||
+                   ctx->Texture.Unit[unit]._Current->Target != GL_TEXTURE_CUBE_MAP)) {
 	    GLuint swaptexmatcol = (VB->AttribPtr[_TNL_ATTRIB_TEX0 + unit]->size - 3);
 	    if (((rmesa->NeedTexMatrix >> unit) & 1) &&
 		 (swaptexmatcol != ((rmesa->TexMatColSwap >> unit) & 1)))

@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -46,6 +46,10 @@ clear_flags(struct pipe_rasterizer_state *rast)
 {
    rast->light_twoside = 0;
    rast->offset_tri = 0;
+   rast->offset_line = 0;
+   rast->offset_point = 0;
+   rast->offset_units = 0.0f;
+   rast->offset_scale = 0.0f;
 }
 
 
@@ -108,19 +112,20 @@ llvmpipe_bind_rasterizer_state(struct pipe_context *pipe, void *handle)
       /* XXX: just pass lp_state directly to setup.
        */
       lp_setup_set_triangle_state( llvmpipe->setup,
-				   state->lp_state.cull_face,
-				   state->lp_state.front_ccw,
-				   state->lp_state.scissor,
-				   state->lp_state.gl_rasterization_rules);
+                                  state->lp_state.cull_face,
+                                  state->lp_state.front_ccw,
+                                  state->lp_state.scissor,
+                                  state->lp_state.half_pixel_center,
+                                  state->lp_state.bottom_edge_rule);
       lp_setup_set_flatshade_first( llvmpipe->setup,
 				    state->lp_state.flatshade_first);
       lp_setup_set_line_state( llvmpipe->setup,
-			       state->lp_state.line_width);
+                              state->lp_state.line_width);
       lp_setup_set_point_state( llvmpipe->setup,
-				state->lp_state.point_size,
-				state->lp_state.point_size_per_vertex,
-				state->lp_state.sprite_coord_enable,
-				state->lp_state.sprite_coord_mode);
+                               state->lp_state.point_size,
+                               state->lp_state.point_size_per_vertex,
+                               state->lp_state.sprite_coord_enable,
+                               state->lp_state.sprite_coord_mode);
    }
    else {
       llvmpipe->rasterizer = NULL;

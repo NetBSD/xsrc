@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.6
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  * (C) Copyright IBM Corporation 2006
@@ -19,16 +18,18 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL OR IBM BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
- * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #ifndef ARRAYOBJ_H
 #define ARRAYOBJ_H
 
 #include "glheader.h"
+#include "mtypes.h"
+#include "glformats.h"
 
 struct gl_context;
 
@@ -44,25 +45,67 @@ struct gl_context;
  * Internal functions
  */
 
-extern struct gl_array_object *
-_mesa_new_array_object( struct gl_context *ctx, GLuint name );
+extern struct gl_vertex_array_object *
+_mesa_lookup_vao(struct gl_context *ctx, GLuint id);
+
+extern struct gl_vertex_array_object *
+_mesa_new_vao(struct gl_context *ctx, GLuint name);
 
 extern void
-_mesa_delete_array_object( struct gl_context *ctx, struct gl_array_object *obj );
+_mesa_delete_vao(struct gl_context *ctx, struct gl_vertex_array_object *obj);
 
 extern void
-_mesa_reference_array_object(struct gl_context *ctx,
-                             struct gl_array_object **ptr,
-                             struct gl_array_object *arrayObj);
+_mesa_reference_vao_(struct gl_context *ctx,
+                     struct gl_vertex_array_object **ptr,
+                     struct gl_vertex_array_object *vao);
+
+static inline void
+_mesa_reference_vao(struct gl_context *ctx,
+                    struct gl_vertex_array_object **ptr,
+                    struct gl_vertex_array_object *vao)
+{
+   if (*ptr != vao)
+      _mesa_reference_vao_(ctx, ptr, vao);
+}
+
 
 extern void
-_mesa_initialize_array_object( struct gl_context *ctx,
-                               struct gl_array_object *obj, GLuint name );
+_mesa_initialize_vao(struct gl_context *ctx,
+                     struct gl_vertex_array_object *obj, GLuint name);
 
 
 extern void
-_mesa_update_array_object_max_element(struct gl_context *ctx,
-                                      struct gl_array_object *arrayObj);
+_mesa_update_vao_max_element(struct gl_context *ctx,
+                             struct gl_vertex_array_object *vao);
+
+extern void
+_mesa_update_vao_client_arrays(struct gl_context *ctx,
+                               struct gl_vertex_array_object *vao);
+
+
+/** Returns the bitmask of all enabled arrays in fixed function mode.
+ *
+ *  In fixed function mode only the traditional fixed function arrays
+ *  are available.
+ */
+static inline GLbitfield64
+_mesa_array_object_get_enabled_ff(const struct gl_vertex_array_object *vao)
+{
+   return vao->_Enabled & VERT_BIT_FF_ALL;
+}
+
+/** Returns the bitmask of all enabled arrays in arb/glsl shader mode.
+ *
+ *  In arb/glsl shader mode all the fixed function and the arb/glsl generic
+ *  arrays are available. Only the first generic array takes
+ *  precedence over the legacy position array.
+ */
+static inline GLbitfield64
+_mesa_array_object_get_enabled_arb(const struct gl_vertex_array_object *vao)
+{
+   GLbitfield64 enabled = vao->_Enabled;
+   return enabled & ~(VERT_BIT_POS & (enabled >> VERT_ATTRIB_GENERIC0));
+}
 
 
 /*
@@ -74,12 +117,12 @@ void GLAPIENTRY _mesa_BindVertexArray( GLuint id );
 
 void GLAPIENTRY _mesa_BindVertexArrayAPPLE( GLuint id );
 
-void GLAPIENTRY _mesa_DeleteVertexArraysAPPLE(GLsizei n, const GLuint *ids);
+void GLAPIENTRY _mesa_DeleteVertexArrays(GLsizei n, const GLuint *ids);
 
 void GLAPIENTRY _mesa_GenVertexArrays(GLsizei n, GLuint *arrays);
 
 void GLAPIENTRY _mesa_GenVertexArraysAPPLE(GLsizei n, GLuint *buffer);
 
-GLboolean GLAPIENTRY _mesa_IsVertexArrayAPPLE( GLuint id );
+GLboolean GLAPIENTRY _mesa_IsVertexArray( GLuint id );
 
 #endif /* ARRAYOBJ_H */

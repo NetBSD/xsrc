@@ -33,17 +33,11 @@
  * Client-side GLX interface for current context management.
  */
 
-#ifdef PTHREADS
+#ifdef HAVE_PTHREAD
 #include <pthread.h>
 #endif
 
 #include "glxclient.h"
-#ifdef GLX_USE_APPLEGL
-#include <stdlib.h>
-
-#include "apple_glx.h"
-#include "apple_glx_context.h"
-#endif
 
 #include "glapi.h"
 
@@ -73,7 +67,7 @@ struct glx_context dummyContext = {
  * Current context management and locking
  */
 
-#if defined( PTHREADS )
+#if defined( HAVE_PTHREAD )
 
 _X_HIDDEN pthread_mutex_t __glXmutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -213,32 +207,12 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
    struct glx_context *gc = (struct glx_context *) gc_user;
    struct glx_context *oldGC = __glXGetCurrentContext();
 
-   /* XXX: If this is left out, then libGL ends up not having this
-    * symbol, and drivers using it fail to load.  Compare the
-    * implementation of this symbol to _glapi_noop_enable_warnings(),
-    * though, which gets into the library despite no callers, the same
-    * prototypes, and the same compile flags to the files containing
-    * them.  Moving the definition to glapi_nop.c gets it into the
-    * library, though.
-    */
-   (void)_glthread_GetID();
-
    /* Make sure that the new context has a nonzero ID.  In the request,
     * a zero context ID is used only to mean that we bind to no current
     * context.
     */
    if ((gc != NULL) && (gc->xid == None)) {
       return GL_FALSE;
-   }
-
-   if (gc == NULL && (draw != None || read != None)) {
-      __glXGenerateError(dpy, (draw != None) ? draw : read,
-                         BadMatch, X_GLXMakeContextCurrent);
-      return False;
-   }
-   if (gc != NULL && (draw == None || read == None)) {
-      __glXGenerateError(dpy, None, BadMatch, X_GLXMakeContextCurrent);
-      return False;
    }
 
    _glapi_check_multithread();

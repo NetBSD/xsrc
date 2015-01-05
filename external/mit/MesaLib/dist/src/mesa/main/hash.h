@@ -5,7 +5,6 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -22,9 +21,10 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 
@@ -45,23 +45,34 @@ extern void _mesa_HashInsert(struct _mesa_HashTable *table, GLuint key, void *da
 
 extern void _mesa_HashRemove(struct _mesa_HashTable *table, GLuint key);
 
+extern void _mesa_HashLockMutex(struct _mesa_HashTable *table);
+
+extern void _mesa_HashUnlockMutex(struct _mesa_HashTable *table);
+
+extern void *_mesa_HashLookupLocked(struct _mesa_HashTable *table, GLuint key);
+
+extern void _mesa_HashInsertLocked(struct _mesa_HashTable *table,
+                                   GLuint key, void *data);
+
 extern void
 _mesa_HashDeleteAll(struct _mesa_HashTable *table,
                     void (*callback)(GLuint key, void *data, void *userData),
                     void *userData);
+
+extern struct _mesa_HashTable *
+_mesa_HashClone(const struct _mesa_HashTable *table);
 
 extern void
 _mesa_HashWalk(const struct _mesa_HashTable *table,
                void (*callback)(GLuint key, void *data, void *userData),
                void *userData);
 
-extern GLuint _mesa_HashFirstEntry(struct _mesa_HashTable *table);
-
-extern GLuint _mesa_HashNextEntry(const struct _mesa_HashTable *table, GLuint key);
-
 extern void _mesa_HashPrint(const struct _mesa_HashTable *table);
 
 extern GLuint _mesa_HashFindFreeKeyBlock(struct _mesa_HashTable *table, GLuint numKeys);
+
+extern GLuint
+_mesa_HashNumEntries(const struct _mesa_HashTable *table);
 
 extern void _mesa_test_hash_functions(void);
 

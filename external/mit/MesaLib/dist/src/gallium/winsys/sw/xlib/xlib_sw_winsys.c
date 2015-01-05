@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Bismarck, ND., USA
+ * Copyright 2007 VMware, Inc., Bismarck, ND., USA
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -39,7 +39,8 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
-#include "state_tracker/xlib_sw_winsys.h"
+#include "state_tracker/xlibsw_api.h"
+#include "xlib_sw_winsys.h"
 
 #include <X11/Xlib.h>
 #include <X11/Xlibint.h>
@@ -165,6 +166,7 @@ alloc_shm_ximage(struct xlib_displaytarget *xlib_dt,
                                       &xlib_dt->shminfo,
                                       width, height);
    if (xlib_dt->tempImage == NULL) {
+      shmctl(xlib_dt->shminfo.shmid, IPC_RMID, 0);
       xlib_dt->shm = False;
       return;
    }
@@ -175,6 +177,11 @@ alloc_shm_ximage(struct xlib_displaytarget *xlib_dt,
    /* This may trigger the X protocol error we're ready to catch: */
    XShmAttach(xlib_dt->display, &xlib_dt->shminfo);
    XSync(xlib_dt->display, False);
+
+   /* Mark the segment to be destroyed, so that it is automatically destroyed
+    * when this process dies.  Needs to be after XShmAttach() for *BSD.
+    */
+   shmctl(xlib_dt->shminfo.shmid, IPC_RMID, 0);
 
    if (XErrorFlag) {
       /* we are on a remote display, this error is normal, don't print it */
@@ -370,7 +377,8 @@ xlib_sw_display(struct xlib_drawable *xlib_drawable,
 static void
 xlib_displaytarget_display(struct sw_winsys *ws,
                            struct sw_displaytarget *dt,
-                           void *context_private)
+                           void *context_private,
+                           struct pipe_box *box)
 {
    struct xlib_drawable *xlib_drawable = (struct xlib_drawable *)context_private;
    xlib_sw_display(xlib_drawable, dt);

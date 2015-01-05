@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.1
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -17,15 +16,17 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keith@tungstengraphics.com>
+ *    Keith Whitwell <keithw@vmware.com>
  */
 
 #include "main/glheader.h"
+#include "main/bufferobj.h"
 #include "main/condrender.h"
 #include "main/context.h"
 #include "main/imports.h"
@@ -140,7 +141,8 @@ convert_fixed_to_float(const struct gl_client_array *input,
                        const GLubyte *ptr, GLfloat *fptr,
                        GLuint count)
 {
-   GLuint i, j;
+   GLuint i;
+   GLint j;
    const GLint size = input->Size;
 
    if (input->Normalized) {
@@ -277,18 +279,18 @@ static void bind_inputs( struct gl_context *ctx,
       const void *ptr;
 
       if (inputs[i]->BufferObj->Name) { 
-	 if (!inputs[i]->BufferObj->Pointer) {
+	 if (!inputs[i]->BufferObj->Mappings[MAP_INTERNAL].Pointer) {
 	    bo[*nr_bo] = inputs[i]->BufferObj;
 	    (*nr_bo)++;
-	    ctx->Driver.MapBuffer(ctx, 
-				  GL_ARRAY_BUFFER,
-				  GL_READ_ONLY_ARB,
-				  inputs[i]->BufferObj);
+	    ctx->Driver.MapBufferRange(ctx, 0, inputs[i]->BufferObj->Size,
+				       GL_MAP_READ_BIT,
+				       inputs[i]->BufferObj,
+                                       MAP_INTERNAL);
 	    
-	    assert(inputs[i]->BufferObj->Pointer);
+	    assert(inputs[i]->BufferObj->Mappings[MAP_INTERNAL].Pointer);
 	 }
 	 
-	 ptr = ADD_POINTERS(inputs[i]->BufferObj->Pointer,
+	 ptr = ADD_POINTERS(inputs[i]->BufferObj->Mappings[MAP_INTERNAL].Pointer,
 			    inputs[i]->Ptr);
       }
       else
@@ -340,25 +342,27 @@ static void bind_indices( struct gl_context *ctx,
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    GLuint i;
-   void *ptr;
+   const void *ptr;
 
    if (!ib) {
       VB->Elts = NULL;
       return;
    }
 
-   if (ib->obj->Name && !ib->obj->Pointer) {
+   if (_mesa_is_bufferobj(ib->obj) &&
+       !_mesa_bufferobj_mapped(ib->obj, MAP_INTERNAL)) {
+      /* if the buffer object isn't mapped yet, map it now */
       bo[*nr_bo] = ib->obj;
       (*nr_bo)++;
-      ctx->Driver.MapBuffer(ctx, 
-			    GL_ELEMENT_ARRAY_BUFFER,
-			    GL_READ_ONLY_ARB,
-			    ib->obj);
-
-      assert(ib->obj->Pointer);
+      ptr = ctx->Driver.MapBufferRange(ctx, (GLsizeiptr) ib->ptr,
+                                       ib->count * vbo_sizeof_ib_type(ib->type),
+				       GL_MAP_READ_BIT, ib->obj,
+                                       MAP_INTERNAL);
+      assert(ib->obj->Mappings[MAP_INTERNAL].Pointer);
+   } else {
+      /* user-space elements, or buffer already mapped */
+      ptr = ADD_POINTERS(ib->obj->Mappings[MAP_INTERNAL].Pointer, ib->ptr);
    }
-
-   ptr = ADD_POINTERS(ib->obj->Pointer, ib->ptr);
 
    if (ib->type == GL_UNSIGNED_INT && VB->Primitive[0].basevertex == 0) {
       VB->Elts = (GLuint *) ptr;
@@ -402,45 +406,34 @@ static void unmap_vbos( struct gl_context *ctx,
 {
    GLuint i;
    for (i = 0; i < nr_bo; i++) { 
-      ctx->Driver.UnmapBuffer(ctx, 
-			      0, /* target -- I don't see why this would be needed */
-			      bo[i]);
+      ctx->Driver.UnmapBuffer(ctx, bo[i], MAP_INTERNAL);
    }
 }
 
-
-void _tnl_vbo_draw_prims(struct gl_context *ctx,
-			 const struct gl_client_array *arrays[],
-			 const struct _mesa_prim *prim,
-			 GLuint nr_prims,
-			 const struct _mesa_index_buffer *ib,
-			 GLboolean index_bounds_valid,
-			 GLuint min_index,
-			 GLuint max_index)
-{
-   if (!index_bounds_valid)
-      vbo_get_minmax_index(ctx, prim, ib, &min_index, &max_index);
-
-   _tnl_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
-}
 
 /* This is the main entrypoint into the slimmed-down software tnl
  * module.  In a regular swtnl driver, this can be plugged straight
  * into the vbo->Driver.DrawPrims() callback.
  */
-void _tnl_draw_prims( struct gl_context *ctx,
-		      const struct gl_client_array *arrays[],
-		      const struct _mesa_prim *prim,
-		      GLuint nr_prims,
-		      const struct _mesa_index_buffer *ib,
-		      GLuint min_index,
-		      GLuint max_index)
+void _tnl_draw_prims(struct gl_context *ctx,
+			 const struct _mesa_prim *prim,
+			 GLuint nr_prims,
+			 const struct _mesa_index_buffer *ib,
+			 GLboolean index_bounds_valid,
+			 GLuint min_index,
+			 GLuint max_index,
+			 struct gl_transform_feedback_object *tfb_vertcount,
+			 struct gl_buffer_object *indirect)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
+   const struct gl_client_array **arrays = ctx->Array._DrawArrays;
    const GLuint TEST_SPLIT = 0;
    const GLint max = TEST_SPLIT ? 8 : tnl->vb.Size - MAX_CLIPPED_VERTICES;
    GLint max_basevertex = prim->basevertex;
    GLuint i;
+
+   if (!index_bounds_valid)
+      vbo_get_minmax_indices(ctx, prim, ib, &min_index, &max_index, nr_prims);
 
    /* Mesa core state should have been validated already */
    assert(ctx->NewState == 0x0);
@@ -466,7 +459,7 @@ void _tnl_draw_prims( struct gl_context *ctx,
        */
       vbo_rebase_prims( ctx, arrays, prim, nr_prims, ib, 
 			min_index, max_index,
-			_tnl_vbo_draw_prims );
+			_tnl_draw_prims );
       return;
    }
    else if ((GLint)max_index + max_basevertex > max) {
@@ -484,7 +477,7 @@ void _tnl_draw_prims( struct gl_context *ctx,
        */
       vbo_split_prims( ctx, arrays, prim, nr_prims, ib, 
 		       0, max_index + prim->basevertex,
-		       _tnl_vbo_draw_prims,
+		       _tnl_draw_prims,
 		       &limits );
    }
    else {

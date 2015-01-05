@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -29,8 +29,8 @@
  * \file
  * Vertex buffer drawing stage.
  * 
- * \author Keith Whitwell <keith@tungstengraphics.com>
- * \author Jose Fonseca <jrfonsec@tungstengraphics.com>
+ * \author Keith Whitwell <keithw@vmware.com>
+ * \author Jose Fonseca <jfonseca@vmware.com>
  */
 
 #ifndef DRAW_VBUF_H_
@@ -43,6 +43,7 @@
 struct pipe_rasterizer_state;
 struct draw_context;
 struct vertex_info;
+struct pipe_query_data_pipeline_statistics;
 
 
 /**
@@ -95,7 +96,7 @@ struct vbuf_render {
     * the discretion of the driver, for the benefit of the passthrough
     * path.
     */
-   boolean (*set_primitive)( struct vbuf_render *, unsigned prim );
+   void (*set_primitive)( struct vbuf_render *, unsigned prim );
 
    /**
     * Draw indexed primitives.  Note that indices are ushort.  The driver
@@ -124,7 +125,14 @@ struct vbuf_render {
     */
    void (*set_stream_output_info)( struct vbuf_render *vbufr,
                                    unsigned primitive_count,
-                                   unsigned vertices_count );
+                                   unsigned primitive_generated );
+
+   /**
+    * Called after all relevant statistics have been accumulated.
+    */
+   void (*pipeline_statistics)(
+      struct vbuf_render *vbufr,
+      const struct pipe_query_data_pipeline_statistics *stats );
 };
 
 

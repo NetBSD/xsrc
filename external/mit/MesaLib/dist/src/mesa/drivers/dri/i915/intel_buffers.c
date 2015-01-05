@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -28,37 +28,11 @@
 #include "intel_context.h"
 #include "intel_buffers.h"
 #include "intel_fbo.h"
+#include "intel_mipmap_tree.h"
 
+#include "main/fbobject.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
-
-/**
- * Return pointer to current color drawing region, or NULL.
- */
-struct intel_region *
-intel_drawbuf_region(struct intel_context *intel)
-{
-   struct intel_renderbuffer *irbColor =
-      intel_renderbuffer(intel->ctx.DrawBuffer->_ColorDrawBuffers[0]);
-   if (irbColor)
-      return irbColor->region;
-   else
-      return NULL;
-}
-
-/**
- * Return pointer to current color reading region, or NULL.
- */
-struct intel_region *
-intel_readbuf_region(struct intel_context *intel)
-{
-   struct intel_renderbuffer *irb
-      = intel_renderbuffer(intel->ctx.ReadBuffer->_ColorReadBuffer);
-   if (irb)
-      return irb->region;
-   else
-      return NULL;
-}
 
 /**
  * Check if we're about to draw into the front color buffer.
@@ -68,11 +42,11 @@ void
 intel_check_front_buffer_rendering(struct intel_context *intel)
 {
    const struct gl_framebuffer *fb = intel->ctx.DrawBuffer;
-   if (fb->Name == 0) {
+   if (_mesa_is_winsys_fbo(fb)) {
       /* drawing to window system buffer */
       if (fb->_NumColorDrawBuffers > 0) {
          if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
-	    intel->front_buffer_dirty = GL_TRUE;
+	    intel->front_buffer_dirty = true;
 	 }
       }
    }
@@ -81,13 +55,13 @@ intel_check_front_buffer_rendering(struct intel_context *intel)
 static void
 intelDrawBuffer(struct gl_context * ctx, GLenum mode)
 {
-   if ((ctx->DrawBuffer != NULL) && (ctx->DrawBuffer->Name == 0)) {
+   if (ctx->DrawBuffer && _mesa_is_winsys_fbo(ctx->DrawBuffer)) {
       struct intel_context *const intel = intel_context(ctx);
-      const GLboolean was_front_buffer_rendering =
+      const bool was_front_buffer_rendering =
 	intel->is_front_buffer_rendering;
 
       intel->is_front_buffer_rendering = (mode == GL_FRONT_LEFT)
-	|| (mode == GL_FRONT);
+	|| (mode == GL_FRONT) || (mode == GL_FRONT_AND_BACK);
 
       /* If we weren't front-buffer rendering before but we are now,
        * invalidate our DRI drawable so we'll ask for new buffers
@@ -97,16 +71,16 @@ intelDrawBuffer(struct gl_context * ctx, GLenum mode)
 	 dri2InvalidateDrawable(intel->driContext->driDrawablePriv);
    }
 
-   intel_draw_buffer(ctx, ctx->DrawBuffer);
+   intel_draw_buffer(ctx);
 }
 
 
 static void
 intelReadBuffer(struct gl_context * ctx, GLenum mode)
 {
-   if ((ctx->DrawBuffer != NULL) && (ctx->DrawBuffer->Name == 0)) {
+   if (ctx->ReadBuffer && _mesa_is_winsys_fbo(ctx->ReadBuffer)) {
       struct intel_context *const intel = intel_context(ctx);
-      const GLboolean was_front_buffer_reading =
+      const bool was_front_buffer_reading =
 	intel->is_front_buffer_reading;
 
       intel->is_front_buffer_reading = (mode == GL_FRONT_LEFT)

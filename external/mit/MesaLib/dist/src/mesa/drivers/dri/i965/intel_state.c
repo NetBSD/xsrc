@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ *
+ * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,19 +10,19 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 
@@ -34,32 +34,43 @@
 #include "main/dd.h"
 
 #include "intel_screen.h"
-#include "intel_context.h"
+#include "brw_context.h"
+#include "brw_defines.h"
 
 int
 intel_translate_shadow_compare_func(GLenum func)
 {
+   /* GL specifies the result of shadow comparisons as:
+    *     1     if   ref <op> texel,
+    *     0     otherwise.
+    *
+    * The hardware does:
+    *     0     if texel <op> ref,
+    *     1     otherwise.
+    *
+    * So, these look a bit strange because there's both a negation
+    * and swapping of the arguments involved.
+    */
    switch (func) {
-   case GL_NEVER: 
-       return COMPAREFUNC_ALWAYS;
-   case GL_LESS: 
-       return COMPAREFUNC_LEQUAL;
-   case GL_LEQUAL: 
-       return COMPAREFUNC_LESS;
-   case GL_GREATER: 
-       return COMPAREFUNC_GEQUAL;
-   case GL_GEQUAL: 
-      return COMPAREFUNC_GREATER;
-   case GL_NOTEQUAL: 
-      return COMPAREFUNC_EQUAL;
-   case GL_EQUAL: 
-      return COMPAREFUNC_NOTEQUAL;
-   case GL_ALWAYS: 
-       return COMPAREFUNC_NEVER;
+   case GL_NEVER:
+      return BRW_COMPAREFUNCTION_ALWAYS;
+   case GL_LESS:
+      return BRW_COMPAREFUNCTION_LEQUAL;
+   case GL_LEQUAL:
+      return BRW_COMPAREFUNCTION_LESS;
+   case GL_GREATER:
+      return BRW_COMPAREFUNCTION_GEQUAL;
+   case GL_GEQUAL:
+      return BRW_COMPAREFUNCTION_GREATER;
+   case GL_NOTEQUAL:
+      return BRW_COMPAREFUNCTION_EQUAL;
+   case GL_EQUAL:
+      return BRW_COMPAREFUNCTION_NOTEQUAL;
+   case GL_ALWAYS:
+      return BRW_COMPAREFUNCTION_NEVER;
    }
 
-   fprintf(stderr, "Unknown value in %s: %x\n", __FUNCTION__, func);
-   return COMPAREFUNC_NEVER;
+   unreachable("Invalid shadow comparison function.");
 }
 
 int
@@ -67,25 +78,24 @@ intel_translate_compare_func(GLenum func)
 {
    switch (func) {
    case GL_NEVER:
-      return COMPAREFUNC_NEVER;
+      return BRW_COMPAREFUNCTION_NEVER;
    case GL_LESS:
-      return COMPAREFUNC_LESS;
+      return BRW_COMPAREFUNCTION_LESS;
    case GL_LEQUAL:
-      return COMPAREFUNC_LEQUAL;
+      return BRW_COMPAREFUNCTION_LEQUAL;
    case GL_GREATER:
-      return COMPAREFUNC_GREATER;
+      return BRW_COMPAREFUNCTION_GREATER;
    case GL_GEQUAL:
-      return COMPAREFUNC_GEQUAL;
+      return BRW_COMPAREFUNCTION_GEQUAL;
    case GL_NOTEQUAL:
-      return COMPAREFUNC_NOTEQUAL;
+      return BRW_COMPAREFUNCTION_NOTEQUAL;
    case GL_EQUAL:
-      return COMPAREFUNC_EQUAL;
+      return BRW_COMPAREFUNCTION_EQUAL;
    case GL_ALWAYS:
-      return COMPAREFUNC_ALWAYS;
+      return BRW_COMPAREFUNCTION_ALWAYS;
    }
 
-   fprintf(stderr, "Unknown value in %s: %x\n", __FUNCTION__, func);
-   return COMPAREFUNC_ALWAYS;
+   unreachable("Invalid comparison function.");
 }
 
 int
@@ -93,64 +103,24 @@ intel_translate_stencil_op(GLenum op)
 {
    switch (op) {
    case GL_KEEP:
-      return STENCILOP_KEEP;
+      return BRW_STENCILOP_KEEP;
    case GL_ZERO:
-      return STENCILOP_ZERO;
+      return BRW_STENCILOP_ZERO;
    case GL_REPLACE:
-      return STENCILOP_REPLACE;
+      return BRW_STENCILOP_REPLACE;
    case GL_INCR:
-      return STENCILOP_INCRSAT;
+      return BRW_STENCILOP_INCRSAT;
    case GL_DECR:
-      return STENCILOP_DECRSAT;
+      return BRW_STENCILOP_DECRSAT;
    case GL_INCR_WRAP:
-      return STENCILOP_INCR;
+      return BRW_STENCILOP_INCR;
    case GL_DECR_WRAP:
-      return STENCILOP_DECR;
+      return BRW_STENCILOP_DECR;
    case GL_INVERT:
-      return STENCILOP_INVERT;
+      return BRW_STENCILOP_INVERT;
    default:
-      return STENCILOP_ZERO;
+      return BRW_STENCILOP_ZERO;
    }
-}
-
-int
-intel_translate_blend_factor(GLenum factor)
-{
-   switch (factor) {
-   case GL_ZERO:
-      return BLENDFACT_ZERO;
-   case GL_SRC_ALPHA:
-      return BLENDFACT_SRC_ALPHA;
-   case GL_ONE:
-      return BLENDFACT_ONE;
-   case GL_SRC_COLOR:
-      return BLENDFACT_SRC_COLR;
-   case GL_ONE_MINUS_SRC_COLOR:
-      return BLENDFACT_INV_SRC_COLR;
-   case GL_DST_COLOR:
-      return BLENDFACT_DST_COLR;
-   case GL_ONE_MINUS_DST_COLOR:
-      return BLENDFACT_INV_DST_COLR;
-   case GL_ONE_MINUS_SRC_ALPHA:
-      return BLENDFACT_INV_SRC_ALPHA;
-   case GL_DST_ALPHA:
-      return BLENDFACT_DST_ALPHA;
-   case GL_ONE_MINUS_DST_ALPHA:
-      return BLENDFACT_INV_DST_ALPHA;
-   case GL_SRC_ALPHA_SATURATE:
-      return BLENDFACT_SRC_ALPHA_SATURATE;
-   case GL_CONSTANT_COLOR:
-      return BLENDFACT_CONST_COLOR;
-   case GL_ONE_MINUS_CONSTANT_COLOR:
-      return BLENDFACT_INV_CONST_COLOR;
-   case GL_CONSTANT_ALPHA:
-      return BLENDFACT_CONST_ALPHA;
-   case GL_ONE_MINUS_CONSTANT_ALPHA:
-      return BLENDFACT_INV_CONST_ALPHA;
-   }
-
-   fprintf(stderr, "Unknown value in %s: %x\n", __FUNCTION__, factor);
-   return BLENDFACT_ZERO;
 }
 
 int
@@ -158,54 +128,38 @@ intel_translate_logic_op(GLenum opcode)
 {
    switch (opcode) {
    case GL_CLEAR:
-      return LOGICOP_CLEAR;
+      return BRW_LOGICOPFUNCTION_CLEAR;
    case GL_AND:
-      return LOGICOP_AND;
+      return BRW_LOGICOPFUNCTION_AND;
    case GL_AND_REVERSE:
-      return LOGICOP_AND_RVRSE;
+      return BRW_LOGICOPFUNCTION_AND_REVERSE;
    case GL_COPY:
-      return LOGICOP_COPY;
+      return BRW_LOGICOPFUNCTION_COPY;
    case GL_COPY_INVERTED:
-      return LOGICOP_COPY_INV;
+      return BRW_LOGICOPFUNCTION_COPY_INVERTED;
    case GL_AND_INVERTED:
-      return LOGICOP_AND_INV;
+      return BRW_LOGICOPFUNCTION_AND_INVERTED;
    case GL_NOOP:
-      return LOGICOP_NOOP;
+      return BRW_LOGICOPFUNCTION_NOOP;
    case GL_XOR:
-      return LOGICOP_XOR;
+      return BRW_LOGICOPFUNCTION_XOR;
    case GL_OR:
-      return LOGICOP_OR;
+      return BRW_LOGICOPFUNCTION_OR;
    case GL_OR_INVERTED:
-      return LOGICOP_OR_INV;
+      return BRW_LOGICOPFUNCTION_OR_INVERTED;
    case GL_NOR:
-      return LOGICOP_NOR;
+      return BRW_LOGICOPFUNCTION_NOR;
    case GL_EQUIV:
-      return LOGICOP_EQUIV;
+      return BRW_LOGICOPFUNCTION_EQUIV;
    case GL_INVERT:
-      return LOGICOP_INV;
+      return BRW_LOGICOPFUNCTION_INVERT;
    case GL_OR_REVERSE:
-      return LOGICOP_OR_RVRSE;
+      return BRW_LOGICOPFUNCTION_OR_REVERSE;
    case GL_NAND:
-      return LOGICOP_NAND;
+      return BRW_LOGICOPFUNCTION_NAND;
    case GL_SET:
-      return LOGICOP_SET;
+      return BRW_LOGICOPFUNCTION_SET;
    default:
-      return LOGICOP_SET;
+      return BRW_LOGICOPFUNCTION_SET;
    }
-}
-
-/* Fallback to swrast for select and feedback.
- */
-static void
-intelRenderMode(struct gl_context *ctx, GLenum mode)
-{
-   struct intel_context *intel = intel_context(ctx);
-   FALLBACK(intel, INTEL_FALLBACK_RENDERMODE, (mode != GL_RENDER));
-}
-
-
-void
-intelInitStateFuncs(struct dd_function_table *functions)
-{
-   functions->RenderMode = intelRenderMode;
 }

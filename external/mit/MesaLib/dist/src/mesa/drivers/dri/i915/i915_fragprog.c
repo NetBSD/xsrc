@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -97,43 +97,43 @@ src_vector(struct i915_fragment_program *p,
       break;
    case PROGRAM_INPUT:
       switch (source->Index) {
-      case FRAG_ATTRIB_WPOS:
+      case VARYING_SLOT_POS:
          src = i915_emit_decl(p, REG_TYPE_T, p->wpos_tex, D0_CHANNEL_ALL);
          break;
-      case FRAG_ATTRIB_COL0:
+      case VARYING_SLOT_COL0:
          src = i915_emit_decl(p, REG_TYPE_T, T_DIFFUSE, D0_CHANNEL_ALL);
          break;
-      case FRAG_ATTRIB_COL1:
+      case VARYING_SLOT_COL1:
          src = i915_emit_decl(p, REG_TYPE_T, T_SPECULAR, D0_CHANNEL_XYZ);
          src = swizzle(src, X, Y, Z, ONE);
          break;
-      case FRAG_ATTRIB_FOGC:
+      case VARYING_SLOT_FOGC:
          src = i915_emit_decl(p, REG_TYPE_T, T_FOG_W, D0_CHANNEL_W);
          src = swizzle(src, W, ZERO, ZERO, ONE);
          break;
-      case FRAG_ATTRIB_TEX0:
-      case FRAG_ATTRIB_TEX1:
-      case FRAG_ATTRIB_TEX2:
-      case FRAG_ATTRIB_TEX3:
-      case FRAG_ATTRIB_TEX4:
-      case FRAG_ATTRIB_TEX5:
-      case FRAG_ATTRIB_TEX6:
-      case FRAG_ATTRIB_TEX7:
+      case VARYING_SLOT_TEX0:
+      case VARYING_SLOT_TEX1:
+      case VARYING_SLOT_TEX2:
+      case VARYING_SLOT_TEX3:
+      case VARYING_SLOT_TEX4:
+      case VARYING_SLOT_TEX5:
+      case VARYING_SLOT_TEX6:
+      case VARYING_SLOT_TEX7:
          src = i915_emit_decl(p, REG_TYPE_T,
-                              T_TEX0 + (source->Index - FRAG_ATTRIB_TEX0),
+                              T_TEX0 + (source->Index - VARYING_SLOT_TEX0),
                               D0_CHANNEL_ALL);
 	 break;
 
-      case FRAG_ATTRIB_VAR0:
-      case FRAG_ATTRIB_VAR0 + 1:
-      case FRAG_ATTRIB_VAR0 + 2:
-      case FRAG_ATTRIB_VAR0 + 3:
-      case FRAG_ATTRIB_VAR0 + 4:
-      case FRAG_ATTRIB_VAR0 + 5:
-      case FRAG_ATTRIB_VAR0 + 6:
-      case FRAG_ATTRIB_VAR0 + 7:
+      case VARYING_SLOT_VAR0:
+      case VARYING_SLOT_VAR0 + 1:
+      case VARYING_SLOT_VAR0 + 2:
+      case VARYING_SLOT_VAR0 + 3:
+      case VARYING_SLOT_VAR0 + 4:
+      case VARYING_SLOT_VAR0 + 5:
+      case VARYING_SLOT_VAR0 + 6:
+      case VARYING_SLOT_VAR0 + 7:
          src = i915_emit_decl(p, REG_TYPE_T,
-                              T_TEX0 + (source->Index - FRAG_ATTRIB_VAR0),
+                              T_TEX0 + (source->Index - VARYING_SLOT_VAR0),
                               D0_CHANNEL_ALL);
          break;
 
@@ -146,6 +146,7 @@ src_vector(struct i915_fragment_program *p,
    case PROGRAM_OUTPUT:
       switch (source->Index) {
       case FRAG_RESULT_COLOR:
+      case FRAG_RESULT_DATA0:
 	 src = UREG(REG_TYPE_OC, 0);
 	 break;
       case FRAG_RESULT_DEPTH:
@@ -160,25 +161,11 @@ src_vector(struct i915_fragment_program *p,
       /* Various paramters and env values.  All emitted to
        * hardware as program constants.
        */
-   case PROGRAM_LOCAL_PARAM:
-      src = i915_emit_param4fv(p, program->Base.LocalParams[source->Index]);
-      break;
-
-   case PROGRAM_ENV_PARAM:
-      src =
-         i915_emit_param4fv(p,
-                            p->ctx->FragmentProgram.Parameters[source->
-                                                               Index]);
-      break;
-
    case PROGRAM_CONSTANT:
    case PROGRAM_STATE_VAR:
-   case PROGRAM_NAMED_PARAM:
    case PROGRAM_UNIFORM:
-      src =
-         i915_emit_param4fv(p,
-                            program->Base.Parameters->ParameterValues[source->
-                                                                      Index]);
+      src = i915_emit_param4fv(p,
+	 &program->Base.Parameters->ParameterValues[source->Index][0].f);
       break;
 
    default:
@@ -820,23 +807,52 @@ upload_program(struct i915_fragment_program *p)
 	 flags = get_result_flags(inst);
 	 dst = get_result_vector(p, inst);
 
+         /* If both operands are uniforms or constants, we get 5 instructions
+          * like:
+          *
+          *     U[1] = MOV CONST[1]
+          *     U[0].xyz = SGE CONST[0].xxxx, U[1]
+          *     U[1] = MOV CONST[1].-x-y-z-w
+          *     R[0].xyz = SGE CONST[0].-x-x-x-x, U[1]
+          *     R[0].xyz = MUL R[0], U[0]
+          *
+          * This code is stupid.  Instead of having the individual calls to
+          * i915_emit_arith generate the moves to utemps, do it in the caller.
+          * This results in code like:
+          *
+          *     U[1] = MOV CONST[1]
+          *     U[0].xyz = SGE CONST[0].xxxx, U[1]
+          *     R[0].xyz = SGE CONST[0].-x-x-x-x, U[1].-x-y-z-w
+          *     R[0].xyz = MUL R[0], U[0]
+          */
+         src0 = src_vector(p, &inst->SrcReg[0], program);
+         src1 = src_vector(p, &inst->SrcReg[1], program);
+
+         if (GET_UREG_TYPE(src0) == REG_TYPE_CONST
+             && GET_UREG_TYPE(src1) == REG_TYPE_CONST) {
+            unsigned tmp = i915_get_utemp(p);
+
+            i915_emit_arith(p, A0_MOV, tmp, A0_DEST_CHANNEL_ALL, 0,
+                            src1, 0, 0);
+
+            src1 = tmp;
+         }
+
 	 /* tmp = src1 >= src2 */
 	 i915_emit_arith(p,
 			 A0_SGE,
 			 tmp,
 			 flags, 0,
-			 src_vector(p, &inst->SrcReg[0], program),
-			 src_vector(p, &inst->SrcReg[1], program),
+			 src0,
+			 src1,
 			 0);
 	 /* dst = src1 <= src2 */
 	 i915_emit_arith(p,
 			 A0_SGE,
 			 dst,
 			 flags, 0,
-			 negate(src_vector(p, &inst->SrcReg[0], program),
-				1, 1, 1, 1),
-			 negate(src_vector(p, &inst->SrcReg[1], program),
-				1, 1, 1, 1),
+			 negate(src0, 1, 1, 1, 1),
+			 negate(src1, 1, 1, 1, 1),
 			 0);
 	 /* dst = tmp && dst */
 	 i915_emit_arith(p,
@@ -969,23 +985,52 @@ upload_program(struct i915_fragment_program *p)
 	 flags = get_result_flags(inst);
 	 dst = get_result_vector(p, inst);
 
+         /* If both operands are uniforms or constants, we get 5 instructions
+          * like:
+          *
+          *     U[1] = MOV CONST[1]
+          *     U[0].xyz = SLT CONST[0].xxxx, U[1]
+          *     U[1] = MOV CONST[1].-x-y-z-w
+          *     R[0].xyz = SLT CONST[0].-x-x-x-x, U[1]
+          *     R[0].xyz = MUL R[0], U[0]
+          *
+          * This code is stupid.  Instead of having the individual calls to
+          * i915_emit_arith generate the moves to utemps, do it in the caller.
+          * This results in code like:
+          *
+          *     U[1] = MOV CONST[1]
+          *     U[0].xyz = SLT CONST[0].xxxx, U[1]
+          *     R[0].xyz = SLT CONST[0].-x-x-x-x, U[1].-x-y-z-w
+          *     R[0].xyz = MUL R[0], U[0]
+          */
+         src0 = src_vector(p, &inst->SrcReg[0], program);
+         src1 = src_vector(p, &inst->SrcReg[1], program);
+
+         if (GET_UREG_TYPE(src0) == REG_TYPE_CONST
+             && GET_UREG_TYPE(src1) == REG_TYPE_CONST) {
+            unsigned tmp = i915_get_utemp(p);
+
+            i915_emit_arith(p, A0_MOV, tmp, A0_DEST_CHANNEL_ALL, 0,
+                            src1, 0, 0);
+
+            src1 = tmp;
+         }
+
 	 /* tmp = src1 < src2 */
 	 i915_emit_arith(p,
 			 A0_SLT,
 			 tmp,
 			 flags, 0,
-			 src_vector(p, &inst->SrcReg[0], program),
-			 src_vector(p, &inst->SrcReg[1], program),
+			 src0,
+			 src1,
 			 0);
 	 /* dst = src1 > src2 */
 	 i915_emit_arith(p,
 			 A0_SLT,
 			 dst,
 			 flags, 0,
-			 negate(src_vector(p, &inst->SrcReg[0], program),
-				1, 1, 1, 1),
-			 negate(src_vector(p, &inst->SrcReg[1], program),
-				1, 1, 1, 1),
+			 negate(src0, 1, 1, 1, 1),
+			 negate(src1, 1, 1, 1, 1),
 			 0);
 	 /* dst = tmp || dst */
 	 i915_emit_arith(p,
@@ -1090,7 +1135,6 @@ upload_program(struct i915_fragment_program *p)
 
       case OPCODE_BGNLOOP:
       case OPCODE_BGNSUB:
-      case OPCODE_BRA:
       case OPCODE_BRK:
       case OPCODE_CAL:
       case OPCODE_CONT:
@@ -1150,21 +1194,21 @@ fixup_depth_write(struct i915_fragment_program *p)
 static void
 check_wpos(struct i915_fragment_program *p)
 {
-   GLuint inputs = p->FragProg.Base.InputsRead;
+   GLbitfield64 inputs = p->FragProg.Base.InputsRead;
    GLint i;
 
    p->wpos_tex = -1;
 
    for (i = 0; i < p->ctx->Const.MaxTextureCoordUnits; i++) {
-      if (inputs & (FRAG_BIT_TEX(i) | FRAG_BIT_VAR(i)))
+      if (inputs & (VARYING_BIT_TEX(i) | VARYING_BIT_VAR(i)))
          continue;
-      else if (inputs & FRAG_BIT_WPOS) {
+      else if (inputs & VARYING_BIT_POS) {
          p->wpos_tex = i;
-         inputs &= ~FRAG_BIT_WPOS;
+         inputs &= ~VARYING_BIT_POS;
       }
    }
 
-   if (inputs & FRAG_BIT_WPOS) {
+   if (inputs & VARYING_BIT_POS) {
       i915_program_error(p, "No free texcoord for wpos value");
    }
 }
@@ -1287,7 +1331,7 @@ i915IsProgramNative(struct gl_context * ctx, GLenum target, struct gl_program *p
       return !p->error;
    }
    else
-      return GL_TRUE;
+      return true;
 }
 
 static GLboolean
@@ -1302,7 +1346,14 @@ i915ProgramStringNotify(struct gl_context * ctx,
    (void) _tnl_program_string(ctx, target, prog);
 
    /* XXX check if program is legal, within limits */
-   return GL_TRUE;
+   return true;
+}
+
+static void
+i915SamplerUniformChange(struct gl_context *ctx,
+                         GLenum target, struct gl_program *prog)
+{
+   i915ProgramStringNotify(ctx, target, prog);
 }
 
 void
@@ -1339,7 +1390,7 @@ i915ValidateFragmentProgram(struct i915_context *i915)
    struct i915_fragment_program *p =
       (struct i915_fragment_program *) ctx->FragmentProgram._Current;
 
-   const GLuint inputsRead = p->FragProg.Base.InputsRead;
+   const GLbitfield64 inputsRead = p->FragProg.Base.InputsRead;
    GLuint s4 = i915->state.Ctx[I915_CTXREG_LIS4] & ~S4_VFMT_MASK;
    GLuint s2 = S2_TEXCOORD_NONE;
    int i, offset = 0;
@@ -1356,29 +1407,33 @@ i915ValidateFragmentProgram(struct i915_context *i915)
    intel->coloroffset = 0;
    intel->specoffset = 0;
 
-   if (inputsRead & FRAG_BITS_TEX_ANY || p->wpos_tex != -1) {
+   if (inputsRead & VARYING_BITS_TEX_ANY || p->wpos_tex != -1) {
       EMIT_ATTR(_TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, S4_VFMT_XYZW, 16);
    }
    else {
       EMIT_ATTR(_TNL_ATTRIB_POS, EMIT_3F_VIEWPORT, S4_VFMT_XYZ, 12);
    }
 
-   if (inputsRead & FRAG_BIT_COL0) {
+   /* Handle gl_PointSize builtin var here */
+   if (ctx->Point._Attenuated || ctx->VertexProgram.PointSizeEnabled)
+      EMIT_ATTR(_TNL_ATTRIB_POINTSIZE, EMIT_1F, S4_VFMT_POINT_WIDTH, 4);
+
+   if (inputsRead & VARYING_BIT_COL0) {
       intel->coloroffset = offset / 4;
       EMIT_ATTR(_TNL_ATTRIB_COLOR0, EMIT_4UB_4F_BGRA, S4_VFMT_COLOR, 4);
    }
 
-   if (inputsRead & FRAG_BIT_COL1) {
+   if (inputsRead & VARYING_BIT_COL1) {
        intel->specoffset = offset / 4;
        EMIT_ATTR(_TNL_ATTRIB_COLOR1, EMIT_4UB_4F_BGRA, S4_VFMT_SPEC_FOG, 4);
    }
 
-   if ((inputsRead & FRAG_BIT_FOGC)) {
+   if ((inputsRead & VARYING_BIT_FOGC)) {
       EMIT_ATTR(_TNL_ATTRIB_FOG, EMIT_1F, S4_VFMT_FOG_PARAM, 4);
    }
 
    for (i = 0; i < p->ctx->Const.MaxTextureCoordUnits; i++) {
-      if (inputsRead & FRAG_BIT_TEX(i)) {
+      if (inputsRead & VARYING_BIT_TEX(i)) {
          int sz = VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]->size;
 
          s2 &= ~S2_TEXCOORD_FMT(i, S2_TEXCOORD_FMT0_MASK);
@@ -1386,7 +1441,7 @@ i915ValidateFragmentProgram(struct i915_context *i915)
 
          EMIT_ATTR(_TNL_ATTRIB_TEX0 + i, EMIT_SZ(sz), 0, sz * 4);
       }
-      else if (inputsRead & FRAG_BIT_VAR(i)) {
+      else if (inputsRead & VARYING_BIT_VAR(i)) {
          int sz = VB->AttribPtr[_TNL_ATTRIB_GENERIC0 + i]->size;
 
          s2 &= ~S2_TEXCOORD_FMT(i, S2_TEXCOORD_FMT0_MASK);
@@ -1454,4 +1509,5 @@ i915InitFragProgFuncs(struct dd_function_table *functions)
    functions->DeleteProgram = i915DeleteProgram;
    functions->IsProgramNative = i915IsProgramNative;
    functions->ProgramStringNotify = i915ProgramStringNotify;
+   functions->SamplerUniformChange = i915SamplerUniformChange;
 }

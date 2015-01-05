@@ -28,6 +28,8 @@
 
 #include "ir.h"
 
+namespace {
+
 class redundant_jumps_visitor : public ir_hierarchical_visitor {
 public:
    redundant_jumps_visitor()
@@ -42,11 +44,13 @@ public:
    bool progress;
 };
 
+} /* unnamed namespace */
+
 /* We only care about the top level instructions, so don't descend
  * into expressions.
  */
 ir_visitor_status
-redundant_jumps_visitor::visit_enter(ir_assignment *ir)
+redundant_jumps_visitor::visit_enter(ir_assignment *)
 {
    return visit_continue_with_parent;
 }

@@ -1,7 +1,7 @@
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and
-                     Tungsten Grahpics Inc., Austin, Texas.
+                     VMware, Inc.
 
 All Rights Reserved.
 
@@ -29,7 +29,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * Authors:
- *   Keith Whitwell <keith@tungstengraphics.com>
+ *   Keith Whitwell <keithw@vmware.com>
  *
  */
 
@@ -45,9 +45,6 @@ extern void radeonEmitPrimitive( struct gl_context *ctx, GLuint first, GLuint la
 				 GLuint flags );
 
 extern void radeonTclFallback( struct gl_context *ctx, GLuint bit, GLboolean mode );
-
-extern void radeonInitStaticFogData( void );
-extern float radeonComputeFogBlendFactor( struct gl_context *ctx, GLfloat fogcoord );
 
 #define RADEON_TCL_FALLBACK_RASTER            0x1 /* rasterization */
 #define RADEON_TCL_FALLBACK_UNFILLED          0x2 /* unfilled tris */

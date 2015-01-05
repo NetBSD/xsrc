@@ -28,6 +28,7 @@
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 
+#include "pipe-loader/pipe_loader.h"
 #include "state_tracker/drm_driver.h"
 
 #include <unistd.h>
@@ -35,14 +36,19 @@
 
 #include "gbm_gallium_drmint.h"
 
+/* For importing wl_buffer */
+#if HAVE_WAYLAND_PLATFORM
+#include "../../../egl/wayland/wayland-drm/wayland-drm.h"
+#endif
+
 static INLINE enum pipe_format
 gbm_format_to_gallium(enum gbm_bo_format format)
 {
    switch (format) {
    case GBM_BO_FORMAT_XRGB8888:
-      return PIPE_FORMAT_B8G8R8X8_UNORM;
+      return PIPE_FORMAT_BGRX8888_UNORM;
    case GBM_BO_FORMAT_ARGB8888:
-      return PIPE_FORMAT_B8G8R8A8_UNORM;
+      return PIPE_FORMAT_BGRA8888_UNORM;
    default:
       return PIPE_FORMAT_NONE;
    }
@@ -61,7 +67,7 @@ gbm_usage_to_gallium(uint usage)
    if (usage & GBM_BO_USE_RENDERING)
       resource_usage |= PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
 
-   if (usage & GBM_BO_USE_CURSOR_64X64)
+   if (usage & GBM_BO_USE_CURSOR)
       resource_usage |= PIPE_BIND_CURSOR;
 
    return resource_usage;
@@ -79,7 +85,7 @@ gbm_gallium_drm_is_format_supported(struct gbm_device *gbm,
    if (pf == PIPE_FORMAT_NONE)
       return 0;
 
-   if (!gdrm->screen->is_format_supported(gdrm->screen, PIPE_TEXTURE_2D, pf, 0,
+   if (!gdrm->screen->is_format_supported(gdrm->screen, pf, PIPE_TEXTURE_2D, 0,
                                           gbm_usage_to_gallium(usage)))
       return 0;
 
@@ -99,39 +105,66 @@ gbm_gallium_drm_bo_destroy(struct gbm_bo *_bo)
 }
 
 static struct gbm_bo *
-gbm_gallium_drm_bo_create_from_egl_image(struct gbm_device *gbm,
-                                         void *egl_dpy, void *egl_image,
-                                         uint32_t width, uint32_t height,
-                                         uint32_t usage)
+gbm_gallium_drm_bo_import(struct gbm_device *gbm,
+                          uint32_t type, void *buffer, uint32_t usage)
 {
    struct gbm_gallium_drm_device *gdrm = gbm_gallium_drm_device(gbm);
    struct gbm_gallium_drm_bo *bo;
    struct winsys_handle whandle;
+   struct pipe_resource *resource;
 
-   if (!gdrm->lookup_egl_image)
+   switch (type) {
+#if HAVE_WAYLAND_PLATFORM
+   case GBM_BO_IMPORT_WL_BUFFER:
+   {
+      struct wl_drm_buffer *wb = (struct wl_drm_buffer *) buffer;
+
+      resource = wb->driver_buffer;
+      break;
+   }
+#endif
+
+   case GBM_BO_IMPORT_EGL_IMAGE:
+      if (!gdrm->lookup_egl_image)
+         return NULL;
+
+      resource = gdrm->lookup_egl_image(gdrm->lookup_egl_image_data, buffer);
+      if (resource == NULL)
+         return NULL;
+      break;
+
+   default:
       return NULL;
+   }
 
    bo = CALLOC_STRUCT(gbm_gallium_drm_bo);
    if (bo == NULL)
       return NULL;
 
-   bo->resource = gdrm->lookup_egl_image(gdrm->lookup_egl_image_data,
-                                         egl_image);
-   if (bo->resource == NULL) {
+   bo->base.base.gbm = gbm;
+   bo->base.base.width = resource->width0;
+   bo->base.base.height = resource->height0;
+
+   switch (resource->format) {
+   case PIPE_FORMAT_BGRX8888_UNORM:
+      bo->base.base.format = GBM_BO_FORMAT_XRGB8888;
+      break;
+   case PIPE_FORMAT_BGRA8888_UNORM:
+      bo->base.base.format = GBM_BO_FORMAT_ARGB8888;
+      break;
+   default:
       FREE(bo);
       return NULL;
    }
 
-   bo->base.base.gbm = gbm;
-   bo->base.base.width = width;
-   bo->base.base.height = height;
+   pipe_resource_reference(&bo->resource, resource);
 
    memset(&whandle, 0, sizeof(whandle));
    whandle.type = DRM_API_HANDLE_TYPE_KMS;
    gdrm->screen->resource_get_handle(gdrm->screen, bo->resource, &whandle);
 
    bo->base.base.handle.u32 = whandle.handle;
-   bo->base.base.pitch      = whandle.stride;
+   bo->base.base.stride      = whandle.stride;
 
    return &bo->base.base;
 }
@@ -154,6 +187,7 @@ gbm_gallium_drm_bo_create(struct gbm_device *gbm,
    bo->base.base.gbm = gbm;
    bo->base.base.width = width;
    bo->base.base.height = height;
+   bo->base.base.format = format;
 
    pf = gbm_format_to_gallium(format);
    if (pf == PIPE_FORMAT_NONE)
@@ -180,7 +214,7 @@ gbm_gallium_drm_bo_create(struct gbm_device *gbm,
    gdrm->screen->resource_get_handle(gdrm->screen, bo->resource, &whandle);
 
    bo->base.base.handle.u32 = whandle.handle;
-   bo->base.base.pitch      = whandle.stride;
+   bo->base.base.stride      = whandle.stride;
 
    return &bo->base.base;
 }
@@ -190,25 +224,44 @@ gbm_gallium_drm_destroy(struct gbm_device *gbm)
 {
    struct gbm_gallium_drm_device *gdrm = gbm_gallium_drm_device(gbm);
 
+   free(gdrm->base.driver_name);
    gdrm->screen->destroy(gdrm->screen);
-
-   FREE(gdrm->base.driver_name);
-
-   FREE(gdrm);
+#if !GALLIUM_STATIC_TARGETS
+   pipe_loader_release(&gdrm->dev, 1);
+#endif
+   free(gdrm);
 }
 
-struct gbm_device *
+#if !GALLIUM_STATIC_TARGETS
+#ifdef HAVE_PIPE_LOADER_DRM
+static const char *
+get_library_search_path(void)
+{
+   const char *search_path = NULL;
+
+   /* don't allow setuid apps to use GBM_BACKENDS_PATH */
+   if (geteuid() == getuid())
+      search_path = getenv("GBM_BACKENDS_PATH");
+   if (search_path == NULL)
+      search_path = PIPE_SEARCH_DIR;
+
+   return search_path;
+}
+#endif
+#endif
+
+static struct gbm_device *
 gbm_gallium_drm_device_create(int fd)
 {
    struct gbm_gallium_drm_device *gdrm;
-   int ret;
 
    gdrm = calloc(1, sizeof *gdrm);
+   if (!gdrm)
+      return NULL;
 
    gdrm->base.base.fd = fd;
    gdrm->base.base.bo_create = gbm_gallium_drm_bo_create;
-   gdrm->base.base.bo_create_from_egl_image =
-      gbm_gallium_drm_bo_create_from_egl_image;
+   gdrm->base.base.bo_import = gbm_gallium_drm_bo_import;
    gdrm->base.base.bo_destroy = gbm_gallium_drm_bo_destroy;
    gdrm->base.base.is_format_supported = gbm_gallium_drm_is_format_supported;
    gdrm->base.base.destroy = gbm_gallium_drm_destroy;
@@ -216,11 +269,40 @@ gbm_gallium_drm_device_create(int fd)
    gdrm->base.type = GBM_DRM_DRIVER_TYPE_GALLIUM;
    gdrm->base.base.name = "drm";
 
-   ret = gallium_screen_create(gdrm);
-   if (ret) {
-      free(gdrm);
-      return NULL;
-   }
+#if GALLIUM_STATIC_TARGETS
+   gdrm->screen = dd_create_screen(gdrm->base.base.fd);
+#else
+#ifdef HAVE_PIPE_LOADER_DRM
+   if (pipe_loader_drm_probe_fd(&gdrm->dev, gdrm->base.base.fd, true))
+      gdrm->screen = pipe_loader_create_screen(gdrm->dev,
+                                               get_library_search_path());
+#endif /* HAVE_PIPE_LOADER_DRM */
+#endif
 
+   if (gdrm->screen == NULL)
+      goto out_no_screen;
+
+#if GALLIUM_STATIC_TARGETS
+   gdrm->base.driver_name = strdup(dd_driver_name());
+#else
+#ifdef HAVE_PIPE_LOADER_DRM
+   gdrm->base.driver_name = strdup(gdrm->dev->driver_name);
+#endif /* HAVE_PIPE_LOADER_DRM */
+#endif
    return &gdrm->base.base;
+
+out_no_screen:
+   debug_printf("failed to load gallium_gbm\n");
+#if !GALLIUM_STATIC_TARGETS
+   if (gdrm->dev)
+      pipe_loader_release(&gdrm->dev, 1);
+#endif
+   free(gdrm);
+   return NULL;
 }
+
+
+GBM_EXPORT struct gbm_backend gbm_backend = {
+   .backend_name = "gallium_drm",
+   .create_device = gbm_gallium_drm_device_create,
+};

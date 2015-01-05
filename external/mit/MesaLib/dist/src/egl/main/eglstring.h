@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 VMware, Inc.
  * Copyright 2009-2010 Chia-I Wu <olvaffe@gmail.com>
  * Copyright 2010-2011 LunarG, Inc.
  * All Rights Reserved.
@@ -38,6 +38,7 @@
 #define _eglstrcasecmp _stricmp
 #define _eglsnprintf _snprintf
 #else
+#include <strings.h> // for strcasecmp
 #define _eglstrcasecmp strcasecmp
 #define _eglsnprintf snprintf
 #endif

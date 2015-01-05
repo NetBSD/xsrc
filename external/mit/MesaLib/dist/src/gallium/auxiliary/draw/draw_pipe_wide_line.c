@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,14 +18,14 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 
  **************************************************************************/
 
-/* Authors:  Keith Whitwell <keith@tungstengraphics.com>
+/* Authors:  Keith Whitwell <keithw@vmware.com>
  */
 
 #include "pipe/p_context.h"
@@ -77,11 +77,11 @@ static void wideline_line( struct draw_stage *stage,
    const float dx = fabsf(pos0[0] - pos2[0]);
    const float dy = fabsf(pos0[1] - pos2[1]);
 
-   const boolean gl_rasterization_rules =
-      stage->draw->rasterizer->gl_rasterization_rules;
+   const boolean half_pixel_center =
+      stage->draw->rasterizer->half_pixel_center;
 
    /* small tweak to meet GL specification */
-   const float bias = gl_rasterization_rules ? 0.125f : 0.0f;
+   const float bias = half_pixel_center ? 0.125f : 0.0f;
 
    /*
     * Draw wide line as a quad (two tris) by "stretching" the line along
@@ -95,7 +95,7 @@ static void wideline_line( struct draw_stage *stage,
       pos1[1] = pos1[1] + half_width - bias;
       pos2[1] = pos2[1] - half_width - bias;
       pos3[1] = pos3[1] + half_width - bias;
-      if (gl_rasterization_rules) {
+      if (half_pixel_center) {
          if (pos0[0] < pos2[0]) {
             /* left to right line */
             pos0[0] -= 0.5f;
@@ -118,7 +118,7 @@ static void wideline_line( struct draw_stage *stage,
       pos1[0] = pos1[0] + half_width + bias;
       pos2[0] = pos2[0] - half_width + bias;
       pos3[0] = pos3[0] + half_width + bias;
-      if (gl_rasterization_rules) {
+      if (half_pixel_center) {
          if (pos0[1] < pos2[1]) {
             /* top to bottom line */
             pos0[1] -= 0.5f;

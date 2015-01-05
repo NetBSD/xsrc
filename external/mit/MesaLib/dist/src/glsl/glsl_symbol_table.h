@@ -32,9 +32,9 @@ extern "C" {
 #include "program/symbol_table.h"
 }
 #include "ir.h"
-#include "glsl_types.h"
 
 class symbol_table_entry;
+struct glsl_type;
 
 /**
  * Facade class for _mesa_symbol_table
@@ -77,7 +77,8 @@ public:
    glsl_symbol_table();
    ~glsl_symbol_table();
 
-   unsigned int language_version;
+   /* In 1.10, functions and variables have separate namespaces. */
+   bool separate_function_namespace;
 
    void push_scope();
    void pop_scope();
@@ -98,6 +99,8 @@ public:
    bool add_variable(ir_variable *v);
    bool add_type(const char *name, const glsl_type *t);
    bool add_function(ir_function *f);
+   bool add_interface(const char *name, const glsl_type *i,
+                      enum ir_variable_mode mode);
    /*@}*/
 
    /**
@@ -112,7 +115,17 @@ public:
    ir_variable *get_variable(const char *name);
    const glsl_type *get_type(const char *name);
    ir_function *get_function(const char *name);
+   const glsl_type *get_interface(const char *name,
+                                  enum ir_variable_mode mode);
    /*@}*/
+
+   /**
+    * Disable a previously-added variable so that it no longer appears to be
+    * in the symbol table.  This is necessary when gl_PerVertex is redeclared,
+    * to ensure that previously-available built-in variables are no longer
+    * available.
+    */
+   void disable_variable(const char *name);
 
 private:
    symbol_table_entry *get_entry(const char *name);

@@ -1,6 +1,6 @@
  /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -40,6 +40,7 @@
 #define I915_FALLBACK_POINT_SMOOTH	 0x80000
 #define I915_FALLBACK_POINT_SPRITE_COORD_ORIGIN	 0x100000
 #define I915_FALLBACK_DRAW_OFFSET	 0x200000
+#define I915_FALLBACK_COORD_REPLACE	 0x400000
 
 #define I915_UPLOAD_CTX              0x1
 #define I915_UPLOAD_BUFFERS          0x2
@@ -139,10 +140,10 @@ struct i915_fragment_program
 {
    struct gl_fragment_program FragProg;
 
-   GLboolean translated;
-   GLboolean params_uptodate;
-   GLboolean on_hardware;
-   GLboolean error;             /* If program is malformed for any reason. */
+   bool translated;
+   bool params_uptodate;
+   bool on_hardware;
+   bool error;             /* If program is malformed for any reason. */
 
    /** Record of which phases R registers were last written in. */
    GLuint register_phases[16];
@@ -194,7 +195,7 @@ struct i915_fragment_program
    /* Helpers for i915_fragprog.c:
     */
    GLuint wpos_tex;
-   GLboolean depth_written;
+   bool depth_written;
 
    struct
    {
@@ -249,7 +250,6 @@ struct i915_context
 {
    struct intel_context intel;
 
-   GLuint last_ReallyEnabled;
    GLuint lodbias_ss2[MAX_TEXTURE_UNITS];
 
 
@@ -318,10 +318,14 @@ do {									\
 /*======================================================================
  * i915_context.c
  */
-extern GLboolean i915CreateContext(int api,
-				   const struct gl_config * mesaVis,
-                                   __DRIcontext * driContextPriv,
-                                   void *sharedContextPrivate);
+extern bool i915CreateContext(int api,
+			      const struct gl_config * mesaVis,
+			      __DRIcontext * driContextPriv,
+                              unsigned major_version,
+                              unsigned minor_version,
+                              uint32_t flags,
+                              unsigned *error,
+			      void *sharedContextPrivate);
 
 
 /*======================================================================
@@ -338,6 +342,7 @@ extern void i915InitStateFunctions(struct dd_function_table *functions);
 extern void i915InitState(struct i915_context *i915);
 extern void i915_update_stencil(struct gl_context * ctx);
 extern void i915_update_provoking_vertex(struct gl_context *ctx);
+extern void i915_update_sprite_point_enable(struct gl_context *ctx);
 
 
 /*======================================================================

@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -37,6 +37,7 @@
 
 
 #include "lp_setup_context.h"
+#include "lp_context.h"
 #include "draw/draw_vbuf.h"
 #include "draw/draw_vertex.h"
 #include "util/u_memory.h"
@@ -113,11 +114,10 @@ lp_setup_unmap_vertices(struct vbuf_render *vbr,
 }
 
 
-static boolean
+static void
 lp_setup_set_primitive(struct vbuf_render *vbr, unsigned prim)
 {
    lp_setup_context(vbr)->prim = prim;
-   return TRUE;
 }
 
 typedef const float (*const_float4_ptr)[4];
@@ -534,6 +534,50 @@ lp_setup_vbuf_destroy(struct vbuf_render *vbr)
    lp_setup_destroy(setup);
 }
 
+/*
+ * FIXME: it is unclear if primitives_storage_needed (which is generally
+ * the same as pipe query num_primitives_generated) should increase
+ * if SO is disabled for d3d10, but for GL we definitely need to
+ * increase num_primitives_generated and this is only called for active
+ * SO. If it must not increase for d3d10 need to disambiguate the counters
+ * in the driver and do some work for getting correct values, if it should
+ * increase too should call this from outside streamout code.
+ */
+static void
+lp_setup_so_info(struct vbuf_render *vbr, uint primitives, uint prim_generated)
+{
+   struct lp_setup_context *setup = lp_setup_context(vbr);
+   struct llvmpipe_context *lp = llvmpipe_context(setup->pipe);
+
+   lp->so_stats.num_primitives_written += primitives;
+   lp->so_stats.primitives_storage_needed += prim_generated;
+}
+
+static void
+lp_setup_pipeline_statistics(
+   struct vbuf_render *vbr,
+   const struct pipe_query_data_pipeline_statistics *stats)
+{
+   struct lp_setup_context *setup = lp_setup_context(vbr);
+   struct llvmpipe_context *llvmpipe = llvmpipe_context(setup->pipe);
+
+   llvmpipe->pipeline_statistics.ia_vertices +=
+      stats->ia_vertices;
+   llvmpipe->pipeline_statistics.ia_primitives +=
+      stats->ia_primitives;
+   llvmpipe->pipeline_statistics.vs_invocations +=
+      stats->vs_invocations;
+   llvmpipe->pipeline_statistics.gs_invocations +=
+      stats->gs_invocations;
+   llvmpipe->pipeline_statistics.gs_primitives +=
+      stats->gs_primitives;
+   if (!llvmpipe_rasterization_disabled(llvmpipe)) {
+      llvmpipe->pipeline_statistics.c_invocations +=
+         stats->c_invocations;
+   } else {
+      llvmpipe->pipeline_statistics.c_invocations = 0;
+   }
+}
 
 /**
  * Create the post-transform vertex handler for the given context.
@@ -553,4 +597,6 @@ lp_setup_init_vbuf(struct lp_setup_context *setup)
    setup->base.draw_arrays = lp_setup_draw_arrays;
    setup->base.release_vertices = lp_setup_release_vertices;
    setup->base.destroy = lp_setup_vbuf_destroy;
+   setup->base.set_stream_output_info = lp_setup_so_info;
+   setup->base.pipeline_statistics = lp_setup_pipeline_statistics;
 }

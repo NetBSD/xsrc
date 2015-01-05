@@ -30,16 +30,19 @@
 #ifndef __XMLCONFIG_H
 #define __XMLCONFIG_H
 
+#define STRING_CONF_MAXLEN 25
+
 /** \brief Option data types */
 typedef enum driOptionType {
-    DRI_BOOL, DRI_ENUM, DRI_INT, DRI_FLOAT
+    DRI_BOOL, DRI_ENUM, DRI_INT, DRI_FLOAT, DRI_STRING
 } driOptionType;
 
 /** \brief Option value */
 typedef union driOptionValue {
-    GLboolean _bool; /**< \brief Boolean */
-    GLint _int;      /**< \brief Integer or Enum */
-    GLfloat _float;  /**< \brief Floating-point */
+    unsigned char _bool; /**< \brief Boolean */
+    int _int;      /**< \brief Integer or Enum */
+    float _float;  /**< \brief Floating-point */
+    char *_string;   /**< \brief String */
 } driOptionValue;
 
 /** \brief Single range of valid values
@@ -55,7 +58,7 @@ typedef struct driOptionInfo {
     char *name;             /**< \brief Name */
     driOptionType type;     /**< \brief Type */
     driOptionRange *ranges; /**< \brief Array of ranges */
-    GLuint nRanges;         /**< \brief Number of ranges */
+    unsigned int nRanges;   /**< \brief Number of ranges */
 } driOptionInfo;
 
 /** \brief Option cache
@@ -73,10 +76,9 @@ typedef struct driOptionCache {
    * \li Default values in screen
    * \li Actual values in contexts 
    */
-    GLuint tableSize;
+    unsigned int tableSize;
   /**< \brief Size of the arrays
    *
-   * Depending on the hash function this may differ from __driNConfigOptions.
    * In the current implementation it's not actually a size but log2(size).
    * The value is the same in the screen and all contexts. */
 } driOptionCache;
@@ -87,20 +89,19 @@ typedef struct driOptionCache {
  *
  * \param info    pointer to a driOptionCache that will store the option info
  * \param configOptions   XML document describing available configuration opts
- * \param nConfigOptions  number of options, used to choose a hash table size
  *
  * For the option information to be available to external configuration tools
  * it must be a public symbol __driConfigOptions. It is also passed as a
  * parameter to driParseOptionInfo in order to avoid driver-independent code
  * depending on symbols in driver-specific code. */
 void driParseOptionInfo (driOptionCache *info,
-			 const char *configOptions, GLuint nConfigOptions);
+			 const char *configOptions);
 /** \brief Initialize option cache from info and parse configuration files
  *
  * To be called in <driver>CreateContext. screenNum and driverName select
  * device sections. */
 void driParseConfigFiles (driOptionCache *cache, const driOptionCache *info,
-			  GLint screenNum, const char *driverName);
+			  int screenNum, const char *driverName);
 /** \brief Destroy option info
  *
  * To be called in <driver>DestroyScreen */
@@ -111,14 +112,16 @@ void driDestroyOptionInfo (driOptionCache *info);
 void driDestroyOptionCache (driOptionCache *cache);
 
 /** \brief Check if there exists a certain option */
-GLboolean driCheckOption (const driOptionCache *cache, const char *name,
+unsigned char driCheckOption (const driOptionCache *cache, const char *name,
 			  driOptionType type);
 
 /** \brief Query a boolean option value */
-GLboolean driQueryOptionb (const driOptionCache *cache, const char *name);
+unsigned char driQueryOptionb (const driOptionCache *cache, const char *name);
 /** \brief Query an integer option value */
-GLint driQueryOptioni (const driOptionCache *cache, const char *name);
+int driQueryOptioni (const driOptionCache *cache, const char *name);
 /** \brief Query a floating-point option value */
-GLfloat driQueryOptionf (const driOptionCache *cache, const char *name);
+float driQueryOptionf (const driOptionCache *cache, const char *name);
+/** \brief Query a string option value */
+char *driQueryOptionstr (const driOptionCache *cache, const char *name);
 
 #endif

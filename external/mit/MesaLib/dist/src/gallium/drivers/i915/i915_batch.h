@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -47,29 +47,14 @@
 #define OUT_RELOC_FENCED(buf, usage, offset) \
    i915_winsys_batchbuffer_reloc(i915->batch, buf, usage, offset, true)
 
-#define FLUSH_BATCH(fence) \
-   i915_flush(i915, fence)
+#define FLUSH_BATCH(fence, flags) \
+   i915_flush(i915, fence, flags)
 
 /************************************************************************
  * i915_flush.c
  */
-void i915_flush(struct i915_context *i915, struct pipe_fence_handle **fence);
-
-/*
- * Flush if the current color buf is idle and we have more than 256 vertices
- * queued, or if the current color buf is busy and we have more than 4096
- * vertices queued.
- */
-static INLINE void i915_flush_heuristically(struct i915_context* i915,
-                                            int num_vertex)
-{
-   struct i915_winsys *iws = i915->iws;
-   i915->vertices_since_last_flush += num_vertex;
-   if ( i915->vertices_since_last_flush > 4096
-      || ( i915->vertices_since_last_flush > 256 &&
-           !iws->buffer_is_busy(iws, i915->current.cbuf_bo)) )
-      FLUSH_BATCH(NULL);
-}
-
+extern void i915_flush(struct i915_context *i915,
+                       struct pipe_fence_handle **fence,
+                       unsigned flags);
 
 #endif

@@ -62,6 +62,31 @@ lp_build_or(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
    return res;
 }
 
+/* bitwise XOR (a ^ b) */
+LLVMValueRef
+lp_build_xor(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
+{
+   LLVMBuilderRef builder = bld->gallivm->builder;
+   const struct lp_type type = bld->type;
+   LLVMValueRef res;
+
+   assert(lp_check_value(type, a));
+   assert(lp_check_value(type, b));
+
+   /* can't do bitwise ops on floating-point values */
+   if (type.floating) {
+      a = LLVMBuildBitCast(builder, a, bld->int_vec_type, "");
+      b = LLVMBuildBitCast(builder, b, bld->int_vec_type, "");
+   }
+
+   res = LLVMBuildXor(builder, a, b, "");
+
+   if (type.floating) {
+      res = LLVMBuildBitCast(builder, res, bld->vec_type, "");
+   }
+
+   return res;
+}
 
 /**
  * Return (a & b)
@@ -121,9 +146,29 @@ lp_build_andnot(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
    return res;
 }
 
+/* bitwise NOT */
+LLVMValueRef
+lp_build_not(struct lp_build_context *bld, LLVMValueRef a)
+{
+   LLVMBuilderRef builder = bld->gallivm->builder;
+   const struct lp_type type = bld->type;
+   LLVMValueRef res;
+
+   assert(lp_check_value(type, a));
+
+   if (type.floating) {
+      a = LLVMBuildBitCast(builder, a, bld->int_vec_type, "");
+   }
+   res = LLVMBuildNot(builder, a, "");
+   if (type.floating) {
+      res = LLVMBuildBitCast(builder, res, bld->vec_type, "");
+   }
+   return res;
+}
 
 /**
  * Shift left.
+ * Result is undefined if the shift count is not smaller than the type width.
  */
 LLVMValueRef
 lp_build_shl(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
@@ -145,6 +190,7 @@ lp_build_shl(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
 
 /**
  * Shift right.
+ * Result is undefined if the shift count is not smaller than the type width.
  */
 LLVMValueRef
 lp_build_shr(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
@@ -170,23 +216,25 @@ lp_build_shr(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
 
 /**
  * Shift left with immediate.
+ * The immediate shift count must be smaller than the type width.
  */
 LLVMValueRef
 lp_build_shl_imm(struct lp_build_context *bld, LLVMValueRef a, unsigned imm)
 {
    LLVMValueRef b = lp_build_const_int_vec(bld->gallivm, bld->type, imm);
-   assert(imm <= bld->type.width);
+   assert(imm < bld->type.width);
    return lp_build_shl(bld, a, b);
 }
 
 
 /**
  * Shift right with immediate.
+ * The immediate shift count must be smaller than the type width.
  */
 LLVMValueRef
 lp_build_shr_imm(struct lp_build_context *bld, LLVMValueRef a, unsigned imm)
 {
    LLVMValueRef b = lp_build_const_int_vec(bld->gallivm, bld->type, imm);
-   assert(imm <= bld->type.width);
+   assert(imm < bld->type.width);
    return lp_build_shr(bld, a, b);
 }

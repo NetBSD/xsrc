@@ -32,11 +32,10 @@
 #include "ir.h"
 #include "ir_visitor.h"
 #include "ir_rvalue_visitor.h"
-#include "ir_print_visitor.h"
 #include "glsl_types.h"
 
 ir_visitor_status
-ir_rvalue_visitor::visit_leave(ir_expression *ir)
+ir_rvalue_base_visitor::rvalue_visit(ir_expression *ir)
 {
    unsigned int operand;
 
@@ -48,7 +47,7 @@ ir_rvalue_visitor::visit_leave(ir_expression *ir)
 }
 
 ir_visitor_status
-ir_rvalue_visitor::visit_leave(ir_texture *ir)
+ir_rvalue_base_visitor::rvalue_visit(ir_texture *ir)
 {
    handle_rvalue(&ir->coordinate);
    handle_rvalue(&ir->projector);
@@ -57,17 +56,26 @@ ir_rvalue_visitor::visit_leave(ir_texture *ir)
 
    switch (ir->op) {
    case ir_tex:
+   case ir_lod:
+   case ir_query_levels:
       break;
    case ir_txb:
       handle_rvalue(&ir->lod_info.bias);
       break;
    case ir_txf:
    case ir_txl:
+   case ir_txs:
       handle_rvalue(&ir->lod_info.lod);
+      break;
+   case ir_txf_ms:
+      handle_rvalue(&ir->lod_info.sample_index);
       break;
    case ir_txd:
       handle_rvalue(&ir->lod_info.grad.dPdx);
       handle_rvalue(&ir->lod_info.grad.dPdy);
+      break;
+   case ir_tg4:
+      handle_rvalue(&ir->lod_info.component);
       break;
    }
 
@@ -75,14 +83,14 @@ ir_rvalue_visitor::visit_leave(ir_texture *ir)
 }
 
 ir_visitor_status
-ir_rvalue_visitor::visit_leave(ir_swizzle *ir)
+ir_rvalue_base_visitor::rvalue_visit(ir_swizzle *ir)
 {
    handle_rvalue(&ir->val);
    return visit_continue;
 }
 
 ir_visitor_status
-ir_rvalue_visitor::visit_leave(ir_dereference_array *ir)
+ir_rvalue_base_visitor::rvalue_visit(ir_dereference_array *ir)
 {
    /* The array index is not the target of the assignment, so clear the
     * 'in_assignee' flag.  Restore it after returning from the array index.
@@ -97,14 +105,14 @@ ir_rvalue_visitor::visit_leave(ir_dereference_array *ir)
 }
 
 ir_visitor_status
-ir_rvalue_visitor::visit_leave(ir_dereference_record *ir)
+ir_rvalue_base_visitor::rvalue_visit(ir_dereference_record *ir)
 {
    handle_rvalue(&ir->record);
    return visit_continue;
 }
 
 ir_visitor_status
-ir_rvalue_visitor::visit_leave(ir_assignment *ir)
+ir_rvalue_base_visitor::rvalue_visit(ir_assignment *ir)
 {
    handle_rvalue(&ir->rhs);
    handle_rvalue(&ir->condition);
@@ -113,10 +121,9 @@ ir_rvalue_visitor::visit_leave(ir_assignment *ir)
 }
 
 ir_visitor_status
-ir_rvalue_visitor::visit_leave(ir_call *ir)
+ir_rvalue_base_visitor::rvalue_visit(ir_call *ir)
 {
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_rvalue *param = (ir_rvalue *)iter.get();
+   foreach_in_list_safe(ir_rvalue, param, &ir->actual_parameters) {
       ir_rvalue *new_param = param;
       handle_rvalue(&new_param);
 
@@ -128,15 +135,161 @@ ir_rvalue_visitor::visit_leave(ir_call *ir)
 }
 
 ir_visitor_status
-ir_rvalue_visitor::visit_leave(ir_return *ir)
+ir_rvalue_base_visitor::rvalue_visit(ir_return *ir)
 {
    handle_rvalue(&ir->value);;
    return visit_continue;
 }
 
 ir_visitor_status
-ir_rvalue_visitor::visit_leave(ir_if *ir)
+ir_rvalue_base_visitor::rvalue_visit(ir_if *ir)
 {
    handle_rvalue(&ir->condition);
    return visit_continue;
+}
+
+ir_visitor_status
+ir_rvalue_base_visitor::rvalue_visit(ir_emit_vertex *ir)
+{
+   handle_rvalue(&ir->stream);
+   return visit_continue;
+}
+
+ir_visitor_status
+ir_rvalue_base_visitor::rvalue_visit(ir_end_primitive *ir)
+{
+   handle_rvalue(&ir->stream);
+   return visit_continue;
+}
+
+ir_visitor_status
+ir_rvalue_visitor::visit_leave(ir_expression *ir)
+{
+   return rvalue_visit(ir);
+}
+
+ir_visitor_status
+ir_rvalue_visitor::visit_leave(ir_texture *ir)
+{
+   return rvalue_visit(ir);
+}
+
+ir_visitor_status
+ir_rvalue_visitor::visit_leave(ir_swizzle *ir)
+{
+   return rvalue_visit(ir);
+}
+
+ir_visitor_status
+ir_rvalue_visitor::visit_leave(ir_dereference_array *ir)
+{
+   return rvalue_visit(ir);
+}
+
+ir_visitor_status
+ir_rvalue_visitor::visit_leave(ir_dereference_record *ir)
+{
+   return rvalue_visit(ir);
+}
+
+ir_visitor_status
+ir_rvalue_visitor::visit_leave(ir_assignment *ir)
+{
+   return rvalue_visit(ir);
+}
+
+ir_visitor_status
+ir_rvalue_visitor::visit_leave(ir_call *ir)
+{
+   return rvalue_visit(ir);
+}
+
+ir_visitor_status
+ir_rvalue_visitor::visit_leave(ir_return *ir)
+{
+   return rvalue_visit(ir);
+}
+
+ir_visitor_status
+ir_rvalue_visitor::visit_leave(ir_if *ir)
+{
+   return rvalue_visit(ir);
+}
+
+ir_visitor_status
+ir_rvalue_visitor::visit_leave(ir_emit_vertex *ir)
+{
+   return rvalue_visit(ir);
+}
+
+ir_visitor_status
+ir_rvalue_visitor::visit_leave(ir_end_primitive *ir)
+{
+   return rvalue_visit(ir);
+}
+
+ir_visitor_status
+ir_rvalue_enter_visitor::visit_enter(ir_expression *ir)
+{
+   return rvalue_visit(ir);
+}
+
+ir_visitor_status
+ir_rvalue_enter_visitor::visit_enter(ir_texture *ir)
+{
+   return rvalue_visit(ir);
+}
+
+ir_visitor_status
+ir_rvalue_enter_visitor::visit_enter(ir_swizzle *ir)
+{
+   return rvalue_visit(ir);
+}
+
+ir_visitor_status
+ir_rvalue_enter_visitor::visit_enter(ir_dereference_array *ir)
+{
+   return rvalue_visit(ir);
+}
+
+ir_visitor_status
+ir_rvalue_enter_visitor::visit_enter(ir_dereference_record *ir)
+{
+   return rvalue_visit(ir);
+}
+
+ir_visitor_status
+ir_rvalue_enter_visitor::visit_enter(ir_assignment *ir)
+{
+   return rvalue_visit(ir);
+}
+
+ir_visitor_status
+ir_rvalue_enter_visitor::visit_enter(ir_call *ir)
+{
+   return rvalue_visit(ir);
+}
+
+ir_visitor_status
+ir_rvalue_enter_visitor::visit_enter(ir_return *ir)
+{
+   return rvalue_visit(ir);
+}
+
+ir_visitor_status
+ir_rvalue_enter_visitor::visit_enter(ir_if *ir)
+{
+   return rvalue_visit(ir);
+}
+
+ir_visitor_status
+ir_rvalue_enter_visitor::visit_enter(ir_emit_vertex *ir)
+{
+   return rvalue_visit(ir);
+}
+
+ir_visitor_status
+ir_rvalue_enter_visitor::visit_enter(ir_end_primitive *ir)
+{
+   return rvalue_visit(ir);
 }

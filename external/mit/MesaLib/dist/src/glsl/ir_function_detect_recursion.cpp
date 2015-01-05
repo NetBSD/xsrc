@@ -127,6 +127,8 @@
 #include "program/hash_table.h"
 #include "program.h"
 
+namespace {
+
 struct call_node : public exec_node {
    class function *func;
 };
@@ -139,25 +141,7 @@ public:
       /* empty */
    }
 
-
-   /* Callers of this ralloc-based new need not call delete. It's
-    * easier to just ralloc_free 'ctx' (or any of its ancestors). */
-   static void* operator new(size_t size, void *ctx)
-   {
-      void *node;
-
-      node = ralloc_size(ctx, size);
-      assert(node != NULL);
-
-      return node;
-   }
-
-   /* If the user *does* call delete, that's OK, we will just
-    * ralloc_free in that case. */
-   static void operator delete(void *node)
-   {
-      ralloc_free(node);
-   }
+   DECLARE_RALLOC_CXX_OPERATORS(function)
 
    ir_function_signature *sig;
 
@@ -173,6 +157,7 @@ public:
    has_recursion_visitor()
       : current(NULL)
    {
+      progress = false;
       this->mem_ctx = ralloc_context(NULL);
       this->function_hash = hash_table_ctor(0, hash_table_pointer_hash,
 					    hash_table_pointer_compare);
@@ -217,7 +202,7 @@ public:
       if (this->current == NULL)
 	 return visit_continue;
 
-      function *const target = this->get_function(call->get_callee());
+      function *const target = this->get_function(call->callee);
 
       /* Create a link from the caller to the callee.
        */
@@ -239,18 +224,18 @@ public:
    bool progress;
 };
 
+} /* anonymous namespace */
+
 static void
 destroy_links(exec_list *list, function *f)
 {
-   foreach_list_safe(node, list) {
-      struct call_node *n = (struct call_node *) node;
-
+   foreach_in_list_safe(call_node, node, list) {
       /* If this is the right function, remove it.  Note that the loop cannot
        * terminate now.  There can be multiple links to a function if it is
        * either called multiple times or calls multiple times.
        */
-      if (n->func == f)
-	 n->remove();
+      if (node->func == f)
+	 node->remove();
    }
 }
 
@@ -289,13 +274,15 @@ emit_errors_unlinked(const void *key, void *data, void *closure)
    function *f = (function *) data;
    YYLTYPE loc;
 
+   (void) key;
+
    char *proto = prototype_string(f->sig->return_type,
 				  f->sig->function_name(),
 				  &f->sig->parameters);
 
    memset(&loc, 0, sizeof(loc));
    _mesa_glsl_error(&loc, state,
-		    "function `%s' has static recursion.",
+		    "function `%s' has static recursion",
 		    proto);
    ralloc_free(proto);
 }
@@ -308,13 +295,14 @@ emit_errors_linked(const void *key, void *data, void *closure)
       (struct gl_shader_program *) closure;
    function *f = (function *) data;
 
+   (void) key;
+
    char *proto = prototype_string(f->sig->return_type,
 				  f->sig->function_name(),
 				  &f->sig->parameters);
 
    linker_error(prog, "function `%s' has static recursion.\n", proto);
    ralloc_free(proto);
-   prog->LinkStatus = false;
 }
 
 

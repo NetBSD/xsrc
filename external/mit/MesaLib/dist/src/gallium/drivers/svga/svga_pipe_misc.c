@@ -25,18 +25,23 @@
 
 #include "svga_cmd.h"
 
+#include "util/u_framebuffer.h"
 #include "util/u_inlines.h"
 
 #include "svga_context.h"
+#include "svga_screen.h"
 #include "svga_surface.h"
+#include "svga_resource_texture.h"
 
 
-static void svga_set_scissor_state( struct pipe_context *pipe,
-                                 const struct pipe_scissor_state *scissor )
+static void svga_set_scissor_states( struct pipe_context *pipe,
+                                     unsigned start_slot,
+                                     unsigned num_scissors,
+                                     const struct pipe_scissor_state *scissors )
 {
    struct svga_context *svga = svga_context(pipe);
 
-   memcpy( &svga->curr.scissor, scissor, sizeof(*scissor) );
+   memcpy( &svga->curr.scissor, scissors, sizeof(*scissors) );
    svga->dirty |= SVGA_NEW_SCISSOR;
 }
 
@@ -50,11 +55,12 @@ static void svga_set_polygon_stipple( struct pipe_context *pipe,
 
 void svga_cleanup_framebuffer(struct svga_context *svga)
 {
+   struct svga_screen *svgascreen = svga_screen(svga->pipe.screen);
    struct pipe_framebuffer_state *curr = &svga->curr.framebuffer;
    struct pipe_framebuffer_state *hw = &svga->state.hw_clear.framebuffer;
-   int i;
+   unsigned i;
 
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
+   for (i = 0; i < svgascreen->max_color_buffers; i++) {
       pipe_surface_reference(&curr->cbufs[i], NULL);
       pipe_surface_reference(&hw->cbufs[i], NULL);
    }
@@ -75,26 +81,32 @@ static void svga_set_framebuffer_state(struct pipe_context *pipe,
    struct svga_context *svga = svga_context(pipe);
    struct pipe_framebuffer_state *dst = &svga->curr.framebuffer;
    boolean propagate = FALSE;
-   int i;
+   unsigned i;
 
    dst->width = fb->width;
    dst->height = fb->height;
    dst->nr_cbufs = fb->nr_cbufs;
 
-   /* check if we need to propaget any of the target surfaces */
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
-      if (dst->cbufs[i] && dst->cbufs[i] != fb->cbufs[i])
-         if (svga_surface_needs_propagation(dst->cbufs[i]))
+   /* check if we need to propagate any of the target surfaces */
+   for (i = 0; i < dst->nr_cbufs; i++) {
+      struct pipe_surface *s = i < fb->nr_cbufs ? fb->cbufs[i] : NULL;
+      if (dst->cbufs[i] && dst->cbufs[i] != s) {
+         if (svga_surface_needs_propagation(dst->cbufs[i])) {
             propagate = TRUE;
+            break;
+         }
+      }
    }
 
    if (propagate) {
       /* make sure that drawing calls comes before propagation calls */
       svga_hwtnl_flush_retry( svga );
    
-      for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
-         if (dst->cbufs[i] && dst->cbufs[i] != fb->cbufs[i])
+      for (i = 0; i < dst->nr_cbufs; i++) {
+         struct pipe_surface *s = i < fb->nr_cbufs ? fb->cbufs[i] : NULL;
+         if (dst->cbufs[i] && dst->cbufs[i] != s)
             svga_propagate_surface(svga, dst->cbufs[i]);
+      }
    }
 
    /* XXX: Actually the virtual hardware may support rendertargets with
@@ -107,10 +119,16 @@ static void svga_set_framebuffer_state(struct pipe_context *pipe,
       }
    }
 
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
-      pipe_surface_reference(&dst->cbufs[i], fb->cbufs[i]);
-   pipe_surface_reference(&dst->zsbuf, fb->zsbuf);
+   util_copy_framebuffer_state(dst, fb);
 
+   /* Set the rendered-to flags */
+   for (i = 0; i < dst->nr_cbufs; i++) {
+      struct pipe_surface *s = dst->cbufs[i];
+      if (s) {
+         struct svga_texture *t = svga_texture(s->texture);
+         svga_set_texture_rendered_to(t, s->u.tex.first_layer, s->u.tex.level);
+      }
+   }
 
    if (svga->curr.framebuffer.zsbuf)
    {
@@ -118,9 +136,9 @@ static void svga_set_framebuffer_state(struct pipe_context *pipe,
       case PIPE_FORMAT_Z16_UNORM:
          svga->curr.depthscale = 1.0f / DEPTH_BIAS_SCALE_FACTOR_D16;
          break;
-      case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
+      case PIPE_FORMAT_Z24_UNORM_S8_UINT:
       case PIPE_FORMAT_Z24X8_UNORM:
-      case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+      case PIPE_FORMAT_S8_UINT_Z24_UNORM:
       case PIPE_FORMAT_X8Z24_UNORM:
          svga->curr.depthscale = 1.0f / DEPTH_BIAS_SCALE_FACTOR_D24S8;
          break;
@@ -133,6 +151,13 @@ static void svga_set_framebuffer_state(struct pipe_context *pipe,
       default:
          svga->curr.depthscale = 0.0f;
          break;
+      }
+
+      /* Set rendered-to flag */
+      {
+         struct pipe_surface *s = dst->zsbuf;
+         struct svga_texture *t = svga_texture(s->texture);
+         svga_set_texture_rendered_to(t, s->u.tex.first_layer, s->u.tex.level);
       }
    }
    else {
@@ -159,12 +184,14 @@ static void svga_set_clip_state( struct pipe_context *pipe,
 /* Called when driver state tracker notices changes to the viewport
  * matrix:
  */
-static void svga_set_viewport_state( struct pipe_context *pipe,
-				     const struct pipe_viewport_state *viewport )
+static void svga_set_viewport_states( struct pipe_context *pipe,
+                                      unsigned start_slot,
+                                      unsigned num_viewports,
+                                      const struct pipe_viewport_state *viewports )
 {
    struct svga_context *svga = svga_context(pipe);
 
-   svga->curr.viewport = *viewport; /* struct copy */
+   svga->curr.viewport = *viewports; /* struct copy */
 
    svga->dirty |= SVGA_NEW_VIEWPORT;
 }
@@ -173,11 +200,11 @@ static void svga_set_viewport_state( struct pipe_context *pipe,
 
 void svga_init_misc_functions( struct svga_context *svga )
 {
-   svga->pipe.set_scissor_state = svga_set_scissor_state;
+   svga->pipe.set_scissor_states = svga_set_scissor_states;
    svga->pipe.set_polygon_stipple = svga_set_polygon_stipple;
    svga->pipe.set_framebuffer_state = svga_set_framebuffer_state;
    svga->pipe.set_clip_state = svga_set_clip_state;
-   svga->pipe.set_viewport_state = svga_set_viewport_state;
+   svga->pipe.set_viewport_states = svga_set_viewport_states;
 }
 
 

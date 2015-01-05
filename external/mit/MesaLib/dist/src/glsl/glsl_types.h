@@ -28,21 +28,24 @@
 
 #include <string.h>
 #include <assert.h>
+#include "main/mtypes.h" /* for gl_texture_index, C++'s enum rules are broken */
 
+#ifdef __cplusplus
 extern "C" {
-#include "GL/gl.h"
-}
-
-#include "ralloc.h"
+#endif
 
 struct _mesa_glsl_parse_state;
 struct glsl_symbol_table;
 
-extern "C" void
+extern void
 _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state);
 
-extern "C" void
+extern void
 _mesa_glsl_release_types(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 enum glsl_base_type {
    GLSL_TYPE_UINT = 0,
@@ -50,7 +53,10 @@ enum glsl_base_type {
    GLSL_TYPE_FLOAT,
    GLSL_TYPE_BOOL,
    GLSL_TYPE_SAMPLER,
+   GLSL_TYPE_IMAGE,
+   GLSL_TYPE_ATOMIC_UINT,
    GLSL_TYPE_STRUCT,
+   GLSL_TYPE_INTERFACE,
    GLSL_TYPE_ARRAY,
    GLSL_TYPE_VOID,
    GLSL_TYPE_ERROR
@@ -62,9 +68,41 @@ enum glsl_sampler_dim {
    GLSL_SAMPLER_DIM_3D,
    GLSL_SAMPLER_DIM_CUBE,
    GLSL_SAMPLER_DIM_RECT,
-   GLSL_SAMPLER_DIM_BUF
+   GLSL_SAMPLER_DIM_BUF,
+   GLSL_SAMPLER_DIM_EXTERNAL,
+   GLSL_SAMPLER_DIM_MS
 };
 
+enum glsl_interface_packing {
+   GLSL_INTERFACE_PACKING_STD140,
+   GLSL_INTERFACE_PACKING_SHARED,
+   GLSL_INTERFACE_PACKING_PACKED
+};
+
+enum glsl_matrix_layout {
+   /**
+    * The layout of the matrix is inherited from the object containing the
+    * matrix (the top level structure or the uniform block).
+    */
+   GLSL_MATRIX_LAYOUT_INHERITED,
+
+   /**
+    * Explicit column-major layout
+    *
+    * If a uniform block doesn't have an explicit layout set, it will default
+    * to this layout.
+    */
+   GLSL_MATRIX_LAYOUT_COLUMN_MAJOR,
+
+   /**
+    * Row-major layout
+    */
+   GLSL_MATRIX_LAYOUT_ROW_MAJOR
+};
+
+#ifdef __cplusplus
+#include "GL/gl.h"
+#include "util/ralloc.h"
 
 struct glsl_type {
    GLenum gl_type;
@@ -73,10 +111,12 @@ struct glsl_type {
    unsigned sampler_dimensionality:3; /**< \see glsl_sampler_dim */
    unsigned sampler_shadow:1;
    unsigned sampler_array:1;
-   unsigned sampler_type:2;    /**< Type of data returned using this sampler.
-				* only \c GLSL_TYPE_FLOAT, \c GLSL_TYPE_INT,
+   unsigned sampler_type:2;    /**< Type of data returned using this
+				* sampler or image.  Only \c
+				* GLSL_TYPE_FLOAT, \c GLSL_TYPE_INT,
 				* and \c GLSL_TYPE_UINT are valid.
 				*/
+   unsigned interface_packing:2;
 
    /* Callers of this ralloc-based new need not call delete. It's
     * easier to just ralloc_free 'mem_ctx' (or any of its ancestors). */
@@ -116,15 +156,15 @@ struct glsl_type {
    /**
     * Name of the data type
     *
-    * This may be \c NULL for anonymous structures, for arrays, or for
-    * function types.
+    * Will never be \c NULL.
     */
    const char *name;
 
    /**
     * For \c GLSL_TYPE_ARRAY, this is the length of the array.  For
-    * \c GLSL_TYPE_STRUCT, it is the number of elements in the structure and
-    * the number of values pointed to by \c fields.structure (below).
+    * \c GLSL_TYPE_STRUCT or \c GLSL_TYPE_INTERFACE, it is the number of
+    * elements in the structure and the number of values pointed to by
+    * \c fields.structure (below).
     */
    unsigned length;
 
@@ -137,38 +177,31 @@ struct glsl_type {
       struct glsl_struct_field *structure;      /**< List of struct fields. */
    } fields;
 
-
    /**
     * \name Pointers to various public type singletons
     */
    /*@{*/
-   static const glsl_type *const error_type;
-   static const glsl_type *const void_type;
-   static const glsl_type *const int_type;
-   static const glsl_type *const ivec4_type;
-   static const glsl_type *const uint_type;
-   static const glsl_type *const uvec2_type;
-   static const glsl_type *const uvec3_type;
-   static const glsl_type *const uvec4_type;
-   static const glsl_type *const float_type;
-   static const glsl_type *const vec2_type;
-   static const glsl_type *const vec3_type;
-   static const glsl_type *const vec4_type;
-   static const glsl_type *const bool_type;
-   static const glsl_type *const mat2_type;
-   static const glsl_type *const mat2x3_type;
-   static const glsl_type *const mat2x4_type;
-   static const glsl_type *const mat3x2_type;
-   static const glsl_type *const mat3_type;
-   static const glsl_type *const mat3x4_type;
-   static const glsl_type *const mat4x2_type;
-   static const glsl_type *const mat4x3_type;
-   static const glsl_type *const mat4_type;
+#undef  DECL_TYPE
+#define DECL_TYPE(NAME, ...) \
+   static const glsl_type *const NAME##_type;
+#undef  STRUCT_TYPE
+#define STRUCT_TYPE(NAME) \
+   static const glsl_type *const struct_##NAME##_type;
+#include "builtin_type_macros.h"
    /*@}*/
 
+   /**
+    * Convenience accessors for vector types (shorter than get_instance()).
+    * @{
+    */
+   static const glsl_type *vec(unsigned components);
+   static const glsl_type *ivec(unsigned components);
+   static const glsl_type *uvec(unsigned components);
+   static const glsl_type *bvec(unsigned components);
+   /**@}*/
 
    /**
-    * For numeric and boolean derrived types returns the basic scalar type
+    * For numeric and boolean derived types returns the basic scalar type
     *
     * If the type is a numeric or boolean scalar, vector, or matrix type,
     * this function gets the scalar type of the individual components.  For
@@ -176,6 +209,17 @@ struct glsl_type {
     * error type is returned.
     */
    const glsl_type *get_base_type() const;
+
+   /**
+    * Get the basic scalar type which this type aggregates.
+    *
+    * If the type is a numeric or boolean scalar, vector, or matrix, or an
+    * array of any of those, this function gets the scalar type of the
+    * individual components.  For structs and arrays of structs, this function
+    * returns the struct type.  For samplers and arrays of samplers, this
+    * function returns the sampler type.
+    */
+   const glsl_type *get_scalar_type() const;
 
    /**
     * Query the type of elements in an array
@@ -209,6 +253,14 @@ struct glsl_type {
 					       const char *name);
 
    /**
+    * Get the instance of an interface block type
+    */
+   static const glsl_type *get_interface_instance(const glsl_struct_field *fields,
+						  unsigned num_fields,
+						  enum glsl_interface_packing packing,
+						  const char *block_name);
+
+   /**
     * Query the total number of scalars that make up a scalar, vector or matrix
     */
    unsigned components() const
@@ -223,6 +275,40 @@ struct glsl_type {
     * might occupy.
     */
    unsigned component_slots() const;
+
+   /**
+    * Calculate the number of unique values from glGetUniformLocation for the
+    * elements of the type.
+    *
+    * This is used to allocate slots in the UniformRemapTable, the amount of
+    * locations may not match with actual used storage space by the driver.
+    */
+   unsigned uniform_locations() const;
+
+   /**
+    * Calculate the number of attribute slots required to hold this type
+    *
+    * This implements the language rules of GLSL 1.50 for counting the number
+    * of slots used by a vertex attribute.  It also determines the number of
+    * varying slots the type will use up in the absence of varying packing
+    * (and thus, it can be used to measure the number of varying slots used by
+    * the varyings that are generated by lower_packed_varyings).
+    */
+   unsigned count_attribute_slots() const;
+
+
+   /**
+    * Alignment in bytes of the start of this type in a std140 uniform
+    * block.
+    */
+   unsigned std140_base_alignment(bool row_major) const;
+
+   /** Size in bytes of this type in a std140 uniform block.
+    *
+    * Note that this is not GL_UNIFORM_SIZE (which is the number of
+    * elements in the array)
+    */
+   unsigned std140_size(bool row_major) const;
 
    /**
     * \brief Can this type be implicitly converted to another?
@@ -258,7 +344,8 @@ struct glsl_type {
     *     integers.
     * \endverbatim
     */
-   bool can_implicitly_convert_to(const glsl_type *desired) const;
+   bool can_implicitly_convert_to(const glsl_type *desired,
+                                  _mesa_glsl_parse_state *state) const;
 
    /**
     * Query whether or not a type is a scalar (non-vector and non-matrix).
@@ -307,6 +394,12 @@ struct glsl_type {
    }
 
    /**
+    * Query whether or not type is an integral type, or for struct and array
+    * types, contains an integral type.
+    */
+   bool contains_integer() const;
+
+   /**
     * Query whether or not a type is a float type
     */
    bool is_float() const
@@ -337,6 +430,25 @@ struct glsl_type {
    bool contains_sampler() const;
 
    /**
+    * Get the Mesa texture target index for a sampler type.
+    */
+   gl_texture_index sampler_index() const;
+
+   /**
+    * Query whether or not type is an image, or for struct and array
+    * types, contains an image.
+    */
+   bool contains_image() const;
+
+   /**
+    * Query whether or not a type is an image
+    */
+   bool is_image() const
+   {
+      return base_type == GLSL_TYPE_IMAGE;
+   }
+
+   /**
     * Query whether or not a type is an array
     */
    bool is_array() const
@@ -350,6 +462,14 @@ struct glsl_type {
    bool is_record() const
    {
       return base_type == GLSL_TYPE_STRUCT;
+   }
+
+   /**
+    * Query whether or not a type is an interface
+    */
+   bool is_interface() const
+   {
+      return base_type == GLSL_TYPE_INTERFACE;
    }
 
    /**
@@ -367,6 +487,44 @@ struct glsl_type {
    {
       return base_type == GLSL_TYPE_ERROR;
    }
+
+   /**
+    * Get the type stripped of any arrays
+    *
+    * \return
+    * Pointer to the type of elements of the first non-array type for array
+    * types, or pointer to itself for non-array types.
+    */
+   const glsl_type *without_array() const
+   {
+      return this->is_array() ? this->fields.array : this;
+   }
+
+   /**
+    * Return the amount of atomic counter storage required for a type.
+    */
+   unsigned atomic_size() const
+   {
+      if (base_type == GLSL_TYPE_ATOMIC_UINT)
+         return ATOMIC_COUNTER_SIZE;
+      else if (is_array())
+         return length * element_type()->atomic_size();
+      else
+         return 0;
+   }
+
+   /**
+    * Return whether a type contains any atomic counters.
+    */
+   bool contains_atomic() const
+   {
+      return atomic_size() > 0;
+   }
+
+   /**
+    * Return whether a type contains any opaque types.
+    */
+   bool contains_opaque() const;
 
    /**
     * Query the full type of a matrix row
@@ -396,7 +554,6 @@ struct glsl_type {
 	 : error_type;
    }
 
-
    /**
     * Get the type of a structure field
     *
@@ -406,12 +563,10 @@ struct glsl_type {
     */
    const glsl_type *field_type(const char *name) const;
 
-
    /**
     * Get the location of a filed within a record type
     */
    int field_index(const char *name) const;
-
 
    /**
     * Query the number of elements in an array type
@@ -425,6 +580,34 @@ struct glsl_type {
    {
       return is_array() ? length : -1;
    }
+
+   /**
+    * Query whether the array size for all dimensions has been declared.
+    */
+   bool is_unsized_array() const
+   {
+      return is_array() && length == 0;
+   }
+
+   /**
+    * Return the number of coordinate components needed for this
+    * sampler or image type.
+    *
+    * This is based purely on the sampler's dimensionality.  For example, this
+    * returns 1 for sampler1D, and 3 for sampler2DArray.
+    *
+    * Note that this is often different than actual coordinate type used in
+    * a texturing built-in function, since those pack additional values (such
+    * as the shadow comparitor or projector) into the coordinate type.
+    */
+   int coordinate_components() const;
+
+   /**
+    * Compare a record type against another record type.
+    *
+    * This is useful for matching record types declared across shader stages.
+    */
+   bool record_compare(const glsl_type *b) const;
 
 private:
    /**
@@ -441,14 +624,18 @@ private:
 	     glsl_base_type base_type, unsigned vector_elements,
 	     unsigned matrix_columns, const char *name);
 
-   /** Constructor for sampler types */
-   glsl_type(GLenum gl_type,
+   /** Constructor for sampler or image types */
+   glsl_type(GLenum gl_type, glsl_base_type base_type,
 	     enum glsl_sampler_dim dim, bool shadow, bool array,
 	     unsigned type, const char *name);
 
    /** Constructor for record types */
    glsl_type(const glsl_struct_field *fields, unsigned num_fields,
 	     const char *name);
+
+   /** Constructor for interface types */
+   glsl_type(const glsl_struct_field *fields, unsigned num_fields,
+	     enum glsl_interface_packing packing, const char *name);
 
    /** Constructor for array types */
    glsl_type(const glsl_type *array, unsigned length);
@@ -459,43 +646,21 @@ private:
    /** Hash table containing the known record types. */
    static struct hash_table *record_types;
 
+   /** Hash table containing the known interface types. */
+   static struct hash_table *interface_types;
+
    static int record_key_compare(const void *a, const void *b);
    static unsigned record_key_hash(const void *key);
 
    /**
-    * \name Pointers to various type singletons
+    * \name Built-in type flyweights
     */
    /*@{*/
-   static const glsl_type _error_type;
-   static const glsl_type _void_type;
-   static const glsl_type _sampler3D_type;
-   static const glsl_type builtin_core_types[];
-   static const glsl_type builtin_structure_types[];
-   static const glsl_type builtin_110_deprecated_structure_types[];
-   static const glsl_type builtin_110_types[];
-   static const glsl_type builtin_120_types[];
-   static const glsl_type builtin_130_types[];
-   static const glsl_type builtin_ARB_texture_rectangle_types[];
-   static const glsl_type builtin_EXT_texture_array_types[];
-   static const glsl_type builtin_EXT_texture_buffer_object_types[];
-   /*@}*/
-
-   /**
-    * \name Methods to populate a symbol table with built-in types.
-    *
-    * \internal
-    * This is one of the truely annoying things about C++.  Methods that are
-    * completely internal and private to a type still have to be advertised to
-    * the world in a public header file.
-    */
-   /*@{*/
-   static void generate_100ES_types(glsl_symbol_table *);
-   static void generate_110_types(glsl_symbol_table *);
-   static void generate_120_types(glsl_symbol_table *);
-   static void generate_130_types(glsl_symbol_table *);
-   static void generate_ARB_texture_rectangle_types(glsl_symbol_table *, bool);
-   static void generate_EXT_texture_array_types(glsl_symbol_table *, bool);
-   static void generate_OES_texture_3D_types(glsl_symbol_table *, bool);
+#undef  DECL_TYPE
+#define DECL_TYPE(NAME, ...) static const glsl_type _##NAME##_type;
+#undef  STRUCT_TYPE
+#define STRUCT_TYPE(NAME)        static const glsl_type _struct_##NAME##_type;
+#include "builtin_type_macros.h"
    /*@}*/
 
    /**
@@ -514,6 +679,54 @@ private:
 struct glsl_struct_field {
    const struct glsl_type *type;
    const char *name;
+
+   /**
+    * For interface blocks, gl_varying_slot corresponding to the input/output
+    * if this is a built-in input/output (i.e. a member of the built-in
+    * gl_PerVertex interface block); -1 otherwise.
+    *
+    * Ignored for structs.
+    */
+   int location;
+
+   /**
+    * For interface blocks, the interpolation mode (as in
+    * ir_variable::interpolation).  0 otherwise.
+    */
+   unsigned interpolation:2;
+
+   /**
+    * For interface blocks, 1 if this variable uses centroid interpolation (as
+    * in ir_variable::centroid).  0 otherwise.
+    */
+   unsigned centroid:1;
+
+   /**
+    * For interface blocks, 1 if this variable uses sample interpolation (as
+    * in ir_variable::sample). 0 otherwise.
+    */
+   unsigned sample:1;
+
+   /**
+    * Layout of the matrix.  Uses glsl_matrix_layout values.
+    */
+   unsigned matrix_layout:2;
+
+   /**
+    * For interface blocks, it has a value if this variable uses multiple vertex
+    * streams (as in ir_variable::stream). -1 otherwise.
+    */
+   int stream;
 };
+
+static inline unsigned int
+glsl_align(unsigned int a, unsigned int align)
+{
+   return (a + align - 1) / align * align;
+}
+
+#undef DECL_TYPE
+#undef STRUCT_TYPE
+#endif /* __cplusplus */
 
 #endif /* GLSL_TYPES_H */

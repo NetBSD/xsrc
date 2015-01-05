@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -217,6 +217,36 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
    case TGSI_OPCODE_OR:
    case TGSI_OPCODE_XOR:
    case TGSI_OPCODE_SAD:
+   case TGSI_OPCODE_FSEQ:
+   case TGSI_OPCODE_FSGE:
+   case TGSI_OPCODE_FSLT:
+   case TGSI_OPCODE_FSNE:
+   case TGSI_OPCODE_F2I:
+   case TGSI_OPCODE_IDIV:
+   case TGSI_OPCODE_IMAX:
+   case TGSI_OPCODE_IMIN:
+   case TGSI_OPCODE_INEG:
+   case TGSI_OPCODE_ISGE:
+   case TGSI_OPCODE_ISHR:
+   case TGSI_OPCODE_ISLT:
+   case TGSI_OPCODE_F2U:
+   case TGSI_OPCODE_U2F:
+   case TGSI_OPCODE_UADD:
+   case TGSI_OPCODE_UDIV:
+   case TGSI_OPCODE_UMAD:
+   case TGSI_OPCODE_UMAX:
+   case TGSI_OPCODE_UMIN:
+   case TGSI_OPCODE_UMOD:
+   case TGSI_OPCODE_UMUL:
+   case TGSI_OPCODE_USEQ:
+   case TGSI_OPCODE_USGE:
+   case TGSI_OPCODE_USHR:
+   case TGSI_OPCODE_USLT:
+   case TGSI_OPCODE_USNE:
+   case TGSI_OPCODE_IMUL_HI:
+   case TGSI_OPCODE_UMUL_HI:
+   case TGSI_OPCODE_DDX_FINE:
+   case TGSI_OPCODE_DDY_FINE:
       /* Channel-wise operations */
       read_mask = write_mask;
       break;
@@ -270,21 +300,26 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
          case TGSI_TEXTURE_SHADOW1D:
             read_mask = TGSI_WRITEMASK_XZ;
             break;
+         case TGSI_TEXTURE_1D_ARRAY:
          case TGSI_TEXTURE_2D:
          case TGSI_TEXTURE_RECT:
             read_mask = TGSI_WRITEMASK_XY;
             break;
+         case TGSI_TEXTURE_SHADOW1D_ARRAY:
          case TGSI_TEXTURE_SHADOW2D:
          case TGSI_TEXTURE_SHADOWRECT:
+         case TGSI_TEXTURE_2D_ARRAY:
          case TGSI_TEXTURE_3D:
          case TGSI_TEXTURE_CUBE:
+         case TGSI_TEXTURE_2D_MSAA:
             read_mask = TGSI_WRITEMASK_XYZ;
             break;
-         case TGSI_TEXTURE_1D_ARRAY:
-            read_mask = TGSI_WRITEMASK_XY;
-            break;
-         case TGSI_TEXTURE_2D_ARRAY:
-            read_mask = TGSI_WRITEMASK_XYZ;
+         case TGSI_TEXTURE_SHADOW2D_ARRAY:
+         case TGSI_TEXTURE_CUBE_ARRAY:
+         case TGSI_TEXTURE_SHADOWCUBE:
+         case TGSI_TEXTURE_2D_ARRAY_MSAA:
+         case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
+            read_mask = TGSI_WRITEMASK_XYZW;
             break;
          default:
             assert(0);
@@ -314,4 +349,117 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
    }
 
    return usage_mask;
+}
+
+/**
+ * Convert a tgsi_ind_register into a tgsi_src_register
+ */
+struct tgsi_src_register
+tgsi_util_get_src_from_ind(const struct tgsi_ind_register *reg)
+{
+   struct tgsi_src_register src = { 0 };
+
+   src.File = reg->File;
+   src.Index = reg->Index;
+   src.SwizzleX = reg->Swizzle;
+   src.SwizzleY = reg->Swizzle;
+   src.SwizzleZ = reg->Swizzle;
+   src.SwizzleW = reg->Swizzle;
+
+   return src;
+}
+
+/**
+ * Return the dimension of the texture coordinates (layer included for array
+ * textures), as well as the location of the shadow reference value or the
+ * sample index.
+ */
+int
+tgsi_util_get_texture_coord_dim(int tgsi_tex, int *shadow_or_sample)
+{
+   int dim;
+
+   /*
+    * Depending on the texture target, (src0.xyzw, src1.x) is interpreted
+    * differently:
+    *
+    *   (s, X, X, X, X),               for BUFFER
+    *   (s, X, X, X, X),               for 1D
+    *   (s, t, X, X, X),               for 2D, RECT
+    *   (s, t, r, X, X),               for 3D, CUBE
+    *
+    *   (s, layer, X, X, X),           for 1D_ARRAY
+    *   (s, t, layer, X, X),           for 2D_ARRAY
+    *   (s, t, r, layer, X),           for CUBE_ARRAY
+    *
+    *   (s, X, shadow, X, X),          for SHADOW1D
+    *   (s, t, shadow, X, X),          for SHADOW2D, SHADOWRECT
+    *   (s, t, r, shadow, X),          for SHADOWCUBE
+    *
+    *   (s, layer, shadow, X, X),      for SHADOW1D_ARRAY
+    *   (s, t, layer, shadow, X),      for SHADOW2D_ARRAY
+    *   (s, t, r, layer, shadow),      for SHADOWCUBE_ARRAY
+    *
+    *   (s, t, sample, X, X),          for 2D_MSAA
+    *   (s, t, layer, sample, X),      for 2D_ARRAY_MSAA
+    */
+   switch (tgsi_tex) {
+   case TGSI_TEXTURE_BUFFER:
+   case TGSI_TEXTURE_1D:
+   case TGSI_TEXTURE_SHADOW1D:
+      dim = 1;
+      break;
+   case TGSI_TEXTURE_2D:
+   case TGSI_TEXTURE_RECT:
+   case TGSI_TEXTURE_1D_ARRAY:
+   case TGSI_TEXTURE_SHADOW2D:
+   case TGSI_TEXTURE_SHADOWRECT:
+   case TGSI_TEXTURE_SHADOW1D_ARRAY:
+   case TGSI_TEXTURE_2D_MSAA:
+      dim = 2;
+      break;
+   case TGSI_TEXTURE_3D:
+   case TGSI_TEXTURE_CUBE:
+   case TGSI_TEXTURE_2D_ARRAY:
+   case TGSI_TEXTURE_SHADOWCUBE:
+   case TGSI_TEXTURE_SHADOW2D_ARRAY:
+   case TGSI_TEXTURE_2D_ARRAY_MSAA:
+      dim = 3;
+      break;
+   case TGSI_TEXTURE_CUBE_ARRAY:
+   case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
+      dim = 4;
+      break;
+   default:
+      assert(!"unknown texture target");
+      dim = 0;
+      break;
+   }
+
+   if (shadow_or_sample) {
+      switch (tgsi_tex) {
+      case TGSI_TEXTURE_SHADOW1D:
+         /* there is a gap */
+         *shadow_or_sample = 2;
+         break;
+      case TGSI_TEXTURE_SHADOW2D:
+      case TGSI_TEXTURE_SHADOWRECT:
+      case TGSI_TEXTURE_SHADOWCUBE:
+      case TGSI_TEXTURE_SHADOW1D_ARRAY:
+      case TGSI_TEXTURE_SHADOW2D_ARRAY:
+      case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
+         *shadow_or_sample = dim;
+         break;
+      case TGSI_TEXTURE_2D_MSAA:
+      case TGSI_TEXTURE_2D_ARRAY_MSAA:
+         *shadow_or_sample = 3;
+         break;
+      default:
+         /* no shadow nor sample */
+         *shadow_or_sample = -1;
+         break;
+      }
+   }
+
+   return dim;
 }
