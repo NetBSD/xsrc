@@ -194,7 +194,7 @@ static const struct u_resource_vtbl r600_global_buffer_vtbl =
 
 void *evergreen_create_compute_state(
 	struct pipe_context *ctx_,
-	const const struct pipe_compute_state *cso)
+	const struct pipe_compute_state *cso)
 {
 	struct r600_context *ctx = (struct r600_context *)ctx_;
 	struct r600_pipe_compute *shader = CALLOC_STRUCT(r600_pipe_compute);
