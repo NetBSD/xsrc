@@ -1,8 +1,8 @@
 /*
  Copyright (C) Intel Corp.  2006.  All Rights Reserved.
- Intel funded Tungsten Graphics (http://www.tungstengraphics.com) to
+ Intel funded Tungsten Graphics to
  develop this 3D driver.
- 
+
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
  "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  distribute, sublicense, and/or sell copies of the Software, and to
  permit persons to whom the Software is furnished to do so, subject to
  the following conditions:
- 
+
  The above copyright notice and this permission notice (including the
  next paragraph) shall be included in all copies or substantial
  portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -22,11 +22,11 @@
  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- 
+
  **********************************************************************/
  /*
   * Authors:
-  *   Keith Whitwell <keith@tungstengraphics.com>
+  *   Keith Whitwell <keithw@vmware.com>
   */
 
 #include "main/glheader.h"
@@ -42,7 +42,7 @@
 #include "brw_state.h"
 #include "brw_clip.h"
 
-#include "../glsl/ralloc.h"
+#include "util/ralloc.h"
 
 #define FRONT_UNFILLED_BIT  0x1
 #define BACK_UNFILLED_BIT   0x2
@@ -51,19 +51,15 @@
 static void compile_clip_prog( struct brw_context *brw,
 			     struct brw_clip_prog_key *key )
 {
-   struct intel_context *intel = &brw->intel;
    struct brw_clip_compile c;
    const GLuint *program;
    void *mem_ctx;
    GLuint program_size;
-   GLuint delta;
-   GLuint i;
-   GLuint header_regs;
 
    memset(&c, 0, sizeof(c));
 
    mem_ctx = ralloc_context(NULL);
-   
+
    /* Begin the compilation:
     */
    brw_init_compile(brw, &c.func, mem_ctx);
@@ -71,51 +67,33 @@ static void compile_clip_prog( struct brw_context *brw,
    c.func.single_program_flow = 1;
 
    c.key = *key;
+   c.vue_map = brw->vue_map_geom_out;
 
-   /* Need to locate the two positions present in vertex + header.
-    * These are currently hardcoded:
+   c.has_flat_shading =
+      brw_any_flat_varyings(&key->interpolation_mode);
+   c.has_noperspective_shading =
+      brw_any_noperspective_varyings(&key->interpolation_mode);
+
+   /* nr_regs is the number of registers filled by reading data from the VUE.
+    * This program accesses the entire VUE, so nr_regs needs to be the size of
+    * the VUE (measured in pairs, since two slots are stored in each
+    * register).
     */
-   c.header_position_offset = ATTR_SIZE;
-
-   if (intel->gen == 5)
-      header_regs = 3;
-   else
-      header_regs = 1;
-
-   delta = header_regs * REG_SIZE;
-
-   for (i = 0; i < VERT_RESULT_MAX; i++) {
-      if (c.key.attrs & BITFIELD64_BIT(i)) {
-	 c.offset[i] = delta;
-	 delta += ATTR_SIZE;
-
-	 c.idx_to_attr[c.nr_attrs] = i;
-	 c.nr_attrs++;
-      }
-   }
-
-   /* The vertex attributes start at a URB row-aligned offset after
-    * the 8-20 dword vertex header, and continue for a URB row-aligned
-    * length.  nr_regs determines the urb_read_length from the start
-    * of the header to the end of the vertex data.
-    */
-   c.nr_regs = header_regs + (c.nr_attrs + 1) / 2;
-
-   c.nr_bytes = c.nr_regs * REG_SIZE;
+   c.nr_regs = (c.vue_map.num_slots + 1)/2;
 
    c.prog_data.clip_mode = c.key.clip_mode; /* XXX */
 
    /* For some reason the thread is spawned with only 4 channels
-    * unmasked.  
+    * unmasked.
     */
-   brw_set_mask_control(&c.func, BRW_MASK_DISABLE);
+   brw_set_default_mask_control(&c.func, BRW_MASK_DISABLE);
 
 
    /* Would ideally have the option of producing a program which could
     * do all three:
     */
    switch (key->primitive) {
-   case GL_TRIANGLES: 
+   case GL_TRIANGLES:
       if (key->do_unfilled)
 	 brw_emit_unfilled_clip( &c );
       else
@@ -128,22 +106,19 @@ static void compile_clip_prog( struct brw_context *brw,
       brw_emit_point_clip( &c );
       break;
    default:
-      assert(0);
-      return;
+      unreachable("not reached");
    }
 
-	 
+   brw_compact_instructions(&c.func, 0, 0, NULL);
 
    /* get the program
     */
    program = brw_get_program(&c.func, &program_size);
 
    if (unlikely(INTEL_DEBUG & DEBUG_CLIP)) {
-      printf("clip:\n");
-      for (i = 0; i < program_size / sizeof(struct brw_instruction); i++)
-	 brw_disasm(stdout, &((struct brw_instruction *)program)[i],
-		    intel->gen);
-      printf("\n");
+      fprintf(stderr, "clip:\n");
+      brw_disassemble(brw, c.func.store, 0, program_size, stderr);
+      fprintf(stderr, "\n");
    }
 
    brw_upload_cache(&brw->cache,
@@ -157,27 +132,32 @@ static void compile_clip_prog( struct brw_context *brw,
 
 /* Calculate interpolants for triangle and line rasterization.
  */
-static void upload_clip_prog(struct brw_context *brw)
+static void
+brw_upload_clip_prog(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct brw_clip_prog_key key;
 
    memset(&key, 0, sizeof(key));
 
    /* Populate the key:
     */
-   /* BRW_NEW_REDUCED_PRIMITIVE */
-   key.primitive = brw->intel.reduced_primitive;
-   /* CACHE_NEW_VS_PROG */
-   key.attrs = brw->vs.prog_data->outputs_written;
-   /* _NEW_LIGHT */
-   key.do_flat_shading = (ctx->Light.ShadeModel == GL_FLAT);
-   key.pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);
-   /* _NEW_TRANSFORM */
-   key.nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
 
-   if (intel->gen == 5)
+   /* BRW_NEW_INTERPOLATION_MAP */
+   key.interpolation_mode = brw->interpolation_mode;
+
+   /* BRW_NEW_REDUCED_PRIMITIVE */
+   key.primitive = brw->reduced_primitive;
+   /* BRW_NEW_VUE_MAP_GEOM_OUT */
+   key.attrs = brw->vue_map_geom_out.slots_valid;
+
+   /* _NEW_LIGHT */
+   key.pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);
+   /* _NEW_TRANSFORM (also part of VUE map)*/
+   if (ctx->Transform.ClipPlanesEnabled)
+      key.nr_userclip = _mesa_logbase2(ctx->Transform.ClipPlanesEnabled) + 1;
+
+   if (brw->gen == 5)
        key.clip_mode = BRW_CLIPMODE_KERNEL_CLIP;
    else
        key.clip_mode = BRW_CLIPMODE_NORMAL;
@@ -196,8 +176,8 @@ static void upload_clip_prog(struct brw_context *brw)
 	 if (!ctx->Polygon.CullFlag ||
 	     ctx->Polygon.CullFaceMode != GL_FRONT) {
 	    switch (ctx->Polygon.FrontMode) {
-	    case GL_FILL: 
-	       fill_front = CLIP_FILL; 
+	    case GL_FILL:
+	       fill_front = CLIP_FILL;
 	       offset_front = 0;
 	       break;
 	    case GL_LINE:
@@ -214,8 +194,8 @@ static void upload_clip_prog(struct brw_context *brw)
 	 if (!ctx->Polygon.CullFlag ||
 	     ctx->Polygon.CullFaceMode != GL_BACK) {
 	    switch (ctx->Polygon.BackMode) {
-	    case GL_FILL: 
-	       fill_back = CLIP_FILL; 
+	    case GL_FILL:
+	       fill_back = CLIP_FILL;
 	       offset_back = 0;
 	       break;
 	    case GL_LINE:
@@ -240,7 +220,7 @@ static void upload_clip_prog(struct brw_context *brw)
 
 	    if (offset_back || offset_front) {
 	       /* _NEW_POLYGON, _NEW_BUFFERS */
-	       key.offset_units = ctx->Polygon.OffsetUnits * brw->intel.polygon_offset_scale;
+	       key.offset_units = ctx->Polygon.OffsetUnits * ctx->DrawBuffer->_MRD * 2;
 	       key.offset_factor = ctx->Polygon.OffsetFactor * ctx->DrawBuffer->_MRD;
 	    }
 
@@ -251,7 +231,7 @@ static void upload_clip_prog(struct brw_context *brw)
 	       key.offset_ccw = offset_front;
 	       key.offset_cw = offset_back;
 	       if (ctx->Light.Model.TwoSide &&
-		   key.fill_cw != CLIP_CULL) 
+		   key.fill_cw != CLIP_CULL)
 		  key.copy_bfc_cw = 1;
 	       break;
 	    case GL_CW:
@@ -260,7 +240,7 @@ static void upload_clip_prog(struct brw_context *brw)
 	       key.offset_cw = offset_front;
 	       key.offset_ccw = offset_back;
 	       if (ctx->Light.Model.TwoSide &&
-		   key.fill_ccw != CLIP_CULL) 
+		   key.fill_ccw != CLIP_CULL)
 		  key.copy_bfc_ccw = 1;
 	       break;
 	    }
@@ -278,12 +258,13 @@ static void upload_clip_prog(struct brw_context *brw)
 
 const struct brw_tracked_state brw_clip_prog = {
    .dirty = {
-      .mesa  = (_NEW_LIGHT | 
+      .mesa  = (_NEW_LIGHT |
 		_NEW_TRANSFORM |
-		_NEW_POLYGON | 
+		_NEW_POLYGON |
 		_NEW_BUFFERS),
-      .brw   = (BRW_NEW_REDUCED_PRIMITIVE),
-      .cache = CACHE_NEW_VS_PROG
+      .brw   = (BRW_NEW_REDUCED_PRIMITIVE |
+                BRW_NEW_VUE_MAP_GEOM_OUT |
+                BRW_NEW_INTERPOLATION_MAP)
    },
-   .prepare = upload_clip_prog
+   .emit = brw_upload_clip_prog
 };

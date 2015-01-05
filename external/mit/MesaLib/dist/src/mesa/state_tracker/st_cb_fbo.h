@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -48,24 +48,20 @@ struct st_renderbuffer
    struct gl_renderbuffer Base;
    struct pipe_resource *texture;
    struct pipe_surface *surface; /* temporary view into texture */
-   struct pipe_sampler_view *sampler_view;
-   enum pipe_format format;  /** preferred format, or PIPE_FORMAT_NONE */
    GLboolean defined;        /**< defined contents? */
+
+   struct pipe_transfer *transfer; /**< only used when mapping the resource */
 
    /**
     * Used only when hardware accumulation buffers are not supported.
     */
    boolean software;
-   size_t stride;
    void *data;
-   
-   struct st_texture_object *rtt;  /**< GL render to texture's texture */
-   int rtt_level, rtt_face, rtt_slice;
 
-   /** Render to texture state */
-   struct pipe_resource *texture_save;
-   struct pipe_surface *surface_save;
-   struct pipe_sampler_view *sampler_view_save;
+   /* Inputs from Driver.RenderTexture, don't use directly. */
+   boolean is_rtt; /**< whether Driver.RenderTexture was called */
+   unsigned rtt_face, rtt_slice;
+   boolean rtt_layered; /**< whether glFramebufferTexture was called */
 };
 
 
@@ -80,17 +76,10 @@ extern struct gl_renderbuffer *
 st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw);
 
 extern void
+st_update_renderbuffer_surface(struct st_context *st,
+                               struct st_renderbuffer *strb);
+
+extern void
 st_init_fbo_functions(struct dd_function_table *functions);
-
-/* XXX unused ? */
-extern struct pipe_sampler_view *
-st_get_renderbuffer_sampler_view(struct st_renderbuffer *rb,
-                                 struct pipe_context *pipe);
-
-
-extern GLboolean
-st_is_depth_stencil_combined(const struct gl_renderbuffer_attachment *depth,
-                             const struct gl_renderbuffer_attachment *stencil);
-
 
 #endif /* ST_CB_FBO_H */

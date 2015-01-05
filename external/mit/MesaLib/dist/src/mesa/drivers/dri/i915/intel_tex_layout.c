@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2006 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2006 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -26,46 +26,114 @@
  **************************************************************************/
  /*
   * Authors:
-  *   Keith Whitwell <keith@tungstengraphics.com>
-  *   Michel Dänzer <michel@tungstengraphics.com>
+  *   Keith Whitwell <keithw@vmware.com>
+  *   Michel Dänzer <daenzer@vmware.com>
   */
 
 #include "intel_mipmap_tree.h"
 #include "intel_tex_layout.h"
 #include "intel_context.h"
+
+#include "main/image.h"
 #include "main/macros.h"
 
-void
-intel_get_texture_alignment_unit(gl_format format,
-				 unsigned int *w, unsigned int *h)
+static unsigned int
+intel_horizontal_texture_alignment_unit(struct intel_context *intel,
+                                       mesa_format format)
 {
-   if (_mesa_is_format_compressed(format)) {
-      /* The hardware alignment requirements for compressed textures
-       * happen to match the block boundaries.
-       */
-      _mesa_get_format_block_size(format, w, h);
-   } else {
-      *w = 4;
-      *h = 2;
-   }
+   /**
+    * From the "Alignment Unit Size" section of various specs, namely:
+    * - Gen3 Spec: "Memory Data Formats" Volume,         Section 1.20.1.4
+    * - i965 and G45 PRMs:             Volume 1,         Section 6.17.3.4.
+    * - Ironlake and Sandybridge PRMs: Volume 1, Part 1, Section 7.18.3.4
+    * - BSpec (for Ivybridge and slight variations in separate stencil)
+    *
+    * +----------------------------------------------------------------------+
+    * |                                        | alignment unit width  ("i") |
+    * | Surface Property                       |-----------------------------|
+    * |                                        | 915 | 965 | ILK | SNB | IVB |
+    * +----------------------------------------------------------------------+
+    * | YUV 4:2:2 format                       |  8  |  4  |  4  |  4  |  4  |
+    * | BC1-5 compressed format (DXTn/S3TC)    |  4  |  4  |  4  |  4  |  4  |
+    * | FXT1  compressed format                |  8  |  8  |  8  |  8  |  8  |
+    * | Depth Buffer (16-bit)                  |  4  |  4  |  4  |  4  |  8  |
+    * | Depth Buffer (other)                   |  4  |  4  |  4  |  4  |  4  |
+    * | Separate Stencil Buffer                | N/A | N/A |  8  |  8  |  8  |
+    * | All Others                             |  4  |  4  |  4  |  4  |  4  |
+    * +----------------------------------------------------------------------+
+    *
+    * On IVB+, non-special cases can be overridden by setting the SURFACE_STATE
+    * "Surface Horizontal Alignment" field to HALIGN_4 or HALIGN_8.
+    */
+    if (_mesa_is_format_compressed(format)) {
+       /* The hardware alignment requirements for compressed textures
+        * happen to match the block boundaries.
+        */
+      unsigned int i, j;
+      _mesa_get_format_block_size(format, &i, &j);
+      return i;
+    }
+
+   return 4;
 }
 
-void i945_miptree_layout_2d(struct intel_context *intel,
-			    struct intel_mipmap_tree *mt,
-			    uint32_t tiling, int nr_images)
+static unsigned int
+intel_vertical_texture_alignment_unit(struct intel_context *intel,
+                                     mesa_format format)
 {
-   GLuint align_h, align_w;
+   /**
+    * From the "Alignment Unit Size" section of various specs, namely:
+    * - Gen3 Spec: "Memory Data Formats" Volume,         Section 1.20.1.4
+    * - i965 and G45 PRMs:             Volume 1,         Section 6.17.3.4.
+    * - Ironlake and Sandybridge PRMs: Volume 1, Part 1, Section 7.18.3.4
+    * - BSpec (for Ivybridge and slight variations in separate stencil)
+    *
+    * +----------------------------------------------------------------------+
+    * |                                        | alignment unit height ("j") |
+    * | Surface Property                       |-----------------------------|
+    * |                                        | 915 | 965 | ILK | SNB | IVB |
+    * +----------------------------------------------------------------------+
+    * | BC1-5 compressed format (DXTn/S3TC)    |  4  |  4  |  4  |  4  |  4  |
+    * | FXT1  compressed format                |  4  |  4  |  4  |  4  |  4  |
+    * | Depth Buffer                           |  2  |  2  |  2  |  4  |  4  |
+    * | Separate Stencil Buffer                | N/A | N/A | N/A |  4  |  8  |
+    * | Multisampled (4x or 8x) render target  | N/A | N/A | N/A |  4  |  4  |
+    * | All Others                             |  2  |  2  |  2  |  2  |  2  |
+    * +----------------------------------------------------------------------+
+    *
+    * On SNB+, non-special cases can be overridden by setting the SURFACE_STATE
+    * "Surface Vertical Alignment" field to VALIGN_2 or VALIGN_4.
+    *
+    * We currently don't support multisampling.
+    */
+   if (_mesa_is_format_compressed(format))
+      return 4;
+
+   return 2;
+}
+
+void
+intel_get_texture_alignment_unit(struct intel_context *intel,
+				 mesa_format format,
+				 unsigned int *w, unsigned int *h)
+{
+   *w = intel_horizontal_texture_alignment_unit(intel, format);
+   *h = intel_vertical_texture_alignment_unit(intel, format);
+}
+
+void i945_miptree_layout_2d(struct intel_mipmap_tree *mt)
+{
    GLuint level;
    GLuint x = 0;
    GLuint y = 0;
-   GLuint width = mt->width0;
-   GLuint height = mt->height0;
+   GLuint width = mt->physical_width0;
+   GLuint height = mt->physical_height0;
+   GLuint depth = mt->physical_depth0; /* number of array layers. */
 
-   mt->total_width = mt->width0;
-   intel_get_texture_alignment_unit(mt->format, &align_w, &align_h);
+   mt->total_width = mt->physical_width0;
 
    if (mt->compressed) {
-       mt->total_width = ALIGN(mt->width0, align_w);
+       mt->total_width = ALIGN(mt->physical_width0, mt->align_w);
    }
 
    /* May need to adjust width to accomodate the placement of
@@ -77,11 +145,11 @@ void i945_miptree_layout_2d(struct intel_context *intel,
        GLuint mip1_width;
 
        if (mt->compressed) {
-           mip1_width = ALIGN(minify(mt->width0), align_w)
-               + ALIGN(minify(minify(mt->width0)), align_w);
+          mip1_width = ALIGN(minify(mt->physical_width0, 1), mt->align_w) +
+             ALIGN(minify(mt->physical_width0, 2), mt->align_w);
        } else {
-           mip1_width = ALIGN(minify(mt->width0), align_w)
-               + minify(minify(mt->width0));
+          mip1_width = ALIGN(minify(mt->physical_width0, 1), mt->align_w) +
+             minify(mt->physical_width0, 2);
        }
 
        if (mip1_width > mt->total_width) {
@@ -94,12 +162,12 @@ void i945_miptree_layout_2d(struct intel_context *intel,
    for ( level = mt->first_level ; level <= mt->last_level ; level++ ) {
       GLuint img_height;
 
-      intel_miptree_set_level_info(mt, level, nr_images, x, y, width,
-				   height, 1);
+      intel_miptree_set_level_info(mt, level, x, y, width,
+				   height, depth);
 
-      img_height = ALIGN(height, align_h);
+      img_height = ALIGN(height, mt->align_h);
       if (mt->compressed)
-	 img_height /= align_h;
+	 img_height /= mt->align_h;
 
       /* Because the images are packed better, the final offset
        * might not be the maximal one:
@@ -109,13 +177,13 @@ void i945_miptree_layout_2d(struct intel_context *intel,
       /* Layout_below: step right after second mipmap.
        */
       if (level == mt->first_level + 1) {
-	 x += ALIGN(width, align_w);
+	 x += ALIGN(width, mt->align_w);
       }
       else {
 	 y += img_height;
       }
 
-      width  = minify(width);
-      height = minify(height);
+      width  = minify(width, 1);
+      height = minify(height, 1);
    }
 }

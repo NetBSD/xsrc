@@ -15,9 +15,10 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
 
@@ -37,7 +38,7 @@
 
 #include "rtasm_execmem.h"
 
-#if defined(PIPE_OS_BSD)
+#ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
 #endif
 
@@ -48,7 +49,7 @@
 #include <windows.h>
 #endif
 
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_CYGWIN)
 
 
 /*
@@ -68,7 +69,7 @@ static struct mem_block *exec_heap = NULL;
 static unsigned char *exec_mem = NULL;
 
 
-static void
+static int
 init_heap(void)
 {
    if (!exec_heap)
@@ -78,6 +79,8 @@ init_heap(void)
       exec_mem = (unsigned char *) mmap(0, EXEC_HEAP_SIZE, 
 					PROT_EXEC | PROT_READ | PROT_WRITE, 
 					MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+   return (exec_mem != MAP_FAILED);
 }
 
 
@@ -89,7 +92,8 @@ rtasm_exec_malloc(size_t size)
 
    pipe_mutex_lock(exec_mutex);
 
-   init_heap();
+   if (!init_heap())
+      goto bail;
 
    if (exec_heap) {
       size = (size + 31) & ~31;  /* next multiple of 32 bytes */
@@ -100,7 +104,8 @@ rtasm_exec_malloc(size_t size)
       addr = exec_mem + block->ofs;
    else 
       debug_printf("rtasm_exec_malloc failed\n");
-   
+
+bail:
    pipe_mutex_unlock(exec_mutex);
    
    return addr;

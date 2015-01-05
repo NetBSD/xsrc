@@ -1,8 +1,8 @@
 /*
  Copyright (C) Intel Corp.  2006.  All Rights Reserved.
- Intel funded Tungsten Graphics (http://www.tungstengraphics.com) to
+ Intel funded Tungsten Graphics to
  develop this 3D driver.
- 
+
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
  "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  distribute, sublicense, and/or sell copies of the Software, and to
  permit persons to whom the Software is furnished to do so, subject to
  the following conditions:
- 
+
  The above copyright notice and this permission notice (including the
  next paragraph) shall be included in all copies or substantial
  portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -22,11 +22,11 @@
  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- 
+
  **********************************************************************/
  /*
   * Authors:
-  *   Keith Whitwell <keith@tungstengraphics.com>
+  *   Keith Whitwell <keithw@vmware.com>
   */
 
 #ifndef BRW_CLIP_H
@@ -36,16 +36,20 @@
 #include "brw_context.h"
 #include "brw_eu.h"
 
-#define MAX_VERTS (3+6+6)	
+/* Initial 3 verts, plus at most 6 additional verts from intersections
+ * with fixed planes, plus at most 8 additional verts from intersections
+ * with user clip planes
+ */
+#define MAX_VERTS (3+6+8)
 
 /* Note that if unfilled primitives are being emitted, we have to fix
  * up polygon offset and flatshading at this point:
  */
 struct brw_clip_prog_key {
    GLbitfield64 attrs;
+   struct interpolation_mode_map interpolation_mode;
    GLuint primitive:4;
-   GLuint nr_userclip:3;
-   GLuint do_flat_shading:1;
+   GLuint nr_userclip:4;
    GLuint pv_first:1;
    GLuint do_unfilled:1;
    GLuint fill_cw:2;		/* includes cull information */
@@ -55,7 +59,6 @@ struct brw_clip_prog_key {
    GLuint copy_bfc_cw:1;
    GLuint copy_bfc_ccw:1;
    GLuint clip_mode:3;
-   GLuint pad0:11;
 
    GLfloat offset_factor;
    GLfloat offset_units;
@@ -74,7 +77,7 @@ struct brw_clip_compile {
    struct brw_compile func;
    struct brw_clip_prog_key key;
    struct brw_clip_prog_data prog_data;
-   
+
    struct {
       struct brw_reg R0;
       struct brw_reg vertex[MAX_VERTS];
@@ -96,32 +99,47 @@ struct brw_clip_compile {
       struct brw_reg dir;
       struct brw_reg tmp0, tmp1;
       struct brw_reg offset;
-      
+
       struct brw_reg fixed_planes;
       struct brw_reg plane_equation;
-       
+
       struct brw_reg ff_sync;
+
+      /* Bitmask indicating which coordinate attribute should be used for
+       * comparison to each clipping plane. A 0 indicates that VARYING_SLOT_POS
+       * should be used, because it's one of the fixed +/- x/y/z planes that
+       * constitute the bounds of the view volume. A 1 indicates that
+       * VARYING_SLOT_CLIP_VERTEX should be used (if available) since it's a user-
+       * defined clipping plane.
+       */
+      struct brw_reg vertex_src_mask;
+
+      /* Offset into the vertex of the current plane's clipdistance value */
+      struct brw_reg clipdistance_offset;
    } reg;
 
-   /* 3 different ways of expressing vertex size:
-    */
-   GLuint nr_attrs;
+   /* Number of registers storing VUE data */
    GLuint nr_regs;
-   GLuint nr_bytes;
 
    GLuint first_tmp;
    GLuint last_tmp;
 
-   GLboolean need_direction;
+   bool need_direction;
 
-   GLuint header_position_offset;
-   /** Mapping from VERT_RESULT_* to offset within the VUE. */
-   GLuint offset[VERT_RESULT_MAX];
-   /** Mapping from attribute index to VERT_RESULT_* */
-   GLuint idx_to_attr[VERT_RESULT_MAX];
+   struct brw_vue_map vue_map;
+
+   bool has_flat_shading;
+   bool has_noperspective_shading;
 };
 
-#define ATTR_SIZE  (4*4)
+/**
+ * True if the given varying is one of the outputs of the vertex shader.
+ */
+static inline bool brw_clip_have_varying(struct brw_clip_compile *c,
+                                         GLuint varying)
+{
+   return (c->key.attrs & BITFIELD64_BIT(varying)) ? 1 : 0;
+}
 
 /* Points are only culled, so no need for a clip routine, however it
  * works out easier to have a dummy one.
@@ -137,7 +155,7 @@ void brw_clip_tri_init_vertices( struct brw_clip_compile *c );
 void brw_clip_tri_flat_shade( struct brw_clip_compile *c );
 void brw_clip_tri( struct brw_clip_compile *c );
 void brw_clip_tri_emit_polygon( struct brw_clip_compile *c );
-void brw_clip_tri_alloc_regs( struct brw_clip_compile *c, 
+void brw_clip_tri_alloc_regs( struct brw_clip_compile *c,
 			      GLuint nr_verts );
 
 
@@ -149,14 +167,13 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
 			     struct brw_indirect v0_ptr, /* from */
 			     struct brw_indirect v1_ptr, /* to */
 			     struct brw_reg t0,
-			     GLboolean force_edgeflag );
+			     bool force_edgeflag );
 
 void brw_clip_init_planes( struct brw_clip_compile *c );
 
-void brw_clip_emit_vue(struct brw_clip_compile *c, 
+void brw_clip_emit_vue(struct brw_clip_compile *c,
 		       struct brw_indirect vert,
-		       GLboolean allocate,
-		       GLboolean eot,
+                       enum brw_urb_write_flags flags,
 		       GLuint header);
 
 void brw_clip_kill_thread(struct brw_clip_compile *c);
@@ -164,8 +181,8 @@ void brw_clip_kill_thread(struct brw_clip_compile *c);
 struct brw_reg brw_clip_plane_stride( struct brw_clip_compile *c );
 struct brw_reg brw_clip_plane0_address( struct brw_clip_compile *c );
 
-void brw_clip_copy_colors( struct brw_clip_compile *c,
-			   GLuint to, GLuint from );
+void brw_clip_copy_flatshaded_attributes( struct brw_clip_compile *c,
+                                          GLuint to, GLuint from );
 
 void brw_clip_init_clipmask( struct brw_clip_compile *c );
 

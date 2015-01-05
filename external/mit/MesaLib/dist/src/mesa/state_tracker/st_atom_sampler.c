@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -27,14 +27,16 @@
 
  /*
   * Authors:
-  *   Keith Whitwell <keith@tungstengraphics.com>
+  *   Keith Whitwell <keithw@vmware.com>
   *   Brian Paul
   */
  
 
 #include "main/macros.h"
 #include "main/mtypes.h"
+#include "main/glformats.h"
 #include "main/samplerobj.h"
+#include "main/texobj.h"
 
 #include "st_context.h"
 #include "st_cb_texture.h"
@@ -45,6 +47,8 @@
 #include "pipe/p_defines.h"
 
 #include "cso_cache/cso_context.h"
+
+#include "util/u_format.h"
 
 
 /**
@@ -126,14 +130,19 @@ convert_sampler(struct st_context *st,
                 struct pipe_sampler_state *sampler,
                 GLuint texUnit)
 {
-   struct gl_texture_object *texobj;
+   const struct gl_texture_object *texobj;
    struct gl_context *ctx = st->ctx;
    struct gl_sampler_object *msamp;
+   const struct gl_texture_image *teximg;
+   GLenum texBaseFormat;
 
    texobj = ctx->Texture.Unit[texUnit]._Current;
    if (!texobj) {
-      texobj = st_get_default_texture(st);
+      texobj = _mesa_get_fallback_texture(ctx, TEXTURE_2D_INDEX);
    }
+
+   teximg = texobj->Image[0][texobj->BaseLevel];
+   texBaseFormat = teximg ? teximg->_BaseFormat : GL_RGBA;
 
    msamp = _mesa_get_samplerobj(ctx, texUnit);
 
@@ -151,11 +160,8 @@ convert_sampler(struct st_context *st,
 
    sampler->lod_bias = ctx->Texture.Unit[texUnit].LodBias + msamp->LodBias;
 
-   sampler->min_lod = CLAMP(msamp->MinLod,
-                            0.0f,
-                            (GLfloat) texobj->MaxLevel - texobj->BaseLevel);
-   sampler->max_lod = MIN2((GLfloat) texobj->MaxLevel - texobj->BaseLevel,
-                           msamp->MaxLod);
+   sampler->min_lod = MAX2(msamp->MinLod, 0.0f);
+   sampler->max_lod = msamp->MaxLod;
    if (sampler->max_lod < sampler->min_lod) {
       /* The GL spec doesn't seem to specify what to do in this case.
        * Swap the values.
@@ -166,27 +172,58 @@ convert_sampler(struct st_context *st,
       assert(sampler->min_lod <= sampler->max_lod);
    }
 
+   /* For non-black borders... */
    if (msamp->BorderColor.ui[0] ||
        msamp->BorderColor.ui[1] ||
        msamp->BorderColor.ui[2] ||
        msamp->BorderColor.ui[3]) {
-      struct gl_texture_image *teximg;
+      const struct st_texture_object *stobj = st_texture_object_const(texobj);
+      const GLboolean is_integer = texobj->_IsIntegerFormat;
+      const struct pipe_sampler_view *sv = NULL;
+      union pipe_color_union border_color;
+      GLuint i;
 
-      teximg = texobj->Image[0][texobj->BaseLevel];
+      /* Just search for the first used view. We can do this because the
+         swizzle is per-texture, not per context. */
+      /* XXX: clean that up to not use the sampler view at all */
+      for (i = 0; i < stobj->num_sampler_views; ++i) {
+         if (stobj->sampler_views[i]) {
+            sv = stobj->sampler_views[i];
+            break;
+         }
+      }
 
-      st_translate_color(msamp->BorderColor.f,
-                         teximg ? teximg->_BaseFormat : GL_RGBA,
-                         sampler->border_color);
+      if (st->apply_texture_swizzle_to_border_color && sv) {
+         const unsigned char swz[4] =
+         {
+            sv->swizzle_r,
+            sv->swizzle_g,
+            sv->swizzle_b,
+            sv->swizzle_a,
+         };
+
+         st_translate_color(&msamp->BorderColor,
+                            &border_color,
+                            texBaseFormat, is_integer);
+
+         util_format_apply_color_swizzle(&sampler->border_color,
+                                         &border_color, swz, is_integer);
+      } else {
+         st_translate_color(&msamp->BorderColor,
+                            &sampler->border_color,
+                            texBaseFormat, is_integer);
+      }
    }
 
    sampler->max_anisotropy = (msamp->MaxAnisotropy == 1.0 ?
                               0 : (GLuint) msamp->MaxAnisotropy);
 
-   /* only care about ARB_shadow, not SGI shadow */
-   if (msamp->CompareMode == GL_COMPARE_R_TO_TEXTURE) {
+   /* If sampling a depth texture and using shadow comparison */
+   if ((texBaseFormat == GL_DEPTH_COMPONENT ||
+        texBaseFormat == GL_DEPTH_STENCIL) &&
+       msamp->CompareMode == GL_COMPARE_R_TO_TEXTURE) {
       sampler->compare_mode = PIPE_TEX_COMPARE_R_TO_TEXTURE;
-      sampler->compare_func
-         = st_compare_func_to_pipe(msamp->CompareFunc);
+      sampler->compare_func = st_compare_func_to_pipe(msamp->CompareFunc);
    }
 
    sampler->seamless_cube_map =
@@ -194,78 +231,82 @@ convert_sampler(struct st_context *st,
 }
 
 
+/**
+ * Update the gallium driver's sampler state for fragment, vertex or
+ * geometry shader stage.
+ */
 static void
-update_vertex_samplers(struct st_context *st)
+update_shader_samplers(struct st_context *st,
+                       unsigned shader_stage,
+                       const struct gl_program *prog,
+                       unsigned max_units,
+                       struct pipe_sampler_state *samplers,
+                       unsigned *num_samplers)
 {
-   const struct gl_context *ctx = st->ctx;
-   struct gl_vertex_program *vprog = ctx->VertexProgram._Current;
-   GLuint su;
+   GLuint unit;
+   GLbitfield samplers_used;
+   const GLuint old_max = *num_samplers;
 
-   st->state.num_vertex_samplers = 0;
+   samplers_used = prog->SamplersUsed;
+
+   if (*num_samplers == 0 && samplers_used == 0x0)
+       return;
+
+   *num_samplers = 0;
 
    /* loop over sampler units (aka tex image units) */
-   for (su = 0; su < ctx->Const.MaxVertexTextureImageUnits; su++) {
-      struct pipe_sampler_state *sampler = st->state.vertex_samplers + su;
+   for (unit = 0; unit < max_units; unit++, samplers_used >>= 1) {
+      struct pipe_sampler_state *sampler = samplers + unit;
 
-      if (vprog->Base.SamplersUsed & (1 << su)) {
-	 GLuint texUnit;
+      if (samplers_used & 1) {
+         const GLuint texUnit = prog->SamplerUnits[unit];
 
-	 texUnit = vprog->Base.SamplerUnits[su];
+         convert_sampler(st, sampler, texUnit);
 
-	 convert_sampler(st, sampler, texUnit);
+         *num_samplers = unit + 1;
 
-	 st->state.num_vertex_samplers = su + 1;
-
-	 cso_single_vertex_sampler(st->cso_context, su, sampler);
-      } else {
-	 cso_single_vertex_sampler(st->cso_context, su, NULL);
+         cso_single_sampler(st->cso_context, shader_stage, unit, sampler);
       }
-   }
-   cso_single_vertex_sampler_done(st->cso_context);
-}
-
-
-static void
-update_fragment_samplers(struct st_context *st)
-{
-   const struct gl_context *ctx = st->ctx;
-   struct gl_fragment_program *fprog = ctx->FragmentProgram._Current;
-   GLuint su;
-
-   st->state.num_samplers = 0;
-
-   /* loop over sampler units (aka tex image units) */
-   for (su = 0; su < ctx->Const.MaxTextureImageUnits; su++) {
-      struct pipe_sampler_state *sampler = st->state.samplers + su;
-
-
-      if (fprog->Base.SamplersUsed & (1 << su)) {
-         GLuint texUnit;
-
-	 texUnit = fprog->Base.SamplerUnits[su];
-
-	 convert_sampler(st, sampler, texUnit);
-
-         st->state.num_samplers = su + 1;
-
-         /*printf("%s su=%u non-null\n", __FUNCTION__, su);*/
-         cso_single_sampler(st->cso_context, su, sampler);
+      else if (samplers_used != 0 || unit < old_max) {
+         cso_single_sampler(st->cso_context, shader_stage, unit, NULL);
       }
       else {
-         /*printf("%s su=%u null\n", __FUNCTION__, su);*/
-         cso_single_sampler(st->cso_context, su, NULL);
+         /* if we've reset all the old samplers and we have no more new ones */
+         break;
       }
    }
 
-   cso_single_sampler_done(st->cso_context);
+   cso_single_sampler_done(st->cso_context, shader_stage);
 }
 
 
 static void
 update_samplers(struct st_context *st)
 {
-    update_fragment_samplers(st);
-    update_vertex_samplers(st);
+   const struct gl_context *ctx = st->ctx;
+
+   update_shader_samplers(st,
+                          PIPE_SHADER_FRAGMENT,
+                          &ctx->FragmentProgram._Current->Base,
+                          ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits,
+                          st->state.samplers[PIPE_SHADER_FRAGMENT],
+                          &st->state.num_samplers[PIPE_SHADER_FRAGMENT]);
+
+   update_shader_samplers(st,
+                          PIPE_SHADER_VERTEX,
+                          &ctx->VertexProgram._Current->Base,
+                          ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits,
+                          st->state.samplers[PIPE_SHADER_VERTEX],
+                          &st->state.num_samplers[PIPE_SHADER_VERTEX]);
+
+   if (ctx->GeometryProgram._Current) {
+      update_shader_samplers(st,
+                             PIPE_SHADER_GEOMETRY,
+                             &ctx->GeometryProgram._Current->Base,
+                             ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits,
+                             st->state.samplers[PIPE_SHADER_GEOMETRY],
+                             &st->state.num_samplers[PIPE_SHADER_GEOMETRY]);
+   }
 }
 
 

@@ -58,7 +58,8 @@ rbug_resource_create(struct rbug_screen *rb_screen,
    rb_resource->base.screen = &rb_screen->base;
    rb_resource->resource = resource;
 
-   rbug_screen_add_to_list(rb_screen, resources, rb_resource);
+   if (resource->target != PIPE_BUFFER)
+      rbug_screen_add_to_list(rb_screen, resources, rb_resource);
 
    return &rb_resource->base;
 
@@ -71,7 +72,9 @@ void
 rbug_resource_destroy(struct rbug_resource *rb_resource)
 {
    struct rbug_screen *rb_screen = rbug_screen(rb_resource->base.screen);
-   rbug_screen_remove_from_list(rb_screen, resources, rb_resource);
+
+   if (rb_resource->base.target != PIPE_BUFFER)
+      rbug_screen_remove_from_list(rb_screen, resources, rb_resource);
 
    pipe_resource_reference(&rb_resource->resource, NULL);
    FREE(rb_resource);
@@ -137,7 +140,7 @@ rbug_sampler_view_create(struct rbug_context *rb_context,
    rb_view->base.reference.count = 1;
    rb_view->base.texture = NULL;
    pipe_resource_reference(&rb_view->base.texture, &rb_resource->base);
-   rb_view->base.context = rb_context->pipe;
+   rb_view->base.context = &rb_context->base;
    rb_view->sampler_view = view;
 
    return &rb_view->base;
@@ -184,7 +187,7 @@ rbug_transfer_create(struct rbug_context *rb_context,
    return &rb_transfer->base;
 
 error:
-   rb_context->pipe->transfer_destroy(rb_context->pipe, transfer);
+   rb_context->pipe->transfer_unmap(rb_context->pipe, transfer);
    return NULL;
 }
 
@@ -193,8 +196,6 @@ rbug_transfer_destroy(struct rbug_context *rb_context,
                       struct rbug_transfer *rb_transfer)
 {
    pipe_resource_reference(&rb_transfer->base.resource, NULL);
-   rb_transfer->pipe->transfer_destroy(rb_context->pipe,
-                                       rb_transfer->transfer);
    FREE(rb_transfer);
 }
 

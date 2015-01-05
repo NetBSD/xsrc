@@ -170,22 +170,22 @@ get_input_arg(struct combiner_state *rc, int arg, int flags)
 		int i = (source == GL_TEXTURE ?
 			 rc->unit : source - GL_TEXTURE0);
 		struct gl_texture_object *t = rc->ctx->Texture.Unit[i]._Current;
-		gl_format format = t->Image[0][t->BaseLevel]->TexFormat;
+		mesa_format format = t->Image[0][t->BaseLevel]->TexFormat;
 
-		if (format == MESA_FORMAT_A8) {
+		if (format == MESA_FORMAT_A_UNORM8) {
 			/* Emulated using I8. */
 			if (is_color_operand(operand))
 				return RC_IN_SOURCE(ZERO) |
 					get_input_mapping(rc, operand, flags);
 
-		} else if (format == MESA_FORMAT_L8) {
+		} else if (format == MESA_FORMAT_L_UNORM8) {
 			/* Sometimes emulated using I8. */
 			if (!is_color_operand(operand))
 				return RC_IN_SOURCE(ZERO) |
 					get_input_mapping(rc, operand,
 							  flags ^ INVERT);
 
-		} else if (format == MESA_FORMAT_XRGB8888) {
+		} else if (format == MESA_FORMAT_B8G8R8X8_UNORM) {
 			/* Sometimes emulated using ARGB8888. */
 			if (!is_color_operand(operand))
 				return RC_IN_SOURCE(ZERO) |
@@ -304,7 +304,7 @@ nv10_get_general_combiner(struct gl_context *ctx, int i,
 {
 	struct combiner_state rc_a, rc_c;
 
-	if (ctx->Texture.Unit[i]._ReallyEnabled) {
+	if (ctx->Texture.Unit[i]._Current) {
 		INIT_COMBINER(RGB, ctx, &rc_c, i);
 
 		if (rc_c.mode == GL_DOT3_RGBA)
@@ -319,7 +319,7 @@ nv10_get_general_combiner(struct gl_context *ctx, int i,
 		rc_a.in = rc_a.out = rc_c.in = rc_c.out = 0;
 	}
 
-	*k = pack_rgba_f(MESA_FORMAT_ARGB8888,
+	*k = pack_rgba_f(MESA_FORMAT_B8G8R8A8_UNORM,
 			 ctx->Texture.Unit[i].EnvColor);
 	*a_in = rc_a.in;
 	*a_out = rc_a.out;
@@ -353,7 +353,7 @@ nv10_get_final_combiner(struct gl_context *ctx, uint64_t *in, int *n)
 		INPUT_ONE(&rc, E, 0);
 	}
 
-	if (ctx->Texture._EnabledUnits) {
+	if (ctx->Texture._MaxEnabledTexImageUnit != -1) {
 		INPUT_SRC(&rc, B, SPARE0, RGB);
 		INPUT_SRC(&rc, G, SPARE0, ALPHA);
 	} else {
@@ -362,15 +362,14 @@ nv10_get_final_combiner(struct gl_context *ctx, uint64_t *in, int *n)
 	}
 
 	*in = rc.in;
-	*n = log2i(ctx->Texture._EnabledUnits) + 1;
+	*n = ctx->Texture._MaxEnabledTexImageUnit + 1;
 }
 
 void
 nv10_emit_tex_env(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_TEX_ENV0;
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *celsius = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	uint32_t a_in, a_out, c_in, c_out, k;
 
 	nv10_get_general_combiner(ctx, i, &a_in, &a_out, &c_in, &c_out, &k);
@@ -383,16 +382,16 @@ nv10_emit_tex_env(struct gl_context *ctx, int emit)
 			c_out |= 0x3 << 27;
 	}
 
-	BEGIN_RING(chan, celsius, NV10_3D_RC_IN_ALPHA(i), 1);
-	OUT_RING(chan, a_in);
-	BEGIN_RING(chan, celsius, NV10_3D_RC_IN_RGB(i), 1);
-	OUT_RING(chan, c_in);
-	BEGIN_RING(chan, celsius, NV10_3D_RC_COLOR(i), 1);
-	OUT_RING(chan, k);
-	BEGIN_RING(chan, celsius, NV10_3D_RC_OUT_ALPHA(i), 1);
-	OUT_RING(chan, a_out);
-	BEGIN_RING(chan, celsius, NV10_3D_RC_OUT_RGB(i), 1);
-	OUT_RING(chan, c_out);
+	BEGIN_NV04(push, NV10_3D(RC_IN_ALPHA(i)), 1);
+	PUSH_DATA (push, a_in);
+	BEGIN_NV04(push, NV10_3D(RC_IN_RGB(i)), 1);
+	PUSH_DATA (push, c_in);
+	BEGIN_NV04(push, NV10_3D(RC_COLOR(i)), 1);
+	PUSH_DATA (push, k);
+	BEGIN_NV04(push, NV10_3D(RC_OUT_ALPHA(i)), 1);
+	PUSH_DATA (push, a_out);
+	BEGIN_NV04(push, NV10_3D(RC_OUT_RGB(i)), 1);
+	PUSH_DATA (push, c_out);
 
 	context_dirty(ctx, FRAG);
 }
@@ -400,14 +399,13 @@ nv10_emit_tex_env(struct gl_context *ctx, int emit)
 void
 nv10_emit_frag(struct gl_context *ctx, int emit)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *celsius = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	uint64_t in;
 	int n;
 
 	nv10_get_final_combiner(ctx, &in, &n);
 
-	BEGIN_RING(chan, celsius, NV10_3D_RC_FINAL0, 2);
-	OUT_RING(chan, in);
-	OUT_RING(chan, in >> 32);
+	BEGIN_NV04(push, NV10_3D(RC_FINAL0), 2);
+	PUSH_DATA (push, in);
+	PUSH_DATA (push, in >> 32);
 }

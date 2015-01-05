@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 VMware, Inc.
  * Copyright 2009-2010 Chia-I Wu <olvaffe@gmail.com>
  * Copyright 2010 LunarG, Inc.
  * All Rights Reserved.
@@ -270,7 +270,7 @@ _eglChooseModeMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *scrn,
    }
 
    /* allocate array of mode pointers */
-   modeList = (_EGLMode **) malloc(modes_size * sizeof(_EGLMode *));
+   modeList = malloc(modes_size * sizeof(_EGLMode *));
    if (!modeList) {
       _eglError(EGL_BAD_MODE_MESA, "eglChooseModeMESA(out of memory)");
       return EGL_FALSE;

@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,12 +18,25 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
+
+/**
+ * @file
+ *
+ * Fake WGL API implementation.
+ *
+ * These functions implement the WGL API, on top of the ICD DDI, so that the
+ * resulting DLL can be used as a drop-in replacement for the system's
+ * opengl32.dll.
+ *
+ * These functions never get called for ICD drivers, which use exclusively the
+ * ICD DDI, i.e., the Drv* entrypoints.
+ */
 
 #include <windows.h>
 
@@ -172,8 +185,10 @@ wglSetPixelFormat(
    int iPixelFormat,
    const PIXELFORMATDESCRIPTOR *ppfd )
 {
-   if (ppfd->nSize != sizeof( PIXELFORMATDESCRIPTOR ))
-      return FALSE;
+    /* SetPixelFormat (hence wglSetPixelFormat) must not touch ppfd, per
+     * http://msdn.microsoft.com/en-us/library/dd369049(v=vs.85).aspx
+     */
+   (void) ppfd;
 
    return DrvSetPixelFormat( hdc, iPixelFormat );
 }

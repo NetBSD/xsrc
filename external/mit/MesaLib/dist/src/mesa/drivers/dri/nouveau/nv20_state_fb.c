@@ -33,18 +33,18 @@
 #include "nv20_driver.h"
 
 static inline unsigned
-get_rt_format(gl_format format)
+get_rt_format(mesa_format format)
 {
 	switch (format) {
-	case MESA_FORMAT_XRGB8888:
+	case MESA_FORMAT_B8G8R8X8_UNORM:
 		return NV20_3D_RT_FORMAT_COLOR_X8R8G8B8;
-	case MESA_FORMAT_ARGB8888:
+	case MESA_FORMAT_B8G8R8A8_UNORM:
 		return NV20_3D_RT_FORMAT_COLOR_A8R8G8B8;
-	case MESA_FORMAT_RGB565:
+	case MESA_FORMAT_B5G6R5_UNORM:
 		return NV20_3D_RT_FORMAT_COLOR_R5G6B5;
-	case MESA_FORMAT_Z16:
+	case MESA_FORMAT_Z_UNORM16:
 		return NV20_3D_RT_FORMAT_DEPTH_Z16;
-	case MESA_FORMAT_Z24_S8:
+	case MESA_FORMAT_S8_UINT_Z24_UNORM:
 		return NV20_3D_RT_FORMAT_DEPTH_Z24S8;
 	default:
 		assert(0);
@@ -54,9 +54,7 @@ get_rt_format(gl_format format)
 static void
 setup_hierz_buffer(struct gl_context *ctx)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *kelvin = context_eng3d(ctx);
-	struct nouveau_bo_context *bctx = context_bctx(ctx, HIERZ);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 	struct nouveau_framebuffer *nfb = to_nouveau_framebuffer(fb);
 	unsigned pitch = align(fb->Width, 128),
@@ -66,22 +64,20 @@ setup_hierz_buffer(struct gl_context *ctx)
 	if (!nfb->hierz.bo || nfb->hierz.bo->size != size) {
 		nouveau_bo_ref(NULL, &nfb->hierz.bo);
 		nouveau_bo_new(context_dev(ctx), NOUVEAU_BO_VRAM, 0, size,
-			       &nfb->hierz.bo);
+			       NULL, &nfb->hierz.bo);
 	}
 
-	BEGIN_RING(chan, kelvin, NV25_3D_HIERZ_PITCH, 1);
-	OUT_RING(chan, pitch);
-
-	nouveau_bo_markl(bctx, kelvin, NV25_3D_HIERZ_OFFSET, nfb->hierz.bo,
-			 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
+	BEGIN_NV04(push, NV25_3D(HIERZ_PITCH), 1);
+	PUSH_DATA (push, pitch);
+	BEGIN_NV04(push, NV25_3D(HIERZ_OFFSET), 1);
+	PUSH_MTHDl(push, NV25_3D(HIERZ_OFFSET), BUFCTX_FB,
+			 nfb->hierz.bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
 }
 
 void
 nv20_emit_framebuffer(struct gl_context *ctx, int emit)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *kelvin = context_eng3d(ctx);
-	struct nouveau_bo_context *bctx = context_bctx(ctx, FRAMEBUFFER);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 	struct nouveau_surface *s;
 	unsigned rt_format = NV20_3D_RT_FORMAT_TYPE_LINEAR;
@@ -91,6 +87,8 @@ nv20_emit_framebuffer(struct gl_context *ctx, int emit)
 	if (fb->_Status != GL_FRAMEBUFFER_COMPLETE_EXT)
 		return;
 
+	PUSH_RESET(push, BUFCTX_FB);
+
 	/* Render target */
 	if (fb->_ColorDrawBuffers[0]) {
 		s = &to_nouveau_renderbuffer(
@@ -99,54 +97,56 @@ nv20_emit_framebuffer(struct gl_context *ctx, int emit)
 		rt_format |= get_rt_format(s->format);
 		rt_pitch = s->pitch;
 
-		nouveau_bo_markl(bctx, kelvin, NV20_3D_COLOR_OFFSET,
+		BEGIN_NV04(push, NV20_3D(COLOR_OFFSET), 1);
+		PUSH_MTHDl(push, NV20_3D(COLOR_OFFSET), BUFCTX_FB,
 				 s->bo, 0, bo_flags);
 	}
 
 	/* depth/stencil */
-	if (fb->_DepthBuffer) {
+	if (fb->Attachment[BUFFER_DEPTH].Renderbuffer) {
 		s = &to_nouveau_renderbuffer(
-			fb->_DepthBuffer->Wrapped)->surface;
+			fb->Attachment[BUFFER_DEPTH].Renderbuffer)->surface;
 
 		rt_format |= get_rt_format(s->format);
 		zeta_pitch = s->pitch;
 
-		nouveau_bo_markl(bctx, kelvin, NV20_3D_ZETA_OFFSET,
+		BEGIN_NV04(push, NV20_3D(ZETA_OFFSET), 1);
+		PUSH_MTHDl(push, NV20_3D(ZETA_OFFSET), BUFCTX_FB,
 				 s->bo, 0, bo_flags);
 
 		if (context_chipset(ctx) >= 0x25)
 			setup_hierz_buffer(ctx);
 	} else {
-		rt_format |= get_rt_format(MESA_FORMAT_Z24_S8);
+		rt_format |= get_rt_format(MESA_FORMAT_S8_UINT_Z24_UNORM);
 		zeta_pitch = rt_pitch;
 	}
 
-	BEGIN_RING(chan, kelvin, NV20_3D_RT_FORMAT, 2);
-	OUT_RING(chan, rt_format);
-	OUT_RING(chan, zeta_pitch << 16 | rt_pitch);
+	BEGIN_NV04(push, NV20_3D(RT_FORMAT), 2);
+	PUSH_DATA (push, rt_format);
+	PUSH_DATA (push, zeta_pitch << 16 | rt_pitch);
 
 	/* Recompute the viewport/scissor state. */
 	context_dirty(ctx, VIEWPORT);
 	context_dirty(ctx, SCISSOR);
+	context_dirty(ctx, DEPTH);
 }
 
 void
 nv20_emit_viewport(struct gl_context *ctx, int emit)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *kelvin = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 	float a[4] = {};
 
 	get_viewport_translate(ctx, a);
 
-	BEGIN_RING(chan, kelvin, NV20_3D_VIEWPORT_TRANSLATE_X, 4);
-	OUT_RINGp(chan, a, 4);
+	BEGIN_NV04(push, NV20_3D(VIEWPORT_TRANSLATE_X), 4);
+	PUSH_DATAp(push, a, 4);
 
-	BEGIN_RING(chan, kelvin, NV20_3D_VIEWPORT_CLIP_HORIZ(0), 1);
-	OUT_RING(chan, (fb->Width - 1) << 16);
-	BEGIN_RING(chan, kelvin, NV20_3D_VIEWPORT_CLIP_VERT(0), 1);
-	OUT_RING(chan, (fb->Height - 1) << 16);
+	BEGIN_NV04(push, NV20_3D(VIEWPORT_CLIP_HORIZ(0)), 1);
+	PUSH_DATA (push, (fb->Width - 1) << 16);
+	BEGIN_NV04(push, NV20_3D(VIEWPORT_CLIP_VERT(0)), 1);
+	PUSH_DATA (push, (fb->Height - 1) << 16);
 
 	context_dirty(ctx, PROJECTION);
 }

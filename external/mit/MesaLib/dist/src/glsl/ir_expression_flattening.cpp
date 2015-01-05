@@ -27,17 +27,13 @@
  * Takes the leaves of expression trees and makes them dereferences of
  * assignments of the leaves to temporaries, according to a predicate.
  *
- * This is used for automatic function inlining, where we want to take
- * an expression containing a call and move the call out to its own
- * assignment so that we can inline it at the appropriate place in the
- * instruction stream.
+ * This is used for breaking down matrix operations, where it's easier to
+ * create a temporary and work on each of its vector components individually.
  */
 
 #include "ir.h"
-#include "ir_visitor.h"
 #include "ir_rvalue_visitor.h"
 #include "ir_expression_flattening.h"
-#include "glsl_types.h"
 
 class ir_expression_flattening_visitor : public ir_rvalue_visitor {
 public:
@@ -61,9 +57,7 @@ do_expression_flattening(exec_list *instructions,
 {
    ir_expression_flattening_visitor v(predicate);
 
-   foreach_iter(exec_list_iterator, iter, *instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
-
+   foreach_in_list(ir_instruction, ir, instructions) {
       ir->accept(&v);
    }
 }

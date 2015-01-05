@@ -14,18 +14,17 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
- * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #include "util/u_double_list.h"
 
 #include "nouveau_screen.h"
+#include "nouveau_winsys.h"
 #include "nouveau_fence.h"
-
-#include "nouveau/nouveau_pushbuf.h"
 
 #ifdef PIPE_OS_UNIX
 #include <sched.h>
@@ -175,6 +174,9 @@ nouveau_fence_signalled(struct nouveau_fence *fence)
 {
    struct nouveau_screen *screen = fence->screen;
 
+   if (fence->state == NOUVEAU_FENCE_STATE_SIGNALLED)
+      return TRUE;
+
    if (fence->state >= NOUVEAU_FENCE_STATE_EMITTED)
       nouveau_fence_update(screen, FALSE);
 
@@ -190,20 +192,23 @@ nouveau_fence_wait(struct nouveau_fence *fence)
    /* wtf, someone is waiting on a fence in flush_notify handler? */
    assert(fence->state != NOUVEAU_FENCE_STATE_EMITTING);
 
-   if (fence->state < NOUVEAU_FENCE_STATE_EMITTED) {
+   if (fence->state < NOUVEAU_FENCE_STATE_EMITTED)
       nouveau_fence_emit(fence);
 
-      if (fence == screen->fence.current)
-         nouveau_fence_new(screen, &screen->fence.current, FALSE);
-   }
    if (fence->state < NOUVEAU_FENCE_STATE_FLUSHED)
-      FIRE_RING(screen->channel);
+      if (nouveau_pushbuf_kick(screen->pushbuf, screen->pushbuf->channel))
+         return FALSE;
+
+   if (fence == screen->fence.current)
+      nouveau_fence_next(screen);
 
    do {
       nouveau_fence_update(screen, FALSE);
 
       if (fence->state == NOUVEAU_FENCE_STATE_SIGNALLED)
          return TRUE;
+      if (!spins)
+         NOUVEAU_DRV_STAT(screen, any_non_kernel_fence_sync_count, 1);
       spins++;
 #ifdef PIPE_OS_UNIX
       if (!(spins % 8)) /* donate a few cycles */

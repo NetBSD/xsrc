@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -30,48 +30,23 @@
 #include "main/state.h"
 #include "main/mtypes.h"
 #include "main/condrender.h"
+#include "main/fbobject.h"
 #include "drivers/common/meta.h"
 
 #include "intel_context.h"
 #include "intel_buffers.h"
+#include "intel_mipmap_tree.h"
 #include "intel_regions.h"
 #include "intel_pixel.h"
 #include "intel_fbo.h"
+#include "intel_blit.h"
 
 #define FILE_DEBUG_FLAG DEBUG_PIXEL
 
 /**
- * Check if any fragment operations are in effect which might effect
- * glCopyPixels.  Differs from intel_check_blit_fragment_ops in that
- * we allow Scissor.
- */
-static GLboolean
-intel_check_copypixel_blit_fragment_ops(struct gl_context * ctx)
-{
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
-
-   /* Could do logicop with the blitter: 
-    */
-   return !(ctx->_ImageTransferState ||
-            ctx->Color.AlphaEnabled ||
-            ctx->Depth.Test ||
-            ctx->Fog.Enabled ||
-            ctx->Stencil._Enabled ||
-            !ctx->Color.ColorMask[0][0] ||
-            !ctx->Color.ColorMask[0][1] ||
-            !ctx->Color.ColorMask[0][2] ||
-            !ctx->Color.ColorMask[0][3] ||
-            ctx->Texture._EnabledUnits ||
-	    ctx->FragmentProgram._Enabled ||
-	    ctx->Color.BlendEnabled);
-}
-
-
-/**
  * CopyPixels with the blitter.  Don't support zooming, pixel transfer, etc.
  */
-static GLboolean
+static bool
 do_blit_copypixels(struct gl_context * ctx,
                    GLint srcx, GLint srcy,
                    GLsizei width, GLsizei height,
@@ -84,7 +59,6 @@ do_blit_copypixels(struct gl_context * ctx,
    GLint orig_dsty;
    GLint orig_srcx;
    GLint orig_srcy;
-   GLboolean flip = GL_FALSE;
    struct intel_renderbuffer *draw_irb = NULL;
    struct intel_renderbuffer *read_irb = NULL;
 
@@ -94,8 +68,8 @@ do_blit_copypixels(struct gl_context * ctx,
    switch (type) {
    case GL_COLOR:
       if (fb->_NumColorDrawBuffers != 1) {
-	 fallback_debug("glCopyPixels() fallback: MRT\n");
-	 return GL_FALSE;
+	 perf_debug("glCopyPixels() fallback: MRT\n");
+	 return false;
       }
 
       draw_irb = intel_renderbuffer(fb->_ColorDrawBuffers[0]);
@@ -107,41 +81,66 @@ do_blit_copypixels(struct gl_context * ctx,
 	 intel_renderbuffer(read_fb->Attachment[BUFFER_DEPTH].Renderbuffer);
       break;
    case GL_DEPTH:
-      fallback_debug("glCopyPixels() fallback: GL_DEPTH\n");
-      return GL_FALSE;
+      perf_debug("glCopyPixels() fallback: GL_DEPTH\n");
+      return false;
    case GL_STENCIL:
-      fallback_debug("glCopyPixels() fallback: GL_STENCIL\n");
-      return GL_FALSE;
+      perf_debug("glCopyPixels() fallback: GL_STENCIL\n");
+      return false;
    default:
-      fallback_debug("glCopyPixels(): Unknown type\n");
-      return GL_FALSE;
+      perf_debug("glCopyPixels(): Unknown type\n");
+      return false;
    }
 
    if (!draw_irb) {
-      fallback_debug("glCopyPixels() fallback: missing draw buffer\n");
-      return GL_FALSE;
+      perf_debug("glCopyPixels() fallback: missing draw buffer\n");
+      return false;
    }
 
    if (!read_irb) {
-      fallback_debug("glCopyPixels() fallback: missing read buffer\n");
-      return GL_FALSE;
+      perf_debug("glCopyPixels() fallback: missing read buffer\n");
+      return false;
    }
 
-   if (draw_irb->Base.Format != read_irb->Base.Format &&
-       !(draw_irb->Base.Format == MESA_FORMAT_XRGB8888 &&
-	 read_irb->Base.Format == MESA_FORMAT_ARGB8888)) {
-      fallback_debug("glCopyPixels() fallback: mismatched formats (%s -> %s\n",
-		     _mesa_get_format_name(read_irb->Base.Format),
-		     _mesa_get_format_name(draw_irb->Base.Format));
-      return GL_FALSE;
+   if (ctx->_ImageTransferState) {
+      perf_debug("glCopyPixels(): Unsupported image transfer state\n");
+      return false;
    }
 
-   /* Copypixels can be more than a straight copy.  Ensure all the
-    * extra operations are disabled:
-    */
-   if (!intel_check_copypixel_blit_fragment_ops(ctx) ||
-       ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F)
-      return GL_FALSE;
+   if (ctx->Depth.Test) {
+      perf_debug("glCopyPixels(): Unsupported depth test state\n");
+      return false;
+   }
+
+   if (ctx->Stencil._Enabled) {
+      perf_debug("glCopyPixels(): Unsupported stencil test state\n");
+      return false;
+   }
+
+   if (ctx->Fog.Enabled ||
+       ctx->Texture._MaxEnabledTexImageUnit != -1 ||
+       ctx->FragmentProgram._Enabled) {
+      perf_debug("glCopyPixels(): Unsupported fragment shader state\n");
+      return false;
+   }
+
+   if (ctx->Color.AlphaEnabled ||
+       ctx->Color.BlendEnabled) {
+      perf_debug("glCopyPixels(): Unsupported blend state\n");
+      return false;
+   }
+
+   if (!ctx->Color.ColorMask[0][0] ||
+       !ctx->Color.ColorMask[0][1] ||
+       !ctx->Color.ColorMask[0][2] ||
+       !ctx->Color.ColorMask[0][3]) {
+      perf_debug("glCopyPixels(): Unsupported color mask state\n");
+      return false;
+   }
+
+   if (ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F) {
+      perf_debug("glCopyPixles(): Unsupported pixel zoom\n");
+      return false;
+   }
 
    intel_prepare_render(intel);
 
@@ -169,39 +168,26 @@ do_blit_copypixels(struct gl_context * ctx,
    dstx += srcx - orig_srcx;
    dsty += srcy - orig_srcy;
 
-   /* Flip dest Y if it's a window system framebuffer. */
-   if (fb->Name == 0) {
-      /* copypixels to a window system framebuffer */
-      dsty = fb->Height - dsty - height;
-      flip = !flip;
-   }
-
-   /* Flip source Y if it's a window system framebuffer. */
-   if (read_fb->Name == 0) {
-      srcy = read_fb->Height - srcy - height;
-      flip = !flip;
-   }
-
-   srcx += read_irb->draw_x;
-   srcy += read_irb->draw_y;
-   dstx += draw_irb->draw_x;
-   dsty += draw_irb->draw_y;
-
-   if (!intel_region_copy(intel,
-			  draw_irb->region, 0, dstx, dsty,
-			  read_irb->region, 0, srcx, srcy,
-			  width, height, flip,
-			  ctx->Color.ColorLogicOpEnabled ?
-			  ctx->Color.LogicOp : GL_COPY)) {
+   if (!intel_miptree_blit(intel,
+                           read_irb->mt, read_irb->mt_level, read_irb->mt_layer,
+                           srcx, srcy, _mesa_is_winsys_fbo(read_fb),
+                           draw_irb->mt, draw_irb->mt_level, draw_irb->mt_layer,
+                           dstx, dsty, _mesa_is_winsys_fbo(fb),
+                           width, height,
+                           (ctx->Color.ColorLogicOpEnabled ?
+                            ctx->Color.LogicOp : GL_COPY))) {
       DBG("%s: blit failure\n", __FUNCTION__);
-      return GL_FALSE;
+      return false;
    }
+
+   if (ctx->Query.CurrentOcclusionObject)
+      ctx->Query.CurrentOcclusionObject->Result += width * height;
 
 out:
    intel_check_front_buffer_rendering(intel);
 
    DBG("%s: success\n", __FUNCTION__);
-   return GL_TRUE;
+   return true;
 }
 
 

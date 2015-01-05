@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,40 +18,25 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 
  **************************************************************************/
 
-/* Authors:  Keith Whitwell <keith@tungstengraphics.com>
+/* Authors:  Keith Whitwell <keithw@vmware.com>
  */
 
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_prim.h"
 #include "pipe/p_defines.h"
 #include "draw_private.h"
 #include "draw_pipe.h"
 #include "draw_context.h"
 #include "draw_vbuf.h"
 
-static boolean points( unsigned prim )
-{
-   return (prim == PIPE_PRIM_POINTS);
-}
-
-static boolean lines( unsigned prim )
-{
-   return (prim == PIPE_PRIM_LINES ||
-           prim == PIPE_PRIM_LINE_STRIP ||
-           prim == PIPE_PRIM_LINE_LOOP);
-}
-
-static boolean triangles( unsigned prim )
-{
-   return prim >= PIPE_PRIM_TRIANGLES;
-}
 
 /**
  * Default version of a function to check if we need any special
@@ -66,6 +51,8 @@ draw_need_pipeline(const struct draw_context *draw,
                    const struct pipe_rasterizer_state *rasterizer,
                    unsigned int prim )
 {
+   unsigned reduced_prim = u_reduced_prim(prim);
+
    /* If the driver has overridden this, use that version: 
     */
    if (draw->render &&
@@ -80,8 +67,7 @@ draw_need_pipeline(const struct draw_context *draw,
     * and triggering the pipeline, because we have to trigger the
     * pipeline *anyway* if unfilled mode is active.
     */
-   if (lines(prim)) 
-   {
+   if (reduced_prim == PIPE_PRIM_LINES) {
       /* line stipple */
       if (rasterizer->line_stipple_enable && draw->pipeline.line_stipple)
          return TRUE;
@@ -93,10 +79,11 @@ draw_need_pipeline(const struct draw_context *draw,
       /* AA lines */
       if (rasterizer->line_smooth && draw->pipeline.aaline)
          return TRUE;
-   }
 
-   if (points(prim))
-   {
+      if (draw_current_shader_num_written_culldistances(draw))
+         return TRUE;
+   }
+   else if (reduced_prim == PIPE_PRIM_POINTS) {
       /* large points */
       if (rasterizer->point_size > draw->pipeline.wide_point_threshold)
          return TRUE;
@@ -114,10 +101,7 @@ draw_need_pipeline(const struct draw_context *draw,
       if (rasterizer->sprite_coord_enable && draw->pipeline.point_sprite)
          return TRUE;
    }
-
-
-   if (triangles(prim)) 
-   {
+   else if (reduced_prim == PIPE_PRIM_TRIANGLES) {
       /* polygon stipple */
       if (rasterizer->poly_stipple_enable && draw->pipeline.pstipple)
          return TRUE;
@@ -136,6 +120,9 @@ draw_need_pipeline(const struct draw_context *draw,
       /* two-side lighting */
       if (rasterizer->light_twoside)
          return TRUE;
+
+      if (draw_current_shader_num_written_culldistances(draw))
+         return TRUE;
    }
 
    /* polygon cull - this is difficult - hardware can cull just fine
@@ -145,7 +132,7 @@ draw_need_pipeline(const struct draw_context *draw,
     *
    if (rasterizer->cull_mode)
       return TRUE;
-    */
+   */
 
    return FALSE;
 }
@@ -195,6 +182,7 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
    if (rast->line_smooth && draw->pipeline.aaline) {
       draw->pipeline.aaline->next = next;
       next = draw->pipeline.aaline;
+      precalc_flat = TRUE;
    }
 
    if (rast->point_smooth && draw->pipeline.aapoint) {
@@ -259,7 +247,8 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
     * to less work emitting vertices, smaller vertex buffers, etc.
     * It's difficult to say whether this will be true in general.
     */
-   if (need_det || rast->cull_face != PIPE_FACE_NONE) {
+   if (need_det || rast->cull_face != PIPE_FACE_NONE ||
+       draw_current_shader_num_written_culldistances(draw)) {
       draw->pipeline.cull->next = next;
       next = draw->pipeline.cull;
    }
@@ -272,7 +261,6 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
       next = draw->pipeline.clip;
    }
 
-   
    draw->pipeline.first = next;
 
    if (0) {

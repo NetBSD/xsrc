@@ -37,6 +37,9 @@ import SCons.Errors
 import SCons.Util
 
 
+required_llvm_version = '3.1'
+
+
 def generate(env):
     env['llvm'] = False
 
@@ -84,6 +87,9 @@ def generate(env):
         if llvm_version is None:
             print 'scons: could not determine the LLVM version from %s' % llvm_config
             return
+        if llvm_version < distutils.version.LooseVersion(required_llvm_version):
+            print 'scons: LLVM version %s found, but %s is required' % (llvm_version, required_llvm_version)
+            return
 
         env.Prepend(CPPPATH = [os.path.join(llvm_dir, 'include')])
         env.AppendUnique(CPPDEFINES = [
@@ -92,35 +98,35 @@ def generate(env):
             'HAVE_STDINT_H',
         ])
         env.Prepend(LIBPATH = [os.path.join(llvm_dir, 'lib')])
-        if llvm_version >= distutils.version.LooseVersion('2.7'):
-            # 2.7
+        if llvm_version >= distutils.version.LooseVersion('3.2'):
+            # 3.2
             env.Prepend(LIBS = [
-                'LLVMLinker', 'LLVMipo', 'LLVMInterpreter',
-                'LLVMInstrumentation', 'LLVMJIT', 'LLVMExecutionEngine',
                 'LLVMBitWriter', 'LLVMX86Disassembler', 'LLVMX86AsmParser',
-                'LLVMMCParser', 'LLVMX86AsmPrinter', 'LLVMX86CodeGen',
-                'LLVMSelectionDAG', 'LLVMX86Info', 'LLVMAsmPrinter',
-                'LLVMCodeGen', 'LLVMScalarOpts', 'LLVMInstCombine',
-                'LLVMTransformUtils', 'LLVMipa', 'LLVMAsmParser',
-                'LLVMArchive', 'LLVMBitReader', 'LLVMAnalysis', 'LLVMTarget',
-                'LLVMMC', 'LLVMCore', 'LLVMSupport', 'LLVMSystem',
+                'LLVMX86CodeGen', 'LLVMX86Desc', 'LLVMSelectionDAG',
+                'LLVMAsmPrinter', 'LLVMMCParser', 'LLVMX86AsmPrinter',
+                'LLVMX86Utils', 'LLVMX86Info', 'LLVMMCJIT', 'LLVMJIT',
+                'LLVMExecutionEngine', 'LLVMCodeGen', 'LLVMScalarOpts',
+                'LLVMInstCombine', 'LLVMTransformUtils', 'LLVMipa',
+                'LLVMAnalysis', 'LLVMTarget', 'LLVMMC', 'LLVMCore',
+                'LLVMSupport', 'LLVMRuntimeDyld', 'LLVMObject'
             ])
         else:
-            # 2.6
+            # 3.1
             env.Prepend(LIBS = [
-                'LLVMX86AsmParser', 'LLVMX86AsmPrinter', 'LLVMX86CodeGen',
-                'LLVMX86Info', 'LLVMLinker', 'LLVMipo', 'LLVMInterpreter',
-                'LLVMInstrumentation', 'LLVMJIT', 'LLVMExecutionEngine',
-                'LLVMDebugger', 'LLVMBitWriter', 'LLVMAsmParser',
-                'LLVMArchive', 'LLVMBitReader', 'LLVMSelectionDAG',
-                'LLVMAsmPrinter', 'LLVMCodeGen', 'LLVMScalarOpts',
-                'LLVMTransformUtils', 'LLVMipa', 'LLVMAnalysis',
-                'LLVMTarget', 'LLVMMC', 'LLVMCore', 'LLVMSupport',
-                'LLVMSystem',
+                'LLVMBitWriter', 'LLVMX86Disassembler', 'LLVMX86AsmParser',
+                'LLVMX86CodeGen', 'LLVMX86Desc', 'LLVMSelectionDAG',
+                'LLVMAsmPrinter', 'LLVMMCParser', 'LLVMX86AsmPrinter',
+                'LLVMX86Utils', 'LLVMX86Info', 'LLVMMCJIT', 'LLVMJIT',
+                'LLVMExecutionEngine', 'LLVMCodeGen', 'LLVMScalarOpts',
+                'LLVMInstCombine', 'LLVMTransformUtils', 'LLVMipa',
+                'LLVMAnalysis', 'LLVMTarget', 'LLVMMC', 'LLVMCore',
+                'LLVMSupport'
             ])
         env.Append(LIBS = [
             'imagehlp',
             'psapi',
+            'shell32',
+            'advapi32'
         ])
         if env['msvc']:
             # Some of the LLVM C headers use the inline keyword without
@@ -134,16 +140,38 @@ def generate(env):
                 env.Append(LINKFLAGS = ['/nodefaultlib:LIBCMT'])
     else:
         if not env.Detect('llvm-config'):
-            print 'scons: llvm-config script not found' % llvm_version
+            print 'scons: llvm-config script not found'
             return
 
         llvm_version = env.backtick('llvm-config --version').rstrip()
         llvm_version = distutils.version.LooseVersion(llvm_version)
 
+        if llvm_version < distutils.version.LooseVersion(required_llvm_version):
+            print 'scons: LLVM version %s found, but %s is required' % (llvm_version, required_llvm_version)
+            return
+
         try:
-            env.ParseConfig('llvm-config --cppflags')
-            env.ParseConfig('llvm-config --libs')
+            # Treat --cppflags specially to prevent NDEBUG from disabling
+            # assertion failures in debug builds.
+            cppflags = env.ParseFlags('!llvm-config --cppflags')
+            try:
+                cppflags['CPPDEFINES'].remove('NDEBUG')
+            except ValueError:
+                pass
+            env.MergeFlags(cppflags)
+
+            # Match llvm --fno-rtti flag
+            cxxflags = env.backtick('llvm-config --cxxflags').split()
+            if '-fno-rtti' in cxxflags:
+                env.Append(CXXFLAGS = ['-fno-rtti'])
+
+            components = ['engine', 'mcjit', 'bitwriter', 'x86asmprinter']
+
+            env.ParseConfig('llvm-config --libs ' + ' '.join(components))
             env.ParseConfig('llvm-config --ldflags')
+            if llvm_version >= distutils.version.LooseVersion('3.5'):
+                env.ParseConfig('llvm-config --system-libs')
+                env.Append(CXXFLAGS = ['-std=c++11'])
         except OSError:
             print 'scons: llvm-config version %s failed' % llvm_version
             return

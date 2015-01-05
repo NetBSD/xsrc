@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -38,13 +38,16 @@
 #include "lp_rast.h"
 #include "lp_state_fs.h"
 #include "lp_state_setup.h"
+#include "lp_context.h"
+
+#include <inttypes.h>
 
 #define NUM_CHANNELS 4
 
 #if defined(PIPE_ARCH_SSE)
 #include <emmintrin.h>
 #endif
-   
+
 static INLINE int
 subpixel_snap(float a)
 {
@@ -54,13 +57,20 @@ subpixel_snap(float a)
 static INLINE float
 fixed_to_float(int a)
 {
-   return a * (1.0 / FIXED_ONE);
+   return a * (1.0f / FIXED_ONE);
 }
 
 
-
-
-
+/* Position and area in fixed point coordinates */
+struct fixed_position {
+   int32_t x[4];
+   int32_t y[4];
+   int64_t area;
+   int32_t dx01;
+   int32_t dy01;
+   int32_t dx20;
+   int32_t dy20;
+};
 
 
 /**
@@ -179,6 +189,19 @@ lp_rast_tri_tab[MAX_PLANES+1] = {
    LP_RAST_OP_TRIANGLE_8
 };
 
+static unsigned
+lp_rast_32_tri_tab[MAX_PLANES+1] = {
+   0,               /* should be impossible */
+   LP_RAST_OP_TRIANGLE_32_1,
+   LP_RAST_OP_TRIANGLE_32_2,
+   LP_RAST_OP_TRIANGLE_32_3,
+   LP_RAST_OP_TRIANGLE_32_4,
+   LP_RAST_OP_TRIANGLE_32_5,
+   LP_RAST_OP_TRIANGLE_32_6,
+   LP_RAST_OP_TRIANGLE_32_7,
+   LP_RAST_OP_TRIANGLE_32_8
+};
+
 
 
 /**
@@ -197,7 +220,19 @@ lp_setup_whole_tile(struct lp_setup_context *setup,
 
    /* if variant is opaque and scissor doesn't effect the tile */
    if (inputs->opaque) {
-      if (!scene->fb.zsbuf) {
+      /* Several things prevent this optimization from working:
+       * - For layered rendering we can't determine if this covers the same layer
+       * as previous rendering (or in case of clears those actually always cover
+       * all layers so optimization is impossible). Need to use fb_max_layer and
+       * not setup->layer_slot to determine this since even if there's currently
+       * no slot assigned previous rendering could have used one.
+       * - If there were any Begin/End query commands in the scene then those
+       * would get removed which would be very wrong. Furthermore, if queries
+       * were just active we also can't do the optimization since to get
+       * accurate query results we unfortunately need to execute the rendering
+       * commands.
+       */
+      if (!scene->fb.zsbuf && scene->fb_max_layer == 0 && !scene->had_queries) {
          /*
           * All previous rendering will be overwritten so reset the bin.
           */
@@ -226,41 +261,42 @@ lp_setup_whole_tile(struct lp_setup_context *setup,
  */
 static boolean
 do_triangle_ccw(struct lp_setup_context *setup,
-		const float (*v0)[4],
-		const float (*v1)[4],
-		const float (*v2)[4],
-		boolean frontfacing )
+                struct fixed_position* position,
+                const float (*v0)[4],
+                const float (*v1)[4],
+                const float (*v2)[4],
+                boolean frontfacing )
 {
    struct lp_scene *scene = setup->scene;
    const struct lp_setup_variant_key *key = &setup->setup.variant->key;
    struct lp_rast_triangle *tri;
    struct lp_rast_plane *plane;
-   int x[4];
-   int y[4];
    struct u_rect bbox;
    unsigned tri_bytes;
    int nr_planes = 3;
+   unsigned viewport_index = 0;
+   unsigned layer = 0;
+
+   /* Area should always be positive here */
+   assert(position->area > 0);
 
    if (0)
       lp_setup_print_triangle(setup, v0, v1, v2);
 
    if (setup->scissor_test) {
       nr_planes = 7;
+      if (setup->viewport_index_slot > 0) {
+         unsigned *udata = (unsigned*)v0[setup->viewport_index_slot];
+         viewport_index = lp_clamp_viewport_idx(*udata);
+      }
    }
    else {
       nr_planes = 3;
    }
-
-   /* x/y positions in fixed point */
-   x[0] = subpixel_snap(v0[0][0] - setup->pixel_offset);
-   x[1] = subpixel_snap(v1[0][0] - setup->pixel_offset);
-   x[2] = subpixel_snap(v2[0][0] - setup->pixel_offset);
-   x[3] = 0;
-   y[0] = subpixel_snap(v0[0][1] - setup->pixel_offset);
-   y[1] = subpixel_snap(v1[0][1] - setup->pixel_offset);
-   y[2] = subpixel_snap(v2[0][1] - setup->pixel_offset);
-   y[3] = 0;
-   
+   if (setup->layer_slot > 0) {
+      layer = *(unsigned*)v1[setup->layer_slot];
+      layer = MIN2(layer, scene->fb_max_layer);
+   }
 
    /* Bounding rectangle (in pixels) */
    {
@@ -269,17 +305,15 @@ do_triangle_ccw(struct lp_setup_context *setup,
        * up needing a bottom-left fill convention, which requires
        * slightly different rounding.
        */
-      int adj = (setup->pixel_offset != 0) ? 1 : 0;
+      int adj = (setup->bottom_edge_rule != 0) ? 1 : 0;
 
-      bbox.x0 = (MIN3(x[0], x[1], x[2]) + (FIXED_ONE-1)) >> FIXED_ORDER;
-      bbox.x1 = (MAX3(x[0], x[1], x[2]) + (FIXED_ONE-1)) >> FIXED_ORDER;
-      bbox.y0 = (MIN3(y[0], y[1], y[2]) + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
-      bbox.y1 = (MAX3(y[0], y[1], y[2]) + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
+      /* Inclusive x0, exclusive x1 */
+      bbox.x0 =  MIN3(position->x[0], position->x[1], position->x[2]) >> FIXED_ORDER;
+      bbox.x1 = (MAX3(position->x[0], position->x[1], position->x[2]) - 1) >> FIXED_ORDER;
 
-      /* Inclusive coordinates:
-       */
-      bbox.x1--;
-      bbox.y1--;
+      /* Inclusive / exclusive depending upon adj (bottom-left or top-right) */
+      bbox.y0 = (MIN3(position->y[0], position->y[1], position->y[2]) + adj) >> FIXED_ORDER;
+      bbox.y1 = (MAX3(position->y[0], position->y[1], position->y[2]) - 1 + adj) >> FIXED_ORDER;
    }
 
    if (bbox.x1 < bbox.x0 ||
@@ -289,7 +323,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
       return TRUE;
    }
 
-   if (!u_rect_test_intersection(&setup->draw_region, &bbox)) {
+   if (!u_rect_test_intersection(&setup->draw_regions[viewport_index], &bbox)) {
       if (0) debug_printf("offscreen\n");
       LP_COUNT(nr_culled_tris);
       return TRUE;
@@ -333,6 +367,8 @@ do_triangle_ccw(struct lp_setup_context *setup,
    tri->inputs.frontfacing = frontfacing;
    tri->inputs.disable = FALSE;
    tri->inputs.opaque = setup->fs.current.variant->opaque;
+   tri->inputs.layer = layer;
+   tri->inputs.viewport_index = viewport_index;
 
    if (0)
       lp_dump_setup_coef(&setup->setup.variant->key,
@@ -343,7 +379,10 @@ do_triangle_ccw(struct lp_setup_context *setup,
    plane = GET_PLANES(tri);
 
 #if defined(PIPE_ARCH_SSE)
-   {
+   if (setup->fb.width <= MAX_FIXED_LENGTH32 &&
+       setup->fb.height <= MAX_FIXED_LENGTH32 &&
+       (bbox.x1 - bbox.x0) <= MAX_FIXED_LENGTH32 &&
+       (bbox.y1 - bbox.y0) <= MAX_FIXED_LENGTH32) {
       __m128i vertx, verty;
       __m128i shufx, shufy;
       __m128i dcdx, dcdy, c;
@@ -355,9 +394,10 @@ do_triangle_ccw(struct lp_setup_context *setup,
       __m128i c_inc_mask, c_inc;
       __m128i eo, p0, p1, p2;
       __m128i zero = _mm_setzero_si128();
+      PIPE_ALIGN_VAR(16) int32_t temp_vec[4];
 
-      vertx = _mm_loadu_si128((__m128i *)x); /* vertex x coords */
-      verty = _mm_loadu_si128((__m128i *)y); /* vertex y coords */
+      vertx = _mm_loadu_si128((__m128i *)position->x); /* vertex x coords */
+      verty = _mm_loadu_si128((__m128i *)position->y); /* vertex y coords */
 
       shufx = _mm_shuffle_epi32(vertx, _MM_SHUFFLE(3,0,2,1));
       shufy = _mm_shuffle_epi32(verty, _MM_SHUFFLE(3,0,2,1));
@@ -369,7 +409,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
       dcdx_zero_mask = _mm_cmpeq_epi32(dcdx, zero);
       dcdy_neg_mask = _mm_srai_epi32(dcdy, 31);
 
-      top_left_flag = _mm_set1_epi32((setup->pixel_offset == 0) ? ~0 : 0);
+      top_left_flag = _mm_set1_epi32((setup->bottom_edge_rule == 0) ? ~0 : 0);
 
       c_inc_mask = _mm_or_si128(dcdx_neg_mask,
                                 _mm_and_si128(dcdx_zero_mask,
@@ -401,45 +441,44 @@ do_triangle_ccw(struct lp_setup_context *setup,
       transpose4_epi32(&c, &dcdx, &dcdy, &eo,
                        &p0, &p1, &p2, &unused);
 
-      _mm_store_si128((__m128i *)&plane[0], p0);
-      _mm_store_si128((__m128i *)&plane[1], p1);
-      _mm_store_si128((__m128i *)&plane[2], p2);
-   }
-#else
+#define STORE_PLANE(plane, vec) do {                 \
+         _mm_store_si128((__m128i *)&temp_vec, vec); \
+         plane.c    = (int64_t)temp_vec[0];          \
+         plane.dcdx = temp_vec[1];                   \
+         plane.dcdy = temp_vec[2];                   \
+         plane.eo   = temp_vec[3];                   \
+      } while(0)
+
+      STORE_PLANE(plane[0], p0);
+      STORE_PLANE(plane[1], p1);
+      STORE_PLANE(plane[2], p2);
+#undef STORE_PLANE
+   } else
+#endif
    {
       int i;
-      plane[0].dcdy = x[0] - x[1];
-      plane[1].dcdy = x[1] - x[2];
-      plane[2].dcdy = x[2] - x[0];
-      plane[0].dcdx = y[0] - y[1];
-      plane[1].dcdx = y[1] - y[2];
-      plane[2].dcdx = y[2] - y[0];
+      plane[0].dcdy = position->dx01;
+      plane[1].dcdy = position->x[1] - position->x[2];
+      plane[2].dcdy = position->dx20;
+      plane[0].dcdx = position->dy01;
+      plane[1].dcdx = position->y[1] - position->y[2];
+      plane[2].dcdx = position->dy20;
   
       for (i = 0; i < 3; i++) {
          /* half-edge constants, will be interated over the whole render
           * target.
           */
-         plane[i].c = plane[i].dcdx * x[i] - plane[i].dcdy * y[i];
+         plane[i].c = IMUL64(plane[i].dcdx, position->x[i]) -
+               IMUL64(plane[i].dcdy, position->y[i]);
 
-         /* correct for top-left vs. bottom-left fill convention.  
-          *
-          * note that we're overloading gl_rasterization_rules to mean
-          * both (0.5,0.5) pixel centers *and* bottom-left filling
-          * convention.
-          *
-          * GL actually has a top-left filling convention, but GL's
-          * notion of "top" differs from gallium's...
-          *
-          * Also, sometimes (in FBO cases) GL will render upside down
-          * to its usual method, in which case it will probably want
-          * to use the opposite, top-left convention.
+         /* correct for top-left vs. bottom-left fill convention.
           */         
          if (plane[i].dcdx < 0) {
             /* both fill conventions want this - adjust for left edges */
             plane[i].c++;            
          }
          else if (plane[i].dcdx == 0) {
-            if (setup->pixel_offset == 0) {
+            if (setup->bottom_edge_rule == 0){
                /* correct for top-left fill convention:
                 */
                if (plane[i].dcdy > 0) plane[i].c++;
@@ -451,8 +490,12 @@ do_triangle_ccw(struct lp_setup_context *setup,
             }
          }
 
-         plane[i].dcdx *= FIXED_ONE;
-         plane[i].dcdy *= FIXED_ONE;
+         /* Scale up to match c:
+          */
+         assert((plane[i].dcdx << FIXED_ORDER) >> FIXED_ORDER == plane[i].dcdx);
+         assert((plane[i].dcdy << FIXED_ORDER) >> FIXED_ORDER == plane[i].dcdy);
+         plane[i].dcdx <<= FIXED_ORDER;
+         plane[i].dcdy <<= FIXED_ORDER;
 
          /* find trivial reject offsets for each edge for a single-pixel
           * sized block.  These will be scaled up at each recursive level to
@@ -464,22 +507,21 @@ do_triangle_ccw(struct lp_setup_context *setup,
          if (plane[i].dcdy > 0) plane[i].eo += plane[i].dcdy;
       }
    }
-#endif
 
    if (0) {
-      debug_printf("p0: %08x/%08x/%08x/%08x\n",
+      debug_printf("p0: %"PRIx64"/%08x/%08x/%"PRIx64"\n",
                    plane[0].c,
                    plane[0].dcdx,
                    plane[0].dcdy,
                    plane[0].eo);
       
-      debug_printf("p1: %08x/%08x/%08x/%08x\n",
+      debug_printf("p1: %"PRIx64"/%08x/%08x/%"PRIx64"\n",
                    plane[1].c,
                    plane[1].dcdx,
                    plane[1].dcdy,
                    plane[1].eo);
       
-      debug_printf("p0: %08x/%08x/%08x/%08x\n",
+      debug_printf("p2: %"PRIx64"/%08x/%08x/%"PRIx64"\n",
                    plane[2].c,
                    plane[2].dcdx,
                    plane[2].dcdy,
@@ -506,7 +548,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
     * these planes elsewhere.
     */
    if (nr_planes == 7) {
-      const struct u_rect *scissor = &setup->scissor;
+      const struct u_rect *scissor = &setup->scissors[viewport_index];
 
       plane[3].dcdx = -1;
       plane[3].dcdy = 0;
@@ -529,7 +571,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
       plane[6].eo = 0;
    }
 
-   return lp_setup_bin_triangle( setup, tri, &bbox, nr_planes );
+   return lp_setup_bin_triangle(setup, tri, &bbox, nr_planes, viewport_index);
 }
 
 /*
@@ -563,12 +605,12 @@ boolean
 lp_setup_bin_triangle( struct lp_setup_context *setup,
                        struct lp_rast_triangle *tri,
                        const struct u_rect *bbox,
-                       int nr_planes )
+                       int nr_planes,
+                       unsigned viewport_index )
 {
    struct lp_scene *scene = setup->scene;
    struct u_rect trimmed_box = *bbox;   
    int i;
-
    /* What is the largest power-of-two boundary this triangle crosses:
     */
    int dx = floor_pot((bbox->x0 ^ bbox->x1) |
@@ -577,15 +619,18 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
    /* The largest dimension of the rasterized area of the triangle
     * (aligned to a 4x4 grid), rounded down to the nearest power of two:
     */
-   int sz = floor_pot((bbox->x1 - (bbox->x0 & ~3)) |
-		      (bbox->y1 - (bbox->y0 & ~3)));
+   int max_sz = ((bbox->x1 - (bbox->x0 & ~3)) |
+                 (bbox->y1 - (bbox->y0 & ~3)));
+   int sz = floor_pot(max_sz);
+   boolean use_32bits = max_sz <= MAX_FIXED_LENGTH32;
 
    /* Now apply scissor, etc to the bounding box.  Could do this
     * earlier, but it confuses the logic for tri-16 and would force
     * the rasterizer to also respect scissor, etc, just for the rare
     * cases where a small triangle extends beyond the scissor.
     */
-   u_rect_find_intersection(&setup->draw_region, &trimmed_box);
+   u_rect_find_intersection(&setup->draw_regions[viewport_index],
+                            &trimmed_box);
 
    /* Determine which tile(s) intersect the triangle's bounding box
     */
@@ -593,9 +638,8 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
    {
       int ix0 = bbox->x0 / TILE_SIZE;
       int iy0 = bbox->y0 / TILE_SIZE;
-      int px = bbox->x0 & 63 & ~3;
-      int py = bbox->y0 & 63 & ~3;
-      int mask = px | (py << 8);
+      unsigned px = bbox->x0 & 63 & ~3;
+      unsigned py = bbox->y0 & 63 & ~3;
 
       assert(iy0 == bbox->y1 / TILE_SIZE &&
 	     ix0 == bbox->x1 / TILE_SIZE);
@@ -605,46 +649,73 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
          {
             /* Triangle is contained in a single 4x4 stamp:
              */
+            assert(px + 4 <= TILE_SIZE);
+            assert(py + 4 <= TILE_SIZE);
             return lp_scene_bin_cmd_with_state( scene, ix0, iy0,
                                                 setup->fs.stored,
+                                                use_32bits ?
+                                                LP_RAST_OP_TRIANGLE_32_3_4 :
                                                 LP_RAST_OP_TRIANGLE_3_4,
-                                                lp_rast_arg_triangle(tri, mask) );
+                                                lp_rast_arg_triangle_contained(tri, px, py) );
          }
 
          if (sz < 16)
          {
             /* Triangle is contained in a single 16x16 block:
              */
+
+            /*
+             * The 16x16 block is only 4x4 aligned, and can exceed the tile
+             * dimensions if the triangle is 16 pixels in one dimension but 4
+             * in the other. So budge the 16x16 back inside the tile.
+             */
+            px = MIN2(px, TILE_SIZE - 16);
+            py = MIN2(py, TILE_SIZE - 16);
+
+            assert(px + 16 <= TILE_SIZE);
+            assert(py + 16 <= TILE_SIZE);
+
             return lp_scene_bin_cmd_with_state( scene, ix0, iy0,
                                                 setup->fs.stored,
+                                                use_32bits ?
+                                                LP_RAST_OP_TRIANGLE_32_3_16 :
                                                 LP_RAST_OP_TRIANGLE_3_16,
-                                                lp_rast_arg_triangle(tri, mask) );
+                                                lp_rast_arg_triangle_contained(tri, px, py) );
          }
       }
       else if (nr_planes == 4 && sz < 16) 
       {
+         px = MIN2(px, TILE_SIZE - 16);
+         py = MIN2(py, TILE_SIZE - 16);
+
+         assert(px + 16 <= TILE_SIZE);
+         assert(py + 16 <= TILE_SIZE);
+
          return lp_scene_bin_cmd_with_state(scene, ix0, iy0,
                                             setup->fs.stored,
+                                            use_32bits ?
+                                            LP_RAST_OP_TRIANGLE_32_4_16 :
                                             LP_RAST_OP_TRIANGLE_4_16,
-                                            lp_rast_arg_triangle(tri, mask) );
+                                            lp_rast_arg_triangle_contained(tri, px, py));
       }
 
 
       /* Triangle is contained in a single tile:
        */
-      return lp_scene_bin_cmd_with_state( scene, ix0, iy0, setup->fs.stored,
-                                          lp_rast_tri_tab[nr_planes], 
-                                          lp_rast_arg_triangle(tri, (1<<nr_planes)-1) );
+      return lp_scene_bin_cmd_with_state(
+         scene, ix0, iy0, setup->fs.stored,
+         use_32bits ? lp_rast_32_tri_tab[nr_planes] : lp_rast_tri_tab[nr_planes],
+         lp_rast_arg_triangle(tri, (1<<nr_planes)-1));
    }
    else
    {
       struct lp_rast_plane *plane = GET_PLANES(tri);
-      int c[MAX_PLANES];
-      int ei[MAX_PLANES];
+      int64_t c[MAX_PLANES];
+      int64_t ei[MAX_PLANES];
 
-      int eo[MAX_PLANES];
-      int xstep[MAX_PLANES];
-      int ystep[MAX_PLANES];
+      int64_t eo[MAX_PLANES];
+      int64_t xstep[MAX_PLANES];
+      int64_t ystep[MAX_PLANES];
       int x, y;
 
       int ix0 = trimmed_box.x0 / TILE_SIZE;
@@ -654,16 +725,16 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
       
       for (i = 0; i < nr_planes; i++) {
          c[i] = (plane[i].c + 
-                 plane[i].dcdy * iy0 * TILE_SIZE - 
-                 plane[i].dcdx * ix0 * TILE_SIZE);
+                 IMUL64(plane[i].dcdy, iy0) * TILE_SIZE -
+                 IMUL64(plane[i].dcdx, ix0) * TILE_SIZE);
 
          ei[i] = (plane[i].dcdy - 
                   plane[i].dcdx - 
                   plane[i].eo) << TILE_ORDER;
 
          eo[i] = plane[i].eo << TILE_ORDER;
-         xstep[i] = -(plane[i].dcdx << TILE_ORDER);
-         ystep[i] = plane[i].dcdy << TILE_ORDER;
+         xstep[i] = -(((int64_t)plane[i].dcdx) << TILE_ORDER);
+         ystep[i] = ((int64_t)plane[i].dcdy) << TILE_ORDER;
       }
 
 
@@ -675,22 +746,22 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
        */
       for (y = iy0; y <= iy1; y++)
       {
-	 boolean in = FALSE;  /* are we inside the triangle? */
-	 int cx[MAX_PLANES];
+         boolean in = FALSE;  /* are we inside the triangle? */
+         int64_t cx[MAX_PLANES];
 
          for (i = 0; i < nr_planes; i++)
             cx[i] = c[i];
 
-	 for (x = ix0; x <= ix1; x++)
-	 {
+         for (x = ix0; x <= ix1; x++)
+         {
             int out = 0;
             int partial = 0;
 
             for (i = 0; i < nr_planes; i++) {
-               int planeout = cx[i] + eo[i];
-               int planepartial = cx[i] + ei[i] - 1;
-               out |= (planeout >> 31);
-               partial |= (planepartial >> 31) & (1<<i);
+               int64_t planeout = cx[i] + eo[i];
+               int64_t planepartial = cx[i] + ei[i] - 1;
+               out |= (planeout >> 63);
+               partial |= (planepartial >> 63) & (1<<i);
             }
 
             if (out) {
@@ -700,7 +771,7 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
                LP_COUNT(nr_empty_64);
             }
             else if (partial) {
-               /* Not trivially accepted by at least one plane - 
+               /* Not trivially accepted by at least one plane -
                 * rasterize/shade partial tile
                 */
                int count = util_bitcount(partial);
@@ -708,7 +779,9 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
                
                if (!lp_scene_bin_cmd_with_state( scene, x, y,
                                                  setup->fs.stored,
-                                                 lp_rast_tri_tab[count], 
+                                                 use_32bits ?
+                                                 lp_rast_32_tri_tab[count] :
+                                                 lp_rast_tri_tab[count],
                                                  lp_rast_arg_triangle(tri, partial) ))
                   goto fail;
 
@@ -722,14 +795,12 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
                   goto fail;
             }
 
-	    /* Iterate cx values across the region:
-	     */
+            /* Iterate cx values across the region: */
             for (i = 0; i < nr_planes; i++)
                cx[i] += xstep[i];
-	 }
-      
-	 /* Iterate c values down the region:
-	  */
+         }
+
+         /* Iterate c values down the region: */
          for (i = 0; i < nr_planes; i++)
             c[i] += ystep[i];
       }
@@ -751,31 +822,102 @@ fail:
  * Try to draw the triangle, restart the scene on failure.
  */
 static void retry_triangle_ccw( struct lp_setup_context *setup,
+                                struct fixed_position* position,
                                 const float (*v0)[4],
                                 const float (*v1)[4],
                                 const float (*v2)[4],
                                 boolean front)
 {
-   if (!do_triangle_ccw( setup, v0, v1, v2, front ))
+   if (!do_triangle_ccw( setup, position, v0, v1, v2, front ))
    {
       if (!lp_setup_flush_and_restart(setup))
          return;
 
-      if (!do_triangle_ccw( setup, v0, v1, v2, front ))
+      if (!do_triangle_ccw( setup, position, v0, v1, v2, front ))
          return;
    }
 }
 
-static INLINE float
-calc_area(const float (*v0)[4],
-          const float (*v1)[4],
-          const float (*v2)[4])
+/**
+ * Calculate fixed position data for a triangle
+ */
+static INLINE void
+calc_fixed_position( struct lp_setup_context *setup,
+                     struct fixed_position* position,
+                     const float (*v0)[4],
+                     const float (*v1)[4],
+                     const float (*v2)[4])
 {
-   float dx01 = v0[0][0] - v1[0][0];
-   float dy01 = v0[0][1] - v1[0][1];
-   float dx20 = v2[0][0] - v0[0][0];
-   float dy20 = v2[0][1] - v0[0][1];
-   return dx01 * dy20 - dx20 * dy01;
+   position->x[0] = subpixel_snap(v0[0][0] - setup->pixel_offset);
+   position->x[1] = subpixel_snap(v1[0][0] - setup->pixel_offset);
+   position->x[2] = subpixel_snap(v2[0][0] - setup->pixel_offset);
+   position->x[3] = 0;
+
+   position->y[0] = subpixel_snap(v0[0][1] - setup->pixel_offset);
+   position->y[1] = subpixel_snap(v1[0][1] - setup->pixel_offset);
+   position->y[2] = subpixel_snap(v2[0][1] - setup->pixel_offset);
+   position->y[3] = 0;
+
+   position->dx01 = position->x[0] - position->x[1];
+   position->dy01 = position->y[0] - position->y[1];
+
+   position->dx20 = position->x[2] - position->x[0];
+   position->dy20 = position->y[2] - position->y[0];
+
+   position->area = IMUL64(position->dx01, position->dy20) -
+         IMUL64(position->dx20, position->dy01);
+}
+
+
+/**
+ * Rotate a triangle, flipping its clockwise direction,
+ * Swaps values for xy[0] and xy[1]
+ */
+static INLINE void
+rotate_fixed_position_01( struct fixed_position* position )
+{
+   int x, y;
+
+   x = position->x[1];
+   y = position->y[1];
+   position->x[1] = position->x[0];
+   position->y[1] = position->y[0];
+   position->x[0] = x;
+   position->y[0] = y;
+
+   position->dx01 = -position->dx01;
+   position->dy01 = -position->dy01;
+   position->dx20 = position->x[2] - position->x[0];
+   position->dy20 = position->y[2] - position->y[0];
+
+   position->area = -position->area;
+}
+
+
+/**
+ * Rotate a triangle, flipping its clockwise direction,
+ * Swaps values for xy[1] and xy[2]
+ */
+static INLINE void
+rotate_fixed_position_12( struct fixed_position* position )
+{
+   int x, y;
+
+   x = position->x[2];
+   y = position->y[2];
+   position->x[2] = position->x[1];
+   position->y[2] = position->y[1];
+   position->x[1] = x;
+   position->y[1] = y;
+
+   x = position->dx01;
+   y = position->dy01;
+   position->dx01 = -position->dx20;
+   position->dy01 = -position->dy20;
+   position->dx20 = -x;
+   position->dy20 = -y;
+
+   position->area = -position->area;
 }
 
 
@@ -787,10 +929,19 @@ static void triangle_cw( struct lp_setup_context *setup,
 			 const float (*v1)[4],
 			 const float (*v2)[4] )
 {
-   float area = calc_area(v0, v1, v2);
+   struct fixed_position position;
 
-   if (area < 0.0f) 
-      retry_triangle_ccw(setup, v0, v2, v1, !setup->ccw_is_frontface);
+   calc_fixed_position(setup, &position, v0, v1, v2);
+
+   if (position.area < 0) {
+      if (setup->flatshade_first) {
+         rotate_fixed_position_12(&position);
+         retry_triangle_ccw(setup, &position, v0, v2, v1, !setup->ccw_is_frontface);
+      } else {
+         rotate_fixed_position_01(&position);
+         retry_triangle_ccw(setup, &position, v1, v0, v2, !setup->ccw_is_frontface);
+      }
+   }
 }
 
 
@@ -799,10 +950,12 @@ static void triangle_ccw( struct lp_setup_context *setup,
                           const float (*v1)[4],
                           const float (*v2)[4])
 {
-   float area = calc_area(v0, v1, v2);
+   struct fixed_position position;
 
-   if (area > 0.0f) 
-      retry_triangle_ccw(setup, v0, v1, v2, setup->ccw_is_frontface);
+   calc_fixed_position(setup, &position, v0, v1, v2);
+
+   if (position.area > 0)
+      retry_triangle_ccw(setup, &position, v0, v1, v2, setup->ccw_is_frontface);
 }
 
 /**
@@ -813,7 +966,15 @@ static void triangle_both( struct lp_setup_context *setup,
 			   const float (*v1)[4],
 			   const float (*v2)[4] )
 {
-   float area = calc_area(v0, v1, v2);
+   struct fixed_position position;
+   struct llvmpipe_context *lp_context = (struct llvmpipe_context *)setup->pipe;
+
+   if (lp_context->active_statistics_queries &&
+       !llvmpipe_rasterization_disabled(lp_context)) {
+      lp_context->pipeline_statistics.c_primitives++;
+   }
+
+   calc_fixed_position(setup, &position, v0, v1, v2);
 
    if (0) {
       assert(!util_is_inf_or_nan(v0[0][0]));
@@ -822,13 +983,19 @@ static void triangle_both( struct lp_setup_context *setup,
       assert(!util_is_inf_or_nan(v1[0][1]));
       assert(!util_is_inf_or_nan(v2[0][0]));
       assert(!util_is_inf_or_nan(v2[0][1]));
-      assert(!util_is_inf_or_nan(area));
    }
 
-   if (area > 0.0f) 
-      retry_triangle_ccw( setup, v0, v1, v2, setup->ccw_is_frontface );
-   else if (area < 0.0f)
-      retry_triangle_ccw( setup, v0, v2, v1, !setup->ccw_is_frontface );
+   if (position.area > 0)
+      retry_triangle_ccw( setup, &position, v0, v1, v2, setup->ccw_is_frontface );
+   else if (position.area < 0) {
+      if (setup->flatshade_first) {
+         rotate_fixed_position_12( &position );
+         retry_triangle_ccw( setup, &position, v0, v2, v1, !setup->ccw_is_frontface );
+      } else {
+         rotate_fixed_position_01( &position );
+         retry_triangle_ccw( setup, &position, v1, v0, v2, !setup->ccw_is_frontface );
+      }
+   }
 }
 
 

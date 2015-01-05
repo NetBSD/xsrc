@@ -31,13 +31,14 @@
 #include "util/u_simple_list.h"
 #include "os/os_time.h"
 #include "gallivm/lp_bld_arit.h"
+#include "gallivm/lp_bld_bitarit.h"
 #include "gallivm/lp_bld_const.h"
 #include "gallivm/lp_bld_debug.h"
 #include "gallivm/lp_bld_init.h"
+#include "gallivm/lp_bld_logic.h"
 #include "gallivm/lp_bld_intr.h"
 #include "gallivm/lp_bld_flow.h"
 #include "gallivm/lp_bld_type.h"
-#include <llvm-c/Analysis.h>	/* for LLVMVerifyFunction */
 
 #include "lp_perf.h"
 #include "lp_debug.h"
@@ -48,6 +49,9 @@
 #include "lp_state_fs.h"
 #include "lp_state_setup.h"
 
+
+/** Setup shader number (for debugging) */
+static unsigned setup_no = 0;
 
 
 /* currently organized to interpolate full float[4] attributes even
@@ -76,100 +80,43 @@ struct lp_setup_args
    LLVMValueRef dy01_ooa;
    LLVMValueRef dx20_ooa;
    LLVMValueRef dx01_ooa;
-
-   /* Temporary, per-attribute:
-    */
-   LLVMValueRef v0a;
-   LLVMValueRef v1a;
-   LLVMValueRef v2a;
+   struct lp_build_context bld;
 };
 
 
-
-static LLVMTypeRef
-type4f(struct gallivm_state *gallivm)
-{
-   return LLVMVectorType(LLVMFloatTypeInContext(gallivm->context), 4);
-}
-
-
-/* Equivalent of _mm_setr_ps(a,b,c,d)
- */
-static LLVMValueRef
-vec4f(struct gallivm_state *gallivm,
-      LLVMValueRef a, LLVMValueRef b, LLVMValueRef c, LLVMValueRef d,
-      const char *name)
-{
-   LLVMBuilderRef bld = gallivm->builder;
-   LLVMValueRef i0 = lp_build_const_int32(gallivm, 0);
-   LLVMValueRef i1 = lp_build_const_int32(gallivm, 1);
-   LLVMValueRef i2 = lp_build_const_int32(gallivm, 2);
-   LLVMValueRef i3 = lp_build_const_int32(gallivm, 3);
-
-   LLVMValueRef res = LLVMGetUndef(type4f(gallivm));
-
-   res = LLVMBuildInsertElement(bld, res, a, i0, "");
-   res = LLVMBuildInsertElement(bld, res, b, i1, "");
-   res = LLVMBuildInsertElement(bld, res, c, i2, "");
-   res = LLVMBuildInsertElement(bld, res, d, i3, name);
-
-   return res;
-}
-
-/* Equivalent of _mm_set1_ps(a)
- */
-static LLVMValueRef
-vec4f_from_scalar(struct gallivm_state *gallivm,
-                  LLVMValueRef a,
-                  const char *name)
-{
-   LLVMBuilderRef bld = gallivm->builder;
-   LLVMValueRef res = LLVMGetUndef(type4f(gallivm));
-   int i;
-
-   for(i = 0; i < 4; ++i) {
-      LLVMValueRef index = lp_build_const_int32(gallivm, i);
-      res = LLVMBuildInsertElement(bld, res, a, index, i == 3 ? name : "");
-   }
-
-   return res;
-}
-
 static void
 store_coef(struct gallivm_state *gallivm,
-	   struct lp_setup_args *args,
-	   unsigned slot,
-	   LLVMValueRef a0,
-	   LLVMValueRef dadx,
-	   LLVMValueRef dady)
+           struct lp_setup_args *args,
+           unsigned slot,
+           LLVMValueRef a0,
+           LLVMValueRef dadx,
+           LLVMValueRef dady)
 {
    LLVMBuilderRef builder = gallivm->builder;
    LLVMValueRef idx = lp_build_const_int32(gallivm, slot);
-   
-   LLVMBuildStore(builder,
-		  a0, 
-		  LLVMBuildGEP(builder, args->a0, &idx, 1, ""));
 
    LLVMBuildStore(builder,
-		  dadx, 
-		  LLVMBuildGEP(builder, args->dadx, &idx, 1, ""));
+                  a0,
+                  LLVMBuildGEP(builder, args->a0, &idx, 1, ""));
 
    LLVMBuildStore(builder,
-		  dady, 
-		  LLVMBuildGEP(builder, args->dady, &idx, 1, ""));
+                  dadx,
+                  LLVMBuildGEP(builder, args->dadx, &idx, 1, ""));
+
+   LLVMBuildStore(builder,
+                  dady,
+                  LLVMBuildGEP(builder, args->dady, &idx, 1, ""));
 }
 
 
 
 static void 
 emit_constant_coef4(struct gallivm_state *gallivm,
-		     struct lp_setup_args *args,
-		     unsigned slot,
-		     LLVMValueRef vert)
+                    struct lp_setup_args *args,
+                    unsigned slot,
+                    LLVMValueRef vert)
 {
-   LLVMValueRef zero      = lp_build_const_float(gallivm, 0.0);
-   LLVMValueRef zerovec   = vec4f_from_scalar(gallivm, zero, "zero");
-   store_coef(gallivm, args, slot, vert, zerovec, zerovec);
+   store_coef(gallivm, args, slot, vert, args->bld.zero, args->bld.zero);
 }
 
 
@@ -180,27 +127,40 @@ emit_constant_coef4(struct gallivm_state *gallivm,
  */
 static void 
 emit_facing_coef(struct gallivm_state *gallivm,
-		  struct lp_setup_args *args,
-		  unsigned slot )
+                 struct lp_setup_args *args,
+                 unsigned slot )
 {
    LLVMBuilderRef builder = gallivm->builder;
    LLVMTypeRef float_type = LLVMFloatTypeInContext(gallivm->context);
    LLVMValueRef a0_0 = args->facing;
    LLVMValueRef a0_0f = LLVMBuildSIToFP(builder, a0_0, float_type, "");
-   LLVMValueRef zero = lp_build_const_float(gallivm, 0.0);
-   LLVMValueRef a0 = vec4f(gallivm, a0_0f, zero, zero, zero, "facing");
-   LLVMValueRef zerovec = vec4f_from_scalar(gallivm, zero, "zero");
+   LLVMValueRef a0, face_val;
+   const unsigned char swizzles[4] = { PIPE_SWIZZLE_RED, PIPE_SWIZZLE_ZERO,
+                                       PIPE_SWIZZLE_ZERO, PIPE_SWIZZLE_ZERO };
+   /* Our face val is either 1 or 0 so we do
+    * face = (val * 2) - 1
+    * to make it 1 or -1
+    */
+   face_val =
+      LLVMBuildFAdd(builder,
+                    LLVMBuildFMul(builder, a0_0f,
+                                  lp_build_const_float(gallivm, 2.0),
+                                  ""),
+                    lp_build_const_float(gallivm, -1.0),
+                    "facing");
+   face_val = lp_build_broadcast_scalar(&args->bld, face_val);
+   a0 = lp_build_swizzle_aos(&args->bld, face_val, swizzles);
 
-   store_coef(gallivm, args, slot, a0, zerovec, zerovec);
+   store_coef(gallivm, args, slot, a0, args->bld.zero, args->bld.zero);
 }
 
 
 static LLVMValueRef
 vert_attrib(struct gallivm_state *gallivm,
-	    LLVMValueRef vert,
-	    int attr,
-	    int elem,
-	    const char *name)
+            LLVMValueRef vert,
+            int attr,
+            int elem,
+            const char *name)
 {
    LLVMBuilderRef b = gallivm->builder;
    LLVMValueRef idx[2];
@@ -209,35 +169,22 @@ vert_attrib(struct gallivm_state *gallivm,
    return LLVMBuildLoad(b, LLVMBuildGEP(b, vert, idx, 2, ""), name);
 }
 
-static LLVMValueRef
-vert_clamp(LLVMBuilderRef b,
-           LLVMValueRef x,
-           LLVMValueRef min,
-           LLVMValueRef max)
-{
-   LLVMValueRef min_result = LLVMBuildFCmp(b, LLVMRealUGT, min, x, "");
-   LLVMValueRef max_result = LLVMBuildFCmp(b, LLVMRealUGT, x, max, "");
-   LLVMValueRef clamp_value;
-
-   clamp_value = LLVMBuildSelect(b, min_result, min, x, "");
-   clamp_value = LLVMBuildSelect(b, max_result, max, x, "");
-
-   return clamp_value;
-}
 
 static void
 lp_twoside(struct gallivm_state *gallivm,
            struct lp_setup_args *args,
            const struct lp_setup_variant_key *key,
-           int bcolor_slot)
+           int bcolor_slot,
+           LLVMValueRef attribv[3])
 {
    LLVMBuilderRef b = gallivm->builder;
    LLVMValueRef a0_back, a1_back, a2_back;
    LLVMValueRef idx2 = lp_build_const_int32(gallivm, bcolor_slot);
 
    LLVMValueRef facing = args->facing;
-   LLVMValueRef front_facing = LLVMBuildICmp(b, LLVMIntEQ, facing, lp_build_const_int32(gallivm, 0), ""); /** need i1 for if condition */
-   
+   LLVMValueRef front_facing = LLVMBuildICmp(b, LLVMIntEQ, facing,
+                                             lp_build_const_int32(gallivm, 0), ""); /** need i1 for if condition */
+
    a0_back = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v0, &idx2, 1, ""), "v0a_back");
    a1_back = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v1, &idx2, 1, ""), "v1a_back");
    a2_back = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v2, &idx2, 1, ""), "v2a_back");
@@ -247,135 +194,220 @@ lp_twoside(struct gallivm_state *gallivm,
     * Prefer select to if so we don't have to worry about phis or
     * allocas.
     */
-   args->v0a = LLVMBuildSelect(b, front_facing, a0_back, args->v0a, "");
-   args->v1a = LLVMBuildSelect(b, front_facing, a1_back, args->v1a, "");
-   args->v2a = LLVMBuildSelect(b, front_facing, a2_back, args->v2a, "");
+   attribv[0] = LLVMBuildSelect(b, front_facing, a0_back, attribv[0], "");
+   attribv[1] = LLVMBuildSelect(b, front_facing, a1_back, attribv[1], "");
+   attribv[2] = LLVMBuildSelect(b, front_facing, a2_back, attribv[2], "");
 
 }
 
 static void
 lp_do_offset_tri(struct gallivm_state *gallivm,
                  struct lp_setup_args *args,
-                 const struct lp_setup_variant_key *key)
+                 const struct lp_setup_variant_key *key,
+                 LLVMValueRef inv_det,
+                 LLVMValueRef dxyz01,
+                 LLVMValueRef dxyz20,
+                 LLVMValueRef attribv[3])
 {
    LLVMBuilderRef b = gallivm->builder;
-   struct lp_build_context bld;
+   struct lp_build_context flt_scalar_bld;
+   struct lp_build_context int_scalar_bld;
+   struct lp_build_context *bld = &args->bld;
    LLVMValueRef zoffset, mult;
    LLVMValueRef z0_new, z1_new, z2_new;
-   LLVMValueRef dzdx0, dzdx, dzdy0, dzdy;
-   LLVMValueRef max, max_value;
-   
-   LLVMValueRef one  = lp_build_const_float(gallivm, 1.0);
-   LLVMValueRef zero = lp_build_const_float(gallivm, 0.0);
-   LLVMValueRef two  = lp_build_const_int32(gallivm, 2);
+   LLVMValueRef dzdxdzdy, dzdx, dzdy, dzxyz20, dyzzx01, dyzzx01_dzxyz20, dzx01_dyz20;
+   LLVMValueRef z0z1, z0z1z2;
+   LLVMValueRef max, max_value, res12;
+   LLVMValueRef shuffles[4];
+   LLVMTypeRef shuf_type = LLVMInt32TypeInContext(gallivm->context);
+   LLVMValueRef onei = lp_build_const_int32(gallivm, 1);
+   LLVMValueRef zeroi = lp_build_const_int32(gallivm, 0);
+   LLVMValueRef twoi = lp_build_const_int32(gallivm, 2);
+   LLVMValueRef threei  = lp_build_const_int32(gallivm, 3);
 
-   /* edge vectors: e = v0 - v2, f = v1 - v2 */
-   LLVMValueRef v0_x = vert_attrib(gallivm, args->v0, 0, 0, "v0_x");
-   LLVMValueRef v1_x = vert_attrib(gallivm, args->v1, 0, 0, "v1_x");
-   LLVMValueRef v2_x = vert_attrib(gallivm, args->v2, 0, 0, "v2_x");
-   LLVMValueRef v0_y = vert_attrib(gallivm, args->v0, 0, 1, "v0_y");
-   LLVMValueRef v1_y = vert_attrib(gallivm, args->v1, 0, 1, "v1_y");
-   LLVMValueRef v2_y = vert_attrib(gallivm, args->v2, 0, 1, "v2_y");
-   LLVMValueRef v0_z = vert_attrib(gallivm, args->v0, 0, 2, "v0_z");
-   LLVMValueRef v1_z = vert_attrib(gallivm, args->v1, 0, 2, "v1_z");
-   LLVMValueRef v2_z = vert_attrib(gallivm, args->v2, 0, 2, "v2_z");
- 
-   /* edge vectors: e = v0 - v2, f = v1 - v2 */
-   LLVMValueRef dx02 = LLVMBuildFSub(b, v0_x, v2_x, "dx02");
-   LLVMValueRef dy02 = LLVMBuildFSub(b, v0_y, v2_y, "dy02");
-   LLVMValueRef dz02 = LLVMBuildFSub(b, v0_z, v2_z, "dz02");
-   LLVMValueRef dx12 = LLVMBuildFSub(b, v1_x, v2_x, "dx12"); 
-   LLVMValueRef dy12 = LLVMBuildFSub(b, v1_y, v2_y, "dy12");
-   LLVMValueRef dz12 = LLVMBuildFSub(b, v1_z, v2_z, "dz12");
- 
-   /* det = cross(e,f).z */
-   LLVMValueRef dx02_dy12  = LLVMBuildFMul(b, dx02, dy12, "dx02_dy12");
-   LLVMValueRef dy02_dx12  = LLVMBuildFMul(b, dy02, dx12, "dy02_dx12");
-   LLVMValueRef det  = LLVMBuildFSub(b, dx02_dy12, dy02_dx12, "det");
-   LLVMValueRef inv_det = LLVMBuildFDiv(b, one, det, "inv_det"); 
-   
-   /* (res1,res2) = cross(e,f).xy */
-   LLVMValueRef dy02_dz12    = LLVMBuildFMul(b, dy02, dz12, "dy02_dz12");
-   LLVMValueRef dz02_dy12    = LLVMBuildFMul(b, dz02, dy12, "dz02_dy12");
-   LLVMValueRef dz02_dx12    = LLVMBuildFMul(b, dz02, dx12, "dz02_dx12");
-   LLVMValueRef dx02_dz12    = LLVMBuildFMul(b, dx02, dz12, "dx02_dz12");
-   LLVMValueRef res1  = LLVMBuildFSub(b, dy02_dz12, dz02_dy12, "res1");
-   LLVMValueRef res2  = LLVMBuildFSub(b, dz02_dx12, dx02_dz12, "res2");
+   /* (res12) = cross(e,f).xy */
+   shuffles[0] = twoi;
+   shuffles[1] = zeroi;
+   shuffles[2] = onei;
+   shuffles[3] = twoi;
+   dzxyz20 = LLVMBuildShuffleVector(b, dxyz20, dxyz20, LLVMConstVector(shuffles, 4), "");
+
+   shuffles[0] = onei;
+   shuffles[1] = twoi;
+   shuffles[2] = twoi;
+   shuffles[3] = zeroi;
+   dyzzx01 = LLVMBuildShuffleVector(b, dxyz01, dxyz01, LLVMConstVector(shuffles, 4), "");
+
+   dyzzx01_dzxyz20 = LLVMBuildFMul(b, dzxyz20, dyzzx01, "dyzzx01_dzxyz20");
+
+   shuffles[0] = twoi;
+   shuffles[1] = threei;
+   shuffles[2] = LLVMGetUndef(shuf_type);
+   shuffles[3] = LLVMGetUndef(shuf_type);
+   dzx01_dyz20 = LLVMBuildShuffleVector(b, dyzzx01_dzxyz20, dyzzx01_dzxyz20,
+                                        LLVMConstVector(shuffles, 4), "");
+
+   res12 = LLVMBuildFSub(b, dyzzx01_dzxyz20, dzx01_dyz20, "res12");
 
    /* dzdx = fabsf(res1 * inv_det), dydx = fabsf(res2 * inv_det)*/
-   lp_build_context_init(&bld, gallivm, lp_type_float(32));
-   dzdx0 = LLVMBuildFMul(b, res1, inv_det, "dzdx");
-   dzdx  = lp_build_abs(&bld, dzdx0);
-   dzdy0 = LLVMBuildFMul(b, res2, inv_det, "dzdy");
-   dzdy  = lp_build_abs(&bld, dzdy0);
+   dzdxdzdy = LLVMBuildFMul(b, res12, inv_det, "dzdxdzdy");
+   dzdxdzdy = lp_build_abs(bld, dzdxdzdy);
 
-   /* zoffset = offset->units + MAX2(dzdx, dzdy) * offset->scale */
+   dzdx = LLVMBuildExtractElement(b, dzdxdzdy, zeroi, "");
+   dzdy = LLVMBuildExtractElement(b, dzdxdzdy, onei, "");
+
+   /* mult = MAX2(dzdx, dzdy) * pgon_offset_scale */
    max = LLVMBuildFCmp(b, LLVMRealUGT, dzdx, dzdy, "");
    max_value = LLVMBuildSelect(b, max, dzdx, dzdy, "max"); 
 
-   mult = LLVMBuildFMul(b, max_value, lp_build_const_float(gallivm, key->scale), "");
-   zoffset = LLVMBuildFAdd(b, lp_build_const_float(gallivm, key->units), mult, "zoffset");
+   mult = LLVMBuildFMul(b, max_value,
+                        lp_build_const_float(gallivm, key->pgon_offset_scale), "");
+
+   lp_build_context_init(&flt_scalar_bld, gallivm, lp_type_float_vec(32, 32));
+
+   if (key->floating_point_depth) {
+      /*
+       * bias = pgon_offset_units * 2^(exponent(max(z0, z1, z2)) - mantissa_bits) +
+       *           MAX2(dzdx, dzdy) * pgon_offset_scale
+       *
+       * NOTE: Assumes IEEE float32.
+       */
+      LLVMValueRef c23_shifted, exp_mask, bias, exp;
+      LLVMValueRef maxz_value, maxz0z1_value;
+
+      lp_build_context_init(&int_scalar_bld, gallivm, lp_type_int_vec(32, 32));
+
+      c23_shifted = lp_build_const_int32(gallivm, 23 << 23);
+      exp_mask = lp_build_const_int32(gallivm, 0xff << 23);
+
+      maxz0z1_value = lp_build_max(&flt_scalar_bld,
+                         LLVMBuildExtractElement(b, attribv[0], twoi, ""),
+                         LLVMBuildExtractElement(b, attribv[1], twoi, ""));
+
+      maxz_value = lp_build_max(&flt_scalar_bld,
+                      LLVMBuildExtractElement(b, attribv[2], twoi, ""),
+                      maxz0z1_value);
+
+      exp = LLVMBuildBitCast(b, maxz_value, int_scalar_bld.vec_type, "");
+      exp = lp_build_and(&int_scalar_bld, exp, exp_mask);
+      exp = lp_build_sub(&int_scalar_bld, exp, c23_shifted);
+      /* Clamping to zero means mrd will be zero for very small numbers,
+       * but specs do not indicate this should be prevented by clamping
+       * mrd to smallest normal number instead. */
+      exp = lp_build_max(&int_scalar_bld, exp, int_scalar_bld.zero);
+      exp = LLVMBuildBitCast(b, exp, flt_scalar_bld.vec_type, "");
+
+      bias = LLVMBuildFMul(b, exp,
+                           lp_build_const_float(gallivm, key->pgon_offset_units),
+                           "bias");
+
+      zoffset = LLVMBuildFAdd(b, bias, mult, "zoffset");
+   } else {
+      /*
+       * bias = pgon_offset_units + MAX2(dzdx, dzdy) * pgon_offset_scale
+       */
+      zoffset = LLVMBuildFAdd(b,
+                              lp_build_const_float(gallivm, key->pgon_offset_units),
+                              mult, "zoffset");
+   }
+
+   if (key->pgon_offset_clamp > 0) {
+      zoffset = lp_build_min(&flt_scalar_bld,
+                             lp_build_const_float(gallivm, key->pgon_offset_clamp),
+                             zoffset);
+   }
+   else if (key->pgon_offset_clamp < 0) {
+      zoffset = lp_build_max(&flt_scalar_bld,
+                             lp_build_const_float(gallivm, key->pgon_offset_clamp),
+                             zoffset);
+   }
+
+   /* yuck */
+   shuffles[0] = twoi;
+   shuffles[1] = lp_build_const_int32(gallivm, 6);
+   shuffles[2] = LLVMGetUndef(shuf_type);
+   shuffles[3] = LLVMGetUndef(shuf_type);
+   z0z1 = LLVMBuildShuffleVector(b, attribv[0], attribv[1], LLVMConstVector(shuffles, 4), "");
+   shuffles[0] = zeroi;
+   shuffles[1] = onei;
+   shuffles[2] = lp_build_const_int32(gallivm, 6);
+   shuffles[3] = LLVMGetUndef(shuf_type);
+   z0z1z2 = LLVMBuildShuffleVector(b, z0z1, attribv[2], LLVMConstVector(shuffles, 4), "");
+   zoffset = lp_build_broadcast_scalar(bld, zoffset);
 
    /* clamp and do offset */
-   z0_new = vert_clamp(b, LLVMBuildFAdd(b, v0_z, zoffset, ""), zero, one);
-   z1_new = vert_clamp(b, LLVMBuildFAdd(b, v1_z, zoffset, ""), zero, one);
-   z2_new = vert_clamp(b, LLVMBuildFAdd(b, v2_z, zoffset, ""), zero, one);
+   /*
+    * FIXME I suspect the clamp (is that even right to always clamp to fixed
+    * 0.0/1.0?) should really be per fragment?
+    */
+   z0z1z2 = lp_build_clamp(bld, LLVMBuildFAdd(b, z0z1z2, zoffset, ""), bld->zero, bld->one);
 
    /* insert into args->a0.z, a1.z, a2.z:
-    */   
-   args->v0a = LLVMBuildInsertElement(b, args->v0a, z0_new, two, "");
-   args->v1a = LLVMBuildInsertElement(b, args->v1a, z1_new, two, "");
-   args->v2a = LLVMBuildInsertElement(b, args->v2a, z2_new, two, "");
+    */
+   z0_new = LLVMBuildExtractElement(b, z0z1z2, zeroi, "");
+   z1_new = LLVMBuildExtractElement(b, z0z1z2, onei, "");
+   z2_new = LLVMBuildExtractElement(b, z0z1z2, twoi, "");
+   attribv[0] = LLVMBuildInsertElement(b, attribv[0], z0_new, twoi, "");
+   attribv[1] = LLVMBuildInsertElement(b, attribv[1], z1_new, twoi, "");
+   attribv[2] = LLVMBuildInsertElement(b, attribv[2], z2_new, twoi, "");
 }
 
 static void
 load_attribute(struct gallivm_state *gallivm,
                struct lp_setup_args *args,
                const struct lp_setup_variant_key *key,
-               unsigned vert_attr)
+               unsigned vert_attr,
+               LLVMValueRef attribv[3])
 {
    LLVMBuilderRef b = gallivm->builder;
    LLVMValueRef idx = lp_build_const_int32(gallivm, vert_attr);
 
    /* Load the vertex data
     */
-   args->v0a = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v0, &idx, 1, ""), "v0a");
-   args->v1a = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v1, &idx, 1, ""), "v1a");
-   args->v2a = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v2, &idx, 1, ""), "v2a");
+   attribv[0] = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v0, &idx, 1, ""), "v0a");
+   attribv[1] = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v1, &idx, 1, ""), "v1a");
+   attribv[2] = LLVMBuildLoad(b, LLVMBuildGEP(b, args->v2, &idx, 1, ""), "v2a");
 
 
-   /* Potentially modify it according to twoside, offset, etc:
+   /* Potentially modify it according to twoside, etc:
     */
-   if (vert_attr == 0 && (key->scale != 0.0f || key->units != 0.0f)) {
-      lp_do_offset_tri(gallivm, args, key);
-   }
-
    if (key->twoside) {
-      if (vert_attr == key->color_slot && key->bcolor_slot != ~0)
-         lp_twoside(gallivm, args, key, key->bcolor_slot);
-      else if (vert_attr == key->spec_slot && key->bspec_slot != ~0)
-         lp_twoside(gallivm, args, key, key->bspec_slot);
+      if (vert_attr == key->color_slot && key->bcolor_slot >= 0)
+         lp_twoside(gallivm, args, key, key->bcolor_slot, attribv);
+      else if (vert_attr == key->spec_slot && key->bspec_slot >= 0)
+         lp_twoside(gallivm, args, key, key->bspec_slot, attribv);
    }
 }
 
+/*
+ * FIXME: interpolation is always done wrt fb origin (0/0).
+ * However, if some (small) tri is far away from the origin and gradients
+ * are large, this can lead to HUGE errors, since the a0 value calculated
+ * here can get very large (with the actual values inside the triangle way
+ * smaller), leading to complete loss of accuracy. This could be prevented
+ * by using some point inside (or at corner) of the tri as interpolation
+ * origin, or just use barycentric interpolation (which GL suggests and is
+ * what real hw does - you can get the barycentric coordinates from the
+ * edge functions in rasterization in principle (though we skip these
+ * sometimes completely in case of tris covering a block fully,
+ * which obviously wouldn't work)).
+ */
 static void 
 emit_coef4( struct gallivm_state *gallivm,
-	    struct lp_setup_args *args,
-	    unsigned slot,
-	    LLVMValueRef a0,
-	    LLVMValueRef a1,
-	    LLVMValueRef a2)
+            struct lp_setup_args *args,
+            unsigned slot,
+            LLVMValueRef a0,
+            LLVMValueRef a1,
+            LLVMValueRef a2)
 {
    LLVMBuilderRef b = gallivm->builder;
+   LLVMValueRef attr_0;
    LLVMValueRef dy20_ooa = args->dy20_ooa;
    LLVMValueRef dy01_ooa = args->dy01_ooa;
    LLVMValueRef dx20_ooa = args->dx20_ooa;
    LLVMValueRef dx01_ooa = args->dx01_ooa;
    LLVMValueRef x0_center = args->x0_center;
    LLVMValueRef y0_center = args->y0_center;
-
-   /* XXX: using fsub, fmul on vector types -- does this work??
-    */
    LLVMValueRef da01 = LLVMBuildFSub(b, a0, a1, "da01");
    LLVMValueRef da20 = LLVMBuildFSub(b, a2, a0, "da20");
 
@@ -393,10 +425,10 @@ emit_coef4( struct gallivm_state *gallivm,
 
    /* Calculate a0 - the attribute value at the origin
     */
-   LLVMValueRef dadx_x0       = LLVMBuildFMul(b, dadx, x0_center, "dadx_x0"); 
-   LLVMValueRef dady_y0       = LLVMBuildFMul(b, dady, y0_center, "dady_y0"); 
-   LLVMValueRef attr_v0       = LLVMBuildFAdd(b, dadx_x0, dady_y0, "attr_v0"); 
-   LLVMValueRef attr_0        = LLVMBuildFSub(b, a0, attr_v0, "attr_0"); 
+   LLVMValueRef dadx_x0    = LLVMBuildFMul(b, dadx, x0_center, "dadx_x0");
+   LLVMValueRef dady_y0    = LLVMBuildFMul(b, dady, y0_center, "dady_y0");
+   LLVMValueRef attr_v0    = LLVMBuildFAdd(b, dadx_x0, dady_y0, "attr_v0");
+   attr_0                  = LLVMBuildFSub(b, a0, attr_v0, "attr_0");
 
    store_coef(gallivm, args, slot, attr_0, dadx, dady);
 }
@@ -404,15 +436,16 @@ emit_coef4( struct gallivm_state *gallivm,
 
 static void 
 emit_linear_coef( struct gallivm_state *gallivm,
-		  struct lp_setup_args *args,
-		  unsigned slot)
+                  struct lp_setup_args *args,
+                  unsigned slot,
+                  LLVMValueRef attribv[3])
 {
    /* nothing to do anymore */
    emit_coef4(gallivm,
               args, slot, 
-              args->v0a,
-              args->v1a,
-              args->v2a);
+              attribv[0],
+              attribv[1],
+              attribv[2]);
 }
 
 
@@ -425,35 +458,102 @@ emit_linear_coef( struct gallivm_state *gallivm,
  * divide the interpolated value by the interpolated W at that fragment.
  */
 static void 
-emit_perspective_coef( struct gallivm_state *gallivm,
-		       struct lp_setup_args *args,
-		       unsigned slot)
+apply_perspective_corr( struct gallivm_state *gallivm,
+                        struct lp_setup_args *args,
+                        unsigned slot,
+                        LLVMValueRef attribv[3])
 {
    LLVMBuilderRef b = gallivm->builder;
 
    /* premultiply by 1/w  (v[0][3] is always 1/w):
     */
-   LLVMValueRef v0_oow = vec4f_from_scalar(gallivm, vert_attrib(gallivm, args->v0, 0, 3, ""), "v0_oow");
-   LLVMValueRef v1_oow = vec4f_from_scalar(gallivm, vert_attrib(gallivm, args->v1, 0, 3, ""), "v1_oow");
-   LLVMValueRef v2_oow = vec4f_from_scalar(gallivm, vert_attrib(gallivm, args->v2, 0, 3, ""), "v2_oow");
+   LLVMValueRef v0_oow = lp_build_broadcast_scalar(&args->bld,
+                            vert_attrib(gallivm, args->v0, 0, 3, "v0_oow"));
+   LLVMValueRef v1_oow = lp_build_broadcast_scalar(&args->bld,
+                            vert_attrib(gallivm, args->v1, 0, 3, "v1_oow"));
+   LLVMValueRef v2_oow = lp_build_broadcast_scalar(&args->bld,
+                            vert_attrib(gallivm, args->v2, 0, 3, "v2_oow"));
 
-   LLVMValueRef v0_oow_v0a = LLVMBuildFMul(b, args->v0a, v0_oow, "v0_oow_v0a");
-   LLVMValueRef v1_oow_v1a = LLVMBuildFMul(b, args->v1a, v1_oow, "v1_oow_v1a");
-   LLVMValueRef v2_oow_v2a = LLVMBuildFMul(b, args->v2a, v2_oow, "v2_oow_v2a");
-
-   emit_coef4(gallivm, args, slot, v0_oow_v0a, v1_oow_v1a, v2_oow_v2a);
+   attribv[0] = LLVMBuildFMul(b, attribv[0], v0_oow, "v0_oow_v0a");
+   attribv[1] = LLVMBuildFMul(b, attribv[1], v1_oow, "v1_oow_v1a");
+   attribv[2] = LLVMBuildFMul(b, attribv[2], v2_oow, "v2_oow_v2a");
 }
 
 
+/**
+ * Applys cylindrical wrapping to vertex attributes if enabled.
+ * Input coordinates must be in [0, 1] range, otherwise results are undefined.
+ *
+ * @param cyl_wrap  TGSI_CYLINDRICAL_WRAP_x flags
+ */
 static void
-emit_position_coef( struct gallivm_state *gallivm,
-		    struct lp_setup_args *args,
-		    int slot )
+emit_apply_cyl_wrap(struct gallivm_state *gallivm,
+                    struct lp_setup_args *args,
+                    uint cyl_wrap,
+                    LLVMValueRef attribv[3])
+
 {
-   emit_linear_coef(gallivm, args, slot);
+   LLVMBuilderRef builder = gallivm->builder;
+   struct lp_type type = args->bld.type;
+   LLVMTypeRef float_vec_type = args->bld.vec_type;
+   LLVMValueRef pos_half;
+   LLVMValueRef neg_half;
+   LLVMValueRef cyl_mask;
+   LLVMValueRef offset;
+   LLVMValueRef delta;
+   LLVMValueRef one;
+
+   if (!cyl_wrap)
+      return;
+
+   /* Constants */
+   pos_half = lp_build_const_vec(gallivm, type, +0.5f);
+   neg_half = lp_build_const_vec(gallivm, type, -0.5f);
+   cyl_mask = lp_build_const_mask_aos(gallivm, type, cyl_wrap, 4);
+
+   one = lp_build_const_vec(gallivm, type, 1.0f);
+   one = LLVMBuildBitCast(builder, one, lp_build_int_vec_type(gallivm, type), "");
+   one = LLVMBuildAnd(builder, one, cyl_mask, "");
+
+   /* Edge v0 -> v1 */
+   delta = LLVMBuildFSub(builder, attribv[1], attribv[0], "");
+
+   offset     = lp_build_compare(gallivm, type, PIPE_FUNC_GREATER, delta, pos_half);
+   offset     = LLVMBuildAnd(builder, offset, one, "");
+   offset     = LLVMBuildBitCast(builder, offset, float_vec_type, "");
+   attribv[0] = LLVMBuildFAdd(builder, attribv[0], offset, "");
+
+   offset     = lp_build_compare(gallivm, type, PIPE_FUNC_LESS, delta, neg_half);
+   offset     = LLVMBuildAnd(builder, offset, one, "");
+   offset     = LLVMBuildBitCast(builder, offset, float_vec_type, "");
+   attribv[1] = LLVMBuildFAdd(builder, attribv[1], offset, "");
+
+   /* Edge v1 -> v2 */
+   delta = LLVMBuildFSub(builder, attribv[2], attribv[1], "");
+
+   offset     = lp_build_compare(gallivm, type, PIPE_FUNC_GREATER, delta, pos_half);
+   offset     = LLVMBuildAnd(builder, offset, one, "");
+   offset     = LLVMBuildBitCast(builder, offset, float_vec_type, "");
+   attribv[1] = LLVMBuildFAdd(builder, attribv[1], offset, "");
+
+   offset     = lp_build_compare(gallivm, type, PIPE_FUNC_LESS, delta, neg_half);
+   offset     = LLVMBuildAnd(builder, offset, one, "");
+   offset     = LLVMBuildBitCast(builder, offset, float_vec_type, "");
+   attribv[2] = LLVMBuildFAdd(builder, attribv[2], offset, "");
+
+   /* Edge v2 -> v0 */
+   delta = LLVMBuildFSub(builder, attribv[0], attribv[2], "");
+
+   offset     = lp_build_compare(gallivm, type, PIPE_FUNC_GREATER, delta, pos_half);
+   offset     = LLVMBuildAnd(builder, offset, one, "");
+   offset     = LLVMBuildBitCast(builder, offset, float_vec_type, "");
+   attribv[2] = LLVMBuildFAdd(builder, attribv[2], offset, "");
+
+   offset     = lp_build_compare(gallivm, type, PIPE_FUNC_LESS, delta, neg_half);
+   offset     = LLVMBuildAnd(builder, offset, one, "");
+   offset     = LLVMBuildBitCast(builder, offset, float_vec_type, "");
+   attribv[0] = LLVMBuildFAdd(builder, attribv[0], offset, "");
 }
-
-
 
 
 /**
@@ -461,41 +561,38 @@ emit_position_coef( struct gallivm_state *gallivm,
  */
 static void 
 emit_tri_coef( struct gallivm_state *gallivm,
-	       const struct lp_setup_variant_key *key,
-	       struct lp_setup_args *args )
+               const struct lp_setup_variant_key *key,
+               struct lp_setup_args *args)
 {
    unsigned slot;
 
-   /* The internal position input is in slot zero:
-    */
-   load_attribute(gallivm, args, key, 0);
-   emit_position_coef(gallivm, args, 0);
+   LLVMValueRef attribs[3];
 
-   /* setup interpolation for all the remaining attributes:
+  /* setup interpolation for all the remaining attributes:
     */
    for (slot = 0; slot < key->num_inputs; slot++) {
-
-      if (key->inputs[slot].interp == LP_INTERP_CONSTANT ||
-          key->inputs[slot].interp == LP_INTERP_LINEAR ||
-          key->inputs[slot].interp == LP_INTERP_PERSPECTIVE)
-         load_attribute(gallivm, args, key, key->inputs[slot].src_index);
-
       switch (key->inputs[slot].interp) {
       case LP_INTERP_CONSTANT:
-	 if (key->flatshade_first) {
-	    emit_constant_coef4(gallivm, args, slot+1, args->v0a);
-	 }
-	 else {
-	    emit_constant_coef4(gallivm, args, slot+1, args->v2a);
-	 }
-	 break;
+         load_attribute(gallivm, args, key, key->inputs[slot].src_index, attribs);
+         if (key->flatshade_first) {
+            emit_constant_coef4(gallivm, args, slot+1, attribs[0]);
+         }
+         else {
+            emit_constant_coef4(gallivm, args, slot+1, attribs[2]);
+         }
+         break;
 
       case LP_INTERP_LINEAR:
-	 emit_linear_coef(gallivm, args, slot+1);
+         load_attribute(gallivm, args, key, key->inputs[slot].src_index, attribs);
+         emit_apply_cyl_wrap(gallivm, args, key->inputs[slot].cyl_wrap, attribs);
+         emit_linear_coef(gallivm, args, slot+1, attribs);
          break;
 
       case LP_INTERP_PERSPECTIVE:
-	 emit_perspective_coef(gallivm, args, slot+1);
+         load_attribute(gallivm, args, key, key->inputs[slot].src_index, attribs);
+         emit_apply_cyl_wrap(gallivm, args, key->inputs[slot].cyl_wrap, attribs);
+         apply_perspective_corr(gallivm, args, slot+1, attribs);
+         emit_linear_coef(gallivm, args, slot+1, attribs);
          break;
 
       case LP_INTERP_POSITION:
@@ -516,122 +613,91 @@ emit_tri_coef( struct gallivm_state *gallivm,
 }
 
 
-/* XXX: This is generic code, share with fs/vs codegen:
- */
-static lp_jit_setup_triangle
-finalize_function(struct gallivm_state *gallivm,
-		  LLVMBuilderRef builder,
-		  LLVMValueRef function)
-{
-   void *f;
-
-   /* Verify the LLVM IR.  If invalid, dump and abort */
-#ifdef DEBUG
-   if (LLVMVerifyFunction(function, LLVMPrintMessageAction)) {
-      if (1)
-         lp_debug_dump_value(function);
-      abort();
-   }
-#endif
-
-   /* Apply optimizations to LLVM IR */
-   LLVMRunFunctionPassManager(gallivm->passmgr, function);
-
-   if (gallivm_debug & GALLIVM_DEBUG_IR)
-   {
-      /* Print the LLVM IR to stderr */
-      lp_debug_dump_value(function);
-      debug_printf("\n");
-   }
-
-   /*
-    * Translate the LLVM IR into machine code.
-    */
-   f = LLVMGetPointerToGlobal(gallivm->engine, function);
-
-   if (gallivm_debug & GALLIVM_DEBUG_ASM)
-   {
-      lp_disassemble(f);
-   }
-
-   lp_func_delete_body(function);
-
-   return f;
-}
-
-/* XXX: Generic code:
- */
-static void
-lp_emit_emms(struct gallivm_state *gallivm)
-{
-#ifdef PIPE_ARCH_X86
-   /* Avoid corrupting the FPU stack on 32bit OSes. */
-   lp_build_intrinsic(gallivm->builder, "llvm.x86.mmx.emms",
-         LLVMVoidTypeInContext(gallivm->context), NULL, 0);
-#endif
-}
-
-
 /* XXX: generic code:
  */
 static void
 set_noalias(LLVMBuilderRef builder,
-	    LLVMValueRef function,
-	    const LLVMTypeRef *arg_types,
-	    int nr_args)
+            LLVMValueRef function,
+            const LLVMTypeRef *arg_types,
+            int nr_args)
 {
    int i;
-   for(i = 0; i < Elements(arg_types); ++i)
+   for(i = 0; i < nr_args; ++i)
       if(LLVMGetTypeKind(arg_types[i]) == LLVMPointerTypeKind)
          LLVMAddAttribute(LLVMGetParam(function, i),
-			  LLVMNoAliasAttribute);
+            LLVMNoAliasAttribute);
 }
 
 static void
 init_args(struct gallivm_state *gallivm,
-	  struct lp_setup_args *args,
-	  const struct lp_setup_variant *variant)
+          const struct lp_setup_variant_key *key,
+          struct lp_setup_args *args)
 {
    LLVMBuilderRef b = gallivm->builder;
+   LLVMTypeRef shuf_type = LLVMInt32TypeInContext(gallivm->context);
+   LLVMValueRef onef = lp_build_const_float(gallivm, 1.0);
+   LLVMValueRef onei = lp_build_const_int32(gallivm, 1);
+   LLVMValueRef zeroi = lp_build_const_int32(gallivm, 0);
+   LLVMValueRef pixel_center, xy0_center, dxy01, dxy20, dyx20;
+   LLVMValueRef e, f, ef, ooa;
+   LLVMValueRef shuffles[4], shuf10;
+   LLVMValueRef attr_pos[3];
+   struct lp_type typef4 = lp_type_float_vec(32, 128);
+   struct lp_build_context bld;
 
-   LLVMValueRef v0_x = vert_attrib(gallivm, args->v0, 0, 0, "v0_x");
-   LLVMValueRef v0_y = vert_attrib(gallivm, args->v0, 0, 1, "v0_y");
+   lp_build_context_init(&bld, gallivm, typef4);
+   args->bld = bld;
 
-   LLVMValueRef v1_x = vert_attrib(gallivm, args->v1, 0, 0, "v1_x");
-   LLVMValueRef v1_y = vert_attrib(gallivm, args->v1, 0, 1, "v1_y");
+   /* The internal position input is in slot zero:
+    */
+   load_attribute(gallivm, args, key, 0, attr_pos);
 
-   LLVMValueRef v2_x = vert_attrib(gallivm, args->v2, 0, 0, "v2_x");
-   LLVMValueRef v2_y = vert_attrib(gallivm, args->v2, 0, 1, "v2_y");
+   pixel_center = lp_build_const_vec(gallivm, typef4,
+                                     key->pixel_center_half ? 0.5 : 0.0);
 
-   LLVMValueRef pixel_center = lp_build_const_float(gallivm,
-                                   variant->key.pixel_center_half ? 0.5 : 0);
+   /*
+    * xy are first two elems in v0a/v1a/v2a but just use vec4 arit
+    * also offset_tri uses actually xyz in them
+    */
+   xy0_center = LLVMBuildFSub(b, attr_pos[0], pixel_center, "xy0_center" );
 
-   LLVMValueRef x0_center = LLVMBuildFSub(b, v0_x, pixel_center, "x0_center" );
-   LLVMValueRef y0_center = LLVMBuildFSub(b, v0_y, pixel_center, "y0_center" );
-   
-   LLVMValueRef dx01 = LLVMBuildFSub(b, v0_x, v1_x, "dx01");
-   LLVMValueRef dy01 = LLVMBuildFSub(b, v0_y, v1_y, "dy01");
-   LLVMValueRef dx20 = LLVMBuildFSub(b, v2_x, v0_x, "dx20");
-   LLVMValueRef dy20 = LLVMBuildFSub(b, v2_y, v0_y, "dy20");
+   dxy01 = LLVMBuildFSub(b, attr_pos[0], attr_pos[1], "dxy01");
+   dxy20 = LLVMBuildFSub(b, attr_pos[2], attr_pos[0], "dxy20");
 
-   LLVMValueRef one  = lp_build_const_float(gallivm, 1.0);
-   LLVMValueRef e    = LLVMBuildFMul(b, dx01, dy20, "e");
-   LLVMValueRef f    = LLVMBuildFMul(b, dx20, dy01, "f");
-   LLVMValueRef ooa  = LLVMBuildFDiv(b, one, LLVMBuildFSub(b, e, f, ""), "ooa");
+   shuffles[0] = onei;
+   shuffles[1] = zeroi;
+   shuffles[2] = LLVMGetUndef(shuf_type);
+   shuffles[3] = LLVMGetUndef(shuf_type);
+   shuf10 = LLVMConstVector(shuffles, 4);
 
-   LLVMValueRef dy20_ooa = LLVMBuildFMul(b, dy20, ooa, "dy20_ooa");
-   LLVMValueRef dy01_ooa = LLVMBuildFMul(b, dy01, ooa, "dy01_ooa");
-   LLVMValueRef dx20_ooa = LLVMBuildFMul(b, dx20, ooa, "dx20_ooa");
-   LLVMValueRef dx01_ooa = LLVMBuildFMul(b, dx01, ooa, "dx01_ooa");
+   dyx20 = LLVMBuildShuffleVector(b, dxy20, dxy20, shuf10, "");
 
-   args->dy20_ooa  = vec4f_from_scalar(gallivm, dy20_ooa, "dy20_ooa_4f");
-   args->dy01_ooa  = vec4f_from_scalar(gallivm, dy01_ooa, "dy01_ooa_4f");
+   ef = LLVMBuildFMul(b, dxy01, dyx20, "ef");
+   e = LLVMBuildExtractElement(b, ef, zeroi, "");
+   f = LLVMBuildExtractElement(b, ef, onei, "");
 
-   args->dx20_ooa  = vec4f_from_scalar(gallivm, dx20_ooa, "dx20_ooa_4f");
-   args->dx01_ooa  = vec4f_from_scalar(gallivm, dx01_ooa, "dx01_ooa_4f");
+   ooa  = LLVMBuildFDiv(b, onef, LLVMBuildFSub(b, e, f, ""), "ooa");
 
-   args->x0_center = vec4f_from_scalar(gallivm, x0_center, "x0_center_4f");
-   args->y0_center = vec4f_from_scalar(gallivm, y0_center, "y0_center_4f");
+   ooa = lp_build_broadcast_scalar(&bld, ooa);
+
+   /* tri offset calc shares a lot of arithmetic, do it here */
+   if (key->pgon_offset_scale != 0.0f || key->pgon_offset_units != 0.0f) {
+      lp_do_offset_tri(gallivm, args, key, ooa, dxy01, dxy20, attr_pos);
+   }
+
+   dxy20 = LLVMBuildFMul(b, dxy20, ooa, "");
+   dxy01 = LLVMBuildFMul(b, dxy01, ooa, "");
+
+   args->dy20_ooa  = lp_build_extract_broadcast(gallivm, typef4, typef4, dxy20, onei);
+   args->dy01_ooa  = lp_build_extract_broadcast(gallivm, typef4, typef4, dxy01, onei);
+
+   args->dx20_ooa  = lp_build_extract_broadcast(gallivm, typef4, typef4, dxy20, zeroi);
+   args->dx01_ooa  = lp_build_extract_broadcast(gallivm, typef4, typef4, dxy01, zeroi);
+
+   args->x0_center = lp_build_extract_broadcast(gallivm, typef4, typef4, xy0_center, zeroi);
+   args->y0_center = lp_build_extract_broadcast(gallivm, typef4, typef4, xy0_center, onei);
+
+   emit_linear_coef(gallivm, args, 0, attr_pos);
 }
 
 /**
@@ -639,18 +705,18 @@ init_args(struct gallivm_state *gallivm,
  *
  */
 static struct lp_setup_variant *
-generate_setup_variant(struct gallivm_state *gallivm,
-		       struct lp_setup_variant_key *key,
+generate_setup_variant(struct lp_setup_variant_key *key,
                        struct llvmpipe_context *lp)
 {
    struct lp_setup_variant *variant = NULL;
+   struct gallivm_state *gallivm;
    struct lp_setup_args args;
-   char func_name[256];
+   char func_name[64];
    LLVMTypeRef vec4f_type;
    LLVMTypeRef func_type;
    LLVMTypeRef arg_types[7];
    LLVMBasicBlockRef block;
-   LLVMBuilderRef builder = gallivm->builder;
+   LLVMBuilderRef builder;
    int64_t t0 = 0, t1;
 
    if (0)
@@ -660,16 +726,24 @@ generate_setup_variant(struct gallivm_state *gallivm,
    if (variant == NULL)
       goto fail;
 
+   variant->no = setup_no++;
+
+   util_snprintf(func_name, sizeof(func_name), "setup_variant_%u",
+                 variant->no);
+
+   variant->gallivm = gallivm = gallivm_create(func_name);
+   if (!variant->gallivm) {
+      goto fail;
+   }
+
+   builder = gallivm->builder;
+
    if (LP_DEBUG & DEBUG_COUNTERS) {
       t0 = os_time_get();
    }
 
    memcpy(&variant->key, key, key->size);
    variant->list_item_global.base = variant;
-
-   util_snprintf(func_name, sizeof(func_name), "fs%u_setup%u",
-		 0,
-		 variant->no);
 
    /* Currently always deal with full 4-wide vertex attributes from
     * the vertices.
@@ -718,16 +792,21 @@ generate_setup_variant(struct gallivm_state *gallivm,
    LLVMPositionBuilderAtEnd(builder, block);
 
    set_noalias(builder, variant->function, arg_types, Elements(arg_types));
-   init_args(gallivm, &args, variant);
+   init_args(gallivm, &variant->key, &args);
    emit_tri_coef(gallivm, &variant->key, &args);
 
-   lp_emit_emms(gallivm);
    LLVMBuildRetVoid(builder);
 
-   variant->jit_function = finalize_function(gallivm, builder,
-					     variant->function);
+   gallivm_verify_function(gallivm, variant->function);
+
+   gallivm_compile_module(gallivm);
+
+   variant->jit_function = (lp_jit_setup_triangle)
+      gallivm_jit_function(gallivm, variant->function);
    if (!variant->jit_function)
       goto fail;
+
+   gallivm_free_ir(variant->gallivm);
 
    /*
     * Update timing information:
@@ -737,20 +816,17 @@ generate_setup_variant(struct gallivm_state *gallivm,
       LP_COUNT_ADD(llvm_compile_time, t1 - t0);
       LP_COUNT_ADD(nr_llvm_compiles, 1);
    }
-   
+
    return variant;
 
 fail:
    if (variant) {
-      if (variant->function) {
-	 if (variant->jit_function)
-	    LLVMFreeMachineCodeForFunction(gallivm->engine,
-					   variant->function);
-	 LLVMDeleteFunction(variant->function);
+      if (variant->gallivm) {
+         gallivm_destroy(variant->gallivm);
       }
       FREE(variant);
    }
-   
+
    return NULL;
 }
 
@@ -758,33 +834,53 @@ fail:
 
 static void
 lp_make_setup_variant_key(struct llvmpipe_context *lp,
-			  struct lp_setup_variant_key *key)
+                          struct lp_setup_variant_key *key)
 {
    struct lp_fragment_shader *fs = lp->fs;
    unsigned i;
 
-   assert(sizeof key->inputs[0] == sizeof(ushort));
-   
+   assert(sizeof key->inputs[0] == sizeof(uint));
+
    key->num_inputs = fs->info.base.num_inputs;
    key->flatshade_first = lp->rasterizer->flatshade_first;
-   key->pixel_center_half = lp->rasterizer->gl_rasterization_rules;
+   key->pixel_center_half = lp->rasterizer->half_pixel_center;
    key->twoside = lp->rasterizer->light_twoside;
    key->size = Offset(struct lp_setup_variant_key,
-		      inputs[key->num_inputs]);
-   key->color_slot = lp->color_slot[0];
+                      inputs[key->num_inputs]);
+
+   key->color_slot  = lp->color_slot [0];
    key->bcolor_slot = lp->bcolor_slot[0];
-   key->spec_slot = lp->color_slot[1];
-   key->bspec_slot = lp->bcolor_slot[1];
-   key->units = (float) (lp->rasterizer->offset_units * lp->mrd);
-   key->scale = lp->rasterizer->offset_scale;
+   key->spec_slot   = lp->color_slot [1];
+   key->bspec_slot  = lp->bcolor_slot[1];
+   assert(key->color_slot  == lp->color_slot [0]);
+   assert(key->bcolor_slot == lp->bcolor_slot[0]);
+   assert(key->spec_slot   == lp->color_slot [1]);
+   assert(key->bspec_slot  == lp->bcolor_slot[1]);
+
+   /*
+    * If depth is floating point, depth bias is calculated with respect
+    * to the primitive's maximum Z value. Retain the original depth bias
+    * value until that stage.
+    */
+   key->floating_point_depth = lp->floating_point_depth;
+
+   if (key->floating_point_depth) {
+      key->pgon_offset_units = (float) lp->rasterizer->offset_units;
+   } else {
+      key->pgon_offset_units =
+         (float) (lp->rasterizer->offset_units * lp->mrd);
+   }
+
+   key->pgon_offset_scale = lp->rasterizer->offset_scale;
+   key->pgon_offset_clamp = lp->rasterizer->offset_clamp;
    key->pad = 0;
    memcpy(key->inputs, fs->inputs, key->num_inputs * sizeof key->inputs[0]);
    for (i = 0; i < key->num_inputs; i++) {
       if (key->inputs[i].interp == LP_INTERP_COLOR) {
          if (lp->rasterizer->flatshade)
-	    key->inputs[i].interp = LP_INTERP_CONSTANT;
-	 else
-	    key->inputs[i].interp = LP_INTERP_LINEAR;
+            key->inputs[i].interp = LP_INTERP_CONSTANT;
+         else
+            key->inputs[i].interp = LP_INTERP_PERSPECTIVE;
       }
    }
 
@@ -793,18 +889,15 @@ lp_make_setup_variant_key(struct llvmpipe_context *lp,
 
 static void
 remove_setup_variant(struct llvmpipe_context *lp,
-		     struct lp_setup_variant *variant)
+                     struct lp_setup_variant *variant)
 {
    if (gallivm_debug & GALLIVM_DEBUG_IR) {
       debug_printf("llvmpipe: del setup_variant #%u total %u\n",
-		   variant->no, lp->nr_setup_variants);
+                   variant->no, lp->nr_setup_variants);
    }
 
-   if (variant->function) {
-      if (variant->jit_function)
-	 LLVMFreeMachineCodeForFunction(lp->gallivm->engine,
-					variant->function);
-      LLVMDeleteFunction(variant->function);
+   if (variant->gallivm) {
+      gallivm_destroy(variant->gallivm);
    }
 
    remove_from_list(&variant->list_item_global);
@@ -831,7 +924,13 @@ cull_setup_variants(struct llvmpipe_context *lp)
    llvmpipe_finish(pipe, __FUNCTION__);
 
    for (i = 0; i < LP_MAX_SETUP_VARIANTS / 4; i++) {
-      struct lp_setup_variant_list_item *item = last_elem(&lp->setup_variants_list);
+      struct lp_setup_variant_list_item *item;
+      if (is_empty_list(&lp->setup_variants_list)) {
+         break;
+      }
+      item = last_elem(&lp->setup_variants_list);
+      assert(item);
+      assert(item->base);
       remove_setup_variant(lp, item->base);
    }
 }
@@ -853,7 +952,7 @@ llvmpipe_update_setup(struct llvmpipe_context *lp)
 
    foreach(li, &lp->setup_variants_list) {
       if(li->base->key.size == key->size &&
-	 memcmp(&li->base->key, key, key->size) == 0) {
+         memcmp(&li->base->key, key, key->size) == 0) {
          variant = li->base;
          break;
       }
@@ -864,18 +963,17 @@ llvmpipe_update_setup(struct llvmpipe_context *lp)
    }
    else {
       if (lp->nr_setup_variants >= LP_MAX_SETUP_VARIANTS) {
-	 cull_setup_variants(lp);
+         cull_setup_variants(lp);
       }
 
-      variant = generate_setup_variant(lp->gallivm, key, lp);
-      insert_at_head(&lp->setup_variants_list, &variant->list_item_global);
-      lp->nr_setup_variants++;
-
-      llvmpipe_variant_count++;
+      variant = generate_setup_variant(key, lp);
+      if (variant) {
+         insert_at_head(&lp->setup_variants_list, &variant->list_item_global);
+         lp->nr_setup_variants++;
+      }
    }
 
-   lp_setup_set_setup_variant(lp->setup,
-			      variant);
+   lp_setup_set_setup_variant(lp->setup, variant);
 }
 
 void
@@ -891,36 +989,33 @@ lp_delete_setup_variants(struct llvmpipe_context *lp)
 }
 
 void
-lp_dump_setup_coef( const struct lp_setup_variant_key *key,
-		    const float (*sa0)[4],
-		    const float (*sdadx)[4],
-		    const float (*sdady)[4])
+lp_dump_setup_coef(const struct lp_setup_variant_key *key,
+                   const float (*sa0)[4],
+                   const float (*sdadx)[4],
+                   const float (*sdady)[4])
 {
    int i, slot;
 
-   for (i = 0; i < NUM_CHANNELS; i++) {
+   for (i = 0; i < TGSI_NUM_CHANNELS; i++) {
       float a0   = sa0  [0][i];
       float dadx = sdadx[0][i];
       float dady = sdady[0][i];
 
       debug_printf("POS.%c: a0 = %f, dadx = %f, dady = %f\n",
-		   "xyzw"[i],
-		   a0, dadx, dady);
+                   "xyzw"[i], a0, dadx, dady);
    }
 
    for (slot = 0; slot < key->num_inputs; slot++) {
       unsigned usage_mask = key->inputs[slot].usage_mask;
-      for (i = 0; i < NUM_CHANNELS; i++) {
-	 if (usage_mask & (1 << i)) {
-	    float a0   = sa0  [1 + slot][i];
-	    float dadx = sdadx[1 + slot][i];
-	    float dady = sdady[1 + slot][i];
+      for (i = 0; i < TGSI_NUM_CHANNELS; i++) {
+         if (usage_mask & (1 << i)) {
+            float a0   = sa0  [1 + slot][i];
+            float dadx = sdadx[1 + slot][i];
+            float dady = sdady[1 + slot][i];
 
-	    debug_printf("IN[%u].%c: a0 = %f, dadx = %f, dady = %f\n",
-			 slot,
-			 "xyzw"[i],
-			 a0, dadx, dady);
-	 }
+            debug_printf("IN[%u].%c: a0 = %f, dadx = %f, dady = %f\n",
+                         slot, "xyzw"[i], a0, dadx, dady);
+         }
       }
    }
 }

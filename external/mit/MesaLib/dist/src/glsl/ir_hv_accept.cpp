@@ -49,8 +49,7 @@ visit_list_elements(ir_hierarchical_visitor *v, exec_list *l,
 {
    ir_instruction *prev_base_ir = v->base_ir;
 
-   foreach_list_safe(n, l) {
-      ir_instruction *const ir = (ir_instruction *) n;
+   foreach_in_list_safe(ir_instruction, ir, l) {
       if (statement_list)
          v->base_ir = ir;
       ir_visitor_status s = ir->accept(v);
@@ -62,6 +61,13 @@ visit_list_elements(ir_hierarchical_visitor *v, exec_list *l,
       v->base_ir = prev_base_ir;
 
    return visit_continue;
+}
+
+
+ir_visitor_status
+ir_rvalue::accept(ir_hierarchical_visitor *v)
+{
+   return v->visit(this);
 }
 
 
@@ -83,26 +89,6 @@ ir_loop::accept(ir_hierarchical_visitor *v)
    s = visit_list_elements(v, &this->body_instructions);
    if (s == visit_stop)
       return s;
-
-   if (s != visit_continue_with_parent) {
-      if (this->from) {
-	 s = this->from->accept(v);
-	 if (s != visit_continue)
-	    return (s == visit_continue_with_parent) ? visit_continue : s;
-      }
-
-      if (this->to) {
-	 s = this->to->accept(v);
-	 if (s != visit_continue)
-	    return (s == visit_continue_with_parent) ? visit_continue : s;
-      }
-
-      if (this->increment) {
-	 s = this->increment->accept(v);
-	 if (s != visit_continue)
-	    return (s == visit_continue_with_parent) ? visit_continue : s;
-      }
-   }
 
    return v->visit_leave(this);
 }
@@ -180,9 +166,11 @@ ir_texture::accept(ir_hierarchical_visitor *v)
    if (s != visit_continue)
       return (s == visit_continue_with_parent) ? visit_continue : s;
 
-   s = this->coordinate->accept(v);
-   if (s != visit_continue)
-      return (s == visit_continue_with_parent) ? visit_continue : s;
+   if (this->coordinate) {
+      s = this->coordinate->accept(v);
+      if (s != visit_continue)
+	 return (s == visit_continue_with_parent) ? visit_continue : s;
+   }
 
    if (this->projector) {
       s = this->projector->accept(v);
@@ -204,6 +192,8 @@ ir_texture::accept(ir_hierarchical_visitor *v)
 
    switch (this->op) {
    case ir_tex:
+   case ir_lod:
+   case ir_query_levels:
       break;
    case ir_txb:
       s = this->lod_info.bias->accept(v);
@@ -212,9 +202,15 @@ ir_texture::accept(ir_hierarchical_visitor *v)
       break;
    case ir_txl:
    case ir_txf:
+   case ir_txs:
       s = this->lod_info.lod->accept(v);
       if (s != visit_continue)
 	 return (s == visit_continue_with_parent) ? visit_continue : s;
+      break;
+   case ir_txf_ms:
+      s = this->lod_info.sample_index->accept(v);
+      if (s != visit_continue)
+         return (s == visit_continue_with_parent) ? visit_continue : s;
       break;
    case ir_txd:
       s = this->lod_info.grad.dPdx->accept(v);
@@ -224,6 +220,11 @@ ir_texture::accept(ir_hierarchical_visitor *v)
       s = this->lod_info.grad.dPdy->accept(v);
       if (s != visit_continue)
 	 return (s == visit_continue_with_parent) ? visit_continue : s;
+      break;
+   case ir_tg4:
+      s = this->lod_info.component->accept(v);
+      if (s != visit_continue)
+         return (s == visit_continue_with_parent) ? visit_continue : s;
       break;
    }
 
@@ -323,6 +324,14 @@ ir_call::accept(ir_hierarchical_visitor *v)
    if (s != visit_continue)
       return (s == visit_continue_with_parent) ? visit_continue : s;
 
+   if (this->return_deref != NULL) {
+      v->in_assignee = true;
+      s = this->return_deref->accept(v);
+      v->in_assignee = false;
+      if (s != visit_continue)
+	 return (s == visit_continue_with_parent) ? visit_continue : s;
+   }
+
    s = visit_list_elements(v, &this->actual_parameters, false);
    if (s == visit_stop)
       return s;
@@ -390,4 +399,33 @@ ir_if::accept(ir_hierarchical_visitor *v)
    }
 
    return v->visit_leave(this);
+}
+
+ir_visitor_status
+ir_emit_vertex::accept(ir_hierarchical_visitor *v)
+{
+   ir_visitor_status s = v->visit_enter(this);
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   s = this->stream->accept(v);
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   return (s == visit_stop) ? s : v->visit_leave(this);
+}
+
+
+ir_visitor_status
+ir_end_primitive::accept(ir_hierarchical_visitor *v)
+{
+   ir_visitor_status s = v->visit_enter(this);
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   s = this->stream->accept(v);
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   return (s == visit_stop) ? s : v->visit_leave(this);
 }

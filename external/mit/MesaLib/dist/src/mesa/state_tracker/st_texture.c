@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -40,6 +40,7 @@
 #include "util/u_format.h"
 #include "util/u_rect.h"
 #include "util/u_math.h"
+#include "util/u_memory.h"
 
 
 #define DBG if(0) printf
@@ -60,6 +61,7 @@ st_texture_create(struct st_context *st,
 		  GLuint height0,
 		  GLuint depth0,
                   GLuint layers,
+                  GLuint nr_samples,
                   GLuint bind )
 {
    struct pipe_resource pt, *newtex;
@@ -72,9 +74,8 @@ st_texture_create(struct st_context *st,
    if (target == PIPE_TEXTURE_CUBE)
       assert(layers == 6);
 
-   DBG("%s target %s format %s last_level %d\n", __FUNCTION__,
-       _mesa_lookup_enum_by_nr(target),
-       _mesa_lookup_enum_by_nr(format), last_level);
+   DBG("%s target %d format %s last_level %d\n", __FUNCTION__,
+       (int) target, util_format_name(format), last_level);
 
    assert(format);
    assert(screen->is_format_supported(screen, format, target, 0,
@@ -91,6 +92,7 @@ st_texture_create(struct st_context *st,
    pt.usage = PIPE_USAGE_DEFAULT;
    pt.bind = bind;
    pt.flags = 0;
+   pt.nr_samples = nr_samples;
 
    newtex = screen->resource_create(screen, &pt);
 
@@ -118,6 +120,7 @@ st_gl_texture_dims_to_pipe_dims(GLenum texture,
 {
    switch (texture) {
    case GL_TEXTURE_1D:
+   case GL_PROXY_TEXTURE_1D:
       assert(heightIn == 1);
       assert(depthIn == 1);
       *widthOut = widthIn;
@@ -126,6 +129,7 @@ st_gl_texture_dims_to_pipe_dims(GLenum texture,
       *layersOut = 1;
       break;
    case GL_TEXTURE_1D_ARRAY:
+   case GL_PROXY_TEXTURE_1D_ARRAY:
       assert(depthIn == 1);
       *widthOut = widthIn;
       *heightOut = 1;
@@ -133,7 +137,12 @@ st_gl_texture_dims_to_pipe_dims(GLenum texture,
       *layersOut = heightIn;
       break;
    case GL_TEXTURE_2D:
+   case GL_PROXY_TEXTURE_2D:
    case GL_TEXTURE_RECTANGLE:
+   case GL_PROXY_TEXTURE_RECTANGLE:
+   case GL_TEXTURE_EXTERNAL_OES:
+   case GL_PROXY_TEXTURE_2D_MULTISAMPLE:
+   case GL_TEXTURE_2D_MULTISAMPLE:
       assert(depthIn == 1);
       *widthOut = widthIn;
       *heightOut = heightIn;
@@ -141,6 +150,13 @@ st_gl_texture_dims_to_pipe_dims(GLenum texture,
       *layersOut = 1;
       break;
    case GL_TEXTURE_CUBE_MAP:
+   case GL_PROXY_TEXTURE_CUBE_MAP:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
       assert(depthIn == 1);
       *widthOut = widthIn;
       *heightOut = heightIn;
@@ -148,6 +164,16 @@ st_gl_texture_dims_to_pipe_dims(GLenum texture,
       *layersOut = 6;
       break;
    case GL_TEXTURE_2D_ARRAY:
+   case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
+   case GL_PROXY_TEXTURE_2D_ARRAY:
+   case GL_PROXY_TEXTURE_2D_MULTISAMPLE_ARRAY:
+      *widthOut = widthIn;
+      *heightOut = heightIn;
+      *depthOut = 1;
+      *layersOut = depthIn;
+      break;
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+   case GL_PROXY_TEXTURE_CUBE_MAP_ARRAY:
       *widthOut = widthIn;
       *heightOut = heightIn;
       *depthOut = 1;
@@ -157,6 +183,7 @@ st_gl_texture_dims_to_pipe_dims(GLenum texture,
       assert(0 && "Unexpected texture in st_gl_texture_dims_to_pipe_dims()");
       /* fall-through */
    case GL_TEXTURE_3D:
+   case GL_PROXY_TEXTURE_3D:
       *widthOut = widthIn;
       *heightOut = heightIn;
       *depthOut = depthIn;
@@ -170,9 +197,9 @@ st_gl_texture_dims_to_pipe_dims(GLenum texture,
  * Check if a texture image can be pulled into a unified mipmap texture.
  */
 GLboolean
-st_texture_match_image(const struct pipe_resource *pt,
-                       const struct gl_texture_image *image,
-                       GLuint face, GLuint level)
+st_texture_match_image(struct st_context *st,
+                       const struct pipe_resource *pt,
+                       const struct gl_texture_image *image)
 {
    GLuint ptWidth, ptHeight, ptDepth, ptLayers;
 
@@ -183,7 +210,7 @@ st_texture_match_image(const struct pipe_resource *pt,
 
    /* Check if this image's format matches the established texture's format.
     */
-   if (st_mesa_format_to_pipe_format(image->TexFormat) != pt->format)
+   if (st_mesa_format_to_pipe_format(st, image->TexFormat) != pt->format)
       return GL_FALSE;
 
    st_gl_texture_dims_to_pipe_dims(image->TexObject->Target,
@@ -193,9 +220,9 @@ st_texture_match_image(const struct pipe_resource *pt,
    /* Test if this image's size matches what's expected in the
     * established texture.
     */
-   if (ptWidth != u_minify(pt->width0, level) ||
-       ptHeight != u_minify(pt->height0, level) ||
-       ptDepth != u_minify(pt->depth0, level) ||
+   if (ptWidth != u_minify(pt->width0, image->Level) ||
+       ptHeight != u_minify(pt->height0, image->Level) ||
+       ptDepth != u_minify(pt->depth0, image->Level) ||
        ptLayers != pt->array_size)
       return GL_FALSE;
 
@@ -213,67 +240,62 @@ st_texture_match_image(const struct pipe_resource *pt,
  */
 GLubyte *
 st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
-                     GLuint zoffset, enum pipe_transfer_usage usage,
-                     GLuint x, GLuint y, GLuint w, GLuint h)
+                     enum pipe_transfer_usage usage,
+                     GLuint x, GLuint y, GLuint z,
+                     GLuint w, GLuint h, GLuint d,
+                     struct pipe_transfer **transfer)
 {
-   struct pipe_context *pipe = st->pipe;
-   struct pipe_resource *pt = stImage->pt;
+   struct st_texture_object *stObj =
+      st_texture_object(stImage->base.TexObject);
+   GLuint level;
+   void *map;
 
    DBG("%s \n", __FUNCTION__);
 
-   stImage->transfer = pipe_get_transfer(st->pipe, pt, stImage->level,
-                                         stImage->face + zoffset,
-                                         usage, x, y, w, h);
-
-   if (stImage->transfer)
-      return pipe_transfer_map(pipe, stImage->transfer);
-   else
+   if (!stImage->pt)
       return NULL;
+
+   if (stObj->pt != stImage->pt)
+      level = 0;
+   else
+      level = stImage->base.Level;
+
+   z += stImage->base.Face;
+
+   map = pipe_transfer_map_3d(st->pipe, stImage->pt, level, usage,
+                              x, y, z, w, h, d, transfer);
+   if (map) {
+      /* Enlarge the transfer array if it's not large enough. */
+      if (z >= stImage->num_transfers) {
+         unsigned new_size = z + 1;
+
+         stImage->transfer = realloc(stImage->transfer,
+                     new_size * sizeof(struct st_texture_image_transfer));
+         memset(&stImage->transfer[stImage->num_transfers], 0,
+                (new_size - stImage->num_transfers) *
+                sizeof(struct st_texture_image_transfer));
+         stImage->num_transfers = new_size;
+      }
+
+      assert(!stImage->transfer[z].transfer);
+      stImage->transfer[z].transfer = *transfer;
+   }
+   return map;
 }
 
 
 void
 st_texture_image_unmap(struct st_context *st,
-                       struct st_texture_image *stImage)
+                       struct st_texture_image *stImage, unsigned slice)
 {
    struct pipe_context *pipe = st->pipe;
+   struct pipe_transfer **transfer =
+      &stImage->transfer[slice + stImage->base.Face].transfer;
 
    DBG("%s\n", __FUNCTION__);
 
-   pipe_transfer_unmap(pipe, stImage->transfer);
-
-   pipe->transfer_destroy(pipe, stImage->transfer);
-}
-
-
-
-/**
- * Upload data to a rectangular sub-region.  Lots of choices how to do this:
- *
- * - memcpy by span to current destination
- * - upload data as new buffer and blit
- *
- * Currently always memcpy.
- */
-static void
-st_surface_data(struct pipe_context *pipe,
-		struct pipe_transfer *dst,
-		unsigned dstx, unsigned dsty,
-		const void *src, unsigned src_stride,
-		unsigned srcx, unsigned srcy, unsigned width, unsigned height)
-{
-   void *map = pipe_transfer_map(pipe, dst);
-
-   assert(dst->resource);
-   util_copy_rect(map,
-                  dst->resource->format,
-                  dst->stride,
-                  dstx, dsty, 
-                  width, height, 
-                  src, src_stride, 
-                  srcx, srcy);
-
-   pipe_transfer_unmap(pipe, dst);
+   pipe_transfer_unmap(pipe, *transfer);
+   *transfer = NULL;
 }
 
 
@@ -290,11 +312,11 @@ st_texture_image_data(struct st_context *st,
    struct pipe_context *pipe = st->pipe;
    GLuint i;
    const GLubyte *srcUB = src;
-   struct pipe_transfer *dst_transfer;
    GLuint layers;
 
    if (dst->target == PIPE_TEXTURE_1D_ARRAY ||
-       dst->target == PIPE_TEXTURE_2D_ARRAY)
+       dst->target == PIPE_TEXTURE_2D_ARRAY ||
+       dst->target == PIPE_TEXTURE_CUBE_ARRAY)
       layers = dst->array_size;
    else
       layers = u_minify(dst->depth0, level);
@@ -302,20 +324,14 @@ st_texture_image_data(struct st_context *st,
    DBG("%s\n", __FUNCTION__);
 
    for (i = 0; i < layers; i++) {
-      dst_transfer = pipe_get_transfer(st->pipe, dst, level, face + i,
-                                       PIPE_TRANSFER_WRITE, 0, 0,
-                                       u_minify(dst->width0, level),
-                                       u_minify(dst->height0, level));
+      struct pipe_box box;
+      u_box_2d_zslice(0, 0, face + i,
+                      u_minify(dst->width0, level),
+                      u_minify(dst->height0, level),
+                      &box);
 
-      st_surface_data(pipe, dst_transfer,
-		      0, 0,                             /* dstx, dsty */
-		      srcUB,
-		      src_row_stride,
-		      0, 0,                             /* source x, y */
-		      u_minify(dst->width0, level),
-                      u_minify(dst->height0, level));    /* width, height */
-
-      pipe->transfer_destroy(pipe, dst_transfer);
+      pipe->transfer_inline_write(pipe, dst, level, PIPE_TRANSFER_WRITE,
+                                  &box, srcUB, src_row_stride, 0);
 
       srcUB += src_image_stride;
    }
@@ -339,13 +355,11 @@ print_center_pixel(struct pipe_context *pipe, struct pipe_resource *src)
    region.height = 1;
    region.depth = 1;
 
-   xfer = pipe->get_transfer(pipe, src, 0, PIPE_TRANSFER_READ, &region);
-   map = pipe->transfer_map(pipe, xfer);
+   map = pipe->transfer_map(pipe, src, 0, PIPE_TRANSFER_READ, &region, &xfer);
 
    printf("center pixel: %d %d %d %d\n", map[0], map[1], map[2], map[3]);
 
    pipe->transfer_unmap(pipe, xfer);
-   pipe->transfer_destroy(pipe, xfer);
 }
 
 
@@ -382,6 +396,14 @@ st_texture_image_copy(struct pipe_context *pipe,
    src_box.width = width;
    src_box.height = height;
    src_box.depth = 1;
+
+   if (src->target == PIPE_TEXTURE_1D_ARRAY ||
+       src->target == PIPE_TEXTURE_2D_ARRAY ||
+       src->target == PIPE_TEXTURE_CUBE_ARRAY) {
+      face = 0;
+      depth = src->array_size;
+   }
+
    /* Loop over 3D image slices */
    /* could (and probably should) use "true" 3d box here -
       but drivers can't quite handle it yet */
@@ -402,3 +424,107 @@ st_texture_image_copy(struct pipe_context *pipe,
    }
 }
 
+
+struct pipe_resource *
+st_create_color_map_texture(struct gl_context *ctx)
+{
+   struct st_context *st = st_context(ctx);
+   struct pipe_resource *pt;
+   enum pipe_format format;
+   const uint texSize = 256; /* simple, and usually perfect */
+
+   /* find an RGBA texture format */
+   format = st_choose_format(st, GL_RGBA, GL_NONE, GL_NONE,
+                             PIPE_TEXTURE_2D, 0, PIPE_BIND_SAMPLER_VIEW,
+                             FALSE);
+
+   /* create texture for color map/table */
+   pt = st_texture_create(st, PIPE_TEXTURE_2D, format, 0,
+                          texSize, texSize, 1, 1, 0, PIPE_BIND_SAMPLER_VIEW);
+   return pt;
+}
+
+/**
+ * Try to find a matching sampler view for the given context.
+ * If none is found an empty slot is initialized with a
+ * template and returned instead.
+ */
+struct pipe_sampler_view **
+st_texture_get_sampler_view(struct st_context *st,
+                            struct st_texture_object *stObj)
+{
+   struct pipe_sampler_view *used = NULL, **free = NULL;
+   GLuint i;
+
+   for (i = 0; i < stObj->num_sampler_views; ++i) {
+      struct pipe_sampler_view **sv = &stObj->sampler_views[i];
+      /* Is the array entry used ? */
+      if (*sv) {
+         /* Yes, check if it's the right one */
+         if ((*sv)->context == st->pipe)
+            return sv;
+
+         /* Wasn't the right one, but remember it as template */
+         used = *sv;
+      } else {
+         /* Found a free slot, remember that */
+         free = sv;
+      }
+   }
+
+   /* Couldn't find a slot for our context, create a new one */
+
+   if (!free) {
+      /* Haven't even found a free one, resize the array */
+      GLuint old_size = stObj->num_sampler_views * sizeof(void *);
+      GLuint new_size = old_size + sizeof(void *);
+      stObj->sampler_views = REALLOC(stObj->sampler_views, old_size, new_size);
+      free = &stObj->sampler_views[stObj->num_sampler_views++];
+      *free = NULL;
+   }
+
+   /* Add just any sampler view to be used as a template */
+   if (used)
+      pipe_sampler_view_reference(free, used);
+
+   return free;
+}
+
+void
+st_texture_release_sampler_view(struct st_context *st,
+                                struct st_texture_object *stObj)
+{
+   GLuint i;
+
+   for (i = 0; i < stObj->num_sampler_views; ++i) {
+      struct pipe_sampler_view **sv = &stObj->sampler_views[i];
+
+      if (*sv && (*sv)->context == st->pipe) {
+         pipe_sampler_view_reference(sv, NULL);
+         break;
+      }
+   }
+}
+
+void
+st_texture_release_all_sampler_views(struct st_context *st,
+                                     struct st_texture_object *stObj)
+{
+   GLuint i;
+
+   /* XXX This should use sampler_views[i]->pipe, not st->pipe */
+   for (i = 0; i < stObj->num_sampler_views; ++i)
+      pipe_sampler_view_release(st->pipe, &stObj->sampler_views[i]);
+}
+
+
+void
+st_texture_free_sampler_views(struct st_texture_object *stObj)
+{
+   /* NOTE:
+    * We use FREE() here to match REALLOC() above.  Both come from
+    * u_memory.h, not imports.h.  If we mis-match MALLOC/FREE from
+    * those two headers we can trash the heap.
+    */
+   FREE(stObj->sampler_views);
+}

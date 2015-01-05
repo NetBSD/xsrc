@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -34,6 +34,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
+#include "util/u_draw.h"
 #include "util/u_prim.h"
 
 #include "sp_context.h"
@@ -42,58 +43,6 @@
 #include "sp_texture.h"
 
 #include "draw/draw_context.h"
-
-
-
-
-
-void
-softpipe_draw_stream_output(struct pipe_context *pipe, unsigned mode)
-{
-   struct softpipe_context *sp = softpipe_context(pipe);
-   struct draw_context *draw = sp->draw;
-   const unsigned start = 0;
-   const unsigned count = sp->so_target.so_count[0];
-   void *buf = sp->so_target.buffer[0]->data;
-   int offset = sp->so_target.offset[0];
-
-   if (!softpipe_check_render_cond(sp) ||
-       sp->so_target.num_buffers != 1)
-      return;
-
-   sp->reduced_api_prim = u_reduced_prim(mode);
-
-   if (sp->dirty) {
-      softpipe_update_derived(sp);
-   }
-
-   softpipe_map_transfers(sp);
-
-   /* Map so buffers */
-   if (offset < 0) /* we were appending so start from beginning */
-      offset = 0;
-   buf = (void*)((int32_t*)buf + offset);
-   draw_set_mapped_vertex_buffer(draw, 0, buf);
-
-   draw_set_mapped_index_buffer(draw, NULL);
-
-   /* draw! */
-   draw_arrays(draw, mode, start, count);
-
-   /* unmap vertex/index buffers - will cause draw module to flush */
-   draw_set_mapped_vertex_buffer(draw, 0, NULL);
-
-   /*
-    * TODO: Flush only when a user vertex/index buffer is present
-    * (or even better, modify draw module to do this
-    * internally when this condition is seen?)
-    */
-   draw_flush(draw);
-
-   /* Note: leave drawing surfaces mapped */
-   sp->dirty_render_cache = TRUE;
-}
-
 
 /**
  * This function handles drawing indexed and non-indexed prims,
@@ -113,42 +62,89 @@ softpipe_draw_vbo(struct pipe_context *pipe,
 {
    struct softpipe_context *sp = softpipe_context(pipe);
    struct draw_context *draw = sp->draw;
-   void *mapped_indices = NULL;
+   const void *mapped_indices = NULL;
    unsigned i;
 
    if (!softpipe_check_render_cond(sp))
       return;
 
+   if (info->indirect) {
+      util_draw_indirect(pipe, info);
+      return;
+   }
+
    sp->reduced_api_prim = u_reduced_prim(info->mode);
 
    if (sp->dirty) {
-      softpipe_update_derived(sp);
+      softpipe_update_derived(sp, sp->reduced_api_prim);
    }
-
-   softpipe_map_transfers(sp);
 
    /* Map vertex buffers */
    for (i = 0; i < sp->num_vertex_buffers; i++) {
-      void *buf = softpipe_resource(sp->vertex_buffer[i].buffer)->data;
-      draw_set_mapped_vertex_buffer(draw, i, buf);
+      const void *buf = sp->vertex_buffer[i].user_buffer;
+      size_t size = ~0;
+      if (!buf) {
+         if (!sp->vertex_buffer[i].buffer) {
+            continue;
+         }
+         buf = softpipe_resource_data(sp->vertex_buffer[i].buffer);
+         size = sp->vertex_buffer[i].buffer->width0;
+      }
+      draw_set_mapped_vertex_buffer(draw, i, buf, size);
    }
 
    /* Map index buffer, if present */
-   if (info->indexed && sp->index_buffer.buffer)
-      mapped_indices = softpipe_resource(sp->index_buffer.buffer)->data;
+   if (info->indexed) {
+      unsigned available_space = ~0;
+      mapped_indices = sp->index_buffer.user_buffer;
+      if (!mapped_indices) {
+         mapped_indices = softpipe_resource_data(sp->index_buffer.buffer);
+         if (sp->index_buffer.buffer->width0 > sp->index_buffer.offset)
+            available_space =
+               (sp->index_buffer.buffer->width0 - sp->index_buffer.offset);
+         else
+            available_space = 0;
+      }
 
-   draw_set_mapped_index_buffer(draw, mapped_indices);
+      draw_set_indexes(draw,
+                       (ubyte *) mapped_indices + sp->index_buffer.offset,
+                       sp->index_buffer.index_size, available_space);
+   }
+
+
+   for (i = 0; i < sp->num_so_targets; i++) {
+      void *buf = 0;
+      if (sp->so_targets[i]) {
+         buf = softpipe_resource(sp->so_targets[i]->target.buffer)->data;
+         sp->so_targets[i]->mapping = buf;
+      }
+   }
+
+   draw_set_mapped_so_targets(draw, sp->num_so_targets,
+                              sp->so_targets);
+
+   if (sp->gs && !sp->gs->shader.tokens) {
+      /* we have an empty geometry shader with stream output, so
+         attach the stream output info to the current vertex shader */
+      if (sp->vs) {
+         draw_vs_attach_so(sp->vs->draw_data, &sp->gs->shader.stream_output);
+      }
+   }
+   draw_collect_pipeline_statistics(draw,
+                                    sp->active_statistics_queries > 0);
 
    /* draw! */
    draw_vbo(draw, info);
 
    /* unmap vertex/index buffers - will cause draw module to flush */
    for (i = 0; i < sp->num_vertex_buffers; i++) {
-      draw_set_mapped_vertex_buffer(draw, i, NULL);
+      draw_set_mapped_vertex_buffer(draw, i, NULL, 0);
    }
    if (mapped_indices) {
-      draw_set_mapped_index_buffer(draw, NULL);
+      draw_set_indexes(draw, NULL, 0, 0);
    }
+
+   draw_set_mapped_so_targets(draw, 0, NULL);
 
    /*
     * TODO: Flush only when a user vertex/index buffer is present

@@ -2,7 +2,7 @@ Import('*')
 
 env = env.Clone()
 
-env.Prepend(LIBS = [gallium])
+env.Prepend(LIBS = [mesautil, gallium])
 
 env.Prepend(LIBPATH = [graw.dir])
 env.Prepend(LIBS = ['graw'])
@@ -16,15 +16,23 @@ if env['platform'] == 'freebsd8':
 
 progs = [
     'clear',
-    'tri',
-    'tri-instanced',
-    'quad-tex',
+    'disasm',
+    'fs-fragcoord',
+    'fs-frontface',
     'fs-test',
-    'vs-test',
+    'fs-write-z',
     'gs-test',
-    'shader-leak',
-    'tri-gs',
+    'occlusion-query',
     'quad-sample',
+    'quad-tex',
+    'shader-leak',
+    'tex-srgb',
+    'tex-swizzle',
+    'tri',
+    'tri-large',
+    'tri-gs',
+    'tri-instanced',
+    'vs-test',
 ]
 
 for name in progs:

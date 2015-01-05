@@ -28,25 +28,26 @@
 #include "stdint.h"
 #include "main/bufferobj.h"
 #include "main/enums.h"
+#include "main/fbobject.h"
 #include "main/image.h"
+#include "main/readpix.h"
 #include "main/state.h"
-#include "swrast/swrast.h"
 
-#include "radeon_buffer_objects.h"
 #include "radeon_common_context.h"
+#include "radeon_buffer_objects.h"
 #include "radeon_debug.h"
 #include "radeon_mipmap_tree.h"
 
-static gl_format gl_format_and_type_to_mesa_format(GLenum format, GLenum type)
+static mesa_format gl_format_and_type_to_mesa_format(GLenum format, GLenum type)
 {
     switch (format)
     {
         case GL_RGB:
             switch (type) {
                 case GL_UNSIGNED_SHORT_5_6_5:
-                    return MESA_FORMAT_RGB565;
+                    return MESA_FORMAT_B5G6R5_UNORM;
                 case GL_UNSIGNED_SHORT_5_6_5_REV:
-                    return MESA_FORMAT_RGB565_REV;
+                    return MESA_FORMAT_R5G6B5_UNORM;
             }
             break;
         case GL_RGBA:
@@ -54,29 +55,29 @@ static gl_format gl_format_and_type_to_mesa_format(GLenum format, GLenum type)
                 case GL_FLOAT:
                     return MESA_FORMAT_RGBA_FLOAT32;
                 case GL_UNSIGNED_SHORT_5_5_5_1:
-                    return MESA_FORMAT_RGBA5551;
+                    return MESA_FORMAT_A1B5G5R5_UNORM;
                 case GL_UNSIGNED_INT_8_8_8_8:
-                    return MESA_FORMAT_RGBA8888;
+                    return MESA_FORMAT_A8B8G8R8_UNORM;
                 case GL_UNSIGNED_BYTE:
                 case GL_UNSIGNED_INT_8_8_8_8_REV:
-                    return MESA_FORMAT_RGBA8888_REV;
+                    return MESA_FORMAT_R8G8B8A8_UNORM;
             }
             break;
         case GL_BGRA:
             switch (type) {
                 case GL_UNSIGNED_SHORT_4_4_4_4:
-                    return MESA_FORMAT_ARGB4444_REV;
+                    return MESA_FORMAT_A4R4G4B4_UNORM;
                 case GL_UNSIGNED_SHORT_4_4_4_4_REV:
-                    return MESA_FORMAT_ARGB4444;
+                    return MESA_FORMAT_B4G4R4A4_UNORM;
                 case GL_UNSIGNED_SHORT_5_5_5_1:
-                    return MESA_FORMAT_ARGB1555_REV;
+                    return MESA_FORMAT_A1R5G5B5_UNORM;
                 case GL_UNSIGNED_SHORT_1_5_5_5_REV:
-                    return MESA_FORMAT_ARGB1555;
+                    return MESA_FORMAT_B5G5R5A1_UNORM;
                 case GL_UNSIGNED_INT_8_8_8_8:
-                    return MESA_FORMAT_ARGB8888_REV;
+                    return MESA_FORMAT_A8R8G8B8_UNORM;
                 case GL_UNSIGNED_BYTE:
                 case GL_UNSIGNED_INT_8_8_8_8_REV:
-                    return MESA_FORMAT_ARGB8888;
+                    return MESA_FORMAT_B8G8R8A8_UNORM;
 
             }
             break;
@@ -93,7 +94,7 @@ do_blit_readpixels(struct gl_context * ctx,
 {
     radeonContextPtr radeon = RADEON_CONTEXT(ctx);
     const struct radeon_renderbuffer *rrb = radeon_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
-    const gl_format dst_format = gl_format_and_type_to_mesa_format(format, type);
+    const mesa_format dst_format = gl_format_and_type_to_mesa_format(format, type);
     unsigned dst_rowstride, dst_imagesize, aligned_rowstride, flip_y;
     struct radeon_bo *dst_buffer;
     GLint dst_x = 0, dst_y = 0;
@@ -105,11 +106,11 @@ do_blit_readpixels(struct gl_context * ctx,
     }
 
     if (dst_format == MESA_FORMAT_NONE ||
-        !radeon->vtbl.check_blit(dst_format) || !radeon->vtbl.blit) {
+        !radeon->vtbl.check_blit(dst_format, rrb->pitch / rrb->cpp) || !radeon->vtbl.blit) {
         return GL_FALSE;
     }
 
-    if (ctx->_ImageTransferState || ctx->Color._LogicOpEnabled) {
+    if (ctx->_ImageTransferState || ctx->Color.ColorLogicOpEnabled) {
         return GL_FALSE;
     }
 
@@ -128,7 +129,7 @@ do_blit_readpixels(struct gl_context * ctx,
     }
     assert(x >= 0 && y >= 0);
 
-    aligned_rowstride = get_texture_image_row_stride(radeon, dst_format, dst_rowstride, 0);
+    aligned_rowstride = get_texture_image_row_stride(radeon, dst_format, dst_rowstride, 0, GL_TEXTURE_2D);
     dst_rowstride *= _mesa_get_format_bytes(dst_format);
     if (_mesa_is_bufferobj(pack->BufferObj) && aligned_rowstride != dst_rowstride)
         return GL_FALSE;
@@ -148,19 +149,19 @@ do_blit_readpixels(struct gl_context * ctx,
     }
 
     /* Disable source Y flipping for FBOs */
-    flip_y = (ctx->ReadBuffer->Name == 0);
+    flip_y = _mesa_is_winsys_fbo(ctx->ReadBuffer);
     if (pack->Invert) {
-        y = rrb->base.Height - height - y;
+        y = rrb->base.Base.Height - height - y;
         flip_y = !flip_y;
     }
 
     if (radeon->vtbl.blit(ctx,
                           rrb->bo,
                           rrb->draw_offset,
-                          rrb->base.Format,
+                          rrb->base.Base.Format,
                           rrb->pitch / rrb->cpp,
-                          rrb->base.Width,
-                          rrb->base.Height,
+                          rrb->base.Base.Width,
+                          rrb->base.Base.Height,
                           x,
                           y,
                           dst_buffer,
@@ -205,12 +206,10 @@ radeonReadPixels(struct gl_context * ctx,
     if (do_blit_readpixels(ctx, x, y, width, height, format, type, pack, pixels))
         return;
 
-    /* Update Mesa state before calling down into _swrast_ReadPixels, as
-     * the spans code requires the computed buffer states to be up to date,
-     * but _swrast_ReadPixels only updates Mesa state after setting up
-     * the spans code.
+    /* Update Mesa state before calling _mesa_readpixels().
+     * XXX this may not be needed since ReadPixels no longer uses the
+     * span code.
      */
-
     radeon_print(RADEON_FALLBACKS, RADEON_NORMAL,
                  "Falling back to sw for ReadPixels (format %s, type %s)\n",
                  _mesa_lookup_enum_by_nr(format), _mesa_lookup_enum_by_nr(type));
@@ -218,5 +217,5 @@ radeonReadPixels(struct gl_context * ctx,
     if (ctx->NewState)
         _mesa_update_state(ctx);
 
-    _swrast_ReadPixels(ctx, x, y, width, height, format, type, pack, pixels);
+    _mesa_readpixels(ctx, x, y, width, height, format, type, pack, pixels);
 }

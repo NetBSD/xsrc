@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 VMware, Inc.
  * Copyright 2009-2010 Chia-I Wu <olvaffe@gmail.com>
  * Copyright 2010-2011 LunarG, Inc.
  * All Rights Reserved.
@@ -44,6 +44,8 @@ enum _egl_platform_type {
    _EGL_PLATFORM_WAYLAND,
    _EGL_PLATFORM_DRM,
    _EGL_PLATFORM_FBDEV,
+   _EGL_PLATFORM_NULL,
+   _EGL_PLATFORM_ANDROID,
 
    _EGL_NUM_PLATFORMS,
    _EGL_INVALID_PLATFORM = -1
@@ -87,8 +89,10 @@ struct _egl_extensions
    EGLBoolean MESA_copy_context;
    EGLBoolean MESA_drm_display;
    EGLBoolean MESA_drm_image;
+   EGLBoolean MESA_configless_context;
 
    EGLBoolean WL_bind_wayland_display;
+   EGLBoolean WL_create_wayland_buffer_from_image;
 
    EGLBoolean KHR_image_base;
    EGLBoolean KHR_image_pixmap;
@@ -101,12 +105,22 @@ struct _egl_extensions
    EGLBoolean KHR_reusable_sync;
    EGLBoolean KHR_fence_sync;
 
-   EGLBoolean KHR_surfaceless_gles1;
-   EGLBoolean KHR_surfaceless_gles2;
-   EGLBoolean KHR_surfaceless_opengl;
+   EGLBoolean KHR_surfaceless_context;
+   EGLBoolean KHR_create_context;
 
    EGLBoolean NOK_swap_region;
    EGLBoolean NOK_texture_from_pixmap;
+
+   EGLBoolean ANDROID_image_native_buffer;
+
+   EGLBoolean CHROMIUM_sync_control;
+
+   EGLBoolean NV_post_sub_buffer;
+
+   EGLBoolean EXT_create_context_robustness;
+   EGLBoolean EXT_buffer_age;
+   EGLBoolean EXT_swap_buffers_with_damage;
+   EGLBoolean EXT_image_dma_buf_import;
 };
 
 
@@ -150,7 +164,7 @@ struct _egl_display
 
 
 extern _EGLPlatformType
-_eglGetNativePlatform(void);
+_eglGetNativePlatform(void *nativeDisplay);
 
 
 extern void
@@ -230,5 +244,25 @@ _eglIsResourceLinked(_EGLResource *res)
    return res->IsLinked;
 }
 
+#ifdef HAVE_X11_PLATFORM
+_EGLDisplay*
+_eglGetX11Display(Display *native_display, const EGLint *attrib_list);
+#endif
+
+#ifdef HAVE_DRM_PLATFORM
+struct gbm_device;
+
+_EGLDisplay*
+_eglGetGbmDisplay(struct gbm_device *native_display,
+                  const EGLint *attrib_list);
+#endif
+
+#ifdef HAVE_WAYLAND_PLATFORM
+struct wl_display;
+
+_EGLDisplay*
+_eglGetWaylandDisplay(struct wl_display *native_display,
+                      const EGLint *attrib_list);
+#endif
 
 #endif /* EGLDISPLAY_INCLUDED */

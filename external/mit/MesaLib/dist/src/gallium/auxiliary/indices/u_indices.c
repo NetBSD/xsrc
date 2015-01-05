@@ -26,20 +26,43 @@
 #include "u_indices_priv.h"
 
 static void translate_memcpy_ushort( const void *in,
+                                     unsigned start,
                                      unsigned nr,
                                      void *out )
 {
-   memcpy(out, in, nr*sizeof(short));
+   memcpy(out, &((short *)in)[start], nr*sizeof(short));
 }
                               
 static void translate_memcpy_uint( const void *in,
+                                   unsigned start,
                                    unsigned nr,
                                    void *out )
 {
-   memcpy(out, in, nr*sizeof(int));
+   memcpy(out, &((int *)in)[start], nr*sizeof(int));
 }
                               
 
+/**
+ * Translate indexes when a driver can't support certain types
+ * of drawing.  Example include:
+ * - Translate 1-byte indexes into 2-byte indexes
+ * - Translate PIPE_PRIM_QUADS into PIPE_PRIM_TRIANGLES when the hardware
+ *   doesn't support the former.
+ * - Translate from first provoking vertex to last provoking vertex and
+ *   vice versa.
+ *
+ * \param hw_mask  mask of (1 << PIPE_PRIM_x) flags indicating which types
+ *                 of primitives are supported by the hardware.
+ * \param prim  incoming PIPE_PRIM_x
+ * \param in_index_size  bytes per index value (1, 2 or 4)
+ * \param nr  number of incoming vertices
+ * \param in_pv  incoming provoking vertex convention (PV_FIRST or PV_LAST)
+ * \param out_pv  desired provoking vertex convention (PV_FIRST or PV_LAST)
+ * \param out_prim  returns new PIPE_PRIM_x we'll translate to
+ * \param out_index_size  returns bytes per new index value (2 or 4)
+ * \param out_nr  returns number of new vertices
+ * \param out_translate  returns the translation function to use by the caller
+ */
 int u_index_translator( unsigned hw_mask,
                         unsigned prim,
                         unsigned in_index_size,
@@ -55,6 +78,10 @@ int u_index_translator( unsigned hw_mask,
    unsigned out_idx;
    int ret = U_TRANSLATE_NORMAL;
 
+   assert(in_index_size == 1 ||
+          in_index_size == 2 ||
+          in_index_size == 4);
+
    u_index_init();
 
    in_idx = in_size_idx(in_index_size);
@@ -65,6 +92,7 @@ int u_index_translator( unsigned hw_mask,
        in_index_size == *out_index_size &&
        in_pv == out_pv) 
    {
+      /* Index translation not really needed */
       if (in_index_size == 4)
          *out_translate = translate_memcpy_uint;
       else
@@ -150,9 +178,26 @@ int u_index_translator( unsigned hw_mask,
 }
 
 
-
-
-
+/**
+ * If a driver does not support a particular gallium primitive type
+ * (such as PIPE_PRIM_QUAD_STRIP) this function can be used to help
+ * convert the primitive into a simpler type (like PIPE_PRIM_TRIANGLES).
+ *
+ * The generator functions generates a number of ushort or uint indexes
+ * for drawing the new type of primitive.
+ *
+ * \param hw_mask  a bitmask of (1 << PIPE_PRIM_x) values that indicates
+ *                 kind of primitives are supported by the driver.
+ * \param prim  the PIPE_PRIM_x that the user wants to draw
+ * \param start  index of first vertex to draw
+ * \param nr  number of vertices to draw
+ * \param in_pv  user's provoking vertex (PV_FIRST/LAST)
+ * \param out_pv  desired proking vertex for the hardware (PV_FIRST/LAST)
+ * \param out_prim  returns the new primitive type for the driver
+ * \param out_index_size  returns OUT_USHORT or OUT_UINT
+ * \param out_nr  returns new number of vertices to draw
+ * \param out_generate  returns pointer to the generator function
+ */
 int u_index_generator( unsigned hw_mask,
                        unsigned prim,
                        unsigned start,

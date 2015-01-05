@@ -45,9 +45,9 @@ extern "C" {
 #include "main/core.h"
 #include "brw_wm.h"
 }
-#include "../glsl/ir.h"
-#include "../glsl/ir_expression_flattening.h"
-#include "../glsl/glsl_types.h"
+#include "glsl/ir.h"
+#include "glsl/ir_expression_flattening.h"
+#include "glsl/glsl_types.h"
 
 class ir_channel_expressions_visitor : public ir_hierarchical_visitor {
 public:
@@ -75,6 +75,18 @@ channel_expressions_predicate(ir_instruction *ir)
    if (!expr)
       return false;
 
+   switch (expr->operation) {
+      /* these opcodes need to act on the whole vector,
+       * just like texturing.
+       */
+      case ir_unop_interpolate_at_centroid:
+      case ir_binop_interpolate_at_offset:
+      case ir_binop_interpolate_at_sample:
+         return false;
+      default:
+         break;
+   }
+
    for (i = 0; i < expr->get_num_operands(); i++) {
       if (expr->operands[i]->type->is_vector())
 	 return true;
@@ -83,7 +95,7 @@ channel_expressions_predicate(ir_instruction *ir)
    return false;
 }
 
-GLboolean
+bool
 brw_do_channel_expressions(exec_list *instructions)
 {
    ir_channel_expressions_visitor v;
@@ -135,7 +147,7 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
    ir_expression *expr = ir->rhs->as_expression();
    bool found_vector = false;
    unsigned int i, vector_elements = 1;
-   ir_variable *op_var[2];
+   ir_variable *op_var[3];
 
    if (!expr)
       return visit_continue;
@@ -152,6 +164,16 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
    }
    if (!found_vector)
       return visit_continue;
+
+   switch (expr->operation) {
+      case ir_unop_interpolate_at_centroid:
+      case ir_binop_interpolate_at_offset:
+      case ir_binop_interpolate_at_sample:
+         return visit_continue;
+
+      default:
+         break;
+   }
 
    /* Store the expression operands in temps so we can use them
     * multiple times.
@@ -191,7 +213,14 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
    case ir_unop_log:
    case ir_unop_exp2:
    case ir_unop_log2:
+   case ir_unop_bitcast_i2f:
+   case ir_unop_bitcast_f2i:
+   case ir_unop_bitcast_f2u:
+   case ir_unop_bitcast_u2f:
+   case ir_unop_i2u:
+   case ir_unop_u2i:
    case ir_unop_f2i:
+   case ir_unop_f2u:
    case ir_unop_i2f:
    case ir_unop_f2b:
    case ir_unop_b2f:
@@ -208,7 +237,15 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
    case ir_unop_sin_reduced:
    case ir_unop_cos_reduced:
    case ir_unop_dFdx:
+   case ir_unop_dFdx_coarse:
+   case ir_unop_dFdx_fine:
    case ir_unop_dFdy:
+   case ir_unop_dFdy_coarse:
+   case ir_unop_dFdy_fine:
+   case ir_unop_bitfield_reverse:
+   case ir_unop_bit_count:
+   case ir_unop_find_msb:
+   case ir_unop_find_lsb:
       for (i = 0; i < vector_elements; i++) {
 	 ir_rvalue *op0 = get_element(op_var[0], i);
 
@@ -222,7 +259,10 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
    case ir_binop_add:
    case ir_binop_sub:
    case ir_binop_mul:
+   case ir_binop_imul_high:
    case ir_binop_div:
+   case ir_binop_carry:
+   case ir_binop_borrow:
    case ir_binop_mod:
    case ir_binop_min:
    case ir_binop_max:
@@ -293,10 +333,9 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
    case ir_binop_logic_and:
    case ir_binop_logic_xor:
    case ir_binop_logic_or:
-      ir->print();
-      printf("\n");
-      assert(!"not reached: expression operates on scalars only");
-      break;
+      ir->fprint(stderr);
+      fprintf(stderr, "\n");
+      unreachable("not reached: expression operates on scalars only");
    case ir_binop_all_equal:
    case ir_binop_any_nequal: {
       ir_expression *last = NULL;
@@ -328,11 +367,83 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
       break;
    }
    case ir_unop_noise:
-      assert(!"noise should have been broken down to function call");
+      unreachable("noise should have been broken down to function call");
+
+   case ir_binop_bfm: {
+      /* Does not need to be scalarized, since its result will be identical
+       * for all channels.
+       */
+      ir_rvalue *op0 = get_element(op_var[0], 0);
+      ir_rvalue *op1 = get_element(op_var[1], 0);
+
+      assign(ir, 0, new(mem_ctx) ir_expression(expr->operation,
+                                               element_type,
+                                               op0,
+                                               op1));
       break;
+   }
+
+   case ir_binop_ubo_load:
+      unreachable("not yet supported");
+
+   case ir_triop_fma:
+   case ir_triop_lrp:
+   case ir_triop_csel:
+   case ir_triop_bitfield_extract:
+      for (i = 0; i < vector_elements; i++) {
+	 ir_rvalue *op0 = get_element(op_var[0], i);
+	 ir_rvalue *op1 = get_element(op_var[1], i);
+	 ir_rvalue *op2 = get_element(op_var[2], i);
+
+	 assign(ir, i, new(mem_ctx) ir_expression(expr->operation,
+						  element_type,
+						  op0,
+						  op1,
+						  op2));
+      }
+      break;
+
+   case ir_triop_bfi: {
+      /* Only a single BFM is needed for multiple BFIs. */
+      ir_rvalue *op0 = get_element(op_var[0], 0);
+
+      for (i = 0; i < vector_elements; i++) {
+         ir_rvalue *op1 = get_element(op_var[1], i);
+         ir_rvalue *op2 = get_element(op_var[2], i);
+
+         assign(ir, i, new(mem_ctx) ir_expression(expr->operation,
+                                                  element_type,
+                                                  op0->clone(mem_ctx, NULL),
+                                                  op1,
+                                                  op2));
+      }
+      break;
+   }
+
+   case ir_unop_pack_snorm_2x16:
+   case ir_unop_pack_snorm_4x8:
+   case ir_unop_pack_unorm_2x16:
+   case ir_unop_pack_unorm_4x8:
+   case ir_unop_pack_half_2x16:
+   case ir_unop_unpack_snorm_2x16:
+   case ir_unop_unpack_snorm_4x8:
+   case ir_unop_unpack_unorm_2x16:
+   case ir_unop_unpack_unorm_4x8:
+   case ir_unop_unpack_half_2x16:
+   case ir_binop_ldexp:
+   case ir_binop_vector_extract:
+   case ir_triop_vector_insert:
+   case ir_quadop_bitfield_insert:
    case ir_quadop_vector:
-      assert(!"should have been lowered");
-      break;
+      unreachable("should have been lowered");
+
+   case ir_unop_unpack_half_2x16_split_x:
+   case ir_unop_unpack_half_2x16_split_y:
+   case ir_binop_pack_half_2x16_split:
+   case ir_unop_interpolate_at_centroid:
+   case ir_binop_interpolate_at_offset:
+   case ir_binop_interpolate_at_sample:
+      unreachable("not reached: expression operates on scalars only");
    }
 
    ir->remove();

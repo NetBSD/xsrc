@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,14 +18,14 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 
  **************************************************************************/
 
-/* Authors:  Keith Whitwell <keith@tungstengraphics.com>
+/* Authors:  Keith Whitwell <keithw@vmware.com>
  */
 
 #ifndef SP_QUAD_H
@@ -62,7 +62,8 @@
 struct quad_header_input
 {
    int x0, y0;                /**< quad window pos, always even */
-   float coverage[QUAD_SIZE]; /**< fragment coverage for antialiasing */
+   unsigned layer;
+   float coverage[TGSI_QUAD_SIZE]; /**< fragment coverage for antialiasing */
    unsigned facing:1;         /**< Front (0) or back (1) facing? */
    unsigned prim:2;           /**< QUAD_PRIM_POINT, LINE, TRI */
 };
@@ -83,9 +84,9 @@ struct quad_header_inout
 struct quad_header_output
 {
    /** colors in SOA format (rrrr, gggg, bbbb, aaaa) */
-   float color[PIPE_MAX_COLOR_BUFS][NUM_CHANNELS][QUAD_SIZE];
-   float depth[QUAD_SIZE];
-   uint8_t stencil[QUAD_SIZE];
+   float color[PIPE_MAX_COLOR_BUFS][TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE];
+   float depth[TGSI_QUAD_SIZE];
+   uint8_t stencil[TGSI_QUAD_SIZE];
 };
 
 

@@ -32,6 +32,8 @@
 #include "ir_optimization.h"
 #include "glsl_types.h"
 
+namespace {
+
 /**
  * Visitor class for replacing expressions with ir_constant values.
  */
@@ -56,6 +58,8 @@ public:
    bool progress;
 };
 
+} /* unnamed namespace */
+
 void
 ir_constant_folding_visitor::handle_rvalue(ir_rvalue **rvalue)
 {
@@ -74,6 +78,11 @@ ir_constant_folding_visitor::handle_rvalue(ir_rvalue **rvalue)
 	    return;
       }
    }
+
+   /* Ditto for swizzles. */
+   ir_swizzle *swiz = (*rvalue)->as_swizzle();
+   if (swiz && !swiz->val->as_constant())
+      return;
 
    ir_constant *constant = (*rvalue)->constant_expression_value();
    if (constant) {
@@ -117,12 +126,14 @@ ir_constant_folding_visitor::visit_enter(ir_assignment *ir)
 ir_visitor_status
 ir_constant_folding_visitor::visit_enter(ir_call *ir)
 {
-   exec_list_iterator sig_iter = ir->get_callee()->parameters.iterator();
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_rvalue *param_rval = (ir_rvalue *)iter.get();
-      ir_variable *sig_param = (ir_variable *)sig_iter.get();
+   /* Attempt to constant fold parameters */
+   foreach_two_lists(formal_node, &ir->callee->parameters,
+                     actual_node, &ir->actual_parameters) {
+      ir_rvalue *param_rval = (ir_rvalue *) actual_node;
+      ir_variable *sig_param = (ir_variable *) formal_node;
 
-      if (sig_param->mode == ir_var_in || sig_param->mode == ir_var_const_in) {
+      if (sig_param->data.mode == ir_var_function_in
+          || sig_param->data.mode == ir_var_const_in) {
 	 ir_rvalue *new_param = param_rval;
 
 	 handle_rvalue(&new_param);
@@ -130,7 +141,15 @@ ir_constant_folding_visitor::visit_enter(ir_call *ir)
 	    param_rval->replace_with(new_param);
 	 }
       }
-      sig_iter.next();
+   }
+
+   /* Next, see if the call can be replaced with an assignment of a constant */
+   ir_constant *const_val = ir->constant_expression_value();
+
+   if (const_val != NULL) {
+      ir_assignment *assignment =
+	 new(ralloc_parent(ir)) ir_assignment(ir->return_deref, const_val);
+      ir->replace_with(assignment);
    }
 
    return visit_continue_with_parent;

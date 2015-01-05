@@ -25,14 +25,23 @@
 #define GLCPP_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
-#include "../ralloc.h"
+#include "main/mtypes.h"
+
+#include "util/ralloc.h"
 
 #include "program/hash_table.h"
 
 #define yyscan_t void*
 
 /* Some data types used for parser values. */
+
+typedef struct expression_value {
+	intmax_t value;
+	char *undefined_macro;
+} expression_value_t;
+   
 
 typedef struct string_node {
 	const char *str;
@@ -50,6 +59,7 @@ typedef struct token_list token_list_t;
 typedef union YYSTYPE
 {
 	intmax_t ival;
+	expression_value_t expression_value;
 	char *str;
 	string_list_t *string_list;
 	token_t *token;
@@ -150,6 +160,7 @@ typedef enum skip_type {
 
 typedef struct skip_node {
 	skip_type_t type;
+	bool has_else;
 	YYLTYPE loc; /* location of the initial #if/#elif/... */
 	struct skip_node *next;
 } skip_node_t;
@@ -164,23 +175,38 @@ struct glcpp_parser {
 	yyscan_t scanner;
 	struct hash_table *defines;
 	active_list_t *active;
-	int lexing_if;
+	int lexing_directive;
 	int space_tokens;
+	int last_token_was_newline;
+	int last_token_was_space;
+	int first_non_space_token_this_line;
 	int newline_as_space;
 	int in_control_line;
 	int paren_count;
+	int commented_newlines;
 	skip_node_t *skip_stack;
+	int skipping;
 	token_list_t *lex_from_list;
 	token_node_t *lex_from_node;
 	char *output;
 	char *info_log;
+	size_t output_length;
+	size_t info_log_length;
 	int error;
+	const struct gl_extensions *extensions;
+	gl_api api;
+	bool version_resolved;
+	bool has_new_line_number;
+	int new_line_number;
+	bool has_new_source_number;
+	int new_source_number;
+	bool is_gles;
 };
 
 struct gl_extensions;
 
 glcpp_parser_t *
-glcpp_parser_create (const struct gl_extensions *extensions, int api);
+glcpp_parser_create (const struct gl_extensions *extensions, gl_api api);
 
 int
 glcpp_parser_parse (glcpp_parser_t *parser);
@@ -188,9 +214,12 @@ glcpp_parser_parse (glcpp_parser_t *parser);
 void
 glcpp_parser_destroy (glcpp_parser_t *parser);
 
+void
+glcpp_parser_resolve_implicit_version(glcpp_parser_t *parser);
+
 int
-preprocess(void *ralloc_ctx, const char **shader, char **info_log,
-	   const struct gl_extensions *extensions, int api);
+glcpp_preprocess(void *ralloc_ctx, const char **shader, char **info_log,
+	   const struct gl_extensions *extensions, struct gl_context *g_ctx);
 
 /* Functions for writing to the info log */
 

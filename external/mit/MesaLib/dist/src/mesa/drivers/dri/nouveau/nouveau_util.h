@@ -31,22 +31,22 @@
 #include "main/colormac.h"
 
 static inline unsigned
-pack_rgba_i(gl_format f, uint8_t c[])
+pack_rgba_i(mesa_format f, const uint8_t c[])
 {
 	switch (f) {
-	case MESA_FORMAT_ARGB8888:
+	case MESA_FORMAT_B8G8R8A8_UNORM:
 		return PACK_COLOR_8888(c[ACOMP], c[RCOMP], c[GCOMP], c[BCOMP]);
-	case MESA_FORMAT_ARGB8888_REV:
+	case MESA_FORMAT_A8R8G8B8_UNORM:
 		return PACK_COLOR_8888(c[BCOMP], c[GCOMP], c[RCOMP], c[ACOMP]);
-	case MESA_FORMAT_XRGB8888:
+	case MESA_FORMAT_B8G8R8X8_UNORM:
 		return PACK_COLOR_8888(0, c[RCOMP], c[GCOMP], c[BCOMP]);
-	case MESA_FORMAT_XRGB8888_REV:
+	case MESA_FORMAT_X8R8G8B8_UNORM:
 		return PACK_COLOR_8888(c[BCOMP], c[GCOMP], c[RCOMP], 0);
-	case MESA_FORMAT_RGBA8888:
+	case MESA_FORMAT_A8B8G8R8_UNORM:
 		return PACK_COLOR_8888(c[RCOMP], c[GCOMP], c[BCOMP], c[ACOMP]);
-	case MESA_FORMAT_RGBA8888_REV:
+	case MESA_FORMAT_R8G8B8A8_UNORM:
 		return PACK_COLOR_8888(c[ACOMP], c[BCOMP], c[GCOMP], c[RCOMP]);
-	case MESA_FORMAT_RGB565:
+	case MESA_FORMAT_B5G6R5_UNORM:
 		return PACK_COLOR_565(c[RCOMP], c[GCOMP], c[BCOMP]);
 	default:
 		assert(0);
@@ -54,14 +54,14 @@ pack_rgba_i(gl_format f, uint8_t c[])
 }
 
 static inline unsigned
-pack_zs_i(gl_format f, uint32_t z, uint8_t s)
+pack_zs_i(mesa_format f, uint32_t z, uint8_t s)
 {
 	switch (f) {
-	case MESA_FORMAT_Z24_S8:
+	case MESA_FORMAT_S8_UINT_Z24_UNORM:
 		return (z & 0xffffff00) | (s & 0xff);
-	case MESA_FORMAT_Z24_X8:
+	case MESA_FORMAT_X8_UINT_Z24_UNORM:
 		return (z & 0xffffff00);
-	case MESA_FORMAT_Z16:
+	case MESA_FORMAT_Z_UNORM16:
 		return (z & 0xffff0000) >> 16;
 	default:
 		assert(0);
@@ -69,7 +69,7 @@ pack_zs_i(gl_format f, uint32_t z, uint8_t s)
 }
 
 static inline unsigned
-pack_rgba_f(gl_format f, float c[])
+pack_rgba_f(mesa_format f, const float c[])
 {
 	return pack_rgba_i(f, (uint8_t []) {
 			   FLOAT_TO_UBYTE(c[RCOMP]),
@@ -79,9 +79,26 @@ pack_rgba_f(gl_format f, float c[])
 }
 
 static inline unsigned
-pack_zs_f(gl_format f, float z, uint8_t s)
+pack_rgba_clamp_f(mesa_format f, const float c[])
+{
+	GLubyte bytes[4];
+	_mesa_unclamped_float_rgba_to_ubyte(bytes, c);
+	return pack_rgba_i(f, bytes);
+}
+
+static inline unsigned
+pack_zs_f(mesa_format f, float z, uint8_t s)
 {
 	return pack_zs_i(f, FLOAT_TO_UINT(z), s);
+}
+
+static inline unsigned
+pack_la_clamp_f(mesa_format f, float l, float a)
+{
+	GLubyte lb, ab;
+	UNCLAMPED_FLOAT_TO_UBYTE(lb, l);
+	UNCLAMPED_FLOAT_TO_UBYTE(ab, a);
+	return pack_rgba_i(f, (uint8_t []) { lb, lb, lb, ab });
 }
 
 /* Integer base-2 logarithm, rounded towards zero. */
@@ -132,7 +149,7 @@ get_scissors(struct gl_framebuffer *fb, int *x, int *y, int *w, int *h)
 static inline void
 get_viewport_scale(struct gl_context *ctx, float a[16])
 {
-	struct gl_viewport_attrib *vp = &ctx->Viewport;
+	struct gl_viewport_attrib *vp = &ctx->ViewportArray[0];
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 
 	a[MAT_SX] = (float)vp->Width / 2;
@@ -149,7 +166,7 @@ get_viewport_scale(struct gl_context *ctx, float a[16])
 static inline void
 get_viewport_translate(struct gl_context *ctx, float a[4])
 {
-	struct gl_viewport_attrib *vp = &ctx->Viewport;
+	struct gl_viewport_attrib *vp = &ctx->ViewportArray[0];
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 
 	a[0] = (float)vp->Width / 2 + vp->X;
@@ -161,22 +178,6 @@ get_viewport_translate(struct gl_context *ctx, float a[4])
 		a[1] = fb->Height - (float)vp->Height / 2 - vp->Y;
 
 	a[2] = fb->_DepthMaxF * (vp->Far + vp->Near) / 2;
-}
-
-static inline void
-OUT_RINGb(struct nouveau_channel *chan, GLboolean x)
-{
-	OUT_RING(chan, x ? 1 : 0);
-}
-
-static inline void
-OUT_RINGm(struct nouveau_channel *chan, float m[16])
-{
-	int i, j;
-
-	for (i = 0; i < 4; i++)
-		for (j = 0; j < 4; j++)
-			OUT_RINGf(chan, m[4*j + i]);
 }
 
 static inline GLboolean
@@ -213,6 +214,26 @@ get_texgen_coeff(struct gl_texgen *c)
 		return c->EyePlane;
 	else
 		return NULL;
+}
+
+static inline unsigned
+get_format_blocksx(mesa_format format,
+		       unsigned x)
+{
+	GLuint blockwidth;
+	GLuint blockheight;
+	_mesa_get_format_block_size(format, &blockwidth, &blockheight);
+	return (x + blockwidth - 1) / blockwidth;
+}
+
+static inline unsigned
+get_format_blocksy(mesa_format format,
+		       unsigned y)
+{
+	GLuint blockwidth;
+	GLuint blockheight;
+	_mesa_get_format_block_size(format, &blockwidth, &blockheight);
+	return (y + blockheight - 1) / blockheight;
 }
 
 #endif

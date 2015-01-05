@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,14 +18,14 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 
  **************************************************************************/
 
-/* Authors:  Keith Whitwell <keith@tungstengraphics.com>
+/* Authors:  Keith Whitwell <keithw@vmware.com>
  */
 
 #include "util/u_math.h"
@@ -38,8 +38,8 @@
 struct twoside_stage {
    struct draw_stage stage;
    float sign;         /**< +1 or -1 */
-   uint attrib_front0, attrib_back0;
-   uint attrib_front1, attrib_back1;
+   int attrib_front0, attrib_back0;
+   int attrib_front1, attrib_back1;
 };
 
 
@@ -47,9 +47,6 @@ static INLINE struct twoside_stage *twoside_stage( struct draw_stage *stage )
 {
    return (struct twoside_stage *)stage;
 }
-
-
-
 
 /**
  * Copy back color(s) to front color(s).
@@ -60,12 +57,12 @@ copy_bfc( struct twoside_stage *twoside,
           unsigned idx )
 {   
    struct vertex_header *tmp = dup_vert( &twoside->stage, v, idx );
-   
-   if (twoside->attrib_back0) {
+
+   if (twoside->attrib_back0 >= 0 && twoside->attrib_front0 >= 0) {
       COPY_4FV(tmp->data[twoside->attrib_front0],
                tmp->data[twoside->attrib_back0]);
    }
-   if (twoside->attrib_back1) {
+   if (twoside->attrib_back1 >= 0 && twoside->attrib_front1 >= 0) {
       COPY_4FV(tmp->data[twoside->attrib_front1],
                tmp->data[twoside->attrib_back1]);
    }
@@ -109,10 +106,10 @@ static void twoside_first_tri( struct draw_stage *stage,
    const struct draw_vertex_shader *vs = stage->draw->vs.vertex_shader;
    uint i;
 
-   twoside->attrib_front0 = 0;
-   twoside->attrib_front1 = 0;
-   twoside->attrib_back0 = 0;
-   twoside->attrib_back1 = 0;
+   twoside->attrib_front0 = -1;
+   twoside->attrib_front1 = -1;
+   twoside->attrib_back0 = -1;
+   twoside->attrib_back1 = -1;
 
    /* Find which vertex shader outputs are front/back colors */
    for (i = 0; i < vs->info.num_outputs; i++) {
@@ -129,12 +126,6 @@ static void twoside_first_tri( struct draw_stage *stage,
             twoside->attrib_back1 = i;
       }
    }
-
-   if (!twoside->attrib_back0)
-      twoside->attrib_front0 = 0;
-
-   if (!twoside->attrib_back1)
-      twoside->attrib_front1 = 0;
 
    /*
     * We'll multiply the primitive's determinant by this sign to determine

@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2006 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2006 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -37,6 +37,7 @@
 #include "main/state.h"
 #include "main/texobj.h"
 #include "main/context.h"
+#include "main/fbobject.h"
 #include "swrast/swrast.h"
 #include "drivers/common/meta.h"
 
@@ -44,6 +45,7 @@
 #include "intel_context.h"
 #include "intel_batchbuffer.h"
 #include "intel_blit.h"
+#include "intel_fbo.h"
 #include "intel_regions.h"
 #include "intel_buffers.h"
 #include "intel_pixel.h"
@@ -74,9 +76,10 @@ static const GLubyte *map_pbo( struct gl_context *ctx,
       return NULL;
    }
 
-   buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-					   GL_READ_ONLY_ARB,
-					   unpack->BufferObj);
+   buf = (GLubyte *) ctx->Driver.MapBufferRange(ctx, 0, unpack->BufferObj->Size,
+						GL_MAP_READ_BIT,
+						unpack->BufferObj,
+                                                MAP_INTERNAL);
    if (!buf) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glBitmap(PBO is mapped)");
       return NULL;
@@ -85,7 +88,7 @@ static const GLubyte *map_pbo( struct gl_context *ctx,
    return ADD_POINTERS(buf, bitmap);
 }
 
-static GLboolean test_bit( const GLubyte *src, GLuint bit )
+static bool test_bit( const GLubyte *src, GLuint bit )
 {
    return (src[bit/8] & (1<<(bit % 8))) ? 1 : 0;
 }
@@ -105,7 +108,7 @@ static GLuint get_bitmap_rect(GLsizei width, GLsizei height,
 			      GLuint w, GLuint h,
 			      GLubyte *dest,
 			      GLuint row_align,
-			      GLboolean invert)
+			      bool invert)
 {
    GLuint src_offset = (x + unpack->SkipPixels) & 0x7;
    GLuint mask = unpack->LsbFirst ? 0 : 7;
@@ -158,7 +161,7 @@ static GLuint get_bitmap_rect(GLsizei width, GLsizei height,
 static INLINE int
 y_flip(struct gl_framebuffer *fb, int y, int height)
 {
-   if (fb->Name != 0)
+   if (_mesa_is_user_fbo(fb))
       return y;
    else
       return fb->Height - y - height;
@@ -167,7 +170,7 @@ y_flip(struct gl_framebuffer *fb, int y, int height)
 /*
  * Render a bitmap.
  */
-static GLboolean
+static bool
 do_blit_bitmap( struct gl_context *ctx, 
 		GLint dstx, GLint dsty,
 		GLsizei width, GLsizei height,
@@ -175,8 +178,8 @@ do_blit_bitmap( struct gl_context *ctx,
 		const GLubyte *bitmap )
 {
    struct intel_context *intel = intel_context(ctx);
-   struct intel_region *dst;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
+   struct intel_renderbuffer *irb;
    GLfloat tmpColor[4];
    GLubyte ubcolor[4];
    GLuint color;
@@ -195,19 +198,23 @@ do_blit_bitmap( struct gl_context *ctx,
        * It seems the blit Z coord is always 1.0 (the far plane) so fragments
        * will likely be obscured by other, closer geometry.
        */
-      return GL_FALSE;
+      return false;
    }
 
    intel_prepare_render(intel);
-   dst = intel_drawbuf_region(intel);
 
-   if (!dst)
-       return GL_FALSE;
+   if (fb->_NumColorDrawBuffers != 1) {
+      perf_debug("accelerated glBitmap() only supports rendering to a "
+                 "single color buffer\n");
+      return false;
+   }
+
+   irb = intel_renderbuffer(fb->_ColorDrawBuffers[0]);
 
    if (_mesa_is_bufferobj(unpack->BufferObj)) {
       bitmap = map_pbo(ctx, width, height, unpack, bitmap);
       if (bitmap == NULL)
-	 return GL_TRUE;	/* even though this is an error, we're done */
+	 return true;	/* even though this is an error, we're done */
    }
 
    COPY_4V(tmpColor, ctx->Current.RasterColor);
@@ -221,13 +228,22 @@ do_blit_bitmap( struct gl_context *ctx,
    UNCLAMPED_FLOAT_TO_UBYTE(ubcolor[2], tmpColor[2]);
    UNCLAMPED_FLOAT_TO_UBYTE(ubcolor[3], tmpColor[3]);
 
-   if (dst->cpp == 2)
-      color = PACK_COLOR_565(ubcolor[0], ubcolor[1], ubcolor[2]);
-   else
+   switch (irb->mt->format) {
+   case MESA_FORMAT_B8G8R8A8_UNORM:
+   case MESA_FORMAT_B8G8R8X8_UNORM:
       color = PACK_COLOR_8888(ubcolor[3], ubcolor[0], ubcolor[1], ubcolor[2]);
+      break;
+   case MESA_FORMAT_B5G6R5_UNORM:
+      color = PACK_COLOR_565(ubcolor[0], ubcolor[1], ubcolor[2]);
+      break;
+   default:
+      perf_debug("Unsupported format %s in accelerated glBitmap()\n",
+                 _mesa_get_format_name(irb->mt->format));
+      return false;
+   }
 
    if (!intel_check_blit_fragment_ops(ctx, tmpColor[3] == 1.0F))
-      return GL_FALSE;
+      return false;
 
    /* Clip to buffer bounds and scissor. */
    if (!_mesa_clip_to_region(fb->_Xmin, fb->_Ymin,
@@ -258,31 +274,35 @@ do_blit_bitmap( struct gl_context *ctx,
 	  * Have to translate destination coordinates back into source
 	  * coordinates.
 	  */
-	 if (get_bitmap_rect(bitmap_width, bitmap_height, unpack,
-			     bitmap,
-			     -orig_dstx + (dstx + px),
-			     -orig_dsty + y_flip(fb, dsty + py, h),
-			     w, h,
-			     (GLubyte *)stipple,
-			     8,
-			     fb->Name == 0 ? GL_TRUE : GL_FALSE) == 0)
+         int count = get_bitmap_rect(bitmap_width, bitmap_height, unpack,
+                                     bitmap,
+                                     -orig_dstx + (dstx + px),
+                                     -orig_dsty + y_flip(fb, dsty + py, h),
+                                     w, h,
+                                     (GLubyte *)stipple,
+                                     8,
+                                     _mesa_is_winsys_fbo(fb));
+         if (count == 0)
 	    continue;
 
 	 if (!intelEmitImmediateColorExpandBlit(intel,
-						dst->cpp,
+						irb->mt->cpp,
 						(GLubyte *)stipple,
 						sz,
 						color,
-						dst->pitch,
-						dst->buffer,
+						irb->mt->region->pitch,
+						irb->mt->region->bo,
 						0,
-						dst->tiling,
+						irb->mt->region->tiling,
 						dstx + px,
 						dsty + py,
 						w, h,
 						logic_op)) {
-	    return GL_FALSE;
+	    return false;
 	 }
+
+         if (ctx->Query.CurrentOcclusionObject)
+            ctx->Query.CurrentOcclusionObject->Result += count;
       }
    }
 out:
@@ -292,13 +312,12 @@ out:
 
    if (_mesa_is_bufferobj(unpack->BufferObj)) {
       /* done with PBO so unmap it now */
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                              unpack->BufferObj);
+      ctx->Driver.UnmapBuffer(ctx, unpack->BufferObj, MAP_INTERNAL);
    }
 
    intel_check_front_buffer_rendering(intel);
 
-   return GL_TRUE;
+   return true;
 }
 
 
@@ -329,18 +348,12 @@ intelBitmap(struct gl_context * ctx,
 	    const struct gl_pixelstore_attrib *unpack,
 	    const GLubyte * pixels)
 {
-   struct intel_context *intel = intel_context(ctx);
-
    if (!_mesa_check_conditional_render(ctx))
       return;
 
    if (do_blit_bitmap(ctx, x, y, width, height,
                           unpack, pixels))
       return;
-
-   /* FIXME */
-   if (intel->gen == 6)
-       return _swrast_Bitmap(ctx, x, y, width, height, unpack, pixels);
 
    _mesa_meta_Bitmap(ctx, x, y, width, height, unpack, pixels);
 }

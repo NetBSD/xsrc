@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -27,7 +27,7 @@
 
  /*
   * Authors:
-  *   Keith Whitwell <keith@tungstengraphics.com>
+  *   Keith Whitwell <keithw@vmware.com>
   *   Brian Paul
   */
 
@@ -44,7 +44,6 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 #include "util/u_gen_mipmap.h"
-#include "util/u_blit.h"
 
 
 /** Check if we have a front color buffer and if it's been drawn to. */
@@ -76,20 +75,16 @@ display_front_buffer(struct st_context *st)
 }
 
 
-void st_flush( struct st_context *st,
-               struct pipe_fence_handle **fence )
+void st_flush(struct st_context *st,
+              struct pipe_fence_handle **fence,
+              unsigned flags)
 {
+   FLUSH_VERTICES(st->ctx, 0);
    FLUSH_CURRENT(st->ctx, 0);
 
-   /* Release any vertex buffers that might potentially be accessed in
-    * successive frames:
-    */
-   st_flush_bitmap(st);
-   st_flush_clear(st);
-   util_blit_flush(st->blit);
-   util_gen_mipmap_flush(st->gen_mipmap);
+   st_flush_bitmap_cache(st);
 
-   st->pipe->flush( st->pipe, fence );
+   st->pipe->flush(st->pipe, fence, flags);
 }
 
 
@@ -100,7 +95,7 @@ void st_finish( struct st_context *st )
 {
    struct pipe_fence_handle *fence = NULL;
 
-   st_flush(st, &fence);
+   st_flush(st, &fence, 0);
 
    if(fence) {
       st->pipe->screen->fence_finish(st->pipe->screen, fence,
@@ -123,7 +118,7 @@ static void st_glFlush(struct gl_context *ctx)
     * synchronization issues.  Calling finish() here will just hide
     * problems that need to be fixed elsewhere.
     */
-   st_flush(st, NULL);
+   st_flush(st, NULL, 0);
 
    if (is_front_buffer_dirty(st)) {
       display_front_buffer(st);

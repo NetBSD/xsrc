@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -27,7 +27,7 @@
 
  /*
   * Authors:
-  *   Keith Whitwell <keith@tungstengraphics.com>
+  *   Keith Whitwell <keithw@vmware.com>
   */
 
 #include "util/u_memory.h"
@@ -78,6 +78,25 @@ static void vsvg_set_buffer( struct draw_vs_variant *variant,
                            max_index );
 }
 
+static const struct pipe_viewport_state *
+find_viewport(struct draw_context *draw,
+              char *buffer,
+              unsigned vertex_idx,
+              unsigned stride)
+{
+   int viewport_index_output =
+      draw_current_shader_viewport_index_output(draw);
+   char *ptr = buffer + vertex_idx * stride;
+   unsigned *data = (unsigned *)ptr;
+   int viewport_index =
+      draw_current_shader_uses_viewport_index(draw) ?
+      data[viewport_index_output * 4] : 0;
+
+   viewport_index = draw_clamp_viewport_idx(viewport_index);
+
+   return &draw->viewports[viewport_index];
+}
+   
 
 /* Mainly for debug at this stage:
  */
@@ -86,14 +105,17 @@ static void do_rhw_viewport( struct draw_vs_variant_generic *vsvg,
                              void *output_buffer )
 {
    char *ptr = (char *)output_buffer;
-   const float *scale = vsvg->base.vs->draw->viewport.scale;
-   const float *trans = vsvg->base.vs->draw->viewport.translate;
    unsigned stride = vsvg->temp_vertex_stride;
    unsigned j;
 
    ptr += vsvg->base.vs->position_output * 4 * sizeof(float);
 
    for (j = 0; j < count; j++, ptr += stride) {
+      const struct pipe_viewport_state *viewport =
+         find_viewport(vsvg->base.vs->draw, (char*)output_buffer,
+                       j, stride);
+      const float *scale = viewport->scale;
+      const float *trans = viewport->translate;
       float *data = (float *)ptr;
       float w = 1.0f / data[3];
 
@@ -109,14 +131,17 @@ static void do_viewport( struct draw_vs_variant_generic *vsvg,
                          void *output_buffer )
 {
    char *ptr = (char *)output_buffer;
-   const float *scale = vsvg->base.vs->draw->viewport.scale;
-   const float *trans = vsvg->base.vs->draw->viewport.translate;
    unsigned stride = vsvg->temp_vertex_stride;
    unsigned j;
 
    ptr += vsvg->base.vs->position_output * 4 * sizeof(float);
 
    for (j = 0; j < count; j++, ptr += stride) {
+      const struct pipe_viewport_state *viewport =
+         find_viewport(vsvg->base.vs->draw, (char*)output_buffer,
+                       j, stride);
+      const float *scale = viewport->scale;
+      const float *trans = viewport->translate;
       float *data = (float *)ptr;
 
       data[0] = data[0] * scale[0] + trans[0];
@@ -143,6 +168,7 @@ static void PIPE_CDECL vsvg_run_elts( struct draw_vs_variant *variant,
    vsvg->fetch->run_elts( vsvg->fetch, 
                           elts,
                           count,
+                          vsvg->draw->start_instance,
                           vsvg->draw->instance_id,
                           temp_buffer );
 
@@ -186,6 +212,7 @@ static void PIPE_CDECL vsvg_run_elts( struct draw_vs_variant *variant,
 
    vsvg->emit->run( vsvg->emit,
                     0, count,
+                    vsvg->draw->start_instance,
                     vsvg->draw->instance_id,
                     output_buffer );
 
@@ -209,6 +236,7 @@ static void PIPE_CDECL vsvg_run_linear( struct draw_vs_variant *variant,
    vsvg->fetch->run( vsvg->fetch, 
                      start,
                      count,
+                     vsvg->draw->start_instance,
                      vsvg->draw->instance_id,
                      temp_buffer );
 
@@ -249,6 +277,7 @@ static void PIPE_CDECL vsvg_run_linear( struct draw_vs_variant *variant,
    
    vsvg->emit->run( vsvg->emit,
                     0, count,
+                    vsvg->draw->start_instance,
                     vsvg->draw->instance_id,
                     output_buffer );
 
@@ -286,7 +315,7 @@ draw_vs_create_variant_generic( struct draw_vertex_shader *vs,
    vsvg->draw = vs->draw;
 
    vsvg->temp_vertex_stride = MAX2(key->nr_inputs,
-                                   vsvg->base.vs->info.num_outputs) * 4 * sizeof(float);
+                                   draw_total_vs_outputs(vs->draw)) * 4 * sizeof(float);
 
    /* Build free-standing fetch and emit functions:
     */

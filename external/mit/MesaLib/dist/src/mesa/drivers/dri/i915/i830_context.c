@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -26,13 +26,16 @@
  **************************************************************************/
 
 #include "i830_context.h"
+#include "main/api_exec.h"
 #include "main/imports.h"
+#include "main/version.h"
+#include "main/vtxfmt.h"
 #include "tnl/tnl.h"
 #include "tnl/t_vertex.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
-#include "intel_span.h"
 #include "intel_tris.h"
+#include "util/ralloc.h"
 
 /***************************************
  * Mesa's Driver Functions
@@ -47,31 +50,43 @@ i830InitDriverFunctions(struct dd_function_table *functions)
 
 extern const struct tnl_pipeline_stage *intel_pipeline[];
 
-GLboolean
-i830CreateContext(const struct gl_config * mesaVis,
+bool
+i830CreateContext(int api,
+                  const struct gl_config * mesaVis,
                   __DRIcontext * driContextPriv,
+                  unsigned major_version,
+                  unsigned minor_version,
+                  uint32_t flags,
+                  unsigned *error,
                   void *sharedContextPrivate)
 {
    struct dd_function_table functions;
-   struct i830_context *i830 = CALLOC_STRUCT(i830_context);
+   struct i830_context *i830 = rzalloc(NULL, struct i830_context);
    struct intel_context *intel = &i830->intel;
    struct gl_context *ctx = &intel->ctx;
-   if (!i830)
-      return GL_FALSE;
+
+   if (!i830) {
+      *error = __DRI_CTX_ERROR_NO_MEMORY;
+      return false;
+   }
 
    i830InitVtbl(i830);
    i830InitDriverFunctions(&functions);
 
-   if (!intelInitContext(intel, __DRI_API_OPENGL, mesaVis, driContextPriv,
-                         sharedContextPrivate, &functions)) {
-      FREE(i830);
-      return GL_FALSE;
+   if (!intelInitContext(intel, __DRI_API_OPENGL,
+                         major_version, minor_version, flags,
+                         mesaVis, driContextPriv,
+                         sharedContextPrivate, &functions,
+                         error)) {
+      ralloc_free(i830);
+      return false;
    }
+
+   intel_init_texture_formats(ctx);
 
    _math_matrix_ctr(&intel->ViewportMatrix);
 
    /* Initialize swrast, tnl driver tables: */
-   intelInitSpanFuncs(ctx);
    intelInitTriFuncs(ctx);
 
    /* Install the customized pipeline: */
@@ -82,7 +97,7 @@ i830CreateContext(const struct gl_config * mesaVis,
       FALLBACK(intel, INTEL_FALLBACK_USER, 1);
 
    intel->ctx.Const.MaxTextureUnits = I830_TEX_UNITS;
-   intel->ctx.Const.MaxTextureImageUnits = I830_TEX_UNITS;
+   intel->ctx.Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits = I830_TEX_UNITS;
    intel->ctx.Const.MaxTextureCoordUnits = I830_TEX_UNITS;
 
    /* Advertise the full hardware capabilities.  The new memory
@@ -97,6 +112,7 @@ i830CreateContext(const struct gl_config * mesaVis,
    ctx->Const.MaxTextureMaxAnisotropy = 2.0;
 
    ctx->Const.MaxDrawBuffers = 1;
+   ctx->Const.QueryCounterBits.SamplesPassed = 0;
 
    _tnl_init_vertices(ctx, ctx->Const.MaxArrayLockSize + 12,
                       18 * sizeof(GLfloat));
@@ -108,5 +124,10 @@ i830CreateContext(const struct gl_config * mesaVis,
    _tnl_allow_vertex_fog(ctx, 1);
    _tnl_allow_pixel_fog(ctx, 0);
 
-   return GL_TRUE;
+   _mesa_compute_version(ctx);
+
+   _mesa_initialize_dispatch_tables(ctx);
+   _mesa_initialize_vbo_vtxfmt(ctx);
+
+   return true;
 }

@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -175,7 +175,12 @@ static INLINE void u_print_ps(const char *name, __m128 r)
  * MSVC will never get in here as its intrinsics support do not rely on
  * compiler command line options.
  */
-static __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+static __inline __m128i
+#ifdef __clang__
+   __attribute__((__always_inline__, __nodebug__))
+#else
+   __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+#endif
 _mm_shuffle_epi8(__m128i a, __m128i mask)
 {
     __m128i result;
