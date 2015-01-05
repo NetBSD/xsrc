@@ -281,7 +281,11 @@ typedef GLUquadric GLUquadricObj;
 typedef GLUtesselator GLUtesselatorObj;
 typedef GLUtesselator GLUtriangulatorObj;
 
+#ifdef __vax__
+#define GLU_TESS_MAX_COORD 1.0e19
+#else
 #define GLU_TESS_MAX_COORD 1.0e150
+#endif
 
 /* Internal convenience typedefs */
 typedef void (GLAPIENTRYP _GLUfuncptr)(void);

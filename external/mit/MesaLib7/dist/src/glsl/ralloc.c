@@ -272,7 +272,7 @@ ralloc_parent(const void *ptr)
 
 static void *autofree_context = NULL;
 
-static void
+static void __attribute__((__destructor__))
 autofree(void)
 {
    ralloc_free(autofree_context);
@@ -283,7 +283,6 @@ ralloc_autofree_context(void)
 {
    if (unlikely(autofree_context == NULL)) {
       autofree_context = ralloc_context(NULL);
-      atexit(autofree);
    }
    return autofree_context;
 }

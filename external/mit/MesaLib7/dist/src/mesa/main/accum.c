@@ -29,6 +29,7 @@
 #include "macros.h"
 #include "mfeatures.h"
 #include "state.h"
+#include "GL/glext.h"
 #include "mtypes.h"
 #include "main/dispatch.h"
 

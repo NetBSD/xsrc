@@ -65,7 +65,7 @@ static void radeonQueryGetResult(struct gl_context *ctx, struct gl_query_object 
 					 (uint64_t)LE32_TO_CPU(result[i + 1]) << 32;
 			uint64_t end = (uint64_t)LE32_TO_CPU(result[i + 2]) |
 				       (uint64_t)LE32_TO_CPU(result[i + 3]) << 32;
-			if ((start & 0x8000000000000000) && (end & 0x8000000000000000)) {
+			if ((start & 0x8000000000000000ULL) && (end & 0x8000000000000000ULL)) {
 				uint64_t query_count = end - start;
 				query->Base.Result += query_count;
 
