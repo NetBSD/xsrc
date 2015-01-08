@@ -27,7 +27,7 @@ in this Software without prior written authorization from The Open Group.
 /* Constructs string definitions */
 
 #include <stdio.h>
-#include <X11/Xos.h>
+#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 
