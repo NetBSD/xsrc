@@ -147,13 +147,13 @@ libsna_la_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	brw/libbrw.la fb/libfb.la ../../libobj/libcompat.la \
 	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3) \
 	$(am__DEPENDENCIES_4)
-am__libsna_la_SOURCES_DIST = atomic.h blt.c compiler.h kgem.c kgem.h \
-	rop.h sna.h sna_accel.c sna_acpi.c sna_blt.c sna_composite.c \
-	sna_cpu.c sna_cpuid.h sna_damage.c sna_damage.h sna_display.c \
-	sna_display_fake.c sna_driver.c sna_glyphs.c sna_gradient.c \
-	sna_io.c sna_module.h sna_render.c sna_render.h \
-	sna_render_inline.h sna_reg.h sna_stream.c sna_trapezoids.h \
-	sna_trapezoids.c sna_trapezoids_boxes.c \
+am__libsna_la_SOURCES_DIST = atomic.h blt.c compiler.h debug.h kgem.c \
+	kgem.h rop.h sna.h sna_accel.c sna_acpi.c sna_blt.c \
+	sna_composite.c sna_cpu.c sna_cpuid.h sna_damage.c \
+	sna_damage.h sna_display.c sna_display_fake.c sna_driver.c \
+	sna_glyphs.c sna_gradient.c sna_io.c sna_module.h sna_render.c \
+	sna_render.h sna_render_inline.h sna_reg.h sna_stream.c \
+	sna_trapezoids.h sna_trapezoids.c sna_trapezoids_boxes.c \
 	sna_trapezoids_imprecise.c sna_trapezoids_mono.c \
 	sna_trapezoids_precise.c sna_tiling.c sna_transform.c \
 	sna_threads.c sna_vertex.c sna_video.c sna_video.h \
@@ -164,7 +164,7 @@ am__libsna_la_SOURCES_DIST = atomic.h blt.c compiler.h kgem.c kgem.h \
 	gen5_render.c gen5_render.h gen6_common.c gen6_common.h \
 	gen6_render.c gen6_render.h gen7_render.c gen7_render.h \
 	gen8_eu.c gen8_eu.h gen8_render.c gen8_render.h gen8_vertex.c \
-	gen8_vertex.h sna_dri2.c sna_dri3.c sna_present.c \
+	gen8_vertex.h xassert.h sna_dri2.c sna_dri3.c sna_present.c \
 	sna_video_hwmc.h sna_video_hwmc.c kgem_debug.c kgem_debug.h \
 	kgem_debug_gen2.c kgem_debug_gen3.c kgem_debug_gen4.c \
 	kgem_debug_gen5.c kgem_debug_gen6.c kgem_debug_gen7.c
@@ -367,10 +367,6 @@ IVO_LIBS = @IVO_LIBS@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBEXEC_PATH = @LIBEXEC_PATH@
-LIBGLAMOR_CFLAGS = @LIBGLAMOR_CFLAGS@
-LIBGLAMOR_EGL_CFLAGS = @LIBGLAMOR_EGL_CFLAGS@
-LIBGLAMOR_EGL_LIBS = @LIBGLAMOR_EGL_LIBS@
-LIBGLAMOR_LIBS = @LIBGLAMOR_LIBS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
@@ -491,8 +487,8 @@ libsna_la_LDFLAGS = -pthread
 libsna_la_LIBADD = $(UDEV_LIBS) -lm $(DRM_LIBS) brw/libbrw.la \
 	fb/libfb.la ../../libobj/libcompat.la $(am__append_4) \
 	$(am__append_7) $(am__append_10)
-libsna_la_SOURCES = atomic.h blt.c compiler.h kgem.c kgem.h rop.h \
-	sna.h sna_accel.c sna_acpi.c sna_blt.c sna_composite.c \
+libsna_la_SOURCES = atomic.h blt.c compiler.h debug.h kgem.c kgem.h \
+	rop.h sna.h sna_accel.c sna_acpi.c sna_blt.c sna_composite.c \
 	sna_cpu.c sna_cpuid.h sna_damage.c sna_damage.h sna_display.c \
 	sna_display_fake.c sna_driver.c sna_glyphs.c sna_gradient.c \
 	sna_io.c sna_module.h sna_render.c sna_render.h \
@@ -508,8 +504,9 @@ libsna_la_SOURCES = atomic.h blt.c compiler.h kgem.c kgem.h rop.h \
 	gen5_render.c gen5_render.h gen6_common.c gen6_common.h \
 	gen6_render.c gen6_render.h gen7_render.c gen7_render.h \
 	gen8_eu.c gen8_eu.h gen8_render.c gen8_render.h gen8_vertex.c \
-	gen8_vertex.h $(NULL) $(am__append_3) $(am__append_6) \
-	$(am__append_9) $(am__append_11) $(am__append_12)
+	gen8_vertex.h xassert.h $(NULL) $(am__append_3) \
+	$(am__append_6) $(am__append_9) $(am__append_11) \
+	$(am__append_12)
 all: all-recursive
 
 .SUFFIXES:

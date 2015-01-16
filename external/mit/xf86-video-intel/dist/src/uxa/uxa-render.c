@@ -29,22 +29,9 @@
 #include <stdlib.h>
 
 #include "uxa-priv.h"
-#include "uxa-glamor.h"
 
 #ifdef RENDER
 #include "mipict.h"
-
-/* Note: when using glamor we can not fail through to the ordinary UXA
- * code paths, as glamor keeps an internal texture which will become
- * inconsistent with the original bo. (The texture is replaced whenever
- * the format changes, e.g. switching between xRGB and ARGB, for which mesa
- * will allocate its own bo.)
- *
- * Ergo it is unsafe to fall through to the original backend operations if
- * glamor is enabled.
- *
- * XXX This has some serious implications for mixing Render, DRI, scanout...
- */
 
 static void uxa_composite_fallback_pict_desc(PicturePtr pict, char *string,
 					     int n)
@@ -1357,30 +1344,6 @@ uxa_composite(CARD8 op,
 	RegionRec region;
 	int tx, ty;
 
-	if (uxa_screen->info->flags & UXA_USE_GLAMOR) {
-		int ok;
-
-		uxa_picture_prepare_access(pDst, UXA_GLAMOR_ACCESS_RW);
-		uxa_picture_prepare_access(pSrc, UXA_GLAMOR_ACCESS_RO);
-		if (pMask)
-			uxa_picture_prepare_access(pMask, UXA_GLAMOR_ACCESS_RO);
-
-		ok = glamor_composite_nf(op,
-					 pSrc, pMask, pDst, xSrc, ySrc,
-					 xMask, yMask, xDst, yDst,
-					 width, height);
-
-		if (pMask)
-			uxa_picture_finish_access(pMask, UXA_GLAMOR_ACCESS_RO);
-		uxa_picture_finish_access(pSrc, UXA_GLAMOR_ACCESS_RO);
-		uxa_picture_finish_access(pDst, UXA_GLAMOR_ACCESS_RW);
-
-		if (!ok)
-			goto fallback;
-
-		return;
-	}
-
 	if (uxa_screen->force_fallback)
 		goto fallback;
 
@@ -1722,25 +1685,7 @@ uxa_trapezoids(CARD8 op, PicturePtr src, PicturePtr dst,
 	BoxRec bounds;
 	Bool direct;
 
-	if (uxa_screen->info->flags & UXA_USE_GLAMOR) {
-		int ok;
-
-		uxa_picture_prepare_access(dst, UXA_GLAMOR_ACCESS_RW);
-		uxa_picture_prepare_access(src, UXA_GLAMOR_ACCESS_RO);
-		ok = glamor_trapezoids_nf(op,
-					  src, dst, maskFormat, xSrc,
-					  ySrc, ntrap, traps);
-		uxa_picture_finish_access(src, UXA_GLAMOR_ACCESS_RO);
-		uxa_picture_finish_access(dst, UXA_GLAMOR_ACCESS_RW);
-
-		if (!ok)
-			goto fallback;
-
-		return;
-	}
-
 	if (uxa_screen->force_fallback) {
-fallback:
 		uxa_check_trapezoids(op, src, dst, maskFormat, xSrc, ySrc, ntrap, traps);
 		return;
 	}
@@ -1951,25 +1896,7 @@ uxa_triangles(CARD8 op, PicturePtr pSrc, PicturePtr pDst,
 	BoxRec bounds;
 	Bool direct;
 
-	if (uxa_screen->info->flags & UXA_USE_GLAMOR) {
-		int ok;
-
-		uxa_picture_prepare_access(pDst, UXA_GLAMOR_ACCESS_RW);
-		uxa_picture_prepare_access(pSrc, UXA_GLAMOR_ACCESS_RO);
-		ok = glamor_triangles_nf(op,
-				        pSrc, pDst, maskFormat, xSrc,
-					ySrc, ntri, tris);
-		uxa_picture_finish_access(pSrc, UXA_GLAMOR_ACCESS_RO);
-		uxa_picture_finish_access(pDst, UXA_GLAMOR_ACCESS_RW);
-
-		if (!ok)
-			goto fallback;
-
-		return;
-	}
-
 	if (uxa_screen->force_fallback) {
-fallback:
 		uxa_check_triangles(op, pSrc, pDst, maskFormat,
 				    xSrc, ySrc, ntri, tris);
 		return;
@@ -2051,23 +1978,5 @@ void
 uxa_add_traps(PicturePtr pPicture,
 	      INT16 x_off, INT16 y_off, int ntrap, xTrap * traps)
 {
-	ScreenPtr pScreen = pPicture->pDrawable->pScreen;
-	uxa_screen_t *uxa_screen = uxa_get_screen(pScreen);
-
-	if (uxa_screen->info->flags & UXA_USE_GLAMOR) {
-		int ok;
-
-		uxa_picture_prepare_access(pPicture, UXA_GLAMOR_ACCESS_RW);
-		ok = glamor_add_traps_nf(pPicture,
-					 x_off, y_off, ntrap, traps);
-		uxa_picture_finish_access(pPicture, UXA_GLAMOR_ACCESS_RW);
-
-		if (!ok)
-			goto fallback;
-
-		return;
-	}
-
-fallback:
 	uxa_check_add_traps(pPicture, x_off, y_off, ntrap, traps);
 }

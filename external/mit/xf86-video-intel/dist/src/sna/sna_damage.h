@@ -29,6 +29,25 @@ struct sna_damage {
 
 struct sna_damage *sna_damage_create(void);
 
+struct sna_damage *__sna_damage_all(struct sna_damage *damage,
+				    int width, int height);
+static inline struct sna_damage *
+_sna_damage_all(struct sna_damage *damage,
+		int width, int height)
+{
+	damage = __sna_damage_all(damage, width, height);
+	return DAMAGE_MARK_ALL(damage);
+}
+
+static inline void sna_damage_all(struct sna_damage **damage,
+				  PixmapPtr pixmap)
+{
+	if (!DAMAGE_IS_ALL(*damage))
+		*damage = _sna_damage_all(*damage,
+					  pixmap->drawable.width,
+					  pixmap->drawable.height);
+}
+
 struct sna_damage *_sna_damage_combine(struct sna_damage *l,
 				       struct sna_damage *r,
 				       int dx, int dy);
@@ -47,6 +66,24 @@ static inline void sna_damage_add(struct sna_damage **damage,
 {
 	assert(!DAMAGE_IS_ALL(*damage));
 	*damage = _sna_damage_add(*damage, region);
+}
+
+static inline bool sna_damage_add_to_pixmap(struct sna_damage **damage,
+					    RegionPtr region,
+					    PixmapPtr pixmap)
+{
+	assert(!DAMAGE_IS_ALL(*damage));
+	if (region->data == NULL &&
+	    region->extents.x2 - region->extents.x1 >= pixmap->drawable.width &&
+	    region->extents.y2 - region->extents.y1 >= pixmap->drawable.height) {
+		*damage = _sna_damage_all(*damage,
+					  pixmap->drawable.width,
+					  pixmap->drawable.height);
+		return true;
+	} else {
+		*damage = _sna_damage_add(*damage, region);
+		return false;
+	}
 }
 
 fastcall struct sna_damage *_sna_damage_add_box(struct sna_damage *damage,
@@ -129,25 +166,6 @@ static inline bool sna_damage_is_all(struct sna_damage **_damage,
 			return false;
 		}
 	}
-}
-
-struct sna_damage *__sna_damage_all(struct sna_damage *damage,
-				    int width, int height);
-static inline struct sna_damage *
-_sna_damage_all(struct sna_damage *damage,
-		int width, int height)
-{
-	damage = __sna_damage_all(damage, width, height);
-	return DAMAGE_MARK_ALL(damage);
-}
-
-static inline void sna_damage_all(struct sna_damage **damage,
-				  PixmapPtr pixmap)
-{
-	if (!DAMAGE_IS_ALL(*damage))
-		*damage = _sna_damage_all(*damage,
-					  pixmap->drawable.width,
-					  pixmap->drawable.height);
 }
 
 fastcall struct sna_damage *_sna_damage_subtract(struct sna_damage *damage,

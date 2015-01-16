@@ -122,6 +122,11 @@ static const struct intel_device_info intel_cherryview_info = {
 	.gen = 0101,
 };
 
+static const struct intel_device_info intel_skylake_info = {
+	.gen = 0110,
+};
+
+
 static const SymTabRec intel_chipsets[] = {
 	{PCI_CHIP_I810,				"i810"},
 	{PCI_CHIP_I810_DC100,			"i810-dc100"},
@@ -311,6 +316,8 @@ static const struct pci_id_match intel_device_match[] = {
 
 	INTEL_CHV_IDS(&intel_cherryview_info),
 
+	INTEL_SKL_IDS(&intel_skylake_info),
+
 	INTEL_VGA_DEVICE(PCI_MATCH_ANY, &intel_generic_info),
 #endif
 
@@ -318,27 +325,31 @@ static const struct pci_id_match intel_device_match[] = {
 };
 
 void
-intel_detect_chipset(ScrnInfoPtr scrn, EntityInfoPtr ent)
+intel_detect_chipset(ScrnInfoPtr scrn, struct intel_device *dev)
 {
-	MessageType from = X_PROBED;
-	const char *name = NULL;
 	int devid;
+	const char *name = NULL;
 	int i;
 
-	if (ent->device->chipID >= 0) {
-		xf86DrvMsg(scrn->scrnIndex, from = X_CONFIG,
-			   "ChipID override: 0x%04X\n",
-			   ent->device->chipID);
-		devid = ent->device->chipID;
-	} else {
+	if (dev == NULL) {
+		EntityInfoPtr ent;
 		struct pci_device *pci;
 
-		pci = xf86GetPciInfoForEntity(ent->index);
-		if (pci != NULL)
-			devid = pci->device_id;
-		else
-			devid = intel_get_device_id(scrn);
-	}
+		ent = xf86GetEntityInfo(scrn->entityList[0]);
+		if (ent->device->chipID >= 0) {
+			xf86DrvMsg(scrn->scrnIndex, X_CONFIG,
+				   "ChipID override: 0x%04X\n",
+				   ent->device->chipID);
+			devid = ent->device->chipID;
+		} else {
+			pci = xf86GetPciInfoForEntity(ent->index);
+			if (pci)
+				devid = pci->device_id;
+			else
+				devid = ~0;
+		}
+	} else
+		devid = intel_get_device_id(dev);
 
 	for (i = 0; intel_chipsets[i].name != NULL; i++) {
 		if (devid == intel_chipsets[i].token) {
@@ -358,7 +369,7 @@ intel_detect_chipset(ScrnInfoPtr scrn, EntityInfoPtr ent)
 		}
 
 		if (gen) {
-			xf86DrvMsg(scrn->scrnIndex, from,
+			xf86DrvMsg(scrn->scrnIndex, X_PROBED,
 				   "gen%d engineering sample\n", gen);
 		} else {
 			xf86DrvMsg(scrn->scrnIndex, X_WARNING,
@@ -367,7 +378,7 @@ intel_detect_chipset(ScrnInfoPtr scrn, EntityInfoPtr ent)
 
 		name = "unknown";
 	} else {
-		xf86DrvMsg(scrn->scrnIndex, from,
+		xf86DrvMsg(scrn->scrnIndex, X_PROBED,
 			   "Integrated Graphics Chipset: Intel(R) %s\n",
 			   name);
 	}
@@ -489,7 +500,7 @@ _xf86findDriver(const char *ident, XF86ConfDevicePtr p)
 	return NULL;
 }
 
-static enum accel_method { NOACCEL, SNA, UXA, GLAMOR } get_accel_method(void)
+static enum accel_method { NOACCEL, SNA, UXA } get_accel_method(void)
 {
 	enum accel_method accel_method = DEFAULT_ACCEL_METHOD;
 	XF86ConfDevicePtr dev;
@@ -509,8 +520,6 @@ static enum accel_method { NOACCEL, SNA, UXA, GLAMOR } get_accel_method(void)
 				accel_method = SNA;
 			else if (strcasecmp(s, "uxa") == 0)
 				accel_method = UXA;
-			else if (strcasecmp(s, "glamor") == 0)
-				accel_method = GLAMOR;
 		}
 	}
 
@@ -572,7 +581,6 @@ intel_scrn_create(DriverPtr		driver,
 #if !USE_SNA
 	case NOACCEL:
 #endif
-	case GLAMOR:
 	case UXA:
 		  return intel_init_scrn(scrn);
 #endif

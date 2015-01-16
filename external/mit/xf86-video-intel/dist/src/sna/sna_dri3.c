@@ -49,6 +49,19 @@ static inline struct sna_sync_fence *sna_sync_fence(SyncFence *fence)
 	return dixLookupPrivate(&fence->devPrivates, &sna_sync_fence_private_key);
 }
 
+static inline void mark_dri3_pixmap(struct sna *sna, struct sna_pixmap *priv, struct kgem_bo *bo)
+{
+	bo->flush = true;
+	if (bo->exec)
+		sna->kgem.flush = 1;
+	if (bo == priv->gpu_bo)
+		priv->flush |= 3;
+	else
+		priv->shm = true;
+
+	sna_accel_watch_flush(sna, 1);
+}
+
 static void sna_sync_flush(struct sna *sna, struct sna_pixmap *priv)
 {
 	struct kgem_bo *bo = NULL;
@@ -83,27 +96,10 @@ sna_sync_fence_set_triggered(SyncFence *fence)
 {
 	struct sna *sna = to_sna_from_screen(fence->pScreen);
 	struct sna_sync_fence *sna_fence = sna_sync_fence(fence);
-	DrawablePtr draw = NULL;
 
 	DBG(("%s()\n", __FUNCTION__));
+	sna_accel_flush(sna);
 
-#if 0
-	draw = miSyncShmFenceGetDrawable(fence);
-#endif
-	if (draw) {
-		DBG(("%s: associated pixmap=%ld\n", __FUNCTION__, get_drawable_pixmap(draw)->drawable.serialNumber));
-		sna_sync_flush(sna, sna_pixmap(get_drawable_pixmap(draw)));
-	} else { /* SyncFence are currently per-screen, sigh */
-		struct sna_pixmap *priv;
-
-		DBG(("%s: flushing all DRI3 pixmaps\n", __FUNCTION__));
-		list_for_each_entry(priv, &sna->dri3.pixmaps, cow_list)
-			sna_sync_flush(sna, priv);
-
-		sna_accel_flush(sna);
-	}
-
-	DBG(("%s: complete, chaining up\n", __FUNCTION__));
 	fence->funcs.SetTriggered = sna_fence->set_triggered;
 	sna_fence->set_triggered(fence);
 	sna_fence->set_triggered = fence->funcs.SetTriggered;
@@ -158,7 +154,7 @@ static int sna_dri3_open_device(ScreenPtr screen,
 	int fd;
 
 	DBG(("%s()\n", __FUNCTION__));
-	fd = intel_get_client_fd(xf86ScreenToScrn(screen));
+	fd = intel_get_client_fd(to_sna_from_screen(screen)->dev);
 	if (fd < 0)
 		return -fd;
 
@@ -278,6 +274,8 @@ static PixmapPtr sna_dri3_pixmap_from_fd(ScreenPtr screen,
 	}
 	list_add(&priv->cow_list, &sna->dri3.pixmaps);
 
+	mark_dri3_pixmap(sna, priv, bo);
+
 	return pixmap;
 
 free_pixmap:
@@ -336,6 +334,8 @@ static int sna_dri3_fd_from_pixmap(ScreenPtr screen,
 	if (bo == priv->gpu_bo)
 		priv->pinned |= PIN_DRI3;
 	list_move(&priv->cow_list, &sna->dri3.pixmaps);
+
+	mark_dri3_pixmap(sna, priv, bo);
 
 	*stride = (priv->pinned & PIN_DRI3) ? priv->gpu_bo->pitch : priv->cpu_bo->pitch;
 	*size = kgem_bo_size((priv->pinned & PIN_DRI3) ? priv->gpu_bo : priv->cpu_bo);

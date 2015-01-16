@@ -29,13 +29,13 @@
  *   Keith Whitwell <keith@tungstengraphics.com>
  */
 
-
 #ifndef BRW_EU_H
 #define BRW_EU_H
 
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+
 #include <assert.h>
 
 #define BRW_SWIZZLE4(a,b,c,d) (((a)<<0) | ((b)<<2) | ((c)<<4) | ((d)<<6))

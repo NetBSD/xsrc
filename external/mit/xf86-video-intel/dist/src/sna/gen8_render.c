@@ -462,21 +462,21 @@ gen8_emit_urb(struct sna *sna)
 {
 	/* num of VS entries must be divisible by 8 if size < 9 */
 	OUT_BATCH(GEN8_3DSTATE_URB_VS | (2 - 2));
-	OUT_BATCH(1024 << URB_ENTRY_NUMBER_SHIFT |
+	OUT_BATCH(960 << URB_ENTRY_NUMBER_SHIFT |
 		  (2 - 1) << URB_ENTRY_SIZE_SHIFT |
-		  0 << URB_STARTING_ADDRESS_SHIFT);
+		  4 << URB_STARTING_ADDRESS_SHIFT);
 
 	OUT_BATCH(GEN8_3DSTATE_URB_HS | (2 - 2));
 	OUT_BATCH(0 << URB_ENTRY_SIZE_SHIFT |
-		  0 << URB_STARTING_ADDRESS_SHIFT);
+		  4 << URB_STARTING_ADDRESS_SHIFT);
 
 	OUT_BATCH(GEN8_3DSTATE_URB_DS | (2 - 2));
 	OUT_BATCH(0 << URB_ENTRY_SIZE_SHIFT |
-		  0 << URB_STARTING_ADDRESS_SHIFT);
+		  4 << URB_STARTING_ADDRESS_SHIFT);
 
 	OUT_BATCH(GEN8_3DSTATE_URB_GS | (2 - 2));
 	OUT_BATCH(0 << URB_ENTRY_SIZE_SHIFT |
-		  0 << URB_STARTING_ADDRESS_SHIFT);
+		  4 << URB_STARTING_ADDRESS_SHIFT);
 }
 
 static void
@@ -519,7 +519,7 @@ gen8_emit_vs_invariant(struct sna *sna)
 	OUT_BATCH(GEN8_3DSTATE_VS | (9 - 2));
 	OUT_BATCH64(0); /* no VS kernel */
 	OUT_BATCH(0);
-	OUT_BATCH64(0);
+	OUT_BATCH64(0); /* scratch */
 	OUT_BATCH(0);
 	OUT_BATCH(1 << 1); /* pass-through */
 	OUT_BATCH(1 << 16 | 1 << 21); /* urb write to SBE */
@@ -545,12 +545,10 @@ static void
 gen8_emit_hs_invariant(struct sna *sna)
 {
 	OUT_BATCH(GEN8_3DSTATE_HS | (9 - 2));
-	OUT_BATCH(0); /* no HS kernel */
 	OUT_BATCH(0);
 	OUT_BATCH(0);
-	OUT_BATCH(0);
-	OUT_BATCH(0);
-	OUT_BATCH(0);
+	OUT_BATCH64(0); /* no HS kernel */
+	OUT_BATCH64(0); /* scratch */
 	OUT_BATCH(0);
 	OUT_BATCH(0); /* pass-through */
 
@@ -586,11 +584,9 @@ static void
 gen8_emit_ds_invariant(struct sna *sna)
 {
 	OUT_BATCH(GEN8_3DSTATE_DS | (9 - 2));
+	OUT_BATCH64(0); /* no kernel */
 	OUT_BATCH(0);
-	OUT_BATCH(0);
-	OUT_BATCH(0);
-	OUT_BATCH(0);
-	OUT_BATCH(0);
+	OUT_BATCH64(0); /* scratch */
 	OUT_BATCH(0);
 	OUT_BATCH(0);
 	OUT_BATCH(0);
@@ -618,15 +614,13 @@ static void
 gen8_emit_gs_invariant(struct sna *sna)
 {
 	OUT_BATCH(GEN8_3DSTATE_GS | (10 - 2));
-	OUT_BATCH(0); /* no GS kernel */
+	OUT_BATCH64(0); /* no GS kernel */
 	OUT_BATCH(0);
-	OUT_BATCH(0);
-	OUT_BATCH(0);
-	OUT_BATCH(0);
-	OUT_BATCH(0);
-	OUT_BATCH(0);
+	OUT_BATCH64(0); /* scratch */
 	OUT_BATCH(0);
 	OUT_BATCH(0); /* pass-through */
+	OUT_BATCH(0);
+	OUT_BATCH(0);
 
 #if SIM
 	OUT_BATCH(GEN8_3DSTATE_CONSTANT_GS | (11 - 2));
@@ -740,13 +734,15 @@ gen8_emit_wm_invariant(struct sna *sna)
 	OUT_BATCH(WM_PERSPECTIVE_PIXEL_BARYCENTRIC);
 
 #if SIM
+	OUT_BATCH(GEN8_3DSTATE_WM_CHROMAKEY | (2 - 2));
+	OUT_BATCH(0);
+#endif
+
+#if 0
 	OUT_BATCH(GEN8_3DSTATE_WM_HZ_OP | (5 - 2));
 	OUT_BATCH(0);
 	OUT_BATCH(0);
 	OUT_BATCH(0);
-	OUT_BATCH(0);
-
-	OUT_BATCH(GEN8_3DSTATE_WM_CHROMAKEY | (2 - 2));
 	OUT_BATCH(0);
 #endif
 
@@ -792,6 +788,8 @@ gen8_emit_cc_invariant(struct sna *sna)
 static void
 gen8_emit_vf_invariant(struct sna *sna)
 {
+	int n;
+
 #if 1
 	OUT_BATCH(GEN8_3DSTATE_VF | (2 - 2));
 	OUT_BATCH(0);
@@ -804,6 +802,12 @@ gen8_emit_vf_invariant(struct sna *sna)
 	OUT_BATCH(RECTLIST);
 
 	OUT_BATCH(GEN8_3DSTATE_VF_STATISTICS | 0);
+
+	for (n = 1; n <= 3; n++) {
+		OUT_BATCH(GEN8_3DSTATE_VF_INSTANCING | (3 - 2));
+		OUT_BATCH(n);
+		OUT_BATCH(0);
+	}
 }
 
 static void
@@ -814,7 +818,6 @@ gen8_emit_invariant(struct sna *sna)
 #if SIM
 	OUT_BATCH(GEN8_STATE_SIP | (3 - 2));
 	OUT_BATCH64(0);
-
 #endif
 
 	OUT_BATCH(GEN8_3DSTATE_MULTISAMPLE | (2 - 2));
@@ -887,6 +890,7 @@ gen8_emit_cc(struct sna *sna, uint32_t blend)
 	} else
 		OUT_BATCH(PS_BLEND_HAS_WRITEABLE_RT);
 
+	assert(is_aligned(render->cc_blend + blend * GEN8_BLEND_STATE_PADDED_SIZE, 64));
 	OUT_BATCH(GEN8_3DSTATE_BLEND_STATE_POINTERS | (2 - 2));
 	OUT_BATCH((render->cc_blend + blend * GEN8_BLEND_STATE_PADDED_SIZE) | 1);
 
@@ -926,6 +930,8 @@ gen8_emit_sf(struct sna *sna, bool has_mask)
 
 	OUT_BATCH(GEN8_3DSTATE_SBE | (4 - 2));
 	OUT_BATCH(num_sf_outputs << SBE_NUM_OUTPUTS_SHIFT |
+		  SBE_FORCE_VERTEX_URB_READ_LENGTH | /* forced is faster */
+		  SBE_FORCE_VERTEX_URB_READ_OFFSET |
 		  1 << SBE_URB_ENTRY_READ_LENGTH_SHIFT |
 		  1 << SBE_URB_ENTRY_READ_OFFSET_SHIFT);
 	OUT_BATCH(0);
@@ -949,11 +955,14 @@ gen8_emit_wm(struct sna *sna, int kernel)
 	     wm_kernels[kernel].name,
 	     wm_kernels[kernel].num_surfaces,
 	     kernels[0], kernels[1], kernels[2]));
+	assert(is_aligned(kernels[0], 64));
+	assert(is_aligned(kernels[1], 64));
+	assert(is_aligned(kernels[2], 64));
 
 	OUT_BATCH(GEN8_3DSTATE_PS | (12 - 2));
 	OUT_BATCH64(kernels[0] ?: kernels[1] ?: kernels[2]);
 	OUT_BATCH(1 << PS_SAMPLER_COUNT_SHIFT |
-		  //PS_VECTOR_MASK_ENABLE |
+		  PS_VECTOR_MASK_ENABLE |
 		  wm_kernels[kernel].num_surfaces << PS_BINDING_TABLE_ENTRY_COUNT_SHIFT);
 	OUT_BATCH64(0); /* scratch address */
 	OUT_BATCH(PS_MAX_THREADS |
@@ -989,7 +998,7 @@ gen8_emit_drawing_rectangle(struct sna *sna,
 	uint32_t limit = (op->dst.height - 1) << 16 | (op->dst.width - 1);
 	uint32_t offset = (uint16_t)op->dst.y << 16 | (uint16_t)op->dst.x;
 
-	assert(!too_large(op->dst.x, op->dst.y));
+	assert(!too_large(abs(op->dst.x), abs(op->dst.y)));
 	assert(!too_large(op->dst.width, op->dst.height));
 
 	if (sna->render_state.gen8.drawrect_limit == limit &&
@@ -1238,8 +1247,8 @@ static bool gen8_magic_ca_pass(struct sna *sna,
 						  true, true,
 						  op->is_affine));
 
-	OUT_BATCH(GEN8_3DPRIMITIVE | (7- 2));
-	OUT_BATCH(RECTLIST); /* ignored, see VF_TOPOLOGY */
+	OUT_BATCH(GEN8_3DPRIMITIVE | (7 - 2));
+	OUT_BATCH(0); /* ignored, see VF_TOPOLOGY */
 	OUT_BATCH(sna->render.vertex_index - sna->render.vertex_start);
 	OUT_BATCH(sna->render.vertex_start);
 	OUT_BATCH(1);	/* single instance */
@@ -1396,8 +1405,8 @@ gen8_bind_bo(struct sna *sna,
 
 	kgem_bo_set_binding(bo, format | is_dst << 30 | is_scanout << 31, offset);
 
-	DBG(("[%x] bind bo(handle=%d, addr=%d), format=%d, width=%d, height=%d, pitch=%d, tiling=%d -> %s\n",
-	     offset, bo->handle, ss[1],
+	DBG(("[%x] bind bo(handle=%d, addr=%lx), format=%d, width=%d, height=%d, pitch=%d, tiling=%d -> %s\n",
+	     offset, bo->handle, *(uint64_t *)(ss+8),
 	     format, width, height, bo->pitch, bo->tiling,
 	     domains & 0xffff ? "render" : "sampler"));
 
@@ -1416,10 +1425,6 @@ static void gen8_emit_vertex_buffer(struct sna *sna,
 	OUT_BATCH64(0);
 	OUT_BATCH(~0); /* buffer size: disabled */
 
-	OUT_BATCH(GEN8_3DSTATE_VF_INSTANCING | (3 - 2));
-	OUT_BATCH(id);
-	OUT_BATCH(0);
-
 	sna->render.vb_id |= 1 << id;
 }
 
@@ -1431,7 +1436,7 @@ static void gen8_emit_primitive(struct sna *sna)
 	}
 
 	OUT_BATCH(GEN8_3DPRIMITIVE | (7 - 2));
-	OUT_BATCH(RECTLIST); /* ignored, see VF_TOPOLOGY */
+	OUT_BATCH(0); /* ignored, see VF_TOPOLOGY */
 	sna->render.vertex_offset = sna->kgem.nbatch;
 	OUT_BATCH(0);	/* vertex count, to be filled in later */
 	OUT_BATCH(sna->render.vertex_index);
@@ -1772,6 +1777,7 @@ gen8_create_blend_state(struct sna_static_stream *stream)
 			assert(((ptr - base) & 63) == 0);
 			COMPILE_TIME_ASSERT(sizeof(blend->common) == 4);
 			COMPILE_TIME_ASSERT(sizeof(blend->rt) == 8);
+			COMPILE_TIME_ASSERT((char *)&blend->rt - (char *)blend == 4);
 
 			blend->rt.post_blend_clamp = 1;
 			blend->rt.pre_blend_clamp = 1;
@@ -3885,7 +3891,7 @@ static bool gen8_render_setup(struct sna *sna)
 	int i, j, k, l, m;
 	uint32_t devid;
 
-	devid = intel_get_device_id(sna->scrn);
+	devid = intel_get_device_id(sna->dev);
 	if (devid & 0xf)
 		state->gt = ((devid >> 4) & 0xf) + 1;
 	DBG(("%s: gt=%d\n", __FUNCTION__, state->gt));

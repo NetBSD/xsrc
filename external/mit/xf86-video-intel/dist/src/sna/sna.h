@@ -76,16 +76,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <signal.h>
 #include <setjmp.h>
 
+#include "xassert.h"
 #include "compiler.h"
-
-#if HAS_DEBUG_FULL
-void LogF(const char *f, ...);
-#define DBG(x) LogF x
-#define ERR(x) ErrorF x
-#else
-#define DBG(x)
-#define ERR(x)
-#endif
+#include "debug.h"
 
 #define DEBUG_NO_BLT 0
 
@@ -241,6 +234,7 @@ struct sna {
 	struct kgem kgem;
 
 	ScrnInfoPtr scrn;
+	struct intel_device *dev;
 
 	unsigned flags;
 #define SNA_IS_SLAVED		0x1
@@ -311,6 +305,8 @@ struct sna {
 		struct udev_monitor *backlight_monitor;
 		pointer backlight_handler;
 #endif
+
+		Bool (*rrGetInfo)(ScreenPtr, Rotation *);
 	} mode;
 
 	struct {
@@ -322,6 +318,7 @@ struct sna {
 		uint32_t fg, bg;
 		int size;
 
+		int active;
 		int last_x;
 		int last_y;
 
@@ -425,10 +422,14 @@ bool sna_mode_wants_tear_free(struct sna *sna);
 void sna_mode_adjust_frame(struct sna *sna, int x, int y);
 extern void sna_mode_discover(struct sna *sna);
 extern void sna_mode_check(struct sna *sna);
+extern bool sna_mode_disable(struct sna *sna);
+extern void sna_mode_enable(struct sna *sna);
 extern void sna_mode_reset(struct sna *sna);
-extern void sna_mode_wakeup(struct sna *sna);
+extern int sna_mode_wakeup(struct sna *sna);
 extern void sna_mode_redisplay(struct sna *sna);
 extern void sna_shadow_set_crtc(struct sna *sna, xf86CrtcPtr crtc, struct kgem_bo *bo);
+extern void sna_shadow_steal_crtcs(struct sna *sna, struct list *list);
+extern void sna_shadow_unsteal_crtcs(struct sna *sna, struct list *list);
 extern void sna_shadow_unset_crtc(struct sna *sna, xf86CrtcPtr crtc);
 extern bool sna_pixmap_discard_shadow_damage(struct sna_pixmap *priv,
 					     const RegionRec *region);
@@ -440,8 +441,7 @@ extern void sna_crtc_config_notify(ScreenPtr screen);
 
 extern bool sna_cursors_init(ScreenPtr screen, struct sna *sna);
 
-typedef void (*sna_flip_handler_t)(struct sna *sna,
-				   struct drm_event_vblank *e,
+typedef void (*sna_flip_handler_t)(struct drm_event_vblank *e,
 				   void *data);
 
 extern int sna_page_flip(struct sna *sna,
@@ -539,15 +539,17 @@ static inline uint64_t ust64(int tv_sec, int tv_usec)
 #if HAVE_DRI2
 bool sna_dri2_open(struct sna *sna, ScreenPtr pScreen);
 void sna_dri2_page_flip_handler(struct sna *sna, struct drm_event_vblank *event);
-void sna_dri2_vblank_handler(struct sna *sna, struct drm_event_vblank *event);
+void sna_dri2_vblank_handler(struct drm_event_vblank *event);
 void sna_dri2_pixmap_update_bo(struct sna *sna, PixmapPtr pixmap, struct kgem_bo *bo);
+void sna_dri2_decouple_window(WindowPtr win);
 void sna_dri2_destroy_window(WindowPtr win);
 void sna_dri2_close(struct sna *sna, ScreenPtr pScreen);
 #else
 static inline bool sna_dri2_open(struct sna *sna, ScreenPtr pScreen) { return false; }
 static inline void sna_dri2_page_flip_handler(struct sna *sna, struct drm_event_vblank *event) { }
-static inline void sna_dri2_vblank_handler(struct sna *sna, struct drm_event_vblank *event) { }
+static inline void sna_dri2_vblank_handler(struct drm_event_vblank *event) { }
 static inline void sna_dri2_pixmap_update_bo(struct sna *sna, PixmapPtr pixmap, struct kgem_bo *bo) { }
+static inline void sna_dri2_decouple_window(WindowPtr win) { }
 static inline void sna_dri2_destroy_window(WindowPtr win) { }
 static inline void sna_dri2_close(struct sna *sna, ScreenPtr pScreen) { }
 #endif
@@ -564,13 +566,12 @@ static inline void sna_dri3_close(struct sna *sna, ScreenPtr pScreen) { }
 bool sna_present_open(struct sna *sna, ScreenPtr pScreen);
 void sna_present_update(struct sna *sna);
 void sna_present_close(struct sna *sna, ScreenPtr pScreen);
-void sna_present_vblank_handler(struct sna *sna,
-				struct drm_event_vblank *event);
+void sna_present_vblank_handler(struct drm_event_vblank *event);
 #else
 static inline bool sna_present_open(struct sna *sna, ScreenPtr pScreen) { return false; }
 static inline void sna_present_update(struct sna *sna) { }
 static inline void sna_present_close(struct sna *sna, ScreenPtr pScreen) { }
-static inline void sna_present_vblank_handler(struct sna *sna, struct drm_event_vblank *event) { }
+static inline void sna_present_vblank_handler(struct drm_event_vblank *event) { }
 #endif
 
 extern bool sna_crtc_set_sprite_rotation(xf86CrtcPtr crtc, uint32_t rotation);
@@ -671,7 +672,8 @@ void sna_pixmap_destroy(PixmapPtr pixmap);
 
 #define assert_pixmap_map(pixmap, priv)  do { \
 	assert(priv->mapped != MAPPED_NONE || pixmap->devPrivate.ptr == PTR(priv->ptr)); \
-	assert(priv->mapped == MAPPED_NONE || pixmap->devPrivate.ptr == (priv->mapped == MAPPED_CPU ? MAP(priv->gpu_bo->map__cpu) : MAP(priv->gpu_bo->map__gtt))); \
+	assert(priv->mapped != MAPPED_CPU || pixmap->devPrivate.ptr == MAP(priv->gpu_bo->map__cpu)); \
+	assert(priv->mapped != MAPPED_GTT || pixmap->devPrivate.ptr == priv->gpu_bo->map__gtt || pixmap->devPrivate.ptr == priv->gpu_bo->map__wc); \
 } while (0)
 
 static inline void sna_pixmap_unmap(PixmapPtr pixmap, struct sna_pixmap *priv)
@@ -706,6 +708,7 @@ sna_pixmap_undo_cow(struct sna *sna, struct sna_pixmap *priv, unsigned flags);
 #define __MOVE_DRI 0x80
 #define __MOVE_SCANOUT 0x100
 #define __MOVE_TILED 0x200
+#define __MOVE_PRIME 0x400
 
 struct sna_pixmap *
 sna_pixmap_move_area_to_gpu(PixmapPtr pixmap, const BoxRec *box, unsigned int flags);

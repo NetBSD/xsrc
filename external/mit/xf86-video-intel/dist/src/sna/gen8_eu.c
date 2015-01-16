@@ -1075,28 +1075,6 @@ static void fb_write(struct brw_compile *p, int dw)
 			      false, true);
 }
 
-static void wm_write(struct brw_compile *p, int dw, int src)
-{
-	int n;
-
-	if (dw == 8) {
-		/* XXX pixel execution mask? */
-		gen8_set_compression_control(p, BRW_COMPRESSION_NONE);
-		for (n = 0; n < 4; n++)
-			gen8_MOV(p,
-				 brw_message_reg(2 + n),
-				 brw_vec8_grf(src + n, 0));
-	} else {
-		gen8_set_compression_control(p, BRW_COMPRESSION_COMPRESSED);
-		for (n = 0; n < 4; n++)
-			gen8_MOV(p,
-				 brw_message_reg(2 + 2*n),
-				 brw_vec8_grf(src + 2*n, 0));
-	}
-
-	fb_write(p, dw);
-}
-
 static void wm_write__mask(struct brw_compile *p, int dw,
 			   int src, int mask)
 {
@@ -1183,7 +1161,8 @@ gen8_wm_kernel__affine(struct brw_compile *p, int dispatch)
 {
 	gen8_compile_init(p);
 
-	wm_write(p, dispatch, wm_affine(p, dispatch, 0, 1, 12));
+	wm_affine(p, dispatch, 0, 10, MRF_HACK_START+2);
+	fb_write(p, dispatch);
 	return true;
 }
 
@@ -1268,8 +1247,8 @@ static void wm_projective_st(struct brw_compile *p, int dw,
 		 brw_vec8_grf(2, 0));
 	gen8_PLN(p,
 		 brw_vec8_grf(28, 0),
-		 brw_vec1_grf(uv, 0),
-		 brw_vec8_grf(4, 0));
+		 brw_vec1_grf(uv, 4),
+		 brw_vec8_grf(2, 0));
 
 	gen8_MUL(p,
 		 brw_message_reg(msg),
@@ -1304,7 +1283,8 @@ gen8_wm_kernel__projective(struct brw_compile *p, int dispatch)
 {
 	gen8_compile_init(p);
 
-	wm_write(p, dispatch, wm_projective(p, dispatch, 0, 1, 12));
+	wm_projective(p, dispatch, 0, 10, MRF_HACK_START+2);
+	fb_write(p, dispatch);
 	return true;
 }
 

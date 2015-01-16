@@ -81,7 +81,7 @@ static int create_context(XvPortPtr port, XvMCContextPtr ctx,
 		return BadAlloc;
 
 	if (sna->kgem.gen >= 040) {
-		int devid = intel_get_device_id(sna->scrn);
+		int devid = intel_get_device_id(sna->dev);
 
 		if (sna->kgem.gen >= 045)
 			priv->type = XVMC_I965_MPEG2_VLD;

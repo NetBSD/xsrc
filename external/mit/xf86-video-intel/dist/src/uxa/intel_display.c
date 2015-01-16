@@ -55,9 +55,10 @@
 #endif
 #include "xf86DDC.h"
 #include "fb.h"
-#include "uxa.h"
 
-#include "intel_glamor.h"
+#if USE_UXA
+#include "intel_uxa.h"
+#endif
 
 #define KNOWN_MODE_FLAGS ((1<<14)-1)
 
@@ -70,9 +71,6 @@ struct intel_drm_queue {
         intel_drm_handler_proc handler;
         intel_drm_abort_proc abort;
 };
-
-static void
-intel_drm_abort_scrn(ScrnInfoPtr scrn);
 
 static uint32_t intel_drm_seq;
 static struct list intel_drm_queue;
@@ -187,7 +185,7 @@ intel_output_backlight_init(xf86OutputPtr output)
 {
 	struct intel_output *intel_output = output->driver_private;
 	intel_screen_private *intel = intel_get_screen_private(output->scrn);
-	char *str;
+	const char *str;
 
 #if !USE_BACKLIGHT
 	return;
@@ -398,7 +396,6 @@ intel_crtc_apply(xf86CrtcPtr crtc)
 
 	if (scrn->pScreen)
 		xf86_reload_cursors(scrn->pScreen);
-        intel_drm_abort_scrn(scrn);
 
 done:
 	free(output_ids);
@@ -443,8 +440,7 @@ intel_crtc_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
 	crtc->y = y;
 	crtc->rotation = rotation;
 
-	intel_glamor_flush(intel);
-	intel_batch_submit(crtc->scrn);
+        intel_flush(intel);
 
 	mode_to_kmode(crtc->scrn, &intel_crtc->kmode, mode);
 	ret = intel_crtc_apply(crtc);
@@ -551,10 +547,28 @@ intel_crtc_shadow_allocate(xf86CrtcPtr crtc, int width, int height)
 		return NULL;
 	}
 
-	drm_intel_bo_disable_reuse(intel_crtc->rotate_bo);
-
 	intel_crtc->rotate_pitch = rotate_pitch;
 	return intel_crtc->rotate_bo;
+}
+
+static PixmapPtr
+intel_create_pixmap_header(ScreenPtr pScreen, int width, int height, int depth,
+                           int bitsPerPixel, int devKind, void *pPixData)
+{
+        PixmapPtr pixmap;
+
+        /* width and height of 0 means don't allocate any pixmap data */
+        pixmap = (*pScreen->CreatePixmap) (pScreen, 0, 0, depth, 0);
+
+        if (pixmap) {
+                if ((*pScreen->ModifyPixmapHeader) (pixmap, width, height, depth,
+                                                    bitsPerPixel, devKind, pPixData))
+                {
+                        return pixmap;
+                }
+                (*pScreen->DestroyPixmap) (pixmap);
+        }
+        return NullPixmap;
 }
 
 static PixmapPtr
@@ -579,12 +593,12 @@ intel_crtc_shadow_create(xf86CrtcPtr crtc, void *data, int width, int height)
 		return NULL;
 	}
 
-	rotate_pixmap = GetScratchPixmapHeader(scrn->pScreen,
-					       width, height,
-					       scrn->depth,
-					       scrn->bitsPerPixel,
-					       intel_crtc->rotate_pitch,
-					       NULL);
+	rotate_pixmap = intel_create_pixmap_header(scrn->pScreen,
+                                                   width, height,
+                                                   scrn->depth,
+                                                   scrn->bitsPerPixel,
+                                                   intel_crtc->rotate_pitch,
+                                                   NULL);
 
 	if (rotate_pixmap == NULL) {
 		xf86DrvMsg(scrn->scrnIndex, X_ERROR,
@@ -608,8 +622,8 @@ intel_crtc_shadow_destroy(xf86CrtcPtr crtc, PixmapPtr rotate_pixmap, void *data)
 	struct intel_mode *mode = intel_crtc->mode;
 
 	if (rotate_pixmap) {
-		intel_set_pixmap_bo(rotate_pixmap, NULL);
-		FreeScratchPixmapHeader(rotate_pixmap);
+                intel_set_pixmap_bo(rotate_pixmap, NULL);
+                rotate_pixmap->drawable.pScreen->DestroyPixmap(rotate_pixmap);
 	}
 
 	if (data) {
@@ -1555,25 +1569,17 @@ intel_xf86crtc_resize(ScrnInfoPtr scrn, int width, int height)
 	int	    i, old_width, old_height, old_pitch;
 	int pitch;
 	uint32_t tiling;
-	ScreenPtr screen;
 
 	if (scrn->virtualX == width && scrn->virtualY == height)
 		return TRUE;
 
-	intel_glamor_flush(intel);
-	intel_batch_submit(scrn);
+        intel_flush(intel);
 
 	old_width = scrn->virtualX;
 	old_height = scrn->virtualY;
 	old_pitch = scrn->displayWidth;
 	old_fb_id = mode->fb_id;
 	old_front = intel->front_buffer;
-
-	if (intel->back_pixmap) {
-		screen = intel->back_pixmap->drawable.pScreen;
-		screen->DestroyPixmap(intel->back_pixmap);
-		intel->back_pixmap = NULL;
-	}
 
 	if (intel->back_buffer) {
 		drm_intel_bo_unreference(intel->back_buffer);
@@ -1594,7 +1600,6 @@ intel_xf86crtc_resize(ScrnInfoPtr scrn, int width, int height)
 	if (ret)
 		goto fail;
 
-	drm_intel_bo_disable_reuse(intel->front_buffer);
 	intel->front_pitch = pitch;
 	intel->front_tiling = tiling;
 
@@ -1677,8 +1682,7 @@ intel_do_pageflip(intel_screen_private *intel,
 		goto error_out;
 
 	drm_intel_bo_disable_reuse(new_front);
-	intel_glamor_flush(intel);
-	intel_batch_submit(scrn);
+        intel_flush(intel);
 
 	mode->pageflip_data = pageflip_data;
 	mode->pageflip_handler = pageflip_handler;
@@ -2356,6 +2360,7 @@ Bool intel_crtc_on(xf86CrtcPtr crtc)
 	return ret;
 }
 
+
 static PixmapPtr
 intel_create_pixmap_for_bo(ScreenPtr pScreen, dri_bo *bo,
 			   int width, int height,
@@ -2555,4 +2560,82 @@ restart_destroy:
 	drmModeFreeResources(mode_res);
 out:
 	RRGetInfo(xf86ScrnToScreen(scrn), TRUE);
+}
+
+void intel_box_intersect(BoxPtr dest, BoxPtr a, BoxPtr b)
+{
+	dest->x1 = a->x1 > b->x1 ? a->x1 : b->x1;
+	dest->x2 = a->x2 < b->x2 ? a->x2 : b->x2;
+	if (dest->x1 >= dest->x2) {
+		dest->x1 = dest->x2 = dest->y1 = dest->y2 = 0;
+		return;
+	}
+
+	dest->y1 = a->y1 > b->y1 ? a->y1 : b->y1;
+	dest->y2 = a->y2 < b->y2 ? a->y2 : b->y2;
+	if (dest->y1 >= dest->y2)
+		dest->x1 = dest->x2 = dest->y1 = dest->y2 = 0;
+}
+
+void intel_crtc_box(xf86CrtcPtr crtc, BoxPtr crtc_box)
+{
+	if (crtc->enabled) {
+		crtc_box->x1 = crtc->x;
+		crtc_box->x2 =
+		    crtc->x + xf86ModeWidth(&crtc->mode, crtc->rotation);
+		crtc_box->y1 = crtc->y;
+		crtc_box->y2 =
+		    crtc->y + xf86ModeHeight(&crtc->mode, crtc->rotation);
+	} else
+		crtc_box->x1 = crtc_box->x2 = crtc_box->y1 = crtc_box->y2 = 0;
+}
+
+static int intel_box_area(BoxPtr box)
+{
+	return (int)(box->x2 - box->x1) * (int)(box->y2 - box->y1);
+}
+
+/*
+ * Return the crtc covering 'box'. If two crtcs cover a portion of
+ * 'box', then prefer 'desired'. If 'desired' is NULL, then prefer the crtc
+ * with greater coverage
+ */
+
+xf86CrtcPtr
+intel_covering_crtc(ScrnInfoPtr scrn,
+		    BoxPtr box, xf86CrtcPtr desired, BoxPtr crtc_box_ret)
+{
+	xf86CrtcConfigPtr xf86_config = XF86_CRTC_CONFIG_PTR(scrn);
+	xf86CrtcPtr crtc, best_crtc;
+	int coverage, best_coverage;
+	int c;
+	BoxRec crtc_box, cover_box;
+
+	best_crtc = NULL;
+	best_coverage = 0;
+	crtc_box_ret->x1 = 0;
+	crtc_box_ret->x2 = 0;
+	crtc_box_ret->y1 = 0;
+	crtc_box_ret->y2 = 0;
+	for (c = 0; c < xf86_config->num_crtc; c++) {
+		crtc = xf86_config->crtc[c];
+
+		/* If the CRTC is off, treat it as not covering */
+		if (!intel_crtc_on(crtc))
+			continue;
+
+		intel_crtc_box(crtc, &crtc_box);
+		intel_box_intersect(&cover_box, &crtc_box, box);
+		coverage = intel_box_area(&cover_box);
+		if (coverage && crtc == desired) {
+			*crtc_box_ret = crtc_box;
+			return crtc;
+		}
+		if (coverage > best_coverage) {
+			*crtc_box_ret = crtc_box;
+			best_crtc = crtc;
+			best_coverage = coverage;
+		}
+	}
+	return best_crtc;
 }

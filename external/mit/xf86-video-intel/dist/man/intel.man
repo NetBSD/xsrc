@@ -65,10 +65,13 @@ This sets the default pixel value for the YUV video overlay key.
 .IP
 Default: undefined.
 .TP
-.BI "Option \*qDRI\*q \*q" boolean \*q
-Disable or enable DRI support.
+.BI "Option \*qDRI\*q \*q" string \*q
+Disable or enable DRI support. A driver name to use can be provided instead
+of simple boolean value, which will be passed to the GL implementation for
+it to load the appropriate backend. Alternatively the maximum level of DRI
+to enable (e.g. "1", "2" or "3") can be specified.
 .IP
-Default: DRI is enabled for configurations where it is supported.
+Default: All levels of DRI are enabled for configurations where it is supported.
 
 .PP
 The following driver
@@ -137,7 +140,7 @@ the GEM driver model. It is in the process of being superseded by \*qSNA\*q
 (Sandybridge's New Acceleration). Until that process is complete, the ability to
 choose which backend to use remains for backwards compatibility.
 In addition, there are a pair of sub-options to limit the acceleration for
-debugging use. Specify \*qoff\*q to disable all acceleration, or \*qblt\*q to
+debugging use. Specify \*qoff\*q or \*qnone\*q to disable all acceleration, or \*qblt\*q to
 disable render acceleration and only use the BLT engine.
 .IP
 Default: use SNA (render acceleration)

@@ -23,8 +23,7 @@
 #define GEN8_3DSTATE_DEPTH_BUFFER               GEN8_3D(3, 0, 0x05)
 # define DEPTH_BUFFER_TYPE_SHIFT	29
 # define DEPTH_BUFFER_FORMAT_SHIFT	18
-/* DW1 */
-# define DEPTH_CLEAR_VALID		(1 << 15)
+
 #define GEN8_3DSTATE_STENCIL_BUFFER		GEN8_3D(3, 0, 0x06)
 #define GEN8_3DSTATE_HIER_DEPTH_BUFFER		GEN8_3D(3, 0, 0x07)
 #define GEN8_3DSTATE_VERTEX_BUFFERS		GEN8_3D(3, 0, 0x08)
@@ -65,16 +64,9 @@
 /* DW1 */
 # define WM_STATISTICS_ENABLE                              (1 << 31)
 # define WM_DEPTH_CLEAR                                    (1 << 30)
-# define WM_DISPATCH_ENABLE                                (1 << 29)
 # define WM_DEPTH_RESOLVE                                  (1 << 28)
 # define WM_HIERARCHICAL_DEPTH_RESOLVE                     (1 << 27)
 # define WM_KILL_ENABLE                                    (1 << 25)
-# define WM_PSCDEPTH_OFF                                   (0 << 23)
-# define WM_PSCDEPTH_ON                                    (1 << 23)
-# define WM_PSCDEPTH_ON_GE                                 (2 << 23)
-# define WM_PSCDEPTH_ON_LE                                 (3 << 23)
-# define WM_USES_SOURCE_DEPTH                              (1 << 20)
-# define WM_USES_SOURCE_W                                  (1 << 19)
 # define WM_POSITION_ZW_PIXEL                              (0 << 17)
 # define WM_POSITION_ZW_CENTROID                           (2 << 17)
 # define WM_POSITION_ZW_SAMPLE                             (3 << 17)
@@ -84,7 +76,6 @@
 # define WM_PERSPECTIVE_SAMPLE_BARYCENTRIC                 (1 << 13)
 # define WM_PERSPECTIVE_CENTROID_BARYCENTRIC               (1 << 12)
 # define WM_PERSPECTIVE_PIXEL_BARYCENTRIC                  (1 << 11)
-# define WM_USES_INPUT_COVERAGE_MASK                       (1 << 10)
 # define WM_LINE_END_CAP_AA_WIDTH_0_5                      (0 << 8)
 # define WM_LINE_END_CAP_AA_WIDTH_1_0                      (1 << 8)
 # define WM_LINE_END_CAP_AA_WIDTH_2_0                      (2 << 8)
@@ -100,8 +91,6 @@
 # define WM_MSRAST_OFF_PATTERN                             (1 << 0)
 # define WM_MSRAST_ON_PIXEL                                (2 << 0)
 # define WM_MSRAST_ON_PATTERN                              (3 << 0)
-/* DW2 */
-# define WM_MSDISPMODE_PERPIXEL                            (1 << 31)
 
 #define GEN8_3DSTATE_CONSTANT_VS		GEN8_3D(3, 0, 0x15)
 #define GEN8_3DSTATE_CONSTANT_GS		GEN8_3D(3, 0, 0x16)
@@ -125,22 +114,21 @@
 # define SBE_SWIZZLE_ENABLE                (1 << 21)
 # define SBE_POINT_SPRITE_LOWERLEFT        (1 << 20)
 # define SBE_URB_ENTRY_READ_LENGTH_SHIFT   11
-# define SBE_URB_ENTRY_READ_OFFSET_SHIFT   4
+# define SBE_URB_ENTRY_READ_OFFSET_SHIFT   5
 
 #define GEN8_3DSTATE_PS                                 GEN8_3D(3, 0, 0x20)
-/* DW1: kernel pointer */
-/* DW2 */
+/* DW1:DW2 kernel pointer */
+/* DW3 */
 # define PS_SPF_MODE                               (1 << 31)
 # define PS_VECTOR_MASK_ENABLE                     (1 << 30)
 # define PS_SAMPLER_COUNT_SHIFT                    27
 # define PS_BINDING_TABLE_ENTRY_COUNT_SHIFT        18
 # define PS_FLOATING_POINT_MODE_IEEE_754           (0 << 16)
 # define PS_FLOATING_POINT_MODE_ALT                (1 << 16)
-/* DW3: scratch space */
-/* DW4 */
+/* DW4:DW5: scratch space */
+/* DW6 */
 # define PS_MAX_THREADS_SHIFT                      23
 # define PS_MAX_THREADS                            (62 << PS_MAX_THREADS_SHIFT)
-# define PS_SAMPLE_MASK_SHIFT                      12
 # define PS_PUSH_CONSTANT_ENABLE                   (1 << 11)
 # define PS_RENDER_TARGET_CLEAR			   (1 << 8)
 # define PS_RENDER_TARGET_RESOLVE		   (1 << 6)
@@ -150,12 +138,12 @@
 # define PS_32_DISPATCH_ENABLE                     (1 << 2)
 # define PS_16_DISPATCH_ENABLE                     (1 << 1)
 # define PS_8_DISPATCH_ENABLE                      (1 << 0)
-/* DW5 */
+/* DW7 */
 # define PS_DISPATCH_START_GRF_SHIFT_0             16
 # define PS_DISPATCH_START_GRF_SHIFT_1             8
 # define PS_DISPATCH_START_GRF_SHIFT_2             0
-/* DW6: kernel 1 pointer */
-/* DW7: kernel 2 pointer */
+/* DW8:D9: kernel 1 pointer */
+/* DW10:D11: kernel 2 pointer */
 
 #define GEN8_3DSTATE_VIEWPORT_STATE_POINTERS_SF_CLIP      GEN8_3D(3, 0, 0x21)
 #define GEN8_3DSTATE_VIEWPORT_STATE_POINTERS_CC         GEN8_3D(3, 0, 0x23)

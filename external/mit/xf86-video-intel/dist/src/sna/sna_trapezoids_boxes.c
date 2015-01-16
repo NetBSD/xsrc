@@ -85,7 +85,8 @@ static void apply_damage(struct sna_composite_op *op, RegionPtr region)
 	RegionTranslate(region, op->dst.x, op->dst.y);
 
 	assert_pixmap_contains_box(op->dst.pixmap, RegionExtents(region));
-	sna_damage_add(op->damage, region);
+	if (sna_damage_add_to_pixmap(op->damage, region, op->dst.pixmap))
+		op->damage = NULL;
 }
 
 static void _apply_damage_box(struct sna_composite_op *op, const BoxRec *box)

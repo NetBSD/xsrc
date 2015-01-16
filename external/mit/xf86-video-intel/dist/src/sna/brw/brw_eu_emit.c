@@ -34,6 +34,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#define ARRAY_SIZE(A) (sizeof(A)/sizeof(A[0]))
+
 /***********************************************************************
  * Internal helper for constructing instructions
  */
@@ -178,6 +180,11 @@ validate_reg(struct brw_instruction *insn, struct brw_reg reg)
 	if (reg.file == BRW_ARCHITECTURE_REGISTER_FILE &&
 	    reg.file == BRW_ARF_NULL)
 		return;
+
+	assert(reg.hstride >= 0 && reg.hstride < ARRAY_SIZE(hstride_for_reg));
+	assert(reg.vstride >= 0 && reg.vstride < ARRAY_SIZE(vstride_for_reg));
+	assert(reg.width >= 0 && reg.width < ARRAY_SIZE(width_for_reg));
+	assert(insn->header.execution_size >= 0 && insn->header.execution_size < ARRAY_SIZE(execsize_for_reg));
 
 	hstride = hstride_for_reg[reg.hstride];
 

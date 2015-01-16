@@ -29,6 +29,9 @@
 #include "fb.h"
 
 #include "intel.h"
+#if USE_UXA
+#include "intel_uxa.h"
+#endif
 #include "dri3.h"
 
 static int
@@ -36,9 +39,11 @@ intel_dri3_open(ScreenPtr screen,
                 RRProviderPtr provider,
                 int *out)
 {
+	ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
+	intel_screen_private *intel = intel_get_screen_private(scrn);
 	int fd;
 
-	fd = intel_get_client_fd(xf86ScreenToScrn(screen));
+	fd = intel_get_client_fd(intel->dev);
 	if (fd < 0)
 		return -fd;
 
@@ -56,7 +61,7 @@ static PixmapPtr intel_dri3_pixmap_from_fd(ScreenPtr screen,
 {
 	ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
 	intel_screen_private *intel = intel_get_screen_private(scrn);
-	struct intel_pixmap *priv;
+	struct intel_uxa_pixmap *priv;
 	PixmapPtr pixmap;
 	dri_bo *bo;
 
@@ -84,10 +89,10 @@ static PixmapPtr intel_dri3_pixmap_from_fd(ScreenPtr screen,
 	if (bo == NULL)
 		goto free_pixmap;
 
-	intel_set_pixmap_bo(pixmap, bo);
+	intel_uxa_set_pixmap_bo(pixmap, bo);
 	dri_bo_unreference(bo);
 
-	priv = intel_get_pixmap_private(pixmap);
+	priv = intel_uxa_get_pixmap_private(pixmap);
 	if (priv == NULL)
 		goto free_pixmap;
 
@@ -105,14 +110,14 @@ static int intel_dri3_fd_from_pixmap(ScreenPtr screen,
 				     CARD16 *stride,
 				     CARD32 *size)
 {
-	struct intel_pixmap *priv;
+	struct intel_uxa_pixmap *priv;
 	int fd;
 
-	priv = intel_get_pixmap_private(pixmap);
+	priv = intel_uxa_get_pixmap_private(pixmap);
 	if (!priv)
 		return -1;
 
-	if (priv->stride > UINT16_MAX)
+	if (intel_pixmap_pitch(pixmap) > UINT16_MAX)
 		return -1;
 
 	if (drm_intel_bo_gem_export_to_prime(priv->bo, &fd) < 0)
@@ -120,7 +125,7 @@ static int intel_dri3_fd_from_pixmap(ScreenPtr screen,
 
 	priv->pinned |= PIN_DRI3;
 
-	*stride = priv->stride;
+	*stride = intel_pixmap_pitch(pixmap);
 	*size = priv->bo->size;
 	return fd;
 }

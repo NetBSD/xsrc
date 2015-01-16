@@ -727,7 +727,7 @@ next_glyph:
 		}
 		list++;
 	}
-	if (glyph_atlas)
+	if (glyph_atlas != NO_ATLAS)
 		tmp.done(sna, &tmp);
 
 	return true;
@@ -1971,8 +1971,8 @@ sna_glyphs(CARD8 op,
 		goto fallback;
 	}
 
-	if (dst->alphaMap) {
-		DBG(("%s: fallback -- dst alpha map\n", __FUNCTION__));
+	if (!can_render_to_picture(dst)) {
+		DBG(("%s: fallback -- dst incompatible picture\n", __FUNCTION__));
 		goto fallback;
 	}
 
@@ -2301,8 +2301,8 @@ sna_glyphs__shared(CARD8 op,
 		goto fallback;
 	}
 
-	if (dst->alphaMap) {
-		DBG(("%s: fallback -- dst alpha map\n", __FUNCTION__));
+	if (!can_render_to_picture(dst)) {
+		DBG(("%s: fallback -- incompatible picture\n", __FUNCTION__));
 		goto fallback;
 	}
 

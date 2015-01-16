@@ -38,18 +38,10 @@
 #include <stdbool.h>
 #include <pixman.h>
 
-#if HAS_DEBUG_FULL
-void LogF(const char *f, ...);
-#define DBG(x) LogF x
-#define ERR(x) ErrorF x
-#else
-#define DBG(x)
-#define ERR(x)
-#endif
-
 #include "sfb.h"
 
 #include "../../compat-api.h"
+#include "../debug.h"
 
 #define WRITE(ptr, val) (*(ptr) = (val))
 #define READ(ptr) (*(ptr))

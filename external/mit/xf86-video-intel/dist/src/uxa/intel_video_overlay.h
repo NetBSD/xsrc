@@ -1,6 +1,6 @@
 /***************************************************************************
 
- Copyright 2014 Intel Corporation.  All Rights Reserved.
+ Copyright 2000 Intel Corporation.  All Rights Reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the
@@ -24,37 +24,28 @@
 
  **************************************************************************/
 
-#ifndef BACKLIGHT_H
-#define BACKLIGHT_H
+/*
+ * i830_video.c: i830/i845 Xv driver.
+ *
+ * Copyright © 2002 by Alan Hourihane and David Dawes
+ *
+ * Authors:
+ *	Alan Hourihane <alanh@tungstengraphics.com>
+ *	David Dawes <dawes@xfree86.org>
+ *
+ * Derived from i810 Xv driver:
+ *
+ * Authors of i810 code:
+ * 	Jonathan Bian <jonathan.bian@intel.com>
+ *      Offscreen Images:
+ *        Matt Sottek <matthew.j.sottek@intel.com>
+ */
 
-enum backlight_type {
-	BL_NONE = -1,
-	BL_PLATFORM,
-	BL_FIRMWARE,
-	BL_RAW,
-	BL_NAMED,
-};
+#ifndef _INTEL_VIDEO_OVERLAY_H_
+#define _INTEL_VIDEO_OVERLAY_H_
 
-struct backlight {
-	char *iface;
-	enum backlight_type type;
-	int max;
-	int has_power;
-	int pid, fd;
-};
+XF86VideoAdaptorPtr intel_video_overlay_setup_image(ScreenPtr);
 
-enum backlight_type backlight_exists(const char *iface);
+void intel_video_overlay_off(intel_screen_private *intel);
 
-void backlight_init(struct backlight *backlight);
-int backlight_open(struct backlight *backlight, char *iface);
-int backlight_set(struct backlight *backlight, int level);
-int backlight_get(struct backlight *backlight);
-int backlight_on(struct backlight *b);
-int backlight_off(struct backlight *b);
-void backlight_disable(struct backlight *backlight);
-void backlight_close(struct backlight *backlight);
-
-struct pci_device;
-char *backlight_find_for_device(struct pci_device *pci);
-
-#endif /* BACKLIGHT_H */
+#endif /* _INTEL_VIDEO_OVERLAY_H_ */

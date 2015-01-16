@@ -430,8 +430,8 @@ move_to_gpu(PixmapPtr pixmap, const BoxRec *box, bool blt)
 
 	priv = sna_pixmap(pixmap);
 	if (priv == NULL) {
-		DBG(("%s: not migrating unattached pixmap\n",
-		     __FUNCTION__));
+		DBG(("%s: not migrating unattached pixmap=%ld\n",
+		     __FUNCTION__, pixmap->drawable.serialNumber));
 		return NULL;
 	}
 
@@ -448,20 +448,22 @@ move_to_gpu(PixmapPtr pixmap, const BoxRec *box, bool blt)
 	}
 
 	if (priv->cpu_damage == NULL) {
-		DBG(("%s: not migrating uninitialised pixmap\n",
-		     __FUNCTION__));
+		DBG(("%s: not migrating uninitialised pixmap=%ld\n",
+		     __FUNCTION__, pixmap->drawable.serialNumber));
 		return NULL;
 	}
 
 	if (pixmap->usage_hint) {
-		DBG(("%s: not migrating pixmap due to usage_hint=%d\n",
-		     __FUNCTION__, pixmap->usage_hint));
+		DBG(("%s: not migrating pixmap=%ld due to usage_hint=%d\n",
+		     __FUNCTION__,
+		     pixmap->drawable.serialNumber,
+		     pixmap->usage_hint));
 		return NULL;
 	}
 
 	if (DBG_FORCE_UPLOAD < 0) {
 		if (!sna_pixmap_force_to_gpu(pixmap,
-					     blt ? MOVE_READ : MOVE_SOURCE_HINT | MOVE_READ))
+					     blt ? MOVE_READ : MOVE_SOURCE_HINT | MOVE_ASYNC_HINT | MOVE_READ))
 			return NULL;
 
 		return priv->gpu_bo;
@@ -506,7 +508,7 @@ upload:
 			return NULL;
 	} else {
 		if (!sna_pixmap_move_to_gpu(pixmap,
-					    __MOVE_FORCE | MOVE_SOURCE_HINT | MOVE_READ))
+					    __MOVE_FORCE | MOVE_ASYNC_HINT | MOVE_SOURCE_HINT | MOVE_READ))
 			return NULL;
 	}
 
@@ -774,7 +776,7 @@ static int sna_render_picture_downsample(struct sna *sna,
 	priv = sna_pixmap(tmp);
 	assert(priv && priv->gpu_bo);
 
-	if (!sna_pixmap_move_to_gpu(pixmap, MOVE_SOURCE_HINT | MOVE_READ)) {
+	if (!sna_pixmap_move_to_gpu(pixmap, MOVE_ASYNC_HINT | MOVE_SOURCE_HINT | MOVE_READ)) {
 fixup:
 		DBG(("%s: unable to create GPU bo for target or temporary pixmaps\n",
 		     __FUNCTION__));
@@ -827,9 +829,15 @@ fixup:
 	size = sna->render.max_3d_size - 4096 / pixmap->drawable.bitsPerPixel;
 	while (size * size * 4 > max_size)
 		size /= 2;
+	DBG(("%s: size=%d (max=%d), scale %dx%d\n",
+	     __FUNCTION__, size, max_size, sx, sy));
 
 	sw = size / sx - 2 * sx;
+	if (sw < 1)
+		sw = 1;
 	sh = size / sy - 2 * sy;
+	if (sh < 1)
+		sh = 1;
 	DBG(("%s %d:%d downsampling using %dx%d GPU tiles\n",
 	     __FUNCTION__, (width + sw-1)/sw, (height + sh-1)/sh, sw, sh));
 
@@ -1037,7 +1045,7 @@ sna_render_picture_partial(struct sna *sna,
 		struct sna_pixmap *priv;
 
 		priv = sna_pixmap_force_to_gpu(pixmap,
-					       MOVE_READ | MOVE_SOURCE_HINT);
+					       MOVE_READ | MOVE_ASYNC_HINT | MOVE_SOURCE_HINT);
 		if (priv == NULL)
 			return false;
 
@@ -1977,6 +1985,14 @@ sna_render_composite_redirect(struct sna *sna,
 			box.x1 = box.x1 & ~(tile_width * 8 / op->dst.pixmap->drawable.bitsPerPixel - 1);
 			box.x2 = ALIGN(box.x2, tile_width * 8 / op->dst.pixmap->drawable.bitsPerPixel);
 
+			if (box.x1 > sna->render.max_3d_size &&
+			    box.x2 <= 2*sna->render.max_3d_size)
+				box.x1 = sna->render.max_3d_size;
+
+			if (box.y1 > sna->render.max_3d_size &&
+			    box.y2 <= 2*sna->render.max_3d_size)
+				box.y1 = sna->render.max_3d_size;
+
 			offset = box.x1 * op->dst.pixmap->drawable.bitsPerPixel / 8 / tile_width * tile_size;
 		} else {
 			if (sna->kgem.gen < 040) {
@@ -1992,6 +2008,14 @@ sna_render_composite_redirect(struct sna *sna,
 				box.x1 = box.x1 & ~1;
 				box.x2 = ALIGN(box.x2, 2);
 			}
+
+			if (box.x1 > sna->render.max_3d_size &&
+			    box.x2 <= 2*sna->render.max_3d_size)
+				box.x1 = sna->render.max_3d_size;
+
+			if (box.y1 > sna->render.max_3d_size &&
+			    box.y2 <= 2*sna->render.max_3d_size)
+				box.y1 = sna->render.max_3d_size;
 
 			offset = box.x1 * op->dst.pixmap->drawable.bitsPerPixel / 8;
 		}
@@ -2278,4 +2302,82 @@ cleanup_boxes:
 		free(boxes);
 
 	return ret;
+}
+
+static bool can_copy_cpu(struct sna *sna,
+			 struct kgem_bo *src,
+			 struct kgem_bo *dst)
+{
+	if (src->tiling != dst->tiling)
+		return false;
+
+	if (src->pitch != dst->pitch)
+		return false;
+
+	if (!kgem_bo_can_map__cpu(&sna->kgem, src, false))
+		return false;
+
+	if (!kgem_bo_can_map__cpu(&sna->kgem, dst, true))
+		return false;
+
+	DBG(("%s -- yes, src handle=%d, dst handle=%d\n", __FUNCTION__, src->handle, dst->handle));
+	return true;
+}
+
+bool
+memcpy_copy_boxes(struct sna *sna, uint8_t op,
+		  const DrawableRec *src_draw, struct kgem_bo *src_bo, int16_t sx, int16_t sy,
+		  const DrawableRec *dst_draw, struct kgem_bo *dst_bo, int16_t dx, int16_t dy,
+		  const BoxRec *box, int n, unsigned flags)
+{
+	void *dst, *src;
+	bool clipped;
+
+	if (op != GXcopy)
+		return false;
+
+	clipped = (n > 1 ||
+		   box->x1 + dx > 0 ||
+		   box->y1 + dy > 0 ||
+		   box->x2 + dx < dst_draw->width ||
+		   box->y2 + dy < dst_draw->height);
+
+	dst = src = NULL;
+	if (!clipped && can_copy_cpu(sna, src_bo, dst_bo)) {
+		dst = kgem_bo_map__cpu(&sna->kgem, dst_bo);
+		src = kgem_bo_map__cpu(&sna->kgem, src_bo);
+	}
+
+	if (dst == NULL || src == NULL) {
+		dst = kgem_bo_map__gtt(&sna->kgem, dst_bo);
+		src = kgem_bo_map__gtt(&sna->kgem, src_bo);
+		if (dst == NULL || src == NULL)
+			return false;
+	} else {
+		kgem_bo_sync__cpu_full(&sna->kgem, dst_bo, true);
+		kgem_bo_sync__cpu_full(&sna->kgem, src_bo, false);
+	}
+
+	DBG(("%s: src(%d, %d), dst(%d, %d) x %d\n",
+	     __FUNCTION__, sx, sy, dx, dy, n));
+
+	if (sigtrap_get() == 0) {
+		do {
+			memcpy_blt(src, dst, dst_draw->bitsPerPixel,
+				   src_bo->pitch, dst_bo->pitch,
+				   box->x1 + sx, box->y1 + sy,
+				   box->x1 + dx, box->y1 + dy,
+				   box->x2 - box->x1, box->y2 - box->y1);
+			box++;
+		} while (--n);
+		sigtrap_put();
+	}
+
+	return true;
+}
+
+void
+sna_render_mark_wedged(struct sna *sna)
+{
+	sna->render.copy_boxes = memcpy_copy_boxes;
 }

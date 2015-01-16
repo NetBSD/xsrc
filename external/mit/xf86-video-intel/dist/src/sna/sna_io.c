@@ -484,11 +484,12 @@ fallback:
 	if (sna->kgem.gen >= 0100) {
 		cmd |= 8;
 		do {
-			int nbox_this_time;
+			int nbox_this_time, rem;
 
 			nbox_this_time = tmp_nbox;
-			if (10*nbox_this_time > kgem->surface - kgem->nbatch - KGEM_BATCH_RESERVED)
-				nbox_this_time = (kgem->surface - kgem->nbatch - KGEM_BATCH_RESERVED) / 8;
+			rem = kgem_batch_space(kgem);
+			if (10*nbox_this_time > rem)
+				nbox_this_time = rem / 8;
 			if (2*nbox_this_time > KGEM_RELOC_SIZE(kgem) - kgem->nreloc)
 				nbox_this_time = (KGEM_RELOC_SIZE(kgem) - kgem->nreloc) / 2;
 			assert(nbox_this_time);
@@ -543,11 +544,12 @@ fallback:
 	} else {
 		cmd |= 6;
 		do {
-			int nbox_this_time;
+			int nbox_this_time, rem;
 
 			nbox_this_time = tmp_nbox;
-			if (8*nbox_this_time > kgem->surface - kgem->nbatch - KGEM_BATCH_RESERVED)
-				nbox_this_time = (kgem->surface - kgem->nbatch - KGEM_BATCH_RESERVED) / 8;
+			rem = kgem_batch_space(kgem);
+			if (8*nbox_this_time > rem)
+				nbox_this_time = rem / 8;
 			if (2*nbox_this_time > KGEM_RELOC_SIZE(kgem) - kgem->nreloc)
 				nbox_this_time = (KGEM_RELOC_SIZE(kgem) - kgem->nreloc) / 2;
 			assert(nbox_this_time);
@@ -650,6 +652,9 @@ static bool upload_inplace__tiled(struct kgem *kgem, struct kgem_bo *bo)
 		break;
 	}
 
+	if (kgem->has_wc_mmap)
+		return true;
+
 	return kgem_bo_can_map__cpu(kgem, bo, true);
 }
 
@@ -661,14 +666,22 @@ write_boxes_inplace__tiled(struct kgem *kgem,
 {
 	uint8_t *dst;
 
-	assert(kgem_bo_can_map__cpu(kgem, bo, true));
+	assert(kgem->has_wc_mmap || kgem_bo_can_map__cpu(kgem, bo, true));
 	assert(bo->tiling != I915_TILING_Y);
 
-	dst = kgem_bo_map__cpu(kgem, bo);
-	if (dst == NULL)
-		return false;
+	if (kgem_bo_can_map__cpu(kgem, bo, true)) {
+		dst = kgem_bo_map__cpu(kgem, bo);
+		if (dst == NULL)
+			return false;
 
-	kgem_bo_sync__cpu(kgem, bo);
+		kgem_bo_sync__cpu(kgem, bo);
+	} else {
+		dst = kgem_bo_map__wc(kgem, bo);
+		if (dst == NULL)
+			return false;
+
+		kgem_bo_sync__gtt(kgem, bo);
+	}
 
 	if (sigtrap_get())
 		return false;
@@ -1029,11 +1042,12 @@ tile:
 	if (kgem->gen >= 0100) {
 		cmd |= 8;
 		do {
-			int nbox_this_time;
+			int nbox_this_time, rem;
 
 			nbox_this_time = nbox;
-			if (10*nbox_this_time > kgem->surface - kgem->nbatch - KGEM_BATCH_RESERVED)
-				nbox_this_time = (kgem->surface - kgem->nbatch - KGEM_BATCH_RESERVED) / 8;
+			rem = kgem_batch_space(kgem);
+			if (10*nbox_this_time > rem)
+				nbox_this_time = rem / 8;
 			if (2*nbox_this_time > KGEM_RELOC_SIZE(kgem) - kgem->nreloc)
 				nbox_this_time = (KGEM_RELOC_SIZE(kgem) - kgem->nreloc) / 2;
 			assert(nbox_this_time);
@@ -1122,11 +1136,12 @@ tile:
 	} else {
 		cmd |= 6;
 		do {
-			int nbox_this_time;
+			int nbox_this_time, rem;
 
 			nbox_this_time = nbox;
-			if (8*nbox_this_time > kgem->surface - kgem->nbatch - KGEM_BATCH_RESERVED)
-				nbox_this_time = (kgem->surface - kgem->nbatch - KGEM_BATCH_RESERVED) / 8;
+			rem = kgem_batch_space(kgem);
+			if (8*nbox_this_time > rem)
+				nbox_this_time = rem / 8;
 			if (2*nbox_this_time > KGEM_RELOC_SIZE(kgem) - kgem->nreloc)
 				nbox_this_time = (KGEM_RELOC_SIZE(kgem) - kgem->nreloc) / 2;
 			assert(nbox_this_time);
@@ -1530,11 +1545,12 @@ tile:
 	if (sna->kgem.gen >= 0100) {
 		cmd |= 8;
 		do {
-			int nbox_this_time;
+			int nbox_this_time, rem;
 
 			nbox_this_time = nbox;
-			if (10*nbox_this_time > kgem->surface - kgem->nbatch - KGEM_BATCH_RESERVED)
-				nbox_this_time = (kgem->surface - kgem->nbatch - KGEM_BATCH_RESERVED) / 8;
+			rem = kgem_batch_space(kgem);
+			if (10*nbox_this_time > rem)
+				nbox_this_time = rem / 8;
 			if (2*nbox_this_time > KGEM_RELOC_SIZE(kgem) - kgem->nreloc)
 				nbox_this_time = (KGEM_RELOC_SIZE(kgem) - kgem->nreloc) / 2;
 			assert(nbox_this_time);
@@ -1627,11 +1643,12 @@ tile:
 	} else {
 		cmd |= 6;
 		do {
-			int nbox_this_time;
+			int nbox_this_time, rem;
 
 			nbox_this_time = nbox;
-			if (8*nbox_this_time > kgem->surface - kgem->nbatch - KGEM_BATCH_RESERVED)
-				nbox_this_time = (kgem->surface - kgem->nbatch - KGEM_BATCH_RESERVED) / 8;
+			rem = kgem_batch_space(kgem);
+			if (8*nbox_this_time > rem)
+				nbox_this_time = rem / 8;
 			if (2*nbox_this_time > KGEM_RELOC_SIZE(kgem) - kgem->nreloc)
 				nbox_this_time = (KGEM_RELOC_SIZE(kgem) - kgem->nreloc) / 2;
 			assert(nbox_this_time);
@@ -1765,6 +1782,7 @@ indirect_replace(struct sna *sna,
 	if (!src_bo)
 		return false;
 
+	ret = false;
 	if (sigtrap_get() == 0) {
 		memcpy_blt(src, ptr, pixmap->drawable.bitsPerPixel,
 			   stride, src_bo->pitch,
@@ -1782,8 +1800,7 @@ indirect_replace(struct sna *sna,
 					     &pixmap->drawable, bo, 0, 0,
 					     &box, 1, 0);
 		sigtrap_put();
-	} else
-		ret = false;
+	}
 
 	kgem_bo_destroy(kgem, src_bo);
 

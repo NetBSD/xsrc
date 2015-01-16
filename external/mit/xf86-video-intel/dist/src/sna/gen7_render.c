@@ -923,7 +923,7 @@ gen7_emit_drawing_rectangle(struct sna *sna,
 	uint32_t limit = (op->dst.height - 1) << 16 | (op->dst.width - 1);
 	uint32_t offset = (uint16_t)op->dst.y << 16 | (uint16_t)op->dst.x;
 
-	assert(!too_large(op->dst.x, op->dst.y));
+	assert(!too_large(abs(op->dst.x), abs(op->dst.y)));
 	assert(!too_large(op->dst.width, op->dst.height));
 
 	if (sna->render_state.gen7.drawrect_limit == limit &&
@@ -1069,6 +1069,7 @@ gen7_emit_pipe_invalidate(struct sna *sna)
 		  GEN7_PIPE_CONTROL_CS_STALL);
 	OUT_BATCH(0);
 	OUT_BATCH(0);
+	sna->render_state.gen7.pipe_controls_since_stall = 0;
 }
 
 inline static void
@@ -1077,9 +1078,11 @@ gen7_emit_pipe_flush(struct sna *sna, bool need_stall)
 	unsigned stall;
 
 	stall = 0;
-	if (need_stall)
-		stall = (GEN7_PIPE_CONTROL_CS_STALL |
-			 GEN7_PIPE_CONTROL_STALL_AT_SCOREBOARD);
+	if (need_stall) {
+		stall = GEN7_PIPE_CONTROL_CS_STALL;
+		sna->render_state.gen7.pipe_controls_since_stall = 0;
+	} else
+		sna->render_state.gen7.pipe_controls_since_stall++;
 
 	OUT_BATCH(GEN7_PIPE_CONTROL | (4 - 2));
 	OUT_BATCH(GEN7_PIPE_CONTROL_WC_FLUSH | stall);
@@ -1095,6 +1098,7 @@ gen7_emit_pipe_stall(struct sna *sna)
 		  GEN7_PIPE_CONTROL_STALL_AT_SCOREBOARD);
 	OUT_BATCH(0);
 	OUT_BATCH(0);
+	sna->render_state.gen7.pipe_controls_since_stall = 0;
 }
 
 static void
@@ -1123,6 +1127,9 @@ gen7_emit_state(struct sna *sna,
 
 	need_stall &= gen7_emit_drawing_rectangle(sna, op);
 	if (ALWAYS_STALL)
+		need_stall = true;
+	if (sna->kgem.gen < 075 &&
+	    sna->render_state.gen7.pipe_controls_since_stall >= 3)
 		need_stall = true;
 
 	if (need_invalidate) {
@@ -3746,6 +3753,7 @@ gen7_render_clear(struct sna *sna, PixmapPtr dst, struct kgem_bo *bo)
 }
 static void gen7_render_reset(struct sna *sna)
 {
+	sna->render_state.gen7.pipe_controls_since_stall = 0;
 	sna->render_state.gen7.emit_flush = false;
 	sna->render_state.gen7.needs_invariant = true;
 	sna->render_state.gen7.ve_id = 3 << 2;
@@ -3885,7 +3893,7 @@ static bool gen7_render_setup(struct sna *sna, int devid)
 
 const char *gen7_render_init(struct sna *sna, const char *backend)
 {
-	int devid = intel_get_device_id(sna->scrn);
+	int devid = intel_get_device_id(sna->dev);
 
 	if (!gen7_render_setup(sna, devid))
 		return backend;

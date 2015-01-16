@@ -117,26 +117,27 @@ struct xf86_platform_device;
 struct intel_device_info {
 	int gen;
 };
+struct intel_device;
 
 int intel_entity_get_devid(int index);
-
-void intel_detect_chipset(ScrnInfoPtr scrn, EntityInfoPtr ent);
 
 int intel_open_device(int entity_num,
 		      const struct pci_device *pci,
 		      struct xf86_platform_device *dev);
 int __intel_peek_fd(ScrnInfoPtr scrn);
-int intel_has_render_node(ScrnInfoPtr scrn);
-int intel_get_device(ScrnInfoPtr scrn);
-const char *intel_get_client_name(ScrnInfoPtr scrn);
-int intel_get_client_fd(ScrnInfoPtr scrn);
-int intel_get_device_id(ScrnInfoPtr scrn);
-int intel_get_master(ScrnInfoPtr scrn);
-int intel_put_master(ScrnInfoPtr scrn);
-void intel_put_device(ScrnInfoPtr scrn);
+struct intel_device *intel_get_device(ScrnInfoPtr scrn, int *fd);
+int intel_has_render_node(struct intel_device *dev);
+const char *intel_get_client_name(struct intel_device *dev);
+int intel_get_client_fd(struct intel_device *dev);
+int intel_get_device_id(struct intel_device *dev);
+int intel_get_master(struct intel_device *dev);
+int intel_put_master(struct intel_device *dev);
+void intel_put_device(struct intel_device *dev);
+
+void intel_detect_chipset(ScrnInfoPtr scrn, struct intel_device *dev);
 
 #define IS_DEFAULT_ACCEL_METHOD(x) ({ \
-	enum { NOACCEL, SNA, UXA, GLAMOR } default_accel_method__ = DEFAULT_ACCEL_METHOD; \
+	enum { NOACCEL, SNA, UXA } default_accel_method__ = DEFAULT_ACCEL_METHOD; \
 	default_accel_method__ == x; \
 })
 

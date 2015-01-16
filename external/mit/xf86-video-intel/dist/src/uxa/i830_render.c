@@ -33,6 +33,7 @@
 #include "xorg-server.h"
 #include "xf86.h"
 #include "intel.h"
+#include "intel_uxa.h"
 #include "i830_reg.h"
 
 struct blendinfo {
@@ -166,7 +167,7 @@ static Bool i830_get_dest_format(PicturePtr dest_picture, uint32_t * dst_format)
 		break;
 	default:
 		scrn = xf86ScreenToScrn(dest_picture->pDrawable->pScreen);
-		intel_debug_fallback(scrn, "Unsupported dest format 0x%x\n",
+		intel_uxa_debug_fallback(scrn, "Unsupported dest format 0x%x\n",
 				     (int)dest_picture->format);
 		return FALSE;
 	}
@@ -197,7 +198,7 @@ static Bool i830_get_blend_cntl(ScrnInfoPtr scrn, int op, PicturePtr mask,
 	 */
 	if (dst_format == PICT_a8 && ((sblend == BLENDFACTOR_DST_ALPHA ||
 				       sblend == BLENDFACTOR_INV_DST_ALPHA))) {
-		intel_debug_fallback(scrn, "Can't do dst alpha blending with "
+		intel_uxa_debug_fallback(scrn, "Can't do dst alpha blending with "
 				     "PICT_a8 dest.\n");
 		return FALSE;
 	}
@@ -257,7 +258,7 @@ static void i830_texture_setup(PicturePtr picture, PixmapPtr pixmap, int unit)
 	intel->scale_units[unit][1] = pixmap->drawable.height;
 	intel->transform[unit] = picture->transform;
 
-	if (intel_transform_is_affine(intel->transform[unit]))
+	if (intel_uxa_transform_is_affine(intel->transform[unit]))
 		texcoordtype = TEXCOORDTYPE_CARTESIAN;
 	else
 		texcoordtype = TEXCOORDTYPE_HOMOGENEOUS;
@@ -293,9 +294,9 @@ static void i830_texture_setup(PicturePtr picture, PixmapPtr pixmap, int unit)
 	}
 	filter |= (MIPFILTER_NONE << TM0S3_MIP_FILTER_SHIFT);
 
-	if (intel_pixmap_tiled(pixmap)) {
+	if (intel_uxa_pixmap_tiled(pixmap)) {
 		tiling_bits = TM0S1_TILED_SURFACE;
-		if (intel_get_pixmap_private(pixmap)->tiling
+		if (intel_uxa_get_pixmap_private(pixmap)->tiling
 				== I915_TILING_Y)
 			tiling_bits |= TM0S1_TILE_WALK;
 	} else
@@ -352,7 +353,7 @@ i830_check_composite(int op,
 
 	/* Check for unsupported compositing operations. */
 	if (op >= sizeof(i830_blend_op) / sizeof(i830_blend_op[0])) {
-		intel_debug_fallback(scrn, "Unsupported Composite op 0x%x\n",
+		intel_uxa_debug_fallback(scrn, "Unsupported Composite op 0x%x\n",
 				     op);
 		return FALSE;
 	}
@@ -365,7 +366,7 @@ i830_check_composite(int op,
 		 */
 		if (i830_blend_op[op].src_alpha &&
 		    (i830_blend_op[op].src_blend != BLENDFACTOR_ZERO)) {
-			intel_debug_fallback(scrn, "Component alpha not "
+			intel_uxa_debug_fallback(scrn, "Component alpha not "
 					     "supported with source alpha and "
 					     "source value blending.\n");
 			return FALSE;
@@ -373,12 +374,12 @@ i830_check_composite(int op,
 	}
 
 	if (!i830_get_dest_format(dest_picture, &tmp1)) {
-		intel_debug_fallback(scrn, "Get Color buffer format\n");
+		intel_uxa_debug_fallback(scrn, "Get Color buffer format\n");
 		return FALSE;
 	}
 
 	if (width > 2048 || height > 2048) {
-		intel_debug_fallback(scrn, "Operation is too large (%d, %d)\n", width, height);
+		intel_uxa_debug_fallback(scrn, "Operation is too large (%d, %d)\n", width, height);
 		return FALSE;
 	}
 
@@ -391,7 +392,7 @@ i830_check_composite_target(PixmapPtr pixmap)
 	if (pixmap->drawable.width > 2048 || pixmap->drawable.height > 2048)
 		return FALSE;
 
-	if(!intel_check_pitch_3d(pixmap))
+	if(!intel_uxa_check_pitch_3d(pixmap))
 		return FALSE;
 
 	return TRUE;
@@ -404,14 +405,14 @@ i830_check_composite_texture(ScreenPtr screen, PicturePtr picture)
 	intel_screen_private *intel = intel_get_screen_private(scrn);
 
 	if (picture->repeatType > RepeatReflect) {
-		intel_debug_fallback(scrn, "Unsupported picture repeat %d\n",
+		intel_uxa_debug_fallback(scrn, "Unsupported picture repeat %d\n",
 			     picture->repeatType);
 		return FALSE;
 	}
 
 	if (picture->filter != PictFilterNearest &&
 	    picture->filter != PictFilterBilinear) {
-		intel_debug_fallback(scrn, "Unsupported filter 0x%x\n",
+		intel_uxa_debug_fallback(scrn, "Unsupported filter 0x%x\n",
 				     picture->filter);
 		return FALSE;
 	}
@@ -422,7 +423,7 @@ i830_check_composite_texture(ScreenPtr screen, PicturePtr picture)
 		w = picture->pDrawable->width;
 		h = picture->pDrawable->height;
 		if ((w > 2048) || (h > 2048)) {
-			intel_debug_fallback(scrn,
+			intel_uxa_debug_fallback(scrn,
 					     "Picture w/h too large (%dx%d)\n",
 					     w, h);
 			return FALSE;
@@ -430,7 +431,7 @@ i830_check_composite_texture(ScreenPtr screen, PicturePtr picture)
 
 		/* XXX we can use the xrgb32 types if there the picture covers the clip */
 		if (!i8xx_get_card_format(intel, picture)) {
-			intel_debug_fallback(scrn, "Unsupported picture format "
+			intel_uxa_debug_fallback(scrn, "Unsupported picture format "
 					     "0x%x\n",
 					     (int)picture->format);
 			return FALSE;
@@ -451,9 +452,9 @@ i830_prepare_composite(int op, PicturePtr source_picture,
 	intel_screen_private *intel = intel_get_screen_private(scrn);
 	drm_intel_bo *bo_table[] = {
 		NULL,		/* batch_bo */
-		intel_get_pixmap_bo(source),
-		mask ? intel_get_pixmap_bo(mask) : NULL,
-		intel_get_pixmap_bo(dest),
+		intel_uxa_get_pixmap_bo(source),
+		mask ? intel_uxa_get_pixmap_bo(mask) : NULL,
+		intel_uxa_get_pixmap_bo(dest),
 	};
 
 	intel->render_source_picture = source_picture;
@@ -463,7 +464,7 @@ i830_prepare_composite(int op, PicturePtr source_picture,
 	intel->render_dest_picture = dest_picture;
 	intel->render_dest = dest;
 
-	if (!intel_check_pitch_3d(source))
+	if (!intel_uxa_check_pitch_3d(source))
 		return FALSE;
 	if (mask) {
 		if (mask_picture->componentAlpha &&
@@ -474,22 +475,22 @@ i830_prepare_composite(int op, PicturePtr source_picture,
 			 */
 			if (i830_blend_op[op].src_alpha &&
 			    (i830_blend_op[op].src_blend != BLENDFACTOR_ZERO)) {
-				intel_debug_fallback(scrn, "Component alpha not "
+				intel_uxa_debug_fallback(scrn, "Component alpha not "
 						     "supported with source alpha and "
 						     "source value blending.\n");
 				return FALSE;
 			}
 		}
-		if (!intel_check_pitch_3d(mask))
+		if (!intel_uxa_check_pitch_3d(mask))
 			return FALSE;
 	}
-	if (!intel_check_pitch_3d(dest))
+	if (!intel_uxa_check_pitch_3d(dest))
 		return FALSE;
 
 	if (!i830_get_dest_format(dest_picture, &intel->render_dest_format))
 		return FALSE;
 
-	if (!intel_get_aperture_space(scrn, bo_table, ARRAY_SIZE(bo_table)))
+	if (!intel_uxa_get_aperture_space(scrn, bo_table, ARRAY_SIZE(bo_table)))
 		return FALSE;
 
 	if (mask) {
@@ -564,7 +565,7 @@ i830_prepare_composite(int op, PicturePtr source_picture,
 		intel->s8_blendctl = blendctl;
 	}
 
-	if (intel_pixmap_is_dirty(source) || intel_pixmap_is_dirty(mask))
+	if (intel_uxa_pixmap_is_dirty(source) || intel_uxa_pixmap_is_dirty(mask))
 		intel_batch_emit_flush(scrn);
 
 	intel->needs_render_state_emit = TRUE;
@@ -585,9 +586,9 @@ static void i830_emit_composite_state(ScrnInfoPtr scrn)
 
 	assert(intel->in_batch_atomic);
 
-	if (intel_pixmap_tiled(intel->render_dest)) {
+	if (intel_uxa_pixmap_tiled(intel->render_dest)) {
 		tiling_bits = BUF_3D_TILED_SURFACE;
-		if (intel_get_pixmap_private(intel->render_dest)->tiling
+		if (intel_uxa_get_pixmap_private(intel->render_dest)->tiling
 				== I915_TILING_Y)
 			tiling_bits |= BUF_3D_TILE_WALK_Y;
 	} else
@@ -636,12 +637,12 @@ static void i830_emit_composite_state(ScrnInfoPtr scrn)
 		  DISABLE_STENCIL_WRITE | ENABLE_TEX_CACHE |
 		  DISABLE_DITHER | ENABLE_COLOR_WRITE | DISABLE_DEPTH_WRITE);
 
-	if (intel_transform_is_affine(intel->render_source_picture->transform))
+	if (intel_uxa_transform_is_affine(intel->render_source_picture->transform))
 		texcoordfmt |= (TEXCOORDFMT_2D << 0);
 	else
 		texcoordfmt |= (TEXCOORDFMT_3D << 0);
 	if (intel->render_mask) {
-		if (intel_transform_is_affine
+		if (intel_uxa_transform_is_affine
 		    (intel->render_mask_picture->transform))
 			texcoordfmt |= (TEXCOORDFMT_2D << 2);
 		else
@@ -677,23 +678,23 @@ i830_emit_composite_primitive(PixmapPtr dest,
 	{
 		float x = srcX, y = srcY;
 
-		is_affine_src = intel_transform_is_affine(intel->transform[0]);
+		is_affine_src = intel_uxa_transform_is_affine(intel->transform[0]);
 		if (is_affine_src) {
-			if (!intel_get_transformed_coordinates(x, y,
+			if (!intel_uxa_get_transformed_coordinates(x, y,
 							      intel->
 							      transform[0],
 							      &src_x[0],
 							      &src_y[0]))
 				return;
 
-			if (!intel_get_transformed_coordinates(x, y + h,
+			if (!intel_uxa_get_transformed_coordinates(x, y + h,
 							      intel->
 							      transform[0],
 							      &src_x[1],
 							      &src_y[1]))
 				return;
 
-			if (!intel_get_transformed_coordinates(x + w, y + h,
+			if (!intel_uxa_get_transformed_coordinates(x + w, y + h,
 							      intel->
 							      transform[0],
 							      &src_x[2],
@@ -702,7 +703,7 @@ i830_emit_composite_primitive(PixmapPtr dest,
 
 			per_vertex += 2;	/* src x/y */
 		} else {
-			if (!intel_get_transformed_coordinates_3d(x, y,
+			if (!intel_uxa_get_transformed_coordinates_3d(x, y,
 								 intel->
 								 transform[0],
 								 &src_x[0],
@@ -710,7 +711,7 @@ i830_emit_composite_primitive(PixmapPtr dest,
 								 &src_w[0]))
 				return;
 
-			if (!intel_get_transformed_coordinates_3d(x, y + h,
+			if (!intel_uxa_get_transformed_coordinates_3d(x, y + h,
 								 intel->
 								 transform[0],
 								 &src_x[1],
@@ -718,7 +719,7 @@ i830_emit_composite_primitive(PixmapPtr dest,
 								 &src_w[1]))
 				return;
 
-			if (!intel_get_transformed_coordinates_3d(x + w, y + h,
+			if (!intel_uxa_get_transformed_coordinates_3d(x + w, y + h,
 								 intel->
 								 transform[0],
 								 &src_x[2],
@@ -733,23 +734,23 @@ i830_emit_composite_primitive(PixmapPtr dest,
 	if (intel->render_mask) {
 		float x = maskX, y = maskY;
 
-		is_affine_mask = intel_transform_is_affine(intel->transform[1]);
+		is_affine_mask = intel_uxa_transform_is_affine(intel->transform[1]);
 		if (is_affine_mask) {
-			if (!intel_get_transformed_coordinates(x, y,
+			if (!intel_uxa_get_transformed_coordinates(x, y,
 							      intel->
 							      transform[1],
 							      &mask_x[0],
 							      &mask_y[0]))
 				return;
 
-			if (!intel_get_transformed_coordinates(x, y + h,
+			if (!intel_uxa_get_transformed_coordinates(x, y + h,
 							      intel->
 							      transform[1],
 							      &mask_x[1],
 							      &mask_y[1]))
 				return;
 
-			if (!intel_get_transformed_coordinates(x + w, y + h,
+			if (!intel_uxa_get_transformed_coordinates(x + w, y + h,
 							      intel->
 							      transform[1],
 							      &mask_x[2],
@@ -758,7 +759,7 @@ i830_emit_composite_primitive(PixmapPtr dest,
 
 			per_vertex += 2;	/* mask x/y */
 		} else {
-			if (!intel_get_transformed_coordinates_3d(x, y,
+			if (!intel_uxa_get_transformed_coordinates_3d(x, y,
 								 intel->
 								 transform[1],
 								 &mask_x[0],
@@ -766,7 +767,7 @@ i830_emit_composite_primitive(PixmapPtr dest,
 								 &mask_w[0]))
 				return;
 
-			if (!intel_get_transformed_coordinates_3d(x, y + h,
+			if (!intel_uxa_get_transformed_coordinates_3d(x, y + h,
 								 intel->
 								 transform[1],
 								 &mask_x[1],
@@ -774,7 +775,7 @@ i830_emit_composite_primitive(PixmapPtr dest,
 								 &mask_w[1]))
 				return;
 
-			if (!intel_get_transformed_coordinates_3d(x + w, y + h,
+			if (!intel_uxa_get_transformed_coordinates_3d(x + w, y + h,
 								 intel->
 								 transform[1],
 								 &mask_x[2],

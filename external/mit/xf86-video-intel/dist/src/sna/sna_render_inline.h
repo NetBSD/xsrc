@@ -113,6 +113,30 @@ too_small(struct sna_pixmap *priv)
 }
 
 static inline bool
+can_render_to_picture(PicturePtr dst)
+{
+	if (dst->alphaMap) {
+		DBG(("%s(pixmap=%ld) -- no, has alphamap\n", __FUNCTION__,
+		     get_drawable_pixmap(dst->pDrawable)->drawable.serialNumber));
+		return false;
+	}
+
+	switch (PICT_FORMAT_TYPE(dst->format)) {
+	case PICT_TYPE_COLOR:
+	case PICT_TYPE_GRAY:
+	case PICT_TYPE_OTHER:
+		DBG(("%s(pixmap=%ld) -- no, has palette\n", __FUNCTION__,
+		     get_drawable_pixmap(dst->pDrawable)->drawable.serialNumber));
+		return false;
+	default:
+		break;
+	}
+
+	return true;
+}
+
+
+static inline bool
 is_gpu_dst(struct sna_pixmap *priv)
 {
 	assert(priv);

@@ -35,15 +35,7 @@
 #include <i915_drm.h>
 
 #include "compiler.h"
-
-#if HAS_DEBUG_FULL
-void LogF(const char *f, ...);
-#define DBG(x) LogF x
-#define ERR(x) ErrorF x
-#else
-#define DBG(x)
-#define ERR(x)
-#endif
+#include "debug.h"
 
 struct kgem_bo {
 	struct kgem_request *rq;
@@ -62,6 +54,7 @@ struct kgem_bo {
 
 	void *map__cpu;
 	void *map__gtt;
+	void *map__wc;
 #define MAP(ptr) ((void*)((uintptr_t)(ptr) & ~3))
 
 	struct kgem_bo_binding {
@@ -120,11 +113,21 @@ enum {
 };
 
 struct kgem {
-	int fd;
 	unsigned wedged;
+	int fd;
 	unsigned gen;
 
 	uint32_t unique_id;
+
+	uint16_t nbatch;
+	uint16_t surface;
+	uint16_t nexec;
+	uint16_t nreloc;
+	uint16_t nreloc__self;
+	uint16_t nfence;
+	uint16_t batch_size;
+
+	uint32_t *batch;
 
 	enum kgem_mode {
 		/* order matches I915_EXEC_RING ordering */
@@ -145,6 +148,7 @@ struct kgem {
 	struct list batch_buffers, active_buffers;
 
 	struct list requests[2];
+	struct kgem_request *fence[2];
 	struct kgem_request *next_request;
 	struct kgem_request static_request;
 
@@ -157,14 +161,6 @@ struct kgem {
 	uint32_t batch_flags_base;
 #define I915_EXEC_SECURE (1<<9)
 #define LOCAL_EXEC_OBJECT_WRITE (1<<2)
-
-	uint16_t nbatch;
-	uint16_t surface;
-	uint16_t nexec;
-	uint16_t nreloc;
-	uint16_t nreloc__self;
-	uint16_t nfence;
-	uint16_t batch_size;
 
 	uint32_t flush:1;
 	uint32_t need_expire:1;
@@ -189,6 +185,7 @@ struct kgem {
 	uint32_t has_wt :1;
 	uint32_t has_no_reloc :1;
 	uint32_t has_handle_lut :1;
+	uint32_t has_wc_mmap :1;
 
 	uint32_t can_blt_cpu :1;
 	uint32_t can_render_y :1;
@@ -217,8 +214,9 @@ struct kgem {
 				    int16_t dst_x, int16_t dst_y,
 				    uint16_t width, uint16_t height);
 
+	struct kgem_bo *batch_bo;
+
 	uint16_t reloc__self[256];
-	uint32_t batch[64*1024-8] page_aligned;
 	struct drm_i915_gem_exec_object2 exec[384] page_aligned;
 	struct drm_i915_gem_relocation_entry reloc[8192] page_aligned;
 
@@ -299,8 +297,9 @@ enum {
 	CREATE_PRIME = 0x20,
 	CREATE_TEMPORARY = 0x40,
 	CREATE_CACHED = 0x80,
-	CREATE_NO_RETIRE = 0x100,
-	CREATE_NO_THROTTLE = 0x200,
+	CREATE_UNCACHED = 0x100,
+	CREATE_NO_RETIRE = 0x200,
+	CREATE_NO_THROTTLE = 0x400,
 };
 struct kgem_bo *kgem_create_2d(struct kgem *kgem,
 			       int width,
@@ -428,6 +427,13 @@ static inline void _kgem_set_mode(struct kgem *kgem, enum kgem_mode mode)
 	kgem->mode = mode;
 }
 
+static inline int kgem_batch_space(struct kgem *kgem)
+{
+	int rem = kgem->surface - kgem->nbatch;
+	assert(rem > 0);
+	return rem - KGEM_BATCH_RESERVED;
+}
+
 static inline bool kgem_check_batch(struct kgem *kgem, int num_dwords)
 {
 	assert(num_dwords > 0);
@@ -492,6 +498,7 @@ uint64_t kgem_add_reloc64(struct kgem *kgem,
 void *kgem_bo_map(struct kgem *kgem, struct kgem_bo *bo);
 void *kgem_bo_map__async(struct kgem *kgem, struct kgem_bo *bo);
 void *kgem_bo_map__gtt(struct kgem *kgem, struct kgem_bo *bo);
+void *kgem_bo_map__wc(struct kgem *kgem, struct kgem_bo *bo);
 void kgem_bo_sync__gtt(struct kgem *kgem, struct kgem_bo *bo);
 void *kgem_bo_map__debug(struct kgem *kgem, struct kgem_bo *bo);
 void *kgem_bo_map__cpu(struct kgem *kgem, struct kgem_bo *bo);
@@ -536,6 +543,13 @@ static inline bool kgem_bo_blt_pitch_is_ok(struct kgem *kgem,
 					   struct kgem_bo *bo)
 {
 	int pitch = bo->pitch;
+
+	if (kgem->gen >= 0100 && pitch & (1 << 4)) { /* bdw is broken */
+		DBG(("%s: can not blt to handle=%d, pitch=%d\n",
+		     __FUNCTION__, bo->handle, pitch));
+		return false;
+	}
+
 	if (kgem->gen >= 040 && bo->tiling)
 		pitch /= 4;
 	if (pitch > MAXSHORT) {
@@ -555,6 +569,12 @@ static inline bool kgem_bo_can_blt(struct kgem *kgem,
 	if (bo->tiling == I915_TILING_Y) {
 		DBG(("%s: can not blt to handle=%d, tiling=Y\n",
 		     __FUNCTION__, bo->handle));
+		return false;
+	}
+
+	if (kgem->gen >= 0100 && bo->proxy && bo->delta & (1 << 4)) {
+		DBG(("%s: can not blt to handle=%d, delta=%d\n",
+		     __FUNCTION__, bo->handle, bo->delta));
 		return false;
 	}
 
@@ -606,6 +626,7 @@ static inline bool kgem_bo_is_busy(struct kgem_bo *bo)
 	return bo->rq;
 }
 
+void __kgem_retire_requests_upto(struct kgem *kgem, struct kgem_bo *bo);
 static inline bool __kgem_bo_is_busy(struct kgem *kgem, struct kgem_bo *bo)
 {
 	DBG(("%s: handle=%d, domain: %d exec? %d, rq? %d\n", __FUNCTION__,
@@ -615,8 +636,12 @@ static inline bool __kgem_bo_is_busy(struct kgem *kgem, struct kgem_bo *bo)
 	if (bo->exec)
 		return true;
 
-	if (bo->rq && !__kgem_busy(kgem, bo->handle))
-		__kgem_bo_clear_busy(bo);
+	if (bo->rq && !__kgem_busy(kgem, bo->handle)) {
+		__kgem_retire_requests_upto(kgem, bo);
+		assert(list_is_empty(&bo->request));
+		assert(bo->rq == NULL);
+		assert(bo->domain == DOMAIN_NONE);
+	}
 
 	return kgem_bo_is_busy(bo);
 }
@@ -698,13 +723,16 @@ static inline bool kgem_bo_mapped(struct kgem *kgem, struct kgem_bo *bo)
 	if (bo->tiling == I915_TILING_NONE && (bo->domain == DOMAIN_CPU || kgem->has_llc))
 		return bo->map__cpu != NULL;
 
+	if (bo->tiling == I915_TILING_NONE && bo->map__wc)
+		return true;
+
 	return bo->map__gtt != NULL;
 }
 
 static inline bool kgem_bo_can_map(struct kgem *kgem, struct kgem_bo *bo)
 {
-	DBG(("%s: handle=%d, map=%p:%p, tiling=%d, domain=%d, offset=%ld\n",
-	     __FUNCTION__, bo->handle, bo->map__gtt, bo->map__cpu, bo->tiling, bo->domain, (long)bo->presumed_offset));
+	DBG(("%s: handle=%d, map=%p:%p:%p, tiling=%d, domain=%d, offset=%ld\n",
+	     __FUNCTION__, bo->handle, bo->map__gtt, bo->map__wc, bo->map__cpu, bo->tiling, bo->domain, (long)bo->presumed_offset));
 
 	if (!bo->tiling && (kgem->has_llc || bo->domain == DOMAIN_CPU))
 		return true;
@@ -716,6 +744,9 @@ static inline bool kgem_bo_can_map(struct kgem *kgem, struct kgem_bo *bo)
 
 	if (kgem->gen == 021 && bo->tiling == I915_TILING_Y)
 		return false;
+
+	if (!bo->tiling && kgem->has_wc_mmap)
+		return true;
 
 	return __kgem_bo_num_pages(bo) <= kgem->aperture_mappable / 4;
 }

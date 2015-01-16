@@ -65,9 +65,11 @@
 #include "fd.h"
 
 struct intel_device {
+	int idx;
 	char *master_node;
 	char *render_node;
 	int fd;
+	int device_id;
 	int open_count;
 	int master_count;
 };
@@ -184,7 +186,7 @@ int intel_entity_get_devid(int idx)
 	if (dev == NULL)
 		return 0;
 
-	return __intel_get_device_id(dev->fd);
+	return dev->device_id;
 }
 
 static inline struct intel_device *intel_device(ScrnInfoPtr scrn)
@@ -193,11 +195,6 @@ static inline struct intel_device *intel_device(ScrnInfoPtr scrn)
 		return NULL;
 
 	return xf86GetEntityPrivate(scrn->entityList[0], intel_device_key)->ptr;
-}
-
-static inline void intel_set_device(ScrnInfoPtr scrn, struct intel_device *dev)
-{
-	xf86GetEntityPrivate(scrn->entityList[0], intel_device_key)->ptr = dev;
 }
 
 static int is_i915_device(int fd)
@@ -585,6 +582,12 @@ int intel_open_device(int entity_num,
 	if (geteuid() && is_master(fd))
 		master_count++;
 
+	if (pci)
+		dev->device_id = pci->device_id;
+	else
+		dev->device_id = __intel_get_device_id(fd);
+
+	dev->idx = entity_num;
 	dev->fd = fd;
 	dev->open_count = master_count;
 	dev->master_count = master_count;
@@ -615,24 +618,24 @@ int __intel_peek_fd(ScrnInfoPtr scrn)
 	return dev->fd;
 }
 
-int intel_has_render_node(ScrnInfoPtr scrn)
+int intel_has_render_node(struct intel_device *dev)
 {
-	struct intel_device *dev;
 	struct stat st;
 
-	dev = intel_device(scrn);
 	assert(dev && dev->fd != -1);
-
 	return is_render_node(dev->fd, &st);
 }
 
-int intel_get_device(ScrnInfoPtr scrn)
+struct intel_device *intel_get_device(ScrnInfoPtr scrn, int *fd)
 {
 	struct intel_device *dev;
 	int ret;
 
 	dev = intel_device(scrn);
-	assert(dev && dev->fd != -1);
+	if (dev == NULL)
+		return NULL;
+
+	assert(dev->fd != -1);
 
 	if (dev->open_count++ == 0) {
 		drmSetVersion sv;
@@ -661,16 +664,16 @@ int intel_get_device(ScrnInfoPtr scrn)
 				   strerror(errno), errno);
 			dump_clients_info(scrn, dev->fd);
 			dev->open_count--;
-			return -1;
+			return NULL;
 		}
 	}
 
-	return dev->fd;
+	*fd = dev->fd;
+	return dev;
 }
 
-const char *intel_get_client_name(ScrnInfoPtr scrn)
+const char *intel_get_client_name(struct intel_device *dev)
 {
-	struct intel_device *dev = intel_device(scrn);
 	assert(dev && dev->render_node);
 	return dev->render_node;
 }
@@ -686,14 +689,11 @@ static int authorise(struct intel_device *dev, int fd)
 	return drmGetMagic(fd, &magic) == 0 && drmAuthMagic(dev->fd, magic) == 0;
 }
 
-int intel_get_client_fd(ScrnInfoPtr scrn)
+int intel_get_client_fd(struct intel_device *dev)
 {
-	struct intel_device *dev;
 	int fd = -1;
 
-	dev = intel_device(scrn);
-	assert(dev);
-	assert(dev->fd != -1);
+	assert(dev && dev->fd != -1);
 	assert(dev->render_node);
 
 #ifdef O_CLOEXEC
@@ -714,16 +714,14 @@ int intel_get_client_fd(ScrnInfoPtr scrn)
 	return fd;
 }
 
-int intel_get_device_id(ScrnInfoPtr scrn)
+int intel_get_device_id(struct intel_device *dev)
 {
-	struct intel_device *dev = intel_device(scrn);
 	assert(dev && dev->fd != -1);
-	return __intel_get_device_id(dev->fd);
+	return dev->device_id;
 }
 
-int intel_get_master(ScrnInfoPtr scrn)
+int intel_get_master(struct intel_device *dev)
 {
-	struct intel_device *dev = intel_device(scrn);
 	int ret;
 
 	assert(dev && dev->fd != -1);
@@ -744,9 +742,8 @@ int intel_get_master(ScrnInfoPtr scrn)
 	return ret;
 }
 
-int intel_put_master(ScrnInfoPtr scrn)
+int intel_put_master(struct intel_device *dev)
 {
-	struct intel_device *dev = intel_device(scrn);
 	int ret;
 
 	assert(dev && dev->fd != -1);
@@ -762,10 +759,8 @@ int intel_put_master(ScrnInfoPtr scrn)
 	return ret;
 }
 
-void intel_put_device(ScrnInfoPtr scrn)
+void intel_put_device(struct intel_device *dev)
 {
-	struct intel_device *dev = intel_device(scrn);
-
 	assert(dev && dev->fd != -1);
 
 	assert(dev->open_count);
@@ -773,7 +768,7 @@ void intel_put_device(ScrnInfoPtr scrn)
 		return;
 
 	assert(!hosted());
-	intel_set_device(scrn, NULL);
+	xf86GetEntityPrivate(dev->idx, intel_device_key)->ptr = NULL;
 
 	drmClose(dev->fd);
 	if (dev->render_node != dev->master_node)

@@ -13,6 +13,12 @@
 #define NO_IMPRECISE 0
 #define NO_PRECISE 0
 
+#if 0
+#define __DBG DBG
+#else
+#define __DBG(x)
+#endif
+
 bool
 composite_aligned_boxes(struct sna *sna,
 			CARD8 op,
@@ -46,12 +52,6 @@ mono_trapezoid_span_inplace(struct sna *sna,
 			    PicturePtr dst,
 			    INT16 src_x, INT16 src_y,
 			    int ntrap, xTrapezoid *traps);
-
-bool
-mono_trap_span_converter(struct sna *sna,
-			 PicturePtr dst,
-			 INT16 x, INT16 y,
-			 int ntrap, xTrap *traps);
 
 bool
 mono_triangles_span_converter(struct sna *sna,
@@ -204,10 +204,39 @@ trapezoid_span_fallback(CARD8 op, PicturePtr src, PicturePtr dst,
 }
 
 bool
+mono_trap_span_converter(struct sna *sna,
+			 PicturePtr dst,
+			 INT16 x, INT16 y,
+			 int ntrap, xTrap *traps);
+
+bool
+precise_trap_span_converter(struct sna *sna,
+			    PicturePtr dst,
+			    INT16 src_x, INT16 src_y,
+			    int ntrap, xTrap *trap);
+
+bool
+imprecise_trap_span_converter(struct sna *sna,
+			      PicturePtr dst,
+			      INT16 src_x, INT16 src_y,
+			      int ntrap, xTrap *trap);
+
+static inline bool
 trap_span_converter(struct sna *sna,
 		    PicturePtr dst,
 		    INT16 src_x, INT16 src_y,
-		    int ntrap, xTrap *trap);
+		    int ntrap, xTrap *trap)
+{
+	if (NO_SCAN_CONVERTER)
+		return false;
+
+	if (dst->polyEdge == PolyEdgeSharp || dst->pDrawable->depth < 8)
+		return mono_trap_span_converter(sna, dst, src_x, src_y, ntrap, trap);
+	else if (dst->polyMode == PolyModePrecise)
+		return precise_trap_span_converter(sna, dst, src_x, src_y, ntrap, trap);
+	else
+		return imprecise_trap_span_converter(sna, dst, src_x, src_y, ntrap, trap);
+}
 
 bool
 trap_mask_converter(struct sna *sna,
@@ -227,10 +256,37 @@ triangles_mask_converter(CARD8 op, PicturePtr src, PicturePtr dst,
 			 int count, xTriangle *tri);
 
 bool
+mono_tristrip_span_converter(struct sna *sna,
+			     CARD8 op, PicturePtr src, PicturePtr dst,
+			     INT16 src_x, INT16 src_y,
+			     int count, xPointFixed *points);
+bool
+imprecise_tristrip_span_converter(struct sna *sna,
+				  CARD8 op, PicturePtr src, PicturePtr dst,
+				  PictFormatPtr maskFormat, INT16 src_x, INT16 src_y,
+				  int count, xPointFixed *points);
+bool
+precise_tristrip_span_converter(struct sna *sna,
+				CARD8 op, PicturePtr src, PicturePtr dst,
+				PictFormatPtr maskFormat, INT16 src_x, INT16 src_y,
+				int count, xPointFixed *points);
+
+static inline bool
 tristrip_span_converter(struct sna *sna,
 			CARD8 op, PicturePtr src, PicturePtr dst,
 			PictFormatPtr maskFormat, INT16 src_x, INT16 src_y,
-			int count, xPointFixed *points);
+			int count, xPointFixed *points)
+{
+	if (NO_SCAN_CONVERTER)
+		return false;
+
+	if (is_mono(dst, maskFormat))
+		return mono_tristrip_span_converter(sna, op, src, dst, src_x, src_y, count, points);
+	else if (is_precise(dst, maskFormat))
+		return precise_tristrip_span_converter(sna, op, src, dst, maskFormat, src_x, src_y, count, points);
+	else
+		return imprecise_tristrip_span_converter(sna, op, src, dst, maskFormat, src_x, src_y, count, points);
+}
 
 inline static void trapezoid_origin(const xLineFixed *l, int16_t *x, int16_t *y)
 {
@@ -332,7 +388,7 @@ xTriangleValid(const xTriangle *t)
 
 static inline int pixman_fixed_to_fast(pixman_fixed_t v)
 {
-	return (v + ((1<<(16-FAST_SAMPLES_shift-1))-1)) >> (16 - FAST_SAMPLES_shift);
+	return (v + (1<<(16-FAST_SAMPLES_shift-1))) >> (16 - FAST_SAMPLES_shift);
 }
 
 bool trapezoids_bounds(int n, const xTrapezoid *t, BoxPtr box);

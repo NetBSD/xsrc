@@ -48,7 +48,6 @@
 #include <inttypes.h>
 #include <math.h>
 #include <string.h>
-#include <assert.h>
 #include <errno.h>
 
 #include <sys/mman.h>
