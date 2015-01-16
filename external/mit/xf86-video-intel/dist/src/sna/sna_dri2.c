@@ -247,6 +247,7 @@ inline static void *dri2_window_get_front(WindowPtr win) { return NULL; }
 
 #define xorg_can_triple_buffer() 0
 #define swap_limit(d, l) false
+#define mark_stale(b)
 
 #else
 
