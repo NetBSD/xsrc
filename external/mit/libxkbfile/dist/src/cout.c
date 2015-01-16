@@ -45,7 +45,7 @@ WriteCHdrVMods(FILE *file,Display *dpy,XkbDescPtr xkb)
 {
 register int i,nOut;
 
-    if ((!xkb)||(!xkb->names)||(!xkb->names->vmods))
+    if ((!xkb)||(!xkb->names))
 	return False;
     for (i=nOut=0;i<XkbNumVirtualMods;i++) {
 	if (xkb->names->vmods[i]!=None) {
