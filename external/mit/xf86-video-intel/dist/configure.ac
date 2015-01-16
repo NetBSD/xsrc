@@ -23,7 +23,7 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-video-intel],
-        [2.99.916],
+        [2.99.917],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
         [xf86-video-intel])
 AC_CONFIG_SRCDIR([Makefile.am])
@@ -339,10 +339,10 @@ AC_ARG_ENABLE(dri2,
 	      [DRI2=$enableval],
 	      [DRI2=yes])
 AC_ARG_ENABLE(dri3,
-	      AS_HELP_STRING([--disable-dri3],
-			     [Disable DRI3 support [[default=yes]]]),
+	      AS_HELP_STRING([--enable-dri3],
+			     [Enable DRI3 support [[default=no]]]),
 	      [DRI3=$enableval],
-	      [DRI3=yes])
+	      [DRI3=no])
 
 AC_ARG_ENABLE(xvmc, AS_HELP_STRING([--disable-xvmc],
                                   [Disable XvMC support [[default=yes]]]),
@@ -422,25 +422,6 @@ if test "x$UXA" != "xno"; then
 	PKG_CHECK_MODULES(DRMINTEL, [libdrm_intel >= $uxa_requires_libdrm])
 	required_pixman_version=0.24
 	UXA=yes
-fi
-
-AC_ARG_ENABLE(glamor,
-	      AS_HELP_STRING([--enable-glamor],
-			     [Enable glamor, a new GL-based acceleration [default=no]]),
-	      [GLAMOR="$enableval"],
-	      [GLAMOR="no"])
-if test "x$GLAMOR" != "xno"; then
-	if test "x$UXA" != "xyes"; then
-		AC_MSG_ERROR([Glamor acceleration requested but UXA is not enabled])
-	fi
-	if pkg-config --exists "xorg-server >= 1.15.99.901"; then
-		GLAMOR="yes (using Xorg glamor module)"
-	else
-		PKG_CHECK_MODULES(LIBGLAMOR, [glamor >= 0.6.0])
-		PKG_CHECK_MODULES(LIBGLAMOR_EGL, [glamor-egl])
-		GLAMOR="yes (using libglamor)"
-	fi
-	AC_DEFINE(USE_GLAMOR, 1, [Enable glamor acceleration])
 fi
 
 PKG_CHECK_MODULES(XORG, [xorg-server >= $required_xorg_server_version xproto fontsproto pixman-1 >= $required_pixman_version $REQUIRED_MODULES])
@@ -645,10 +626,6 @@ AC_MSG_CHECKING([whether to include UXA support])
 AC_MSG_RESULT([$UXA])
 AM_CONDITIONAL(UXA, test "x$UXA" != "xno")
 
-AC_MSG_CHECKING([whether to include GLAMOR support])
-AC_MSG_RESULT([$GLAMOR])
-AM_CONDITIONAL(GLAMOR, test "x$GLAMOR" != "xno")
-
 AC_MSG_CHECKING([whether to include SNA support])
 AM_CONDITIONAL(SNA, test "x$SNA" != "xno")
 AC_MSG_RESULT([$SNA])
@@ -669,7 +646,7 @@ fi
 
 AC_ARG_WITH(default-accel,
 	    AS_HELP_STRING([--with-default-accel],
-			   [Select the default acceleration method out of glamor, none, sna, or uxa  [default is sna if enabled, otherwise uxa]]),
+			   [Select the default acceleration method out of none, sna, or uxa  [default is sna if enabled, otherwise uxa]]),
 			   [accel="$withval"],
 			   [accel="auto"])
 if test "x$accel" = "xyes"; then
@@ -710,15 +687,6 @@ if test "x$accel" = "xuxa"; then
 	fi
 fi
 
-if test "x$accel" = "xglamor"; then
-	if test "x$GLAMOR" != "xno"; then
-		AC_DEFINE(DEFAULT_ACCEL_METHOD, GLAMOR, [Default acceleration method])
-		have_accel="yes"
-	else
-		AC_MSG_ERROR([glamor acceleration requested as default, but is not enabled])
-	fi
-fi
-
 if test "x$have_accel" = "xnone"; then
 	if test "x$KMS" = "xyes"; then
 		if test "x$SNA" != "xno" -o "x$UXA" != "xno"; then
@@ -752,6 +720,16 @@ AM_CONDITIONAL(USE_RENDERNODE, test "x$RENDERNODE" = "xyes")
 if test "x$RENDERNODE" = "xyes"; then
 	AC_DEFINE(USE_RENDERNODE,1,[Assume "rendernode" support])
 	xp_msg="$xp_msg rendernode"
+fi
+
+AC_ARG_ENABLE(wc-mmap,
+	      AS_HELP_STRING([--enable-wc-mmap],
+			     [Enable use of WriteCombining mmaps [default=no]]),
+	      [WC_MMAP="$enableval"],
+	      [WC_MMAP="no"])
+if test "x$WC_MMAP" = "xyes"; then
+	AC_DEFINE(USE_WC_MMAP,1,[Enable use of WriteCombining mmaps])
+	xp_msg="$xp_msg mmap(wc)"
 fi
 
 AC_ARG_ENABLE(create2,
@@ -904,13 +882,6 @@ if test "x$UXA" != "xno"; then
 		accel_msg="$accel_msg *uxa"
 	else
 		accel_msg="$accel_msg uxa"
-	fi
-fi
-if test "x$GLAMOR" != "xno"; then
-	if test "$accel" = "glamor"; then
-		accel_msg="$accel_msg *glamor"
-	else
-		accel_msg="$accel_msg glamor"
 	fi
 fi
 

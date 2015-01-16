@@ -508,6 +508,7 @@ struct gen7_render_state {
 	uint16_t last_primitive;
 	int16_t floats_per_vertex;
 	uint16_t surface_table;
+	uint16_t pipe_controls_since_stall;
 
 	bool needs_invariant;
 	bool emit_flush;
@@ -620,6 +621,8 @@ const char *gen6_render_init(struct sna *sna, const char *backend);
 const char *gen7_render_init(struct sna *sna, const char *backend);
 const char *gen8_render_init(struct sna *sna, const char *backend);
 
+void sna_render_mark_wedged(struct sna *sna);
+
 bool sna_tiling_composite(uint32_t op,
 			  PicturePtr src,
 			  PicturePtr mask,
@@ -706,6 +709,11 @@ bool sna_blt_copy_boxes_fallback(struct sna *sna, uint8_t alu,
 				 const DrawableRec *src, struct kgem_bo *src_bo, int16_t src_dx, int16_t src_dy,
 				 const DrawableRec *dst, struct kgem_bo *dst_bo, int16_t dst_dx, int16_t dst_dy,
 				 const BoxRec *box, int nbox);
+
+bool memcpy_copy_boxes(struct sna *sna, uint8_t op,
+		       const DrawableRec *src_draw, struct kgem_bo *src_bo, int16_t sx, int16_t sy,
+		       const DrawableRec *dst_draw, struct kgem_bo *dst_bo, int16_t dx, int16_t dy,
+		       const BoxRec *box, int n, unsigned flags);
 
 bool _sna_get_pixel_from_rgba(uint32_t *pixel,
 			     uint16_t red,

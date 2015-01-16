@@ -232,9 +232,6 @@
 /* Use automagic builder description */
 #undef USE_GIT_DESCRIBE
 
-/* Enable glamor acceleration */
-#undef USE_GLAMOR
-
 /* Assume "rendernode" support */
 #undef USE_RENDERNODE
 
@@ -243,6 +240,9 @@
 
 /* Enable UXA support */
 #undef USE_UXA
+
+/* Enable use of WriteCombining mmaps */
+#undef USE_WC_MMAP
 
 /* Version number of package */
 #undef VERSION

@@ -1,3 +1,53 @@
+Snapshot 2.99.917 (2014-12-21)
+==============================
+3 months drifted by whilst I looked elsewhere for bugs.. The highlight of
+bugs fixed here are a couple of workarounds required for Broadwell and
+making sure that the rasterisation code is symmetric under inversions.
+However, as a couple of crashers slipped through into 2.99.916 (though
+not actual regressions in 2.99.916 per se) and 3 months have passed, we
+should make one more snapshot before an imminent release.
+
+ * Beware of recomputing the clear hint in the middle of MI recursion
+   https://bugs.freedesktop.org/show_bug.cgi?id=77074
+
+ * Fix crash from rendering an empty Glyph string under PRIME as the
+   secondary driver
+
+ * Restore application of default monitor options to the first output,
+   a regression in 2.99.915 and the MST support
+   https://bugs.gentoo.org/show_bug.cgi?id=522500
+
+ * Finally fix ZaphodHeads blocking on waiting for flip completion events.
+   Before kernel 3.19, O_NONBLOCK support is broken and so we must avoid
+   reading if we are not expecting an event.
+
+ * Backwards compatibilty fix for fake triple buffering with PRIME and
+   Xorg-1.15
+   https://bugs.freedesktop.org/show_bug.cgi?id=85144#c12
+
+ * Fix a rendering issue with output rotation and software fallbacks.
+   https://bugs.freedesktop.org/show_bug.cgi?id=84653
+
+ * Enable MST discovery even without udev support
+   https://bugs.freedesktop.org/show_bug.cgi?id=84718
+
+ * Fix TearFree operation after the GPU is wedged
+   https://bugs.freedesktop.org/show_bug.cgi?id=85058
+
+ * Fix projective sampling on gen6+.
+
+ * Fix rendering and corruption with gen8.
+   https://bugs.freedesktop.org/show_bug.cgi?id=84958
+   https://bugs.freedesktop.org/show_bug.cgi?id=83207
+   https://bugs.freedesktop.org/show_bug.cgi?id=79053
+   https://bugs.freedesktop.org/show_bug.cgi?id=81583
+
+ * Fix crash when using Xinerama.
+   https://bugs.freedesktop.org/show_bug.cgi?id=87207
+
+ * Fix rendering of right-to-left or bottom-to-top PolySegments in UXA
+
+
 Snapshot 2.99.916 (2014-09-08)
 ==============================
 Quick update for MST in UXA - we need to hook up the RandR outputs for

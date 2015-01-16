@@ -37,7 +37,7 @@
 #include "gcstruct.h"
 
 #include "intel.h"
-#include "intel_video.h"
+#include "intel_uxa.h"
 #include "i915_reg.h"
 #include "i915_3d.h"
 
@@ -67,7 +67,7 @@ I915DisplayVideoTextured(ScrnInfoPtr scrn,
 	dyo = dstRegion->extents.y1;
 
 	if (pixmap->drawable.width > 2048 || pixmap->drawable.height > 2048 ||
-	    !intel_check_pitch_3d(pixmap)) {
+	    !intel_uxa_check_pitch_3d(pixmap)) {
 		ScreenPtr screen = pixmap->drawable.pScreen;
 
 		target = screen->CreatePixmap(screen,
@@ -78,7 +78,7 @@ I915DisplayVideoTextured(ScrnInfoPtr scrn,
 		if (target == NULL)
 			return;
 
-		if (intel_get_pixmap_bo(target) == NULL) {
+		if (intel_uxa_get_pixmap_bo(target) == NULL) {
 			screen->DestroyPixmap(target);
 			return;
 		}
@@ -159,9 +159,9 @@ I915DisplayVideoTextured(ScrnInfoPtr scrn,
 			  DSTORG_VERT_BIAS(0x8) | format);
 
 		/* front buffer, pitch, offset */
-		if (intel_pixmap_tiled(target)) {
+		if (intel_uxa_pixmap_tiled(target)) {
 			tiling = BUF_3D_TILED_SURFACE;
-			if (intel_get_pixmap_private(target)->tiling == I915_TILING_Y)
+			if (intel_uxa_get_pixmap_private(target)->tiling == I915_TILING_Y)
 				tiling |= BUF_3D_TILE_WALK_Y;
 		} else
 			tiling = 0;
@@ -488,5 +488,5 @@ I915DisplayVideoTextured(ScrnInfoPtr scrn,
 		target->drawable.pScreen->DestroyPixmap(target);
 	}
 
-	intel_debug_flush(scrn);
+	intel_uxa_debug_flush(scrn);
 }

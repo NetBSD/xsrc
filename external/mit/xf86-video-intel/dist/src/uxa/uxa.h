@@ -46,8 +46,6 @@
 typedef enum {
 	UXA_ACCESS_RO,
 	UXA_ACCESS_RW,
-	UXA_GLAMOR_ACCESS_RO,
-	UXA_GLAMOR_ACCESS_RW
 } uxa_access_t;
 
 /**
@@ -544,20 +542,6 @@ typedef struct _UxaDriver {
  * (right-to-left, bottom-to-top).
  */
 #define UXA_TWO_BITBLT_DIRECTIONS	(1 << 2)
-
-/**
- * UXA_USE_GLAMOR indicates to use glamor acceleration to perform rendering.
- * And if glamor fail to accelerate the rendering, then goto fallback to
- * use CPU to do the rendering. This flag will be set only when glamor get
- * initialized successfully.
- * Note, in ddx close screen, this bit need to be cleared.
- */
-#define UXA_USE_GLAMOR			(1 << 3)
-
-/* UXA_GLAMOR_EGL_INITIALIZED indicates glamor egl layer get initialized
- * successfully. UXA layer does not use this flag, before call to
- * glamor_init, ddx need to check this flag. */
-#define UXA_GLAMOR_EGL_INITIALIZED	(1 << 4)
 
 /** @} */
 /** @name UXA CreatePixmap hint flags

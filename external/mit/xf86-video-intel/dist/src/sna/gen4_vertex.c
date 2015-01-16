@@ -3089,14 +3089,6 @@ emit_span_boxes_linear__avx2(const struct sna_composite_spans_op *op,
 }
 #endif
 
-inline static uint32_t
-gen4_choose_spans_vertex_buffer(const struct sna_composite_op *op)
-{
-	int id = op->src.is_solid ? 1 : 2 + !op->src.is_affine;
-	DBG(("%s: id=%x (%d, 1)\n", __FUNCTION__, 1 << 2 | id, id));
-	return 1 << 2 | id;
-}
-
 unsigned gen4_choose_spans_emitter(struct sna *sna,
 				   struct sna_composite_spans_op *tmp)
 {

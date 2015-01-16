@@ -66,8 +66,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "dri2.h"
 
-#include "intel_glamor.h"
-#include "uxa.h"
+#if USE_UXA
+#include "intel_uxa.h"
+#endif
 
 typedef struct {
 	int refcnt;
@@ -82,7 +83,7 @@ static int i830_client_key;
 
 static uint32_t pixmap_flink(PixmapPtr pixmap)
 {
-	struct intel_pixmap *priv = intel_get_pixmap_private(pixmap);
+	struct intel_uxa_pixmap *priv = intel_uxa_get_pixmap_private(pixmap);
 	uint32_t name;
 
 	if (priv == NULL || priv->bo == NULL)
@@ -107,58 +108,6 @@ static PixmapPtr get_front_buffer(DrawablePtr drawable)
 	return pixmap;
 }
 
-static PixmapPtr fixup_glamor(DrawablePtr drawable, PixmapPtr pixmap)
-{
-	ScreenPtr screen = drawable->pScreen;
-	ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
-	intel_screen_private *intel = intel_get_screen_private(scrn);
-	PixmapPtr old = get_drawable_pixmap(drawable);
-	struct intel_pixmap *priv = intel_get_pixmap_private(pixmap);
-	GCPtr gc;
-
-	/* With a glamor pixmap, 2D pixmaps are created in texture
-	 * and without a static BO attached to it. To support DRI,
-	 * we need to create a new textured-drm pixmap and
-	 * need to copy the original content to this new textured-drm
-	 * pixmap, and then convert the old pixmap to a coherent
-	 * textured-drm pixmap which has a valid BO attached to it
-	 * and also has a valid texture, thus both glamor and DRI2
-	 * can access it.
-	 *
-	 */
-
-	/* Copy the current contents of the pixmap to the bo. */
-	gc = GetScratchGC(drawable->depth, screen);
-	if (gc) {
-		ValidateGC(&pixmap->drawable, gc);
-		gc->ops->CopyArea(drawable, &pixmap->drawable,
-				  gc,
-				  0, 0,
-				  drawable->width,
-				  drawable->height,
-				  0, 0);
-		FreeScratchGC(gc);
-	}
-
-	intel_set_pixmap_private(pixmap, NULL);
-
-	/* Exchange the underlying texture/image. */
-	intel_glamor_exchange_buffers(intel, old, pixmap);
-	/* And redirect the pixmap to the new bo (for 3D). */
-	intel_set_pixmap_private(old, priv);
-	old->refcnt++;
-
-	screen->ModifyPixmapHeader(old,
-				   drawable->width,
-				   drawable->height,
-				   0, 0,
-				   priv->stride,
-				   NULL);
-	screen->DestroyPixmap(pixmap);
-	intel_get_screen_private(xf86ScreenToScrn(screen))->needs_flush = TRUE;
-	return old;
-}
-
 #if DRI2INFOREC_VERSION < 2
 static DRI2BufferPtr
 I830DRI2CreateBuffers(DrawablePtr drawable, unsigned int *attachments,
@@ -170,7 +119,6 @@ I830DRI2CreateBuffers(DrawablePtr drawable, unsigned int *attachments,
 	DRI2BufferPtr buffers;
 	I830DRI2BufferPrivatePtr privates;
 	PixmapPtr pixmap, pDepthPixmap;
-	Bool is_glamor_pixmap = FALSE;
 	int i;
 
 	buffers = calloc(count, sizeof *buffers);
@@ -188,10 +136,8 @@ I830DRI2CreateBuffers(DrawablePtr drawable, unsigned int *attachments,
 		if (attachments[i] == DRI2BufferFrontLeft) {
 			pixmap = get_front_buffer(drawable);
 
-			if (pixmap == NULL) {
+			if (pixmap == NULL)
 				drawable = &(get_drawable_pixmap(drawable)->drawable);
-				is_glamor_pixmap = TRUE;
-			}
 		} else if (attachments[i] == DRI2BufferStencil && pDepthPixmap) {
 			pixmap = pDepthPixmap;
 			pixmap->refcnt++;
@@ -229,9 +175,6 @@ I830DRI2CreateBuffers(DrawablePtr drawable, unsigned int *attachments,
 					screen->DestroyPixmap(pixmap);
 				goto unwind;
 			}
-
-			if (is_glamor_pixmap)
-				pixmap = fixup_glamor(drawable, pixmap);
 		}
 
 		if (attachments[i] == DRI2BufferDepth)
@@ -292,7 +235,6 @@ I830DRI2CreateBuffer(DrawablePtr drawable, unsigned int attachment,
 	DRI2Buffer2Ptr buffer;
 	I830DRI2BufferPrivatePtr privates;
 	PixmapPtr pixmap;
-	Bool is_glamor_pixmap = FALSE;
 
 	buffer = calloc(1, sizeof *buffer);
 	if (buffer == NULL)
@@ -306,11 +248,8 @@ I830DRI2CreateBuffer(DrawablePtr drawable, unsigned int attachment,
 	pixmap = NULL;
 	if (attachment == DRI2BufferFrontLeft) {
 		pixmap = get_front_buffer(drawable);
-
-		if (pixmap == NULL) {
+		if (pixmap == NULL)
 			drawable = &(get_drawable_pixmap(drawable)->drawable);
-			is_glamor_pixmap = TRUE;
-		}
 	}
 
 	if (pixmap == NULL) {
@@ -383,8 +322,6 @@ I830DRI2CreateBuffer(DrawablePtr drawable, unsigned int attachment,
 			free(buffer);
 			return NULL;
 		}
-		if (is_glamor_pixmap)
-			pixmap = fixup_glamor(drawable, pixmap);
 	}
 
 	buffer->attachment = attachment;
@@ -739,10 +676,10 @@ i830_dri2_del_frame_event(DRI2FrameEventPtr info)
 	free(info);
 }
 
-static struct intel_pixmap *
+static struct intel_uxa_pixmap *
 intel_exchange_pixmap_buffers(struct intel_screen_private *intel, PixmapPtr front, PixmapPtr back)
 {
-	struct intel_pixmap *new_front, *new_back;
+	struct intel_uxa_pixmap *new_front = NULL, *new_back;
 	RegionRec region;
 
 	/* Post damage on the front buffer so that listeners, such
@@ -755,14 +692,12 @@ intel_exchange_pixmap_buffers(struct intel_screen_private *intel, PixmapPtr fron
 	region.data = NULL;
 	DamageRegionAppend(&front->drawable, &region);
 
-	new_front = intel_get_pixmap_private(back);
-	new_back = intel_get_pixmap_private(front);
-	intel_set_pixmap_private(front, new_front);
-	intel_set_pixmap_private(back, new_back);
+	new_front = intel_uxa_get_pixmap_private(back);
+	new_back = intel_uxa_get_pixmap_private(front);
+	intel_uxa_set_pixmap_private(front, new_front);
+	intel_uxa_set_pixmap_private(back, new_back);
 	new_front->busy = 1;
 	new_back->busy = -1;
-
-	intel_glamor_exchange_buffers(intel, front, back);
 
 	DamageRegionProcessPending(&front->drawable);
 
@@ -774,7 +709,7 @@ I830DRI2ExchangeBuffers(struct intel_screen_private *intel, DRI2BufferPtr front,
 {
 	I830DRI2BufferPrivatePtr front_priv, back_priv;
 	int tmp;
-	struct intel_pixmap *new_front;
+	struct intel_uxa_pixmap *new_front;
 
 	front_priv = front->driverPrivate;
 	back_priv = back->driverPrivate;
@@ -791,38 +726,6 @@ I830DRI2ExchangeBuffers(struct intel_screen_private *intel, DRI2BufferPtr front,
 	dri_bo_unreference (intel->front_buffer);
 	intel->front_buffer = new_front->bo;
 	dri_bo_reference (intel->front_buffer);
-}
-
-static PixmapPtr
-intel_glamor_create_back_pixmap(ScreenPtr screen,
-				PixmapPtr front_pixmap,
-				drm_intel_bo *back_bo)
-{
-	PixmapPtr back_pixmap;
-
-	back_pixmap = screen->CreatePixmap(screen,
-					   0,
-					   0,
-				           front_pixmap->drawable.depth,
-				           0);
-	if (back_pixmap == NULL)
-		return NULL;
-
-	screen->ModifyPixmapHeader(back_pixmap,
-				   front_pixmap->drawable.width,
-				   front_pixmap->drawable.height,
-				   0, 0,
-				   front_pixmap->devKind,
-				   0);
-	intel_set_pixmap_bo(back_pixmap, back_bo);
-	if (!intel_glamor_create_textured_pixmap(back_pixmap)) {
-		ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
-		xf86DrvMsg(scrn->scrnIndex, X_WARNING,
-			   "Failed to create textured back pixmap.\n");
-		screen->DestroyPixmap(back_pixmap);
-		return NULL;
-	}
-	return back_pixmap;
 }
 
 static drm_intel_bo *get_pixmap_bo(I830DRI2BufferPrivatePtr priv)
@@ -883,10 +786,6 @@ I830DRI2ScheduleFlip(struct intel_screen_private *intel,
 	}
 
 	if (intel->back_buffer == NULL) {
-		I830DRI2BufferPrivatePtr drvpriv;
-		PixmapPtr front_pixmap, back_pixmap;
-		ScreenPtr screen;
-
 		new_back = drm_intel_bo_alloc(intel->bufmgr, "front buffer",
 					      intel->front_buffer->size, 0);
 		if (new_back == NULL)
@@ -903,21 +802,6 @@ I830DRI2ScheduleFlip(struct intel_screen_private *intel,
 
 		drm_intel_bo_disable_reuse(new_back);
 		dri_bo_flink(new_back, &intel->back_name);
-
-		if ((intel->uxa_flags & UXA_USE_GLAMOR)) {
-			screen = draw->pScreen;
-			drvpriv = info->front->driverPrivate;
-			front_pixmap = drvpriv->pixmap;
-
-			back_pixmap = intel_glamor_create_back_pixmap(screen,
-								      front_pixmap,
-								      new_back);
-			if (back_pixmap == NULL) {
-				drm_intel_bo_unreference(new_back);
-				return FALSE;
-			}
-			intel->back_pixmap = back_pixmap;
-		}
 	} else {
 		new_back = intel->back_buffer;
 		intel->back_buffer = NULL;
@@ -937,13 +821,8 @@ I830DRI2ScheduleFlip(struct intel_screen_private *intel,
 
 	intel->back_buffer = intel->front_buffer;
 	drm_intel_bo_reference(intel->back_buffer);
-	if (!(intel->uxa_flags & UXA_USE_GLAMOR)) {
-		intel_set_pixmap_bo(priv->pixmap, new_back);
-		drm_intel_bo_unreference(new_back);
-	}
-	else
-		intel_exchange_pixmap_buffers(intel, priv->pixmap,
-					      intel->back_pixmap);
+	intel_set_pixmap_bo(priv->pixmap, new_back);
+	drm_intel_bo_unreference(new_back);
 
 	tmp_name = info->front->name;
 	info->front->name = intel->back_name;
@@ -967,8 +846,8 @@ can_exchange(DrawablePtr drawable, DRI2BufferPtr front, DRI2BufferPtr back)
 	I830DRI2BufferPrivatePtr back_priv = back->driverPrivate;
 	PixmapPtr front_pixmap = front_priv->pixmap;
 	PixmapPtr back_pixmap = back_priv->pixmap;
-	struct intel_pixmap *front_intel = intel_get_pixmap_private(front_pixmap);
-	struct intel_pixmap *back_intel = intel_get_pixmap_private(back_pixmap);
+	struct intel_uxa_pixmap *front_intel = intel_uxa_get_pixmap_private(front_pixmap);
+	struct intel_uxa_pixmap *back_intel = intel_uxa_get_pixmap_private(back_pixmap);
 
 	if (!pScrn->vtSema)
 		return FALSE;

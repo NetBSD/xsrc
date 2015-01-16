@@ -47,6 +47,10 @@
 #include "gen4_source.h"
 #include "gen4_vertex.h"
 
+#define ALWAYS_INVALIDATE 0
+#define ALWAYS_FLUSH 0
+#define ALWAYS_STALL 0
+
 #define NO_COMPOSITE 0
 #define NO_COMPOSITE_SPANS 0
 #define NO_COPY 0
@@ -397,6 +401,42 @@ gen6_choose_composite_kernel(int op, bool has_mask, bool is_ca, bool is_affine)
 	return base + !is_affine;
 }
 
+inline static void
+gen6_emit_pipe_invalidate(struct sna *sna)
+{
+	OUT_BATCH(GEN6_PIPE_CONTROL | (4 - 2));
+	OUT_BATCH(GEN6_PIPE_CONTROL_WC_FLUSH |
+		  GEN6_PIPE_CONTROL_TC_FLUSH |
+		  GEN6_PIPE_CONTROL_CS_STALL);
+	OUT_BATCH(0);
+	OUT_BATCH(0);
+}
+
+inline static void
+gen6_emit_pipe_flush(struct sna *sna, bool need_stall)
+{
+	unsigned stall;
+
+	stall = 0;
+	if (need_stall)
+		stall = GEN6_PIPE_CONTROL_CS_STALL;
+
+	OUT_BATCH(GEN6_PIPE_CONTROL | (4 - 2));
+	OUT_BATCH(GEN6_PIPE_CONTROL_WC_FLUSH | stall);
+	OUT_BATCH(0);
+	OUT_BATCH(0);
+}
+
+inline static void
+gen6_emit_pipe_stall(struct sna *sna)
+{
+	OUT_BATCH(GEN6_PIPE_CONTROL | (4 - 2));
+	OUT_BATCH(GEN6_PIPE_CONTROL_CS_STALL |
+		  GEN6_PIPE_CONTROL_STALL_AT_SCOREBOARD);
+	OUT_BATCH(0);
+	OUT_BATCH(0);
+}
+
 static void
 gen6_emit_urb(struct sna *sna)
 {
@@ -547,13 +587,13 @@ gen6_emit_invariant(struct sna *sna)
 	sna->render_state.gen6.needs_invariant = false;
 }
 
-static bool
+static void
 gen6_emit_cc(struct sna *sna, int blend)
 {
 	struct gen6_render_state *render = &sna->render_state.gen6;
 
 	if (render->blend == blend)
-		return blend != NO_BLEND;
+		return;
 
 	DBG(("%s: blend = %x\n", __FUNCTION__, blend));
 
@@ -568,7 +608,6 @@ gen6_emit_cc(struct sna *sna, int blend)
 	}
 
 	render->blend = blend;
-	return blend != NO_BLEND;
 }
 
 static void
@@ -687,12 +726,12 @@ gen6_emit_drawing_rectangle(struct sna *sna,
 	uint32_t limit = (op->dst.height - 1) << 16 | (op->dst.width - 1);
 	uint32_t offset = (uint16_t)op->dst.y << 16 | (uint16_t)op->dst.x;
 
-	assert(!too_large(op->dst.x, op->dst.y));
+	assert(!too_large(abs(op->dst.x), abs(op->dst.y)));
 	assert(!too_large(op->dst.width, op->dst.height));
 
 	if (sna->render_state.gen6.drawrect_limit  == limit &&
 	    sna->render_state.gen6.drawrect_offset == offset)
-		return false;
+		return true;
 
 	/* [DevSNB-C+{W/A}] Before any depth stall flush (including those
 	 * produced by non-pipelined state commands), software needs to first
@@ -703,13 +742,8 @@ gen6_emit_drawing_rectangle(struct sna *sna,
 	 * BEFORE the pipe-control with a post-sync op and no write-cache
 	 * flushes.
 	 */
-	if (!sna->render_state.gen6.first_state_packet) {
-		OUT_BATCH(GEN6_PIPE_CONTROL | (4 - 2));
-		OUT_BATCH(GEN6_PIPE_CONTROL_CS_STALL |
-			  GEN6_PIPE_CONTROL_STALL_AT_SCOREBOARD);
-		OUT_BATCH(0);
-		OUT_BATCH(0);
-	}
+	if (!sna->render_state.gen6.first_state_packet)
+		gen6_emit_pipe_stall(sna);
 
 	OUT_BATCH(GEN6_PIPE_CONTROL | (4 - 2));
 	OUT_BATCH(GEN6_PIPE_CONTROL_WRITE_TIME);
@@ -721,7 +755,7 @@ gen6_emit_drawing_rectangle(struct sna *sna,
 	OUT_BATCH(0);
 
 	DBG(("%s: offset=(%d, %d), limit=(%d, %d)\n",
-	     __FUNCTION__, op->dst.x, op->dst.y, op->dst.width, op->dst.width));
+	     __FUNCTION__, op->dst.x, op->dst.y, op->dst.width, op->dst.height));
 	OUT_BATCH(GEN6_3DSTATE_DRAWING_RECTANGLE | (4 - 2));
 	OUT_BATCH(0);
 	OUT_BATCH(limit);
@@ -729,7 +763,7 @@ gen6_emit_drawing_rectangle(struct sna *sna,
 
 	sna->render_state.gen6.drawrect_offset = offset;
 	sna->render_state.gen6.drawrect_limit = limit;
-	return true;
+	return false;
 }
 
 static void
@@ -853,51 +887,56 @@ gen6_emit_vertex_elements(struct sna *sna,
 }
 
 static void
-gen6_emit_flush(struct sna *sna)
-{
-	OUT_BATCH(GEN6_PIPE_CONTROL | (4 - 2));
-	OUT_BATCH(GEN6_PIPE_CONTROL_WC_FLUSH |
-		  GEN6_PIPE_CONTROL_TC_FLUSH |
-		  GEN6_PIPE_CONTROL_CS_STALL);
-	OUT_BATCH(0);
-	OUT_BATCH(0);
-}
-
-static void
 gen6_emit_state(struct sna *sna,
 		const struct sna_composite_op *op,
 		uint16_t wm_binding_table)
 {
-	bool need_flush, need_stall;
+	bool need_invalidate;
+	bool need_flush;
+	bool need_stall;
 
 	assert(op->dst.bo->exec);
 
-	need_stall = wm_binding_table & 1;
-	need_flush = false;
-	if (gen6_emit_cc(sna, GEN6_BLEND(op->u.gen6.flags)))
-		need_flush = need_stall;
+	need_flush = wm_binding_table & 1;
+	if (ALWAYS_FLUSH)
+		need_flush = true;
+
+	wm_binding_table &= ~1;
+	need_stall = sna->render_state.gen6.surface_table != wm_binding_table;
+	if (ALWAYS_STALL)
+		need_stall = true;
+
+	need_invalidate = kgem_bo_is_dirty(op->src.bo) || kgem_bo_is_dirty(op->mask.bo);
+	if (ALWAYS_INVALIDATE)
+		need_invalidate = true;
+
+	if (need_invalidate) {
+		gen6_emit_pipe_invalidate(sna);
+		kgem_clear_dirty(&sna->kgem);
+		assert(op->dst.bo->exec);
+		kgem_bo_mark_dirty(op->dst.bo);
+
+		need_flush = false;
+		need_stall = false;
+		sna->render_state.gen6.first_state_packet = true;
+	}
+	if (need_flush) {
+		gen6_emit_pipe_flush(sna, need_stall);
+		need_stall = false;
+		sna->render_state.gen6.first_state_packet = true;
+	}
+
+	need_stall &= gen6_emit_drawing_rectangle(sna, op);
+	if (need_stall)
+		gen6_emit_pipe_stall(sna);
+
+	gen6_emit_cc(sna, GEN6_BLEND(op->u.gen6.flags));
 	gen6_emit_sampler(sna, GEN6_SAMPLER(op->u.gen6.flags));
 	gen6_emit_sf(sna, GEN6_VERTEX(op->u.gen6.flags) >> 2);
 	gen6_emit_wm(sna, GEN6_KERNEL(op->u.gen6.flags), GEN6_VERTEX(op->u.gen6.flags) >> 2);
 	gen6_emit_vertex_elements(sna, op);
+	gen6_emit_binding_table(sna, wm_binding_table);
 
-	need_stall |= gen6_emit_binding_table(sna, wm_binding_table & ~1);
-	if (gen6_emit_drawing_rectangle(sna, op))
-		need_stall = false;
-	if (need_flush || kgem_bo_is_dirty(op->src.bo) || kgem_bo_is_dirty(op->mask.bo)) {
-		gen6_emit_flush(sna);
-		kgem_clear_dirty(&sna->kgem);
-		assert(op->dst.bo->exec);
-		kgem_bo_mark_dirty(op->dst.bo);
-		need_stall = false;
-	}
-	if (need_stall) {
-		OUT_BATCH(GEN6_PIPE_CONTROL | (4 - 2));
-		OUT_BATCH(GEN6_PIPE_CONTROL_CS_STALL |
-			  GEN6_PIPE_CONTROL_STALL_AT_SCOREBOARD);
-		OUT_BATCH(0);
-		OUT_BATCH(0);
-	}
 	sna->render_state.gen6.first_state_packet = false;
 }
 
@@ -912,7 +951,7 @@ static bool gen6_magic_ca_pass(struct sna *sna,
 	DBG(("%s: CA fixup (%d -> %d)\n", __FUNCTION__,
 	     sna->render.vertex_start, sna->render.vertex_index));
 
-	gen6_emit_flush(sna);
+	gen6_emit_pipe_stall(sna);
 
 	gen6_emit_cc(sna, gen6_get_blend(PictOpAdd, true, op->dst.format));
 	gen6_emit_wm(sna,
@@ -1176,7 +1215,7 @@ static int gen6_get_rectangles__flush(struct sna *sna,
 	if (sna->render.vertex_offset) {
 		gen4_vertex_flush(sna);
 		if (gen6_magic_ca_pass(sna, op)) {
-			gen6_emit_flush(sna);
+			gen6_emit_pipe_stall(sna);
 			gen6_emit_cc(sna, GEN6_BLEND(op->u.gen6.flags));
 			gen6_emit_wm(sna,
 				     GEN6_KERNEL(op->u.gen6.flags),
@@ -3633,7 +3672,7 @@ static bool gen6_render_setup(struct sna *sna, int devid)
 
 const char *gen6_render_init(struct sna *sna, const char *backend)
 {
-	int devid = intel_get_device_id(sna->scrn);
+	int devid = intel_get_device_id(sna->dev);
 
 	if (!gen6_render_setup(sna, devid))
 		return backend;

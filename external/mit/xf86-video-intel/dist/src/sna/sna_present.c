@@ -124,13 +124,14 @@ sna_present_get_ust_msc(RRCrtcPtr crtc, CARD64 *ust, CARD64 *msc)
 }
 
 void
-sna_present_vblank_handler(struct sna *sna, struct drm_event_vblank *event)
+sna_present_vblank_handler(struct drm_event_vblank *event)
 {
 	struct sna_present_event *info = to_present_event(event->user_data);
 
-	DBG(("%s: pipe=%d event=%lld, tv=%d.%06d msc=%d\n", __FUNCTION__,
-	     sna_crtc_to_pipe(info->crtc), (long long)info->event_id,
-	     event->tv_sec, event->tv_usec, event->sequence));
+	DBG(("%s: pipe=%d tv=%d.%06d msc=%d, event %lld complete\n", __FUNCTION__,
+	     sna_crtc_to_pipe(info->crtc),
+	     event->tv_sec, event->tv_usec, event->sequence,
+	     (long long)info->event_id));
 	present_event_notify(info->event_id,
 			     ust64(event->tv_sec, event->tv_usec),
 			     sna_crtc_record_event(info->crtc, event));
@@ -287,14 +288,17 @@ page_flip__async(RRCrtcPtr crtc,
 		return FALSE;
 	}
 
+	DBG(("%s: pipe=%d tv=%d.%06d msc=%d, event %lld complete\n", __FUNCTION__,
+	     pipe_from_crtc(crtc),
+	     gettime_ust64() / 1000000, gettime_ust64() % 1000000,
+	     sna_crtc_last_swap(crtc->devPrivate)->msc,
+	     (long long)event_id));
 	present_event_notify(event_id, gettime_ust64(), target_msc);
 	return TRUE;
 }
 
 static void
-present_flip_handler(struct sna *sna,
-		     struct drm_event_vblank *event,
-		     void *data)
+present_flip_handler(struct drm_event_vblank *event, void *data)
 {
 	struct sna_present_event *info = data;
 	struct ust_msc swap;
@@ -308,9 +312,10 @@ present_flip_handler(struct sna *sna,
 	} else
 		swap = *sna_crtc_last_swap(info->crtc);
 
-	DBG(("%s: pipe=%d, tv=%d.%06d msc %lld, complete\n", __FUNCTION__,
+	DBG(("%s: pipe=%d, tv=%d.%06d msc %lld, event %lld complete\n", __FUNCTION__,
 	     info->crtc ? sna_crtc_to_pipe(info->crtc) : -1,
-	     swap.tv_sec, swap.tv_usec, (long long)swap.msc));
+	     swap.tv_sec, swap.tv_usec, (long long)swap.msc,
+	     (long long)info->event_id));
 	present_event_notify(info->event_id, ust64(swap.tv_sec, swap.tv_usec), swap.msc);
 	free(info);
 }
@@ -416,13 +421,17 @@ sna_present_unflip(ScreenPtr screen, uint64_t event_id)
 	struct kgem_bo *bo;
 
 	DBG(("%s(event=%lld)\n", __FUNCTION__, (long long)event_id));
-	if (sna->mode.front_active == 0) {
+	if (sna->mode.front_active == 0 || sna->mode.shadow_active) {
 		const struct ust_msc *swap;
 
 		DBG(("%s: no CRTC active, perform no-op flip\n", __FUNCTION__));
 
 notify:
 		swap = sna_crtc_last_swap(sna_mode_first_crtc(sna));
+		DBG(("%s: pipe=%d, tv=%d.%06d msc %lld, event %lld complete\n", __FUNCTION__,
+		     -1,
+		     swap->tv_sec, swap->tv_usec, (long long)swap->msc,
+		     (long long)event_id));
 		present_event_notify(event_id,
 				     ust64(swap->tv_sec, swap->tv_usec),
 				     swap->msc);

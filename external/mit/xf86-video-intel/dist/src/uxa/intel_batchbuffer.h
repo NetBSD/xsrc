@@ -129,7 +129,7 @@ intel_batch_emit_reloc(intel_screen_private *intel,
 
 static inline void
 intel_batch_mark_pixmap_domains(intel_screen_private *intel,
-				struct intel_pixmap *priv,
+				struct intel_uxa_pixmap *priv,
 				uint32_t read_domains, uint32_t write_domain)
 {
 	assert (read_domains);
@@ -149,7 +149,7 @@ intel_batch_emit_reloc_pixmap(intel_screen_private *intel, PixmapPtr pixmap,
 			      uint32_t read_domains, uint32_t write_domain,
 			      uint32_t delta, int needs_fence)
 {
-	struct intel_pixmap *priv = intel_get_pixmap_private(pixmap);
+	struct intel_uxa_pixmap *priv = intel_uxa_get_pixmap_private(pixmap);
 
 	intel_batch_mark_pixmap_domains(intel, priv, read_domains, write_domain);
 

@@ -364,7 +364,7 @@ I810PreInit(ScrnInfoPtr scrn, int flags)
     */
    I810DoDDC(scrn, pI810->pEnt->index);
 
-   intel_detect_chipset(scrn, pI810->pEnt);
+   intel_detect_chipset(scrn, NULL);
 
    pI810->LinearAddr = pI810->PciInfo->regions[0].base_addr;
    xf86DrvMsg(scrn->scrnIndex, X_PROBED, "Linear framebuffer at 0x%lX\n",

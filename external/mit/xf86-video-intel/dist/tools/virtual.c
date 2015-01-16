@@ -1079,8 +1079,8 @@ static int clone_init_xfer(struct clone *clone)
 	int width, height;
 
 	if (clone->dst.mode.id == 0) {
-		clone->width = 0;
-		clone->height = 0;
+		width = 0;
+		height = 0;
 	} else if (clone->dri3.xid) {
 		width = clone->dst.display->width;
 		height = clone->dst.display->height;
@@ -3117,6 +3117,9 @@ static void context_cleanup(struct context *ctx)
 	for (i = 1; i < ctx->ndisplay; i++)
 		display_cleanup(&ctx->display[i]);
 
+	if (dpy == NULL)
+		return;
+
 	res = _XRRGetScreenResourcesCurrent(dpy, ctx->display->root);
 	if (res == NULL)
 		return;
@@ -3213,6 +3216,12 @@ int main(int argc, char **argv)
 			exit(0);
 		}
 	}
+
+	if (verbose)
+		printf("intel-virtual-output: version %d.%d.%d\n",
+		       PACKAGE_VERSION_MAJOR,
+		       PACKAGE_VERSION_MINOR,
+		       PACKAGE_VERSION_PATCHLEVEL);
 
 	ret = context_init(&ctx);
 	if (ret)

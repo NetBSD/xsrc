@@ -41,7 +41,7 @@
 #include "i915_drm.h"
 #include "i965_reg.h"
 
-#include "uxa.h"
+#include "intel_uxa.h"
 
 #define DUMP_BATCHBUFFERS NULL // "/tmp/i915-batchbuffers.dump"
 
@@ -142,7 +142,7 @@ void intel_batch_teardown(ScrnInfoPtr scrn)
 static void intel_batch_do_flush(ScrnInfoPtr scrn)
 {
 	intel_screen_private *intel = intel_get_screen_private(scrn);
-	struct intel_pixmap *priv;
+	struct intel_uxa_pixmap *priv;
 
 	list_for_each_entry(priv, &intel->batch_pixmaps, batch)
 		priv->dirty = 0;
@@ -289,10 +289,10 @@ void intel_batch_submit(ScrnInfoPtr scrn)
 	}
 
 	while (!list_is_empty(&intel->batch_pixmaps)) {
-		struct intel_pixmap *entry;
+		struct intel_uxa_pixmap *entry;
 
 		entry = list_first_entry(&intel->batch_pixmaps,
-					 struct intel_pixmap,
+					 struct intel_uxa_pixmap,
 					 batch);
 
 		entry->busy = -1;
@@ -311,7 +311,7 @@ void intel_batch_submit(ScrnInfoPtr scrn)
 	intel->current_batch = 0;
 }
 
-void intel_debug_flush(ScrnInfoPtr scrn)
+void intel_uxa_debug_flush(ScrnInfoPtr scrn)
 {
 	intel_screen_private *intel = intel_get_screen_private(scrn);
 

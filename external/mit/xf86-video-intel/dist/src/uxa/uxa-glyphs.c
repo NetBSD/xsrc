@@ -65,7 +65,6 @@
 #include <stdlib.h>
 
 #include "uxa-priv.h"
-#include "uxa-glamor.h"
 #include "common.h"
 
 /* Width of the pixmaps we use for the caches; this should be less than
@@ -210,10 +209,6 @@ bail:
 Bool uxa_glyphs_init(ScreenPtr pScreen)
 {
 
-	uxa_screen_t *uxa_screen = uxa_get_screen(pScreen);
-
-	if (uxa_screen->info->flags & UXA_USE_GLAMOR)
-		return TRUE;
 #if HAS_DIXREGISTERPRIVATEKEY
 	if (!dixRegisterPrivateKey(&uxa_glyph_key, PRIVATE_GLYPH, 0))
 		return FALSE;
@@ -308,12 +303,6 @@ uxa_glyph_unrealize(ScreenPtr screen,
 		    GlyphPtr glyph)
 {
 	struct uxa_glyph *priv;
-	uxa_screen_t *uxa_screen = uxa_get_screen(screen);
-
-	if (uxa_screen->info->flags & UXA_USE_GLAMOR) {
-		glamor_glyph_unrealize(screen, glyph);
-		return;
-	}
 
 	/* Use Lookup in case we have not attached to this glyph. */
 	priv = dixLookupPrivate(&glyph->devPrivates, &uxa_glyph_key);
@@ -974,23 +963,6 @@ uxa_glyphs(CARD8 op,
 {
 	ScreenPtr screen = pDst->pDrawable->pScreen;
 	uxa_screen_t *uxa_screen = uxa_get_screen(screen);
-
-	if (uxa_screen->info->flags & UXA_USE_GLAMOR) {
-		int ok;
-
-		uxa_picture_prepare_access(pDst, UXA_GLAMOR_ACCESS_RW);
-		uxa_picture_prepare_access(pSrc, UXA_GLAMOR_ACCESS_RO);
-		ok = glamor_glyphs_nf(op,
-				     pSrc, pDst, maskFormat,
-				     xSrc, ySrc, nlist, list, glyphs);
-		uxa_picture_finish_access(pSrc, UXA_GLAMOR_ACCESS_RO);
-		uxa_picture_finish_access(pDst, UXA_GLAMOR_ACCESS_RW);
-
-		if (!ok)
-			goto fallback;
-
-		return;
-	}
 
 	if (!uxa_screen->info->prepare_composite ||
 	    uxa_screen->force_fallback ||

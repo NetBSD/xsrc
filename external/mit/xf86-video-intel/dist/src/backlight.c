@@ -81,6 +81,7 @@ void backlight_init(struct backlight *b)
 	b->fd = -1;
 	b->pid = -1;
 	b->max = -1;
+	b->has_power = 0;
 }
 
 #ifdef __OpenBSD__
@@ -153,6 +154,15 @@ enum backlight_type backlight_exists(const char *iface)
 	return BL_PLATFORM;
 }
 
+int backlight_on(struct backlight *b)
+{
+	return 0;
+}
+
+int backlight_off(struct backlight *b)
+{
+	return 0;
+}
 #else
 
 static int
@@ -200,6 +210,21 @@ __backlight_read(const char *iface, const char *file)
 	close(fd);
 
 	return val;
+}
+
+static int
+__backlight_write(const char *iface, const char *file, const char *value)
+{
+	int fd, ret;
+
+	fd = __backlight_open(iface, file, O_WRONLY);
+	if (fd < 0)
+		return -1;
+
+	ret = write(fd, value, strlen(value)+1);
+	close(fd);
+
+	return ret;
 }
 
 /* List of available kernel interfaces in priority order */
@@ -283,6 +308,9 @@ static int __backlight_direct_init(struct backlight *b, char *iface)
 	fd = __backlight_open(iface, "brightness", O_RDWR);
 	if (fd < 0)
 		return 0;
+
+	if (__backlight_read(iface, "bl_power") != -1)
+		b->has_power = 1;
 
 	return __backlight_init(b, iface, fd);
 }
@@ -447,6 +475,30 @@ int backlight_get(struct backlight *b)
 	else if (level < 0)
 		level = -1;
 	return level;
+}
+
+int backlight_off(struct backlight *b)
+{
+	if (b->iface == NULL)
+		return 0;
+
+	if (!b->has_power)
+		return 0;
+
+	/* 4 -> FB_BLANK_POWERDOWN */
+	return __backlight_write(b->iface, "bl_power", "4");
+}
+
+int backlight_on(struct backlight *b)
+{
+	if (b->iface == NULL)
+		return 0;
+
+	if (!b->has_power)
+		return 0;
+
+	/* 0 -> FB_BLANK_UNBLANK */
+	return __backlight_write(b->iface, "bl_power", "0");
 }
 #endif
 

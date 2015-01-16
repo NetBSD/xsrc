@@ -139,19 +139,26 @@ am__EXEEXT_3 = basic-fillrect$(EXEEXT) basic-tiledrect$(EXEEXT) \
 	basic-string$(EXEEXT) basic-copyarea$(EXEEXT) \
 	basic-copyarea-size$(EXEEXT) basic-putimage$(EXEEXT) \
 	basic-lines$(EXEEXT) basic-stress$(EXEEXT) \
-	cursor-test$(EXEEXT) render-fill$(EXEEXT) \
-	render-trapezoid$(EXEEXT) render-trapezoid-image$(EXEEXT) \
-	render-fill-copy$(EXEEXT) render-composite-solid$(EXEEXT) \
+	DrawSegments$(EXEEXT) cursor-test$(EXEEXT) \
+	render-fill$(EXEEXT) render-trapezoid$(EXEEXT) \
+	render-trapezoid-image$(EXEEXT) render-fill-copy$(EXEEXT) \
+	render-composite-solid$(EXEEXT) \
 	render-composite-solid-mask$(EXEEXT) render-copyarea$(EXEEXT) \
 	render-copyarea-mask$(EXEEXT) render-copyarea-size$(EXEEXT) \
 	render-copy-alphaless$(EXEEXT) mixed-stress$(EXEEXT) \
 	shm-test$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2)
 PROGRAMS = $(noinst_PROGRAMS)
+DrawSegments_SOURCES = DrawSegments.c
+DrawSegments_OBJECTS = DrawSegments.$(OBJEXT)
+DrawSegments_LDADD = $(LDADD)
+am__DEPENDENCIES_1 =
+@X11_DRI3_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
+DrawSegments_DEPENDENCIES = libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_2)
 basic_copyarea_SOURCES = basic-copyarea.c
 basic_copyarea_OBJECTS = basic-copyarea.$(OBJEXT)
 basic_copyarea_LDADD = $(LDADD)
-am__DEPENDENCIES_1 =
-@X11_DRI3_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
 basic_copyarea_DEPENDENCIES = libtest.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_2)
@@ -358,17 +365,7 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libtest_la_SOURCES) basic-copyarea.c basic-copyarea-size.c \
-	basic-fillrect.c basic-lines.c basic-putimage.c \
-	basic-rectangle.c basic-stippledrect.c basic-stress.c \
-	basic-string.c basic-tiledrect.c cursor-test.c dri2-race.c \
-	dri2-swap.c dri2-test.c dri3-test.c lowlevel-blt-bench.c \
-	mixed-stress.c present-test.c render-composite-solid.c \
-	render-composite-solid-mask.c render-copy-alphaless.c \
-	render-copyarea.c render-copyarea-mask.c \
-	render-copyarea-size.c render-fill.c render-fill-copy.c \
-	render-trapezoid.c render-trapezoid-image.c shm-test.c
-DIST_SOURCES = $(am__libtest_la_SOURCES_DIST) basic-copyarea.c \
+SOURCES = $(libtest_la_SOURCES) DrawSegments.c basic-copyarea.c \
 	basic-copyarea-size.c basic-fillrect.c basic-lines.c \
 	basic-putimage.c basic-rectangle.c basic-stippledrect.c \
 	basic-stress.c basic-string.c basic-tiledrect.c cursor-test.c \
@@ -379,6 +376,17 @@ DIST_SOURCES = $(am__libtest_la_SOURCES_DIST) basic-copyarea.c \
 	render-copyarea-mask.c render-copyarea-size.c render-fill.c \
 	render-fill-copy.c render-trapezoid.c render-trapezoid-image.c \
 	shm-test.c
+DIST_SOURCES = $(am__libtest_la_SOURCES_DIST) DrawSegments.c \
+	basic-copyarea.c basic-copyarea-size.c basic-fillrect.c \
+	basic-lines.c basic-putimage.c basic-rectangle.c \
+	basic-stippledrect.c basic-stress.c basic-string.c \
+	basic-tiledrect.c cursor-test.c dri2-race.c dri2-swap.c \
+	dri2-test.c dri3-test.c lowlevel-blt-bench.c mixed-stress.c \
+	present-test.c render-composite-solid.c \
+	render-composite-solid-mask.c render-copy-alphaless.c \
+	render-copyarea.c render-copyarea-mask.c \
+	render-copyarea-size.c render-fill.c render-fill-copy.c \
+	render-trapezoid.c render-trapezoid-image.c shm-test.c
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -470,10 +478,6 @@ IVO_LIBS = @IVO_LIBS@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBEXEC_PATH = @LIBEXEC_PATH@
-LIBGLAMOR_CFLAGS = @LIBGLAMOR_CFLAGS@
-LIBGLAMOR_EGL_CFLAGS = @LIBGLAMOR_EGL_CFLAGS@
-LIBGLAMOR_EGL_LIBS = @LIBGLAMOR_EGL_LIBS@
-LIBGLAMOR_LIBS = @LIBGLAMOR_LIBS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
@@ -587,7 +591,7 @@ top_srcdir = @top_srcdir@
 stress_TESTS = basic-fillrect basic-tiledrect basic-stippledrect \
 	basic-rectangle basic-string basic-copyarea \
 	basic-copyarea-size basic-putimage basic-lines basic-stress \
-	cursor-test render-fill render-trapezoid \
+	DrawSegments cursor-test render-fill render-trapezoid \
 	render-trapezoid-image render-fill-copy render-composite-solid \
 	render-composite-solid-mask render-copyarea \
 	render-copyarea-mask render-copyarea-size \
@@ -666,6 +670,10 @@ clean-noinstPROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
+
+DrawSegments$(EXEEXT): $(DrawSegments_OBJECTS) $(DrawSegments_DEPENDENCIES) $(EXTRA_DrawSegments_DEPENDENCIES) 
+	@rm -f DrawSegments$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(DrawSegments_OBJECTS) $(DrawSegments_LDADD) $(LIBS)
 
 basic-copyarea$(EXEEXT): $(basic_copyarea_OBJECTS) $(basic_copyarea_DEPENDENCIES) $(EXTRA_basic_copyarea_DEPENDENCIES) 
 	@rm -f basic-copyarea$(EXEEXT)
@@ -789,6 +797,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DrawSegments.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/basic-copyarea-size.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/basic-copyarea.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/basic-fillrect.Po@am__quote@

@@ -54,9 +54,6 @@
 
 #include "present.h"
 
-#include "intel_glamor.h"
-#include "uxa.h"
-
 struct intel_present_vblank_event {
 	uint64_t        event_id;
 };
@@ -193,7 +190,8 @@ intel_present_queue_vblank(RRCrtcPtr                    crtc,
 		if (errno != EBUSY || !intel_present_flush_drm_events(screen))
 			return BadAlloc;
 	}
-	DebugPresent(("\t\tiq %lld seq %u msc %u (hw msc %u)\n", event_id, seq, low_msc, vbl.request.sequence));
+	DebugPresent(("\t\tiq %lld seq %u msc %llu (hw msc %u)\n",
+                      (long long) event_id, seq, (long long) msc, vbl.request.sequence));
 	return Success;
 }
 
@@ -245,6 +243,7 @@ intel_present_check_flip(RRCrtcPtr              crtc,
 	ScreenPtr               screen = window->drawable.pScreen;
 	ScrnInfoPtr             scrn = xf86ScreenToScrn(screen);
 	intel_screen_private    *intel = intel_get_screen_private(scrn);
+        dri_bo                  *bo;
 
 	if (!scrn->vtSema)
 		return FALSE;
@@ -257,6 +256,15 @@ intel_present_check_flip(RRCrtcPtr              crtc,
 
 	if (crtc && !intel_crtc_on(crtc->devPrivate))
 		return FALSE;
+
+        /* Check stride, can't change that on flip */
+        if (pixmap->devKind != intel->front_pitch)
+                return FALSE;
+
+        /* Make sure there's a bo we can get to */
+        bo = intel_get_pixmap_bo(pixmap);
+        if (!bo)
+                return FALSE;
 
 	return TRUE;
 }

@@ -312,7 +312,7 @@ void sna_video_textured_setup(struct sna *sna, ScreenPtr screen)
 {
 	XvAdaptorPtr adaptor;
 	struct sna_video *video;
-	int nports = 16, i;
+	int nports, i;
 
 	if (!sna->render.video) {
 		xf86DrvMsg(sna->scrn->scrnIndex, X_INFO,
@@ -330,6 +330,12 @@ void sna_video_textured_setup(struct sna *sna, ScreenPtr screen)
 	if (adaptor == NULL)
 		return;
 
+	nports = 16;
+	if (sna->kgem.gen >= 060)
+		nports = 32;
+	if (sna->kgem.gen >= 0100)
+		nports = 64;
+
 	video = calloc(nports, sizeof(struct sna_video));
 	adaptor->pPorts = calloc(nports, sizeof(XvPortRec));
 	if (video == NULL || adaptor->pPorts == NULL) {
@@ -338,7 +344,6 @@ void sna_video_textured_setup(struct sna *sna, ScreenPtr screen)
 		sna->xv.num_adaptors--;
 		return;
 	}
-
 
 	adaptor->type = XvInputMask | XvImageMask;
 	adaptor->pScreen = screen;

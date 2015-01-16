@@ -135,14 +135,14 @@ sna_transform_is_imprecise_integer_translation(const PictTransform *t,
 			int f;
 
 			f = pixman_fixed_fraction(t->matrix[0][2]);
-			if (f < IntToxFixed(1)/4 || f > IntToxFixed(3)/4) {
-				DBG(("%s: imprecise, fractional translation X\n", __FUNCTION__));
+			if (f > IntToxFixed(1)/4 && f < IntToxFixed(3)/4) {
+				DBG(("%s: imprecise, fractional translation X: %x\n", __FUNCTION__, f));
 				return false;
 			}
 
 			f = pixman_fixed_fraction(t->matrix[1][2]);
-			if (f < IntToxFixed(1)/4 || f > IntToxFixed(3)/4) {
-				DBG(("%s: imprecise, fractional translation Y\n", __FUNCTION__));
+			if (f > IntToxFixed(1)/4 && f < IntToxFixed(3)/4) {
+				DBG(("%s: imprecise, fractional translation Y: %x\n", __FUNCTION__, f));
 				return false;
 			}
 		}

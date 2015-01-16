@@ -37,7 +37,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "config.h"
 #endif
 
-#include <assert.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -60,6 +59,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
+#include <sys/poll.h>
 #include "i915_drm.h"
 
 #ifdef HAVE_VALGRIND
@@ -249,41 +249,31 @@ static Bool sna_create_screen_resources(ScreenPtr screen)
 		return FALSE;
 	}
 
-	if (!sna_pixmap_force_to_gpu(new_front, MOVE_READ)) {
-		xf86DrvMsg(screen->myNum, X_ERROR,
-			   "[intel] Failed to allocate video resources for front buffer %dx%d at depth %d\n",
-			   screen->width,
-			   screen->height,
-			   screen->rootDepth);
-		screen->DestroyPixmap(new_front);
-		return FALSE;
-	}
+	/* Prefer to use the GPU for rendering into the eventual scanout
+	 * bo so that we do not unduly stall when it is time to attach
+	 * it to the CRTCs.
+	 */
+	(void)sna_pixmap_force_to_gpu(new_front, MOVE_READ | __MOVE_SCANOUT);
 
 	screen->SetScreenPixmap(new_front);
 	assert(screen->GetScreenPixmap(screen) == new_front);
 	assert(sna->front == new_front);
 	screen->DestroyPixmap(new_front); /* transfer ownership to screen */
 
-	if (intel_get_master(sna->scrn)) {
-		xf86DrvMsg(screen->myNum, X_ERROR,
-			   "[intel] Failed to become DRM master\n");
-		screen->DestroyPixmap(sna->front);
-		sna->front = NULL;
-		return FALSE;
-	}
-
 	sna_mode_set_primary(sna);
 
-	/* Only preserve the fbcon, not any subsequent server regens */
-	if (serverGeneration == 1 && (sna->flags & SNA_IS_HOSTED) == 0)
-		sna_copy_fbcon(sna);
+	/* Try to become master and copy the current fbcon before the
+	 * actual VT switch. If we fail here, we will try to reset the
+	 * mode in the eventual VT switch. This can fail if systemd has
+	 * already revoked our KMS privileges, so just carry on regardless,
+	 * and hope that everything is sorted after the VT switch.
+	 */
+	if (intel_get_master(sna->dev) == 0) {
+		/* Only preserve the fbcon, not any subsequent server regens */
+		if (serverGeneration == 1 && (sna->flags & SNA_IS_HOSTED) == 0)
+			sna_copy_fbcon(sna);
 
-	if (!sna_set_desired_mode(sna)) {
-		xf86DrvMsg(screen->myNum, X_ERROR,
-			   "[intel] Failed to set initial mode\n");
-		screen->DestroyPixmap(sna->front);
-		sna->front = NULL;
-		return FALSE;
+		(void)sna_set_desired_mode(sna);
 	}
 
 	return TRUE;
@@ -607,8 +597,8 @@ static Bool sna_pre_init(ScrnInfoPtr scrn, int probe)
 	scrn->progClock = TRUE;
 	scrn->rgbBits = 8;
 
-	fd = intel_get_device(scrn);
-	if (fd == -1) {
+	sna->dev = intel_get_device(scrn, &fd);
+	if (sna->dev == NULL) {
 		xf86DrvMsg(scrn->scrnIndex, X_ERROR,
 			   "Failed to claim DRM device.\n");
 		goto cleanup;
@@ -621,7 +611,7 @@ static Bool sna_pre_init(ScrnInfoPtr scrn, int probe)
 		goto cleanup;
 	}
 
-	intel_detect_chipset(scrn, pEnt);
+	intel_detect_chipset(scrn, sna->dev);
 	xf86DrvMsg(scrn->scrnIndex, X_PROBED, "CPU: %s\n",
 		   sna_cpu_features_to_string(sna->cpu_features, buf));
 
@@ -725,6 +715,8 @@ static Bool sna_pre_init(ScrnInfoPtr scrn, int probe)
 
 cleanup:
 	scrn->driverPrivate = (void *)((uintptr_t)sna->info | (sna->flags & SNA_IS_SLAVED) | 2);
+	if (sna->dev)
+		intel_put_device(sna->dev);
 	free(sna);
 	return FALSE;
 }
@@ -780,8 +772,11 @@ sna_wakeup_handler(WAKEUPHANDLER_ARGS_DECL)
 
 	sna_accel_wakeup_handler(sna);
 
-	if (FD_ISSET(sna->kgem.fd, (fd_set*)read_mask))
+	if (FD_ISSET(sna->kgem.fd, (fd_set*)read_mask)) {
 		sna_mode_wakeup(sna);
+		/* Clear the flag so that subsequent ZaphodHeads don't block  */
+		FD_CLR(sna->kgem.fd, (fd_set*)read_mask);
+	}
 }
 
 #if HAVE_UDEV
@@ -877,6 +872,22 @@ err_dev:
 	goto out;
 }
 
+static bool sna_uevent_poll(struct sna *sna)
+{
+	struct pollfd pfd;
+
+	if (sna->uevent_monitor == NULL)
+		return false;
+
+	pfd.fd = udev_monitor_get_fd(sna->uevent_monitor);
+	pfd.events = POLLIN;
+
+	while (poll(&pfd, 1, 0) > 0)
+		sna_handle_uevents(pfd.fd, sna);
+
+	return true;
+}
+
 static void
 sna_uevent_fini(struct sna *sna)
 {
@@ -898,8 +909,20 @@ sna_uevent_fini(struct sna *sna)
 }
 #else
 static void sna_uevent_init(struct sna *sna) { }
+static bool sna_uevent_poll(struct sna *sna) { return false; }
 static void sna_uevent_fini(struct sna *sna) { }
 #endif /* HAVE_UDEV */
+
+static Bool
+sna_randr_getinfo(ScreenPtr screen, Rotation *rotations)
+{
+	struct sna *sna = to_sna_from_screen(screen);
+
+	if (!sna_uevent_poll(sna))
+		sna_mode_discover(sna);
+
+	return sna->mode.rrGetInfo(screen, rotations);
+}
 
 static void sna_leave_vt(VT_FUNC_ARGS_DECL)
 {
@@ -911,7 +934,7 @@ static void sna_leave_vt(VT_FUNC_ARGS_DECL)
 	sna_accel_leave(sna);
 	sna_mode_reset(sna);
 
-	if (intel_put_master(scrn))
+	if (intel_put_master(sna->dev))
 		xf86DrvMsg(scrn->scrnIndex, X_WARNING,
 			   "drmDropMaster failed: %s\n", strerror(errno));
 }
@@ -949,7 +972,7 @@ static Bool sna_early_close_screen(CLOSE_SCREEN_ARGS_DECL)
 	}
 
 	if (scrn->vtSema) {
-		intel_put_master(scrn);
+		intel_put_master(sna->dev);
 		scrn->vtSema = FALSE;
 	}
 
@@ -1039,10 +1062,25 @@ static void sna_dri_init(struct sna *sna, ScreenPtr screen)
 			   "direct rendering: %senabled\n", str);
 }
 
-static size_t
-agp_aperture_size(struct pci_device *dev, int gen)
+static Bool
+sna_mode_init(struct sna *sna, ScreenPtr screen)
 {
-	return dev->regions[gen < 030 ? 0 : 2].size;
+	rrScrPrivPtr rp;
+
+	if (!xf86CrtcScreenInit(screen))
+		return FALSE;
+
+	xf86RandR12SetRotations(screen, RR_Rotate_All | RR_Reflect_All);
+	xf86RandR12SetTransformSupport(screen, TRUE);
+
+	/* Wrap RR queries to catch pending MST topology changes */
+	rp = rrGetScrPriv(screen);
+	if (rp) {
+		sna->mode.rrGetInfo = rp->rrGetInfo;
+		rp->rrGetInfo = sna_randr_getinfo;
+	}
+
+	return TRUE;
 }
 
 static Bool
@@ -1050,7 +1088,6 @@ sna_screen_init(SCREEN_INIT_ARGS_DECL)
 {
 	ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
 	struct sna *sna = to_sna(scrn);
-	struct pci_device *pci;
 	VisualPtr visuals;
 	DepthPtr depths;
 	int nvisuals;
@@ -1068,11 +1105,7 @@ sna_screen_init(SCREEN_INIT_ARGS_DECL)
 	if (!sna_register_all_privates())
 		return FALSE;
 
-	pci = xf86GetPciInfoForEntity(sna->pEnt->index);
-	if (pci != NULL)
-		scrn->videoRam = agp_aperture_size(pci, sna->kgem.gen) / 1024;
-	else
-		scrn->videoRam = 256;
+	scrn->videoRam = sna->kgem.aperture_mappable * 4; /* Page to KiB */
 
 	miClearVisualTypes();
 	if (!miSetVisualTypes(scrn->depth,
@@ -1145,11 +1178,8 @@ sna_screen_init(SCREEN_INIT_ARGS_DECL)
 	sna->CloseScreen = screen->CloseScreen;
 	screen->CloseScreen = sna_early_close_screen;
 
-	if (!xf86CrtcScreenInit(screen))
+	if (!sna_mode_init(sna, screen))
 		return FALSE;
-
-	xf86RandR12SetRotations(screen, RR_Rotate_All | RR_Reflect_All);
-	xf86RandR12SetTransformSupport(screen, TRUE);
 
 	if (!miCreateDefColormap(screen))
 		return FALSE;
@@ -1162,6 +1192,7 @@ sna_screen_init(SCREEN_INIT_ARGS_DECL)
 
 	xf86DPMSInit(screen, sna_dpms_set, 0);
 
+	sna_uevent_init(sna);
 	sna_video_init(sna, screen);
 	sna_dri_init(sna, screen);
 
@@ -1175,8 +1206,6 @@ sna_screen_init(SCREEN_INIT_ARGS_DECL)
 		xf86ShowUnusedOptions(scrn->scrnIndex, scrn->options);
 
 	sna->suspended = FALSE;
-
-	sna_uevent_init(sna);
 
 	return TRUE;
 }
@@ -1201,9 +1230,9 @@ static void sna_free_screen(FREE_SCREEN_ARGS_DECL)
 
 	sna_mode_fini(sna);
 	sna_acpi_fini(sna);
-	free(sna);
 
-	intel_put_device(scrn);
+	intel_put_device(sna->dev);
+	free(sna);
 }
 
 static Bool sna_enter_vt(VT_FUNC_ARGS_DECL)
@@ -1212,7 +1241,7 @@ static Bool sna_enter_vt(VT_FUNC_ARGS_DECL)
 	struct sna *sna = to_sna(scrn);
 
 	DBG(("%s\n", __FUNCTION__));
-	if (intel_get_master(scrn))
+	if (intel_get_master(sna->dev))
 		return FALSE;
 
 	if (sna->flags & SNA_REPROBE) {
@@ -1224,7 +1253,7 @@ static Bool sna_enter_vt(VT_FUNC_ARGS_DECL)
 	}
 
 	if (!sna_set_desired_mode(sna)) {
-		intel_put_master(scrn);
+		intel_put_master(sna->dev);
 		return FALSE;
 	}
 

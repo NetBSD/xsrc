@@ -38,7 +38,7 @@
 
 #include "intel.h"
 #include "intel_xvmc.h"
-#include "intel_video.h"
+#include "intel_uxa.h"
 #include "i830_reg.h"
 #include "i965_reg.h"
 #include "brw_defines.h"
@@ -388,7 +388,7 @@ static void i965_create_dst_surface_state(ScrnInfoPtr scrn,
 {
 	intel_screen_private *intel = intel_get_screen_private(scrn);
 	struct brw_surface_state dest_surf_state;
-	drm_intel_bo *pixmap_bo = intel_get_pixmap_bo(pixmap);
+	drm_intel_bo *pixmap_bo = intel_uxa_get_pixmap_bo(pixmap);
 	assert(pixmap_bo != NULL);
 
 	memset(&dest_surf_state, 0, sizeof(dest_surf_state));
@@ -414,7 +414,7 @@ static void i965_create_dst_surface_state(ScrnInfoPtr scrn,
 	dest_surf_state.ss0.render_cache_read_mode = 0;
 
 	dest_surf_state.ss1.base_addr =
-	    intel_emit_reloc(surf_bo, offset + offsetof(struct brw_surface_state, ss1),
+	    intel_uxa_emit_reloc(surf_bo, offset + offsetof(struct brw_surface_state, ss1),
 			     pixmap_bo, 0, I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER);
 
 	dest_surf_state.ss2.height = pixmap->drawable.height - 1;
@@ -422,7 +422,7 @@ static void i965_create_dst_surface_state(ScrnInfoPtr scrn,
 	dest_surf_state.ss2.mip_count = 0;
 	dest_surf_state.ss2.render_target_rotation = 0;
 	dest_surf_state.ss3.pitch = intel_pixmap_pitch(pixmap) - 1;
-	dest_surf_state.ss3.tiled_surface = intel_pixmap_tiled(pixmap);
+	dest_surf_state.ss3.tiled_surface = intel_uxa_pixmap_tiled(pixmap);
 	dest_surf_state.ss3.tile_walk = 0;	/* TileX */
 
 	dri_bo_subdata(surf_bo,
@@ -465,7 +465,7 @@ static void i965_create_src_surface_state(ScrnInfoPtr scrn,
 
 	if (src_bo) {
 		src_surf_state.ss1.base_addr =
-		    intel_emit_reloc(surface_bo,
+		    intel_uxa_emit_reloc(surface_bo,
 				     offset + offsetof(struct brw_surface_state, ss1),
 				     src_bo, src_offset,
 				     I915_GEM_DOMAIN_SAMPLER, 0);
@@ -485,13 +485,13 @@ static void gen7_create_dst_surface_state(ScrnInfoPtr scrn,
 {
 	intel_screen_private *intel = intel_get_screen_private(scrn);
 	struct gen7_surface_state dest_surf_state;
-	drm_intel_bo *pixmap_bo = intel_get_pixmap_bo(pixmap);
+	drm_intel_bo *pixmap_bo = intel_uxa_get_pixmap_bo(pixmap);
 	assert(pixmap_bo != NULL);
 
 	memset(&dest_surf_state, 0, sizeof(dest_surf_state));
 
 	dest_surf_state.ss0.surface_type = BRW_SURFACE_2D;
-	dest_surf_state.ss0.tiled_surface = intel_pixmap_tiled(pixmap);
+	dest_surf_state.ss0.tiled_surface = intel_uxa_pixmap_tiled(pixmap);
 	dest_surf_state.ss0.tile_walk = 0;	/* TileX */
 
 	if (intel->cpp == 2) {
@@ -501,7 +501,7 @@ static void gen7_create_dst_surface_state(ScrnInfoPtr scrn,
 	}
 
 	dest_surf_state.ss1.base_addr =
-		intel_emit_reloc(surf_bo,
+		intel_uxa_emit_reloc(surf_bo,
 				offset + offsetof(struct gen7_surface_state, ss1),
 				pixmap_bo, 0,
 				I915_GEM_DOMAIN_SAMPLER, 0);
@@ -543,7 +543,7 @@ static void gen7_create_src_surface_state(ScrnInfoPtr scrn,
 
 	if (src_bo) {
 		src_surf_state.ss1.base_addr =
-			intel_emit_reloc(surface_bo,
+			intel_uxa_emit_reloc(surface_bo,
 					offset + offsetof(struct gen7_surface_state, ss1),
 					src_bo, src_offset,
 					I915_GEM_DOMAIN_SAMPLER, 0);
@@ -596,7 +596,7 @@ static drm_intel_bo *i965_create_sampler_state(ScrnInfoPtr scrn)
 	sampler_state.ss1.s_wrap_mode = BRW_TEXCOORDMODE_CLAMP;
 	sampler_state.ss1.t_wrap_mode = BRW_TEXCOORDMODE_CLAMP;
 
-	return intel_bo_alloc_for_data(intel,
+	return intel_uxa_bo_alloc_for_data(intel,
 				       &sampler_state, sizeof(sampler_state),
 				       "textured video sampler state");
 }
@@ -613,7 +613,7 @@ static drm_intel_bo *gen7_create_sampler_state(ScrnInfoPtr scrn)
 	sampler_state.ss3.s_wrap_mode = BRW_TEXCOORDMODE_CLAMP;
 	sampler_state.ss3.t_wrap_mode = BRW_TEXCOORDMODE_CLAMP;
 
-	return intel_bo_alloc_for_data(intel,
+	return intel_uxa_bo_alloc_for_data(intel,
 				       &sampler_state, sizeof(sampler_state),
 				       "textured video sampler state");
 }
@@ -633,7 +633,7 @@ static drm_intel_bo *i965_create_vs_state(ScrnInfoPtr scrn)
 	vs_state.vs6.vs_enable = 0;
 	vs_state.vs6.vert_cache_disable = 1;
 
-	return intel_bo_alloc_for_data(intel,
+	return intel_uxa_bo_alloc_for_data(intel,
 				       &vs_state, sizeof(vs_state),
 				       "textured video vs state");
 }
@@ -643,7 +643,7 @@ static drm_intel_bo *i965_create_program(ScrnInfoPtr scrn,
 					 unsigned int program_size)
 {
 	intel_screen_private *intel = intel_get_screen_private(scrn);
-	return intel_bo_alloc_for_data(intel,
+	return intel_uxa_bo_alloc_for_data(intel,
 				       program, program_size,
 				       "textured video program");
 }
@@ -680,7 +680,7 @@ static drm_intel_bo *i965_create_sf_state(ScrnInfoPtr scrn)
 	memset(&sf_state, 0, sizeof(sf_state));
 	sf_state.thread0.grf_reg_count = BRW_GRF_BLOCKS(SF_KERNEL_NUM_GRF);
 	sf_state.thread0.kernel_start_pointer =
-	    intel_emit_reloc(sf_bo, offsetof(struct brw_sf_unit_state, thread0),
+	    intel_uxa_emit_reloc(sf_bo, offsetof(struct brw_sf_unit_state, thread0),
 			     kernel_bo, sf_state.thread0.grf_reg_count << 1,
 			     I915_GEM_DOMAIN_INSTRUCTION, 0) >> 6;
 	sf_state.sf1.single_program_flow = 1;	/* XXX */
@@ -764,7 +764,7 @@ static drm_intel_bo *i965_create_wm_state(ScrnInfoPtr scrn,
 	memset(&wm_state, 0, sizeof(wm_state));
 	wm_state.thread0.grf_reg_count = BRW_GRF_BLOCKS(PS_KERNEL_NUM_GRF);
 	wm_state.thread0.kernel_start_pointer =
-	    intel_emit_reloc(wm_bo, offsetof(struct brw_wm_unit_state, thread0),
+	    intel_uxa_emit_reloc(wm_bo, offsetof(struct brw_wm_unit_state, thread0),
 			     kernel_bo, wm_state.thread0.grf_reg_count << 1,
 			     I915_GEM_DOMAIN_INSTRUCTION, 0) >> 6;
 	wm_state.thread1.single_program_flow = 1;	/* XXX */
@@ -791,7 +791,7 @@ static drm_intel_bo *i965_create_wm_state(ScrnInfoPtr scrn,
 	wm_state.thread3.urb_entry_read_offset = 0;	/* XXX */
 	wm_state.wm4.stats_enable = 1;
 	wm_state.wm4.sampler_state_pointer =
-	    intel_emit_reloc(wm_bo, offsetof(struct brw_wm_unit_state, wm4),
+	    intel_uxa_emit_reloc(wm_bo, offsetof(struct brw_wm_unit_state, wm4),
 			     sampler_bo, 0,
 			     I915_GEM_DOMAIN_INSTRUCTION, 0) >> 5;
 	if (IS_GEN5(intel))
@@ -818,7 +818,7 @@ static drm_intel_bo *i965_create_cc_vp_state(ScrnInfoPtr scrn)
 	cc_viewport.min_depth = -1.e35;
 	cc_viewport.max_depth = 1.e35;
 
-	return intel_bo_alloc_for_data(intel,
+	return intel_uxa_bo_alloc_for_data(intel,
 				       &cc_viewport, sizeof(cc_viewport),
 				       "textured video cc viewport");
 }
@@ -850,7 +850,7 @@ static drm_intel_bo *i965_create_cc_state(ScrnInfoPtr scrn)
 	cc_state.cc3.blend_enable = 0;	/* disable color blend */
 	cc_state.cc3.alpha_test = 0;	/* disable alpha test */
 	cc_state.cc4.cc_viewport_state_offset =
-	    intel_emit_reloc(cc_bo, offsetof(struct brw_cc_unit_state, cc4),
+	    intel_uxa_emit_reloc(cc_bo, offsetof(struct brw_cc_unit_state, cc4),
 			     cc_vp_bo, 0, I915_GEM_DOMAIN_INSTRUCTION, 0) >> 5;
 	cc_state.cc5.dither_enable = 0;	/* disable dither */
 	cc_state.cc5.logicop_func = 0xc;	/* WHITE */
@@ -1287,7 +1287,7 @@ I965DisplayVideoTextured(ScrnInfoPtr scrn,
 		vb[i++] = (float)box_x1 + pix_xoff;
 		vb[i++] = (float)box_y1 + pix_yoff;
 
-		bo_table[0] = intel_bo_alloc_for_data(intel,
+		bo_table[0] = intel_uxa_bo_alloc_for_data(intel,
 						      vb, sizeof(vb),
 						      "textured video vbo");
 
@@ -1341,7 +1341,7 @@ I965DisplayVideoTextured(ScrnInfoPtr scrn,
 	/* release reference once we're finished */
 	drm_intel_bo_unreference(surface_state_binding_table_bo);
 
-	intel_debug_flush(scrn);
+	intel_uxa_debug_flush(scrn);
 }
 
 void i965_free_video(ScrnInfoPtr scrn)
@@ -1387,7 +1387,7 @@ gen6_create_cc_state(ScrnInfoPtr scrn)
 	cc_state.constant_b = 1.0;
 	cc_state.constant_a = 1.0;
 
-	return intel_bo_alloc_for_data(intel,
+	return intel_uxa_bo_alloc_for_data(intel,
 				       &cc_state, sizeof(cc_state),
 				       "textured video cc state");
 }
@@ -1403,7 +1403,7 @@ gen6_create_blend_state(ScrnInfoPtr scrn)
 	blend_state.blend1.logic_op_func = 0xc;
 	blend_state.blend1.pre_blend_clamp_enable = 1;
 
-	return intel_bo_alloc_for_data(intel,
+	return intel_uxa_bo_alloc_for_data(intel,
 				       &blend_state, sizeof(blend_state),
 				       "textured video blend state");
 }
@@ -1415,7 +1415,7 @@ gen6_create_depth_stencil_state(ScrnInfoPtr scrn)
 	struct gen6_depth_stencil_state depth_stencil_state;
 
 	memset(&depth_stencil_state, 0, sizeof(depth_stencil_state));
-	return intel_bo_alloc_for_data(intel,
+	return intel_uxa_bo_alloc_for_data(intel,
 				       &depth_stencil_state,
 				       sizeof(depth_stencil_state),
 				       "textured video blend state");
@@ -1917,7 +1917,7 @@ void Gen6DisplayVideoTextured(ScrnInfoPtr scrn,
 		vb[i++] = (float)box_x1 + pix_xoff;
 		vb[i++] = (float)box_y1 + pix_yoff;
 
-		bo_table[0] = intel_bo_alloc_for_data(intel,
+		bo_table[0] = intel_uxa_bo_alloc_for_data(intel,
 						      vb, sizeof(vb),
 						      "video vbo");
 
@@ -1936,5 +1936,5 @@ void Gen6DisplayVideoTextured(ScrnInfoPtr scrn,
 
 	/* release reference once we're finished */
 	drm_intel_bo_unreference(surface_state_binding_table_bo);
-	intel_debug_flush(scrn);
+	intel_uxa_debug_flush(scrn);
 }
