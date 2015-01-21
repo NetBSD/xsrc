@@ -29,7 +29,6 @@ AM_CFLAGS = \
 	@XORG_CFLAGS@ \
 	@UDEV_CFLAGS@ \
 	@DRM_CFLAGS@ \
-	@NOWARNFLAGS@ \
 	$(NULL)
 
 if DEBUG
@@ -58,3 +57,5 @@ brw_test_SOURCES = \
 brw_test_LDADD = \
 	libbrw.la \
 	$(NULL)
+
+AM_CFLAGS += @NOWARNFLAGS@

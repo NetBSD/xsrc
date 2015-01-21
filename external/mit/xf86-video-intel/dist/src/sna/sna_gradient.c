@@ -246,8 +246,8 @@ sna_render_finish_solid(struct sna *sna, bool force)
 	struct kgem_bo *old;
 	int i;
 
-	DBG(("sna_render_finish_solid(force=%d, domain=%d, busy=%d, dirty=%d)\n",
-	     force, cache->cache_bo->domain, cache->cache_bo->rq != NULL, cache->dirty));
+	DBG(("sna_render_finish_solid(force=%d, domain=%d, busy=%d, dirty=%d, size=%d)\n",
+	     force, cache->cache_bo->domain, cache->cache_bo->rq != NULL, cache->dirty, cache->size));
 
 	if (!force && cache->cache_bo->domain != DOMAIN_GPU)
 		return;
@@ -353,9 +353,10 @@ sna_render_get_solid(struct sna *sna, uint32_t color)
 		}
 	}
 
-	sna_render_finish_solid(sna, i == 1024);
+	sna_render_finish_solid(sna, i == ARRAY_SIZE(cache->color));
 
 	i = cache->size++;
+	assert(i < ARRAY_SIZE(cache->color));
 	cache->color[i] = color;
 	cache->dirty = 1;
 	DBG(("sna_render_get_solid(%d) = %x (new)\n", i, color));
@@ -429,7 +430,7 @@ static bool sna_solid_cache_init(struct sna *sna)
 	if (!cache->cache_bo)
 		return false;
 
-	cache->last = 1024;
+	cache->last = 0;
 	cache->color[cache->last] = 0;
 	cache->dirty = 0;
 	cache->size = 0;

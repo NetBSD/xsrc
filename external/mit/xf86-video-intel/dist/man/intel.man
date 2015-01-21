@@ -25,8 +25,11 @@ the 830M and later.
 .B intel
 supports the i810, i810-DC100, i810e, i815, i830M, 845G, 852GM, 855GM,
 865G, 915G, 915GM, 945G, 945GM, 965G, 965Q, 946GZ, 965GM, 945GME,
-G33, Q33, Q35, G35, GM45, G45, Q45, G43, G41 chipsets, and Pineview-M in
-Atom N400 series, Pineview-D in Atom D400/D500 series.
+G33, Q33, Q35, G35, GM45, G45, Q45, G43, G41 chipsets, Pineview-M in
+Atom N400 series, Pineview-D in Atom D400/D500 series,
+Intel(R) HD Graphics: 2000-6000,
+Intel(R) Iris(TM) Graphics: 5100/6100, and
+Intel(R) Iris(TM) Pro Graphics: 5200/6200/P6300.
 
 .SH CONFIGURATION DETAILS
 Please refer to __xconfigfile__(__filemansuffix__) for general configuration
@@ -62,10 +65,13 @@ This sets the default pixel value for the YUV video overlay key.
 .IP
 Default: undefined.
 .TP
-.BI "Option \*qDRI\*q \*q" boolean \*q
-Disable or enable DRI support.
+.BI "Option \*qDRI\*q \*q" string \*q
+Disable or enable DRI support. A driver name to use can be provided instead
+of simple boolean value, which will be passed to the GL implementation for
+it to load the appropriate backend. Alternatively the maximum level of DRI
+to enable (e.g. "1", "2" or "3") can be specified.
 .IP
-Default: DRI is enabled for configurations where it is supported.
+Default: All levels of DRI are enabled for configurations where it is supported.
 
 .PP
 The following driver
@@ -121,6 +127,11 @@ Disable or enable acceleration.
 .IP
 Default: acceleration is enabled.
 .TP
+.BI "Option \*qPresent\*q \*q" boolean \*q
+Enable use of hardware counters and flow control for the Present extension.
+.IP
+Default: Enabled
+.TP
 .BI "Option \*qAccelMethod\*q \*q" string \*q
 Select acceleration method.
 There are a couple of backends available for accelerating the DDX. \*qUXA\*q (Unified
@@ -129,10 +140,29 @@ the GEM driver model. It is in the process of being superseded by \*qSNA\*q
 (Sandybridge's New Acceleration). Until that process is complete, the ability to
 choose which backend to use remains for backwards compatibility.
 In addition, there are a pair of sub-options to limit the acceleration for
-debugging use. Specify \*qoff\*q to disable all acceleration, or \*qblt\*q to
+debugging use. Specify \*qoff\*q or \*qnone\*q to disable all acceleration, or \*qblt\*q to
 disable render acceleration and only use the BLT engine.
 .IP
-Default: use UXA (render acceleration)
+Default: use SNA (render acceleration)
+.TP
+.BI "Option \*qTearFree\*q \*q" boolean \*q
+Disable or enable TearFree updates. This option forces X to perform all
+rendering to a backbuffer prior to updating the actual display. It requires
+an extra memory allocation the same size as a framebuffer, the occasional extra
+copy, and requires Damage tracking. Thus enabling TearFree requires more
+memory and is slower (reduced throughput) and introduces a small amount of
+output latency, but it should not impact input latency. However, the update to
+the screen is then performed synchronously with the vertical refresh of the
+display so that the entire update is completed before the display starts its
+refresh. That is only one frame is ever visible, preventing an unsightly tear
+between two visible and differing frames. Note that this replicates what the
+compositing manager should be doing, however TearFree will redirect the
+compositor updates (and those of fullscreen games) directly on to the scanout
+thus incurring no additional overhead in the composited case. Also note that
+not all compositing managers prevent tearing, and if the outputs are
+rotated, there will still be tearing without TearFree enabled.
+.IP
+Default: TearFree is disabled.
 .TP
 .BI "Option \*qReprobeOutputs\*q \*q" boolean \*q
 Disable or enable rediscovery of connected displays during server startup.
@@ -196,13 +226,31 @@ i.e. perform synchronous rendering.
 Default: Disabled
 .TP
 .TP
+.BI "Option \*qVSync\*q \*q" boolean \*q
+This option controls the use of commands to synchronise rendering with the
+vertical refresh of the display. Some rendering commands have the option
+to be performed in a "tear-free" fashion by stalling the GPU to wait for
+the display to be outside of the region to be updated. This slows down all
+rendering, and historically has been the source of many GPU hangs.
+.IP
+Default: enabled.
+.TP
+.BI "Option \*qPageFlip\*q \*q" boolean \*q
+This option controls the use of commands to flip the scanout address on a
+VBlank. This is used by glXSwapBuffers to efficiently perform the back-to-front
+exchange at the end of a frame without incurring the penalty of a copy, or
+stalling the render pipeline (the flip is performed asynchronrously to the
+render command stream by the display engine). However, it has historically
+been the source of many GPU hangs.
+.IP
+Default: enabled.
+.TP
 .BI "Option \*qSwapbuffersWait\*q \*q" boolean \*q
 This option controls the behavior of glXSwapBuffers and glXCopySubBufferMESA
 calls by GL applications.  If enabled, the calls will avoid tearing by making
 sure the display scanline is outside of the area to be copied before the copy
 occurs.  If disabled, no scanline synchronization is performed, meaning tearing
-will likely occur.  Note that when enabled, this option can adversely affect
-the framerate of applications that render frames at less than refresh rate.
+will likely occur.
 .IP
 Default: enabled.
 .TP
@@ -260,6 +308,18 @@ This option controls whether the driver automatically notifies
 applications when monitors are connected or disconnected.
 .IP
 Default: enabled.
+.TP
+.BI "Option \*qVirtualheads\*q \*q" integer \*q
+This option controls specifies the number of fake outputs to create in
+addition to the normal outputs detected on your hardware. These outputs
+cannot be assigned to the regular displays attached to the GPU, but do
+otherwise act as any other xrandr output and share a portion of the
+regular framebuffer. One use case for these extra heads is for extending
+your desktop onto a discrete GPU using the Bumblebee project. However,
+the recommendation here is to use PRIME instead to create a single
+Xserver that can addresses and coordinate between multiple GPUs.
+.IP
+Default: 0
 .TP
 .BI "Option \*qZaphodHeads\*q \*q" string \*q
 .IP
@@ -444,7 +504,7 @@ video windows).
 
 The xf86-video-intel driver is part of the X.Org and Freedesktop.org
 umbrella projects.  Details on bug reporting can be found at
-http://www.intellinuxgraphics.org/how_to_report_bug.html.  Mailing
+https://01.org/linuxgraphics/documentation/how-report-bugs.  Mailing
 lists are also commonly used to report experiences and ask questions
 about configuration and other topics.  See lists.freedesktop.org for
 more information (the xorg@lists.freedesktop.org mailing list is the

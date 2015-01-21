@@ -110,7 +110,7 @@ static const uint32_t ps_kernel_planar[][4] = {
 };
 
 #define compare(old) brw_test_compare(__FUNCTION__, p.gen, p.store, p.nr_insn, (struct brw_instruction *)old, ARRAY_SIZE(old))
-#define GEN 70
+#define GEN 070
 
 static void gen7_ps_nomask_affine(void)
 {

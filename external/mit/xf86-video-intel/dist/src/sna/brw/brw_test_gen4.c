@@ -127,6 +127,8 @@ static const uint32_t ps_kernel_planar_static[][4] = {
 #include "exa_wm_write.g4b"
 };
 
+#define GEN 040
+
 #define compare(old) brw_test_compare(__FUNCTION__, p.gen, p.store, p.nr_insn, (struct brw_instruction *)old, ARRAY_SIZE(old)-8)
 
 static void gen4_sf__nomask(void)
@@ -134,7 +136,7 @@ static void gen4_sf__nomask(void)
 	uint32_t store[128];
 	struct brw_compile p;
 
-	brw_compile_init(&p, 40, store);
+	brw_compile_init(&p, GEN, store);
 	brw_sf_kernel__nomask(&p);
 
 	compare(sf_kernel);
@@ -145,7 +147,7 @@ static void gen4_sf__mask(void)
 	uint32_t store[128];
 	struct brw_compile p;
 
-	brw_compile_init(&p, 40, store);
+	brw_compile_init(&p, GEN, store);
 	brw_sf_kernel__mask(&p);
 
 	compare(sf_kernel_mask);
@@ -157,7 +159,7 @@ gen4_wm_kernel__affine_nomask(void)
 	uint32_t store[128];
 	struct brw_compile p;
 
-	brw_compile_init(&p, 40, store);
+	brw_compile_init(&p, GEN, store);
 	brw_wm_kernel__affine(&p, 16);
 
 	compare(ps_kernel_nomask_affine);
@@ -169,7 +171,7 @@ gen4_wm_kernel__affine_mask_noca(void)
 	uint32_t store[128];
 	struct brw_compile p;
 
-	brw_compile_init(&p, 40, store);
+	brw_compile_init(&p, GEN, store);
 	brw_wm_kernel__affine_mask(&p, 16);
 
 	compare(ps_kernel_masknoca_affine);
@@ -181,7 +183,7 @@ gen4_wm_kernel__projective_nomask(void)
 	uint32_t store[128];
 	struct brw_compile p;
 
-	brw_compile_init(&p, 40, store);
+	brw_compile_init(&p, GEN, store);
 	brw_wm_kernel__projective(&p, 16);
 
 	compare(ps_kernel_nomask_projective);

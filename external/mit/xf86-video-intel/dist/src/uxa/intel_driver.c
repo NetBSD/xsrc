@@ -45,6 +45,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <stdio.h>
 #include <errno.h>
 
+#include "xorg-server.h"
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "xf86cmap.h"
@@ -52,14 +53,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "compiler.h"
 #include "mipointer.h"
 #include "micmap.h"
-#include "shadowfb.h"
 #include <X11/extensions/randr.h>
-#include <X11/extensions/dpmsconst.h>
 #include "fb.h"
 #include "miscstruct.h"
 #include "dixstruct.h"
 #include "xf86xv.h"
-#include <X11/extensions/Xv.h>
 #include "shadow.h"
 #include "intel.h"
 #include "intel_video.h"
@@ -70,15 +68,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "intel_xvmc.h"
 #endif
 
-#include "legacy/legacy.h"
-#include "uxa.h"
+#if USE_UXA
+#include "intel_uxa.h"
+#endif
 
-#include <sys/ioctl.h>
-#include "i915_drm.h"
-#include <xf86drmMode.h>
-
-#include "intel_glamor.h"
 #include "intel_options.h"
+#include "i915_drm.h"
 
 static void i830AdjustFrame(ADJUST_FRAME_ARGS_DECL);
 static Bool I830CloseScreen(CLOSE_SCREEN_ARGS_DECL);
@@ -174,6 +169,24 @@ static Bool i830CreateScreenResources(ScreenPtr screen)
 	return TRUE;
 }
 
+void
+intel_set_pixmap_bo(PixmapPtr pixmap, dri_bo *bo)
+{
+        intel_uxa_set_pixmap_bo(pixmap, bo);
+}
+
+dri_bo *
+intel_get_pixmap_bo(PixmapPtr pixmap)
+{
+        return intel_uxa_get_pixmap_bo(pixmap);
+}
+
+void
+intel_flush(intel_screen_private *intel)
+{
+        intel_batch_submit(intel->scrn);
+}
+
 static void PreInitCleanup(ScrnInfoPtr scrn)
 {
 	if (!scrn || !scrn->driverPrivate)
@@ -186,7 +199,7 @@ static void PreInitCleanup(ScrnInfoPtr scrn)
 static void intel_check_chipset_option(ScrnInfoPtr scrn)
 {
 	intel_screen_private *intel = intel_get_screen_private(scrn);
-	intel_detect_chipset(scrn, intel->pEnt, intel->PciInfo);
+	intel_detect_chipset(scrn, intel->dev);
 }
 
 static Bool I830GetEarlyOptions(ScrnInfoPtr scrn)
@@ -198,6 +211,7 @@ static Bool I830GetEarlyOptions(ScrnInfoPtr scrn)
 	if (!intel->Options)
 		return FALSE;
 
+#if USE_UXA
 	intel->fallback_debug = xf86ReturnOptValBool(intel->Options,
 						     OPTION_FALLBACKDEBUG,
 						     FALSE);
@@ -219,91 +233,42 @@ static Bool I830GetEarlyOptions(ScrnInfoPtr scrn)
 				 FALSE))
 		intel->debug_flush |= DEBUG_FLUSH_WAIT;
 
+#endif
 	return TRUE;
 }
 
 static Bool intel_option_cast_string_to_bool(intel_screen_private *intel,
 					     int id, Bool val)
 {
+#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,7,99,901,0)
 	xf86getBoolValue(&val, xf86GetOptValString(intel->Options, id));
 	return val;
+#else
+	return val;
+#endif
 }
 
 static void intel_check_dri_option(ScrnInfoPtr scrn)
 {
 	intel_screen_private *intel = intel_get_screen_private(scrn);
 
-	intel->directRenderingType = DRI_NONE;
+	intel->dri2 = intel->dri3 = DRI_NONE;
 	if (!intel_option_cast_string_to_bool(intel, OPTION_DRI, TRUE))
-		intel->directRenderingType = DRI_DISABLED;
+		intel->dri2 = intel->dri3 = DRI_DISABLED;
 
 	if (scrn->depth != 16 && scrn->depth != 24 && scrn->depth != 30) {
 		xf86DrvMsg(scrn->scrnIndex, X_CONFIG,
 			   "DRI is disabled because it "
 			   "runs only at depths 16, 24, and 30.\n");
-		intel->directRenderingType = DRI_DISABLED;
+		intel->dri2 = intel->dri3 = DRI_DISABLED;
 	}
 }
 
 static Bool intel_open_drm_master(ScrnInfoPtr scrn)
 {
 	intel_screen_private *intel = intel_get_screen_private(scrn);
-	struct pci_device *dev = intel->PciInfo;
-	drmSetVersion sv;
-	struct drm_i915_getparam gp;
-	int err, has_gem;
-	char busid[20];
-
-	snprintf(busid, sizeof(busid), "pci:%04x:%02x:%02x.%d",
-		 dev->domain, dev->bus, dev->dev, dev->func);
-
-	intel->drmSubFD = drmOpen(NULL, busid);
-	if (intel->drmSubFD == -1) {
-		xf86DrvMsg(scrn->scrnIndex, X_ERROR,
-			   "[drm] Failed to open DRM device for %s: %s\n",
-			   busid, strerror(errno));
-		return FALSE;
-	}
-
-	/* Check that what we opened was a master or a master-capable FD,
-	 * by setting the version of the interface we'll use to talk to it.
-	 * (see DRIOpenDRMMaster() in DRI1)
-	 */
-	sv.drm_di_major = 1;
-	sv.drm_di_minor = 1;
-	sv.drm_dd_major = -1;
-	sv.drm_dd_minor = -1;
-	err = drmSetInterfaceVersion(intel->drmSubFD, &sv);
-	if (err != 0) {
-		xf86DrvMsg(scrn->scrnIndex, X_ERROR,
-			   "[drm] failed to set drm interface version.\n");
-		drmClose(intel->drmSubFD);
-		intel->drmSubFD = -1;
-		return FALSE;
-	}
-
-	has_gem = FALSE;
-	gp.param = I915_PARAM_HAS_GEM;
-	gp.value = &has_gem;
-	(void)drmCommandWriteRead(intel->drmSubFD, DRM_I915_GETPARAM,
-				  &gp, sizeof(gp));
-	if (!has_gem) {
-		xf86DrvMsg(scrn->scrnIndex, X_ERROR,
-			   "[drm] Failed to detect GEM.  Kernel 2.6.28 required.\n");
-		drmClose(intel->drmSubFD);
-		intel->drmSubFD = -1;
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-static void intel_close_drm_master(intel_screen_private *intel)
-{
-	if (intel && intel->drmSubFD > 0) {
-		drmClose(intel->drmSubFD);
-		intel->drmSubFD = -1;
-	}
+	intel->dev = intel_get_device(scrn, &intel->drmSubFD);
+	return intel->dev != NULL;
 }
 
 static int intel_init_bufmgr(intel_screen_private *intel)
@@ -414,7 +379,7 @@ static Bool can_accelerate_blt(struct intel_screen_private *intel)
 	}
 
 	if (INTEL_INFO(intel)->gen == 060) {
-		struct pci_device *const device = intel->PciInfo;
+		struct pci_device *const device = xf86GetPciInfoForEntity(intel->pEnt->index);
 
 		/* Sandybridge rev07 locks up easily, even with the
 		 * BLT ring workaround in place.
@@ -501,12 +466,12 @@ static Bool I830PreInit(ScrnInfoPtr scrn, int flags)
 	if (flags & PROBE_DETECT)
 		return TRUE;
 
-	if (((uintptr_t)scrn->driverPrivate) & 1) {
+	if (((uintptr_t)scrn->driverPrivate) & 3) {
 		intel = xnfcalloc(sizeof(*intel), 1);
 		if (intel == NULL)
 			return FALSE;
 
-		intel->info = (void *)((uintptr_t)scrn->driverPrivate & ~1);
+		intel->info = (void *)((uintptr_t)scrn->driverPrivate & ~3);
 		scrn->driverPrivate = intel;
 	}
 	intel = intel_get_screen_private(scrn);
@@ -514,8 +479,6 @@ static Bool I830PreInit(ScrnInfoPtr scrn, int flags)
 	intel->pEnt = pEnt;
 
 	scrn->displayWidth = 640;	/* default it */
-
-	intel->PciInfo = xf86GetPciInfoForEntity(intel->pEnt->index);
 
 	if (!intel_open_drm_master(scrn)) {
 		xf86DrvMsg(scrn->scrnIndex, X_ERROR,
@@ -646,41 +609,17 @@ static Bool I830PreInit(ScrnInfoPtr scrn, int flags)
 		return FALSE;
 	}
 
-	if (!intel_glamor_pre_init(scrn)) {
-		PreInitCleanup(scrn);
-		xf86DrvMsg(scrn->scrnIndex, X_ERROR,
-			"Failed to pre init glamor display.\n");
-		return FALSE;
-	}
-
-	/* Load the dri2 module if requested. */
-	if (intel->directRenderingType != DRI_DISABLED)
-		xf86LoadSubModule(scrn, "dri2");
+	/* Load the dri modules if requested. */
+#if HAVE_DRI2
+	if (intel->dri2 != DRI_DISABLED && !xf86LoadSubModule(scrn, "dri2"))
+		intel->dri2 = DRI_DISABLED;
+#endif
+#if HAVE_DRI3
+	if (intel->dri3 != DRI_DISABLED && !xf86LoadSubModule(scrn, "dri3"))
+		intel->dri3 = DRI_DISABLED;
+#endif
 
 	return TRUE;
-}
-
-/**
- * Intialiazes the hardware for the 3D pipeline use in the 2D driver.
- *
- * Some state caching is performed to avoid redundant state emits.  This
- * function is also responsible for marking the state as clobbered for DRI
- * clients.
- */
-void IntelEmitInvarientState(ScrnInfoPtr scrn)
-{
-	intel_screen_private *intel = intel_get_screen_private(scrn);
-
-	/* If we've emitted our state since the last clobber by another client,
-	 * skip it.
-	 */
-	if (intel->last_3d != LAST_3D_OTHER)
-		return;
-
-	if (IS_GEN2(intel))
-		I830EmitInvarientState(scrn);
-	else if IS_GEN3(intel)
-		I915EmitInvarientState(scrn);
 }
 
 #ifdef INTEL_PIXMAP_SHARING
@@ -706,9 +645,9 @@ redisplay_dirty(ScreenPtr screen, PixmapDirtyUpdatePtr dirty)
 	PixmapSyncDirtyHelper(dirty, &pixregion);
 	RegionUninit(&pixregion);
 
-	intel_batch_submit(scrn);
+        intel_flush(intel);
 	if (!intel->has_prime_vmap_flush) {
-		drm_intel_bo *bo = intel_get_pixmap_bo(dirty->slave_dst->master_pixmap);
+		drm_intel_bo *bo = intel_uxa_get_pixmap_bo(dirty->slave_dst->master_pixmap);
 		was_blocked = xf86BlockSIGIO();
 		drm_intel_bo_map(bo, FALSE);
 		drm_intel_bo_unmap(bo);
@@ -765,14 +704,13 @@ intel_init_initial_framebuffer(ScrnInfoPtr scrn)
 	intel_screen_private *intel = intel_get_screen_private(scrn);
 	int width = scrn->virtualX;
 	int height = scrn->virtualY;
-	unsigned long pitch;
+	int pitch;
 	uint32_t tiling;
 
 	intel->front_buffer = intel_allocate_framebuffer(scrn,
 							 width, height,
 							 intel->cpp,
-							 &pitch,
-							 &tiling);
+							 &pitch, &tiling);
 
 	if (!intel->front_buffer) {
 		xf86DrvMsg(scrn->scrnIndex, X_ERROR,
@@ -792,10 +730,8 @@ intel_flush_callback(CallbackListPtr *list,
 		     pointer user_data, pointer call_data)
 {
 	ScrnInfoPtr scrn = user_data;
-	if (scrn->vtSema) {
-		intel_batch_submit(scrn);
-		intel_glamor_flush(intel_get_screen_private(scrn));
-	}
+	if (scrn->vtSema)
+                intel_flush(intel_get_screen_private(scrn));
 }
 
 #if HAVE_UDEV
@@ -828,7 +764,9 @@ I830HandleUEvents(int fd, void *closure)
 
 	if (memcmp(&s.st_rdev, &udev_devnum, sizeof (dev_t)) == 0 &&
 			hotplug && atoi(hotplug) == 1)
-		RRGetInfo(xf86ScrnToScreen(scrn), TRUE);
+	{
+		intel_mode_hotplug(intel);
+	}
 
 	udev_device_unref(dev);
 }
@@ -873,10 +811,8 @@ I830UeventInit(ScrnInfoPtr scrn)
 		return;
 	}
 
-	intel->uevent_handler =
-		xf86AddGeneralHandler(udev_monitor_get_fd(mon),
-				I830HandleUEvents,
-				scrn);
+	intel->uevent_handler = xf86AddGeneralHandler(udev_monitor_get_fd(mon),
+						      I830HandleUEvents, scrn);
 	if (!intel->uevent_handler) {
 		udev_monitor_unref(mon);
 		udev_unref(u);
@@ -913,7 +849,7 @@ I830ScreenInit(SCREEN_INIT_ARGS_DECL)
 #ifdef INTEL_XVMC
 	MessageType from;
 #endif
-	struct pci_device *const device = intel->PciInfo;
+	struct pci_device *const device = xf86GetPciInfoForEntity(intel->pEnt->index);
 	int fb_bar = IS_GEN2(intel) ? 0 : 2;
 
 	scrn->videoRam = device->regions[fb_bar].size / 1024;
@@ -927,19 +863,8 @@ I830ScreenInit(SCREEN_INIT_ARGS_DECL)
 	 */
 	intel->XvEnabled = TRUE;
 
-#ifdef DRI2
-	if (intel->directRenderingType == DRI_NONE
-	    && I830DRI2ScreenInit(screen))
-		intel->directRenderingType = DRI_DRI2;
-#endif
-
 	if (!intel_init_initial_framebuffer(scrn))
 		return FALSE;
-
-	intel_batch_init(scrn);
-
-	if (INTEL_INFO(intel)->gen >= 040)
-		gen4_render_state_init(scrn);
 
 	miClearVisualTypes();
 	if (!miSetVisualTypes(scrn->depth,
@@ -949,6 +874,7 @@ I830ScreenInit(SCREEN_INIT_ARGS_DECL)
 	if (!miSetPixmapDepths())
 		return FALSE;
 
+	/* Must be first, before anything else installs screen callbacks. */
 	if (!fbScreenInit(screen, NULL,
 			  scrn->virtualX, scrn->virtualY,
 			  scrn->xDpi, scrn->yDpi,
@@ -979,6 +905,21 @@ I830ScreenInit(SCREEN_INIT_ARGS_DECL)
 			   "Hardware acceleration initialization failed\n");
 		return FALSE;
 	}
+
+#if HAVE_DRI2
+	if (intel->dri2 == DRI_NONE && I830DRI2ScreenInit(screen))
+		intel->dri2 = DRI_ACTIVE;
+#endif
+
+#if HAVE_DRI3
+	if (!intel_sync_init(screen))
+		intel->dri3 = DRI_DISABLED;
+	if (intel->dri3 == DRI_NONE && intel_dri3_screen_init(screen))
+		intel->dri3 = DRI_ACTIVE;
+#endif
+
+	if (xf86ReturnOptValBool(intel->Options, OPTION_PRESENT, TRUE))
+		intel_present_screen_init(screen);
 
 	xf86SetBackingStore(screen);
 	xf86SetSilkenMouse(screen);
@@ -1015,7 +956,6 @@ I830ScreenInit(SCREEN_INIT_ARGS_DECL)
 	intel->CreateScreenResources = screen->CreateScreenResources;
 	screen->CreateScreenResources = i830CreateScreenResources;
 
-	intel_glamor_init(screen);
 	if (!xf86CrtcScreenInit(screen))
 		return FALSE;
 
@@ -1033,7 +973,7 @@ I830ScreenInit(SCREEN_INIT_ARGS_DECL)
 #ifdef INTEL_XVMC
 	if (INTEL_INFO(intel)->gen >= 040)
 		intel->XvMCEnabled = TRUE;
-	from = ((intel->directRenderingType == DRI_DRI2) &&
+	from = (intel->dri2 == DRI_ACTIVE &&
 		xf86GetOptValBool(intel->Options, OPTION_XVMC,
 				  &intel->XvMCEnabled) ? X_CONFIG : X_DEFAULT);
 	xf86DrvMsg(scrn->scrnIndex, from, "Intel XvMC decoder %sabled\n",
@@ -1041,27 +981,46 @@ I830ScreenInit(SCREEN_INIT_ARGS_DECL)
 #endif
 	/* Init video */
 	if (intel->XvEnabled)
-		I830InitVideo(screen);
+		intel_video_init(screen);
 
-#if defined(DRI2)
-	switch (intel->directRenderingType) {
-	case DRI_DRI2:
-		intel->directRenderingOpen = TRUE;
+#if HAVE_DRI2
+	switch (intel->dri2) {
+	case DRI_ACTIVE:
 		xf86DrvMsg(scrn->scrnIndex, X_INFO,
-			   "direct rendering: DRI2 Enabled\n");
+			   "DRI2: Enabled\n");
 		break;
 	case DRI_DISABLED:
 		xf86DrvMsg(scrn->scrnIndex, X_INFO,
-			   "direct rendering: Disabled\n");
+			   "DRI2: Disabled\n");
 		break;
 	case DRI_NONE:
 		xf86DrvMsg(scrn->scrnIndex, X_INFO,
-			   "direct rendering: Failed\n");
+			   "DRI2: Failed\n");
 		break;
 	}
 #else
 	xf86DrvMsg(scrn->scrnIndex, X_INFO,
-		   "direct rendering: Not available\n");
+		   "DRI2: Not available\n");
+#endif
+
+#if HAVE_DRI3
+	switch (intel->dri3) {
+	case DRI_ACTIVE:
+		xf86DrvMsg(scrn->scrnIndex, X_INFO,
+			   "DRI3: Enabled\n");
+		break;
+	case DRI_DISABLED:
+		xf86DrvMsg(scrn->scrnIndex, X_INFO,
+			   "DRI3: Disabled\n");
+		break;
+	case DRI_NONE:
+		xf86DrvMsg(scrn->scrnIndex, X_INFO,
+			   "DRI3: Failed\n");
+		break;
+	}
+#else
+	xf86DrvMsg(scrn->scrnIndex, X_INFO,
+		   "DRI3: Not available\n");
 #endif
 
 	if (serverGeneration == 1)
@@ -1091,10 +1050,10 @@ static void I830FreeScreen(FREE_SCREEN_ARGS_DECL)
 	SCRN_INFO_PTR(arg);
 	intel_screen_private *intel = intel_get_screen_private(scrn);
 
-	if (intel && !((uintptr_t)intel & 1)) {
+	if (intel && !((uintptr_t)intel & 3)) {
 		intel_mode_fini(intel);
-		intel_close_drm_master(intel);
 		intel_bufmgr_fini(intel);
+		intel_put_device(intel->dev);
 
 		free(intel);
 		scrn->driverPrivate = NULL;
@@ -1105,14 +1064,12 @@ static void I830LeaveVT(VT_FUNC_ARGS_DECL)
 {
 	SCRN_INFO_PTR(arg);
 	intel_screen_private *intel = intel_get_screen_private(scrn);
-	int ret;
 
 	xf86RotateFreeShadow(scrn);
 
 	xf86_hide_cursors(scrn);
 
-	ret = drmDropMaster(intel->drmSubFD);
-	if (ret)
+	if (intel_put_master(intel->dev))
 		xf86DrvMsg(scrn->scrnIndex, X_WARNING,
 			   "drmDropMaster failed: %s\n", strerror(errno));
 }
@@ -1124,13 +1081,12 @@ static Bool I830EnterVT(VT_FUNC_ARGS_DECL)
 {
 	SCRN_INFO_PTR(arg);
 	intel_screen_private *intel = intel_get_screen_private(scrn);
-	int ret;
 
-	ret = drmSetMaster(intel->drmSubFD);
-	if (ret) {
+	if (intel_get_master(intel->dev)) {
 		xf86DrvMsg(scrn->scrnIndex, X_WARNING,
 			   "drmSetMaster failed: %s\n",
 			   strerror(errno));
+		return FALSE;
 	}
 
 	if (!xf86SetDesiredModes(scrn))
@@ -1160,8 +1116,6 @@ static Bool I830CloseScreen(CLOSE_SCREEN_ARGS_DECL)
 
 	DeleteCallback(&FlushCallback, intel_flush_callback, scrn);
 
-	intel_glamor_close_screen(screen);
-
 	TimerFree(intel->cache_expire);
 	intel->cache_expire = NULL;
 
@@ -1169,11 +1123,6 @@ static Bool I830CloseScreen(CLOSE_SCREEN_ARGS_DECL)
 		uxa_driver_fini(screen);
 		free(intel->uxa_driver);
 		intel->uxa_driver = NULL;
-	}
-
-	if (intel->back_pixmap) {
-		screen->DestroyPixmap(intel->back_pixmap);
-		intel->back_pixmap = NULL;
 	}
 
 	if (intel->back_buffer) {
@@ -1193,7 +1142,7 @@ static Bool I830CloseScreen(CLOSE_SCREEN_ARGS_DECL)
 
 	intel_batch_teardown(scrn);
 
-	if (INTEL_INFO(intel)->gen >= 040)
+	if (INTEL_INFO(intel)->gen >= 040 && INTEL_INFO(intel)->gen < 0100)
 		gen4_render_state_cleanup(scrn);
 
 	xf86_cursors_fini(screen);
@@ -1203,11 +1152,17 @@ static Bool I830CloseScreen(CLOSE_SCREEN_ARGS_DECL)
 	screen->CloseScreen = intel->CloseScreen;
 	(*screen->CloseScreen) (CLOSE_SCREEN_ARGS);
 
-	if (intel->directRenderingOpen
-	    && intel->directRenderingType == DRI_DRI2) {
-		intel->directRenderingOpen = FALSE;
+	if (intel->dri2 == DRI_ACTIVE) {
 		I830DRI2CloseScreen(screen);
+		intel->dri2 = DRI_NONE;
 	}
+
+	if (intel->dri3 == DRI_ACTIVE) {
+		/* nothing to do here? */
+		intel->dri3 = DRI_NONE;
+	}
+
+	intel_sync_close(screen);
 
 	xf86GARTCloseScreen(scrn->scrnIndex);
 
@@ -1296,8 +1251,6 @@ static Bool I830PMEvent(SCRN_ARG_TYPE arg, pmEvent event, Bool undo)
 
 Bool intel_init_scrn(ScrnInfoPtr scrn)
 {
-	__intel_uxa_release_device(scrn);
-
 	scrn->PreInit = I830PreInit;
 	scrn->ScreenInit = I830ScreenInit;
 	scrn->SwitchMode = I830SwitchMode;

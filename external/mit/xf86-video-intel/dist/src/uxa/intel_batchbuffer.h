@@ -108,6 +108,8 @@ intel_batch_emit_reloc(intel_screen_private *intel,
 		       uint32_t read_domains,
 		       uint32_t write_domains, uint32_t delta, int needs_fence)
 {
+	uint64_t offset;
+
 	if (needs_fence)
 		drm_intel_bo_emit_reloc_fence(intel->batch_bo,
 					      intel->batch_used * 4,
@@ -118,12 +120,16 @@ intel_batch_emit_reloc(intel_screen_private *intel,
 					bo, delta,
 					read_domains, write_domains);
 
-	intel_batch_emit_dword(intel, bo->offset + delta);
+	offset = bo->offset64 + delta;
+
+	intel_batch_emit_dword(intel, offset);
+	if (INTEL_INFO(intel)->gen >= 0100)
+		intel_batch_emit_dword(intel, offset >> 32);
 }
 
 static inline void
 intel_batch_mark_pixmap_domains(intel_screen_private *intel,
-				struct intel_pixmap *priv,
+				struct intel_uxa_pixmap *priv,
 				uint32_t read_domains, uint32_t write_domain)
 {
 	assert (read_domains);
@@ -143,7 +149,7 @@ intel_batch_emit_reloc_pixmap(intel_screen_private *intel, PixmapPtr pixmap,
 			      uint32_t read_domains, uint32_t write_domain,
 			      uint32_t delta, int needs_fence)
 {
-	struct intel_pixmap *priv = intel_get_pixmap_private(pixmap);
+	struct intel_uxa_pixmap *priv = intel_uxa_get_pixmap_private(pixmap);
 
 	intel_batch_mark_pixmap_domains(intel, priv, read_domains, write_domain);
 

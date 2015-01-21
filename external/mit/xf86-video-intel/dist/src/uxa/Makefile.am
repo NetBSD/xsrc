@@ -18,13 +18,14 @@
 #  IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-AM_CFLAGS = @CWARNFLAGS@ @XORG_CFLAGS@ @DRM_CFLAGS@ @PCIACCESS_CFLAGS@
-AM_CFLAGS += @UDEV_CFLAGS@ @DRM_CFLAGS@ @DRMINTEL_CFLAGS@
+AM_CFLAGS = @CWARNFLAGS@ $(XORG_CFLAGS) $(DRM_CFLAGS) $(PCIACCESS_CFLAGS)
+AM_CFLAGS += $(UDEV_CFLAGS) $(DRM_CFLAGS) $(DRMINTEL_CFLAGS)
 AM_CFLAGS += -I$(top_srcdir)/xvmc -I$(top_srcdir)/src -I$(top_srcdir)/src/render_program
 
 noinst_LTLIBRARIES = libuxa.la
-libuxa_la_LIBADD = @UDEV_LIBS@ @DRMINTEL_LIBS@ @DRM_LIBS@
+libuxa_la_LIBADD = $(UDEV_LIBS) $(DRMINTEL_LIBS) $(DRM_LIBS)
 libuxa_la_SOURCES = \
+	intel_uxa.h \
 	brw_defines.h \
 	brw_structs.h \
 	common.h \
@@ -33,11 +34,13 @@ libuxa_la_SOURCES = \
 	intel_batchbuffer.h \
 	intel_display.c \
 	intel_driver.c \
-	intel_glamor.h \
 	intel_memory.c \
 	intel_uxa.c \
 	intel_video.c \
 	intel_video.h \
+	intel_video_overlay.c \
+	intel_video_overlay.h \
+	intel_uxa_video.c \
 	i830_3d.c \
 	i830_render.c \
 	i830_reg.h \
@@ -54,29 +57,33 @@ libuxa_la_SOURCES = \
 	uxa.c \
 	uxa.h \
 	uxa-accel.c \
-	uxa-glamor.h \
 	uxa-glyphs.c \
 	uxa-render.c \
 	uxa-priv.h \
 	uxa-unaccel.c
 	$(NULL)
 
-if GLAMOR
-AM_CFLAGS += @LIBGLAMOR_CFLAGS@
-libuxa_la_LIBADD += @LIBGLAMOR_LIBS@
-libuxa_la_SOURCES += \
-	 intel_glamor.c \
-	 $(NULL)
-endif
-
 if DRI2
-AM_CFLAGS += @DRI2_CFLAGS@
+AM_CFLAGS += $(DRI2_CFLAGS)
 libuxa_la_SOURCES += \
 	intel_dri.c \
 	$(NULL)
 libuxa_la_LIBADD += \
 	$(DRI2_LIBS) \
-	@CLOCK_GETTIME_LIBS@ \
+	$(CLOCK_GETTIME_LIBS) \
+	$(NULL)
+endif
+
+if DRI3
+libuxa_la_SOURCES += \
+	intel_dri3.c \
+	intel_sync.c \
+	$(NULL)
+endif
+
+if PRESENT
+libuxa_la_SOURCES += \
+	intel_present.c \
 	$(NULL)
 endif
 

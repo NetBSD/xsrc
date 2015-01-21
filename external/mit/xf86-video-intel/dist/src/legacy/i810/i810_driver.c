@@ -53,6 +53,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /*
  * These are X and server generic header files.
  */
+#include "xorg-server.h"
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "xf86cmap.h"
@@ -151,7 +152,7 @@ static int i810_pitches[] = {
 static Bool
 I810GetRec(ScrnInfoPtr scrn)
 {
-   if (((uintptr_t)scrn->driverPrivate & 1) == 0)
+   if (((uintptr_t)scrn->driverPrivate & 3) == 0)
       return TRUE;
 
    scrn->driverPrivate = xnfcalloc(sizeof(I810Rec), 1);
@@ -363,7 +364,7 @@ I810PreInit(ScrnInfoPtr scrn, int flags)
     */
    I810DoDDC(scrn, pI810->pEnt->index);
 
-   intel_detect_chipset(scrn, pI810->pEnt, pI810->PciInfo);
+   intel_detect_chipset(scrn, NULL);
 
    pI810->LinearAddr = pI810->PciInfo->regions[0].base_addr;
    xf86DrvMsg(scrn->scrnIndex, X_PROBED, "Linear framebuffer at 0x%lX\n",

@@ -28,16 +28,20 @@ SUBDIRS = render_program legacy
 
 AM_CFLAGS = \
 	@CWARNFLAGS@ \
-	@XORG_CFLAGS@ \
-	@DRM_CFLAGS@ \
-	@PCIACCESS_CFLAGS@ \
+	$(XORG_CFLAGS) \
+	$(DRM_CFLAGS) \
+	$(PCIACCESS_CFLAGS) \
 	@NOWARNFLAGS@ \
 	$(NULL)
 
+if VALGRIND
+AM_CFLAGS += $(VALGRIND_CFLAGS)
+endif
+
 intel_drv_la_LTLIBRARIES = intel_drv.la
 intel_drv_la_LDFLAGS = -module -avoid-version
-intel_drv_ladir = @moduledir@/drivers
-intel_drv_la_LIBADD = legacy/liblegacy.la @PCIACCESS_LIBS@ $(XORG_LIBS)
+intel_drv_ladir = $(moduledir)/drivers
+intel_drv_la_LIBADD = legacy/liblegacy.la $(PCIACCESS_LIBS) $(XORG_LIBS)
 
 if SNA
 SUBDIRS += sna
@@ -52,6 +56,10 @@ endif
 NULL:=#
 
 intel_drv_la_SOURCES = \
+	backlight.c \
+	backlight.h \
+	fd.h \
+	fd.c \
 	i915_pciids.h \
 	intel_list.h \
 	intel_options.h \

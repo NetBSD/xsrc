@@ -1207,7 +1207,7 @@ static int i915_xvmc_mc_render_surface(Display * display, XvMCContext * context,
 		}
 	}
 
-	intelFlushBatch(TRUE);
+	intelFlushBatch();
 
 	i915_xvmc_free_render_state_buffers(pI915XvMC);
 
