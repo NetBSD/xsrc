@@ -80,6 +80,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <sys/types.h>
 #include <sys/ioctl.h>
 
+#include "xorg-server.h"
 #include "xf86.h"
 #include "xf86_OSproc.h"
 
@@ -136,11 +137,10 @@ intel_get_fence_pitch(intel_screen_private *intel, unsigned long pitch,
 	return i;
 }
 
-static Bool
-intel_check_display_stride(ScrnInfoPtr scrn, int stride, Bool tiling)
+Bool intel_check_display_stride(ScrnInfoPtr scrn, int stride, Bool tiling)
 {
 	intel_screen_private *intel = intel_get_screen_private(scrn);
-	int limit = KB(32);
+	int limit;
 
 	/* 8xx spec has always 8K limit, but tests show larger limit in
 	   non-tiling mode, which makes large monitor work. */
@@ -153,22 +153,11 @@ intel_check_display_stride(ScrnInfoPtr scrn, int stride, Bool tiling)
 			limit = KB(16);
 		else
 			limit = KB(32);
-	}
+	} else
+		limit = KB(32);
 
-	if (stride <= limit)
-		return TRUE;
-	else
-		return FALSE;
+	return stride <= limit;
 }
-
-/*
- * Pad to accelerator requirement
- */
-static inline int intel_pad_drawable_width(int width)
-{
-	return ALIGN(width, 64);
-}
-
 
 static size_t
 agp_aperture_size(struct pci_device *dev, int gen)
@@ -176,10 +165,10 @@ agp_aperture_size(struct pci_device *dev, int gen)
 	return dev->regions[gen < 030 ? 0 : 2].size;
 }
 
-static void intel_set_gem_max_sizes(ScrnInfoPtr scrn)
+void intel_set_gem_max_sizes(ScrnInfoPtr scrn)
 {
 	intel_screen_private *intel = intel_get_screen_private(scrn);
-	size_t agp_size = agp_aperture_size(intel->PciInfo,
+	size_t agp_size = agp_aperture_size(xf86GetPciInfoForEntity(intel->pEnt->index),
 					    INTEL_INFO(intel)->gen);
 
 	/* The chances of being able to mmap an object larger than
@@ -202,85 +191,140 @@ static void intel_set_gem_max_sizes(ScrnInfoPtr scrn)
 	intel->max_bo_size = intel->max_gtt_map_size;
 }
 
-/**
- * Allocates a framebuffer for a screen.
- *
- * Used once for each X screen, so once with RandR 1.2 and twice with classic
- * dualhead.
- */
+unsigned int
+intel_compute_size(struct intel_screen_private *intel,
+                   int w, int h, int bpp, unsigned usage,
+                   uint32_t *tiling, int *stride)
+{
+	int pitch, size;
+
+	if (*tiling != I915_TILING_NONE) {
+		/* First check whether tiling is necessary. */
+		pitch = (w * bpp  + 7) / 8;
+		pitch = ALIGN(pitch, 64);
+		size = pitch * ALIGN (h, 2);
+		if (INTEL_INFO(intel)->gen < 040) {
+			/* Gen 2/3 has a maximum stride for tiling of
+			 * 8192 bytes.
+			 */
+			if (pitch > KB(8))
+				*tiling = I915_TILING_NONE;
+
+			/* Narrower than half a tile? */
+			if (pitch < 256)
+				*tiling = I915_TILING_NONE;
+
+			/* Older hardware requires fences to be pot size
+			 * aligned with a minimum of 1 MiB, so causes
+			 * massive overallocation for small textures.
+			 */
+			if (size < 1024*1024/2 && !intel->has_relaxed_fencing)
+				*tiling = I915_TILING_NONE;
+		} else if (!(usage & INTEL_CREATE_PIXMAP_DRI2) && size <= 4096) {
+			/* Disable tiling beneath a page size, we will not see
+			 * any benefit from reducing TLB misses and instead
+			 * just incur extra cost when we require a fence.
+			 */
+			*tiling = I915_TILING_NONE;
+		}
+	}
+
+	pitch = (w * bpp + 7) / 8;
+	if (!(usage & INTEL_CREATE_PIXMAP_DRI2) && pitch <= 256)
+		*tiling = I915_TILING_NONE;
+
+	if (*tiling != I915_TILING_NONE) {
+		int aligned_h, tile_height;
+
+		if (IS_GEN2(intel))
+			tile_height = 16;
+		else if (*tiling == I915_TILING_X)
+			tile_height = 8;
+		else
+			tile_height = 32;
+		aligned_h = ALIGN(h, tile_height);
+
+		*stride = intel_get_fence_pitch(intel,
+						ALIGN(pitch, 512),
+						*tiling);
+
+		/* Round the object up to the size of the fence it will live in
+		 * if necessary.  We could potentially make the kernel allocate
+		 * a larger aperture space and just bind the subset of pages in,
+		 * but this is easier and also keeps us out of trouble (as much)
+		 * with drm_intel_bufmgr_check_aperture().
+		 */
+		size = intel_get_fence_size(intel, *stride * aligned_h);
+
+		if (size > intel->max_tiling_size)
+			*tiling = I915_TILING_NONE;
+	}
+
+	if (*tiling == I915_TILING_NONE) {
+		/* We only require a 64 byte alignment for scanouts, but
+		 * a 256 byte alignment for sharing with PRIME.
+		 */
+		*stride = ALIGN(pitch, 256);
+		/* Round the height up so that the GPU's access to a 2x2 aligned
+		 * subspan doesn't address an invalid page offset beyond the
+		 * end of the GTT.
+		 */
+		size = *stride * ALIGN(h, 2);
+	}
+
+	return size;
+}
+
 drm_intel_bo *intel_allocate_framebuffer(ScrnInfoPtr scrn,
-					int width, int height, int cpp,
-					unsigned long *out_pitch,
-					uint32_t *out_tiling)
+					 int width, int height, int cpp,
+					 int *out_stride,
+					 uint32_t *out_tiling)
 {
 	intel_screen_private *intel = intel_get_screen_private(scrn);
-	drm_intel_bo *front_buffer;
-	uint32_t tiling_mode;
-	unsigned long pitch;
-
-	if (intel->tiling & INTEL_TILING_FB)
-		tiling_mode = I915_TILING_X;
-	else
-		tiling_mode = I915_TILING_NONE;
-
-	width = intel_pad_drawable_width(width);
-	if (!intel_check_display_stride(scrn, width * intel->cpp,
-					tiling_mode != I915_TILING_NONE))
-	    tiling_mode = I915_TILING_NONE;
-	if (!intel_check_display_stride(scrn, width * intel->cpp,
-					tiling_mode != I915_TILING_NONE)) {
-		xf86DrvMsg(scrn->scrnIndex, X_ERROR,
-			   "Expected front buffer stride %d kB "
-			   "will exceed display limit\n",
-			   width * intel->cpp / 1024);
-		return NULL;
-	}
-
-retry:
-	front_buffer = drm_intel_bo_alloc_tiled(intel->bufmgr, "front buffer",
-						width, height, intel->cpp,
-						&tiling_mode, &pitch, 0);
-	if (front_buffer == NULL) {
-		if (tiling_mode != I915_TILING_NONE) {
-			tiling_mode = I915_TILING_NONE;
-			goto retry;
-		}
-		xf86DrvMsg(scrn->scrnIndex, X_ERROR,
-			   "Failed to allocate framebuffer.\n");
-		return NULL;
-	}
-
-	if (!intel_check_display_stride(scrn, pitch,
-				       tiling_mode != I915_TILING_NONE)) {
-		drm_intel_bo_unreference(front_buffer);
-		if (tiling_mode != I915_TILING_NONE) {
-			tiling_mode = I915_TILING_NONE;
-			goto retry;
-		}
-
-		xf86DrvMsg(scrn->scrnIndex, X_ERROR,
-			   "Front buffer stride %ld kB "
-			   "exceeds display limit\n", pitch / 1024);
-		return NULL;
-	}
-
-	/* If we could have used tiling but failed, warn */
-	if (intel->tiling & INTEL_TILING_FB &&
-	    tiling_mode != I915_TILING_X &&
-	    intel_check_display_stride(scrn, pitch, I915_TILING_X))
-		xf86DrvMsg(scrn->scrnIndex, X_WARNING,
-			   "Failed to set tiling on frontbuffer.\n");
-
-	xf86DrvMsg(scrn->scrnIndex, X_INFO,
-		   "Allocated new frame buffer %dx%d stride %ld, %s\n",
-		   width, height, pitch,
-		   tiling_mode == I915_TILING_NONE ? "untiled" : "tiled");
-
-	drm_intel_bo_disable_reuse(front_buffer);
+	uint32_t tiling;
+	int stride, size;
+	drm_intel_bo *bo;
 
 	intel_set_gem_max_sizes(scrn);
-	*out_pitch = pitch;
-	*out_tiling = tiling_mode;
 
-	return front_buffer;
+	if (intel->tiling & INTEL_TILING_FB)
+		tiling = I915_TILING_X;
+	else
+		tiling = I915_TILING_NONE;
+
+retry:
+	size = intel_compute_size(intel,
+                                  width, height,
+                                  intel->cpp*8, 0,
+                                  &tiling, &stride);
+	if (!intel_check_display_stride(scrn, stride, tiling)) {
+		if (tiling != I915_TILING_NONE) {
+			tiling = I915_TILING_NONE;
+			goto retry;
+		}
+
+		xf86DrvMsg(scrn->scrnIndex, X_ERROR,
+			   "Front buffer stride %d kB "
+			   "exceeds display limit\n", stride / 1024);
+		return NULL;
+	}
+
+	bo = drm_intel_bo_alloc(intel->bufmgr, "front buffer", size, 0);
+	if (bo == NULL)
+		return FALSE;
+
+	if (tiling != I915_TILING_NONE)
+		drm_intel_bo_set_tiling(bo, &tiling, stride);
+
+	xf86DrvMsg(scrn->scrnIndex, X_INFO,
+		   "Allocated new frame buffer %dx%d stride %d, %s\n",
+		   width, height, stride,
+		   tiling == I915_TILING_NONE ? "untiled" : "tiled");
+
+	drm_intel_bo_disable_reuse(bo);
+
+	*out_stride = stride;
+	*out_tiling = tiling;
+	return bo;
 }
+

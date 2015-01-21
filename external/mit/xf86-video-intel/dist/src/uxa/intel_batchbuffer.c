@@ -34,13 +34,14 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include "xorg-server.h"
 #include "xf86.h"
 #include "intel.h"
 #include "i830_reg.h"
 #include "i915_drm.h"
 #include "i965_reg.h"
 
-#include "uxa.h"
+#include "intel_uxa.h"
 
 #define DUMP_BATCHBUFFERS NULL // "/tmp/i915-batchbuffers.dump"
 
@@ -141,7 +142,7 @@ void intel_batch_teardown(ScrnInfoPtr scrn)
 static void intel_batch_do_flush(ScrnInfoPtr scrn)
 {
 	intel_screen_private *intel = intel_get_screen_private(scrn);
-	struct intel_pixmap *priv;
+	struct intel_uxa_pixmap *priv;
 
 	list_for_each_entry(priv, &intel->batch_pixmaps, batch)
 		priv->dirty = 0;
@@ -184,13 +185,21 @@ void intel_batch_emit_flush(ScrnInfoPtr scrn)
 	assert (!intel->in_batch_atomic);
 
 	/* Big hammer, look to the pipelined flushes in future. */
-	if ((INTEL_INFO(intel)->gen >= 060)) {
+	if ((INTEL_INFO(intel)->gen >= 0100)) {
+		/* Only BLT supported */
+		BEGIN_BATCH_BLT(4);
+		OUT_BATCH(MI_FLUSH_DW | 2);
+		OUT_BATCH(0); /* address low */
+		OUT_BATCH(0); /* address high */
+		OUT_BATCH(0); /* dword data */
+		ADVANCE_BATCH();
+	} else if ((INTEL_INFO(intel)->gen >= 060)) {
 		if (intel->current_batch == BLT_BATCH) {
 			BEGIN_BATCH_BLT(4);
 			OUT_BATCH(MI_FLUSH_DW | 2);
-			OUT_BATCH(0);
-			OUT_BATCH(0);
-			OUT_BATCH(0);
+			OUT_BATCH(0); /* address */
+			OUT_BATCH(0); /* qword low */
+			OUT_BATCH(0); /* qword high */
 			ADVANCE_BATCH();
 		} else  {
 			if ((INTEL_INFO(intel)->gen == 060)) {
@@ -280,10 +289,10 @@ void intel_batch_submit(ScrnInfoPtr scrn)
 	}
 
 	while (!list_is_empty(&intel->batch_pixmaps)) {
-		struct intel_pixmap *entry;
+		struct intel_uxa_pixmap *entry;
 
 		entry = list_first_entry(&intel->batch_pixmaps,
-					 struct intel_pixmap,
+					 struct intel_uxa_pixmap,
 					 batch);
 
 		entry->busy = -1;
@@ -302,7 +311,7 @@ void intel_batch_submit(ScrnInfoPtr scrn)
 	intel->current_batch = 0;
 }
 
-void intel_debug_flush(ScrnInfoPtr scrn)
+void intel_uxa_debug_flush(ScrnInfoPtr scrn)
 {
 	intel_screen_private *intel = intel_get_screen_private(scrn);
 

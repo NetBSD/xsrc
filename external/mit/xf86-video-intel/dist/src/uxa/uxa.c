@@ -38,7 +38,6 @@
 #include <X11/fonts/fontstruct.h>
 #include "dixfontstr.h"
 #include "uxa.h"
-#include "uxa-glamor.h"
 
 #if HAS_DEVPRIVATEKEYREC
 DevPrivateKeyRec uxa_screen_index;
@@ -184,21 +183,12 @@ void uxa_finish_access(DrawablePtr pDrawable, uxa_access_t access)
 static void
 uxa_validate_gc(GCPtr pGC, unsigned long changes, DrawablePtr pDrawable)
 {
-	uxa_screen_t *uxa_screen = uxa_get_screen(pGC->pScreen);
 	/* fbValidateGC will do direct access to pixmaps if the tiling has
 	 * changed.
 	 * Preempt fbValidateGC by doing its work and masking the change out, so
 	 * that we can do the Prepare/finish_access.
 	 */
 
-	/* If we are using GLAMOR, then the tile or stipple pixmap
-	 * may be pure GLAMOR pixmap, then we should let the glamor
-	 * to do the validation.
-	 */
-	if (uxa_screen->info->flags & UXA_USE_GLAMOR) {
-		glamor_validate_gc(pGC, changes, pDrawable);
-		goto set_ops;
-	}
 #ifdef FB_24_32BIT
 	if ((changes & GCTile) && fbGetRotatedPixmap(pGC)) {
 		(*pGC->pScreen->DestroyPixmap) (fbGetRotatedPixmap(pGC));
@@ -267,7 +257,6 @@ uxa_validate_gc(GCPtr pGC, unsigned long changes, DrawablePtr pDrawable)
 		fbValidateGC(pGC, changes, pDrawable);
 	}
 
-set_ops:
 	pGC->ops = (GCOps *) & uxa_ops;
 }
 
@@ -382,6 +371,7 @@ static Bool uxa_close_screen(CLOSE_SCREEN_ARGS_DECL)
 
 	uxa_glyphs_fini(screen);
 
+#if XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1,15,99,903,0)
 	if (screen->devPrivate) {
 		/* Destroy the pixmap created by miScreenInit() *before*
 		 * chaining up as we finalize ourselves here and so this
@@ -391,6 +381,7 @@ static Bool uxa_close_screen(CLOSE_SCREEN_ARGS_DECL)
 		(void) (*screen->DestroyPixmap) (screen->devPrivate);
 		screen->devPrivate = NULL;
 	}
+#endif
 
 	screen->CreateGC = uxa_screen->SavedCreateGC;
 	screen->CloseScreen = uxa_screen->SavedCloseScreen;

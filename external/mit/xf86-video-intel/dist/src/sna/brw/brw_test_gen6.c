@@ -172,7 +172,7 @@ static void gen6_ps_nomask_affine(void)
 	uint32_t store[1024];
 	struct brw_compile p;
 
-	brw_compile_init(&p, 60, store);
+	brw_compile_init(&p, 060, store);
 	brw_wm_kernel__affine(&p, 16);
 
 	compare(ps_kernel_nomask_affine);
@@ -183,7 +183,7 @@ static void gen6_ps_mask_affine(void)
 	uint32_t store[1024];
 	struct brw_compile p;
 
-	brw_compile_init(&p, 60, store);
+	brw_compile_init(&p, 060, store);
 	brw_wm_kernel__affine_mask(&p, 16);
 
 	compare(ps_kernel_masknoca_affine);
@@ -194,7 +194,7 @@ static void gen6_ps_nomask_projective(void)
 	uint32_t store[1024];
 	struct brw_compile p;
 
-	brw_compile_init(&p, 60, store);
+	brw_compile_init(&p, 060, store);
 	brw_wm_kernel__projective(&p, 16);
 
 	compare(ps_kernel_nomask_projective);

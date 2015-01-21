@@ -841,7 +841,7 @@ static Status render_surface(Display * display,
 				}
 			}
 		}
-		intelFlushBatch(TRUE);
+		intelFlushBatch();
 		UNLOCK_HARDWARE(intel_ctx->hw_context);
 	}
 	return Success;

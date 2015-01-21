@@ -191,6 +191,7 @@ Bool intel_xvmc_adaptor_init(ScreenPtr pScreen)
 {
 	ScrnInfoPtr scrn = xf86ScreenToScrn(pScreen);
 	intel_screen_private *intel = intel_get_screen_private(scrn);
+	struct pci_device *pci;
 	static XF86MCAdaptorRec *pAdapt;
 	char *name;
 	char buf[64];
@@ -206,6 +207,10 @@ Bool intel_xvmc_adaptor_init(ScreenPtr pScreen)
 		ErrorF("Your chipset doesn't support XvMC.\n");
 		return FALSE;
 	}
+
+	pci = xf86GetPciInfoForEntity(intel->pEnt->index);
+	if (pci == NULL)
+		return FALSE;
 
 	pAdapt = calloc(1, sizeof(XF86MCAdaptorRec));
 	if (!pAdapt) {
@@ -249,8 +254,7 @@ Bool intel_xvmc_adaptor_init(ScreenPtr pScreen)
 	}
 
 	sprintf(buf, "pci:%04x:%02x:%02x.%d",
-		intel->PciInfo->domain,
-		intel->PciInfo->bus, intel->PciInfo->dev, intel->PciInfo->func);
+		pci->domain, pci->bus, pci->dev, pci->func);
 
 	xf86XvMCRegisterDRInfo(pScreen, INTEL_XVMC_LIBNAME,
 			       buf,

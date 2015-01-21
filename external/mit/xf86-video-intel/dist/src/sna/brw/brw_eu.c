@@ -29,6 +29,10 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "brw_eu.h"
 
 #include <string.h>

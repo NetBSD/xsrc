@@ -23,10 +23,6 @@
 
 #include "uxa-priv.h"
 
-#ifdef RENDER
-#include "mipict.h"
-#endif
-
 /*
  * These functions wrap the low-level fb rendering functions and
  * synchronize framebuffer/accelerated drawing by stalling until

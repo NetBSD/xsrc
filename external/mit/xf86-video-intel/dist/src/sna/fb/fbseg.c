@@ -25,7 +25,6 @@
 
 #include "fb.h"
 #include "fbclip.h"
-#include <mi.h>
 #include <miline.h>
 #include <scrnintstr.h>
 

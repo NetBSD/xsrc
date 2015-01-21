@@ -38,15 +38,10 @@
 #include <stdbool.h>
 #include <pixman.h>
 
-#if HAS_DEBUG_FULL
-#define DBG(x) ErrorF x
-#else
-#define DBG(x)
-#endif
-
 #include "sfb.h"
 
 #include "../../compat-api.h"
+#include "../debug.h"
 
 #define WRITE(ptr, val) (*(ptr) = (val))
 #define READ(ptr) (*(ptr))

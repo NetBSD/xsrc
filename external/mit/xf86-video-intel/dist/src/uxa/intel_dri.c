@@ -48,6 +48,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <time.h>
 #include <errno.h>
 
+#include "xorg-server.h"
 #include "xf86.h"
 #include "xf86_OSproc.h"
 
@@ -65,8 +66,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "dri2.h"
 
-#include "intel_glamor.h"
-#include "uxa.h"
+#if USE_UXA
+#include "intel_uxa.h"
+#endif
 
 typedef struct {
 	int refcnt;
@@ -81,7 +83,7 @@ static int i830_client_key;
 
 static uint32_t pixmap_flink(PixmapPtr pixmap)
 {
-	struct intel_pixmap *priv = intel_get_pixmap_private(pixmap);
+	struct intel_uxa_pixmap *priv = intel_uxa_get_pixmap_private(pixmap);
 	uint32_t name;
 
 	if (priv == NULL || priv->bo == NULL)
@@ -90,7 +92,7 @@ static uint32_t pixmap_flink(PixmapPtr pixmap)
 	if (dri_bo_flink(priv->bo, &name) != 0)
 		return 0;
 
-	priv->pinned |= PIN_DRI;
+	priv->pinned |= PIN_DRI2;
 	return name;
 }
 
@@ -106,58 +108,6 @@ static PixmapPtr get_front_buffer(DrawablePtr drawable)
 	return pixmap;
 }
 
-static PixmapPtr fixup_glamor(DrawablePtr drawable, PixmapPtr pixmap)
-{
-	ScreenPtr screen = drawable->pScreen;
-	ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
-	intel_screen_private *intel = intel_get_screen_private(scrn);
-	PixmapPtr old = get_drawable_pixmap(drawable);
-	struct intel_pixmap *priv = intel_get_pixmap_private(pixmap);
-	GCPtr gc;
-
-	/* With a glamor pixmap, 2D pixmaps are created in texture
-	 * and without a static BO attached to it. To support DRI,
-	 * we need to create a new textured-drm pixmap and
-	 * need to copy the original content to this new textured-drm
-	 * pixmap, and then convert the old pixmap to a coherent
-	 * textured-drm pixmap which has a valid BO attached to it
-	 * and also has a valid texture, thus both glamor and DRI2
-	 * can access it.
-	 *
-	 */
-
-	/* Copy the current contents of the pixmap to the bo. */
-	gc = GetScratchGC(drawable->depth, screen);
-	if (gc) {
-		ValidateGC(&pixmap->drawable, gc);
-		gc->ops->CopyArea(drawable, &pixmap->drawable,
-				  gc,
-				  0, 0,
-				  drawable->width,
-				  drawable->height,
-				  0, 0);
-		FreeScratchGC(gc);
-	}
-
-	intel_set_pixmap_private(pixmap, NULL);
-
-	/* Exchange the underlying texture/image. */
-	intel_glamor_exchange_buffers(intel, old, pixmap);
-	/* And redirect the pixmap to the new bo (for 3D). */
-	intel_set_pixmap_private(old, priv);
-	old->refcnt++;
-
-	screen->ModifyPixmapHeader(old,
-				   drawable->width,
-				   drawable->height,
-				   0, 0,
-				   priv->stride,
-				   NULL);
-	screen->DestroyPixmap(pixmap);
-	intel_get_screen_private(xf86ScreenToScrn(screen))->needs_flush = TRUE;
-	return old;
-}
-
 #if DRI2INFOREC_VERSION < 2
 static DRI2BufferPtr
 I830DRI2CreateBuffers(DrawablePtr drawable, unsigned int *attachments,
@@ -169,7 +119,6 @@ I830DRI2CreateBuffers(DrawablePtr drawable, unsigned int *attachments,
 	DRI2BufferPtr buffers;
 	I830DRI2BufferPrivatePtr privates;
 	PixmapPtr pixmap, pDepthPixmap;
-	Bool is_glamor_pixmap = FALSE;
 	int i;
 
 	buffers = calloc(count, sizeof *buffers);
@@ -187,10 +136,8 @@ I830DRI2CreateBuffers(DrawablePtr drawable, unsigned int *attachments,
 		if (attachments[i] == DRI2BufferFrontLeft) {
 			pixmap = get_front_buffer(drawable);
 
-			if (pixmap == NULL) {
+			if (pixmap == NULL)
 				drawable = &(get_drawable_pixmap(drawable)->drawable);
-				is_glamor_pixmap = TRUE;
-			}
 		} else if (attachments[i] == DRI2BufferStencil && pDepthPixmap) {
 			pixmap = pDepthPixmap;
 			pixmap->refcnt++;
@@ -228,9 +175,6 @@ I830DRI2CreateBuffers(DrawablePtr drawable, unsigned int *attachments,
 					screen->DestroyPixmap(pixmap);
 				goto unwind;
 			}
-
-			if (is_glamor_pixmap)
-				pixmap = fixup_glamor(drawable, pixmap);
 		}
 
 		if (attachments[i] == DRI2BufferDepth)
@@ -291,7 +235,6 @@ I830DRI2CreateBuffer(DrawablePtr drawable, unsigned int attachment,
 	DRI2Buffer2Ptr buffer;
 	I830DRI2BufferPrivatePtr privates;
 	PixmapPtr pixmap;
-	Bool is_glamor_pixmap = FALSE;
 
 	buffer = calloc(1, sizeof *buffer);
 	if (buffer == NULL)
@@ -305,11 +248,8 @@ I830DRI2CreateBuffer(DrawablePtr drawable, unsigned int attachment,
 	pixmap = NULL;
 	if (attachment == DRI2BufferFrontLeft) {
 		pixmap = get_front_buffer(drawable);
-
-		if (pixmap == NULL) {
+		if (pixmap == NULL)
 			drawable = &(get_drawable_pixmap(drawable)->drawable);
-			is_glamor_pixmap = TRUE;
-		}
 	}
 
 	if (pixmap == NULL) {
@@ -382,8 +322,6 @@ I830DRI2CreateBuffer(DrawablePtr drawable, unsigned int attachment,
 			free(buffer);
 			return NULL;
 		}
-		if (is_glamor_pixmap)
-			pixmap = fixup_glamor(drawable, pixmap);
 	}
 
 	buffer->attachment = attachment;
@@ -574,27 +512,27 @@ static void I830DRI2ReferenceBuffer(DRI2Buffer2Ptr buffer)
 	}
 }
 
-static int
-I830DRI2DrawablePipe(DrawablePtr pDraw)
+static xf86CrtcPtr
+I830DRI2DrawableCrtc(DrawablePtr pDraw)
 {
 	ScreenPtr pScreen = pDraw->pScreen;
 	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 	BoxRec box, crtcbox;
-	xf86CrtcPtr crtc;
-	int pipe = -1;
+	xf86CrtcPtr crtc = NULL;
 
 	box.x1 = pDraw->x;
 	box.y1 = pDraw->y;
 	box.x2 = box.x1 + pDraw->width;
 	box.y2 = box.y1 + pDraw->height;
 
-	crtc = intel_covering_crtc(pScrn, &box, NULL, &crtcbox);
+	if (pDraw->type != DRAWABLE_PIXMAP)
+		crtc = intel_covering_crtc(pScrn, &box, NULL, &crtcbox);
 
 	/* Make sure the CRTC is valid and this is the real front buffer */
 	if (crtc != NULL && !crtc->rotatedData)
-		pipe = intel_crtc_to_pipe(crtc);
+                return crtc;
 
-	return pipe;
+	return NULL;
 }
 
 static RESTYPE	frame_event_client_type, frame_event_drawable_type;
@@ -725,23 +663,23 @@ i830_dri2_add_frame_event(DRI2FrameEventPtr info)
 }
 
 static void
-i830_dri2_del_frame_event(DrawablePtr drawable, DRI2FrameEventPtr info)
+i830_dri2_del_frame_event(DRI2FrameEventPtr info)
 {
 	list_del(&info->client_resource);
 	list_del(&info->drawable_resource);
 
 	if (info->front)
-		I830DRI2DestroyBuffer(drawable, info->front);
+		I830DRI2DestroyBuffer(NULL, info->front);
 	if (info->back)
-		I830DRI2DestroyBuffer(drawable, info->back);
+		I830DRI2DestroyBuffer(NULL, info->back);
 
 	free(info);
 }
 
-static struct intel_pixmap *
+static struct intel_uxa_pixmap *
 intel_exchange_pixmap_buffers(struct intel_screen_private *intel, PixmapPtr front, PixmapPtr back)
 {
-	struct intel_pixmap *new_front, *new_back;
+	struct intel_uxa_pixmap *new_front = NULL, *new_back;
 	RegionRec region;
 
 	/* Post damage on the front buffer so that listeners, such
@@ -754,14 +692,12 @@ intel_exchange_pixmap_buffers(struct intel_screen_private *intel, PixmapPtr fron
 	region.data = NULL;
 	DamageRegionAppend(&front->drawable, &region);
 
-	new_front = intel_get_pixmap_private(back);
-	new_back = intel_get_pixmap_private(front);
-	intel_set_pixmap_private(front, new_front);
-	intel_set_pixmap_private(back, new_back);
+	new_front = intel_uxa_get_pixmap_private(back);
+	new_back = intel_uxa_get_pixmap_private(front);
+	intel_uxa_set_pixmap_private(front, new_front);
+	intel_uxa_set_pixmap_private(back, new_back);
 	new_front->busy = 1;
 	new_back->busy = -1;
-
-	intel_glamor_exchange_buffers(intel, front, back);
 
 	DamageRegionProcessPending(&front->drawable);
 
@@ -773,7 +709,7 @@ I830DRI2ExchangeBuffers(struct intel_screen_private *intel, DRI2BufferPtr front,
 {
 	I830DRI2BufferPrivatePtr front_priv, back_priv;
 	int tmp;
-	struct intel_pixmap *new_front;
+	struct intel_uxa_pixmap *new_front;
 
 	front_priv = front->driverPrivate;
 	back_priv = back->driverPrivate;
@@ -792,43 +728,29 @@ I830DRI2ExchangeBuffers(struct intel_screen_private *intel, DRI2BufferPtr front,
 	dri_bo_reference (intel->front_buffer);
 }
 
-static PixmapPtr
-intel_glamor_create_back_pixmap(ScreenPtr screen,
-				PixmapPtr front_pixmap,
-				drm_intel_bo *back_bo)
-{
-	PixmapPtr back_pixmap;
-
-	back_pixmap = screen->CreatePixmap(screen,
-					   0,
-					   0,
-				           front_pixmap->drawable.depth,
-				           0);
-	if (back_pixmap == NULL)
-		return NULL;
-
-	screen->ModifyPixmapHeader(back_pixmap,
-				   front_pixmap->drawable.width,
-				   front_pixmap->drawable.height,
-				   0, 0,
-				   front_pixmap->devKind,
-				   0);
-	intel_set_pixmap_bo(back_pixmap, back_bo);
-	if (!intel_glamor_create_textured_pixmap(back_pixmap)) {
-		ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
-		xf86DrvMsg(scrn->scrnIndex, X_WARNING,
-			   "Failed to create textured back pixmap.\n");
-		screen->DestroyPixmap(back_pixmap);
-		return NULL;
-	}
-	return back_pixmap;
-}
-
 static drm_intel_bo *get_pixmap_bo(I830DRI2BufferPrivatePtr priv)
 {
 	drm_intel_bo *bo = intel_get_pixmap_bo(priv->pixmap);
 	assert(bo != NULL); /* guaranteed by construction of the DRI2 buffer */
 	return bo;
+}
+
+static void
+I830DRI2FlipComplete(uint64_t frame, uint64_t usec, void *pageflip_data)
+{
+        DRI2FrameEventPtr info = pageflip_data;
+
+        I830DRI2FlipEventHandler((uint32_t) frame, usec / 1000000,
+                                 usec % 1000000,
+                                 info);
+}
+
+static void
+I830DRI2FlipAbort(void *pageflip_data)
+{
+        DRI2FrameEventPtr info = pageflip_data;
+
+        i830_dri2_del_frame_event(info);
 }
 
 /*
@@ -848,7 +770,9 @@ I830DRI2ScheduleFlip(struct intel_screen_private *intel,
 		info->type = DRI2_SWAP;
 		if (!intel_do_pageflip(intel,
 				       get_pixmap_bo(priv),
-				       info, info->pipe))
+				       info->pipe, FALSE, info,
+                                       I830DRI2FlipComplete,
+                                       I830DRI2FlipAbort))
 			return FALSE;
 
 		I830DRI2ExchangeBuffers(intel, info->front, info->back);
@@ -862,10 +786,6 @@ I830DRI2ScheduleFlip(struct intel_screen_private *intel,
 	}
 
 	if (intel->back_buffer == NULL) {
-		I830DRI2BufferPrivatePtr priv;
-		PixmapPtr front_pixmap, back_pixmap;
-		ScreenPtr screen;
-
 		new_back = drm_intel_bo_alloc(intel->bufmgr, "front buffer",
 					      intel->front_buffer->size, 0);
 		if (new_back == NULL)
@@ -882,28 +802,13 @@ I830DRI2ScheduleFlip(struct intel_screen_private *intel,
 
 		drm_intel_bo_disable_reuse(new_back);
 		dri_bo_flink(new_back, &intel->back_name);
-
-		if ((intel->uxa_flags & UXA_USE_GLAMOR)) {
-			screen = draw->pScreen;
-			priv = info->front->driverPrivate;
-			front_pixmap = priv->pixmap;
-
-			back_pixmap = intel_glamor_create_back_pixmap(screen,
-								      front_pixmap,
-								      new_back);
-			if (back_pixmap == NULL) {
-				drm_intel_bo_unreference(new_back);
-				return FALSE;
-			}
-			intel->back_pixmap = back_pixmap;
-		}
 	} else {
 		new_back = intel->back_buffer;
 		intel->back_buffer = NULL;
 	}
 
 	old_back = get_pixmap_bo(priv);
-	if (!intel_do_pageflip(intel, old_back, info, info->pipe)) {
+	if (!intel_do_pageflip(intel, old_back, info->pipe, FALSE, info, I830DRI2FlipComplete, I830DRI2FlipAbort)) {
 		intel->back_buffer = new_back;
 		return FALSE;
 	}
@@ -916,13 +821,8 @@ I830DRI2ScheduleFlip(struct intel_screen_private *intel,
 
 	intel->back_buffer = intel->front_buffer;
 	drm_intel_bo_reference(intel->back_buffer);
-	if (!(intel->uxa_flags & UXA_USE_GLAMOR)) {
-		intel_set_pixmap_bo(priv->pixmap, new_back);
-		drm_intel_bo_unreference(new_back);
-	}
-	else
-		intel_exchange_pixmap_buffers(intel, priv->pixmap,
-					      intel->back_pixmap);
+	intel_set_pixmap_bo(priv->pixmap, new_back);
+	drm_intel_bo_unreference(new_back);
 
 	tmp_name = info->front->name;
 	info->front->name = intel->back_name;
@@ -946,13 +846,13 @@ can_exchange(DrawablePtr drawable, DRI2BufferPtr front, DRI2BufferPtr back)
 	I830DRI2BufferPrivatePtr back_priv = back->driverPrivate;
 	PixmapPtr front_pixmap = front_priv->pixmap;
 	PixmapPtr back_pixmap = back_priv->pixmap;
-	struct intel_pixmap *front_intel = intel_get_pixmap_private(front_pixmap);
-	struct intel_pixmap *back_intel = intel_get_pixmap_private(back_pixmap);
+	struct intel_uxa_pixmap *front_intel = intel_uxa_get_pixmap_private(front_pixmap);
+	struct intel_uxa_pixmap *back_intel = intel_uxa_get_pixmap_private(back_pixmap);
 
 	if (!pScrn->vtSema)
 		return FALSE;
 
-	if (I830DRI2DrawablePipe(drawable) < 0)
+	if (I830DRI2DrawableCrtc(drawable) == NULL)
 		return FALSE;
 
 	if (!DRI2CanFlip(drawable))
@@ -983,6 +883,9 @@ can_exchange(DrawablePtr drawable, DRI2BufferPtr front, DRI2BufferPtr back)
 	if (front_intel->tiling != back_intel->tiling)
 		return FALSE;
 
+	if (front_intel->pinned & ~(PIN_SCANOUT | PIN_DRI2))
+		return FALSE;
+
 	return TRUE;
 }
 
@@ -999,7 +902,7 @@ void I830DRI2FrameEventHandler(unsigned int frame, unsigned int tv_sec,
 		status = dixLookupDrawable(&drawable, swap_info->drawable_id, serverClient,
 					   M_ANY, DixWriteAccess);
 	if (status != Success) {
-		i830_dri2_del_frame_event(NULL, swap_info);
+		i830_dri2_del_frame_event(swap_info);
 		return;
 	}
 
@@ -1033,7 +936,7 @@ void I830DRI2FrameEventHandler(unsigned int frame, unsigned int tv_sec,
 		break;
 	}
 
-	i830_dri2_del_frame_event(drawable, swap_info);
+	i830_dri2_del_frame_event(swap_info);
 }
 
 void I830DRI2FlipEventHandler(unsigned int frame, unsigned int tv_sec,
@@ -1094,7 +997,7 @@ void I830DRI2FlipEventHandler(unsigned int frame, unsigned int tv_sec,
 						   serverClient,
 						   M_ANY, DixWriteAccess);
 			if (chain_drawable == NULL) {
-				i830_dri2_del_frame_event(chain_drawable, chain);
+				i830_dri2_del_frame_event(chain);
 			} else if (!can_exchange(chain_drawable, chain->front, chain->back) ||
 				   !I830DRI2ScheduleFlip(intel, chain_drawable, chain)) {
 				I830DRI2FallbackBlitSwap(chain_drawable,
@@ -1105,7 +1008,7 @@ void I830DRI2FlipEventHandler(unsigned int frame, unsigned int tv_sec,
 						 DRI2_BLIT_COMPLETE,
 						 chain->client ? chain->event_complete : NULL,
 						 chain->event_data);
-				i830_dri2_del_frame_event(chain_drawable, chain);
+				i830_dri2_del_frame_event(chain);
 			}
 		}
 		break;
@@ -1117,7 +1020,7 @@ void I830DRI2FlipEventHandler(unsigned int frame, unsigned int tv_sec,
 		break;
 	}
 
-	i830_dri2_del_frame_event(drawable, flip_info);
+	i830_dri2_del_frame_event(flip_info);
 }
 
 static uint32_t pipe_select(int pipe)
@@ -1128,6 +1031,28 @@ static uint32_t pipe_select(int pipe)
 		return DRM_VBLANK_SECONDARY;
 	else
 		return 0;
+}
+
+static void
+intel_dri2_vblank_handler(ScrnInfoPtr scrn,
+                          xf86CrtcPtr crtc,
+                          uint64_t msc,
+                          uint64_t usec,
+                          void *data)
+{
+        DRI2FrameEventPtr swap_info = data;
+
+        I830DRI2FrameEventHandler((uint32_t) msc, usec / 1000000, usec % 1000000, swap_info);
+}
+
+static void
+intel_dri2_vblank_abort(ScrnInfoPtr scrn,
+                        xf86CrtcPtr crtc,
+                        void *data)
+{
+        DRI2FrameEventPtr swap_info = data;
+
+        i830_dri2_del_frame_event(swap_info);
 }
 
 /*
@@ -1159,20 +1084,19 @@ I830DRI2ScheduleSwap(ClientPtr client, DrawablePtr draw, DRI2BufferPtr front,
 	ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
 	intel_screen_private *intel = intel_get_screen_private(scrn);
 	drmVBlank vbl;
-	int ret, pipe = I830DRI2DrawablePipe(draw), flip = 0;
+	int ret;
+        xf86CrtcPtr crtc = I830DRI2DrawableCrtc(draw);
+        int pipe = crtc ? intel_crtc_to_pipe(crtc) : -1;
+        int flip = 0;
 	DRI2FrameEventPtr swap_info = NULL;
 	enum DRI2FrameEventType swap_type = DRI2_SWAP;
-	CARD64 current_msc;
+	uint64_t current_msc, current_ust;
+        uint64_t request_msc;
+        uint32_t seq;
 
 	/* Drawable not displayed... just complete the swap */
 	if (pipe == -1)
 	    goto blit_fallback;
-
-	/* Truncate to match kernel interfaces; means occasional overflow
-	 * misses, but that's generally not a big deal */
-	*target_msc &= 0xffffffff;
-	divisor &= 0xffffffff;
-	remainder &= 0xffffffff;
 
 	swap_info = calloc(1, sizeof(DRI2FrameEventRec));
 	if (!swap_info)
@@ -1196,18 +1120,9 @@ I830DRI2ScheduleSwap(ClientPtr client, DrawablePtr draw, DRI2BufferPtr front,
 	I830DRI2ReferenceBuffer(front);
 	I830DRI2ReferenceBuffer(back);
 
-	/* Get current count */
-	vbl.request.type = DRM_VBLANK_RELATIVE | pipe_select(pipe);
-	vbl.request.sequence = 0;
-	ret = drmWaitVBlank(intel->drmSubFD, &vbl);
-	if (ret) {
-		xf86DrvMsg(scrn->scrnIndex, X_WARNING,
-			   "first get vblank counter failed: %s\n",
-			   strerror(errno));
-		goto blit_fallback;
-	}
-
-	current_msc = vbl.reply.sequence;
+        ret = intel_get_crtc_msc_ust(scrn, crtc, &current_msc, &current_ust);
+	if (ret)
+	    goto blit_fallback;
 
 	/* Flips need to be submitted one frame before */
 	if (can_exchange(draw, front, back)) {
@@ -1256,8 +1171,13 @@ I830DRI2ScheduleSwap(ClientPtr client, DrawablePtr draw, DRI2BufferPtr front,
 		if (current_msc >= *target_msc)
 			*target_msc = current_msc;
 
-		vbl.request.sequence = *target_msc;
-		vbl.request.signal = (unsigned long)swap_info;
+                seq = intel_drm_queue_alloc(scrn, crtc, swap_info, intel_dri2_vblank_handler, intel_dri2_vblank_abort);
+                if (!seq)
+                        goto blit_fallback;
+
+		vbl.request.sequence = intel_crtc_msc_to_sequence(scrn, crtc, *target_msc);
+		vbl.request.signal = seq;
+
 		ret = drmWaitVBlank(intel->drmSubFD, &vbl);
 		if (ret) {
 			xf86DrvMsg(scrn->scrnIndex, X_WARNING,
@@ -1266,7 +1186,7 @@ I830DRI2ScheduleSwap(ClientPtr client, DrawablePtr draw, DRI2BufferPtr front,
 			goto blit_fallback;
 		}
 
-		*target_msc = vbl.reply.sequence + flip;
+                *target_msc = intel_sequence_to_crtc_msc(crtc, vbl.reply.sequence + flip);
 		swap_info->frame = *target_msc;
 
 		return TRUE;
@@ -1282,8 +1202,8 @@ I830DRI2ScheduleSwap(ClientPtr client, DrawablePtr draw, DRI2BufferPtr front,
 	if (flip == 0)
 		vbl.request.type |= DRM_VBLANK_NEXTONMISS;
 
-	vbl.request.sequence = current_msc - (current_msc % divisor) +
-		remainder;
+        request_msc = current_msc - (current_msc % divisor) +
+                remainder;
 
 	/*
 	 * If the calculated deadline vbl.request.sequence is smaller than
@@ -1296,13 +1216,17 @@ I830DRI2ScheduleSwap(ClientPtr client, DrawablePtr draw, DRI2BufferPtr front,
 	 * into account, as well as a potential DRM_VBLANK_NEXTONMISS delay
 	 * if we are blitting/exchanging instead of flipping.
 	 */
-	if (vbl.request.sequence <= current_msc)
-		vbl.request.sequence += divisor;
+	if (request_msc <= current_msc)
+		request_msc += divisor;
+
+        seq = intel_drm_queue_alloc(scrn, crtc, swap_info, intel_dri2_vblank_handler, intel_dri2_vblank_abort);
+        if (!seq)
+                goto blit_fallback;
 
 	/* Account for 1 frame extra pageflip delay if flip > 0 */
-	vbl.request.sequence -= flip;
+        vbl.request.sequence = intel_crtc_msc_to_sequence(scrn, crtc, request_msc) - flip;
+	vbl.request.signal = seq;
 
-	vbl.request.signal = (unsigned long)swap_info;
 	ret = drmWaitVBlank(intel->drmSubFD, &vbl);
 	if (ret) {
 		xf86DrvMsg(scrn->scrnIndex, X_WARNING,
@@ -1312,7 +1236,7 @@ I830DRI2ScheduleSwap(ClientPtr client, DrawablePtr draw, DRI2BufferPtr front,
 	}
 
 	/* Adjust returned value for 1 fame pageflip offset of flip > 0 */
-	*target_msc = vbl.reply.sequence + flip;
+	*target_msc = intel_sequence_to_crtc_msc(crtc, vbl.reply.sequence + flip);
 	swap_info->frame = *target_msc;
 
 	return TRUE;
@@ -1321,7 +1245,7 @@ blit_fallback:
 	I830DRI2FallbackBlitSwap(draw, front, back);
 	DRI2SwapComplete(client, draw, 0, 0, 0, DRI2_BLIT_COMPLETE, func, data);
 	if (swap_info)
-	    i830_dri2_del_frame_event(draw, swap_info);
+	    i830_dri2_del_frame_event(swap_info);
 	*target_msc = 0; /* offscreen, so zero out target vblank count */
 	return TRUE;
 }
@@ -1345,21 +1269,18 @@ I830DRI2GetMSC(DrawablePtr draw, CARD64 *ust, CARD64 *msc)
 {
 	ScreenPtr screen = draw->pScreen;
 	ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
-	intel_screen_private *intel = intel_get_screen_private(scrn);
-	drmVBlank vbl;
-	int ret, pipe = I830DRI2DrawablePipe(draw);
+	int ret;
+        xf86CrtcPtr crtc = I830DRI2DrawableCrtc(draw);
 
 	/* Drawable not displayed, make up a *monotonic* value */
-	if (pipe == -1) {
+	if (crtc == NULL) {
+fail:
 		*ust = gettime_us();
 		*msc = 0;
 		return TRUE;
 	}
 
-	vbl.request.type = DRM_VBLANK_RELATIVE | pipe_select(pipe);
-	vbl.request.sequence = 0;
-
-	ret = drmWaitVBlank(intel->drmSubFD, &vbl);
+        ret = intel_get_crtc_msc_ust(scrn, crtc, msc, ust);
 	if (ret) {
 		static int limit = 5;
 		if (limit) {
@@ -1369,11 +1290,8 @@ I830DRI2GetMSC(DrawablePtr draw, CARD64 *ust, CARD64 *msc)
 				   strerror(errno));
 			limit--;
 		}
-		return FALSE;
+		goto fail;
 	}
-
-	*ust = ((CARD64)vbl.reply.tval_sec * 1000000) + vbl.reply.tval_usec;
-	*msc = vbl.reply.sequence;
 
 	return TRUE;
 }
@@ -1393,14 +1311,11 @@ I830DRI2ScheduleWaitMSC(ClientPtr client, DrawablePtr draw, CARD64 target_msc,
 	intel_screen_private *intel = intel_get_screen_private(scrn);
 	DRI2FrameEventPtr wait_info;
 	drmVBlank vbl;
-	int ret, pipe = I830DRI2DrawablePipe(draw);
-	CARD64 current_msc;
-
-	/* Truncate to match kernel interfaces; means occasional overflow
-	 * misses, but that's generally not a big deal */
-	target_msc &= 0xffffffff;
-	divisor &= 0xffffffff;
-	remainder &= 0xffffffff;
+	int ret;
+        xf86CrtcPtr crtc = I830DRI2DrawableCrtc(draw);
+        int pipe = crtc ? intel_crtc_to_pipe(crtc) : -1;
+	CARD64 current_msc, current_ust, request_msc;
+        uint32_t seq;
 
 	/* Drawable not visible, return immediately */
 	if (pipe == -1)
@@ -1422,22 +1337,9 @@ I830DRI2ScheduleWaitMSC(ClientPtr client, DrawablePtr draw, CARD64 target_msc,
 	}
 
 	/* Get current count */
-	vbl.request.type = DRM_VBLANK_RELATIVE | pipe_select(pipe);
-	vbl.request.sequence = 0;
-	ret = drmWaitVBlank(intel->drmSubFD, &vbl);
-	if (ret) {
-		static int limit = 5;
-		if (limit) {
-			xf86DrvMsg(scrn->scrnIndex, X_WARNING,
-				   "%s:%d get vblank counter failed: %s\n",
-				   __FUNCTION__, __LINE__,
-				   strerror(errno));
-			limit--;
-		}
-		goto out_free;
-	}
-
-	current_msc = vbl.reply.sequence;
+        ret = intel_get_crtc_msc_ust(scrn, crtc, &current_msc, &current_ust);
+	if (ret)
+	    goto out_free;
 
 	/*
 	 * If divisor is zero, or current_msc is smaller than target_msc,
@@ -1451,12 +1353,17 @@ I830DRI2ScheduleWaitMSC(ClientPtr client, DrawablePtr draw, CARD64 target_msc,
 		 * sending us MSC targets from the past by forcibly updating
 		 * their count on this call.
 		 */
+                seq = intel_drm_queue_alloc(scrn, crtc, wait_info, intel_dri2_vblank_handler, intel_dri2_vblank_abort);
+                if (!seq)
+                        goto out_free;
+
 		if (current_msc >= target_msc)
 			target_msc = current_msc;
 		vbl.request.type =
 			DRM_VBLANK_ABSOLUTE | DRM_VBLANK_EVENT | pipe_select(pipe);
-		vbl.request.sequence = target_msc;
-		vbl.request.signal = (unsigned long)wait_info;
+		vbl.request.sequence = intel_crtc_msc_to_sequence(scrn, crtc, target_msc);
+		vbl.request.signal = seq;
+
 		ret = drmWaitVBlank(intel->drmSubFD, &vbl);
 		if (ret) {
 			static int limit = 5;
@@ -1470,7 +1377,7 @@ I830DRI2ScheduleWaitMSC(ClientPtr client, DrawablePtr draw, CARD64 target_msc,
 			goto out_free;
 		}
 
-		wait_info->frame = vbl.reply.sequence;
+		wait_info->frame = intel_sequence_to_crtc_msc(crtc, vbl.reply.sequence);
 		DRI2BlockClient(client, draw);
 		return TRUE;
 	}
@@ -1482,9 +1389,8 @@ I830DRI2ScheduleWaitMSC(ClientPtr client, DrawablePtr draw, CARD64 target_msc,
 	vbl.request.type =
 		DRM_VBLANK_ABSOLUTE | DRM_VBLANK_EVENT | pipe_select(pipe);
 
-	vbl.request.sequence = current_msc - (current_msc % divisor) +
-	    remainder;
-
+        request_msc = current_msc - (current_msc % divisor) +
+                remainder;
 	/*
 	 * If calculated remainder is larger than requested remainder,
 	 * it means we've passed the last point where
@@ -1492,9 +1398,15 @@ I830DRI2ScheduleWaitMSC(ClientPtr client, DrawablePtr draw, CARD64 target_msc,
 	 * that will happen.
 	 */
 	if ((current_msc % divisor) >= remainder)
-	    vbl.request.sequence += divisor;
+                request_msc += divisor;
 
-	vbl.request.signal = (unsigned long)wait_info;
+        seq = intel_drm_queue_alloc(scrn, crtc, wait_info, intel_dri2_vblank_handler, intel_dri2_vblank_abort);
+        if (!seq)
+                goto out_free;
+
+	vbl.request.sequence = intel_crtc_msc_to_sequence(scrn, crtc, request_msc);
+	vbl.request.signal = seq;
+
 	ret = drmWaitVBlank(intel->drmSubFD, &vbl);
 	if (ret) {
 		static int limit = 5;
@@ -1508,13 +1420,13 @@ I830DRI2ScheduleWaitMSC(ClientPtr client, DrawablePtr draw, CARD64 target_msc,
 		goto out_free;
 	}
 
-	wait_info->frame = vbl.reply.sequence;
+	wait_info->frame = intel_sequence_to_crtc_msc(crtc, vbl.reply.sequence);
 	DRI2BlockClient(client, draw);
 
 	return TRUE;
 
 out_free:
-	i830_dri2_del_frame_event(draw, wait_info);
+	i830_dri2_del_frame_event(wait_info);
 out_complete:
 	DRI2WaitMSCComplete(client, draw, target_msc, 0, 0);
 	return TRUE;
@@ -1530,6 +1442,7 @@ static int has_i830_dri(void)
 
 static const char *dri_driver_name(intel_screen_private *intel)
 {
+#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,7,99,901,0)
 	const char *s = xf86GetOptValString(intel->Options, OPTION_DRI);
 	Bool dummy;
 
@@ -1543,6 +1456,14 @@ static const char *dri_driver_name(intel_screen_private *intel)
 	}
 
 	return s;
+#else
+	if (INTEL_INFO(intel)->gen < 030)
+		return has_i830_dri() ? "i830" : "i915";
+	else if (INTEL_INFO(intel)->gen < 040)
+		return "i915";
+	else
+		return "i965";
+#endif
 }
 
 Bool I830DRI2ScreenInit(ScreenPtr screen)
@@ -1550,10 +1471,10 @@ Bool I830DRI2ScreenInit(ScreenPtr screen)
 	ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
 	intel_screen_private *intel = intel_get_screen_private(scrn);
 	DRI2InfoRec info;
-	int dri2_major = 1;
-	int dri2_minor = 0;
+	int dri2scr_major = 1;
+	int dri2scr_minor = 0;
 #if DRI2INFOREC_VERSION >= 4
-	const char *driverNames[1];
+	const char *driverNames[2];
 #endif
 
 	if (intel->force_fallback) {
@@ -1563,9 +1484,9 @@ Bool I830DRI2ScreenInit(ScreenPtr screen)
 	}
 
 	if (xf86LoaderCheckSymbol("DRI2Version"))
-		DRI2Version(&dri2_major, &dri2_minor);
+		DRI2Version(&dri2scr_major, &dri2scr_minor);
 
-	if (dri2_minor < 1) {
+	if (dri2scr_minor < 1) {
 		xf86DrvMsg(scrn->scrnIndex, X_WARNING,
 			   "DRI2 requires DRI2 module version 1.1.0 or later\n");
 		return FALSE;
@@ -1620,9 +1541,10 @@ Bool I830DRI2ScreenInit(ScreenPtr screen)
 	info.ScheduleSwap = I830DRI2ScheduleSwap;
 	info.GetMSC = I830DRI2GetMSC;
 	info.ScheduleWaitMSC = I830DRI2ScheduleWaitMSC;
-	info.numDrivers = 1;
+	info.numDrivers = 2;
 	info.driverNames = driverNames;
 	driverNames[0] = info.driverName;
+	driverNames[1] = info.driverName;
 #endif
 
 	return DRI2ScreenInit(screen, &info);
@@ -1634,6 +1556,5 @@ void I830DRI2CloseScreen(ScreenPtr screen)
 	intel_screen_private *intel = intel_get_screen_private(scrn);
 
 	DRI2CloseScreen(screen);
-	intel->directRenderingType = DRI_NONE;
 	drmFree(intel->deviceName);
 }
