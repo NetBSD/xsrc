@@ -78,8 +78,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-noinst_PROGRAMS = radeon_ttm$(EXEEXT)
-subdir = tests/radeon
+noinst_PROGRAMS = proptest$(EXEEXT)
+subdir = tests/proptest
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/build-aux/depcomp
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -94,10 +94,9 @@ CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 PROGRAMS = $(noinst_PROGRAMS)
-am_radeon_ttm_OBJECTS = rbo.$(OBJEXT) radeon_ttm.$(OBJEXT)
-radeon_ttm_OBJECTS = $(am_radeon_ttm_OBJECTS)
-radeon_ttm_LDADD = $(LDADD)
-radeon_ttm_DEPENDENCIES = $(top_builddir)/libdrm.la
+am_proptest_OBJECTS = proptest.$(OBJEXT)
+proptest_OBJECTS = $(am_proptest_OBJECTS)
+proptest_DEPENDENCIES = $(top_builddir)/libdrm.la
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -136,8 +135,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(radeon_ttm_SOURCES)
-DIST_SOURCES = $(radeon_ttm_SOURCES)
+SOURCES = $(proptest_SOURCES)
+DIST_SOURCES = $(proptest_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -300,15 +299,14 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CFLAGS = \
-	-I $(top_srcdir)/include/drm \
-	-I $(top_srcdir)
+	-I$(top_srcdir)/include/drm \
+	-I$(top_srcdir)
 
-LDADD = $(top_builddir)/libdrm.la
-radeon_ttm_SOURCES = \
-	rbo.c \
-	rbo.h \
-	list.h \
-	radeon_ttm.c
+proptest_SOURCES = \
+	proptest.c
+
+proptest_LDADD = \
+	$(top_builddir)/libdrm.la
 
 all: all-am
 
@@ -323,9 +321,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign tests/radeon/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign tests/proptest/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign tests/radeon/Makefile
+	  $(AUTOMAKE) --foreign tests/proptest/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -354,9 +352,9 @@ clean-noinstPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
-radeon_ttm$(EXEEXT): $(radeon_ttm_OBJECTS) $(radeon_ttm_DEPENDENCIES) $(EXTRA_radeon_ttm_DEPENDENCIES) 
-	@rm -f radeon_ttm$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(radeon_ttm_OBJECTS) $(radeon_ttm_LDADD) $(LIBS)
+proptest$(EXEEXT): $(proptest_OBJECTS) $(proptest_DEPENDENCIES) $(EXTRA_proptest_DEPENDENCIES) 
+	@rm -f proptest$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(proptest_OBJECTS) $(proptest_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -364,8 +362,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radeon_ttm.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rbo.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/proptest.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

@@ -759,15 +759,16 @@ retry:
 		bo_gem->swizzle_mode = I915_BIT_6_SWIZZLE_NONE;
 		bo_gem->stride = 0;
 
+		/* drm_intel_gem_bo_free calls DRMLISTDEL() for an uninitialized
+		   list (vma_list), so better set the list head here */
+		DRMINITLISTHEAD(&bo_gem->name_list);
+		DRMINITLISTHEAD(&bo_gem->vma_list);
 		if (drm_intel_gem_bo_set_tiling_internal(&bo_gem->bo,
 							 tiling_mode,
 							 stride)) {
 		    drm_intel_gem_bo_free(&bo_gem->bo);
 		    return NULL;
 		}
-
-		DRMINITLISTHEAD(&bo_gem->name_list);
-		DRMINITLISTHEAD(&bo_gem->vma_list);
 	}
 
 	bo_gem->name = name;
@@ -1811,6 +1812,14 @@ do_bo_emit_reloc(drm_intel_bo *bo, uint32_t offset,
 	assert(offset <= bo->size - 4);
 	assert((write_domain & (write_domain - 1)) == 0);
 
+	/* An object needing a fence is a tiled buffer, so it won't have
+	 * relocs to other buffers.
+	 */
+	if (need_fence) {
+		assert(target_bo_gem->reloc_count == 0);
+		target_bo_gem->reloc_tree_fences = 1;
+	}
+
 	/* Make sure that we're not adding a reloc to something whose size has
 	 * already been accounted for.
 	 */
@@ -1818,13 +1827,8 @@ do_bo_emit_reloc(drm_intel_bo *bo, uint32_t offset,
 	if (target_bo_gem != bo_gem) {
 		target_bo_gem->used_as_reloc_target = true;
 		bo_gem->reloc_tree_size += target_bo_gem->reloc_tree_size;
+		bo_gem->reloc_tree_fences += target_bo_gem->reloc_tree_fences;
 	}
-	/* An object needing a fence is a tiled buffer, so it won't have
-	 * relocs to other buffers.
-	 */
-	if (need_fence)
-		target_bo_gem->reloc_tree_fences = 1;
-	bo_gem->reloc_tree_fences += target_bo_gem->reloc_tree_fences;
 
 	bo_gem->relocs[bo_gem->reloc_count].offset = offset;
 	bo_gem->relocs[bo_gem->reloc_count].delta = target_offset;
@@ -3176,7 +3180,8 @@ drm_intel_bufmgr_gem_set_aub_dump(drm_intel_bufmgr *bufmgr, int enable)
 
 	/* Set up the GTT. The max we can handle is 256M */
 	aub_out(bufmgr_gem, CMD_AUB_TRACE_HEADER_BLOCK | ((bufmgr_gem->gen >= 8 ? 6 : 5) - 2));
-	aub_out(bufmgr_gem, AUB_TRACE_MEMTYPE_NONLOCAL | 0 | AUB_TRACE_OP_DATA_WRITE);
+	/* Need to use GTT_ENTRY type for recent emulator */
+	aub_out(bufmgr_gem, AUB_TRACE_MEMTYPE_GTT_ENTRY | 0 | AUB_TRACE_OP_DATA_WRITE);
 	aub_out(bufmgr_gem, 0); /* subtype */
 	aub_out(bufmgr_gem, 0); /* offset */
 	aub_out(bufmgr_gem, gtt_size); /* size */
@@ -3478,6 +3483,8 @@ drm_intel_bufmgr_gem_init(int fd, int batch_size)
 		bufmgr_gem->gen = 7;
 	else if (IS_GEN8(bufmgr_gem->pci_device))
 		bufmgr_gem->gen = 8;
+	else if (IS_GEN9(bufmgr_gem->pci_device))
+		bufmgr_gem->gen = 9;
 	else {
 		free(bufmgr_gem);
 		bufmgr_gem = NULL;

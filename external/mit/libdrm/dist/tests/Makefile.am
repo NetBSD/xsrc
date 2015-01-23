@@ -10,7 +10,7 @@ check_PROGRAMS = \
 	dristat \
 	drmstat
 
-SUBDIRS = modeprint
+SUBDIRS = modeprint proptest
 
 if HAVE_LIBKMS
 SUBDIRS += kmstest modetest
@@ -22,6 +22,10 @@ endif
 
 if HAVE_EXYNOS
 SUBDIRS += exynos
+endif
+
+if HAVE_TEGRA
+SUBDIRS += tegra
 endif
 
 if HAVE_LIBUDEV

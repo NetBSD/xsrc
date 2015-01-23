@@ -30,6 +30,9 @@
 /* Have freedreno support */
 #undef HAVE_FREEDRENO
 
+/* Have freedreno support for KGSL kernel interface */
+#undef HAVE_FREEDRENO_KGSL
+
 /* Install test programs */
 #undef HAVE_INSTALL_TESTS
 
@@ -80,6 +83,9 @@
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
+
+/* Have Tegra support */
+#undef HAVE_TEGRA
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
