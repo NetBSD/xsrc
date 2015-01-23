@@ -79,8 +79,8 @@ __asm__(".text");
 extern unsigned long
 x86_current_tls();
 
-static char x86_entry_start[];
-static char x86_entry_end[];
+extern char x86_entry_start[] __attribute__((__visibility__("hidden")));
+extern char x86_entry_end[] __attribute__((__visibility__("hidden")));
 
 void
 entry_patch_public(void)

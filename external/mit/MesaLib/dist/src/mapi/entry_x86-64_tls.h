@@ -62,8 +62,7 @@ entry_patch_public(void)
 {
 }
 
-static char
-x86_64_entry_start[];
+extern char x86_64_entry_start[] __attribute__((__visibility__("hidden")));
 
 mapi_func
 entry_get_public(int slot)

@@ -70,8 +70,8 @@ __asm__(".balign 32\n"
 #include <string.h>
 #include "u_execmem.h"
 
-static const char x86_entry_start[];
-static const char x86_entry_end[];
+extern const char x86_entry_start[] __attribute__((__visibility__("hidden")));
+extern const char x86_entry_end[] __attribute__((__visibility__("hidden")));
 
 void
 entry_patch_public(void)
