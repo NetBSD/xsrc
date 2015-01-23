@@ -57,7 +57,6 @@
 #include "xf86drm.h"
 #include "xf86drmMode.h"
 #include "drm_fourcc.h"
-#include "libkms.h"
 
 #include "buffers.h"
 #include "cursor.h"
@@ -104,18 +103,21 @@ struct device {
 	int fd;
 
 	struct resources *resources;
-	struct kms_driver *kms;
 
 	struct {
 		unsigned int width;
 		unsigned int height;
 
 		unsigned int fb_id;
-		struct kms_bo *bo;
+		struct bo *bo;
 	} mode;
 };
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+static inline int64_t U642I64(uint64_t val)
+{
+	return (int64_t)*((int64_t *)&val);
+}
 
 struct type_name {
 	int type;
@@ -264,8 +266,10 @@ static void dump_blob(struct device *dev, uint32_t blob_id)
 	drmModePropertyBlobPtr blob;
 
 	blob = drmModeGetPropertyBlob(dev->fd, blob_id);
-	if (!blob)
+	if (!blob) {
+		printf("\n");
 		return;
+	}
 
 	blob_data = blob->data;
 
@@ -294,32 +298,43 @@ static void dump_prop(struct device *dev, drmModePropertyPtr prop,
 	printf("\t\tflags:");
 	if (prop->flags & DRM_MODE_PROP_PENDING)
 		printf(" pending");
-	if (prop->flags & DRM_MODE_PROP_RANGE)
-		printf(" range");
 	if (prop->flags & DRM_MODE_PROP_IMMUTABLE)
 		printf(" immutable");
-	if (prop->flags & DRM_MODE_PROP_ENUM)
+	if (drm_property_type_is(prop, DRM_MODE_PROP_SIGNED_RANGE))
+		printf(" signed range");
+	if (drm_property_type_is(prop, DRM_MODE_PROP_RANGE))
+		printf(" range");
+	if (drm_property_type_is(prop, DRM_MODE_PROP_ENUM))
 		printf(" enum");
-	if (prop->flags & DRM_MODE_PROP_BITMASK)
+	if (drm_property_type_is(prop, DRM_MODE_PROP_BITMASK))
 		printf(" bitmask");
-	if (prop->flags & DRM_MODE_PROP_BLOB)
+	if (drm_property_type_is(prop, DRM_MODE_PROP_BLOB))
 		printf(" blob");
+	if (drm_property_type_is(prop, DRM_MODE_PROP_OBJECT))
+		printf(" object");
 	printf("\n");
 
-	if (prop->flags & DRM_MODE_PROP_RANGE) {
+	if (drm_property_type_is(prop, DRM_MODE_PROP_SIGNED_RANGE)) {
+		printf("\t\tvalues:");
+		for (i = 0; i < prop->count_values; i++)
+			printf(" %"PRId64, U642I64(prop->values[i]));
+		printf("\n");
+	}
+
+	if (drm_property_type_is(prop, DRM_MODE_PROP_RANGE)) {
 		printf("\t\tvalues:");
 		for (i = 0; i < prop->count_values; i++)
 			printf(" %"PRIu64, prop->values[i]);
 		printf("\n");
 	}
 
-	if (prop->flags & DRM_MODE_PROP_ENUM) {
+	if (drm_property_type_is(prop, DRM_MODE_PROP_ENUM)) {
 		printf("\t\tenums:");
 		for (i = 0; i < prop->count_enums; i++)
 			printf(" %s=%llu", prop->enums[i].name,
 			       prop->enums[i].value);
 		printf("\n");
-	} else if (prop->flags & DRM_MODE_PROP_BITMASK) {
+	} else if (drm_property_type_is(prop, DRM_MODE_PROP_BITMASK)) {
 		printf("\t\tvalues:");
 		for (i = 0; i < prop->count_enums; i++)
 			printf(" %s=0x%llx", prop->enums[i].name,
@@ -329,7 +344,7 @@ static void dump_prop(struct device *dev, drmModePropertyPtr prop,
 		assert(prop->count_enums == 0);
 	}
 
-	if (prop->flags & DRM_MODE_PROP_BLOB) {
+	if (drm_property_type_is(prop, DRM_MODE_PROP_BLOB)) {
 		printf("\t\tblobs:\n");
 		for (i = 0; i < prop->count_blobs; i++)
 			dump_blob(dev, prop->blob_ids[i]);
@@ -339,7 +354,7 @@ static void dump_prop(struct device *dev, drmModePropertyPtr prop,
 	}
 
 	printf("\t\tvalue:");
-	if (prop->flags & DRM_MODE_PROP_BLOB)
+	if (drm_property_type_is(prop, DRM_MODE_PROP_BLOB))
 		dump_blob(dev, value);
 	else
 		printf(" %"PRIu64"\n", value);
@@ -544,6 +559,8 @@ static struct resources *get_resources(struct device *dev)
 		return NULL;
 
 	memset(res, 0, sizeof *res);
+
+	drmSetClientCap(dev->fd, DRM_CLIENT_CAP_UNIVERSAL_PLANES, 1);
 
 	res->res = drmModeGetResources(dev->fd);
 	if (!res->res) {
@@ -949,7 +966,7 @@ static int set_plane(struct device *dev, struct plane_arg *p)
 	drmModePlane *ovr;
 	uint32_t handles[4], pitches[4], offsets[4] = {0}; /* we only use [0] */
 	uint32_t plane_id = 0;
-	struct kms_bo *plane_bo;
+	struct bo *plane_bo;
 	uint32_t plane_flags = 0;
 	int crtc_x, crtc_y, crtc_w, crtc_h;
 	struct crtc *crtc = NULL;
@@ -990,8 +1007,8 @@ static int set_plane(struct device *dev, struct plane_arg *p)
 	fprintf(stderr, "testing %dx%d@%s overlay plane %u\n",
 		p->w, p->h, p->format_str, plane_id);
 
-	plane_bo = create_test_buffer(dev->kms, p->fourcc, p->w, p->h, handles,
-				      pitches, offsets, PATTERN_TILES);
+	plane_bo = bo_create(dev->fd, p->fourcc, p->w, p->h, handles,
+			     pitches, offsets, PATTERN_TILES);
 	if (plane_bo == NULL)
 		return -1;
 
@@ -1031,7 +1048,7 @@ static void set_mode(struct device *dev, struct pipe_arg *pipes, unsigned int co
 {
 	uint32_t handles[4], pitches[4], offsets[4] = {0}; /* we only use [0] */
 	unsigned int fb_id;
-	struct kms_bo *bo;
+	struct bo *bo;
 	unsigned int i;
 	unsigned int j;
 	int ret, x;
@@ -1051,9 +1068,8 @@ static void set_mode(struct device *dev, struct pipe_arg *pipes, unsigned int co
 			dev->mode.height = pipe->mode->vdisplay;
 	}
 
-	bo = create_test_buffer(dev->kms, pipes[0].fourcc,
-				dev->mode.width, dev->mode.height,
-				handles, pitches, offsets, PATTERN_SMPTE);
+	bo = bo_create(dev->fd, pipes[0].fourcc, dev->mode.width, dev->mode.height,
+		       handles, pitches, offsets, PATTERN_SMPTE);
 	if (bo == NULL)
 		return;
 
@@ -1110,7 +1126,7 @@ static void set_planes(struct device *dev, struct plane_arg *p, unsigned int cou
 static void set_cursors(struct device *dev, struct pipe_arg *pipes, unsigned int count)
 {
 	uint32_t handles[4], pitches[4], offsets[4] = {0}; /* we only use [0] */
-	struct kms_bo *bo;
+	struct bo *bo;
 	unsigned int i;
 	int ret;
 
@@ -1121,8 +1137,8 @@ static void set_cursors(struct device *dev, struct pipe_arg *pipes, unsigned int
 	/* create cursor bo.. just using PATTERN_PLAIN as it has
 	 * translucent alpha
 	 */
-	bo = create_test_buffer(dev->kms, DRM_FORMAT_ARGB8888,
-			cw, ch, handles, pitches, offsets, PATTERN_PLAIN);
+	bo = bo_create(dev->fd, DRM_FORMAT_ARGB8888, cw, ch, handles, pitches,
+		       offsets, PATTERN_PLAIN);
 	if (bo == NULL)
 		return;
 
@@ -1151,14 +1167,14 @@ static void test_page_flip(struct device *dev, struct pipe_arg *pipes, unsigned 
 {
 	uint32_t handles[4], pitches[4], offsets[4] = {0}; /* we only use [0] */
 	unsigned int other_fb_id;
-	struct kms_bo *other_bo;
+	struct bo *other_bo;
 	drmEventContext evctx;
 	unsigned int i;
 	int ret;
 
-	other_bo = create_test_buffer(dev->kms, pipes[0].fourcc,
-				      dev->mode.width, dev->mode.height,
-				      handles, pitches, offsets, PATTERN_PLAIN);
+	other_bo = bo_create(dev->fd, pipes[0].fourcc,
+			     dev->mode.width, dev->mode.height,
+			     handles, pitches, offsets, PATTERN_PLAIN);
 	if (other_bo == NULL)
 		return;
 
@@ -1233,7 +1249,7 @@ static void test_page_flip(struct device *dev, struct pipe_arg *pipes, unsigned 
 		drmHandleEvent(dev->fd, &evctx);
 	}
 
-	kms_bo_destroy(&other_bo);
+	bo_destroy(other_bo);
 }
 
 #define min(a, b)	((a) < (b) ? (a) : (b))
@@ -1437,7 +1453,7 @@ int main(int argc, char **argv)
 	int drop_master = 0;
 	int test_vsync = 0;
 	int test_cursor = 0;
-	const char *modules[] = { "i915", "radeon", "nouveau", "vmwgfx", "omapdrm", "exynos", "tilcdc", "msm", "sti" };
+	const char *modules[] = { "i915", "radeon", "nouveau", "vmwgfx", "omapdrm", "exynos", "tilcdc", "msm", "sti", "tegra" };
 	char *device = NULL;
 	char *module = NULL;
 	unsigned int i;
@@ -1592,10 +1608,11 @@ int main(int argc, char **argv)
 		set_property(&dev, &prop_args[i]);
 
 	if (count || plane_count) {
-		ret = kms_create(dev.fd, &dev.kms);
-		if (ret) {
-			fprintf(stderr, "failed to create kms driver: %s\n",
-				strerror(-ret));
+		uint64_t cap = 0;
+
+		ret = drmGetCap(dev.fd, DRM_CAP_DUMB_BUFFER, &cap);
+		if (ret || cap == 0) {
+			fprintf(stderr, "driver doesn't support the dumb buffer API\n");
 			return 1;
 		}
 
@@ -1619,8 +1636,7 @@ int main(int argc, char **argv)
 		if (test_cursor)
 			clear_cursors(&dev);
 
-		kms_bo_destroy(&dev.mode.bo);
-		kms_destroy(&dev.kms);
+		bo_destroy(dev.mode.bo);
 	}
 
 	free_resources(dev.resources);
