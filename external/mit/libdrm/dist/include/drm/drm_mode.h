@@ -173,6 +173,9 @@ struct drm_mode_get_plane_res {
 #define DRM_MODE_ENCODER_TMDS	2
 #define DRM_MODE_ENCODER_LVDS	3
 #define DRM_MODE_ENCODER_TVDAC	4
+#define DRM_MODE_ENCODER_VIRTUAL 5
+#define DRM_MODE_ENCODER_DSI	6
+#define DRM_MODE_ENCODER_DPMST	7
 
 struct drm_mode_get_encoder {
 	__u32 encoder_id;
@@ -210,6 +213,8 @@ struct drm_mode_get_encoder {
 #define DRM_MODE_CONNECTOR_HDMIB	12
 #define DRM_MODE_CONNECTOR_TV		13
 #define DRM_MODE_CONNECTOR_eDP		14
+#define DRM_MODE_CONNECTOR_VIRTUAL      15
+#define DRM_MODE_CONNECTOR_DSI		16
 
 struct drm_mode_get_connector {
 
@@ -238,6 +243,21 @@ struct drm_mode_get_connector {
 #define DRM_MODE_PROP_ENUM	(1<<3) /* enumerated type with text strings */
 #define DRM_MODE_PROP_BLOB	(1<<4)
 #define DRM_MODE_PROP_BITMASK	(1<<5) /* bitmask of enumerated types */
+
+/* non-extended types: legacy bitmask, one bit per type: */
+#define DRM_MODE_PROP_LEGACY_TYPE  ( \
+		DRM_MODE_PROP_RANGE | \
+		DRM_MODE_PROP_ENUM | \
+		DRM_MODE_PROP_BLOB | \
+		DRM_MODE_PROP_BITMASK)
+
+/* extended-types: rather than continue to consume a bit per type,
+ * grab a chunk of the bits to use as integer type id.
+ */
+#define DRM_MODE_PROP_EXTENDED_TYPE	0x0000ffc0
+#define DRM_MODE_PROP_TYPE(n)		((n) << 6)
+#define DRM_MODE_PROP_OBJECT		DRM_MODE_PROP_TYPE(1)
+#define DRM_MODE_PROP_SIGNED_RANGE	DRM_MODE_PROP_TYPE(2)
 
 struct drm_mode_property_enum {
 	__u64 value;

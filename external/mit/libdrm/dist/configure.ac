@@ -20,7 +20,7 @@
 
 AC_PREREQ([2.63])
 AC_INIT([libdrm],
-        [2.4.58],
+        [2.4.59],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=DRI],
         [libdrm])
 
@@ -93,10 +93,20 @@ AC_ARG_ENABLE(exynos-experimental-api,
 	      [Enable support for EXYNOS's experimental API (default: disabled)]),
 	      [EXYNOS=$enableval], [EXYNOS=no])
 
-AC_ARG_ENABLE(freedreno-experimental-api,
-	      AS_HELP_STRING([--enable-freedreno-experimental-api],
-	      [Enable support for freedreno's experimental API (default: disabled)]),
-	      [FREEDRENO=$enableval], [FREEDRENO=no])
+AC_ARG_ENABLE(freedreno,
+	      AS_HELP_STRING([--disable-freedreno],
+	      [Enable support for freedreno's KMS API (default: enabled on arm)]),
+	      [FREEDRENO=$enableval], [FREEDRENO=auto])
+
+AC_ARG_ENABLE(freedreno-kgsl,
+	      AS_HELP_STRING([--enable-freedreno-kgsl],
+	      [Enable support for freedreno's to use downstream android kernel API (default: disabled)]),
+	      [FREEDRENO_KGSL=$enableval], [FREEDRENO_KGSL=no])
+
+AC_ARG_ENABLE(tegra-experimental-api,
+	      AS_HELP_STRING([--enable-tegra-experimental-api],
+	      [Enable support for Tegra's experimental API (default: disabled)]),
+	      [TEGRA=$enableval], [TEGRA=no])
 
 AC_ARG_ENABLE(install-test-programs,
 		  AS_HELP_STRING([--enable-install-test-programs],
@@ -267,6 +277,13 @@ if test "x$LIBKMS" = xauto ; then
 	esac
 fi
 
+if test "x$FREEDRENO" = xauto ; then
+	case $host_cpu in
+		arm*|aarch64)	FREEDRENO="yes" ;;
+		*)		FREEDRENO="no" ;;
+	esac
+fi
+
 AM_CONDITIONAL(HAVE_LIBKMS, [test "x$LIBKMS" = xyes])
 
 AM_CONDITIONAL(HAVE_INTEL, [test "x$INTEL" = xyes])
@@ -299,9 +316,19 @@ if test "x$FREEDRENO" = xyes; then
 	AC_DEFINE(HAVE_FREEDRENO, 1, [Have freedreno support])
 fi
 
+AM_CONDITIONAL(HAVE_FREEDRENO_KGSL, [test "x$FREEDRENO_KGSL" = xyes])
+if test "x$FREEDRENO_KGSL" = xyes; then
+	AC_DEFINE(HAVE_FREEDRENO_KGSL, 1, [Have freedreno support for KGSL kernel interface])
+fi
+
 AM_CONDITIONAL(HAVE_RADEON, [test "x$RADEON" = xyes])
 if test "x$RADEON" = xyes; then
 	AC_DEFINE(HAVE_RADEON, 1, [Have radeon support])
+fi
+
+AM_CONDITIONAL(HAVE_TEGRA, [test "x$TEGRA" = xyes])
+if test "x$TEGRA" = xyes; then
+	AC_DEFINE(HAVE_TEGRA, 1, [Have Tegra support])
 fi
 
 AM_CONDITIONAL(HAVE_INSTALL_TESTS, [test "x$INSTALL_TESTS" = xyes])
@@ -403,13 +430,17 @@ AC_CONFIG_FILES([
 	exynos/libdrm_exynos.pc
 	freedreno/Makefile
 	freedreno/libdrm_freedreno.pc
+	tegra/Makefile
+	tegra/libdrm_tegra.pc
 	tests/Makefile
 	tests/modeprint/Makefile
 	tests/modetest/Makefile
 	tests/kmstest/Makefile
+	tests/proptest/Makefile
 	tests/radeon/Makefile
 	tests/vbltest/Makefile
 	tests/exynos/Makefile
+	tests/tegra/Makefile
 	man/Makefile
 	libdrm.pc])
 AC_OUTPUT
@@ -424,5 +455,6 @@ echo "  Radeon API     $RADEON"
 echo "  Nouveau API    $NOUVEAU"
 echo "  OMAP API       $OMAP"
 echo "  EXYNOS API     $EXYNOS"
-echo "  Freedreno API  $FREEDRENO"
+echo "  Freedreno API  $FREEDRENO (kgsl: $FREEDRENO_KGSL)"
+echo "  Tegra API      $TEGRA"
 echo ""
