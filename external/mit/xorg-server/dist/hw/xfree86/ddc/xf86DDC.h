@@ -57,8 +57,6 @@ extern _X_EXPORT Bool xf86SetDDCproperties(
     xf86MonPtr DDC
 );
 
-extern _X_EXPORT DisplayModePtr xf86DDCGetModes(int scrnIndex, xf86MonPtr DDC);
-
 extern _X_EXPORT Bool
 xf86MonitorIsHDMI(xf86MonPtr mon);
 
@@ -99,11 +97,6 @@ typedef enum {
     /* Force single-link DVI bandwidth limit */
     DDC_QUIRK_DVI_SINGLE_LINK = 1 << 8,
 } ddc_quirk_t;
-
-DisplayModePtr xf86DDCGetModes(int scrnIndex, xf86MonPtr DDC);
-
-extern Bool
-xf86MonitorIsHDMI(xf86MonPtr mon);
 
 typedef void (* handle_detailed_fn)(struct detailed_monitor_section *,void *);
 

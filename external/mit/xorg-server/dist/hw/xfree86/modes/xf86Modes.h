@@ -69,10 +69,6 @@ extern _X_EXPORT Bool
 xf86ModeIsReduced(const DisplayModeRec *mode);
 
 extern _X_EXPORT void
-xf86ValidateModesFlags(ScrnInfoPtr pScrn, DisplayModePtr modeList,
-		       int flags);
-
-extern _X_EXPORT void
 xf86ValidateModesClocks(ScrnInfoPtr pScrn, DisplayModePtr modeList,
 			int *min, int *max, int n_ranges);
 

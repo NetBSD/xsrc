@@ -54,6 +54,7 @@
 #if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86Resources.h"
 #endif
+#include "xf86Modes.h"
 #include "xf86Pci.h"
 #include "xf86_OSproc.h"
 #include "xf86Cursor.h"

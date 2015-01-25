@@ -464,9 +464,6 @@ extern _X_EXPORT Bool RRScreenInit(ScreenPtr pScreen);
 extern _X_EXPORT RROutputPtr
 RRFirstOutput (ScreenPtr pScreen);
 
-extern _X_EXPORT Rotation
-RRGetRotation (ScreenPtr pScreen);
-
 extern _X_EXPORT CARD16
 RRVerticalRefresh (xRRModeInfo *mode);
 
@@ -501,8 +498,6 @@ RRSetCurrentConfig (ScreenPtr		pScreen,
 		    Rotation		rotation,
 		    int			rate,
 		    RRScreenSizePtr	pSize);
-
-extern _X_EXPORT Bool RRScreenInit (ScreenPtr pScreen);
 
 extern _X_EXPORT Rotation
 RRGetRotation (ScreenPtr pScreen);
@@ -607,25 +602,6 @@ RRCrtcGammaSetSize (RRCrtcPtr	crtc,
 
 extern _X_EXPORT void
 RRCrtcGetScanoutSize(RRCrtcPtr crtc, int *width, int *height);
-
-/*
- * Compute the complete transformation matrix including
- * client-specified transform, rotation/reflection values and the crtc 
- * offset.
- *
- * Return TRUE if the resulting transform is not a simple translation.
- */
-extern _X_EXPORT Bool
-RRTransformCompute (int			    x,
-		    int			    y,
-		    int			    width,
-		    int			    height,
-		    Rotation		    rotation,
-		    RRTransformPtr	    rr_transform,
-
-		    PictTransformPtr	    transform,
-		    struct pict_f_transform *f_transform,
-		    struct pict_f_transform *f_inverse);
 
 /*
  * Return crtc transform
