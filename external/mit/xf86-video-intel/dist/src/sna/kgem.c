@@ -440,12 +440,7 @@ static void *__kgem_bo_map__gtt(struct kgem *kgem, struct kgem_bo *bo)
 	VG_CLEAR(gtt);
 retry_gtt:
 	gtt.handle = bo->handle;
-#ifdef __NetBSD__
-	if (drmIoctl(kgem->fd, DRM_IOCTL_I915_GEM_MMAP_GTT, &gtt)) {
-		err = errno;
-#else
 	if ((err = do_ioctl(kgem->fd, DRM_IOCTL_I915_GEM_MMAP_GTT, &gtt))) {
-#endif
 		assert(err != EINVAL);
 
 		(void)__kgem_throttle_retire(kgem, 0);
@@ -461,15 +456,10 @@ retry_gtt:
 	}
 
 retry_mmap:
-#ifdef __NetBSD__
-	err = -drmMap(kgem->fd, gtt.offset, bytes(bo), &ptr);
-	if (err) {
-#else
 	ptr = mmap(0, bytes(bo), PROT_READ | PROT_WRITE, MAP_SHARED,
 		   kgem->fd, gtt.offset);
 	if (ptr == MAP_FAILED) {
 		err = errno;
-#endif
 		assert(err != EINVAL);
 
 		if (__kgem_throttle_retire(kgem, 0))
