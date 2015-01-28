@@ -366,6 +366,8 @@ static int r6_surface_init_2d(struct radeon_surface_manager *surf_man,
     xalign = (surf_man->hw_info.group_bytes * surf_man->hw_info.num_banks) /
              (tilew * surf->bpe * surf->nsamples);
     xalign = MAX2(tilew * surf_man->hw_info.num_banks, xalign);
+    if (surf->flags & RADEON_SURF_FMASK)
+	xalign = MAX2(128, xalign);
     yalign = tilew * surf_man->hw_info.num_pipes;
     if (surf->flags & RADEON_SURF_SCANOUT) {
         xalign = MAX2((surf->bpe == 1) ? 64 : 32, xalign);
@@ -595,7 +597,7 @@ static void eg_surf_minify(struct radeon_surface *surf,
     mtile_ps = (mtile_pr * surflevel->nblk_y) / mtileh;
 
     surflevel->offset = offset;
-    surflevel->pitch_bytes = surflevel->nblk_x * bpe * slice_pt;
+    surflevel->pitch_bytes = surflevel->nblk_x * bpe * surf->nsamples;
     surflevel->slice_size = mtile_ps * mtileb * slice_pt;
 
     surf->bo_size = offset + surflevel->slice_size * surflevel->nblk_z * surf->array_size;
@@ -1498,7 +1500,7 @@ static void si_surf_minify_2d(struct radeon_surface *surf,
     /* macro tile per slice */
     mtile_ps = (mtile_pr * surflevel->nblk_y) / yalign;
     surflevel->offset = offset;
-    surflevel->pitch_bytes = surflevel->nblk_x * bpe * slice_pt;
+    surflevel->pitch_bytes = surflevel->nblk_x * bpe * surf->nsamples;
     surflevel->slice_size = mtile_ps * mtileb * slice_pt;
 
     surf->bo_size = offset + surflevel->slice_size * surflevel->nblk_z * surf->array_size;
