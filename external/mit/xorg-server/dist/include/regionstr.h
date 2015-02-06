@@ -108,7 +108,7 @@ static inline BoxPtr RegionEnd(RegionPtr reg) {
 }
 
 static inline size_t RegionSizeof(int n) {
-    if (n < 0 || (size_t)n < ((INT_MAX - sizeof(RegDataRec)) / sizeof(BoxRec)))
+    if ((size_t)n < ((INT_MAX - sizeof(RegDataRec)) / sizeof(BoxRec)))
         return (sizeof(RegDataRec) + ((n) * sizeof(BoxRec)));
     else
         return 0;
