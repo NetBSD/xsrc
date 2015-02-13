@@ -74,7 +74,7 @@
 #define PACKAGE_NAME "xf86-video-vmware"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-video-vmware 13.0.2"
+#define PACKAGE_STRING "xf86-video-vmware 13.1.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-video-vmware"
@@ -83,22 +83,22 @@
 #undef PACKAGE_URL
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "13.0.2"
+#define PACKAGE_VERSION "13.1.0"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 13
 
 /* Minor version of this package */
-#define PACKAGE_VERSION_MINOR 0
+#define PACKAGE_VERSION_MINOR 1
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 2
+#define PACKAGE_VERSION_PATCHLEVEL 0
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "13.0.2"
+#define VERSION "13.1.0"
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
