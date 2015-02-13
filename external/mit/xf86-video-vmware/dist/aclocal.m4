@@ -1,4 +1,4 @@
-# generated automatically by aclocal 1.11.3 -*- Autoconf -*-
+# generated automatically by aclocal 1.11.6 -*- Autoconf -*-
 
 # Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
 # 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation,
@@ -2683,10 +2683,14 @@ linux* | k*bsd*-gnu | kopensolaris*-gnu)
   # before this can be enabled.
   hardcode_into_libs=yes
 
+  # Add ABI-specific directories to the system library path.
+  sys_lib_dlsearch_path_spec="/lib64 /usr/lib64 /lib /usr/lib"
+
   # Append ld.so.conf contents to the search path
   if test -f /etc/ld.so.conf; then
     lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s 2>/dev/null", \[$]2)); skip = 1; } { if (!skip) print \[$]0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;/^[	 ]*hwcap[	 ]/d;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;s/"//g;/^$/d' | tr '\n' ' '`
-    sys_lib_dlsearch_path_spec="/lib /usr/lib $lt_ld_extra"
+    sys_lib_dlsearch_path_spec="$sys_lib_dlsearch_path_spec $lt_ld_extra"
+
   fi
 
   # We used to test for /lib/ld.so.1 and disable shared libraries on
@@ -2696,18 +2700,6 @@ linux* | k*bsd*-gnu | kopensolaris*-gnu)
   # people can always --disable-shared, the test was removed, and we
   # assume the GNU/Linux dynamic linker is in use.
   dynamic_linker='GNU/Linux ld.so'
-  ;;
-
-netbsdelf*-gnu)
-  version_type=linux
-  need_lib_prefix=no
-  need_version=no
-  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
-  soname_spec='${libname}${release}${shared_ext}$major'
-  shlibpath_var=LD_LIBRARY_PATH
-  shlibpath_overrides_runpath=no
-  hardcode_into_libs=yes
-  dynamic_linker='NetBSD ld.elf_so'
   ;;
 
 netbsd*)
@@ -3315,7 +3307,7 @@ linux* | k*bsd*-gnu | kopensolaris*-gnu)
   lt_cv_deplibs_check_method=pass_all
   ;;
 
-netbsd* | netbsdelf*-gnu)
+netbsd*)
   if echo __ELF__ | $CC -E - | $GREP __ELF__ > /dev/null; then
     lt_cv_deplibs_check_method='match_pattern /lib[[^/]]+(\.so\.[[0-9]]+\.[[0-9]]+|_pic\.a)$'
   else
@@ -4127,7 +4119,7 @@ m4_if([$1], [CXX], [
 	    ;;
 	esac
 	;;
-      netbsd* | netbsdelf*-gnu)
+      netbsd*)
 	;;
       *qnx* | *nto*)
         # QNX uses GNU C++, but need to define -shared option too, otherwise
@@ -4604,9 +4596,6 @@ m4_if([$1], [CXX], [
       ;;
     esac
     ;;
-  linux* | k*bsd*-gnu | gnu*)
-    _LT_TAGVAR(link_all_deplibs, $1)=no
-    ;;
   *)
     _LT_TAGVAR(export_symbols_cmds, $1)='$NM $libobjs $convenience | $global_symbol_pipe | $SED '\''s/.* //'\'' | sort | uniq > $export_symbols'
     ;;
@@ -4668,9 +4657,6 @@ dnl Note also adjust exclude_expsyms for C++ above.
     ;;
   openbsd*)
     with_gnu_ld=no
-    ;;
-  linux* | k*bsd*-gnu | gnu*)
-    _LT_TAGVAR(link_all_deplibs, $1)=no
     ;;
   esac
 
@@ -4893,7 +4879,7 @@ _LT_EOF
       fi
       ;;
 
-    netbsd* | netbsdelf*-gnu)
+    netbsd*)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	_LT_TAGVAR(archive_cmds, $1)='$LD -Bshareable $libobjs $deplibs $linker_flags -o $lib'
 	wlarc=
@@ -5070,7 +5056,6 @@ _LT_EOF
 	if test "$aix_use_runtimelinking" = yes; then
 	  shared_flag="$shared_flag "'${wl}-G'
 	fi
-	_LT_TAGVAR(link_all_deplibs, $1)=no
       else
 	# not using gcc
 	if test "$host_cpu" = ia64; then
@@ -5375,7 +5360,7 @@ _LT_EOF
       _LT_TAGVAR(link_all_deplibs, $1)=yes
       ;;
 
-    netbsd* | netbsdelf*-gnu)
+    netbsd*)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	_LT_TAGVAR(archive_cmds, $1)='$LD -Bshareable -o $lib $libobjs $deplibs $linker_flags'  # a.out
       else
@@ -8654,8 +8639,7 @@ m4_ifndef([_LT_PROG_CXX],		[AC_DEFUN([_LT_PROG_CXX])])
 # ----------------------------------
 AC_DEFUN([PKG_PROG_PKG_CONFIG],
 [m4_pattern_forbid([^_?PKG_[A-Z_]+$])
-m4_pattern_allow([^PKG_CONFIG(_(PATH|LIBDIR|SYSROOT_DIR|ALLOW_SYSTEM_(CFLAGS|LIBS)))?$])
-m4_pattern_allow([^PKG_CONFIG_(DISABLE_UNINSTALLED|TOP_BUILD_DIR|DEBUG_SPEW)$])
+m4_pattern_allow([^PKG_CONFIG(_PATH)?$])
 AC_ARG_VAR([PKG_CONFIG], [path to pkg-config utility])
 AC_ARG_VAR([PKG_CONFIG_PATH], [directories to add to pkg-config's search path])
 AC_ARG_VAR([PKG_CONFIG_LIBDIR], [path overriding pkg-config's built-in search path])
@@ -8701,8 +8685,7 @@ m4_define([_PKG_CONFIG],
     pkg_cv_[]$1="$$1"
  elif test -n "$PKG_CONFIG"; then
     PKG_CHECK_EXISTS([$3],
-                     [pkg_cv_[]$1=`$PKG_CONFIG --[]$2 "$3" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes ],
+                     [pkg_cv_[]$1=`$PKG_CONFIG --[]$2 "$3" 2>/dev/null`],
 		     [pkg_failed=yes])
  else
     pkg_failed=untried
@@ -8750,9 +8733,9 @@ if test $pkg_failed = yes; then
    	AC_MSG_RESULT([no])
         _PKG_SHORT_ERRORS_SUPPORTED
         if test $_pkg_short_errors_supported = yes; then
-	        $1[]_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$2" 2>&1`
+	        $1[]_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "$2" 2>&1`
         else 
-	        $1[]_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$2" 2>&1`
+	        $1[]_PKG_ERRORS=`$PKG_CONFIG --print-errors "$2" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$$1[]_PKG_ERRORS" >&AS_MESSAGE_LOG_FD
@@ -8765,7 +8748,7 @@ $$1_PKG_ERRORS
 Consider adjusting the PKG_CONFIG_PATH environment variable if you
 installed software in a non-standard prefix.
 
-_PKG_TEXT])[]dnl
+_PKG_TEXT])
         ])
 elif test $pkg_failed = untried; then
      	AC_MSG_RESULT([no])
@@ -8776,7 +8759,7 @@ path to pkg-config.
 
 _PKG_TEXT
 
-To get pkg-config, see <http://pkg-config.freedesktop.org/>.])[]dnl
+To get pkg-config, see <http://pkg-config.freedesktop.org/>.])
         ])
 else
 	$1[]_CFLAGS=$pkg_cv_[]$1[]_CFLAGS
@@ -8825,7 +8808,7 @@ dnl DEALINGS IN THE SOFTWARE.
 # See the "minimum version" comment for each macro you use to see what 
 # version you require.
 m4_defun([XORG_MACROS_VERSION],[
-m4_define([vers_have], [1.17])
+m4_define([vers_have], [1.16.1])
 m4_define([maj_have], m4_substr(vers_have, 0, m4_index(vers_have, [.])))
 m4_define([maj_needed], m4_substr([$1], 0, m4_index([$1], [.])))
 m4_if(m4_cmp(maj_have, maj_needed), 0,,
@@ -9844,39 +9827,6 @@ AC_MSG_CHECKING([whether to build unit test cases])
 AC_MSG_RESULT([$enable_unit_tests])
 ]) # XORG_ENABLE_UNIT_TESTS
 
-# XORG_ENABLE_INTEGRATION_TESTS (enable_unit_tests=auto)
-# ------------------------------------------------------
-# Minimum version: 1.17.0
-#
-# This macro enables a builder to enable/disable integration testing
-# It makes no assumption about the test cases' implementation
-# Test cases may or may not use Automake "Support for test suites"
-#
-# Please see XORG_ENABLE_UNIT_TESTS for unit test support. Unit test support
-# usually requires less dependencies and may be built and run under less
-# stringent environments than integration tests.
-#
-# Interface to module:
-# ENABLE_INTEGRATION_TESTS:   used in makefiles to conditionally build tests
-# enable_integration_tests:   used in configure.ac for additional configuration
-# --enable-integration-tests: 'yes' user instructs the module to build tests
-#                             'no' user instructs the module not to build tests
-# parm1:                      specify the default value, yes or no.
-#
-AC_DEFUN([XORG_ENABLE_INTEGRATION_TESTS],[
-AC_REQUIRE([XORG_MEMORY_CHECK_FLAGS])
-m4_define([_defopt], m4_default([$1], [auto]))
-AC_ARG_ENABLE(integration-tests, AS_HELP_STRING([--enable-integration-tests],
-	[Enable building integration test cases (default: ]_defopt[)]),
-	[enable_integration_tests=$enableval],
-	[enable_integration_tests=]_defopt)
-m4_undefine([_defopt])
-AM_CONDITIONAL([ENABLE_INTEGRATION_TESTS],
-	[test "x$enable_integration_tests" != xno])
-AC_MSG_CHECKING([whether to build unit test cases])
-AC_MSG_RESULT([$enable_integration_tests])
-]) # XORG_ENABLE_INTEGRATION_TESTS
-
 # XORG_WITH_GLIB([MIN-VERSION], [DEFAULT])
 # ----------------------------------------
 # Minimum version: 1.13.0
@@ -9886,10 +9836,6 @@ AC_MSG_RESULT([$enable_integration_tests])
 #
 # When used with ENABLE_UNIT_TESTS, it is assumed GLib is used for unit testing.
 # Otherwise the value of $enable_unit_tests is blank.
-#
-# Please see XORG_ENABLE_INTEGRATION_TESTS for integration test support. Unit
-# test support usually requires less dependencies and may be built and run under
-# less stringent environments than integration tests.
 #
 # Interface to module:
 # HAVE_GLIB: used in makefiles to conditionally build targets
@@ -10249,20 +10195,12 @@ AM_CONDITIONAL(MAKE_LINT_LIB, [test x$make_lint_lib != xno])
 #
 # Checks for various brands of compilers and sets flags as appropriate:
 #   GNU gcc - relies on AC_PROG_CC (via AC_PROG_CC_C99) to set GCC to "yes"
-#   GNU g++ - relies on AC_PROG_CXX to set GXX to "yes"
 #   clang compiler - sets CLANGCC to "yes"
 #   Intel compiler - sets INTELCC to "yes"
 #   Sun/Oracle Solaris Studio cc - sets SUNCC to "yes"
 #
 AC_DEFUN([XORG_COMPILER_BRAND], [
-AC_LANG_CASE(
-	[C], [
-		AC_REQUIRE([AC_PROG_CC_C99])
-	],
-	[C++], [
-		AC_REQUIRE([AC_PROG_CXX])
-	]
-)
+AC_REQUIRE([AC_PROG_CC_C99])
 AC_CHECK_DECL([__clang__], [CLANGCC="yes"], [CLANGCC="no"])
 AC_CHECK_DECL([__INTEL_COMPILER], [INTELCC="yes"], [INTELCC="no"])
 AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
@@ -10282,77 +10220,54 @@ AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
 # -Werror=unused-command-line-argument
 #
 AC_DEFUN([XORG_TESTSET_CFLAG], [
+AC_REQUIRE([AC_PROG_CC_C99])
 m4_if([$#], 0, [m4_fatal([XORG_TESTSET_CFLAG was given with an unsupported number of arguments])])
 m4_if([$#], 1, [m4_fatal([XORG_TESTSET_CFLAG was given with an unsupported number of arguments])])
 
-AC_LANG_COMPILER_REQUIRE
+xorg_testset_save_CFLAGS="$CFLAGS"
 
-AC_LANG_CASE(
-	[C], [
-		AC_REQUIRE([AC_PROG_CC_C99])
-		define([PREFIX], [C])
-		define([CACHE_PREFIX], [cc])
-		define([COMPILER], [$CC])
-	],
-	[C++], [
-		define([PREFIX], [CXX])
-		define([CACHE_PREFIX], [cxx])
-		define([COMPILER], [$CXX])
-	]
-)
-
-[xorg_testset_save_]PREFIX[FLAGS]="$PREFIX[FLAGS]"
-
-if test "x$[xorg_testset_]CACHE_PREFIX[_unknown_warning_option]" = "x" ; then
-	PREFIX[FLAGS]="$PREFIX[FLAGS] -Werror=unknown-warning-option"
-	AC_CACHE_CHECK([if ]COMPILER[ supports -Werror=unknown-warning-option],
-			[xorg_cv_]CACHE_PREFIX[_flag_unknown_warning_option],
-			AC_COMPILE_IFELSE([AC_LANG_SOURCE([int i;])],
-					  [xorg_cv_]CACHE_PREFIX[_flag_unknown_warning_option=yes],
-					  [xorg_cv_]CACHE_PREFIX[_flag_unknown_warning_option=no]))
-	[xorg_testset_]CACHE_PREFIX[_unknown_warning_option]=$[xorg_cv_]CACHE_PREFIX[_flag_unknown_warning_option]
-	PREFIX[FLAGS]="$[xorg_testset_save_]PREFIX[FLAGS]"
+if test "x$xorg_testset_unknown_warning_option" = "x" ; then
+	CFLAGS="$CFLAGS -Werror=unknown-warning-option"
+	AC_MSG_CHECKING([if $CC supports -Werror=unknown-warning-option])
+	AC_COMPILE_IFELSE([AC_LANG_SOURCE([int i;])],
+	                  [xorg_testset_unknown_warning_option=yes],
+	                  [xorg_testset_unknown_warning_option=no])
+	AC_MSG_RESULT([$xorg_testset_unknown_warning_option])
+	CFLAGS="$xorg_testset_save_CFLAGS"
 fi
 
-if test "x$[xorg_testset_]CACHE_PREFIX[_unused_command_line_argument]" = "x" ; then
-	if test "x$[xorg_testset_]CACHE_PREFIX[_unknown_warning_option]" = "xyes" ; then
-		PREFIX[FLAGS]="$PREFIX[FLAGS] -Werror=unknown-warning-option"
+if test "x$xorg_testset_unused_command_line_argument" = "x" ; then
+	if test "x$xorg_testset_unknown_warning_option" = "xyes" ; then
+		CFLAGS="$CFLAGS -Werror=unknown-warning-option"
 	fi
-	PREFIX[FLAGS]="$PREFIX[FLAGS] -Werror=unused-command-line-argument"
-	AC_CACHE_CHECK([if ]COMPILER[ supports -Werror=unused-command-line-argument],
-			[xorg_cv_]CACHE_PREFIX[_flag_unused_command_line_argument],
-			AC_COMPILE_IFELSE([AC_LANG_SOURCE([int i;])],
-					  [xorg_cv_]CACHE_PREFIX[_flag_unused_command_line_argument=yes],
-					  [xorg_cv_]CACHE_PREFIX[_flag_unused_command_line_argument=no]))
-	[xorg_testset_]CACHE_PREFIX[_unused_command_line_argument]=$[xorg_cv_]CACHE_PREFIX[_flag_unused_command_line_argument]
-	PREFIX[FLAGS]="$[xorg_testset_save_]PREFIX[FLAGS]"
+	CFLAGS="$CFLAGS -Werror=unused-command-line-argument"
+	AC_MSG_CHECKING([if $CC supports -Werror=unused-command-line-argument])
+	AC_COMPILE_IFELSE([AC_LANG_SOURCE([int i;])],
+	                  [xorg_testset_unused_command_line_argument=yes],
+	                  [xorg_testset_unused_command_line_argument=no])
+	AC_MSG_RESULT([$xorg_testset_unused_command_line_argument])
+	CFLAGS="$xorg_testset_save_CFLAGS"
 fi
 
 found="no"
 m4_foreach([flag], m4_cdr($@), [
 	if test $found = "no" ; then
 		if test "x$xorg_testset_unknown_warning_option" = "xyes" ; then
-			PREFIX[FLAGS]="$PREFIX[FLAGS] -Werror=unknown-warning-option"
+			CFLAGS="$CFLAGS -Werror=unknown-warning-option"
 		fi
 
 		if test "x$xorg_testset_unused_command_line_argument" = "xyes" ; then
-			PREFIX[FLAGS]="$PREFIX[FLAGS] -Werror=unused-command-line-argument"
+			CFLAGS="$CFLAGS -Werror=unused-command-line-argument"
 		fi
 
-		PREFIX[FLAGS]="$PREFIX[FLAGS] ]flag["
+		CFLAGS="$CFLAGS ]flag["
 
-dnl Some hackery here since AC_CACHE_VAL can't handle a non-literal varname
-		AC_MSG_CHECKING([if ]COMPILER[ supports]flag[])
-		cacheid=AS_TR_SH([xorg_cv_]CACHE_PREFIX[_flag_]flag[])
-		AC_CACHE_VAL($cacheid,
-			     [AC_LINK_IFELSE([AC_LANG_PROGRAM([int i;])],
-					     [eval $cacheid=yes],
-					     [eval $cacheid=no])])
-
-		PREFIX[FLAGS]="$[xorg_testset_save_]PREFIX[FLAGS]"
-
-		eval supported=\$$cacheid
+		AC_MSG_CHECKING([if $CC supports ]flag[])
+		AC_LINK_IFELSE([AC_LANG_PROGRAM([int i;])],
+		                  [supported=yes], [supported=no])
 		AC_MSG_RESULT([$supported])
+		CFLAGS="$xorg_testset_save_CFLAGS"
+
 		if test "$supported" = "yes" ; then
 			$1="$$1 ]flag["
 			found="yes"
@@ -10365,13 +10280,13 @@ dnl Some hackery here since AC_CACHE_VAL can't handle a non-literal varname
 # ---------------
 # Minimum version: 1.16.0
 #
-# Defines BASE_CFLAGS or BASE_CXXFLAGS to contain a set of command line
-# arguments supported by the selected compiler which do NOT alter the generated
-# code.  These arguments will cause the compiler to print various warnings
-# during compilation AND turn a conservative set of warnings into errors.
+# Defines BASE_CFLAGS to contain a set of command line arguments supported
+# by the selected compiler which do NOT alter the generated code.  These
+# arguments will cause the compiler to print various warnings during
+# compilation AND turn a conservative set of warnings into errors.
 #
-# The set of flags supported by BASE_CFLAGS and BASE_CXXFLAGS will grow in
-# future versions of util-macros as options are added to new compilers.
+# The set of flags supported by BASE_CFLAGS will grow in future
+# versions of util-macros as options are added to new compilers.
 #
 AC_DEFUN([XORG_COMPILER_FLAGS], [
 AC_REQUIRE([XORG_COMPILER_BRAND])
@@ -10382,89 +10297,76 @@ AC_ARG_ENABLE(selective-werror,
               [SELECTIVE_WERROR=$enableval],
               [SELECTIVE_WERROR=yes])
 
-AC_LANG_CASE(
-        [C], [
-                define([PREFIX], [C])
-        ],
-        [C++], [
-                define([PREFIX], [CXX])
-        ]
-)
 # -v is too short to test reliably with XORG_TESTSET_CFLAG
 if test "x$SUNCC" = "xyes"; then
-    [BASE_]PREFIX[FLAGS]="-v"
+    BASE_CFLAGS="-v"
 else
-    [BASE_]PREFIX[FLAGS]=""
+    BASE_CFLAGS=""
 fi
 
 # This chunk of warnings were those that existed in the legacy CWARNFLAGS
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wall])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wpointer-arith])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wmissing-declarations])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wformat=2], [-Wformat])
-
-AC_LANG_CASE(
-	[C], [
-		XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wstrict-prototypes])
-		XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wmissing-prototypes])
-		XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wnested-externs])
-		XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wbad-function-cast])
-		XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wold-style-definition])
-		XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wdeclaration-after-statement])
-	]
-)
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wall])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wpointer-arith])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wstrict-prototypes])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wmissing-prototypes])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wmissing-declarations])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wnested-externs])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wbad-function-cast])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wformat=2], [-Wformat])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wold-style-definition])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wdeclaration-after-statement])
 
 # This chunk adds additional warnings that could catch undesired effects.
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wunused])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wuninitialized])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wshadow])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wcast-qual])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wmissing-noreturn])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wmissing-format-attribute])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wredundant-decls])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wunused])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wuninitialized])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wshadow])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wcast-qual])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wmissing-noreturn])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wmissing-format-attribute])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wredundant-decls])
 
 # These are currently disabled because they are noisy.  They will be enabled
 # in the future once the codebase is sufficiently modernized to silence
 # them.  For now, I don't want them to drown out the other warnings.
-# XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wlogical-op])
-# XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wparentheses])
-# XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wcast-align])
+# XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wlogical-op])
+# XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wparentheses])
+# XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wcast-align])
 
 # Turn some warnings into errors, so we don't accidently get successful builds
 # when there are problems that should be fixed.
 
 if test "x$SELECTIVE_WERROR" = "xyes" ; then
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Werror=implicit], [-errwarn=E_NO_EXPLICIT_TYPE_GIVEN -errwarn=E_NO_IMPLICIT_DECL_ALLOWED])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Werror=nonnull])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Werror=init-self])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Werror=main])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Werror=missing-braces])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Werror=sequence-point])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Werror=return-type], [-errwarn=E_FUNC_HAS_NO_RETURN_STMT])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Werror=trigraphs])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Werror=array-bounds])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Werror=write-strings])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Werror=address])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Werror=int-to-pointer-cast], [-errwarn=E_BAD_PTR_INT_COMBINATION])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Werror=pointer-to-int-cast]) # Also -errwarn=E_BAD_PTR_INT_COMBINATION
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Werror=implicit], [-errwarn=E_NO_EXPLICIT_TYPE_GIVEN -errwarn=E_NO_IMPLICIT_DECL_ALLOWED])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Werror=nonnull])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Werror=init-self])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Werror=main])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Werror=missing-braces])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Werror=sequence-point])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Werror=return-type], [-errwarn=E_FUNC_HAS_NO_RETURN_STMT])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Werror=trigraphs])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Werror=array-bounds])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Werror=write-strings])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Werror=address])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Werror=int-to-pointer-cast], [-errwarn=E_BAD_PTR_INT_COMBINATION])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Werror=pointer-to-int-cast]) # Also -errwarn=E_BAD_PTR_INT_COMBINATION
 else
 AC_MSG_WARN([You have chosen not to turn some select compiler warnings into errors.  This should not be necessary.  Please report why you needed to do so in a bug report at $PACKAGE_BUGREPORT])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wimplicit])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wnonnull])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Winit-self])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wmain])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wmissing-braces])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wsequence-point])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wreturn-type])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wtrigraphs])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Warray-bounds])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wwrite-strings])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Waddress])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wint-to-pointer-cast])
-XORG_TESTSET_CFLAG([[BASE_]PREFIX[FLAGS]], [-Wpointer-to-int-cast])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wimplicit])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wnonnull])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Winit-self])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wmain])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wmissing-braces])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wsequence-point])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wreturn-type])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wtrigraphs])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Warray-bounds])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wwrite-strings])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Waddress])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wint-to-pointer-cast])
+XORG_TESTSET_CFLAG([BASE_CFLAGS], [-Wpointer-to-int-cast])
 fi
 
-AC_SUBST([BASE_]PREFIX[FLAGS])
+AC_SUBST([BASE_CFLAGS])
 ]) # XORG_COMPILER_FLAGS
 
 # XORG_CWARNFLAGS
@@ -10482,15 +10384,11 @@ AC_SUBST([BASE_]PREFIX[FLAGS])
 AC_DEFUN([XORG_CWARNFLAGS], [
 AC_REQUIRE([XORG_COMPILER_FLAGS])
 AC_REQUIRE([XORG_COMPILER_BRAND])
-AC_LANG_CASE(
-	[C], [
-		CWARNFLAGS="$BASE_CFLAGS"
-		if  test "x$GCC" = xyes ; then
-		    CWARNFLAGS="$CWARNFLAGS -fno-strict-aliasing"
-		fi
-		AC_SUBST(CWARNFLAGS)
-	]
-)
+CWARNFLAGS="$BASE_CFLAGS"
+if  test "x$GCC" = xyes ; then
+    CWARNFLAGS="$CWARNFLAGS -fno-strict-aliasing"
+fi
+AC_SUBST(CWARNFLAGS)
 ]) # XORG_CWARNFLAGS
 
 # XORG_STRICT_OPTION
@@ -10500,7 +10398,7 @@ AC_LANG_CASE(
 # Add configure option to enable strict compilation flags, such as treating
 # warnings as fatal errors.
 # If --enable-strict-compilation is passed to configure, adds strict flags to
-# $BASE_CFLAGS or $BASE_CXXFLAGS and the deprecated $CWARNFLAGS.
+# $BASE_CFLAGS and the deprecated $CWARNFLAGS.
 #
 # Starting in 1.14.0 also exports $STRICT_CFLAGS for use in other tests or
 # when strict compilation is unconditionally desired.
@@ -10513,30 +10411,21 @@ AC_ARG_ENABLE(strict-compilation,
 			  [Enable all warnings from compiler and make them errors (default: disabled)]),
 			  [STRICT_COMPILE=$enableval], [STRICT_COMPILE=no])
 
-AC_LANG_CASE(
-        [C], [
-                define([PREFIX], [C])
-        ],
-        [C++], [
-                define([PREFIX], [CXX])
-        ]
-)
-
-[STRICT_]PREFIX[FLAGS]=""
-XORG_TESTSET_CFLAG([[STRICT_]PREFIX[FLAGS]], [-pedantic])
-XORG_TESTSET_CFLAG([[STRICT_]PREFIX[FLAGS]], [-Werror], [-errwarn])
+STRICT_CFLAGS=""
+XORG_TESTSET_CFLAG([STRICT_CFLAGS], [-pedantic])
+XORG_TESTSET_CFLAG([STRICT_CFLAGS], [-Werror], [-errwarn])
 
 # Earlier versions of gcc (eg: 4.2) support -Werror=attributes, but do not
 # activate it with -Werror, so we add it here explicitly.
-XORG_TESTSET_CFLAG([[STRICT_]PREFIX[FLAGS]], [-Werror=attributes])
+XORG_TESTSET_CFLAG([STRICT_CFLAGS], [-Werror=attributes])
 
 if test "x$STRICT_COMPILE" = "xyes"; then
-    [BASE_]PREFIX[FLAGS]="$[BASE_]PREFIX[FLAGS] $[STRICT_]PREFIX[FLAGS]"
-    AC_LANG_CASE([C], [CWARNFLAGS="$CWARNFLAGS $STRICT_CFLAGS"])
+    BASE_CFLAGS="$BASE_CFLAGS $STRICT_CFLAGS"
+    CWARNFLAGS="$CWARNFLAGS $STRICT_CFLAGS"
 fi
-AC_SUBST([STRICT_]PREFIX[FLAGS])
-AC_SUBST([BASE_]PREFIX[FLAGS])
-AC_LANG_CASE([C], AC_SUBST([CWARNFLAGS]))
+AC_SUBST([STRICT_CFLAGS])
+AC_SUBST([BASE_CFLAGS])
+AC_SUBST([CWARNFLAGS])
 ]) # XORG_STRICT_OPTION
 
 # XORG_DEFAULT_OPTIONS
@@ -10707,7 +10596,7 @@ AC_DEFUN([AM_AUTOMAKE_VERSION],
 [am__api_version='1.11'
 dnl Some users find AM_AUTOMAKE_VERSION and mistake it for a way to
 dnl require some minimum version.  Point them to the right macro.
-m4_if([$1], [1.11.3], [],
+m4_if([$1], [1.11.6], [],
       [AC_FATAL([Do not call $0, use AM_INIT_AUTOMAKE([$1]).])])dnl
 ])
 
@@ -10723,7 +10612,7 @@ m4_define([_AM_AUTOCONF_VERSION], [])
 # Call AM_AUTOMAKE_VERSION and AM_AUTOMAKE_VERSION so they can be traced.
 # This function is AC_REQUIREd by AM_INIT_AUTOMAKE.
 AC_DEFUN([AM_SET_CURRENT_AUTOMAKE_VERSION],
-[AM_AUTOMAKE_VERSION([1.11.3])dnl
+[AM_AUTOMAKE_VERSION([1.11.6])dnl
 m4_ifndef([AC_AUTOCONF_VERSION],
   [m4_copy([m4_PACKAGE_VERSION], [AC_AUTOCONF_VERSION])])dnl
 _AM_AUTOCONF_VERSION(m4_defn([AC_AUTOCONF_VERSION]))])
