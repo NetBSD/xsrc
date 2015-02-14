@@ -39,7 +39,7 @@
 #define ENTRY_CURRENT_TABLE_GET U_STRINGIFY(u_current_get_table_internal)
 #endif
 
-#if defined(USE_X86_ASM) && defined(__GNUC__)
+#if defined(USE_X86_ASM) && defined(__GNUC__) && !defined(__NetBSD__)
 #   ifdef GLX_USE_TLS
 #      include "entry_x86_tls.h"
 #   else                 
