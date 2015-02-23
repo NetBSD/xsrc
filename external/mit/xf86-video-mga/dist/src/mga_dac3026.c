@@ -727,7 +727,7 @@ MGA3026Restore(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, MGARegPtr mgaReg,
 		OUTREG16(0x1FDE, (mgaReg->ExtVga[i] << 8) | i);
 
 #ifdef XSERVER_LIBPCIACCESS
-	pci_device_cfg_write_bits(pMga->PciInfo, OPTION_MASK, (uint32_t)mgaReg->Option,
+	pci_device_cfg_write_bits(pMga->PciInfo, OPTION_MASK, mgaReg->Option,
 				  PCI_OPTION_REG);
 #else
 	pciSetBitsLong(pMga->PciTag, PCI_OPTION_REG, OPTION_MASK,
@@ -852,12 +852,8 @@ MGA3026Save(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, MGARegPtr mgaReg,
 		mgaReg->DacRegs[i]	 = inTi3026(MGADACregs[i]);
 	
 #ifdef XSERVER_LIBPCIACCESS
-    {
-	uint32_t Option;
-	pci_device_cfg_read_u32(pMga->PciInfo, & Option, 
+	pci_device_cfg_read_u32(pMga->PciInfo, & mgaReg->Option, 
 				PCI_OPTION_REG);
-        mgaReg->Option = Option;
-    }
 #else
 	mgaReg->Option = pciReadLong(pMga->PciTag, PCI_OPTION_REG);
 #endif

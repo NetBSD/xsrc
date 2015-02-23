@@ -7,7 +7,6 @@
 #include "misc.h"
 #include "xf86.h"
 #include "xf86_OSproc.h"
-#include <X11/Xos.h>
 #include "vgaHW.h"
 #include "compiler.h"
 #include "xf86cmap.h"
