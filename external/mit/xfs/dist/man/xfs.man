@@ -64,6 +64,9 @@ xfs \- X font server
 [
 .BI "\-user " username
 ]
+[
+.B \-version
+]
 .SH DESCRIPTION
 .B xfs
 is the X Window System font server.
@@ -167,6 +170,11 @@ for why this may be desired.
 By default,
 .B xfs
 runs with the user and group IDs of the user who invoked it.
+.TP
+.B \-version
+instructs
+.B xfs
+to print the program version and exit.
 .SH "INPUT FILES"
 .B xfs
 reads and serves any font file format recognized by the X server itself.

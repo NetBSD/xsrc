@@ -64,12 +64,5 @@ InitFonts(void)
 
     ResetFontPrivateIndex();
 
-#ifdef FONT_PCF
-    FontFileRegisterFpeFunctions();
-
-#endif
-
-#ifdef FONT_FS
-    fs_register_fpe_functions();
-#endif
+    register_fpe_functions();
 }

@@ -188,10 +188,13 @@ GetTimeInMillis(void)
 }
 
 static void _X_NORETURN
-usage(void)
+usage(const char *errmsg)
 {
-    fprintf(stderr, "usage: %s [-config config_file] [-port tcp_port] [-droppriv] [-daemon] [-nodaemon] [-user user_name] [-ls listen_socket]\n",
-	    progname);
+    if (errmsg != NULL)
+        fprintf (stderr, "%s: %s\n", progname, errmsg);
+    fprintf(stderr, "usage: %s [-config config_file] [-port tcp_port] [-droppriv] [-daemon] [-nodaemon] [-user user_name] [-ls listen_socket]\n"
+	    "	    %s [-version]\n",
+	    progname, progname);
     exit(1);
 }
 
@@ -243,7 +246,7 @@ ProcessLSoption (char *str)
     {
 	slash = (char *) strchr (ptr, '/');
 	if (slash == NULL) {
-	    usage();
+	    usage("invalid argument for -ls");
 	}
 	len = slash - ptr;
 	strncpy (number, ptr, len);
@@ -254,7 +257,7 @@ ProcessLSoption (char *str)
 
 	slash = (char *) strchr (ptr, '/');
 	if (slash == NULL) {
-	    usage();
+	    usage("invalid argument for -ls");
 	}
 	len = slash - ptr;
 	strncpy (number, ptr, len);
@@ -269,7 +272,7 @@ ProcessLSoption (char *str)
 	{
 	    char *comma = (char *) strchr (ptr, ',');
 	    if (comma == NULL) {
-		usage();
+		usage("invalid argument for -ls");
 	    }
 	    len = comma - ptr;
 	    strncpy (number, ptr, len);
@@ -296,12 +299,12 @@ ProcessCmdLine(int argc, char **argv)
 		ListenPort = atoi(argv[++i]);
 		portFromCmdline = TRUE;
 	    } else
-		usage();
+		usage("-port requires an argument");
 	} else if (!strcmp(argv[i], "-ls")) {
 	    if (argv[i + 1])
 		ProcessLSoption (argv[++i]);
 	    else
-		usage();
+		usage("-ls requires an argument");
 	} else if (!strcmp(argv[i], "-droppriv")) {
 	        dropPriv = TRUE;
 	} else if (!strcmp(argv[i], "-daemon")) {
@@ -319,15 +322,21 @@ ProcessCmdLine(int argc, char **argv)
 	    if (argv[i + 1])
 		userId = argv[++i];
 	    else
-		usage();
+		usage("-user requires an argument");
 	} else if (!strcmp(argv[i], "-cf") || !strcmp(argv[i], "-config")) {
 	    if (argv[i + 1])
 		configfilename = argv[++i];
 	    else
-		usage();
+		usage("-config requires an argument");
 	}
-	else
-	    usage();
+	else if (!strcmp(argv[i], "-version")) {
+	    puts(PACKAGE_STRING);
+	    exit(0);
+	}
+	else {
+	    fprintf (stderr, "%s: unrecognized option %s\n", progname, argv[i]);
+	    usage(NULL);
+	}
     }
 }
 

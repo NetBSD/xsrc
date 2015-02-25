@@ -73,14 +73,6 @@ typedef unsigned long RESTYPE;
 
 #define	BAD_RESOURCE		0xe0000000
 
-#ifdef NOTYET
-extern Bool ChangeResourceValue(int cid, FSID id, RESTYPE rtype, pointer value);
-extern FSID FakeClientID(int client);
-extern RESTYPE CreateNewResourceClass(void);
-extern RESTYPE CreateNewResourceType(DeleteType deleteFunc);
-extern pointer LookupIDByClass(FSID id, RESTYPE classes);
-extern void FreeResourceByType(int cid, FSID id, RESTYPE type, Bool skipFree);
-#endif /* NOTYET */
 
 extern Bool AddResource(int cid, FSID id, RESTYPE type, pointer value);
 extern Bool InitClientResources(ClientPtr client);
