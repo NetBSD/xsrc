@@ -398,7 +398,7 @@ DoSendErrToClient(
 	.sequenceNumber = client->sequence,
 	.timestamp = GetTimeInMillis(),
 	.major_opcode = ((fsReq *) client->requestBuffer)->reqType,
-	.minor_opcode = MinorOpcodeOfRequest(client)
+	.minor_opcode = 0
     };
     int         extralen = 0;
 
@@ -1034,11 +1034,6 @@ DoCloseDownClient(ClientPtr client)
 	CheckFileNumbers();
 #endif /* DebugConnectionTranslation */
 
-#ifdef NOTYET
-	/* reset server when last client goes away */
-	if (client->requestVector != InitialVector && nClients == 0)
-	    dispatchException |= DE_RESET;
-#endif
 
 	if (currentClient == client)
 	    currentClient = serverClient;

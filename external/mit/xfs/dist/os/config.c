@@ -60,6 +60,7 @@ in this Software without prior written authorization from The Open Group.
 #include	"difsutils.h"
 #include	<X11/fonts/fontutil.h>
 #include	"difs.h"
+#include	<X11/fonts/fontconf.h>
 
 /* libXfont/src/bitmap/snfstr.h */
 extern void SnfSetFormat(int bit, int byte, int glyph, int scan);
@@ -660,6 +661,8 @@ config_set_snf_format (
     val = config_parse_int (parm, val, &ret, &scan);
     if (ret == -1)
 	return val;
+#ifdef XFONT_SNFFORMAT
     SnfSetFormat (bit, byte, glyph, scan);
+#endif
     return val;
 }

@@ -153,17 +153,6 @@ ReadRequest(ClientPtr client)
     oci->bufptr += oci->lenLastReq;
 
     gotnow = oci->bufcnt + oci->buffer - oci->bufptr;
-
-#ifdef WORD64
-    /* need 8-byte alignment */
-    if ((oci->bufptr - oci->buffer) & 7  &&  gotnow > 0)
-    {
-	memmove( oci->buffer, oci->bufptr, gotnow);
-	oci->bufptr = oci->buffer;
-	oci->bufcnt = gotnow;
-    }
-#endif
-
     request = (fsReq *) oci->bufptr;
 
     /* not enough for a request */

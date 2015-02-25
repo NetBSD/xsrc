@@ -274,19 +274,13 @@ int
 CloneMyself(void)
 {
     int         child;
-    char        old_listen_arg[256];
-    char	*arg_ptr = old_listen_arg;
     int         i, j;
     int         lastfdesc;
-    char	portnum[20];
 
     assert(!drone_server);	/* a drone shouldn't hit this */
 
     if (!CloneSelf)
 	return -1;
-
-
-    old_listen_arg[0] = '\0';
 
     lastfdesc = sysconf(_SC_OPEN_MAX) - 1;
     if ( (lastfdesc < 0) || (lastfdesc > MAXSOCKS)) {
@@ -312,6 +306,9 @@ CloneMyself(void)
 	drone_server = TRUE;
 	return 1;
     } else {			/* parent */
+	char	old_listen_arg[256];
+	char	portnum[8];
+
 	NoticeF("clone: parent revitalizing as %s\n", progname);
 	CloseErrors();
 	/* XXX should we close stdio as well? */
@@ -325,27 +322,34 @@ CloneMyself(void)
 		(void) close(i);
 	}
 
+	old_listen_arg[0] = '\0';
+
 	for (i = 0; i < ListenTransCount; i++)
 	{
 	    int trans_id, fd;
 	    char *port;
+	    size_t arg_len;
 
 	    if (!_FontTransGetReopenInfo (ListenTransConns[i],
 		&trans_id, &fd, &port))
 		continue;
 
-	    sprintf (arg_ptr, "%d/%d/%s", trans_id, fd, port);
-	    arg_ptr += strlen (arg_ptr);
-	    free (port);
-
-	    if (i < ListenTransCount - 1)
-	    {
-		strcat (arg_ptr, ",");
-		arg_ptr++;
+	    arg_len = strlen(old_listen_arg);
+	    if (arg_len < sizeof(old_listen_arg)) {
+		char *arg_ptr = old_listen_arg + arg_len;
+		size_t actual_len;
+		actual_len = snprintf (arg_ptr, sizeof(old_listen_arg) - arg_len,
+				       "%s%d/%d/%s", (arg_len > 0) ? "," : "",
+				       trans_id, fd, port);
+		/* Ensure we don't leave a partial address if we ran out of
+		   room in the buffer */
+		if (actual_len >= (sizeof(old_listen_arg) - arg_len))
+		    *arg_ptr = '\0';
 	    }
+	    free (port);
 	}
 
-	sprintf (portnum, "%d", ListenPort);
+	snprintf (portnum, sizeof(portnum), "%d", ListenPort);
 	if (*old_listen_arg != '\0')
 	    execlp(progname, progname,
 		   "-ls", old_listen_arg,

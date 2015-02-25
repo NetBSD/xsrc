@@ -30,6 +30,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <auth.h>
 #include <X11/fonts/font.h>
 #include <X11/fonts/fontstruct.h>
+#include <X11/fonts/fontmisc.h>
 
 typedef void (*DifsWakeupFunc)(pointer data, int result, unsigned long * pReadmask);
 typedef Bool (*DifsWorkFunc) (ClientPtr, pointer);
@@ -40,8 +41,6 @@ extern Bool ClientSleep (ClientPtr client, Bool (*function) (ClientPtr, pointer)
 extern Bool QueueWorkProc (DifsWorkFunc function, ClientPtr client, pointer data);
 extern Bool RegisterBlockAndWakeupHandlers (BlockHandlerProcPtr blockHandler, DifsWakeupFunc wakeupHandler, pointer blockData);
 #if 0
-extern Bool XpClientIsBitmapClient (ClientPtr client);
-extern Bool XpClientIsPrintClient (ClientPtr client, FontPathElementPtr fpe);
 extern FontResolutionPtr GetClientResolutions (int *num);
 #endif
 #if 0
@@ -57,7 +56,6 @@ extern pointer Xalloc (unsigned long m);
 extern pointer Xrealloc (pointer n, unsigned long m);
 extern void BlockHandler (OSTimePtr pTimeout, pointer pReadmask);
 extern void ClientWakeup (ClientPtr client);
-extern void CopyISOLatin1Lowered (char *d, char *s, int length);
 extern void InitBlockAndWakeupHandlers (void);
 extern void NoopDDA (void);
 extern void ProcessWorkQueue (void);

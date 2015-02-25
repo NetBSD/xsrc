@@ -29,6 +29,7 @@
 #include "difsfn.h"
 #include "globals.h"
 #include <X11/fonts/fontstruct.h>
+#include <X11/fonts/fontmisc.h>
 
 typedef int (*InitialFunc)(ClientPtr);
 typedef int (*ProcFunc)(ClientPtr);
@@ -38,13 +39,11 @@ typedef void (*ReplySwapFunc)(ClientPtr, int, void *);
 
 extern InitialFunc InitialVector[3];
 extern ReplySwapFunc ReplySwapVector[NUM_PROC_VECTORS];
+extern EventSwapFunc EventSwapVector[NUM_EVENT_VECTORS];
 
 /* FIXME: this is derived from fontstruct.h; should integrate it */
 
 /* difs/atom.c */
-extern Atom MakeAtom ( const char *string, unsigned len, Bool makeit );
-extern int ValidAtom ( Atom atom );
-extern char * NameForAtom ( Atom atom );
 extern void InitAtoms ( void );
 
 /* difs/charinfo.c */
