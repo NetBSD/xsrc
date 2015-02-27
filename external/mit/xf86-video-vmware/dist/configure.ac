@@ -23,7 +23,7 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-video-vmware],
-        [13.0.2],
+        [13.1.0],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
         [xf86-video-vmware])
 AC_CONFIG_SRCDIR([Makefile.am])
@@ -126,7 +126,7 @@ if test x$BUILD_VMWGFX = xyes; then
 			  [PKG_CHECK_EXISTS([xatracker = 2.0.0],
 	                  [AC_DEFINE([HAVE_XA_2], 1,
                		  [Has version 2 of XA])])],
-			  [],[BUILD_VMWGFX=no])
+			  [BUILD_VMWGFX=no])
 #
 # Check for prime.
 #
