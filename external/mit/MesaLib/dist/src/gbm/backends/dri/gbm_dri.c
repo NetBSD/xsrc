@@ -169,8 +169,8 @@ swrast_put_image(__DRIdrawable *driDrawable,
                  char          *data,
                  void          *loaderPrivate)
 {
-   return swrast_put_image2(driDrawable, op, x, y, width, height,
-                            width * 4, data, loaderPrivate);
+   swrast_put_image2(driDrawable, op, x, y, width, height,
+                     width * 4, data, loaderPrivate);
 }
 
 static void
