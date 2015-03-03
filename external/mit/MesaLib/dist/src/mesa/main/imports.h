@@ -259,8 +259,10 @@ static inline int IROUND_POS(float f)
    return (int) (f + 0.5F);
 }
 
+#ifdef __GNUC__
 #ifdef __x86_64__
 #  include <xmmintrin.h>
+#endif
 #endif
 
 /**
