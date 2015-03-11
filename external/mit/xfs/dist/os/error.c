@@ -71,11 +71,7 @@ abort_server(void)
 {
     fflush(stderr);
 
-#ifdef SABER
-    saber_stop();
-#else
     _exit(1);
-#endif
 }
 
 void

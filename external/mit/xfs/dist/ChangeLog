@@ -1,3 +1,241 @@
+commit 4bc3e1f01864f09ce87b8eba9b1970ea3715375c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Aug 21 22:34:59 2014 -0700
+
+    xfs 1.1.4
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 899268224e98d2c660839a08d70166543d8e0a51
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Aug 11 18:40:27 2014 -0700
+
+    Add subdir-objects to automake options
+    
+    automake 1.14.1 is asking for it:
+    
+     warning: possible forward-incompatibility.
+     At least a source file is in a subdirectory, but the 'subdir-objects'
+     automake option hasn't been enabled.  For now, the corresponding output
+     object file(s) will be placed in the top-level directory.  However,
+     this behaviour will change in future Automake versions: they will
+     unconditionally cause object files to be placed in the same subdirectory
+     of the corresponding sources.
+     You are advised to start using 'subdir-objects' option throughout your
+     project, to avoid future incompatibilities.
+    
+    and repeating for every source file:
+    Makefile.am:35: warning: source file 'difs/charinfo.c' is in a subdirectory,
+    Makefile.am:35: but option 'subdir-objects' is disabled
+    
+    This quiets it, and brings us into line with the future state.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a3498cecb300d20ddaab033a8dbda72df52a8b3b
+Author: Yaakov Selkowitz <yselkowitz@users.sourceforge.net>
+Date:   Sun Apr 6 14:41:56 2014 -0500
+
+    Fix CFLAGS and LDFLAGS for Cygwin/MinGW
+    
+    As in xserver, FD_SETSIZE must be overridden due to a too-low default,
+    and symbols must be exported for compatibility with the shared libXfont
+    stub handling on these platforms.
+    
+    Signed-off-by: Yaakov Selkowitz <yselkowitz@users.sourceforge.net>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1c8459eafc04997751ae3d200d0ec91e43e19b5b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 31 21:39:32 2014 -0700
+
+    autogen.sh: Honor NOCONFIGURE=1
+    
+    See http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d353fc875c534c1efeaeb5185b3088f52d266882
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 31 21:38:41 2014 -0700
+
+    configure: Drop AM_MAINTAINER_MODE
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 79db3095004c912850455bddfc91bb0991ff6c75
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri May 23 23:01:51 2014 -0700
+
+    Add -version option to print program version
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f25c51fba6c7a08748892050c9db78e911e80ede
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri May 23 22:55:53 2014 -0700
+
+    Print which option was in error along with usage message
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9298ede3e9b9a4707d91a460f2f9e91aef23d6c1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu May 22 23:21:18 2014 -0700
+
+    Delete XpClient stubs
+    
+    Xprint support stubs were required for libXfont prior to removal
+    of Xprint support in libXfont commit e1927f80deabe in 2009, but
+    are no longer needed.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9ca90f04e43545dd0ab4f2f580e1c7a32139936d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu May 22 23:11:48 2014 -0700
+
+    Move EventSwapVector from extenst.h to difs.h
+    
+    Fits in better with other swap vectors there
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 03bf9d280c88b15161defd305ab06920bacb26a9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu May 22 23:05:42 2014 -0700
+
+    Delete unused extension code
+    
+    No extensions were defined, but the code was ready for them, just in
+    case someone came up with one.  If someone ever does, they can restore
+    from git history or an old tarball - until then, less code for us to
+    maintain & worry about checking for proper encoding/decoding of protocol.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ca9663adce2a6e477fd92429e6e64bf8665998ef
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue May 20 22:51:15 2014 -0700
+
+    Replace fsalloc(strlen) + strcpy with strdup
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0c2c5520eef72b851aef245e4d5209087e824385
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue May 20 22:39:40 2014 -0700
+
+    Convert remaining sprintf calls to snprintf
+    
+    Removes a bonus unchecked strcat() call as well.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 51970b9a6f51fdb23ccdd566b48594aeb593eb11
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue May 20 22:04:21 2014 -0700
+
+    unifdef -USABER
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b240bc3633a56db6dbd0b1c8fa465b186814f1b7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue May 20 22:01:29 2014 -0700
+
+    unifdef -UNOTYET
+    
+    Mostly removes resource class code copied from the X server resource
+    handling code and never used.  Also removes reset on last client
+    disconnect code (similarly copied from the X server and not used).
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 659e9deafa76bb7feab16afc848392536361c92b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri May 16 15:33:56 2014 -0700
+
+    Only call SnfSetFormat if libXfont is built with SNF support
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 013df6f7d4ad0f3f2a74993733fc62ab67ffd484
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Thu May 8 19:28:28 2014 +0200
+
+    Delete unused CopyISOLatin1Lowered function
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 62daf761ea5e7c810d305c84426a8769db785979
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Thu May 8 19:28:27 2014 +0200
+
+    Use the register_fpe_functions() function from libXfont
+    
+    Instead of individually registering support for font files and font
+    servers, use the libXfont-provided register_fpe_functions() which will
+    do the right thing (as of 1.4.2) depending how libXfont was configured.
+    
+    This should let xfs run against a libXfont configured with --disable-fc.
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c6bb161dcb391977d353dc1c9d2b7d10179a20d4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Apr 24 23:29:13 2014 -0700
+
+    Don't abort() just because we found more names than client requested
+    
+    Too many fonts is no reason to drop everything, dump core, and exit.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2c7945278c8f5b7c70b0ef12b4024caa43ac152e
+Author: Keith Packard <keithp@keithp.com>
+Date:   Wed Jan 29 13:14:22 2014 -0800
+
+    Warning fixes.
+    
+    XFS replicates quite a bit of X server infrastructure so that it can
+    share libXfont. Many of those shared functions are declared in shared
+    font header files (either fontsproto.h or fontmisc.h). This patch
+    removes duplicate definitions from the XFS header files and makes sure
+    the shared header files are included in the right places to get the
+    functions declared before being defined.
+    
+    Of course, some of those function types have changed, in particular
+    CopyISOLatin1Lowered now takes a const char * source parameter.
+    
+    This patch also stops re-using the 'port' variable in
+    GetInetdListenInfo when fetching the ReopenInfo. That's not strictly
+    necessary here, but will be useful when the Reopen API in libxtrans
+    changes to take a constant parameter.
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Tested-by: Gaetan Nadon <memsize@videotron.ca>
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit b7cd80d37de51311e4cbf73dc9cdf231c5352bb1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jul 6 00:10:50 2013 -0700
+
+    Remove CRAY/WORD64 support
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 37df336745b23a7394a97e93ffe8944376d194db
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jun 24 22:34:36 2013 -0700
+
+    Require ANSI C89 pre-processor, drop pre-C89 token pasting support
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit a52114915c0fadfbbdd81049d5e940720868f44e
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Fri Apr 12 18:45:28 2013 -0700

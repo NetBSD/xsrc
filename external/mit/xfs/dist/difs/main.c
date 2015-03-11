@@ -128,7 +128,6 @@ main(int argc, char *argv[])
 	if (!InitClientResources(serverClient))
 	    FatalError("couldn't init server resources\n");
 
-	InitExtensions();
 	InitAtoms();
 	InitFonts();
 	SetConfigValues();
@@ -146,7 +145,6 @@ main(int argc, char *argv[])
 #endif
 
 	/* clean up per-cycle stuff */
-	CloseDownExtensions();
 	if ((dispatchException & DE_TERMINATE) || drone_server)
 	    break;
 	fsfree(ConnectionInfo);

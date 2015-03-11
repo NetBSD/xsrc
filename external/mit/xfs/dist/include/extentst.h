@@ -48,44 +48,7 @@ in this Software without prior written authorization from The Open Group.
 #ifndef _EXTENTST_H_
 #define _EXTENTST_H_
 
-typedef struct _ExtensionEntry {
-    int         index;
-    void        (*CloseDown) (struct _ExtensionEntry*);
-    char       *name;
-    int         base;
-    int         eventBase;
-    int         eventLast;
-    int         errorBase;
-    int         errorLast;
-    int         num_aliases;
-    char      **aliases;
-    pointer     extPrivate;
-    unsigned short (*MinorOpcode) (ClientPtr);
-}           ExtensionEntry;
-
-extern void (*EventSwapVector[]) (fsError *, fsError *);
-
-#if 0
-typedef void (*ExtensionLookupProc) (char *name, GCPtr pGC);
-
-typedef struct _ProcEntry {
-    char       *name;
-    ExtensionLookupProc proc;
-}           ProcEntryRec, *ProcEntryPtr;
-
-extern ExtensionEntry *AddExtension();
-extern ExtensionLookupProc LookupProc(char *name, GCPtr pGC);
-extern Bool RegisterProc();
-#endif
-
-extern ExtensionEntry * AddExtension ( char *name, int num_events, int num_errors, int (*main_proc) (ClientPtr), int (*smain_proc) (ClientPtr), void (*closedown_proc) (struct _ExtensionEntry *), unsigned short (*minorop_proc) (ClientPtr) );
-
-extern Bool AddExtensionAlias(char *alias, ExtensionEntry *ext);
 extern int  ProcListExtensions(ClientPtr client);
 extern int  ProcQueryExtension(ClientPtr client);
-extern unsigned short MinorOpcodeOfRequest(ClientPtr client);
-extern unsigned short StandardMinorOpcode(ClientPtr client);
-extern void CloseDownExtensions(void);
-extern void InitExtensions(void);
 
 #endif				/* _EXTENTST_H_ */

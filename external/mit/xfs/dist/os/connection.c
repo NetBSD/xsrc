@@ -201,7 +201,7 @@ CreateSockets(int old_listen_count, OldListenRec *old_listen)
 	    if (old_listen[i].portnum != ListenPort)
 		continue;		/* this should never happen */
 	    else
-		sprintf (portnum, "%d", old_listen[i].portnum);
+		snprintf (portnum, sizeof(portnum), "%d", old_listen[i].portnum);
 
 	    if ((ListenTransConns[ListenTransCount] =
 		_FontTransReopenCOTSServer (old_listen[i].trans_id,
@@ -220,7 +220,7 @@ CreateSockets(int old_listen_count, OldListenRec *old_listen)
 	char port[20];
 	int partial;
 
-	sprintf (port, "%d", ListenPort);
+	snprintf (port, sizeof(port), "%d", ListenPort);
 
 	if ((_FontTransMakeAllCOTSServerListeners (port, &partial,
 	    &ListenTransCount, &ListenTransConns) >= 0) &&

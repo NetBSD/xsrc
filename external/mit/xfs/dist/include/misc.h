@@ -115,14 +115,9 @@ in this Software without prior written authorization from The Open Group.
 extern void NoopDDA(void);
 extern char *NameForAtom(Atom atom);
 #endif
-extern void BitOrderInvert(unsigned char *buf, int nbytes);
 
 
-#if !defined(UNIXCPP) || defined(ANSICPP)
 #define fsCat(x,y) x##_##y
-#else
-#define fsCat(x,y) x/**/_/**/y
-#endif
 
 /* copy a xCharInfo into a XCharInfo */
 

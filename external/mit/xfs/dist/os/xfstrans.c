@@ -89,8 +89,9 @@ TRANS(GetInetdListenInfo) (int fd)
      */
     old_listen =  malloc (sizeof (OldListenRec));
     if (old_listen != NULL) {
+        char *old_port;
 	TRANS(GetReopenInfo)(inetdCI, &(old_listen->trans_id),
-			     &(old_listen->fd), &port);
+			     &(old_listen->fd), &old_port);
 
 	old_listen->portnum = portnum;
     }

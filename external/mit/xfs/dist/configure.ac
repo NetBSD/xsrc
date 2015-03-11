@@ -23,7 +23,7 @@ dnl Process this file with autoconf to create configure.
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xfs],
-        [1.1.3],
+        [1.1.4],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
         [xfs])
 # Set common system defines for POSIX extensions, such as _GNU_SOURCE
@@ -33,8 +33,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
 # Initialize Automake
-AM_INIT_AUTOMAKE([foreign dist-bzip2])
-AM_MAINTAINER_MODE
+AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects])
 
 # Require xorg-macros minimum of 1.10 for HAVE_STYLESHEETS in XORG_CHECK_SGML_DOCTOOLS
 m4_ifndef([XORG_MACROS_VERSION],
@@ -132,6 +131,12 @@ AC_CHECK_FUNCS([daemon])
 #  - xproto >= 7.0.17 required for _X_NORETURN in <X11/Xfuncproto.h>
 #  - xfont >= 1.4.5 required for matching MakeAtom prototypes in fontmisc.h
 PKG_CHECK_MODULES(XFS, xproto >= 7.0.17 xfont >= 1.4.5 xtrans)
+
+case "$host_os" in
+  cygwin*|mingw*)
+    CFLAGS="$CFLAGS -DFD_SETSIZE=256"
+    LDFLAGS="$LDFLAGS -Wl,--export-all" ;;
+esac
 
 # Transport selection macro from xtrans.m4
 XTRANS_CONNECTION_FLAGS
