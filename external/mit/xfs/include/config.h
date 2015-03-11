@@ -1,13 +1,11 @@
-/* xfs-config.h.  Generated from xfs-config.h.in by configure.  */
-/* xfs-config.h.in.  Generated from configure.ac by autoheader.  */
+/* config.h.  Generated from config.h.in by configure.  */
+/* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Define to 1 if `struct sockaddr_in' has a `sin_len' member */
 #define BSD44SOCKETS 1
 
 /* comma-separated list of strings for config file paths when not specified */
-#ifndef DEFAULT_CONFIG_FILE
 #define DEFAULT_CONFIG_FILE "/etc/X11/fs/config"
-#endif
 
 /* Define to 1 if you have the `daemon' function. */
 #define HAVE_DAEMON 1
@@ -61,13 +59,16 @@
 #define PACKAGE_NAME "xfs"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xfs 1.1.3"
+#define PACKAGE_STRING "xfs 1.1.4"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xfs"
 
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
+
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.1.3"
+#define PACKAGE_VERSION "1.1.4"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
@@ -76,10 +77,7 @@
 #define PACKAGE_VERSION_MINOR 1
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 3
-
-/* Define as the return type of signal handlers (`int' or `void'). */
-#define RETSIGTYPE void
+#define PACKAGE_VERSION_PATCHLEVEL 4
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -93,23 +91,33 @@
 /* Build support for logging via syslog */
 #define USE_SYSLOG 1
 
-/* Version number of package */
-#define VERSION "1.1.3"
-
-/* Build support for starting from inetd */
-#define XFS_INETD 1
-
-/* Define to 1 if on AIX 3.
-   System headers sometimes define this.
-   We just want to avoid a redefinition error message.  */
+/* Enable extensions on AIX 3, Interix.  */
 #ifndef _ALL_SOURCE
-/* # undef _ALL_SOURCE */
+# define _ALL_SOURCE 1
 #endif
-
 /* Enable GNU extensions on systems that have them.  */
 #ifndef _GNU_SOURCE
 # define _GNU_SOURCE 1
 #endif
+/* Enable threading extensions on Solaris.  */
+#ifndef _POSIX_PTHREAD_SEMANTICS
+# define _POSIX_PTHREAD_SEMANTICS 1
+#endif
+/* Enable extensions on HP NonStop.  */
+#ifndef _TANDEM_SOURCE
+# define _TANDEM_SOURCE 1
+#endif
+/* Enable general extensions on Solaris.  */
+#ifndef __EXTENSIONS__
+# define __EXTENSIONS__ 1
+#endif
+
+
+/* Version number of package */
+#define VERSION "1.1.4"
+
+/* Build support for starting from inetd */
+#define XFS_INETD 1
 
 /* Define to 1 if on MINIX. */
 /* #undef _MINIX */
@@ -121,13 +129,5 @@
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 /* #undef _POSIX_SOURCE */
 
-/* Enable extensions on Solaris.  */
-#ifndef __EXTENSIONS__
-# define __EXTENSIONS__ 1
-#endif
-#ifndef _POSIX_PTHREAD_SEMANTICS
-# define _POSIX_PTHREAD_SEMANTICS 1
-#endif
-#ifndef _TANDEM_SOURCE
-# define _TANDEM_SOURCE 1
-#endif
+/* Defined if needed to expose struct msghdr.msg_control */
+/* #undef _XOPEN_SOURCE */

@@ -26,7 +26,7 @@
 #define HAVE_POLL_H 1
 
 /* Define to 1 if you have the `readlink' function. */
-#undef HAVE_READLINK
+#define HAVE_READLINK 1
 
 /* Define to 1 if the system has the type `socklen_t'. */
 #define HAVE_SOCKLEN_T 1
@@ -75,7 +75,7 @@
 #define PACKAGE_NAME "libXfont"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libXfont 1.4.8"
+#define PACKAGE_STRING "libXfont 1.5.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libXfont"
@@ -84,16 +84,16 @@
 #undef PACKAGE_URL
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.4.8"
+#define PACKAGE_VERSION "1.5.0"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
 
 /* Minor version of this package */
-#define PACKAGE_VERSION_MINOR 4
+#define PACKAGE_VERSION_MINOR 5
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 8
+#define PACKAGE_VERSION_PATCHLEVEL 0
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -127,7 +127,7 @@
 
 
 /* Version number of package */
-#define VERSION "1.4.1"
+#define VERSION "1.5.0"
 
 /* Support bdf format bitmap font files */
 #define XFONT_BDFFORMAT 1
@@ -160,14 +160,14 @@
 #define X_GZIP_FONT_COMPRESSION 1
 
 /* Define to 1 if on MINIX. */
-#undef _MINIX
+/* #undef _MINIX */
 
 /* Define to 2 if the system does not provide POSIX.1 features except with
    this defined. */
-#undef _POSIX_1_SOURCE
+/* #undef _POSIX_1_SOURCE */
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
-#undef _POSIX_SOURCE
+/* #undef _POSIX_SOURCE */
 
 /* Defined if needed to expose struct msghdr.msg_control */
-#undef _XOPEN_SOURCE
+/* #undef _XOPEN_SOURCE */

@@ -100,47 +100,12 @@ typedef struct _ClientResource {
 }           ClientResourceRec;
 
 static RESTYPE lastResourceType;
-#ifdef NOTYET
-static RESTYPE lastResourceClass;
-#endif
 static RESTYPE TypeMask;
 
 typedef int (*DeleteType) (void *, FSID);
 
 static DeleteType *DeleteFuncs = (DeleteType *) NULL;
 
-#ifdef NOTYET
-RESTYPE
-CreateNewResourceType(DeleteType deleteFunc)
-{
-    RESTYPE     next = lastResourceType + 1;
-    DeleteType *funcs;
-
-    if (next & lastResourceClass)
-	return 0;
-    funcs = (DeleteType *) fsrealloc(DeleteFuncs,
-				     (next + 1) * sizeof(DeleteType));
-    if (!funcs)
-	return 0;
-    lastResourceType = next;
-    DeleteFuncs = funcs;
-    DeleteFuncs[next] = deleteFunc;
-    return next;
-}
-
-RESTYPE
-CreateNewResourceClass(void)
-{
-    RESTYPE     next = lastResourceClass >> 1;
-
-    if (next & lastResourceType)
-	return 0;
-    lastResourceClass = next;
-    TypeMask = next - 1;
-    return next;
-}
-
-#endif				/* NOTYET */
 
 static ClientResourceRec clientTable[MAXCLIENTS];
 
@@ -164,9 +129,6 @@ InitClientResources(ClientPtr client)
 
     if (client == serverClient) {
 	lastResourceType = RT_LASTPREDEF;
-#ifdef NOTYET
-	lastResourceClass = RC_LASTPREDEF;
-#endif
 	TypeMask = RC_LASTPREDEF - 1;
 	if (DeleteFuncs)
 	    fsfree(DeleteFuncs);
@@ -410,63 +372,6 @@ FreeResource(
 	FatalError("freeing resource id=%lX which isn't there\n", id);
 }
 
-#ifdef NOTYET
-void
-FreeResourceByType(
-    int         cid,
-    FSID        id,
-    RESTYPE     type,
-    Bool        skipFree)
-{
-    register ResourcePtr res;
-    register ResourcePtr *prev,
-               *head;
-
-    if (clientTable[cid].buckets) {
-	head = &clientTable[cid].resources[hash(cid, id)];
-
-	prev = head;
-	while (res = *prev) {
-	    if (res->id == id && res->type == type) {
-		*prev = res->next;
-		if (!skipFree)
-		    (*DeleteFuncs[type & TypeMask]) (res->value, res->id);
-		fsfree(res);
-		break;
-	    } else
-		prev = &res->next;
-	}
-    }
-}
-
-/*
- * Change the value associated with a resource id.  Caller
- * is responsible for "doing the right thing" with the old
- * data
- */
-
-Bool
-ChangeResourceValue(
-    int         cid,
-    FSID        id,
-    RESTYPE     rtype,
-    pointer     value)
-{
-    register ResourcePtr res;
-
-    if (clientTable[cid].buckets) {
-	res = clientTable[cid].resources[hash(cid, id)];
-
-	for (; res; res = res->next)
-	    if ((res->id == id) && (res->type == rtype)) {
-		res->value = value;
-		return TRUE;
-	    }
-    }
-    return FALSE;
-}
-
-#endif				/* NOTYET */
 
 void
 FreeClientResources(ClientPtr client)
@@ -544,27 +449,3 @@ LookupIDByType(
     return (pointer) NULL;
 }
 
-#ifdef NOTYET
-/*
- *  lookup_ID_by_class returns the object with the given id and any one of the
- *  given classes, else NULL.
- */
-pointer
-LookupIDByClass(
-    FSID        id,
-    RESTYPE     classes)
-{
-    int         cid;
-    register ResourcePtr res;
-
-    if (((cid = CLIENT_ID(id)) < MAXCLIENTS) && clientTable[cid].buckets) {
-	res = clientTable[cid].resources[hash(cid, id)];
-
-	for (; res; res = res->next)
-	    if ((res->id == id) && (res->type & classes))
-		return res->value;
-    }
-    return (pointer) NULL;
-}
-
-#endif				/* NOTYET */

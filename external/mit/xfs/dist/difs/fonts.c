@@ -169,7 +169,7 @@ RemoveFontWakeup(FontPathElementPtr fpe)
 
 /* ARGSUSED */
 static void
-FontWakeup(pointer data, int count, unsigned long *LastSelectMask)
+FontWakeup(pointer data, int count, unsigned long *lastSelectMask)
 {
     int         i;
     FontPathElementPtr fpe;
@@ -179,7 +179,7 @@ FontWakeup(pointer data, int count, unsigned long *LastSelectMask)
     /* wake up any fpe's that may be waiting for information */
     for (i = 0; i < num_slept_fpes; i++) {
 	fpe = slept_fpes[i];
-	(void) (*fpe_functions[fpe->type].wakeup_fpe) (fpe, LastSelectMask);
+	(void) (*fpe_functions[fpe->type].wakeup_fpe) (fpe, lastSelectMask);
     }
 }
 
@@ -1284,7 +1284,7 @@ do_list_fonts_with_info(ClientPtr client, pointer data)
 
 	    --cPtr->current.max_names;
 	    if (cPtr->current.max_names < 0)
-		abort();
+		break;
 	}
     }
 
@@ -1404,7 +1404,7 @@ LoadGlyphRanges(
 
 int
 RegisterFPEFunctions(
-    Bool          (*name_func) (char *name),
+    NameCheckFunc name_func,
     InitFpeFunc   init_func,
     FreeFpeFunc   free_func,
     ResetFpeFunc  reset_func,
@@ -1418,7 +1418,7 @@ RegisterFPEFunctions(
     LoadGlyphsFunc load_glyphs,
     StartLaFunc   start_list_alias_func,
     NextLaFunc    next_list_alias_func,
-    void	  (*set_path_func) (void))
+    SetPathFunc   set_path_func)
 {
     FPEFunctions *new;
 
