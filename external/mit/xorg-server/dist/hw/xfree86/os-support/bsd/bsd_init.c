@@ -482,7 +482,7 @@ xf86OpenSyscons()
 	    {
 		xf86ErrorF(" (version 0.x)\n");
 	    }
-	    xf86Msg(from, "using VT number %d\n\n", xf86Info.vtno);
+	    xf86Msg(from, "using VT number %d\n", xf86Info.vtno);
 	}
 	else
 	{
@@ -601,7 +601,7 @@ xf86OpenPcvt()
 	    xf86Msg(X_PROBED, "Using pcvt driver (version %d.%d)\n",
 		    pcvt_version.rmajor, pcvt_version.rminor);
 #endif
-	    xf86Msg(X_PROBED, "using VT number %d\n\n", xf86Info.vtno);
+	    xf86Msg(X_PROBED, "using VT number %d\n", xf86Info.vtno);
 	}
 	else
 	{
