@@ -18,6 +18,7 @@ exec_prefix_set="no"
 includedir="%includedir%"
 libdir="%libdir%"
 enable_shared="%build_libtool_libs%"
+hardcode_libdir_flag_spec=%hardcode_libdir_flag_spec%
 
 usage()
 {
@@ -146,7 +147,7 @@ if test "$echo_libs" = "yes" ; then
   if test "$enable_shared" = "yes" ; then
     eval "rpath=\"$hardcode_libdir_flag_spec\""
   fi
-  libs="%LIBS_CONFIG%"
+  libs="-lfreetype"
   staticlibs="%LIBSSTATIC_CONFIG%"
   if test "$show_static" = "yes" ; then
     libs="$staticlibs"
