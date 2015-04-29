@@ -26,13 +26,13 @@
 #include <stdlib.h>
 
 #if defined(FC_ATOMIC_INT_NIL)
-#pragma message("Could not find any system to define atomic_int macros, library may NOT be thread-safe.")
+#warning Could not find any system to define atomic_int macros, library may NOT be thread-safe.
 #endif
 #if defined(FC_MUTEX_IMPL_NIL)
-#pragma message("Could not find any system to define mutex macros, library may NOT be thread-safe.")
+#warning Could not find any system to define mutex macros, library may NOT be thread-safe.
 #endif
 #if defined(FC_ATOMIC_INT_NIL) || defined(FC_MUTEX_IMPL_NIL)
-#pragma message("To suppress these warnings, define FC_NO_MT.")
+#warning To suppress these warnings, define FC_NO_MT.
 #endif
 
 static FcConfig *
