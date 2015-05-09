@@ -655,9 +655,10 @@ ProcessCommandLine(int argc, char *argv[])
 	{
 #if !defined(WIN32) || !defined(__MINGW32__)
 	    struct rlimit   core_limit;
-	    getrlimit (RLIMIT_CORE, &core_limit);
-	    core_limit.rlim_cur = core_limit.rlim_max;
-	    setrlimit (RLIMIT_CORE, &core_limit);
+	    if (getrlimit (RLIMIT_CORE, &core_limit) != -1) {
+		    core_limit.rlim_cur = core_limit.rlim_max;
+		    setrlimit (RLIMIT_CORE, &core_limit);
+	    }
 #endif
 	    CoreDump = TRUE;
 	}
