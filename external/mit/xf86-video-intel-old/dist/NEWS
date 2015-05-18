@@ -1,0 +1,314 @@
+Release 2.9.1 (2009-10-26)
+==========================
+We are pleased to announce a maintenance release (2.9.1) of the
+xf86-video-intel driver. This release comes one month after 2.9.0 and
+consists only of a few, hand-picked bug fixes since that release.
+
+Complete list of fixes in 2.9.1 compared to 2.9.0
+-------------------------------------------------
+ * Fix corruption and artifacts due to wrong colors in the colormap
+   with X server 1.7
+
+ * Fix incorrect rendering, such as missing scrollbar arrows in some
+   themes (http://bugs.freedesktop.org/show_bug.cgi?id=24459)
+
+ * Fix black screen when X server is reset
+   (https://bugs.freedesktop.org/show_bug.cgi?id=24383)
+
+ * Fix regressions detecting DVI monitors
+
+   http://bugs.freedesktop.org/show_bug.cgi?id=24255
+   http://bugs.freedesktop.org/show_bug.cgi?id=24282
+   http://bugs.freedesktop.org/show_bug.cgi?id=24458
+
+Release 2.9.0 (2009-09-28)
+==========================
+We are pleased to announce the 2.9.0 release of the xf86-video-intel
+driver. (If you have been following along at home, this release is
+identical to the 2.8.99.902 release candidate other than the version
+number).
+
+New features in 2.9 compared to 2.8
+-----------------------------------
+* Support for the B43 chipset.
+
+Major fixes in 2.9.0 compared to 2.8.0
+--------------------------------------
+* Multiple fixes to make the driver stable for 8xx chipsets, (855GM,
+  865G, etc.). The 2.8 driver series was extremely unstable with many
+  of these chipsets.
+
+  https://bugs.freedesktop.org/show_bug.cgi?id=22904 (and many duplicates)
+  https://bugs.freedesktop.org/show_bug.cgi?id=22947
+
+* Add support for BACKLIGHT property when using kernel modesetting
+  (KMS). This allows backlight adjustment with programs such as
+  "xbacklight -set <percentage>" or "xrandr --set BACKLIGHT <value>".
+
+  https://bugs.freedesktop.org/show_bug.cgi?id=20963
+
+* Fix so that "xrandr --scale" works when using KMS.
+
+  https://bugs.freedesktop.org/show_bug.cgi?id=22893
+
+* Fix segfaults of X server when logging out.
+
+  https://bugs.freedesktop.org/show_bug.cgi?id=20516
+
+* Avoid falling back to software for 1-bit alpha-only masks.
+
+  https://bugs.freedesktop.org/show_bug.cgi?id=23184
+
+* Fix pixel sampling position for 8xx chipsets, (fixes some cairo-test
+  suite failures).
+
+Snapshot 2.8.99.901 (2009-09-09)
+================================
+This is the first release candidate in preparation for the upcoming
+2.9.0 release. We will appreciate any feedback we can get from testing
+of this snapshot to improve the 2.9.0 release.
+
+See the commit log for changes in this release, and developers, please
+provide me summaries for any major features in this release that you
+think should appear in NEWS and in the 2.9.0 release notes.
+
+Note: We are still investigating failures with 865G chipsets, (these
+failures existed in the 2.8 series as well). We are hoping to fix
+these failures before the 2.9.0 release.
+
+Release 2.8.0 (2009-07-20)
+==========================
+We are pleased to present this major release of the xf86-video-intel
+driver. This release is very similar to the 2.7.99.902 release
+candidate but includes a couple of additional bug fixes, (for bugs
+#22760 and @22483).
+
+Compared to the 2.7 releases this driver contains several new features
+and many bug fixes. The driver now depends on X server 1.6 or later,
+and eliminates several obsolete code paths, (XAA and EXA removed in
+favor of UXA, DRI1 support eliminated). The driver certainly will work
+best with an i915 module from a recent kernel (2.6.31) and with
+kernel-modesetting (KMS, specified by loading i915 with the option
+"modeset=1").
+
+New features in 2.8.0 compared to 2.7
+-------------------------------------
+* Remove XAA/EXA/DRI1 and NoAccel, and only support UXA/DRI2 now
+  (requiring xserver 1.6).
+
+* VLD support added into XvMC for Mpeg2, which decreases CPU usage
+  when playing video.
+
+Major fixes in 2.8.0 compared to 2.7
+------------------------------------
+* Fix broken front-buffer rendering
+  https://bugs.freedesktop.org/show_bug.cgi?id=19174
+
+* Fix disabling of XvMC disabled
+  https://bugs.freedesktop.org/show_bug.cgi?id=20790
+
+* Fix broken VT switch on some machines
+  https://bugs.freedesktop.org/show_bug.cgi?id=19578
+
+* Improve performance of trapezoid rendering for UXA
+  https://bugs.freedesktop.org/show_bug.cgi?id=21376
+
+* Vblank sync'd GL buffer swap (fixing video tearing under composite)
+  https://bugs.freedesktop.org/show_bug.cgi?id=20664
+
+* Fix G41 DRM support
+  https://bugs.freedesktop.org/show_bug.cgi?id=21095
+
+* Fix crash on some 8xx
+  https://bugs.freedesktop.org/show_bug.cgi?id=18974
+
+Various fixes for GPU hangs, and more...
+
+Snapshot 2.7.99.902 (2009-07-13)
+--------------------------------
+This is the first release candidate in preparation for the upcoming
+2.8.0 release. Most major and critical bugs should be fixed, but some
+minor bugs may still be present. We will appreciate any feedback we
+can get from testing of this snapshot to improve the 2.8.0 release.
+
+Snapshot 2.7.99.901 (2009-06-10)
+--------------------------------
+This is the first release candidate in preparation for the upcoming
+2.8.0 release. Most critical bugs should be fixed, but some major
+bugs may still be present. We will appreciate any feedback we can
+get from testing of this snapshot to improve the 2.8.0 release.
+
+Some of the major fixes in this snapshot include:
+
+	* Several fixes for intermittent GPU hangs/crashes, (some of
+	  which already appeared in the 2.7.1 release)
+
+	* Fix to avoid X crash when viewing large images in browser
+
+	* Fix X server failure when running old (non-GEM) kernel
+
+	* Fixes for SDVO LVDS mode detection
+
+	* Fix major performance regression of trapezoid rendering
+          compared to XAA/EXA
+
+	* New support for tear-free video when using KMS
+
+	* New support for tear-free DRI2 CopyRegion
+
+Snapshot 2.7.99.1 (2009-04-28)
+------------------------------
+This is a development snapshot very early in the process toward
+developing 2.8. There have been some big changes to the code, and
+we're anxious to get feedback on these changes as early as possible.
+
+Here is a summary of the biggest changes:
+
+  * Driver now depends on X server 1.6 or later
+
+  * Eliminate XAA and EXA support (in favor of UXA)
+
+  * Eliminate DRI1 support
+
+  * Fixes for running without DRI at all
+
+These code removals represent a deletion of a substantial amount of
+code, (and hopefully piles of bugs), as well as reduce the maintenance
+effort going forward as the number of combinatorial configurations for
+the driver are greatly reduced. This means that users are much more
+likely to be running code that has actually been tested, and it will
+be much easy for developers to replicate bugs that users experience.
+
+One of the things that would be most useful in testing this release is
+to revisit any outstanding bugs that you have previously reported. If
+the buggy behavior is gone, (or the bug is no longer relevant---such
+as a bug that's specific to XAA only), please feel free to indicate so
+in bugzilla or even just close the bug.
+
+If you confirm that the bug is still present, please indicate so in
+the bug report. (I was going to ask that you select a 1.7.99 version,
+but it looks like bugzilla only has versions for products not
+compoenents, while we use a "xorg" product and a "driver/intel"
+component.) We definitely want to make any such confirmed bugs a
+priority, so it would be nice to have a consistent mechanism to search
+for these bugs. Suggestions are welcome on the best approach.
+
+Thanks in advance for any testing or feedback on this snapshot.
+
+Release 2.7.0 (2009-04-15)
+--------------------------
+Compared to the 2.6 series, 2.7.0 has a large number of bug fixes, but
+also a few significant features, such as:
+
+        SDVO-TV support, available on ADD2 card (bug#9992) and
+        D945GCLF2 board (bug#17776).
+
+        Basic SDVO-LVDS support
+
+        XV video display without tearing
+	[Though this isn't working for all users yet, see
+	https://bugs.freedesktop.org/show_bug.cgi?id=21076 ]
+
+	Various fixes for UXA, DRI2, and Kernel modesetting.
+
+We encourage users to use kernel modesetting and UXA acceleration with
+this release, which should give the best performance and
+robustness. When KMS is available, UXA is the default acceleration
+used by the driver, (EXA is the default otherwise).
+
+Known issue:
+
+	Some Linux kernel versions (such as 2.6.29) are known to have
+	broken PAT code that causes recent versions of this driver to
+	fail, (which can manifest as the X server simply not
+	starting). This can be verified by adding the "nopat" option
+	to the kernel command-line and seeing the failure go away. We
+	hope that newer kernels in the 2.6.29.x as well as 2.6.30 and
+	above will have working PAT code.
+
+Some of the most notable bugs fixed in 2.7.0 include:
+
+	[GM45 965GM] bad htotal causes panel startup failure
+	https://bugs.freedesktop.org/show_bug.cgi?id=17292
+
+	[xrandr TV] need TV output property control
+	https://bugs.freedesktop.org/show_bug.cgi?id=12763
+
+	[TV] "xrandr --set TV_FORMAT" gets BadMatch error
+	https://bugs.freedesktop.org/show_bug.cgi?id=16566
+
+	[945 tiling] Low performance due to no A17 workaround
+	https://bugs.freedesktop.org/show_bug.cgi?id=16835
+
+	[TV]Flicker when launching applications in the 2.4-branch
+	https://bugs.freedesktop.org/show_bug.cgi?id=17405
+
+	[945GM FBC] FBC causes underruns & flicker
+	https://bugs.freedesktop.org/show_bug.cgi?id=18651
+
+	[xv] Textured video suffers from tearing
+	https://bugs.freedesktop.org/show_bug.cgi?id=19635
+
+	[G45] Random hangs with UXA
+	https://bugs.freedesktop.org/show_bug.cgi?id=19734
+
+	[945GM] Any 3D app is slow in resolution higher than 800x600
+	with UXA+DRI2, due to tiling
+	https://bugs.freedesktop.org/show_bug.cgi?id=19738
+
+	[i915 UXA,EXA] rotation messes display with tiling on
+	https://bugs.freedesktop.org/show_bug.cgi?id=20265
+
+	[G45] DRI2/UXA gives solid white instead of transparency
+	https://bugs.freedesktop.org/show_bug.cgi?id=20321
+
+	LVDS output not detected
+	https://bugs.freedesktop.org/show_bug.cgi?id=20517
+
+	xf86-video-intel-2.6.3: Xv crashes X server
+	https://bugs.freedesktop.org/show_bug.cgi?id=20525
+
+	[G965 non-GEM] systray in KDE 4 completely broken
+	https://bugs.freedesktop.org/show_bug.cgi?id=20527
+
+	[SDVO-TV]the desktop is teared in four sections on the screen
+	https://bugs.freedesktop.org/show_bug.cgi?id=20550
+
+	Intel video driver 2.6.3 crashes with XVideo
+	https://bugs.freedesktop.org/show_bug.cgi?id=20563
+
+	[855GM] Xv crash with non-KMS
+	https://bugs.freedesktop.org/show_bug.cgi?id=20585
+
+	2.6.99.902 breaks native 1680x1050 mode on TMDS -- EDID miss
+	https://bugs.freedesktop.org/show_bug.cgi?id=20594
+
+	[945GM TV] 2.6.99.902 sets a too high CONTRAST-value
+	https://bugs.freedesktop.org/show_bug.cgi?id=20670
+
+	[915GM] fail to detect LVDS with new VBT code
+	https://bugs.freedesktop.org/show_bug.cgi?id=20752
+
+	[regression i965]tiled output when start X
+	https://bugs.freedesktop.org/show_bug.cgi?id=20803
+
+	2.6.99.902: LVDS wrongly detected as disconnected
+	https://bugs.freedesktop.org/show_bug.cgi?id=20826
+
+	vt switching fails and crashes X
+	https://bugs.freedesktop.org/show_bug.cgi?id=20863
+
+	[HDMI] The screen will flicker when some application runs on
+	G45-64
+	https://bugs.freedesktop.org/show_bug.cgi?id=20875
+
+	TexturedVideo is offsetted wrongly on dualhead
+	https://bugs.freedesktop.org/show_bug.cgi?id=20980
+
+	[EXA] xvideo hang X
+	https://bugs.freedesktop.org/show_bug.cgi?id=21027
+
+	[EXA] x11perf performance regression
+	https://bugs.freedesktop.org/show_bug.cgi?id=21029
+
+	And many others...
