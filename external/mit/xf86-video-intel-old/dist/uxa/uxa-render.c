@@ -438,12 +438,6 @@ uxa_picture_from_pixman_image (ScreenPtr pScreen,
     return pPicture;
 }
 
-#if XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC (1,6,99,1,0)
-#define IMAGE_FROM_PICT(P) image_from_pict(P, 0)
-#else
-#define IMAGE_FROM_PICT(P) image_from_pict(P, 0, 0)
-#endif
-
 static PicturePtr
 uxa_acquire_pattern (ScreenPtr pScreen,
 		     PicturePtr pPict,
@@ -452,8 +446,9 @@ uxa_acquire_pattern (ScreenPtr pScreen,
 		     CARD16 width, CARD16 height)
 {
     pixman_image_t *source, *image;
-
-    source = IMAGE_FROM_PICT (pPict);
+    int src_xoff, src_yoff;
+    
+    source = image_from_pict(pPict, FALSE, &src_xoff, &src_yoff);
     if (!source)
 	return 0;
 

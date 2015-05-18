@@ -79,7 +79,7 @@ const int I830PatternROP[16] =
     ROP_1
 };
 
-static int uxa_pixmap_index;
+static DevPrivateKeyRec uxa_pixmap_index;
 
 /**
  * Returns whether a given pixmap is tiled or not.
@@ -452,7 +452,11 @@ i830_transform_is_affine (PictTransformPtr t)
 dri_bo *
 i830_get_pixmap_bo(PixmapPtr pixmap)
 {
+#if HAS_DEVPRIVATEKEYREC
+    return dixGetPrivate(&pixmap->devPrivates, &uxa_pixmap_index);
+#else
     return dixLookupPrivate(&pixmap->devPrivates, &uxa_pixmap_index);
+#endif
 }
 
 void
@@ -703,7 +707,11 @@ i830_uxa_init (ScreenPtr pScreen)
     ScrnInfoPtr scrn = xf86Screens[pScreen->myNum];
     I830Ptr i830 = I830PTR(scrn);
 
+#if HAS_DIXREGISTERPRIVATEKEY
+    if (!dixRegisterPrivateKey(&uxa_pixmap_index, PRIVATE_PIXMAP, 0))
+#else
     if (!dixRequestPrivate(&uxa_pixmap_index, 0))
+#endif
 	return FALSE;
 
     i830->uxa_driver = uxa_driver_alloc();

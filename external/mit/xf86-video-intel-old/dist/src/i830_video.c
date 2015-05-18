@@ -2204,40 +2204,6 @@ i830_clip_video_helper (ScrnInfoPtr pScrn,
     return ret;
 }
 
-static void
-i830_fill_colorkey (ScreenPtr pScreen, uint32_t key, RegionPtr clipboxes)
-{
-   DrawablePtr root = &WindowTable[pScreen->myNum]->drawable;
-   XID	       pval[2];
-   BoxPtr      pbox = REGION_RECTS(clipboxes);
-   int	       i, nbox = REGION_NUM_RECTS(clipboxes);
-   xRectangle  *rects;
-   GCPtr       gc;
-
-   if(!xf86Screens[pScreen->myNum]->vtSema) return;
-
-   gc = GetScratchGC(root->depth, pScreen);
-   pval[0] = key;
-   pval[1] = IncludeInferiors;
-   (void) ChangeGC(gc, GCForeground|GCSubwindowMode, pval);
-   ValidateGC(root, gc);
-
-   rects = xalloc (nbox * sizeof(xRectangle));
-
-   for(i = 0; i < nbox; i++, pbox++) 
-   {
-      rects[i].x = pbox->x1;
-      rects[i].y = pbox->y1;
-      rects[i].width = pbox->x2 - pbox->x1;
-      rects[i].height = pbox->y2 - pbox->y1;
-   }
-   
-   (*gc->ops->PolyFillRect)(root, gc, nbox, rects);
-   
-   xfree (rects);
-   FreeScratchGC (gc);
-}
-
 /*
  * The source rectangle of the video is defined by (src_x, src_y, src_w, src_h).
  * The dest rectangle of the video is defined by (drw_x, drw_y, drw_w, drw_h).
@@ -2525,7 +2491,7 @@ I830PutImage(ScrnInfoPtr pScrn,
 	/* update cliplist */
 	if (!REGION_EQUAL(pScrn->pScreen, &pPriv->clip, clipBoxes)) {
 	    REGION_COPY(pScrn->pScreen, &pPriv->clip, clipBoxes);
-	    i830_fill_colorkey (pScreen, pPriv->colorKey, clipBoxes);
+	    xf86XVFillKeyHelper(pScrn->pScreen, pPriv->colorKey, clipBoxes);
 	}
     } else {
         Bool sync = TRUE;
@@ -2867,7 +2833,7 @@ I830DisplaySurface(XF86SurfacePtr surface,
 		     surface->pitches[0], x1, y1, x2, y2, &dstBox,
 		     src_w, src_h, drw_w, drw_h);
 
-    i830_fill_colorkey (pScreen, pI830Priv->colorKey, clipBoxes);
+    xf86XVFillKeyHelper(pScrn->pScreen, pI830Priv->colorKey, clipBoxes);
 
     pPriv->isOn = TRUE;
     /* we've prempted the XvImage stream so set its free timer */

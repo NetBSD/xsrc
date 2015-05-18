@@ -902,10 +902,6 @@ i830_xf86crtc_resize (ScrnInfoPtr scrn, int width, int height)
 				   width, height, -1, -1, scrn->displayWidth * i830->cpp,
 				   i830->FbBase + scrn->fbOffset);
 
-	/* ick. xf86EnableDisableFBAccess smashes the screen pixmap devPrivate,
-	 * so update the value it uses
-	 */
-	scrn->pixmapPrivate.ptr = i830->FbBase + scrn->fbOffset;
 	xf86DrvMsg(scrn->scrnIndex, X_INFO, "New front buffer at 0x%lx\n",
 		   i830->front_buffer->offset);
 	i830_set_new_crtc_bo(scrn);
