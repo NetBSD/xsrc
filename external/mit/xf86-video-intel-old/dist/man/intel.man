@@ -1,0 +1,494 @@
+.\" shorthand for double quote that works everywhere.
+.ds q \N'34'
+.TH intel  __drivermansuffix__ __vendorversion__
+.SH NAME
+intel \- Intel integrated graphics chipsets
+.SH SYNOPSIS
+.nf
+.B "Section \*qDevice\*q"
+.BI "  Identifier \*q"  devname \*q
+.B  "  Driver \*qintel\*q"
+\ \ ...
+.B EndSection
+.fi
+.SH DESCRIPTION
+.B intel
+is an __xservername__ driver for Intel integrated graphics chipsets.
+The driver supports depths 8, 15, 16 and 24.  All visual types are
+supported in depth 8.  For the i810/i815 other depths support the
+TrueColor and DirectColor visuals.  For the i830M and later, only the
+TrueColor visual is supported for depths greater than 8.  The driver
+supports hardware accelerated 3D via the Direct Rendering Infrastructure
+(DRI), but only in depth 16 for the i810/i815 and depths 16 and 24 for
+the 830M and later.
+.SH SUPPORTED HARDWARE
+.B intel
+supports the i810, i810-DC100, i810e, i815, i830M, 845G, 852GM, 855GM,
+865G, 915G, 915GM, 945G, 945GM, 965G, 965Q, 946GZ, 965GM, 945GME,
+G33, Q33, Q35, G35, GM45, G45, Q45, G43 and G41 chipsets.
+
+.SH CONFIGURATION DETAILS
+Please refer to __xconfigfile__(__filemansuffix__) for general configuration
+details.  This section only covers configuration details specific to this
+driver.
+.PP
+The Intel 8xx and 9xx families of integrated graphics chipsets have a unified
+memory architecture meaning that system memory is used as video RAM.  For the
+i810 and i815 family of chipsets, operating system support for allocating system
+memory is required in order to use this driver.  For the 830M
+and later, this is required in order for the driver to use more video RAM
+than has been pre-allocated at boot time by the BIOS.  This is usually
+achieved with an "agpgart" or "agp" kernel driver.  Linux, FreeBSD, OpenBSD,
+NetBSD, and Solaris have such kernel drivers available.
+.PP
+By default, the i810/i815 will use 8 MB of system memory for graphics if AGP
+allocable memory is < 128 MB, 16 MB if < 192 MB or 24 MB if higher. Use the
+.B VideoRam
+option to change the default value.
+.PP
+For the 830M and later, the driver will automatically size its memory
+allocation according to the features it will support.  Therefore, the
+.B VideoRam
+option, which in the past had been necessary to allow more than some small
+amount of memory to be allocated, is now ignored.
+.PP
+The following driver
+.B Options
+are supported
+.TP
+.BI "Option \*qColorKey\*q \*q" integer \*q
+This sets the default pixel value for the YUV video overlay key.
+.IP
+Default: undefined.
+.TP
+.BI "Option \*qCacheLines\*q \*q" integer \*q
+This allows the user to change the amount of graphics memory used for
+2D acceleration and video when XAA acceleration is enabled.  Decreasing this
+amount leaves more for 3D textures.  Increasing it can improve 2D performance
+at the expense of 3D performance.
+.IP
+Default: depends on the resolution, depth, and available video memory.  The
+driver attempts to allocate space for at 3 screenfuls of pixmaps plus an
+HD-sized XV video.  The default used for a specific configuration can be found
+by examining the __xservername__ log file.
+.TP
+.BI "Option \*qFramebufferCompression\*q \*q" boolean \*q
+This option controls whether the framebuffer compression feature is enabled.
+If possible, the front buffer will be allocated in a tiled format and compressed
+periodically to save memory bandwidth and power.
+This option is only available on mobile chipsets.
+.IP
+Default: enabled on supported configurations.
+.TP
+.BI "Option \*qTiling\*q \*q" boolean \*q
+This option controls whether memory buffers are allocated in tiled mode.  In
+most cases (especially for complex rendering), tiling dramatically improves
+performance.
+.IP
+Default: enabled.
+.TP
+.BI "Option \*qSwapbuffersWait\*q \*q" boolean \*q
+This option controls the behavior of glXSwapBuffers and glXCopySubBufferMESA
+calls by GL applications.  If enabled, the calls will avoid tearing by making
+sure the display scanline is outside of the area to be copied before the copy
+occurs.  If disabled, no scanline synchronization is performed, meaning tearing
+will likely occur.  Note that when enabled, this option can adversely affect
+the framerate of applications that render frames at less than refresh rate.
+.IP
+Default: enabled.
+.TP
+.BI "Option \*qDRI\*q \*q" boolean \*q
+Disable or enable DRI support.
+.IP
+Default: DRI is enabled for configurations where it is supported.
+
+.PP
+The following driver
+.B Options
+are supported for the i810 and i815 chipsets:
+.TP
+.BI "Option \*qDDC\*q \*q" boolean \*q
+Disable or enable DDC support.
+.IP
+Default: enabled.
+.TP
+.BI "Option \*qDac6Bit\*q \*q" boolean \*q
+Enable or disable 6-bits per RGB for 8-bit modes.
+.IP
+Default: 8-bits per RGB for 8-bit modes.
+.TP
+.BI "Option \*qXvMCSurfaces\*q \*q" integer \*q
+This option enables XvMC.  The integer parameter specifies the number of
+surfaces to use.  Valid values are 6 and 7.
+.IP
+Default: XvMC is disabled.
+.TP
+.BI "VideoRam " integer
+This option specifies the amount of system memory to use for graphics, in KB.
+.IP
+The default is 8192 if AGP allocable memory is < 128 MB, 16384 if < 192 MB,
+24576 if higher. DRI require at least a value of 16384. Higher values may give
+better 3D performance, at expense of available system memory.
+.TP
+.BI "Option \*qNoAccel\*q \*q" boolean \*q
+Disable or enable acceleration.
+.IP
+Default: acceleration is enabled.
+
+.PP
+The following driver
+.B Options
+are supported for the 830M and later chipsets:
+.TP
+.BI "Option \*qVideoKey\*q \*q" integer \*q
+This is the same as the
+.B \*qColorKey\*q
+option described above.  It is provided for compatibility with most
+other drivers.
+.TP
+.BI "Option \*qXvPreferOverlay\*q \*q" boolean \*q
+Make hardware overlay be the first XV adaptor.
+The overlay behaves incorrectly in the presence of compositing, but some prefer
+it due to it syncing to vblank in the absence of compositing.  While most
+XV-using applications have options to select which XV adaptor to use, this
+option can be used to place the overlay first for applications which don't
+have options for selecting adaptors.
+.IP
+Default: Textured video adaptor is preferred.
+.TP
+.BI "Option \*qModeDebug\*q \*q" boolean \*q
+Enable printing of additional debugging information about modesetting to
+the server log.
+.IP
+Default: Disabled
+.TP
+.BI "Option \*qFallbackDebug\*q \*q" boolean \*q
+Enable printing of debugging information on acceleration fallbacks to the
+server log.
+.IP
+Default: Disabled
+.TP
+.BI "Option \*qForceEnablePipeA\*q \*q" boolean \*q
+Force the driver to leave pipe A enabled.  May be necessary in configurations
+where the BIOS accesses pipe registers during display hotswitch or lid close,
+causing a crash.  If you find that your platform needs this option, please file
+a bug (see REPORTING BUGS below) including the output of 'lspci -v' and 'lspci -vn'.
+.TP
+.BI "Option \*qLVDS24Bit\*q \*q" boolean \*q
+Specify 24 bit pixel format (i.e. 8 bits per color) to be used for the
+LVDS output.  Some newer LCD panels expect pixels to be formatted and
+sent as 8 bits per color channel instead of the more common 6 bits per
+color channel.  Set this option to true to enable the newer format.
+Note that this concept is entirely different and independent from the
+frame buffer color depth - which is still controlled in the usual way
+within the X server.  This option instead selects the physical format
+/ sequencing of the digital bits sent to the display.  Setting the
+frame buffer color depth is really a matter of preference by the user,
+while setting the pixel format here is a requirement of the connected
+hardware.
+.IP
+Leaving this unset implies the default value of false,
+which is almost always going to be right choice.  If your
+LVDS-connected display on the other hand is extremely washed out
+(e.g. white on a lighter white), trying this option might clear the
+problem.
+.TP
+.BI "Option \*qLVDSFixedMode\*q \*q" boolean \*q
+Use a fixed set of timings for the LVDS output, independent of normal
+xorg specified timings.
+.IP
+The default value if left unspecified is
+true, which is what you want for a normal LVDS-connected LCD type of
+panel.  If you are not sure about this, leave it at its default, which
+allows the driver to automatically figure out the correct fixed panel
+timings.  See further in the section about LVDS fixed timing for more
+information.
+.TP
+.BI "Option \*qXvMC\*q \*q" boolean \*q
+Enable XvMC driver. Current support MPEG2 MC on 915/945 and G33 series.
+User should provide absolute path to libIntelXvMC.so in XvMCConfig file.
+.IP
+Default: Disabled.
+
+.SH OUTPUT CONFIGURATION
+On 830M and better chipsets, the driver supports runtime configuration of
+detected outputs.  You can use the
+.B xrandr
+tool to control outputs on the command line.  Each output listed below may have
+one or more properties associated with it (like a binary EDID block if one is
+found).  Some outputs have unique properties which are described below.  See the "MULTIHEAD CONFIGURATIONS" section below for additional information.
+
+.SS "VGA"
+VGA output port (typically exposed via an HD15 connector).
+
+.SS "LVDS"
+Low Voltage Differential Signalling output (typically a laptop LCD panel).  Available properties:
+
+.PP
+.B BACKLIGHT
+- current backlight level (adjustable)
+.TP 2
+By adjusting the BACKLIGHT property, the brightness on the LVDS output can be adjusted.  In some cases, this property may be unavailable (for example if your platform uses an external microcontroller to control the backlight).
+
+.PP
+.B BACKLIGHT_CONTROL
+- method used to control backlight
+.TP 2
+The driver will attempt to automatically detect the backlight control method for your platform.  If this fails however, you can select another method which may allow you to control your backlight.  Available methods include:
+.PP
+.B native
+.TP 4
+Intel chipsets include backlight control registers, which on some platforms may be wired to control the backlight directly.  This method uses those registers.
+.PP
+.B legacy
+.TP 4
+The legacy backlight control registers exist in PCI configuration space, and have fewer available backlight levels than the native registers.  However, some platforms are wired this way and so need to use this method.
+.PP
+.B combo
+.TP 4
+This method attempts to use the native registers where possible, resorting to the legacy, configuration space registers only to enable the backlight if needed.  On platforms that have both wired this can be a good choice as it allows the fine grained backlight control of the native interface.
+.PP
+.B kernel
+.TP 4
+On some system, the kernel may provide a backlight control driver.  In that case, using the kernel interfaces is preferable, as the same driver may respond to hotkey events or external APIs.
+
+.PP
+.B PANEL_FITTING
+- control LCD panel fitting
+.TP 2
+By default, the driver will attempt to upscale resolutions smaller than the LCD's native size while preserving the aspect ratio.  Other modes are available however:
+.PP
+.B center
+.TP 4
+Simply center the image on-screen, without scaling.
+.PP
+.B full_aspect
+.TP 4
+The default mode.  Try to upscale the image to the screen size, while preserving aspect ratio.  May result in letterboxing or pillar-boxing with some resolutions.
+.PP
+.B full
+.TP 4
+Upscale the image to the native screen size without regard to aspect ratio.  In this mode, the full screen image may appear distorted in some resolutions.
+
+.SS "TV"
+Integrated TV output.  Available properties include:
+
+.PP
+.B BOTTOM, RIGHT, TOP, LEFT
+- margins
+.TP 2
+Adjusting these properties allows you to control the placement of your TV output buffer on the screen. The options with the same name can also be set in xorg.conf with integer value.
+
+.PP
+.B BRIGHTNESS
+- TV brightness, range 0-255
+.TP 2
+Adjust TV brightness, default value is 128.
+
+.PP
+.B CONTRAST
+- TV contrast, range 0-255
+.TP 2
+Adjust TV contrast, default value is 1.0 in chipset specific format.
+
+.PP
+.B SATURATION
+- TV saturation, range 0-255
+.TP 2
+Adjust TV saturation, default value is 1.0 in chipset specific format.
+
+.PP
+.B HUE
+- TV hue, range 0-255
+.TP 2
+Adjust TV hue, default value is 0.
+
+.PP
+.B TV_FORMAT
+- output standard
+.TP 2
+This property allows you to control the output standard used on your TV output port.  You can select between NTSC-M, NTSC-443, NTSC-J, PAL-M, PAL-N, and PAL.
+
+.PP
+.B TV_Connector
+- connector type
+.TP 2
+This config option should be added to xorg.conf TV monitor's section, it allows you to force the TV output connector type, which bypass load detect and TV will always be taken as connected. You can select between S-Video, Composite and Component.
+
+.SS "TMDS-1"
+First DVI SDVO output
+
+.SS "TMDS-2"
+Second DVI SDVO output
+
+.SS "TMDS-1", "TMDS-2", "HDMI-1", "HDMI-2"
+DVI/HDMI outputs. Avaliable common properties include:
+.PP
+.B BROADCAST_RGB
+- method used to set RGB color range(full range 0-255, not full range 16-235)
+.TP 2
+Adjusting this propertie allows you to set RGB color range on each channel in order to match HDTV requirment(default 0 for full range). Setting 1 means RGB color range is 16-235, 0 means RGB color range is 0-255 on each channel.
+
+.PP
+SDVO and DVO TV outputs are not supported by the driver at this time.
+
+.PP
+See __xconfigfile__(__filemansuffix__) for information on associating Monitor
+sections with these outputs for configuration.  Associating Monitor sections
+with each output can be helpful if you need to ignore a specific output, for
+example, or statically configure an extended desktop monitor layout.
+
+.SH HARDWARE LVDS FIXED TIMINGS AND SCALING
+
+Following here is a discussion that should shed some light on the
+nature and reasoning behind the LVDSFixedMode option.
+
+Unlike a CRT display, an LCD has a "native" resolution corresponding
+to the actual pixel geometry.  A graphics controller under all normal
+circumstances should always output that resolution (and timings) to
+the display.  Anything else and the image might not fill the display,
+it might not be centered, or it might have information missing - any
+manner of strange effects can happen if an LCD panel is not fed with
+the expected resolution and timings.
+
+However there are cases where one might want to run an LCD panel at an
+effective resolution other than the native one.  And for this reason,
+GPUs which drive LCD panels typically include a hardware scaler to
+match the user-configured frame buffer size to the actual size of the
+panel.  Thus when one "sets" his/her 1280x1024 panel to only 1024x768,
+the GPU happily configures a 1024x768 frame buffer, but it scans the
+buffer out in such a way that the image is scaled to 1280x1024 and in
+fact sends 1280x1024 to the panel.  This is normally invisible to the
+user; when a "fuzzy" LCD image is seen, scaling like this is why this
+happens.
+
+In order to make this magic work, this driver logically has to be
+configured with two sets of monitor timings - the set specified (or
+otherwise determined) as the normal xorg "mode", and the "fixed"
+timings that are actually sent to the monitor.  But with xorg, it's
+only possible to specify the first user-driven set, and not the second
+fixed set.  So how does the driver figure out the correct fixed panel
+timings?  Normally it will attempt to detect the fixed timings, and it
+uses a number of strategies to figure this out.  First it attempts to
+read EDID data from whatever is connected to the LVDS port.  Failing
+that, it will check if the LVDS output is already configured (perhaps
+previously by the video BIOS) and will adopt those settings if found.
+Failing that, it will scan the video BIOS ROM, looking for an embedded
+mode table from which it can infer the proper timings.  If even that
+fails, then the driver gives up, prints the message "Couldn't detect
+panel mode.  Disabling panel" to the X server log, and shuts down the
+LVDS output.
+
+Under most circumstances, the detection scheme works.  However there
+are cases when it can go awry.  For example, if you have a panel
+without EDID support and it isn't integral to the motherboard
+(i.e. not a laptop), then odds are the driver is either not going to
+find something suitable to use or it is going to find something
+flat-out wrong, leaving a messed up display.  Remember that this is
+about the fixed timings being discussed here and not the
+user-specified timings which can always be set in xorg.conf in the
+worst case.  So when this process goes awry there seems to be little
+recourse.  This sort of scenario can happen in some embedded
+applications.
+
+The LVDSFixedMode option is present to deal with this.  This option
+normally enables the above-described detection strategy.  And since it
+defaults to true, this is in fact what normally happens.  However if
+the detection fails to do the right thing, the LVDSFixedMode option
+can instead be set to false, which disables all the magic.  With
+LVDSFixedMode set to false, the detection steps are skipped and the
+driver proceeds without a specified fixed mode timing.  This then
+causes the hardware scaler to be disabled, and the actual timings then
+used fall back to those normally configured via the usual xorg
+mechanisms.
+
+Having LVDSFixedMode set to false means that whatever is used for the
+monitor's mode (e.g. a modeline setting) is precisely what is sent to
+the device connected to the LVDS port.  This also means that the user
+now has to determine the correct mode to use - but it's really no
+different than the work for correctly configuring an old-school CRT
+anyway, and the alternative if detection fails will be a useless
+display.
+
+In short, leave LVDSFixedMode alone (thus set to true) and normal
+fixed mode detection will take place, which in most cases is exactly
+what is needed.  Set LVDSFixedMode to false and then the user has full
+control over the resolution and timings sent to the LVDS-connected
+device, through the usual means in xorg.
+
+.SH MULTIHEAD CONFIGURATIONS
+
+The number of independent outputs is dictated by the number of CRTCs
+(in X parlance) a given chip supports.  Most recent Intel chips have
+two CRTCs, meaning that two separate framebuffers can be displayed
+simultaneously, in an extended desktop configuration.  If a chip
+supports more outputs than it has CRTCs (say local flat panel, VGA and
+TV in the case of many outputs), two of the outputs will have to be
+"cloned", meaning that they display the same framebuffer contents (or
+one displays a subset of another's framebuffer if the modes aren't
+equal).
+
+You can use the "xrandr" tool, or various desktop utilities, to change
+your output configuration at runtime.  To statically configure your
+outputs, you can use the "Monitor-<type>" options along with
+additional monitor sections in your xorg.conf to create your screen
+topology.  The example below puts the VGA output to the right of the
+builtin laptop screen, both running at 1024x768.
+
+.nf
+.B "Section \*qMonitor\*q"
+.BI "  Identifier \*qLaptop FooBar Internal Display\*q"
+.BI "  Option \*qPosition\*q \*q0 0\*q"
+.B "EndSection"
+
+.B "Section \*qMonitor\*q"
+.BI "  Identifier \*qSome Random CRT\*q"
+.BI "  Option \*qPosition\*q \*q1024 0\*q"
+.BI "  Option \*qRightOf\*q \*qLaptop FoodBar Internal Display\*q"
+.B "EndSection"
+
+.B "Section \*qDevice\*q"
+.BI "  Driver \*qintel\*q"
+.BI "  Option \*qmonitor-LVDS\*q \*qLaptop FooBar Internal Display\*q"
+.BI "  Option \*qmonitor-VGA\*q \*qSome Random CRT\*q"
+.B "EndSection"
+
+.SH TEXTURED VIDEO ATTRIBUTES
+The driver supports the following X11 Xv attributes for Textured Video.
+You can use the "xvattr" tool to query/set those attributes at runtime.
+
+.SS "XV_SYNC_TO_VBLANK"
+XV_SYNC_TO_VBLANK is used to control whether textured adapter synchronizes 
+the screen update to the vblank to eliminate tearing. It is a Boolean
+attribute with values of 0 (never sync) or 1 (always sync). An historic
+value of -1 (sync for large windows only) will now be interpreted as 1,
+(since the current approach for sync is not costly even with small
+video windows).
+
+.SS "XV_BRIGHTNESS"
+        
+.SS "XV_CONTRAST"
+        
+.SH REPORTING BUGS
+
+The xf86-video-intel driver is part of the X.Org and Freedesktop.org
+umbrella projects.  Details on bug reporting can be found at
+http://www.intellinuxgraphics.org/how_to_report_bug.html.  Mailing
+lists are also commonly used to report experiences and ask questions
+about configuration and other topics.  See lists.freedesktop.org for
+more information (the xorg@lists.freedesktop.org mailing list is the
+most appropriate place to ask X.Org and driver related questions).
+
+.SH "SEE ALSO"
+__xservername__(__appmansuffix__), __xconfigfile__(__filemansuffix__), Xserver(__appmansuffix__), X(__miscmansuffix__)
+.SH AUTHORS
+Authors include: Keith Whitwell, and also Jonathan Bian, Matthew J Sottek,
+Jeff Hartmann, Mark Vojkovich, Alan Hourihane, H. J. Lu.  830M and 845G
+support reworked for XFree86 4.3 by David Dawes and Keith Whitwell.  852GM,
+855GM, and 865G support added by David Dawes and Keith Whitwell.  915G,
+915GM, 945G, 945GM, 965G, 965Q and 946GZ support added by Alan Hourihane and
+Keith Whitwell. Lid status support added by Alan Hourihane. Textured video
+support for 915G and later chips, RandR 1.2 and hardware modesetting added
+by Eric Anholt and Keith Packard. EXA and Render acceleration added by Wang
+Zhenyu. TV out support added by Zou Nan Hai and Keith Packard. 965GM, G33,
+Q33, and Q35 support added by Wang Zhenyu.
