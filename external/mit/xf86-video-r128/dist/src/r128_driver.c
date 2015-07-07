@@ -1625,6 +1625,8 @@ static int R128ValidateFPModes(ScrnInfoPtr pScrn)
         pScrn->display->modes[0] = xnfalloc(16);
         sprintf(pScrn->display->modes[0], "%dx%d",
                info->PanelXRes, info->PanelYRes);
+        /* don't forget to NULL terminate */
+        pScrn->display->modes[1] = NULL;
     }
 
     for(i=0; pScrn->display->modes[i] != NULL; i++)
