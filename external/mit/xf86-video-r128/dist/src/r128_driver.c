@@ -1622,8 +1622,8 @@ static int R128ValidateFPModes(ScrnInfoPtr pScrn)
     /* If no mode specified in config, we use native resolution*/
     if(!pScrn->display->modes[0])
     {
-        pScrn->display->modes[0] = xnfalloc(16);
-        sprintf(pScrn->display->modes[0], "%dx%d",
+        pScrn->display->modes[0] = xnfalloc(32);
+        snprintf(pScrn->display->modes[0], 32, "%dx%d",
                info->PanelXRes, info->PanelYRes);
         /* don't forget to NULL terminate */
         pScrn->display->modes[1] = NULL;
