@@ -75,7 +75,7 @@ requests are received and proxies are started.
 The proxy manager maintains a local configuration file describing the proxy
 services available.  This configuration file is installed
 in
-.I __projectroot__/lib/X11/proxymngr/pmconfig
+.I __configdir__
 during the installation
 of proxymngr.  The location of the configuration file can be overwritten using
 the \fB\-config\fP command line option.

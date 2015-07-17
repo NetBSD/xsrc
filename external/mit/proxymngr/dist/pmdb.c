@@ -33,12 +33,7 @@ from The Open Group.
 #include <stdlib.h>
 #include <signal.h>
 
-#if defined(X_NOT_POSIX) && defined(SIGNALRETURNSINT)
-#define SIGVAL int
-#else
-#define SIGVAL void
-#endif
-typedef SIGVAL (*Signal_Handler)(int);
+typedef void (*Signal_Handler)(int);
 
 static proxy_service *proxyServiceList = NULL;
 
@@ -77,18 +72,17 @@ FindProxyService (
     }
 
     if (createIf) {
-	service = (proxy_service *) malloc (sizeof (proxy_service));
+	service = malloc (sizeof (proxy_service));
 	if (!service)
 	    return NULL;
 
-	service->serviceName = (char *) malloc (nameLen + 1);
+	service->serviceName = strdup (serviceName);
 	if (!service->serviceName)
 	{
 	    free (service);
 	    return NULL;
 	}
 
-	strcpy (service->serviceName, serviceName);
 	service->proxyCount = 0;
 	service->proxyList = NULL;
 
@@ -121,7 +115,7 @@ StartNewProxy (
     if (!service)
 	return NULL;
 
-    proxy = (running_proxy *) malloc (sizeof (running_proxy));
+    proxy = malloc (sizeof (running_proxy));
     if (!proxy)
 	return NULL;
 
@@ -216,7 +210,7 @@ ConnectToProxy (
         SetCloseOnExec (IceConnectionNumber (proxy_iceConn));
 
 	/* See PMprotocolSetupProc */
-	pmConn = (PMconn *) malloc (sizeof (PMconn));
+	pmConn = malloc (sizeof (PMconn));
 
 	if (pmConn == NULL) {
 	    IceCloseConnection (proxy_iceConn);
@@ -245,7 +239,7 @@ ConnectToProxy (
 	pmConn->release = release;
     }
 
-    proxy = (running_proxy *) malloc (sizeof (running_proxy));
+    proxy = malloc (sizeof (running_proxy));
     if (!proxy) {
 	IceCloseConnection (proxy_iceConn);
 	free (pmConn);
@@ -378,20 +372,13 @@ ProxyGone (
 					req->authLen, req->authName,
 					req->authData);
 		    }
-		    if (req->serviceName)
-			free (req->serviceName);
-		    if (req->serverAddress)
-			free (req->serverAddress);
-		    if (req->hostAddress)
-			free (req->hostAddress);
-		    if (req->startOptions)
-			free (req->startOptions);
-		    if (req->listData)
-			free (req->listData);	/* proxyList */
-		    if (req->authName)
-			free (req->authName);
-		    if (req->authData)
-			free (req->authData);
+		    free (req->serviceName);
+		    free (req->serverAddress);
+		    free (req->hostAddress);
+		    free (req->startOptions);
+		    free (req->listData);	/* proxyList */
+		    free (req->authName);
+		    free (req->authData);
 		    free (req);
 		    req = nextreq;
 		}
@@ -424,20 +411,13 @@ ProxyGone (
 
 			*prev_reqP = req->next;
 
-			if (req->serviceName)
-			    free (req->serviceName);
-			if (req->serverAddress)
-			    free (req->serverAddress);
-			if (req->hostAddress)
-			    free (req->hostAddress);
-			if (req->startOptions)
-			    free (req->startOptions);
-			if (req->listData)
-			    free (req->listData);	/* proxyList */
-			if (req->authName)
-			    free (req->authName);
-			if (req->authData)
-			    free (req->authData);
+			free (req->serviceName);
+			free (req->serverAddress);
+			free (req->hostAddress);
+			free (req->startOptions);
+			free (req->listData);	/* proxyList */
+			free (req->authName);
+			free (req->authData);
 			free (req);
 
 			/* return; */ /* should but only one req, but... */
@@ -479,7 +459,7 @@ GetRunningProxyList (
     if (!service || !service->proxyCount)
 	return NULL;
 
-    runList = (running_proxy_list *) malloc (sizeof (running_proxy_list) +
+    runList = malloc (sizeof (running_proxy_list) +
 	service->proxyCount * sizeof (running_proxy *));
 
     if (!runList)
@@ -561,20 +541,22 @@ PushRequestorQueue (
     char *authData)
 
 {
-    request_list *newreq = (request_list *) malloc (sizeof (request_list));
+    request_list *newreq = malloc (sizeof (request_list));
 
     if (!newreq)
 	return 0;
 
-    newreq->serviceName = (char *) malloc (strlen (serviceName) + 1);
-    newreq->serverAddress = (char *) malloc (strlen (serverAddress) + 1);
-    newreq->hostAddress = (char *) malloc (strlen (hostAddress) + 1);
-    newreq->startOptions = (char *) malloc (strlen (startOptions) + 1);
+    newreq->serviceName = strdup (serviceName);
+    newreq->serverAddress = strdup (serverAddress);
+    newreq->hostAddress = strdup (hostAddress);
+    newreq->startOptions = strdup (startOptions);
     if (authLen > 0)
     {
-	newreq->authName = (char *) malloc (strlen (authName) + 1);
-	newreq->authData = (char *) malloc (authLen);
+	newreq->authName = strdup (authName);
+	newreq->authData = malloc (authLen);
     }
+    else
+	newreq->authName = newreq->authData = NULL;
 
     if (!newreq->serviceName ||
 	!newreq->serverAddress ||
@@ -582,34 +564,19 @@ PushRequestorQueue (
 	!newreq->startOptions ||
 	(authLen > 0 && (!newreq->authName || !newreq->authData)))
     {
-	if (newreq->serviceName)
-	    free (newreq->serviceName);
-	if (newreq->serverAddress)
-	    free (newreq->serverAddress);
-	if (newreq->hostAddress)
-	    free (newreq->hostAddress);
-	if (newreq->startOptions)
-	    free (newreq->startOptions);
-	if (newreq->authName)
-	    free (newreq->authName);
-	if (newreq->authData)
-	    free (newreq->authData);
+	free (newreq->serviceName);
+	free (newreq->serverAddress);
+	free (newreq->hostAddress);
+	free (newreq->startOptions);
+	free (newreq->authName);
+	free (newreq->authData);
 	free (newreq);
 	return 0;
     }
 
-    strcpy (newreq->serviceName, serviceName);
-    strcpy (newreq->serverAddress, serverAddress);
-    strcpy (newreq->hostAddress, hostAddress);
-    strcpy (newreq->startOptions, startOptions);
     if (authLen > 0)
     {
-	strcpy (newreq->authName, authName);
 	memcpy (newreq->authData, authData, authLen);
-    }
-    else
-    {
-	newreq->authName = newreq->authData = NULL;
     }
 
     newreq->requestor = requestor;
@@ -733,7 +700,7 @@ PopRequestorQueue (
 
 	    if (newServer)
 	    {
-		server = (server_list *) malloc (sizeof (server_list));
+		server = malloc (sizeof (server_list));
 		server->serverAddress = proxy->requests->serverAddress;
 		server->next = proxy->servers;
 		proxy->servers = server;
@@ -743,18 +710,12 @@ PopRequestorQueue (
 	if (!newServer)
 	    free (proxy->requests->serverAddress);
 
-	if (proxy->requests->serviceName)
-	    free (proxy->requests->serviceName);
-	if (proxy->requests->hostAddress)
-	    free (proxy->requests->hostAddress);
-	if (proxy->requests->startOptions)
-	    free (proxy->requests->startOptions);
-	if (freeProxyList && proxy->requests->listData)
-	    free (proxy->requests->listData);	/* proxyList */
-	if (proxy->requests->authName)
-	    free (proxy->requests->authName);
-	if (proxy->requests->authData)
-	    free (proxy->requests->authData);
+	free (proxy->requests->serviceName);
+	free (proxy->requests->hostAddress);
+	free (proxy->requests->startOptions);
+	free (proxy->requests->listData);	/* proxyList */
+	free (proxy->requests->authName);
+	free (proxy->requests->authData);
 
 	requestor = proxy->requests->requestor;
 

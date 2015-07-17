@@ -49,9 +49,9 @@ FILE	*f)
 	    else
 		*plen = BUFSIZ;
 	    if (*pbuf)
-		*pbuf = (char *) realloc (*pbuf, *plen + 1);
+		*pbuf = realloc (*pbuf, *plen + 1);
 	    else
-		*pbuf = (char *) malloc (*plen + 1);
+		*pbuf = malloc (*plen + 1);
 	    if (! *pbuf) {
 		fprintf (stderr, "Memory allocation failure reading config file\n");
 		return 0;
@@ -73,9 +73,7 @@ FILE	*f)
 
 #ifdef NEED_STRCASECMP
 int
-ncasecmp (str1, str2, n)
-    char *str1, *str2;
-    int n;
+ncasecmp (const char *str1, const char *str2, int n)
 {
     char buf1[512],buf2[512];
     char c, *s;
@@ -104,8 +102,8 @@ ncasecmp (str1, str2, n)
 
 Status
 GetConfig (
-    char *configFile,
-    char *serviceName,
+    const char *configFile,
+    const char *serviceName,
     Bool *managed,
     char **startCommand,
     char **proxyAddress)
@@ -160,35 +158,31 @@ GetConfig (
 
 	if (*managed)
 	{
-	    n = strlen (p);
-	    *startCommand = (char *) malloc (n + 2);
+	    n = strlen (p) + 2;
+	    *startCommand = malloc (n);
 	    if (! *startCommand) {
 		fprintf (stderr,
 			 "Memory allocation failed for service \"%s\"\n",
 			 serviceName);
 		break;
 	    }
-	    strcpy (*startCommand, p);
-	    (*startCommand)[n] = '&';
-	    (*startCommand)[n + 1] = '\0';
+	    snprintf(*startCommand, n, "%s&", p);
 	}
 	else
 	{
-	    *proxyAddress = (char *) malloc (strlen (p) + 1);
+	    *proxyAddress = strdup (p);
 	    if (! *proxyAddress) {
 		fprintf (stderr,
 			 "Memory allocation failed for service \"%s\" at %s\n",
 			 serviceName, p);
 		break;
 	    }
-	    strcpy (*proxyAddress, p);
 	}
 
 	found = 1;
     }
 
-    if (buf)
-	free (buf);
+    free (buf);
 
     fclose (fp);
     return found;

@@ -60,8 +60,8 @@ static IcePaVersionRec	PMReplyVersions[] = {{PM_MAJOR_VERSION, PM_MINOR_VERSION,
 static IcePoVersionRec	PMSetupVersions[] = {{PM_MAJOR_VERSION, PM_MINOR_VERSION,
 				      PMSetupProcessMessages}};
 
-char *PM_VENDOR_STRING = XVENDORNAME;
-char *PM_VENDOR_RELEASE = XORG_RELEASE;
+const char *PM_VENDOR_STRING = XVENDORNAME;
+const char *PM_VENDOR_RELEASE = XORG_RELEASE;
 
 int verbose = 0;
 
@@ -69,7 +69,7 @@ static XtAppContext	appContext;
 
 #define PM_PORT "6500"
 
-static char *configFile = NULL;
+static const char *configFile = NULL;
 
 void
 Usage(void)
@@ -177,7 +177,7 @@ main (int argc, char *argv[])
     }
 
     networkIds = IceComposeNetworkIdList (numTransports, listenObjs);
-    p = (char *) malloc(sizeof ("PROXY_MANAGER") + strlen(networkIds) + 2);
+    p = malloc (sizeof ("PROXY_MANAGER") + strlen(networkIds) + 2);
     sprintf (p, "PROXY_MANAGER=%s", networkIds);
     putenv (p);
     printf ("%s\n", p);
@@ -275,7 +275,7 @@ PMprotocolSetupProc(IceConn iceConn, int majorVersion, int minorVersion,
     static char standardError[] = "Could not allocate memory for new client";
     PMconn *pmConn;
 
-    if ((pmConn = (PMconn *) malloc (sizeof (PMconn))) == NULL)
+    if ((pmConn = malloc (sizeof (PMconn))) == NULL)
     {
 	if (verbose)
 	    fprintf (stderr, "%s\n", standardError);
@@ -355,8 +355,8 @@ void
 SendGetProxyAddrReply (
     PMconn *requestor,
     int status,
-    char *addr,
-    char *error)
+    const char *addr,
+    const char *error)
 
 {
     int len = STRING_BYTES (addr) + STRING_BYTES (error);
@@ -449,7 +449,7 @@ PMReplyProcessMessages(IceConn iceConn, IcePointer clientData, int opcode,
 	if (authLen > 0)
 	{
 	    EXTRACT_STRING (pData, swap, authName);
-	    authData = (char *) malloc (authLen);
+	    authData = malloc (authLen);
 	    memcpy (authData, pData, authLen);
 	}
 
@@ -513,7 +513,7 @@ PMReplyProcessMessages(IceConn iceConn, IcePointer clientData, int opcode,
 			char		* pch = strdup (tmpName);
 
 			len = strlen(canonname) + strlen(tmpName) + 1;
-			serverAddress = (char *) realloc (serverAddress, len);
+			serverAddress = realloc (serverAddress, len);
 			sprintf (serverAddress, "%s%s", canonname, pch);
 			free (pch);
 		    }
@@ -539,18 +539,12 @@ PMReplyProcessMessages(IceConn iceConn, IcePointer clientData, int opcode,
 	ForwardRequest (pmConn, serviceName, serverAddress, hostAddress,
 			startOptions, authLen, authName, authData);
 
-	if (serviceName)
-	    free (serviceName);
-	if (serverAddress)
-	    free (serverAddress);
-	if (hostAddress)
-	    free (hostAddress);
-	if (startOptions)
-	    free (startOptions);
-	if (authName)
-	    free (authName);
-	if (authData)
-	    free (authData);
+	free (serviceName);
+	free (serverAddress);
+	free (hostAddress);
+	free (startOptions);
+	free (authName);
+	free (authData);
 
 	break;
     }
@@ -793,10 +787,8 @@ PMReplyProcessMessages(IceConn iceConn, IcePointer clientData, int opcode,
 		    }
 		}
 
-		if (startCommand)
-		    free (startCommand);
-		if (proxyAddress)
-		    free (proxyAddress);
+		free (startCommand);
+		free (proxyAddress);
 
 		PopRequestorQueue (pmConn, False,
 		    runningProxy ? False : True /* free proxy list */);
@@ -836,10 +828,8 @@ PMReplyProcessMessages(IceConn iceConn, IcePointer clientData, int opcode,
 	    }
 	}
 
-	if (addr)
-	    free (addr);
-	if (error)
-	    free (error);
+	free (addr);
+	free (error);
 
 	break;
     }
@@ -976,10 +966,8 @@ ForwardRequest(PMconn *requestor, char *serviceName, char *serverAddress,
 		}
 	    }
 
-	    if (startCommand)
-		free (startCommand);
-	    if (proxyAddress)
-		free (proxyAddress);
+	    free (startCommand);
+	    free (proxyAddress);
 	}
     }
 
