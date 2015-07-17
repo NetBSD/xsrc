@@ -21,7 +21,7 @@
 
 bin_PROGRAMS = proxymngr
 
-CONFIG_DIR = $(libdir)/X11/proxymngr
+CONFIG_DIR = $(sysconfdir)/X11/proxymngr
 
 AM_CFLAGS =						\
 	$(CWARNFLAGS)					\
@@ -47,7 +47,7 @@ configdir = $(CONFIG_DIR)
 config_DATA = pmconfig
 
 pmconfig: pmconfig.cpp
-	$(SED) -e s/LBXPROXY/`echo @LBXPROXY@ | sed -e s/\\\\//\\\\\\\\\\\\//g`/ < $(srcdir)/pmconfig.cpp > $@
+	$(AM_V_GEN)$(SED) -e s/LBXPROXY/`echo @LBXPROXY@ | sed -e s/\\\\//\\\\\\\\\\\\//g`/ < $(srcdir)/pmconfig.cpp > $@
 
 EXTRA_DIST = pmconfig.cpp
 CLEANFILES = pmconfig
@@ -58,6 +58,9 @@ appman_DATA = $(appman_PRE:man=@APP_MAN_SUFFIX@)
 
 EXTRA_DIST += $(appman_PRE)
 CLEANFILES += $(appman_DATA)
+
+# String replacements in MAN_SUBSTS now come from xorg-macros.m4 via configure
+MAN_SUBSTS += -e 's|__configdir__|$(CONFIG_DIR)|g'
 
 SUFFIXES = .$(APP_MAN_SUFFIX) .man
 

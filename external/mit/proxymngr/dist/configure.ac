@@ -21,11 +21,17 @@ dnl  PERFORMANCE OF THIS SOFTWARE.
 dnl
 dnl Process this file with autoconf to create configure.
 
+# Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([proxymngr], [1.0.2],
+AC_INIT([proxymngr], [1.0.4],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg], [proxymngr])
-AM_INIT_AUTOMAKE([dist-bzip2])
-AM_MAINTAINER_MODE
+AC_CONFIG_SRCDIR([Makefile.am])
+# The program itself has a header called config.h so
+# we have to choose a different name
+AC_CONFIG_HEADERS([xconfig.h])
+
+# Initialize Automake
+AM_INIT_AUTOMAKE([foreign dist-bzip2])
 
 # Require X.Org macros 1.8 or later for MAN_SUBSTS set by XORG_MANPAGE_SECTIONS
 m4_ifndef([XORG_MACROS_VERSION],
@@ -33,10 +39,7 @@ m4_ifndef([XORG_MACROS_VERSION],
 XORG_MACROS_VERSION(1.8)
 XORG_DEFAULT_OPTIONS
 
-# The program itself has a header called config.h so 
-# we have to choose a different name
-AM_CONFIG_HEADER(xconfig.h)
-
+# Checks for programs
 AC_PROG_CPP
 
 AC_PATH_PROG(LBXPROXY, lbxproxy)
@@ -45,7 +48,7 @@ if [[ -z $LBXPROXY ]] ; then
 fi
 
 # Checks for pkg-config packages
-PKG_CHECK_MODULES(PROXYMNGR, ice xt x11 xproxymngproto)
+PKG_CHECK_MODULES(PROXYMNGR, [ice xt xproto >= 7.0.17 xproxymngproto])
 
 AC_CHECK_FUNC(strcasecmp, [], 
 	AC_DEFINE([NEED_STRCASECMP],1,

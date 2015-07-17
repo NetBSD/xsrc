@@ -1,3 +1,194 @@
+commit 7e9c8369b90333b2102e90a4d95046cf73bcc416
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Apr 16 22:19:44 2015 -0700
+
+    proxymngr 1.0.4
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit be8a5fbefcd6d3bee5e55283e06e255003b376b4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 8 16:05:52 2014 -0800
+
+    Stop checking if pointers are NULL before passing them to free()
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f391fa1f55436ec2e4f7de4c4734fcd89cdbe250
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 8 15:47:43 2014 -0800
+
+    Stop casting results of malloc calls
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5d5a7f80d905d58530c8473bc7ec0b0b3b165658
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 8 15:45:00 2014 -0800
+
+    Replace last strcpy call + manual append with snprintf call
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9a17f21de44bcfe1493e9d10ae2354c2a3b496b1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 8 15:42:03 2014 -0800
+
+    Replace malloc(strlen)+strcpy sets with strdup calls
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 333085a276a2bb2b156339cd9f8caa658ef4d1b6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 8 15:32:42 2014 -0800
+
+    Ensure memory is initialized before use in PushRequestorQueue
+    
+    If authLen <= 0, then we weren't initializing the authName & authData
+    pointers until after checking if all the allocations succeeded, but
+    if any allocations failed, we'd then try to free them before that.
+    
+    Error: Uninitialised memory (CWE 456)
+       Possible access to uninitialised memory '&newreq->authData'
+            at line 590 of pmdb.c in function 'PushRequestorQueue'.
+              &newreq->authData allocated at line 559.
+              &newreq->authData uninitialised when authLen <= 0 at line 568.
+            at line 591 of pmdb.c in function 'PushRequestorQueue'.
+              &newreq->authData allocated at line 559.
+              &newreq->authData uninitialised when authLen <= 0 at line 568
+                  and newreq->authName == NULL at line 574.
+       Possible access to uninitialised memory '&newreq->authName'
+            at line 588 of pmdb.c in function 'PushRequestorQueue'.
+              &newreq->authName allocated at line 559.
+              &newreq->authName uninitialised when authLen <= 0 at line 568.
+            at line 589 of pmdb.c in function 'PushRequestorQueue'.
+              &newreq->authName allocated at line 559.
+              &newreq->authName uninitialised when authLen <= 0 at line 568
+                  and newreq->authName != NULL at line 574.
+    
+    [ This bug was found by the Parfait 1.5.1 bug checking tool.
+      http://labs.oracle.com/pls/apex/f?p=labs:49:::::P49_PROJECT_ID:13 ]
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3735919092d164a5d4a76a47e6ae8281fbf89be1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jun 2 21:03:45 2014 -0700
+
+    autogen.sh: Honor NOCONFIGURE=1
+    
+    See http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit af7fd61a9b53f4e7e433c17292df55ae55fee2fa
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jun 2 21:03:45 2014 -0700
+
+    configure: Drop AM_MAINTAINER_MODE
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e6d92a4bd724db15eff286eb975df0baaa99313c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jun 1 00:30:41 2014 -0700
+
+    This is not a GNU project, so declare it foreign.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 29d85cd3abd884022b67ea26c011fc06109242ac
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Apr 1 21:50:37 2013 -0700
+
+    Assume signal handlers return void, as C89 requires
+    
+    Drops use of Imake's obsolete SIGNALRETURNSINT.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 173166cff3d37a71098bf9b194b0cbe8dae0564c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 10 17:21:40 2013 -0800
+
+    proxymngr 1.0.3
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 41a2f89c2644dc66fbddf84af7cf02f0be323059
+Author: Egbert Eich <eich@freedesktop.org>
+Date:   Thu May 19 09:30:06 2011 +0200
+
+    install: Use sysconfdir instead of libdir for config files.
+    
+    Most X packages today install their config files in sysconfigdir,
+    only a few are left which still put their configuration in libdir.
+    
+    Signed-off-by: Egbert Eich <eich@freedesktop.org>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4e07066c12f2e2ef69ec4e56f702452c1216c035
+Author: Egbert Eich <eich@freedesktop.org>
+Date:   Thu May 19 09:29:10 2011 +0200
+
+    man: Set correct config file location in man page
+    
+    Change the config file location from a hard coded path to what is
+    set during build.
+    
+    Signed-off-by: Egbert Eich <eich@freedesktop.org>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a636334182348da3b3f62012c1ae7690339ec620
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Apr 16 15:47:26 2012 -0700
+
+    Mark Usage() with _X_NORETURN to silence gcc warning
+    
+    main.c: In function ‘Usage’:
+    main.c:75:1: warning: function might be possible candidate for attribute ‘noreturn’
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 509bceb0f731f580903a32e4861b863a512dfd0b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Apr 16 15:45:01 2012 -0700
+
+    Add const qualifiers to clear gcc -Wwrite-strings warnings
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2945c25a30029eded24abfe9ff0a2e30063b3b6b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Feb 18 20:02:47 2011 -0800
+
+    config: replace deprecated AM_CONFIG_HEADER with AC_CONFIG_HEADERS
+    
+    Regroup AC statements under the Autoconf initialization section.
+    Regroup AM statements under the Automake initialization section.
+    Add missing AC_CONFIG_SRCDIR
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e7678d9a965aeff60fb6e21409412d115f74bcb8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Feb 18 20:00:59 2011 -0800
+
+    Add $(AM_V_GEN) to silence pmconfig creation rule
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d2c6b45582897ad73f6160dcec1e20162571d9f7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Feb 18 19:55:14 2011 -0800
+
+    proxymngr depends on xproto, not x11 (Xlib)
+    
+    proxymngr doesn't include any Xlib headers or call any Xlib functions
+    directly, but does include Xos.h, Xfuncs.h & Xmd.h from xproto.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 3c65ddd9f0717ef330513bdabb7d3ce8bcd6dc32
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sat Oct 30 13:29:13 2010 -0700

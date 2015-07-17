@@ -28,8 +28,8 @@ from The Open Group.
 
 Status
 GetConfig (
-    char *configFile,
-    char *proxyService,
+    const char *configFile,
+    const char *serviceName,
     Bool *managed,
     char **startCommand,
     char **proxyAddress);
@@ -37,8 +37,8 @@ GetConfig (
 #ifdef NEED_STRCASECMP
 int
 ncasecmp (
-    char *str1,
-    char *str2,
+    const char *str1,
+    const char *str2,
     int n);
 #else
 #include <string.h>
