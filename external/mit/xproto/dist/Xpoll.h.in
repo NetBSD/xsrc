@@ -54,13 +54,13 @@ from The Open Group.
 
 #ifndef USE_POLL
 
-#include <X11/Xos.h>
-
 #define XFD_SETSIZE	512
 
 #ifndef FD_SETSIZE
 #define FD_SETSIZE	XFD_SETSIZE
 #endif
+
+#include <X11/Xos.h>
 
 #include <sys/select.h>  /* Get the FD_* macros. */
 
