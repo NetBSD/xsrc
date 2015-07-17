@@ -69,6 +69,7 @@ in this Software without prior written authorization from The Open Group.
 
 #include	"config.h"
 
+#include	"X11/Xpoll.h"
 #include	<stdlib.h>
 #include	<X11/Xtrans/Xtrans.h>
 #include	<stdlib.h>
@@ -84,7 +85,6 @@ in this Software without prior written authorization from The Open Group.
 #include	<X11/fonts/FS.h>
 #include	<X11/fonts/FSproto.h>
 #include	"clientstr.h"
-#include	"X11/Xpoll.h"
 #include	"osdep.h"
 #include	"globals.h"
 #include	"osstruct.h"
