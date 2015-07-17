@@ -56,6 +56,12 @@ from The Open Group.
 
 #include <X11/Xos.h>
 
+#define XFD_SETSIZE	512
+
+#ifndef FD_SETSIZE
+#define FD_SETSIZE	XFD_SETSIZE
+#endif
+
 #include <sys/select.h>  /* Get the FD_* macros. */
 
 #include <X11/Xmd.h>
@@ -65,12 +71,6 @@ from The Open Group.
 # if BSD < 199103
 typedef long fd_mask;
 # endif
-#endif
-
-#define XFD_SETSIZE	512
-
-#ifndef FD_SETSIZE
-#define FD_SETSIZE	XFD_SETSIZE
 #endif
 
 #ifndef NBBY
