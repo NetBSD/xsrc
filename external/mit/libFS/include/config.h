@@ -63,7 +63,7 @@
 #define PACKAGE_NAME "libFS"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libFS 1.0.6"
+#define PACKAGE_STRING "libFS 1.0.7"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libFS"
@@ -72,7 +72,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.0.6"
+#define PACKAGE_VERSION "1.0.7"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
@@ -81,7 +81,7 @@
 #define PACKAGE_VERSION_MINOR 0
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 6
+#define PACKAGE_VERSION_PATCHLEVEL 7
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
@@ -96,4 +96,4 @@
 #define UNIXCONN 1
 
 /* Version number of package */
-#define VERSION "1.0.6"
+#define VERSION "1.0.7"
