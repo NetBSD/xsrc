@@ -30,7 +30,7 @@
 .SH NAME
 xfindproxy - locate proxy services
 .SH SYNOPSIS
-\fBxfindproxy\fP \fB\-manager\fP \fImanagerAddr\fP \fB\-name\fP \fIserviceName\fP \fB\-server\fP \fIserverAddr\fP [\fB\-auth\fP] [\fB\-host\fP \fIhostAddr\fP] [\fB\-options\fP \fIopts\fP]
+\fBxfindproxy\fP \fB\-manager\fP \fImanagerAddr\fP \fB\-name\fP \fIserviceName\fP \fB\-server\fP \fIserverAddr\fP [\fB\-auth\fP] [\fB\-host\fP \fIhostAddr\fP] [\fB\-options\fP \fIopts\fP] [\fB-version\fP]
 .SH DESCRIPTION
 .B xfindproxy
 is a program used to locate available proxy services.  It utilizes
@@ -80,6 +80,10 @@ it will pass any options specified.  The semantics of the options are specific
 to each proxy server and are not defined here.  In the event that xfindproxy
 locates an already existing proxy, the options will be passed, but the
 semantics of how the proxy uses these options are undefined.
+.PP
+The
+.B \-version
+argument prints the program version and exits.
 .PP
 If xfindproxy is successful in obtaining a proxy address, it will print it to
 stdout.  The format of the proxy address is specific to the proxy service being

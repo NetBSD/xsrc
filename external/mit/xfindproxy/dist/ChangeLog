@@ -1,3 +1,53 @@
+commit df86d7529fc469d427f788a609a6b20195aaa6fe
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Apr 16 23:14:36 2015 -0700
+
+    xfindproxy 1.0.4
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b71a32b1a1e45d41b97f88e1537f7e64e435445b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jun 2 22:31:55 2014 -0700
+
+    autogen.sh: Honor NOCONFIGURE=1
+    
+    See http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f9c497885ffd1374c6b2502e1556735591c182fd
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jun 2 22:31:55 2014 -0700
+
+    configure: Drop AM_MAINTAINER_MODE
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3dedede9c6ad56b6d84e8bee9288e8793f9f7316
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jun 1 00:30:41 2014 -0700
+
+    This is not a GNU project, so declare it foreign.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b54815bb48784246cbf5f62c4078c45d34ec19d0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri May 23 23:55:31 2014 -0700
+
+    Add -version option to print program version
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0193fcd1732c2ee37896ae779b97a8b2ee79a3c1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri May 23 23:46:56 2014 -0700
+
+    Print which option was in error along with usage message
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit c74119a641e3c4fc74deaf8f47d3faf589d0d196
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sat Sep 7 23:40:55 2013 -0700
