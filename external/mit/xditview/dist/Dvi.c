@@ -1,5 +1,3 @@
-/* $XConsortium: Dvi.c,v 1.21 94/04/17 20:43:34 keith Exp $ */
-/* $XdotOrg: $ */
 /*
 
 Copyright (c) 1991  X Consortium
@@ -29,7 +27,6 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xditview/Dvi.c,v 1.3 2001/08/01 00:45:03 tsi Exp $ */
 
 
 /*
@@ -66,7 +63,7 @@ from the X Consortium.
  *       therefor it has been split in to and assigned to resources
  *       in the ClassInitialize routine.
  */
-static char default_font_map_1[] =  "\
+static const char *default_font_map_1 =  "\
 R	-*-times-medium-r-normal--*-*-*-*-*-*-iso8859-1\n\
 I	-*-times-medium-i-normal--*-*-*-*-*-*-iso8859-1\n\
 B	-*-times-bold-r-normal--*-*-*-*-*-*-iso8859-1\n\
@@ -85,7 +82,7 @@ HO	-*-helvetica-medium-o-normal--*-*-*-*-*-*-iso8859-1\n\
 HB	-*-helvetica-bold-r-normal--*-*-*-*-*-*-iso8859-1\n\
 HF	-*-helvetica-bold-o-normal--*-*-*-*-*-*-iso8859-1\n\
 ";
-static char default_font_map_2[] =  "\
+static const char *default_font_map_2 =  "\
 N	-*-new century schoolbook-medium-r-normal--*-*-*-*-*-*-iso8859-1\n\
 NI	-*-new century schoolbook-medium-i-normal--*-*-*-*-*-*-iso8859-1\n\
 NB	-*-new century schoolbook-bold-r-normal--*-*-*-*-*-*-iso8859-1\n\
@@ -434,22 +431,22 @@ CloseFile (DviWidget dw)
 static void
 OpenFile (DviWidget dw)
 {
-    char	tmpName[sizeof ("/tmp/dviXXXXXX")];
-#ifdef HAS_MKSTEMP
-    int fd;
-#endif
-
     dw->dvi.tmpFile = NULL;
     if (!dw->dvi.seek) {
-	strcpy (tmpName, "/tmp/dviXXXXXX");
+	char	tmpName[] = "/tmp/dviXXXXXX";
+
 #ifndef HAS_MKSTEMP
 	mktemp (tmpName);
 	dw->dvi.tmpFile = fopen (tmpName, "w+");
 #else
-	fd = mkstemp(tmpName);
-	dw->dvi.tmpFile = fdopen(fd, "w+");
+	int fd = mkstemp(tmpName);
+	if (fd != -1) {
+	    dw->dvi.tmpFile = fdopen(fd, "w+");
+	    if (dw->dvi.tmpFile == NULL)
+		close(fd);
+	}
 #endif
-	unlink (tmpName);
+	remove (tmpName);
     }
     if (dw->dvi.requested_page < 1)
 	dw->dvi.requested_page = 1;

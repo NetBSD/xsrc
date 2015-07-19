@@ -1,4 +1,3 @@
-/* $XFree86: xc/programs/xditview/XFontName.c,v 1.2 2001/08/01 00:45:03 tsi Exp $ */
 /*
  * XFontName.c
  *
@@ -128,7 +127,8 @@ XFormatFontName (XFontName *fontName, unsigned int fontNameAttributes,
 		 XFontNameString fontNameString)
 {
 	XFontNameString	tmp;
-	char		*name = tmp, *f;
+	char		*name = tmp;
+	const char	*f;
 	int		left = sizeof (tmp) - 1;
 	char		number[32];
 
@@ -188,71 +188,3 @@ XFormatFontName (XFontName *fontName, unsigned int fontNameAttributes,
 	strcpy (fontNameString, tmp);
 	return True;
 }
-
-#if 0
-Bool
-XCompareFontName (
-	XFontName	*name1,
-	XFontName	*name2,
-	unsigned int	fontNameAttributes)
-{
-#define CompareString(field,bit) \
-	if (fontNameAttributes & bit) \
-		if (strcmp (name1->field, name2->field)) \
-			return False;
-
-#define CompareUnsigned(field,bit) \
-	if (fontNameAttributes & bit) \
-		if (name1->field != name2->field) \
-			return False;
-
-	CompareString (Registry, FontNameRegistry)
-	CompareString (Foundry, FontNameFoundry)
-	CompareString (FamilyName, FontNameFamilyName)
-	CompareString (WeightName, FontNameWeightName)
-	CompareString (Slant, FontNameSlant)
-	CompareString (SetwidthName, FontNameSetwidthName)
-	CompareString (AddStyleName, FontNameAddStyleName)
-	CompareUnsigned (PixelSize, FontNamePixelSize)
-	CompareUnsigned (PointSize, FontNamePointSize)
-	CompareUnsigned (ResolutionX, FontNameResolutionX)
-	CompareUnsigned (ResolutionY, FontNameResolutionY)
-	CompareString (Spacing, FontNameSpacing)
-	CompareUnsigned (AverageWidth, FontNameAverageWidth)
-	CompareString (CharSetRegistry, FontNameCharSetRegistry)
-	CompareString (CharSetEncoding, FontNameCharSetEncoding)
-	return True;
-}
-
-Bool
-XCopyFontName (
-	XFontName	*name1,
-	XFontName	*name2,
-	unsigned int	fontNameAttributes)
-{
-#define CopyString(field,bit) \
-	if (fontNameAttributes & bit) \
-		strcpy (name2->field, name1->field);
-
-#define CopyUnsigned(field,bit) \
-	if (fontNameAttributes & bit) \
-		name2->field = name1->field;
-
-	CopyString (Registry, FontNameRegistry)
-	CopyString (Foundry, FontNameFoundry)
-	CopyString (FamilyName, FontNameFamilyName)
-	CopyString (WeightName, FontNameWeightName)
-	CopyString (Slant, FontNameSlant)
-	CopyString (SetwidthName, FontNameSetwidthName)
-	CopyString (AddStyleName, FontNameAddStyleName)
-	CopyUnsigned (PixelSize, FontNamePixelSize)
-	CopyUnsigned (PointSize, FontNamePointSize)
-	CopyUnsigned (ResolutionX, FontNameResolutionX)
-	CopyUnsigned (ResolutionY, FontNameResolutionY)
-	CopyString (Spacing, FontNameSpacing)
-	CopyUnsigned (AverageWidth, FontNameAverageWidth)
-	CopyString (CharSetRegistry, FontNameCharSetRegistry)
-	CopyString (CharSetEncoding, FontNameCharSetEncoding)
-	return True;
-}
-#endif

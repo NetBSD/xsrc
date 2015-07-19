@@ -1,6 +1,3 @@
-/* $XConsortium: page.c,v 1.5 91/07/26 00:40:20 keith Exp $ */
-/* $XFree86: xc/programs/xditview/page.c,v 1.3 2001/08/01 00:45:03 tsi Exp $ */
-
 /*
  * page.c
  *
@@ -75,8 +72,8 @@ FileSeek(DviWidget dw, long position)
 {
 	if (dw->dvi.tmpFile) {
 		dw->dvi.readingTmp = 1;
-		fseek (dw->dvi.tmpFile, position, 0);
+		fseek (dw->dvi.tmpFile, position, SEEK_SET);
 	} else
-		fseek (dw->dvi.file, position, 0);
+		fseek (dw->dvi.file, position, SEEK_SET);
 }
 

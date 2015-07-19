@@ -1,4 +1,3 @@
-/* $XFree86: xc/programs/xditview/lex.c,v 1.3 2000/12/04 21:01:01 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include <X11/IntrinsicP.h>
@@ -34,10 +33,6 @@ GetLine(DviWidget dw, char *Buffer, int Length)
 	while ((!p || i < Length) && DviGetC (dw, &c) != EOF && c != '\n')
 		if (p)
 			*p++ = c;
-#if 0
-	if (c == '\n' && p)		    /* Retain the newline like fgets */
-		*p++ = c;
-#endif
 	if (c == '\n')
 		DviUngetC(dw, c);
 	if (p)
