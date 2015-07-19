@@ -1,4 +1,3 @@
-/* $XConsortium: xditview.c,v 1.32 94/04/17 20:43:36 eswu Exp $ */
 /*
 
 Copyright (c) 1991  X Consortium
@@ -28,7 +27,6 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xditview/xditview.c,v 1.4tsi Exp $ */
 /*
  * xditview -- 
  *
@@ -73,21 +71,21 @@ static XrmOptionDescRec options[] = {
 static char	current_file_name[1024];
 static FILE	*current_file;
 
-static void MakePrompt(Widget, char *, void (*)(char *), char *);
+static void MakePrompt(Widget, const char *, void (*)(char *), char *);
 
 /*
  * Report the syntax for calling xditview.
  */
 
 static void
-Syntax(char *call)
+Syntax(const char *call)
 {
-	(void) printf ("Usage: %s [-fg <color>] [-bg <color>]\n", call);
-	(void) printf ("       [-bd <color>] [-bw <pixels>] [-help]\n");
-	(void) printf ("       [-display displayname] [-geometry geom]\n");
-	(void) printf ("       [-page <page-number>] [-backing <backing-store>]\n");
-	(void) printf ("       [-resolution <screen-resolution>]\n\n");
-	exit(1);
+    (void) printf ("Usage: %s [-fg <color>] [-bg <color>]\n%s\n", call,
+                   "       [-bd <color>] [-bw <pixels>] [-help]\n"
+                   "       [-display displayname] [-geometry geom]\n"
+                   "       [-page <page-number>] [-backing <backing-store>]\n"
+                   "       [-resolution <screen-resolution>]\n");
+    exit(1);
 }
 
 static void	NewResolution (char *resString);
@@ -95,9 +93,6 @@ static void	NewFile (char *name);
 static void	DisplayPageNumber (void);
 static void	VisitFile (char *name, Boolean resetPage);
 static Widget	toplevel, paned, porthole, dvi;
-#ifdef NOTDEF
-static Widget	form, panner;
-#endif
 static Widget	popupMenu;
 static Widget	menuBar;
 static Widget	fileMenuButton, fileMenu;
@@ -156,59 +151,6 @@ static XtActionsRec xditview_actions[] = {
 
 static Atom wm_delete_window;
 
-#ifdef NOTDEF
-/*	Function Name: PannerCallback
- *	Description: called when the panner has moved.
- *	Arguments: panner - the panner widget.
- *                 closure - *** NOT USED ***.
- *                 report_ptr - the panner record.
- *	Returns: none.
- */
-
-/* ARGSUSED */
-static void 
-PannerCallback(Widget w, XtPointer closure, XtPointer report_ptr)
-{
-    Arg args[2];
-    XawPannerReport *report = (XawPannerReport *) report_ptr;
-
-    if (!dvi)
-	return;
-    XtSetArg (args[0], XtNx, -report->slider_x);
-    XtSetArg (args[1], XtNy, -report->slider_y);
-
-    XtSetValues(dvi, args, 2);
-}
-
-/*	Function Name: PortholeCallback
- *	Description: called when the porthole or its child has
- *                   changed 
- *	Arguments: porthole - the porthole widget.
- *                 panner_ptr - the panner widget.
- *                 report_ptr - the porthole record.
- *	Returns: none.
- */
-
-/* ARGSUSED */
-static void 
-PortholeCallback(Widget w, XtPointer panner_ptr, XtPointer report_ptr)
-{
-    Arg args[10];
-    Cardinal n = 0;
-    XawPannerReport *report = (XawPannerReport *) report_ptr;
-    Widget panner = (Widget) panner_ptr;
-
-    XtSetArg (args[n], XtNsliderX, report->slider_x); n++;
-    XtSetArg (args[n], XtNsliderY, report->slider_y); n++;
-    if (report->changed != (XawPRSliderX | XawPRSliderY)) {
-	XtSetArg (args[n], XtNsliderWidth, report->slider_width); n++;
-	XtSetArg (args[n], XtNsliderHeight, report->slider_height); n++;
-	XtSetArg (args[n], XtNcanvasWidth, report->canvas_width); n++;
-	XtSetArg (args[n], XtNcanvasHeight, report->canvas_height); n++;
-    }
-    XtSetValues (panner, args, n);
-}
-#endif
 
 int
 main(int argc, char **argv)
@@ -282,21 +224,8 @@ main(int argc, char **argv)
     (void) XtCreateManagedWidget ("nextButton", commandWidgetClass,
 				  menuBar, NULL, (Cardinal) 0);
 
-#ifdef NOTDEF
-    form = XtCreateManagedWidget ("form", formWidgetClass, paned,
-				    NULL, (Cardinal) 0);
-    panner = XtCreateManagedWidget ("panner", pannerWidgetClass,
-				    form, NULL, 0);
-    porthole = XtCreateManagedWidget ("porthole", portholeWidgetClass,
-				      form, NULL, 0);
-    XtAddCallback(porthole, 
-		  XtNreportCallback, PortholeCallback, (XtPointer) panner);
-    XtAddCallback(panner, 
-		  XtNreportCallback, PannerCallback, (XtPointer) porthole);
-#else
     porthole = XtCreateManagedWidget ("viewport", viewportWidgetClass,
 				      paned, NULL, 0);
-#endif
     dvi = XtCreateManagedWidget ("dvi", dviWidgetClass, porthole, NULL, 0);
     if (file_name)
 	VisitFile (file_name, FALSE);
@@ -324,11 +253,11 @@ DisplayPageNumber (void)
     XtSetArg (arg[1], XtNlastPageNumber, &last_page);
     XtGetValues (dvi, arg, 2);
     if (actual_number == 0)
-	sprintf (value, "<none>");
+	snprintf (value, sizeof(value), "<none>");
     else if (last_page > 0)
-	sprintf (value, "%d of %d", actual_number, last_page);
+	snprintf (value, sizeof(value), "%d of %d", actual_number, last_page);
     else
-	sprintf (value, "%d", actual_number);
+	snprintf (value, sizeof(value), "%d", actual_number);
     text.firstPos = 0;
     text.length = strlen (value);
     text.ptr = value;
@@ -493,7 +422,7 @@ SetResolutionAction (Widget w, XEvent *xev, String *s, Cardinal *c)
 
     XtSetArg (args[0], XtNscreenResolution, &cur);
     XtGetValues (dvi, args, 1);
-    sprintf (resolutionBuf, "%d", cur);
+    snprintf (resolutionBuf, sizeof(resolutionBuf), "%d", cur);
     MakePrompt (toplevel, "Screen resolution:", NewResolution, resolutionBuf);
 }
 
@@ -574,7 +503,7 @@ void Noop (Widget w, XEvent *xev, String *s, Cardinal *c)
 }
 
 static void
-MakePrompt(Widget centerw, char *prompt, void (*func)(char *), char *def)
+MakePrompt(Widget centerw, const char *prompt, void (*func)(char *), char *def)
 {
     static Arg dialogArgs[] = {
 	{XtNlabel, (XtArgVal) 0},

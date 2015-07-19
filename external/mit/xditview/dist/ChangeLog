@@ -1,3 +1,110 @@
+commit d8b43b22c6432e7c927236b6e729a53f737cedfb
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Apr 16 23:07:15 2015 -0700
+
+    xditview 1.0.4
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b35fd1fb11d26dbe2be060a77a8a275b98d28251
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 8 09:29:58 2014 -0800
+
+    Use SEEK_* names instead of raw numbers for fseek whence argument
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 67506ce7948065ae81f370bb821645de4c7daf9b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 25 13:39:48 2014 -0700
+
+    Remove CVS/RCS $Id tags
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c14b35a3b958663056a887471a1280842efbb981
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 25 13:27:06 2014 -0700
+
+    Combine usage message strings
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit cb2b3214a0593b0970cd8738d34d0ac3e1268b38
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 25 13:15:46 2014 -0700
+
+    Remove #if 0 code
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5134d3eaaeb25a49622d827af7c783b980a10919
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 25 13:12:31 2014 -0700
+
+    unifdef -UNOTDEF -UNOTUSED
+
+commit f7f6ce39ca5f1988f04696581f261bf59c23dc4c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 25 12:56:45 2014 -0700
+
+    Const cleanup
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit da45a0a835bf2d2abb2810ca7bdb9cbc450f7135
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jun 2 22:24:37 2014 -0700
+
+    autogen.sh: Honor NOCONFIGURE=1
+    
+    See http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit bc59f4d3543192e8ccd29f70db9f3dcb4e23fd5a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jun 2 22:24:37 2014 -0700
+
+    configure: Drop AM_MAINTAINER_MODE
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit fc869719ccf944905316692c94c236f249aeb8c2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jun 2 22:24:25 2014 -0700
+
+    config: Add missing AC_CONFIG_SRCDIR
+    
+    Regroup AC statements under the Autoconf initialization section.
+    Regroup AM statements under the Automake initialization section.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4768101b52f5e5324208c5c014bac87e0eb28b39
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Feb 18 18:13:43 2014 -0800
+
+    Convert sprintf calls to snprintf
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 93986e62c7793ef7bb3123748249302e974b72e6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 21 15:18:28 2013 -0700
+
+    Close file leak when fdopen() fails in OpenFile()
+    
+    Found by parfait 1.1 bug checking tool:
+    Error: File Leak
+       File Descriptor Leak: Leaked File Descriptor fd
+            at line 457 of app/xditview/Dvi.c in function 'OpenFile'.
+              fd initialized at line 449 with mkstemp
+    
+    Also reorganize & clean up the code a bit while we're here
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 23371e39e595056b3db2e361fad8a21ed4a0d9e7
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sat Jan 12 16:36:26 2013 -0800

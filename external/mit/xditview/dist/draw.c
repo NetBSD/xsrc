@@ -1,6 +1,4 @@
 /*
- * $XConsortium: draw.c,v 1.8 94/04/17 20:43:35 gildea Exp $
- * $XFree86: xc/programs/xditview/draw.c,v 1.4 2001/08/01 00:45:03 tsi Exp $
  *
 Copyright (c) 1991  X Consortium
 
@@ -75,7 +73,7 @@ static Point *spline = (Point *)NULL;	/* head of spline linked list */
 static void	ApproxSpline(int n);
 static void	DeletePoint(Point *p);
 static void	DrawSplineSegments(DviWidget dw);
-static int	GetSpline(char *s);
+static int	GetSpline(const char *s);
 static void	InsertPoint(Point *p, Point *q);
 static void	LineApprox(Point *p1, Point *p2, Point *p3);
 static Point *	MakePoint(double x, double y);
@@ -152,15 +150,6 @@ FlushCharCache (DviWidget dw)
     dw->dvi.cache.start_x = dw->dvi.cache.x = xx;
     dw->dvi.cache.start_y = dw->dvi.cache.y = yx;
 }
-
-#if 0
-void
-ClearPage (DviWidget dw)
-{
-    if (dw->dvi.display_enable)
-	XClearWindow (XtDisplay (dw), XtWindow (dw));
-}
-#endif
 
 void
 SetGCForDraw (DviWidget dw)
@@ -292,8 +281,8 @@ DrawArc (DviWidget dw, int x0, int y0, int x1, int y1)
 
 /* copy next non-blank string from p to temp, update p */
 
-static char *
-getstr(char *p, char *temp)
+static const char *
+getstr(const char *p, char *temp)
 {
     while (*p == ' ' || *p == '\t' || *p == '\n')
 	p++;
@@ -312,7 +301,7 @@ getstr(char *p, char *temp)
 
 /*ARGSUSED*/
 void
-DrawSpline (DviWidget dw, char *s, int len)
+DrawSpline (DviWidget dw, const char *s, int len)
 {
     int		n;
 
@@ -330,12 +319,13 @@ DrawSpline (DviWidget dw, char *s, int len)
 /*	as its head.  Return the number of coordinate pairs found.    */
 
 static int
-GetSpline(char *s)
+GetSpline(const char *s)
 {
     double	x, y, x1, y1;
     int		n = 0;
     Point	*pt;
-    char	*p = s, d[10];
+    const char	*p = s;
+    char        d[10];
 
     if (!*p)
 	return(n);
@@ -345,10 +335,10 @@ GetSpline(char *s)
     x = y = 0.0;
     p = s;
     while (p && *p) {
-	if ((p = getstr(p, d)) == (char *)NULL)
+	if ((p = getstr(p, d)) == (const char *)NULL)
 	    break;
 	x1 = x + atof(d);
-	if ((p = getstr(p, d)) == (char *)NULL)
+	if ((p = getstr(p, d)) == (const char *)NULL)
 	    break;
 	y1 = y + atof(d);
 	pt->next = MakePoint(x1, y1);

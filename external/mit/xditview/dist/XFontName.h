@@ -1,5 +1,3 @@
-/* $XFree86$ */
-
 #ifndef _XFONTNAME_H_
 #define _XFONTNAME_H_
 

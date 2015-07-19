@@ -1,8 +1,3 @@
-/*
- * $XConsortium: DviP.h,v 1.10 92/02/11 01:27:15 keith Exp $
- */
-/* $XFree86: xc/programs/xditview/DviP.h,v 1.4 2001/08/01 00:45:03 tsi Exp $ */
-
 /* 
  * DviP.h - Private definitions for Dvi widget
  */
@@ -214,7 +209,7 @@ extern int		DviGetAndPut(DviWidget, int *);
 #define DviGetC(dw, cp)\
     (dw->dvi.readingTmp ? (\
 	((*cp = getc (dw->dvi.tmpFile)) == EOF) ? (\
-	    fseek (dw->dvi.tmpFile, 0l, 2),\
+	    fseek (dw->dvi.tmpFile, 0l, SEEK_END),\
 	    (dw->dvi.readingTmp = 0),\
 	    DviGetIn (dw,cp)\
 	) : (\
@@ -259,12 +254,12 @@ extern void		DrawLine(DviWidget, int, int);
 extern void		DrawCircle(DviWidget, int);
 extern void		DrawEllipse(DviWidget, int, int);
 extern void		DrawArc(DviWidget, int, int, int, int);
-extern void		DrawSpline(DviWidget, char *, int);
+extern void		DrawSpline(DviWidget, const char *, int);
 
 /* font.c */
 extern void		ParseFontMap(DviWidget);
 extern void		DestroyFontMap(DviFontMap *);
-extern void		SetFontPosition(DviWidget, int, char *, char *);
+extern void		SetFontPosition(DviWidget, int, const char *, const char *);
 #ifdef USE_XFT
 extern XftFont *	QueryFont(DviWidget, int, int);
 #else
