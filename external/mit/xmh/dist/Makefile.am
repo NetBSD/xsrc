@@ -19,6 +19,7 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 #  PERFORMANCE OF THIS SOFTWARE.
 
+SUBDIRS = man
 bin_PROGRAMS = xmh
 
 AM_CFLAGS = $(CWARNFLAGS) $(XMH_CFLAGS) -D_BSD_SOURCE
@@ -59,9 +60,6 @@ xmh_SOURCES =	\
         viewfuncs.c \
         xmh.h
 
-appman_PRE = \
-        xmh.man
-
 # App default files
 DISTCHECK_CONFIGURE_FLAGS = --with-appdefaultdir=\$${datadir}/X11/app-defaults
 
@@ -74,21 +72,7 @@ dist_appdefault_DATA = \
 
 EXTRA_DIST = Xmh.sample
 
-
-appmandir = $(APP_MAN_DIR)
-
-appman_DATA = $(appman_PRE:man=@APP_MAN_SUFFIX@)
-
-EXTRA_DIST += $(appman_PRE)
 MAINTAINERCLEANFILES = ChangeLog INSTALL
-CLEANFILES = $(appman_DATA)
-
-SUFFIXES = .$(APP_MAN_SUFFIX) .man
-
-# String replacements in MAN_SUBSTS now come from xorg-macros.m4 via configure
-.man.$(APP_MAN_SUFFIX):
-	$(AM_V_GEN)$(SED) $(MAN_SUBSTS) < $< > $@
-
 
 .PHONY: ChangeLog INSTALL
 

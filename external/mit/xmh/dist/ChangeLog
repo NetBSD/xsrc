@@ -1,3 +1,109 @@
+commit f70138ea7faf7a4ad78b0b4743045c3a06224afd
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Apr 17 00:01:25 2015 -0700
+
+    xmh 1.0.3
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4508750217b3d3ba4e2c4491ba80cfd33b6dff85
+Author: Daphne Pfister <daphnediane@mac.com>
+Date:   Fri Feb 6 01:21:56 2015 -0500
+
+    Fixes misplaced shortcut in man page: #89003
+    
+    The shortcut Meta-h was on the wrong row in the man page.
+    
+    Fixes: https://bugs.freedesktop.org/show_bug.cgi?id=89003
+    
+    Signed-off-by: Daphne Pfister <daphnediane@mac.com>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d0026b068e21b1919a1058339ae62912524443d6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 31 23:38:32 2014 -0700
+
+    autogen.sh: Honor NOCONFIGURE=1
+    
+    See http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 81dc9d3df907f1697bccc9eda39ca6eff5cf757a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 31 23:38:32 2014 -0700
+
+    configure: Drop AM_MAINTAINER_MODE
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f25d3b82dfffc7ae2b5abb447b0552376d181bff
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 31 23:38:27 2014 -0700
+
+    config: Add missing AC_CONFIG_SRCDIR
+    
+    Regroup AC statements under the Autoconf initialization section.
+    Regroup AM statements under the Automake initialization section.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f0b3169ee8b4ffe7c8152770d1d20c6f5d2f7bcc
+Author: Eric S. Raymond <esr@thyrsus.com>
+Date:   Wed Jun 19 06:09:50 2013 -0400
+
+    Don't rely on the ability to set tan stops.  Use tables instead.
+    
+    Also, fix a presentational abuse of the .SS macro.
+
+commit 6ebc514050a392ebbf069823207eb967ca2629e0
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jan 19 10:06:56 2011 -0500
+
+    config: move man pages into their own directory
+    
+    Use services provided by XORG_MANPAGE_SECTIONS.
+    Use standard Makefile for man pages.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit f1d5cee2eff5c6d82b8879053b5ffc994096cb38
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Jan 13 17:15:36 2011 -0500
+
+    man: replace hard coded man page section with substitution strings
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 84c197d3a2fdc154a57529318822b111a5282d6f
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Jan 13 11:15:47 2011 -0500
+
+    man: remove trailing spaces and tabs
+    
+    Using s/[ \t]*$//
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit ffb0ec41f0543b5474117d12f93c048efa32e428
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jan 12 16:28:02 2011 -0500
+
+    config: replace deprecated AM_CONFIG_HEADER with AC_CONFIG_HEADERS
+    
+    This silences an Autoconf warning
+
+commit 1a43684e6aa86941d3f901de0d69fbd90b8a753b
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jan 12 15:29:50 2011 -0500
+
+    config: replace deprecated AC_HELP_STRING with AS_HELP_STRING
+    
+    This silences an Automake warning.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
 commit bdb398a17be488e9aa189c911fb29526e46a794d
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sat Oct 30 17:46:25 2010 -0700
