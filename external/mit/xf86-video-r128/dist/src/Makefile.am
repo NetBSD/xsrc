@@ -40,8 +40,9 @@ r128_drv_la_LTLIBRARIES = r128_drv.la
 r128_drv_la_LDFLAGS = -module -avoid-version
 r128_drv_ladir = @moduledir@/drivers
 r128_drv_la_SOURCES = \
-	r128_accel.c r128_cursor.c r128_dga.c r128_driver.c \
-	r128_video.c r128_misc.c r128_probe.c $(R128_EXA_SRCS) $(R128_DRI_SRCS)
+	r128_accel.c r128_cursor.c r128_driver.c \
+	r128_video.c r128_misc.c r128_crtc.c r128_output.c r128_probe.c \
+	$(R128_EXA_SRCS) $(R128_DRI_SRCS)
 
 EXTRA_DIST = \
         compat-api.h \

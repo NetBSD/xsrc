@@ -145,9 +145,9 @@ void R128EngineReset(ScrnInfoPtr pScrn)
 {
     R128InfoPtr   info      = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
-    CARD32        clock_cntl_index;
-    CARD32        mclk_cntl;
-    CARD32        gen_reset_cntl;
+    uint32_t      clock_cntl_index;
+    uint32_t      mclk_cntl;
+    uint32_t      gen_reset_cntl;
 
     R128EngineFlush(pScrn);
 
@@ -161,7 +161,7 @@ void R128EngineReset(ScrnInfoPtr pScrn)
     OUTREG(R128_GEN_RESET_CNTL, gen_reset_cntl | R128_SOFT_RESET_GUI);
     INREG(R128_GEN_RESET_CNTL);
     OUTREG(R128_GEN_RESET_CNTL,
-	gen_reset_cntl & (CARD32)(~R128_SOFT_RESET_GUI));
+	gen_reset_cntl & (uint32_t)(~R128_SOFT_RESET_GUI));
     INREG(R128_GEN_RESET_CNTL);
 
     OUTPLL(R128_MCLK_CNTL,        mclk_cntl);
@@ -450,7 +450,7 @@ static void R128SetupForDashedLine(ScrnInfoPtr pScrn,
 {
     R128InfoPtr   info      = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
-    CARD32        pat       = *(CARD32 *)(pointer)pattern;
+    uint32_t      pat       = *(uint32_t *)(pointer)pattern;
 
 #if X_BYTE_ORDER == X_LITTLE_ENDIAN
 # define PAT_SHIFT(pat,n) pat << n
@@ -590,7 +590,7 @@ static void R128SetupForScreenToScreenCopy(ScrnInfoPtr pScrn,
 					? R128_DST_Y_TOP_TO_BOTTOM
 					: 0)));
 
-    if ((trans_color != -1) || (info->XAAForceTransBlit == TRUE)) {
+    if (trans_color != -1) {
 				/* Set up for transparency */
 	R128WaitForFifo(pScrn, 3);
 	OUTREG(R128_CLR_CMP_CLR_SRC, trans_color);
@@ -847,10 +847,10 @@ static void R128SubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno)
 {
     R128InfoPtr     info      = R128PTR(pScrn);
     unsigned char   *R128MMIO = info->MMIO;
-    CARD32          *p        = (pointer)info->scratch_buffer[bufno];
+    uint32_t        *p        = (pointer)info->scratch_buffer[bufno];
     int             i;
     int             left      = info->scanline_words;
-    volatile CARD32 *d;
+    volatile uint32_t *d;
 
     if (info->scanline_direct) return;
     --info->scanline_h;
@@ -977,10 +977,10 @@ static void R128SubsequentImageWriteScanline(ScrnInfoPtr pScrn, int bufno)
 {
     R128InfoPtr     info      = R128PTR(pScrn);
     unsigned char   *R128MMIO = info->MMIO;
-    CARD32          *p        = (pointer)info->scratch_buffer[bufno];
+    uint32_t        *p        = (pointer)info->scratch_buffer[bufno];
     int             i;
     int             left      = info->scanline_words;
-    volatile CARD32 *d;
+    volatile uint32_t *d;
 
     if (info->scanline_direct) return;
     --info->scanline_h;
@@ -1182,7 +1182,7 @@ static void R128CCESetupForScreenToScreenCopy(ScrnInfoPtr pScrn,
 
     ADVANCE_RING();
 
-    if ((trans_color != -1) || (info->XAAForceTransBlit == TRUE)) {
+    if (trans_color != -1) {
 	BEGIN_RING( 6 );
 
 	OUT_RING_REG( R128_CLR_CMP_CLR_SRC, trans_color );
@@ -1438,7 +1438,7 @@ static void R128CCESetupForDashedLine(ScrnInfoPtr pScrn,
 				   int length, unsigned char *pattern)
 {
     R128InfoPtr   info      = R128PTR(pScrn);
-    CARD32        pat       = *(CARD32 *)(pointer)pattern;
+    uint32_t      pat       = *(uint32_t *)(pointer)pattern;
     RING_LOCALS;
 
     R128CCE_REFRESH( pScrn, info );
@@ -1746,7 +1746,7 @@ static void R128CCEAccelInit(ScrnInfoPtr pScrn, XAAInfoRecPtr a)
 					   | HARDWARE_PATTERN_SCREEN_ORIGIN
 					   | BIT_ORDER_IN_BYTE_LSBFIRST);
 
-    if(!info->IsSecondary && xf86IsEntityShared(pScrn->entityList[0]))
+    if (xf86IsEntityShared(info->pEnt->index))
         a->RestoreAccelState           = R128RestoreCCEAccelState;
 
 }
@@ -1851,19 +1851,13 @@ static void R128MMIOAccelInit(ScrnInfoPtr pScrn, XAAInfoRecPtr a)
 					  | LEFT_EDGE_CLIPPING_NEGATIVE_X
 					  | SCANLINE_PAD_DWORD;
 
-    if(xf86IsEntityShared(pScrn->entityList[0]))
-    {
-        DevUnion* pPriv;
-        R128EntPtr pR128Ent;
-        pPriv = xf86GetEntityPrivate(pScrn->entityList[0],
-                getR128EntityIndex());
-        pR128Ent = pPriv->ptr;
-        
-        /*if there are more than one devices sharing this entity, we
-          have to assign this call back, otherwise the XAA will be
-          disabled */
-        if(pR128Ent->HasSecondary || pR128Ent->BypassSecondary)
-           a->RestoreAccelState           = R128RestoreAccelState;
+    if (xf86IsEntityShared(info->pEnt->index)) {
+        /* If there are more than one devices sharing this entity, we
+         * have to assign this call back, otherwise the XAA will be
+         * disabled.
+	 */
+        if (xf86GetNumEntityInstances(info->pEnt->index) > 1)
+            a->RestoreAccelState           = R128RestoreAccelState;
     }
 
 }

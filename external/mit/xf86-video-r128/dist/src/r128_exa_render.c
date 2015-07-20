@@ -40,8 +40,8 @@
 static struct {
     Bool dst_alpha;
     Bool src_alpha;
-    CARD32 sblend;
-    CARD32 dblend;
+    uint32_t sblend;
+    uint32_t dblend;
 } R128BlendOp[] = {
     /* Clear */
     {0, 0, R128_ALPHA_BLEND_ZERO        , R128_ALPHA_BLEND_ZERO},
@@ -157,8 +157,10 @@ R128GetDatatypePict2(uint32_t format, uint32_t *type)
 static Bool
 R128CheckCompositeTexture(PicturePtr pPict, PicturePtr pDstPict, int op)
 {
+#if R128_DEBUG
     ScreenPtr     pScreen   = pDstPict->pDrawable->pScreen;
     ScrnInfoPtr   pScrn     = xf86ScreenToScrn(pScreen);
+#endif
 
     unsigned int repeatType = pPict->repeat ? pPict->repeatType : RepeatNone;
     uint32_t tmp1;
@@ -198,8 +200,10 @@ R128CheckCompositeTexture(PicturePtr pPict, PicturePtr pDstPict, int op)
 static Bool
 R128CCECheckComposite(int op, PicturePtr pSrcPicture, PicturePtr pMaskPicture, PicturePtr pDstPicture)
 {
+#if R128_DEBUG
     ScreenPtr     pScreen   = pDstPicture->pDrawable->pScreen;
     ScrnInfoPtr   pScrn     = xf86ScreenToScrn(pScreen);
+#endif
 
     PixmapPtr pSrcPixmap, pDstPixmap;
     uint32_t tmp1;
@@ -350,7 +354,7 @@ do {							\
 		    R128_TEX_MAP_ALPHA_IN_TEXTURE |	\
 		    R128_TEX_CACHE_LINE_SIZE_4QW);	\
     OUT_RING_REG(R128_SETUP_CNTL,			\
-		    R128_COLOR_SOLID_COLOR |		\
+		    R128_COLOR_GOURAUD |		\
 		    R128_PRIM_TYPE_TRI |		\
 		    R128_TEXTURE_ST_MULT_W |		\
 		    R128_STARTING_VERTEX_1 |		\
@@ -358,9 +362,9 @@ do {							\
 		    R128_SUB_PIX_4BITS);		\
     OUT_RING_REG(R128_PM4_VC_FPU_SETUP,			\
 		    R128_FRONT_DIR_CCW |		\
-		    R128_BACKFACE_CULL |		\
+		    R128_BACKFACE_SOLID |		\
 		    R128_FRONTFACE_SOLID |		\
-		    R128_FPU_COLOR_SOLID |		\
+		    R128_FPU_COLOR_GOURAUD |		\
 		    R128_FPU_SUB_PIX_4BITS |		\
 		    R128_FPU_MODE_3D |			\
 		    R128_TRAP_BITS_DISABLE |		\
@@ -458,12 +462,7 @@ R128CCEPrepareComposite(int op, PicturePtr pSrcPicture, PicturePtr pMaskPicture,
 
     if (!info->state_2d.composite_setup) {
         COMPOSITE_SETUP();
-	/* DRI and EXA are fighting over control of the texture hardware.
-	 * That means we need to set up the compositing hardware every time
-	 * while a 3D app is running and once after it closes.
-	 */
-	if (!info->have3DWindows)
-	    info->state_2d.composite_setup = TRUE;
+        info->state_2d.composite_setup = TRUE;
     }
 
     /* We cannot guarantee that this register will stay zero - DRI needs it too. */
@@ -587,9 +586,9 @@ R128CCEPrepareComposite(int op, PicturePtr pSrcPicture, PicturePtr pMaskPicture,
     return TRUE;
 }
 
-typedef union { float f; CARD32 i; } fi_type;
+typedef union { float f; uint32_t i; } fi_type;
 
-static inline CARD32
+static inline uint32_t
 R128FloatAsInt(float val)
 {
 	fi_type fi;
