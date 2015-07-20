@@ -577,9 +577,6 @@ void R128GetPanelInfoFromBIOS(xf86OutputPtr output)
         xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
 		   "Can't determine panel dimensions, and none specified.\n"
 		   "\tDisabling programming of FP registers.\n");
-    } else {
-	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Panel size: %dx%d\n",
-		   info->PanelXRes, info->PanelYRes);
     }
 
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Panel ID: ");
@@ -1716,16 +1713,6 @@ Bool R128ScreenInit(SCREEN_INIT_ARGS_DECL)
     info->PaletteSavedOnVT = FALSE;
 
     R128Save(pScrn);
-#ifndef AVOID_FBDEV
-    if (info->FBDev) {
-	if (!fbdevHWModeInit(pScrn, pScrn->currentMode)) return FALSE;
-    } else {
-#endif
-	if (!R128ModeInit(pScrn, pScrn->currentMode)) return FALSE;
-    }
-
-    R128SaveScreen(pScreen, SCREEN_SAVER_ON);
-    pScrn->AdjustFrame(ADJUST_FRAME_ARGS(pScrn, pScrn->frameX0, pScrn->frameY0));
 
 				/* Visual setup */
     miClearVisualTypes();
@@ -2101,11 +2088,15 @@ Bool R128ScreenInit(SCREEN_INIT_ARGS_DECL)
     /* xf86CrtcRotate accesses pScrn->pScreen */
     pScrn->pScreen = pScreen;
 
+#ifndef AVOID_FBDEV
     if (info->FBDev) {
 	if (!fbdevHWModeInit(pScrn, pScrn->currentMode)) return FALSE;
     } else {
+#endif
 	if (!xf86SetDesiredModes(pScrn)) return FALSE;
+#ifndef AVOID_FBDEV
     }
+#endif
 
     R128SaveScreen(pScreen, SCREEN_SAVER_ON);
     //pScrn->AdjustFrame(ADJUST_FRAME_ARGS(pScrn, pScrn->frameX0, pScrn->frameY0));
@@ -2149,19 +2140,10 @@ Bool R128ScreenInit(SCREEN_INIT_ARGS_DECL)
     if (info->FBDev)
 	xf86DPMSInit(pScreen, fbdevHWDPMSSetWeak(), 0);
     else
+#endif
         xf86DPMSInit(pScreen, xf86DPMSSet, 0);
 
-    else 
-#endif
-    {
-	if (info->DisplayType == MT_LCD)
-	    xf86DPMSInit(pScreen, R128DisplayPowerManagementSetLCD, 0);
-	else
-	    xf86DPMSInit(pScreen, R128DisplayPowerManagementSet, 0);
-    }
-
-    if (!info->IsSecondary)
-	R128InitVideo(pScreen);
+    R128InitVideo(pScreen);
 
 				/* Provide SaveScreen */
     pScreen->SaveScreen  = R128SaveScreen;
@@ -2787,6 +2769,7 @@ static void R128Restore(ScrnInfoPtr pScrn)
     R128RestoreFPRegisters(pScrn, restore);
     R128RestoreLVDSRegisters(pScrn, restore);
 
+#if 0
     if (!info->IsSecondary) {
         OUTREG(R128_AMCGPIO_MASK,     restore->amcgpio_mask);
         OUTREG(R128_AMCGPIO_EN_REG,   restore->amcgpio_en_reg);
@@ -2794,6 +2777,7 @@ static void R128Restore(ScrnInfoPtr pScrn)
         OUTREG(R128_GEN_RESET_CNTL,   restore->gen_reset_cntl);
         OUTREG(R128_DP_DATATYPE,      restore->dp_datatype);
     }
+#endif
 
 #ifdef WITH_VGAHW
     if (info->VGAAccess) {
@@ -3629,14 +3613,12 @@ Bool R128EnterVT(VT_FUNC_ARGS_DECL)
 #ifndef AVOID_FBDEV
     if (info->FBDev) {
         if (!fbdevHWEnterVT(VT_FUNC_ARGS)) return FALSE;
-    } else
+    } else {
 #endif
-    if (!R128ModeInit(pScrn, pScrn->currentMode)) return FALSE;
-    else {
-        if (!xf86SetDesiredModes(pScrn)) return FALSE;
+	if (!xf86SetDesiredModes(pScrn)) return FALSE;
+#ifndef AVOID_FBDEV
     }
-
-    //if (!R128ModeInit(pScrn, pScrn->currentMode)) return FALSE;
+#endif
 
     if (info->accelOn)
 	R128EngineInit(pScrn);
@@ -3754,130 +3736,4 @@ void R128FreeScreen(FREE_SCREEN_ARGS_DECL)
 	vgaHWFreeHWRec(pScrn);
 #endif
     R128FreeRec(pScrn);
-}
-
-/* Sets VESA Display Power Management Signaling (DPMS) Mode.  */
-static void R128DisplayPowerManagementSet(ScrnInfoPtr pScrn,
-					  int PowerManagementMode, int flags)
-{
-    R128InfoPtr   info      = R128PTR(pScrn);
-    unsigned char *R128MMIO = info->MMIO;
-    int           mask      = (R128_CRTC_DISPLAY_DIS
-			       | R128_CRTC_HSYNC_DIS
-			       | R128_CRTC_VSYNC_DIS);
-    int             mask2     = R128_CRTC2_DISP_DIS;
-
-    switch (PowerManagementMode) {
-    case DPMSModeOn:
-	/* Screen: On; HSync: On, VSync: On */
-	if (info->IsSecondary)
-		OUTREGP(R128_CRTC2_GEN_CNTL, 0, ~mask2);
-	else
-		OUTREGP(R128_CRTC_EXT_CNTL, 0, ~mask);
-	break;
-    case DPMSModeStandby:
-	/* Screen: Off; HSync: Off, VSync: On */
-	if (info->IsSecondary)
-		OUTREGP(R128_CRTC2_GEN_CNTL, R128_CRTC2_DISP_DIS, ~mask2);
-	    else
-		OUTREGP(R128_CRTC_EXT_CNTL,
-			R128_CRTC_DISPLAY_DIS | R128_CRTC_HSYNC_DIS, ~mask);
-	break;
-    case DPMSModeSuspend:
-	/* Screen: Off; HSync: On, VSync: Off */
-	if (info->IsSecondary)
-		OUTREGP(R128_CRTC2_GEN_CNTL, R128_CRTC2_DISP_DIS, ~mask2);
-	else 
-		OUTREGP(R128_CRTC_EXT_CNTL,
-			R128_CRTC_DISPLAY_DIS | R128_CRTC_VSYNC_DIS, ~mask);
-	break;
-    case DPMSModeOff:
-	/* Screen: Off; HSync: Off, VSync: Off */
-	if (info->IsSecondary)
-		OUTREGP(R128_CRTC2_GEN_CNTL, mask2, ~mask2);
-	else
-		OUTREGP(R128_CRTC_EXT_CNTL, mask, ~mask);
-	break;
-    }
-    if(info->isDFP) {
-	switch (PowerManagementMode) {
-	case DPMSModeOn:
-	    OUTREG(R128_FP_GEN_CNTL, INREG(R128_FP_GEN_CNTL) | (R128_FP_FPON | R128_FP_TDMS_EN));
-	    break;
-	case DPMSModeStandby:
-	case DPMSModeSuspend:
-	case DPMSModeOff:
-	    OUTREG(R128_FP_GEN_CNTL, INREG(R128_FP_GEN_CNTL) & ~(R128_FP_FPON | R128_FP_TDMS_EN));
-	    break;
-	}
-    }
-}
-
-static int r128_set_backlight_enable(ScrnInfoPtr pScrn, int on);
-
-static void R128DisplayPowerManagementSetLCD(ScrnInfoPtr pScrn,
-					  int PowerManagementMode, int flags)
-{
-    R128InfoPtr   info      = R128PTR(pScrn);
-    unsigned char *R128MMIO = info->MMIO;
-    int           mask      = R128_LVDS_DISPLAY_DIS;
-
-    switch (PowerManagementMode) {
-    case DPMSModeOn:
-	/* Screen: On; HSync: On, VSync: On */
-	OUTREGP(R128_LVDS_GEN_CNTL, 0, ~mask);
-        r128_set_backlight_enable(pScrn, 1);
-	break;
-    case DPMSModeStandby:
-	/* Fall through */
-    case DPMSModeSuspend:
-	/* Fall through */
-    case DPMSModeOff:
-	/* Screen: Off; HSync: Off, VSync: Off */
-	OUTREGP(R128_LVDS_GEN_CNTL, mask, ~mask);
-        r128_set_backlight_enable(pScrn, 0);
-	break;
-    }
-}
-
-static int r128_set_backlight_enable(ScrnInfoPtr pScrn, int on)
-{
-        R128InfoPtr info        = R128PTR(pScrn);
-        unsigned char *R128MMIO = info->MMIO;
-	unsigned int lvds_gen_cntl = INREG(R128_LVDS_GEN_CNTL);
-
-	lvds_gen_cntl |= (/*R128_LVDS_BL_MOD_EN |*/ R128_LVDS_BLON);
-	if (on) {
-		lvds_gen_cntl |= R128_LVDS_DIGON;
-		if (!(lvds_gen_cntl & R128_LVDS_ON)) {
-			lvds_gen_cntl &= ~R128_LVDS_BLON;
-			OUTREG(R128_LVDS_GEN_CNTL, lvds_gen_cntl);
-			(void)INREG(R128_LVDS_GEN_CNTL);
-			usleep(10000);
-			lvds_gen_cntl |= R128_LVDS_BLON;
-			OUTREG(R128_LVDS_GEN_CNTL, lvds_gen_cntl);
-		}
-#if 0
-		lvds_gen_cntl &= ~R128_LVDS_BL_MOD_LEVEL_MASK;
-		lvds_gen_cntl |= (0xFF /* backlight_conv[level] */ <<
-				  R128_LVDS_BL_MOD_LEVEL_SHIFT);
-#endif
-		lvds_gen_cntl |= (R128_LVDS_ON | R128_LVDS_EN);
-		lvds_gen_cntl &= ~R128_LVDS_DISPLAY_DIS;
-	} else {
-#if 0
-		lvds_gen_cntl &= ~R128_LVDS_BL_MOD_LEVEL_MASK;
-		lvds_gen_cntl |= (0xFF /* backlight_conv[0] */ <<
-				  R128_LVDS_BL_MOD_LEVEL_SHIFT);
-#endif
-		lvds_gen_cntl |= R128_LVDS_DISPLAY_DIS;
-		OUTREG(R128_LVDS_GEN_CNTL, lvds_gen_cntl);
-		usleep(10);
-		lvds_gen_cntl &= ~(R128_LVDS_ON | R128_LVDS_EN | R128_LVDS_BLON
-				   | R128_LVDS_DIGON);
-	}
-
-	OUTREG(R128_LVDS_GEN_CNTL, lvds_gen_cntl);
-
-	return 0;
 }
