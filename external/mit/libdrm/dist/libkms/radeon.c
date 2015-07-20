@@ -38,7 +38,7 @@
 
 #include <sys/ioctl.h>
 #include "xf86drm.h"
-#include "libdrm.h"
+#include "libdrm_macros.h"
 
 #include "radeon_drm.h"
 
@@ -219,7 +219,7 @@ radeon_bo_destroy(struct kms_bo *_bo)
 	return 0;
 }
 
-int
+drm_private int
 radeon_create(int fd, struct kms_driver **out)
 {
 	struct kms_driver *kms;

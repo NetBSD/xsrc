@@ -25,6 +25,7 @@
  *
  */
 
+#include <sys/ioctl.h>
 #include "drmtest.h"
 
 static void
@@ -121,7 +122,7 @@ static int rm_drawable(int fd, int drawable, int fail)
  */
 int main(int argc, char **argv)
 {
-	int fd, ret, d1, d2;
+	int fd, d1, d2;
 
 	if (getuid() != 0) {
 		fprintf(stderr, "updatedraw test requires root, skipping\n");

@@ -43,6 +43,7 @@
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 
+int current;
 int connectors;
 int full_props;
 int edid;
@@ -53,7 +54,7 @@ int crtcs;
 int fbs;
 char *module_name;
 
-const char* getConnectionText(drmModeConnection conn)
+static const char* getConnectionText(drmModeConnection conn)
 {
 	switch (conn) {
 	case DRM_MODE_CONNECTED:
@@ -66,7 +67,7 @@ const char* getConnectionText(drmModeConnection conn)
 
 }
 
-int printMode(struct drm_mode_modeinfo *mode)
+static int printMode(struct drm_mode_modeinfo *mode)
 {
 	if (full_modes) {
 		printf("Mode: %s\n", mode->name);
@@ -90,7 +91,7 @@ int printMode(struct drm_mode_modeinfo *mode)
 	return 0;
 }
 
-int printProperty(int fd, drmModeResPtr res, drmModePropertyPtr props, uint64_t value)
+static int printProperty(int fd, drmModeResPtr res, drmModePropertyPtr props, uint64_t value)
 {
 	const char *name = NULL;
 	int j;
@@ -161,7 +162,7 @@ static const char * const output_names[] = { "None",
 					     "DSI",
 };
 
-int printConnector(int fd, drmModeResPtr res, drmModeConnectorPtr connector, uint32_t id)
+static int printConnector(int fd, drmModeResPtr res, drmModeConnectorPtr connector, uint32_t id)
 {
 	int i = 0;
 	struct drm_mode_modeinfo *mode = NULL;
@@ -214,7 +215,7 @@ int printConnector(int fd, drmModeResPtr res, drmModeConnectorPtr connector, uin
 	return 0;
 }
 
-int printEncoder(int fd, drmModeResPtr res, drmModeEncoderPtr encoder, uint32_t id)
+static int printEncoder(int fd, drmModeResPtr res, drmModeEncoderPtr encoder, uint32_t id)
 {
 	printf("Encoder\n");
 	printf("\tid     :%i\n", id);
@@ -225,7 +226,7 @@ int printEncoder(int fd, drmModeResPtr res, drmModeEncoderPtr encoder, uint32_t 
 	return 0;
 }
 
-int printCrtc(int fd, drmModeResPtr res, drmModeCrtcPtr crtc, uint32_t id)
+static int printCrtc(int fd, drmModeResPtr res, drmModeCrtcPtr crtc, uint32_t id)
 {
 	printf("Crtc\n");
 	printf("\tid             : %i\n", id);
@@ -239,7 +240,7 @@ int printCrtc(int fd, drmModeResPtr res, drmModeCrtcPtr crtc, uint32_t id)
 	return 0;
 }
 
-int printFrameBuffer(int fd, drmModeResPtr res, drmModeFBPtr fb)
+static int printFrameBuffer(int fd, drmModeResPtr res, drmModeFBPtr fb)
 {
 	printf("Framebuffer\n");
 	printf("\thandle    : %i\n", fb->handle);
@@ -253,7 +254,7 @@ int printFrameBuffer(int fd, drmModeResPtr res, drmModeFBPtr fb)
 	return 0;
 }
 
-int printRes(int fd, drmModeResPtr res)
+static int printRes(int fd, drmModeResPtr res)
 {
 	int i;
 	drmModeFBPtr fb;
@@ -272,7 +273,7 @@ int printRes(int fd, drmModeResPtr res)
 
 	if (connectors) {
 		for (i = 0; i < res->count_connectors; i++) {
-			connector = drmModeGetConnector(fd, res->connectors[i]);
+			connector = (current ? drmModeGetConnectorCurrent : drmModeGetConnector) (fd, res->connectors[i]);
 
 			if (!connector)
 				printf("Could not get connector %i\n", res->connectors[i]);
@@ -329,8 +330,9 @@ int printRes(int fd, drmModeResPtr res)
 	return 0;
 }
 
-void args(int argc, char **argv)
+static void args(int argc, char **argv)
 {
+	int defaults = 1;
 	int i;
 
 	fbs = 0;
@@ -341,32 +343,41 @@ void args(int argc, char **argv)
 	full_modes = 0;
 	full_props = 0;
 	connectors = 0;
+	current = 0;
 
 	module_name = argv[1];
 
 	for (i = 2; i < argc; i++) {
 		if (strcmp(argv[i], "-fb") == 0) {
 			fbs = 1;
+			defaults = 0;
 		} else if (strcmp(argv[i], "-crtcs") == 0) {
 			crtcs = 1;
+			defaults = 0;
 		} else if (strcmp(argv[i], "-cons") == 0) {
 			connectors = 1;
 			modes = 1;
+			defaults = 0;
 		} else if (strcmp(argv[i], "-modes") == 0) {
 			connectors = 1;
 			modes = 1;
+			defaults = 0;
 		} else if (strcmp(argv[i], "-full") == 0) {
 			connectors = 1;
 			modes = 1;
 			full_modes = 1;
+			defaults = 0;
 		} else if (strcmp(argv[i], "-props") == 0) {
 			connectors = 1;
 			full_props = 1;
+			defaults = 0;
 		} else if (strcmp(argv[i], "-edids") == 0) {
 			connectors = 1;
 			edid = 1;
+			defaults = 0;
 		} else if (strcmp(argv[i], "-encoders") == 0) {
 			encoders = 1;
+			defaults = 0;
 		} else if (strcmp(argv[i], "-v") == 0) {
 			fbs = 1;
 			edid = 1;
@@ -376,10 +387,13 @@ void args(int argc, char **argv)
 			full_modes = 1;
 			full_props = 1;
 			connectors = 1;
+			defaults = 0;
+		} else if (strcmp(argv[i], "-current") == 0) {
+			current = 1;
 		}
 	}
 
-	if (argc == 2) {
+	if (defaults) {
 		fbs = 1;
 		edid = 1;
 		crtcs = 1;

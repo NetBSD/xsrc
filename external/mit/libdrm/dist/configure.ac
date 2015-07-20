@@ -20,7 +20,7 @@
 
 AC_PREREQ([2.63])
 AC_INIT([libdrm],
-        [2.4.59],
+        [2.4.62],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=DRI],
         [libdrm])
 
@@ -29,18 +29,31 @@ AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 
+# Require xorg-macros minimum of 1.12 for XORG_WITH_XSLTPROC
+m4_ifndef([XORG_MACROS_VERSION],
+          [m4_fatal([must install xorg-macros 1.12 or later before running autoconf/autogen])])
+XORG_MACROS_VERSION(1.12)
+XORG_WITH_XSLTPROC
+XORG_MANPAGE_SECTIONS
+
 AM_INIT_AUTOMAKE([1.10 foreign dist-bzip2])
-AM_MAINTAINER_MODE([enable])
 
 # Enable quiet compiles on automake 1.11.
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 # Check for programs
 AC_PROG_CC
+AC_PROG_CC_C99
+
+if test "x$ac_cv_prog_cc_c99" = xno; then
+	AC_MSG_ERROR([Building libdrm requires C99 enabled compiler])
+fi
 
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
 AC_FUNC_ALLOCA
+
+AC_CHECK_HEADERS([sys/mkdev.h])
 
 # Initialize libtool
 LT_PREREQ([2.2])
@@ -60,12 +73,12 @@ AC_ARG_ENABLE([udev],
 
 AC_ARG_ENABLE(libkms,
 	      AS_HELP_STRING([--disable-libkms],
-	      [Disable KMS mm abstraction library (default: auto)]),
+	      [Disable KMS mm abstraction library (default: auto, enabled on supported platforms)]),
 	      [LIBKMS=$enableval], [LIBKMS=auto])
 
 AC_ARG_ENABLE(intel,
 	      AS_HELP_STRING([--disable-intel],
-	      [Enable support for intel's KMS API (default: auto)]),
+	      [Enable support for intel's KMS API (default: auto, enabled on x86)]),
 	      [INTEL=$enableval], [INTEL=auto])
 
 AC_ARG_ENABLE(radeon,
@@ -95,7 +108,7 @@ AC_ARG_ENABLE(exynos-experimental-api,
 
 AC_ARG_ENABLE(freedreno,
 	      AS_HELP_STRING([--disable-freedreno],
-	      [Enable support for freedreno's KMS API (default: enabled on arm)]),
+	      [Enable support for freedreno's KMS API (default: auto, enabled on arm)]),
 	      [FREEDRENO=$enableval], [FREEDRENO=auto])
 
 AC_ARG_ENABLE(freedreno-kgsl,
@@ -214,45 +227,56 @@ if test "x$drm_cv_atomic_primitives" = "xlibatomic-ops"; then
 	AC_DEFINE(HAVE_LIB_ATOMIC_OPS, 1, [Enable if you have libatomic-ops-dev installed])
 fi
 
-if test "x$INTEL" != "xno" -o "x$RADEON" != "xno" -o "x$NOUVEAU" != "xno"; then
-	if test "x$drm_cv_atomic_primitives" = "xnone"; then
-		if test "x$INTEL" != "xauto"; then
-			if test "x$INTEL" != "xno"; then
-				AC_MSG_ERROR([libdrm_intel depends upon atomic operations, which were not found for your compiler/cpu. Try compiling with -march=native, or install the libatomics-op-dev package, or, failing both of those, disable support for Intel GPUs by passing --disable-intel to ./configure])
-			fi
-		else
-			AC_MSG_WARN([Disabling libdrm_intel. It depends on atomic operations, which were not found for your compiler/cpu. Try compiling with -march=native, or install the libatomics-op-dev package.])
-			INTEL=no
-		fi
-		if test "x$RADEON" != "xauto"; then
-			if test "x$RADEON" != "xno"; then
-				AC_MSG_ERROR([libdrm_radeon depends upon atomic operations, which were not found for your compiler/cpu. Try compiling with -march=native, or install the libatomics-op-dev package, or, failing both of those, disable support for Radeon GPUs by passing --disable-radeon to ./configure])
-			fi
-		else
-			AC_MSG_WARN([Disabling libdrm_radeon. It depends on atomic operations, which were not found for your compiler/cpu. Try compiling with -march=native, or install the libatomics-op-dev package.])
-			RADEON=no
-		fi
-		if test "x$NOUVEAU" != "xauto"; then
-			if test "x$NOUVEAU" != "xno"; then
-				AC_MSG_ERROR([libdrm_nouveau depends upon atomic operations, which were not found for your compiler/cpu. Try compiling with -march=native, or install the libatomics-op-dev package, or, failing both of those, disable support for NVIDIA GPUs by passing --disable-nouveau to ./configure])
-			fi
-		else
-			AC_MSG_WARN([Disabling libdrm_nouveau. It depends on atomic operations, which were not found for your compiler/cpu. Try compiling with -march=native, or install the libatomics-op-dev package.])
-			NOUVEAU=no
-		fi
-	else
-		if test "x$INTEL" != "xno"; then
-			case $host_cpu in
-				i?86|x86_64) INTEL=yes ;;
-				*) INTEL=no ;;
-			esac
-		fi
-		if test "x$RADEON" != "xno"; then
-			RADEON=yes
-		fi
-		if test "x$NOUVEAU" != "xno"; then
-			NOUVEAU=yes
-		fi
+dnl Print out the approapriate message considering the value set be the
+dnl respective in $1.
+dnl $1 - value to be evaluated. Eg. $INTEL, $NOUVEAU, ...
+dnl $2 - libdrm shortname. Eg. intel, freedreno, ...
+dnl $3 - GPU name/brand. Eg. Intel, NVIDIA Tegra, ...
+dnl $4 - Configure switch. Eg. intel, omap-experimental-api, ...
+AC_DEFUN([LIBDRM_ATOMICS_NOT_FOUND_MSG], [
+	case "x$1" in
+		xyes)	AC_MSG_ERROR([libdrm_$2 depends upon atomic operations, which were not found for your compiler/cpu. Try compiling with -march=native, or install the libatomics-op-dev package, or, failing both of those, disable support for $3 GPUs by passing --disable-$4 to ./configure]) ;;
+		xauto)	AC_MSG_WARN([Disabling $2. It depends on atomic operations, which were not found for your compiler/cpu. Try compiling with -march=native, or install the libatomics-op-dev package.]) ;;
+		*)	;;
+	esac
+])
+
+if test "x$drm_cv_atomic_primitives" = "xnone"; then
+	LIBDRM_ATOMICS_NOT_FOUND_MSG($INTEL, intel, Intel, intel)
+	INTEL=no
+
+	LIBDRM_ATOMICS_NOT_FOUND_MSG($RADEON, radeon, Radeon, radeon)
+	RADEON=no
+
+	LIBDRM_ATOMICS_NOT_FOUND_MSG($NOUVEAU, nouveau, NVIDIA, nouveau)
+	NOUVEAU=no
+
+	LIBDRM_ATOMICS_NOT_FOUND_MSG($OMAP, omap, OMAP, omap-experimental-api)
+	OMAP=no
+
+	LIBDRM_ATOMICS_NOT_FOUND_MSG($FREEDRENO, freedreno, Qualcomm Adreno, freedreno)
+	FREEDRENO=no
+
+	LIBDRM_ATOMICS_NOT_FOUND_MSG($TEGRA, tegra, NVIDIA Tegra, tegra-experimental-api)
+	TEGRA=no
+else
+	if test "x$INTEL" = xauto; then
+		case $host_cpu in
+			i?86|x86_64)	INTEL=yes ;;
+			*)		INTEL=no ;;
+		esac
+	fi
+	if test "x$RADEON" = xauto; then
+		RADEON=yes
+	fi
+	if test "x$NOUVEAU" = xauto; then
+		NOUVEAU=yes
+	fi
+	if test "x$FREEDRENO" = xauto; then
+		case $host_cpu in
+			arm*|aarch64)	FREEDRENO=yes ;;
+			*)		FREEDRENO=no ;;
+		esac
 	fi
 fi
 
@@ -274,13 +298,6 @@ if test "x$LIBKMS" = xauto ; then
 				LIBKMS="yes" ;;
 		dragonfly*)	LIBKMS="yes" ;;
 		*)		LIBKMS="no" ;;
-	esac
-fi
-
-if test "x$FREEDRENO" = xauto ; then
-	case $host_cpu in
-		arm*|aarch64)	FREEDRENO="yes" ;;
-		*)		FREEDRENO="no" ;;
 	esac
 fi
 
@@ -316,6 +333,11 @@ if test "x$FREEDRENO" = xyes; then
 	AC_DEFINE(HAVE_FREEDRENO, 1, [Have freedreno support])
 fi
 
+if test "x$FREEDRENO_KGSL" = xyes; then
+	if test "x$FREEDRENO" != xyes; then
+		AC_MSG_ERROR([Cannot enable freedreno KGSL interface if freedreno is disabled])
+	fi
+fi
 AM_CONDITIONAL(HAVE_FREEDRENO_KGSL, [test "x$FREEDRENO_KGSL" = xyes])
 if test "x$FREEDRENO_KGSL" = xyes; then
 	AC_DEFINE(HAVE_FREEDRENO_KGSL, 1, [Have freedreno support for KGSL kernel interface])
@@ -363,9 +385,8 @@ AM_CONDITIONAL(HAVE_LIBUDEV, [test "x$HAVE_LIBUDEV" = xyes])
 
 # xsltproc for docbook manpages
 AC_ARG_ENABLE([manpages],
-              AS_HELP_STRING([--disable-manpages], [disable manpages @<:@default=enabled@:>@]),
+              AS_HELP_STRING([--enable-manpages], [enable manpages @<:@default=auto@:>@]),
               [MANS=$enableval], [MANS=auto])
-AC_PATH_PROG(XSLTPROC, xsltproc)
 AM_CONDITIONAL([BUILD_MANPAGES], [test "x$XSLTPROC" != "x" -a "x$MANS" != "xno"])
 
 # check for offline man-pages stylesheet
@@ -382,10 +403,24 @@ else
 fi
 AM_CONDITIONAL([HAVE_MANPAGES_STYLESHEET], [test "x$HAVE_MANPAGES_STYLESHEET" = "xyes"])
 
+AC_ARG_ENABLE(valgrind,
+              [AS_HELP_STRING([--enable-valgrind],
+                             [Build libdrm with  valgrind support (default: auto)])],
+                             [VALGRIND=$enableval], [VALGRIND=yes])
 PKG_CHECK_MODULES(VALGRIND, [valgrind], [have_valgrind=yes], [have_valgrind=no])
-if test "x$have_valgrind" = "xyes"; then
+AC_MSG_CHECKING([whether to enable Valgrind support])
+if test "x$VALGRIND" = xauto; then
+	VALGRIND="$have_valgrind"
+fi
+
+if test "x$VALGRIND" = "xyes"; then
+	if ! test "x$have_valgrind" = xyes; then
+		AC_MSG_ERROR([Valgrind support required but not present])
+	fi
 	AC_DEFINE([HAVE_VALGRIND], 1, [Use valgrind intrinsics to suppress false warnings])
 fi
+
+AC_MSG_RESULT([$VALGRIND])
 
 AC_ARG_WITH([kernel-source],
             [AS_HELP_STRING([--with-kernel-source],
@@ -393,24 +428,13 @@ AC_ARG_WITH([kernel-source],
 	    [kernel_source="$with_kernel_source"])
 AC_SUBST(kernel_source)
 
-dnl Add flags for gcc and g++
-if test "x$GCC" = xyes; then
-    # Enable -fvisibility=hidden if using a gcc that supports it
-    save_CFLAGS="$CFLAGS"
-    AC_MSG_CHECKING([whether $CC supports -fvisibility=hidden])
-    VISIBILITY_CFLAGS="-fvisibility=hidden"
-    CFLAGS="$CFLAGS $VISIBILITY_CFLAGS"
-    AC_LINK_IFELSE([AC_LANG_PROGRAM()], AC_MSG_RESULT([yes]),
-                   [VISIBILITY_CFLAGS=""; AC_MSG_RESULT([no])]);
+AC_MSG_CHECKING([whether $CC supports __attribute__(("hidden"))])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([
+    int foo_hidden( void ) __attribute__((visibility("hidden")));
+])], HAVE_ATTRIBUTE_VISIBILITY="yes"; AC_MSG_RESULT([yes]), AC_MSG_RESULT([no]));
 
-    # Restore CFLAGS; VISIBILITY_CFLAGS are added to it where needed.
-    CFLAGS=$save_CFLAGS
-
-    if test "x$VISIBILITY_CFLAGS" != x; then
-        AC_DEFINE(HAVE_VISIBILITY, 1, [Compiler has -fvisibility support])
-    fi
-
-    AC_SUBST([VISIBILITY_CFLAGS])
+if test "x$HAVE_ATTRIBUTE_VISIBILITY" = xyes; then
+    AC_DEFINE(HAVE_VISIBILITY, 1, [Compiler supports __attribute__(("hidden"))])
 fi
 
 AC_SUBST(WARN_CFLAGS)
@@ -441,6 +465,7 @@ AC_CONFIG_FILES([
 	tests/vbltest/Makefile
 	tests/exynos/Makefile
 	tests/tegra/Makefile
+	tests/nouveau/Makefile
 	man/Makefile
 	libdrm.pc])
 AC_OUTPUT

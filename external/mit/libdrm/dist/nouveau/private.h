@@ -1,7 +1,7 @@
 #ifndef __NOUVEAU_LIBDRM_PRIVATE_H__
 #define __NOUVEAU_LIBDRM_PRIVATE_H__
 
-#include <libdrm.h>
+#include <libdrm_macros.h>
 #include <xf86drm.h>
 #include <xf86atomic.h>
 #include <pthread.h>
@@ -10,7 +10,7 @@
 #include "nouveau.h"
 
 #ifdef DEBUG
-uint32_t nouveau_debug;
+drm_private uint32_t nouveau_debug;
 #define dbg_on(lvl) (nouveau_debug & (1 << lvl))
 #define dbg(lvl, fmt, args...) do {                                            \
 	if (dbg_on((lvl)))                                                     \
@@ -114,13 +114,13 @@ int
 nouveau_device_open_existing(struct nouveau_device **, int, int, drm_context_t);
 
 /* abi16.c */
-int  abi16_chan_nv04(struct nouveau_object *);
-int  abi16_chan_nvc0(struct nouveau_object *);
-int  abi16_chan_nve0(struct nouveau_object *);
-int  abi16_engobj(struct nouveau_object *);
-int  abi16_ntfy(struct nouveau_object *);
-void abi16_bo_info(struct nouveau_bo *, struct drm_nouveau_gem_info *);
-int  abi16_bo_init(struct nouveau_bo *, uint32_t alignment,
-		   union nouveau_bo_config *);
+drm_private int  abi16_chan_nv04(struct nouveau_object *);
+drm_private int  abi16_chan_nvc0(struct nouveau_object *);
+drm_private int  abi16_chan_nve0(struct nouveau_object *);
+drm_private int  abi16_engobj(struct nouveau_object *);
+drm_private int  abi16_ntfy(struct nouveau_object *);
+drm_private void abi16_bo_info(struct nouveau_bo *, struct drm_nouveau_gem_info *);
+drm_private int  abi16_bo_init(struct nouveau_bo *, uint32_t alignment,
+			       union nouveau_bo_config *);
 
 #endif

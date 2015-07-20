@@ -36,7 +36,7 @@
 #include "internal.h"
 
 #include "xf86drm.h"
-#include "libdrm.h"
+#include "libdrm_macros.h"
 #include "vmwgfx_drm.h"
 
 struct vmwgfx_bo
@@ -185,7 +185,7 @@ vmwgfx_bo_destroy(struct kms_bo *_bo)
 	return 0;
 }
 
-int
+drm_private int
 vmwgfx_create(int fd, struct kms_driver **out)
 {
 	struct kms_driver *kms;

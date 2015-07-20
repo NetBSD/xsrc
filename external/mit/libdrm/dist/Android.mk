@@ -24,8 +24,6 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
-LIBDRM_TOP := $(LOCAL_PATH)
-
 # Import variables LIBDRM_{,H_,INCLUDE_H_,INCLUDE_VMWGFX_H_}FILES
 include $(LOCAL_PATH)/Makefile.sources
 
@@ -33,31 +31,17 @@ LOCAL_MODULE := libdrm
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := $(LIBDRM_FILES)
-LOCAL_EXPORT_C_INCLUDE_DIRS += \
+LOCAL_EXPORT_C_INCLUDE_DIRS := \
 	$(LOCAL_PATH) \
 	$(LOCAL_PATH)/include/drm
 
 LOCAL_C_INCLUDES := \
-	$(LIBDRM_TOP)/include/drm
+	$(LOCAL_PATH)/include/drm
 
 LOCAL_CFLAGS := \
+	-DHAVE_VISIBILITY=1 \
 	-DHAVE_LIBDRM_ATOMIC_PRIMITIVES=1
 
-LOCAL_COPY_HEADERS := \
-	$(LIBDRM_H_FILES) \
-	$(LIBDRM_INCLUDE_H_FILES) \
-	$(LIBDRM_INCLUDE_VMWGFX_H_FILES)
-
-LOCAL_COPY_HEADERS_TO := libdrm
 include $(BUILD_SHARED_LIBRARY)
 
-SUBDIRS := \
-	freedreno \
-	intel \
-	nouveau \
-	radeon \
-	libkms \
-	tests/modetest
-
-mkfiles := $(patsubst %,$(LIBDRM_TOP)/%/Android.mk,$(SUBDIRS))
-include $(mkfiles)
+include $(call all-makefiles-under,$(LOCAL_PATH))

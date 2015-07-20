@@ -48,11 +48,6 @@
 #endif
 #include "xf86drm.h"
 
-/* Support gcc's __FUNCTION__ for people using other compilers */
-#if !defined(__GNUC__) && !defined(__FUNCTION__)
-# define __FUNCTION__ __func__ /* C99 */
-#endif
-
 int sigio_fd;
 
 static double usec(struct timeval *end, struct timeval *start)
@@ -81,23 +76,17 @@ static void getversion(int fd)
 	printf( "No driver available\n" );
     }
 }
-	
-void handler(int fd, void *oldctx, void *newctx)
-{
-    printf("Got fd %d\n", fd);
-}
 
-void process_sigio(char *device)
+static void process_sigio(char *device)
 {
     int              fd;
 
     if ((fd = open(device, 0)) < 0) {
-	drmError(-errno, __FUNCTION__);
+	drmError(-errno, __func__);
 	exit(1);
     }
 
     sigio_fd = fd;
-    /*  drmInstallSIGIOHandler(fd, handler); */
     for (;;) sleep(60);
 }
 
@@ -425,13 +414,6 @@ int main(int argc, char **argv)
 	}
 
     return r; 
-}
-
-void DRM_PRINTFLIKE(4, 0)
-xf86VDrvMsgVerb(int scrnIndex, int type, int verb, const char *format,
-                va_list args)
-{
-	vfprintf(stderr, format, args);
 }
 
 int xf86ConfigDRI[10];

@@ -507,4 +507,41 @@ struct drm_mode_destroy_dumb {
 	__u32 handle;
 };
 
+/* page-flip flags are valid, plus: */
+#define DRM_MODE_ATOMIC_TEST_ONLY	0x0100
+#define DRM_MODE_ATOMIC_NONBLOCK	0x0200
+#define DRM_MODE_ATOMIC_ALLOW_MODESET	0x0400
+
+struct drm_mode_atomic {
+	__u32 flags;
+	__u32 count_objs;
+	__u64 objs_ptr;
+	__u64 count_props_ptr;
+	__u64 props_ptr;
+	__u64 prop_values_ptr;
+	__u64 reserved;
+	__u64 user_data;
+};
+
+/**
+ * Create a new 'blob' data property, copying length bytes from data pointer,
+ * and returning new blob ID.
+ */
+struct drm_mode_create_blob {
+	/** Pointer to data to copy. */
+	__u64 data;
+	/** Length of data to copy. */
+	__u32 length;
+	/** Return: new property ID. */
+	__u32 blob_id;
+};
+
+/**
+ * Destroy a user-created blob property.
+ */
+struct drm_mode_destroy_blob {
+	__u32 blob_id;
+};
+
+
 #endif

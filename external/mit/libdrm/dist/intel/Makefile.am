@@ -26,9 +26,7 @@ include Makefile.sources
 
 AM_CFLAGS = \
 	$(WARN_CFLAGS) \
-	$(VISIBILITY_CFLAGS) \
 	-I$(top_srcdir) \
-	-I$(top_srcdir)/intel \
 	$(PTHREADSTUBS_CFLAGS) \
 	$(PCIACCESS_CFLAGS) \
 	$(VALGRIND_CFLAGS) \
@@ -43,8 +41,6 @@ libdrm_intel_la_LIBADD = ../libdrm.la \
 	@CLOCK_LIB@
 
 libdrm_intel_la_SOURCES = $(LIBDRM_INTEL_FILES)
-
-intel_bufmgr_gem_o_CFLAGS = $(AM_CFLAGS) -c99
 
 libdrm_intelincludedir = ${includedir}/libdrm
 libdrm_intelinclude_HEADERS = $(LIBDRM_INTEL_H_FILES)
@@ -61,7 +57,8 @@ BATCHES = \
 	tests/gen7-3d.batch
 
 TESTS = \
-	$(BATCHES:.batch=.batch.sh)
+	$(BATCHES:.batch=.batch.sh) \
+	intel-symbol-check
 
 EXTRA_DIST = \
 	$(BATCHES) \
@@ -69,7 +66,8 @@ EXTRA_DIST = \
 	$(BATCHES:.batch=.batch-ref.txt) \
 	$(BATCHES:.batch=.batch-ref.txt) \
 	tests/test-batch.sh \
-	Android.mk
+	Android.mk \
+	$(TESTS)
 
 test_decode_LDADD = libdrm_intel.la ../libdrm.la
 
