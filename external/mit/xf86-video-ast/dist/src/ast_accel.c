@@ -54,8 +54,6 @@
 #include "ast.h"
 #include "ast_2dtool.h"
 
-extern UCHAR *pjRequestCMDQ(ASTRecPtr pAST, ULONG ulDataLen);
-
 #ifdef	Accel_2D
 
 #ifdef HAVE_XAA_H
