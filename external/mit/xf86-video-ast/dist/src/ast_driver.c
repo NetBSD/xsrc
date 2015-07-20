@@ -40,7 +40,6 @@
 #include "xf86xv.h"
 #include <X11/extensions/Xv.h>
 
-#include "xf86PciInfo.h"
 #include "xf86Pci.h"
 
 /* framebuffer offscreen manager */
@@ -57,44 +56,9 @@
 
 /* Driver specific headers */
 #include "ast.h"
-
-/* external reference fucntion */
-extern Bool ASTMapMem(ScrnInfoPtr pScrn);
-extern Bool ASTUnmapMem(ScrnInfoPtr pScrn);
-extern Bool ASTMapMMIO(ScrnInfoPtr pScrn);
-extern void ASTUnmapMMIO(ScrnInfoPtr pScrn);
-
-extern void vASTOpenKey(ScrnInfoPtr pScrn);
-extern Bool bASTRegInit(ScrnInfoPtr pScrn);
-extern void GetDRAMInfo(ScrnInfoPtr pScrn);
-extern ULONG GetVRAMInfo(ScrnInfoPtr pScrn);
-extern ULONG GetMaxDCLK(ScrnInfoPtr pScrn);
-extern void GetChipType(ScrnInfoPtr pScrn);
-extern void GetScratchOptions(ScrnInfoPtr pScrn);
-extern void vASTLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indices, LOCO *colors, VisualPtr pVisual);
-extern void ASTDisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode, int flags);
-extern void vSetStartAddressCRT1(ASTRecPtr pAST, ULONG base);
-extern Bool ASTSetMode(ScrnInfoPtr pScrn, DisplayModePtr mode);
-extern Bool GetVGA2EDID(ScrnInfoPtr pScrn, unsigned char *pEDIDBuffer);
-extern void vInitDRAMReg(ScrnInfoPtr pScrn);
-extern Bool bIsVGAEnabled(ScrnInfoPtr pScrn);
-extern void ASTBlankScreen(ScrnInfoPtr pScreen, Bool unblack);
-extern Bool InitVGA(ScrnInfoPtr pScrn, ULONG Flags);
-extern Bool GetVGAEDID(ScrnInfoPtr pScrn, unsigned char *pEDIDBuffer);
-extern Bool bInitAST1180(ScrnInfoPtr pScrn);
-extern void GetAST1180DRAMInfo(ScrnInfoPtr pScrn);
-extern void vEnableASTVGAMMIO(ScrnInfoPtr pScrn);
-
-extern Bool bInitCMDQInfo(ScrnInfoPtr pScrn, ASTRecPtr pAST);
-extern Bool bEnableCMDQ(ScrnInfoPtr pScrn, ASTRecPtr pAST);
-extern void vDisable2D(ScrnInfoPtr pScrn, ASTRecPtr pAST);
-
-#ifdef HAVE_XAA_H
-extern Bool ASTAccelInit(ScreenPtr pScreen);
-#endif
-
-extern Bool ASTCursorInit(ScreenPtr pScreen);
-extern void ASTDisableHWC(ScrnInfoPtr pScrn);
+#include "ast_mode.h"
+#include "ast_vgatool.h"
+#include "ast_2dtool.h"
 
 /* Mandatory functions */
 static void ASTIdentify(int flags);
@@ -126,8 +90,11 @@ static Bool ASTModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode);
 static void ASTInitVideo(ScreenPtr pScreen);
 static int  ASTPutImage( ScrnInfoPtr,
         short, short, short, short, short, short, short, short,
-        int, unsigned char*, short, short, Bool, RegionPtr, pointer,
-	DrawablePtr);
+        int, unsigned char*, short, short, Bool, RegionPtr, pointer
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) >= 1
+		          , DrawablePtr pDraw
+#endif
+			 );
 #endif
 
 /*
@@ -292,7 +259,10 @@ ASTProbe(DriverPtr drv, int flags)
 				   devSections, numDevSections,
 				   drv, &usedChips);
 
-    free(devSections);
+    if (numUsed <= 0) {
+	free(devSections);
+	return FALSE;
+    }
 
     if (flags & PROBE_DETECT) {
         if (numUsed > 0)
@@ -310,7 +280,13 @@ ASTProbe(DriverPtr drv, int flags)
                                "ast: The PCI device 0x%x at %2.2d@%2.2d:%2.2d:%1.1d has a kernel module claiming it.\n",
                                pPci->device_id, pPci->bus, pPci->domain, pPci->dev, pPci->func);
                     xf86DrvMsg(0, X_ERROR,
-                               "cirrus: This driver cannot operate until it has been unloaded.\n");
+                               "ast: This driver cannot operate until it has been unloaded.\n");
+                    xf86UnclaimPciSlot(pPci
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) >= 13
+				       , devSections[0]
+#endif
+				       );
+                    free(devSections);
                     return FALSE;
                 }
             }
@@ -344,6 +320,7 @@ ASTProbe(DriverPtr drv, int flags)
         }  /* end of for-loop */
     } /* end of if flags */
 
+    free(devSections);
     free(usedChips);
 
     return foundScreen;
@@ -563,23 +540,21 @@ ASTPreInit(ScrnInfoPtr pScrn, int flags)
    xf86DrvMsg(pScrn->scrnIndex, from, "Chipset: \"%s\"\n",
 	      (pScrn->chipset != NULL) ? pScrn->chipset : "Unknown ast");
 
-   /* Resource Allocation */
+
 #if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
-    pAST->IODBase = pScrn->domainIOBase;
-#else
-    pAST->IODBase = 0;
-#endif
     /* "Patch" the PIOOffset inside vgaHW in order to force
      * the vgaHW module to use our relocated i/o ports.
      */
+    VGAHWPTR(pScrn)->PIOOffset =
+	pScrn->domainIOBase + PCI_REGION_BASE(pAST->PciInfo, 2, REGION_IO) - 0x380;
 
-#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
-    VGAHWPTR(pScrn)->PIOOffset = /* ... */
+    pAST->RelocateIO = pScrn->domainIOBase +
+	    PCI_REGION_BASE(pAST->PciInfo, 2, REGION_IO);
+#else
+    pAST->RelocateIO = (PCI_REGION_BASE(pAST->PciInfo, 2, REGION_IO));
+
 #endif
-       	pAST->PIOOffset =
-	pAST->IODBase + PCI_REGION_BASE(pAST->PciInfo, 2, REGION_IO) - 0x380;
 
-    pAST->RelocateIO = (IOADDRESS)(PCI_REGION_BASE(pAST->PciInfo, 2, REGION_IO) + pAST->IODBase);
 
    if (pAST->pEnt->device->MemBase != 0) {
       pAST->FBPhysAddr = pAST->pEnt->device->MemBase;
@@ -636,41 +611,43 @@ ASTPreInit(ScrnInfoPtr pScrn, int flags)
        }
 
        /* Init AST1180 */
-       bInitAST1180(pScrn);
+       bASTInitAST1180(pScrn);
 
        /* Get AST1180 Information */
-       GetAST1180DRAMInfo(pScrn);
+       ASTGetAST1180DRAMInfo(pScrn);
        pScrn->videoRam = pAST->ulVRAMSize / 1024;
 
    }
    else
    {
        /* Enable VGA MMIO Access */
-       vEnableASTVGAMMIO(pScrn);
+       vASTEnableVGAMMIO(pScrn);
 
        /* Init VGA Adapter */
        if (!xf86IsPrimaryPci(pAST->PciInfo))
        {
-           InitVGA(pScrn, 0);
+           ASTInitVGA(pScrn, 0);
        }
 
        vASTOpenKey(pScrn);
        bASTRegInit(pScrn);
 
        /* Get Chip Type */
-       if (PCI_DEV_REVISION(pAST->PciInfo) >= 0x20)
+       if (PCI_DEV_REVISION(pAST->PciInfo) >= 0x30)
+           pAST->jChipType = AST2400;
+       else if (PCI_DEV_REVISION(pAST->PciInfo) >= 0x20)
            pAST->jChipType = AST2300;
        else if (PCI_DEV_REVISION(pAST->PciInfo) >= 0x10)
-           GetChipType(pScrn);
+           ASTGetChipType(pScrn);
        else
            pAST->jChipType = AST2000;
 
        /* Get Options from Scratch */
-       GetScratchOptions(pScrn);
+       ASTGetScratchOptions(pScrn);
 
        /* Get DRAM Info */
-       GetDRAMInfo(pScrn);
-       pAST->ulVRAMSize = GetVRAMInfo(pScrn);
+       ASTGetDRAMInfo(pScrn);
+       pAST->ulVRAMSize = ASTGetVRAMInfo(pScrn);
        pScrn->videoRam  = pAST->ulVRAMSize / 1024;
    }
 
@@ -702,13 +679,13 @@ ASTPreInit(ScrnInfoPtr pScrn, int flags)
    clockRanges = xnfcalloc(sizeof(ClockRange), 1);
    clockRanges->next = NULL;
    clockRanges->minClock = 9500;
-   clockRanges->maxClock = GetMaxDCLK(pScrn) * 1000;
+   clockRanges->maxClock = ASTGetMaxDCLK(pScrn) * 1000;
    clockRanges->clockIndex = -1;
    clockRanges->interlaceAllowed = FALSE;
    clockRanges->doubleScanAllowed = FALSE;
 
    /* Add for AST2100, ycchen@061807 */
-   if ((pAST->jChipType == AST2100) || (pAST->jChipType == AST2200) || (pAST->jChipType == AST2300) || (pAST->jChipType == AST1180))
+   if ((pAST->jChipType == AST2100) || (pAST->jChipType == AST2200) || (pAST->jChipType == AST2300) || (pAST->jChipType == AST2400) || (pAST->jChipType == AST1180))
    {
        maxPitch  = 1920;
        maxHeight = 1200;
@@ -1024,7 +1001,7 @@ ASTScreenInit(SCREEN_INIT_ARGS_DECL)
    xf86DPMSInit(pScreen, ASTDisplayPowerManagementSet, 0);
 
 #ifdef AstVideo
-   if ( (pAST->jChipType == AST1180) || (pAST->jChipType == AST2300) )
+   if ( (pAST->jChipType == AST1180) || (pAST->jChipType == AST2300) || (pAST->jChipType == AST2400) )
    {
        xf86DrvMsg(pScrn->scrnIndex, X_INFO,"AST Initial Video()\n");
        ASTInitVideo(pScreen);
@@ -1073,7 +1050,7 @@ ASTSwitchMode(SWITCH_MODE_ARGS_DECL)
        xf86FreeOffscreenLinear(pAST->pCMDQPtr);		/* free CMDQ */
        pAST->pCMDQPtr = NULL;
    }
-   vDisable2D(pScrn, pAST);
+   vASTDisable2D(pScrn, pAST);
 #endif
 
    /* Fixed display abnormal on the of the screen if run xvidtune, ycchen@122909 */
@@ -1093,7 +1070,7 @@ ASTAdjustFrame(ADJUST_FRAME_ARGS_DECL)
    base = y * pAST->VideoModeInfo.ScreenPitch + x * ((pAST->VideoModeInfo.bitsPerPixel + 1) / 8);
    /* base = base >> 2; */			/* DW unit */
 
-   vSetStartAddressCRT1(pAST, base);
+   vASTSetStartAddressCRT1(pAST, base);
 
 }
 
@@ -1105,14 +1082,14 @@ ASTEnterVT(VT_FUNC_ARGS_DECL)
    ASTRecPtr pAST = ASTPTR(pScrn);
 
    /* Fixed suspend can't resume issue */
-   if (!bIsVGAEnabled(pScrn))
+   if (!bASTIsVGAEnabled(pScrn))
    {
        if (pAST->jChipType == AST1180)
-           bInitAST1180(pScrn);
+           bASTInitAST1180(pScrn);
        else
        {
-           vEnableASTVGAMMIO(pScrn);
-           InitVGA(pScrn, 1);
+           vASTEnableVGAMMIO(pScrn);
+           ASTInitVGA(pScrn, 1);
        }
        ASTRestore(pScrn);
    }
@@ -1149,7 +1126,7 @@ ASTLeaveVT(VT_FUNC_ARGS_DECL)
        xf86FreeOffscreenLinear(pAST->pCMDQPtr);		/* free CMDQ */
        pAST->pCMDQPtr = NULL;
    }
-   vDisable2D(pScrn, pAST);
+   vASTDisable2D(pScrn, pAST);
 #endif
 
    ASTRestore(pScrn);
@@ -1218,7 +1195,7 @@ ASTValidMode(SCRN_ARG_TYPE arg, DisplayModePtr mode, Bool verbose, int flags)
       if ( (mode->CrtcHDisplay == 1600) && (mode->CrtcVDisplay == 900) )
           return MODE_OK;
 
-      if ( (pAST->jChipType == AST2100) || (pAST->jChipType == AST2200) || (pAST->jChipType == AST2300) || (pAST->jChipType == AST1180) )
+      if ( (pAST->jChipType == AST2100) || (pAST->jChipType == AST2200) || (pAST->jChipType == AST2300) || (pAST->jChipType == AST2400) || (pAST->jChipType == AST1180) )
       {
           if ( (mode->CrtcHDisplay == 1920) && (mode->CrtcVDisplay == 1080) )
               return MODE_OK;
@@ -1279,10 +1256,14 @@ ASTGetRec(ScrnInfoPtr pScrn)
 static void
 ASTFreeRec(ScrnInfoPtr pScrn)
 {
+   ASTRecPtr pAST = ASTPTR(pScrn);
+
    if (!pScrn)
       return;
    if (!pScrn->driverPrivate)
       return;
+   if (pAST->pDP501FWBufferVirtualAddress)
+       free(pAST->pDP501FWBufferVirtualAddress);
    free(pScrn->driverPrivate);
    pScrn->driverPrivate = 0;
 }
@@ -1329,7 +1310,7 @@ ASTCloseScreen(CLOSE_SCREEN_ARGS_DECL)
            xf86FreeOffscreenLinear(pAST->pCMDQPtr);		/* free CMDQ */
            pAST->pCMDQPtr = NULL;
        }
-       vDisable2D(pScrn, pAST);
+       vASTDisable2D(pScrn, pAST);
 #endif
 
        ASTRestore(pScrn);
@@ -1546,9 +1527,15 @@ ASTProbeDDC(ScrnInfoPtr pScrn, int index)
    if (xf86LoadSubModule(pScrn, "ddc"))
    {
       if (pAST->jChipType == AST1180)
-          Flags = GetVGA2EDID(pScrn, DDC_data);
+          Flags = ASTGetVGA2EDID(pScrn, DDC_data);
+      else if (pAST->jTxChipType == Tx_DP501)
+      {
+          Flags = ASTReadEDID_M68K(pScrn, DDC_data);
+          if (Flags == FALSE)
+              Flags = ASTGetVGAEDID(pScrn, DDC_data);
+      }
       else
-          Flags = GetVGAEDID(pScrn, DDC_data);
+          Flags = ASTGetVGAEDID(pScrn, DDC_data);
 
       if (Flags)
       {
@@ -1590,9 +1577,17 @@ ASTDoDDC(ScrnInfoPtr pScrn, int index)
    if (xf86LoadSubModule(pScrn, "ddc"))
    {
       if (pAST->jChipType == AST1180)
-          Flags = GetVGA2EDID(pScrn, DDC_data);
+          Flags = ASTGetVGA2EDID(pScrn, DDC_data);
+      else if (pAST->jTxChipType == Tx_DP501)
+      {
+	      pAST->DP501_MaxVCLK = 0xFF;
+          Flags = ASTReadEDID_M68K(pScrn, DDC_data);
+          if (Flags) pAST->DP501_MaxVCLK = ASTGetLinkMaxCLK(pScrn);
+          else
+              Flags = ASTGetVGAEDID(pScrn, DDC_data);
+      }
       else
-          Flags = GetVGAEDID(pScrn, DDC_data);
+          Flags = ASTGetVGAEDID(pScrn, DDC_data);
 
       if (Flags)
       {
@@ -1608,7 +1603,7 @@ ASTDoDDC(ScrnInfoPtr pScrn, int index)
 
       /* For VGA2 CLONE Support, ycchen@012508 */
       if ((xf86ReturnOptValBool(pAST->Options, OPTION_VGA2_CLONE, FALSE)) || pAST->VGA2Clone) {
-          if (GetVGA2EDID(pScrn, DDC_data) == TRUE) {
+          if (ASTGetVGA2EDID(pScrn, DDC_data) == TRUE) {
               xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Get VGA2 EDID Correctly!! \n");
               MonInfo2 = xf86InterpretEDID(pScrn->scrnIndex, DDC_data);
               if (MonInfo1 == NULL)	/* No DDC1 EDID */
@@ -1740,7 +1735,7 @@ ASTDoDDC(ScrnInfoPtr pScrn, int index)
 
                } /* Check with VGA1 & VGA2 EDID */
 
-           } /* GetVGA2EDID */
+           } /* ASTGetVGA2EDID */
            else {
                xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Can't Get VGA2 EDID Correctly!! \n");
            }
@@ -2098,8 +2093,6 @@ static int ASTQueryImageAttributes(ScrnInfoPtr pScrn, int id,
     return size;
 }
 
-extern void ASTDisplayVideo(ScrnInfoPtr pScrn, ASTPortPrivPtr pPriv, RegionPtr clipBoxes, int id);
-
 static int ASTPutImage(ScrnInfoPtr pScrn,
                           short src_x, short src_y,
                           short drw_x, short drw_y,
@@ -2108,8 +2101,10 @@ static int ASTPutImage(ScrnInfoPtr pScrn,
                           int id, unsigned char* buf,
                           short width, short height,
                           Bool sync,
-                          RegionPtr clipBoxes, pointer data,
-			  DrawablePtr pDraw
+                          RegionPtr clipBoxes, pointer data
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) >= 1
+		          , DrawablePtr pDraw
+#endif
 )
 {
     ASTPtr pAST = ASTPTR(pScrn);

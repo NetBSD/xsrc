@@ -339,15 +339,13 @@ Mach64GetOrder(int val, int *shift)
 static Bool
 Mach64CheckTexture(PicturePtr pPict)
 {
-    int h, w;
+    int h,w;
     int l2w, l2h, level, i;
 
-    if  (pPict->pDrawable == NULL)
-    	return FALSE;
-
+    if (pPict->pDrawable == NULL)
+	    return FALSE;
     w = pPict->pDrawable->width;
     h = pPict->pDrawable->height;
-
     for (i = 0; i < MACH64_NR_TEX_FORMATS; i++) {
         if (Mach64TexFormats[i].pictFormat == pPict->format)
             break;
