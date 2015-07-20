@@ -43,6 +43,7 @@ xkb_symbols "basic" {
     key <AB08>  { [     comma,  semicolon,       periodcentered,     multiply	] };
     key <AB09>	{ [    period,      colon,                U2026,     division 	] };
     key <AB10>	{ [     minus, underscore,               endash,     emdash	] };
+    key <LSGT>	{ [     less,     greater,                  bar,     NoSymbol   ] };
 
     include "kpdl(comma)"
 
@@ -308,7 +309,7 @@ xkb_symbols "sundeadkeys" {
 //
 //      http://www.neo-layout.org
 //
-// $Revision: 1.1.1.11 $, $Date: 2014/07/11 19:08:50 $
+// $Revision: 1.1.1.12 $, $Date: 2015/07/20 05:27:56 $
 
 partial alphanumeric_keys modifier_keys keypad_keys
 xkb_symbols "neo_base" {
@@ -637,6 +638,40 @@ xkb_symbols "ru" {
 };
 
 partial alphanumeric_keys
+xkb_symbols "pl" {
+
+    // Combined layout for entering both German and Polish symbols on a German physical
+    // keyboard. Based on German (eliminate dead keys) and Polish (basic). Polish diacritics
+    // on AltGr+"acelnosxz". EuroSign moved to AE04 (AltGr+dollar key) to avoid conflict
+    // with Polish eogonek.
+    //
+    // https://github.com/kontextify/xkeyboard-config
+
+    include "latin(type4)"
+ 
+    name[Group1]= "Polish (Germany, eliminate dead keys)";
+
+    include "de(nodeadkeys)"
+    key <AE04>	{ [         4,     dollar,   EuroSign,     currency ]	};
+
+    key <AD01>  { [         q,          Q ] };
+    key <AD02>  { [         w,          W ] };
+    key <AD03>	{ [         e,          E,      eogonek,      Eogonek ]	};
+    key <AD09>	{ [         o,          O,       oacute,       Oacute ]	};
+    key <AC01>	{ [         a,          A,      aogonek,      Aogonek ]	};
+    key <AC02>	{ [         s,          S,       sacute,       Sacute ]	};
+    key <AC04>  { [         f,          F ] };
+    key <AD06>	{ [         z,          Z,    zabovedot,    Zabovedot ]	};
+    key <AB02>	{ [         x,          X,       zacute,       Zacute ]	};
+    key <AB03>	{ [         c,          C,       cacute,       Cacute ]	};
+    key <AB06>	{ [         n,          N,       nacute,       Nacute ]	};
+
+    include "kpdl(comma)"
+
+    include "level3(ralt_switch)"
+};
+
+partial alphanumeric_keys
 xkb_symbols "htcdream" {
         include "inet(htcdream)"
 
@@ -781,7 +816,7 @@ xkb_symbols "adnw_base" {
     key <AC11> { [ ssharp,                  U1E9E,                   NoSymbol,                Greek_finalsmallsigma,   NoSymbol,                NoSymbol,                jot,                     NoSymbol                 ] };
     key <AB01> { [ x,                       X,                       NoSymbol,                Greek_xi,                NoSymbol,                NoSymbol,                Greek_XI,                NoSymbol                 ] };
     key <AB02> { [ y,                       Y,                       NoSymbol,                Greek_upsilon,           NoSymbol,                NoSymbol,                nabla,                   NoSymbol                 ] };
-    key <AB03> { [ odiaeresis,              odiaeresis,              NoSymbol,                U03F5,                   NoSymbol,                NoSymbol,                intersection,            NoSymbol                 ] };
+    key <AB03> { [ odiaeresis,              Odiaeresis,              NoSymbol,                U03F5,                   NoSymbol,                NoSymbol,                intersection,            NoSymbol                 ] };
     key <AB05> { [ q,                       Q,                       NoSymbol,                U03D5,                   NoSymbol,                NoSymbol,                U211A,                   NoSymbol                 ] };
     key <AB06> { [ b,                       B,                       NoSymbol,                Greek_beta,              NoSymbol,                NoSymbol,                U21D0,                   NoSymbol                 ] };
     key <AB07> { [ p,                       P,                       NoSymbol,                Greek_pi,                NoSymbol,                NoSymbol,                Greek_PI,                NoSymbol                 ] };
