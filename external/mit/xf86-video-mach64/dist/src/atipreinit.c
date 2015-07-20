@@ -729,8 +729,6 @@ ATIPreInit
         xf86SetDDCproperties(pScreenInfo, ConfiguredMonitor);
     }
 
-#endif /* AVOID_CPIO */
-
     if (flags & PROBE_DETECT)
     {
         return TRUE;
