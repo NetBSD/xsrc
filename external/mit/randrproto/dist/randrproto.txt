@@ -1,6 +1,6 @@
 	       The X Resize, Rotate and Reflect Extension
-			     Version 1.4.0
-			       2012-07-03
+			     Version 1.5.0
+			       2015-03-14
 
 			      Jim Gettys
 			   Jim.Gettys@hp.com
@@ -108,7 +108,7 @@ instead it provides a mechanism to find out what combinations are supported.
 1.3 Introduction to version 1.3 of the extension
 
 Version 1.3 builds on the changes made with version 1.2 and adds some new
-capabilities without fundmentally changing the extension again. The
+capabilities without fundamentally changing the extension again. The
 following features are added in this version:
 
    • Projective Transforms. The implementation work for general rotation
@@ -149,7 +149,52 @@ be dynamically configured to provide support for:
 
  4) multiple GPU rendering - This replaces Xinerama.
 
-1.99 Acknowledgements
+1.5. Introduction to version 1.5 of the extension
+
+Version 1.5 adds an optional TILE property to outputs.
+
+   • An optional TILE property.
+     This property is used to denote individual tiles in a tiled monitor
+     configuration, as exposed via DisplayID v1.3.
+
+Version 1.5 adds monitors
+
+ • A 'Monitor' is a rectangular subset of the screen which represents
+   a coherent collection of pixels presented to the user.
+
+ • Each Monitor is be associated with a list of outputs (which may be
+   empty).
+
+ • When clients define monitors, the associated outputs are removed from
+   existing Monitors. If removing the output causes the list for that
+   monitor to become empty, that monitor will be deleted.
+
+ • For active CRTCs that have no output associated with any
+   client-defined Monitor, one server-defined monitor will
+   automatically be defined of the first Output associated with them.
+
+ • When defining a monitor, setting the geometry to all zeros will
+   cause that monitor to dynamically track the bounding box of the
+   active outputs associated with them
+
+This new object separates the physical configuration of the hardware
+from the logical subsets  the screen that applications should
+consider as single viewable areas.
+
+1.5.1. Relationship between Monitors and Xinerama
+
+Xinerama's information now comes from the Monitors instead of directly
+from the CRTCs. The Monitor marked as Primary will be listed first.
+
+1.5.2. Clarification of Output lifetimes
+
+With dynamic connectors being a possibility with the introduction of
+DisplayPort multistream (MST), a lot of RandR clients can't handle the
+XID BadMatch when a RandR output disappears. This is to clarify that
+going forward the X server will not remove outputs dynamically,
+just mark them as disconnected.
+
+1.99 Acknowledgments
 
 Our thanks to the contributors to the design found on the xpert mailing
 list, in particular:
@@ -162,7 +207,9 @@ David Dawes for XFree86 DDX integration work
 Thomas Winischhofer for the hardware-accelerated SiS rotation implementation
 Matthew Tippett and Kevin Martin for splitting outputs and CRTCs to more
 fully expose what video hardware can do
-Dave Airlie for the 1.4.0 protocol changes.
+Dave Airlie for the 1.4.0 protocol changes and for working through the
+implications of MST monitors and encouraging the introduction of the
+'Monitor' concept.
 
 			      ❧❧❧❧❧❧❧❧❧❧❧
 
@@ -212,9 +259,12 @@ are visible on the reconfigured screen).
 
 3. Data Types
 
-The subpixel order is shared with the Render extension, and is documented
-there. The only datatype defined is the screen size, defined in the normal
-(0 degree) orientation.
+The subpixel order and transform data types are shared with the Render
+extension, and are documented there.
+
+The only datatype defined in the original extension is the screen size,
+defined in the normal (0 degree) orientation.  Several more are added
+in later revisions.
 
 			      ❧❧❧❧❧❧❧❧❧❧❧
 
@@ -259,7 +309,7 @@ RRCONFIGSTATUS { Success
 	configuration is unsupported by the hardware. The goal is to make
 	these limitations expressed by the protocol, but when that isn't
 	possible it is correct to return this error value. If, as a
-	implentor, you find this error code required, please submit the
+	implementer, you find this error code required, please submit the
 	hardware constraints that exist so that a future version of the
 	extension can correctly capture the configuration constraints in
 	your system.
@@ -296,15 +346,9 @@ CONNECTION { Connected, Disconnected, UnknownConnection }
 	This value provides an indication of whether an output is actually
 	connected to a monitor or other presentation device.
 
-SUBPIXELORDER { SubPixelUnknown		The subpixel order uses the Render
-		SubPixelHorizontalRGB	extensions definitions; they are here
-		SubPixelHorizontalBGR	only for convenience.
-		SubPixelVerticalRGB
-		SubPixelVerticalBGR
-		SubPixelNone }
 
-SCREENSIZE { widthInPixels, heightInPixels: CARD16
-	     widthInMillimeters, heightInMillimeters: CARD16 }
+SCREENSIZE [ widthInPixels, heightInPixels: CARD16
+	     widthInMillimeters, heightInMillimeters: CARD16 ]
 
 MODEFLAG { HSyncPositive
 	   HSyncNegative
@@ -321,15 +365,37 @@ MODEFLAG { HSyncPositive
 	   DoubleClock
 	   ClockDivideBy2 }
 
-MODEINFO { id: MODE
+MODEINFO [ id: MODE
 	   name: STRING
 	   width, height: CARD16
 	   dotClock: CARD32
 	   hSyncStart, hSyncEnd, hTotal, hSkew: CARD16
 	   vSyncStart, vSyncEnd, vTotal: CARD16
-	   modeFlags: SETofMODEFLAG }
+	   modeFlags: SETofMODEFLAG ]
 
-REFRESH { rates: LISTofCARD16 }
+REFRESH [ rates: LISTofCARD16 ]
+
+			      ❧❧❧❧❧❧❧❧❧❧❧
+
+5.1 Data Types defined by the Render extension
+
+These data types use the Render extension definitions; they are shown here
+only for convenience:
+
+SUBPIXELORDER { SubPixelUnknown
+		SubPixelHorizontalRGB
+		SubPixelHorizontalBGR
+		SubPixelVerticalRGB
+		SubPixelVerticalBGR
+		SubPixelNone }
+
+FIXED         32-bit value (top 16 are integer portion, bottom 16 are fraction)
+
+TRANSFORM     [
+                        p11, p12, p13:  FIXED
+                        p21, p22, p23:  FIXED
+                        p31, p32, p33:  FIXED
+              ]
 
 			      ❧❧❧❧❧❧❧❧❧❧❧
 
@@ -338,11 +404,26 @@ REFRESH { rates: LISTofCARD16 }
 PROVIDER { XID }
 
 PROVIDER_CAPS { SourceOutput, SinkOutput, SourceOffload, SinkOffload }
-	Capabilties for this provider:
+	Capabilities for this provider:
 	SourceOutput: This device can source output buffers.
 	SinkOutput: This device can sink output buffers.
 	SourceOffload: This device can source offload buffers.
 	SinkOffload: This device can sink offload buffers.
+
+			      ❧❧❧❧❧❧❧❧❧❧❧
+
+5.6. Protocol Types added in version 1.5 of the extension
+
+MONITORINFO { name: ATOM
+              primary: BOOL
+	      automatic: BOOL
+	      x: INT16
+	      y: INT16
+	      width: CARD16
+	      height: CARD16
+	      width-in-millimeters: CARD32
+	      height-in-millimeters: CARD32
+	      outputs: LISTofOUTPUT }
 
 			      ❧❧❧❧❧❧❧❧❧❧❧
 
@@ -387,19 +468,19 @@ The name of this extension is "RANDR".
 
 	New for version 1.2:
 
-	If 'enable' contains RRCrtcChangeMask, RRCrtcChangeNotify events
-	will be sent when a the configuration for a CRTC associated with the
+	If 'enable' contains RRCrtcChangeNotifyMask, RRCrtcChangeNotify events
+	will be sent when the configuration for a CRTC associated with the
 	screen changes, either through this protocol extension or due to
 	detected external changes. RRCrtcChangeNotify may also be sent when
 	this request executes if the CRTC configuration has changed since
 	the client connected, to avoid race conditions.
 
-	If 'enable' contains RROutputChangeMask, RROutputChangeNotify events
-	will be sent when a the configuration for an output associated with
+	If 'enable' contains RROutputChangeNotifyMask, RROutputChangeNotify
+	events will be sent when the configuration for an output associated with
 	the screen changes, either through this protocol extension or due to
-	detected external changes. RROutputChangeNotify may also be sent
-	when this request executes if the output configuration has changed
-	since the client connected, to avoid race conditions.
+	detected external changes. RROutputChangeNotify may also be sent when
+	this request executes if the output configuration has changed since the
+	client connected, to avoid race conditions.
 
 	If 'enable' contains RROutputPropertyNotifyMask,
 	RROutputPropertyNotify events will be sent when properties change on
@@ -1307,7 +1388,7 @@ dynamic changes in the display environment.
 └───
 	Errors: Window
 
-	RRGetPRoviders returns the list of providers connected to the screen
+	RRGetProviders returns the list of providers connected to the screen
 	associated with 'window'.
 
 	'timestamp' indicates when the configuration was last set.
@@ -1329,7 +1410,7 @@ dynamic changes in the display environment.
 	Errors: Provider
 
 	RRGetProviderInfo return information about the specified provider.
-	The capabilites of the current provider are returned, along with
+	The capabilities of the current provider are returned, along with
 	the list of providers currently associated with this provider and
 	the capability they are associated with. It also provides the list
 	of crtcs and outputs that this provider is responsible for.
@@ -1341,7 +1422,7 @@ dynamic changes in the display environment.
     RRSetProviderOffloadSink
 	provider: PROVIDER
 	sink_provider: PROVIDER
-     ▶
+	config-timestamp: TIMESTAMP
 └───
 	Errors: Provider
 
@@ -1352,7 +1433,7 @@ dynamic changes in the display environment.
     RRSetProviderOutputSource
 	provider: PROVIDER
 	source_provider: PROVIDER
-     ▶
+	config-timestamp: TIMESTAMP
 └───
 	Errors: Provider
 
@@ -1520,6 +1601,79 @@ dynamic changes in the display environment.
 
 
 			      ❧❧❧❧❧❧❧❧❧❧❧
+
+7.5. Extension Requests added in version 1.5 of the extension.
+
+┌───
+    RRGetMonitors
+	window : WINDOW
+	get_active : BOOL
+     ▶
+	timestamp: TIMESTAMP
+	monitors: LISTofMONITORINFO
+└───
+	Errors: Window
+
+	Returns the list of Monitors for the screen containing
+	'window'. If 'get_active' is set it returns only active
+	monitors (non-0x0 monitors).  'get_active' should always
+	be set by toolkits, and not by configuration clients.
+
+	'timestamp' indicates the server time when the list of
+	monitors last changed.
+
+┌───
+    RRSetMonitor
+	window : WINDOW
+	info: MONITORINFO
+└───
+	Errors: Window, Output, Atom, Value
+
+	Create a new monitor. Any existing Monitor of the same name is deleted.
+
+	'name' must be a valid atom or an Atom error results.
+
+	'name' must not match the name of any Output on the screen, or
+	a Value error results.
+
+	If 'info.outputs' is non-empty, and if x, y, width, height are all
+	zero, then the Monitor geometry will be dynamically defined to
+	be the bounding box of the geometry of the active CRTCs
+	associated with them.
+
+	If 'name' matches an existing Monitor on the screen, the
+	existing one will be deleted as if RRDeleteMonitor were called.
+
+	For each output in 'info.outputs, each one is removed from all
+	pre-existing Monitors. If removing the output causes the list of
+	outputs for that Monitor to become empty, then that Monitor will
+	be deleted as if RRDeleteMonitor were called.
+
+	Only one monitor per screen may be primary. If 'info.primary'
+	is true, then the primary value will be set to false on all
+	other monitors on the screen.
+
+	RRSetMonitor generates a ConfigureNotify event on the root
+	window of the screen.
+
+┌───
+    RRDeleteMonitor
+	window : WINDOW
+	name: ATOM
+└───
+	Errors: Window, Atom, Value
+
+	Deletes the named Monitor.
+
+	'name' must be a valid atom or an Atom error results.
+
+	'name' must match the name of a Monitor on the screen, or a
+	Value error results.
+
+	RRDeleteMonitor generates a ConfigureNotify event on the root
+	window of the screen.
+
+			      ❧❧❧❧❧❧❧❧❧❧❧
 8. Extension Events
 
 Clients MAY select for ConfigureNotify on the root window to be
@@ -1661,25 +1815,20 @@ factors, such as re-cabling a monitor, etc.
 ┌───
     RRProviderChangeNotify:
 	timestamp: TIMESTAMP		time screen was reconfigured
-	config-timestamp: TIMESTAMP	time available config data was changed
 	window: WINDOW			window requesting notification
 	provider: PROVIDER		provider affected by change
-	role: CRTC			new role for provider
 └───
 
 	This event is generated whenever the role for a provider has changed
 	and is sent to requesting clients. 'timestamp' indicates when the
-	provider configuration was changed by a client.
-	'config-timestamp' says when the last time the available
-	configurations changed. 'root' is the root of the screen the change
-	occurred on, 'window' is window selecting for this event. The
-	precise change can be detected by examining the new state of the
-	system.
+	provider configuration was changed by a client.  'window' is the
+	window selecting for this event.  The precise change can be detected
+	by examining the new state of the system.
 
 ┌───
     RRProviderPropertyNotify:
 	window: WINDOW			window requesting notification
-	provider: PROVIDER		providre affected by change
+	provider: PROVIDER		provider affected by change
 	atom: ATOM			affected property
 	time: TIMESTAMP			time property was changed
 	state: { NewValue, Deleted }	new property state
@@ -1943,6 +2092,37 @@ doesn't handle a mandatory property correctly.
 	  2 = left/right and top/bottom borders can be specified independently
 	  4 = all four borders can be specified independently
 
+    "GUID"			aka RR_PROPERTY_GUID
+	Type:			INTEGER
+	Format:			8
+	Num items:		16
+	Flags:			Immutable
+	Range/List:		-
+
+	Some display devices, such as DisplayPort 1.2 devices, have globally
+	unique identifiers.  When such an identifier is available, this property
+	contains its raw bytes.
+
+    "TILE"			aka RR_PROPERTY_RANDR_TILE
+	Type:			INTEGER
+	Format:			32
+	Num items:		8
+	Flags:			Immutable
+	Range/List:		-
+
+        Tile monitors have an array of values describing the tiling,
+        based on DisplayID v1.3
+
+	The 8 elements are:
+        0: group id - The tile group identifier
+        1: flags - flags for tile group
+		0x1 = single monitor enclosure
+        2: number of horizontal tiles in tile group
+        3: number of vertical tiles in tile group
+        4: horizontal tile location for this tile
+        5: vertical tile location for this tile
+        6: horizontal tile size for this tile
+        7: vertical tile size for this tile
 
 9.2 Properties introduced with version 1.2 of the RandR extension
 
@@ -1977,6 +2157,17 @@ Property			Immutable	Mandatory since
 Border				yes		not mandatory
 BorderDimensions		yes: static	not mandatory
 
+9.6 Properties introduced with version 1.4.1 of the RandR extension
+
+Property			Immutable	Mandatory since
+────────			─────────	───────────────
+GUID				yes		not mandatory
+
+9.7 Properties introduced with version 1.5 of the RandR extension
+
+Property			Immutable	Mandatory since
+────────			─────────	───────────────
+TILE				yes		not mandatory
 			      ❧❧❧❧❧❧❧❧❧❧❧
 
 10. Extension Versioning
@@ -2012,6 +2203,8 @@ list of what each version provided:
 	     Added standard properties.
 
         1.4: Added provider objects for handling multi-GPU systems.
+
+	1.5: Added Monitors
 
 Compatibility between 0.0 and 1.0 was *NOT* preserved, and 0.0 clients
 will fail against 1.0 servers. The wire encoding op-codes were
@@ -2155,6 +2348,30 @@ A.1 Common Types
 	2		UnknownConnection
 └───
 
+┌───
+    PROVIDER_CAPS				Added in version 1.4
+	0x00000001	SourceOutput
+	0x00000002	SinkOutput
+	0x00000004	SourceOffload
+	0x00000008	SinkOffload
+└───
+
+A.1.1 Common Types added in version 1.5 of the protocol
+
+┌───
+    MONITORINFO (16 + 4*n)
+	4	ATOM		name
+	1	BOOL		primary
+	1	BOOL		automatic
+	2	CARD16		ncrtcs
+	2	INT16		x
+	2	INT16		y
+	2	CARD16		width in pixels
+	2	CARD16		height in pixels
+	4	CARD32		width in millimeters
+	4	CARD32		height in millimeters
+	4*n	CRTC		crtcs
+└───
 
 A.2 Protocol Requests
 
@@ -2443,7 +2660,7 @@ A.2.1 Protocol Requests added with version 1.2
     RRCreateMode
 	1	CARD8			major opcode
 	1	16			RandR opcode
-	2	12+(n+p)/4		length
+	2	10+(n+p)/4		length
 	4	WINDOW			window
 	32	MODEINFO		mode
 	n	STRING8			mode name
@@ -2491,7 +2708,7 @@ A.2.1 Protocol Requests added with version 1.2
 	1	RRCONFIGSTATUS		status
 	2	CARD16			sequence number
 	4	o+p			reply length
-	4	TIMESTATMP		timestamp
+	4	TIMESTAMP		timestamp
 	2	INT16			x
 	2	INT16			y
 	2	CARD16			width
@@ -2508,7 +2725,7 @@ A.2.1 Protocol Requests added with version 1.2
     RRSetCrtcConfig
 	1	CARD8			major opcode
 	1	21			RandR opcode
-	2	7+2n			length
+	2	7+n			length
 	4	CRTC			crtc
 	4	TIMESTAMP		timestamp
 	4	TIMESTAMP		config timestamp
@@ -2517,7 +2734,7 @@ A.2.1 Protocol Requests added with version 1.2
 	4	MODE			mode
 	2	ROTATION		rotation/reflection
 	2				unused
-	8n	LISTofOUTPUT		outputs
+	4n	LISTofOUTPUT		outputs
       ▶
 	1	1			Reply
 	1	RRCONFIGSTATUS		status
@@ -2550,7 +2767,7 @@ A.2.1 Protocol Requests added with version 1.2
 	1	1			Reply
 	1				unused
 	2	CARD16			sequence number
-	4	(6n+2)/4		reply length
+	4	(6n+p)/4		reply length
 	2	n			size
 	20				unused
 	2n	LISTofCARD16		red
@@ -2562,7 +2779,7 @@ A.2.1 Protocol Requests added with version 1.2
     RRSetCrtcGamma
 	1	CARD8			major opcode
 	1	24			RandR opcode
-	2	3+(6n+2)/4		length
+	2	3+(6n+p)/4		length
 	4	CRTC			crtc
 	2	n			size
 	2				unused
@@ -2733,13 +2950,12 @@ A.2.3 Protocol Requests added with version 1.4
 	1	1			Reply
 	1				unused
 	2	CARD16			sequence number
-	4	CARD32			length
+	4	p			length
 	4	TIMESTAMP		timestamp
 	2	p			number of Providers
-	2	CARD16			maximum masters
-	4	CARD32			flags
+	18				unused
 	4p	LISTofPROVIDERS		providers
-
+└───
 ┌───
     RRGetProviderInfo
 	1	CARD8			major opcode
@@ -2752,36 +2968,38 @@ A.2.3 Protocol Requests added with version 1.4
 	1	RRCONFIGSTATUS		status
 	2	CARD16			sequence number
 	4	1+c+o+(a*2)+(n+p)/4		reply length
-	4	TIMESTATMP		timestamp
-	4	CARD32			capabilites
+	4	TIMESTAMP		timestamp
+	4	CARD32			capabilities
 	2	c			number of crtcs
 	2	o 			number of outputs
 	2	a 			number of associated providers
 	2	n			length of name
+	8       			unused
 	4c	LISTofCRTC		crtcs
 	4o	LISTofOUTPUT		outputs
 	4a	LISTofPROVIDER		associated providers
 	4a	CARD32			associated provider capability
 	n	STRING8			name
 	p				unused, p=pad(n)
-
+└───
 ┌───
     RRSetProviderOffloadSink
 	1	CARD8			major opcode
 	1	34			RandR opcode
-	2	2			length
+	2	4			length
 	4	PROVIDER		provider
 	4	PROVIDER		offload sink provider
 	4	TIMESTAMP		timestamp
+└───
 ┌───
     RRSetProviderOutputSource
 	1	CARD8			major opcode
 	1	35			RandR opcode
-	2	2			length
+	2	4			length
 	4	PROVIDER		provider
 	4	PROVIDER		output source provider
 	4	TIMESTAMP		timestamp
-
+└───
 ┌───
     RRListProviderProperties
 	1	CARD8			major opcode
@@ -2893,6 +3111,42 @@ A.2.3 Protocol Requests added with version 1.4
 	p				unused, p=pad(n)
 └───
 
+A.2.4 Protocol Requests added with version 1.5
+
+┌───
+    RRGetMonitors
+	1	CARD8			major opcode
+	1	42			RandR opcode
+	2	2			request length
+	4	WINDOW			window
+     ▶
+	1	1			Reply
+	1				unused
+	2	CARD16			sequence number
+	4	6*n + o			reply length
+	4	TIMESTAMP		timestamp
+	4	n			nmonitors
+	4	o			noutputs
+	12				unused
+	n*24+o*4 LISTofMONITORINFO	monitors
+└───
+┌───
+    RRSetMonitor
+	1	CARD8			major opcode
+	1	43			RandR opcode
+	2	6 + o			request length
+	4	WINDOW			window
+	24+o	MONITORINFO		monitorinfo
+└───
+┌───
+    RRDeleteMonitor
+	1	CARD8			major opcode
+	1	44			RandR opcode
+	2	3			request length
+	4	WINDOW			window
+	4	ATOM			name
+└───
+
 A.3 Protocol Events
 
 ┌───
@@ -2964,7 +3218,7 @@ A.3.2 Protocol Events added with version 1.4
 ┌───
     RRProviderChangeNotify
 	1	Base + 1		code
-	1	1			sub-code
+	1	3			sub-code
 	2	CARD16			sequence number
 	4	TIMESTAMP		timestamp
 	4	WINDOW			request window
@@ -2974,7 +3228,7 @@ A.3.2 Protocol Events added with version 1.4
 ┌───
     RRProviderPropertyNotify
 	1	Base + 1		code
-	1	2			sub-code
+	1	4			sub-code
 	2	CARD16			sequence number
 	4	WINDOW			window
 	4	PROVIDER		provider
@@ -2988,7 +3242,7 @@ A.3.2 Protocol Events added with version 1.4
 ┌───
     RRResourceChangeNotify
 	1	Base + 1		code
-	1	2			sub-code
+	1	5			sub-code
 	2	CARD16			sequence number
 	4	TIMESTAMP		time
 	4	WINDOW			window
