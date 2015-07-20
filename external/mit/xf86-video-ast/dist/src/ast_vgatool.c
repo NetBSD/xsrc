@@ -36,7 +36,6 @@
 #include "xf86xv.h"
 #include <X11/extensions/Xv.h>
 
-#include "xf86PciInfo.h"
 #include "xf86Pci.h"
 
 /* framebuffer offscreen manager */
@@ -53,29 +52,350 @@
 
 /* Driver specific headers */
 #include "ast.h"
+#include "ast_vgatool.h"
+#include "ast_dp501fw.h"
 
-/* Prototype type declaration*/
-void vASTOpenKey(ScrnInfoPtr pScrn);
-Bool bASTRegInit(ScrnInfoPtr pScrn);
-void GetDRAMInfo(ScrnInfoPtr pScrn);
-ULONG GetVRAMInfo(ScrnInfoPtr pScrn);
-ULONG GetMaxDCLK(ScrnInfoPtr pScrn);
-void GetChipType(ScrnInfoPtr pScrn);
-void GetScratchOptions(ScrnInfoPtr pScrn);
-void vAST1000DisplayOn(ASTRecPtr pAST);
-void vAST1000DisplayOff(ASTRecPtr pAST);
-void ASTBlankScreen(ScrnInfoPtr pScrn, Bool unblack);
-void vSetStartAddressCRT1(ASTRecPtr pAST, ULONG base);
-void vASTLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indices, LOCO *colors, VisualPtr pVisual);
-void ASTDisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode, int flags);
-Bool GetVGA2EDID(ScrnInfoPtr pScrn, unsigned char *pEDIDBuffer);
-void vInitDRAMReg(ScrnInfoPtr pScrn);
-Bool bIsVGAEnabled(ScrnInfoPtr pScrn);
-Bool InitVGA(ScrnInfoPtr pScrn, ULONG Flags);
-Bool GetVGAEDID(ScrnInfoPtr pScrn, unsigned char *pEDIDBuffer);
-Bool bInitAST1180(ScrnInfoPtr pScrn);
-void GetAST1180DRAMInfo(ScrnInfoPtr pScrn);
+__inline ULONG MIndwm(UCHAR *mmiobase, ULONG r)
+{
+    ULONG ulData;
 
+    *(ULONG *) (mmiobase + 0xF004) = r & 0xFFFF0000;
+    *(ULONG *) (mmiobase + 0xF000) = 0x1;
+
+    do {
+        ulData = *(volatile ULONG *) (mmiobase + 0xF004) & 0xFFFF0000;
+    } while (ulData != (r & 0xFFFF0000) );
+
+    return ( *(volatile ULONG *) (mmiobase + 0x10000 + (r & 0x0000FFFF)) );
+
+}
+
+__inline void MOutdwm(UCHAR *mmiobase, ULONG r, ULONG v)
+{
+    ULONG ulData;
+
+    *(ULONG *) (mmiobase + 0xF004) = r & 0xFFFF0000;
+    *(ULONG *) (mmiobase + 0xF000) = 0x1;
+
+    do {
+        ulData = *(volatile ULONG *) (mmiobase + 0xF004) & 0xFFFF0000;
+    } while (ulData != (r & 0xFFFF0000) );
+
+    *(volatile ULONG *) (mmiobase + 0x10000 + (r & 0x0000FFFF)) = v;
+}
+
+/*
+ * BMCI2C
+ */
+#define I2C_BASE	0x1e780000
+
+
+static ULONG GetFWBase(ScrnInfoPtr pScrn)
+{
+    ASTRecPtr pAST = ASTPTR(pScrn);
+    UCHAR *mmiobase;
+
+    mmiobase = pAST->MMIOVirtualAddr;
+    return (MIndwm(mmiobase, 0x1e6e2104) & 0x7FFFFFFF);
+}
+
+static void send_ack(ScrnInfoPtr pScrn)
+{
+    ASTRecPtr pAST = ASTPTR(pScrn);
+    UCHAR SendACK;
+
+    GetIndexRegMask(CRTC_PORT, 0x9b, 0xFF, SendACK);
+	SendACK |= 0x80;
+    SetIndexRegMask(CRTC_PORT, 0x9B, 0x00, SendACK);
+}
+
+static void send_nack(ScrnInfoPtr pScrn)
+{
+    ASTRecPtr pAST = ASTPTR(pScrn);
+    UCHAR SendACK;
+
+    GetIndexRegMask(CRTC_PORT, 0x9b, 0xFF, SendACK);
+	SendACK &= ~0x80;
+    SetIndexRegMask(CRTC_PORT, 0x9B, 0x00, SendACK);
+}
+
+static Bool wait_ack(ScrnInfoPtr pScrn)
+{
+    ASTRecPtr pAST = ASTPTR(pScrn);
+    UCHAR WaitACK;
+    ULONG retry=0;
+
+ 	do {
+        GetIndexRegMask(CRTC_PORT, 0xd2, 0xFF, WaitACK);
+        WaitACK &= 0x80;
+	 	DelayUS(100);
+    } while ( (!WaitACK) && (retry++ < 1000) );
+
+    if (retry < 1000)
+        return TRUE;
+    else
+        return FALSE;
+}
+
+static Bool wait_nack(ScrnInfoPtr pScrn)
+{
+    ASTRecPtr pAST = ASTPTR(pScrn);
+    UCHAR WaitACK;
+    ULONG retry=0;
+
+ 	do {
+        GetIndexRegMask(CRTC_PORT, 0xd2, 0xFF, WaitACK);
+        WaitACK &= 0x80;
+	 	DelayUS(100);
+    } while ( (WaitACK) && (retry++ < 1000) );
+
+    if (retry < 1000)
+        return TRUE;
+    else
+        return FALSE;
+}
+
+static void set_cmd_trigger(ScrnInfoPtr pScrn)
+{
+    ASTRecPtr pAST = ASTPTR(pScrn);
+
+    SetIndexRegMask(CRTC_PORT, 0x9B, ~0x40, 0x40);
+}
+
+static void clear_cmd_trigger(ScrnInfoPtr pScrn)
+{
+    ASTRecPtr pAST = ASTPTR(pScrn);
+
+    SetIndexRegMask(CRTC_PORT, 0x9B, ~0x40, 0x00);
+}
+
+static Bool write_cmd(ScrnInfoPtr pScrn, UCHAR data)
+{
+    ASTRecPtr pAST = ASTPTR(pScrn);
+	UCHAR retry = 0;
+
+	if (wait_nack(pScrn))
+	{
+        send_nack(pScrn);
+        SetIndexRegMask(CRTC_PORT, 0x9a, 0x00, data);
+        send_ack(pScrn);
+        set_cmd_trigger(pScrn);
+        do {
+		    if (wait_ack(pScrn))
+		    {
+			    clear_cmd_trigger(pScrn);
+			    send_nack(pScrn);
+		        return TRUE;
+	        }
+        } while (retry++ < 100);
+    }
+
+    clear_cmd_trigger(pScrn);
+    send_nack(pScrn);
+    return FALSE;
+}
+
+static Bool write_data(ScrnInfoPtr pScrn, UCHAR data)
+{
+    ASTRecPtr pAST = ASTPTR(pScrn);
+
+	if (wait_nack(pScrn))
+	{
+        send_nack(pScrn);
+        SetIndexRegMask(CRTC_PORT, 0x9a, 0x00, data);
+        send_ack(pScrn);
+		if (wait_ack(pScrn))
+		{
+			send_nack(pScrn);
+		    return TRUE;
+	    }
+    }
+
+    send_nack(pScrn);
+    return FALSE;
+}
+
+static void SetDP501VideoOutput(ScrnInfoPtr pScrn, UCHAR Mode)
+{
+    write_cmd(pScrn, 0x40);
+    write_data(pScrn, Mode);
+
+    DelayMS(10);						/* delay 10ms */
+
+} /* SetDP501VideoOutput */
+
+static BOOL BackupM68KFW(ScrnInfoPtr pScrn, UCHAR *addr, ULONG size)
+{
+    ASTRecPtr pAST  = ASTPTR(pScrn);
+    UCHAR *mmiobase = pAST->MMIOVirtualAddr;
+    ULONG i, Data;
+    ULONG BootAddress;
+
+    Data = MIndwm(mmiobase, 0x1e6e2100) & 0x01;
+    if (Data)	/* FW had been load */
+	{
+        /* copy image to buffer */
+        BootAddress = GetFWBase(pScrn);
+        for (i=0; i<size; i+=4)
+        {
+            *(ULONG *)(addr + i) = MIndwm(mmiobase, BootAddress + i);
+        }
+        return TRUE;
+    } /* UEFI Driver Handling */
+
+    return FALSE;
+} /* BackupM68KFW */
+
+static BOOL LaunchM68K(ScrnInfoPtr pScrn)
+{
+    ASTRecPtr pAST  = ASTPTR(pScrn);
+    UCHAR *mmiobase = pAST->MMIOVirtualAddr;
+    ULONG i, Data, Len;
+    ULONG BootAddress;
+    UCHAR *pFWAddr;
+    UCHAR jReg;
+
+    Data = MIndwm(mmiobase, 0x1e6e2100) & 0x03;
+    if (Data != 0x01)	/* UEFI Driver Handling */
+    {
+        /* Reset Co-processor */
+        MOutdwm(mmiobase, 0x1e6e2100, 0x03);
+        do {
+            Data = MIndwm(mmiobase, 0x1e6e2100);
+        } while (Data != 0x03);
+
+	if (pAST->pDP501FWBufferVirtualAddress)
+	{
+	    pFWAddr = pAST->pDP501FWBufferVirtualAddress;
+	    Len     = 32*1024;		/* 32K */
+	}
+	else
+	{
+	    pFWAddr = AST_DP501_firmware;
+            Len     = sizeof(AST_DP501_firmware) / sizeof(AST_DP501_firmware[0]);
+	}
+
+        /* Get BootAddress */
+        MOutdwm(mmiobase, 0x1e6e2000, 0x1688a8a8);				/* open passwd */
+        Data = MIndwm(mmiobase, 0x1e6e0004);
+        switch (Data & 0x03)
+        {
+	    case 0x00:	/* 64M */
+	        BootAddress = 0x44000000;
+	        break;
+	    default:
+	    case 0x01:	/* 128MB */
+	        BootAddress = 0x48000000;
+	        break;
+	    case 0x02:	/* 256MB */
+	        BootAddress = 0x50000000;
+	        break;
+	    case 0x03:	/* 512MB */
+	        BootAddress = 0x60000000;
+	        break;
+        }
+        BootAddress -= 0x200000;	/* - 2MB */
+
+        /* copy image to buffer */
+        for (i=0; i<Len; i+=4)
+        {
+	        Data = *(ULONG *)(pFWAddr + i);
+            MOutdwm(mmiobase, BootAddress + i, Data);
+        }
+
+        /* Init SCU */
+        MOutdwm(mmiobase, 0x1e6e2000, 0x1688a8a8);				/* open passwd */
+
+        /* Launch FW */
+        MOutdwm(mmiobase, 0x1e6e2104, 0x80000000 + BootAddress);
+        MOutdwm(mmiobase, 0x1e6e2100, 1);
+
+        /* Update Scratch */
+        Data  = MIndwm(mmiobase, 0x1e6e2040) & 0xFFFFF1FF;		/* D[11:9] = 100b: UEFI handling */
+        Data |= 0x0800;
+        MOutdwm(mmiobase, 0x1e6e2040, Data);
+
+        GetIndexRegMask(CRTC_PORT, 0x99, 0xFC, jReg);			/* D[1:0]: Reserved Video Buffer */
+        jReg |= 0x02;										    /* 2MB */
+        SetIndexReg(CRTC_PORT, 0x99, jReg);
+
+    } /* UEFI Driver Handling */
+
+    return TRUE;
+} /* LaunchM68K */
+
+/*
+ * DP501 external
+ */
+Bool ASTReadEDID_M68K(ScrnInfoPtr pScrn, BYTE *pEDIDData)
+{
+    ASTRecPtr pAST = ASTPTR(pScrn);
+    UCHAR *mmiobase;
+    ULONG i, BootAddress, Offset, Data;
+
+    /* init value */
+    mmiobase = pAST->MMIOVirtualAddr;
+    BootAddress = GetFWBase(pScrn);
+
+    /* validate FW version */
+    Offset = 0xF000;
+    Data = MIndwm(mmiobase, BootAddress + Offset);
+    if ((Data & 0xF0) != 0x10)	/* version: 1x */
+        return FALSE;
+
+    /* validate PnP Monitor */
+    Offset = 0xF010;
+    Data = MIndwm(mmiobase, BootAddress + Offset);
+    if (!(Data & 0x01))
+        return FALSE;
+
+    /* Read EDID */
+    Offset = 0xF020;
+    for (i=0; i<128; i+=4)
+    {
+        Data = MIndwm(mmiobase, BootAddress + Offset + i);
+        *(ULONG *)(pEDIDData + i) = Data;
+    }
+
+    return TRUE;
+} /* ReadEDID_M68K */
+
+UCHAR ASTGetLinkMaxCLK(ScrnInfoPtr pScrn)
+{
+    ASTRecPtr pAST = ASTPTR(pScrn);
+    UCHAR *mmiobase;
+    ULONG BootAddress, Offset, Data;
+    UCHAR LinkCap[4], LinkRate, LinkLanes, MaxClk = 0xFF;
+
+    /* init value */
+    mmiobase = pAST->MMIOVirtualAddr;
+    BootAddress = GetFWBase(pScrn);
+
+    /* validate FW version */
+    Offset = 0xF000;
+    Data = MIndwm(mmiobase, BootAddress + Offset);
+    if ((Data & 0xF0) != 0x10)	/* version: 1x */
+        return MaxClk;
+
+    /* Read Link Capability */
+    Offset = 0xF014;
+    *(ULONG *)(LinkCap) = MIndwm(mmiobase, BootAddress + Offset);
+    if (LinkCap[2] == 0)		/* no Max. CLK Assigned */
+    {
+	    LinkRate  = LinkCap[0];
+	    LinkLanes = LinkCap[1];
+	    Data = (LinkRate == 0x0A) ? (90 * LinkLanes): (54 * LinkLanes);
+	    if (Data > 255) Data = 255;				/* Max. */
+	    MaxClk = (UCHAR)(Data);
+    }
+
+    return MaxClk;
+
+} /* ASTGetLinkMaxCLK */
+
+/*
+ * VGA Modules
+ */
 void
 vASTOpenKey(ScrnInfoPtr pScrn)
 {
@@ -103,7 +423,7 @@ bASTRegInit(ScrnInfoPtr pScrn)
 }
 
 void
-GetDRAMInfo(ScrnInfoPtr pScrn)
+ASTGetDRAMInfo(ScrnInfoPtr pScrn)
 {
     ASTRecPtr pAST = ASTPTR(pScrn);
     ULONG ulRefPLL, ulDeNumerator, ulNumerator, ulDivider;
@@ -126,7 +446,7 @@ GetDRAMInfo(ScrnInfoPtr pScrn)
        pAST->ulDRAMBusWidth = 32;
 
     /* Get DRAM Type */
-    if (pAST->jChipType == AST2300)
+    if ((pAST->jChipType == AST2300) || (pAST->jChipType == AST2400))
     {
         switch (ulData & 0x03)
         {
@@ -193,36 +513,56 @@ GetDRAMInfo(ScrnInfoPtr pScrn)
     }
     pAST->ulMCLK = ulRefPLL * (ulNumerator + 2) / ((ulDeNumerator + 2) * ulDivider * 1000);
 
-} /* GetDRAMInfo */
+} /* ASTGetDRAMInfo */
 
 ULONG
-GetVRAMInfo(ScrnInfoPtr pScrn)
+ASTGetVRAMInfo(ScrnInfoPtr pScrn)
 {
    ASTRecPtr pAST = ASTPTR(pScrn);
+   ULONG ulVRAMSize;
    UCHAR jReg;
 
    vASTOpenKey(pScrn);
 
+   /* Get VRAMSize from H/W Trapping */
    GetIndexRegMask(CRTC_PORT, 0xAA, 0xFF, jReg);
-
    switch (jReg & 0x03)
    {
+   default:
    case 0x00:
-       return (VIDEOMEM_SIZE_08M);
+       ulVRAMSize = VIDEOMEM_SIZE_08M;
+       break;
    case 0x01:
-       return (VIDEOMEM_SIZE_16M);
+       ulVRAMSize = VIDEOMEM_SIZE_16M;
+       break;
    case 0x02:
-       return (VIDEOMEM_SIZE_32M);
+       ulVRAMSize = VIDEOMEM_SIZE_32M;
+       break;
    case 0x03:
-       return (VIDEOMEM_SIZE_64M);
+       ulVRAMSize = VIDEOMEM_SIZE_64M;
+       break;
    }
 
-   return (DEFAULT_VIDEOMEM_SIZE);
+   /* Adjust VRAMSize from Scratch */
+   GetIndexRegMask(CRTC_PORT, 0x99, 0xFF, jReg);
+   switch (jReg & 0x03)
+   {
+   case 0x01:
+       ulVRAMSize -= 0x100000;
+       break;
+   case 0x02:
+       ulVRAMSize -= 0x200000;
+       break;
+   case 0x03:
+       ulVRAMSize -= 0x400000;
+       break;
+   }
 
+   return (ulVRAMSize);
 }
 
 ULONG
-GetMaxDCLK(ScrnInfoPtr pScrn)
+ASTGetMaxDCLK(ScrnInfoPtr pScrn)
 {
    ASTRecPtr pAST = ASTPTR(pScrn);
    UCHAR jReg;
@@ -236,7 +576,7 @@ GetMaxDCLK(ScrnInfoPtr pScrn)
    /* Modify DARM utilization to 60% for AST1100/2100 16bits DRAM, ycchen@032508 */
    if ( ((pAST->jChipType == AST2100) || (pAST->jChipType == AST1100) || (pAST->jChipType == AST2200) || (pAST->jChipType == AST2150)) && (ulDRAMBusWidth == 16) )
        DRAMEfficiency = 600;
-   else if (pAST->jChipType == AST2300)
+   else if ((pAST->jChipType == AST2300) || (pAST->jChipType == AST2400))
        DRAMEfficiency = 400;
    ulDRAMBandwidth = ulMCLK * ulDRAMBusWidth * 2 / 8;
    ActualDRAMBandwidth = ulDRAMBandwidth * DRAMEfficiency / 1000;
@@ -258,8 +598,14 @@ GetMaxDCLK(ScrnInfoPtr pScrn)
            ulDCLK = ActualDRAMBandwidth / ((pScrn->bitsPerPixel+1) / 8);
    }
 
+   /* Validate for DP501 */
+   if (pAST->jTxChipType == Tx_DP501)
+   {
+       if (ulDCLK > pAST->DP501_MaxVCLK) ulDCLK = pAST->DP501_MaxVCLK;
+   }
+
    /* Add for AST2100, ycchen@061807 */
-   if ((pAST->jChipType == AST2100) || (pAST->jChipType == AST2200) || (pAST->jChipType == AST2300) || (pAST->jChipType == AST1180) )
+   if ((pAST->jChipType == AST2100) || (pAST->jChipType == AST2200) || (pAST->jChipType == AST2300) || (pAST->jChipType == AST2400) || (pAST->jChipType == AST1180) )
    {
        if (ulDCLK > 200) ulDCLK = 200;
    }
@@ -273,7 +619,7 @@ GetMaxDCLK(ScrnInfoPtr pScrn)
 }
 
 void
-GetChipType(ScrnInfoPtr pScrn)
+ASTGetChipType(ScrnInfoPtr pScrn)
 {
    ASTRecPtr pAST = ASTPTR(pScrn);
    ULONG ulData;
@@ -305,7 +651,7 @@ GetChipType(ScrnInfoPtr pScrn)
 }
 
 void
-GetScratchOptions(ScrnInfoPtr pScrn)
+ASTGetScratchOptions(ScrnInfoPtr pScrn)
 {
    ASTRecPtr pAST = ASTPTR(pScrn);
    ULONG ulData;
@@ -315,6 +661,38 @@ GetScratchOptions(ScrnInfoPtr pScrn)
    GetIndexRegMask(CRTC_PORT, 0x90, 0xFF, jReg);
    if (jReg & 0x10)
        pAST->VGA2Clone = TRUE;
+
+   /* 3rd Tx Check */
+   pAST->pDP501FWBufferVirtualAddress = NULL;
+   pAST->jTxChipType = Tx_NONE;
+   /* Get 3rd Tx Info from HW Reg. */
+   GetIndexRegMask(CRTC_PORT, 0xA3, 0xFF, jReg);
+   if (jReg & 0x80)
+       pAST->jTxChipType = Tx_Sil164;
+   /* Get 3rd Tx Info from BMC Scratch */
+   if ((pAST->jChipType == AST2300) || (pAST->jChipType == AST2400))
+   {
+       GetIndexRegMask(CRTC_PORT, 0xD1, 0x0E, jReg);
+	   switch (jReg)
+	   {
+	   case 0x04:
+	       pAST->jTxChipType = Tx_Sil164;
+	       break;
+       case 0x08:
+	        pAST->pDP501FWBufferVirtualAddress = (UCHAR*) calloc(1, 32*1024);
+	        if	(pAST->pDP501FWBufferVirtualAddress)
+	        {
+                if (BackupM68KFW(pScrn, pAST->pDP501FWBufferVirtualAddress, 32*1024) == FALSE)
+		        {
+                    free(pAST->pDP501FWBufferVirtualAddress);
+                    pAST->pDP501FWBufferVirtualAddress = NULL;
+		        }
+            } /* Backup DP501 FW */
+       case 0x0c:
+           pAST->jTxChipType = Tx_DP501;
+           break;
+       }
+   }
 
    /* WideScreen Support */
    switch (pAST->jChipType)
@@ -334,21 +712,21 @@ GetScratchOptions(ScrnInfoPtr pScrn)
        else
        {
            pAST->SupportWideScreen = FALSE;
-           if (pAST->jChipType == AST2300)	/* for AST1300 */
-           {
-               *(ULONG *) (pAST->MMIOVirtualAddr + 0xF004) = 0x1e6e0000;
-               *(ULONG *) (pAST->MMIOVirtualAddr + 0xF000) = 0x1;
-               ulData = *(ULONG *) (pAST->MMIOVirtualAddr + 0x1207c);
-               if ((ulData & 0x0300) == 0)	/* AST1300 */
-                   pAST->SupportWideScreen = TRUE;
-           }
+           *(ULONG *) (pAST->MMIOVirtualAddr + 0xF004) = 0x1e6e0000;
+           *(ULONG *) (pAST->MMIOVirtualAddr + 0xF000) = 0x1;
+           ulData  = *(ULONG *) (pAST->MMIOVirtualAddr + 0x1207c);
+           ulData &= 0x0300;
+           if ((pAST->jChipType == AST2300) && (ulData == 0x0000))	/* AST1300 */
+               pAST->SupportWideScreen = TRUE;
+           if ((pAST->jChipType == AST2400) && (ulData == 0x0100))	/* AST1400 */
+               pAST->SupportWideScreen = TRUE;
        }
     } /* switch case */
 
 } /* GetScratchOptions */
 
 void
-vSetStartAddressCRT1(ASTRecPtr pAST, ULONG base)
+vASTSetStartAddressCRT1(ASTRecPtr pAST, ULONG base)
 {
     ULONG addr;
 
@@ -369,9 +747,14 @@ vSetStartAddressCRT1(ASTRecPtr pAST, ULONG base)
 }
 
 void
-vAST1000DisplayOff(ASTRecPtr pAST)
+vAST1000DisplayOff(ScrnInfoPtr pScrn)
 {
+    ASTRecPtr pAST = ASTPTR(pScrn);
     ULONG ulData;
+
+	/* 3rd Tx */
+    if (pAST->jTxChipType == Tx_DP501)
+	    SetDP501VideoOutput(pScrn, 0);
 
     if (pAST->jChipType == AST1180)
     {
@@ -381,13 +764,15 @@ vAST1000DisplayOff(ASTRecPtr pAST)
     }
     else
         SetIndexRegMask(SEQ_PORT,0x01, 0xDF, 0x20);
+
 }
 
-
 void
-vAST1000DisplayOn(ASTRecPtr pAST)
+vAST1000DisplayOn(ScrnInfoPtr pScrn)
 {
-   ULONG ulData;
+
+    ASTRecPtr pAST = ASTPTR(pScrn);
+    ULONG ulData;
 
     if (pAST->jChipType == AST1180)
     {
@@ -397,18 +782,18 @@ vAST1000DisplayOn(ASTRecPtr pAST)
     }
     else
         SetIndexRegMask(SEQ_PORT,0x01, 0xDF, 0x00);
+
+    /* 3rd Tx */
+    if (pAST->jTxChipType == Tx_DP501)
+	    SetDP501VideoOutput(pScrn, 1);
 }
 
 void ASTBlankScreen(ScrnInfoPtr pScrn, Bool unblack)
 {
-   ASTRecPtr pAST;
-
-   pAST = ASTPTR(pScrn);
-
     if (unblack)
-        vAST1000DisplayOn(pAST);
+        vAST1000DisplayOn(pScrn);
     else
-        vAST1000DisplayOff(pAST);
+        vAST1000DisplayOff(pScrn);
 }
 
 void
@@ -516,6 +901,11 @@ ASTDisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode, int fla
       break;
    }
 
+   if (PowerManagementMode != DPMSModeOn)
+   {  /* 3rd Tx */
+      if (pAST->jTxChipType == Tx_DP501) SetDP501VideoOutput(pScrn, 0);
+   }
+
    if (pAST->jChipType == AST1180)
    {
        ReadAST1180SOC(AST1180_GFX_BASE + AST1180_VGA1_CTRL, ulTemp);
@@ -529,19 +919,25 @@ ASTDisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode, int fla
        SetIndexRegMask(CRTC_PORT,0xB6, 0xFC, CRB6);
    }
 
+   if (PowerManagementMode == DPMSModeOn)
+   {  /* 3rd Tx */
+      if (pAST->jTxChipType == Tx_DP501) SetDP501VideoOutput(pScrn, 1);
+   }
 }
 
 
-#define I2C_BASE		0x1e780000
-#define I2C_OFFSET		(0xA000 + 0x40 * 4)	/* port4 */
-#define I2C_DEVICEADDR		0x0A0			/* slave addr */
+#ifndef I2C_BASE
+#define I2C_BASE			0x1e780000
+#endif
+#define I2C_OFFSET			(0xA000 + 0x40 * 4)	/* port4 */
+#define I2C_DEVICEADDR		0x0A0				/* slave addr */
 
 #define I2C_BASE_AST1180	0x80fc0000
 #define I2C_OFFSET_AS1180	(0xB000 + 0x40 * 2)	/* port2 */
 #define I2C_DEVICEADDR_AST1180	0x0A0			/* slave addr */
 
 Bool
-GetVGA2EDID(ScrnInfoPtr pScrn, unsigned char *pEDIDBuffer)
+ASTGetVGA2EDID(ScrnInfoPtr pScrn, unsigned char *pEDIDBuffer)
 {
     ASTRecPtr pAST = ASTPTR(pScrn);
     ULONG i, ulData;
@@ -641,10 +1037,10 @@ GetVGA2EDID(ScrnInfoPtr pScrn, unsigned char *pEDIDBuffer)
 
     return (TRUE);
 
-} /* GetVGA2EDID */
+} /* ASTGetVGA2EDID */
 
 /* Init VGA */
-Bool bIsVGAEnabled(ScrnInfoPtr pScrn)
+Bool bASTIsVGAEnabled(ScrnInfoPtr pScrn)
 {
     ASTRecPtr pAST;
     UCHAR ch;
@@ -675,7 +1071,7 @@ Bool bIsVGAEnabled(ScrnInfoPtr pScrn)
     return (0);
 }
 
-void vEnableVGA(ScrnInfoPtr pScrn)
+static void vEnableVGA(ScrnInfoPtr pScrn)
 {
     ASTRecPtr pAST;
 
@@ -686,28 +1082,28 @@ void vEnableVGA(ScrnInfoPtr pScrn)
 
 }
 
-UCHAR ExtRegInfo[] = {
+static UCHAR ExtRegInfo[] = {
     0x0F,
     0x04,
     0x1C,
     0xFF
 };
 
-UCHAR ExtRegInfo_AST2300A0[] = {
+static UCHAR ExtRegInfo_AST2300A0[] = {
     0x0F,
     0x04,
     0x1C,
     0xFF
 };
 
-UCHAR ExtRegInfo_AST2300[] = {
+static UCHAR ExtRegInfo_AST2300[] = {
     0x0F,
     0x04,
     0x1F,
     0xFF
 };
 
-void vSetDefExtReg(ScrnInfoPtr pScrn)
+static void vSetDefExtReg(ScrnInfoPtr pScrn)
 {
     ASTRecPtr pAST;
     UCHAR i, jIndex, jReg, *pjExtRegInfo;
@@ -721,7 +1117,7 @@ void vSetDefExtReg(ScrnInfoPtr pScrn)
     }
 
     /* Set Ext. Reg */
-    if (pAST->jChipType == AST2300)
+    if ((pAST->jChipType == AST2300) || (pAST->jChipType == AST2400))
     {
        if (PCI_DEV_REVISION(pAST->PciInfo) > 0x20)
            pjExtRegInfo = ExtRegInfo_AST2300;
@@ -749,39 +1145,10 @@ void vSetDefExtReg(ScrnInfoPtr pScrn)
 
     /* Enable RAMDAC for A1, ycchen@113005 */
     jReg = 0x04;
-    if (pAST->jChipType == AST2300)
+    if ((pAST->jChipType == AST2300) || (pAST->jChipType == AST2400))
         jReg |= 0x20;
     SetIndexRegMask(CRTC_PORT,0xB6, 0xFF, jReg);
 
-}
-
-__inline ULONG MIndwm(UCHAR *mmiobase, ULONG r)
-{
-    ULONG ulData;
-
-    *(ULONG *) (mmiobase + 0xF004) = r & 0xFFFF0000;
-    *(ULONG *) (mmiobase + 0xF000) = 0x1;
-
-    do {
-        ulData = *(volatile ULONG *) (mmiobase + 0xF004) & 0xFFFF0000;
-    } while (ulData != (r & 0xFFFF0000) );
-
-    return ( *(volatile ULONG *) (mmiobase + 0x10000 + (r & 0x0000FFFF)) );
-
-}
-
-__inline void MOutdwm(UCHAR *mmiobase, ULONG r, ULONG v)
-{
-    ULONG ulData;
-
-    *(ULONG *) (mmiobase + 0xF004) = r & 0xFFFF0000;
-    *(ULONG *) (mmiobase + 0xF000) = 0x1;
-
-    do {
-        ulData = *(volatile ULONG *) (mmiobase + 0xF004) & 0xFFFF0000;
-    } while (ulData != (r & 0xFFFF0000) );
-
-    *(volatile ULONG *) (mmiobase + 0x10000 + (r & 0x0000FFFF)) = v;
 }
 
 /*
@@ -795,7 +1162,7 @@ __inline void MOutdwm(UCHAR *mmiobase, ULONG r, ULONG v)
 
 #define CBR_PATNUM_AST2150           8
 
-ULONG pattern_AST2150[14] ={
+static ULONG pattern_AST2150[14] ={
 0xFF00FF00,
 0xCC33CC33,
 0xAA55AA55,
@@ -815,7 +1182,7 @@ typedef struct _AST2150DRAMParam {
     UCHAR	*pjMMIOVirtualAddress;
 } AST2150DRAMParam, *PAST2150DRAMParam;
 
-ULONG MMCTestBurst2_AST2150(PAST2150DRAMParam  param, ULONG datagen)
+static ULONG MMCTestBurst2_AST2150(PAST2150DRAMParam  param, ULONG datagen)
 {
   ULONG data, timeout;
   UCHAR *mmiobase;
@@ -847,7 +1214,7 @@ ULONG MMCTestBurst2_AST2150(PAST2150DRAMParam  param, ULONG datagen)
   return(data);
 }
 
-ULONG MMCTestSingle2_AST2150(PAST2150DRAMParam  param, ULONG datagen)
+static ULONG MMCTestSingle2_AST2150(PAST2150DRAMParam  param, ULONG datagen)
 {
   ULONG data, timeout;
   UCHAR *mmiobase;
@@ -869,7 +1236,7 @@ ULONG MMCTestSingle2_AST2150(PAST2150DRAMParam  param, ULONG datagen)
   return(data);
 }
 
-int CBRTest_AST2150(PAST2150DRAMParam  param)
+static int CBRTest_AST2150(PAST2150DRAMParam  param)
 {
   UCHAR *mmiobase;
 
@@ -887,7 +1254,7 @@ int CBRTest_AST2150(PAST2150DRAMParam  param)
 
 }
 
-int CBRScan_AST2150(PAST2150DRAMParam  param, int busw)
+static int CBRScan_AST2150(PAST2150DRAMParam  param, int busw)
 {
   ULONG patcnt, loop;
   UCHAR *mmiobase;
@@ -909,7 +1276,7 @@ int CBRScan_AST2150(PAST2150DRAMParam  param, int busw)
 
 }
 
-void CBRDLLI_AST2150(PAST2150DRAMParam  param, int busw)
+static void CBRDLLI_AST2150(PAST2150DRAMParam  param, int busw)
 {
   ULONG dllmin[4], dllmax[4], dlli, data, passcnt;
   UCHAR *mmiobase;
@@ -952,7 +1319,7 @@ typedef struct _AST_DRAMStruct {
 
 } AST_DRAMStruct, *PAST_DRAMStruct;
 
-AST_DRAMStruct AST2000DRAMTableData[] = {
+static AST_DRAMStruct AST2000DRAMTableData[] = {
     { 0x0108, 0x00000000 },
     { 0x0120, 0x00004a21 },
     { 0xFF00, 0x00000043 },
@@ -980,7 +1347,7 @@ AST_DRAMStruct AST2000DRAMTableData[] = {
     { 0xFFFF, 0xFFFFFFFF }
 };
 
-AST_DRAMStruct AST1100DRAMTableData[] = {
+static AST_DRAMStruct AST1100DRAMTableData[] = {
     { 0x2000, 0x1688a8a8 },
     { 0x2020, 0x000041f0 },
     { 0xFF00, 0x00000043 },
@@ -1033,7 +1400,7 @@ AST_DRAMStruct AST1100DRAMTableData[] = {
     { 0xffff, 0xffffffff },
 };
 
-AST_DRAMStruct AST2100DRAMTableData[] = {
+static AST_DRAMStruct AST2100DRAMTableData[] = {
     { 0x2000, 0x1688a8a8 },
     { 0x2020, 0x00004120 },
     { 0xFF00, 0x00000043 },
@@ -1086,7 +1453,7 @@ AST_DRAMStruct AST2100DRAMTableData[] = {
     { 0xffff, 0xffffffff },
 };
 
-void vInitDRAMReg(ScrnInfoPtr pScrn)
+static void vInitDRAMReg(ScrnInfoPtr pScrn)
 {
     AST_DRAMStruct *pjDRAMRegInfo;
     ASTRecPtr pAST = ASTPTR(pScrn);
@@ -1256,7 +1623,7 @@ ULONG pattern[8] ={
 0xF1E843C7,
 0x7C61D253};
 
-int MMCTestBurst(PAST2300DRAMParam  param, ULONG datagen)
+static int MMCTestBurst(PAST2300DRAMParam  param, ULONG datagen)
 {
   ULONG data, timeout;
   UCHAR *mmiobase;
@@ -1280,7 +1647,7 @@ int MMCTestBurst(PAST2300DRAMParam  param, ULONG datagen)
   return(1);
 }
 
-int MMCTestBurst2(PAST2300DRAMParam  param, ULONG datagen)
+static int MMCTestBurst2(PAST2300DRAMParam  param, ULONG datagen)
 {
   ULONG data, timeout;
   UCHAR *mmiobase;
@@ -1303,7 +1670,7 @@ int MMCTestBurst2(PAST2300DRAMParam  param, ULONG datagen)
   return(data);
 }
 
-int MMCTestSingle(PAST2300DRAMParam  param, ULONG datagen)
+static int MMCTestSingle(PAST2300DRAMParam  param, ULONG datagen)
 {
   ULONG data, timeout;
   UCHAR *mmiobase;
@@ -1327,7 +1694,7 @@ int MMCTestSingle(PAST2300DRAMParam  param, ULONG datagen)
   return(1);
 }
 
-int MMCTestSingle2(PAST2300DRAMParam  param, ULONG datagen)
+static int MMCTestSingle2(PAST2300DRAMParam  param, ULONG datagen)
 {
   ULONG data, timeout;
   UCHAR *mmiobase;
@@ -1350,7 +1717,7 @@ int MMCTestSingle2(PAST2300DRAMParam  param, ULONG datagen)
   return(data);
 }
 
-int CBRTest(PAST2300DRAMParam  param)
+static int CBRTest(PAST2300DRAMParam  param)
 {
   ULONG data;
   UCHAR *mmiobase;
@@ -1372,7 +1739,7 @@ int CBRTest(PAST2300DRAMParam  param)
   return(1);
 }
 
-int CBRScan(PAST2300DRAMParam  param)
+static int CBRScan(PAST2300DRAMParam  param)
 {
   ULONG data, data2, patcnt, loop;
   UCHAR *mmiobase;
@@ -1398,7 +1765,7 @@ int CBRScan(PAST2300DRAMParam  param)
   return(data2);
 }
 
-ULONG CBRTest2(PAST2300DRAMParam  param)
+static ULONG CBRTest2(PAST2300DRAMParam  param)
 {
   ULONG data;
   UCHAR *mmiobase;
@@ -1410,7 +1777,7 @@ ULONG CBRTest2(PAST2300DRAMParam  param)
   return(~data & 0xffff);
 }
 
-ULONG CBRScan2(PAST2300DRAMParam  param)
+static ULONG CBRScan2(PAST2300DRAMParam  param)
 {
   ULONG data, data2, patcnt, loop;
   UCHAR *mmiobase;
@@ -1436,14 +1803,14 @@ ULONG CBRScan2(PAST2300DRAMParam  param)
   return(data2);
 }
 
-ULONG CBRTest3(PAST2300DRAMParam  param)
+static ULONG CBRTest3(PAST2300DRAMParam  param)
 {
   if(!MMCTestBurst(param, 0)) return(0);
   if(!MMCTestSingle(param, 0)) return(0);
   return(1);
 }
 
-ULONG CBRScan3(PAST2300DRAMParam  param)
+static ULONG CBRScan3(PAST2300DRAMParam  param)
 {
   ULONG patcnt, loop;
   UCHAR *mmiobase;
@@ -1464,7 +1831,7 @@ ULONG CBRScan3(PAST2300DRAMParam  param)
   return(1);
 }
 
-Bool finetuneDQI_L(PAST2300DRAMParam  param)
+static Bool finetuneDQI_L(PAST2300DRAMParam  param)
 {
   ULONG gold_sadj[2], dllmin[16], dllmax[16], dlli, data, cnt, mask, passcnt, retry = 0;
   UCHAR *mmiobase;
@@ -1570,7 +1937,7 @@ FINETUNE_DONE:
 
 } /* finetuneDQI_L */
 
-void finetuneDQSI(PAST2300DRAMParam  param)
+static void finetuneDQSI(PAST2300DRAMParam  param)
 {
   ULONG dlli, dqsip, dqidly, cnt;
   ULONG reg_mcr18, reg_mcr0c, passcnt[2], diff;
@@ -1672,7 +2039,7 @@ void finetuneDQSI(PAST2300DRAMParam  param)
   MOutdwm(mmiobase, 0x1E6E0018, reg_mcr18);
 } /* finetuneDQSI */
 
-Bool CBRDLL2(PAST2300DRAMParam  param)
+static Bool CBRDLL2(PAST2300DRAMParam  param)
 {
   ULONG dllmin[2], dllmax[2], dlli, data, data2, passcnt, retry=0;
   UCHAR *mmiobase;
@@ -1734,7 +2101,7 @@ CBR_DONE2:
 
 } /* CBRDLL2 */
 
-void GetDDR2Info(PAST2300DRAMParam param)
+static void GetDDR2Info(PAST2300DRAMParam param)
 {
   UCHAR *mmiobase;
   ULONG trap, TRAP_AC2, TRAP_MRS;
@@ -1982,7 +2349,7 @@ void GetDDR2Info(PAST2300DRAMParam param)
 
 }
 
-void GetDDR3Info(PAST2300DRAMParam param)
+static void GetDDR3Info(PAST2300DRAMParam param)
 {
   UCHAR *mmiobase;
   ULONG trap, TRAP_AC2, TRAP_MRS;
@@ -2225,7 +2592,7 @@ void GetDDR3Info(PAST2300DRAMParam param)
 
 }
 
-void DDR2_Init(PAST2300DRAMParam param)
+static void DDR2_Init(PAST2300DRAMParam param)
 {
   ULONG data, data2, retry = 0;
   UCHAR *mmiobase;
@@ -2355,7 +2722,7 @@ DDR2_Init_Start:
 #endif
 }
 
-void DDR3_Init(PAST2300DRAMParam param)
+static void DDR3_Init(PAST2300DRAMParam param)
 {
   ULONG data, data2, retry = 0;
   UCHAR *mmiobase;
@@ -2481,7 +2848,7 @@ DDR3_Init_Start:
 #endif
 }
 
-void vInitAST2300DRAMReg(ScrnInfoPtr pScrn)
+static void vInitAST2300DRAMReg(ScrnInfoPtr pScrn)
 {
     ASTRecPtr pAST = ASTPTR(pScrn);
     AST2300DRAMParam param;
@@ -2541,12 +2908,12 @@ void vInitAST2300DRAMReg(ScrnInfoPtr pScrn)
 
 } /* vInitAST2300DRAMReg */
 
-void vGetDefaultSettings(ScrnInfoPtr pScrn)
+void static vGetDefaultSettings(ScrnInfoPtr pScrn)
 {
     ASTRecPtr pAST = ASTPTR(pScrn);
     ULONG ulData;
 
-    if (pAST->jChipType == AST2300)
+    if ((pAST->jChipType == AST2300) || (pAST->jChipType == AST2400))
     {
         *(ULONG *) (pAST->MMIOVirtualAddr + 0xF004) = 0x1e6e0000;
         *(ULONG *) (pAST->MMIOVirtualAddr + 0xF000) = 0x1;
@@ -2578,11 +2945,114 @@ void vGetDefaultSettings(ScrnInfoPtr pScrn)
 
 } /* vGetDefaultSettings */
 
+static Bool InitDVO(ScrnInfoPtr pScrn)
+{
+    ASTRecPtr pAST = ASTPTR(pScrn);
+    ULONG ulData;
+    UCHAR jReg;
+
+    *(ULONG *) (pAST->MMIOVirtualAddr + 0xF004)  = 0x1e6e0000;
+    *(ULONG *) (pAST->MMIOVirtualAddr + 0xF000)  = 0x1;
+    *(ULONG *) (pAST->MMIOVirtualAddr + 0x12000) = 0x1688A8A8;
+
+    GetIndexRegMask(CRTC_PORT, 0xD0, 0xFF, jReg);
+    if (!(jReg & 0x80))														/* Init SCU DVO Settings */
+    {
+        ulData  = *(ULONG *) (pAST->MMIOVirtualAddr + 0x12008);				/* delay phase */
+        ulData &= 0xfffff8ff;
+        ulData |= 0x00000500;
+        *(ULONG *) (pAST->MMIOVirtualAddr + 0x12008) = ulData;
+
+        if (pAST->jChipType == AST2300)
+        {
+            ulData  = *(ULONG *) (pAST->MMIOVirtualAddr + 0x12084);			/* multi-pins for DVO single-edge */
+            ulData |= 0xfffe0000;
+            *(ULONG *) (pAST->MMIOVirtualAddr + 0x12084) = ulData;
+
+            ulData  = *(ULONG *) (pAST->MMIOVirtualAddr + 0x12088);			/* multi-pins for DVO single-edge */
+            ulData |= 0x000fffff;
+            *(ULONG *) (pAST->MMIOVirtualAddr + 0x12088) = ulData;
+
+            ulData  = *(ULONG *) (pAST->MMIOVirtualAddr + 0x12090);			/* multi-pins for DVO single-edge */
+            ulData &= 0xffffffcf;
+            ulData |= 0x00000020;
+            *(ULONG *) (pAST->MMIOVirtualAddr + 0x12090) = ulData;
+        }
+        else	/* AST2400 */
+        {
+            ulData  = *(ULONG *) (pAST->MMIOVirtualAddr + 0x12088);			/* multi-pins for DVO single-edge */
+            ulData |= 0x30000000;
+            *(ULONG *) (pAST->MMIOVirtualAddr + 0x12088) = ulData;
+
+            ulData  = *(ULONG *) (pAST->MMIOVirtualAddr + 0x1208c);			/* multi-pins for DVO single-edge */
+            ulData |= 0x000000cf;
+            *(ULONG *) (pAST->MMIOVirtualAddr + 0x1208c) = ulData;
+
+            ulData  = *(ULONG *) (pAST->MMIOVirtualAddr + 0x120a4);			/* multi-pins for DVO single-edge */
+            ulData |= 0xffff0000;
+            *(ULONG *) (pAST->MMIOVirtualAddr + 0x120a4) = ulData;
+
+            ulData  = *(ULONG *) (pAST->MMIOVirtualAddr + 0x120a8);			/* multi-pins for DVO single-edge */
+            ulData |= 0x0000000f;
+            *(ULONG *) (pAST->MMIOVirtualAddr + 0x120a8) = ulData;
+
+            ulData  = *(ULONG *) (pAST->MMIOVirtualAddr + 0x12094);			/* multi-pins for DVO single-edge */
+            ulData |= 0x00000002;
+            *(ULONG *) (pAST->MMIOVirtualAddr + 0x12094) = ulData;
+        }
+    }
+
+    /* Force to DVO */
+    ulData  = *(ULONG *) (pAST->MMIOVirtualAddr + 0x1202c);
+    ulData &= 0xfffbffff;
+	*(ULONG *) (pAST->MMIOVirtualAddr + 0x1202c) = ulData;
+
+    /* Init VGA DVO Settings */
+    SetIndexRegMask(CRTC_PORT, 0xA3, 0xCF, 0x80);							/* enable DVO, single-edge */
+
+    return TRUE;
+} /* InitDVO */
+
+static void vInit3rdTX(ScrnInfoPtr pScrn)
+{
+    ASTRecPtr pAST = ASTPTR(pScrn);
+    ULONG ulData;
+    UCHAR jReg;
+
+    /* Only support on AST2300/2400 */
+    if ((pAST->jChipType == AST2300) || (pAST->jChipType == AST2400))
+    {
+        GetIndexRegMask(CRTC_PORT, 0xD1, 0xFF, jReg);      /* D[1]: DVO Enable */
+        switch (jReg & 0x0E)	/* D[11:9] */
+        {
+	    case 0x04:				/* Sil164 */
+            InitDVO(pScrn);
+            break;
+	    case 0x08:	    		/* DP501 with VBIOS launch FW */
+	        LaunchM68K(pScrn);
+	    case 0x0C:				/* DP501 with BMC launch FW */
+            InitDVO(pScrn);
+	        break;
+	    default:    			/* Force to VGA */
+            if (pAST->jTxChipType == Tx_Sil164)
+                InitDVO(pScrn);
+            else
+            {
+                *(ULONG *)(pAST->MMIOVirtualAddr + 0x12000) = 0x1688A8A8;
+                ulData  = *(ULONG *) (pAST->MMIOVirtualAddr + 0x1202c);
+                ulData &= 0xfffcffff;
+	            *(ULONG *)(pAST->MMIOVirtualAddr) = ulData;
+            }
+        }
+    }
+
+} /* vInit3rdTX */
+
 /*
  * Flags: 0: POST init
  *        1: resume from power management
  */
-Bool InitVGA(ScrnInfoPtr pScrn, ULONG Flags)
+Bool ASTInitVGA(ScrnInfoPtr pScrn, ULONG Flags)
 {
    ASTRecPtr pAST;
    uint32_t ulData;
@@ -2604,11 +3074,12 @@ Bool InitVGA(ScrnInfoPtr pScrn, ULONG Flags)
        if (Flags == 0)
            vGetDefaultSettings(pScrn);
 
-       if (pAST->jChipType == AST2300)
+       if ((pAST->jChipType == AST2300) || (pAST->jChipType == AST2400))
            vInitAST2300DRAMReg(pScrn);
        else
            vInitDRAMReg(pScrn);
 
+       vInit3rdTX(pScrn);
    }
 
    return (TRUE);
@@ -2810,7 +3281,7 @@ ReceiveI2CDataByte(ASTRecPtr pAST)
 }
 
 Bool
-GetVGAEDID(ScrnInfoPtr pScrn, unsigned char *pEDIDBuffer)
+ASTGetVGAEDID(ScrnInfoPtr pScrn, unsigned char *pEDIDBuffer)
 {
     ASTRecPtr pAST;
     UCHAR *pjDstEDID;
@@ -2876,9 +3347,9 @@ GetVGAEDID(ScrnInfoPtr pScrn, unsigned char *pEDIDBuffer)
 
     return (TRUE);
 
-} /* GetVGAEDID */
+} /* ASTGetVGAEDID */
 
-Bool bInitAST1180(ScrnInfoPtr pScrn)
+Bool bASTInitAST1180(ScrnInfoPtr pScrn)
 {
     ASTRecPtr pAST;
     uint32_t ulData;
@@ -2913,9 +3384,9 @@ Bool bInitAST1180(ScrnInfoPtr pScrn)
 
     return (TRUE);
 
-} /* bInitAST1180 */
+} /* bASTInitAST1180 */
 
-void GetAST1180DRAMInfo(ScrnInfoPtr pScrn)
+void ASTGetAST1180DRAMInfo(ScrnInfoPtr pScrn)
 {
     ASTRecPtr pAST = ASTPTR(pScrn);
     ULONG ulData;
@@ -2968,9 +3439,9 @@ void GetAST1180DRAMInfo(ScrnInfoPtr pScrn)
     /* MCLK */
     pAST->ulMCLK = 200;
 
-} /* GetAST1180DRAMInfo */
+} /* ASTGetAST1180DRAMInfo */
 
-void vEnableASTVGAMMIO(ScrnInfoPtr pScrn)
+void vASTEnableVGAMMIO(ScrnInfoPtr pScrn)
 {
     ASTRecPtr pAST = ASTPTR(pScrn);
     ULONG ulData;
