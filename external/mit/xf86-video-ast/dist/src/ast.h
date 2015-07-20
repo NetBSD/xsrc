@@ -19,6 +19,10 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifndef _AST_H_
+# define _AST_H_
+
 /* Compiler Options */
 #define	Accel_2D
 /* #define MMIO_2D */
@@ -67,8 +71,16 @@ typedef enum _CHIP_ID {
     AST2200,
     AST2150,
     AST2300,
+    AST2400,
     AST1180
 } CHIP_ID;
+
+typedef enum _TX_CHIPTYPE {
+    Tx_NONE,
+    Tx_Sil164,
+    Tx_Ite66121,
+    Tx_DP501
+} TX_CHIPTYPE;
 
 /* AST REC Info */
 #define AST_NAME 			"AST"
@@ -86,6 +98,10 @@ typedef enum _CHIP_ID {
 #define MIN_CMDQ_SIZE			0x00040000
 #define CMD_QUEUE_GUARD_BAND    	0x00000020
 #define DEFAULT_HWC_NUM			0x00000002
+
+/* Customized Info. for DVO */
+#define HDMI_I2C_CHANNEL		1
+#define HDMI_TX_I2C_SLAVE_ADDR 		0x98
 
 /* Patch Info */
 #define ABI_VIDEODRV_VERSION_PATCH	SET_ABI_VERSION(0, 5)
@@ -239,7 +255,7 @@ typedef struct _ASTRec {
     Bool		VGA2Clone;
     Bool		SupportWideScreen;
 
-    ULONG     		FBPhysAddr;		/* Frame buffer physical address     */
+    ULONG     		FBPhysAddr;			/* Frame buffer physical address     */
     ULONG     		MMIOPhysAddr;     	/* MMIO region physical address      */
     ULONG     		BIOSPhysAddr;     	/* BIOS physical address             */
 
@@ -249,9 +265,11 @@ typedef struct _ASTRec {
     unsigned long	FbMapSize;
     unsigned long	MMIOMapSize;
 
-    IOADDRESS		IODBase;        	/* Base of PIO memory area */
-    IOADDRESS		PIOOffset;
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
     IOADDRESS		RelocateIO;
+#else
+    int			RelocateIO;
+#endif
 
     VIDEOMODE 		VideoModeInfo;
     ASTRegRec       SavedReg;
@@ -267,6 +285,10 @@ typedef struct _ASTRec {
 
     int				mon_h_active;		/* Monitor Info. */
     int				mon_v_active;
+
+    UCHAR			jTxChipType;		/* 3rd TX */
+    UCHAR			DP501_MaxVCLK;
+    UCHAR			*pDP501FWBufferVirtualAddress;
 
 #ifdef AstVideo
     XF86VideoAdaptorPtr adaptor;
@@ -287,8 +309,56 @@ typedef struct _ASTRec {
 
 #define ASTPTR(p) ((ASTRecPtr)((p)->driverPrivate))
 
-/* Include Files */
-#include "ast_mode.h"
-#include "ast_vgatool.h"
-#include "ast_2dtool.h"
-#include "ast_cursor.h"
+/* ast_vgatool.c */
+extern Bool bASTIsVGAEnabled(ScrnInfoPtr pScrn);
+extern Bool ASTGetVGA2EDID(ScrnInfoPtr pScrn, unsigned char *pEDIDBuffer);
+extern void ASTDisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode, int flags);
+extern void vASTLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indices, LOCO *colors, VisualPtr pVisual);
+extern void ASTBlankScreen(ScrnInfoPtr pScreen, Bool unblack);
+extern void vAST1000DisplayOn(ScrnInfoPtr pScrn);
+extern void vAST1000DisplayOff(ScrnInfoPtr pScrn);
+extern void vASTSetStartAddressCRT1(ASTRecPtr pAST, ULONG base);
+extern void ASTGetScratchOptions(ScrnInfoPtr pScrn);
+void ASTGetChipType(ScrnInfoPtr pScrn);
+ULONG ASTGetMaxDCLK(ScrnInfoPtr pScrn);
+ULONG ASTGetVRAMInfo(ScrnInfoPtr pScrn);
+void ASTGetDRAMInfo(ScrnInfoPtr pScrn);
+Bool bASTRegInit(ScrnInfoPtr pScrn);
+void vASTOpenKey(ScrnInfoPtr pScrn);
+Bool ASTReadEDID_M68K(ScrnInfoPtr pScrn, BYTE *pEDIDData);
+UCHAR ASTGetLinkMaxCLK(ScrnInfoPtr pScrn);
+Bool ASTGetVGAEDID(ScrnInfoPtr pScrn, unsigned char *pEDIDBuffer);
+Bool bASTInitAST1180(ScrnInfoPtr pScrn);
+void ASTGetAST1180DRAMInfo(ScrnInfoPtr pScrn);
+void vASTEnableVGAMMIO(ScrnInfoPtr pScrn);
+Bool ASTInitVGA(ScrnInfoPtr pScrn, ULONG Flags);
+
+/* ast_2dtool.c */
+void vASTWaitEngIdle(ScrnInfoPtr pScrn, ASTRecPtr pAST);
+UCHAR *pASTjRequestCMDQ(ASTRecPtr pAST, ULONG ulDataLen);
+Bool bASTEnable2D(ScrnInfoPtr pScrn, ASTRecPtr pAST);
+void vASTDisable2D(ScrnInfoPtr pScrn, ASTRecPtr pAST);
+
+/* ast_cursor.c */
+#ifdef  HWC
+Bool ASTCursorInit(ScreenPtr pScreen);
+Bool bASTInitHWC(ScrnInfoPtr pScrn, ASTRecPtr pAST);
+void ASTDisableHWC(ScrnInfoPtr pScrn);
+#endif
+
+/* ast_mode.c */
+Bool ASTSetMode(ScrnInfoPtr pScrn, DisplayModePtr mode);
+
+/* ast_accel.c */
+#ifdef HAVE_XAA_H
+Bool ASTAccelInit(ScreenPtr pScreen);
+#endif
+void ASTDisplayVideo(ScrnInfoPtr pScrn, ASTPortPrivPtr pPriv, RegionPtr clipBoxes, int id);
+
+/* ast_tool.c */
+Bool ASTMapMem(ScrnInfoPtr pScrn);
+Bool ASTUnmapMem(ScrnInfoPtr pScrn);
+Bool ASTMapMMIO(ScrnInfoPtr pScrn);
+void ASTUnmapMMIO(ScrnInfoPtr pScrn);
+
+#endif /* _AST_H_ */

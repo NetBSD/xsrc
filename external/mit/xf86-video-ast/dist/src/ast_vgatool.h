@@ -166,3 +166,7 @@
         *(ULONG *) (pAST->MMIOVirtualAddr + 0xF000) = 0x1;	\
         *(ULONG *) (pAST->MMIOVirtualAddr + 0x10000 + ((addr) & 0x0000FFFF)) = (data);	\
 }
+
+/* Delay */
+#define DelayUS(x)		usleep(x)
+#define DelayMS(x)		DelayUS(1000*x)
