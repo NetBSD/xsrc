@@ -26,7 +26,9 @@ from The Open Group.
 
 */
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #include <stdlib.h>		/* for exit() and abs() */
 #include <stdio.h>
