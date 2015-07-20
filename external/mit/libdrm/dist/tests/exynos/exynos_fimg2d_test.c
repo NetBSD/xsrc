@@ -18,6 +18,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
+#include <unistd.h>
 
 #include <sys/mman.h>
 #include <linux/stddef.h>
@@ -29,48 +31,18 @@
 
 #include "exynos_drm.h"
 #include "exynos_drmif.h"
-#include "fimg2d.h"
+#include "exynos_fimg2d.h"
 
 #define DRM_MODULE_NAME		"exynos"
-#define MAX_TEST_CASE		8
 
 static unsigned int screen_width, screen_height;
-
-/*
- * A structure to test fimg2d hw.
- *
- * @solid_fild: fill given color data to source buffer.
- * @copy: copy source to destination buffer.
- * @copy_with_scale: copy source to destination buffer scaling up or
- *	down properly.
- * @blend: blend source to destination buffer.
- */
-struct fimg2d_test_case {
-	int (*solid_fill)(struct exynos_device *dev, struct exynos_bo *dst);
-	int (*copy)(struct exynos_device *dev, struct exynos_bo *src,
-			struct exynos_bo *dst, enum e_g2d_buf_type);
-	int (*copy_with_scale)(struct exynos_device *dev,
-				struct exynos_bo *src, struct exynos_bo *dst,
-				enum e_g2d_buf_type);
-	int (*blend)(struct exynos_device *dev,
-				struct exynos_bo *src, struct exynos_bo *dst,
-				enum e_g2d_buf_type);
-};
 
 struct connector {
 	uint32_t id;
 	char mode_str[64];
-	char format_str[5];
-	unsigned int fourcc;
 	drmModeModeInfo *mode;
 	drmModeEncoder *encoder;
 	int crtc;
-	int pipe;
-	int plane_zpos;
-	unsigned int fb_id[2], current_fb_id;
-	struct timeval start;
-
-	int swap_count;
 };
 
 static void connector_find_mode(int fd, struct connector *c,
@@ -140,37 +112,6 @@ static void connector_find_mode(int fd, struct connector *c,
 		c->crtc = c->encoder->crtc_id;
 }
 
-static int connector_find_plane(int fd, unsigned int *plane_id)
-{
-	drmModePlaneRes *plane_resources;
-	drmModePlane *ovr;
-	int i;
-
-	plane_resources = drmModeGetPlaneResources(fd);
-	if (!plane_resources) {
-		fprintf(stderr, "drmModeGetPlaneResources failed: %s\n",
-			strerror(errno));
-		return -1;
-	}
-
-	for (i = 0; i < plane_resources->count_planes; i++) {
-		plane_id[i] = 0;
-
-		ovr = drmModeGetPlane(fd, plane_resources->planes[i]);
-		if (!ovr) {
-			fprintf(stderr, "drmModeGetPlane failed: %s\n",
-				strerror(errno));
-			continue;
-		}
-
-		if (ovr->possible_crtcs & (1 << 0))
-			plane_id[i] = ovr->plane_id;
-		drmModeFreePlane(ovr);
-	}
-
-	return 0;
-}
-
 static int drm_set_crtc(struct exynos_device *dev, struct connector *c,
 			unsigned int fb_id)
 {
@@ -178,14 +119,9 @@ static int drm_set_crtc(struct exynos_device *dev, struct connector *c,
 
 	ret = drmModeSetCrtc(dev->fd, c->crtc,
 			fb_id, 0, 0, &c->id, 1, c->mode);
-	if (ret) {
+	if (ret)
 		drmMsg("failed to set mode: %s\n", strerror(errno));
-		goto err;
-	}
 
-	return 0;
-
-err:
 	return ret;
 }
 
@@ -207,15 +143,50 @@ static struct exynos_bo *exynos_create_buffer(struct exynos_device *dev,
 	return bo;
 }
 
+/* Allocate buffer and fill it with checkerboard pattern, where the tiles *
+ * have a random color. The caller has to free the buffer.                */
+static void *create_checkerboard_pattern(unsigned int num_tiles_x,
+						unsigned int num_tiles_y, unsigned int tile_size)
+{
+	unsigned int *buf;
+	unsigned int x, y, i, j;
+	const unsigned int stride = num_tiles_x * tile_size;
+
+	if (posix_memalign((void*)&buf, 64, num_tiles_y * tile_size * stride * 4) != 0)
+		return NULL;
+
+	for (x = 0; x < num_tiles_x; ++x) {
+		for (y = 0; y < num_tiles_y; ++y) {
+			const unsigned int color = 0xff000000 + (random() & 0xffffff);
+
+			for (i = 0; i < tile_size; ++i) {
+				for (j = 0; j < tile_size; ++j) {
+					buf[x * tile_size + y * stride * tile_size + i + j * stride] = color;
+				}
+			}
+		}
+	}
+
+	return buf;
+}
+
 static void exynos_destroy_buffer(struct exynos_bo *bo)
 {
 	exynos_bo_destroy(bo);
 }
 
+static void wait_for_user_input(int last)
+{
+	printf("press <ENTER> to %s\n", last ? "exit test application" :
+			"skip to next test");
+
+	getchar();
+}
+
 static int g2d_solid_fill_test(struct exynos_device *dev, struct exynos_bo *dst)
 {
 	struct g2d_context *ctx;
-	struct g2d_image img;
+	struct g2d_image img = {0};
 	unsigned int count, img_w, img_h;
 	int ret = 0;
 
@@ -223,10 +194,9 @@ static int g2d_solid_fill_test(struct exynos_device *dev, struct exynos_bo *dst)
 	if (!ctx)
 		return -EFAULT;
 
-	memset(&img, 0, sizeof(struct g2d_image));
 	img.bo[0] = dst->handle;
 
-	printf("soild fill test.\n");
+	printf("solid fill test.\n");
 
 	srand(time(NULL));
 	img_w = screen_width;
@@ -266,8 +236,7 @@ static int g2d_copy_test(struct exynos_device *dev, struct exynos_bo *src,
 				enum e_g2d_buf_type type)
 {
 	struct g2d_context *ctx;
-	struct g2d_image src_img, dst_img;
-	unsigned int count;
+	struct g2d_image src_img = {0}, dst_img = {0};
 	unsigned int src_x, src_y, dst_x, dst_y, img_w, img_h;
 	unsigned long userptr, size;
 	int ret;
@@ -276,8 +245,6 @@ static int g2d_copy_test(struct exynos_device *dev, struct exynos_bo *src,
 	if (!ctx)
 		return -EFAULT;
 
-	memset(&src_img, 0, sizeof(struct g2d_image));
-	memset(&dst_img, 0, sizeof(struct g2d_image));
 	dst_img.bo[0] = dst->handle;
 
 	src_x = 0;
@@ -303,9 +270,10 @@ static int g2d_copy_test(struct exynos_device *dev, struct exynos_bo *src,
 		src_img.user_ptr[0].userptr = userptr;
 		src_img.user_ptr[0].size = size;
 		break;
+	case G2D_IMGBUF_COLOR:
 	default:
-		type = G2D_IMGBUF_GEM;
-		break;
+		ret = -EFAULT;
+		goto fail;
 	}
 
 	printf("copy test with %s.\n",
@@ -339,6 +307,7 @@ err_free_userptr:
 		if (userptr)
 			free((void *)userptr);
 
+fail:
 	g2d_fini(ctx);
 
 	return ret;
@@ -350,9 +319,8 @@ static int g2d_copy_with_scale_test(struct exynos_device *dev,
 					enum e_g2d_buf_type type)
 {
 	struct g2d_context *ctx;
-	struct g2d_image src_img, dst_img;
-	unsigned int count;
-	unsigned int src_x, src_y, dst_x, dst_y, img_w, img_h;
+	struct g2d_image src_img = {0}, dst_img = {0};
+	unsigned int src_x, src_y, img_w, img_h;
 	unsigned long userptr, size;
 	int ret;
 
@@ -360,14 +328,10 @@ static int g2d_copy_with_scale_test(struct exynos_device *dev,
 	if (!ctx)
 		return -EFAULT;
 
-	memset(&src_img, 0, sizeof(struct g2d_image));
-	memset(&dst_img, 0, sizeof(struct g2d_image));
 	dst_img.bo[0] = dst->handle;
 
 	src_x = 0;
 	src_y = 0;
-	dst_x = 0;
-	dst_y = 0;
 	img_w = screen_width;
 	img_h = screen_height;
 
@@ -387,9 +351,10 @@ static int g2d_copy_with_scale_test(struct exynos_device *dev,
 		src_img.user_ptr[0].userptr = userptr;
 		src_img.user_ptr[0].size = size;
 		break;
+	case G2D_IMGBUF_COLOR:
 	default:
-		type = G2D_IMGBUF_GEM;
-		break;
+		ret = -EFAULT;
+		goto fail;
 	}
 
 	printf("copy and scale test with %s.\n",
@@ -428,6 +393,7 @@ err_free_userptr:
 		if (userptr)
 			free((void *)userptr);
 
+fail:
 	g2d_fini(ctx);
 
 	return 0;
@@ -439,8 +405,7 @@ static int g2d_blend_test(struct exynos_device *dev,
 					enum e_g2d_buf_type type)
 {
 	struct g2d_context *ctx;
-	struct g2d_image src_img, dst_img;
-	unsigned int count;
+	struct g2d_image src_img = {0}, dst_img = {0};
 	unsigned int src_x, src_y, dst_x, dst_y, img_w, img_h;
 	unsigned long userptr, size;
 	int ret;
@@ -449,8 +414,6 @@ static int g2d_blend_test(struct exynos_device *dev,
 	if (!ctx)
 		return -EFAULT;
 
-	memset(&src_img, 0, sizeof(struct g2d_image));
-	memset(&dst_img, 0, sizeof(struct g2d_image));
 	dst_img.bo[0] = dst->handle;
 
 	src_x = 0;
@@ -476,9 +439,10 @@ static int g2d_blend_test(struct exynos_device *dev,
 		src_img.user_ptr[0].userptr = userptr;
 		src_img.user_ptr[0].size = size;
 		break;
+	case G2D_IMGBUF_COLOR:
 	default:
-		type = G2D_IMGBUF_GEM;
-		break;
+		ret = -EFAULT;
+		goto fail;
 	}
 
 	printf("blend test with %s.\n",
@@ -528,17 +492,90 @@ err_free_userptr:
 		if (userptr)
 			free((void *)userptr);
 
+fail:
 	g2d_fini(ctx);
 
 	return 0;
 }
 
-static struct fimg2d_test_case test_case = {
-	.solid_fill = &g2d_solid_fill_test,
-	.copy = &g2d_copy_test,
-	.copy_with_scale = &g2d_copy_with_scale_test,
-	.blend = &g2d_blend_test,
-};
+static int g2d_checkerboard_test(struct exynos_device *dev,
+					struct exynos_bo *src,
+					struct exynos_bo *dst,
+					enum e_g2d_buf_type type)
+{
+	struct g2d_context *ctx;
+	struct g2d_image src_img = {0}, dst_img = {0};
+	unsigned int src_x, src_y, dst_x, dst_y, img_w, img_h;
+	void *checkerboard = NULL;
+	int ret;
+
+	ctx = g2d_init(dev->fd);
+	if (!ctx)
+		return -EFAULT;
+
+	dst_img.bo[0] = dst->handle;
+
+	src_x = 0;
+	src_y = 0;
+	dst_x = 0;
+	dst_y = 0;
+
+	checkerboard = create_checkerboard_pattern(screen_width / 32, screen_height / 32, 32);
+	if (checkerboard == NULL) {
+		ret = -1;
+		goto fail;
+	}
+
+	img_w = screen_width - (screen_width % 32);
+	img_h = screen_height - (screen_height % 32);
+
+	switch (type) {
+	case G2D_IMGBUF_GEM:
+		memcpy(src->vaddr, checkerboard, img_w * img_h * 4);
+		src_img.bo[0] = src->handle;
+		break;
+	case G2D_IMGBUF_USERPTR:
+		src_img.user_ptr[0].userptr = (unsigned long)checkerboard;
+		src_img.user_ptr[0].size = img_w * img_h * 4;
+		break;
+	case G2D_IMGBUF_COLOR:
+	default:
+		ret = -EFAULT;
+		goto fail;
+	}
+
+	printf("checkerboard test with %s.\n",
+			type == G2D_IMGBUF_GEM ? "gem" : "userptr");
+
+	src_img.width = img_w;
+	src_img.height = img_h;
+	src_img.stride = src_img.width * 4;
+	src_img.buf_type = type;
+	src_img.color_mode = G2D_COLOR_FMT_ARGB8888 | G2D_ORDER_AXRGB;
+
+	dst_img.width = screen_width;
+	dst_img.height = screen_height;
+	dst_img.stride = dst_img.width * 4;
+	dst_img.buf_type = G2D_IMGBUF_GEM;
+	dst_img.color_mode = G2D_COLOR_FMT_ARGB8888 | G2D_ORDER_AXRGB;
+	src_img.color = 0xff000000;
+	ret = g2d_solid_fill(ctx, &dst_img, src_x, src_y, screen_width, screen_height);
+	if (ret < 0)
+		goto fail;
+
+	ret = g2d_copy(ctx, &src_img, &dst_img, src_x, src_y, dst_x, dst_y,
+			img_w, img_h);
+	if (ret < 0)
+		goto fail;
+
+	g2d_exec(ctx);
+
+fail:
+	free(checkerboard);
+	g2d_fini(ctx);
+
+	return ret;
+}
 
 static void usage(char *name)
 {
@@ -555,7 +592,6 @@ int main(int argc, char **argv)
 	struct exynos_device *dev;
 	struct exynos_bo *bo, *src;
 	struct connector con;
-	char *modeset = NULL;
 	unsigned int fb_id;
 	uint32_t handles[4] = {0}, pitches[4] = {0}, offsets[4] = {0};
 	drmModeRes *resources;
@@ -571,7 +607,6 @@ int main(int argc, char **argv)
 	while ((c = getopt(argc, argv, optstr)) != -1) {
 		switch (c) {
 		case 's':
-			modeset = strdup(optarg);
 			con.crtc = -1;
 			if (sscanf(optarg, "%d:0x%64s",
 						&con.id,
@@ -584,7 +619,7 @@ int main(int argc, char **argv)
 			break;
 		default:
 			usage(argv[0]);
-			return -EINVAL;
+			break;
 		}
 	}
 
@@ -611,10 +646,22 @@ int main(int argc, char **argv)
 	connector_find_mode(dev->fd, &con, resources);
 	drmModeFreeResources(resources);
 
+	if (!con.mode) {
+		fprintf(stderr, "failed to find usable connector\n");
+		ret = -EFAULT;
+		goto err_drm_close;
+	}
+
 	screen_width = con.mode->hdisplay;
 	screen_height = con.mode->vdisplay;
 
-	printf("screen width  = %d, screen height = %d\n", screen_width,
+	if (screen_width == 0 || screen_height == 0) {
+		fprintf(stderr, "failed to find sane resolution on connector\n");
+		ret = -EFAULT;
+		goto err_drm_close;
+	}
+
+	printf("screen width = %d, screen height = %d\n", screen_width,
 			screen_height);
 
 	bo = exynos_create_buffer(dev, screen_width * screen_height * 4, 0);
@@ -633,21 +680,19 @@ int main(int argc, char **argv)
 	if (ret < 0)
 		goto err_destroy_buffer;
 
-	con.plane_zpos = -1;
-
 	memset(bo->vaddr, 0xff, screen_width * screen_height * 4);
 
 	ret = drm_set_crtc(dev, &con, fb_id);
 	if (ret < 0)
 		goto err_rm_fb;
 
-	ret = test_case.solid_fill(dev, bo);
+	ret = g2d_solid_fill_test(dev, bo);
 	if (ret < 0) {
 		fprintf(stderr, "failed to solid fill operation.\n");
 		goto err_rm_fb;
 	}
 
-	getchar();
+	wait_for_user_input(0);
 
 	src = exynos_create_buffer(dev, screen_width * screen_height * 4, 0);
 	if (!src) {
@@ -655,27 +700,45 @@ int main(int argc, char **argv)
 		goto err_rm_fb;
 	}
 
-	ret = test_case.copy(dev, src, bo, G2D_IMGBUF_GEM);
+	ret = g2d_copy_test(dev, src, bo, G2D_IMGBUF_GEM);
 	if (ret < 0) {
 		fprintf(stderr, "failed to test copy operation.\n");
 		goto err_free_src;
 	}
 
-	getchar();
+	wait_for_user_input(0);
 
-	ret = test_case.copy_with_scale(dev, src, bo, G2D_IMGBUF_GEM);
+	ret = g2d_copy_with_scale_test(dev, src, bo, G2D_IMGBUF_GEM);
 	if (ret < 0) {
 		fprintf(stderr, "failed to test copy and scale operation.\n");
 		goto err_free_src;
 	}
 
-	getchar();
+	wait_for_user_input(0);
 
-	ret  = test_case.blend(dev, src, bo, G2D_IMGBUF_USERPTR);
+	ret = g2d_checkerboard_test(dev, src, bo, G2D_IMGBUF_GEM);
+	if (ret < 0) {
+		fprintf(stderr, "failed to issue checkerboard test.\n");
+		goto err_free_src;
+	}
+
+	wait_for_user_input(1);
+
+	/*
+	 * The blend test uses the userptr functionality of exynos-drm, which
+	 * is currently not safe to use. If the kernel hasn't been build with
+	 * exynos-iommu support, then the blend test is going to produce (kernel)
+	 * memory corruption, eventually leading to a system crash.
+	 *
+	 * Disable the test for now, until the kernel code has been sanitized.
+	 */
+#if 0
+	ret  = g2d_blend_test(dev, src, bo, G2D_IMGBUF_USERPTR);
 	if (ret < 0)
 		fprintf(stderr, "failed to test blend operation.\n");
 
 	getchar();
+#endif
 
 err_free_src:
 	if (src)

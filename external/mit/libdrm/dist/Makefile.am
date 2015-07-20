@@ -22,6 +22,22 @@ include Makefile.sources
 
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 
+AM_DISTCHECK_CONFIGURE_FLAGS = \
+	--enable-udev \
+	--enable-libkms \
+	--enable-intel \
+	--enable-radeon \
+	--enable-nouveau \
+	--enable-vmwgfx \
+	--enable-omap-experimental-api \
+	--enable-exynos-experimental-api \
+	--enable-freedreno \
+	--enable-freedreno-kgsl\
+	--enable-tegra-experimental-api \
+	--enable-install-test-programs \
+	--enable-cairo-tests \
+	--enable-manpages
+
 pkgconfigdir = @pkgconfigdir@
 pkgconfig_DATA = libdrm.pc
 
@@ -57,7 +73,24 @@ if HAVE_TEGRA
 TEGRA_SUBDIR = tegra
 endif
 
-SUBDIRS = . $(LIBKMS_SUBDIR) $(INTEL_SUBDIR) $(NOUVEAU_SUBDIR) $(RADEON_SUBDIR) $(OMAP_SUBDIR) $(EXYNOS_SUBDIR) $(FREEDRENO_SUBDIR) $(TEGRA_SUBDIR) tests man
+if BUILD_MANPAGES
+if HAVE_MANPAGES_STYLESHEET
+MAN_SUBDIR = man
+endif
+endif
+
+SUBDIRS = \
+	. \
+	$(LIBKMS_SUBDIR) \
+	$(INTEL_SUBDIR) \
+	$(NOUVEAU_SUBDIR) \
+	$(RADEON_SUBDIR) \
+	$(OMAP_SUBDIR) \
+	$(EXYNOS_SUBDIR) \
+	$(FREEDRENO_SUBDIR) \
+	$(TEGRA_SUBDIR) \
+	tests \
+	$(MAN_SUBDIR)
 
 libdrm_la_LTLIBRARIES = libdrm.la
 libdrm_ladir = $(libdir)
@@ -66,6 +99,7 @@ libdrm_la_LIBADD = @CLOCK_LIB@
 
 libdrm_la_CPPFLAGS = -I$(top_srcdir)/include/drm
 AM_CFLAGS = \
+	$(WARN_CFLAGS) \
 	$(VALGRIND_CFLAGS)
 
 libdrm_la_SOURCES = $(LIBDRM_FILES)

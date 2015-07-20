@@ -26,6 +26,7 @@
  */
 
 #include <limits.h>
+#include <sys/ioctl.h>
 #include "drmtest.h"
 
 /**
@@ -43,8 +44,6 @@ int main(int argc, char **argv)
 
 	ret = ioctl(fd, DRM_IOCTL_GET_STATS, &stats);
 	assert(ret == 0);
-
-	assert(stats.count >= 0);
 
 	close(fd);
 	return 0;

@@ -26,9 +26,7 @@ include Makefile.sources
 
 AM_CFLAGS = \
 	$(WARN_CFLAGS) \
-	$(VISIBILITY_CFLAGS) \
 	-I$(top_srcdir) \
-	-I$(top_srcdir)/radeon \
 	$(PTHREADSTUBS_CFLAGS) \
 	-I$(top_srcdir)/include/drm
 
@@ -45,4 +43,4 @@ libdrm_radeoninclude_HEADERS = $(LIBDRM_RADEON_H_FILES)
 pkgconfigdir = @pkgconfigdir@
 pkgconfig_DATA = libdrm_radeon.pc
 
-EXTRA_DIST = Android.mk
+EXTRA_DIST = Android.mk $(LIBDRM_RADEON_BOF_FILES) $(TESTS)

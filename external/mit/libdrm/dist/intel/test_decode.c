@@ -34,7 +34,7 @@
 #include <sys/stat.h>
 #include <err.h>
 
-#include "libdrm.h"
+#include "libdrm_macros.h"
 #include "intel_bufmgr.h"
 #include "intel_chipset.h"
 
@@ -91,7 +91,10 @@ compare_batch(struct drm_intel_decode *ctx, const char *batch_filename)
 {
 	FILE *out = NULL;
 	void *ptr, *ref_ptr, *batch_ptr;
-	size_t size, ref_size, batch_size;
+#ifdef HAVE_OPEN_MEMSTREAM
+	size_t size;
+#endif
+	size_t ref_size, batch_size;
 	const char *ref_suffix = "-ref.txt";
 	char *ref_filename;
 

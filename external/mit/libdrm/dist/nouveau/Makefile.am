@@ -2,9 +2,7 @@ include Makefile.sources
 
 AM_CFLAGS = \
 	$(WARN_CFLAGS) \
-	$(VISIBILITY_CFLAGS) \
 	-I$(top_srcdir) \
-	-I$(top_srcdir)/nouveau \
 	$(PTHREADSTUBS_CFLAGS) \
 	-I$(top_srcdir)/include/drm \
 	-DDEBUG
@@ -22,4 +20,5 @@ libdrm_nouveauinclude_HEADERS = $(LIBDRM_NOUVEAU_H_FILES)
 pkgconfigdir = @pkgconfigdir@
 pkgconfig_DATA = libdrm_nouveau.pc
 
-EXTRA_DIST = Android.mk
+TESTS = nouveau-symbol-check
+EXTRA_DIST = Android.mk $(TESTS)

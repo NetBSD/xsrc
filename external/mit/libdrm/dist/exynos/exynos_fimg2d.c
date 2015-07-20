@@ -24,10 +24,10 @@
 
 #include <xf86drm.h>
 
-#include "libdrm.h"
+#include "libdrm_macros.h"
 #include "exynos_drm.h"
 #include "fimg2d_reg.h"
-#include "fimg2d.h"
+#include "exynos_fimg2d.h"
 
 #define		SET_BF(val, sc, si, scsa, scda, dc, di, dcsa, dcda) \
 			val.data.src_coeff = sc;		\
@@ -40,6 +40,23 @@
 			val.data.dst_coeff_dst_a = dcda;
 
 #define MIN(a, b)	((a) < (b) ? (a) : (b))
+
+enum g2d_base_addr_reg {
+	g2d_dst = 0,
+	g2d_src
+};
+
+static unsigned int g2d_get_scaling(unsigned int src, unsigned int dst)
+{
+	/*
+	 * The G2D hw scaling factor is a normalized inverse of the scaling factor.
+	 * For example: When source width is 100 and destination width is 200
+	 * (scaling of 2x), then the hw factor is NC * 100 / 200.
+	 * The normalization factor (NC) is 2^16 = 0x10000.
+	 */
+
+	return ((src << 16) / dst);
+}
 
 static unsigned int g2d_get_blend_op(enum e_g2d_op op)
 {
@@ -68,6 +85,10 @@ static unsigned int g2d_get_blend_op(enum e_g2d_op op)
 		break;
 	case G2D_OP_OVER:
 		SET_BF(val, G2D_COEFF_MODE_ONE, 0, 0, 0,
+				G2D_COEFF_MODE_SRC_ALPHA, 1, 0, 0);
+		break;
+	case G2D_OP_INTERPOLATE:
+		SET_BF(val, G2D_COEFF_MODE_SRC_ALPHA, 0, 0, 0,
 				G2D_COEFF_MODE_SRC_ALPHA, 1, 0, 0);
 		break;
 	default:
@@ -118,7 +139,27 @@ static int g2d_add_cmd(struct g2d_context *ctx, unsigned long cmd,
 		break;
 	}
 
-	return TRUE;
+	return 0;
+}
+
+/*
+ * g2d_add_base_addr - helper function to set dst/src base address register.
+ *
+ * @ctx: a pointer to g2d_context structure.
+ * @img: a pointer to the dst/src g2d_image structure.
+ * @reg: the register that should be set.
+ */
+static void g2d_add_base_addr(struct g2d_context *ctx, struct g2d_image *img,
+			enum g2d_base_addr_reg reg)
+{
+	const unsigned long cmd = (reg == g2d_dst) ?
+		DST_BASE_ADDR_REG : SRC_BASE_ADDR_REG;
+
+	if (img->buf_type == G2D_IMGBUF_USERPTR)
+		g2d_add_cmd(ctx, cmd | G2D_BUF_USERPTR,
+				(unsigned long)&img->user_ptr[0]);
+	else
+		g2d_add_cmd(ctx, cmd, img->bo[0]);
 }
 
 /*
@@ -136,28 +177,26 @@ static void g2d_reset(struct g2d_context *ctx)
 }
 
 /*
- * g2d_flush - summit all commands and values in user side command buffer
+ * g2d_flush - submit all commands and values in user side command buffer
  *		to command queue aware of fimg2d dma.
  *
  * @ctx: a pointer to g2d_context structure.
  *
  * This function should be called after all commands and values to user
- * side command buffer is set to summit that buffer to kernel side driver.
+ * side command buffer are set. It submits that buffer to the kernel side driver.
  */
 static int g2d_flush(struct g2d_context *ctx)
 {
 	int ret;
-	struct drm_exynos_g2d_set_cmdlist cmdlist;
+	struct drm_exynos_g2d_set_cmdlist cmdlist = {0};
 
-	if (ctx->cmd_nr  == 0 && ctx->cmd_buf_nr == 0)
-		return FALSE;
+	if (ctx->cmd_nr == 0 && ctx->cmd_buf_nr == 0)
+		return -1;
 
 	if (ctx->cmdlist_nr >= G2D_MAX_CMD_LIST_NR) {
 		fprintf(stderr, "Overflow cmdlist.\n");
 		return -EINVAL;
 	}
-
-	memset(&cmdlist, 0, sizeof(struct drm_exynos_g2d_set_cmdlist));
 
 	cmdlist.cmd = (uint64_t)(uintptr_t)&ctx->cmd[0];
 	cmdlist.cmd_buf = (uint64_t)(uintptr_t)&ctx->cmd_buf[0];
@@ -183,9 +222,9 @@ static int g2d_flush(struct g2d_context *ctx)
 /**
  * g2d_init - create a new g2d context and get hardware version.
  *
- * fd: a file descriptor to drm device driver opened.
+ * fd: a file descriptor to an opened drm device.
  */
-drm_public struct g2d_context *g2d_init(int fd)
+struct g2d_context *g2d_init(int fd)
 {
 	struct drm_exynos_g2d_get_ver ver;
 	struct g2d_context *ctx;
@@ -213,10 +252,9 @@ drm_public struct g2d_context *g2d_init(int fd)
 	return ctx;
 }
 
-drm_public void g2d_fini(struct g2d_context *ctx)
+void g2d_fini(struct g2d_context *ctx)
 {
-	if (ctx)
-		free(ctx);
+	free(ctx);
 }
 
 /**
@@ -224,7 +262,7 @@ drm_public void g2d_fini(struct g2d_context *ctx)
  *
  * @ctx: a pointer to g2d_context structure.
  */
-drm_public int g2d_exec(struct g2d_context *ctx)
+int g2d_exec(struct g2d_context *ctx)
 {
 	struct drm_exynos_g2d_exec exec;
 	int ret;
@@ -256,7 +294,7 @@ drm_public int g2d_exec(struct g2d_context *ctx)
  * @w: width value to buffer filled with given color data.
  * @h: height value to buffer filled with given color data.
  */
-drm_public int
+int
 g2d_solid_fill(struct g2d_context *ctx, struct g2d_image *img,
 			unsigned int x, unsigned int y, unsigned int w,
 			unsigned int h)
@@ -266,13 +304,7 @@ g2d_solid_fill(struct g2d_context *ctx, struct g2d_image *img,
 
 	g2d_add_cmd(ctx, DST_SELECT_REG, G2D_SELECT_MODE_NORMAL);
 	g2d_add_cmd(ctx, DST_COLOR_MODE_REG, img->color_mode);
-
-	if (img->buf_type == G2D_IMGBUF_USERPTR)
-		g2d_add_cmd(ctx, DST_BASE_ADDR_REG | G2D_BUF_USERPTR,
-				(unsigned long)&img->user_ptr[0]);
-	else
-		g2d_add_cmd(ctx, DST_BASE_ADDR_REG, img->bo[0]);
-
+	g2d_add_base_addr(ctx, img, g2d_dst);
 	g2d_add_cmd(ctx, DST_STRIDE_REG, img->stride);
 
 	if (x + w > img->width)
@@ -297,9 +329,7 @@ g2d_solid_fill(struct g2d_context *ctx, struct g2d_image *img,
 	bitblt.data.fast_solid_color_fill_en = 1;
 	g2d_add_cmd(ctx, BITBLT_COMMAND_REG, bitblt.val);
 
-	g2d_flush(ctx);
-
-	return 0;
+	return g2d_flush(ctx);
 }
 
 /**
@@ -317,7 +347,7 @@ g2d_solid_fill(struct g2d_context *ctx, struct g2d_image *img,
  * @w: width value to source and destination buffers.
  * @h: height value to source and destination buffers.
  */
-drm_public int
+int
 g2d_copy(struct g2d_context *ctx, struct g2d_image *src,
 		struct g2d_image *dst, unsigned int src_x, unsigned int src_y,
 		unsigned int dst_x, unsigned dst_y, unsigned int w,
@@ -329,22 +359,12 @@ g2d_copy(struct g2d_context *ctx, struct g2d_image *src,
 
 	g2d_add_cmd(ctx, DST_SELECT_REG, G2D_SELECT_MODE_BGCOLOR);
 	g2d_add_cmd(ctx, DST_COLOR_MODE_REG, dst->color_mode);
-	if (dst->buf_type == G2D_IMGBUF_USERPTR)
-		g2d_add_cmd(ctx, DST_BASE_ADDR_REG | G2D_BUF_USERPTR,
-				(unsigned long)&dst->user_ptr[0]);
-	else
-		g2d_add_cmd(ctx, DST_BASE_ADDR_REG, dst->bo[0]);
-
+	g2d_add_base_addr(ctx, dst, g2d_dst);
 	g2d_add_cmd(ctx, DST_STRIDE_REG, dst->stride);
 
 	g2d_add_cmd(ctx, SRC_SELECT_REG, G2D_SELECT_MODE_NORMAL);
 	g2d_add_cmd(ctx, SRC_COLOR_MODE_REG, src->color_mode);
-	if (src->buf_type == G2D_IMGBUF_USERPTR)
-		g2d_add_cmd(ctx, SRC_BASE_ADDR_REG | G2D_BUF_USERPTR,
-				(unsigned long)&src->user_ptr[0]);
-	else
-		g2d_add_cmd(ctx, SRC_BASE_ADDR_REG, src->bo[0]);
-
+	g2d_add_base_addr(ctx, src, g2d_src);
 	g2d_add_cmd(ctx, SRC_STRIDE_REG, src->stride);
 
 	src_w = w;
@@ -392,9 +412,7 @@ g2d_copy(struct g2d_context *ctx, struct g2d_image *src,
 	rop4.data.unmasked_rop3 = G2D_ROP3_SRC;
 	g2d_add_cmd(ctx, ROP4_REG, rop4.val);
 
-	g2d_flush(ctx);
-
-	return 0;
+	return g2d_flush(ctx);
 }
 
 /**
@@ -417,7 +435,7 @@ g2d_copy(struct g2d_context *ctx, struct g2d_image *src,
  * @negative: indicate that it uses color negative to source and
  *	destination buffers.
  */
-drm_public int
+int
 g2d_copy_with_scale(struct g2d_context *ctx, struct g2d_image *src,
 				struct g2d_image *dst, unsigned int src_x,
 				unsigned int src_y, unsigned int src_w,
@@ -428,34 +446,29 @@ g2d_copy_with_scale(struct g2d_context *ctx, struct g2d_image *src,
 	union g2d_rop4_val rop4;
 	union g2d_point_val pt;
 	unsigned int scale;
-	double scale_x = 0.0f, scale_y = 0.0f;
+	unsigned int scale_x, scale_y;
 
 	g2d_add_cmd(ctx, DST_SELECT_REG, G2D_SELECT_MODE_BGCOLOR);
 	g2d_add_cmd(ctx, DST_COLOR_MODE_REG, dst->color_mode);
-	if (dst->buf_type == G2D_IMGBUF_USERPTR)
-		g2d_add_cmd(ctx, DST_BASE_ADDR_REG | G2D_BUF_USERPTR,
-				(unsigned long)&dst->user_ptr[0]);
-	else
-		g2d_add_cmd(ctx, DST_BASE_ADDR_REG, dst->bo[0]);
-
+	g2d_add_base_addr(ctx, dst, g2d_dst);
 	g2d_add_cmd(ctx, DST_STRIDE_REG, dst->stride);
 
 	g2d_add_cmd(ctx, SRC_SELECT_REG, G2D_SELECT_MODE_NORMAL);
 	g2d_add_cmd(ctx, SRC_COLOR_MODE_REG, src->color_mode);
-	if (src->buf_type == G2D_IMGBUF_USERPTR)
-		g2d_add_cmd(ctx, SRC_BASE_ADDR_REG | G2D_BUF_USERPTR,
-				(unsigned long)&src->user_ptr[0]);
-	else
-		g2d_add_cmd(ctx, SRC_BASE_ADDR_REG, src->bo[0]);
 
+	g2d_add_cmd(ctx, SRC_REPEAT_MODE_REG, src->repeat_mode);
+	if (src->repeat_mode == G2D_REPEAT_MODE_PAD)
+		g2d_add_cmd(ctx, SRC_PAD_VALUE_REG, dst->color);
+
+	g2d_add_base_addr(ctx, src, g2d_src);
 	g2d_add_cmd(ctx, SRC_STRIDE_REG, src->stride);
 
 	if (src_w == dst_w && src_h == dst_h)
 		scale = 0;
 	else {
 		scale = 1;
-		scale_x = (double)src_w / (double)dst_w;
-		scale_y = (double)src_h / (double)dst_h;
+		scale_x = g2d_get_scaling(src_w, dst_w);
+		scale_y = g2d_get_scaling(src_h, dst_h);
 	}
 
 	if (src_x + src_w > src->width)
@@ -487,8 +500,8 @@ g2d_copy_with_scale(struct g2d_context *ctx, struct g2d_image *src,
 
 	if (scale) {
 		g2d_add_cmd(ctx, SRC_SCALE_CTRL_REG, G2D_SCALE_MODE_BILINEAR);
-		g2d_add_cmd(ctx, SRC_XSCALE_REG, G2D_DOUBLE_TO_FIXED(scale_x));
-		g2d_add_cmd(ctx, SRC_YSCALE_REG, G2D_DOUBLE_TO_FIXED(scale_y));
+		g2d_add_cmd(ctx, SRC_XSCALE_REG, scale_x);
+		g2d_add_cmd(ctx, SRC_YSCALE_REG, scale_y);
 	}
 
 	pt.val = 0;
@@ -509,13 +522,11 @@ g2d_copy_with_scale(struct g2d_context *ctx, struct g2d_image *src,
 	pt.data.y = dst_y + dst_h;
 	g2d_add_cmd(ctx, DST_RIGHT_BOTTOM_REG, pt.val);
 
-	g2d_flush(ctx);
-
-	return 0;
+	return g2d_flush(ctx);
 }
 
 /**
- * g2d_blend - blend image data in source and destion buffers
+ * g2d_blend - blend image data in source and destination buffers.
  *
  * @ctx: a pointer to g2d_context structure.
  * @src: a pointer to g2d_image structure including image and buffer
@@ -530,7 +541,7 @@ g2d_copy_with_scale(struct g2d_context *ctx, struct g2d_image *src,
  * @h: height value to source and destination buffer.
  * @op: blend operation type.
  */
-drm_public int
+int
 g2d_blend(struct g2d_context *ctx, struct g2d_image *src,
 		struct g2d_image *dst, unsigned int src_x,
 		unsigned int src_y, unsigned int dst_x, unsigned int dst_y,
@@ -550,12 +561,7 @@ g2d_blend(struct g2d_context *ctx, struct g2d_image *src,
 		g2d_add_cmd(ctx, DST_SELECT_REG, G2D_SELECT_MODE_NORMAL);
 
 	g2d_add_cmd(ctx, DST_COLOR_MODE_REG, dst->color_mode);
-	if (dst->buf_type == G2D_IMGBUF_USERPTR)
-		g2d_add_cmd(ctx, DST_BASE_ADDR_REG | G2D_BUF_USERPTR,
-				(unsigned long)&dst->user_ptr[0]);
-	else
-		g2d_add_cmd(ctx, DST_BASE_ADDR_REG, dst->bo[0]);
-
+	g2d_add_base_addr(ctx, dst, g2d_dst);
 	g2d_add_cmd(ctx, DST_STRIDE_REG, dst->stride);
 
 	g2d_add_cmd(ctx, SRC_SELECT_REG, src->select_mode);
@@ -563,12 +569,7 @@ g2d_blend(struct g2d_context *ctx, struct g2d_image *src,
 
 	switch (src->select_mode) {
 	case G2D_SELECT_MODE_NORMAL:
-		if (src->buf_type == G2D_IMGBUF_USERPTR)
-			g2d_add_cmd(ctx, SRC_BASE_ADDR_REG | G2D_BUF_USERPTR,
-					(unsigned long)&src->user_ptr[0]);
-		else
-			g2d_add_cmd(ctx, SRC_BASE_ADDR_REG, src->bo[0]);
-
+		g2d_add_base_addr(ctx, src, g2d_src);
 		g2d_add_cmd(ctx, SRC_STRIDE_REG, src->stride);
 		break;
 	case G2D_SELECT_MODE_FGCOLOR:
@@ -628,8 +629,133 @@ g2d_blend(struct g2d_context *ctx, struct g2d_image *src,
 	pt.data.y = dst_y + h;
 	g2d_add_cmd(ctx, DST_RIGHT_BOTTOM_REG, pt.val);
 
-	g2d_flush(ctx);
-
-	return 0;
+	return g2d_flush(ctx);
 }
 
+/**
+ * g2d_scale_and_blend - apply scaling to source buffer and then blend to destination buffer
+ *
+ * @ctx: a pointer to g2d_context structure.
+ * @src: a pointer to g2d_image structure including image and buffer
+ *	information to source.
+ * @dst: a pointer to g2d_image structure including image and buffer
+ *	information to destination.
+ * @src_x: x start position to source buffer.
+ * @src_y: y start position to source buffer.
+ * @src_w: width value to source buffer.
+ * @src_h: height value to source buffer.
+ * @dst_x: x start position to destination buffer.
+ * @dst_y: y start position to destination buffer.
+ * @dst_w: width value to destination buffer.
+ * @dst_h: height value to destination buffer.
+ * @op: blend operation type.
+ */
+int
+g2d_scale_and_blend(struct g2d_context *ctx, struct g2d_image *src,
+		struct g2d_image *dst, unsigned int src_x, unsigned int src_y,
+		unsigned int src_w, unsigned int src_h, unsigned int dst_x,
+		unsigned int dst_y, unsigned int dst_w, unsigned int dst_h,
+		enum e_g2d_op op)
+{
+	union g2d_point_val pt;
+	union g2d_bitblt_cmd_val bitblt;
+	union g2d_blend_func_val blend;
+	unsigned int scale;
+	unsigned int scale_x, scale_y;
+
+	bitblt.val = 0;
+	blend.val = 0;
+
+	if (op == G2D_OP_SRC || op == G2D_OP_CLEAR)
+		g2d_add_cmd(ctx, DST_SELECT_REG, G2D_SELECT_MODE_BGCOLOR);
+	else
+		g2d_add_cmd(ctx, DST_SELECT_REG, G2D_SELECT_MODE_NORMAL);
+
+	g2d_add_cmd(ctx, DST_COLOR_MODE_REG, dst->color_mode);
+	if (dst->buf_type == G2D_IMGBUF_USERPTR)
+		g2d_add_cmd(ctx, DST_BASE_ADDR_REG | G2D_BUF_USERPTR,
+				(unsigned long)&dst->user_ptr[0]);
+	else
+		g2d_add_cmd(ctx, DST_BASE_ADDR_REG, dst->bo[0]);
+
+	g2d_add_cmd(ctx, DST_STRIDE_REG, dst->stride);
+
+	g2d_add_cmd(ctx, SRC_SELECT_REG, src->select_mode);
+	g2d_add_cmd(ctx, SRC_COLOR_MODE_REG, src->color_mode);
+
+	switch (src->select_mode) {
+	case G2D_SELECT_MODE_NORMAL:
+		if (src->buf_type == G2D_IMGBUF_USERPTR)
+			g2d_add_cmd(ctx, SRC_BASE_ADDR_REG | G2D_BUF_USERPTR,
+					(unsigned long)&src->user_ptr[0]);
+		else
+			g2d_add_cmd(ctx, SRC_BASE_ADDR_REG, src->bo[0]);
+
+		g2d_add_cmd(ctx, SRC_STRIDE_REG, src->stride);
+		break;
+	case G2D_SELECT_MODE_FGCOLOR:
+		g2d_add_cmd(ctx, FG_COLOR_REG, src->color);
+		break;
+	case G2D_SELECT_MODE_BGCOLOR:
+		g2d_add_cmd(ctx, BG_COLOR_REG, src->color);
+		break;
+	default:
+		fprintf(stderr , "failed to set src.\n");
+		return -EINVAL;
+	}
+
+	if (src_w == dst_w && src_h == dst_h)
+		scale = 0;
+	else {
+		scale = 1;
+		scale_x = g2d_get_scaling(src_w, dst_w);
+		scale_y = g2d_get_scaling(src_h, dst_h);
+	}
+
+	if (src_x + src_w > src->width)
+		src_w = src->width - src_x;
+	if (src_y + src_h > src->height)
+		src_h = src->height - src_y;
+
+	if (dst_x + dst_w > dst->width)
+		dst_w = dst->width - dst_x;
+	if (dst_y + dst_h > dst->height)
+		dst_h = dst->height - dst_y;
+
+	if (src_w <= 0 || src_h <= 0 || dst_w <= 0 || dst_h <= 0) {
+		fprintf(stderr, "invalid width or height.\n");
+		g2d_reset(ctx);
+		return -EINVAL;
+	}
+
+	if (scale) {
+		g2d_add_cmd(ctx, SRC_SCALE_CTRL_REG, G2D_SCALE_MODE_BILINEAR);
+		g2d_add_cmd(ctx, SRC_XSCALE_REG, scale_x);
+		g2d_add_cmd(ctx, SRC_YSCALE_REG, scale_y);
+	}
+
+	bitblt.data.alpha_blend_mode = G2D_ALPHA_BLEND_MODE_ENABLE;
+	blend.val = g2d_get_blend_op(op);
+	g2d_add_cmd(ctx, BITBLT_COMMAND_REG, bitblt.val);
+	g2d_add_cmd(ctx, BLEND_FUNCTION_REG, blend.val);
+
+	pt.val = 0;
+	pt.data.x = src_x;
+	pt.data.y = src_y;
+	g2d_add_cmd(ctx, SRC_LEFT_TOP_REG, pt.val);
+	pt.val = 0;
+	pt.data.x = src_x + src_w;
+	pt.data.y = src_y + src_h;
+	g2d_add_cmd(ctx, SRC_RIGHT_BOTTOM_REG, pt.val);
+
+	pt.val = 0;
+	pt.data.x = dst_x;
+	pt.data.y = dst_y;
+	g2d_add_cmd(ctx, DST_LEFT_TOP_REG, pt.val);
+	pt.val = 0;
+	pt.data.x = dst_x + dst_w;
+	pt.data.y = dst_y + dst_h;
+	g2d_add_cmd(ctx, DST_RIGHT_BOTTOM_REG, pt.val);
+
+	return g2d_flush(ctx);
+}

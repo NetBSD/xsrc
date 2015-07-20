@@ -1,8 +1,6 @@
 AM_CFLAGS = \
 	$(WARN_CFLAGS) \
-	$(VISIBILITY_CFLAGS) \
 	-I$(top_srcdir) \
-	-I$(top_srcdir)/omap \
 	$(PTHREADSTUBS_CFLAGS) \
 	-I$(top_srcdir)/include/drm
 
@@ -21,3 +19,6 @@ libdrm_omapinclude_HEADERS = omap_drmif.h
 
 pkgconfigdir = @pkgconfigdir@
 pkgconfig_DATA = libdrm_omap.pc
+
+TESTS = omap-symbol-check
+EXTRA_DIST = $(TESTS)

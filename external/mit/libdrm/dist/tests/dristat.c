@@ -100,6 +100,7 @@ static void getvm(int fd)
 	case DRM_SHM:            typename = "SHM"; break;
 	case DRM_AGP:            typename = "AGP"; break;
 	case DRM_SCATTER_GATHER: typename = "SG";  break;
+	case DRM_CONSISTENT:     typename = "CON"; break;
 	default:                 typename = "???"; break;
 	}
 
@@ -189,9 +190,9 @@ static void printhuman(unsigned long value, const char *name, int mult)
 static void getstats(int fd, int i)
 {
     drmStatsT prev, curr;
-    int       j;
+    unsigned  j;
     double    rate;
-    
+
     printf("  System statistics:\n");
 
     if (drmGetStats(fd, &prev)) return;
@@ -268,7 +269,7 @@ int main(int argc, char **argv)
 
     for (i = 0; i < 16; i++) if (!minor || i == minor) {
 	sprintf(buf, DRM_DEV_NAME, DRM_DIR_NAME, i);
-	fd = drmOpenMinor(i, 1, DRM_NODE_RENDER);
+	fd = drmOpenMinor(i, 1, DRM_NODE_PRIMARY);
 	if (fd >= 0) {
 	    printf("%s\n", buf);
 	    if (mask & DRM_BUSID)   getbusid(fd);

@@ -1,8 +1,6 @@
 AM_CFLAGS = \
 	$(WARN_CFLAGS) \
-	$(VISIBILITY_CFLAGS) \
 	-I$(top_srcdir) \
-	-I$(top_srcdir)/exynos \
 	$(PTHREADSTUBS_CFLAGS) \
 	-I$(top_srcdir)/include/drm
 
@@ -14,14 +12,16 @@ libdrm_exynos_la_LIBADD = ../libdrm.la @PTHREADSTUBS_LIBS@
 libdrm_exynos_la_SOURCES = \
 	exynos_drm.c \
 	exynos_fimg2d.c \
-	fimg2d.h \
 	fimg2d_reg.h
 
 libdrm_exynoscommonincludedir = ${includedir}/exynos
-libdrm_exynoscommoninclude_HEADERS = exynos_drm.h
+libdrm_exynoscommoninclude_HEADERS = exynos_drm.h exynos_fimg2d.h
 
 libdrm_exynosincludedir = ${includedir}/libdrm
 libdrm_exynosinclude_HEADERS = exynos_drmif.h
 
 pkgconfigdir = @pkgconfigdir@
 pkgconfig_DATA = libdrm_exynos.pc
+
+TESTS = exynos-symbol-check
+EXTRA_DIST = $(TESTS)

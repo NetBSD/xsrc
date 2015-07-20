@@ -4,7 +4,6 @@ AM_CPPFLAGS = \
 
 AM_CFLAGS = \
 	@PTHREADSTUBS_CFLAGS@ \
-	$(VISIBILITY_CFLAGS) \
 	$(WARN_CFLAGS)
 
 libdrm_tegra_ladir = $(libdir)
@@ -21,3 +20,6 @@ libdrm_tegrainclude_HEADERS = tegra.h
 
 pkgconfigdir = @pkgconfigdir@
 pkgconfig_DATA = libdrm_tegra.pc
+
+TESTS = tegra-symbol-check
+EXTRA_DIST = $(TESTS)
