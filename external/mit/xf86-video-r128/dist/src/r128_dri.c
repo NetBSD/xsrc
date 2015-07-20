@@ -53,7 +53,6 @@
 
 				/* X and server generic header files */
 #include "xf86.h"
-#include "xf86PciInfo.h"
 #include "windowstr.h"
 
 #include "shadowfb.h"
@@ -309,7 +308,11 @@ static void R128EnterServer(ScreenPtr pScreen)
 #endif
 #ifdef USE_EXA
     if (info->ExaDriver) exaMarkSync(pScreen);
-    info->state_2d.composite_setup = FALSE;
+    /* EXA and DRI are fighting over control of the texture hardware.
+     * That means we need to setup compositing when the server wakes
+     * up if a 3D app is running.
+     */
+    if (info->have3DWindows) info->state_2d.composite_setup = FALSE;
 #endif
 }
 
@@ -394,7 +397,7 @@ static void R128DRIInitBuffers(WindowPtr pWin, RegionPtr prgn, CARD32 indx)
     pboxSave = pbox = REGION_RECTS(prgn);
     nboxSave = nbox = REGION_NUM_RECTS(prgn);
 
-    (*info->accel->SetupForSolidFill)(pScrn, 0, GXcopy, (CARD32)(-1));
+    (*info->accel->SetupForSolidFill)(pScrn, 0, GXcopy, (uint32_t)(-1));
     for (; nbox; nbox--, pbox++) {
 	(*info->accel->SubsequentSolidFillRect)(pScrn,
 						pbox->x1 + info->fbX,
@@ -412,7 +415,7 @@ static void R128DRIInitBuffers(WindowPtr pWin, RegionPtr prgn, CARD32 indx)
     nbox = nboxSave;
 
     /* FIXME: this needs to consider depth tiling. */
-    (*info->accel->SetupForSolidFill)(pScrn, depth, GXcopy, (CARD32)(-1));
+    (*info->accel->SetupForSolidFill)(pScrn, depth, GXcopy, (uint32_t)(-1));
     for (; nbox; nbox--, pbox++)
 	(*info->accel->SubsequentSolidFillRect)(pScrn,
 						pbox->x1 + info->depthX,
@@ -644,7 +647,7 @@ static Bool R128DRIAgpInit(R128InfoPtr info, ScreenPtr pScreen)
 static Bool R128DRIPciInit(R128InfoPtr info, ScreenPtr pScreen)
 {
     unsigned char *R128MMIO = info->MMIO;
-    CARD32 chunk;
+    uint32_t chunk;
     int ret;
     int flags;
 
@@ -1410,12 +1413,12 @@ static void R128DRIRefreshArea(ScrnInfoPtr pScrn, int num, BoxPtr pbox)
     if (!info->useEXA) {
 	(*info->accel->SetupForScreenToScreenCopy)(pScrn,
 					       1, 1, GXcopy,
-					       (CARD32)(-1), -1);
+					       (uint32_t)(-1), -1);
     }
 #endif
 #ifdef USE_EXA
     if (info->useEXA) {
-        CARD32 src_pitch_offset, dst_pitch_offset, datatype;
+        uint32_t src_pitch_offset, dst_pitch_offset, datatype;
 
 	R128GetPixmapOffsetPitch(pPix, &src_pitch_offset);
 	dst_pitch_offset = src_pitch_offset + (info->backOffset >> 5);
@@ -1462,7 +1465,7 @@ static void R128EnablePageFlip(ScreenPtr pScreen)
 	if (!info->useEXA) {
 	    (*info->accel->SetupForScreenToScreenCopy)(pScrn,
 						   1, 1, GXcopy,
-						   (CARD32)(-1), -1);
+						   (uint32_t)(-1), -1);
 
 	    (*info->accel->SubsequentScreenToScreenCopy)(pScrn,
 						     0,
@@ -1475,7 +1478,7 @@ static void R128EnablePageFlip(ScreenPtr pScreen)
 #endif
 #ifdef USE_EXA
 	if (info->useEXA) {
-	    CARD32 src_pitch_offset, dst_pitch_offset, datatype;
+	    uint32_t src_pitch_offset, dst_pitch_offset, datatype;
 
 	    R128GetPixmapOffsetPitch(pPix, &src_pitch_offset);
 	    dst_pitch_offset = src_pitch_offset + (info->backOffset >> 5);
@@ -1522,9 +1525,6 @@ static void R128DRITransitionTo3d(ScreenPtr pScreen)
     R128EnablePageFlip(pScreen);
 
     info->have3DWindows = 1;
-
-    if (info->cursor_start)
-        xf86ForceHWCursor(pScreen, TRUE);
 }
 
 static void R128DRITransitionTo2d(ScreenPtr pScreen)
@@ -1547,7 +1547,4 @@ static void R128DRITransitionTo2d(ScreenPtr pScreen)
     }
 
     info->have3DWindows = 0;
-
-    if (info->cursor_start)
-        xf86ForceHWCursor(pScreen, FALSE);
 }
