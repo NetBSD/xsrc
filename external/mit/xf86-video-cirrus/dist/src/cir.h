@@ -23,7 +23,9 @@ typedef struct {
 	ScrnInfoPtr		pScrn;
 	CARD32			properties;
 	pciVideoPtr		PciInfo;
+#ifndef XSERVER_LIBPCIACCESS
 	PCITAG			PciTag;
+#endif
 	unsigned long		PIOReg;
     union {
 	struct lgRec		*lg;
