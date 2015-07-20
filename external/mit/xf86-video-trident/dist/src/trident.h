@@ -34,7 +34,10 @@
 
 #include "exa.h"
 #include "xf86Cursor.h"
+#ifdef HAVE_XAA_H
 #include "xaa.h"
+#endif
+#include "xf86fbman.h"
 #include "xf86RamDac.h"
 #include "compiler.h"
 #include "vgaHW.h"
@@ -46,6 +49,7 @@
 #include "xf86Pci.h"
 #include "vbe.h"
 
+#include "compat-api.h"
 /* Banked framebuffer only supported on ISA */
 #ifdef HAVE_ISA
 #define LINEAR() (pTrident->Linear)
@@ -53,7 +57,30 @@
 #define LINEAR() (1)
 #endif
 
-#define PCI_CHIP_2200		0x2200
+#define PCI_VENDOR_TRIDENT		0x1023
+#define PCI_CHIP_2100			0x2100
+#define PCI_CHIP_2200			0x2200
+#define PCI_CHIP_8400			0x8400
+#define PCI_CHIP_8420			0x8420
+#define PCI_CHIP_8500			0x8500
+#define PCI_CHIP_8520			0x8520
+#define PCI_CHIP_8600			0x8600
+#define PCI_CHIP_8620			0x8620
+#define PCI_CHIP_8820			0x8820
+#define PCI_CHIP_9320			0x9320
+#define PCI_CHIP_9388			0x9388
+#define PCI_CHIP_9397			0x9397
+#define PCI_CHIP_939A			0x939A
+#define PCI_CHIP_9420			0x9420
+#define PCI_CHIP_9440			0x9440
+#define PCI_CHIP_9520			0x9520
+#define PCI_CHIP_9525			0x9525
+#define PCI_CHIP_9540			0x9540
+#define PCI_CHIP_9660			0x9660
+#define PCI_CHIP_9750			0x9750
+#define PCI_CHIP_9850			0x9850
+#define PCI_CHIP_9880			0x9880
+#define PCI_CHIP_9910			0x9910
 
 typedef struct {
 	unsigned char tridentRegs3x4[0x100];
@@ -110,7 +137,7 @@ typedef struct {
     unsigned char *	ShadowPtr;
     int			ShadowPitch;
     RefreshAreaFuncPtr  RefreshArea;
-    void	        (*PointerMoved)(int index, int x, int y);
+    void	        (*PointerMoved)(SCRN_ARG_TYPE arg, int x, int y);
     int                 Rotate;
     float		frequency;
     unsigned char	REGPCIReg;
@@ -150,9 +177,12 @@ typedef struct {
 #ifdef VBE_INFO
     vbeModeInfoPtr	vbeModes;
 #endif
+#ifdef HAVE_XAA_H
     XAAInfoRecPtr	AccelInfoRec;
+#endif
     CloseScreenProcPtr	CloseScreen;
     ScreenBlockHandlerProcPtr BlockHandler;
+    CreateScreenResourcesProcPtr CreateScreenResources;
     int                 panelWidth;
     int                 panelHeight;
     unsigned int	(*ddc1Read)(ScrnInfoPtr);
@@ -225,8 +255,8 @@ typedef struct {
 /* Prototypes */
 
 Bool TRIDENTClockSelect(ScrnInfoPtr pScrn, int no);
-Bool TRIDENTSwitchMode(int scrnIndex, DisplayModePtr mode, int flags);
-void TRIDENTAdjustFrame(int scrnIndex, int x, int y, int flags);
+Bool TRIDENTSwitchMode(SWITCH_MODE_ARGS_DECL);
+void TRIDENTAdjustFrame(ADJUST_FRAME_ARGS_DECL);
 Bool TRIDENTDGAInit(ScreenPtr pScreen);
 Bool TRIDENTI2CInit(ScreenPtr pScreen);
 void TRIDENTInitVideo(ScreenPtr pScreen);
@@ -265,7 +295,7 @@ void TridentFindClock(ScrnInfoPtr pScrn, int clock);
 float CalculateMCLK(ScrnInfoPtr pScrn);
 void TRIDENTRefreshArea(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 void TRIDENTShadowUpdate (ScreenPtr pScreen, shadowBufPtr pBuf);
-void TRIDENTPointerMoved(int index, int x, int y);
+void TRIDENTPointerMoved(SCRN_ARG_TYPE arg, int x, int y);
 void TRIDENTRefreshArea8(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 void TRIDENTRefreshArea16(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 void TRIDENTRefreshArea24(ScrnInfoPtr pScrn, int num, BoxPtr pbox);

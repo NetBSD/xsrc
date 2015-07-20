@@ -45,7 +45,6 @@
 #include "xf86Resources.h"
 #include "xf86RAC.h"
 #endif
-#include "xf86PciInfo.h"
 #include "xf86Pci.h"
 #include "xf86cmap.h"
 #include "vgaHW.h"
@@ -56,7 +55,6 @@
 
 #include "mipointer.h"
 
-#include "mibstore.h"
 #include "shadow.h"
 #include "trident.h"
 #include "trident_regs.h"
@@ -80,16 +78,15 @@ static const OptionInfoRec * TRIDENTAvailableOptions(int chipid, int busid);
 static void	TRIDENTIdentify(int flags);
 static Bool	TRIDENTProbe(DriverPtr drv, int flags);
 static Bool	TRIDENTPreInit(ScrnInfoPtr pScrn, int flags);
-static Bool	TRIDENTScreenInit(int Index, ScreenPtr pScreen, int argc,
-			      char **argv);
-static Bool	TRIDENTEnterVT(int scrnIndex, int flags);
-static void	TRIDENTLeaveVT(int scrnIndex, int flags);
-static Bool	TRIDENTCloseScreen(int scrnIndex, ScreenPtr pScreen);
+static Bool	TRIDENTScreenInit(SCREEN_INIT_ARGS_DECL);
+static Bool	TRIDENTEnterVT(VT_FUNC_ARGS_DECL);
+static void	TRIDENTLeaveVT(VT_FUNC_ARGS_DECL);
+static Bool	TRIDENTCloseScreen(CLOSE_SCREEN_ARGS_DECL);
 static Bool	TRIDENTSaveScreen(ScreenPtr pScreen, int mode);
 
 /* Optional functions */
-static void	TRIDENTFreeScreen(int scrnIndex, int flags);
-static ModeStatus TRIDENTValidMode(int scrnIndex, DisplayModePtr mode,
+static void	TRIDENTFreeScreen(FREE_SCREEN_ARGS_DECL);
+static ModeStatus TRIDENTValidMode(SCRN_ARG_TYPE arg, DisplayModePtr mode,
 				   Bool verbose, int flags);
 
 /* Internally used functions */
@@ -98,7 +95,7 @@ static Bool	TRIDENTUnmapMem(ScrnInfoPtr pScrn);
 static void	TRIDENTSave(ScrnInfoPtr pScrn);
 static void	TRIDENTRestore(ScrnInfoPtr pScrn);
 static Bool	TRIDENTModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode);
-static void 	TRIDENTBlockHandler(int, pointer, pointer, pointer);
+static void 	TRIDENTBlockHandler(BLOCKHANDLER_ARGS_DECL);
 
 static void	TRIDENTEnableMMIO(ScrnInfoPtr pScrn);
 static void	TRIDENTDisableMMIO(ScrnInfoPtr pScrn);
@@ -610,18 +607,14 @@ TRIDENTDisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode, int
 }
 
 static void
-TRIDENTBlockHandler (
-    int i,
-    pointer     blockData,
-    pointer     pTimeout,
-    pointer     pReadmask
-){
-    ScreenPtr      pScreen = screenInfo.screens[i];
-    ScrnInfoPtr    pScrn = xf86Screens[i];
+TRIDENTBlockHandler (BLOCKHANDLER_ARGS_DECL)
+{
+    SCREEN_PTR(arg);
+    ScrnInfoPtr    pScrn = xf86ScreenToScrn(pScreen);
     TRIDENTPtr     pTrident = TRIDENTPTR(pScrn);
 
     pScreen->BlockHandler = pTrident->BlockHandler;
-    (*pScreen->BlockHandler) (i, blockData, pTimeout, pReadmask);
+    (*pScreen->BlockHandler) (BLOCKHANDLER_ARGS);
     pScreen->BlockHandler = TRIDENTBlockHandler;
 
     if(pTrident->VideoTimerCallback) {
@@ -985,6 +978,18 @@ TRIDENTProbeDDC(ScrnInfoPtr pScrn, int index)
 	ConfiguredMonitor = vbeDoEDID(pVbe, NULL);
 	vbeFree(pVbe);
     }
+}
+
+static void
+TRIDENTProtect(ScrnInfoPtr pScrn, Bool on)
+{
+    vgaHWProtect(pScrn, on);
+}
+
+static void
+TRIDENTBlankScreen(ScrnInfoPtr pScrn, Bool on)
+{
+    vgaHWBlankScreen(pScrn, on);
 }
 
 /* Mandatory */
@@ -1993,8 +1998,7 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
     if (!pScrn->progClock) {
 	pScrn->numClocks = NoClocks;
 	xf86GetClocks(pScrn, NoClocks, TRIDENTClockSelect,
-			  vgaHWProtectWeak(),
-			  vgaHWBlankScreenWeak(),
+			  TRIDENTProtect, TRIDENTBlankScreen,
 			  vgaIOBase + 0x0A, 0x08, 1, 28322);
 	from = X_PROBED;
 	xf86ShowClocks(pScrn, from);
@@ -2759,13 +2763,31 @@ TRIDENTRestore(ScrnInfoPtr pScrn)
     vgaHWProtect(pScrn, FALSE);
 }
 
+static Bool
+TRIDENTCreateScreenResources(ScreenPtr pScreen)
+{
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
+    TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
+    Bool ret;
+
+    pScreen->CreateScreenResources = pTrident->CreateScreenResources;
+    ret = pScreen->CreateScreenResources(pScreen);
+    pTrident->CreateScreenResources = pScreen->CreateScreenResources;
+    pScreen->CreateScreenResources = TRIDENTCreateScreenResources;
+
+    if (ret)
+	ret = shadowAdd(pScreen, pScreen->GetScreenPixmap(pScreen),
+			TRIDENTShadowUpdate, NULL, 0, 0);
+
+    return ret;
+}
 
 /* Mandatory */
 
 /* This gets called at the start of each server generation */
 
 static Bool
-TRIDENTScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
+TRIDENTScreenInit(SCREEN_INIT_ARGS_DECL)
 {
     /* The vgaHW references will disappear one day */
     ScrnInfoPtr pScrn;
@@ -2779,7 +2801,7 @@ TRIDENTScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     /* 
      * First get the ScrnInfoRec
      */
-    pScrn = xf86Screens[pScreen->myNum];
+    pScrn = xf86ScreenToScrn(pScreen);
     pTrident = TRIDENTPTR(pScrn);
 
     if (IsPrimaryCard) {
@@ -2838,7 +2860,7 @@ TRIDENTScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     /* Darken the screen for aesthetic reasons and set the viewport */
     TRIDENTSaveScreen(pScreen, SCREEN_SAVER_ON);
-    TRIDENTAdjustFrame(scrnIndex, pScrn->frameX0, pScrn->frameY0, 0);
+    TRIDENTAdjustFrame(ADJUST_FRAME_ARGS(pScrn, pScrn->frameX0, pScrn->frameY0));
 
     /*
      * The next step is to setup the screen's visuals, and initialise the
@@ -2908,7 +2930,7 @@ TRIDENTScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     
 	break;
     default:
-	xf86DrvMsg(scrnIndex, X_ERROR,
+	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		   "Internal error: invalid bpp (%d) in TRIDENTScrnInit\n",
 		   pScrn->bitsPerPixel);
 	    ret = FALSE;
@@ -3005,7 +3027,7 @@ TRIDENTScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
  	       AvailFBArea.y2 - pScrn->virtualY);
 
 	    if (xf86InitFBManagerLinear(pScreen, area, ((pTrident->FbMapSize/cpp) - area))) {
-		xf86DrvMsg(scrnIndex, X_INFO, 
+		xf86DrvMsg(pScrn->scrnIndex, X_INFO, 
 			"Using %ld bytes of offscreen memory for linear (offset=0x%x)\n", (pTrident->FbMapSize - areaoffset), areaoffset);
 	    }
     	}
@@ -3042,7 +3064,6 @@ TRIDENTScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     	TridentAccelInit(pScreen);
     }
 
-    miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
 
     /* Initialise cursor functions */
@@ -3084,7 +3105,10 @@ TRIDENTScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	} else {
 	  pTrident->RefreshArea = TRIDENTRefreshArea;
 	}
-	shadowInit (pScreen, TRIDENTShadowUpdate, 0);
+	if (!shadowSetup(pScreen))
+	    return FALSE;
+	pTrident->CreateScreenResources = pScreen->CreateScreenResources;
+	pScreen->CreateScreenResources = TRIDENTCreateScreenResources;
     }
 
     xf86DPMSInit(pScreen, (DPMSSetProcPtr)TRIDENTDisplayPowerManagementSet, 0);
@@ -3115,9 +3139,10 @@ TRIDENTScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
 /* Usually mandatory */
 Bool
-TRIDENTSwitchMode(int scrnIndex, DisplayModePtr mode, int flags)
+TRIDENTSwitchMode(SWITCH_MODE_ARGS_DECL)
 {
-    return TRIDENTModeInit(xf86Screens[scrnIndex], mode);
+    SCRN_INFO_PTR(arg);
+    return TRIDENTModeInit(pScrn, mode);
 }
 
 
@@ -3127,9 +3152,9 @@ TRIDENTSwitchMode(int scrnIndex, DisplayModePtr mode, int flags)
  */
 /* Usually mandatory */
 void 
-TRIDENTAdjustFrame(int scrnIndex, int x, int y, int flags)
+TRIDENTAdjustFrame(ADJUST_FRAME_ARGS_DECL)
 {
-    ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
+    SCRN_INFO_PTR(arg);
     TRIDENTPtr pTrident;
     int base = y * pScrn->displayWidth + x;
     int vgaIOBase;
@@ -3174,9 +3199,9 @@ TRIDENTAdjustFrame(int scrnIndex, int x, int y, int flags)
 
 /* Mandatory */
 static Bool
-TRIDENTEnterVT(int scrnIndex, int flags)
+TRIDENTEnterVT(VT_FUNC_ARGS_DECL)
 {
-    ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
+    SCRN_INFO_PTR(arg);
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
 
     if (IsPciCard && UseMMIO) TRIDENTEnableMMIO(pScrn);
@@ -3201,15 +3226,18 @@ TRIDENTEnterVT(int scrnIndex, int flags)
 
 /* Mandatory */
 static void
-TRIDENTLeaveVT(int scrnIndex, int flags)
+TRIDENTLeaveVT(VT_FUNC_ARGS_DECL)
 {
-    ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
+    SCRN_INFO_PTR(arg);
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
     vgaHWPtr hwp = VGAHWPTR(pScrn);
 
+#ifdef HAVE_XAA_H
     if (!pTrident->NoAccel && !pTrident->useEXA)
 	pTrident->AccelInfoRec->Sync(pScrn);
-    else if (!pTrident->NoAccel && pTrident->useEXA)
+    else 
+#endif
+    if (!pTrident->NoAccel && pTrident->useEXA)
 	pTrident->EXADriverPtr->WaitMarker(pScrn->pScreen, 0);
 
     TRIDENTRestore(pScrn);
@@ -3231,16 +3259,19 @@ TRIDENTLeaveVT(int scrnIndex, int flags)
 
 /* Mandatory */
 static Bool
-TRIDENTCloseScreen(int scrnIndex, ScreenPtr pScreen)
+TRIDENTCloseScreen(CLOSE_SCREEN_ARGS_DECL)
 {
-    ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     vgaHWPtr hwp = VGAHWPTR(pScrn);
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
 
     if (pScrn->vtSema) {
+#ifdef HAVE_XAA_H
     if (!pTrident->NoAccel && !pTrident->useEXA)
 	pTrident->AccelInfoRec->Sync(pScrn);
-    else if (!pTrident->NoAccel && pTrident->useEXA)
+    else
+#endif
+    if (!pTrident->NoAccel && pTrident->useEXA)
 	pTrident->EXADriverPtr->WaitMarker(pScreen, 0);
 
 #if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
@@ -3254,8 +3285,10 @@ TRIDENTCloseScreen(int scrnIndex, ScreenPtr pScreen)
     	TRIDENTUnmapMem(pScrn);
     }
 
+#ifdef HAVE_XAA_H
     if (pTrident->AccelInfoRec)
 	XAADestroyInfoRec(pTrident->AccelInfoRec);
+#endif
     if (pTrident->EXADriverPtr) {
 	exaDriverFini(pScreen);
 	free(pTrident->EXADriverPtr);
@@ -3263,8 +3296,11 @@ TRIDENTCloseScreen(int scrnIndex, ScreenPtr pScreen)
     }	
     if (pTrident->CursorInfoRec)
 	xf86DestroyCursorInfoRec(pTrident->CursorInfoRec);
-    if (pTrident->ShadowPtr)
+    if (pTrident->ShadowPtr) {
+	shadowRemove(pScreen, pScreen->GetScreenPixmap(pScreen));
 	free(pTrident->ShadowPtr);
+	pScreen->CreateScreenResources = pTrident->CreateScreenResources;
+    }
     if (pTrident->DGAModes)
 	free(pTrident->DGAModes);
     pScrn->vtSema = FALSE;
@@ -3277,7 +3313,7 @@ TRIDENTCloseScreen(int scrnIndex, ScreenPtr pScreen)
     else
 	xf86FreeInt10(pTrident->Int10);
     pScreen->CloseScreen = pTrident->CloseScreen;
-    return (*pScreen->CloseScreen)(scrnIndex, pScreen);
+    return (*pScreen->CloseScreen)(CLOSE_SCREEN_ARGS);
 }
 
 
@@ -3285,11 +3321,12 @@ TRIDENTCloseScreen(int scrnIndex, ScreenPtr pScreen)
 
 /* Optional */
 static void
-TRIDENTFreeScreen(int scrnIndex, int flags)
+TRIDENTFreeScreen(FREE_SCREEN_ARGS_DECL)
 {
+    SCRN_INFO_PTR(arg);
     if (xf86LoaderCheckSymbol("vgaHWFreeHWRec"))
-	vgaHWFreeHWRec(xf86Screens[scrnIndex]);
-    TRIDENTFreeRec(xf86Screens[scrnIndex]);
+        vgaHWFreeHWRec(pScrn);
+    TRIDENTFreeRec(pScrn);
 }
 
 
@@ -3297,15 +3334,15 @@ TRIDENTFreeScreen(int scrnIndex, int flags)
 
 /* Optional */
 static ModeStatus
-TRIDENTValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
+TRIDENTValidMode(SCRN_ARG_TYPE arg, DisplayModePtr mode, Bool verbose, int flags)
 {
-    ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
+    SCRN_INFO_PTR(arg);
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
     
     if (pTrident->lcdActive && (pTrident->lcdMode != 0xff)){
 	if (((mode->HDisplay > LCD[pTrident->lcdMode].display_x) 
 	|| (mode->VDisplay > LCD[pTrident->lcdMode].display_y))) {
-	    xf86DrvMsg(scrnIndex,X_INFO, "Removing mode (%dx%d) "
+	    xf86DrvMsg(pScrn->scrnIndex,X_INFO, "Removing mode (%dx%d) "
 		       "larger than the LCD panel (%dx%d)\n",
 		       mode->HDisplay,
 		       mode->VDisplay,
@@ -3314,7 +3351,7 @@ TRIDENTValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
 	    return(MODE_BAD);
 	}
 	if (((float)mode->HDisplay/(float)mode->VDisplay) > 2.0) {
-	    xf86DrvMsg(scrnIndex,X_INFO, "Removing mode (%dx%d) "
+	    xf86DrvMsg(pScrn->scrnIndex,X_INFO, "Removing mode (%dx%d) "
 		       "unusual aspect ratio\n",
 		       mode->HDisplay,
 		       mode->VDisplay);
