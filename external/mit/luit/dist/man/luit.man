@@ -233,9 +233,9 @@ will never be.
 xterm(__appmansuffix__), unicode(__miscmansuffix__), utf-8(__miscmansuffix__), charsets(__miscmansuffix__).
 .nf
 .br
-.I Character Code Structure and Extension Techniques (ISO\ 2022, ECMA-35).
+\fICharacter Code Structure and Extension Techniques (ISO\ 2022, ECMA-35)\fR.
 .br
-.I Control Functions for Coded Character Sets (ISO\ 6429, ECMA-48).
+\fIControl Functions for Coded Character Sets (ISO\ 6429, ECMA-48)\fR.
 .fi
 .SH AUTHOR
 The version of

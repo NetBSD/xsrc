@@ -21,7 +21,7 @@ dnl
 dnl Process this file with autoconf to create configure.
 
 AC_PREREQ([2.60])
-AC_INIT([luit], [1.1.0],
+AC_INIT([luit], [1.1.1],
 	[https://bugs.freedesktop.org/enter_bug.cgi?product=xorg], [luit])
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
 AM_MAINTAINER_MODE
@@ -32,18 +32,16 @@ m4_ifndef([XORG_MACROS_VERSION],
 XORG_MACROS_VERSION(1.8)
 XORG_DEFAULT_OPTIONS
 
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS([config.h])
 
 AC_CANONICAL_HOST
 
 
 AC_CHECK_HEADERS([pty.h stropts.h sys/param.h sys/select.h])
-AC_CHECK_FUNCS([select grantpt])
-
-AC_CHECK_LIB(z, gzopen,, AC_MSG_ERROR([zlib not found]))
+AC_CHECK_FUNCS([select grantpt posix_openpt])
 
 AC_ARG_WITH(localealiasfile,
-        AC_HELP_STRING([--with-localealiasfile=<path>],
+        AS_HELP_STRING([--with-localealiasfile=<path>],
                        [The locale alias file (default: ${datadir}/X11/locale/locale.alias)]),
         [LOCALEALIASFILE="$withval"],
         [LOCALEALIASFILE=${datadir}/X11/locale/locale.alias])
