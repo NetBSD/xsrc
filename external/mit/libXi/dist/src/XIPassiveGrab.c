@@ -249,6 +249,7 @@ XIUngrabTouchBegin(Display* display, int deviceid, Window grab_window,
     LockDisplay(display);
     if (_XiCheckExtInit(display, XInput_2_2, extinfo) == -1)
 	return -1;
+    UnlockDisplay(display);
 
     return _XIPassiveUngrabDevice(display, deviceid, XIGrabtypeTouchBegin, 0,
                                   grab_window, num_modifiers, modifiers);
