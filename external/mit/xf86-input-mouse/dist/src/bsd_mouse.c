@@ -97,9 +97,7 @@ static const char *mouseDevs[] = {
 static int
 SupportedInterfaces(void)
 {
-#if defined(__NetBSD__)
-    return MSE_SERIAL | MSE_BUS | MSE_PS2 | MSE_AUTO | MSE_MISC;
-#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__) || defined(__NetBSD__)
     return MSE_SERIAL | MSE_BUS | MSE_PS2 | MSE_AUTO | MSE_MISC;
 #else
     return MSE_SERIAL | MSE_BUS | MSE_PS2 | MSE_XPS2 | MSE_AUTO | MSE_MISC;
@@ -435,17 +433,13 @@ wsconsReadInput(InputInfoPtr pInfo)
             break;
 #endif
 	case WSCONS_EVENT_MOUSE_ABSOLUTE_X:
-	    miPointerGetPosition (pInfo->dev, &x, &y);
 	    x = event->value;
-	    miPointerSetPosition (pInfo->dev, &x, &y);
-	    xf86PostMotionEvent(pInfo->dev, TRUE, 0, 2, x, y);
+	    xf86PostMotionEvent(pInfo->dev, TRUE, 0, 1, x);
 	    ++event;
 	    continue;
 	case WSCONS_EVENT_MOUSE_ABSOLUTE_Y:
-	    miPointerGetPosition (pInfo->dev, &x, &y);
 	    y = event->value;
-	    miPointerSetPosition (pInfo->dev, &x, &y);
-	    xf86PostMotionEvent(pInfo->dev, TRUE, 0, 2, x, y);
+	    xf86PostMotionEvent(pInfo->dev, TRUE, 1, 1, y);
 	    ++event;
 	    continue;
 #ifdef WSCONS_EVENT_MOUSE_ABSOLUTE_Z
