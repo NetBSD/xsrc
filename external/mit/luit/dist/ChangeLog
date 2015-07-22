@@ -1,3 +1,125 @@
+commit 9baee90bb4a81d439a7e2de13de190bf65936b4c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Mar 22 21:22:57 2012 -0700
+
+    luit 1.1.1
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ca55f514b6ee55c4ab6880bfa47d1c36967bd106
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Feb 10 19:47:37 2012 -0800
+
+    Add additional printf & noreturn attributes suggested by gcc warnings
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 75de0f3d8b7bd9541a8a9528ab63e51fa9c57b17
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Dec 5 20:47:09 2011 -0800
+
+    Fix memory leak on failure in getFontencCharset
+    
+    Error: Memory leak (CWE 401)
+       Memory leak of pointer 'c' allocated with malloc(80)
+            at line 297 of app/luit/charset.c in function 'getFontencCharset'.
+              'c' allocated at line 290 with malloc(80).
+            at line 303 of app/luit/charset.c in function 'getFontencCharset'.
+              'c' allocated at line 290 with malloc(80).
+    
+    [ This bug was found by the Parfait 0.4.2 bug checking tool.
+      For more information see http://labs.oracle.com/projects/parfait/ ]
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 525785fd7beca872ebeeb8bb6c22d82459128788
+Author: Ed Schouten <ed@80386.nl>
+Date:   Wed Oct 12 20:53:21 2011 +0200
+
+    Add support for posix_openpt().
+    
+    Instead of opening /dev/ptmx directly, we should use the proper
+    posix_openpt() function to obtain a pseudo-terminal. Some operating
+    systems, such as FreeBSD 8 and later, implement pseudo-terminal master
+    device nodes as a special file descriptor type, like sockets. They do
+    not support creation of pseudo-terminals through /dev/ptmx.
+    
+    Signed-off-by: Ed Schouten <ed@80386.nl>
+    Reviewed-by: Guillem Jover <guillem@hadrons.org>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 82bec8b84d90d37f75f10b3abe9ec34a3415a622
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Thu Oct 6 10:50:54 2011 -0700
+
+    Fix ifdef-foo for the BSDs which are still living in the 90s
+    
+    NetBSD and FreeBSD still don't _POSIX_SAVED_IDS
+    
+    https://bugs.freedesktop.org/show_bug.cgi?id=41513
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit 290c32fb19d901306c4da1119a679112490cb838
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Aug 15 21:29:51 2011 -0700
+
+    Remove check for zlib in configure script
+    
+    If libfontenc needs it, it will either be linked with it or
+    provide -lz in its pkg-config library requirements.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Dan Nicholson <dbn.lists@gmail.com>
+
+commit 84ce81476ac32a9c79935e9666ee96d38d7ed600
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Fri May 6 18:30:26 2011 -0700
+
+    Mark FatalError _X_NORETURN
+    
+    This removes a false-positive from static analysis results.
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit 7e7820d859a779efcf9e7824d6cc6df4c0d325a7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jan 25 08:20:08 2011 -0800
+
+    man: Use \fI & \fR instead of .I for strings longer than Solaris can handle
+    
+    The nroff .I macro on Solaris was truncating these strings when
+    displayed using the "man" command
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 94292b07a6072b590e000b3ab4f9a261dd21d492
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jan 12 16:28:02 2011 -0500
+
+    config: replace deprecated AM_CONFIG_HEADER with AC_CONFIG_HEADERS
+    
+    This silences an Autoconf warning
+
+commit 49e8ed96ee1316e07b45c5784fd2ae8e1ebf9e6d
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jan 12 15:29:49 2011 -0500
+
+    config: replace deprecated AC_HELP_STRING with AS_HELP_STRING
+    
+    This silences an Automake warning.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit e1064d9bffdc77f12fc3907b2709ded6310db3f5
+Author: Jesse Adkins <jesserayadkins@gmail.com>
+Date:   Tue Sep 28 13:29:49 2010 -0700
+
+    Purge cvs tags.
+    
+    Signed-off-by: Jesse Adkins <jesserayadkins@gmail.com>
+
 commit f44baa7b690f04a0b4ebbaf0c43284b9798ac7d7
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Wed Oct 6 19:04:40 2010 -0700

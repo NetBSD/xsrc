@@ -293,12 +293,14 @@ getFontencCharset(unsigned final, int type, const char *name)
 
     mapping = FontEncMapFind(fc->xlfd, FONT_ENCODING_UNICODE, -1, -1, NULL);
     if (!mapping) {
+	free(c);
 	fc->type = T_FAILED;
 	return NULL;
     }
 
     reverse = FontMapReverse(mapping);
     if (!reverse) {
+	free(c);
 	fc->type = T_FAILED;
 	return NULL;
     }

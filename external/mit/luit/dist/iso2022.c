@@ -41,25 +41,6 @@ THE SOFTWARE.
 static unsigned char buffered_input[BUFFERED_INPUT_SIZE];
 static int buffered_input_count = 0;
 
-static void
-FatalError(const char *f,...)
-{
-    va_list args;
-    va_start(args, f);
-    vfprintf(stderr, f, args);
-    va_end(args);
-    ExitProgram(1);
-}
-
-static void
-ErrorF(const char *f,...)
-{
-    va_list args;
-    va_start(args, f);
-    vfprintf(stderr, f, args);
-    va_end(args);
-}
-
 #define OUTBUF_FREE(is, count) ((is)->outbuf_count + (count) <= BUFFER_SIZE)
 #define OUTBUF_MAKE_FREE(is, fd, count) \
     if(!OUTBUF_FREE((is), (count))) outbuf_flush((is), (fd))
