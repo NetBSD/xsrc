@@ -9,6 +9,12 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
+/* Define to 1 if you have the `pthread_condattr_destroy' function. */
+#undef HAVE_PTHREAD_CONDATTR_DESTROY
+
+/* Define to 1 if you have the `pthread_condattr_init' function. */
+#undef HAVE_PTHREAD_CONDATTR_INIT
+
 /* Define to 1 if you have the `pthread_cond_broadcast' function. */
 #undef HAVE_PTHREAD_COND_BROADCAST
 
@@ -21,11 +27,17 @@
 /* Define to 1 if you have the `pthread_cond_signal' function. */
 #undef HAVE_PTHREAD_COND_SIGNAL
 
+/* Define to 1 if you have the `pthread_cond_timedwait' function. */
+#undef HAVE_PTHREAD_COND_TIMEDWAIT
+
 /* Define to 1 if you have the `pthread_cond_wait' function. */
 #undef HAVE_PTHREAD_COND_WAIT
 
 /* Define to 1 if you have the `pthread_equal' function. */
 #undef HAVE_PTHREAD_EQUAL
+
+/* Define to 1 if you have the `pthread_exit' function. */
+#undef HAVE_PTHREAD_EXIT
 
 /* Define to 1 if you have the `pthread_mutex_destroy' function. */
 #undef HAVE_PTHREAD_MUTEX_DESTROY
@@ -63,6 +75,10 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
 /* Name of package */
 #undef PACKAGE
 
@@ -77,6 +93,9 @@
 
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION

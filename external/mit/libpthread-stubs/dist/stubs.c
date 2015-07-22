@@ -25,6 +25,7 @@
  */
 
 #include <pthread.h>
+#include <stdlib.h>
 #include "config.h"
 
 #ifndef HAVE_PTHREAD_SELF
@@ -90,12 +91,39 @@ int pthread_cond_destroy() __attribute__ ((weak, alias ("__pthread_zero_stub")))
 # endif
 #endif
 
-#ifndef HAVE_PTHREAD_COND_WAIT
+#ifndef HAVE_PTHREAD_CONDATTR_INIT
 #define NEED_ZERO_STUB
 # ifdef SUPPORT_ATTRIBUTE_ALIAS
-int pthread_cond_wait() __attribute__ ((weak, alias ("__pthread_zero_stub")));
+int pthread_condattr_init() __attribute__ ((weak, alias ("__pthread_zero_stub")));
 # else
-#  pragma weak pthread_cond_wait = __pthread_zero_stub
+#  pragma weak pthread_condattr_init = __pthread_zero_stub
+# endif
+#endif
+
+#ifndef HAVE_PTHREAD_CONDATTR_DESTROY
+#define NEED_ZERO_STUB
+# ifdef SUPPORT_ATTRIBUTE_ALIAS
+int pthread_condattr_destroy() __attribute__ ((weak, alias ("__pthread_zero_stub")));
+# else
+#  pragma weak pthread_condattr_destroy = __pthread_zero_stub
+# endif
+#endif
+
+#ifndef HAVE_PTHREAD_COND_WAIT
+#define NEED_ABORT_STUB
+# ifdef SUPPORT_ATTRIBUTE_ALIAS
+int pthread_cond_wait() __attribute__ ((weak, alias ("__pthread_abort_stub")));
+# else
+#  pragma weak pthread_cond_wait = __pthread_abort_stub
+# endif
+#endif
+
+#ifndef HAVE_PTHREAD_COND_TIMEDWAIT
+#define NEED_ABORT_STUB
+# ifdef SUPPORT_ATTRIBUTE_ALIAS
+int pthread_cond_timedwait() __attribute__ ((weak, alias ("__pthread_abort_stub")));
+# else
+#  pragma weak pthread_cond_timedwait = __pthread_abort_stub
 # endif
 #endif
 
@@ -126,6 +154,15 @@ int pthread_equal() __attribute__ ((weak, alias ("__pthread_equal_stub")));
 # endif
 #endif
 
+#ifndef HAVE_PTHREAD_EXIT
+#define NEED_EXIT_STUB
+# ifdef SUPPORT_ATTRIBUTE_ALIAS
+int pthread_exit() __attribute__ ((weak, alias ("__pthread_exit_stub")));
+# else
+#  pragma weak pthread_exit = __pthread_exit_stub
+# endif
+#endif
+
 #ifdef NEED_ZERO_STUB
 static int __pthread_zero_stub()
 {
@@ -133,9 +170,23 @@ static int __pthread_zero_stub()
 }
 #endif
 
+#ifdef NEED_ABORT_STUB
+static int __pthread_abort_stub()
+{
+    abort();
+}
+#endif
+
 #ifdef NEED_EQUAL_STUB
 static int __pthread_equal_stub(pthread_t t1, pthread_t t2)
 {
     return (t1 == t2);
+}
+#endif
+
+#ifdef NEED_EXIT_STUB
+static void __pthread_exit_stub(void *ret)
+{
+    exit(EXIT_SUCCESS);
 }
 #endif
