@@ -23,7 +23,9 @@ THE SOFTWARE.
 #ifndef LUIT_OTHER_H
 #define LUIT_OTHER_H 1
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"		/* include this, for self-contained headers */
+#endif
 
 #ifndef GCC_UNUSED
 #define GCC_UNUSED		/* ARGSUSED */
