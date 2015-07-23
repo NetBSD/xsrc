@@ -125,7 +125,7 @@ static unsigned char* NewportRealizeCursor(xf86CursorInfoPtr infoPtr, CursorPtr 
 	CARD32 *mem, *SrcS, *SrcM, *DstS;
 	unsigned int i;
 
-	if (!(mem = xcalloc(1, size)))
+	if (!(mem = calloc(1, size)))
         	return NULL;
 
 	SrcS = (CARD32*)pCurs->bits->source;

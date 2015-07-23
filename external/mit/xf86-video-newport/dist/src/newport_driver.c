@@ -1,6 +1,4 @@
 /*
- * Id: newport_driver.c,v 1.2 2000/11/29 20:58:10 agx Exp $ 
- *
  * Driver for the SGI Indy's Newport graphics card
  * 
  * This driver is based on the newport.c & newport_con.c kernel code
@@ -30,7 +28,6 @@
  * Project.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport_driver.c,v 1.25 2003/04/23 21:51:41 tsi Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -62,9 +59,9 @@
 #define NEWPORT_VERSION		4000
 #define NEWPORT_NAME		"NEWPORT"
 #define NEWPORT_DRIVER_NAME	"newport"
-#define NEWPORT_MAJOR_VERSION	0
-#define NEWPORT_MINOR_VERSION	2
-#define NEWPORT_PATCHLEVEL	0
+#define NEWPORT_MAJOR_VERSION	PACKAGE_VERSION_MAJOR
+#define NEWPORT_MINOR_VERSION	PACKAGE_VERSION_MINOR
+#define NEWPORT_PATCHLEVEL	PACKAGE_VERSION_PATCHLEVEL
 
 
 /* Prototypes ------------------------------------------------------- */
@@ -104,36 +101,6 @@ static SymTabRec NewportChipsets[] = {
     { CHIP_XL, "XL" },
     {-1, NULL }
 };
-
-/* List of Symbols from other modules that this module references */
-
-static const char *fbSymbols[] = {
-	"fbPictureInit",
-	"fbScreenInit",
-	NULL
-};	
-
-static const char *ramdacSymbols[] = {
-    "xf86CreateCursorInfoRec",
-    "xf86InitCursor",
-    NULL
-};
-
-static const char *shadowSymbols[] = {
-	"ShadowFBInit",
-	NULL
-};
-
-static const char *xaaSymbols[] = {
-    "XAACreateInfoRec",
-    "XAADestroyInfoRec",
-    "XAAGetFallbackOps",
-    "XAAInit",
-    NULL
-};
-
-
-#ifdef XFree86LOADER
 
 static MODULESETUPPROTO(newportSetup);
 
@@ -175,14 +142,6 @@ newportSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 		xf86AddDriver(&NEWPORT, module, 0);
 
 		/*
-		 * Tell the loader about symbols from other modules that this module
-		 * might refer to.
-		 *
-		 */
-		LoaderRefSymLists( fbSymbols, ramdacSymbols, shadowSymbols, xaaSymbols, NULL);
-
-
-		/*
 		 * The return value must be non-NULL on success even though
 		 * there is no TearDownProc.
 		 */
@@ -192,8 +151,6 @@ newportSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 	return NULL;
        }
 }
-
-#endif /* XFree86LOADER */
 
 typedef enum {
 	OPTION_BITPLANES,
@@ -230,9 +187,7 @@ NewportGetRec(ScrnInfoPtr pScrn)
 static Bool
 NewportFreeRec(ScrnInfoPtr pScrn)
 {
-	if (pScrn->driverPrivate == NULL)
-		return TRUE;
-	xfree(pScrn->driverPrivate);
+	free(pScrn->driverPrivate);
 	pScrn->driverPrivate = NULL;
 	return TRUE;
 }
@@ -250,7 +205,9 @@ NewportProbe(DriverPtr drv, int flags)
 	Bool foundScreen = FALSE;
 	GDevPtr *devSections;
 	GDevPtr dev = NULL;
+#ifndef XSERVER_LIBPCIACCESS
 	resRange range[] = { {ResExcMemBlock ,0,0}, _END };
+#endif
 	unsigned probedIDs[NEWPORT_MAX_BOARDS];
 	memType base;
 
@@ -272,17 +229,15 @@ NewportProbe(DriverPtr drv, int flags)
 					int entity;
 					ScrnInfoPtr pScrn = NULL;
 
-					/* This is a hack because don't have the RAC info(and don't want it).  
-					 * Set it as an ISA entity to get the entity field set up right.
-					 */
-					entity = xf86ClaimIsaSlot(drv, 0, dev, TRUE);
+					entity = xf86ClaimNoSlot(drv, 0, dev, TRUE);
+#ifndef XSERVER_LIBPCIACCESS
 					base = (NEWPORT_BASE_ADDR0
 						+ busID * NEWPORT_BASE_OFFSET);
 					RANGE(range[0], base, base + sizeof(NewportRegs),\
 							ResExcMemBlock);
-					pScrn = xf86ConfigIsaEntity(pScrn, 0, entity, NULL, range, \
-							NULL, NULL, NULL, NULL);
-					/* Allocate a ScrnInfoRec */
+#endif
+					pScrn = xf86AllocateScreen(drv, 0);
+					xf86AddEntityToScreen(pScrn, entity);
 					pScrn->driverVersion = NEWPORT_VERSION;
 					pScrn->driverName    = NEWPORT_DRIVER_NAME;
 					pScrn->name          = NEWPORT_NAME;
@@ -298,7 +253,7 @@ NewportProbe(DriverPtr drv, int flags)
 			}
 		}
 	}
-	xfree(devSections);
+	free(devSections);
 	return foundScreen;
 }
 
@@ -397,7 +352,7 @@ NewportPreInit(ScrnInfoPtr pScrn, int flags)
 
 	/* Fill in pScrn->options) */
 	xf86CollectOptions(pScrn, NULL);
-	if (!(pNewport->Options = xalloc(sizeof(NewportOptions))))
+	if (!(pNewport->Options = malloc(sizeof(NewportOptions))))
 		return FALSE;
 	memcpy(pNewport->Options, NewportOptions, sizeof(NewportOptions));
 	xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pNewport->Options);
@@ -489,7 +444,6 @@ NewportPreInit(ScrnInfoPtr pScrn, int flags)
 		NewportFreeRec(pScrn);
 		return FALSE;
 	}
-	xf86LoaderReqSymLists( fbSymbols, NULL);
 
 	/* Load ramdac modules */
     	if (pNewport->hwCursor) {
@@ -497,7 +451,6 @@ NewportPreInit(ScrnInfoPtr pScrn, int flags)
 			NewportFreeRec(pScrn);
             		return FALSE;
         	}
-        	xf86LoaderReqSymLists(ramdacSymbols, NULL);
     	}
 
 	/* Load ShadowFB module */
@@ -505,7 +458,6 @@ NewportPreInit(ScrnInfoPtr pScrn, int flags)
 		NewportFreeRec(pScrn);
 		return FALSE;
 	}
-	xf86LoaderReqSymLists(shadowSymbols, NULL);
 
 	return TRUE;
 }
@@ -593,11 +545,12 @@ NewportScreenInit(int index, ScreenPtr pScreen, int argc, char **argv)
 	pNewport->NoAccel = FALSE;
 	if (xf86ReturnOptValBool(pNewport->Options, OPTION_NOACCEL, FALSE)) 
 	{
-	    if (!xf86LoadSubModule(pScrn, "xaa"))
-		return FALSE;
-	    xf86LoaderReqSymLists(xaaSymbols, NULL);
 	    pNewport->NoAccel = TRUE;
 	    xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Acceleration disabled\n");
+	}
+	if (!pNewport->NoAccel) {
+	    if (!xf86LoadSubModule(pScrn, "xaa"))
+		pNewport->NoAccel = TRUE;
 	}
 #if 0    
 	if (pScrn->bitsPerPixel < 24)
@@ -699,8 +652,7 @@ NewportCloseScreen(int scrnIndex, ScreenPtr pScreen)
 #endif	
 
 	NewportRestore(pScrn, TRUE);
-	if (pNewport->ShadowPtr)
-		xfree(pNewport->ShadowPtr);
+	free(pNewport->ShadowPtr);
 
 	/* unmap the Newport's registers from memory */
 	NewportUnmapRegs(pScrn);
