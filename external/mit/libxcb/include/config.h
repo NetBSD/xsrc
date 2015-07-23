@@ -69,13 +69,13 @@
 #define PACKAGE "libxcb"
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "xcb@lists.freedesktop.org"
+#define PACKAGE_BUGREPORT "https://bugs.freedesktop.org/enter_bug.cgi?product=xcb"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "libxcb"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libxcb 1.10"
+#define PACKAGE_STRING "libxcb 1.11"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libxcb"
@@ -84,7 +84,16 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.10"
+#define PACKAGE_VERSION "1.11"
+
+/* Major version of this package */
+#define PACKAGE_VERSION_MAJOR 1
+
+/* Minor version of this package */
+#define PACKAGE_VERSION_MINOR 11
+
+/* Patch version of this package */
+#define PACKAGE_VERSION_PATCHLEVEL 0
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -115,7 +124,7 @@
 
 
 /* Version number of package */
-#define VERSION "1.10"
+#define VERSION "1.11"
 
 /* XCB buffer queue size */
 #define XCB_QUEUE_BUFFER_SIZE 16384
