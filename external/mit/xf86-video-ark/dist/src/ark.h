@@ -7,9 +7,17 @@
 
 #include "xf86.h"
 #include "xf86Pci.h"
-#include "xf86PciInfo.h"
+#ifdef HAVE_XAA_H
 #include "xaa.h"
+#endif
 #include "vgaHW.h"
+
+#include "compat-api.h"
+#define PCI_VENDOR_ARK			0xEDD8
+#define PCI_CHIP_1000PV			0xA091
+#define PCI_CHIP_2000PV			0xA099
+#define PCI_CHIP_2000MT			0xA0A1
+#define PCI_CHIP_2000MI			0xA0A9
 
 typedef struct _ARKRegRec {
 	unsigned char		sr10, sr11, sr12, sr13, sr14,
@@ -34,15 +42,16 @@ typedef struct _ARKRec {
 #endif
 	EntityInfoPtr		pEnt;
 	CARD32			IOAddress;
-	CARD32			FBAddress;
-	unsigned char *		FBBase;
-	unsigned char *		MMIOBase;
+	pointer			FBBase;
+	pointer			MMIOBase;
 	unsigned long		videoRam;
 	OptionInfoPtr		Options;
 	unsigned int		Flags;
 	Bool			NoAccel;
 	CARD32			Bus;
+#ifdef HAVE_XAA_H
 	XAAInfoRecPtr		pXAA;
+#endif
 	int			Chipset, ChipRev;
 	int			clock_mult;
 	int			dac_width;
@@ -50,7 +59,7 @@ typedef struct _ARKRec {
 	int			ramdac;
 	ARKRegRec		SavedRegs;	/* original mode */
 	ARKRegRec		ModeRegs;	/* current mode */
-	Bool			(*CloseScreen)(int, ScreenPtr);
+	Bool			(*CloseScreen)(CLOSE_SCREEN_ARGS_DECL);
 } ARKRec, *ARKPtr;
 
 
