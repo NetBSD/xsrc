@@ -1,7 +1,0 @@
-$NetBSD: TODO,v 1.1 2004/01/18 05:21:41 rtr Exp $
-
-- More SFB acceleration.
-- Figure out why SFB hardware cursor refuses to display.
-- Proper write barriers.
-- Fix lk keyboard map.
-- Remove decFbInfo::size.

@@ -1,6 +1,0 @@
-XCOMM $XFree86: xc/programs/Xserver/GL/mesa/array_cache/module/Imakefile,v 1.1 2004/04/08 10:08:01 alanh Exp $
-
-#define IHaveModules
-
-#include "../Imakefile"
-

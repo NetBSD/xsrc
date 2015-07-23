@@ -1,6 +1,0 @@
-XCOMM $XFree86: xc/programs/Xserver/GL/mesa/shader/module/Imakefile,v 1.1 2004/12/10 16:07:00 alanh Exp $
-
-#define IHaveModules
-
-#include "../Imakefile"
-
