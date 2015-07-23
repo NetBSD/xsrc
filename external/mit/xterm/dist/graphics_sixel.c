@@ -1,4 +1,4 @@
-/* $XTermId: graphics_sixel.c,v 1.8 2014/05/02 22:53:20 tom Exp $ */
+/* $XTermId: graphics_sixel.c,v 1.11 2014/12/12 09:47:29 Ross.Combs Exp $ */
 
 /*
  * Copyright 2014 by Ross Combs
@@ -122,6 +122,7 @@ typedef struct {
 static void
 init_sixel_background(Graphic *graphic, SixelContext const *context)
 {
+    const int mw = graphic->max_width;
     int r, c;
 
     TRACE(("initializing sixel background to size=%dx%d bgcolor=%hu\n",
@@ -134,7 +135,7 @@ init_sixel_background(Graphic *graphic, SixelContext const *context)
 
     for (r = 0; r < graphic->actual_height; r++) {
 	for (c = 0; c < graphic->actual_width; c++) {
-	    graphic->pixels[r * graphic->max_width + c] = context->background;
+	    graphic->pixels[r * mw + c] = context->background;
 	}
     }
     graphic->color_registers_used[context->background] = 1;
@@ -143,6 +144,8 @@ init_sixel_background(Graphic *graphic, SixelContext const *context)
 static void
 set_sixel(Graphic *graphic, SixelContext const *context, int sixel)
 {
+    const int mh = graphic->max_height;
+    const int mw = graphic->max_width;
     RegisterNum color;
     int pix;
 
@@ -159,8 +162,7 @@ set_sixel(Graphic *graphic, SixelContext const *context, int sixel)
 	   ((color != COLOR_HOLE)
 	    ? (unsigned) graphic->color_registers[color].b : 0U)));
     for (pix = 0; pix < 6; pix++) {
-	if (context->col < graphic->max_width &&
-	    context->row + pix < graphic->max_height) {
+	if (context->col < mw && context->row + pix < mh) {
 	    if (sixel & (1 << pix)) {
 		if (context->col + 1 > graphic->actual_width) {
 		    graphic->actual_width = context->col + 1;
@@ -168,10 +170,8 @@ set_sixel(Graphic *graphic, SixelContext const *context, int sixel)
 		if (context->row + pix + 1 > graphic->actual_height) {
 		    graphic->actual_height = context->row + pix + 1;
 		}
-		graphic->pixels[
-				   (((context->row + pix) * graphic->max_width)
-				    + context->col)
-		    ] = color;
+		graphic->pixels[((context->row + pix) * mw) + context->col] =
+		    color;
 	    }
 	} else {
 	    TRACE(("sixel pixel %d out of bounds\n", pix));
@@ -214,7 +214,6 @@ update_sixel_aspect(SixelContext const *context, Graphic *graphic)
  * Interpret sixel graphics sequences.
  *
  * Resources:
- *  http://en.wikipedia.org/wiki/Sixel
  *  http://vt100.net/docs/vt3xx-gp/chapter14.html
  *  ftp://ftp.cs.utk.edu/pub/shuford/terminal/sixel_graphics_news.txt
  *  ftp://ftp.cs.utk.edu/pub/shuford/terminal/all_about_sixels.txt
@@ -291,7 +290,7 @@ parse_sixel(XtermWidget xw, ANSI *params, char const *string)
 	    context.aspect_vertical = Pan;
 	    context.aspect_horizontal = Pad;
 
-	    if (Ph == 0 || Pv == 0) {
+	    if (Ph <= 0 || Pv <= 0) {
 		TRACE(("DATA_ERROR: raster image dimensions are invalid %dx%d\n",
 		       Ph, Pv));
 		return;
@@ -541,7 +540,7 @@ parse_sixel(XtermWidget xw, ANSI *params, char const *string)
 		int Pv = raster_params.a_param[3];
 
 		TRACE(("sixel raster attribute with h=%d v=%d\n", Ph, Pv));
-		if (Ph == 0 || Pv == 0) {
+		if (Ph <= 0 || Pv <= 0) {
 		    TRACE(("DATA_ERROR: raster image dimensions are invalid %dx%d\n",
 			   Ph, Pv));
 		    return;
@@ -572,7 +571,9 @@ parse_sixel(XtermWidget xw, ANSI *params, char const *string)
 	string++;
     }
 
-    /* update the screen */
+    /* Update the screen scrolling and do a refresh.
+     * The refresh may not cover the whole graphic.
+     */
     if (screen->scroll_amt)
 	FlushScroll(xw);
 
@@ -633,7 +634,8 @@ parse_sixel(XtermWidget xw, ANSI *params, char const *string)
     }
 
   finis:
-    refresh_modified_displayed_graphics(screen);
+    graphic->dirty = 1;
+    refresh_modified_displayed_graphics(xw);
 
     TRACE(("DONE successfully parsed sixel data\n"));
     dump_graphic(graphic);

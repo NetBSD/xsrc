@@ -1,4 +1,4 @@
-/* $XTermId: graphics.h,v 1.16 2014/04/25 21:30:23 Ross.Combs Exp $ */
+/* $XTermId: graphics.h,v 1.20 2014/11/28 19:48:36 tom Exp $ */
 
 /*
  * Copyright 2013,2014 by Ross Combs
@@ -39,22 +39,18 @@
 
 #if OPT_GRAPHICS
 
+#define CHANNEL_MAX 100
+
 typedef struct {
-    Pixel pix;
     short r, g, b;
-    short allocated;
 } ColorRegister;
 
 typedef unsigned short RegisterNum;
 
-#define MAX_COLOR_REGISTERS 256U
+#define MAX_COLOR_REGISTERS 1024U
 #define COLOR_HOLE ((RegisterNum)MAX_COLOR_REGISTERS)
 
 #define MAX_GRAPHICS 16U
-
-#define BUFFER_WIDTH 1000
-#define BUFFER_HEIGHT 800
-#define MAX_PIXELS (BUFFER_HEIGHT * BUFFER_WIDTH)
 
 typedef struct {
     RegisterNum *pixels;
@@ -85,6 +81,7 @@ extern RegisterNum read_pixel(Graphic *graphic, int x, int y);
 extern void draw_solid_pixel(Graphic *graphic, int x, int y, unsigned color);
 extern void draw_solid_rectangle(Graphic *graphic, int x1, int y1, int x2, int y2, unsigned color);
 extern void draw_solid_line(Graphic *graphic, int x1, int y1, int x2, int y2, unsigned color);
+extern void copy_overlapping_area(Graphic *graphic, int src_x, int src_y, int dst_x, int dst_y, unsigned w, unsigned h, unsigned default_color);
 extern void hls2rgb(int h, int l, int s, short *r, short *g, short *b);
 extern void dump_graphic(Graphic const *graphic);
 extern unsigned get_color_register_count(TScreen const *screen);
@@ -92,10 +89,10 @@ extern void update_color_register(Graphic *graphic, unsigned color, int r, int g
 extern RegisterNum find_color_register(ColorRegister const *color_registers, int r, int g, int b);
 extern void chararea_clear_displayed_graphics(TScreen const *screen, int leftcol, int toprow, int ncols, int nrows);
 extern void pixelarea_clear_displayed_graphics(TScreen const *screen, int winx, int winy, int w, int h);
-extern void refresh_displayed_graphics(TScreen const *screen, int leftcol, int toprow, int ncols, int nrows);
-extern void refresh_modified_displayed_graphics(TScreen const *screen);
+extern void refresh_displayed_graphics(XtermWidget xw, int leftcol, int toprow, int ncols, int nrows);
+extern void refresh_modified_displayed_graphics(XtermWidget xw);
 extern void reset_displayed_graphics(TScreen const *screen);
-extern void scroll_displayed_graphics(int rows);
+extern void scroll_displayed_graphics(XtermWidget xw, int rows);
 
 #ifdef NO_LEAKS
 extern void noleaks_graphics(void);
@@ -109,6 +106,7 @@ extern void noleaks_graphics(void);
 #define draw_solid_pixel(graphic, x, y, color) /* nothing */
 #define draw_solid_rectangle(graphic, x1, y1, x2, y2, color) /* nothing */
 #define draw_solid_line(graphic, x1, y1, x2, y2, color) /* nothing */
+#define copy_overlapping_area(graphic, src_x, src_y, dst_x, dst_y, w, h, default_color) /* nothing */
 #define hls2rgb(h, l, s, r, g, b) /* nothing */
 #define dump_graphic(graphic) /* nothing */
 #define get_color_register_count(screen) /* nothing */
@@ -116,10 +114,10 @@ extern void noleaks_graphics(void);
 #define find_color_register(color_registers, r, g, b) /* nothing */
 #define chararea_clear_displayed_graphics(screen, leftcol, toprow, ncols, nrows) /* nothing */
 #define pixelarea_clear_displayed_graphics(screen, winx, winy, w, h) /* nothing */
-#define refresh_displayed_graphics(screen, leftcol, toprow, ncols, nrows) /* nothing */
-#define refresh_modified_displayed_graphics(screen) /* nothing */
+#define refresh_displayed_graphics(xw, leftcol, toprow, ncols, nrows) /* nothing */
+#define refresh_modified_displayed_graphics(xw) /* nothing */
 #define reset_displayed_graphics(screen) /* nothing */
-#define scroll_displayed_graphics(rows) /* nothing */
+#define scroll_displayed_graphics(xw, rows) /* nothing */
 
 #endif
 

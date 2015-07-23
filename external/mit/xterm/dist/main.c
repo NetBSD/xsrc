@@ -1,7 +1,7 @@
-/* $XTermId: main.c,v 1.758 2014/05/26 00:01:25 tom Exp $ */
+/* $XTermId: main.c,v 1.769 2015/04/10 00:33:25 tom Exp $ */
 
 /*
- * Copyright 2002-2013,2014 by Thomas E. Dickey
+ * Copyright 2002-2014,2015 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -102,6 +102,8 @@
 #include <X11/Xaw/Form.h>
 #elif defined(HAVE_LIB_XAW3D)
 #include <X11/Xaw3d/Form.h>
+#elif defined(HAVE_LIB_XAW3DXFT)
+#include <X11/Xaw3dxft/Form.h>
 #elif defined(HAVE_LIB_NEXTAW)
 #include <X11/neXtaw/Form.h>
 #elif defined(HAVE_LIB_XAWPLUS)
@@ -777,7 +779,8 @@ static char etc_wtmp[] = WTMP_FILENAME;
 static char bin_login[] = LOGIN_FILENAME;
 #endif
 
-static char passedPty[PTYCHARLEN + 1];	/* name if pty if slave */
+static char noPassedPty[2];
+static char *passedPty = noPassedPty;	/* name if pty if slave */
 
 #if defined(TIOCCONS) || defined(SRIOCSREDIR)
 static int Console;
@@ -957,6 +960,10 @@ static XrmOptionDescRec optionDescList[] = {
 {"-fa",		"*faceName",	XrmoptionSepArg,	(XPointer) NULL},
 {"-fd",		"*faceNameDoublesize", XrmoptionSepArg,	(XPointer) NULL},
 {"-fs",		"*faceSize",	XrmoptionSepArg,	(XPointer) NULL},
+#endif
+#if OPT_WIDE_ATTRS && OPT_ISO_COLORS
+{"-itc",	"*colorITMode",	XrmoptionNoArg,		(XPointer) "off"},
+{"+itc",	"*colorITMode",	XrmoptionNoArg,		(XPointer) "on"},
 #endif
 #if OPT_WIDE_CHARS
 {"-fw",		"*wideFont",	XrmoptionSepArg,	(XPointer) NULL},
@@ -1250,6 +1257,9 @@ static OptionHelp xtermOptions[] = {
 #endif
 { "-/+vb",                 "turn on/off visual bell" },
 { "-/+pob",                "turn on/off pop on bell" },
+#if OPT_WIDE_ATTRS && OPT_ISO_COLORS
+{ "-/+itc",                "turn off/on display of italic as color"},
+#endif
 #if OPT_WIDE_CHARS
 { "-/+wc",                 "turn on/off wide-character mode" },
 { "-/+mk_width",           "turn on/off simple width convention" },
@@ -1286,7 +1296,7 @@ static OptionHelp xtermOptions[] = {
 { NULL, NULL }};
 /* *INDENT-ON* */
 
-static const char *message[] =
+static const char *const message[] =
 {
     "Fonts should be fixed width and, if both normal and bold are specified, should",
     "have the same size.  If only a normal font is specified, it will be used for",
@@ -1605,7 +1615,7 @@ Help(void)
 {
     OptionHelp *opt;
     OptionHelp *list = sortedOpts(xtermOptions, optionDescList, XtNumber(optionDescList));
-    const char **cpp;
+    const char *const *cpp;
 
     printf("%s usage:\n    %s [-options ...] [-e command args]\n\n",
 	   xtermVersion(), ProgramName);
@@ -1758,6 +1768,7 @@ ParseSccn(char *option)
     char *leaf = x_basename(option);
     Bool code = False;
 
+    passedPty = x_strdup(option);
     if (leaf != option) {
 	if (leaf - option > 0
 	    && isdigit(CharOf(*leaf))
@@ -1769,13 +1780,13 @@ ParseSccn(char *option)
 	     * the /dev/pts/XXX value, but since we do not need to reopen it,
 	     * it is useful mainly for display in a "ps -ef".
 	     */
-	    strncpy(passedPty, option, len);
 	    passedPty[len] = 0;
 	    code = True;
 	}
     } else {
 	code = (sscanf(option, "%c%c%d",
 		       passedPty, passedPty + 1, &am_slave) == 3);
+	passedPty[2] = '\0';
     }
     TRACE(("ParseSccn(%s) = '%s' %d (%s)\n", option,
 	   passedPty, am_slave, code ? "OK" : "ERR"));
@@ -1941,7 +1952,7 @@ main(int argc, char *argv[]ENVP_ARG)
 {
 #if OPT_MAXIMIZE
 #define DATA(name) { #name, es##name }
-    static FlagList tblFullscreen[] =
+    static const FlagList tblFullscreen[] =
     {
 	DATA(Always),
 	DATA(Never)
@@ -2507,7 +2518,7 @@ main(int argc, char *argv[]ENVP_ARG)
     }
 #endif
 #endif
-#if defined(USE_ANY_SYSV_TERMIO) || defined(__MVS__)
+#if defined(USE_ANY_SYSV_TERMIO) || defined(__MVS__) || defined(__minix)
     if (0 > (mode = fcntl(screen->respond, F_GETFL, 0)))
 	SysError(ERROR_F_GETFL);
 #ifdef O_NDELAY
@@ -2550,7 +2561,9 @@ main(int argc, char *argv[]ENVP_ARG)
     });
     XSetErrorHandler(xerror);
     XSetIOErrorHandler(xioerror);
+#if OPT_SESSION_MGT
     IceSetIOErrorHandler(ice_error);
+#endif
 
     initPtyData(&VTbuffer);
 #ifdef ALLOWLOGGING
@@ -2868,7 +2881,7 @@ pty_search(int *pty)
  */
 
 #if OPT_TEK4014
-static const char *tekterm[] =
+static const char *const tekterm[] =
 {
     "tek4014",
     "tek4015",			/* 4014 with APL character set support */
@@ -2887,7 +2900,7 @@ static const char *tekterm[] =
  * The VT420 has up to 48 lines on the screen.
  */
 
-static const char *vtterm[] =
+static const char *const vtterm[] =
 {
 #ifdef USE_X11TERM
     "x11term",			/* for people who want special term name */
@@ -3307,7 +3320,7 @@ spawnXTerm(XtermWidget xw)
 #if USE_NO_DEV_TTY
     int no_dev_tty = False;
 #endif
-    const char **envnew;	/* new environment */
+    const char *const *envnew;	/* new environment */
     char buf[64];
     char *TermName = NULL;
 #ifdef TTYSIZE_STRUCT
@@ -4687,9 +4700,13 @@ spawnXTerm(XtermWidget xw)
 	    signal(SIGHUP, SIG_DFL);
 #endif
 
-	    shname_minus = CastMallocN(char, strlen(shname) + 2);
-	    (void) strcpy(shname_minus, "-");
-	    (void) strcat(shname_minus, shname);
+	    if ((shname_minus = CastMallocN(char, strlen(shname) + 2)) != 0) {
+		(void) strcpy(shname_minus, "-");
+		(void) strcat(shname_minus, shname);
+	    } else {
+		static char default_minus[] = "-sh";
+		shname_minus = default_minus;
+	    }
 #ifndef TERMIO_STRUCT
 	    ldisc = (!XStrCmp("csh", shname + strlen(shname) - 3)
 		     ? NTTYDISC
@@ -5366,5 +5383,19 @@ qsetlogin(char *login, char *ttyname)
     Send(1, &ps, &rps, sizeof(ps), sizeof(rps));
 
     return (rps.status);
+}
+#endif
+
+#ifdef __minix
+int
+setpgrp(void)
+{
+    return 0;
+}
+
+void
+_longjmp(jmp_buf _env, int _val)
+{
+    longjmp(_env, _val);
 }
 #endif

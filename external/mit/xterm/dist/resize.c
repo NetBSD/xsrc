@@ -1,7 +1,7 @@
-/* $XTermId: resize.c,v 1.130 2014/04/25 23:39:42 tom Exp $ */
+/* $XTermId: resize.c,v 1.135 2015/04/10 09:00:41 tom Exp $ */
 
 /*
- * Copyright 2003-2013,2014 by Thomas E. Dickey
+ * Copyright 2003-2014,2015 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -126,32 +126,31 @@ static struct {
 };
 /* *INDENT-ON* */
 
-static const char *emuname[EMULATIONS] =
+static const char *const emuname[EMULATIONS] =
 {
     "VT100",
     "Sun",
 };
 static char *myname;
 static int shell_type = SHELL_UNKNOWN;
-static const char *getsize[EMULATIONS] =
+static const char *const getsize[EMULATIONS] =
 {
     ESCAPE("7") ESCAPE("[r") ESCAPE("[999;999H") ESCAPE("[6n"),
     ESCAPE("[18t"),
 };
 #if defined(USE_STRUCT_WINSIZE)
-static const char *getwsize[EMULATIONS] =
+static const char *const getwsize[EMULATIONS] =
 {				/* size in pixels */
     0,
     ESCAPE("[14t"),
 };
 #endif /* USE_STRUCT_WINSIZE */
-static const char *restore[EMULATIONS] =
+static const char *const restore[EMULATIONS] =
 {
     ESCAPE("8"),
     0,
 };
-static const char *setname = "";
-static const char *setsize[EMULATIONS] =
+static const char *const setsize[EMULATIONS] =
 {
     0,
     ESCAPE("[8;%s;%st"),
@@ -165,12 +164,12 @@ static struct termios tioorig;
 static struct sgttyb sgorig;
 #endif /* USE_ANY_SYSV_TERMIO/USE_TERMIOS */
 
-static const char *size[EMULATIONS] =
+static const char *const size[EMULATIONS] =
 {
     ESCAPE("[%d;%dR"),
     ESCAPE("[8;%d;%dt"),
 };
-static char sunname[] = "sunsize";
+static const char sunname[] = "sunsize";
 static int tty;
 static FILE *ttyfp;
 
@@ -264,13 +263,13 @@ static void
 readstring(FILE *fp, char *buf, const char *str)
 {
     int last, c;
-#if !defined(USG)
+#if !defined(USG) && !defined(__minix)
     /* What is the advantage of setitimer() over alarm()? */
     struct itimerval it;
 #endif
 
     signal(SIGALRM, resize_timeout);
-#if defined(USG)
+#if defined(USG) || defined(__minix)
     alarm(TIMEOUT);
 #else
     memset((char *) &it, 0, sizeof(struct itimerval));
@@ -292,7 +291,7 @@ readstring(FILE *fp, char *buf, const char *str)
     while ((*buf++ = (char) getc(fp)) != last) {
 	;
     }
-#if defined(USG)
+#if defined(USG) || defined(__minix)
     alarm(0);
 #else
     memset((char *) &it, 0, sizeof(struct itimerval));
@@ -336,6 +335,7 @@ main(int argc, char **argv ENVP_ARG)
 #ifdef CANT_OPEN_DEV_TTY
     extern char *ttyname();
 #endif
+    const char *setname = "";
 
     myname = x_basename(argv[0]);
     if (strcmp(myname, sunname) == 0)
@@ -554,8 +554,8 @@ main(int argc, char **argv ENVP_ARG)
 	i = (int) (ptr - termcap) + 3;
 	strncpy(newtc, termcap, (size_t) i);
 	sprintf(newtc + i, "%d", cols);
-	ptr = strchr(ptr, ':');
-	strcat(newtc, ptr);
+	if ((ptr = strchr(ptr, ':')) != 0)
+	    strcat(newtc, ptr);
 
 	/* now do lines */
 	if ((ptr = x_strindex(newtc, "li#")) == NULL) {
@@ -566,8 +566,8 @@ main(int argc, char **argv ENVP_ARG)
 	i = (int) (ptr - newtc) + 3;
 	strncpy(termcap, newtc, (size_t) i);
 	sprintf(termcap + i, "%d", rows);
-	ptr = strchr(ptr, ':');
-	strcat(termcap, ptr);
+	if ((ptr = strchr(ptr, ':')) != 0)
+	    strcat(termcap, ptr);
     }
 #endif /* USE_TERMCAP */
 
