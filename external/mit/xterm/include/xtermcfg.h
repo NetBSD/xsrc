@@ -1,8 +1,8 @@
 /* xtermcfg.h.  Generated automatically by configure.  */
-/* $XTermId: xtermcfg.hin,v 1.205 2014/05/08 08:05:07 tom Exp $ */
+/* $XTermId: xtermcfg.hin,v 1.208 2015/02/15 18:00:55 tom Exp $ */
 
 /*
- * Copyright 1997-2013,2014 by Thomas E. Dickey
+ * Copyright 1997-2014,2015 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -45,6 +45,7 @@
 #define DEF_ALT_SENDS_ESC False	/* CF_ARG_ENABLE(alt-sends-esc) */
 #define DEF_BACKARO_BS True		/* CF_ARG_DISABLE(backarrow-key) */
 #define DEF_BACKARO_ERASE False	/* CF_ARG_ENABLE(backarrow-is-erase) */
+#define DEF_INITIAL_ERASE False /* CF_ARG_DISABLE(initial-erase) */
 #define DEF_META_SENDS_ESC False	/* CF_ARG_ENABLE(meta-sends-esc) */
 /* #undef DFT_COLORMODE */		/* AC_ARG_WITH(default-color-mode) */
 #define DFT_DECID "420"		/* AC_ARG_WITH(default-terminal-id) */
@@ -63,6 +64,7 @@
 /* #undef HAVE_LIB_PCRE */		/* CF_WITH_PCRE */
 #define HAVE_LIB_XAW 1		/* CF_X_ATHENA */
 /* #undef HAVE_LIB_XAW3D */		/* CF_X_ATHENA(--with-Xaw3d) */
+/* #undef HAVE_LIB_XAW3DXFT */		/* CF_X_ATHENA(--with-Xaw3dxft) */
 /* #undef HAVE_LIB_XAWPLUS */		/* CF_X_ATHENA(--with-XawPlus) */
 #define HAVE_LIB_XCURSOR 1		/* AC_CHECK_LIB(Xcursor) */
 #define HAVE_MKDTEMP 1		/* AC_CHECK_FUNCS(mkdtemp) */
@@ -101,6 +103,7 @@
 #define HAVE_WCSWIDTH 1		/* AC_CHECK_FUNCS(wcswidth) */
 #define HAVE_WCWIDTH 1		/* AC_CHECK_FUNCS(wcwidth) */
 #define HAVE_X11_DECKEYSYM_H 1	/* AC_CHECK_HEADERS(X11/DECkeysym.h) */
+#define HAVE_X11_EXTENSIONS_XINERAMA_H 1	 /* AC_CHECK_HEADERS(X11/extensions/Xinerama.h) */
 #define HAVE_X11_EXTENSIONS_XKB_H 1 /* AC_CHECK_HEADERS(X11/extensions/XKB.h) */
 #define HAVE_X11_SUNKEYSYM_H 1	/* AC_CHECK_HEADERS(X11/Sunkeysym.h) */
 #define HAVE_X11_XF86KEYSYM_H 1	/* AC_CHECK_HEADERS(X11/XF86keysym.h) */

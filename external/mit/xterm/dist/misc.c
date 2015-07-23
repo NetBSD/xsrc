@@ -1,7 +1,7 @@
-/* $XTermId: misc.c,v 1.712 2014/05/26 14:45:58 tom Exp $ */
+/* $XTermId: misc.c,v 1.726 2015/04/10 08:27:17 tom Exp $ */
 
 /*
- * Copyright 1999-2013,2014 by Thomas E. Dickey
+ * Copyright 1999-2014,2015 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -704,8 +704,8 @@ void
 init_colored_cursor(void)
 {
 #ifdef HAVE_LIB_XCURSOR
-    const char *theme = "index.theme";
-    const char *pattern = "xtermXXXXXX";
+    static const char theme[] = "index.theme";
+    static const char pattern[] = "xtermXXXXXX";
     const char *tmp_dir;
     char *filename;
     char *env = getenv("XCURSOR_THEME");
@@ -915,16 +915,19 @@ HandleSpawnTerminal(Widget w GCC_UNUSED,
 	} else {
 	    unsigned myargc = *nparams + 1;
 	    char **myargv = TypeMallocN(char *, myargc + 1);
-	    unsigned n = 0;
 
-	    myargv[n++] = child_exe;
+	    if (myargv != 0) {
+		unsigned n = 0;
 
-	    while (n < myargc) {
-		myargv[n++] = (char *) *params++;
+		myargv[n++] = child_exe;
+
+		while (n < myargc) {
+		    myargv[n++] = (char *) *params++;
+		}
+
+		myargv[n] = 0;
+		execv(child_exe, myargv);
 	    }
-
-	    myargv[n] = 0;
-	    execv(child_exe, myargv);
 
 	    /* If we get here, we've failed */
 	    xtermWarning("exec of '%s': %s\n", child_exe, SysErrorMsg(errno));
@@ -1018,15 +1021,10 @@ HandleFocusChange(Widget w GCC_UNUSED,
     if (screen->quiet_grab
 	&& (event->mode == NotifyGrab || event->mode == NotifyUngrab)) {
 	/* EMPTY */ ;
-    } else if ((event->type == FocusIn || event->type == FocusOut)
-	       && event->detail == NotifyPointer) {
-	/*
-	 * NotifyPointer is sent to the window where the pointer is, and is
-	 * in addition to events sent to the old/new focus-windows.
-	 */
-	/* EMPTY */ ;
     } else if (event->type == FocusIn) {
-	setXUrgency(xw, False);
+	if (event->detail != NotifyPointer) {
+	    setXUrgency(xw, False);
+	}
 
 	/*
 	 * NotifyNonlinear only happens (on FocusIn) if the pointer was not in
@@ -2010,7 +2008,7 @@ StartLog(XtermWidget xw)
 	    if ((log_default = x_strdup(log_def_name)) == NULL)
 		return;
 #else
-	    const char *log_def_name = "XtermLog.XXXXXX";
+	    static const char log_def_name[] = "XtermLog.XXXXXX";
 	    if ((log_default = x_strdup(log_def_name)) == NULL)
 		return;
 
@@ -2921,6 +2919,12 @@ ManipulateSelectionData(XtermWidget xw, TScreen *screen, char *buf, int final)
 					  XtLastTimestampProcessed(TScreenOf(xw)->display),
 					  select_args, n,
 					  NULL);
+			/*
+			 * select_args is used via SelectionReceived, cannot
+			 * free it here.
+			 */
+		    } else {
+			free(select_args);
 		    }
 		} else {
 		    if (AllowWindowOps(xw, ewSetSelection)) {
@@ -2930,8 +2934,8 @@ ManipulateSelectionData(XtermWidget xw, TScreen *screen, char *buf, int final)
 			    AppendToSelectionBuffer(screen, CharOf(*buf++));
 			CompleteSelection(xw, select_args, n);
 		    }
+		    free(select_args);
 		}
-		free(select_args);
 	    }
 	    free(used);
 	}
@@ -3412,6 +3416,10 @@ ChangeFontRequest(XtermWidget xw, String buf)
 	    num = screen->menu_font_number;
 	}
 	name = x_strtrim(buf);
+	if (screen->EscapeFontName()) {
+	    FREE_STRING(screen->EscapeFontName());
+	    screen->EscapeFontName() = 0;
+	}
 	if (success && !IsEmpty(name)) {
 #if OPT_RENDERFONT
 	    if (UsingRenderFont(xw)) {
@@ -3423,10 +3431,15 @@ ChangeFontRequest(XtermWidget xw, String buf)
 		memset(&fonts, 0, sizeof(fonts));
 		fonts.f_n = name;
 		SetVTFont(xw, num, True, &fonts);
+		if (num == screen->menu_font_number &&
+		    num != fontMenu_fontescape) {
+		    screen->EscapeFontName() = x_strdup(name);
+		}
 	    }
 	} else {
 	    Bell(xw, XkbBI_MinorError, 0);
 	}
+	update_font_escape();
 	free(name);
     }
 }
@@ -3528,6 +3541,7 @@ do_osc(XtermWidget xw, Char *oscbuf, size_t len, int final)
      * a special case.
      */
     switch (mode) {
+    case 50:
 #if OPT_ISO_COLORS
     case OSC_Reset(4):
     case OSC_Reset(5):
@@ -3598,6 +3612,59 @@ do_osc(XtermWidget xw, Char *oscbuf, size_t len, int final)
     case 4:
 	if (ChangeAnsiColorRequest(xw, buf, ansi_colors, final))
 	    xw->misc.palette_changed = True;
+	break;
+    case 6:
+	/* FALLTHRU */
+    case OSC_Reset(6):
+	TRACE(("parse colorXXMode:%s\n", buf));
+	while (*buf != '\0') {
+	    long which = 0;
+	    long value = 0;
+	    char *next;
+	    if (*buf == ';') {
+		++buf;
+	    } else {
+		which = strtol(buf, &next, 10);
+		if (next == 0)
+		    break;
+		buf = next;
+		if (*buf == ';')
+		    ++buf;
+	    }
+	    if (*buf == ';') {
+		++buf;
+	    } else {
+		value = strtol(buf, &next, 10);
+		if (next == 0)
+		    break;
+		buf = next;
+		if (*buf == ';')
+		    ++buf;
+	    }
+	    TRACE(("updating colorXXMode which=%ld, value=%ld\n", which, value));
+	    switch (which) {
+	    case 0:
+		screen->colorBDMode = (value != 0);
+		break;
+	    case 1:
+		screen->colorULMode = (value != 0);
+		break;
+	    case 2:
+		screen->colorBLMode = (value != 0);
+		break;
+	    case 3:
+		screen->colorRVMode = (value != 0);
+		break;
+#if OPT_WIDE_ATTRS
+	    case 4:
+		screen->colorITMode = (value != 0);
+		break;
+#endif
+	    default:
+		TRACE(("...unknown colorXXMode\n"));
+		break;
+	    }
+	}
 	break;
     case OSC_Reset(5):
 	ansi_colors = NUM_ANSI_COLORS;
@@ -3748,6 +3815,9 @@ parse_decudk(XtermWidget xw, const char *cp)
 	unsigned key = 0;
 	int lo, hi;
 	int len = 0;
+
+	if (str == NULL)
+	    break;
 
 	while (isdigit(CharOf(*cp)))
 	    key = (key * 10) + (unsigned) (*cp++ - '0');
@@ -4045,7 +4115,7 @@ do_dcs(XtermWidget xw, Char *dcsbuf, size_t dcslen)
 		else if (isCursorBar(screen))
 		    code = STEADY_BAR;
 #if OPT_BLINK_CURS
-		if (screen->cursor_blink_esc == 0)
+		if (screen->cursor_blink_esc != 0)
 		    code -= 1;
 #endif
 		sprintf(reply, "%d%s", code, cp);
@@ -4175,7 +4245,7 @@ do_dcs(XtermWidget xw, Char *dcsbuf, size_t dcslen)
 		    parse_decudk(xw, cp);
 		}
 		break;
-	    case '{':		/* DECDLD (no '}' case though) */
+	    case L_CURL:	/* DECDLD */
 		if (screen->vtXX_level >= 2) {	/* VT220 */
 		    parse_decdld(&params, cp);
 		}
@@ -4710,7 +4780,7 @@ xtermLoadIcon(XtermWidget xw)
 	    myData = BuiltInXPM(xterm_xpms, XtNumber(xterm_xpms));
 	if (myData == 0)
 	    myData = &mini_xterm_xpms[XtNumber(mini_xterm_xpms) - 1];
-	data = (char **) myData->data,
+	data = (char **) myData->data;
 #else
 	data = (char **) &mini_xterm_48x48_xpm;
 #endif
@@ -5032,7 +5102,7 @@ Panic(const char *s GCC_UNUSED, int a GCC_UNUSED)
 const char *
 SysErrorMsg(int code)
 {
-    static char unknown[] = "unknown error";
+    static const char unknown[] = "unknown error";
     char *s = strerror(code);
     return s ? s : unknown;
 }
@@ -6045,4 +6115,10 @@ xtermEmbedWindow(Window winToEmbedInto)
 	screen->embed_high = (Dimension) attrs.height;
 	screen->embed_wide = (Dimension) attrs.width;
     }
+}
+
+void
+free_string(String value)
+{
+    free((void *) value);
 }
