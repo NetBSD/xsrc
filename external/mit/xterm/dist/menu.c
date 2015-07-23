@@ -1,7 +1,7 @@
-/* $XTermId: menu.c,v 1.325 2014/05/05 21:47:35 tom Exp $ */
+/* $XTermId: menu.c,v 1.331 2015/04/10 01:11:52 tom Exp $ */
 
 /*
- * Copyright 1999-2013,2014 by Thomas E. Dickey
+ * Copyright 1999-2014,2015 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -87,6 +87,18 @@
 #if OPT_TOOLBAR
 #include <X11/Xaw3d/MenuButton.h>
 #include <X11/Xaw3d/Form.h>
+#endif
+
+#elif defined(HAVE_LIB_XAW3DXFT)
+
+#include <X11/Xaw3dxft/SimpleMenu.h>
+#include <X11/Xaw3dxft/Box.h>
+#include <X11/Xaw3dxft/SmeBSB.h>
+#include <X11/Xaw3dxft/SmeLine.h>
+
+#if OPT_TOOLBAR
+#include <X11/Xaw3dxft/MenuButton.h>
+#include <X11/Xaw3dxft/Form.h>
 #endif
 
 #elif defined(HAVE_LIB_NEXTAW)
@@ -453,7 +465,7 @@ typedef struct {
 } MenuHeader;
 
     /* This table is ordered to correspond with MenuIndex */
-static MenuHeader menu_names[] = {
+static const MenuHeader menu_names[] = {
     { "mainMenu", mainMenuEntries, XtNumber(mainMenuEntries) },
     { "vtMenu",   vtMenuEntries,   XtNumber(vtMenuEntries)   },
     { "fontMenu", fontMenuEntries, XtNumber(fontMenuEntries) },
@@ -630,7 +642,7 @@ create_menu(Widget w, XtermWidget xw, MenuIndex num)
     {XtNcallback, (XtArgVal) cb};
 
     TScreen *screen = TScreenOf(xw);
-    MenuHeader *data = &menu_names[num];
+    const MenuHeader *data = &menu_names[num];
     MenuList *list = select_menu(w, num);
     struct _MenuEntry *entries = data->entry_list;
     Cardinal nentries = data->entry_len;
@@ -810,10 +822,7 @@ domenu(Widget w,
 		if (IsEmpty(screen->menu_font_names[n][fNorm]))
 		    SetItemSensitivity(fontMenuEntries[n].widget, False);
 	    }
-	    SetItemSensitivity(
-				  fontMenuEntries[fontMenu_fontescape].widget,
-				  (screen->menu_font_names[fontMenu_fontescape][fNorm]
-				   ? True : False));
+	    update_font_escape();
 	    update_menu_allowBoldFonts();
 #if OPT_BOX_CHARS
 	    update_font_boxchars();
@@ -860,10 +869,10 @@ domenu(Widget w,
 	SetItemSensitivity(fontMenuEntries[fontMenu_fontsel].widget, True);
 #else
 	FindFontSelection(xw, NULL, True);
-	SetItemSensitivity(
-			      fontMenuEntries[fontMenu_fontsel].widget,
-			      (screen->menu_font_names[fontMenu_fontsel][fNorm]
-			       ? True : False));
+	SetItemSensitivity(fontMenuEntries[fontMenu_fontsel].widget,
+			   (screen->SelectFontName()
+			    ? True
+			    : False));
 #endif
 	break;
 
@@ -969,7 +978,7 @@ UpdateMenuItem(
 				     : None);
 	XtSetValues(mi, &menuArgs, (Cardinal) 1);
     }
-    TRACE(("%s(%d): %s\n", func, which, BtoS(val)));
+    TRACE(("%s(%d): %s\n", func, which, MtoS(val)));
 }
 
 void
@@ -2109,7 +2118,7 @@ HandleSendSignal(Widget w,
 		 Cardinal *param_count)
 {
     /* *INDENT-OFF* */
-    static struct sigtab {
+    static const struct sigtab {
 	const char *name;
 	int sig;
     } signals[] = {
@@ -2132,7 +2141,7 @@ HandleSendSignal(Widget w,
     /* *INDENT-ON* */
 
     if (*param_count == 1) {
-	struct sigtab *st;
+	const struct sigtab *st;
 
 	for (st = signals; st->name; st++) {
 	    if (XmuCompareISOLatin1(st->name, params[0]) == 0) {
@@ -2620,6 +2629,19 @@ HandleAllowBoldFonts(Widget w,
 {
     HANDLE_VT_TOGGLE(allowBoldFonts);
 }
+
+#if OPT_LOAD_VTFONTS
+void
+update_font_escape(void)
+{
+    TScreen *screen = TScreenOf(term);
+
+    SetItemSensitivity(fontMenuEntries[fontMenu_fontescape].widget,
+		       ((screen->allowFontOps &&
+			 screen->EscapeFontName())
+			? True : False));
+}
+#endif
 
 #if OPT_DEC_CHRSET
 void

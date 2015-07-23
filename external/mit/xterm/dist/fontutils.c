@@ -1,7 +1,7 @@
-/* $XTermId: fontutils.c,v 1.439 2014/06/17 20:38:27 tom Exp $ */
+/* $XTermId: fontutils.c,v 1.448 2015/03/02 13:19:36 tom Exp $ */
 
 /*
- * Copyright 1998-2013,2014 by Thomas E. Dickey
+ * Copyright 1998-2014,2015 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -50,12 +50,6 @@
 
 #include <stdio.h>
 #include <ctype.h>
-
-#define ALLOC_STRING(name) \
-	if (name != 0) \
-	    name = x_strdup(name)
-#define FREE_STRING(name) \
-	    free_string(name)
 
 #define SetFontWidth(screen,dst,src)  (dst)->f_width = (src)
 #define SetFontHeight(screen,dst,src) (dst)->f_height = dimRound((screen)->scale_height * (float) (src))
@@ -125,12 +119,6 @@ typedef struct {
     /* charset registry, charset encoding */
     char *end;
 } FontNameProperties;
-
-static void
-free_string(String value)
-{
-    free((void *) value);
-}
 
 #if OPT_RENDERFONT
 static void fillInFaceSize(XtermWidget, int);
@@ -1145,7 +1133,9 @@ xtermLoadFont(XtermWidget xw,
 		       &fnts[fNorm],
 		       warn[fNorm],
 		       (fontnum == fontMenu_default))) {
-	SetItemSensitivity(fontMenuEntries[fontnum].widget, False);
+	if (fontnum != fontMenu_fontsel) {
+	    SetItemSensitivity(fontMenuEntries[fontnum].widget, False);
+	}
 	goto bad;
     }
 
@@ -1437,8 +1427,7 @@ xtermLoadFont(XtermWidget xw,
 	    FREE_STRING(screen->MenuFontName(fontnum));
 	screen->MenuFontName(fontnum) = tmpname;
 	if (fontnum == fontMenu_fontescape) {
-	    SetItemSensitivity(fontMenuEntries[fontMenu_fontescape].widget,
-			       True);
+	    update_font_escape();
 	}
 #if OPT_SHIFT_FONTS
 	screen->menu_font_sizes[fontnum] = FontSize(fnts[fNorm].fs);
@@ -1477,7 +1466,7 @@ xtermLoadFont(XtermWidget xw,
 	free(tmpname);
 
 #if OPT_RENDERFONT
-    if (fontnum == fontMenu_fontsel) {
+    if ((fontnum == fontMenu_fontsel) && (fontnum != screen->menu_font_number)) {
 	int old_fontnum = screen->menu_font_number;
 #if OPT_TOOLBAR
 	SetItemSensitivity(fontMenuEntries[fontnum].widget, True);
@@ -1492,8 +1481,10 @@ xtermLoadFont(XtermWidget xw,
 	TRACE(("...recovering for TrueType fonts\n"));
 	code = xtermLoadFont(xw, &myfonts, doresize, fontnum);
 	if (code) {
-	    SetItemSensitivity(fontMenuEntries[fontnum].widget,
-			       UsingRenderFont(xw));
+	    if (fontnum != fontMenu_fontsel) {
+		SetItemSensitivity(fontMenuEntries[fontnum].widget,
+				   UsingRenderFont(xw));
+	    }
 	    TRACE(("...recovered size %dx%d\n",
 		   FontHeight(screen),
 		   FontWidth(screen)));
@@ -1598,7 +1589,7 @@ xtermLoadItalics(XtermWidget xw)
 		FREE_STRING(dst.menu_font_names[n][m]); \
 		dst.menu_font_names[n][m] = x_strdup(src.menu_font_names[n][m]); \
 	    } \
-	    TRACE((".. " #dst ".menu_fonts_names[%d] = %s\n", n, dst.menu_font_names[n][fNorm])); \
+	    TRACE((".. " #dst ".menu_fonts_names[%d] = %s\n", n, NonNull(dst.menu_font_names[n][fNorm]))); \
 	}
 
 #define COPY_DEFAULT_FONTS(target, source) \
@@ -1869,37 +1860,42 @@ HandleLoadVTFonts(Widget w,
 	char name_buf[80];
 	char class_buf[80];
 	String name = (String) ((*param_count > 0) ? params[0] : empty);
-	char *myName = (char *) MyStackAlloc(strlen(name) + 1, name_buf);
-	String convert = (String) ((*param_count > 1) ? params[1] : myName);
-	char *myClass = (char *) MyStackAlloc(strlen(convert) + 1, class_buf);
-	int n;
+	char *myName = MyStackAlloc(strlen(name) + 1, name_buf);
 
 	TRACE(("HandleLoadVTFonts(%d)\n", *param_count));
-	strcpy(myName, name);
-	strcpy(myClass, convert);
-	if (*param_count == 1)
-	    myClass[0] = x_toupper(myClass[0]);
+	if (myName != 0) {
+	    String convert = (String) ((*param_count > 1) ? params[1] : myName);
+	    char *myClass = MyStackAlloc(strlen(convert) + 1, class_buf);
+	    int n;
 
-	if (xtermLoadVTFonts(xw, myName, myClass)) {
-	    /*
-	     * When switching fonts, try to preserve the font-menu selection, since
-	     * it is less surprising to do that (if the font-switching can be
-	     * undone) than to switch to "Default".
-	     */
-	    int font_number = screen->menu_font_number;
-	    if (font_number > fontMenu_lastBuiltin)
-		font_number = fontMenu_lastBuiltin;
-	    for (n = 0; n < NMENUFONTS; ++n) {
-		screen->menu_font_sizes[n] = 0;
+	    strcpy(myName, name);
+	    if (myClass != 0) {
+		strcpy(myClass, convert);
+		if (*param_count == 1)
+		    myClass[0] = x_toupper(myClass[0]);
+
+		if (xtermLoadVTFonts(xw, myName, myClass)) {
+		    /*
+		     * When switching fonts, try to preserve the font-menu
+		     * selection, since it is less surprising to do that (if
+		     * the font-switching can be undone) than to switch to
+		     * "Default".
+		     */
+		    int font_number = screen->menu_font_number;
+		    if (font_number > fontMenu_lastBuiltin)
+			font_number = fontMenu_lastBuiltin;
+		    for (n = 0; n < NMENUFONTS; ++n) {
+			screen->menu_font_sizes[n] = 0;
+		    }
+		    SetVTFont(xw, font_number, True,
+			      ((font_number == fontMenu_default)
+			       ? &(xw->misc.default_font)
+			       : NULL));
+		}
+		MyStackFree(myClass, class_buf);
 	    }
-	    SetVTFont(xw, font_number, True,
-		      ((font_number == fontMenu_default)
-		       ? &(xw->misc.default_font)
-		       : NULL));
+	    MyStackFree(myName, name_buf);
 	}
-
-	MyStackFree(myName, name_buf);
-	MyStackFree(myClass, class_buf);
     }
 }
 #endif /* OPT_LOAD_VTFONTS */
@@ -2072,7 +2068,7 @@ reportXftFonts(XtermWidget xw,
 	FcChar32 ch;
 	unsigned missing = 0;
 
-	printf("Loaded XftFonts(%s:%s)\n", name, tag);
+	printf("Loaded XftFonts(%s[%s])\n", name, tag);
 
 	for (ch = first_char; ch <= last_char; ++ch) {
 	    if (xtermXftMissing(xw, fp, ch)) {
@@ -3578,9 +3574,9 @@ SetVTFont(XtermWidget xw,
 		SAVE_FNAME(f_wb, fWBold);
 #endif
 	    } else {
-		xtermLoadFont(xw,
-			      xtermFontName(screen->MenuFontName(oldFont)),
-			      doresize, oldFont);
+		(void) xtermLoadFont(xw,
+				     xtermFontName(screen->MenuFontName(oldFont)),
+				     doresize, oldFont);
 		Bell(xw, XkbBI_MinorError, 0);
 	    }
 	    FREE_FNAME(f_n);

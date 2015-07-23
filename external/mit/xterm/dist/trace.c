@@ -1,7 +1,7 @@
-/* $XTermId: trace.c,v 1.155 2014/04/25 21:30:23 Ross.Combs Exp $ */
+/* $XTermId: trace.c,v 1.159 2015/03/02 02:00:48 tom Exp $ */
 
 /*
- * Copyright 1997-2013,2014 by Thomas E. Dickey
+ * Copyright 1997-2014,2015 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -306,11 +306,11 @@ visibleChars(const Char *buf, unsigned len)
 	result = 0;
 	used = 0;
     }
-    return result;
+    return NonNull(result);
 }
 
 char *
-visibleIChars(IChar *buf, unsigned len)
+visibleIChars(const IChar *buf, unsigned len)
 {
     static char *result;
     static unsigned used;
@@ -342,7 +342,7 @@ visibleIChars(IChar *buf, unsigned len)
 	result = 0;
 	used = 0;
     }
-    return result;
+    return NonNull(result);
 }
 
 char *
@@ -627,7 +627,7 @@ TraceScreen(XtermWidget xw, int whichBuf)
 }
 
 void
-TraceFocus(Widget w, XEvent * ev)
+TraceFocus(Widget w, XEvent *ev)
 {
     TRACE(("trace_focus event type %d:%s\n",
 	   ev->type, visibleEventType(ev->type)));
@@ -783,7 +783,7 @@ TraceWMSizeHints(XtermWidget xw)
  */
 /* ARGSUSED */
 static int
-no_error(Display *dpy GCC_UNUSED, XErrorEvent * event GCC_UNUSED)
+no_error(Display *dpy GCC_UNUSED, XErrorEvent *event GCC_UNUSED)
 {
     return 1;
 }
@@ -860,7 +860,7 @@ TraceResizeRequest(const char *fn, int ln, Widget w,
 }
 
 #define XRES_S(name) Trace(#name " = %s\n", NonNull(resp->name))
-#define XRES_B(name) Trace(#name " = %s\n", BtoS(resp->name))
+#define XRES_B(name) Trace(#name " = %s\n", MtoS(resp->name))
 #define XRES_I(name) Trace(#name " = %d\n", resp->name)
 
 void

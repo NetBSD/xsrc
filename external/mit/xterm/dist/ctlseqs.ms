@@ -1,9 +1,9 @@
 .\"#! troff -ms $1		-*- Nroff -*-
 .\" "Xterm Control Sequences" document
-.\" $XTermId: ctlseqs.ms,v 1.311 2014/05/27 00:23:36 tom Exp $
+.\" $XTermId: ctlseqs.ms,v 1.320 2015/04/12 20:55:48 tom Exp $
 .\"
 .\"
-.\" Copyright 1996-2013,2014 by Thomas E. Dickey
+.\" Copyright 1996-2014,2015 by Thomas E. Dickey
 .\"
 .\"                         All Rights Reserved
 .\"
@@ -69,8 +69,8 @@
 .\"
 .ds XT XTerm
 .ds xt xterm
-.ds LF Patch #305
-.ds RF 2014/05/26
+.ds LF Patch #318
+.ds RF 2015/04/12
 .\"
 .if n .pl 9999v		\" no page breaks in nroff
 .ND
@@ -330,7 +330,7 @@ X Consortium (1994)
 Thomas Dickey
 .AI
 XFree86 Project (1996-2006)
-invisible-island.net (2006-2013)
+invisible-island.net (2006-2015)
 updated for \*(XT \*(LF (\*(RF)
 .AU
 .
@@ -641,6 +641,7 @@ The string following the "q" is one of the following:
   \*(c"\*q	\(-> DECSCA
   \*(c"\*p	\(-> DECSCL
   \*r		\(-> DECSTBM
+  \*(cs		\(-> DECSLRM
   \*m		\(-> SGR
   \*(Sp\*q	\(-> DECSCUSR
 .br
@@ -1129,10 +1130,10 @@ ISO-8613-3 can be interpreted in more than one way;
 .RE
 .sP
 These ISO-8613-3 controls are supported:
-  \*(Ps = \*3\*8 ; \*2 ; \*(Pr ; \*(Pg ; \*(Pb \(-> Set foreground color to the closest match in \fIxterm\fP's palette for the given RGB \*(Pr/\*(Pg/\*(Pb.
-  \*(Ps = \*3\*8 ; \*5 ; \*(Ps \(-> Set foreground color to the second \*(Ps.
-  \*(Ps = \*4\*8 ; \*2 ; \*(Pr ; \*(Pg ; \*(Pb \(-> Set background color to the closest match in \fIxterm\fP's palette for the given RGB \*(Pr/\*(Pg/\*(Pb.
-  \*(Ps = \*4\*8 ; \*5 ; \*(Ps \(-> Set background color to the second \*(Ps.
+  \*(Ps = \*3\*8\*;\*2\*;\*(Pr\*;\*(Pg\*;\*(Pb \(-> Set foreground color to the closest match in \fIxterm\fP's palette for the given RGB \*(Pr/\*(Pg/\*(Pb.
+  \*(Ps = \*3\*8\*;\*5\*;\*(Ps \(-> Set foreground color to the second \*(Ps.
+  \*(Ps = \*4\*8\*;\*2\*;\*(Pr\*;\*(Pg\*;\*(Pb \(-> Set background color to the closest match in \fIxterm\fP's palette for the given RGB \*(Pr/\*(Pg/\*(Pb.
+  \*(Ps = \*4\*8\*;\*5\*;\*(Ps \(-> Set background color to the second \*(Ps.
 .sp
 .
 .IP \\*(Cs\\*>\\*(Ps\\*;\\*(Ps\\*s\\*m
@@ -1151,11 +1152,13 @@ If no parameters are given, all resources are reset to their initial values.
 .
 .IP \\*(Cs\\*(Ps\\*s\\*n
 Device Status Report (DSR).
-  \*(Ps = \*5 \(-> Status Report.  Result (``OK'') is
+  \*(Ps = \*5 \(-> Status Report.
 .br
+Result (``OK'') is
 \*(Cs\*0\*n
-  \*(Ps = \*6 \(-> Report Cursor Position (CPR) [row;column].  Result is
+  \*(Ps = \*6 \(-> Report Cursor Position (CPR) [row;column].
 .br
+Result is
 \*(Cs\*(Ir\*s\*;\*(Ic\*s\*R
 .sp
 \fBNote\fP:
@@ -1357,17 +1360,29 @@ Zero parameters use the display's height or width.
   \*(Ps = \*1\*1 \(-> Report \fIxterm\fP window state.
 If the \fIxterm\fP window is open (non-iconified), it returns \*(Cs\*1\*t.
 If the \fIxterm\fP window is iconified, it returns \*(Cs\*2\*t.
-  \*(Ps = \*1\*3 \(-> Report \fIxterm\fP window position.  Result is
+  \*(Ps = \*1\*3 \(-> Report \fIxterm\fP window position.
+.br
+Result is
 \*(Cs\*3\*;\*(Ix\*s\*;\*(Iy\*s\*t
-  \*(Ps = \*1\*4 \(-> Report \fIxterm\fP window in pixels.  Result is
+  \*(Ps = \*1\*4 \(-> Report \fIxterm\fP window in pixels.
+.br
+Result is
 \*(Cs\*s\*4\*s\*;\*s\fIheight\fP\*s\*;\*s\fIwidth\fP\*s\*t
-  \*(Ps = \*1\*8 \(-> Report the size of the text area in characters.  Result is
+  \*(Ps = \*1\*8 \(-> Report the size of the text area in characters.
+.br
+Result is
 \*(Cs\*s\*8\*s\*;\*s\fIheight\fP\*s\*;\*s\fIwidth\fP\*s\*t
-  \*(Ps = \*1\*9 \(-> Report the size of the screen in characters.  Result is
+  \*(Ps = \*1\*9 \(-> Report the size of the screen in characters.
+.br
+Result is
 \*(Cs\*s\*9\*s\*;\*s\fIheight\fP\*s\*;\*s\fIwidth\fP\*s\*t
-  \*(Ps = \*2\*0 \(-> Report \fIxterm\fP window's icon label.  Result is
+  \*(Ps = \*2\*0 \(-> Report \fIxterm\fP window's icon label.
+.br
+Result is
 \*(Os\*s\*L\*s\fIlabel\fP\*s\*(ST
-  \*(Ps = \*2\*1 \(-> Report \fIxterm\fP window's title.  Result is
+  \*(Ps = \*2\*1 \(-> Report \fIxterm\fP window's title.
+.br
+Result is
 \*(Os\*s\*l\*s\fIlabel\fP\*s\*(ST
   \*(Ps = \*2\*2\*s\*;\*s\*0 \(-> Save \fIxterm\fP icon and window title on stack.
   \*(Ps = \*2\*2\*s\*;\*s\*1 \(-> Save \fIxterm\fP icon title on stack.
@@ -1450,7 +1465,7 @@ Select Attribute Change Extent (DECSACE).
 Request Checksum of Rectangular Area (DECRQCRA), VT420 and up.
 Response is
 .br
-\*(Dc\*(Pt\*s\*!x\*sx\*sx\*sx\*s\*(ST
+\*(Dc\*(Pi\*s\*!x\*sx\*sx\*sx\*s\*(ST
 .br
   \*(Pi is the request id.
   \*(Pg is the page number.
@@ -1512,7 +1527,7 @@ have been enabled with a DECEFR.
 .sP
   \(-> \*(Cs\*(Pe\*s\*;\*(Pb\*s\*;\*(Pr\*s\*;\*(Pc\*s\*;\*(Pp\*s\*&\*s\*w
 .sP
-Parameters are [event;button;row;column;page].
+Parameters are [\fIevent\fP;\fIbutton\fP;\fIrow\fP;\fIcolumn\fP;\fIpage\fP].
 .br
 Valid values for the event:
   \*(Pe = \*0 \(-> locator unavailable - no other parameters sent.
@@ -1527,17 +1542,17 @@ Valid values for the event:
   \*(Pe = \*9 \(-> M4 button up.
   \*(Pe = \*1\*0 \(-> locator outside filter rectangle.
 .br
-``button'' parameter is a bitmask indicating which buttons are pressed:
+The ``\fIbutton\fP'' parameter is a bitmask indicating which buttons are pressed:
   \*(Pb = \*0 \(<- no buttons down.
   \*(Pb & \*1 \(<- right button down.
   \*(Pb & \*2 \(<- middle button down.
   \*(Pb & \*4 \(<- left button down.
   \*(Pb & \*8 \(<- M4 button down.
 .br
-``row'' and ``column'' parameters are the coordinates of the locator
+The ``\fIrow\fP'' and ``\fIcolumn\fP'' parameters are the coordinates of the locator
 position in the \fI\*(xt\fP window, encoded as ASCII decimal.
 .br
-The ``page'' parameter is not used by \*(xt, and will be omitted.
+The ``\fIpage\fP'' parameter is not used by \*(xt.
 .
 .IP \\*(Cs\\*(Pm\\*s\\*(qu\\*}
 Insert \*(Ps Column(s) (default = 1) (DECIC), VT420 and up.
@@ -1564,10 +1579,10 @@ and window title.
   \*(Ps = \*3 \(-> Set X property on top-level window.
 \*(Pt should be in the form
 "\fIprop=value\fP", or just "\fIprop\fP" to delete the property
-  \*(Ps = \*4 ; \fIc ; spec\fP \(-> Change Color Number \fIc\fP to
+  \*(Ps = \*4\*;\fIc\fP\*;\fIspec\fP \(-> Change Color Number \fIc\fP to
 the color specified by \fIspec\fP.
 This can be a name or RGB specification as per \fIXParseColor\fP.
-Any number of \fIc name\fP pairs may be given.
+Any number of \fIc\fP/\fIspec\fP pairs may be given.
 The color numbers correspond to the ANSI colors 0-7,
 their bright versions 8-15,
 and if supported, the remainder of the 88-color or 256-color table.
@@ -1578,17 +1593,23 @@ to set the corresponding color.
 Because more than one pair of color number and specification can
 be given in one control sequence, \fIxterm\fR can make more than one reply.
 .sP
-  \*(Ps = \*5 ; \fIc ; spec\fP \(-> Change Special Color Number \fIc\fP to
+  \*(Ps = \*5\*;\fIc\fP\*;\fIspec\fP \(-> Change Special Color Number \fIc\fP to
 the color specified by \fIspec\fP.
 This can be a name or RGB specification as per \fIXParseColor\fP.
-Any number of \fIc name\fP pairs may be given.
+Any number of \fIc\fP/\fIspec\fP pairs may be given.
 The special colors can also be set by adding the maximum number of colors
 to these codes in an \*(Os\*4 control:
 .sP
+.in +2n
   \*(Pc = \*0 \(<- resource \fBcolorBD\fP (BOLD).
   \*(Pc = \*1 \(<- resource \fBcolorUL\fP (UNDERLINE).
   \*(Pc = \*2 \(<- resource \fBcolorBL\fP (BLINK).
   \*(Pc = \*3 \(<- resource \fBcolorRV\fP (REVERSE).
+  \*(Pc = \*4 \(<- resource \fBcolorIT\fP (ITALIC).
+.in -2n
+.sP
+  \*(Ps = \*6\*;\fIc\fP\*;\fIf\fP \(-> Enable/disable Special Color Number \fIc\fP.
+\*(Os\*6 is the same as \*(Os\*1\*0\*6.
 .sP
 The 10 colors (below) which may be set or queried
 using \*1\*0 through \*1\*9 are
@@ -1640,7 +1661,7 @@ by adding a space and then the font specifier.
 If the "TrueType Fonts" menu entry is set (the \fBrenderFont\fP resource),
 then this control sets/queries the \fBfaceName\fP resource.
 .sP
-  \*(Ps = \*5\*1 (reserved for Emacs shell).
+  \*(Ps = \*5\*1 \(-> reserved for Emacs shell.
 .sP
   \*(Ps = \*5\*2 \(-> Manipulate Selection Data.
 These controls may be disabled using the \fIallowWindowOps\fP resource.
@@ -1672,7 +1693,7 @@ If the second parameter is neither a base64 string nor \*?,
 then the selection is cleared.
 .Ed
 .sP
-  \*(Ps = \*1\*0\*4 ; \fIc\fP \(-> Reset Color Number \fIc\fP.  It is reset to
+  \*(Ps = \*1\*0\*4\*;\fIc\fP \(-> Reset Color Number \fIc\fP.  It is reset to
 the color specified by the corresponding X resource.
 Any number of \fIc\fP parameters may be given.
 These parameters correspond to the ANSI colors 0-7,
@@ -1680,12 +1701,25 @@ their bright versions 8-15,
 and if supported, the remainder of the 88-color or 256-color table.
 If no parameters are given, the entire table will be reset.
 .sP
-  \*(Ps = \*1\*0\*5 ; \fIc\fP \(-> Reset Special Color Number \fIc\fP.  It is reset to
+  \*(Ps = \*1\*0\*5\*;\fIc\fP \(-> Reset Special Color Number \fIc\fP.  It is reset to
 the color specified by the corresponding X resource.
 Any number of \fIc\fP parameters may be given.
 These parameters correspond to the special colors which can be set
 using an \*(Os\*5 control (or by adding the maximum number of colors
 using an \*(Os\*4 control).
+.sP
+  \*(Ps = \*1\*0\*6\*;\fIc\fP\*;\fIf\fP \(-> Enable/disable Special Color Number \fIc\fP.
+The second parameter tells \fIxterm\fP to enable the corresponding color
+mode if nonzero, disable it if zero.
+.sP
+.in +2n
+  \*(Pc = \*0 \(<- resource \fBcolorBDMode\fP (BOLD).
+  \*(Pc = \*1 \(<- resource \fBcolorULMode\fP (UNDERLINE).
+  \*(Pc = \*2 \(<- resource \fBcolorBLMode\fP (BLINK).
+  \*(Pc = \*3 \(<- resource \fBcolorRVMode\fP (REVERSE).
+  \*(Pc = \*4 \(<- resource \fBcolorITMode\fP (ITALIC).
+  \*(Pc = \*5 \(<- resource \fBcolorAttrMode\fP (Override ANSI).
+.in -2n
 .sP
 The \fIdynamic colors\fR can also be reset to their default (resource) values:
   \*(Ps = \*1\*1\*0 \(-> Reset VT100 text foreground color.

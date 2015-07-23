@@ -1,7 +1,7 @@
-/* $XTermId: screen.c,v 1.500 2014/06/19 21:09:11 tom Exp $ */
+/* $XTermId: screen.c,v 1.512 2015/03/22 14:47:02 tom Exp $ */
 
 /*
- * Copyright 1999-2013,2014 by Thomas E. Dickey
+ * Copyright 1999-2014,2015 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -402,7 +402,7 @@ unsaveEditBufLines(TScreen *screen, ScrnBuf sb, unsigned n)
 	int extra = (int) (n - j);
 	LineData *dst = (LineData *) scrnHeadAddr(screen, sb, j);
 #if OPT_FIFO_LINES
-	LineData *src;
+	CLineData *src;
 
 	if (extra > screen->saved_fifo || extra > screen->savelines) {
 	    TRACE(("...FIXME: must clear text!\n"));
@@ -411,8 +411,8 @@ unsaveEditBufLines(TScreen *screen, ScrnBuf sb, unsigned n)
 	src = getScrollback(screen, -extra);
 #else
 	unsigned k = (screen->savelines - extra);
-	LineData *src = (LineData *) scrnHeadAddr(screen,
-						  screen->saveBuf_index, k);
+	CLineData *src = CLineData *scrnHeadAddr(screen,
+						 screen->saveBuf_index, k);
 #endif
 	copyLineData(dst, src);
     }
@@ -1027,6 +1027,7 @@ ScrnClearLines(XtermWidget xw, ScrnBuf sb, int where, unsigned n, unsigned size)
 	   screen->savelines,
 	   n,
 	   screen->max_col));
+    /* FIXME: this looks wrong -- rcombs */
     chararea_clear_displayed_graphics(screen,
 				      where + screen->savelines,
 				      0,
@@ -1118,8 +1119,10 @@ ScrnInsertLine(XtermWidget xw, ScrnBuf sb, int last, int where, unsigned n)
     TRACE(("ScrnInsertLine(last %d, where %d, n %d, size %d)\n",
 	   last, where, n, size));
 
+    if ((int) n > last)
+	n = (unsigned) last;
+
     assert(where >= 0);
-    assert(last >= (int) n);
     assert(last >= where);
 
     assert((int) n > 0);
@@ -1254,14 +1257,14 @@ ScrnInsertChar(XtermWidget xw, unsigned n)
     if (col < first || col > last) {
 	TRACE(("ScrnInsertChar - col %d outside [%d..%d]\n", col, first, last));
 	return;
-    } else if (last <= (col + (int) n)) {
-	n = (unsigned) (last - col);
+    } else if (last < (col + (int) n)) {
+	n = (unsigned) (last + 1 - col);
     }
 
     assert(screen->cur_col >= 0);
     assert(screen->cur_row >= 0);
     assert((int) n >= 0);
-    assert(last >= (int) n);
+    assert((last + 1) >= (int) n);
 
     if_OPT_WIDE_CHARS(screen, {
 	int xx = screen->cur_row;
@@ -1323,7 +1326,7 @@ ScrnDeleteChar(XtermWidget xw, unsigned n)
     assert(screen->cur_col >= 0);
     assert(screen->cur_row >= 0);
     assert((int) n >= 0);
-    assert(last > (int) n);
+    assert(last >= (int) n);
 
     if_OPT_WIDE_CHARS(screen, {
 	int kl;
@@ -1362,7 +1365,7 @@ ScrnDeleteChar(XtermWidget xw, unsigned n)
  * its line-wrapping state.
  */
 void
-ShowWrapMarks(XtermWidget xw, int row, LineData *ld)
+ShowWrapMarks(XtermWidget xw, int row, CLineData *ld)
 {
     TScreen *screen = TScreenOf(xw);
     Boolean set = (Boolean) LineTstWrapped(ld);
@@ -1399,7 +1402,7 @@ refreshFontGCs(XtermWidget xw, unsigned new_attrs, unsigned old_attrs)
 /*
  * Repaints the area enclosed by the parameters.
  * Requires: (toprow, leftcol), (toprow + nrows, leftcol + ncols) are
- * 	     coordinates of characters in screen;
+ *	     coordinates of characters in screen;
  *	     nrows and ncols positive.
  *	     all dimensions are based on single-characters.
  */
@@ -1412,7 +1415,7 @@ ScrnRefresh(XtermWidget xw,
 	    Bool force)		/* ... leading/trailing spaces */
 {
     TScreen *screen = TScreenOf(xw);
-    LineData *ld;
+    CLineData *ld;
     int y = toprow * FontHeight(screen) + screen->border;
     int row;
     int maxrow = toprow + nrows - 1;
@@ -1449,7 +1452,7 @@ ScrnRefresh(XtermWidget xw,
 #endif
 #define BLANK_CEL(cell) (chars[cell] == ' ')
 	IChar *chars;
-	IAttr *attrs;
+	const IAttr *attrs;
 	int col = leftcol;
 	int maxcol = leftcol + ncols - 1;
 	int hi_col = maxcol;
@@ -1755,11 +1758,7 @@ ScrnRefresh(XtermWidget xw,
 	resetXtermGC(xw, flags, hilite);
     }
 
-    refresh_displayed_graphics(screen,
-			       leftcol,
-			       toprow + screen->topline,
-			       ncols,
-			       nrows);
+    refresh_displayed_graphics(xw, leftcol, toprow, ncols, nrows);
 
     /*
      * If we're in color mode, reset the various GC's to the current
@@ -1870,7 +1869,7 @@ ScreenResize(XtermWidget xw,
 {
     TScreen *screen = TScreenOf(xw);
     int code, rows, cols;
-    int border = 2 * screen->border;
+    const int border = 2 * screen->border;
     int move_down_by = 0;
 #ifdef TTYSIZE_STRUCT
     TTYSIZE_STRUCT ts;
@@ -2207,7 +2206,7 @@ ScreenResize(XtermWidget xw,
 	screen->fullVwin.height = height - border;
 	screen->fullVwin.width = width - border - screen->fullVwin.sb_info.width;
 
-	scroll_displayed_graphics(-move_down_by);
+	scroll_displayed_graphics(xw, -move_down_by);
     } else if (FullHeight(screen) == height && FullWidth(screen) == width)
 	return (0);		/* nothing has changed at all */
 
@@ -2496,6 +2495,8 @@ ScrnCopyRectangle(XtermWidget xw, XTermRect *source, int nparam, int *params)
 
 		for (row = source->top - 1; row < source->bottom; ++row) {
 		    ld = getLineData(screen, row);
+		    if (ld == 0)
+			continue;
 		    j = (Cardinal) (row - (source->top - 1));
 		    for (col = source->left - 1; col < source->right; ++col) {
 			k = (Cardinal) (col - (source->left - 1));
@@ -2506,6 +2507,8 @@ ScrnCopyRectangle(XtermWidget xw, XTermRect *source, int nparam, int *params)
 		}
 		for (row = target.top - 1; row < target.bottom; ++row) {
 		    ld = getLineData(screen, row);
+		    if (ld == 0)
+			continue;
 		    j = (Cardinal) (row - (target.top - 1));
 		    for (col = target.left - 1; col < target.right; ++col) {
 			k = (Cardinal) (col - (target.left - 1));

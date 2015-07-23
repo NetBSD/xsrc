@@ -1,7 +1,7 @@
-/* $XTermId: ptyx.h,v 1.809 2014/06/13 00:53:35 tom Exp $ */
+/* $XTermId: ptyx.h,v 1.823 2015/02/16 00:25:27 tom Exp $ */
 
 /*
- * Copyright 1999-2013,2014 by Thomas E. Dickey
+ * Copyright 1999-2014,2015 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -367,6 +367,9 @@ typedef struct {
 #define	ANSI_OSC	0x9D
 #define	ANSI_PM		0x9E
 #define	ANSI_APC	0x9F
+
+#define L_CURL		'{'
+#define R_CURL		'}'
 
 #define MIN_DECID  52			/* can emulate VT52 */
 #define MAX_DECID 525			/* ...through VT525 */
@@ -910,6 +913,23 @@ typedef enum {
 } TermColors;
 
 /*
+ * Definitions for exec-formatted and insert-formatted actions.
+ */
+typedef void (*FormatSelect) (Widget, char *, char *, CELL *, CELL *);
+
+typedef struct {
+    char *format;
+    char *buffer;
+    FormatSelect format_select;
+#if OPT_PASTE64
+    Cardinal base64_paste;
+#endif
+#if OPT_READLINE
+    unsigned paste_brackets;
+#endif
+} InternalSelect;
+
+/*
  * Constants for titleModes resource
  */
 typedef enum {
@@ -1212,10 +1232,19 @@ typedef enum {
 #define COLOR_UL	(NUM_ANSI_COLORS+1)	/* UNDERLINE */
 #define COLOR_BL	(NUM_ANSI_COLORS+2)	/* BLINK */
 #define COLOR_RV	(NUM_ANSI_COLORS+3)	/* REVERSE */
+
+#if OPT_WIDE_ATTRS
+#define COLOR_IT	(NUM_ANSI_COLORS+4)	/* ITALIC */
+#define MAXCOLORS	(NUM_ANSI_COLORS+5)
+#else
 #define MAXCOLORS	(NUM_ANSI_COLORS+4)
+#endif
+
 #ifndef DFT_COLORMODE
 #define DFT_COLORMODE True	/* default colorMode resource */
 #endif
+
+#define UseItalicFont(screen) (!(screen)->colorITMode)
 
 #define ReverseOrHilite(screen,flags,hilite) \
 		(( screen->colorRVMode && hilite ) || \
@@ -1233,6 +1262,7 @@ typedef enum {
 
 #define TERM_COLOR_FLAGS(xw) 0
 
+#define UseItalicFont(screen) True
 #define ReverseOrHilite(screen,flags,hilite) \
 		      (( (flags & INVERSE) && !hilite) || \
 		       (!(flags & INVERSE) &&  hilite))
@@ -1455,16 +1485,16 @@ typedef unsigned char IChar;	/* for 8-bit characters */
 #define BUF_SIZE resource.maxBufSize
 
 typedef struct {
-	Char *	next;
-	Char *	last;
-	int	update;		/* HandleInterpret */
+	Char    *next;
+	Char    *last;
+	int      update;	/* HandleInterpret */
 #if OPT_WIDE_CHARS
-	IChar	utf_data;	/* resulting character */
-	int	utf_size;	/* ...number of bytes decoded */
-	Char	*write_buf;
+	IChar    utf_data;	/* resulting character */
+	int      utf_size;	/* ...number of bytes decoded */
+	Char    *write_buf;
 	unsigned write_len;
 #endif
-	Char	buffer[1];
+	Char     buffer[1];
 } PtyData;
 
 /***====================================================================***/
@@ -1520,6 +1550,8 @@ typedef struct {
 	CharData *combData[1];	/* first enum past fixed-offsets */
 } LineData;
 
+typedef const LineData CLineData;
+
 /*
  * We use CellData in a few places, when copying a cell's data to a temporary
  * variable.
@@ -1551,8 +1583,11 @@ typedef struct {
 #define ROW2INX(screen, row)	((row) + (screen)->topline)
 #define INX2ROW(screen, inx)	((inx) - (screen)->topline)
 
+/* these are unused but could be useful for debugging */
+#if 0
 #define ROW2ABS(screen, row)	((row) + (screen)->savedlines)
 #define INX2ABS(screen, inx)	ROW2ABS(screen, INX2ROW(screen, inx))
+#endif
 
 #define okScrnRow(screen, row) \
 	((row) <= ((screen)->max_row - (screen)->topline) \
@@ -1890,6 +1925,9 @@ typedef struct {
 	Boolean		colorBLMode;	/* use color for blink?		*/
 	Boolean		colorRVMode;	/* use color for reverse?	*/
 	Boolean		colorAttrMode;	/* prefer colorUL/BD to SGR	*/
+#if OPT_WIDE_ATTRS
+	Boolean		colorITMode;	/* use color for italics?	*/
+#endif
 #endif
 #if OPT_DEC_CHRSET
 	Boolean		font_doublesize;/* enable font-scaling		*/
@@ -1988,6 +2026,7 @@ typedef struct {
 	Boolean		allowTitleOps;	/* TitleOps mode		*/
 	Boolean		allowWindowOps;	/* WindowOps mode		*/
 
+	Boolean		allowPasteControl0; /* PasteControls mode	*/
 	Boolean		allowColorOp0;	/* initial ColorOps mode	*/
 	Boolean		allowFontOp0;	/* initial FontOps mode		*/
 	Boolean		allowSendEvent0;/* initial SendEvent mode	*/
@@ -2105,7 +2144,7 @@ typedef struct {
 	 * the saved lines, taking scrolling into account.
 	 */
 	int		topline;	/* line number of top, <= 0	*/
-	long		saved_fifo;     /* number of lines that've been saved */
+	long		saved_fifo;     /* number of lines that've ever been saved */
 	int		savedlines;     /* number of lines that've been saved */
 	int		savelines;	/* number of lines off top to save */
 	int		scroll_amt;	/* amount to scroll		*/
@@ -2206,6 +2245,20 @@ typedef struct {
 	unsigned	restore_height;
 #endif
 
+#if OPT_REGIS_GRAPHICS
+	String		graphics_regis_default_font; /* font for "builtin" */
+
+	String		graphics_regis_screensize; /* given a size in pixels */
+	Dimension	graphics_regis_def_wide; /* ...corresponding width   */
+	Dimension	graphics_regis_def_high; /* ...and height            */
+#endif
+
+#if OPT_GRAPHICS
+	String		graphics_max_size;	/* given a size in pixels */
+	Dimension	graphics_max_wide;	/* ...corresponding width */
+	Dimension	graphics_max_high;	/* ...and height          */
+#endif
+
 #if OPT_SCROLL_LOCK
 	Boolean		allowScrollLock;/* ScrollLock mode		*/
 	Boolean		allowScrollLock0;/* initial ScrollLock mode	*/
@@ -2294,7 +2347,7 @@ typedef struct {
 	int		lastValidRow;	/* " " */
 
 	Boolean		selectToBuffer;	/* copy selection to buffer	*/
-	char *		internal_select;
+	InternalSelect	internal_select;
 
 	String		default_string;
 	String		eightbit_select_types;
@@ -2328,6 +2381,8 @@ typedef struct {
 	String		initial_font;
 	String		menu_font_names[NMENUFONTS][fMAX];
 #define MenuFontName(n) menu_font_names[n][fNorm]
+#define EscapeFontName() MenuFontName(fontMenu_fontescape)
+#define SelectFontName() MenuFontName(fontMenu_fontsel)
 	long		menu_font_sizes[NMENUFONTS];
 	int		menu_font_number;
 #if OPT_LOAD_VTFONTS || OPT_WIDE_CHARS

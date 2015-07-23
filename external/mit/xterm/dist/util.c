@@ -1,7 +1,7 @@
-/* $XTermId: util.c,v 1.660 2014/06/19 22:15:20 tom Exp $ */
+/* $XTermId: util.c,v 1.681 2015/04/10 08:31:02 tom Exp $ */
 
 /*
- * Copyright 1999-2013,2014 by Thomas E. Dickey
+ * Copyright 1999-2014,2015 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -63,6 +63,7 @@
 #include <xstrings.h>
 
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 #include <assert.h>
 
@@ -72,6 +73,10 @@
 #endif
 #include <wcwidth.h>
 #endif
+
+#ifdef HAVE_X11_EXTENSIONS_XINERAMA_H
+#include <X11/extensions/Xinerama.h>
+#endif /* HAVE_X11_EXTENSIONS_XINERAMA_H */
 
 #include <graphics.h>
 
@@ -108,7 +113,7 @@ int (*my_wcwidth) (wchar_t);
 int
 DamagedCells(TScreen *screen, unsigned n, int *klp, int *krp, int row, int col)
 {
-    LineData *ld = getLineData(screen, row);
+    CLineData *ld = getLineData(screen, row);
     int result = False;
 
     assert(ld);
@@ -687,7 +692,7 @@ xtermScroll(XtermWidget xw, int amount)
 	}
     }
 
-    scroll_displayed_graphics(amount);
+    scroll_displayed_graphics(xw, amount);
 
     if (refreshheight > 0) {
 	ScrnRefresh(xw,
@@ -893,6 +898,20 @@ initZIconBeep(void)
     }
 }
 
+static char *
+getIconName(void)
+{
+    static char *icon_name;
+    static Arg args[] =
+    {
+	{XtNiconName, (XtArgVal) & icon_name}
+    };
+
+    icon_name = NULL;
+    XtGetValues(toplevel, args, XtNumber(args));
+    return icon_name;
+}
+
 static void
 setZIconBeep(XtermWidget xw)
 {
@@ -901,15 +920,7 @@ setZIconBeep(XtermWidget xw)
     /* Flag icon name with "***"  on window output when iconified.
      */
     if (resource.zIconBeep && mapstate == IsUnmapped && !screen->zIconBeep_flagged) {
-	static char *icon_name;
-	static Arg args[] =
-	{
-	    {XtNiconName, (XtArgVal) & icon_name}
-	};
-
-	icon_name = NULL;
-	XtGetValues(toplevel, args, XtNumber(args));
-
+	char *icon_name = getIconName();
 	if (icon_name != NULL) {
 	    screen->zIconBeep_flagged = True;
 	    ChangeIconName(xw, icon_name);
@@ -961,17 +972,12 @@ showZIconBeep(XtermWidget xw, char *name)
 void
 resetZIconBeep(XtermWidget xw)
 {
-    static char *icon_name;
-    static Arg args[] =
-    {
-	{XtNiconName, (XtArgVal) & icon_name}
-    };
+    char *icon_name;
     TScreen *screen = TScreenOf(xw);
 
     if (screen->zIconBeep_flagged) {
 	screen->zIconBeep_flagged = False;
-	icon_name = NULL;
-	XtGetValues(toplevel, args, XtNumber(args));
+	icon_name = getIconName();
 	if (icon_name != NULL) {
 	    char *buf = CastMallocN(char, strlen(icon_name));
 	    if (buf == NULL) {
@@ -1019,7 +1025,7 @@ void
 WriteText(XtermWidget xw, IChar *str, Cardinal len)
 {
     TScreen *screen = TScreenOf(xw);
-    LineData *ld = 0;
+    CLineData *ld = 0;
     int fg;
     unsigned test;
     unsigned attr_flags = xw->flags;
@@ -1214,9 +1220,8 @@ DeleteLine(XtermWidget xw, int n)
 					  && !screen->whichBuf
 					  && screen->cur_row == 0);
 
-    if (!ScrnIsRowInMargins(screen, screen->cur_row)
-	|| screen->cur_col < left
-	|| screen->cur_col > right)
+    if (!ScrnIsRowInMargins(screen, screen->cur_row) ||
+	!ScrnIsColInMargins(screen, screen->cur_col))
 	return;
 
     TRACE(("DeleteLine count=%d\n", n));
@@ -1321,7 +1326,7 @@ void
 InsertChar(XtermWidget xw, unsigned n)
 {
     TScreen *screen = TScreenOf(xw);
-    LineData *ld;
+    CLineData *ld;
     unsigned limit;
     int row = INX2ROW(screen, screen->cur_row);
     int left = ScrnLeftMargin(xw);
@@ -1404,14 +1409,16 @@ void
 DeleteChar(XtermWidget xw, unsigned n)
 {
     TScreen *screen = TScreenOf(xw);
-    LineData *ld;
+    CLineData *ld;
     unsigned limit;
     int row = INX2ROW(screen, screen->cur_row);
-    int left = ScrnLeftMargin(xw);
     int right = ScrnRightMargin(xw);
 
     if (screen->cursor_state)
 	HideCursor();
+
+    if (!ScrnIsColInMargins(screen, screen->cur_col))
+	return;
 
     TRACE(("DeleteChar count=%d\n", n));
 
@@ -1426,10 +1433,8 @@ DeleteChar(XtermWidget xw, unsigned n)
     if (n > limit)
 	n = limit;
 
-    if (screen->cur_col < left || screen->cur_col > right) {
-	n = 0;
-    } else if (AddToVisible(xw)
-	       && (ld = getLineData(screen, screen->cur_row)) != 0) {
+    if (AddToVisible(xw)
+	&& (ld = getLineData(screen, screen->cur_row)) != 0) {
 	int col = right + 1 - (int) n;
 
 	/*
@@ -1479,8 +1484,9 @@ ClearAbove(XtermWidget xw)
 	unsigned len = (unsigned) MaxCols(screen);
 
 	assert(screen->max_col >= 0);
-	for (row = 0; row <= screen->max_row; row++)
+	for (row = 0; row < screen->cur_row; row++)
 	    ClearInLine(xw, row, 0, len);
+	ClearInLine(xw, screen->cur_row, 0, (unsigned) screen->cur_col);
     } else {
 	int top, height;
 
@@ -1561,7 +1567,7 @@ static int
 ClearInLine2(XtermWidget xw, int flags, int row, int col, unsigned len)
 {
     TScreen *screen = TScreenOf(xw);
-    LineData *ld;
+    CLineData *ld;
     int rc = 1;
 
     TRACE(("ClearInLine(row=%d, col=%d, len=%d) vs %d..%d\n",
@@ -1889,7 +1895,7 @@ screen_has_data(XtermWidget xw)
 {
     TScreen *screen = TScreenOf(xw);
     Boolean result = False;
-    LineData *ld;
+    CLineData *ld;
     int row, col;
 
     for (row = 0; row < screen->max_row; ++row) {
@@ -1950,8 +1956,7 @@ CopyWait(XtermWidget xw)
     XEvent *rep = &reply;
 
     for (;;) {
-	XWindowEvent(screen->display, VWindow(screen),
-		     ExposureMask, &reply);
+	XWindowEvent(screen->display, VWindow(screen), ExposureMask, &reply);
 	switch (reply.type) {
 	case Expose:
 	    HandleExposure(xw, &reply);
@@ -2028,7 +2033,7 @@ horizontal_copy_area(XtermWidget xw,
 		     int amount)	/* number of characters to move right */
 {
     TScreen *screen = TScreenOf(xw);
-    LineData *ld;
+    CLineData *ld;
 
     if ((ld = getLineData(screen, screen->cur_row)) != 0) {
 	int src_x = LineCursorX(screen, ld, firstchar);
@@ -2068,7 +2073,7 @@ vertical_copy_area(XtermWidget xw,
 	copy_area(xw, src_x, src_y, w, h, dst_x, dst_y);
 
 	if (screen->show_wrap_marks) {
-	    LineData *ld;
+	    CLineData *ld;
 	    int row;
 	    for (row = firstline; row < firstline + nlines; ++row) {
 		if ((ld = getLineData(screen, row)) != 0) {
@@ -2736,6 +2741,9 @@ getWideXftFont(XtermWidget xw,
 
 #if OPT_WIDE_ATTRS
     if ((attr_flags & ATR_ITALIC)
+#if OPT_ISO_COLORS
+	&& !screen->colorITMode
+#endif
 	&& XFT_FONT(renderWideItal[fontnum])) {
 	wfont = XFT_FONT(renderWideItal[fontnum]);
     } else
@@ -2770,6 +2778,9 @@ getNormXftFont(XtermWidget xw,
 
 #if OPT_WIDE_ATTRS
     if ((attr_flags & ATR_ITALIC)
+#if OPT_ISO_COLORS
+	&& !screen->colorITMode
+#endif
 	&& XFT_FONT(renderFontItal[fontnum])) {
 	font = XFT_FONT(renderFontItal[fontnum]);
     } else
@@ -2803,7 +2814,7 @@ getNormXftFont(XtermWidget xw,
  * fontconfig/Xft combination prior to 2.2 has a problem with
  * CJK truetype 'double-width' (bi-width/monospace) fonts leading
  * to the 's p a c e d o u t' rendering. Consequently, we can't
- * rely on XftDrawString8/16  when one of  those fonts is used.
+ * rely on XftDrawString8/16 when one of those fonts is used.
  * Instead, we need to roll out our own using XftDrawCharSpec.
  * A patch in the same spirit (but in a rather different form)
  * was applied to gnome vte and gtk2 port of vim.
@@ -2816,7 +2827,7 @@ xtermXftDrawString(XtermWidget xw,
 		   XftFont *font,
 		   int x,
 		   int y,
-		   IChar *text,
+		   const IChar *text,
 		   Cardinal len,
 		   Bool really)
 {
@@ -3176,7 +3187,7 @@ drawClippedXftString(XtermWidget xw,
 		     XftColor *fg_color,
 		     int x,
 		     int y,
-		     IChar *text,
+		     const IChar *text,
 		     Cardinal len)
 {
     int ncells = xtermXftWidth(xw, attr_flags,
@@ -3311,7 +3322,7 @@ drawXtermText(XtermWidget xw,
 	      int start_x,
 	      int start_y,
 	      int chrset,
-	      IChar *text,
+	      const IChar *text,
 	      Cardinal len,
 	      int on_wide)
 {
@@ -3435,22 +3446,25 @@ drawXtermText(XtermWidget xw,
 	} else {		/* simulate double-sized characters */
 	    unsigned need = 2 * len;
 	    IChar *temp = TypeMallocN(IChar, need);
-	    unsigned n = 0;
 
-	    while (len--) {
-		temp[n++] = *text++;
-		temp[n++] = ' ';
+	    if (temp != 0) {
+		unsigned n = 0;
+
+		while (len--) {
+		    temp[n++] = *text++;
+		    temp[n++] = ' ';
+		}
+		x = drawXtermText(xw,
+				  attr_flags,
+				  draw_flags,
+				  gc,
+				  x, y,
+				  0,
+				  temp,
+				  n,
+				  on_wide);
+		free(temp);
 	    }
-	    x = drawXtermText(xw,
-			      attr_flags,
-			      draw_flags,
-			      gc,
-			      x, y,
-			      0,
-			      temp,
-			      n,
-			      on_wide);
-	    free(temp);
 	}
 	return x;
     }
@@ -4481,7 +4495,7 @@ getXtermForeground(XtermWidget xw, unsigned attr_flags, int color)
 unsigned
 getXtermCell(TScreen *screen, int row, int col)
 {
-    LineData *ld = getLineData(screen, row);
+    CLineData *ld = getLineData(screen, row);
 
     return ((ld && (col < (int) ld->lineSize))
 	    ? ld->charData[col]
@@ -4533,7 +4547,7 @@ addXtermCombining(TScreen *screen, int row, int col, unsigned ch)
 unsigned
 getXtermCombining(TScreen *screen, int row, int col, int off)
 {
-    LineData *ld = getLineData(screen, row);
+    CLineData *ld = getLineData(screen, row);
     return ld->combData[off][col];
 }
 #endif
@@ -4833,4 +4847,110 @@ dimRound(double value)
     if (result < value)
 	++result;
     return result;
+}
+
+/*
+ * Find the geometry of the specified Xinerama screen
+ */
+static void
+find_xinerama_screen(Display *display, int screen, struct Xinerama_geometry *ret)
+{
+#ifdef HAVE_X11_EXTENSIONS_XINERAMA_H
+    XineramaScreenInfo *screens;
+    int nb_screens;
+
+    if (screen == -1)		/* already inited */
+	return;
+    screens = XineramaQueryScreens(display, &nb_screens);
+    if (screen >= nb_screens) {
+	xtermWarning("Xinerama screen %d does not exist\n", screen);
+	return;
+    }
+    if (screen == -2) {
+	int ptr_x, ptr_y;
+	int dummy_int, i;
+	unsigned dummy_uint;
+	Window dummy_win;
+	if (nb_screens == 0)
+	    return;
+	XQueryPointer(display, DefaultRootWindow(display),
+		      &dummy_win, &dummy_win,
+		      &ptr_x, &ptr_y,
+		      &dummy_int, &dummy_int, &dummy_uint);
+	for (i = 0; i < nb_screens; i++) {
+	    if ((ptr_x - screens[i].x_org) < screens[i].width &&
+		(ptr_y - screens[i].y_org) < screens[i].height) {
+		screen = i;
+		break;
+	    }
+	}
+	if (screen < 0) {
+	    xtermWarning("Mouse not in any Xinerama screen, using 0\n");
+	    screen = 0;
+	}
+    }
+    ret->scr_x = screens[screen].x_org;
+    ret->scr_y = screens[screen].y_org;
+    ret->scr_w = screens[screen].width;
+    ret->scr_h = screens[screen].height;
+#else /* HAVE_X11_EXTENSIONS_XINERAMA_H */
+    (void) display;
+    (void) ret;
+    if (screen > 0)
+	xtermWarning("Xinerama support not enabled\n");
+#endif /* HAVE_X11_EXTENSIONS_XINERAMA_H */
+}
+
+/*
+ * Parse the screen code after the @ in a geometry string.
+ */
+static void
+parse_xinerama_screen(Display *display, const char *str, struct Xinerama_geometry *ret)
+{
+    int screen = -1;
+    char *end;
+
+    if (*str == 'g') {
+	screen = -1;
+	str++;
+    } else if (*str == 'c') {
+	screen = -2;
+	str++;
+    } else {
+	long s = strtol(str, &end, 0);
+	if (end > str && (int) s >= 0) {
+	    screen = (int) s;
+	    str = end;
+	}
+    }
+    if (*str) {
+	xtermWarning("invalid Xinerama specification '%s'\n", str);
+	return;
+    }
+    if (screen == -1)		/* already done */
+	return;
+    find_xinerama_screen(display, screen, ret);
+}
+
+/*
+ * Parse a geometry string with extra Xinerama specification:
+ * <w>x<h>+<x>+<y>@<screen>.
+ */
+int
+XParseXineramaGeometry(Display *display, char *parsestring, struct Xinerama_geometry *ret)
+{
+    char *at, buf[128];
+
+    ret->scr_x = 0;
+    ret->scr_y = 0;
+    ret->scr_w = DisplayWidth(display, DefaultScreen(display));
+    ret->scr_h = DisplayHeight(display, DefaultScreen(display));
+    at = strchr(parsestring, '@');
+    if (at != NULL && (size_t) (at - parsestring) < sizeof(buf) - 1) {
+	memcpy(buf, parsestring, (size_t) (at - parsestring));
+	buf[at - parsestring] = 0;
+	parsestring = buf;
+	parse_xinerama_screen(display, at + 1, ret);
+    }
+    return XParseGeometry(parsestring, &ret->x, &ret->y, &ret->w, &ret->h);
 }
