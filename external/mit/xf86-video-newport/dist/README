@@ -16,31 +16,31 @@
 
   ______________________________________________________________________
 
-  [1m1.  Supported Hardware[0m
+  1.  Supported Hardware
 
   This is an unaccelerated driver for the SGI newport cards (a.k.a. XL)
   as found in the SGI Indy and Indigo2. Both the 8bit and 24bit versions
   are tested and working.
 
 
-  [1m2.  Features[0m
+  2.  Features
 
 
-  +o  Support for 8 and 24 bit pixel depths
+  o  Support for 8 and 24 bit pixel depths
 
-  +o  Hardware cursor support to reduce flicker
-
-
-  [1m3.  Notes[0m
+  o  Hardware cursor support to reduce flicker
 
 
-  +o  X -configure does not generate a xorg.conf file.
-
-  +o  There's only a 1280x1024 mode.
+  3.  Notes
 
 
+  o  X -configure does not generate a xorg.conf file.
 
-  [1m4.  Configuration[0m
+  o  There's only a 1280x1024 mode.
+
+
+
+  4.  Configuration
 
   The driver auto-detects all device information necessary to initialize
   the card on the Indy. The only lines you need in the "Device" section
@@ -56,34 +56,35 @@
 
   However, if you have problems with auto-detection, you can specify:
 
-  +o  bitplanes - number of physical bitplanes (8 or 24)
+  o  bitplanes - number of physical bitplanes (8 or 24)
 
-  +o  HWCursor - enable or disable hardware cursor
+  o  HWCursor - enable or disable hardware cursor
 
-  +o  BusID - set this to "1" on the Indigo2 XL
-
-
-
-  [1m5.  Authors[0m
-
-
-  +o  Guido Guenther  <agx@sigxcpu.org>
+  o  BusID - set this to "1" on the Indigo2 XL
 
 
 
-  [1m6.  Acknowledgements[0m
+  5.  Authors
 
 
-  +o  Gleb O. Raiko  <raiko@niisi.msk.ru> for getting the beast to build
+  o  Guido Guenther  <mailto:agx@sigxcpu.org>
 
-  +o  Ralf Baechle  <ralf@oss.sgi.com> for his patience...
 
-  +o  Ulf Carlsson  <ulfc@calypso.engr.sgi.com> for comments and elf
-     loader code
 
-  +o  Nina A. Podolskaya  <nap@niisi.msk.ru> for elf loader code
+  6.  Acknowledgements
 
-  +o  all the guys who wrote the newport_con linux kernel code
+
+  o  Gleb O. Raiko  <mailto:raiko@niisi.msk.ru> for getting the beast to
+     build
+
+  o  Ralf Baechle  <mailto:ralf@oss.sgi.com> for his patience...
+
+  o  Ulf Carlsson  <mailto:ulfc@calypso.engr.sgi.com> for comments and
+     elf loader code
+
+  o  Nina A. Podolskaya  <mailto:nap@niisi.msk.ru> for elf loader code
+
+  o  all the guys who wrote the newport_con linux kernel code
 
 
 
