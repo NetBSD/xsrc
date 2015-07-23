@@ -1,0 +1,30 @@
+This package includes both the client and server sides implementing
+the protocol described in the "A Flexible Remote Execution Protocol
+Based on rsh" paper found in the specs/ subdirectory.
+
+This software has been deprecated in favor of the X11 forwarding
+provided in common ssh implementations.
+
+All questions regarding this software should be directed at the
+Xorg mailing list:
+
+        http://lists.freedesktop.org/mailman/listinfo/xorg
+
+Please submit bug reports to the Xorg bugzilla:
+
+        https://bugs.freedesktop.org/enter_bug.cgi?product=xorg
+
+The master development code repository can be found at:
+
+        git://anongit.freedesktop.org/git/xorg/app/rstart
+
+        http://cgit.freedesktop.org/xorg/app/rstart
+
+For patch submission instructions, see:
+
+	http://www.x.org/wiki/Development/Documentation/SubmittingPatches
+
+For more information on the git code manager, see:
+
+        http://wiki.x.org/wiki/GitPage
+
