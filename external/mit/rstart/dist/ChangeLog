@@ -1,0 +1,686 @@
+commit 5f8db7ff3cac1e635c92916dfab349416aeb58b8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 10 18:17:58 2013 -0800
+
+    rstart 1.0.5
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2b712991f56eb4257ec4f761d055a8ca9c156463
+Author: Egbert Eich <eich@freedesktop.org>
+Date:   Fri Nov 30 06:56:34 2012 -0500
+
+    man: Set correct config file location in man page
+    
+    Change the config file location from a hard coded path to what is
+    set during build.
+    
+    Signed-off-by: Egbert Eich <eich@freedesktop.org>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 261f9ddab794742c07e28c93f8d5bbbf992676bd
+Author: Egbert Eich <eich@freedesktop.org>
+Date:   Fri Nov 30 06:49:10 2012 -0500
+
+    install: Use sysconfdir instead of libdir for config files.
+    
+    Most X packages today install their config files in sysconfigdir,
+    only a few are left which still put their configuration in libdir.
+    Fix and consolidate setting of the config dir in one place.
+    
+    Signed-off-by: Egbert Eich <eich@freedesktop.org>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b1e14dadd77e69be6cb1e9223015cd43497b554a
+Author: Eric S. Raymond <esr@thyrsus.com>
+Date:   Thu Aug 23 12:55:38 2012 -0400
+
+    Eliminate use of tab stops.  Use real TBL markup.
+    
+    These changes enable structural translation to DocBook.
+    
+    Signed-off-by: Eric S. Raymond <esr@thyrsus.com>
+
+commit 16fb559aaf157f7465c52ecd50e4945c5d58c372
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Mar 11 14:42:00 2011 -0800
+
+    Make Makefile.am's compatible with Solaris make
+    
+    Solaris make won't substitute $< in explicit rules, only implicit ones
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit aaf318c99efcbc0d53f92059bc3bb74e08ab3c4c
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Jan 23 19:55:48 2011 -0500
+
+    config: upgrade configure.ac
+    
+    No functional change, applying standard statements and commenting.
+    http://wiki.x.org/wiki/NewModuleGuidelines
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 3fa14f7d0efd20967b8b144a31ea677f9035001f
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Jan 23 19:40:35 2011 -0500
+
+    config: rstartd.real does not require linking to any library
+    
+    It depends on xproto which does not provide libraries.
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 4607cec504483f608deea62008d12544a18723fc
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Jan 23 19:32:45 2011 -0500
+
+    config: move scripts into their own directory
+    
+    Complete the pattern of having targets in subdirs
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit cc819a1b6543e7699b4c01047d78ac5e91449134
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Jan 23 16:09:36 2011 -0500
+
+    config: add links from x and x11 from @Aliases
+    
+    This was part of the FIXME code removed earlier.
+    The information was read from the @Aliases file, but it
+    has not changed for the past 8 years. If it does change,
+    the makefile will need to be updated.
+    
+    The links are broken in 1.0.2 and restored in 1.0.3
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Using Automake, these links are now properly removed when uninstalling.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit c0cc423bb1c822a7d062b634cbcc79050dee3e93
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Jan 23 13:38:08 2011 -0500
+
+    config: let the specs directory handle the specs files
+    
+    For now, simply distribute the files, the troff docs
+    will get converted to DocBook/XML.
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 1b5c67c4233649d58c42be5e0290efa9bbc02551
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Jan 23 13:29:52 2011 -0500
+
+    config: let the samples directory handle the samples
+    
+    In this case, simply distribute the samples, no installation
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 065ee3cba18d4a4949a57a5e656ea6adf7f1d241
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Jan 23 13:13:48 2011 -0500
+
+    config: install contexts files using Automake
+    
+    This replaces the *FIXME* shell code which "generates in place"
+    the contexts files rather than doing a proper installation using the
+    $INSTALL automake specified program.
+    
+    Using Automake, we can now "uninstall" the commands.
+    
+    The links in @Aliases will be dealt with in following patches,
+    in case in turns out they are not needed.
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit a3d2a03340221e34fbf7191b8b35d6e48fc0f91f
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Jan 23 11:15:59 2011 -0500
+
+    config: install commands using Automake
+    
+    This replaces the *FIXME* shell code which "generates in place"
+    the commands rather than doing a proper installation using the
+    $INSTALL automake specified program.
+    
+    Using Automake, we can now "uninstall" the commands.
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 6e49f0ab6410fd12142011386e171fe340811a51
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Jan 23 08:33:02 2011 -0500
+
+    config: -DPACKAGEname and -DENVPREFIX not required in config.in
+    
+    Their value is hard coded in the Makefile and cannot be changed
+    at build time.
+    
+    The ENVPREFIX instance in install-data-hook will be handled later.
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 50518fb4f9cf4da7fe824f456a26f69996cc48e2
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sat Jan 22 20:14:59 2011 -0500
+
+    config: use sed rather than cpp to substitute config values
+    
+    A simple sed substitution will do for config values
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit b841619d12806d176ec45595677510c2a165490a
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sat Jan 22 19:58:41 2011 -0500
+
+    config: use sed rather than cpp to substitute rsh command value
+    
+    Use @RSH@ from autconf to obtain the rsh command value.
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 5461407fd29ea0804567af85b7f48f22c960dd2d
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sat Jan 22 19:45:58 2011 -0500
+
+    config: use sed rather than cpp to substitute directory values
+    
+    Use @rstartdir@ from autconf to obtain the $libdir/X11/rstart value.
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 4ddce1b4a83514a6a6555aa65a8b66f80e5fc9dc
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sat Jan 22 17:36:24 2011 -0500
+
+    config: -DBINDIR not required in server.cpp
+    
+    The value of BINDIR and LIBDIR are always identical.
+    There are no configure option to change it.
+    
+    These are not bindir and libdir from automake,
+    the value is always $libdir/X11/rstart.
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit d0671dca361c5937ad915ef8c3b3f574354d74be
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sat Jan 22 17:30:25 2011 -0500
+
+    config: -DSERVERNAME not required in client.cc and server.cpp
+    
+    The server name, rstartd, is hard coded in the makefile and
+    there are no configure options to change it.
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit d433f80d3abd5b6f1ae2b84faaddcd9c30c3bbde
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sat Jan 22 16:58:14 2011 -0500
+
+    config: use a single directory variable to represent $lib/X11/rstart
+    
+    There are numerous places where the rstart lib directory is needed.
+    One of the 4 strings is used, all have the same value:
+    
+    rstart_serverdir
+    $(libdir)/X11/rstart
+    configdir
+    DATA_DIR
+    
+    There are no configure options to let user assign a different directory
+    for one of the places where the value is needed.
+    
+    The patch assigns a new value called rstartdir to represent the root
+    dir from where files and other directories are created. Because it
+    ends with "dir" it can be used as a prefix to primary variables
+    such as PROGRAMS or DATA.
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit fbe9fbda023bf81870b76ce7c811d5c29bee5834
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Jan 13 19:26:43 2011 -0500
+
+    config: move man pages into their own directory
+    
+    Use services provided by XORG_MANPAGE_SECTIONS.
+    Use standard Makefile for man pages.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 16785403620d553cded89fa74be4c8ee10893326
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Jan 13 11:15:47 2011 -0500
+
+    man: remove trailing spaces and tabs
+    
+    Using s/[ \t]*$//
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit f73eb094e6db9c2d803b38eab1edef8475f3fa00
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jan 12 16:28:02 2011 -0500
+
+    config: replace deprecated AM_CONFIG_HEADER with AC_CONFIG_HEADERS
+    
+    This silences an Autoconf warning
+
+commit 74607edefc9c8ab3932d516766f15c024e5bedd5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 30 14:43:09 2010 -0700
+
+    rstart 1.0.4
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0a78f9f2ebb2fd2e0fdb9c81bd38c57a4b1b042c
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sat Oct 30 14:41:22 2010 -0700
+
+    config: update AC_PREREQ statement to 2.60
+    
+    Unrelated to the previous patches, the new value simply reflects
+    the reality that the minimum level for autoconf to configure
+    all x.org modules is 2.60 dated June 2006.
+    
+    ftp://ftp.gnu.org/gnu/autoconf/autoconf-2.60.tar.gz
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit eb2a237ac5ebc3e04e53658c6d30674419538eed
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 30 14:40:28 2010 -0700
+
+    config: Remove unnecessary calls from configure.ac
+    
+    AC_PROG_CC, AC_PROG_SED & AC_PROG_INSTALL are provided by
+     XORG_DEFAULT_OPTIONS now
+    PKG_CONFIG_MODULES handles AC_SUBST of the CFLAGS & LIBS variables
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 08de40a2f599e2d66a31cf103109e1764b4f3e0d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Oct 30 14:34:30 2010 -0700
+
+    Add note to readme explaining what this is, and to use ssh instead
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 35dfb51df90ac3fcf2b6eaf55c667c5ea37891dd
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Aug 6 08:16:19 2010 -0700
+
+    Fill in COPYING file with copyright notices from source code
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 73cbb59768dbc61478b1db52e927ee5a32703083
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jul 9 21:27:36 2010 -0700
+
+    Change PKG_CHECK_MODULES to only use xproto not x11
+    
+    Doesn't call any libX11 functions, so don't need to link against it.
+    Just has #include <X11/Xos.h> which is in xproto.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4f62402dbb7dc6776fc70457c733894e8dac688d
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Nov 26 09:19:52 2009 -0500
+
+    Makefile.am: add ChangeLog and INSTALL on MAINTAINERCLEANFILES
+    
+    Now that the INSTALL file is generated.
+    Allows running make maintainer-clean.
+
+commit cfb21bdc34e8a120aa78f2d65d08ce8f87bf090c
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Oct 28 14:09:07 2009 -0400
+
+    INSTALL, NEWS, README or AUTHORS files are missing/incorrect #24206
+    
+    Add missing INSTALL file. Use standard GNU file on building tarball
+    README may have been updated
+    Remove AUTHORS file as it is empty and no content available yet.
+    Remove NEWS file as it is empty and no content available yet.
+
+commit db62b3e8b4e12ceb2615c910825a6973379883b5
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Mon Oct 26 22:08:38 2009 -0400
+
+    Makefile.am: ChangeLog not required: EXTRA_DIST or *CLEANFILES #24432
+    
+    ChangeLog filename is known to Automake and requires no further
+    coding in the makefile.
+
+commit 902af47ba00493a3cf7478425ac6cc219ca35d97
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Oct 22 12:34:14 2009 -0400
+
+    .gitignore: use common defaults with custom section # 24239
+    
+    Using common defaults will reduce errors and maintenance.
+    Only the very small or inexistent custom section need periodic maintenance
+    when the structure of the component changes. Do not edit defaults.
+
+commit 353d94bbccae446170832b90c0e8abecb4745af5
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Tue Oct 13 10:54:47 2009 -0700
+
+    Move rstart specs from docs/xorg-docs module
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit 38a9f63214c97900ec3e78d26481b4e34851478d
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Mon Oct 12 18:28:45 2009 -0700
+
+    Migrate to xorg macros 1.3 & XORG_DEFAULT_OPTIONS
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit ac956035a953743b6a0812ad5c3558175915b190
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Thu Oct 1 14:54:19 2009 -0700
+
+    Add README with pointers to mailing lists, bugzilla, & git
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit 1e32bed14ffe65f74433e2a2ec21f407d9536070
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Sun Aug 2 15:16:02 2009 +0200
+
+    Bump to 1.0.3
+
+commit 1679afa400192182cf29fd57c488b3d47aff1aa2
+Author: Paulo Cesar Pereira de Andrade <pcpa@mandriva.com.br>
+Date:   Thu Jan 15 18:09:19 2009 -0200
+
+    Ansification and compile warning fixes.
+    
+      This also uses XORG_CHANGELOG and XORG_CWARNFLAGS, corrects
+    make distcheck and all gcc 4.3 and sparse warnings.
+
+commit c1eea0c7fc893c983d9f692e9c8643709d093551
+Author: Paulo Cesar Pereira de Andrade <pcpa@mandriva.com.br>
+Date:   Sat Nov 29 04:34:53 2008 -0200
+
+    VPATH build correction and s/git-/git /.
+    
+    This patch adds a missing correction available in
+    http://bugs.freedesktop.org/show_bug.cgi?id=17940
+    that was not applied in alternate committed patch
+    63c9c672a97a7e4a9434075958c68d8502624a40
+
+commit 61d9381ebc6bd5fa55b9021b8a68fff93e68059a
+Author: James Cloos <cloos@jhcloos.com>
+Date:   Thu Dec 6 16:37:05 2007 -0500
+
+    Replace static ChangeLog with dist-hook to generate from git log
+
+commit 5e8323af8c3adff08cb0f455fe54f28950e98223
+Author: James Cloos <cloos@jhcloos.com>
+Date:   Mon Sep 3 05:51:09 2007 -0400
+
+    Add *~ to .gitignore to skip patch/emacs droppings
+
+commit fd77f3d067d0df0656d428f7289ccc6c3c5c1949
+Author: James Cloos <cloos@jhcloos.com>
+Date:   Thu Aug 23 19:24:35 2007 -0400
+
+    Rename .cvsignore to .gitignore
+
+commit 63c9c672a97a7e4a9434075958c68d8502624a40
+Author: Kean Johnston <kean@armory.com>
+Date:   Sun Dec 3 05:12:39 2006 -0800
+
+    Don't use absolute pathnames when copying from ${srcdir}.
+
+commit 2a016c91334ad0affaf6db9906325202179096fc
+Author: Adam Jackson <ajax@nwnk.net>
+Date:   Wed Apr 26 23:35:32 2006 +0000
+
+    Bump to
+
+commit c10cbfc3619bdf8fe0c96d238cf4deeba8543757
+Author: Adam Jackson <ajax@nwnk.net>
+Date:   Mon Apr 3 19:32:19 2006 +0000
+
+    Bug #6425: srcdir != objdir build fix. (Yaakov Selkowitz)
+
+commit 203bb5fcd6c94f9f3dd6694e8225ed03d89c15a7
+Author: Kevin E Martin <kem@kem.org>
+Date:   Wed Dec 21 02:29:47 2005 +0000
+
+    Update package version for X11R7 release.
+
+commit d630c54f3e5f983e81ba1c3126089cb175ea759b
+Author: Adam Jackson <ajax@nwnk.net>
+Date:   Mon Dec 19 16:22:41 2005 +0000
+
+    Stub COPYING files
+
+commit 803021f3b61c5f41435f4bfc634dbf98bb70b428
+Author: Kevin E Martin <kem@kem.org>
+Date:   Thu Dec 15 00:24:03 2005 +0000
+
+    Update package version number for final X11R7 release candidate.
+
+commit 102695adf6f26533e86d45b9fe8e61a83f300969
+Author: Kevin E Martin <kem@kem.org>
+Date:   Tue Dec 6 22:48:18 2005 +0000
+
+    Change *man_SOURCES ==> *man_PRE to fix autotools warnings.
+
+commit d64c29bc96df9e5e31126ea6caf3560a657c36c0
+Author: Kevin E Martin <kem@kem.org>
+Date:   Sat Dec 3 05:49:17 2005 +0000
+
+    Update package version number for X11R7 RC3 release.
+
+commit 39f0a98d456aa05a227ea3e85e7aee6c0406a317
+Author: Alan Coopersmith <Alan.Coopersmith@sun.com>
+Date:   Mon Nov 28 22:01:38 2005 +0000
+
+    Change *mandir targets to use new *_MAN_DIR variables set by xorg-macros.m4
+        update to fix bug #5167 (Linux prefers *.1x man pages in man1 subdir)
+
+commit fa6b5809fb54bc9f4fa8e81f46ab55d6042e8fb2
+Author: Eric Anholt <anholt@freebsd.org>
+Date:   Mon Nov 21 10:34:57 2005 +0000
+
+    Another pass at .cvsignores for apps.
+
+commit d07abeadc55b3edc8c97534593b4b0f48729c62f
+Author: Eric Anholt <anholt@freebsd.org>
+Date:   Sun Nov 20 22:08:49 2005 +0000
+
+    Add/improve .cvsignore files for apps.
+
+commit 8da96206210461f1f43b8b0ff6a78d36549b06bb
+Author: Kevin E Martin <kem@kem.org>
+Date:   Wed Oct 19 02:47:50 2005 +0000
+
+    Update package version number for RC1 release.
+
+commit 1462f8bf2027a6bd0864b5073fae33c8622ade80
+Author: Alan Coopersmith <Alan.Coopersmith@sun.com>
+Date:   Mon Oct 17 23:56:20 2005 +0000
+
+    Use @APP_MAN_SUFFIX@ instead of $(APP_MAN_SUFFIX) in macro substitutions to
+        work better with BSD make
+
+commit 8c93946dc0a6d04fa9633069d89d62dcb64a985a
+Author: Alan Coopersmith <Alan.Coopersmith@sun.com>
+Date:   Fri Oct 14 21:59:06 2005 +0000
+
+    Missed changelog in yesterday's commit
+
+commit 946902bf607734c4253dab800d45691b10f7dd37
+Author: Alan Coopersmith <Alan.Coopersmith@sun.com>
+Date:   Fri Oct 14 01:28:06 2005 +0000
+
+    Use cpp to fill in variables in man pages
+
+commit 4ec4f04ad354b019532f3603de9e2d03081fdd85
+Author: Alan Coopersmith <Alan.Coopersmith@sun.com>
+Date:   Thu Oct 6 20:13:14 2005 +0000
+
+    Fix cpp generation of scripts & config files Add --with flags to configure
+        for setting default $PATH & $MANPATH
+
+commit 4a4e84476cb47b280a2b87a96897c394b6d77768
+Author: Alan Coopersmith <Alan.Coopersmith@sun.com>
+Date:   Wed Oct 5 16:08:27 2005 +0000
+
+    Add missing $(DESTDIR)s to custom install targets
+
+commit 49b173b1f90f75294dab19f622f8f13f421a5b44
+Author: Kevin E Martin <kem@kem.org>
+Date:   Tue Oct 4 23:31:22 2005 +0000
+
+    Add server.os2 to EXTRA_DIST
+
+commit 12ba788dcac295641271af315f4742a82732f5ab
+Author: Alan Coopersmith <Alan.Coopersmith@sun.com>
+Date:   Mon Aug 1 20:25:28 2005 +0000
+
+    Install man pages to section 1 instead of section m (Patch from Donnie
+        Berkholz)
+
+commit bc98cab949400a2c0191c586b0ba29d2d89b2c90
+Author: Kevin E Martin <kem@kem.org>
+Date:   Fri Jul 29 21:22:30 2005 +0000
+
+    Various changes preparing packages for RC0:
+    - Verify and update package version numbers as needed
+    - Implement versioning scheme
+    - Change bug address to point to bugzilla bug entry form
+    - Disable loadable i18n in libX11 by default (use --enable-loadable-i18n to
+        reenable it)
+    - Fix makedepend to use pkgconfig and pass distcheck
+    - Update build script to build macros first
+    - Update modular Xorg version
+
+commit 344b91c599fec33db6d7c96c806dab6acce47934
+Author: Kevin E Martin <kem@kem.org>
+Date:   Thu Jul 28 15:57:12 2005 +0000
+
+    Fix distcheck for remaining apps
+
+commit 6a2e9e6f18e3b214e375d4b79f66ec6f3fbeadcd
+Author: Matthieu Herrb <matthieu.herrb@laas.fr>
+Date:   Sat Jul 23 17:43:20 2005 +0000
+
+    fix make install when builddir != srcdir
+
+commit 0188681c8275738ab27c7618d1fd827c6556dc15
+Author: Matthieu Herrb <matthieu.herrb@laas.fr>
+Date:   Sat Jul 23 17:42:47 2005 +0000
+
+    Probe for rm and ln that are used during make install.
+
+commit 6b1ff419a810eea0c3c93b25d74e2012b506d837
+Author: Adam Jackson <ajax@nwnk.net>
+Date:   Wed Jul 20 19:31:50 2005 +0000
+
+    Use a unique token for PKG_CHECK_MODULES. Otherwise, if you use a global
+        configure cache, you cache it, and the cached value is probably wrong.
+
+commit 1665633fc9c566e909d6bf23648844b45a5c1e75
+Author: Matthieu Herrb <matthieu.herrb@laas.fr>
+Date:   Sun Jul 17 20:11:01 2005 +0000
+
+    fix rules to work with non-GNU make and outside of $srcdir
+
+commit bdc2b9966d510b9ceb5fa0c0fc699950fdb1bfdf
+Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Date:   Thu Jul 7 22:34:16 2005 +0000
+
+    Build system for rstart
+
+commit 2fedc84e2356a2c7c9621e9a5a498305835b25cf
+Author: Egbert Eich <eich@suse.de>
+Date:   Fri Apr 23 19:54:37 2004 +0000
+
+    Merging XORG-CURRENT into trunk
+
+commit 0b9fd8109dc7d2e90e97be9cc23b58152dccc620
+Author: Egbert Eich <eich@suse.de>
+Date:   Sun Mar 14 08:34:56 2004 +0000
+
+    Importing vendor version xf86-4_4_99_1 on Sun Mar 14 00:26:39 PST 2004
+
+commit 60c0a3d9cc0729922e457290f062c674d3d8681f
+Author: Egbert Eich <eich@suse.de>
+Date:   Wed Mar 3 12:12:54 2004 +0000
+
+    Importing vendor version xf86-4_4_0 on Wed Mar 3 04:09:24 PST 2004
+
+commit 3283d8fafa02c9e93a71ad83f2f3788c9cb54e2a
+Author: Egbert Eich <eich@suse.de>
+Date:   Thu Feb 26 13:36:15 2004 +0000
+
+    readding XFree86's cvs IDs
+
+commit bc9710352c3e369ffc442826ef729c1e505a3954
+Author: Egbert Eich <eich@suse.de>
+Date:   Thu Feb 26 09:23:57 2004 +0000
+
+    Importing vendor version xf86-4_3_99_903 on Wed Feb 26 01:21:00 PST 2004
+
+commit 28544d3d210e769557639c6494205bec83f39d7e
+Author: Egbert Eich <eich@suse.de>
+Date:   Thu Jan 29 08:09:02 2004 +0000
+
+    Importing vendor version xf86-012804-2330 on Thu Jan 29 00:06:33 PST 2004
+
+commit 129d33aeda28f4c0970e70e537196d1f9a83e3a9
+Author: Kaleb Keithley <kaleb@freedesktop.org>
+Date:   Tue Nov 25 19:29:03 2003 +0000
+
+    XFree86 4.3.99.16 Bring the tree up to date for the Cygwin folks
+
+commit 719e9d3f369ff71c4eef2f8e1a72b075b6c6490b
+Author: Kaleb Keithley <kaleb@freedesktop.org>
+Date:   Fri Nov 14 16:48:58 2003 +0000
+
+    XFree86 4.3.0.1
+
+commit 2416645e0f054d5b400a1ab22065acbe3d7bffb6
+Author: Kaleb Keithley <kaleb@freedesktop.org>
+Date:   Fri Nov 14 16:48:58 2003 +0000
+
+    Initial revision
+
+commit 86113ea526160c917e7471dd8c54d99ed4f497a7
+Author: Kaleb Keithley <kaleb@freedesktop.org>
+Date:   Fri Nov 14 15:54:53 2003 +0000
+
+    R6.6 is the Xorg base-line
