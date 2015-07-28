@@ -217,7 +217,7 @@ fi
 XCOMM if no vt is specified add vtarg (which may be empty)
 have_vtarg="no"
 for i in $serverargs; do
-    if expr "$i" : '^vt[0-9]\+$' > /dev/null; then
+    if expr "$i" : 'vt[0-9][0-9]*$' > /dev/null; then
         have_vtarg="yes"
     fi
 done
