@@ -2797,15 +2797,11 @@ static void R128Restore(ScrnInfoPtr pScrn)
     R128RestoreFPRegisters(pScrn, restore);
     R128RestoreLVDSRegisters(pScrn, restore);
 
-#if 0
-    if (!info->IsSecondary) {
-        OUTREG(R128_AMCGPIO_MASK,     restore->amcgpio_mask);
-        OUTREG(R128_AMCGPIO_EN_REG,   restore->amcgpio_en_reg);
-        OUTREG(R128_CLOCK_CNTL_INDEX, restore->clock_cntl_index);
-        OUTREG(R128_GEN_RESET_CNTL,   restore->gen_reset_cntl);
-        OUTREG(R128_DP_DATATYPE,      restore->dp_datatype);
-    }
-#endif
+    OUTREG(R128_AMCGPIO_MASK,     restore->amcgpio_mask);
+    OUTREG(R128_AMCGPIO_EN_REG,   restore->amcgpio_en_reg);
+    OUTREG(R128_CLOCK_CNTL_INDEX, restore->clock_cntl_index);
+    OUTREG(R128_GEN_RESET_CNTL,   restore->gen_reset_cntl);
+    OUTREG(R128_DP_DATATYPE,      restore->dp_datatype);
 
 #ifdef WITH_VGAHW
     if (info->VGAAccess) {
