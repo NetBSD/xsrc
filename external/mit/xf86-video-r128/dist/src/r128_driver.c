@@ -596,7 +596,8 @@ void R128GetPanelInfoFromBIOS(xf86OutputPtr output)
     return;
 fallback:
 #ifdef __NetBSD__
-    if (!r128_output->PanelXRes || !r128_output->PanelYRes) {
+    if ((!r128_output->PanelXRes || !r128_output->PanelYRes)  &&
+        (info->HaveWSDisplay)) {
 	/*
 	 * we may not be on x86 so check wsdisplay for panel dimensions
 	 * XXX this assumes that the r128 is the console, although that should
@@ -1313,6 +1314,9 @@ Bool R128PreInit(ScrnInfoPtr pScrn, int flags)
 {
     R128InfoPtr      info;
     xf86Int10InfoPtr pInt10 = NULL;
+#ifdef __NetBSD__
+    struct wsdisplayio_bus_id bid;
+#endif
 
     R128TRACE(("R128PreInit\n"));
 
@@ -1339,6 +1343,29 @@ Bool R128PreInit(ScrnInfoPtr pScrn, int flags)
 	       PCI_DEV_BUS(info->PciInfo),
 	       PCI_DEV_DEV(info->PciInfo),
 	       PCI_DEV_FUNC(info->PciInfo));
+
+#ifdef __NetBSD__
+    /* now check if this is the console */
+    info->HaveWSDisplay = FALSE;
+    info->HaveBacklightControl = FALSE;
+    if (ioctl(xf86Info.screenFd, WSDISPLAYIO_GET_BUSID, &bid) != -1) {
+    	if ((bid.bus_type == WSDISPLAYIO_BUS_PCI) &&
+    	    (bid.ubus.pci.bus == PCI_DEV_BUS(info->PciInfo)) &&
+    	    (bid.ubus.pci.device == PCI_DEV_DEV(info->PciInfo)) &&
+    	    (bid.ubus.pci.function == PCI_DEV_FUNC(info->PciInfo))) {
+    	    	struct wsdisplay_param p;
+    	    	xf86Msg(X_INFO, "Alright, this is the console\n");
+    	    	info->HaveWSDisplay = TRUE;
+
+    	    	/* now see if we have hacklight control */
+    	    	p.param = WSDISPLAYIO_PARAM_BACKLIGHT;
+		if (ioctl(xf86Info.screenFd, WSDISPLAYIO_GETPARAM, &p) != -1) {
+		    xf86Msg(X_INFO, "... and we have backlight control\n");
+		    info->HaveBacklightControl = TRUE; 	 
+		}   	
+    	}
+    }
+#endif
 
 #ifndef XSERVER_LIBPCIACCESS
     info->PciTag        = pciTag(PCI_DEV_BUS(info->PciInfo),

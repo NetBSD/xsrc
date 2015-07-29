@@ -311,6 +311,10 @@ typedef struct {
     Bool              FBDev;
 #endif
 
+#ifdef __NetBSD__
+    Bool	      HaveWSDisplay;
+    Bool	      HaveBacklightControl;
+#endif
     unsigned long     LinearAddr;   /* Frame buffer physical address         */
     unsigned long     MMIOAddr;     /* MMIO region physical address          */
     unsigned long     BIOSAddr;     /* BIOS physical address                 */

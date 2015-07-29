@@ -189,9 +189,20 @@ void R128DPMSSetOn(xf86OutputPtr output)
 
     switch(MonType) {
     case MT_LCD:
-        OUTREGP(R128_LVDS_GEN_CNTL, R128_LVDS_BLON, ~R128_LVDS_BLON);
-        usleep(r128_output->PanelPwrDly * 1000);
-        OUTREGP(R128_LVDS_GEN_CNTL, R128_LVDS_ON, ~R128_LVDS_ON);
+#ifdef __NetBSD__
+	if (info->HaveBacklightControl) {
+	    struct wsdisplay_param p;
+
+	    p.param = WSDISPLAYIO_PARAM_BACKLIGHT;
+	    p.curval = 1;
+	    ioctl(xf86Info.screenFd, WSDISPLAYIO_SETPARAM, &p);
+	} else
+#endif
+	{
+            OUTREGP(R128_LVDS_GEN_CNTL, R128_LVDS_BLON, ~R128_LVDS_BLON);
+            usleep(r128_output->PanelPwrDly * 1000);
+            OUTREGP(R128_LVDS_GEN_CNTL, R128_LVDS_ON, ~R128_LVDS_ON);
+        }
         save->lvds_gen_cntl |=     (R128_LVDS_ON | R128_LVDS_BLON);
         break;
     case MT_DFP:
@@ -218,7 +229,18 @@ void R128DPMSSetOff(xf86OutputPtr output)
 
     switch(MonType) {
     case MT_LCD:
-        OUTREGP(R128_LVDS_GEN_CNTL, 0, ~(R128_LVDS_BLON | R128_LVDS_ON));
+#ifdef __NetBSD__
+	if (info->HaveBacklightControl) {
+	    struct wsdisplay_param p;
+
+	    p.param = WSDISPLAYIO_PARAM_BACKLIGHT;
+	    p.curval = 0;
+	    ioctl(xf86Info.screenFd, WSDISPLAYIO_SETPARAM, &p);
+	} else
+#endif
+	{
+            OUTREGP(R128_LVDS_GEN_CNTL, 0, ~(R128_LVDS_BLON | R128_LVDS_ON));
+        }
         save->lvds_gen_cntl &=         ~(R128_LVDS_BLON | R128_LVDS_ON);
         break;
     case MT_DFP:
@@ -247,22 +269,24 @@ static R128MonitorType R128DisplayDDCConnected(xf86OutputPtr output)
 
     if (r128_output->type == OUTPUT_LVDS) {
 #ifdef __NetBSD__
-	struct wsdisplayio_edid_info ei;
-	char *buffer;
-	xf86MonPtr tmp;
+	if (info->HaveWSDisplay) {
+	    struct wsdisplayio_edid_info ei;
+	    char *buffer;
+	    xf86MonPtr tmp;
 
-	buffer = malloc(1024);
-	ei.edid_data = buffer;
-	ei.buffer_size = 1024;
-	if (ioctl(xf86Info.screenFd, WSDISPLAYIO_GET_EDID, &ei) != -1) {
-	    xf86Msg(X_ERROR, "got %d bytes worth of EDID from wsdisplay\n",
-	      ei.data_size);
-	    tmp = xf86InterpretEEDID(pScrn->scrnIndex, buffer);
-	    tmp->flags |= MONITOR_EDID_COMPLETE_RAWDATA;
-	    *MonInfo = tmp;
-	    xf86OutputSetEDID(output, tmp);
-	} else
-	    free(buffer);
+	    buffer = malloc(1024);
+	    ei.edid_data = buffer;
+	    ei.buffer_size = 1024;
+	    if (ioctl(xf86Info.screenFd, WSDISPLAYIO_GET_EDID, &ei) != -1) {
+		xf86Msg(X_INFO, "got %d bytes worth of EDID from wsdisplay\n",
+	    	ei.data_size);
+	    	tmp = xf86InterpretEEDID(pScrn->scrnIndex, buffer);
+	    	tmp->flags |= MONITOR_EDID_COMPLETE_RAWDATA;
+	    	*MonInfo = tmp;
+	    	xf86OutputSetEDID(output, tmp);
+	    } else
+	        free(buffer);
+	}
 #endif
         return MT_LCD;
     } else if (r128_output->type == OUTPUT_VGA) {
