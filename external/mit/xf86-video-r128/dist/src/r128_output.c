@@ -40,6 +40,14 @@
 #include "r128.h"
 #include "r128_probe.h"
 #include "r128_reg.h"
+#include "xf86Priv.h"
+
+#ifdef __NetBSD__
+#include <sys/time.h>
+#include <sys/ioctl.h>
+#include <dev/wscons/wsconsio.h>
+#endif
+
 
 static void R128ConnectorFindMonitor(ScrnInfoPtr pScrn, xf86OutputPtr output);
 
@@ -238,6 +246,24 @@ static R128MonitorType R128DisplayDDCConnected(xf86OutputPtr output)
     uint32_t mask1, mask2;
 
     if (r128_output->type == OUTPUT_LVDS) {
+#ifdef __NetBSD__
+	struct wsdisplayio_edid_info ei;
+	char *buffer;
+	xf86MonPtr tmp;
+
+	buffer = malloc(1024);
+	ei.edid_data = buffer;
+	ei.buffer_size = 1024;
+	if (ioctl(xf86Info.screenFd, WSDISPLAYIO_GET_EDID, &ei) != -1) {
+	    xf86Msg(X_ERROR, "got %d bytes worth of EDID from wsdisplay\n",
+	      ei.data_size);
+	    tmp = xf86InterpretEEDID(pScrn->scrnIndex, buffer);
+	    tmp->flags |= MONITOR_EDID_COMPLETE_RAWDATA;
+	    *MonInfo = tmp;
+	    xf86OutputSetEDID(output, tmp);
+	} else
+	    free(buffer);
+#endif
         return MT_LCD;
     } else if (r128_output->type == OUTPUT_VGA) {
         mask1 = R128_GPIO_MONID_MASK_1 | (info->isPro2 ? R128_GPIO_MONID_MASK_2 : R128_GPIO_MONID_MASK_3);
@@ -297,8 +323,8 @@ DisplayModePtr R128ProbeOutputModes(xf86OutputPtr output)
     if (r128_output->pI2CBus) {
         edid_mon = xf86OutputGetEDID(output, r128_output->pI2CBus);
         xf86OutputSetEDID(output, edid_mon);
-        modes = xf86OutputGetEDIDModes(output);
     }
+    modes = xf86OutputGetEDIDModes(output);
 
     /* Letting this function return NULL would be a bad idea. With old cards
      * like r128, users often specify a small resolution in order to get DRI.
