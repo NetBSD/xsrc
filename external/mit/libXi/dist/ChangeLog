@@ -1,3 +1,23 @@
+commit 8c255b30f3a4ed8bf67e6bb76df47cbd480735f8
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Fri Jul 18 16:45:51 2014 +1000
+
+    libXi 1.7.4
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit b731d1357d993663ee6b28d6627bdeba69b60dd2
+Author: Owen W. Taylor <otaylor@fishsoup.net>
+Date:   Fri Jul 11 15:13:54 2014 -0400
+
+    Fix locking bugs with XIAllowTouchEvents() and XIUngrabTouchBegin()
+    
+    Fix two places where the display was double locked when an API
+    function chained to an implementation that also locks the display.
+    
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
 commit 0250f40fb7c9cb7d542189b9cd37e0ae75309729
 Author: Peter Hutterer <peter.hutterer@who-t.net>
 Date:   Thu Jul 10 08:58:48 2014 +1000
