@@ -27,7 +27,6 @@
 #include "config.h"
 #endif
 
-#include <unistd.h>
 #include "osdef.h"
 #include "vgatypes.h"
 
