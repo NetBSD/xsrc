@@ -95,6 +95,7 @@ _X_EXPORT DriverRec SUNFFB = {
 typedef enum {
     OPTION_SW_CURSOR,
     OPTION_HW_CURSOR,
+    OPTION_ACCELMETHOD,
     OPTION_NOACCEL
 } FFBOpts;
 
@@ -102,6 +103,7 @@ static const OptionInfoRec FFBOptions[] = {
     { OPTION_SW_CURSOR,		"SWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_HW_CURSOR,		"HWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_NOACCEL,		"NoAccel",	OPTV_BOOLEAN,	{0}, FALSE },
+    { OPTION_ACCELMETHOD,	"AccelMethod",	OPTV_STRING,	{0}, FALSE },
     { -1,			NULL,		OPTV_NONE,	{0}, FALSE }
 };
 
@@ -413,11 +415,6 @@ FFBPreInit(ScrnInfoPtr pScrn, int flags)
     }
         
     if (xf86LoadSubModule(pScrn, "fb") == NULL) {
-	FFBFreeRec(pScrn);
-	return FALSE;
-    }
-
-    if (xf86LoadSubModule(pScrn, "xaa") == NULL) {
 	FFBFreeRec(pScrn);
 	return FALSE;
     }
@@ -760,9 +757,22 @@ FFBScreenInit(SCREEN_INIT_ARGS_DECL)
     xf86SetBlackWhitePixels(pScreen);
 
     if (!pFfb->NoAccel) {
-	if (!FFBAccelInit(pScreen, pFfb))
-	    return FALSE;
-	xf86Msg(X_INFO, "%s: Using acceleration\n", pFfb->psdp->device);
+	char *optstr;
+	optstr = (char *)xf86GetOptValString(pFfb->Options, OPTION_ACCELMETHOD);
+	if (optstr == NULL) optstr = "xaa";
+	if (xf86NameCmp(optstr, "EXA") == 0) {
+	    xf86Msg(X_INFO, "using EXA\n");
+	    if (xf86LoadSubModule(pScrn, "exa") != NULL) {
+		if (!FFBInitEXA(pScreen))
+		    return FALSE;
+    	    }
+    	} else if (xf86NameCmp(optstr, "XAA") == 0) {
+	    xf86Msg(X_INFO, "using XAA\n");
+	    if (xf86LoadSubModule(pScrn, "xaa") != NULL) {
+		if (!FFBAccelInit(pScreen, pFfb))
+		    return FALSE;
+	    }
+	}
     }
 
 

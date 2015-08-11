@@ -518,4 +518,45 @@ do {	volatile unsigned int *__p = (__regp); \
 	FFB_WRITE64(__regp, __lo32, __hi32)
 #endif
 
+#define FFB_ATTR_SFB_VAR_XAA(__fpriv, __pmask, __alu) \
+do {   unsigned int __ppc = FFB_PPC_ABE_DISABLE | FFB_PPC_APE_DISABLE | FFB_PPC_CS_VAR | FFB_PPC_XS_WID; \
+       unsigned int __ppc_mask = FFB_PPC_ABE_MASK | FFB_PPC_APE_MASK | FFB_PPC_CS_MASK | FFB_PPC_XS_MASK; \
+       unsigned int __rop = (FFB_ROP_EDIT_BIT | (__alu))|(FFB_ROP_NEW<<8); \
+       unsigned int __fbc = (__fpriv)->fbc; \
+       unsigned int __wid = (__fpriv)->wid; \
+       if (((__fpriv)->ppc_cache & __ppc_mask) != __ppc || \
+           (__fpriv)->fbc_cache != __fbc || \
+           (__fpriv)->wid_cache != __wid || \
+           (__fpriv)->rop_cache != __rop || \
+           (__fpriv)->pmask_cache != (__pmask)) \
+               __FFB_Attr_SFB_VAR(__fpriv, __ppc, __ppc_mask, __fbc, \
+                                  __wid, __rop, (__pmask)); \
+} while(0)
+
+#define FFB_ATTR_VSCROLL_XAA(__fpriv, __pmask) \
+do {    unsigned int __ppc = FFB_PPC_ABE_DISABLE | FFB_PPC_APE_DISABLE | FFB_PPC_CS_VAR | FFB_PPC_XS_WID; \
+        unsigned int __ppc_mask = FFB_PPC_ABE_MASK | FFB_PPC_APE_MASK | FFB_PPC_CS_MASK | FFB_PPC_XS_MASK; \
+        unsigned int __rop = (FFB_ROP_OLD | (FFB_ROP_OLD << 8)); \
+        unsigned int __fbc = (__fpriv)->fbc; \
+        (__fpriv)->ppc_cache &= ~__ppc_mask; \
+        (__fpriv)->ppc_cache |= __ppc; \
+        (__fpriv)->regs->ppc = __ppc; \
+        if ((__fpriv)->fbc_cache != __fbc || \
+            (__fpriv)->rop_cache != __rop || \
+            (__fpriv)->pmask_cache != (__pmask) || \
+            (__fpriv)->drawop_cache != FFB_DRAWOP_VSCROLL) { \
+                ffb_fbcPtr __ffb = (__fpriv)->regs; \
+                (__fpriv)->fbc_cache = __fbc; \
+                (__fpriv)->rop_cache = __rop; \
+                (__fpriv)->pmask_cache = (__pmask); \
+                (__fpriv)->drawop_cache = FFB_DRAWOP_VSCROLL; \
+                (__fpriv)->rp_active = 1; \
+                FFBFifo(__fpriv, 4); \
+                (__ffb)->fbc = __fbc; \
+                (__ffb)->rop = __rop; \
+                (__ffb)->pmask = (__pmask); \
+                (__ffb)->drawop = FFB_DRAWOP_VSCROLL; \
+        } \
+} while(0)
+
 #endif /* FFBREGS_H */

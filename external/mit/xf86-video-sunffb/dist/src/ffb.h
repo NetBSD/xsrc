@@ -34,6 +34,8 @@
 #ifdef HAVE_XAA_H
 #include "xaa.h"
 #endif
+#include "exa.h"
+
 #include <X11/Xmd.h>
 #include "gcstruct.h"
 #include "windowstr.h"
@@ -179,9 +181,6 @@ typedef struct {
 #ifdef HAVE_XAA_H
 	XAAInfoRecPtr pXAAInfo;
 #endif
-	unsigned int xaa_fbc;
-	unsigned int xaa_wid;
-	unsigned int xaa_planemask;
 	unsigned int xaa_linepat;
 	int xaa_xdir, xaa_ydir, xaa_rop;
 	unsigned char *xaa_scanline_buffers[2];
@@ -205,6 +204,12 @@ typedef struct {
 	unsigned char CursorShiftX, CursorShiftY;
 	unsigned char *CursorData;
 
+	/* EXA stuff */
+	ExaDriverPtr 	pExa;
+	int srcpitch, srcoff;
+	int xdir, ydir, rop;
+	CARD32 planemask, fbc, wid;
+
 	PixmapPtr pix32, pix8;
 
 	void *I2C;
@@ -215,6 +220,7 @@ typedef struct {
 
 /* Acceleration */
 extern Bool FFBAccelInit(ScreenPtr, FFBPtr);
+extern Bool FFBInitEXA(ScreenPtr);
 extern void CreatorVtChange (ScreenPtr pScreen, int enter);
 
 /* HW cursor support */
