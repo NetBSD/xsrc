@@ -206,9 +206,13 @@ typedef struct {
 
 	/* EXA stuff */
 	ExaDriverPtr 	pExa;
-	int srcpitch, srcoff;
 	int xdir, ydir, rop;
-	CARD32 planemask, fbc, wid;
+	CARD32 planemask, fbc, wid, fillcolour;
+	Bool no_source_pixmap, source_is_solid;
+	int srcoff, srcpitch, mskoff, mskpitch;
+	CARD32 srcformat, dstformat, mskformat;
+	int op;
+
 
 	PixmapPtr pix32, pix8;
 
@@ -297,5 +301,10 @@ do {	fprintf __x; 				\
 #else
 #define FFBLOG(__x)		do { } while(0)
 #endif
+
+/* common acceleration routines */
+void FFB_SetupTextureAttrs(FFBPtr);
+void FFB_HardwareSetup(FFBPtr);
+void CreatorAlignTabInit(FFBPtr);
 
 #endif /* FFB_H */
