@@ -1,0 +1,2768 @@
+
+
+
+CTWM(1)                  USER COMMANDS                    CTWM(1)
+
+***********************
+VMS specific:
+  This is an edited version of the man page.
+  Compilation note: this window manager has been compiled to run on VMS.
+  Hence file and directory specifications should be in that format.
+  peterc@a3.ph.man.ac.uk 21/7/93 & 15/2/95
+***********************
+
+
+NAME
+     ctwm - Tab Window Manager for the X Window System
+
+SYNTAX
+     ctwm [-display dpy] [-s] [-f initfile] [-v]  [-n]  [-k]  [-w
+     [win-id]]
+
+DESCRIPTION
+     Ctwm is a window manager for the X Window System.   It  pro-
+     vides    titlebars,    shaped   windows,   virtual   screens
+     (workspaces), several forms of icon management, user-defined
+     macro  functions,  click-to-type and pointer-driven keyboard
+     focus, and user-specified key and pointer  button  bindings.
+     It  is  actually  twm  (Tab Window Manager) from the MIT X11
+     distribution slightly modified to  accommodate  the  use  of
+     several virtual screens (workspaces). It is heavily inspired
+     from the Hewlett-Packard vuewm window manager. In  addition,
+     ctwm can use coloured, shaped icons and background root pix-
+     maps in XPM format [from Arnaud Le Hors],any  format  under-
+     stood  by  the  imconv package [from the San Diego Supercom-
+     puter Center] and xwd files. Ctwm can  be  compiled  to  use
+     both, either or none of the above icon/pixmap formats.
+
+     This program  is  usually  started  by  the  user's  session
+     manager  or  startup  script.   When  used  from  xdm(1)  or
+     xinit(1) without a session manager, ctwm is frequently  exe-
+     cuted  in  the foreground as the last client.  When run this
+     way, exiting ctwm causes the session to be terminated  (i.e.
+     logged out).
+
+     By  default,  application  windows  are  surrounded   by   a
+     ``frame''  with  a  titlebar at the top and a special border
+     around the window.  The titlebar contains the window's name,
+     a  rectangle  that  is lit when the window is receiving key-
+     board input, and function boxes known as ``titlebuttons'' at
+     the left and right edges of the titlebar.
+
+     Pressing  pointer  Button1  (usually  the  left-most  button
+     unless  it  has  been changed with xmodmap) on a titlebutton
+     will invoke the function associated with the button.  In the
+     default interface, windows are iconified by clicking (press-
+     ing and then immediately  releasing)  the  left  titlebutton
+     (which  looks like a Dot).  Conversely, windows are deiconi-
+     fied by clicking in the associated icon or entry in the icon
+     manager (see description of the variable ShowIconManager and
+     of the function f.showiconmgr).
+
+     Windows are resized by pressing the right titlebutton (which
+     resembles  a  group of nested squares), dragging the pointer
+     over edge that is to be moved,  and  releasing  the  pointer
+     when  the  outline of the window is the desired size.  Simi-
+     larly, windows  are  moved  by  pressing  in  the  title  or
+     highlight region, dragging a window outline to the new loca-
+     tion, and then releasing when the outline is in the  desired
+     position.   Just  clicking  in the title or highlight region
+     raises the window without moving it.
+
+     When new windows are created, ctwm will honor any  size  and
+     location  information requested by the user (usually through
+     -geometry command line argument or resources for the indivi-
+     dual  applications).  Otherwise,  an outline of the window's
+     default size, its titlebar, and lines  dividing  the  window
+     into  a  3x3  grid  that  track  the  pointer are displayed.
+     Clicking pointer Button1 will position  the  window  at  the
+     current  position  and  give  it the default size.  Pressing
+     pointer Button2 (usually  the  middle  pointer  button)  and
+     dragging  the outline will give the window its current posi-
+     tion but allow the sides to be resized as  described  above.
+     Clicking  pointer Button3 (usually the right pointer button)
+     will give the window its current  position  but  attempt  to
+     make it long enough to touch the bottom the screen.
+
+OPTIONS
+     Ctwm accepts the following command line options:
+
+     -display dpy
+             This option specifies the X server to use.
+
+     -s      This option indicates that only the  default  screen
+             (as specified by -display or by the DISPLAY environ-
+             ment variable) should be managed.  By default,  ctwm
+             will attempt to manage all screens on the display.
+
+***********************
+VMS specific:
+  filename.num -> filename_num
+  and see note below for .ctwmrc
+***********************
+
+     -f filename
+             This option specifies the name of the  startup  file
+             to  use.   Ctwm will first try to load filename.num,
+             where num is the screen number.   If  it  fails,  it
+             will  try  to  load filename.  By default, ctwm will
+             look in the user's home directory  for  files  named
+             .ctwmrc.num  (where  num  is  a  screen  number)  or
+             .ctwmrc.
+
+     -v      This option indicates that ctwm should  print  error
+             messages  whenever  an  unexpected  X Error event is
+             received.  This can be useful when debugging  appli-
+             cations but can be distracting in regular use.
+
+     -n      This option indicates that ctwm  should  not  filter
+             the  startup file through m4. Available only if ctwm
+             is compiled with the USEM4 flag.
+
+     -k      This option indicates  that  ctwm  should  keep  the
+             result  of filtering your startup file through m4 in
+             /tmp. Available only if ctwm is  compiled  with  the
+             USEM4 flag.
+
+
+     -version
+             ctwm just prints its version number.
+
+
+     -info   ctwm prints its detailed version  and  compile  time
+             options.
+
+
+     -w [win-id]
+             If -w is specified without a win-id value, ctwm does
+             not  take  over  the  whole  screen(s),  instead  it
+             creates a new window that becomes its  root  window.
+             if the win-id value is given, it is considered to be
+             the id of an existing window, in  which  case,  ctwm
+             will  try to use this window as root window. You can
+             run any number of instantiation of ctwm at the  same
+             time.  You  can  even  have embedded ctwm instantia-
+             tions. This is totally  useless,  but  I  like.  The
+             f.adoptwindow  function  can  be  used to capture an
+             existing window belonging to another ctwm. A  possi-
+             ble  use  of such mode can be to test new configura-
+             tion file without restarting ctwm.
+
+     -W      This option tells ctwm not to  display  any  welcome
+             when starting.
+
+
+CUSTOMIZATION
+     Much of ctwm's appearance and behavior can be controlled  by
+     providing  a  startup file in one of the following locations
+     (searched in order for each screen being managed  when  ctwm
+     begins):
+
+***********************
+VMS specific:
+  Instead of $HOME/.[c]twmrc[.#] use DECW$USER_DEFAULTS:[C]TWM.RC[_#]
+  -- where the logical DECW$USER_DEFAULTS usually points to
+     SYS$LOGINROOT:[DECW$DEFAULTS], eg mphv2$user2:[bloggs.decw$defaults].
+  and /usr/lib/X11/twm/system.ctwmrc => DECW$SYSTEM_DEFAULTS:SYSTEM.CTWMRC
+***********************
+
+     $HOME/.ctwmrc.screennumber
+             The screennumber is a small positive number (e.g. 0,
+             1,  etc.)  representing  the screen number (e.g. the
+             last number  in  the  DISPLAY  environment  variable
+             host:displaynum.screennum)  that  would  be  used to
+             contact  that  screen  of  the  display.   This   is
+             intended  for  displays  with  multiple  screens  of
+             differing visual types.
+
+     $HOME/.ctwmrc
+             This is the usual  name  for  an  individual  user's
+             startup file.
+
+     $HOME/.twmrc
+             The users twm startup file.
+
+     /usr/lib/X11/twm/system.ctwmrc
+             If none of the preceding files are found, ctwm  will
+             look in this file for a default configuration.  This
+             is often tailored by the site administrator to  pro-
+             vide  convenient  menus  or  familiar  bindings  for
+             novice users.
+
+     If no startup files are found, ctwm will  use  the  built-in
+     defaults described above.  The only resource used by ctwm is
+     bitmapFilePath for a colon-separated list of directories  to
+     search  when looking for bitmap files (for more information,
+     see the Athena Widgets manual and xrdb(1)).
+
+     Ctwm startup files are logically broken up into three  types
+     of  specifications:   Variables, Bindings, Menus.  The Vari-
+     ables section must come first and is used  to  describe  the
+     fonts,  colors,  cursors,  border  widths,  icon  and window
+     placement,  highlighting,  autoraising,  layout  of  titles,
+     warping, use of the icon manager.  The Bindings section usu-
+     ally comes second and is used to specify the functions  that
+     should  be  to  be invoked when keyboard and pointer buttons
+     are pressed in windows,  icons,  titles,  and  frames.   The
+     Menus section gives any user-defined menus (containing func-
+     tions to be invoked or commands to be executed).
+
+     Variable names and keywords are  case-insensitive.   Strings
+     must  be surrounded by double quote characters (e.g. "blue")
+     and are case-sensitive.  A  pound  sign  (#)  outside  of  a
+     string causes the remainder of the line in which the charac-
+     ter appears to be treated as a comment.
+
+***********************
+VMS specific:
+  M4 processing is not supported on VMS.
+***********************
+
+M4 PREPROCESSING
+     ctwm uses m4(1) to pre-process its setup files.   When  ctwm
+     starts  up,  it  opens  a file for input as described above.
+     But, it processes that file through m4  before  parsing  it.
+     So, you can use m4 macro's to perform operations at runtime.
+     This makes it very easy to work when you use many  different
+     display's,  with different characteristics.  For example, If
+     you want to set the lower right section of the screen to  be
+     your  IconRegion,  (see  below for details on the IconRegion
+     variable) you can use m4 directives and pre-defined  symbols
+     to calculate the region you want.  For example:
+
+          define(IRegion, translit(eval(WIDTH/3)*eval(HEIGHT/2)+eval(WIDTH-WIDTH/3)-0, *, x))
+          IconRegion  "IRegion" SOUTH EAST 75 25
+
+     will define the lower half,  and  right-hand  third  of  the
+     screen.   The above makes use of symbols that are predefined
+     in m4 by ctwm.  The symbols WIDTH and HEIGHT are  calculated
+     by  ctwm  and  written  into a temporary file for m4 to use.
+     The following symbols are predefined by ctwm:
+
+     SERVERHOST              This variable is set to the name  of
+                             the  machine  that  is running the X
+                             server.
+
+     CLIENTHOST              The  machine  that  is  running  the
+                             clients.  (ie, ctwm)
+
+     HOSTNAME                The canonical hostname  running  the
+                             clients.    (ie.  a  fully-qualified
+                             version of CLIENTHOST)
+
+     USER                    The name of  the  user  running  the
+                             program.   Gotten  from the environ-
+                             ment.
+
+     HOME                    The user's home  directory.   Gotten
+                             from the environment.
+
+     VERSION                 The X major  protocol  version.   As
+                             seen by ProtocolVersion(3).
+
+     REVISION                The X minor protocol  revision.   As
+                             seen by ProtocolRevision(3).
+
+     VENDOR                  The vendor of your  X  server.   For
+                             example: MIT X Consortium.
+
+     RELEASE                 The release number of your X server.
+                             For MIT X11R5, this is 5.
+
+     WIDTH                   The width of your display in pixels.
+
+     HEIGHT                  The height of your display  in  pix-
+                             els.
+
+     X_RESOLUTION            The X resolution of your display  in
+                             pixels per meter.
+
+     Y_RESOLUTION            The Y resolution of your display  in
+                             pixels per meter.
+
+     PLANES                  The  number  of  bit   planes   your
+                             display supports in the default root
+                             window.
+
+     BITS_PER_RGB            The number of significant bits in an
+                             RGB  color.   (log  base  2  of  the
+                             number of distinct colors  that  can
+                             be created.  This is often different
+                             from the number of colors  that  can
+                             be displayed at once.)
+
+     TWM_TYPE                Tells which twm offshoot is running.
+                             It  will always be set to the string
+                             "ctwm" in  this  program.   This  is
+                             useful  for protecting parts of your
+                             .twmrc file that ctwm  proper  won't
+                             understand (like WorkSpaces) so that
+                             it is still usable  with  other  twm
+                             programs.
+
+     TWM_VERSION             Tells which ctwm version is  running
+                             in  the  form  of  a  floating point
+                             number.
+
+     CLASS                   Your visual class.  Will return  one
+                             of   StaticGray,   GrayScale,   Sta-
+                             ticColor,  PseudoColor,   TrueColor,
+                             DirectColor, or, if it cannot deter-
+                             mine what you have, NonStandard.
+
+     COLOR                   This will be either 'Yes'  or  'No'.
+                             This  is  just  a wrapper around the
+                             above definition.  Returns 'Yes'  on
+                             *Color,  and  'No' on StaticGray and
+                             GrayScale.
+
+     XPM                     Is defined only if ctwm was compiled
+                             with XPM.
+
+     TWM_CAPTIVE             This will be either 'Yes'  or  'No'.
+                             'Yes' if the current ctwm is captive
+                             (flag -w), 'No' in the other case.
+
+     You may well find that if  you  research  the  m4(1)  manual
+     well,  and  understand  the power of m4, this will be a very
+     useful and powerful tool.  But, if you use any of  the  sym-
+     bols  which  are predefined by m4, you are in severe danger!
+     For example, the Sun m4 predefines shift, so if you use that
+     name in your .ctwmrc, you are out of luck.
+
+     The availability of the m4 preprocessing is subject  to  the
+     compilation define USEM4.
+
+VARIABLES
+     Many of the aspects of ctwm's user interface are  controlled
+     by  variables  that  may  be set in the user's startup file.
+     Some of the options are enabled or disabled  simply  by  the
+     presence  of  a  particular  keyword.  Other options require
+     keywords, numbers, strings, or lists of all of these.
+
+     Lists are surrounded by braces and are usually separated  by
+     whitespace or a newline.  For example:
+
+          AutoRaise { "emacs" "XTerm" "Xmh" }
+
+     or
+
+          AutoRaise
+          {
+               "emacs"
+               "XTerm"
+               "Xmh"
+          }
+
+     When a variable containing a list  of  strings  representing
+     windows  is  searched  (e.g.  to determine whether or not to
+     enable autoraise as shown above), a string must be an exact,
+     case-sensitive match to the window's name name (given by the
+     WM_NAME window property), resource name or class name  (both
+     given by the WM_CLASS window property).  The preceding exam-
+     ple would enable autoraise on  windows  named  ``emacs''  as
+     well as any xterm (since they are of class ``XTerm'') or xmh
+     windows (which are of class ``Xmh'').
+
+***********************
+VMS specific:
+  The tilde (~) is taken as indicating that the file "~foo.bar"
+  is looked for in HOME or SYS$LOGIN, e.g. SYS$LOGIN = DISK$USERS:[BLOGGS]
+  implies "~foo.bar" will be DISK$USERS:[BLOGGS]FOO.BAR.
+  Also a leading slash (/) implies an absolute filename,
+  e.g. "/disk$users:[joe]foo.bar" means DISK$USERS:[JOE]FOO.BAR.
+***********************
+
+     String arguments that are interpreted as filenames (see  the
+     Pixmaps,  Cursors, and IconDirectory below) will prepend the
+     user's directory (specified by the  HOME  environment  vari-
+     able)  if  the first character is a tilde (~).  If, instead,
+     the first character is a colon (:), the name is  assumed  to
+     refer to one of the internal bitmaps that are used to create
+     the default titlebars symbols:   :xlogo  or  :iconify  (both
+     refer  to  the  X used for the iconify button), :resize (the
+     nested squares used by the  resize  button),  and  :question
+     (the question mark used for non-existent bitmap files).
+
+     The following variables may be specified at  the  top  of  a
+     ctwm  startup file.  Lists of Window name prefix strings are
+     indicated by win-list.   Optional  arguments  are  shown  in
+     square brackets:
+
+     AlwaysOnTop { win-list }
+             This variable specifies a list of windows (all  win-
+             dows  if  the  list is defaulted) that ctwm will try
+             its best to maintain on top of others. This  doesn't
+             work in all case.
+
+
+     AlwaysShowWindowWhenMovingFromWorkspaceManager
+             When ReallyMoveInWorkspaceManager is present and the
+             user  is moving a window from the WorkSpaceMap, ctwm
+             display the actual window only  if  it  crosses  the
+             current active workspace. If AlwaysShowWindowWhenMo-
+             vingFromWorkspaceManager is present, the actual win-
+             dow is always visible during the move, regardless of
+             whether it crosses the current workspace or not. The
+             Shift key toggles this behaviour.
+
+
+     AnimationSpeed speed
+             The speed argument is  a  non-negative  integer.  It
+             determines  the  number of times a second animations
+             (if any) are updated. If speed is 0, animations  are
+             freezed. The default value is 0.
+
+
+     AutoFocusToTransients
+             Transient   windows  get  focus  automatically  when
+             created.  Useful with programs  that  have  keyboard
+             shortcuts that pop up windows.
+
+
+     AutoOccupy
+             This variable specifies that clients will  automati-
+             cally  change  their  occupation  when their name or
+             icon name changes. The new occupation will be recal-
+             culated  from the Occupy and OccupyAll fields in the
+             .ctwmrc file.
+
+
+     AutoRaise { win-list }
+             This variable specifies a list of windows (all  win-
+             dows  if  the list is defaulted) to be automatically
+             raised whenever the pointer has come to  rest  in  a
+             window  for  the  amount  of  time  specified by the
+             RaiseDelay variable. This  action  can  be  interac-
+             tively  enabled  or  disabled  on individual windows
+             using the function f.autoraise.
+
+
+     AutoRaiseIcons
+             Icons are raised when the cursor enters  it.  Useful
+             with SchrinkIconTitles.
+
+
+     AutoRelativeResize
+             This variable indicates that dragging out  a  window
+             size  (either  when initially sizing the window with
+             pointer Button2 or when resizing it) should not wait
+             until  the  pointer  has  crossed  the window edges.
+             Instead, moving the pointer automatically causes the
+             nearest  edge  or  edges to move by the same amount.
+             This allows the resizing of windows that extend  off
+             the  edge  of  the screen.  If the pointer is in the
+             center of the window, or if the resize is  begun  by
+             pressing a titlebutton, ctwm will still wait for the
+             pointer  to  cross  a  window   edge   (to   prevent
+             accidents).   This option is particularly useful for
+             people who like  the  press-drag-release  method  of
+             sweeping out window sizes.
+
+
+     AutoSqueeze { win-list }
+             These windows will be auto-squeezed (see f.squeeze).
+             i.e.  automatically  unsqueezed when they get focus,
+             and squeezed when they  loose  it.  Useful  for  the
+             workspace manager. Not authorized for icon managers.
+
+
+     BeNiceToColormap
+             By defaults new colors  are  allocated  for  shadows
+             when  a  3D look is used, but when you specify BeNi-
+             ceToColormap  ctwm  uses  stipling  instead  of  new
+             colors,  the  effect  is less beautiful, but accept-
+             able. In this case ClearShadowContrast and  DarkSha-
+             dowContrast have no effects.
+
+
+     BorderColor string [{ wincolorlist }]
+             This variable specifies the  default  color  of  the
+             border  to  be  placed around all non-iconified win-
+             dows, and may only be given within a Color or  Mono-
+             chrome  list.  The optional wincolorlist specifies a
+             list of window and color name pairs  for  specifying
+             particular border colors for different types of win-
+             dows.  For example:
+
+                  BorderColor "gray50"
+                  {
+                       "XTerm"   "red"
+                       "xmh"     "green"
+                  }
+
+             The default is "black".
+
+
+     BorderResizeCursors
+             This variable specifies that ctwm should use  resiz-
+             ing  cursors  when  the  pointer  is  on  the window
+             border. To be used preferably when you have bound  a
+             button to f.resize in the frame context.
+
+
+     BorderShadowDepth pixels
+             This variable specifies the depth of the shadow ctwm
+             uses for 3D window borders, when UseThreeDBorders is
+             selected.
+
+     BorderTileBackground string [{ wincolorlist }]
+             This variable specifies the default background color
+             in  the  gray  pattern used in unhighlighted borders
+             (only if NoHighlight hasn't been set), and may  only
+             be  given  within  a  Color or Monochrome list.  The
+             optional wincolorlist allows per-window colors to be
+             specified.  The default  is "white".
+
+     BorderTileForeground string [{ wincolorlist }]
+             This variable specifies the default foreground color
+             in  the  gray  pattern used in unhighlighted borders
+             (only if NoHighlight hasn't been set), and may  only
+             be  given  within  a  Color or Monochrome list.  The
+             optional wincolorlist allows per-window colors to be
+             specified.  The default is "black".
+
+
+     BorderWidth pixels
+             This variable specifies the width in pixels  of  the
+             border  surrounding  all  client  window  frames  if
+             ClientBorderWidth  has  not  been  specified.   This
+             value is also used to set the border size of windows
+             created by ctwm (such as  the  icon  manager).   The
+             default is 2.
+
+     ButtonIndent pixels
+             This  variable  specifies  the   amount   by   which
+             titlebuttons should be indented on all sides.  Posi-
+             tive values cause the buttons to be smaller than the
+             window  text  and  highlight area so that they stand
+             out.  Setting this  and  the  TitleButtonBorderWidth
+             variables  to  0  makes  titlebuttons be as tall and
+             wide as possible.  The default is 1 if  UseThreeDTi-
+             tles is not set, 0 if it is set.
+
+
+     CenterFeedbackWindow
+             The moving and resizing information window  is  cen-
+             tered in the middle of the screen instead of the top
+             left corner.
+
+
+     ClearShadowContrast contrast
+             Indicates to ctwm how to calculate the clear  shadow
+             color  for  3D  items.   The  value  is  a comprised
+             between 0 and 100. The formula used is :
+
+                      clear.{RGB} = (65535 - color.{RGB}) * (contrast / 100).
+
+             Has no effect if BeNiceToColormap is active.
+
+
+     ClientBorderWidth
+             This variable  indicates  that  border  width  of  a
+             window's  frame  should be set to the initial border
+             width of the window, rather than  to  the  value  of
+             BorderWidth.
+
+
+     Color { colors-list }
+             This variable specifies a list of color  assignments
+             to  be  made  if  the  default display is capable of
+             displaying more than simple black  and  white.   The
+             colors-list  is made up of the following color vari-
+             ables and their values: DefaultBackground,  Default-
+             Foreground,  MenuBackground,  MenuForeground,  Menu-
+             TitleBackground, MenuTitleForeground,  and  MenuSha-
+             dowColor.  The following color variables may also be
+             given a list of window and color name pairs to allow
+             per-window  colors  to be specified (see BorderColor
+             for  details):  BorderColor,   IconManagerHighlight,
+             BorderTileBackground,          BorderTileForeground,
+             TitleBackground,  TitleForeground,   IconBackground,
+             IconForeground,   IconBorderColor,  IconManagerBack-
+             ground, and IconManagerForeground.  For example:
+
+                  Color
+                  {
+                       MenuBackground      "gray50"
+                       MenuForeground      "blue"
+                       BorderColor              "red" { "XTerm" "yellow" }
+                       TitleForeground          "yellow"
+                       TitleBackground          "blue"
+                  }
+
+             All of these color variables may also  be  specified
+             for  the Monochrome variable, allowing the same ini-
+             tialization file to be used on both color and  mono-
+             chrome displays.
+
+     ConstrainedMoveTime milliseconds
+             This variable specifies the length of  time  between
+             button  clicks  needed  to  begin a constrained move
+             operation.  Double clicking within  this  amount  of
+             time when invoking f.move will cause the window only
+             be moved in  a  horizontal  or  vertical  direction.
+             Setting  this  value  to  0 will disable constrained
+             moves.  The default is 400 milliseconds.
+
+     Cursors { cursor-list }
+             This variable specifies the glyphs that ctwm  should
+             use for various pointer cursors.  Each cursor may be
+             defined either from the cursor font or from two bit-
+             map  files.   Shapes  from  the  cursor  font may be
+             specified directly as:
+
+                       cursorname     "string"
+
+             where cursorname is one of the cursor  names  listed
+             below, and string is the name of a glyph as found in
+             the file /usr/include/X11/cursorfont.h (without  the
+             ``XC_''  prefix).   If  the  cursor is to be defined
+             from bitmap files,  the  following  syntax  is  used
+             instead:
+
+                       cursorname     "image"   "mask"
+
+             The image and mask  strings  specify  the  names  of
+             files  containing  the  glyph image and mask in bit-
+             map(1) form.  The bitmap files are  located  in  the
+             same  manner  as  icon  bitmap files.  The following
+             example shows the default cursor definitions:
+
+                  Cursors
+                  {
+                       Frame          "top_left_arrow"
+                       Title          "top_left_arrow"
+                       Icon      "top_left_arrow"
+                       IconMgr   "top_left_arrow"
+                       Move      "fleur"
+                       Resize         "fleur"
+                       Menu      "sb_left_arrow"
+                       Button         "hand2"
+                       Wait      "watch"
+                       Select         "dot"
+                       Destroy   "pirate"
+                  }
+
+
+     DarkShadowContrast contrast
+                 Indicates to ctwm hos to calculate the dark sha-
+             dow  color  for  3D items.  The value is a comprised
+             between 0 and 100. The formula used is :
+
+                      dark.{RGB}  = color.{RGB} * ((100 - contrast) / 100),
+
+             Has no effect if BeNiceToColormap is active.
+
+
+     DecorateTransients
+             This  variable  indicates  that  transient   windows
+             (those   containing   a  WM_TRANSIENT_FOR  property)
+             should have titlebars.  By default,  transients  are
+             not reparented.
+
+
+     DefaultBackground string
+             This variable specifies the background color  to  be
+             used   for  sizing  and  information  windows.   The
+             default is "white".
+
+
+     DefaultForeground string
+             This variable specifies the foreground color  to  be
+             used   for  sizing  and  information  windows.   The
+             default is "black".
+
+
+     DontIconifyByUnmapping { win-list }
+             This variable  specifies  a  list  of  windows  that
+             should not be iconified by simply unmapping the win-
+             dow (as would be the case if IconifyByUnmapping  had
+             been  set).   This  is frequently used to force some
+             windows to be treated as icons while  other  windows
+             are handled by the icon manager.
+
+
+     DontMoveOff
+             This variable indicates that windows should  not  be
+             allowed to be moved off the screen.  It can be over-
+             ridden by the f.forcemove function.
+
+
+     DontPaintRootWindow
+             This variable tells ctwm not to paint the root  win-
+             dow,  whatever you told in the Workspaces specifica-
+             tion.  This  is  useful  to  have  pixmaps  in   the
+             Workspace Map but not on the root window.
+
+
+     DontSetInactive { win-list }
+             These windows won't be  set  to  InactiveState  when
+             they  become  invisible  due  to a change workspace.
+             This has been added because some ill-behaved clients
+             (Frame5) don't like this.
+
+
+     DontSqueezeTitle [{ win-list }]
+             This variable indicates that titlebars should not be
+             squeezed  to  their  minimum size as described under
+             SqueezeTitle below.  If the optional window list  is
+             supplied,  only those windows will be prevented from
+             being squeezed.
+
+
+     DontWarpCursorInWMap
+             Tells ctwm not to warp the cursor to the correspond-
+             ing  actual  window when you click in a small window
+             in the workspace map.
+
+
+     ForceIcons
+             This variable indicates that icon pixmaps  specified
+             in  the  Icons  variable should override any client-
+             supplied pixmaps.
+
+
+     FramePadding pixels
+             This variable specifies  the  distance  between  the
+             titlebar  decorations  (the button and text) and the
+             window  frame.   The  default   is   2   pixels   if
+             UseThreeDTitles is not set, 0 if it is set.
+
+
+     IconBackground string [{ win-list }]
+             This variable  specifies  the  background  color  of
+             icons,  and  may only be specified inside of a Color
+             or Monochrome list.  The optional win-list is a list
+             of window names and colors so that per-window colors
+             may be specified.  See the BorderColor variable  for
+             a complete description of the win-list.  The default
+             is "white".
+
+
+     IconBorderColor string [{ win-list }]
+             This variable specifies the color of the border used
+             for  icon  windows, and may only be specified inside
+             of a Color or Monochrome list.   The  optional  win-
+             list  is  a  list of window names and colors so that
+             per-window colors may be specified.  See the Border-
+             Color  variable  for  a  complete description of the
+             win-list. The default is "black".
+
+     IconBorderWidth pixels
+             This variable specifies the width in pixels  of  the
+             border surrounding icon windows.  The default is 2.
+
+     IconDirectory string
+             This variable specifies the directory that should be
+             searched  if if a bitmap file cannot be found in any
+             of the directories in the bitmapFilePath resource.
+
+     IconFont string
+             This variable specifies  the  font  to  be  used  to
+             display  icon  names  within  icons.  The default is
+             "variable".
+
+     IconForeground string [{ win-list }]
+             This variable specifies the foreground color  to  be
+             used  when  displaying icons, and may only be speci-
+             fied inside of a  Color  or  Monochrome  list.   The
+             optional  win-list  is  a  list  of window names and
+             colors so that per-window colors may  be  specified.
+             See the BorderColor variable for a complete descrip-
+             tion of the win-list.  The default is "black".
+
+     IconifyByUnmapping [{ win-list }]
+             This variable indicates that windows should be icon-
+             ified  by  being  unmapped without trying to map any
+             icons.  This assumes that the user is will remap the
+             window  through the icon manager, the f.warpto func-
+             tion, or the TwmWindows menu.  If the optional  win-
+             list  is provided, only those windows will be iconi-
+             fied by simply unmapping.  Windows  that  have  both
+             this and the IconManagerDontShow options set may not
+             be accessible if no binding to the  TwmWindows  menu
+             is set in the user's startup file.
+
+     IconJustification string
+             Where string is either "left", "center" or  "right".
+             Tells ctwm how to justify the icon image against the
+             icon title (if any).
+
+     IconManagerBackground string [{ win-list }]
+             This variable specifies the background color to  use
+             for  icon manager entries, and may only be specified
+             inside of a Color or Monochrome list.  The  optional
+             win-list  is  a  list  of window names and colors so
+             that per-window colors may be  specified.   See  the
+             BorderColor  variable  for a complete description of
+             the win-list.  The default is "white".
+
+     IconManagerDontShow [{ win-list }]
+             This variable indicates that the icon manager should
+             not  display  any windows.  If the optional win-list
+             is given, only those windows will not be  displayed.
+             This  variable  is  used to prevent windows that are
+             rarely iconified (such as xclock or xload) from tak-
+             ing up space in the icon manager.
+
+     IconManagerFont string
+             This variable specifies the font  to  be  used  when
+             displaying  icon  manager  entries.   The default is
+             "variable".
+
+     IconManagerForeground string [{ win-list }]
+             This variable specifies the foreground color  to  be
+             used  when  displaying icon manager entries, and may
+             only be specified inside of a  Color  or  Monochrome
+             list.   The  optional  win-list  is a list of window
+             names and colors so that per-window  colors  may  be
+             specified.   See the BorderColor variable for a com-
+             plete description of the win-list.  The  default  is
+             "black".
+
+     IconManagerGeometry string [ columns ]
+             This variable specifies the  geometry  of  the  icon
+             manager  window.   The  string  argument is standard
+             geometry specification that  indicates  the  initial
+             full  size  of  the  icon manager.  The icon manager
+             window is then broken into columns pieces and scaled
+             according  to  the  number  of  entries  in the icon
+             manager.  Extra entries are wrapped  to  form  addi-
+             tional rows.  The default number of columns is 1.
+
+     IconManagerHighlight string [{ win-list }]
+             This variable specifies the border color to be  used
+             when   highlighting  the  icon  manager  entry  that
+             currently has the focus, and can only  be  specified
+             inside  of a Color or Monochrome list.  The optional
+             win-list is a list of window  names  and  colors  so
+             that  per-window  colors  may be specified.  See the
+             BorderColor variable for a complete  description  of
+             the win-list.  The default is "black".
+
+     IconManagers { iconmgr-list }
+             This variable specifies a list of icon  managers  to
+             create.   Each item in the iconmgr-list has the fol-
+             lowing format:
+
+                       "winname" ["iconname"]   "geometry" columns
+
+             where winname is the name of the windows that should
+             be  put into this icon manager, iconname is the name
+             of that icon manager window's icon,  geometry  is  a
+             standard  geometry specification, and columns is the
+             number of columns in this icon manager as  described
+             in IconManagerGeometry.  For example:
+
+                  IconManagers
+                  {
+                       "XTerm"   "=300x5+800+5" 5
+                       "myhost"  "=400x5+100+5" 2
+                  }
+
+             Clients whose name or class is ``XTerm''  will  have
+             an  entry  created  in  the  ``XTerm'' icon manager.
+             Clients whose name was ``myhost'' would be put  into
+             the ``myhost'' icon manager.
+
+
+     IconManagerShadowDepth pixels
+             This variable specifies the depth of the shadow ctwm
+             uses for 3D IconManager entries, when UseThreeDIcon-
+             Managers is selected.
+
+
+     IconManagerShow { win-list }
+             This variable  specifies  a  list  of  windows  that
+             should  appear  in  the  icon manager.  When used in
+             conjunction with the  IconManagerDontShow  variable,
+             only  the  windows in this list will be shown in the
+             icon manager.
+
+
+     IconRegion geomstring vgrav hgrav gridwidth gridheight [iconjust]
+             [iconregjust] [iconregalign] [{ win-list }]
+
+             This variable specifies an area on the  root  window
+             in  which icons are placed if no specific icon loca-
+             tion is provided by the client.  The geomstring is a
+             quoted string containing a standard geometry specif-
+             ication. If  more  than  one  IconRegion  lines  are
+             given,  icons  will  be put into the succeeding icon
+             regions when the first is full. The  vgrav  argument
+             should  be  either North or South and control and is
+             used to control whether icons are  first  filled  in
+             from  the  top  or bottom of the icon region.  Simi-
+             larly, the hgrav argument should be either  East  or
+             West  and is used to control whether icons should be
+             filled in from left from the right. Icons  are  laid
+             out within the region in a grid with cells gridwidth
+             pixels  wide  and  gridheight  pixels    high.   The
+             optional win-list argument tells ctwm that if such a
+             window is iconified, and there  is  enough  room  in
+             this  icon  region for its icon, then place it here.
+             The optionnal iconjust, iconregjust and iconregalign
+             can  be used to give specific values of IconJustifi-
+             cation,    IconRegionJustification    and    IconRe-
+             gionAlignement for this IconRegion.
+
+
+     IconRegionAlignement string
+             Where string is either "top", "center"  "bottom"  or
+             "border".   Tells  ctwm  how  to  align icons inside
+             their place in the IconRegion.  This keyword needs a
+             string  value.  The  acceptable  values are : "top",
+             "center", "bottom"  and  "border".  If  "border"  is
+             given,  the  justification will be "top" if the icon
+             region gravity is "north" and "bottom" if  the  icon
+             region gravity is "south".
+
+
+     IconRegionJustification string
+             Where string is either "left", "center"  "right"  or
+             "border".   Tells  ctwm  how to justify icons inside
+             their place in the IconRegion.  This keyword needs a
+             string  value.  The  acceptable values are : "left",
+             "center",  "right"  and  "border".  If  "border"  is
+             given,  the justification will be "left" if the icon
+             region gravity is "west" and  "right"  if  the  icon
+             region gravity is "east".
+
+
+     Icons { win-list }
+             This variable specifies a list of window  names  and
+             the  bitmap  filenames  that should be used as their
+             icons.  For example:
+
+                  Icons
+                  {
+                       "XTerm"   "xterm.icon"
+                       "xfd"          "xfd_icon"
+                  }
+
+             Windows that match ``XTerm'' and would not be iconi-
+             fied  by  unmapping,  and  would try to use the icon
+             bitmap in the file ``xterm.icon''.  If ForceIcons id
+             specified,  this  bitmap  will  be  used even if the
+             client has requested its own icon pixmap.
+
+
+     IgnoreLockModifier
+             If present, all  bindings (buttons  and  keys)  will
+             ignore  the  LockMask.  Useful if you often use caps
+             lock, and  don't  want  to  define  twice  all  your
+             bindings.
+
+
+     InterpolateMenuColors
+             This  variable  indicates  that  menu  entry  colors
+             should   be  interpolated  between  entry  specified
+             colors.  In the example below:
+
+                  Menu "mymenu"
+                  {
+                       "Title"        ("black":"red")          f.title
+                       "entry1"                 f.nop
+                       "entry2"                 f.nop
+                       "entry3"  ("white":"green")   f.nop
+                       "entry4"                 f.nop
+                       "entry5"  ("red":"white")          f.nop
+                  }
+
+             the foreground colors for ``entry1'' and  ``entry2''
+             will  be  interpolated  between black and white, and
+             the background colors between red and green.   Simi-
+             larly,  the  foreground for ``entry4'' will be half-
+             way between white and red, and the  background  will
+             be half-way between green and white.
+
+     MakeTitle { win-list }
+             This variable specifies a list of windows on which a
+             titlebar  should  be  placed  and is used to request
+             titles on specific windows  when  NoTitle  has  been
+             set.
+
+     MapWindowBackground color [{ win-list }]
+             This variable specifies the background colors to use
+             for  small  windows  in the workspace map window and
+             may only be specified inside of  a  Color  or  Mono-
+             chrome list. The optional win-list is a list of win-
+             dow names and colors so that per-window  colors  may
+             be  specified.  If  there  is neither MapWindowBack-
+             ground, nor  MapWindowForeground  the  window  title
+             colors are used.
+
+     MapWindowCurrentWorkSpace  {  border_color  [background]   [fore-
+	ground] [bitmap] }
+             Specify the appearence of the map window correspond-
+             ing to the current workspace.
+
+     MapWindowDefaultWorkSpace  {  border_color  [background]   [fore-
+	ground] [bitmap] }
+             Specify the appearence of the map window correspond-
+             ing  to  the  workspaces  other  than  the   current
+             workspace  when  no  root background information has
+             been provided to ctwm in the WorkSpace command.  Not
+             used in others cases.
+
+     MapWindowForeground color [{ win-list }]
+             This variable specifies the foreground colors to use
+             for  small  windows  in the workspace map window and
+             may only be specified inside of  a  Color  or  Mono-
+             chrome list. The optional win-list is a list of win-
+             dow names and colors so that per-window  colors  may
+             be  specified.  If  there  is neither MapWindowBack-
+             ground, nor  MapWindowForeground  the  window  title
+             colors are used.
+
+     MaxIconTitleWidth width
+             The integer argument tells ctwm the maximun width to
+             use  for  an  icon title. If an icon title is larger
+             than width, it is truncated.
+
+     MaxWindowSize string
+             This variable specifies  a  geometry  in  which  the
+             width  and  height give the maximum size for a given
+             window.  This is typically used to restrict  windows
+             to   the   size  of  the  screen.   The  default  is
+             "30000x30000".
+
+     MenuBackground string
+             This variable specifies the  background  color  used
+             for  menus,  and  can  only be specified inside of a
+             Color or Monochrome list.  The default is "white".
+
+     MenuFont string
+             This  variable  specifies  the  font  to  use   when
+             displaying menus.  The default is "variable".
+
+     MenuForeground string
+             This variable specifies the  foreground  color  used
+             for  menus,  and  can  only be specified inside of a
+             Color or Monochrome list.  The default is "black".
+
+     MenuShadowColor string
+             This variable specifies  the  color  of  the  shadow
+             behind  pull-down  menus  and  can only be specified
+             inside of a Color or Monochrome list.   The  default
+             is "black".
+
+     MenuShadowDepth pixels
+             This variable specifies the depth of the shadow ctwm
+             uses for 3D menus, when UseThreeDMenus is selected.
+
+     MenuTitleBackground string
+             This variable specifies  the  background  color  for
+             f.title  entries in menus, and can only be specified
+             inside of a Color or Monochrome list.   The  default
+             is "white".
+
+     MenuTitleForeground string
+             This variable specifies  the  foreground  color  for
+             f.title  entries  in menus and can only be specified
+             inside of a Color or Monochrome list.   The  default
+             is "black".
+
+     Monochrome { colors }
+             This variable specifies a list of color  assignments
+             that  should be made if the screen has a depth of 1.
+             See the description of Colors.
+
+     MoveDelta pixels
+             This variable specifies the  number  of  pixels  the
+             pointer  must move before the f.move function starts
+             working.  Also see the  f.deltastop  function.   The
+             default is zero pixels.
+
+     MovePackResistance pixels
+             This variable specifies the number of pixels of  the
+             movepack and movepush resistance. See f.movepack and
+             f.movepush.
+
+     MoveOffResistance pixels
+             This variable specifies the number of pixels of  the
+             moveoff   resistance.    If   pixels   is  positive,
+             DontMoveOff will only prevent you from going off the
+             edge  if you're within n pixels off the edge. If you
+             go further, DontMoveOff gives up and lets you go  as
+             far  as  you  wish.  f.forcemove still allows you to
+             totally ignore DontMoveOff.  A negative  value  puts
+             you   back  into  "never  moveoff"  mode  (it's  the
+             default).
+
+     NoBackingStore
+             This variable indicates that ctwm's menus should not
+             request  backing  store  to  minimize  repainting of
+             menus.  This is typically used with servers that can
+             repaint faster than they can handle backing store.
+
+     NoBorder { win-list }
+             These windows won't have  border.  If  you  want  no
+             borders on all windows, use the BorderWidth keyword.
+
+     NoCaseSensitive
+             This variable indicates that case should be  ignored
+             when  sorting  icon  names in an icon manager.  This
+             option is typically used with applications that cap-
+             italize the first letter of their icon name.
+
+     NoDefaults
+             This variable indicates that ctwm should not  supply
+             the  default titlebuttons and bindings.  This option
+             should only be used if the startup file  contains  a
+             completely new set of bindings and definitions.
+
+     NoGrabServer
+             This variable indicates that ctwm  should  not  grab
+             the  server  when popping up menus and moving opaque
+             windows.
+
+     NoHighlight [{ win-list }]
+             This variable indicates that borders should  not  be
+             highlighted  to  track  the location of the pointer.
+             If the optional win-list is given, highlighting will
+             only be disabled for those windows.  When the border
+             is highlighted, it will be drawn in the current Bor-
+             derColor.   When  the  border is not highlighted, it
+             will be stippled with  an  gray  pattern  using  the
+             current   BorderTileForeground  and  BorderTileBack-
+             ground colors.
+
+     NoIconTitle [{ win-list }]
+             This  variable  indicates  that  icons  should   not
+             display  the  icon  name  of  the  client.   If  the
+             optional win-list is given, only those clients  will
+             not have icon titles.
+
+     NoIconManagerFocus
+             This variable indicates that ctwm will not  set  the
+             focus  on  the corresponding window when the pointer
+             is in an IconManager.
+
+     NoIconManagers
+             This variable indicates that no icon manager  should
+             be created.
+
+     NoMenuShadows
+             This variable indicates that menus should  not  have
+             drop  shadows  drawn behind them.  This is typically
+             used with slower servers since  it  speeds  up  menu
+             drawing  at  the expense of making the menu slightly
+             harder to read.
+
+     NoOpaqueMove { window-list }
+             The counterpart of OpaqueMove. See OpaqueMove.
+
+     NoOpaqueResize { window-list }
+             The counterpart of OpaqueResize. See OpaqueResize.
+
+     NoRaiseOnDeiconify
+             This  variable  indicates  that  windows  that   are
+             deiconified should not be raised.
+
+     NoRaiseOnMove
+             This variable indicates that windows should  not  be
+             raised  when moved.  This is typically used to allow
+             windows to slide underneath each other.
+
+     NoRaiseOnResize
+             This variable indicates that windows should  not  be
+             raised  when  resized.   This  is  typically used to
+             allow windows to be resized underneath each other.
+
+     NoRaiseOnWarp
+             This variable indicates that windows should  not  be
+             raised when the pointer is warped into them with the
+             f.warpto function.  If this option is  set,  warping
+             to an occluded window may result in the pointer end-
+             ing up in the occluding window instead  the  desired
+             window   (which   causes  unexpected  behavior  with
+             f.warpring).
+
+     NoSaveUnders
+             This  variable  indicates  that  menus  should   not
+             request  save-unders  to  minimize window repainting
+             following menu selection.  It is typically used with
+             displays  that can repaint faster than they can han-
+             dle save-unders.
+
+     NoShowOccupyAll
+             This variable specifies that OccupyAll windows won't
+             be displayed in the WorkSpaceMap window.
+
+     NoStackMode [{ win-list }]
+             This variable indicates that client window  requests
+             to  change stacking order should be ignored.  If the
+             optional win-list is given, only requests  on  those
+             windows  will be ignored.  This is typically used to
+             prevent applications from relentlessly popping them-
+             selves to the front of the window stack.
+
+     NoTitle [{ win-list }]
+             This variable indicates that windows should not have
+             titlebars.   If the optional win-list is given, only
+             those windows will not  have  titlebars.   MakeTitle
+             may  be  used with this option to force titlebars to
+             be put on specific windows.
+
+     NoTitleFocus
+             This variable indicates that  ctwm  should  not  set
+             keyboard  input  focus  to  each  window  as  it  is
+             entered.  Normally, ctwm  sets  the  focus  so  that
+             focus  and  key  events  from  the titlebar and icon
+             managers are delivered to the application.   If  the
+             pointer  is  moved  quickly  and  ctwm  is  slow  to
+             respond, input can be directed  to  the  old  window
+             instead  of  the new.  This option is typically used
+             to prevent this ``input lag''  and  to  work  around
+             bugs  in  older applications that have problems with
+             focus events.
+
+     NoTitleHighlight [{ win-list }]
+             This variable indicates that the highlight  area  of
+             the  titlebar,  which is used to indicate the window
+             that currently has the input focus,  should  not  be
+             displayed.   If the optional win-list is given, only
+             those windows will not have highlight  areas.   This
+             and  the SqueezeTitle options can be set to substan-
+             tially reduce the amount of screen space required by
+             titlebars.
+
+     Occupy { occupy-list }
+             This variable specifies which windows  occupy  which
+             workspaces at startup.
+
+             occupy-list consists of entries of the form :
+
+                          [Window]   win-name { wpsc1 wspc2 ... }
+                  or      Workspace  wspc-name {win1 win2 ... }
+
+             Example :
+
+                  Occupy {
+                                 "xload"   {"all"}
+                      Window     "xterm"   {"here" "there" "elsewhere"}
+                                 "xv"      {"images"}
+                      WorkSpace  "images"  {"xloadimage"}
+                  }
+
+             Note : The Occupy declaration should come after  the
+             WorkSpaces declaration.
+
+
+     OccupyAll { window-list }
+
+             This variable specifies a list of windows that  will
+             occupy all workspaces at startup.
+
+             window-list is a list of window names.
+
+             Example :
+
+                  OccupyAll
+                  {
+                      "xload"
+                      "xbiff"
+                      "xconsole"
+                  }
+
+             Note : The OccupyAll declaration should  come  after
+             the WorkSpaces declaration.
+
+
+     OpaqueMove { window-list }
+             This variable indicates  that  the  f.move  function
+             should  actually  move the window instead of just an
+             outline so that the user can  immediately  see  what
+             the window will look like in the new position.  This
+             option is typically used on fast displays  (particu-
+             larly  if  NoGrabServer is set). The optional window
+             list parameter indicates that only windows  in  this
+             list  should  actually  be moved in opaque mode. The
+             NoOpaqueMove counterpart is also available.
+
+
+     OpaqueMoveThreshold { threshold }
+             The integer parameter is a percentage and  indicates
+             that only windows (elligible for opaque moving) with
+             a surface smaller than this percentage of  the  sur-
+             face  of  the  screen  should  actually  be moved in
+             opaque mode.
+
+
+     OpaqueResize { window-list }
+             The opaque version  of  resize.  Extremely  resource
+             intensive,      but      beautiful     with     fast
+             server/client/network. See  OpaqueMove.  The  NoOpa-
+             queResize counterpart is also available.
+
+
+     OpaqueResizeThreshold { threshold }
+             The resize version of OpaqueMoveThreshold.
+
+
+***********************
+VMS specific:
+  OpenWindowTimeout is currently not implemented on VMS
+***********************
+
+     OpenWindowTimeout seconds
+             seconds is  an  integer  representing  a  number  of
+             second. When a window tries to open on an unattended
+             display, it will be automatically mapped after  this
+             number of seconds.
+
+
+     PackNewWindows
+             Use f.movepack  algorithm  instead  of  f.move  when
+             opening a new window.
+
+
+     Pixmaps { pixmaps }
+             This variable  specifies  a  list  of  pixmaps  that
+             define the appearance of various images.  Each entry
+             is a keyword indicating the pixmap to set,  followed
+             by a string giving the name of the bitmap file.  The
+             following pixmaps may be specified:
+
+                  Pixmaps
+                  {
+                       TitleHighlight "gray1"
+                  #    TitleHighlight "supman%.xbm"
+                  }
+
+             The default for TitleHighlight is  to  use  an  even
+             stipple pattern.
+
+
+     PixmapDirectory path
+             This variable specifies the path where ctwm looks to
+             find non-X11 bitmap files.  Whenever you want to use
+             a image file that is not an X11  bitmap,  specify  :
+             xpm:filename (for xpm files) or xwd:filename for xwd
+             files, or im:filename (for other files supported  by
+             the  imconv package), or |command for an on the file
+             generated xwd file. Use the % character  to  specify
+             an  animation. path can be a colon separated list of
+             directories.  Example :
+
+                  PixmapDirectory  "/usr/lib/X11/twm"
+                  Icons
+                  {
+                      "Axe"    "xpm:edit.xpm"
+                      "xterm"  "xpm:ball%.xpm"
+                  }
+
+**************
+VMS specific:
+  PixmapDirectory	"mphv2$user2:[bloggs.xpm]"
+**************
+  
+             N.B This is only valid if your version of  ctwm  has
+             been compiled with the XPM and IMCONV options.
+
+
+     RaiseDelay milliseconds
+             For windows that are to be automatically raised when
+             the  pointer  enters (see the AutoRaise variable and
+             the f.autoraise function)  this  variable  specifies
+             the  length  of  time the pointer should rest in the
+             window before it is raised.  The default is  0  mil-
+             liseconds.
+
+
+     RaiseOnClick
+             If  present a window will be raised on top of others
+             when clicked on, and the ButtonPress event  will  be
+             correctly  forwarded  to  the  client that owns this
+             window (if it asked to). See RaiseOnClickButton.
+
+
+     RaiseOnClickButton  button_number
+             Where button_number is a valid button number  (gene-
+             rally  1 to 3). Specify the button to use for Raise-
+             OnClick.
+
+
+     RaiseWhenAutoUnSqueeze
+             Windows are raised when auto-unsqueezed  (See  Auto-
+             Squeeze).
+
+
+     RandomPlacement [ string ]
+             Where  string  is  either  "on",  "off",  "all"   or
+             "unmapped".   This  variable  indicates that windows
+             with no specified geometry should  be  placed  in  a
+             pseudo-random  location  instead  of having the user
+             drag out an outline.  The  argument  "on"  or  "all"
+             tells  ctwm  do do this for all such windows, "off",
+             not to do this, and "unmapped",  only  for  unmapped
+             windows,  e.g.   iconified  or  not  visible  in the
+             current workspace.
+
+
+     ReallyMoveInWorkspaceManager
+             This keyword tells ctwm to move  the  actual  window
+             when  the  user  is  moving the small windows in the
+             WorkSpaceMap window. If not present the WorkSpaceMap
+             can  be used only to modify the occupation of a win-
+             dow.
+
+
+     ResizeFont string
+             This variable specifies the font to be used  for  in
+             the  dimensions  window  when resizing windows.  The
+             default is "fixed".
+
+
+     RestartPreviousState
+             This variable indicates that ctwm should attempt  to
+             use  the WM_STATE property on client windows to tell
+             which windows should be iconified and  which  should
+             be  left  visible.  This is typically used to try to
+             regenerate the state that the screen was  in  before
+             the previous window manager was shutdown.
+
+
+     ReverseCurrentWorkspace string
+             This variable specifies tells ctwm  to  reverse  the
+             background  and  foreground colors in the small win-
+             dows in the workspace map for the current workspace.
+
+
+     SaveColor { colors-list }
+             This variable indicates a list of color  assignments
+             to be stored as pixel values in the root window pro-
+             perty _MIT_PRIORITY_COLORS.  Clients  may  elect  to
+             preserve  these  values  when  installing  their own
+             colormap.  Note that use of this mechanism is a  way
+             an  for application to avoid the "technicolor" prob-
+             lem, whereby useful screen objects  such  as  window
+             borders and titlebars disappear when a programs cus-
+             tom colors are installed by the window manager.  For
+             example:
+
+                  SaveColor
+                  {
+                          BorderColor
+                          TitleBackground
+                          TitleForeground
+                          "red"
+                          "green"
+                          "blue"
+                  }
+
+             This would place on the root window 3  pixel  values
+             for  borders  and  titlebars,  as  well as the three
+             color strings, all taken from the default colormap.
+
+
+     SchrinkIconTitles
+             A la Motif schrinking of icon titles, and  expansion
+             when mouse is inside icon.
+
+
+     ShortAllWindowsMenus
+             Don't show WorkSpaceManager and IconManagers in  the
+             TwmWindows and TwmAllWindows menus.
+
+
+     ShowIconManager
+             This variable indicates that the icon manager window
+             should  be  displayed  when ctwm is started.  It can
+             always be brought up using the  f.showiconmgr  func-
+             tion.
+
+
+     ShowWorkSpaceManager
+             This variable specifies  that  the  WorkSpaceManager
+             should be visible.
+
+
+     SortIconManager
+             This variable indicates that  entries  in  the  icon
+             manager  should be sorted alphabetically rather than
+             by simply appending new windows to the end.
+
+
+     SqueezeTitle [{ squeeze-list }]
+             This variable indicates that ctwm should attempt  to
+             use  the  SHAPE  extension  to make titlebars occupy
+             only as much screen space as they need, rather  than
+             extending  all the way across the top of the window.
+             The optional squeeze-list may be used to control the
+             location  of  the squeezed titlebar along the top of
+             the window.  It contains entries of the form:
+
+                       "name"         justification  num  denom
+
+             where name is a window name, justification is either
+             left,  center,  or  right,  and  num  and  denom are
+             numbers specifying a ratio giving the relative posi-
+             tion  about  which  the  titlebar is justified.  The
+             ratio is measured from left to right if the  numera-
+             tor  is  positive, and right to left if negative.  A
+             denominator of 0 indicates that the numerator should
+             be  measured  in pixels.  For convenience, the ratio
+             0/0 is the same as  1/2  for  center  and  -1/1  for
+             right.  For example:
+
+                  SqueezeTitle
+                  {
+                       "XTerm"   left      0    0
+                       "xterm1"  left      1    3
+                       "xterm2"  left      2    3
+                       "oclock"  center         0    0
+                       "emacs"   right          0    0
+                  }
+
+             The DontSqueezeTitle list can be used  to  turn  off
+             squeezing on certain titles.
+
+
+     StartIconified [{ win-list }]
+             This variable indicates that client  windows  should
+             initially be left as icons until explicitly deiconi-
+             fied by the  user.   If  the  optional  win-list  is
+             given,  only  those  windows will be started iconic.
+             This is useful for programs that do not  support  an
+             -iconic command line option or resource.
+
+
+     StartInMapState
+             This variable specifies  that  the  WorkSpaceManager
+             should be started in its map form when created.
+
+
+     StartSqueezed { win-list }
+             These  windows  will  first  show  up  squeezed (see
+             f.squeeze).
+
+
+     StayUpMenus
+             Tells ctwm to use stayup  menus.  These  menus  will
+             stay on the screen when ButtonUp, if either the menu
+             has not yet been entered  by  the  pointer,  or  the
+             current item is a f.title.
+
+
+     SunkFocusWindowTitle
+             This variable specifies that the title of the  focus
+             window  (if  exists)  should  be  sunken  instead of
+             raised. Only valid if UseThreeDTitles is set.
+
+
+     ThreeDBorderWidth  pixels
+             The width of the 3D border in pixels, if any.
+
+
+     TitleBackground string [{ win-list }]
+             This variable specifies the background color used in
+             titlebars,  and  may  only  be specified inside of a
+             Color or Monochrome list.  The optional win-list  is
+             a list of window names and colors so that per-window
+             colors may be specified.  The default is "white".
+
+
+     TitleButtonBorderWidth pixels
+             This variable specifies the width in pixels  of  the
+             border  surrounding titlebuttons.  This is typically
+             set to 0 to allow titlebuttons to take  up  as  much
+             space  as  possible  and  to not have a border.  The
+             default is 1 if UseThreeDTitles is not set, 0 if  it
+             is set.
+
+
+     TitleButtonShadowDepth pixels
+             This variable specifies the depth of the shadow ctwm
+             uses  for  3D title buttons, when UseThreeDTitles is
+             selected.
+
+
+     TitleFont string
+             This  variable  specifies  the  font  to  used   for
+             displaying  window  names in titlebars.  The default
+             is "variable".
+
+
+     TitleForeground string [{ win-list }]
+             This variable specifies the foreground color used in
+             titlebars,  and  may  only  be specified inside of a
+             Color or Monochrome list.  The optional win-list  is
+             a list of window names and colors so that per-window
+             colors may be specified.  The default is "black".
+
+
+     TitleJustification string
+             This keyword needs a string  value.  The  acceptable
+             values  are : "left", "center" and "right". The win-
+             dow titles will be justified according  to  this  in
+             the title window.
+
+
+     TitlePadding pixels
+             This variable specifies  the  distance  between  the
+             various  buttons,  text,  and highlight areas in the
+             titlebar.  The default is 8 pixels  if  UseThreeDTi-
+             tles is not set, 0 if it is set.
+
+
+     TitleShadowDepth pixels
+             This variable specifies the depth of the shadow ctwm
+             uses   for   3D   titles,  when  UseThreeDTitles  is
+             selected.
+
+
+     TransientHasOccupation
+             This variable specifies that transient-for and  non-
+             group  leader  windows can have their own occupation
+             potentially different from their leader window.  The
+             default  case  is  that  these  windows follow their
+             leader, use  this  keyword  if  the  default  action
+             doesn't please you.
+
+
+     TransientOnTop percentage
+             The parameter (required) is a percentage  and  tells
+             ctwm to put transient (and non-group leader) windows
+             always on top of their leader if and only  if  their
+             surface is smaller than this fraction of the surface
+             of their leader. The surface  of  a  window  is  its
+             width times its weight.
+
+
+     UnknownIcon string
+             This variable specifies the  filename  of  a  bitmap
+             file  to  be  used as the default icon.  This bitmap
+             will be used as the icon of all clients which do not
+             provide  an  icon  bitmap  and are not listed in the
+             Icons list.
+
+
+     UnmapByMovingFarAway [{ win-list }]
+             These windows  will  be  moved  out  of  the  screen
+             instead  of beeing unmapped when they become invisi-
+             ble due to a change workspace. This has  been  added
+             because some ill-behaved clients (Frame5) don't like
+             to be unmapped.
+
+
+     UsePPosition string
+             This variable specifies whether or not  ctwm  should
+             honor program-requested locations (given by the PPo-
+             sition flag in the WM_NORMAL_HINTS property) in  the
+             absence  of a user-specified position.  The argument
+             string may have one of  three  values:   "off"  (the
+             default)  indicating  that  ctwm  should  ignore the
+             program-supplied position, "on" indicating that  the
+             position  should  be used, and "non-zero" indicating
+             that the position should used if it  is  other  than
+             (0,0).   The  latter  option is for working around a
+             bug in older toolkits.
+
+
+     UseSunkTitlePixmap
+             This makes it so the shadows are inversed for  title
+             pixmaps when focus is lost.  This is similar to hav-
+             ing the SunkFocusWindowTitle, but it makes your  xbm
+             or  3d  XPM  (if any) sink instead of just the whole
+             bar.
+
+
+     UseThreeDBorders
+             Tells ctwm to use  3D-looking  window  borders.  The
+             width  ot  the  3D borders is ThreeDBorderWidth. The
+             color of the 3D border is BorderTileBackground,  and
+             if  NoHighlight  is  not selected, the border of the
+             Focus window is BorderColor.
+
+
+     UseThreeDIconManagers
+             Tells ctwm to use 3D-looking IconManagers if any.
+
+
+     UseThreeDMenus
+             Tells ctwm to use 3D-looking menus.
+
+
+     UseThreeDTitles
+             Tells ctwm to  use  3D-looking  windows  titles.  In
+             which  case  the  default  values of TitleButtonBor-
+             derWidth, FramePadding, TitlePadding  and  ButtonIn-
+             dent  are  set  to  0.  There are plenty of built-in
+             scalable pixmaps for buttons,  :xpm:menu,  :xpm:dot,
+             :xpm:resize,   :xpm:bar,   :xpm:vbar,  :xpm:iconify,
+             :xpm:resize and :xpm:box. There is several  built-in
+             scalable   animation   for  buttons  :  %xpm:resize,
+             %xpm:menu-up,  %xpm:menu-down,  %xpm:resize-out-top,
+             %xpm:resize-in-top,             %xpm:resize-out-bot,
+             %xpm:resize-in-bot,   %xpm:maze-out,   %xpm:maze-in,
+             %xpm:zoom-out, %xpm:zoom-in and %xpm:zoom-inout. Try
+             them to see what they look like.
+
+
+     UseThreeDWMap
+             Tells ctwm to use 3D for the small  windows  in  the
+             workspace map.
+
+
+     WarpCursor [{ win-list }]
+             This variable indicates that the pointer  should  be
+             warped  into  windows when they are deiconified.  If
+             the optional win-list is  given,  the  pointer  will
+             only be warped when those windows are deiconified.
+
+
+     WindowRing [{ win-list }]
+             This variable specifies  a  list  of  windows  along
+             which the f.warpring function cycles. If no argument
+             is given, all the windows are in the ring.
+
+
+     WarpRingOnScreen
+             Tells ctwm that f.warpring  warps  pointer  only  to
+             windows visible in the current workspace.
+
+
+     WarpToDefaultMenuEntry
+             (Useful only with StayUpMenus)  When  using  StayUp-
+             Menus,  and  a  menu  does  stays up, the pointer is
+             warped to the default entry of the menu.
+
+
+     WarpUnmapped
+             This variable indicates that that the f.warpto func-
+             tion  should  deiconify  any  iconified  windows  it
+             encounters.  This is typically used to  make  a  key
+             binding  that  will pop a particular window (such as
+             xmh), no matter where it is.   The  default  is  for
+             f.warpto to ignore iconified windows.
+
+
+     WMgrButtonShadowDepth depth
+             Control the depth of the  shadow  of  the  workspace
+             manager buttons.
+
+
+     WMgrHorizButtonIndent nb_pixels
+             Specifies the horizontal space,  in  pixel,  between
+             the  buttons  of  the  workspace  manager (in button
+             mode).
+
+
+     WMgrVertButtonIndent nb_pixels
+             Specifies the vertical space, in pixel, between  the
+             buttons of the workspace manager (in button mode).
+
+
+     WorkSpaceFont string
+             This allows you to specify the font to use  for  the
+             small  windows in the workspace manager map. (Try "-
+             adobe-times-*-r-*--10-*-*-*-*-*-*-*").
+
+
+     WorkSpaceManagerGeometry string [ columns ]
+             This  variable  specifies  the   geometry   of   the
+             workspace  manager  window.  The  string argument is
+             standard geometry specification that  indicates  the
+             initial  full  size  of  the  workspace manager. The
+             columns argument indicates the number of columns  to
+             use for the workspace manager window.
+
+                  WorkSpaceManagerGeometry        "360x60+60-0" 8
+
+
+     WorkSpaces { workspace-list }
+             This variable specifies a list  of  workspaces  that
+             are created at startup, Where workspace-list is :
+
+                  name [{bg-button [fg-button] [bg-root] [fg-root] [pixmap-root]}]
+
+
+             With :
+
+             bg-button:
+                     background color of the corresponding button
+                     in the workspace manager.
+
+             fg-button:
+                     foreground color of the corresponding button
+                     in the workspace manager.
+
+             bg-root:
+                     background color of the  corresponding  root
+                     screen.
+
+             fg-root:
+                     foreground color of the  corresponding  root
+                     screen.
+
+             pixmap-root:
+                     pixmap to display on the corresponding  root
+                     screen,   either   the  name  of  a  bitmap,
+                     xpm:xpmfile,   xwd:xwdfile,   im:imfile   or
+                     |command_that generate_xwd.
+
+             Example :
+
+                  WorkSpaces
+                  {
+                    "One"   {"#686B9F" "white" "DeepSkyBlue3" "white" "xlogo16"}
+                    "Two"   {"#619AAE" "white" "firebrick"}
+                    "Three" {"#727786" "white" "MidnightBlue" "white" "xpm:ball%.xpm"}
+                    "Four"  {"#727786" "white" "white" "white" "|(giftoppm | pnmtoxwd) < 2010.gif"}
+
+                    "Five"  {"#727786" "white" "DeepSkyBlue3" "white" "plaid"}
+                    "Six"   {"#619AAE" "white" "DeepSkyBlue3" "white" "xpm:background1"}
+                    "Seven" {"#8C5b7A" "white" "chartreuse4"}
+                    "Eight" {"#686B9F" "white" "MidnightBlue"}
+                  }
+
+
+             The WorkSpaces declaration should  come  before  the
+             Occupy or OccupyAll declarations. The maximum number
+             of workspaces is 32.
+
+
+     XMoveGrid number
+             This variable specifies the value  to  use  to  con-
+             strain window movement.  When moving windows around,
+             the x coordinate will always be a multiple  of  this
+             variable.  Default  id  1.  f.forcemove ignores this
+             variable.
+
+
+     YMoveGrid number
+
+
+     XorValue number
+             This variable specifies the value to use when  draw-
+             ing  window  outlines for moving and resizing.  This
+             should be set to a  value  that  will  result  in  a
+             variety  of  distinguishable  colors when exclusive-
+             or'ed  with  the  contents  of  the  user's  typical
+             screen.  Setting this variable to 1 often gives nice
+             results if adjacent colors in the  default  colormap
+             are  distinct.   By  default,  ctwm  will attempt to
+             cause temporary lines to appear at the opposite  end
+             of the colormap from the graphics.
+
+
+     YMoveGrid number
+             This variable specifies the value  to  use  to  con-
+             strain window movement.  When moving windows around,
+             the y coordinate will always be a multiple  of  this
+             variable.  Default  id  1.  f.forcemove ignores this
+             variable.
+
+
+     Zoom [ count ]
+             This variable  indicates  that  outlines  suggesting
+             movement of a window to and from its iconified state
+             should be displayed whenever a window  is  iconified
+             or  deiconified.  The optional count argument speci-
+             fies the  number  of  outlines  to  be  drawn.   The
+             default count is 8.
+
+     The following variables must be set  after  the  fonts  have
+     been  assigned, so it is usually best to put them at the end
+     of the variables or beginning of the bindings sections:
+
+
+     ChangeWorkspaceFunction function
+             This variable specifies the function to be  executed
+             when the user change the current workspace (zap).
+
+
+     DefaultFunction function
+             This variable specifies the function to be  executed
+             when  a key or button event is received for which no
+             binding is provided.  This  is  typically  bound  to
+             f.nop,  f.beep,  or  a menu containing window opera-
+             tions.
+
+
+     DeIconifyFunction function
+             This variable specifies the function to be  executed
+             when a window is deiconified.
+
+
+     IconifyFunction function
+             This variable specifies the function to be  executed
+             when a window is iconified.
+
+
+     WindowFunction function
+             This variable specifies the function to execute when
+             a  window  is selected from the TwmWindows menu.  If
+             this variable is not set, the window will be deicon-
+             ified and raised.
+
+BINDINGS
+     After the desired variables have been set, functions may  be
+     attached   titlebuttons   and   key   and  pointer  buttons.
+     Titlebuttons may be added from the left or  right  side  and
+     appear  in  the titlebar from left-to-right according to the
+     order in which they are specified.  Key and  pointer  button
+     bindings may be given in any order.
+
+     Titlebuttons specifications must include  the  name  of  the
+     pixmap  to  use  in  the  button  box and the function to be
+     invoked when a pointer button is pressed within them:
+
+          LeftTitleButton "bitmapname"  = function
+
+     or
+
+          LeftTitleButton "bitmapname" {
+              Buttoni : function
+              ...
+              Buttonj : function
+          }
+
+     or
+
+          RightTitleButton "bitmapname" = function
+
+     or
+
+          RightTitleButton "bitmapname" {
+              Buttoni : function
+              ...
+              Buttonj : function
+          }
+
+     The bitmapname may refer to one  of  the   built-in  bitmaps
+     (which are scaled to match TitleFont) by using the appropri-
+     ate colon-prefixed name described above.
+
+     Key and pointer button specifications must give  the  modif-
+     iers  that  must  be pressed, over which parts of the screen
+     the pointer must be, and what function  is  to  be  invoked.
+     Keys  are given as strings containing the appropriate keysym
+     name; buttons are given as the keywords Button1-Button5:
+
+          "FP1"          = modlist : context : function
+          Button1   = modlist : context : function
+
+     The modlist is any combination of the modifier names  shift,
+     control,  lock, meta, mod1, mod2, mod3, mod4, or mod5 (which
+     may be abbreviated as s, c,  l,  m,  m1,  m2,  m3,  m4,  m5,
+     respectively)  separated  by a vertical bar (|).  Similarly,
+     the context is any combination of window, title, icon, root,
+     frame, iconmgr, their first letters (iconmgr abbreviation is
+     m), or all, separated by a vertical bar.   The  function  is
+     any  of  the  f. keywords described below.  For example, the
+     default startup file contains the following bindings:
+
+          Button1   =    : root         : f.menu "TwmWindows"
+          Button1   = m  : window | icon     : f.function "move-or-lower"
+          Button2   = m  : window | icon     : f.iconify
+          Button3   = m  : window | icon     : f.function "move-or-raise"
+          Button1   =    : title        : f.function "move-or-raise"
+          Button2   =    : title        : f.raiselower
+          Button1   =    : icon         : f.function "move-or-iconify"
+          Button2   =    : icon         : f.iconify
+          Button1   =    : iconmgr : f.iconify
+          Button2   =    : iconmgr : f.iconify
+
+     A user who wanted to be able to manipulate windows from  the
+     keyboard could use the following bindings:
+
+          "F1"      =    : all          : f.iconify
+          "F2"      =    : all          : f.raiselower
+          "F3"      =    : all          : f.warpring "next"
+          "F4"      =    : all          : f.warpto "xmh"
+          "F5"      =    : all          : f.warpto "emacs"
+          "F6"      =    : all          : f.colormap "next"
+          "F7"      =    : all          : f.colormap "default"
+          "F20"          =    : all          : f.warptoscreen "next"
+          "Left"         = m  : all          : f.backiconmgr
+          "Right"   = m | s   : all          : f.forwiconmgr
+          "Up"      = m  : all          : f.upiconmgr
+          "Down"    = m | s   : all          : f.downiconmgr
+
+
+     Ctwm provides many more window manipulation primitives  than
+     can  be  conveniently  stored in a titlebar, menu, or set of
+     key bindings.  Although a small set of defaults are supplied
+     (unless  the  NoDefaults is specified), most users will want
+     to have their most common operations bound to key and button
+     strokes.  To do this, ctwm associates names with each of the
+     primitives and provides user-defined functions for  building
+     higher  level primitives and menus for interactively select-
+     ing among groups of functions.
+
+     User-defined functions contain the name by  which  they  are
+     referenced  in calls to f.function and a list of other func-
+     tions to execute.  For example:
+
+          Function "move-or-lower" { f.move f.deltastop f.lower }
+          Function "move-or-raise" { f.move f.deltastop f.raise }
+          Function "move-or-iconify"    { f.move f.deltastop f.iconify }
+          Function "restore-colormap"   { f.colormap "default" f.lower }
+
+     The function name must be used in f.function exactly  as  it
+     appears in the function specification.
+
+     In the descriptions  below,  if  the  function  is  said  to
+     operate  on  the selected window, but is invoked from a root
+     menu, the cursor will be changed to the  Select  cursor  and
+     the next window to receive a button press will be chosen:
+
+     ! string
+             This is an abbreviation for f.exec string.
+
+     f.addtoworkspace string
+             This  function  adds  the  selected  window  to  the
+             workspace whose name is string.
+
+     f.adoptwindow
+             This function ask for the user to  select  a  window
+             with  the  mouse,  and  then adopt this window is it
+             doesn't belong to the current ctwm. Useful only with
+             the -w flag.
+
+     f.altcontext
+             Set the alternate context. The next  key  or  button
+             event  ctwm  reveives  will be interpreted using the
+             alternate context. To define bindings in the  alter-
+             nate  context,  use the keyword alter in the context
+             field of the binding command.  For example:
+
+                  "Return"= m    : all          : f.altcontext
+                  "n"  =    : alter        : f.nextworkspace
+                  "p"  =    : alter        : f.prevworkspace
+
+
+     f.altkeymap  number
+             Set the alternate keymap number, where number is  an
+             integer  between  1  and 5 included. The next key or
+             button event ctwm reveives will be interpreted using
+             this  alternate  keymap.  To  define  bindings in an
+             alternate keymap, use  the  keyword  a  followed  by
+             number in the modifier field of the binding command.
+             For example:
+
+                  "Return"= c    : all          : f.altkeymap "1"
+                  "i"  = a1 : window|icon|iconmgr    : f.iconify
+                  "z"  = a1 : window  : f.zoom
+                  "d"  = a1 : window|icon  : f.delete
+                  "o"  = a1 : window|icon  : f.occupy
+                  "r"  = a1 : window|icon  : f.refresh
+
+
+     When using an alternate keymaps, only the root, window, icon
+     and iconmgr contexts are allowed.
+
+
+     f.autoraise
+             This function toggles whether or  not  the  selected
+             window  is  raised  whenever entered by the pointer.
+             See the description of the variable AutoRaise.
+
+
+     f.backmapiconmgr
+             This function warps the  pointer in the same  manner
+             as  f.backiconmgr but only stops at windows that are
+             mapped.
+
+
+     f.backiconmgr
+             This function warps  the  pointer  to  the  previous
+             column in the current icon manager, wrapping back to
+             the previous row if necessary.
+
+
+     f.beep  This function sounds the keyboard bell.
+
+
+     f.bottomzoom
+             This function is similar to the f.fullzoom function,
+             but  resizes the window to fill only the bottom half
+             of the screen.
+
+
+     f.circledown
+             This  function  lowers  the  top-most  window   that
+             occludes another window.
+
+
+     f.circleup
+             This function raises the bottom-most window that  is
+             occluded by another window.
+
+
+     f.colormap string
+             This function rotates the colormaps  (obtained  from
+             the WM_COLORMAP_WINDOWS property on the window) that
+             ctwm will display when the pointer is in  this  win-
+             dow.   The  argument string may have one of the fol-
+             lowing values: "next", "prev",  and  "default".   It
+             should  be noted here that in general, the installed
+             colormap is determined by keyboard focus.  A pointer
+             driven  keyboard focus will install a private color-
+             map upon entry of the window  owning  the  colormap.
+             Using  the  click  to  type model, private colormaps
+             will not be installed until the user presses a mouse
+             button on the target window.
+
+     f.deiconify
+             This function deiconifies the selected  window.   If
+             the  window is not an icon, this function does noth-
+             ing.
+
+
+     f.delete
+             This function sends the WM_DELETE_WINDOW message  to
+             the  selected  window  if the client application has
+             requested it through the  WM_PROTOCOLS  window  pro-
+             perty.   The  application  is supposed to respond to
+             the message by removing the  indicated  window.   If
+             the  window  has not requested WM_DELETE_WINDOW mes-
+             sages, the keyboard bell  will  be  rung  indicating
+             that  the  user should choose an alternative method.
+             Note this is very  different  from  f.destroy.   The
+             intent  here  is  to  delete  a  single window,  not
+             necessarily the entire application.
+
+
+     f.deleteordestroy
+             First  tries  to  delete   the   window   (send   it
+             WM_DELETE_WINDOW  message),  or  kills  it,  if  the
+             client doesn't accept such message.
+
+
+     f.deltastop
+             This function allows a user-defined function  to  be
+             aborted  if  the  pointer  has  been moved more than
+             MoveDelta pixels.  See the example definition  given
+             for Function "move-or-raise" at the beginning of the
+             section.
+
+
+     f.destroy
+             This function instructs the X server  to  close  the
+             display  connection  of  the client that created the
+             selected window.  This should only be used as a last
+             resort  for shutting down runaway clients.  See also
+             f.delete.
+
+
+     f.downiconmgr
+             This function warps the pointer to the next  row  in
+             the  current  icon manger, wrapping to the beginning
+             of the next column if necessary.
+
+
+     f.downworkspace
+             Goto  the  workspace  immediately   underneath   the
+             current  workspace  in the workspace manager. If the
+             current workspace is the bottom one,  goto  the  top
+             one  in  the  same column. The result depends on the
+             layout of the workspace manager.
+
+
+     f.exec string
+             This function passes the argument string to  /bin/sh
+             for  execution.   In  multiscreen  mode,  if  string
+             starts a new X client without giving a display argu-
+             ment,  the  client  will  appear  on the screen from
+             which this  function  was  invoked.  If  the  string
+             "$currentworkspace"  is  present  inside  the string
+             argument, it will be substituated with  the  current
+             workspace name.
+
+
+     f.fill string
+             Where string is either : "right", "left",  "top"  or
+             "bottom".   The  current  window  is  resized in the
+             specified direction until  it  reaches  an  obstacle
+             (either another window, or the screen border).
+
+
+     f.focus This function toggles  the  keyboard  focus  of  the
+             server  to  the  selected window, changing the focus
+             rule  from  pointer-driven  if  necessary.   If  the
+             selected  window  already was focused, this function
+             executes an f.unfocus.
+
+
+     f.forcemove
+             This function is like f.move except that it  ignores
+             the DontMoveOff variable.
+
+
+     f.forwiconmgr
+             This function warps the pointer to the  next  column
+             in  the current icon manager, wrapping to the begin-
+             ning of the next row if necessary.
+
+
+     f.forwmapiconmgr
+             This function warps the  pointer in the same  manner
+             as  f.forwiconmgr but only stops at windows that are
+             mapped.
+
+
+     f.fullzoom
+             This function resizes the  selected  window  to  the
+             full size of the display or else restores the origi-
+             nal size if the window was already zoomed.
+
+
+     f.function string
+             This function  executes  the  user-defined  function
+             whose name is specified by the argument string.
+
+
+     f.gotoworkspace workspace_name
+             This function warps you to the workspace whose  name
+             is workspace_name.
+
+
+     f.hbzoom
+             This function is a synonym for f.bottomzoom.
+
+
+     f.hideiconmgr
+             This function unmaps the current icon manager.
+
+
+     f.hideworkspacemgr
+             Unmap the WorkSpace manager.
+
+
+     f.horizoom
+             This variable is  similar  to  the  f.zoom  function
+             except  that  the  selected window is resized to the
+             full width of the display.
+
+
+     f.htzoom
+             This function is a synonym for f.topzoom.
+
+
+     f.hypermove
+             Use this function to "move" a window between 2  cap-
+             tives ctwm (or between a captive and the root ctwm).
+             Of  course 2 Ctwm's are completely different univer-
+             ses. You have to go in hyperspace to  achieve  this,
+             hence the name.
+
+
+     f.hzoom This function is a synonym for f.horizoom.
+
+
+     f.iconify
+             This function iconifies or deiconifies the  selected
+             window or icon, respectively.
+
+
+     f.identify
+             This function displays a summary  of  the  name  and
+             geometry  of  the  selected  window.   Clicking  the
+             pointer or pressing a key in the window will dismiss
+             it.
+
+
+     f.lefticonmgr
+             This function similar to f.backiconmgr  except  that
+             wrapping does not change rows.
+
+
+     f.leftworkspace
+             Goto the workspace immediately on the  left  of  the
+             current  workspace  in the workspace manager. If the
+             current workspace  is  the  leftest  one,  goto  the
+             rightest  one in the same row. The result depends on
+             the layout of the workspace manager.
+
+
+     f.leftzoom
+             This variable is similar to the  f.bottomzoom  func-
+             tion  but causes the selected window is only resized
+             to the left half of the display.
+
+
+     f.lower This function lowers the selected window.
+
+
+     f.menu string
+             This function invokes  the  menu  specified  by  the
+             argument  string.   Cascaded  menus  may be built by
+             nesting calls to f.menu. When a menu is  popped  up,
+             you can use the arrow keys to move the cursor around
+             it. "Down" or space goes down, "Up" goes up,  "Left"
+             pops  down  the  menu,  and  "Right"  activates  the
+             current entry. The first letter  of  an  entry  name
+             activates  this  entry  (the  first  one  if several
+             entries match). If the first letter is ~ then  Meta-
+             the-second-letter activates it, if this first letter
+             is ^ then  Control-the-second-letter  activates  it,
+             and  if  this first letter is space, then the second
+             letter activates it.
+
+
+     f.move  This function drags an outline of the selected  win-
+             dow (or the window itself if the OpaqueMove variable
+             is  set)  until  the  invoking  pointer  button   is
+             released.  Double clicking within the number of mil-
+             liseconds given  by  ConstrainedMoveTime  warps  the
+             pointer  to  the center of the window and constrains
+             the move to be either horizontal or vertical depend-
+             ing on which grid line is crossed.  To abort a move,
+             press another button before releasing the first but-
+             ton.
+
+
+     f.movepack
+             This function is like f.move except that it tries to
+             avoid overlapping of windows. When the moving window
+             begin to overlap with another window,  the  move  is
+             stopped.  If  you  go  too far over the other window
+             (more that MovePackResistance pixels), the  move  is
+             resumed  and  the moving window can overlap with the
+             other window. Useful to pack windows closely.
+
+
+     f.movepush
+             This function is like f.move except that it tries to
+             avoid overlapping of windows. When the moving window
+             begin to overlap with another window, the other win-
+             dow is pushed. If you go too far over the other win-
+             dow (more that MovePackResistance pixels), there  is
+             no  push  and the moving window can overlap with the
+             other  window.  Only  available  if  OpaqueMove   is
+             active.
+
+
+     f.nexticonmgr
+             This function warps the pointer  to  the  next  icon
+             manager containing any windows on the current or any
+             succeeding screen.
+
+
+     f.nextworkspace
+             Goto the next workspace in the list, using the order
+             given in the .ctwmrc file.
+
+
+     f.nop   This function does nothing  and  is  typically  used
+             with the DefaultFunction or WindowFunction variables
+             or to introduce blank lines in menus.
+
+
+     f.occupy
+             This function pops up  a  window  for  the  user  to
+             choose which workspaces a window belongs to.
+
+
+     f.occupyall
+             This function makes the specified window occupy  all
+             the workspaces.
+
+
+     f.pack string
+             Where string is either : "right", "left",  "top"  or
+             "bottom"  The  current window is moved in the speci-
+             fied direction until it reaches an obstacle  (either
+             another  window,  or the screen border). The pointer
+             follows the window. Example :
+
+
+     f.previconmgr
+             This function warps the pointer to the previous icon
+             manager  containing  any  windows  on the current or
+             preceding screens.
+
+
+     f.prevworkspace
+             Goto the previous workspace in the list,  using  the
+             order given in the .ctwmrc file.
+
+
+     f.pin   Valid only in a root menu. Make a menu permanent  on
+             the screen. This is a toggle function, if you select
+             it while the menu is already permanent,  it  becomes
+             non-permanent.
+
+
+     f.quit  This function causes ctwm to  restore  the  window's
+             borders  and  exit.   If  ctwm  is  the first client
+             invoked from xdm,  this  will  result  in  a  server
+             reset.
+
+
+     f.raiseicons
+             This function raises all the icons  in  the  current
+             workspace.
+
+
+     f.raise This function raises the selected window.
+
+
+     f.raiselower
+             This function raises the selected window to the  top
+             of  the stacking order if it is occluded by any win-
+             dows, otherwise the window will be lowered.
+
+
+     f.removefromworkspace string
+             This function removes the selected window  from  the
+             workspace whose name is string.
+
+
+     f.refresh
+             This function causes all windows to be refreshed.
+
+
+     f.resize
+             This function displays an outline  of  the  selected
+             window.   Crossing  a  border  (or setting AutoRela-
+             tiveResize) will  cause  the  outline  to  begin  to
+             rubber  band  until the invoking button is released.
+             To abort  a  resize,  press  another  button  before
+             releasing the first button.
+
+
+     f.restart
+             This function kills and restarts ctwm.
+
+
+     f.restoregeometry
+             Restore the current  window  geometry  to  what  was
+             saved in the last call to f.savegeometry.
+
+
+     f.righticonmgr
+             This function is  similar  to  f.nexticonmgr  except
+             that wrapping does not change rows.
+
+
+     f.rightworkspace
+             Goto the workspace immediately on the right  of  the
+             current  workspace  in the workspace manager. If the
+             current workspace is  the  rightest  one,  goto  the
+             leftest  one  in the same row. The result depends on
+             the layout of the workspace manager.
+
+
+     f.rightzoom
+             This variable is similar to the  f.bottomzoom  func-
+             tion except that the selected window is only resized
+             to the right half of the display.
+
+
+     f.savegeometry
+             The geometry of the current  window  is  saved.  The
+             next  call  to  f.restoregeometry  will restore this
+             window to this geometry.
+
+
+     f.saveyourself
+             This function sends a WM_SAVEYOURSELF message to the
+             selected  window  if it has requested the message in
+             its  WM_PROTOCOLS  window  property.   Clients  that
+             accept  this  message are supposed to checkpoint all
+             state associated with  the  window  and  update  the
+             WM_COMMAND  property  as specified in the ICCCM.  If
+             the selected window has not selected for  this  mes-
+             sage, the keyboard bell will be rung.
+
+
+     f.separator
+             Valid only in menus. The effect is  to  add  a  line
+             separator  between  the  previous  and the following
+             entry. The name selector part in  the  menu  is  not
+             used (but must be present).
+
+
+     f.setbuttonsstate
+             Set the WorkSpace manager in button state.
+
+
+     f.setmapstate
+             Set the WorkSpace manager in map state.
+
+
+     f.showiconmgr
+             This function maps the current icon manager.
+
+
+     f.sorticonmgr
+             This function sorts the entries in the current  icon
+             manager  alphabetically.  See the variable SortIcon-
+             Manager.
+
+
+     f.showworkspacemgr
+             Map the WorkSpace manager.
+
+
+     f.slowdownanimation
+             Decrease AnimationSpeed by 1.
+
+
+     f.speedupanimation
+             Increase AnimationSpeed by 1.
+
+
+     f.squeeze
+             f.squeeze squeezes a window to a null vertical size.
+             Works  only for windows with either a title, or a 3D
+             border (in order  to  have  something  left  on  the
+             screen).  If  the  window is already squeezed, it is
+             unsqueezed.
+
+
+     f.startanimation
+             Restart freezed animations (if any).
+
+
+     f.stopanimation
+             Freeze animations (if any).
+
+
+     f.title This function provides a centered, unselectable item
+             in  a menu definition.  It should not be used in any
+             other context.
+
+
+     f.toggleoccupation string
+             This  function  adds  the  selected  window  to  the
+             workspace whose name is string if it doesn't already
+             belongs to it, and removes it from this workspace if
+             not.
+
+
+     f.togglestate
+             Toggle the state of the WorkSpace manager.
+
+
+     f.toggleworkspacemgr
+             Toggle the presence of the WorkSpaceManager.  If  it
+             is mapped, it will be unmapped and vice versa.
+
+
+     f.topzoom
+             This variable is similar to the  f.bottomzoom  func-
+             tion except that the selected window is only resized
+             to the top half of the display.
+
+
+
+     f.unfocus
+             This function resets  the  focus  back  to  pointer-
+             driven.   This  should be used when a focused window
+             is no longer desired.
+
+
+     f.upiconmgr
+             This function warps the pointer to the previous  row
+             in  the  current  icon manager, wrapping to the last
+             row in the same column if necessary.
+
+
+     f.upworkspace
+             Goto the workspace  immediately  above  the  current
+             workspace  in  the workspace manager. If the current
+             workspace is the top one, goto the bottom one in the
+             same column. The result depends on the layout of the
+             workspace manager.
+
+
+     f.vanish
+             The  specified  window  vanishes  from  the  current
+             workspace   if   it  occupies  at  least  one  other
+             WorkSpace. Do nothing in the others cases.
+
+     f.vlzoom
+             This function is a synonym for f.leftzoom.
+
+
+     f.vrzoom
+             This function is a synonym for f.rightzoom.
+
+
+     f.warphere win_name
+             This function adds the window which has  a  name  or
+             class  that  matches string to the current workspace
+             and warps the pointer to it. If the window is iconi-
+             fied, it will be deiconified if the variable WarpUn-
+             mapped is set or else ignored.
+
+
+     f.warpring string
+             This function warps the pointer to the next or  pre-
+             vious  window  (as indicated by the argument string,
+             which may be "next" or "prev") specified in the Win-
+             dowRing variable.
+
+
+     f.warpto string
+             This function warps the pointer to the window  which
+             has  a  name  or  class that matches string.  If the
+             window is iconified, it will be deiconified  if  the
+             variable WarpUnmapped is set or else ignored.
+
+
+     f.warptoiconmgr string
+             This function warps the pointer to the icon  manager
+             entry  associated  with  the  window  containing the
+             pointer in the icon manager specified by  the  argu-
+             ment  string.   If  string  is  empty (i.e. ""), the
+             current icon manager is chosen.
+
+
+     f.warptoscreen string
+             This function warps the pointer to the screen speci-
+             fied by the argument string.  String may be a number
+             (e.g. "0" or "1"), the word "next"  (indicating  the
+             current  screen  plus 1, skipping over any unmanaged
+             screens), the word "back"  (indicating  the  current
+             screen   minus   1,   skipping  over  any  unmanaged
+             screens), or the word "prev"  (indicating  the  last
+             screen visited.
+
+     f.winrefresh
+             This function is similar to the  f.refresh  function
+             except that only the selected window is refreshed.
+
+     f.zoom  This function is similar to the f.fullzoom function,
+             except that the only the height of the selected win-
+             dow is changed.
+
+MENUS
+     Functions may be grouped and  interactively  selected  using
+     pop-up  (when  bound to a pointer button) or pull-down (when
+     associated with a titlebutton) menus.  Each menu  specifica-
+     tion contains the name of the menu as it will be referred to
+     by  f.menu,  optional  default  foreground  and   background
+     colors, the list of item names and the functions they should
+     invoke, and optional foreground and  background  colors  for
+     individual items:
+
+          Menu "menuname" [ ("deffore":"defback") ]
+          {
+               string1   [ ("fore1":"backn")]     function1
+               string2   [ ("fore2":"backn")]     function2
+                    .
+                    .
+                    .
+               stringN   [ ("foreN":"backN")]     functionN
+          }
+
+
+     The menuname is case-sensitive.  The  optional  deffore  and
+     defback  arguments  specify  the  foreground  and background
+     colors used on a color display to  highlight  menu  entries.
+     The string portion of each menu entry will be the text which
+     will appear in the menu.  The optional fore and  back  argu-
+     ments  specify  the  foreground and background colors of the
+     menu entry when the pointer is  not  in  the  entry.   These
+     colors will only be used on a color display.  The default is
+     to use the colors specified by the MenuForeground and  Menu-
+     Background  variables.   The  function  portion  of the menu
+     entry is one of the functions,  including  any  user-defined
+     functions, or additional menus.
+
+     There is 3 special menus. TwmWindows contains the  names  of
+     all  of  the client and ctwm-supplied windows in the current
+     workspace.  Selecting an entry will cause the WindowFunction
+     to  be  executed  on  that window.  If WindowFunction hasn't
+     been  set,  the  window  will  be  deiconified  and  raised.
+     TwmWorkspaces   contains   the  names  of  your  workspaces,
+     selecting an entry goto this workspace. In  addition,  these
+     entries  have  submenus  containing the names of all windows
+     occupying this workspace, selecting such an  entry  executes
+     f.warpto on this window. And finally, TwmAllWindows contains
+     the names of all the windows  ctwm  manages.  Selectting  an
+     entry executes f.warpto on this window.
+
+     If an entry name begins with a '*' (star), this  star  won't
+     be displayed and the corresponding entry will be the default
+     entry for this menu. When a menu has a default entry and  is
+     used as a submenu of another menu, this default entry action
+     will be executed automatically when this submenu is selected
+     without  beeing displayed. It's hard to explain, but easy to
+     understand.
+
+ICONS
+     Ctwm supports several different ways of manipulating  iconi-
+     fied  windows.  The common pixmap-and-text style may be laid
+     out by hand or automatically arranged as  described  by  the
+     IconRegion  variable.   In  addition,  a  terse grid of icon
+     names, called an icon manager, provides a more efficient use
+     of  screen  space  as  well as the ability to navigate among
+     windows from the keyboard.
+
+     An icon manager is a window that contains names of  selected
+     or all windows currently on the display.  In addition to the
+     window name, a small button using the default iconify symbol
+     will be displayed to the left of the name when the window is
+     iconified.  By default, clicking on an  entry  in  the  icon
+     manager  performs f.iconify.  To change the actions taken in
+     the icon manager, use the the iconmgr context when  specify-
+     ing button and keyboard bindings.
+
+     Moving the pointer into the icon manager also  directs  key-
+     board  focus  to  the  indicated  window  (setting the focus
+     explicitly or else sending synthetic events NoTitleFocus  is
+     set).   Using  the f.upiconmgr, f.downiconmgr f.lefticonmgr,
+     and f.righticonmgr functions, the input focus can be changed
+     between windows directly from the keyboard.
+
+BUGS
+     The resource manager should have been used instead of all of
+     the window lists.
+
+     The IconRegion variable should take a list.
+
+     Double clicking very fast to get the constrained move  func-
+     tion  will  sometimes  cause the window to move, even though
+     the pointer is not moved.
+
+     If IconifyByUnmapping is on and windows are listed in  Icon-
+     ManagerDontShow  but not in DontIconifyByUnmapping, they may
+     be lost if they are iconified  and  no  bindings  to  f.menu
+     "TwmWindows" or f.warpto are setup.
+
+FILES
+
+***********************
+VMS specific:
+  see notes above
+***********************
+
+      $HOME/.ctwmrc.<screen number>
+      $HOME/.ctwmrc
+      /usr/lib/X11/twm/system.ctwmrc
+      $HOME/.twmrc
+
+ENVIRONMENT VARIABLES
+     DISPLAY This variable is used to determine which X server to
+             use.   It is also set during f.exec so that programs
+             come up on the proper screen.
+
+     HOME    This variable is used as the prefix for  files  that
+             begin with a tilde and for locating the ctwm startup
+             file.
+
+SEE ALSO
+     X(1), Xserver(1), xdm(1), xrdb(1)
+
+COPYRIGHT
+     Portions copyright 1988 Evans & Sutherland Computer Corpora-
+     tion;  portions  copyright  1989 Hewlett-Packard Company and
+     the Massachusetts Institute of Technology,  See X(1)  for  a
+     full statement of rights and permissions.
+
+AUTHORS
+     Tom LaStrange, Solbourne Computer; Jim Fulton, MIT X Consor-
+     tium;  Steve Pitschke, Stardent Computer; Keith Packard, MIT
+     X Consortium; Dave Sternlicht, MIT X Consortium; Dave Payne,
+     Apple  Computer.   Claude  Lecommandeur, Swiss Polytechnical
+     Institute of Lausanne (lecom@sic.epfl.ch).
+

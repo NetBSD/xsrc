@@ -1,0 +1,20 @@
+/* XPM */
+static char * 3ddot_xpm[] = {
+"11 14 3 1",
+" 	c #659510403CF3 s Background",
+".	c #B2CA8A289E79 s HiShadow",
+"X	c #30C208201C71 s LoShadow",
+"           ",
+"           ",
+"           ",
+" .......X  ",
+" ......XX  ",
+" ..    XX  ",
+" ..    XX  ",
+" ..    XX  ",
+" ..    XX  ",
+" ..XXXXXX  ",
+" .XXXXXXX  ",
+"           ",
+"           ",
+"           "};

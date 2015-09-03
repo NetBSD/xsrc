@@ -1,0 +1,20 @@
+/* XPM */
+static char * 3ddimple_xpm[] = {
+"12 14 3 1",
+" 	c #BDBDB7B76B6B s Background",
+".	c #71716E6E4040 s LoShadow",
+"X	c #DEDEDBDBB5B5 s HiShadow",
+"                ",
+"                ",
+" ..  ..  ..  .. ",
+"  XX  XX  XX  XX",
+"                ",
+"                ",
+" ..  ..  ..  .. ",
+"  XX  XX  XX  XX",
+"                ",
+"                ",
+" ..  ..  ..  .. ",
+"  XX  XX  XX  XX",
+"                ",
+"                "};

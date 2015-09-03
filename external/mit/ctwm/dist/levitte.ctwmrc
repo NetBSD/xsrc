@@ -1,0 +1,348 @@
+#
+# $XConsortium: system.twmrc,v 1.8 91/04/23 21:10:58 gildea Exp $
+# 
+# Default twm configuration file; needs to be kept small to conserve string
+# space in systems whose compilers don't handle medium-sized strings.
+#
+# Sites should tailor this file, providing any extra title buttons, menus, etc.
+# that may be appropriate for their environment.  For example, if most of the
+# users were accustomed to uwm, the defaults could be set up not to decorate
+# any windows and to use meta-keys.
+#
+# Changed by Richard Levitte for local system...
+
+IconDirectory          "DECW$BITMAPS:"
+PixmapDirectory        "PROGRAM:[LIB.XPM]"
+
+NoDefaults
+NoGrabServer
+RestartPreviousState
+DecorateTransients
+StayUpMenus
+TitleFont "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
+ResizeFont "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
+MenuFont "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
+IconFont "-adobe-helvetica-bold-r-normal--*-100-*-*-*-*-*-*"
+IconManagerFont "-adobe-helvetica-bold-r-normal--*-100-*-*-*"
+ShowWorkSpaceManager			# start with workspcace manager up
+ShowIconManager
+UseThreeDMenus
+UseThreeDTitles
+UseThreeDIconManagers
+UseThreeDBorders
+UseThreeDWMap
+SunkFocusWindowTitle
+BorderResizeCursors
+MovePackResistance 25
+AnimationSpeed 4
+
+UsePPosition "on"
+RandomPlacement "unmapped"
+
+IconManagerGeometry    "360x100-0+71" 4
+IconifyByUnmapping
+MaxIconTitleWidth 500
+
+WorkSpaceManagerGeometry        "360x60-0+0" 4
+WorkSpaces {
+    "One"   {"#686B9F" "white" "DeepSkyBlue3"}
+    "Two"   {"#619AAE" "white" "firebrick" "white" "plaid.xbm"}
+    "Three" {"#727786" "white" "brown"}
+    "Four"  {"#8C5b7A" "white" "MidnightBlue"}
+
+    "Five"  {"#727786" "white" "firebrick"}
+    "Six"   {"#619AAE" "white" "DeepSkyBlue3"}
+    "Seven" {"#8C5b7A" "white" "chartreuse4"}
+    "Eight" {"#686B9F" "white" "MidnightBlue"}
+}
+
+Color
+{
+    BorderColor           "Red"
+    DefaultBackground     "blue"
+    DefaultForeground     "gray85"
+    BorderTileBackground  "DeepSkyBlue1" {
+	"xterm"		"DeepSkyBlue3"
+    }
+    BorderTileForeground  "Black" {
+	"xterm" "DeepSkyBlue3"
+    }
+    TitleBackground       "DeepSkyBlue1" {
+	"xterm" "DeepSkyBlue3"
+    }
+    TitleForeground       "Black" {
+	"xterm" "White"
+    }
+    MenuBackground        "#686B9F"
+    MenuForeground        "white"
+    MenuTitleBackground   "gray70"
+    MenuTitleForeground   "White"
+    IconBackground        "LightSlateBlue"
+    IconForeground        "White"
+    IconBorderColor       "gray85"
+    IconManagerBackground "DeepSkyBlue1" {"Axe" "DeepSkyBlue3" "xload" "DeepSkyBlue2"}
+    IconManagerForeground "Black"
+    MapWindowBackground   "DeepSkyBlue1" {
+	"root*" "Red"
+	"xterm" "DeepSkyBlue3"
+	"Axe"	"Yellow"
+    }
+    MapWindowForeground   "Black" {
+	"xterm" "White"
+    }
+}
+
+Monochrome
+{
+    MapWindowBackground "white"
+    MapWindowForeground "black"
+    IconManagerHighlight    "black"
+}
+
+UnknownIcon    "xpm:nothing.xpm"
+
+Icons
+{
+    "DECW$TERMINAL" "xpm:term.xpm"
+    "DECW$CALC"     "xpm:xcalc.xpm"
+    "Emacs"         "xpm:emacs.xpm"
+    "Tpu"           "xpm:xedit.xpm"
+    "VUE$MASTER"    "xpm:ball%.xpm"
+}
+
+OccupyAll
+{
+    "VUE$MASTER"
+    "Decw$MessagePanel"
+    "Clock"
+}
+
+IconManagerDontShow {
+    "WorkSpaceManager"
+}
+
+NoTitle {                  # little programs that look like icons
+    "TWM Icon Manager"
+    "WorkSpaceManager"
+}
+
+#
+# Define some useful functions for motion-based actions.
+#
+MoveDelta 3
+
+DefaultFunction f.nop
+
+Function "move-or-lower" { f.move f.deltastop f.lower }
+Function "move-or-raise" { f.move f.deltastop f.raise }
+Function "move-or-iconify" { f.move f.deltastop f.iconify }
+Function "movepack-or-lower" { f.movepack f.deltastop f.lower }
+Function "movepack-or-raise" { f.movepack f.deltastop f.raise }
+Function "movepack-or-iconify" { f.movepack f.deltastop f.iconify }
+Function "movepush-or-lower" { f.movepush f.deltastop f.lower }
+Function "movepush-or-raise" { f.movepush f.deltastop f.raise }
+Function "movepush-or-iconify" { f.movepush f.deltastop f.iconify }
+Function "resize-or-raise" { f.resize f.deltastop f.raise }
+
+
+#
+# Set some useful bindings.  Sort of uwm-ish, sort of simple-button-ish
+#
+LeftTitleButton ":xpm:bar" {
+    Button1 : f.menu "barmenu"
+}
+LeftTitleButton ":xpm:menu" {
+    Button1 : f.menu "titlemenu"
+}
+RightTitleButton ":xpm:dot" {
+    Button1 : f.iconify
+}
+RightTitleButton ":xpm:zoom" {
+    Button1 : f.fullzoom
+}
+RightTitleButton ":xpm:resize" {
+    Button1 : f.resize
+}
+
+Button1 =	: root		: f.menu "defops"
+Button2 =	: root		: f.menu "windowops"
+Button3 =	: root		: f.menu "TwmWindows"
+Button3 = s	: root		: f.menu "TwmWorkspaces"
+Button3 = c	: root		: f.menu "TwmAllWindows"
+
+Button1 = m	: window|icon	: f.function "move-or-lower"
+Button2 = m	: window|icon	: f.iconify
+Button3 = m	: window|icon	: f.function "move-or-raise"
+
+Button1 =	: title		: f.function "move-or-raise"
+Button1 = s	: title		: f.function "movepack-or-raise"
+Button1 = c	: title		: f.function "movepush-or-raise"
+Button2 =	: title		: f.raiselower
+Button3 =	: title		: f.menu "titlemenu"
+
+Button1 =	: icon		: f.function "move-or-iconify"
+Button2 =	: icon		: f.iconify
+Button3 =	: icon		: f.menu "iconmenu"
+
+Button1 =	: iconmgr	: f.iconify
+Button2 =	: iconmgr	: f.iconify
+Button3 =	: iconmgr	: f.menu "iconmgrmenu"
+
+Button1 =       : frame         : f.function "resize-or-raise"
+Button1 = s	: frame		: f.function "movepack-or-raise"
+Button1 = c	: frame		: f.function "movepush-or-raise"
+Button1 = m     : frame         : f.function "move-or-raise"
+Button2 =       : frame         : f.raiselower
+#
+# And a menus with the usual things
+#
+menu "defops"
+{
+    "Utilities"		f.title
+    ""			f.separator
+    "Pin menu"		f.pin
+    ""			f.separator
+    "Bookreader"	!"run sys$system:decw$bookreader"
+    "Calculator"	!"run sys$system:decw$calc"
+    "DECterm"		!"create/terminal/detach DECterm"
+    "Editor (EVE)"	!"edit/tpu/display=DECwindows"
+    #"Editor (Emacs)"	!"runemacs"
+    "Fileview"		!"run sys$system:vue$master"
+    "Mail"		!"run sys$system:decw$mail"
+    "Netscape"		!"netscape -install"
+    "Paint"		!"run sys$system:decw$paint"
+    "Xmag"		!"run decw$utils:xmag"
+    ""			f.separator
+    "Pause"		!"run sys$system:decw$pausesession"
+    "Restart"		f.restart
+    "Exit"		f.quit
+    "Logout"		!"run sys$system:decw$endsession"
+}
+
+menu "windowops" {
+    "Windows"		f.title
+    ""			f.separator
+    "Pin menu"		f.pin
+    ""			f.separator
+    "Occupy"		f.occupy
+    "Occupy All"	f.occupyall
+    "Refresh All"	f.refresh
+    "Refresh"		f.winrefresh
+    "Vanish"		f.vanish
+    "Info"		f.identify
+    "CTWM version"	f.version
+    ""			f.separator
+    "Iconify"		f.iconify
+    ""			f.separator
+    "Sort icons"	f.sorticonmgr
+    "Hide icon mgr"	f.hideiconmgr
+    "Show icon mgr"	f.showiconmgr
+    "Hide workspace mgr"	f.hideworkspacemgr
+    "Show workspace mgr"	f.showworkspacemgr
+    ""			f.separator
+    "Squeeze"		f.squeeze
+    "Resize"		f.resize
+    "Move"		f.move
+    "RaiseLower"	f.raiselower
+    "Raise"		f.raise
+    "Raise icons"	f.raiseicons
+    "Lower"		f.lower
+    "Focus"		f.focus
+    "Unfocus"		f.unfocus
+    ""			f.separator
+    "Toggle autoraise"	f.autoraise
+    ""			f.separator
+    "Beep"		f.beep
+    #"Adopt Window"	f.adoptwindow
+    "Animation"		f.menu "Anim"
+    "Zoom"		f.menu "Zoom"
+    ""			f.separator
+    "Send Save"		f.saveyourself
+    "Send Delete"	f.delete
+    "Kill Window"	f.destroy
+}
+
+menu "Anim" {
+    "Pin menu"		f.pin
+    ""			f.separator
+    "Start"		f.startanimation
+    "*Stop"		f.stopanimation
+    "Faster"		f.speedupanimation
+    "Slower"		f.slowdownanimation
+}
+
+menu "Zoom" {
+    "Pin menu"		f.pin
+    ""			f.separator
+    "Full"		f.fullzoom
+    "Horizontal"	f.horizoom
+    "Vertical"		f.zoom
+    "Left"		f.leftzoom
+    "Top"		f.topzoom
+    "Right"		f.rightzoom
+    "Bottom"		f.bottomzoom
+}
+
+menu "barmenu" {
+    "Title Menu"	f.title
+    ""			f.separator
+    "Occupy ..."	f.occupy
+    "Occupy All"	f.occupyall
+    "Iconify"		f.iconify
+    "Squeeze"		f.squeeze
+    "RaiseLower"	f.raiselower
+    "Refresh"		f.winrefresh
+    "Zoom"		f.menu "Zoom"
+    "Vanish"		f.vanish
+    "Focus"		f.focus
+    "Unfocus"		f.unfocus
+    ""			f.separator
+    "Send Delete"	f.delete
+    "Kill Window"	f.destroy
+    "Resize..." 	f.resize
+    "Move..."		f.move
+}
+
+menu "titlemenu" {
+    "Title Menu"	f.title
+    ""			f.separator
+    "Occupy ..."	f.occupy
+    "Occupy All"	f.occupyall
+    "Iconify"		f.iconify
+    "Squeeze"		f.squeeze
+    "RaiseLower"	f.raiselower
+    "Refresh"		f.winrefresh
+    "Zoom"		f.menu "Zoom"
+    "Vanish"		f.vanish
+    "Focus"		f.focus
+    "Unfocus"		f.unfocus
+    ""			f.separator
+    "Send Delete"	f.delete
+    "Kill Window"	f.destroy
+    "Resize..." 	f.resize
+    "Move..."		f.move
+}
+
+menu "iconmenu" {
+    "Actions"		f.title
+    ""			f.separator
+    "Restore"		f.iconify
+    "Move"		f.move
+    "Occupy ..."	f.occupy
+    "Occupy All"	f.occupyall
+    ""			f.separator
+    "Send Delete"	f.delete
+    "Kill Window"	f.destroy
+}
+
+menu "iconmgrmenu" {
+    "Actions"		f.title
+    ""			f.separator
+    "Restore"		f.iconify
+    "Occupy ..."	f.occupy
+    "Occupy All"	f.occupyall
+    ""			f.separator
+    "Send Delete"	f.delete
+    "Kill Window"	f.destroy
+}
+

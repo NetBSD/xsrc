@@ -1,0 +1,24 @@
+# Changes relative to system.ctwmrc for gnome
+
+# Don't enable this
+#ShowWorkSpaceManager
+
+# Additional things to hide/ignore
+NoTitle {
+    "panel"
+    "gmc-desktop-icon"
+}
+OccupyAll {
+    "panel"
+}
+NoBorder {
+    "panel"
+    "gmc-desktop-icon"
+}
+
+# Don't use icon manager
+NoIconManagers
+
+# May need different bindings
+Button1 = m	: root		: f.menu "defops"
+Button2 = m	: root		: f.menu "windowops"

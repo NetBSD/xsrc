@@ -1,0 +1,143 @@
+# This is the local configuration file for MMS/MMK for ctwm.
+
+######################################################################
+#
+#  Libraries
+#
+##########
+
+# Xmu include files
+# X11XMU=X11LIB:
+X11XMU=sys$sysroot:[decw$include.xmu]
+
+# Xmu library to use
+# X11XMULIB=X11LIB:XMU.OLB
+X11XMULIB=SYS$SHARE:DECW$XMULIBSHR/SHARE
+
+# Xsm include files
+# X11SM=X11LIB:
+X11SM=sys$sysroot:[decw$include.sm]
+
+# Xsm library to use
+# X11SMLIB=X11LIB:SM.OLB
+X11SMLIB=SYS$SHARE:DECW$SMSHR/SHARE
+
+# ctwm exit style:
+#	0 - Just exit with error code 20.
+#	1 - run sys$system:decw$endsession.exe on exit
+EXIT_ENDSESSION = 0
+
+# if you want to put the executable and object files at some specific place,
+# change this macro
+GOAL=
+
+######################################################################
+#
+#  Options
+#
+##########
+
+# The following is quite similar to Imakefile.local in teh Unixly
+# build, except the flags are MMS/MMK variables rather than C macros.
+# To disable a feature, the flag MUST be set to the empty string.  To
+# enable any particular feature, the flag variable must be set to
+# something non-empty, preferably 1.
+#
+# Some of the things you can define also come with make variables that
+# can be manipulated.  All such variables have names starting with
+# USER_.
+
+# ----------------------------------------------------------------------
+# Feature: Use IMCONV features.
+# Uhmm, I really don't know what this is about. -- Richard Levitte
+#
+# The make variables USER_IMCONVLIBDIR and USER_IMCONVINCDIR can be
+# used to configure library search paths and include file search paths
+# to find the imconv libraries and header files.
+#
+# Example:
+#
+# IMCONV = 1
+# USER_IMCONVLIBDIR = LOCAL_LIBRARIES:
+# USER_IMCONVINCDIR = LOCAL_INCLUDES:
+#
+IMCONV =
+
+# ----------------------------------------------------------------------
+# Feature: Use sounds
+# If you want sound support through librplay, defined USE_SOUND.
+#
+# The make variables USER_SOUNDLIBDIR and USER_SOUNDINCDIR can be
+# used to configure library search paths and include file search paths
+# to find the rplay libraries and header files.
+#
+# Example:
+#
+# USE_SOUND = 1
+# USER_SOUNDLIBDIR = LOCAL_LIBRARIES:
+# USER_SOUNDINCDIR = LOCAL_INCLUDES:
+#
+USE_SOUND =
+
+# ----------------------------------------------------------------------
+# Feature: Use XPM images
+# If you want XPM support, define XPM.
+#
+# The make variables USER_XPMLIBDIR and USER_XPMINCDIR can be
+# used to configure library search paths and include file search paths
+# to find the rplay libraries and header files.
+#
+# Example:
+#
+# XPM = 1
+# USER_XPMLIBDIR = LOCAL_LIBRARIES:
+# USER_XPMINCDIR = LOCAL_INCLUDES:
+#
+XPM = 1
+USER_XPMLIBDIR = [-.XPM-3_4J]
+USER_XPMINCDIR = [-.XPM-3_4J.LIB]
+
+# ----------------------------------------------------------------------
+# Feature: Use Jpeg images
+# If you want JPEG support, define JPEG.
+#
+# The make variables USER_JPEGLIBDIR and USER_JPEGINCDIR can be
+# used to configure library search paths and include file search paths
+# to find the rplay libraries and header files.
+#
+# Example:
+#
+# JPEG = 1
+# USER_JPEGLIBDIR = LOCAL_LIBRARIES:
+# USER_JPEGINCDIR = LOCAL_INCLUDE:
+#
+JPEG = 1
+
+# ----------------------------------------------------------------------
+# Feature: Using M4 to process the ctwm configuration file
+# If you want to process the ctwm configuration file with m4, define
+# USE_M4.
+#
+USE_M4 =
+
+# ----------------------------------------------------------------------
+# Feature: Support for Gnome extensions
+# If you want to build with Gnome extensions, define GNOME.
+#
+GNOME = 1
+
+# ----------------------------------------------------------------------
+# Feature: Use GNU regex
+# If you want to build with GNU regex instead of the internal regex
+# functions, define USE_GNU_REGEX.
+#
+USE_GNU_REGEX =
+
+# DEBUGGING:
+
+# ----------------------------------------------------------------------
+# Feature: General debugging
+# If you want to get all kinds of debugging output from CTWM, define
+# DEBUG.
+#
+DEBUG =

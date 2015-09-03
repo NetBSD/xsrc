@@ -1,0 +1,221 @@
+# Submakefile for ctwm
+# Do NOT use this description file directly.  Instead, just type MMS,
+# and this one will be included.
+
+OBJS =	$(GOAL)GRAM.$(EXT)OBJ,$(GOAL)LEX.$(EXT)OBJ,$(GOAL)DEFTWMRC.$(EXT)OBJ,-
+	$(GOAL)ADD_WINDOW.$(EXT)OBJ,$(GOAL)GC.$(EXT)OBJ,$(GOAL)LIST.$(EXT)OBJ,-
+	$(GOAL)CTWM.$(EXT)OBJ,$(GOAL)PARSE.$(EXT)OBJ,$(GOAL)MENUS.$(EXT)OBJ,-
+	$(GOAL)EVENTS.$(EXT)OBJ,$(GOAL)RESIZE.$(EXT)OBJ,$(GOAL)UTIL.$(EXT)OBJ,-
+	$(GOAL)VERSION.$(EXT)OBJ,$(GOAL)ICONMGR.$(EXT)OBJ,-
+	$(GOAL)CURSOR.$(EXT)OBJ,$(GOAL)ICONS.$(EXT)OBJ,-
+	$(GOAL)WORKMGR.$(EXT)OBJ,$(GOAL)WINDOWBOX.$(EXT)OBJ,-
+	$(GOAL)CLICKTOFOCUS.$(EXT)OBJ,$(GOAL)VSCREEN.$(EXT)OBJ,-
+	$(GOAL)SESSION.$(EXT)OBJ$(GNOMEOBJ)$(SOUNDOBJ),-
+	$(GOAL)VMS_CMD_SERVICES.$(EXT)OBJ,-
+	$(GOAL)LNM.$(EXT)OBJ,$(GOAL)ALLOCA.$(EXT)OBJ
+
+.FIRST :
+	DEFINE X11XMU $(X11XMU)
+	DEFINE X11SM $(X11SM)
+
+.SUFFIXES : .$(EXT)OBJ .C
+
+.C.$(EXT)OBJ :
+	$(CC) $(CFLAGS) $< /OBJECT=$@
+
+$(GOAL)CTWM.$(EXE_EXT)EXE : $(OBJS) $(OPTION) VERSION.OPT
+	$(LD) $(LDFLAGS) /exec=$*.$(EXE_EXT)exe $(OBJS),VERSION.OPT/OPT -
+		$(OPTIONCMD)
+
+LEX.C : LEX.L
+	@ WRITE SYS$ERROR "****"
+	@ WRITE SYS$ERROR "**** Ignore %DCL-W-IVVERB"
+	@ WRITE SYS$ERROR "****"
+	- FLEX LEX.L
+	@ WRITE SYS$ERROR "**** You can open your eyes now"
+	__RESULT = F$SEARCH("LEXYY.C")
+	IF __RESULT .NES. "" THEN RENAME LEXYY.C LEX.C/LOG
+	IF __RESULT .EQS. "" THEN COPY LEX.C_VMS LEX.C/LOG
+
+GRAM.C GRAM.H : GRAM.Y
+	@ WRITE SYS$ERROR "****"
+	@ WRITE SYS$ERROR "**** Ignore %DCL-W-IVVERB"
+	@ WRITE SYS$ERROR "****"
+	- BISON /DEF/YACC GRAM.Y
+	@ WRITE SYS$ERROR "**** You can open your eyes now"
+	__RESULT = F$SEARCH("Y_TAB.C")
+	IF __RESULT .NES. "" THEN RENAME Y_TAB.C GRAM.C/LOG
+	IF __RESULT .NES. "" THEN RENAME Y_TAB.H GRAM.H/LOG
+	IF __RESULT .EQS. "" THEN COPY GRAM.C_VMS GRAM.C/LOG
+	IF __RESULT .EQS. "" THEN COPY GRAM.H_VMS GRAM.H/LOG
+
+DEFTWMRC.C : SYSTEM.CTWMRC GENDEFTWMRC.COM
+	@GENDEFTWMRC.COM
+
+$(OPTION) : DESCRIP.MMS DESCRIP.SUBMMS
+	if "$(CLIB)" .nes. "" then write foo "$(CLIB)"
+	__result := $(XPMLIB).OLB
+	if f$search(__result) .eqs. "" then -
+		__result := $(XPMLIB).OLB
+	if "$(EXT)" .eqs. "VAX_VAXC_" .and. -
+		f$search("$(XPMLIB).OLB_VAXC") .nes. "" then -
+		__result := $(XPMLIB).OLB_VAXC
+	if "$(EXT)" .eqs. "VAX_" .and. -
+		f$search("$(XPMLIB).OLB_DECC") .nes. "" then -
+		__result := $(XPMLIB).OLB_DECC
+	if "$(EXT)" .eqs. "AXP_" .and. -
+		f$search("$(XPMLIB).OLB_AXP") .nes. "" then -
+		__result := $(XPMLIB).OLB_AXP
+	@ !The following will cause a proper error message, says
+	@ !Michael Lemke.
+	if f$search(__result) .eqs. "" then -
+		libr/list=nl: '__result'
+	open/write foo $(OPTION)
+	write foo __result,"/LIB"
+	write foo "$(X11XMULIB)"
+	write foo "$(X11SMLIB)/SHARE"
+	write foo "SYS$SHARE:DECW$XTSHR/SHARE"
+	write foo "SYS$SHARE:DECW$XEXTLIBSHR/SHARE"
+	write foo "SYS$SHARE:DECW$XLIBSHR/SHARE"
+	write foo "SYS$SHARE:DECW$ICELIB/SHARE"
+	close foo
+
+xwdfile.h : descrip.mms
+	@ ! This is a pure hack to circumvent a bug in the file provided by
+	@ ! Digital.  This is so ugly we don't want the user to see what
+	@ ! really happens.
+	@ ! But perhaps we'll give him just a little hint, huh?  :-)
+	@ write sys$output "*** Doing some hackery with XWDFile.h...  Sit tight"
+	@ __result := NO
+	@ if f$search("DECW$UTILS:XWDFILE.H") .nes. "" then __result := YES
+	@ if __result then open/write foo xwdfile.tpu_tmp
+	@ if __result then write foo -
+		"input_file:=GET_INFO(COMMAND_LINE, ""file_name"");"
+	@ if __result then write foo -
+		"main_buffer := CREATE_BUFFER (""main"", input_file);"
+	@ if __result then write foo -
+		"position (beginning_of (main_buffer));"
+	@ if __result then write foo -
+		"loop"
+	@ if __result then write foo -
+		"	r := search_quietly (""""""copyright.h"""""", FORWARD);"
+	@ if __result then write foo -
+		"	EXITIF r = 0;"
+	@ if __result then write foo -
+		"	if beginning_of(r) <> end_of(r)"
+	@ if __result then write foo -
+		"	then"
+	@ if __result then write foo -
+		"		erase (r);"
+	@ if __result then write foo -
+		"		position (r);"
+	@ if __result then write foo -
+		"		copy_text (""<decw$utils/copyright.h>"");"
+	@ if __result then write foo -
+		"	endif;"
+	@ if __result then write foo -
+		"	position (end_of (r));"
+	@ if __result then write foo -
+		"endloop;"
+	@ if __result then write foo -
+		"position (beginning_of (main_buffer));"
+	@ if __result then write foo -
+		"loop"
+	@ if __result then write foo -
+		"	r := search_quietly (LINE_BEGIN + ""struct {"", FORWARD);"
+	@ if __result then write foo -
+		"	EXITIF r = 0;"
+	@ if __result then write foo -
+		"	if beginning_of(r) <> end_of(r)"
+	@ if __result then write foo -
+		"	then"
+	@ if __result then write foo -
+		"		erase (r);"
+	@ if __result then write foo -
+		"		position (r);"
+	@ if __result then write foo -
+		"		copy_text (""typedef struct {"");"
+	@ if __result then write foo -
+		"	endif;"
+	@ if __result then write foo -
+		"	position (end_of (r));"
+	@ if __result then write foo -
+		"endloop;"
+	@ if __result then write foo -
+		"write_file(main_buffer, get_info (command_line, ""output_file""));"
+	@ if __result then write foo "quit;"
+	@ if __result then close foo
+	@ if __result then save_mesg = f$environment("MESSAGE")
+	@ !if __result then -
+	!	set message/nofacility/noidentification/noseverity/notext
+	@ if __result then edit/tpu/nosection/nodisplay -
+		/command=xwdfile.tpu_tmp/out=xwdfile.h -
+		decw$utils:xwdfile.h
+	@ if __result then delete xwdfile.tpu_tmp;*
+	@ if __result then set message'save_mesg'
+	@ if __result then write sys$output "*** There, done."
+
+ADD_WINDOW.$(EXT)OBJ : ADD_WINDOW.C -
+       TWM.H ADD_WINDOW.H UTIL.H RESIZE.H PARSE.H GRAM.H LIST.H EVENTS.H -
+       MENUS.H SCREEN.H ICONS.H ICONMGR.H -
+       LIST.H MENUS.H ICONMGR.H WORKMGR.H
+CLICKTOFOCUS.$(EXT)OBJ : CLICKTOFOCUS.C -
+       TWM.H SCREEN.H UTIL.H -
+       LIST.H MENUS.H ICONMGR.H WORKMGR.H
+CTWM.$(EXT)OBJ : CTWM.C -
+       TWM.H ADD_WINDOW.H GC.H PARSE.H VERSION.H MENUS.H EVENTS.H UTIL.H -
+       GRAM.H SCREEN.H ICONS.H ICONMGR.H -
+       LIST.H MENUS.H ICONMGR.H WORKMGR.H
+CURSOR.$(EXT)OBJ : CURSOR.C -
+       TWM.H SCREEN.H UTIL.H -
+       LIST.H MENUS.H ICONMGR.H WORKMGR.H
+DEFTWMRC.$(EXT)OBJ : DEFTWMRC.C
+EVENTS.$(EXT)OBJ : EVENTS.C -
+       TWM.H ADD_WINDOW.H MENUS.H EVENTS.H RESIZE.H PARSE.H GRAM.H UTIL.H -
+       SCREEN.H ICONS.H ICONMGR.H VERSION.H -
+       LIST.H MENUS.H ICONMGR.H WORKMGR.H
+GC.$(EXT)OBJ : GC.C -
+       TWM.H UTIL.H GRAM.H SCREEN.H -
+       LIST.H MENUS.H ICONMGR.H WORKMGR.H
+GRAM.$(EXT)OBJ : GRAM.C -
+       TWM.H MENUS.H ICONS.H ADD_WINDOW.H LIST.H UTIL.H SCREEN.H PARSE.H -
+       LIST.H MENUS.H ICONMGR.H WORKMGR.H
+ICONMGR.$(EXT)OBJ : ICONMGR.C -
+       TWM.H UTIL.H PARSE.H SCREEN.H RESIZE.H ADD_WINDOW.H SICONIFY.BM -
+       LIST.H MENUS.H ICONMGR.H WORKMGR.H
+ICONS.$(EXT)OBJ : ICONS.C -
+       TWM.H SCREEN.H ICONS.H GRAM.H LIST.H PARSE.H UTIL.H -
+       LIST.H MENUS.H ICONMGR.H WORKMGR.H
+LEX.$(EXT)OBJ : LEX.C -
+       GRAM.H PARSE.H
+LIST.$(EXT)OBJ : LIST.C -
+       TWM.H SCREEN.H GRAM.H UTIL.H -
+       LIST.H MENUS.H ICONMGR.H WORKMGR.H
+MENUS.$(EXT)OBJ : MENUS.C -
+       TWM.H GC.H MENUS.H RESIZE.H EVENTS.H UTIL.H PARSE.H GRAM.H SCREEN.H -
+       ICONS.H VMS_CMD_SERVICES.H VERSION.H -
+       LIST.H MENUS.H ICONMGR.H WORKMGR.H
+PARSE.$(EXT)OBJ : PARSE.C -
+       TWM.H SCREEN.H MENUS.H UTIL.H GRAM.H PARSE.H VERSION.H -
+       LIST.H MENUS.H ICONMGR.H WORKMGR.H
+RESIZE.$(EXT)OBJ : RESIZE.C -
+       TWM.H PARSE.H UTIL.H RESIZE.H ADD_WINDOW.H SCREEN.H -
+       LIST.H MENUS.H ICONMGR.H WORKMGR.H
+UTIL.$(EXT)OBJ : UTIL.C -
+       TWM.H UTIL.H GRAM.H SCREEN.H ICONS.H SICONIFY.BM -
+       LIST.H MENUS.H ICONMGR.H WORKMGR.H $(DEP_XWDFILE)
+VERSION.$(EXT)OBJ : VERSION.C
+WINDOWBOX.$(EXT)OBJ : WINDOWBOX.C -
+       TWM.H SCREEN.H ADD_WINDOW.H RESIZE.H WINDOWBOX.H -
+       TYPES.H LIST.H -
+       ICONMGR.H -
+       GRAM.H -
+       MENUS.H VSCREEN.H WORKMGR.H
+WORKMGR.$(EXT)OBJ : WORKMGR.C -
+       TWM.H UTIL.H PARSE.H SCREEN.H ICONS.H RESIZE.H ADD_WINDOW.H EVENTS.H -
+       GRAM.H -
+       LIST.H MENUS.H ICONMGR.H WORKMGR.H
+VMS_CMD_SERVICES.$(EXT)OBJ : -
+       VMS_CMD_SERVICES.C VMS_CMD_SERVICES.H LNM.H
+LNM.$(EXT)OBJ : LNM.C
+ALLOCA.$(EXT)OBJ : ALLOCA.C

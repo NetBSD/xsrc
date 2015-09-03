@@ -1,0 +1,15 @@
+Should we set SKIP_WINLIST, SKIP_TASKBAR, etc. on IconManagerDontShow windows?  Maybe HIDDEN?
+Is there a problem with the current approach (don't tell GNOME about those windows at all)?
+Layer and size hints
+- layers... how does stacking order work?
+autoconf (replace Imakefile)
+configuration capplet or standalone application
+add an option to the gnomepager-applet to move windows to other workspaces
+- ideally, one would drag windows, like the workspacemanager.
+	however, even a pop-up menu listing workspaces and allowing movement would 
+	be an improvement.
+Why doesn't the workspace window work for some GTK apps?
+- transient problem.  Why are all GTK windows transient?  Is this a WM bug, 
+  or a GTK problem?  Investigate.
+Cleanup on exit - remove properties from root window.
+Write a small utility app using libctwm so that any CTWM will work with GNOME.

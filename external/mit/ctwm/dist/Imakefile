@@ -1,0 +1,236 @@
+XCOMM $XConsortium: Imakefile,v 1.33 91/07/17 00:48:06 gildea Exp $
+XCOMM
+XCOMM Here is an Imakefile for twm.  It depends on having TWMDIR defined
+XCOMM in Imake.tmpl.  I like to use Imakefiles for everything, and I am sure
+XCOMM other people do also, so perhaps you could do us all a favor and
+XCOMM distribute this one.
+XCOMM
+
+#include "Imakefile.local"
+
+
+        BYFLAGS = -d -b gram
+#ifdef DEBUGPARSER
+         YFLAGS = $(BYFLAGS) -t -v
+DEBUGPARSERDEFINES = -DYYDEBUG=1
+#else
+         YFLAGS = $(BYFLAGS)
+#endif
+        DEPLIBS = $(DEPXMULIB) $(DEPEXTENSIONLIB) $(DEPXLIB)
+       LINTLIBS = $(LINTXMU) $(LINTEXTENSIONLIB) $(LINTXLIB)
+
+#ifdef XPM
+      XPMLIBDIR = $(USER_XPMLIBDIR)
+      XPMINCDIR = $(USER_XPMINCDIR) 
+
+     XPMDEFINES = -DXPM
+         XPMLIB = $(XPMLIBDIR) -lXpm
+#else
+      XPMLIBDIR = 
+      XPMINCDIR = 
+
+     XPMDEFINES = 
+         XPMLIB = 
+#endif
+
+#ifdef JPEG
+     JPEGLIBDIR = $(USER_JPEGLIBDIR)
+     JPEGINCDIR = $(USER_JPEGINCDIR)
+
+    JPEGDEFINES = -DJPEG
+        JPEGLIB = $(JPEGLIBDIR) -ljpeg
+#else
+     JPEGLIBDIR = 
+     JPEGINCDIR = 
+
+    JPEGDEFINES = 
+        JPEGLIB = 
+#endif
+
+#ifdef USE_GNU_REGEX
+     GNUREGEXDEFS = -DUSE_GNU_REGEX
+#else
+     GNUREGEXDEFS =
+#endif
+
+#ifdef IMCONV
+   IMCONVLIBDIR = $(USER_IMCONVLIBDIR)
+   IMCONVINCDIR = $(USER_IMCONVINCDIR)
+
+  IMCONVDEFINES = -DIMCONV
+      IMCONVLIB = $(IMCONVLIBDIR) -lim -lsdsc
+#else
+   IMCONVLIBDIR = 
+   IMCONVINCDIR = 
+
+  IMCONVDEFINES = 
+      IMCONVLIB = 
+#endif
+
+#if defined USE_M4 || defined USEM4
+  M4DEFINES = -DUSEM4
+#ifdef M4_CMD
+      M4CMD = M4_CMD
+#else
+      M4CMD = m4
+#endif
+#else
+  M4DEFINES = 
+      M4CMD = 
+#endif
+
+#ifdef GNOME
+  GNOMEDEFINES = -DGNOME
+      GNOMESRC = gnome.c
+      GNOMEOBJ = gnome.o
+#else
+  GNOMEDEFINES = 
+      GNOMESRC = 
+      GNOMEOBJ = 
+#endif
+
+#ifdef USE_SOUND
+    SOUNDLIBDIR = $(USER_SOUNDLIBDIR)
+    SOUNDINCDIR = $(USER_SOUNDINCDIR)
+
+   SOUNDDEFINES = -DSOUNDS
+       SOUNDLIB = $(SOUNDLIBDIR) -lrplay
+       SOUNDSRC = sound.c
+       SOUNDOBJ = sound.o
+#else
+    SOUNDLIBDIR = 
+    SOUNDINCDIR = 
+
+   SOUNDDEFINES = 
+       SOUNDLIB = 
+       SOUNDSRC = 
+       SOUNDOBJ = 
+#endif
+
+#ifdef DEBUG
+    CDEBUGFLAGS = -g -O0
+#endif
+
+#ifndef NO_WARNS
+      CCOPTIONS = -Wall \
+		-Wshadow -Wstrict-prototypes -Wmissing-prototypes -Wundef \
+		-Wredundant-decls -Wcast-align -Wcast-qual -Wchar-subscripts \
+		-Winline -Wnested-externs -Wmissing-declarations
+#endif
+
+PIXMAPDIR = $(TWMDIR)/images
+CONFDIR = $(TWMDIR)
+
+LOCAL_LIBRARIES = $(IMCONVLIB) $(XPMLIB) $(JPEGLIB) $(XMULIB) $(XTOOLLIB) $(XLIB) $(SOUNDLIB)
+        DEFINES = $(SIGNAL_DEFINES) $(M4DEFINES) $(GNOMEDEFINES) $(IMCONVDEFINES) $(XPMDEFINES) $(JPEGDEFINES) $(SOUNDDEFINES)  $(DEBUGPARSERDEFINES) $(GNUREGEXDEFS)
+
+ EXTRA_INCLUDES = $(IMCONVINCDIR) $(XPMINCDIR) $(JPEGINCDIR) $(SOUNDINCDIR)
+
+           SRCS = gram.tab.c lex.c deftwmrc.c add_window.c gc.c list.c ctwm.c \
+		parse.c menus.c events.c resize.c util.c version.c iconmgr.c \
+		cursor.c icons.c workmgr.c windowbox.c clicktofocus.c \
+		vscreen.c session.c mwmhints.c $(GNOMESRC) $(SOUNDSRC)
+
+           OBJS = gram.tab.o lex.o deftwmrc.o add_window.o gc.o list.o ctwm.o \
+		parse.o menus.o events.o resize.o util.o version.o iconmgr.o \
+		cursor.o icons.o workmgr.o windowbox.o clicktofocus.o \
+		vscreen.o session.o mwmhints.o $(GNOMEOBJ) $(SOUNDOBJ)
+
+  PIXMAPFILES =	xpm/IslandD.xpm        xpm/mail1.xpm          xpm/xgopher.xpm \
+		xpm/IslandW.xpm        xpm/nothing.xpm        xpm/xgrab.xpm \
+		xpm/LRom.xpm           xpm/pixmap.xpm         xpm/xhpcalc.xpm \
+		xpm/LRom1.xpm          xpm/postit.xpm         xpm/xmail.xpm \
+		xpm/arthur.xpm         xpm/term.xpm           xpm/xman.xpm \
+		xpm/cdrom1.xpm         xpm/unknown.xpm        xpm/xnomail.xpm \
+		xpm/claude.xpm         xpm/unread.xpm         xpm/xrn.goodnews.xpm \
+		xpm/datebook.xpm       xpm/xarchie.xpm        xpm/xrn.nonews.xpm \
+		xpm/emacs.xpm          xpm/xcalc.xpm          xpm/xrn.xpm \
+		xpm/hpterm.xpm         xpm/xcalc2.xpm         xpm/xterm.xpm \
+		xpm/mail0.xpm          xpm/xedit.xpm          xpm/welcome.xpm \
+		xpm/audio_editor.xpm   xpm/clipboard.xpm      xpm/ghostview.xpm \
+		xpm/xirc.xpm           xpm/xmosaic.xpm        xpm/unknown1.xpm \
+		xpm/xrn-compose.xpm    xpm/gnu-emacs1.xpm     xpm/gnu-emacs2.xpm \
+		xpm/gnu-emacs3.xpm     xpm/gnu-emacs4.xpm     xpm/gnu-emacs5.xpm \
+		xpm/gnu-emacs6.xpm     xpm/gnu-emacs7.xpm     xpm/skull.xpm \
+		xpm/3D_Expand15.xpm    xpm/3D_Iconify15.xpm   xpm/3D_Lightning15.xpm \
+		xpm/3D_Menu15.xpm      xpm/3D_Resize15.xpm    xpm/3D_Zoom15.xpm \
+		xpm/background8.xpm    xpm/spider.xpm \
+		xpm/ball1.xpm    xpm/ball12.xpm   xpm/ball4.xpm    xpm/ball7.xpm \
+		xpm/ball10.xpm   xpm/ball2.xpm    xpm/ball5.xpm    xpm/ball8.xpm \
+		xpm/ball11.xpm   xpm/ball3.xpm    xpm/ball6.xpm    xpm/ball9.xpm \
+		xpm/supman1.xbm   xpm/supman4.xbm   xpm/supman7.xbm \
+		xpm/supman2.xbm   xpm/supman5.xbm   xpm/supman8.xbm \
+		xpm/supman3.xbm   xpm/supman6.xbm   xpm/supman9.xbm \
+		xpm/nt1.xpm   xpm/nt2.xpm xpm/xftp.xpm xpm/welcome.xwd \
+		3dcircle.xpm 3ddimple.xpm 3ddot.xpm 3dfeet.xpm 3dleopard.xpm \
+		3dpie.xpm 3dpyramid.xpm 3dslant.xpm
+
+SpecialObjectRule(parse.o,parse.c,'-DSYSTEM_INIT_FILE="$(CONFDIR)/system.ctwmrc"' '-DPIXMAP_DIRECTORY="$(PIXMAPDIR)"' '-DM4CMD="$(M4CMD)"')
+SpecialObjectRule(ctwm.o,ctwm.c,'-DPIXMAP_DIRECTORY="$(PIXMAPDIR)"')
+#if !HasPutenv
+SpecialObjectRule(util.o,util.c,-DNOPUTENV)
+#endif
+
+depend:: lex.c gram.tab.c deftwmrc.c
+
+NormalLibraryTarget(ctwm, libctwm.o)
+ComplexProgramTarget(ctwm)
+InstallNonExecFile(system.ctwmrc,$(CONFDIR))
+#ifdef XPM
+install::
+	MakeDir($(DESTDIR)$(PIXMAPDIR))
+	@case '${MFLAGS}' in *[i]*) set +e;; esac; \
+	for i in xpm/?* ; do \
+		(set -x; $(INSTALL) -c $(INSTLIBFLAGS) $$i $(DESTDIR)$(PIXMAPDIR)); \
+	done
+#endif
+
+gram.tab.c: gram.tab.h
+
+gram.tab.h: gram.y
+	$(YACC) $(YFLAGS) gram.y
+
+clean::
+	$(RM) y.tab.h y.tab.c lex.yy.c gram.tab.h gram.tab.c lex.c deftwmrc.c
+	$(RM) *.[chy].flc *.orig *.rej
+
+deftwmrc.c:  system.ctwmrc
+	$(RM) $@
+	echo '/* ' >>$@
+	echo ' * This file is generated automatically from the default' >>$@
+	echo ' * twm bindings file system.ctwmrc by the twm Imakefile.' >>$@
+	echo ' */' >>$@
+	echo '' >>$@
+	echo 'char *defTwmrc[] = {' >>$@
+	sed -e '/^#/d' -e 's/"/\\"/g' -e 's/^/    "/' -e 's/$$/",/' \
+		system.ctwmrc >>$@
+	echo '    (char *) 0 };' >>$@
+
+GET_VERSION="`grep '^\#define VERSION_ID' version.c | sed -e 's/^[^"]*"\([^"]*\)".*$$/\1/'`"
+dist:	clean Makefile gram.tab.h gram.tab.c lex.c deftwmrc.c
+	./mk_tar.sh
+
+rpm: hack_spec dist unhack_spec do_rpm
+hack_spec:
+	if grep 'Debian' /etc/issue > /dev/null 2> /dev/null; then \
+	    mv ctwm.spec ctwm.spec.Redhat; \
+	    sed -e '/^BuildRequires:/d' < ctwm.spec.Redhat > ctwm.spec; \
+	fi
+unhack_spec:
+	if grep 'Debian' /etc/issue > /dev/null 2> /dev/null; then \
+	    mv ctwm.spec.Redhat ctwm.spec; \
+	fi
+do_rpm:
+	version=$(GET_VERSION); \
+	rpmbuild -ta ../ctwm-$$version.tar.gz
+
+# Make all source files depend on this file, so there will be no more
+# surprises.
+
+$(OBJS): Makefile
+
+#define IHaveSpecialMakefileTarget
+Makefile: Imakefile Imakefile.local
+	echo "You need to run 'xmkmf'"
+	xmkmf && ${MAKE} ${MAKEFLAGS}
+#	exit 1

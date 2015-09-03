@@ -1,0 +1,132 @@
+To compile and install ctwm on VMS machines:
+
+Unpacking and configuration:
+----------------------------
+
+0) You must have the X miscellaneous utilities and X extension libraries.
+   Possibly, also have some unix type tools such as tar and gzip
+   (get these from ftp.spc.edu in macros32/savesets).
+
+1) Get the latest xpm library (at time of writing, 3.4) and compile that
+   first. This is used for coloured icons. (There should be many sites that
+   have a copy of xpm, try using Google to find a site near you. I found
+   ftp://ftp2.cnam.fr/decwindows/lib/)
+
+2) If you don't already have a working descrip.local, copy
+   descrip.local-template to desrip.local:
+
+   $ IF F$SEARCH("DESCRIP.LOCAL") .EQS. "" THEN -
+	COPY DESCRIP.LOCAL-TEMPLATE DESCRIP.LOCAL
+
+3) Edit descrip.local and change what needs to be changed.  There are fairly
+   clear comments describing how it should be done.
+
+   About EXIT_ENDSESSION, see warning W1 below.
+
+Compilation and linking:
+------------------------
+
+4) This item is not true any more, because support for make.com and link.com
+   has been removed.  MMK is free and works perfectly well.
+
+   Was: 'IF YOU DOWNLOADED A PACKAGE WITH OBJECT FILES, you only need to link
+   ctwm, doing "@link.com".  Then go to step 7).'
+
+5) You do not need to rename the files with _VMS extensions any more.
+
+6) build ctwm by doing "mmk/ign=w" (if you have DECSET, you can use MMS
+   instead of MMK).  If you downloaded a package with object files, it
+   should result in ctwm being linked only.
+
+[ N.B.:  WHEN LINKING object files that have been compiled with VAX C
+  (*.VAX_VAXC_OBJ), the linker may complain about two undefined symbols.
+  They are however not refered to anywhere, so this is completelly harmless.
+  The two symbols are COLORCONVERTARGS and SCREENCONVERTARG.
+							/Richard Levitte ]
+
+[ N.B.2:  The resulting executable will have the name CTWM.VAX_EXE or
+  CTWM.AXP_EXE!  This because you may want to compile or link for both
+  architectures in the same directory.			/Richard Levitte ]
+
+Installation:
+-------------
+
+7) When ctwm has been successfully built, work out where to put the xpm
+   icons, say disk$users:[joe.xpm]. Edit the file ctwm.com and change it to
+   suit you.
+
+8) Create your user config file ctwm.rc and put it in DECW$USER_DEFAULTS.
+   Now is the time to read the man page on ctwm. Be sure to read vms.txt for
+   differences between the Unix ctwm and the VMS version.
+   (See peterc.ctwmrc or levitte_system.ctwmrc, for an example config file.)
+
+9) [Optional] Create your own system default config file system.ctwmrc
+   and put it in DECW$SYSTEM_DEFAULTS.
+
+10) Go to the session manager and under the Options menu pick out the
+    "Menus..." item. Make a menu item called "CT Window Manager" and enter the
+    DCL command "@disk$users:[joe.com]ctwm.com", as an example.
+
+11) Go to the session manager, again, and under the Options menu pick out
+    the "Automatic Startup..." item. Take out your current window manager
+    and replace it with ctwm using the "CT Window Manager" item you just
+    created.
+
+12) Now all is done. Exit from the session and log back in to try out ctwm.
+
+
+WARNINGS:
+---------
+
+W1) [THIS APPLIES ON VAX ONLY!]
+
+    It seems like some older DECwindows/Motif versions end their session
+    like this:
+
+	%decw$endsession -vueimage sys$system:.exe
+
+    this is an internal Session Manager command.  If this is how it's
+    done on your machine, you'd better not use the session ending features
+    of ctwm at all, or you won't get back a login prompt when you end
+    your session.  In such a case, EXIT_ENDSESSION must be set to 0, or
+    you may get into trouble.
+
+W2) Bitmap (xbm) files are sometimes stored in files with no extensions
+    on older Unix X11 releases, which makes definitions like this work
+    on those ("plaid" is the culprit here):
+
+	WorkSpaces {
+	    "One"   {"#619AAE" "white" "firebrick" "white" "plaid"}
+	}
+
+    Since those files have never been stored without extension on VMS,
+    you have to rewrite such definitions like this:
+
+	WorkSpaces {
+	    "One"   {"#619AAE" "white" "firebrick" "white" "plaid.xbm"}
+	}
+
+    I has been discussed if you couldn't add a "dna=.xbm" parameter to
+    the open() or fopen() that opens the bitmap file.  This would of
+    course have been possible, if the loading of bitmap files wasn't
+    done through the function XmuLocateBitmapFile().  Of course, you
+    could as well hack ExpandFilename(), but that is less clean.  The
+    Xmu library needs to be enhanced for this task.
+
+
+Ctwm 3.3 ported by Peter Chang - peterc@v2.ph.man.ac.uk 4/5/94.
+Ctwm 3.4pl2 and 3.5 further ported by Richard Levitte <levitte@lp.se>
+
+
+Thank you:
+----------
+
+A thank you goes to the following people:
+
+  Claude Lecommandeur <Claude.Lecommandeur@epfl.ch>, for making ctwm
+	to begin with.
+  Peter Chang <peterc@v2.ph.man.ac.uk>, for the previous ports.
+
+  Michael Lemke <ai26@a400.sternwarte.uni-erlangen.de>
+
+/Richard Levitte, <richard@levitte.org>

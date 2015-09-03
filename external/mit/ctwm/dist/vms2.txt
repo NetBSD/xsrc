@@ -1,0 +1,75 @@
+What did I do for ctwm?				(Richard Levitte)
+-----------------------
+
+>>>> ctwm 3.5 beta 1:
+
+19970301:
+
+  Well, some bug fixes (a missing return at one place...  Baaaad...), fixing
+  the restart code for VMS, a lot of extra declarations to make DEC C shut up,
+  A real descrip.mms (and a descrip.submms), so you can compile for VAX and
+  AXP without any file conflict, enhancements of make.com, ctwm.com and of
+  the docs...
+
+  Well, that's about it.
+
+19970309:
+
+  Peter Chang mentioned that XWD files are supported in DECWindows.  All
+  you have to do is include decw$utils:xwdfile.h.  Unfortunatelly, that
+  is not completelly true since that file has a fatal bug.  Fortunatelly,
+  it's pretty easy to correct.  I do it the hard way though, by editing
+  the places that are wrong and saving the result in the current directory.
+  On the fly, of course :-).
+
+  I also added support for the new file conventions that are used in the
+  VMS port of xpm (version 3.4J).  This is also checked on the fly.
+
+  A few bugs in the build procedures were removed at the same time.
+
+19970318:
+
+  DESCRIP.SUBMMS and MAKE.COM now deal with the copying of *.%_VMS on
+  their own.  No more need for the user to rename those.
+
+  A few quirks with the library option file making cleared.
+
+  A few bugs with older X window system include files cleared.
+
+  A .HLP file created (Thank you Michael Lemke!).
+
+>>>> ctwm 3.5 beta 3:
+
+19971115:
+
+  Readded the following files that I have hacked on since the latest
+  release of Ctwm 3.5 beta 1 for VMS (or that were forgotten back then):
+
+	ALLOCA.C, CTWM.COM, DESCRIP.MMS, GENDEFTWMRC.COM,
+	LEVITTE_SYSTEM.CTWMRC, MAKE.COM, README.VMS, VMS.TXT
+
+  Added a few function declarations in the following files:
+
+	CURSOR.H, MENUS.H, WORKMGR.H
+
+  MENUS.C needed to include CURSOR.H for correct declaration of
+  MakeStringCursor().  Also, I've removed (with #if 0..#endif) some code
+  that Claude claims is already done in Done() (found in CTWM.C).  Tests
+  have proved that he's right.
+
+  I readded the sanity code in TWM.H for now, currently commented, to
+  have if I need it on other platforms.
+
+  WORKMGR.C: In VMS older than version 7.0, strdup() is not implemented,
+  so I changed the code for VMS to do a malloc() and strcpy().
+  [ N.B.: this was redesigned by Claude to redefine strdup() in UTIL.H
+    instead. ]
+
+Todo:
+-----
+
+There is some code around a select() in add_window.c that I have simply
+#ifdef'ed out for VMS.  I'll deal with it as soon as I understand what
+it is supposed to do.
+
+/Richard Levitte <levitte@lp.se>

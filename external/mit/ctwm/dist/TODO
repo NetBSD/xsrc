@@ -1,0 +1,14 @@
+TODO:
+
+Before releasing 3.7:
+
+ - Ponder over the rest of the available patches and apply them if
+   reasonable.
+
+ - Make sure it compiles and runs on VMS.
+
+Longer term:
+
+ - Check the new protocols that Gnome 2 and KDE use, and implement
+   them.
+

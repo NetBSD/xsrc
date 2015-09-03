@@ -1,0 +1,26 @@
+Notes about the GNOME-compliance patches to CTWM.
+
+Things that work:
+multiple workspaces, and switching between them.
+window shading, iconification, settings windows to sticky.
+root window clicks (might be some bugs).
+
+Things that don't work:
+layers
+GNOME window-size hints, and some other hints
+
+These patches should be sufficient to make the gnome-pager applet work with 
+CTWM.  However, you'll want to make a few changes to your .ctwmrc in order to 
+make it work well.  These changes have been made to the default .ctwmrc
+(system.ctwmrc) included in the distribution.  The changes are:
+1. Make the panel occupy all workspaces 
+2. Remove the borders and title bar from the panel window
+3. Don't show the workspace manager and the icon manager
+4. Remove the border and title from gmc windows; you might want them to occupy
+all workspaces.
+5. In order to have root window clicks work, don't bind anything (a menu or
+other action) to mouse actions on the root window.
+
+These patches were written by Nathan Dushman (nhd+ctwmg@andrew.cmu.edu).
+Please let me know of any problems, solutions, requests, and please send me
+an email if you like and use these patches - it will make me happy.
