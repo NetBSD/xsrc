@@ -3532,6 +3532,7 @@ int ExecuteFunction(int func, void *action, Window w, TwmWindow *tmp_win,
 	    fprintf (stderr, "%s:  unable to open file \"%s\"\n", 
 		     ProgramName, (char *)action);
 	}
+	free(action);
 	break;
 
     case F_REFRESH:
