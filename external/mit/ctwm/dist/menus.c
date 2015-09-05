@@ -4123,10 +4123,10 @@ static void UnmapTransients(TwmWindow *tmp_win, int iconify, unsigned long event
 	if (t != tmp_win &&
 		((t->transient && t->transientfor == tmp_win->w) ||
 		 t->group == tmp_win->w)) {
-	    if (iconify) {
+	    if (iconify && tmp_win->icon) {
 		if (t->icon_on)
 		    Zoom(t->icon->w, tmp_win->icon->w);
-		else if (tmp_win->icon)
+		else 
 		    Zoom(t->frame, tmp_win->icon->w);
 	    }
 
