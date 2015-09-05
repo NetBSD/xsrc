@@ -785,7 +785,9 @@ int UpdateMenu(void)
 	if (ActiveMenu && !ActiveMenu->entered)
 	    continue;
 
-	XFindContext(dpy, ActiveMenu->w, ScreenContext, (XPointer *)&Scr);
+	if (XFindContext(dpy, ActiveMenu->w, ScreenContext, (XPointer *)&Scr)
+	    != XCSUCCESS)
+	    continue;
 
 	if (x < 0 || y < 0 ||
 	    x >= ActiveMenu->width || y >= ActiveMenu->height)
