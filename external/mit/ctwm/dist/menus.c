@@ -5003,7 +5003,9 @@ void MosaicFade (TwmWindow *tmp_win, Window blanket)
     }
     for (i = 0; i < 10; i++) {
 	for (j = 0; j < nrects; j++) {
+	    /* coverity[dc.weak_crypto] */
 	    rectangles [j].x = ((lrand48 () %  width) / srect) * srect;
+	    /* coverity[dc.weak_crypto] */
 	    rectangles [j].y = ((lrand48 () % height) / srect) * srect;
 	}
 	XFillRectangles (dpy, mask, gc, rectangles, nrects);
