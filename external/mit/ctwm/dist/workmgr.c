@@ -1340,7 +1340,7 @@ static void DisplayWin (virtualScreen *vs, TwmWindow *tmp_win)
 	if (tmp_win->isicon) {
 	    if (tmp_win->icon_on) {
 		if (tmp_win->icon && tmp_win->icon->w) {
-		    if (vs != tmp_win->old_parent_vs) {
+		    if (vs && vs != tmp_win->old_parent_vs) {
 			int x, y;
 			unsigned int junk;
 			Window junkW, w = tmp_win->icon->w;
@@ -1370,7 +1370,7 @@ static void DisplayWin (virtualScreen *vs, TwmWindow *tmp_win)
 	    XMapWindow   (dpy, tmp_win->w);
 	    XSelectInput (dpy, tmp_win->w, eventMask);
 	}
-	if (vs != tmp_win->old_parent_vs) {
+	if (vs && vs != tmp_win->old_parent_vs) {
 	    XReparentWindow (dpy, tmp_win->frame, vs->window, tmp_win->frame_x, tmp_win->frame_y);
 	}
 	XMapWindow (dpy, tmp_win->frame);
