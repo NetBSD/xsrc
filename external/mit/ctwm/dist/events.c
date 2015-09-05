@@ -3085,14 +3085,16 @@ void HandleButtonPress(void)
 		((Event.xany.window == Tmp_win->iconmanagerlist->icon) ||
 		 (Event.xany.window == Tmp_win->iconmanagerlist->w))) {
 	    Tmp_win = Tmp_win->iconmanagerlist->iconmgr->twm_win;
-	    XTranslateCoordinates(dpy, Event.xany.window, Tmp_win->w,
-		Event.xbutton.x, Event.xbutton.y, 
-		&JunkX, &JunkY, &JunkChild);
+	    if (Tmp_win) {
+		XTranslateCoordinates(dpy, Event.xany.window, Tmp_win->w,
+		    Event.xbutton.x, Event.xbutton.y, 
+		    &JunkX, &JunkY, &JunkChild);
 
-	    Event.xbutton.x = JunkX - Tmp_win->frame_bw3D;
-	    Event.xbutton.y = JunkY - Tmp_win->title_height - Tmp_win->frame_bw3D;
-	    Event.xany.window = Tmp_win->w;
-	    Context = C_WINDOW;
+		Event.xbutton.x = JunkX - Tmp_win->frame_bw3D;
+		Event.xbutton.y = JunkY - Tmp_win->title_height - Tmp_win->frame_bw3D;
+		Event.xany.window = Tmp_win->w;
+		Context = C_WINDOW;
+	    }
 	}
 	else if (Event.xany.window == Tmp_win->title_w) {
 	    if (Scr->ClickToFocus &&
@@ -3199,7 +3201,7 @@ void HandleButtonPress(void)
 
 	    if (Event.xany.window != 0 &&
 		(Tmp_win = GetTwmWindow(Event.xany.window))) {
-		if (Tmp_win->iswinbox) {
+		if (Tmp_win && Tmp_win->iswinbox) {
 		    XTranslateCoordinates (dpy, Scr->Root, Event.xany.window,
 			JunkX, JunkY,  &JunkX, &JunkY, &win);
 		    XTranslateCoordinates (dpy, Event.xany.window, win,
