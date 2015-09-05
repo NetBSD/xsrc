@@ -1123,6 +1123,7 @@ void HandleKeyPress(void)
 			break;
 		    case ' ' :
 			offset = 1;
+			/*FALLTHROUGH*/
 		    default :
 			if (((Scr->IgnoreCaseInMenuSelection) &&
 			    (keynam [0] == Tolower (item->item [offset]))) ||
