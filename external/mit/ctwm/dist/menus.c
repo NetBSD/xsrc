@@ -479,6 +479,7 @@ void InitTitlebarButtons (void)
 	    if (!tb->image) {		/* cannot happen (see util.c) */
 		fprintf (stderr, "%s:  unable to add titlebar button \"%s\"\n",
 			 ProgramName, tb->name);
+		continue;
 	    }
 	}
 	tb->width  = tb->image->width;
