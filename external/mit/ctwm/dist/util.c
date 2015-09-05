@@ -2879,11 +2879,14 @@ void PaintTitleButton (TwmWindow *tmp_win, TBWindow  *tbw)
 void PaintTitleButtons (TwmWindow *tmp_win)
 {
     int i;
-    TBWindow *tbw;
+    TBWindow *tbw = tmp_win->titlebuttons;
     int nb = Scr->TBInfo.nleft + Scr->TBInfo.nright;
 
-    for (i = 0, tbw = tmp_win->titlebuttons; i < nb; i++, tbw++) {
-	if (tbw) PaintTitleButton (tmp_win, tbw);
+    if (tbw == NULL)
+	return;
+
+    for (i = 0, i < nb; i++, tbw++) {
+	PaintTitleButton (tmp_win, tbw);
     }
 }
 
