@@ -2718,7 +2718,7 @@ void WMgrHandleButtonEvent (virtualScreen *vs, XEvent *event)
     switch (button) {
 	case 1 :
 	    XUnmapWindow (dpy, sw);
-
+	    break;
 	case 2 :
 	    XGetGeometry (dpy, sw, &junkW, &X0, &Y0, &W0, &H0, &bw, &junk);
 	    XTranslateCoordinates (dpy, vs->wsw->mswl [oldws->number]->w,
