@@ -2885,7 +2885,7 @@ void PaintTitleButtons (TwmWindow *tmp_win)
     if (tbw == NULL)
 	return;
 
-    for (i = 0, i < nb; i++, tbw++) {
+    for (i = 0; i < nb; i++, tbw++) {
 	PaintTitleButton (tmp_win, tbw);
     }
 }
