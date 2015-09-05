@@ -1819,7 +1819,7 @@ void resizeFromCenter(Window w, TwmWindow *tmp_win)
 	}
       
       if (Event.type != MotionNotify) {
-	DispatchEvent2 ();
+	(void)DispatchEvent2 ();
 	continue;
       }
       
