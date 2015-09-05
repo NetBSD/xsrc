@@ -4077,7 +4077,7 @@ void DeIconify(TwmWindow *tmp_win)
     /* de-iconify the main window */
     if (Scr->WindowMask)
 	XRaiseWindow (dpy, Scr->WindowMask);
-    if (tmp_win->isicon)
+    if (tmp_win && tmp_win->isicon)
     {
 	isicon = TRUE;
 	if (tmp_win->icon_on && tmp_win->icon && tmp_win->icon->w)
