@@ -256,11 +256,11 @@ Zoom(Window wf, Window wt)
  *  \param name  the filename to expand
  */
 char *
-ExpandFilename(char *name)
+ExpandFilename(const char *name)
 {
     char *newname;
 
-    if (name[0] != '~') return name;
+    if (name[0] != '~') return strdup(name);
 
     newname = malloc (HomeLen + strlen(name) + 2);
     if (!newname) {
