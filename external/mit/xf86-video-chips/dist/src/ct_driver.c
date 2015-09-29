@@ -822,7 +822,7 @@ CHIPSPciProbe(DriverPtr drv, int entity_num, struct pci_device * dev,
 	pScrn->ValidMode	= CHIPSValidMode;
 
 	if (!CHIPSGetRec(pScrn)) {
-		return 0;
+		return FALSE;
 	}
 	cPtr = CHIPSPTR(pScrn);
 	cPtr->Chipset = match_data;
