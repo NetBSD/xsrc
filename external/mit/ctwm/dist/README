@@ -2,20 +2,20 @@
                                    ----
 
 
-CTWM is an extension to twm, originally written by Claude Lecommandeur
-that support multiple virtual screens, and a lot of other goodies.
+CTWM is an extension to twm, originally written by Claude Lecommandeur,
+that supports multiple virtual screens, and a lot of other goodies.
 
 You can use and manage up to 32 virtual screens called workspaces.
 You swap from one workspace to another by clicking on a button in an
-optionnal panel of buttons (the workspace manager) or by invoking a
+optional panel of buttons (the workspace manager) or by invoking a
 function.
 
-You can custom each workspace by choosing different colors, names and
+You can customize each workspace by choosing different colors, names and
 pixmaps for the buttons and background root windows.
 
 Main features are :
 
- - Optional 3D window titles and border (ala Motif).
+ - Optional 3D window titles and borders (ala Motif).
  - Shaped, colored icons.
  - Multiple icons for clients based on the icon name.
  - Windows can belong to several workspaces.
@@ -25,7 +25,7 @@ Main features are :
  - Pinnable and sticky menus.
  - etc...
 
-The sources files were once the twm ones with only workmgr.[ch] added
+The source files were once the twm ones with only workmgr.[ch] added
 (written from scratch by Claude Lecommandeur).  There were also some
 modifications to some twm files.  This was back in CTWM version 1, by
 now, there are a bit more changes and a few more additions.  It's
@@ -40,7 +40,7 @@ please send a report to the mailing list.
 
 Configuration:
 
-Ctwm is built using xmkmf, which read Imakefile.  That file includes
+Ctwm is built using xmkmf, which reads Imakefile.  That file includes
 Imakefile.local, which is meant for local configuration, and *WHICH YOU
 MUST CREATE*.  For your comfort, the file Imakefile.local-template can
 simply be copied to Imakefile.local, then changed.
