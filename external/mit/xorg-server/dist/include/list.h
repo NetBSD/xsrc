@@ -100,4 +100,10 @@ list_is_empty(const struct list *head)
 	 &pos->member != (head);					\
 	 pos = tmp, tmp = __container_of(pos->member.next, tmp, member))
 
+static inline void
+list_append(struct list *entry, struct list *head)
+{
+    __list_add(entry, head, head->next);
+}
+
 #endif
