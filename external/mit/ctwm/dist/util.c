@@ -908,6 +908,10 @@ void MaskScreen (char *file)
     reportfilenotfound = 0;
     AlternateCmap = Scr->WelcomeCmap;
     if (! file) {
+#ifdef CTWM_WELCOME_FILE
+	Scr->WelcomeImage  = GetImage (CTWM_WELCOME_FILE, WelcomeCp);
+	if (Scr->WelcomeImage == None)
+#endif
 	Scr->WelcomeImage  = GetImage ("xwd:welcome.xwd", WelcomeCp);
 #ifdef XPM
 	if (Scr->WelcomeImage == None)
