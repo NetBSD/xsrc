@@ -166,7 +166,7 @@ unClip(Cg6Ptr pCg6)
     pCg6->fbc->clipmaxx = pCg6->clipxe;
 }
 
-static void
+void
 Cg6InitEngine(Cg6Ptr pCg6)
 {
     pCg6->clipxa = 0;

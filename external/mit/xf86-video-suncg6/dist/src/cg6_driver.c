@@ -93,13 +93,15 @@ _X_EXPORT DriverRec SUNCG6 = {
 typedef enum {
     OPTION_SW_CURSOR,
     OPTION_HW_CURSOR,
-    OPTION_NOACCEL
+    OPTION_NOACCEL,
+    OPTION_ACCELMETHOD
 } CG6Opts;
 
 static const OptionInfoRec CG6Options[] = {
     { OPTION_SW_CURSOR,		"SWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_HW_CURSOR,		"HWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_NOACCEL,		"NoAccel",	OPTV_BOOLEAN,	{0}, FALSE },
+    { OPTION_ACCELMETHOD,	"AccelMethod",	OPTV_STRING,	{0}, FALSE },
     { -1,			NULL,		OPTV_NONE,	{0}, FALSE }
 };
 
@@ -404,7 +406,14 @@ CG6PreInit(ScrnInfoPtr pScrn, int flags)
 	pCg6->NoAccel = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Acceleration disabled\n");
     }
-        
+    pCg6->useXAA = FALSE;
+
+    char *optstr;
+    optstr = (char *)xf86GetOptValString(pCg6->Options, OPTION_ACCELMETHOD);
+    if (optstr == NULL) optstr = "exa";
+    if (xf86NameCmp(optstr, "xaa") == 0)
+        pCg6->useXAA = TRUE;
+
     if (xf86LoadSubModule(pScrn, "fb") == NULL) {
 	CG6FreeRec(pScrn);
 	return FALSE;
@@ -413,11 +422,6 @@ CG6PreInit(ScrnInfoPtr pScrn, int flags)
     if (pCg6->HWCursor && xf86LoadSubModule(pScrn, "ramdac") == NULL) {
 	CG6FreeRec(pScrn);
 	return FALSE;
-    }
-
-    if (pCg6->HWCursor && xf86LoadSubModule(pScrn, "xaa") == NULL) {
-        CG6FreeRec(pScrn);
-        return FALSE;
     }
 
     /*********************
@@ -562,17 +566,37 @@ CG6ScreenInit(SCREEN_INIT_ARGS_DECL)
     xf86SetBlackWhitePixels(pScreen);
 
     if (!pCg6->NoAccel) {
-        BoxRec bx;
-        pCg6->pXAA=XAACreateInfoRec();
-        CG6AccelInit(pScrn);
-        bx.x1=bx.y1=0;
-        bx.x2=pCg6->width;
-        bx.y2=pCg6->maxheight;
-        xf86InitFBManager(pScreen,&bx);
-        if(!XAAInit(pScreen, pCg6->pXAA))
-            return FALSE;
+    	if (pCg6->useXAA) {
+	    BoxRec bx;
+	    if (!xf86LoadSubModule(pScrn, "xaa"))
+	    	return FALSE;
+	    pCg6->pXAA=XAACreateInfoRec();
+	    CG6AccelInit(pScrn);
+	    bx.x1=bx.y1=0;
+	    bx.x2=pCg6->width;
+	    bx.y2=pCg6->maxheight;
+	    xf86InitFBManager(pScreen,&bx);
+	    if(!XAAInit(pScreen, pCg6->pXAA))
+		return FALSE;
 
-        xf86Msg(X_INFO, "%s: Using acceleration\n", pCg6->psdp->device);
+	    xf86Msg(X_INFO, "%s: Using XAA acceleration\n", pCg6->psdp->device);
+	} else {
+	    /* EXA */
+	    XF86ModReqInfo req;
+	    int errmaj, errmin;
+
+	    memset(&req, 0, sizeof(XF86ModReqInfo));
+	    req.majorversion = EXA_VERSION_MAJOR;
+	    req.minorversion = EXA_VERSION_MINOR;
+	    if (!LoadSubModule(pScrn->module, "exa", NULL, NULL, NULL, &req,
+		&errmaj, &errmin)) {
+		LoaderErrorMsg(NULL, "exa", errmaj, errmin);
+		return FALSE;
+	    }
+	    if (!CG6EXAInit(pScreen))
+		return FALSE;
+	    xf86Msg(X_INFO, "%s: Using EXA acceleration\n", pCg6->psdp->device);
+	}
     }
 
     /* setup DGA */
