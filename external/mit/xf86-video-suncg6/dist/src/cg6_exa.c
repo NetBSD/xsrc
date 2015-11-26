@@ -218,17 +218,57 @@ Cg6UploadToScreen(PixmapPtr pDst, int x, int y, int w, int h,
 {
     ScrnInfoPtr pScrn = xf86Screens[pDst->drawable.pScreen->myNum];
     Cg6Ptr pCg6       = GET_CG6_FROM_SCRN(pScrn);
-    char  *dst        = pCg6->fb + exaGetPixmapOffset(pDst);
+    uint32_t *sline;
     int    dst_pitch  = exaGetPixmapPitch(pDst);
+    int    dst_line   = y + exaGetPixmapOffset(pDst) / pCg6->width;
+    int    i, bits;
+    int    words = (w + 3) >> 2;
 
+    /* clip to the destination */
+    pCg6->fbc->clipmaxx = x + w - 1;
+    pCg6->fbc->clipminx = x;
 
-    dst += x + (y * dst_pitch);
-
-    while (h--) {
-        memcpy(dst, src, w);
-        src += src_pitch;
-        dst += dst_pitch;
+    /* see if the source is aligned, if not adjust */
+    bits = ((long)src) & 3;
+    if (bits != 0) {
+    	src -= bits;
+    	w += bits;
+	words = (w + 3) >> 2;
+	x -= bits;
     }
+
+    /* we assume that source pitch is always a multiple of 4 */
+    if ((src_pitch & 3) != 0)
+    	xf86Msg(X_ERROR, "pitch %d\n", src_pitch);
+    waitReady(pCg6);
+    
+    pCg6->fbc->mode = GX_BLIT_NOSRC |
+		GX_MODE_COLOR8 |
+		GX_DRAW_RENDER |
+		GX_BWRITE0_ENABLE |
+		GX_BWRITE1_DISABLE |
+		GX_BREAD_0 |
+		GX_BDISP_0;
+    
+    pCg6->fbc->alu = Cg6BlitROP[GXcopy];
+    pCg6->fbc->pm = 0xffffffff;
+    pCg6->fbc->incx = 4;
+    pCg6->fbc->incy = 0;
+    while (h--) {
+        pCg6->fbc->x0 = x;
+        pCg6->fbc->x1 = x + 3;
+        pCg6->fbc->y0 = dst_line;
+        sline = (uint32_t *)src;
+        for (i = 0; i < words; i++) {
+        	pCg6->fbc->font = *sline;
+        	sline++;
+        }
+        src += src_pitch;
+        dst_line++;
+    }
+    pCg6->fbc->clipmaxx = 4096;
+    pCg6->fbc->clipminx = 0;
+    exaMarkSync(pDst->drawable.pScreen);
     return TRUE;
 }
 
@@ -243,13 +283,14 @@ Cg6DownloadFromScreen(PixmapPtr pSrc, int x, int y, int w, int h,
     Cg6Ptr pCg6       = GET_CG6_FROM_SCRN(pScrn);
     char  *src        = pCg6->fb + exaGetPixmapOffset(pSrc);
     int    src_pitch  = exaGetPixmapPitch(pSrc);
-
+     
     src += x + (y * src_pitch);
 
-    while (h--) {
+    while (h > 0) {
         memcpy(dst, src, w);
         src += src_pitch;
         dst += dst_pitch;
+        h--;
     }
     return TRUE;
 }
@@ -273,7 +314,9 @@ CG6EXAInit(ScreenPtr pScreen)
     pExa->exa_minor = EXA_VERSION_MINOR;
 
     pExa->memoryBase = pCg6->fb;
-    pExa->memorySize = pCg6->vidmem;
+
+    /* round to multiple of pixmap pitch */
+    pExa->memorySize = (pCg6->vidmem / pCg6->width) * pCg6->width;
     pExa->offScreenBase = pCg6->width * pCg6->height;
 
     /*
