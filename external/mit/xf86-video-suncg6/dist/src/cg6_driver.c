@@ -566,6 +566,7 @@ CG6ScreenInit(SCREEN_INIT_ARGS_DECL)
     xf86SetBlackWhitePixels(pScreen);
 
     if (!pCg6->NoAccel) {
+#ifdef HAVE_XAA_H
     	if (pCg6->useXAA) {
 	    BoxRec bx;
 	    if (!xf86LoadSubModule(pScrn, "xaa"))
@@ -580,7 +581,9 @@ CG6ScreenInit(SCREEN_INIT_ARGS_DECL)
 		return FALSE;
 
 	    xf86Msg(X_INFO, "%s: Using XAA acceleration\n", pCg6->psdp->device);
-	} else {
+	} else
+#endif /* HAVE_XAA_H */
+	 {
 	    /* EXA */
 	    XF86ModReqInfo req;
 	    int errmaj, errmin;

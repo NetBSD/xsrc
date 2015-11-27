@@ -305,6 +305,8 @@ Cg6SubsequentSolidFillRect
     runDraw(pCg6);
 }
 
+#ifdef HAVE_XAA_H
+
 static void 
 Cg6SetupForCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
         		int fg, int bg,
@@ -495,6 +497,8 @@ CG6AccelInit(ScrnInfoPtr pScrn)
      
     return 0;
 }
+
+#endif /* HAVE_XAA_H */
 
 Bool
 Cg6DGAInit(ScreenPtr pScreen)
