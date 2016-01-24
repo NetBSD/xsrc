@@ -572,7 +572,7 @@ get_extension_override( struct gl_context *ctx )
  * These strings are allocated early during the first context creation by
  * _mesa_one_time_init_extension_overrides.
  */
-static void
+static void __attribute__((__destructor__))
 free_unknown_extensions_strings(void)
 {
    free(extra_extensions);
@@ -594,7 +594,7 @@ _mesa_one_time_init_extension_overrides(void)
    int len;
    size_t offset;
 
-   atexit(free_unknown_extensions_strings);
+   /* atexit(free_unknown_extensions_strings); */
 
    memset(&_mesa_extension_override_enables, 0, sizeof(struct gl_extensions));
    memset(&_mesa_extension_override_disables, 0, sizeof(struct gl_extensions));
