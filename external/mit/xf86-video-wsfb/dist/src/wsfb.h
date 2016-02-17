@@ -60,6 +60,7 @@ typedef struct {
 	void *			shadow;
 	Bool			shadowFB;
 	Bool			HWCursor;
+	Bool			useSwap32;
 	CloseScreenProcPtr	CloseScreen;
 	CreateScreenResourcesProcPtr CreateScreenResources;
 	void                    (*PointerMoved)(int, int, int);

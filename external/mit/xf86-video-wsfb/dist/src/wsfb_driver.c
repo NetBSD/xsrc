@@ -140,8 +140,10 @@ static Bool WsfbDGASetMode(ScrnInfoPtr, DGAModePtr);
 static void WsfbDGASetViewport(ScrnInfoPtr, int, int, int);
 static Bool WsfbDGAInit(ScrnInfoPtr, ScreenPtr);
 #endif
-static Bool WsfbDriverFunc(ScrnInfoPtr pScrn, xorgDriverFuncOp op,
-				pointer ptr);
+
+static void WsfbShadowUpdateSwap32(ScreenPtr, shadowBufPtr);
+
+static Bool WsfbDriverFunc(ScrnInfoPtr, xorgDriverFuncOp, pointer);
 
 /* Helper functions */
 static int wsfb_open(const char *);
@@ -573,64 +575,6 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 	if (pScrn->depth == 24 && pix24bpp == 0)
 		pix24bpp = xf86GetBppFromDepth(pScrn, 24);
 
-	/* Color weight */
-	if (fPtr->fbi.fbi_pixeltype == WSFB_RGB) {
-		rgb zeros = { 0, 0, 0 }, masks;
-
-		if (fPtr->fbi.fbi_subtype.fbi_rgbmasks.red_size > 0) {
-			uint32_t msk;
-
-			msk = 0xffffffff;
-			msk = msk << fPtr->fbi.fbi_subtype.fbi_rgbmasks.red_size;
-			msk = ~msk;
-			masks.red = msk << fPtr->fbi.fbi_subtype.fbi_rgbmasks.red_offset; 
-
-			msk = 0xffffffff;
-			msk = msk << fPtr->fbi.fbi_subtype.fbi_rgbmasks.green_size;
-			msk = ~msk;
-			masks.green = msk << fPtr->fbi.fbi_subtype.fbi_rgbmasks.green_offset; 
-
-			msk = 0xffffffff;
-			msk = msk << fPtr->fbi.fbi_subtype.fbi_rgbmasks.blue_size;
-			msk = ~msk;
-			masks.blue = msk << fPtr->fbi.fbi_subtype.fbi_rgbmasks.blue_offset; 
-			xf86Msg(X_INFO, "masks generated: %08lx %08lx %08lx\n",
-			    (unsigned long)masks.red,
-			    (unsigned long)masks.green,
-			    (unsigned long)masks.blue);
-		} else {
-			masks.red = 0;
-			masks.green = 0;
-			masks.blue = 0;
-		}
-
-		if (!xf86SetWeight(pScrn, zeros, masks))
-			return FALSE;
-	}
-
-	/* Visual init */
-	if (!xf86SetDefaultVisual(pScrn, -1))
-		return FALSE;
-
-	/* We don't currently support DirectColor at > 8bpp . */
-	if (pScrn->depth > 8 && pScrn->defaultVisual != TrueColor) {
-		xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Given default visual"
-			   " (%s) is not supported at depth %d\n",
-			   xf86GetVisualName(pScrn->defaultVisual),
-			   pScrn->depth);
-		return FALSE;
-	}
-
-	xf86SetGamma(pScrn,zeros);
-
-	pScrn->progClock = TRUE;
-	pScrn->rgbBits   = (pScrn->depth >= 8) ? 8 : pScrn->depth;
-	pScrn->chipset   = "wsfb";
-	pScrn->videoRam  = fPtr->fbi.fbi_fbsize;
-
-	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Vidmem: %dk\n",
-		   pScrn->videoRam/1024);
-
 	/* Handle options. */
 	xf86CollectOptions(pScrn, NULL);
 	fPtr->Options = (OptionInfoRec *)malloc(sizeof(WsfbOptions));
@@ -685,6 +629,88 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 			    "Option \"Rotate\" ignored on depth < 8");
 		}
 	}
+
+
+	fPtr->useSwap32 = FALSE;
+	/* Color weight */
+	if (fPtr->fbi.fbi_pixeltype == WSFB_RGB) {
+		rgb zeros = { 0, 0, 0 }, masks;
+
+		if (fPtr->fbi.fbi_subtype.fbi_rgbmasks.red_size > 0) {
+			uint32_t msk;
+
+			/*
+			 * see if we need to byte-swap pixels
+			 * XXX this requires a shadow FB and is incompatible
+			 * (for now ) with rotation
+			 */
+			if ((fPtr->fbi.fbi_bitsperpixel == 32) &&
+			    (fPtr->fbi.fbi_subtype.fbi_rgbmasks.blue_offset == 24) &&
+			    (fPtr->rotate == WSFB_ROTATE_NONE) &&
+			    (fPtr->shadowFB == TRUE)) {
+			    	/*
+			    	 * looks like BGRA - set the swap flag and flip
+			    	 * the offsets
+			    	 */
+			    	xf86Msg(X_INFO, "endian-flipped RGB framebuffer "
+			    			"detected, using WsfbShadowUpdateSwap32()\n");
+			    	fPtr->fbi.fbi_subtype.fbi_rgbmasks.blue_offset = 0;
+			    	fPtr->fbi.fbi_subtype.fbi_rgbmasks.green_offset = 8;
+			    	fPtr->fbi.fbi_subtype.fbi_rgbmasks.red_offset = 16;
+			    	fPtr->fbi.fbi_subtype.fbi_rgbmasks.alpha_offset = 24;
+				fPtr->useSwap32 = TRUE;
+			}
+
+			msk = 0xffffffff;
+			msk = msk << fPtr->fbi.fbi_subtype.fbi_rgbmasks.red_size;
+			msk = ~msk;
+			masks.red = msk << fPtr->fbi.fbi_subtype.fbi_rgbmasks.red_offset; 
+
+			msk = 0xffffffff;
+			msk = msk << fPtr->fbi.fbi_subtype.fbi_rgbmasks.green_size;
+			msk = ~msk;
+			masks.green = msk << fPtr->fbi.fbi_subtype.fbi_rgbmasks.green_offset; 
+
+			msk = 0xffffffff;
+			msk = msk << fPtr->fbi.fbi_subtype.fbi_rgbmasks.blue_size;
+			msk = ~msk;
+			masks.blue = msk << fPtr->fbi.fbi_subtype.fbi_rgbmasks.blue_offset; 
+			xf86Msg(X_INFO, "masks generated: %08lx %08lx %08lx\n",
+			    (unsigned long)masks.red,
+			    (unsigned long)masks.green,
+			    (unsigned long)masks.blue);
+		} else {
+			masks.red = 0;
+			masks.green = 0;
+			masks.blue = 0;
+		}
+
+		if (!xf86SetWeight(pScrn, zeros, masks))
+			return FALSE;
+	}
+
+	/* Visual init */
+	if (!xf86SetDefaultVisual(pScrn, -1))
+		return FALSE;
+
+	/* We don't currently support DirectColor at > 8bpp . */
+	if (pScrn->depth > 8 && pScrn->defaultVisual != TrueColor) {
+		xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Given default visual"
+			   " (%s) is not supported at depth %d\n",
+			   xf86GetVisualName(pScrn->defaultVisual),
+			   pScrn->depth);
+		return FALSE;
+	}
+
+	xf86SetGamma(pScrn,zeros);
+
+	pScrn->progClock = TRUE;
+	pScrn->rgbBits   = (pScrn->depth >= 8) ? 8 : pScrn->depth;
+	pScrn->chipset   = "wsfb";
+	pScrn->videoRam  = fPtr->fbi.fbi_fbsize;
+
+	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Vidmem: %dk\n",
+		   pScrn->videoRam/1024);
 
 	/* Fake video mode struct. */
 	mode = (DisplayModePtr)malloc(sizeof(DisplayModeRec));
@@ -787,7 +813,8 @@ WsfbCreateScreenResources(ScreenPtr pScreen)
 	pPixmap = pScreen->GetScreenPixmap(pScreen);
 
 	if (!shadowAdd(pScreen, pPixmap, fPtr->rotate ?
-		shadowUpdateRotatePackedWeak() : shadowUpdatePackedWeak(),
+		shadowUpdateRotatePackedWeak() : (fPtr->useSwap32 ? 
+		    WsfbShadowUpdateSwap32 : shadowUpdatePackedWeak()),
 		WsfbWindowLinear, fPtr->rotate, NULL)) {
 		return FALSE;
 	}
@@ -1572,5 +1599,95 @@ WsfbDriverFunc(ScrnInfoPtr pScrn, xorgDriverFuncOp op,
 	default:
 		return FALSE;
 	}
+}
+
+static inline void
+memcpy32sw(void *dest, void *src, int len)
+{
+	uint32_t *d = dest, *s = src;
+
+#if DEBUG
+	if ((((long)dest & 3) + ((long)src & 3) + (len & 3)) != 0) {
+		xf86Msg(X_ERROR, "unaligned %s\n", __func__);
+		return;
+	}
+#endif
+	while (len > 0) {
+		*d = bswap32(*s);
+		d++;
+		s++;
+		len -= 4;
+	}
+}
+
+/* adapted from miext/shadow/shpacked.c::shadowUpdatePacked() */
+void
+WsfbShadowUpdateSwap32(ScreenPtr pScreen, shadowBufPtr pBuf)
+{
+    RegionPtr	damage = shadowDamage (pBuf);
+    PixmapPtr	pShadow = pBuf->pPixmap;
+    int		nbox = RegionNumRects (damage);
+    BoxPtr	pbox = RegionRects (damage);
+    FbBits	*shaBase, *shaLine, *sha;
+    FbStride	shaStride;
+    int		scrBase, scrLine, scr;
+    int		shaBpp;
+    int		shaXoff, shaYoff; /* XXX assumed to be zero */
+    int		x, y, w, h, width;
+    int         i;
+    FbBits	*winBase = NULL, *win;
+    CARD32      winSize;
+
+    fbGetDrawable (&pShadow->drawable, shaBase, shaStride, shaBpp, shaXoff, shaYoff);
+    while (nbox--)
+    {
+	x = pbox->x1 * shaBpp;
+	y = pbox->y1;
+	w = (pbox->x2 - pbox->x1) * shaBpp;
+	h = pbox->y2 - pbox->y1;
+
+	scrLine = (x >> FB_SHIFT);
+	shaLine = shaBase + y * shaStride + (x >> FB_SHIFT);
+				   
+	x &= FB_MASK;
+	w = (w + x + FB_MASK) >> FB_SHIFT;
+	
+	while (h--)
+	{
+	    winSize = 0;
+	    scrBase = 0;
+	    width = w;
+	    scr = scrLine;
+	    sha = shaLine;
+	    while (width) {
+		/* how much remains in this window */
+		i = scrBase + winSize - scr;
+		if (i <= 0 || scr < scrBase)
+		{
+		    winBase = (FbBits *) (*pBuf->window) (pScreen,
+							  y,
+							  scr * sizeof (FbBits),
+							  SHADOW_WINDOW_WRITE,
+							  &winSize,
+							  pBuf->closure);
+		    if(!winBase)
+			return;
+		    scrBase = scr;
+		    winSize /= sizeof (FbBits);
+		    i = winSize;
+		}
+		win = winBase + (scr - scrBase);
+		if (i > width)
+		    i = width;
+		width -= i;
+		scr += i;
+		memcpy32sw(win, sha, i * sizeof(FbBits));
+		sha += i;
+	    }
+	    shaLine += shaStride;
+	    y++;
+	}
+	pbox++;
+    }
 }
 
