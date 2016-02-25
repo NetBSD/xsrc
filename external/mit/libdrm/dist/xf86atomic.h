@@ -83,7 +83,7 @@ typedef struct {
 #define HAS_ATOMIC_OPS 1
 
 #if defined(__NetBSD__)
-#define LIBDRM_ATOMIC_TYPE int
+#define LIBDRM_ATOMIC_TYPE unsigned int
 #else
 #define LIBDRM_ATOMIC_TYPE uint_t
 #endif
