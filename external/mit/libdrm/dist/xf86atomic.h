@@ -88,7 +88,7 @@ typedef struct {
 #define LIBDRM_ATOMIC_TYPE uint_t
 #endif
 
-typedef struct { LIBDRM_ATOMIC_TYPE atomic; } atomic_t;
+typedef struct { volatile LIBDRM_ATOMIC_TYPE atomic; } atomic_t;
 
 # define atomic_read(x) (int) ((x)->atomic)
 # define atomic_set(x, val) ((x)->atomic = (LIBDRM_ATOMIC_TYPE)(val))
