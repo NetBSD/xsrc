@@ -876,12 +876,12 @@ bool expr_handler::evaluate_condition(unsigned alu_cnd_flags,
 	switch (cmp_type) {
 	case AF_FLOAT_CMP: {
 		switch (cc) {
-		case AF_CC_E : return s1.f == s2.f;
-		case AF_CC_GT: return s1.f >  s2.f;
-		case AF_CC_GE: return s1.f >= s2.f;
-		case AF_CC_NE: return s1.f != s2.f;
-		case AF_CC_LT: return s1.f <  s2.f;
-		case AF_CC_LE: return s1.f <= s2.f;
+		case (unsigned)AF_CC_E : return s1.f == s2.f;
+		case (unsigned)AF_CC_GT: return s1.f >  s2.f;
+		case (unsigned)AF_CC_GE: return s1.f >= s2.f;
+		case (unsigned)AF_CC_NE: return s1.f != s2.f;
+		case (unsigned)AF_CC_LT: return s1.f <  s2.f;
+		case (unsigned)AF_CC_LE: return s1.f <= s2.f;
 		default:
 			assert(!"invalid condition code");
 			return false;
@@ -889,12 +889,12 @@ bool expr_handler::evaluate_condition(unsigned alu_cnd_flags,
 	}
 	case AF_INT_CMP: {
 		switch (cc) {
-		case AF_CC_E : return s1.i == s2.i;
-		case AF_CC_GT: return s1.i >  s2.i;
-		case AF_CC_GE: return s1.i >= s2.i;
-		case AF_CC_NE: return s1.i != s2.i;
-		case AF_CC_LT: return s1.i <  s2.i;
-		case AF_CC_LE: return s1.i <= s2.i;
+		case (unsigned)AF_CC_E : return s1.i == s2.i;
+		case (unsigned)AF_CC_GT: return s1.i >  s2.i;
+		case (unsigned)AF_CC_GE: return s1.i >= s2.i;
+		case (unsigned)AF_CC_NE: return s1.i != s2.i;
+		case (unsigned)AF_CC_LT: return s1.i <  s2.i;
+		case (unsigned)AF_CC_LE: return s1.i <= s2.i;
 		default:
 			assert(!"invalid condition code");
 			return false;
@@ -902,12 +902,12 @@ bool expr_handler::evaluate_condition(unsigned alu_cnd_flags,
 	}
 	case AF_UINT_CMP: {
 		switch (cc) {
-		case AF_CC_E : return s1.u == s2.u;
-		case AF_CC_GT: return s1.u >  s2.u;
-		case AF_CC_GE: return s1.u >= s2.u;
-		case AF_CC_NE: return s1.u != s2.u;
-		case AF_CC_LT: return s1.u <  s2.u;
-		case AF_CC_LE: return s1.u <= s2.u;
+		case (unsigned)AF_CC_E : return s1.u == s2.u;
+		case (unsigned)AF_CC_GT: return s1.u >  s2.u;
+		case (unsigned)AF_CC_GE: return s1.u >= s2.u;
+		case (unsigned)AF_CC_NE: return s1.u != s2.u;
+		case (unsigned)AF_CC_LT: return s1.u <  s2.u;
+		case (unsigned)AF_CC_LE: return s1.u <= s2.u;
 		default:
 			assert(!"invalid condition code");
 			return false;
