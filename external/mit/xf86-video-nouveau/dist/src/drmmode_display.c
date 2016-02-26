@@ -897,7 +897,7 @@ drmmode_output_dpms(xf86OutputPtr output, int mode)
 
 	for (i = 0; i < koutput->count_props; i++) {
 		props = drmModeGetProperty(drmmode->fd, koutput->props[i]);
-		if (props && (props->flags && DRM_MODE_PROP_ENUM)) {
+		if (props && (props->flags & DRM_MODE_PROP_ENUM)) {
 			if (!strcmp(props->name, "DPMS")) {
 				mode_id = koutput->props[i];
 				drmModeFreeProperty(props);
