@@ -134,7 +134,7 @@ typedef struct _LispMac LispMac;
     (((unsigned long)(object) & NIL_BIT) == 0)
 
 #define MOST_POSITIVE_FIXNUM	((1L << (sizeof(long) * 8 - 5)) - 1)
-#define MOST_NEGATIVE_FIXNUM	(-1L << (sizeof(long) * 8 - 5))
+#define MOST_NEGATIVE_FIXNUM	(-(1L << (sizeof(long) * 8 - 5)))
 
 #define SCHAR(value)							\
     ((LispObj*)(((long)(value) << BIT_COUNT) | SCHAR_MASK))
@@ -179,7 +179,7 @@ typedef struct _LispMac LispMac;
 
 /* fixnum */
 #define FIXNUM(value)							\
-    ((LispObj*)(((long)(value) << BIT_COUNT) | FIXNUM_MASK))
+    ((LispObj*)(((long)(value) * (1 << BIT_COUNT)) | FIXNUM_MASK))
 #define FIXNUM_VALUE(object)	((long)(object) >> BIT_COUNT)
 #define FIXNUMP(object)							\
     (((unsigned long)(object) & BIT_MASK) == FIXNUM_MASK)
