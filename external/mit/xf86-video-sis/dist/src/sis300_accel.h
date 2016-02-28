@@ -130,7 +130,7 @@
 
 #define SiSSetupSRCXY(x,y) \
                 if (CmdQueLen <= 0)  SiSIdle;\
-                SIS_MMIO_OUT32(pSiS->IOBase, BR(2), (x)<<16 | (y) );\
+                SIS_MMIO_OUT32(pSiS->IOBase, BR(2), (CARD32)(x)<<16 | (CARD32)(y) );\
                 CmdQueLen--;
 
 #define SiSSetupDSTBase(base) \
@@ -140,12 +140,12 @@
 
 #define SiSSetupDSTXY(x,y) \
                 if (CmdQueLen <= 0)  SiSIdle;\
-                SIS_MMIO_OUT32(pSiS->IOBase, BR(3), (x)<<16 | (y) );\
+                SIS_MMIO_OUT32(pSiS->IOBase, BR(3), (CARD32)(x)<<16 | (CARD32)(y) );\
                 CmdQueLen--;
 
 #define SiSSetupDSTRect(x,y) \
                 if (CmdQueLen <= 0)  SiSIdle;\
-                SIS_MMIO_OUT32(pSiS->IOBase, BR(5), (y)<<16 | (x) );\
+                SIS_MMIO_OUT32(pSiS->IOBase, BR(5), (CARD32)(y)<<16 | (CARD32)(x) );\
                 CmdQueLen--;
 
 #define SiSSetupDSTColorDepth(bpp) \
@@ -157,7 +157,7 @@
 
 #define SiSSetupRect(w,h) \
                 if (CmdQueLen <= 0)  SiSIdle;\
-                SIS_MMIO_OUT32(pSiS->IOBase, BR(6), (h)<<16 | (w) );\
+                SIS_MMIO_OUT32(pSiS->IOBase, BR(6), (CARD32)(h)<<16 | (CARD32)(w) );\
                 CmdQueLen--;
 
 #define SiSSetupPATFG(color) \
@@ -204,12 +204,12 @@
 
 #define SiSSetupClipLT(left,top) \
                 if (CmdQueLen <= 0)  SiSIdle;\
-                SIS_MMIO_OUT32(pSiS->IOBase, BR(13), ((left) & 0xFFFF) | (top)<<16 );\
+                SIS_MMIO_OUT32(pSiS->IOBase, BR(13), ((left) & 0xFFFF) | (CARD32)(top)<<16 );\
                 CmdQueLen--;
 
 #define SiSSetupClipRB(right,bottom) \
                 if (CmdQueLen <= 0)  SiSIdle;\
-                SIS_MMIO_OUT32(pSiS->IOBase, BR(14), ((right) & 0xFFFF) | (bottom)<<16 );\
+                SIS_MMIO_OUT32(pSiS->IOBase, BR(14), ((right) & 0xFFFF) | (CARD32)(bottom)<<16 );\
                 CmdQueLen--;
 
 /* General */
@@ -235,12 +235,12 @@
 /* Line */
 #define SiSSetupX0Y0(x,y) \
                 if (CmdQueLen <= 0)  SiSIdle;\
-                SIS_MMIO_OUT32(pSiS->IOBase, BR(2), (y)<<16 | (x) );\
+                SIS_MMIO_OUT32(pSiS->IOBase, BR(2), (CARD32)(y)<<16 | (CARD32)(x) );\
                 CmdQueLen--;
 
 #define SiSSetupX1Y1(x,y) \
                 if (CmdQueLen <= 0)  SiSIdle;\
-                SIS_MMIO_OUT32(pSiS->IOBase, BR(3), (y)<<16 | (x) );\
+                SIS_MMIO_OUT32(pSiS->IOBase, BR(3), (CARD32)(y)<<16 | (CARD32)(x) );\
                 CmdQueLen--;
 
 #define SiSSetupLineCount(c) \
@@ -266,22 +266,22 @@
 /* Trapezoid */
 #define SiSSetupYH(y,h) \
                 if (CmdQueLen <= 0)  SiSIdle;\
-                SIS_MMIO_OUT32(pSiS->IOBase, 0x8208, (y)<<16 | (h) );\
+                SIS_MMIO_OUT32(pSiS->IOBase, 0x8208, (CARD32)(y)<<16 | (CARD32)(h) );\
                 CmdQueLen--;
 
 #define SiSSetupLR(left,right) \
                 if (CmdQueLen <= 0)  SiSIdle;\
-                SIS_MMIO_OUT32(pSiS->IOBase, 0x820C, (right)<<16 | (left) );\
+                SIS_MMIO_OUT32(pSiS->IOBase, 0x820C, (CARD32)(right)<<16 | (CARD32)(left) );\
                 CmdQueLen--;
 
 #define SiSSetupdL(dxL,dyL) \
                 if (CmdQueLen <= 0)  SiSIdle;\
-                SIS_MMIO_OUT32(pSiS->IOBase, 0x8244, (dyL)<<16 | (dxL) );\
+                SIS_MMIO_OUT32(pSiS->IOBase, 0x8244, (CARD32)(dyL)<<16 | (CARD32)(dxL) );\
                 CmdQueLen--;
 
 #define SiSSetupdR(dxR,dyR) \
                 if (CmdQueLen <= 0)  SiSIdle;\
-		SIS_MMIO_OUT32(pSiS->IOBase, 0x8248, (dyR)<<16 | (dxR) );\
+		SIS_MMIO_OUT32(pSiS->IOBase, 0x8248, (CARD32)(dyR)<<16 | (CARD32)(dxR) );\
                 CmdQueLen--;
 
 #define SiSSetupEL(eL) \
