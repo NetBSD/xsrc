@@ -423,7 +423,7 @@ static void
 SISErrorLog(ScrnInfoPtr pScrn, const char *format, ...)
 {
     va_list ap;
-    static const char *str = "**************************************************\n";
+    static const char str[] = "**************************************************\n";
 
     va_start(ap, format);
     xf86DrvMsg(pScrn->scrnIndex, X_ERROR, str);
@@ -1782,7 +1782,7 @@ SiSUpdateXineramaScreenInfo(ScrnInfoPtr pScrn1)
     DisplayModePtr currentMode, firstMode;
     Bool infochanged = FALSE;
     Bool usenonrect = pSiS->NonRect;
-    const char *rectxine = "\t... setting up rectangular Xinerama layout\n";
+    static const char rectxine[] = "\t... setting up rectangular Xinerama layout\n";
 
     pSiS->MBXNR1XMAX = pSiS->MBXNR1YMAX = pSiS->MBXNR2XMAX = pSiS->MBXNR2YMAX = 65536;
     pSiS->HaveNonRect = pSiS->HaveOffsRegions = FALSE;
