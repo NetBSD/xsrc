@@ -622,29 +622,29 @@ static void init_regs( void )
    struct reg_names *tmp;
    int i;
 
-   for (i = 0 ; i < Elements(regs) ; i++) {
+   for (i = 0 ; i < Elements(regs) - 1; i++) {
       regs[i].idx = reg_names[i].idx;
       regs[i].closest = &reg_names[i];
       regs[i].flags = 0;
    }
+   regs[i].idx = -1;
 
-   for (i = 0, tmp = scalar_names ; i < Elements(scalars) ; i++) {
+   for (i = 0, tmp = scalar_names ; i < Elements(scalars) - 1; i++) {
       if (tmp[1].idx == i) tmp++;
       scalars[i].idx = i;
       scalars[i].closest = tmp;
       scalars[i].flags = ISFLOAT;
    }
+   scalars[i].idx = -1;
 
-   for (i = 0, tmp = vector_names ; i < Elements(vectors) ; i++) {
+   for (i = 0, tmp = vector_names ; i < Elements(vectors) - 1; i++) {
       if (tmp[1].idx*4 == i) tmp++;
       vectors[i].idx = i;
       vectors[i].closest = tmp;
       vectors[i].flags = ISFLOAT|ISVEC;
    }
+   vectors[i].idx = -1;
 
-   regs[Elements(regs)-1].idx = -1;
-   scalars[Elements(scalars)-1].idx = -1;
-   vectors[Elements(vectors)-1].idx = -1;
 }
 
 static int find_or_add_value( struct reg *reg, int val )
