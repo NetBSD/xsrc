@@ -513,7 +513,7 @@ typedef enum {
 } wm_kernel_t;
 
 #define KERNEL(kernel_enum, kernel, masked) \
-    [kernel_enum] = {&kernel, sizeof(kernel), masked}
+    [kernel_enum] = {__UNCONST(&kernel), sizeof(kernel), masked}
 struct wm_kernel_info {
     void *data;
     unsigned int size;

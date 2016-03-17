@@ -900,7 +900,7 @@ intel_emit_reloc(drm_intel_bo *bo, uint32_t offset,
 }
 
 static inline drm_intel_bo *
-intel_bo_alloc_for_data(ScrnInfoPtr scrn, void *data, unsigned int size,
+intel_bo_alloc_for_data(ScrnInfoPtr scrn, const void *data, unsigned int size,
 			char *name)
 {
     I830Ptr pI830 = I830PTR(scrn);
