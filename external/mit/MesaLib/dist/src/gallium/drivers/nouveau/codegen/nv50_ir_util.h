@@ -94,7 +94,7 @@ public:
    virtual void reset() { assert(0); } // only for graph iterators
 };
 
-typedef std::auto_ptr<Iterator> IteratorRef;
+typedef std::unique_ptr<Iterator> IteratorRef;
 
 class ManipIterator : public Iterator
 {
