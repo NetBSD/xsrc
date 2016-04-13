@@ -840,29 +840,32 @@ int GetWindowConfig (TwmWindow *theWindow, short *x, short *y,
 
 /*===[ Unique Filename Generator ]===========================================*/
 
-static char *unique_filename (char *path, char *prefix)
-/* this function attempts to allocate a temporary filename to store the 
+static FILE *unique_file (char **filename, char *path, char *prefix)
+/* this function attempts to allocate a temporary file to store the 
  * information of the windows
  */
 {
+    int fd;
+    char tmp[PATH_MAX], template[PATH_MAX];
+    FILE *fp;
 
-#ifndef X_NOT_POSIX
-    return ((char *) tempnam (path, prefix));
+    snprintf(tmp, sizeof(tmp), "%s/%sXXXXXX", path, prefix);
+#ifndef HAVE_MKSTEMP
+    do {
+        if (fd == -1)
+            strcpy(template, tmp);
+        if ((mktemp(template) == NULL) || (template[0] == '\0'))
+            return NULL;
+        fd = open(template, O_RDWR | O_CREAT | O_EXCL, 0600);
+    } while ((fd == -1) && (errno == EEXIST || errno == EINTR));
 #else
-    char tempFile[PATH_MAX];
-    char *tmp;
-
-    sprintf (tempFile, "%s/%sXXXXXX", path, prefix);
-    tmp = (char *) mktemp (tempFile);
-    if (tmp)
-    {
-	char *ptr = (char *) malloc (strlen (tmp) + 1);
-	strcpy (ptr, tmp);
-	return (ptr);
-    }
-    else
-	return (NULL);
+    if ((fd = mkstemp(tmp)) == -1)
+	return NULL;
 #endif
+    if ((fp = fdopen(fd, "wb")) == NULL)
+	close(fd);
+    *filename = strdup(template);
+    return fp;
 }
 
 /*===[ SAVE WINDOW INFORMATION ]=============================================*/
@@ -942,10 +945,7 @@ void SaveYourselfPhase2CB (SmcConn smcCon, SmPointer clientData)
      *        no longer the same since the new format supports
      *        virtaul workspaces.
      *========================================================*/
-    if ((filename = unique_filename (path, ".ctwm")) == NULL)
-	goto bad;
-
-    if (!(configFile = fopen (filename, "wb"))) /* wb = write bytes ? */
+    if ((configFile = unique_file (&filename, path, ".ctwm")) == NULL)
 	goto bad;
 
     if (!write_ushort (configFile, SAVEFILE_VERSION))
