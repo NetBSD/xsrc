@@ -1617,7 +1617,7 @@ extern "C" {
  * programs would be invalid.  So this should happen at approximately
  * program exit.
  */
-void
+void __attribute__((__destructor__))
 _mesa_destroy_shader_compiler(void)
 {
    _mesa_destroy_shader_compiler_caches();
