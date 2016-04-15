@@ -66,11 +66,16 @@ struct _egl_global _eglGlobal =
    " EGL_MESA_platform_gbm"
 };
 
+static EGLBoolean registered = EGL_FALSE;
 
-static void
+static void __attribute__((__destructor__))
 _eglAtExit(void)
 {
    EGLint i;
+
+   if (!registered)
+     return;
+
    for (i = _eglGlobal.NumAtExitCalls - 1; i >= 0; i--)
       _eglGlobal.AtExitCalls[i]();
 }
@@ -80,14 +85,10 @@ void
 _eglAddAtExitCall(void (*func)(void))
 {
    if (func) {
-      static EGLBoolean registered = EGL_FALSE;
 
       _eglLockMutex(_eglGlobal.Mutex);
 
-      if (!registered) {
-         atexit(_eglAtExit);
-         registered = EGL_TRUE;
-      }
+      registered = EGL_TRUE;
 
       assert(_eglGlobal.NumAtExitCalls < ARRAY_SIZE(_eglGlobal.AtExitCalls));
       _eglGlobal.AtExitCalls[_eglGlobal.NumAtExitCalls++] = func;
