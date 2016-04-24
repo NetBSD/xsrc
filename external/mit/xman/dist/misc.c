@@ -374,7 +374,7 @@ UncompressNamed(ManpageGlobals * man_globals, const char *filename,
 {
     char tmp[BUFSIZ], cmdbuf[BUFSIZ], error_buf[BUFSIZ];
     struct stat junk;
-    int fd;
+    int fd, omask;
 
     if (stat(filename, &junk) != 0) {   /* Check for existence of the file. */
         if (errno != ENOENT) {
@@ -392,7 +392,9 @@ UncompressNamed(ManpageGlobals * man_globals, const char *filename,
  */
 
     strcpy(tmp, MANTEMP);       /* get a temp file. */
+    omask = umask(077);
     fd = mkstemp(tmp);
+    umask(omask);
     if (fd < 0) {
         PopupWarning(man_globals, "Error creating a temp file");
         return FALSE;
@@ -450,7 +452,7 @@ SgmlToRoffNamed(ManpageGlobals * man_globals, char *filename, char *output,
 {
     char tmp[BUFSIZ], cmdbuf[BUFSIZ], error_buf[BUFSIZ];
     struct stat junk;
-    int fd;
+    int fd, omask;
 
     if (stat(filename, &junk) != 0) {   /* Check for existence of the file. */
         if (errno != ENOENT) {
@@ -463,7 +465,9 @@ SgmlToRoffNamed(ManpageGlobals * man_globals, char *filename, char *output,
     }
 
     strcpy(tmp, MANTEMP);       /* get a temp file. */
+    omask = umask(077):
     fd = mkstemp(tmp);
+    umask(omask);
     if (fd < 0) {
         PopupWarning(man_globals, "Error creating a temp file");
         return FALSE;
@@ -503,7 +507,7 @@ FILE *
 Format(ManpageGlobals * man_globals, const char *entry)
 {
     FILE *file = NULL;
-    int fd;
+    int fd, omask;
 
     Widget manpage = man_globals->manpagewidgets.manpage;
     char cmdbuf[BUFSIZ], tmp[BUFSIZ], filename[BUFSIZ], error_buf[BUFSIZ];
@@ -559,7 +563,9 @@ Format(ManpageGlobals * man_globals, const char *entry)
     XFlush(XtDisplay(man_globals->standby));
 
     strcpy(tmp, MANTEMP);       /* Get a temp file. */
+    omask = umask(077);
     fd = mkstemp(tmp);
+    umask(omask);
     if (fd >= 0) {
         file = fdopen(fd, "r");
         if (file == NULL) {
