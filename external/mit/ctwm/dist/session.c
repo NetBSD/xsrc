@@ -859,7 +859,12 @@ static FILE *unique_file (char **filename, char *path, char *prefix)
         fd = open(template, O_RDWR | O_CREAT | O_EXCL, 0600);
     } while ((fd == -1) && (errno == EEXIST || errno == EINTR));
 #else
-    if ((fd = mkstemp(tmp)) == -1)
+    {
+	int omask = umask(077);
+	fd = mkstemp(tmp);
+	umask(omask);
+    }
+    if (fd == -1)
 	return NULL;
 #endif
     if ((fp = fdopen(fd, "wb")) == NULL)
