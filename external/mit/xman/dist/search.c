@@ -153,7 +153,7 @@ DoSearch(ManpageGlobals * man_globals, int type)
     char string_buf[BUFSIZ], cmp_str[BUFSIZ], error_buf[BUFSIZ];
     char *search_string = SearchString(man_globals);
     FILE *file;
-    int fd;
+    int fd, omask;
     int count;
     Boolean flag;
 
@@ -180,7 +180,9 @@ DoSearch(ManpageGlobals * man_globals, int type)
         char label[BUFSIZ];
 
         strcpy(tmp, MANTEMP);   /* get a temp file. */
+	omask = umask(077);
         fd = mkstemp(tmp);
+	umask(omask);
         if (fd < 0) {
             PopupWarning(man_globals, "Cant create temp file");
             return NULL;
