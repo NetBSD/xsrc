@@ -1225,7 +1225,7 @@ Process(int scrno, Bool doScreen, Bool execute)
 #else
 	{
 	int fd = mkstemp(template);
-	output = fdopen(fd, "w");
+	output = fd != -1 ? fdopen(fd, "w") : NULL;
 	}
 #endif
 	if (!output)
