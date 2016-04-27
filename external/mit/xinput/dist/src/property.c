@@ -169,6 +169,7 @@ list_props_xi1(Display *dpy, int argc, char** argv, char* name, char *desc)
     int          i;
     int         nprops;
     Atom        *props;
+    int         rc = EXIT_SUCCESS;
 
     if (argc == 0)
     {
@@ -182,6 +183,7 @@ list_props_xi1(Display *dpy, int argc, char** argv, char* name, char *desc)
         if (!info)
         {
             fprintf(stderr, "unable to find device '%s'\n", argv[i]);
+            rc = EXIT_FAILURE;
             continue;
         }
 
@@ -189,6 +191,7 @@ list_props_xi1(Display *dpy, int argc, char** argv, char* name, char *desc)
         if (!dev)
         {
             fprintf(stderr, "unable to open device '%s'\n", info->name);
+            rc = EXIT_FAILURE;
             continue;
         }
 
@@ -208,7 +211,7 @@ list_props_xi1(Display *dpy, int argc, char** argv, char* name, char *desc)
         XFree(props);
         XCloseDevice(dpy, dev);
     }
-    return EXIT_SUCCESS;
+    return rc;
 }
 
 
@@ -532,6 +535,7 @@ list_props_xi2(Display *dpy, int argc, char** argv, char* name, char *desc)
     int         i;
     int         nprops;
     Atom        *props;
+    int         rc = EXIT_SUCCESS;
 
     if (argc == 0)
     {
@@ -545,6 +549,7 @@ list_props_xi2(Display *dpy, int argc, char** argv, char* name, char *desc)
         if (!info)
         {
             fprintf(stderr, "unable to find device %s\n", argv[i]);
+            rc = EXIT_FAILURE;
             continue;
         }
 
@@ -563,7 +568,7 @@ list_props_xi2(Display *dpy, int argc, char** argv, char* name, char *desc)
 
         XFree(props);
     }
-    return EXIT_SUCCESS;
+    return rc;
 }
 
 static int
@@ -832,12 +837,28 @@ int set_prop(Display *display, int argc, char *argv[], char *name,
 
 int disable(Display *display, int argc, char *argv[], char *name, char *desc)
 {
-    char *new_argv[3] = { argv[0], "Device Enabled", "0" };
+    char *new_argv[3] = { NULL, "Device Enabled", "0" };
+
+    if (argc != 1) {
+        fprintf(stderr, "Usage: xinput %s %s\n", name, desc);
+        return EXIT_FAILURE;
+    }
+
+    new_argv[0] = argv[0];
+
     return set_prop(display, 3, new_argv, name, desc);
 }
 
 int enable(Display *display, int argc, char *argv[], char *name, char *desc)
 {
-    char *new_argv[3] = { argv[0], "Device Enabled", "1" };
+    char *new_argv[3] = { NULL, "Device Enabled", "1" };
+
+    if (argc != 1) {
+        fprintf(stderr, "Usage: xinput %s %s\n", name, desc);
+        return EXIT_FAILURE;
+    }
+
+    new_argv[0] = argv[0];
+
     return set_prop(display, 3, new_argv, name, desc);
 }
