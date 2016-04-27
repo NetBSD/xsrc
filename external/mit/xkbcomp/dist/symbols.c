@@ -2030,7 +2030,7 @@ CopySymbolsDef(XkbFileInfo * result, KeyInfo * key, int start_from)
         type = &xkb->map->types[types[i]];
         if (type->num_levels < key->numLevels[i])
         {
-            if (warningLevel > 0)
+            if (warningLevel > 5)
             {
                 WARN4
                     ("Type \"%s\" has %d levels, but %s has %d symbols\n",
