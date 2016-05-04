@@ -197,7 +197,7 @@ void get_list(const char *pattern)
             info = XLoadQueryFont (dpy, pattern);
 
             if (info) {
-                fonts = &pattern;
+                fonts = __UNCONST(&pattern);
                 available = 1;
                 XUnloadFont (dpy, info->fid);
             } else {
