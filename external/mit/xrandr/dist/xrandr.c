@@ -3987,7 +3987,7 @@ main (int argc, char **argv)
 		    if (output)
 			printf (" %s", output->output.string);
 		    else
-			printf (" unknown output 0x%x\n", (CARD32) monitors->monitors[m].outputs[o]);
+			printf (" unknown output 0x%"PRIxMAX"\n", (uintmax_t) monitors->monitors[m].outputs[o]);
 		}
 		printf ("\n");
 	    }
