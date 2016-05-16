@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# Copyright 2000-2015 by
+# Copyright 2000-2016 by
 # David Turner, Robert Wilhelm, and Werner Lemberg.
 #
 # This file is part of the FreeType project, and may only be used, modified,
@@ -125,21 +125,20 @@ else
 fi
 
 if test "$echo_ft_version" = "yes" ; then
-  major=`grep define ${SYSROOT}$includedir/freetype2/freetype.h \
+  major=`grep define ${SYSROOT}$includedir/freetype2/freetype/freetype.h \
          | grep FREETYPE_MAJOR \
          | sed 's/.*[ 	]\([0-9][0-9]*\).*/\1/'`
-  minor=`grep define ${SYSROOT}$includedir/freetype2/freetype.h \
+  minor=`grep define ${SYSROOT}$includedir/freetype2/freetype/freetype.h \
          | grep FREETYPE_MINOR \
          | sed 's/.*[ 	]\([0-9][0-9]*\).*/\1/'`
-  patch=`grep define ${SYSROOT}$includedir/freetype2/freetype.h \
+  patch=`grep define ${SYSROOT}$includedir/freetype2/freetype/freetype.h \
          | grep FREETYPE_PATCH \
          | sed 's/.*[ 	]\([0-9][0-9]*\).*/\1/'`
   echo $major.$minor.$patch
 fi
 
 if test "$echo_cflags" = "yes" ; then
-  cflags="-I${SYSROOT}$includedir/freetype2"
-  echo $cflags
+  echo -I${SYSROOT}$includedir/freetype2
 fi
 
 if test "$echo_libs" = "yes" ; then
