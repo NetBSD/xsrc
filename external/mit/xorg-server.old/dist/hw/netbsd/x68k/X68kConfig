@@ -1,0 +1,113 @@
+;; $NetBSD: X68kConfig,v 1.1.1.1 2016/06/09 09:07:59 mrg Exp $
+;;----------------------------------------------------------------
+;; X68kConfig: sample configuration for X68k
+;; written by Yasushi Yamasaki
+;;----------------------------------------------------------------
+
+;;----------------------------------------------------------------
+;; standard modes
+;;----------------------------------------------------------------
+
+;
+; 768x512x1bit Monochrome
+; CRTC-R20 = 0x0416(1046) VIDEOC-R0 = 0x0004
+;
+(ModeDef Monochrome768x512
+;  type depth   class     width height
+   Text   1   StaticGray   768   512
+; CRTC-R00 -R01 -R02 -R03 -R04 -R05 -R06 -R07 -R08
+       137   14   28  124  567    5   40  552   27
+; CRTC-R20 VIDEOC-R0 dotclk
+      1046         4      0)
+
+;
+; 768x512x4bit StaticGray
+; CRTC-R20 = 0x0416(1046) VIDEOC-R0 = 0x0004
+;
+(ModeDef Static16Gray768x512 Graphic 4 StaticGray  768  512
+       137   14   28  124  567    5   40  552   27
+      1046    4    0)
+
+;
+; 768x512x4bit PseudoColor
+; CRTC-R20 = 0x0416(1046) VIDEOC-R0 = 0x0004
+;
+(ModeDef Pseudo16Color768x512 Graphic 4 PseudoColor  768 512
+       137   14   28  124  567    5   40  552   27
+      1046    4    0)
+
+;
+; 512x512x8bit PseudoColor
+; CRTC-R20 = 0x0115(277) VIDEOC-R0 = 0x0001
+;
+(ModeDef Pseudo256Color512x512 Graphic 8 PseudoColor  512 512
+        91    9   17   81  567    5   40  552   27
+       277    1    0)
+
+;
+; 512x512x15bit TrueColor
+; CRTC-R20 = 0x0315(789) VIDEOC-R0 = 0x0003
+;
+(ModeDef True32768Color512x512 Graphic 15 TrueColor  512 512
+        91    9   17   81  567    5   40  552   27
+       789    3    0)
+
+;;----------------------------------------------------------------
+;; tricky modes
+;;----------------------------------------------------------------
+
+;
+; 1024x768x1bit Monochrome
+; CRTC-R20 = 0x041a(1050) VIDEOC-R0 = 0x0004
+;
+(ModeDef Monochrome1024x768 Text 1 StaticGray  1024 768
+       164    9   26  154  415    2   28  412   27
+      1050    4    0)
+
+;
+; 1024x768x4bit PseudoColor
+; CRTC-R20 = 0x041a(1050) VIDEOC-R0 = 0x0004
+;
+(ModeDef Pseudo16Color1024x768 Graphic 4 PseudoColor  1024 768
+       164    9   26  154  415    2   28  412   27
+      1050    4    0)
+
+;
+; 1024x762x4bit StaticGray
+; CRTC-R20 = 0x041a(1050) VIDEOC-R0 = 0x0004
+;
+(ModeDef NeedsMultiScan Graphic 4 StaticGray  1024 768
+       154    9   16  144  405    2   18  402   27
+      1050    4    0)
+
+;
+; 512x512x15bit TrueColor
+; CRTC-R20 = 0x0316(790) VIDEOC-R0 = 0x0003
+;
+(ModeDef True32768ColorSquare Graphic 15 TrueColor  512 512
+       137   14   28  124  567    5   40  552   27
+       790    3    0)
+
+;;----------------------------------------------------------------
+;; mode selection
+;;----------------------------------------------------------------
+
+(Mode Pseudo16Color768x512)	; choose 768x512x4bit PseudoColor
+;(Mode Pseudo256Color512x512)
+;(Mode Static16Gray768x512)
+;(Mode True32768Color512x512)
+;(Mode Monochrome768x512)
+;(Mode Monochrome1024x768)
+;(Mode Pseudo16Color1024x768)
+;(Mode NeedsMultiScan)
+
+;;----------------------------------------------------------------
+;; input devices
+;;----------------------------------------------------------------
+
+(Mouse standard)	; standard x68k mouse
+(Keyboard standard)	; standard x68k keyboard
+; (Keyboard ascii)	; ascii map
+
+
+;;---------------------------- EOF -------------------------------
