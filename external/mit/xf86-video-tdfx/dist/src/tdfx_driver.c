@@ -100,8 +100,16 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endif
 
 #define USE_INT10 1
-#define USE_PCIVGAIO (GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12)
 
+/*
+ * XXX
+ * This controls wether VGA IO registers are accessed through the IO BAR or
+ * via legacy registers. No idea why it's made ABI version dependent, on
+ * non-x86 at least I see no reason not to go through the BAR
+ */ 
+#ifndef USE_PCIVGAIO
+#define USE_PCIVGAIO (GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12)
+#endif
 /* Required Functions: */
 
 static const OptionInfoRec *	TDFXAvailableOptions(int chipid, int busid);
@@ -2244,11 +2252,12 @@ TDFXScreenInit(SCREEN_INIT_ARGS_DECL) {
 
   if (!pTDFX->usePIO) TDFXSetMMIOAccess(pTDFX);
 
-#ifndef USE_PCIVGAIO
+#if USE_PCIVGAIO
+  vgaHWGetIOBase(hwp);
+#else
   /* access VGA registers through the IO BAR, not legacy decoding */
   hwp->PIOOffset = pTDFX->PIOBase[0] - 0x300;
 #endif
-  vgaHWGetIOBase(hwp);
   /* Map VGA memory only for primary cards (to save/restore textmode data). */
   if (pTDFX->Primary) {
     if (!vgaHWMapMem(pScrn))
