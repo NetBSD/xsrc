@@ -2011,6 +2011,7 @@ SMI_EnableVideo(ScrnInfoPtr pScrn)
 void
 SMI_EnableMmio(ScrnInfoPtr pScrn)
 {
+#if !defined(__mips__)
     SMIPtr pSmi = SMIPTR(pScrn);
 
     ENTER();
@@ -2039,11 +2040,13 @@ SMI_EnableMmio(ScrnInfoPtr pScrn)
     }
 
     LEAVE();
+#endif
 }
 
 void
 SMI_DisableMmio(ScrnInfoPtr pScrn)
 {
+#if !defined(__mips__)
     SMIPtr pSmi = SMIPTR(pScrn);
 
     ENTER();
@@ -2063,6 +2066,7 @@ SMI_DisableMmio(ScrnInfoPtr pScrn)
     }
 
     LEAVE();
+#endif
 }
 
 static void
