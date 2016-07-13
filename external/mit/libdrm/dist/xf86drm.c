@@ -811,6 +811,18 @@ drmVersionPtr drmGetLibVersion(int fd)
     return (drmVersionPtr)version;
 }
 
+int drmGetCap(int fd, uint64_t capability, uint64_t *value)
+{
+	struct drm_get_cap cap = { capability, 0 };
+	int ret;
+
+	ret = drmIoctl(fd, DRM_IOCTL_GET_CAP, &cap);
+	if (ret)
+		return ret;
+
+	*value = cap.value;
+	return 0;
+}
 
 /**
  * Free the bus ID information.
@@ -965,7 +977,7 @@ int drmAddMap(int fd, drm_handle_t offset, drmSize size, drmMapType type,
     if (drmIoctl(fd, DRM_IOCTL_ADD_MAP, &map))
 	return -errno;
     if (handle)
-	*handle = (drm_handle_t)map.handle;
+	*handle = (drm_handle_t)(uintptr_t)map.handle;
     return 0;
 }
 
@@ -973,7 +985,7 @@ int drmRmMap(int fd, drm_handle_t handle)
 {
     drm_map_t map;
 
-    map.handle = (void *)handle;
+    map.handle = (void *)(uintptr_t)handle;
 
     if(drmIoctl(fd, DRM_IOCTL_RM_MAP, &map))
 	return -errno;
@@ -2109,7 +2121,7 @@ int drmAddContextPrivateMapping(int fd, drm_context_t ctx_id,
     drm_ctx_priv_map_t map;
 
     map.ctx_id = ctx_id;
-    map.handle = (void *)handle;
+    map.handle = (void *)(uintptr_t)handle;
 
     if (drmIoctl(fd, DRM_IOCTL_SET_SAREA_CTX, &map))
 	return -errno;
@@ -2126,7 +2138,7 @@ int drmGetContextPrivateMapping(int fd, drm_context_t ctx_id,
     if (drmIoctl(fd, DRM_IOCTL_GET_SAREA_CTX, &map))
 	return -errno;
     if (handle)
-	*handle = (drm_handle_t)map.handle;
+	*handle = (drm_handle_t)(uintptr_t)map.handle;
 
     return 0;
 }

@@ -178,7 +178,7 @@ struct _drm_intel_bufmgr {
 	 */
 	int (*bo_mrb_exec) (drm_intel_bo *bo, int used,
 			drm_clip_rect_t *cliprects, int num_cliprects,
-			int DR4, int ring_flag);
+			    int DR4, unsigned flags);
 
 	/**
 	 * Pin a buffer to the aperture and fix the offset until unpinned
@@ -278,6 +278,11 @@ struct _drm_intel_bufmgr {
 
 	/**< Enables verbose debugging printouts */
 	int debug;
+};
+
+struct _drm_intel_context {
+	unsigned int ctx_id;
+	struct _drm_intel_bufmgr *bufmgr;
 };
 
 #define ALIGN(value, alignment)	((value + alignment - 1) & ~(alignment - 1))
