@@ -33,6 +33,7 @@
  * subject to backwards-compatibility constraints.
  */
 
+
 /* Each region is a minimum of 16k, and there are at most 255 of them.
  */
 #define I915_NR_TEX_REGIONS 255	/* table size 2k - maximum due to use
@@ -189,6 +190,11 @@ typedef struct _drm_i915_sarea {
 #define DRM_I915_OVERLAY_PUT_IMAGE	0x27
 #define DRM_I915_OVERLAY_ATTRS	0x28
 #define DRM_I915_GEM_EXECBUFFER2	0x29
+#define DRM_I915_GET_SPRITE_COLORKEY	0x2a
+#define DRM_I915_SET_SPRITE_COLORKEY	0x2b
+#define DRM_I915_GEM_WAIT	0x2c
+#define DRM_I915_GEM_CONTEXT_CREATE	0x2d
+#define DRM_I915_GEM_CONTEXT_DESTROY	0x2e
 
 #define DRM_IOCTL_I915_INIT		DRM_IOW( DRM_COMMAND_BASE + DRM_I915_INIT, drm_i915_init_t)
 #define DRM_IOCTL_I915_FLUSH		DRM_IO ( DRM_COMMAND_BASE + DRM_I915_FLUSH)
@@ -228,8 +234,13 @@ typedef struct _drm_i915_sarea {
 #define DRM_IOCTL_I915_GEM_GET_APERTURE	DRM_IOR  (DRM_COMMAND_BASE + DRM_I915_GEM_GET_APERTURE, struct drm_i915_gem_get_aperture)
 #define DRM_IOCTL_I915_GET_PIPE_FROM_CRTC_ID DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_GET_PIPE_FROM_CRTC_ID, struct drm_i915_get_pipe_from_crtc_id)
 #define DRM_IOCTL_I915_GEM_MADVISE	DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_GEM_MADVISE, struct drm_i915_gem_madvise)
-#define DRM_IOCTL_I915_OVERLAY_PUT_IMAGE	DRM_IOW(DRM_COMMAND_BASE + DRM_IOCTL_I915_OVERLAY_ATTRS, struct drm_intel_overlay_put_image)
+#define DRM_IOCTL_I915_OVERLAY_PUT_IMAGE	DRM_IOW(DRM_COMMAND_BASE + DRM_I915_OVERLAY_PUT_IMAGE, struct drm_intel_overlay_put_image)
 #define DRM_IOCTL_I915_OVERLAY_ATTRS	DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_OVERLAY_ATTRS, struct drm_intel_overlay_attrs)
+#define DRM_IOCTL_I915_SET_SPRITE_COLORKEY DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_SET_SPRITE_COLORKEY, struct drm_intel_sprite_colorkey)
+#define DRM_IOCTL_I915_GET_SPRITE_COLORKEY DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_SET_SPRITE_COLORKEY, struct drm_intel_sprite_colorkey)
+#define DRM_IOCTL_I915_GEM_WAIT		DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_GEM_WAIT, struct drm_i915_gem_wait)
+#define DRM_IOCTL_I915_GEM_CONTEXT_CREATE	DRM_IOWR (DRM_COMMAND_BASE + DRM_I915_GEM_CONTEXT_CREATE, struct drm_i915_gem_context_create)
+#define DRM_IOCTL_I915_GEM_CONTEXT_DESTROY	DRM_IOW (DRM_COMMAND_BASE + DRM_I915_GEM_CONTEXT_DESTROY, struct drm_i915_gem_context_destroy)
 
 /* Allow drivers to submit batchbuffers directly to hardware, relying
  * on the security mechanisms provided by hardware.
@@ -279,6 +290,13 @@ typedef struct drm_i915_irq_wait {
 #define I915_PARAM_HAS_BSD		 10
 #define I915_PARAM_HAS_BLT		 11
 #define I915_PARAM_HAS_RELAXED_FENCING	 12
+#define I915_PARAM_HAS_COHERENT_RINGS	 13
+#define I915_PARAM_HAS_EXEC_CONSTANTS	 14
+#define I915_PARAM_HAS_RELAXED_DELTA	 15
+#define I915_PARAM_HAS_GEN7_SOL_RESET	 16
+#define I915_PARAM_HAS_LLC     	 	 17
+#define I915_PARAM_HAS_ALIASING_PPGTT	 18
+#define I915_PARAM_HAS_WAIT_TIMEOUT	 19
 
 typedef struct drm_i915_getparam {
 	int param;
@@ -625,10 +643,30 @@ struct drm_i915_gem_execbuffer2 {
 #define I915_EXEC_RENDER                 (1<<0)
 #define I915_EXEC_BSD                    (2<<0)
 #define I915_EXEC_BLT                    (3<<0)
+
+/* Used for switching the constants addressing mode on gen4+ RENDER ring.
+ * Gen6+ only supports relative addressing to dynamic state (default) and
+ * absolute addressing.
+ *
+ * These flags are ignored for the BSD and BLT rings.
+ */
+#define I915_EXEC_CONSTANTS_MASK 	(3<<6)
+#define I915_EXEC_CONSTANTS_REL_GENERAL (0<<6) /* default */
+#define I915_EXEC_CONSTANTS_ABSOLUTE 	(1<<6)
+#define I915_EXEC_CONSTANTS_REL_SURFACE (2<<6) /* gen4/5 only */
 	__u64 flags;
-	__u64 rsvd1;
+	__u64 rsvd1; /* now used for context info */
 	__u64 rsvd2;
 };
+
+/** Resets the SO write offset registers for transform feedback on gen7. */
+#define I915_EXEC_GEN7_SOL_RESET	(1<<8)
+
+#define I915_EXEC_CONTEXT_ID_MASK	(0xffffffff)
+#define i915_execbuffer2_set_context_id(eb2, context) \
+	(eb2).rsvd1 = context & I915_EXEC_CONTEXT_ID_MASK
+#define i915_execbuffer2_get_context_id(eb2) \
+	((eb2).rsvd1 & I915_EXEC_CONTEXT_ID_MASK)
 
 struct drm_i915_gem_pin {
 	/** Handle of the buffer to be pinned. */
@@ -819,6 +857,57 @@ struct drm_intel_overlay_attrs {
 	__u32 gamma3;
 	__u32 gamma4;
 	__u32 gamma5;
+};
+
+/*
+ * Intel sprite handling
+ *
+ * Color keying works with a min/mask/max tuple.  Both source and destination
+ * color keying is allowed.
+ *
+ * Source keying:
+ * Sprite pixels within the min & max values, masked against the color channels
+ * specified in the mask field, will be transparent.  All other pixels will
+ * be displayed on top of the primary plane.  For RGB surfaces, only the min
+ * and mask fields will be used; ranged compares are not allowed.
+ *
+ * Destination keying:
+ * Primary plane pixels that match the min value, masked against the color
+ * channels specified in the mask field, will be replaced by corresponding
+ * pixels from the sprite plane.
+ *
+ * Note that source & destination keying are exclusive; only one can be
+ * active on a given plane.
+ */
+
+#define I915_SET_COLORKEY_NONE		(1<<0) /* disable color key matching */
+#define I915_SET_COLORKEY_DESTINATION	(1<<1)
+#define I915_SET_COLORKEY_SOURCE	(1<<2)
+struct drm_intel_sprite_colorkey {
+	__u32 plane_id;
+	__u32 min_value;
+	__u32 channel_mask;
+	__u32 max_value;
+	__u32 flags;
+};
+
+struct drm_i915_gem_wait {
+	/** Handle of BO we shall wait on */
+	__u32 bo_handle;
+	__u32 flags;
+	/** Number of nanoseconds to wait, Returns time remaining. */
+	__s64 timeout_ns;
+};
+
+struct drm_i915_gem_context_create {
+	/*  output: id of new context*/
+	__u32 ctx_id;
+	__u32 pad;
+};
+
+struct drm_i915_gem_context_destroy {
+	__u32 ctx_id;
+	__u32 pad;
 };
 
 #endif				/* _I915_DRM_H_ */

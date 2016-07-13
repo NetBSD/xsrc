@@ -24,6 +24,9 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
+/* Have EXYNOS support */
+#undef HAVE_EXYNOS
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
@@ -41,6 +44,15 @@
 
 /* Have nouveau (nvidia) support */
 #undef HAVE_NOUVEAU
+
+/* Have OMAP support */
+#undef HAVE_OMAP
+
+/* Define to 1 if you have the `open_memstream' function. */
+#undef HAVE_OPEN_MEMSTREAM
+
+/* Have radeon support */
+#undef HAVE_RADEON
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
@@ -62,6 +74,9 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
+
+/* Use valgrind intrinsics to suppress false warnings */
+#undef HAVE_VALGRIND
 
 /* Have vmwgfx kernel headers */
 #undef HAVE_VMWGFX
@@ -130,6 +145,11 @@
 /* Version number of package */
 #undef VERSION
 
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
+
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
 
@@ -145,3 +165,6 @@
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 #undef _POSIX_SOURCE
+
+/* Define to `unsigned int' if <sys/types.h> does not define. */
+#undef size_t

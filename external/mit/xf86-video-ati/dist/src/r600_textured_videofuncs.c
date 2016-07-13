@@ -275,7 +275,8 @@ R600DisplayTexturedVideo(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 	tex_res.bo                  = accel_state->src_obj[0].bo;
 	tex_res.mip_bo              = accel_state->src_obj[0].bo;
 #ifdef XF86DRM_MODE
-	tex_res.surface             = NULL;
+	if (info->cs)
+		tex_res.surface     = NULL;
 #endif
 
 	tex_res.format              = FMT_8;
@@ -412,7 +413,8 @@ R600DisplayTexturedVideo(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     cb_conf.base = accel_state->dst_obj.offset;
     cb_conf.bo = accel_state->dst_obj.bo;
 #ifdef XF86DRM_MODE
-    cb_conf.surface = accel_state->dst_obj.surface;
+    if (info->cs)
+        cb_conf.surface = accel_state->dst_obj.surface;
 #endif
 
     switch (accel_state->dst_obj.bpp) {

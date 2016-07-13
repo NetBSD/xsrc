@@ -120,6 +120,43 @@ struct drm_mode_crtc {
 	struct drm_mode_modeinfo mode;
 };
 
+#define DRM_MODE_PRESENT_TOP_FIELD     (1<<0)
+#define DRM_MODE_PRESENT_BOTTOM_FIELD  (1<<1)
+
+/* Planes blend with or override other bits on the CRTC */
+struct drm_mode_set_plane {
+	__u32 plane_id;
+	__u32 crtc_id;
+	__u32 fb_id; /* fb object contains surface format type */
+	__u32 flags;
+
+	/* Signed dest location allows it to be partially off screen */
+	__s32 crtc_x, crtc_y;
+	__u32 crtc_w, crtc_h;
+
+	/* Source values are 16.16 fixed point */
+	__u32 src_x, src_y;
+	__u32 src_h, src_w;
+};
+
+struct drm_mode_get_plane {
+	__u32 plane_id;
+
+	__u32 crtc_id;
+	__u32 fb_id;
+
+	__u32 possible_crtcs;
+	__u32 gamma_size;
+
+	__u32 count_format_types;
+	__u64 format_type_ptr;
+};
+
+struct drm_mode_get_plane_res {
+	__u64 plane_id_ptr;
+	__u32 count_planes;
+};
+
 #define DRM_MODE_ENCODER_NONE	0
 #define DRM_MODE_ENCODER_DAC	1
 #define DRM_MODE_ENCODER_TMDS	2
@@ -189,6 +226,7 @@ struct drm_mode_get_connector {
 #define DRM_MODE_PROP_IMMUTABLE	(1<<2)
 #define DRM_MODE_PROP_ENUM	(1<<3) /* enumerated type with text strings */
 #define DRM_MODE_PROP_BLOB	(1<<4)
+#define DRM_MODE_PROP_BITMASK	(1<<5) /* bitmask of enumerated types */
 
 struct drm_mode_property_enum {
 	__u64 value;
@@ -213,6 +251,30 @@ struct drm_mode_connector_set_property {
 	__u32 connector_id;
 };
 
+#define DRM_MODE_OBJECT_CRTC 0xcccccccc
+#define DRM_MODE_OBJECT_CONNECTOR 0xc0c0c0c0
+#define DRM_MODE_OBJECT_ENCODER 0xe0e0e0e0
+#define DRM_MODE_OBJECT_MODE 0xdededede
+#define DRM_MODE_OBJECT_PROPERTY 0xb0b0b0b0
+#define DRM_MODE_OBJECT_FB 0xfbfbfbfb
+#define DRM_MODE_OBJECT_BLOB 0xbbbbbbbb
+#define DRM_MODE_OBJECT_PLANE 0xeeeeeeee
+
+struct drm_mode_obj_get_properties {
+	__u64 props_ptr;
+	__u64 prop_values_ptr;
+	__u32 count_props;
+	__u32 obj_id;
+	__u32 obj_type;
+};
+
+struct drm_mode_obj_set_property {
+	__u64 value;
+	__u32 prop_id;
+	__u32 obj_id;
+	__u32 obj_type;
+};
+
 struct drm_mode_get_blob {
 	__u32 blob_id;
 	__u32 length;
@@ -227,6 +289,33 @@ struct drm_mode_fb_cmd {
 	__u32 depth;
 	/* driver specific handle */
 	__u32 handle;
+};
+
+#define DRM_MODE_FB_INTERLACED (1<<0) /* for interlaced framebuffers */
+
+struct drm_mode_fb_cmd2 {
+	__u32 fb_id;
+	__u32 width, height;
+	__u32 pixel_format; /* fourcc code from drm_fourcc.h */
+	__u32 flags;
+
+	/*
+	 * In case of planar formats, this ioctl allows up to 4
+	 * buffer objects with offsets and pitches per plane.
+	 * The pitch and offset order is dictated by the fourcc,
+	 * e.g. NV12 (http://fourcc.org/yuv.php#NV12) is described as:
+	 *
+	 *   YUV 4:2:0 image with a plane of 8 bit Y samples
+	 *   followed by an interleaved U/V plane containing
+	 *   8 bit 2x2 subsampled colour difference samples.
+	 *
+	 * So it would consist of Y as offset[0] and UV as
+	 * offset[1].  Note that offset[0] will generally
+	 * be 0.
+	 */
+	__u32 handles[4];
+	__u32 pitches[4]; /* pitch for each plane */
+	__u32 offsets[4]; /* offset of each plane */
 };
 
 #define DRM_MODE_FB_DIRTY_ANNOTATE_COPY 0x01
@@ -342,6 +431,35 @@ struct drm_mode_crtc_page_flip {
 	__u32 flags;
 	__u32 reserved;
 	__u64 user_data;
+};
+
+/* create a dumb scanout buffer */
+struct drm_mode_create_dumb {
+        __u32 height;
+        __u32 width;
+        __u32 bpp;
+        __u32 flags;
+        /* handle, pitch, size will be returned */
+        __u32 handle;
+        __u32 pitch;
+        __u64 size;
+};
+
+/* set up for mmap of a dumb scanout buffer */
+struct drm_mode_map_dumb {
+        /** Handle for the object being mapped. */
+        __u32 handle;
+        __u32 pad;
+        /**
+         * Fake offset to use for subsequent mmap call
+         *
+         * This is a fixed-size type for 32/64 compatibility.
+         */
+        __u64 offset;
+};
+
+struct drm_mode_destroy_dumb {
+	__u32 handle;
 };
 
 #endif

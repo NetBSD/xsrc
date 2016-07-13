@@ -43,6 +43,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
@@ -51,8 +52,8 @@
 
 #include "xf86drm.h"
 #include "xf86drmMode.h"
-#include "intel_bufmgr.h"
-#include "i915_drm.h"
+#include "drm_fourcc.h"
+#include "libkms.h"
 
 #ifdef HAVE_CAIRO
 #include <math.h>
@@ -71,7 +72,7 @@ struct type_name {
 
 #define type_name_fn(res) \
 char * res##_str(int type) {			\
-	int i;						\
+	unsigned int i;					\
 	for (i = 0; i < ARRAY_SIZE(res##_names); i++) { \
 		if (res##_names[i].type == type)	\
 			return res##_names[i].name;	\
@@ -145,7 +146,7 @@ void dump_encoders(void)
 
 void dump_mode(drmModeModeInfo *mode)
 {
-	printf("  %s %d %d %d %d %d %d %d %d %d\n",
+	printf("\t%s %d %d %d %d %d %d %d %d %d\n",
 	       mode->name,
 	       mode->vrefresh,
 	       mode->hdisplay,
@@ -159,16 +160,98 @@ void dump_mode(drmModeModeInfo *mode)
 }
 
 static void
-dump_props(drmModeConnector *connector)
+dump_blob(uint32_t blob_id)
 {
-	drmModePropertyPtr props;
-	int i;
+	uint32_t i;
+	unsigned char *blob_data;
+	drmModePropertyBlobPtr blob;
 
-	for (i = 0; i < connector->count_props; i++) {
-		props = drmModeGetProperty(fd, connector->props[i]);
-		printf("\t%s, flags %d\n", props->name, props->flags);
-		drmModeFreeProperty(props);
+	blob = drmModeGetPropertyBlob(fd, blob_id);
+	if (!blob)
+		return;
+
+	blob_data = blob->data;
+
+	for (i = 0; i < blob->length; i++) {
+		if (i % 16 == 0)
+			printf("\n\t\t\t");
+		printf("%.2hhx", blob_data[i]);
 	}
+	printf("\n");
+
+	drmModeFreePropertyBlob(blob);
+}
+
+static void
+dump_prop(uint32_t prop_id, uint64_t value)
+{
+	int i;
+	drmModePropertyPtr prop;
+
+	prop = drmModeGetProperty(fd, prop_id);
+
+	printf("\t%d", prop_id);
+	if (!prop) {
+		printf("\n");
+		return;
+	}
+
+	printf(" %s:\n", prop->name);
+
+	printf("\t\tflags:");
+	if (prop->flags & DRM_MODE_PROP_PENDING)
+		printf(" pending");
+	if (prop->flags & DRM_MODE_PROP_RANGE)
+		printf(" range");
+	if (prop->flags & DRM_MODE_PROP_IMMUTABLE)
+		printf(" immutable");
+	if (prop->flags & DRM_MODE_PROP_ENUM)
+		printf(" enum");
+	if (prop->flags & DRM_MODE_PROP_BITMASK)
+		printf(" bitmask");
+	if (prop->flags & DRM_MODE_PROP_BLOB)
+		printf(" blob");
+	printf("\n");
+
+	if (prop->flags & DRM_MODE_PROP_RANGE) {
+		printf("\t\tvalues:");
+		for (i = 0; i < prop->count_values; i++)
+			printf(" %"PRIu64, prop->values[i]);
+		printf("\n");
+	}
+
+	if (prop->flags & DRM_MODE_PROP_ENUM) {
+		printf("\t\tenums:");
+		for (i = 0; i < prop->count_enums; i++)
+			printf(" %s=%llu", prop->enums[i].name,
+			       prop->enums[i].value);
+		printf("\n");
+	} else if (prop->flags & DRM_MODE_PROP_BITMASK) {
+		printf("\t\tvalues:");
+		for (i = 0; i < prop->count_enums; i++)
+			printf(" %s=0x%llx", prop->enums[i].name,
+			       (1LL << prop->enums[i].value));
+		printf("\n");
+	} else {
+		assert(prop->count_enums == 0);
+	}
+
+	if (prop->flags & DRM_MODE_PROP_BLOB) {
+		printf("\t\tblobs:\n");
+		for (i = 0; i < prop->count_blobs; i++)
+			dump_blob(prop->blob_ids[i]);
+		printf("\n");
+	} else {
+		assert(prop->count_blobs == 0);
+	}
+
+	printf("\t\tvalue:");
+	if (prop->flags & DRM_MODE_PROP_BLOB)
+		dump_blob(value);
+	else
+		printf(" %"PRIu64"\n", value);
+
+	drmModeFreeProperty(prop);
 }
 
 void dump_connectors(void)
@@ -199,17 +282,18 @@ void dump_connectors(void)
 			printf("%s%d", j > 0 ? ", " : "", connector->encoders[j]);
 		printf("\n");
 
-		if (!connector->count_modes)
-			continue;
-
+		if (connector->count_modes) {
 		printf("  modes:\n");
-		printf("  name refresh (Hz) hdisp hss hse htot vdisp "
+			printf("\tname refresh (Hz) hdisp hss hse htot vdisp "
 		       "vss vse vtot)\n");
 		for (j = 0; j < connector->count_modes; j++)
 			dump_mode(&connector->modes[j]);
 
 		printf("  props:\n");
-		dump_props(connector);
+			for (j = 0; j < connector->count_props; j++)
+				dump_prop(connector->props[j],
+					  connector->prop_values[j]);
+		}
 
 		drmModeFreeConnector(connector);
 	}
@@ -219,7 +303,9 @@ void dump_connectors(void)
 void dump_crtcs(void)
 {
 	drmModeCrtc *crtc;
+	drmModeObjectPropertiesPtr props;
 	int i;
+	uint32_t j;
 
 	printf("CRTCs:\n");
 	printf("id\tfb\tpos\tsize\n");
@@ -237,6 +323,19 @@ void dump_crtcs(void)
 		       crtc->x, crtc->y,
 		       crtc->width, crtc->height);
 		dump_mode(&crtc->mode);
+
+		printf("  props:\n");
+		props = drmModeObjectGetProperties(fd, crtc->crtc_id,
+						   DRM_MODE_OBJECT_CRTC);
+		if (props) {
+			for (j = 0; j < props->count_props; j++)
+				dump_prop(props->props[j],
+					  props->prop_values[j]);
+			drmModeFreeObjectProperties(props);
+		} else {
+			printf("\tcould not get crtc properties: %s\n",
+			       strerror(errno));
+		}
 
 		drmModeFreeCrtc(crtc);
 	}
@@ -266,6 +365,64 @@ void dump_framebuffers(void)
 		drmModeFreeFB(fb);
 	}
 	printf("\n");
+}
+
+static void dump_planes(void)
+{
+	drmModeObjectPropertiesPtr props;
+	drmModePlaneRes *plane_resources;
+	drmModePlane *ovr;
+	unsigned int i, j;
+
+	plane_resources = drmModeGetPlaneResources(fd);
+	if (!plane_resources) {
+		fprintf(stderr, "drmModeGetPlaneResources failed: %s\n",
+			strerror(errno));
+		return;
+	}
+
+	printf("Planes:\n");
+	printf("id\tcrtc\tfb\tCRTC x,y\tx,y\tgamma size\n");
+	for (i = 0; i < plane_resources->count_planes; i++) {
+		ovr = drmModeGetPlane(fd, plane_resources->planes[i]);
+		if (!ovr) {
+			fprintf(stderr, "drmModeGetPlane failed: %s\n",
+				strerror(errno));
+			continue;
+		}
+
+		printf("%d\t%d\t%d\t%d,%d\t\t%d,%d\t%d\n",
+		       ovr->plane_id, ovr->crtc_id, ovr->fb_id,
+		       ovr->crtc_x, ovr->crtc_y, ovr->x, ovr->y,
+		       ovr->gamma_size);
+
+		if (!ovr->count_formats)
+			continue;
+
+		printf("  formats:");
+		for (j = 0; j < ovr->count_formats; j++)
+			printf(" %4.4s", (char *)&ovr->formats[j]);
+		printf("\n");
+
+		printf("  props:\n");
+		props = drmModeObjectGetProperties(fd, ovr->plane_id,
+						   DRM_MODE_OBJECT_PLANE);
+		if (props) {
+			for (j = 0; j < props->count_props; j++)
+				dump_prop(props->props[j],
+					  props->prop_values[j]);
+			drmModeFreeObjectProperties(props);
+		} else {
+			printf("\tcould not get plane properties: %s\n",
+			       strerror(errno));
+		}
+
+		drmModeFreePlane(ovr);
+	}
+	printf("\n");
+
+	drmModeFreePlaneResources(plane_resources);
+	return;
 }
 
 /*
@@ -352,31 +509,60 @@ connector_find_mode(struct connector *c)
 
 	if (c->crtc == -1)
 		c->crtc = c->encoder->crtc_id;
+
+	/* and figure out which crtc index it is: */
+	for (i = 0; i < resources->count_crtcs; i++) {
+		if (c->crtc == resources->crtcs[i]) {
+			c->pipe = i;
+			break;
+		}
+	}
+
 }
 
-static drm_intel_bo *
-allocate_buffer(drm_intel_bufmgr *bufmgr,
+static struct kms_bo *
+allocate_buffer(struct kms_driver *kms,
 		int width, int height, int *stride)
 {
-	int size;
+	struct kms_bo *bo;
+	unsigned bo_attribs[] = {
+		KMS_WIDTH,   0,
+		KMS_HEIGHT,  0,
+		KMS_BO_TYPE, KMS_BO_TYPE_SCANOUT_X8R8G8B8,
+		KMS_TERMINATE_PROP_LIST
+	};
+	int ret;
 
-	/* Scan-out has a 64 byte alignment restriction */
-	size = (width + 63) & -64;
-	*stride = size;
-	size *= height;
+	bo_attribs[1] = width;
+	bo_attribs[3] = height;
 
-	return drm_intel_bo_alloc(bufmgr, "frontbuffer", size, 0);
+	ret = kms_bo_create(kms, bo_attribs, &bo);
+	if (ret) {
+		fprintf(stderr, "failed to alloc buffer: %s\n",
+			strerror(-ret));
+		return NULL;
+	}
+
+	ret = kms_bo_get_prop(bo, KMS_PITCH, stride);
+	if (ret) {
+		fprintf(stderr, "failed to retreive buffer stride: %s\n",
+			strerror(-ret));
+		kms_bo_destroy(&bo);
+		return NULL;
+	}
+
+	return bo;
 }
 
 static void
-make_pwetty(drm_intel_bo *bo, int width, int height, int stride)
+make_pwetty(void *data, int width, int height, int stride)
 {
 #ifdef HAVE_CAIRO
 	cairo_surface_t *surface;
 	cairo_t *cr;
 	int x, y;
 
-	surface = cairo_image_surface_create_for_data(bo->virtual,
+	surface = cairo_image_surface_create_for_data(data,
 						      CAIRO_FORMAT_ARGB32,
 						      width, height,
 						      stride);
@@ -415,29 +601,29 @@ make_pwetty(drm_intel_bo *bo, int width, int height, int stride)
 }
 
 static int
-create_test_buffer(drm_intel_bufmgr *bufmgr,
-		   int width, int height, int *stride_out, drm_intel_bo **bo_out)
+create_test_buffer(struct kms_driver *kms,
+		   int width, int height, int *stride_out,
+		   struct kms_bo **bo_out)
 {
-	drm_intel_bo *bo;
+	struct kms_bo *bo;
 	int ret, i, j, stride;
+	void *virtual;
 
-	bo = allocate_buffer(bufmgr, width, height, &stride);
-	if (!bo) {
-		fprintf(stderr, "failed to alloc buffer: %s\n",
-			strerror(errno));
+	bo = allocate_buffer(kms, width, height, &stride);
+	if (!bo)
 		return -1;
-	}
 
-	ret = drm_intel_gem_bo_map_gtt(bo);
+	ret = kms_bo_map(bo, &virtual);
 	if (ret) {
-		fprintf(stderr, "failed to GTT map buffer: %s\n",
-			strerror(errno));
+		fprintf(stderr, "failed to map buffer: %s\n",
+			strerror(-ret));
+		kms_bo_destroy(&bo);
 		return -1;
 	}
 
 	/* paint the buffer with colored tiles */
 	for (j = 0; j < height; j++) {
-		uint32_t *fb_ptr = (uint32_t*)((char*)bo->virtual + j * stride);
+		uint32_t *fb_ptr = (uint32_t*)((char*)virtual + j * stride);
 		for (i = 0; i < width; i++) {
 			div_t d = div(i, width);
 			fb_ptr[i] =
@@ -446,9 +632,9 @@ create_test_buffer(drm_intel_bufmgr *bufmgr,
 		}
 	}
 
-	make_pwetty(bo, width, height, stride);
+	make_pwetty(virtual, width, height, stride);
 
-	drm_intel_gem_bo_unmap_gtt(bo);
+	kms_bo_unmap(bo);
 
 	*bo_out = bo;
 	*stride_out = stride;
@@ -456,32 +642,29 @@ create_test_buffer(drm_intel_bufmgr *bufmgr,
 }
 
 static int
-create_grey_buffer(drm_intel_bufmgr *bufmgr,
-		   int width, int height, int *stride_out, drm_intel_bo **bo_out)
+create_grey_buffer(struct kms_driver *kms,
+		   int width, int height, int *stride_out,
+		   struct kms_bo **bo_out)
 {
-	drm_intel_bo *bo;
+	struct kms_bo *bo;
 	int size, ret, stride;
+	void *virtual;
 
-	/* Mode size at 32 bpp */
-	stride = width * 4;
-	size = stride * height;
-
-	bo = drm_intel_bo_alloc(bufmgr, "frontbuffer", size, 4096);
-	if (!bo) {
-		fprintf(stderr, "failed to alloc buffer: %s\n",
-			strerror(errno));
+	bo = allocate_buffer(kms, width, height, &stride);
+	if (!bo)
 		return -1;
-	}
 
-	ret = drm_intel_gem_bo_map_gtt(bo);
+	ret = kms_bo_map(bo, &virtual);
 	if (ret) {
-		fprintf(stderr, "failed to GTT map buffer: %s\n",
-			strerror(errno));
+		fprintf(stderr, "failed to map buffer: %s\n",
+			strerror(-ret));
+		kms_bo_destroy(&bo);
 		return -1;
 	}
 
-	memset(bo->virtual, 0x77, size);
-	drm_intel_gem_bo_unmap_gtt(bo);
+	size = stride * height;
+	memset(virtual, 0x77, size);
+	kms_bo_unmap(bo);
 
 	*bo_out = bo;
 	*stride_out = stride;
@@ -518,13 +701,246 @@ page_flip_handler(int fd, unsigned int frame,
 	}
 }
 
+/* swap these for big endian.. */
+#define RED   2
+#define GREEN 1
+#define BLUE  0
+
 static void
-set_mode(struct connector *c, int count, int page_flip)
+fill420(unsigned char *y, unsigned char *u, unsigned char *v,
+		int cs /*chroma pixel stride */,
+		int n, int width, int height, int stride)
 {
-	drm_intel_bufmgr *bufmgr;
-	drm_intel_bo *bo, *other_bo;
+	int i, j;
+
+	/* paint the buffer with colored tiles, in blocks of 2x2 */
+	for (j = 0; j < height; j+=2) {
+		unsigned char *y1p = y + j * stride;
+		unsigned char *y2p = y1p + stride;
+		unsigned char *up = u + (j/2) * stride * cs / 2;
+		unsigned char *vp = v + (j/2) * stride * cs / 2;
+
+		for (i = 0; i < width; i+=2) {
+			div_t d = div(n+i+j, width);
+			uint32_t rgb = 0x00130502 * (d.quot >> 6) + 0x000a1120 * (d.rem >> 6);
+			unsigned char *rgbp = (unsigned char *)&rgb;
+			unsigned char y = (0.299 * rgbp[RED]) + (0.587 * rgbp[GREEN]) + (0.114 * rgbp[BLUE]);
+
+			*(y2p++) = *(y1p++) = y;
+			*(y2p++) = *(y1p++) = y;
+
+			*up = (rgbp[BLUE] - y) * 0.565 + 128;
+			*vp = (rgbp[RED] - y) * 0.713 + 128;
+			up += cs;
+			vp += cs;
+		}
+	}
+}
+
+static void
+fill422(unsigned char *virtual, int n, int width, int height, int stride)
+{
+	int i, j;
+	/* paint the buffer with colored tiles */
+	for (j = 0; j < height; j++) {
+		uint8_t *ptr = (uint8_t*)((char*)virtual + j * stride);
+		for (i = 0; i < width; i++) {
+			div_t d = div(n+i+j, width);
+			uint32_t rgb = 0x00130502 * (d.quot >> 6) + 0x000a1120 * (d.rem >> 6);
+			unsigned char *rgbp = (unsigned char *)&rgb;
+			unsigned char y = (0.299 * rgbp[RED]) + (0.587 * rgbp[GREEN]) + (0.114 * rgbp[BLUE]);
+
+			*(ptr++) = y;
+			*(ptr++) = (rgbp[BLUE] - y) * 0.565 + 128;
+			*(ptr++) = y;
+			*(ptr++) = (rgbp[RED] - y) * 0.713 + 128;
+		}
+	}
+}
+
+static void
+fill1555(unsigned char *virtual, int n, int width, int height, int stride)
+{
+	int i, j;
+	/* paint the buffer with colored tiles */
+	for (j = 0; j < height; j++) {
+		uint16_t *ptr = (uint16_t*)((char*)virtual + j * stride);
+		for (i = 0; i < width; i++) {
+			div_t d = div(n+i+j, width);
+			uint32_t rgb = 0x00130502 * (d.quot >> 6) + 0x000a1120 * (d.rem >> 6);
+			unsigned char *rgbp = (unsigned char *)&rgb;
+
+			*(ptr++) = 0x8000 |
+					(rgbp[RED] >> 3) << 10 |
+					(rgbp[GREEN] >> 3) << 5 |
+					(rgbp[BLUE] >> 3);
+		}
+	}
+}
+
+static int
+set_plane(struct kms_driver *kms, struct connector *c, struct plane *p)
+{
+	drmModePlaneRes *plane_resources;
+	drmModePlane *ovr;
+	uint32_t handles[4], pitches[4], offsets[4] = {0}; /* we only use [0] */
+	uint32_t plane_id = 0;
+	struct kms_bo *plane_bo;
+	uint32_t plane_flags = 0, format;
+	int ret, crtc_x, crtc_y, crtc_w, crtc_h;
+	unsigned int i;
+
+	/* find an unused plane which can be connected to our crtc */
+	plane_resources = drmModeGetPlaneResources(fd);
+	if (!plane_resources) {
+		fprintf(stderr, "drmModeGetPlaneResources failed: %s\n",
+			strerror(errno));
+		return -1;
+	}
+
+	for (i = 0; i < plane_resources->count_planes && !plane_id; i++) {
+		ovr = drmModeGetPlane(fd, plane_resources->planes[i]);
+		if (!ovr) {
+			fprintf(stderr, "drmModeGetPlane failed: %s\n",
+				strerror(errno));
+			return -1;
+		}
+
+		if ((ovr->possible_crtcs & (1 << c->pipe)) && !ovr->crtc_id)
+			plane_id = ovr->plane_id;
+
+		drmModeFreePlane(ovr);
+	}
+
+	fprintf(stderr, "testing %dx%d@%s overlay plane\n",
+			p->w, p->h, p->format_str);
+
+	if (!plane_id) {
+		fprintf(stderr, "failed to find plane!\n");
+		return -1;
+	}
+
+	if (!strcmp(p->format_str, "XR24")) {
+		if (create_test_buffer(kms, p->w, p->h, &pitches[0], &plane_bo))
+			return -1;
+		kms_bo_get_prop(plane_bo, KMS_HANDLE, &handles[0]);
+		format = DRM_FORMAT_XRGB8888;
+	} else {
+		void *virtual;
+
+		/* TODO: this always allocates a buffer for 32bpp RGB.. but for
+		 * YUV formats, we don't use all of it..  since 4bytes/pixel is
+		 * worst case, so live with it for now and just don't use all
+		 * the buffer:
+		 */
+		plane_bo = allocate_buffer(kms, p->w, p->h, &pitches[0]);
+		if (!plane_bo)
+			return -1;
+
+		ret = kms_bo_map(plane_bo, &virtual);
+		if (ret) {
+			fprintf(stderr, "failed to map buffer: %s\n",
+				strerror(-ret));
+			kms_bo_destroy(&plane_bo);
+			return -1;
+		}
+
+		/* just testing a limited # of formats to test single
+		 * and multi-planar path.. would be nice to add more..
+		 */
+		if (!strcmp(p->format_str, "YUYV")) {
+			pitches[0] = p->w * 2;
+			offsets[0] = 0;
+			kms_bo_get_prop(plane_bo, KMS_HANDLE, &handles[0]);
+
+			fill422(virtual, 0, p->w, p->h, pitches[0]);
+
+			format = DRM_FORMAT_YUYV;
+		} else if (!strcmp(p->format_str, "NV12")) {
+			pitches[0] = p->w;
+			offsets[0] = 0;
+			kms_bo_get_prop(plane_bo, KMS_HANDLE, &handles[0]);
+			pitches[1] = p->w;
+			offsets[1] = p->w * p->h;
+			kms_bo_get_prop(plane_bo, KMS_HANDLE, &handles[1]);
+
+			fill420(virtual, virtual+offsets[1], virtual+offsets[1]+1,
+					2, 0, p->w, p->h, pitches[0]);
+
+			format = DRM_FORMAT_NV12;
+		} else if (!strcmp(p->format_str, "YV12")) {
+			pitches[0] = p->w;
+			offsets[0] = 0;
+			kms_bo_get_prop(plane_bo, KMS_HANDLE, &handles[0]);
+			pitches[1] = p->w / 2;
+			offsets[1] = p->w * p->h;
+			kms_bo_get_prop(plane_bo, KMS_HANDLE, &handles[1]);
+			pitches[2] = p->w / 2;
+			offsets[2] = offsets[1] + (p->w * p->h) / 4;
+			kms_bo_get_prop(plane_bo, KMS_HANDLE, &handles[2]);
+
+			fill420(virtual, virtual+offsets[1], virtual+offsets[2],
+					1, 0, p->w, p->h, pitches[0]);
+
+			format = DRM_FORMAT_YVU420;
+		} else if (!strcmp(p->format_str, "XR15")) {
+			pitches[0] = p->w * 2;
+			offsets[0] = 0;
+			kms_bo_get_prop(plane_bo, KMS_HANDLE, &handles[0]);
+
+			fill1555(virtual, 0, p->w, p->h, pitches[0]);
+
+			format = DRM_FORMAT_XRGB1555;
+		} else if (!strcmp(p->format_str, "AR15")) {
+			pitches[0] = p->w * 2;
+			offsets[0] = 0;
+			kms_bo_get_prop(plane_bo, KMS_HANDLE, &handles[0]);
+
+			fill1555(virtual, 0, p->w, p->h, pitches[0]);
+
+			format = DRM_FORMAT_ARGB1555;
+		} else {
+			fprintf(stderr, "Unknown format: %s\n", p->format_str);
+			return -1;
+		}
+
+		kms_bo_unmap(plane_bo);
+	}
+
+	/* just use single plane format for now.. */
+	if (drmModeAddFB2(fd, p->w, p->h, format,
+			handles, pitches, offsets, &p->fb_id, plane_flags)) {
+		fprintf(stderr, "failed to add fb: %s\n", strerror(errno));
+		return -1;
+	}
+
+	/* ok, boring.. but for now put in middle of screen: */
+	crtc_x = c->mode->hdisplay / 3;
+	crtc_y = c->mode->vdisplay / 3;
+	crtc_w = crtc_x;
+	crtc_h = crtc_y;
+
+	/* note src coords (last 4 args) are in Q16 format */
+	if (drmModeSetPlane(fd, plane_id, c->crtc, p->fb_id,
+			    plane_flags, crtc_x, crtc_y, crtc_w, crtc_h,
+			    0, 0, p->w << 16, p->h << 16)) {
+		fprintf(stderr, "failed to enable plane: %s\n",
+			strerror(errno));
+		return -1;
+	}
+
+	return 0;
+}
+
+static void
+set_mode(struct connector *c, int count, struct plane *p, int plane_count,
+		int page_flip)
+{
+	struct kms_driver *kms;
+	struct kms_bo *bo, *other_bo;
 	unsigned int fb_id, other_fb_id;
-	int i, ret, width, height, x, stride;
+	int i, j, ret, width, height, x, stride;
+	unsigned handle;
 	drmEventContext evctx;
 
 	width = 0;
@@ -538,19 +954,21 @@ set_mode(struct connector *c, int count, int page_flip)
 			height = c[i].mode->vdisplay;
 	}
 
-	bufmgr = drm_intel_bufmgr_gem_init(fd, 2<<20);
-	if (!bufmgr) {
-		fprintf(stderr, "failed to init bufmgr: %s\n", strerror(errno));
+	ret = kms_create(fd, &kms);
+	if (ret) {
+		fprintf(stderr, "failed to create kms driver: %s\n",
+			strerror(-ret));
 		return;
 	}
 
-	if (create_test_buffer(bufmgr, width, height, &stride, &bo))
+	if (create_test_buffer(kms, width, height, &stride, &bo))
 		return;
 
-	ret = drmModeAddFB(fd, width, height, 32, 32, stride, bo->handle,
-			   &fb_id);
+	kms_bo_get_prop(bo, KMS_HANDLE, &handle);
+	ret = drmModeAddFB(fd, width, height, 24, 32, stride, handle, &fb_id);
 	if (ret) {
-		fprintf(stderr, "failed to add fb: %s\n", strerror(errno));
+		fprintf(stderr, "failed to add fb (%ux%u): %s\n",
+			width, height, strerror(errno));
 		return;
 	}
 
@@ -564,21 +982,32 @@ set_mode(struct connector *c, int count, int page_flip)
 
 		ret = drmModeSetCrtc(fd, c[i].crtc, fb_id, x, 0,
 				     &c[i].id, 1, c[i].mode);
+
+		/* XXX: Actually check if this is needed */
+		drmModeDirtyFB(fd, fb_id, NULL, 0);
+
 		x += c[i].mode->hdisplay;
 
 		if (ret) {
 			fprintf(stderr, "failed to set mode: %s\n", strerror(errno));
 			return;
 		}
+
+		/* if we have a plane/overlay to show, set that up now: */
+		for (j = 0; j < plane_count; j++)
+			if (p[j].con_id == c[i].id)
+				if (set_plane(kms, &c[i], &p[j]))
+					return;
 	}
 
 	if (!page_flip)
 		return;
 
-	if (create_grey_buffer(bufmgr, width, height, &stride, &other_bo))
+	if (create_grey_buffer(kms, width, height, &stride, &other_bo))
 		return;
 
-	ret = drmModeAddFB(fd, width, height, 32, 32, stride, other_bo->handle,
+	kms_bo_get_prop(other_bo, KMS_HANDLE, &handle);
+	ret = drmModeAddFB(fd, width, height, 32, 32, stride, handle,
 			   &other_fb_id);
 	if (ret) {
 		fprintf(stderr, "failed to add fb: %s\n", strerror(errno));
@@ -589,13 +1018,17 @@ set_mode(struct connector *c, int count, int page_flip)
 		if (c[i].mode == NULL)
 			continue;
 
-		drmModePageFlip(fd, c[i].crtc, other_fb_id,
+		ret = drmModePageFlip(fd, c[i].crtc, other_fb_id,
 				DRM_MODE_PAGE_FLIP_EVENT, &c[i]);
+		if (ret) {
+			fprintf(stderr, "failed to page flip: %s\n", strerror(errno));
+			return;
+		}
 		gettimeofday(&c[i].start, NULL);
 		c[i].swap_count = 0;
 		c[i].fb_id[0] = fb_id;
 		c[i].fb_id[1] = other_fb_id;
-		c[i].current_fb_id = fb_id;
+		c[i].current_fb_id = other_fb_id;
 	}
 
 	memset(&evctx, 0, sizeof evctx);
@@ -640,31 +1073,40 @@ set_mode(struct connector *c, int count, int page_flip)
 
 		drmHandleEvent(fd, &evctx);
 	}
+
+	kms_bo_destroy(&bo);
+	kms_bo_destroy(&other_bo);
+	kms_destroy(&kms);
 }
 
 extern char *optarg;
 extern int optind, opterr, optopt;
-static char optstr[] = "ecpmfs:v";
+static char optstr[] = "ecpmfs:P:v";
 
 void usage(char *name)
 {
 	fprintf(stderr, "usage: %s [-ecpmf]\n", name);
 	fprintf(stderr, "\t-e\tlist encoders\n");
 	fprintf(stderr, "\t-c\tlist connectors\n");
-	fprintf(stderr, "\t-p\tlist CRTCs (pipes)\n");
+	fprintf(stderr, "\t-p\tlist CRTCs and planes (pipes)\n");
 	fprintf(stderr, "\t-m\tlist modes\n");
 	fprintf(stderr, "\t-f\tlist framebuffers\n");
 	fprintf(stderr, "\t-v\ttest vsynced page flipping\n");
 	fprintf(stderr, "\t-s <connector_id>:<mode>\tset a mode\n");
 	fprintf(stderr, "\t-s <connector_id>@<crtc_id>:<mode>\tset a mode\n");
+	fprintf(stderr, "\t-P <connector_id>:<w>x<h>\tset a plane\n");
+	fprintf(stderr, "\t-P <connector_id>:<w>x<h>@<format>\tset a plane\n");
 	fprintf(stderr, "\n\tDefault is to dump all info.\n");
 	exit(0);
 }
 
 #define dump_resource(res) if (res) dump_##res()
 
-static int page_flipping_supported(int fd)
+static int page_flipping_supported(void)
 {
+	/*FIXME: generic ioctl needed? */
+	return 1;
+#if 0
 	int ret, value;
 	struct drm_i915_getparam gp;
 
@@ -678,17 +1120,19 @@ static int page_flipping_supported(int fd)
 	}
 
 	return *gp.value;
+#endif
 }
 
 int main(int argc, char **argv)
 {
 	int c;
-	int encoders = 0, connectors = 0, crtcs = 0, framebuffers = 0;
+	int encoders = 0, connectors = 0, crtcs = 0, planes = 0, framebuffers = 0;
 	int test_vsync = 0;
-	char *modules[] = { "i915", "radeon", "nouveau" };
-	char *modeset = NULL;
-	int i, count = 0;
+	char *modules[] = { "i915", "radeon", "nouveau", "vmwgfx", "omapdrm", "exynos" };
+	unsigned int i;
+	int count = 0, plane_count = 0;
 	struct connector con_args[2];
+	struct plane plane_args[2] = {0};
 	
 	opterr = 0;
 	while ((c = getopt(argc, argv, optstr)) != -1) {
@@ -701,6 +1145,7 @@ int main(int argc, char **argv)
 			break;
 		case 'p':
 			crtcs = 1;
+			planes = 1;
 			break;
 		case 'm':
 			modes = 1;
@@ -712,7 +1157,6 @@ int main(int argc, char **argv)
 			test_vsync = 1;
 			break;
 		case 's':
-			modeset = strdup(optarg);
 			con_args[count].crtc = -1;
 			if (sscanf(optarg, "%d:%64s",
 				   &con_args[count].id,
@@ -724,6 +1168,20 @@ int main(int argc, char **argv)
 				usage(argv[0]);
 			count++;				      
 			break;
+		case 'P':
+			strcpy(plane_args[plane_count].format_str, "XR24");
+			if (sscanf(optarg, "%d:%dx%d@%4s",
+					&plane_args[plane_count].con_id,
+					&plane_args[plane_count].w,
+					&plane_args[plane_count].h,
+					plane_args[plane_count].format_str) != 4 &&
+				sscanf(optarg, "%d:%dx%d",
+					&plane_args[plane_count].con_id,
+					&plane_args[plane_count].w,
+					&plane_args[plane_count].h) != 3)
+				usage(argv[0]);
+			plane_count++;
+			break;
 		default:
 			usage(argv[0]);
 			break;
@@ -731,7 +1189,7 @@ int main(int argc, char **argv)
 	}
 
 	if (argc == 1)
-		encoders = connectors = crtcs = modes = framebuffers = 1;
+		encoders = connectors = crtcs = planes = modes = framebuffers = 1;
 
 	for (i = 0; i < ARRAY_SIZE(modules); i++) {
 		printf("trying to load module %s...", modules[i]);
@@ -744,7 +1202,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (test_vsync && !page_flipping_supported(fd)) {
+	if (test_vsync && !page_flipping_supported()) {
 		fprintf(stderr, "page flipping not supported by drm.\n");
 		return -1;
 	}
@@ -765,10 +1223,11 @@ int main(int argc, char **argv)
 	dump_resource(encoders);
 	dump_resource(connectors);
 	dump_resource(crtcs);
+	dump_resource(planes);
 	dump_resource(framebuffers);
 
 	if (count > 0) {
-		set_mode(con_args, count, test_vsync);
+		set_mode(con_args, count, plane_args, plane_count, test_vsync);
 		getchar();
 	}
 
