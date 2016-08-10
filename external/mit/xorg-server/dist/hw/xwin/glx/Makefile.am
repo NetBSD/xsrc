@@ -1,12 +1,17 @@
 noinst_LTLIBRARIES = libXwinGLX.la
+lib_LTLIBRARIES = libnativeGLthunk.la
 
 libXwinGLX_la_SOURCES = \
 	winpriv.c \
 	winpriv.h \
 	glwindows.h \
-	glwrap.c \
+	glshim.c \
 	indirect.c \
-	wgl_ext_api.c
+	wgl_ext_api.c \
+	wgl_ext_api.h
+
+libnativeGLthunk_la_SOURCES = \
+	glthunk.c
 
 if XWIN_MULTIWINDOW
 DEFS_MULTIWINDOW = -DXWIN_MULTIWINDOW
@@ -16,45 +21,45 @@ if XWIN_MULTIWINDOWEXTWM
 DEFS_MULTIWINDOWEXTWM = -DXWIN_MULTIWINDOWEXTWM
 endif
 
-DEFS =  $(DEFS_MULTIWINDOW) $(DEFS_MULTIWINDOWEXTWM)
+if XWIN_GLX_WINDOWS
+DEFS_GLX_WINDOWS = -DXWIN_GLX_WINDOWS
+endif
 
-INCLUDES = -I$(top_srcdir)/miext/rootless
+DEFS =  $(DEFS_MULTIWINDOW) $(DEFS_MULTIWINDOWEXTWM) $(DEFS_GLX_WINDOWS)
+
+AM_CPPFLAGS = -I$(top_srcdir)/miext/rootless
 
 AM_CFLAGS = -DHAVE_XWIN_CONFIG_H $(DIX_CFLAGS) \
             $(XWINMODULES_CFLAGS) \
             -I$(top_srcdir) \
             -I$(top_srcdir)/hw/xwin/
 
-glwrap.c: generated_gl_wrappers.c
-wgl_ext_api.c: generated_wgl_wrappers.c wglext.h
-wgl_ext_api.h: wglext.h
-indirect.c: wgl_ext_api.h
+libnativeGLthunk_la_CFLAGS = $(AM_CFLAGS) -Wno-unused-function -Wno-missing-prototypes -Wno-missing-declarations
+libnativeGLthunk_la_LDFLAGS = -shared -no-undefined -avoid-version -lopengl32 -export-symbols generated_gl_thunks.def
+EXTRA_libnativeGLthunk_la_DEPENDENCIES = generated_gl_thunks.def
 
-SPEC_FILES = gl.spec gl.tm wglext.spec wgl.tm
+if XWIN_GLX_WINDOWS
 
-gl.spec:
-	wget http://www.opengl.org/registry/api/gl.spec
+if DEBUG
+GENGLWRAPPERSOPTS=""
+else
+GENGLWRAPPERSOPTS="-nodebug"
+endif
 
-gl.tm:
-	wget http://www.opengl.org/registry/api/gl.tm
+generated_wgl_wrappers.c: $(srcdir)/gen_gl_wrappers.py $(KHRONOS_SPEC_DIR)/wgl.xml $(KHRONOS_SPEC_DIR)/reg.py
+	$(AM_V_GEN)PYTHONPATH=$(KHRONOS_SPEC_DIR) $(PYTHON3) $(srcdir)/gen_gl_wrappers.py -registry $(KHRONOS_SPEC_DIR)/wgl.xml -prefix wgl -wrapper -preresolve $(GENGLWRAPPERSOPTS) -outfile $@
 
-wglext.spec:
-	wget http://www.opengl.org/registry/api/wglext.spec
+generated_gl_shim.c: $(srcdir)/gen_gl_wrappers.py $(KHRONOS_SPEC_DIR)/gl.xml $(KHRONOS_SPEC_DIR)/reg.py
+	$(AM_V_GEN)PYTHONPATH=$(KHRONOS_SPEC_DIR) $(PYTHON3) $(srcdir)/gen_gl_wrappers.py -registry $(KHRONOS_SPEC_DIR)/gl.xml -shim $(GENGLWRAPPERSOPTS) -outfile $@
 
-wgl.tm:
-	wget http://www.opengl.org/registry/api/wgl.tm
+generated_gl_thunks.c: $(srcdir)/gen_gl_wrappers.py $(KHRONOS_SPEC_DIR)/gl.xml $(KHRONOS_SPEC_DIR)/reg.py
+	$(AM_V_GEN)PYTHONPATH=$(KHRONOS_SPEC_DIR) $(PYTHON3) $(srcdir)/gen_gl_wrappers.py -registry $(KHRONOS_SPEC_DIR)/gl.xml -thunk $(GENGLWRAPPERSOPTS) -outfile $@
 
-generated_gl_wrappers.c: gen_gl_wrappers.py gl.spec gl.tm
-	$(srcdir)/gen_gl_wrappers.py --spec=`test -e gl.spec || echo $(srcdir)/`gl.spec --typemap=`test -e gl.tm || echo $(srcdir)/`gl.tm --dispatch-header=$(top_srcdir)/glx/dispatch.h --staticwrappers >generated_gl_wrappers.c
+generated_gl_thunks.def: $(srcdir)/gen_gl_wrappers.py $(KHRONOS_SPEC_DIR)/gl.xml $(KHRONOS_SPEC_DIR)/reg.py
+	$(AM_V_GEN)PYTHONPATH=$(KHRONOS_SPEC_DIR) $(PYTHON3) $(srcdir)/gen_gl_wrappers.py -registry $(KHRONOS_SPEC_DIR)/gl.xml -thunkdefs $(GENGLWRAPPERSOPTS) -outfile $@
+endif
 
-generated_wgl_wrappers.c: gen_gl_wrappers.py wglext.spec wgl.tm
-	$(srcdir)/gen_gl_wrappers.py --spec=`test -e wglext.spec || echo $(srcdir)/`wglext.spec --typemap=`test -e wgl.tm || echo $(srcdir)/`wgl.tm --prefix=wgl --preresolve >generated_wgl_wrappers.c
-
-wglext.h:
-	wget http://www.opengl.org/registry/api/wglext.h
-
-BUILT_SOURCES = generated_gl_wrappers.c generated_wgl_wrappers.c
+BUILT_SOURCES = generated_gl_shim.c generated_gl_thunks.c generated_gl_thunks.def generated_wgl_wrappers.c
 CLEANFILES = $(BUILT_SOURCES)
-DISTCLEANFILES = $(SPEC_FILES) wglext.h
 
-EXTRA_DIST = gen_gl_wrappers.py $(SPEC_FILES) wglext.h
+EXTRA_DIST = gen_gl_wrappers.py

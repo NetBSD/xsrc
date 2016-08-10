@@ -37,6 +37,7 @@
 #endif
 #include <stdio.h>
 #include <stdlib.h>
+#define _STDLIB_H 1 /* bison checks this to know if stdlib has been included */
 #include <string.h>
 #include "winprefs.h"
 
@@ -63,7 +64,7 @@ static void SetDefaultSysMenu (char *menu, int pos);
 static void SetTrayIcon (char *fname);
 
 static void OpenMenu(char *menuname);
-static void AddMenuLine(char *name, MENUCOMMANDTYPE cmd, char *param);
+static void AddMenuLine(const char *name, MENUCOMMANDTYPE cmd, const char *param);
 static void CloseMenu(void);
 
 static void OpenIcons(void);
@@ -78,10 +79,10 @@ static void OpenSysMenu(void);
 static void AddSysMenuLine(char *matchstr, char *menuname, int pos);
 static void CloseSysMenu(void);
 
-static int yyerror (char *s);
+static int yyerror (const char *s);
 
-extern void ErrorF (const char* /*f*/, ...);
 extern char *yytext;
+extern int yylineno;
 extern int yylex(void);
 
 %}
@@ -252,10 +253,8 @@ debug: 	DEBUGOUTPUT STRING NEWLINE { ErrorF("LoadPreferences: %s\n", $2); free($
  * Errors in parsing abort and print log messages
  */
 static int
-yyerror (char *s) 
+yyerror (const char *s)
 {
-  extern int yylineno; /* Handled by flex internally */
-
   ErrorF("LoadPreferences: %s line %d\n", s, yylineno);
   return 1;
 }
@@ -283,16 +282,16 @@ SetTrayIcon (char *fname)
 }
 
 static void
-SetRootMenu (char *menu)
+SetRootMenu (char *menuname)
 {
-  strncpy (pref.rootMenuName, menu, MENU_MAX);
+  strncpy (pref.rootMenuName, menuname, MENU_MAX);
   pref.rootMenuName[MENU_MAX] = 0;
 }
 
 static void
-SetDefaultSysMenu (char *menu, int pos)
+SetDefaultSysMenu (char *menuname, int pos)
 {
-  strncpy (pref.defaultSysMenuName, menu, MENU_MAX);
+  strncpy (pref.defaultSysMenuName, menuname, MENU_MAX);
   pref.defaultSysMenuName[MENU_MAX] = 0;
   pref.defaultSysMenuPos = pos;
 }
@@ -308,13 +307,12 @@ OpenMenu (char *menuname)
 }
 
 static void
-AddMenuLine (char *text, MENUCOMMANDTYPE cmd, char *param)
+AddMenuLine (const char *text, MENUCOMMANDTYPE cmd, const char *param)
 {
   if (menu.menuItem==NULL)
-    menu.menuItem = (MENUITEM*)malloc(sizeof(MENUITEM));
+    menu.menuItem = malloc(sizeof(MENUITEM));
   else
-    menu.menuItem = (MENUITEM*)
-      realloc(menu.menuItem, sizeof(MENUITEM)*(menu.menuItems+1));
+    menu.menuItem = realloc(menu.menuItem, sizeof(MENUITEM)*(menu.menuItems+1));
 
   strncpy (menu.menuItem[menu.menuItems].text, text, MENU_MAX);
   menu.menuItem[menu.menuItems].text[MENU_MAX] = 0;
@@ -339,10 +337,9 @@ CloseMenu (void)
     }
   
   if (pref.menuItems)
-    pref.menu = (MENUPARSED*)
-      realloc (pref.menu, (pref.menuItems+1)*sizeof(MENUPARSED));
+    pref.menu = realloc (pref.menu, (pref.menuItems+1)*sizeof(MENUPARSED));
   else
-    pref.menu = (MENUPARSED*)malloc (sizeof(MENUPARSED));
+    pref.menu = malloc (sizeof(MENUPARSED));
   
   memcpy (pref.menu+pref.menuItems, &menu, sizeof(MENUPARSED));
   pref.menuItems++;
@@ -365,10 +362,9 @@ static void
 AddIconLine (char *matchstr, char *iconfile)
 {
   if (pref.icon==NULL)
-    pref.icon = (ICONITEM*)malloc(sizeof(ICONITEM));
+    pref.icon = malloc(sizeof(ICONITEM));
   else
-    pref.icon = (ICONITEM*)
-      realloc(pref.icon, sizeof(ICONITEM)*(pref.iconItems+1));
+    pref.icon = realloc(pref.icon, sizeof(ICONITEM)*(pref.iconItems+1));
 
   strncpy(pref.icon[pref.iconItems].match, matchstr, MENU_MAX);
   pref.icon[pref.iconItems].match[MENU_MAX] = 0;
@@ -401,10 +397,9 @@ static void
 AddStyleLine (char *matchstr, unsigned long style)
 {
   if (pref.style==NULL)
-    pref.style = (STYLEITEM*)malloc(sizeof(STYLEITEM));
+    pref.style = malloc(sizeof(STYLEITEM));
   else
-    pref.style = (STYLEITEM*)
-      realloc(pref.style, sizeof(STYLEITEM)*(pref.styleItems+1));
+    pref.style = realloc(pref.style, sizeof(STYLEITEM)*(pref.styleItems+1));
 
   strncpy(pref.style[pref.styleItems].match, matchstr, MENU_MAX);
   pref.style[pref.styleItems].match[MENU_MAX] = 0;
@@ -434,10 +429,9 @@ static void
 AddSysMenuLine (char *matchstr, char *menuname, int pos)
 {
   if (pref.sysMenu==NULL)
-    pref.sysMenu = (SYSMENUITEM*)malloc(sizeof(SYSMENUITEM));
+    pref.sysMenu = malloc(sizeof(SYSMENUITEM));
   else
-    pref.sysMenu = (SYSMENUITEM*)
-      realloc(pref.sysMenu, sizeof(SYSMENUITEM)*(pref.sysMenuItems+1));
+    pref.sysMenu = realloc(pref.sysMenu, sizeof(SYSMENUITEM)*(pref.sysMenuItems+1));
 
   strncpy (pref.sysMenu[pref.sysMenuItems].match, matchstr, MENU_MAX);
   pref.sysMenu[pref.sysMenuItems].match[MENU_MAX] = 0;

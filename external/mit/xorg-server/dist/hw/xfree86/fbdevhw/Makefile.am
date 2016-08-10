@@ -2,7 +2,7 @@ SUBDIRS = man
 
 module_LTLIBRARIES = libfbdevhw.la
 
-libfbdevhw_la_LDFLAGS = -avoid-version
+libfbdevhw_la_LDFLAGS = -module -avoid-version $(LD_NO_UNDEFINED_FLAG)
 
 if FBDEVHW
 libfbdevhw_la_SOURCES = fbdevhw.c
@@ -10,7 +10,7 @@ else
 libfbdevhw_la_SOURCES = fbdevhwstub.c
 endif
 
-INCLUDES = $(XORG_INCS) -I$(srcdir)/../i2c
+AM_CPPFLAGS = $(XORG_INCS) -I$(srcdir)/../i2c -I$(srcdir)/../modes -I$(srcdir)/../ddc -I$(srcdir)/../parser
 
 AM_CFLAGS = $(DIX_CFLAGS) $(XORG_CFLAGS)
 

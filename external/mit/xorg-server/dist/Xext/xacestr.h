@@ -40,9 +40,9 @@ typedef struct {
     ClientPtr client;
     XID id;
     RESTYPE rtype;
-    pointer res;
+    void *res;
     RESTYPE ptype;
-    pointer parent;
+    void *parent;
     Mask access_mode;
     int status;
 } XaceResourceAccessRec;
@@ -144,4 +144,4 @@ typedef struct {
     int requestResult;
 } XaceAuditRec;
 
-#endif /* _XACESTR_H */
+#endif                          /* _XACESTR_H */

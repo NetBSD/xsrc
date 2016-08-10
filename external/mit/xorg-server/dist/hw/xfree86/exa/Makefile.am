@@ -2,12 +2,11 @@ SUBDIRS = man
 
 module_LTLIBRARIES = libexa.la
 
-libexa_la_LDFLAGS = -avoid-version
+libexa_la_LDFLAGS = -module -avoid-version $(LD_NO_UNDEFINED_FLAG)
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	$(XORG_INCS) \
-	-I$(srcdir)/../../../exa \
-	-I$(srcdir)/../../../miext/cw
+	-I$(srcdir)/../../../exa
 
 AM_CFLAGS = $(DIX_CFLAGS) $(XORG_CFLAGS)
 
@@ -15,4 +14,4 @@ libexa_la_SOURCES = \
 	examodule.c
 
 libexa_la_LIBADD = \
-	../../../exa/libexa.la
+	../../../exa/libexa.la $(PIXMAN_LIBS)

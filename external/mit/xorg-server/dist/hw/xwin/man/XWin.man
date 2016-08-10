@@ -67,7 +67,7 @@ The default behaviour is to create a single screen 0 that is roughly the
 size of useful area of the primary monitor (allowing for any window
 decorations and the task-bar).
 
-Screen specific parameters, such as \fB\-fullscreen\fP, can be applied as a
+Screen specific parameters can be applied as a
 default to all screens by placing those screen specific parameters
 before any \fB\-screen\fP parameter.  Screen specific parameters placed after
 the first \fB\-screen\fP parameter will apply only to the immediately
@@ -76,6 +76,9 @@ preceeding \fB\-screen\fP parameter.
 .B \-[no]multimonitors or \-[no]multiplemonitors
 Create a screen 0 that covers all monitors [the primary monitor] on a system with
 multiple monitors.
+Fake XINERAMA data is created describing the individual monitors,
+(This is similar to the 'merged framebuffer' or 'pseudo-xinerama' mode provided by
+some drivers for the xorg X server).
 This option is currently enabled by default in \fB\-multiwindow\fP mode.
 .TP 8
 .B "\-screen \fIscreen_number\fP [\fIW\fP \fIH\fP [\fIX\fP \fIY\fP] | [[\fIW\fPx\fIH\fP[+\fIX\fP+\fIY\fP]][@\fIM\fP]] ] "
@@ -108,6 +111,7 @@ in \fB-multiwindow\fP or \fB-rootless\fP mode.
 .B "\-fullscreen"
 The X server window takes the full screen, covering completely the
 \fIWindows\fP desktop.
+Currently \fB\-fullscreen\fP may only be applied to one X screen.
 .TP 8
 .B \-nodecoration
 Do not give the Cygwin/X window a \fIWindows\fP window border, title bar,
@@ -120,13 +124,15 @@ Alternative name for \fB\-resize=scrollbars\fP.
 .SH OPTIONS CONTROLLING RESIZE BEHAVIOUR
 .TP 8
 .B \-resize[=none|scrollbars|randr]
-Select the resize mode of an X screen.
+Select the resize mode of an X screen. The default is randr.
 
 .RS
 .IP \fB\-resize=none\fP 8
-(default). The screen is not resizable.
+The screen is not resizable.
 
 In windowed mode, if the window has decorations, a fixed frame is used.
+
+Alternative name is \fB\-noresize\fP.
 
 .IP \fB\-resize=scrollbars\fP 8
 The screen window is resizeable, but the screen is not resizable.
@@ -158,14 +164,21 @@ of the X screen using the RANDR extension is not permitted.
 
 The maximum dimensions of the screen are the dimensions of the \fIWindows\fP virtual desktop.
 
-.IP \fB\--resize\fP 8
-on its own is equivalent to \fB\--resize=randr\fP
+.IP \fB\-resize\fP 8
+on its own is equivalent to \fB\-resize=randr\fP
 .RE
+
+.SH OPTIONS FOR MULTIWINDOW MODE
+.TP 8
+.B \-[no]hostintitle
+Add the host name to the window title for X applications which are running
+on remote hosts, when that information is available and it's useful to do so.
+The default is enabled.
 
 .SH OPTIONS CONTROLLING WINDOWS INTEGRATION
 .TP 8
 .B \-[no]clipboard
-Enables [disables] the integration between the Cygwin/X clipboard and
+Enables [disables] the integration between the X11 clipboard and
 \fIWindows\fP clipboard.  The default is enabled.
 .TP 8
 .B "\-emulate3buttons [\fItimeout\fP]"
@@ -175,7 +188,8 @@ milliseconds causes an emulated middle button press.  The default
 .I timeout
 is 50 milliseconds.  Note that most mice with scroll wheel have middle
 button functionality, usually you will need this option only if you have
-a two button mouse without scroll wheel.
+a two button mouse without scroll wheel.  Default is to enable this
+option if  \fIWindows\fP reports a two button mouse, disabled otherwise.
 .TP 8
 .B \-[no]keyhook
 Enable [disable] a low-level keyboard hook for catching
@@ -189,6 +203,10 @@ also to be hidden when it is over an inactive Cygwin/X window.  This
 prevents the \fIWindows\fP mouse cursor from being drawn on top of the X
 cursor.
 This parameter has no effect unless \fB-swcursor\fP is also specified.
+.TP 8
+.B \-[no]primary
+Clipboard integration may [will not] use the PRIMARY selection.
+The default is enabled.
 .TP 8
 .B \-swcursor
 Disable the usage of the \fIWindows\fP cursor and use the X11 software cursor instead.
@@ -206,6 +224,10 @@ Do not use Unicode clipboard even if on a NT-based platform.
 Enable or disable the \fICtrl-Alt-Backspace\fP key combination as a
 signal to exit the X Server.  The \fICtrl-Alt-Backspace\fP key combination
 is disabled by default.
+.TP 8
+.B \-[no]wgl
+Enable [disable] the GLX extension to use the native Windows WGL interface
+for hardware accelerated OpenGL (AIGLX). The default is enabled.
 .TP 8
 .B \-[no]winkill
 Enable or disable the \fIAlt-F4\fP key combination as a signal to exit the
@@ -226,9 +248,6 @@ functionality does not provide a benefit at any number of boxes; we
 can only determine the usefulness of this feature through testing.
 This option probably has limited effect on current \fIWindows\fP versions
 as they already perform GDI batching.
-This parameter works in conjunction with engines 1, 2, and 4 (Shadow
-GDI, Shadow DirectDraw, and Shadow DirectDraw Non-Locking,
-respectively).
 .TP 8
 .B "\-engine \fIengine_type_id\fP"
 This option, which is intended for Cygwin/X developers,
@@ -243,14 +262,8 @@ The engine type ids are:
 .RS
 .IP 1 4
 Shadow GDI
-.IP 2 4
-Shadow DirectDraw
 .IP 4 4
 Shadow DirectDraw Non-Locking
-.IP 8 4
-Primary DirectDraw (unsupported, obsolete)
-.IP 16 4
-Native GDI (unsupported, experimental and barely functional)
 .RE
 
 .SH FULLSCREEN OPTIONS
@@ -307,18 +320,22 @@ exit silently and don't display any error message.
 .B "\-xkbvariant \fIvariant\fp"
 These options configure the xkeyboard extension to load
 a particular keyboard map as the X server starts.  The behavior is similar
-to the \fIsetxkbmap\fP program.  The layout data is located at \fI
-__datadir__/X11/xkb/\fP.  Additional information is found in the
-README files therein and in the man page of \fIsetxkbmap\fP.  For example
-in order to load a German layout for a pc105 keyboard one uses
-the options:
+to the \fIsetxkbmap\fP(1) program.
+
+See the \fIxkeyboard-config\fP(__miscmansuffix__) manual page for a list of
+keyboard configurations.
+
+The keyboard layout data is located at \fI__datadir__/X11/xkb/\fP.  Additional information
+can be found in the README files there and in the \fIsetxkbmap\fP(1) manual page.
+
+For example, in order to load a German layout for a pc105 keyboard, use the options:
 .br
 .I " \-xkblayout de \-xkbmodel pc105"
 
-Alternatively one may use the \fIsetxkbmap\fP program after \fIXWin\fP is
+Alternatively, you can use the \fIsetxkbmap\fP(1) program after \fIXWin\fP is
 running.
 
-The default is to select a configuration matching your current layout as
+The default is to select a keyboard configuration matching your current layout as
 reported by \fIWindows\fP, if known, or the default X server configuration
 if no matching keyboard configuration was found.
 
@@ -364,22 +381,23 @@ window, in both the generic case and for particular programs.
 * To change the style that is associated to the \fIWindows\fP window that
 \fXWin I-multiwindow\fP produces for each top-level X window.
 .PP
-The format of the \fI.XWinrc\fP file is given in the man page XWinrc(5).
+The format of the \fI.XWinrc\fP file is given in the XWinrc(5) manual page.
 
 .SH EXAMPLES
 Need some examples
 
 
 .SH "SEE ALSO"
-X(__miscmansuffix__), Xserver(1), xdm(1), xinit(1), XWinrc(__filemansuffix__), setxkbmap(1)
+X(__miscmansuffix__), Xserver(1), xdm(1), xinit(1), XWinrc(__filemansuffix__),
+setxkbmap(1), xkeyboard-config(__miscmansuffix__).
 
 
 .SH BUGS
 .I XWin
-and this man page still have many limitations.
+and this manual page still have many limitations.
 
 The \fIXWin\fP software is continuously developing; it is therefore possible that
-this man page is not up to date.  It is always prudent to
+this manual page is not up to date.  It is always prudent to
 look also at the output of \fIXWin -help\fP in order to
 check the options that are operative.
 

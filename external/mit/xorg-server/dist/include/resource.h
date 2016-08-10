@@ -22,18 +22,17 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
-
 Copyright 1987, 1989 by Digital Equipment Corporation, Maynard, Massachusetts.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of Digital not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -51,12 +50,12 @@ SOFTWARE.
 #include "dixaccess.h"
 
 /*****************************************************************
- * STUFF FOR RESOURCES 
+ * STUFF FOR RESOURCES
  *****************************************************************/
 
 /* classes for Resource routines */
 
-typedef unsigned long RESTYPE;
+typedef uint32_t RESTYPE;
 
 #define RC_VANILLA	((RESTYPE)0)
 #define RC_CACHED	((RESTYPE)1<<31)
@@ -86,21 +85,10 @@ typedef unsigned long RESTYPE;
 #define RT_LASTPREDEF	((RESTYPE)9)
 #define RT_NONE		((RESTYPE)0)
 
+extern _X_EXPORT unsigned int ResourceClientBits(void);
 /* bits and fields within a resource id */
-#define RESOURCE_AND_CLIENT_COUNT   29			/* 29 bits for XIDs */
-#if MAXCLIENTS == 64
-#define RESOURCE_CLIENT_BITS	6
-#endif
-#if MAXCLIENTS == 128
-#define RESOURCE_CLIENT_BITS	7
-#endif
-#if MAXCLIENTS == 256
-#define RESOURCE_CLIENT_BITS	8
-#endif
-#if MAXCLIENTS == 512
-#define RESOURCE_CLIENT_BITS	9
-#endif
-/* client field offset */
+#define RESOURCE_AND_CLIENT_COUNT   29  /* 29 bits for XIDs */
+#define RESOURCE_CLIENT_BITS        ResourceClientBits() /* client field offset */
 #define CLIENTOFFSET	    (RESOURCE_AND_CLIENT_COUNT - RESOURCE_CLIENT_BITS)
 /* resource field */
 #define RESOURCE_ID_MASK	((1 << CLIENTOFFSET) - 1)
@@ -110,10 +98,10 @@ typedef unsigned long RESTYPE;
 #define CLIENT_BITS(id) ((id) & RESOURCE_CLIENT_MASK)
 /* extract the client id from an XID */
 #define CLIENT_ID(id) ((int)(CLIENT_BITS(id) >> CLIENTOFFSET))
-#define SERVER_BIT		(Mask)0x40000000	/* use illegal bit */
+#define SERVER_BIT		(Mask)0x40000000        /* use illegal bit */
 
 #ifdef INVALID
-#undef INVALID	/* needed on HP/UX */
+#undef INVALID                  /* needed on HP/UX */
 #endif
 
 /* Invalid resource id */
@@ -126,159 +114,163 @@ typedef unsigned long RESTYPE;
 /* Resource state callback */
 extern _X_EXPORT CallbackListPtr ResourceStateCallback;
 
-typedef enum {ResourceStateAdding,
-	      ResourceStateFreeing} ResourceState;
+typedef enum { ResourceStateAdding,
+    ResourceStateFreeing
+} ResourceState;
 
 typedef struct {
     ResourceState state;
     XID id;
     RESTYPE type;
-    pointer value;
+    void *value;
 } ResourceStateInfoRec;
 
-typedef int (*DeleteType)(
-    pointer /*value*/,
-    XID /*id*/);
+typedef int (*DeleteType) (void *value,
+                           XID id);
 
-typedef void (*FindResType)(
-    pointer /*value*/,
-    XID /*id*/,
-    pointer /*cdata*/);
+typedef void (*FindResType) (void *value,
+                             XID id,
+                             void *cdata);
 
-typedef void (*FindAllRes)(
-    pointer /*value*/,
-    XID /*id*/,
-    RESTYPE /*type*/,
-    pointer /*cdata*/);
+typedef void (*FindAllRes) (void *value,
+                            XID id,
+                            RESTYPE type,
+                            void *cdata);
 
-typedef Bool (*FindComplexResType)(
-    pointer /*value*/,
-    XID /*id*/,
-    pointer /*cdata*/);
+typedef Bool (*FindComplexResType) (void *value,
+                                    XID id,
+                                    void *cdata);
 
-extern _X_EXPORT RESTYPE CreateNewResourceType(
-    DeleteType /*deleteFunc*/, char * /*name*/);
+/* Structure for estimating resource memory usage. Memory usage
+ * consists of space allocated for the resource itself and of
+ * references to other resources. Currently the most important use for
+ * this structure is to estimate pixmap usage of different resources
+ * more accurately. */
+typedef struct {
+    /* Size of resource itself. Zero if not implemented. */
+    unsigned long resourceSize;
+    /* Size attributed to pixmap references from the resource. */
+    unsigned long pixmapRefSize;
+    /* Number of references to this resource; typically 1 */
+    unsigned long refCnt;
+} ResourceSizeRec, *ResourceSizePtr;
+
+typedef void (*SizeType)(void *value,
+                         XID id,
+                         ResourceSizePtr size);
+
+extern _X_EXPORT RESTYPE CreateNewResourceType(DeleteType deleteFunc,
+                                               const char *name);
+
+typedef void (*FindTypeSubResources)(void *value,
+                                     FindAllRes func,
+                                     void *cdata);
+
+extern _X_EXPORT SizeType GetResourceTypeSizeFunc(
+    RESTYPE /*type*/);
+
+extern _X_EXPORT void SetResourceTypeFindSubResFunc(
+    RESTYPE /*type*/, FindTypeSubResources /*findFunc*/);
+
+extern _X_EXPORT void SetResourceTypeSizeFunc(
+    RESTYPE /*type*/, SizeType /*sizeFunc*/);
 
 extern _X_EXPORT void SetResourceTypeErrorValue(
     RESTYPE /*type*/, int /*errorValue*/);
 
 extern _X_EXPORT RESTYPE CreateNewResourceClass(void);
 
-extern _X_EXPORT Bool InitClientResources(
-    ClientPtr /*client*/);
+extern _X_EXPORT Bool InitClientResources(ClientPtr /*client */ );
 
-extern _X_EXPORT XID FakeClientID(
-    int /*client*/);
+extern _X_EXPORT XID FakeClientID(int /*client */ );
 
 /* Quartz support on Mac OS X uses the CarbonCore
    framework whose AddResource function conflicts here. */
 #ifdef __APPLE__
 #define AddResource Darwin_X_AddResource
 #endif
-extern _X_EXPORT Bool AddResource(
-    XID /*id*/,
-    RESTYPE /*type*/,
-    pointer /*value*/);
+extern _X_EXPORT Bool AddResource(XID id,
+                                  RESTYPE type,
+                                  void *value);
 
-extern _X_EXPORT void FreeResource(
-    XID /*id*/,
-    RESTYPE /*skipDeleteFuncType*/);
+extern _X_EXPORT void FreeResource(XID /*id */ ,
+                                   RESTYPE /*skipDeleteFuncType */ );
 
-extern _X_EXPORT void FreeResourceByType(
-    XID /*id*/,
-    RESTYPE /*type*/,
-    Bool /*skipFree*/);
+extern _X_EXPORT void FreeResourceByType(XID /*id */ ,
+                                         RESTYPE /*type */ ,
+                                         Bool /*skipFree */ );
 
-extern _X_EXPORT Bool ChangeResourceValue(
-    XID /*id*/,
-    RESTYPE /*rtype*/,
-    pointer /*value*/);
+extern _X_EXPORT Bool ChangeResourceValue(XID id,
+                                          RESTYPE rtype,
+                                          void *value);
 
-extern _X_EXPORT void FindClientResourcesByType(
-    ClientPtr /*client*/,
-    RESTYPE /*type*/,
-    FindResType /*func*/,
-    pointer /*cdata*/);
+extern _X_EXPORT void FindClientResourcesByType(ClientPtr client,
+                                                RESTYPE type,
+                                                FindResType func,
+                                                void *cdata);
 
-extern _X_EXPORT void FindAllClientResources(
-    ClientPtr /*client*/,
-    FindAllRes /*func*/,
-    pointer /*cdata*/);
+extern _X_EXPORT void FindAllClientResources(ClientPtr client,
+                                             FindAllRes func,
+                                             void *cdata);
 
-extern _X_EXPORT void FreeClientNeverRetainResources(
-    ClientPtr /*client*/);
+/** @brief Iterate through all subresources of a resource.
 
-extern _X_EXPORT void FreeClientResources(
-    ClientPtr /*client*/);
+    @note The XID argument provided to the FindAllRes function
+          may be 0 for subresources that don't have an XID */
+extern _X_EXPORT void FindSubResources(void *resource,
+                                       RESTYPE type,
+                                       FindAllRes func,
+                                       void *cdata);
+
+extern _X_EXPORT void FreeClientNeverRetainResources(ClientPtr /*client */ );
+
+extern _X_EXPORT void FreeClientResources(ClientPtr /*client */ );
 
 extern _X_EXPORT void FreeAllResources(void);
 
-extern _X_EXPORT Bool LegalNewID(
-    XID /*id*/,
-    ClientPtr /*client*/);
+extern _X_EXPORT Bool LegalNewID(XID /*id */ ,
+                                 ClientPtr /*client */ );
 
-extern _X_EXPORT pointer LookupClientResourceComplex(
-    ClientPtr client,
-    RESTYPE type,
-    FindComplexResType func,
-    pointer cdata);
+extern _X_EXPORT void *LookupClientResourceComplex(ClientPtr client,
+                                                     RESTYPE type,
+                                                     FindComplexResType func,
+                                                     void *cdata);
 
-extern _X_EXPORT int dixLookupResourceByType(
-    pointer *result,
-    XID id,
-    RESTYPE rtype,
-    ClientPtr client,
-    Mask access_mode);
+extern _X_EXPORT int dixLookupResourceByType(void **result,
+                                             XID id,
+                                             RESTYPE rtype,
+                                             ClientPtr client,
+                                             Mask access_mode);
 
-extern _X_EXPORT int dixLookupResourceByClass(
-    pointer *result,
-    XID id,
-    RESTYPE rclass,
-    ClientPtr client,
-    Mask access_mode);
+extern _X_EXPORT int dixLookupResourceByClass(void **result,
+                                              XID id,
+                                              RESTYPE rclass,
+                                              ClientPtr client,
+                                              Mask access_mode);
 
-extern _X_EXPORT void GetXIDRange(
-    int /*client*/,
-    Bool /*server*/,
-    XID * /*minp*/,
-    XID * /*maxp*/);
+extern _X_EXPORT void GetXIDRange(int /*client */ ,
+                                  Bool /*server */ ,
+                                  XID * /*minp */ ,
+                                  XID * /*maxp */ );
 
-extern _X_EXPORT unsigned int GetXIDList(
-    ClientPtr /*client*/,
-    unsigned int /*count*/,
-    XID * /*pids*/);
+extern _X_EXPORT unsigned int GetXIDList(ClientPtr /*client */ ,
+                                         unsigned int /*count */ ,
+                                         XID * /*pids */ );
 
 extern _X_EXPORT RESTYPE lastResourceType;
 extern _X_EXPORT RESTYPE TypeMask;
 
-/*
- * These are deprecated compatibility functions and will be removed soon!
- * Please use the noted replacements instead.
- */
+/** @brief A hashing function to be used for hashing resource IDs
 
-/* replaced by dixLookupResourceByType */
-extern _X_EXPORT pointer SecurityLookupIDByType(
-    ClientPtr client,
-    XID id,
-    RESTYPE rtype,
-    Mask access_mode) _X_DEPRECATED;
+    @param id The resource ID to hash
+    @param numBits The number of bits in the resulting hash. Must be >=0.
 
-/* replaced by dixLookupResourceByClass */
-extern _X_EXPORT pointer SecurityLookupIDByClass(
-    ClientPtr client,
-    XID id,
-    RESTYPE classes,
-    Mask access_mode) _X_DEPRECATED;
-
-/* replaced by dixLookupResourceByType */
-extern _X_EXPORT pointer LookupIDByType(
-    XID id,
-    RESTYPE rtype) _X_DEPRECATED;
-
-/* replaced by dixLookupResourceByClass */
-extern _X_EXPORT pointer LookupIDByClass(
-    XID id,
-    RESTYPE classes) _X_DEPRECATED;
+    @note This function is really only for handling
+    INITHASHSIZE..MAXHASHSIZE bit hashes, but will handle any number
+    of bits by either masking numBits lower bits of the ID or by
+    providing at most MAXHASHSIZE hashes.
+*/
+extern _X_EXPORT int HashResourceID(XID id,
+                                    int numBits);
 
 #endif /* RESOURCE_H */
-

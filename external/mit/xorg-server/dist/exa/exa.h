@@ -39,12 +39,13 @@
 #include "fb.h"
 
 #define EXA_VERSION_MAJOR   2
-#define EXA_VERSION_MINOR   5
+#define EXA_VERSION_MINOR   6
 #define EXA_VERSION_RELEASE 0
 
 typedef struct _ExaOffscreenArea ExaOffscreenArea;
 
-typedef void (*ExaOffscreenSaveProc) (ScreenPtr pScreen, ExaOffscreenArea *area);
+typedef void (*ExaOffscreenSaveProc) (ScreenPtr pScreen,
+                                      ExaOffscreenArea * area);
 
 typedef enum _ExaOffscreenState {
     ExaOffscreenAvail,
@@ -53,22 +54,22 @@ typedef enum _ExaOffscreenState {
 } ExaOffscreenState;
 
 struct _ExaOffscreenArea {
-    int                 base_offset;	/* allocation base */
-    int                 offset;         /* aligned offset */
-    int                 size;           /* total allocation size */
-    unsigned            last_use;
-    pointer             privData;
+    int base_offset;            /* allocation base */
+    int offset;                 /* aligned offset */
+    int size;                   /* total allocation size */
+    unsigned last_use;
+    void *privData;
 
     ExaOffscreenSaveProc save;
 
-    ExaOffscreenState   state;
+    ExaOffscreenState state;
 
-    ExaOffscreenArea    *next;
+    ExaOffscreenArea *next;
 
-    unsigned            eviction_cost;
+    unsigned eviction_cost;
 
-    ExaOffscreenArea    *prev;          /* Double-linked list for defragmentation */
-    int                 align;          /* required alignment */
+    ExaOffscreenArea *prev;     /* Double-linked list for defragmentation */
+    int align;                  /* required alignment */
 };
 
 /**
@@ -89,7 +90,7 @@ typedef struct _ExaDriver {
      * The visible screen should be within memoryBase to memoryBase +
      * memorySize.
      */
-    CARD8         *memoryBase;
+    CARD8 *memoryBase;
 
     /**
      * offScreenBase is the offset from memoryBase of the beginning of the area
@@ -98,7 +99,7 @@ typedef struct _ExaDriver {
      * In XFree86 DDX drivers, this is probably:
      *   (pScrn->displayWidth * cpp * pScrn->virtualY)
      */
-    unsigned long  offScreenBase;
+    unsigned long offScreenBase;
 
     /**
      * memorySize is the length (in bytes) of framebuffer memory beginning
@@ -162,8 +163,8 @@ typedef struct _ExaDriver {
 
     /* private */
     ExaOffscreenArea *offScreenAreas;
-    Bool              needsSync;
-    int               lastMarker;
+    Bool needsSync;
+    int lastMarker;
 
     /** @name Solid
      * @{
@@ -189,10 +190,8 @@ typedef struct _ExaDriver {
      * The PrepareSolid() call is required of all drivers, but it may fail for any
      * reason.  Failure results in a fallback to software rendering.
      */
-    Bool        (*PrepareSolid) (PixmapPtr      pPixmap,
-                                 int            alu,
-                                 Pixel          planemask,
-                                 Pixel          fg);
+    Bool (*PrepareSolid) (PixmapPtr pPixmap,
+                          int alu, Pixel planemask, Pixel fg);
 
     /**
      * Solid() performs a solid fill set up in the last PrepareSolid() call.
@@ -213,7 +212,7 @@ typedef struct _ExaDriver {
      *
      * This call is required if PrepareSolid() ever succeeds.
      */
-    void        (*Solid) (PixmapPtr      pPixmap, int x1, int y1, int x2, int y2);
+    void (*Solid) (PixmapPtr pPixmap, int x1, int y1, int x2, int y2);
 
     /**
      * DoneSolid() finishes a set of solid fills.
@@ -227,14 +226,14 @@ typedef struct _ExaDriver {
      *
      * This call is required if PrepareSolid() ever succeeds.
      */
-    void        (*DoneSolid) (PixmapPtr      pPixmap);
+    void (*DoneSolid) (PixmapPtr pPixmap);
     /** @} */
 
     /** @name Copy
      * @{
      */
     /**
-     * PrepareCopy() sets up the driver for doing a copy within video 
+     * PrepareCopy() sets up the driver for doing a copy within video
      * memory.
      *
      * @param pSrcPixmap source pixmap
@@ -264,12 +263,9 @@ typedef struct _ExaDriver {
      * The PrepareCopy() call is required of all drivers, but it may fail for any
      * reason.  Failure results in a fallback to software rendering.
      */
-    Bool        (*PrepareCopy) (PixmapPtr       pSrcPixmap,
-                                PixmapPtr       pDstPixmap,
-                                int             dx,
-                                int             dy,
-                                int             alu,
-                                Pixel           planemask);
+    Bool (*PrepareCopy) (PixmapPtr pSrcPixmap,
+                         PixmapPtr pDstPixmap,
+                         int dx, int dy, int alu, Pixel planemask);
 
     /**
      * Copy() performs a copy set up in the last PrepareCopy call.
@@ -295,13 +291,9 @@ typedef struct _ExaDriver {
      *
      * This call is required if PrepareCopy ever succeeds.
      */
-    void        (*Copy) (PixmapPtr       pDstPixmap,
-                         int    srcX,
-                         int    srcY,
-                         int    dstX,
-                         int    dstY,
-                         int    width,
-                         int    height);
+    void (*Copy) (PixmapPtr pDstPixmap,
+                  int srcX,
+                  int srcY, int dstX, int dstY, int width, int height);
 
     /**
      * DoneCopy() finishes a set of copies.
@@ -315,7 +307,7 @@ typedef struct _ExaDriver {
      *
      * This call is required if PrepareCopy() ever succeeds.
      */
-    void        (*DoneCopy) (PixmapPtr       pDstPixmap);
+    void (*DoneCopy) (PixmapPtr pDstPixmap);
     /** @} */
 
     /** @name Composite
@@ -346,10 +338,9 @@ typedef struct _ExaDriver {
      * The CheckComposite() call is recommended if PrepareComposite() is
      * implemented, but is not required.
      */
-    Bool        (*CheckComposite) (int          op,
-                                   PicturePtr   pSrcPicture,
-                                   PicturePtr   pMaskPicture,
-                                   PicturePtr   pDstPicture);
+    Bool (*CheckComposite) (int op,
+                            PicturePtr pSrcPicture,
+                            PicturePtr pMaskPicture, PicturePtr pDstPicture);
 
     /**
      * PrepareComposite() sets up the driver for doing a Composite operation
@@ -405,13 +396,11 @@ typedef struct _ExaDriver {
      * of cairo applications.  Failure results in a fallback to software
      * rendering.
      */
-    Bool        (*PrepareComposite) (int                op,
-                                     PicturePtr         pSrcPicture,
-                                     PicturePtr         pMaskPicture,
-                                     PicturePtr         pDstPicture,
-                                     PixmapPtr          pSrc,
-                                     PixmapPtr          pMask,
-                                     PixmapPtr          pDst);
+    Bool (*PrepareComposite) (int op,
+                              PicturePtr pSrcPicture,
+                              PicturePtr pMaskPicture,
+                              PicturePtr pDstPicture,
+                              PixmapPtr pSrc, PixmapPtr pMask, PixmapPtr pDst);
 
     /**
      * Composite() performs a Composite operation set up in the last
@@ -437,15 +426,11 @@ typedef struct _ExaDriver {
      *
      * This call is required if PrepareComposite() ever succeeds.
      */
-    void        (*Composite) (PixmapPtr         pDst,
-                              int       srcX,
-                              int        srcY,
-                              int        maskX,
-                              int        maskY,
-                              int        dstX,
-                              int        dstY,
-                              int        width,
-                              int        height);
+    void (*Composite) (PixmapPtr pDst,
+                       int srcX,
+                       int srcY,
+                       int maskX,
+                       int maskY, int dstX, int dstY, int width, int height);
 
     /**
      * DoneComposite() finishes a set of Composite operations.
@@ -459,7 +444,7 @@ typedef struct _ExaDriver {
      *
      * This call is required if PrepareComposite() ever succeeds.
      */
-    void        (*DoneComposite) (PixmapPtr         pDst);
+    void (*DoneComposite) (PixmapPtr pDst);
     /** @} */
 
     /**
@@ -486,27 +471,22 @@ typedef struct _ExaDriver {
      * UploadToScreen() can aid in pixmap migration, but is most important for
      * the performance of exaGlyphs() (antialiased font drawing) by allowing
      * pipelining of data uploads, avoiding a sync of the card after each glyph.
-     * 
+     *
      * @return TRUE if the driver successfully uploaded the data.  FALSE
      * indicates that EXA should fall back to doing the upload in software.
      *
      * UploadToScreen() is not required, but is recommended if Composite
      * acceleration is supported.
      */
-    Bool        (*UploadToScreen) (PixmapPtr            pDst,
-				   int                  x,
-				   int                  y,
-				   int                  w,
-				   int                  h,
-                                   char                 *src,
-                                   int                  src_pitch);
+    Bool (*UploadToScreen) (PixmapPtr pDst,
+                            int x,
+                            int y, int w, int h, char *src, int src_pitch);
 
     /**
      * UploadToScratch() is no longer used and will be removed next time the EXA
      * major version needs to be bumped.
      */
-    Bool        (*UploadToScratch) (PixmapPtr           pSrc,
-                                    PixmapPtr           pDst);
+    Bool (*UploadToScratch) (PixmapPtr pSrc, PixmapPtr pDst);
 
     /**
      * DownloadFromScreen() loads a rectangle of data from pSrc into dst
@@ -532,16 +512,15 @@ typedef struct _ExaDriver {
      * migration, which is the read from framebuffer when evicting pixmaps from
      * framebuffer memory.  Thus, it is highly recommended, even though
      * implementations are typically complicated.
-     * 
+     *
      * @return TRUE if the driver successfully downloaded the data.  FALSE
      * indicates that EXA should fall back to doing the download in software.
      *
      * DownloadFromScreen() is not required, but is highly recommended.
      */
-    Bool (*DownloadFromScreen)(PixmapPtr pSrc,
-                               int x,  int y,
-                               int w,  int h,
-                               char *dst,  int dst_pitch);
+    Bool (*DownloadFromScreen) (PixmapPtr pSrc,
+                                int x, int y,
+                                int w, int h, char *dst, int dst_pitch);
 
     /**
      * MarkSync() requests that the driver mark a synchronization point,
@@ -558,7 +537,7 @@ typedef struct _ExaDriver {
      *
      * MarkSync() is optional.
      */
-    int		(*MarkSync)   (ScreenPtr pScreen);
+    int (*MarkSync) (ScreenPtr pScreen);
 
     /**
      * WaitMarker() waits for all rendering before the given marker to have
@@ -572,7 +551,7 @@ typedef struct _ExaDriver {
      *
      * WaitMarker() is required of all drivers.
      */
-    void	(*WaitMarker) (ScreenPtr pScreen, int marker);
+    void (*WaitMarker) (ScreenPtr pScreen, int marker);
 
     /** @{ */
     /**
@@ -608,7 +587,7 @@ typedef struct _ExaDriver {
      * @return FALSE if PrepareAccess() is unsuccessful and EXA should use
      * DownloadFromScreen() to migate the pixmap out.
      */
-    Bool	(*PrepareAccess)(PixmapPtr pPix, int index);
+    Bool (*PrepareAccess) (PixmapPtr pPix, int index);
 
     /**
      * FinishAccess() is called after CPU access to an offscreen pixmap.
@@ -620,7 +599,7 @@ typedef struct _ExaDriver {
      * pixmap set up by PrepareAccess().  Note that the FinishAccess() will not be
      * called if PrepareAccess() failed and the pixmap was migrated out.
      */
-    void	(*FinishAccess)(PixmapPtr pPix, int index);
+    void (*FinishAccess) (PixmapPtr pPix, int index);
 
     /**
      * PixmapIsOffscreen() is an optional driver replacement to
@@ -637,34 +616,34 @@ typedef struct _ExaDriver {
      *
      *
      */
-    Bool	(*PixmapIsOffscreen)(PixmapPtr pPix);
+    Bool (*PixmapIsOffscreen) (PixmapPtr pPix);
 
-	/** @name PrepareAccess() and FinishAccess() indices
+        /** @name PrepareAccess() and FinishAccess() indices
 	 * @{
 	 */
-	/**
+        /**
 	 * EXA_PREPARE_DEST is the index for a pixmap that may be drawn to or
 	 * read from.
-	 */ 
-	#define EXA_PREPARE_DEST	0
-	/**
+	 */
+#define EXA_PREPARE_DEST	0
+        /**
 	 * EXA_PREPARE_SRC is the index for a pixmap that may be read from
 	 */
-	#define EXA_PREPARE_SRC		1
-	/**
+#define EXA_PREPARE_SRC		1
+        /**
 	 * EXA_PREPARE_SRC is the index for a second pixmap that may be read
 	 * from.
 	 */
-	#define EXA_PREPARE_MASK	2
-	/**
+#define EXA_PREPARE_MASK	2
+        /**
 	 * EXA_PREPARE_AUX* are additional indices for other purposes, e.g.
 	 * separate alpha maps with Composite operations.
 	 */
-	#define EXA_PREPARE_AUX_DEST	3
-	#define EXA_PREPARE_AUX_SRC	4
-	#define EXA_PREPARE_AUX_MASK	5
-	#define EXA_NUM_PREPARE_INDICES	6
-	/** @} */
+#define EXA_PREPARE_AUX_DEST	3
+#define EXA_PREPARE_AUX_SRC	4
+#define EXA_PREPARE_AUX_MASK	5
+#define EXA_NUM_PREPARE_INDICES	6
+        /** @} */
 
     /**
      * maxPitchPixels controls the pitch limitation for rendering from
@@ -697,31 +676,35 @@ typedef struct _ExaDriver {
     int maxPitchBytes;
 
     /* Hooks to allow driver to its own pixmap memory management */
-    void *(*CreatePixmap)(ScreenPtr pScreen, int size, int align);
-    void (*DestroyPixmap)(ScreenPtr pScreen, void *driverPriv);
+    void *(*CreatePixmap) (ScreenPtr pScreen, int size, int align);
+    void (*DestroyPixmap) (ScreenPtr pScreen, void *driverPriv);
     /**
      * Returning a pixmap with non-NULL devPrivate.ptr implies a pixmap which is
      * not offscreen, which will never be accelerated and Prepare/FinishAccess won't
      * be called.
      */
-    Bool (*ModifyPixmapHeader)(PixmapPtr pPixmap, int width, int height,
-                              int depth, int bitsPerPixel, int devKind,
-                              pointer pPixData);
+    Bool (*ModifyPixmapHeader) (PixmapPtr pPixmap, int width, int height,
+                                int depth, int bitsPerPixel, int devKind,
+                                void *pPixData);
 
     /* hooks for drivers with tiling support:
      * driver MUST fill out new_fb_pitch with valid pitch of pixmap
      */
-    void *(*CreatePixmap2)(ScreenPtr pScreen, int width, int height,
-			   int depth, int usage_hint, int bitsPerPixel,
-			   int *new_fb_pitch);
+    void *(*CreatePixmap2) (ScreenPtr pScreen, int width, int height,
+                            int depth, int usage_hint, int bitsPerPixel,
+                            int *new_fb_pitch);
     /** @} */
+    Bool (*SharePixmapBacking)(PixmapPtr pPixmap, ScreenPtr slave, void **handle_p);
+
+    Bool (*SetSharedPixmapBacking)(PixmapPtr pPixmap, void *handle);
+
 } ExaDriverRec, *ExaDriverPtr;
 
 /** @name EXA driver flags
  * @{
  */
 /**
- * EXA_OFFSCREEN_PIXMAPS indicates to EXA that the driver can support 
+ * EXA_OFFSCREEN_PIXMAPS indicates to EXA that the driver can support
  * offscreen pixmaps.
  */
 #define EXA_OFFSCREEN_PIXMAPS		(1 << 0)
@@ -772,65 +755,59 @@ typedef struct _ExaDriver {
 /** @} */
 
 /* in exa.c */
-extern _X_EXPORT ExaDriverPtr
-exaDriverAlloc(void);
+extern _X_EXPORT ExaDriverPtr exaDriverAlloc(void);
 
 extern _X_EXPORT Bool
-exaDriverInit(ScreenPtr      pScreen,
-              ExaDriverPtr   pScreenInfo);
+ exaDriverInit(ScreenPtr pScreen, ExaDriverPtr pScreenInfo);
 
 extern _X_EXPORT void
-exaDriverFini(ScreenPtr      pScreen);
+ exaDriverFini(ScreenPtr pScreen);
 
 extern _X_EXPORT void
-exaMarkSync(ScreenPtr pScreen);
+ exaMarkSync(ScreenPtr pScreen);
 extern _X_EXPORT void
-exaWaitSync(ScreenPtr pScreen);
+ exaWaitSync(ScreenPtr pScreen);
 
 extern _X_EXPORT unsigned long
-exaGetPixmapOffset(PixmapPtr pPix);
+ exaGetPixmapOffset(PixmapPtr pPix);
 
 extern _X_EXPORT unsigned long
-exaGetPixmapPitch(PixmapPtr pPix);
+ exaGetPixmapPitch(PixmapPtr pPix);
 
 extern _X_EXPORT unsigned long
-exaGetPixmapSize(PixmapPtr pPix);
+ exaGetPixmapSize(PixmapPtr pPix);
 
-extern _X_EXPORT void *
-exaGetPixmapDriverPrivate(PixmapPtr p);
-
+extern _X_EXPORT void *exaGetPixmapDriverPrivate(PixmapPtr p);
 
 /* in exa_offscreen.c */
-extern _X_EXPORT ExaOffscreenArea *
-exaOffscreenAlloc(ScreenPtr pScreen, int size, int align,
-                  Bool locked,
-                  ExaOffscreenSaveProc save,
-                  pointer privData);
+extern _X_EXPORT ExaOffscreenArea *exaOffscreenAlloc(ScreenPtr pScreen,
+                                                     int size, int align,
+                                                     Bool locked,
+                                                     ExaOffscreenSaveProc save,
+                                                     void *privData);
 
-extern _X_EXPORT ExaOffscreenArea *
-exaOffscreenFree(ScreenPtr pScreen, ExaOffscreenArea *area);
-
-extern _X_EXPORT void
-ExaOffscreenMarkUsed (PixmapPtr pPixmap);
+extern _X_EXPORT ExaOffscreenArea *exaOffscreenFree(ScreenPtr pScreen,
+                                                    ExaOffscreenArea * area);
 
 extern _X_EXPORT void
-exaEnableDisableFBAccess (int index, Bool enable);
+ ExaOffscreenMarkUsed(PixmapPtr pPixmap);
+
+extern _X_EXPORT void
+ exaEnableDisableFBAccess(ScreenPtr pScreen, Bool enable);
 
 extern _X_EXPORT Bool
-exaDrawableIsOffscreen (DrawablePtr pDrawable);
+ exaDrawableIsOffscreen(DrawablePtr pDrawable);
 
 /* in exa.c */
 extern _X_EXPORT void
-exaMoveInPixmap (PixmapPtr pPixmap);
+ exaMoveInPixmap(PixmapPtr pPixmap);
 
 extern _X_EXPORT void
-exaMoveOutPixmap (PixmapPtr pPixmap);
-
+ exaMoveOutPixmap(PixmapPtr pPixmap);
 
 /* in exa_unaccel.c */
 extern _X_EXPORT CARD32
-exaGetPixmapFirstPixel (PixmapPtr pPixmap);
-
+ exaGetPixmapFirstPixel(PixmapPtr pPixmap);
 
 /**
  * Returns TRUE if the given planemask covers all the significant bits in the
@@ -840,4 +817,4 @@ exaGetPixmapFirstPixel (PixmapPtr pPixmap);
 	(((_pm) & FbFullMask((_pDrawable)->depth)) == \
 	 FbFullMask((_pDrawable)->depth))
 
-#endif /* EXA_H */
+#endif                          /* EXA_H */

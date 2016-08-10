@@ -44,7 +44,6 @@
 
 #include "picturestr.h"
 
-
 // Debug output, or not.
 #ifdef ROOTLESSDEBUG
 #define RL_DEBUG_MSG ErrorF
@@ -52,27 +51,28 @@
 #define RL_DEBUG_MSG(a, ...)
 #endif
 
-
 // Global variables
 extern DevPrivateKeyRec rootlessGCPrivateKeyRec;
+
 #define rootlessGCPrivateKey (&rootlessGCPrivateKeyRec)
 
 extern DevPrivateKeyRec rootlessScreenPrivateKeyRec;
+
 #define rootlessScreenPrivateKey (&rootlessScreenPrivateKeyRec)
 
 extern DevPrivateKeyRec rootlessWindowPrivateKeyRec;
+
 #define rootlessWindowPrivateKey (&rootlessWindowPrivateKeyRec)
 
 extern DevPrivateKeyRec rootlessWindowOldPixmapPrivateKeyRec;
-#define rootlessWindowOldPixmapPrivateKey (&rootlessWindowOldPixmapPrivateKeyRec)
 
+#define rootlessWindowOldPixmapPrivateKey (&rootlessWindowOldPixmapPrivateKeyRec)
 
 // RootlessGCRec: private per-gc data
 typedef struct {
-    GCFuncs *originalFuncs;
-    GCOps *originalOps;
+    const GCFuncs *originalFuncs;
+    const GCOps *originalOps;
 } RootlessGCRec;
-
 
 // RootlessScreenRec: per-screen private data
 typedef struct _RootlessScreenRec {
@@ -94,6 +94,7 @@ typedef struct _RootlessScreenRec {
     ChangeBorderWidthProcPtr ChangeBorderWidth;
     PositionWindowProcPtr PositionWindow;
     ChangeWindowAttributesProcPtr ChangeWindowAttributes;
+    PaintWindowProcPtr PaintWindow;
 
     CreateGCProcPtr CreateGC;
     CopyWindowProcPtr CopyWindow;
@@ -118,10 +119,10 @@ typedef struct _RootlessScreenRec {
     ColormapPtr colormap;
 
     void *redisplay_timer;
-    unsigned int redisplay_timer_set :1;
-    unsigned int redisplay_queued :1;
-    unsigned int redisplay_expired :1;
-    unsigned int colormap_changed :1;
+    unsigned int redisplay_timer_set:1;
+    unsigned int redisplay_queued:1;
+    unsigned int redisplay_expired:1;
+    unsigned int colormap_changed:1;
 } RootlessScreenRec, *RootlessScreenPtr;
 
 // "Definition of the Porting Layer for the X11 Sample Server" says
@@ -134,7 +135,6 @@ typedef struct _RootlessScreenRec {
 #define SCREEN_WRAP(screen, fn) \
     SCREENREC(screen)->fn = screen->fn; \
     screen->fn = Rootless##fn
-
 
 // Accessors for screen and window privates
 
@@ -157,7 +157,6 @@ typedef struct _RootlessScreenRec {
         RL_DEBUG_MSG("calling frame proc " #proc " ");  \
         SCREENREC(pScreen)->frameProcs.proc params;     \
     }
-
 
 // BoxRec manipulators
 // Copied from shadowfb
@@ -185,7 +184,6 @@ typedef struct _RootlessScreenRec {
 #define BOX_NOT_EMPTY(box) \
     (((box.x2 - box.x1) > 0) && ((box.y2 - box.y1) > 0))
 
-
 // HUGE_ROOT and NORMAL_ROOT
 // We don't want to clip windows to the edge of the screen.
 // HUGE_ROOT temporarily makes the root window really big.
@@ -197,21 +195,20 @@ extern RegionRec rootlessHugeRoot;
 
 #define HUGE_ROOT(pWin)                         \
     do {                                        \
-        WindowPtr w = pWin;                     \
-        while (w->parent)                       \
-            w = w->parent;                      \
-        saveRoot = w->winSize;                  \
-        w->winSize = rootlessHugeRoot;          \
+        WindowPtr _w = pWin;                     \
+        while (_w->parent)                       \
+            _w = _w->parent;                      \
+        saveRoot = _w->winSize;                  \
+        _w->winSize = rootlessHugeRoot;          \
     } while (0)
 
 #define NORMAL_ROOT(pWin)                       \
     do {                                        \
-        WindowPtr w = pWin;                     \
-        while (w->parent)                       \
-            w = w->parent;                      \
-        w->winSize = saveRoot;                  \
+        WindowPtr _w = pWin;                     \
+        while (_w->parent)                       \
+            _w = _w->parent;                      \
+        _w->winSize = saveRoot;                  \
     } while (0)
-
 
 // Returns TRUE if this window is a top-level window (i.e. child of the root)
 // The root is not a top-level window.
@@ -221,7 +218,6 @@ extern RegionRec rootlessHugeRoot;
 // Returns TRUE if this window is a root window
 #define IsRoot(pWin) \
     ((pWin) == (pWin)->drawable.pScreen->root)
-
 
 /*
  * SetPixmapBaseToScreen
@@ -245,7 +241,6 @@ extern RegionRec rootlessHugeRoot;
     }                                                                       \
 }
 
-
 // Returns TRUE if this window is visible inside a frame
 // (e.g. it is visible and has a top-level or root parent)
 Bool IsFramedWindow(WindowPtr pWin);
@@ -262,14 +257,14 @@ void RootlessRedisplayScreen(ScreenPtr pScreen);
 void RootlessQueueRedisplay(ScreenPtr pScreen);
 
 /* Return the colormap currently installed on the given screen. */
-ColormapPtr RootlessGetColormap (ScreenPtr pScreen);
+ColormapPtr RootlessGetColormap(ScreenPtr pScreen);
 
 /* Convert colormap to ARGB. */
-Bool RootlessResolveColormap (ScreenPtr pScreen, int first_color,
-			      int n_colors, uint32_t *colors);
+Bool RootlessResolveColormap(ScreenPtr pScreen, int first_color,
+                             int n_colors, uint32_t * colors);
 
-void RootlessFlushWindowColormap (WindowPtr pWin);
-void RootlessFlushScreenColormaps (ScreenPtr pScreen);
+void RootlessFlushWindowColormap(WindowPtr pWin);
+void RootlessFlushScreenColormaps(ScreenPtr pScreen);
 
 // Move a window to its proper location on the screen.
 void RootlessRepositionWindow(WindowPtr pWin);
@@ -277,14 +272,14 @@ void RootlessRepositionWindow(WindowPtr pWin);
 // Move the window to it's correct place in the physical stacking order.
 void RootlessReorderWindow(WindowPtr pWin);
 
-void RootlessScreenExpose (ScreenPtr pScreen);
-void RootlessHideAllWindows (void);
-void RootlessShowAllWindows (void);
-void RootlessUpdateRooted (Bool state);
+void RootlessScreenExpose(ScreenPtr pScreen);
+void RootlessHideAllWindows(void);
+void RootlessShowAllWindows(void);
+void RootlessUpdateRooted(Bool state);
 
-void RootlessEnableRoot (ScreenPtr pScreen);
-void RootlessDisableRoot (ScreenPtr pScreen);
+void RootlessEnableRoot(ScreenPtr pScreen);
+void RootlessDisableRoot(ScreenPtr pScreen);
 
 void RootlessSetPixmapOfAncestors(WindowPtr pWin);
 
-#endif /* _ROOTLESSCOMMON_H */
+#endif                          /* _ROOTLESSCOMMON_H */

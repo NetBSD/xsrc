@@ -36,61 +36,63 @@
 
 /* See Porting Layer Definition - p. 6 */
 void
-winBlockHandler (int nScreen,
-		 pointer pBlockData,
-		 pointer pTimeout,
-		 pointer pReadMask)
+winBlockHandler(ScreenPtr pScreen,
+                void *pTimeout, void *pReadMask)
 {
 #if defined(XWIN_CLIPBOARD) || defined(XWIN_MULTIWINDOW)
-  winScreenPriv((ScreenPtr)pBlockData);
+    winScreenPriv(pScreen);
 #endif
-  MSG			msg;
+
 #ifndef HAS_DEVWINDOWS
-  struct timeval **tvp = pTimeout;
-  if (*tvp != NULL) 
-  {
-    (*tvp)->tv_sec = 0;
-    (*tvp)->tv_usec = 100;
-  }
+    struct timeval **tvp = pTimeout;
+
+    if (*tvp != NULL) {
+      if (GetQueueStatus(QS_ALLINPUT | QS_ALLPOSTMESSAGE) != 0) {
+        /* If there are still messages to process on the Windows message
+           queue, make sure select() just polls rather than blocking.
+        */
+        (*tvp)->tv_sec = 0;
+        (*tvp)->tv_usec = 0;
+      }
+      else {
+        /* Otherwise, lacking /dev/windows, we must wake up again in
+           a reasonable time to check the Windows message queue. without
+           noticeable delay.
+         */
+        (*tvp)->tv_sec = 0;
+        (*tvp)->tv_usec = 100;
+      }
+    }
 #endif
 
 #if defined(XWIN_CLIPBOARD) || defined(XWIN_MULTIWINDOW)
-  /* Signal threaded modules to begin */
-  if (pScreenPriv != NULL && !pScreenPriv->fServerStarted)
-    {
-      int		iReturn;
-      
-      winDebug ("winBlockHandler - Releasing pmServerStarted\n");
+    /* Signal threaded modules to begin */
+    if (pScreenPriv != NULL && !pScreenPriv->fServerStarted) {
+        int iReturn;
 
-      /* Flag that modules are to be started */
-      pScreenPriv->fServerStarted = TRUE;
+        ErrorF("winBlockHandler - pthread_mutex_unlock()\n");
 
-      /* Unlock the mutex for threaded modules */
-      iReturn = pthread_mutex_unlock (&pScreenPriv->pmServerStarted);
-      if (iReturn != 0)
-	{
-	  ErrorF ("winBlockHandler - pthread_mutex_unlock () failed: %d\n",
-		  iReturn);
-	  goto winBlockHandler_ProcessMessages; 
-	}
+        /* Flag that modules are to be started */
+        pScreenPriv->fServerStarted = TRUE;
 
-      winDebug ("winBlockHandler - pthread_mutex_unlock () returned\n");
+        /* Unlock the mutex for threaded modules */
+        iReturn = pthread_mutex_unlock(&pScreenPriv->pmServerStarted);
+        if (iReturn != 0) {
+            ErrorF("winBlockHandler - pthread_mutex_unlock () failed: %d\n",
+                   iReturn);
+        }
+        else {
+            winDebug("winBlockHandler - pthread_mutex_unlock () returned\n");
+        }
     }
-
-winBlockHandler_ProcessMessages:
 #endif
 
-  /* Process all messages on our queue */
-  while (PeekMessage (&msg, NULL, 0, 0, PM_REMOVE))
-    {
-      if ((g_hDlgDepthChange == 0
-	   || !IsDialogMessage (g_hDlgDepthChange, &msg))
-	  && (g_hDlgExit == 0
-	      || !IsDialogMessage (g_hDlgExit, &msg))
-	  && (g_hDlgAbout == 0
-	      || !IsDialogMessage (g_hDlgAbout, &msg)))
-	{
-	  DispatchMessage (&msg);
-	}
-    }
+  /*
+    At least one X client has asked to suspend the screensaver, so
+    reset Windows' display idle timer
+  */
+#ifdef SCREENSAVER
+  if (screenSaverSuspended)
+    SetThreadExecutionState(ES_DISPLAY_REQUIRED);
+#endif
 }

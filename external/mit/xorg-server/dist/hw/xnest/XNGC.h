@@ -18,11 +18,11 @@ is" without express or implied warranty.
 /* This file uses the GC definition form Xlib.h as XlibGC. */
 
 typedef struct {
-  XlibGC gc;
-  int nClipRects;
+    XlibGC gc;
 } xnestPrivGC;
 
 extern DevPrivateKeyRec xnestGCPrivateKeyRec;
+
 #define xnestGCPrivateKey (&xnestGCPrivateKeyRec)
 
 #define xnestGCPriv(pGC) ((xnestPrivGC *) \
@@ -35,9 +35,8 @@ void xnestValidateGC(GCPtr pGC, unsigned long changes, DrawablePtr pDrawable);
 void xnestChangeGC(GCPtr pGC, unsigned long mask);
 void xnestCopyGC(GCPtr pGCSrc, unsigned long mask, GCPtr pGCDst);
 void xnestDestroyGC(GCPtr pGC);
-void xnestChangeClip(GCPtr pGC, int type, pointer pValue, int nRects);
+void xnestChangeClip(GCPtr pGC, int type, void *pValue, int nRects);
 void xnestDestroyClip(GCPtr pGC);
-void xnestDestroyClipHelper(GCPtr pGC);
 void xnestCopyClip(GCPtr pGCDst, GCPtr pGCSrc);
 
-#endif /* XNESTGC_H */
+#endif                          /* XNESTGC_H */

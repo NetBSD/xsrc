@@ -61,18 +61,21 @@ extern _X_EXPORT CallbackListPtr XaceHooks[XACE_NUM_HOOKS];
 /* Entry point for hook functions.  Called by Xserver.
  * Required by libdbe and libextmod
  */
-extern _X_EXPORT int XaceHook(
-    int /*hook*/,
-    ... /*appropriate args for hook*/
-    ); 
+extern _X_EXPORT int XaceHook(int /*hook */ ,
+                              ...       /*appropriate args for hook */
+    );
+
+/* determine whether any callbacks are present for the XACE hook */
+extern _X_EXPORT int XaceHookIsSet(int hook);
 
 /* Special-cased hook functions
  */
 extern _X_EXPORT int XaceHookDispatch(ClientPtr ptr, int major);
 extern _X_EXPORT int XaceHookPropertyAccess(ClientPtr ptr, WindowPtr pWin,
-				   PropertyPtr *ppProp, Mask access_mode);
-extern _X_EXPORT int XaceHookSelectionAccess(ClientPtr ptr,
-				   Selection **ppSel, Mask access_mode);
+                                            PropertyPtr *ppProp,
+                                            Mask access_mode);
+extern _X_EXPORT int XaceHookSelectionAccess(ClientPtr ptr, Selection ** ppSel,
+                                             Mask access_mode);
 extern _X_EXPORT void XaceHookAuditEnd(ClientPtr ptr, int result);
 
 /* Register a callback for a given hook.
@@ -93,17 +96,14 @@ extern _X_EXPORT int XaceIsLocal(ClientPtr ptr);
 /* From the original Security extension...
  */
 
-extern _X_EXPORT void XaceCensorImage(
-    ClientPtr client,
-    RegionPtr pVisibleRegion,
-    long widthBytesLine,
-    DrawablePtr pDraw,
-    int x, int y, int w, int h,
-    unsigned int format,
-    char * pBuf
-    );
+extern _X_EXPORT void XaceCensorImage(ClientPtr client,
+                                      RegionPtr pVisibleRegion,
+                                      long widthBytesLine,
+                                      DrawablePtr pDraw,
+                                      int x, int y, int w, int h,
+                                      unsigned int format, char *pBuf);
 
-#else /* XACE */
+#else                           /* XACE */
 
 /* Default window background */
 #define XaceBackgroundNoneState(w)		None
@@ -112,6 +112,7 @@ extern _X_EXPORT void XaceCensorImage(
 
 #ifdef __GNUC__
 #define XaceHook(args...) Success
+#define XaceHookIsSet(args...) 0
 #define XaceHookDispatch(args...) Success
 #define XaceHookPropertyAccess(args...) Success
 #define XaceHookSelectionAccess(args...) Success
@@ -119,6 +120,7 @@ extern _X_EXPORT void XaceCensorImage(
 #define XaceCensorImage(args...) { ; }
 #else
 #define XaceHook(...) Success
+#define XaceHookIsSet(...) 0
 #define XaceHookDispatch(...) Success
 #define XaceHookPropertyAccess(...) Success
 #define XaceHookSelectionAccess(...) Success
@@ -126,6 +128,6 @@ extern _X_EXPORT void XaceCensorImage(
 #define XaceCensorImage(...) { ; }
 #endif
 
-#endif /* XACE */
+#endif                          /* XACE */
 
-#endif /* _XACE_H */
+#endif                          /* _XACE_H */

@@ -54,7 +54,7 @@ SOFTWARE.
 #include <dix-config.h>
 #endif
 
-#include "inputstr.h"	/* DeviceIntPtr      */
+#include "inputstr.h"           /* DeviceIntPtr      */
 #include <X11/extensions/XI.h>
 #include <X11/extensions/XIproto.h>
 #include "exglobals.h"
@@ -70,10 +70,8 @@ SOFTWARE.
 int
 SProcXGetDeviceButtonMapping(ClientPtr client)
 {
-    char n;
-
     REQUEST(xGetDeviceButtonMappingReq);
-    swaps(&stuff->length, n);
+    swaps(&stuff->length);
     return (ProcXGetDeviceButtonMapping(client));
 }
 
@@ -94,24 +92,26 @@ ProcXGetDeviceButtonMapping(ClientPtr client)
     REQUEST(xGetDeviceButtonMappingReq);
     REQUEST_SIZE_MATCH(xGetDeviceButtonMappingReq);
 
-    rep.repType = X_Reply;
-    rep.RepType = X_GetDeviceButtonMapping;
-    rep.nElts = 0;
-    rep.length = 0;
-    rep.sequenceNumber = client->sequence;
+    rep = (xGetDeviceButtonMappingReply) {
+        .repType = X_Reply,
+        .RepType = X_GetDeviceButtonMapping,
+        .sequenceNumber = client->sequence,
+        .nElts = 0,
+        .length = 0
+    };
 
     rc = dixLookupDevice(&dev, stuff->deviceid, client, DixGetAttrAccess);
     if (rc != Success)
-	return rc;
+        return rc;
 
     b = dev->button;
     if (b == NULL)
-	return BadMatch;
+        return BadMatch;
 
     rep.nElts = b->numButtons;
     rep.length = bytes_to_int32(rep.nElts);
     WriteReplyToClient(client, sizeof(xGetDeviceButtonMappingReply), &rep);
-    (void)WriteToClient(client, rep.nElts, (char *)&b->map[1]);
+    WriteToClient(client, rep.nElts, &b->map[1]);
     return Success;
 }
 
@@ -124,11 +124,9 @@ ProcXGetDeviceButtonMapping(ClientPtr client)
 
 void
 SRepXGetDeviceButtonMapping(ClientPtr client, int size,
-			    xGetDeviceButtonMappingReply * rep)
+                            xGetDeviceButtonMappingReply * rep)
 {
-    char n;
-
-    swaps(&rep->sequenceNumber, n);
-    swapl(&rep->length, n);
-    WriteToClient(client, size, (char *)rep);
+    swaps(&rep->sequenceNumber);
+    swapl(&rep->length);
+    WriteToClient(client, size, rep);
 }

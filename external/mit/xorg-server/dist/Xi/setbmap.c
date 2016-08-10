@@ -54,7 +54,7 @@ SOFTWARE.
 #include <dix-config.h>
 #endif
 
-#include "inputstr.h"	/* DeviceIntPtr      */
+#include "inputstr.h"           /* DeviceIntPtr      */
 #include <X11/extensions/XI.h>
 #include <X11/extensions/XIproto.h>
 #include "exevents.h"
@@ -71,10 +71,8 @@ SOFTWARE.
 int
 SProcXSetDeviceButtonMapping(ClientPtr client)
 {
-    char n;
-
     REQUEST(xSetDeviceButtonMappingReq);
-    swaps(&stuff->length, n);
+    swaps(&stuff->length);
     return (ProcXSetDeviceButtonMapping(client));
 }
 
@@ -96,19 +94,23 @@ ProcXSetDeviceButtonMapping(ClientPtr client)
 
     if (stuff->length !=
         bytes_to_int32(sizeof(xSetDeviceButtonMappingReq) + stuff->map_length))
-	return BadLength;
+        return BadLength;
 
     ret = dixLookupDevice(&dev, stuff->deviceid, client, DixManageAccess);
     if (ret != Success)
         return ret;
 
-    rep.repType = X_Reply;
-    rep.RepType = X_SetDeviceButtonMapping;
-    rep.length = 0;
-    rep.sequenceNumber = client->sequence;
-    rep.status = MappingSuccess;
+    rep = (xSetDeviceButtonMappingReply) {
+        .repType = X_Reply,
+        .RepType = X_SetDeviceButtonMapping,
+        .sequenceNumber = client->sequence,
+        .length = 0,
+        .status = MappingSuccess
+    };
 
-    ret = ApplyPointerMapping(dev, (CARD8 *) &stuff[1], stuff->map_length, client);
+    ret =
+        ApplyPointerMapping(dev, (CARD8 *) &stuff[1], stuff->map_length,
+                            client);
     if (ret == -1)
         return BadValue;
     else if (ret == MappingBusy)
@@ -130,11 +132,9 @@ ProcXSetDeviceButtonMapping(ClientPtr client)
 
 void
 SRepXSetDeviceButtonMapping(ClientPtr client, int size,
-			    xSetDeviceButtonMappingReply * rep)
+                            xSetDeviceButtonMappingReply * rep)
 {
-    char n;
-
-    swaps(&rep->sequenceNumber, n);
-    swapl(&rep->length, n);
-    WriteToClient(client, size, (char *)rep);
+    swaps(&rep->sequenceNumber);
+    swapl(&rep->length);
+    WriteToClient(client, size, rep);
 }

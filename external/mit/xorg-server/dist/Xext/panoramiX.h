@@ -26,10 +26,9 @@ Equipment Corporation.
 
 ******************************************************************/
 
-
 /* THIS IS NOT AN X PROJECT TEAM SPECIFICATION */
 
-/*  
+/*
  *	PanoramiX definitions
  */
 
@@ -44,35 +43,37 @@ Equipment Corporation.
 #include <X11/extensions/panoramiXproto.h>
 #undef _PANORAMIX_SERVER
 #include "gcstruct.h"
-
+#include "dixstruct.h"
 
 typedef struct _PanoramiXInfo {
-    XID id ;
+    XID id;
 } PanoramiXInfo;
 
 typedef struct {
     PanoramiXInfo info[MAXSCREENS];
     RESTYPE type;
     union {
-	struct {
-	    char   visibility;
-	    char   class;
-            char   root;
-	} win;
-	struct {
-	    Bool shared;
-	} pix;
-	struct {
-	    Bool root;
-	} pict;
-	char raw_data[4];
+        struct {
+            char visibility;
+            char class;
+            char root;
+        } win;
+        struct {
+            Bool shared;
+        } pix;
+        struct {
+            Bool root;
+        } pict;
+        char raw_data[4];
     } u;
 } PanoramiXRes;
 
 #define FOR_NSCREENS_FORWARD(j) for(j = 0; j < PanoramiXNumScreens; j++)
+#define FOR_NSCREENS_FORWARD_SKIP(j) for(j = 1; j < PanoramiXNumScreens; j++)
 #define FOR_NSCREENS_BACKWARD(j) for(j = PanoramiXNumScreens - 1; j >= 0; j--)
 #define FOR_NSCREENS(j) FOR_NSCREENS_FORWARD(j)
 
 #define IS_SHARED_PIXMAP(r) (((r)->type == XRT_PIXMAP) && (r)->u.pix.shared)
 
-#endif /* _PANORAMIX_H_ */
+#define IS_ROOT_DRAWABLE(d) (((d)->type == XRT_WINDOW) && (d)->u.win.root)
+#endif                          /* _PANORAMIX_H_ */

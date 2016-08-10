@@ -64,7 +64,7 @@ typedef struct module_desc {
     void *handle;
     ModuleSetupProc SetupProc;
     ModuleTearDownProc TearDownProc;
-    void *TearDownData;		/* returned from SetupProc */
+    void *TearDownData;         /* returned from SetupProc */
     const XF86ModuleVersionInfo *VersionInfo;
 } ModuleDesc, *ModuleDescPtr;
 
@@ -72,15 +72,14 @@ typedef struct module_desc {
 
 void LoaderInit(void);
 
-ModuleDescPtr LoadDriver(const char *, const char *, int, pointer, int *,
-			 int *);
+ModuleDescPtr LoadDriver(const char *, const char *, int, void *, int *,
+                         int *);
 ModuleDescPtr LoadModule(const char *, const char *, const char **,
-			 const char **, pointer, const XF86ModReqInfo *,
-			 int *, int *);
+                         const char **, void *, const XF86ModReqInfo *,
+                         int *, int *);
 ModuleDescPtr DuplicateModule(ModuleDescPtr mod, ModuleDescPtr parent);
 void UnloadDriver(ModuleDescPtr);
 void LoaderSetPath(const char *path);
-void LoaderSortExtensions(void);
 
 void LoaderUnload(const char *, void *);
 unsigned long LoaderGetModuleVersion(ModuleDescPtr mod);
@@ -91,4 +90,4 @@ void LoaderSetOptions(unsigned long);
 /* Options for LoaderSetOptions */
 #define LDR_OPT_ABI_MISMATCH_NONFATAL		0x0001
 
-#endif /* _LOADERPROCS_H */
+#endif                          /* _LOADERPROCS_H */

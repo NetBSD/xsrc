@@ -1,4 +1,4 @@
-/* Copyright (c) 2008 Apple Inc.
+/* Copyright (c) 2008-2012 Apple Inc.
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation files
@@ -44,7 +44,6 @@
 #include   "scrnintstr.h"
 #include   "mipointer.h"
 
-#include "darwin.h"
 #include "quartz.h"
 #include "quartzKeyboard.h"
 #include "darwinEvents.h"
@@ -53,29 +52,52 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
+#ifdef HAVE_LIBDISPATCH
+#include <dispatch/dispatch.h>
+#endif
+
 #include "rootlessWindow.h"
 #include "xprEvent.h"
 
-Bool QuartzModeEventHandler(int screenNum, XQuartzEvent *e, DeviceIntPtr dev) {
-    TA_SERVER();
-    
-    switch(e->subtype) {
-        case kXquartzWindowState:
-            DEBUG_LOG("kXquartzWindowState\n");
-            RootlessNativeWindowStateChanged(xprGetXWindow(e->data[0]),
-                                             e->data[1]);
-            return TRUE;
-            
-        case kXquartzWindowMoved:
-            DEBUG_LOG("kXquartzWindowMoved\n");
-            RootlessNativeWindowMoved(xprGetXWindow(e->data[0]));
-            return TRUE;
-            
-        case kXquartzBringAllToFront:
-            DEBUG_LOG("kXquartzBringAllToFront\n");
+Bool
+QuartzModeEventHandler(int screenNum, XQuartzEvent *e, DeviceIntPtr dev)
+{
+    switch (e->subtype) {
+    case kXquartzWindowState:
+        DEBUG_LOG("kXquartzWindowState\n");
+        RootlessNativeWindowStateChanged(xprGetXWindow(e->data[0]),
+                                         e->data[1]);
+        return TRUE;
+
+    case kXquartzWindowMoved:
+        DEBUG_LOG("kXquartzWindowMoved\n");
+        RootlessNativeWindowMoved(xprGetXWindow(e->data[0]));
+        return TRUE;
+
+    case kXquartzBringAllToFront:
+        DEBUG_LOG("kXquartzBringAllToFront\n");
+        /* There's no need to do xp_window_bring_all_to_front on Leopard,
+         * and we don't care about the result, so just do it async.
+         */
+#if defined(HAVE_LIBDISPATCH) && defined(XPLUGIN_VERSION) && XPLUGIN_VERSION >= 6
+#  if defined(XPLUGIN_VERSION_MIN_REQUIRED) && XPLUGIN_VERSION_MIN_REQUIRED < 6
+        if (&xp_window_bring_all_to_front) {
+#  endif
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                xp_window_bring_all_to_front();
+            });
+#  if defined(XPLUGIN_VERSION_MIN_REQUIRED) && XPLUGIN_VERSION_MIN_REQUIRED < 6
+        } else {
             RootlessOrderAllWindows(e->data[0]);
-            return TRUE;
-        default:
-            return FALSE;
+        }
+#  endif
+#else
+        RootlessOrderAllWindows(e->data[0]);
+#endif
+
+        return TRUE;
+
+    default:
+        return FALSE;
     }
 }

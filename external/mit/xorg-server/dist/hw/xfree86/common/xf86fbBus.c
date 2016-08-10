@@ -54,13 +54,19 @@ xf86ClaimFbSlot(DriverPtr drvp, int chipset, GDevPtr dev, Bool active)
     EntityPtr p;
     int num;
 
+#ifdef XSERVER_PLATFORM_BUS
+    if (platformSlotClaimed)
+        return -1;
+#endif
+#ifdef XSERVER_LIBPCIACCESS
     if (pciSlotClaimed)
-	return -1;
+        return -1;
+#endif
 #if defined(__sparc__) || defined (__sparc64__)
     if (sbusSlotClaimed)
-	return -1;
+        return -1;
 #endif
-    
+
     num = xf86AllocateEntity();
     p = xf86Entities[num];
     p->driver = drvp;
@@ -83,12 +89,12 @@ xf86GetFbInfoForScreen(int scrnIndex)
     int num = 0;
     int i;
     EntityPtr p;
-    
+
     for (i = 0; i < xf86Screens[scrnIndex]->numEntities; i++) {
-	p = xf86Entities[xf86Screens[scrnIndex]->entityList[i]];
-  	if (p->bus.type == BUS_NONE) {
-  	    num++;
-  	}
+        p = xf86Entities[xf86Screens[scrnIndex]->entityList[i]];
+        if (p->bus.type == BUS_NONE) {
+            num++;
+        }
     }
     return num;
 }

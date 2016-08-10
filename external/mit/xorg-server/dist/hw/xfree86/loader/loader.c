@@ -65,30 +65,11 @@
 #include "loaderProcs.h"
 #include "xf86.h"
 #include "xf86Priv.h"
-#include "compiler.h"
 
 #ifdef HAVE_DLFCN_H
 
 #include <dlfcn.h>
 #include <X11/Xos.h>
-
-#if defined(DL_LAZY)
-#define DLOPEN_LAZY DL_LAZY
-#elif defined(RTLD_LAZY)
-#define DLOPEN_LAZY RTLD_LAZY
-#elif defined(__FreeBSD__)
-#define DLOPEN_LAZY 1
-#else
-#define DLOPEN_LAZY 0
-#endif
-
-#if defined(LD_GLOBAL)
-#define DLOPEN_GLOBAL LD_GLOBAL
-#elif defined(RTLD_GLOBAL)
-#define DLOPEN_GLOBAL RTLD_GLOBAL
-#else
-#define DLOPEN_GLOBAL 0
-#endif
 
 #else
 #error i have no dynamic linker and i must scream
@@ -99,20 +80,20 @@ extern void *xorg_symbols[];
 void
 LoaderInit(void)
 {
-    xf86MsgVerb(X_INFO, 2, "Loader magic: %p\n", (void *)xorg_symbols);
+    xf86MsgVerb(X_INFO, 2, "Loader magic: %p\n", (void *) xorg_symbols);
     xf86MsgVerb(X_INFO, 2, "Module ABI versions:\n");
     xf86ErrorFVerb(2, "\t%s: %d.%d\n", ABI_CLASS_ANSIC,
-		   GET_ABI_MAJOR(LoaderVersionInfo.ansicVersion),
-		   GET_ABI_MINOR(LoaderVersionInfo.ansicVersion));
+                   GET_ABI_MAJOR(LoaderVersionInfo.ansicVersion),
+                   GET_ABI_MINOR(LoaderVersionInfo.ansicVersion));
     xf86ErrorFVerb(2, "\t%s: %d.%d\n", ABI_CLASS_VIDEODRV,
-		   GET_ABI_MAJOR(LoaderVersionInfo.videodrvVersion),
-		   GET_ABI_MINOR(LoaderVersionInfo.videodrvVersion));
+                   GET_ABI_MAJOR(LoaderVersionInfo.videodrvVersion),
+                   GET_ABI_MINOR(LoaderVersionInfo.videodrvVersion));
     xf86ErrorFVerb(2, "\t%s : %d.%d\n", ABI_CLASS_XINPUT,
-		   GET_ABI_MAJOR(LoaderVersionInfo.xinputVersion),
-		   GET_ABI_MINOR(LoaderVersionInfo.xinputVersion));
+                   GET_ABI_MAJOR(LoaderVersionInfo.xinputVersion),
+                   GET_ABI_MINOR(LoaderVersionInfo.xinputVersion));
     xf86ErrorFVerb(2, "\t%s : %d.%d\n", ABI_CLASS_EXTENSION,
-		   GET_ABI_MAJOR(LoaderVersionInfo.extensionVersion),
-		   GET_ABI_MINOR(LoaderVersionInfo.extensionVersion));
+                   GET_ABI_MAJOR(LoaderVersionInfo.extensionVersion),
+                   GET_ABI_MINOR(LoaderVersionInfo.extensionVersion));
 
 }
 
@@ -129,13 +110,13 @@ LoaderOpen(const char *module, int *errmaj, int *errmin)
 
     xf86Msg(X_INFO, "Loading %s\n", module);
 
-    if (!(ret = dlopen(module, DLOPEN_LAZY | DLOPEN_GLOBAL))) {
-	xf86Msg(X_ERROR, "Failed to load %s: %s\n", module, dlerror());
-	if (errmaj)
-	    *errmaj = LDR_NOLOAD;
-	if (errmin)
-	    *errmin = LDR_NOLOAD;
-	return NULL;
+    if (!(ret = dlopen(module, RTLD_LAZY | RTLD_GLOBAL))) {
+        xf86Msg(X_ERROR, "Failed to load %s: %s\n", module, dlerror());
+        if (errmaj)
+            *errmaj = LDR_NOLOAD;
+        if (errmin)
+            *errmin = LDR_NOLOAD;
+        return NULL;
     }
 
     return ret;
@@ -149,23 +130,29 @@ LoaderSymbol(const char *name)
 
     p = dlsym(RTLD_DEFAULT, name);
     if (p != NULL)
-	return p;
+        return p;
 
     if (!global_scope)
-	global_scope = dlopen(NULL, DLOPEN_LAZY | DLOPEN_GLOBAL);
+        global_scope = dlopen(NULL, RTLD_LAZY | RTLD_GLOBAL);
 
     if (global_scope)
-	return dlsym(global_scope, name);
+        return dlsym(global_scope, name);
 
     return NULL;
+}
+
+void *
+LoaderSymbolFromModule(void *handle, const char *name)
+{
+    return dlsym(handle, name);
 }
 
 void
 LoaderUnload(const char *name, void *handle)
 {
-    xf86Msg(X_INFO, "Unloading %s\n", name);
+    LogMessageVerbSigSafe(X_INFO, 1, "Unloading %s\n", name);
     if (handle)
-	dlclose(handle);
+        dlclose(handle);
 }
 
 unsigned long LoaderOptions = 0;
@@ -189,17 +176,17 @@ LoaderGetABIVersion(const char *abiclass)
         const char *name;
         int version;
     } classes[] = {
-        { ABI_CLASS_ANSIC,     LoaderVersionInfo.ansicVersion },
-        { ABI_CLASS_VIDEODRV,  LoaderVersionInfo.videodrvVersion },
-        { ABI_CLASS_XINPUT,    LoaderVersionInfo.xinputVersion },
-        { ABI_CLASS_EXTENSION, LoaderVersionInfo.extensionVersion },
-        { ABI_CLASS_FONT,      LoaderVersionInfo.fontVersion },
-        { NULL,                0 }
+        {ABI_CLASS_ANSIC, LoaderVersionInfo.ansicVersion},
+        {ABI_CLASS_VIDEODRV, LoaderVersionInfo.videodrvVersion},
+        {ABI_CLASS_XINPUT, LoaderVersionInfo.xinputVersion},
+        {ABI_CLASS_EXTENSION, LoaderVersionInfo.extensionVersion},
+        {ABI_CLASS_FONT, LoaderVersionInfo.fontVersion},
+        {NULL, 0}
     };
     int i;
 
-    for(i = 0; classes[i].name; i++) {
-        if(!strcmp(classes[i].name, abiclass)) {
+    for (i = 0; classes[i].name; i++) {
+        if (!strcmp(classes[i].name, abiclass)) {
             return classes[i].version;
         }
     }

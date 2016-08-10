@@ -41,7 +41,7 @@
 
 /* Constant strings */
 #ifndef PROJECT_NAME
-#  define PROJECT_NAME		"Cygwin/X"
+#define PROJECT_NAME		"Cygwin/X"
 #endif
 #define EXECUTABLE_NAME         "XWin"
 #define WINDOW_CLASS		"cygwin/x"
@@ -49,10 +49,11 @@
 #define WINDOW_TITLE_XDMCP	"%s:%s.%d"
 #define WIN_SCR_PROP		"cyg_screen_prop rl"
 #define WINDOW_CLASS_X		"cygwin/x X rl"
+#define WINDOW_CLASS_X_MSG      "cygwin/x X msg"
 #define WINDOW_TITLE_X		PROJECT_NAME " X"
 #define WIN_WINDOW_PROP		"cyg_window_prop_rl"
 #ifdef HAS_DEVWINDOWS
-# define WIN_MSG_QUEUE_FNAME	"/dev/windows"
+#define WIN_MSG_QUEUE_FNAME	"/dev/windows"
 #endif
 #define WIN_WID_PROP		"cyg_wid_prop_rl"
 #define WIN_NEEDMANAGE_PROP	"cyg_override_redirect_prop_rl"
@@ -67,39 +68,31 @@
 
 typedef struct _winPrivScreenRec *winPrivScreenPtr;
 
-
 /*
  * Window privates
  */
 
-typedef struct
-{
-  DWORD			dwDummy;
-  HRGN			hRgn;
-  HWND			hWnd;
-  winPrivScreenPtr	pScreenPriv;
-  Bool			fXKilled;
-
-  /* Privates used by primary fb DirectDraw server */
-  LPDDSURFACEDESC	pddsdPrimary;
-
-  /* Privates used by shadow fb DirectDraw Nonlocking server */
-  LPDIRECTDRAWSURFACE4	pddsPrimary4;
-
-  /* Privates used by both shadow fb DirectDraw servers */
-  LPDIRECTDRAWCLIPPER	pddcPrimary;
+typedef struct {
+    DWORD dwDummy;
+    HRGN hRgn;
+    HWND hWnd;
+    winPrivScreenPtr pScreenPriv;
+    Bool fXKilled;
+    HDWP hDwp;
+#ifdef XWIN_GLX_WINDOWS
+    Bool fWglUsed;
+#endif
 } winPrivWinRec, *winPrivWinPtr;
 
 #ifdef XWIN_MULTIWINDOW
-typedef struct _winWMMessageRec{
-  DWORD			dwID;
-  DWORD			msg;
-  int			iWindow;
-  HWND			hwndWindow;
-  int			iX, iY;
-  int			iWidth, iHeight;
+typedef struct _winWMMessageRec {
+    DWORD dwID;
+    DWORD msg;
+    int iWindow;
+    HWND hwndWindow;
+    int iX, iY;
+    int iWidth, iHeight;
 } winWMMessageRec, *winWMMessagePtr;
-
 
 /*
  * winmultiwindowwm.c
@@ -114,58 +107,60 @@ typedef struct _winWMMessageRec{
 #define		WM_WM_KILL		(WM_USER + 7)
 #define		WM_WM_ACTIVATE		(WM_USER + 8)
 #define		WM_WM_NAME_EVENT	(WM_USER + 9)
-#define		WM_WM_HINTS_EVENT	(WM_USER + 10)
+#define		WM_WM_ICON_EVENT	(WM_USER + 10)
 #define		WM_WM_CHANGE_STATE	(WM_USER + 11)
 #define		WM_WM_MAP2		(WM_USER + 12)
 #define		WM_WM_MAP3		(WM_USER + 13)
+#define		WM_WM_HINTS_EVENT	(WM_USER + 14)
 #define		WM_MANAGE		(WM_USER + 100)
 #define		WM_UNMANAGE		(WM_USER + 102)
 
 #define		MwmHintsDecorations	(1L << 1)
 
-#define		MwmDecorAll		(1l << 0)
-#define		MwmDecorBorder		(1l << 1)
-#define		MwmDecorHandle		(1l << 2)
-#define		MwmDecorTitle		(1l << 3)
+#define		MwmDecorAll		(1L << 0)
+#define		MwmDecorBorder		(1L << 1)
+#define		MwmDecorHandle		(1L << 2)
+#define		MwmDecorTitle		(1L << 3)
+#define		MwmDecorMenu		(1L << 4)
+#define		MwmDecorMinimize	(1L << 5)
+#define		MwmDecorMaximize	(1L << 6)
 
 /* This structure only contains 3 elements... the Motif 2.0 structure
 contains 5... we only need the first 3... so that is all we will define */
 typedef struct MwmHints {
-  unsigned long		flags, functions, decorations;
+    unsigned long flags, functions, decorations;
 } MwmHints;
+
 #define		PropMwmHintsElements	3
 
 void
-winSendMessageToWM (void *pWMInfo, winWMMessagePtr msg);
+ winSendMessageToWM(void *pWMInfo, winWMMessagePtr msg);
 
 Bool
-winInitWM (void **ppWMInfo,
-	   pthread_t *ptWMProc,
-	   pthread_t *ptXMsgProc,
-	   pthread_mutex_t *ppmServerStarted,
-	   int dwScreen,
-	   HWND hwndScreen,
-	   BOOL allowOtherWM);
+
+winInitWM(void **ppWMInfo,
+          pthread_t * ptWMProc,
+          pthread_t * ptXMsgProc,
+          pthread_mutex_t * ppmServerStarted,
+          int dwScreen, HWND hwndScreen, BOOL allowOtherWM);
 
 void
-winDeinitMultiWindowWM (void);
+ winDeinitMultiWindowWM(void);
 
 void
-winMinimizeWindow (Window id);
-
-
-/*
- * winmultiwindowicons.c
- */
+ winMinimizeWindow(Window id);
 
 void
-winUpdateIcon (Window id);
+ winPropertyStoreInit(void);
 
-void 
-winInitGlobalIcons (void);
+void
+ winPropertyStoreDestroy(void);
 
-void 
-winDestroyIcon(HICON hIcon);
+void
+ winSetAppUserModelID(HWND hWnd, const char *AppID);
 
-#endif /* XWIN_MULTIWINDOW */
+void
+ winShowWindowOnTaskbar(HWND hWnd, BOOL show);
+
+#endif                          /* XWIN_MULTIWINDOW */
 #endif

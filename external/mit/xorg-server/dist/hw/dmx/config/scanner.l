@@ -39,6 +39,7 @@
 
 #include "dmxparse.h"
 #include "parser.h"
+#include "os.h"
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -83,10 +84,12 @@ param           return gettoken(T_PARAM, yytext, yyleng);
 %%
 int yywrap(void)
 {
+    (void) &yyunput;
+    (void) &input;
     return 1;
 }
 
-void yyerror(const char *message)
+_X_NORETURN void yyerror(const char *message)
 {
     const char *pt, *end;
     struct _entry {
@@ -108,7 +111,7 @@ void yyerror(const char *message)
     };
     
     fprintf(stderr, "parse error on line %d at token \"%*.*s\"\n",
-            lineno, yyleng, yyleng, yytext);
+            lineno, (int)yyleng, (int)yyleng, yytext);
     end = message + strlen(message);
     for (pt = message; *pt; pt++) {
         if (pt[0] == 'T' && pt[1] == '_') {
@@ -152,7 +155,7 @@ static int getdimension(int token, const char *text, int leng)
     char *tmp = dmxConfigAlloc(leng+1);
     int  x, y;
 
-    strncpy(tmp, text, leng);
+    strlcpy(tmp, text, leng+1);
     x = strtol(tmp, &endptr, 10);
     while (*endptr && !isdigit(*endptr)) ++endptr;
     y = strtol(endptr, NULL, 10);

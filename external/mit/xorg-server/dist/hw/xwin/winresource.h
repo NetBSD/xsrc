@@ -30,7 +30,6 @@
  * Authors:	Harold L Hunt II
  */
 
-
 /*
  * Local defines
  */
@@ -40,15 +39,12 @@
 #define IDM_TRAYICON_MENU	103
 #define IDC_CLIENTS_CONNECTED	104
 
-
 #define ID_APP_EXIT		200
 #define ID_APP_HIDE_ROOT	201
 #define ID_APP_ALWAYS_ON_TOP	202
 #define ID_APP_ABOUT		203
+#define ID_APP_MONITOR_PRIMARY	204
 
-#define ID_ABOUT_UG		300
-#define ID_ABOUT_FAQ		301
-#define ID_ABOUT_CHANGELOG	302
 #define ID_ABOUT_WEBSITE	303
 
 #endif

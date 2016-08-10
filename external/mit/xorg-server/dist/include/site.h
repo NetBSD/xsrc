@@ -22,18 +22,17 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
-
 Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of Digital not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -67,8 +66,8 @@ SOFTWARE.
 /*
  * The following constants are provided solely as a last line of defense.  The
  * normal build ALWAYS overrides them using a special rule given in
- * server/dix/Imakefile.  If you want to change either of these constants, 
- * you should set the DefaultFontPath or DefaultRGBDatabase configuration 
+ * server/dix/Imakefile.  If you want to change either of these constants,
+ * you should set the DefaultFontPath or DefaultRGBDatabase configuration
  * parameters.
  * DO NOT CHANGE THESE VALUES OR THE DIX IMAKEFILE!
  */
@@ -77,7 +76,7 @@ SOFTWARE.
 #endif
 
 /*
- * The following constants contain default values for all of the variables 
+ * The following constants contain default values for all of the variables
  * that can be initialized on the server command line or in the environment.
  */
 #define COMPILEDDEFAULTFONT	"fixed"
@@ -85,7 +84,7 @@ SOFTWARE.
 #ifndef COMPILEDDISPLAYCLASS
 #define COMPILEDDISPLAYCLASS	"MIT-unspecified"
 #endif
-#define DEFAULT_TIMEOUT		60	/* seconds */
+#define DEFAULT_TIMEOUT		60      /* seconds */
 #define DEFAULT_KEYBOARD_CLICK 	0
 #define DEFAULT_BELL		50
 #define DEFAULT_BELL_PITCH	400
@@ -97,8 +96,8 @@ SOFTWARE.
         0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,\
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 
-#define DEFAULT_LEDS		0x0        /* all off */
-#define DEFAULT_LEDS_MASK	0xffffffff /* 32 */
+#define DEFAULT_LEDS		0x0     /* all off */
+#define DEFAULT_LEDS_MASK	0xffffffff      /* 32 */
 #define DEFAULT_INT_RESOLUTION		1000
 #define DEFAULT_INT_MIN_VALUE		0
 #define DEFAULT_INT_MAX_VALUE		100
@@ -124,4 +123,4 @@ SOFTWARE.
 #define DEFAULT_LOG_FILE_VERBOSITY	3
 #endif
 
-#endif /* SITE_H */
+#endif                          /* SITE_H */

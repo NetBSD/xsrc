@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL SuSE
  * BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
- * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN 
+ * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  * Author:  Keith Packard, SuSE, Inc.
@@ -40,41 +40,41 @@
 #define GlyphFormatNum	5
 
 typedef struct _Glyph {
-    CARD32	    refcnt;
-    PrivateRec	*devPrivates;
-    unsigned char   sha1[20];
-    CARD32	    size; /* info + bitmap */
-    xGlyphInfo	    info;
+    CARD32 refcnt;
+    PrivateRec *devPrivates;
+    unsigned char sha1[20];
+    CARD32 size;                /* info + bitmap */
+    xGlyphInfo info;
     /* per-screen pixmaps follow */
 } GlyphRec, *GlyphPtr;
 
 #define GlyphPicture(glyph) ((PicturePtr *) ((glyph) + 1))
 
 typedef struct _GlyphRef {
-    CARD32	signature;
-    GlyphPtr	glyph;
+    CARD32 signature;
+    GlyphPtr glyph;
 } GlyphRefRec, *GlyphRefPtr;
 
 #define DeletedGlyph	((GlyphPtr) 1)
 
 typedef struct _GlyphHashSet {
-    CARD32	entries;
-    CARD32	size;
-    CARD32	rehash;
+    CARD32 entries;
+    CARD32 size;
+    CARD32 rehash;
 } GlyphHashSetRec, *GlyphHashSetPtr;
 
 typedef struct _GlyphHash {
-    GlyphRefPtr	    table;
+    GlyphRefPtr table;
     GlyphHashSetPtr hashSet;
-    CARD32	    tableEntries;
+    CARD32 tableEntries;
 } GlyphHashRec, *GlyphHashPtr;
 
 typedef struct _GlyphSet {
-    CARD32	    refcnt;
-    int		    fdepth;
-    PictFormatPtr   format;
-    GlyphHashRec    hash;
-    PrivateRec      *devPrivates;
+    CARD32 refcnt;
+    int fdepth;
+    PictFormatPtr format;
+    GlyphHashRec hash;
+    PrivateRec *devPrivates;
 } GlyphSetRec, *GlyphSetPtr;
 
 #define GlyphSetGetPrivate(pGlyphSet,k)					\
@@ -84,67 +84,43 @@ typedef struct _GlyphSet {
     dixSetPrivate(&(pGlyphSet)->devPrivates, k, ptr)
 
 typedef struct _GlyphList {
-    INT16	    xOff;
-    INT16	    yOff;
-    CARD8	    len;
-    PictFormatPtr   format;
+    INT16 xOff;
+    INT16 yOff;
+    CARD8 len;
+    PictFormatPtr format;
 } GlyphListRec, *GlyphListPtr;
 
-extern _X_EXPORT GlyphHashSetPtr
-FindGlyphHashSet (CARD32 filled);
+extern void
+ GlyphUninit(ScreenPtr pScreen);
 
+extern GlyphPtr FindGlyphByHash(unsigned char sha1[20], int format);
+
+extern int
+HashGlyph(xGlyphInfo * gi,
+          CARD8 *bits, unsigned long size, unsigned char sha1[20]);
+
+extern void
+ AddGlyph(GlyphSetPtr glyphSet, GlyphPtr glyph, Glyph id);
+
+extern Bool
+ DeleteGlyph(GlyphSetPtr glyphSet, Glyph id);
+
+extern GlyphPtr FindGlyph(GlyphSetPtr glyphSet, Glyph id);
+
+extern GlyphPtr AllocateGlyph(xGlyphInfo * gi, int format);
+
+extern Bool
+ ResizeGlyphSet(GlyphSetPtr glyphSet, CARD32 change);
+
+extern GlyphSetPtr AllocateGlyphSet(int fdepth, PictFormatPtr format);
+
+extern int
+ FreeGlyphSet(void *value, XID gid);
+
+#define GLYPH_HAS_GLYPH_PICTURE_ACCESSOR 1 /* used for api compat */
+extern _X_EXPORT PicturePtr
+ GetGlyphPicture(GlyphPtr glyph, ScreenPtr pScreen);
 extern _X_EXPORT void
-GlyphUninit (ScreenPtr pScreen);
+ SetGlyphPicture(GlyphPtr glyph, ScreenPtr pScreen, PicturePtr picture);
 
-extern _X_EXPORT GlyphHashSetPtr
-FindGlyphHashSet (CARD32 filled);
-
-extern _X_EXPORT GlyphRefPtr
-FindGlyphRef (GlyphHashPtr	hash,
-	      CARD32		signature,
-	      Bool		match,
-	      unsigned char	sha1[20]);
-
-extern _X_EXPORT GlyphPtr
-FindGlyphByHash (unsigned char sha1[20], int format);
-
-extern _X_EXPORT int
-HashGlyph (xGlyphInfo    *gi,
-	   CARD8	 *bits,
-	   unsigned long size,
-	   unsigned char sha1[20]);
-
-extern _X_EXPORT void
-FreeGlyph (GlyphPtr glyph, int format);
-
-extern _X_EXPORT void
-AddGlyph (GlyphSetPtr glyphSet, GlyphPtr glyph, Glyph id);
-
-extern _X_EXPORT Bool
-DeleteGlyph (GlyphSetPtr glyphSet, Glyph id);
-
-extern _X_EXPORT GlyphPtr
-FindGlyph (GlyphSetPtr glyphSet, Glyph id);
-
-extern _X_EXPORT GlyphPtr
-AllocateGlyph (xGlyphInfo *gi, int format);
-
-extern _X_EXPORT Bool
-AllocateGlyphHash (GlyphHashPtr hash, GlyphHashSetPtr hashSet);
-
-extern _X_EXPORT Bool
-ResizeGlyphHash (GlyphHashPtr hash, CARD32 change, Bool global);
-
-extern _X_EXPORT Bool
-ResizeGlyphSet (GlyphSetPtr glyphSet, CARD32 change);
-
-extern _X_EXPORT GlyphSetPtr
-AllocateGlyphSet (int fdepth, PictFormatPtr format);
-
-extern _X_EXPORT int
-FreeGlyphSet (pointer   value,
-	      XID       gid);
-
-
-
-#endif /* _GLYPHSTR_H_ */
+#endif                          /* _GLYPHSTR_H_ */

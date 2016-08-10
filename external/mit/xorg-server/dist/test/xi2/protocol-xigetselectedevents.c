@@ -42,21 +42,21 @@
 #include <X11/extensions/XI2proto.h>
 #include "inputstr.h"
 #include "windowstr.h"
-#include "extinit.h" /* for XInputExtensionInit */
+#include "extinit.h"            /* for XInputExtensionInit */
 #include "scrnintstr.h"
 #include "xiselectev.h"
 #include "exevents.h"
 
 #include "protocol-common.h"
-#include <glib.h>
 
-static void reply_XIGetSelectedEvents(ClientPtr client, int len, char *data, void *userdata);
-static void reply_XIGetSelectedEvents_data(ClientPtr client, int len, char *data, void *userdata);
-
+static void reply_XIGetSelectedEvents(ClientPtr client, int len, char *data,
+                                      void *userdata);
+static void reply_XIGetSelectedEvents_data(ClientPtr client, int len,
+                                           char *data, void *userdata);
 
 struct {
     int num_masks_expected;
-    unsigned char mask[MAXDEVICES][XI2LASTEVENT]; /* intentionally bigger */
+    unsigned char mask[MAXDEVICES][XI2LASTEVENT];       /* intentionally bigger */
     int mask_len;
 } test_data;
 
@@ -65,14 +65,14 @@ struct {
  * fake client window. If the requested ID is neither of those wanted,
  * return whatever the real dixLookupWindow does.
  */
-int __wrap_dixLookupWindow(WindowPtr *win, XID id, ClientPtr client, Mask access)
+int
+__wrap_dixLookupWindow(WindowPtr *win, XID id, ClientPtr client, Mask access)
 {
-    if (id == root.drawable.id)
-    {
+    if (id == root.drawable.id) {
         *win = &root;
         return Success;
-    } else if (id == window.drawable.id)
-    {
+    }
+    else if (id == window.drawable.id) {
         *win = &window;
         return Success;
     }
@@ -81,81 +81,82 @@ int __wrap_dixLookupWindow(WindowPtr *win, XID id, ClientPtr client, Mask access
 }
 
 /* AddResource is called from XISetSEventMask, we don't need this */
-Bool __wrap_AddResource(XID id, RESTYPE type, pointer value)
+Bool
+__wrap_AddResource(XID id, RESTYPE type, void *value)
 {
     return TRUE;
 }
 
-static void reply_XIGetSelectedEvents(ClientPtr client, int len, char *data, void *userdata)
+static void
+reply_XIGetSelectedEvents(ClientPtr client, int len, char *data, void *userdata)
 {
-    xXIGetSelectedEventsReply *rep = (xXIGetSelectedEventsReply*)data;
+    xXIGetSelectedEventsReply *rep = (xXIGetSelectedEventsReply *) data;
 
-    if (client->swapped)
-    {
-        char n;
-        swapl(&rep->length, n);
-        swaps(&rep->sequenceNumber, n);
-        swaps(&rep->num_masks, n);
+    if (client->swapped) {
+        swapl(&rep->length);
+        swaps(&rep->sequenceNumber);
+        swaps(&rep->num_masks);
     }
 
     reply_check_defaults(rep, len, XIGetSelectedEvents);
 
-    g_assert(rep->num_masks == test_data.num_masks_expected);
+    assert(rep->num_masks == test_data.num_masks_expected);
 
     reply_handler = reply_XIGetSelectedEvents_data;
 }
 
-static void reply_XIGetSelectedEvents_data(ClientPtr client, int len, char *data, void *userdata)
+static void
+reply_XIGetSelectedEvents_data(ClientPtr client, int len, char *data,
+                               void *userdata)
 {
     int i;
     xXIEventMask *mask;
     unsigned char *bitmask;
 
-    mask = (xXIEventMask*)data;
-    for (i = 0; i < test_data.num_masks_expected; i++)
-    {
-        if (client->swapped)
-        {
-            char n;
-            swaps(&mask->deviceid, n);
-            swaps(&mask->mask_len, n);
+    mask = (xXIEventMask *) data;
+    for (i = 0; i < test_data.num_masks_expected; i++) {
+        if (client->swapped) {
+            swaps(&mask->deviceid);
+            swaps(&mask->mask_len);
         }
 
-        g_assert(mask->deviceid < 6);
-        g_assert(mask->mask_len <= (((XI2LASTEVENT + 8)/8) + 3)/4) ;
+        assert(mask->deviceid < 6);
+        assert(mask->mask_len <= (((XI2LASTEVENT + 8) / 8) + 3) / 4);
 
-        bitmask = (unsigned char*)&mask[1];
-        g_assert(memcmp(bitmask,
-                    test_data.mask[mask->deviceid],
-                    mask->mask_len * 4) == 0);
+        bitmask = (unsigned char *) &mask[1];
+        assert(memcmp(bitmask,
+                      test_data.mask[mask->deviceid], mask->mask_len * 4) == 0);
 
-        mask = (xXIEventMask*)((char*)mask + mask->mask_len * 4 + sizeof(xXIEventMask));
+        mask =
+            (xXIEventMask *) ((char *) mask + mask->mask_len * 4 +
+                              sizeof(xXIEventMask));
     }
-
 
 }
 
-static void request_XIGetSelectedEvents(xXIGetSelectedEventsReq* req, int error)
+static void
+request_XIGetSelectedEvents(xXIGetSelectedEventsReq * req, int error)
 {
-    char n;
     int rc;
     ClientRec client;
+
     client = init_client(req->length, req);
 
     reply_handler = reply_XIGetSelectedEvents;
 
     rc = ProcXIGetSelectedEvents(&client);
-    g_assert(rc == error);
+    assert(rc == error);
 
     reply_handler = reply_XIGetSelectedEvents;
     client.swapped = TRUE;
-    swapl(&req->win, n);
-    swaps(&req->length, n);
+    swapl(&req->win);
+    swaps(&req->length);
     rc = SProcXIGetSelectedEvents(&client);
-    g_assert(rc == error);
+    assert(rc == error);
 }
 
-static void test_XIGetSelectedEvents(void)
+static void
+test_XIGetSelectedEvents(void)
 {
     int i, j;
     xXIGetSelectedEventsReq request;
@@ -165,11 +166,11 @@ static void test_XIGetSelectedEvents(void)
 
     request_init(&request, XIGetSelectedEvents);
 
-    g_test_message("Testing for BadWindow on invalid window.");
+    printf("Testing for BadWindow on invalid window.\n");
     request.win = None;
     request_XIGetSelectedEvents(&request, BadWindow);
 
-    g_test_message("Testing for zero-length (unset) masks.");
+    printf("Testing for zero-length (unset) masks.\n");
     /* No masks set yet */
     test_data.num_masks_expected = 0;
     request.win = ROOT_WINDOW_ID;
@@ -178,42 +179,37 @@ static void test_XIGetSelectedEvents(void)
     request.win = CLIENT_WINDOW_ID;
     request_XIGetSelectedEvents(&request, Success);
 
-    memset(test_data.mask, 0,
-           sizeof(test_data.mask));
+    memset(test_data.mask, 0, sizeof(test_data.mask));
 
-    g_test_message("Testing for valid masks");
-    memset(&dev, 0, sizeof(dev)); /* dev->id is enough for XISetEventMask */
+    printf("Testing for valid masks\n");
+    memset(&dev, 0, sizeof(dev));       /* dev->id is enough for XISetEventMask */
     request.win = ROOT_WINDOW_ID;
 
     /* devices 6 - MAXDEVICES don't exist, they mustn't be included in the
      * reply even if a mask is set */
-    for (j = 0; j < MAXDEVICES; j++)
-    {
+    for (j = 0; j < MAXDEVICES; j++) {
         test_data.num_masks_expected = min(j + 1, devices.num_devices + 2);
         dev.id = j;
         mask = test_data.mask[j];
         /* bits one-by-one */
-        for (i = 0; i < XI2LASTEVENT; i++)
-        {
+        for (i = 0; i < XI2LASTEVENT; i++) {
             SetBit(mask, i);
-            XISetEventMask(&dev, &root, &client, (i + 8)/8, mask);
+            XISetEventMask(&dev, &root, &client, (i + 8) / 8, mask);
             request_XIGetSelectedEvents(&request, Success);
             ClearBit(mask, i);
         }
 
         /* all valid mask bits */
-        for (i = 0; i < XI2LASTEVENT; i++)
-        {
+        for (i = 0; i < XI2LASTEVENT; i++) {
             SetBit(mask, i);
-            XISetEventMask(&dev, &root, &client, (i + 8)/8, mask);
+            XISetEventMask(&dev, &root, &client, (i + 8) / 8, mask);
             request_XIGetSelectedEvents(&request, Success);
         }
     }
 
-    g_test_message("Testing removing all masks");
+    printf("Testing removing all masks\n");
     /* Unset all masks one-by-one */
-    for (j = MAXDEVICES - 1; j >= 0; j--)
-    {
+    for (j = MAXDEVICES - 1; j >= 0; j--) {
         if (j < devices.num_devices + 2)
             test_data.num_masks_expected--;
 
@@ -227,15 +223,12 @@ static void test_XIGetSelectedEvents(void)
     }
 }
 
-int main(int argc, char** argv)
+int
+main(int argc, char **argv)
 {
-    g_test_init(&argc, &argv,NULL);
-    g_test_bug_base("https://bugzilla.freedesktop.org/show_bug.cgi?id=");
-
     init_simple();
 
-    g_test_add_func("/xi2/protocol/XIGetSelectedEvents", test_XIGetSelectedEvents);
+    test_XIGetSelectedEvents();
 
-    return g_test_run();
+    return 0;
 }
-

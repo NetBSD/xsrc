@@ -1,5 +1,5 @@
 
-SUBDIRS = input config examples doc man
+SUBDIRS = input config examples doc doxygen man
 bin_PROGRAMS = Xdmx
 
 if XINERAMA
@@ -56,8 +56,6 @@ Xdmx_SOURCES = dmx.c \
                dmxprop.h \
                dmxscrinit.c \
                dmxscrinit.h \
-               dmxshadow.c \
-               dmxshadow.h \
                dmxstat.c \
                dmxstat.h \
                dmxsync.c \
@@ -67,7 +65,6 @@ Xdmx_SOURCES = dmx.c \
                dmxwindow.c \
                dmxwindow.h \
                $(top_srcdir)/mi/miinitext.c \
-               $(top_srcdir)/fb/fbcmap_mi.c \
                $(GLX_SRCS) 
 
 

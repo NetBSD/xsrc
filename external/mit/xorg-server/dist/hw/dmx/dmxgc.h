@@ -41,22 +41,21 @@
 
 /** GC private area. */
 typedef struct _dmxGCPriv {
-    GCOps   *ops;
-    GCFuncs *funcs;
-    XlibGC   gc;
-    Bool     msc;
+    const GCOps *ops;
+    const GCFuncs *funcs;
+    XlibGC gc;
+    Bool msc;
 } dmxGCPrivRec, *dmxGCPrivPtr;
-
 
 extern Bool dmxInitGC(ScreenPtr pScreen);
 
 extern Bool dmxCreateGC(GCPtr pGC);
 extern void dmxValidateGC(GCPtr pGC, unsigned long changes,
-			  DrawablePtr pDrawable);
+                          DrawablePtr pDrawable);
 extern void dmxChangeGC(GCPtr pGC, unsigned long mask);
 extern void dmxCopyGC(GCPtr pGCSrc, unsigned long changes, GCPtr pGCDst);
 extern void dmxDestroyGC(GCPtr pGC);
-extern void dmxChangeClip(GCPtr pGC, int type, pointer pvalue, int nrects);
+extern void dmxChangeClip(GCPtr pGC, int type, void *pvalue, int nrects);
 extern void dmxDestroyClip(GCPtr pGC);
 extern void dmxCopyClip(GCPtr pGCDst, GCPtr pGCSrc);
 
@@ -83,4 +82,4 @@ do {									\
 	DMX_WRAP(ops, &dmxGCOps, _pGCPriv, (_pGC));			\
 } while (0)
 
-#endif /* DMXGC_H */
+#endif                          /* DMXGC_H */

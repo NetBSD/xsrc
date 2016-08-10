@@ -29,13 +29,13 @@
 
 #include "resource.h"
 
-extern _X_EXPORT RESTYPE RegionResType;
-extern _X_EXPORT int XFixesErrorBase;
+extern RESTYPE RegionResType;
+extern int XFixesErrorBase;
 
 #define VERIFY_REGION(pRegion, rid, client, mode)			\
     do {								\
 	int err;							\
-	err = dixLookupResourceByType((pointer *) &pRegion, rid,	\
+	err = dixLookupResourceByType((void **) &pRegion, rid,	\
 				      RegionResType, client, mode);	\
 	if (err != Success) {						\
 	    client->errorValue = rid;					\
@@ -48,8 +48,9 @@ extern _X_EXPORT int XFixesErrorBase;
     if (rid) VERIFY_REGION(pRegion, rid, client, mode); \
 }
 
-extern _X_EXPORT RegionPtr
-XFixesRegionCopy (RegionPtr pRegion);
+extern RegionPtr
+ XFixesRegionCopy(RegionPtr pRegion);
 
+#include "xibarriers.h"
 
-#endif /* _XFIXES_H_ */
+#endif                          /* _XFIXES_H_ */

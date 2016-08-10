@@ -63,11 +63,11 @@ extern xGLXSingleReply __glXReply;
   	__glXReply.sequenceNumber = client->sequence;
 
 #define __GLX_SEND_HEADER() \
-	WriteToClient( client, sz_xGLXSingleReply, (char *)&__glXReply);
+	WriteToClient (client, sz_xGLXSingleReply, &__glXReply);
 
 #define __GLX_PUT_RETVAL(a) \
   	__glXReply.retval = (a);
-  
+
 #define __GLX_PUT_SIZE(a) \
   	__glXReply.size = (a);
 
@@ -83,7 +83,8 @@ extern xGLXSingleReply __glXReply;
 ** pointer.
 */
 #define __GLX_GET_ANSWER_BUFFER(res,cl,size,align)			 \
-    if ((size) > sizeof(answerBuffer)) {				 \
+    if (size < 0) return BadLength;                                      \
+    else if ((size) > sizeof(answerBuffer)) {				 \
 	int bump;							 \
 	if ((cl)->returnBufSize < (size)+(align)) {			 \
 	    (cl)->returnBuf = (GLbyte*)realloc((cl)->returnBuf,	 	 \
@@ -102,34 +103,33 @@ extern xGLXSingleReply __glXReply;
 
 #define __GLX_PUT_BYTE() \
   	*(GLbyte *)&__glXReply.pad3 = *(GLbyte *)answer
-	  
+
 #define __GLX_PUT_SHORT() \
   	*(GLshort *)&__glXReply.pad3 = *(GLshort *)answer
-	  
+
 #define __GLX_PUT_INT() \
   	*(GLint *)&__glXReply.pad3 = *(GLint *)answer
-	  
+
 #define __GLX_PUT_FLOAT() \
   	*(GLfloat *)&__glXReply.pad3 = *(GLfloat *)answer
-	  
+
 #define __GLX_PUT_DOUBLE() \
   	*(GLdouble *)&__glXReply.pad3 = *(GLdouble *)answer
-	  
+
 #define __GLX_SEND_BYTE_ARRAY(len) \
-	WriteToClient(client, __GLX_PAD((len)*__GLX_SIZE_INT8), (char *)answer)
+	WriteToClient(client, __GLX_PAD((len)*__GLX_SIZE_INT8), answer)
 
 #define __GLX_SEND_SHORT_ARRAY(len) \
-	WriteToClient(client, __GLX_PAD((len)*__GLX_SIZE_INT16), (char *)answer)
-  
-#define __GLX_SEND_INT_ARRAY(len) \
-	WriteToClient(client, (len)*__GLX_SIZE_INT32, (char *)answer)
-  
-#define __GLX_SEND_FLOAT_ARRAY(len) \
-	WriteToClient(client, (len)*__GLX_SIZE_FLOAT32, (char *)answer)
-  
-#define __GLX_SEND_DOUBLE_ARRAY(len) \
-	WriteToClient(client, (len)*__GLX_SIZE_FLOAT64, (char *)answer)
+	WriteToClient(client, __GLX_PAD((len)*__GLX_SIZE_INT16), answer)
 
+#define __GLX_SEND_INT_ARRAY(len) \
+	WriteToClient(client, (len)*__GLX_SIZE_INT32, answer)
+
+#define __GLX_SEND_FLOAT_ARRAY(len) \
+	WriteToClient(client, (len)*__GLX_SIZE_FLOAT32, answer)
+
+#define __GLX_SEND_DOUBLE_ARRAY(len) \
+	WriteToClient(client, (len)*__GLX_SIZE_FLOAT64, answer)
 
 #define __GLX_SEND_VOID_ARRAY(len)  __GLX_SEND_BYTE_ARRAY(len)
 #define __GLX_SEND_UBYTE_ARRAY(len)  __GLX_SEND_BYTE_ARRAY(len)
@@ -148,19 +148,18 @@ extern xGLXSingleReply __glXReply;
   	GLbyte *swapPC;		\
   	GLbyte *swapEnd
 
-
 #define __GLX_SWAP_INT(pc) 			\
   	sw = ((GLbyte *)(pc))[0]; 		\
   	((GLbyte *)(pc))[0] = ((GLbyte *)(pc))[3]; 	\
   	((GLbyte *)(pc))[3] = sw; 		\
   	sw = ((GLbyte *)(pc))[1]; 		\
   	((GLbyte *)(pc))[1] = ((GLbyte *)(pc))[2]; 	\
-  	((GLbyte *)(pc))[2] = sw;	
+  	((GLbyte *)(pc))[2] = sw;
 
 #define __GLX_SWAP_SHORT(pc) \
   	sw = ((GLbyte *)(pc))[0]; 		\
   	((GLbyte *)(pc))[0] = ((GLbyte *)(pc))[1]; 	\
-  	((GLbyte *)(pc))[1] = sw; 	
+  	((GLbyte *)(pc))[1] = sw;
 
 #define __GLX_SWAP_DOUBLE(pc) \
   	sw = ((GLbyte *)(pc))[0]; 		\
@@ -174,7 +173,7 @@ extern xGLXSingleReply __glXReply;
   	((GLbyte *)(pc))[5] = sw;			\
   	sw = ((GLbyte *)(pc))[3]; 		\
   	((GLbyte *)(pc))[3] = ((GLbyte *)(pc))[4]; 	\
-  	((GLbyte *)(pc))[4] = sw;	
+  	((GLbyte *)(pc))[4] = sw;
 
 #define __GLX_SWAP_FLOAT(pc) \
   	sw = ((GLbyte *)(pc))[0]; 		\
@@ -182,7 +181,7 @@ extern xGLXSingleReply __glXReply;
   	((GLbyte *)(pc))[3] = sw; 		\
   	sw = ((GLbyte *)(pc))[1]; 		\
   	((GLbyte *)(pc))[1] = ((GLbyte *)(pc))[2]; 	\
-  	((GLbyte *)(pc))[2] = sw;	
+  	((GLbyte *)(pc))[2] = sw;
 
 #define __GLX_SWAP_INT_ARRAY(pc, count) \
   	swapPC = ((GLbyte *)(pc));		\
@@ -191,7 +190,7 @@ extern xGLXSingleReply __glXReply;
 	    __GLX_SWAP_INT(swapPC);		\
 	    swapPC += __GLX_SIZE_INT32;		\
 	}
-	
+
 #define __GLX_SWAP_SHORT_ARRAY(pc, count) \
   	swapPC = ((GLbyte *)(pc));		\
   	swapEnd = ((GLbyte *)(pc)) + (count)*__GLX_SIZE_INT16;\
@@ -199,7 +198,7 @@ extern xGLXSingleReply __glXReply;
 	    __GLX_SWAP_SHORT(swapPC);		\
 	    swapPC += __GLX_SIZE_INT16;		\
 	}
-	
+
 #define __GLX_SWAP_DOUBLE_ARRAY(pc, count) \
   	swapPC = ((GLbyte *)(pc));		\
   	swapEnd = ((GLbyte *)(pc)) + (count)*__GLX_SIZE_FLOAT64;\
@@ -207,7 +206,7 @@ extern xGLXSingleReply __glXReply;
 	    __GLX_SWAP_DOUBLE(swapPC);		\
 	    swapPC += __GLX_SIZE_FLOAT64;	\
 	}
-    
+
 #define __GLX_SWAP_FLOAT_ARRAY(pc, count) \
   	swapPC = ((GLbyte *)(pc));		\
   	swapEnd = ((GLbyte *)(pc)) + (count)*__GLX_SIZE_FLOAT32;\
@@ -226,9 +225,4 @@ extern xGLXSingleReply __glXReply;
 #define __GLX_SWAP_REPLY_SIZE() \
   	__GLX_SWAP_INT(&__glXReply.size)
 
-#endif /* !__GLX_unpack_h__ */
-
-
-
-
-
+#endif                          /* !__GLX_unpack_h__ */

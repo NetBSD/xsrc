@@ -35,37 +35,36 @@
 #include "micmap.h"
 
 #include "xf86.h"
-#include "compiler.h"
 #include "colormapst.h"
 #include "xf86RamDacPriv.h"
 
 void
-RamDacLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indices, LOCO *colors,
-		 VisualPtr pVisual)
+RamDacLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indices, LOCO * colors,
+                  VisualPtr pVisual)
 {
     RamDacRecPtr hwp = RAMDACSCRPTR(pScrn);
     int i, index;
 
     for (i = 0; i < numColors; i++) {
-	index = indices[i];
-	(*hwp->WriteAddress)(pScrn, index);
-	(*hwp->WriteData)(pScrn, colors[index].red);
-	(*hwp->WriteData)(pScrn, colors[index].green);
-	(*hwp->WriteData)(pScrn, colors[index].blue);
+        index = indices[i];
+        (*hwp->WriteAddress) (pScrn, index);
+        (*hwp->WriteData) (pScrn, colors[index].red);
+        (*hwp->WriteData) (pScrn, colors[index].green);
+        (*hwp->WriteData) (pScrn, colors[index].blue);
     }
 }
 
 Bool
 RamDacHandleColormaps(ScreenPtr pScreen, int maxColors, int sigRGBbits,
-		      unsigned int flags)
+                      unsigned int flags)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     RamDacRecPtr hwp = RAMDACSCRPTR(pScrn);
 
     if (hwp->LoadPalette == NULL)
-   	return xf86HandleColormaps(pScreen, maxColors, sigRGBbits,
-			     RamDacLoadPalette, NULL, flags);
+        return xf86HandleColormaps(pScreen, maxColors, sigRGBbits,
+                                   RamDacLoadPalette, NULL, flags);
     else
-    	return xf86HandleColormaps(pScreen, maxColors, sigRGBbits,
-			     hwp->LoadPalette, NULL, flags);
+        return xf86HandleColormaps(pScreen, maxColors, sigRGBbits,
+                                   hwp->LoadPalette, NULL, flags);
 }

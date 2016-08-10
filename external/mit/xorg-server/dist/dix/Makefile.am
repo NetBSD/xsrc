@@ -4,17 +4,17 @@ AM_CPPFLAGS = -I$(top_srcdir)/include
 AM_CFLAGS = $(DIX_CFLAGS)
 
 libmain_la_SOURCES =    \
-	main.c
+	stubmain.c
 
 libdix_la_SOURCES = 	\
 	atom.c		\
 	colormap.c	\
 	cursor.c	\
-	deprecated.c	\
 	devices.c	\
 	dispatch.c	\
 	dispatch.h	\
 	dixfonts.c	\
+	main.c		\
 	dixutils.c	\
 	enterleave.c	\
 	enterleave.h	\
@@ -40,6 +40,7 @@ libdix_la_SOURCES = 	\
 	swaprep.c	\
 	swapreq.c	\
 	tables.c	\
+	touch.c		\
 	window.c
 
 EXTRA_DIST = buildatoms BuiltInAtoms Xserver.d Xserver-dtrace.h.in
@@ -65,11 +66,9 @@ dtrace-dix.o: $(top_srcdir)/dix/Xserver.d $(am_libdix_la_OBJECTS)
 
 noinst_PROGRAMS = dix.O
 
+dix_O_SOURCES =
 dix.O: dtrace-dix.o $(am_libdix_la_OBJECTS)
 	$(AM_V_GEN)ld -r -o $@ $(am_libdix_la_OBJECTS:%.lo=.libs/%.o)
 endif
 
-dix.c:
-	touch $@
-
-CLEANFILES = dix.c Xserver-dtrace.h
+CLEANFILES = Xserver-dtrace.h

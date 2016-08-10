@@ -44,6 +44,8 @@
 /* #include "g_disptab_EXT.h" */
 #include "unpack.h"
 #include "glxutil.h"
+#include "glxcmds.h"
+#include "glxvendor.h"
 
 #include "GL/glxproto.h"
 
@@ -67,7 +69,7 @@
 	dpy->bufptr += SIZEOF(x##name##Req);\
 	dpy->request++
 
-#else  /* non-ANSI C uses empty comment instead of "##" for token concatenation */
+#else                           /* non-ANSI C uses empty comment instead of "##" for token concatenation */
 #define GetReqVendorPrivate(name, req) \
         WORD64ALIGN\
 	if ((dpy->bufptr + SIZEOF(x/**/name/**/Req)) > dpy->bufmax)\
@@ -78,92 +80,89 @@
 	dpy->request++
 #endif
 
-extern Display *GetBackEndDisplay( __GLXclientState *cl, int s );
-extern int GetCurrentBackEndTag(__GLXclientState *cl, GLXContextTag tag, int s);
-
 static int swap_vec_element_size = 0;
 
-static void SendSwappedReply( ClientPtr client,
-                              xGLXVendorPrivReply *reply, 
-			      char *buf,
-			      int   buf_size )
+static void
+SendSwappedReply(ClientPtr client,
+                 xGLXVendorPrivReply * reply, char *buf, int buf_size)
 {
-   __GLX_DECLARE_SWAP_VARIABLES;
-   __GLX_SWAP_SHORT(&reply->sequenceNumber);
-   __GLX_SWAP_INT(&reply->length);
-   __GLX_SWAP_INT(&reply->retval);
-   __GLX_SWAP_INT(&reply->size);
+    __GLX_DECLARE_SWAP_VARIABLES;
+    __GLX_SWAP_SHORT(&reply->sequenceNumber);
+    __GLX_SWAP_INT(&reply->length);
+    __GLX_SWAP_INT(&reply->retval);
+    __GLX_SWAP_INT(&reply->size);
 
-   if ( (buf_size == 0) && (swap_vec_element_size > 0) ) {
-      /*
-       * the reply has single component - need to swap pad3
-       */
-      if (swap_vec_element_size == 2) {
-	 __GLX_SWAP_SHORT(&reply->pad3);
-      }
-      else if (swap_vec_element_size == 4) {
-	 __GLX_SWAP_INT(&reply->pad3);
-	 __GLX_SWAP_INT(&reply->pad4);
-      }
-      else if (swap_vec_element_size == 8) {
-	 __GLX_SWAP_DOUBLE(&reply->pad3);
-      }
-   }
-   else if ( (buf_size > 0) && (swap_vec_element_size > 0) ) {
-      /*
-       * the reply has vector of elements which needs to be swapped
-       */
-      int vsize = buf_size / swap_vec_element_size;
-      char *p = buf;
-      int i;
+    if ((buf_size == 0) && (swap_vec_element_size > 0)) {
+        /*
+         * the reply has single component - need to swap pad3
+         */
+        if (swap_vec_element_size == 2) {
+            __GLX_SWAP_SHORT(&reply->pad3);
+        }
+        else if (swap_vec_element_size == 4) {
+            __GLX_SWAP_INT(&reply->pad3);
+            __GLX_SWAP_INT(&reply->pad4);
+        }
+        else if (swap_vec_element_size == 8) {
+            __GLX_SWAP_DOUBLE(&reply->pad3);
+        }
+    }
+    else if ((buf_size > 0) && (swap_vec_element_size > 0)) {
+        /*
+         * the reply has vector of elements which needs to be swapped
+         */
+        int vsize = buf_size / swap_vec_element_size;
+        char *p = buf;
+        int i;
 
-      for (i=0; i<vsize; i++) {
-	 if (swap_vec_element_size == 2) {
-	    __GLX_SWAP_SHORT(p);
-	 }
-	 else if (swap_vec_element_size == 4) {
-	    __GLX_SWAP_INT(p);
-	 }
-	 else if (swap_vec_element_size == 8) {
-	    __GLX_SWAP_DOUBLE(p);
-	 }
+        for (i = 0; i < vsize; i++) {
+            if (swap_vec_element_size == 2) {
+                __GLX_SWAP_SHORT(p);
+            }
+            else if (swap_vec_element_size == 4) {
+                __GLX_SWAP_INT(p);
+            }
+            else if (swap_vec_element_size == 8) {
+                __GLX_SWAP_DOUBLE(p);
+            }
 
-	 p += swap_vec_element_size;
-      }
+            p += swap_vec_element_size;
+        }
 
-      __GLX_SWAP_INT(&reply->pad3);
-      __GLX_SWAP_INT(&reply->pad4);
-      __GLX_SWAP_INT(&reply->pad5);
-      __GLX_SWAP_INT(&reply->pad6);
+        __GLX_SWAP_INT(&reply->pad3);
+        __GLX_SWAP_INT(&reply->pad4);
+        __GLX_SWAP_INT(&reply->pad5);
+        __GLX_SWAP_INT(&reply->pad6);
 
-   }
+    }
 
-    WriteToClient(client, sizeof(xGLXVendorPrivReply),(char *)reply);
+    WriteToClient(client, sizeof(xGLXVendorPrivReply), reply);
     if (buf_size > 0)
-       WriteToClient(client, buf_size, (char *)buf);
+        WriteToClient(client, buf_size, buf);
 
 }
 
-int __glXVForwardSingleReq( __GLXclientState *cl, GLbyte *pc )
+int
+__glXVForwardSingleReq(__GLXclientState * cl, GLbyte * pc)
 {
-   xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *)pc;
-   xGLXVendorPrivateReq *be_req;
+    xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *) pc;
+    xGLXVendorPrivateReq *be_req;
     __GLXcontext *glxc;
-   int from_screen = 0;
-   int to_screen = 0;
-   int buf_size;
-   int s;
+    int from_screen = 0;
+    int to_screen = 0;
+    int buf_size;
+    int s;
 
     glxc = __glXLookupContextByTag(cl, req->contextTag);
     if (!glxc) {
-	return 0;
+        return 0;
     }
     from_screen = to_screen = glxc->pScreen->myNum;
 
 #ifdef PANORAMIX
     if (!noPanoramiXExtension) {
-       from_screen = 0;
-       to_screen = screenInfo.numScreens - 1;
+        from_screen = 0;
+        to_screen = screenInfo.numScreens - 1;
     }
 #endif
 
@@ -173,43 +172,44 @@ int __glXVForwardSingleReq( __GLXclientState *cl, GLbyte *pc )
     /*
      * just forward the request to back-end server(s)
      */
-    for (s=from_screen; s<=to_screen; s++) {
-       DMXScreenInfo *dmxScreen = &dmxScreens[s];
-       Display *dpy = GetBackEndDisplay(cl,s);
+    for (s = from_screen; s <= to_screen; s++) {
+        DMXScreenInfo *dmxScreen = &dmxScreens[s];
+        Display *dpy = GetBackEndDisplay(cl, s);
 
-       LockDisplay(dpy);
-       GetReqVendorPrivate(GLXVendorPrivate,be_req);
-       be_req->reqType = dmxScreen->glxMajorOpcode;
-       be_req->glxCode = req->glxCode;
-       be_req->length = req->length;
-       be_req->vendorCode = req->vendorCode;
-       be_req->contextTag = GetCurrentBackEndTag(cl,req->contextTag,s);
-       if (buf_size > 0) 
-	  _XSend(dpy, (const char *)pc, buf_size);
-       UnlockDisplay(dpy);
-       SyncHandle();
+        LockDisplay(dpy);
+        GetReqVendorPrivate(GLXVendorPrivate, be_req);
+        be_req->reqType = dmxScreen->glxMajorOpcode;
+        be_req->glxCode = req->glxCode;
+        be_req->length = req->length;
+        be_req->vendorCode = req->vendorCode;
+        be_req->contextTag = GetCurrentBackEndTag(cl, req->contextTag, s);
+        if (buf_size > 0)
+            _XSend(dpy, (const char *) pc, buf_size);
+        UnlockDisplay(dpy);
+        SyncHandle();
     }
 
     return Success;
 }
 
-int __glXVForwardPipe0WithReply( __GLXclientState *cl, GLbyte *pc )
+int
+__glXVForwardPipe0WithReply(__GLXclientState * cl, GLbyte * pc)
 {
-   ClientPtr client = cl->client;
-   xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *)pc;
-   xGLXVendorPrivateReq *be_req;
-   xGLXVendorPrivReply reply;
-   xGLXVendorPrivReply be_reply;
+    ClientPtr client = cl->client;
+    xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *) pc;
+    xGLXVendorPrivateReq *be_req;
+    xGLXVendorPrivReply reply;
+    xGLXVendorPrivReply be_reply;
     __GLXcontext *glxc;
-   int buf_size;
-   char *be_buf = NULL;
-   int   be_buf_size;
-   DMXScreenInfo *dmxScreen;
-   Display *dpy;
+    int buf_size;
+    char *be_buf = NULL;
+    int be_buf_size;
+    DMXScreenInfo *dmxScreen;
+    Display *dpy;
 
     glxc = __glXLookupContextByTag(cl, req->contextTag);
     if (!glxc) {
-	return __glXBadContext;
+        return __glXBadContext;
     }
 
     pc += sz_xGLXVendorPrivateReq;
@@ -218,34 +218,35 @@ int __glXVForwardPipe0WithReply( __GLXclientState *cl, GLbyte *pc )
     dmxScreen = &dmxScreens[glxc->pScreen->myNum];
     dpy = GetBackEndDisplay(cl, glxc->pScreen->myNum);
 
-    /* 
+    /*
      * send the request to the first back-end server
      */
     LockDisplay(dpy);
-    GetReqVendorPrivate(GLXVendorPrivate,be_req);
+    GetReqVendorPrivate(GLXVendorPrivate, be_req);
     be_req->reqType = dmxScreen->glxMajorOpcode;
     be_req->glxCode = req->glxCode;
     be_req->length = req->length;
     be_req->vendorCode = req->vendorCode;
-    be_req->contextTag = GetCurrentBackEndTag(cl,req->contextTag, glxc->pScreen->myNum);
-    if (buf_size > 0) 
-       _XSend(dpy, (const char *)pc, buf_size);
+    be_req->contextTag =
+        GetCurrentBackEndTag(cl, req->contextTag, glxc->pScreen->myNum);
+    if (buf_size > 0)
+        _XSend(dpy, (const char *) pc, buf_size);
 
     /*
      * get the reply from the back-end server
      */
-    _XReply(dpy, (xReply*) &be_reply, 0, False);
+    _XReply(dpy, (xReply *) &be_reply, 0, False);
     be_buf_size = be_reply.length << 2;
     if (be_buf_size > 0) {
-       be_buf = (char *)malloc( be_buf_size );
-       if (be_buf) {
-	  _XRead(dpy, be_buf, be_buf_size);
-       }
-       else {
-	  /* Throw data on the floor */
-	  _XEatData(dpy, be_buf_size);
-	  return BadAlloc;
-       }
+        be_buf = (char *) malloc(be_buf_size);
+        if (be_buf) {
+            _XRead(dpy, be_buf, be_buf_size);
+        }
+        else {
+            /* Throw data on the floor */
+            _XEatDataWords(dpy, be_reply.length);
+            return BadAlloc;
+        }
     }
 
     UnlockDisplay(dpy);
@@ -254,332 +255,364 @@ int __glXVForwardPipe0WithReply( __GLXclientState *cl, GLbyte *pc )
     /*
      * send the reply to the client
      */
-    memcpy( &reply, &be_reply, sz_xGLXVendorPrivReply );
+    memcpy(&reply, &be_reply, sz_xGLXVendorPrivReply);
     reply.type = X_Reply;
     reply.sequenceNumber = client->sequence;
 
     if (client->swapped) {
-       SendSwappedReply( client, &reply, be_buf, be_buf_size );
+        SendSwappedReply(client, &reply, be_buf, be_buf_size);
     }
     else {
-       WriteToClient(client, sizeof(xGLXVendorPrivReply),(char *)&reply);
-       if (be_buf_size > 0)
-	  WriteToClient(client, be_buf_size, (char *)be_buf);
+        WriteToClient(client, sizeof(xGLXVendorPrivReply), &reply);
+        if (be_buf_size > 0)
+            WriteToClient(client, be_buf_size, be_buf);
     }
 
-    if (be_buf_size > 0) free(be_buf);
+    if (be_buf_size > 0)
+        free(be_buf);
 
     return Success;
 }
 
-int __glXVForwardAllWithReply( __GLXclientState *cl, GLbyte *pc )
+int
+__glXVForwardAllWithReply(__GLXclientState * cl, GLbyte * pc)
 {
-   ClientPtr client = cl->client;
-   xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *)pc;
-   xGLXVendorPrivateReq *be_req;
-   xGLXVendorPrivReply reply;
-   xGLXVendorPrivReply be_reply;
+    ClientPtr client = cl->client;
+    xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *) pc;
+    xGLXVendorPrivateReq *be_req;
+    xGLXVendorPrivReply reply;
+    xGLXVendorPrivReply be_reply;
     __GLXcontext *glxc;
-   int buf_size;
-   char *be_buf = NULL;
-   int   be_buf_size = 0;
-   int from_screen = 0;
-   int to_screen = 0;
-   int s;
+    int buf_size;
+    char *be_buf = NULL;
+    int be_buf_size = 0;
+    int from_screen = 0;
+    int to_screen = 0;
+    int s;
 
-   DMXScreenInfo *dmxScreen;
-   Display *dpy;
+    DMXScreenInfo *dmxScreen;
+    Display *dpy;
 
     glxc = __glXLookupContextByTag(cl, req->contextTag);
     if (!glxc) {
-	return 0;
+        return 0;
     }
     from_screen = to_screen = glxc->pScreen->myNum;
 
 #ifdef PANORAMIX
     if (!noPanoramiXExtension) {
-       from_screen = 0;
-       to_screen = screenInfo.numScreens - 1;
+        from_screen = 0;
+        to_screen = screenInfo.numScreens - 1;
     }
 #endif
 
     pc += sz_xGLXVendorPrivateReq;
     buf_size = (req->length << 2) - sz_xGLXVendorPrivateReq;
 
-    /* 
+    /*
      * send the request to the first back-end server(s)
      */
-    for (s=to_screen; s>=from_screen; s--) {
-       dmxScreen = &dmxScreens[s];
-       dpy = GetBackEndDisplay(cl,s);
+    for (s = to_screen; s >= from_screen; s--) {
+        dmxScreen = &dmxScreens[s];
+        dpy = GetBackEndDisplay(cl, s);
 
-       LockDisplay(dpy);
-       GetReqVendorPrivate(GLXVendorPrivate,be_req);
-       be_req->reqType = dmxScreen->glxMajorOpcode;
-       be_req->glxCode = req->glxCode;
-       be_req->length = req->length;
-       be_req->vendorCode = req->vendorCode;
-       be_req->contextTag = GetCurrentBackEndTag(cl,req->contextTag,s);
-       if (buf_size > 0) 
-	  _XSend(dpy, (const char *)pc, buf_size);
+        LockDisplay(dpy);
+        GetReqVendorPrivate(GLXVendorPrivate, be_req);
+        be_req->reqType = dmxScreen->glxMajorOpcode;
+        be_req->glxCode = req->glxCode;
+        be_req->length = req->length;
+        be_req->vendorCode = req->vendorCode;
+        be_req->contextTag = GetCurrentBackEndTag(cl, req->contextTag, s);
+        if (buf_size > 0)
+            _XSend(dpy, (const char *) pc, buf_size);
 
-       /*
-	* get the reply from the back-end server
-	*/
-       _XReply(dpy, (xReply*) &be_reply, 0, False);
-       be_buf_size = be_reply.length << 2;
-       if (be_buf_size > 0) {
-	  be_buf = (char *)malloc( be_buf_size );
-	  if (be_buf) {
-	     _XRead(dpy, be_buf, be_buf_size);
-	  }
-	  else {
-	     /* Throw data on the floor */
-	     _XEatData(dpy, be_buf_size);
-	     return BadAlloc;
-	  }
-       }
+        /*
+         * get the reply from the back-end server
+         */
+        _XReply(dpy, (xReply *) &be_reply, 0, False);
+        if (s == from_screen) {
+            /* Save data from last reply to send on to client */
+            be_buf_size = be_reply.length << 2;
+            if (be_buf_size > 0) {
+                be_buf = malloc(be_buf_size);
+                if (be_buf) {
+                    _XRead(dpy, be_buf, be_buf_size);
+                }
+                else {
+                    /* Throw data on the floor */
+                    _XEatDataWords(dpy, be_reply.length);
+                    return BadAlloc;
+                }
+            }
+        }
+        else {
+            /* Just discard data from all replies before the last one */
+            if (be_reply.length > 0)
+                _XEatDataWords(dpy, be_reply.length);
+        }
 
-       UnlockDisplay(dpy);
-       SyncHandle();
-
-       if (s > from_screen && be_buf_size > 0) {
-	  free(be_buf);
-       }
+        UnlockDisplay(dpy);
+        SyncHandle();
     }
 
     /*
      * send the reply to the client
      */
-    memcpy( &reply, &be_reply, sz_xGLXVendorPrivReply );
+    memcpy(&reply, &be_reply, sz_xGLXVendorPrivReply);
     reply.type = X_Reply;
     reply.sequenceNumber = client->sequence;
 
     if (client->swapped) {
-       SendSwappedReply( client, &reply, be_buf, be_buf_size );
+        SendSwappedReply(client, &reply, be_buf, be_buf_size);
     }
     else {
-       WriteToClient(client, sizeof(xGLXVendorPrivReply),(char *)&reply);
-       if (be_buf_size > 0)
-	  WriteToClient(client, be_buf_size, (char *)be_buf);
+        WriteToClient(client, sizeof(xGLXVendorPrivReply), &reply);
+        if (be_buf_size > 0)
+            WriteToClient(client, be_buf_size, be_buf);
     }
 
-    if (be_buf_size > 0) free(be_buf);
+    if (be_buf_size > 0)
+        free(be_buf);
 
     return Success;
 }
 
-int __glXVForwardSingleReqSwap( __GLXclientState *cl, GLbyte *pc )
+int
+__glXVForwardSingleReqSwap(__GLXclientState * cl, GLbyte * pc)
 {
-   xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *)pc;
-   __GLX_DECLARE_SWAP_VARIABLES;
+    xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *) pc;
 
-   __GLX_SWAP_SHORT(&req->length);
-   __GLX_SWAP_INT(&req->vendorCode);
-   __GLX_SWAP_INT(&req->contextTag);
+    __GLX_DECLARE_SWAP_VARIABLES;
 
-   swap_vec_element_size = 0;
+    __GLX_SWAP_SHORT(&req->length);
+    __GLX_SWAP_INT(&req->vendorCode);
+    __GLX_SWAP_INT(&req->contextTag);
 
-   return( __glXVForwardSingleReq( cl, pc ) );
+    swap_vec_element_size = 0;
+
+    return (__glXVForwardSingleReq(cl, pc));
 }
 
-int __glXVForwardPipe0WithReplySwap( __GLXclientState *cl, GLbyte *pc )
+int
+__glXVForwardPipe0WithReplySwap(__GLXclientState * cl, GLbyte * pc)
 {
-   xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *)pc;
-   __GLX_DECLARE_SWAP_VARIABLES;
-   __GLX_DECLARE_SWAP_ARRAY_VARIABLES;
+    xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *) pc;
 
-   __GLX_SWAP_SHORT(&req->length);
-   __GLX_SWAP_INT(&req->vendorCode);
-   __GLX_SWAP_INT(&req->contextTag);
+    __GLX_DECLARE_SWAP_VARIABLES;
+    __GLX_DECLARE_SWAP_ARRAY_VARIABLES;
 
-   swap_vec_element_size = 0;
+    __GLX_SWAP_SHORT(&req->length);
+    __GLX_SWAP_INT(&req->vendorCode);
+    __GLX_SWAP_INT(&req->contextTag);
 
-   /*
-    * swap extra data in request - assuming all data
-    * (if available) are arrays of 4 bytes components !
-    */
-   if (req->length > sz_xGLXVendorPrivateReq/4) {
-      int *data = (int *)(req+1);
-      int count = req->length - sz_xGLXVendorPrivateReq/4;
-      __GLX_SWAP_INT_ARRAY(data, count );
-   }
+    swap_vec_element_size = 0;
 
-   return( __glXVForwardPipe0WithReply( cl, pc ) );
+    /*
+     * swap extra data in request - assuming all data
+     * (if available) are arrays of 4 bytes components !
+     */
+    if (req->length > sz_xGLXVendorPrivateReq / 4) {
+        int *data = (int *) (req + 1);
+        int count = req->length - sz_xGLXVendorPrivateReq / 4;
+
+        __GLX_SWAP_INT_ARRAY(data, count);
+    }
+
+    return (__glXVForwardPipe0WithReply(cl, pc));
 }
 
-int __glXVForwardPipe0WithReplySwapsv( __GLXclientState *cl, GLbyte *pc )
+int
+__glXVForwardPipe0WithReplySwapsv(__GLXclientState * cl, GLbyte * pc)
 {
-   xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *)pc;
-   __GLX_DECLARE_SWAP_VARIABLES;
-   __GLX_DECLARE_SWAP_ARRAY_VARIABLES;
+    xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *) pc;
 
-   __GLX_SWAP_SHORT(&req->length);
-   __GLX_SWAP_INT(&req->vendorCode);
-   __GLX_SWAP_INT(&req->contextTag);
+    __GLX_DECLARE_SWAP_VARIABLES;
+    __GLX_DECLARE_SWAP_ARRAY_VARIABLES;
 
-   swap_vec_element_size = 2;
+    __GLX_SWAP_SHORT(&req->length);
+    __GLX_SWAP_INT(&req->vendorCode);
+    __GLX_SWAP_INT(&req->contextTag);
 
-   /*
-    * swap extra data in request - assuming all data
-    * (if available) are arrays of 4 bytes components !
-    */
-   if (req->length > sz_xGLXVendorPrivateReq/4) {
-      int *data = (int *)(req+1);
-      int count = req->length - sz_xGLXVendorPrivateReq/4;
-      __GLX_SWAP_INT_ARRAY(data, count );
-   }
+    swap_vec_element_size = 2;
 
-   return( __glXVForwardPipe0WithReply( cl, pc ) );
+    /*
+     * swap extra data in request - assuming all data
+     * (if available) are arrays of 4 bytes components !
+     */
+    if (req->length > sz_xGLXVendorPrivateReq / 4) {
+        int *data = (int *) (req + 1);
+        int count = req->length - sz_xGLXVendorPrivateReq / 4;
+
+        __GLX_SWAP_INT_ARRAY(data, count);
+    }
+
+    return (__glXVForwardPipe0WithReply(cl, pc));
 }
 
-int __glXVForwardPipe0WithReplySwapiv( __GLXclientState *cl, GLbyte *pc )
+int
+__glXVForwardPipe0WithReplySwapiv(__GLXclientState * cl, GLbyte * pc)
 {
-   xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *)pc;
-   __GLX_DECLARE_SWAP_VARIABLES;
-   __GLX_DECLARE_SWAP_ARRAY_VARIABLES;
+    xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *) pc;
 
-   __GLX_SWAP_SHORT(&req->length);
-   __GLX_SWAP_INT(&req->vendorCode);
-   __GLX_SWAP_INT(&req->contextTag);
+    __GLX_DECLARE_SWAP_VARIABLES;
+    __GLX_DECLARE_SWAP_ARRAY_VARIABLES;
 
-   swap_vec_element_size = 4;
+    __GLX_SWAP_SHORT(&req->length);
+    __GLX_SWAP_INT(&req->vendorCode);
+    __GLX_SWAP_INT(&req->contextTag);
 
-   /*
-    * swap extra data in request - assuming all data
-    * (if available) are arrays of 4 bytes components !
-    */
-   if (req->length > sz_xGLXVendorPrivateReq/4) {
-      int *data = (int *)(req+1);
-      int count = req->length - sz_xGLXVendorPrivateReq/4;
-      __GLX_SWAP_INT_ARRAY(data, count );
-   }
+    swap_vec_element_size = 4;
 
-   return( __glXVForwardPipe0WithReply( cl, pc ) );
+    /*
+     * swap extra data in request - assuming all data
+     * (if available) are arrays of 4 bytes components !
+     */
+    if (req->length > sz_xGLXVendorPrivateReq / 4) {
+        int *data = (int *) (req + 1);
+        int count = req->length - sz_xGLXVendorPrivateReq / 4;
+
+        __GLX_SWAP_INT_ARRAY(data, count);
+    }
+
+    return (__glXVForwardPipe0WithReply(cl, pc));
 }
 
-int __glXVForwardPipe0WithReplySwapdv( __GLXclientState *cl, GLbyte *pc )
+int
+__glXVForwardPipe0WithReplySwapdv(__GLXclientState * cl, GLbyte * pc)
 {
-   xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *)pc;
-   __GLX_DECLARE_SWAP_VARIABLES;
-   __GLX_DECLARE_SWAP_ARRAY_VARIABLES;
+    xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *) pc;
 
-   __GLX_SWAP_SHORT(&req->length);
-   __GLX_SWAP_INT(&req->vendorCode);
-   __GLX_SWAP_INT(&req->contextTag);
+    __GLX_DECLARE_SWAP_VARIABLES;
+    __GLX_DECLARE_SWAP_ARRAY_VARIABLES;
 
-   swap_vec_element_size = 8;
+    __GLX_SWAP_SHORT(&req->length);
+    __GLX_SWAP_INT(&req->vendorCode);
+    __GLX_SWAP_INT(&req->contextTag);
 
-   /*
-    * swap extra data in request - assuming all data
-    * (if available) are arrays of 4 bytes components !
-    */
-   if (req->length > sz_xGLXVendorPrivateReq/4) {
-      int *data = (int *)(req+1);
-      int count = req->length - sz_xGLXVendorPrivateReq/4;
-      __GLX_SWAP_INT_ARRAY(data, count );
-   }
+    swap_vec_element_size = 8;
 
-   return( __glXVForwardPipe0WithReply( cl, pc ) );
+    /*
+     * swap extra data in request - assuming all data
+     * (if available) are arrays of 4 bytes components !
+     */
+    if (req->length > sz_xGLXVendorPrivateReq / 4) {
+        int *data = (int *) (req + 1);
+        int count = req->length - sz_xGLXVendorPrivateReq / 4;
+
+        __GLX_SWAP_INT_ARRAY(data, count);
+    }
+
+    return (__glXVForwardPipe0WithReply(cl, pc));
 }
 
-int __glXVForwardAllWithReplySwap( __GLXclientState *cl, GLbyte *pc )
+int
+__glXVForwardAllWithReplySwap(__GLXclientState * cl, GLbyte * pc)
 {
-   xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *)pc;
-   __GLX_DECLARE_SWAP_VARIABLES;
-   __GLX_DECLARE_SWAP_ARRAY_VARIABLES;
+    xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *) pc;
 
-   __GLX_SWAP_SHORT(&req->length);
-   __GLX_SWAP_INT(&req->vendorCode);
-   __GLX_SWAP_INT(&req->contextTag);
+    __GLX_DECLARE_SWAP_VARIABLES;
+    __GLX_DECLARE_SWAP_ARRAY_VARIABLES;
 
-   swap_vec_element_size = 0;
+    __GLX_SWAP_SHORT(&req->length);
+    __GLX_SWAP_INT(&req->vendorCode);
+    __GLX_SWAP_INT(&req->contextTag);
 
-   /*
-    * swap extra data in request - assuming all data
-    * (if available) are arrays of 4 bytes components !
-    */
-   if (req->length > sz_xGLXVendorPrivateReq/4) {
-      int *data = (int *)(req+1);
-      int count = req->length - sz_xGLXVendorPrivateReq/4;
-      __GLX_SWAP_INT_ARRAY(data, count );
-   }
+    swap_vec_element_size = 0;
 
-   return( __glXVForwardAllWithReply( cl, pc ) );
+    /*
+     * swap extra data in request - assuming all data
+     * (if available) are arrays of 4 bytes components !
+     */
+    if (req->length > sz_xGLXVendorPrivateReq / 4) {
+        int *data = (int *) (req + 1);
+        int count = req->length - sz_xGLXVendorPrivateReq / 4;
+
+        __GLX_SWAP_INT_ARRAY(data, count);
+    }
+
+    return (__glXVForwardAllWithReply(cl, pc));
 }
 
-int __glXVForwardAllWithReplySwapsv( __GLXclientState *cl, GLbyte *pc )
+int
+__glXVForwardAllWithReplySwapsv(__GLXclientState * cl, GLbyte * pc)
 {
-   xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *)pc;
-   __GLX_DECLARE_SWAP_VARIABLES;
-   __GLX_DECLARE_SWAP_ARRAY_VARIABLES;
+    xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *) pc;
 
-   __GLX_SWAP_SHORT(&req->length);
-   __GLX_SWAP_INT(&req->vendorCode);
-   __GLX_SWAP_INT(&req->contextTag);
+    __GLX_DECLARE_SWAP_VARIABLES;
+    __GLX_DECLARE_SWAP_ARRAY_VARIABLES;
 
-   swap_vec_element_size = 2;
+    __GLX_SWAP_SHORT(&req->length);
+    __GLX_SWAP_INT(&req->vendorCode);
+    __GLX_SWAP_INT(&req->contextTag);
 
-   /*
-    * swap extra data in request - assuming all data
-    * (if available) are arrays of 4 bytes components !
-    */
-   if (req->length > sz_xGLXVendorPrivateReq/4) {
-      int *data = (int *)(req+1);
-      int count = req->length - sz_xGLXVendorPrivateReq/4;
-      __GLX_SWAP_INT_ARRAY(data, count );
-   }
+    swap_vec_element_size = 2;
 
-   return( __glXVForwardAllWithReply( cl, pc ) );
+    /*
+     * swap extra data in request - assuming all data
+     * (if available) are arrays of 4 bytes components !
+     */
+    if (req->length > sz_xGLXVendorPrivateReq / 4) {
+        int *data = (int *) (req + 1);
+        int count = req->length - sz_xGLXVendorPrivateReq / 4;
+
+        __GLX_SWAP_INT_ARRAY(data, count);
+    }
+
+    return (__glXVForwardAllWithReply(cl, pc));
 }
 
-int __glXVForwardAllWithReplySwapiv( __GLXclientState *cl, GLbyte *pc )
+int
+__glXVForwardAllWithReplySwapiv(__GLXclientState * cl, GLbyte * pc)
 {
-   xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *)pc;
-   __GLX_DECLARE_SWAP_VARIABLES;
-   __GLX_DECLARE_SWAP_ARRAY_VARIABLES;
+    xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *) pc;
 
-   __GLX_SWAP_SHORT(&req->length);
-   __GLX_SWAP_INT(&req->vendorCode);
-   __GLX_SWAP_INT(&req->contextTag);
+    __GLX_DECLARE_SWAP_VARIABLES;
+    __GLX_DECLARE_SWAP_ARRAY_VARIABLES;
 
-   swap_vec_element_size = 4;
+    __GLX_SWAP_SHORT(&req->length);
+    __GLX_SWAP_INT(&req->vendorCode);
+    __GLX_SWAP_INT(&req->contextTag);
 
-   /*
-    * swap extra data in request - assuming all data
-    * (if available) are arrays of 4 bytes components !
-    */
-   if (req->length > sz_xGLXVendorPrivateReq/4) {
-      int *data = (int *)(req+1);
-      int count = req->length - sz_xGLXVendorPrivateReq/4;
-      __GLX_SWAP_INT_ARRAY(data, count );
-   }
+    swap_vec_element_size = 4;
 
-   return( __glXVForwardAllWithReply( cl, pc ) );
+    /*
+     * swap extra data in request - assuming all data
+     * (if available) are arrays of 4 bytes components !
+     */
+    if (req->length > sz_xGLXVendorPrivateReq / 4) {
+        int *data = (int *) (req + 1);
+        int count = req->length - sz_xGLXVendorPrivateReq / 4;
+
+        __GLX_SWAP_INT_ARRAY(data, count);
+    }
+
+    return (__glXVForwardAllWithReply(cl, pc));
 }
 
-int __glXVForwardAllWithReplySwapdv( __GLXclientState *cl, GLbyte *pc )
+int
+__glXVForwardAllWithReplySwapdv(__GLXclientState * cl, GLbyte * pc)
 {
-   xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *)pc;
-   __GLX_DECLARE_SWAP_VARIABLES;
-   __GLX_DECLARE_SWAP_ARRAY_VARIABLES;
+    xGLXVendorPrivateReq *req = (xGLXVendorPrivateReq *) pc;
 
-   __GLX_SWAP_SHORT(&req->length);
-   __GLX_SWAP_INT(&req->vendorCode);
-   __GLX_SWAP_INT(&req->contextTag);
+    __GLX_DECLARE_SWAP_VARIABLES;
+    __GLX_DECLARE_SWAP_ARRAY_VARIABLES;
 
-   swap_vec_element_size = 8;
+    __GLX_SWAP_SHORT(&req->length);
+    __GLX_SWAP_INT(&req->vendorCode);
+    __GLX_SWAP_INT(&req->contextTag);
 
-   /*
-    * swap extra data in request - assuming all data
-    * (if available) are arrays of 4 bytes components !
-    */
-   if (req->length > sz_xGLXVendorPrivateReq/4) {
-      int *data = (int *)(req+1);
-      int count = req->length - sz_xGLXVendorPrivateReq/4;
-      __GLX_SWAP_INT_ARRAY(data, count );
-   }
+    swap_vec_element_size = 8;
 
-   return( __glXVForwardAllWithReply( cl, pc ) );
+    /*
+     * swap extra data in request - assuming all data
+     * (if available) are arrays of 4 bytes components !
+     */
+    if (req->length > sz_xGLXVendorPrivateReq / 4) {
+        int *data = (int *) (req + 1);
+        int count = req->length - sz_xGLXVendorPrivateReq / 4;
+
+        __GLX_SWAP_INT_ARRAY(data, count);
+    }
+
+    return (__glXVForwardAllWithReply(cl, pc));
 }
-

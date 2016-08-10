@@ -51,7 +51,6 @@
 #include <glxcontext.h>
 #include <glxext.h>
 #include <glxutil.h>
-#include <glxscreens.h>
 #include <GL/internal/glcore.h>
 
 #include "capabilities.h"
@@ -65,45 +64,45 @@ __GLXconfig *__glXAquaCreateVisualConfigs(int *numConfigsPtr, int screenNumber) 
     struct glCapabilities caps;
     struct glCapabilitiesConfig *conf;
     int stereo, depth, aux, buffers, stencil, accum, color, msample;
-    
+
     if(getGlCapabilities(&caps)) {
         ErrorF("error from getGlCapabilities()!\n");
         return NULL;
     }
-    
+
     /*
-     conf->stereo is 0 or 1, but we need at least 1 iteration of the loop, 
+     conf->stereo is 0 or 1, but we need at least 1 iteration of the loop,
      so we treat a true conf->stereo as 2.
-     
+
      The depth size is 0 or 24.  Thus we do 2 iterations for that.
-     
+
      conf->aux_buffers (when available/non-zero) result in 2 iterations instead of 1.
-     
+
      conf->buffers indicates whether we have single or double buffering.
-     
+
      conf->total_stencil_bit_depths
-     
+
      conf->total_color_buffers indicates the RGB/RGBA color depths.
-     
-     conf->total_accum_buffers iterations for accum (with at least 1 if equal to 0) 
-     
-     conf->total_depth_buffer_depths 
-     
+
+     conf->total_accum_buffers iterations for accum (with at least 1 if equal to 0)
+
+     conf->total_depth_buffer_depths
+
      conf->multisample_buffers iterations (with at least 1 if equal to 0).  We add 1
      for the 0 multisampling config.
-     
+
      */
-    
+
     assert(NULL != caps.configurations);
-    
+
     numConfigs = 0;
-    
+
     for(conf = caps.configurations; conf; conf = conf->next) {
         if(conf->total_color_buffers <= 0)
             continue;
-        
-        numConfigs += (conf->stereo ? 2 : 1) 
-	    * (conf->aux_buffers ? 2 : 1) 
+
+        numConfigs += (conf->stereo ? 2 : 1)
+	    * (conf->aux_buffers ? 2 : 1)
 	    * conf->buffers
 	    * ((conf->total_stencil_bit_depths > 0) ? conf->total_stencil_bit_depths : 1)
 	    * conf->total_color_buffers
@@ -111,65 +110,62 @@ __GLXconfig *__glXAquaCreateVisualConfigs(int *numConfigsPtr, int screenNumber) 
 	    * conf->total_depth_buffer_depths
 	    * (conf->multisample_buffers + 1);
     }
-    
+
     if(numConfigsPtr)
-        *numConfigsPtr = numConfigs; 
-    
+        *numConfigsPtr = numConfigs;
+
     visualConfigs = calloc(sizeof(*visualConfigs), numConfigs);
-    
+
     if(NULL == visualConfigs) {
         ErrorF("xcalloc failure when allocating visualConfigs\n");
         freeGlCapabilities(&caps);
         return NULL;
     }
-    
+
     c = visualConfigs; /* current buffer */
     for(conf = caps.configurations; conf; conf = conf->next) {
         for(stereo = 0; stereo < (conf->stereo ? 2 : 1); ++stereo) {
             for(aux = 0; aux < (conf->aux_buffers ? 2 : 1); ++aux) {
                 for(buffers = 0; buffers < conf->buffers; ++buffers) {
-                    for(stencil = 0; stencil < ((conf->total_stencil_bit_depths > 0) ? 
+                    for(stencil = 0; stencil < ((conf->total_stencil_bit_depths > 0) ?
                                                 conf->total_stencil_bit_depths : 1); ++stencil) {
                         for(color = 0; color < conf->total_color_buffers; ++color) {
                             for(accum = 0; accum < ((conf->total_accum_buffers > 0) ?
                                                     conf->total_accum_buffers : 1); ++accum) {
                                 for(depth = 0; depth < conf->total_depth_buffer_depths; ++depth) {
                                     for(msample = 0; msample < (conf->multisample_buffers + 1); ++msample) {
-                                        
+
                                         // Global
                                         c->visualID = -1;
                                         c->visualType = GLX_TRUE_COLOR;
                                         c->next = c + 1;
 
-                                        c->screen = screenNumber;
-
                                         c->level = 0;
                                         c->indexBits = 0;
-                                        c->pixmapMode = 0; // TODO: What should this be?
-                                        
+
                                         if(conf->accelerated) {
                                             c->visualRating = GLX_NONE;
                                         } else {
                                             c->visualRating = GLX_SLOW_VISUAL_EXT;
                                         }
-                                        
+
                                         c->transparentPixel = GLX_NONE;
                                         c->transparentRed = GLX_NONE;
                                         c->transparentGreen = GLX_NONE;
                                         c->transparentBlue = GLX_NONE;
                                         c->transparentAlpha = GLX_NONE;
                                         c->transparentIndex = GLX_NONE;
-                                        
+
                                         c->visualSelectGroup = 0;
-                                        
+
                                         c->swapMethod = GLX_SWAP_UNDEFINED_OML;
-                                        
+
                                         // Stereo
                                         c->stereoMode = stereo ? TRUE : FALSE;
 
                                         // Aux buffers
                                         c->numAuxBuffers = aux ? conf->aux_buffers : 0;
-                                        
+
                                         // Double Buffered
                                         c->doubleBufferMode = buffers ? TRUE : FALSE;
 
@@ -179,7 +175,7 @@ __GLXconfig *__glXAquaCreateVisualConfigs(int *numConfigsPtr, int screenNumber) 
                                         } else {
                                             c->stencilBits = 0;
                                         }
-                                        
+
                                         // Color
                                         if(GLCAPS_COLOR_BUF_INVALID_VALUE != conf->color_buffers[color].a) {
                                             c->alphaBits = conf->color_buffers[color].a;
@@ -189,14 +185,14 @@ __GLXconfig *__glXAquaCreateVisualConfigs(int *numConfigsPtr, int screenNumber) 
                                         c->redBits   = conf->color_buffers[color].r;
                                         c->greenBits = conf->color_buffers[color].g;
                                         c->blueBits  = conf->color_buffers[color].b;
-                                        
+
                                         c->rgbBits = c->alphaBits + c->redBits + c->greenBits + c->blueBits;
 
                                         c->alphaMask = AM_ARGB(c->alphaBits, c->redBits, c->greenBits, c->blueBits);
                                         c->redMask   = RM_ARGB(c->alphaBits, c->redBits, c->greenBits, c->blueBits);
                                         c->greenMask = GM_ARGB(c->alphaBits, c->redBits, c->greenBits, c->blueBits);
                                         c->blueMask  = BM_ARGB(c->alphaBits, c->redBits, c->greenBits, c->blueBits);
-                                                                                
+
                                         // Accumulation Buffers
                                         if(conf->total_accum_buffers > 0) {
                                             c->accumRedBits = conf->accum_buffers[accum].r;
@@ -212,11 +208,11 @@ __GLXconfig *__glXAquaCreateVisualConfigs(int *numConfigsPtr, int screenNumber) 
                                             c->accumGreenBits = 0;
                                             c->accumBlueBits = 0;
                                             c->accumAlphaBits = 0;
-                                        } 
+                                        }
 
                                         // Depth
                                         c->depthBits = conf->depth_buffers[depth];
-                                        
+
                                         // MultiSample
                                         if(msample > 0) {
                                             c->samples = conf->multisample_samples;
@@ -225,9 +221,9 @@ __GLXconfig *__glXAquaCreateVisualConfigs(int *numConfigsPtr, int screenNumber) 
                                             c->samples = 0;
                                             c->sampleBuffers = 0;
                                         }
-										
-                                        /* 
-                                         * The Apple libGL supports GLXPixmaps and 
+
+                                        /*
+                                         * The Apple libGL supports GLXPixmaps and
                                          * GLXPbuffers in direct mode.
                                          */
                                         /* SGIX_fbconfig / GLX 1.3 */
@@ -235,34 +231,37 @@ __GLXconfig *__glXAquaCreateVisualConfigs(int *numConfigsPtr, int screenNumber) 
                                         c->renderType = GLX_RGBA_BIT;
                                         c->xRenderable = GL_TRUE;
                                         c->fbconfigID = -1;
-                                        
+
                                         /* SGIX_pbuffer / GLX 1.3 */
-                                        
-                                        /* 
+
+                                        /*
                                          * The CGL layer provides a way of retrieving
                                          * the maximum pbuffer width/height, but only
                                          * if we create a context and call glGetIntegerv.
-                                         * 
+                                         *
                                          * The following values are from a test program
                                          * that does so.
                                          */
                                         c->maxPbufferWidth = 8192;
                                         c->maxPbufferHeight = 8192;
                                         c->maxPbufferPixels = /*Do we need this?*/ 0;
-                                        /* 
+                                        /*
                                          * There is no introspection for this sort of thing
                                          * with CGL.  What should we do realistically?
                                          */
                                         c->optimalPbufferWidth = 0;
                                         c->optimalPbufferHeight = 0;
-                                        
+
                                         /* EXT_texture_from_pixmap */
                                         c->bindToTextureRgb = 0;
                                         c->bindToTextureRgba = 0;
                                         c->bindToMipmapTexture = 0;
                                         c->bindToTextureTargets = 0;
                                         c->yInverted = 0;
-                                        
+
+                                        /* EXT_framebuffer_sRGB */
+                                        c->sRGBCapable = GL_FALSE;
+
                                         c = c->next;
                                     }
                                 }
@@ -279,7 +278,7 @@ __GLXconfig *__glXAquaCreateVisualConfigs(int *numConfigsPtr, int screenNumber) 
     if (c - visualConfigs != numConfigs) {
         FatalError("numConfigs calculation error in setVisualConfigs!  numConfigs is %d  i is %d\n", numConfigs, (int)(c - visualConfigs));
     }
-    
+
     freeGlCapabilities(&caps);
     return visualConfigs;
 }

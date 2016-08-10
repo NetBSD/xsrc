@@ -1,4 +1,4 @@
-noinst_LTLIBRARIES = libXi.la
+noinst_LTLIBRARIES = libXi.la libXistubs.la
 
 AM_CFLAGS = $(DIX_CFLAGS)
 
@@ -78,6 +78,8 @@ libXi_la_SOURCES =	\
 	ungrdevk.h \
 	xiallowev.c \
 	xiallowev.h \
+	xibarriers.c \
+	xibarriers.h \
 	xichangecursor.c \
 	xichangecursor.h \
 	xichangehierarchy.c \
@@ -105,4 +107,5 @@ libXi_la_SOURCES =	\
 	xiwarppointer.c \
 	xiwarppointer.h
 
-EXTRA_DIST = stubs.c
+libXistubs_la_SOURCES =	\
+	stubs.c

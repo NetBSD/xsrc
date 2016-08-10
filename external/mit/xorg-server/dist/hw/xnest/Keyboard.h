@@ -20,9 +20,9 @@ is" without express or implied warranty.
 
 extern DeviceIntPtr xnestKeyboardDevice;
 
-void xnestBell(int volume, DeviceIntPtr pDev, pointer ctrl, int cls);
-void xnestChangeKeyboardControl(DeviceIntPtr pDev, KeybdCtrl *ctrl);
+void xnestBell(int volume, DeviceIntPtr pDev, void *ctrl, int cls);
+void xnestChangeKeyboardControl(DeviceIntPtr pDev, KeybdCtrl * ctrl);
 int xnestKeyboardProc(DeviceIntPtr pDev, int onoff);
 void xnestUpdateModifierState(unsigned int state);
 
-#endif /* XNESTKEYBOARD_H */
+#endif                          /* XNESTKEYBOARD_H */

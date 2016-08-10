@@ -76,9 +76,10 @@ extern int ChangeDeviceNotify;
 extern int DevicePresenceNotify;
 extern int DevicePropertyNotify;
 
-extern int RT_INPUTCLIENT;
+extern RESTYPE RT_INPUTCLIENT;
 
 extern DevPrivateKeyRec XIClientPrivateKeyRec;
+
 #define XIClientPrivateKey (&XIClientPrivateKeyRec)
 
-#endif /* EXGLOBALS_H */
+#endif                          /* EXGLOBALS_H */

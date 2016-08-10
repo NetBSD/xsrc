@@ -32,13 +32,13 @@
 #include <X11/Xatom.h>
 #include "inputstr.h"
 #include "extinit.h"
+#include "exglobals.h"
 #include "scrnintstr.h"
 #include "xkbsrv.h"
 
 #include "xiquerydevice.h"
 
 #include "protocol-common.h"
-#include <glib.h>
 /*
  * Protocol testing for XIQueryDevice request and reply.
  *
@@ -54,198 +54,228 @@ struct test_data {
     int num_devices_in_reply;
 };
 
-static void reply_XIQueryDevice_data(ClientPtr client, int len, char *data, void *userdata);
-static void reply_XIQueryDevice(ClientPtr client, int len, char* data, void *userdata);
+static void reply_XIQueryDevice_data(ClientPtr client, int len, char *data,
+                                     void *closure);
+static void reply_XIQueryDevice(ClientPtr client, int len, char *data,
+                                void *closure);
 
 /* reply handling for the first bytes that constitute the reply */
-static void reply_XIQueryDevice(ClientPtr client, int len, char* data, void *userdata)
+static void
+reply_XIQueryDevice(ClientPtr client, int len, char *data, void *userdata)
 {
-    xXIQueryDeviceReply *rep = (xXIQueryDeviceReply*)data;
-    struct test_data *querydata = (struct test_data*)userdata;
+    xXIQueryDeviceReply *rep = (xXIQueryDeviceReply *) data;
+    struct test_data *querydata = (struct test_data *) userdata;
 
-    if (client->swapped)
-    {
-        char n;
-        swapl(&rep->length, n);
-        swaps(&rep->sequenceNumber, n);
-        swaps(&rep->num_devices, n);
+    if (client->swapped) {
+        swapl(&rep->length);
+        swaps(&rep->sequenceNumber);
+        swaps(&rep->num_devices);
     }
 
     reply_check_defaults(rep, len, XIQueryDevice);
 
     if (querydata->which_device == XIAllDevices)
-        g_assert(rep->num_devices == devices.num_devices);
+        assert(rep->num_devices == devices.num_devices);
     else if (querydata->which_device == XIAllMasterDevices)
-        g_assert(rep->num_devices == devices.num_master_devices);
+        assert(rep->num_devices == devices.num_master_devices);
     else
-        g_assert(rep->num_devices == 1);
+        assert(rep->num_devices == 1);
 
     querydata->num_devices_in_reply = rep->num_devices;
     reply_handler = reply_XIQueryDevice_data;
 }
 
 /* reply handling for the trailing bytes that constitute the device info */
-static void reply_XIQueryDevice_data(ClientPtr client, int len, char *data, void *userdata)
+static void
+reply_XIQueryDevice_data(ClientPtr client, int len, char *data, void *closure)
 {
-    char n;
     int i, j;
-    struct test_data *querydata = (struct test_data*)userdata;
+    struct test_data *querydata = (struct test_data *) closure;
 
     DeviceIntPtr dev;
-    xXIDeviceInfo *info = (xXIDeviceInfo*)data;
+    xXIDeviceInfo *info = (xXIDeviceInfo *) data;
     xXIAnyInfo *any;
 
-    for (i = 0; i < querydata->num_devices_in_reply; i++)
-    {
-        if (client->swapped)
-        {
-            swaps(&info->deviceid, n);
-            swaps(&info->attachment, n);
-            swaps(&info->use, n);
-            swaps(&info->num_classes, n);
-            swaps(&info->name_len, n);
+    for (i = 0; i < querydata->num_devices_in_reply; i++) {
+        if (client->swapped) {
+            swaps(&info->deviceid);
+            swaps(&info->attachment);
+            swaps(&info->use);
+            swaps(&info->num_classes);
+            swaps(&info->name_len);
         }
 
         if (querydata->which_device > XIAllMasterDevices)
-            g_assert(info->deviceid == querydata->which_device);
+            assert(info->deviceid == querydata->which_device);
 
-        g_assert(info->deviceid >=  2); /* 0 and 1 is reserved */
+        assert(info->deviceid >= 2);    /* 0 and 1 is reserved */
 
+        switch (info->deviceid) {
+        case 2:                /* VCP */
+            dev = devices.vcp;
+            assert(info->use == XIMasterPointer);
+            assert(info->attachment == devices.vck->id);
+            assert(info->num_classes == 3);     /* 2 axes + button */
+            break;
+        case 3:                /* VCK */
+            dev = devices.vck;
+            assert(info->use == XIMasterKeyboard);
+            assert(info->attachment == devices.vcp->id);
+            assert(info->num_classes == 1);
+            break;
+        case 4:                /* mouse */
+            dev = devices.mouse;
+            assert(info->use == XISlavePointer);
+            assert(info->attachment == devices.vcp->id);
+            assert(info->num_classes == 7);     /* 4 axes + button + 2 scroll */
+            break;
+        case 5:                /* keyboard */
+            dev = devices.kbd;
+            assert(info->use == XISlaveKeyboard);
+            assert(info->attachment == devices.vck->id);
+            assert(info->num_classes == 1);
+            break;
 
-        switch(info->deviceid)
-        {
-            case 2:  /* VCP */
-                dev = devices.vcp;
-                g_assert(info->use == XIMasterPointer);
-                g_assert(info->attachment == devices.vck->id);
-                g_assert(info->num_classes == 3); /* 2 axes + button */
-                break;
-            case 3:  /* VCK */
-                dev = devices.vck;
-                g_assert(info->use == XIMasterKeyboard);
-                g_assert(info->attachment == devices.vcp->id);
-                g_assert(info->num_classes == 1);
-                break;
-            case 4:  /* mouse */
-                dev = devices.mouse;
-                g_assert(info->use == XISlavePointer);
-                g_assert(info->attachment == devices.vcp->id);
-                g_assert(info->num_classes == 3); /* 2 axes + button */
-                break;
-            case 5:  /* keyboard */
-                dev = devices.kbd;
-                g_assert(info->use == XISlaveKeyboard);
-                g_assert(info->attachment == devices.vck->id);
-                g_assert(info->num_classes == 1);
-                break;
-
-            default:
-                /* We shouldn't get here */
-                g_assert(0);
-                break;
+        default:
+            /* We shouldn't get here */
+            assert(0);
+            break;
         }
-        g_assert(info->enabled == dev->enabled);
-        g_assert(info->name_len == strlen(dev->name));
-        g_assert(strncmp((char*)&info[1], dev->name, info->name_len) == 0);
+        assert(info->enabled == dev->enabled);
+        assert(info->name_len == strlen(dev->name));
+        assert(strncmp((char *) &info[1], dev->name, info->name_len) == 0);
 
-        any = (xXIAnyInfo*)((char*)&info[1] + ((info->name_len + 3)/4) * 4);
-        for (j = 0; j < info->num_classes; j++)
-        {
-            if (client->swapped)
-            {
-                swaps(&any->type, n);
-                swaps(&any->length, n);
-                swaps(&any->sourceid, n);
+        any =
+            (xXIAnyInfo *) ((char *) &info[1] + ((info->name_len + 3) / 4) * 4);
+        for (j = 0; j < info->num_classes; j++) {
+            if (client->swapped) {
+                swaps(&any->type);
+                swaps(&any->length);
+                swaps(&any->sourceid);
             }
 
-            switch(info->deviceid)
+            switch (info->deviceid) {
+            case 3:            /* VCK and kbd have the same properties */
+            case 5:
             {
-                case 3: /* VCK and kbd have the same properties */
-                case 5:
-                    {
-                        int k;
-                        xXIKeyInfo *ki = (xXIKeyInfo*)any;
-                        XkbDescPtr xkb = devices.vck->key->xkbInfo->desc;
-                        uint32_t *kc;
+                int k;
+                xXIKeyInfo *ki = (xXIKeyInfo *) any;
+                XkbDescPtr xkb = devices.vck->key->xkbInfo->desc;
+                uint32_t *kc;
 
-                        if (client->swapped)
-                            swaps(&ki->num_keycodes, n);
+                if (client->swapped)
+                    swaps(&ki->num_keycodes);
 
-                        g_assert(any->type == XIKeyClass);
-                        g_assert(ki->num_keycodes == (xkb->max_key_code - xkb->min_key_code + 1));
-                        g_assert(any->length == (2 + ki->num_keycodes));
+                assert(any->type == XIKeyClass);
+                assert(ki->num_keycodes ==
+                       (xkb->max_key_code - xkb->min_key_code + 1));
+                assert(any->length == (2 + ki->num_keycodes));
 
-                        kc = (uint32_t*)&ki[1];
-                        for (k = 0; k < ki->num_keycodes; k++, kc++)
-                        {
-                            if (client->swapped)
-                                swapl(kc, n);
+                kc = (uint32_t *) &ki[1];
+                for (k = 0; k < ki->num_keycodes; k++, kc++) {
+                    if (client->swapped)
+                        swapl(kc);
 
-                            g_assert(*kc >= xkb->min_key_code);
-                            g_assert(*kc <= xkb->max_key_code);
-                        }
-                        break;
-                    }
-                case 2: /* VCP and mouse have the same properties */
-                case 4:
-                    {
-                        g_assert(any->type == XIButtonClass ||
-                                any->type == XIValuatorClass);
-
-                        if (any->type == XIButtonClass)
-                        {
-                            int len;
-                            xXIButtonInfo *bi = (xXIButtonInfo*)any;
-
-                            if (client->swapped)
-                                swaps(&bi->num_buttons, n);
-
-                            g_assert(bi->num_buttons == devices.vcp->button->numButtons);
-
-                            len = 2 + bi->num_buttons + bytes_to_int32(bits_to_bytes(bi->num_buttons));
-                            g_assert(bi->length == len);
-                        } else if (any->type == XIValuatorClass)
-                        {
-                            xXIValuatorInfo *vi = (xXIValuatorInfo*)any;
-
-                            if (client->swapped)
-                            {
-                                swaps(&vi->number, n);
-                                swapl(&vi->label, n);
-                                swapl(&vi->min.integral, n);
-                                swapl(&vi->min.frac, n);
-                                swapl(&vi->max.integral, n);
-                                swapl(&vi->max.frac, n);
-                                swapl(&vi->resolution, n);
-                            }
-
-                            g_assert(vi->length == 11);
-                            g_assert(vi->number == 0 ||
-                                     vi->number == 1);
-                            g_assert(vi->mode == XIModeRelative);
-                            /* device was set up as relative, so standard
-                             * values here. */
-                            g_assert(vi->min.integral == -1);
-                            g_assert(vi->min.frac == 0);
-                            g_assert(vi->max.integral == -1);
-                            g_assert(vi->max.frac == 0);
-                            g_assert(vi->resolution == 0);
-                        }
-                    }
-                    break;
+                    assert(*kc >= xkb->min_key_code);
+                    assert(*kc <= xkb->max_key_code);
+                }
+                break;
             }
-            any = (xXIAnyInfo*)(((char*)any) + any->length * 4);
+            case 4:
+            {
+                assert(any->type == XIButtonClass ||
+                       any->type == XIValuatorClass ||
+                       any->type == XIScrollClass);
+
+                if (any->type == XIScrollClass) {
+                    xXIScrollInfo *si = (xXIScrollInfo *) any;
+
+                    if (client->swapped) {
+                        swaps(&si->number);
+                        swaps(&si->scroll_type);
+                        swapl(&si->increment.integral);
+                        swapl(&si->increment.frac);
+                    }
+                    assert(si->length == 6);
+                    assert(si->number == 2 || si->number == 3);
+                    if (si->number == 2) {
+                        assert(si->scroll_type == XIScrollTypeVertical);
+                        assert(!si->flags);
+                    }
+                    if (si->number == 3) {
+                        assert(si->scroll_type == XIScrollTypeHorizontal);
+                        assert(si->flags & XIScrollFlagPreferred);
+                        assert(!(si->flags & ~XIScrollFlagPreferred));
+                    }
+
+                    assert(si->increment.integral == si->number);
+                    /* protocol-common.c sets up increments of 2.4 and 3.5 */
+                    assert(si->increment.frac > 0.3 * (1ULL << 32));
+                    assert(si->increment.frac < 0.6 * (1ULL << 32));
+                }
+
+            }
+                /* fall through */
+            case 2:            /* VCP and mouse have the same properties except for scroll */
+            {
+                if (info->deviceid == 2)        /* VCP */
+                    assert(any->type == XIButtonClass ||
+                           any->type == XIValuatorClass);
+
+                if (any->type == XIButtonClass) {
+                    int l;
+                    xXIButtonInfo *bi = (xXIButtonInfo *) any;
+
+                    if (client->swapped)
+                        swaps(&bi->num_buttons);
+
+                    assert(bi->num_buttons == devices.vcp->button->numButtons);
+
+                    l = 2 + bi->num_buttons +
+                        bytes_to_int32(bits_to_bytes(bi->num_buttons));
+                    assert(bi->length == l);
+                }
+                else if (any->type == XIValuatorClass) {
+                    xXIValuatorInfo *vi = (xXIValuatorInfo *) any;
+
+                    if (client->swapped) {
+                        swaps(&vi->number);
+                        swapl(&vi->label);
+                        swapl(&vi->min.integral);
+                        swapl(&vi->min.frac);
+                        swapl(&vi->max.integral);
+                        swapl(&vi->max.frac);
+                        swapl(&vi->resolution);
+                    }
+
+                    assert(vi->length == 11);
+                    assert(vi->number >= 0 && vi->number < 4);
+                    if (info->deviceid == 2)    /* VCP */
+                        assert(vi->number < 2);
+
+                    assert(vi->mode == XIModeRelative);
+                    /* device was set up as relative, so standard
+                     * values here. */
+                    assert(vi->min.integral == -1);
+                    assert(vi->min.frac == 0);
+                    assert(vi->max.integral == -1);
+                    assert(vi->max.frac == 0);
+                    assert(vi->resolution == 0);
+                }
+            }
+                break;
+            }
+            any = (xXIAnyInfo *) (((char *) any) + any->length * 4);
         }
 
-        info = (xXIDeviceInfo*)any;
+        info = (xXIDeviceInfo *) any;
     }
 }
 
-static void request_XIQueryDevice(struct test_data *querydata,
-                                 int deviceid, int error)
+static void
+request_XIQueryDevice(struct test_data *querydata, int deviceid, int error)
 {
     int rc;
-    char n;
     ClientRec client;
     xXIQueryDeviceReq request;
 
@@ -257,60 +287,57 @@ static void request_XIQueryDevice(struct test_data *querydata,
 
     request.deviceid = deviceid;
     rc = ProcXIQueryDevice(&client);
-    g_assert(rc == error);
+    assert(rc == error);
 
     if (rc != Success)
-        g_assert(client.errorValue == deviceid);
+        assert(client.errorValue == deviceid);
 
     reply_handler = reply_XIQueryDevice;
 
     client.swapped = TRUE;
-    swaps(&request.length, n);
-    swaps(&request.deviceid, n);
+    swaps(&request.length);
+    swaps(&request.deviceid);
     rc = SProcXIQueryDevice(&client);
-    g_assert(rc == error);
+    assert(rc == error);
 
     if (rc != Success)
-        g_assert(client.errorValue == deviceid);
+        assert(client.errorValue == deviceid);
 }
 
-static void test_XIQueryDevice(void)
+static void
+test_XIQueryDevice(void)
 {
     int i;
     xXIQueryDeviceReq request;
     struct test_data data;
 
     reply_handler = reply_XIQueryDevice;
-    userdata = &data;
+    global_userdata = &data;
     request_init(&request, XIQueryDevice);
 
-    g_test_message("Testing XIAllDevices.");
+    printf("Testing XIAllDevices.\n");
     request_XIQueryDevice(&data, XIAllDevices, Success);
-    g_test_message("Testing XIAllMasterDevices.");
+    printf("Testing XIAllMasterDevices.\n");
     request_XIQueryDevice(&data, XIAllMasterDevices, Success);
 
-    g_test_message("Testing existing device ids.");
+    printf("Testing existing device ids.\n");
     for (i = 2; i < 6; i++)
         request_XIQueryDevice(&data, i, Success);
 
-    g_test_message("Testing non-existing device ids.");
+    printf("Testing non-existing device ids.\n");
     for (i = 6; i <= 0xFFFF; i++)
         request_XIQueryDevice(&data, i, BadDevice);
-
 
     reply_handler = NULL;
 
 }
 
-int main(int argc, char** argv)
+int
+main(int argc, char **argv)
 {
-    g_test_init(&argc, &argv,NULL);
-    g_test_bug_base("https://bugzilla.freedesktop.org/show_bug.cgi?id=");
-
     init_simple();
 
-    g_test_add_func("/dix/xi2protocol/XIQueryDevice", test_XIQueryDevice);
+    test_XIQueryDevice();
 
-    return g_test_run();
+    return 0;
 }
-

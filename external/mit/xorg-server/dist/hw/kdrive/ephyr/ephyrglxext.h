@@ -1,8 +1,8 @@
 /*
  * Xephyr - A kdrive X server thats runs in a host X window.
  *          Authored by Matthew Allum <mallum@openedhand.com>
- * 
- * Copyright © 2007 OpenedHand Ltd 
+ *
+ * Copyright © 2007 OpenedHand Ltd
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -29,7 +29,6 @@
 #define __EPHYR_GLXEXT_H__
 
 #include <X11/Xdefs.h>
-Bool ephyrHijackGLXExtension (void) ;
+Bool ephyrHijackGLXExtension(void);
 
 #endif /*__EPHYR_GLXEXT_H__*/
-

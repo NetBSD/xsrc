@@ -34,265 +34,190 @@
 #include <xwin-config.h>
 #endif
 #include "win.h"
-#include "mivalidate.h" // for union _Validate used by windowstr.h
-
-#ifndef RANDR_12_INTERFACE
-#error X server must have RandR 1.2 interface
-#endif
-
 
 /*
  * Answer queries about the RandR features supported.
  */
 
 static Bool
-winRandRGetInfo (ScreenPtr pScreen, Rotation *pRotations)
+winRandRGetInfo(ScreenPtr pScreen, Rotation * pRotations)
 {
-  winDebug ("winRandRGetInfo ()\n");
+    rrScrPrivPtr pRRScrPriv;
+    RROutputPtr output;
 
-  /* Don't support rotations */
-  *pRotations = RR_Rotate_0;
+    pRRScrPriv = rrGetScrPriv(pScreen);
+    output = pRRScrPriv->outputs[0];
 
-  /*
-    The screen doesn't have to be limited to the actual
-    monitor size (we can have scrollbars :-), so what is
-    the upper limit?
-  */
-  RRScreenSetSizeRange(pScreen, 0, 0, 4096, 4096);
+    winDebug("winRandRGetInfo ()\n");
 
-  return TRUE;
-}
+    /* Don't support rotations */
+    *pRotations = RR_Rotate_0;
 
+    /* Delete previous mode */
+    if (output->modes[0])
+        {
+            RRModeDestroy(output->modes[0]);
+            RRModeDestroy(output->crtc->mode);
+        }
 
-/*
-  Copied from the xfree86 DDX
-
-  Why can't this be in DIX?
-  Does union _Validate vary depending on DDX??
- */
-static void
-xf86SetRootClip (ScreenPtr pScreen, Bool enable)
-{
-    WindowPtr	pWin = pScreen->root;
-    WindowPtr	pChild;
-    Bool	WasViewable = (Bool)(pWin->viewable);
-    Bool	anyMarked = FALSE;
-    WindowPtr   pLayerWin;
-    BoxRec	box;
-
-    if (WasViewable)
+    /* Register current mode */
     {
-	for (pChild = pWin->firstChild; pChild; pChild = pChild->nextSib)
-	{
-	    (void) (*pScreen->MarkOverlappedWindows)(pChild,
-						     pChild,
-						     &pLayerWin);
-	}
-	(*pScreen->MarkWindow) (pWin);
-	anyMarked = TRUE;
-	if (pWin->valdata)
-	{
-	    if (HasBorder (pWin))
-	    {
-		RegionPtr	borderVisible;
+        xRRModeInfo modeInfo;
+        RRModePtr mode;
+        char name[100];
 
-		borderVisible = REGION_CREATE(pScreen, NullBox, 1);
-		REGION_SUBTRACT(pScreen, borderVisible,
-				&pWin->borderClip, &pWin->winSize);
-		pWin->valdata->before.borderVisible = borderVisible;
-	    }
-	    pWin->valdata->before.resized = TRUE;
-	}
+        memset(&modeInfo, '\0', sizeof(modeInfo));
+        snprintf(name, sizeof(name), "%dx%d", pScreen->width, pScreen->height);
+
+        modeInfo.width = pScreen->width;
+        modeInfo.height = pScreen->height;
+        modeInfo.hTotal = pScreen->width;
+        modeInfo.vTotal = pScreen->height;
+        modeInfo.dotClock = 0;
+        modeInfo.nameLength = strlen(name);
+        mode = RRModeGet(&modeInfo, name);
+
+        output->modes[0] = mode;
+        output->numModes = 1;
+
+        mode = RRModeGet(&modeInfo, name);
+        output->crtc->mode = mode;
     }
 
-    /*
-     * Use REGION_BREAK to avoid optimizations in ValidateTree
-     * that assume the root borderClip can't change well, normally
-     * it doesn't...)
-     */
-    if (enable)
-    {
-	box.x1 = 0;
-	box.y1 = 0;
-	box.x2 = pScreen->width;
-	box.y2 = pScreen->height;
-	REGION_INIT (pScreen, &pWin->winSize, &box, 1);
-	REGION_INIT (pScreen, &pWin->borderSize, &box, 1);
-	if (WasViewable)
-	    REGION_RESET(pScreen, &pWin->borderClip, &box);
-	pWin->drawable.width = pScreen->width;
-	pWin->drawable.height = pScreen->height;
-        REGION_BREAK (pWin->drawable.pScreen, &pWin->clipList);
-    }
-    else
-    {
-	REGION_EMPTY(pScreen, &pWin->borderClip);
-	REGION_BREAK (pWin->drawable.pScreen, &pWin->clipList);
-    }
-
-    ResizeChildrenWinSize (pWin, 0, 0, 0, 0);
-
-    if (WasViewable)
-    {
-	if (pWin->firstChild)
-	{
-	    anyMarked |= (*pScreen->MarkOverlappedWindows)(pWin->firstChild,
-							   pWin->firstChild,
-							   (WindowPtr *)NULL);
-	}
-	else
-	{
-	    (*pScreen->MarkWindow) (pWin);
-	    anyMarked = TRUE;
-	}
-
-
-	if (anyMarked)
-	    (*pScreen->ValidateTree)(pWin, NullWindow, VTOther);
-    }
-
-    if (WasViewable)
-    {
-	if (anyMarked)
-	    (*pScreen->HandleExposures)(pWin);
-	if (anyMarked && pScreen->PostValidateTree)
-	    (*pScreen->PostValidateTree)(pWin, NullWindow, VTOther);
-    }
-    if (pWin->realized)
-	WindowsRestructured ();
-    FlushAllOutput ();
+    return TRUE;
 }
 
 /*
 
 */
 void
-winDoRandRScreenSetSize (ScreenPtr  pScreen,
-                         CARD16	    width,
-                         CARD16	    height,
-                         CARD32	    mmWidth,
-                         CARD32	    mmHeight)
+winDoRandRScreenSetSize(ScreenPtr pScreen,
+                        CARD16 width,
+                        CARD16 height, CARD32 mmWidth, CARD32 mmHeight)
 {
-  winScreenPriv(pScreen);
-  winScreenInfo *pScreenInfo = pScreenPriv->pScreenInfo;
-  WindowPtr pRoot = pScreen->root;
+    winScreenPriv(pScreen);
+    winScreenInfo *pScreenInfo = pScreenPriv->pScreenInfo;
+    WindowPtr pRoot = pScreen->root;
 
-  // Prevent screen updates while we change things around
-  xf86SetRootClip(pScreen, FALSE);
+    /* Ignore changes which do nothing */
+    if ((pScreen->width == width) && (pScreen->height == height) &&
+        (pScreen->mmWidth == mmWidth) && (pScreen->mmHeight == mmHeight))
+        return;
 
-  /* Update the screen size as requested */
-  pScreenInfo->dwWidth = width;
-  pScreenInfo->dwHeight = height;
+    // Prevent screen updates while we change things around
+    SetRootClip(pScreen, ROOT_CLIP_NONE);
 
-  /* Reallocate the framebuffer used by the drawing engine */
-  (*pScreenPriv->pwinFreeFB)(pScreen);
-  if (!(*pScreenPriv->pwinAllocateFB)(pScreen))
-    {
-      ErrorF ("winDoRandRScreenSetSize - Could not reallocate framebuffer\n");
+    /* Update the screen size as requested */
+    pScreenInfo->dwWidth = width;
+    pScreenInfo->dwHeight = height;
+
+    /* Reallocate the framebuffer used by the drawing engine */
+    (*pScreenPriv->pwinFreeFB) (pScreen);
+    if (!(*pScreenPriv->pwinAllocateFB) (pScreen)) {
+        ErrorF("winDoRandRScreenSetSize - Could not reallocate framebuffer\n");
     }
 
-  pScreen->width = width;
-  pScreen->height = height;
-  pScreen->mmWidth = mmWidth;
-  pScreen->mmHeight = mmHeight;
+    pScreen->width = width;
+    pScreen->height = height;
+    pScreen->mmWidth = mmWidth;
+    pScreen->mmHeight = mmHeight;
 
-  /* Update the screen pixmap to point to the new framebuffer */
-  winUpdateFBPointer(pScreen, pScreenInfo->pfb);
+    /* Update the screen pixmap to point to the new framebuffer */
+    winUpdateFBPointer(pScreen, pScreenInfo->pfb);
 
-  // pScreen->devPrivate == pScreen->GetScreenPixmap(screen) ?
-  // resize the root window
-  //pScreen->ResizeWindow(pRoot, 0, 0, width, height, NULL);
-  // does this emit a ConfigureNotify??
+    // pScreen->devPrivate == pScreen->GetScreenPixmap(screen) ?
+    // resize the root window
+    //pScreen->ResizeWindow(pRoot, 0, 0, width, height, NULL);
+    // does this emit a ConfigureNotify??
 
-  // Restore the ability to update screen, now with new dimensions
-  xf86SetRootClip(pScreen, TRUE);
+    // Restore the ability to update screen, now with new dimensions
+    SetRootClip(pScreen, ROOT_CLIP_FULL);
 
-  // and arrange for it to be repainted
-  miPaintWindow(pRoot, &pRoot->borderClip,  PW_BACKGROUND);
+    // and arrange for it to be repainted
+    pScreen->PaintWindow(pRoot, &pRoot->borderClip, PW_BACKGROUND);
 
-  /* Indicate that a screen size change took place */
-  RRScreenSizeNotify(pScreen);
+    /* Indicate that a screen size change took place */
+    RRScreenSizeNotify(pScreen);
 }
 
 /*
  * Respond to resize request
  */
 static
-Bool
-winRandRScreenSetSize (ScreenPtr  pScreen,
-		       CARD16	    width,
-		       CARD16	    height,
-		       CARD16       pixWidth,
-		       CARD16       pixHeight,
-		       CARD32	    mmWidth,
-		       CARD32	    mmHeight)
+    Bool
+winRandRScreenSetSize(ScreenPtr pScreen,
+                      CARD16 width,
+                      CARD16 height, CARD32 mmWidth, CARD32 mmHeight)
 {
-  winScreenPriv(pScreen);
-  winScreenInfo *pScreenInfo = pScreenPriv->pScreenInfo;
+    winScreenPriv(pScreen);
+    winScreenInfo *pScreenInfo = pScreenPriv->pScreenInfo;
 
-  winDebug ("winRandRScreenSetSize ()\n");
-
-  /*
-    It doesn't currently make sense to allow resize in fullscreen mode
-    (we'd actually have to list the supported resolutions)
-  */
-  if (pScreenInfo->fFullScreen)
-    {
-      ErrorF ("winRandRScreenSetSize - resize not supported in fullscreen mode\n");
-      return FALSE;
-    }
-
-  /*
-    Client resize requests aren't allowed in rootless modes, even if
-    the X screen is monitor or virtual desktop size, we'd need to
-    resize the native display size
-  */
-  if (FALSE
-#ifdef XWIN_MULTIWINDOWEXTWM
-      || pScreenInfo->fMWExtWM
-#endif
-      || pScreenInfo->fRootless
-#ifdef XWIN_MULTIWINDOW
-      || pScreenInfo->fMultiWindow
-#endif
-      )
-    {
-      ErrorF ("winRandRScreenSetSize - resize not supported in rootless modes\n");
-      return FALSE;
-    }
-
-  winDoRandRScreenSetSize(pScreen, width, height, mmWidth, mmHeight);
-
-  /* Cause the native window for the screen to resize itself */
-  {
-    DWORD dwStyle, dwExStyle;
-    RECT rcClient;
-
-    rcClient.left = 0;
-    rcClient.top = 0;
-    rcClient.right = width;
-    rcClient.bottom = height;
-
-    ErrorF ("winRandRScreenSetSize new client area w: %d h: %d\n", width, height);
-
-    /* Get the Windows window style and extended style */
-    dwExStyle = GetWindowLongPtr(pScreenPriv->hwndScreen, GWL_EXSTYLE);
-    dwStyle = GetWindowLongPtr(pScreenPriv->hwndScreen, GWL_STYLE);
+    winDebug("winRandRScreenSetSize ()\n");
 
     /*
-     * Calculate the window size needed for the given client area
-     * adjusting for any decorations it will have
+       It doesn't currently make sense to allow resize in fullscreen mode
+       (we'd actually have to list the supported resolutions)
      */
-    AdjustWindowRectEx(&rcClient, dwStyle, FALSE, dwExStyle);
+    if (pScreenInfo->fFullScreen) {
+        ErrorF
+            ("winRandRScreenSetSize - resize not supported in fullscreen mode\n");
+        return FALSE;
+    }
 
-    ErrorF ("winRandRScreenSetSize new window area w: %ld h: %ld\n", rcClient.right-rcClient.left, rcClient.bottom-rcClient.top);
+    /*
+       Client resize requests aren't allowed in rootless modes, even if
+       the X screen is monitor or virtual desktop size, we'd need to
+       resize the native display size
+     */
+    if (FALSE
+#ifdef XWIN_MULTIWINDOWEXTWM
+        || pScreenInfo->fMWExtWM
+#endif
+        || pScreenInfo->fRootless
+#ifdef XWIN_MULTIWINDOW
+        || pScreenInfo->fMultiWindow
+#endif
+        ) {
+        ErrorF
+            ("winRandRScreenSetSize - resize not supported in rootless modes\n");
+        return FALSE;
+    }
 
-    SetWindowPos(pScreenPriv->hwndScreen, NULL,
-                 0, 0, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top,
-                 SWP_NOZORDER | SWP_NOMOVE);
-  }
+    winDoRandRScreenSetSize(pScreen, width, height, mmWidth, mmHeight);
 
-  return TRUE;
+    /* Cause the native window for the screen to resize itself */
+    {
+        DWORD dwStyle, dwExStyle;
+        RECT rcClient;
+
+        rcClient.left = 0;
+        rcClient.top = 0;
+        rcClient.right = width;
+        rcClient.bottom = height;
+
+        ErrorF("winRandRScreenSetSize new client area w: %d h: %d\n", width,
+               height);
+
+        /* Get the Windows window style and extended style */
+        dwExStyle = GetWindowLongPtr(pScreenPriv->hwndScreen, GWL_EXSTYLE);
+        dwStyle = GetWindowLongPtr(pScreenPriv->hwndScreen, GWL_STYLE);
+
+        /*
+         * Calculate the window size needed for the given client area
+         * adjusting for any decorations it will have
+         */
+        AdjustWindowRectEx(&rcClient, dwStyle, FALSE, dwExStyle);
+
+        ErrorF("winRandRScreenSetSize new window area w: %d h: %d\n",
+               (int)(rcClient.right - rcClient.left),
+               (int)(rcClient.bottom - rcClient.top));
+
+        SetWindowPos(pScreenPriv->hwndScreen, NULL,
+                     0, 0, rcClient.right - rcClient.left,
+                     rcClient.bottom - rcClient.top, SWP_NOZORDER | SWP_NOMOVE);
+    }
+
+    return TRUE;
 }
 
 /*
@@ -300,24 +225,64 @@ winRandRScreenSetSize (ScreenPtr  pScreen,
  */
 
 Bool
-winRandRInit (ScreenPtr pScreen)
+winRandRInit(ScreenPtr pScreen)
 {
-  rrScrPrivPtr pRRScrPriv;
-  winDebug ("winRandRInit ()\n");
+    rrScrPrivPtr pRRScrPriv;
 
-  if (!RRScreenInit (pScreen))
-    {
-      ErrorF ("winRandRInit () - RRScreenInit () failed\n");
-      return FALSE;
+    winDebug("winRandRInit ()\n");
+
+    if (!RRScreenInit(pScreen)) {
+        ErrorF("winRandRInit () - RRScreenInit () failed\n");
+        return FALSE;
     }
 
-  /* Set some RandR function pointers */
-  pRRScrPriv = rrGetScrPriv (pScreen);
-  pRRScrPriv->rrGetInfo = winRandRGetInfo;
-  pRRScrPriv->rrSetConfig = NULL;
-  pRRScrPriv->rrScreenSetSize = winRandRScreenSetSize;
-  pRRScrPriv->rrCrtcSet = NULL;
-  pRRScrPriv->rrCrtcSetGamma = NULL;
+    /* Set some RandR function pointers */
+    pRRScrPriv = rrGetScrPriv(pScreen);
+    pRRScrPriv->rrGetInfo = winRandRGetInfo;
+    pRRScrPriv->rrSetConfig = NULL;
+    pRRScrPriv->rrScreenSetSize = winRandRScreenSetSize;
+    pRRScrPriv->rrCrtcSet = NULL;
+    pRRScrPriv->rrCrtcSetGamma = NULL;
 
-  return TRUE;
+    /* Create a CRTC and an output for the screen, and hook them together */
+    {
+        RRCrtcPtr crtc;
+        RROutputPtr output;
+
+        crtc = RRCrtcCreate(pScreen, NULL);
+        if (!crtc)
+            return FALSE;
+
+        crtc->rotations = RR_Rotate_0;
+
+        output = RROutputCreate(pScreen, "default", 7, NULL);
+        if (!output)
+            return FALSE;
+
+        RROutputSetCrtcs(output, &crtc, 1);
+        RROutputSetConnection(output, RR_Connected);
+        RROutputSetSubpixelOrder(output, PictureGetSubpixelOrder(pScreen));
+
+        output->crtc = crtc;
+
+        /* Set crtc outputs (should use RRCrtcNotify?) */
+        crtc->outputs = malloc(sizeof(RROutputPtr));
+        crtc->outputs[0] = output;
+        crtc->numOutputs = 1;
+
+        pRRScrPriv->primaryOutput = output;
+
+        /* Ensure we have space for exactly one mode */
+        output->modes = malloc(sizeof(RRModePtr));
+        output->modes[0] = NULL;
+    }
+
+    /*
+       The screen doesn't have to be limited to the actual
+       monitor size (we can have scrollbars :-), so set the
+       upper limit to the maximum coordinates X11 can use.
+     */
+    RRScreenSetSizeRange(pScreen, 0, 0, 32768, 32768);
+
+    return TRUE;
 }
