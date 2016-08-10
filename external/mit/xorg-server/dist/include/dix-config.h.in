@@ -30,9 +30,6 @@
 /* Support Damage extension */
 #undef DAMAGE
 
-/* Build for darwin with Quartz support */
-#undef DARWIN_WITH_QUARTZ
-
 /* Use OsVendorVErrorF */
 #undef DDXOSVERRORF
 
@@ -41,6 +38,9 @@
 
 /* Build DPMS extension */
 #undef DPMSExtension
+
+/* Build DRI3 extension */
+#undef DRI3
 
 /* Build GLX extension */
 #undef GLXEXT
@@ -54,41 +54,27 @@
 /* Support XDM-AUTH*-1 */
 #undef HASXDMAUTH
 
-/* Define to 1 if you have the `getdtablesize' function. */
-#undef HAS_GETDTABLESIZE
-
-/* Define to 1 if you have the `getifaddrs' function. */
-#undef HAS_GETIFADDRS
-
-/* Define to 1 if you have the `getpeereid' function. */
-#undef HAS_GETPEEREID
-
-/* Define to 1 if you have the `getpeerucred' function. */
-#undef HAS_GETPEERUCRED
-
-/* Define to 1 if you have the `mmap' function. */
-#undef HAS_MMAP
-
 /* Support SHM */
 #undef HAS_SHM
-
-/* Have the 'strlcpy' function */
-#undef HAS_STRLCPY
-
-/* Define to 1 if you have the <asm/mtrr.h> header file. */
-#undef HAVE_ASM_MTRR_H
 
 /* Has backtrace support */
 #undef HAVE_BACKTRACE
 
+/* Has libunwind support */
+#undef HAVE_LIBUNWIND
+
 /* Define to 1 if you have the <byteswap.h> header file. */
 #undef HAVE_BYTESWAP_H
 
-/* Define to 1 if you have cbrt */
+/* Define to 1 if you have the `cbrt' function. */
 #undef HAVE_CBRT
 
 /* Define to 1 if you have the <dbm.h> header file. */
 #undef HAVE_DBM_H
+
+/* Define to 1 if you have the declaration of `program_invocation_short_name', and
+   to 0 if you don't. */
+#undef HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME
 
 /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
    */
@@ -97,23 +83,29 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
-/* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
-#undef HAVE_DOPRNT
-
 /* Have execinfo.h */
 #undef HAVE_EXECINFO_H
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
-/* Define to 1 if you have the `geteuid' function. */
-#undef HAVE_GETEUID
+/* Define to 1 if you have the `ffs' function. */
+#undef HAVE_FFS
 
-/* Define to 1 if you have the `getisax' function. */
-#undef HAVE_GETISAX
+/* Define to 1 if you have the `getdtablesize' function. */
+#undef HAVE_GETDTABLESIZE
 
-/* Define to 1 if you have the `getuid' function. */
-#undef HAVE_GETUID
+/* Define to 1 if you have the `getifaddrs' function. */
+#undef HAVE_GETIFADDRS
+
+/* Define to 1 if you have the `getpeereid' function. */
+#undef HAVE_GETPEEREID
+
+/* Define to 1 if you have the `getpeerucred' function. */
+#undef HAVE_GETPEERUCRED
+
+/* Define to 1 if you have the `getprogname' function. */
+#undef HAVE_GETPROGNAME
 
 /* Define to 1 if you have the `getzoneid' function. */
 #undef HAVE_GETZONEID
@@ -127,8 +119,8 @@
 /* Support application updating through sparkle. */
 #undef XQUARTZ_SPARKLE
 
-/* Prefix to use for launchd identifiers */
-#undef LAUNCHD_ID_PREFIX
+/* Prefix to use for bundle identifiers */
+#undef BUNDLE_ID_PREFIX
 
 /* Build a standalone xpbproxy */
 #undef STANDALONE_XPBPROXY
@@ -136,8 +128,8 @@
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
 
-/* Define to 1 if you have the `link' function. */
-#undef HAVE_LINK
+/* Define to 1 if you have the libdispatch (GCD) available */
+#undef HAVE_LIBDISPATCH
 
 /* Define to 1 if you have the <linux/agpgart.h> header file. */
 #undef HAVE_LINUX_AGPGART_H
@@ -148,14 +140,17 @@
 /* Define to 1 if you have the <linux/fb.h> header file. */
 #undef HAVE_LINUX_FB_H
 
-/* Define to 1 if you have the `mkstemp' function. */
-#undef HAVE_MKSTEMP
+/* Define to 1 if you have the `mmap' function. */
+#undef HAVE_MMAP
 
 /* Define to 1 if you have the <ndbm.h> header file. */
 #undef HAVE_NDBM_H
 
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
+
+/* Define to 1 if you have the `reallocarray' function. */
+#undef HAVE_REALLOCARRAY
 
 /* Define to 1 if you have the <rpcsvc/dbm.h> header file. */
 #undef HAVE_RPCSVC_DBM_H
@@ -166,11 +161,17 @@
 /* Define to use CommonCrypto SHA1 functions */
 #undef HAVE_SHA1_IN_COMMONCRYPTO
 
+/* Define to use CryptoAPI SHA1 functions */
+#undef HAVE_SHA1_IN_CRYPTOAPI
+
 /* Define to use libmd SHA1 functions */
 #undef HAVE_SHA1_IN_LIBMD
 
 /* Define to use libgcrypt SHA1 functions */
 #undef HAVE_SHA1_IN_LIBGCRYPT
+
+/* Define to use libnettle SHA1 functions */
+#undef HAVE_SHA1_IN_LIBNETTLE
 
 /* Define to use libsha1 for SHA1 */
 #undef HAVE_SHA1_IN_LIBSHA1
@@ -178,14 +179,23 @@
 /* Define to 1 if you have the `shmctl64' function. */
 #undef HAVE_SHMCTL64
 
-/* Define to 1 if you have the <stdint.h> header file. */
-#undef HAVE_STDINT_H
-
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
 
-/* Define to 1 if you have the `strchr' function. */
-#undef HAVE_STRCHR
+/* Define to 1 if you have the `strcasecmp' function. */
+#undef HAVE_STRCASECMP
+
+/* Define to 1 if you have the `strcasestr' function. */
+#undef HAVE_STRCASESTR
+
+/* Define to 1 if you have the `strncasecmp' function. */
+#undef HAVE_STRNCASECMP
+
+/* Define to 1 if you have the `strlcat' function. */
+#undef HAVE_STRLCAT
+
+/* Define to 1 if you have the `strlcpy' function. */
+#undef HAVE_STRLCPY
 
 /* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
@@ -193,11 +203,11 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
-/* Define to 1 if you have the `strrchr' function. */
-#undef HAVE_STRRCHR
+/* Define to 1 if you have the `strndup' function. */
+#undef HAVE_STRNDUP
 
-/* Define to 1 if you have the `strtol' function. */
-#undef HAVE_STRTOL
+/* Define to 1 if libsystemd-daemon is available */
+#undef HAVE_SYSTEMD_DAEMON
 
 /* Define to 1 if SYSV IPC is available */
 #undef HAVE_SYSV_IPC
@@ -208,9 +218,6 @@
 /* Define to 1 if you have the <sys/dir.h> header file, and it defines `DIR'.
    */
 #undef HAVE_SYS_DIR_H
-
-/* Define to 1 if you have the <sys/io.h> header file. */
-#undef HAVE_SYS_IO_H
 
 /* Define to 1 if you have the <sys/ndir.h> header file, and it defines `DIR'.
    */
@@ -225,9 +232,6 @@
 /* Define to 1 if you have the <sys/utsname.h> header file. */
 #undef HAVE_SYS_UTSNAME_H
 
-/* Define to 1 if you have the <sys/vm86.h> header file. */
-#undef HAVE_SYS_VM86_H
-
 /* Define to 1 if you have the <tslib.h> header file. */
 #undef HAVE_TSLIB_H
 
@@ -239,9 +243,6 @@
 
 /* Have /dev/urandom */
 #undef HAVE_URANDOM
-
-/* Define to 1 if you have the `vprintf' function. */
-#undef HAVE_VPRINTF
 
 /* Define to 1 if you have the `vasprintf' function. */
 #undef HAVE_VASPRINTF
@@ -264,6 +265,9 @@
 /* Internal define for Xinerama */
 #undef PANORAMIX
 
+/* Support Present extension */
+#undef PRESENT
+
 /* Overall prefix */
 #undef PROJECTROOT
 
@@ -279,6 +283,9 @@
 /* Support X resource extension */
 #undef RES
 
+/* Support client ID tracking in X resource extension */
+#undef CLIENTIDS
+
 /* Support MIT-SCREEN-SAVER extension */
 #undef SCREENSAVER
 
@@ -288,14 +295,17 @@
 /* Support SHAPE extension */
 #undef SHAPE
 
+/* Where to install Xorg.bin and Xorg.wrap */
+#undef SUID_WRAPPER_DIR
+
 /* Define to 1 on systems derived from System V Release 4 */
 #undef SVR4
 
+/* sysconfdir */
+#undef SYSCONFDIR
+
 /* Support TCP socket connections */
 #undef TCPCONN
-
-/* Enable touchscreen support */
-#undef TOUCHSCREEN
 
 /* Support tslib touchscreen abstraction library */
 #undef TSLIB
@@ -378,8 +388,14 @@
 /* Vendor name */
 #undef XVENDORNAME
 
+/* Number of bits in a file offset, on hosts where this is settable. */
+#undef _FILE_OFFSET_BITS
+
 /* Enable GNU and other extensions to the C environment for GLIBC */
 #undef _GNU_SOURCE
+
+/* Define for large files, on AIX-style hosts. */
+#undef _LARGE_FILES
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
@@ -405,14 +421,23 @@
 /* Use libudev for input hotplug */
 #undef CONFIG_UDEV
 
-/* Use D-Bus for input hotplug */
-#undef CONFIG_NEED_DBUS
+/* Use libudev for kms enumeration */
+#undef CONFIG_UDEV_KMS
 
-/* Support the D-Bus hotplug API */
-#undef CONFIG_DBUS_API
+/* Use udev_monitor_filter_add_match_tag() */
+#undef HAVE_UDEV_MONITOR_FILTER_ADD_MATCH_TAG
+
+/* Use udev_enumerate_add_match_tag() */
+#undef HAVE_UDEV_ENUMERATE_ADD_MATCH_TAG
+
+/* Enable D-Bus core */
+#undef NEED_DBUS
 
 /* Support HAL for hotplug */
 #undef CONFIG_HAL
+
+/* Enable systemd-logind integration */
+#undef SYSTEMD_LOGIND 1
 
 /* Have a monotonic clock from clock_gettime() */
 #undef MONOTONIC_CLOCK
@@ -429,24 +454,71 @@
 /* Define to 64-bit byteswap macro */
 #undef bswap_64
 
-/* Need the strcasecmp function. */
-#undef NEED_STRCASECMP
+/* Define to 1 if typeof works with your compiler. */
+#undef HAVE_TYPEOF
 
-/* Need the strncasecmp function. */
-#undef NEED_STRNCASECMP
-
-/* Need the strcasestr function. */
-#undef NEED_STRCASESTR
-
-/* Define to 1 if you have the `ffs' function. */
-#undef HAVE_FFS
-
-/* If the compiler supports a TLS storage class define it to that here */
-#undef TLS
+/* Define to __typeof__ if your compiler spells it that way. */
+#undef typeof
 
 /* Correctly set _XSERVER64 for OSX fat binaries */
 #ifdef __APPLE__
 #include "dix-config-apple-verbatim.h"
 #endif
+
+/* Enable general extensions on Solaris.  */
+#ifndef __EXTENSIONS__
+# undef __EXTENSIONS__
+#endif
+
+/* Defined if needed to expose struct msghdr.msg_control */
+#undef _XOPEN_SOURCE
+
+/* Have support for X shared memory fence library (xshmfence) */
+#undef HAVE_XSHMFENCE
+
+/* Use XTrans FD passing support */
+#undef XTRANS_SEND_FDS
+
+/* Wrap SIGBUS to catch MIT-SHM faults */
+#undef BUSFAULT
+
+/* Directory for shared memory temp files */
+#undef SHMDIR
+
+/* Don't let Xdefs.h define 'pointer' */
+#define _XTYPEDEF_POINTER       1
+
+/* Don't let XIproto define 'Pointer' */
+#define _XITYPEDEF_POINTER      1
+
+/* Ask fontsproto to make font path element names const */
+#define FONT_PATH_ELEMENT_NAME_CONST    1
+
+/* Build GLAMOR */
+#undef GLAMOR
+
+/* Build glamor's GBM-based EGL support */
+#undef GLAMOR_HAS_GBM
+
+/* Build glamor/gbm has linear support */
+#undef GLAMOR_HAS_GBM_LINEAR
+
+/* byte order */
+#undef X_BYTE_ORDER
+
+/* Listen on TCP socket */
+#undef LISTEN_TCP
+
+/* Listen on Unix socket */
+#undef LISTEN_UNIX
+
+/* Listen on local socket */
+#undef LISTEN_LOCAL
+
+/* Define if no local socket credentials interface exists */
+#undef NO_LOCAL_CLIENT_CRED
+
+/* Have posix_fallocate() */
+#undef HAVE_POSIX_FALLOCATE
 
 #endif /* _DIX_CONFIG_H_ */

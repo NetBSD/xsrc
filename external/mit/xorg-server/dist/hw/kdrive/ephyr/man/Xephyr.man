@@ -1,18 +1,18 @@
-."
-." Copyright (c) Matthieu Herrb <matthieu@herrb.eu>
-."
-." Permission to use, copy, modify, and distribute this software for any
-." purpose with or without fee is hereby granted, provided that the above
-." copyright notice and this permission notice appear in all copies.
-."
-." THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-." WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-." MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-." ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-." WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-." ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-." OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-."
+.\"
+.\" Copyright (c) Matthieu Herrb <matthieu@herrb.eu>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
 .TH Xephyr __appmansuffix__ __vendorversion__
 .SH NAME
 Xephyr - X server outputting to a window on a pre-existing X display
@@ -39,12 +39,14 @@ uses the host X server window as "framebuffer" via fast SHM XImages.
 It also has support for "visually" debugging what the server is
 painting.
 .SH OPTIONS
+The server accepts all the standard options of Xserver(__appmansuffix__)
+and the following additional options:
 .TP 8
 .BI -screen " width" x height
 sets the screen size.
 .TP 8
 .BI -parent " id"
-uses exiting window
+uses existing window
 .I id .
 If a
 .BI -screen
@@ -57,6 +59,13 @@ set 'cursor acceleration':
 The host's cursor is reused. This is only really there to aid
 debugging by avoiding server paints for the cursor. Performance
 improvement is negligible.
+.TP 8
+.B -resizeable
+Allow the Xephyr window to be resized, even if not embedded into a parent
+window. By default, the Xephyr window has a fixed size.
+.TP 8
+.B -no-host-grab
+Disable grabbing the keyboard and mouse.
 .SH "SIGNALS"
 Send a SIGUSR1 to the server (e.g. pkill -USR1 Xephyr) to
 toggle the debugging mode.
@@ -79,7 +88,7 @@ build flags are causing this. I haven't figured as yet how to work
 round it. It doesn't appear to break anything however.
 .IP \(bu 2
 Keyboard handling is basic but works.
-.TP \(bu 2
+.IP \(bu 2
 Mouse button 5 probably won't work.
 .SH "SEE ALSO"
 X(__miscmansuffix__), Xserver(__appmansuffix__)

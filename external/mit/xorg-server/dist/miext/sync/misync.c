@@ -29,83 +29,72 @@
 #include "misync.h"
 #include "misyncstr.h"
 
-static DevPrivateKeyRec syncScreenPrivateKeyRec;
-static DevPrivateKey syncScreenPrivateKey = &syncScreenPrivateKeyRec;
-
-#define SYNC_SCREEN_PRIV(pScreen) 				\
-    (SyncScreenPrivPtr) dixLookupPrivate(&pScreen->devPrivates,	\
-					 syncScreenPrivateKey)
-
-typedef struct _syncScreenPriv {
-    /* Wrappable sync-specific screen functions */
-    SyncScreenFuncsRec		funcs;
-
-    /* Wrapped screen functions */
-    CloseScreenProcPtr		CloseScreen;
-} SyncScreenPrivRec, *SyncScreenPrivPtr;
+DevPrivateKeyRec miSyncScreenPrivateKey;
 
 /* Default implementations of the sync screen functions */
 void
-miSyncScreenCreateFence(ScreenPtr pScreen, SyncFence* pFence,
+miSyncScreenCreateFence(ScreenPtr pScreen, SyncFence * pFence,
                         Bool initially_triggered)
 {
-    (void)pScreen;
+    (void) pScreen;
 
     pFence->triggered = initially_triggered;
 }
 
-void miSyncScreenDestroyFence(ScreenPtr pScreen, SyncFence* pFence)
+void
+miSyncScreenDestroyFence(ScreenPtr pScreen, SyncFence * pFence)
 {
-    (void)pScreen;
-    (void)pFence;
+    (void) pScreen;
+    (void) pFence;
 }
 
 /* Default implementations of the per-object functions */
-static void
-miSyncFenceSetTriggered(SyncFence* pFence)
+void
+miSyncFenceSetTriggered(SyncFence * pFence)
 {
     pFence->triggered = TRUE;
 }
 
-static void
-miSyncFenceReset(SyncFence* pFence)
+void
+miSyncFenceReset(SyncFence * pFence)
 {
     pFence->triggered = FALSE;
 }
 
-static Bool
-miSyncFenceCheckTriggered(SyncFence* pFence)
+Bool
+miSyncFenceCheckTriggered(SyncFence * pFence)
 {
     return pFence->triggered;
 }
 
-static void
-miSyncFenceAddTrigger(SyncTrigger* pTrigger)
+void
+miSyncFenceAddTrigger(SyncTrigger * pTrigger)
 {
-    (void)pTrigger;
+    (void) pTrigger;
 
     return;
 }
 
-static void
-miSyncFenceDeleteTrigger(SyncTrigger* pTrigger)
+void
+miSyncFenceDeleteTrigger(SyncTrigger * pTrigger)
 {
-    (void)pTrigger;
+    (void) pTrigger;
 
     return;
 }
 
 /* Machine independent portion of the fence sync object implementation */
 void
-miSyncInitFence(ScreenPtr pScreen, SyncFence* pFence, Bool initially_triggered)
+miSyncInitFence(ScreenPtr pScreen, SyncFence * pFence, Bool initially_triggered)
 {
     SyncScreenPrivPtr pScreenPriv = SYNC_SCREEN_PRIV(pScreen);
+
     static const SyncFenceFuncsRec miSyncFenceFuncs = {
-	&miSyncFenceSetTriggered,
-	&miSyncFenceReset,
-	&miSyncFenceCheckTriggered,
-	&miSyncFenceAddTrigger,
-	&miSyncFenceDeleteTrigger
+        &miSyncFenceSetTriggered,
+        &miSyncFenceReset,
+        &miSyncFenceCheckTriggered,
+        &miSyncFenceAddTrigger,
+        &miSyncFenceDeleteTrigger
     };
 
     pFence->pScreen = pScreen;
@@ -115,7 +104,7 @@ miSyncInitFence(ScreenPtr pScreen, SyncFence* pFence, Bool initially_triggered)
 }
 
 void
-miSyncDestroyFence(SyncFence* pFence)
+miSyncDestroyFence(SyncFence * pFence)
 {
     ScreenPtr pScreen = pFence->pScreen;
     SyncScreenPrivPtr pScreenPriv = SYNC_SCREEN_PRIV(pScreen);
@@ -123,11 +112,10 @@ miSyncDestroyFence(SyncFence* pFence)
 
     pFence->sync.beingDestroyed = TRUE;
     /* tell all the fence's triggers that the counter has been destroyed */
-    for (ptl = pFence->sync.pTriglist; ptl; ptl = pNext)
-    {
-	(*ptl->pTrigger->CounterDestroyed)(ptl->pTrigger);
-	pNext = ptl->next;
-	free(ptl); /* destroy the trigger list as we go */
+    for (ptl = pFence->sync.pTriglist; ptl; ptl = pNext) {
+        (*ptl->pTrigger->CounterDestroyed) (ptl->pTrigger);
+        pNext = ptl->next;
+        free(ptl);              /* destroy the trigger list as we go */
     }
 
     pScreenPriv->funcs.DestroyFence(pScreen, pFence);
@@ -136,7 +124,7 @@ miSyncDestroyFence(SyncFence* pFence)
 }
 
 void
-miSyncTriggerFence(SyncFence* pFence)
+miSyncTriggerFence(SyncFence * pFence)
 {
     SyncTriggerList *ptl, *pNext;
     CARD64 unused;
@@ -146,15 +134,15 @@ miSyncTriggerFence(SyncFence* pFence)
     XSyncIntToValue(&unused, 0L);
 
     /* run through triggers to see if any fired */
-    for (ptl = pFence->sync.pTriglist; ptl; ptl = pNext)
-    {
-	pNext = ptl->next;
-	if ((*ptl->pTrigger->CheckTrigger)(ptl->pTrigger, unused))
-	    (*ptl->pTrigger->TriggerFired)(ptl->pTrigger);
+    for (ptl = pFence->sync.pTriglist; ptl; ptl = pNext) {
+        pNext = ptl->next;
+        if ((*ptl->pTrigger->CheckTrigger) (ptl->pTrigger, unused))
+            (*ptl->pTrigger->TriggerFired) (ptl->pTrigger);
     }
 }
 
-SyncScreenFuncsPtr miSyncGetScreenFuncs(ScreenPtr pScreen)
+SyncScreenFuncsPtr
+miSyncGetScreenFuncs(ScreenPtr pScreen)
 {
     SyncScreenPrivPtr pScreenPriv = SYNC_SCREEN_PRIV(pScreen);
 
@@ -162,39 +150,40 @@ SyncScreenFuncsPtr miSyncGetScreenFuncs(ScreenPtr pScreen)
 }
 
 static Bool
-SyncCloseScreen (int i, ScreenPtr pScreen)
+SyncCloseScreen(ScreenPtr pScreen)
 {
     SyncScreenPrivPtr pScreenPriv = SYNC_SCREEN_PRIV(pScreen);
 
     pScreen->CloseScreen = pScreenPriv->CloseScreen;
 
-    return (*pScreen->CloseScreen) (i, pScreen);
+    return (*pScreen->CloseScreen) (pScreen);
 }
 
 Bool
 miSyncSetup(ScreenPtr pScreen)
 {
-    SyncScreenPrivPtr	pScreenPriv;
+    SyncScreenPrivPtr pScreenPriv;
 
     static const SyncScreenFuncsRec miSyncScreenFuncs = {
-	&miSyncScreenCreateFence,
-	&miSyncScreenDestroyFence
+        &miSyncScreenCreateFence,
+        &miSyncScreenDestroyFence
     };
 
-    if (dixPrivateKeyRegistered(syncScreenPrivateKey))
-	return TRUE;
-
-    if (!dixRegisterPrivateKey(syncScreenPrivateKey, PRIVATE_SCREEN,
-			       sizeof(SyncScreenPrivRec)))
-	return FALSE;
+    if (!dixPrivateKeyRegistered(&miSyncScreenPrivateKey)) {
+        if (!dixRegisterPrivateKey(&miSyncScreenPrivateKey, PRIVATE_SCREEN,
+                                   sizeof(SyncScreenPrivRec)))
+            return FALSE;
+    }
 
     pScreenPriv = SYNC_SCREEN_PRIV(pScreen);
 
-    pScreenPriv->funcs = miSyncScreenFuncs;
+    if (!pScreenPriv->funcs.CreateFence) {
+        pScreenPriv->funcs = miSyncScreenFuncs;
 
-    /* Wrap CloseScreen to clean up */
-    pScreenPriv->CloseScreen = pScreen->CloseScreen;
-    pScreen->CloseScreen = SyncCloseScreen;
+        /* Wrap CloseScreen to clean up */
+        pScreenPriv->CloseScreen = pScreen->CloseScreen;
+        pScreen->CloseScreen = SyncCloseScreen;
+    }
 
     return TRUE;
 }

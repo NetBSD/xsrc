@@ -30,13 +30,13 @@ and Olivetti Research Limited, Cambridge, England.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the names of Digital or Olivetti
 not be used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL AND OLIVETTI DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
 SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
@@ -51,6 +51,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #ifndef _SYNCSRV_H_
 #define _SYNCSRV_H_
 
+#include "list.h"
 #include "misync.h"
 #include "misyncstr.h"
 
@@ -65,82 +66,87 @@ typedef enum {
     XSyncCounterUnrestricted
 } SyncCounterType;
 
+typedef void (*SyncSystemCounterQueryValue)(void *counter,
+                                            CARD64 *value_return
+    );
+typedef void (*SyncSystemCounterBracketValues)(void *counter,
+                                               CARD64 *pbracket_less,
+                                               CARD64 *pbracket_greater
+    );
+
 typedef struct _SysCounterInfo {
-    char	*name;
-    CARD64	resolution;
-    CARD64	bracket_greater;
-    CARD64	bracket_less;
-    SyncCounterType counterType;  /* how can this counter change */
-    void        (*QueryValue)(
-			      pointer /*pCounter*/,
-			      CARD64 * /*freshvalue*/
-);
-    void	(*BracketValues)(
-				 pointer /*pCounter*/,
-				 CARD64 * /*lessthan*/,
-				 CARD64 * /*greaterthan*/
-);
+    SyncCounter *pCounter;
+    char *name;
+    CARD64 resolution;
+    CARD64 bracket_greater;
+    CARD64 bracket_less;
+    SyncCounterType counterType;        /* how can this counter change */
+    SyncSystemCounterQueryValue QueryValue;
+    SyncSystemCounterBracketValues BracketValues;
+    void *private;
+    struct xorg_list entry;
 } SysCounterInfo;
 
-
-
 typedef struct _SyncAlarmClientList {
-    ClientPtr	client;
-    XID		delete_id;
+    ClientPtr client;
+    XID delete_id;
     struct _SyncAlarmClientList *next;
 } SyncAlarmClientList;
 
 typedef struct _SyncAlarm {
     SyncTrigger trigger;
-    ClientPtr	client;
-    XSyncAlarm 	alarm_id;
-    CARD64	delta;
-    int		events;
-    int		state;
+    ClientPtr client;
+    XSyncAlarm alarm_id;
+    CARD64 delta;
+    int events;
+    int state;
     SyncAlarmClientList *pEventClients;
 } SyncAlarm;
 
 typedef struct {
-    ClientPtr	client;
-    CARD32 	delete_id;
-    int		num_waitconditions;
+    ClientPtr client;
+    CARD32 delete_id;
+    int num_waitconditions;
 } SyncAwaitHeader;
 
 typedef struct {
     SyncTrigger trigger;
-    CARD64	event_threshold;
+    CARD64 event_threshold;
     SyncAwaitHeader *pHeader;
 } SyncAwait;
 
 typedef union {
     SyncAwaitHeader header;
-    SyncAwait	    await;
+    SyncAwait await;
 } SyncAwaitUnion;
 
-extern pointer SyncCreateSystemCounter(
-    char *	/* name */,
-    CARD64  	/* inital_value */,
-    CARD64  	/* resolution */,
-    SyncCounterType /* change characterization */,
-    void        (* /*QueryValue*/ ) (
-        pointer /* pCounter */,
-        CARD64 * /* pValue_return */), /* XXX prototype */
-    void        (* /*BracketValues*/) (
-        pointer /* pCounter */, 
-        CARD64 * /* pbracket_less */,
-        CARD64 * /* pbracket_greater */)
-);
+extern SyncCounter* SyncCreateSystemCounter(const char *name,
+                                            CARD64 initial_value,
+                                            CARD64 resolution,
+                                            SyncCounterType counterType,
+                                            SyncSystemCounterQueryValue QueryValue,
+                                            SyncSystemCounterBracketValues BracketValues
+    );
 
-extern void SyncChangeCounter(
-    SyncCounter *	/* pCounter*/,
-    CARD64  		/* new_value */
-);
+extern void SyncChangeCounter(SyncCounter *pCounter,
+                              CARD64 new_value
+    );
 
-extern void SyncDestroySystemCounter(
-    pointer pCounter
-);
+extern void SyncDestroySystemCounter(void *pCounter);
 
-extern void InitServertime(void);
+extern SyncCounter *SyncInitDeviceIdleTime(DeviceIntPtr dev);
+extern void SyncRemoveDeviceIdleTime(SyncCounter *counter);
 
-extern void SyncExtensionInit(void);
-#endif /* _SYNCSRV_H_ */
+int
+SyncCreateFenceFromFD(ClientPtr client, DrawablePtr pDraw, XID id, int fd, BOOL initially_triggered);
+
+int
+SyncFDFromFence(ClientPtr client, DrawablePtr pDraw, SyncFence *fence);
+
+void
+SyncDeleteTriggerFromSyncObject(SyncTrigger * pTrigger);
+
+int
+SyncAddTriggerToSyncObject(SyncTrigger * pTrigger);
+
+#endif                          /* _SYNCSRV_H_ */

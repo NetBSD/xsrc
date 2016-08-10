@@ -45,8 +45,17 @@
 /* Path to installed libraries. */
 #undef DEFAULT_LIBRARY_PATH
 
-/* Path to server log file. */
+/* Default log location */
+#undef DEFAULT_LOGDIR
+
+/* Default logfile prefix */
 #undef DEFAULT_LOGPREFIX
+
+/* Default XDG_DATA dir under HOME */
+#undef DEFAULT_XDG_DATA_HOME
+
+/* Default log dir under XDG_DATA_HOME */
+#undef DEFAULT_XDG_DATA_HOME_LOGDIR
 
 /* Building DRI-capable DDX. */
 #undef XF86DRI
@@ -72,12 +81,6 @@
 
 /* Building vgahw module */
 #undef WITH_VGAHW
-
-/* Define to 1 if NetBSD built-in MTRR support is available */
-#undef HAS_MTRR_BUILTIN
-
-/* Define to 1 if BSD MTRR support is available */
-#undef HAS_MTRR_SUPPORT
 
 /* NetBSD PIO alpha IO */
 #undef USE_ALPHA_PIO
@@ -118,17 +121,8 @@
 /* Have execinfo.h */
 #undef HAVE_EXECINFO_H
 
-/* Have pci_system_init_dev_mem() */
-#undef HAVE_PCI_SYSTEM_INIT_DEV_MEM
-
-/* Define to 1 if you have the `pci_device_is_boot_vga' function. */
-#undef HAVE_PCI_DEVICE_IS_BOOT_VGA
-
-/* Have pci_enable_device */
-#undef HAVE_PCI_DEVICE_ENABLE
-
-/* Define to 1 if you have the `pci_device_vgaarb_init' function. */
-#undef HAVE_PCI_DEVICE_VGAARB_INIT
+/* Define to 1 if you have the <sys/mkdev.h> header file. */
+#undef HAVE_SYS_MKDEV_H
 
 /* Path to text files containing PCI IDs */
 #undef PCI_TXT_IDS_PATH
@@ -136,10 +130,25 @@
 /* Use SIGIO handlers for input device events by default */
 #undef USE_SIGIO_BY_DEFAULT
 
-/* Support PC98 */
-#undef SUPPORT_PC98
-
 /* Build with libdrm support */
 #undef WITH_LIBDRM
+
+/* Use libpciaccess */
+#undef XSERVER_LIBPCIACCESS
+
+/* Have setugid */
+#undef HAVE_ISSETUGID
+
+/* Have getresuid */
+#undef HAVE_GETRESUID
+
+/* Have X server platform bus support */
+#undef XSERVER_PLATFORM_BUS
+
+/* Define to 1 if you have the `seteuid' function. */
+#undef HAVE_SETEUID
+
+/* Support APM/ACPI power management in the server */
+#undef XF86PM
 
 #endif /* _XORG_CONFIG_H_ */

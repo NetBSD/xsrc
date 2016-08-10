@@ -37,97 +37,110 @@
 
 typedef struct __GLXtextureFromPixmap __GLXtextureFromPixmap;
 struct __GLXtextureFromPixmap {
-    int (*bindTexImage)		(__GLXcontext  *baseContext,
-				 int            buffer,
-				 __GLXdrawable *pixmap);
-    int (*releaseTexImage)	(__GLXcontext  *baseContext,
-				 int            buffer,
-				 __GLXdrawable *pixmap);
+    int (*bindTexImage) (__GLXcontext * baseContext,
+                         int buffer, __GLXdrawable * pixmap);
+    int (*releaseTexImage) (__GLXcontext * baseContext,
+                            int buffer, __GLXdrawable * pixmap);
 };
 
-
 struct __GLXcontext {
-    void           (*destroy)       (__GLXcontext *context);
-    int            (*makeCurrent)   (__GLXcontext *context);
-    int            (*loseCurrent)   (__GLXcontext *context);
-    int            (*copy)          (__GLXcontext *dst,
-				     __GLXcontext *src,
-				     unsigned long mask);
-    int            (*forceCurrent)  (__GLXcontext *context);
-
-    Bool           (*wait)          (__GLXcontext *context,
-				     __GLXclientState *cl,
-				     int *error);
+    void (*destroy) (__GLXcontext * context);
+    int (*makeCurrent) (__GLXcontext * context);
+    int (*loseCurrent) (__GLXcontext * context);
+    int (*copy) (__GLXcontext * dst, __GLXcontext * src, unsigned long mask);
+    Bool (*wait) (__GLXcontext * context, __GLXclientState * cl, int *error);
 
     __GLXtextureFromPixmap *textureFromPixmap;
 
     /*
-    ** list of context structs
-    */
-    __GLXcontext *last;
+     ** list of context structs
+     */
     __GLXcontext *next;
 
     /*
-    ** config struct for this context
-    */
+     ** config struct for this context
+     */
     __GLXconfig *config;
 
     /*
-    ** Pointer to screen info data for this context.  This is set
-    ** when the context is created.
-    */
+     ** Pointer to screen info data for this context.  This is set
+     ** when the context is created.
+     */
     __GLXscreen *pGlxScreen;
 
     /*
-    ** The XID of this context.
-    */
+     ** If this context is current for a client, this will be that client
+     */
+    ClientPtr currentClient;
+
+    /*
+     ** The XID of this context.
+     */
     XID id;
 
     /*
-    ** The XID of the shareList context.
-    */
+     ** The XID of the shareList context.
+     */
     XID share_id;
 
     /*
-    ** Whether this context's ID still exists.
-    */
+     ** Whether this context's ID still exists.
+     */
     GLboolean idExists;
-    
+
     /*
-    ** Whether this context is current for some client.
-    */
-    GLboolean isCurrent;
-    
-    /*
-    ** Whether this context is a direct rendering context.
-    */
+     ** Whether this context is a direct rendering context.
+     */
     GLboolean isDirect;
 
     /*
-    ** This flag keeps track of whether there are unflushed GL commands.
-    */
+     ** This flag keeps track of whether there are unflushed GL commands.
+     */
     GLboolean hasUnflushedCommands;
-    
-    /*
-    ** Current rendering mode for this context.
-    */
-    GLenum renderMode;
-    
-    /*
-    ** Buffers for feedback and selection.
-    */
-    GLfloat *feedbackBuf;
-    GLint feedbackBufSize;	/* number of elements allocated */
-    GLuint *selectBuf;
-    GLint selectBufSize;	/* number of elements allocated */
 
     /*
-    ** The drawable private this context is bound to
-    */
+     ** Current rendering mode for this context.
+     */
+    GLenum renderMode;
+
+    /**
+     * Reset notification strategy used when a GPU reset occurs.
+     */
+    GLenum resetNotificationStrategy;
+
+    /**
+     * Context release behavior
+     */
+    GLenum releaseBehavior;
+
+    /*
+     ** Buffers for feedback and selection.
+     */
+    GLfloat *feedbackBuf;
+    GLint feedbackBufSize;      /* number of elements allocated */
+    GLuint *selectBuf;
+    GLint selectBufSize;        /* number of elements allocated */
+
+    /*
+     ** The drawable private this context is bound to
+     */
     __GLXdrawable *drawPriv;
     __GLXdrawable *readPriv;
 };
 
-void __glXContextDestroy(__GLXcontext *context);
+void __glXContextDestroy(__GLXcontext * context);
 
-#endif /* !__GLX_context_h__ */
+extern int validGlxScreen(ClientPtr client, int screen,
+                          __GLXscreen ** pGlxScreen, int *err);
+
+extern int validGlxFBConfig(ClientPtr client, __GLXscreen * pGlxScreen,
+                            XID id, __GLXconfig ** config, int *err);
+
+extern int validGlxContext(ClientPtr client, XID id, int access_mode,
+                           __GLXcontext ** context, int *err);
+
+extern __GLXcontext *__glXdirectContextCreate(__GLXscreen * screen,
+                                              __GLXconfig * modes,
+                                              __GLXcontext * shareContext);
+
+#endif                          /* !__GLX_context_h__ */

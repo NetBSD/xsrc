@@ -71,38 +71,39 @@
 #include "damageextint.h"
 #include "xfixes.h"
 #include <X11/extensions/compositeproto.h>
+#include "compositeext.h"
 #include <assert.h>
 
 /*
  *  enable this for debugging
- 
+
     #define COMPOSITE_DEBUG
  */
 
 typedef struct _CompClientWindow {
-    struct _CompClientWindow	*next;
-    XID				id;
-    int				update;
-}  CompClientWindowRec, *CompClientWindowPtr;
+    struct _CompClientWindow *next;
+    XID id;
+    int update;
+} CompClientWindowRec, *CompClientWindowPtr;
 
 typedef struct _CompWindow {
-    RegionRec		    borderClip;
-    DamagePtr		    damage;	/* for automatic update mode */
-    Bool		    damageRegistered;
-    Bool		    damaged;
-    int			    update;
-    CompClientWindowPtr	    clients;
-    int			    oldx;
-    int			    oldy;
-    PixmapPtr		    pOldPixmap;
-    int			    borderClipX, borderClipY;
+    RegionRec borderClip;
+    DamagePtr damage;           /* for automatic update mode */
+    Bool damageRegistered;
+    Bool damaged;
+    int update;
+    CompClientWindowPtr clients;
+    int oldx;
+    int oldy;
+    PixmapPtr pOldPixmap;
+    int borderClipX, borderClipY;
 } CompWindowRec, *CompWindowPtr;
 
 #define COMP_ORIGIN_INVALID	    0x80000000
 
 typedef struct _CompSubwindows {
-    int			    update;
-    CompClientWindowPtr	    clients;
+    int update;
+    CompClientWindowPtr clients;
 } CompSubwindowsRec, *CompSubwindowsPtr;
 
 #ifndef COMP_INCLUDE_RGB24_VISUAL
@@ -112,64 +113,75 @@ typedef struct _CompSubwindows {
 typedef struct _CompOverlayClientRec *CompOverlayClientPtr;
 
 typedef struct _CompOverlayClientRec {
-    CompOverlayClientPtr pNext;  
-    ClientPtr            pClient;
-    ScreenPtr            pScreen;
-    XID			 resource;
+    CompOverlayClientPtr pNext;
+    ClientPtr pClient;
+    ScreenPtr pScreen;
+    XID resource;
 } CompOverlayClientRec;
 
+typedef struct _CompImplicitRedirectException {
+    XID parentVisual;
+    XID winVisual;
+} CompImplicitRedirectException;
+
 typedef struct _CompScreen {
-    PositionWindowProcPtr	PositionWindow;
-    CopyWindowProcPtr		CopyWindow;
-    CreateWindowProcPtr		CreateWindow;
-    DestroyWindowProcPtr	DestroyWindow;
-    RealizeWindowProcPtr	RealizeWindow;
-    UnrealizeWindowProcPtr	UnrealizeWindow;
-    ClipNotifyProcPtr		ClipNotify;
+    PositionWindowProcPtr PositionWindow;
+    CopyWindowProcPtr CopyWindow;
+    CreateWindowProcPtr CreateWindow;
+    DestroyWindowProcPtr DestroyWindow;
+    RealizeWindowProcPtr RealizeWindow;
+    UnrealizeWindowProcPtr UnrealizeWindow;
+    ClipNotifyProcPtr ClipNotify;
     /*
      * Called from ConfigureWindow, these
      * three track changes to the offscreen storage
      * geometry
      */
-    ConfigNotifyProcPtr         ConfigNotify;
-    MoveWindowProcPtr		MoveWindow;
-    ResizeWindowProcPtr		ResizeWindow;
-    ChangeBorderWidthProcPtr	ChangeBorderWidth;
+    ConfigNotifyProcPtr ConfigNotify;
+    MoveWindowProcPtr MoveWindow;
+    ResizeWindowProcPtr ResizeWindow;
+    ChangeBorderWidthProcPtr ChangeBorderWidth;
     /*
      * Reparenting has an effect on Subwindows redirect
      */
-    ReparentWindowProcPtr	ReparentWindow;
-    
+    ReparentWindowProcPtr ReparentWindow;
+
     /*
      * Colormaps for new visuals better not get installed
      */
-    InstallColormapProcPtr	InstallColormap;
+    InstallColormapProcPtr InstallColormap;
 
     /*
      * Fake backing store via automatic redirection
      */
     ChangeWindowAttributesProcPtr ChangeWindowAttributes;
 
-    ScreenBlockHandlerProcPtr	BlockHandler;
-    CloseScreenProcPtr		CloseScreen;
-    int				numAlternateVisuals;
-    VisualID			*alternateVisuals;
+    ScreenBlockHandlerProcPtr BlockHandler;
+    CloseScreenProcPtr CloseScreen;
+    int numAlternateVisuals;
+    VisualID *alternateVisuals;
+    int numImplicitRedirectExceptions;
+    CompImplicitRedirectException *implicitRedirectExceptions;
 
-    WindowPtr                   pOverlayWin;
-    Window			overlayWid;
-    CompOverlayClientPtr        pOverlayClients;
-    
-    GetImageProcPtr		GetImage;
-    SourceValidateProcPtr	SourceValidate;
+    WindowPtr pOverlayWin;
+    Window overlayWid;
+    CompOverlayClientPtr pOverlayClients;
+
+    GetImageProcPtr GetImage;
+    GetSpansProcPtr GetSpans;
+    SourceValidateProcPtr SourceValidate;
 } CompScreenRec, *CompScreenPtr;
 
 extern DevPrivateKeyRec CompScreenPrivateKeyRec;
+
 #define CompScreenPrivateKey (&CompScreenPrivateKeyRec)
 
 extern DevPrivateKeyRec CompWindowPrivateKeyRec;
+
 #define CompWindowPrivateKey (&CompWindowPrivateKeyRec)
 
 extern DevPrivateKeyRec CompSubwindowsPrivateKeyRec;
+
 #define CompSubwindowsPrivateKey (&CompSubwindowsPrivateKeyRec)
 
 #define GetCompScreen(s) ((CompScreenPtr) \
@@ -179,80 +191,76 @@ extern DevPrivateKeyRec CompSubwindowsPrivateKeyRec;
 #define GetCompSubwindows(w) ((CompSubwindowsPtr) \
     dixLookupPrivate(&(w)->devPrivates, CompSubwindowsPrivateKey))
 
-extern RESTYPE		CompositeClientWindowType;
-extern RESTYPE		CompositeClientSubwindowsType;
-extern RESTYPE		CompositeClientOverlayType;
+extern RESTYPE CompositeClientSubwindowsType;
+extern RESTYPE CompositeClientOverlayType;
 
 /*
  * compalloc.c
  */
 
 Bool
-compRedirectWindow (ClientPtr pClient, WindowPtr pWin, int update);
+ compRedirectWindow(ClientPtr pClient, WindowPtr pWin, int update);
 
 void
-compFreeClientWindow (WindowPtr pWin, XID id);
+ compFreeClientWindow(WindowPtr pWin, XID id);
 
 int
-compUnredirectWindow (ClientPtr pClient, WindowPtr pWin, int update);
+ compUnredirectWindow(ClientPtr pClient, WindowPtr pWin, int update);
 
 int
-compRedirectSubwindows (ClientPtr pClient, WindowPtr pWin, int update);
+ compRedirectSubwindows(ClientPtr pClient, WindowPtr pWin, int update);
 
 void
-compFreeClientSubwindows (WindowPtr pWin, XID id);
+ compFreeClientSubwindows(WindowPtr pWin, XID id);
 
 int
-compUnredirectSubwindows (ClientPtr pClient, WindowPtr pWin, int update);
+ compUnredirectSubwindows(ClientPtr pClient, WindowPtr pWin, int update);
 
 int
-compRedirectOneSubwindow (WindowPtr pParent, WindowPtr pWin);
+ compRedirectOneSubwindow(WindowPtr pParent, WindowPtr pWin);
 
 int
-compUnredirectOneSubwindow (WindowPtr pParent, WindowPtr pWin);
+ compUnredirectOneSubwindow(WindowPtr pParent, WindowPtr pWin);
 
 Bool
-compAllocPixmap (WindowPtr pWin);
+ compAllocPixmap(WindowPtr pWin);
 
 void
-compFreePixmap (WindowPtr pWin);
+ compSetParentPixmap(WindowPtr pWin);
+
+void
+ compRestoreWindow(WindowPtr pWin, PixmapPtr pPixmap);
 
 Bool
-compReallocPixmap (WindowPtr pWin, int x, int y,
-		   unsigned int w, unsigned int h, int bw);
 
-/*
- * compext.c
- */
-
-void
-CompositeExtensionInit (void);
+compReallocPixmap(WindowPtr pWin, int x, int y,
+                  unsigned int w, unsigned int h, int bw);
 
 /*
  * compinit.c
  */
 
 Bool
-compScreenInit (ScreenPtr pScreen);
+ compScreenInit(ScreenPtr pScreen);
 
 /*
  * compoverlay.c
  */
 
 void
-compFreeOverlayClient (CompOverlayClientPtr pOcToDel);
+ compFreeOverlayClient(CompOverlayClientPtr pOcToDel);
 
 CompOverlayClientPtr
-compFindOverlayClient (ScreenPtr pScreen, ClientPtr pClient);
-    
+compFindOverlayClient(ScreenPtr pScreen, ClientPtr pClient);
+
 CompOverlayClientPtr
-compCreateOverlayClient (ScreenPtr pScreen, ClientPtr pClient);
+compCreateOverlayClient(ScreenPtr pScreen, ClientPtr pClient);
 
 Bool
-compCreateOverlayWindow (ScreenPtr pScreen);
+ compCreateOverlayWindow(ScreenPtr pScreen);
 
 void
-compDestroyOverlayWindow (ScreenPtr pScreen);
+ compDestroyOverlayWindow(ScreenPtr pScreen);
 
 /*
  * compwindow.c
@@ -260,74 +268,73 @@ compDestroyOverlayWindow (ScreenPtr pScreen);
 
 #ifdef COMPOSITE_DEBUG
 void
-compCheckTree (ScreenPtr pScreen);
+ compCheckTree(ScreenPtr pScreen);
 #else
 #define compCheckTree(s)
 #endif
 
-PictFormatPtr
-compWindowFormat (WindowPtr pWin);
-
 void
-compSetPixmap (WindowPtr pWin, PixmapPtr pPixmap);
+ compSetPixmap(WindowPtr pWin, PixmapPtr pPixmap);
 
 Bool
-compCheckRedirect (WindowPtr pWin);
+ compCheckRedirect(WindowPtr pWin);
 
 Bool
-compPositionWindow (WindowPtr pWin, int x, int y);
+ compPositionWindow(WindowPtr pWin, int x, int y);
 
 Bool
-compRealizeWindow (WindowPtr pWin);
+ compRealizeWindow(WindowPtr pWin);
 
 Bool
-compUnrealizeWindow (WindowPtr pWin);
+ compUnrealizeWindow(WindowPtr pWin);
 
 void
-compClipNotify (WindowPtr pWin, int dx, int dy);
+ compClipNotify(WindowPtr pWin, int dx, int dy);
 
 void
-compMoveWindow (WindowPtr pWin, int x, int y, WindowPtr pSib, VTKind kind);
+ compMoveWindow(WindowPtr pWin, int x, int y, WindowPtr pSib, VTKind kind);
 
 void
-compResizeWindow (WindowPtr pWin, int x, int y,
-		  unsigned int w, unsigned int h, WindowPtr pSib);
+
+compResizeWindow(WindowPtr pWin, int x, int y,
+                 unsigned int w, unsigned int h, WindowPtr pSib);
 
 void
-compChangeBorderWidth (WindowPtr pWin, unsigned int border_width);
+ compChangeBorderWidth(WindowPtr pWin, unsigned int border_width);
 
 void
-compReparentWindow (WindowPtr pWin, WindowPtr pPriorParent);
+ compReparentWindow(WindowPtr pWin, WindowPtr pPriorParent);
 
 Bool
-compCreateWindow (WindowPtr pWin);
+ compCreateWindow(WindowPtr pWin);
 
 Bool
-compDestroyWindow (WindowPtr pWin);
+ compDestroyWindow(WindowPtr pWin);
 
 void
-compSetRedirectBorderClip (WindowPtr pWin, RegionPtr pRegion);
+ compSetRedirectBorderClip(WindowPtr pWin, RegionPtr pRegion);
 
 RegionPtr
-compGetRedirectBorderClip (WindowPtr pWin);
+ compGetRedirectBorderClip(WindowPtr pWin);
 
 void
-compCopyWindow (WindowPtr pWin, DDXPointRec ptOldOrg, RegionPtr prgnSrc);
+ compCopyWindow(WindowPtr pWin, DDXPointRec ptOldOrg, RegionPtr prgnSrc);
 
 void
-compPaintChildrenToWindow (WindowPtr pWin);
+ compPaintChildrenToWindow(WindowPtr pWin);
 
 WindowPtr
-CompositeRealChildHead (WindowPtr pWin);
+ CompositeRealChildHead(WindowPtr pWin);
 
 int
-DeleteWindowNoInputDevices(pointer value, XID wid);
+ DeleteWindowNoInputDevices(void *value, XID wid);
 
 int
+
 compConfigNotify(WindowPtr pWin, int x, int y, int w, int h,
-		 int bw, WindowPtr pSib);
+                 int bw, WindowPtr pSib);
 
-void PanoramiXCompositeInit (void);
-void PanoramiXCompositeReset (void);
+void PanoramiXCompositeInit(void);
+void PanoramiXCompositeReset(void);
 
-#endif /* _COMPINT_H_ */
+#endif                          /* _COMPINT_H_ */

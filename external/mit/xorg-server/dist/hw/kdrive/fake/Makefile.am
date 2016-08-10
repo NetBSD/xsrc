@@ -1,4 +1,4 @@
-INCLUDES = 					\
+AM_CPPFLAGS = 					\
 	@KDRIVE_INCS@				\
 	@KDRIVE_CFLAGS@
 
@@ -18,6 +18,7 @@ Xfake_SOURCES = \
 
 Xfake_LDADD = 						\
 	libfake.la					\
+	@KDRIVE_MAIN_LIB@				\
 	@KDRIVE_LIBS@
 
 Xfake_LDFLAGS = $(LD_EXPORT_SYMBOLS_FLAG)

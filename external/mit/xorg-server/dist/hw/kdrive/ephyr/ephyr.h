@@ -1,8 +1,8 @@
 /*
  * Xephyr - A kdrive X server thats runs in a host X window.
  *          Authored by Matthew Allum <mallum@o-hand.com>
- * 
- * Copyright © 2004 Nokia 
+ *
+ * Copyright Â© 2004 Nokia
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -29,8 +29,9 @@
 #include <unistd.h>
 #include <signal.h>
 #include <libgen.h>
+#include <xcb/xcb_image.h>
 
-#include "os.h"  		/* for OsSignal() */
+#include "os.h"                 /* for OsSignal() */
 #include "kdrive.h"
 #include "hostx.h"
 #include "exa.h"
@@ -42,8 +43,8 @@
 #include "damage.h"
 
 typedef struct _ephyrPriv {
-    CARD8	*base;
-    int		bytes_per_line;
+    CARD8 *base;
+    int bytes_per_line;
 } EphyrPriv;
 
 typedef struct _ephyrFakexaPriv {
@@ -61,10 +62,34 @@ typedef struct _ephyrFakexaPriv {
 } EphyrFakexaPriv;
 
 typedef struct _ephyrScrPriv {
-    Rotation	randr;
-    Bool	shadow;
-    DamagePtr   pDamage;
+    /* ephyr server info */
+    Rotation randr;
+    Bool shadow;
+    DamagePtr pDamage;
     EphyrFakexaPriv *fakexa;
+
+    /* Host X window info */
+    xcb_window_t win;
+    xcb_window_t win_pre_existing;    /* Set via -parent option like xnest */
+    xcb_window_t peer_win;            /* Used for GL; should be at most one */
+    xcb_image_t *ximg;
+    Bool win_explicit_position;
+    int win_x, win_y;
+    int win_width, win_height;
+    int server_depth;
+    const char *output;         /* Set via -output option */
+    unsigned char *fb_data;     /* only used when host bpp != server bpp */
+    xcb_shm_segment_info_t shminfo;
+
+    KdScreenInfo *screen;
+    int mynum;                  /* Screen number */
+    unsigned long cmap[256];
+
+    /**
+     * Per-screen Xlib-using state for glamor (private to
+     * ephyr_glamor_glx.c)
+     */
+    struct ephyr_glamor *glamor;
 } EphyrScrPriv;
 
 extern KdCardFuncs ephyrFuncs;
@@ -74,130 +99,141 @@ extern KdPointerInfo *ephyrMouse;
 extern miPointerScreenFuncRec ephyrPointerScreenFuncs;
 
 Bool
-ephyrInitialize (KdCardInfo *card, EphyrPriv *priv);
+ ephyrInitialize(KdCardInfo * card, EphyrPriv * priv);
 
 Bool
-ephyrCardInit (KdCardInfo *card);
+ ephyrCardInit(KdCardInfo * card);
 
 Bool
-ephyrScreenInit (KdScreenInfo *screen);
+ephyrScreenInitialize(KdScreenInfo *screen);
 
 Bool
-ephyrScreenInitialize (KdScreenInfo *screen, EphyrScrPriv *scrpriv);
-    
-Bool
-ephyrInitScreen (ScreenPtr pScreen);
+ ephyrInitScreen(ScreenPtr pScreen);
 
 Bool
-ephyrFinishInitScreen (ScreenPtr pScreen);
+ ephyrFinishInitScreen(ScreenPtr pScreen);
 
 Bool
-ephyrCreateResources (ScreenPtr pScreen);
+ ephyrCreateResources(ScreenPtr pScreen);
 
 void
-ephyrPreserve (KdCardInfo *card);
+ ephyrPreserve(KdCardInfo * card);
 
 Bool
-ephyrEnable (ScreenPtr pScreen);
+ ephyrEnable(ScreenPtr pScreen);
 
 Bool
-ephyrDPMS (ScreenPtr pScreen, int mode);
+ ephyrDPMS(ScreenPtr pScreen, int mode);
 
 void
-ephyrDisable (ScreenPtr pScreen);
+ ephyrDisable(ScreenPtr pScreen);
 
 void
-ephyrRestore (KdCardInfo *card);
+ ephyrRestore(KdCardInfo * card);
 
 void
-ephyrScreenFini (KdScreenInfo *screen);
+ ephyrScreenFini(KdScreenInfo * screen);
 
 void
-ephyrCardFini (KdCardInfo *card);
+ephyrCloseScreen(ScreenPtr pScreen);
 
 void
-ephyrGetColors (ScreenPtr pScreen, int n, xColorItem *pdefs);
+ ephyrCardFini(KdCardInfo * card);
 
 void
-ephyrPutColors (ScreenPtr pScreen, int n, xColorItem *pdefs);
+ ephyrGetColors(ScreenPtr pScreen, int n, xColorItem * pdefs);
+
+void
+ ephyrPutColors(ScreenPtr pScreen, int n, xColorItem * pdefs);
 
 Bool
-ephyrMapFramebuffer (KdScreenInfo *screen);
+ ephyrMapFramebuffer(KdScreenInfo * screen);
 
-void *
-ephyrWindowLinear (ScreenPtr	pScreen,
-		   CARD32	row,
-		   CARD32	offset,
-		   int		mode,
-		   CARD32	*size,
-		   void		*closure);
+void *ephyrWindowLinear(ScreenPtr pScreen,
+                        CARD32 row,
+                        CARD32 offset, int mode, CARD32 *size, void *closure);
 
 void
-ephyrSetScreenSizes (ScreenPtr pScreen);
+ ephyrSetScreenSizes(ScreenPtr pScreen);
 
 Bool
-ephyrUnmapFramebuffer (KdScreenInfo *screen);
+ ephyrUnmapFramebuffer(KdScreenInfo * screen);
 
 void
-ephyrUnsetInternalDamage (ScreenPtr pScreen);
+ ephyrUnsetInternalDamage(ScreenPtr pScreen);
 
 Bool
-ephyrSetInternalDamage (ScreenPtr pScreen);
+ ephyrSetInternalDamage(ScreenPtr pScreen);
 
 Bool
-ephyrCreateColormap (ColormapPtr pmap);
+ ephyrCreateColormap(ColormapPtr pmap);
 
 void
-ephyrPoll(void);
-    
+ ephyrPoll(void);
+
 #ifdef RANDR
 Bool
-ephyrRandRGetInfo (ScreenPtr pScreen, Rotation *rotations);
+ ephyrRandRGetInfo(ScreenPtr pScreen, Rotation * rotations);
 
 Bool
-ephyrRandRSetConfig (ScreenPtr		pScreen,
-		     Rotation		randr,
-		     int		rate,
-		     RRScreenSizePtr	pSize);
-Bool
-ephyrRandRInit (ScreenPtr pScreen);
 
-void 
-ephyrShadowUpdate (ScreenPtr pScreen, shadowBufPtr pBuf);
+ephyrRandRSetConfig(ScreenPtr pScreen,
+                    Rotation randr, int rate, RRScreenSizePtr pSize);
+Bool
+ ephyrRandRInit(ScreenPtr pScreen);
+
+void
+ ephyrShadowUpdate(ScreenPtr pScreen, shadowBufPtr pBuf);
 
 #endif
 
 void
-ephyrUpdateModifierState(unsigned int state);
+ ephyrUpdateModifierState(unsigned int state);
 
 extern KdPointerDriver EphyrMouseDriver;
 
-extern KdKeyboardDriver	EphyrKeyboardDriver;
+extern KdKeyboardDriver EphyrKeyboardDriver;
 
-extern KdOsFuncs   EphyrOsFuncs;
+extern KdOsFuncs EphyrOsFuncs;
 
 extern Bool ephyrCursorInit(ScreenPtr pScreen);
 
-extern void ephyrCursorEnable(ScreenPtr pScreen);
-
-extern int ephyrBufferHeight(KdScreenInfo *screen);
+extern int ephyrBufferHeight(KdScreenInfo * screen);
 
 /* ephyr_draw.c */
 
 Bool
-ephyrDrawInit(ScreenPtr pScreen);
+ ephyrDrawInit(ScreenPtr pScreen);
 
 void
-ephyrDrawEnable(ScreenPtr pScreen);
+ ephyrDrawEnable(ScreenPtr pScreen);
 
 void
-ephyrDrawDisable(ScreenPtr pScreen);
+ ephyrDrawDisable(ScreenPtr pScreen);
 
 void
-ephyrDrawFini(ScreenPtr pScreen);
+ ephyrDrawFini(ScreenPtr pScreen);
+
+/* hostx.c glamor support */
+Bool ephyr_glamor_init(ScreenPtr pScreen);
+Bool ephyr_glamor_create_screen_resources(ScreenPtr pScreen);
+void ephyr_glamor_enable(ScreenPtr pScreen);
+void ephyr_glamor_disable(ScreenPtr pScreen);
+void ephyr_glamor_fini(ScreenPtr pScreen);
+void ephyr_glamor_host_paint_rect(ScreenPtr pScreen);
 
 /*ephyvideo.c*/
 
-Bool ephyrInitVideo(ScreenPtr pScreen) ;
+Bool ephyrInitVideo(ScreenPtr pScreen);
+
+/* ephyr_glamor_xv.c */
+#ifdef GLAMOR
+void ephyr_glamor_xv_init(ScreenPtr screen);
+#else /* !GLAMOR */
+static inline void
+ephyr_glamor_xv_init(ScreenPtr screen)
+{
+}
+#endif /* !GLAMOR */
 
 #endif

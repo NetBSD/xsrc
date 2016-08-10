@@ -46,8 +46,7 @@
 #include <X11/extensions/XKMformat.h>
 #include "xkbfile.h"
 #include "../xkb/xkb.h"
-
-#include <glib.h>
+#include <assert.h>
 
 /**
  * Initialize an empty XkbRMLVOSet.
@@ -56,22 +55,22 @@
  *
  * Result: RMLVO defaults are the same as obtained.
  */
-static void xkb_get_rules_test(void)
+static void
+xkb_get_rules_test(void)
 {
-    XkbRMLVOSet rmlvo = { NULL};
+    XkbRMLVOSet rmlvo = { NULL };
     XkbGetRulesDflts(&rmlvo);
 
-
-    g_assert(rmlvo.rules);
-    g_assert(rmlvo.model);
-    g_assert(rmlvo.layout);
-    g_assert(rmlvo.variant);
-    g_assert(rmlvo.options);
-    g_assert(strcmp(rmlvo.rules, XKB_DFLT_RULES) == 0);
-    g_assert(strcmp(rmlvo.model, XKB_DFLT_MODEL) == 0);
-    g_assert(strcmp(rmlvo.layout, XKB_DFLT_LAYOUT) == 0);
-    g_assert(strcmp(rmlvo.variant, XKB_DFLT_VARIANT) == 0);
-    g_assert(strcmp(rmlvo.options, XKB_DFLT_OPTIONS) == 0);
+    assert(rmlvo.rules);
+    assert(rmlvo.model);
+    assert(rmlvo.layout);
+    assert(rmlvo.variant);
+    assert(rmlvo.options);
+    assert(strcmp(rmlvo.rules, XKB_DFLT_RULES) == 0);
+    assert(strcmp(rmlvo.model, XKB_DFLT_MODEL) == 0);
+    assert(strcmp(rmlvo.layout, XKB_DFLT_LAYOUT) == 0);
+    assert(strcmp(rmlvo.variant, XKB_DFLT_VARIANT) == 0);
+    assert(strcmp(rmlvo.options, XKB_DFLT_OPTIONS) == 0);
 }
 
 /**
@@ -80,34 +79,38 @@ static void xkb_get_rules_test(void)
  * Compare obtained ruleset with the built-in defaults.
  * Result: RMLVO defaults are the same as obtained.
  */
-static void xkb_set_rules_test(void)
+static void
+xkb_set_rules_test(void)
 {
-    XkbRMLVOSet rmlvo = {
-        .rules = "test-rules",
-        .model = "test-model",
-        .layout = "test-layout",
-        .variant = "test-variant",
-        .options = "test-options"
-    };
+    XkbRMLVOSet rmlvo;
     XkbRMLVOSet rmlvo_new = { NULL };
+
+    XkbInitRules(&rmlvo, "test-rules", "test-model", "test-layout",
+                         "test-variant", "test-options");
+    assert(rmlvo.rules);
+    assert(rmlvo.model);
+    assert(rmlvo.layout);
+    assert(rmlvo.variant);
+    assert(rmlvo.options);
 
     XkbSetRulesDflts(&rmlvo);
     XkbGetRulesDflts(&rmlvo_new);
 
     /* XkbGetRulesDflts strdups the values */
-    g_assert(rmlvo.rules != rmlvo_new.rules);
-    g_assert(rmlvo.model != rmlvo_new.model);
-    g_assert(rmlvo.layout != rmlvo_new.layout);
-    g_assert(rmlvo.variant != rmlvo_new.variant);
-    g_assert(rmlvo.options != rmlvo_new.options);
+    assert(rmlvo.rules != rmlvo_new.rules);
+    assert(rmlvo.model != rmlvo_new.model);
+    assert(rmlvo.layout != rmlvo_new.layout);
+    assert(rmlvo.variant != rmlvo_new.variant);
+    assert(rmlvo.options != rmlvo_new.options);
 
-    g_assert(strcmp(rmlvo.rules, rmlvo_new.rules) == 0);
-    g_assert(strcmp(rmlvo.model, rmlvo_new.model) == 0);
-    g_assert(strcmp(rmlvo.layout, rmlvo_new.layout) == 0);
-    g_assert(strcmp(rmlvo.variant, rmlvo_new.variant) == 0);
-    g_assert(strcmp(rmlvo.options, rmlvo_new.options) == 0);
+    assert(strcmp(rmlvo.rules, rmlvo_new.rules) == 0);
+    assert(strcmp(rmlvo.model, rmlvo_new.model) == 0);
+    assert(strcmp(rmlvo.layout, rmlvo_new.layout) == 0);
+    assert(strcmp(rmlvo.variant, rmlvo_new.variant) == 0);
+    assert(strcmp(rmlvo.options, rmlvo_new.options) == 0);
+
+    XkbFreeRMLVOSet(&rmlvo, FALSE);
 }
-
 
 /**
  * Get the default RMLVO set.
@@ -117,7 +120,8 @@ static void xkb_set_rules_test(void)
  *
  * Result: RMLVO set obtained is the same as previously set.
  */
-static void xkb_set_get_rules_test(void)
+static void
+xkb_set_get_rules_test(void)
 {
 /* This test failed before XkbGetRulesDftlts changed to strdup.
    We test this twice because the first time using XkbGetRulesDflts we obtain
@@ -145,29 +149,26 @@ static void xkb_set_get_rules_test(void)
 
     /* This test is iffy, because strictly we may be comparing against already
      * freed memory */
-    g_assert(strcmp(rmlvo.rules, rmlvo_backup.rules) == 0);
-    g_assert(strcmp(rmlvo.model, rmlvo_backup.model) == 0);
-    g_assert(strcmp(rmlvo.layout, rmlvo_backup.layout) == 0);
-    g_assert(strcmp(rmlvo.variant, rmlvo_backup.variant) == 0);
-    g_assert(strcmp(rmlvo.options, rmlvo_backup.options) == 0);
+    assert(strcmp(rmlvo.rules, rmlvo_backup.rules) == 0);
+    assert(strcmp(rmlvo.model, rmlvo_backup.model) == 0);
+    assert(strcmp(rmlvo.layout, rmlvo_backup.layout) == 0);
+    assert(strcmp(rmlvo.variant, rmlvo_backup.variant) == 0);
+    assert(strcmp(rmlvo.options, rmlvo_backup.options) == 0);
 
     XkbGetRulesDflts(&rmlvo);
-    g_assert(strcmp(rmlvo.rules, rmlvo_backup.rules) == 0);
-    g_assert(strcmp(rmlvo.model, rmlvo_backup.model) == 0);
-    g_assert(strcmp(rmlvo.layout, rmlvo_backup.layout) == 0);
-    g_assert(strcmp(rmlvo.variant, rmlvo_backup.variant) == 0);
-    g_assert(strcmp(rmlvo.options, rmlvo_backup.options) == 0);
+    assert(strcmp(rmlvo.rules, rmlvo_backup.rules) == 0);
+    assert(strcmp(rmlvo.model, rmlvo_backup.model) == 0);
+    assert(strcmp(rmlvo.layout, rmlvo_backup.layout) == 0);
+    assert(strcmp(rmlvo.variant, rmlvo_backup.variant) == 0);
+    assert(strcmp(rmlvo.options, rmlvo_backup.options) == 0);
 }
 
-
-int main(int argc, char** argv)
+int
+main(int argc, char **argv)
 {
-    g_test_init(&argc, &argv,NULL);
-    g_test_bug_base("https://bugzilla.freedesktop.org/show_bug.cgi?id=");
+    xkb_set_get_rules_test();
+    xkb_get_rules_test();
+    xkb_set_rules_test();
 
-    g_test_add_func("/xkb/set-get-rules", xkb_set_get_rules_test);
-    g_test_add_func("/xkb/get-rules", xkb_get_rules_test);
-    g_test_add_func("/xkb/set-rules", xkb_set_rules_test);
-
-    return g_test_run();
+    return 0;
 }

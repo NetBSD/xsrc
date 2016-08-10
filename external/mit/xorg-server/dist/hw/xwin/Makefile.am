@@ -3,20 +3,16 @@ bin_PROGRAMS = XWin
 if XWIN_CLIPBOARD
 SRCS_CLIPBOARD = \
 	winclipboardinit.c \
-	winclipboardtextconv.c \
-	winclipboardthread.c \
-	winclipboardunicode.c \
-	winclipboardwndproc.c \
-	winclipboardwrappers.c \
-	winclipboardxevents.c
+	winclipboardwrappers.c
 DEFS_CLIPBOARD = -DXWIN_CLIPBOARD
+CLIPBOARD_LIBS = $(top_builddir)/hw/xwin/winclipboard/libXWinclipboard.la
 endif
 
 if XWIN_GLX_WINDOWS
 GLX_DIR = glx
 DEFS_GLX_WINDOWS = -DXWIN_GLX_WINDOWS
 XWIN_GLX_LIBS = $(top_builddir)/hw/xwin/glx/libXwinGLX.la
-XWIN_GLX_LINK_FLAGS = -lopengl32
+XWIN_GLX_SYS_LIBS = -lopengl32
 endif
 
 if XWIN_MULTIWINDOW
@@ -24,8 +20,11 @@ SRCS_MULTIWINDOW = \
 	winmultiwindowshape.c \
 	winmultiwindowwindow.c \
 	winmultiwindowwm.c \
-	winmultiwindowwndproc.c
+	winmultiwindowwndproc.c \
+	propertystore.h \
+	winSetAppUserModelID.c
 DEFS_MULTIWINDOW = -DXWIN_MULTIWINDOW
+MULTIWINDOW_SYS_LIBS = -lshlwapi -lole32
 endif
 
 if XWIN_MULTIWINDOWEXTWM
@@ -36,27 +35,6 @@ SRCS_MULTIWINDOWEXTWM = \
 	winwindowswm.c
 DEFS_MULTIWINDOWEXTWM = -DXWIN_MULTIWINDOWEXTWM
 MULTIWINDOWEXTWM_LIBS = $(top_builddir)/miext/rootless/librootless.la
-endif
-
-if XWIN_NATIVEGDI
-SRCS_NATIVEGDI = \
-	winclip.c \
-	winfillsp.c \
-	winfont.c \
-	wingc.c \
-	wingetsp.c \
-	winnativegdi.c \
-	winpixmap.c \
-	winpolyline.c \
-	winrop.c \
-	winsetsp.c
-DEFS_NATIVEGDI = -DXWIN_NATIVEGDI
-endif
-
-if XWIN_PRIMARYFB
-SRCS_PRIMARYFB = \
-	winpfbdd.c
-DEFS_PRIMARYFB = -DXWIN_PRIMARYFB
 endif
 
 if XWIN_RANDR
@@ -90,41 +68,43 @@ SRCS =	InitInput.c \
 	winmonitors.c \
 	winmouse.c \
 	winmsg.c \
+	winmsgwindow.c \
 	winmultiwindowclass.c \
 	winmultiwindowicons.c \
+	winos.c \
 	winprefs.c \
 	winprefsyacc.y \
 	winprefslex.l \
 	winprocarg.c \
-	winregistry.c \
 	winscrinit.c \
-	winshaddd.c \
 	winshadddnl.c \
 	winshadgdi.c \
+	wintaskbar.c \
 	wintrayicon.c \
 	winvalargs.c \
 	winwakeup.c \
 	winwindow.c \
 	winwndproc.c \
 	ddraw.h \
-	winclipboard.h \
 	winconfig.h \
 	win.h \
+	winglobals.h \
 	winkeybd.h \
 	winkeynames.h \
 	winlayouts.h \
 	winmessages.h \
+	winmonitors.h \
 	winmsg.h \
 	winms.h \
 	winmultiwindowclass.h \
+	winmultiwindowicons.h \
 	winprefs.h \
 	winresource.h \
 	winwindow.h \
+	windisplay.c \
+	windisplay.h \
 	XWin.rc \
-	$(top_srcdir)/Xext/dpmsstubs.c \
-	$(top_srcdir)/Xi/stubs.c \
 	$(top_srcdir)/mi/miinitext.c \
-	$(top_srcdir)/fb/fbcmap_mi.c \
 	$(SRCS_CLIPBOARD) \
 	$(SRCS_MULTIWINDOW) \
 	$(SRCS_MULTIWINDOWEXTWM) \
@@ -144,14 +124,41 @@ SRCS =	InitInput.c \
 
 XWin_SOURCES = $(SRCS)
 
-INCLUDES = -I$(top_srcdir)/miext/rootless
+AM_CPPFLAGS = -I$(top_srcdir)/miext/rootless
 
-XWin_DEPENDENCIES = $(MULTIWINDOWEXTWM_LIBS) $(XWIN_GLX_LIBS) $(XWIN_LIBS) $(MAIN_LIB) $(XSERVER_LIBS)
-XWin_LDADD = $(MULTIWINDOWEXTWM_LIBS) $(XWIN_GLX_LIBS) $(XWIN_GLX_LINK_FLAGS) $(XWIN_LIBS) $(MAIN_LIB) $(XSERVER_LIBS) $(XSERVER_SYS_LIBS) $(XWIN_SYS_LIBS)
-XWin_LDFLAGS = -mwindows -static
+XWIN_SYS_LIBS += -ldxguid
+
+XWIN_LIBS += \
+	$(top_builddir)/pseudoramiX/libPseudoramiX.la \
+	$(top_builddir)/Xext/libXextdpmsstubs.la \
+	$(top_builddir)/Xi/libXistubs.la
+
+XWin_DEPENDENCIES = \
+	$(MULTIWINDOWEXTWM_LIBS) \
+	$(XWIN_GLX_LIBS) \
+	$(XWIN_LIBS) \
+	$(CLIPBOARD_LIBS) \
+	$(XSERVER_LIBS)
+
+
+XWin_LDADD = \
+	$(MULTIWINDOWEXTWM_LIBS) \
+	$(XWIN_GLX_LIBS) \
+	$(XWIN_LIBS) \
+	$(CLIPBOARD_LIBS) \
+	$(XSERVER_LIBS) \
+	$(XWIN_GLX_SYS_LIBS) \
+	$(XSERVER_SYS_LIBS) \
+	$(XWIN_SYS_LIBS) \
+	$(MULTIWINDOW_SYS_LIBS)
+
+XWin_LDFLAGS = -mwindows -Wl,--disable-stdcall-fixup $(LD_EXPORT_SYMBOLS_FLAG)
+
 
 .rc.o:
 	$(AM_V_GEN)$(WINDRES) --use-temp-file -i $< --input-format=rc -o $@ -O coff -I $(top_builddir)/include
+
+XWin.o: XWin.rc XWin.exe.manifest X.ico
 
 winprefsyacc.h: winprefsyacc.c
 winprefslex.c: winprefslex.l winprefsyacc.c winprefsyacc.h
@@ -176,29 +183,10 @@ EXTRA_DIST = \
 	$(xwinconfig_DATA) \
 	X.ico \
 	XWin.rc \
-	xlaunch/config.cc \
-	xlaunch/COPYING \
-	xlaunch/main.cc \
-	xlaunch/resources/dialog.rc \
-	xlaunch/resources/fullscreen.bmp \
-	xlaunch/resources/images.rc \
-	xlaunch/resources/multiwindow.bmp \
-	xlaunch/resources/nodecoration.bmp \
-	xlaunch/resources/resources.h \
-	xlaunch/resources/resources.rc \
-	xlaunch/resources/strings.rc \
-	xlaunch/resources/windowed.bmp \
-	xlaunch/window/dialog.cc \
-	xlaunch/window/dialog.h \
-	xlaunch/window/util.cc \
-	xlaunch/window/util.h \
-	xlaunch/window/window.cc \
-	xlaunch/window/window.h \
-	xlaunch/window/wizard.cc \
-	xlaunch/window/wizard.h
+	XWin.exe.manifest
 
 relink:
 	$(AM_V_at)rm -f XWin$(EXEEXT) && $(MAKE) XWin$(EXEEXT)
 
-SUBDIRS = man $(GLX_DIR) .
-DIST_SUBDIRS = man glx .
+SUBDIRS = man $(GLX_DIR) winclipboard .
+DIST_SUBDIRS = man glx winclipboard .

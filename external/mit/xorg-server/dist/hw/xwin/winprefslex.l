@@ -37,19 +37,13 @@
 #include <string.h>
 #include "winprefsyacc.h"
 
-extern YYSTYPE yylval;
-extern char *yytext;
-extern int yyparse(void);
-
 extern void ErrorF (const char* /*f*/, ...);
-
-int yylineno;
 
 /* Copy the parsed string, must be free()d in yacc parser */
 static char *makestr(char *str)
 {
   char *ptr;
-  ptr = (char*)malloc (strlen(str)+1);
+  ptr = malloc(strlen(str)+1);
   if (!ptr)
     {
       ErrorF ("winMultiWindowLex:makestr() out of memory\n");
@@ -62,6 +56,9 @@ static char *makestr(char *str)
 %}
 
 %option yylineno
+%option nounput
+%option noinput
+%option never-interactive
 
 %%
 \#.*[\r\n]              { /* comment */ return NEWLINE; }
@@ -91,6 +88,7 @@ ALWAYSONTOP             { return ALWAYSONTOP; }
 DEBUG                   { return DEBUGOUTPUT; }
 RELOAD                  { return RELOAD; }
 TRAYICON                { return TRAYICON; }
+FORCEEXIT		{ return FORCEEXIT; }
 SILENTEXIT		{ return SILENTEXIT; }
 "{"                     { return LB; }
 "}"                     { return RB; }
@@ -113,14 +111,18 @@ yywrap (void)
 /*
  * Run a file through the yacc parser
  */
-void
+int
 parse_file (FILE *file)
 {
+  int ret;
+
   if (!file)
-    return; 
+    return 1;
   
   yylineno = 1;
   yyin = file;
-  yyparse ();
+  ret = yyparse ();
+  yylex_destroy ();
+  return ret;
 }
 

@@ -38,41 +38,39 @@ from The Open Group.
 #include "extnsionst.h"
 #include <X11/extensions/bigreqsproto.h>
 #include "opaque.h"
-#include "modinit.h"
-
-void BigReqExtensionInit(INITARGS);
+#include "extinit.h"
 
 static int
-ProcBigReqDispatch (ClientPtr client)
+ProcBigReqDispatch(ClientPtr client)
 {
     REQUEST(xBigReqEnableReq);
     xBigReqEnableReply rep;
-     int n;
 
     if (client->swapped) {
-	swaps(&stuff->length, n);
+        swaps(&stuff->length);
     }
     if (stuff->brReqType != X_BigReqEnable)
-	return BadRequest;
+        return BadRequest;
     REQUEST_SIZE_MATCH(xBigReqEnableReq);
     client->big_requests = TRUE;
-    memset(&rep, 0, sizeof(xBigReqEnableReply));
-    rep.type = X_Reply;
-    rep.length = 0;
-    rep.sequenceNumber = client->sequence;
-    rep.max_request_size = maxBigRequestSize;
+    rep = (xBigReqEnableReply) {
+        .type = X_Reply,
+        .sequenceNumber = client->sequence,
+        .length = 0,
+        .max_request_size = maxBigRequestSize
+    };
     if (client->swapped) {
-    	swaps(&rep.sequenceNumber, n);
-	swapl(&rep.max_request_size, n);
+        swaps(&rep.sequenceNumber);
+        swapl(&rep.max_request_size);
     }
-    WriteToClient(client, sizeof(xBigReqEnableReply), (char *)&rep);
+    WriteToClient(client, sizeof(xBigReqEnableReply), &rep);
     return Success;
 }
 
 void
-BigReqExtensionInit(INITARGS)
+BigReqExtensionInit(void)
 {
     AddExtension(XBigReqExtensionName, 0, 0,
-		 ProcBigReqDispatch, ProcBigReqDispatch,
-		 NULL, StandardMinorOpcode);
+                 ProcBigReqDispatch, ProcBigReqDispatch,
+                 NULL, StandardMinorOpcode);
 }

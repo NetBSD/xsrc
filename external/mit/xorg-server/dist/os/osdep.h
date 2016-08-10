@@ -22,18 +22,17 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
-
 Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of Digital not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -52,10 +51,6 @@ SOFTWARE.
 #ifndef _OSDEP_H_
 #define _OSDEP_H_ 1
 
-#define BOTIMEOUT 200 /* in milliseconds */
-#define BUFSIZE 4096
-#define BUFWATERMARK 8192
-
 #if defined(XDMCP) || defined(HASXDMAUTH)
 #include <X11/Xdmcp.h>
 #endif
@@ -70,17 +65,17 @@ SOFTWARE.
 
 #ifndef OPEN_MAX
 #ifdef SVR4
-#define OPEN_MAX 256
+#define OPEN_MAX 512
 #else
 #include <sys/param.h>
 #ifndef OPEN_MAX
 #if defined(NOFILE) && !defined(NOFILES_MAX)
 #define OPEN_MAX NOFILE
 #else
-#if !defined(WIN32)
+#if !defined(WIN32) || defined(__CYGWIN__)
 #define OPEN_MAX NOFILES_MAX
 #else
-#define OPEN_MAX 256
+#define OPEN_MAX 512
 #endif
 #endif
 #endif
@@ -94,46 +89,26 @@ SOFTWARE.
  * like sysconf(_SC_OPEN_MAX) is not supported.
  */
 
-#if OPEN_MAX <= 256
+#if OPEN_MAX <= 512
 #define MAXSOCKS (OPEN_MAX - 1)
 #else
-#define MAXSOCKS 256
+#define MAXSOCKS 512
 #endif
 
 /* MAXSELECT is the number of fds that select() can handle */
 #define MAXSELECT (sizeof(fd_set) * NBBY)
 
-#ifndef HAS_GETDTABLESIZE
-#if !defined(SVR4) && !defined(SYSV)
-#define HAS_GETDTABLESIZE
-#endif
-#endif
-
 #include <stddef.h>
 
 #if defined(XDMCP) || defined(HASXDMAUTH)
-typedef Bool (*ValidatorFunc)(ARRAY8Ptr Auth, ARRAY8Ptr Data, int packet_type);
-typedef Bool (*GeneratorFunc)(ARRAY8Ptr Auth, ARRAY8Ptr Data, int packet_type);
-typedef Bool (*AddAuthorFunc)(unsigned name_length, const char *name,
-			      unsigned data_length, char *data);
+typedef Bool (*ValidatorFunc) (ARRAY8Ptr Auth, ARRAY8Ptr Data, int packet_type);
+typedef Bool (*GeneratorFunc) (ARRAY8Ptr Auth, ARRAY8Ptr Data, int packet_type);
+typedef Bool (*AddAuthorFunc) (unsigned name_length, const char *name,
+                               unsigned data_length, char *data);
 #endif
 
-typedef struct _connectionInput {
-    struct _connectionInput *next;
-    char *buffer;               /* contains current client input */
-    char *bufptr;               /* pointer to current start of data */
-    int  bufcnt;                /* count of bytes in buffer */
-    int lenLastReq;
-    int size;
-    unsigned int ignoreBytes;   /* bytes to ignore before the next request */
-} ConnectionInput, *ConnectionInputPtr;
-
-typedef struct _connectionOutput {
-    struct _connectionOutput *next;
-    int size;
-    unsigned char *buf;
-    int count;
-} ConnectionOutput, *ConnectionOutputPtr;
+typedef struct _connectionInput *ConnectionInputPtr;
+typedef struct _connectionOutput *ConnectionOutputPtr;
 
 struct _osComm;
 
@@ -143,7 +118,7 @@ typedef void (*AuthInitFunc) (AuthInitArgs);
 #define AuthAddCArgs unsigned short data_length, const char *data, XID id
 typedef int (*AuthAddCFunc) (AuthAddCArgs);
 
-#define AuthCheckArgs unsigned short data_length, const char *data, ClientPtr client, char **reason
+#define AuthCheckArgs unsigned short data_length, const char *data, ClientPtr client, const char **reason
 typedef XID (*AuthCheckFunc) (AuthCheckArgs);
 
 #define AuthFromIDArgs XID id, unsigned short *data_lenp, char **datap
@@ -161,30 +136,28 @@ typedef int (*AuthRstCFunc) (AuthRstCArgs);
 #define AuthToIDArgs unsigned short data_length, char *data
 typedef XID (*AuthToIDFunc) (AuthToIDArgs);
 
-typedef void (*OsCloseFunc)(ClientPtr);
+typedef void (*OsCloseFunc) (ClientPtr);
 
-typedef int (*OsFlushFunc)(ClientPtr who, struct _osComm * oc, char* extraBuf, int extraCount);
+typedef int (*OsFlushFunc) (ClientPtr who, struct _osComm * oc, char *extraBuf,
+                            int extraCount);
 
 typedef struct _osComm {
     int fd;
     ConnectionInputPtr input;
     ConnectionOutputPtr output;
-    XID	auth_id;		/* authorization id */
-    CARD32 conn_time;		/* timestamp if not established, else 0  */
+    XID auth_id;                /* authorization id */
+    CARD32 conn_time;           /* timestamp if not established, else 0  */
     struct _XtransConnInfo *trans_conn; /* transport connection object */
-    Bool local_client;
 } OsCommRec, *OsCommPtr;
 
-extern int FlushClient(
-    ClientPtr /*who*/,
-    OsCommPtr /*oc*/,
-    const void * /*extraBuf*/,
-    int /*extraCount*/
-);
+extern int FlushClient(ClientPtr /*who */ ,
+                       OsCommPtr /*oc */ ,
+                       const void * /*extraBuf */ ,
+                       int      /*extraCount */
+    );
 
-extern void FreeOsBuffers(
-    OsCommPtr /*oc*/
-);
+extern void FreeOsBuffers(OsCommPtr     /*oc */
+    );
 
 #include "dix.h"
 
@@ -198,21 +171,21 @@ extern fd_set ClientsWriteBlocked;
 extern fd_set OutputPending;
 extern fd_set IgnoredClientsWithInput;
 
-#ifndef WIN32
+#if !defined(WIN32) || defined(__CYGWIN__)
 extern int *ConnectionTranslation;
 #else
 extern int GetConnectionTranslation(int conn);
 extern void SetConnectionTranslation(int conn, int client);
 extern void ClearConnectionTranslation(void);
 #endif
- 
+
 extern Bool NewOutputPending;
 extern Bool AnyClientsWriteBlocked;
 
 extern WorkQueuePtr workQueue;
 
 /* in WaitFor.c */
-#ifdef WIN32
+#if defined(WIN32) && !defined(__CYGWIN__)
 typedef long int fd_mask;
 #endif
 #define ffs mffs
@@ -222,67 +195,63 @@ extern int mffs(fd_mask);
 extern Bool ComputeLocalClient(ClientPtr client);
 
 /* in auth.c */
-extern void GenerateRandomData (int len, char *buf);
+extern void GenerateRandomData(int len, char *buf);
 
 /* in mitauth.c */
-extern XID  MitCheckCookie    (AuthCheckArgs);
-extern XID  MitGenerateCookie (AuthGenCArgs);
-extern XID  MitToID           (AuthToIDArgs);
-extern int  MitAddCookie      (AuthAddCArgs);
-extern int  MitFromID         (AuthFromIDArgs);
-extern int  MitRemoveCookie   (AuthRemCArgs);
-extern int  MitResetCookie    (AuthRstCArgs);
+extern XID MitCheckCookie(AuthCheckArgs);
+extern XID MitGenerateCookie(AuthGenCArgs);
+extern XID MitToID(AuthToIDArgs);
+extern int MitAddCookie(AuthAddCArgs);
+extern int MitFromID(AuthFromIDArgs);
+extern int MitRemoveCookie(AuthRemCArgs);
+extern int MitResetCookie(AuthRstCArgs);
 
 /* in xdmauth.c */
 #ifdef HASXDMAUTH
-extern XID  XdmCheckCookie    (AuthCheckArgs);
-extern XID  XdmToID           (AuthToIDArgs);
-extern int  XdmAddCookie      (AuthAddCArgs);
-extern int  XdmFromID         (AuthFromIDArgs);
-extern int  XdmRemoveCookie   (AuthRemCArgs);
-extern int  XdmResetCookie    (AuthRstCArgs);
+extern XID XdmCheckCookie(AuthCheckArgs);
+extern XID XdmToID(AuthToIDArgs);
+extern int XdmAddCookie(AuthAddCArgs);
+extern int XdmFromID(AuthFromIDArgs);
+extern int XdmRemoveCookie(AuthRemCArgs);
+extern int XdmResetCookie(AuthRstCArgs);
 #endif
 
 /* in rpcauth.c */
 #ifdef SECURE_RPC
-extern void SecureRPCInit     (AuthInitArgs);
-extern XID  SecureRPCCheck    (AuthCheckArgs);
-extern XID  SecureRPCToID     (AuthToIDArgs);
-extern int  SecureRPCAdd      (AuthAddCArgs);
-extern int  SecureRPCFromID   (AuthFromIDArgs);
-extern int  SecureRPCRemove   (AuthRemCArgs);
-extern int  SecureRPCReset    (AuthRstCArgs);
+extern void SecureRPCInit(AuthInitArgs);
+extern XID SecureRPCCheck(AuthCheckArgs);
+extern XID SecureRPCToID(AuthToIDArgs);
+extern int SecureRPCAdd(AuthAddCArgs);
+extern int SecureRPCFromID(AuthFromIDArgs);
+extern int SecureRPCRemove(AuthRemCArgs);
+extern int SecureRPCReset(AuthRstCArgs);
 #endif
 
 #ifdef XDMCP
 /* in xdmcp.c */
-extern void XdmcpUseMsg (void);
+extern void XdmcpUseMsg(void);
 extern int XdmcpOptions(int argc, char **argv, int i);
-extern void XdmcpRegisterConnection (
-    int	    type,
-    const char    *address,
-    int	    addrlen);
-extern void XdmcpRegisterAuthorizations (void);
-extern void XdmcpRegisterAuthorization (const char *name, int namelen);
-extern void XdmcpInit (void);
-extern void XdmcpReset (void);
+extern void XdmcpRegisterConnection(int type, const char *address, int addrlen);
+extern void XdmcpRegisterAuthorizations(void);
+extern void XdmcpRegisterAuthorization(const char *name, int namelen);
+extern void XdmcpInit(void);
+extern void XdmcpReset(void);
 extern void XdmcpOpenDisplay(int sock);
 extern void XdmcpCloseDisplay(int sock);
-extern void XdmcpRegisterAuthentication (
-    const char    *name,
-    int	    namelen,
-    const char    *data,
-    int	    datalen,
-    ValidatorFunc Validator,
-    GeneratorFunc Generator,
-    AddAuthorFunc AddAuth);
+extern void XdmcpRegisterAuthentication(const char *name,
+                                        int namelen,
+                                        const char *data,
+                                        int datalen,
+                                        ValidatorFunc Validator,
+                                        GeneratorFunc Generator,
+                                        AddAuthorFunc AddAuth);
 
 struct sockaddr_in;
-extern void XdmcpRegisterBroadcastAddress (const struct sockaddr_in *addr);
+extern void XdmcpRegisterBroadcastAddress(const struct sockaddr_in *addr);
 #endif
 
 #ifdef HASXDMAUTH
-extern void XdmAuthenticationInit (const char *cookie, int cookie_length);
+extern void XdmAuthenticationInit(const char *cookie, int cookie_length);
 #endif
 
-#endif /* _OSDEP_H_ */
+#endif                          /* _OSDEP_H_ */

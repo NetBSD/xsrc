@@ -30,39 +30,40 @@
 #include <dbus/dbus.h>
 #include <sys/select.h>
 
-#include "config-backends.h"
 #include "dix.h"
 #include "os.h"
+#include "dbus-core.h"
 
 /* How often to attempt reconnecting when we get booted off the bus. */
-#define RECONNECT_DELAY (10 * 1000) /* in ms */
+#define RECONNECT_DELAY (10 * 1000)     /* in ms */
 
 struct dbus_core_info {
     int fd;
     DBusConnection *connection;
     OsTimerPtr timer;
-    struct config_dbus_core_hook *hooks;
+    struct dbus_core_hook *hooks;
 };
 static struct dbus_core_info bus_info;
 
-static CARD32 reconnect_timer(OsTimerPtr timer, CARD32 time, pointer arg);
+static CARD32 reconnect_timer(OsTimerPtr timer, CARD32 time, void *arg);
 
 static void
-wakeup_handler(pointer data, int err, pointer read_mask)
+wakeup_handler(void *data, int num_fds, void *read_mask)
 {
     struct dbus_core_info *info = data;
 
-    if (info->connection && FD_ISSET(info->fd, (fd_set *) read_mask)) {
+    if (info->connection && num_fds > 0 && FD_ISSET(info->fd, (fd_set *) read_mask)) {
         do {
             dbus_connection_read_write_dispatch(info->connection, 0);
         } while (info->connection &&
                  dbus_connection_get_is_connected(info->connection) &&
-                 dbus_connection_get_dispatch_status(info->connection) == DBUS_DISPATCH_DATA_REMAINS);
+                 dbus_connection_get_dispatch_status(info->connection) ==
+                 DBUS_DISPATCH_DATA_REMAINS);
     }
 }
 
 static void
-block_handler(pointer data, struct timeval **tv, pointer read_mask)
+block_handler(void *data, struct timeval **tv, void *read_mask)
 {
 }
 
@@ -73,7 +74,7 @@ block_handler(pointer data, struct timeval **tv, pointer read_mask)
 static void
 teardown(void)
 {
-    struct config_dbus_core_hook *hook;
+    struct dbus_core_hook *hook;
 
     if (bus_info.timer) {
         TimerFree(bus_info.timer);
@@ -105,14 +106,13 @@ teardown(void)
  * careful to ignore anything we don't want to deal with here.
  */
 static DBusHandlerResult
-message_filter(DBusConnection *connection, DBusMessage *message, void *data)
+message_filter(DBusConnection * connection, DBusMessage * message, void *data)
 {
     /* If we get disconnected, then take everything down, and attempt to
      * reconnect immediately (assuming it's just a restart).  The
      * connection isn't valid at this point, so throw it out immediately. */
-    if (dbus_message_is_signal(message, DBUS_INTERFACE_LOCAL,
-                                    "Disconnected")) {
-        DebugF("[config/dbus-core] disconnected from bus\n");
+    if (dbus_message_is_signal(message, DBUS_INTERFACE_LOCAL, "Disconnected")) {
+        DebugF("[dbus-core] disconnected from bus\n");
         bus_info.connection = NULL;
         teardown();
 
@@ -136,12 +136,12 @@ static int
 connect_to_bus(void)
 {
     DBusError error;
-    struct config_dbus_core_hook *hook;
+    struct dbus_core_hook *hook;
 
     dbus_error_init(&error);
     bus_info.connection = dbus_bus_get(DBUS_BUS_SYSTEM, &error);
     if (!bus_info.connection || dbus_error_is_set(&error)) {
-        DebugF("[config/dbus-core] error connecting to system bus: %s (%s)\n",
+        LogMessage(X_ERROR, "dbus-core: error connecting to system bus: %s (%s)\n",
                error.name, error.message);
         goto err_begin;
     }
@@ -150,13 +150,13 @@ connect_to_bus(void)
     dbus_connection_set_exit_on_disconnect(bus_info.connection, FALSE);
 
     if (!dbus_connection_get_unix_fd(bus_info.connection, &bus_info.fd)) {
-        ErrorF("[config/dbus-core] couldn't get fd for system bus\n");
+        ErrorF("[dbus-core] couldn't get fd for system bus\n");
         goto err_unref;
     }
 
     if (!dbus_connection_add_filter(bus_info.connection, message_filter,
                                     &bus_info, NULL)) {
-        ErrorF("[config/dbus-core] couldn't add filter: %s (%s)\n", error.name,
+        ErrorF("[dbus-core] couldn't add filter: %s (%s)\n", error.name,
                error.message);
         goto err_fd;
     }
@@ -173,19 +173,19 @@ connect_to_bus(void)
 
     return 1;
 
-err_fd:
+ err_fd:
     bus_info.fd = -1;
-err_unref:
+ err_unref:
     dbus_connection_unref(bus_info.connection);
     bus_info.connection = NULL;
-err_begin:
+ err_begin:
     dbus_error_free(&error);
 
     return 0;
 }
 
 static CARD32
-reconnect_timer(OsTimerPtr timer, CARD32 time, pointer arg)
+reconnect_timer(OsTimerPtr timer, CARD32 time, void *arg)
 {
     if (connect_to_bus()) {
         TimerFree(bus_info.timer);
@@ -198,12 +198,11 @@ reconnect_timer(OsTimerPtr timer, CARD32 time, pointer arg)
 }
 
 int
-config_dbus_core_add_hook(struct config_dbus_core_hook *hook)
+dbus_core_add_hook(struct dbus_core_hook *hook)
 {
-    struct config_dbus_core_hook **prev;
+    struct dbus_core_hook **prev;
 
-    for (prev = &bus_info.hooks; *prev; prev = &(*prev)->next)
-        ;
+    for (prev = &bus_info.hooks; *prev; prev = &(*prev)->next);
 
     hook->next = NULL;
     *prev = hook;
@@ -216,9 +215,9 @@ config_dbus_core_add_hook(struct config_dbus_core_hook *hook)
 }
 
 void
-config_dbus_core_remove_hook(struct config_dbus_core_hook *hook)
+dbus_core_remove_hook(struct dbus_core_hook *hook)
 {
-    struct config_dbus_core_hook **prev;
+    struct dbus_core_hook **prev;
 
     for (prev = &bus_info.hooks; *prev; prev = &(*prev)->next) {
         if (*prev == hook) {
@@ -229,19 +228,19 @@ config_dbus_core_remove_hook(struct config_dbus_core_hook *hook)
 }
 
 int
-config_dbus_core_init(void)
+dbus_core_init(void)
 {
     memset(&bus_info, 0, sizeof(bus_info));
     bus_info.fd = -1;
     bus_info.hooks = NULL;
-    bus_info.connection = NULL;
-    bus_info.timer = TimerSet(NULL, 0, 1, reconnect_timer, NULL);
+    if (!connect_to_bus())
+        bus_info.timer = TimerSet(NULL, 0, 1, reconnect_timer, NULL);
 
     return 1;
 }
 
 void
-config_dbus_core_fini(void)
+dbus_core_fini(void)
 {
     teardown();
 }

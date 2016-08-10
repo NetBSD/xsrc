@@ -16,6 +16,10 @@
 #ifndef _XORG_SERVER_H_
 #define _XORG_SERVER_H_
 
+#ifdef HAVE_XORG_CONFIG_H
+#error Include xorg-config.h when building the X server
+#endif
+
 /* Support BigRequests extension */
 #undef BIGREQS
 
@@ -28,6 +32,9 @@
 /* Build DPMS extension */
 #undef DPMSExtension
 
+/* Build DRI3 extension */
+#undef DRI3
+
 /* Build GLX extension */
 #undef GLXEXT
 
@@ -37,6 +44,30 @@
 /* Support SHM */
 #undef HAS_SHM
 
+/* Define to 1 if you have the `ffs' function. */
+#undef HAVE_FFS
+
+/* Define to 1 if you have the `reallocarray' function. */
+#undef HAVE_REALLOCARRAY
+
+/* Define to 1 if you have the `strcasecmp' function. */
+#undef HAVE_STRCASECMP
+
+/* Define to 1 if you have the `strcasestr' function. */
+#undef HAVE_STRCASESTR
+
+/* Define to 1 if you have the `strlcat' function. */
+#undef HAVE_STRLCAT
+
+/* Define to 1 if you have the `strlcpy' function. */
+#undef HAVE_STRLCPY
+
+/* Define to 1 if you have the `strncasecmp' function. */
+#undef HAVE_STRNCASECMP
+
+/* Define to 1 if you have the `strndup' function. */
+#undef HAVE_STRNDUP
+
 /* Support IPv6 for TCP connections */
 #undef IPv6
 
@@ -45,6 +76,9 @@
 
 /* Internal define for Xinerama */
 #undef PANORAMIX
+
+/* Support Present extension */
+#undef PRESENT
 
 /* Support RANDR extension */
 #undef RANDR
@@ -66,9 +100,6 @@
 
 /* Support TCP socket connections */
 #undef TCPCONN
-
-/* Enable touchscreen support */
-#undef TOUCHSCREEN
 
 /* Support tslib touchscreen abstraction library */
 #undef TSLIB
@@ -176,7 +207,7 @@
 #undef WSCONS_SUPPORT
 
 /* Loadable XFree86 server awesomeness */
-#undef XFree86LOADER
+#define XFree86LOADER
 
 /* Use libpciaccess */
 #undef XSERVER_LIBPCIACCESS
@@ -184,8 +215,23 @@
 /* X Access Control Extension */
 #undef XACE
 
+/* Have X server platform bus support */
+#undef XSERVER_PLATFORM_BUS
+
 #ifdef _LP64
 #define _XSERVER64 1
 #endif
+
+/* Have support for X shared memory fence library (xshmfence) */
+#undef HAVE_XSHMFENCE
+
+/* Use XTrans FD passing support */
+#undef XTRANS_SEND_FDS
+
+/* Ask fontsproto to make font path element names const */
+#define FONT_PATH_ELEMENT_NAME_CONST    1
+
+/* byte order */
+#undef X_BYTE_ORDER
 
 #endif /* _XORG_SERVER_H_ */

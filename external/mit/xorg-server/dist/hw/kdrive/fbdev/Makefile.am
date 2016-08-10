@@ -1,4 +1,4 @@
-INCLUDES = 					\
+AM_CPPFLAGS = 					\
 	@KDRIVE_INCS@				\
 	@KDRIVE_CFLAGS@
 
@@ -16,6 +16,7 @@ Xfbdev_SOURCES = \
 
 Xfbdev_LDADD = 						\
 	libfbdev.la					\
+	@KDRIVE_MAIN_LIB@				\
 	@KDRIVE_LIBS@
 
 Xfbdev_DEPENDENCIES =	\

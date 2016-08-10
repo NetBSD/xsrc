@@ -54,7 +54,7 @@ SOFTWARE.
 #include <dix-config.h>
 #endif
 
-#include "inputstr.h"	/* DeviceIntPtr      */
+#include "inputstr.h"           /* DeviceIntPtr      */
 #include <X11/extensions/XI.h>
 #include <X11/extensions/XIproto.h>
 #include "exglobals.h"
@@ -74,10 +74,8 @@ SOFTWARE.
 int
 SProcXGetDeviceKeyMapping(ClientPtr client)
 {
-    char n;
-
     REQUEST(xGetDeviceKeyMappingReq);
-    swaps(&stuff->length, n);
+    swaps(&stuff->length);
     return (ProcXGetDeviceKeyMapping(client));
 }
 
@@ -101,31 +99,33 @@ ProcXGetDeviceKeyMapping(ClientPtr client)
 
     rc = dixLookupDevice(&dev, stuff->deviceid, client, DixGetAttrAccess);
     if (rc != Success)
-	return rc;
+        return rc;
     if (dev->key == NULL)
-	return BadMatch;
+        return BadMatch;
     xkb = dev->key->xkbInfo->desc;
 
     if (stuff->firstKeyCode < xkb->min_key_code ||
-	stuff->firstKeyCode > xkb->max_key_code) {
-	client->errorValue = stuff->firstKeyCode;
-	return BadValue;
+        stuff->firstKeyCode > xkb->max_key_code) {
+        client->errorValue = stuff->firstKeyCode;
+        return BadValue;
     }
 
     if (stuff->firstKeyCode + stuff->count > xkb->max_key_code + 1) {
-	client->errorValue = stuff->count;
-	return BadValue;
+        client->errorValue = stuff->count;
+        return BadValue;
     }
 
     syms = XkbGetCoreMap(dev);
     if (!syms)
         return BadAlloc;
 
-    rep.repType = X_Reply;
-    rep.RepType = X_GetDeviceKeyMapping;
-    rep.sequenceNumber = client->sequence;
-    rep.keySymsPerKeyCode = syms->mapWidth;
-    rep.length = (syms->mapWidth * stuff->count);	/* KeySyms are 4 bytes */
+    rep = (xGetDeviceKeyMappingReply) {
+        .repType = X_Reply,
+        .RepType = X_GetDeviceKeyMapping,
+        .sequenceNumber = client->sequence,
+        .keySymsPerKeyCode = syms->mapWidth,
+        .length = (syms->mapWidth * stuff->count) /* KeySyms are 4 bytes */
+    };
     WriteReplyToClient(client, sizeof(xGetDeviceKeyMappingReply), &rep);
 
     client->pSwapReplyFunc = (ReplySwapPtr) CopySwap32Write;
@@ -148,11 +148,9 @@ ProcXGetDeviceKeyMapping(ClientPtr client)
 
 void
 SRepXGetDeviceKeyMapping(ClientPtr client, int size,
-			 xGetDeviceKeyMappingReply * rep)
+                         xGetDeviceKeyMappingReply * rep)
 {
-    char n;
-
-    swaps(&rep->sequenceNumber, n);
-    swapl(&rep->length, n);
-    WriteToClient(client, size, (char *)rep);
+    swaps(&rep->sequenceNumber);
+    swapl(&rep->length);
+    WriteToClient(client, size, rep);
 }

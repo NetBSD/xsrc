@@ -22,18 +22,17 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
-
 Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of Digital not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -80,7 +79,7 @@ Equipment Corporation.
 #endif
 
 #include <X11/X.h>
-#include <X11/Xos.h>   /* for unistd.h  */
+#include <X11/Xos.h>            /* for unistd.h  */
 #include <X11/Xproto.h>
 #include <pixman.h>
 #include "scrnintstr.h"
@@ -96,6 +95,8 @@ Equipment Corporation.
 #include "cursorstr.h"
 #include "selection.h"
 #include <X11/fonts/font.h>
+#include <X11/fonts/fontstruct.h>
+#include <X11/fonts/fontutil.h>
 #include "opaque.h"
 #include "servermd.h"
 #include "hotplug.h"
@@ -104,10 +105,12 @@ Equipment Corporation.
 #include "extnsionst.h"
 #include "privates.h"
 #include "registry.h"
+#include "client.h"
+#include "exevents.h"
 #ifdef PANORAMIX
 #include "panoramiXsrv.h"
 #else
-#include "dixevents.h"		/* InitEvents() */
+#include "dixevents.h"          /* InitEvents() */
 #endif
 
 #ifdef DPMSExtension
@@ -124,21 +127,17 @@ BOOL serverRunning = FALSE;
 pthread_mutex_t serverRunningMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t serverRunningCond = PTHREAD_COND_INITIALIZER;
 
-int dix_main(int argc, char *argv[], char *envp[]);
-
-int dix_main(int argc, char *argv[], char *envp[])
-#else
-int main(int argc, char *argv[], char *envp[])
 #endif
+
+int
+dix_main(int argc, char *argv[], char *envp[])
 {
-    int		i;
-    HWEventQueueType	alwaysCheckForInput[2];
+    int i;
+    HWEventQueueType alwaysCheckForInput[2];
 
     display = "0";
 
     InitRegions();
-
-    pixman_disable_out_of_bounds_workaround();
 
     CheckUserParameters(argc, argv, envp);
 
@@ -150,209 +149,241 @@ int main(int argc, char *argv[], char *envp[])
 
     alwaysCheckForInput[0] = 0;
     alwaysCheckForInput[1] = 1;
-    while(1)
-    {
-	serverGeneration++;
-	ScreenSaverTime = defaultScreenSaverTime;
-	ScreenSaverInterval = defaultScreenSaverInterval;
-	ScreenSaverBlanking = defaultScreenSaverBlanking;
-	ScreenSaverAllowExposures = defaultScreenSaverAllowExposures;
+    while (1) {
+        serverGeneration++;
+        ScreenSaverTime = defaultScreenSaverTime;
+        ScreenSaverInterval = defaultScreenSaverInterval;
+        ScreenSaverBlanking = defaultScreenSaverBlanking;
+        ScreenSaverAllowExposures = defaultScreenSaverAllowExposures;
 #ifdef DPMSExtension
-	DPMSStandbyTime = DPMSSuspendTime = DPMSOffTime = ScreenSaverTime;
-	DPMSEnabled = TRUE;
-	DPMSPowerLevel = 0;
+        DPMSStandbyTime = DPMSSuspendTime = DPMSOffTime = ScreenSaverTime;
+        DPMSEnabled = TRUE;
+        DPMSPowerLevel = 0;
 #endif
-	InitBlockAndWakeupHandlers();
-	/* Perform any operating system dependent initializations you'd like */
-	OsInit();
-	if(serverGeneration == 1)
-	{
-	    CreateWellKnownSockets();
-	    for (i=1; i<MAXCLIENTS; i++)
-		clients[i] = NullClient;
-	    serverClient = calloc(sizeof(ClientRec), 1);
-	    if (!serverClient)
-		FatalError("couldn't create server client");
-	    InitClient(serverClient, 0, (pointer)NULL);
-	}
-	else
-	    ResetWellKnownSockets ();
-	clients[0] = serverClient;
-	currentMaxClients = 1;
+        InitBlockAndWakeupHandlers();
+        /* Perform any operating system dependent initializations you'd like */
+        OsInit();
+        if (serverGeneration == 1) {
+            CreateWellKnownSockets();
+            for (i = 1; i < LimitClients; i++)
+                clients[i] = NullClient;
+            serverClient = calloc(sizeof(ClientRec), 1);
+            if (!serverClient)
+                FatalError("couldn't create server client");
+            InitClient(serverClient, 0, (void *) NULL);
+        }
+        else
+            ResetWellKnownSockets();
+        clients[0] = serverClient;
+        currentMaxClients = 1;
 
-	/* Initialize privates before first allocation */
-	dixResetPrivates();
+        /* clear any existing selections */
+        InitSelections();
 
-	/* Initialize server client devPrivates, to be reallocated as
-	 * more client privates are registered
-	 */
-	if (!dixAllocatePrivates(&serverClient->devPrivates, PRIVATE_CLIENT))
-	    FatalError("failed to create server client privates");
+        /* Initialize privates before first allocation */
+        dixResetPrivates();
 
-	if (!InitClientResources(serverClient))      /* for root resources */
-	    FatalError("couldn't init server resources");
+        /* Initialize server client devPrivates, to be reallocated as
+         * more client privates are registered
+         */
+        if (!dixAllocatePrivates(&serverClient->devPrivates, PRIVATE_CLIENT))
+            FatalError("failed to create server client privates");
 
-	SetInputCheck(&alwaysCheckForInput[0], &alwaysCheckForInput[1]);
-	screenInfo.numScreens = 0;
+        if (!InitClientResources(serverClient)) /* for root resources */
+            FatalError("couldn't init server resources");
 
-	InitAtoms();
-	InitEvents();
-	InitSelections();
-	InitGlyphCaching();
-	dixResetRegistry();
-	ResetFontPrivateIndex();
-	InitCallbackManager();
-	InitOutput(&screenInfo, argc, argv);
+        SetInputCheck(&alwaysCheckForInput[0], &alwaysCheckForInput[1]);
+        screenInfo.numScreens = 0;
 
-	if (screenInfo.numScreens < 1)
-	    FatalError("no screens found");
-	InitExtensions(argc, argv);
+        InitAtoms();
+        InitEvents();
+        InitGlyphCaching();
+        dixResetRegistry();
+        ResetFontPrivateIndex();
+        InitCallbackManager();
+        InitOutput(&screenInfo, argc, argv);
 
-	for (i = 0; i < screenInfo.numScreens; i++)
-	{
-	    ScreenPtr pScreen = screenInfo.screens[i];
-	    if (!CreateScratchPixmapsForScreen(i))
-		FatalError("failed to create scratch pixmaps");
-	    if (pScreen->CreateScreenResources &&
-		!(*pScreen->CreateScreenResources)(pScreen))
-		FatalError("failed to create screen resources");
-	    if (!CreateGCperDepth(i))
-		FatalError("failed to create scratch GCs");
-	    if (!CreateDefaultStipple(i))
-		FatalError("failed to create default stipple");
-	    if (!CreateRootWindow(pScreen))
-		FatalError("failed to create root window");
-	}
+        if (screenInfo.numScreens < 1)
+            FatalError("no screens found");
+        InitExtensions(argc, argv);
 
-	InitFonts();
-	if (SetDefaultFontPath(defaultFontPath) != Success) {
-	    ErrorF("[dix] failed to set default font path '%s'", defaultFontPath);
-	}
-	if (!SetDefaultFont(defaultTextFont)) {
-	    FatalError("could not open default font '%s'", defaultTextFont);
-	}
+        for (i = 0; i < screenInfo.numGPUScreens; i++) {
+            ScreenPtr pScreen = screenInfo.gpuscreens[i];
+            if (!CreateScratchPixmapsForScreen(pScreen))
+                FatalError("failed to create scratch pixmaps");
+            if (pScreen->CreateScreenResources &&
+                !(*pScreen->CreateScreenResources) (pScreen))
+                FatalError("failed to create screen resources");
+        }
 
-	if (!(rootCursor = CreateRootCursor(NULL, 0))) {
-	    FatalError("could not open default cursor font '%s'",
-		       defaultCursorFont);
-	}
+        for (i = 0; i < screenInfo.numScreens; i++) {
+            ScreenPtr pScreen = screenInfo.screens[i];
+
+            if (!CreateScratchPixmapsForScreen(pScreen))
+                FatalError("failed to create scratch pixmaps");
+            if (pScreen->CreateScreenResources &&
+                !(*pScreen->CreateScreenResources) (pScreen))
+                FatalError("failed to create screen resources");
+            if (!CreateGCperDepth(i))
+                FatalError("failed to create scratch GCs");
+            if (!CreateDefaultStipple(i))
+                FatalError("failed to create default stipple");
+            if (!CreateRootWindow(pScreen))
+                FatalError("failed to create root window");
+        }
+
+        InitFonts();
+        if (SetDefaultFontPath(defaultFontPath) != Success) {
+            ErrorF("[dix] failed to set default font path '%s'",
+                   defaultFontPath);
+        }
+        if (!SetDefaultFont(defaultTextFont)) {
+            FatalError("could not open default font '%s'", defaultTextFont);
+        }
+
+        if (!(rootCursor = CreateRootCursor(NULL, 0))) {
+            FatalError("could not open default cursor font '%s'",
+                       defaultCursorFont);
+        }
 
 #ifdef DPMSExtension
- 	/* check all screens, looking for DPMS Capabilities */
- 	DPMSCapableFlag = DPMSSupported();
-	if (!DPMSCapableFlag)
-     	    DPMSEnabled = FALSE;
+        /* check all screens, looking for DPMS Capabilities */
+        DPMSCapableFlag = DPMSSupported();
+        if (!DPMSCapableFlag)
+            DPMSEnabled = FALSE;
 #endif
 
 #ifdef PANORAMIX
-	/*
-	 * Consolidate window and colourmap information for each screen
-	 */
-	if (!noPanoramiXExtension)
-	    PanoramiXConsolidate();
+        /*
+         * Consolidate window and colourmap information for each screen
+         */
+        if (!noPanoramiXExtension)
+            PanoramiXConsolidate();
 #endif
 
-	for (i = 0; i < screenInfo.numScreens; i++)
-	    InitRootWindow(screenInfo.screens[i]->root);
+        for (i = 0; i < screenInfo.numScreens; i++)
+            InitRootWindow(screenInfo.screens[i]->root);
 
         InitCoreDevices();
-	InitInput(argc, argv);
-	InitAndStartDevices();
+        InitInput(argc, argv);
+        InitAndStartDevices();
+        ReserveClientIds(serverClient);
 
-	dixSaveScreens(serverClient, SCREEN_SAVER_FORCER, ScreenSaverReset);
+        dixSaveScreens(serverClient, SCREEN_SAVER_FORCER, ScreenSaverReset);
 
-#ifdef PANORAMIX
-	if (!noPanoramiXExtension) {
-	    if (!PanoramiXCreateConnectionBlock()) {
-		FatalError("could not create connection block info");
-	    }
-	} else
-#endif
-	{
-	    if (!CreateConnectionBlock()) {
-	    	FatalError("could not create connection block info");
-	    }
-	}
-
-#ifdef XQUARTZ
-	/* Let the other threads know the server is done with its init */
-	pthread_mutex_lock(&serverRunningMutex);
-	serverRunning = TRUE;
-	pthread_cond_broadcast(&serverRunningCond);
-	pthread_mutex_unlock(&serverRunningMutex);
-#endif
-        
-	NotifyParentProcess();
-
-	Dispatch();
-
-#ifdef XQUARTZ
-	/* Let the other threads know the server is no longer running */
-	pthread_mutex_lock(&serverRunningMutex);
-	serverRunning = FALSE;
-	pthread_mutex_unlock(&serverRunningMutex);
-#endif
-
-	UndisplayDevices();
-
-	/* Now free up whatever must be freed */
-	if (screenIsSaved == SCREEN_SAVER_ON)
-	    dixSaveScreens(serverClient, SCREEN_SAVER_OFF, ScreenSaverReset);
-	FreeScreenSaverTimer();
-	CloseDownExtensions();
+        dixCloseRegistry();
 
 #ifdef PANORAMIX
-	{
-	    Bool remember_it = noPanoramiXExtension;
-	    noPanoramiXExtension = TRUE;
-	    FreeAllResources();
-	    noPanoramiXExtension = remember_it;
-	}
+        if (!noPanoramiXExtension) {
+            if (!PanoramiXCreateConnectionBlock()) {
+                FatalError("could not create connection block info");
+            }
+        }
+        else
+#endif
+        {
+            if (!CreateConnectionBlock()) {
+                FatalError("could not create connection block info");
+            }
+        }
+
+#ifdef XQUARTZ
+        /* Let the other threads know the server is done with its init */
+        pthread_mutex_lock(&serverRunningMutex);
+        serverRunning = TRUE;
+        pthread_cond_broadcast(&serverRunningCond);
+        pthread_mutex_unlock(&serverRunningMutex);
+#endif
+
+        NotifyParentProcess();
+
+        Dispatch();
+
+#ifdef XQUARTZ
+        /* Let the other threads know the server is no longer running */
+        pthread_mutex_lock(&serverRunningMutex);
+        serverRunning = FALSE;
+        pthread_mutex_unlock(&serverRunningMutex);
+#endif
+
+        UndisplayDevices();
+        DisableAllDevices();
+
+        /* Now free up whatever must be freed */
+        if (screenIsSaved == SCREEN_SAVER_ON)
+            dixSaveScreens(serverClient, SCREEN_SAVER_OFF, ScreenSaverReset);
+        FreeScreenSaverTimer();
+        CloseDownExtensions();
+
+#ifdef PANORAMIX
+        {
+            Bool remember_it = noPanoramiXExtension;
+
+            noPanoramiXExtension = TRUE;
+            FreeAllResources();
+            noPanoramiXExtension = remember_it;
+        }
 #else
-	FreeAllResources();
+        FreeAllResources();
 #endif
 
         CloseInput();
 
-	for (i = 0; i < screenInfo.numScreens; i++)
-	    screenInfo.screens[i]->root = NullWindow;
-	CloseDownDevices();
-	CloseDownEvents();
+        for (i = 0; i < screenInfo.numScreens; i++)
+            screenInfo.screens[i]->root = NullWindow;
 
-	for (i = screenInfo.numScreens - 1; i >= 0; i--)
-	{
-	    FreeScratchPixmapsForScreen(i);
-	    FreeGCperDepth(i);
-	    FreeDefaultStipple(i);
-	    (* screenInfo.screens[i]->CloseScreen)(i, screenInfo.screens[i]);
-	    dixFreePrivates(screenInfo.screens[i]->devPrivates, PRIVATE_SCREEN);
-	    free(screenInfo.screens[i]);
-	    screenInfo.numScreens = i;
-	}
+        CloseDownDevices();
 
-	dixFreePrivates(serverClient->devPrivates, PRIVATE_CLIENT);
-	serverClient->devPrivates = NULL;
+        CloseDownEvents();
 
-	FreeFonts();
+        for (i = screenInfo.numGPUScreens - 1; i >= 0; i--) {
+            ScreenPtr pScreen = screenInfo.gpuscreens[i];
+            FreeScratchPixmapsForScreen(pScreen);
+            dixFreeScreenSpecificPrivates(pScreen);
+            (*pScreen->CloseScreen) (pScreen);
+            dixFreePrivates(pScreen->devPrivates, PRIVATE_SCREEN);
+            free(pScreen);
+            screenInfo.numGPUScreens = i;
+        }
 
-	FreeAuditTimer();
+        for (i = screenInfo.numScreens - 1; i >= 0; i--) {
+            FreeScratchPixmapsForScreen(screenInfo.screens[i]);
+            FreeGCperDepth(i);
+            FreeDefaultStipple(i);
+            dixFreeScreenSpecificPrivates(screenInfo.screens[i]);
+            (*screenInfo.screens[i]->CloseScreen) (screenInfo.screens[i]);
+            dixFreePrivates(screenInfo.screens[i]->devPrivates, PRIVATE_SCREEN);
+            free(screenInfo.screens[i]);
+            screenInfo.numScreens = i;
+        }
 
-	if (dispatchException & DE_TERMINATE)
-	{
-	    CloseWellKnownConnections();
-	}
+        ReleaseClientIds(serverClient);
+        dixFreePrivates(serverClient->devPrivates, PRIVATE_CLIENT);
+        serverClient->devPrivates = NULL;
 
-	OsCleanup((dispatchException & DE_TERMINATE) != 0);
+	dixFreeRegistry();
 
-	if (dispatchException & DE_TERMINATE)
-	{
-	    ddxGiveUp();
-	    break;
-	}
+        FreeFonts();
 
-	free(ConnectionInfo);
-	ConnectionInfo = NULL;
+        FreeAllAtoms();
+
+        FreeAuditTimer();
+
+        DeleteCallbackManager();
+
+        if (dispatchException & DE_TERMINATE) {
+            CloseWellKnownConnections();
+        }
+
+        OsCleanup((dispatchException & DE_TERMINATE) != 0);
+
+        if (dispatchException & DE_TERMINATE) {
+            ddxGiveUp(EXIT_NO_ERROR);
+            break;
+        }
+
+        free(ConnectionInfo);
+        ConnectionInfo = NULL;
     }
     return 0;
 }
-

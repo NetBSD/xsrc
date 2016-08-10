@@ -43,13 +43,12 @@ typedef enum {
     usbOther
 } usbType;
 
-extern pointer usbCreatePrivate(DeviceIntPtr pDevice);
-extern void    usbDestroyPrivate(pointer priv);
-extern void    usbRead(DevicePtr pDev,
-                       dmxMotionProcPtr motion,
-                       dmxEnqueueProcPtr enqueue,
-                       int minButton,
-                       DMXBlockType block);
-extern void    usbInit(DevicePtr pDev, usbType type);
-extern void    usbOff(DevicePtr pDev);
+extern void *usbCreatePrivate(DeviceIntPtr pDevice);
+extern void usbDestroyPrivate(void *priv);
+extern void usbRead(DevicePtr pDev,
+                    dmxMotionProcPtr motion,
+                    dmxEnqueueProcPtr enqueue,
+                    int minButton, DMXBlockType block);
+extern void usbInit(DevicePtr pDev, usbType type);
+extern void usbOff(DevicePtr pDev);
 #endif

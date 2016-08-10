@@ -54,9 +54,9 @@ SOFTWARE.
 #include <dix-config.h>
 #endif
 
-#include "inputstr.h"	/* DeviceIntPtr      */
+#include "inputstr.h"           /* DeviceIntPtr      */
 #include <X11/extensions/XI.h>
-#include <X11/extensions/XIproto.h>	/* Request macro     */
+#include <X11/extensions/XIproto.h>     /* Request macro     */
 #include "exglobals.h"
 
 #include "getmmap.h"
@@ -71,10 +71,8 @@ SOFTWARE.
 int
 SProcXGetDeviceModifierMapping(ClientPtr client)
 {
-    char n;
-
     REQUEST(xGetDeviceModifierMappingReq);
-    swaps(&stuff->length, n);
+    swaps(&stuff->length);
     return (ProcXGetDeviceModifierMapping(client));
 }
 
@@ -97,21 +95,23 @@ ProcXGetDeviceModifierMapping(ClientPtr client)
 
     ret = dixLookupDevice(&dev, stuff->deviceid, client, DixGetAttrAccess);
     if (ret != Success)
-	return ret;
+        return ret;
 
     ret = generate_modkeymap(client, dev, &modkeymap, &max_keys_per_mod);
     if (ret != Success)
         return ret;
 
-    rep.repType = X_Reply;
-    rep.RepType = X_GetDeviceModifierMapping;
-    rep.numKeyPerModifier = max_keys_per_mod;
-    rep.sequenceNumber = client->sequence;
+    rep = (xGetDeviceModifierMappingReply) {
+        .repType = X_Reply,
+        .RepType = X_GetDeviceModifierMapping,
+        .sequenceNumber = client->sequence,
+        .numKeyPerModifier = max_keys_per_mod,
     /* length counts 4 byte quantities - there are 8 modifiers 1 byte big */
-    rep.length = max_keys_per_mod << 1;
+        .length = max_keys_per_mod << 1
+    };
 
     WriteReplyToClient(client, sizeof(xGetDeviceModifierMappingReply), &rep);
-    WriteToClient(client, max_keys_per_mod * 8, (char *) modkeymap);
+    WriteToClient(client, max_keys_per_mod * 8, modkeymap);
 
     free(modkeymap);
 
@@ -127,11 +127,9 @@ ProcXGetDeviceModifierMapping(ClientPtr client)
 
 void
 SRepXGetDeviceModifierMapping(ClientPtr client, int size,
-			      xGetDeviceModifierMappingReply * rep)
+                              xGetDeviceModifierMappingReply * rep)
 {
-    char n;
-
-    swaps(&rep->sequenceNumber, n);
-    swapl(&rep->length, n);
-    WriteToClient(client, size, (char *)rep);
+    swaps(&rep->sequenceNumber);
+    swapl(&rep->length);
+    WriteToClient(client, size, rep);
 }

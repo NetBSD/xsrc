@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL SuSE
  * BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
- * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN 
+ * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  * Author:  Keith Packard, SuSE, Inc.
@@ -29,23 +29,16 @@
 #define _FB24_32_H_
 
 Bool
-fb24_32FinishScreenInit(ScreenPtr    pScreen,
-			pointer      pbits,
-			int          xsize,
-			int          ysize,
-			int          dpix,
-			int          dpiy,
-			int          width,
-			int          bpp);
+
+fb24_32FinishScreenInit(ScreenPtr pScreen,
+                        void *pbits,
+                        int xsize,
+                        int ysize, int dpix, int dpiy, int width, int bpp);
 
 Bool
-fb24_32ScreenInit(ScreenPtr  pScreen,
-		  pointer    pbits,
-		  int        xsize,
-		  int        ysize,
-		  int        dpix,
-		  int        dpiy,
-		  int        width,
-		  int        bpp);
+
+fb24_32ScreenInit(ScreenPtr pScreen,
+                  void *pbits,
+                  int xsize, int ysize, int dpix, int dpiy, int width, int bpp);
 
 #endif

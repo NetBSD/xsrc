@@ -1,10 +1,12 @@
 noinst_LIBRARIES = libglxproxy.a
 
 libglxproxy_a_SOURCES = compsize.c \
+                        compsize.h \
                         g_disptab.c \
                         g_disptab.h \
                         global.c \
                         glxcmds.c \
+                        glxcmds.h \
                         glxcmdsswap.c \
                         glxcontext.h \
                         glxdrawable.h \
@@ -20,7 +22,6 @@ libglxproxy_a_SOURCES = compsize.c \
                         glxsingle.h \
                         glxswap.c \
                         glxswap.h \
-                        glxutil.c \
                         glxutil.h \
                         glxvendor.c \
                         glxvendor.h \

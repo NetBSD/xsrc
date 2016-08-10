@@ -7,11 +7,11 @@
 	<key>CFBundleExecutable</key>
 		<string>X11</string>
 	<key>CFBundleGetInfoString</key>
-		<string>LAUNCHD_ID_PREFIX.X11</string>
+		<string>BUNDLE_ID_PREFIX.X11</string>
 	<key>CFBundleIconFile</key>
 		<string>X11.icns</string>
 	<key>CFBundleIdentifier</key>
-		<string>LAUNCHD_ID_PREFIX.X11</string>
+		<string>BUNDLE_ID_PREFIX.X11</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 		<string>6.0</string>
 	<key>CFBundleName</key>
@@ -19,12 +19,14 @@
 	<key>CFBundlePackageType</key>
 		<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-		<string>2.6.4</string>
+		<string>BUNDLE_VERSION_STRING</string>
 	<key>CFBundleVersion</key>
-		<string>2.6.4</string>
+		<string>BUNDLE_VERSION</string>
 	<key>CFBundleSignature</key>
 		<string>x11a</string>
 	<key>CSResourcesFileMapped</key>
+		<true/>
+	<key>NSSupportsAutomaticGraphicsSwitching</key>
 		<true/>
 #ifdef XQUARTZ_SPARKLE
 	<key>SUEnableAutomaticChecks</key>
@@ -32,14 +34,14 @@
 	<key>SUPublicDSAKeyFile</key>
 		<string>sparkle.pem</string>
         <key>SUFeedURL</key>
-                <string>http://xquartz.macosforge.org/downloads/sparkle/release.xml</string>
+                <string>XQUARTZ_SPARKLE_FEED_URL</string>
 #endif
 	<key>LSApplicationCategoryType</key>
 		<string>public.app-category.utilities</string>
 	<key>NSHumanReadableCopyright</key>
-		<string>© 2003-2012 Apple Inc.
+		<string>© 2003-2016 Apple Inc.
 © 2003 XFree86 Project, Inc.
-© 2003-2012 X.org Foundation, Inc.
+© 2003-2016 X.org Foundation, Inc.
 </string>
 	<key>NSMainNibFile</key>
 		<string>main</string>

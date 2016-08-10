@@ -8,6 +8,7 @@ AM_CPPFLAGS = \
 	-DUSE_NEW_CLUT \
 	-DXFree86Server \
 	-I$(top_srcdir)/miext/rootless \
+	-I$(top_builddir)/pseudoramiX \
 	-DX11LIBDIR=\"$(libdir)\"
 
 if GLX
@@ -19,7 +20,6 @@ SUBDIRS = bundle . $(GL_DIR) xpr pbproxy mach-startup man
 DIST_SUBDIRS = bundle . GL xpr pbproxy mach-startup man
 
 libXquartz_la_SOURCES = \
-	$(top_srcdir)/fb/fbcmap_mi.c \
 	$(top_srcdir)/mi/miinitext.c \
 	X11Application.m \
 	X11Controller.m \
@@ -28,13 +28,14 @@ libXquartz_la_SOURCES = \
 	darwinEvents.c \
 	darwinXinput.c \
 	keysym2ucs.c \
-	pseudoramiX.c \
 	quartz.c \
 	quartzCocoa.m \
 	quartzKeyboard.c \
 	quartzStartup.c \
 	quartzRandR.c \
-	threadSafety.c
+	console_redirect.c
+
+libXquartz_la_LIBADD = $(top_builddir)/pseudoramiX/libPseudoramiX.la
 
 EXTRA_DIST = \
 	X11Application.h \
@@ -44,11 +45,10 @@ EXTRA_DIST = \
 	darwinfb.h \
 	darwinEvents.h \
 	keysym2ucs.h \
-	pseudoramiX.h \
 	quartz.h \
 	quartzCommon.h \
 	quartzKeyboard.h \
 	quartzRandR.h \
 	sanitizedCarbon.h \
 	sanitizedCocoa.h \
-	threadSafety.h
+	console_redirect.h

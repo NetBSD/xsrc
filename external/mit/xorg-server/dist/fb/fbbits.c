@@ -70,9 +70,6 @@
 #define POLYSEGMENT fbPolySegment16
 #define BITS	    CARD16
 #define BITS2	    CARD32
-#if FB_SHIFT == 6
-#define BITS4	    FbBits
-#endif
 
 #include "fbbits.h"
 
@@ -85,11 +82,7 @@
 #undef POLYSEGMENT
 #undef BITS
 #undef BITS2
-#if FB_SHIFT == 6
-#undef BITS4
-#endif
 
-#ifdef FB_24BIT
 #define BRESSOLID   fbBresSolid24
 #define BRESDASH    fbBresDash24
 #define DOTS        fbDots24
@@ -140,14 +133,13 @@
 #undef BITSMUL
 #undef BITSUNIT
 #undef BITS
-    
+
 #undef BRESSOLID
 #undef BRESDASH
 #undef DOTS
 #undef ARC
 #undef POLYLINE
 #undef POLYSEGMENT
-#endif /* FB_24BIT */
 
 #define BRESSOLID   fbBresSolid32
 #define BRESDASH    fbBresDash32
@@ -157,9 +149,6 @@
 #define POLYLINE    fbPolyline32
 #define POLYSEGMENT fbPolySegment32
 #define BITS	    CARD32
-#if FB_SHIFT == 6
-#define BITS2	    FbBits
-#endif
 
 #include "fbbits.h"
 
@@ -171,6 +160,3 @@
 #undef POLYLINE
 #undef POLYSEGMENT
 #undef BITS
-#if FB_SHIFT == 6
-#undef BITS2
-#endif

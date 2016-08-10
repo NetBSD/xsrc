@@ -30,10 +30,10 @@
 #include "inputstr.h"
 #include "scrnintstr.h"
 #include "exevents.h"
+#include "extinit.h"
 #include "xkbsrv.h"
 #include "xserver-properties.h"
-
-#include <glib.h>
+#include "syncsrv.h"
 
 /**
  */
@@ -42,11 +42,22 @@
 extern DeviceIntPtr xtestpointer, xtestkeyboard;
 
 /* Needed for the screen setup, otherwise we crash during sprite initialization */
-static Bool device_cursor_init(DeviceIntPtr dev, ScreenPtr screen) { return TRUE; }
+static Bool
+device_cursor_init(DeviceIntPtr dev, ScreenPtr screen)
+{
+    return TRUE;
+}
 
-static void xtest_init_devices(void)
+static void
+device_cursor_cleanup(DeviceIntPtr dev, ScreenPtr screen)
+{
+}
+
+static void
+xtest_init_devices(void)
 {
     ScreenRec screen;
+    ClientRec server_client;
 
     /* random stuff that needs initialization */
     memset(&screen, 0, sizeof(screen));
@@ -57,29 +68,36 @@ static void xtest_init_devices(void)
     screen.width = 640;
     screen.height = 480;
     screen.DeviceCursorInitialize = device_cursor_init;
+    screen.DeviceCursorCleanup = device_cursor_cleanup;
     dixResetPrivates();
+    serverClient = &server_client;
+    InitClient(serverClient, 0, (void *) NULL);
+    if (!InitClientResources(serverClient)) /* for root resources */
+        FatalError("couldn't init server resources");
     InitAtoms();
-
-    XkbInitPrivates();
+    SyncExtensionInit();
 
     /* this also inits the xtest devices */
     InitCoreDevices();
 
-    g_assert(xtestpointer);
-    g_assert(xtestkeyboard);
-    g_assert(IsXTestDevice(xtestpointer, NULL));
-    g_assert(IsXTestDevice(xtestkeyboard, NULL));
-    g_assert(IsXTestDevice(xtestpointer, inputInfo.pointer));
-    g_assert(IsXTestDevice(xtestkeyboard, inputInfo.keyboard));
-    g_assert(GetXTestDevice(inputInfo.pointer) == xtestpointer);
-    g_assert(GetXTestDevice(inputInfo.keyboard) == xtestkeyboard);
+    assert(xtestpointer);
+    assert(xtestkeyboard);
+    assert(IsXTestDevice(xtestpointer, NULL));
+    assert(IsXTestDevice(xtestkeyboard, NULL));
+    assert(IsXTestDevice(xtestpointer, inputInfo.pointer));
+
+    assert(IsXTestDevice(xtestkeyboard, inputInfo.keyboard));
+    assert(GetXTestDevice(inputInfo.pointer) == xtestpointer);
+
+    assert(GetXTestDevice(inputInfo.keyboard) == xtestkeyboard);
 }
 
 /**
  * Each xtest devices has a property attached marking it. This property
  * cannot be changed.
  */
-static void xtest_properties(void)
+static void
+xtest_properties(void)
 {
     int rc;
     char value = 1;
@@ -87,32 +105,28 @@ static void xtest_properties(void)
     Atom xtest_prop = XIGetKnownProperty(XI_PROP_XTEST_DEVICE);
 
     rc = XIGetDeviceProperty(xtestpointer, xtest_prop, &prop);
-    g_assert(rc == Success);
-    g_assert(prop);
+    assert(rc == Success);
+    assert(prop);
 
     rc = XIGetDeviceProperty(xtestkeyboard, xtest_prop, &prop);
-    g_assert(rc == Success);
-    g_assert(prop != NULL);
+    assert(rc == Success);
+    assert(prop != NULL);
 
     rc = XIChangeDeviceProperty(xtestpointer, xtest_prop,
-                                XA_INTEGER, 8, PropModeReplace, 1, &value, FALSE);
-    g_assert(rc == BadAccess);
+                                XA_INTEGER, 8, PropModeReplace, 1, &value,
+                                FALSE);
+    assert(rc == BadAccess);
     rc = XIChangeDeviceProperty(xtestkeyboard, xtest_prop,
-                                XA_INTEGER, 8, PropModeReplace, 1, &value, FALSE);
-    g_assert(rc == BadAccess);
+                                XA_INTEGER, 8, PropModeReplace, 1, &value,
+                                FALSE);
+    assert(rc == BadAccess);
 }
 
-
-
-int main(int argc, char** argv)
+int
+main(int argc, char **argv)
 {
-    g_test_init(&argc, &argv,NULL);
-    g_test_bug_base("https://bugzilla.freedesktop.org/show_bug.cgi?id=");
+    xtest_init_devices();
+    xtest_properties();
 
-    g_test_add_func("/dix/xtest/init", xtest_init_devices);
-    g_test_add_func("/dix/xtest/properties", xtest_properties);
-
-    return g_test_run();
+    return 0;
 }
-
-

@@ -42,66 +42,53 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "micmap.h"
 #include "globals.h"
 #include "glxserver.h"
+#include "extinit.h"
+#include "glx_extinit.h"
 
 static MODULESETUPPROTO(glxSetup);
 
-static const char *initdeps[] = { "DOUBLE-BUFFER", "COMPOSITE", NULL };
-
-static ExtensionModule GLXExt =
-{
-    GlxExtensionInit,
-    "GLX",
-    &noGlxExtension,
-    NULL,
-    initdeps
+static const ExtensionModule GLXExt[] = {
+    { GlxExtensionInit, "GLX", &noGlxExtension },
 };
 
-static XF86ModuleVersionInfo VersRec =
-{
-        "glx",
-        MODULEVENDORSTRING,
-        MODINFOSTRING1,
-        MODINFOSTRING2,
-        XORG_VERSION_CURRENT,
-        1, 0, 0,
-        ABI_CLASS_EXTENSION,
-        ABI_EXTENSION_VERSION,
-        MOD_CLASS_NONE,
-        {0,0,0,0}
+static XF86ModuleVersionInfo VersRec = {
+    "glx",
+    MODULEVENDORSTRING,
+    MODINFOSTRING1,
+    MODINFOSTRING2,
+    XORG_VERSION_CURRENT,
+    1, 0, 0,
+    ABI_CLASS_EXTENSION,
+    ABI_EXTENSION_VERSION,
+    MOD_CLASS_NONE,
+    {0, 0, 0, 0}
 };
 
 _X_EXPORT XF86ModuleData glxModuleData = { &VersRec, glxSetup, NULL };
 
-static pointer
-glxSetup(pointer module, pointer opts, int *errmaj, int *errmin)
+static void *
+glxSetup(void *module, void *opts, int *errmaj, int *errmin)
 {
     static Bool setupDone = FALSE;
     __GLXprovider *provider;
 
     if (setupDone) {
-	if (errmaj) *errmaj = LDR_ONCEONLY;
-	return NULL;
-    } 
+        if (errmaj)
+            *errmaj = LDR_ONCEONLY;
+        return NULL;
+    }
 
     setupDone = TRUE;
 
-    provider = LoaderSymbol("__glXDRISWRastProvider");
-    if (provider == NULL)
-	return NULL;
-    GlxPushProvider(provider);
-
-    xf86Msg(xf86Info.aiglxFrom, "AIGLX %s\n", 
-	    xf86Info.aiglx ? "enabled" : "disabled");
+    xf86Msg(xf86Info.aiglxFrom, "AIGLX %s\n",
+            xf86Info.aiglx ? "enabled" : "disabled");
     if (xf86Info.aiglx) {
-      provider = LoaderSymbol("__glXDRIProvider");
-      if (provider)
-	GlxPushProvider(provider);
-      provider = LoaderSymbol("__glXDRI2Provider");
-      if (provider)
-	GlxPushProvider(provider);
+        provider = LoaderSymbol("__glXDRI2Provider");
+        if (provider)
+            GlxPushProvider(provider);
     }
 
-    LoadExtension(&GLXExt, FALSE);
+    LoadExtensionList(GLXExt, ARRAY_SIZE(GLXExt), FALSE);
 
     return module;
 }

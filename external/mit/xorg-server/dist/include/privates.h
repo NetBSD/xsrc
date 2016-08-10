@@ -33,9 +33,9 @@ typedef enum {
     PRIVATE_SCREEN,
     PRIVATE_EXTENSION,
     PRIVATE_COLORMAP,
+    PRIVATE_DEVICE,
 
     /* These cannot have any objects before all relevant keys are registered */
-    PRIVATE_DEVICE,
     PRIVATE_CLIENT,
     PRIVATE_PROPERTY,
     PRIVATE_SELECTION,
@@ -46,7 +46,6 @@ typedef enum {
     PRIVATE_CURSOR_BITS,
 
     /* extension privates */
-    PRIVATE_DBE_WINDOW,
     PRIVATE_DAMAGE,
     PRIVATE_GLYPH,
     PRIVATE_GLYPHSET,
@@ -58,16 +57,23 @@ typedef enum {
 } DevPrivateType;
 
 typedef struct _DevPrivateKeyRec {
-    int			offset;
-    int			size;
-    Bool		initialized;
-    Bool		allocated;
-    DevPrivateType	type;
-    struct _DevPrivateKeyRec	*next;
+    int offset;
+    int size;
+    Bool initialized;
+    Bool allocated;
+    DevPrivateType type;
+    struct _DevPrivateKeyRec *next;
 } DevPrivateKeyRec, *DevPrivateKey;
 
+typedef struct _DevPrivateSetRec {
+    DevPrivateKey key;
+    unsigned offset;
+    int created;
+    int allocated;
+} DevPrivateSetRec, *DevPrivateSetPtr;
+
 typedef struct _DevScreenPrivateKeyRec {
-    DevPrivateKeyRec	screenKey;
+    DevPrivateKeyRec screenKey;
 } DevScreenPrivateKeyRec, *DevScreenPrivateKey;
 
 /*
@@ -93,7 +99,7 @@ typedef struct _DevScreenPrivateKeyRec {
  * during its operation.
  */
 extern _X_EXPORT Bool
-dixRegisterPrivateKey(DevPrivateKey key, DevPrivateType type, unsigned size);
+ dixRegisterPrivateKey(DevPrivateKey key, DevPrivateType type, unsigned size);
 
 /*
  * Check whether a private key has been registered
@@ -127,7 +133,7 @@ dixGetPrivateAddr(PrivatePtr *privates, const DevPrivateKey key)
 static inline void *
 dixGetPrivate(PrivatePtr *privates, const DevPrivateKey key)
 {
-    assert (key->size == 0);
+    assert(key->size == 0);
     return *(void **) dixGetPrivateAddr(privates, key);
 }
 
@@ -136,10 +142,10 @@ dixGetPrivate(PrivatePtr *privates, const DevPrivateKey key)
  * dixLookupPrivate(privates, key) will return 'val'.
  */
 static inline void
-dixSetPrivate(PrivatePtr *privates, const DevPrivateKey key, pointer val)
+dixSetPrivate(PrivatePtr *privates, const DevPrivateKey key, void *val)
 {
-    assert (key->size == 0);
-    *(pointer *) dixGetPrivateAddr(privates, key) = val;
+    assert(key->size == 0);
+    *(void **) dixGetPrivateAddr(privates, key) = val;
 }
 
 #include "dix.h"
@@ -152,13 +158,13 @@ dixSetPrivate(PrivatePtr *privates, const DevPrivateKey key, pointer val)
  * storage. For privates without defined storage, return the pointer
  * contents
  */
-static inline pointer
+static inline void *
 dixLookupPrivate(PrivatePtr *privates, const DevPrivateKey key)
 {
     if (key->size)
-	return dixGetPrivateAddr(privates, key);
+        return dixGetPrivateAddr(privates, key);
     else
-	return dixGetPrivate(privates, key);
+        return dixGetPrivate(privates, key);
 }
 
 /*
@@ -167,48 +173,101 @@ dixLookupPrivate(PrivatePtr *privates, const DevPrivateKey key)
  * This returns the place where the private pointer is stored,
  * which is only valid for privates without predefined storage.
  */
-static inline pointer *
+static inline void **
 dixLookupPrivateAddr(PrivatePtr *privates, const DevPrivateKey key)
 {
-    assert (key->size == 0);
-    return (pointer *)dixGetPrivateAddr(privates, key);
+    assert(key->size == 0);
+    return (void **) dixGetPrivateAddr(privates, key);
 }
 
 extern _X_EXPORT Bool
-dixRegisterScreenPrivateKey(DevScreenPrivateKey key, ScreenPtr pScreen, DevPrivateType type, unsigned size);
+
+dixRegisterScreenPrivateKey(DevScreenPrivateKey key, ScreenPtr pScreen,
+                            DevPrivateType type, unsigned size);
 
 extern _X_EXPORT DevPrivateKey
-_dixGetScreenPrivateKey(const DevScreenPrivateKey key, ScreenPtr pScreen);
+ _dixGetScreenPrivateKey(const DevScreenPrivateKey key, ScreenPtr pScreen);
 
 static inline void *
-dixGetScreenPrivateAddr(PrivatePtr *privates, const DevScreenPrivateKey key, ScreenPtr pScreen)
+dixGetScreenPrivateAddr(PrivatePtr *privates, const DevScreenPrivateKey key,
+                        ScreenPtr pScreen)
 {
     return dixGetPrivateAddr(privates, _dixGetScreenPrivateKey(key, pScreen));
 }
 
 static inline void *
-dixGetScreenPrivate(PrivatePtr *privates, const DevScreenPrivateKey key, ScreenPtr pScreen)
+dixGetScreenPrivate(PrivatePtr *privates, const DevScreenPrivateKey key,
+                    ScreenPtr pScreen)
 {
     return dixGetPrivate(privates, _dixGetScreenPrivateKey(key, pScreen));
 }
 
 static inline void
-dixSetScreenPrivate(PrivatePtr *privates, const DevScreenPrivateKey key, ScreenPtr pScreen, pointer val)
+dixSetScreenPrivate(PrivatePtr *privates, const DevScreenPrivateKey key,
+                    ScreenPtr pScreen, void *val)
 {
     dixSetPrivate(privates, _dixGetScreenPrivateKey(key, pScreen), val);
 }
 
-static inline pointer
-dixLookupScreenPrivate(PrivatePtr *privates, const DevScreenPrivateKey key, ScreenPtr pScreen)
+static inline void *
+dixLookupScreenPrivate(PrivatePtr *privates, const DevScreenPrivateKey key,
+                       ScreenPtr pScreen)
 {
     return dixLookupPrivate(privates, _dixGetScreenPrivateKey(key, pScreen));
 }
 
-static inline pointer *
-dixLookupScreenPrivateAddr(PrivatePtr *privates, const DevScreenPrivateKey key, ScreenPtr pScreen)
+static inline void **
+dixLookupScreenPrivateAddr(PrivatePtr *privates, const DevScreenPrivateKey key,
+                           ScreenPtr pScreen)
 {
-    return dixLookupPrivateAddr(privates, _dixGetScreenPrivateKey(key, pScreen));
+    return dixLookupPrivateAddr(privates,
+                                _dixGetScreenPrivateKey(key, pScreen));
 }
+
+/*
+ * These functions relate to allocations related to a specific screen;
+ * space will only be available for objects allocated for use on that
+ * screen. As such, only objects which are related directly to a specific
+ * screen are candidates for allocation this way, this includes
+ * windows, pixmaps, gcs, pictures and colormaps. This key is
+ * used just like any other key using dixGetPrivate and friends.
+ *
+ * This is distinctly different from the ScreenPrivateKeys above which
+ * allocate space in global objects like cursor bits for a specific
+ * screen, allowing multiple screen-related chunks of storage in a
+ * single global object.
+ */
+
+#define HAVE_SCREEN_SPECIFIC_PRIVATE_KEYS       1
+
+extern _X_EXPORT Bool
+dixRegisterScreenSpecificPrivateKey(ScreenPtr pScreen, DevPrivateKey key,
+                                    DevPrivateType type, unsigned size);
+
+/* Clean up screen-specific privates before CloseScreen */
+extern void
+dixFreeScreenSpecificPrivates(ScreenPtr pScreen);
+
+/* Initialize screen-specific privates in AddScreen */
+extern void
+dixInitScreenSpecificPrivates(ScreenPtr pScreen);
+
+extern _X_EXPORT void *
+_dixAllocateScreenObjectWithPrivates(ScreenPtr pScreen,
+                                     unsigned size,
+                                     unsigned clear,
+                                     unsigned offset,
+                                     DevPrivateType type);
+
+#define dixAllocateScreenObjectWithPrivates(s, t, type) _dixAllocateScreenObjectWithPrivates(s, sizeof(t), sizeof(t), offsetof(t, devPrivates), type)
+
+extern _X_EXPORT int
+dixScreenSpecificPrivatesSize(ScreenPtr pScreen, DevPrivateType type);
+
+extern _X_EXPORT void
+_dixInitScreenPrivates(ScreenPtr pScreen, PrivatePtr *privates, void *addr, DevPrivateType type);
+
+#define dixInitScreenPrivates(s, o, v, type) _dixInitScreenPrivates(s, &(o)->devPrivates, (v), type);
 
 /*
  * Allocates private data separately from main object.
@@ -220,13 +279,13 @@ dixLookupScreenPrivateAddr(PrivatePtr *privates, const DevScreenPrivateKey key, 
  * extensions entries.
  */
 extern _X_EXPORT Bool
-dixAllocatePrivates(PrivatePtr *privates, DevPrivateType type);
+ dixAllocatePrivates(PrivatePtr *privates, DevPrivateType type);
 
 /*
  * Frees separately allocated private data
  */
 extern _X_EXPORT void
-dixFreePrivates(PrivatePtr privates, DevPrivateType type);
+ dixFreePrivates(PrivatePtr privates, DevPrivateType type);
 
 /*
  * Initialize privates by zeroing them
@@ -240,7 +299,7 @@ _dixInitPrivates(PrivatePtr *privates, void *addr, DevPrivateType type);
  * Clean up privates
  */
 extern _X_EXPORT void
-_dixFiniPrivates(PrivatePtr privates, DevPrivateType type);
+ _dixFiniPrivates(PrivatePtr privates, DevPrivateType type);
 
 #define dixFiniPrivates(o,t)	_dixFiniPrivates((o)->devPrivates,t)
 
@@ -249,13 +308,17 @@ _dixFiniPrivates(PrivatePtr privates, DevPrivateType type);
  * for almost all objects, except for the list described
  * above for dixAllocatePrivates.
  */
-extern _X_EXPORT void *
-_dixAllocateObjectWithPrivates(unsigned size, unsigned clear, unsigned offset, DevPrivateType type);
+extern _X_EXPORT void *_dixAllocateObjectWithPrivates(unsigned size,
+                                                      unsigned clear,
+                                                      unsigned offset,
+                                                      DevPrivateType type);
 
 #define dixAllocateObjectWithPrivates(t, type) (t *) _dixAllocateObjectWithPrivates(sizeof(t), sizeof(t), offsetof(t, devPrivates), type)
 
 extern _X_EXPORT void
-_dixFreeObjectWithPrivates(void *object, PrivatePtr privates, DevPrivateType type);
+
+_dixFreeObjectWithPrivates(void *object, PrivatePtr privates,
+                           DevPrivateType type);
 
 #define dixFreeObjectWithPrivates(o,t) _dixFreeObjectWithPrivates(o, (o)->devPrivates, t)
 
@@ -263,20 +326,20 @@ _dixFreeObjectWithPrivates(void *object, PrivatePtr privates, DevPrivateType typ
  * Return size of privates for the specified type
  */
 extern _X_EXPORT int
-dixPrivatesSize(DevPrivateType type);
+ dixPrivatesSize(DevPrivateType type);
 
 /*
  * Dump out private stats to ErrorF
  */
 extern void
-dixPrivateUsage(void);
+ dixPrivateUsage(void);
 
 /*
  * Resets the privates subsystem.  dixResetPrivates is called from the main loop
  * before each server generation.  This function must only be called by main().
  */
 extern _X_EXPORT void
-dixResetPrivates(void);
+ dixResetPrivates(void);
 
 /*
  * Looks up the offset where the devPrivates field is located.
@@ -287,7 +350,7 @@ dixResetPrivates(void);
  * structure definition.
  */
 extern _X_EXPORT int
-dixLookupPrivateOffset(RESTYPE type);
+ dixLookupPrivateOffset(RESTYPE type);
 
 /*
  * Convenience macro for adding an offset to an object pointer
@@ -295,4 +358,4 @@ dixLookupPrivateOffset(RESTYPE type);
  */
 #define DEVPRIV_AT(ptr, offset) ((PrivatePtr *)((char *)(ptr) + offset))
 
-#endif /* PRIVATES_H */
+#endif                          /* PRIVATES_H */

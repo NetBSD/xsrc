@@ -1,18 +1,18 @@
 /*
  * (C) Copyright IBM Corporation 2005, 2006
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sub license,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
  * Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.  IN NO EVENT SHALL
@@ -45,8 +45,8 @@ struct __glXDispatchInfo {
 
     /**
      */
-    const int_fast16_t * dispatch_tree;
-    
+    const int_fast16_t *dispatch_tree;
+
     /**
      * Array of protocol decode and dispatch functions index by the opcode
      * search tree (i.e., \c dispatch_tree).  The first element in each pair
@@ -70,7 +70,7 @@ struct __glXDispatchInfo {
      * If size checking is not to be performed on this type of protocol
      * data, this pointer will be \c NULL.
      */
-    const int_fast16_t (*size_table)[2];
+    const int_fast16_t(*size_table)[2];
 
     /**
      * Array of functions used to calculate the variable-size portion of
@@ -103,4 +103,4 @@ extern const struct __glXDispatchInfo Single_dispatch_info;
 extern const struct __glXDispatchInfo Render_dispatch_info;
 extern const struct __glXDispatchInfo VendorPriv_dispatch_info;
 
-#endif /* INDIRECT_TABLE_H */
+#endif                          /* INDIRECT_TABLE_H */

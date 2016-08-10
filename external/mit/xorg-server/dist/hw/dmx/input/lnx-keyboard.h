@@ -37,27 +37,27 @@
 #ifndef _LNX_KEYBOARD_H_
 #define _LNX_KEYBOARD_H_
 
-extern pointer kbdLinuxCreatePrivate(DeviceIntPtr pKeyboard);
-extern void    kbdLinuxDestroyPrivate(pointer private);
+extern void *kbdLinuxCreatePrivate(DeviceIntPtr pKeyboard);
+extern void kbdLinuxDestroyPrivate(void *private);
 
-extern void    kbdLinuxInit(DevicePtr pDev);
-extern void    kbdLinuxGetInfo(DevicePtr pDev, DMXLocalInitInfoPtr info);
-extern int     kbdLinuxOn(DevicePtr pDev);
-extern void    kbdLinuxOff(DevicePtr pDev);
+extern void kbdLinuxInit(DevicePtr pDev);
+extern void kbdLinuxGetInfo(DevicePtr pDev, DMXLocalInitInfoPtr info);
+extern int kbdLinuxOn(DevicePtr pDev);
+extern void kbdLinuxOff(DevicePtr pDev);
 
-extern void    kbdLinuxVTPreSwitch(pointer p);
-extern void    kbdLinuxVTPostSwitch(pointer p);
-extern int     kbdLinuxVTSwitch(pointer p, int vt,
-                                dmxVTSwitchReturnProcPtr switch_return,
-                                pointer switch_return_data);
+extern void kbdLinuxVTPreSwitch(void *p);
+extern void kbdLinuxVTPostSwitch(void *p);
+extern int kbdLinuxVTSwitch(void *p, int vt,
+                            dmxVTSwitchReturnProcPtr switch_return,
+                            void *switch_return_data);
 
-extern void    kbdLinuxRead(DevicePtr pDev,
-                            dmxMotionProcPtr motion,
-                            dmxEnqueueProcPtr enqueue,
-                            dmxCheckSpecialProcPtr checkspecial,
-                            DMXBlockType block);
+extern void kbdLinuxRead(DevicePtr pDev,
+                         dmxMotionProcPtr motion,
+                         dmxEnqueueProcPtr enqueue,
+                         dmxCheckSpecialProcPtr checkspecial,
+                         DMXBlockType block);
 
-extern void    kbdLinuxCtrl(DevicePtr pDev, KeybdCtrl *ctrl);
-extern void    kbdLinuxBell(DevicePtr pDev, int percent,
-                            int volume, int pitch, int duration);
+extern void kbdLinuxCtrl(DevicePtr pDev, KeybdCtrl * ctrl);
+extern void kbdLinuxBell(DevicePtr pDev, int percent,
+                         int volume, int pitch, int duration);
 #endif

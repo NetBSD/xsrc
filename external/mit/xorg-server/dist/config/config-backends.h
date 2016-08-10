@@ -27,44 +27,20 @@
 #include <dix-config.h>
 #endif
 #include "input.h"
+#include "list.h"
 
 void remove_devices(const char *backend, const char *config_info);
 BOOL device_is_duplicate(const char *config_info);
-void add_option(InputOption **options, const char *key, const char *value);
 
 #ifdef CONFIG_UDEV
+int config_udev_pre_init(void);
 int config_udev_init(void);
 void config_udev_fini(void);
-#else
-
-# ifdef CONFIG_NEED_DBUS
-#include <dbus/dbus.h>
-
-typedef void (*config_dbus_core_connect_hook)(DBusConnection *connection,
-                                              void *data);
-typedef void (*config_dbus_core_disconnect_hook)(void *data);
-
-struct config_dbus_core_hook {
-    config_dbus_core_connect_hook connect;
-    config_dbus_core_disconnect_hook disconnect;
-    void *data;
-
-    struct config_dbus_core_hook *next;
-};
-
-int config_dbus_core_init(void);
-void config_dbus_core_fini(void);
-int config_dbus_core_add_hook(struct config_dbus_core_hook *hook);
-void config_dbus_core_remove_hook(struct config_dbus_core_hook *hook);
-# endif
-
-# ifdef CONFIG_DBUS_API
-int config_dbus_init(void);
-void config_dbus_fini(void);
-# endif
-
-# ifdef CONFIG_HAL
+void config_udev_odev_probe(config_odev_probe_proc_ptr probe_callback);
+#elif defined(CONFIG_HAL)
 int config_hal_init(void);
 void config_hal_fini(void);
-# endif
+#elif defined(CONFIG_WSCONS)
+int config_wscons_init(void);
+void config_wscons_fini(void);
 #endif

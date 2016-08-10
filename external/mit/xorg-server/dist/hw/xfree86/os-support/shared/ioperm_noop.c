@@ -22,7 +22,7 @@
  */
 
 /*
- * Some platforms don't bother with I/O permissions, 
+ * Some platforms don't bother with I/O permissions,
  * or the permissions are implicit with opening/enabling the console.
  */
 
@@ -36,14 +36,13 @@
 #include "xf86_OSlib.h"
 
 Bool
-xf86EnableIO()
+xf86EnableIO(void)
 {
-	return TRUE;
+    return TRUE;
 }
 
 void
-xf86DisableIO()
+xf86DisableIO(void)
 {
-	return;
+    return;
 }
-

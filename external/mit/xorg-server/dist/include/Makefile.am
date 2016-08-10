@@ -3,6 +3,7 @@ sdk_HEADERS =		\
 	XIstubs.h	\
 	Xprintf.h	\
 	callback.h	\
+	client.h	\
 	closestr.h	\
 	closure.h	\
 	colormap.h	\
@@ -25,12 +26,15 @@ sdk_HEADERS =		\
 	gc.h		\
 	gcstruct.h	\
 	globals.h	\
+	glx_extinit.h	\
 	input.h		\
 	inputstr.h	\
 	list.h		\
 	misc.h		\
 	miscstruct.h	\
 	opaque.h	\
+	nonsdk_extinit.h	\
+	optionstr.h	\
 	os.h		\
 	pixmap.h	\
 	pixmapstr.h	\
@@ -48,9 +52,8 @@ sdk_HEADERS =		\
 	selection.h	\
 	servermd.h	\
 	site.h		\
-	swaprep.h	\
-	swapreq.h	\
 	validate.h	\
+	displaymode.h    \
 	window.h	\
 	windowstr.h	\
 	xkbfile.h	\
@@ -65,7 +68,13 @@ endif
 AM_CFLAGS = $(DIX_CFLAGS)
 
 EXTRA_DIST = 	\
+	busfault.h dbus-core.h \
 	dix-config-apple-verbatim.h \
-	eventconvert.h eventstr.h inpututils.h \
+	dixfontstubs.h eventconvert.h eventstr.h inpututils.h \
+	probes.h \
 	protocol-versions.h \
+	swaprep.h \
+	swapreq.h \
+	systemd-logind.h \
+        vidmodestr.h \
 	xsha1.h

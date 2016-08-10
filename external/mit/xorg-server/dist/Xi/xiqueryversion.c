@@ -33,7 +33,6 @@
 #include <dix-config.h>
 #endif
 
-
 #include "inputstr.h"
 
 #include <X11/Xmd.h>
@@ -45,7 +44,8 @@
 #include "xiqueryversion.h"
 #include "misc.h"
 
-extern XExtensionVersion XIVersion; /* defined in getvers.c */
+extern XExtensionVersion XIVersion;     /* defined in getvers.c */
+
 /**
  * Return the supported XI version.
  *
@@ -58,43 +58,70 @@ ProcXIQueryVersion(ClientPtr client)
     xXIQueryVersionReply rep;
     XIClientPtr pXIClient;
     int major, minor;
-    unsigned int sversion, cversion;
 
     REQUEST(xXIQueryVersionReq);
     REQUEST_SIZE_MATCH(xXIQueryVersionReq);
 
     /* This request only exists after XI2 */
-    if (stuff->major_version < 2)
-    {
+    if (stuff->major_version < 2) {
         client->errorValue = stuff->major_version;
         return BadValue;
     }
 
     pXIClient = dixLookupPrivate(&client->devPrivates, XIClientPrivateKey);
 
-    sversion = XIVersion.major_version * 1000 + XIVersion.minor_version;
-    cversion = stuff->major_version * 1000 + stuff->minor_version;
-
-    if (sversion > cversion)
-    {
+    if (version_compare(XIVersion.major_version, XIVersion.minor_version,
+                stuff->major_version, stuff->minor_version) > 0) {
         major = stuff->major_version;
         minor = stuff->minor_version;
-    } else
-    {
+    } else {
         major = XIVersion.major_version;
         minor = XIVersion.minor_version;
     }
 
-    pXIClient->major_version = major;
-    pXIClient->minor_version = minor;
+    if (pXIClient->major_version) {
 
-    memset(&rep, 0, sizeof(xXIQueryVersionReply));
-    rep.repType = X_Reply;
-    rep.RepType = X_XIQueryVersion;
-    rep.length = 0;
-    rep.sequenceNumber = client->sequence;
-    rep.major_version = major;
-    rep.minor_version = minor;
+        /* Check to see if the client has only ever asked
+         * for version 2.2 or higher
+         */
+        if (version_compare(major, minor, 2, 2) >= 0 &&
+            version_compare(pXIClient->major_version, pXIClient->minor_version, 2, 2) >= 0)
+        {
+
+            /* As of version 2.2, Peter promises to never again break
+             * backward compatibility, so we'll return the requested
+             * version to the client but leave the server internal
+             * version set to the highest requested value
+             */
+            if (version_compare(major, minor,
+                                pXIClient->major_version, pXIClient->minor_version) > 0)
+            {
+                pXIClient->major_version = major;
+                pXIClient->minor_version = minor;
+            }
+        } else {
+            if (version_compare(major, minor,
+                                pXIClient->major_version, pXIClient->minor_version) < 0) {
+
+                client->errorValue = stuff->major_version;
+                return BadValue;
+            }
+            major = pXIClient->major_version;
+            minor = pXIClient->minor_version;
+        }
+    } else {
+        pXIClient->major_version = major;
+        pXIClient->minor_version = minor;
+    }
+
+    rep = (xXIQueryVersionReply) {
+        .repType = X_Reply,
+        .RepType = X_XIQueryVersion,
+        .sequenceNumber = client->sequence,
+        .length = 0,
+        .major_version = major,
+        .minor_version = minor
+    };
 
     WriteReplyToClient(client, sizeof(xXIQueryVersionReply), &rep);
 
@@ -106,23 +133,20 @@ ProcXIQueryVersion(ClientPtr client)
 int
 SProcXIQueryVersion(ClientPtr client)
 {
-    char n;
-
     REQUEST(xXIQueryVersionReq);
-    swaps(&stuff->length, n);
+    swaps(&stuff->length);
     REQUEST_AT_LEAST_SIZE(xXIQueryVersionReq);
-    swaps(&stuff->major_version, n);
-    swaps(&stuff->minor_version, n);
+    swaps(&stuff->major_version);
+    swaps(&stuff->minor_version);
     return (ProcXIQueryVersion(client));
 }
 
 void
-SRepXIQueryVersion(ClientPtr client, int size, xXIQueryVersionReply *rep)
+SRepXIQueryVersion(ClientPtr client, int size, xXIQueryVersionReply * rep)
 {
-    char n;
-    swaps(&rep->sequenceNumber, n);
-    swapl(&rep->length, n);
-    swaps(&rep->major_version, n);
-    swaps(&rep->minor_version, n);
-    WriteToClient(client, size, (char *)rep);
+    swaps(&rep->sequenceNumber);
+    swapl(&rep->length);
+    swaps(&rep->major_version);
+    swaps(&rep->minor_version);
+    WriteToClient(client, size, rep);
 }

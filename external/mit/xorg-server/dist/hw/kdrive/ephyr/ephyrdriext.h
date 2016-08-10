@@ -1,8 +1,8 @@
 /*
  * Xephyr - A kdrive X server thats runs in a host X window.
  *          Authored by Matthew Allum <mallum@openedhand.com>
- * 
- * Copyright © 2007 OpenedHand Ltd 
+ *
+ * Copyright © 2007 OpenedHand Ltd
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -29,14 +29,12 @@
 #define __EPHYRDRIEXT_H__
 
 typedef struct {
-    WindowPtr local ;
-    int remote ;
+    WindowPtr local;
+    int remote;
 } EphyrWindowPair;
 
-Bool ephyrDRIExtensionInit (ScreenPtr a_screen) ;
+Bool ephyrDRIExtensionInit(ScreenPtr a_screen);
 
-Bool findWindowPairFromRemote (int a_remote,
-			       EphyrWindowPair **a_pair);
+Bool findWindowPairFromRemote(int a_remote, EphyrWindowPair ** a_pair);
 
 #endif /*__EPHYRDRIEXT_H__*/
-
