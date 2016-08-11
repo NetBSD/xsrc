@@ -39,7 +39,6 @@
 #include "exevents.h"
 
 #include "protocol-common.h"
-#include <glib.h>
 
 struct {
     int cp_is_set;
@@ -50,13 +49,14 @@ struct {
 static ClientRec client_window;
 static ClientRec client_request;
 
-int __wrap_dixLookupClient(ClientPtr *pClient, XID rid, ClientPtr client, Mask access)
+int
+__wrap_dixLookupClient(ClientPtr *pClient, XID rid, ClientPtr client,
+                       Mask access)
 {
     if (rid == ROOT_WINDOW_ID)
         return BadWindow;
 
-    if (rid == CLIENT_WINDOW_ID)
-    {
+    if (rid == CLIENT_WINDOW_ID) {
         *pClient = &client_window;
         return Success;
     }
@@ -64,51 +64,51 @@ int __wrap_dixLookupClient(ClientPtr *pClient, XID rid, ClientPtr client, Mask a
     return __real_dixLookupClient(pClient, rid, client, access);
 }
 
-
-static void reply_XIGetClientPointer(ClientPtr client, int len, char *data, void *userdata)
+static void
+reply_XIGetClientPointer(ClientPtr client, int len, char *data, void *userdata)
 {
-    xXIGetClientPointerReply *rep = (xXIGetClientPointerReply*)data;
+    xXIGetClientPointerReply *rep = (xXIGetClientPointerReply *) data;
 
-    if (client->swapped)
-    {
-        char n;
-        swapl(&rep->length, n);
-        swaps(&rep->sequenceNumber, n);
-        swaps(&rep->deviceid, n);
+    if (client->swapped) {
+        swapl(&rep->length);
+        swaps(&rep->sequenceNumber);
+        swaps(&rep->deviceid);
     }
 
     reply_check_defaults(rep, len, XIGetClientPointer);
 
-    g_assert(rep->set == test_data.cp_is_set);
+    assert(rep->set == test_data.cp_is_set);
     if (rep->set)
-        g_assert(rep->deviceid == test_data.dev->id);
+        assert(rep->deviceid == test_data.dev->id);
 }
 
-static void request_XIGetClientPointer(ClientPtr client, xXIGetClientPointerReq* req, int error)
+static void
+request_XIGetClientPointer(ClientPtr client, xXIGetClientPointerReq * req,
+                           int error)
 {
-    char n;
     int rc;
 
     test_data.win = req->win;
 
     rc = ProcXIGetClientPointer(&client_request);
-    g_assert(rc == error);
+    assert(rc == error);
 
     if (rc == BadWindow)
-        g_assert(client_request.errorValue == req->win);
+        assert(client_request.errorValue == req->win);
 
     client_request.swapped = TRUE;
-    swapl(&req->win, n);
-    swaps(&req->length, n);
+    swapl(&req->win);
+    swaps(&req->length);
     rc = SProcXIGetClientPointer(&client_request);
-    g_assert(rc == error);
+    assert(rc == error);
 
     if (rc == BadWindow)
-        g_assert(client_request.errorValue == req->win);
+        assert(client_request.errorValue == req->win);
 
 }
 
-static void test_XIGetClientPointer(void)
+static void
+test_XIGetClientPointer(void)
 {
     xXIGetClientPointerReq request;
 
@@ -116,12 +116,11 @@ static void test_XIGetClientPointer(void)
 
     request.win = CLIENT_WINDOW_ID;
 
-
     reply_handler = reply_XIGetClientPointer;
 
     client_request = init_client(request.length, &request);
 
-    g_test_message("Testing invalid window");
+    printf("Testing invalid window\n");
     request.win = INVALID_WINDOW_ID;
     request_XIGetClientPointer(&client_request, &request, BadWindow);
 
@@ -132,15 +131,15 @@ static void test_XIGetClientPointer(void)
 
     test_data.cp_is_set = FALSE;
 
-    g_test_message("Testing window None, unset ClientPointer.");
+    printf("Testing window None, unset ClientPointer.\n");
     request.win = None;
     request_XIGetClientPointer(&client_request, &request, Success);
 
-    g_test_message("Testing valid window, unset ClientPointer.");
+    printf("Testing valid window, unset ClientPointer.\n");
     request.win = CLIENT_WINDOW_ID;
     request_XIGetClientPointer(&client_request, &request, Success);
 
-    g_test_message("Testing valid window, set ClientPointer.");
+    printf("Testing valid window, set ClientPointer.\n");
     client_window.clientPtr = devices.vcp;
     test_data.dev = devices.vcp;
     test_data.cp_is_set = TRUE;
@@ -149,7 +148,7 @@ static void test_XIGetClientPointer(void)
 
     client_window.clientPtr = NULL;
 
-    g_test_message("Testing window None, set ClientPointer.");
+    printf("Testing window None, set ClientPointer.\n");
     client_request.clientPtr = devices.vcp;
     test_data.dev = devices.vcp;
     test_data.cp_is_set = TRUE;
@@ -157,16 +156,13 @@ static void test_XIGetClientPointer(void)
     request_XIGetClientPointer(&client_request, &request, Success);
 }
 
-int main(int argc, char** argv)
+int
+main(int argc, char **argv)
 {
-    g_test_init(&argc, &argv,NULL);
-    g_test_bug_base("https://bugzilla.freedesktop.org/show_bug.cgi?id=");
-
     init_simple();
     client_window = init_client(0, NULL);
 
+    test_XIGetClientPointer();
 
-    g_test_add_func("/xi2/protocol/XIGetClientPointer", test_XIGetClientPointer);
-
-    return g_test_run();
+    return 0;
 }

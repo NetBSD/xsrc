@@ -130,4 +130,4 @@
 
 #endif /* __NetBSD__ */
 
-#endif /* _XF86_SBUS_H */
+#endif                          /* _XF86_SBUS_H */
