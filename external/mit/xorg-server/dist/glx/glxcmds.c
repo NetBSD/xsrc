@@ -2349,17 +2349,6 @@ __glXDisp_RenderLarge(__GLXclientState * cl, GLbyte * pc)
 	    */
 	}
 	return Success;
-            /*
-             ** Reset for the next RenderLarge series.
-             */
-            __glXResetLargeCommandStatus(cl);
-        }
-        else {
-            /*
-             ** This is neither the first nor the last request.
-             */
-        }
-        return Success;
     }
 }
 

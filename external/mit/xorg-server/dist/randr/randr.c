@@ -627,14 +627,6 @@ RRTellChanged(ScreenPtr pScreen)
     }
 }
 
-void
-RRSetChanged(ScreenPtr pScreen)
-{
-	rrScrPriv(pScreen);
-
-	pScrPriv->changed = TRUE;
-}
-
 /*
  * Return the first output which is connected to an active CRTC
  * Used in emulating 1.0 behaviour
