@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2015 Tobias Nygren
  * Copyright © 2013 Keith Packard
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -20,24 +21,40 @@
  * OF THIS SOFTWARE.
  */
 
-#ifndef _XSHMFENCEINT_H_
-#define _XSHMFENCEINT_H_
+#ifndef _XSHMFENCE_SEMAPHORE_H_
+#define _XSHMFENCE_SEMAPHORE_H_
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/mman.h>
-#include "xshmfence.h"
+#include <semaphore.h>
 
-#if HAVE_FUTEX
-#include "xshmfence_futex.h"
+#define LOCK_ALIGN __attribute__((aligned(128)))
+#ifndef LIBXSHM_PAGESIZE
+#error unknown machine page size
 #endif
+#define PAGE_ALIGN __attribute__((aligned(LIBXSHM_PAGESIZE)))
 
-#if HAVE_SEMAPHORE
-#include "xshmfence_semaphore.h"
-#endif
+/*
+ * the fence is divided into two memory pages:
+ * page 1 contains process shared state
+ * page 2 contains process local state
+ */
 
-#if HAVE_PTHREAD
-#include "xshmfence_pthread.h"
-#endif
+struct xshmfence {
+	/* page 1 */
+	int refcnt LOCK_ALIGN;
+	int triggered LOCK_ALIGN;
+	int waiting LOCK_ALIGN;
+	char lockname[16];
+	char condname[16];
+	/* page 2*/
+	sem_t *lock PAGE_ALIGN;
+	sem_t *cond;
+};
 
-#endif /* _XSHMFENCEINT_H_ */
+void
+xshmfence_init(int fd);
+void
+xshmfence_open_semaphore(struct xshmfence *f);
+void
+xshmfence_close_semaphore(struct xshmfence *f);
+
+#endif /* _XSHMFENCE_SEMAPHORE_H_ */

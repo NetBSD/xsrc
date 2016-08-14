@@ -110,6 +110,9 @@ xshmfence_map_shm(int fd)
 		close (fd);
 		return 0;
 	}
+#ifdef HAVE_SEMAPHORE
+	xshmfence_open_semaphore(addr);
+#endif
 	return addr;
 }
 
@@ -121,5 +124,8 @@ xshmfence_map_shm(int fd)
 void
 xshmfence_unmap_shm(struct xshmfence *f)
 {
+#ifdef HAVE_SEMAPHORE
+	xshmfence_close_semaphore(f);
+#endif
         munmap(f, sizeof (struct xshmfence));
 }
