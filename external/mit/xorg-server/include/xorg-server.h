@@ -17,17 +17,24 @@
 #ifndef _XORG_SERVER_H_
 #define _XORG_SERVER_H_
 
+#ifdef HAVE_XORG_CONFIG_H
+#error Include xorg-config.h when building the X server
+#endif
+
 /* Support BigRequests extension */
 #define BIGREQS 1
 
 /* Default font path */
-#define COMPILEDDEFAULTFONTPATH "/usr/local/lib/X11/fonts/misc/,/usr/local/lib/X11/fonts/TTF/,/usr/local/lib/X11/fonts/OTF,/usr/local/lib/X11/fonts/Type1/,/usr/local/lib/X11/fonts/100dpi/,/usr/local/lib/X11/fonts/75dpi/"
+/* #define COMPILEDDEFAULTFONTPATH "/usr/pkg/share/fonts/X11/misc,/usr/pkg/share/fonts/X11/TTF,/usr/pkg/share/fonts/X11/OTF,/usr/pkg/share/fonts/X11/Type1,/usr/pkg/share/fonts/X11/100dpi,/usr/pkg/share/fonts/X11/75dpi,/usr/pkg/share/fonts/X11/cyrillic,/usr/pkg/lib/X11/fonts/misc,/usr/pkg/lib/X11/fonts/TTF,/usr/pkg/lib/X11/fonts/OTF,/usr/pkg/lib/X11/fonts/Type1,/usr/pkg/lib/X11/fonts/100dpi,/usr/pkg/lib/X11/fonts/75dpi,/usr/pkg/lib/X11/fonts/cyrillic" */
 
 /* Support Composite Extension */
 #define COMPOSITE 1
 
 /* Build DPMS extension */
 #define DPMSExtension 1
+
+/* Build DRI3 extension */
+#define DRI3 1
 
 /* Build GLX extension */
 #define GLXEXT 1
@@ -38,6 +45,30 @@
 /* Support SHM */
 #define HAS_SHM 1
 
+/* Define to 1 if you have the `ffs' function. */
+#define HAVE_FFS 1
+
+/* Define to 1 if you have the `reallocarray' function. */
+/* #undef HAVE_REALLOCARRAY */
+
+/* Define to 1 if you have the `strcasecmp' function. */
+#define HAVE_STRCASECMP 1
+
+/* Define to 1 if you have the `strcasestr' function. */
+#define HAVE_STRCASESTR 1
+
+/* Define to 1 if you have the `strlcat' function. */
+#define HAVE_STRLCAT 1
+
+/* Define to 1 if you have the `strlcpy' function. */
+#define HAVE_STRLCPY 1
+
+/* Define to 1 if you have the `strncasecmp' function. */
+#define HAVE_STRNCASECMP 1
+
+/* Define to 1 if you have the `strndup' function. */
+#define HAVE_STRNDUP 1
+
 /* Support IPv6 for TCP connections */
 #define IPv6 1
 
@@ -46,6 +77,9 @@
 
 /* Internal define for Xinerama */
 #define PANORAMIX 1
+
+/* Support Present extension */
+#define PRESENT 1
 
 /* Support RANDR extension */
 #define RANDR 1
@@ -67,9 +101,6 @@
 
 /* Support TCP socket connections */
 #define TCPCONN 1
-
-/* Enable touchscreen support */
-/* #undef TOUCHSCREEN */
 
 /* Support tslib touchscreen abstraction library */
 /* #undef TSLIB */
@@ -120,7 +151,7 @@
 /* #undef XORG_RELEASE */
 
 /* Current Xorg version */
-#define XORG_VERSION_CURRENT (((1) * 10000000) + ((10) * 100000) + ((6) * 1000) + 0)
+#define XORG_VERSION_CURRENT (((1) * 10000000) + ((18) * 100000) + ((4) * 1000) + 0)
 
 /* Build Xv Extension */
 #define XvExtension 1
@@ -177,7 +208,7 @@
 #define WSCONS_SUPPORT 1
 
 /* Loadable XFree86 server awesomeness */
-#define XFree86LOADER 1
+#define XFree86LOADER
 
 /* Use libpciaccess */
 #define XSERVER_LIBPCIACCESS 1
@@ -185,8 +216,25 @@
 /* X Access Control Extension */
 #define XACE 1
 
+/* Have X server platform bus support */
+/* #undef XSERVER_PLATFORM_BUS */
+
 #ifdef _LP64
 #define _XSERVER64 1
+#endif
+
+/* Have support for X shared memory fence library (xshmfence) */
+#define HAVE_XSHMFENCE 1
+
+/* Use XTrans FD passing support */
+#define XTRANS_SEND_FDS 1
+
+/* Ask fontsproto to make font path element names const */
+#define FONT_PATH_ELEMENT_NAME_CONST    1
+
+#if 0
+/* byte order */
+#define X_BYTE_ORDER X_LITTLE_ENDIAN
 #endif
 
 #endif /* _XORG_SERVER_H_ */

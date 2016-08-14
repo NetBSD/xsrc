@@ -17,7 +17,7 @@
 #define XORGSERVER 1
 
 /* Current X.Org version. */
-#define XORG_VERSION_CURRENT (((1) * 10000000) + ((10) * 100000) + ((6) * 1000) + 0)
+#define XORG_VERSION_CURRENT (((1) * 10000000) + ((18) * 100000) + ((4) * 1000) + 0)
 
 /* Name of X server. */
 #define __XSERVERNAME__ "Xorg"
@@ -41,13 +41,22 @@
 #define __XCONFIGDIR__ "xorg.conf.d"
 
 /* Path to loadable modules. */
-#define DEFAULT_MODULE_PATH "/usr/X11R7/lib/modules"
+/* #define DEFAULT_MODULE_PATH "/usr/X11R7/lib/xorg/modules" */
 
 /* Path to installed libraries. */
-#define DEFAULT_LIBRARY_PATH "/usr/X11R7/lib"
+/* #define DEFAULT_LIBRARY_PATH "/usr/X11R7/lib" */
 
-/* Path to server log file. */
-#define DEFAULT_LOGPREFIX "/var/log/Xorg."
+/* Default log location */
+#define DEFAULT_LOGDIR "/var/log"
+
+/* Default logfile prefix */
+#define DEFAULT_LOGPREFIX "Xorg."
+
+/* Default XDG_DATA dir under HOME */
+#define DEFAULT_XDG_DATA_HOME ".local/share"
+
+/* Default log dir under XDG_DATA_HOME */
+#define DEFAULT_XDG_DATA_HOME_LOGDIR "xorg"
 
 /* Building DRI-capable DDX. */
 #define XF86DRI 1
@@ -68,19 +77,11 @@
    xorg_backtrace in hw/xfree86/common/xf86Events.c */
 /* #undef HAVE_WALKCONTEXT */
 
-#if defined(_LP64)
 /* Define to 1 if unsigned long is 64 bits. */
-#define _XSERVER64 1
-#endif
+/* #undef _XSERVER64 */
 
 /* Building vgahw module */
 #define WITH_VGAHW 1
-
-/* Define to 1 if NetBSD built-in MTRR support is available */
-#define HAS_MTRR_BUILTIN 1
-
-/* Define to 1 if BSD MTRR support is available */
-/* #undef HAS_MTRR_SUPPORT */
 
 /* NetBSD PIO alpha IO */
 /* #undef USE_ALPHA_PIO */
@@ -91,10 +92,8 @@
 /* BSD /dev/io */
 /* #undef USE_DEV_IO */
 
-#if defined(__i386__) || defined(__x86_64__)
 /* BSD i386 iopl */
 #define USE_I386_IOPL 1
-#endif
 
 /* System is BSD-like */
 #define CSRG_BASED 1
@@ -123,17 +122,8 @@
 /* Have execinfo.h */
 /* #undef HAVE_EXECINFO_H */
 
-/* Have pci_system_init_dev_mem() */
-#define HAVE_PCI_SYSTEM_INIT_DEV_MEM 1
-
-/* Define to 1 if you have the `pci_device_is_boot_vga' function. */
-#define HAVE_PCI_DEVICE_IS_BOOT_VGA 1
-
-/* Have pci_enable_device */
-#define HAVE_PCI_DEVICE_ENABLE 1
-
-/* Define to 1 if you have the `pci_device_vgaarb_init' function. */
-#define HAVE_PCI_DEVICE_VGAARB_INIT 1
+/* Define to 1 if you have the <sys/mkdev.h> header file. */
+/* #undef HAVE_SYS_MKDEV_H */
 
 /* Path to text files containing PCI IDs */
 #define PCI_TXT_IDS_PATH ""
@@ -141,10 +131,25 @@
 /* Use SIGIO handlers for input device events by default */
 #define USE_SIGIO_BY_DEFAULT TRUE
 
-/* Support PC98 */
-/* #undef SUPPORT_PC98 */
-
 /* Build with libdrm support */
 #define WITH_LIBDRM 1
+
+/* Use libpciaccess */
+#define XSERVER_LIBPCIACCESS 1
+
+/* Have setugid */
+#define HAVE_ISSETUGID 1
+
+/* Have getresuid */
+/* #undef HAVE_GETRESUID */
+
+/* Have X server platform bus support */
+/* #undef XSERVER_PLATFORM_BUS */
+
+/* Define to 1 if you have the `seteuid' function. */
+#define HAVE_SETEUID 1
+
+/* Support APM/ACPI power management in the server */
+/* #undef XF86PM */
 
 #endif /* _XORG_CONFIG_H_ */
