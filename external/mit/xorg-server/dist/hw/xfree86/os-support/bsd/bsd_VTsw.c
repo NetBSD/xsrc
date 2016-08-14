@@ -66,6 +66,7 @@ xf86VTSwitchPending()
 Bool
 xf86VTSwitchAway()
 {
+#if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
     if (xf86Info.consType == SYSCONS || xf86Info.consType == PCVT) {
 #ifdef WSCONS_SUPPORT
 	ioctl(xf86Info.consoleFd, KDSETMODE, KD_TEXT);

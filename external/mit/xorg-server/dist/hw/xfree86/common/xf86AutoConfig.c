@@ -339,6 +339,7 @@ listPossibleVideoDrivers(char *matches[], int nmatches)
 #elif defined(__NetBSD__)
 	matches[i++] = xnfstrdup("wsfb");
 #endif
+    }
 }
 
 /* copy a screen section and enter the desired driver

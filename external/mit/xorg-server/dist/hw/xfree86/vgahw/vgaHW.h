@@ -176,6 +176,7 @@ typedef struct _vgaHWRec {
 	    (hw)->readST01((hw)); \
 	    (hw)->readST01((hw)); \
 	} while (0)
+#endif
 
 /* Function Prototypes */
 
