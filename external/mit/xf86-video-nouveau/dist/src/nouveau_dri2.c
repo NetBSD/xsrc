@@ -10,7 +10,9 @@
 #else
 #error "This driver requires a DRI2-enabled X server"
 #endif
-
+#ifdef DRI3
+#include "dri3.h"
+#endif
 #include "xf86drmMode.h"
 
 struct nouveau_dri2_buffer {
@@ -168,9 +170,13 @@ nouveau_dri2_copy_region2(ScreenPtr pScreen, DrawablePtr pDraw, RegionPtr pRegio
 	}
 
 	if (translate && pDraw->type == DRAWABLE_WINDOW) {
+#ifdef COMPOSITE
 		PixmapPtr pPix = get_drawable_pixmap(pDraw);
-		off_x = pDraw->x - pPix->screen_x;
-		off_y = pDraw->y - pPix->screen_y;
+		off_x = -pPix->screen_x;
+		off_y = -pPix->screen_y;
+#endif
+		off_x += pDraw->x;
+		off_y += pDraw->y;
 	}
 
 	pGC = GetScratchGC(pDraw->depth, pScreen);
@@ -1011,4 +1017,136 @@ nouveau_dri2_fini(ScreenPtr pScreen)
 	NVPtr pNv = NVPTR(pScrn);
 	if (pNv->AccelMethod == EXA)
 		DRI2CloseScreen(pScreen);
+}
+
+#ifdef DRI3
+static int is_render_node(int fd, struct stat *st)
+{
+	if (fstat(fd, st))
+		return 0;
+
+	if (!S_ISCHR(st->st_mode))
+		return 0;
+
+	return st->st_rdev & 0x80;
+  }
+
+static int
+nouveau_dri3_open(ScreenPtr screen, RRProviderPtr provider, int *out)
+{
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(screen);
+	NVPtr pNv = NVPTR(pScrn);
+	int fd = -1;
+	struct stat buff;
+
+#ifdef O_CLOEXEC
+	fd = open(pNv->render_node, O_RDWR | O_CLOEXEC);
+#endif
+	if (fd < 0)
+		fd = open(pNv->render_node, O_RDWR);
+	if (fd < 0)
+		return -BadAlloc;
+
+	if (fstat(fd, &buff)) {
+		close(fd);
+		return -BadMatch;
+	}
+	if (!is_render_node(fd, &buff)) {
+		drm_magic_t magic;
+
+		if (drmGetMagic(fd, &magic) || drmAuthMagic(pNv->dev->fd, magic)) {
+			close(fd);
+			return -BadMatch;
+		}
+	}
+
+	*out = fd;
+	return Success;
+}
+
+static PixmapPtr nouveau_dri3_pixmap_from_fd(ScreenPtr screen, int fd, CARD16 width, CARD16 height, CARD16 stride, CARD8 depth, CARD8 bpp)
+{
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(screen);
+	NVPtr pNv = NVPTR(pScrn);
+	PixmapPtr pixmap;
+	struct nouveau_bo *bo = NULL;
+	struct nouveau_pixmap *nvpix;
+
+	if (depth < 8 || depth > 32 || depth % 8)
+		return NULL;
+
+	pixmap = screen->CreatePixmap(screen, 0, 0, depth, 0);
+	if (!pixmap)
+		return NULL;
+
+	if (!screen->ModifyPixmapHeader(pixmap, width, height, 0, 0, stride, NULL))
+		goto free_pixmap;
+
+	if (nouveau_bo_prime_handle_ref(pNv->dev, fd, &bo))
+		goto free_pixmap;
+
+	nvpix = nouveau_pixmap(pixmap);
+	nouveau_bo_ref(NULL, &nvpix->bo);
+	nvpix->bo = bo;
+	nvpix->shared = (bo->flags & NOUVEAU_BO_APER) == NOUVEAU_BO_GART;
+	return pixmap;
+
+free_pixmap:
+	screen->DestroyPixmap(pixmap);
+	return NULL;
+}
+
+static int nouveau_dri3_fd_from_pixmap(ScreenPtr screen, PixmapPtr pixmap, CARD16 *stride, CARD32 *size)
+{
+	struct nouveau_bo *bo = nouveau_pixmap_bo(pixmap);
+	int fd;
+
+	if (!bo || nouveau_bo_set_prime(bo, &fd) < 0)
+		return -EINVAL;
+
+	*stride = pixmap->devKind;
+	*size = bo->size;
+	return fd;
+}
+
+static dri3_screen_info_rec nouveau_dri3_screen_info = {
+        .version = DRI3_SCREEN_INFO_VERSION,
+
+        .open = nouveau_dri3_open,
+        .pixmap_from_fd = nouveau_dri3_pixmap_from_fd,
+        .fd_from_pixmap = nouveau_dri3_fd_from_pixmap
+};
+#endif
+
+Bool
+nouveau_dri3_screen_init(ScreenPtr screen)
+{
+#ifdef DRI3
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(screen);
+	NVPtr pNv = NVPTR(pScrn);
+	struct stat master, render;
+	char *buf;
+
+	if (is_render_node(pNv->dev->fd, &master))
+		return TRUE;
+
+	buf = drmGetRenderDeviceNameFromFd(pNv->dev->fd);
+	if (buf && stat(buf, &render) == 0 &&
+	    master.st_mode == render.st_mode) {
+		pNv->render_node = buf;
+		if (dri3_screen_init(screen, &nouveau_dri3_screen_info)) {
+			xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+				   "DRI3 on EXA enabled\n");
+			return TRUE;
+		}
+		else {
+			xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
+				   "DRI3 on EXA initialization failed\n");
+			return FALSE;
+		}
+	} else
+		free(buf);
+#endif
+
+        return TRUE;
 }

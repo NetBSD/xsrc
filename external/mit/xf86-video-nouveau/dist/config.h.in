@@ -5,12 +5,6 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
-/* Build support for glamor acceleration */
-#undef HAVE_GLAMOR
-
-/* Define to 1 if you have the <glamor.h> header file. */
-#undef HAVE_GLAMOR_H
-
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
@@ -50,8 +44,7 @@
 /* Have xorg_list API */
 #undef HAVE_XORG_LIST
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
 
 /* Driver date */

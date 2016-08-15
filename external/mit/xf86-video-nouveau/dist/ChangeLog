@@ -1,3 +1,371 @@
+commit b18bc036bf9997ea65f5cbd824fd057931e604fe
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Tue Dec 8 15:52:25 2015 +1000
+
+    Bump version to 1.0.12
+    
+    Various random fixes have been pending for a long while now...
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit 6e6d8ac1c7b4ee047a7b40b95dea1e65a7c3211a
+Author: Mario Kleiner <mario.kleiner.de@gmail.com>
+Date:   Sun Jun 28 02:33:49 2015 +0200
+
+    Take shift in crtc positions for ZaphodHeads configs into account.
+    
+    In multi-x-screen ZaphodHeads configurations, there isn't a
+    one-to-one mapping of kernel provided drmmode crtc index
+    to the index of the corresponding xf86Crtc inside the
+    xf86CrtcConfig crtc array anymore, ie. for kernel provided
+    drmmode->mode_res->crtcs[i], the i'th crtc won't correspond
+    to the xf86Crtc in the i'th slot of the x-screens xf86CrtcConfig
+    anymore, once ZaphodHeads has only selected a subset of all crtcs
+    of a graphics card for a given x-screen, instead of all crtcs.
+    
+    This breaks the mapping of bit positions in the bit masks returned
+    in kencoder->possible_crtcs and kencoder->possible_clones. A 1 bit
+    in position i of those masks allows use of the kernels i'th crtc for
+    the given kencoder. The X-Servers dix code checks those bit masks
+    for valid xf86Output -> xf86Crtc assignments, assuming that the i'th
+    slot xf86CrtcConfigPtr config->crtc[i] corresponds to bit i in the
+    xf86Output->possibe_crtcs bitmask, and bails if the bitmask doesn't
+    allow the specified assignment of crtc to output. If ZaphodHeads
+    breaks the assumption of bit i <-> crtc slot i this ends in failure.
+    
+    Take this shift of crtc index positions wrt. encoder bitmask bit
+    positions into account by bit-shifting positions accordingly when
+    assigning encoder->possible_crtcs to output->possible_crtcs, so
+    the proper indices match up again for validation by the dix.
+    
+    This problem wasn't apparent last year when testing the ZaphodHeads
+    support on some Kepler cards, as apparently the encoder->possible_crtcs
+    bitmasks returned for those cards by the kernel just had all 4
+    lsb bits set for all tested encoders/output, so each of the cards 4
+    crtcs could go with each output and things worked by chance.
+    
+    The current code breaks, e.g., on 2010 MacBookPro with nv50, where
+    one crtc is hardwired to the internal lvds panel, and one crtc
+    is hardwired to the external DP connector, resulting in a failure
+    where dual-display on single-x-screen works fine, but assigning
+    each output to a separate x-screen via ZaphodHeads fails due to
+    the mismatched encoder->possible_crtcs bitmasks.
+    
+    This patch fixes the problem.
+    
+    Signed-off-by: Mario Kleiner <mario.kleiner.de@gmail.com>
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit 1ff13a922535924681b91452235b017e43a4c6f6
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Sun Sep 13 15:29:15 2015 -0400
+
+    fix build after glamor removal
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit 3bb943b33bbe8e593afc00d13fe867dd7a708c3c
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Thu Aug 21 20:36:41 2014 -0400
+
+    xv: use correct max width/height settings
+    
+    Bugzilla: https://bugs.freedesktop.org/show_bug.cgi?id=70931
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit 3e2e0faa2ee1cce9c1bb5c7ad80d0592460f3edc
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Sat Jul 11 17:16:27 2015 -0400
+
+    remove maxwell GM10x support for now
+    
+    There is no EXA acceleration, and now no GLAMOR either.
+    User is better off with modesetting until EXA makes an appearance.
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit 1f8b2b348526d94e9bde4a285f331a4934c11078
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Sat Jul 11 17:08:52 2015 -0400
+
+    glamor: remove
+    
+    If you want glamor, just use modesetting instead. It's hooked up
+    incorrectly in nouveau, and there doesn't seem to be any point in fixing
+    it when the modesetting driver does it all properly.
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit 6296145654b78518f3299bb5887f224f0d3810fd
+Author: Mario Kleiner <mario.kleiner.de@gmail.com>
+Date:   Wed Jul 29 14:39:02 2015 +0200
+
+    Add Option "DRI" to allow selection of maximum DRI level. (v2)
+    
+    Allow user to select the maximum level of DRI implementation
+    to use, DRI2 or DRI3.
+    
+    exa accel supports both DRI2 and, if the kernel supports
+    rendernodes, also DRI3. However, DRI3 still seems to have
+    some bugs on current implementations, and additionally it
+    doesn't work well at all for X-Servers older than 1.16.3
+    due to X-Server bugs. Therefore we default to DRI2 on exa,
+    but allow the user to enable DRI3 with this new option.
+    
+    nouveau's glamor accel backend currently doesn't work under
+    DRI2 at all, so we continue to use DRI3 whenever it is
+    supported and ignore this new option for now.
+    
+    Also add a bit more output about status of Present and
+    DRI3 to aid debugging.
+    
+    Note: This was originally meant to be a boolean parameter,
+          to just select between DRI3 on and off, but changed
+          here to a DRI level to make it consistent with the
+          same option in the released Intel-ddx.
+    
+    v2: Use fixed up Bool return type of nouveau_present_init().
+    
+    Signed-off-by: Mario Kleiner <mario.kleiner.de@gmail.com>
+    Cc: Ilia Mirkin <imirkin@alum.mit.edu>
+    Cc: Emil Velikov <emil.l.velikov@gmail.com>
+    Cc: Martin Peres <martin.peres@free.fr>
+    Cc: Ben Skeggs <bskeggs@redhat.com>
+    Reviewed-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit 0deb1fcc6d1099db698ff8c512a4884708a458ec
+Author: Mario Kleiner <mario.kleiner.de@gmail.com>
+Date:   Wed Jul 29 14:39:01 2015 +0200
+
+    present: Fixup return type of nouveau_present_init()
+    
+    Make it a Bool consistently, as declared in header.
+    
+    Reported-by: Ilia Mirkin <imirkin@alum.mit.edu>
+    Signed-off-by: Mario Kleiner <mario.kleiner.de@gmail.com>
+    Reviewed-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit 5212dbd7e5eba35fdd6578b30f5b0c8c8543081b
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Tue Jul 14 19:23:01 2015 -0400
+
+    Avoid build fail without COMPOSITE
+    
+    Reviewed-by: Dave Airlie <airlied@redhat.com>
+
+commit fdc528306e4018b314f2efcb2be4e37672bddd75
+Author: Vadim Rutkovsky <vrutkovs@redhat.com>
+Date:   Thu Jul 9 23:23:37 2015 +0200
+
+    Adapt to new dirty tracking api
+    
+    Mirrors commit b6d871bf2 (radeon: adopt for new X server dirty tracking
+    APIs.) in xf86-video-ati.
+    
+    Bugzilla: https://bugs.freedesktop.org/show_bug.cgi?id=91284
+
+commit dfd827cefb940f46b18dc77c129f0a603c7c95fa
+Author: Samuel Pitoiset <samuel.pitoiset@gmail.com>
+Date:   Wed May 20 17:08:58 2015 +0200
+
+    fix a wrong use of a logical operator in drmmode_output_dpms()
+    
+    This is probably a typo error which has been introduced in 2009...
+    This fixes the following warning detected by Clang :
+    
+    drmmode_display.c:907:30: warning: use of logical '&&' with constant operand [-Wconstant-logical-operand]
+        if (props && (props->flags && DRM_MODE_PROP_ENUM)) {
+    
+    Signed-off-by: Samuel Pitoiset <samuel.pitoiset@gmail.com>
+    Reviewed-by: Dave Airlie <airlied@redhat.com>
+
+commit 27234dbe00caf6dfd4efb24fc7bbc026fa0134fc
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Wed May 27 20:26:42 2015 -0400
+
+    nv50/exa: add comments showing the code that makes up the programs
+    
+    As decoded by envydis. Perhaps these should move into separate files
+    similar to nvc0, but this seems like a simple intermediate solution.
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit 08ef36dc6766080f173ae2b7e660b3182cab9f2d
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Wed May 20 18:36:17 2015 -0400
+
+    older hardware prefers copy to clear, so use that
+    
+    Doing a solid copy of 0, or a clear, has the same effect. This is a
+    partial revert of commit 5439a9905eab8c. Pre-nv50 hardware succeeds with
+    copies more often.
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit 278ad73475bd137eac8a49ec7a22406bfc2867e7
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Tue May 19 16:26:16 2015 -0400
+
+    nv04-nv40: don't attempt to do 32-bit shifts
+    
+    A 32-bit shift is a no-op, which will also make the new planemask get
+    or'd with ~0, thus negating the usefulness of the subsequent
+    planemask != ~0 check. Only do this if it's a less-than-32-bit per pixel
+    format, in which case it will have the desired effect of setting the
+    high bits.
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+    Reviewed-by: Martin Peres <martin.peres@free.fr>
+
+commit 7583471e1fe181dc7c26b7d0a0d16f70eb10dd21
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Tue May 19 16:11:17 2015 -0400
+
+    Check before trying a solid fill
+    
+    Pre-nv50 has all sorts of funny requirements for non-copy alu
+    operations, and will bail out of solid fills left and right. Account for
+    that case and fall back to the memset.
+    
+    Reported-by: Andrew Randrianasulu <randrianasulu@gmail.com>
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+    Reviewed-by: Martin Peres <martin.peres@free.fr>
+
+commit 212fc5354ed60ba282d5eabf468c0e2dd0d0afe6
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Mon Mar 23 20:05:23 2015 -0400
+
+    nv50: explicitly disable ZETA buffer
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit 734b8404c0a1fa9ce8ee62a0d4cc5baae7c8fcdf
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Sat Mar 21 11:46:35 2015 -0400
+
+    use defined method names where available
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit 5439a9905eab8c8d0f86e9963df6c893633bdbfd
+Author: Maarten Lankhorst <dev@mblankhorst.nl>
+Date:   Mon Mar 23 19:41:38 2015 +0100
+
+    Actually do a clear instead of doing a bogus copy.
+    
+    Oops!
+
+commit f0fdc156039eaa79fb1ad82fcc6437f2432306c6
+Author: Maarten Lankhorst <dev@mblankhorst.nl>
+Date:   Sat Mar 21 22:30:10 2015 +0100
+
+    Try using EXA ops harder in drmmode_fbcon_copy fallback
+    
+    The memcpy in the fallback path fails with SIGBUS on GK20A because
+    this memory is not coherent, try to use a solid fill instead.
+
+commit 7319b54291d59e1cd3cbe4f39ea8cc6dc8bf45bc
+Author: Maarten Lankhorst <dev@mblankhorst.nl>
+Date:   Fri Mar 20 23:24:50 2015 +0100
+
+    Simplify nouveau_allocate_surface's pitch calculation.
+    
+    Judging from previous commits all linear buffers should have a 256 byte alignment.
+
+commit 91e51a7571e6e8cb9338fc168f817f56438b1901
+Author: Maarten Lankhorst <dev@mblankhorst.nl>
+Date:   Fri Mar 20 23:17:13 2015 +0100
+
+    Use drmGetRenderDeviceNameFromFd to obtain the dri3 node.
+
+commit d29d8baad4d845ec9d3d1d1bc8d1c1e1f6f6f086
+Author: Maarten Lankhorst <dev@mblankhorst.nl>
+Date:   Sat Mar 14 18:00:00 2015 +0100
+
+    Use the correct class and shader ops for GK20A.
+    
+    Signed-off-by: Maarten Lankhorst <dev@mblankhorst.nl>
+
+commit 6829d4c672fc05f4d3d993ac1bfde21d4b6c1200
+Author: Maarten Lankhorst <dev@mblankhorst.nl>
+Date:   Sat Mar 14 11:58:12 2015 +0100
+
+    Make the ddx load with platform devices
+    
+    Signed-off-by: Maarten Lankhorst <dev@mblankhorst.nl>
+
+commit 3fb97d78202213c1221a1d3ad8a5cebda78fdf44
+Author: Maarten Lankhorst <maarten.lankhorst@ubuntu.com>
+Date:   Thu Oct 23 09:29:14 2014 +0200
+
+    fix null pointer deref
+
+commit 90ba0bb6a371a5beebdf6d363bcd73659b7c9f1f
+Author: Maarten Lankhorst <maarten.lankhorst@ubuntu.com>
+Date:   Thu Oct 23 08:25:01 2014 +0200
+
+    check memory allocation in nouveau_glamor_set_shared_pixmap_backing
+    
+    As reported by Roy Spliet.
+
+commit 4dfa13c77a1f6cee1affea05b5f3a0b26827d366
+Author: Maarten Lankhorst <maarten.lankhorst@ubuntu.com>
+Date:   Thu Oct 23 08:21:55 2014 +0200
+
+    rework initialization to prevent some crashes
+
+commit 485902e61b18aff864226db62ba10399aab40128
+Author: Maarten Lankhorst <maarten.lankhorst@ubuntu.com>
+Date:   Wed Oct 22 15:52:22 2014 +0200
+
+    fix !DRI3 case
+
+commit 79d438ec4d23280a242d36c2d81f2f43f6e90ada
+Author: Maarten Lankhorst <maarten.lankhorst@ubuntu.com>
+Date:   Wed Oct 22 15:42:55 2014 +0200
+
+    fix crash in nouveau_glamor_set_shared_pixmap_backing
+
+commit 217f6577afe44b10f7f8e066eaf55419fb0f5ee1
+Author: Maarten Lankhorst <maarten.lankhorst@ubuntu.com>
+Date:   Wed Oct 22 13:16:33 2014 +0200
+
+    move down call to nouveau_present_init until after fb init.
+
+commit 241e7289f25a342a457952b9b0e539c2f0b81d99
+Author: Maarten Lankhorst <maarten.lankhorst@ubuntu.com>
+Date:   Wed Oct 22 11:04:16 2014 +0200
+
+    enable dri3 support without glamor
+
+commit 762b22f5a2b9deed1c6b18d7098f8fddf2f4b759
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Tue Sep 23 21:44:12 2014 -0400
+
+    kepler: remove unnecessary texbars, add live-only tex for nvf0
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit ce9d6e165cd810f06d158e3cfbb4b9f14b060ded
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Tue Sep 23 21:37:46 2014 -0400
+
+    allow path to envyas binary to be specified
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit 02c1aee91ae22b58e777716ffd38397f9df0a087
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Thu Sep 4 15:27:53 2014 -0400
+
+    copy: don't bother trying to create copy on pre-nva3
+    
+    Only the NVA3/5/8/F tesla chips have a copy engine. Don't bother trying
+    to create one on earlier tesla chips (and thus printing an error on
+    failure).
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
 commit 3cd4c8494c296c7583dfa7f0823a272c9e932e03
 Author: Mario Kleiner <mario.kleiner.de@gmail.com>
 Date:   Thu Aug 28 03:57:48 2014 +0200

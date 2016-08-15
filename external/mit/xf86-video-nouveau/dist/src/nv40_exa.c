@@ -633,13 +633,13 @@ NVAccelInitNV40TCL(ScrnInfoPtr pScrn)
 	PUSH_DATA (push, 0x0020ffff);
 	BEGIN_NV04(push, SUBC_3D(0x1d64), 1);
 	PUSH_DATA (push, 0x00d30000);
-	BEGIN_NV04(push, SUBC_3D(0x1e94), 1);
-	PUSH_DATA (push, 0x00000001);
+	BEGIN_NV04(push, NV30_3D(ENGINE), 1);
+	PUSH_DATA (push, NV30_3D_ENGINE_FP);
 
 	/* This removes the the stair shaped tearing that i get. */
 	/* Verified on one G70 card that it doesn't cause regressions for people without the problem. */
 	/* The blob sets this up by default for NV43. */
-	BEGIN_NV04(push, SUBC_3D(0x1450), 1);
+	BEGIN_NV04(push, NV30_3D(FP_REG_CONTROL), 1);
 	PUSH_DATA (push, 0x0000000F);
 
 	BEGIN_NV04(push, NV30_3D(VIEWPORT_TRANSLATE_X), 8);
@@ -690,7 +690,7 @@ NVAccelInitNV40TCL(ScrnInfoPtr pScrn)
 		PUSH_DATA (push, 0);
 	}
 
-	BEGIN_NV04(push, SUBC_3D(0x1d78), 1);
+	BEGIN_NV04(push, NV30_3D(DEPTH_CONTROL), 1);
 	PUSH_DATA (push, 0x110);
 
 	BEGIN_NV04(push, NV30_3D(RT_ENABLE), 1);

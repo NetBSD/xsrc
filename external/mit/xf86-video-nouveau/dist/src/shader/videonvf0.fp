@@ -29,8 +29,8 @@ interp pass f32 $r2 a[0x7c] 0x0 0x0 0x0
 rcp f32 $r2 $r2
 interp mul f32 $r0 a[0x80] $r2 0x0 0x0
 interp mul f32 $r1 a[0x84] $r2 0x0 0x0
-tex t lauto #:#:#:$r4 t2d c[0x0] xy__ $r0:$r1 0x0
-tex p lauto #:#:$r0:$r1 t2d c[0x4] xy__ $r0:$r1 0x0
+tex t lauto live dfp #:#:#:$r4 t2d c[0x0] xy__ $r0:$r1 0x0
+tex p lauto live dfp #:#:$r0:$r1 t2d c[0x4] xy__ $r0:$r1 0x0
 texbar 0x1
 mul ftz rn f32 $r5 $r4 c0[0x0]
 add ftz rn f32 $r3 $r5 c0[0x4]

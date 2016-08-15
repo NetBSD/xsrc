@@ -644,16 +644,16 @@ NVAccelInitNV30TCL(ScrnInfoPtr pScrn)
 		PUSH_DATA (push, 0);
 	}
 
-	BEGIN_NV04(push, SUBC_3D(0x220), 1);
+	BEGIN_NV04(push, NV30_3D(RT_ENABLE), 1);
 	PUSH_DATA (push, 1);
 
-	BEGIN_NV04(push, SUBC_3D(0x03b0), 1);
-	PUSH_DATA (push, 0x00100000);
-	BEGIN_NV04(push, SUBC_3D(0x1454), 1);
+	BEGIN_NV04(push, NV40_3D(MIPMAP_ROUNDING), 1);
+	PUSH_DATA (push, NV40_3D_MIPMAP_ROUNDING_MODE_DOWN);
+	BEGIN_NV04(push, NV30_3D(FLATSHADE_FIRST), 1);
 	PUSH_DATA (push, 0);
 	BEGIN_NV04(push, SUBC_3D(0x1d80), 1);
 	PUSH_DATA (push, 3);
-	BEGIN_NV04(push, SUBC_3D(0x1450), 1);
+	BEGIN_NV04(push, NV30_3D(FP_REG_CONTROL), 1);
 	PUSH_DATA (push, 0x00030004);
 
 	/* NEW */
@@ -670,17 +670,17 @@ NVAccelInitNV30TCL(ScrnInfoPtr pScrn)
 	PUSH_DATA (push, 0); PUSH_DATA (push, 0); PUSH_DATA (push, 0); PUSH_DATA (push, 0);
 	PUSH_DATA (push, 0); PUSH_DATA (push, 0); PUSH_DATA (push, 0);
 
-	BEGIN_NV04(push, SUBC_3D(0x120), 3);
+	BEGIN_NV04(push, NV30_3D(FLIP_SET_READ), 3);
 	PUSH_DATA (push, 0);
 	PUSH_DATA (push, 1);
 	PUSH_DATA (push, 2);
 
-	BEGIN_NV04(push, SUBC_BLIT(0x120), 3);
+	BEGIN_NV04(push, NV15_BLIT(FLIP_SET_READ), 3);
 	PUSH_DATA (push, 0);
 	PUSH_DATA (push, 1);
 	PUSH_DATA (push, 2);
 
-	BEGIN_NV04(push, SUBC_3D(0x1d88), 1);
+	BEGIN_NV04(push, NV30_3D(COORD_CONVENTIONS), 1);
 	PUSH_DATA (push, 0x00001200);
 
 	BEGIN_NV04(push, NV30_3D(MULTISAMPLE_CONTROL), 1);
@@ -742,7 +742,7 @@ NVAccelInitNV30TCL(ScrnInfoPtr pScrn)
 	 * it's not needed between nouveau restarts - which suggests that
 	 * the 3D context (wherever it's stored?) survives somehow.
 	 */
-	//BEGIN_NV04(push, SUBC_3D(0x1d60),1);
+	//BEGIN_NV04(push, NV30_3D(FP_CONTROL),1);
 	//PUSH_DATA (push, 0x03008000);
 
 	int w=4096;
@@ -756,7 +756,7 @@ NVAccelInitNV30TCL(ScrnInfoPtr pScrn)
 	PUSH_DATA (push, 0x0);
 	BEGIN_NV04(push, NV30_3D(VIEWPORT_TX_ORIGIN), 1);
 	PUSH_DATA (push, 0);
-        BEGIN_NV04(push, SUBC_3D(0x0a00), 2);
+        BEGIN_NV04(push, NV30_3D(VIEWPORT_HORIZ), 2);
         PUSH_DATA (push, (w<<16) | 0);
         PUSH_DATA (push, (h<<16) | 0);
 	BEGIN_NV04(push, NV30_3D(VIEWPORT_CLIP_HORIZ(0)), 2);

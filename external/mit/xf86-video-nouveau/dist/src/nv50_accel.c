@@ -110,13 +110,13 @@ NVAccelInit2D_NV50(ScrnInfoPtr pScrn)
 	/* Magics from nv, no clue what they do, but at least some
 	 * of them are needed to avoid crashes.
 	 */
-	BEGIN_NV04(push, SUBC_2D(0x0260), 1);
+	BEGIN_NV04(push, NV50_2D(UNK260), 1);
 	PUSH_DATA (push, 1);
 	BEGIN_NV04(push, NV50_2D(CLIP_ENABLE), 1);
 	PUSH_DATA (push, 1);
 	BEGIN_NV04(push, NV50_2D(COLOR_KEY_ENABLE), 1);
 	PUSH_DATA (push, 0);
-	BEGIN_NV04(push, SUBC_2D(0x058c), 1);
+	BEGIN_NV04(push, NV50_2D(UNK58C), 1);
 	PUSH_DATA (push, 0x111);
 
 	pNv->currentRop = 0xfffffffa;
@@ -205,8 +205,10 @@ NVAccelInitNV50TCL(ScrnInfoPtr pScrn)
 
 	BEGIN_NV04(push, NV50_3D(VIEWPORT_TRANSFORM_EN), 1);
 	PUSH_DATA (push, 0);
-	BEGIN_NV04(push, SUBC_3D(0x0f90), 1);
+	BEGIN_NV04(push, NV50_3D(COLOR_MASK_COMMON), 1);
 	PUSH_DATA (push, 1);
+	BEGIN_NV04(push, NV50_3D(ZETA_ENABLE), 1);
+	PUSH_DATA (push, 0);
 
 	BEGIN_NV04(push, NV50_3D(TIC_ADDRESS_HIGH), 3);
 	PUSH_DATA (push, (pNv->scratch->offset + TIC_OFFSET) >> 32);
@@ -223,65 +225,65 @@ NVAccelInitNV50TCL(ScrnInfoPtr pScrn)
 
 	PUSH_DATAu(push, pNv->scratch, PVP_OFFSET, 30 * 2);
 	PUSH_DATA (push, 0x10000001);
-	PUSH_DATA (push, 0x0423c788);
+	PUSH_DATA (push, 0x0423c788); /* mov b32 o[0x0] a[0x0] */
 	PUSH_DATA (push, 0x10000205);
-	PUSH_DATA (push, 0x0423c788);
+	PUSH_DATA (push, 0x0423c788); /* mov b32 o[0x4] a[0x4] */
 	PUSH_DATA (push, 0xc0800401);
-	PUSH_DATA (push, 0x00200780);
+	PUSH_DATA (push, 0x00200780); /* mul rn f32 $r0 a[0x8] c0[0x0] */
 	PUSH_DATA (push, 0xc0830405);
-	PUSH_DATA (push, 0x00200780);
+	PUSH_DATA (push, 0x00200780); /* mul rn f32 $r1 a[0x8] c0[0xc] */
 	PUSH_DATA (push, 0xc0860409);
-	PUSH_DATA (push, 0x00200780);
+	PUSH_DATA (push, 0x00200780); /* mul rn f32 $r2 a[0x8] c0[0x18] */
 	PUSH_DATA (push, 0xe0810601);
-	PUSH_DATA (push, 0x00200780);
+	PUSH_DATA (push, 0x00200780); /* add f32 $r0 (mul a[0xc] c0[0x4]) $r0 */
 	PUSH_DATA (push, 0xe0840605);
-	PUSH_DATA (push, 0x00204780);
+	PUSH_DATA (push, 0x00204780); /* add f32 $r1 (mul a[0xc] c0[0x10]) $r1 */
 	PUSH_DATA (push, 0xe0870609);
-	PUSH_DATA (push, 0x00208780);
+	PUSH_DATA (push, 0x00208780); /* add f32 $r2 (mul a[0xc] c0[0x1c]) $r2 */
 	PUSH_DATA (push, 0xb1000001);
-	PUSH_DATA (push, 0x00008780);
+	PUSH_DATA (push, 0x00008780); /* add rn f32 $r0 $r0 c0[0x8] */
 	PUSH_DATA (push, 0xb1000205);
-	PUSH_DATA (push, 0x00014780);
+	PUSH_DATA (push, 0x00014780); /* add rn f32 $r1 $r1 c0[0x14] */
 	PUSH_DATA (push, 0xb1000409);
-	PUSH_DATA (push, 0x00020780);
+	PUSH_DATA (push, 0x00020780); /* add rn f32 $r2 $r2 c0[0x20] */
 	PUSH_DATA (push, 0x90000409);
-	PUSH_DATA (push, 0x00000780);
+	PUSH_DATA (push, 0x00000780); /* rcp f32 $r2 $r2 */
 	PUSH_DATA (push, 0xc0020001);
-	PUSH_DATA (push, 0x00000780);
+	PUSH_DATA (push, 0x00000780); /* mul rn f32 $r0 $r0 $r2 */
 	PUSH_DATA (push, 0xc0020205);
-	PUSH_DATA (push, 0x00000780);
+	PUSH_DATA (push, 0x00000780); /* mul rn f32 $r1 $r1 $r2 */
 	PUSH_DATA (push, 0xc0890009);
-	PUSH_DATA (push, 0x00000788);
+	PUSH_DATA (push, 0x00000788); /* mul rn f32 o[0x8] $r0 c0[0x24] */
 	PUSH_DATA (push, 0xc08a020d);
-	PUSH_DATA (push, 0x00000788);
+	PUSH_DATA (push, 0x00000788); /* mul rn f32 o[0xc] $r1 c0[0x28] */
 	PUSH_DATA (push, 0xc08b0801);
-	PUSH_DATA (push, 0x00200780);
+	PUSH_DATA (push, 0x00200780); /* mul rn f32 $r0 a[0x10] c0[0x2c] */
 	PUSH_DATA (push, 0xc08e0805);
-	PUSH_DATA (push, 0x00200780);
+	PUSH_DATA (push, 0x00200780); /* mul rn f32 $r1 a[0x10] c0[0x38] */
 	PUSH_DATA (push, 0xc0910809);
-	PUSH_DATA (push, 0x00200780);
+	PUSH_DATA (push, 0x00200780); /* mul rn f32 $r2 a[0x10] c0[0x44] */
 	PUSH_DATA (push, 0xe08c0a01);
-	PUSH_DATA (push, 0x00200780);
+	PUSH_DATA (push, 0x00200780); /* add f32 $r0 (mul a[0x14] c0[0x30]) $r0 */
 	PUSH_DATA (push, 0xe08f0a05);
-	PUSH_DATA (push, 0x00204780);
+	PUSH_DATA (push, 0x00204780); /* add f32 $r1 (mul a[0x14] c0[0x3c]) $r1 */
 	PUSH_DATA (push, 0xe0920a09);
-	PUSH_DATA (push, 0x00208780);
+	PUSH_DATA (push, 0x00208780); /* add f32 $r2 (mul a[0x14] c0[0x48]) $r2 */
 	PUSH_DATA (push, 0xb1000001);
-	PUSH_DATA (push, 0x00034780);
+	PUSH_DATA (push, 0x00034780); /* add rn f32 $r0 $r0 c0[0x34] */
 	PUSH_DATA (push, 0xb1000205);
-	PUSH_DATA (push, 0x00040780);
+	PUSH_DATA (push, 0x00040780); /* add rn f32 $r1 $r1 c0[0x40] */
 	PUSH_DATA (push, 0xb1000409);
-	PUSH_DATA (push, 0x0004c780);
+	PUSH_DATA (push, 0x0004c780); /* add rn f32 $r2 $r2 c0[0x4c] */
 	PUSH_DATA (push, 0x90000409);
-	PUSH_DATA (push, 0x00000780);
+	PUSH_DATA (push, 0x00000780); /* rcp f32 $r2 $r2 */
 	PUSH_DATA (push, 0xc0020001);
-	PUSH_DATA (push, 0x00000780);
+	PUSH_DATA (push, 0x00000780); /* mul rn f32 $r0 $r0 $r2 */
 	PUSH_DATA (push, 0xc0020205);
-	PUSH_DATA (push, 0x00000780);
+	PUSH_DATA (push, 0x00000780); /* mul rn f32 $r1 $r1 $r2 */
 	PUSH_DATA (push, 0xc0940011);
-	PUSH_DATA (push, 0x00000788);
+	PUSH_DATA (push, 0x00000788); /* mul rn f32 o[0x10] $r0 c0[0x50] */
 	PUSH_DATA (push, 0xc0950215);
-	PUSH_DATA (push, 0x00000789);
+	PUSH_DATA (push, 0x00000789); /* exit mul rn f32 o[0x14] $r1 c0[0x54] */
 
 	/* fetch only VTX_ATTR[0,8,9].xy */
 	BEGIN_NV04(push, NV50_3D(VP_ATTR_EN(0)), 2);
@@ -305,116 +307,116 @@ NVAccelInitNV50TCL(ScrnInfoPtr pScrn)
 	PUSH_DATA (push, 0);
 
 	PUSH_DATAu(push, pNv->scratch, PFP_OFFSET + PFP_S, 6);
-	PUSH_DATA (push, 0x80000000);
-	PUSH_DATA (push, 0x90000004);
-	PUSH_DATA (push, 0x82010200);
-	PUSH_DATA (push, 0x82020204);
+	PUSH_DATA (push, 0x80000000); /* interp $r0 v[0x0] */
+	PUSH_DATA (push, 0x90000004); /* rcp f32 $r1 $r0 */
+	PUSH_DATA (push, 0x82010200); /* interp $r0 v[0x4] $r1 */
+	PUSH_DATA (push, 0x82020204); /* interp $r1 v[0x8] $r1 */
 	PUSH_DATA (push, 0xf6400001);
-	PUSH_DATA (push, 0x0000c785);
+	PUSH_DATA (push, 0x0000c785); /* exit texauto live $r0:$r1:$r2:$r3 $t0 $s0 $r0:$r1 0x0 0x0 0x0 */
 	PUSH_DATAu(push, pNv->scratch, PFP_OFFSET + PFP_C, 16);
-	PUSH_DATA (push, 0x80000000);
-	PUSH_DATA (push, 0x90000004);
-	PUSH_DATA (push, 0x82030210);
-	PUSH_DATA (push, 0x82040214);
-	PUSH_DATA (push, 0x82010200);
-	PUSH_DATA (push, 0x82020204);
+	PUSH_DATA (push, 0x80000000); /* interp $r0 v[0x0] */
+	PUSH_DATA (push, 0x90000004); /* rcp f32 $r1 $r0 */
+	PUSH_DATA (push, 0x82030210); /* interp $r4 v[0xc] $r1 */
+	PUSH_DATA (push, 0x82040214); /* interp $r5 v[0x10] $r1 */
+	PUSH_DATA (push, 0x82010200); /* interp $r0 v[0x4] $r1 */
+	PUSH_DATA (push, 0x82020204); /* interp $r1 v[0x8] $r1 */
 	PUSH_DATA (push, 0xf6400001);
-	PUSH_DATA (push, 0x0000c784);
+	PUSH_DATA (push, 0x0000c784); /* texauto live $r0:$r1:$r2:$r3 $t0 $s0 $r0:$r1 0x0 0x0 0x0 */
 	PUSH_DATA (push, 0xf0400211);
-	PUSH_DATA (push, 0x00008784);
-	PUSH_DATA (push, 0xc0040000);
-	PUSH_DATA (push, 0xc0040204);
+	PUSH_DATA (push, 0x00008784); /* texauto live #:#:#:$r4 $t1 $s0 $r4:$r5 0x0 0x0 0x0 */
+	PUSH_DATA (push, 0xc0040000); /* mul f32 $r0 $r0 $r4 */
+	PUSH_DATA (push, 0xc0040204); /* mul f32 $r1 $r1 $r4 */
 	PUSH_DATA (push, 0xc0040409);
-	PUSH_DATA (push, 0x00000780);
+	PUSH_DATA (push, 0x00000780); /* mul rn f32 $r2 $r2 $r4 */
 	PUSH_DATA (push, 0xc004060d);
-	PUSH_DATA (push, 0x00000781);
+	PUSH_DATA (push, 0x00000781); /* exit mul rn f32 $r3 $r3 $r4 */
 	PUSH_DATAu(push, pNv->scratch, PFP_OFFSET + PFP_CCA, 16);
-	PUSH_DATA (push, 0x80000000);
-	PUSH_DATA (push, 0x90000004);
-	PUSH_DATA (push, 0x82030210);
-	PUSH_DATA (push, 0x82040214);
-	PUSH_DATA (push, 0x82010200);
-	PUSH_DATA (push, 0x82020204);
+	PUSH_DATA (push, 0x80000000); /* interp $r0 v[0x0] */
+	PUSH_DATA (push, 0x90000004); /* rcp f32 $r1 $r0 */
+	PUSH_DATA (push, 0x82030210); /* interp $r4 v[0xc] $r1 */
+	PUSH_DATA (push, 0x82040214); /* interp $r5 v[0x10] $r1 */
+	PUSH_DATA (push, 0x82010200); /* interp $r0 v[0x4] $r1 */
+	PUSH_DATA (push, 0x82020204); /* interp $r1 v[0x8] $r1 */
 	PUSH_DATA (push, 0xf6400001);
-	PUSH_DATA (push, 0x0000c784);
+	PUSH_DATA (push, 0x0000c784); /* texauto live $r0:$r1:$r2:$r3 $t0 $s0 $r0:$r1 0x0 0x0 0x0 */
 	PUSH_DATA (push, 0xf6400211);
-	PUSH_DATA (push, 0x0000c784);
-	PUSH_DATA (push, 0xc0040000);
-	PUSH_DATA (push, 0xc0050204);
+	PUSH_DATA (push, 0x0000c784); /* texauto live $r4:$r5:$r6:$r7 $t1 $s0 $r4:$r5 0x0 0x0 0x0 */
+	PUSH_DATA (push, 0xc0040000); /* mul f32 $r0 $r0 $r4 */
+	PUSH_DATA (push, 0xc0050204); /* mul f32 $r1 $r1 $r5 */
 	PUSH_DATA (push, 0xc0060409);
-	PUSH_DATA (push, 0x00000780);
+	PUSH_DATA (push, 0x00000780); /* mul rn f32 $r2 $r2 $r6 */
 	PUSH_DATA (push, 0xc007060d);
-	PUSH_DATA (push, 0x00000781);
+	PUSH_DATA (push, 0x00000781); /* exit mul rn f32 $r3 $r3 $r7 */
 	PUSH_DATAu(push, pNv->scratch, PFP_OFFSET + PFP_CCASA, 16);
-	PUSH_DATA (push, 0x80000000);
-	PUSH_DATA (push, 0x90000004);
-	PUSH_DATA (push, 0x82030200);
-	PUSH_DATA (push, 0x82040204);
-	PUSH_DATA (push, 0x82010210);
-	PUSH_DATA (push, 0x82020214);
+	PUSH_DATA (push, 0x80000000); /* interp $r0 v[0x0] */
+	PUSH_DATA (push, 0x90000004); /* rcp f32 $r1 $r0 */
+	PUSH_DATA (push, 0x82030200); /* interp $r0 v[0xc] $r1 */
+	PUSH_DATA (push, 0x82040204); /* interp $r1 v[0x10] $r1 */
+	PUSH_DATA (push, 0x82010210); /* interp $r4 v[0x4] $r1 */
+	PUSH_DATA (push, 0x82020214); /* interp $r5 v[0x8] $r1 */
 	PUSH_DATA (push, 0xf6400201);
-	PUSH_DATA (push, 0x0000c784);
+	PUSH_DATA (push, 0x0000c784); /* texauto live $r0:$r1:$r2:$r3 $t1 $s0 $r0:$r1 0x0 0x0 0x0 */
 	PUSH_DATA (push, 0xf0400011);
-	PUSH_DATA (push, 0x00008784);
-	PUSH_DATA (push, 0xc0040000);
-	PUSH_DATA (push, 0xc0040204);
+	PUSH_DATA (push, 0x00008784); /* texauto live #:#:#:$r4 $t0 $s0 $r4:$r5 0x0 0x0 0x0 */
+	PUSH_DATA (push, 0xc0040000); /* mul f32 $r0 $r0 $r4 */
+	PUSH_DATA (push, 0xc0040204); /* mul f32 $r1 $r1 $r4 */
 	PUSH_DATA (push, 0xc0040409);
-	PUSH_DATA (push, 0x00000780);
+	PUSH_DATA (push, 0x00000780); /* mul rn f32 $r2 $r2 $r4 */
 	PUSH_DATA (push, 0xc004060d);
-	PUSH_DATA (push, 0x00000781);
+	PUSH_DATA (push, 0x00000781); /* exit mul rn f32 $r3 $r3 $r4 */
 	PUSH_DATAu(push, pNv->scratch, PFP_OFFSET + PFP_S_A8, 10);
-	PUSH_DATA (push, 0x80000000);
-	PUSH_DATA (push, 0x90000004);
-	PUSH_DATA (push, 0x82010200);
-	PUSH_DATA (push, 0x82020204);
+	PUSH_DATA (push, 0x80000000); /* interp $r0 v[0x0] */
+	PUSH_DATA (push, 0x90000004); /* rcp f32 $r1 $r0 */
+	PUSH_DATA (push, 0x82010200); /* interp $r0 v[0x4] $r1 */
+	PUSH_DATA (push, 0x82020204); /* interp $r1 v[0x8] $r1 */
 	PUSH_DATA (push, 0xf0400001);
-	PUSH_DATA (push, 0x00008784);
-	PUSH_DATA (push, 0x10008004);
-	PUSH_DATA (push, 0x10008008);
+	PUSH_DATA (push, 0x00008784); /* texauto live #:#:#:$r0 $t0 $s0 $r0:$r1 0x0 0x0 0x0 */
+	PUSH_DATA (push, 0x10008004); /* mov b32 $r1 $r0 */
+	PUSH_DATA (push, 0x10008008); /* mov b32 $r2 $r0 */
 	PUSH_DATA (push, 0x1000000d);
-	PUSH_DATA (push, 0x0403c781);
+	PUSH_DATA (push, 0x0403c781); /* exit mov b32 $r3 $r0 */
 	PUSH_DATAu(push, pNv->scratch, PFP_OFFSET + PFP_C_A8, 16);
-	PUSH_DATA (push, 0x80000000);
-	PUSH_DATA (push, 0x90000004);
-	PUSH_DATA (push, 0x82030208);
-	PUSH_DATA (push, 0x8204020c);
-	PUSH_DATA (push, 0x82010200);
-	PUSH_DATA (push, 0x82020204);
+	PUSH_DATA (push, 0x80000000); /* interp $r0 v[0x0] */
+	PUSH_DATA (push, 0x90000004); /* rcp f32 $r1 $r0 */
+	PUSH_DATA (push, 0x82030208); /* interp $r2 v[0xc] $r1 */
+	PUSH_DATA (push, 0x8204020c); /* interp $r3 v[0x10] $r1 */
+	PUSH_DATA (push, 0x82010200); /* interp $r0 v[0x4] $r1 */
+	PUSH_DATA (push, 0x82020204); /* interp $r1 v[0x8] $r1 */
 	PUSH_DATA (push, 0xf0400001);
-	PUSH_DATA (push, 0x00008784);
+	PUSH_DATA (push, 0x00008784); /* texauto live #:#:#:$r0 $t0 $s0 $r0:$r1 0x0 0x0 0x0 */
 	PUSH_DATA (push, 0xf0400209);
-	PUSH_DATA (push, 0x00008784);
+	PUSH_DATA (push, 0x00008784); /* texauto live #:#:#:$r2 $t1 $s0 $r2:$r3 0x0 0x0 0x0 */
 	PUSH_DATA (push, 0xc002000d);
-	PUSH_DATA (push, 0x00000780);
-	PUSH_DATA (push, 0x10008600);
-	PUSH_DATA (push, 0x10008604);
+	PUSH_DATA (push, 0x00000780); /* mul rn f32 $r3 $r0 $r2 */
+	PUSH_DATA (push, 0x10008600); /* mov b32 $r0 $r3 */
+	PUSH_DATA (push, 0x10008604); /* mov b32 $r1 $r3 */
 	PUSH_DATA (push, 0x10000609);
-	PUSH_DATA (push, 0x0403c781);
+	PUSH_DATA (push, 0x0403c781); /* exit mov b32 $r2 $r3 */
 	PUSH_DATAu(push, pNv->scratch, PFP_OFFSET + PFP_NV12, 24);
-	PUSH_DATA (push, 0x80000008);
-	PUSH_DATA (push, 0x90000408);
-	PUSH_DATA (push, 0x82010400);
-	PUSH_DATA (push, 0x82020404);
+	PUSH_DATA (push, 0x80000008); /* interp $r2 v[0x0] */
+	PUSH_DATA (push, 0x90000408); /* rcp f32 $r2 $r2 */
+	PUSH_DATA (push, 0x82010400); /* interp $r0 v[0x4] $r2 */
+	PUSH_DATA (push, 0x82020404); /* interp $r1 v[0x8] $r2 */
 	PUSH_DATA (push, 0xf0400001);
-	PUSH_DATA (push, 0x00008784);
-	PUSH_DATA (push, 0xc0800014);
-	PUSH_DATA (push, 0xb0810a0c);
-	PUSH_DATA (push, 0xb0820a10);
-	PUSH_DATA (push, 0xb0830a14);
-	PUSH_DATA (push, 0x82010400);
-	PUSH_DATA (push, 0x82020404);
+	PUSH_DATA (push, 0x00008784); /* texauto live #:#:#:$r0 $t0 $s0 $r0:$r1 0x0 0x0 0x0 */
+	PUSH_DATA (push, 0xc0800014); /* mul f32 $r5 $r0 c0[0x0] */
+	PUSH_DATA (push, 0xb0810a0c); /* add f32 $r3 $r5 c0[0x4] */
+	PUSH_DATA (push, 0xb0820a10); /* add f32 $r4 $r5 c0[0x8] */
+	PUSH_DATA (push, 0xb0830a14); /* add f32 $r5 $r5 c0[0xc] */
+	PUSH_DATA (push, 0x82010400); /* interp $r0 v[0x4] $r2 */
+	PUSH_DATA (push, 0x82020404); /* interp $r1 v[0x8] $r2 */
 	PUSH_DATA (push, 0xf0400201);
-	PUSH_DATA (push, 0x0000c784);
-	PUSH_DATA (push, 0xe084000c);
-	PUSH_DATA (push, 0xe0850010);
+	PUSH_DATA (push, 0x0000c784); /* texauto live #:#:$r0:$r1 $t1 $s0 $r0:$r1 0x0 0x0 0x0 */
+	PUSH_DATA (push, 0xe084000c); /* add f32 $r3 (mul $r0 c0[0x10]) $r3 */
+	PUSH_DATA (push, 0xe0850010); /* add f32 $r4 (mul $r0 c0[0x14]) $r4 */
 	PUSH_DATA (push, 0xe0860015);
-	PUSH_DATA (push, 0x00014780);
+	PUSH_DATA (push, 0x00014780); /* add f32 $r5 (mul $r0 c0[0x18]) $r5 */
 	PUSH_DATA (push, 0xe0870201);
-	PUSH_DATA (push, 0x0000c780);
+	PUSH_DATA (push, 0x0000c780); /* add f32 $r0 (mul $r1 c0[0x1c]) $r3 */
 	PUSH_DATA (push, 0xe0890209);
-	PUSH_DATA (push, 0x00014780);
+	PUSH_DATA (push, 0x00014780); /* add f32 $r2 (mul $r1 c0[0x24]) $r5 */
 	PUSH_DATA (push, 0xe0880205);
-	PUSH_DATA (push, 0x00010781);
+	PUSH_DATA (push, 0x00010781); /* exit add f32 $r1 (mul $r1 c0[0x20]) $r4 */
 
 	/* HPOS.xy = ($o0, $o1), HPOS.zw = (0.0, 1.0), then map $o2 - $o5 */
 	BEGIN_NV04(push, NV50_3D(VP_RESULT_MAP(0)), 2);
@@ -454,4 +456,3 @@ NVAccelInitNV50TCL(ScrnInfoPtr pScrn)
 
 	return TRUE;
 }
-

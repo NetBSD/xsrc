@@ -21,6 +21,7 @@
  */
 
 #include <stdio.h>
+#include <fcntl.h>
 
 #include "nv_include.h"
 
@@ -33,7 +34,6 @@
 #endif
 
 #include "nouveau_copy.h"
-#include "nouveau_glamor.h"
 #include "nouveau_present.h"
 #include "nouveau_sync.h"
 
@@ -299,21 +299,21 @@ NVOpenNouveauDevice(struct pci_device *pci_dev,
 	char *busid;
 	int ret, fd = -1;
 
-#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,9,99,901,0)
-	XNFasprintf(&busid, "pci:%04x:%02x:%02x.%d",
-		    pci_dev->domain, pci_dev->bus, pci_dev->dev, pci_dev->func);
-#else
-	busid = XNFprintf("pci:%04x:%02x:%02x.%d",
-			  pci_dev->domain, pci_dev->bus, pci_dev->dev, pci_dev->func);
+#ifdef ODEV_ATTRIB_PATH
+	if (platform_dev)
+		busid = NULL;
+	else
 #endif
-
-	if (probe) {
-		ret = drmCheckModesettingSupported(busid);
-		if (ret) {
-			xf86DrvMsg(scrnIndex, X_ERROR, "[drm] KMS not enabled\n");
-			free(busid);
-			return NULL;
-		}
+	{
+#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,9,99,901,0)
+		XNFasprintf(&busid, "pci:%04x:%02x:%02x.%d",
+			    pci_dev->domain, pci_dev->bus,
+			    pci_dev->dev, pci_dev->func);
+#else
+		busid = XNFprintf("pci:%04x:%02x:%02x.%d",
+				  pci_dev->domain, pci_dev->bus,
+				  pci_dev->dev, pci_dev->func);
+#endif
 	}
 
 #if defined(ODEV_ATTRIB_FD)
@@ -323,6 +323,19 @@ NVOpenNouveauDevice(struct pci_device *pci_dev,
 #endif
 	if (fd != -1)
 		ret = nouveau_device_wrap(fd, 0, &dev);
+#ifdef ODEV_ATTRIB_PATH
+	else if (platform_dev) {
+		const char *path;
+
+		path = xf86_get_platform_device_attrib(platform_dev,
+						       ODEV_ATTRIB_PATH);
+
+		fd = open(path, O_RDWR | O_CLOEXEC);
+		ret = nouveau_device_wrap(fd, 1, &dev);
+		if (ret)
+			close(fd);
+	}
+#endif
 	else
 		ret = nouveau_device_open(busid, &dev);
 	if (ret)
@@ -376,10 +389,9 @@ NVHasKMS(struct pci_device *pci_dev, struct xf86_platform_device *platform_dev)
 	case 0xe0:
 	case 0xf0:
 	case 0x100:
-	case 0x110:
 		break;
 	default:
-		xf86DrvMsg(-1, X_ERROR, "Unknown chipset: NV%02x\n", chipset);
+		xf86DrvMsg(-1, X_ERROR, "Unknown chipset: NV%02X\n", chipset);
 		return FALSE;
 	}
 	return TRUE;
@@ -416,9 +428,6 @@ NVPlatformProbe(DriverPtr driver,
 {
 	ScrnInfoPtr scrn = NULL;
 	uint32_t scr_flags = 0;
-
-	if (!dev->pdev)
-		return FALSE;
 
 	if (!NVHasKMS(dev->pdev, dev))
 		return FALSE;
@@ -546,7 +555,11 @@ redisplay_dirty(ScreenPtr screen, PixmapDirtyUpdatePtr dirty)
 	PixmapRegionInit(&pixregion, dirty->slave_dst);
 
 	DamageRegionAppend(&dirty->slave_dst->drawable, &pixregion);
+#ifdef HAS_DIRTYTRACKING_ROTATION
+	PixmapSyncDirtyHelper(dirty);
+#else
 	PixmapSyncDirtyHelper(dirty, &pixregion);
+#endif
 
 	DamageRegionProcessPending(&dirty->slave_dst->drawable);
 	RegionUninit(&pixregion);
@@ -610,9 +623,6 @@ NVCreateScreenResources(ScreenPtr pScreen)
 	if (pNv->AccelMethod == EXA) {
 		PixmapPtr ppix = pScreen->GetScreenPixmap(pScreen);
 		nouveau_bo_ref(pNv->scanout, &nouveau_pixmap(ppix)->bo);
-	} else
-	if (pNv->AccelMethod == GLAMOR) {
-		nouveau_glamor_create_screen_resources(pScreen);
 	}
 
 	return TRUE;
@@ -721,6 +731,7 @@ NVCloseDRM(ScrnInfoPtr pScrn)
 	drmFree(pNv->drm_device_name);
 	nouveau_client_del(&pNv->client);
 	nouveau_device_del(&pNv->dev);
+	free(pNv->render_node);
 }
 
 static void
@@ -1033,9 +1044,6 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
 	if (string) {
 		if      (!strcmp(string,   "none")) pNv->AccelMethod = NONE;
 		else if (!strcmp(string,    "exa")) pNv->AccelMethod = EXA;
-#ifdef HAVE_GLAMOR
-		else if (!strcmp(string, "glamor")) pNv->AccelMethod = GLAMOR;
-#endif
 		else {
 			xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
 				   "Invalid AccelMethod specified\n");
@@ -1043,12 +1051,7 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
 	}
 
 	if (pNv->AccelMethod == UNKNOWN) {
-#ifdef HAVE_GLAMOR
-		if (pNv->Architecture >= NV_MAXWELL)
-			pNv->AccelMethod = GLAMOR;
-		else
-#endif
-			pNv->AccelMethod = EXA;
+		pNv->AccelMethod = EXA;
 	}
 
 	if (xf86ReturnOptValBool(pNv->Options, OPTION_NOACCEL, FALSE)) {
@@ -1071,13 +1074,26 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
 		pNv->tiled_scanout = TRUE;
 	}
 
-	if (pNv->AccelMethod == GLAMOR) {
-		if (!nouveau_glamor_pre_init(pScrn))
-			pNv->AccelMethod = EXA;
-	}
-
 	pNv->ce_enabled =
 		xf86ReturnOptValBool(pNv->Options, OPTION_ASYNC_COPY, FALSE);
+
+	/* Define maximum allowed level of DRI implementation to use.
+	 * We default to DRI2 on EXA for now, as DRI3 still has some
+	 * problems.
+	 */
+	pNv->max_dri_level = 2;
+	from = X_DEFAULT;
+
+	if (xf86GetOptValInteger(pNv->Options, OPTION_DRI,
+				 &pNv->max_dri_level)) {
+		from = X_CONFIG;
+		if (pNv->max_dri_level < 2)
+			pNv->max_dri_level = 2;
+		if (pNv->max_dri_level > 3)
+			pNv->max_dri_level = 3;
+	}
+	xf86DrvMsg(pScrn->scrnIndex, from, "Allowed maximum DRI level %i.\n",
+		   pNv->max_dri_level);
 
 	if (pNv->AccelMethod > NONE && pNv->dev->chipset >= 0x11) {
 		from = X_DEFAULT;
@@ -1351,9 +1367,6 @@ NVScreenInit(SCREEN_INIT_ARGS_DECL)
 	}
 
 	nouveau_copy_init(pScreen);
-	nouveau_sync_init(pScreen);
-	nouveau_dri2_init(pScreen);
-	nouveau_present_init(pScreen);
 
 	/* Allocate and map memory areas we need */
 	if (!NVMapMem(pScrn))
@@ -1461,11 +1474,20 @@ NVScreenInit(SCREEN_INIT_ARGS_DECL)
 
 	xf86SetBlackWhitePixels(pScreen);
 
-	if (pNv->AccelMethod == GLAMOR) {
-		if (!nouveau_glamor_init(pScreen))
-			return FALSE;
-	} else
+	if (nouveau_present_init(pScreen))
+		xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+			   "Hardware support for Present enabled\n");
+	else
+		xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+			   "Hardware support for Present disabled\n");
+
+	nouveau_sync_init(pScreen);
+	nouveau_dri2_init(pScreen);
 	if (pNv->AccelMethod == EXA) {
+		if (pNv->max_dri_level >= 3 &&
+		    !nouveau_dri3_screen_init(pScreen))
+			return FALSE;
+
 		if (!nouveau_exa_init(pScreen))
 			return FALSE;
 	}

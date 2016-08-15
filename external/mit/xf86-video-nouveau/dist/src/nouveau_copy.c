@@ -61,6 +61,10 @@ nouveau_copy_init(ScreenPtr pScreen)
 
 	switch (pNv->Architecture) {
 	case NV_TESLA:
+		if (pNv->dev->chipset < 0xa3 ||
+		    pNv->dev->chipset == 0xaa ||
+		    pNv->dev->chipset == 0xac)
+			return FALSE;
 		data = &(struct nv04_fifo) {
 			.vram = NvDmaFB,
 			.gart = NvDmaTT,
@@ -87,7 +91,7 @@ nouveau_copy_init(ScreenPtr pScreen)
 				 &pNv->ce_channel);
 	if (ret) {
 		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-			   "[COPY} error allocating channel: %d\n", ret);
+			   "[COPY] error allocating channel: %d\n", ret);
 		return FALSE;
 	}
 

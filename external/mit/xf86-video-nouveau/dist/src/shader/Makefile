@@ -24,20 +24,21 @@ NVF0_SHADERS = xfrm2nvf0.vpc \
 	       videonvf0.fpc
 
 SHADERS = $(NVC0_SHADERS) $(NVE0_SHADERS) $(NVF0_SHADERS)
+ENVYAS ?= envyas
 
 all: $(SHADERS)
 
 $(filter %nvc0.vpc,$(SHADERS)): %.vpc: %.vp
-	cpp -DENVYAS $< | sed -e '/^#/d' | envyas -w -m nvc0 -o $@
+	cpp -DENVYAS $< | sed -e '/^#/d' | $(ENVYAS) -w -m nvc0 -o $@
 $(filter %nvc0.fpc,$(SHADERS)): %.fpc: %.fp
-	cpp -DENVYAS $< | sed -e '/^#/d' | envyas -w -m nvc0 -o $@
+	cpp -DENVYAS $< | sed -e '/^#/d' | $(ENVYAS) -w -m nvc0 -o $@
 
 $(filter %nve0.vpc,$(SHADERS)): %.vpc: %.vp
-	cpp -DENVYAS $< | sed -e '/^#/d' | envyas -w -m nvc0 -V nve4 -o $@
+	cpp -DENVYAS $< | sed -e '/^#/d' | $(ENVYAS) -w -m nvc0 -V nve4 -o $@
 $(filter %nve0.fpc,$(SHADERS)): %.fpc: %.fp
-	cpp -DENVYAS $< | sed -e '/^#/d' | envyas -w -m nvc0 -V nve4 -o $@
+	cpp -DENVYAS $< | sed -e '/^#/d' | $(ENVYAS) -w -m nvc0 -V nve4 -o $@
 
 $(filter %nvf0.vpc,$(SHADERS)): %.vpc: %.vp
-	cpp -DENVYAS $< | sed -e '/^#/d' | envyas -w -m gk110 -o $@
+	cpp -DENVYAS $< | sed -e '/^#/d' | $(ENVYAS) -w -m gk110 -o $@
 $(filter %nvf0.fpc,$(SHADERS)): %.fpc: %.fp
-	cpp -DENVYAS $< | sed -e '/^#/d' | envyas -w -m gk110 -o $@
+	cpp -DENVYAS $< | sed -e '/^#/d' | $(ENVYAS) -w -m gk110 -o $@
