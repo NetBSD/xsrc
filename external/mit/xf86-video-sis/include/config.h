@@ -33,8 +33,10 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
+#if 0
  /* Define to 1 if you have the <xaa.h> header file. */
 #define HAVE_XAA_H 1
+#endif
 
 /* xextproto 7.1 available */
 #define HAVE_XEXTPROTO_71 1
@@ -53,7 +55,7 @@
 #define PACKAGE_NAME "xf86-video-sis"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-video-sis 0.10.7"
+#define PACKAGE_STRING "xf86-video-sis 0.10.8"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-video-sis"
@@ -63,7 +65,7 @@
 
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.10.7"
+#define PACKAGE_VERSION "0.10.8"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 0
@@ -72,7 +74,7 @@
 #define PACKAGE_VERSION_MINOR 10
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 7
+#define PACKAGE_VERSION_PATCHLEVEL 8
 
 /* Enable DRI driver support */
 #undef SISDRI
@@ -84,7 +86,7 @@
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "0.10.7"
+#define VERSION "0.10.8"
 
 /* Build support for Exa */
 #define XF86EXA 1
