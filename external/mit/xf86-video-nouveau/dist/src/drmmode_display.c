@@ -42,8 +42,6 @@
 #include "libudev.h"
 #endif
 
-#include "nouveau_glamor.h"
-
 static Bool drmmode_xf86crtc_resize(ScrnInfoPtr scrn, int width, int height);
 typedef struct {
     int fd;
@@ -106,9 +104,6 @@ drmmode_from_scrn(ScrnInfoPtr scrn)
 static inline struct nouveau_pixmap *
 drmmode_pixmap(PixmapPtr ppix)
 {
-	NVPtr pNv = NVPTR(xf86ScreenToScrn(ppix->drawable.pScreen));
-	if (pNv->AccelMethod == GLAMOR)
-		return nouveau_glamor_pixmap_get(ppix);
 	return nouveau_pixmap(ppix);
 }
 
@@ -332,13 +327,24 @@ drmmode_fbcon_copy(ScreenPtr pScreen)
 	ExaDriverPtr exa = pNv->EXADriverPtr;
 	xf86CrtcConfigPtr xf86_config = XF86_CRTC_CONFIG_PTR(pScrn);
 	struct nouveau_bo *bo = NULL;
-	PixmapPtr pspix, pdpix;
+	PixmapPtr pspix, pdpix = NULL;
 	drmModeFBPtr fb;
 	unsigned w = pScrn->virtualX, h = pScrn->virtualY;
 	int i, ret, fbcon_id = 0;
 
 	if (pNv->AccelMethod != EXA)
 		goto fallback;
+
+	pdpix = drmmode_pixmap_wrap(pScreen, pScrn->virtualX,
+				    pScrn->virtualY, pScrn->depth,
+				    pScrn->bitsPerPixel, pScrn->displayWidth *
+				    pScrn->bitsPerPixel / 8, pNv->scanout,
+				    NULL);
+	if (!pdpix) {
+		xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
+			   "Failed to init scanout pixmap for fbcon mirror\n");
+		goto fallback;
+	}
 
 	for (i = 0; i < xf86_config->num_crtc; i++) {
 		drmmode_crtc_private_ptr drmmode_crtc =
@@ -382,18 +388,6 @@ drmmode_fbcon_copy(ScreenPtr pScreen)
 		goto fallback;
 	}
 
-	pdpix = drmmode_pixmap_wrap(pScreen, pScrn->virtualX,
-				    pScrn->virtualY, pScrn->depth,
-				    pScrn->bitsPerPixel, pScrn->displayWidth *
-				    pScrn->bitsPerPixel / 8, pNv->scanout,
-				    NULL);
-	if (!pdpix) {
-		xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
-			   "Failed to init scanout pixmap for fbcon mirror\n");
-		pScreen->DestroyPixmap(pspix);
-		goto fallback;
-	}
-
 	exa->PrepareCopy(pspix, pdpix, 0, 0, GXcopy, ~0);
 	exa->Copy(pdpix, 0, 0, 0, 0, w, h);
 	exa->DoneCopy(pdpix);
@@ -410,6 +404,17 @@ drmmode_fbcon_copy(ScreenPtr pScreen)
 	return;
 
 fallback:
+	if (pdpix) {
+		if (exa->PrepareSolid(pdpix, GXcopy, ~0, 0)) {
+			exa->Solid(pdpix, 0, 0, w, h);
+			exa->DoneSolid(pdpix);
+			PUSH_KICK(pNv->pushbuf);
+			nouveau_bo_wait(pNv->scanout, NOUVEAU_BO_RDWR, pNv->client);
+			pScreen->DestroyPixmap(pdpix);
+			return;
+		}
+		pScreen->DestroyPixmap(pdpix);
+	}
 #endif
 	if (nouveau_bo_map(pNv->scanout, NOUVEAU_BO_WR, pNv->client))
 		return;
@@ -719,7 +724,9 @@ drmmode_set_scanout_pixmap(xf86CrtcPtr crtc, PixmapPtr ppix)
 		screen->height = screenpix->drawable.height = max_height;
 	}
 	drmmode_crtc->scanout_pixmap_x = this_x;
-#ifdef HAS_DIRTYTRACKING2
+#ifdef HAS_DIRTYTRACKING_ROTATION
+	PixmapStartDirtyTracking(ppix, screenpix, 0, 0, this_x, 0, RR_Rotate_0);
+#elif defined(HAS_DIRTYTRACKING2)
 	PixmapStartDirtyTracking2(ppix, screenpix, 0, 0, this_x, 0);
 #else
 	PixmapStartDirtyTracking(ppix, screenpix, 0, 0);
@@ -1204,7 +1211,7 @@ drmmode_zaphod_match(ScrnInfoPtr pScrn, const char *s, char *output_name)
 }
 
 static unsigned int
-drmmode_output_init(ScrnInfoPtr pScrn, drmmode_ptr drmmode, int num)
+drmmode_output_init(ScrnInfoPtr pScrn, drmmode_ptr drmmode, int num, int crtcshift)
 {
 	NVPtr pNv = NVPTR(pScrn);
 	xf86OutputPtr output;
@@ -1286,8 +1293,8 @@ drmmode_output_init(ScrnInfoPtr pScrn, drmmode_ptr drmmode, int num)
 	output->subpixel_order = subpixel_conv_table[koutput->subpixel];
 	output->driver_private = drmmode_output;
 
-	output->possible_crtcs = kencoder->possible_crtcs;
-	output->possible_clones = kencoder->possible_clones;
+	output->possible_crtcs = kencoder->possible_crtcs >> crtcshift;
+	output->possible_clones = kencoder->possible_clones >> crtcshift;
 
 	output->interlaceAllowed = true;
 	output->doubleScanAllowed = true;
@@ -1381,9 +1388,6 @@ drmmode_xf86crtc_resize(ScrnInfoPtr scrn, int width, int height)
 				       crtc->rotation, crtc->x, crtc->y);
 	}
 
-	if (pNv->AccelMethod == GLAMOR)
-		nouveau_glamor_create_screen_resources(scrn->pScreen);
-
 	if (old_fb_id)
 		drmModeRmFB(drmmode->fd, old_fb_id);
 	nouveau_bo_ref(NULL, &old_bo);
@@ -1411,6 +1415,7 @@ Bool drmmode_pre_init(ScrnInfoPtr pScrn, int fd, int cpp)
 	NVEntPtr pNVEnt = NVEntPriv(pScrn);
 	int i;
 	unsigned int crtcs_needed = 0;
+	int crtcshift;
 
 	drmmode = xnfalloc(sizeof *drmmode);
 	drmmode->fd = fd;
@@ -1434,8 +1439,9 @@ Bool drmmode_pre_init(ScrnInfoPtr pScrn, int fd, int cpp)
 	}
 
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Initializing outputs ...\n");
+	crtcshift = ffs(pNVEnt->assigned_crtcs ^ 0xffffffff) - 1;
 	for (i = 0; i < drmmode->mode_res->count_connectors; i++)
-		crtcs_needed += drmmode_output_init(pScrn, drmmode, i);
+		crtcs_needed += drmmode_output_init(pScrn, drmmode, i, crtcshift);
 
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 		   "%d crtcs needed for screen.\n", crtcs_needed);
