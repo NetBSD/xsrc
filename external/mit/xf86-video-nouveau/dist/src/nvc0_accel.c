@@ -180,9 +180,9 @@ NVAccelInit2D_NVC0(ScrnInfoPtr pScrn)
 	PUSH_DATA (push, 1);
 	BEGIN_NVC0(push, NV50_2D(COLOR_KEY_ENABLE), 1);
 	PUSH_DATA (push, 0);
-	BEGIN_NVC0(push, SUBC_2D(0x0884), 1);
+	BEGIN_NVC0(push, NV50_2D(UNK0884), 1);
 	PUSH_DATA (push, 0x3f);
-	BEGIN_NVC0(push, SUBC_2D(0x0888), 1);
+	BEGIN_NVC0(push, NV50_2D(UNK0888), 1);
 	PUSH_DATA (push, 1);
 	BEGIN_NVC0(push, NV50_2D(ROP), 1);
 	PUSH_DATA (push, 0x55);
@@ -217,8 +217,10 @@ NVAccelInit3D_NVC0(ScrnInfoPtr pScrn)
 	if (pNv->Architecture < NV_KEPLER) {
 		class  = 0x9097;
 		handle = 0x001f906e;
-	} else
-	if (pNv->dev->chipset < 0xf0) {
+	} else if (pNv->dev->chipset == 0xea) {
+		class = 0xa297;
+		handle = 0x0000906e;
+	} else if (pNv->dev->chipset < 0xf0) {
 		class  = 0xa097;
 		handle = 0x0000906e;
 	} else {
@@ -323,7 +325,7 @@ NVAccelInit3D_NVC0(ScrnInfoPtr pScrn)
 		BEGIN_NVC0(push, NVC0_3D(MEM_BARRIER), 1);
 		PUSH_DATA (push, 0x1111);
 	} else
-	if (pNv->dev->chipset < 0xf0) {
+	if (pNv->dev->chipset < 0xf0 && pNv->dev->chipset != 0xea) {
 		NVC0PushProgram(pNv, PVP_PASS, NVE0VP_Transform2);
 		NVC0PushProgram(pNv, PFP_S, NVE0FP_Source);
 		NVC0PushProgram(pNv, PFP_C, NVE0FP_Composite);

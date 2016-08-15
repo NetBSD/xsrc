@@ -697,9 +697,9 @@ NVAccelInitNV10TCL(ScrnInfoPtr pScrn)
 		PUSH_DATA (push, 0);
 	}
 
-	BEGIN_NV04(push, SUBC_3D(0x290), 1);
+	BEGIN_NV04(push, NV10_3D(UNK0290), 1);
 	PUSH_DATA (push, (0x10<<16)|1);
-	BEGIN_NV04(push, SUBC_3D(0x3f4), 1);
+	BEGIN_NV04(push, NV10_3D(UNK03F4), 1);
 	PUSH_DATA (push, 0);
 
 	BEGIN_NV04(push, NV04_GRAPH(3D, NOP), 1);
@@ -707,12 +707,12 @@ NVAccelInitNV10TCL(ScrnInfoPtr pScrn)
 
 	if (class != NV10_3D_CLASS) {
 		/* For nv11, nv17 */
-		BEGIN_NV04(push, SUBC_3D(0x120), 3);
+		BEGIN_NV04(push, SUBC_3D(NV15_3D_FLIP_SET_READ), 3);
 		PUSH_DATA (push, 0);
 		PUSH_DATA (push, 1);
 		PUSH_DATA (push, 2);
 
-		BEGIN_NV04(push, SUBC_BLIT(0x120), 3);
+		BEGIN_NV04(push, NV15_BLIT(FLIP_SET_READ), 3);
 		PUSH_DATA (push, 0);
 		PUSH_DATA (push, 1);
 		PUSH_DATA (push, 2);

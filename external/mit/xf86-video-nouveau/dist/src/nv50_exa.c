@@ -286,9 +286,9 @@ NV50EXACopy(PixmapPtr pdpix, int srcX , int srcY,
 	if (!PUSH_SPACE(push, 32))
 		return;
 
-	BEGIN_NV04(push, SUBC_2D(0x0110), 1);
+	BEGIN_NV04(push, SUBC_2D(NV50_GRAPH_SERIALIZE), 1);
 	PUSH_DATA (push, 0);
-	BEGIN_NV04(push, SUBC_2D(0x088c), 1);
+	BEGIN_NV04(push, NV50_2D(BLIT_CONTROL), 1);
 	PUSH_DATA (push, 0);
 	BEGIN_NV04(push, NV50_2D(BLIT_DST_X), 12);
 	PUSH_DATA (push, dstX);
@@ -837,7 +837,7 @@ NV50EXAPrepareComposite(int op,
 	PUSH_RESET(push);
 	PUSH_REFN (push, pNv->scratch, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
 
-	BEGIN_NV04(push, SUBC_2D(0x0110), 1);
+	BEGIN_NV04(push, SUBC_2D(NV50_GRAPH_SERIALIZE), 1);
 	PUSH_DATA (push, 0);
 
 	if (!NV50EXARenderTarget(pdpix, pdpict))
@@ -875,7 +875,7 @@ NV50EXAPrepareComposite(int op,
 			PUSH_DATA (push, PFP_S);
 	}
 
-	BEGIN_NV04(push, SUBC_3D(0x1334), 1);
+	BEGIN_NV04(push, NV50_3D(TIC_FLUSH), 1);
 	PUSH_DATA (push, 0);
 
 	BEGIN_NV04(push, NV50_3D(BIND_TIC(2)), 1);

@@ -81,8 +81,7 @@ are supported:
 Enable or disable the HW cursor.  Default: on.
 .TP
 .BI "Option \*qAccelMethod\*q \*q" string \*q
-Specify the acceleration method. One of \*qnone\*q, \*qexa\*q, or
-\*qglamor\*q. Default: exa, except for GMxxx which default to glamor.
+Specify the acceleration method. One of \*qnone\*q, or \*qexa\*q. Default: exa.
 .TP
 .BI "Option \*qNoAccel\*q \*q" boolean \*q
 Disable or enable acceleration.  Default: acceleration is enabled.
@@ -125,6 +124,12 @@ that relies on correct presentation timing behaviour as defined in that
 specification.
 .br
 Default: 1.
+.TP
+.BI "Option \*qDRI\*q \*q" integer \*q
+Define the maximum level of DRI to enable. Valid values are 2 or 3.
+exa acceleration will honor the maximum level if it is supported.
+Under glamor acceleration DRI3 is always enabled if supported,
+as glamor currently does not support DRI2. Default: 2 on exa, 3 on glamor.
 .SH "SEE ALSO"
 __xservername__(__appmansuffix__), __xconfigfile__(__filemansuffix__), Xserver(__appmansuffix__), X(__miscmansuffix__)
 .SH AUTHORS

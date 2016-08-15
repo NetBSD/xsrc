@@ -30,7 +30,6 @@ rcp f32 $r0 $r0
 interp mul f32 $r3 a[0x84] $r0 0x0
 interp mul f32 $r2 a[0x80] $r0 0x0
 tex t lauto live dfp #:#:#:$r4 t2d $t0 $s0 $r2:$r3 ()
-texbar 0x0
 interp mul f32 $r1 a[0x94] $r0 0x0
 interp mul f32 $r0 a[0x90] $r0 0x0
 tex t lauto live dfp $r0:$r1:$r2:$r3 t2d $t1 $s0 $r0:$r1 ()

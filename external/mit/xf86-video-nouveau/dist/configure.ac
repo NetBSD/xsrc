@@ -22,7 +22,7 @@
 
 AC_PREREQ([2.60])
 AC_INIT([xf86-video-nouveau],
-        [1.0.11],
+        [1.0.12],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
         [xf86-video-nouveau])
 
@@ -80,7 +80,7 @@ XORG_DRIVER_CHECK_EXT(DPMSExtension, xextproto)
 XORG_DRIVER_CHECK_EXT(DRI2, [dri2proto >= 2.6])
 
 # Checks for pkg-config packages
-PKG_CHECK_MODULES(LIBDRM, [libdrm >= 2.4.17])
+PKG_CHECK_MODULES(LIBDRM, [libdrm >= 2.4.60])
 PKG_CHECK_MODULES(LIBDRM_NOUVEAU, [libdrm_nouveau >= 2.4.25])
 AC_SUBST(LIBDRM_NOUVEAU_CFLAGS)
 AC_SUBST(LIBDRM_NOUVEAU_LIBS)
@@ -138,17 +138,6 @@ if test "x$have_list_h" = xyes; then
                   [#include <X11/Xdefs.h>
                    #include "xorg-server.h"
                    #include "list.h"])
-fi
-
-AC_CHECK_HEADERS([glamor.h],[found_glamor_header=yes],[found_glamor_header=no],
-		 [#include "xorg-server.h"])
-AC_MSG_CHECKING([whether to include GLAMOR support])
-if test "x$found_glamor_header" = xyes && pkg-config --exists "xorg-server >= 1.15.99.901"
-then
-	AC_DEFINE(HAVE_GLAMOR, 1, [Build support for glamor acceleration])
-	AC_MSG_RESULT([yes])
-else
-	AC_MSG_RESULT([no])
 fi
 
 AC_CONFIG_FILES([

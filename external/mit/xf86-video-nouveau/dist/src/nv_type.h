@@ -53,7 +53,6 @@ typedef struct _NVRec {
 	    UNKNOWN = 0,
 	    NONE,
 	    EXA,
-	    GLAMOR,
     } AccelMethod;
     void (*Flush)(ScrnInfoPtr);
 
@@ -71,6 +70,7 @@ typedef struct _NVRec {
     Bool		has_pageflip;
     int 		swap_limit;
     int 		max_swap_limit;
+    int 		max_dri_level;
 
     ScreenBlockHandlerProcPtr BlockHandler;
     CreateScreenResourcesProcPtr CreateScreenResources;
@@ -140,6 +140,8 @@ typedef struct _NVRec {
 	PixmapPtr pspix, pmpix, pdpix;
 	PicturePtr pspict, pmpict;
 	Pixel fg_colour;
+
+	char *render_node;
 } NVRec;
 
 #define NVPTR(p) ((NVPtr)((p)->driverPrivate))
@@ -163,6 +165,7 @@ typedef struct _NVPortPrivRec {
 	Bool		texture;
 	Bool		bicubic; /* only for texture adapter */
 	Bool		SyncToVBlank;
+	int             max_image_dim;
 	struct nouveau_bo *video_mem;
 	int		pitch;
 	int		offset;

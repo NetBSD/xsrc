@@ -23,9 +23,8 @@
  */
 
 #include "nouveau_present.h"
-#if defined(DRI3) && defined(HAVE_GLAMOR)
+#if defined(DRI3)
 #include "nv_include.h"
-#include "nouveau_glamor.h"
 #include "xf86drmMode.h"
 
 struct nouveau_present {
@@ -177,33 +176,11 @@ static Bool
 nouveau_present_flip_exec(ScrnInfoPtr scrn, uint64_t event_id, int sync,
 			  uint64_t target_msc, PixmapPtr pixmap, Bool vsync)
 {
-	ScreenPtr screen = scrn->pScreen;
-	struct nouveau_pixmap *priv;
+	struct nouveau_pixmap *priv = nouveau_pixmap(pixmap);
 	NVPtr pNv = NVPTR(scrn);
 	uint32_t next_fb;
-	CARD16 stride;
-	CARD32 size;
 	void *token;
 	int ret;
-
-	priv = nouveau_glamor_pixmap_get(pixmap);
-	if (priv == NULL) {
-		int fd = glamor_fd_from_pixmap(screen, pixmap, &stride, &size);
-		if (fd < 0)
-			return FALSE;
-
-		priv = calloc(1, sizeof(*priv));
-		if (!priv)
-			return FALSE;
-
-		ret = nouveau_bo_prime_handle_ref(pNv->dev, fd, &priv->bo);
-		if (ret) {
-			free(priv);
-			return FALSE;
-		}
-
-		nouveau_glamor_pixmap_set(pixmap, priv);
-	}
 
 	ret = drmModeAddFB(pNv->dev->fd, pixmap->drawable.width,
 			   pixmap->drawable.height, pixmap->drawable.depth,
@@ -289,7 +266,7 @@ nouveau_present_fini(ScreenPtr screen)
 	}
 }
 
-int
+Bool
 nouveau_present_init(ScreenPtr screen)
 {
 	ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
@@ -298,12 +275,9 @@ nouveau_present_init(ScreenPtr screen)
 	uint64_t value;
 	int ret;
 
-	if (pNv->AccelMethod != GLAMOR)
-		return -ENOSYS;
-
 	present = pNv->present = calloc(1, sizeof(*present));
 	if (!present)
-		return -ENOMEM;
+		return FALSE;
 
 	present->info.version = PRESENT_SCREEN_INFO_VERSION;
 	present->info.get_crtc = nouveau_present_crtc;

@@ -36,6 +36,7 @@ Bool nouveau_allocate_surface(ScrnInfoPtr scrn, int width, int height,
 /* in nouveau_dri2.c */
 Bool nouveau_dri2_init(ScreenPtr pScreen);
 void nouveau_dri2_fini(ScreenPtr pScreen);
+Bool nouveau_dri3_screen_init(ScreenPtr pScreen);
 
 /* in nouveau_xv.c */
 void NVInitVideo(ScreenPtr);

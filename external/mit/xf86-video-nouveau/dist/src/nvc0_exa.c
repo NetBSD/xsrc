@@ -290,7 +290,7 @@ NVC0EXACopy(PixmapPtr pdpix, int srcX , int srcY,
 
 	BEGIN_NVC0(push, SUBC_2D(NV50_GRAPH_SERIALIZE), 1);
 	PUSH_DATA (push, 0);
-	BEGIN_NVC0(push, SUBC_2D(0x088c), 1);
+	BEGIN_NVC0(push, NV50_2D(BLIT_CONTROL), 1);
 	PUSH_DATA (push, 0);
 	BEGIN_NVC0(push, NV50_2D(BLIT_DST_X), 12);
 	PUSH_DATA (push, dstX);

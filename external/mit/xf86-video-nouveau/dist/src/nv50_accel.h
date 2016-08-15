@@ -8,6 +8,7 @@
 #include "hwdefs/nv50_texture.h"
 #include "hwdefs/nv_3ddefs.xml.h"
 #include "hwdefs/nv_m2mf.xml.h"
+#include "hwdefs/nv_object.xml.h"
 
 /* subchannel assignments - graphics channel */
 #define SUBC_M2MF(mthd)  0, (mthd)

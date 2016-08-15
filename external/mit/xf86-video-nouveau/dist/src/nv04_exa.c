@@ -49,7 +49,8 @@ NV04EXASetROP(PixmapPtr ppix, int subc, int mthd, int alu, Pixel planemask)
 	NVPtr pNv = NVPTR(pScrn);
 	struct nouveau_pushbuf *push = pNv->pushbuf;
 
-	planemask |= ~0 << ppix->drawable.bitsPerPixel;
+	if (ppix->drawable.bitsPerPixel < 32)
+		planemask |= ~0 << ppix->drawable.bitsPerPixel;
 	if (planemask != ~0 || alu != GXcopy) {
 		if (ppix->drawable.bitsPerPixel == 32)
 			return FALSE;

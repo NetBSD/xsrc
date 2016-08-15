@@ -206,7 +206,7 @@ nv50_xv_image_put(ScrnInfoPtr pScrn,
 	BEGIN_NV04(push, NV50_3D(FP_START_ID), 1);
 	PUSH_DATA (push, PFP_NV12);
 
-	BEGIN_NV04(push, SUBC_3D(0x1334), 1);
+	BEGIN_NV04(push, NV50_3D(TIC_FLUSH), 1);
 	PUSH_DATA (push, 0);
 
 	BEGIN_NV04(push, NV50_3D(BIND_TIC(2)), 1);
@@ -364,6 +364,7 @@ nv50_xv_set_port_defaults(ScrnInfoPtr pScrn, NVPortPrivPtr pPriv)
 	pPriv->saturation	= 0;
 	pPriv->hue		= 0;
 	pPriv->iturbt_709	= 0;
+	pPriv->max_image_dim    = 8192;
 }
 
 int
