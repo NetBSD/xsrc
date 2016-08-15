@@ -1,3 +1,41 @@
+commit d3f3c9549119629ddd9447a0f9b699a909b916d5
+Author: Connor Behan <connor.behan@gmail.com>
+Date:   Thu Jan 21 22:12:25 2016 -0500
+
+    Bump to version 6.10.1
+    
+    Signed-off-by: Connor Behan <connor.behan@gmail.com>
+    Tested-by: Christopher Chavez <chrischavez@gmx.us>
+
+commit 562681414f38c6925da01b3fec0802f532cd9e53
+Author: Connor Behan <connor.behan@gmail.com>
+Date:   Sun Jan 17 16:45:31 2016 -0500
+
+    Assume CRT in the absence of other monitors
+    
+    This patch is still untested, but it sounds like a lot of people need
+    it. Assuming that there are no monitors when DDC fails (which causes X
+    to abort with UMS) does not make sense. Some people will always have DDC
+    fail. For example, the pins are not connected on an iMac G3. For another
+    example, some RAGE128TF cards are known to lie that there is no VGA port
+    in the connector table.
+    
+    Signed-off-by: Connor Behan <connor.behan@gmail.com>
+
+commit d6dd6c9ad5ba8e4950c9398d93298fea48745263
+Author: Connor Behan <connor.behan@gmail.com>
+Date:   Thu Jul 2 18:20:58 2015 -0400
+
+    Really fix bitmasks for DDC
+    
+    For DDC, there is actually no difference between Pro2 cards and other
+    VGA desktop cards. Mobility / dualhead cards are the only ones that
+    differ.
+    Fixes: https://bugs.freedesktop.org/show_bug.cgi?id=91113
+    
+    Signed-off-by: Connor Behan <connor.behan@gmail.com>
+    Tested-by: Kevin Brace <kevinbrace@gmx.com>
+
 commit 0b0f74ac7db42c772c8dda0167154bbdcb904d4f
 Author: Connor Behan <connor.behan@gmail.com>
 Date:   Fri May 1 19:43:42 2015 -0400
