@@ -41,6 +41,8 @@
 #include <sys/time.h>
 #include <dev/wscons/wsconsio.h>
 
+#include "compat-api.h"
+
 #include "xf86.h"
 #include "xf86_OSproc.h"
 
@@ -63,7 +65,7 @@ typedef struct {
 	Bool			useSwap32;
 	CloseScreenProcPtr	CloseScreen;
 	CreateScreenResourcesProcPtr CreateScreenResources;
-	void                    (*PointerMoved)(int, int, int);
+	void                    (*PointerMoved)(SCRN_ARG_TYPE, int, int);
 	EntityInfoPtr		pEnt;
 	struct wsdisplay_cmap	saved_cmap;
 
