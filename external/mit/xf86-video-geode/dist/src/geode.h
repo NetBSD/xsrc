@@ -32,6 +32,7 @@
 #include "config.h"
 #endif
 
+#include "xorg-server.h"
 #ifdef HAVE_XAA_H
 #include "xaa.h"
 #endif
