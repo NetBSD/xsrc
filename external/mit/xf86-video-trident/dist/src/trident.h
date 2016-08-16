@@ -32,6 +32,7 @@
 
 #include "tridentpcirename.h"
 
+#include "xorg-server.h"
 #include "exa.h"
 #include "xf86Cursor.h"
 #ifdef HAVE_XAA_H

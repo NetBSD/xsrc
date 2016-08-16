@@ -29,6 +29,7 @@
 #include <immintrin.h>
 #endif
 
+#include "xorg-config.h"
 #include "xf86xv.h"
 #include <X11/extensions/Xv.h>
 #include "exa.h"
