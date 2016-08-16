@@ -33,7 +33,7 @@ extern int ws_debug_level;
 #define NUMEVENTS 16		/* max # of ws events to read at once */
 
 typedef struct WSDevice {
-	char *devName;		/* device name */
+	const char *devName;	/* device name */
 	int type;		/* ws device type */
 	unsigned int buttons;	/* # of buttons */
 	unsigned int lastButtons; /* last state of buttons */

@@ -132,6 +132,7 @@ wsPreInit12(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	WSDevicePtr priv;
 	MessageType buttons_from = X_CONFIG;
 	char *s;
+	const char *cs;
 	int rc;
 
 	priv = (WSDevicePtr)calloc(1, sizeof(WSDeviceRec));
@@ -235,22 +236,22 @@ wsPreInit12(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 	}
 	priv->inv_x = 0;
 	priv->inv_y = 0;
-	s = xf86FindOptionValue(pInfo->options, "Rotate");
-	if (s) {
-		if (xf86NameCmp(s, "CW") == 0) {
+	cs = xf86FindOptionValue(pInfo->options, "Rotate");
+	if (cs) {
+		if (xf86NameCmp(cs, "CW") == 0) {
 			priv->inv_x = 1;
 			priv->inv_y = 0;
 			priv->swap_axes = 1;
-		} else if (xf86NameCmp(s, "CCW") == 0) {
+		} else if (xf86NameCmp(cs, "CCW") == 0) {
 			priv->inv_x = 0;
 			priv->inv_y = 1;
 			priv->swap_axes = 1;
-		} else if (xf86NameCmp(s, "UD") == 0) {
+		} else if (xf86NameCmp(cs, "UD") == 0) {
 			priv->inv_x = 1;
 			priv->inv_y = 1;
 		} else {
 			xf86Msg(X_ERROR, "\"%s\" is not a valid value "
-				"for Option \"Rotate\"\n", s);
+				"for Option \"Rotate\"\n", cs);
 			xf86Msg(X_ERROR, "Valid options are \"CW\", \"CCW\","
 				" or \"UD\"\n");
 		}
