@@ -93,7 +93,7 @@
 /* #undef USE_DEV_IO */
 
 /* BSD i386 iopl */
-#define USE_I386_IOPL 1
+/* #undef USE_I386_IOPL */
 
 /* System is BSD-like */
 #define CSRG_BASED 1

@@ -202,6 +202,9 @@ xf86DisableIO()
 #endif                          /* USE_I386_IOPL */
 
 #ifdef USE_AMD64_IOPL
+#ifdef __NetBSD__
+#define amd64_iopl(x) x86_64_iopl(x)
+#endif
 /***************************************************************************/
 /* I/O Permissions section                                                 */
 /***************************************************************************/
