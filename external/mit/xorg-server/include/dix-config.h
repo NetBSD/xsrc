@@ -491,10 +491,10 @@
 #define SHMDIR "/var/shm"
 
 /* Don't let Xdefs.h define 'pointer' */
-#define _XTYPEDEF_POINTER       1
+/* #define _XTYPEDEF_POINTER       1 */
 
 /* Don't let XIproto define 'Pointer' */
-#define _XITYPEDEF_POINTER      1
+/* #define _XITYPEDEF_POINTER      1 */
 
 /* Ask fontsproto to make font path element names const */
 #define FONT_PATH_ELEMENT_NAME_CONST    1
