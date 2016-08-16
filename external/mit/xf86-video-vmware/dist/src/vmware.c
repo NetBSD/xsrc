@@ -1324,7 +1324,7 @@ VMWAREScreenInit(SCREEN_INIT_ARGS_DECL)
 
 
     if (useXinerama && xf86IsOptionSet(options, OPTION_GUI_LAYOUT)) {
-       char *topology = xf86GetOptValString(options, OPTION_GUI_LAYOUT);
+       const char *topology = xf86GetOptValString(options, OPTION_GUI_LAYOUT);
        if (topology) {
           pVMWARE->xineramaState =
              VMWAREParseTopologyString(pScrn, topology,
@@ -1336,7 +1336,7 @@ VMWAREScreenInit(SCREEN_INIT_ARGS_DECL)
        }
     } else if (useXinerama &&
 	       xf86IsOptionSet(options, OPTION_STATIC_XINERAMA)) {
-       char *topology = xf86GetOptValString(options, OPTION_STATIC_XINERAMA);
+       const char *topology = xf86GetOptValString(options, OPTION_STATIC_XINERAMA);
        if (topology) {
           pVMWARE->xineramaState =
              VMWAREParseTopologyString(pScrn, topology,
