@@ -36,6 +36,7 @@
 #ifndef _R128_PROBE_H_
 #define _R128_PROBE_H_ 1
 
+#include "xorg-server.h"
 #include "xf86str.h"
 #include "xf86DDC.h"
 #include "randrstr.h"

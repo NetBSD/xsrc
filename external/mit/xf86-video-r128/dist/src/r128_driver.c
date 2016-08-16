@@ -94,6 +94,7 @@
 #include "xf86xv.h"
 #include "vbe.h"
 #include "xf86Priv.h"
+#include "xf86Privstr.h"
 
 				/* fbdevhw & vgahw */
 #ifdef WITH_VGAHW
@@ -608,7 +609,7 @@ fallback:
 	 */
 	struct wsdisplay_fbinfo fbinfo;
 	
-	if (ioctl(xf86Info.screenFd, WSDISPLAYIO_GINFO, &fbinfo) == 0) {
+	if (ioctl(xf86Info.consoleFd, WSDISPLAYIO_GINFO, &fbinfo) == 0) {
 	    r128_output->PanelXRes = fbinfo.width;
 	    r128_output->PanelYRes = fbinfo.height;
 	}
@@ -1348,7 +1349,7 @@ Bool R128PreInit(ScrnInfoPtr pScrn, int flags)
     /* now check if this is the console */
     info->HaveWSDisplay = FALSE;
     info->HaveBacklightControl = FALSE;
-    if (ioctl(xf86Info.screenFd, WSDISPLAYIO_GET_BUSID, &bid) != -1) {
+    if (ioctl(xf86Info.consoleFd, WSDISPLAYIO_GET_BUSID, &bid) != -1) {
     	if ((bid.bus_type == WSDISPLAYIO_BUS_PCI) &&
     	    (bid.ubus.pci.bus == PCI_DEV_BUS(info->PciInfo)) &&
     	    (bid.ubus.pci.device == PCI_DEV_DEV(info->PciInfo)) &&
@@ -1359,7 +1360,7 @@ Bool R128PreInit(ScrnInfoPtr pScrn, int flags)
 
     	    	/* now see if we have hacklight control */
     	    	p.param = WSDISPLAYIO_PARAM_BACKLIGHT;
-		if (ioctl(xf86Info.screenFd, WSDISPLAYIO_GETPARAM, &p) != -1) {
+		if (ioctl(xf86Info.consoleFd, WSDISPLAYIO_GETPARAM, &p) != -1) {
 		    xf86Msg(X_INFO, "... and we have backlight control\n");
 		    info->HaveBacklightControl = TRUE; 	 
 		}   	

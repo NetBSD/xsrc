@@ -41,6 +41,7 @@
 #include "r128_probe.h"
 #include "r128_reg.h"
 #include "xf86Priv.h"
+#include "xf86Privstr.h"
 
 #ifdef __NetBSD__
 #include <sys/time.h>
@@ -195,7 +196,7 @@ void R128DPMSSetOn(xf86OutputPtr output)
 
 	    p.param = WSDISPLAYIO_PARAM_BACKLIGHT;
 	    p.curval = 1;
-	    ioctl(xf86Info.screenFd, WSDISPLAYIO_SETPARAM, &p);
+	    ioctl(xf86Info.consoleFd, WSDISPLAYIO_SETPARAM, &p);
 	} else
 #endif
 	{
@@ -235,7 +236,7 @@ void R128DPMSSetOff(xf86OutputPtr output)
 
 	    p.param = WSDISPLAYIO_PARAM_BACKLIGHT;
 	    p.curval = 0;
-	    ioctl(xf86Info.screenFd, WSDISPLAYIO_SETPARAM, &p);
+	    ioctl(xf86Info.consoleFd, WSDISPLAYIO_SETPARAM, &p);
 	} else
 #endif
 	{
@@ -278,7 +279,7 @@ static R128MonitorType R128DisplayDDCConnected(xf86OutputPtr output)
 	    buffer = malloc(1024);
 	    ei.edid_data = buffer;
 	    ei.buffer_size = 1024;
-	    if (ioctl(xf86Info.screenFd, WSDISPLAYIO_GET_EDID, &ei) != -1) {
+	    if (ioctl(xf86Info.consoleFd, WSDISPLAYIO_GET_EDID, &ei) != -1) {
 		xf86Msg(X_INFO, "got %d bytes worth of EDID from wsdisplay\n",
 	    	ei.data_size);
 	    	tmp = xf86InterpretEEDID(pScrn->scrnIndex, buffer);

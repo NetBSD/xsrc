@@ -38,6 +38,7 @@
 #define _R128_H_
 
 #include <unistd.h>
+#include "xorg-server.h"
 #include "xf86str.h"
 
 				/* PCI support */
