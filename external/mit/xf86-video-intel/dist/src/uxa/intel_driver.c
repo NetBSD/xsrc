@@ -642,7 +642,11 @@ redisplay_dirty(ScreenPtr screen, PixmapDirtyUpdatePtr dirty)
 		return;
 
 	PixmapRegionInit(&pixregion, dirty->slave_dst->master_pixmap);
+#ifdef HAS_DIRTYTRACKING_ROTATION
+	PixmapSyncDirtyHelper(dirty);
+#else
 	PixmapSyncDirtyHelper(dirty, &pixregion);
+#endif
 	RegionUninit(&pixregion);
 
         intel_flush(intel);

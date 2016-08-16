@@ -269,7 +269,11 @@ redisplay_dirty(ScreenPtr screen, PixmapDirtyUpdatePtr dirty)
 
 	PixmapRegionInit(&pixregion, dirty->slave_dst);
 	DamageRegionAppend(&dirty->slave_dst->drawable, &pixregion);
+#ifdef HAS_DIRTYTRACKING_ROTATION
+	PixmapSyncDirtyHelper(dirty);
+#else
 	PixmapSyncDirtyHelper(dirty, &pixregion);
+#endif
 
 	radeon_cs_flush_indirect(pScrn);
 	DamageRegionProcessPending(&dirty->slave_dst->drawable);
