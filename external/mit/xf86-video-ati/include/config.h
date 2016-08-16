@@ -118,8 +118,10 @@
 /* Define to use byteswap macros from <sys/endian.h> */
 #define USE_SYS_ENDIAN_H 1
 
+#if 0
 /* Build support for XAA */
 #define USE_XAA 1
+#endif
 
 /* Version number of package */
 #define VERSION "6.14.6"

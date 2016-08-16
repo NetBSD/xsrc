@@ -1,0 +1,7 @@
+$NetBSD: README,v 1.1 2016/08/16 07:38:15 mrg Exp $
+
+These are copied from xorg-server 1.10.6 in the NetBSD xsrc tree,
+and are apparently necessary for xf86-video-ati pre-KMS-only to
+build, which is necessary for older NetBSD ports.
+
+--mrg 2016-08-15

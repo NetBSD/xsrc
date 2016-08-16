@@ -6440,7 +6440,11 @@ static Bool RADEONCloseScreen(CLOSE_SCREEN_ARGS_DECL)
     if (info->dri && info->dri->pDamage) {
 	PixmapPtr pPix = pScreen->GetScreenPixmap(pScreen);
 
+#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,15,0,0,0)
+	DamageUnregister(info->dri->pDamage);
+#else
 	DamageUnregister(&pPix->drawable, info->dri->pDamage);
+#endif
 	DamageDestroy(info->dri->pDamage);
 	info->dri->pDamage = NULL;
     }
