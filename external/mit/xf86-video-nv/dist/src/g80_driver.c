@@ -28,6 +28,7 @@
 
 #include <string.h>
 
+#include "xorg-server.h"
 #include <xf86.h>
 #include <xf86_OSproc.h>
 #if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
@@ -163,7 +164,7 @@ G80PreInit(ScrnInfoPtr pScrn, int flags)
     Bool primary;
     const rgb zeros = {0, 0, 0};
     const Gamma gzeros = {0.0, 0.0, 0.0};
-    char *s;
+    const char *s;
     CARD32 tmp;
     memType BAR1sizeKB;
 

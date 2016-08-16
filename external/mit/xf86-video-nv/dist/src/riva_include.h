@@ -4,6 +4,7 @@
 #include <string.h>
 
 /* All drivers should typically include these */
+#include "xorg-server.h"
 #include "xf86.h"
 #include "xf86_OSproc.h"
 
