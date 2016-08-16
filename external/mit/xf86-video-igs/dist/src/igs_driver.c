@@ -1,5 +1,5 @@
 /* $OpenBSD: wsfb_driver.c,v 1.19 2003/04/27 16:42:32 matthieu Exp $ */
-/* $NetBSD: igs_driver.c,v 1.11 2014/08/25 15:27:00 macallan Exp $ */
+/* $NetBSD: igs_driver.c,v 1.12 2016/08/16 01:27:46 mrg Exp $ */
 /*
  * Copyright (c) 2001 Matthieu Herrb
  *		 2009 Michael Lorenz
@@ -60,7 +60,6 @@
 #include "xf86_OSproc.h"
 
 #include "mipointer.h"
-#include "mibstore.h"
 #include "micmap.h"
 #include "colormapst.h"
 #include "xf86cmap.h"
@@ -762,7 +761,6 @@ IgsScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 #endif
 
 	xf86SetBlackWhitePixels(pScreen);
-	miInitializeBackingStore(pScreen);
 	xf86SetBackingStore(pScreen);
 
 	/* setup acceleration */

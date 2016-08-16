@@ -1,7 +1,7 @@
 /* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nsc/nsc_gx2_driver.c,v 1.9tsi Exp $ */
 /*
  * $Workfile: nsc_gx2_driver.c $
- * $Revision: 1.1.1.1 $
+ * $Revision: 1.2 $
  * $Author: mrg $
  *
  * File Contents: This is the main module configures the interfacing 
@@ -178,8 +178,6 @@
 #include "mipointer.h"
 #include "mibank.h"
 #include "micmap.h"
-/* All drivers implementing backing store need this */
-#include "mibstore.h"
 #include "vgaHW.h"
 #include "vbe.h"
 
@@ -1928,7 +1926,6 @@ GX2ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
       GX2AccelInit(pScreen);
    }
    GeodeDebug(("GX2ScreenInit(7)!\n"));
-   miInitializeBackingStore(pScreen);
    xf86SetBackingStore(pScreen);
    GeodeDebug(("GX2ScreenInit(8)!\n"));
    /* Initialise software cursor */

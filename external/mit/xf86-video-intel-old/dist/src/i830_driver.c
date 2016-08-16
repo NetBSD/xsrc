@@ -54,7 +54,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "xf86Priv.h"
 #include "xf86cmap.h"
 #include "compiler.h"
-#include "mibstore.h"
 #include "vgaHW.h"
 #include "mipointer.h"
 #include "micmap.h"
@@ -2717,7 +2716,6 @@ I830ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
    else
        pI830->batch_flush_notify = i830_batch_flush_notify;
 
-   miInitializeBackingStore(pScreen);
    xf86SetBackingStore(pScreen);
    xf86SetSilkenMouse(pScreen);
    miDCInitialize(pScreen, xf86GetPointerScreenFuncs());

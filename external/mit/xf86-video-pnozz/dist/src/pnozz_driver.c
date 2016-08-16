@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz_driver.c,v 1.5 2011/05/25 23:36:39 macallan Exp $ */
+/* $NetBSD: pnozz_driver.c,v 1.6 2016/08/16 01:27:47 mrg Exp $ */
 
 /*
  * this driver has been tested on SPARCbook 3GX and 3TX, it supports full 
@@ -43,7 +43,6 @@
 #include "xf86sbusBus.h"
 
 #include "mipointer.h"
-#include "mibstore.h"
 #include "micmap.h"
 
 #define DEBUG 0
@@ -729,7 +728,6 @@ PnozzScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     fbPictureInit(pScreen, 0, 0);
 
-    miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
     xf86SetSilkenMouse(pScreen);
     xf86SetBlackWhitePixels(pScreen);

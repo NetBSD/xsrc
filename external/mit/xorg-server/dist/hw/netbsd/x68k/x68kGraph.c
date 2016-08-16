@@ -1,4 +1,4 @@
-/* $NetBSD: x68kGraph.c,v 1.2 2014/03/04 12:11:59 tsutsui Exp $ */
+/* $NetBSD: x68kGraph.c,v 1.3 2016/08/16 01:27:48 mrg Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -341,7 +341,6 @@ x68kCfbFinishScreenInit(
     
     pScreen->CloseScreen = fbCloseScreen;
     pScreen->SaveScreen = x68kSaveScreen;
-    miInitializeBackingStore (pScreen);
 
     return TRUE;
 }

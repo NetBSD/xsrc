@@ -37,7 +37,6 @@
 #include "xf86cmap.h"
 #include "mipointer.h"
 
-#include "mibstore.h"
 #include "miline.h"
 
 #include "tga_regs.h"

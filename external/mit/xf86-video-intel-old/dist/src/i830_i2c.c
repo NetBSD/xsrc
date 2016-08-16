@@ -33,7 +33,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "xf86_OSproc.h"
 #include "xf86cmap.h"
 #include "compiler.h"
-#include "mibstore.h"
 #include "vgaHW.h"
 #include "mipointer.h"
 #include "micmap.h"

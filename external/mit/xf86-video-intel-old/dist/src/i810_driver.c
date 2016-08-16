@@ -58,7 +58,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "xf86cmap.h"
 
 #include "compiler.h"
-#include "mibstore.h"
 #include "vgaHW.h"
 #include "mipointer.h"
 #include "micmap.h"
@@ -2049,7 +2048,6 @@ I810ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
       }
    }
 
-   miInitializeBackingStore(pScreen);
    xf86SetBackingStore(pScreen);
    xf86SetSilkenMouse(pScreen);
 

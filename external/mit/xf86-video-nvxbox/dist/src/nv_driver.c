@@ -1718,7 +1718,6 @@ NVScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     if (!pNv->NoAccel)
 	NVXAccelInit(pScreen);
     
-    miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
     xf86SetSilkenMouse(pScreen);
 

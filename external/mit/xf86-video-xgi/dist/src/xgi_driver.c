@@ -70,7 +70,6 @@
 #include "vbe.h"
 
 #include "mipointer.h"
-#include "mibstore.h"
 
 #include "xgi.h"
 #include "xgi_regs.h"
@@ -5064,7 +5063,6 @@ XGIScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     PDEBUG(ErrorF("--- AccelInit ---  \n"));
     PDEBUG(XGIDumpRegs(pScrn));
 
-    miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
     xf86SetSilkenMouse(pScreen);
 

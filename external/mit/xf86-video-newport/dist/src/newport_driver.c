@@ -44,8 +44,6 @@
 
 /* Drivers using the mi SW cursor need: */
 #include "mipointer.h"
-/* Drivers using the mi implementation of backing store need: */
-#include "mibstore.h"
 /* Drivers using the mi colourmap code need: */
 #include "micmap.h"
 
@@ -573,7 +571,6 @@ NewportScreenInit(int index, ScreenPtr pScreen, int argc, char **argv)
 		xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
 			   "RENDER extension initialisation failed.\n");
 
-	miInitializeBackingStore(pScreen);
 	xf86SetBackingStore(pScreen);
 
 	xf86SetBlackWhitePixels(pScreen);

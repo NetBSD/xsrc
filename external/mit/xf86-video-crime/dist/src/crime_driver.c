@@ -1,4 +1,4 @@
-/* $NetBSD: crime_driver.c,v 1.11 2013/11/05 11:28:09 macallan Exp $ */
+/* $NetBSD: crime_driver.c,v 1.12 2016/08/16 01:27:46 mrg Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -48,7 +48,6 @@
 #include "xf86_OSproc.h"
 
 #include "mipointer.h"
-#include "mibstore.h"
 #include "micmap.h"
 #include "colormapst.h"
 #include "xf86cmap.h"
@@ -642,7 +641,6 @@ CrimeScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 			   "RENDER extension initialisation failed.");
 
 	xf86SetBlackWhitePixels(pScreen);
-	miInitializeBackingStore(pScreen);
 	xf86SetBackingStore(pScreen);
 
 	if (fPtr) {

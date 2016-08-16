@@ -1,7 +1,7 @@
 /* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nsc/nsc_driver.c,v 1.4tsi Exp $ */
 /*
  * $Workfile: nsc_driver.c $
- * $Revision: 1.1.1.1 $
+ * $Revision: 1.2 $
  * $Author: mrg $
  *
  * File Contents: This is the main module configures the interfacing 
@@ -177,8 +177,6 @@
 #include "mipointer.h"
 #include "mibank.h"
 #include "micmap.h"
-/* All drivers implementing backing store need this */
-#include "mibstore.h"
 #include "vgaHW.h"
 #include "vbe.h"
 

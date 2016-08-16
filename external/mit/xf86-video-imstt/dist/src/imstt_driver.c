@@ -45,7 +45,6 @@
 #include "xaa.h"
 #include "mipointer.h"
 #include "micmap.h"
-#include "mibstore.h"
 #include "fbdevhw.h"
 
 #include "fb.h"
@@ -816,7 +815,6 @@ static Bool IMSTTScreenInit(int scrnIndex, ScreenPtr pScreen,
 	fbPictureInit (pScreen, 0, 0);
 
 	xf86SetBlackWhitePixels(pScreen);
-	miInitializeBackingStore(pScreen);
 	xf86SetBackingStore(pScreen);
 
 	if (!iptr->NoAccel) {

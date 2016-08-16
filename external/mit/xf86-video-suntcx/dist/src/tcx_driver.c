@@ -657,8 +657,6 @@ TCXScreenInit(SCREEN_INIT_ARGS_DECL)
 	    return FALSE;
     }
 
-    miInitializeBackingStore(pScreen);
-
     xf86SetBackingStore(pScreen);
     xf86SetSilkenMouse(pScreen);
 
