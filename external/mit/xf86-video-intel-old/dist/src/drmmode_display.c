@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include "xorg-server.h"
 #include "xorgVersion.h"
 
 #include "i830.h"

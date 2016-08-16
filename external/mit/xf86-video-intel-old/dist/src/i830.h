@@ -47,6 +47,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef _I830_H_
 #define _I830_H_
 
+#include "xorg-server.h"
 #include "xf86_OSproc.h"
 #include "compiler.h"
 #include "xf86PciInfo.h"

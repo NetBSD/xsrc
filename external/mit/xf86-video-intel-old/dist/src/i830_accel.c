@@ -42,6 +42,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <errno.h>
 
+#include "xorg-server.h"
 #include "xf86.h"
 #include "i830.h"
 #include "i810_reg.h"
