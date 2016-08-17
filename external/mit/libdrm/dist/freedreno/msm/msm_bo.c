@@ -75,7 +75,7 @@ static int msm_bo_cpu_prep(struct fd_bo *bo, struct fd_pipe *pipe, uint32_t op)
 			.op = op,
 	};
 
-	get_abs_timeout(&req.timeout, 5000);
+	get_abs_timeout(&req.timeout, 5000000000);
 
 	return drmCommandWrite(bo->dev->fd, DRM_MSM_GEM_CPU_PREP, &req, sizeof(req));
 }
@@ -89,6 +89,25 @@ static void msm_bo_cpu_fini(struct fd_bo *bo)
 	drmCommandWrite(bo->dev->fd, DRM_MSM_GEM_CPU_FINI, &req, sizeof(req));
 }
 
+static int msm_bo_madvise(struct fd_bo *bo, int willneed)
+{
+	struct drm_msm_gem_madvise req = {
+			.handle = bo->handle,
+			.madv = willneed ? MSM_MADV_WILLNEED : MSM_MADV_DONTNEED,
+	};
+	int ret;
+
+	/* older kernels do not support this: */
+	if (bo->dev->version < FD_VERSION_MADVISE)
+		return willneed;
+
+	ret = drmCommandWriteRead(bo->dev->fd, DRM_MSM_GEM_MADVISE, &req, sizeof(req));
+	if (ret)
+		return ret;
+
+	return req.retained;
+}
+
 static void msm_bo_destroy(struct fd_bo *bo)
 {
 	struct msm_bo *msm_bo = to_msm_bo(bo);
@@ -96,10 +115,11 @@ static void msm_bo_destroy(struct fd_bo *bo)
 
 }
 
-static struct fd_bo_funcs funcs = {
+static const struct fd_bo_funcs funcs = {
 		.offset = msm_bo_offset,
 		.cpu_prep = msm_bo_cpu_prep,
 		.cpu_fini = msm_bo_cpu_fini,
+		.madvise = msm_bo_madvise,
 		.destroy = msm_bo_destroy,
 };
 
@@ -129,7 +149,6 @@ drm_private struct fd_bo * msm_bo_from_handle(struct fd_device *dev,
 {
 	struct msm_bo *msm_bo;
 	struct fd_bo *bo;
-	unsigned i;
 
 	msm_bo = calloc(1, sizeof(*msm_bo));
 	if (!msm_bo)
@@ -137,9 +156,6 @@ drm_private struct fd_bo * msm_bo_from_handle(struct fd_device *dev,
 
 	bo = &msm_bo->base;
 	bo->funcs = &funcs;
-
-	for (i = 0; i < ARRAY_SIZE(msm_bo->list); i++)
-		list_inithead(&msm_bo->list[i]);
 
 	return bo;
 }

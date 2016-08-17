@@ -39,6 +39,8 @@
 
 struct msm_device {
 	struct fd_device base;
+	struct fd_bo_cache ring_cache;
+	unsigned ring_cnt;
 };
 
 static inline struct msm_device * to_msm_device(struct fd_device *x)
@@ -71,8 +73,12 @@ struct msm_bo {
 	struct fd_bo base;
 	uint64_t offset;
 	uint64_t presumed;
-	uint32_t indexp1[FD_PIPE_MAX]; /* index plus 1 */
-	struct list_head list[FD_PIPE_MAX];
+	/* to avoid excess hashtable lookups, cache the ring this bo was
+	 * last emitted on (since that will probably also be the next ring
+	 * it is emitted on)
+	 */
+	unsigned current_ring_seqno;
+	uint32_t idx;
 };
 
 static inline struct msm_bo * to_msm_bo(struct fd_bo *x)
@@ -85,13 +91,13 @@ drm_private int msm_bo_new_handle(struct fd_device *dev,
 drm_private struct fd_bo * msm_bo_from_handle(struct fd_device *dev,
 		uint32_t size, uint32_t handle);
 
-static inline void get_abs_timeout(struct drm_msm_timespec *tv, uint32_t ms)
+static inline void get_abs_timeout(struct drm_msm_timespec *tv, uint64_t ns)
 {
 	struct timespec t;
-	uint32_t s = ms / 1000;
+	uint32_t s = ns / 1000000000;
 	clock_gettime(CLOCK_MONOTONIC, &t);
 	tv->tv_sec = t.tv_sec + s;
-	tv->tv_nsec = t.tv_nsec + ((ms - (s * 1000)) * 1000000);
+	tv->tv_nsec = t.tv_nsec + ns - (s * 1000000000);
 }
 
 #endif /* MSM_PRIV_H_ */

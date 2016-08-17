@@ -50,13 +50,18 @@ static int kgsl_pipe_get_param(struct fd_pipe *pipe,
 	case FD_CHIP_ID:
 		*value = kgsl_pipe->devinfo.chip_id;
 		return 0;
+	case FD_MAX_FREQ:
+	case FD_TIMESTAMP:
+		/* unsupported on kgsl */
+		return -1;
 	default:
 		ERROR_MSG("invalid param id: %d", param);
 		return -1;
 	}
 }
 
-static int kgsl_pipe_wait(struct fd_pipe *pipe, uint32_t timestamp)
+static int kgsl_pipe_wait(struct fd_pipe *pipe, uint32_t timestamp,
+		uint64_t timeout)
 {
 	struct kgsl_pipe *kgsl_pipe = to_kgsl_pipe(pipe);
 	struct kgsl_device_waittimestamp req = {
@@ -101,13 +106,13 @@ static void kgsl_pipe_destroy(struct fd_pipe *pipe)
 	if (kgsl_pipe->drawctxt_id)
 		ioctl(kgsl_pipe->fd, IOCTL_KGSL_DRAWCTXT_DESTROY, &req);
 
-	if (kgsl_pipe->fd)
+	if (kgsl_pipe->fd >= 0)
 		close(kgsl_pipe->fd);
 
 	free(kgsl_pipe);
 }
 
-static struct fd_pipe_funcs funcs = {
+static const struct fd_pipe_funcs funcs = {
 		.ringbuffer_new = kgsl_ringbuffer_new,
 		.get_param = kgsl_pipe_get_param,
 		.wait = kgsl_pipe_wait,

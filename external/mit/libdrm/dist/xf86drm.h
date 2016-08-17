@@ -39,7 +39,7 @@
 #include <stdint.h>
 #include <drm.h>
 
-#if defined(__cplusplus) || defined(c_plusplus)
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -76,11 +76,18 @@ extern "C" {
 	(S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
 #define DRM_DEV_MODE	 (S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP)
 
+#ifdef __OpenBSD__
+#define DRM_DIR_NAME  "/dev"
+#define DRM_DEV_NAME  "%s/drm%d"
+#define DRM_CONTROL_DEV_NAME  "%s/drmC%d"
+#define DRM_RENDER_DEV_NAME  "%s/drmR%d"
+#else
 #define DRM_DIR_NAME  "/dev/dri"
 #define DRM_DEV_NAME  "%s/card%d"
 #define DRM_CONTROL_DEV_NAME  "%s/controlD%d"
 #define DRM_RENDER_DEV_NAME  "%s/renderD%d"
 #define DRM_PROC_NAME "/proc/dri/" /* For backward Linux compatibility */
+#endif
 
 #define DRM_ERR_NO_DEVICE  (-1001)
 #define DRM_ERR_NO_ACCESS  (-1002)
@@ -556,6 +563,8 @@ extern int           drmOpen(const char *name, const char *busid);
 #define DRM_NODE_PRIMARY 0
 #define DRM_NODE_CONTROL 1
 #define DRM_NODE_RENDER  2
+#define DRM_NODE_MAX     3
+
 extern int           drmOpenWithType(const char *name, const char *busid,
                                      int type);
 
@@ -752,7 +761,42 @@ extern int drmPrimeFDToHandle(int fd, int prime_fd, uint32_t *handle);
 extern char *drmGetPrimaryDeviceNameFromFd(int fd);
 extern char *drmGetRenderDeviceNameFromFd(int fd);
 
-#if defined(__cplusplus) || defined(c_plusplus)
+#define DRM_BUS_PCI   0
+
+typedef struct _drmPciBusInfo {
+    uint16_t domain;
+    uint8_t bus;
+    uint8_t dev;
+    uint8_t func;
+} drmPciBusInfo, *drmPciBusInfoPtr;
+
+typedef struct _drmPciDeviceInfo {
+    uint16_t vendor_id;
+    uint16_t device_id;
+    uint16_t subvendor_id;
+    uint16_t subdevice_id;
+    uint8_t revision_id;
+} drmPciDeviceInfo, *drmPciDeviceInfoPtr;
+
+typedef struct _drmDevice {
+    char **nodes; /* DRM_NODE_MAX sized array */
+    int available_nodes; /* DRM_NODE_* bitmask */
+    int bustype;
+    union {
+        drmPciBusInfoPtr pci;
+    } businfo;
+    union {
+        drmPciDeviceInfoPtr pci;
+    } deviceinfo;
+} drmDevice, *drmDevicePtr;
+
+extern int drmGetDevice(int fd, drmDevicePtr *device);
+extern void drmFreeDevice(drmDevicePtr *device);
+
+extern int drmGetDevices(drmDevicePtr devices[], int max_devices);
+extern void drmFreeDevices(drmDevicePtr devices[], int count);
+
+#if defined(__cplusplus)
 }
 #endif
 

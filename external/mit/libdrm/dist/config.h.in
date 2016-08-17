@@ -15,11 +15,17 @@
    */
 #undef HAVE_ALLOCA_H
 
+/* Have amdgpu support */
+#undef HAVE_AMDGPU
+
 /* Have Cairo support */
 #undef HAVE_CAIRO
 
 /* Define to 1 if you have the `clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
+
+/* Enable CUNIT Have amdgpu support */
+#undef HAVE_CUNIT
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
@@ -78,11 +84,14 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
-/* Define to 1 if you have the <sys/mkdev.h> header file. */
-#undef HAVE_SYS_MKDEV_H
+/* Define to 1 if you have the <sys/select.h> header file. */
+#undef HAVE_SYS_SELECT_H
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/sysctl.h> header file. */
+#undef HAVE_SYS_SYSCTL_H
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
@@ -96,6 +105,9 @@
 /* Use valgrind intrinsics to suppress false warnings */
 #undef HAVE_VALGRIND
 
+/* Have VC4 support */
+#undef HAVE_VC4
+
 /* Compiler supports __attribute__(("hidden")) */
 #undef HAVE_VISIBILITY
 
@@ -104,6 +116,14 @@
 
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
+
+/* Define to 1 if `major', `minor', and `makedev' are declared in <mkdev.h>.
+   */
+#undef MAJOR_IN_MKDEV
+
+/* Define to 1 if `major', `minor', and `makedev' are declared in
+   <sysmacros.h>. */
+#undef MAJOR_IN_SYSMACROS
 
 /* Name of package */
 #undef PACKAGE

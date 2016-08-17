@@ -228,9 +228,10 @@ am__klibdrminclude_HEADERS_DIST = include/drm/drm.h \
 	include/drm/mach64_drm.h include/drm/mga_drm.h \
 	include/drm/nouveau_drm.h include/drm/qxl_drm.h \
 	include/drm/r128_drm.h include/drm/radeon_drm.h \
-	include/drm/savage_drm.h include/drm/sis_drm.h \
-	include/drm/tegra_drm.h include/drm/via_drm.h \
-	include/drm/vmwgfx_drm.h
+	include/drm/amdgpu_drm.h include/drm/savage_drm.h \
+	include/drm/sis_drm.h include/drm/tegra_drm.h \
+	include/drm/vc4_drm.h include/drm/via_drm.h \
+	include/drm/virtgpu_drm.h include/drm/vmwgfx_drm.h
 HEADERS = $(klibdrminclude_HEADERS) $(libdrminclude_HEADERS)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
@@ -261,8 +262,8 @@ am__define_uniq_tagged_files = \
 ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
-DIST_SUBDIRS = . libkms intel nouveau radeon omap exynos freedreno \
-	tegra tests man
+DIST_SUBDIRS = . libkms intel nouveau radeon amdgpu omap exynos \
+	freedreno tegra vc4 tests man
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.sources \
 	$(srcdir)/config.h.in $(srcdir)/libdrm.pc.in \
 	$(top_srcdir)/build-aux/compile \
@@ -337,6 +338,8 @@ CFLAGS = @CFLAGS@
 CLOCK_LIB = @CLOCK_LIB@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+CUNIT_CFLAGS = @CUNIT_CFLAGS@
+CUNIT_LIBS = @CUNIT_LIBS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
@@ -475,7 +478,9 @@ LIBDRM_FILES := \
 	xf86drmMode.c \
 	xf86atomic.h \
 	libdrm_macros.h \
-	libdrm_lists.h
+	libdrm_lists.h \
+	util_double_list.h \
+	util_math.h
 
 LIBDRM_H_FILES := \
 	xf86drm.h \
@@ -493,10 +498,13 @@ LIBDRM_INCLUDE_H_FILES := \
 	include/drm/qxl_drm.h \
 	include/drm/r128_drm.h \
 	include/drm/radeon_drm.h \
+	include/drm/amdgpu_drm.h \
 	include/drm/savage_drm.h \
 	include/drm/sis_drm.h \
 	include/drm/tegra_drm.h \
-	include/drm/via_drm.h
+	include/drm/vc4_drm.h \
+	include/drm/via_drm.h \
+	include/drm/virtgpu_drm.h
 
 LIBDRM_INCLUDE_VMWGFX_H_FILES := \
 	include/drm/vmwgfx_drm.h
@@ -507,7 +515,9 @@ AM_DISTCHECK_CONFIGURE_FLAGS = \
 	--enable-libkms \
 	--enable-intel \
 	--enable-radeon \
+	--enable-amdgpu \
 	--enable-nouveau \
+	--enable-vc4 \
 	--enable-vmwgfx \
 	--enable-omap-experimental-api \
 	--enable-exynos-experimental-api \
@@ -516,17 +526,20 @@ AM_DISTCHECK_CONFIGURE_FLAGS = \
 	--enable-tegra-experimental-api \
 	--enable-install-test-programs \
 	--enable-cairo-tests \
-	--enable-manpages
+	--enable-manpages \
+	--enable-valgrind
 
 pkgconfig_DATA = libdrm.pc
 @HAVE_LIBKMS_TRUE@LIBKMS_SUBDIR = libkms
 @HAVE_INTEL_TRUE@INTEL_SUBDIR = intel
 @HAVE_NOUVEAU_TRUE@NOUVEAU_SUBDIR = nouveau
 @HAVE_RADEON_TRUE@RADEON_SUBDIR = radeon
+@HAVE_AMDGPU_TRUE@AMDGPU_SUBDIR = amdgpu
 @HAVE_OMAP_TRUE@OMAP_SUBDIR = omap
 @HAVE_EXYNOS_TRUE@EXYNOS_SUBDIR = exynos
 @HAVE_FREEDRENO_TRUE@FREEDRENO_SUBDIR = freedreno
 @HAVE_TEGRA_TRUE@TEGRA_SUBDIR = tegra
+@HAVE_VC4_TRUE@VC4_SUBDIR = vc4
 @BUILD_MANPAGES_TRUE@@HAVE_MANPAGES_STYLESHEET_TRUE@MAN_SUBDIR = man
 SUBDIRS = \
 	. \
@@ -534,17 +547,19 @@ SUBDIRS = \
 	$(INTEL_SUBDIR) \
 	$(NOUVEAU_SUBDIR) \
 	$(RADEON_SUBDIR) \
+	$(AMDGPU_SUBDIR) \
 	$(OMAP_SUBDIR) \
 	$(EXYNOS_SUBDIR) \
 	$(FREEDRENO_SUBDIR) \
 	$(TEGRA_SUBDIR) \
+	$(VC4_SUBDIR) \
 	tests \
 	$(MAN_SUBDIR)
 
 libdrm_la_LTLIBRARIES = libdrm.la
 libdrm_ladir = $(libdir)
 libdrm_la_LDFLAGS = -version-number 2:4:0 -no-undefined
-libdrm_la_LIBADD = @CLOCK_LIB@
+libdrm_la_LIBADD = @CLOCK_LIB@ -lm
 libdrm_la_CPPFLAGS = -I$(top_srcdir)/include/drm
 AM_CFLAGS = \
 	$(WARN_CFLAGS) \
@@ -553,7 +568,6 @@ AM_CFLAGS = \
 libdrm_la_SOURCES = $(LIBDRM_FILES)
 libdrmincludedir = ${includedir}
 libdrminclude_HEADERS = $(LIBDRM_H_FILES)
-EXTRA_DIST = Android.mk
 klibdrmincludedir = ${includedir}/libdrm
 klibdrminclude_HEADERS = $(LIBDRM_INCLUDE_H_FILES) $(am__append_1)
 all: config.h
