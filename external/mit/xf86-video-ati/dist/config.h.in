@@ -2,20 +2,26 @@
 
 #include "xorg-server.h"
 
-/* Use Damage extension */
-#undef DAMAGE
-
-/* Use linux pragma pack */
-#undef FGL_LINUX
-
 /* Define to 1 if you have the <byteswap.h> header file. */
 #undef HAVE_BYTESWAP_H
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
-/* have new FreeShadow API */
-#undef HAVE_FREE_SHADOW
+/* Define to 1 if you have the <dri3.h> header file. */
+#undef HAVE_DRI3_H
+
+/* Have fbGlyphs API */
+#undef HAVE_FBGLYPHS
+
+/* Have glamor_egl_destroy_textured_pixmap API */
+#undef HAVE_GLAMOR_EGL_DESTROY_TEXTURED_PIXMAP
+
+/* Have glamor_glyphs_init API */
+#undef HAVE_GLAMOR_GLYPHS_INIT
+
+/* Define to 1 if you have the <glamor.h> header file. */
+#undef HAVE_GLAMOR_H
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -23,14 +29,14 @@
 /* libudev support */
 #undef HAVE_LIBUDEV
 
-/* Define to 1 if you have the <list.h> header file. */
-#undef HAVE_LIST_H
-
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
-/* Have pci_device_enable prototype */
-#undef HAVE_PCI_DEVICE_ENABLE
+/* Define to 1 if you have the <misyncshm.h> header file. */
+#undef HAVE_MISYNCSHM_H
+
+/* Define to 1 if you have the <present.h> header file. */
+#undef HAVE_PRESENT_H
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
@@ -56,24 +62,14 @@
 /* xextproto 7.1 available */
 #undef HAVE_XEXTPROTO_71
 
-/* Have xf86_crtc_clip_video_helper prototype */
-#undef HAVE_XF86CRTCCLIPVIDEOHELPER
-
-/* Have xf86ModeBandwidth prototype */
-#undef HAVE_XF86MODEBANDWIDTH
+/* Have xf86CursorResetCursor API */
+#undef HAVE_XF86_CURSOR_RESET_CURSOR
 
 /* Have xorg_list API */
 #undef HAVE_XORG_LIST
 
-/* Have xf86XVFillKeyHelperDrawable prototype */
-#undef HAVE_XV_DRAWABLE_HELPER
-
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
-
-/* Define to 1 if your C compiler doesn't accept -c and -o together. */
-#undef NO_MINUS_C_MINUS_O
 
 /* Name of package */
 #undef PACKAGE
@@ -105,32 +101,22 @@
 /* Patch version of this package */
 #undef PACKAGE_VERSION_PATCHLEVEL
 
-/* Enable DRI2 code */
-#undef RADEON_DRI2
-
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
-/* Build support for Exa */
-#undef USE_EXA
+/* Enable glamor acceleration */
+#undef USE_GLAMOR
 
 /* Define to use byteswap macros from <sys/endian.h> */
 #undef USE_SYS_ENDIAN_H
 
-/* Build support for XAA */
-#undef USE_XAA
-
 /* Version number of package */
 #undef VERSION
 
-/* Enable DRI driver support */
-#undef XF86DRI
-
-/* Enable developmental DRI driver support */
-#undef XF86DRI_DEVEL
-
-/* DRM kernel modesetting */
-#undef XF86DRM_MODE
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
