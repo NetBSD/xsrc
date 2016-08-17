@@ -34,7 +34,7 @@
  */
 
 /*
- * TODO the types we are after are defined in diffrent headers on diffrent
+ * TODO the types we are after are defined in different headers on different
  * platforms find which headers to include to get uint32_t
  */
 
@@ -46,6 +46,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
+#ifdef HAVE_SYS_SYSCTL_H
+#include <sys/sysctl.h>
+#endif
 #include <stdio.h>
 #include <stdbool.h>
 
@@ -111,7 +114,6 @@ void drmModeFreeResources(drmModeResPtr ptr)
 	drmFree(ptr->connectors);
 	drmFree(ptr->encoders);
 	drmFree(ptr);
-
 }
 
 void drmModeFreeFB(drmModeFBPtr ptr)
@@ -129,7 +131,6 @@ void drmModeFreeCrtc(drmModeCrtcPtr ptr)
 		return;
 
 	drmFree(ptr);
-
 }
 
 void drmModeFreeConnector(drmModeConnectorPtr ptr)
@@ -142,7 +143,6 @@ void drmModeFreeConnector(drmModeConnectorPtr ptr)
 	drmFree(ptr->props);
 	drmFree(ptr->modes);
 	drmFree(ptr);
-
 }
 
 void drmModeFreeEncoder(drmModeEncoderPtr ptr)
@@ -249,7 +249,7 @@ err_allocs:
 }
 
 int drmModeAddFB(int fd, uint32_t width, uint32_t height, uint8_t depth,
-                 uint8_t bpp, uint32_t pitch, uint32_t bo_handle,
+		 uint8_t bpp, uint32_t pitch, uint32_t bo_handle,
 		 uint32_t *buf_id)
 {
 	struct drm_mode_fb_cmd f;
@@ -337,7 +337,6 @@ int drmModeDirtyFB(int fd, uint32_t bufferId,
 	return DRM_IOCTL(fd, DRM_IOCTL_MODE_DIRTYFB, &dirty);
 }
 
-
 /*
  * Crtc functions
  */
@@ -374,9 +373,8 @@ drmModeCrtcPtr drmModeGetCrtc(int fd, uint32_t crtcId)
 	return r;
 }
 
-
 int drmModeSetCrtc(int fd, uint32_t crtcId, uint32_t bufferId,
-                   uint32_t x, uint32_t y, uint32_t *connectors, int count,
+		   uint32_t x, uint32_t y, uint32_t *connectors, int count,
 		   drmModeModeInfoPtr mode)
 {
 	struct drm_mode_crtc crtc;
@@ -477,12 +475,13 @@ _drmModeGetConnector(int fd, uint32_t connector_id, int probe)
 {
 	struct drm_mode_get_connector conn, counts;
 	drmModeConnectorPtr r = NULL;
+	struct drm_mode_modeinfo stack_mode;
 
 	memclear(conn);
 	conn.connector_id = connector_id;
 	if (!probe) {
 		conn.count_modes = 1;
-		conn.modes_ptr = VOID2U64(drmMalloc(sizeof(struct drm_mode_modeinfo)));
+		conn.modes_ptr = VOID2U64(&stack_mode);
 	}
 
 	if (drmIoctl(fd, DRM_IOCTL_MODE_GETCONNECTOR, &conn))
@@ -506,7 +505,7 @@ retry:
 			goto err_allocs;
 	} else {
 		conn.count_modes = 1;
-		conn.modes_ptr = VOID2U64(drmMalloc(sizeof(struct drm_mode_modeinfo)));
+		conn.modes_ptr = VOID2U64(&stack_mode);
 	}
 
 	if (conn.count_encoders) {
@@ -527,7 +526,8 @@ retry:
 	    counts.count_encoders < conn.count_encoders) {
 		drmFree(U642VOID(conn.props_ptr));
 		drmFree(U642VOID(conn.prop_values_ptr));
-		drmFree(U642VOID(conn.modes_ptr));
+		if (U642VOID(conn.modes_ptr) != &stack_mode)
+			drmFree(U642VOID(conn.modes_ptr));
 		drmFree(U642VOID(conn.encoders_ptr));
 
 		goto retry;
@@ -569,7 +569,8 @@ retry:
 err_allocs:
 	drmFree(U642VOID(conn.prop_values_ptr));
 	drmFree(U642VOID(conn.props_ptr));
-	drmFree(U642VOID(conn.modes_ptr));
+	if (U642VOID(conn.modes_ptr) != &stack_mode)
+		drmFree(U642VOID(conn.modes_ptr));
 	drmFree(U642VOID(conn.encoders_ptr));
 
 	return r;
@@ -606,7 +607,6 @@ int drmModeDetachMode(int fd, uint32_t connector_id, drmModeModeInfoPtr mode_inf
 
 	return DRM_IOCTL(fd, DRM_IOCTL_MODE_DETACHMODE, &res);
 }
-
 
 drmModePropertyPtr drmModeGetProperty(int fd, uint32_t property_id)
 {
@@ -832,8 +832,25 @@ int drmCheckModesettingSupported(const char *busid)
 	if (ret == 0)
 		return 0;
 #endif
-	return -ENOSYS;
+#ifdef __OpenBSD__
+	int	fd;
+	struct drm_mode_card_res res;
+	drmModeResPtr r = 0;
 
+	if ((fd = drmOpen(NULL, busid)) < 0)
+		return -EINVAL;
+
+	memset(&res, 0, sizeof(struct drm_mode_card_res));
+
+	if (drmIoctl(fd, DRM_IOCTL_MODE_GETRESOURCES, &res)) {
+		drmClose(fd);
+		return -errno;
+	}
+
+	drmClose(fd);
+	return 0;
+#endif
+	return -ENOSYS;
 }
 
 int drmModeCrtcGetGamma(int fd, uint32_t crtc_id, uint32_t size,
@@ -872,7 +889,7 @@ int drmHandleEvent(int fd, drmEventContextPtr evctx)
 	int len, i;
 	struct drm_event *e;
 	struct drm_event_vblank *vblank;
-	
+
 	/* The DRM read semantics guarantees that we always get only
 	 * complete events. */
 
@@ -892,7 +909,7 @@ int drmHandleEvent(int fd, drmEventContextPtr evctx)
 				break;
 			vblank = (struct drm_event_vblank *) e;
 			evctx->vblank_handler(fd,
-					      vblank->sequence, 
+					      vblank->sequence,
 					      vblank->tv_sec,
 					      vblank->tv_usec,
 					      U642VOID (vblank->user_data));
@@ -937,7 +954,6 @@ int drmModeSetPlane(int fd, uint32_t plane_id, uint32_t crtc_id,
 		    uint32_t crtc_w, uint32_t crtc_h,
 		    uint32_t src_x, uint32_t src_y,
 		    uint32_t src_w, uint32_t src_h)
-
 {
 	struct drm_mode_set_plane s;
 
@@ -957,7 +973,6 @@ int drmModeSetPlane(int fd, uint32_t plane_id, uint32_t crtc_id,
 
 	return DRM_IOCTL(fd, DRM_IOCTL_MODE_SETPLANE, &s);
 }
-
 
 drmModePlanePtr drmModeGetPlane(int fd, uint32_t plane_id)
 {
@@ -1190,6 +1205,9 @@ drmModeAtomicReqPtr drmModeAtomicDuplicate(drmModeAtomicReqPtr old)
 {
 	drmModeAtomicReqPtr new;
 
+	if (!old)
+		return NULL;
+
 	new = drmMalloc(sizeof *new);
 	if (!new)
 		return NULL;
@@ -1214,6 +1232,9 @@ drmModeAtomicReqPtr drmModeAtomicDuplicate(drmModeAtomicReqPtr old)
 
 int drmModeAtomicMerge(drmModeAtomicReqPtr base, drmModeAtomicReqPtr augment)
 {
+	if (!base)
+		return -EINVAL;
+
 	if (!augment || augment->cursor == 0)
 		return 0;
 
@@ -1240,12 +1261,15 @@ int drmModeAtomicMerge(drmModeAtomicReqPtr base, drmModeAtomicReqPtr augment)
 
 int drmModeAtomicGetCursor(drmModeAtomicReqPtr req)
 {
+	if (!req)
+		return -EINVAL;
 	return req->cursor;
 }
 
 void drmModeAtomicSetCursor(drmModeAtomicReqPtr req, int cursor)
 {
-	req->cursor = cursor;
+	if (req)
+		req->cursor = cursor;
 }
 
 int drmModeAtomicAddProperty(drmModeAtomicReqPtr req,
@@ -1253,6 +1277,9 @@ int drmModeAtomicAddProperty(drmModeAtomicReqPtr req,
 			     uint32_t property_id,
 			     uint64_t value)
 {
+	if (!req)
+		return -EINVAL;
+
 	if (req->cursor >= req->size_items) {
 		drmModeAtomicReqItemPtr new;
 
@@ -1299,7 +1326,7 @@ static int sort_req_list(const void *misc, const void *other)
 int drmModeAtomicCommit(int fd, drmModeAtomicReqPtr req, uint32_t flags,
 			void *user_data)
 {
-	drmModeAtomicReqPtr sorted = drmModeAtomicDuplicate(req);
+	drmModeAtomicReqPtr sorted;
 	struct drm_mode_atomic atomic;
 	uint32_t *objs_ptr = NULL;
 	uint32_t *count_props_ptr = NULL;
@@ -1310,7 +1337,14 @@ int drmModeAtomicCommit(int fd, drmModeAtomicReqPtr req, uint32_t flags,
 	int obj_idx = -1;
 	int ret = -1;
 
-	if (!sorted)
+	if (!req)
+		return -EINVAL;
+
+	if (req->cursor == 0)
+		return 0;
+
+	sorted = drmModeAtomicDuplicate(req);
+	if (sorted == NULL)
 		return -ENOMEM;
 
 	memclear(atomic);

@@ -37,6 +37,7 @@
  * TODO: use cairo to write the mode info on the selected output once
  *       the mode has been programmed, along with possible test patterns.
  */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -52,12 +53,20 @@
 #include <string.h>
 #include <strings.h>
 #include <errno.h>
-#include <sys/poll.h>
+#include <poll.h>
 #include <sys/time.h>
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
 
 #include "xf86drm.h"
 #include "xf86drmMode.h"
 #include "drm_fourcc.h"
+
+#include "util/common.h"
+#include "util/format.h"
+#include "util/kms.h"
+#include "util/pattern.h"
 
 #include "buffers.h"
 #include "cursor.h"
@@ -77,6 +86,7 @@ struct connector {
 	drmModeConnector *connector;
 	drmModeObjectProperties *props;
 	drmModePropertyRes **props_info;
+	char *name;
 };
 
 struct fb {
@@ -115,69 +125,10 @@ struct device {
 	} mode;
 };
 
-#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 static inline int64_t U642I64(uint64_t val)
 {
 	return (int64_t)*((int64_t *)&val);
 }
-
-struct type_name {
-	int type;
-	const char *name;
-};
-
-#define type_name_fn(res) \
-const char * res##_str(int type) {			\
-	unsigned int i;					\
-	for (i = 0; i < ARRAY_SIZE(res##_names); i++) { \
-		if (res##_names[i].type == type)	\
-			return res##_names[i].name;	\
-	}						\
-	return "(invalid)";				\
-}
-
-struct type_name encoder_type_names[] = {
-	{ DRM_MODE_ENCODER_NONE, "none" },
-	{ DRM_MODE_ENCODER_DAC, "DAC" },
-	{ DRM_MODE_ENCODER_TMDS, "TMDS" },
-	{ DRM_MODE_ENCODER_LVDS, "LVDS" },
-	{ DRM_MODE_ENCODER_TVDAC, "TVDAC" },
-	{ DRM_MODE_ENCODER_VIRTUAL, "Virtual" },
-	{ DRM_MODE_ENCODER_DSI, "DSI" },
-	{ DRM_MODE_ENCODER_DPMST, "DPMST" },
-};
-
-static type_name_fn(encoder_type)
-
-struct type_name connector_status_names[] = {
-	{ DRM_MODE_CONNECTED, "connected" },
-	{ DRM_MODE_DISCONNECTED, "disconnected" },
-	{ DRM_MODE_UNKNOWNCONNECTION, "unknown" },
-};
-
-static type_name_fn(connector_status)
-
-struct type_name connector_type_names[] = {
-	{ DRM_MODE_CONNECTOR_Unknown, "unknown" },
-	{ DRM_MODE_CONNECTOR_VGA, "VGA" },
-	{ DRM_MODE_CONNECTOR_DVII, "DVI-I" },
-	{ DRM_MODE_CONNECTOR_DVID, "DVI-D" },
-	{ DRM_MODE_CONNECTOR_DVIA, "DVI-A" },
-	{ DRM_MODE_CONNECTOR_Composite, "composite" },
-	{ DRM_MODE_CONNECTOR_SVIDEO, "s-video" },
-	{ DRM_MODE_CONNECTOR_LVDS, "LVDS" },
-	{ DRM_MODE_CONNECTOR_Component, "component" },
-	{ DRM_MODE_CONNECTOR_9PinDIN, "9-pin DIN" },
-	{ DRM_MODE_CONNECTOR_DisplayPort, "DP" },
-	{ DRM_MODE_CONNECTOR_HDMIA, "HDMI-A" },
-	{ DRM_MODE_CONNECTOR_HDMIB, "HDMI-B" },
-	{ DRM_MODE_CONNECTOR_TV, "TV" },
-	{ DRM_MODE_CONNECTOR_eDP, "eDP" },
-	{ DRM_MODE_CONNECTOR_VIRTUAL, "Virtual" },
-	{ DRM_MODE_CONNECTOR_DSI, "DSI" },
-};
-
-static type_name_fn(connector_type)
 
 #define bit_name_fn(res)					\
 const char * res##_str(int type) {				\
@@ -238,7 +189,7 @@ static void dump_encoders(struct device *dev)
 		printf("%d\t%d\t%s\t0x%08x\t0x%08x\n",
 		       encoder->encoder_id,
 		       encoder->crtc_id,
-		       encoder_type_str(encoder->encoder_type),
+		       util_lookup_encoder_type_name(encoder->encoder_type),
 		       encoder->possible_crtcs,
 		       encoder->possible_clones);
 	}
@@ -363,6 +314,8 @@ static void dump_prop(struct device *dev, drmModePropertyPtr prop,
 	printf("\t\tvalue:");
 	if (drm_property_type_is(prop, DRM_MODE_PROP_BLOB))
 		dump_blob(dev, value);
+	else if (drm_property_type_is(prop, DRM_MODE_PROP_SIGNED_RANGE))
+		printf(" %"PRId64"\n", value);
 	else
 		printf(" %"PRIu64"\n", value);
 }
@@ -372,18 +325,18 @@ static void dump_connectors(struct device *dev)
 	int i, j;
 
 	printf("Connectors:\n");
-	printf("id\tencoder\tstatus\t\ttype\tsize (mm)\tmodes\tencoders\n");
+	printf("id\tencoder\tstatus\t\tname\t\tsize (mm)\tmodes\tencoders\n");
 	for (i = 0; i < dev->resources->res->count_connectors; i++) {
 		struct connector *_connector = &dev->resources->connectors[i];
 		drmModeConnector *connector = _connector->connector;
 		if (!connector)
 			continue;
 
-		printf("%d\t%d\t%s\t%s\t%dx%d\t\t%d\t",
+		printf("%d\t%d\t%s\t%-15s\t%dx%d\t\t%d\t",
 		       connector->connector_id,
 		       connector->encoder_id,
-		       connector_status_str(connector->connection),
-		       connector_type_str(connector->connector_type),
+		       util_lookup_connector_status_name(connector->connection),
+		       _connector->name,
 		       connector->mmWidth, connector->mmHeight,
 		       connector->count_modes);
 
@@ -509,12 +462,13 @@ static void dump_planes(struct device *dev)
 
 static void free_resources(struct resources *res)
 {
+	int i;
+
 	if (!res)
 		return;
 
 #define free_resource(_res, __res, type, Type)					\
 	do {									\
-		int i;								\
 		if (!(_res)->type##s)						\
 			break;							\
 		for (i = 0; i < (int)(_res)->__res->count_##type##s; ++i) {	\
@@ -527,7 +481,6 @@ static void free_resources(struct resources *res)
 
 #define free_properties(_res, __res, type)					\
 	do {									\
-		int i;								\
 		for (i = 0; i < (int)(_res)->__res->count_##type##s; ++i) {	\
 			drmModeFreeObjectProperties(res->type##s[i].props);	\
 			free(res->type##s[i].props_info);			\
@@ -539,6 +492,10 @@ static void free_resources(struct resources *res)
 
 		free_resource(res, res, crtc, Crtc);
 		free_resource(res, res, encoder, Encoder);
+
+		for (i = 0; i < res->res->count_connectors; i++)
+			free(res->connectors[i].name);
+
 		free_resource(res, res, connector, Connector);
 		free_resource(res, res, fb, FB);
 
@@ -586,7 +543,6 @@ static struct resources *get_resources(struct device *dev)
 
 #define get_resource(_res, __res, type, Type)					\
 	do {									\
-		int i;								\
 		for (i = 0; i < (int)(_res)->__res->count_##type##s; ++i) {	\
 			(_res)->type##s[i].type =				\
 				drmModeGet##Type(dev->fd, (_res)->__res->type##s[i]); \
@@ -602,9 +558,18 @@ static struct resources *get_resources(struct device *dev)
 	get_resource(res, res, connector, Connector);
 	get_resource(res, res, fb, FB);
 
+	/* Set the name of all connectors based on the type name and the per-type ID. */
+	for (i = 0; i < res->res->count_connectors; i++) {
+		struct connector *connector = &res->connectors[i];
+		drmModeConnector *conn = connector->connector;
+
+		asprintf(&connector->name, "%s-%u",
+			 util_lookup_connector_type_name(conn->connector_type),
+			 conn->connector_type_id);
+	}
+
 #define get_properties(_res, __res, type, Type)					\
 	do {									\
-		int i;								\
 		for (i = 0; i < (int)(_res)->__res->count_##type##s; ++i) {	\
 			struct type *obj = &res->type##s[i];			\
 			unsigned int j;						\
@@ -668,6 +633,21 @@ static int get_crtc_index(struct device *dev, uint32_t id)
 	return -1;
 }
 
+static drmModeConnector *get_connector_by_name(struct device *dev, const char *name)
+{
+	struct connector *connector;
+	int i;
+
+	for (i = 0; i < dev->resources->res->count_connectors; i++) {
+		connector = &dev->resources->connectors[i];
+
+		if (strcmp(connector->name, name) == 0)
+			return connector->connector;
+	}
+
+	return NULL;
+}
+
 static drmModeConnector *get_connector_by_id(struct device *dev, uint32_t id)
 {
 	drmModeConnector *connector;
@@ -708,6 +688,7 @@ static drmModeEncoder *get_encoder_by_id(struct device *dev, uint32_t id)
  * can bind it with a free crtc.
  */
 struct pipe_arg {
+	const char **cons;
 	uint32_t *con_ids;
 	unsigned int num_cons;
 	uint32_t crtc_id;
@@ -823,8 +804,8 @@ static int pipe_find_crtc_and_mode(struct device *dev, struct pipe_arg *pipe)
 					   pipe->mode_str, pipe->vrefresh);
 		if (mode == NULL) {
 			fprintf(stderr,
-				"failed to find mode \"%s\" for connector %u\n",
-				pipe->mode_str, pipe->con_ids[i]);
+				"failed to find mode \"%s\" for connector %s\n",
+				pipe->mode_str, pipe->cons[i]);
 			return -EINVAL;
 		}
 	}
@@ -1021,7 +1002,7 @@ static int set_plane(struct device *dev, struct plane_arg *p)
 		p->w, p->h, p->format_str, plane_id);
 
 	plane_bo = bo_create(dev->fd, p->fourcc, p->w, p->h, handles,
-			     pitches, offsets, PATTERN_TILES);
+			     pitches, offsets, UTIL_PATTERN_TILES);
 	if (plane_bo == NULL)
 		return -1;
 
@@ -1097,8 +1078,9 @@ static void set_mode(struct device *dev, struct pipe_arg *pipes, unsigned int co
 			dev->mode.height = pipe->mode->vdisplay;
 	}
 
-	bo = bo_create(dev->fd, pipes[0].fourcc, dev->mode.width, dev->mode.height,
-		       handles, pitches, offsets, PATTERN_SMPTE);
+	bo = bo_create(dev->fd, pipes[0].fourcc, dev->mode.width,
+		       dev->mode.height, handles, pitches, offsets,
+		       UTIL_PATTERN_SMPTE);
 	if (bo == NULL)
 		return;
 
@@ -1124,7 +1106,7 @@ static void set_mode(struct device *dev, struct pipe_arg *pipes, unsigned int co
 		printf("setting mode %s-%dHz@%s on connectors ",
 		       pipe->mode_str, pipe->mode->vrefresh, pipe->format_str);
 		for (j = 0; j < pipe->num_cons; ++j)
-			printf("%u, ", pipe->con_ids[j]);
+			printf("%s, ", pipe->cons[j]);
 		printf("crtc %d\n", pipe->crtc->crtc->crtc_id);
 
 		ret = drmModeSetCrtc(dev->fd, pipe->crtc->crtc->crtc_id, fb_id,
@@ -1176,7 +1158,7 @@ static void set_cursors(struct device *dev, struct pipe_arg *pipes, unsigned int
 	 * translucent alpha
 	 */
 	bo = bo_create(dev->fd, DRM_FORMAT_ARGB8888, cw, ch, handles, pitches,
-		       offsets, PATTERN_PLAIN);
+		       offsets, UTIL_PATTERN_PLAIN);
 	if (bo == NULL)
 		return;
 
@@ -1215,9 +1197,9 @@ static void test_page_flip(struct device *dev, struct pipe_arg *pipes, unsigned 
 	unsigned int i;
 	int ret;
 
-	other_bo = bo_create(dev->fd, pipes[0].fourcc,
-			     dev->mode.width, dev->mode.height,
-			     handles, pitches, offsets, PATTERN_PLAIN);
+	other_bo = bo_create(dev->fd, pipes[0].fourcc, dev->mode.width,
+			     dev->mode.height, handles, pitches, offsets,
+			     UTIL_PATTERN_PLAIN);
 	if (other_bo == NULL)
 		return;
 
@@ -1253,7 +1235,7 @@ static void test_page_flip(struct device *dev, struct pipe_arg *pipes, unsigned 
 	evctx.version = DRM_EVENT_CONTEXT_VERSION;
 	evctx.vblank_handler = NULL;
 	evctx.page_flip_handler = page_flip_handler;
-	
+
 	while (1) {
 #if 0
 		struct pollfd pfd[2];
@@ -1273,7 +1255,6 @@ static void test_page_flip(struct device *dev, struct pipe_arg *pipes, unsigned 
 #else
 		struct timeval timeout = { .tv_sec = 3, .tv_usec = 0 };
 		fd_set fds;
-		int ret;
 
 		FD_ZERO(&fds);
 		FD_SET(0, &fds);
@@ -1313,18 +1294,24 @@ static int parse_connector(struct pipe_arg *pipe, const char *arg)
 
 	/* Count the number of connectors and allocate them. */
 	pipe->num_cons = 1;
-	for (p = arg; isdigit(*p) || *p == ','; ++p) {
+	for (p = arg; *p && *p != ':' && *p != '@'; ++p) {
 		if (*p == ',')
 			pipe->num_cons++;
 	}
 
 	pipe->con_ids = calloc(pipe->num_cons, sizeof(*pipe->con_ids));
-	if (pipe->con_ids == NULL)
+	pipe->cons = calloc(pipe->num_cons, sizeof(*pipe->cons));
+	if (pipe->con_ids == NULL || pipe->cons == NULL)
 		return -1;
 
 	/* Parse the connectors. */
 	for (i = 0, p = arg; i < pipe->num_cons; ++i, p = endp + 1) {
-		pipe->con_ids[i] = strtoul(p, &endp, 10);
+		endp = strpbrk(p, ",@:");
+		if (!endp)
+			break;
+
+		pipe->cons[i] = strndup(p, endp - p);
+
 		if (*endp != ',')
 			break;
 	}
@@ -1360,7 +1347,7 @@ static int parse_connector(struct pipe_arg *pipe, const char *arg)
 		pipe->format_str[4] = '\0';
 	}
 
-	pipe->fourcc = format_fourcc(pipe->format_str);
+	pipe->fourcc = util_format_fourcc(pipe->format_str);
 	if (pipe->fourcc == 0)  {
 		fprintf(stderr, "unknown format %s\n", pipe->format_str);
 		return -1;
@@ -1413,7 +1400,7 @@ static int parse_plane(struct plane_arg *plane, const char *p)
 		strcpy(plane->format_str, "XR24");
 	}
 
-	plane->fourcc = format_fourcc(plane->format_str);
+	plane->fourcc = util_format_fourcc(plane->format_str);
 	if (plane->fourcc == 0) {
 		fprintf(stderr, "unknown format %s\n", plane->format_str);
 		return -EINVAL;
@@ -1486,6 +1473,32 @@ static int cursor_supported(void)
 	return 1;
 }
 
+static int pipe_resolve_connectors(struct device *dev, struct pipe_arg *pipe)
+{
+	drmModeConnector *connector;
+	unsigned int i;
+	uint32_t id;
+	char *endp;
+
+	for (i = 0; i < pipe->num_cons; i++) {
+		id = strtoul(pipe->cons[i], &endp, 10);
+		if (endp == pipe->cons[i]) {
+			connector = get_connector_by_name(dev, pipe->cons[i]);
+			if (!connector) {
+				fprintf(stderr, "no connector named '%s'\n",
+					pipe->cons[i]);
+				return -ENODEV;
+			}
+
+			id = connector->connector_id;
+		}
+
+		pipe->con_ids[i] = id;
+	}
+
+	return 0;
+}
+
 static char optstr[] = "cdD:efM:P:ps:Cvw:";
 
 int main(int argc, char **argv)
@@ -1497,11 +1510,10 @@ int main(int argc, char **argv)
 	int drop_master = 0;
 	int test_vsync = 0;
 	int test_cursor = 0;
-	const char *modules[] = { "i915", "radeon", "nouveau", "vmwgfx", "omapdrm", "exynos", "tilcdc", "msm", "sti", "tegra", "imx-drm", "rockchip", "atmel-hlcdc" };
 	char *device = NULL;
 	char *module = NULL;
 	unsigned int i;
-	int count = 0, plane_count = 0;
+	unsigned int count = 0, plane_count = 0;
 	unsigned int prop_count = 0;
 	struct pipe_arg *pipe_args = NULL;
 	struct plane_arg *plane_args = NULL;
@@ -1567,7 +1579,7 @@ int main(int argc, char **argv)
 			if (parse_connector(&pipe_args[count], optarg) < 0)
 				usage(argv[0]);
 
-			count++;				      
+			count++;
 			break;
 		case 'C':
 			test_cursor = 1;
@@ -1598,29 +1610,9 @@ int main(int argc, char **argv)
 	if (!args)
 		encoders = connectors = crtcs = planes = framebuffers = 1;
 
-	if (module) {
-		dev.fd = drmOpen(module, device);
-		if (dev.fd < 0) {
-			fprintf(stderr, "failed to open device '%s'.\n", module);
-			return 1;
-		}
-	} else {
-		for (i = 0; i < ARRAY_SIZE(modules); i++) {
-			printf("trying to open device '%s'...", modules[i]);
-			dev.fd = drmOpen(modules[i], device);
-			if (dev.fd < 0) {
-				printf("failed.\n");
-			} else {
-				printf("success.\n");
-				break;
-			}
-		}
-
-		if (dev.fd < 0) {
-			fprintf(stderr, "no device found.\n");
-			return 1;
-		}
-	}
+	dev.fd = util_open(device, module);
+	if (dev.fd < 0)
+		return -1;
 
 	if (test_vsync && !page_flipping_supported()) {
 		fprintf(stderr, "page flipping not supported by drm.\n");
@@ -1641,6 +1633,14 @@ int main(int argc, char **argv)
 	if (!dev.resources) {
 		drmClose(dev.fd);
 		return 1;
+	}
+
+	for (i = 0; i < count; i++) {
+		if (pipe_resolve_connectors(&dev, &pipe_args[i]) < 0) {
+			free_resources(dev.resources);
+			drmClose(dev.fd);
+			return 1;
+		}
 	}
 
 #define dump_resource(dev, res) if (res) dump_##res(dev)
