@@ -186,6 +186,7 @@ static struct omap_bo * bo_from_handle(struct omap_device *dev,
 	}
 	bo->dev = omap_device_ref(dev);
 	bo->handle = handle;
+	bo->fd = -1;
 	atomic_set(&bo->refcnt, 1);
 	/* add ourselves to the handle table: */
 	drmHashInsert(dev->handle_table, handle, bo);
@@ -363,7 +364,7 @@ void omap_bo_del(struct omap_bo *bo)
 		munmap(bo->map, bo->size);
 	}
 
-	if (bo->fd) {
+	if (bo->fd >= 0) {
 		close(bo->fd);
 	}
 
@@ -414,7 +415,7 @@ uint32_t omap_bo_handle(struct omap_bo *bo)
  */
 int omap_bo_dmabuf(struct omap_bo *bo)
 {
-	if (!bo->fd) {
+	if (bo->fd < 0) {
 		struct drm_prime_handle req = {
 				.handle = bo->handle,
 				.flags = DRM_CLOEXEC,

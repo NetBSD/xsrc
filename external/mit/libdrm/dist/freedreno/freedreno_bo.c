@@ -33,9 +33,8 @@
 #include "freedreno_drmif.h"
 #include "freedreno_priv.h"
 
-static pthread_mutex_t table_lock = PTHREAD_MUTEX_INITIALIZER;
-
-static void bo_del(struct fd_bo *bo);
+drm_private pthread_mutex_t table_lock = PTHREAD_MUTEX_INITIALIZER;
+drm_private void bo_del(struct fd_bo *bo);
 
 /* set buffer name, and add to table, call w/ table_lock held: */
 static void set_name(struct fd_bo *bo, uint32_t name)
@@ -52,6 +51,9 @@ static struct fd_bo * lookup_bo(void *tbl, uint32_t key)
 	if (!drmHashLookup(tbl, key, (void **)&bo)) {
 		/* found, incr refcnt and return: */
 		bo = fd_bo_ref(bo);
+
+		/* don't break the bucket if this bo was found in one */
+		list_delinit(&bo->list);
 	}
 	return bo;
 }
@@ -80,114 +82,16 @@ static struct fd_bo * bo_from_handle(struct fd_device *dev,
 	return bo;
 }
 
-/* Frees older cached buffers.  Called under table_lock */
-drm_private void fd_cleanup_bo_cache(struct fd_device *dev, time_t time)
-{
-	int i;
-
-	if (dev->time == time)
-		return;
-
-	for (i = 0; i < dev->num_buckets; i++) {
-		struct fd_bo_bucket *bucket = &dev->cache_bucket[i];
-		struct fd_bo *bo;
-
-		while (!LIST_IS_EMPTY(&bucket->list)) {
-			bo = LIST_ENTRY(struct fd_bo, bucket->list.next, list);
-
-			/* keep things in cache for at least 1 second: */
-			if (time && ((time - bo->free_time) <= 1))
-				break;
-
-			list_del(&bo->list);
-			bo_del(bo);
-		}
-	}
-
-	dev->time = time;
-}
-
-static struct fd_bo_bucket * get_bucket(struct fd_device *dev, uint32_t size)
-{
-	int i;
-
-	/* hmm, this is what intel does, but I suppose we could calculate our
-	 * way to the correct bucket size rather than looping..
-	 */
-	for (i = 0; i < dev->num_buckets; i++) {
-		struct fd_bo_bucket *bucket = &dev->cache_bucket[i];
-		if (bucket->size >= size) {
-			return bucket;
-		}
-	}
-
-	return NULL;
-}
-
-static int is_idle(struct fd_bo *bo)
-{
-	return fd_bo_cpu_prep(bo, NULL,
-			DRM_FREEDRENO_PREP_READ |
-			DRM_FREEDRENO_PREP_WRITE |
-			DRM_FREEDRENO_PREP_NOSYNC) == 0;
-}
-
-static struct fd_bo *find_in_bucket(struct fd_device *dev,
-		struct fd_bo_bucket *bucket, uint32_t flags)
-{
-	struct fd_bo *bo = NULL;
-
-	/* TODO .. if we had an ALLOC_FOR_RENDER flag like intel, we could
-	 * skip the busy check.. if it is only going to be a render target
-	 * then we probably don't need to stall..
-	 *
-	 * NOTE that intel takes ALLOC_FOR_RENDER bo's from the list tail
-	 * (MRU, since likely to be in GPU cache), rather than head (LRU)..
-	 */
-	pthread_mutex_lock(&table_lock);
-	while (!LIST_IS_EMPTY(&bucket->list)) {
-		bo = LIST_ENTRY(struct fd_bo, bucket->list.next, list);
-		if (0 /* TODO: if madvise tells us bo is gone... */) {
-			list_del(&bo->list);
-			bo_del(bo);
-			bo = NULL;
-			continue;
-		}
-		/* TODO check for compatible flags? */
-		if (is_idle(bo)) {
-			list_del(&bo->list);
-			break;
-		}
-		bo = NULL;
-		break;
-	}
-	pthread_mutex_unlock(&table_lock);
-
-	return bo;
-}
-
-
 struct fd_bo *
 fd_bo_new(struct fd_device *dev, uint32_t size, uint32_t flags)
 {
 	struct fd_bo *bo = NULL;
-	struct fd_bo_bucket *bucket;
 	uint32_t handle;
 	int ret;
 
-	size = ALIGN(size, 4096);
-	bucket = get_bucket(dev, size);
-
-	/* see if we can be green and recycle: */
-	if (bucket) {
-		size = bucket->size;
-		bo = find_in_bucket(dev, bucket, flags);
-		if (bo) {
-			atomic_set(&bo->refcnt, 1);
-			fd_device_ref(bo->dev);
-			return bo;
-		}
-	}
+	bo = fd_bo_cache_alloc(&dev->bo_cache, &size, flags);
+	if (bo)
+		return bo;
 
 	ret = dev->funcs->bo_new_handle(dev, size, flags, &handle);
 	if (ret)
@@ -195,7 +99,7 @@ fd_bo_new(struct fd_device *dev, uint32_t size, uint32_t flags)
 
 	pthread_mutex_lock(&table_lock);
 	bo = bo_from_handle(dev, size, handle);
-	bo->bo_reuse = 1;
+	bo->bo_reuse = TRUE;
 	pthread_mutex_unlock(&table_lock);
 
 	return bo;
@@ -223,20 +127,30 @@ out_unlock:
 struct fd_bo *
 fd_bo_from_dmabuf(struct fd_device *dev, int fd)
 {
-	struct drm_prime_handle req = {
-			.fd = fd,
-	};
 	int ret, size;
+	uint32_t handle;
+	struct fd_bo *bo;
 
-	ret = drmIoctl(dev->fd, DRM_IOCTL_PRIME_FD_TO_HANDLE, &req);
+	pthread_mutex_lock(&table_lock);
+	ret = drmPrimeFDToHandle(dev->fd, fd, &handle);
 	if (ret) {
 		return NULL;
 	}
 
-	/* hmm, would be nice if we had a way to figure out the size.. */
-	size = 0;
+	bo = lookup_bo(dev->handle_table, handle);
+	if (bo)
+		goto out_unlock;
 
-	return fd_bo_from_handle(dev, req.handle, size);
+	/* lseek() to get bo size */
+	size = lseek(fd, 0, SEEK_END);
+	lseek(fd, 0, SEEK_CUR);
+
+	bo = bo_from_handle(dev, size, handle);
+
+out_unlock:
+	pthread_mutex_unlock(&table_lock);
+
+	return bo;
 }
 
 struct fd_bo * fd_bo_from_name(struct fd_device *dev, uint32_t name)
@@ -285,42 +199,19 @@ void fd_bo_del(struct fd_bo *bo)
 	if (!atomic_dec_and_test(&bo->refcnt))
 		return;
 
-	if (bo->fd) {
-		close(bo->fd);
-		bo->fd = 0;
-	}
-
 	pthread_mutex_lock(&table_lock);
 
-	if (bo->bo_reuse) {
-		struct fd_bo_bucket *bucket = get_bucket(dev, bo->size);
-
-		/* see if we can be green and recycle: */
-		if (bucket) {
-			struct timespec time;
-
-			clock_gettime(CLOCK_MONOTONIC, &time);
-
-			bo->free_time = time.tv_sec;
-			list_addtail(&bo->list, &bucket->list);
-			fd_cleanup_bo_cache(dev, time.tv_sec);
-
-			/* bo's in the bucket cache don't have a ref and
-			 * don't hold a ref to the dev:
-			 */
-
-			goto out;
-		}
-	}
+	if (bo->bo_reuse && (fd_bo_cache_free(&dev->bo_cache, bo) == 0))
+		goto out;
 
 	bo_del(bo);
-out:
 	fd_device_del_locked(dev);
+out:
 	pthread_mutex_unlock(&table_lock);
 }
 
 /* Called under table_lock */
-static void bo_del(struct fd_bo *bo)
+drm_private void bo_del(struct fd_bo *bo)
 {
 	if (bo->map)
 		drm_munmap(bo->map, bo->size);
@@ -358,6 +249,7 @@ int fd_bo_get_name(struct fd_bo *bo, uint32_t *name)
 		pthread_mutex_lock(&table_lock);
 		set_name(bo, req.name);
 		pthread_mutex_unlock(&table_lock);
+		bo->bo_reuse = FALSE;
 	}
 
 	*name = bo->name;
@@ -372,21 +264,18 @@ uint32_t fd_bo_handle(struct fd_bo *bo)
 
 int fd_bo_dmabuf(struct fd_bo *bo)
 {
-	if (!bo->fd) {
-		struct drm_prime_handle req = {
-				.handle = bo->handle,
-				.flags = DRM_CLOEXEC,
-		};
-		int ret;
+	int ret, prime_fd;
 
-		ret = drmIoctl(bo->dev->fd, DRM_IOCTL_PRIME_HANDLE_TO_FD, &req);
-		if (ret) {
-			return ret;
-		}
-
-		bo->fd = req.fd;
+	ret = drmPrimeHandleToFD(bo->dev->fd, bo->handle, DRM_CLOEXEC,
+			&prime_fd);
+	if (ret) {
+		ERROR_MSG("failed to get dmabuf fd: %d", ret);
+		return ret;
 	}
-	return dup(bo->fd);
+
+	bo->bo_reuse = FALSE;
+
+	return prime_fd;
 }
 
 uint32_t fd_bo_size(struct fd_bo *bo)
@@ -425,3 +314,10 @@ void fd_bo_cpu_fini(struct fd_bo *bo)
 {
 	bo->funcs->cpu_fini(bo);
 }
+
+#ifndef HAVE_FREEDRENO_KGSL
+struct fd_bo * fd_bo_from_fbdev(struct fd_pipe *pipe, int fbfd, uint32_t size)
+{
+    return NULL;
+}
+#endif

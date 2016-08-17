@@ -32,6 +32,25 @@
 
 #include "msm_priv.h"
 
+static int query_param(struct fd_pipe *pipe, uint32_t param,
+		uint64_t *value)
+{
+	struct msm_pipe *msm_pipe = to_msm_pipe(pipe);
+	struct drm_msm_param req = {
+			.pipe = msm_pipe->pipe,
+			.param = param,
+	};
+	int ret;
+
+	ret = drmCommandWriteRead(pipe->dev->fd, DRM_MSM_GET_PARAM,
+			&req, sizeof(req));
+	if (ret)
+		return ret;
+
+	*value = req.value;
+
+	return 0;
+}
 
 static int msm_pipe_get_param(struct fd_pipe *pipe,
 		enum fd_param_id param, uint64_t *value)
@@ -48,13 +67,18 @@ static int msm_pipe_get_param(struct fd_pipe *pipe,
 	case FD_CHIP_ID:
 		*value = msm_pipe->chip_id;
 		return 0;
+	case FD_MAX_FREQ:
+		return query_param(pipe, MSM_PARAM_MAX_FREQ, value);
+	case FD_TIMESTAMP:
+		return query_param(pipe, MSM_PARAM_TIMESTAMP, value);
 	default:
 		ERROR_MSG("invalid param id: %d", param);
 		return -1;
 	}
 }
 
-static int msm_pipe_wait(struct fd_pipe *pipe, uint32_t timestamp)
+static int msm_pipe_wait(struct fd_pipe *pipe, uint32_t timestamp,
+		uint64_t timeout)
 {
 	struct fd_device *dev = pipe->dev;
 	struct drm_msm_wait_fence req = {
@@ -62,7 +86,7 @@ static int msm_pipe_wait(struct fd_pipe *pipe, uint32_t timestamp)
 	};
 	int ret;
 
-	get_abs_timeout(&req.timeout, 5000);
+	get_abs_timeout(&req.timeout, timeout);
 
 	ret = drmCommandWrite(dev->fd, DRM_MSM_WAIT_FENCE, &req, sizeof(req));
 	if (ret) {
@@ -79,28 +103,22 @@ static void msm_pipe_destroy(struct fd_pipe *pipe)
 	free(msm_pipe);
 }
 
-static struct fd_pipe_funcs funcs = {
+static const struct fd_pipe_funcs funcs = {
 		.ringbuffer_new = msm_ringbuffer_new,
 		.get_param = msm_pipe_get_param,
 		.wait = msm_pipe_wait,
 		.destroy = msm_pipe_destroy,
 };
 
-static uint64_t get_param(struct fd_device *dev, uint32_t pipe, uint32_t param)
+static uint64_t get_param(struct fd_pipe *pipe, uint32_t param)
 {
-	struct drm_msm_param req = {
-			.pipe = pipe,
-			.param = param,
-	};
-	int ret;
-
-	ret = drmCommandWriteRead(dev->fd, DRM_MSM_GET_PARAM, &req, sizeof(req));
+	uint64_t value;
+	int ret = query_param(pipe, param, &value);
 	if (ret) {
 		ERROR_MSG("get-param failed! %d (%s)", ret, strerror(errno));
 		return 0;
 	}
-
-	return req.value;
+	return value;
 }
 
 drm_private struct fd_pipe * msm_pipe_new(struct fd_device *dev,
@@ -122,10 +140,14 @@ drm_private struct fd_pipe * msm_pipe_new(struct fd_device *dev,
 	pipe = &msm_pipe->base;
 	pipe->funcs = &funcs;
 
+	/* initialize before get_param(): */
+	pipe->dev = dev;
 	msm_pipe->pipe = pipe_id[id];
-	msm_pipe->gpu_id = get_param(dev, pipe_id[id], MSM_PARAM_GPU_ID);
-	msm_pipe->gmem   = get_param(dev, pipe_id[id], MSM_PARAM_GMEM_SIZE);
-	msm_pipe->chip_id = get_param(dev, pipe_id[id], MSM_PARAM_CHIP_ID);
+
+	/* these params should be supported since the first version of drm/msm: */
+	msm_pipe->gpu_id = get_param(pipe, MSM_PARAM_GPU_ID);
+	msm_pipe->gmem   = get_param(pipe, MSM_PARAM_GMEM_SIZE);
+	msm_pipe->chip_id = get_param(pipe, MSM_PARAM_CHIP_ID);
 
 	if (! msm_pipe->gpu_id)
 		goto fail;

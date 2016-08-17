@@ -39,10 +39,11 @@
 static void msm_device_destroy(struct fd_device *dev)
 {
 	struct msm_device *msm_dev = to_msm_device(dev);
+	fd_bo_cache_cleanup(&msm_dev->ring_cache, 0);
 	free(msm_dev);
 }
 
-static struct fd_device_funcs funcs = {
+static const struct fd_device_funcs funcs = {
 		.bo_new_handle = msm_bo_new_handle,
 		.bo_from_handle = msm_bo_from_handle,
 		.pipe_new = msm_pipe_new,
@@ -60,6 +61,8 @@ drm_private struct fd_device * msm_device_new(int fd)
 
 	dev = &msm_dev->base;
 	dev->funcs = &funcs;
+
+	fd_bo_cache_init(&msm_dev->ring_cache, TRUE);
 
 	return dev;
 }
