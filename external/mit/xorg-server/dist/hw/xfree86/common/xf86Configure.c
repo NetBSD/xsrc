@@ -99,7 +99,7 @@ xf86AddBusDeviceToConfigure(const char *driver, BusType bus, void *busData,
             ret = xf86SbusConfigure(busData, DevToConfig[i].sVideo);
             break;
 #endif
-#if defined(__arm32__)
+#if defined(__arm32__) || defined(__arm__)
         case BUS_ISA:
             break;
 #endif
@@ -141,7 +141,7 @@ xf86AddBusDeviceToConfigure(const char *driver, BusType bus, void *busData,
                                 &DevToConfig[i].GDev);
         break;
 #endif
-#if defined(__arm32__)
+#if defined(__arm32__) || defined(__arm__)
     case BUS_ISA:
 	DevToConfig[i].GDev.busID = xnfalloc(6);
 	strcpy(DevToConfig[i].GDev.busID, "ISA");

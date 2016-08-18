@@ -97,7 +97,7 @@
 
 #if defined(DO_PROTOTYPES)
 #if !defined(__arm__)
-#if !defined(__sparc__) && !defined(__arm32__) && !defined(__nds32__) \
+#if !defined(__sparc__) && !defined(__arm__) && !defined(__arm32__) && !defined(__nds32__) \
       && !(defined(__alpha__) && defined(linux)) \
       && !(defined(__ia64__) && defined(linux)) \
       && !(defined(__mips64) && defined(linux)) \
@@ -109,7 +109,7 @@ extern _X_EXPORT unsigned int inb(unsigned short);
 extern _X_EXPORT unsigned int inw(unsigned short);
 extern _X_EXPORT unsigned int inl(unsigned short);
 
-#else                           /* __sparc__,  __arm32__, __alpha__, __nds32__ */
+#else                           /* __sparc__,  __arm__, __arm32__, __alpha__, __nds32__ */
 extern _X_EXPORT void outb(unsigned long, unsigned char);
 extern _X_EXPORT void outw(unsigned long, unsigned short);
 extern _X_EXPORT void outl(unsigned long, unsigned int);
@@ -518,8 +518,8 @@ xf86WriteMmio32Le(__volatile__ void *base, const unsigned long offset,
     barrier();
 }
 
-#elif defined(__mips__) || (defined(__arm32__) && !defined(__linux__))
-#if defined(__arm32__) || defined(__mips64)
+#elif defined(__mips__) || ((defined(__arm__) || defined(__arm32__)) && !defined(__linux__))
+#if defined(__arm__) || defined(__arm32__) || defined(__mips64)
 #define PORT_SIZE long
 #else
 #define PORT_SIZE short

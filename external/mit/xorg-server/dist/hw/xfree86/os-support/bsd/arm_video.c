@@ -160,7 +160,7 @@ xf86DisableIO()
 
 #endif
 
-#if defined(USE_ARC_MMAP) || defined(__arm32__)
+#if defined(USE_ARC_MMAP) || defined(__arm__) || defined(__arm32__)
 
 Bool
 xf86EnableIO()
