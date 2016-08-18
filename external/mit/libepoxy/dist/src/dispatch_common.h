@@ -39,7 +39,11 @@
 #define PLATFORM_HAS_WGL 0
 #define EPOXY_IMPORTEXPORT
 #else
+#ifdef __NetBSD__ /* XXX enable egl in xsrc */
+#define PLATFORM_HAS_EGL 0
+#else
 #define PLATFORM_HAS_EGL 1
+#endif
 #define PLATFORM_HAS_GLX 1
 #define PLATFORM_HAS_WGL 0
 #define EPOXY_IMPORTEXPORT
