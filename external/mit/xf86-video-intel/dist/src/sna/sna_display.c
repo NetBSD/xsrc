@@ -5056,8 +5056,8 @@ sna_cursor_pre_init(struct sna *sna)
 		return;
 
 #define LOCAL_IOCTL_GET_CAP	DRM_IOWR(0x0c, struct local_get_cap)
-#define DRM_CAP_CURSOR_WIDTH	8
-#define DRM_CAP_CURSOR_HEIGHT	9
+#define DRM_CAP_CURSOR_WIDTH	0x8
+#define DRM_CAP_CURSOR_HEIGHT	0x9
 
 #define I915_PARAM_HAS_COHERENT_PHYS_GTT 29
 
