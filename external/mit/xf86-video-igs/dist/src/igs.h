@@ -1,5 +1,5 @@
 /* $OpenBSD: wsfb_driver.c,v 1.18 2003/04/02 16:42:13 jason Exp $ */
-/* $NetBSD: igs.h,v 1.6 2011/12/14 23:58:54 macallan Exp $ */
+/* $NetBSD: igs.h,v 1.7 2016/08/18 09:32:26 mrg Exp $ */
 /*
  * Copyright (c) 2001 Matthieu Herrb
  *		 2009 Michael Lorenz
@@ -43,8 +43,11 @@
 #include <sys/time.h>
 #include <dev/wscons/wsconsio.h>
 
+/* all driver need this */
+#include "xorg-server.h"
 #include "xf86.h"
 #include "xf86_OSproc.h"
+#include "compiler.h"
 
 #include "xf86RamDac.h"
 #include "exa.h"

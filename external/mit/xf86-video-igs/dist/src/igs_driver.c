@@ -1,5 +1,5 @@
 /* $OpenBSD: wsfb_driver.c,v 1.19 2003/04/27 16:42:32 matthieu Exp $ */
-/* $NetBSD: igs_driver.c,v 1.12 2016/08/16 01:27:46 mrg Exp $ */
+/* $NetBSD: igs_driver.c,v 1.13 2016/08/18 09:32:26 mrg Exp $ */
 /*
  * Copyright (c) 2001 Matthieu Herrb
  *		 2009 Michael Lorenz
@@ -43,10 +43,6 @@
   * adapted from wsfb
   */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -55,9 +51,7 @@
 #include <errno.h>
 #include <dev/wscons/wsconsio.h>
 
-/* all driver need this */
-#include "xf86.h"
-#include "xf86_OSproc.h"
+#include "igs.h"
 
 #include "mipointer.h"
 #include "micmap.h"
@@ -65,9 +59,6 @@
 #include "xf86cmap.h"
 #include "shadow.h"
 #include "dgaproc.h"
-
-/* Everything using inb/outb, etc needs "compiler.h" */
-#include "compiler.h"
 
 /* for visuals */
 #include "fb.h"
@@ -80,8 +71,6 @@
 #ifdef XvExtension
 #include "xf86xv.h"
 #endif
-
-#include "igs.h"
 
 #include <sys/mman.h>
 

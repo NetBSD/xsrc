@@ -1,4 +1,4 @@
-/* $NetBSD: igs_cursor.c,v 1.3 2011/05/28 13:26:54 christos Exp $ */
+/* $NetBSD: igs_cursor.c,v 1.4 2016/08/18 09:32:26 mrg Exp $ */
 /*
  * Copyright (c) 2005 Michael Lorenz
  * All rights reserved.
@@ -36,11 +36,6 @@
 #include <dev/wscons/wsconsio.h>
 #include <sys/ioctl.h>
 #include <errno.h>
-
-/* all driver need this */
-#include "xf86.h"
-#include "xf86_OSproc.h"
-#include "compiler.h"
 
 #include "igs.h"
 
