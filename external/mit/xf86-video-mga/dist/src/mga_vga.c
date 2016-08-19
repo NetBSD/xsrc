@@ -4,6 +4,7 @@
 
 #include <unistd.h>
 
+#include "xorg-server.h"
 #include "misc.h"
 #include "xf86.h"
 #include "xf86_OSproc.h"
