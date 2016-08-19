@@ -36,9 +36,6 @@ void ViaCrtcMask(vgaHWPtr hwp, CARD8 index, CARD8 value, CARD8 mask);
 void ViaSeqMask(vgaHWPtr hwp, CARD8 index, CARD8 value, CARD8 mask);
 void ViaGrMask(vgaHWPtr hwp, CARD8 index, CARD8 value, CARD8 mask);
 
-void VIASave(ScrnInfoPtr pScrn);
-void VIARestore(ScrnInfoPtr pScrn);
-
 #ifdef HAVE_DEBUG
 void ViaVgahwPrint(vgaHWPtr hwp);
 #endif /* HAVE_DEBUG */

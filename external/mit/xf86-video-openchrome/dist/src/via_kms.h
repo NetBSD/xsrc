@@ -36,7 +36,7 @@
 
 typedef struct {
     int fd;
-    unsigned fb_id;
+    uint32_t fb_id;
 #ifdef HAVE_DRI
     drmModeResPtr mode_res;
     drmModeFBPtr mode_fb;

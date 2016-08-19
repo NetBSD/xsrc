@@ -1,17 +1,18 @@
-OpenChrome Version 0.4.0 Release Note (March 30th, 2016)
---------------------------------------------------------
+OpenChrome Version 0.5 Release Note (July 6th, 2016)
+----------------------------------------------------
 
-OpenChrome is an open source implementation of x.org X Server 
+OpenChrome is an open source implementation of X.Org Server 
 DDX (Device Dependent X) graphics device driver for VIA Technologies 
-UniChrome and Chrome9 IGPs (Integrated Graphics Processor). 
+UniChrome and Chrome9 IGPs. (Integrated Graphics Processor)
 Please note that OpenChrome does not support VIA Technologies IGPs 
 that are related to Trident Microsystems (i.e., Apollo MVP4, PLE133, 
-and KLE133) or S3 Graphics (i.e., KM266).
-    Here is the project home page for OpenChrome.
+and KLE133) or S3 Graphics (i.e., KM266). Here is the project home 
+page for OpenChrome.
 
 http://www.freedesktop.org/wiki/Openchrome/
 
 Please note that VIA Technologies does not support OpenChrome in any way.
+
 
 
 Supported Chipsets
@@ -31,17 +32,19 @@ Supported Chipsets
 - VX900
 
 
+
 Supported Features
 ------------------
 
 - VGA
 - DVI from an integrated TMDS transmitter (CX700, VX700, and 
   VX900 chipsets)
+- DVI from VIA Technologies VT1632A TMDS transmitter
 - LVDS flat panel (i.e., laptop LCD flat panel)
 - EXA acceleration (RENDER acceleration)
 - Xv and XvMC
-- Dual screen (Screen clone mode only. No extended screen support at 
-  this point.)
+- Multiple display output (i.e., RandR)
+
 
 
 Unproven Features
@@ -54,14 +57,15 @@ Unproven Features
   OpenChrome Source Code" chapter for more details.)
 
 
+
 Unimplemented Features
 ----------------------
 
-- Extended screen support
 - Hardware cursor support for CLE266, KM400, KM400A, KN400, and 
   P4M800 chipsets
-- DVI via VT1632A TMDS transmitter (functionality is currently disabled)
-- DVI via Silicon Image SiI 164 TMDS transmitter
+- DVI via Silicon Image SiI 164 TMDS transmitter or Chrontel TMDS 
+  transmitter
+- LVDS via VT1631 / VT1636 LVDS transmitter
 - External HDMI transmitter (i.e., Jetway J7F5M-VHE-LF motherboard, 
   VIA Embedded EPIA-P720 motherboard, etc.)
 - DisplayPort and HDMI support for VX900 chipset (Might work with 
@@ -69,107 +73,33 @@ Unimplemented Features
   OpenChrome Source Code" chapter for more details.)
 
 
-What's New for OpenChrome Version 0.4.0
----------------------------------------
 
-OpenChrome Version 0.4.0 is a major break from the past versions where 
-configuring the display resources were done manually. Now the displays 
-are detected mostly automatically, although a few manual options still 
-remain. These will be retired in the near future. Besides that, two 
-alternative mode setting options were discontinued (VBE mode setting 
-and "legacy" mode setting), in order to simplify the code. A regression 
-affecting those with DVI to VGA adapter, which appeared in OpenChrome 
-Version 0.3.x, is fixed. More importantly, devices that were not 
-registered with a known device table (a table that is located 
-internally inside the code) used to crash at boot time, but since this 
-table was removed completely, this bug does not appear anymore.
+OS Support
+----------
 
-- Removal of VBE (VESA BIOS Extension) mode setting
-  (removal of VBEModes and VbeSaveRestore options)
-- Removal of "legacy" mode setting
-  (removal of ModeSwitchMethod option)
-- Removal of ActiveDevice option
-- Removal of ForcePanel option
-- Removal of PanelSize option
-- Removal of a known device table internally
-- Mostly automatic display detection
-- Fix for a regression affecting those with DVI to VGA adapter
-- Fix for a boot time crash for devices that were not on the known 
-  device table
-- Fix for a possible OLPC XO-1.5 detection issue (untested)
-- Fix for various small compilation warnings / errors
+- X.Org Server Version 1.7 or later
+  (It might not work correctly if it is compiled against an older 
+  X.Org Server.)
+- Linux Version 2.6.32 or later
+  (Note: For Linux Version 4.5 or later, you may have to blacklist 
+  vesafb. This is a bug that has not been fixed so far.)
 
 
-Known Bugs for OpenChrome Version 0.4.0
----------------------------------------
 
-Please note that the developers are committed to fixing every one of 
-these bugs eventually, but due to time and resource issues, these bugs 
-remain in the code currently.
+What's New for OpenChrome Version 0.5
+-------------------------------------
 
+Based on OpenChrome Version 0.4.0 code, OpenChrome Version 0.5 fixes 
+several bugs while adding two new features. 
 
-* The computer will fail to boot if RCA composite Video is used
+- Major code cleanup
+- Removal of more manual options (BusWidth, ForcePanel, and AccelMethod)
+- Fix for runtime screen resolution change X.Org Server crash bug
+- Fix for CLE266 chipset not being able to function correctly if 
+  "CRT + TV" option was chosen in BIOS setup
+- Initial support for VIA Technologies VT1632A TMDS transmitter for DVI
+- Initial support for multiple display output (i.e., RandR)
 
-This was observed with the following motherboard.
-
-- VIA Embedded EPIA-M motherboard (CLE266 chipset)
-
-
-* Resume from ACPI S3 State or Suspend to RAM (STR) will cause a hang
-
-This was observed with the following motherboards.
-
-- VIA Embedded EPIA-CL motherboard (CLE266 chipset)
-- VIA Embedded EPIA-M motherboard (CLE266 chipset)
-- Foxconn 400M01-G-6L motherboard (KM400 chipset)
-- VIA Embedded EPIA-M830 motherboard (VX800 chipset)
-- Quanta IL1 laptop (VX800 chipset)
-
-
-* Resume from ACPI S3 State or Suspend to RAM (STR) will not cause 
-  a hang, but LVDS flat panel screen is lost or gets messed up
-
-If VGA still works, you might still be able to partially operate the 
-computer. This was observed with the following computer.
-
-- Sylvania gnet 13001 netbook (VX700 chipset)
-- Epic Learning Epic 1314 laptop (MSI VR321 laptop equivalent, 
-  VN896 chipset)
-
-
-* There is no cursor on the screen in Lubuntu 10.04
-
-This bug affects CLE266, KM400, KM400A, KN400, and P4M800 chipsets.
-It is related to the lack of hardware cursor support in OpenChrome 
-code for these chipsets at the present time. This bug does not affect 
-Ubuntu 10.04 LTS.
-
-
-* Window title for LXTerminal is not displayed correctly in 
-  Lubuntu 10.04
-
-This bug likely affects every supported chipset.
-
-
-* DVI does not work
-
-DVI coming out of VT1632A DVI transmitter chip is currently broken, 
-so the code to initialize it is currently disabled. Another possibility 
-is that DVI is coming out of Silicon Image SiI 164 TMDS transmitter. 
-SiI 164 is not supported by OpenChrome at this time.
-
-
-* DVI and flat panel does not work simultaneously in clone mode
-
-This has been observed with Sylvania gnet 13001 netbook (i.e., laptops 
-based on VIA Technologies NanoBook reference design).
-
-
-* GUI screen will crash when the screen resolution is changed via a 
-  utility
-
-This bug has been observed in Lubuntu 12.04, but likely affects other 
-OSes.
 
 
 How to Contact OpenChrome Developers
@@ -180,10 +110,27 @@ Please visit these OpenChrome mailing lists.
 http://lists.freedesktop.org/mailman/listinfo/openchrome-users
 http://lists.freedesktop.org/mailman/listinfo/openchrome-devel
 
-openchrome-users mailing list is meant for casual, non-technical 
-users asking questions about how to use OpenChrome, etc. 
-openchrome-devel mailing list is for discussing OpenChrome development 
-issues.
+openchrome-users mailing list is meant for non-technical users asking 
+questions about how to use OpenChrome, etc. openchrome-devel mailing 
+list is for discussing OpenChrome development issues.
+
+
+
+Support for Older Versions
+--------------------------
+
+As a general rule, the older version OpenChrome will not be supported 
+once a new version is out. It is sometimes useful to try out the 
+older version, in order to see if a regression has occurred, but 
+generally speaking, there will be no fixes for the older versions.
+OpenChrome is written so that it can be compiled against X.Org Server 
+Version 1.7 or later and Linux Version 2.6.32 or later. We will likely 
+maintain this minimum platform requirement for the foreseeable future. 
+What this means is that if the user wanted to try the latest OpenChrome, 
+it can do so with an OS that was released around Year 2010. OpenChrome 
+might still compile for anything older than that, but it might not be 
+stable enough to be useful.
+
 
 
 Where to File a Bug Report
@@ -202,6 +149,7 @@ etc.) will likely be a waste of your time since the developers for those
 distributions do not directly work on developing OpenChrome.
 
 
+
 Where to Submit a Patch
 -----------------------
 
@@ -211,6 +159,7 @@ When you file the bug, file it against "xorg." When specifying the
 component, please select "Driver/openchrome." This allows a message to 
 be sent to openchrome-devel mailing list, so that developers can be 
 notified of the bug.
+
 
 
 Where to Obtain OpenChrome Source Code
@@ -227,18 +176,21 @@ KMS (Kernel Mode Setting) is located at.
 https://cgit.freedesktop.org/openchrome/drm-openchrome/tree/drivers/gpu/drm/via
 
 
+
 If You See a Bug
 ----------------
 
 If you see a bug, please don't be surprised. OpenChrome has been in 
 development for more than 10 years. In that process, there were many 
-different developers that wrote the code in varying ways. Due to the fact 
-that OpenChrome is a unified graphics device driver that supports every 
-UniChrome and Chrome9 IGP (even the VIA Technoloiges in house unified 
-graphics device driver does not support the number of devices OpenChrome 
-does), and UniChrome and Chrome9 IGPs tend to rely heavily on many 
-different external encoders and transmitters. As a result, it is very 
-difficult to get the code right for every possible configuration.
+different developers that wrote the code in varying ways. OpenChrome 
+is a unified graphics device driver that supports 12 generations of 
+VIA Technologies IGP starting from CLE266 chipset all the way to 
+VX900 chipset. Even the VIA Technoloiges in house unified graphics 
+device driver does not support the number of devices OpenChrome does. 
+Furthermore, VIA Technologies IGPs tend to rely heavily on many 
+different kinds of external encoders and transmitters to get the 
+desired functionality. As a result, it is very difficult to get the 
+code right for every possible configuration you can think of.
     Starting with OpenChrome Version 0.4.0, the project is under new 
 management, and moving forward, the emphasis will be on device driver 
 reliability, and code maintainability.

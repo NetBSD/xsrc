@@ -1,4 +1,7 @@
 /*
+ * Copyright 2016 Kevin Brace
+ * Copyright 2005-2016 The OpenChrome Project
+ *                     [http://www.freedesktop.org/wiki/Openchrome]
  * Copyright 2004-2005 The Unichrome Project  [unichrome.sf.net]
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.
@@ -135,10 +138,8 @@ typedef struct ViaPanelInfo {
 
     /* Panel/LCD entries */
     CARD16      ResolutionIndex;
-    Bool        ForcePanel;
     int         PanelIndex;
     Bool        Center;
-    CARD8       BusWidth;		/* Digital Output Bus Width */
     Bool        SetDVI;
     /* LCD Simultaneous Expand Mode HWCursor Y Scale */
     Bool        scaleY;
@@ -152,9 +153,6 @@ typedef struct _VIABIOSINFO {
     CARD32      Clock; /* register value for the dotclock */
     Bool        ClockExternal;
     CARD32      Bandwidth; /* available memory bandwidth */
-
-    /* Simultaneous */
-    Bool SimultaneousEnabled;
 
     /* TV entries */
     int         TVEncoder;
@@ -183,41 +181,48 @@ typedef struct _VIABIOSINFO {
 } VIABIOSInfoRec, *VIABIOSInfoPtr;
 
 /* via_ums.c */
-void VIAUnmapMMIO(ScrnInfoPtr pScrn);
-Bool ums_create(ScrnInfoPtr pScrn);
-Bool UMSPreInit(ScrnInfoPtr pScrn);
-Bool UMSAccelInit(ScreenPtr pScreen);
+void viaUnmapMMIO(ScrnInfoPtr pScrn);
 void viaDisableVQ(ScrnInfoPtr pScrn);
+Bool umsAccelInit(ScreenPtr pScreen);
+Bool umsCreate(ScrnInfoPtr pScrn);
+Bool umsPreInit(ScrnInfoPtr pScrn);
+Bool umsCrtcInit(ScrnInfoPtr pScrn);
 
 /* via_output.c */
-void ViaOutputsDetect(ScrnInfoPtr pScrn);
+void viaOutputDetect(ScrnInfoPtr pScrn);
 CARD32 ViaGetMemoryBandwidth(ScrnInfoPtr pScrn);
 CARD32 ViaModeDotClockTranslate(ScrnInfoPtr pScrn, DisplayModePtr mode);
-void ViaModePrimaryLegacy(xf86CrtcPtr crtc, DisplayModePtr mode);
-void ViaModeSecondaryLegacy(xf86CrtcPtr crtc, DisplayModePtr mode);
-void ViaDFPPower(ScrnInfoPtr pScrn, Bool On);
+void viaTMDSPower(ScrnInfoPtr pScrn, Bool On);
 void ViaTVPower(ScrnInfoPtr pScrn, Bool On);
 void ViaTVSave(ScrnInfoPtr pScrn);
 void ViaTVRestore(ScrnInfoPtr pScrn);
 #ifdef HAVE_DEBUG
 void ViaTVPrintRegs(ScrnInfoPtr pScrn);
 #endif
-void ViaModeSecondCRTC(ScrnInfoPtr pScrn, DisplayModePtr mode);
-void ViaModeFirstCRTC(ScrnInfoPtr pScrn, DisplayModePtr mode);
+void viaProbePinStrapping(ScrnInfoPtr pScrn);
+void ViaSetPrimaryDotclock(ScrnInfoPtr pScrn, CARD32 clock);
 void ViaSetSecondaryDotclock(ScrnInfoPtr pScrn, CARD32 clock);
 void ViaSetUseExternalClock(vgaHWPtr hwp);
 
 /* via_display.c */
-Bool UMSCrtcInit(ScrnInfoPtr pScrn);
-void ViaCRTCInit(ScrnInfoPtr pScrn);
-void ViaFirstCRTCSetStartingAddress(xf86CrtcPtr crtc, int x, int y);
-void ViaFirstCRTCSetMode(ScrnInfoPtr pScrn, DisplayModePtr mode);
-void ViaSecondCRTCSetStartingAddress(xf86CrtcPtr crtc, int x, int y);
-void ViaSecondCRTCHorizontalOffset(ScrnInfoPtr pScrn);
-void ViaSecondCRTCHorizontalQWCount(ScrnInfoPtr pScrn, int width);
-void ViaSecondCRTCSetMode(ScrnInfoPtr pScrn, DisplayModePtr mode);
-void ViaShadowCRTCSetMode(ScrnInfoPtr pScrn, DisplayModePtr mode);
+void viaIGA1DPMSControl(ScrnInfoPtr pScrn, CARD8 dpmsControl);
+void viaIGA2DisplayOutput(ScrnInfoPtr pScrn, Bool outputState);
+void viaIGA2DisplayChannel(ScrnInfoPtr pScrn, Bool channelState);
+void viaDisplayInit(ScrnInfoPtr pScrn);
 void ViaGammaDisable(ScrnInfoPtr pScrn);
+void ViaCRTCInit(ScrnInfoPtr pScrn);
+void viaIGAInitCommon(ScrnInfoPtr pScrn);
+void viaIGA1Init(ScrnInfoPtr pScrn);
+void viaIGA1SetFBStartingAddress(xf86CrtcPtr crtc, int x, int y);
+void viaIGA1SetDisplayRegister(ScrnInfoPtr pScrn, DisplayModePtr mode);
+void viaIGA1Save(ScrnInfoPtr pScrn);
+void viaIGA1Restore(ScrnInfoPtr pScrn);
+void viaIGA2Init(ScrnInfoPtr pScrn);
+void viaIGA2SetFBStartingAddress(xf86CrtcPtr crtc, int x, int y);
+void viaIGA2SetDisplayRegister(ScrnInfoPtr pScrn, DisplayModePtr mode);
+void viaIGA2Save(ScrnInfoPtr pScrn);
+void viaIGA2Restore(ScrnInfoPtr pScrn);
+void ViaShadowCRTCSetMode(ScrnInfoPtr pScrn, DisplayModePtr mode);
 
 /* via_lvds.c */
 void via_lvds_init(ScrnInfoPtr pScrn);
@@ -234,12 +239,5 @@ void ViaVT162xInit(ScrnInfoPtr pScrn);
 /* via_ch7xxx.c */
 I2CDevPtr ViaCH7xxxDetect(ScrnInfoPtr pScrn, I2CBusPtr pBus, CARD8 Address);
 void ViaCH7xxxInit(ScrnInfoPtr pScrn);
-
-/* via_display.c */
-void ViaSecondDisplayChannelEnable(ScrnInfoPtr pScrn);
-void ViaSecondDisplayChannelDisable(ScrnInfoPtr pScrn);
-void ViaDisplayInit(ScrnInfoPtr pScrn);
-void ViaDisplayEnableSimultaneous(ScrnInfoPtr pScrn);
-void ViaDisplayDisableSimultaneous(ScrnInfoPtr pScrn);
 
 #endif /* _VIA_BIOS_H_ */

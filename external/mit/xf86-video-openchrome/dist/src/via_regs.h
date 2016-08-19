@@ -49,15 +49,15 @@ enum VIACHIPTAGS {
     VIA_PM800,
     VIA_P4M800PRO,  /* VT3314 */
     VIA_CX700,      /* VT3324 */
-    VIA_K8M890,     /* VT3336 */
+#ifdef VIA_VT3293_SUPPORT
+    VIA_CN750,      /* VT3293 */
+#endif
     VIA_P4M890,     /* VT3327 */
+    VIA_K8M890,     /* VT3336 */
     VIA_P4M900,     /* VT3364 */
     VIA_VX800,      /* VT3353 */
     VIA_VX855,      /* VT3409*/
     VIA_VX900,      /* VT3410*/
-#ifdef VIA_VT3293_SUPPORT
-    VIA_CN750,      /* VT3293 */
-#endif
     VIA_LAST
 };
 
@@ -70,31 +70,21 @@ enum VIACHIPTAGS {
 #define PCI_CHIP_VT3259         0x3118	/* PM800 */
 #define PCI_CHIP_VT3314         0x3344	/* P4M800 Pro */
 #define PCI_CHIP_VT3324         0x3157	/* CX700 */
-#define PCI_CHIP_VT3336         0x3230	/* K8M890 */
+#ifdef VIA_VT3293_SUPPORT
+#define PCI_CHIP_VT3293         0x3225  /* CN750 */
+#endif
 #define PCI_CHIP_VT3327         0x3343	/* P4M890 */
+#define PCI_CHIP_VT3336         0x3230  /* K8M890 */
 #define PCI_CHIP_VT3364         0x3371	/* P4M900 */
 #define PCI_CHIP_VT3353         0x1122	/* VX800 */
 #define PCI_CHIP_VT3409         0x5122	/* VX855/VX875 */
 #define PCI_CHIP_VT3410         0x7122	/* VX900 */
-#ifdef VIA_VT3293_SUPPORT
-#define PCI_CHIP_VT3293         0x3225	/* CN750 */
-#endif
 
 /* There is some conflicting information about the two major revisions of
  * the CLE266, often labelled Ax and Cx.  The dividing line seems to be
  * either 0x0f or 0x10. */
 #define CLE266_REV_IS_AX(x) ((x) < 0x10)
 #define CLE266_REV_IS_CX(x) ((x) >= 0x10)
-
-struct ViaCardIdStruct {
-    char*  String;  /* full identification string */
-    CARD8  Chip;    /* which family of unichrome */
-    CARD16 Vendor;  /* PCI subsystem Vendor ID */
-    CARD16 Device;  /* PCI subsystem Device ID */
-    CARD8  Outputs; /* whether it supports CRT, LCD, and TV */
-};
-
-void ViaCheckCardId(ScrnInfoPtr pScrn);
 
 #define BIOS_BSIZE              1024
 #define BIOS_BASE               0xc0000

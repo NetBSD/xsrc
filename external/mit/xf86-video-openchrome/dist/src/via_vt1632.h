@@ -31,7 +31,7 @@
 #define VIA_VT1632_EDGE 0x02
 #define VIA_VT1632_PDB  0x01
 
-struct ViaVT1632PrivateData {
+typedef struct _ViaVT1632 {
 	I2CDevPtr VT1632I2CDev;
 
 	int DotclockMin;
@@ -40,15 +40,15 @@ struct ViaVT1632PrivateData {
 	CARD8 Register09;
 	CARD8 Register0A;
 	CARD8 Register0C;
-};
+} ViaVT1632Rec, *ViaVT1632Ptr;
 
-void via_vt1632_power(xf86OutputPtr output, BOOL on);
+void via_vt1632_power(xf86OutputPtr output, Bool powerState);
 void via_vt1632_save(xf86OutputPtr output);
 void via_vt1632_restore(xf86OutputPtr output);
 int via_vt1632_mode_valid(xf86OutputPtr output, DisplayModePtr pMode);
 void via_vt1632_mode_set(xf86OutputPtr output, DisplayModePtr mode, DisplayModePtr adjusted_mode);
 xf86OutputStatus via_vt1632_detect(xf86OutputPtr output);
 BOOL via_vt1632_probe(ScrnInfoPtr pScrn, I2CDevPtr pDev);
-struct ViaVT1632PrivateData * via_vt1632_init(ScrnInfoPtr pScrn, I2CDevPtr pDev);
+ViaVT1632Ptr via_vt1632_init(ScrnInfoPtr pScrn, I2CDevPtr pDev);
 
 #endif /* _VIA_VT1632_H_ */

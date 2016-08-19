@@ -1,5 +1,6 @@
 /*
- * Copyright 2005-2015 The Openchrome Project
+ * Copyright 2016 Kevin Brace
+ * Copyright 2005-2016 The OpenChrome Project
  *                     [http://www.freedesktop.org/wiki/Openchrome]
  * Copyright 2004-2005 The Unichrome Project  [unichrome.sf.net]
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
@@ -509,27 +510,94 @@ via_tv_init(ScrnInfoPtr pScrn)
 }
 
 /*
- * Enables CRT using DPMS registers.
+ * Enables or disables analog VGA output by controlling DAC
+ * (Digital to Analog Converter) output state.
  */
 static void
-ViaDisplayEnableCRT(ScrnInfoPtr pScrn)
+viaAnalogOutput(ScrnInfoPtr pScrn, Bool outputState)
 {
     vgaHWPtr hwp = VGAHWPTR(pScrn);
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ViaDisplayEnableCRT\n"));
-    ViaCrtcMask(hwp, 0x36, 0x00, 0x30);
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Entered viaAnalogOutput.\n"));
+
+    /* This register controls analog VGA DAC output state. */
+    /* 3X5.47[2] - DACOFF Backdoor Register
+     *             0: DAC on
+     *             1: DAC off */
+    ViaCrtcMask(hwp, 0x47, outputState ? 0x00 : 0x04, 0x04);
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                "Analog VGA Output: %s\n",
+                outputState ? "On" : "Off");
+
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Exiting viaAnalogOutput.\n"));
 }
 
 /*
- * Disables CRT using DPMS registers.
+ * Specifies IGA1 or IGA2 for analog VGA DAC source.
  */
 static void
-ViaDisplayDisableCRT(ScrnInfoPtr pScrn)
+viaAnalogSource(ScrnInfoPtr pScrn, CARD8 displaySource)
 {
     vgaHWPtr hwp = VGAHWPTR(pScrn);
+    CARD8 value = displaySource;
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ViaDisplayDisableCRT\n"));
-    ViaCrtcMask(hwp, 0x36, 0x30, 0x30);
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Entered viaAnalogSource.\n"));
+
+    ViaSeqMask(hwp, 0x16, value << 6, 0x40);
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                "Analog VGA Output Source: IGA%d\n",
+                (value & 0x01) + 1);
+
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Exiting viaAnalogSource.\n"));
+}
+
+/*
+ * Intializes analog VGA related registers.
+ */
+static void
+viaAnalogInit(ScrnInfoPtr pScrn)
+{
+    vgaHWPtr hwp = VGAHWPTR(pScrn);
+    VIAPtr pVia = VIAPTR(pScrn);
+
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Entered viaAnalogInit.\n"));
+
+    /* 3X5.37[7]   - DAC Power Save Control 1
+     *               0: Depend on Rx3X5.37[5:4] setting
+     *               1: DAC always goes into power save mode
+     * 3X5.37[6]   - DAC Power Down Control
+     *               0: Depend on Rx3X5.47[2] setting
+     *               1: DAC never goes to power down mode
+     * 3X5.37[5:4] - DAC Power Save Control 2
+     *               00: DAC never goes to power save mode
+     *               01: DAC goes to power save mode by line
+     *               10: DAC goes to power save mode by frame
+     *               11: DAC goes to power save mode by line and frame
+     * 3X5.37[3]   - DAC PEDESTAL Control
+     * 3X5.37[2:0] - DAC Factor
+     *               (Default: 100) */
+    ViaCrtcMask(hwp, 0x37, 0x04, 0xFF);
+
+    switch (pVia->Chipset) {
+    case VIA_CX700:
+    case VIA_VX800:
+    case VIA_VX855:
+    case VIA_VX900:
+        /* 3C5.5E[0] - CRT DACOFF Setting
+         *             1: CRT DACOFF controlled by 3C5.01[5] */
+        ViaSeqMask(hwp, 0x5E, 0x01, 0x01);
+        break;
+    default:
+        break;
+    }
+
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Exiting viaAnalogInit.\n"));
 }
 
 static void
@@ -557,17 +625,24 @@ via_analog_dpms(xf86OutputPtr output, int mode)
 {
     ScrnInfoPtr pScrn = output->scrn;
 
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Entered via_analog_dpms.\n"));
+
     switch (mode) {
     case DPMSModeOn:
-        ViaDisplayEnableCRT(pScrn);
+        viaAnalogOutput(pScrn, TRUE);
         break;
-
     case DPMSModeStandby:
     case DPMSModeSuspend:
     case DPMSModeOff:
-        ViaDisplayDisableCRT(pScrn);
+        viaAnalogOutput(pScrn, FALSE);
+        break;
+    default:
         break;
     }
+
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Exiting via_analog_dpms.\n"));
 }
 
 static void
@@ -614,18 +689,20 @@ via_analog_mode_set(xf86OutputPtr output, DisplayModePtr mode,
                     DisplayModePtr adjusted_mode)
 {
     ScrnInfoPtr pScrn = output->scrn;
+    vgaHWPtr hwp = VGAHWPTR(pScrn);
+    drmmode_crtc_private_ptr iga = output->crtc->driver_private;
+
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Entered via_analog_mode_set.\n"));
+
+    viaAnalogInit(pScrn);
 
     if (output->crtc) {
-        drmmode_crtc_private_ptr iga = output->crtc->driver_private;
-        CARD8 value = 0x00; /* Value for IGA 1 */
-        vgaHWPtr hwp = VGAHWPTR(pScrn);
-
-        /* IGA 2 */
-        if (iga->index)
-            value = 0x40;
-        ViaSeqMask(hwp, 0x16, value, 0x40);
+        viaAnalogSource(pScrn, iga->index ? 0x01 : 0x00);
     }
-    ViaDisplayEnableCRT(pScrn);
+
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Exiting via_analog_mode_set.\n"));
 }
 
 static xf86OutputStatus
@@ -794,16 +871,16 @@ via_dvi_dpms(xf86OutputPtr output, int mode)
 
     switch (mode) {
     case DPMSModeOn:
-        ViaDFPPower(pScrn, TRUE);
+        via_vt1632_power(output, TRUE);
         break;
-
     case DPMSModeStandby:
     case DPMSModeSuspend:
     case DPMSModeOff:
-        ViaDFPPower(pScrn, FALSE);
+        via_vt1632_power(output, FALSE);
+        break;
+    default:
         break;
     }
-
 }
 
 static void
@@ -848,10 +925,7 @@ via_dvi_mode_set(xf86OutputPtr output, DisplayModePtr mode,
     ScrnInfoPtr pScrn = output->scrn;
     vgaHWPtr hwp = VGAHWPTR(pScrn);
 
-    via_vt1632_power(output, FALSE);
-    ViaModeSecondCRTC(pScrn, mode);
     via_vt1632_mode_set(output, mode, adjusted_mode);
-    via_vt1632_power(output, TRUE);
 }
 
 static xf86OutputStatus
@@ -860,15 +934,26 @@ via_dvi_detect(xf86OutputPtr output)
     xf86OutputStatus status = XF86OutputStatusDisconnected;
     ScrnInfoPtr pScrn = output->scrn;
     VIAPtr pVia = VIAPTR(pScrn);
+    ViaVT1632Ptr Private = output->driver_private;
     xf86MonPtr mon;
 
-    mon = xf86OutputGetEDID(output, pVia->pI2CBus2);
-    if (mon && DIGITAL(mon->features.input_type)) {
-        xf86OutputSetEDID(output, mon);
-        status = XF86OutputStatusConnected;
-    } else {
-        status = via_vt1632_detect(output);
+    /* Check for the DVI presence via VT1632A first before accessing
+     * I2C bus. */
+    status = via_vt1632_detect(output);
+    if (status == XF86OutputStatusConnected) {
+
+        /* Since DVI presence was established, access the I2C bus
+         * assigned to DVI. */
+        mon = xf86OutputGetEDID(output, Private->VT1632I2CDev->pI2CBus);
+
+        /* Is the interface type digital? */
+        if (mon && DIGITAL(mon->features.input_type)) {
+            xf86OutputSetEDID(output, mon);
+        } else {
+            status = XF86OutputStatusDisconnected;
+        }
     }
+
     return status;
 }
 
@@ -903,7 +988,7 @@ via_dvi_init(ScrnInfoPtr pScrn)
 {
     VIAPtr pVia = VIAPTR(pScrn);
     xf86OutputPtr output = NULL;
-    struct ViaVT1632PrivateData *private_data = NULL;
+    ViaVT1632Ptr private_data = NULL;
     I2CBusPtr pBus = NULL;
     I2CDevPtr pDev = NULL;
     I2CSlaveAddr addr = 0x10;
@@ -987,16 +1072,254 @@ via_dvi_init(ScrnInfoPtr pScrn)
                         "Exiting via_dvi_init.\n"));
 }
 
+/*
+ * Reads off the VIA Technologies IGP pin strapping for
+ * display detection purposes.
+ */
 void
-ViaOutputsDetect(ScrnInfoPtr pScrn)
+viaProbePinStrapping(ScrnInfoPtr pScrn)
+{
+    vgaHWPtr hwp = VGAHWPTR(pScrn);
+    VIAPtr pVia = VIAPTR(pScrn);
+    CARD8 sr12, sr13, sr5a;
+
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Entered viaProbePinStrapping.\n"));
+
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                "Probing VIA Technologies IGP pin strapping . . .\n");
+
+    if ((pVia->Chipset == VIA_CX700)
+        || (pVia->Chipset == VIA_VX800)
+        || (pVia->Chipset == VIA_VX855)
+        || (pVia->Chipset == VIA_VX900)) {
+
+        sr5a = hwp->readSeq(hwp, 0x5A);
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "SR5A: 0x%02X\n", sr5a));
+        xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                    "Setting 3C5.5A[0] to 0.\n");
+        ViaSeqMask(hwp, 0x5A, sr5a & 0xFE, 0x01);
+    }
+
+    sr12 = hwp->readSeq(hwp, 0x12);
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "SR12: 0x%02X\n", sr12));
+    sr13 = hwp->readSeq(hwp, 0x13);
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "SR13: 0x%02X\n", sr13));
+
+    switch (pVia->Chipset) {
+    case VIA_CLE266:
+    case VIA_KM400:
+
+        /* 3C5.12[4] - FPD17 pin strapping
+         *             0: TMDS transmitter (DVI) / capture device
+         *             1: Flat panel */
+        if (sr12 & 0x10) {
+            xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "A flat panel is connected to "
+                        "flat panel interface.\n");
+
+            /* 3C5.12[3:0] - FPD16-13 pin strapping
+             *               0 ~ 15: Flat panel code defined
+             *                       by VIA Technologies */
+            xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Detected Flat Panel Type from "
+                        "Strapping Pins: %d\n", sr12 & 0x0F);
+        } else {
+            xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "A TMDS transmitter (DVI) / capture device is "
+                        "connected to flat panel interface.\n");
+        }
+
+        /* 3C5.12[5] - FPD18 pin strapping
+         *             0: TMDS transmitter (DVI)
+         *             1: TV encoder */
+        if (sr12 & 0x20) {
+            xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "A TMDS transmitter (DVI) is connected to "
+                        "DVI port.\n");
+        } else {
+            xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "A TV encoder is connected to "
+                        "DVI port.\n");
+
+            /* 3C5.13[4:3] - FPD21-20 pin strapping
+             *               00: PAL
+             *               01: NTSC
+             *               10: PAL-N
+             *               11: PAL-NC */
+            if (sr13 & 0x04) {
+                xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "NTSC for the TV encoder.\n");
+            } else {
+                if (!(sr13 & 0x08)) {
+                    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                                "PAL for the TV encoder.\n");
+                } else {
+                    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                                "PAL%s for the TV encoder.\n",
+                                sr13 & 0x04 ? "-NC" : "-N");
+                }
+            }
+
+            /* 3C5.12[6] - FPD19 pin strapping
+             *             0: 525 lines (NTSC)
+             *             1: 625 lines (PAL) */
+            xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "%s lines for the TV encoder.\n",
+                        sr12 & 0x40 ? "625" : "525");
+        }
+
+        break;
+
+    case VIA_K8M800:
+    case VIA_PM800:
+    case VIA_P4M800PRO:
+
+        /* 3C5.12[6] - DVP0D6 pin strapping
+         *             0: Disable DVP0 (Digital Video Port 0) for
+         *                DVI or TV out use
+         *             1: Enable DVP0 (Digital Video Port 0) for
+         *                DVI or TV out use */
+        if (sr12 & 0x40) {
+
+            /* 3C5.12[5] - DVP0D5 pin strapping
+             *             0: TMDS transmitter (DVI)
+             *             1: TV encoder */
+            if (sr12 & 0x20) {
+                xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "A TV encoder is detected on "
+                            "DVP0 (Digital Video Port 0).\n");
+            } else {
+                xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "A TMDS transmitter (DVI) is detected on "
+                            "DVP0 (Digital Video Port 0).\n");
+            }
+        }
+
+
+        /* 3C5.13[3] - DVP0D8 pin strapping
+         *             0: AGP pins are used for AGP
+         *             1: AGP pins are used by FPDP
+         *             (Flat Panel Display Port) */
+        if (sr13 & 0x08) {
+
+            /* 3C5.12[4] - DVP0D4 pin strapping
+             *             0: Dual 12-bit FPDP (Flat Panel Display Port)
+             *             1: 24-bit FPDP  (Flat Panel Display Port) */
+            if (sr12 & 0x10) {
+                xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "24-bit FPDP (Flat Panel Display Port) "
+                            "detected.\n");
+
+                /* 3C5.12[3:0] - DVP0D3-0 pin strapping
+                 *               0 ~ 15: Flat panel code defined
+                 *                       by VIA Technologies */
+                xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "Detected Flat Panel Type from "
+                            "Strapping Pins: %d\n", sr12 & 0x0F);
+            } else {
+
+                /* 3C5.12[6] - DVP0D6 pin strapping
+                 *             0: Disable DVP0 (Digital Video Port 0) for
+                 *                DVI or TV out use
+                 *             1: Enable DVP0 (Digital Video Port 0) for
+                 *                DVI or TV out use
+                 * 3C5.12[5] - DVP0D5 pin strapping
+                 *             0: TMDS transmitter (DVI)
+                 *             1: TV encoder */
+                if ((!(sr12 & 0x40)) && (!(sr12 & 0x20))) {
+                    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                                "A TV encoder is connected to "
+                                "FPDP (Flat Panel Display Port).\n");
+                } else {
+                    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                                "Dual 12-bit FPDP (Flat Panel Display Port) "
+                                "detected.\n");
+
+                    /* 3C5.12[3:0] - DVP0D3-0 pin strapping
+                     *               0 ~ 15: Flat panel code defined
+                     *                       by VIA Technologies */
+                    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                                "Detected Flat Panel Type from "
+                                "Strapping Pins: %d\n", sr12 & 0x0F);
+                }
+            }
+        }
+
+        break;
+
+    default:
+        break;
+    }
+
+    if ((pVia->Chipset == VIA_CX700)
+        || (pVia->Chipset == VIA_VX800)
+        || (pVia->Chipset == VIA_VX855)
+        || (pVia->Chipset == VIA_VX900)) {
+
+        xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                    "Setting 3C5.5A[0] to 1.\n");
+        ViaSeqMask(hwp, 0x5A, sr5a | 0x01, 0x01);
+
+        sr12 = hwp->readSeq(hwp, 0x12);
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "SR12: 0x%02X\n", sr12));
+        sr13 = hwp->readSeq(hwp, 0x13);
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "SR13: 0x%02X\n", sr13));
+
+        /* 3C5.13[7:6] - Integrated LVDS / DVI Mode Select
+         *               (DVP1D15-14 pin strapping)
+         *               00: LVDS1 + LVDS2
+         *               01: DVI + LVDS2
+         *               10: Dual LVDS Channel (High Resolution Panel)
+         *               11: One DVI only (decrease the clock jitter) */
+        switch (sr13 & 0xC0) {
+        case 0x00:
+            xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "LVDS1 + LVDS2 detected.\n");
+            break;
+        case 0x40:
+            xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Single Link DVI + LVDS2 detected.\n");
+            break;
+        case 0x80:
+            xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Dual Channel LVDS detected.\n");
+            break;
+        case 0xC0:
+            xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Single Link DVI detected.\n");
+            break;
+        default:
+            break;
+        }
+
+        hwp->writeSeq(hwp, 0x5A, sr5a);
+
+    }
+
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Exiting viaProbePinStrapping.\n"));
+}
+
+void
+viaOutputDetect(ScrnInfoPtr pScrn)
 {
     VIAPtr pVia = VIAPTR(pScrn);
     VIABIOSInfoPtr pBIOSInfo = pVia->pBIOSInfo;
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Entered ViaOutputsDetect.\n"));
+                        "Entered viaOutputDetect.\n"));
 
     pBIOSInfo->analog = NULL;
+
+    /* Read off the VIA Technologies IGP pin strapping for
+       display detection purposes. */
+    viaProbePinStrapping(pScrn);
 
     /* LVDS */
     via_lvds_init(pScrn);
@@ -1007,17 +1330,11 @@ ViaOutputsDetect(ScrnInfoPtr pScrn)
     /* TV */
     via_tv_init(pScrn);
 
-    /*
-     * via_dvi_init function to initialize VT1632A TMDS transmitter
-     * is disabled for now.
-     */
     /* External TMDS Transmitter (DVI) */
-/*
     via_dvi_init(pScrn);
-*/
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Exiting ViaOutputsDetect.\n"));
+                        "Exiting viaOutputDetect.\n"));
 }
 
 #ifdef HAVE_DEBUG
@@ -1144,7 +1461,7 @@ ViaSetDotclock(ScrnInfoPtr pScrn, CARD32 clock, int base, int probase)
 /*
  *
  */
-static void
+void
 ViaSetPrimaryDotclock(ScrnInfoPtr pScrn, CARD32 clock)
 {
     vgaHWPtr hwp = VGAHWPTR(pScrn);
@@ -1300,78 +1617,26 @@ ViaModeDotClockTranslate(ScrnInfoPtr pScrn, DisplayModePtr mode)
 }
 
 void
-ViaDFPPower(ScrnInfoPtr pScrn, Bool On)
+viaTMDSPower(ScrnInfoPtr pScrn, Bool On)
 {
-#ifdef HAVE_DEBUG
-    if (On)
-        xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ViaDFPPower: On.\n");
-    else
-        xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ViaDFPPower: Off.\n");
-#endif
+
     vgaHWPtr hwp = VGAHWPTR(pScrn);
 
-    /* Display Channel Select */
-    ViaCrtcMask(hwp, 0xD2, 0x30, 0x30);
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Entered viaTMDSPower.\n"));
 
-    if (On)
+    if (On) {
         /* Power on TMDS */
         ViaCrtcMask(hwp, 0xD2, 0x00, 0x08);
-    else
+    } else {
         /* Power off TMDS */
         ViaCrtcMask(hwp, 0xD2, 0x08, 0x08);
+    }
+
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                "Integrated TMDS (DVI) Power: %s\n",
+                On ? "On" : "Off");
+
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Exiting viaTMDSPower.\n"));
 }
-
-void
-ViaModeFirstCRTC(ScrnInfoPtr pScrn, DisplayModePtr mode)
-{
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ViaModeFirstCRTC\n");
-    vgaHWPtr hwp = VGAHWPTR(pScrn);
-    VIAPtr pVia = VIAPTR(pScrn);
-    VIABIOSInfoPtr pBIOSInfo = pVia->pBIOSInfo;
-
-    /* Turn off Screen */
-    ViaCrtcMask(hwp, 0x17, 0x00, 0x80);
-
-    ViaFirstCRTCSetMode(pScrn, mode);
-    pBIOSInfo->Clock = ViaModeDotClockTranslate(pScrn, mode);
-    pBIOSInfo->ClockExternal = FALSE;
-
-    /* Enable Extended Mode Memory Access. */
-    ViaSeqMask(hwp, 0x1A, 0x08, 0x08);
-
-    ViaSetPrimaryFIFO(pScrn, mode);
-
-    ViaSetPrimaryDotclock(pScrn, pBIOSInfo->Clock);
-    ViaSetUseExternalClock(hwp);
-    ViaCrtcMask(hwp, 0x6B, 0x00, 0x01);
-
-    hwp->disablePalette(hwp);
-
-    /* Turn on Screen */
-    ViaCrtcMask(hwp, 0x17, 0x80, 0x80);
-}
-
-void
-ViaModeSecondCRTC(ScrnInfoPtr pScrn, DisplayModePtr mode)
-{
-    VIAPtr pVia = VIAPTR(pScrn);
-    VIABIOSInfoPtr pBIOSInfo = pVia->pBIOSInfo;
-    vgaHWPtr hwp = VGAHWPTR(pScrn);
-    DisplayModePtr realMode = mode;
-
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ViaModeSecondCRTC\n"));
-
-    ViaSecondCRTCSetMode(pScrn, realMode);
-    ViaSetSecondaryFIFO(pScrn, realMode);
-    pBIOSInfo->Clock = ViaModeDotClockTranslate(pScrn, realMode);
-
-    /* Fix LCD scaling */
-    ViaSecondCRTCHorizontalQWCount(pScrn, mode->CrtcHDisplay);
-
-    pBIOSInfo->ClockExternal = FALSE;
-    ViaSetSecondaryDotclock(pScrn, pBIOSInfo->Clock);
-    ViaSetUseExternalClock(hwp);
-
-    hwp->disablePalette(hwp);
-}
-
