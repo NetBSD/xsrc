@@ -13,6 +13,8 @@
 #define EPOXY_NOINLINE __attribute__((noinline))
 #elif defined (_MSC_VER)
 #define EPOXY_NOINLINE __declspec(noinline)
+#elif defined (__lint__)
+#define EPOXY_NOINLINE
 #endif
 struct dispatch_table {
     PFNGLXBINDCHANNELTOWINDOWSGIXPROC epoxy_glXBindChannelToWindowSGIX;

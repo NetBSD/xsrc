@@ -140,6 +140,9 @@
   __pragma(section(".CRT$XCU",read)) \
   __declspec(allocate(".CRT$XCU")) static int (* _array ## _func)(void) = _func ## _constructor;
 
+#elif defined(__lint__)
+#define CONSTRUCT(_func)
+#define DESTRUCT(_func)
 #else
 #error "You will need constructor support for your compiler"
 #endif
