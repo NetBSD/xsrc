@@ -1,3 +1,49 @@
+OpenChrome Version 0.5 (July 6th, 2016)
+---------------------------------------
+
+Based on OpenChrome Version 0.4.0 code, OpenChrome Version 0.5 fixes 
+several bugs while adding two new features. 
+
+- Major code cleanup
+- Removal of more manual options (BusWidth, ForcePanel, and AccelMethod)
+- Fix for runtime screen resolution change X.Org Server crash bug
+- Fix for CLE266 chipset not being able to function correctly if 
+  "CRT + TV" option was chosen in BIOS setup
+- Initial support for VIA Technologies VT1632A TMDS transmitter for DVI
+- Initial support for multiple display output (i.e., RandR)
+
+
+OpenChrome Version 0.4.0 (March 31st, 2016)
+-------------------------------------------
+
+OpenChrome Version 0.4.0 is a major break from the past versions where 
+configuring the display resources were done manually. Now the displays 
+are detected mostly automatically, although a few manual options still 
+remain. These will be retired in the near future. Besides that, two 
+alternative mode setting options were discontinued (VBE mode setting 
+and "legacy" mode setting), in order to simplify the code. A regression 
+affecting those with a DVI to VGA adapter, which appeared in OpenChrome 
+Version 0.3.x, is now fixed. More importantly, devices that were not 
+registered with a known device table (a large table that is located 
+internally inside the code) used to crash during boot time, but since 
+this table was removed completely, this bug does not appear anymore.
+
+- Removal of VBE (VESA BIOS Extension) mode setting
+  (removal of VBEModes and VbeSaveRestore options)
+- Removal of "legacy" mode setting
+  (removal of ModeSwitchMethod option)
+- Removal of ActiveDevice option
+- Removal of ForcePanel option
+- Removal of PanelSize option
+- Removal of a known device table internally
+- Mostly automatic display detection
+- Fix for a regression affecting those with DVI to VGA adapter
+- Fix for a boot time crash for devices that were not on the known 
+  device table
+- Fix for a possible OLPC XO-1.5 detection issue (untested)
+- Fix for various small compilation warnings / errors
+
+
 openchrome 0.3.3 (23/05/2013)
 -----------------------------
 
