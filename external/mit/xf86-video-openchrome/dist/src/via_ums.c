@@ -28,6 +28,7 @@
 
 #include "globals.h"
 #include "via_driver.h"
+#include "xf86fbman.h"
 
 static void
 ViaMMIODisable(ScrnInfoPtr pScrn)
