@@ -54,7 +54,6 @@
 #include "xf86Crtc.h"
 #include "xf86RandR12.h"
 #include "xf86cmap.h"
-#include "vbe.h"
 
 #ifdef HAVE_DRI
 #define _XF86DRI_SERVER_
@@ -85,6 +84,8 @@
 #include "xf86PciInfo.h"
 #endif
 #include <errno.h>
+
+#include "via_vt1632.h"
 
 #include "compat-api.h"
 #define VIA_AGP_UPL_SIZE    (1024*128)
@@ -212,15 +213,6 @@ typedef struct _twodContext {
     int clipY2;
 } ViaTwodContext;
 
-typedef struct{
-    /* textMode */
-    CARD8 *state, *pstate; /* SVGA state */
-    int statePage, stateSize, stateMode;
-
-    /* vbe version */
-    int major, minor;
-} ViaVbeModeInfo;
-
 typedef struct _VIA {
     VIARegRec           SavedReg;
     int                 Bpp, Bpl;
@@ -253,7 +245,6 @@ typedef struct _VIA {
     Bool                NoAccel;
     Bool                shadowFB;
     Rotation            rotate;
-    Bool                vbeSR;
     int                 agpMem;
 
 	CreateScreenResourcesProcPtr CreateScreenResources;
@@ -268,12 +259,6 @@ typedef struct _VIA {
     int                 ChipId;
     int                 ChipRev;
     int                 EntityIndex;
-
-    /* vbe */
-    vbeInfoPtr          pVbe;
-    ViaVbeModeInfo      vbeMode;
-    Bool                useVBEModes;
-    Bool                useLegacyVBE;
 
     /* Support for shadowFB and rotation */
     unsigned char*      ShadowPtr;
@@ -317,7 +302,9 @@ typedef struct _VIA {
 
     /* BIOS Info Ptr */
     VIABIOSInfoPtr      pBIOSInfo;
-    struct ViaCardIdStruct* Id;
+
+    /* OLPC XO-1.5 */
+    Bool                IsOLPCXO15;
 
     /* I2C & DDC */
     I2CBusPtr           pI2CBus1;
@@ -356,8 +343,6 @@ typedef struct _VIA {
     Bool                dma2d;
     Bool                dmaXV;
 
-    CARD8               ActiveDevice;	/* Option */
-
     /* Video */
     int                 VideoEngine;
     swovRec             swov;
@@ -387,7 +372,6 @@ typedef struct _VIA {
     Bool                I2CScan;
 #endif /* HAVE_DEBUG */
 
-    Bool                UseLegacyModeSwitch;
     video_via_regs*     VideoRegs;
 } VIARec, *VIAPtr;
 
@@ -518,5 +502,13 @@ void viaDRIOffscreenSave(ScrnInfoPtr pScrn);
 Bool VIADRIBufferInit(ScrnInfoPtr pScrn);
 
 #endif /* HAVE_DRI */
+
+int viaOffScreenLinear(struct buffer_object *obj, ScrnInfoPtr pScrn, unsigned long size);
+void viaShowCursor(ScrnInfoPtr pScrn);
+void viaHideCursor(ScrnInfoPtr pScrn);
+Bool viaHWCursorInit(ScreenPtr pScreen);
+void ViaDisplaySetStreamOnCRT(ScrnInfoPtr pScrn, Bool primary);
+void ViaDisplaySetStreamOnDFP(ScrnInfoPtr pScrn, Bool primary);
+void ViaDisplayEnableSimultaneous(ScrnInfoPtr pScrn);
 
 #endif /* _VIA_DRIVER_H_ */

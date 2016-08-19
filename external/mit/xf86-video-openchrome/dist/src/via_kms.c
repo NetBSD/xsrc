@@ -187,7 +187,6 @@ drmmode_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
         output_count++;
     }
 
-    xf86SetModeDefaultName(mode);
     drmmode_ConvertToKMode(crtc->scrn, &kmode, mode);
 
     if (drmmode->fb_id == 0) {

@@ -20,6 +20,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
@@ -31,7 +32,7 @@
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 struct bit_desc {
-	u_int8_t mask;
+	uint8_t mask;
 	char *name;
 };
 
@@ -41,8 +42,8 @@ struct io_index {
 };
 
 struct io_reg {
-	u_int16_t	io_port_addr;	/* port for address */
-	u_int16_t	io_port_data;	/* port for address */
+	uint16_t	io_port_addr;	/* port for address */
+	uint16_t	io_port_data;	/* port for address */
 	char *		name;
 	struct io_index	index[0xff];
 };
@@ -583,23 +584,23 @@ struct io_reg sequencer_regs = {
 	},
 };
 
-static u_int8_t readb_idx_reg(u_int16_t port, u_int8_t index)
+static uint8_t readb_idx_reg(uint16_t port, uint8_t index)
 {
 	outb(index, port-1);
 	return inb(port);
 }
 
-static void writeb_idx_reg(u_int16_t port, u_int8_t index,
-			   u_int8_t val)
+static void writeb_idx_reg(uint16_t port, uint8_t index,
+			   uint8_t val)
 {
 	outb(index, port-1);
 	outb(val, port);
 }
 
-static void writeb_idx_mask(u_int16_t reg, u_int8_t idx, u_int8_t val,
-			    u_int8_t mask)
+static void writeb_idx_mask(uint16_t reg, uint8_t idx, uint8_t val,
+			    uint8_t mask)
 {
-	u_int8_t tmp;
+	uint8_t tmp;
 
 	tmp = readb_idx_reg(reg, idx);
 	tmp &= ~ mask;
@@ -614,31 +615,31 @@ struct io_reg *io_regs[] = {
 	&graphic_regs,
 	&crtc_regs,
 	NULL
-};	
+};
 
 struct half_mode {
-	u_int16_t total;
-	u_int16_t active;
-	u_int16_t blank_start;
-	u_int16_t blank_end;
-	u_int16_t retr_start;
-	u_int16_t retr_end;
+	uint16_t total;
+	uint16_t active;
+	uint16_t blank_start;
+	uint16_t blank_end;
+	uint16_t retr_start;
+	uint16_t retr_end;
 	int n_sync;
 };
 
 struct mode {
-	struct half_mode h;	
-	struct half_mode v;	
-	u_int32_t addr_start;
-	u_int8_t bpp;
-	u_int16_t horiz_quad_count;
-	u_int16_t horiz_offset;
+	struct half_mode h;
+	struct half_mode v;
+	uint32_t addr_start;
+	uint8_t bpp;
+	uint16_t horiz_quad_count;
+	uint16_t horiz_offset;
 };
 
 static int get_mode(struct mode *m, int secondary)
 {
-	u_int8_t val;
-	
+	uint8_t val;
+
 	memset(m, 0, sizeof(*m));
 
 	if (!secondary) {
@@ -801,7 +802,7 @@ static int get_mode(struct mode *m, int secondary)
 static void dump_scaling(void)
 {
 	u_int32_t h_scaling, v_scaling;
-	u_int8_t val;
+	uint8_t val;
 
 	val = readb_idx_reg(0x3d5, 0x79);
 	if (val & 0x01) {
@@ -827,11 +828,11 @@ static void dump_scaling(void)
 
 static void dump_registers(struct io_reg *ior)
 {
-	u_int8_t idx;
+	uint8_t idx;
 
 	printf("%s register dump (IO Port address: 0x%03x): \n", ior->name, ior->io_port_addr);
 	for (idx = 0; idx < 0xff; idx++) {
-		u_int8_t val;
+		uint8_t val;
 		struct bit_desc *desc = ior->index[idx].bit_desc;
 
 		if (!ior->index[idx].name)
@@ -864,8 +865,8 @@ enum pll {
 
 static void get_vck_clock(enum pll pll, unsigned int f_ref_khz)
 {
-	u_int8_t reg_ofs = 0;
-	u_int8_t val;
+	uint8_t reg_ofs = 0;
+	uint8_t val;
 	unsigned int dm, dtz, dr, dn;
 	unsigned long f_vco, f_out;
 	char *name;
@@ -898,7 +899,7 @@ static void get_vck_clock(enum pll pll, unsigned int f_ref_khz)
 	dtz |= (val & 0x1) << 1;
 	dn = val >> 1;
 
-	printf("%s PLL: dm=%d, dtx=%d, dr=%d, dn=%d ", name, dm, dtz, dr, dn);
+	printf("%s PLL: dm=%u, dtx=%u, dr=%u, dn=%u ", name, dm, dtz, dr, dn);
 
 	f_vco = f_ref_khz * (dm + 2) / (dn + 2);
 	if (dr)
@@ -918,7 +919,7 @@ struct gpio_state {
 
 static int get_gpio_state(struct gpio_state *s)
 {
-	u_int8_t val;
+	uint8_t val;
 
 	memset(s, 0, sizeof(*s));
 
@@ -958,7 +959,7 @@ static int get_gpio_state(struct gpio_state *s)
 
 static void dump_gpio_state(const char *pfx, const struct gpio_state *gs)
 {
-	int i;
+	unsigned int i;
 
 	for (i = 2; i < 6; i++) {
 		printf("%sGPIO %u: function=", pfx, i);
@@ -998,10 +999,10 @@ static void dump_mode(const char *pfx, struct mode *m)
 
 static void dump_sl(const char *pfx)
 {
-	u_int8_t val;
+	uint8_t val;
 	unsigned int sl_size_mb;
 	unsigned long rtsf_in_sl_addr;
-	u_int64_t sl_in_mem_addr;
+	uint64_t sl_in_mem_addr, temp;
 
 	val = readb_idx_reg(0x3c5, 0x68);
 	switch (val) {
@@ -1041,7 +1042,8 @@ static void dump_sl(const char *pfx)
 
 	sl_in_mem_addr = readb_idx_reg(0x3c5, 0x6d) << 21;
 	sl_in_mem_addr |= readb_idx_reg(0x3c5, 0x6d) << 29;
-	sl_in_mem_addr |= (readb_idx_reg(0x3c5, 0x6d) & 0x7f) << 37;
+	temp = (readb_idx_reg(0x3c5, 0x6d) & 0x7f);
+	sl_in_mem_addr |= (temp << 37);
 
 	printf("%sSL in System memory: 0x%llx, RTSF in SL: 0x%lx\n",
 		pfx, sl_in_mem_addr, rtsf_in_sl_addr);
@@ -1049,7 +1051,7 @@ static void dump_sl(const char *pfx)
 
 static int dump_lvds(void)
 {
-	u_int8_t val;
+	uint8_t val;
 	char *mode;
 
 	writeb_idx_mask(0x3c5, 0x5a, 0x01, 0x01);
@@ -1087,7 +1089,7 @@ static int dump_lvds(void)
 		val & 1 ? "OpenLDI":"SPWG", val & 0x40 ? "Down" : "Up");
 	
 }
-static int parse_ioreg(u_int16_t *reg, u_int8_t *index, char *str)
+static int parse_ioreg(uint16_t *reg, uint8_t *index, char *str)
 {
 	char *dot;
 	char buf[255];
@@ -1160,8 +1162,8 @@ int main(int argc, char **argv)
 
 	while (1) {
 		int c;
-		u_int16_t reg;
-		u_int8_t index;
+		uint16_t reg;
+		uint8_t index;
 		unsigned long val;
 		static struct option long_options[] = {
 			{ "help", 0, 0, 'h' },

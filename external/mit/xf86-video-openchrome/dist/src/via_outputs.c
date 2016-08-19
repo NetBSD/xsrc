@@ -1,5 +1,6 @@
 /*
- * Copyright 2005-2007 The Openchrome Project [openchrome.org]
+ * Copyright 2005-2015 The Openchrome Project
+ *                     [http://www.freedesktop.org/wiki/Openchrome]
  * Copyright 2004-2005 The Unichrome Project  [unichrome.sf.net]
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.
@@ -124,7 +125,7 @@ ViaTVSetMode(xf86CrtcPtr crtc, DisplayModePtr mode)
     if (pBIOSInfo->TVModeCrtc)
         pBIOSInfo->TVModeCrtc(crtc, mode);
 
-	/* TV reset. */
+    /* TV reset. */
     xf86I2CWriteByte(pBIOSInfo->TVI2CDev, 0x1D, 0x00);
     xf86I2CWriteByte(pBIOSInfo->TVI2CDev, 0x1D, 0x80);
 }
@@ -164,9 +165,9 @@ via_tv_create_resources(xf86OutputPtr output)
 #ifdef RANDR_12_INTERFACE
 static Bool
 via_tv_set_property(xf86OutputPtr output, Atom property,
-					RRPropertyValuePtr value)
+                    RRPropertyValuePtr value)
 {
-    return FALSE;
+    return TRUE;
 }
 
 static Bool
@@ -217,27 +218,15 @@ via_tv_mode_valid(xf86OutputPtr output, DisplayModePtr pMode)
     VIAPtr pVia = VIAPTR(pScrn);
     int ret = MODE_OK;
 
-    if (pVia->UseLegacyModeSwitch) {
-        VIABIOSInfoPtr pBIOSInfo = pVia->pBIOSInfo;
+    if (!ViaModeDotClockTranslate(pScrn, pMode))
+        return MODE_NOCLOCK;
 
-        if (pBIOSInfo->TVModeValid) {
-            ret = pBIOSInfo->TVModeValid(pScrn, pMode);
-            if (ret != MODE_OK) {
-                xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                            "Mode \"%s\" is not supported by TV encoder.\n",
-                            pMode->name);
-            }
-        }
-    } else {
-        if (!ViaModeDotClockTranslate(pScrn, pMode))
-            return MODE_NOCLOCK;
-    }
     return ret;
 }
 
 static Bool
 via_tv_mode_fixup(xf86OutputPtr output, DisplayModePtr mode,
-					DisplayModePtr adjusted_mode)
+                  DisplayModePtr adjusted_mode)
 {
     return TRUE;
 }
@@ -259,7 +248,8 @@ ViaDisplayEnableDVO(ScrnInfoPtr pScrn, int port)
 {
     vgaHWPtr hwp = VGAHWPTR(pScrn);
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ViaDisplayEnableDVO, port: %d\n", port));
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ViaDisplayEnableDVO, port: %d\n",
+                     port));
     switch (port) {
     case VIA_DI_PORT_DVP0:
         ViaSeqMask(hwp, 0x1E, 0xC0, 0xC0);
@@ -275,7 +265,8 @@ ViaDisplayDisableDVO(ScrnInfoPtr pScrn, int port)
 {
     vgaHWPtr hwp = VGAHWPTR(pScrn);
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ViaDisplayDisableDVO, port: %d\n", port));
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ViaDisplayDisableDVO, port: %d\n",
+                     port));
     switch (port) {
     case VIA_DI_PORT_DVP0:
         ViaSeqMask(hwp, 0x1E, 0x00, 0xC0);
@@ -292,7 +283,8 @@ ViaDisplaySetStreamOnDVO(ScrnInfoPtr pScrn, int port, int iga)
     vgaHWPtr hwp = VGAHWPTR(pScrn);
     int regNum;
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ViaDisplaySetStreamOnDVO, port: %d\n", port));
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ViaDisplaySetStreamOnDVO, port: %d\n",
+                     port));
 
     switch (port) {
         case VIA_DI_PORT_DVP0:
@@ -317,7 +309,7 @@ ViaDisplaySetStreamOnDVO(ScrnInfoPtr pScrn, int port, int iga)
 
 static void
 via_tv_mode_set(xf86OutputPtr output, DisplayModePtr mode,
-				DisplayModePtr adjusted_mode)
+                DisplayModePtr adjusted_mode)
 {
     ScrnInfoPtr pScrn = output->scrn;
     VIAPtr pVia = VIAPTR(pScrn);
@@ -371,6 +363,8 @@ static const xf86OutputFuncsRec via_tv_funcs = {
     .create_resources   = via_tv_create_resources,
 #ifdef RANDR_12_INTERFACE
     .set_property       = via_tv_set_property,
+#endif
+#ifdef RANDR_13_INTERFACE
     .get_property       = via_tv_get_property,
 #endif
     .dpms               = via_tv_dpms,
@@ -395,6 +389,9 @@ via_tv_init(ScrnInfoPtr pScrn)
     VIAPtr pVia = VIAPTR(pScrn);
     VIABIOSInfoPtr pBIOSInfo = pVia->pBIOSInfo;
     xf86OutputPtr output = NULL;
+
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Entered via_tv_init.\n"));
 
     /* preset some pBIOSInfo TV related values -- move up */
     pBIOSInfo->TVEncoder = VIA_NONETV;
@@ -426,8 +423,14 @@ via_tv_init(ScrnInfoPtr pScrn)
     else if (pVia->pI2CBus3 && xf86I2CProbeAddress(pVia->pI2CBus3, 0xEA))
         pBIOSInfo->TVI2CDev = ViaCH7xxxDetect(pScrn, pVia->pI2CBus3, 0xEA);
 
-    if (!pBIOSInfo->TVI2CDev)
+    if (!pBIOSInfo->TVI2CDev) {
+        xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+                    "Did not detect a TV encoder.\n");
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "Exiting via_tv_init.\n"));
+
         return FALSE;
+    }
 
     switch (pBIOSInfo->TVEncoder) {
         case VIA_VT1621:
@@ -442,6 +445,10 @@ via_tv_init(ScrnInfoPtr pScrn)
             ViaCH7xxxInit(pScrn);
             break;
         default:
+            xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+                        "Was not able to initialize a known TV encoder.\n");
+            DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                                "Exiting via_tv_init.\n"));
             return FALSE;
             break;
     }
@@ -452,10 +459,8 @@ via_tv_init(ScrnInfoPtr pScrn)
         || !pBIOSInfo->TVPower || !pBIOSInfo->TVModes
         || !pBIOSInfo->TVPrintRegs) {
 
-        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-                   "via_tv_init: TVEncoder was not properly initialised.\n");
-
         xf86DestroyI2CDevRec(pBIOSInfo->TVI2CDev, TRUE);
+
         pBIOSInfo->TVI2CDev = NULL;
         pBIOSInfo->TVOutput = TVOUTPUT_NONE;
         pBIOSInfo->TVEncoder = VIA_NONETV;
@@ -471,6 +476,10 @@ via_tv_init(ScrnInfoPtr pScrn)
         pBIOSInfo->TVPrintRegs = NULL;
         pBIOSInfo->TVNumRegs = 0;
 
+        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+                   "TV encoder was not properly initialized.\n");
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "Exiting via_tv_init.\n"));
         return FALSE;
     }
 
@@ -481,7 +490,8 @@ via_tv_init(ScrnInfoPtr pScrn)
         /* Allow tv output on both crtcs, set bit 0 and 1. */
         output->possible_crtcs = 0x3;
     } else {
-        xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "via_tv_init: Failed to create output for TV-1.\n");
+        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+                   "Failed to register TV-1.\n");
     }
 
     pBIOSInfo->tv = output;
@@ -492,158 +502,10 @@ via_tv_init(ScrnInfoPtr pScrn)
     if (VIAPTR(pScrn)->PrintTVRegs)
         pBIOSInfo->TVPrintRegs(pScrn);
 #endif
+
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Exiting via_tv_init.\n"));
     return TRUE;
-}
-
-static void
-via_dp_create_resources(xf86OutputPtr output)
-{
-}
-
-#ifdef RANDR_12_INTERFACE
-static Bool
-via_dp_set_property(xf86OutputPtr output, Atom property,
-						RRPropertyValuePtr value)
-{
-    return FALSE;
-}
-
-static Bool
-via_dp_get_property(xf86OutputPtr output, Atom property)
-{
-    return FALSE;
-}
-#endif
-
-static void
-via_dp_dpms(xf86OutputPtr output, int mode)
-{
-    ScrnInfoPtr pScrn = output->scrn;
-
-    switch (mode) {
-    case DPMSModeOn:
-        ViaDFPPower(pScrn, TRUE);
-        break;
-
-    case DPMSModeStandby:
-    case DPMSModeSuspend:
-    case DPMSModeOff:
-        ViaDFPPower(pScrn, FALSE);
-        break;
-    }
-}
-
-static void
-via_dp_save(xf86OutputPtr output)
-{
-}
-
-static void
-via_dp_restore(xf86OutputPtr output)
-{
-}
-
-static int
-via_dp_mode_valid(xf86OutputPtr output, DisplayModePtr pMode)
-{
-    ScrnInfoPtr pScrn = output->scrn;
-
-    if (!ViaModeDotClockTranslate(pScrn, pMode))
-        return MODE_NOCLOCK;
-    return MODE_OK;
-}
-
-static Bool
-via_dp_mode_fixup(xf86OutputPtr output, DisplayModePtr mode,
-						DisplayModePtr adjusted_mode)
-{
-    return TRUE;
-}
-
-static void
-via_dp_prepare(xf86OutputPtr output)
-{
-}
-
-static void
-via_dp_commit(xf86OutputPtr output)
-{
-}
-
-static void
-via_dp_mode_set(xf86OutputPtr output, DisplayModePtr mode,
-				DisplayModePtr adjusted_mode)
-{
-    ScrnInfoPtr pScrn = output->scrn;
-
-    if (output->crtc) {
-        drmmode_crtc_private_ptr iga = output->crtc->driver_private;
-        CARD8 value = 0x00; /* Value for IGA 1 */
-        vgaHWPtr hwp = VGAHWPTR(pScrn);
-
-        /* IGA 2 */
-        if (iga->index)
-            value = 0x10;
-        ViaSeqMask(hwp, 0x99, value, 0x10);
-    }
-    ViaDFPPower(pScrn, TRUE);
-}
-
-static xf86OutputStatus
-via_dp_detect(xf86OutputPtr output)
-{
-    xf86OutputStatus status = XF86OutputStatusDisconnected;
-    ScrnInfoPtr pScrn = output->scrn;
-    VIAPtr pVia = VIAPTR(pScrn);
-    xf86MonPtr mon;
-
-    mon = xf86OutputGetEDID(output, pVia->pI2CBus2);
-    if (mon && DIGITAL(mon->features.input_type)) {
-        xf86OutputSetEDID(output, mon);
-        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "DDC pI2CBus2 detected a DP\n"));
-        status = XF86OutputStatusConnected;
-    }
-    return status;
-}
-
-static void
-via_dp_destroy(xf86OutputPtr output)
-{
-}
-
-static const xf86OutputFuncsRec via_dp_funcs = {
-    .create_resources   = via_dp_create_resources,
-#ifdef RANDR_12_INTERFACE
-    .set_property       = via_dp_set_property,
-    .get_property       = via_dp_get_property,
-#endif
-    .dpms               = via_dp_dpms,
-    .save               = via_dp_save,
-    .restore            = via_dp_restore,
-    .mode_valid         = via_dp_mode_valid,
-    .mode_fixup         = via_dp_mode_fixup,
-    .prepare            = via_dp_prepare,
-    .commit             = via_dp_commit,
-    .mode_set           = via_dp_mode_set,
-    .detect             = via_dp_detect,
-    .get_modes          = xf86OutputGetEDIDModes,
-    .destroy            = via_dp_destroy,
-};
-
-void
-via_dp_init(ScrnInfoPtr pScrn)
-{
-    VIAPtr pVia = VIAPTR(pScrn);
-    xf86OutputPtr output = NULL;
-
-    if (pVia->pI2CBus2)
-        output = xf86OutputCreate(pScrn, &via_dp_funcs, "DP-1");
-    if (output) {
-        output->possible_crtcs = 0x1;
-        output->possible_clones = 0;
-        output->interlaceAllowed = TRUE;
-        output->doubleScanAllowed = FALSE;
-    }
 }
 
 /*
@@ -678,9 +540,9 @@ via_analog_create_resources(xf86OutputPtr output)
 #ifdef RANDR_12_INTERFACE
 static Bool
 via_analog_set_property(xf86OutputPtr output, Atom property,
-						RRPropertyValuePtr value)
+                        RRPropertyValuePtr value)
 {
-    return FALSE;
+    return TRUE;
 }
 
 static Bool
@@ -730,7 +592,7 @@ via_analog_mode_valid(xf86OutputPtr output, DisplayModePtr pMode)
 
 static Bool
 via_analog_mode_fixup(xf86OutputPtr output, DisplayModePtr mode,
-						DisplayModePtr adjusted_mode)
+                      DisplayModePtr adjusted_mode)
 {
     return TRUE;
 }
@@ -749,7 +611,7 @@ via_analog_commit(xf86OutputPtr output)
 
 static void
 via_analog_mode_set(xf86OutputPtr output, DisplayModePtr mode,
-					DisplayModePtr adjusted_mode)
+                    DisplayModePtr adjusted_mode)
 {
     ScrnInfoPtr pScrn = output->scrn;
 
@@ -774,48 +636,78 @@ via_analog_detect(xf86OutputPtr output)
     VIAPtr pVia = VIAPTR(pScrn);
     xf86MonPtr mon;
 
+    /* Probe I2C Bus 1 to see if a VGA monitor is connected. */
+    xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+                "Probing for a VGA monitor on I2C Bus 1.\n");
     mon = xf86OutputGetEDID(output, pVia->pI2CBus1);
-    if (mon && !DIGITAL(mon->features.input_type)) {
+    if (mon && (!mon->features.input_type)) {
         xf86OutputSetEDID(output, mon);
-        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "DDC pI2CBus1 detected a CRT\n"));
         status = XF86OutputStatusConnected;
+        xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+                    "Detected a VGA monitor on I2C Bus 1.\n");
     } else {
-        vgaHWPtr hwp = VGAHWPTR(pScrn);
-        CARD8 SR01 = hwp->readSeq(hwp, 0x01);
-        CARD8 SR40 = hwp->readSeq(hwp, 0x40);
-        CARD8 CR36 = hwp->readCrtc(hwp, 0x36);
+        xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+                    "Did not detect a VGA monitor on I2C Bus 1.\n");
 
-        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "Test for CRT with VSYNC\n"));
-        /* We have to power on the display to detect it */
-        ViaSeqMask(hwp, 0x01, 0x00, 0x20);
-        ViaCrtcMask(hwp, 0x36, 0x00, 0xF0);
-
-        /* Wait for vblank */
-        usleep(16);
-
-        /* Detect the load on pins */
-        ViaSeqMask(hwp, 0x40, 0x80, 0x80);
-
-        if ((VIA_CX700 == pVia->Chipset) ||
-            (VIA_VX800 == pVia->Chipset) ||
-            (VIA_VX855 == pVia->Chipset) ||
-            (VIA_VX900 == pVia->Chipset))
-            ViaSeqMask(hwp, 0x40, 0x00, 0x80);
-
-        if (ViaVgahwIn(hwp, 0x3C2) & 0x20)
+        /* Probe I2C Bus 2 to see if a VGA monitor is connected. */
+        xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+                    "Probing for a VGA monitor on I2C Bus 2.\n");
+        mon = xf86OutputGetEDID(output, pVia->pI2CBus2);
+        if (mon && (!mon->features.input_type)) {
+            xf86OutputSetEDID(output, mon);
             status = XF86OutputStatusConnected;
+            xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+                        "Detected a VGA monitor on I2C Bus 2.\n");
+        } else {
+            xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+                        "Did not detect a VGA monitor on I2C Bus 2.\n");
 
-        if ((VIA_CX700 == pVia->Chipset) ||
-            (VIA_VX800 == pVia->Chipset) ||
-            (VIA_VX855 == pVia->Chipset) ||
-            (VIA_VX900 == pVia->Chipset))
-            ViaSeqMask(hwp, 0x40, 0x00, 0x80);
+            /* Perform manual detection of a VGA monitor since */
+            /* it was not detected via I2C buses. */
+            xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+                        "Now perform manual detection of a VGA "
+                        "monitor.\n");
+            vgaHWPtr hwp = VGAHWPTR(pScrn);
+            CARD8 SR01 = hwp->readSeq(hwp, 0x01);
+            CARD8 SR40 = hwp->readSeq(hwp, 0x40);
+            CARD8 CR36 = hwp->readCrtc(hwp, 0x36);
 
-        /* Restore previous state */
-        hwp->writeSeq(hwp, 0x40, SR40);
-        hwp->writeSeq(hwp, 0x01, SR01);
-        hwp->writeCrtc(hwp, 0x36, CR36);
+            /* We have to power on the display to detect it */
+            ViaSeqMask(hwp, 0x01, 0x00, 0x20);
+            ViaCrtcMask(hwp, 0x36, 0x00, 0xF0);
+
+            /* Wait for vblank */
+            usleep(16);
+
+            /* Detect the load on pins */
+            ViaSeqMask(hwp, 0x40, 0x80, 0x80);
+
+            if ((VIA_CX700 == pVia->Chipset) ||
+                (VIA_VX800 == pVia->Chipset) ||
+                (VIA_VX855 == pVia->Chipset) ||
+                (VIA_VX900 == pVia->Chipset))
+                ViaSeqMask(hwp, 0x40, 0x00, 0x80);
+
+            if (ViaVgahwIn(hwp, 0x3C2) & 0x20) {
+                status = XF86OutputStatusConnected;
+                xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+                            "Detected a VGA monitor using manual "
+                            "detection method.\n");
+            }
+
+            if ((VIA_CX700 == pVia->Chipset) ||
+                (VIA_VX800 == pVia->Chipset) ||
+                (VIA_VX855 == pVia->Chipset) ||
+                (VIA_VX900 == pVia->Chipset))
+                ViaSeqMask(hwp, 0x40, 0x00, 0x80);
+
+            /* Restore previous state */
+            hwp->writeSeq(hwp, 0x40, SR40);
+            hwp->writeSeq(hwp, 0x01, SR01);
+            hwp->writeCrtc(hwp, 0x36, CR36);
+        }
     }
+
     return status;
 }
 
@@ -825,9 +717,11 @@ via_analog_destroy(xf86OutputPtr output)
 }
 
 static const xf86OutputFuncsRec via_analog_funcs = {
-    .create_resources	= via_analog_create_resources,
+    .create_resources   = via_analog_create_resources,
 #ifdef RANDR_12_INTERFACE
     .set_property       = via_analog_set_property,
+#endif
+#ifdef RANDR_13_INTERFACE
     .get_property       = via_analog_get_property,
 #endif
     .dpms               = via_analog_dpms,
@@ -850,27 +744,257 @@ via_analog_init(ScrnInfoPtr pScrn)
     VIABIOSInfoPtr pBIOSInfo = pVia->pBIOSInfo;
     xf86OutputPtr output = NULL;
 
-    if (pVia->pI2CBus1) {
-        output = xf86OutputCreate(pScrn, &via_analog_funcs, "VGA-1");
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Entered via_analog_init.\n"));
 
-        output->possible_crtcs = 0x3;
-        output->possible_clones = 0;
-        output->interlaceAllowed = TRUE;
-        output->doubleScanAllowed = FALSE;
-        pBIOSInfo->analog = output;
+    if (!pVia->pI2CBus1 || !pVia->pI2CBus2) {
+        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+                    "I2C Bus 1 or I2C Bus 2 does not exist.\n");
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "Exiting via_analog_init.\n"));
+        return;
     }
+
+    output = xf86OutputCreate(pScrn, &via_analog_funcs, "VGA-1");
+
+    output->possible_crtcs = 0x3;
+    output->possible_clones = 0;
+    output->interlaceAllowed = TRUE;
+    output->doubleScanAllowed = FALSE;
+    pBIOSInfo->analog = output;
+
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Exiting via_analog_init.\n"));
 }
 
-/*
- *
- */
+static void
+via_dvi_create_resources(xf86OutputPtr output)
+{
+}
+
+#ifdef RANDR_12_INTERFACE
+static Bool
+via_dvi_set_property(xf86OutputPtr output, Atom property,
+                     RRPropertyValuePtr value)
+{
+    return TRUE;
+}
+
+static Bool
+via_dvi_get_property(xf86OutputPtr output, Atom property)
+{
+    return FALSE;
+}
+#endif
+
+static void
+via_dvi_dpms(xf86OutputPtr output, int mode)
+{
+    ScrnInfoPtr pScrn = output->scrn;
+
+    switch (mode) {
+    case DPMSModeOn:
+        ViaDFPPower(pScrn, TRUE);
+        break;
+
+    case DPMSModeStandby:
+    case DPMSModeSuspend:
+    case DPMSModeOff:
+        ViaDFPPower(pScrn, FALSE);
+        break;
+    }
+
+}
+
+static void
+via_dvi_save(xf86OutputPtr output)
+{
+    via_vt1632_save(output);
+}
+
+static void
+via_dvi_restore(xf86OutputPtr output)
+{
+    via_vt1632_restore(output);
+}
+
+static int
+via_dvi_mode_valid(xf86OutputPtr output, DisplayModePtr pMode)
+{
+    return via_vt1632_mode_valid(output, pMode);
+}
+
+static Bool
+via_dvi_mode_fixup(xf86OutputPtr output, DisplayModePtr mode,
+                   DisplayModePtr adjusted_mode)
+{
+    return TRUE;
+}
+
+static void
+via_dvi_prepare(xf86OutputPtr output)
+{
+}
+
+static void
+via_dvi_commit(xf86OutputPtr output)
+{
+}
+
+static void
+via_dvi_mode_set(xf86OutputPtr output, DisplayModePtr mode,
+                 DisplayModePtr adjusted_mode)
+{
+    ScrnInfoPtr pScrn = output->scrn;
+    vgaHWPtr hwp = VGAHWPTR(pScrn);
+
+    via_vt1632_power(output, FALSE);
+    ViaModeSecondCRTC(pScrn, mode);
+    via_vt1632_mode_set(output, mode, adjusted_mode);
+    via_vt1632_power(output, TRUE);
+}
+
+static xf86OutputStatus
+via_dvi_detect(xf86OutputPtr output)
+{
+    xf86OutputStatus status = XF86OutputStatusDisconnected;
+    ScrnInfoPtr pScrn = output->scrn;
+    VIAPtr pVia = VIAPTR(pScrn);
+    xf86MonPtr mon;
+
+    mon = xf86OutputGetEDID(output, pVia->pI2CBus2);
+    if (mon && DIGITAL(mon->features.input_type)) {
+        xf86OutputSetEDID(output, mon);
+        status = XF86OutputStatusConnected;
+    } else {
+        status = via_vt1632_detect(output);
+    }
+    return status;
+}
+
+static void
+via_dvi_destroy(xf86OutputPtr output)
+{
+}
+
+static const xf86OutputFuncsRec via_dvi_funcs = {
+    .create_resources   = via_dvi_create_resources,
+#ifdef RANDR_12_INTERFACE
+    .set_property       = via_dvi_set_property,
+#endif
+#ifdef RANDR_13_INTERFACE
+    .get_property       = via_dvi_get_property,
+#endif
+    .dpms               = via_dvi_dpms,
+    .save               = via_dvi_save,
+    .restore            = via_dvi_restore,
+    .mode_valid         = via_dvi_mode_valid,
+    .mode_fixup         = via_dvi_mode_fixup,
+    .prepare            = via_dvi_prepare,
+    .commit             = via_dvi_commit,
+    .mode_set           = via_dvi_mode_set,
+    .detect             = via_dvi_detect,
+    .get_modes          = xf86OutputGetEDIDModes,
+    .destroy            = via_dvi_destroy,
+};
+
+void
+via_dvi_init(ScrnInfoPtr pScrn)
+{
+    VIAPtr pVia = VIAPTR(pScrn);
+    xf86OutputPtr output = NULL;
+    struct ViaVT1632PrivateData *private_data = NULL;
+    I2CBusPtr pBus = NULL;
+    I2CDevPtr pDev = NULL;
+    I2CSlaveAddr addr = 0x10;
+
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Entered via_dvi_init.\n"));
+
+    if (!pVia->pI2CBus2 || !pVia->pI2CBus3) {
+        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+                    "I2C Bus 2 or I2C Bus 3 does not exist.\n");
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                    "Exiting via_dvi_init.\n"));
+        return;
+    }
+
+    if (xf86I2CProbeAddress(pVia->pI2CBus3, addr)) {
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+                            "Will probe I2C Bus 3 for a possible "
+                            "external TMDS transmitter.\n"));
+        pBus = pVia->pI2CBus3;
+    } else if (xf86I2CProbeAddress(pVia->pI2CBus2, addr)) {
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+                            "Will probe I2C Bus 2 for a possible "
+                            "external TMDS transmitter.\n"));
+        pBus = pVia->pI2CBus2;
+    } else {
+        xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+                    "Did not find a possible external TMDS transmitter "
+                    "on I2C Bus 2 or I2C Bus 3.\n");
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "Exiting via_dvi_init.\n"));
+        return;
+    }
+
+    pDev = xf86CreateI2CDevRec();
+    if (!pDev) {
+        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+                    "Failed to create an I2C bus structure.\n");
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "Exiting via_dvi_init.\n"));
+        return;
+    }
+
+    pDev->DevName = "VT1632A";
+    pDev->SlaveAddr = addr;
+    pDev->pI2CBus = pBus;
+    if (!xf86I2CDevInit(pDev)) {
+        xf86DestroyI2CDevRec(pDev, TRUE);
+        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+                    "Failed to initialize a device on I2C bus.\n");
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "Exiting via_dvi_init.\n"));
+        return;
+    }
+
+    if (!via_vt1632_probe(pScrn, pDev)) {
+        xf86DestroyI2CDevRec(pDev, TRUE);
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "Exiting via_dvi_init.\n"));
+        return;
+    }
+
+    private_data = via_vt1632_init(pScrn, pDev);
+    if (!private_data) {
+        xf86DestroyI2CDevRec(pDev, TRUE);
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "Exiting via_dvi_init.\n"));
+        return;
+    }
+
+    output = xf86OutputCreate(pScrn, &via_dvi_funcs, "DVI-1");
+    if (output) {
+        output->driver_private = private_data;
+        output->possible_crtcs = 0x2;
+        output->possible_clones = 0;
+        output->interlaceAllowed = FALSE;
+        output->doubleScanAllowed = FALSE;
+    }
+
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Exiting via_dvi_init.\n"));
+}
+
 void
 ViaOutputsDetect(ScrnInfoPtr pScrn)
 {
     VIAPtr pVia = VIAPTR(pScrn);
     VIABIOSInfoPtr pBIOSInfo = pVia->pBIOSInfo;
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ViaOutputsDetect\n"));
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Entered ViaOutputsDetect.\n"));
 
     pBIOSInfo->analog = NULL;
 
@@ -880,24 +1004,20 @@ ViaOutputsDetect(ScrnInfoPtr pScrn)
     /* VGA */
     via_analog_init(pScrn);
 
-    /*
-     * FIXME: xf86I2CProbeAddress(pVia->pI2CBus3, 0x40)
-     * disables the panel on P4M900
-     */
-    /* TV encoder */
-    if ((pVia->Chipset != VIA_P4M900) || (pVia->ActiveDevice & VIA_DEVICE_TV))
-        via_tv_init(pScrn);
+    /* TV */
+    via_tv_init(pScrn);
 
-    if (pVia->ActiveDevice & VIA_DEVICE_DFP) {
-        switch (pVia->Chipset) {
-        case VIA_CX700:
-        case VIA_VX800:
-        case VIA_VX855:
-        case VIA_VX900:
-            via_dp_init(pScrn);
-            break;
-        }
-    }
+    /*
+     * via_dvi_init function to initialize VT1632A TMDS transmitter
+     * is disabled for now.
+     */
+    /* External TMDS Transmitter (DVI) */
+/*
+    via_dvi_init(pScrn);
+*/
+
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Exiting ViaOutputsDetect.\n"));
 }
 
 #ifdef HAVE_DEBUG
@@ -933,7 +1053,9 @@ ViaGetMemoryBandwidth(ScrnInfoPtr pScrn)
 {
     VIAPtr pVia = VIAPTR(pScrn);
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ViaGetMemoryBandwidth. Memory type: %d\n", pVia->MemClk));
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                     "ViaGetMemoryBandwidth. Memory type: %d\n",
+                     pVia->MemClk));
 
     switch (pVia->MemClk) {
         case VIA_MEM_SDR66:
@@ -954,7 +1076,8 @@ ViaGetMemoryBandwidth(ScrnInfoPtr pScrn)
             return VIA_BW_DDR1066;
         default:
             xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-                       "ViaBandwidthAllowed: Unknown memory type: %d\n", pVia->MemClk);
+                       "ViaBandwidthAllowed: Unknown memory type: %d\n",
+                       pVia->MemClk);
             return VIA_BW_MIN;
     }
 }
@@ -1012,7 +1135,8 @@ ViaSetDotclock(ScrnInfoPtr pScrn, CARD32 clock, int base, int probase)
         }
 
         hwp->writeSeq(hwp, probase, dm & 0xff);
-        hwp->writeSeq(hwp, probase+1, ((dm >> 8) & 0x03) | (dr << 2) | ((dtz & 1) << 7));
+        hwp->writeSeq(hwp, probase+1,
+                      ((dm >> 8) & 0x03) | (dr << 2) | ((dtz & 1) << 7));
         hwp->writeSeq(hwp, probase+2, (dn & 0x7f) | ((dtz & 2) << 6));
     }
 }
@@ -1161,7 +1285,8 @@ ViaModeDotClockTranslate(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
         DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
                          "ViaComputeDotClock %d : %04x : %04x\n",
-                         mode->Clock, (unsigned int)best1, (unsigned int)best2));
+                         mode->Clock, (unsigned int)best1,
+                         (unsigned int)best2));
 
         return best2;
     } else {
@@ -1172,116 +1297,6 @@ ViaModeDotClockTranslate(ScrnInfoPtr pScrn, DisplayModePtr mode)
     }
 
     return 0;
-}
-
-/*
- *
- */
-void
-ViaModePrimaryLegacy(xf86CrtcPtr crtc, DisplayModePtr mode)
-{
-	ScrnInfoPtr pScrn = crtc->scrn;
-	vgaHWPtr hwp = VGAHWPTR(pScrn);
-	VIAPtr pVia = VIAPTR(pScrn);
-	VIABIOSInfoPtr pBIOSInfo = pVia->pBIOSInfo;
-
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ViaModePrimaryLegacy\n"));
-    DEBUG(ViaPrintMode(pScrn, mode));
-
-    /* Turn off Screen */
-    ViaCrtcMask(hwp, 0x17, 0x00, 0x80);
-
-    /* Clean Second Path Status */
-    hwp->writeCrtc(hwp, 0x6A, 0x00);
-    hwp->writeCrtc(hwp, 0x6B, 0x00);
-    hwp->writeCrtc(hwp, 0x6C, 0x00);
-    hwp->writeCrtc(hwp, 0x93, 0x00);
-
-    ViaCRTCInit(pScrn);
-    ViaFirstCRTCSetMode(pScrn, mode);
-    pBIOSInfo->Clock = ViaModeDotClockTranslate(pScrn, mode);
-    pBIOSInfo->ClockExternal = FALSE;
-
-    /* Enable MMIO & PCI burst (1 wait state) */
-    ViaSeqMask(hwp, 0x1A, 0x06, 0x06);
-
-    if (pBIOSInfo->analog->status == XF86OutputStatusConnected)
-        ViaCrtcMask(hwp, 0x36, 0x30, 0x30);
-    else
-        ViaSeqMask(hwp, 0x16, 0x00, 0x40);
-
-	if ((pBIOSInfo->tv && pBIOSInfo->tv->status == XF86OutputStatusConnected)) {
-        /* Quick 'n dirty workaround for non-primary case until TVCrtcMode
-         * is removed -- copy from clock handling code below */
-        if ((pVia->Chipset == VIA_CLE266) && CLE266_REV_IS_AX(pVia->ChipRev))
-            ViaSetPrimaryDotclock(pScrn, 0x471C);  /* CLE266Ax uses 2x XCLK */
-        else if (pVia->Chipset != VIA_CLE266 && pVia->Chipset != VIA_KM400)
-            ViaSetPrimaryDotclock(pScrn, 0x529001);
-        else
-            ViaSetPrimaryDotclock(pScrn, 0x871C);
-        ViaSetUseExternalClock(hwp);
-
-        ViaTVSetMode(crtc, mode);
-    } else
-        ViaTVPower(pScrn, FALSE);
-
-    ViaSetPrimaryFIFO(pScrn, mode);
-
-    if (pBIOSInfo->ClockExternal) {
-        if ((pVia->Chipset == VIA_CLE266) && CLE266_REV_IS_AX(pVia->ChipRev))
-            ViaSetPrimaryDotclock(pScrn, 0x471C);  /* CLE266Ax uses 2x XCLK */
-        else if (pVia->Chipset != VIA_CLE266 && pVia->Chipset != VIA_KM400)
-            ViaSetPrimaryDotclock(pScrn, 0x529001);
-        else
-            ViaSetPrimaryDotclock(pScrn, 0x871C);
-        if (pVia->Chipset == VIA_CLE266 || pVia->Chipset == VIA_KM400)
-            ViaCrtcMask(hwp, 0x6B, 0x01, 0x01);
-    } else {
-        ViaSetPrimaryDotclock(pScrn, pBIOSInfo->Clock);
-        ViaSetUseExternalClock(hwp);
-        ViaCrtcMask(hwp, 0x6B, 0x00, 0x01);
-    }
-
-    /* Enable CRT Controller (3D5.17 Hardware Reset) */
-    ViaCrtcMask(hwp, 0x17, 0x80, 0x80);
-
-    hwp->disablePalette(hwp);
-}
-
-/*
- *
- */
-void
-ViaModeSecondaryLegacy(xf86CrtcPtr crtc, DisplayModePtr mode)
-{
-	ScrnInfoPtr pScrn = crtc->scrn;
-	vgaHWPtr hwp = VGAHWPTR(pScrn);
-	VIAPtr pVia = VIAPTR(pScrn);
-	VIABIOSInfoPtr pBIOSInfo = pVia->pBIOSInfo;
-
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ViaModeSecondaryLegacy\n"));
-    DEBUG(ViaPrintMode(pScrn, mode));
-
-    /* Turn off Screen */
-    ViaCrtcMask(hwp, 0x17, 0x00, 0x80);
-
-    ViaSecondCRTCSetMode(pScrn, mode);
-
-	if (pBIOSInfo->tv && pBIOSInfo->tv->status == XF86OutputStatusConnected)
-        ViaTVSetMode(crtc, mode);
-
-    /* CLE266A2 apparently doesn't like this */
-    if (!(pVia->Chipset == VIA_CLE266 && pVia->ChipRev == 0x02))
-        ViaCrtcMask(hwp, 0x6C, 0x00, 0x1E);
-
-    ViaSetSecondaryFIFO(pScrn, mode);
-
-    ViaSetSecondaryDotclock(pScrn, pBIOSInfo->Clock);
-    ViaSetUseExternalClock(hwp);
-
-    ViaCrtcMask(hwp, 0x17, 0x80, 0x80);
-
-    hwp->disablePalette(hwp);
 }
 
 void
@@ -1321,19 +1336,8 @@ ViaModeFirstCRTC(ScrnInfoPtr pScrn, DisplayModePtr mode)
     pBIOSInfo->Clock = ViaModeDotClockTranslate(pScrn, mode);
     pBIOSInfo->ClockExternal = FALSE;
 
-    /* Enable MMIO & PCI burst (1 wait state) */
-    switch (pVia->Chipset) {
-        case VIA_CLE266:
-        case VIA_KM400:
-        case VIA_K8M800:
-        case VIA_PM800:
-        case VIA_VM800:
-            ViaSeqMask(hwp, 0x1A, 0x06, 0x06);
-            break;
-        default:
-            ViaSeqMask(hwp, 0x1A, 0x0C, 0x0C);
-            break;
-    }
+    /* Enable Extended Mode Memory Access. */
+    ViaSeqMask(hwp, 0x1A, 0x08, 0x08);
 
     ViaSetPrimaryFIFO(pScrn, mode);
 
@@ -1370,3 +1374,4 @@ ViaModeSecondCRTC(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
     hwp->disablePalette(hwp);
 }
+

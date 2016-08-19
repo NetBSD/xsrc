@@ -309,8 +309,6 @@
     }
 
 
-#if !defined(__i386__) || (defined(linux) && defined(__i386__))
-
 static void
 libc_YUV42X(unsigned char *dst, const unsigned char *src,
             int dstPitch, int w, int h, int yuv422)
@@ -348,8 +346,6 @@ libc_YUV42X(unsigned char *dst, const unsigned char *src,
         }
     }
 }
-#endif
-
 
 #ifdef __i386__
 
@@ -415,7 +411,6 @@ kernel_YUV42X(unsigned char *dst, const unsigned char *src,
     }
 }
 
-#ifdef linux
 PREFETCH_FUNC(sse, SSE, SSE,, FENCE)
 PREFETCH_FUNC(mmxext, MMXEXT, SSE, EMMS, FENCEMMS)
 PREFETCH_FUNC(now, MMX, NOW, FEMMS, FEMMS)
@@ -515,7 +510,6 @@ cpuValid(const char *cpuinfo, char **flags)
     }
     return 0;
 }
-#endif /* linux */
 
 /*
  * Benchmark the video copy routines and choose the fastest.
@@ -525,7 +519,6 @@ viaVidCopyInit(char *copyType, ScreenPtr pScreen)
 {
     ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 
-#ifdef linux
     char buf[BSIZ];
     unsigned char *buf1, *buf2, *buf3;
     char *tmpBuf, *endBuf;
@@ -641,11 +634,6 @@ viaVidCopyInit(char *copyType, ScreenPtr pScreen)
                "Using %s YUV42X copy for %s.\n",
                mcFunctions[bestSoFar].mName, copyType);
     return mcFunctions[bestSoFar].mFunc;
-#else
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-               "Using Linux kernel memcpy for video.\n");
-    return kernel_YUV42X;
-#endif /* linux */
 }
 
 #else

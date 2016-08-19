@@ -1,5 +1,6 @@
 /*
- * Copyright 2005-2008 The Openchrome Project  [openchrome.org]
+ * Copyright 2005-2015 The Openchrome Project
+ *                     [http://www.freedesktop.org/wiki/Openchrome]
  * Copyright 2004-2005 The Unichrome Project  [unichrome.sf.net]
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.
@@ -203,8 +204,8 @@ ViaSetPrimaryFIFO(ScrnInfoPtr pScrn, DisplayModePtr mode)
             else
                 ViaSeqMask(hwp, 0x22, 0x1F, 0x1F);  /* 31 */
             break;
-        /* P4M800Pro/VN800/CN700 */ 
-        case VIA_VM800:
+        /* P4M800 Pro/VN800/CN700 */ 
+        case VIA_P4M800PRO:
             hwp->writeSeq(hwp, 0x17, 0x2F);
             ViaSeqMask(hwp, 0x16, 0x14, 0xBF);  /* 80/4    = 20  = 0x14 */
             ViaSeqMask(hwp, 0x18, 0x08, 0xBF);
@@ -374,7 +375,7 @@ ViaSetSecondaryFIFO(ScrnInfoPtr pScrn, DisplayModePtr mode)
             else
                 ViaCrtcMask(hwp, 0x94, 0x20, 0x7F);  /* 128/4 */
             break;
-        case VIA_VM800:
+        case VIA_P4M800PRO:
             ViaCrtcMask(hwp, 0x68, 0xA0, 0xF0);
             ViaCrtcMask(hwp, 0x94, 0x00, 0x80);
             ViaCrtcMask(hwp, 0x95, 0x00, 0x80);

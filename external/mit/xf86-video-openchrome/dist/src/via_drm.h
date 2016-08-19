@@ -38,7 +38,7 @@
 #define VIA_NR_XVMC_LOCKS		5
 #define VIA_MAX_CACHELINE_SIZE		64
 #define XVMCLOCKPTR(saPriv,lockNo)					\
-	((__volatile__ struct drm_hw_lock *)(((((unsigned long) (saPriv)->XvMCLockArea) + \
+	((volatile struct drm_hw_lock *)(((((unsigned long) (saPriv)->XvMCLockArea) + \
 				      (VIA_MAX_CACHELINE_SIZE - 1)) &	\
 				     ~(VIA_MAX_CACHELINE_SIZE - 1)) +	\
 				    VIA_MAX_CACHELINE_SIZE*(lockNo)))
@@ -65,7 +65,7 @@
 #define DRM_VIA_FB_INIT		0x03
 #define DRM_VIA_MAP_INIT	0x04
 #define DRM_VIA_DEC_FUTEX	0x05
-#define DRM_VIA_GEM_CREATE	0x06
+#define DRM_VIA_OLD_GEM_CREATE	0x06
 #define DRM_VIA_DMA_INIT	0x07
 #define DRM_VIA_CMDBUFFER	0x08
 #define DRM_VIA_FLUSH		0x09
@@ -76,13 +76,20 @@
 #define DRM_VIA_DMA_BLIT	0x0e
 #define DRM_VIA_BLIT_SYNC	0x0f
 
+/* KMS ioctls */
+#define DRM_VIA_GETPARAM	0x10
+#define DRM_VIA_SETPARAM	0x11
+#define DRM_VIA_GEM_CREATE	0x12
+#define DRM_VIA_GEM_WAIT	0x13
+#define DRM_VIA_GEM_STATE	0x14
+
 #define DRM_IOCTL_VIA_ALLOCMEM	  DRM_IOWR(DRM_COMMAND_BASE + DRM_VIA_ALLOCMEM, drm_via_mem_t)
 #define DRM_IOCTL_VIA_FREEMEM	  DRM_IOW( DRM_COMMAND_BASE + DRM_VIA_FREEMEM, drm_via_mem_t)
 #define DRM_IOCTL_VIA_AGP_INIT	  DRM_IOWR(DRM_COMMAND_BASE + DRM_VIA_AGP_INIT, drm_via_agp_t)
 #define DRM_IOCTL_VIA_FB_INIT	  DRM_IOWR(DRM_COMMAND_BASE + DRM_VIA_FB_INIT, drm_via_fb_t)
 #define DRM_IOCTL_VIA_MAP_INIT	  DRM_IOWR(DRM_COMMAND_BASE + DRM_VIA_MAP_INIT, drm_via_init_t)
 #define DRM_IOCTL_VIA_DEC_FUTEX   DRM_IOW( DRM_COMMAND_BASE + DRM_VIA_DEC_FUTEX, drm_via_futex_t)
-#define DRM_IOCTL_VIA_GEM_CREATE  DRM_IOWR(DRM_COMMAND_BASE + DRM_VIA_GEM_CREATE, struct drm_via_gem_create)
+#define DRM_IOCTL_VIA_OLD_GEM_CREATE  DRM_IOWR(DRM_COMMAND_BASE + DRM_VIA_OLD_GEM_CREATE, struct drm_via_gem_object)
 #define DRM_IOCTL_VIA_DMA_INIT	  DRM_IOWR(DRM_COMMAND_BASE + DRM_VIA_DMA_INIT, drm_via_dma_init_t)
 #define DRM_IOCTL_VIA_CMDBUFFER	  DRM_IOW( DRM_COMMAND_BASE + DRM_VIA_CMDBUFFER, drm_via_cmdbuffer_t)
 #define DRM_IOCTL_VIA_FLUSH	  DRM_IO(  DRM_COMMAND_BASE + DRM_VIA_FLUSH)
@@ -92,6 +99,13 @@
 #define DRM_IOCTL_VIA_WAIT_IRQ    DRM_IOWR( DRM_COMMAND_BASE + DRM_VIA_WAIT_IRQ, drm_via_irqwait_t)
 #define DRM_IOCTL_VIA_DMA_BLIT    DRM_IOW(DRM_COMMAND_BASE + DRM_VIA_DMA_BLIT, drm_via_dmablit_t)
 #define DRM_IOCTL_VIA_BLIT_SYNC   DRM_IOW(DRM_COMMAND_BASE + DRM_VIA_BLIT_SYNC, drm_via_blitsync_t)
+
+/* KMS ioctls */
+#define DRM_IOCTL_VIA_GETPARAM    DRM_IOR(DRM_COMMAND_BASE + DRM_VIA_GETPARAM, struct drm_via_param)
+#define DRM_IOCTL_VIA_SETPARAM    DRM_IOW(DRM_COMMAND_BASE + DRM_VIA_SETPARAM, struct drm_via_param)
+#define DRM_IOCTL_VIA_GEM_CREATE  DRM_IOWR(DRM_COMMAND_BASE + DRM_VIA_GEM_CREATE, struct drm_via_gem_object)
+#define DRM_IOCTL_VIA_GEM_WAIT    DRM_IOW(DRM_COMMAND_BASE + DRM_VIA_GEM_WAIT, struct drm_via_gem_wait)
+#define DRM_IOCTL_VIA_GEM_STATE   DRM_IOWR(DRM_COMMAND_BASE + DRM_VIA_GEM_STATE, struct drm_via_gem_object)
 
 /* Indices into buf.Setup where various bits of state are mirrored per
  * context and per buffer.  These can be fired at the card as a unit,
@@ -114,19 +128,19 @@
 #define VIA_MEM_UNKNOWN 4
 
 typedef struct {
-	uint32_t offset;
-	uint32_t size;
+	__u32 offset;
+	__u32 size;
 } drm_via_agp_t;
 
 typedef struct {
-	uint32_t offset;
-	uint32_t size;
+	__u32 offset;
+	__u32 size;
 } drm_via_fb_t;
 
 typedef struct {
-	uint32_t context;
-	uint32_t type;
-	uint32_t size;
+	__u32 context;
+	__u32 type;
+	__u32 size;
 	unsigned long index;
 	unsigned long offset;
 } drm_via_mem_t;
@@ -148,9 +162,9 @@ typedef struct _drm_via_futex {
 		VIA_FUTEX_WAIT = 0x00,
 		VIA_FUTEX_WAKE = 0X01
 	} func;
-	uint32_t ms;
-	uint32_t lock;
-	uint32_t val;
+	__u32 ms;
+	__u32 lock;
+	__u32 val;
 } drm_via_futex_t;
 
 typedef struct _drm_via_dma_init {
@@ -211,7 +225,7 @@ typedef struct _drm_via_cmdbuf_size {
 		VIA_CMDBUF_LAG = 0x02
 	} func;
 	int wait;
-	uint32_t size;
+	__u32 size;
 } drm_via_cmdbuf_size_t;
 
 typedef enum {
@@ -223,7 +237,8 @@ typedef enum {
 
 #define VIA_IRQ_FLAGS_MASK 0xF0000000
 
-enum drm_via_irqs{drm_via_irq_hqv0 = 0,
+enum drm_via_irqs {
+	drm_via_irq_hqv0 = 0,
 	drm_via_irq_hqv1,
 	drm_via_irq_dma0_dd,
 	drm_via_irq_dma0_td,
@@ -235,8 +250,8 @@ enum drm_via_irqs{drm_via_irq_hqv0 = 0,
 struct drm_via_wait_irq_request {
 	unsigned irq;
 	via_irq_seq_type_t type;
-	uint32_t sequence;
-	uint32_t signal;
+	__u32 sequence;
+	__u32 signal;
 };
 
 typedef union drm_via_irqwait {
@@ -245,34 +260,43 @@ typedef union drm_via_irqwait {
 } drm_via_irqwait_t;
 
 typedef struct drm_via_blitsync {
-	uint32_t sync_handle;
+	__u32 sync_handle;
 	unsigned engine;
 } drm_via_blitsync_t;
 
-/*
- * Below,"flags" is currently unused but will be used for possible future
+/* - * Below,"flags" is currently unused but will be used for possible future
  * extensions like kernel space bounce buffers for bad alignments and
  * blit engine busy-wait polling for better latency in the absence of
  * interrupts.
  */
 
 typedef struct drm_via_dmablit {
-	uint32_t num_lines;
-	uint32_t line_length;
+	__u32 num_lines;
+	__u32 line_length;
 
-	uint32_t fb_addr;
-	uint32_t fb_stride;
+	__u32 fb_addr;
+	__u32 fb_stride;
 
 	unsigned char *mem_addr;
-	uint32_t  mem_stride;
+	__u32 mem_stride;
 
-	int bounce_buffer;
+	__u32 flags;
 	int to_fb;
 
 	drm_via_blitsync_t sync;
 } drm_via_dmablit_t;
 
-struct drm_via_gem_create {
+/* Ioctl to query kernel params:
+ */
+#define VIA_PARAM_CHIPSET_ID		0
+#define VIA_PARAM_REVISION_ID		1
+
+struct drm_via_param {
+	uint64_t param;
+	uint64_t value;
+};
+
+struct drm_via_gem_object {
 	/**
 	 * Requested size for the object.
 	 *
@@ -318,12 +342,15 @@ struct drm_via_gem_create {
 	uint32_t handle;
 
 	/**
-	 * Padding for future expansion.
+	 * Version to tell how to handle this data.
 	 */
-	uint32_t pad1;
-	uint64_t pad2;
-	uint64_t pad3;
-	uint64_t pad4;
+	uint32_t version;
+};
+
+struct drm_via_gem_wait {
+	/* the buffer object handle */
+	uint32_t handle;
+	uint32_t no_wait;
 };
 
 #endif				/* _VIA_DRM_H_ */

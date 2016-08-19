@@ -47,7 +47,6 @@ enum VIACHIPTAGS {
     VIA_KM400,
     VIA_K8M800,
     VIA_PM800,
-    VIA_VM800,
     VIA_P4M800PRO,  /* VT3314 */
     VIA_CX700,      /* VT3324 */
     VIA_K8M890,     /* VT3336 */
@@ -69,7 +68,7 @@ enum VIACHIPTAGS {
 #define PCI_CHIP_VT3205         0x7205	/* KM400 */
 #define PCI_CHIP_VT3204         0x3108	/* K8M800 */
 #define PCI_CHIP_VT3259         0x3118	/* PM800 */
-#define PCI_CHIP_VT3314         0x3344	/* VM800 */
+#define PCI_CHIP_VT3314         0x3344	/* P4M800 Pro */
 #define PCI_CHIP_VT3324         0x3157	/* CX700 */
 #define PCI_CHIP_VT3336         0x3230	/* K8M890 */
 #define PCI_CHIP_VT3327         0x3343	/* P4M890 */
