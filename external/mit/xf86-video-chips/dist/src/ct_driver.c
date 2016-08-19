@@ -96,9 +96,6 @@
 /* All drivers initialising the SW cursor need this */
 #include "mipointer.h"
 
-/* All drivers implementing backing store need this */
-#include "mibstore.h"
-
 /* All drivers using the mi banking wrapper need this */
 #ifdef HAVE_ISA
 #include "mibank.h"
@@ -2101,13 +2098,7 @@ chipsPreInitHiQV(ScrnInfoPtr pScrn, int flags)
     pScrn->progClock = TRUE;
     cPtr->ClockType = HiQV_STYLE | TYPE_PROGRAMMABLE;
 
-    if (cPtr->pEnt->device->textClockFreq > 0) {
-	SaveClk->Clock = cPtr->pEnt->device->textClockFreq;
-	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
-		   "Using textclock freq: %7.3f.\n",
-		   SaveClk->Clock/1000.0);
-    } else
-	SaveClk->Clock = 0;
+    SaveClk->Clock = 0;
 
     xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "Using programmable clocks\n");
 
@@ -2810,13 +2801,7 @@ chipsPreInitWingine(ScrnInfoPtr pScrn, int flags)
 
     if (cPtr->ClockType & TYPE_PROGRAMMABLE) {
 	pScrn->numClocks = NoClocks;
-	if(cPtr->pEnt->device->textClockFreq > 0) {
-	    SaveClk->Clock = cPtr->pEnt->device->textClockFreq;
-	    xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
-		       "Using textclock freq: %7.3f.\n",
-		       SaveClk->Clock/1000.0);
-	} else
-	   SaveClk->Clock = CRT_TEXT_CLK_FREQ;
+	SaveClk->Clock = CRT_TEXT_CLK_FREQ;
 	xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "Using programmable clocks\n");
     } else {  /* TYPE_PROGRAMMABLE */
 	SaveClk->Clock = chipsGetHWClock(pScrn);
@@ -3503,14 +3488,8 @@ chipsPreInit655xx(ScrnInfoPtr pScrn, int flags)
 
     if (cPtr->ClockType & TYPE_PROGRAMMABLE) {
 	pScrn->numClocks = NoClocks;
-	if (cPtr->pEnt->device->textClockFreq > 0) {
-	    SaveClk->Clock = cPtr->pEnt->device->textClockFreq;
-	    xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
-		       "Using textclock freq: %7.3f.\n",
-		       SaveClk->Clock/1000.0);
-	} else
-	   SaveClk->Clock = ((cPtr->PanelType & ChipsLCDProbed) ? 
-				 LCD_TEXT_CLK_FREQ : CRT_TEXT_CLK_FREQ);
+        SaveClk->Clock = ((cPtr->PanelType & ChipsLCDProbed) ? 
+			  LCD_TEXT_CLK_FREQ : CRT_TEXT_CLK_FREQ);
 	xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "Using programmable clocks\n");
     } else {  /* TYPE_PROGRAMMABLE */
 	SaveClk->Clock = chipsGetHWClock(pScrn);
@@ -4145,7 +4124,6 @@ CHIPSScreenInit(SCREEN_INIT_ARGS_DECL)
 	    pBankInfo = NULL;
 	    return FALSE;
 	}
-	miInitializeBackingStore(pScreen);
 	xf86SetBackingStore(pScreen);
 
 	/* Initialise cursor functions */
@@ -4296,7 +4274,6 @@ CHIPSScreenInit(SCREEN_INIT_ARGS_DECL)
 	    }
 	}
 	
-	miInitializeBackingStore(pScreen);
 	xf86SetBackingStore(pScreen);
 #ifdef ENABLE_SILKEN_MOUSE
 	xf86SetSilkenMouse(pScreen);
