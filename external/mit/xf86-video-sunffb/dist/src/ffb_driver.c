@@ -27,6 +27,8 @@
 
 #include <string.h>
 
+#include "ffb.h"
+
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "mipointer.h"
@@ -34,8 +36,6 @@
 #include "fb.h"
 
 #include "xf86cmap.h"
-
-#include "ffb.h"
 
 static const OptionInfoRec * FFBAvailableOptions(int chipid, int busid);
 static void	FFBIdentify(int flags);

@@ -1,4 +1,4 @@
-/* $NetBSD: ffb_exa.c,v 1.2 2015/08/16 17:47:39 macallan Exp $ */
+/* $NetBSD: ffb_exa.c,v 1.3 2016/08/19 19:16:01 mrg Exp $ */
 /*
  * Copyright (c) 2015 Michael Lorenz
  * All rights reserved.
@@ -31,16 +31,16 @@
  
 #include <sys/types.h>
 
+#include "ffb_fifo.h"
+#include "ffb_rcache.h"
+#include "ffb.h"
+#include "ffb_regs.h"
+
 /* all driver need this */
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "compiler.h"
 #include "exa.h"
-
-#include "ffb_fifo.h"
-#include "ffb_rcache.h"
-#include "ffb.h"
-#include "ffb_regs.h"
 
 extern void VISmoveImageRL(unsigned char *, unsigned char *, long, long, long, long);
 extern void VISmoveImageLR(unsigned char *, unsigned char *, long, long, long, long);

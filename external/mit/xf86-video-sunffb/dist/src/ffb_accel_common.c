@@ -1,4 +1,4 @@
-/* $NetBSD: ffb_accel_common.c,v 1.1 2015/08/16 17:47:39 macallan Exp $ */
+/* $NetBSD: ffb_accel_common.c,v 1.2 2016/08/19 19:16:01 mrg Exp $ */
 /*
  * Copyright (C) 1998,1999,2000 Jakub Jelinek (jakub@redhat.com)
  * Copyright (C) 1998 Michal Rehacek (majkl@iname.com)
@@ -28,16 +28,16 @@
  
 #include <sys/types.h>
 
+#include "ffb_fifo.h"
+#include "ffb_rcache.h"
+#include "ffb.h"
+#include "ffb_regs.h"
+
 /* all driver need this */
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "compiler.h"
 #include "exa.h"
-
-#include "ffb_fifo.h"
-#include "ffb_rcache.h"
-#include "ffb.h"
-#include "ffb_regs.h"
 
 void FFB_SetupTextureAttrs(FFBPtr pFfb)
 {

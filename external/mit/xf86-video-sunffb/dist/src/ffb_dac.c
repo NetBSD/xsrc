@@ -34,6 +34,7 @@
 #include "xf86_OSproc.h"
 
 #include "xf86DDC.h"
+#include "xf86Privstr.h"
 
 /*
  * Used for stabilize time after playing with power management on the display

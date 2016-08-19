@@ -29,18 +29,18 @@
 #include "config.h"
 #endif
 
+#include	"ffb.h"
+#include	"ffb_fifo.h"
+#include	"ffb_rcache.h"
+#include	"ffb_loops.h"
+#include	"ffb_regs.h"
+
 #include	"scrnintstr.h"
 #include	"pixmapstr.h"
 #include	"regionstr.h"
 #include	"mistruct.h"
 #include	"miline.h"
 #include	"fb.h"
-
-#include	"ffb.h"
-#include	"ffb_fifo.h"
-#include	"ffb_rcache.h"
-#include	"ffb_loops.h"
-#include	"ffb_regs.h"
 
 #ifdef HAVE_XAA_H
 /* VISmoveImage.s */

@@ -30,6 +30,7 @@
 
 #include <string.h>
 
+#include "cg6.h"
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "mipointer.h"
@@ -37,7 +38,6 @@
 
 #include "fb.h"
 #include "xf86cmap.h"
-#include "cg6.h"
 
 #include "compat-api.h"
 
