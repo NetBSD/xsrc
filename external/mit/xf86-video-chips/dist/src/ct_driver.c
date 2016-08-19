@@ -100,7 +100,6 @@
 #ifdef HAVE_ISA
 #include "mibank.h"
 #endif
-#endif
 
 /* All drivers using the mi colormap manipulation need this */
 #include "micmap.h"
