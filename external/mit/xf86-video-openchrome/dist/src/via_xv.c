@@ -392,12 +392,12 @@ DecideOverlaySupport(xf86CrtcPtr crtc)
             DBG_DD(ErrorF(" via_xv.c : mClk= %f : \n", mClock));
             DBG_DD(ErrorF(" via_xv.c : memEfficiency= %f : \n",
                 memEfficiency));
+            if (needBandWidth < totalBandWidth)
+                return TRUE;
             ErrorF(" via_xv.c : needBandwidth= %f : \n",
                 needBandWidth);
             ErrorF(" via_xv.c : totalBandwidth= %f : \n",
                 totalBandWidth);
-            if (needBandWidth < totalBandWidth)
-                return TRUE;
         }
         return FALSE;
     }
@@ -610,7 +610,7 @@ viaInitVideo(ScreenPtr pScreen)
         (pVia->Chipset == VIA_KM400) ||
         (pVia->Chipset == VIA_K8M800) ||
         (pVia->Chipset == VIA_PM800) ||
-        (pVia->Chipset == VIA_VM800) ||
+        (pVia->Chipset == VIA_P4M800PRO) ||
         (pVia->Chipset == VIA_K8M890) ||
         (pVia->Chipset == VIA_P4M900) ||
         (pVia->Chipset == VIA_CX700) ||
@@ -633,7 +633,7 @@ viaInitVideo(ScreenPtr pScreen)
 
     if ((pVia->Chipset == VIA_CLE266) || (pVia->Chipset == VIA_KM400) ||
         (pVia->Chipset == VIA_K8M800) || (pVia->Chipset == VIA_PM800) ||
-        (pVia->Chipset == VIA_VM800) || (pVia->Chipset == VIA_K8M890) ||
+        (pVia->Chipset == VIA_P4M800PRO) || (pVia->Chipset == VIA_K8M890) ||
         (pVia->Chipset == VIA_P4M900) || (pVia->Chipset == VIA_CX700) ||
         (pVia->Chipset == VIA_P4M890) || (pVia->Chipset == VIA_VX800) ||
         (pVia->Chipset == VIA_VX855 || (pVia->Chipset == VIA_VX900))) {

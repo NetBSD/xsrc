@@ -23,7 +23,7 @@
 # Initialize Autoconf
 AC_PREREQ(2.57)
 AC_INIT([xf86-video-openchrome],
-        [0.3.3],
+        [0.4.0],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg&component=Driver/openchrome],
         [xf86-video-openchrome])
 
@@ -80,7 +80,7 @@ XORG_DRIVER_CHECK_EXT(XF86DRI, xextproto x11)
 XORG_DRIVER_CHECK_EXT(DPMSExtension, xextproto)
 
 # Checks for pkg-config packages
-PKG_CHECK_MODULES(XORG, [xorg-server xproto fontsproto libdrm glproto $REQUIRED_MODULES])
+PKG_CHECK_MODULES(XORG, [xorg-server xproto fontsproto glproto $REQUIRED_MODULES])
 PKG_CHECK_MODULES(XEXT, [xextproto >= 7.0.99.1],
  HAVE_XEXTPROTO_71="yes"; AC_DEFINE(HAVE_XEXTPROTO_71, 1, [xextproto 7.1 available]),
  HAVE_XEXTPROTO_71="no")

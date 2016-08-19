@@ -1,5 +1,6 @@
 /*
- * Copyright 2011 The Openchrome Project  [openchrome.org]
+ * Copyright 2011-2015 The Openchrome Project
+ *                     [http://www.freedesktop.org/wiki/Openchrome]
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,8 +25,6 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "xf86Crtc.h"
-#include "xf86fbman.h"
 
 #include "globals.h"
 #include "via_driver.h"
@@ -37,8 +36,8 @@ ViaMMIODisable(ScrnInfoPtr pScrn)
     vgaHWPtr hwp = VGAHWPTR(pScrn);
 
     switch (pVia->Chipset) {
-        case VIA_K8M890:
         case VIA_CX700:
+        case VIA_K8M890:
         case VIA_P4M900:
         case VIA_VX800:
         case VIA_VX855:
@@ -52,11 +51,12 @@ ViaMMIODisable(ScrnInfoPtr pScrn)
 }
 
 void
-VIAUnmapMem(ScrnInfoPtr pScrn)
+VIAUnmapMMIO(ScrnInfoPtr pScrn)
 {
     VIAPtr pVia = VIAPTR(pScrn);
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIAUnmapMem\n"));
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Entered VIAUnmapMMIO.\n"));
 
     ViaMMIODisable(pScrn);
 
@@ -85,6 +85,9 @@ VIAUnmapMem(ScrnInfoPtr pScrn)
         xf86UnMapVidMem(pScrn->scrnIndex, (pointer) pVia->FBBase,
                         pVia->videoRambytes);
 #endif
+
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Exiting VIAUnmapMMIO.\n"));
 }
 
 static void
@@ -94,8 +97,8 @@ ViaMMIOEnable(ScrnInfoPtr pScrn)
     vgaHWPtr hwp = VGAHWPTR(pScrn);
 
     switch (pVia->Chipset) {
-        case VIA_K8M890:
         case VIA_CX700:
+        case VIA_K8M890:
         case VIA_P4M900:
         case VIA_VX800:
         case VIA_VX855:
@@ -708,24 +711,25 @@ UMSPreInit(ScrnInfoPtr pScrn)
             pScrn->videoRam = (1 << ((videoRam & 0x70) >> 4)) << 10;
             break;
         case VIA_KM400:
-            /* P4M800 */
+#ifdef HAVE_PCIACCESS
+            /* P4M800 Host Bridge PCI Device ID */
             if (DEVICE_ID(bridge) == 0x0296) {
-#ifdef HAVE_PCIACCESS
                 pci_device_cfg_read_u8(vgaDevice, &videoRam, 0xA1);
-#else
-                videoRam = pciReadByte(pciTag(0, 0, 3), 0xA1) & 0x70;
-#endif
             } else {
-#ifdef HAVE_PCIACCESS
                 pci_device_cfg_read_u8(bridge, &videoRam, 0xE1);
-#else
-                videoRam = pciReadByte(pciTag(0, 0, 0), 0xE1) & 0x70;
-#endif
             }
+#else
+            /* P4M800 Host Bridge PCI Device ID */
+            if (pciReadWord(pciTag(0, 0, 0), 0x02) == 0x0296) {
+                videoRam = pciReadByte(pciTag(0, 0, 3), 0xA1) & 0x70;
+            } else {
+                videoRam = pciReadByte(pciTag(0, 0, 0), 0xE1) & 0x70;
+            }
+#endif
             pScrn->videoRam = (1 << ((videoRam & 0x70) >> 4)) << 10;
             break;
         case VIA_PM800:
-        case VIA_VM800:
+        case VIA_P4M800PRO:
         case VIA_K8M800:
 #ifdef HAVE_PCIACCESS
             pci_device_cfg_read_u8(vgaDevice, &videoRam, 0xA1);
@@ -734,8 +738,8 @@ UMSPreInit(ScrnInfoPtr pScrn)
 #endif
             pScrn->videoRam = (1 << ((videoRam & 0x70) >> 4)) << 10;
             break;
-        case VIA_K8M890:
         case VIA_P4M890:
+        case VIA_K8M890:
         case VIA_P4M900:
         case VIA_CX700:
         case VIA_VX800:

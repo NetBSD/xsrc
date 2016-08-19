@@ -182,20 +182,8 @@ typedef struct _VIABIOSINFO {
 
 } VIABIOSInfoRec, *VIABIOSInfoPtr;
 
-/* Function prototypes */
-/* via_vbe.c */
-void ViaVbeAdjustFrame(ScrnInfoPtr pScrn, int x, int y);
-Bool ViaVbeSetMode(ScrnInfoPtr pScrn, DisplayModePtr pMode);
-Bool ViaVbeSaveRestore(ScrnInfoPtr pScrn, vbeSaveRestoreFunction function);
-Bool ViaVbeModePreInit(ScrnInfoPtr pScrn);
-void ViaVbeDPMS(ScrnInfoPtr pScrn, int mode);
-void ViaVbeDoDPMS(ScrnInfoPtr pScrn, int mode);
-int ViaVbePanelPower(vbeInfoPtr pVbe, int mode);
-Bool ViaVbeSetPanelMode(ScrnInfoPtr pScrn, Bool expand);
-
 /* via_ums.c */
-Bool VIAMapMem(ScrnInfoPtr pScrn);
-void VIAUnmapMem(ScrnInfoPtr pScrn);
+void VIAUnmapMMIO(ScrnInfoPtr pScrn);
 Bool ums_create(ScrnInfoPtr pScrn);
 Bool UMSPreInit(ScrnInfoPtr pScrn);
 Bool UMSAccelInit(ScreenPtr pScreen);
