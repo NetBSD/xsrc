@@ -3514,7 +3514,7 @@ S3VEnableMmio(ScrnInfoPtr pScrn)
 {
   vgaHWPtr hwp;
   S3VPtr ps3v;
-  IOADDRESS vgaCRIndex, vgaCRReg;
+  unsigned int vgaCRIndex, vgaCRReg;
   unsigned char val;
   unsigned int PIOOffset = 0;
 
@@ -3583,7 +3583,7 @@ S3VDisableMmio(ScrnInfoPtr pScrn)
 {
   vgaHWPtr hwp;
   S3VPtr ps3v;
-  IOADDRESS vgaCRIndex, vgaCRReg;
+  unsigned int vgaCRIndex, vgaCRReg;
   
   PVERB5("	S3VDisableMmio\n");
   
@@ -3759,6 +3759,12 @@ S3Vddc1Read(ScrnInfoPtr pScrn)
     return ((unsigned int) (tmp & 0x08));
 }
 
+static void
+S3Vddc1SetSpeed(ScrnInfoPtr pScrn, xf86ddcSpeed speed)
+{
+    vgaHWddc1SetSpeed(pScrn, speed);
+}
+
 static Bool
 S3Vddc1(ScrnInfoPtr pScrn)
 {
@@ -3772,7 +3778,7 @@ S3Vddc1(ScrnInfoPtr pScrn)
     OUTREG(DDC_REG,(tmp | 0x12));
     
     if ((pMon = xf86PrintEDID(
-		xf86DoEDID_DDC1(XF86_SCRN_ARG(pScrn),vgaHWddc1SetSpeedWeak(),
+		xf86DoEDID_DDC1(XF86_SCRN_ARG(pScrn), S3Vddc1SetSpeed,
 	                S3Vddc1Read))) != NULL)
 	success = TRUE;
     xf86SetDDCproperties(pScrn,pMon);

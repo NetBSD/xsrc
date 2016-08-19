@@ -63,8 +63,7 @@
 /* xextproto 7.1 available */
 #define HAVE_XEXTPROTO_71 1
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #define LT_OBJDIR ".libs/"
 
 /* Name of package */
@@ -77,7 +76,7 @@
 #define PACKAGE_NAME "xf86-video-openchrome"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-video-openchrome 0.3.3"
+#define PACKAGE_STRING "xf86-video-openchrome 0.4.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-video-openchrome"
@@ -86,7 +85,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.3.3"
+#define PACKAGE_VERSION "0.4.0"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -95,16 +94,16 @@
 /* #undef TOOLS */
 
 /* Version number of package */
-#define VERSION "0.3.3"
+#define VERSION "0.4.0"
 
 /* Major version */
 #define VIA_MAJOR_VERSION 0
 
 /* Minor version */
-#define VIA_MINOR_VERSION 3
+#define VIA_MINOR_VERSION 4
 
 /* Patch version */
-#define VIA_PATCHLEVEL 3
+#define VIA_PATCHLEVEL 0
 
 /* Enable DRI driver support */
 #define XF86DRI 1

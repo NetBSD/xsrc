@@ -1,5 +1,6 @@
 /*
- * Copyright 2005-2011 The Openchrome Project [openchrome.org]
+ * Copyright 2005-2015 The Openchrome Project
+ *                     [http://www.freedesktop.org/wiki/Openchrome]
  * Copyright 2004-2005 The Unichrome Project  [unichrome.sf.net]
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.
@@ -312,8 +313,8 @@ ViaFirstCRTCSetMode(ScrnInfoPtr pScrn, DisplayModePtr mode)
     }
 
     switch (pVia->ChipId) {
-        case VIA_K8M890:
         case VIA_CX700:
+        case VIA_K8M890:
         case VIA_P4M900:
         case VIA_VX800:
         case VIA_VX855:
@@ -323,7 +324,7 @@ ViaFirstCRTCSetMode(ScrnInfoPtr pScrn, DisplayModePtr mode)
             ViaSeqMask(hwp, 0x16, 0x08, 0xBF);
             ViaSeqMask(hwp, 0x17, 0x1F, 0xFF);
             ViaSeqMask(hwp, 0x18, 0x4E, 0xFF);
-            ViaSeqMask(hwp, 0x1A, 0x08, 0xFD);
+            ViaSeqMask(hwp, 0x1A, 0x08, 0xF9);
             break;
     }
 
@@ -417,8 +418,8 @@ ViaFirstCRTCSetMode(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
     /* FIXME: check if this is really necessary here */
     switch (pVia->ChipId) {
-        case VIA_K8M890:
         case VIA_CX700:
+        case VIA_K8M890:
         case VIA_P4M900:
         case VIA_VX800:
         case VIA_VX855:
@@ -454,8 +455,8 @@ ViaFirstCRTCSetMode(ScrnInfoPtr pScrn, DisplayModePtr mode)
     ViaSeqMask(hwp, 0x1D, temp >> 9, 0x03);
 
     switch (pVia->ChipId) {
-        case VIA_K8M890:
         case VIA_CX700:
+        case VIA_K8M890:
         case VIA_P4M900:
         case VIA_VX800:
         case VIA_VX855:
@@ -582,8 +583,8 @@ ViaSecondCRTCSetMode(ScrnInfoPtr pScrn, DisplayModePtr mode)
     }
 
     switch (pVia->ChipId) {
-        case VIA_K8M890:
         case VIA_CX700:
+        case VIA_K8M890:
         case VIA_P4M900:
         case VIA_VX800:
         case VIA_VX855:
@@ -593,7 +594,7 @@ ViaSecondCRTCSetMode(ScrnInfoPtr pScrn, DisplayModePtr mode)
             ViaSeqMask(hwp, 0x16, 0x08, 0xBF);
             ViaSeqMask(hwp, 0x17, 0x1F, 0xFF);
             ViaSeqMask(hwp, 0x18, 0x4E, 0xFF);
-            ViaSeqMask(hwp, 0x1A, 0x08, 0xFD);
+            ViaSeqMask(hwp, 0x1A, 0x08, 0xF9);
             break;
     }
 
@@ -668,8 +669,8 @@ ViaSecondCRTCSetMode(ScrnInfoPtr pScrn, DisplayModePtr mode)
     ViaCrtcMask(hwp, 0x5F, temp, 0x1F);
 
     switch (pVia->ChipId) {
-        case VIA_K8M890:
         case VIA_CX700:
+        case VIA_K8M890:
         case VIA_P4M900:
         case VIA_VX800:
         case VIA_VX855:
@@ -826,29 +827,26 @@ iga1_crtc_dpms(xf86CrtcPtr crtc, int mode)
     VIAPtr pVia = VIAPTR(pScrn);
     VIABIOSInfoPtr pBIOSInfo = pVia->pBIOSInfo;
 
-    if (pVia->pVbe) {
-        ViaVbeDPMS(pScrn, mode);
-    } else {
-        switch (mode) {
-        case DPMSModeOn:
-            if (pBIOSInfo->SimultaneousEnabled)
-                ViaDisplayEnableSimultaneous(pScrn);
-            break;
+    switch (mode) {
+    case DPMSModeOn:
+        if (pBIOSInfo->SimultaneousEnabled)
+            ViaDisplayEnableSimultaneous(pScrn);
+        break;
 
-        case DPMSModeStandby:
-        case DPMSModeSuspend:
-        case DPMSModeOff:
-            if (pBIOSInfo->SimultaneousEnabled)
-                ViaDisplayDisableSimultaneous(pScrn);
-            break;
+    case DPMSModeStandby:
+    case DPMSModeSuspend:
+    case DPMSModeOff:
+        if (pBIOSInfo->SimultaneousEnabled)
+            ViaDisplayDisableSimultaneous(pScrn);
+        break;
 
-		default:
-            xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Invalid DPMS mode %d\n",
-                        mode);
-            break;
-        }
-        //vgaHWSaveScreen(pScrn->pScreen, mode);
+	default:
+        xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Invalid DPMS mode %d\n",
+                    mode);
+        break;
     }
+    //vgaHWSaveScreen(pScrn->pScreen, mode);
+
 }
 
 static void
@@ -858,12 +856,7 @@ iga1_crtc_save(xf86CrtcPtr crtc)
     vgaHWPtr hwp = VGAHWPTR(pScrn);
     VIAPtr pVia = VIAPTR(pScrn);
 
-    if (pVia->pVbe && pVia->vbeSR) {
-        ViaVbeSaveRestore(pScrn, MODE_SAVE);
-    } else {
-        VIASave(pScrn);
-    }
-
+    VIASave(pScrn);
     vgaHWUnlock(hwp);
 }
 
@@ -874,10 +867,7 @@ iga1_crtc_restore(xf86CrtcPtr crtc)
     vgaHWPtr hwp = VGAHWPTR(pScrn);
     VIAPtr pVia = VIAPTR(pScrn);
 
-    if (pVia->pVbe && pVia->vbeSR)
-        ViaVbeSaveRestore(pScrn, MODE_RESTORE);
-    else
-        VIARestore(pScrn);
+    VIARestore(pScrn);
 
     /* A soft reset helps to avoid a 3D hang on VT switch. */
     switch (pVia->Chipset) {
@@ -914,9 +904,6 @@ iga1_crtc_mode_fixup(xf86CrtcPtr crtc, DisplayModePtr mode,
     VIAPtr pVia = VIAPTR(pScrn);
     CARD32 temp;
     ModeStatus modestatus;
-
-    if (pVia->pVbe)
-        return TRUE;
 
     if ((mode->Clock < pScrn->clockRanges->minClock) ||
         (mode->Clock > pScrn->clockRanges->maxClock)) {
@@ -956,11 +943,7 @@ iga1_crtc_set_origin(xf86CrtcPtr crtc, int x, int y)
     ScrnInfoPtr pScrn = crtc->scrn;
     VIAPtr pVia = VIAPTR(pScrn);
 
-    if (pVia->pVbe) {
-        ViaVbeAdjustFrame(pScrn, x, y);
-    } else {
-        ViaFirstCRTCSetStartingAddress(crtc, x, y);
-    }
+    ViaFirstCRTCSetStartingAddress(crtc, x, y);
     VIAVidAdjustFrame(pScrn, x, y);
 }
 
@@ -972,25 +955,17 @@ iga1_crtc_mode_set(xf86CrtcPtr crtc, DisplayModePtr mode,
     ScrnInfoPtr pScrn = crtc->scrn;
     VIAPtr pVia = VIAPTR(pScrn);
 
-    if (!pVia->pVbe) {
-        if (!vgaHWInit(pScrn, adjusted_mode))
-            return;
+    if (!vgaHWInit(pScrn, adjusted_mode))
+        return;
 
-        if (pVia->UseLegacyModeSwitch) {
-            ViaModePrimaryLegacy(crtc, adjusted_mode);
-        } else {
-            ViaCRTCInit(pScrn);
-            ViaModeFirstCRTC(pScrn, adjusted_mode);
+    ViaCRTCInit(pScrn);
+    ViaModeFirstCRTC(pScrn, adjusted_mode);
 
-            if (pVia->pBIOSInfo->SimultaneousEnabled)
-                ViaDisplayEnableSimultaneous(pScrn);
-            else
-                ViaDisplayDisableSimultaneous(pScrn);
-        }
-    } else {
-        if (!ViaVbeSetMode(pScrn, adjusted_mode))
-            return;
-    }
+    if (pVia->pBIOSInfo->SimultaneousEnabled)
+        ViaDisplayEnableSimultaneous(pScrn);
+    else
+        ViaDisplayDisableSimultaneous(pScrn);
+
     iga1_crtc_set_origin(crtc, crtc->x, crtc->y);
 }
 
@@ -1245,7 +1220,7 @@ static const xf86CrtcFuncsRec iga1_crtc_funcs = {
     .show_cursor            = iga1_crtc_show_cursor,
     .hide_cursor            = iga1_crtc_hide_cursor,
     .load_cursor_argb       = iga_crtc_load_cursor_argb,
-#ifdef RANDR_12_INTERFACE
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) > 2
     .set_origin             = iga1_crtc_set_origin,
 #endif
     .destroy                = iga_crtc_destroy,
@@ -1258,29 +1233,25 @@ iga2_crtc_dpms(xf86CrtcPtr crtc, int mode)
     VIAPtr pVia = VIAPTR(pScrn);
     VIABIOSInfoPtr pBIOSInfo = pVia->pBIOSInfo;
 
-    if (pVia->pVbe) {
-        ViaVbeDPMS(pScrn, mode);
-    } else {
-        switch (mode) {
-        case DPMSModeOn:
-            if (pBIOSInfo->SimultaneousEnabled)
-                ViaDisplayEnableSimultaneous(pScrn);
-            break;
+    switch (mode) {
+    case DPMSModeOn:
+        if (pBIOSInfo->SimultaneousEnabled)
+            ViaDisplayEnableSimultaneous(pScrn);
+        break;
 
-        case DPMSModeStandby:
-        case DPMSModeSuspend:
-        case DPMSModeOff:
-            if (pBIOSInfo->SimultaneousEnabled)
-                ViaDisplayDisableSimultaneous(pScrn);
-            break;
+    case DPMSModeStandby:
+    case DPMSModeSuspend:
+    case DPMSModeOff:
+        if (pBIOSInfo->SimultaneousEnabled)
+            ViaDisplayDisableSimultaneous(pScrn);
+        break;
 
-        default:
-            xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Invalid DPMS mode %d\n",
-                        mode);
-            break;
-        }
-        //vgaHWSaveScreen(pScrn->pScreen, mode);
+    default:
+        xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Invalid DPMS mode %d\n",
+                    mode);
+        break;
     }
+    //vgaHWSaveScreen(pScrn->pScreen, mode);
 }
 
 static void
@@ -1290,11 +1261,8 @@ iga2_crtc_save(xf86CrtcPtr crtc)
     vgaHWPtr hwp = VGAHWPTR(pScrn);
     VIAPtr pVia = VIAPTR(pScrn);
 
-    if (pVia->pVbe && pVia->vbeSR)
-        ViaVbeSaveRestore(pScrn, MODE_SAVE);
-    else
-        VIASave(pScrn);
-	vgaHWUnlock(hwp);
+    VIASave(pScrn);
+    vgaHWUnlock(hwp);
 }
 
 static void
@@ -1304,10 +1272,7 @@ iga2_crtc_restore(xf86CrtcPtr crtc)
     vgaHWPtr hwp = VGAHWPTR(pScrn);
     VIAPtr pVia = VIAPTR(pScrn);
 
-    if (pVia->pVbe && pVia->vbeSR)
-        ViaVbeSaveRestore(pScrn, MODE_RESTORE);
-    else
-        VIARestore(pScrn);
+    VIARestore(pScrn);
     vgaHWLock(hwp);
 }
 
@@ -1330,9 +1295,6 @@ iga2_crtc_mode_fixup(xf86CrtcPtr crtc, DisplayModePtr mode,
     VIAPtr pVia = VIAPTR(pScrn);
     CARD32 temp;
     ModeStatus modestatus;
-
-    if (pVia->pVbe)
-        return TRUE;
 
     if ((mode->Clock < pScrn->clockRanges->minClock) ||
         (mode->Clock > pScrn->clockRanges->maxClock)) {
@@ -1372,11 +1334,7 @@ iga2_crtc_set_origin(xf86CrtcPtr crtc, int x, int y)
     ScrnInfoPtr pScrn = crtc->scrn;
     VIAPtr pVia = VIAPTR(pScrn);
 
-    if (pVia->pVbe) {
-        ViaVbeAdjustFrame(pScrn, x, y);
-    } else {
-        ViaSecondCRTCSetStartingAddress(crtc, x, y);
-    }
+    ViaSecondCRTCSetStartingAddress(crtc, x, y);
     VIAVidAdjustFrame(pScrn, x, y);
 }
 
@@ -1387,26 +1345,18 @@ iga2_crtc_mode_set(xf86CrtcPtr crtc, DisplayModePtr mode,
     ScrnInfoPtr pScrn = crtc->scrn;
     VIAPtr pVia = VIAPTR(pScrn);
 
-    if (pVia->pVbe) {
-        if (!ViaVbeSetMode(pScrn, adjusted_mode))
-            return;
-    } else {
-        if (!vgaHWInit(pScrn, adjusted_mode))
-            return;
+    if (!vgaHWInit(pScrn, adjusted_mode))
+        return;
 
-        if (pVia->UseLegacyModeSwitch) {
-            ViaModeSecondaryLegacy(crtc, adjusted_mode);
-        } else {
-            ViaCRTCInit(pScrn);
-            ViaModeSecondCRTC(pScrn, adjusted_mode);
-            ViaSecondDisplayChannelEnable(pScrn);
+    ViaCRTCInit(pScrn);
+    ViaModeSecondCRTC(pScrn, adjusted_mode);
+    ViaSecondDisplayChannelEnable(pScrn);
 
-            if (pVia->pBIOSInfo->SimultaneousEnabled)
-                ViaDisplayEnableSimultaneous(pScrn);
-            else
-                ViaDisplayDisableSimultaneous(pScrn);
-        }
-    }
+    if (pVia->pBIOSInfo->SimultaneousEnabled)
+        ViaDisplayEnableSimultaneous(pScrn);
+    else
+        ViaDisplayDisableSimultaneous(pScrn);
+
     iga2_crtc_set_origin(crtc, crtc->x, crtc->y);
 }
 
@@ -1667,7 +1617,7 @@ static const xf86CrtcFuncsRec iga2_crtc_funcs = {
     .show_cursor            = iga2_crtc_show_cursor,
     .hide_cursor            = iga2_crtc_hide_cursor,
     .load_cursor_argb       = iga_crtc_load_cursor_argb,
-#ifdef RANDR_12_INTERFACE
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) > 2
     .set_origin             = iga2_crtc_set_origin,
 #endif
     .destroy                = iga_crtc_destroy,
@@ -1679,7 +1629,11 @@ UMSCrtcInit(ScrnInfoPtr pScrn)
     drmmode_crtc_private_ptr iga1_rec = NULL, iga2_rec = NULL;
     vgaHWPtr hwp = VGAHWPTR(pScrn);
     VIAPtr pVia = VIAPTR(pScrn);
+#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,8,0,0,0)
     ClockRangePtr clockRanges;
+#else
+    ClockRangesPtr clockRanges;
+#endif
     int max_pitch, max_height;
     VIABIOSInfoPtr pBIOSInfo;
     xf86CrtcPtr iga1, iga2;
@@ -1722,28 +1676,16 @@ UMSCrtcInit(ScrnInfoPtr pScrn)
     if (!xf86LoadSubModule(pScrn, "ddc"))
         return FALSE;
 
-    pVia->pVbe = NULL;
-    if (pVia->useVBEModes) {
-        /* VBE doesn't properly initialise int10 itself. */
-        if (xf86LoadSubModule(pScrn, "int10") &&
-            xf86LoadSubModule(pScrn, "vbe")) {
-            pVia->pVbe = VBEExtendedInit(NULL, pVia->EntityIndex,
-                                        SET_BIOS_SCRATCH |
-                                        RESTORE_BIOS_SCRATCH);
-        }
-
-        if (!pVia->pVbe)
-            xf86DrvMsg(pScrn->scrnIndex, X_WARNING, "VBE initialisation failed."
-                        " Using builtin code to set modes.\n");
-        else
-            ConfiguredMonitor = vbeDoEDID(pVia->pVbe, NULL);
-    }
-
     /*
      * Set up ClockRanges, which describe what clock ranges are
      * available, and what sort of modes they can be used for.
      */
+
+#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,8,0,0,0)
     clockRanges = xnfalloc(sizeof(ClockRange));
+#else
+    clockRanges = xnfalloc(sizeof(ClockRanges));
+#endif
     clockRanges->next = NULL;
     clockRanges->minClock = 20000;
     clockRanges->maxClock = 230000;
@@ -1807,14 +1749,14 @@ UMSCrtcInit(ScrnInfoPtr pScrn)
     case VIA_KM400:
     case VIA_K8M800:
     case VIA_PM800:
-    case VIA_VM800:
+    case VIA_P4M800PRO:
         max_pitch = 3344;
         max_height = 2508;
         break;
 
     case VIA_CX700:
-    case VIA_K8M890:
     case VIA_P4M890:
+    case VIA_K8M890:
     case VIA_P4M900:
         max_pitch = 8192/(pScrn->bitsPerPixel >> 3)-1;
         max_height = max_pitch;
@@ -1860,9 +1802,5 @@ UMSCrtcInit(ScrnInfoPtr pScrn)
 
     ViaOutputsDetect(pScrn);
 
-    if (pVia->pVbe) {
-        if (!ViaVbeModePreInit(pScrn))
-            return FALSE;
-    }
     return TRUE;
 }
