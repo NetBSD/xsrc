@@ -64,6 +64,7 @@
 #endif
 
 #include "xf86Priv.h"
+#include "xf86Privstr.h"
 
 /*
  * FreeScreen handles the clean-up.
@@ -714,7 +715,7 @@ ATIPreInit
 
 	ei.edid_data = buffer;
 	ei.buffer_size = 1024;
-	if (ioctl(xf86Info.screenFd, WSDISPLAYIO_GET_EDID, &ei) != -1) {
+	if (ioctl(xf86Info.consoleFd, WSDISPLAYIO_GET_EDID, &ei) != -1) {
 	    xf86Msg(X_INFO, "got %d bytes worth of EDID from wsdisplay\n", ei.data_size);
 	    ConfiguredMonitor = xf86InterpretEDID(pScreenInfo->scrnIndex, buffer);
 	} else

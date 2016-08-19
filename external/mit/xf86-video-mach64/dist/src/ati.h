@@ -24,6 +24,7 @@
 #define ___ATI_H___ 1
 
 #include <unistd.h>
+#include "xorg-server.h"
 #include "xf86Pci.h"
 
 #include "xf86.h"
