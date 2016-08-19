@@ -52,6 +52,7 @@
 #include "fb.h"
 
 #include "xf86Crtc.h"
+#include "xf86fbman.h"
 #include "xf86RandR12.h"
 #include "xf86cmap.h"
 
@@ -128,26 +129,28 @@ static int gVIAEntityIndex = -1;
 typedef struct {
     CARD8   SR08, SR0A, SR0F;
 
-    /*   extended Sequencer registers */
-    CARD8   SR10, SR11, SR12, SR13,SR14,SR15,SR16;
-    CARD8   SR17, SR18, SR19, SR1A,SR1B,SR1C,SR1D,SR1E;
-    CARD8   SR1F, SR20, SR21, SR22,SR23,SR24,SR25,SR26;
-    CARD8   SR27, SR28, SR29, SR2A,SR2B,SR2C,SR2D,SR2E;
-    CARD8   SR2F, SR30, SR31, SR32,SR33,SR34,SR40,SR41;
-    CARD8   SR42, SR43, SR44, SR45,SR46,SR47,SR48,SR49;
-    CARD8   SR4A, SR4B, SR4C, SR4D;
+    /* Extended Sequencer Registers */
+    CARD8   SR10, SR11, SR12, SR13, SR14, SR15, SR16, SR17;
+    CARD8   SR18, SR19, SR1A, SR1B, SR1C, SR1D, SR1E, SR1F;
+    CARD8   SR20, SR21, SR22, SR23, SR24, SR25, SR26, SR27;
+    CARD8   SR28, SR29, SR2A, SR2B, SR2C, SR2D, SR2E, SR2F;
+    CARD8   SR30, SR31, SR32, SR33, SR34;
+    CARD8   SR40, SR41, SR42, SR43, SR44, SR45, SR46, SR47;
+    CARD8   SR48, SR49, SR4A, SR4B, SR4C, SR4D, SR4E, SR4F;
 
-    /*   extended CRTC registers */
+    /* CRTC Registers */
     CARD8   CR0C, CR0D;
-    CARD8   CR13, CR30, CR31, CR32, CR33, CR34, CR35, CR36;
-    CARD8   CR37, CR38, CR39, CR3A, CR40, CR41, CR42, CR43;
-    CARD8   CR44, CR45, CR46, CR47, CR48, CR49, CR4A;
-    CARD8   CR97, CR99, CR9B, CR9F, CRA0, CRA1, CRA2;
-    CARD8   CRTCRegs[68];
-/*    CARD8   LCDRegs[0x40];*/
+    CARD8   CR13;
 
-    /* TMDS/LVDS Control */
-    CARD8   CRD2;
+    /* IGA1 Registers */
+    CARD8   CR30, CR31, CR32, CR33, CR34, CR35, CR36, CR37;
+    CARD8   CR38, CR39, CR3A, CR3B, CR3C, CR3D, CR3E, CR3F;
+    CARD8   CR40, CR41, CR42, CR43, CR44, CR45, CR46, CR47;
+    CARD8   CR48;
+
+    /* IGA2 Registers */
+    CARD8   EXCR[0xFD - 0x50 + 1];
+
 } VIARegRec, *VIARegPtr;
 
 /*
@@ -392,6 +395,11 @@ typedef struct
     ScrnInfoPtr pPrimaryScrn;
 } VIAEntRec, *VIAEntPtr;
 
+
+/* In via_display.c. */
+const xf86CrtcFuncsRec iga1_crtc_funcs;
+const xf86CrtcFuncsRec iga2_crtc_funcs;
+
 /* In via_exa.c. */
 Bool viaInitExa(ScreenPtr pScreen);
 Bool viaAccelSetMode(int bpp, ViaTwodContext * tdc);
@@ -509,6 +517,5 @@ void viaHideCursor(ScrnInfoPtr pScrn);
 Bool viaHWCursorInit(ScreenPtr pScreen);
 void ViaDisplaySetStreamOnCRT(ScrnInfoPtr pScrn, Bool primary);
 void ViaDisplaySetStreamOnDFP(ScrnInfoPtr pScrn, Bool primary);
-void ViaDisplayEnableSimultaneous(ScrnInfoPtr pScrn);
 
 #endif /* _VIA_DRIVER_H_ */

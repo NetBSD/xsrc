@@ -76,7 +76,7 @@
 #define PACKAGE_NAME "xf86-video-openchrome"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-video-openchrome 0.4.0"
+#define PACKAGE_STRING "xf86-video-openchrome 0.5.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-video-openchrome"
@@ -85,7 +85,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.4.0"
+#define PACKAGE_VERSION "0.5.0"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -94,13 +94,13 @@
 /* #undef TOOLS */
 
 /* Version number of package */
-#define VERSION "0.4.0"
+#define VERSION "0.5.0"
 
 /* Major version */
 #define VIA_MAJOR_VERSION 0
 
 /* Minor version */
-#define VIA_MINOR_VERSION 4
+#define VIA_MINOR_VERSION 5
 
 /* Patch version */
 #define VIA_PATCHLEVEL 0

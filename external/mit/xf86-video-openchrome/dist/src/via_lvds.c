@@ -40,13 +40,11 @@
  * Option handling.
  */
 enum ViaPanelOpts {
-    OPTION_BUSWIDTH,
     OPTION_CENTER
 };
 
 static OptionInfoRec ViaPanelOptions[] =
 {
-    {OPTION_BUSWIDTH,   "BusWidth",     OPTV_ANYSTR,    {0},    FALSE},
     {OPTION_CENTER,     "Center",       OPTV_BOOLEAN,   {0},    FALSE},
     {-1,                NULL,           OPTV_NONE,      {0},    FALSE}
 };
@@ -238,16 +236,6 @@ ViaLVDSHardwarePowerSecondSequence(ScrnInfoPtr pScrn, Bool on)
 }
 
 static void
-ViaLVDSDFPPower(ScrnInfoPtr pScrn, Bool on)
-{
-    vgaHWPtr hwp = VGAHWPTR(pScrn);
-    VIAPtr pVia = VIAPTR(pScrn);
-
-    /* Switch DFP High/Low pads on or off for channels active at EnterVT(). */
-    ViaSeqMask(hwp, 0x2A, on ? pVia->SavedReg.SR2A : 0, 0x0F);
-}
-
-static void
 ViaLVDSPowerChannel(ScrnInfoPtr pScrn, Bool on)
 {
     vgaHWPtr hwp = VGAHWPTR(pScrn);
@@ -265,11 +253,12 @@ ViaLVDSPowerChannel(ScrnInfoPtr pScrn, Bool on)
 }
 
 static void
-ViaLVDSPower(ScrnInfoPtr pScrn, Bool on)
+ViaLVDSPower(ScrnInfoPtr pScrn, Bool Power_On)
 {
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ViaLVDSPower %d\n", on));
     VIAPtr pVia = VIAPTR(pScrn);
 
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Entered ViaLVDSPower.\n"));
     /*
      * VX800, CX700 have HW issue, so we'd better use SW power sequence
      * Fix Ticket #308
@@ -277,17 +266,23 @@ ViaLVDSPower(ScrnInfoPtr pScrn, Bool on)
     switch (pVia->Chipset) {
     case VIA_VX800:
     case VIA_CX700:
-        ViaLVDSSoftwarePowerFirstSequence(pScrn, on);
-        ViaLVDSSoftwarePowerSecondSequence(pScrn, on);
+        ViaLVDSSoftwarePowerFirstSequence(pScrn, Power_On);
+        ViaLVDSSoftwarePowerSecondSequence(pScrn, Power_On);
         break;
     default:
-        ViaLVDSHardwarePowerFirstSequence(pScrn, on);
-        ViaLVDSHardwarePowerSecondSequence(pScrn, on);
+        ViaLVDSHardwarePowerFirstSequence(pScrn, Power_On);
+        ViaLVDSHardwarePowerSecondSequence(pScrn, Power_On);
         break;
     }
 
-    ViaLVDSDFPPower(pScrn, on);
-    ViaLVDSPowerChannel(pScrn, on);
+    ViaLVDSPowerChannel(pScrn, Power_On);
+
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                "Integrated LVDS Flat Panel Power: %s\n",
+                Power_On ? "On" : "Off");
+
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Exiting ViaLVDSPower.\n"));
 }
 
 static void
@@ -324,7 +319,7 @@ ViaLCDPowerSequence(vgaHWPtr hwp, VIALCDPowerSeqRec Sequence)
 }
 
 static void
-ViaLCDPower(xf86OutputPtr output, Bool On)
+ViaLCDPower(xf86OutputPtr output, Bool Power_On)
 {
     ViaPanelInfoPtr Panel = output->driver_private;
     ScrnInfoPtr pScrn = output->scrn;
@@ -333,21 +328,17 @@ ViaLCDPower(xf86OutputPtr output, Bool On)
     VIABIOSInfoPtr pBIOSInfo = pVia->pBIOSInfo;
     int i;
 
-#ifdef HAVE_DEBUG
-    if (On)
-        xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ViaLCDPower: On.\n");
-    else
-        xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ViaLCDPower: Off.\n");
-#endif
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Entered ViaLCDPower.\n"));
 
     /* Enable LCD */
-    if (On)
+    if (Power_On)
         ViaCrtcMask(hwp, 0x6A, 0x08, 0x08);
     else
         ViaCrtcMask(hwp, 0x6A, 0x00, 0x08);
 
     if (pBIOSInfo->LCDPower)
-        pBIOSInfo->LCDPower(pScrn, On);
+        pBIOSInfo->LCDPower(pScrn, Power_On);
 
     /* Find Panel Size Index for PowerSeq Table */
     if (pVia->Chipset == VIA_CLE266) {
@@ -364,11 +355,18 @@ ViaLCDPower(xf86OutputPtr output, Bool On)
         i = 2;
 
     usleep(1);
-    if (On)
+    if (Power_On)
         ViaLCDPowerSequence(hwp, powerOn[i]);
     else
         ViaLCDPowerSequence(hwp, powerOff[i]);
     usleep(1);
+
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                "Integrated LVDS Flat Panel Power: %s\n",
+                Power_On ? "On" : "Off");
+
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Exiting ViaLCDPower.\n"));
 }
 
 static void
@@ -550,29 +548,6 @@ ViaGetResolutionIndex(ScrnInfoPtr pScrn, ViaPanelInfoPtr Panel,
 
     Panel->ResolutionIndex = VIA_RES_INVALID;
     return FALSE;
-}
-
-static int
-ViaGetVesaMode(ScrnInfoPtr pScrn, DisplayModePtr mode)
-{
-    int i;
-
-    for (i = 0; ViaVesaModes[i].Width; i++)
-        if ((ViaVesaModes[i].Width == mode->CrtcHDisplay)
-            && (ViaVesaModes[i].Height == mode->CrtcVDisplay)) {
-            switch (pScrn->bitsPerPixel) {
-                case 8:
-                    return ViaVesaModes[i].mode_8b;
-                case 16:
-                    return ViaVesaModes[i].mode_16b;
-                case 24:
-                case 32:
-                    return ViaVesaModes[i].mode_32b;
-                default:
-                    return 0xFFFF;
-            }
-        }
-    return 0xFFFF;
 }
 
 /*
@@ -1037,18 +1012,6 @@ via_lvds_init(ScrnInfoPtr pScrn)
     xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, Options);
 
     Panel->NativeModeIndex = VIA_PANEL_INVALID;
-    Panel->BusWidth = VIA_DI_12BIT;
-    if ((s = xf86GetOptValString(Options, OPTION_BUSWIDTH))) {
-        from = X_CONFIG;
-        if (!xf86NameCmp(s, "12BIT")) {
-            Panel->BusWidth = VIA_DI_12BIT;
-        } else if (!xf86NameCmp(s, "24BIT")) {
-            Panel->BusWidth = VIA_DI_24BIT;
-        }
-    }
-    xf86DrvMsg(pScrn->scrnIndex, from,
-               "LVDS-0 : Digital output bus width is %d bits.\n",
-               (Panel->BusWidth == VIA_DI_12BIT) ? 12 : 24);
 
     /* LCD Center/Expend Option */
     Panel->Center = FALSE;
