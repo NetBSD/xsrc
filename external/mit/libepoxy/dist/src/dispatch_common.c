@@ -107,10 +107,14 @@
 #elif defined(ANDROID)
 #define GLX_LIB "libGLESv2.so"
 #else
+#ifdef __NetBSD__
+#define GLX_LIB "libGL.so"
+#else
 #define GLX_LIB "libGL.so.1"
 #endif
+#endif
 
-#ifdef ANDROID
+#if defined(ANDROID) || defined(__NetBSD__)
 #define EGL_LIB "libEGL.so"
 #define GLES1_LIB "libGLESv1_CM.so"
 #define GLES2_LIB "libGLESv2.so"
