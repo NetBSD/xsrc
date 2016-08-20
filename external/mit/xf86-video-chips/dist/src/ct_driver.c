@@ -2335,7 +2335,7 @@ chipsPreInitWingine(ScrnInfoPtr pScrn, int flags)
     CHIPSPtr cPtr = CHIPSPTR(pScrn);
     CHIPSClockPtr SaveClk = &(cPtr->SavedReg.Clock);
     Bool useLinear = FALSE;
-    char *s;
+    const char *s;
 #ifndef XSERVER_LIBPCIACCESS
     resRange linearRes[] = { {ResExcMemBlock|ResBios|ResBus,0,0},_END };
 #endif
@@ -2802,7 +2802,7 @@ chipsPreInit655xx(ScrnInfoPtr pScrn, int flags)
     CHIPSPanelSizePtr Size = &cPtr->PanelSize;
     CHIPSClockPtr SaveClk = &(cPtr->SavedReg.Clock);
     Bool useLinear = FALSE;
-    char *s;
+    const char *s;
 #ifndef XSERVER_LIBPCIACCESS
     resRange linearRes[] = { {ResExcMemBlock|ResBios|ResBus,0,0},_END };
 #endif
@@ -6823,21 +6823,26 @@ chipsMapMem(ScrnInfoPtr pScrn)
 			   VIDMEM_MMIO_32BIT, cPtr->IOAddress, 0x20000L);
 #else
 		{
+		    int err;
+		    void** result = (void**)&cPtr->MMIOBase;
+
 		    if (cPtr->pEnt->location.type == BUS_PCI) {
-		        void** result = (void**)&cPtr->MMIOBase;
-		        int err = pci_device_map_range(cPtr->PciInfo,
-						 cPtr->IOAddress,
-						 0x20000L,
-						 PCI_DEV_MAP_FLAG_WRITABLE,
-						 result);
-		        if (err) {
-			    xf86Msg(X_ERROR, "PCI mmap failed\n");
-		            return FALSE;
-			}
-		    } else
-			cPtr->MMIOBase = xf86MapVidMem(pScrn->scrnIndex,
-			   VIDMEM_MMIO_32BIT, cPtr->IOAddress, 0x20000L);
-		    
+		        err = pci_device_map_range(cPtr->PciInfo,
+						   cPtr->IOAddress,
+						   0x20000L,
+						   PCI_DEV_MAP_FLAG_WRITABLE,
+						   result);
+		    } else {
+			err = pci_device_map_legacy(cPtr->PciInfo,
+						    cPtr->IOAddress,
+						    0x00020000U,
+						    PCI_DEV_MAP_FLAG_WRITABLE,
+						    result);
+		    }
+		    if (err) {
+			xf86Msg(X_ERROR, "PCI mmap failed\n");
+		        return FALSE;
+		    }
 		}
 #endif
 	    } else {
@@ -6851,20 +6856,26 @@ chipsMapMem(ScrnInfoPtr pScrn)
 			  VIDMEM_MMIO_32BIT, cPtr->IOAddress, 0x10000L);
 #else
 		{
+		    int err;
+		    void** result = (void**)&cPtr->MMIOBase;
+
 		    if (cPtr->pEnt->location.type == BUS_PCI) {
-			void** result = (void**)&cPtr->MMIOBase;
-			int err = pci_device_map_range(cPtr->PciInfo,
-						 cPtr->IOAddress,
-						 0x10000L,
-						 PCI_DEV_MAP_FLAG_WRITABLE,
-						 result);
-		        if (err) {
-			    xf86Msg(X_ERROR, "PCI mmap failed\n");
-		            return FALSE;
-			}
-		    } else
-		        cPtr->MMIOBase = xf86MapVidMem(pScrn->scrnIndex,
-			  VIDMEM_MMIO_32BIT, cPtr->IOAddress, 0x10000L);
+			err = pci_device_map_range(cPtr->PciInfo,
+						   cPtr->IOAddress,
+						   0x10000L,
+						   PCI_DEV_MAP_FLAG_WRITABLE,
+						   result);
+		    } else {
+			err = pci_device_map_legacy(cPtr->PciInfo,
+						    cPtr->IOAddress,
+						    0x00010000U,
+						    PCI_DEV_MAP_FLAG_WRITABLE,
+						    result);
+		    }
+		    if (err) {
+			xf86Msg(X_ERROR, "PCI mmap failed\n");
+		        return FALSE;
+		    }
 		}
 #endif
 	    }
@@ -6873,59 +6884,65 @@ chipsMapMem(ScrnInfoPtr pScrn)
 		return FALSE;
 	}
 	if (cPtr->FbMapSize) {
-	  unsigned long Addr = (unsigned long)cPtr->FbAddress;
-	  unsigned int Map =  cPtr->FbMapSize;
+	    unsigned long Addr = (unsigned long)cPtr->FbAddress;
+	    unsigned int Map =  cPtr->FbMapSize;
+#ifdef XSERVER_LIBPCIACCESS
+	    int err;
+	    void** result;
+#endif
 	  
-	  if ((cPtr->Flags & ChipsDualChannelSupport) &&
-	      (xf86IsEntityShared(pScrn->entityList[0]))) {
-	      cPtrEnt = xf86GetEntityPrivate(pScrn->entityList[0],
-					     CHIPSEntityIndex)->ptr;
-	    if(cPtr->SecondCrtc == FALSE) {
-	      Addr = cPtrEnt->masterFbAddress;
-	      Map = cPtrEnt->masterFbMapSize;
-	    } else {
-	      Addr = cPtrEnt->slaveFbAddress;
-	      Map = cPtrEnt->slaveFbMapSize;
+	    if ((cPtr->Flags & ChipsDualChannelSupport) &&
+	        (xf86IsEntityShared(pScrn->entityList[0]))) {
+		cPtrEnt = xf86GetEntityPrivate(pScrn->entityList[0],
+					       CHIPSEntityIndex)->ptr;
+		if (cPtr->SecondCrtc == FALSE) {
+		    Addr = cPtrEnt->masterFbAddress;
+		    Map = cPtrEnt->masterFbMapSize;
+		} else {
+		    Addr = cPtrEnt->slaveFbAddress;
+		    Map = cPtrEnt->slaveFbMapSize;
+		}
 	    }
-	  }
 
 #ifndef XSERVER_LIBPCIACCESS
-	  if (cPtr->pEnt->location.type == BUS_PCI)
-	      cPtr->FbBase = xf86MapPciMem(pScrn->scrnIndex,VIDMEM_FRAMEBUFFER,
- 			          cPtr->PciTag, Addr, Map);
+	   if (cPtr->pEnt->location.type == BUS_PCI)
+		cPtr->FbBase = xf86MapPciMem(pScrn->scrnIndex,VIDMEM_FRAMEBUFFER,
+		 			     cPtr->PciTag, Addr, Map);
 
-	  else
-	      cPtr->FbBase = xf86MapVidMem(pScrn->scrnIndex,VIDMEM_FRAMEBUFFER,
-					   Addr, Map);
+	    else
+		cPtr->FbBase = xf86MapVidMem(pScrn->scrnIndex,VIDMEM_FRAMEBUFFER,
+					     Addr, Map);
 #else
-	  if (cPtr->pEnt->location.type == BUS_PCI) {
-	    void** result = (void**)&cPtr->FbBase;
-	    int err = pci_device_map_range(cPtr->PciInfo,
+	    result = (void**)&cPtr->FbBase;
+	    if (cPtr->pEnt->location.type == BUS_PCI) {
+		err = pci_device_map_range(cPtr->PciInfo,
 					   Addr,
 					   Map,
 					   PCI_DEV_MAP_FLAG_WRITABLE |
 					   PCI_DEV_MAP_FLAG_WRITE_COMBINE,
 					   result);
-		        if (err) {
-			    xf86Msg(X_ERROR, "PCI mmap fb failed\n");
-		            return FALSE;
-			}
-	  } else
-	      cPtr->FbBase = xf86MapVidMem(pScrn->scrnIndex,VIDMEM_FRAMEBUFFER,
-					   Addr, Map);
-
+	    } else
+		err = pci_device_map_legacy(cPtr->PciInfo,
+					    Addr,
+					    Map,
+					    PCI_DEV_MAP_FLAG_WRITABLE |
+					    PCI_DEV_MAP_FLAG_WRITE_COMBINE,
+					    result);
+	    if (err) {
+		xf86Msg(X_ERROR, "PCI mmap fb failed\n");
+		return FALSE;
+	    }
 #endif
-
-	  if (cPtr->FbBase == NULL)
-	      return FALSE;
+	    if (cPtr->FbBase == NULL)
+		return FALSE;
 	}
 	if (cPtr->Flags & ChipsFullMMIOSupport) {
 #ifndef XSERVER_LIBPCIACCESS
-		cPtr->MMIOBaseVGA = xf86MapPciMem(pScrn->scrnIndex,
-						  VIDMEM_MMIO,cPtr->PciTag,
-						  cPtr->IOAddress, 0x2000L);
+	    cPtr->MMIOBaseVGA = xf86MapPciMem(pScrn->scrnIndex,
+					      VIDMEM_MMIO,cPtr->PciTag,
+					      cPtr->IOAddress, 0x2000L);
 #else
-		cPtr->MMIOBaseVGA = cPtr->MMIOBase;
+	    cPtr->MMIOBaseVGA = cPtr->MMIOBase;
 #endif
 	    /* 69030 MMIO Fix.
 	     *
@@ -6936,22 +6953,22 @@ chipsMapMem(ScrnInfoPtr pScrn)
 	     * pipe and to toggle between them as necessary. -GHB
 	     */
 	    if (cPtr->Flags & ChipsDualChannelSupport)
+	    {
 #ifndef XSERVER_LIBPCIACCESS
 	       	cPtr->MMIOBasePipeB = xf86MapPciMem(pScrn->scrnIndex,
 				      VIDMEM_MMIO,cPtr->PciTag,
 				      cPtr->IOAddress + 0x800000, 0x2000L);
 #else
-	    {
-	      void** result = (void**)&cPtr->MMIOBasePipeB;
-	      int err = pci_device_map_range(cPtr->PciInfo,
-					     cPtr->IOAddress + 0x800000,
-					     0x2000L,
-					     PCI_DEV_MAP_FLAG_WRITABLE,
-					     result);
-	      if (err) 
-		return FALSE;
-	    }
+		void** result = (void**)&cPtr->MMIOBasePipeB;
+		int err = pci_device_map_range(cPtr->PciInfo,
+					       cPtr->IOAddress + 0x800000,
+					       0x2000L,
+					       PCI_DEV_MAP_FLAG_WRITABLE,
+					       result);
+		if (err) 
+		    return FALSE;
 #endif
+	    }
 
 	    cPtr->MMIOBasePipeA = cPtr->MMIOBaseVGA;
 	}
