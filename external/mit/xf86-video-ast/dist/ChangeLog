@@ -1,3 +1,44 @@
+commit 39e80895acb4b818ecc15af51a68178562ebb41d
+Author: Y.C. Chen <yc_chen@aspeedtech.com>
+Date:   Wed Aug 19 09:21:05 2015 +0800
+
+    Bump Version to 1.1.5
+
+commit 74281c4ce201ff04a6672c703d09ed28286f1801
+Author: Y.C. Chen <yc_chen@aspeedtech.com>
+Date:   Fri Aug 14 15:30:00 2015 +0800
+
+    Support AST2500
+
+commit 9918d6f69ac51d9d27b074e3e490783acda68dca
+Author: Y.C. Chen <yc_chen@aspeedtech.com>
+Date:   Fri Aug 14 10:11:23 2015 +0800
+
+    Fixed Failed to Init when ASPEED Graphics is Secondary
+
+commit e545ab905ea120014558d6f1733d87ffde5d5d71
+Author: Y.C. Chen <yc_chen@aspeedtech.com>
+Date:   Thu Aug 13 15:54:15 2015 +0800
+
+    Fixed Transient Noise While System Resume from Hibernate
+
+commit 77e7ac37c6031551f7ad355dc94c4176df4956aa
+Author: Y.C. Chen <yc_chen@aspeedtech.com>
+Date:   Thu Aug 13 15:21:57 2015 +0800
+
+    use same search mode criteria with ast drm driver
+
+commit 4f404aa29eea5707cfdfe3dc2c762bd46063dfec
+Author: Thomas Klausner <wiz@NetBSD.org>
+Date:   Mon Aug 18 05:35:48 2014 +0800
+
+    Use proper type.
+    
+    Two other places in this file already use uint32_t when passing
+    it to PCI_READ_LONG.
+    
+    Signed-off-by: Thomas Klausner <wiz@NetBSD.org>
+
 commit d531cac475980908ea52309846221a974b8e7efd
 Author: Y.C. Chen <yc_chen@aspeedtech.com>
 Date:   Fri Aug 8 16:51:07 2014 +0800
