@@ -96,11 +96,6 @@
 /* All drivers initialising the SW cursor need this */
 #include "mipointer.h"
 
-/* All drivers using the mi banking wrapper need this */
-#ifdef HAVE_ISA
-#include "mibank.h"
-#endif
-
 /* All drivers using the mi colormap manipulation need this */
 #include "micmap.h"
 
