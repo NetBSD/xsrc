@@ -468,7 +468,7 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 	int i;
 	int depth_flags;
 	ClockRangePtr clockRanges;
-	char *s;
+	const char *s;
  	xf86Int10InfoPtr pInt = NULL;
 
 	if (flags & PROBE_DETECT)  {
