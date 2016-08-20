@@ -22,6 +22,10 @@
  */
 /* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suncg6/cg6_accel.c $ */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "cg6.h"
 #include "cg6_regs.h"
 #include "dgaproc.h"
