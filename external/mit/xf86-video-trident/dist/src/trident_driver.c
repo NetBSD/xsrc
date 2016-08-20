@@ -33,7 +33,6 @@
 #include "config.h"
 #endif
 
-#include "xorg-server.h"
 #include "fb.h"
 
 #ifdef HAVE_ISA

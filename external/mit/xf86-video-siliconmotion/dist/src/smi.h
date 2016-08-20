@@ -35,7 +35,6 @@ authorization from the XFree86 Project and Silicon Motion.
 #include <string.h>
 #include <stdio.h>
 
-#include "xorg-server.h"
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "xf86Pci.h"

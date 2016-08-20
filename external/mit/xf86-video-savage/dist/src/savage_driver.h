@@ -48,7 +48,6 @@
 
 #define MODE_24 24
 
-#include "xorg-server.h"
 #include "compiler.h"
 #include "vgaHW.h"
 #include "xf86.h"

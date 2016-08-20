@@ -28,7 +28,6 @@
 #include "config.h"
 #endif
 
-#include "xorg-server.h"
 #include "fb.h"
 #include "micmap.h"
 #include "xf86.h"

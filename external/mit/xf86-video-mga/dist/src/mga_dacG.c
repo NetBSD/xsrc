@@ -6,8 +6,6 @@
 #include "config.h"
 #endif
 
-#include "xorg-server.h"
-
 #include "colormapst.h"
 
 /* All drivers should typically include these */

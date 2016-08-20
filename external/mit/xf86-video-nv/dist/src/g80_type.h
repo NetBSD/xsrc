@@ -1,4 +1,3 @@
-#include "xorg-server.h"
 #include <exa.h>
 #include <xf86.h>
 #include <xf86int10.h>

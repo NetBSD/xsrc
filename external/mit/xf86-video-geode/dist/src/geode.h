@@ -32,7 +32,6 @@
 #endif
 #include "geode_pcirename.h"
 
-#include "xorg-server.h"
 #ifdef HAVE_XAA_H
 #include "xaa.h"
 #endif

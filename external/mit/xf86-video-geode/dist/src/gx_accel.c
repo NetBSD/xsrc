@@ -37,7 +37,6 @@
 #include "config.h"
 #endif
 
-#include "xorg-server.h"
 #include "vgaHW.h"
 #include "xf86.h"
 #ifdef HAVE_XAA_H

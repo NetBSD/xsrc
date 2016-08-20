@@ -25,7 +25,6 @@
 
 #include "atipriv.h"
 
-#include "xorg-server.h"
 #include "xf86str.h"
 
 #include "xf86i2c.h"

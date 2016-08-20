@@ -28,7 +28,6 @@
 #include "config.h"
 #endif
 
-#include "xorg-server.h"
 #include "exa.h"
 #include "picture.h"
 
