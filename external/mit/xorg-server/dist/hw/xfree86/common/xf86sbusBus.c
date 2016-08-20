@@ -76,7 +76,6 @@ CheckSbusDevice(const char *device, int fbNum)
     psdp->device = xnfstrdup(device);
     psdp->width = fbattr.fbtype.fb_width;
     psdp->height = fbattr.fbtype.fb_height;
-    psdp->size = fbattr.fbtype.fb_size;
     psdp->fd = -1;
 }
 
@@ -727,7 +726,7 @@ xf86SbusHandleColormaps(ScreenPtr pScreen, sbusDevicePtr psdp)
     if (pScreen->whitePixel == 0) {
         data[0] = 255;
         data[1] = 0;
-    else {
+    } else {
         data[0] = 0;
         data[1] = 255;
     }

@@ -303,7 +303,7 @@ listPossibleVideoDrivers(char *matches[], int nmatches)
 #ifdef __sparc__
     if (i < (nmatches - 1))
     {
-        char *sbusDriver = sparcDriverName();
+        const char *sbusDriver = sparcDriverName();
 
         if (sbusDriver)
             matches[i++] = xnfstrdup(sbusDriver);
