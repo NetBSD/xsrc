@@ -312,7 +312,7 @@ static Bool S3PreInit(ScrnInfoPtr pScrn, int flags)
 	Gamma gzeros = {0.0, 0.0, 0.0};
 	int i, vgaCRIndex, vgaCRReg;
 	unsigned char tmp;
-	char *s;
+	const char *s;
 
         if (flags & PROBE_DETECT)
                 return FALSE;
