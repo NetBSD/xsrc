@@ -164,7 +164,7 @@ static void  CTNAME(ReadPixmap)(ScrnInfoPtr pScrn, int x, int y, int w, int h,
 # define BE_SWAPON(pScrn,cPtr)
 # define BE_SWAPOFF(pScrn,cPtr)
 #endif
-#endif
+
 Bool 
 CTNAME(AccelInit)(ScreenPtr pScreen)
 {
@@ -1741,6 +1741,8 @@ CTNAME(ReadPixmap)(ScrnInfoPtr pScrn, int x, int y, int w, int h,
 }
 #endif /* ReadPixmap */
 
-#endif
+#endif /* writepixmap */
 
 #endif
+
+#endif /* HAVE_XAA_H */
