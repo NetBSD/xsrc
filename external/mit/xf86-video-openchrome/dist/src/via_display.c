@@ -29,6 +29,7 @@
 #include "config.h"
 #endif
 
+#include <stdint.h>
 #include "via_driver.h"
 
 /*
@@ -813,11 +814,11 @@ viaIGA1SetFBStartingAddress(xf86CrtcPtr crtc, int x, int y)
 
     Base = (y * pScrn->displayWidth + x) * (pScrn->bitsPerPixel / 8);
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Base Address: 0x%lx\n",
+                        "Base Address: 0x%"PRIx32"x\n",
                         Base));
     Base = (Base + drmmode->front_bo->offset) >> 1;
     xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                "DRI Base Address: 0x%lx\n",
+                "DRI Base Address: 0x%"PRIx32"\n",
                 Base);
 
     hwp->writeCrtc(hwp, 0x0D, Base & 0xFF);
@@ -2044,11 +2045,11 @@ viaIGA2SetFBStartingAddress(xf86CrtcPtr crtc, int x, int y)
 
     Base = (y * pScrn->displayWidth + x) * (pScrn->bitsPerPixel / 8);
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Base Address: 0x%lx\n",
+                        "Base Address: 0x%"PRIx32"\n",
                         Base));
     Base = (Base + drmmode->front_bo->offset) >> 3;
     xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                "DRI Base Address: 0x%lx\n",
+                "DRI Base Address: 0x%"PRIx32"\n",
                 Base);
 
     tmp = hwp->readCrtc(hwp, 0x62) & 0x01;
