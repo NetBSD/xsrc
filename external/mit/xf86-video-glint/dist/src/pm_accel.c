@@ -401,7 +401,7 @@ PermediaSubsequentScreenToScreenCopy(
     if (!(pGlint->BltScanDirection & YPositive)) {
 	y1 = y1 + h - 1;
 	y2 = y2 + h - 1;
-	direction = -1<<16;
+	direction = -65536;
     } else {
 	direction = 1<<16;
     }
@@ -1162,9 +1162,9 @@ PermediaSubsequentHorVertLine(ScrnInfoPtr pScrn,int x,int y,int len,int dir)
   
     GLINT_WAIT(7);
     if (dir == DEGREES_0) {
-        PermediaLoadCoord(pScrn, x<<16, y<<16, 0, len, 1<<16, 0);
+        PermediaLoadCoord(pScrn, x * 65536, y * 65536, 0, len, 1<<16, 0);
     } else {
-        PermediaLoadCoord(pScrn, x<<16, y<<16, 0, len, 0, 1<<16);
+        PermediaLoadCoord(pScrn, x * 65536, y * 65536, 0, len, 0, 1<<16);
     }
 
     GLINT_WRITE_REG(PrimitiveLine, Render);
@@ -1180,15 +1180,15 @@ PermediaSubsequentSolidBresenhamLine( ScrnInfoPtr pScrn,
     if(dmaj == dmin) {
 	GLINT_WAIT(7);
 	if(octant & YDECREASING) {
-	    dy = -1<<16;
+	    dy = -65536;
 	} else {
-	    dy = 1<<16;
+	    dy = 65536;
 	}
 
 	if(octant & XDECREASING) {
-	    dxdom = -1<<16;
+	    dxdom = -65536;
 	} else {
-	    dxdom = 1<<16;
+	    dxdom = 65536;
 	}
 
         PermediaLoadCoord(pScrn, x<<16, y<<16, 0, len, dxdom, dy);

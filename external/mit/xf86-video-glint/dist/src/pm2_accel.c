@@ -620,19 +620,19 @@ Permedia2SubsequentSolidBresenhamLine( ScrnInfoPtr pScrn,
     if(dmaj == dmin) {
 	GLINT_WAIT(6);
 	if(octant & YDECREASING) {
-	    GLINT_WRITE_REG(-1<<16, dY);
+	    GLINT_WRITE_REG(-65536, dY);
 	} else {
-	    GLINT_WRITE_REG(1<<16, dY);
+	    GLINT_WRITE_REG(65536, dY);
 	}
 
 	if(octant & XDECREASING) {
-	    GLINT_WRITE_REG(-1<<16, dXDom);
+	    GLINT_WRITE_REG(-65536, dXDom);
 	} else {
-	    GLINT_WRITE_REG(1<<16, dXDom);
+	    GLINT_WRITE_REG(65536, dXDom);
 	}
 
-	GLINT_WRITE_REG(x<<16, StartXDom);
-	GLINT_WRITE_REG(y<<16, StartY);
+	GLINT_WRITE_REG(x * 65536, StartXDom);
+	GLINT_WRITE_REG(y * 65536, StartY);
 	GLINT_WRITE_REG(len,GLINTCount);
 	GLINT_WRITE_REG(PrimitiveLine, Render);
 	return;
