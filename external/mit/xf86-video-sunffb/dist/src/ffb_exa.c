@@ -1,4 +1,4 @@
-/* $NetBSD: ffb_exa.c,v 1.3 2016/08/19 19:16:01 mrg Exp $ */
+/* $NetBSD: ffb_exa.c,v 1.4 2016/08/22 08:28:32 mrg Exp $ */
 /*
  * Copyright (c) 2015 Michael Lorenz
  * All rights reserved.
@@ -30,6 +30,10 @@
  */
  
 #include <sys/types.h>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "ffb_fifo.h"
 #include "ffb_rcache.h"

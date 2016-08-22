@@ -1,4 +1,4 @@
-/* $NetBSD: ffb_accel_common.c,v 1.2 2016/08/19 19:16:01 mrg Exp $ */
+/* $NetBSD: ffb_accel_common.c,v 1.3 2016/08/22 08:28:32 mrg Exp $ */
 /*
  * Copyright (C) 1998,1999,2000 Jakub Jelinek (jakub@redhat.com)
  * Copyright (C) 1998 Michal Rehacek (majkl@iname.com)
@@ -27,6 +27,10 @@
  */
  
 #include <sys/types.h>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "ffb_fifo.h"
 #include "ffb_rcache.h"
