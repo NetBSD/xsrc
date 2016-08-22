@@ -566,8 +566,13 @@ FFBDacSaveScreen(ScreenPtr pScreen, int mode) {
 
   if (redraw) {
     /* this causes a complete redraw of the screen */
+#ifdef XF86_SCRN_INTERFACE // compat-api.h
+    pScrn->EnableDisableFBAccess(pScrn, FALSE);
+    pScrn->EnableDisableFBAccess(pScrn, TRUE);
+#else
     pScrn->EnableDisableFBAccess(pScreen->myNum, FALSE);
     pScrn->EnableDisableFBAccess(pScreen->myNum, TRUE);
+#endif
   } 
   return TRUE;
 }
