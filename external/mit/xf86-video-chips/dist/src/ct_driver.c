@@ -75,6 +75,7 @@
 /* All drivers should typically include these */
 #include "xf86.h"
 #include "xf86_OSproc.h"
+#include "xf86Priv.h"
 
 /* Everything using inb/outb, etc needs "compiler.h" */
 #include "compiler.h"
@@ -1363,7 +1364,13 @@ chipsPreInitHiQV(ScrnInfoPtr pScrn, int flags)
         return FALSE;
 
     hwp = VGAHWPTR(pScrn);
+#if defined(__arm__)
+    vgaHWSetMmioFuncs(hwp, (CARD8 *)IOPortBase, 0);
+#elif defined(__powerpc__)
+    vgaHWSetMmioFuncs(hwp, ioBase, 0);
+#else
     vgaHWSetStdFuncs(hwp);
+#endif
     vgaHWGetIOBase(hwp);
 #if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
     cPtr->PIOBase = hwp->PIOOffset;
@@ -1843,8 +1850,15 @@ chipsPreInitHiQV(ScrnInfoPtr pScrn, int flags)
 		       xf86SetDDCproperties(pScrn,pMon);
 		}
 	    }
+/*
+ * XXX
+ * this takes forever
+ * do halfway modern monitors even support ddc1?
+ */
+#if 0
 	if (!ddc_done)
 	    chips_ddc1(pScrn);
+#endif
     }
 
     /*test STN / TFT */
@@ -3400,8 +3414,8 @@ chipsPreInit655xx(ScrnInfoPtr pScrn, int flags)
 
     if (cPtr->ClockType & TYPE_PROGRAMMABLE) {
 	pScrn->numClocks = NoClocks;
-        SaveClk->Clock = ((cPtr->PanelType & ChipsLCDProbed) ? 
-			  LCD_TEXT_CLK_FREQ : CRT_TEXT_CLK_FREQ);
+	SaveClk->Clock = ((cPtr->PanelType & ChipsLCDProbed) ? 
+				 LCD_TEXT_CLK_FREQ : CRT_TEXT_CLK_FREQ);
 	xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "Using programmable clocks\n");
     } else {  /* TYPE_PROGRAMMABLE */
 	SaveClk->Clock = chipsGetHWClock(pScrn);
@@ -3626,7 +3640,11 @@ CHIPSLeaveVT(VT_FUNC_ARGS_DECL)
     } else {
 	chipsHWCursorOff(cPtr, pScrn);
 	chipsRestore(pScrn, &(VGAHWPTR(pScrn))->SavedReg, &cPtr->SavedReg,
+#ifdef AVOID_VGAHW
+					FALSE);
+#else
 					TRUE);
+#endif
 	chipsLock(pScrn);
     }
 }
@@ -3779,9 +3797,11 @@ CHIPSScreenInit(SCREEN_INIT_ARGS_DECL)
     hwp = VGAHWPTR(pScrn);
     hwp->MapSize = 0x10000;		/* Standard 64k VGA window */
 
+#ifndef AVOID_VGAHW
     /* Map the VGA memory */
     if (!vgaHWMapMem(pScrn))
 	return FALSE;
+#endif
 
     /* Map the Chips memory and possible MMIO areas */
     if (!chipsMapMem(pScrn))
@@ -4176,6 +4196,7 @@ CHIPSScreenInit(SCREEN_INIT_ARGS_DECL)
 
 	    xf86InitFBManager(pScreen, &AvailFBArea); 
 	}
+#ifdef HAVE_XAA_H
 	if (cPtr->Flags & ChipsAccelSupport) {
 	    if (IS_HiQV(cPtr)) {
 		CHIPSHiQVAccelInit(pScreen);
@@ -4185,7 +4206,7 @@ CHIPSScreenInit(SCREEN_INIT_ARGS_DECL)
 		CHIPSAccelInit(pScreen);
 	    }
 	}
-	
+#endif
 	xf86SetBackingStore(pScreen);
 #ifdef ENABLE_SILKEN_MOUSE
 	xf86SetSilkenMouse(pScreen);
@@ -4393,7 +4414,11 @@ CHIPSCloseScreen(CLOSE_SCREEN_ARGS_DECL)
 	} else {
 	    chipsHWCursorOff(cPtr, pScrn);
 	    chipsRestore(pScrn, &(VGAHWPTR(pScrn))->SavedReg, &cPtr->SavedReg,
+#ifdef AVOID_VGAHW
+					FALSE);
+#else
 					TRUE);
+#endif
 	    chipsLock(pScrn);
 	}
 	chipsUnmapMem(pScrn);
@@ -5128,8 +5153,11 @@ chipsSave(ScrnInfoPtr pScrn, vgaRegPtr VgaSave, CHIPSRegPtr ChipsSave)
     tmp = cPtr->readXR(cPtr, 0x02);
     cPtr->writeXR(cPtr, 0x02, tmp & ~0x18);
     /* get generic registers */
+#ifdef AVOID_VGAHW
+    vgaHWSave(pScrn, VgaSave, VGA_SR_CMAP | VGA_SR_MODE);
+#else
     vgaHWSave(pScrn, VgaSave, VGA_SR_ALL);
-
+#endif
     /* save clock */
     chipsClockSave(pScrn, &ChipsSave->Clock);
 

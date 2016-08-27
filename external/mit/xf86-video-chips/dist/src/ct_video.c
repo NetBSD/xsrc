@@ -175,8 +175,10 @@ CHIPSResetVideo(ScrnInfoPtr pScrn)
     unsigned char mr3c;
     int red, green, blue;
     
+#ifdef HAVE_XAA_H
     if (cPtr->Flags & ChipsAccelSupport) 
 	CHIPSHiQVSync(pScrn);
+#endif
 
     mr3c = cPtr->readMR(cPtr, 0x3C);
     cPtr->writeMR(cPtr, 0x3C, (mr3c | 0x6));
@@ -288,8 +290,10 @@ CHIPSStopVideo(ScrnInfoPtr pScrn, pointer data, Bool shadow)
   unsigned char mr3c, tmp;
 
   REGION_EMPTY(pScrn->pScreen, &pPriv->clip);   
+#ifdef HAVE_XAA_H
   if (cPtr->Flags & ChipsAccelSupport) 
       CHIPSHiQVSync(pScrn);
+#endif
   if(shadow) {
      if(pPriv->videoStatus & CLIENT_VIDEO_ON) {
 	mr3c = cPtr->readMR(cPtr, 0x3C);
@@ -321,8 +325,10 @@ CHIPSSetPortAttribute(
   CHIPSPortPrivPtr pPriv = (CHIPSPortPrivPtr)data;
   CHIPSPtr cPtr = CHIPSPTR(pScrn);
 
+#ifdef HAVE_XAA_H
   if (cPtr->Flags & ChipsAccelSupport) 
       CHIPSHiQVSync(pScrn);
+#endif
   if(attribute == xvColorKey) {
 	int red, green, blue;
 	pPriv->colorKey = value;
@@ -531,10 +537,11 @@ CHIPSDisplayVideo(
     int buffer = pPriv->currentBuffer;
     Bool dblscan = (pScrn->currentMode->Flags & V_DBLSCAN) == V_DBLSCAN;
     int val;
-    
+
+#ifdef HAVE_XAA_H    
     if (cPtr->Flags & ChipsAccelSupport) 
 	CHIPSHiQVSync(pScrn);
-
+#endif
     tmp = cPtr->readXR(cPtr, 0xD0);
     cPtr->writeXR(cPtr, 0xD0, (tmp | 0x10));
     
@@ -639,8 +646,10 @@ CHIPSDisplayVideo(
 
     tmp = cPtr->readMR(cPtr, 0x3C);
     cPtr->writeMR(cPtr, 0x3C, (tmp | 0x7));
+#ifdef HAVE_XAA_H    
     if (cPtr->Flags & ChipsAccelSupport) 
 	CHIPSHiQVSync(pScrn);
+#endif
 }
 
 static int 
@@ -820,8 +829,10 @@ CHIPSVideoTimerCallback(ScrnInfoPtr pScrn, Time time)
     if(pPriv->videoStatus & TIMER_MASK) {
 	if(pPriv->videoStatus & OFF_TIMER) {
 	    if(pPriv->offTime < time) {
+#ifdef HAVE_XAA_H    
 		if (cPtr->Flags & ChipsAccelSupport) 
 		    CHIPSHiQVSync(pScrn);
+#endif
 		mr3c = cPtr->readMR(cPtr, 0x3C);
 		cPtr->writeMR(cPtr, 0x3C, (mr3c & 0xFE));
 		pPriv->videoStatus = FREE_TIMER;
