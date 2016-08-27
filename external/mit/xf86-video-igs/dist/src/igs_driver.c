@@ -1,5 +1,5 @@
 /* $OpenBSD: wsfb_driver.c,v 1.19 2003/04/27 16:42:32 matthieu Exp $ */
-/* $NetBSD: igs_driver.c,v 1.13 2016/08/18 09:32:26 mrg Exp $ */
+/* $NetBSD: igs_driver.c,v 1.14 2016/08/27 05:15:03 macallan Exp $ */
 /*
  * Copyright (c) 2001 Matthieu Herrb
  *		 2009 Michael Lorenz
@@ -104,14 +104,14 @@ static const OptionInfoRec * IgsAvailableOptions(int, int);
 static void IgsIdentify(int);
 static Bool IgsProbe(DriverPtr, int);
 static Bool IgsPreInit(ScrnInfoPtr, int);
-static Bool IgsScreenInit(int, ScreenPtr, int, char **);
-static Bool IgsCloseScreen(int, ScreenPtr);
+static Bool IgsScreenInit(ScreenPtr, int, char **);
+static Bool IgsCloseScreen(ScreenPtr);
 static void *IgsWindowLinear(ScreenPtr, CARD32, CARD32, int, CARD32 *,
 			      void *);
-static Bool IgsEnterVT(int, int);
-static void IgsLeaveVT(int, int);
-static Bool IgsSwitchMode(int, DisplayModePtr, int);
-static int IgsValidMode(int, DisplayModePtr, Bool, int);
+static Bool IgsEnterVT(ScrnInfoPtr);
+static void IgsLeaveVT(ScrnInfoPtr);
+static Bool IgsSwitchMode(ScrnInfoPtr, DisplayModePtr);
+static int IgsValidMode(ScrnInfoPtr, DisplayModePtr, Bool, int);
 static void IgsLoadPalette(ScrnInfoPtr, int, int *, LOCO *, VisualPtr);
 static Bool IgsSaveScreen(ScreenPtr, int);
 static void IgsSave(ScrnInfoPtr);
@@ -258,7 +258,7 @@ IgsFreeRec(ScrnInfoPtr pScrn)
 
 	if (pScrn->driverPrivate == NULL)
 		return;
-	xfree(pScrn->driverPrivate);
+	free(pScrn->driverPrivate);
 	pScrn->driverPrivate = NULL;
 }
 
@@ -279,7 +279,7 @@ IgsIdentify(int flags)
 
 /* Open the framebuffer device */
 static int
-igs_open(char *dev)
+igs_open(const char *dev)
 {
 	int fd = -1;
 
@@ -406,7 +406,7 @@ IgsProbe(DriverPtr drv, int flags)
 	}
     }
     
-    xfree(devSections);
+    free(devSections);
     return foundScreen;
 }
 
@@ -415,7 +415,8 @@ IgsPreInit(ScrnInfoPtr pScrn, int flags)
 {
 	IgsPtr fPtr;
 	int default_depth, vram_size = 2 * 1024 * 1024;
-	char *dev, *s;
+	const char *dev;
+	char *s;
 	char *mod = NULL;
 	const char *reqSym = NULL;
 	Gamma zeros = {0.0, 0.0, 0.0};
@@ -511,14 +512,14 @@ IgsPreInit(ScrnInfoPtr pScrn, int flags)
 
 	/* handle options */
 	xf86CollectOptions(pScrn, NULL);
-	if (!(fPtr->Options = xalloc(sizeof(IgsOptions))))
+	if (!(fPtr->Options = malloc(sizeof(IgsOptions))))
 		return FALSE;
 	memcpy(fPtr->Options, IgsOptions, sizeof(IgsOptions));
 	xf86ProcessOptions(pScrn->scrnIndex, fPtr->pEnt->device->options,
 			   fPtr->Options);
 
 	/* fake video mode struct */
-	mode = (DisplayModePtr)xalloc(sizeof(DisplayModeRec));
+	mode = (DisplayModePtr)malloc(sizeof(DisplayModeRec));
 	mode->prev = mode;
 	mode->next = mode;
 	mode->name = "igs current mode";
@@ -633,7 +634,7 @@ IgsShadowInit(ScreenPtr pScreen)
 }
 
 static Bool
-IgsScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
+IgsScreenInit(ScreenPtr pScreen, int argc, char **argv)
 {
 	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
 	IgsPtr fPtr = IGSPTR(pScrn);
@@ -810,9 +811,9 @@ IgsScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 }
 
 static Bool
-IgsCloseScreen(int scrnIndex, ScreenPtr pScreen)
+IgsCloseScreen(ScreenPtr pScreen)
 {
-	ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 	IgsPtr fPtr = IGSPTR(pScrn);
 
 	TRACE_ENTER("IgsCloseScreen");
@@ -828,7 +829,7 @@ IgsCloseScreen(int scrnIndex, ScreenPtr pScreen)
 	}
 #ifdef XFreeXDGA
 	if (fPtr->pDGAMode) {
-		xfree(fPtr->pDGAMode);
+		free(fPtr->pDGAMode);
 		fPtr->pDGAMode = NULL;
 		fPtr->nDGAMode = 0;
 	}
@@ -837,7 +838,7 @@ IgsCloseScreen(int scrnIndex, ScreenPtr pScreen)
 
 	/* unwrap CloseScreen */
 	pScreen->CloseScreen = fPtr->CloseScreen;
-	return (*pScreen->CloseScreen)(scrnIndex, pScreen);
+	return (*pScreen->CloseScreen)(pScreen);
 }
 
 static void *
@@ -858,31 +859,24 @@ IgsWindowLinear(ScreenPtr pScreen, CARD32 row, CARD32 offset, int mode,
 }
 
 static Bool
-IgsEnterVT(int scrnIndex, int flags)
+IgsEnterVT(ScrnInfoPtr pScrn)
 {
-	ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
-
 	TRACE_ENTER("EnterVT");
 	pScrn->vtSema = TRUE;
 	return TRUE;
 }
 
 static void
-IgsLeaveVT(int scrnIndex, int flags)
+IgsLeaveVT(ScrnInfoPtr pScrn)
 {
-#if DEBUG
-	ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
-#endif
 
 	TRACE_ENTER("LeaveVT");
+	pScrn->vtSema = FALSE;
 }
 
 static Bool
-IgsSwitchMode(int scrnIndex, DisplayModePtr mode, int flags)
+IgsSwitchMode(ScrnInfoPtr arg, DisplayModePtr mode)
 {
-#if DEBUG
-	ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
-#endif
 
 	TRACE_ENTER("SwitchMode");
 	/* Nothing else to do */
@@ -890,11 +884,8 @@ IgsSwitchMode(int scrnIndex, DisplayModePtr mode, int flags)
 }
 
 static int
-IgsValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
+IgsValidMode(ScrnInfoPtr pScrn, DisplayModePtr mode, Bool verbose, int flags)
 {
-#if DEBUG
-	ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
-#endif
 
 	TRACE_ENTER("ValidMode");
 	return MODE_OK;
@@ -1045,9 +1036,9 @@ IgsDGASetMode(ScrnInfoPtr pScrn, DGAModePtr pDGAMode)
 		frameY0 = pScrn->frameY0;
 	}
 
-	if (!(*pScrn->SwitchMode)(scrnIdx, pMode, 0))
+	if (!(*pScrn->SwitchMode)(pScrn, pMode))
 		return FALSE;
-	(*pScrn->AdjustFrame)(scrnIdx, frameX0, frameY0, 0);
+	(*pScrn->AdjustFrame)(pScrn, frameX0, frameY0);
 
 	return TRUE;
 }
@@ -1055,7 +1046,7 @@ IgsDGASetMode(ScrnInfoPtr pScrn, DGAModePtr pDGAMode)
 static void
 IgsDGASetViewport(ScrnInfoPtr pScrn, int x, int y, int flags)
 {
-	(*pScrn->AdjustFrame)(pScrn->pScreen->myNum, x, y, flags);
+	(*pScrn->AdjustFrame)(pScrn, x, y);
 }
 
 static int
@@ -1085,7 +1076,7 @@ IgsDGAAddModes(ScrnInfoPtr pScrn)
 	DGAModePtr pDGAMode;
 
 	do {
-		pDGAMode = xrealloc(fPtr->pDGAMode,
+		pDGAMode = realloc(fPtr->pDGAMode,
 				    (fPtr->nDGAMode + 1) * sizeof(DGAModeRec));
 		if (!pDGAMode)
 			break;
