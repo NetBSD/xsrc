@@ -1367,7 +1367,7 @@ chipsPreInitHiQV(ScrnInfoPtr pScrn, int flags)
 #if defined(__arm__)
     vgaHWSetMmioFuncs(hwp, (CARD8 *)IOPortBase, 0);
 #elif defined(__powerpc__)
-    vgaHWSetMmioFuncs(hwp, ioBase, 0);
+    vgaHWSetMmioFuncs(hwp, (void *)ioBase, 0);
 #else
     vgaHWSetStdFuncs(hwp);
 #endif
