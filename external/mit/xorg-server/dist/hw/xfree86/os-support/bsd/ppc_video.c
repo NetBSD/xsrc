@@ -27,6 +27,7 @@
 #include <xorg-config.h>
 #endif
 
+#include <errno.h>
 #include <X11/X.h>
 #include <machine/param.h>
 #include "xf86.h"
@@ -71,10 +72,10 @@ xf86EnableIO()
     xf86MsgVerb(X_WARNING, 3, "xf86EnableIO %d\n", fd);
     if (ioBase == MAP_FAILED) {
         ioBase = mmap(NULL, 0x10000, PROT_READ | PROT_WRITE, MAP_SHARED, fd,
-                      0xf2000000);
+                      PCI_MAGIC_IO_RANGE);
         xf86MsgVerb(X_INFO, 3, "xf86EnableIO: %08x\n", ioBase);
         if (ioBase == MAP_FAILED) {
-            xf86MsgVerb(X_WARNING, 3, "Can't map IO space!\n");
+            xf86MsgVerb(X_WARNING, 3, "Can't map IO space! (%d)\n", errno);
             return FALSE;
         }
     }
