@@ -1088,7 +1088,7 @@ I810DRIFinishScreenInit(ScreenPtr pScreen)
    ScrnInfoPtr        pScrn = xf86Screens[pScreen->myNum];
    I810Ptr info  = I810PTR(pScrn);
 
-   memset(sPriv, 0, sizeof(sPriv));
+   memset(sPriv, 0, sizeof(*sPriv));
 
    /* Have shadow run only while there is 3d active.
     */
