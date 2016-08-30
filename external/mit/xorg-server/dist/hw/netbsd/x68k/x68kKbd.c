@@ -1,4 +1,4 @@
-/* $NetBSD: x68kKbd.c,v 1.1 2014/03/01 19:34:47 tsutsui Exp $ */
+/* $NetBSD: x68kKbd.c,v 1.2 2016/08/30 07:50:55 mrg Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -78,6 +78,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <X11/keysym.h>
 #include "screenint.h"
 #include "inputstr.h"
+#include "eventstr.h"
 #include "misc.h"
 #include "scrnintstr.h"
 #include "servermd.h"
@@ -119,7 +120,7 @@ x68kKbdProc(DeviceIntPtr pDev, 	/* Keyboard to manipulate */
         case DEVICE_INIT:
             pKeyboard->devicePrivate = (pointer)&x68kKbdPriv;
             if( (x68kKbdPriv.fd = open("/dev/kbd", O_RDONLY)) == -1 ) {
-                Error("Can't open keyboard device");
+                ErrorF("Can't open keyboard device");
                 return !Success;
             }
             pKeyboard->on = FALSE;
@@ -144,7 +145,7 @@ x68kKbdProc(DeviceIntPtr pDev, 	/* Keyboard to manipulate */
             if ( fcntl(x68kKbdPriv.fd, F_SETOWN, getpid()) == -1 ||
                  fcntl(x68kKbdPriv.fd, F_SETFL, O_NONBLOCK|O_ASYNC) == -1 ||
                  ioctl(x68kKbdPriv.fd, KIOCSDIRECT, &mode) == -1 ) {
-                Error("Async keyboard I/O failed");
+                ErrorF("Async keyboard I/O failed");
                 return !Success;
             }
 	    x68kSetLeds(&x68kKbdPriv, (u_char)x68kKbdPriv.leds);
@@ -263,14 +264,14 @@ Firm_event *
 x68kKbdGetEvents(int fd, int *pNumEvents, Bool *pAgain)
 {
     int nBytes; 	    /* number of bytes of events available. */
-    static Firm_event evBuf[MAXEVENTS];   /* Buffer for Firm_events */
+    static Firm_event evBuf[X68K_MAXEVENTS];   /* Buffer for Firm_events */
 
     if ((nBytes = read (fd, evBuf, sizeof(evBuf))) == -1) {
 	if (errno == EWOULDBLOCK) {
 	    *pNumEvents = 0;
 	    *pAgain = FALSE;
 	} else {
-	    Error ("Reading keyboard");
+	    ErrorF("Reading keyboard");
 	    FatalError ("Could not read the keyboard");
 	}
     } else {
@@ -293,12 +294,11 @@ x68kKbdEnqueueEvent(DeviceIntPtr pDev, Firm_event *fe)
     int			type;
     int			i, nevents;
 
-    GetEventList(&x68kEvents);
     type = ((fe->value == VKEY_UP) ? KeyRelease : KeyPress);
     keycode = (fe->id & 0x7f) + MIN_KEYCODE;
     nevents = GetKeyboardEvents(x68kEvents, pDev, type, keycode);
     for (i = 0; i < nevents; i++)
-	mieqEnqueue(pDev, (InternalEvent*)(x68kEvents + i)->event);
+	mieqEnqueue(pDev, &x68kEvents[i]);
 }
 
 /*-
@@ -327,13 +327,13 @@ x68kKbdRingBell(DeviceIntPtr pDev, int volume, int duration)
 
     kbdCmd = KBD_CMD_BELL;
     if (ioctl (pPriv->fd, KIOCCMD, &kbdCmd) == -1) {
- 	Error("Failed to activate bell");
+ 	ErrorF("Failed to activate bell");
 	return;
     }
     usleep (duration * 1000);
     kbdCmd = KBD_CMD_NOBELL;
     if (ioctl (pPriv->fd, KIOCCMD, &kbdCmd) == -1)
-	Error ("Failed to deactivate bell");
+	ErrorF("Failed to deactivate bell");
 }
 
 static void
@@ -404,7 +404,7 @@ x68kSetLeds(X68kKbdPrivPtr pPriv, u_char data)
 {
     /* bit sequence of led indicator in xkb and hardware are same */
     if (ioctl(pPriv->fd, KIOCSLED, &data) == -1)
-        Error("Failed to set keyboard lights");
+        ErrorF("Failed to set keyboard lights");
 }    
 
 Bool

@@ -1,4 +1,4 @@
-/* $NetBSD: x68k.h,v 1.1 2014/03/01 19:34:47 tsutsui Exp $ */
+/* $NetBSD: x68k.h,v 1.2 2016/08/30 07:50:55 mrg Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -95,7 +95,7 @@ typedef struct _X68kScreenRec {
  */
 typedef struct _X68kFbProcRec {
     Bool (*open)(X68kScreenRec *);		 /* open procedure       */
-    Bool (*init)(int, ScreenPtr, int, char *[]); /* initialize procedure */
+    Bool (*init)(ScreenPtr, int, char *[]);      /* initialize procedure */
     void (*close)(X68kScreenRec *);		 /* close procedure      */
 } X68kFbProcRec;
 
@@ -123,7 +123,7 @@ typedef struct _X68kKbdPriv {
 #define X68K_KB_STANDARD 0      /* standard keyboard */
 #define X68K_KB_ASCII    1      /* ascii map keyboard */
 
-#define MAXEVENTS 32
+#define X68K_MAXEVENTS 32
 
 extern DevPrivateKeyRec x68kScreenPrivateKeyRec;
 #define x68kScreenPrivateKey (&x68kScreenPrivateKeyRec)
@@ -147,11 +147,11 @@ Bool x68kSaveScreen(ScreenPtr, int);
 
 /* x68kGraph.c */
 Bool x68kGraphOpen(X68kScreenRec *);
-Bool x68kGraphInit(int, ScreenPtr, int, char *[]);
+Bool x68kGraphInit(ScreenPtr, int, char *[]);
 void x68kGraphClose(X68kScreenRec *);
 
 /* in x68kInit.c */
-extern EventList *x68kEvents;
+extern InternalEvent *x68kEvents;
 
 /* in x68kIo.c */
 void x68kSigIOHandler(int);
@@ -175,7 +175,7 @@ extern KeySymsRec jisKeySyms, asciiKeySyms, *x68kKeySyms;
 
 /* x68kText.c */
 Bool x68kTextOpen(X68kScreenRec *);
-Bool x68kTextInit(int, ScreenPtr, int, char *[]);
+Bool x68kTextInit(ScreenPtr, int, char *[]);
 void x68kTextClose(X68kScreenRec *);
 
 /* EOF x68k.h */

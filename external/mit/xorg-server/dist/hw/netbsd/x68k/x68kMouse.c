@@ -1,4 +1,4 @@
-/* $NetBSD: x68kMouse.c,v 1.1 2014/03/01 19:34:47 tsutsui Exp $ */
+/* $NetBSD: x68kMouse.c,v 1.2 2016/08/30 07:50:55 mrg Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -87,6 +87,8 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "inpututils.h"
 
 #include "exevents.h"
+#include "events.h"
+#include "eventstr.h"
 #include <X11/Xatom.h>
 #include "xserver-properties.h"
 
@@ -99,8 +101,6 @@ miPointerScreenFuncRec x68kPointerScreenFuncs = {
     x68kCursorOffScreen,
     x68kCrossScreen,
     x68kWarpCursor,
-    NULL,
-    NULL
 };
 
 DeviceIntPtr x68kPointerDevice = NULL;
@@ -132,7 +132,7 @@ x68kMouseProc(DeviceIntPtr device, int what)
 	case DEVICE_INIT:
             pMouse->devicePrivate = (pointer) &x68kMousePriv;
             if( (x68kMousePriv.fd = open("/dev/mouse", O_RDONLY)) == -1 ) {
-                Error ("Can't open mouse device");
+                ErrorF("Can't open mouse device");
                 return !Success;
             }
 	    pMouse->on = FALSE;
@@ -152,18 +152,18 @@ x68kMouseProc(DeviceIntPtr device, int what)
 
 	case DEVICE_ON:
 	    if (ioctl (x68kMousePriv.fd, VUIDGFORMAT, &oformat) == -1) {
-		Error ("x68kMouseProc ioctl VUIDGFORMAT");
+		ErrorF("x68kMouseProc ioctl VUIDGFORMAT");
 		return !Success;
 	    }
 	    format = VUID_FIRM_EVENT;
 	    if (ioctl (x68kMousePriv.fd, VUIDSFORMAT, &format) == -1) {
-		Error ("x68kMouseProc ioctl VUIDSFORMAT");
+		ErrorF("x68kMouseProc ioctl VUIDSFORMAT");
 		return !Success;
 	    }
             if ( fcntl(x68kMousePriv.fd, F_SETOWN, getpid()) == -1 ||
                  fcntl(x68kMousePriv.fd, F_SETFL, O_NONBLOCK | O_ASYNC) == -1
                  ) {
-                Error ("Async mouse I/O failed");
+                ErrorF("Async mouse I/O failed");
                 return !Success;
             }
 	    x68kMousePriv.bmask = 0;
@@ -178,7 +178,7 @@ x68kMouseProc(DeviceIntPtr device, int what)
 
 	case DEVICE_CLOSE:
 	    if (ioctl (x68kMousePriv.fd, VUIDSFORMAT, &oformat) == -1)
-		Error ("x68kMouseProc ioctl VUIDSFORMAT");
+		ErrorF("x68kMouseProc ioctl VUIDSFORMAT");
 	    break;
 
     }
@@ -225,14 +225,14 @@ Firm_event *
 x68kMouseGetEvents(int fd, int *pNumEvents, Bool *pAgain)
 {
     int nBytes;               /* number of bytes of events available. */
-    static Firm_event evBuf[MAXEVENTS];     /* Buffer for Firm_events */
+    static Firm_event evBuf[X68K_MAXEVENTS];     /* Buffer for Firm_events */
 
     if ((nBytes = read (fd, (char *)evBuf, sizeof(evBuf))) == -1) {
 	if (errno == EWOULDBLOCK) {
 	    *pNumEvents = 0;
 	    *pAgain = FALSE;
 	} else {
-	    Error ("x68kMouseGetEvents read");
+	    ErrorF("x68kMouseGetEvents read");
 	    FatalError ("Could not read from mouse");
 	}
     } else {
@@ -265,8 +265,6 @@ x68kMouseEnqueueEvent(DeviceIntPtr device, Firm_event *fe)
     int			type, buttons, flag;
     int			i, nevents, valuators[2];
     ValuatorMask	mask;
-
-    GetEventList(&x68kEvents);
 
     pPriv = (X68kMousePrivPtr)device->public.devicePrivate;
 
@@ -303,7 +301,7 @@ x68kMouseEnqueueEvent(DeviceIntPtr device, Firm_event *fe)
 	nevents = GetPointerEvents(x68kEvents, device,
 	    type, buttons, flag, &mask);
 	for (i = 0; i < nevents; i++)
-	    mieqEnqueue(device, (InternalEvent*)(x68kEvents + i)->event);
+	    mieqEnqueue(device, &x68kEvents[i]);
 	break;
     case LOC_X_DELTA:
 	valuators[0] = fe->value;
@@ -313,7 +311,7 @@ x68kMouseEnqueueEvent(DeviceIntPtr device, Firm_event *fe)
 	nevents = GetPointerEvents(x68kEvents, device,
 	    MotionNotify, 0, flag, &mask);
 	for (i = 0; i < nevents; i++)
-	    mieqEnqueue(device, (InternalEvent*)(x68kEvents + i)->event);
+	    mieqEnqueue(device, &x68kEvents[i]);
 	break;
     case LOC_Y_DELTA:
 	/*
@@ -328,7 +326,7 @@ x68kMouseEnqueueEvent(DeviceIntPtr device, Firm_event *fe)
 	nevents = GetPointerEvents(x68kEvents, device,
 	    MotionNotify, 0, flag, &mask);
 	for (i = 0; i < nevents; i++)
-	    mieqEnqueue(device, (InternalEvent*)(x68kEvents + i)->event);
+	    mieqEnqueue(device, &x68kEvents[i]);
 	break;
     case LOC_X_ABSOLUTE:
     case LOC_Y_ABSOLUTE:

@@ -1,4 +1,4 @@
-/* $NetBSD: x68kText.c,v 1.1 2014/03/01 19:34:47 tsutsui Exp $ */
+/* $NetBSD: x68kText.c,v 1.2 2016/08/30 07:50:55 mrg Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -33,6 +33,7 @@
 #include "mi.h"
 #include "micmap.h"
 #include "fb.h"
+#include "os.h"
 
 /*-------------------------------------------------------------------------
  * function "x68kTextOpen"                          [ X68kFBProc function ]
@@ -89,14 +90,13 @@ x68kTextClose(X68kScreenRec *pPriv)
  * function "x68kTextInit"                     [ called by DIX AddScreen ]
  *
  *  purpose:  initialize text frame buffer
- *  argument: (int)screen              : screen index
- *            (ScreenPtr)pScreen       : DIX screen record
+ *  argument: (ScreenPtr)pScreen       : DIX screen record
  *            (int)argc, (char **)argv : standard C arguments
  *  returns:  (Bool) TRUE  if succeeded
  *                   FALSE otherwise
  *-----------------------------------------------------------------------*/
 Bool
-x68kTextInit(int screen, ScreenPtr pScreen, int argc, char *argv[])
+x68kTextInit(ScreenPtr pScreen, int argc, char *argv[])
 {
     X68kScreenRec *pPriv;
 
@@ -104,7 +104,7 @@ x68kTextInit(int screen, ScreenPtr pScreen, int argc, char *argv[])
     pPriv = x68kGetScreenRecByType(X68K_FB_TEXT);
 
     if ( !dixRegisterPrivateKey(&x68kScreenPrivateKeyRec, PRIVATE_SCREEN, 0) ) {
-            Error("dixRegisterPrivateKey failed");
+            ErrorF("dixRegisterPrivateKey failed");
             return FALSE;
     }
     x68kSetScreenPrivate(pScreen, pPriv);

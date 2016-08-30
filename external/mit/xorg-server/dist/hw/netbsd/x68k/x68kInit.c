@@ -1,4 +1,4 @@
-/* $NetBSD: x68kInit.c,v 1.1 2014/03/01 19:34:47 tsutsui Exp $ */
+/* $NetBSD: x68kInit.c,v 1.2 2016/08/30 07:50:55 mrg Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -77,7 +77,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "x68k.h"
 #include "mi.h"
 
-EventList *x68kEvents = NULL;
+InternalEvent *x68kEvents = NULL;
 
 static int nscreens;
 
@@ -135,7 +135,6 @@ InitInput(int argc, char *argv[])
 {
     x68kPointerDevice = AddInputDevice(serverClient, x68kMouseProc, TRUE);
     x68kKeyboardDevice = AddInputDevice(serverClient, x68kKbdProc, TRUE);
-    GetEventList(&x68kEvents);
 
     if ( !mieqInit() )
         FatalError("mieqInit failed\n");
@@ -153,11 +152,11 @@ CloseInput(void)
  * function "AbortDDX"                                 [ called by OS ]
  *
  *  purpose:  free signal handler and close frame buffers
- *  argument: nothing
+ *  argument: ExitCode
  *  returns:  nothing
  *-----------------------------------------------------------------------*/
 void
-AbortDDX(void)
+AbortDDX(enum ExitCode error)
 {
     int i;
     X68kScreenRec *screen;
@@ -182,9 +181,9 @@ AbortDDX(void)
  *  returns:  nothing
  *-----------------------------------------------------------------------*/
 void
-ddxGiveUp(void)
+ddxGiveUp(enum ExitCode error)
 {
-    AbortDDX();
+    AbortDDX(error);
 }
 
 /*-------------------------------------------------------------------------
@@ -223,8 +222,8 @@ ddxUseMsg(void)
     ErrorF("-x68kconfig filename   specify configuration file\n");
 }
 
-void
-OsVendorFatalError(void)
+_X_EXPORT void
+OsVendorFatalError(const char *f, va_list args)
 {
 }
 

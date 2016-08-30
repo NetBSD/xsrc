@@ -1,4 +1,4 @@
-/* $NetBSD: x68kGraph.c,v 1.3 2016/08/16 01:27:48 mrg Exp $ */
+/* $NetBSD: x68kGraph.c,v 1.4 2016/08/30 07:50:55 mrg Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -185,14 +185,13 @@ x68kGraphClose(X68kScreenRec *pPriv)
  * function "x68kGraphInit"                     [ called by DIX AddScreen ]
  *
  *  purpose:  initialize graphic frame buffer
- *  argument: (int)screen              : screen index
- *            (ScreenPtr)pScreen       : DIX screen record
+ *  argument: (ScreenPtr)pScreen       : DIX screen record
  *            (int)argc, (char **)argv : standard C arguments
  *  returns:  (Bool) : TRUE  if succeeded
  *                     FALSE otherwise
  *-----------------------------------------------------------------------*/
 Bool
-x68kGraphInit(int screen, ScreenPtr pScreen, int argc, char *argv[])
+x68kGraphInit(ScreenPtr pScreen, int argc, char *argv[])
 {
     X68kScreenRec *pPriv;
 
@@ -201,7 +200,7 @@ x68kGraphInit(int screen, ScreenPtr pScreen, int argc, char *argv[])
     
     /* store private record into screen */
     if (!dixRegisterPrivateKey(&x68kScreenPrivateKeyRec, PRIVATE_SCREEN, 0)) {
-        Error("dixRegisterPrivateKey failed");
+        ErrorF("dixRegisterPrivateKey failed");
         return FALSE;
     }
     x68kSetScreenPrivate(pScreen, pPriv);
@@ -420,8 +419,11 @@ x68kUninstallColormap(ColormapPtr cmap)
 	Colormap defMapID = cmap->pScreen->defColormap;
 
 	if (cmap->mid != defMapID) {
-	    ColormapPtr defMap = (ColormapPtr) LookupIDByType(defMapID,
-							      RT_COLORMAP);
+	    pointer retval;
+	    ColormapPtr defMap;
+	    dixLookupResourceByType(&retval, defMapID, RT_COLORMAP,
+		serverClient, DixReadAccess);
+	    defMap = (ColormapPtr) retval;
 	    (*cmap->pScreen->InstallColormap)(defMap);
 	}
     }
