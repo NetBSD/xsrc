@@ -78,8 +78,10 @@
 /* Internal define for Xinerama */
 #define PANORAMIX 1
 
+#if 0
 /* Support Present extension */
 #define PRESENT 1
+#endif
 
 /* Support RANDR extension */
 #define RANDR 1
@@ -120,6 +122,7 @@
 /* Build XFree86 BigFont extension */
 /* #undef XF86BIGFONT */
 
+#if 0
 /* Support XFree86 Video Mode extension */
 #define XF86VIDMODE 1
 
@@ -131,6 +134,7 @@
 
 /* Support X Input extension */
 #define XINPUT 1
+#endif
 
 /* XKB default rules */
 #define XKB_DFLT_RULES "base"
@@ -207,11 +211,13 @@
 /* System has wscons console */
 #define WSCONS_SUPPORT 1
 
+#if 0
 /* Loadable XFree86 server awesomeness */
 #define XFree86LOADER
 
 /* Use libpciaccess */
 #define XSERVER_LIBPCIACCESS 1
+#endif
 
 /* X Access Control Extension */
 #define XACE 1

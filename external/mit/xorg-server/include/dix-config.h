@@ -268,8 +268,10 @@
 /* Internal define for Xinerama */
 #define PANORAMIX 1
 
+#if 0
 /* Support Present extension */
 #define PRESENT 1
+#endif
 
 /* Overall prefix */
 /* #define PROJECTROOT "/usr/X11R7" */
@@ -277,8 +279,10 @@
 /* Support RANDR extension */
 #define RANDR 1
 
+#if 0
 /* Support Record extension */
 #define XRECORD 1
+#endif
 
 /* Support RENDER extension */
 #define RENDER 1
@@ -343,14 +347,18 @@
 /* Build XFree86 BigFont extension */
 /* #undef XF86BIGFONT */
 
+#if 0
 /* Support XFree86 Video Mode extension */
 #define XF86VIDMODE 1
+#endif
 
 /* Support XFixes extension */
 #define XFIXES 1
 
+#if 0
 /* Build XDGA support */
 #define XFreeXDGA 1
+#endif
 
 /* Support Xinerama extension */
 #define XINERAMA 1
@@ -385,8 +393,10 @@
 /* Build DRI2 extension */
 #define DRI2 1
 
+#if 0
 /* Build DBE support */
 #define DBE 1
+#endif
 
 /* Vendor name */
 #define XVENDORNAME "The X.Org Foundation"
