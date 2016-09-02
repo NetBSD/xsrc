@@ -47,14 +47,6 @@
 extern void VISmoveImageRL(unsigned char *src, unsigned char *dst, long w, long h, long skind, long dkind);
 extern void VISmoveImageLR(unsigned char *src, unsigned char *dst, long w, long h, long skind, long dkind);
 
-/* Indexed by ffb resolution enum. */
-struct fastfill_parms ffb_fastfill_parms[] = {
-	/* fsmall, psmall,  ffh,  ffw,  pfh,  pfw */
-	{  0x00c0, 0x1400, 0x04, 0x08, 0x10, 0x50 },	/* Standard: 1280 x 1024 */
-	{  0x0140, 0x2800, 0x04, 0x10, 0x10, 0xa0 },	/* High:     1920 x 1360 */
-	{  0x0080, 0x0a00, 0x02, 0x08, 0x08, 0x50 },	/* Stereo:   960  x 580  */
-/*XXX*/	{  0x00c0, 0x0a00, 0x04, 0x08, 0x08, 0x50 },	/* Portrait: 1280 x 2048 XXX */
-};
 
 void
 CreatorVtChange (ScreenPtr pScreen, int enter)

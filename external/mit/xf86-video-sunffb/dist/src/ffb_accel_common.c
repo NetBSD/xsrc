@@ -1,4 +1,4 @@
-/* $NetBSD: ffb_accel_common.c,v 1.3 2016/08/22 08:28:32 mrg Exp $ */
+/* $NetBSD: ffb_accel_common.c,v 1.4 2016/09/02 21:24:49 macallan Exp $ */
 /*
  * Copyright (C) 1998,1999,2000 Jakub Jelinek (jakub@redhat.com)
  * Copyright (C) 1998 Michal Rehacek (majkl@iname.com)
@@ -42,6 +42,15 @@
 #include "xf86_OSproc.h"
 #include "compiler.h"
 #include "exa.h"
+
+/* Indexed by ffb resolution enum. */
+struct fastfill_parms ffb_fastfill_parms[] = {
+	/* fsmall, psmall,  ffh,  ffw,  pfh,  pfw */
+	{  0x00c0, 0x1400, 0x04, 0x08, 0x10, 0x50 },	/* Standard: 1280 x 1024 */
+	{  0x0140, 0x2800, 0x04, 0x10, 0x10, 0xa0 },	/* High:     1920 x 1360 */
+	{  0x0080, 0x0a00, 0x02, 0x08, 0x08, 0x50 },	/* Stereo:   960  x 580  */
+/*XXX*/	{  0x00c0, 0x0a00, 0x04, 0x08, 0x08, 0x50 },	/* Portrait: 1280 x 2048 XXX */
+};
 
 void FFB_SetupTextureAttrs(FFBPtr pFfb)
 {
