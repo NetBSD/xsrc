@@ -198,8 +198,6 @@ static const OptionInfoRec SMIOptions[] =
     { -1,		     NULL,		  OPTV_NONE,	{0}, FALSE }
 };
 
-#ifdef XFree86LOADER
-
 static MODULESETUPPROTO(siliconmotionSetup);
 
 static XF86ModuleVersionInfo SMIVersRec =
@@ -252,8 +250,6 @@ siliconmotionSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 	return NULL;
     }
 }
-
-#endif /* XFree86LOADER */
 
 static Bool
 SMI_GetRec(ScrnInfoPtr pScrn)
@@ -487,6 +483,7 @@ SMI_PreInit(ScrnInfoPtr pScrn, int flags)
     if (pScrn->depth > 8) {
 	/* The defaults are OK for us */
 	rgb zeros = {0, 0, 0};
+
 #if __BYTE_ORDER == __BIG_ENDIAN
 	rgb masks = {0xff00,0xff0000,0xff000000};
 #else

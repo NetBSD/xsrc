@@ -107,8 +107,6 @@ static const OptionInfoRec FFBOptions[] = {
     { -1,			NULL,		OPTV_NONE,	{0}, FALSE }
 };
 
-#ifdef XFree86LOADER
-
 static MODULESETUPPROTO(ffbSetup);
 
 static XF86ModuleVersionInfo sunffbVersRec =
@@ -151,8 +149,6 @@ ffbSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 	return NULL;
     }
 }
-
-#endif /* XFree86LOADER */
 
 static Bool
 FFBGetRec(ScrnInfoPtr pScrn)
