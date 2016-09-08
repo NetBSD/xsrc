@@ -84,6 +84,8 @@ static void SMI_ProbeDDC(ScrnInfoPtr pScrn, int index);
 static void SMI_DetectPanelSize(ScrnInfoPtr pScrn);
 static void SMI_DetectMCLK(ScrnInfoPtr pScrn);
 
+static Bool SMI_driverFunc(ScrnInfoPtr, xorgDriverFuncOp, pointer);
+
 /*
  * xf86VDrvMsgVerb prints up to 14 characters prefix, where prefix has the
  * format "%s(%d): " so, use name "SMI" instead of "Silicon Motion"
@@ -121,7 +123,8 @@ _X_EXPORT DriverRec SILICONMOTION =
     SMI_Probe,
     SMI_AvailableOptions,
     NULL,
-    0
+    0,
+    SMI_driverFunc
 };
 
 /* Supported chipsets */
@@ -235,7 +238,7 @@ siliconmotionSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 
     if (!setupDone) {
 	setupDone = TRUE;
-	xf86AddDriver(&SILICONMOTION, module, 0);
+	xf86AddDriver(&SILICONMOTION, module, HaveDriverFuncs);
 
 	/*
 	 * The return value must be non-NULL on success even though there
@@ -2129,4 +2132,20 @@ SMI_PrintRegs(ScrnInfoPtr pScrn)
 		"END register dump --------------------\n");
 
     LEAVE();
+}
+
+static Bool
+SMI_driverFunc(ScrnInfoPtr pScrn, xorgDriverFuncOp op,
+    pointer ptr)
+{
+	xorgHWFlags *flag;
+	
+	switch (op) {
+	case GET_REQUIRED_HW_INTERFACES:
+		flag = (CARD32*)ptr;
+		(*flag) = HW_MMIO;
+		return TRUE;
+	default:
+		return FALSE;
+	}
 }
