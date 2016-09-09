@@ -230,6 +230,7 @@ R128Solid(PixmapPtr pPixmap, int x1, int y1, int x2, int y2)
     R128WaitForFifo(pScrn, 2);
     OUTREG(R128_DST_Y_X,          (y1 << 16) | x1);
     OUTREG(R128_DST_WIDTH_HEIGHT, ((x2-x1) << 16) | (y2-y1));
+    exaMarkSync(pScreen);
 }
 
 #define R128DoneSolid R128Done
@@ -317,6 +318,7 @@ R128Copy(PixmapPtr pDstPixmap, int srcX, int srcY, int dstX, int dstY, int width
     OUTREG(R128_SRC_Y_X,          (srcY << 16) | srcX);
     OUTREG(R128_DST_Y_X,          (dstY << 16) | dstX);
     OUTREG(R128_DST_HEIGHT_WIDTH, (height << 16) | width);
+    exaMarkSync(pScreen);
 }
 
 #define R128DoneCopy R128Done
@@ -410,6 +412,131 @@ R128CCESync(ScreenPtr pScreen, int marker)
 
 #endif
 
+/*
+ * Memcpy-based UTS.
+ */
+static Bool
+R128UploadToScreen(PixmapPtr pDst, int x, int y, int w, int h,
+    char *src, int src_pitch)
+{
+    ScrnInfoPtr pScrn = xf86Screens[pDst->drawable.pScreen->myNum];
+    R128InfoPtr	info      = R128PTR(pScrn);
+    char	*dst        = info->FB + exaGetPixmapOffset(pDst);
+    int		dst_pitch  = exaGetPixmapPitch(pDst);
+    int		bpp    = pDst->drawable.bitsPerPixel;
+    int		cpp    = (bpp + 7) >> 3;
+    int		wBytes = w * cpp;
+
+    dst += (x * cpp) + (y * dst_pitch);
+
+    R128WaitForIdle(pScrn);
+
+    while (h--) {
+	memcpy(dst, src, wBytes);
+	src += src_pitch;
+	dst += dst_pitch;
+    }
+
+    return TRUE;
+}
+
+/*
+ * Hostblit-based UTS.
+ * this assumes 32bit pixels
+ */
+static Bool
+R128UploadToScreenHW(PixmapPtr pDst, int x, int y, int w, int h,
+    char *src, int src_pitch)
+{
+    ScrnInfoPtr	pScrn = xf86Screens[pDst->drawable.pScreen->myNum];
+    R128InfoPtr	info      = R128PTR(pScrn);
+    uint32_t	dst_pitch_offset, datatype;
+    int		cnt, line, px;
+    unsigned char *R128MMIO = info->MMIO;
+    int		bpp = pDst->drawable.bitsPerPixel;
+    uint32_t	*s;
+
+    if (!R128GetDatatypeBpp(bpp, &datatype)) {
+        R128TRACE(("R128GetDatatypeBpp failed\n"));
+	return FALSE;
+    }
+
+    if (!R128GetPixmapOffsetPitch(pDst, &dst_pitch_offset)) {
+        R128TRACE(("R128GetPixmapOffsetPitch dest failed\n"));
+	return FALSE;
+    }
+
+    info->state_2d.in_use = TRUE;
+    info->state_2d.dp_gui_master_cntl = (R128_GMC_DST_PITCH_OFFSET_CNTL |
+					  R128_GMC_BRUSH_NONE |
+					  (datatype >> 8) |
+					  R128_GMC_SRC_DATATYPE_COLOR |
+					  R128_ROP3_S |
+					  R128_DP_SRC_SOURCE_HOST_DATA |
+					  R128_GMC_CLR_CMP_CNTL_DIS);
+    info->state_2d.dp_cntl = R128_DST_X_LEFT_TO_RIGHT |
+                             R128_DST_Y_TOP_TO_BOTTOM;
+    info->state_2d.dp_write_mask = 0xffffffff;
+    info->state_2d.dst_pitch_offset = dst_pitch_offset;
+    info->state_2d.default_sc_bottom_right = R128_DEFAULT_SC_RIGHT_MAX |
+                                             R128_DEFAULT_SC_BOTTOM_MAX;
+    Emit2DState(pScrn);
+
+    R128WaitForFifo(pScrn, 3);
+    OUTREG(R128_SRC_Y_X, 0);
+    OUTREG(R128_DST_Y_X, (y << 16) | x);
+    OUTREG(R128_DST_HEIGHT_WIDTH, (h << 16) | w);
+    
+    R128WaitForFifo(pScrn, 32);
+    cnt = 0;
+
+    for (line = 0; line < h; line++) {
+    	s = (void *)src;
+    	for (px = 0; px < w; px++) {
+    	    OUTREG(R128_HOST_DATA0, cpu_to_le32(*s));
+    	    s++;
+    	    cnt++;
+    	    if (cnt > 31) {
+		R128WaitForFifo(pScrn, 32);
+		cnt = 0;
+	    }
+	}
+	src += src_pitch;
+    }
+    info->state_2d.in_use = FALSE;
+    exaMarkSync(pDst->drawable.pScreen);
+    return TRUE;
+}
+
+/*
+ * Memcpy-based DFS.
+ */
+static Bool
+R128DownloadFromScreen(PixmapPtr pSrc, int x, int y, int w, int h,
+    char *dst, int dst_pitch)
+{
+    ScrnInfoPtr pScrn = xf86Screens[pSrc->drawable.pScreen->myNum];
+    R128InfoPtr   info      = R128PTR(pScrn);
+    char  *src        = info->FB + exaGetPixmapOffset(pSrc);
+    int    src_pitch  = exaGetPixmapPitch(pSrc);
+
+    int bpp    = pSrc->drawable.bitsPerPixel;
+    int cpp    = (bpp + 7) >> 3;
+    int wBytes = w * cpp;
+
+    src += (x * cpp) + (y * src_pitch);
+
+    R128WaitForIdle(pScrn);
+
+    while (h--) {
+	memcpy(dst, src, wBytes);
+	src += src_pitch;
+	dst += dst_pitch;
+    }
+
+    return TRUE;
+}
+
 Bool
 R128EXAInit(ScreenPtr pScreen)
 {
@@ -420,7 +547,7 @@ R128EXAInit(ScreenPtr pScreen)
     info->ExaDriver->exa_minor = EXA_VERSION_MINOR;
 
     info->ExaDriver->memoryBase = info->FB + pScrn->fbOffset;
-    info->ExaDriver->flags = EXA_OFFSCREEN_PIXMAPS | EXA_OFFSCREEN_ALIGN_POT;
+    info->ExaDriver->flags = EXA_OFFSCREEN_PIXMAPS;
 
 #if EXA_VERSION_MAJOR > 2 || (EXA_VERSION_MAJOR == 2 && EXA_VERSION_MINOR >= 3)
     info->ExaDriver->maxPitchBytes = 16320;
@@ -446,6 +573,7 @@ R128EXAInit(ScreenPtr pScreen)
 
 #ifdef RENDER
 	if (info->RenderAccel) {
+	    info->ExaDriver->flags |= EXA_OFFSCREEN_ALIGN_POT;
 	    info->ExaDriver->CheckComposite = R128CCECheckComposite;
 	    info->ExaDriver->PrepareComposite = R128CCEPrepareComposite;
 	    info->ExaDriver->Composite = R128CCEComposite;
@@ -464,6 +592,13 @@ R128EXAInit(ScreenPtr pScreen)
 	info->ExaDriver->PrepareCopy = R128PrepareCopy;
 	info->ExaDriver->Copy = R128Copy;
 	info->ExaDriver->DoneCopy = R128DoneCopy;
+
+	if (pScrn->bitsPerPixel < 24) {
+	    info->ExaDriver->UploadToScreen = R128UploadToScreen;
+	} else {
+	    info->ExaDriver->UploadToScreen = R128UploadToScreenHW;
+	}
+	info->ExaDriver->DownloadFromScreen = R128DownloadFromScreen;
 
 	/* The registers used for r128 compositing are CCE specific, just like the
 	 * registers used for radeon compositing are CP specific. The radeon driver
