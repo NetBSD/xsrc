@@ -1,4 +1,4 @@
-/* $NetBSD: x68kMouse.c,v 1.2 2016/08/30 07:50:55 mrg Exp $ */
+/* $NetBSD: x68kMouse.c,v 1.3 2016/09/11 03:55:57 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -263,7 +263,7 @@ x68kMouseEnqueueEvent(DeviceIntPtr device, Firm_event *fe)
     X68kMousePrivPtr	pPriv;	/* Private data for pointer */
     int			bmask;	/* Temporary button mask */
     int			type, buttons, flag;
-    int			i, nevents, valuators[2];
+    int			valuators[2];
     ValuatorMask	mask;
 
     pPriv = (X68kMousePrivPtr)device->public.devicePrivate;
@@ -298,20 +298,14 @@ x68kMouseEnqueueEvent(DeviceIntPtr device, Firm_event *fe)
 	}
 	flag = POINTER_RELATIVE;
 	valuator_mask_set_range(&mask, 0, 0, NULL);
-	nevents = GetPointerEvents(x68kEvents, device,
-	    type, buttons, flag, &mask);
-	for (i = 0; i < nevents; i++)
-	    mieqEnqueue(device, &x68kEvents[i]);
+	QueuePointerEvents(device, type, buttons, flag, &mask);
 	break;
     case LOC_X_DELTA:
 	valuators[0] = fe->value;
 	valuators[1] = 0;
 	valuator_mask_set_range(&mask, 0, 2, valuators);
         flag = POINTER_RELATIVE | POINTER_ACCELERATE;
-	nevents = GetPointerEvents(x68kEvents, device,
-	    MotionNotify, 0, flag, &mask);
-	for (i = 0; i < nevents; i++)
-	    mieqEnqueue(device, &x68kEvents[i]);
+	QueuePointerEvents(device, MotionNotify, 0, flag, &mask);
 	break;
     case LOC_Y_DELTA:
 	/*
@@ -323,10 +317,7 @@ x68kMouseEnqueueEvent(DeviceIntPtr device, Firm_event *fe)
 	valuators[1] = -fe->value;
 	valuator_mask_set_range(&mask, 0, 2, valuators);
         flag = POINTER_RELATIVE | POINTER_ACCELERATE;
-	nevents = GetPointerEvents(x68kEvents, device,
-	    MotionNotify, 0, flag, &mask);
-	for (i = 0; i < nevents; i++)
-	    mieqEnqueue(device, &x68kEvents[i]);
+	QueuePointerEvents(device, MotionNotify, 0, flag, &mask);
 	break;
     case LOC_X_ABSOLUTE:
     case LOC_Y_ABSOLUTE:

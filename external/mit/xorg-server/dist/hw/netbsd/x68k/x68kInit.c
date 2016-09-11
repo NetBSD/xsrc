@@ -1,4 +1,4 @@
-/* $NetBSD: x68kInit.c,v 1.2 2016/08/30 07:50:55 mrg Exp $ */
+/* $NetBSD: x68kInit.c,v 1.3 2016/09/11 03:55:57 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -77,8 +77,6 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "x68k.h"
 #include "mi.h"
 
-InternalEvent *x68kEvents = NULL;
-
 static int nscreens;
 
 void
@@ -146,6 +144,7 @@ InitInput(int argc, char *argv[])
 void
 CloseInput(void)
 {
+    mieqFini();
 }
 
 /*-------------------------------------------------------------------------

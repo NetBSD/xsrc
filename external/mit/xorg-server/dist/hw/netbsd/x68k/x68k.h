@@ -1,4 +1,4 @@
-/* $NetBSD: x68k.h,v 1.2 2016/08/30 07:50:55 mrg Exp $ */
+/* $NetBSD: x68k.h,v 1.3 2016/09/11 03:55:57 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -149,9 +149,6 @@ Bool x68kSaveScreen(ScreenPtr, int);
 Bool x68kGraphOpen(X68kScreenRec *);
 Bool x68kGraphInit(ScreenPtr, int, char *[]);
 void x68kGraphClose(X68kScreenRec *);
-
-/* in x68kInit.c */
-extern InternalEvent *x68kEvents;
 
 /* in x68kIo.c */
 void x68kSigIOHandler(int);

@@ -1,4 +1,4 @@
-/* $NetBSD: x68kKbd.c,v 1.2 2016/08/30 07:50:55 mrg Exp $ */
+/* $NetBSD: x68kKbd.c,v 1.3 2016/09/11 03:55:57 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -292,13 +292,10 @@ x68kKbdEnqueueEvent(DeviceIntPtr pDev, Firm_event *fe)
 {
     BYTE		keycode;
     int			type;
-    int			i, nevents;
 
     type = ((fe->value == VKEY_UP) ? KeyRelease : KeyPress);
     keycode = (fe->id & 0x7f) + MIN_KEYCODE;
-    nevents = GetKeyboardEvents(x68kEvents, pDev, type, keycode);
-    for (i = 0; i < nevents; i++)
-	mieqEnqueue(pDev, &x68kEvents[i]);
+    QueueKeyboardEvents(pDev, type, keycode);
 }
 
 /*-
