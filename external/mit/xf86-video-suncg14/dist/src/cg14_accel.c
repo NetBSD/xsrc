@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.7 2013/07/30 21:49:38 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.8 2016/09/16 21:16:37 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -28,7 +28,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  */
- 
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/types.h>
 
 /* all driver need this */

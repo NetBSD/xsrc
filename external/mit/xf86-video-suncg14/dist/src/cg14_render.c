@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_render.c,v 1.7 2013/07/30 21:49:38 macallan Exp $ */
+/* $NetBSD: cg14_render.c,v 1.8 2016/09/16 21:16:37 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -29,6 +29,10 @@
  *
  */
  
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/types.h>
 
 /* all driver need this */
@@ -224,10 +228,10 @@ void CG14Comp_Over8Solid(Cg14Ptr p,
 			/* fetch destination pixels */
 			write_sx_io(p, dstx, SX_LDUQ0(60, 3, dstx & 7));
 			/* duplicate them for all channels */
+			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 13, 16, 3));
+			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 14, 20, 3));
+			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 15, 24, 3));
 			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 12, 13, 2));
-			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 16, 17, 2));
-			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 20, 21, 2));
-			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 24, 25, 2));
 			/* generate inverted alpha */
 			write_sx_reg(p, SX_INSTRUCTIONS,
 			    SX_XORS(12, 8, 28, 15));

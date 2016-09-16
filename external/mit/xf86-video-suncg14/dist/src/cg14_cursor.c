@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_cursor.c,v 1.2 2013/06/19 13:20:05 macallan Exp $ */
+/* $NetBSD: cg14_cursor.c,v 1.3 2016/09/16 21:16:37 macallan Exp $ */
 /*
  * Copyright (c) 2005 Michael Lorenz
  * All rights reserved.
@@ -28,6 +28,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <sys/types.h>
 

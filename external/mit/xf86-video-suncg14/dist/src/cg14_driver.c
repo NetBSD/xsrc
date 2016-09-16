@@ -58,6 +58,8 @@ static void	CG14InitCplane24(ScrnInfoPtr pScrn);
 static void	CG14ExitCplane24(ScrnInfoPtr pScrn);
 static void    *CG14WindowLinear(ScreenPtr, CARD32, CARD32, int, CARD32 *,
 			      void *);
+static Bool	CG14DriverFunc(ScrnInfoPtr pScrn, xorgDriverFuncOp op,
+				pointer ptr);
 
 /* Required if the driver supports mode switching */
 static Bool	CG14SwitchMode(SWITCH_MODE_ARGS_DECL);
@@ -93,7 +95,8 @@ _X_EXPORT DriverRec SUNCG14 = {
     CG14Probe,
     CG14AvailableOptions,
     NULL,
-    0
+    0,
+    CG14DriverFunc
 };
 
 typedef enum {
@@ -140,7 +143,7 @@ cg14Setup(pointer module, pointer opts, int *errmaj, int *errmin)
 
     if (!setupDone) {
 	setupDone = TRUE;
-	xf86AddDriver(&SUNCG14, module, 0);
+	xf86AddDriver(&SUNCG14, module, HaveDriverFuncs);
 
 	/*
 	 * Modules that this driver always requires can be loaded here
@@ -299,7 +302,8 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
 {
     Cg14Ptr pCg14;
     sbusDevicePtr psdp = NULL;
-    int i, from;
+    int i, from, size, len, reg[6], prom;
+    char *ptr;
 
     if (flags & PROBE_DETECT) return FALSE;
 
@@ -345,8 +349,17 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
     pCg14->memsize = 4 * 1024 * 1024;	/* always safe */
     if ((psdp->height * psdp->width * 4) > 0x00400000)
     	 pCg14->memsize = 0x00800000;
-    if (psdp->size > pCg14->memsize)
-    	pCg14->memsize = psdp->size;
+    len = 24;
+    prom = sparcPromInit();
+    if (ptr = sparcPromGetProperty(&psdp->node, "reg", &len)) {
+    	if (len >= 24) {
+    	    memcpy(reg, ptr, 24);
+    	    size = reg[5];
+    	    xf86Msg(X_DEBUG, "memsize from reg: %d MB\n", size >> 20);
+	    if (size > pCg14->memsize)
+    		pCg14->memsize = size;
+    	}
+    }
     xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "found %d MB video memory\n",
       pCg14->memsize >> 20);
     /*********************
@@ -585,7 +598,7 @@ CG14ScreenInit(SCREEN_INIT_ARGS_DECL)
     miSetPixmapDepths ();
 
     if (pCg14->use_shadow) {
-	pCg14->shadow = xcalloc(1, pScrn->virtualX * pScrn->virtualY * 4);
+	pCg14->shadow = malloc(pScrn->virtualX * pScrn->virtualY * 4);
 		
 	if (!pCg14->shadow) {
 	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
@@ -864,4 +877,21 @@ CG14ExitCplane24(ScrnInfoPtr pScrn)
   int bpp = 8;
               
   ioctl (pCg14->psdp->fd, CG14_SET_PIXELMODE, &bpp);
+}
+
+
+static Bool
+CG14DriverFunc(ScrnInfoPtr pScrn, xorgDriverFuncOp op,
+    pointer ptr)
+{
+	xorgHWFlags *flag;
+	
+	switch (op) {
+	case GET_REQUIRED_HW_INTERFACES:
+		flag = (CARD32*)ptr;
+		(*flag) = HW_MMIO;
+		return TRUE;
+	default:
+		return FALSE;
+	}
 }
