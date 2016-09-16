@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_render.c,v 1.8 2016/09/16 21:16:37 macallan Exp $ */
+/* $NetBSD: cg14_render.c,v 1.9 2016/09/16 22:07:25 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -43,11 +43,11 @@
 #include "cg14.h"
 #include <sparc/sxreg.h>
 
-#define SX_SINGLE
+/*#define SX_SINGLE*/
 /*#define SX_RENDER_DEBUG*/
 /*#define SX_ADD_SOFTWARE*/
 
-#ifdef SX__RENDER_DEBUG
+#ifdef SX_RENDER_DEBUG
 #define ENTER xf86Msg(X_ERROR, "%s>\n", __func__);
 #define DPRINTF xf86Msg
 #else
@@ -71,8 +71,47 @@ void CG14Comp_Over32Solid(Cg14Ptr p,
 	for (line = 0; line < height; line++) {
 		mskx = msk;
 		dstx = dst;
-#ifdef SX_SINGLE
-
+#ifndef SX_SINGLE
+		int rest;
+		for (x = 0; x < width; x += 4) {
+			rest = width - x;
+			/* fetch 4 mask values */
+			write_sx_io(p, mskx, SX_LDUQ0(12, 3, mskx & 7));
+			/* fetch destination pixels */
+			write_sx_io(p, dstx, SX_LDUQ0(60, 3, dstx & 7));
+			/* duplicate them for all channels */
+			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 12, 13, 2));
+			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 16, 17, 2));
+			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 20, 21, 2));
+			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 24, 25, 2));
+			/* generate inverted alpha */
+			write_sx_reg(p, SX_INSTRUCTIONS,
+			    SX_XORS(12, 8, 28, 15));
+			/* multiply source */
+			write_sx_reg(p, SX_INSTRUCTIONS,
+			    SX_MUL16X16SR8(8, 12, 44, 3));
+			write_sx_reg(p, SX_INSTRUCTIONS,
+			    SX_MUL16X16SR8(8, 16, 48, 3));
+			write_sx_reg(p, SX_INSTRUCTIONS,
+			    SX_MUL16X16SR8(8, 20, 52, 3));
+			write_sx_reg(p, SX_INSTRUCTIONS,
+			    SX_MUL16X16SR8(8, 24, 56, 3));
+			/* multiply dest */
+			write_sx_reg(p, SX_INSTRUCTIONS,
+			    SX_MUL16X16SR8(28, 60, 76, 15));
+			/* add up */
+			write_sx_reg(p, SX_INSTRUCTIONS,
+			    SX_ADDV(44, 76, 92, 15));
+			/* write back */
+			if (rest < 4) {
+				write_sx_io(p, dstx, SX_STUQ0C(92, rest - 1, dstx & 7));
+			} else {
+				write_sx_io(p, dstx, SX_STUQ0C(92, 3, dstx & 7));
+			}
+			dstx += 16;
+			mskx += 16;
+		}
+#else /* SX_SINGLE */
 		for (x = 0; x < width; x++) {
 			m = *(volatile uint32_t *)(p->fb + mskx);
 			m = m >> 24;
@@ -114,41 +153,7 @@ void CG14Comp_Over32Solid(Cg14Ptr p,
 			dstx += 4;
 			mskx += 4;
 		}
-#else
-		for (x = 0; x < width; x += 4) {
-			/* fetch 4 mask values */
-			write_sx_io(p, mskx, SX_LDUQ0(12, 3, mskx & 7));
-			/* fetch destination pixels */
-			write_sx_io(p, dstx, SX_LDUQ0(60, 3, dstx & 7));
-			/* duplicate them for all channels */
-			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 12, 13, 2));
-			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 16, 17, 2));
-			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 20, 21, 2));
-			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 24, 25, 2));
-			/* generate inverted alpha */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_XORS(12, 8, 28, 15));
-			/* multiply source */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_MUL16X16SR8(8, 12, 44, 3));
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_MUL16X16SR8(8, 16, 48, 3));
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_MUL16X16SR8(8, 20, 52, 3));
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_MUL16X16SR8(8, 24, 56, 3));
-			/* multiply dest */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_MUL16X16SR8(28, 60, 76, 15));
-			/* add up */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_ADDV(44, 76, 92, 15));
-			/* write back */
-			write_sx_io(p, dstx, SX_STUQ0C(92, 3, dstx & 7));
-			dstx += 16;
-			mskx += 16;
-		}
-#endif
+#endif /* SX_SINGLE */
 		dst += dstpitch;
 		msk += srcpitch;
 	}
@@ -172,8 +177,47 @@ void CG14Comp_Over8Solid(Cg14Ptr p,
 	for (line = 0; line < height; line++) {
 		mskx = msk;
 		dstx = dst;
-#ifdef SX_SINGLE
-
+#ifndef SX_SINGLE
+		int rest;
+		for (x = 0; x < width; x += 4) {
+			rest = width - x;			
+			/* fetch 4 mask values */
+			write_sx_io(p, mskx, SX_LDB(12, 3, mskx & 7));
+			/* fetch destination pixels */
+			write_sx_io(p, dstx, SX_LDUQ0(60, 3, dstx & 7));
+			/* duplicate them for all channels */
+			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 13, 16, 3));
+			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 14, 20, 3));
+			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 15, 24, 3));
+			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 12, 13, 2));
+			/* generate inverted alpha */
+			write_sx_reg(p, SX_INSTRUCTIONS,
+			    SX_XORS(12, 8, 28, 15));
+			/* multiply source */
+			write_sx_reg(p, SX_INSTRUCTIONS,
+			    SX_MUL16X16SR8(8, 12, 44, 3));
+			write_sx_reg(p, SX_INSTRUCTIONS,
+			    SX_MUL16X16SR8(8, 16, 48, 3));
+			write_sx_reg(p, SX_INSTRUCTIONS,
+			    SX_MUL16X16SR8(8, 20, 52, 3));
+			write_sx_reg(p, SX_INSTRUCTIONS,
+			    SX_MUL16X16SR8(8, 24, 56, 3));
+			/* multiply dest */
+			write_sx_reg(p, SX_INSTRUCTIONS,
+			    SX_MUL16X16SR8(28, 60, 76, 15));
+			/* add up */
+			write_sx_reg(p, SX_INSTRUCTIONS,
+			    SX_ADDV(44, 76, 92, 15));
+			/* write back */
+			if (rest < 4) {
+				write_sx_io(p, dstx, SX_STUQ0C(92, rest - 1, dstx & 7));
+			} else {
+				write_sx_io(p, dstx, SX_STUQ0C(92, 3, dstx & 7));
+			}
+			dstx += 16;
+			mskx += 4;
+		}
+#else /* SX_SINGLE */
 		for (x = 0; x < width; x++) {
 			m = *(volatile uint8_t *)(p->fb + mskx);
 #ifdef SX_DEBUG
@@ -217,44 +261,10 @@ void CG14Comp_Over8Solid(Cg14Ptr p,
 			dstx += 4;
 			mskx += 1;
 		}
+#endif /* SX_SINGLE */
 #ifdef SX_DEBUG
 		buffer[x] = 0;
 		xf86Msg(X_ERROR, "%s\n", buffer);
-#endif
-#else
-		for (x = 0; x < width; x += 4) {
-			/* fetch 4 mask values */
-			write_sx_io(p, mskx, SX_LDB(12, 3, mskx & 7));
-			/* fetch destination pixels */
-			write_sx_io(p, dstx, SX_LDUQ0(60, 3, dstx & 7));
-			/* duplicate them for all channels */
-			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 13, 16, 3));
-			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 14, 20, 3));
-			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 15, 24, 3));
-			write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(0, 12, 13, 2));
-			/* generate inverted alpha */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_XORS(12, 8, 28, 15));
-			/* multiply source */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_MUL16X16SR8(8, 12, 44, 3));
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_MUL16X16SR8(8, 16, 48, 3));
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_MUL16X16SR8(8, 20, 52, 3));
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_MUL16X16SR8(8, 24, 56, 3));
-			/* multiply dest */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_MUL16X16SR8(28, 60, 76, 15));
-			/* add up */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_ADDV(44, 76, 92, 15));
-			/* write back */
-			write_sx_io(p, dstx, SX_STUQ0C(92, 3, dstx & 7));
-			dstx += 16;
-			mskx += 4;
-		}
 #endif
 		dst += dstpitch;
 		msk += srcpitch;
