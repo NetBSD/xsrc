@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.8 2016/09/16 21:16:37 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.9 2016/09/16 22:05:47 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -43,9 +43,7 @@
 #include "cg14.h"
 #include <sparc/sxreg.h>
 
-#define SX_SINGLE
 /*#define SX_DEBUG*/
-/*#define SX_ADD_SOFTWARE*/
 
 #ifdef SX_DEBUG
 #define ENTER xf86Msg(X_ERROR, "%s>\n", __func__);
@@ -548,7 +546,7 @@ CG14CheckComposite(int op, PicturePtr pSrcPicture,
 	 */
 	
 	if ((op != PictOpOver) && (op != PictOpAdd) && (op != PictOpSrc)) {
-		xf86Msg(X_ERROR, "%s: rejecting %d\n", __func__, op);
+		DPRINTF(X_ERROR, "%s: rejecting %d\n", __func__, op);
 		return FALSE;
 	}
 	i = 0;
@@ -558,7 +556,7 @@ CG14CheckComposite(int op, PicturePtr pSrcPicture,
 	}
 
 	if (!ok) {
-		xf86Msg(X_ERROR, "%s: unsupported src format %x\n",
+		DPRINTF(X_ERROR, "%s: unsupported src format %x\n",
 		    __func__, pSrcPicture->format);
 		return FALSE;
 	}
@@ -852,9 +850,9 @@ CG14InitAccel(ScreenPtr pScreen)
 	pExa->pixmapOffsetAlign = 8;
 	pExa->pixmapPitchAlign = 8;
 
-	pExa->flags = EXA_OFFSCREEN_PIXMAPS |
-		      /*EXA_SUPPORTS_OFFSCREEN_OVERLAPS |*/
-		      EXA_MIXED_PIXMAPS;
+	pExa->flags = EXA_OFFSCREEN_PIXMAPS
+		      /* | EXA_SUPPORTS_OFFSCREEN_OVERLAPS |*/
+		      | EXA_MIXED_PIXMAPS;
 
 	/*
 	 * these limits are bogus
