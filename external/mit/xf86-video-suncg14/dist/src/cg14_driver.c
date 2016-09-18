@@ -355,7 +355,7 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
     	if (len >= 24) {
     	    memcpy(reg, ptr, 24);
     	    size = reg[5];
-    	    xf86Msg(X_DEBUG, "memsize from reg: %d MB\n", size >> 20);
+    	    xf86Msg(X_INFO, "memsize from reg: %d MB\n", size >> 20);
 	    if (size > pCg14->memsize)
     		pCg14->memsize = size;
     	}
