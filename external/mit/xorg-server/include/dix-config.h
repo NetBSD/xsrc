@@ -251,7 +251,9 @@
 #define HAVE_VASPRINTF 1
 
 /* Support IPv6 for TCP connections */
-#define IPv6 1
+#ifndef __NetBSD__	/* Defined by the build */
+# define IPv6 1
+#endif
 
 /* Support os-specific local connections */
 /* #undef LOCALCONN */

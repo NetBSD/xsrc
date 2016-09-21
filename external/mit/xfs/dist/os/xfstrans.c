@@ -45,7 +45,7 @@ TRANS(GetInetdListenInfo) (int fd)
 
     /* Fill in correct address/portnum */
     TRANS(SocketINETGetAddr)(inetdCI);
-#ifdef AF_INET6
+#if defined(IPv6) && defined(AF_INET6)
     if ( ((struct sockaddr *)(inetdCI->addr))->sa_family == AF_INET6 )
 	portnum = ntohs(((struct sockaddr_in6 *)(inetdCI->addr))->sin6_port);
     else

@@ -70,7 +70,9 @@
 #define HAVE_STRNDUP 1
 
 /* Support IPv6 for TCP connections */
-#define IPv6 1
+#ifndef __NetBSD__	/* Defined by the build */
+# define IPv6 1
+#endif
 
 /* Support MIT-SHM Extension */
 #define MITSHM 1
