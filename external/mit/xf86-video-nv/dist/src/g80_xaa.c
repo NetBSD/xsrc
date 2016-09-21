@@ -48,15 +48,6 @@ G80Sync(ScrnInfoPtr pScrn)
 }
 
 void
-G80DMAKickoffCallback(ScrnInfoPtr pScrn)
-{
-    G80Ptr pNv = G80PTR(pScrn);
-
-    G80DmaKickoff(pNv);
-    pNv->DMAKickoffCallback = NULL;
-}
-
-void
 G80SetPattern(G80Ptr pNv, int bg, int fg, int pat0, int pat1)
 {
     G80DmaStart(pNv, 0x2f0, 4);
@@ -129,7 +120,7 @@ G80SetupForScreenToScreenCopy(
         G80DmaNext (pNv, 4);
         G80SetRopSolid(pNv, rop, planemask);
     }
-    pNv->DMAKickoffCallback = G80DMAKickoffCallback;
+    pNv->DMAKickoffCallback = G80DmaKickoffCallback;
 }
 
 static void
@@ -185,7 +176,7 @@ G80SetupForSolidFill(
     G80DmaStart(pNv, 0x588, 1);
     G80DmaNext (pNv, color);
 
-    pNv->DMAKickoffCallback = G80DMAKickoffCallback;
+    pNv->DMAKickoffCallback = G80DmaKickoffCallback;
 }
 
 static void
@@ -242,7 +233,7 @@ G80SetupForMono8x8PatternFill(
     G80DmaStart(pNv, 0x588, 1);
     G80DmaNext (pNv, fg);
 
-    pNv->DMAKickoffCallback = G80DMAKickoffCallback;
+    pNv->DMAKickoffCallback = G80DmaKickoffCallback;
 }
 
 static void
@@ -428,7 +419,7 @@ G80SetupForSolidLine(ScrnInfoPtr pScrn, int color, int rop, unsigned planemask)
     G80DmaStart(pNv, 0x588, 1);
     G80DmaNext (pNv, color);
 
-    pNv->DMAKickoffCallback = G80DMAKickoffCallback;
+    pNv->DMAKickoffCallback = G80DmaKickoffCallback;
 }
 
 static void

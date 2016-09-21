@@ -12,3 +12,4 @@
 
 void G80DmaKickoff(G80Ptr pNv);
 void G80DmaWait(G80Ptr pNv, int size);
+void G80DmaKickoffCallback(ScrnInfoPtr pScrn);

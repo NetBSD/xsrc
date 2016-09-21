@@ -63,3 +63,12 @@ void G80DmaWait(G80Ptr pNv, int size)
             pNv->dmaFree = dmaGet - pNv->dmaCurrent - 1;
     }
 }
+
+void
+G80DmaKickoffCallback(ScrnInfoPtr pScrn)
+{
+    G80Ptr pNv = G80PTR(pScrn);
+
+    G80DmaKickoff(pNv);
+    pNv->DMAKickoffCallback = NULL;
+}
