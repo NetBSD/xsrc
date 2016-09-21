@@ -116,7 +116,7 @@ prepareSolid(PixmapPtr      pPixmap,
     G80DmaStart(pNv, 0x588, 1);
     G80DmaNext (pNv, fg);
 
-    pNv->DMAKickoffCallback = G80DmaKickoffCallback;
+    pNv->DMAKickoffCallback = G80DMAKickoffCallback;
     return TRUE;
 }
 
@@ -163,7 +163,7 @@ prepareCopy(PixmapPtr       pSrcPixmap,
         G80DmaNext (pNv, 4);
         G80SetRopSolid(pNv, alu, planemask);
     }
-    pNv->DMAKickoffCallback = G80DmaKickoffCallback;
+    pNv->DMAKickoffCallback = G80DMAKickoffCallback;
     return TRUE;
 }
 
@@ -283,7 +283,7 @@ upload(PixmapPtr pDst,
     if(kickoff)
         G80DmaKickoff(pNv);
     else
-        pNv->DMAKickoffCallback = G80DmaKickoffCallback;
+        pNv->DMAKickoffCallback = G80DMAKickoffCallback;
 
     return TRUE;
 }
