@@ -798,13 +798,15 @@ MGAGCalcClock ( ScrnInfoPtr pScrn, long f_out,
 		/* see values of ( n ) which we can't use */
 		for ( n = feed_div_min; n <= feed_div_max; n++ )
 		{ 
+			double av;
 			calc_f = ref_freq * (n + 1) / (m + 1) ;
 
 			/*
 			 * Pick the closest frequency.
 			 */
-			if ( abs(calc_f - f_vco) < m_err ) {
-				m_err = abs(calc_f - f_vco);
+			av = fabs(calc_f - f_vco);
+			if ( av < m_err ) {
+				m_err = av;
 				*best_m = m;
 				*best_n = n;
 			}
