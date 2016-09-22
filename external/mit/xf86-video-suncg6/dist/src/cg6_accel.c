@@ -547,10 +547,12 @@ Cg6DGAInit(ScreenPtr pScreen)
     if (result) {
     	xf86Msg(X_INFO, "%s: DGA initialized\n",
             pCg6->psdp->device);
+	return TRUE;
     } else {
      	xf86Msg(X_WARNING, "%s: DGA setup failed\n",
             pCg6->psdp->device);
-    }       
+	return FALSE;
+    }
 }
 
 static Bool 
