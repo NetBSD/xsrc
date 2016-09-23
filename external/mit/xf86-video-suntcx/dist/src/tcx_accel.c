@@ -21,7 +21,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: tcx_accel.c,v 1.9 2014/07/08 17:05:26 macallan Exp $ */
+/* $NetBSD: tcx_accel.c,v 1.10 2016/09/23 20:50:54 macallan Exp $ */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <sys/types.h>
 
@@ -95,7 +99,7 @@ TcxCopy
 {
     ScrnInfoPtr pScreenInfo = xf86Screens[pDstPixmap->drawable.pScreen->myNum];
     TcxPtr pTcx = GET_TCX_FROM_SCRN(pScreenInfo);
-    uint64_t cmd, lcmd;
+    volatile uint64_t cmd, lcmd;
     int line, col, leftover, src, dst, xsteps, sstep, dstep, dpitch, x, xoff;
     int doff;
 
@@ -217,7 +221,7 @@ TcxSolid(
     ScrnInfoPtr pScreenInfo = xf86Screens[pPixmap->drawable.pScreen->myNum];
     TcxPtr pTcx = GET_TCX_FROM_SCRN(pScreenInfo);
     int dpitch, dst, line, fullsteps, i;
-    uint64_t cmd, rcmd, lcmd, tmpl;
+    volatile uint64_t cmd, rcmd, lcmd, tmpl;
     uint32_t pmask;
 
     dpitch = exaGetPixmapPitch(pPixmap) >> pTcx->pitchshift;

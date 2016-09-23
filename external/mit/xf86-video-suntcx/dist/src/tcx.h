@@ -61,8 +61,8 @@ typedef struct {
 	Bool		Is8bit;
 	Bool		HasStipROP;
 	int		vramsize;	/* size of the 8bit fb */
-	uint64_t	*rblit;
-	uint64_t	*rstip;
+	volatile uint64_t	*rblit;
+	volatile uint64_t	*rstip;
 	xf86CursorInfoPtr CursorInfoRec;
 	unsigned int	CursorXY;
 	int		CursorBg, CursorFg;
