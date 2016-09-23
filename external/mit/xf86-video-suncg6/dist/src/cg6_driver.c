@@ -25,9 +25,6 @@
 #include "config.h"
 #endif
 
-/* need this for PRIxPTR macro */
-#include <machine/int_fmtio.h>
-
 #include <string.h>
 
 #include "cg6.h"
@@ -489,9 +486,8 @@ CG6ScreenInit(SCREEN_INIT_ARGS_DECL)
     
     if (!pCg6->fbc || !pCg6->thc || !pCg6->fb) {
         xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-                   "xf86MapSbusMem failed fbc:%" PRIxPTR " fb:%" PRIxPTR
-                   " thc:%" PRIxPTR "\n",
-                   pCg6->fbc, pCg6->fb, pCg6->thc );
+                   "xf86MapSbusMem failed fbc:%p fb:%p thc:%p\n",
+                   pCg6->fbc, pCg6->fb, pCg6->thc);
     
         if (pCg6->fbc) {
             xf86UnmapSbusMem(psdp, pCg6->fbc, sizeof(*pCg6->fbc));
