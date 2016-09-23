@@ -65,6 +65,9 @@ static ModeStatus TCXValidMode(SCRN_ARG_TYPE arg, DisplayModePtr mode,
 
 void TCXSync(ScrnInfoPtr pScrn);
 
+static Bool TCXDriverFunc(ScrnInfoPtr, xorgDriverFuncOp, pointer);
+
+
 #define TCX_VERSION 4000
 #define TCX_NAME "SUNTCX"
 #define TCX_DRIVER_NAME "suntcx"
@@ -87,7 +90,8 @@ _X_EXPORT DriverRec SUNTCX = {
     TCXProbe,
     TCXAvailableOptions,
     NULL,
-    0
+    0,
+    TCXDriverFunc
 };
 
 typedef enum {
@@ -128,7 +132,7 @@ tcxSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 
     if (!setupDone) {
 	setupDone = TRUE;
-	xf86AddDriver(&SUNTCX, module, 0);
+	xf86AddDriver(&SUNTCX, module, HaveDriverFuncs);
 
 	/*
 	 * Modules that this driver always requires can be loaded here
@@ -878,4 +882,20 @@ TCXInitCplane24(ScrnInfoPtr pScrn)
     p = pTcx->cplane;
     for (q = pTcx->cplane + size; p != q; p++)
 	*p = (*p & 0xffffff) | TCX_CPLANE_MODE;
+}
+
+static Bool
+TCXDriverFunc(ScrnInfoPtr pScrn, xorgDriverFuncOp op,
+    pointer ptr)
+{
+	xorgHWFlags *flag;
+	
+	switch (op) {
+	case GET_REQUIRED_HW_INTERFACES:
+		flag = (CARD32*)ptr;
+		(*flag) = HW_MMIO;
+		return TRUE;
+	default:
+		return FALSE;
+	}
 }
