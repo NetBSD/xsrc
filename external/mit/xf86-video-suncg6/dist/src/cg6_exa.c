@@ -285,7 +285,7 @@ Cg6DownloadFromScreen(PixmapPtr pSrc, int x, int y, int w, int h,
 {
     ScrnInfoPtr pScrn = xf86Screens[pSrc->drawable.pScreen->myNum];
     Cg6Ptr pCg6       = GET_CG6_FROM_SCRN(pScrn);
-    char  *src        = pCg6->fb + exaGetPixmapOffset(pSrc);
+    uint8_t *src      = pCg6->fb + exaGetPixmapOffset(pSrc);
     int    src_pitch  = exaGetPixmapPitch(pSrc);
      
     src += x + (y * src_pitch);
