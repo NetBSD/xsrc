@@ -848,9 +848,11 @@ pci_device_netbsd_has_kernel_driver(struct pci_device *dev)
 {
 #ifdef PCI_IOC_DRVNAME
 	/*
-	 * NetBSD PCI_IOC_DRVNAME appears at the same time as pci_drvname(3)
+	 * NetBSD PCI_IOC_DRVNAME appears at the same time as pci_drvname(3),
+	 * same as the better onbus version.
 	 */
 	char drvname[16];
+	int i;
 
 	if (dev->bus >= nbuses)
 		return 0;
@@ -858,10 +860,22 @@ pci_device_netbsd_has_kernel_driver(struct pci_device *dev)
 	/*
 	 * vga(4) should be considered "not bound".
 	 */
-	if (pci_drvname(buses[dev->bus].fd, dev->dev, dev->func,
-			drvname, sizeof drvname) == 0 &&
-	    strncmp(drvname, "vga", 3) != 0)
-		return 1;
+	for (i = 0; i < nbuses; i++) {
+		if (buses[i].num == dev->bus) {
+			int rv;
+
+#ifdef PCI_IOC_DRVNAMEONBUS
+			rv = pci_drvnameonbus(buses[i].fd, dev->bus,
+			    dev->dev, dev->func, drvname, sizeof drvname);
+#else
+			rv = pci_drvname(buses[i].fd,
+			    dev->dev, dev->func, drvname, sizeof drvname);
+#endif
+			if (rv == 0 && strncmp(drvname, "vga", 3) != 0)
+				return 1;
+			return 0;
+		}
+	}
 #endif
 	return 0;
 }
