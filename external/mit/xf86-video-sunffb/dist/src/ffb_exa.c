@@ -1,4 +1,4 @@
-/* $NetBSD: ffb_exa.c,v 1.4 2016/08/22 08:28:32 mrg Exp $ */
+/* $NetBSD: ffb_exa.c,v 1.5 2016/09/27 19:12:53 joerg Exp $ */
 /*
  * Copyright (c) 2015 Michael Lorenz
  * All rights reserved.
@@ -300,8 +300,8 @@ FFBPrepareComposite(int op, PicturePtr pSrcPicture,
 		if (pSrcPicture->pSourcePict->type == SourcePictTypeSolidFill) {
 			pFfb->fillcolour =
 			    pSrcPicture->pSourcePict->solidFill.color;
-			DPRINTF(X_ERROR, "%s: solid src %08x\n",
-			    __func__, pFfb->fillcolour);
+			DPRINTF(X_ERROR, "%s: solid src %08"PRIx32"\n",
+			    __func__, (uint32_t)pFfb->fillcolour);
 			pFfb->no_source_pixmap = TRUE;
 			pFfb->source_is_solid = TRUE;
 		}
@@ -311,8 +311,8 @@ FFBPrepareComposite(int op, PicturePtr pSrcPicture,
 		    SourcePictTypeSolidFill) {
 			pFfb->fillcolour = 
 			   pMaskPicture->pSourcePict->solidFill.color;
-			xf86Msg(X_ERROR, "%s: solid mask %08x\n",
-			    __func__, pFfb->fillcolour);
+			xf86Msg(X_ERROR, "%s: solid mask %08"PRIx32"\n",
+			    __func__, (uint32_t)pFfb->fillcolour);
 		}
 	}
 	if (pMaskPicture != NULL) {
