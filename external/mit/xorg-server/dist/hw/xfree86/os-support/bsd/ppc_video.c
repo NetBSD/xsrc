@@ -82,8 +82,8 @@ xf86EnableIO()
 #ifdef __arm__
     IOPortBase = (unsigned int)ioBase;
 #endif
-    return TRUE;
 #endif
+    return TRUE;
 }
 
 
