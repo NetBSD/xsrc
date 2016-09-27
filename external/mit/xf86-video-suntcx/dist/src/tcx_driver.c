@@ -345,7 +345,7 @@ TCXPreInit(ScrnInfoPtr pScrn, int flags)
     prom = sparcPromInit();
     hwCursor = sparcPromGetBool(&psdp->node, "hw-cursor");
     lowDepth = sparcPromGetBool(&psdp->node, "tcx-8-bit");
-    if (pTcx->HasStipROP = sparcPromGetBool(&psdp->node, "stip-rop")) {
+    if ((pTcx->HasStipROP = sparcPromGetBool(&psdp->node, "stip-rop"))) {
 	xf86Msg(X_PROBED, "stipple space supports ROPs\n");
     }
     pTcx->Is8bit = (lowDepth != 0); 

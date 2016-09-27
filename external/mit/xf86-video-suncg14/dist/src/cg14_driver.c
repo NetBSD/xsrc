@@ -351,7 +351,7 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
     	 pCg14->memsize = 0x00800000;
     len = 24;
     prom = sparcPromInit();
-    if (ptr = sparcPromGetProperty(&psdp->node, "reg", &len)) {
+    if ((ptr = sparcPromGetProperty(&psdp->node, "reg", &len))) {
     	if (len >= 24) {
     	    memcpy(reg, ptr, 24);
     	    size = reg[5];
