@@ -55,7 +55,8 @@ typedef enum {
 typedef struct _DisplayModeRec {
     struct _DisplayModeRec *prev;
     struct _DisplayModeRec *next;
-    const char *name;           /* identifier for the mode */
+    /* dozens of drivers write to this value */
+    /*const*/ char *name;           /* identifier for the mode */
     ModeStatus status;
     int type;
 

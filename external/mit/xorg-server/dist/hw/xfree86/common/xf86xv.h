@@ -106,7 +106,7 @@ typedef enum {
 
 typedef struct {
     int id;
-    const char *name;
+    /*const*/ char *name; /* dozens of drivers write to this value */
     unsigned short width, height;
     XvRationalRec rate;
 } XF86VideoEncodingRec, *XF86VideoEncodingPtr;
