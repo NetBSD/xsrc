@@ -850,7 +850,7 @@ SISGetMergedModeDetails(ScrnInfoPtr pScrn,
  ***********************************/
 
 static void
-sisutil_prepare_string(xSiSCtrlCommandReply *sdcbuf, char *mystring)
+sisutil_prepare_string(xSiSCtrlCommandReply *sdcbuf, const char *mystring)
 {
    int slen = 0;
    sdcbuf->sdc_buffer[0] = 0;
