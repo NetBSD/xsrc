@@ -1,3 +1,47 @@
+commit 9f5621a410f18149d4c76b02daa7f1a98b4a2c16
+Author: Matthieu Herrb <matthieu.herrb@laas.fr>
+Date:   Tue Oct 4 21:28:17 2016 +0200
+
+    libXtst 1.2.3
+    
+    Signed-off-by: Matthieu Herrb <matthieu.herrb@laas.fr>
+
+commit 9556ad67af3129ec4a7a4f4b54a0d59701beeae3
+Author: Tobias Stoeckmann <tobias@stoeckmann.org>
+Date:   Sun Sep 25 21:37:01 2016 +0200
+
+    Out of boundary access and endless loop in libXtst
+    
+    A lack of range checks in libXtst allows out of boundary accesses.
+    The checks have to be done in-place here, because it cannot be done
+    without in-depth knowledge of the read data.
+    
+    If XRecordStartOfData, XRecordEndOfData, or XRecordClientDied
+    without a client sequence have attached data, an endless loop would
+    occur. The do-while-loop continues until the current index reaches
+    the end. But in these cases, the current index would not be
+    incremented, leading to an endless processing.
+    
+    Signed-off-by: Tobias Stoeckmann <tobias@stoeckmann.org>
+    Reviewed-by: Matthieu Herrb <matthieu@herrb.eu>
+
+commit 48d2656fa1dd98e9d88b31211fa4f09f813e7b30
+Author: Michael Joost <mehl@michael-joost.de>
+Date:   Mon Nov 18 16:11:26 2013 +0100
+
+    Remove fallback for _XEatDataWords, require libX11 1.6 for it
+    
+    _XEatDataWords was orignally introduced with the May 2013 security
+    patches, and in order to ease the process of delivering those,
+    fallback versions of _XEatDataWords were included in the X extension
+    library patches so they could be applied to older versions that didn't
+    have libX11 1.6 yet.   Now that we're past that hurdle, we can drop
+    the fallbacks and just require libX11 1.6 for building new versions
+    of the extension libraries.
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit cdc04f06325e55916e0c95b61db626d22b76e2ff
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Thu May 30 19:09:42 2013 -0700
