@@ -24,6 +24,7 @@
 #include <config.h>
 #endif
 
+#include <limits.h>
 #include <stdio.h>
 #include <X11/Xlib.h>
 /* we need to be able to manipulate the Display structure on events */
@@ -65,6 +66,15 @@ XRRGetMonitors(Display *dpy, Window window, Bool get_active, int *nmonitors)
 	return NULL;
     }
 
+    if (rep.length > INT_MAX >> 2 ||
+	rep.nmonitors > INT_MAX / SIZEOF(xRRMonitorInfo) ||
+	rep.noutputs > INT_MAX / 4 ||
+	rep.nmonitors * SIZEOF(xRRMonitorInfo) > INT_MAX - rep.noutputs * 4) {
+	_XEatData (dpy, rep.length);
+	UnlockDisplay (dpy);
+	SyncHandle ();
+	return NULL;
+    }
     nbytes = (long) rep.length << 2;
     nmon = rep.nmonitors;
     noutput = rep.noutputs;
@@ -84,8 +94,8 @@ XRRGetMonitors(Display *dpy, Window window, Bool get_active, int *nmonitors)
 	mon = Xmalloc (rbytes);
 
 	if (buf == NULL || mon == NULL) {
-	    if (buf != NULL) Xfree(buf);
-	    if (mon != NULL) Xfree(mon);
+	    Xfree(buf);
+	    Xfree(mon);
 	    _XEatDataWords (dpy, rep.length);
 	    UnlockDisplay (dpy);
 	    SyncHandle ();
@@ -111,6 +121,14 @@ XRRGetMonitors(Display *dpy, Window window, Bool get_active, int *nmonitors)
 	    mon[m].outputs = output;
 	    buf += SIZEOF (xRRMonitorInfo);
 	    xoutput = (CARD32 *) buf;
+	    if (xmon->noutput > rep.noutputs) {
+	        Xfree(buf);
+	        Xfree(mon);
+	        UnlockDisplay (dpy);
+	        SyncHandle ();
+	        return NULL;
+	    }
+	    rep.noutputs -= xmon->noutput;
 	    for (o = 0; o < xmon->noutput; o++)
 		output[o] = xoutput[o];
 	    output += xmon->noutput;
@@ -194,7 +212,6 @@ XRRAllocateMonitor(Display *dpy, int noutput)
 void
 XRRFreeMonitors(XRRMonitorInfo *monitors)
 {
-    if (monitors)
-	Xfree(monitors);
+    Xfree(monitors);
 }
 
