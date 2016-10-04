@@ -1,3 +1,23 @@
+commit 8e0476653dd134cee84f4e893f656b2f93c4e3b0
+Author: Matthieu Herrb <matthieu.herrb@laas.fr>
+Date:   Tue Oct 4 21:14:01 2016 +0200
+
+    libXi 1.7.7
+    
+    Signed-off-by: Matthieu Herrb <matthieu.herrb@laas.fr>
+
+commit 19a9cd607de73947fcfb104682f203ffe4e1f4e5
+Author: Tobias Stoeckmann <tobias@stoeckmann.org>
+Date:   Sun Sep 25 22:31:34 2016 +0200
+
+    Properly validate server responses.
+    
+    By validating length fields from server responses, out of boundary
+    accesses and endless loops can be mitigated.
+    
+    Signed-off-by: Tobias Stoeckmann <tobias@stoeckmann.org>
+    Reviewed-by: Matthieu Herrb <matthieu@herrb.eu>
+
 commit 2286282f965064176b3b1492646c6e2e0f4ab7dd
 Author: Peter Hutterer <peter.hutterer@who-t.net>
 Date:   Tue Dec 22 11:20:01 2015 +1000
