@@ -28,6 +28,7 @@ in this Software without prior written authorization from The Open Group.
 
 #define NEED_REPLIES
 #include "Xlibint.h"
+#include <limits.h>
 
 XModifierKeymap *
 XGetModifierMapping(dpy)
@@ -42,8 +43,13 @@ XGetModifierMapping(dpy)
     GetEmptyReq(GetModifierMapping, req);
     (void) _XReply (dpy, (xReply *)&rep, 0, xFalse);
 
-    nbytes = (unsigned long)rep.length << 2;
-    res = (XModifierKeymap *) Xmalloc(sizeof (XModifierKeymap));
+    if (rep.length < (INT_MAX >> 2) &&
+	(rep.length >> 1) == rep.numKeyPerModifier) {
+        nbytes = (unsigned long)rep.length << 2;
+        res = (XModifierKeymap *) Xmalloc(sizeof (XModifierKeymap));
+    } else
+	res = NULL;
+
     if (res) res->modifiermap = (KeyCode *) Xmalloc ((unsigned) nbytes);
     if ((! res) || (! res->modifiermap)) {
 	if (res) Xfree((char *) res);
