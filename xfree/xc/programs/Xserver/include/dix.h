@@ -53,6 +53,7 @@ SOFTWARE.
 #include "gc.h"
 #include "window.h"
 #include "input.h"
+#include <stdint.h>
 
 #define EARLIER -1
 #define SAMETIME 0

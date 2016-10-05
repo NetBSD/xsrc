@@ -29,6 +29,7 @@ in this Software without prior written authorization from The Open Group.
 
 #define NEED_REPLIES
 #include "Xlibint.h"
+#include <limits.h>
 
 char **
 XListFonts(
@@ -41,7 +42,9 @@ int *actualCount)	/* RETURN */
     register unsigned i;
     register int length;
     char **flist;
-    char *ch;
+    char *ch = NULL;
+    char *chend;
+    int count = 0;
     xListFontsReply rep;
     register xListFontsReq *req;
     register long rlen;
@@ -63,9 +66,11 @@ int *actualCount)	/* RETURN */
 
     if (rep.nFonts) {
 	flist = (char **)Xmalloc ((unsigned)rep.nFonts * sizeof(char *));
-	rlen = rep.length << 2;
-	ch = (char *) Xmalloc((unsigned) (rlen + 1));
-	    /* +1 to leave room for last null-terminator */
+	if (rep.length > 0 && rep.length < (INT_MAX >> 2)) {
+	    rlen = rep.length << 2;
+	    ch = (char *) Xmalloc((unsigned) (rlen + 1));
+	        /* +1 to leave room for last null-terminator */
+	}
 
 	if ((! flist) || (! ch)) {
 	    if (flist) Xfree((char *) flist);
@@ -81,17 +86,33 @@ int *actualCount)	/* RETURN */
 	/*
 	 * unpack into null terminated strings.
 	 */
+	chend = ch + (rlen + 1);
 	length = *(unsigned char *)ch;
 	*ch = 1; /* make sure it is non-zero for XFreeFontNames */
 	for (i = 0; i < rep.nFonts; i++) {
-	    flist[i] = ch + 1;  /* skip over length */
-	    ch += length + 1;  /* find next length ... */
-	    length = *(unsigned char *)ch;
-	    *ch = '\0';  /* and replace with null-termination */
+	    if (ch + length < chend) {
+	        flist[i] = ch + 1;  /* skip over length */
+	        ch += length + 1;  /* find next length ... */
+		if (ch <= chend) {
+		    length = *(unsigned char *)ch;
+		    *ch = '\0';  /* and replace with null-termination */
+		    count++;
+	        } else {
+		    Xfree(flist);
+		    flist = NULL;
+		    count = 0;
+		    break;
+		}
+	    } else {
+	       Xfree(flist);
+	       flist = NULL;
+	       count = 0;
+	       break;
+	    }
 	}
     }
     else flist = (char **) NULL;
-    *actualCount = rep.nFonts;
+    *actualCount = count;
     UnlockDisplay(dpy);
     SyncHandle();
     return (flist);
