@@ -22,6 +22,7 @@
  *
  */
 
+#include <limits.h>
 #include <stdint.h>
 #include <X11/Xlibint.h>
 #include <X11/extensions/XI2proto.h>
@@ -39,6 +40,7 @@ XIQueryDevice(Display *dpy, int deviceid, int *ndevices_return)
     xXIQueryDeviceReq   *req;
     xXIQueryDeviceReply reply;
     char                *ptr;
+    char                *end;
     int                 i;
     char                *buf;
 
@@ -56,14 +58,24 @@ XIQueryDevice(Display *dpy, int deviceid, int *ndevices_return)
     if (!_XReply(dpy, (xReply*) &reply, 0, xFalse))
         goto error;
 
-    *ndevices_return = reply.num_devices;
-    info = Xmalloc((reply.num_devices + 1) * sizeof(XIDeviceInfo));
+    if (reply.length < INT_MAX / 4)
+    {
+	*ndevices_return = reply.num_devices;
+	info = Xmalloc((reply.num_devices + 1) * sizeof(XIDeviceInfo));
+    }
+    else
+    {
+	*ndevices_return = 0;
+	info = NULL;
+    }
+
     if (!info)
         goto error;
 
     buf = Xmalloc(reply.length * 4);
     _XRead(dpy, buf, reply.length * 4);
     ptr = buf;
+    end = buf + reply.length * 4;
 
     /* info is a null-terminated array */
     info[reply.num_devices].name = NULL;
@@ -72,6 +84,9 @@ XIQueryDevice(Display *dpy, int deviceid, int *ndevices_return)
     {
         XIDeviceInfo    *lib = &info[i];
         xXIDeviceInfo   *wire = (xXIDeviceInfo*)ptr;
+
+        if (ptr + sizeof(xXIDeviceInfo) > end)
+            goto error_loop;
 
         lib->deviceid    = wire->deviceid;
         lib->use         = wire->use;
@@ -82,11 +97,22 @@ XIQueryDevice(Display *dpy, int deviceid, int *ndevices_return)
 
         ptr += sizeof(xXIDeviceInfo);
 
+        if (ptr + wire->name_len > end)
+            goto error_loop;
+
         lib->name = Xcalloc(wire->name_len + 1, 1);
+        if (lib->name == NULL)
+            goto error_loop;
         strncpy(lib->name, ptr, wire->name_len);
+        lib->name[wire->name_len] = '\0';
         ptr += ((wire->name_len + 3)/4) * 4;
 
         lib->classes = Xmalloc(size_classes((xXIAnyInfo*)ptr, lib->num_classes));
+        if (lib->classes == NULL)
+        {
+            Xfree(lib->name);
+            goto error_loop;
+        }
         ptr += copy_classes(lib, (xXIAnyInfo*)ptr, lib->num_classes);
     }
 
@@ -95,6 +121,12 @@ XIQueryDevice(Display *dpy, int deviceid, int *ndevices_return)
     SyncHandle();
     return info;
 
+error_loop:
+    while (--i >= 0)
+    {
+        Xfree(info[i].name);
+        Xfree(info[i].classes);
+    }
 error:
     UnlockDisplay(dpy);
     SyncHandle();
