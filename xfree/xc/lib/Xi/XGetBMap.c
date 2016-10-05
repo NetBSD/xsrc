@@ -90,16 +90,20 @@ XGetDeviceButtonMapping (dpy, device, map, nmap)
     req->deviceid = device->device_id;
 
     status = _XReply (dpy, (xReply *)&rep, 0, xFalse);
-    if (status == 1)
-	{
-	nbytes = (long)rep.length << 2;
-	_XRead (dpy, (char *)mapping, nbytes);
+    if (status == 1) {
+	if (rep.length <= (sizeof(mapping) >> 2) &&
+	    rep.nElts <= (rep.length << 2)) {
+	    nbytes = (long)rep.length << 2;
+	    _XRead (dpy, (char *)mapping, nbytes);
 
-	/* don't return more data than the user asked for. */
-	if (rep.nElts) 
-	    memcpy ((char *) map, (char *) mapping, MIN((int)rep.nElts, nmap));
-	status = rep.nElts;
+	    /* don't return more data than the user asked for. */
+	    if (rep.nElts) 
+	        memcpy ((char *) map, (char *) mapping, MIN((int)rep.nElts, nmap));
+	    status = rep.nElts;
+	} else {
+	    status = 0;
 	}
+    }
     else
 	status = 0;
     UnlockDisplay(dpy);

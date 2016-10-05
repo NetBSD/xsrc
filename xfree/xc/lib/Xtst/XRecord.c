@@ -51,6 +51,7 @@ from The Open Group.
 /* $XFree86: xc/lib/Xtst/XRecord.c,v 1.8 2005/01/27 02:28:59 dawes Exp $ */
 
 #include <stdio.h>
+#include <limits.h>
 #include <assert.h>
 #define NEED_EVENTS
 #define NEED_REPLIES
@@ -728,15 +729,23 @@ parse_reply_call_callback(Display *dpy, XExtDisplayInfo *info,
 	switch (rep->category) {
 	case XRecordFromServer:
 	    if (rep->elementHeader&XRecordFromServerTime) {
+		if (current_index + 4 > rep->length << 2)
+		    return Error;
 		EXTRACT_CARD32(rep->clientSwapped,
 			       reply->buf+current_index,
 			       data->server_time);
 		current_index += 4;
 	    }
+	    if (current_index + 1 > rep->length << 2)
+		return Error;
 	    switch (reply->buf[current_index]) {
 	    case X_Reply: /* reply */
+		if (current_index + 8 > rep->length << 2)
+		    return Error;
 		EXTRACT_CARD32(rep->clientSwapped,
 			       reply->buf+current_index+4, datum_bytes);
+		if (datum_bytes < 0 || datum_bytes > ((INT_MAX >> 2) - 8))
+		    return Error;
 		datum_bytes = (datum_bytes+8) << 2;
 		break;
 	    default: /* error or event */
@@ -745,52 +754,73 @@ parse_reply_call_callback(Display *dpy, XExtDisplayInfo *info,
 	    break;
 	case XRecordFromClient:
 	    if (rep->elementHeader&XRecordFromClientTime) {
+		if (current_index + 4 > rep->length << 2)
+		    return Error;
 		EXTRACT_CARD32(rep->clientSwapped,
 			       reply->buf+current_index,
 			       data->server_time);
 		current_index += 4;
 	    }
 	    if (rep->elementHeader&XRecordFromClientSequence) {
+		if (current_index + 4 > rep->length << 2)
+		    return Error;
 		EXTRACT_CARD32(rep->clientSwapped,
 			       reply->buf+current_index,
 			       data->client_seq);
 		current_index += 4;
 	    }
+	    if (current_index + 4 > rep->length<<2)
+		return Error;
 	    if (reply->buf[current_index+2] == 0
 		&& reply->buf[current_index+3] == 0) /* needn't swap 0 */
 	    {	/* BIG-REQUESTS */
+		if (current_index + 8 > rep->length << 2)
+		    return Error;
 		EXTRACT_CARD32(rep->clientSwapped,
 			       reply->buf+current_index+4, datum_bytes);
 	    } else {
 		EXTRACT_CARD16(rep->clientSwapped,
 			       reply->buf+current_index+2, datum_bytes);
 	    }
+	    if (datum_bytes < 0 || datum_bytes > INT_MAX >> 2)
+		return Error;
 	    datum_bytes <<= 2;
 	    break;
 	case XRecordClientStarted:
+	    if (current_index + 8 > rep->length << 2)
+		return Error;
 	    EXTRACT_CARD16(rep->clientSwapped,
 			   reply->buf+current_index+6, datum_bytes);
 	    datum_bytes = (datum_bytes+2) << 2;
 	    break;
 	case XRecordClientDied:
 	    if (rep->elementHeader&XRecordFromClientSequence) {
+		if (current_index + 4 > rep->length << 2)
+		    return Error;
 		EXTRACT_CARD32(rep->clientSwapped,
 			       reply->buf+current_index,
 			       data->client_seq);
 		current_index += 4;
-	    }
-	    /* fall through */
+	    } else if (current_index < rep->length << 2)
+		return Error;
+	    datum_bytes = 0;
+	    break;
 	case XRecordStartOfData:
 	case XRecordEndOfData:
+	    if (current_index < rep->length << 2)
+		return Error;
 	    datum_bytes = 0;
+	    break;
 	}
 	
 	if (datum_bytes > 0) {
-	    if (current_index + datum_bytes > rep->length << 2)
+	    if (INT_MAX - datum_bytes < (rep->length << 2) - current_index) {
 		fprintf(stderr,
 			"XRecord: %lu-byte reply claims %d-byte element (seq %lu)\n",
-			(long)rep->length << 2, current_index + datum_bytes,
+			(unsigned long)rep->length << 2, current_index + datum_bytes,
 			dpy->last_request_read);
+		return Error;
+	    }
 	    /*
 	     * This assignment (and indeed the whole buffer sharing
 	     * scheme) assumes arbitrary 4-byte boundaries are
@@ -837,6 +867,12 @@ XRecordEnableContext(Display *dpy, XRecordContext context,
 	/* This code should match that in XRecordEnableContextAsync */
 	if (!_XReply (dpy, (xReply *)&rep, 0, xFalse))
 	{
+	    UnlockDisplay(dpy);
+	    SyncHandle();
+	    return 0;
+	}
+
+	if (rep.length > INT_MAX >> 2) {
 	    UnlockDisplay(dpy);
 	    SyncHandle();
 	    return 0;
