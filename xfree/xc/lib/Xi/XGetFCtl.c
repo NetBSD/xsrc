@@ -60,6 +60,7 @@ SOFTWARE.
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/extutil.h>
 #include "XIint.h"
+#include <limits.h>
 
 XFeedbackState
 *XGetFeedbackControl (dpy, dev, num_feedbacks)
@@ -73,6 +74,7 @@ XFeedbackState
     XFeedbackState *Sav = NULL;
     xFeedbackState *f = NULL;
     xFeedbackState *sav = NULL;
+    char *end = NULL;
     xGetFeedbackControlReq *req;
     xGetFeedbackControlReply rep;
     XExtDisplayInfo *info = XInput_find_display (dpy);
@@ -95,8 +97,11 @@ XFeedbackState
     if (rep.length > 0) 
 	{
 	*num_feedbacks = rep.num_feedbacks;
-	nbytes = (long)rep.length << 2;
-	f = (xFeedbackState *) Xmalloc((unsigned) nbytes);
+
+	if (rep.length < (INT_MAX >> 2)) {
+	    nbytes = (long)rep.length << 2;
+	    f = (xFeedbackState *) Xmalloc((unsigned) nbytes);
+	}
         if (!f)
 	    {
 	    _XEatData (dpy, (unsigned long) nbytes);
@@ -105,10 +110,14 @@ XFeedbackState
 	    return (XFeedbackState *) NULL;
 	    }
 	sav = f;
+	end = (char *)f + nbytes;
 	_XRead (dpy, (char *) f, nbytes);
 
 	for (i=0; i<*num_feedbacks; i++)
 	    {
+	    if ((char *)f + sizeof(*f) > end ||
+	        f->length == 0 || f->length > nbytes)
+ 		goto out;
 	    switch (f->class)
 		{
 		case KbdFeedbackClass:
@@ -258,6 +267,7 @@ XFeedbackState
 	    f = (xFeedbackState *) ((char *) f + f->length);
 	    Feedback = (XFeedbackState *) ((char *) Feedback+Feedback->length);
 	    }
+out:
 	XFree ((char *)sav);
 	}
 
