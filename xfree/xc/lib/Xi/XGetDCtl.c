@@ -60,6 +60,7 @@ SOFTWARE.
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/extutil.h>
 #include "XIint.h"
+#include <limits.h>
 
 XDeviceControl
 *XGetDeviceControl (dpy, dev, control)
@@ -95,8 +96,11 @@ XDeviceControl
 	}
     if (rep.length > 0) 
 	{
-	nbytes = (long)rep.length << 2;
-	d = (xDeviceState *) Xmalloc((unsigned) nbytes);
+	if (rep.length < (INT_MAX >> 2) &&
+	    (rep.length << 2) >= sizeof(xDeviceState)) {
+	    nbytes = (long)rep.length << 2;
+	    d = (xDeviceState *) Xmalloc((unsigned) nbytes);
+	}
         if (!d)
 	    {
 	    _XEatData (dpy, (unsigned long) nbytes);
@@ -112,10 +116,16 @@ XDeviceControl
 	    case DEVICE_RESOLUTION:
 		{
 		xDeviceResolutionState *r;
+		size_t val_size;
 
 		r = (xDeviceResolutionState *) d;
-		size += sizeof (XDeviceResolutionState) + 
-			(3 * sizeof(int) * r->num_valuators);
+	        if (sizeof(xDeviceResolutionState) > nbytes ||
+		    r->num_valuators >= (INT_MAX / (3 * sizeof(int))))
+ 		    goto out;
+		val_size = 3 * sizeof(int) * r->num_valuators;
+		if ((sizeof(xDeviceResolutionState) + val_size) > nbytes)
+		    goto out;
+		size = sizeof(XDeviceResolutionState) + val_size;
 		break;
 		}
 	    default:
@@ -158,6 +168,7 @@ XDeviceControl
 	    default:
 		break;
 	    }
+out:
 	XFree (sav);
 	}
 

@@ -59,6 +59,7 @@ SOFTWARE.
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/extutil.h>
 #include "XIint.h"
+#include <limits.h>
 
 XDeviceState
 *XQueryDeviceState (dpy, dev)
@@ -66,13 +67,13 @@ XDeviceState
     XDevice *dev;
     {       
     int				i,j;
-    int				rlen;
+    int				rlen = 0;
     int				size = 0;
     xQueryDeviceStateReq 	*req;
     xQueryDeviceStateReply 	rep;
     XDeviceState		*state = NULL;
     XInputClass			*any, *Any;
-    char			*data;
+    char			*data = NULL, *end = NULL;
     XExtDisplayInfo *info = XInput_find_display (dpy);
 
     LockDisplay (dpy);
@@ -91,10 +92,12 @@ XDeviceState
 	return (XDeviceState *) NULL;
 	}
 
-    rlen = rep.length << 2;
-    if (rlen > 0)
-	{
-	data = Xmalloc (rlen);
+    if (rep.length > 0) {
+	if (rep.length < (INT_MAX >> 2)) {
+	    rlen = (unsigned long) rep.length << 2;
+	    data = Xmalloc(rlen);
+	    end = data + rlen;
+	}
 	if (!data)
 	    {
 	    _XEatData (dpy, (unsigned long) rlen);
@@ -102,10 +105,14 @@ XDeviceState
     	    SyncHandle();
     	    return ((XDeviceState *) NULL);
 	    }
+        end = data + rlen;
 	_XRead (dpy, data, rlen);
 
 	for (i=0, any=(XInputClass *) data; i<(int)rep.num_classes; i++)
 	    {
+	    if ((char *)any + sizeof(XInputClass) > end ||
+		any->length == 0 || any->length > rlen)
+ 		goto out;
 	    switch (any->class)
 		{
 		case KeyClass:
@@ -117,6 +124,8 @@ XDeviceState
 		case ValuatorClass:
 		    {
 		    xValuatorState *v = (xValuatorState *) any;
+		    if ((char *)any + sizeof(xValuatorState) > end)
+		        goto out;
 		    size += (sizeof (XValuatorState) + 
 			(v->num_valuators * sizeof(int)));
 		    }
@@ -186,6 +195,7 @@ XDeviceState
 	Xfree(data);
 	}
 
+out:
     UnlockDisplay(dpy);
     SyncHandle();
     return (state);

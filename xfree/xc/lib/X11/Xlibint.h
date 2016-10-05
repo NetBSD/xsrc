@@ -542,7 +542,7 @@ extern LockInfoPtr _Xglobal_lock;
     unsigned long _BRlen = req->length - 1; \
     req->length = 0; \
     memcpy(_BRdat, ((char *)req) + (_BRlen << 2), 4); \
-    memmove(((char *)req) + 8, ((char *)req) + 4, _BRlen << 2); \
+    memmove(((char *)req) + 8, ((char *)req) + 4, (_BRlen - 1) << 2); \
     memcpy(((char *)req) + 4, _BRdat, 4); \
     Data32(dpy, (long *)&_BRdat, 4); \
     }
