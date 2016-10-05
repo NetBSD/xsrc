@@ -150,9 +150,11 @@ XvQueryAdaptors(
   xvQueryAdaptorsReply rep;
   int size,ii,jj;
   char *name;
+  char *end;
   XvAdaptorInfo *pas, *pa;
   XvFormat *pfs, *pf;
   char *buffer;
+  int status;
   union 
     {
       char *buffer;
@@ -177,14 +179,17 @@ XvQueryAdaptors(
   }
 
   size = rep.length << 2;
-  if ( (buffer = (char *)Xmalloc ((unsigned) size)) == NULL) {
+  if (size > 0) {
+    if ((buffer = Xmalloc(size)) == NULL) {
       UnlockDisplay(dpy);
       SyncHandle();
       return(XvBadAlloc);
+    }
+    _XRead(dpy, buffer, (long) size);
   }
-  _XRead (dpy, buffer, size);
 
   u.buffer = buffer;
+  end = buffer + size;
 
   /* GET INPUT ADAPTORS */
 
@@ -212,6 +217,10 @@ XvQueryAdaptors(
 
   pa = pas;
   for (ii=0; ii<rep.num_adaptors; ii++) {
+      if (u.buffer + sz_xvAdaptorInfo > end) {
+        status = XvBadReply;
+        goto out;
+      }
       pa->type = u.pa->type;
       pa->base_id = u.pa->base_id;
       pa->num_ports = u.pa->num_ports;
@@ -222,6 +231,11 @@ XvQueryAdaptors(
 
       size = u.pa->name_size;
       u.buffer += (sz_xvAdaptorInfo + 3) & ~3;
+
+      if (u.buffer + size > end) {
+        status = XvBadReply;
+        goto out;
+      }
 
       if ( (name = (char *)Xmalloc(size+1)) == NULL)
 	{
@@ -250,6 +264,11 @@ XvQueryAdaptors(
 
       pf = pfs;
       for (jj=0; jj<pa->num_formats; jj++) {
+          if (u.buffer + sz_xvFormat > end) {
+            Xfree(pfs);
+            status = XvBadReply;
+            goto out;
+          }
 	  pf->depth = u.pf->depth;
 	  pf->visual_id = u.pf->visual;
 	  pf++;
@@ -266,11 +285,14 @@ XvQueryAdaptors(
   *p_nAdaptors = rep.num_adaptors;
   *p_pAdaptors = pas;
 
+  status = Success;
+
+out:
   Xfree(buffer);
   UnlockDisplay(dpy);
   SyncHandle();
 
-  return (Success);
+  return (status);
 }
 
 
@@ -312,6 +334,8 @@ XvQueryEncodings(
   xvQueryEncodingsReply rep;
   int size, jj;
   char *name;
+  char *end;
+  int status;
   XvEncodingInfo *pes, *pe;
   char *buffer;
   union 
@@ -337,14 +361,17 @@ XvQueryEncodings(
   }
 
   size = rep.length << 2;
-  if ( (buffer = (char *)Xmalloc ((unsigned) size)) == NULL) {
+  if (size > 0) {
+    if ( (buffer = (char *)Xmalloc ((unsigned) size)) == NULL) {
       UnlockDisplay(dpy);
       SyncHandle();
       return(XvBadAlloc);
+    }
+    _XRead (dpy, buffer, size);
   }
-  _XRead (dpy, buffer, size);
 
   u.buffer = buffer;
+  end = buffer + size;
 
   /* GET ENCODINGS */
 
@@ -367,6 +394,10 @@ XvQueryEncodings(
 
   pe = pes;
   for (jj=0; jj<rep.num_encodings; jj++) {
+      if (u.buffer + sz_xvEncodingInfo > end) {
+        status = XvBadReply;
+        goto out;
+      }
       pe->encoding_id = u.pe->encoding;
       pe->width = u.pe->width;
       pe->height = u.pe->height;
@@ -377,6 +408,10 @@ XvQueryEncodings(
       size = u.pe->name_size;
       u.buffer += (sz_xvEncodingInfo + 3) & ~3;
 
+      if (u.buffer + size > end) {
+        status = XvBadReply;
+        goto out;
+      }
       if ( (name = (char *)Xmalloc(size+1)) == NULL) {
 	  Xfree(buffer);
           UnlockDisplay(dpy);
@@ -394,11 +429,14 @@ XvQueryEncodings(
   *p_nEncodings = rep.num_encodings;
   *p_pEncodings = pes;
 
+  status = Success;
+
+out:
   Xfree(buffer);
   UnlockDisplay(dpy);
   SyncHandle();
 
-  return (Success);
+  return (status);
 }
 
 void
