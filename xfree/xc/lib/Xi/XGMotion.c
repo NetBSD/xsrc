@@ -59,6 +59,7 @@ SOFTWARE.
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/extutil.h>
 #include "XIint.h"
+#include <limits.h>
 
 XDeviceTimeCoord
 *XGetDeviceMotionEvents (dpy, dev, start, stop, nEvents, mode, axis_count)
@@ -74,7 +75,7 @@ XDeviceTimeCoord
     xGetDeviceMotionEventsReply 	rep;
     XDeviceTimeCoord *tc;
     int *data, *bufp, *readp, *savp;
-    long size, size2;
+    long size;
     int	 i, j;
     XExtDisplayInfo *info = XInput_find_display (dpy);
 
@@ -105,11 +106,23 @@ XDeviceTimeCoord
         SyncHandle();
 	return (NULL);
 	}
-    size = rep.length << 2;
-    size2 = rep.nEvents * 
-	(sizeof (XDeviceTimeCoord) + (rep.axes * sizeof (int)));
-    savp = readp = (int *) Xmalloc (size);
-    bufp = (int *) Xmalloc (size2);
+    if (rep.length < (INT_MAX >> 2)) {
+	size = rep.length << 2;
+	savp = readp = Xmalloc(size);
+    } else {
+	size = 0;
+	savp = readp = NULL;
+    }
+    /* rep.axes is a CARD8, so assume max number of axes for bounds check */
+    if (rep.nEvents <
+        (INT_MAX / (sizeof(XDeviceTimeCoord) + (UCHAR_MAX * sizeof(int)))) &&
+        rep.nEvents * (rep.axes + 1) <= rep.length) {
+        size_t bsize = rep.nEvents *
+            (sizeof(XDeviceTimeCoord) + (rep.axes * sizeof(int)));
+        bufp = Xmalloc(bsize);
+    } else
+        bufp = NULL;
+
     if (!bufp || !savp)
 	{
 	*nEvents = 0;
