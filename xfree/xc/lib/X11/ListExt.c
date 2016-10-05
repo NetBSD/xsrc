@@ -28,6 +28,7 @@ in this Software without prior written authorization from The Open Group.
 
 #define NEED_REPLIES
 #include "Xlibint.h"
+#include <limits.h>
 
 char **XListExtensions(dpy, nextensions)
 register Display *dpy;
@@ -35,7 +36,9 @@ int *nextensions;	/* RETURN */
 {
 	xListExtensionsReply rep;
 	char **list;
-	char *ch;
+	char *ch = NULL;
+	char *chend;
+	int count = 0;
 	register unsigned i;
 	register int length;
 	register xReq *req;
@@ -53,9 +56,11 @@ int *nextensions;	/* RETURN */
 	if (rep.nExtensions) {
 	    list = (char **) Xmalloc (
                 (unsigned)(rep.nExtensions * sizeof (char *)));
-	    rlen = rep.length << 2;
-	    ch = (char *) Xmalloc ((unsigned) rlen + 1);
-                /* +1 to leave room for last null-terminator */
+	    if (rep.length > 0 && rep.length < (INT_MAX >> 2)) {
+	        rlen = rep.length << 2;
+	        ch = (char *) Xmalloc ((unsigned) rlen + 1);
+                    /* +1 to leave room for last null-terminator */
+	    }
 
 	    if ((!list) || (!ch)) {
 		if (list) Xfree((char *) list);
@@ -70,17 +75,26 @@ int *nextensions;	/* RETURN */
 	    /*
 	     * unpack into null terminated strings.
 	     */
+	    chend = ch + (rlen + 1);
 	    length = *ch;
 	    for (i = 0; i < rep.nExtensions; i++) {
-		list[i] = ch+1;  /* skip over length */
-		ch += length + 1; /* find next length ... */
-		length = *ch;
-		*ch = '\0'; /* and replace with null-termination */
+		if (ch + length < chend) {
+		    list[i] = ch+1;  /* skip over length */
+		    ch += length + 1; /* find next length ... */
+		    if (ch <= chend) {
+			length = *ch;
+			*ch = '\0'; /* and replace with null-termination */
+			count++;
+		    } else {
+			list[i] = NULL;
+		    }
+		} else
+		    list[i] = NULL;
 	    }
 	}
 	else list = (char **) NULL;
 
-	*nextensions = rep.nExtensions;
+	*nextensions = count;
 	UnlockDisplay(dpy);
 	SyncHandle();
 	return (list);
