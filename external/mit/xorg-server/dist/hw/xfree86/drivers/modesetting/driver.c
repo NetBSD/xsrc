@@ -752,8 +752,8 @@ ms_get_drm_master_fd(ScrnInfoPtr pScrn)
     if (pEnt->location.type == BUS_PCI) {
         ms->PciInfo = xf86GetPciInfoForEntity(ms->pEnt->index);
         if (ms->PciInfo) {
-            BusID = malloc(64);
-            sprintf(BusID, "PCI:%d:%d:%d",
+            char BusID[256];
+            snprintf(BusID, sizeof(BusID), "PCI:%d:%d:%d",
 #if XSERVER_LIBPCIACCESS
                     ((ms->PciInfo->domain << 8) | ms->PciInfo->bus),
                     ms->PciInfo->dev, ms->PciInfo->func
@@ -796,12 +796,15 @@ PreInit(ScrnInfoPtr pScrn, int flags)
     pEnt = xf86GetEntityInfo(pScrn->entityList[0]);
 
     if (flags & PROBE_DETECT) {
+	free(pEnt);
         return FALSE;
     }
 
     /* Allocate driverPrivate */
-    if (!GetRec(pScrn))
+    if (!GetRec(pScrn)) {
+	free(pEnt);
         return FALSE;
+    }
 
     ms = modesettingPTR(pScrn);
     ms->SaveGeneration = -1;
