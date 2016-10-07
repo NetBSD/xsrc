@@ -60,7 +60,7 @@ XRRGetProviderResources(Display *dpy, Window window)
       return NULL;
     }
 
-    if (rep.length < INT_MAX >> 2) {
+    if (rep.length < (INT_MAX >> 2)) {
 	nbytes = (long) rep.length << 2;
 
 	nbytesRead = (long) (rep.nProviders * 4);
@@ -130,9 +130,9 @@ XRRGetProviderInfo(Display *dpy, XRRScreenResources *resources, RRProvider provi
 	return NULL;
     }
 
-    if (rep.length > INT_MAX >> 2 || rep.length < ProviderInfoExtra >> 2)
+    if (rep.length > (INT_MAX >> 2) || rep.length < (ProviderInfoExtra >> 2))
     {
-	if (rep.length < ProviderInfoExtra >> 2)
+	if (rep.length < (ProviderInfoExtra >> 2))
 	    _XEatDataWords (dpy, rep.length);
 	else
 	    _XEatDataWords (dpy, rep.length - (ProviderInfoExtra >> 2));
