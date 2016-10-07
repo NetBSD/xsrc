@@ -140,6 +140,7 @@ error:
 error_unlocked:
     SyncHandle();
     *ndevices_return = -1;
+    Xfree(buf);
     return NULL;
 }
 
