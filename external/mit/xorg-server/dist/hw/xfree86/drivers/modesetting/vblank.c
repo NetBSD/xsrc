@@ -246,13 +246,18 @@ ms_crtc_msc_to_kernel_msc(xf86CrtcPtr crtc, uint64_t expect)
 static void
 ms_drm_wakeup_handler(void *data, int err, void *mask)
 {
-    ScreenPtr screen = data;
-    ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
-    modesettingPtr ms = modesettingPTR(scrn);
-    fd_set *read_mask = mask;
+    ScreenPtr screen;
+    ScrnInfoPtr scrn;
+    modesettingPtr ms;
+    fd_set *read_mask;
 
     if (data == NULL || err < 0)
         return;
+
+    screen = data;
+    scrn = xf86ScreenToScrn(screen);
+    ms = modesettingPTR(scrn);
+    read_mask = mask;
 
     if (FD_ISSET(ms->fd, read_mask))
         drmHandleEvent(ms->fd, &ms->event_context);
