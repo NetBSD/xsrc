@@ -43,7 +43,7 @@
 #undef HAVE_XA_2
 
 /* Has version 1.12.0 or greater of the Xserver */
-#undef HAVE_XORG_SERVER_1_12_0
+#define HAVE_XORG_SERVER_1_12_0
 
 /* Has version 1.1.0 or greater of the Xserver */
 #define HAVE_XORG_SERVER_1_1_0 1
