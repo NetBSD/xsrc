@@ -744,6 +744,7 @@ SMI_PreInit(ScrnInfoPtr pScrn, int flags)
 	char *strptr;
 
 	from = X_DEFAULT;
+	pSmi->useEXA = TRUE;
 	if ((strptr = (char *)xf86GetOptValString(pSmi->Options,
 						  OPTION_ACCELMETHOD))) {
 	    if (!xf86NameCmp(strptr,"XAA")) {
