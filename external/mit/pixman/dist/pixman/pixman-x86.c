@@ -74,8 +74,11 @@ detect_cpu_features (void)
 
 #else
 
-#define _PIXMAN_X86_64							\
-    (defined(__amd64__) || defined(__x86_64__) || defined(_M_AMD64))
+#if defined(__amd64__) || defined(__x86_64__) || defined(_M_AMD64)
+#define _PIXMAN_X86_64 1
+#else
+#define _PIXMAN_X86_64 0
+#endif
 
 static pixman_bool_t
 have_cpuid (void)
