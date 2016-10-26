@@ -755,20 +755,27 @@ FFBScreenInit(SCREEN_INIT_ARGS_DECL)
     if (!pFfb->NoAccel) {
 	char *optstr;
 	optstr = (char *)xf86GetOptValString(pFfb->Options, OPTION_ACCELMETHOD);
+#ifdef HAVE_XAA_H
 	if (optstr == NULL) optstr = "xaa";
+#else
+	if (optstr == NULL) optstr = "exa";
+#endif
 	if (xf86NameCmp(optstr, "EXA") == 0) {
 	    xf86Msg(X_INFO, "using EXA\n");
 	    if (xf86LoadSubModule(pScrn, "exa") != NULL) {
 		if (!FFBInitEXA(pScreen))
 		    return FALSE;
     	    }
-    	} else if (xf86NameCmp(optstr, "XAA") == 0) {
+    	}
+#ifdef HAVE_XAA_H
+    	  else if (xf86NameCmp(optstr, "XAA") == 0) {
 	    xf86Msg(X_INFO, "using XAA\n");
 	    if (xf86LoadSubModule(pScrn, "xaa") != NULL) {
 		if (!FFBAccelInit(pScreen, pFfb))
 		    return FALSE;
 	    }
 	}
+#endif
     }
 
 
