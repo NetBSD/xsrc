@@ -144,7 +144,7 @@ xf86AddBusDeviceToConfigure(const char *driver, BusType bus, void *busData,
 #if defined(__arm32__) || defined(__arm__)
     case BUS_ISA:
 	DevToConfig[i].GDev.busID = xnfalloc(6);
-	strcpy(DevToConfig[i].GDev.busID, "ISA");
+	strcpy((char *)DevToConfig[i].GDev.busID, "ISA");
 	break;
 #endif
     default:
