@@ -7272,8 +7272,8 @@ chipsTestDACComp(ScrnInfoPtr pScrn, unsigned char a, unsigned char b,
     hwp->writeDacData(hwp, a);                /* set pattern */
     hwp->writeDacData(hwp, b);
     hwp->writeDacData(hwp, c);
-    while (!(hwp->readST01(hwp)) & 0x01){};   /* wait for hsync to end  */
-    while ((hwp->readST01(hwp)) & 0x01){};    /* wait for hsync to end  */
+    while (!(hwp->readST01(hwp) & 0x01)){};   /* wait for hsync to end  */
+    while (hwp->readST01(hwp) & 0x01){};      /* wait for hsync to end  */
     type = hwp->readST00(hwp);                /* read comparator        */
     return (type & 0x10);
 }
