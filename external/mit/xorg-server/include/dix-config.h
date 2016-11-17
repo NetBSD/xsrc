@@ -20,7 +20,7 @@
 #define BUILDERSTRING ""
 
 /* Default font path */
-#define COMPILEDDEFAULTFONTPATH "/usr/X11R7/share/fonts/X11/misc,/usr/X11R7/share/fonts/X11/TTF,/usr/X11R7/share/fonts/X11/OTF,/usr/X11R7/share/fonts/X11/Type1,/usr/X11R7/share/fonts/X11/100dpi,/usr/X11R7/share/fonts/X11/75dpi,/usr/X11R7/share/fonts/X11/cyrillic,/usr/X11R7/lib/X11/fonts/misc,/usr/X11R7/lib/X11/fonts/TTF,/usr/X11R7/lib/X11/fonts/OTF,/usr/X11R7/lib/X11/fonts/Type1,/usr/X11R7/lib/X11/fonts/100dpi,/usr/X11R7/lib/X11/fonts/75dpi,/usr/X11R7/lib/X11/fonts/cyrillic"
+/* #define COMPILEDDEFAULTFONTPATH "/usr/X11R7/share/fonts/X11/misc,/usr/X11R7/share/fonts/X11/TTF,/usr/X11R7/share/fonts/X11/OTF,/usr/X11R7/share/fonts/X11/Type1,/usr/X11R7/share/fonts/X11/100dpi,/usr/X11R7/share/fonts/X11/75dpi,/usr/X11R7/share/fonts/X11/cyrillic,/usr/X11R7/lib/X11/fonts/misc,/usr/X11R7/lib/X11/fonts/TTF,/usr/X11R7/lib/X11/fonts/OTF,/usr/X11R7/lib/X11/fonts/Type1,/usr/X11R7/lib/X11/fonts/100dpi,/usr/X11R7/lib/X11/fonts/75dpi,/usr/X11R7/lib/X11/fonts/cyrillic" */
 
 /* Miscellaneous server configuration files path */
 #define SERVER_MISC_CONFIG_PATH "/usr/X11R7/lib/xorg"
