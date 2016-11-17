@@ -1270,13 +1270,13 @@ checkCoreInputDevices(serverLayoutPtr servlayoutp, Bool implicitLayout)
 	} else {
 #endif
         defPtr.inp_driver = strdup("mouse");
+#if defined(__NetBSD__) && (defined(__i386__) || defined(__amd64__))
+        }
+#endif
         confInput = &defPtr;
         foundPointer = TRUE;
         from = X_DEFAULT;
         pointerMsg = "default mouse configuration";
-#if defined(__NetBSD__) && (defined(__i386__) || defined(__amd64__))
-        }
-#endif
     }
 
     /* Add the core pointer device to the layout, and set it to Core. */
