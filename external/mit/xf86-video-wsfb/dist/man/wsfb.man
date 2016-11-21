@@ -96,7 +96,7 @@ Enable rotation of the display. The supported values are "CW" (clockwise,
 Implies use of the shadow framebuffer layer.
 Default: off.
 .SH "SEE ALSO"
-__xservername__(1), __xconfigfile__(__filemansuffix__), xorgconfig(1), Xserver(1),
+__xservername__(1), __xconfigfile__(__filemansuffix__), Xserver(1),
 X(__miscmansuffix__), wsdisplay(__drivermansuffix__)
 .SH AUTHORS
 Authors include: Matthieu Herrb, Gerd Knorr, Michel Dänzer, Geert Uytterhoeven

@@ -15,7 +15,7 @@ fbdevhw module.  fbdevhw can be used by other drivers too, this
 is usually activated with `Option "UseFBDev"' in the device section.
 .SH "SEE ALSO"
 __xservername__(__appmansuffix__), __xconfigfile__(__filemansuffix__),
-xorgconfig(__appmansuffix__), Xserver(__appmansuffix__), X(__miscmansuffix__),
+Xserver(__appmansuffix__), X(__miscmansuffix__),
 fbdev(__drivermansuffix__)
 .SH AUTHORS
 Authors include: Gerd Knorr, based on the XF68_FBDev Server code

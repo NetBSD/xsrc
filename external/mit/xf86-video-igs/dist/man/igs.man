@@ -69,7 +69,7 @@ Video modes specifications in the configuration file are ignored.
 The driver doesn't contain any code to program video modes, it relies on the
 igsfb driver to take care of that.
 .SH "SEE ALSO"
-Xorg(1), __xconfigfile__(__filemansuffix__), xorgconfig(1), Xserver(1),
+Xorg(1), __xconfigfile__(__filemansuffix__), Xserver(1),
 X(__miscmansuffix__), wsfb(__drivermansuffix__)
 .SH AUTHORS
 This driver was written by Michael Lorenz
