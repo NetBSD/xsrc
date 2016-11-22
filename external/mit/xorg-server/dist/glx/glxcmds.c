@@ -2339,16 +2339,17 @@ __glXDisp_RenderLarge(__GLXclientState * cl, GLbyte * pc)
             (*proc) (cl->largeCmdBuf + __GLX_RENDER_LARGE_HDR_SIZE);
             glxc->hasUnflushedCommands = GL_TRUE;
 
-	    /*
-	    ** Reset for the next RenderLarge series.
-	    */
-	    __glXResetLargeCommandStatus(cl);
-	} else {
-	    /*
-	    ** This is neither the first nor the last request.
-	    */
-	}
-	return Success;
+            /*
+             ** Reset for the next RenderLarge series.
+             */
+            __glXResetLargeCommandStatus(cl);
+        }
+        else {
+            /*
+             ** This is neither the first nor the last request.
+             */
+        }
+        return Success;
     }
 }
 
