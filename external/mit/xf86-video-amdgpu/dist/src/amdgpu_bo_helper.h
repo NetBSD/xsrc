@@ -31,13 +31,13 @@ extern struct amdgpu_buffer *amdgpu_alloc_pixmap_bo(ScrnInfoPtr pScrn, int width
 
 extern Bool amdgpu_bo_get_handle(struct amdgpu_buffer *bo, uint32_t *handle);
 
+extern uint64_t amdgpu_pixmap_get_tiling_info(PixmapPtr pixmap);
+
 extern Bool amdgpu_pixmap_get_handle(PixmapPtr pixmap, uint32_t *handle);
 
 extern int amdgpu_bo_map(ScrnInfoPtr pScrn, struct amdgpu_buffer *bo);
 
 extern void amdgpu_bo_unmap(struct amdgpu_buffer *bo);
-
-extern Bool amdgpu_share_pixmap_backing(struct amdgpu_buffer *bo, void **handle_p);
 
 extern Bool
 amdgpu_set_shared_pixmap_backing(PixmapPtr ppix, void *fd_handle);
@@ -103,5 +103,21 @@ int amdgpu_query_heap_size(amdgpu_device_handle pDev,
 struct amdgpu_buffer *amdgpu_gem_bo_open_prime(amdgpu_device_handle pDev,
                                                  int fd_handle,
                                                  uint32_t size);
+
+/**
+ * get_drawable_pixmap() returns the backing pixmap for a given drawable.
+ *
+ * @param drawable the drawable being requested.
+ *
+ * This function returns the backing pixmap for a drawable, whether it is a
+ * redirected window, unredirected window, or already a pixmap.
+ */
+static inline PixmapPtr get_drawable_pixmap(DrawablePtr drawable)
+{
+	if (drawable->type == DRAWABLE_PIXMAP)
+		return (PixmapPtr)drawable;
+	else
+		return drawable->pScreen->GetWindowPixmap((WindowPtr)drawable);
+}
 
 #endif /* AMDGPU_BO_HELPER_H */

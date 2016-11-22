@@ -32,6 +32,8 @@ struct amdgpu_pixmap {
 	uint_fast32_t gpu_read;
 	uint_fast32_t gpu_write;
 
+	uint64_t tiling_info;
+
 	struct amdgpu_buffer *bo;
 
 	/* GEM handle for pixmaps shared via DRI2/3 */
@@ -52,19 +54,19 @@ static inline void amdgpu_set_pixmap_private(PixmapPtr pixmap,
 	dixSetPrivate(&pixmap->devPrivates, &amdgpu_pixmap_index, priv);
 }
 
-static inline void amdgpu_set_pixmap_bo(PixmapPtr pPix, struct amdgpu_buffer *bo)
+static inline Bool amdgpu_set_pixmap_bo(PixmapPtr pPix, struct amdgpu_buffer *bo)
 {
 	struct amdgpu_pixmap *priv;
 
 	priv = amdgpu_get_pixmap_private(pPix);
 	if (priv == NULL && bo == NULL)
-		return;
+		return TRUE;
 
 	if (priv) {
-		if (priv->bo == bo)
-			return;
-
 		if (priv->bo) {
+			if (priv->bo == bo)
+				return TRUE;
+
 			amdgpu_bo_unref(&priv->bo);
 			priv->handle_valid = FALSE;
 		}
@@ -79,13 +81,14 @@ static inline void amdgpu_set_pixmap_bo(PixmapPtr pPix, struct amdgpu_buffer *bo
 		if (!priv) {
 			priv = calloc(1, sizeof(struct amdgpu_pixmap));
 			if (!priv)
-				goto out;
+				return FALSE;
 		}
 		amdgpu_bo_ref(bo);
 		priv->bo = bo;
 	}
-out:
+
 	amdgpu_set_pixmap_private(pPix, priv);
+	return TRUE;
 }
 
 static inline struct amdgpu_buffer *amdgpu_get_pixmap_bo(PixmapPtr pPix)

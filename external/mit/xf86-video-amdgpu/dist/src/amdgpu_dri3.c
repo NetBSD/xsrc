@@ -138,8 +138,13 @@ static PixmapPtr amdgpu_dri3_pixmap_from_fd(ScreenPtr screen,
 		if (pixmap) {
 			struct amdgpu_pixmap *priv = calloc(1, sizeof(*priv));
 
-			amdgpu_set_pixmap_private(pixmap, priv);
-			return pixmap;
+			if (priv) {
+				amdgpu_set_pixmap_private(pixmap, priv);
+				return pixmap;
+			}
+
+			screen->DestroyPixmap(pixmap);
+			return NULL;
 		}
 	}
 #endif

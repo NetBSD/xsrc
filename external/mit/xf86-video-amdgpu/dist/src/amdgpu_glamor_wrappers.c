@@ -39,24 +39,6 @@
 #include "amdgpu_pixmap.h"
 
 
-/**
- * get_drawable_pixmap() returns the backing pixmap for a given drawable.
- *
- * @param pDrawable the drawable being requested.
- *
- * This function returns the backing pixmap for a drawable, whether it is a
- * redirected window, unredirected window, or already a pixmap.
- */
-static PixmapPtr
-get_drawable_pixmap(DrawablePtr pDrawable)
-{
-	if (pDrawable->type == DRAWABLE_WINDOW)
-		return pDrawable->pScreen->
-		    GetWindowPixmap((WindowPtr) pDrawable);
-	else
-		return (PixmapPtr) pDrawable;
-}
-
 /* Are there any outstanding GPU operations for this pixmap? */
 static Bool
 amdgpu_glamor_gpu_pending(uint_fast32_t gpu_synced, uint_fast32_t gpu_access)

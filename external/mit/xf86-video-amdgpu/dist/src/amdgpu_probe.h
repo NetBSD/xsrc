@@ -58,10 +58,16 @@ typedef enum {
 	CHIP_FAMILY_UNKNOW,
 	CHIP_FAMILY_LEGACY,
 	CHIP_FAMILY_AMDGPU,
+	CHIP_FAMILY_TAHITI,
+	CHIP_FAMILY_PITCAIRN,
+	CHIP_FAMILY_VERDE,
+	CHIP_FAMILY_OLAND,
+	CHIP_FAMILY_HAINAN,
 	CHIP_FAMILY_BONAIRE,
 	CHIP_FAMILY_KAVERI,
 	CHIP_FAMILY_KABINI,
 	CHIP_FAMILY_HAWAII,
+	CHIP_FAMILY_MULLINS,
 	CHIP_FAMILY_TOPAZ,
 	CHIP_FAMILY_TONGA,
 	CHIP_FAMILY_CARRIZO,
@@ -87,6 +93,8 @@ typedef struct {
 	unsigned long fd_wakeup_registered;	/* server generation for which fd has been registered for wakeup handling */
 	int fd_wakeup_ref;
 	unsigned int assigned_crtcs;
+	ScrnInfoPtr primary_scrn;
+	ScrnInfoPtr secondary_scrn;
 	struct xf86_platform_device *platform_dev;
 } AMDGPUEntRec, *AMDGPUEntPtr;
 

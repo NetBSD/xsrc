@@ -77,20 +77,15 @@ static const OptionInfoRec *AMDGPUAvailableOptions(int chipid, int busid)
 static void AMDGPUIdentify(int flags)
 {
 	xf86PrintChipsets(AMDGPU_NAME,
-			  "Driver for AMD Radeon chipsets", AMDGPUChipsets);
+			  "Driver for AMD Radeon chipsets", AMDGPUUniqueChipsets);
 }
 
 static char *amdgpu_bus_id(ScrnInfoPtr pScrn, struct pci_device *dev)
 {
 	char *busid;
 
-#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,9,99,901,0)
 	XNFasprintf(&busid, "pci:%04x:%02x:%02x.%d",
 		    dev->domain, dev->bus, dev->dev, dev->func);
-#else
-	busid = XNFprintf("pci:%04x:%02x:%02x.%d",
-			  dev->domain, dev->bus, dev->dev, dev->func);
-#endif
 
 	if (!busid)
 		xf86DrvMsgVerb(pScrn->scrnIndex, X_ERROR, 0,
