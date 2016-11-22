@@ -92,10 +92,11 @@ amdgpu_drm_queue_alloc(xf86CrtcPtr crtc, ClientPtr client,
 
 	e = calloc(1, sizeof(struct amdgpu_drm_queue_entry));
 	if (!e)
-		return NULL;
+		return AMDGPU_DRM_QUEUE_ERROR;
 
-	if (!amdgpu_drm_queue_seq)
-		amdgpu_drm_queue_seq = 1;
+	if (_X_UNLIKELY(amdgpu_drm_queue_seq == AMDGPU_DRM_QUEUE_ERROR))
+		amdgpu_drm_queue_seq++;
+
 	e->seq = amdgpu_drm_queue_seq++;
 	e->client = client;
 	e->crtc = crtc;

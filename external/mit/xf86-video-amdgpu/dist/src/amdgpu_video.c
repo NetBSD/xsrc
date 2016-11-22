@@ -67,7 +67,7 @@ static int amdgpu_box_area(BoxPtr box)
 Bool amdgpu_crtc_is_enabled(xf86CrtcPtr crtc)
 {
 	drmmode_crtc_private_ptr drmmode_crtc = crtc->driver_private;
-	return drmmode_crtc->dpms_mode == DPMSModeOn;
+	return drmmode_crtc->pending_dpms_mode == DPMSModeOn;
 }
 
 xf86CrtcPtr

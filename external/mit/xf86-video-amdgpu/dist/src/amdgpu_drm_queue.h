@@ -31,6 +31,8 @@
 
 #include <xf86Crtc.h>
 
+#define AMDGPU_DRM_QUEUE_ERROR 0
+
 #define AMDGPU_DRM_QUEUE_CLIENT_DEFAULT serverClient
 #define AMDGPU_DRM_QUEUE_ID_DEFAULT ~0ULL
 

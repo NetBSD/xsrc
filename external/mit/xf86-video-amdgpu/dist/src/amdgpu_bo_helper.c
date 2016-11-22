@@ -131,6 +131,35 @@ Bool amdgpu_bo_get_handle(struct amdgpu_buffer *bo, uint32_t *handle)
 				handle) == 0;
 }
 
+static void amdgpu_pixmap_do_get_tiling_info(PixmapPtr pixmap)
+{
+	struct amdgpu_pixmap *priv = amdgpu_get_pixmap_private(pixmap);
+	ScreenPtr screen = pixmap->drawable.pScreen;
+	ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
+	AMDGPUEntPtr pAMDGPUEnt = AMDGPUEntPriv(scrn);
+	struct drm_amdgpu_gem_metadata gem_metadata;
+
+	gem_metadata.handle = priv->handle;
+	gem_metadata.op = AMDGPU_GEM_METADATA_OP_GET_METADATA;
+
+	if (drmCommandWriteRead(pAMDGPUEnt->fd, DRM_AMDGPU_GEM_METADATA,
+				&gem_metadata, sizeof(gem_metadata)) == 0)
+		priv->tiling_info = gem_metadata.data.tiling_info;
+}
+
+uint64_t amdgpu_pixmap_get_tiling_info(PixmapPtr pixmap)
+{
+	struct amdgpu_pixmap *priv = amdgpu_get_pixmap_private(pixmap);
+	uint32_t handle;
+
+	if (!priv || !priv->handle_valid) {
+		amdgpu_pixmap_get_handle(pixmap, &handle);
+		priv = amdgpu_get_pixmap_private(pixmap);
+	}
+
+	return priv->tiling_info;
+}
+
 Bool amdgpu_pixmap_get_handle(PixmapPtr pixmap, uint32_t *handle)
 {
 #ifdef USE_GLAMOR
@@ -162,13 +191,15 @@ Bool amdgpu_pixmap_get_handle(PixmapPtr pixmap, uint32_t *handle)
 		r = drmPrimeFDToHandle(pAMDGPUEnt->fd, fd, &priv->handle);
 		close(fd);
 		if (r == 0)
-			goto success;
+			goto get_tiling_info;
 	}
 #endif
 
 	if (!priv->bo || !amdgpu_bo_get_handle(priv->bo, &priv->handle))
 		return FALSE;
 
+ get_tiling_info:
+	amdgpu_pixmap_do_get_tiling_info(pixmap);
  success:
 	priv->handle_valid = TRUE;
 	*handle = priv->handle;
@@ -345,21 +376,6 @@ struct amdgpu_buffer *amdgpu_gem_bo_open_prime(amdgpu_device_handle pDev,
 
 #ifdef AMDGPU_PIXMAP_SHARING
 
-Bool amdgpu_share_pixmap_backing(struct amdgpu_buffer *bo, void **handle_p)
-{
-	int handle;
-
-	if (bo->flags & AMDGPU_BO_FLAGS_GBM)
-		handle = gbm_bo_get_fd(bo->bo.gbm);
-	else
-		amdgpu_bo_export(bo->bo.amdgpu,
-			 amdgpu_bo_handle_type_dma_buf_fd,
-			 (uint32_t *)&handle);
-
-	*handle_p = (void *)(long)handle;
-	return TRUE;
-}
-
 Bool amdgpu_set_shared_pixmap_backing(PixmapPtr ppix, void *fd_handle)
 {
 	ScrnInfoPtr pScrn = xf86ScreenToScrn(ppix->drawable.pScreen);
@@ -368,9 +384,10 @@ Bool amdgpu_set_shared_pixmap_backing(PixmapPtr ppix, void *fd_handle)
 	struct amdgpu_buffer *pixmap_buffer = NULL;
 	int ihandle = (int)(long)fd_handle;
 	uint32_t size = ppix->devKind * ppix->drawable.height;
+	Bool ret;
 
 	if (info->gbm) {
-		struct amdgpu_pixmap *priv;
+		struct amdgpu_buffer *bo;
 		struct gbm_import_fd_data data;
 		uint32_t bo_use = GBM_BO_USE_RENDERING;
 
@@ -379,16 +396,10 @@ Bool amdgpu_set_shared_pixmap_backing(PixmapPtr ppix, void *fd_handle)
 		if (data.format == ~0U)
 			return FALSE;
 
-		priv = calloc(1, sizeof(struct amdgpu_pixmap));
-		if (!priv)
+		bo = calloc(1, sizeof(struct amdgpu_buffer));
+		if (!bo)
 			return FALSE;
-
-		priv->bo = calloc(1, sizeof(struct amdgpu_buffer));
-		if (!priv->bo) {
-			free(priv);
-			return FALSE;
-		}
-		priv->bo->ref_count = 1;
+		bo->ref_count = 1;
 
 		data.fd = ihandle;
 		data.width = ppix->drawable.width;
@@ -398,27 +409,27 @@ Bool amdgpu_set_shared_pixmap_backing(PixmapPtr ppix, void *fd_handle)
 		if (ppix->drawable.bitsPerPixel == pScrn->bitsPerPixel)
 			bo_use |= GBM_BO_USE_SCANOUT;
 
-		priv->bo->bo.gbm = gbm_bo_import(info->gbm, GBM_BO_IMPORT_FD,
-						 &data, bo_use);
-		if (!priv->bo->bo.gbm) {
-			free(priv->bo);
-			free(priv);
+		bo->bo.gbm = gbm_bo_import(info->gbm, GBM_BO_IMPORT_FD, &data,
+					   bo_use);
+		if (!bo->bo.gbm) {
+			free(bo);
 			return FALSE;
 		}
 
-		priv->bo->flags |= AMDGPU_BO_FLAGS_GBM;
+		bo->flags |= AMDGPU_BO_FLAGS_GBM;
 
 #ifdef USE_GLAMOR
 		if (info->use_glamor &&
-		    !amdgpu_glamor_create_textured_pixmap(ppix, priv)) {
-			free(priv->bo);
-			free(priv);
+		    !amdgpu_glamor_create_textured_pixmap(ppix, bo)) {
+			amdgpu_bo_unref(&bo);
 			return FALSE;
 		}
 #endif
 
-		amdgpu_set_pixmap_private(ppix, priv);
-		return TRUE;
+		ret = amdgpu_set_pixmap_bo(ppix, bo);
+		/* amdgpu_set_pixmap_bo increments ref_count if it succeeds */
+		amdgpu_bo_unref(&bo);
+		return ret;
 	}
 
 	pixmap_buffer = amdgpu_gem_bo_open_prime(pAMDGPUEnt->pDev, ihandle, size);
@@ -426,13 +437,15 @@ Bool amdgpu_set_shared_pixmap_backing(PixmapPtr ppix, void *fd_handle)
 		return FALSE;
 	}
 
-	amdgpu_set_pixmap_bo(ppix, pixmap_buffer);
-
 	close(ihandle);
+
+	ret = amdgpu_set_pixmap_bo(ppix, pixmap_buffer);
+
 	/* we have a reference from the alloc and one from set pixmap bo,
 	   drop one */
 	amdgpu_bo_unref(&pixmap_buffer);
-	return TRUE;
+
+	return ret;
 }
 
 #endif /* AMDGPU_PIXMAP_SHARING */

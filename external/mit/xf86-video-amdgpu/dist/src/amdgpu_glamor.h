@@ -69,8 +69,9 @@ void amdgpu_glamor_flush(ScrnInfoPtr pScrn);
 void amdgpu_glamor_finish(ScrnInfoPtr pScrn);
 
 Bool
-amdgpu_glamor_create_textured_pixmap(PixmapPtr pixmap, struct amdgpu_pixmap *priv);
+amdgpu_glamor_create_textured_pixmap(PixmapPtr pixmap, struct amdgpu_buffer *bo);
 void amdgpu_glamor_exchange_buffers(PixmapPtr src, PixmapPtr dst);
+PixmapPtr amdgpu_glamor_set_pixmap_bo(DrawablePtr drawable, PixmapPtr pixmap);
 
 XF86VideoAdaptorPtr amdgpu_glamor_xv_init(ScreenPtr pScreen, int num_adapt);
 

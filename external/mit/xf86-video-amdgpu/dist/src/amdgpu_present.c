@@ -170,7 +170,7 @@ amdgpu_present_queue_vblank(RRCrtcPtr crtc, uint64_t event_id, uint64_t msc)
 					       event_id, event,
 					       amdgpu_present_vblank_handler,
 					       amdgpu_present_vblank_abort);
-	if (!drm_queue_seq) {
+	if (drm_queue_seq == AMDGPU_DRM_QUEUE_ERROR) {
 		free(event);
 		return BadAlloc;
 	}
@@ -211,6 +211,38 @@ amdgpu_present_flush(WindowPtr window)
 }
 
 /*
+ * Test to see if unflipping is possible
+ *
+ * These tests have to pass for flips as well
+ */
+static Bool
+amdgpu_present_check_unflip(ScrnInfoPtr scrn)
+{
+	xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(scrn);
+	int num_crtcs_on;
+	int i;
+
+	if (!scrn->vtSema)
+		return FALSE;
+
+	for (i = 0, num_crtcs_on = 0; i < config->num_crtc; i++) {
+		drmmode_crtc_private_ptr drmmode_crtc = config->crtc[i]->driver_private;
+
+		if (!config->crtc[i]->enabled)
+			continue;
+
+		if (!drmmode_crtc || drmmode_crtc->rotate.bo ||
+		    drmmode_crtc->scanout[0].bo)
+			return FALSE;
+
+		if (drmmode_crtc->pending_dpms_mode == DPMSModeOn)
+			num_crtcs_on++;
+	}
+
+	return num_crtcs_on > 0;
+}
+
+/*
  * Test to see if page flipping is possible on the target crtc
  */
 static Bool
@@ -220,12 +252,6 @@ amdgpu_present_check_flip(RRCrtcPtr crtc, WindowPtr window, PixmapPtr pixmap,
 	ScreenPtr screen = window->drawable.pScreen;
 	ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
 	AMDGPUInfoPtr info = AMDGPUPTR(scrn);
-	xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(scrn);
-	int num_crtcs_on;
-	int i;
-
-	if (!scrn->vtSema)
-		return FALSE;
 
 	if (!info->allowPageFlip)
 		return FALSE;
@@ -233,26 +259,17 @@ amdgpu_present_check_flip(RRCrtcPtr crtc, WindowPtr window, PixmapPtr pixmap,
 	if (info->hwcursor_disabled)
 		return FALSE;
 
-	if (!sync_flip)
-		return FALSE;
-
 	if (info->drmmode.dri2_flipping)
 		return FALSE;
 
-	for (i = 0, num_crtcs_on = 0; i < config->num_crtc; i++) {
-		drmmode_crtc_private_ptr drmmode_crtc = config->crtc[i]->driver_private;
+	/* The kernel driver doesn't handle flipping between BOs with different
+	 * tiling parameters correctly yet
+	 */
+	if (amdgpu_pixmap_get_tiling_info(pixmap) !=
+	    amdgpu_pixmap_get_tiling_info(screen->GetScreenPixmap(screen)))
+		return FALSE;
 
-		if (!config->crtc[i]->enabled)
-			continue;
-
-		if (!drmmode_crtc || drmmode_crtc->rotate.bo != NULL)
-			return FALSE;
-
-		if (drmmode_crtc->dpms_mode == DPMSModeOn)
-			num_crtcs_on++;
-	}
-
-	return num_crtcs_on > 0;
+	return amdgpu_present_check_unflip(scrn);
 }
 
 /*
@@ -311,7 +328,8 @@ amdgpu_present_flip(RRCrtcPtr crtc, uint64_t event_id, uint64_t target_msc,
 	ret = amdgpu_do_pageflip(scrn, AMDGPU_DRM_QUEUE_CLIENT_DEFAULT,
 				 pixmap, event_id, event, crtc_id,
 				 amdgpu_present_flip_event,
-				 amdgpu_present_flip_abort);
+				 amdgpu_present_flip_abort,
+				 sync_flip ? FLIP_VSYNC : FLIP_ASYNC);
 	if (!ret)
 		xf86DrvMsg(scrn->scrnIndex, X_ERROR, "present flip failed\n");
 	else
@@ -334,7 +352,7 @@ amdgpu_present_unflip(ScreenPtr screen, uint64_t event_id)
 	PixmapPtr pixmap = screen->GetScreenPixmap(screen);
 	int i;
 
-	if (!amdgpu_present_check_flip(NULL, screen->root, pixmap, TRUE))
+	if (!amdgpu_present_check_unflip(scrn))
 		goto modeset;
 
 	event = calloc(1, sizeof(struct amdgpu_present_vblank_event));
@@ -348,7 +366,7 @@ amdgpu_present_unflip(ScreenPtr screen, uint64_t event_id)
 
 	if (amdgpu_do_pageflip(scrn, AMDGPU_DRM_QUEUE_CLIENT_DEFAULT, pixmap,
 			       event_id, event, -1, amdgpu_present_flip_event,
-			       amdgpu_present_flip_abort))
+			       amdgpu_present_flip_abort, FLIP_VSYNC))
 		return;
 
 modeset:
@@ -365,7 +383,7 @@ modeset:
 		if (!crtc->enabled)
 			continue;
 
-		if (drmmode_crtc->dpms_mode == DPMSModeOn)
+		if (drmmode_crtc->pending_dpms_mode == DPMSModeOn)
 			crtc->funcs->set_mode_major(crtc, &crtc->mode, crtc->rotation,
 						    crtc->x, crtc->y);
 		else

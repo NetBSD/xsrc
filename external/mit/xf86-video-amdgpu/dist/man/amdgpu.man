@@ -29,7 +29,7 @@ RandR support up to version 1.4;
 .SH SUPPORTED HARDWARE
 The
 .B amdgpu
-driver supports CI and newer families' video cards.
+driver supports SI and newer families' video cards.
 .PD
 .SH CONFIGURATION DETAILS
 Please refer to __xconfigfile__(__filemansuffix__) for general configuration
@@ -64,6 +64,8 @@ will assign xrandr outputs LVDS and VGA-0 to this instance of the driver.
 .BI "Option \*qDRI\*q \*q" integer \*q
 Define the maximum level of DRI to enable. Valid values are 2 for DRI2 or 3 for DRI3.
 The default is
+.B 3 for DRI3
+if the Xorg version is >= 1.18.3, otherwise
 .B 2 for DRI2.
 .TP
 .BI "Option \*qEnablePageFlip\*q \*q" boolean \*q
@@ -71,10 +73,8 @@ Enable DRI2 page flipping.  The default is
 .B on.
 .TP
 .BI "Option \*qTearFree\*q \*q" boolean \*q
-Enable tearing prevention using the hardware page flipping mechanism. This
-option currently doesn't have any effect for CRTCs using transforms other than
-rotation or reflection. It requires allocating two separate scanout buffers for
-each supported CRTC. Enabling this option currently disables Option
+Enable tearing prevention using the hardware page flipping mechanism. Requires allocating two
+separate scanout buffers for each CRTC. Enabling this option currently disables Option
 \*qEnablePageFlip\*q. The default is
 .B off.
 .TP
@@ -118,7 +118,7 @@ http://cgit.freedesktop.org/xorg/driver/xf86-video-amdgpu/
 .IP " 3." 4
 Mailing list:
 .RS 4
-http://lists.x.org/mailman/listinfo/xorg-driver-ati
+http://lists.freedesktop.org/mailman/listinfo/amd-gfx
 .RE
 .IP " 4." 4
 IRC channel:
