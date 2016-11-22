@@ -145,8 +145,7 @@ xf86ExtendedInitInt10(int entityIndex, int Flags)
     /* FIXME: Shouldn't this be a failure case?  Leaving dev as NULL seems like
      * FIXME: an error
      */
-
-   pInt->dev = xf86GetPciInfoForEntity(entityIndex);
+    pInt->dev = xf86GetPciInfoForEntity(entityIndex);
 
     /*
      * we need to map video RAM MMIO as some chipsets map mmio
