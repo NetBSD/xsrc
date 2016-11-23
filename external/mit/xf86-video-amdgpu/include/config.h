@@ -85,7 +85,7 @@
 #define PACKAGE_NAME "xf86-video-amdgpu"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-video-amdgpu 1.1.0"
+#define PACKAGE_STRING "xf86-video-amdgpu 1.2.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-video-amdgpu"
@@ -94,13 +94,13 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.1.0"
+#define PACKAGE_VERSION "1.2.0"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
 
 /* Minor version of this package */
-#define PACKAGE_VERSION_MINOR 1
+#define PACKAGE_VERSION_MINOR 2
 
 /* Patch version of this package */
 #define PACKAGE_VERSION_PATCHLEVEL 0
@@ -115,7 +115,7 @@
 #define USE_SYS_ENDIAN_H 1
 
 /* Version number of package */
-#define VERSION "1.1.0"
+#define VERSION "1.2.0"
 
 /* Enable large inode numbers on Mac OS X 10.5.  */
 #ifndef _DARWIN_USE_64_BIT_INODE
