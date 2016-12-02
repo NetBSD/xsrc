@@ -38,6 +38,8 @@
 #ifdef HAVE_XAA_H
 #include "xaa.h"
 #endif
+#include "exa.h"
+
 #include "xf86fbman.h"
 #include "xf86RamDac.h"
 #include "xf86cmap.h"
@@ -148,6 +150,9 @@ typedef struct {
 #ifdef HAVE_XAA_H
     XAAInfoRecPtr	AccelInfoRec;
 #endif
+    ExaDriverPtr 	pExa;
+    int			srcoff;
+
     CloseScreenProcPtr	CloseScreen;
     ScreenBlockHandlerProcPtr BlockHandler;
     GCPtr		CurrentGC;
@@ -240,6 +245,7 @@ void Permedia3Restore(ScrnInfoPtr pScrn, GLINTRegPtr glintReg);
 void Permedia3Save(ScrnInfoPtr pScrn, GLINTRegPtr glintReg);
 Bool Permedia3Init(ScrnInfoPtr pScrn, DisplayModePtr mode, GLINTRegPtr pReg);
 Bool Permedia3AccelInit(ScreenPtr pScreen);
+Bool Pm3InitEXA(ScreenPtr pScreen);
 void Permedia3InitializeEngine(ScrnInfoPtr pScrn);
 void Permedia3EnableOffscreen(ScreenPtr pScreen);
 void Permedia3Sync(ScrnInfoPtr pScrn);

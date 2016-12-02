@@ -397,22 +397,6 @@ static void Permedia2LoadCoord(
 }
 
 
-void
-Permedia2Sync(ScrnInfoPtr pScrn)
-{
-    GLINTPtr pGlint = GLINTPTR(pScrn);
-
-    CHECKCLIPPING;
-
-    while (GLINT_READ_REG(DMACount) != 0);
-    GLINT_WAIT(2);
-    GLINT_WRITE_REG(0x400, FilterMode);
-    GLINT_WRITE_REG(0, GlintSync);
-    do {
-   	while(GLINT_READ_REG(OutFIFOWords) == 0);
-    } while (GLINT_READ_REG(OutputFIFO) != Sync_tag);
-}
-
 static void
 Permedia2SetClippingRectangle(ScrnInfoPtr pScrn, int x1, int y1, int x2, int y2)
 {

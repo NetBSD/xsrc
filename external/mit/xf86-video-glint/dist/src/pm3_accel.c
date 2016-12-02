@@ -45,9 +45,6 @@
 #include "pm3_regs.h"
 #include "glint.h"
 
-#ifdef HAVE_XAA_H
-#include "xaalocal.h"		/* For replacements */
-
 #define DEBUG 0
 
 #if DEBUG
@@ -60,19 +57,11 @@
 # define TRACE(str)
 #endif
 
-#define PM3_WRITEMASK \
-  (pGlint->PM3_UsingSGRAM ? PM3FBHardwareWriteMask : PM3FBSoftwareWriteMask )
-#define PM3_OTHERWRITEMASK \
-  (pGlint->PM3_UsingSGRAM ? PM3FBSoftwareWriteMask : PM3FBHardwareWriteMask )
+#ifdef HAVE_XAA_H
+#include "xaalocal.h"		/* For replacements */
+#endif
 
-#define PM3_PLANEMASK(planemask)				\
-{ 								\
-	if (planemask != pGlint->planemask) {			\
-		pGlint->planemask = planemask;			\
-		REPLICATE(planemask); 				\
-		GLINT_WRITE_REG(planemask, PM3_WRITEMASK);	\
-	}							\
-} 
+#ifdef HAVE_XAA_H
 
 /* Clipping */
 static void Permedia3SetClippingRectangle(ScrnInfoPtr pScrn, int x, int y,
@@ -122,6 +111,7 @@ static void Permedia3WritePixmap(ScrnInfoPtr pScrn, int x, int y, int w, int h,
 static void Permedia3WriteBitmap(ScrnInfoPtr pScrn, int x, int y, int w, int h, 
 				unsigned char *src, int srcwidth, int skipleft, 
 				int fg, int bg, int rop,unsigned int planemask);
+#endif /* HAVE_XAA_H */
 
 void
 Permedia3InitializeEngine(ScrnInfoPtr pScrn)
@@ -377,11 +367,13 @@ Permedia3InitializeEngine(ScrnInfoPtr pScrn)
     GLINT_SLOW_WRITE_REG(0, StartXSub);
     GLINT_SLOW_WRITE_REG(0, StartY);
     GLINT_SLOW_WRITE_REG(0, GLINTCount);
+#ifdef HAVE_XAA_H
     if (*pGlint->AccelInfoRec->Sync != NULL)
     	(*pGlint->AccelInfoRec->Sync)(pScrn);
+#endif
     TRACE_EXIT("Permedia3InitializeEngine");
 }
-#endif
+
 Bool
 Permedia3AccelInit(ScreenPtr pScreen)
 {
@@ -516,7 +508,6 @@ Permedia3EnableOffscreen (ScreenPtr pScreen)
     xf86InitFBManager(pScreen, &AvailFBArea);
 }
 
-#ifdef HAVE_XAA_H
 
 #define CHECKCLIPPING				\
 {						\
@@ -543,6 +534,7 @@ Permedia3Sync(ScrnInfoPtr pScrn)
     } while (GLINT_READ_REG(OutputFIFO) != Sync_tag);
 }
 
+#ifdef HAVE_XAA_H
 void
 DualPermedia3Sync(
 	ScrnInfoPtr pScrn

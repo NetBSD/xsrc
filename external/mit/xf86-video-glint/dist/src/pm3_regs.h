@@ -1049,6 +1049,20 @@
 #	define PM3FillRectanglePosition_XOffset(x)            ((x)&0xffff)
 #	define PM3FillRectanglePosition_YOffset(y)            (((y)&0xffff)<<16)
 
+#define PM3_WRITEMASK \
+  (pGlint->PM3_UsingSGRAM ? PM3FBHardwareWriteMask : PM3FBSoftwareWriteMask )
+#define PM3_OTHERWRITEMASK \
+  (pGlint->PM3_UsingSGRAM ? PM3FBSoftwareWriteMask : PM3FBHardwareWriteMask )
+
+#define PM3_PLANEMASK(planemask)				\
+{ 								\
+	if (planemask != pGlint->planemask) {			\
+		pGlint->planemask = planemask;			\
+		REPLICATE(planemask); 				\
+		GLINT_WRITE_REG(planemask, PM3_WRITEMASK);	\
+	}							\
+} 
+
 #if 0
 
 /**********************************************
