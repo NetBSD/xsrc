@@ -2224,6 +2224,15 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
 
 	/* set the MULTI width for software rendering */
 	pScrn->displayWidth = inputXSpanBytes / bytesPerPixel;
+    } else {
+	/*
+	 * round pitch up to next multiple of 32
+	 * On most chips this will be enforced anyway by the pprod code, but
+	 * not on pm3, which does seem to have some alignment requirements
+	 * although it's not clear what exactly, so this may be too big.
+	 * With this it works properly with a 1366x768 monitor.
+	 */
+    	pScrn->displayWidth = (pScrn->displayWidth + 31) & ~31;
     }
 
     /* Set the current mode to the first in the list */
