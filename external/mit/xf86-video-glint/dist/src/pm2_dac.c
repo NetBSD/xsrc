@@ -95,8 +95,27 @@ Permedia2Init(ScrnInfoPtr pScrn, DisplayModePtr mode)
     GLINTRegPtr pReg = &pGlint->ModeReg[0];
     CARD32 temp1, temp2, temp3, temp4;
     
-    pReg->glintRegs[Aperture0 >> 3] = 0;
-    pReg->glintRegs[Aperture1 >> 3] = 0;
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+    switch (pGlint->HwBpp) {
+    case 8:
+    case 24:
+	    temp1 = 0x00;
+	    break;
+
+    case 15:
+    case 16:
+	    temp1 = 0x02;
+	    break;
+
+    case 32:
+	    temp1 = 0x01;
+	    break;
+    default:
+	    break;
+    };
+#endif /* BIG_ENDIAN */
+    pReg->glintRegs[Aperture0 >> 3] = temp1;
+    pReg->glintRegs[Aperture1 >> 3] = temp1;
     pReg->glintRegs[PMFramebufferWriteMask >> 3] = 0xFFFFFFFF;
     pReg->glintRegs[PMBypassWriteMask >> 3] = 0xFFFFFFFF;
 
