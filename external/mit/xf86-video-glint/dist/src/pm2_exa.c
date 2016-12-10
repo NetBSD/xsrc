@@ -141,8 +141,6 @@ Pm2DoneCopy(PixmapPtr pPixmap)
 	ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
 	GLINTPtr pGlint = GLINTPTR(pScrn);
 
-	GLINT_WRITE_REG(0, ScissorMinXY);
-	GLINT_WRITE_REG(0x0fff0fff, ScissorMaxXY);
 }
 
 STATIC Bool
@@ -220,7 +218,7 @@ Pm2UploadToScreen(PixmapPtr pDst, int x, int y, int w, int h,
 	ENTER;
 	dst += (x * cpp) + (y * dst_pitch);
 
-	Permedia3Sync(pScrn);
+	Permedia2Sync(pScrn);
 
 	while (h--) {
 		memcpy(dst, src, wBytes);
@@ -249,7 +247,7 @@ Pm2DownloadFromScreen(PixmapPtr pSrc, int x, int y, int w, int h,
 
 	src += (x * cpp) + (y * src_pitch);
 
-	Permedia3Sync(pScrn);
+	Permedia2Sync(pScrn);
 
 	while (h--) {
 		memcpy(dst, src, wBytes);
@@ -294,8 +292,8 @@ Pm2InitEXA(ScreenPtr pScreen)
 		      /* | EXA_SUPPORTS_OFFSCREEN_OVERLAPS |*/
 		      | EXA_MIXED_PIXMAPS;
 
-	pExa->maxX = 2047;
-	pExa->maxY = 2047;
+	pExa->maxX = 2048;
+	pExa->maxY = 2048;
 
 	pExa->WaitMarker = Pm2WaitMarker;
 
