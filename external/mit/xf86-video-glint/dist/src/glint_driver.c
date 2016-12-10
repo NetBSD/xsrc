@@ -2112,7 +2112,12 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
     case PCI_VENDOR_3DLABS_CHIP_PERMEDIA2V:
     case PCI_VENDOR_TI_CHIP_PERMEDIA:
     case PCI_VENDOR_3DLABS_CHIP_PERMEDIA:
-	pGlint->pprod = partprodPermedia[pScrn->displayWidth >> 5];
+    	pScrn->displayWidth = (pScrn->displayWidth + 31) & ~31;
+    	pGlint->pprod = -1;
+    	while ((pGlint->pprod == -1) && (pScrn->displayWidth < 2048)) {
+    		pScrn->displayWidth += 32;
+		pGlint->pprod = partprodPermedia[pScrn->displayWidth >> 5];
+	}
 	pGlint->bppalign = bppand[(pScrn->bitsPerPixel>>3)-1];
 	break;
     case PCI_VENDOR_3DLABS_CHIP_500TX:
@@ -2896,7 +2901,11 @@ GLINTScreenInit(SCREEN_INIT_ARGS_DECL)
         case PCI_VENDOR_TI_CHIP_PERMEDIA2:
         case PCI_VENDOR_3DLABS_CHIP_PERMEDIA2:
         case PCI_VENDOR_3DLABS_CHIP_PERMEDIA2V:
+#ifdef HAVE_XAA_H
 	    Permedia2AccelInit(pScreen);
+#else
+	    Pm2InitEXA(pScreen);
+#endif
 	    break;
 	case PCI_VENDOR_3DLABS_CHIP_PERMEDIA3:
 	case PCI_VENDOR_3DLABS_CHIP_PERMEDIA4:

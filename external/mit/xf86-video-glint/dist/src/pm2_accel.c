@@ -129,7 +129,6 @@ static void Permedia2SubsequentScanlineCPUToScreenColorExpandFill(
 				ScrnInfoPtr pScrn, int x,
 				int y, int w, int h, int skipleft);
 static void Permedia2SubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno);
-static void Permedia2LoadCoord(ScrnInfoPtr pScrn, int x, int y, int w, int h);
 static void Permedia2PolylinesThinSolidWrapper(DrawablePtr pDraw, GCPtr pGC,
    				int mode, int npt, DDXPointPtr pPts);
 static void Permedia2PolySegmentThinSolidWrapper(DrawablePtr pDraw, GCPtr pGC,
@@ -276,25 +275,6 @@ Permedia2AccelInit(ScreenPtr pScreen)
 }
 
 #ifdef HAVE_XAA_H
-static void Permedia2LoadCoord(
-	ScrnInfoPtr pScrn,
-	int x, int y,
-	int w, int h
-){
-    GLINTPtr pGlint = GLINTPTR(pScrn);
-    
-    if ((h != pGlint->h) || (w != pGlint->w)) {
-	pGlint->w = w;
-	pGlint->h = h;
-	GLINT_WRITE_REG(((h&0x0FFF)<<16)|(w&0x0FFF), RectangleSize);
-    }
-    if ((y != pGlint->y) || (x != pGlint->x)) {
-	pGlint->x = x;
-	pGlint->y = y;
-	GLINT_WRITE_REG(((y&0x0FFF)<<16)|(x&0x0FFF), RectangleOrigin);
-    }
-}
-
 
 static void
 Permedia2SetClippingRectangle(ScrnInfoPtr pScrn, int x1, int y1, int x2, int y2)

@@ -224,9 +224,11 @@ void Permedia2Save(ScrnInfoPtr pScrn, GLINTRegPtr glintReg);
 Bool Permedia2Init(ScrnInfoPtr pScrn, DisplayModePtr mode);
 void Permedia2PreInit(ScrnInfoPtr pScrn);
 Bool Permedia2AccelInit(ScreenPtr pScreen);
+Bool Pm2InitEXA(ScreenPtr pScreen);
 void Permedia2Sync(ScrnInfoPtr pScrn);
 void Permedia2InitializeEngine(ScrnInfoPtr pScrn);
 Bool Permedia2HWCursorInit(ScreenPtr pScreen);
+void Permedia2LoadCoord(ScrnInfoPtr, int, int, int, int);
 
 void PermediaRestore(ScrnInfoPtr pScrn, GLINTRegPtr glintReg);
 void PermediaSave(ScrnInfoPtr pScrn, GLINTRegPtr glintReg);

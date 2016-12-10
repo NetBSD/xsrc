@@ -172,3 +172,23 @@ Permedia2Sync(ScrnInfoPtr pScrn)
     } while (GLINT_READ_REG(OutputFIFO) != Sync_tag);
 }
 
+void 
+Permedia2LoadCoord(
+	ScrnInfoPtr pScrn,
+	int x, int y,
+	int w, int h
+){
+    GLINTPtr pGlint = GLINTPTR(pScrn);
+    
+    if ((h != pGlint->h) || (w != pGlint->w)) {
+	pGlint->w = w;
+	pGlint->h = h;
+	GLINT_WRITE_REG(((h&0x0FFF)<<16)|(w&0x0FFF), RectangleSize);
+    }
+    if ((y != pGlint->y) || (x != pGlint->x)) {
+	pGlint->x = x;
+	pGlint->y = y;
+	GLINT_WRITE_REG(((y&0x0FFF)<<16)|(x&0x0FFF), RectangleOrigin);
+    }
+}
+
