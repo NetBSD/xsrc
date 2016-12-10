@@ -1,4 +1,4 @@
-/* $NetBSD: pm3_exa.c,v 1.2 2016/12/02 23:16:07 macallan Exp $ */
+/* $NetBSD: pm3_exa.c,v 1.3 2016/12/10 07:23:38 macallan Exp $ */
 
 /*
  * Copyright (c) 2016 Michael Lorenz
@@ -308,7 +308,7 @@ Pm3InitEXA(ScreenPtr pScreen)
 	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
 	GLINTPtr pGlint = GLINTPTR(pScrn);
 	ExaDriverPtr pExa;
-	int stride;
+	int stride, lines;
 
 	ENTER;
 
@@ -323,7 +323,8 @@ Pm3InitEXA(ScreenPtr pScreen)
 
 	pExa->memoryBase = pGlint->FbBase;
 	stride = pScrn->displayWidth * (pScrn->bitsPerPixel >> 3);
-	pExa->memorySize = min(pGlint->FbMapSize, 4095 * stride);
+	lines = min(pGlint->FbMapSize / stride, 4095);
+	pExa->memorySize = lines * stride;
 	xf86Msg(X_ERROR, "stride: %d\n", stride);
 	pExa->offScreenBase = stride * pScrn->virtualY;
 
@@ -331,9 +332,7 @@ Pm3InitEXA(ScreenPtr pScreen)
 	pExa->pixmapOffsetAlign = stride;
 	pExa->pixmapPitchAlign = stride;
 
-	pExa->flags = EXA_OFFSCREEN_PIXMAPS
-		      /* | EXA_SUPPORTS_OFFSCREEN_OVERLAPS |*/
-		      | EXA_MIXED_PIXMAPS;
+	pExa->flags = EXA_OFFSCREEN_PIXMAPS;
 
 	pExa->maxX = 4095;
 	pExa->maxY = 4095;

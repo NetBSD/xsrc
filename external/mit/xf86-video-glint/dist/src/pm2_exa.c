@@ -264,7 +264,7 @@ Pm2InitEXA(ScreenPtr pScreen)
 	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
 	GLINTPtr pGlint = GLINTPTR(pScrn);
 	ExaDriverPtr pExa;
-	int stride;
+	int stride, lines;
 
 	ENTER;
 
@@ -279,7 +279,8 @@ Pm2InitEXA(ScreenPtr pScreen)
 
 	pExa->memoryBase = pGlint->FbBase;
 	stride = pScrn->displayWidth * (pScrn->bitsPerPixel >> 3);
-	pExa->memorySize = min(pGlint->FbMapSize, 2047 * stride);
+	lines = min(pGlint->FbMapSize / stride, 2047);
+	pExa->memorySize = lines * stride;
 	DPRINTF(X_ERROR, "stride: %d\n", stride);
 	DPRINTF(X_ERROR, "pprod: %08x\n", pGlint->pprod);
 	pExa->offScreenBase = stride * pScrn->virtualY;
@@ -288,9 +289,7 @@ Pm2InitEXA(ScreenPtr pScreen)
 	pExa->pixmapOffsetAlign = stride;
 	pExa->pixmapPitchAlign = stride;
 
-	pExa->flags = EXA_OFFSCREEN_PIXMAPS
-		      /* | EXA_SUPPORTS_OFFSCREEN_OVERLAPS |*/
-		      | EXA_MIXED_PIXMAPS;
+	pExa->flags = EXA_OFFSCREEN_PIXMAPS;
 
 	pExa->maxX = 2048;
 	pExa->maxY = 2048;
