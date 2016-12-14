@@ -1,4 +1,4 @@
-/* $NetBSD: pm3_exa.c,v 1.4 2016/12/14 16:51:44 macallan Exp $ */
+/* $NetBSD: pm3_exa.c,v 1.5 2016/12/14 20:34:17 macallan Exp $ */
 
 /*
  * Copyright (c) 2016 Michael Lorenz
@@ -73,6 +73,10 @@ Pm3PrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap,
 {
 	ScrnInfoPtr pScrn = xf86Screens[pDstPixmap->drawable.pScreen->myNum];
 	GLINTPtr pGlint = GLINTPTR(pScrn);
+	int dstoff = exaGetPixmapOffset(pDstPixmap);
+	int dstpitch = exaGetPixmapPitch(pDstPixmap);
+	int srcoff = exaGetPixmapOffset(pSrcPixmap);
+	int srcpitch = exaGetPixmapPitch(pSrcPixmap);
 
 	ENTER;
 
@@ -99,7 +103,21 @@ Pm3PrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap,
 
 	pGlint->srcoff = exaGetPixmapOffset(pSrcPixmap);
 
-	GLINT_WAIT(2);
+	GLINT_WAIT(10);
+	GLINT_WRITE_REG(dstoff, PM3FBWriteBufferAddr0);
+	GLINT_WRITE_REG(dstpitch >> 2, PM3FBWriteBufferWidth0);
+	GLINT_WRITE_REG(dstoff, PM3FBDestReadBufferAddr0);
+	GLINT_WRITE_REG(dstpitch >> 2, PM3FBDestReadBufferWidth0);
+	GLINT_WRITE_REG(srcoff, PM3FBSourceReadBufferAddr);
+	GLINT_WRITE_REG(srcpitch >> 2, PM3FBSourceReadBufferWidth);
+	GLINT_WRITE_REG(PM3FBWriteMode_WriteEnable|
+		PM3FBWriteMode_OpaqueSpan|
+		PM3FBWriteMode_Enable0,
+		PM3FBWriteMode);
+	GLINT_WRITE_REG(
+		PM3FBDestReadMode_ReadEnable |
+		PM3FBDestReadMode_Enable0,
+		PM3FBDestReadMode);
 	PM3_PLANEMASK(planemask);
 	GLINT_WRITE_REG(pGlint->PM3_Config2D, PM3Config2D);
 	return TRUE;
@@ -113,14 +131,8 @@ Pm3Copy(PixmapPtr pDstPixmap,
 	GLINTPtr pGlint = GLINTPTR(pScrn);
 	/* Spans needs to be 32 bit aligned. */
 	int x_align = srcX & 0x1f;
-	int dstoff = exaGetPixmapOffset(pDstPixmap);
-	int pitch = exaGetPixmapPitch(pDstPixmap);
 	
 	ENTER;
-
-	/* assuming constant pitch for now */	
-	srcY += pGlint->srcoff / pitch;
-	dstY += dstoff / pitch;
 
 	GLINT_WAIT(5);
 	GLINT_WRITE_REG(((dstY & 0x0fff) << 16) | (dstX & 0x0fff), ScissorMinXY);
@@ -155,9 +167,24 @@ Pm3PrepareSolid(PixmapPtr pPixmap, int rop, Pixel planemask, Pixel color)
 {
 	ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
 	GLINTPtr pGlint = GLINTPTR(pScrn);
+	int offset = exaGetPixmapOffset(pPixmap);
+	int pitch = exaGetPixmapPitch(pPixmap);
 
 	ENTER;
 
+	GLINT_WAIT(6);
+	GLINT_WRITE_REG(offset, PM3FBWriteBufferAddr0);
+	GLINT_WRITE_REG(pitch >> 2, PM3FBWriteBufferWidth0);
+	GLINT_WRITE_REG(offset, PM3FBDestReadBufferAddr0);
+	GLINT_WRITE_REG(pitch >> 2, PM3FBDestReadBufferWidth0);
+	GLINT_WRITE_REG(PM3FBWriteMode_WriteEnable|
+		PM3FBWriteMode_OpaqueSpan|
+		PM3FBWriteMode_Enable0,
+		PM3FBWriteMode);
+	GLINT_WRITE_REG(
+		PM3FBDestReadMode_ReadEnable |
+		PM3FBDestReadMode_Enable0,
+		PM3FBDestReadMode);
 	/* Prepare Common Render2D & Config2D data */
 	pGlint->PM3_Render2D =
 		PM3Render2D_XPositive |
@@ -223,13 +250,9 @@ Pm3Solid(PixmapPtr pPixmap, int x1, int y1, int x2, int y2)
 {
 	ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
 	GLINTPtr pGlint = GLINTPTR(pScrn);
-	int offset = exaGetPixmapOffset(pPixmap);
-	int pitch = exaGetPixmapPitch(pPixmap);
 	int w = x2 - x1, h = y2 - y1;
 
 	ENTER;
-
-	y1 += offset / pitch;
 
 	GLINT_WAIT(2);
 	GLINT_WRITE_REG(
@@ -308,7 +331,7 @@ Pm3InitEXA(ScreenPtr pScreen)
 	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
 	GLINTPtr pGlint = GLINTPTR(pScrn);
 	ExaDriverPtr pExa;
-	int stride, lines;
+	int stride;
 
 	ENTER;
 
@@ -323,14 +346,12 @@ Pm3InitEXA(ScreenPtr pScreen)
 
 	pExa->memoryBase = pGlint->FbBase;
 	stride = pScrn->displayWidth * (pScrn->bitsPerPixel >> 3);
-	lines = min(pGlint->FbMapSize / stride, 4095);
-	pExa->memorySize = lines * stride;
-	xf86Msg(X_ERROR, "stride: %d\n", stride);
+	pExa->offScreenBase = stride * pScrn->virtualY;
+	pExa->memorySize = pGlint->FbMapSize;
 	pExa->offScreenBase = stride * pScrn->virtualY;
 
-	/* for now, until I figure out how to do variable stride */
-	pExa->pixmapOffsetAlign = stride;
-	pExa->pixmapPitchAlign = stride;
+	pExa->pixmapOffsetAlign = 32;
+	pExa->pixmapPitchAlign = 32;
 
 	pExa->flags = EXA_OFFSCREEN_PIXMAPS;
 
