@@ -255,6 +255,10 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.88 2003/12/16 21:30:21 herrb Exp $
 #  define AMD64Architecture
 #  undef __x86_64__
 # endif
+# ifdef __ia64__
+#  define ia64Architecture
+#  undef __ia64__
+# endif
 #endif /* NetBSD */
 
 /* Systems based on kernel of NetBSD */
