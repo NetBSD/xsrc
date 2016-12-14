@@ -208,22 +208,62 @@ Pm2UploadToScreen(PixmapPtr pDst, int x, int y, int w, int h,
 {
 	ScrnInfoPtr pScrn = xf86Screens[pDst->drawable.pScreen->myNum];
 	GLINTPtr pGlint = GLINTPTR(pScrn);
-	char  *dst        = pGlint->FbBase + exaGetPixmapOffset(pDst);
+	int    offset	  = exaGetPixmapOffset(pDst);
+	char  *dst        = pGlint->FbBase + offset;
+	uint32_t *s;
 	int    dst_pitch  = exaGetPixmapPitch(pDst);
 
 	int bpp    = pDst->drawable.bitsPerPixel;
 	int cpp    = (bpp + 7) >> 3;
 	int wBytes = w * cpp;
+	int xx, i, fs = pGlint->FIFOSize, chunk, adr;
 
 	ENTER;
-	dst += (x * cpp) + (y * dst_pitch);
 
-	Permedia2Sync(pScrn);
+	if (bpp < 24) {
+		/* for now */
+		dst += (x * cpp) + (y * dst_pitch);
 
-	while (h--) {
-		memcpy(dst, src, wBytes);
-		src += src_pitch;
-		dst += dst_pitch;
+		Permedia2Sync(pScrn);
+
+		while (h--) {
+			memcpy(dst, src, wBytes);
+			src += src_pitch;
+			dst += dst_pitch;
+		}
+	} else {
+		/* use host blit */
+		GLINT_WAIT(3);
+		y += offset / dst_pitch;
+#if 0
+		GLINT_WRITE_REG(UNIT_DISABLE, ColorDDAMode);
+		GLINT_WRITE_REG(pGlint->pprod, FBReadMode);
+        	Permedia2LoadCoord(pScrn, x, y, w, h);
+        	GLINT_WRITE_REG(PrimitiveRectangle | 
+        	                XPositive | YPositive | SyncOnHostData,
+        	                Render);
+#endif
+		adr = y * (dst_pitch >> 2) + x;
+        	while (h--) {
+        		s = (uint32_t *)src;
+        		xx = w;
+        		GLINT_WAIT(1);
+        		GLINT_WRITE_REG(adr, TextureDownloadOffset);
+			while (xx > 0) {
+				chunk = min(fs - 1, xx);
+	        		GLINT_WAIT(chunk);
+	        	      	GLINT_WRITE_REG(((chunk - 1) << 16) | (0x11 << 4) | 
+					0x0d, OutputFIFO);
+				GLINT_MoveDWORDS(
+					(CARD32*)((char*)pGlint->IOBase + OutputFIFO + 4),
+	 				s, chunk);
+	 			xx -= chunk;
+	 			s += chunk;
+			}
+			adr += (dst_pitch >> 2);
+			src += src_pitch;
+		}
+		exaMarkSync(pDst->drawable.pScreen);
 	}
 	return TRUE;
 }
