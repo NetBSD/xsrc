@@ -1,4 +1,4 @@
-/* $NetBSD: pm3_exa.c,v 1.3 2016/12/10 07:23:38 macallan Exp $ */
+/* $NetBSD: pm3_exa.c,v 1.4 2016/12/14 16:51:44 macallan Exp $ */
 
 /*
  * Copyright (c) 2016 Michael Lorenz
@@ -251,9 +251,9 @@ Pm3UploadToScreen(PixmapPtr pDst, int x, int y, int w, int h,
     char *src, int src_pitch)
 {
 	ScrnInfoPtr pScrn = xf86Screens[pDst->drawable.pScreen->myNum];
-	GLINTPtr pGlint = GLINTPTR(pScrn);
-	char  *dst        = pGlint->FbBase + exaGetPixmapOffset(pDst);
-	int    dst_pitch  = exaGetPixmapPitch(pDst);
+	GLINTPtr pGlint    = GLINTPTR(pScrn);
+	unsigned char *dst = pGlint->FbBase + exaGetPixmapOffset(pDst);
+	int    dst_pitch   = exaGetPixmapPitch(pDst);
 
 	int bpp    = pDst->drawable.bitsPerPixel;
 	int cpp    = (bpp + 7) >> 3;
@@ -280,9 +280,9 @@ Pm3DownloadFromScreen(PixmapPtr pSrc, int x, int y, int w, int h,
     char *dst, int dst_pitch)
 {
  	ScrnInfoPtr pScrn = xf86Screens[pSrc->drawable.pScreen->myNum];
-	GLINTPtr pGlint = GLINTPTR(pScrn);
-	char  *src        = pGlint->FbBase + exaGetPixmapOffset(pSrc);
-	int    src_pitch  = exaGetPixmapPitch(pSrc);
+	GLINTPtr pGlint    = GLINTPTR(pScrn);
+	unsigned char *src = pGlint->FbBase + exaGetPixmapOffset(pSrc);
+	int    src_pitch   = exaGetPixmapPitch(pSrc);
 
 	ENTER;
 	int bpp    = pSrc->drawable.bitsPerPixel;
