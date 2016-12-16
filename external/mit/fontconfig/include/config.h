@@ -160,11 +160,11 @@
 #define HAVE_REGFREE 1
 
 /* Define to 1 if you have the 'scandir' function. */
-/* #undef HAVE_SCANDIR */
+#define HAVE_SCANDIR 1
 
 /* Define to 1 if you have the 'scandir' function with int (* compar)(const
    void *, const void *) */
-#define HAVE_SCANDIR_VOID_P 1
+/* #undef HAVE_SCANDIR_VOID_P */
 
 /* Define to 1 if you have the <sched.h> header file. */
 /* #undef HAVE_SCHED_H */
