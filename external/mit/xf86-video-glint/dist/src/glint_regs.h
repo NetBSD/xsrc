@@ -712,6 +712,9 @@
 #define TexelLUTMode						GLINT_TAG_ADDR(0x0c,0x0f)
 
 #define TextureColorMode					GLINT_TAG_ADDR(0x0d,0x00)
+#  define TextureModeModulate	0 << 1
+#  define TextureModeDecal	1 << 1
+#  define TextureModeCopy	3 << 1
 #  define TextureTypeOpenGL 0
 #  define TextureTypeApple  1 << 4
 #  define TextureKsDDA      1 << 5 /* only Apple-Mode */
@@ -770,6 +773,7 @@
 	/* DstFBData				*/
 	/* UNIT_DISABLE				*/
 
+#	define ABM_SrcZERO					0 << 1
 #	define ABM_SrcONE					1 << 1
 #	define ABM_SrcDST_COLOR				2 << 1
 #	define ABM_SrcONE_MINUS_DST_COLOR			3 << 1
@@ -778,6 +782,7 @@
 #	define ABM_SrcDST_ALPHA				6 << 1
 #	define ABM_SrcONE_MINUS_DST_ALPHA			7 << 1
 #	define ABM_SrcSRC_ALPHA_SATURATE			8 << 1
+#	define ABM_DstZERO					0 << 5
 #	define ABM_DstONE					1 << 5
 #	define ABM_DstSRC_COLOR				2 << 5
 #	define ABM_DstONE_MINUS_SRC_COLOR			3 << 5
@@ -1302,12 +1307,13 @@ do{								\
 	}							\
 }
 
-#define DO_PLANEMASK(planemask)					\
+#define DO_PLANEMASK(p)						\
 { 								\
-	if (planemask != pGlint->planemask) {			\
-		pGlint->planemask = planemask;			\
-		REPLICATE(planemask); 				\
-		GLINT_WRITE_REG(planemask, FBHardwareWriteMask);\
+	if (p != pGlint->planemask) {				\
+		CARD32 pm = p;					\
+		pGlint->planemask = p;				\
+		REPLICATE(pm); 					\
+		GLINT_WRITE_REG(pm, FBHardwareWriteMask);	\
 	}							\
 } 
 

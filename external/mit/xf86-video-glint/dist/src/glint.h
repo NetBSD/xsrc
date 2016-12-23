@@ -151,7 +151,11 @@ typedef struct {
     XAAInfoRecPtr	AccelInfoRec;
 #endif
     ExaDriverPtr 	pExa;
-    int			srcoff;
+    int			srcoff, srcpitch;
+    int			mskoff, mskpitch;
+    int			srcformat, dstformat, mskformat;
+    int			fillcolour, op;
+    Bool		source_is_solid, no_source_pixmap, render;
 
     CloseScreenProcPtr	CloseScreen;
     ScreenBlockHandlerProcPtr BlockHandler;

@@ -72,6 +72,12 @@ Permedia2InitializeEngine(ScrnInfoPtr pScrn)
     GLINT_SLOW_WRITE_REG(UNIT_DISABLE,	ColorDDAMode);
     GLINT_SLOW_WRITE_REG(UNIT_DISABLE,	TextureColorMode);
     GLINT_SLOW_WRITE_REG(UNIT_DISABLE,	TextureAddressMode);
+    GLINT_SLOW_WRITE_REG(0,		SStart);
+    GLINT_SLOW_WRITE_REG(0,		dSdx);
+    GLINT_SLOW_WRITE_REG(1 << 20,	dSdyDom);
+    GLINT_SLOW_WRITE_REG(UNIT_DISABLE,	TStart);    
+    GLINT_SLOW_WRITE_REG(1 << 20,	dTdx);
+    GLINT_SLOW_WRITE_REG(0,		dTdyDom);
     GLINT_SLOW_WRITE_REG(UNIT_DISABLE,	PMTextureReadMode);
     GLINT_SLOW_WRITE_REG(pGlint->pprod,	LBReadMode);
     GLINT_SLOW_WRITE_REG(UNIT_DISABLE,	AlphaBlendMode);

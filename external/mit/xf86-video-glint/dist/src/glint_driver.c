@@ -197,6 +197,7 @@ typedef enum {
     OPTION_RGB_BITS,
     OPTION_NOACCEL,
     OPTION_BLOCK_WRITE,
+    OPTION_RENDER_ACCEL,
     OPTION_FIREGL3000,
     OPTION_OVERLAY,
     OPTION_SHADOW_FB,
@@ -210,6 +211,7 @@ static const OptionInfoRec GLINTOptions[] = {
     { OPTION_RGB_BITS,		"RGBbits",	OPTV_INTEGER,	{0}, FALSE },
     { OPTION_NOACCEL,		"NoAccel",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_BLOCK_WRITE,	"BlockWrite",	OPTV_BOOLEAN,   {0}, FALSE },
+    { OPTION_RENDER_ACCEL,	"RenderAccel",	OPTV_BOOLEAN,   {0}, FALSE },
     { OPTION_FIREGL3000,	"FireGL3000",   OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_OVERLAY,		"Overlay",	OPTV_ANYSTR,	{0}, FALSE },
     { OPTION_SHADOW_FB,		"ShadowFB",	OPTV_BOOLEAN,	{0}, FALSE },
@@ -1053,6 +1055,10 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
     if (xf86ReturnOptValBool(pGlint->Options, OPTION_NOACCEL, FALSE)) {
 	pGlint->NoAccel = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Acceleration disabled\n");
+    }
+    if (xf86ReturnOptValBool(pGlint->Options, OPTION_RENDER_ACCEL, FALSE)) {
+	pGlint->render = TRUE;
+	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Render Acceleration enabled\n");
     }
     if (xf86ReturnOptValBool(pGlint->Options, OPTION_SHADOW_FB, FALSE)) {
 	pGlint->ShadowFB = TRUE;

@@ -45,7 +45,7 @@
 #include "glint_regs.h"
 #include "glint.h"
 
-//#define PM2_DEBUG
+/*#define PM2_DEBUG*/
 
 #ifdef PM2_DEBUG
 #define STATIC static
@@ -56,6 +56,41 @@
 #define STATIC 
 #define DPRINTF while (0) xf86Msg
 #endif
+
+int src_formats[] = {PICT_a8r8g8b8, PICT_x8r8g8b8,
+		     PICT_a8b8g8r8, PICT_x8b8g8r8};
+int tex_formats[] = {PICT_a8r8g8b8, PICT_a8b8g8r8};
+
+static uint32_t Pm2BlendOps[] = {
+    /* Clear */
+    ABM_SrcZERO			| ABM_DstZERO,
+    /* Src */
+    ABM_SrcONE			| ABM_DstZERO,
+    /* Dst */
+    ABM_SrcZERO			| ABM_DstONE,
+    /* Over */
+    ABM_SrcONE			| ABM_DstONE_MINUS_SRC_ALPHA,
+    /* OverReverse */
+    ABM_SrcONE_MINUS_DST_ALPHA	| ABM_DstONE,
+    /* In */
+    ABM_SrcDST_ALPHA		| ABM_DstZERO,
+    /* InReverse */
+    ABM_SrcZERO			| ABM_DstSRC_ALPHA,
+    /* Out */
+    ABM_SrcONE_MINUS_DST_ALPHA	| ABM_DstZERO,
+    /* OutReverse */
+    ABM_SrcZERO			| ABM_DstONE_MINUS_SRC_ALPHA,
+    /* Atop */
+    ABM_SrcDST_ALPHA		| ABM_DstONE_MINUS_SRC_ALPHA,
+    /* AtopReverse */
+    ABM_SrcONE_MINUS_DST_ALPHA	| ABM_DstSRC_ALPHA,
+    /* Xor */
+    ABM_SrcONE_MINUS_DST_ALPHA	| ABM_DstONE_MINUS_SRC_ALPHA,
+    /* Add */
+    ABM_SrcONE			| ABM_DstONE
+};
+
+#define arraysize(ary)        (sizeof(ary) / sizeof(ary[0]))
 
 STATIC void
 Pm2WaitMarker(ScreenPtr pScreen, int Marker)
@@ -78,8 +113,11 @@ Pm2PrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap,
 	if (xdir == 1) pGlint->BltScanDirection |= XPositive;
 	if (ydir == 1) pGlint->BltScanDirection |= YPositive;
   
-	GLINT_WAIT(4);
+	GLINT_WAIT(6);
 	DO_PLANEMASK(planemask);
+	GLINT_WRITE_REG(UNIT_DISABLE, AlphaBlendMode);
+	GLINT_WRITE_REG(UNIT_DISABLE, DitherMode);
+	GLINT_WRITE_REG(UNIT_DISABLE, TextureAddressMode);
 
 	GLINT_WRITE_REG(UNIT_DISABLE, ColorDDAMode);
 	if ((rop == GXset) || (rop == GXclear)) {
@@ -131,8 +169,6 @@ Pm2Copy(PixmapPtr pDstPixmap,
         		       FBSourceDelta);
 	}
 	GLINT_WRITE_REG(PrimitiveRectangle | pGlint->BltScanDirection, Render);
-
-	exaMarkSync(pDstPixmap->drawable.pScreen);
 }
 
 STATIC void
@@ -153,7 +189,10 @@ Pm2PrepareSolid(PixmapPtr pPixmap, int rop, Pixel planemask, Pixel color)
 
 	REPLICATE(color);
 
-	GLINT_WAIT(6);
+	GLINT_WAIT(8);
+	GLINT_WRITE_REG(UNIT_DISABLE, AlphaBlendMode);
+	GLINT_WRITE_REG(UNIT_DISABLE, DitherMode);
+	GLINT_WRITE_REG(UNIT_DISABLE, TextureAddressMode);
 	DO_PLANEMASK(planemask);
 	if (rop == GXcopy) {
 		GLINT_WRITE_REG(UNIT_DISABLE, ColorDDAMode);
@@ -195,8 +234,6 @@ Pm2Solid(PixmapPtr pPixmap, int x1, int y1, int x2, int y2)
   		speed = 0;
 	}
 	GLINT_WRITE_REG(PrimitiveRectangle | XPositive | YPositive | speed, Render);
-
-	exaMarkSync(pPixmap->drawable.pScreen);
 }
 
 /*
@@ -235,10 +272,12 @@ Pm2UploadToScreen(PixmapPtr pDst, int x, int y, int w, int h,
 		/* use host blit */
 		y += offset / dst_pitch;
 		adr = y * (dst_pitch >> 2) + x;
+		DPRINTF(X_ERROR, "%d %d\n", x, y);
         	while (h--) {
         		s = (CARD32 *)src;
         		xx = w;
-        		GLINT_WAIT(1);
+        		GLINT_WAIT(2);
+        		DO_PLANEMASK(0xffffffff);
         		GLINT_WRITE_REG(adr, TextureDownloadOffset);
 			while (xx > 0) {
 				chunk = min(fs - 1, xx);
@@ -290,6 +329,262 @@ Pm2DownloadFromScreen(PixmapPtr pSrc, int x, int y, int w, int h,
 }
 
 Bool
+Pm2CheckComposite(int op, PicturePtr pSrcPicture,
+                           PicturePtr pMaskPicture,
+                           PicturePtr pDstPicture)
+{
+	int i, ok = FALSE;
+
+	ENTER;
+
+	i = 0;
+	while ((i < arraysize(src_formats)) && (!ok)) {
+		ok =  (pSrcPicture->format == src_formats[i]);
+		i++;
+	}
+
+	if (!ok) {
+		DPRINTF(X_ERROR, "%s: unsupported src format %x\n",
+		    __func__, pSrcPicture->format);
+		return FALSE;
+	}
+
+	if (pDstPicture != NULL) {
+		i = 0;
+		while ((i < arraysize(src_formats)) && (!ok)) {
+			ok =  (pDstPicture->format == src_formats[i]);
+			i++;
+		}
+
+		if (!ok) {
+			DPRINTF(X_ERROR, "%s: unsupported dst format %x\n",
+			    __func__, pDstPicture->format);
+			return FALSE;
+		}
+	}
+
+	DPRINTF(X_ERROR, "src is %x, %d\n", pSrcPicture->format, op);
+
+	if (pMaskPicture != NULL) {
+		i = 0;
+		ok = FALSE;
+		while ((i < arraysize(tex_formats)) && (!ok)) {
+			ok =  (pMaskPicture->format == tex_formats[i]);
+			i++;
+		}
+		if (!ok) {
+			DPRINTF(X_ERROR, "%s: unsupported mask format %x\n",
+			    __func__, pMaskPicture->format);
+			return FALSE;
+		}
+		DPRINTF(X_ERROR, "mask is %x %d %d\n", pMaskPicture->format,
+		    pMaskPicture->pDrawable->width,
+		    pMaskPicture->pDrawable->height);
+		if (op != PictOpOver)
+			return FALSE;
+	}
+	DPRINTF(X_ERROR, "true\n");
+	return TRUE;
+}
+
+Bool
+Pm2PrepareComposite(int op, PicturePtr pSrcPicture,
+                             PicturePtr pMaskPicture,
+                             PicturePtr pDstPicture,
+                             PixmapPtr  pSrc,
+                             PixmapPtr  pMask,
+                             PixmapPtr  pDst)
+{
+	ScrnInfoPtr pScrn = xf86Screens[pDst->drawable.pScreen->myNum];
+	GLINTPtr pGlint   = GLINTPTR(pScrn);
+
+	ENTER;
+
+	pGlint->no_source_pixmap = FALSE;
+	pGlint->source_is_solid = FALSE;
+
+	if (pSrcPicture->pSourcePict != NULL) {
+		if (pSrcPicture->pSourcePict->type == SourcePictTypeSolidFill) {
+			pGlint->fillcolour =
+			    pSrcPicture->pSourcePict->solidFill.color;
+			DPRINTF(X_ERROR, "%s: solid src %08x\n",
+			    __func__, pGlint->fillcolour);
+			pGlint->no_source_pixmap = TRUE;
+			pGlint->source_is_solid = TRUE;
+		}
+	}
+	if ((pMaskPicture != NULL) && (pMaskPicture->pSourcePict != NULL)) {
+		if (pMaskPicture->pSourcePict->type ==
+		    SourcePictTypeSolidFill) {
+			pGlint->fillcolour = 
+			   pMaskPicture->pSourcePict->solidFill.color;
+			DPRINTF(X_ERROR, "%s: solid mask %08x\n",
+			    __func__, pGlint->fillcolour);
+		}
+	}
+	if (pMaskPicture != NULL) {
+		pGlint->mskoff = exaGetPixmapOffset(pMask);
+		pGlint->mskpitch = exaGetPixmapPitch(pMask);
+		pGlint->mskformat = pMaskPicture->format;
+	} else {
+		pGlint->mskoff = 0;
+		pGlint->mskpitch = 0;
+		pGlint->mskformat = 0;
+	}
+	if (pSrc != NULL) {
+		pGlint->source_is_solid = 
+		   ((pSrc->drawable.width == 1) && (pSrc->drawable.height == 1));
+		pGlint->srcoff = exaGetPixmapOffset(pSrc);
+		pGlint->srcpitch = exaGetPixmapPitch(pSrc);
+		if (pGlint->source_is_solid) {
+			pGlint->fillcolour = exaGetPixmapFirstPixel(pSrc);
+		}
+	}
+	pGlint->srcformat = pSrcPicture->format;
+	pGlint->dstformat = pDstPicture->format;
+
+
+	pGlint->op = op;
+	/* first things first */
+	if (pGlint->source_is_solid)
+		goto ok;
+	if (pGlint->mskpitch == 0)
+		goto ok;
+	DPRINTF(X_ERROR, "nope\n");
+	return FALSE;
+ok:
+	GLINT_WAIT(10);
+	GLINT_WRITE_REG(UNIT_DISABLE, ColorDDAMode);
+	LOADROP(GXcopy);
+	GLINT_WRITE_REG(0, QStart);
+	GLINT_WRITE_REG(0, dQdx);
+	GLINT_WRITE_REG(0, dQdyDom);
+	GLINT_WRITE_REG(0x20, PMTextureDataFormat);
+	GLINT_WRITE_REG(1 << 20, dSdx);
+	GLINT_WRITE_REG(0, dSdyDom);
+	GLINT_WRITE_REG(0, dTdx);
+	GLINT_WRITE_REG(1 << 20, dTdyDom);
+	return TRUE;
+}
+
+void
+Pm2Comp_Over32Solid(ScrnInfoPtr pScrn, int maskX, int maskY,
+				     int dstX, int dstY,
+				     int width, int height)
+{
+	GLINTPtr pGlint = GLINTPTR(pScrn);
+	unsigned long pp;
+	uint32_t *m;
+	int i, j;
+
+	ENTER;
+
+	/* first blit the source colour into the mask */
+	GLINT_WAIT(8);
+	GLINT_WRITE_REG(UNIT_DISABLE, AlphaBlendMode);
+	GLINT_WRITE_REG(UNIT_DISABLE, DitherMode);
+	GLINT_WRITE_REG(CFBRM_Packed| CWM_Enable, Config);
+	GLINT_WRITE_REG(pGlint->fillcolour, FBBlockColor);
+	DO_PLANEMASK(0x00ffffff);	/* preserve alpha */
+       	Permedia2LoadCoord(pScrn, maskX, maskY + pGlint->mskoff / pGlint->mskpitch, width, height);
+	GLINT_WRITE_REG(
+	    PrimitiveRectangle | XPositive | YPositive | FastFillEnable,
+	    Render);
+
+	/* now do the actual rendering */
+	GLINT_WAIT(15);
+
+	/* enable alpha blending */
+	GLINT_WRITE_REG(
+	    ABM_SrcSRC_ALPHA | ABM_DstONE_MINUS_SRC_ALPHA |
+	    ABM_ColorOrderRGB | UNIT_ENABLE, AlphaBlendMode);
+
+	/* not sure if we need this, everything is in ARGB anyway */
+	GLINT_WRITE_REG(UNIT_ENABLE | DTM_ColorOrderRGB, DitherMode);
+
+	/* setup for drawing the dst rectangle... */
+	GLINT_WRITE_REG(CFBRM_DstEnable | /*CFBRM_Packed|*/ CWM_Enable, Config);
+       	Permedia2LoadCoord(pScrn, dstX, dstY, width, height);
+       	/* point at the texture, 1:1 mapping etc. */
+	GLINT_WRITE_REG(pGlint->mskoff >> 2, PMTextureBaseAddress);
+	GLINT_WRITE_REG(1 | 0xb << 9 | 0xb << 13 | 1 << 1 | 1 << 3, PMTextureReadMode);		
+	GLINT_WRITE_REG(1 | TextureModeCopy, TextureColorMode);		
+	GLINT_WRITE_REG(1, TextureAddressMode);
+	GLINT_WRITE_REG(maskX << 20, SStart);
+	GLINT_WRITE_REG(maskY << 20, TStart);
+	GLINT_WRITE_REG(PrimitiveRectangle | XPositive | YPositive | TextureEnable,
+	    Render);
+}
+
+void
+Pm2Comp_Op32(ScrnInfoPtr pScrn, int op, int srcX, int srcY,
+				     int dstX, int dstY,
+				     int width, int height)
+{
+	GLINTPtr pGlint = GLINTPTR(pScrn);
+
+	ENTER;
+
+	GLINT_WAIT(8);
+	DO_PLANEMASK(0xffffffff);
+	
+	GLINT_WRITE_REG(
+	    Pm2BlendOps[op] |
+	    ABM_ColorOrderRGB | UNIT_ENABLE, AlphaBlendMode);
+	GLINT_WRITE_REG(UNIT_ENABLE | DTM_ColorOrderRGB, DitherMode);
+	GLINT_WRITE_REG(CFBRM_DstEnable | /*CFBRM_Packed|*/ CWM_Enable, Config);
+       	Permedia2LoadCoord(pScrn, dstX, dstY, width, height);
+	GLINT_WRITE_REG(pGlint->srcoff >> 2, PMTextureBaseAddress);
+	GLINT_WRITE_REG(1 | 0xb << 9 | 0xb << 13 | 1 << 1 | 1 << 3, PMTextureReadMode);		
+	GLINT_WRITE_REG(1 | TextureModeCopy, TextureColorMode);		
+	GLINT_WRITE_REG(1, TextureAddressMode);
+	GLINT_WRITE_REG(srcX << 20, SStart);
+	GLINT_WRITE_REG(srcY << 20, TStart);
+	GLINT_WRITE_REG(PrimitiveRectangle | XPositive | YPositive | TextureEnable,
+	    Render);
+}
+
+void
+Pm2Composite(PixmapPtr pDst, int srcX, int srcY,
+                              int maskX, int maskY,
+                              int dstX, int dstY,
+                              int width, int height)
+{
+	ScrnInfoPtr pScrn = xf86Screens[pDst->drawable.pScreen->myNum];
+	GLINTPtr pGlint   = GLINTPTR(pScrn);
+	uint32_t dstoff, dstpitch;
+
+	ENTER;
+	dstoff = exaGetPixmapOffset(pDst);		
+	dstpitch = exaGetPixmapPitch(pDst);
+	dstY += dstoff / dstpitch;
+	if (pGlint->source_is_solid) {
+		switch (pGlint->op) {
+			case PictOpOver:
+				DPRINTF(X_ERROR, "Over %08x %08x, %d %d\n",
+				    pGlint->mskformat, pGlint->dstformat, dstX, dstY);
+				switch (pGlint->mskformat) {
+					case PICT_a8r8g8b8:
+					case PICT_a8b8g8r8:
+						Pm2Comp_Over32Solid(pScrn,
+						    maskX, maskY,
+						    dstX, dstY,
+						    width, height);
+						break;
+					default:
+						xf86Msg(X_ERROR,
+						  "unsupported mask format\n");
+				}
+				break;
+			default:
+				xf86Msg(X_ERROR, "unsupported op %d\n", pGlint->op);
+		}
+	} else {
+		Pm2Comp_Op32(pScrn, pGlint->op, srcX, srcY, dstX, dstY, width, height);
+	}
+}
+
+Bool
 Pm2InitEXA(ScreenPtr pScreen)
 {
 	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
@@ -312,6 +607,7 @@ Pm2InitEXA(ScreenPtr pScreen)
 	stride = pScrn->displayWidth * (pScrn->bitsPerPixel >> 3);
 	lines = min(pGlint->FbMapSize / stride, 2047);
 	pExa->memorySize = lines * stride;
+	pExa->offScreenBase = stride * pScrn->virtualY;
 	DPRINTF(X_ERROR, "stride: %d\n", stride);
 	DPRINTF(X_ERROR, "pprod: %08x\n", pGlint->pprod);
 	pExa->offScreenBase = stride * pScrn->virtualY;
@@ -322,8 +618,8 @@ Pm2InitEXA(ScreenPtr pScreen)
 
 	pExa->flags = EXA_OFFSCREEN_PIXMAPS;
 
-	pExa->maxX = 2048;
-	pExa->maxY = 2048;
+	pExa->maxX = 2047;
+	pExa->maxY = 2047;
 
 	pExa->WaitMarker = Pm2WaitMarker;
 
@@ -334,12 +630,17 @@ Pm2InitEXA(ScreenPtr pScreen)
 	pExa->Copy = Pm2Copy;
 	pExa->DoneCopy = Pm2DoneCopy;
 
-	/* EXA hits more optimized paths when it does not have to fallback 
-	 * because of missing UTS/DFS, hook memcpy-based UTS/DFS.
-	 */
+	if (pGlint->render) {
+		pExa->CheckComposite = Pm2CheckComposite;
+		pExa->PrepareComposite = Pm2PrepareComposite;
+		pExa->Composite = Pm2Composite;
+		pExa->DoneComposite = Pm2DoneCopy;
+	}
+
+if (0) {
 	pExa->UploadToScreen = Pm2UploadToScreen;
 	pExa->DownloadFromScreen = Pm2DownloadFromScreen;
-
+}
 	Permedia2InitializeEngine(pScrn);
 
 	return exaDriverInit(pScreen, pExa);
