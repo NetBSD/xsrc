@@ -726,7 +726,7 @@ exaGlyphs(CARD8 op,
                               serverClient, &error);
         if (!pMask ||
             (!component_alpha && pExaScr->info->CheckComposite &&
-             !(*pExaScr->info->CheckComposite) (PictOpAdd, pSrc, pMask, NULL)))
+             !(*pExaScr->info->CheckComposite) (PictOpAdd, pSrc, NULL, pMask)))
         {
             PictFormatPtr argbFormat;
 
