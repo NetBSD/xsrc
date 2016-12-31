@@ -83,11 +83,15 @@ SOFTWARE.
 
 #endif /* __avr32__ */ 
 
-/* XXX arm is not always LE */
 #if defined(__arm32__) || defined(__arm__)
 
+#ifdef __ARMEB__
+#define IMAGE_BYTE_ORDER        MSBFirst
+#define BITMAP_BIT_ORDER        MSBFirst
+#else
 #define IMAGE_BYTE_ORDER        LSBFirst
 #define BITMAP_BIT_ORDER        LSBFirst
+#endif
 #define GLYPHPADBYTES           4
 
 #endif /* __arm32__ */
