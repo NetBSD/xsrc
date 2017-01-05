@@ -77,7 +77,9 @@
 #include "xf86_OSproc.h"
 #include "xf86Priv.h"
 
+#ifdef XSERVER_LIBPCIACCESS
 #include <sys/mman.h>
+#endif
 
 /* Everything using inb/outb, etc needs "compiler.h" */
 #include "compiler.h"
