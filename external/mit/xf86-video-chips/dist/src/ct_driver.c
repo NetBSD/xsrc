@@ -77,9 +77,7 @@
 #include "xf86_OSproc.h"
 #include "xf86Priv.h"
 
-#if defined(HAVE_ISA)
 #include <sys/mman.h>
-#endif
 
 /* Everything using inb/outb, etc needs "compiler.h" */
 #include "compiler.h"
