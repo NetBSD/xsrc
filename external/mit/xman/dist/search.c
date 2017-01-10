@@ -28,9 +28,14 @@ from the X Consortium.
 
 */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 
 #include "globals.h"
 #include "vendor.h"
+#include <X11/Xos.h>            /* sys/types.h and unistd.h included in here */
+#include <sys/stat.h>
 
 /* Map <CR> and control-M to goto beginning of file. */
 
