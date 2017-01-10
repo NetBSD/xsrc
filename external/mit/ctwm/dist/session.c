@@ -120,6 +120,7 @@
 #endif
 #endif
 #endif /* PATH_MAX */
+#include <sys/stat.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
