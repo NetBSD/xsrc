@@ -62,10 +62,6 @@
 #endif
 #include <math.h>
 
-/* Not all systems have MAP_FAILED defined */
-#ifndef MAP_FAILED
-#define MAP_FAILED ((void *)-1)
-#endif
 
 #include "xf86drm.h"
 #include "libdrm_macros.h"
@@ -101,6 +97,11 @@
 
 #ifndef DRM_MAJOR
 #define DRM_MAJOR 226 /* Linux */
+#endif
+
+/* Not all systems have MAP_FAILED defined */
+#ifndef MAP_FAILED
+#define MAP_FAILED ((void *)-1)
 #endif
 
 #define DRM_MSG_VERBOSITY 3
