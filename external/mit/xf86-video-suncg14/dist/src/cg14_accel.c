@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.9 2016/09/16 22:05:47 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.10 2017/01/13 20:58:40 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -549,20 +549,37 @@ CG14CheckComposite(int op, PicturePtr pSrcPicture,
 		DPRINTF(X_ERROR, "%s: rejecting %d\n", __func__, op);
 		return FALSE;
 	}
-	i = 0;
-	while ((i < arraysize(src_formats)) && (!ok)) {
-		ok =  (pSrcPicture->format == src_formats[i]);
-		i++;
+
+	if (pSrcPicture != NULL) {
+		i = 0;
+		while ((i < arraysize(src_formats)) && (!ok)) {
+			ok =  (pSrcPicture->format == src_formats[i]);
+			i++;
+		}
+
+		if (!ok) {
+			DPRINTF(X_ERROR, "%s: unsupported src format %x\n",
+			    __func__, pSrcPicture->format);
+			return FALSE;
+		}
+		DPRINTF(X_ERROR, "src is %x, %d\n", pSrcPicture->format, op);
 	}
 
-	if (!ok) {
-		DPRINTF(X_ERROR, "%s: unsupported src format %x\n",
-		    __func__, pSrcPicture->format);
-		return FALSE;
-	}
+	if (pDstPicture != NULL) {
+		i = 0;
+		ok = FALSE;
+		while ((i < arraysize(src_formats)) && (!ok)) {
+			ok =  (pDstPicture->format == src_formats[i]);
+			i++;
+		}
 
-	DPRINTF(X_ERROR, "src is %x, %d: %d %d\n", pSrcPicture->format, op,
-	    pSrcPicture->pDrawable->width, pSrcPicture->pDrawable->height);
+		if (!ok) {
+			DPRINTF(X_ERROR, "%s: unsupported dst format %x\n",
+			    __func__, pDstPicture->format);
+			return FALSE;
+		}
+		DPRINTF(X_ERROR, "dst is %x, %d\n", pDstPicture->format, op);
+	}
 
 	if (pMaskPicture != NULL) {
 		DPRINTF(X_ERROR, "mask is %x %d %d\n", pMaskPicture->format,
