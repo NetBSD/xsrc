@@ -1,4 +1,4 @@
-/* $NetBSD: pm3_exa.c,v 1.5 2016/12/14 20:34:17 macallan Exp $ */
+/* $NetBSD: pm3_exa.c,v 1.6 2017/01/13 20:54:48 macallan Exp $ */
 
 /*
  * Copyright (c) 2016 Michael Lorenz
@@ -348,7 +348,6 @@ Pm3InitEXA(ScreenPtr pScreen)
 	stride = pScrn->displayWidth * (pScrn->bitsPerPixel >> 3);
 	pExa->offScreenBase = stride * pScrn->virtualY;
 	pExa->memorySize = pGlint->FbMapSize;
-	pExa->offScreenBase = stride * pScrn->virtualY;
 
 	pExa->pixmapOffsetAlign = 32;
 	pExa->pixmapPitchAlign = 32;
