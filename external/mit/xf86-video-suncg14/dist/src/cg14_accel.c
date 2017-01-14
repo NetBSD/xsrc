@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.10 2017/01/13 20:58:40 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.11 2017/01/14 00:20:16 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -63,6 +63,9 @@ int src_formats[] = {PICT_a8r8g8b8, PICT_x8r8g8b8,
 		     PICT_a8b8g8r8, PICT_x8b8g8r8, PICT_a8};
 int tex_formats[] = {PICT_a8r8g8b8, PICT_a8b8g8r8, PICT_a8};
 
+static void CG14Copy32(PixmapPtr, int, int, int, int, int, int);
+static void CG14Copy8(PixmapPtr, int, int, int, int, int, int);
+
 static inline void
 CG14Wait(Cg14Ptr p)
 {
@@ -101,6 +104,17 @@ CG14PrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap,
 		write_sx_reg(p, SX_ROP_CONTROL, alu);
 		p->last_rop = alu;
 	}
+	switch (pSrcPixmap->drawable.bitsPerPixel)  {
+		case 8:
+			p->pExa->Copy = CG14Copy8;
+			break;
+		case 32:
+			p->pExa->Copy = CG14Copy32;
+			break;
+		default:
+			xf86Msg(X_ERROR, "%s depth %d\n", __func__,
+			    pSrcPixmap->drawable.bitsPerPixel);
+	}
 	p->srcpitch = exaGetPixmapPitch(pSrcPixmap);
 	p->srcoff = exaGetPixmapOffset(pSrcPixmap);
 	p->xdir = xdir;
@@ -109,7 +123,7 @@ CG14PrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap,
 }
 
 static void
-CG14Copy(PixmapPtr pDstPixmap,
+CG14Copy32(PixmapPtr pDstPixmap,
          int srcX, int srcY, int dstX, int dstY, int w, int h)
 {
 	ScrnInfoPtr pScrn = xf86Screens[pDstPixmap->drawable.pScreen->myNum];
@@ -274,6 +288,181 @@ CG14Copy(PixmapPtr pDstPixmap,
 					
 					write_sx_io(p, d,
 					    SX_STM(74, count - 1, d & 7));
+				}
+				srcstart += srcinc;
+				dststart += dstinc;
+			}
+		}
+	}			
+	exaMarkSync(pDstPixmap->drawable.pScreen);
+}
+
+static void
+CG14Copy8(PixmapPtr pDstPixmap,
+         int srcX, int srcY, int dstX, int dstY, int w, int h)
+{
+	ScrnInfoPtr pScrn = xf86Screens[pDstPixmap->drawable.pScreen->myNum];
+	Cg14Ptr p = GET_CG14_FROM_SCRN(pScrn);
+	int dstpitch, dstoff, srcpitch, srcoff;
+	int srcstart, dststart, xinc, srcinc, dstinc;
+	int line, count, s, d, num;
+
+	ENTER;
+	dstpitch = exaGetPixmapPitch(pDstPixmap);
+	dstoff = exaGetPixmapOffset(pDstPixmap);
+	srcpitch = p->srcpitch;
+	srcoff = p->srcoff;
+	/*
+	 * should clear the WO bit in SX_CONTROL_STATUS, then check if SX
+	 * actually wrote anything and only sync if it did
+	 */
+	srcstart = srcX + (srcpitch * srcY) + srcoff;
+	dststart = dstX + (dstpitch * dstY) + dstoff;
+
+	/*
+	 * we always copy up to 32 pixels at a time so direction doesn't
+	 * matter if w<=32
+	 */
+	if (w > 32) {
+		if (p->xdir < 0) {
+			srcstart += (w - 32);
+			dststart += (w - 32);
+			xinc = -32;
+		} else
+			xinc = 32;
+	} else
+		xinc = 32;
+	if (p->ydir < 0) {
+		srcstart += (h - 1) * srcpitch;
+		dststart += (h - 1) * dstpitch;
+		srcinc = -srcpitch;
+		dstinc = -dstpitch;
+	} else {
+		srcinc = srcpitch;
+		dstinc = dstpitch;
+	}
+	if (p->last_rop == 0xcc) {
+		/* plain old copy */
+		if ( xinc > 0) {
+			/* going left to right */
+			for (line = 0; line < h; line++) {
+				count = 0;
+				s = srcstart;
+				d = dststart;
+				while ( count < w) {
+					num = min(32, w - count);
+					write_sx_io(p, s,
+					    SX_LDB(10, num - 1, s & 7));
+					write_sx_io(p, d,
+					    SX_STBM(10, num - 1, d & 7));
+					s += xinc;
+					d += xinc;
+					count += 32;
+				}
+				srcstart += srcinc;
+				dststart += dstinc;
+			}
+		} else {
+			/* going right to left */
+			int i, chunks = (w >> 5);
+			for (line = 0; line < h; line++) {
+				s = srcstart;
+				d = dststart;
+				count = w;
+				for (i = 0; i < chunks; i++) {
+					write_sx_io(p, s,
+					    SX_LDB(10, 31, s & 7));
+					write_sx_io(p, d,
+					    SX_STBM(10, 31, d & 7));
+					s -= 32;
+					d -= 32;
+					count -= 32;
+				}
+				/* leftovers, if any */
+				if (count > 0) {
+					s += (32 - count);
+					d += (32 - count);
+					write_sx_io(p, s,
+					    SX_LDB(10, count - 1, s & 7));
+					write_sx_io(p, d,
+					    SX_STBM(10, count - 1, d & 7));
+				}
+				srcstart += srcinc;
+				dststart += dstinc;
+			}
+		}
+	} else {
+		/* ROPs needed */
+		if ( xinc > 0) {
+			/* going left to right */
+			for (line = 0; line < h; line++) {
+				count = 0;
+				s = srcstart;
+				d = dststart;
+				while ( count < w) {
+					num = min(32, w - count);
+					write_sx_io(p, s,
+					    SX_LDB(10, num - 1, s & 7));
+					write_sx_io(p, d,
+					    SX_LDB(42, num - 1, d & 7));
+					if (num > 16) {
+						write_sx_reg(p, SX_INSTRUCTIONS,
+					    	 SX_ROP(10, 42, 74, 15));
+						write_sx_reg(p, SX_INSTRUCTIONS,
+					    	 SX_ROP(26, 58, 90, num - 17));
+					} else {
+						write_sx_reg(p, SX_INSTRUCTIONS,
+					    	 SX_ROP(10, 42, 74, num - 1));
+					}
+					write_sx_io(p, d,
+					    SX_STBM(74, num - 1, d & 7));
+					s += xinc;
+					d += xinc;
+					count += 32;
+				}
+				srcstart += srcinc;
+				dststart += dstinc;
+			}
+		} else {
+			/* going right to left */
+			int i, chunks = (w >> 5);
+			for (line = 0; line < h; line++) {
+				s = srcstart;
+				d = dststart;
+				count = w;
+				for (i = 0; i < chunks; i++) {
+					write_sx_io(p, s, SX_LDB(10, 31, s & 7));
+					write_sx_io(p, d, SX_LDB(42, 31, d & 7));
+					write_sx_reg(p, SX_INSTRUCTIONS,
+				    	    SX_ROP(10, 42, 74, 15));
+					write_sx_reg(p, SX_INSTRUCTIONS,
+				    	    SX_ROP(26, 58, 90, 15));
+					write_sx_io(p, d,
+					    SX_STBM(74, 31, d & 7));
+					s -= 128;
+					d -= 128;
+					count -= 32;
+				}
+				/* leftovers, if any */
+				if (count > 0) {
+					s += (32 - count);
+					d += (32 - count);
+					write_sx_io(p, s,
+					    SX_LDB(10, count - 1, s & 7));
+					write_sx_io(p, d,
+					    SX_LDB(42, count - 1, d & 7));
+					if (count > 16) {
+						write_sx_reg(p, SX_INSTRUCTIONS,
+					    	    SX_ROP(10, 42, 74, 15));
+						write_sx_reg(p, SX_INSTRUCTIONS,
+					    	 SX_ROP(26, 58, 90, count - 17));
+					} else {
+						write_sx_reg(p, SX_INSTRUCTIONS,
+					    	 SX_ROP(10, 42, 74, count - 1));
+					}
+					
+					write_sx_io(p, d,
+					    SX_STBM(74, count - 1, d & 7));
 				}
 				srcstart += srcinc;
 				dststart += dstinc;
@@ -487,6 +676,7 @@ CG14UploadToScreen(PixmapPtr pDst, int x, int y, int w, int h,
 	int wBytes = w * cpp;
 
 	ENTER;
+	DPRINTF(X_ERROR, "%s depth %d\n", __func__, bpp);
 	dst += (x * cpp) + (y * dst_pitch);
 
 	CG14Wait(p);
@@ -731,7 +921,7 @@ CG14Composite(PixmapPtr pDst, int srcX, int srcY,
 						break;
 					default:
 						xf86Msg(X_ERROR,
-						  "unsupported mask format\n");
+						  "unsupported mask format %08x\n", p->mskformat);
 				}
 			} else {
 				DPRINTF(X_ERROR, "non-solid over with msk %x\n",
@@ -828,7 +1018,12 @@ CG14Composite(PixmapPtr pDst, int srcX, int srcY,
 			    p->srcformat, p->dstformat);
 			if (p->mskformat != 0)
 				xf86Msg(X_ERROR, "Src mask %08x\n", p->mskformat);
-			CG14Copy(pDst, srcX, srcY, dstX, dstY, width, height);
+			if (p->srcformat == PICT_a8) {
+				CG14Copy8(pDst, srcX, srcY, dstX, dstY, width, height);
+			} else {
+				/* convert between RGB and BGR? */
+				CG14Copy32(pDst, srcX, srcY, dstX, dstY, width, height);
+			}
 			break;
 		default:
 			xf86Msg(X_ERROR, "unsupported op %d\n", p->op);
@@ -868,8 +1063,8 @@ CG14InitAccel(ScreenPtr pScreen)
 	pExa->pixmapPitchAlign = 8;
 
 	pExa->flags = EXA_OFFSCREEN_PIXMAPS
-		      /* | EXA_SUPPORTS_OFFSCREEN_OVERLAPS |*/
-		      | EXA_MIXED_PIXMAPS;
+		      | EXA_SUPPORTS_OFFSCREEN_OVERLAPS
+		      /*| EXA_MIXED_PIXMAPS*/;
 
 	/*
 	 * these limits are bogus
@@ -885,7 +1080,7 @@ CG14InitAccel(ScreenPtr pScreen)
 	pExa->Solid = CG14Solid;
 	pExa->DoneSolid = CG14DoneCopy;
 	pExa->PrepareCopy = CG14PrepareCopy;
-	pExa->Copy = CG14Copy;
+	pExa->Copy = CG14Copy32;
 	pExa->DoneCopy = CG14DoneCopy;
 	if (p->use_xrender) {
 		pExa->CheckComposite = CG14CheckComposite;
