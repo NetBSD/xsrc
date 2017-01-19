@@ -1270,11 +1270,19 @@ CHIPSPreInit(ScrnInfoPtr pScrn, int flags)
     }
     
     if (cPtr->Flags & ChipsAccelSupport) {
+#ifdef HAVE_XAA_H
 	if (!xf86LoadSubModule(pScrn, "xaa")) {
 	    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Falling back to shadowfb\n");
 	    cPtr->Flags &= ~(ChipsAccelSupport);
 	    cPtr->Flags |= ChipsShadowFB;
 	}
+#else
+	if (!xf86LoadSubModule(pScrn, "exa")) {
+	    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Falling back to shadowfb\n");
+	    cPtr->Flags &= ~(ChipsAccelSupport);
+	    cPtr->Flags |= ChipsShadowFB;
+	}
+#endif
     }
 
     if (cPtr->Flags & ChipsShadowFB) {
@@ -1334,8 +1342,8 @@ chipsPreInitHiQV(ScrnInfoPtr pScrn, int flags)
     /* Set pScrn->monitor */
     pScrn->monitor = pScrn->confScreen->monitor;
     
-    /* All HiQV chips support 16/24/32 bpp */
-    if (!xf86SetDepthBpp(pScrn, 0, 0, 0, Support24bppFb | Support32bppFb |
+    /* All HiQV chips support 16/24/32 bpp, default to 16bpp for speed & vram */
+    if (!xf86SetDepthBpp(pScrn, 16, 0, 0, Support24bppFb | Support32bppFb |
 				SupportConvert32to24 | PreferConvert32to24))
 	return FALSE;
     else {
@@ -4202,17 +4210,22 @@ CHIPSScreenInit(SCREEN_INIT_ARGS_DECL)
 
 	    xf86InitFBManager(pScreen, &AvailFBArea); 
 	}
-#ifdef HAVE_XAA_H
 	if (cPtr->Flags & ChipsAccelSupport) {
 	    if (IS_HiQV(cPtr)) {
+#ifdef HAVE_XAA_H
 		CHIPSHiQVAccelInit(pScreen);
-	    } else if (cPtr->UseMMIO) {
+#else
+		CHIPSInitEXA(pScreen);
+#endif
+	    }
+#ifdef HAVE_XAA_H
+	      else if (cPtr->UseMMIO) {
 		CHIPSMMIOAccelInit(pScreen);
 	    } else {
 		CHIPSAccelInit(pScreen);
 	    }
-	}
 #endif
+	}
 	xf86SetBackingStore(pScreen);
 #ifdef ENABLE_SILKEN_MOUSE
 	xf86SetSilkenMouse(pScreen);

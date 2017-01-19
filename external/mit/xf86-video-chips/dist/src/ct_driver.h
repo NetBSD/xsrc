@@ -31,6 +31,7 @@
 #include "xaa.h"
 #include "xaalocal.h"		/* XAA internals as we replace some of XAA */
 #endif
+#include "exa.h"
 #include "vbe.h"
 #include "xf86Cursor.h"
 #include "xf86i2c.h"
@@ -211,6 +212,7 @@ typedef struct {
     unsigned int CacheEnd;
     /* Storage for pattern mask */
     int planemask;
+    int srcpitch, srcoffset, xdir, ydir;
     /* Storage for foreground and background color */
     int fgColor;
     int bgColor;
@@ -329,6 +331,7 @@ typedef struct _CHIPSRec {
 #ifdef HAVE_XAA_H
     XAAInfoRecPtr	AccelInfoRec;
 #endif
+    ExaDriverPtr 	pExa;
     xf86CursorInfoPtr	CursorInfoRec;
     CHIPSACLRec		Accel;
     unsigned int	HWCursorContents;
@@ -419,6 +422,7 @@ void CHIPSMMIOSync(ScrnInfoPtr pScrn);
 Bool CHIPSHiQVAccelInit(ScreenPtr pScreen);
 void CHIPSHiQVSync(ScrnInfoPtr pScrn);
 Bool CHIPSCursorInit(ScreenPtr pScreen);
+Bool CHIPSInitEXA(ScreenPtr pScreen);
 
 /* register access functions */
 void CHIPSSetStdExtFuncs(CHIPSPtr cPtr);
