@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: ct_exa.c,v 1.1 2017/01/07 16:07:07 macallan Exp $ */
+/* $NetBSD: ct_exa.c,v 1.2 2017/01/24 15:47:01 christos Exp $ */
 
 #include <sys/types.h>
 
@@ -192,7 +192,7 @@ ctUploadToScreen(PixmapPtr pDst, int x, int y, int w, int h,
 {
     ScrnInfoPtr pScrn = xf86Screens[pDst->drawable.pScreen->myNum];
     CHIPSPtr cPtr = CHIPSPTR(pScrn);
-    char  *dst        = cPtr->FbBase + exaGetPixmapOffset(pDst);
+    unsigned char *dst = cPtr->FbBase + exaGetPixmapOffset(pDst);
     int    dst_pitch  = exaGetPixmapPitch(pDst);
 
     int bpp    = pDst->drawable.bitsPerPixel;
@@ -221,7 +221,7 @@ ctDownloadFromScreen(PixmapPtr pSrc, int x, int y, int w, int h,
 {
     ScrnInfoPtr pScrn = xf86Screens[pSrc->drawable.pScreen->myNum];
     CHIPSPtr cPtr = CHIPSPTR(pScrn);
-    char  *src        = cPtr->FbBase + exaGetPixmapOffset(pSrc);
+    unsigned char *src = cPtr->FbBase + exaGetPixmapOffset(pSrc);
     int    src_pitch  = exaGetPixmapPitch(pSrc);
 
     int bpp    = pSrc->drawable.bitsPerPixel;
