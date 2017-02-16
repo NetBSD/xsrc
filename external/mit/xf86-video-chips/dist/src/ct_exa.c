@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: ct_exa.c,v 1.2 2017/01/24 15:47:01 christos Exp $ */
+/* $NetBSD: ct_exa.c,v 1.3 2017/02/16 15:05:57 macallan Exp $ */
 
 #include <sys/types.h>
 
@@ -43,6 +43,7 @@
 #ifdef DEBUG
 #define ENTER xf86Msg(X_ERROR, "%s\n", __func__)
 #define LEAVE xf86Msg(X_ERROR, "%s done\n", __func__)
+int last_op = 0, lx, ly, lw, lh, dx, dy, xdir, ydir, lsp, ldp;
 #else
 #define ENTER
 #define LEAVE
@@ -130,12 +131,29 @@ ctCopy
     ctSETDSTADDR(dst);
     ctSETHEIGHTWIDTHGO(h, w * cAcl->BytesPerPixel);
     LEAVE;
+#ifdef DEBUG
+    last_op = 1;
+    lx = srcX;
+    ly = srcY;
+    lw = w;
+    lh = h;
+    dx = dstX;
+    dy = dstY;
+    xdir = cAcl->xdir;
+    ydir = cAcl->ydir;
+    lsp = cAcl->srcpitch;
+    ldp = dstpitch;
+#endif
 }
 
 static void
 ctDoneCopy(PixmapPtr pDstPixmap)
 {
     ENTER;
+    ScrnInfoPtr pScrn = xf86Screens[pDstPixmap->drawable.pScreen->myNum];
+    CHIPSPtr cPtr = CHIPSPTR(pScrn);
+    CHIPSACLPtr cAcl = CHIPSACLPTR(pScrn);
+    ctBLTWAIT;
     LEAVE;
 }
 
@@ -180,7 +198,10 @@ ctSolid(
     ctSETDSTADDR(dst);
     ctSETSRCADDR(dst);
     ctSETHEIGHTWIDTHGO(y2 - y1, (x2 - x1) * cAcl->BytesPerPixel);
-          LEAVE;
+    LEAVE;
+#ifdef DEBUG
+    last_op = 2;
+#endif
 }
 
 /*
@@ -270,8 +291,14 @@ CHIPSInitEXA(ScreenPtr pScreen)
     pExa->memoryBase = cPtr->FbBase;
     pExa->offScreenBase = cAcl->CacheStart;
     pExa->memorySize = cAcl->CacheEnd;
-    pExa->pixmapOffsetAlign = 4;
-    pExa->pixmapPitchAlign = 4;
+
+    /*
+     * Contrary to the manual, the blitter needs 8 byte pitch alignment or it
+     * will lock up. Probably shouldn't be surprised, there are hidden 64bit 
+     * alignment requirements all over the place.
+     */ 
+    pExa->pixmapOffsetAlign = 8;
+    pExa->pixmapPitchAlign = 8;
 
     pExa->flags = EXA_OFFSCREEN_PIXMAPS;
 

@@ -65,6 +65,8 @@
  * Note that BR04[31] can't be used as some C&T chipsets lockup when reading
  * the BRxx registers.
  */
+
+#if 0
 #define ctBLTWAIT \
                      {int timeout; \
                      timeout = 0; \
@@ -79,7 +81,8 @@
                          if ((cPtr->Chipset < CHIPS_CT69000 && \
 			     (timeout > 100000)) || timeout > 300000) { \
 			    unsigned char tmp; \
-                            ErrorF("timeout\n"); \
+                            ErrorF("%s: timeout %d (%d, %d, %d x %d) -> %d, %d \n", __func__, last_op, lx, ly, lw, lh, dx, dy); \
+                            ErrorF("dir %d %d, pitch %d %d\n", xdir, ydir, lsp, ldp); \
 			    tmp = cPtr->readXR(cPtr, 0x20); \
 			    cPtr->writeXR(cPtr, 0x20, ((tmp & 0xFD) | 0x2)); \
                             usleep(10000); \
@@ -88,6 +91,55 @@
                          } \
 		      } \
 		    }
+#endif
+
+/*
+ * XXX
+ * we only care about C&T 6555x which can safely use BR04
+ */
+
+#ifdef DEBUG
+#define ctBLTWAIT \
+                     {int timeout; \
+                     timeout = 0; \
+		     for (;;) { \
+		         if (!(MMIO_IN32(cPtr->MMIOBase,BR(0x4))&(1<<31)))\
+                             break; \
+                         timeout++; \
+                         if (timeout > 300000) { \
+			    unsigned char tmp; \
+                            ErrorF("%s: timeout %d (%d, %d, %d x %d) -> %d, %d \n", __func__, last_op, lx, ly, lw, lh, dx, dy); \
+                            ErrorF("dir %d %d, pitch %d %d\n", xdir, ydir, lsp, ldp); \
+			    tmp = cPtr->readXR(cPtr, 0x20); \
+			    cPtr->writeXR(cPtr, 0x20, ((tmp & 0xFD) | 0x2)); \
+                            usleep(10000); \
+                            cPtr->writeXR(cPtr, 0x20, (tmp & 0xFD)); \
+			    break; \
+                         } \
+		      } \
+		    }
+
+#else
+#define ctBLTWAIT \
+                     {int timeout; \
+                     timeout = 0; \
+		     for (;;) { \
+		         if (!(MMIO_IN32(cPtr->MMIOBase,BR(0x4))&(1<<31)))\
+                             break; \
+                         timeout++; \
+                         if (timeout > 300000) { \
+			    unsigned char tmp; \
+                            ErrorF("%s: timeout\n", __func__); \
+			    tmp = cPtr->readXR(cPtr, 0x20); \
+			    cPtr->writeXR(cPtr, 0x20, ((tmp & 0xFD) | 0x2)); \
+                            usleep(10000); \
+                            cPtr->writeXR(cPtr, 0x20, (tmp & 0xFD)); \
+			    break; \
+                         } \
+		      } \
+		    }
+
+#endif
 
 #if X_BYTE_ORDER == X_BIG_ENDIAN
 # define TWEAK_24_BE(c) \
