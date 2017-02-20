@@ -514,7 +514,7 @@ void _XtConverterCacheStats(void)
 	    }
 	    (void) fprintf(stdout, "Index: %4d  Entries: %d\n", i, entries);
 	    for (p = cacheHashTable[i]; p; p = p->next) {
-		(void) fprintf(stdout, "    Size: %3d  Refs: %3d  '",
+		(void) fprintf(stdout, "    Size: %3d  Refs: %3ld  '",
 			       p->from.size,
 			       p->has_ext ? CEXT(p)->ref_count : 0);
 		(void) fprintf(stdout, "'\n");

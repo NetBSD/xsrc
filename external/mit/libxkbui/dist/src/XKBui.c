@@ -96,7 +96,7 @@ XkbDescPtr	xkb;
 	if (XAllocNamedColor(view->dpy,view->opts.cmap,spec,&sdef,&xdef)) {
 	    xkb->geom->colors[i].pixel= sdef.pixel;
 #ifdef DEBUG
-	    fprintf(stderr,"got pixel %d for \"%s\"\n",sdef.pixel,spec);
+	    fprintf(stderr,"got pixel %lu for \"%s\"\n",sdef.pixel,spec);
 #endif
 	    found= True;
 	}
@@ -108,7 +108,7 @@ XkbDescPtr	xkb;
 	    if (XAllocNamedColor(view->dpy,view->opts.cmap,buf,&sdef,&xdef)) {
 		xkb->geom->colors[i].pixel= sdef.pixel;
 #ifdef DEBUG
-		fprintf(stderr,"got pixel %d for \"%s\"\n",sdef.pixel,spec);
+		fprintf(stderr,"got pixel %lu for \"%s\"\n",sdef.pixel,spec);
 #endif
 		found= True;
 	    }

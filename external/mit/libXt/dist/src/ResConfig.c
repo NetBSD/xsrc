@@ -903,10 +903,10 @@ _XtResourceConfigurationEH (
 	XtPerDisplay	pd;
 
 #ifdef DEBUG
-	fprintf (stderr, "in _XtResourceConfiguationEH atom = %d\n",event->xproperty.atom);
-	fprintf (stderr, "    window = %x\n", XtWindow (w));
+	fprintf (stderr, "in _XtResourceConfiguationEH atom = %u\n",(unsigned) event->xproperty.atom);
+	fprintf (stderr, "    window = %x\n", (unsigned) XtWindow (w));
 	if (XtIsWidget (w))
-		fprintf (stderr, "    widget = %x   name = %s\n", w, w->core.name);
+		fprintf (stderr, "    widget = %zx   name = %s\n", (size_t)w, w->core.name);
 #endif
 
 	pd = _XtGetPerDisplay (XtDisplay (w));
@@ -981,7 +981,7 @@ _XtResourceConfigurationEH (
 				resource = XtNewString (data_ptr);
 				value = XtNewString (data_value);
 #ifdef DEBUG
-				fprintf (stderr, "resource_len=%d\n",
+				fprintf (stderr, "resource_len=%lu\n",
 					 resource_len);
 				fprintf (stderr, "resource = %s\t value = %s\n",
 					 resource, value);
