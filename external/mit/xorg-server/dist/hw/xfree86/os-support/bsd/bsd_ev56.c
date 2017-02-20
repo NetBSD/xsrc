@@ -13,14 +13,13 @@
 #include "xf86_OSlib.h"
 #include "xf86OSpriv.h"
 
-#include <machine/bwx.h>
-
 /*
  * The following functions are used only on EV56 and greater CPUs,
  * and the assembler requires going to EV56 mode in order to emit
  * these instructions.
  */
 __asm(".arch ev56");
+#include <machine/bwx.h>
 
 int readDense8(void *Base, register unsigned long Offset);
 int readDense16(void *Base, register unsigned long Offset);
