@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: xsetdevicebuttonmapping
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 10/04/2016
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
+.\"      Date: 03/09/2013
 .\"    Manual: \ \&
 .\"    Source: \ \&
 .\"  Language: English
 .\"
-.TH "XSETDEVICEBUTTONMAPP" "libmansuffix" "10/04/2016" "\ \&" "\ \&"
+.TH "XSETDEVICEBUTTONMAPP" "libmansuffix" "03/09/2013" "\ \&" "\ \&"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
