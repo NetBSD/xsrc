@@ -22,6 +22,14 @@ if HAVE_TEGRA
 SUBDIRS += tegra
 endif
 
+if HAVE_ETNAVIV
+SUBDIRS += etnaviv
+endif
+
+if HAVE_NOUVEAU
+SUBDIRS += nouveau
+endif
+
 AM_CFLAGS = \
 	$(WARN_CFLAGS)\
 	-I $(top_srcdir)/include/drm \
@@ -29,47 +37,11 @@ AM_CFLAGS = \
 
 LDADD = $(top_builddir)/libdrm.la
 
-check_PROGRAMS = \
-	dristat \
-	drmdevice \
-	drmstat
-
-dristat_LDADD = -lm
-
-if HAVE_NOUVEAU
-SUBDIRS += nouveau
-endif
-
 TESTS = \
 	drmsl \
 	hash \
 	random
 
-if HAVE_LIBUDEV
-
-check_LTLIBRARIES = libdrmtest.la
-
-libdrmtest_la_SOURCES = \
-	drmtest.c \
-	drmtest.h
-
-LDADD += \
-	libdrmtest.la \
-	$(LIBUDEV_LIBS)
-
-
-XFAIL_TESTS =					\
-	auth					\
-	lock
-
-TESTS +=					\
-	openclose				\
-	getversion				\
-	getclient				\
-	getstats				\
-	setversion				\
-	updatedraw				\
-	name_from_fd
-endif
-
-check_PROGRAMS += $(TESTS)
+check_PROGRAMS = \
+	$(TESTS) \
+	drmdevice

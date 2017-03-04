@@ -30,6 +30,9 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
+/* Have etnaviv support */
+#undef HAVE_ETNAVIV
+
 /* Have EXYNOS support */
 #undef HAVE_EXYNOS
 
@@ -50,9 +53,6 @@
 
 /* Enable if your compiler supports the Intel __sync_* atomic primitives */
 #undef HAVE_LIBDRM_ATOMIC_PRIMITIVES
-
-/* Have libudev support */
-#undef HAVE_LIBUDEV
 
 /* Enable if you have libatomic-ops-dev installed */
 #undef HAVE_LIB_ATOMIC_OPS

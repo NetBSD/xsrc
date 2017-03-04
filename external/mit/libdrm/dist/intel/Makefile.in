@@ -475,8 +475,6 @@ LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
-LIBUDEV_CFLAGS = @LIBUDEV_CFLAGS@
-LIBUDEV_LIBS = @LIBUDEV_LIBS@
 LIB_MAN_DIR = @LIB_MAN_DIR@
 LIB_MAN_SUFFIX = @LIB_MAN_SUFFIX@
 LIPO = @LIPO@
@@ -584,7 +582,8 @@ LIBDRM_INTEL_FILES := \
 	intel_decode.c \
 	intel_chipset.h \
 	mm.c \
-	mm.h
+	mm.h \
+	uthash.h
 
 LIBDRM_INTEL_H_FILES := \
 	intel_bufmgr.h \
