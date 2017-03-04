@@ -647,7 +647,8 @@ CreateColors(
 			while (def_index <= 5 && defaults[def_index] == NULL)
 			    ++def_index;
 		    }
-		    if (def_index >= 2 && defaults[def_index] != NULL &&
+		    if (def_index >= 2 && def_index <= 5 &&
+			defaults[def_index] != NULL &&
 			!xpmstrcasecmp(symbol->value, defaults[def_index]))
 			break;
 		}
