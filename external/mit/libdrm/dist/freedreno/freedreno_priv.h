@@ -123,6 +123,7 @@ struct fd_pipe_funcs {
 struct fd_pipe {
 	struct fd_device *dev;
 	enum fd_pipe_id id;
+	uint32_t gpu_id;
 	const struct fd_pipe_funcs *funcs;
 };
 
@@ -133,7 +134,8 @@ struct fd_ringmarker {
 
 struct fd_ringbuffer_funcs {
 	void * (*hostptr)(struct fd_ringbuffer *ring);
-	int (*flush)(struct fd_ringbuffer *ring, uint32_t *last_start);
+	int (*flush)(struct fd_ringbuffer *ring, uint32_t *last_start,
+			int in_fence_fd, int *out_fence_fd);
 	void (*grow)(struct fd_ringbuffer *ring, uint32_t size);
 	void (*reset)(struct fd_ringbuffer *ring);
 	void (*emit_reloc)(struct fd_ringbuffer *ring,

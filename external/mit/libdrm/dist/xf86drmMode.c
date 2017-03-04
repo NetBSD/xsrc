@@ -270,10 +270,10 @@ int drmModeAddFB(int fd, uint32_t width, uint32_t height, uint8_t depth,
 	return 0;
 }
 
-int drmModeAddFB2(int fd, uint32_t width, uint32_t height,
-		  uint32_t pixel_format, uint32_t bo_handles[4],
-		  uint32_t pitches[4], uint32_t offsets[4],
-		  uint32_t *buf_id, uint32_t flags)
+int drmModeAddFB2WithModifiers(int fd, uint32_t width, uint32_t height,
+                               uint32_t pixel_format, uint32_t bo_handles[4],
+                               uint32_t pitches[4], uint32_t offsets[4],
+                               uint64_t modifier[4], uint32_t *buf_id, uint32_t flags)
 {
 	struct drm_mode_fb_cmd2 f;
 	int ret;
@@ -286,12 +286,25 @@ int drmModeAddFB2(int fd, uint32_t width, uint32_t height,
 	memcpy(f.handles, bo_handles, 4 * sizeof(bo_handles[0]));
 	memcpy(f.pitches, pitches, 4 * sizeof(pitches[0]));
 	memcpy(f.offsets, offsets, 4 * sizeof(offsets[0]));
+	if (modifier)
+		memcpy(f.modifier, modifier, 4 * sizeof(modifier[0]));
 
 	if ((ret = DRM_IOCTL(fd, DRM_IOCTL_MODE_ADDFB2, &f)))
 		return ret;
 
 	*buf_id = f.fb_id;
 	return 0;
+}
+
+int drmModeAddFB2(int fd, uint32_t width, uint32_t height,
+                  uint32_t pixel_format, uint32_t bo_handles[4],
+                  uint32_t pitches[4], uint32_t offsets[4],
+                  uint32_t *buf_id, uint32_t flags)
+{
+	return drmModeAddFB2WithModifiers(fd, width, height,
+					  pixel_format, bo_handles,
+					  pitches, offsets, NULL,
+					  buf_id, flags);
 }
 
 int drmModeRmFB(int fd, uint32_t bufferId)
@@ -888,7 +901,7 @@ int drmHandleEvent(int fd, drmEventContextPtr evctx)
 
 	i = 0;
 	while (i < len) {
-		e = (struct drm_event *) &buffer[i];
+		e = (struct drm_event *)(buffer + i);
 		switch (e->type) {
 		case DRM_EVENT_VBLANK:
 			if (evctx->version < 1 ||
@@ -933,6 +946,22 @@ int drmModePageFlip(int fd, uint32_t crtc_id, uint32_t fb_id,
 	flip.flags = flags;
 
 	return DRM_IOCTL(fd, DRM_IOCTL_MODE_PAGE_FLIP, &flip);
+}
+
+int drmModePageFlipTarget(int fd, uint32_t crtc_id, uint32_t fb_id,
+			  uint32_t flags, void *user_data,
+			  uint32_t target_vblank)
+{
+	struct drm_mode_crtc_page_flip_target flip_target;
+
+	memclear(flip_target);
+	flip_target.fb_id = fb_id;
+	flip_target.crtc_id = crtc_id;
+	flip_target.user_data = VOID2U64(user_data);
+	flip_target.flags = flags;
+	flip_target.sequence = target_vblank;
+
+	return DRM_IOCTL(fd, DRM_IOCTL_MODE_PAGE_FLIP, &flip_target);
 }
 
 int drmModeSetPlane(int fd, uint32_t plane_id, uint32_t crtc_id,

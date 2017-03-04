@@ -92,23 +92,10 @@ host_triplet = @host@
 @HAVE_AMDGPU_TRUE@@HAVE_CUNIT_TRUE@am__append_3 = amdgpu
 @HAVE_EXYNOS_TRUE@am__append_4 = exynos
 @HAVE_TEGRA_TRUE@am__append_5 = tegra
-check_PROGRAMS = dristat$(EXEEXT) drmdevice$(EXEEXT) drmstat$(EXEEXT) \
-	$(am__EXEEXT_2)
-@HAVE_NOUVEAU_TRUE@am__append_6 = nouveau
-TESTS = drmsl$(EXEEXT) hash$(EXEEXT) random$(EXEEXT) $(am__EXEEXT_1)
-@HAVE_LIBUDEV_TRUE@am__append_7 = \
-@HAVE_LIBUDEV_TRUE@	libdrmtest.la \
-@HAVE_LIBUDEV_TRUE@	$(LIBUDEV_LIBS)
-
-@HAVE_LIBUDEV_TRUE@am__append_8 = \
-@HAVE_LIBUDEV_TRUE@	openclose				\
-@HAVE_LIBUDEV_TRUE@	getversion				\
-@HAVE_LIBUDEV_TRUE@	getclient				\
-@HAVE_LIBUDEV_TRUE@	getstats				\
-@HAVE_LIBUDEV_TRUE@	setversion				\
-@HAVE_LIBUDEV_TRUE@	updatedraw				\
-@HAVE_LIBUDEV_TRUE@	name_from_fd
-
+@HAVE_ETNAVIV_TRUE@am__append_6 = etnaviv
+@HAVE_NOUVEAU_TRUE@am__append_7 = nouveau
+TESTS = drmsl$(EXEEXT) hash$(EXEEXT) random$(EXEEXT)
+check_PROGRAMS = $(am__EXEEXT_1) drmdevice$(EXEEXT)
 subdir = tests
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -122,83 +109,27 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-libdrmtest_la_LIBADD =
-am__libdrmtest_la_SOURCES_DIST = drmtest.c drmtest.h
-@HAVE_LIBUDEV_TRUE@am_libdrmtest_la_OBJECTS = drmtest.lo
-libdrmtest_la_OBJECTS = $(am_libdrmtest_la_OBJECTS)
+am__EXEEXT_1 = drmsl$(EXEEXT) hash$(EXEEXT) random$(EXEEXT)
+drmdevice_SOURCES = drmdevice.c
+drmdevice_OBJECTS = drmdevice.$(OBJEXT)
+drmdevice_LDADD = $(LDADD)
+drmdevice_DEPENDENCIES = $(top_builddir)/libdrm.la
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-@HAVE_LIBUDEV_TRUE@am_libdrmtest_la_rpath =
-@HAVE_LIBUDEV_TRUE@am__EXEEXT_1 = openclose$(EXEEXT) \
-@HAVE_LIBUDEV_TRUE@	getversion$(EXEEXT) getclient$(EXEEXT) \
-@HAVE_LIBUDEV_TRUE@	getstats$(EXEEXT) setversion$(EXEEXT) \
-@HAVE_LIBUDEV_TRUE@	updatedraw$(EXEEXT) name_from_fd$(EXEEXT)
-am__EXEEXT_2 = drmsl$(EXEEXT) hash$(EXEEXT) random$(EXEEXT) \
-	$(am__EXEEXT_1)
-dristat_SOURCES = dristat.c
-dristat_OBJECTS = dristat.$(OBJEXT)
-dristat_DEPENDENCIES =
-drmdevice_SOURCES = drmdevice.c
-drmdevice_OBJECTS = drmdevice.$(OBJEXT)
-drmdevice_LDADD = $(LDADD)
-am__DEPENDENCIES_1 =
-@HAVE_LIBUDEV_TRUE@am__DEPENDENCIES_2 = libdrmtest.la \
-@HAVE_LIBUDEV_TRUE@	$(am__DEPENDENCIES_1)
-drmdevice_DEPENDENCIES = $(top_builddir)/libdrm.la \
-	$(am__DEPENDENCIES_2)
 drmsl_SOURCES = drmsl.c
 drmsl_OBJECTS = drmsl.$(OBJEXT)
 drmsl_LDADD = $(LDADD)
-drmsl_DEPENDENCIES = $(top_builddir)/libdrm.la $(am__DEPENDENCIES_2)
-drmstat_SOURCES = drmstat.c
-drmstat_OBJECTS = drmstat.$(OBJEXT)
-drmstat_LDADD = $(LDADD)
-drmstat_DEPENDENCIES = $(top_builddir)/libdrm.la $(am__DEPENDENCIES_2)
-getclient_SOURCES = getclient.c
-getclient_OBJECTS = getclient.$(OBJEXT)
-getclient_LDADD = $(LDADD)
-getclient_DEPENDENCIES = $(top_builddir)/libdrm.la \
-	$(am__DEPENDENCIES_2)
-getstats_SOURCES = getstats.c
-getstats_OBJECTS = getstats.$(OBJEXT)
-getstats_LDADD = $(LDADD)
-getstats_DEPENDENCIES = $(top_builddir)/libdrm.la \
-	$(am__DEPENDENCIES_2)
-getversion_SOURCES = getversion.c
-getversion_OBJECTS = getversion.$(OBJEXT)
-getversion_LDADD = $(LDADD)
-getversion_DEPENDENCIES = $(top_builddir)/libdrm.la \
-	$(am__DEPENDENCIES_2)
+drmsl_DEPENDENCIES = $(top_builddir)/libdrm.la
 hash_SOURCES = hash.c
 hash_OBJECTS = hash.$(OBJEXT)
 hash_LDADD = $(LDADD)
-hash_DEPENDENCIES = $(top_builddir)/libdrm.la $(am__DEPENDENCIES_2)
-name_from_fd_SOURCES = name_from_fd.c
-name_from_fd_OBJECTS = name_from_fd.$(OBJEXT)
-name_from_fd_LDADD = $(LDADD)
-name_from_fd_DEPENDENCIES = $(top_builddir)/libdrm.la \
-	$(am__DEPENDENCIES_2)
-openclose_SOURCES = openclose.c
-openclose_OBJECTS = openclose.$(OBJEXT)
-openclose_LDADD = $(LDADD)
-openclose_DEPENDENCIES = $(top_builddir)/libdrm.la \
-	$(am__DEPENDENCIES_2)
+hash_DEPENDENCIES = $(top_builddir)/libdrm.la
 random_SOURCES = random.c
 random_OBJECTS = random.$(OBJEXT)
 random_LDADD = $(LDADD)
-random_DEPENDENCIES = $(top_builddir)/libdrm.la $(am__DEPENDENCIES_2)
-setversion_SOURCES = setversion.c
-setversion_OBJECTS = setversion.$(OBJEXT)
-setversion_LDADD = $(LDADD)
-setversion_DEPENDENCIES = $(top_builddir)/libdrm.la \
-	$(am__DEPENDENCIES_2)
-updatedraw_SOURCES = updatedraw.c
-updatedraw_OBJECTS = updatedraw.$(OBJEXT)
-updatedraw_LDADD = $(LDADD)
-updatedraw_DEPENDENCIES = $(top_builddir)/libdrm.la \
-	$(am__DEPENDENCIES_2)
+random_DEPENDENCIES = $(top_builddir)/libdrm.la
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -233,12 +164,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libdrmtest_la_SOURCES) dristat.c drmdevice.c drmsl.c \
-	drmstat.c getclient.c getstats.c getversion.c hash.c \
-	name_from_fd.c openclose.c random.c setversion.c updatedraw.c
-DIST_SOURCES = $(am__libdrmtest_la_SOURCES_DIST) dristat.c drmdevice.c \
-	drmsl.c drmstat.c getclient.c getstats.c getversion.c hash.c \
-	name_from_fd.c openclose.c random.c setversion.c updatedraw.c
+SOURCES = drmdevice.c drmsl.c hash.c random.c
+DIST_SOURCES = drmdevice.c drmsl.c hash.c random.c
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -483,7 +410,7 @@ TEST_LOG_DRIVER = $(SHELL) $(top_srcdir)/build-aux/test-driver
 TEST_LOG_COMPILE = $(TEST_LOG_COMPILER) $(AM_TEST_LOG_FLAGS) \
 	$(TEST_LOG_FLAGS)
 DIST_SUBDIRS = util kms modeprint proptest modetest vbltest kmstest \
-	radeon amdgpu exynos tegra nouveau
+	radeon amdgpu exynos tegra etnaviv nouveau
 am__DIST_COMMON = $(srcdir)/Makefile.in \
 	$(top_srcdir)/build-aux/depcomp \
 	$(top_srcdir)/build-aux/test-driver
@@ -563,8 +490,6 @@ LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
-LIBUDEV_CFLAGS = @LIBUDEV_CFLAGS@
-LIBUDEV_LIBS = @LIBUDEV_LIBS@
 LIB_MAN_DIR = @LIB_MAN_DIR@
 LIB_MAN_SUFFIX = @LIB_MAN_SUFFIX@
 LIPO = @LIPO@
@@ -666,23 +591,13 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = util kms modeprint proptest modetest vbltest $(am__append_1) \
 	$(am__append_2) $(am__append_3) $(am__append_4) \
-	$(am__append_5) $(am__append_6)
+	$(am__append_5) $(am__append_6) $(am__append_7)
 AM_CFLAGS = \
 	$(WARN_CFLAGS)\
 	-I $(top_srcdir)/include/drm \
 	-I $(top_srcdir)
 
-LDADD = $(top_builddir)/libdrm.la $(am__append_7)
-dristat_LDADD = -lm
-@HAVE_LIBUDEV_TRUE@check_LTLIBRARIES = libdrmtest.la
-@HAVE_LIBUDEV_TRUE@libdrmtest_la_SOURCES = \
-@HAVE_LIBUDEV_TRUE@	drmtest.c \
-@HAVE_LIBUDEV_TRUE@	drmtest.h
-
-@HAVE_LIBUDEV_TRUE@XFAIL_TESTS = \
-@HAVE_LIBUDEV_TRUE@	auth					\
-@HAVE_LIBUDEV_TRUE@	lock
-
+LDADD = $(top_builddir)/libdrm.la
 all: all-recursive
 
 .SUFFIXES:
@@ -717,20 +632,6 @@ $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
 
-clean-checkLTLIBRARIES:
-	-test -z "$(check_LTLIBRARIES)" || rm -f $(check_LTLIBRARIES)
-	@list='$(check_LTLIBRARIES)'; \
-	locs=`for p in $$list; do echo $$p; done | \
-	      sed 's|^[^/]*$$|.|; s|/[^/]*$$||; s|$$|/so_locations|' | \
-	      sort -u`; \
-	test -z "$$locs" || { \
-	  echo rm -f $${locs}; \
-	  rm -f $${locs}; \
-	}
-
-libdrmtest.la: $(libdrmtest_la_OBJECTS) $(libdrmtest_la_DEPENDENCIES) $(EXTRA_libdrmtest_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(LINK) $(am_libdrmtest_la_rpath) $(libdrmtest_la_OBJECTS) $(libdrmtest_la_LIBADD) $(LIBS)
-
 clean-checkPROGRAMS:
 	@list='$(check_PROGRAMS)'; test -n "$$list" || exit 0; \
 	echo " rm -f" $$list; \
@@ -740,10 +641,6 @@ clean-checkPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
-dristat$(EXEEXT): $(dristat_OBJECTS) $(dristat_DEPENDENCIES) $(EXTRA_dristat_DEPENDENCIES) 
-	@rm -f dristat$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(dristat_OBJECTS) $(dristat_LDADD) $(LIBS)
-
 drmdevice$(EXEEXT): $(drmdevice_OBJECTS) $(drmdevice_DEPENDENCIES) $(EXTRA_drmdevice_DEPENDENCIES) 
 	@rm -f drmdevice$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(drmdevice_OBJECTS) $(drmdevice_LDADD) $(LIBS)
@@ -752,45 +649,13 @@ drmsl$(EXEEXT): $(drmsl_OBJECTS) $(drmsl_DEPENDENCIES) $(EXTRA_drmsl_DEPENDENCIE
 	@rm -f drmsl$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(drmsl_OBJECTS) $(drmsl_LDADD) $(LIBS)
 
-drmstat$(EXEEXT): $(drmstat_OBJECTS) $(drmstat_DEPENDENCIES) $(EXTRA_drmstat_DEPENDENCIES) 
-	@rm -f drmstat$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(drmstat_OBJECTS) $(drmstat_LDADD) $(LIBS)
-
-getclient$(EXEEXT): $(getclient_OBJECTS) $(getclient_DEPENDENCIES) $(EXTRA_getclient_DEPENDENCIES) 
-	@rm -f getclient$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(getclient_OBJECTS) $(getclient_LDADD) $(LIBS)
-
-getstats$(EXEEXT): $(getstats_OBJECTS) $(getstats_DEPENDENCIES) $(EXTRA_getstats_DEPENDENCIES) 
-	@rm -f getstats$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(getstats_OBJECTS) $(getstats_LDADD) $(LIBS)
-
-getversion$(EXEEXT): $(getversion_OBJECTS) $(getversion_DEPENDENCIES) $(EXTRA_getversion_DEPENDENCIES) 
-	@rm -f getversion$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(getversion_OBJECTS) $(getversion_LDADD) $(LIBS)
-
 hash$(EXEEXT): $(hash_OBJECTS) $(hash_DEPENDENCIES) $(EXTRA_hash_DEPENDENCIES) 
 	@rm -f hash$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(hash_OBJECTS) $(hash_LDADD) $(LIBS)
 
-name_from_fd$(EXEEXT): $(name_from_fd_OBJECTS) $(name_from_fd_DEPENDENCIES) $(EXTRA_name_from_fd_DEPENDENCIES) 
-	@rm -f name_from_fd$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(name_from_fd_OBJECTS) $(name_from_fd_LDADD) $(LIBS)
-
-openclose$(EXEEXT): $(openclose_OBJECTS) $(openclose_DEPENDENCIES) $(EXTRA_openclose_DEPENDENCIES) 
-	@rm -f openclose$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(openclose_OBJECTS) $(openclose_LDADD) $(LIBS)
-
 random$(EXEEXT): $(random_OBJECTS) $(random_DEPENDENCIES) $(EXTRA_random_DEPENDENCIES) 
 	@rm -f random$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(random_OBJECTS) $(random_LDADD) $(LIBS)
-
-setversion$(EXEEXT): $(setversion_OBJECTS) $(setversion_DEPENDENCIES) $(EXTRA_setversion_DEPENDENCIES) 
-	@rm -f setversion$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(setversion_OBJECTS) $(setversion_LDADD) $(LIBS)
-
-updatedraw$(EXEEXT): $(updatedraw_OBJECTS) $(updatedraw_DEPENDENCIES) $(EXTRA_updatedraw_DEPENDENCIES) 
-	@rm -f updatedraw$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(updatedraw_OBJECTS) $(updatedraw_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -798,20 +663,10 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dristat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/drmdevice.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/drmsl.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/drmstat.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/drmtest.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/getclient.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/getstats.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/getversion.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/name_from_fd.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/openclose.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/random.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/setversion.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/updatedraw.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -1069,7 +924,7 @@ check-TESTS:
 	log_list=`echo $$log_list`; trs_list=`echo $$trs_list`; \
 	$(MAKE) $(AM_MAKEFLAGS) $(TEST_SUITE_LOG) TEST_LOGS="$$log_list"; \
 	exit $$?;
-recheck: all $(check_LTLIBRARIES) $(check_PROGRAMS)
+recheck: all $(check_PROGRAMS)
 	@test -z "$(TEST_SUITE_LOG)" || rm -f $(TEST_SUITE_LOG)
 	@set +e; $(am__set_TESTS_bases); \
 	bases=`for i in $$bases; do echo $$i; done \
@@ -1097,55 +952,6 @@ hash.log: hash$(EXEEXT)
 random.log: random$(EXEEXT)
 	@p='random$(EXEEXT)'; \
 	b='random'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-openclose.log: openclose$(EXEEXT)
-	@p='openclose$(EXEEXT)'; \
-	b='openclose'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-getversion.log: getversion$(EXEEXT)
-	@p='getversion$(EXEEXT)'; \
-	b='getversion'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-getclient.log: getclient$(EXEEXT)
-	@p='getclient$(EXEEXT)'; \
-	b='getclient'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-getstats.log: getstats$(EXEEXT)
-	@p='getstats$(EXEEXT)'; \
-	b='getstats'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-setversion.log: setversion$(EXEEXT)
-	@p='setversion$(EXEEXT)'; \
-	b='setversion'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-updatedraw.log: updatedraw$(EXEEXT)
-	@p='updatedraw$(EXEEXT)'; \
-	b='updatedraw'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-name_from_fd.log: name_from_fd$(EXEEXT)
-	@p='name_from_fd$(EXEEXT)'; \
-	b='name_from_fd'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
@@ -1221,7 +1027,7 @@ distdir: $(DISTFILES)
 	  fi; \
 	done
 check-am: all-am
-	$(MAKE) $(AM_MAKEFLAGS) $(check_LTLIBRARIES) $(check_PROGRAMS)
+	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
 	$(MAKE) $(AM_MAKEFLAGS) check-TESTS
 check: check-recursive
 all-am: Makefile
@@ -1262,8 +1068,8 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-recursive
 
-clean-am: clean-checkLTLIBRARIES clean-checkPROGRAMS clean-generic \
-	clean-libtool mostlyclean-am
+clean-am: clean-checkPROGRAMS clean-generic clean-libtool \
+	mostlyclean-am
 
 distclean: distclean-recursive
 	-rm -rf ./$(DEPDIR)
@@ -1334,19 +1140,19 @@ uninstall-am:
 .MAKE: $(am__recursive_targets) check-am install-am install-strip
 
 .PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am check \
-	check-TESTS check-am clean clean-checkLTLIBRARIES \
-	clean-checkPROGRAMS clean-generic clean-libtool cscopelist-am \
-	ctags ctags-am distclean distclean-compile distclean-generic \
-	distclean-libtool distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs installdirs-am maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	recheck tags tags-am uninstall uninstall-am
+	check-TESTS check-am clean clean-checkPROGRAMS clean-generic \
+	clean-libtool cscopelist-am ctags ctags-am distclean \
+	distclean-compile distclean-generic distclean-libtool \
+	distclean-tags distdir dvi dvi-am html html-am info info-am \
+	install install-am install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	installdirs-am maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am recheck tags tags-am \
+	uninstall uninstall-am
 
 .PRECIOUS: Makefile
 

@@ -127,6 +127,7 @@ const char *util_lookup_connector_type_name(unsigned int type)
 
 static const char * const modules[] = {
 	"i915",
+	"amdgpu",
 	"radeon",
 	"nouveau",
 	"vmwgfx",
@@ -142,6 +143,8 @@ static const char * const modules[] = {
 	"fsl-dcu-drm",
 	"vc4",
 	"virtio_gpu",
+	"mediatek",
+	"meson",
 };
 
 int util_open(const char *device, const char *module)
