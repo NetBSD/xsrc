@@ -212,6 +212,8 @@ PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
+PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
+PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 SED = @SED@
 SESSREG_CFLAGS = @SESSREG_CFLAGS@
 SESSREG_LIBS = @SESSREG_LIBS@
@@ -490,7 +492,7 @@ uninstall-am: uninstall-appmanDATA
 .PRECIOUS: Makefile
 
 filenames.sed: filenames.sed.c
-	$(AM_V_GEN)$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_V_GEN)$(CPP) -P $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	    $(AM_CPPFLAGS) $(CPPFLAGS) $(srcdir)/filenames.sed.c | \
 	    $(SED) -n -e '/s|__/ p' -e '/^\/__/ p' > $@
 
