@@ -13,6 +13,9 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
+/* Whether we have FE_DIVBYZERO */
+#undef HAVE_FEDIVBYZERO
+
 /* Whether the tool chain supports __float128 */
 #undef HAVE_FLOAT128
 
@@ -76,8 +79,7 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
 
 /* Name of package */
@@ -90,7 +92,7 @@
 #define PACKAGE_NAME "pixman"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "pixman 0.32.6"
+#define PACKAGE_STRING "pixman 0.34.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "pixman"
@@ -102,7 +104,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.32.6"
+#define PACKAGE_VERSION "0.34.0"
 
 /* enable TIMER_BEGIN/TIMER_END macros */
 /* #undef PIXMAN_TIMERS */
@@ -155,7 +157,7 @@
 /* #undef USE_X86_MMX */
 
 /* Version number of package */
-#define VERSION "0.32.6"
+#define VERSION "0.34.0"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
