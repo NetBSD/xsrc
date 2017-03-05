@@ -52,8 +52,6 @@
 #include "compiler.h"
 #include "mipointer.h"
 
-#include "mibstore.h"
-
 #include "pm3_regs.h"
 #include "glint_regs.h"
 #include "IBM.h"
@@ -946,7 +944,9 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
     if (FBDevProbed) {
 	int default_depth, fbbpp;
 	
-	if (!fbdevHWInit(pScrn,NULL,xf86FindOptionValue(pGlint->pEnt->device->options,"fbdev"))) {
+	if (!fbdevHWInit(pScrn, pGlint->PciInfo,
+			 xf86FindOptionValue(pGlint->pEnt->device->options,
+					     "fbdev"))) {
 		xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "fbdevHWInit failed!\n");	
 		return FALSE;
 	}
@@ -1078,7 +1078,9 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
 		return FALSE;
 	}
 
-	if (!fbdevHWInit(pScrn,NULL,xf86FindOptionValue(pGlint->pEnt->device->options,"fbdev")))
+	if (!fbdevHWInit(pScrn, pGlint->PciInfo,
+			 xf86FindOptionValue(pGlint->pEnt->device->options,
+					     "fbdev")))
 	{
 		xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "fbdevHWInit failed!\n");
 		return FALSE;
@@ -2904,7 +2906,6 @@ GLINTScreenInit(SCREEN_INIT_ARGS_DECL)
         }
     }
 
-    miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
     xf86SetSilkenMouse(pScreen);
 
