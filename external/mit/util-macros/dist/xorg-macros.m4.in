@@ -1,6 +1,6 @@
 dnl @configure_input@
 dnl
-dnl Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+dnl Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
 dnl
 dnl Permission is hereby granted, free of charge, to any person obtaining a
 dnl copy of this software and associated documentation files (the "Software"),
@@ -130,8 +130,9 @@ fi
 
 if test x$FILE_MAN_SUFFIX = x    ; then
     case $host_os in
-	solaris*)	FILE_MAN_SUFFIX=4  ;;
-	*)		FILE_MAN_SUFFIX=5  ;;
+	# Solaris 2.0 - 11 use SysV man page sections
+	solaris2.?|solaris2.1[[01]])	FILE_MAN_SUFFIX=4  ;;
+	*)				FILE_MAN_SUFFIX=5  ;;
     esac
 fi
 if test x$FILE_MAN_DIR = x    ; then
@@ -140,8 +141,9 @@ fi
 
 if test x$MISC_MAN_SUFFIX = x    ; then
     case $host_os in
-	solaris*)	MISC_MAN_SUFFIX=5  ;;
-	*)		MISC_MAN_SUFFIX=7  ;;
+	# Solaris 2.0 - 11 use SysV man page sections
+	solaris2.?|solaris2.1[[01]])	MISC_MAN_SUFFIX=5  ;;
+	*)				MISC_MAN_SUFFIX=7  ;;
     esac
 fi
 if test x$MISC_MAN_DIR = x    ; then
@@ -150,8 +152,9 @@ fi
 
 if test x$DRIVER_MAN_SUFFIX = x    ; then
     case $host_os in
-	solaris*)	DRIVER_MAN_SUFFIX=7  ;;
-	*)		DRIVER_MAN_SUFFIX=4  ;;
+	# Solaris 2.0 - 11 use SysV man page sections
+	solaris2.?|solaris2.1[[01]])	DRIVER_MAN_SUFFIX=7  ;;
+	*)				DRIVER_MAN_SUFFIX=4  ;;
     esac
 fi
 if test x$DRIVER_MAN_DIR = x    ; then
@@ -160,8 +163,9 @@ fi
 
 if test x$ADMIN_MAN_SUFFIX = x    ; then
     case $host_os in
-	solaris*)	ADMIN_MAN_SUFFIX=1m ;;
-	*)		ADMIN_MAN_SUFFIX=8  ;;
+	# Solaris 2.0 - 11 use SysV man page sections
+	solaris2.?|solaris2.1[[01]])	ADMIN_MAN_SUFFIX=1m ;;
+	*)				ADMIN_MAN_SUFFIX=8  ;;
     esac
 fi
 if test x$ADMIN_MAN_DIR = x    ; then
@@ -422,13 +426,24 @@ m4_ifval([$1],
 fi])
 
 # Test for the ability of xmlto to generate a text target
+#
+# NOTE: xmlto 0.0.27 or higher return a non-zero return code in the
+# following test for empty XML docbook files.
+# For compatibility reasons use the following empty XML docbook file and if
+# it fails try it again with a non-empty XML file.
 have_xmlto_text=no
 cat > conftest.xml << "EOF"
 EOF
 AS_IF([test "$have_xmlto" = yes],
       [AS_IF([$XMLTO --skip-validation txt conftest.xml >/dev/null 2>&1],
              [have_xmlto_text=yes],
-             [AC_MSG_WARN([xmlto cannot generate text format, this format skipped])])])
+             [# Try it again with a non-empty XML file.
+              cat > conftest.xml << "EOF"
+<x></x>
+EOF
+              AS_IF([$XMLTO --skip-validation txt conftest.xml >/dev/null 2>&1],
+                    [have_xmlto_text=yes],
+                    [AC_MSG_WARN([xmlto cannot generate text format, this format skipped])])])])
 rm -f conftest.xml
 AM_CONDITIONAL([HAVE_XMLTO_TEXT], [test $have_xmlto_text = yes])
 AM_CONDITIONAL([HAVE_XMLTO], [test "$have_xmlto" = yes])
