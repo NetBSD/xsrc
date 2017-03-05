@@ -29,4 +29,4 @@ INSTALL:
 ChangeLog:
 	$(CHANGELOG_CMD)
 
-EXTRA_DIST = ChangeLog INSTALL
+dist-hook: ChangeLog INSTALL

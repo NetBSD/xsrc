@@ -28,6 +28,8 @@
 #include "config.h"
 #endif
 
+#ifdef XF86DRM_MODE
+
 #include "xf86.h"
 
 #include "exa.h"
@@ -106,6 +108,7 @@ EVERGREENDisplayTexturedVideo(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     float uco[3], vco[3], off[3];
     float bright, cont, gamma;
     int ref = pPriv->transform_index;
+    Bool needgamma = FALSE;
     float *ps_alu_consts;
     const_config_t ps_const_conf;
     float *vs_alu_consts;
@@ -132,6 +135,17 @@ EVERGREENDisplayTexturedVideo(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     // XXX
     gamma = 1.0;
 
+    if (gamma != 1.0) {
+	needgamma = TRUE;
+	/* note: gamma correction is out = in ^ gamma;
+	   gpu can only do LG2/EX2 therefore we transform into
+	   in ^ gamma = 2 ^ (log2(in) * gamma).
+	   Lots of scalar ops, unfortunately (better solution?) -
+	   without gamma that's 3 inst, with gamma it's 10...
+	   could use different gamma factors per channel,
+	   if that's of any use. */
+    }
+
     CLEAR (cb_conf);
     CLEAR (tex_res);
     CLEAR (tex_samp);
@@ -140,6 +154,8 @@ EVERGREENDisplayTexturedVideo(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     CLEAR (vs_const_conf);
     CLEAR (ps_const_conf);
 
+    dst_obj.offset = 0;
+    src_obj.offset = 0;
     dst_obj.bo = radeon_get_pixmap_bo(pPixmap);
     dst_obj.tiling_flags = radeon_get_pixmap_tiling(pPixmap);
     dst_obj.surface = radeon_get_pixmap_surface(pPixmap);
@@ -229,8 +245,8 @@ EVERGREENDisplayTexturedVideo(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 	tex_res.pitch               = accel_state->src_obj[0].pitch;
 	tex_res.depth               = 0;
 	tex_res.dim                 = SQ_TEX_DIM_2D;
-	tex_res.base                = 0;
-	tex_res.mip_base            = 0;
+	tex_res.base                = accel_state->src_obj[0].offset;
+	tex_res.mip_base            = accel_state->src_obj[0].offset;
 	tex_res.size                = accel_state->src_size[0];
 	tex_res.bo                  = accel_state->src_obj[0].bo;
 	tex_res.mip_bo              = accel_state->src_obj[0].bo;
@@ -246,8 +262,7 @@ EVERGREENDisplayTexturedVideo(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 	tex_res.last_level          = 0;
 	tex_res.perf_modulation     = 0;
 	tex_res.interlaced          = 0;
-	if ((accel_state->src_obj[0].tiling_flags & RADEON_TILING_MASK) ==
-	    RADEON_TILING_LINEAR)
+	if (accel_state->src_obj[0].tiling_flags == 0)
 	    tex_res.array_mode          = 1;
 	evergreen_set_tex_resource(pScrn, &tex_res, accel_state->src_obj[0].domain);
 
@@ -277,11 +292,10 @@ EVERGREENDisplayTexturedVideo(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 	tex_res.dst_sel_w           = SQ_SEL_1;
 	tex_res.interlaced          = 0;
 
-	tex_res.base                = pPriv->planev_offset;
-	tex_res.mip_base            = pPriv->planev_offset;
+	tex_res.base                = accel_state->src_obj[0].offset + pPriv->planev_offset;
+	tex_res.mip_base            = accel_state->src_obj[0].offset + pPriv->planev_offset;
 	tex_res.size                = tex_res.pitch * (pPriv->h >> 1);
-	if ((accel_state->src_obj[0].tiling_flags & RADEON_TILING_MASK) ==
-	    RADEON_TILING_LINEAR)
+	if (accel_state->src_obj[0].tiling_flags == 0)
 	    tex_res.array_mode          = 1;
 	evergreen_set_tex_resource(pScrn, &tex_res, accel_state->src_obj[0].domain);
 
@@ -301,11 +315,10 @@ EVERGREENDisplayTexturedVideo(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 	tex_res.dst_sel_w           = SQ_SEL_1;
 	tex_res.interlaced          = 0;
 
-	tex_res.base                = pPriv->planeu_offset;
-	tex_res.mip_base            = pPriv->planeu_offset;
+	tex_res.base                = accel_state->src_obj[0].offset + pPriv->planeu_offset;
+	tex_res.mip_base            = accel_state->src_obj[0].offset + pPriv->planeu_offset;
 	tex_res.size                = tex_res.pitch * (pPriv->h >> 1);
-	if ((accel_state->src_obj[0].tiling_flags & RADEON_TILING_MASK) ==
-	    RADEON_TILING_LINEAR)
+	if (accel_state->src_obj[0].tiling_flags == 0)
 	    tex_res.array_mode          = 1;
 	evergreen_set_tex_resource(pScrn, &tex_res, accel_state->src_obj[0].domain);
 
@@ -325,8 +338,8 @@ EVERGREENDisplayTexturedVideo(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 	tex_res.pitch               = accel_state->src_obj[0].pitch >> 1;
 	tex_res.depth               = 0;
 	tex_res.dim                 = SQ_TEX_DIM_2D;
-	tex_res.base                = 0;
-	tex_res.mip_base            = 0;
+	tex_res.base                = accel_state->src_obj[0].offset;
+	tex_res.mip_base            = accel_state->src_obj[0].offset;
 	tex_res.size                = accel_state->src_size[0];
 	tex_res.bo                  = accel_state->src_obj[0].bo;
 	tex_res.mip_bo              = accel_state->src_obj[0].bo;
@@ -345,8 +358,7 @@ EVERGREENDisplayTexturedVideo(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 	tex_res.last_level          = 0;
 	tex_res.perf_modulation     = 0;
 	tex_res.interlaced          = 0;
-	if ((accel_state->src_obj[0].tiling_flags & RADEON_TILING_MASK) ==
-	    RADEON_TILING_LINEAR)
+	if (accel_state->src_obj[0].tiling_flags == 0)
 	    tex_res.array_mode          = 1;
 	evergreen_set_tex_resource(pScrn, &tex_res, accel_state->src_obj[0].domain);
 
@@ -369,7 +381,7 @@ EVERGREENDisplayTexturedVideo(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     cb_conf.id = 0;
     cb_conf.w = accel_state->dst_obj.pitch;
     cb_conf.h = accel_state->dst_obj.height;
-    cb_conf.base = 0;
+    cb_conf.base = accel_state->dst_obj.offset;
     cb_conf.bo = accel_state->dst_obj.bo;
     cb_conf.surface = accel_state->dst_obj.surface;
 
@@ -401,8 +413,7 @@ EVERGREENDisplayTexturedVideo(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     cb_conf.blend_clamp = 1;
     cb_conf.pmask = 0xf;
     cb_conf.rop = 3;
-    if ((accel_state->dst_obj.tiling_flags & RADEON_TILING_MASK) ==
-	RADEON_TILING_LINEAR) {
+    if (accel_state->dst_obj.tiling_flags == 0) {
 	cb_conf.array_mode = 1;
 	cb_conf.non_disp_tiling = 1;
     }
@@ -415,7 +426,7 @@ EVERGREENDisplayTexturedVideo(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     ps_const_conf.type = SHADER_TYPE_PS;
     ps_alu_consts = radeon_vbo_space(pScrn, &accel_state->cbuf, 256);
     ps_const_conf.bo = accel_state->cbuf.vb_bo;
-    ps_const_conf.const_addr = accel_state->cbuf.vb_offset;
+    ps_const_conf.const_addr = accel_state->cbuf.vb_mc_addr + accel_state->cbuf.vb_offset;
     ps_const_conf.cpu_ptr = (uint32_t *)(char *)ps_alu_consts;
 
     ps_alu_consts[0] = off[0];
@@ -441,7 +452,7 @@ EVERGREENDisplayTexturedVideo(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     vs_const_conf.type = SHADER_TYPE_VS;
     vs_alu_consts = radeon_vbo_space(pScrn, &accel_state->cbuf, 256);
     vs_const_conf.bo = accel_state->cbuf.vb_bo;
-    vs_const_conf.const_addr = accel_state->cbuf.vb_offset;
+    vs_const_conf.const_addr = accel_state->cbuf.vb_mc_addr + accel_state->cbuf.vb_offset;
     vs_const_conf.cpu_ptr = (uint32_t *)(char *)vs_alu_consts;
 
     vs_alu_consts[0] = 1.0 / pPriv->w;
@@ -457,7 +468,7 @@ EVERGREENDisplayTexturedVideo(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 	if (pPriv->desired_crtc)
 	    crtc = pPriv->desired_crtc;
 	else
-	    crtc = radeon_pick_best_crtc(pScrn, FALSE,
+	    crtc = radeon_pick_best_crtc(pScrn,
 					 pPriv->drw_x,
 					 pPriv->drw_x + pPriv->dst_w,
 					 pPriv->drw_y,
@@ -516,3 +527,5 @@ EVERGREENDisplayTexturedVideo(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 
     DamageDamageRegion(pPriv->pDraw, &pPriv->clip);
 }
+
+#endif
