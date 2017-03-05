@@ -1,3 +1,24 @@
+commit ec3440ea602aa2c8fc826adfd921506aec60eb7d
+Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Date:   Sat Dec 10 15:18:28 2016 +0200
+
+    Geode 2.11.19
+    
+    This release restores compatibility with xserver-1.19 and newer.
+    
+    VALIDATION PLATFORM
+     * Debian (X server 1.19.0) on FIC ION603A (Geode LX800).
+    
+    Signed-off-by: Martin-Éric Racine <martin-eric.racine@iki.fi>
+
+commit 4d27afae183123ad947416e98cb6cb62e20aeebe
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue Jul 19 10:03:56 2016 -0400
+
+    Adapt Block/WakeupHandler signature for ABI 23
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
 commit 9b04a4df4239e7e9414402f8522cb31728481a27
 Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
 Date:   Wed Feb 3 20:38:37 2016 +0200
