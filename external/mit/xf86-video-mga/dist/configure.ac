@@ -23,7 +23,7 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-video-mga],
-        [1.6.4],
+        [1.6.5],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
         [xf86-video-mga])
 AC_CONFIG_SRCDIR([Makefile.am])
@@ -155,8 +155,9 @@ if test "x$EXA" = xyes; then
 
     SAVE_CPPFLAGS="$CPPFLAGS"
     CPPFLAGS="$CPPFLAGS $XORG_CFLAGS"
-    AC_CHECK_HEADER(exa.h,
-                   [have_exa_h="yes"], [have_exa_h="no"])
+    AC_CHECK_HEADERS(exa.h,
+                   [have_exa_h="yes"], [have_exa_h="no"],
+                   [#include "xorg-server.h"])
     CPPFLAGS="$SAVE_CPPFLAGS"
 else
     AC_MSG_RESULT(no)
@@ -167,6 +168,7 @@ CPPFLAGS="$CPPFLAGS $XORG_CFLAGS"
 if test "x$have_exa_h" = xyes; then
     AC_MSG_CHECKING([whether EXA version is at least 2.0.0])
     AC_PREPROC_IFELSE([AC_LANG_PROGRAM([[
+#include "xorg-server.h"
 #include "exa.h"
 #if EXA_VERSION_MAJOR < 2
 #error OLD EXA!
