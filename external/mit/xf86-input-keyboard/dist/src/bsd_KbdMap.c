@@ -346,11 +346,11 @@ static CARD8 wsUsbMap[] = {
 	/* 133 */ KEY_NOTUSED,
 	/* 134 */ KEY_NOTUSED,
 /*
- * Special keycode for For Japanese keyboard
- * Override atKeyname HKTG and BSlash2 code to unique for JP106 keybaord
+ * Special keycodes for Japanese keyboards
+ * Override atKeyname HKTG and BSlash2 code to unique values for JP106 keyboards
  */
 #undef KEY_HKTG
-#define KEY_HKTG	200	/* Japanee Hiragana Katakana Toggle */
+#define KEY_HKTG	200	/* Japanese Hiragana Katakana Toggle */
 #undef KEY_BSlash2
 #define KEY_BSlash2	203	/* Japanese '\_' key */
 
@@ -364,9 +364,9 @@ static CARD8 wsUsbMap[] = {
 	/* 142 */ KEY_NOTUSED,
 	/* 143 */ KEY_NOTUSED,
 /*
- * Special keycode for For Korean keyboard
- * Define Hangul and Hangul_Hanja unique key code
- * These keys also use KANA and EISU on some Macintosh Japanese USB Keyboards
+ * Special keycodes for Korean keyboards
+ * Define Hangul and Hangul_Hanja unique key codes
+ * These keys also use KANA and EISU on some Macintosh Japanese USB keyboards
  */
 #define KEY_Hangul		201	/* Also KANA Key on Mac JP USB kbd */
 #define KEY_Hangul_Hanja	202	/* Also EISU Key on Mac JP USB kbd */
