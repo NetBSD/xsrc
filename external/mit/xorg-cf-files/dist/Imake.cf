@@ -932,6 +932,12 @@ XCOMM Keep cpp from replacing path elements containing i486/i586/i686
 #  define PpcArchitecture
 #  undef powerpc
 # endif
+# if defined(__or1k__)
+#  ifndef OpenRISC1000Architecture
+#   define OpenRISC1000Architecture
+#  endif
+#  undef __or1k__
+# endif
 # if defined (__powerpc__) && !defined(__powerpc64__) && !defined (powerpc64)
 #  ifndef PpcArchitecture
 #   define PpcArchitecture
