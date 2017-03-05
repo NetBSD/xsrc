@@ -23,7 +23,7 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-video-ati],
-        [7.7.0],
+        [7.8.0],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
         [xf86-video-ati])
 
@@ -35,8 +35,6 @@ AC_CONFIG_AUX_DIR(.)
 # Initialize Automake
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
 AC_SYS_LARGEFILE
-
-AM_MAINTAINER_MODE
 
 # Require X.Org macros 1.8 or later for MAN_SUBSTS set by XORG_MANPAGE_SECTIONS
 m4_ifndef([XORG_MACROS_VERSION],
@@ -75,7 +73,7 @@ PKG_CHECK_MODULES(LIBDRM, [libdrm >= 2.4.58])
 PKG_CHECK_MODULES(LIBDRM_RADEON, [libdrm_radeon])
 
 # Obtain compiler/linker options for the driver dependencies
-PKG_CHECK_MODULES(XORG, [xorg-server >= 1.9 xproto fontsproto xf86driproto $REQUIRED_MODULES])
+PKG_CHECK_MODULES(XORG, [xorg-server >= 1.10 xproto fontsproto xf86driproto $REQUIRED_MODULES])
 PKG_CHECK_MODULES(XEXT, [xextproto >= 7.0.99.1],
                   HAVE_XEXTPROTO_71="yes"; AC_DEFINE(HAVE_XEXTPROTO_71, 1, [xextproto 7.1 available]),
                   HAVE_XEXTPROTO_71="no")
@@ -136,6 +134,12 @@ else
 	AC_MSG_RESULT([$GLAMOR])
 fi
 AM_CONDITIONAL(GLAMOR, test x$GLAMOR != xno)
+
+AC_CHECK_DECL(RegionDuplicate,
+	      [AC_DEFINE(HAVE_REGIONDUPLICATE, 1,
+	      [Have RegionDuplicate API])], [],
+	      [#include <xorg-server.h>
+	       #include <regionstr.h>])
 
 AC_CHECK_DECL(fbGlyphs,
 	      [AC_DEFINE(HAVE_FBGLYPHS, 1, [Have fbGlyphs API])], [],

@@ -139,6 +139,8 @@ typedef struct
     unsigned long     fd_wakeup_registered; /* server generation for which fd has been registered for wakeup handling */
     int fd_wakeup_ref;
     unsigned int assigned_crtcs;
+    ScrnInfoPtr primary_scrn;
+    ScrnInfoPtr secondary_scrn;
 #ifdef XSERVER_PLATFORM_BUS
     struct xf86_platform_device *platform_dev;
 #endif

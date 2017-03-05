@@ -38,6 +38,9 @@
 /* Define to 1 if you have the <present.h> header file. */
 #undef HAVE_PRESENT_H
 
+/* Have RegionDuplicate API */
+#undef HAVE_REGIONDUPLICATE
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
