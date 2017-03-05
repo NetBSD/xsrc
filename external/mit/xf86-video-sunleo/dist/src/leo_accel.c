@@ -34,8 +34,6 @@
 #include	<X11/fonts/fontstruct.h>
 #include	"dixfontstr.h"
 #include	"fb.h"
-#include	"mifillarc.h"
-#include	"miwideline.h"
 #include	"mi.h"
 
 #include	"leo.h"
