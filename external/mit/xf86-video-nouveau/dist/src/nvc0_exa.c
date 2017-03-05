@@ -574,82 +574,84 @@ NVC0EXAPictTexture(NVPtr pNv, PixmapPtr ppix, PicturePtr ppict, unsigned unit)
 {
 	struct nouveau_bo *bo = nouveau_pixmap_bo(ppix);
 	struct nouveau_pushbuf *push = pNv->pushbuf;
+	uint32_t format;
 
 	/*XXX: Scanout buffer not tiled, someone needs to figure it out */
 	if (!nv50_style_tiled_pixmap(ppix))
 		NOUVEAU_FALLBACK("pixmap is scanout buffer\n");
 
-	PUSH_REFN (push, bo, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-	PUSH_DATAu(push, pNv->scratch, TIC_OFFSET + (unit * 32), 8);
 	switch (ppict->format) {
 	case PICT_a8r8g8b8:
-		PUSH_DATA (push, _(B_C0, G_C1, R_C2, A_C3, 8_8_8_8));
+		format = _(B_C0, G_C1, R_C2, A_C3, 8_8_8_8);
 		break;
 	case PICT_a8b8g8r8:
-		PUSH_DATA (push, _(R_C0, G_C1, B_C2, A_C3, 8_8_8_8));
+		format = _(R_C0, G_C1, B_C2, A_C3, 8_8_8_8);
 		break;
 	case PICT_x8r8g8b8:
-		PUSH_DATA (push, _(B_C0, G_C1, R_C2, A_ONE, 8_8_8_8));
+		format = _(B_C0, G_C1, R_C2, A_ONE, 8_8_8_8);
 		break;
 	case PICT_x8b8g8r8:
-		PUSH_DATA (push, _(R_C0, G_C1, B_C2, A_ONE, 8_8_8_8));
+		format = _(R_C0, G_C1, B_C2, A_ONE, 8_8_8_8);
 		break;
 	case PICT_r5g6b5:
-		PUSH_DATA (push, _(B_C0, G_C1, R_C2, A_ONE, 5_6_5));
+		format = _(B_C0, G_C1, R_C2, A_ONE, 5_6_5);
 		break;
 	case PICT_a8:
-		PUSH_DATA (push, _(A_C0, B_ZERO, G_ZERO, R_ZERO, 8));
+		format = _(A_C0, B_ZERO, G_ZERO, R_ZERO, 8);
 		break;
 	case PICT_x1r5g5b5:
-		PUSH_DATA (push, _(B_C0, G_C1, R_C2, A_ONE, 1_5_5_5));
+		format = _(B_C0, G_C1, R_C2, A_ONE, 1_5_5_5);
 		break;
 	case PICT_x1b5g5r5:
-		PUSH_DATA (push, _(R_C0, G_C1, B_C2, A_ONE, 1_5_5_5));
+		format = _(R_C0, G_C1, B_C2, A_ONE, 1_5_5_5);
 		break;
 	case PICT_a1r5g5b5:
-		PUSH_DATA (push, _(B_C0, G_C1, R_C2, A_C3, 1_5_5_5));
+		format = _(B_C0, G_C1, R_C2, A_C3, 1_5_5_5);
 		break;
 	case PICT_a1b5g5r5:
-		PUSH_DATA (push, _(R_C0, G_C1, B_C2, A_C3, 1_5_5_5));
+		format = _(R_C0, G_C1, B_C2, A_C3, 1_5_5_5);
 		break;
 	case PICT_b5g6r5:
-		PUSH_DATA (push, _(R_C0, G_C1, B_C2, A_ONE, 5_6_5));
+		format = _(R_C0, G_C1, B_C2, A_ONE, 5_6_5);
 		break;
 	case PICT_b8g8r8x8:
-		PUSH_DATA (push, _(A_ONE, R_C1, G_C2, B_C3, 8_8_8_8));
+		format = _(A_ONE, R_C1, G_C2, B_C3, 8_8_8_8);
 		break;
 	case PICT_b8g8r8a8:
-		PUSH_DATA (push, _(A_C0, R_C1, G_C2, B_C3, 8_8_8_8));
+		format = _(A_C0, R_C1, G_C2, B_C3, 8_8_8_8);
 		break;
 	case PICT_a2b10g10r10:
-		PUSH_DATA (push, _(R_C0, G_C1, B_C2, A_C3, 2_10_10_10));
+		format = _(R_C0, G_C1, B_C2, A_C3, 2_10_10_10);
 		break;
 	case PICT_x2b10g10r10:
-		PUSH_DATA (push, _(R_C0, G_C1, B_C2, A_ONE, 2_10_10_10));
+		format = _(R_C0, G_C1, B_C2, A_ONE, 2_10_10_10);
 		break;
 	case PICT_x2r10g10b10:
-		PUSH_DATA (push, _(B_C0, G_C1, R_C2, A_ONE, 2_10_10_10));
+		format = _(B_C0, G_C1, R_C2, A_ONE, 2_10_10_10);
 		break;
 	case PICT_a2r10g10b10:
-		PUSH_DATA (push, _(B_C0, G_C1, R_C2, A_C3, 2_10_10_10));
+		format = _(B_C0, G_C1, R_C2, A_C3, 2_10_10_10);
 		break;
 	case PICT_x4r4g4b4:
-		PUSH_DATA (push, _(B_C0, G_C1, R_C2, A_ONE, 4_4_4_4));
+		format = _(B_C0, G_C1, R_C2, A_ONE, 4_4_4_4);
 		break;
 	case PICT_x4b4g4r4:
-		PUSH_DATA (push, _(R_C0, G_C1, B_C2, A_ONE, 4_4_4_4));
+		format = _(R_C0, G_C1, B_C2, A_ONE, 4_4_4_4);
 		break;
 	case PICT_a4r4g4b4:
-		PUSH_DATA (push, _(B_C0, G_C1, R_C2, A_C3, 4_4_4_4));
+		format = _(B_C0, G_C1, R_C2, A_C3, 4_4_4_4);
 		break;
 	case PICT_a4b4g4r4:
-		PUSH_DATA (push, _(R_C0, G_C1, B_C2, A_C3, 4_4_4_4));
+		format = _(R_C0, G_C1, B_C2, A_C3, 4_4_4_4);
 		break;
 	default:
 		NOUVEAU_FALLBACK("invalid picture format, this SHOULD NOT HAPPEN. Expect trouble.\n");
 	}
 #undef _
 
+	PUSH_REFN (push, bo, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+	PUSH_DATAu(push, pNv->scratch, TIC_OFFSET + (unit * 32), 8);
+	PUSH_DATA (push, format);
 	PUSH_DATA (push, bo->offset);
 	PUSH_DATA (push, (bo->offset >> 32) |
 			 (bo->config.nvc0.tile_mode << 18) |

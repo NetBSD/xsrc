@@ -1,3 +1,87 @@
+commit e6479845ec0db20dc733c621b7967b751840a552
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Tue Sep 20 00:31:06 2016 -0400
+
+    Bump version to 1.0.13
+    
+     - Fixes for reverse prime offload
+     - ABI 23 support for Xorg 1.19
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu
+
+commit 6473b68762b0dca2dfccfdfc74100398b7459296
+Author: Keith Packard <keithp@keithp.com>
+Date:   Tue Jul 19 08:29:40 2016 -0700
+
+    Use NotifyFd for drm and udev fds
+    
+    NotifyFd is available after API 22, and must be used after API 23.
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit a964931e8dc4e06c27749edb4993a656dc261d75
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue Jul 19 10:03:56 2016 -0400
+
+    Adapt Block/WakeupHandler signature for ABI 23
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 12f77348e7a9579b167b41228dec9e6f97b74de8
+Author: Hans de Goede <hdegoede@redhat.com>
+Date:   Fri Jun 3 14:46:10 2016 +0200
+
+    Properly cleanup fb for reverse-prime-offload
+    
+    drmmode_set_scanout_pixmap(pix) adds drmmod->fb_id through a call
+    to drmmode_xf86crtc_resize(), but on a subsequent
+    drmmode_set_scanout_pixmap(NULL) it would not remove the fb.
+    
+    This keeps the crtc marked as busy, which causes the dgpu to not
+    being able to runtime suspend, after an output attached to the dgpu
+    has been used once. Which causes burning through an additional 10W
+    of power and the laptop to run quite hot.
+    
+    This commit adds the missing remove fb call, allowing the dgpu to runtime
+    suspend after an external monitor has been plugged into the laptop.
+    
+    Signed-off-by: Hans de Goede <hdegoede@redhat.com>
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit 1da8a937be19e41c51a3d516bd98cee988bca44b
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Thu Jun 2 11:23:53 2016 +1000
+
+    exa/nv50-: fix some potential incomplete pushes
+    
+    I don't think these should actually be able to happen, given that we
+    already reject the unknown formats in the Check() functions.  But,
+    just in case...
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit bb57f9af9d179af0962456dca369953521ea8c2c
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Thu Jun 2 10:17:58 2016 +1000
+
+    fix use of out-of-scope data
+    
+    Reported by Coverity.
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit b824d36c28124955eda4aced5e637aa75eea4d6c
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Wed Jan 13 11:55:06 2016 -0500
+
+    HAS_DIRTYTRACKING_ROTATION also supports multiple CRTCs
+    
+    A port of commit ff9a6b6f from xf86-video-ati.
+    
+    Bugzilla: https://bugs.freedesktop.org/show_bug.cgi?id=93670
+    Reported-by: Thomas D. <thfrdue@gmx.de>
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
 commit b18bc036bf9997ea65f5cbd824fd057931e604fe
 Author: Ben Skeggs <bskeggs@redhat.com>
 Date:   Tue Dec 8 15:52:25 2015 +1000
