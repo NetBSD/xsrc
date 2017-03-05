@@ -27,8 +27,6 @@
 #include "config.h"
 #endif
 
-#ifdef XF86DRM_MODE
-
 #include "xf86.h"
 
 #include <errno.h>
@@ -38,7 +36,6 @@
 #include "cayman_reg.h"
 #include "evergreen_state.h"
 
-#include "radeon_drm.h"
 #include "radeon_vbo.h"
 #include "radeon_exa_shared.h"
 
@@ -304,4 +301,3 @@ cayman_set_default_state(ScrnInfoPtr pScrn)
     END_BATCH();
 }
 
-#endif
