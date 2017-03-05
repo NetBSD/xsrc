@@ -1516,10 +1516,6 @@ Bool R128PreInit(ScrnInfoPtr pScrn, int flags)
     if (info->MMIO) R128UnmapMMIO(pScrn);
     info->MMIO = NULL;
 
-    xf86DrvMsg(pScrn->scrnIndex, X_NOTICE,
-	"For information on using the multimedia capabilities\n\tof this"
-	" adapter, please see http://gatos.sf.net.\n");
-
     return TRUE;
 
   fail:

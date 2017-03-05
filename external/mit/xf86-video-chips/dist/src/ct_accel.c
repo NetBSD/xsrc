@@ -25,8 +25,6 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_XAA_H
-
 /*
  * When monochrome tiles/stipples are cached on the HiQV chipsets the
  * pitch of the monochrome data is the displayWidth. The HiQV manuals
@@ -68,6 +66,8 @@
 #include "ct_Blitter.h"
 #define CTNAME(subname) CATNAME(CHIPS,subname)
 #endif
+
+#ifdef HAVE_XAA_H
 
 #ifdef DEBUG
 # define DEBUG_P(x) ErrorF(x"\n");
@@ -164,7 +164,7 @@ static void  CTNAME(ReadPixmap)(ScrnInfoPtr pScrn, int x, int y, int w, int h,
 # define BE_SWAPON(pScrn,cPtr)
 # define BE_SWAPOFF(pScrn,cPtr)
 #endif
-
+#endif
 Bool 
 CTNAME(AccelInit)(ScreenPtr pScreen)
 {
@@ -1741,8 +1741,6 @@ CTNAME(ReadPixmap)(ScrnInfoPtr pScrn, int x, int y, int w, int h,
 }
 #endif /* ReadPixmap */
 
-#endif /* writepixmap */
-
 #endif
 
-#endif /* HAVE_XAA_H */
+#endif

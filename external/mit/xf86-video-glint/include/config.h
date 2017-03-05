@@ -53,7 +53,7 @@
 #define PACKAGE_NAME "xf86-video-glint"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-video-glint 1.2.8"
+#define PACKAGE_STRING "xf86-video-glint 1.2.9"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-video-glint"
@@ -62,7 +62,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.2.8"
+#define PACKAGE_VERSION "1.2.9"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
@@ -71,10 +71,10 @@
 #define PACKAGE_VERSION_MINOR 2
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 8
+#define PACKAGE_VERSION_PATCHLEVEL 9
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "1.2.8"
+#define VERSION "1.2.9"

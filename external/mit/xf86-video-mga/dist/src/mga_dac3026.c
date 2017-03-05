@@ -854,7 +854,7 @@ MGA3026Save(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, MGARegPtr mgaReg,
 #ifdef XSERVER_LIBPCIACCESS
     {
 	uint32_t Option;
-	pci_device_cfg_read_u32(pMga->PciInfo, & Option, 
+	pci_device_cfg_read_u32(pMga->PciInfo, & Option,
 				PCI_OPTION_REG);
         mgaReg->Option = Option;
     }
