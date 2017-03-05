@@ -238,8 +238,9 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.88 2003/12/16 21:30:21 herrb Exp $
 # ifdef mc68000
 #   define Mc68020Architecture
 # endif
-# ifdef __arm32__
+# if defined(__arm__) || defined(__arm32__)
 #   define Arm32Architecture
+#   undef __arm__
 #   undef __arm32__
 # endif
 # ifdef __vax__
@@ -249,6 +250,10 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.88 2003/12/16 21:30:21 herrb Exp $
 # ifdef __powerpc__
 #   define PpcArchitecture
 #   undef __powerpc__
+# endif
+# ifdef __x86_64__
+#  define AMD64Architecture
+#  undef __x86_64__
 # endif
 #endif /* NetBSD */
 
@@ -922,6 +927,12 @@ XCOMM Keep cpp from replacing path elements containing i486/i586/i686
 # if defined (powerpc) && !defined(__powerpc64__) && !defined (powerpc64)
 #  define PpcArchitecture
 #  undef powerpc
+# endif
+# if defined(__or1k__)
+#  ifndef OpenRISC1000Architecture
+#   define OpenRISC1000Architecture
+#  endif
+#  undef __or1k__
 # endif
 # if defined (__powerpc__) && !defined(__powerpc64__) && !defined (powerpc64)
 #  ifndef PpcArchitecture

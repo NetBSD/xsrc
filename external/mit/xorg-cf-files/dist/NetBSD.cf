@@ -596,10 +596,6 @@ InstallManPageAliasesBase(file,destdir,aliases)
 # define BuildXInputLib          YES
 #endif
 
-#if defined(i386Architecture) || defined(Arm32Architecture) || defined(AlphaArchitecture) || defined(PpcArchitecture) || defined(AMD64Architecture)
-# include <xorg.cf>
-#endif
-
 /*
  * Definitions for the SUN server on NetBSD/sparc
  */
@@ -629,7 +625,6 @@ InstallManPageAliasesBase(file,destdir,aliases)
 #define BuildXF86VidModeExt	NO
 #define BuildXF86DGA		NO
 #define BuildXInputExt		NO
-#include <xorg.cf>
 #endif
 
 /*
@@ -696,3 +691,9 @@ sed 's/\.[0-9]*$$//'`
 #define HasDevRandom		YES
 #define RandomDeviceFile	/dev/urandom
 #endif
+
+/*
+ * Always include xorg.cf for GccAliasingArgs,
+ * regardless of server support on this plattform
+ */
+#include <xorg.cf>

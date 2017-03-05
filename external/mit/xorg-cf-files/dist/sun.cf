@@ -737,13 +737,23 @@ XCOMM SunPro C++ CplusplusCompilerMajorVersion./**/CplusplusCompilerMinorVersion
 #     define DefaultCCOptions -pipe
 #    endif
 #   else /* OSMajorVersion >= 5*/
-#     ifndef DefaultXArchOptions
+#    ifndef DefaultXArchOptions
+#     if ((CCompilerMajorVersion > 5) || \
+          (CCompilerMajorVersion == 5) && (CCompilerMinorVersion >= 9))
+      /* Sun Studio 12.0 (cc 5.9) or later */
+#      if (defined(Sparc64Architecture) || defined(AMD64Architecture))
+#	define DefaultXArchOptions -m64
+#      else
+#	define DefaultXArchOptions -m32
+#      endif
+#     else
 #      ifdef Sparc64Architecture
 #	define DefaultXArchOptions -xarch=v9
 #      elif defined(AMD64Architecture)
 #	define DefaultXArchOptions -xarch=generic64
 #      else
 #       define DefaultXArchOptions /* */
+#      endif
 #     endif
 #     ifndef DefaultCCOptions
 #      define DefaultCCOptions -Xa -v DefaultXArchOptions -z lazyload -z combreloc -xstrconst -xildoff
@@ -855,6 +865,36 @@ MAPFILES_FOR_PROGS = Mapfile_BssAlign Mapfile_NoExStack
 
 #ifdef Solaris64bitSubdir
 # define LibDirName Concat3(lib,/,Solaris64bitSubdir)
+#endif
+
+#if ((OSMajorVersion == 5) && (OSMinorVersion <= 11))
+/* System V man page sections */
+# ifndef FileManSuffix
+#  define FileManSuffix	4		/* use just one tab or cpp will die */
+# endif
+# ifndef MiscManSuffix
+#  define MiscManSuffix	5		/* use just one tab or cpp will die */
+# endif
+# ifndef DriverManSuffix
+#  define DriverManSuffix	7	/* use just one tab or cpp will die */
+# endif
+# ifndef AdminManSuffix
+#  define AdminManSuffix	1m	/* use just one tab or cpp will die */
+# endif
+#else
+/* Bell Labs / BSD man page sections */
+# ifndef FileManSuffix
+#  define FileManSuffix	5		/* use just one tab or cpp will die */
+# endif
+# ifndef MiscManSuffix
+#  define MiscManSuffix	7		/* use just one tab or cpp will die */
+# endif
+# ifndef DriverManSuffix
+#  define DriverManSuffix	4	/* use just one tab or cpp will die */
+# endif
+# ifndef AdminManSuffix
+#  define AdminManSuffix	8	/* use just one tab or cpp will die */
+# endif
 #endif
 
 #if OSMajorVersion > 4

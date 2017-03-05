@@ -134,7 +134,6 @@ dist_config_DATA = $(RULEFILES) $(TMPLFILES) $(DEFFILES) $(CFFILES)
 config_DATA = $(BUILT_DEFFILES)
 
 EXTRA_DIST = \
-	os2def.db \
 	site.sample
 
 all-local: $(BUILT_DEFFILES)

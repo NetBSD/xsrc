@@ -2034,6 +2034,12 @@ XFREE86JAPANESEDOCDIR = $(DOCDIR)/Japanese
 # endif
 #endif
 
+#if HasGcc2 && defined(OpenRISC1000Architecture)
+# ifndef DefaultGcc2OpenRISC1000Opt
+#  define DefaultGcc2OpenRISC1000Opt -O2 GccAliasingArgs
+# endif
+#endif
+
 #if HasGcc2 && defined(Ppc64Architecture)
 # ifndef DefaultGcc2Ppc64Opt
 #  define DefaultGcc2Ppc64Opt -O2 GccAliasingArgs

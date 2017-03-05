@@ -1561,6 +1561,12 @@ XFREE86JAPANESEDOCDIR = $(DOCDIR)/Japanese
 # endif
 #endif
 
+#if HasGcc2 && defined(AArch64Architecture)
+# ifndef DefaultGcc2AArch64Opt
+#  define DefaultGcc2AArch64Opt -O2 GccAliasingArgs
+# endif
+#endif
+
 #if HasGcc2 && defined(AMD64Architecture)
 # ifndef DefaultGcc2AMD64Opt
 #  define DefaultGcc2AMD64Opt -O2 -fno-strength-reduce GccAliasingArgs
@@ -1582,6 +1588,12 @@ XFREE86JAPANESEDOCDIR = $(DOCDIR)/Japanese
 #if HasGcc2 && defined(MipsArchitecture)
 # ifndef DefaultGcc2MipsOpt
 #  define DefaultGcc2MipsOpt -O2 GccAliasingArgs
+# endif
+#endif
+
+#if HasGcc2 && defined(OpenRISC1000Architecture)
+# ifndef DefaultGcc2OpenRISC1000Opt
+#  define DefaultGcc2OpenRISC1000Opt -O2 GccAliasingArgs
 # endif
 #endif
 

@@ -5,9 +5,10 @@ libraries formerly delivered in the X.Org monolithic releases.
 
 The X Window System used imake extensively up through the X11R6.9 release,
 for both full builds within the source tree and external software.
-X has since moved to GNU autoconf and automake for its build system in
-X11R7.0 and later releases, but still maintains imake for building existing
-external software programs that have not yet converted.
+X moved to GNU autoconf and automake for its build system in 2005 for
+X11R7.0 and later releases, but still provides imake for building existing
+external software programs that have not yet converted, though we are not
+actively maintaining it for new OS or platform releases.
 
 More information about Imake and its usage may be found in the resources
 at:
