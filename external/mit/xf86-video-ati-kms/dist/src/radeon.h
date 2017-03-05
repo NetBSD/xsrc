@@ -96,6 +96,25 @@
 
 struct _SyncFence;
 
+#ifndef HAVE_REGIONDUPLICATE
+
+static inline RegionPtr
+RegionDuplicate(RegionPtr pOld)
+{
+    RegionPtr pNew;
+
+    pNew = RegionCreate(&pOld->extents, 0);
+    if (!pNew)
+	return NULL;
+    if (!RegionCopy(pNew, pOld)) {
+	RegionDestroy(pNew);
+	return NULL;
+    }
+    return pNew;
+}
+
+#endif
+
 #ifndef MAX
 #define MAX(a,b) ((a)>(b)?(a):(b))
 #endif
@@ -448,6 +467,10 @@ struct radeon_accel_state {
     Bool              force;
 };
 
+struct radeon_client_priv {
+    uint_fast32_t     needs_flush;
+};
+
 typedef struct {
     EntityInfoPtr     pEnt;
     pciVideoPtr       PciInfo;
@@ -473,6 +496,7 @@ typedef struct {
     Bool              RenderAccel; /* Render */
     Bool              allowColorTiling;
     Bool              allowColorTiling2D;
+    int               callback_event_type;
     uint_fast32_t     gpu_flushed;
     uint_fast32_t     gpu_synced;
     struct radeon_accel_state *accel_state;
@@ -495,9 +519,7 @@ typedef struct {
     DisplayModePtr currentMode;
 
     CreateScreenResourcesProcPtr CreateScreenResources;
-#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) >= 10
     CreateWindowProcPtr CreateWindow;
-#endif
 
     Bool              IsSecondary;
 
@@ -654,10 +676,8 @@ static inline struct radeon_surface *radeon_get_pixmap_surface(PixmapPtr pPix)
 
 uint32_t radeon_get_pixmap_tiling(PixmapPtr pPix);
 
-static inline void radeon_set_pixmap_bo(PixmapPtr pPix, struct radeon_bo *bo)
+static inline Bool radeon_set_pixmap_bo(PixmapPtr pPix, struct radeon_bo *bo)
 {
-    ScreenPtr pScreen = pPix->drawable.pScreen;
-
 #ifdef USE_GLAMOR
     RADEONInfoPtr info = RADEONPTR(xf86ScreenToScrn(pPix->drawable.pScreen));
 
@@ -666,14 +686,15 @@ static inline void radeon_set_pixmap_bo(PixmapPtr pPix, struct radeon_bo *bo)
 
 	priv = radeon_get_pixmap_private(pPix);
 	if (priv == NULL && bo == NULL)
-	    return;
+	    return TRUE;
 
 	if (priv) {
-	    if (priv->bo == bo)
-		return;
+	    if (priv->bo) {
+		if (priv->bo == bo)
+		    return TRUE;
 
-	    if (priv->bo)
 		radeon_bo_unref(priv->bo);
+	    }
 
 	    if (!bo) {
 		free(priv);
@@ -687,18 +708,17 @@ static inline void radeon_set_pixmap_bo(PixmapPtr pPix, struct radeon_bo *bo)
 	    if (!priv) {
 		priv = calloc(1, sizeof (struct radeon_pixmap));
 		if (!priv)
-		    goto out;
+		    return FALSE;
 	    }
 
 	    radeon_bo_ref(bo);
 	    priv->bo = bo;
 
-	    if (radeon_bo_get_tiling(bo, &priv->tiling_flags, &pitch) == 0 &&
-		pitch != pPix->devKind)
-		pScreen->ModifyPixmapHeader(pPix, -1, -1, -1, -1, pitch, NULL);
+	    radeon_bo_get_tiling(bo, &priv->tiling_flags, &pitch);
 	}
-out:
+
 	radeon_set_pixmap_private(pPix, priv);
+	return TRUE;
     } else
 #endif /* USE_GLAMOR */
     {
@@ -714,10 +734,11 @@ out:
 	    radeon_bo_ref(bo);
 	    driver_priv->bo = bo;
 
-	    if (radeon_bo_get_tiling(bo, &driver_priv->tiling_flags, &pitch) == 0 &&
-		pitch != pPix->devKind)
-		pScreen->ModifyPixmapHeader(pPix, -1, -1, -1, -1, pitch, NULL);
+	    radeon_bo_get_tiling(bo, &driver_priv->tiling_flags, &pitch);
+	    return TRUE;
 	}
+
+	return FALSE;
     }
 }
 

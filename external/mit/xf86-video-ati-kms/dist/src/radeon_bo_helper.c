@@ -312,14 +312,17 @@ Bool radeon_set_shared_pixmap_backing(PixmapPtr ppix, void *fd_handle,
     struct radeon_bo *bo;
     int ihandle = (int)(long)fd_handle;
     uint32_t size = ppix->devKind * ppix->drawable.height;
+    Bool ret = FALSE;
 
     bo = radeon_gem_bo_open_prime(info->bufmgr, ihandle, size);
     if (!bo)
-        return FALSE;
+        goto error;
 
     memset(surface, 0, sizeof(struct radeon_surface));
 
-    radeon_set_pixmap_bo(ppix, bo);
+    ret = radeon_set_pixmap_bo(ppix, bo);
+    if (!ret)
+	goto error;
 
     if (info->ChipFamily >= CHIP_FAMILY_R600 && info->surf_man) {
 	uint32_t tiling_flags;
@@ -360,10 +363,12 @@ Bool radeon_set_shared_pixmap_backing(PixmapPtr ppix, void *fd_handle,
 	surface->stencil_tile_split = (tiling_flags >> RADEON_TILING_EG_STENCIL_TILE_SPLIT_SHIFT) & RADEON_TILING_EG_STENCIL_TILE_SPLIT_MASK;
 	surface->mtilea = (tiling_flags >> RADEON_TILING_EG_MACRO_TILE_ASPECT_SHIFT) & RADEON_TILING_EG_MACRO_TILE_ASPECT_MASK;
 	if (radeon_surface_best(info->surf_man, surface)) {
-	    return FALSE;
+	    ret = FALSE;
+	    goto error;
 	}
 	if (radeon_surface_init(info->surf_man, surface)) {
-	    return FALSE;
+	    ret = FALSE;
+	    goto error;
 	}
 	/* we have to post hack the surface to reflect the actual size
 	   of the shared pixmap */
@@ -371,11 +376,12 @@ Bool radeon_set_shared_pixmap_backing(PixmapPtr ppix, void *fd_handle,
 	surface->level[0].nblk_x = ppix->devKind / surface->bpe;
     }
 
+ error:
     close(ihandle);
     /* we have a reference from the alloc and one from set pixmap bo,
        drop one */
     radeon_bo_unref(bo);
-    return TRUE;
+    return ret;
 }
 
 #endif /* RADEON_PIXMAP_SHARING */

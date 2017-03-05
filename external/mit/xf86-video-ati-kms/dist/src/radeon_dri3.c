@@ -144,6 +144,7 @@ static PixmapPtr radeon_dri3_pixmap_from_fd(ScreenPtr screen,
 			}
 
 			screen->DestroyPixmap(pixmap);
+			return NULL;
 		}
 	}
 #endif

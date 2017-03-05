@@ -78,8 +78,8 @@ static void
 RADEONIdentify(int flags)
 {
     xf86PrintChipsets(RADEON_NAME,
-		      "Driver for ATI Radeon chipsets",
-		      RADEONChipsets);
+		      "Driver for ATI/AMD Radeon chipsets",
+		      RADEONUniqueChipsets);
 }
 
 
