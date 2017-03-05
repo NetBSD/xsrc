@@ -1318,7 +1318,7 @@ vmwgfx_dirty(struct saa_driver *driver, PixmapPtr pixmap,
      * just before we call the kms update function for the hw
      * surface.
      */
-    if (vsaa->only_hw_presents) {
+    if (vpix->scanout_hw) {
 	if (!hw && !vmwgfx_upload_to_hw(&vsaa->driver, pixmap, damage))
 	    return FALSE;
 
@@ -1408,7 +1408,8 @@ vmwgfx_saa_init(ScreenPtr pScreen, int drm_fd, struct xa_tracker *xat,
 		void (*present_flush)(ScreenPtr pScreen),
 		Bool direct_presents,
 		Bool only_hw_presents,
-		Bool rendercheck)
+		Bool rendercheck,
+		Bool has_screen_targets)
 {
     struct vmwgfx_saa *vsaa;
 
@@ -1419,6 +1420,7 @@ vmwgfx_saa_init(ScreenPtr pScreen, int drm_fd, struct xa_tracker *xat,
     if (xat == NULL) {
 	direct_presents = FALSE;
 	only_hw_presents = FALSE;
+	has_screen_targets = FALSE;
     }
 
     vsaa->pScreen = pScreen;
@@ -1433,6 +1435,7 @@ vmwgfx_saa_init(ScreenPtr pScreen, int drm_fd, struct xa_tracker *xat,
     vsaa->rendercheck = rendercheck;
     vsaa->is_master = TRUE;
     vsaa->known_prime_format = FALSE;
+    vsaa->has_screen_targets = has_screen_targets;
     WSBMINITLISTHEAD(&vsaa->sync_x_list);
     WSBMINITLISTHEAD(&vsaa->pixmaps);
 
@@ -1492,7 +1495,8 @@ vmwgfx_scanout_refresh(PixmapPtr pixmap)
  */
 
 uint32_t
-vmwgfx_scanout_ref(struct vmwgfx_screen_entry  *entry)
+vmwgfx_scanout_ref(struct vmwgfx_screen_entry  *entry,
+		   Bool scanout_equals_pixmap)
 {
     PixmapPtr pixmap = entry->pixmap;
     struct vmwgfx_saa *vsaa =
@@ -1503,7 +1507,10 @@ vmwgfx_scanout_ref(struct vmwgfx_screen_entry  *entry)
 	uint32_t handle, dummy;
 	unsigned int depth;
 
-	if (vsaa->only_hw_presents) {
+	vpix->scanout_hw = vsaa->only_hw_presents ||
+	    (vsaa->has_screen_targets && scanout_equals_pixmap);
+
+	if (vpix->scanout_hw) {
 	    /*
 	     * The KMS fb will be a HW surface. Create it, add damage
 	     * and get the handle.
