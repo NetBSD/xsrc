@@ -41,8 +41,7 @@
 /* X server has new mode code */
 #undef HAVE_XMODES
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
 
 /* Name of package */
