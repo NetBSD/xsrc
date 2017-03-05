@@ -682,10 +682,16 @@ drmmode_set_scanout_pixmap(xf86CrtcPtr crtc, PixmapPtr ppix)
 	PixmapPtr screenpix = screen->GetScreenPixmap(screen);
 	xf86CrtcConfigPtr xf86_config = XF86_CRTC_CONFIG_PTR(crtc->scrn);
 	drmmode_crtc_private_ptr drmmode_crtc = crtc->driver_private;
+	drmmode_ptr drmmode = drmmode_crtc->drmmode;
 	int c, total_width = 0, max_height = 0, this_x = 0;
 	if (!ppix) {
-		if (crtc->randr_crtc->scanout_pixmap)
+		if (crtc->randr_crtc->scanout_pixmap) {
 			PixmapStopDirtyTracking(crtc->randr_crtc->scanout_pixmap, screenpix);
+			if (drmmode && drmmode->fb_id) {
+				drmModeRmFB(drmmode->fd, drmmode->fb_id);
+				drmmode->fb_id = 0;
+			}
+		}
 		drmmode_crtc->scanout_pixmap_x = 0;
 		return TRUE;
 	}
@@ -706,7 +712,7 @@ drmmode_set_scanout_pixmap(xf86CrtcPtr crtc, PixmapPtr ppix)
 			if (max_height < iter->mode.VDisplay)
 				max_height = iter->mode.VDisplay;
 		}
-#ifndef HAS_DIRTYTRACKING2
+#if !defined(HAS_DIRTYTRACKING_ROTATION) && !defined(HAS_DIRTYTRACKING2)
 	if (iter != crtc) {
 		ErrorF("Cannot do multiple crtcs without X server dirty tracking 2 interface\n");
 		return FALSE;
@@ -1533,6 +1539,15 @@ drmmode_handle_uevents(ScrnInfoPtr scrn)
 }
 #endif
 
+#if HAVE_NOTIFY_FD
+static void
+drmmode_udev_notify(int fd, int notify, void *data)
+{
+	ScrnInfoPtr scrn = data;
+	drmmode_handle_uevents(scrn);
+}
+#endif
+
 static void
 drmmode_uevent_init(ScrnInfoPtr scrn)
 {
@@ -1559,7 +1574,11 @@ drmmode_uevent_init(ScrnInfoPtr scrn)
 		return;
 	}
 
+#if HAVE_NOTIFY_FD
+	SetNotifyFd(udev_monitor_get_fd(mon), drmmode_udev_notify, X_NOTIFY_READ, scrn);
+#else
 	AddGeneralSocket(udev_monitor_get_fd(mon));
+#endif
 	drmmode->uevent_monitor = mon;
 #endif
 }
@@ -1573,12 +1592,26 @@ drmmode_uevent_fini(ScrnInfoPtr scrn)
 	if (drmmode->uevent_monitor) {
 		struct udev *u = udev_monitor_get_udev(drmmode->uevent_monitor);
 
+#if HAVE_NOTIFY_FD
+		RemoveNotifyFd(udev_monitor_get_fd(drmmode->uevent_monitor));
+#else
 		RemoveGeneralSocket(udev_monitor_get_fd(drmmode->uevent_monitor));
+#endif
 		udev_monitor_unref(drmmode->uevent_monitor);
 		udev_unref(u);
 	}
 #endif
 }
+
+#if HAVE_NOTIFY_FD
+static void
+drmmode_notify_fd(int fd, int notify, void *data)
+{
+	ScrnInfoPtr scrn = data;
+	drmmode_ptr drmmode = drmmode_from_scrn(scrn);
+	drmHandleEvent(drmmode->fd, &drmmode->event_context);
+}
+#else
 
 static void
 drmmode_wakeup_handler(pointer data, int err, pointer p)
@@ -1598,6 +1631,7 @@ drmmode_wakeup_handler(pointer data, int err, pointer p)
 		drmmode_handle_uevents(scrn);
 #endif
 }
+#endif
 
 void
 drmmode_screen_init(ScreenPtr pScreen)
@@ -1615,9 +1649,13 @@ drmmode_screen_init(ScreenPtr pScreen)
 	/* Register wakeup handler only once per servergen, so ZaphodHeads work */
 	if (pNVEnt->fd_wakeup_registered != serverGeneration) {
 		/* Register a wakeup handler to get informed on DRM events */
+#if HAVE_NOTIFY_FD
+		SetNotifyFd(drmmode->fd, drmmode_notify_fd, X_NOTIFY_READ, scrn);
+#else
 		AddGeneralSocket(drmmode->fd);
 		RegisterBlockAndWakeupHandlers((BlockHandlerProcPtr)NoopDDA,
 		                               drmmode_wakeup_handler, scrn);
+#endif
 		pNVEnt->fd_wakeup_registered = serverGeneration;
 		pNVEnt->fd_wakeup_ref = 1;
 	}
@@ -1636,10 +1674,14 @@ drmmode_screen_fini(ScreenPtr pScreen)
 	if (pNVEnt->fd_wakeup_registered == serverGeneration &&
 		!--pNVEnt->fd_wakeup_ref) {
 
+#if HAVE_NOTIFY_FD
+		RemoveNotifyFd(drmmode->fd);
+#else
 		/* Unregister wakeup handler */
 		RemoveBlockAndWakeupHandlers((BlockHandlerProcPtr)NoopDDA,
 		                             drmmode_wakeup_handler, scrn);
 		RemoveGeneralSocket(drmmode->fd);
+#endif
 	}
 
 	/* Tear down udev event handler */
