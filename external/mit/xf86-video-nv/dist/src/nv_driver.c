@@ -2066,7 +2066,7 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
 
     /* Load shadowfb if needed */
     if (pNv->ShadowFB) {
-	if (!xf86LoadSubModule(pScrn, "shadowfb")) {
+	if (!xf86LoadSubModule(pScrn, "shadow")) {
 	    xf86FreeInt10(pNv->pInt);
 	    NVFreeRec(pScrn);
 	    return FALSE;
@@ -2374,6 +2374,44 @@ NVDPMSSet(ScrnInfoPtr pScrn, int PowerManagementMode, int flags)
   hwp->writeCrtc(hwp, 0x1A, crtc1A);
 }
 
+static Bool
+NVCreateScreenResources(ScreenPtr pScreen)
+{
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
+	NVPtr pNv = NVPTR(pScrn);
+	PixmapPtr pPixmap;
+	Bool ret;
+
+	pScreen->CreateScreenResources = pNv->CreateScreenResources;
+	ret = pScreen->CreateScreenResources(pScreen);
+	pScreen->CreateScreenResources = NVCreateScreenResources;
+
+	if (!ret)
+		return FALSE;
+
+	pPixmap = pScreen->GetScreenPixmap(pScreen);
+
+	if (!shadowAdd(pScreen, pPixmap, NVShadowUpdate,
+		NULL, 0, NULL)) {
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static Bool
+NVShadowInit(ScreenPtr pScreen)
+{
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
+	NVPtr pNv = NVPTR(pScrn);
+
+	if (!shadowSetup(pScreen))
+		return FALSE;
+	pNv->CreateScreenResources = pScreen->CreateScreenResources;
+	pScreen->CreateScreenResources = NVCreateScreenResources;
+
+	return TRUE;
+}
+
 
 /* Mandatory */
 
@@ -2550,7 +2588,6 @@ NVScreenInit(SCREEN_INIT_ARGS_DECL)
     if (!pNv->NoAccel)
 	NVAccelInit(pScreen);
     
-    miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
     xf86SetSilkenMouse(pScreen);
 
@@ -2596,8 +2633,8 @@ NVScreenInit(SCREEN_INIT_ARGS_DECL)
                           "Driver rotation enabled, RandR disabled\n");
            }
 	}
-
-	ShadowFBInit(pScreen, refreshArea);
+        pNv->refreshArea = refreshArea;
+	NVShadowInit(pScreen);
     }
 
     if(pNv->FlatPanel)

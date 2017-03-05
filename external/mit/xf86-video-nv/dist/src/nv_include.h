@@ -24,12 +24,10 @@
 /* All drivers initialising the SW cursor need this */
 #include "mipointer.h"
 
-/* All drivers implementing backing store need this */
-#include "mibstore.h"
-
 #include "micmap.h"
 
 #include "xf86DDC.h"
+#include "xf86Modes.h"
 
 #include "vbe.h"
 
