@@ -1,3 +1,143 @@
+commit 689d873a035c05a9d6a39feb13a028762bf781e0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Dec 21 17:25:23 2015 -0800
+
+    xorg-cf-files 1.0.6
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 94a91b48847cd0af8ba15e2edac7a36114974979
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 11 17:03:45 2015 -0800
+
+    Remove os2def.db from EXTRA_DIST
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6238441708c58156015a8db66881ff49b380ba49
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 11 17:01:45 2015 -0800
+
+    README: reword status section
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8c11e021a8412d53ae01d351e66ebc07267a3ad9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 11 16:52:16 2015 -0800
+
+    sun.cf: Sun Studio 12.0 & later compilers prefer -m32/-m64
+    
+    Use those flags instead of -xarch when the compiler is new enough
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 513f4a0a8f68491995c7a6a3594c51b6ab84a3a1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 11 16:28:38 2015 -0800
+
+    sun.cf: limit SysV man page sections to Solaris 2.0-11
+    
+    All others (including other SunOS/Solaris releases) use the
+    traditional Bell Labs / BSD / Linux section numbering.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9d00e1f1f5cbb05ad45cc50efce7663ab92bb225
+Author: Andreas Boll <andreas.boll.dev@gmail.com>
+Date:   Thu Dec 10 21:38:35 2015 +0100
+
+    Imake.tmpl: Use gzip -n to not save the timestamps
+    
+    Change default GzipCmd to `gzip -n` so that packages depending on
+    xutils-dev (Debian package which contains util/cf) can be built
+    reproducibly.
+    
+    As an example xtel can be built reproducible with this patch.
+    
+    Fixes bug:
+    https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=789964
+    
+    Suggested-by: Dhole <dhole@openmailbox.org>
+    Signed-off-by: Andreas Boll <andreas.boll.dev@gmail.com>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a7cbc7b0c905f11fe4ee20e50dc4284e116c11ac
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 26 11:17:55 2015 -0700
+
+    Remove very out of date OS2 DLL mappings for no-longer-shipped makedef.cmd
+    
+    Haven't been updated since 2003 to reflect new functions and libraries
+    and can't be used since we no longer ship xc/config/util/makedef.cmd.
+
+commit fa898f4fe6f7dbdd7c07ab32b3b57f5d7c25901a
+Author: James Cloos <cloos@jhcloos.com>
+Date:   Sat Sep 6 14:05:57 2014 -0400
+
+    Minor adjustment to the or1k patch.
+    
+    Protect the definition of OpenRISC1000Architecture w/in an ifndef
+    like the other cpu sections do.
+    
+    Signed-off-by: James Cloos <cloos@jhcloos.com>
+
+commit 3c4f28ceeefcb038eb3cf0ff65c4e80f16f26a50
+Author: Manuel A. Fernandez Montecelo <manuel.montezelo@gmail.com>
+Date:   Mon Aug 11 00:18:59 2014 +0100
+
+    Add support for OpenRISC 1000 (or1k) CPU
+    
+    Signed-off-by: Manuel A. Fernandez Montecelo <manuel.montezelo@gmail.com>
+    Signed-off-by: James Cloos <cloos@jhcloos.com>
+
+commit 5bf89151abdfdb1e5c183df9f28ee57b75e33c03
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 31 21:39:32 2014 -0700
+
+    autogen.sh: Honor NOCONFIGURE=1
+    
+    See http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e3275108cb618a8b42d30cff9116821e767c78b7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 31 21:38:41 2014 -0700
+
+    configure: Drop AM_MAINTAINER_MODE
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e5be807d9e91f11d7244c8e895b6266d54125b1d
+Author: Thomas Klausner <wiz@NetBSD.org>
+Date:   Thu Mar 20 11:33:06 2014 +0100
+
+    Always include xorg.cf for GccAliasingArgs.
+    
+    (regardless of server support on this plattform)
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Thomas Klausner <wiz@NetBSD.org>
+
+commit c91790bc2a6eb024ae09a8e78a889375fd6c74f0
+Author: Thomas Klausner <wiz@NetBSD.org>
+Date:   Thu Mar 20 11:32:39 2014 +0100
+
+    NetBSD: add AMD64Architecture, fix Arm32Architecture.
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Thomas Klausner <wiz@NetBSD.org>
+
+commit 2d586d8c0fe5190a6ab0958ee586e9a8c0a02d72
+Author: Riku Voipio <riku.voipio@linaro.org>
+Date:   Fri Dec 6 15:37:36 2013 -0800
+
+    add DefaultGcc2AArch64Opt to xorg.cf
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 2e0400cfc1d946f22efd40a6780a830d2210c83d
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Mon Jul 22 22:23:02 2013 -0700
@@ -1403,7 +1543,7 @@ Date:   Fri Jan 14 05:53:48 2005 +0000
     Use dlloader by default for loadable server builds.
 
 commit 58b391246436139593a775e71f3d4c8ea1ca5b77
-Author: Kristian Høgsberg <krh@redhat.com>
+Author: Kristian Høgsberg  <krh@redhat.com>
 Date:   Wed Jan 12 20:15:52 2005 +0000
 
     Add new evdev input driver. This driver uses the linux input layer directly
@@ -1537,7 +1677,7 @@ Date:   Thu Nov 25 21:46:11 2004 +0000
         clarify it's purpose.
 
 commit 60766559b63e5a248dc6acfb2aa77f05b62d4c1e
-Author: Kristian Høgsberg <krh@redhat.com>
+Author: Kristian Høgsberg  <krh@redhat.com>
 Date:   Wed Nov 24 02:45:33 2004 +0000
 
     Remove this file and all references to the binary expiry code.
@@ -1893,7 +2033,7 @@ Date:   Mon Aug 16 22:48:50 2004 +0000
     Revert change since it is better to set date in the config files.
 
 commit 4444b3a7053408fa144ba82ce0cda9ec015a30ce
-Author: Kristian Høgsberg <krh@redhat.com>
+Author: Kristian Høgsberg  <krh@redhat.com>
 Date:   Mon Aug 16 16:36:14 2004 +0000
 
     As discussed and agreed on on the release-wranglers meeting of August 16,
@@ -1915,7 +2055,7 @@ Date:   Mon Aug 16 16:36:14 2004 +0000
     Make Xprint support depend on BuildXprintLib.
 
 commit ee7e6fb1f1163fc284a6591910f15082d36c40b1
-Author: Kristian Høgsberg <krh@redhat.com>
+Author: Kristian Høgsberg  <krh@redhat.com>
 Date:   Sun Aug 15 00:58:42 2004 +0000
 
     config/cf/DGUX.cf, config/cf/QNX4.cf, config/cf/bsdi.cf, config/cf/isc.cf,
@@ -1941,20 +2081,20 @@ Date:   Fri Aug 13 22:44:03 2004 +0000
         X11.tmpl
 
 commit 4ddde89177109174f7890e0c48445362ae2a74eb
-Author: Kristian Høgsberg <krh@redhat.com>
+Author: Kristian Høgsberg  <krh@redhat.com>
 Date:   Fri Aug 13 17:21:43 2004 +0000
 
     Add .PHONY target when using GNU make. This will speed up make in general,
         but more importantly fix #1042.
 
 commit e8b81528a74e3359f522fb3fba64370997ec4a7f
-Author: Kristian Høgsberg <krh@redhat.com>
+Author: Kristian Høgsberg  <krh@redhat.com>
 Date:   Thu Aug 12 14:35:55 2004 +0000
 
     Update PPC64 defines to use XorgServer instead of XF86Server.
 
 commit 75efd26d038335c215aeae4e25df8bb137c5eed1
-Author: Kristian Høgsberg <krh@redhat.com>
+Author: Kristian Høgsberg  <krh@redhat.com>
 Date:   Thu Aug 12 13:08:25 2004 +0000
 
     Fix double-backslash typo.
@@ -2039,7 +2179,7 @@ Date:   Mon Aug 9 02:08:34 2004 +0000
         options
 
 commit b59283e34674e01e7d8a9cb9e28378602e6266ac
-Author: Kristian Høgsberg <krh@redhat.com>
+Author: Kristian Høgsberg  <krh@redhat.com>
 Date:   Sun Aug 8 20:56:56 2004 +0000
 
     Disable legacy keyboard driver "keyboard", unless
@@ -2238,7 +2378,7 @@ Date:   Fri Jul 23 05:36:14 2004 +0000
     - Fix build of unichrome DRI driver, which is now enabled on x86.
 
 commit 01ac037c4c3773b49e1312e5bda135df02b65751
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Thu Jul 22 19:24:50 2004 +0000
 
     Thu Jul 22 20:03:11 2004 Soeren Sandmann <sandmann@daimi.au.dk>
@@ -2273,7 +2413,7 @@ Date:   Tue Jul 20 19:31:48 2004 +0000
         Fixing Solaris builds bustage caused by the checkin bug #891.
 
 commit ce53e7db1430990a79e96f9ce206d6fbc4fc051c
-Author: Søren Sandmann Pedersen <sandmann@daimi.au.dk>
+Author: Søren Sandmann Pedersen  <sandmann@daimi.au.dk>
 Date:   Tue Jul 20 17:48:09 2004 +0000
 
     Tue Jul 20 19:38:06 2004 Soeren Sandmann <sandmann@daimi.au.dk>
