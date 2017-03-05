@@ -1,3 +1,43 @@
+commit b93b78f41154d24371acb1081c423351e8f370fd
+Author: Matt Turner <mattst88@gmail.com>
+Date:   Tue Jan 17 14:43:12 2017 -0800
+
+    xf86-video-r128 6.10.2
+    
+    Signed-off-by: Matt Turner <mattst88@gmail.com>
+
+commit 5ab23b3a8ef18ab9ff96ac8be174380d36e185e5
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue Jul 19 10:03:56 2016 -0400
+
+    Adapt Block/WakeupHandler signature for ABI 23
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit a589dd6baf7fa26f8ea7008ba6bd533a5ba3e76e
+Author: Connor Behan <connor.behan@gmail.com>
+Date:   Wed Apr 13 12:41:00 2016 -0400
+
+    Remove gatos advertisement
+    
+    There are many current working ways to use a TV tuner with Linux. This
+    is not one of them.
+    Fixes: https://bugs.freedesktop.org/show_bug.cgi?id=94915
+    
+    Signed-off-by: Connor Behan <connor.behan@gmail.com>
+
+commit 3328547c840664896c12d0fd2db8f63e3a398a62
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Wed Mar 16 18:59:23 2016 -0700
+
+    xextproto 7.1 support update to the source code
+    
+    While the compilation script was updated, for some reason, the source
+    code did not get the update.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+    Reviewed-by: Connor Behan <connor.behan@gmail.com>
+
 commit d3f3c9549119629ddd9447a0f9b699a909b916d5
 Author: Connor Behan <connor.behan@gmail.com>
 Date:   Thu Jan 21 22:12:25 2016 -0500
