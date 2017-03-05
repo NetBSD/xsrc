@@ -1,3 +1,23 @@
+commit c4043adcd42665f294540036b43dcd1b201f4c8c
+Author: Matt Turner <mattst88@gmail.com>
+Date:   Tue Jan 24 07:55:55 2017 -0800
+
+    xf86-video-sunleo 1.2.2
+    
+    Signed-off-by: Matt Turner <mattst88@gmail.com>
+
+commit 7cab298aa9ea095237c1ab288496d6deb05c3f67
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed Nov 12 14:17:35 2014 +1000
+
+    drop miwideline.h include
+
+commit e9b0b0d5765fb9b20be05642f01531c41d148335
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed Nov 12 11:03:08 2014 +1000
+
+    drop mifillarc.h include
+
 commit 9117889527adc34273b308a240fa94b9f248776f
 Author: Matt Turner <mattst88@gmail.com>
 Date:   Mon Jan 21 22:50:09 2013 -0800
