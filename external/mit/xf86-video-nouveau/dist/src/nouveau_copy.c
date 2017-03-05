@@ -50,8 +50,7 @@ nouveau_copy_init(ScreenPtr pScreen)
 	}, *method = methods;
 	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 	NVPtr pNv = NVPTR(pScrn);
-	void *data;
-	int ret, size;
+	int ret;
 
 	if (pNv->AccelMethod == NONE) {
 		xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
@@ -65,30 +64,35 @@ nouveau_copy_init(ScreenPtr pScreen)
 		    pNv->dev->chipset == 0xaa ||
 		    pNv->dev->chipset == 0xac)
 			return FALSE;
-		data = &(struct nv04_fifo) {
-			.vram = NvDmaFB,
-			.gart = NvDmaTT,
-		};
-		size = sizeof(struct nv04_fifo);
+
+		ret = nouveau_object_new(&pNv->dev->object, 0,
+					 NOUVEAU_FIFO_CHANNEL_CLASS,
+					 &(struct nv04_fifo) {
+						.vram = NvDmaFB,
+						.gart = NvDmaTT,
+					 }, sizeof(struct nv04_fifo),
+					 &pNv->ce_channel);
 		break;
 	case NV_FERMI:
-		data = &(struct nvc0_fifo) {};
-		size = sizeof(struct nvc0_fifo);
+		ret = nouveau_object_new(&pNv->dev->object, 0,
+					 NOUVEAU_FIFO_CHANNEL_CLASS,
+					 &(struct nvc0_fifo) {
+					 }, sizeof(struct nvc0_fifo),
+					 &pNv->ce_channel);
 		break;
 	case NV_KEPLER:
-		data = &(struct nve0_fifo) {
-			.engine = NVE0_FIFO_ENGINE_CE0 |
-				  NVE0_FIFO_ENGINE_CE1,
-		};
-		size = sizeof(struct nvc0_fifo);
+		ret = nouveau_object_new(&pNv->dev->object, 0,
+					 NOUVEAU_FIFO_CHANNEL_CLASS,
+					 &(struct nve0_fifo) {
+						.engine = NVE0_FIFO_ENGINE_CE0 |
+							  NVE0_FIFO_ENGINE_CE1,
+					 }, sizeof(struct nve0_fifo),
+					 &pNv->ce_channel);
 		break;
 	default:
 		return FALSE;
 	}
 
-	ret = nouveau_object_new(&pNv->dev->object, 0,
-				 NOUVEAU_FIFO_CHANNEL_CLASS, data, size,
-				 &pNv->ce_channel);
 	if (ret) {
 		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 			   "[COPY] error allocating channel: %d\n", ret);
