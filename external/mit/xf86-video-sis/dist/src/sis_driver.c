@@ -9395,9 +9395,9 @@ SISMergedPointerMoved(SCRN_ARG_TYPE arg, int x, int y)
             y = (int)dy;
         }
 #elif GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 13
-	miPointerSetPosition(inputInfo.pointer, Absolute, x, y);
+	miPointerSetPosition(inputInfo.pointer, Absolute, &x, &y);
 #elif GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 5
-	miPointerSetPosition(inputInfo.pointer, x, y);
+	miPointerSetPosition(inputInfo.pointer, &x, &y);
 #else
 	UpdateCurrentTime();
 	miPointerAbsoluteCursor(x, y, currentTime.milliseconds);
