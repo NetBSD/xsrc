@@ -37,6 +37,8 @@
 
 /* KMS vertex buffer support - for R600 only but could be used on previous gpus */
 
+#ifdef XF86DRM_MODE
+
 static struct radeon_bo *radeon_vbo_get_bo(ScrnInfoPtr pScrn);
 
 void radeon_vbo_put(ScrnInfoPtr pScrn, struct radeon_vbo_object *vbo)
@@ -185,7 +187,6 @@ again_alloc:
 
 	if (!dma_bo->bo) {
 	    ErrorF("failure to allocate DMA BO\n");
-	    free(dma_bo);
 	    return NULL;
 	}
 	insert_at_head(&accel_state->bo_reserved, dma_bo);
@@ -209,3 +210,4 @@ again_alloc:
     return bo;
 }
 
+#endif
