@@ -1,12 +1,193 @@
-commit 891ee48e4c1baa2643eda048b4207f8263a37dca
+commit 0e94cd85b2fa1501d4d883de3c97074c5ea5c373
 Author: Thomas Hellstrom <thellstrom@vmware.com>
-Date:   Mon Jan 19 11:23:50 2015 +0100
+Date:   Wed Nov 16 11:22:53 2016 +0700
 
-    vmware: Bump version number for release
+    Bump minor for release.
     
     Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
 
-commit 79289b0ffc553ded902eea7b8b9803b098f340e3
+commit 3fd542b0394f9ab198b7750409ec2c0f16eb59da
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Nov 16 11:35:58 2016 +0700
+
+    vmware/vmwgfx: Add a missing source file for distribution
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+    (cherry picked from commit fade4f46e84e93153edc3472abb73635f87555e6)
+
+commit e53a7e42eb7597808a364f230a97ce64481f084b
+Author: Hans de Goede <hdegoede@redhat.com>
+Date:   Thu Sep 29 19:37:22 2016 +0200
+
+    Adapt Block/WakeupHandler signature for ABI 23
+    
+    Signed-off-by: Hans de Goede <hdegoede@redhat.com>
+    Acked-by: Thomas Hellstrom <thellstrom@vmware.com>
+    (cherry picked from commit d64d01c7a599dc3c79125701f076a3e459cefdc2)
+
+commit 0bcd4df1843f00f8e8507750401ec2a2a29330dc
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Thu Feb 11 09:45:58 2016 +0100
+
+    vmware: Bump minor to signal availability of new features
+    
+    While this may never be an official release, bump minor to enable the
+    new resolutionKMS functionality. This signals the availability of
+    autolayout and resolutionKMS support.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Brian Paul <brianp@vmware.com>
+
+commit 5036e9d11a899d831b1471f64132eefcf459b222
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Thu Feb 11 09:40:55 2016 +0100
+
+    vmware/vmwgfx: Don't require screen objects to run
+    
+    Using the vmwgfx ldu backend works just as fine except that we're limited
+    to implicit layout placement.
+    
+    With this test on, we may end up in the odd situation that the vmwgfx kernel
+    module and the vwmare legacy Xorg driver are enabled simultaneously, and that
+    is an unsupported configuration. It will also break resolutionKMS which will
+    be enabled based on vmwgfx version but should be disabled since the legacy
+    Xorg driver runs...
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Brian Paul <brianp@vmware.com>
+
+commit 57d4499cc252bd1c3362a569ca7fd99ba6b645ed
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Jan 20 19:08:21 2016 +0100
+
+    vmware/vmwgfx: Disable autolayout if we detect an old resolutionset
+    
+    While the autolayout feature should really avoid races both with the old
+    resolutionSet RandR12 code and with new compositor layout code, let's
+    disable the autolayout feature if someone tries to set the
+    layout / resolution through the vmwarectrl interface.
+    That's most likely an old resolutionSet.
+    
+    Autolayout is turned on on each new screen generation.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+
+commit 48fb82f13ca290e9fbb8c7f79aba5ee119a3ce7f
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Jan 20 14:21:40 2016 +0100
+
+    vmware/vmwgfx: Read the implicit output status from KMS if available.
+    
+    This information is used to switch to software cursors if we have
+    multiple overlapping explicit outputs and thus might need to display
+    two cursors simultaneously.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+
+commit a81e359d88151159e3a19ceb95027029fef0a9ba
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Jan 20 14:04:13 2016 +0100
+
+    vmware/vmwgfx: Avoid filling the log with modeline printouts
+    
+    There are specific debug options for that.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+
+commit 5978597da92898a424837ee89e66f66a8120480c
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Jan 20 13:01:21 2016 +0100
+
+    vmware/vmwgfx: Add a layout handler v2
+    
+    Add a handler that, on hotplug events, scans for a new GUI layout and
+    tries to set that layout using XRandR similar to what the RandR1.2 part of
+    vmware tools resolutionSet module is doing today.
+    
+    v2: Address review comments
+    - Keep the old layout in case of screen resizing errors
+    - Fix the vmwgfx_layout handler() declaration.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+
+commit 885e360b16fd88b48b40930c6277637615aab188
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Jan 20 12:09:22 2016 +0100
+
+    vmware/vmwgfx: Update RandR output properties on hotplug events v2
+    
+    Update also RandR output properties when we receive hotplug events;
+    the RRGetInfo function doesn't do this.
+    
+    This makes sure RandR sends out property change events to clients.
+    Also remove some debugging printouts.
+    
+    v2: Address review comment from Sinclair Yeh;
+    make sure struct output_private::drm_connector is always valid.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+
+commit ada41a5988df8414011ed37ec51cbb402c9c8716
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Jan 20 11:51:46 2016 +0100
+
+    vmware/vmwgfx: Add missing includes of the config.h header.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+
+commit 755e38f373a511bd774a61c9420a67f630f71037
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Thu Dec 18 10:46:42 2014 +0100
+
+    vmware/vmwgfx: Expose kernel connector attributes and react to hotplug events
+    
+    Much of this code is borrowed from the xf86-video-modesetting driver.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+
+commit 1e443c4717a8b107c0c9283e222482703ac0f358
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Wed Feb 25 01:51:11 2015 -0800
+
+    vmware/vmwgfx: Try to use only_hw_present semantics if screen targets are enabled
+    
+    If screen targets are enabled and there is a reasonable chance that the vmwgfx
+    drm driver can use the surface backing a pixmap as a screen target surface,
+    then make that surface a modesetting framebuffer rather than the corresponding
+    DMA buffer. In practice this applies when we start scanning out from the
+    origin (0,0) of the pixmap. However, we would also like to apply the constraint
+    that the scanout area is the entire pixmap, since that is the constraint used
+    by the drm driver, but that would currently require drm framebuffer
+    reallocations and possible flicker, so disable that for now. The drm driver
+    will correctly handle the possibly oversized surface handed to it anyway, and
+    the cost we pay for this is an extra hardware copy of the dirtied area when
+    doing a software update of the scanout.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
+
+commit 8f0cf7c03597532feb1a8ccf3bb1cafcd6170f89
+Author: Thomas Klausner <wiz@NetBSD.org>
+Date:   Sun Aug 10 11:04:51 2014 +0200
+
+    Add 2560x1440 to supported resolutions.
+    
+    Native resolution on iMac 27".
+    Reported missing by Benjamin Lorenz in
+    http://gnats.netbsd.org/49094
+    
+    Signed-off-by: Thomas Klausner <wiz@NetBSD.org>
+    Reviewed-by: Thomas Hellstrom <thellstrom@vmware.com>
+
+commit ab5be2312023d8ccc7156a05ccc1b0abe7679244
 Author: Adam Jackson <ajax@redhat.com>
 Date:   Thu Dec 4 10:35:04 2014 -0500
 
@@ -19,6 +200,26 @@ Date:   Thu Dec 4 10:35:04 2014 -0500
     
     Signed-off-by: Adam Jackson <ajax@redhat.com>
     Reviewed-by: Thomas Hellstrom <thellstrom@vmware.com>
+
+commit 3f7defa8dc595342e2502206ed2006f2be20a884
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Mon Nov 17 19:18:15 2014 +0100
+
+    vmware/vmwgfx: Make large Xv video blits cheaper
+    
+    As screens grow larger, attempt to make large Xv video blits cheaper by
+    performing the color conversion and scaling in two steps:
+    
+    1) Color conversion which has a 4x4 matrix multiplication shader is performed
+       to a bounce buffer the size of which is never larger than the source image.
+    2) Scaling is performed as a src composite blit to the destination image with
+       a simple copy shader.
+    
+    This split is done only if the destination image is substantially larger than
+    the source image / bounce buffer
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Reviewed-by: Sinclair Yeh <syeh@vmware.com>
 
 commit 4664412d7a5266d2b392957406b34abc5db95e48
 Author: Stefan Dirsch <sndirsch@suse.de>
