@@ -63,7 +63,6 @@ static inline int sync_wait(int fd, int timeout)
 	struct pollfd fds;
 	int ret;
 
-	memset(&fds, 0, sizeof(fds));
 	fds.fd = fd;
 	fds.events = POLLIN;
 	fds.revents = 0;
