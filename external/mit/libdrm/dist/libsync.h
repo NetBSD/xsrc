@@ -60,11 +60,13 @@ struct sync_merge_data {
 
 static inline int sync_wait(int fd, int timeout)
 {
-	struct pollfd fds = {0};
+	struct pollfd fds;
 	int ret;
 
+	memset(&fds, 0, sizeof(fds));
 	fds.fd = fd;
 	fds.events = POLLIN;
+	fds.revents = 0;
 
 	do {
 		ret = poll(&fds, 1, timeout);
@@ -85,11 +87,14 @@ static inline int sync_wait(int fd, int timeout)
 
 static inline int sync_merge(const char *name, int fd1, int fd2)
 {
-	struct sync_merge_data data = {0};
+	struct sync_merge_data data;
 	int ret;
 
 	data.fd2 = fd2;
 	strncpy(data.name, name, sizeof(data.name));
+	data.fence = 0;
+	data.flags = 0;
+	data.pad = 0;
 
 	do {
 		ret = ioctl(fd1, SYNC_IOC_MERGE, &data);
