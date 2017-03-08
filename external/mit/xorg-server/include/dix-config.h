@@ -235,6 +235,9 @@
 /* Define to 1 if you have the <sys/utsname.h> header file. */
 #define HAVE_SYS_UTSNAME_H 1
 
+/* Define to 1 if you have the `timingsafe_memcmp' function. */
+/* #undef HAVE_TIMINGSAFE_MEMCMP */
+
 /* Define to 1 if you have the <tslib.h> header file. */
 /* #undef HAVE_TSLIB_H */
 
