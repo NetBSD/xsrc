@@ -532,6 +532,11 @@ extern void AbortDDX(void);
 extern void ddxGiveUp(void);
 extern int TimeSinceLastInputEvent(void);
 
+#ifndef HAVE_TIMINGSAFE_MEMCMP
+extern int
+timingsafe_memcmp(const void *b1, const void *b2, size_t len);
+#endif
+
 /* Logging. */
 typedef enum _LogParameter {
     XLOG_FLUSH,
