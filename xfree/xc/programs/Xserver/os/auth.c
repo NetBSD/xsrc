@@ -50,6 +50,9 @@ from The Open Group.
 #ifdef WIN32
 #include "Xw32defs.h"
 #endif
+#ifdef HAVE_LIBBSD
+#include   <bsd/stdlib.h>       /* for arc4random_buf() */
+#endif
 
 struct protocol {
     unsigned short   name_length;
@@ -57,7 +60,6 @@ struct protocol {
     AuthAddCFunc	Add;	/* new authorization data */
     AuthCheckFunc	Check;	/* verify client authorization data */
     AuthRstCFunc	Reset;	/* delete all authorization data entries */
-    AuthToIDFunc	ToID;	/* convert cookie to ID */
     AuthFromIDFunc	FromID;	/* convert ID to cookie */
     AuthRemCFunc	Remove;	/* remove a specific cookie */
 #ifdef XCSECURITY
@@ -68,7 +70,7 @@ struct protocol {
 static struct protocol   protocols[] = {
 {   (unsigned short) 18,    "MIT-MAGIC-COOKIE-1",
 		MitAddCookie,	MitCheckCookie,	MitResetCookie,
-		MitToID,	MitFromID,	MitRemoveCookie,
+		MitFromID,	MitRemoveCookie,
 #ifdef XCSECURITY
 		MitGenerateCookie
 #endif
@@ -76,7 +78,7 @@ static struct protocol   protocols[] = {
 #ifdef HASXDMAUTH
 {   (unsigned short) 19,    "XDM-AUTHORIZATION-1",
 		XdmAddCookie,	XdmCheckCookie,	XdmResetCookie,
-		XdmToID,	XdmFromID,	XdmRemoveCookie,
+		XdmFromID,	XdmRemoveCookie,
 #ifdef XCSECURITY
 		NULL
 #endif
@@ -85,7 +87,7 @@ static struct protocol   protocols[] = {
 #ifdef SECURE_RPC
 {   (unsigned short) 9,    "SUN-DES-1",
 		SecureRPCAdd,	SecureRPCCheck,	SecureRPCReset,
-		SecureRPCToID,	SecureRPCFromID,SecureRPCRemove,
+		SecureRPCFromID,SecureRPCRemove,
 #ifdef XCSECURITY
 		NULL
 #endif
@@ -94,7 +96,7 @@ static struct protocol   protocols[] = {
 #ifdef K5AUTH
 {   (unsigned short) 14, "MIT-KERBEROS-5",
 		K5Add, K5Check, K5Reset,
-		K5ToID, K5FromID, K5Remove,
+		K5FromID, K5Remove,
 #ifdef XCSECURITY
 		NULL
 #endif
@@ -104,7 +106,7 @@ static struct protocol   protocols[] = {
 {   (unsigned short) XSecurityAuthorizationNameLen,
 	XSecurityAuthorizationName,
 		NULL, AuthSecurityCheck, NULL,
-		NULL, NULL, NULL,
+		NULL, NULL,
 		NULL
 },
 #endif
@@ -252,26 +254,6 @@ ResetAuthorization (void)
 	if (protocols[i].Reset)
 	    (*protocols[i].Reset)();
     ShouldLoadAuth = TRUE;
-}
-
-XID
-AuthorizationToID (
-	unsigned short	name_length,
-	char		*name,
-	unsigned short	data_length,
-	char		*data)
-{
-    int	i;
-
-    for (i = 0; i < NUM_AUTHORIZATION; i++) {
-    	if (protocols[i].name_length == name_length &&
-	    memcmp (protocols[i].name, name, (int) name_length) == 0 &&
-	    protocols[i].ToID)
-    	{
-	    return (*protocols[i].ToID) (data_length, data);
-    	}
-    }
-    return (XID) ~0L;
 }
 
 int
