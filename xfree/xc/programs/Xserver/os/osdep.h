@@ -181,9 +181,6 @@ typedef int (*AuthRemCFunc) (AuthRemCArgs);
 #define AuthRstCArgs void
 typedef int (*AuthRstCFunc) (AuthRstCArgs);
 
-#define AuthToIDArgs unsigned short data_length, char *data
-typedef XID (*AuthToIDFunc) (AuthToIDArgs);
-
 typedef void (*OsCloseFunc)(ClientPtr);
 
 typedef int (*OsFlushFunc)(ClientPtr who, struct _osComm * oc, char* extraBuf, int extraCount);
@@ -269,7 +266,6 @@ extern void GenerateRandomData (int len, char *buf);
 /* in mitauth.c */
 extern XID  MitCheckCookie    (AuthCheckArgs);
 extern XID  MitGenerateCookie (AuthGenCArgs);
-extern XID  MitToID           (AuthToIDArgs);
 extern int  MitAddCookie      (AuthAddCArgs);
 extern int  MitFromID         (AuthFromIDArgs);
 extern int  MitRemoveCookie   (AuthRemCArgs);
@@ -278,7 +274,6 @@ extern int  MitResetCookie    (AuthRstCArgs);
 /* in xdmauth.c */
 #ifdef HASXDMAUTH
 extern XID  XdmCheckCookie    (AuthCheckArgs);
-extern XID  XdmToID           (AuthToIDArgs);
 extern int  XdmAddCookie      (AuthAddCArgs);
 extern int  XdmFromID         (AuthFromIDArgs);
 extern int  XdmRemoveCookie   (AuthRemCArgs);
@@ -289,7 +284,6 @@ extern int  XdmResetCookie    (AuthRstCArgs);
 #ifdef SECURE_RPC
 extern void SecureRPCInit     (AuthInitArgs);
 extern XID  SecureRPCCheck    (AuthCheckArgs);
-extern XID  SecureRPCToID     (AuthToIDArgs);
 extern int  SecureRPCAdd      (AuthAddCArgs);
 extern int  SecureRPCFromID   (AuthFromIDArgs);
 extern int  SecureRPCRemove   (AuthRemCArgs);
