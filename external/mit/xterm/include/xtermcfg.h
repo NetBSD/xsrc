@@ -1,8 +1,8 @@
 /* xtermcfg.h.  Generated automatically by configure.  */
-/* $XTermId: xtermcfg.hin,v 1.208 2015/02/15 18:00:55 tom Exp $ */
+/* $XTermId: xtermcfg.hin,v 1.212 2016/05/30 20:42:13 tom Exp $ */
 
 /*
- * Copyright 1997-2014,2015 by Thomas E. Dickey
+ * Copyright 1997-2015,2016 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -35,6 +35,22 @@
 #define included_xtermcfg_h 1
 
 /* This is a template for <xtermcfg.h> */
+  
+/*
+ * There are no configure options for these features:
+ * ALLOWLOGFILECHANGES
+ * ALLOWLOGFILEONOFF
+ * CANT_OPEN_DEV_TTY
+ * DEBUG* (any debug-option)
+ * DUMP_BITMAP
+ * DUMP_COLORS
+ * HAS_LTCHARS
+ * HAVE_SYS_PTEM_H
+ * HAVE_X11_TRANSLATEI_H
+ * PUCC_PTYD
+ * USE_LOGIN_DASH_P
+ * USE_X11TERM
+ */
 
 /* #undef ALLOWLOGFILEEXEC */		/* CF_ARG_ENABLE(enable-logfile-exec) */
 /* #undef ALLOWLOGGING */		/* CF_ARG_ENABLE(enable-logging) */
@@ -78,6 +94,7 @@
 #define HAVE_PUTENV 1		/* AC_CHECK_FUNCS(putenv) */
 #define HAVE_SCHED_YIELD 1		/* AC_CHECK_FUNCS(sched_yield) */
 #define HAVE_SETPGID 1		/* AC_CHECK_FUNCS(setpgid) */
+#define HAVE_STDINT_H 1		/* AC_PROG_CC_STDC */
 #define HAVE_STDLIB_H 1		/* AC_CHECK_HEADERS(stdlib.h) */
 #define HAVE_STRFTIME 1		/* AC_CHECK_FUNCS(strftime) */
 /* #undef HAVE_SYS_TIME_H */		/* AC_HEADER_TIME */
@@ -125,6 +142,7 @@
 /* #undef OPT_BOX_CHARS */		/* CF_ARG_DISABLE(boxchars) */
 #define OPT_BROKEN_OSC 0		/* CF_ARG_ENABLE(broken-osc) */
 /* #undef OPT_BROKEN_ST */		/* CF_ARG_DISABLE(broken-st) */
+/* #undef OPT_BUILTIN_XPMS */		/* CF_ARG_ENABLE(builtin-xpms) */
 /* #undef OPT_C1_PRINT */		/* CF_ARG_DISABLE(c1-print) */
 /* #undef OPT_COLOR_CLASS */		/* CF_ARG_DISABLE(color-class) */
 /* #undef OPT_DABBREV */		/* CF_ARG_ENABLE(dabbrev) */
@@ -147,6 +165,7 @@
 /* #undef OPT_NUM_LOCK */		/* CF_ARG_DISABLE(num-lock) */
 #define OPT_PASTE64 1		/* CF_ARG_ENABLE(past64) */
 /* #undef OPT_PC_COLORS */		/* CF_ARG_DISABLE(pc-color) */
+/* #undef OPT_SCREEN_DUMPS */		/* CF_ARG_ENABLE(screen-dumps) */
 #define OPT_PTY_HANDSHAKE 1	/* CF_ARG_ENABLE(pty-handshake) */
 /* #undef OPT_READLINE */		/* CF_ARG_ENABLE(readline-mouse) */
 /* #undef OPT_SAME_NAME */		/* CF_ARG_DISABLE(samename) */
