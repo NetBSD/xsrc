@@ -1,7 +1,7 @@
-/* $XTermId: trace.h,v 1.75 2015/03/02 02:01:01 tom Exp $ */
+/* $XTermId: trace.h,v 1.78 2016/10/05 08:56:36 tom Exp $ */
 
 /*
- * Copyright 1997-2014,2015 by Thomas E. Dickey
+ * Copyright 1997-2015,2016 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -41,7 +41,7 @@
 
 #if OPT_TRACE
 
-extern	void	Trace ( const char *, ... )  GCC_PRINTFLIKE(1,2);
+extern	void	Trace ( const char *, ... ) GCC_PRINTFLIKE(1,2);
 
 #undef  TRACE
 #define TRACE(p) Trace p
@@ -55,15 +55,17 @@ extern	void	TraceClose (void);
 #define TRACE2(p) Trace p
 #endif
 
-extern	char *	visibleChars (const Char * /* buf */, unsigned /* len */);
-extern	char *	visibleIChars (const IChar * /* buf */, unsigned /* len */);
-extern	char *	visibleUChar (unsigned);
+extern	const char * visibleChars(const Char * /* buf */, unsigned /* len */);
+extern	const char * visibleIChars(const IChar * /* buf */, unsigned /* len */);
+extern	const char * visibleUChar(unsigned);
 extern	const char * visibleDblChrset(unsigned /* chrset */);
 extern	const char * visibleEventType (int);
 extern	const char * visibleNotifyDetail(int /* code */);
 extern	const char * visibleNotifyMode (int /* code */);
 extern	const char * visibleScsCode(int /* chrset */);
 extern	const char * visibleSelectionTarget(Display * /* d */, Atom /* a */);
+extern	const char * visibleTekparse (int);
+extern	const char * visibleVTparse (int);
 extern	const char * visibleXError (int /* code */);
 
 extern	void	TraceArgv(const char * /* tag */, char ** /* argv */);

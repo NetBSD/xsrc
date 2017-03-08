@@ -1,7 +1,7 @@
-/* $XTermId: xterm.h,v 1.757 2015/04/10 10:49:11 tom Exp $ */
+/* $XTermId: xterm.h,v 1.765 2016/05/29 18:34:09 tom Exp $ */
 
 /*
- * Copyright 1999-2014,2015 by Thomas E. Dickey
+ * Copyright 1999-2015,2016 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -373,6 +373,10 @@ extern char **environ;
 #define FREE_STRING(name) \
 	    free_string(name)
 
+/* strftime format and length of the result */
+#define FMT_TIMESTAMP ".%Y.%m.%d.%H.%M.%S"
+#define LEN_TIMESTAMP sizeof(".YYYY.MM.DD.hh.mm.ss")
+
 /***====================================================================***/
 
 #define XtNallowBoldFonts	"allowBoldFonts"
@@ -472,6 +476,7 @@ extern char **environ;
 #define XtNinternalBorder	"internalBorder"
 #define XtNitalicULMode		"italicULMode"
 #define XtNjumpScroll		"jumpScroll"
+#define XtNkeepClipboard	"keepClipboard"
 #define XtNkeepSelection	"keepSelection"
 #define XtNkeyboardDialect	"keyboardDialect"
 #define XtNlimitResize		"limitResize"
@@ -656,6 +661,7 @@ extern char **environ;
 #define XtCIconHint		"IconHint"
 #define XtCInitialFont		"InitialFont"
 #define XtCJumpScroll		"JumpScroll"
+#define XtCKeepClipboard	"KeepClipboard"
 #define XtCKeepSelection	"KeepSelection"
 #define XtCKeyboardDialect	"KeyboardDialect"
 #define XtCLimitResize		"LimitResize"
@@ -1084,7 +1090,7 @@ extern void free_string(String value);
 extern void hide_tek_window (void);
 extern void hide_vt_window (void);
 extern void ice_error (IceConn /* iceConn */);
-extern void init_colored_cursor (void);
+extern void init_colored_cursor (Display * /* dpy */);
 extern void reset_decudk (XtermWidget /* xw */);
 extern void set_tek_visibility (Bool  /* on */);
 extern void set_vt_visibility (Bool  /* on */);
@@ -1105,6 +1111,12 @@ extern void xtermWarning (const char * /*fmt*/,...) GCC_PRINTFLIKE(1,2);
 
 #if OPT_DABBREV
 extern void HandleDabbrevExpand        PROTO_XT_ACTIONS_ARGS;
+#endif
+
+#if OPT_EXEC_XTERM
+extern char *ProcGetCWD(pid_t /* pid */);
+#else
+#define ProcGetCWD(pid) NULL
 #endif
 
 #if OPT_MAXIMIZE
@@ -1169,6 +1181,13 @@ extern void xtermPrintScreen (XtermWidget /* xw */, Bool  /* use_DECPEX */, Prin
 extern void xtermPrintEverything (XtermWidget /* xw */, PrinterFlags * /* p */);
 extern void xtermPrintImmediately (XtermWidget /* xw */, String /* filename */, int /* opts */, int /* attributes */);
 extern void xtermPrintOnXError (XtermWidget /* xw */, int /* n */);
+
+#if OPT_SCREEN_DUMPS
+/* html.c */
+extern void xtermDumpHtml (XtermWidget /* xw */);
+/* svg.c */
+extern void xtermDumpSvg (XtermWidget /* xw */);
+#endif
 
 /* ptydata.c */
 #ifdef VMS
@@ -1372,7 +1391,6 @@ extern void do_erase_display (XtermWidget /* xw */, int  /* param */, int  /* mo
 extern void do_erase_line (XtermWidget /* xw */, int  /* param */, int  /* mode */);
 extern void do_ti_xtra_scroll (XtermWidget /* xw */);
 extern void getXtermSizeHints (XtermWidget /* xw */);
-extern void init_keyboard_type (XtermWidget /* xw */, xtermKeyboardType /* type */, Bool  /* set */);
 extern void recolor_cursor (TScreen * /* screen */, Cursor  /* cursor */, unsigned long  /* fg */, unsigned long  /* bg */);
 extern void resetXtermGC (XtermWidget /* xw */, unsigned  /* flags */, Bool  /* hilite */);
 extern void scrolling_copy_area (XtermWidget /* xw */, int  /* firstline */, int  /* nlines */, int  /* amount */);

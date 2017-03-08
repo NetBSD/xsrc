@@ -1,7 +1,7 @@
-/* $XTermId: ptyx.h,v 1.823 2015/02/16 00:25:27 tom Exp $ */
+/* $XTermId: ptyx.h,v 1.830 2016/10/07 00:38:57 tom Exp $ */
 
 /*
- * Copyright 1999-2014,2015 by Thomas E. Dickey
+ * Copyright 1999-2015,2016 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -324,6 +324,15 @@ typedef Char *UString;
 #define IsEmpty(s) ((s) == 0 || *(s) == '\0')
 #define IsSpace(c) ((c) == ' ' || (c) == '\t' || (c) == '\r' || (c) == '\n')
 
+/*
+ * Check strtol result, using "FullS2L" when no more data is expected, and
+ * "PartS2L" when more data may follow in the string.
+ */
+#define FullS2L(s,d) (PartS2L(s,d) && (*(d) == '\0'))
+#define PartS2L(s,d) (isdigit(CharOf(*(s))) && (d) != (s) && (d) != 0)
+
+#define CASETYPE(name) case name: result = #name; break
+
 #define CharOf(n) ((Char)(n))
 
 typedef struct {
@@ -530,6 +539,10 @@ typedef struct {
 
 #ifndef OPT_SIXEL_GRAPHICS
 #define OPT_SIXEL_GRAPHICS 0 /* true if xterm supports VT240-style sixel graphics */
+#endif
+
+#ifndef OPT_SCREEN_DUMPS
+#define OPT_SCREEN_DUMPS 0 /* true if xterm supports screen dumps */
 #endif
 
 #ifndef OPT_REGIS_GRAPHICS
@@ -1067,6 +1080,7 @@ typedef enum {
     ,srm_SELECT_TO_CLIPBOARD = 1041
     ,srm_BELL_IS_URGENT = 1042
     ,srm_POP_ON_BELL = 1043
+    ,srm_KEEP_CLIPBOARD = 1044
     ,srm_TITE_INHIBIT = 1048
 #if OPT_TCAP_FKEYS
     ,srm_TCAP_FKEYS = 1050
@@ -1661,6 +1675,7 @@ typedef enum {
 	DP_DECTCEM,
 	DP_DELETE_IS_DEL,
 	DP_EIGHT_BIT_META,
+	DP_KEEP_CLIPBOARD,
 	DP_KEEP_SELECTION,
 	DP_KEYBOARD_TYPE,
 	DP_POP_ON_BELL,
@@ -2320,11 +2335,14 @@ typedef struct {
 	Boolean		trim_selection; /* controls trimming of selection */
 	Boolean		i18nSelections;
 	Boolean		brokenSelections;
+	Boolean		keepClipboard;	/* retain data sent to clipboard */
 	Boolean		keepSelection;	/* do not lose selection on output */
 	Boolean		replyToEmacs;	/* Send emacs escape code when done selecting or extending? */
 	Char		*selection_data; /* the current selection */
 	int		selection_size; /* size of allocated buffer */
 	unsigned long	selection_length; /* number of significant bytes */
+	Char		*clipboard_data; /* the current clipboard */
+	unsigned long	clipboard_size; /*  size of allocated buffer */
 	EventMode	eventMode;
 	Time		selection_time;	/* latest event timestamp */
 	Time		lastButtonUpTime;
@@ -2532,6 +2550,8 @@ typedef enum {			/* legal values for screen.eight_bit_meta */
     , ebLast
 } ebMetaModeTypes;
 
+#define NAME_OLD_KT " legacy"
+
 #if OPT_HP_FUNC_KEYS
 #define NAME_HP_KT " hp"
 #else
@@ -2570,9 +2590,7 @@ typedef enum {			/* legal values for screen.eight_bit_meta */
 #define TRACE_RC(code,func) func
 #endif
 
-#if OPT_TRACE
 extern	const char * visibleKeyboardType(xtermKeyboardType);
-#endif
 
 typedef struct
 {
