@@ -1,7 +1,7 @@
-/* $XTermId: button.c,v 1.492 2015/04/10 10:16:19 tom Exp $ */
+/* $XTermId: button.c,v 1.505 2016/05/30 19:42:44 tom Exp $ */
 
 /*
- * Copyright 1999-2014,2015 by Thomas E. Dickey
+ * Copyright 1999-2015,2016 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -562,7 +562,6 @@ InitLocatorFilter(XtermWidget xw)
     int row = 0, col = 0;
     Bool oor = 0;
     Bool ret;
-    int state;
 
     ret = XQueryPointer(screen->display, VWindow(screen),
 			&root, &child, &rx, &ry, &x, &y, &mask);
@@ -643,6 +642,8 @@ InitLocatorFilter(XtermWidget xw)
 	(col > screen->loc_filter_right) ||
 	(row < screen->loc_filter_top) ||
 	(row > screen->loc_filter_bottom)) {
+	int state;
+
 	/* Pointer is already outside the rectangle - report immediately */
 	ButtonState(state, mask);
 
@@ -679,7 +680,6 @@ CheckLocatorPosition(XtermWidget xw, XButtonEvent *event)
     TScreen *screen = TScreenOf(xw);
     int row, col;
     Bool oor;
-    int state;
 
     LocatorCoords(row, col, event->x, event->y, oor);
 
@@ -703,6 +703,8 @@ CheckLocatorPosition(XtermWidget xw, XButtonEvent *event)
 	    reply.a_nparam = 1;
 	    reply.a_param[0] = 0;	/* Event - 0 = locator unavailable */
 	} else {
+	    int state;
+
 	    ButtonState(state, event->state);
 
 	    reply.a_nparam = 4;
@@ -838,10 +840,12 @@ rowOnCurrentLine(TScreen *screen,
 		 int *deltap)	/* must be XButtonEvent */
 {
     int result = 1;
-    int l1, l2;
 
     *deltap = 0;
+
     if (line != screen->cur_row) {
+	int l1, l2;
+
 	if (line < screen->cur_row)
 	    l1 = line, l2 = screen->cur_row;
 	else
@@ -947,12 +951,13 @@ DiredButton(Widget w,
 
     if ((xw = getXtermWidget(w)) != 0) {
 	TScreen *screen = TScreenOf(xw);
-	Char Line[6];
-	unsigned line, col;
 
 	if (IsBtnEvent(event)
 	    && (event->xbutton.y >= screen->border)
 	    && (event->xbutton.x >= OriginX(screen))) {
+	    Char Line[6];
+	    unsigned line, col;
+
 	    line = (unsigned) ((event->xbutton.y - screen->border)
 			       / FontHeight(screen));
 	    col = (unsigned) ((event->xbutton.x - OriginX(screen))
@@ -1036,14 +1041,16 @@ ViButton(Widget w,
     if ((xw = getXtermWidget(w)) != 0) {
 	TScreen *screen = TScreenOf(xw);
 	int pty = screen->respond;
-	Char Line[6];
-	int line;
 
 	if (IsBtnEvent(event)) {
+	    int line;
 
 	    line = screen->cur_row -
 		((event->xbutton.y - screen->border) / FontHeight(screen));
+
 	    if (line != 0) {
+		Char Line[6];
+
 		Line[0] = ANSI_ESC;	/* force an exit from insert-mode */
 		v_write(pty, Line, 1);
 
@@ -1229,8 +1236,6 @@ UTF8toLatin1(TScreen *screen, Char *s, unsigned long len, unsigned long *result)
 
     Cardinal offset = 0;
 
-    const Char *p;
-
     if (len != 0) {
 	PtyData data;
 
@@ -1265,6 +1270,8 @@ UTF8toLatin1(TScreen *screen, Char *s, unsigned long len, unsigned long *result)
 	     * whatever the user wants).
 	     */
 	    if (fails) {
+		const Char *p;
+
 		for (p = (const Char *) screen->default_string; *p != '\0'; ++p) {
 		    AddChar(&buffer, &used, offset, *p);
 		}
@@ -1524,13 +1531,12 @@ static Atom *
 _SelectionTargets(Widget w)
 {
     Atom *result;
-    TScreen *screen;
     XtermWidget xw;
 
     if ((xw = getXtermWidget(w)) == 0) {
 	result = NULL;
     } else {
-	screen = TScreenOf(xw);
+	TScreen *screen = TScreenOf(xw);
 
 #if OPT_WIDE_CHARS
 	if (screen->wide_chars) {
@@ -1726,13 +1732,14 @@ xtermGetSelection(Widget w,
 	}
 #endif
     } else {
-	struct _SelectionList *list;
 
 	if (targets == NULL || targets[0] == None) {
 	    targets = _SelectionTargets(w);
 	}
 
 	if (targets != 0) {
+	    struct _SelectionList *list;
+
 	    target = targets[0];
 
 	    if (targets[1] == None) {	/* last target in list */
@@ -1840,11 +1847,10 @@ ToNational(TScreen *screen, Char *buffer, unsigned *length)
 {
     int gsetL = screen->gsets[screen->curgl];
     int gsetR = screen->gsets[screen->curgr];
-    unsigned chr, out, gl, gr;
-    Char *p;
 
 #if OPT_WIDE_CHARS
     if ((screen->utf8_nrc_mode | screen->utf8_mode) != uFalse) {
+	Char *p;
 	PtyData *data = TypeXtMallocX(PtyData, *length);
 
 	memset(data, 0, sizeof(*data));
@@ -1853,6 +1859,8 @@ ToNational(TScreen *screen, Char *buffer, unsigned *length)
 	memcpy(data->buffer, buffer, (size_t) *length);
 	p = buffer;
 	while (data->next < data->last) {
+	    unsigned chr, out, gl, gr;
+
 	    if (!decodeUtf8(screen, data)) {
 		data->utf_size = 1;
 		data->utf_data = data->next[0];
@@ -1872,9 +1880,12 @@ ToNational(TScreen *screen, Char *buffer, unsigned *length)
     } else
 #endif
     {
+	Char *p;
+
 	for (p = buffer; (int) (p - buffer) < (int) *length; ++p) {
-	    chr = *p;
-	    out = chr;
+	    unsigned gl, gr;
+	    unsigned chr = *p;
+	    unsigned out = chr;
 	    if ((gl = xtermCharSetIn(screen, chr, gsetL)) != chr) {
 		out = gl;
 	    } else if ((gr = xtermCharSetIn(screen, chr, gsetR)) != chr) {
@@ -1978,7 +1989,9 @@ _WriteSelectionData(XtermWidget xw, Char *line, size_t length)
     /* Doing this one line at a time may no longer be necessary
        because v_write has been re-written. */
 
+#if OPT_PASTE64
     TScreen *screen = TScreenOf(xw);
+#endif
     Char *lag, *end;
 
     /* in the VMS version, if tt_pasting isn't set to True then qio
@@ -2049,11 +2062,11 @@ removeControls(XtermWidget xw, char *value)
 {
     TScreen *screen = TScreenOf(xw);
     size_t dst = 0;
-    size_t src = 0;
 
     if (screen->allowPasteControls) {
 	dst = strlen(value);
     } else {
+	size_t src = 0;
 	while ((value[dst] = value[src]) != '\0') {
 	    int ch = CharOf(value[src++]);
 	    if (ch < 32) {
@@ -2098,7 +2111,7 @@ SelectionReceived(Widget w,
 		  int *format)
 {
     char **text_list = NULL;
-    int text_list_count;
+    int text_list_count = 0;
     XTextProperty text_prop;
     TScreen *screen;
     Display *dpy;
@@ -2479,9 +2492,7 @@ EndExtend(XtermWidget xw,
 	  Bool use_cursor_loc)
 {
     CELL cell;
-    unsigned count;
     TScreen *screen = TScreenOf(xw);
-    Char line[64];
 
     if (use_cursor_loc) {
 	cell = screen->cursorp;
@@ -2489,11 +2500,15 @@ EndExtend(XtermWidget xw,
 	PointToCELL(screen, event->xbutton.y, event->xbutton.x, &cell);
     }
     ExtendExtend(xw, &cell);
+
     screen->lastButtonUpTime = event->xbutton.time;
     screen->lastButton = event->xbutton.button;
+
     if (!isSameCELL(&(screen->startSel), &(screen->endSel))) {
 	if (screen->replyToEmacs) {
-	    count = 0;
+	    Char line[64];
+	    unsigned count = 0;
+
 	    if (screen->control_eight_bits) {
 		line[count++] = ANSI_CSI;
 	    } else {
@@ -2863,10 +2878,10 @@ static int
 LastTextCol(TScreen *screen, CLineData *ld, int row)
 {
     int i = -1;
-    const IAttr *ch;
 
     if (ld != 0) {
 	if (okScrnRow(screen, row)) {
+	    const IAttr *ch;
 	    for (i = screen->max_col,
 		 ch = ld->attribs + i;
 		 i >= 0 && !(*ch & CHARDRAWN);
@@ -3243,8 +3258,6 @@ do_select_regex(TScreen *screen, CELL *startc, CELL *endc)
     char *expr = screen->selectExpr[inx];
     regex_t preg;
     regmatch_t match;
-    char *search;
-    int *indexed;
 
     TRACE(("Select_REGEX[%d]:%s\n", inx, NonNull(expr)));
     if (okPosition(screen, &ld, startc) && expr != 0) {
@@ -3253,11 +3266,13 @@ do_select_regex(TScreen *screen, CELL *startc, CELL *endc)
 	    int lastRow = lastRowOfLine(screen, firstRow);
 	    unsigned size = lengthOfLines(screen, firstRow, lastRow);
 	    int actual = cellToColumn(screen, startc);
+	    int *indexed;
 
 	    TRACE(("regcomp ok rows %d..%d bytes %d\n",
 		   firstRow, lastRow, size));
 
 	    if ((indexed = TypeCallocN(int, size + 1)) != 0) {
+		char *search;
 		if ((search = make_indexed_text(screen,
 						firstRow,
 						size,
@@ -3355,7 +3370,6 @@ ComputeSelect(XtermWidget xw,
 {
     TScreen *screen = TScreenOf(xw);
 
-    int length;
     int cclass;
     CELL first = *startc;
     CELL last = *endc;
@@ -3429,7 +3443,7 @@ ComputeSelect(XtermWidget xw,
 #endif
 
 	if (okPosition(screen, &(ld.endSel), &(screen->endSel))) {
-	    length = LastTextCol(screen, ld.endSel, screen->endSel.row);
+	    int length = LastTextCol(screen, ld.endSel, screen->endSel.row);
 	    cclass = CClassOf(endSel);
 	    do {
 		++screen->endSel.col;
@@ -3608,7 +3622,6 @@ ReHiliteText(XtermWidget xw,
 	     CELL *lastp)
 {
     TScreen *screen = TScreenOf(xw);
-    int i;
     CELL first = *firstp;
     CELL last = *lastp;
 
@@ -3630,6 +3643,7 @@ ReHiliteText(XtermWidget xw,
 	return;
 
     if (!isSameRow(&first, &last)) {	/* do multiple rows */
+	int i;
 	if ((i = screen->max_col - first.col + 1) > 0) {	/* first row */
 	    ScrnRefresh(xw, first.row, first.col, 1, i, True);
 	}
@@ -3656,13 +3670,13 @@ SaltTextAway(XtermWidget xw,
     TScreen *screen = TScreenOf(xw);
     int i, j = 0;
     int eol;
-    int tmp;
     Char *line;
     Char *lp;
     CELL first = *cellc;
     CELL last = *cell;
 
     if (isSameRow(&first, &last) && first.col > last.col) {
+	int tmp;
 	EXCHANGE(first.col, last.col, tmp);
     }
 
@@ -3829,6 +3843,8 @@ _ConvertSelectionHelper(Widget w,
 			Atom *type,
 			XtPointer *value,
 			unsigned long *length,
+			Char *data,
+			unsigned long remaining,
 			int *format,
 			int (*conversion_function) (Display *,
 						    char **, int,
@@ -3848,9 +3864,8 @@ _ConvertSelectionHelper(Widget w,
 	Display *dpy = XtDisplay(w);
 	XTextProperty textprop;
 	int out_n = 0;
-	unsigned long remaining = screen->selection_length;
 	char *result = 0;
-	char *the_data = (char *) screen->selection_data;
+	char *the_data = (char *) data;
 	char *the_next;
 
 	TRACE(("converting %ld:'%s'\n",
@@ -3937,6 +3952,9 @@ SaveConvertedLength(XtPointer *target, unsigned long source)
     return result;
 }
 
+#define keepClipboard(atom) ((screen->keepClipboard) && \
+	 (atom == XInternAtom(screen->display, "CLIPBOARD", False)))
+
 static Boolean
 ConvertSelection(Widget w,
 		 Atom *selection,
@@ -3950,6 +3968,9 @@ ConvertSelection(Widget w,
     TScreen *screen;
     Bool result = False;
 
+    Char *data;
+    unsigned long data_length;
+
     XtermWidget xw;
 
     if ((xw = getXtermWidget(w)) == 0)
@@ -3960,15 +3981,23 @@ ConvertSelection(Widget w,
     TRACE(("ConvertSelection %s\n",
 	   visibleSelectionTarget(dpy, *target)));
 
-    if (screen->selection_data == NULL) {
+    if (keepClipboard(*selection)) {
+	TRACE(("asked for clipboard\n"));
+	data = screen->clipboard_data;
+	data_length = screen->clipboard_size;
+    } else {
+	TRACE(("asked for selection\n"));
+	data = screen->selection_data;
+	data_length = screen->selection_length;
+    }
+
+    if (data == NULL) {
 	TRACE(("...FIXME: no selection_data\n"));
 	return False;		/* can this happen? */
     }
 
     if (*target == XA_TARGETS(dpy)) {
-	Atom *allocP;
 	Atom *targetP;
-	Atom *std_targets;
 	XPointer std_return = 0;
 	unsigned long std_length;
 
@@ -3976,6 +4005,8 @@ ConvertSelection(Widget w,
 					target, type, &std_return,
 					&std_length, format)) {
 	    Atom *my_targets = _SelectionTargets(w);
+	    Atom *allocP;
+	    Atom *std_targets;
 
 	    TRACE(("XmuConvertStandardSelection - success\n"));
 	    std_targets = (Atom *) (void *) (std_return);
@@ -4009,28 +4040,32 @@ ConvertSelection(Widget w,
     else if (screen->wide_chars && *target == XA_STRING) {
 	result =
 	    _ConvertSelectionHelper(w,
-				    type, value, length, format,
+				    type, value, length, data,
+				    data_length, format,
 				    Xutf8TextListToTextProperty,
 				    XStringStyle);
 	TRACE(("...Xutf8TextListToTextProperty:%d\n", result));
     } else if (screen->wide_chars && *target == XA_UTF8_STRING(dpy)) {
 	result =
 	    _ConvertSelectionHelper(w,
-				    type, value, length, format,
+				    type, value, length, data,
+				    data_length, format,
 				    Xutf8TextListToTextProperty,
 				    XUTF8StringStyle);
 	TRACE(("...Xutf8TextListToTextProperty:%d\n", result));
     } else if (screen->wide_chars && *target == XA_TEXT(dpy)) {
 	result =
 	    _ConvertSelectionHelper(w,
-				    type, value, length, format,
+				    type, value, length, data,
+				    data_length, format,
 				    Xutf8TextListToTextProperty,
 				    XStdICCTextStyle);
 	TRACE(("...Xutf8TextListToTextProperty:%d\n", result));
     } else if (screen->wide_chars && *target == XA_COMPOUND_TEXT(dpy)) {
 	result =
 	    _ConvertSelectionHelper(w,
-				    type, value, length, format,
+				    type, value, length, data,
+				    data_length, format,
 				    Xutf8TextListToTextProperty,
 				    XCompoundTextStyle);
 	TRACE(("...Xutf8TextListToTextProperty:%d\n", result));
@@ -4053,14 +4088,16 @@ ConvertSelection(Widget w,
     } else if (*target == XA_TEXT(dpy)) {	/* not wide_chars */
 	result =
 	    _ConvertSelectionHelper(w,
-				    type, value, length, format,
+				    type, value, length, data,
+				    data_length, format,
 				    XmbTextListToTextProperty,
 				    XStdICCTextStyle);
 	TRACE(("...XmbTextListToTextProperty(StdICC):%d\n", result));
     } else if (*target == XA_COMPOUND_TEXT(dpy)) {	/* not wide_chars */
 	result =
 	    _ConvertSelectionHelper(w,
-				    type, value, length, format,
+				    type, value, length, data,
+				    data_length, format,
 				    XmbTextListToTextProperty,
 				    XCompoundTextStyle);
 	TRACE(("...XmbTextListToTextProperty(Compound):%d\n", result));
@@ -4069,7 +4106,8 @@ ConvertSelection(Widget w,
     else if (*target == XA_UTF8_STRING(dpy)) {	/* not wide_chars */
 	result =
 	    _ConvertSelectionHelper(w,
-				    type, value, length, format,
+				    type, value, length, data,
+				    data_length, format,
 				    XmbTextListToTextProperty,
 				    XUTF8StringStyle);
 	TRACE(("...XmbTextListToTextProperty(UTF8):%d\n", result));
@@ -4203,6 +4241,17 @@ _OwnSelection(XtermWidget xw,
 			     (int) length,
 			     cutbuffer);
 	    }
+	} else if (keepClipboard(atoms[i])) {
+	    Char *buf;
+	    TRACE(("saving selection to clipboard buffer\n"));
+	    if ((buf = (Char *) malloc((size_t) screen->selection_length))
+		== 0)
+		SysError(ERROR_BMALLOC2);
+
+	    XtFree((char *) screen->clipboard_data);
+	    memcpy(buf, screen->selection_data, screen->selection_length);
+	    screen->clipboard_data = buf;
+	    screen->clipboard_size = screen->selection_length;
 	} else if (screen->selection_length == 0) {
 	    XtDisownSelection((Widget) xw, atoms[i], screen->selection_time);
 	} else if (!screen->replyToEmacs) {
@@ -4306,7 +4355,6 @@ SaveText(TScreen *screen,
 {
     LineData *ld;
     int i = 0;
-    unsigned c;
     Char *result = lp;
 #if OPT_WIDE_CHARS
     unsigned previous = 0;
@@ -4323,6 +4371,7 @@ SaveText(TScreen *screen,
 #endif
     *eol = !LineTstWrapped(ld);
     for (i = scol; i < ecol; i++) {
+	unsigned c;
 	assert(i < (int) ld->lineSize);
 	c = E2A(ld->charData[i]);
 #if OPT_WIDE_CHARS
@@ -4336,10 +4385,9 @@ SaveText(TScreen *screen,
 		   are in memory attached to the HIDDEN_CHAR */
 		if_OPT_WIDE_CHARS(screen, {
 		    if ((screen->utf8_nrc_mode | screen->utf8_mode) != uFalse) {
-			unsigned ch;
 			size_t off;
 			for_each_combData(off, ld) {
-			    ch = ld->combData[off][i];
+			    unsigned ch = ld->combData[off][i];
 			    if (ch == 0)
 				break;
 			    lp = convertToUTF8(lp, ch);
@@ -4355,10 +4403,9 @@ SaveText(TScreen *screen,
 	if ((screen->utf8_nrc_mode | screen->utf8_mode) != uFalse) {
 	    lp = convertToUTF8(lp, (c != 0) ? c : ' ');
 	    if_OPT_WIDE_CHARS(screen, {
-		unsigned ch;
 		size_t off;
 		for_each_combData(off, ld) {
-		    ch = ld->combData[off][i];
+		    unsigned ch = ld->combData[off][i];
 		    if (ch == 0)
 			break;
 		    lp = convertToUTF8(lp, ch);
@@ -4792,13 +4839,12 @@ static char **
 tokenizeFormat(String format)
 {
     char **result = 0;
-    int pass;
     int argc;
-    int n;
 
     format = x_skip_blanks(format);
     if (*format != '\0') {
 	char *blob = x_strdup(format);
+	int pass;
 
 	for (pass = 0; pass < 2; ++pass) {
 	    int used = 0;
@@ -4806,6 +4852,7 @@ tokenizeFormat(String format)
 	    int escaped = 0;
 	    int squoted = 0;
 	    int dquoted = 0;
+	    int n;
 
 	    argc = 0;
 	    for (n = 0; format[n] != '\0'; ++n) {
@@ -4927,6 +4974,20 @@ formatVideoAttrs(XtermWidget xw, char *buffer, CELL *cell)
     }
 }
 
+static char *
+formatStrlen(char *target, char *source, int freeit)
+{
+    if (source != 0) {
+	sprintf(target, "%u", (unsigned) strlen(source));
+	if (freeit) {
+	    free(source);
+	}
+    } else {
+	strcpy(target, "0");
+    }
+    return target;
+}
+
 /* substitute data into format, reallocating the result */
 static char *
 expandFormat(XtermWidget xw,
@@ -4949,9 +5010,10 @@ expandFormat(XtermWidget xw,
 	    size_t need = 0;
 
 	    for (n = 0; format[n] != '\0'; ++n) {
-		char *value = 0;
 
 		if (format[n] == '%') {
+		    char *value = 0;
+
 		    switch (format[++n]) {
 		    case '%':
 			if (pass) {
@@ -4971,21 +5033,20 @@ expandFormat(XtermWidget xw,
 				finish->col + 1);
 			value = numbers;
 			break;
+		    case 'R':
+			value = formatStrlen(numbers, x_strrtrim(data), 1);
+			break;
+		    case 'r':
+			value = x_strrtrim(data);
+			break;
 		    case 'S':
-			sprintf(numbers, "%u", (unsigned) strlen(data));
-			value = numbers;
+			value = formatStrlen(numbers, data, 0);
 			break;
 		    case 's':
 			value = data;
 			break;
 		    case 'T':
-			if ((value = x_strtrim(data)) != 0) {
-			    sprintf(numbers, "%u", (unsigned) strlen(value));
-			    free(value);
-			} else {
-			    strcpy(numbers, "0");
-			}
-			value = numbers;
+			value = formatStrlen(numbers, x_strtrim(data), 1);
 			break;
 		    case 't':
 			value = x_strtrim(data);
@@ -5039,10 +5100,16 @@ expandFormat(XtermWidget xw,
 
 /* execute the command after forking.  The main process frees its data */
 static void
-executeCommand(char **argv)
+executeCommand(pid_t pid, char **argv)
 {
+    (void) pid;
     if (argv != 0 && argv[0] != 0) {
+	char *child_cwd = ProcGetCWD(pid);
+
 	if (fork() == 0) {
+	    if (child_cwd) {
+		IGNORE_RC(chdir(child_cwd));	/* We don't care if this fails */
+	    }
 	    execvp(argv[0], argv);
 	    exit(EXIT_FAILURE);
 	}
@@ -5052,11 +5119,10 @@ executeCommand(char **argv)
 static void
 freeArgv(char *blob, char **argv)
 {
-    int n;
-
     if (blob) {
 	free(blob);
 	if (argv) {
+	    int n;
 	    for (n = 0; argv[n]; ++n)
 		free(argv[n]);
 	    free(argv);
@@ -5071,15 +5137,15 @@ reallyExecFormatted(Widget w, char *format, char *data, CELL *start, CELL *finis
 
     if ((xw = getXtermWidget(w)) != 0) {
 	char **argv;
-	char *blob;
-	int argc;
 
 	if ((argv = tokenizeFormat(format)) != 0) {
-	    blob = argv[0];
+	    char *blob = argv[0];
+	    int argc;
+
 	    for (argc = 0; argv[argc] != 0; ++argc) {
 		argv[argc] = expandFormat(xw, argv[argc], data, start, finish);
 	    }
-	    executeCommand(argv);
+	    executeCommand(TScreenOf(xw)->pid, argv);
 	    freeArgv(blob, argv);
 	}
     }
@@ -5115,18 +5181,18 @@ HandleExecSelectable(Widget w,
 	    CELL start, finish;
 	    char *data;
 	    char **argv;
-	    char *blob;
-	    int argc;
 
 	    data = getDataFromScreen(xw, params[1], &start, &finish);
 	    if (data != 0) {
 		if ((argv = tokenizeFormat(params[0])) != 0) {
-		    blob = argv[0];
+		    char *blob = argv[0];
+		    int argc;
+
 		    for (argc = 0; argv[argc] != 0; ++argc) {
 			argv[argc] = expandFormat(xw, argv[argc], data,
 						  &start, &finish);
 		    }
-		    executeCommand(argv);
+		    executeCommand(TScreenOf(xw)->pid, argv);
 		    freeArgv(blob, argv);
 		}
 		free(data);
@@ -5181,11 +5247,10 @@ HandleInsertSelectable(Widget w,
 	    CELL start, finish;
 	    char *data;
 	    char *temp = x_strdup(params[0]);
-	    char *exps;
 
 	    data = getDataFromScreen(xw, params[1], &start, &finish);
 	    if (data != 0) {
-		exps = expandFormat(xw, temp, data, &start, &finish);
+		char *exps = expandFormat(xw, temp, data, &start, &finish);
 		if (exps != 0) {
 		    unparseputs(xw, exps);
 		    unparse_end(xw);

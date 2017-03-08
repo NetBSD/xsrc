@@ -1,11 +1,11 @@
-# $XTermId: xterm.spec,v 1.83 2015/04/06 10:31:31 tom Exp $
+# $XTermId: xterm.spec,v 1.93 2016/10/02 23:18:09 tom Exp $
 Summary: X terminal emulator (development version)
 %global my_middle xterm
 %global my_suffix -dev
 %global fullname %{my_middle}%{my_suffix}
 %global my_class XTermDev
 Name: %{fullname}
-Version: 318
+Version: 327
 Release: 1
 License: X11
 Group: User Interface/X
@@ -125,6 +125,7 @@ CPPFLAGS="-DMISC_EXP -DEXP_HTTP_HEADERS" \
 	--enable-paste64 \
 	--enable-regis-graphics \
 	--enable-sco-fkeys \
+	--enable-screen-dumps \
 	--enable-sixel-graphics \
 	--enable-tcap-fkeys \
 	--enable-tcap-query \
@@ -240,6 +241,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_pixmapsdir}/xterm.xpm
 
 %changelog
+
+* Fri Jan 29 2016 Thomas E. Dickey
+- use --enable-screen-dumps
 
 * Mon May 27 2013 Thomas E. Dickey
 - use --with-icon-symlink

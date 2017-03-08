@@ -2,7 +2,7 @@
  *****************************************************************************
  * this file is part of xterm                                                *
  *                                                                           *
- * Copyright 1997-2014,2015 by Thomas E. Dickey                              *
+ * Copyright 1997-2015,2016 by Thomas E. Dickey                              *
  *                                                                           *
  * All Rights Reserved                                                       *
  *                                                                           *
@@ -30,7 +30,7 @@
  * sale, use or other dealings in this Software without prior written        *
  * authorization.                                                            *
  *****************************************************************************
-  $XTermId: xterm.log.html,v 1.1604 2015/04/13 01:11:51 tom Exp $
+  $XTermId: xterm.log.html,v 1.1693 2016/10/08 00:44:44 tom Exp $
   -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
 
@@ -72,6 +72,24 @@
   CHANGELOG</a>).</p>
 
   <ul>
+    <li><a href="#xterm_327">Patch #327 - 2016/10/07</a></li>
+
+    <li><a href="#xterm_326">Patch #326 - 2016/09/25</a></li>
+
+    <li><a href="#xterm_325">Patch #325 - 2016/06/05</a></li>
+
+    <li><a href="#xterm_324">Patch #324 - 2016/03/10</a></li>
+
+    <li><a href="#xterm_323">Patch #323 - 2016/03/07</a></li>
+
+    <li><a href="#xterm_322">Patch #322 - 2016/01/02</a></li>
+
+    <li><a href="#xterm_321">Patch #321 - 2015/12/31</a></li>
+
+    <li><a href="#xterm_320">Patch #320 - 2015/08/28</a></li>
+
+    <li><a href="#xterm_319">Patch #319 - 2015/08/19</a></li>
+
     <li><a href="#xterm_318">Patch #318 - 2015/04/12</a></li>
 
     <li><a href="#xterm_317">Patch #317 - 2015/03/27</a></li>
@@ -921,6 +939,317 @@
     <li><a href="#xterm_01">Patch #1 - 1996/1/6</a></li>
   </ul>
 
+  <h1><a name="xterm_327" id="xterm_327">Patch #327 -
+  2016/10/07</a></h1>
+
+  <ul>
+    <li>add a check in the function which handles end-of-line
+    wrapping to ensure that C1 controls are allocated one column
+    when <code>allowC1Printable</code> is set (Debian
+    #738794).</li>
+
+    <li>use consistent error-checking after <code>strtol</code>
+    calls, fixes a case where a query with OSC 6 did not ensure
+    there was a valid color number (report by Alex Smith).</li>
+
+    <li>add <code>-baudrate</code> option, for testing
+    ncurses.</li>
+
+    <li>always generate the <code>CASE_<em>xxx</em></code> symbols
+    in <code>VTparse.h</code> and <code>Tekparse.h</code>, as part
+    of a change to improve debug-logging. This makes the build
+    always depend upon <code>awk</code>.</li>
+
+    <li>modify <code>allowC1Printable</code> to disallow codes
+    160-254 as being equivalent to codes 32-126 when parsing escape
+    sequences (Debian #839220).</li>
+
+    <li>amend fix from <a href="#xterm_326">patch #326</a> for
+    TrueType fonts to exclude the hidden character used for
+    double-width cells (report by Grady Martin).</li>
+
+    <li>fix a typo in <code>ctlseqs.ms</code></li>
+  </ul>
+
+  <h1><a name="xterm_326" id="xterm_326">Patch #326 -
+  2016/09/25</a></h1>
+
+  <ul>
+    <li>updated appdata file (report by Richard Hughes).</li>
+
+    <li>improve discussion of the different terminal emulations
+    provided by xterm in the manual page.</li>
+
+    <li>add examples of setting the icon title with/without the
+    window title in the manual (Debian #833984).</li>
+
+    <li>correct a limit-check when using a numeric value for
+    extended Booleans e.g., <code>*fullscreen:3</code> rather than
+    a name such as <code>*fullscreen:never</code>.</li>
+
+    <li>add action <code>allow-bold-fonts</code></li>
+
+    <li>improved formatting fixes for manual page, using script to
+    find mismatches in spelling of resources, actions and menu
+    entries.</li>
+
+    <li>improve documentation of logging resources.</li>
+
+    <li>fix a special case of flickering cursor by adding
+    <code>GraphicsExpose</code> to the list of event types that
+    should not trigger making the mouse cursor visible (patch by
+    Joe Peterson).</li>
+
+    <li>correct initialization of line-drawing in VT52-mode,
+    overlooked in changes for <a href="#xterm_297">patch #297</a>
+    (report/patch by Ben Wiley Sittler).</li>
+
+    <li>minor clarification of form-feed versus line-feed in
+    <code>ctlseqs.ms</code> (suggested by David Kemper).</li>
+
+    <li>amend fix for Debian #738794 to restore a check for missing
+    characters which are <em>not</em> combining characters. Also
+    fill in a corresponding special case for TrueType fonts (Debian
+    #827905).</li>
+  </ul>
+
+  <h1><a name="xterm_325" id="xterm_325">Patch #325 -
+  2016/06/05</a></h1>
+
+  <ul>
+    <li>improve manual page discussion of function keys (discussion
+    with Ross Combs).</li>
+
+    <li>further improve fix for Debian #545220 in <a href=
+    "#xterm_248">patch #248</a>, to avoid conflict with combining
+    characters (Debian #738794).</li>
+
+    <li>improve <code>-hold</code> option to avoid 100% CPU usage
+    with NetBSD after closing the shell, which makes subsequent
+    checks for X input events fail (prompted by patch by Pierre
+    Pronchery).</li>
+
+    <li>review <code>#ifdef</code> statements, listed those which
+    do not have a configure option in
+    <code>xtermcfg.hin</code>.</li>
+
+    <li>fixed one case where the menu sensistivity for
+    <em>Print-All Immediately</em> and <em>Print-All on Error</em>
+    was not properly ifdef'd.</li>
+
+    <li>modify terminfo entries for 16-, 88- and 256-color to reset
+    palette with <code>rs1</code> capability.</li>
+
+    <li>accept <code>legacy</code> value of <code>-kt</code> as
+    synonym for the <code>oldXtermFKeys</code> resource, and extend
+    the full-reset logic to use the keyboard type set via
+    <code>-kt</code>.</li>
+
+    <li>modify <code>ioctl</code> calls for <code>I_PUSH</code> to
+    first check if the module has been added, using
+    <code>I_FIND</code>. This is needed for newer Solaris libraries
+    with c11 support (adapted from patch by Alan Coopersmith).</li>
+
+    <li>add check in <code>getXtermCombining</code> to ensure that
+    combining characters were allocated (report by Tor
+    Andersson).</li>
+
+    <li>add configure option <code>--without-xinerama</code> to
+    allow suppressing the extension (Gentoo #580936).</li>
+
+    <li>update keysym2ucs.c based on Unicode 9.0</li>
+
+    <li>fixed most <code>cppcheck --enable=all</code> warnings,
+    including for style (prompted by report by David Binderman).
+    There was one bug-fix:
+
+      <ul>
+        <li>RGB least-squares computation in
+        <code>allocateClosestRGB</code> used only one ordinate</li>
+      </ul>
+    </li>
+
+    <li>add <code>cppcheck</code> to lint-like programs in
+    configure script and makefile.</li>
+
+    <li>updates for SIXEL and ReGIS (Ross Combs):
+
+      <ul>
+        <li>Fixes some const correctness issues and points out an
+        array lifetime issue</li>
+
+        <li>Sixel drawing should still happen after an error if
+        some commands have been processed</li>
+
+        <li>Tiny steps toward reporting ReGIS input</li>
+      </ul>
+    </li>
+  </ul>
+
+  <h1><a name="xterm_324" id="xterm_324">Patch #324 -
+  2016/03/10</a></h1>
+
+  <ul>
+    <li>updated configure macro <code>CF_LD_RPATH_OPT</code> from
+    ncurses changes.</li>
+
+    <li>provide alternate fix for Juha Nurmela's report by turning
+    on POSIX signals if <code>_POSIX_C_SOURCE</code> is at least
+    one. This is done to improve the behavior if a direct child
+    process receives a <code>STOP</code> signal.</li>
+
+    <li>revert change to <code>CF_POSIX_C_SOURCE</code> from
+    <a href="#xterm-323">patch #323</a> (reports by Ashish Shukla,
+    Christian Weisgerber).</li>
+  </ul>
+
+  <h1><a name="xterm_323" id="xterm_323">Patch #323 -
+  2016/03/07</a></h1>
+
+  <ul>
+    <li>updated appdata and desktop files to add keywords (report
+    by Richard Hughes).</li>
+
+    <li>modify configure macro <code>CF_POSIX_C_SOURCE</code> to
+    accommodate some systems, e.g., FreeBSD, which have separated
+    their implementation specific preprocessor symbols from the
+    POSIX ones, requiring both to be defined (report by Juha
+    Nurmela).</li>
+
+    <li>change the directory to the current working dir of the
+    child process in exec-formatted and exec-selectable actions
+    (patch by Alexander Pohoyda).</li>
+
+    <li>correct typo in xterm.man (patch by Larry Hynes).</li>
+
+    <li>correct typo in ctlseqs.ms (report by Shriramana
+    Sharma).</li>
+
+    <li>add feature to support XHTML and SVG screen dumps (patch by
+    Jens Schweikhardt).</li>
+
+    <li>correct response to DECRQSS when terminal id is less than
+    400 (patch by Iwamoto Kouichi).</li>
+  </ul>
+
+  <h1><a name="xterm_322" id="xterm_322">Patch #322 -
+  2016/01/02</a></h1>
+
+  <ul>
+    <li>fix regression due to incorrect fix for compiler warning
+    when allocating storage for <code>/etc/shells</code> (reports
+    by Ashish Shukla, Debian #809646).</li>
+  </ul>
+
+  <h1><a name="xterm_321" id="xterm_321">Patch #321 -
+  2015/12/31</a></h1>
+
+  <ul>
+    <li>add resource <code>keepClipboard</code>, escape sequence
+    and action <code>keep-clipboard</code>.</li>
+
+    <li>add optional feature to capture text copied to clipboard at
+    the time of copying rather than at the time the clipboard
+    contents are requested for pasting (patch by Milan
+    Mehner).</li>
+
+    <li>improve a special case where the <code>-e</code> option was
+    used to pass a single-quoted command via <code>luit</code>, by
+    wrapping it in a &ldquo;sh -c&rdquo; (report by Keith
+    Hedger).</li>
+
+    <li>minor fix for type-cleanliness when allocating storage for
+    <code>/etc/shells</code> (Tobias Stoeckmann).</li>
+
+    <li>fix a typo in manual page (Dan Church).</li>
+
+    <li>fix minor file-descriptor leak; after calling
+    <code>openpty</code>, the slave's file descriptor is not needed
+    (report by Juha Nurmela).</li>
+
+    <li>editorial change to ctlseqs.ms (report by David
+    Gomboc).</li>
+
+    <li>minor updates for autoconf macros.</li>
+
+    <li>update config.guess, config.sub</li>
+  </ul>
+
+  <h1><a name="xterm_320" id="xterm_320">Patch #320 -
+  2015/08/28</a></h1>
+
+  <ul>
+    <li>correct documentation for <code>%t</code> format (report by
+    Martin Tournoij).</li>
+
+    <li>add <code>%R</code> for consistency to
+    <code>exec-formatted()</code> and
+    <code>insert-formatted()</code> actions.</li>
+
+    <li>add <code>%r</code> format to <code>exec-formatted()</code>
+    and <code>insert-formatted()</code> actions (patch by Martin
+    Tournoij).</li>
+
+    <li>Amend fix for Debian #794201 (report forwarded from
+    Christian Jachmann by Emanuel Haupt, Debian #797008).</li>
+  </ul>
+
+  <h1><a name="xterm_319" id="xterm_319">Patch #319 -
+  2015/08/19</a></h1>
+
+  <ul>
+    <li>add a section to <code>ctlseqs.ms</code> discussing control
+    sequences and ECMA-48, to explain why C1 controls do not occur
+    in the decoded characters from UTF-8 byte streams (prompted by
+    discussion with Poul-Henning Kamp).</li>
+
+    <li>modify check for cursor-theme from <a href=
+    "#xterm_301">patch #301</a> to also check if the resource
+    <code>Xcursor.theme</code> is set to a nonempty value before
+    fallback to xterm's own dummy theme (request by Robert
+    Kloefkorn).</li>
+
+    <li>explain in <code>ctlseqs.ms</code> that some keys which
+    normally send SS3-prefixes are changed to CSI-prefixes if
+    key-modifiers are passed as parameters (report by George
+    Nachman).</li>
+
+    <li>correct double-free of font information when multiple
+    problems are found, particularly for the wide fonts loaded via
+    the <code>-wc</code> option (report/testcase by Nelson
+    Beebe).</li>
+
+    <li>make configure option <code>--enable-builtin-xpms</code>
+    actually work (report by William Bulley).</li>
+
+    <li>correct combination of <code>-ls</code> and <code>-e</code>
+    options for utempter configuration (Debian #794201).</li>
+
+    <li>NetBSD build-fix for OPT_RENDERFONT versus OPT_SHIFT_FONTS
+    (patch by Matthew Green, forwarded by Thomas Klausner).</li>
+
+    <li>fix a few minor bugs found with Coverity.</li>
+
+    <li>update pixelvector handling (Ross Combs):
+
+      <ul>
+        <li>split pixel-based and coord-based functions with common
+        parts factored out to a "raw" function</li>
+
+        <li>add a "step" variant which loads a single PV digit</li>
+      </ul>
+    </li>
+
+    <li>make the graphic dirty upon resize or clear, fixing some
+    missing refreshes (patch by Ross Combs)</li>
+
+    <li>fixes scrolling to use user coordinates and move in the
+    correct direction (patch by Ross Combs)</li>
+
+    <li>several fixes/improvements for ReGIS whitespace and
+    page-handling (patch by Ross Combs).</li>
+  </ul>
+
   <h1><a name="xterm_318" id="xterm_318">Patch #318 -
   2015/04/12</a></h1>
 
@@ -1300,7 +1629,7 @@
   <ul>
     <li>mention <code>xclip</code> in manpage as an alternative
     workaround for copying clipboard data, noting that
-    <code>selectToClipboard</code> (from <a href="#xterm_209">patch
+    <code>selectToClipboard</code> (see <a href="#xterm_209">patch
     #209</a>) is the recommended approach (Debian #639094).</li>
 
     <li>correct comparison in do_select_regex() of working position
@@ -4357,7 +4686,7 @@
     <li>modify <code>tcap-query</code> feature to not return data
     for shifted cursor-keys when the keyboard type is set to vt220,
     since returning the same string for shifted/unshifted keys may
-    confuse some applications (GenToo #212546).</li>
+    confuse some applications (Gentoo #212546).</li>
   </ul>
 
   <h1><a name="xterm_237" id="xterm_237">Patch #237 -
@@ -4374,7 +4703,7 @@
     <li>remove an optimization of <code>ConfigureNotify</code>
     events from <a href="#xterm_236">patch #236</a> which seems to
     interfere with passing <code>SIGWINCH</code> to applications
-    (GenToo #233836).</li>
+    (Gentoo #233836).</li>
 
     <li>modify handling of <code>altSendsEscape</code> to reset the
     <code>eightBitInput</code> mode, like
@@ -5165,7 +5494,7 @@
 
     <li>amend cell-width computation for FreeType from <a href=
     "#xterm_217">patch #217</a>, which did not work for VT100
-    line-drawing characters (Debian #399638, GenToo #147111).</li>
+    line-drawing characters (Debian #399638, Gentoo #147111).</li>
 
     <li>amend a change from <a href="#xterm_216">patch #216</a>,
     which made alt-modifier on a cursor-key send a modifier
@@ -5484,7 +5813,7 @@
     by Jason Vas Dias).</li>
 
     <li>improve checks for setuid/setgid operation to accommodate
-    limited resource management in some kernels (GenToo
+    limited resource management in some kernels (Gentoo
     #193238).</li>
 
     <li>update config.guess, config.sub</li>
@@ -5745,7 +6074,7 @@
     with a symbolic link pointing to the most recent.</li>
 
     <li>make <code>-iconic</code> option work with toolbar
-    configuration (GenToo #113604).</li>
+    configuration (Gentoo #113604).</li>
 
     <li>suppress <code>lastlog</code> feature for 64-bit Solaris
     configuration since that platform provides only a 32-bit
@@ -5827,7 +6156,7 @@
 
     <li>add <code>--enable-narrowproto</code> configure option to
     accommodate X.org "modular" build (report by Stephan Hermann,
-    GenToo #17220).</li>
+    Gentoo #17220).</li>
 
     <li>fix typo in xterm.man description of <code>+wf</code>
     (patch by Tobias Stoeckmann).</li>
@@ -5848,12 +6177,12 @@
     <li>use <code>openpty()</code> for Darwin port (patch by
     Emanuele Giaquinta).</li>
 
-    <li>fix GenToo #90697 a different way, postponing the logic in
+    <li>fix Gentoo #90697 a different way, postponing the logic in
     <code>SetupToolbar</code> until the toolbar is actually needed,
     i.e., the <code>+tb</code> option is handled as expected.</li>
 
     <li>revert fix made in <a href="#xterm_203">patch #203</a> for
-    GenToo #90697. That introduced a problem with the control mouse
+    Gentoo #90697. That introduced a problem with the control mouse
     click-popups, while most of the performance problems can be
     resolved by restricting the menu fonts (report by Emanuele
     Giaquinta).</li>
@@ -6008,7 +6337,7 @@
       </ul>
     </li>
 
-    <li>workaround for GenToo Bugzilla #100728.</li>
+    <li>workaround for Gentoo Bugzilla #100728.</li>
 
     <li>add menubar's border width to layout computation. Normally
     this is zero, but patterns such as
@@ -6079,14 +6408,14 @@
 
     <li>improve initialization of toolbar so that individual
     pulldown menus are initialized on demand, as they are in the
-    scenario where they are invoked as popup menus (GenToo Bugzilla
+    scenario where they are invoked as popup menus (Gentoo Bugzilla
     #90697).</li>
 
     <li>fix logic in <code>find_utmp</code>, which did not reset
     result in <code>getutid()</code>, causing an infinite loop in
     some conditions (report by Emil Mikulic).</li>
 
-    <li>set the <code>_NET_WM_PID</code> property (GenToo Bugzilla
+    <li>set the <code>_NET_WM_PID</code> property (Gentoo Bugzilla
     #91008).</li>
 
     <li>modify ifdef's in ptyx.h and xterm_io.h to build with
@@ -6611,7 +6940,7 @@
     Scheler).</li>
 
     <li>modify configure script options for Athena widgets to work
-    as expected for "--without-Xaw3d", etc., (GenToo Bugzilla
+    as expected for "--without-Xaw3d", etc., (Gentoo Bugzilla
     #53455).</li>
 
     <li>add case to uxterm to accommodate locales ending with
@@ -6671,7 +7000,7 @@
 
     <li>work around change in quoting of PROJECTROOT symbol when
     using configure script, from changes made in <a href=
-    "#xterm_187">patch #187</a> for CF_IMAKE_CFLAGS (GenToo
+    "#xterm_187">patch #187</a> for CF_IMAKE_CFLAGS (Gentoo
     Bugzilla #50982).</li>
   </ul>
 
