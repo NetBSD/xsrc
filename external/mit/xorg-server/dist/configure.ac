@@ -220,6 +220,8 @@ AC_CHECK_FUNC([strlcpy], AC_DEFINE(HAS_STRLCPY, 1, [Have the 'strlcpy' function]
 
 AM_CONDITIONAL(NEED_VSNPRINTF, [test x$HAVE_VSNPRINTF = xno])
 
+AC_CHECK_LIB([bsd], [arc4random_buf])
+
 dnl Check for mmap support for Xvfb
 AC_CHECK_FUNC([mmap], AC_DEFINE(HAS_MMAP, 1, [Have the 'mmap' function.]))
 
