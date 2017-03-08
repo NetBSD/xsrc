@@ -1,7 +1,7 @@
-/* $XTermId: misc.c,v 1.726 2015/04/10 08:27:17 tom Exp $ */
+/* $XTermId: misc.c,v 1.743 2016/10/07 00:41:14 tom Exp $ */
 
 /*
- * Copyright 1999-2014,2015 by Thomas E. Dickey
+ * Copyright 1999-2015,2016 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -138,10 +138,15 @@ Readlink(const char *filename)
 {
     char *buf = NULL;
     size_t size = 100;
-    int n;
 
     for (;;) {
-	buf = TypeRealloc(char, size, buf);
+	int n;
+	char *tmp = TypeRealloc(char, size, buf);
+	if (tmp == NULL) {
+	    free(buf);
+	    return NULL;
+	}
+	buf = tmp;
 	memset(buf, 0, size);
 
 	n = (int) readlink(filename, buf, size);
@@ -411,7 +416,7 @@ static XtInputMask
 mergeExposeEvents(XEvent *target)
 {
     XEvent next_event;
-    XExposeEvent *p, *q;
+    XExposeEvent *p;
 
     TRACE(("pending Expose...?\n"));
     TraceExposeEvent(target);
@@ -422,6 +427,7 @@ mergeExposeEvents(XEvent *target)
 	   && XtAppPeekEvent(app_con, &next_event)
 	   && next_event.type == Expose) {
 	Boolean merge_this = False;
+	XExposeEvent *q;
 
 	TraceExposeEvent(&next_event);
 	q = (XExposeEvent *) (&next_event);
@@ -487,7 +493,7 @@ static XtInputMask
 mergeConfigureEvents(XEvent *target)
 {
     XEvent next_event;
-    XConfigureEvent *p, *q;
+    XConfigureEvent *p;
 
     XtAppNextEvent(app_con, target);
     p = (XConfigureEvent *) target;
@@ -499,6 +505,7 @@ mergeConfigureEvents(XEvent *target)
 	&& XtAppPeekEvent(app_con, &next_event)
 	&& next_event.type == ConfigureNotify) {
 	Boolean merge_this = False;
+	XConfigureEvent *q;
 
 	TraceConfigureEvent(&next_event);
 	XtAppNextEvent(app_con, &next_event);
@@ -532,8 +539,10 @@ xtermAppPending(void)
 {
     XtInputMask result = XtAppPending(app_con);
     XEvent this_event;
+    Boolean found = False;
 
     while (result && XtAppPeekEvent(app_con, &this_event)) {
+	found = True;
 	if (this_event.type == Expose) {
 	    result = mergeExposeEvents(&this_event);
 	    TRACE(("got merged expose events\n"));
@@ -544,6 +553,15 @@ xtermAppPending(void)
 	    TRACE(("pending %s\n", visibleEventType(this_event.type)));
 	    break;
 	}
+    }
+
+    /*
+     * With NetBSD, closing a shell results in closing the X input event
+     * stream, which interferes with the "-hold" option.  Wait a short time in
+     * this case, to avoid max'ing the CPU.
+     */
+    if (hold_screen && caught_intr && !found) {
+	Sleep(10);
     }
     return result;
 }
@@ -639,6 +657,7 @@ xevents(void)
 		case ButtonRelease:
 		    /* also these... */
 		case Expose:
+		case GraphicsExpose:
 		case NoExpose:
 		case PropertyNotify:
 		case ClientMessage:
@@ -701,19 +720,28 @@ make_hidden_cursor(XtermWidget xw)
  * until the window is initialized.
  */
 void
-init_colored_cursor(void)
+init_colored_cursor(Display *dpy)
 {
 #ifdef HAVE_LIB_XCURSOR
     static const char theme[] = "index.theme";
     static const char pattern[] = "xtermXXXXXX";
-    const char *tmp_dir;
-    char *filename;
     char *env = getenv("XCURSOR_THEME");
-    size_t needed;
-    FILE *fp;
 
     xterm_cursor_theme = 0;
+    /*
+     * The environment variable overrides a (possible) resource Xcursor.theme
+     */
     if (IsEmpty(env)) {
+	env = XGetDefault(dpy, "Xcursor", "theme");
+    }
+    /*
+     * If neither found, provide our own default theme.
+     */
+    if (IsEmpty(env)) {
+	const char *tmp_dir;
+	char *filename;
+	size_t needed;
+
 	if ((tmp_dir = getenv("TMPDIR")) == 0) {
 	    tmp_dir = P_tmpdir;
 	}
@@ -736,6 +764,8 @@ init_colored_cursor(void)
 	     */
 	    if (xterm_cursor_theme != 0) {
 		char *leaf = xterm_cursor_theme + strlen(xterm_cursor_theme);
+		FILE *fp;
+
 		strcat(leaf, "/");
 		strcat(leaf, theme);
 		if ((fp = fopen(xterm_cursor_theme, "w")) != 0) {
@@ -749,6 +779,8 @@ init_colored_cursor(void)
 	    }
 	}
     }
+#else
+    (void) dpy;
 #endif /* HAVE_LIB_XCURSOR */
 }
 
@@ -857,6 +889,25 @@ HandleStringEvent(Widget w GCC_UNUSED,
 #define PROCFS_ROOT "/proc"
 #endif
 
+/*
+ * Determine the current working directory of the child so that we can
+ * spawn a new terminal in the same directory.
+ *
+ * If we cannot get the CWD of the child, just use our own.
+ */
+char *
+ProcGetCWD(pid_t pid)
+{
+    char *child_cwd = NULL;
+
+    if (pid) {
+	char child_cwd_link[sizeof(PROCFS_ROOT) + 80];
+	sprintf(child_cwd_link, PROCFS_ROOT "/%lu/cwd", (unsigned long) pid);
+	child_cwd = Readlink(child_cwd_link);
+    }
+    return child_cwd;
+}
+
 /* ARGSUSED */
 void
 HandleSpawnTerminal(Widget w GCC_UNUSED,
@@ -887,17 +938,7 @@ HandleSpawnTerminal(Widget w GCC_UNUSED,
 	    return;
     }
 
-    /*
-     * Determine the current working directory of the child so that we can
-     * spawn a new terminal in the same directory.
-     *
-     * If we cannot get the CWD of the child, just use our own.
-     */
-    if (screen->pid) {
-	char child_cwd_link[sizeof(PROCFS_ROOT) + 80];
-	sprintf(child_cwd_link, PROCFS_ROOT "/%lu/cwd", (unsigned long) screen->pid);
-	child_cwd = Readlink(child_cwd_link);
-    }
+    child_cwd = ProcGetCWD(screen->pid);
 
     /* The reaper will take care of cleaning up the child */
     pid = fork();
@@ -1150,7 +1191,6 @@ Bell(XtermWidget xw, int which, int percent)
 {
     TScreen *screen = TScreenOf(xw);
     struct timeval curtime;
-    long now_msecs;
 
     TRACE(("BELL %d %d%%\n", which, percent));
     if (!XtIsRealized((Widget) xw)) {
@@ -1162,6 +1202,8 @@ Bell(XtermWidget xw, int which, int percent)
     /* has enough time gone by that we are allowed to ring
        the bell again? */
     if (screen->bellSuppressTime) {
+	long now_msecs;
+
 	if (screen->bellInProgress) {
 	    do_xevents();
 	    if (screen->bellInProgress) {	/* even after new events? */
@@ -1400,10 +1442,7 @@ dabbrev_expand(XtermWidget xw)
     static unsigned int expansions;
 
     char *expansion;
-    Char *copybuffer;
     size_t hint_len;
-    size_t del_cnt;
-    size_t buf_cnt;
     int result = 0;
     LineData *ld;
 
@@ -1463,8 +1502,9 @@ dabbrev_expand(XtermWidget xw)
     }
 
     if (expansion != 0) {
-	del_cnt = strlen(lastexpansion) - hint_len;
-	buf_cnt = del_cnt + strlen(expansion) - hint_len;
+	Char *copybuffer;
+	size_t del_cnt = strlen(lastexpansion) - hint_len;
+	size_t buf_cnt = del_cnt + strlen(expansion) - hint_len;
 
 	if ((copybuffer = TypeMallocN(Char, buf_cnt)) != 0) {
 	    /* delete previous expansion */
@@ -1985,33 +2025,34 @@ StartLog(XtermWidget xw)
 	    free(screen->logfile);
 	if (log_default == NULL) {
 #if defined(HAVE_GETHOSTNAME) && defined(HAVE_STRFTIME)
-	    char log_def_name[512];	/* see sprintf below */
-	    char hostname[255 + 1];	/* Internet standard limit (RFC 1035):
+	    const char form[] = "Xterm.log.%s%s.%d";
+	    char where[255 + 1];	/* Internet standard limit (RFC 1035):
 					   ``To simplify implementations, the
 					   total length of a domain name (i.e.,
 					   label octets and label length
 					   octets) is restricted to 255 octets
 					   or less.'' */
-	    char yyyy_mm_dd_hh_mm_ss[4 + 5 * (1 + 2) + 1];
+	    char when[LEN_TIMESTAMP];
+	    char formatted[sizeof(form) + sizeof(where) + sizeof(when) + 9];
 	    time_t now;
 	    struct tm *ltm;
 
 	    now = time((time_t *) 0);
 	    ltm = (struct tm *) localtime(&now);
-	    if ((gethostname(hostname, sizeof(hostname)) == 0) &&
-		(strftime(yyyy_mm_dd_hh_mm_ss,
-			  sizeof(yyyy_mm_dd_hh_mm_ss),
-			  "%Y.%m.%d.%H.%M.%S", ltm) > 0)) {
-		(void) sprintf(log_def_name, "Xterm.log.%.255s.%.20s.%d",
-			       hostname, yyyy_mm_dd_hh_mm_ss, (int) getpid());
-	    }
-	    if ((log_default = x_strdup(log_def_name)) == NULL)
+	    if ((gethostname(where, sizeof(where)) == 0) &&
+		(strftime(when, sizeof(when), FMT_TIMESTAMP, ltm) > 0)) {
+		(void) sprintf(formatted, form, where, when, (int) getpid());
+	    } else {
 		return;
+	    }
+	    if ((log_default = x_strdup(formatted)) == NULL) {
+		return;
+	    }
 #else
 	    static const char log_def_name[] = "XtermLog.XXXXXX";
-	    if ((log_default = x_strdup(log_def_name)) == NULL)
+	    if ((log_default = x_strdup(log_def_name)) == NULL) {
 		return;
-
+	    }
 	    mktemp(log_default);
 #endif
 	}
@@ -2237,14 +2278,16 @@ loadColorTable(XtermWidget xw, unsigned length)
 {
     Colormap cmap = xw->core.colormap;
     TScreen *screen = TScreenOf(xw);
-    unsigned i;
     Boolean result = (screen->cmap_data != 0);
 
     if (!result
 	&& length != 0
 	&& length < MAX_COLORTABLE) {
 	screen->cmap_data = TypeMallocN(XColor, (size_t) length);
+
 	if (screen->cmap_data != 0) {
+	    unsigned i;
+
 	    screen->cmap_size = length;
 
 	    for (i = 0; i < screen->cmap_size; i++) {
@@ -2274,22 +2317,18 @@ allocateClosestRGB(XtermWidget xw, Colormap cmap, XColor *def)
 {
     TScreen *screen = TScreenOf(xw);
     Boolean result = False;
-    char *tried;
-    double diff, thisRGB, bestRGB;
-    unsigned attempts;
-    unsigned bestInx;
     unsigned cmap_type;
     unsigned cmap_size;
-    unsigned i;
 
     getColormapInfo(xw, &cmap_type, &cmap_size);
 
     if ((cmap_type & 1) != 0) {
 
 	if (loadColorTable(xw, cmap_size)) {
+	    char *tried = TypeCallocN(char, (size_t) cmap_size);
 
-	    tried = TypeCallocN(char, (size_t) cmap_size);
 	    if (tried != 0) {
+		unsigned attempts;
 
 		/*
 		 * Try (possibly each entry in the color map) to find the best
@@ -2297,11 +2336,14 @@ allocateClosestRGB(XtermWidget xw, Colormap cmap, XColor *def)
 		 */
 		for (attempts = 0; attempts < cmap_size; attempts++) {
 		    Boolean first = True;
+		    double bestRGB = 0.0;
+		    unsigned bestInx = 0;
+		    unsigned i;
 
-		    bestRGB = 0.0;
-		    bestInx = 0;
 		    for (i = 0; i < cmap_size; i++) {
 			if (!tried[bestInx]) {
+			    double diff, thisRGB = 0.0;
+
 			    /*
 			     * Look for the best match based on luminance.
 			     * Measure this by the least-squares difference of
@@ -2312,7 +2354,7 @@ allocateClosestRGB(XtermWidget xw, Colormap cmap, XColor *def)
 			     */
 #define AddColorWeight(weight, color) \
 			    diff = weight * (int) ((def->color) - screen->cmap_data[i].color); \
-			    thisRGB = diff * diff
+			    thisRGB += diff * diff
 
 			    AddColorWeight(0.30, red);
 			    AddColorWeight(0.61, green);
@@ -2432,11 +2474,12 @@ searchColors(XColor *colortable, unsigned mask, unsigned length, unsigned
     unsigned result = 0;
     unsigned n;
     unsigned long best = ULONG_MAX;
-    unsigned long diff;
     unsigned value;
 
     mask = normalizeMask(mask);
     for (n = 0; n < length; ++n) {
+	unsigned long diff;
+
 	SelectColor(state, colortable[n], value);
 	diff = ((color & mask) - (value & mask));
 	diff *= diff;
@@ -2497,12 +2540,12 @@ allocateExactRGB(XtermWidget xw, Colormap cmap, XColor *def)
     if (result) {
 	unsigned cmap_type;
 	unsigned cmap_size;
-	int state;
 
 	getColormapInfo(xw, &cmap_type, &cmap_size);
 
 	if (cmap_type == TrueColor) {
 	    XColor temp = *def;
+	    int state;
 
 	    if (loadColorTable(xw, cmap_size)
 		&& (state = simpleColors(screen->cmap_data, cmap_size)) > 0) {
@@ -2650,8 +2693,6 @@ ChangeAnsiColorRequest(XtermWidget xw,
 		       int first,
 		       int final)
 {
-    char *name;
-    int color;
     int repaint = False;
     int code;
     int last = (MAXCOLORS - first);
@@ -2659,7 +2700,9 @@ ChangeAnsiColorRequest(XtermWidget xw,
     TRACE(("ChangeAnsiColorRequest string='%s'\n", buf));
 
     while (buf && *buf) {
-	name = strchr(buf, ';');
+	int color;
+	char *name = strchr(buf, ';');
+
 	if (name == NULL)
 	    break;
 	*name = '\0';
@@ -2722,8 +2765,8 @@ ResetAnsiColorRequest(XtermWidget xw, char *buf, int start)
 	while (!IsEmpty(buf)) {
 	    char *next;
 
-	    color = (int) strtol(buf, &next, 10);
-	    if ((next == buf) || (color < 0))
+	    color = (int) (strtol) (buf, &next, 10);
+	    if (!PartS2L(buf, next) || (color < 0))
 		break;		/* no number at all */
 	    if (next != 0) {
 		if (strchr(";", *next) == 0)
@@ -2869,9 +2912,7 @@ ManipulateSelectionData(XtermWidget xw, TScreen *screen, char *buf, int final)
     };
 
     const char *base = buf;
-    char *used;
     Cardinal j, n = 0;
-    String *select_args;
 
     TRACE(("Manipulate selection data\n"));
 
@@ -2880,12 +2921,16 @@ ManipulateSelectionData(XtermWidget xw, TScreen *screen, char *buf, int final)
     }
 
     if (*buf == ';') {
+	char *used;
+
 	*buf++ = '\0';
 
 	if (*base == '\0')
 	    base = "s0";
 
 	if ((used = x_strdup(base)) != 0) {
+	    String *select_args;
+
 	    if ((select_args = TypeCallocN(String, 2 + strlen(base))) != 0) {
 		while (*base != '\0') {
 		    for (j = 0; j < XtNumber(table); ++j) {
@@ -3026,8 +3071,9 @@ typedef enum {
 static Bool
 GetOldColors(XtermWidget xw)
 {
-    int i;
     if (xw->work.oldColors == NULL) {
+	int i;
+
 	xw->work.oldColors = TypeXtMalloc(ScrnColors);
 	if (xw->work.oldColors == NULL) {
 	    xtermWarning("allocation failure in GetOldColors\n");
@@ -3179,29 +3225,27 @@ ChangeColorsRequest(XtermWidget xw,
 		    int final)
 {
     Bool result = False;
-    char *thisName;
     ScrnColors newColors;
-    int i, ndx;
 
     TRACE(("ChangeColorsRequest start=%d, names='%s'\n", start, names));
 
     if (GetOldColors(xw)) {
+	int i;
+
 	newColors.which = 0;
 	for (i = 0; i < NCOLORS; i++) {
 	    newColors.names[i] = NULL;
 	}
 	for (i = start; i < OSC_NCOLORS; i++) {
-	    ndx = OscToColorIndex((OscTextColors) i);
+	    int ndx = OscToColorIndex((OscTextColors) i);
 	    if (xw->misc.re_verse)
 		ndx = oppositeColor(ndx);
 
 	    if (IsEmpty(names)) {
 		newColors.names[ndx] = NULL;
 	    } else {
-		if (names[0] == ';')
-		    thisName = NULL;
-		else
-		    thisName = names;
+		char *thisName = ((names[0] == ';') ? NULL : names);
+
 		names = strchr(names, ';');
 		if (names != NULL) {
 		    *names++ = '\0';
@@ -3231,17 +3275,15 @@ ResetColorsRequest(XtermWidget xw,
 		   int code)
 {
     Bool result = False;
-#if OPT_COLOR_RES
-    const char *thisName;
-    ScrnColors newColors;
-    int ndx;
-#endif
 
     TRACE(("ResetColorsRequest code=%d\n", code));
 
 #if OPT_COLOR_RES
     if (GetOldColors(xw)) {
-	ndx = OscToColorIndex((OscTextColors) (code - OSC_RESET));
+	ScrnColors newColors;
+	const char *thisName;
+	int ndx = OscToColorIndex((OscTextColors) (code - OSC_RESET));
+
 	if (xw->misc.re_verse)
 	    ndx = oppositeColor(ndx);
 
@@ -3317,7 +3359,6 @@ QueryFontRequest(XtermWidget xw, String buf, int final)
 	int num;
 	String base = buf + 1;
 	const char *name = 0;
-	char temp[10];
 
 	num = ParseShiftedFont(xw, buf, &buf);
 	if (num < 0
@@ -3343,6 +3384,8 @@ QueryFontRequest(XtermWidget xw, String buf, int final)
 	    if (buf >= base) {
 		/* identify the font-entry, unless it is the current one */
 		if (*buf != '\0') {
+		    char temp[10];
+
 		    unparseputc(xw, '#');
 		    sprintf(temp, "%d", num);
 		    unparseputs(xw, temp);
@@ -3625,7 +3668,7 @@ do_osc(XtermWidget xw, Char *oscbuf, size_t len, int final)
 		++buf;
 	    } else {
 		which = strtol(buf, &next, 10);
-		if (next == 0)
+		if (!PartS2L(buf, next) || (which < 0))
 		    break;
 		buf = next;
 		if (*buf == ';')
@@ -3635,7 +3678,7 @@ do_osc(XtermWidget xw, Char *oscbuf, size_t len, int final)
 		++buf;
 	    } else {
 		value = strtol(buf, &next, 10);
-		if (next == 0)
+		if (!PartS2L(buf, next) || (which < 0))
 		    break;
 		buf = next;
 		if (*buf == ';')
@@ -3723,13 +3766,15 @@ do_osc(XtermWidget xw, Char *oscbuf, size_t len, int final)
 	 * Warning, enabling this feature allows people to overwrite
 	 * arbitrary files accessible to the person running xterm.
 	 */
-	if (strcmp(buf, "?")
-	    && (cp = CastMallocN(char, strlen(buf)) != NULL)) {
-	    strcpy(cp, buf);
-	    if (screen->logfile)
-		free(screen->logfile);
-	    screen->logfile = cp;
-	    break;
+	if (strcmp(buf, "?")) {
+	    char *bp;
+	    if ((bp = CastMallocN(char, strlen(buf))) != NULL) {
+		strcpy(bp, buf);
+		if (screen->logfile)
+		    free(screen->logfile);
+		screen->logfile = bp;
+		break;
+	    }
 	}
 #endif
 	Bell(xw, XkbBI_Info, 0);
@@ -3776,9 +3821,10 @@ static int
 udk_value(const char **cp)
 {
     int result = -1;
-    int c;
 
     for (;;) {
+	int c;
+
 	if ((c = **cp) != '\0')
 	    *cp = *cp + 1;
 	if (c == ';' || c == '\0')
@@ -3813,7 +3859,6 @@ parse_decudk(XtermWidget xw, const char *cp)
 	const char *base = cp;
 	char *str = CastMallocN(char, strlen(cp) + 2);
 	unsigned key = 0;
-	int lo, hi;
 	int len = 0;
 
 	if (str == NULL)
@@ -3821,7 +3866,10 @@ parse_decudk(XtermWidget xw, const char *cp)
 
 	while (isdigit(CharOf(*cp)))
 	    key = (key * 10) + (unsigned) (*cp++ - '0');
+
 	if (*cp == '/') {
+	    int lo, hi;
+
 	    cp++;
 	    while ((hi = udk_value(&cp)) >= 0
 		   && (lo = udk_value(&cp)) >= 0) {
@@ -4049,6 +4097,8 @@ do_dcs(XtermWidget xw, Char *dcsbuf, size_t dcslen)
 		    sprintf(reply, "%d;%ds",
 			    screen->lft_marg + 1,
 			    screen->rgt_marg + 1);
+		} else {
+		    okay = False;
 		}
 	    } else if (!strcmp(cp, "m")) {	/* SGR */
 		strcpy(reply, "0");
@@ -4232,7 +4282,7 @@ do_dcs(XtermWidget xw, Char *dcsbuf, size_t dcslen)
 		    screen->terminal_id == 330 ||
 		    screen->terminal_id == 340 ||
 		    screen->terminal_id == 382) {
-		    parse_sixel(xw, &params, cp);
+		    (void) parse_sixel(xw, &params, cp);
 		}
 #else
 		TRACE(("ignoring sixel graphic (compilation flag not enabled)\n"));
@@ -4282,12 +4332,14 @@ void
 do_rpm(XtermWidget xw, int nparams, int *params)
 {
     ANSI reply;
-    int result = 0;
     int count = 0;
 
     TRACE(("do_rpm %d:%d\n", nparams, params[0]));
     memset(&reply, 0, sizeof(reply));
+
     if (nparams >= 1) {
+	int result = 0;
+
 	switch (params[0]) {
 	case 1:		/* GATM */
 	    result = mdAlwaysReset;
@@ -4337,13 +4389,14 @@ void
 do_decrpm(XtermWidget xw, int nparams, int *params)
 {
     ANSI reply;
-    int result = 0;
     int count = 0;
 
     TRACE(("do_decrpm %d:%d\n", nparams, params[0]));
     memset(&reply, 0, sizeof(reply));
+
     if (nparams >= 1) {
 	TScreen *screen = TScreenOf(xw);
+	int result = 0;
 
 	switch (params[0]) {
 	case srm_DECCKM:
@@ -4624,7 +4677,6 @@ x_find_icon(char **work, int *state, const char *suffix)
     const char *prefix = PIXMAP_ROOTDIR;
     const char *larger = "_48x48";
     char *result = 0;
-    size_t length;
 
     if (*state >= 0) {
 	if ((*state & 1) == 0)
@@ -4643,6 +4695,8 @@ x_find_icon(char **work, int *state, const char *suffix)
     }
 
     if (*state >= 0) {
+	size_t length;
+
 	if (*work) {
 	    free(*work);
 	    *work = 0;
@@ -4958,7 +5012,7 @@ ChangeGroup(XtermWidget xw, const char *attribute, char *value)
 #endif
 	}
     }
-    if (IsTitleMode(xw, tmSetBase16)) {
+    if (IsTitleMode(xw, tmSetBase16) && (value != emptyString)) {
 	free(value);
     }
     free(my_attr);
@@ -6016,6 +6070,8 @@ xtermOpenApplication(XtAppContext * app_context_return,
 			     fallback_resources,
 			     NULL, 0);
 #endif /* OPT_SESSION_MGT */
+    init_colored_cursor(XtDisplay(result));
+
     XtSetErrorHandler((XtErrorHandler) 0);
 
     return result;
