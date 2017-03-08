@@ -184,12 +184,6 @@ SecureRPCReset (void)
     return 1;
 }
 
-XID
-SecureRPCToID (unsigned short data_length, char *data)
-{
-    return rpc_id;
-}
-
 int
 SecureRPCFromID (XID id, unsigned short *data_lenp, char **datap)
 {
