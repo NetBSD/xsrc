@@ -141,6 +141,7 @@ static Bool WsfbDGAInit(ScrnInfoPtr, ScreenPtr);
 #endif
 
 static void WsfbShadowUpdateSwap32(ScreenPtr, shadowBufPtr);
+static void WsfbShadowUpdateSplit(ScreenPtr, shadowBufPtr);
 
 static Bool WsfbDriverFunc(ScrnInfoPtr, xorgDriverFuncOp, pointer);
 
@@ -595,7 +596,13 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 			xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
 				   "Shadow FB option ignored on depth < 8");
 		}
-
+	if (fPtr->fbi.fbi_flags & WSFB_VRAM_IS_SPLIT) {
+		if (!fPtr->shadowFB) {
+			xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
+				   "Shadow FB forced on for split framebuffer");
+			fPtr->shadowFB = TRUE;
+		}
+	}
 	/* Rotation */
 	fPtr->rotate = WSFB_ROTATE_NONE;
 	if ((s = xf86GetOptValString(fPtr->Options, OPTION_ROTATE))) {
@@ -801,6 +808,7 @@ WsfbCreateScreenResources(ScreenPtr pScreen)
 	WsfbPtr fPtr = WSFBPTR(pScrn);
 	PixmapPtr pPixmap;
 	Bool ret;
+	void (*shadowproc)(ScreenPtr, shadowBufPtr);
 
 	pScreen->CreateScreenResources = fPtr->CreateScreenResources;
 	ret = pScreen->CreateScreenResources(pScreen);
@@ -810,10 +818,16 @@ WsfbCreateScreenResources(ScreenPtr pScreen)
 		return FALSE;
 
 	pPixmap = pScreen->GetScreenPixmap(pScreen);
-
-	if (!shadowAdd(pScreen, pPixmap, fPtr->rotate ?
-		shadowUpdateRotatePackedWeak() : (fPtr->useSwap32 ? 
-		    WsfbShadowUpdateSwap32 : shadowUpdatePackedWeak()),
+	if (fPtr->fbi.fbi_flags & WSFB_VRAM_IS_SPLIT) {
+		shadowproc = WsfbShadowUpdateSplit;
+	} else if (fPtr->useSwap32) {
+		shadowproc = WsfbShadowUpdateSwap32;
+	} else if (fPtr->rotate) {
+		shadowproc = shadowUpdateRotatePacked;
+	} else
+		shadowproc = shadowUpdatePacked;
+	
+	if (!shadowAdd(pScreen, pPixmap, shadowproc,
 		WsfbWindowLinear, fPtr->rotate, NULL)) {
 		return FALSE;
 	}
@@ -905,6 +919,7 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 			   strerror(errno));
 		return FALSE;
 	}
+	len = max(len, fPtr->fbi.fbi_fbsize);
 	fPtr->fbmem = wsfb_mmap(len, 0, fPtr->fd);
 
 	if (fPtr->fbmem == NULL) {
@@ -957,8 +972,7 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 #endif
 
 	if (fPtr->shadowFB) {
-		fPtr->shadow = calloc(1, pScrn->virtualX * pScrn->virtualY *
-		    pScrn->bitsPerPixel/8);
+		fPtr->shadow = calloc(1, fPtr->fbi.fbi_stride * pScrn->virtualY);
 
 		if (!fPtr->shadow) {
 			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
@@ -984,7 +998,9 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 		    fPtr->shadowFB ? fPtr->shadow : fPtr->fbstart,
 		    pScrn->virtualX, pScrn->virtualY,
 		    pScrn->xDpi, pScrn->yDpi,
-		    pScrn->displayWidth, pScrn->bitsPerPixel);
+		    /* apparently fb wants stride in pixels, not bytes */
+		    fPtr->fbi.fbi_stride / (pScrn->bitsPerPixel >> 3),
+		    pScrn->bitsPerPixel);
 		break;
 	default:
 		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
@@ -1681,3 +1697,77 @@ WsfbShadowUpdateSwap32(ScreenPtr pScreen, shadowBufPtr pBuf)
     }
 }
 
+void
+WsfbShadowUpdateSplit(ScreenPtr pScreen, shadowBufPtr pBuf)
+{
+    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    WsfbPtr 	fPtr = WSFBPTR(pScrn);
+    RegionPtr	damage = shadowDamage (pBuf);
+    PixmapPtr	pShadow = pBuf->pPixmap;
+    int		nbox = RegionNumRects (damage);
+    BoxPtr	pbox = RegionRects (damage);
+    FbBits	*shaBase, *shaLine, *sha;
+    FbStride	shaStride;
+    int		scrBase, scrLine, scr;
+    int		shaBpp;
+    int		shaXoff, shaYoff; /* XXX assumed to be zero */
+    int		x, y, w, h, width;
+    int         i;
+    FbBits	*winBase = NULL, *win, *win2;
+    unsigned long split = fPtr->fbi.fbi_fbsize / 2; 
+    CARD32      winSize;
+
+    fbGetDrawable (&pShadow->drawable, shaBase, shaStride, shaBpp, shaXoff, shaYoff);
+    while (nbox--)
+    {
+	x = pbox->x1 * shaBpp;
+	y = pbox->y1;
+	w = (pbox->x2 - pbox->x1) * shaBpp;
+	h = pbox->y2 - pbox->y1;
+
+	scrLine = (x >> FB_SHIFT);
+	shaLine = shaBase + y * shaStride + (x >> FB_SHIFT);
+				   
+	x &= FB_MASK;
+	w = (w + x + FB_MASK) >> FB_SHIFT;
+	
+	while (h--)
+	{
+	    winSize = 0;
+	    scrBase = 0;
+	    width = w;
+	    scr = scrLine;
+	    sha = shaLine;
+	    while (width) {
+		/* how much remains in this window */
+		i = scrBase + winSize - scr;
+		if (i <= 0 || scr < scrBase)
+		{
+		    winBase = (FbBits *) (*pBuf->window) (pScreen,
+							  y,
+							  scr * sizeof (FbBits),
+							  SHADOW_WINDOW_WRITE,
+							  &winSize,
+							  pBuf->closure);
+		    if(!winBase)
+			return;
+		    scrBase = scr;
+		    winSize /= sizeof (FbBits);
+		    i = winSize;
+		}
+		win = winBase + (scr - scrBase);
+		win2 = (FbBits *)(split + (unsigned long)win);
+		if (i > width)
+		    i = width;
+		width -= i;
+		scr += i;
+		memcpy(win, sha, i * sizeof(FbBits));
+		memcpy(win2, sha, i * sizeof(FbBits));
+		sha += i;
+	    }
+	    shaLine += shaStride;
+	    y++;
+	}
+	pbox++;
+    }
+}
