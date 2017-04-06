@@ -283,32 +283,29 @@ wsPreInit12(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 		    pInfo->name);
 	}
 
-#ifndef __NetBSD__
 	if (priv->type == WSMOUSE_TYPE_TPANEL && priv->raw) {
+		
 		if (ioctl(pInfo->fd, WSMOUSEIO_GCALIBCOORDS,
 			&priv->coords) != 0) {
-			xf86Msg(X_ERROR, "GCALIBCOORS failed %s\n",
+			xf86Msg(X_ERROR, "GCALIBCOORDS failed %s\n",
 			    strerror(errno));
 			wsClose(pInfo);
 			rc = BadValue;
 			goto fail;
 		}
-
 		/* get default coordinate space from kernel */
 		priv->min_x = priv->coords.minx;
 		priv->max_x = priv->coords.maxx;
 		priv->min_y = priv->coords.miny;
 		priv->max_y = priv->coords.maxy;
 	} else {
-#endif
 		/* in calibrated mode, coordinate space, is screen coords */
 		priv->min_x = 0;
 		priv->max_x = screenInfo.screens[priv->screen_no]->width - 1;
 		priv->min_y = 0;
 		priv->max_y = screenInfo.screens[priv->screen_no]->height - 1;
-#ifndef __NetBSD__
 	}
-#endif
+
 	/* Allow options to override this */
 	priv->min_x = xf86SetIntOption(pInfo->options, "MinX", priv->min_x);
 	xf86Msg(X_INFO, "%s minimum x position: %d\n",
