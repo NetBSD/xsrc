@@ -30,6 +30,7 @@ authorization from the XFree86 Project and Silicon Motion.
 #ifndef _SMI_H
 #define _SMI_H
 
+#include "xorg-server.h"
 #include "smi_pcirename.h"
 
 #include <string.h>
