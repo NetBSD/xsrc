@@ -36,6 +36,8 @@
 #include "config.h"
 #endif
 
+#include "xorg-server.h"
+
 #include "xf86.h"
 #include "exa.h"
 

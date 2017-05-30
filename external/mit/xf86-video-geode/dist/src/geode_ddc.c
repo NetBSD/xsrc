@@ -27,6 +27,8 @@
 #include "config.h"
 #endif
 
+#include "xorg-server.h"
+
 #include "xf86.h"
 #include "xf86Modes.h"
 #include "compiler.h"

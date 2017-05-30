@@ -27,6 +27,8 @@
 #include "config.h"
 #endif
 
+#include "xorg-server.h"
+
 /* Includes that are used by all drivers */
 #include <xf86.h>
 #include <xf86Modes.h>

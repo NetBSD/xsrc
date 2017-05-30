@@ -37,6 +37,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
+#include "xorg-server.h"
 #include "xf86.h"
 #include "geode.h"
 

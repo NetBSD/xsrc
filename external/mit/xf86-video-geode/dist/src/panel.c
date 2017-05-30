@@ -41,6 +41,8 @@
 
 #endif
 
+#include "xorg-server.h"
+
 #include "panel.h"
 #include "gfx_defs.h"
 #include "geode.h"

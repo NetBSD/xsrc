@@ -44,6 +44,8 @@
 #include <sys/cpuctl.h>
 #endif
 
+#include "xorg-server.h"
+
 #include "os.h"
 #include "geode.h"
 

@@ -26,6 +26,8 @@
 #include "config.h"
 #endif
 
+#include "xorg-server.h"
+
 #include "xf86.h"
 #include "geode.h"
 #include "cim/cim_regs.h"

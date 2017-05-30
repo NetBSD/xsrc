@@ -37,6 +37,8 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
+#include "xorg-server.h"
+
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6

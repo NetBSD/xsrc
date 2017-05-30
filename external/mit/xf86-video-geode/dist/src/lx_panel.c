@@ -34,6 +34,8 @@
 
 #include <stdio.h>
 
+#include "xorg-server.h"
+
 #include "xf86.h"
 #include "compiler.h"
 #include "xf86Modes.h"
