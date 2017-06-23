@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2011/12/28 16:55:27 macallan Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2017/06/23 02:15:07 macallan Exp $	*/
 
 /*
  * Copyright (c) 2011 Michael Lorenz
@@ -27,6 +27,10 @@
 
 #include <stdio.h>
 #include <ctype.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <dev/wscons/wsconsio.h>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -69,7 +73,7 @@ main(int argc, char *argv[])
 {
 	int error, glyph_index;
 	int x, y, idx, width_in_bytes, height = 22, cell_height;
-	int width, datalen, didx, i, start, end;
+	int width, datalen, didx, i, start, end, out;
 	FILE *output;
 	uint8_t *fontdata;
 	char fontname[128], filename[128];
@@ -139,7 +143,7 @@ main(int argc, char *argv[])
 	/* now output as a header file */
 	snprintf(fontname, 128, "%s_%dx%d", face->family_name, width, cell_height);
 	for (i = 0; i < strlen(fontname); i++) {
-		if (isblank(fontname[i]))
+		if (isblank((int)fontname[i]))
 			fontname[i]='_';
 	}
 	snprintf(filename, 128, "%s.h", fontname);
@@ -151,8 +155,8 @@ main(int argc, char *argv[])
 	fprintf(output, "\n");
 	fprintf(output, "static struct wsdisplay_font %s = {\n", fontname);
 	fprintf(output, "\t\"%s\",\t\t\t/* typeface name */\n", face->family_name);
-	fprintf(output, "\t0,\t\t\t\t/* firstchar */\n");
-	fprintf(output, "\t255 - 0 + 1,\t\t\t/* numchar */\n");
+	fprintf(output, "\t32,\t\t\t\t/* firstchar */\n");
+	fprintf(output, "\t256 - 32,\t\t\t/* numchar */\n");
 	fprintf(output, "\tWSDISPLAY_FONTENC_ISO,\t\t/* encoding */\n");
 	fprintf(output, "\t%d,\t\t\t\t/* width */\n", width);
 	fprintf(output, "\t%d,\t\t\t\t/* height */\n", cell_height);
@@ -162,7 +166,7 @@ main(int argc, char *argv[])
 	fprintf(output, "\t%s_data\t\t/* data */\n", fontname);
 	fprintf(output, "};\n\n");
 	fprintf(output, "static u_char %s_data[] = {\n", fontname);
-	for (i = 0; i < 256; i++) {
+	for (i = 32; i < 256; i++) {
 		fprintf(output, "\t/* %d */\n", i);
 		idx = i * width * cell_height;
 		for (y = 0; y < cell_height; y++) {
@@ -180,6 +184,44 @@ main(int argc, char *argv[])
 	}
 	fprintf(output, "};\n");
 	fclose(output);
+	/* dump as binary */
+	snprintf(filename, 128, "%s.wsf", fontname);	
+	if ((out = open(filename, O_RDWR | O_CREAT | O_TRUNC, DEFFILEMODE)) > 0) {
+		char nbuf[64];
+		uint32_t foo;
+		write(out, "WSFT", 4);
+		memset(nbuf, 0, 64);
+		strncpy(nbuf, face->family_name, 64);
+		write(out, nbuf, 64);
+		/* firstchar */
+		foo = htole32(32);
+		write(out, &foo, 4);
+		/* numchar */
+		foo = htole32(256 - 32);
+		write(out, &foo, 4);
+		/* encoding */
+		foo = htole32(WSDISPLAY_FONTENC_ISO);
+		write(out, &foo, 4);
+		/* fontwidth */
+		foo = htole32(width);
+		write(out, &foo, 4);
+		/* fontheight */
+		foo = htole32(cell_height);
+		write(out, &foo, 4);
+		/* stride */
+		foo = htole32(width);
+		write(out, &foo, 4);
+		/* bitorder */
+		foo = htole32(WSDISPLAY_FONTORDER_L2R);
+		write(out, &foo, 4);
+		/* byteorder */
+		foo = htole32(WSDISPLAY_FONTORDER_L2R);
+		write(out, &foo, 4);
+		/* now the font data */
+		write(out, fontdata + (32 * width * cell_height),
+		           (256 - 32) * width * cell_height);
+		close(out);
+	}
 	free(fontdata);
 	FT_Done_Face(face);
 	FT_Done_FreeType(library);
