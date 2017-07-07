@@ -154,6 +154,7 @@ ProcXSendExtensionEvent(ClientPtr client)
             client->errorValue = first[i].u.u.type;
             return BadValue;
         }
+    }
 
     list = (XEventClass *) (first + stuff->num_events);
     if ((ret = CreateMaskFromList(client, list, stuff->count, tmp, dev,
