@@ -89,6 +89,7 @@ SProcXSendExtensionEvent(client)
     xEvent *eventP;
     EventSwapPtr proc;
 
+    memset(&eventT, 0, sizeof eventT);
     REQUEST(xSendExtensionEventReq);
     swaps(&stuff->length, n);
     REQUEST_AT_LEAST_SIZE(xSendExtensionEventReq);
@@ -98,8 +99,11 @@ SProcXSendExtensionEvent(client)
     for (i=0; i<stuff->num_events; i++,eventP++)
         {
 	proc = EventSwapVector[eventP->u.u.type & 0177];
- 	if (proc == NotImplemented)   /* no swapping proc; invalid event type? */
+        /* no swapping proc; invalid event type? */
+        if (proc == NotImplemented) {
+            client->errorValue = eventP->u.u.type;
 	    return (BadValue);
+        }
 	(*proc)(eventP, &eventT);
 	*eventP = eventT;
 	}
@@ -124,7 +128,7 @@ int
 ProcXSendExtensionEvent (client)
     register ClientPtr client;
     {
-    int			ret;
+    int			ret, i;
     DeviceIntPtr	dev;
     xEvent		*first;
     XEventClass		*list;
@@ -155,14 +159,13 @@ ProcXSendExtensionEvent (client)
     /* The client's event type must be one defined by an extension. */
 
     first = ((xEvent *) &stuff[1]);
-    if ( ! ((EXTENSION_EVENT_BASE  <= first->u.u.type) &&
-	(first->u.u.type < lastEvent)) )
-	{
-	client->errorValue = first->u.u.type;
-	SendErrorToClient(client, IReqCode, X_SendExtensionEvent, 0, 
-		BadValue);
-	return Success;
-	}
+    for (i = 0; i < stuff->num_events; i++) {
+        if (!((EXTENSION_EVENT_BASE <= first[i].u.u.type) &&
+            (first[i].u.u.type < lastEvent))) {
+            client->errorValue = first[i].u.u.type;
+            return BadValue;
+        }
+    }
 
     list = (XEventClass *) (first + stuff->num_events);
     if ((ret = CreateMaskFromList (client, list, stuff->count, tmp, dev, 
