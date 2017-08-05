@@ -34,6 +34,9 @@
 #include <sys/param.h>
 #ifndef __NetBSD__
 #include <sys/sysctl.h>
+#else
+#include <machine/sysarch.h>
+#include <machine/pio.h>
 #endif
 
 #include "xf86_OSlib.h"
