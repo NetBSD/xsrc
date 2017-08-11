@@ -33,7 +33,10 @@
 #include <string.h>
 #include <stdio.h>
 #include <fcntl.h>
-
+#ifdef __NetBSD__
+#include <sys/ioctl.h>
+#include <dev/ofw/openfirmio.h>
+#endif
 /* X and server generic header files */
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -2731,6 +2734,25 @@ static RADEONMacModel RADEONDetectMacModel(ScrnInfoPtr pScrn)
     if (f != NULL) {
 	while (fgets(cpuline, sizeof cpuline, f)) {
 	    if (!strncmp(cpuline, "machine", strlen ("machine"))) {
+#elif defined(__NetBSD__)
+    char cpuline[50];
+    int of;
+    struct ofiocdesc ofio;
+    
+    of = open("/dev/openfirm", O_RDONLY);
+    if (of > 0) {
+	ofio.of_nodeid = 0;
+        ofio.of_name = "/";
+	ofio.of_namelen = 1;
+	if (ioctl(of, OFIOCFINDDEVICE, &ofio) != -1) {
+	    ofio.of_name = "model";
+	    ofio.of_namelen = 5;
+	    ofio.of_buf = cpuline;
+	    ofio.of_buflen = sizeof(cpuline);
+	    while (ioctl(of, OFIOCGET, &ofio) != -1) {
+	    	cpuline[49] = 0;
+	        xf86Msg(X_ERROR, "model %s\n", cpuline);
+#endif
 		if (strstr(cpuline, "PowerBook5,1") ||
 		    strstr(cpuline, "PowerBook5,2") ||
 		    strstr(cpuline, "PowerBook5,3") ||
@@ -2767,6 +2789,7 @@ static RADEONMacModel RADEONDetectMacModel(ScrnInfoPtr pScrn)
 		    ret = RADEON_MAC_MINI_EXTERNAL; /* external tmds */
 		    break;
 		}
+#ifdef __linux__
 	    } else if (!strncmp(cpuline, "detected as", strlen("detected as"))) {
 		if (strstr(cpuline, "iBook")) {
 		    ret = RADEON_MAC_IBOOK;
@@ -2781,19 +2804,25 @@ static RADEONMacModel RADEONDetectMacModel(ScrnInfoPtr pScrn)
 		    ret = RADEON_MAC_EMAC;
 		    break;
 		}
-
+#endif
 		/* No known PowerMac model detected */
 		break;
 	    }
 	}
 
+#ifdef __linux__
 	fclose (f);
     } else
 	xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
 		   "Cannot detect PowerMac model because /proc/cpuinfo not "
 		   "readable.\n");
-
-#endif /* __linux */
+#elif defined(__NetBSD__)
+	close(of);
+    } else
+	xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
+		   "Cannot detect PowerMac model because /dev/openfirm not "
+		   "readable.\n");
+#endif
 
 #ifdef __OpenBSD__
     char model[32];
