@@ -1226,7 +1226,7 @@ static CARD8 wsSunMap[] = {
 	/* 0x01 */ KEY_L1,		/* stop */
 	/* 0x02 */ KEY_AudioLower,	/* BrightnessDown / S-VolumeDown */
 	/* 0x03 */ KEY_L2,		/* again */
-	/* 0x04 */ KEY_AudioRaise,	/* BridgtnessUp / S-VolumeUp */
+	/* 0x04 */ KEY_AudioRaise,	/* BrightnessUp / S-VolumeUp */
 	/* 0x05 */ KEY_F1,
 	/* 0x06 */ KEY_F2,
 	/* 0x07 */ KEY_F10,
