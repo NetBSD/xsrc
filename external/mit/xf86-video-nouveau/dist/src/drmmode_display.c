@@ -67,6 +67,7 @@ typedef struct {
     uint32_t rotate_fb_id;
     Bool cursor_visible;
     int scanout_pixmap_x;
+    int dpms_mode;
 } drmmode_crtc_private_rec, *drmmode_crtc_private_ptr;
 
 typedef struct {
@@ -114,6 +115,14 @@ drmmode_crtc(xf86CrtcPtr crtc)
 {
 	drmmode_crtc_private_ptr drmmode_crtc = crtc->driver_private;
 	return drmmode_crtc->mode_crtc->crtc_id;
+}
+
+Bool
+drmmode_crtc_on(xf86CrtcPtr crtc)
+{
+    drmmode_crtc_private_ptr drmmode_crtc = crtc->driver_private;
+
+    return crtc->enabled && drmmode_crtc->dpms_mode == DPMSModeOn;
 }
 
 int
@@ -315,9 +324,10 @@ drmmode_ConvertToKMode(ScrnInfoPtr scrn, drmModeModeInfo *kmode,
 }
 
 static void
-drmmode_crtc_dpms(xf86CrtcPtr drmmode_crtc, int mode)
+drmmode_crtc_dpms(xf86CrtcPtr crtc, int mode)
 {
-
+	drmmode_crtc_private_ptr drmmode_crtc = crtc->driver_private;
+	drmmode_crtc->dpms_mode = mode;
 }
 
 void
@@ -1425,7 +1435,7 @@ Bool drmmode_pre_init(ScrnInfoPtr pScrn, int fd, int cpp)
 	unsigned int crtcs_needed = 0;
 	int crtcshift;
 
-	drmmode = xnfalloc(sizeof *drmmode);
+	drmmode = xnfcalloc(sizeof(*drmmode), 1);
 	drmmode->fd = fd;
 	drmmode->fb_id = 0;
 
@@ -1548,6 +1558,15 @@ drmmode_udev_notify(int fd, int notify, void *data)
 }
 #endif
 
+static bool has_randr(void)
+{
+#if HAS_DIXREGISTERPRIVATEKEY
+	return dixPrivateKeyRegistered(rrPrivKey);
+#else
+	return *rrPrivKey;
+#endif
+}
+
 static void
 drmmode_uevent_init(ScrnInfoPtr scrn)
 {
@@ -1555,6 +1574,12 @@ drmmode_uevent_init(ScrnInfoPtr scrn)
 	drmmode_ptr drmmode = drmmode_from_scrn(scrn);
 	struct udev *u;
 	struct udev_monitor *mon;
+
+	/* RandR will be disabled if Xinerama is active, and so generating
+	 * RR hotplug events is then forbidden.
+	 */
+	if (!has_randr())
+		return;
 
 	u = udev_new();
 	if (!u)

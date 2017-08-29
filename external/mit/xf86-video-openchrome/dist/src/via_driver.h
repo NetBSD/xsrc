@@ -127,30 +127,8 @@
 static int gVIAEntityIndex = -1;
 
 typedef struct {
-    CARD8   SR08, SR0A, SR0F;
-
-    /* Extended Sequencer Registers */
-    CARD8   SR10, SR11, SR12, SR13, SR14, SR15, SR16, SR17;
-    CARD8   SR18, SR19, SR1A, SR1B, SR1C, SR1D, SR1E, SR1F;
-    CARD8   SR20, SR21, SR22, SR23, SR24, SR25, SR26, SR27;
-    CARD8   SR28, SR29, SR2A, SR2B, SR2C, SR2D, SR2E, SR2F;
-    CARD8   SR30, SR31, SR32, SR33, SR34;
-    CARD8   SR40, SR41, SR42, SR43, SR44, SR45, SR46, SR47;
-    CARD8   SR48, SR49, SR4A, SR4B, SR4C, SR4D, SR4E, SR4F;
-
-    /* CRTC Registers */
-    CARD8   CR0C, CR0D;
-    CARD8   CR13;
-
-    /* IGA1 Registers */
-    CARD8   CR30, CR31, CR32, CR33, CR34, CR35, CR36, CR37;
-    CARD8   CR38, CR39, CR3A, CR3B, CR3C, CR3D, CR3E, CR3F;
-    CARD8   CR40, CR41, CR42, CR43, CR44, CR45, CR46, CR47;
-    CARD8   CR48;
-
-    /* IGA2 Registers */
-    CARD8   EXCR[0xFD - 0x50 + 1];
-
+    CARD8   SR[256];
+    CARD8   CR[256];
 } VIARegRec, *VIARegPtr;
 
 /*
@@ -306,6 +284,12 @@ typedef struct _VIA {
     /* BIOS Info Ptr */
     VIABIOSInfoPtr      pBIOSInfo;
 
+    /* VIA Technologies NanoBook reference design.
+       Examples include Everex CloudBook and Sylvania g netbook.
+       It is also called FIC CE260 and CE261 by its ODM (Original 
+       Design Manufacturer) name. */
+    Bool                isVIANanoBook;
+
     /* OLPC XO-1.5 */
     Bool                IsOLPCXO15;
 
@@ -376,6 +360,19 @@ typedef struct _VIA {
 #endif /* HAVE_DEBUG */
 
     video_via_regs*     VideoRegs;
+
+    /* Keeping track of the number of analog VGA connectors. */
+    unsigned int        numberVGA;
+
+    /* Keeping track of the number of DVI connectors. */
+    unsigned int        numberDVI;
+
+    /* Keeping track of the number of FP (Flat Panel) connectors. */
+    unsigned int        numberFP;
+
+    /* Shadow copy of CR3B through CR3F. */
+    CARD8       originalCR3B, originalCR3C, originalCR3D,
+                originalCR3E, originalCR3F;
 } VIARec, *VIAPtr;
 
 #define VIAPTR(p) ((VIAPtr)((p)->driverPrivate))
@@ -498,6 +495,8 @@ unsigned long viaXvMCPutImageSize(ScrnInfoPtr pScrn);
 
 /* via_i2c.c */
 void ViaI2CInit(ScrnInfoPtr pScrn);
+Bool xf86I2CMaskByte(I2CDevPtr d, I2CByte subaddr,
+                        I2CByte value, I2CByte mask);
 
 #ifdef HAVE_DRI
 Bool VIADRI1ScreenInit(ScreenPtr pScreen);
