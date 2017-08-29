@@ -40,11 +40,11 @@ openchrome_drv_la_SOURCES = \
          via_3d.c \
          via_3d.h \
          via_3d_reg.h \
+         via_analog.c \
          via_rop.h \
          via_exa.c \
          via_exa_h2.c \
          via_exa_h6.c \
-         via_bandwidth.c \
          via_ums.h \
          via_ch7xxx.c \
          via_ch7xxx.h \
@@ -54,7 +54,7 @@ openchrome_drv_la_SOURCES = \
          via_driver.h \
          via_i2c.c \
          via_id.c \
-         via_lvds.c \
+         via_fp.c \
          via_memcpy.c \
          via_memmgr.h \
          via_memmgr.c \
@@ -62,6 +62,10 @@ openchrome_drv_la_SOURCES = \
          via_mode.h \
          via_priv.h \
          via_regs.h \
+         via_sii164.c \
+         via_sii164.h \
+         via_tmds.c \
+         via_tv.c \
          via_xv_overlay.c \
          via_xv_overlay.h \
          via_ums.c \
@@ -112,6 +116,9 @@ version.h: $(openchrome_drv_la_SOURCES)
         if [ -d .svn ]; then \
 	        echo '#define BUILDCOMMENT "(development build, at revision '\
 	                "`svnversion -nc .. | sed -e s/^[^:]*://`"')"' > $@.tmp; \
+        elif [ "$$SOURCE_DATE_EPOCH" ]; then \
+	        printf '#define BUILDCOMMENT "(compiled with SOURCE_DATE_EPOCH: %s)"' $$SOURCE_DATE_EPOCH \
+        	> $@.tmp; \
         else \
 	        date +'#define BUILDCOMMENT "(development build, compiled on %c)"' \
         	> $@.tmp; \

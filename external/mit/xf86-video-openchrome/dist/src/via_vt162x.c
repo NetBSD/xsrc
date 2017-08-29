@@ -48,18 +48,15 @@ ViaSetTVClockSource(xf86CrtcPtr crtc)
                 case VIA_CX700:
                 case VIA_VX800:
                 case VIA_VX855:
-					/* IGA1 */
+                case VIA_VX900:
+                    /* IGA1 */
                     if (!iga->index) {
-                        if(pBIOSInfo->TVDIPort == VIA_DI_PORT_DVP1)
-                            ViaCrtcMask(hwp, 0x6C, 0xB0, 0xF0);
-                        else if(pBIOSInfo->TVDIPort == VIA_DI_PORT_DVP0)
-                            ViaCrtcMask(hwp, 0x6C, 0x90, 0xF0);
+                        /* Fixing it to DVP1 for IGA1. */
+                        ViaCrtcMask(hwp, 0x6C, 0xB0, 0xF0);
+                    /* IGA2 */
                     } else {
-                        /* IGA2 */
-                        if(pBIOSInfo->TVDIPort == VIA_DI_PORT_DVP1)
-                            ViaCrtcMask(hwp, 0x6C, 0x0B, 0x0F);
-                        else if(pBIOSInfo->TVDIPort == VIA_DI_PORT_DVP0)
-                            ViaCrtcMask(hwp, 0x6C, 0x09, 0x0F);
+                        /* Fixing it to DVP1 for IGA2. */
+                        ViaCrtcMask(hwp, 0x6C, 0x0B, 0x0F);
                     }
                     break;
                 default:

@@ -1,3 +1,37 @@
+OpenChrome DDX Version 0.6 (March 7th, 2017)
+--------------------------------------------
+
+OpenChrome DDX Version 0.6 is an improved version of OpenChrome DDX 
+Version 0.5 with a number of improvements made to the code. OpenChrome 
+DDX Version 0.6 is written in a way to completely replace Version 
+0.2.904 through 0.5.
+
+OpenChrome DDX Version 0.6 has added the following new features.
+
+- First official support for CX700, VX700, and VX800 chipsets 
+  integrated TMDS transmitter (i.e., DVI support)
+- Initial support for Silicon Image SiI 164 TMDS transmitter
+
+
+OpenChrome DDX Version 0.6 has the following improvements.
+
+- Improved FP reinitialization when resuming from standby
+  (HP 2133 Mini-Note, FIC CE260 / CE261 based netbooks like 
+   Everex CloudBook and Sylvania g netbook)
+- Improved automatic detection of display resources
+- Improved X Server stability in dual monitor mode
+- Automatic active steering of the display controller channel to the 
+  correct display output device
+
+
+OpenChrome DDX Version 0.6 fixes the following bugs.
+
+- Fix for the disruption of the VT (Virtual Terminal) screen bug 
+  introduced in Version 0.5
+- Fix for HP 2133 Mini-Note's PCIe WLAN getting turned off 
+  inadvertently bug introduced in Version 0.5
+
+
 OpenChrome Version 0.5 (July 6th, 2016)
 ---------------------------------------
 

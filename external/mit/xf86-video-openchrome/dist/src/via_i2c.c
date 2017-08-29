@@ -1,4 +1,5 @@
 /*
+ * Copyright 2009 Luc Verhaegen.
  * Copyright 2004 The Unichrome Project  [unichrome.sf.net]
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.
@@ -477,4 +478,25 @@ ViaI2CInit(ScrnInfoPtr pScrn)
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
                         "Exiting ViaI2CInit.\n"));
+}
+
+/*
+ * The code originated from Luc Verhaegen's xf86-video-unichrome DDX.
+ *
+ * Sure, it is polluting namespace, but this one is quite useful.
+ */
+Bool
+xf86I2CMaskByte(I2CDevPtr d, I2CByte subaddr, I2CByte value, I2CByte mask)
+{
+    I2CByte tmp;
+    Bool ret;
+
+    ret = xf86I2CReadByte(d, subaddr, &tmp);
+    if (!ret)
+        return FALSE;
+
+    tmp &= ~mask;
+    tmp |= (value & mask);
+
+    return xf86I2CWriteByte(d, subaddr, tmp);
 }
