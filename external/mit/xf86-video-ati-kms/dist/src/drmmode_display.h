@@ -89,6 +89,7 @@ typedef struct {
     RegionRec scanout_last_region;
     unsigned scanout_id;
     Bool scanout_update_pending;
+    Bool tear_free;
     int dpms_mode;
     /* For when a flip is pending when DPMS off requested */
     int pending_dpms_mode;
@@ -124,6 +125,7 @@ typedef struct {
     drmmode_prop_ptr props;
     int enc_mask;
     int enc_clone_mask;
+    int tear_free;
 } drmmode_output_private_rec, *drmmode_output_private_ptr;
 
 
@@ -133,6 +135,16 @@ enum drmmode_flip_sync {
 };
 
 
+extern int drmmode_page_flip_target_absolute(RADEONEntPtr pRADEONEnt,
+					     drmmode_crtc_private_ptr drmmode_crtc,
+					     int fb_id, uint32_t flags,
+					     uintptr_t drm_queue_seq,
+					     uint32_t target_msc);
+extern int drmmode_page_flip_target_relative(RADEONEntPtr pRADEONEnt,
+					     drmmode_crtc_private_ptr drmmode_crtc,
+					     int fb_id, uint32_t flags,
+					     uintptr_t drm_queue_seq,
+					     uint32_t target_msc);
 extern Bool drmmode_pre_init(ScrnInfoPtr pScrn, drmmode_ptr drmmode, int cpp);
 extern void drmmode_init(ScrnInfoPtr pScrn, drmmode_ptr drmmode);
 extern void drmmode_fini(ScrnInfoPtr pScrn, drmmode_ptr drmmode);
@@ -159,7 +171,8 @@ Bool radeon_do_pageflip(ScrnInfoPtr scrn, ClientPtr client,
 			uint32_t new_front_handle, uint64_t id, void *data,
 			int ref_crtc_hw_id, radeon_drm_handler_proc handler,
 			radeon_drm_abort_proc abort,
-			enum drmmode_flip_sync flip_sync);
+			enum drmmode_flip_sync flip_sync,
+			uint32_t target_msc);
 int drmmode_crtc_get_ust_msc(xf86CrtcPtr crtc, CARD64 *ust, CARD64 *msc);
 int drmmode_get_current_ust(int drm_fd, CARD64 *ust);
 

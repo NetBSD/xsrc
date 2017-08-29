@@ -182,6 +182,11 @@ typedef enum {
 
 #if XF86_CRTC_VERSION >= 5
 #define RADEON_PIXMAP_SHARING 1
+#define radeon_is_gpu_screen(screen) (screen)->isGPU
+#define radeon_is_gpu_scrn(scrn) (scrn)->is_gpu
+#else
+#define radeon_is_gpu_screen(screen) 0
+#define radeon_is_gpu_scrn(scrn) 0
 #endif
 
 #define RADEON_VSYNC_TIMEOUT	20000 /* Maximum wait for VSYNC (in usecs) */
@@ -504,7 +509,7 @@ typedef struct {
     Bool              accelOn;
     Bool              use_glamor;
     Bool              shadow_primary;
-    Bool              tear_free;
+    int               tear_free;
     Bool	      exa_pixmaps;
     Bool              exa_force_create;
     XF86ModReqInfo    exaReq;
@@ -520,6 +525,7 @@ typedef struct {
 
     CreateScreenResourcesProcPtr CreateScreenResources;
     CreateWindowProcPtr CreateWindow;
+    WindowExposuresProcPtr WindowExposures;
 
     Bool              IsSecondary;
 
@@ -627,8 +633,7 @@ extern Bool RADEONGetPixmapOffsetPitch(PixmapPtr pPix,
 Bool radeon_dri3_screen_init(ScreenPtr screen);
 
 /* radeon_kms.c */
-void radeon_scanout_update_handler(xf86CrtcPtr crtc, uint32_t frame,
-				   uint64_t usec, void *event_data);
+Bool radeon_scanout_do_update(xf86CrtcPtr xf86_crtc, int scanout_id);
 
 /* radeon_present.c */
 Bool radeon_present_screen_init(ScreenPtr screen);
@@ -933,18 +938,7 @@ enum {
 static __inline__ int
 RADEONLog2(int val)
 {
-	int bits;
-#if (defined __i386__ || defined __x86_64__) && (defined __GNUC__)
-	__asm volatile("bsrl	%1, %0"
-		: "=r" (bits)
-		: "c" (val)
-	);
-	return bits;
-#else
-	for (bits = 0; val != 0; val >>= 1, ++bits)
-		;
-	return bits - 1;
-#endif
+	return 31 - __builtin_clz(val);
 }
 
 #define RADEON_TILING_MASK				0xff

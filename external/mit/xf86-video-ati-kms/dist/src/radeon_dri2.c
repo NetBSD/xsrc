@@ -47,6 +47,7 @@
 #include "radeon_bo_gem.h"
 
 #include <xf86Priv.h>
+#include <X11/extensions/dpmsconst.h>
 
 #if DRI2INFOREC_VERSION >= 9
 #define USE_DRI2_PRIME
@@ -579,9 +580,9 @@ xf86CrtcPtr radeon_dri2_drawable_crtc(DrawablePtr pDraw, Bool consider_disabled)
 static void
 radeon_dri2_flip_event_abort(xf86CrtcPtr crtc, void *event_data)
 {
-    RADEONInfoPtr info = RADEONPTR(crtc->scrn);
+    if (crtc)
+	RADEONPTR(crtc->scrn)->drmmode.dri2_flipping = FALSE;
 
-    info->drmmode.dri2_flipping = FALSE;
     free(event_data);
 }
 
@@ -678,7 +679,8 @@ radeon_dri2_schedule_flip(xf86CrtcPtr crtc, ClientPtr client,
 			   RADEON_DRM_QUEUE_ID_DEFAULT, flip_info,
 			   ref_crtc_hw_id,
 			   radeon_dri2_flip_event_handler,
-			   radeon_dri2_flip_event_abort, FLIP_VSYNC)) {
+			   radeon_dri2_flip_event_abort, FLIP_VSYNC,
+			   target_msc - radeon_get_msc_delta(draw, crtc))) {
 	info->drmmode.dri2_flipping = TRUE;
 	return TRUE;
     }
@@ -755,14 +757,34 @@ can_flip(ScrnInfoPtr pScrn, DrawablePtr draw,
 	 DRI2BufferPtr front, DRI2BufferPtr back)
 {
     RADEONInfoPtr info = RADEONPTR(pScrn);
+    xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(pScrn);
+    int num_crtcs_on;
+    int i;
 
-    return draw->type == DRAWABLE_WINDOW &&
-	   info->allowPageFlip &&
-	   !info->hwcursor_disabled &&
-	   !info->drmmode.present_flipping &&
-	   pScrn->vtSema &&
-	   DRI2CanFlip(draw) &&
-	   can_exchange(pScrn, draw, front, back);
+    if (draw->type != DRAWABLE_WINDOW ||
+	!info->allowPageFlip ||
+	info->hwcursor_disabled ||
+	info->drmmode.present_flipping ||
+	!pScrn->vtSema ||
+	!DRI2CanFlip(draw))
+	return FALSE;
+
+    for (i = 0, num_crtcs_on = 0; i < config->num_crtc; i++) {
+	xf86CrtcPtr crtc = config->crtc[i];
+	drmmode_crtc_private_ptr drmmode_crtc = crtc->driver_private;
+
+	if (!crtc->enabled)
+	    continue;
+
+	if (!drmmode_crtc || drmmode_crtc->rotate.bo ||
+	    drmmode_crtc->scanout[0].bo)
+	    return FALSE;
+
+	if (drmmode_crtc->pending_dpms_mode == DPMSModeOn)
+	    num_crtcs_on++;
+    }
+
+    return num_crtcs_on > 0 && can_exchange(pScrn, draw, front, back);
 }
 
 static void

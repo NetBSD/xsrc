@@ -84,8 +84,15 @@ radeon_glamor_pre_init(ScrnInfoPtr scrn)
 		return FALSE;
 
 	s = xf86GetOptValString(info->Options, OPTION_ACCELMETHOD);
-	if (s == NULL && info->ChipFamily < CHIP_FAMILY_TAHITI)
-		return FALSE;
+	if (!s) {
+		if (xorgGetVersion() >= XORG_VERSION_NUMERIC(1,18,3,0,0)) {
+			if (info->ChipFamily < CHIP_FAMILY_R600)
+				return FALSE;
+		} else {
+			if (info->ChipFamily < CHIP_FAMILY_TAHITI)
+				return FALSE;
+		}
+	}
 
 	if (s && strcasecmp(s, "glamor") != 0) {
 		if (info->ChipFamily >= CHIP_FAMILY_TAHITI)
