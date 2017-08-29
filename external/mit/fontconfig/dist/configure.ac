@@ -33,7 +33,7 @@ dnl This is the package version number, not the shared library
 dnl version.  This same version number must appear in fontconfig/fontconfig.h
 dnl Yes, it is a pain to synchronize version numbers.  Unfortunately, it's
 dnl not possible to extract the version number here from fontconfig.h
-AC_INIT([fontconfig], [2.11.1], [https://bugs.freedesktop.org/enter_bug.cgi?product=fontconfig])
+AC_INIT([fontconfig], [2.12.4], [https://bugs.freedesktop.org/enter_bug.cgi?product=fontconfig])
 AM_INIT_AUTOMAKE([1.11 parallel-tests dist-bzip2])
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
@@ -53,6 +53,8 @@ m4_ifdef([PKG_INSTALLDIR], [PKG_INSTALLDIR], AC_SUBST([pkgconfigdir], ${libdir}/
 
 AM_MISSING_PROG([GIT], [git])
 AM_MISSING_PROG([GPERF], [gperf])
+AM_PATH_PYTHON(,, [:])
+AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != :])
 
 AC_MSG_CHECKING([for RM macro])
 _predefined_rm=`make -p -f /dev/null 2>/dev/null|grep '^RM ='|sed -e 's/^RM = //'`
@@ -72,11 +74,11 @@ dnl libtool versioning
 dnl bump revision when fixing bugs
 dnl bump current and age, reset revision to zero when adding APIs
 dnl bump current, leave age, reset revision to zero when changing/removing APIS
-LIBT_CURRENT=9
-LIBT_REVISION=0
+LIBT_CURRENT=10
+LIBT_REVISION=4
 AC_SUBST(LIBT_CURRENT)
 AC_SUBST(LIBT_REVISION)
-LIBT_AGE=8
+LIBT_AGE=9
 
 LIBT_VERSION_INFO="$LIBT_CURRENT:$LIBT_REVISION:$LIBT_AGE"
 AC_SUBST(LIBT_VERSION_INFO)
@@ -103,11 +105,19 @@ if test "$os_win32" = "yes"; then
 fi
 AM_CONDITIONAL(MS_LIB_AVAILABLE, test x$ms_librarian = xyes)
 
+AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
 WARN_CFLAGS=""
+WARNING_CPP_DIRECTIVE="no"
 if test "x$GCC" = "xyes"; then
 	WARN_CFLAGS="-Wall -Wpointer-arith -Wstrict-prototypes \
 	-Wmissing-prototypes -Wmissing-declarations \
 	-Wnested-externs -fno-strict-aliasing"
+	WARNING_CPP_DIRECTIVE="yes"
+elif test "x$SUNCC" = "xyes"; then
+	WARN_CFLAGS="-v -fd"
+	WARNING_CPP_DIRECTIVE="yes"
+fi
+if test "x$WARNING_CPP_DIRECTIVE" = "xyes"; then
 	AC_DEFINE_UNQUOTED(HAVE_WARNING_CPP_DIRECTIVE,1,
 	[Can use #warning in C files])
 fi
@@ -138,7 +148,7 @@ dnl ==========================================================================
 # Checks for header files.
 AC_HEADER_DIRENT
 AC_HEADER_STDC
-AC_CHECK_HEADERS([fcntl.h regex.h stdlib.h string.h unistd.h sys/statvfs.h sys/vfs.h sys/statfs.h sys/param.h sys/mount.h])
+AC_CHECK_HEADERS([fcntl.h stdlib.h string.h unistd.h sys/statvfs.h sys/vfs.h sys/statfs.h sys/param.h sys/mount.h])
 AX_CREATE_STDINT_H([src/fcstdint.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -150,44 +160,15 @@ AC_TYPE_PID_T
 # Checks for library functions.
 AC_FUNC_VPRINTF
 AC_FUNC_MMAP
-AC_CHECK_FUNCS([link mkstemp mkostemp _mktemp_s mkdtemp getopt getopt_long getprogname getexecname rand random lrand48 random_r rand_r readlink regcomp regerror regexec regfree fstatvfs fstatfs lstat])
+AC_CHECK_FUNCS([link mkstemp mkostemp _mktemp_s mkdtemp getopt getopt_long getprogname getexecname rand random lrand48 random_r rand_r readlink fstatvfs fstatfs lstat])
 
 dnl AC_CHECK_FUNCS doesn't check for header files.
 dnl posix_fadvise() may be not available in older libc.
 AC_CHECK_SYMBOL([posix_fadvise], [fcntl.h], [fc_func_posix_fadvise=1], [fc_func_posix_fadvise=0])
-AC_DEFINE_UNQUOTED([HAVE_POSIX_FADVISE], [$fc_func_posix_fadvise], [Define to 1 if you have the 'posix_fadivse' function.])
-if test "$os_win32" = "no"; then
-	AC_MSG_CHECKING([for scandir])
-	fc_saved_CFLAGS="$CFLAGS"
-	CFLAGS="$CFLAGS $WARN_CFLAGS -Werror"
-	AC_TRY_COMPILE([
-		#include <dirent.h>
-		int main(void);
-	], [
-		int (* comp) (const struct dirent **, const struct dirent **) = 0;
-		struct dirent **d;
-		return scandir(".", &d, 0, comp) >= 0;
-	], [
-		AC_MSG_RESULT([yes])
-		AC_DEFINE([HAVE_SCANDIR], [1], [Define to 1 if you have the 'scandir' function.])
-	], [
-		AC_TRY_COMPILE([
-			#include <dirent.h>
-			int main(void);
-		], [
-			int (* comp) (const void *, const void *) = 0;
-			struct dirent **d;
-			return scandir(".", &d, 0, comp) >= 0;
-		], [
-			AC_MSG_RESULT([yes])
-			AC_DEFINE([HAVE_SCANDIR_VOID_P], [1], [Define to 1 if you have the 'scandir' function with int (* compar)(const void *, const void *)])
-		],[
-			AC_MSG_ERROR([
-*** No scandir function available.])
-		])
-	])
-fi
-CFLAGS="$fc_saved_CFLAGS"
+AC_DEFINE_UNQUOTED([HAVE_POSIX_FADVISE], [$fc_func_posix_fadvise], [Define to 1 if you have the 'posix_fadvise' function.])
+
+#
+AC_CHECK_MEMBERS([struct stat.st_mtim],,, [#include <sys/stat.h>])
 
 #
 if test "x$ac_cv_func_fstatvfs" = "xyes"; then
@@ -211,12 +192,26 @@ if test "x$ac_cv_func_fstatfs" = "xyes"; then
 fi
 AC_CHECK_MEMBERS([struct dirent.d_type],,,
 	[#include <dirent.h>])
-#
-# regex
-#
-if test "x$ac_cv_func_regcomp" = "xyes" -a "x$ac_cv_func_regerror" = "xyes" -a "x$ac_cv_func_regexec" = "xyes" -a "x$ac_cv_func_regfree"; then
-	AC_DEFINE(USE_REGEX,,[Use regex])
-fi
+
+# Check the argument type of the gperf hash/lookup function
+AC_MSG_CHECKING([The type of len parameter of gperf hash/lookup function])
+fc_gperf_test="$(echo 'foo' | gperf -L ANSI-C)"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+	#include <string.h>
+
+	const char *in_word_set(register const char *, register size_t);
+	$fc_gperf_test
+	]])], [FC_GPERF_SIZE_T=size_t],
+	[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+		#include <string.h>
+
+		const char *in_word_set(register const char *, register unsigned int);
+		$fc_gperf_test
+	]])], [FC_GPERF_SIZE_T="unsigned int"],
+	[AC_MSG_ERROR([Unable to determine the type of the len parameter of the gperf hash/lookup function])]
+)])
+AC_DEFINE_UNQUOTED(FC_GPERF_SIZE_T, $FC_GPERF_SIZE_T, [The type of len parameter of the gperf hash/lookup function])
+AC_MSG_RESULT($FC_GPERF_SIZE_T)
 
 #
 # Checks for iconv
@@ -313,6 +308,25 @@ fontconfig_save_libs="$LIBS"
 fontconfig_save_cflags="$CFLAGS"
 LIBS="$LIBS $FREETYPE_LIBS"
 CFLAGS="$CFLAGS $FREETYPE_CFLAGS"
+
+dnl See http://git.savannah.gnu.org/cgit/freetype/freetype2.git/tree/docs/VERSIONS.TXT for versioning in freetype
+dnl
+dnl The outcome of the family property has been changed in freetype-2.7.1.
+dnl Our test cases relies on it and need to update the dependency to get it success.
+dnl However it isn't exactly required to run fontconfig itself.
+dnl so adding another test here for compatibility. it might be simplified in the future.
+PKG_CHECK_EXISTS([freetype2 = 19.0.13], [have_freetype_2_7_1=yes], [have_freetype_2_7_1=no])
+PKG_CHECK_EXISTS([freetype2 >= 20.0.14],
+	[AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+		#include <ft2build.h>
+		#include FT_CONFIG_OPTIONS_H
+		#ifndef PCF_CONFIG_OPTION_LONG_FAMILY_NAMES
+		#  error "No pcf long family names support"
+		#endif
+		]])], [have_pcf_long_family_names=yes], [have_pcf_long_family_names=no])],
+	[have_pcf_long_family_names=no])
+AM_CONDITIONAL(FREETYPE_PCF_LONG_FAMILY_NAMES, test "x$have_freetype_2_7_1" = xyes -o "x$have_pcf_long_family_names" = xyes)
+
 AC_CHECK_FUNCS(FT_Get_Next_Char FT_Get_BDF_Property FT_Get_PS_Font_Info FT_Has_PS_Glyph_Names FT_Get_X11_Font_Format FT_Select_Size)
 AC_CHECK_MEMBER(FT_Bitmap_Size.y_ppem,
 		HAVE_FT_BITMAP_SIZE_Y_PPEM=1,
@@ -321,6 +335,11 @@ AC_CHECK_MEMBER(FT_Bitmap_Size.y_ppem,
 #include FT_FREETYPE_H])
 AC_DEFINE_UNQUOTED(HAVE_FT_BITMAP_SIZE_Y_PPEM,$HAVE_FT_BITMAP_SIZE_Y_PPEM,
 		   [FT_Bitmap_Size structure includes y_ppem field])
+AC_CHECK_MEMBERS([TT_OS2.usLowerOpticalPointSize, TT_OS2.usUpperOpticalPointSize], [], [], [[
+#include <ft2build.h>
+#include FT_FREETYPE_H
+#include FT_TRUETYPE_TABLES_H]])
+
 CFLAGS="$fontconfig_save_cflags"
 LIBS="$fontconfig_save_libs"
 
@@ -425,6 +444,25 @@ if test "$enable_libxml2" = "yes"; then
 *** SAX1 support in libxml2 is required. enable it or use expat instead.])])
     CFLAGS="$fc_saved_CFLAGS"
 fi
+
+#
+# Set default hinting
+#
+
+AC_ARG_WITH(default-hinting,
+	[AC_HELP_STRING([--with-default-hinting=NAME],
+			[Enable your preferred hinting configuration (none/slight/medium/full) [default=slight]])],
+	preferred_hinting="$withval", preferred_hinting=slight)
+
+case "$preferred_hinting" in
+none|slight|medium|full)
+	PREFERRED_HINTING="$preferred_hinting"
+	AC_SUBST(PREFERRED_HINTING)
+	;;
+*)
+	AC_MSG_ERROR([Invalid hinting. please choose one of none, slight, medium, or full])
+	;;
+esac
 
 #
 # Set default font directory
@@ -706,6 +744,7 @@ dnl Figure out what cache format suffix to use for this architecture
 AC_C_BIGENDIAN
 AC_CHECK_SIZEOF([void *])
 AC_CHECK_ALIGNOF([double])
+AC_CHECK_ALIGNOF([void *])
 
 dnl include the header file for workaround of miscalculating size on autoconf
 dnl particularly for fat binaries
@@ -722,6 +761,7 @@ Makefile
 fontconfig/Makefile
 fc-lang/Makefile
 fc-glyphname/Makefile
+fc-blanks/Makefile
 fc-case/Makefile
 src/Makefile
 conf.d/Makefile
