@@ -5,7 +5,10 @@
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
 /* The normal alignment of `double', in bytes. */
-#define ALIGNOF_DOUBLE 8
+#define ALIGNOF_DOUBLE 4
+
+/* The normal alignment of `void *', in bytes. */
+#define ALIGNOF_VOID_P 4
 
 /* Use libxml2 instead of Expat */
 /* #undef ENABLE_LIBXML2 */
@@ -16,10 +19,11 @@
 /* Architecture prefix to use for cache file names */
 /* #undef FC_ARCHITECTURE */
 
-#if 0
 /* System font directory */
 #define FC_DEFAULT_FONTS "/usr/share/fonts"
-#endif
+
+/* The type of len parameter of the gperf hash/lookup function */
+#define FC_GPERF_SIZE_T size_t
 
 /* Define to nothing if C supports flexible array members, and to 1 if it does
    not. That way, with a declaration like `struct s { int n; double
@@ -85,10 +89,8 @@
 /* Define to 1 if you have the `getprogname' function. */
 #define HAVE_GETPROGNAME 1
 
-//#if 0 // fontconfig 2.10, but we should have this in -current now
 /* Have Intel __sync_* atomic primitives */
 #define HAVE_INTEL_ATOMIC_PRIMITIVES 1
-//#endif
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
@@ -109,7 +111,7 @@
 #define HAVE_MKDTEMP 1
 
 /* Define to 1 if you have the `mkostemp' function. */
-/* #undef HAVE_MKOSTEMP */
+#define HAVE_MKOSTEMP 1
 
 /* Define to 1 if you have the `mkstemp' function. */
 #define HAVE_MKSTEMP 1
@@ -120,11 +122,11 @@
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 /* #undef HAVE_NDIR_H */
 
-/* Define to 1 if you have the 'posix_fadivse' function. */
+/* Define to 1 if you have the 'posix_fadvise' function. */
 #define HAVE_POSIX_FADVISE 1
 
 /* Have POSIX threads */
-#define HAVE_PTHREAD 1
+/* #undef HAVE_PTHREAD */
 
 /* Have PTHREAD_PRIO_INHERIT. */
 /* #undef HAVE_PTHREAD_PRIO_INHERIT */
@@ -143,28 +145,6 @@
 
 /* Define to 1 if you have the `readlink' function. */
 #define HAVE_READLINK 1
-
-/* Define to 1 if you have the `regcomp' function. */
-#define HAVE_REGCOMP 1
-
-/* Define to 1 if you have the `regerror' function. */
-#define HAVE_REGERROR 1
-
-/* Define to 1 if you have the `regexec' function. */
-#define HAVE_REGEXEC 1
-
-/* Define to 1 if you have the <regex.h> header file. */
-#define HAVE_REGEX_H 1
-
-/* Define to 1 if you have the `regfree' function. */
-#define HAVE_REGFREE 1
-
-/* Define to 1 if you have the 'scandir' function. */
-#define HAVE_SCANDIR 1
-
-/* Define to 1 if you have the 'scandir' function with int (* compar)(const
-   void *, const void *) */
-/* #undef HAVE_SCANDIR_VOID_P */
 
 /* Define to 1 if you have the <sched.h> header file. */
 /* #undef HAVE_SCHED_H */
@@ -202,6 +182,9 @@
 /* Define to 1 if `f_fstypename' is a member of `struct statvfs'. */
 #define HAVE_STRUCT_STATVFS_F_FSTYPENAME 1
 
+/* Define to 1 if `st_mtim' is a member of `struct stat'. */
+#define HAVE_STRUCT_STAT_ST_MTIM 1
+
 /* Define to 1 if you have the <sys/dir.h> header file, and it defines `DIR'.
    */
 /* #undef HAVE_SYS_DIR_H */
@@ -231,6 +214,12 @@
 /* Define to 1 if you have the <sys/vfs.h> header file. */
 /* #undef HAVE_SYS_VFS_H */
 
+/* Define to 1 if `usLowerOpticalPointSize' is a member of `TT_OS2'. */
+#define HAVE_TT_OS2_USLOWEROPTICALPOINTSIZE 1
+
+/* Define to 1 if `usUpperOpticalPointSize' is a member of `TT_OS2'. */
+#define HAVE_TT_OS2_USUPPEROPTICALPOINTSIZE 1
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
@@ -249,8 +238,7 @@
 /* Define to 1 if you have the `_mktemp_s' function. */
 /* #undef HAVE__MKTEMP_S */
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #define LT_OBJDIR ".libs/"
 
 /* Name of package */
@@ -263,7 +251,7 @@
 #define PACKAGE_NAME "fontconfig"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "fontconfig 2.11.0"
+#define PACKAGE_STRING "fontconfig 2.12.4"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "fontconfig"
@@ -272,7 +260,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.11.0"
+#define PACKAGE_VERSION "2.12.4"
 
 /* Define to necessary symbol if this constant uses a non-standard name on
    your system. */
@@ -294,16 +282,13 @@
 /* #undef SIZEOF_VOIDP */
 
 /* The size of `void *', as computed by sizeof. */
-#define SIZEOF_VOID_P 8
+#define SIZEOF_VOID_P 4
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Use iconv. */
 #define USE_ICONV 0
-
-/* Use regex */
-#define USE_REGEX /**/
 
 /* Enable extensions on AIX 3, Interix.  */
 #ifndef _ALL_SOURCE
@@ -328,7 +313,7 @@
 
 
 /* Version number of package */
-#define VERSION "2.11.0"
+#define VERSION "2.12.4"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
