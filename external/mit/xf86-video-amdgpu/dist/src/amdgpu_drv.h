@@ -86,9 +86,27 @@
 #include "compat-api.h"
 
 #include "simple_list.h"
-#include "amdpciids.h"
 
 struct _SyncFence;
+
+#ifndef HAVE_REGIONDUPLICATE
+
+static inline RegionPtr
+RegionDuplicate(RegionPtr pOld)
+{
+	RegionPtr pNew;
+
+	pNew = RegionCreate(&pOld->extents, 0);
+	if (!pNew)
+		return NULL;
+	if (!RegionCopy(pNew, pOld)) {
+		RegionDestroy(pNew);
+		return NULL;
+	}
+	return pNew;
+}
+
+#endif
 
 #ifndef MAX
 #define MAX(a,b) ((a)>(b)?(a):(b))
@@ -150,6 +168,11 @@ typedef enum {
 
 #if XF86_CRTC_VERSION >= 5
 #define AMDGPU_PIXMAP_SHARING 1
+#define amdgpu_is_gpu_screen(screen) (screen)->isGPU
+#define amdgpu_is_gpu_scrn(scrn) (scrn)->is_gpu
+#else
+#define amdgpu_is_gpu_screen(screen) 0
+#define amdgpu_is_gpu_scrn(scrn) 0
 #endif
 
 #define AMDGPU_VSYNC_TIMEOUT	20000	/* Maximum wait for VSYNC (in usecs) */
@@ -191,9 +214,9 @@ struct amdgpu_client_priv {
 
 typedef struct {
 	EntityInfoPtr pEnt;
-	pciVideoPtr PciInfo;
+	struct pci_device *PciInfo;
 	int Chipset;
-	AMDGPUChipFamily ChipFamily;
+	uint32_t family;
 	struct gbm_device *gbm;
 
 	 Bool(*CloseScreen) (CLOSE_SCREEN_ARGS_DECL);
@@ -219,7 +242,7 @@ typedef struct {
 	Bool use_glamor;
 	Bool force_accel;
 	Bool shadow_primary;
-	Bool tear_free;
+	int tear_free;
 
 	/* general */
 	OptionInfoPtr Options;
@@ -228,6 +251,7 @@ typedef struct {
 
 	CreateScreenResourcesProcPtr CreateScreenResources;
 	CreateWindowProcPtr CreateWindow;
+	WindowExposuresProcPtr WindowExposures;
 
 	Bool IsSecondary;
 
@@ -290,8 +314,7 @@ typedef struct {
 Bool amdgpu_dri3_screen_init(ScreenPtr screen);
 
 /* amdgpu_kms.c */
-void amdgpu_scanout_update_handler(xf86CrtcPtr crtc, uint32_t frame,
-				   uint64_t usec, void *event_data);
+Bool amdgpu_scanout_do_update(xf86CrtcPtr xf86_crtc, int scanout_id);
 
 /* amdgpu_present.c */
 Bool amdgpu_present_screen_init(ScreenPtr screen);

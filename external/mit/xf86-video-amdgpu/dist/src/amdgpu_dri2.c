@@ -51,6 +51,7 @@
 #include "amdgpu_list.h"
 
 #include <xf86Priv.h>
+#include <X11/extensions/dpmsconst.h>
 
 #if DRI2INFOREC_VERSION >= 9
 #define USE_DRI2_PRIME
@@ -465,9 +466,9 @@ xf86CrtcPtr amdgpu_dri2_drawable_crtc(DrawablePtr pDraw, Bool consider_disabled)
 static void
 amdgpu_dri2_flip_event_abort(xf86CrtcPtr crtc, void *event_data)
 {
-	AMDGPUInfoPtr info = AMDGPUPTR(crtc->scrn);
+	if (crtc)
+		AMDGPUPTR(crtc->scrn)->drmmode.dri2_flipping = FALSE;
 
-	info->drmmode.dri2_flipping = FALSE;
 	free(event_data);
 }
 
@@ -563,7 +564,8 @@ amdgpu_dri2_schedule_flip(xf86CrtcPtr crtc, ClientPtr client,
 			       AMDGPU_DRM_QUEUE_ID_DEFAULT, flip_info,
 			       ref_crtc_hw_id,
 			       amdgpu_dri2_flip_event_handler,
-			       amdgpu_dri2_flip_event_abort, FLIP_VSYNC)) {
+			       amdgpu_dri2_flip_event_abort, FLIP_VSYNC,
+			       target_msc - amdgpu_get_msc_delta(draw, crtc))) {
 		info->drmmode.dri2_flipping = TRUE;
 		return TRUE;
 	}
@@ -636,13 +638,34 @@ can_flip(ScrnInfoPtr pScrn, DrawablePtr draw,
 	 DRI2BufferPtr front, DRI2BufferPtr back)
 {
 	AMDGPUInfoPtr info = AMDGPUPTR(pScrn);
+	xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(pScrn);
+	int num_crtcs_on;
+	int i;
 
-	return draw->type == DRAWABLE_WINDOW &&
-	    info->allowPageFlip &&
-	    !info->hwcursor_disabled &&
-	    !info->drmmode.present_flipping &&
-	    pScrn->vtSema &&
-	    DRI2CanFlip(draw) && can_exchange(pScrn, draw, front, back);
+	if (draw->type != DRAWABLE_WINDOW ||
+	    !info->allowPageFlip ||
+	    info->hwcursor_disabled ||
+	    info->drmmode.present_flipping ||
+	    !pScrn->vtSema ||
+	    !DRI2CanFlip(draw))
+		return FALSE;
+
+	for (i = 0, num_crtcs_on = 0; i < config->num_crtc; i++) {
+		xf86CrtcPtr crtc = config->crtc[i];
+		drmmode_crtc_private_ptr drmmode_crtc = crtc->driver_private;
+
+		if (!crtc->enabled)
+			continue;
+
+		if (!drmmode_crtc || drmmode_crtc->rotate.bo ||
+			drmmode_crtc->scanout[0].bo)
+			return FALSE;
+
+		if (drmmode_crtc->pending_dpms_mode == DPMSModeOn)
+			num_crtcs_on++;
+	}
+
+	return num_crtcs_on > 0 && can_exchange(pScrn, draw, front, back);
 }
 
 static void
@@ -783,14 +806,8 @@ drmVBlankSeqType amdgpu_populate_vbl_request_type(xf86CrtcPtr crtc)
 	if (crtc_id == 1)
 		type |= DRM_VBLANK_SECONDARY;
 	else if (crtc_id > 1)
-#ifdef DRM_VBLANK_HIGH_CRTC_SHIFT
 		type |= (crtc_id << DRM_VBLANK_HIGH_CRTC_SHIFT) &
 		    DRM_VBLANK_HIGH_CRTC_MASK;
-#else
-		ErrorF("amdgpu driver bug: %s called for CRTC %d > 1, but "
-		       "DRM_VBLANK_HIGH_CRTC_MASK not defined at build time\n",
-		       __func__, crtc_id);
-#endif
 
 	return type;
 }
@@ -1365,7 +1382,6 @@ Bool amdgpu_dri2_screen_init(ScreenPtr pScreen)
 	dri2_info.CopyRegion = amdgpu_dri2_copy_region;
 
 	if (info->drmmode.count_crtcs > 2) {
-#ifdef DRM_CAP_VBLANK_HIGH_CRTC
 		uint64_t cap_value;
 
 		if (drmGetCap
@@ -1380,12 +1396,6 @@ Bool amdgpu_dri2_screen_init(ScreenPtr pScreen)
 				   "handle VBLANKs on CRTC > 1\n");
 			scheduling_works = FALSE;
 		}
-#else
-		xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
-			   "You need to rebuild against a "
-			   "newer libdrm to handle VBLANKs on CRTC > 1\n");
-		scheduling_works = FALSE;
-#endif
 	}
 
 	if (scheduling_works) {

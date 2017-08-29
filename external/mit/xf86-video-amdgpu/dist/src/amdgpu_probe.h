@@ -54,37 +54,9 @@
 
 extern DriverRec AMDGPU;
 
-typedef enum {
-	CHIP_FAMILY_UNKNOW,
-	CHIP_FAMILY_LEGACY,
-	CHIP_FAMILY_AMDGPU,
-	CHIP_FAMILY_TAHITI,
-	CHIP_FAMILY_PITCAIRN,
-	CHIP_FAMILY_VERDE,
-	CHIP_FAMILY_OLAND,
-	CHIP_FAMILY_HAINAN,
-	CHIP_FAMILY_BONAIRE,
-	CHIP_FAMILY_KAVERI,
-	CHIP_FAMILY_KABINI,
-	CHIP_FAMILY_HAWAII,
-	CHIP_FAMILY_MULLINS,
-	CHIP_FAMILY_TOPAZ,
-	CHIP_FAMILY_TONGA,
-	CHIP_FAMILY_CARRIZO,
-	CHIP_FAMILY_FIJI,
-	CHIP_FAMILY_STONEY,
-	CHIP_FAMILY_POLARIS10,
-	CHIP_FAMILY_POLARIS11,
-	CHIP_FAMILY_LAST
-} AMDGPUChipFamily;
-
-typedef struct {
-	uint32_t pci_device_id;
-	AMDGPUChipFamily chip_family;
-} AMDGPUCardInfo;
-
 typedef struct {
 	Bool HasCRTC2;		/* All cards except original Radeon  */
+	Bool has_page_flip_target;
 
 	amdgpu_device_handle pDev;
 
@@ -96,7 +68,10 @@ typedef struct {
 	ScrnInfoPtr primary_scrn;
 	ScrnInfoPtr secondary_scrn;
 	struct xf86_platform_device *platform_dev;
+	char *render_node;
 } AMDGPUEntRec, *AMDGPUEntPtr;
+
+extern void amdgpu_kernel_close_fd(AMDGPUEntPtr pAMDGPUEnt);
 
 extern const OptionInfoRec *AMDGPUOptionsWeak(void);
 

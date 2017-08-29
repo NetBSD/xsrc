@@ -68,13 +68,5 @@ EXTRA_DIST = \
 	amdgpu_version.h \
 	amdgpu_video.h \
 	simple_list.h \
-	amdpciids.h \
-	ati_pciids_gen.h \
-	amdgpu_chipinfo_gen.h \
-	amdgpu_chipset_gen.h \
-	amdgpu_pci_chipset_gen.h \
-	amdgpu_pci_device_match_gen.h \
-	pcidb/ati_pciids.csv \
-	pcidb/parse_pci_ids.pl \
 	amdgpu_dri2.h \
 	drmmode_display.h

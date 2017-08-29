@@ -48,6 +48,8 @@
 
 #include "present.h"
 
+static present_screen_info_rec amdgpu_present_screen_info;
+
 struct amdgpu_present_vblank_event {
 	uint64_t event_id;
 	Bool unflip;
@@ -325,11 +327,14 @@ amdgpu_present_flip(RRCrtcPtr crtc, uint64_t event_id, uint64_t target_msc,
 
 	event->event_id = event_id;
 
+	amdgpu_glamor_flush(scrn);
+
 	ret = amdgpu_do_pageflip(scrn, AMDGPU_DRM_QUEUE_CLIENT_DEFAULT,
 				 pixmap, event_id, event, crtc_id,
 				 amdgpu_present_flip_event,
 				 amdgpu_present_flip_abort,
-				 sync_flip ? FLIP_VSYNC : FLIP_ASYNC);
+				 sync_flip ? FLIP_VSYNC : FLIP_ASYNC,
+				 target_msc);
 	if (!ret)
 		xf86DrvMsg(scrn->scrnIndex, X_ERROR, "present flip failed\n");
 	else
@@ -350,6 +355,10 @@ amdgpu_present_unflip(ScreenPtr screen, uint64_t event_id)
 	xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(scrn);
 	struct amdgpu_present_vblank_event *event;
 	PixmapPtr pixmap = screen->GetScreenPixmap(screen);
+	enum drmmode_flip_sync flip_sync =
+		(amdgpu_present_screen_info.capabilities & PresentCapabilityAsync) ?
+		FLIP_ASYNC : FLIP_VSYNC;
+	int old_fb_id;
 	int i;
 
 	if (!amdgpu_present_check_unflip(scrn))
@@ -364,18 +373,20 @@ amdgpu_present_unflip(ScreenPtr screen, uint64_t event_id)
 	event->event_id = event_id;
 	event->unflip = TRUE;
 
+	amdgpu_glamor_flush(scrn);
 	if (amdgpu_do_pageflip(scrn, AMDGPU_DRM_QUEUE_CLIENT_DEFAULT, pixmap,
 			       event_id, event, -1, amdgpu_present_flip_event,
-			       amdgpu_present_flip_abort, FLIP_VSYNC))
+			       amdgpu_present_flip_abort, flip_sync, 0))
 		return;
 
 modeset:
 	/* info->drmmode.fb_id still points to the FB for the last flipped BO.
 	 * Clear it, drmmode_set_mode_major will re-create it
 	 */
-	drmModeRmFB(pAMDGPUEnt->fd, info->drmmode.fb_id);
+	old_fb_id = info->drmmode.fb_id;
 	info->drmmode.fb_id = 0;
 
+	amdgpu_glamor_finish(scrn);
 	for (i = 0; i < config->num_crtc; i++) {
 		xf86CrtcPtr crtc = config->crtc[i];
 		drmmode_crtc_private_ptr drmmode_crtc = crtc->driver_private;
@@ -390,6 +401,7 @@ modeset:
 			drmmode_crtc->need_modeset = TRUE;
 	}
 
+	drmModeRmFB(pAMDGPUEnt->fd, old_fb_id);
 	present_event_notify(event_id, 0, 0);
 	info->drmmode.present_flipping = FALSE;
 }
