@@ -51,8 +51,7 @@
 /* Linux ROM read fallback */
 #undef LINUX_ROM
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
 
 /* Name of package */
