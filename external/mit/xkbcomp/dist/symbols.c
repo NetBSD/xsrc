@@ -339,17 +339,18 @@ MergeKeyGroups(SymbolsInfo * info,
     clobber = (from->defs.merge != MergeAugment);
     report = (warningLevel > 9) ||
         ((into->defs.fileID == from->defs.fileID) && (warningLevel > 0));
-    if (into->numLevels[group] >= from->numLevels[group])
-    {
-        resultSyms = into->syms[group];
-        resultActs = into->acts[group];
-        resultWidth = into->numLevels[group];
-    }
-    else
+    if ((from->numLevels[group] > into->numLevels[group])
+        || (clobber && (from->types[group] != None)))
     {
         resultSyms = from->syms[group];
         resultActs = from->acts[group];
         resultWidth = from->numLevels[group];
+    }
+    else
+    {
+        resultSyms = into->syms[group];
+        resultActs = into->acts[group];
+        resultWidth = into->numLevels[group];
     }
     if (resultSyms == NULL)
     {
