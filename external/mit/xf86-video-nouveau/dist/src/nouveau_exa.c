@@ -514,12 +514,13 @@ nouveau_exa_init(ScreenPtr pScreen)
 		break;
 	case NV_FERMI:
 	case NV_KEPLER:
+	case NV_MAXWELL:
+	case NV_PASCAL:
 		exa->CheckComposite   = NVC0EXACheckComposite;
 		exa->PrepareComposite = NVC0EXAPrepareComposite;
 		exa->Composite        = NVC0EXAComposite;
 		exa->DoneComposite    = NVC0EXADoneComposite;
 		break;
-	case NV_MAXWELL:
 	default:
 		break;
 	}

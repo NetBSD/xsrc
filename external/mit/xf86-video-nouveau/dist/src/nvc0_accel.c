@@ -53,6 +53,16 @@
 #include "shader/exas8nvf0.fp"
 #include "shader/exac8nvf0.fp"
 
+#include "shader/xfrm2nv110.vp"
+#include "shader/videonv110.fp"
+
+#include "shader/exascnv110.fp"
+#include "shader/exacmnv110.fp"
+#include "shader/exacanv110.fp"
+#include "shader/exasanv110.fp"
+#include "shader/exas8nv110.fp"
+#include "shader/exac8nv110.fp"
+
 #define NVC0PushProgram(pNv,addr,code) do {                                    \
 	const unsigned size = sizeof(code) / sizeof(code[0]);                  \
 	PUSH_DATAu((pNv)->pushbuf, (pNv)->scratch, (addr), size);              \
@@ -146,9 +156,17 @@ NVAccelInitCOPY_NVE0(ScrnInfoPtr pScrn)
 {
 	NVPtr pNv = NVPTR(pScrn);
 	struct nouveau_pushbuf *push = pNv->pushbuf;
+	uint32_t class;
 	int ret;
 
-	ret = nouveau_object_new(pNv->channel, 0x0000a0b5, 0xa0b5,
+	if (pNv->dev->chipset < 0x110)
+		class = 0xa0b5;
+	else if (pNv->dev->chipset < 0x130)
+		class = 0xb0b5;
+	else
+		class = 0xc0b5;
+
+	ret = nouveau_object_new(pNv->channel, class, class,
 				 NULL, 0, &pNv->NvCOPY);
 	if (ret)
 		return FALSE;
@@ -223,9 +241,26 @@ NVAccelInit3D_NVC0(ScrnInfoPtr pScrn)
 	} else if (pNv->dev->chipset < 0xf0) {
 		class  = 0xa097;
 		handle = 0x0000906e;
-	} else {
+	} else if (pNv->dev->chipset < 0x110) {
 		class  = 0xa197;
 		handle = 0x0000906e;
+	} else if (pNv->dev->chipset < 0x120) {
+		class  = 0xb097;
+		handle = 0x0000906e;
+	} else if (pNv->dev->chipset < 0x130) {
+		class  = 0xb197;
+		handle = 0x0000906e;
+	} else if (pNv->dev->chipset == 0x130) {
+		class  = 0xc097;
+		handle = 0x0000906e;
+	} else if (pNv->dev->chipset < 0x140) {
+		class  = 0xc197;
+		handle = 0x0000906e;
+	} else {
+		xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+			   "No 3D acceleration support for NV%X\n",
+			   pNv->dev->chipset);
+		return FALSE;
 	}
 
 	ret = nouveau_object_new(pNv->channel, class, class,
@@ -300,14 +335,27 @@ NVAccelInit3D_NVC0(ScrnInfoPtr pScrn)
 		PUSH_DATA (push, 0x00000001);
 		BEGIN_NVC0(push, NVC0_3D(CB_BIND(4)), 1);
 		PUSH_DATA (push, 0x11);
-		BEGIN_NVC0(push, SUBC_3D(0x2608), 1);
+		BEGIN_NVC0(push, NVE4_3D(TEX_CB_INDEX), 1);
 		PUSH_DATA (push, 1);
 	}
 
-	BEGIN_NVC0(push, NVC0_3D(VERTEX_QUARANTINE_ADDRESS_HIGH), 3);
-	PUSH_DATA (push, (bo->offset + MISC_OFFSET) >> 32);
-	PUSH_DATA (push, (bo->offset + MISC_OFFSET));
-	PUSH_DATA (push, 1);
+	if (pNv->Architecture < NV_MAXWELL) {
+		BEGIN_NVC0(push, NVC0_3D(VERTEX_QUARANTINE_ADDRESS_HIGH), 3);
+		PUSH_DATA (push, (bo->offset + MISC_OFFSET) >> 32);
+		PUSH_DATA (push, (bo->offset + MISC_OFFSET));
+		PUSH_DATA (push, 1);
+	} else {
+		/* Use new TIC format. Not strictly necessary for GM20x+ */
+		IMMED_NVC0(push, SUBC_3D(0x0f10), 1);
+		if (pNv->dev->chipset >= 0x120) {
+			/* Use center sample locations. */
+			BEGIN_NVC0(push, SUBC_3D(0x11e0), 4);
+			PUSH_DATA (push, 0x88888888);
+			PUSH_DATA (push, 0x88888888);
+			PUSH_DATA (push, 0x88888888);
+			PUSH_DATA (push, 0x88888888);
+		}
+	}
 
 	BEGIN_NVC0(push, NVC0_3D(CODE_ADDRESS_HIGH), 2);
 	PUSH_DATA (push, (bo->offset + CODE_OFFSET) >> 32);
@@ -334,7 +382,8 @@ NVAccelInit3D_NVC0(ScrnInfoPtr pScrn)
 		NVC0PushProgram(pNv, PFP_S_A8, NVE0FP_Source_A8);
 		NVC0PushProgram(pNv, PFP_C_A8, NVE0FP_Composite_A8);
 		NVC0PushProgram(pNv, PFP_NV12, NVE0FP_NV12);
-	} else {
+	} else
+	if (pNv->dev->chipset < 0x110) {
 		NVC0PushProgram(pNv, PVP_PASS, NVF0VP_Transform2);
 		NVC0PushProgram(pNv, PFP_S, NVF0FP_Source);
 		NVC0PushProgram(pNv, PFP_C, NVF0FP_Composite);
@@ -343,6 +392,15 @@ NVAccelInit3D_NVC0(ScrnInfoPtr pScrn)
 		NVC0PushProgram(pNv, PFP_S_A8, NVF0FP_Source_A8);
 		NVC0PushProgram(pNv, PFP_C_A8, NVF0FP_Composite_A8);
 		NVC0PushProgram(pNv, PFP_NV12, NVF0FP_NV12);
+	} else {
+		NVC0PushProgram(pNv, PVP_PASS, NV110VP_Transform2);
+		NVC0PushProgram(pNv, PFP_S, NV110FP_Source);
+		NVC0PushProgram(pNv, PFP_C, NV110FP_Composite);
+		NVC0PushProgram(pNv, PFP_CCA, NV110FP_CAComposite);
+		NVC0PushProgram(pNv, PFP_CCASA, NV110FP_CACompositeSrcAlpha);
+		NVC0PushProgram(pNv, PFP_S_A8, NV110FP_Source_A8);
+		NVC0PushProgram(pNv, PFP_C_A8, NV110FP_Composite_A8);
+		NVC0PushProgram(pNv, PFP_NV12, NV110FP_NV12);
 	}
 
 	BEGIN_NVC0(push, NVC0_3D(SP_SELECT(1)), 4);

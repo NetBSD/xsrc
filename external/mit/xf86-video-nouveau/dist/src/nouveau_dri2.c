@@ -279,23 +279,27 @@ can_exchange(DrawablePtr draw, PixmapPtr dst_pix, PixmapPtr src_pix)
 	ScrnInfoPtr scrn = xf86ScreenToScrn(draw->pScreen);
 	xf86CrtcConfigPtr xf86_config = XF86_CRTC_CONFIG_PTR(scrn);
 	NVPtr pNv = NVPTR(scrn);
-	int i;
+	int i, active_crtc_count = 0;
 
 	if (!xf86_config->num_crtc)
 		return FALSE;
 
 	for (i = 0; i < xf86_config->num_crtc; i++) {
 		xf86CrtcPtr crtc = xf86_config->crtc[i];
-		if (crtc->enabled && crtc->rotatedData)
-			return FALSE;
+		if (drmmode_crtc_on(crtc)) {
+			if (crtc->rotatedData)
+				return FALSE;
 
+			active_crtc_count++;
+		}
 	}
 
 	return ((DRI2CanFlip(draw) && pNv->has_pageflip)) &&
 		dst_pix->drawable.width == src_pix->drawable.width &&
 		dst_pix->drawable.height == src_pix->drawable.height &&
 		dst_pix->drawable.bitsPerPixel == src_pix->drawable.bitsPerPixel &&
-		dst_pix->devKind == src_pix->devKind;
+		dst_pix->devKind == src_pix->devKind &&
+		active_crtc_count;
 }
 
 static Bool
@@ -475,7 +479,7 @@ dri2_page_flip(DrawablePtr draw, PixmapPtr back, void *priv,
 		int head = drmmode_crtc(config->crtc[i]);
 		void *token;
 
-		if (!config->crtc[i]->enabled)
+		if (!drmmode_crtc_on(config->crtc[i]))
 			continue;
 
 		flipdata->flip_count++;

@@ -23,6 +23,7 @@
 #define NV_FERMI    0xc0
 #define NV_KEPLER   0xe0
 #define NV_MAXWELL  0x110
+#define NV_PASCAL   0x130
 
 struct xf86_platform_device;
 
