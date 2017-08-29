@@ -23,7 +23,7 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-video-amdgpu],
-        [1.2.0],
+        [1.3.0],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
         [xf86-video-amdgpu])
 
@@ -69,8 +69,8 @@ XORG_DRIVER_CHECK_EXT(XV, videoproto)
 XORG_DRIVER_CHECK_EXT(DPMSExtension, xextproto)
 
 # Checks for libraries.
-PKG_CHECK_MODULES(LIBDRM, [libdrm >= 2.4.58])
-PKG_CHECK_MODULES(LIBDRM_AMDGPU, [libdrm_amdgpu])
+PKG_CHECK_MODULES(LIBDRM, [libdrm >= 2.4.72])
+PKG_CHECK_MODULES(LIBDRM_AMDGPU, [libdrm_amdgpu >= 2.4.72])
 PKG_CHECK_MODULES(GBM, [gbm])
 
 # Obtain compiler/linker options for the driver dependencies
@@ -138,9 +138,14 @@ if test "x$GLAMOR" != "xno"; then
 					 [Have glamor_egl_destroy_textured_pixmap API])], [],
 			      [#include "xorg-server.h"
 			       #include "glamor.h"])
-	fi
 
-	PKG_CHECK_MODULES(LIBGL, [gl])
+		AC_CHECK_DECL(glamor_finish,
+			      [AC_DEFINE(HAVE_GLAMOR_FINISH, 1,
+					 [Have glamor_finish API])],
+					 [PKG_CHECK_MODULES(LIBGL, [gl])],
+			      [#include "xorg-server.h"
+			       #include "glamor.h"])
+	fi
 
 	if test "x$GLAMOR_XSERVER" != xyes; then
 		PKG_CHECK_MODULES(LIBGLAMOR, [glamor >= 0.6.0])
@@ -151,6 +156,12 @@ else
 	AC_MSG_RESULT([$GLAMOR])
 fi
 AM_CONDITIONAL(GLAMOR, test x$GLAMOR != xno)
+
+AC_CHECK_DECL(RegionDuplicate,
+	      [AC_DEFINE(HAVE_REGIONDUPLICATE, 1,
+	      [Have RegionDuplicate API])], [],
+	      [#include <xorg-server.h>
+	       #include <regionstr.h>])
 
 AC_CHECK_DECL(fbGlyphs,
 	      [AC_DEFINE(HAVE_FBGLYPHS, 1, [Have fbGlyphs API])], [],

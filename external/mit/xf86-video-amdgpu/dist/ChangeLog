@@ -1,3 +1,612 @@
+commit 804e30e14e51f94403a0721ef2aae28f1fa9e9f2
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Mar 16 17:28:11 2017 +0900
+
+    Bump version for 1.3.0 release
+
+commit 3a8582944ed3fef1b75f8871489e6e19963e2ea6
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Mar 9 15:56:59 2017 +0900
+
+    Pass TRUE to drmmode_set_desired_modes the first time for GPU screens
+    
+    This is the only place we call drmmode_set_desired_modes for GPU screens
+    during server startup. Without this change, the display outputs of
+    secondary GPUs may stay on even while Xorg isn't using them.
+    
+    (Ported from radeon commit 9a71445094b728f3d78db8f6808b4782ee19a453)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 82b15a4da156e18da4c8fc0093500c32b549e487
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Mar 9 15:47:24 2017 +0900
+
+    Skip some initialization steps for GPU screens
+    
+    Xorg doesn't use the following functionality of GPU screens, so don't
+    bother initializing it:
+    
+    * DRI page flipping
+    * DRI3 / Present / SYNC fences
+    * XVideo / XvMC
+    * Root window with background None
+    
+    (Ported from radeon commit 67ae5e00a748ad52cf92738d401afff2947b1891)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit fa85331f0ce27e16a9338516518433955133840e
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Mar 7 18:02:29 2017 +0900
+
+    glamor: Use glamor_finish when available
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 7884e38e94c2cbd6c205f556f2b31ad59b4089b4
+Author: Hans De Goede <hdegoede@redhat.com>
+Date:   Tue Oct 18 16:48:40 2016 +0200
+
+    amdgpu_probe: Do not close server managed drm fds
+    
+    This fixes the xserver only seeing AMD/ATI devices supported by the amdgpu
+    driver, as by the time xf86-video-ati gets a chance to probe them, the
+    fd has been closed.
+    
+    This fixes e.g. Xorg not seeing the dGPU on a Lenovo Thinkpad E465 laptop
+    with a CARRIZO iGPU and a HAINAN dGPU.
+    
+    Signed-off-by: Hans de Goede <hdegoede@redhat.com>
+    
+    v2: Rebased on top of new patch 1.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit a2c360fa1d33d6a5aa64c396197e119ff77d1379
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Mar 6 18:59:23 2017 +0900
+
+    Refactor amdgpu_kernel_close_fd helper
+    
+    Preparation for the following change.
+    
+    Assign pAMDGPUEnt->fd = -1 instead of 0 when we're not using the file
+    descriptor anymore.
+    
+    Reviewed-by: Hans de Goede <hdegoede@redhat.com>
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 947017194d07e32876a43ee0efc45fdc71385748
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Mar 3 17:59:19 2017 +0900
+
+    glamor: Don't flush in BlockHandler with Xorg >= 1.19
+    
+    This was only necessary with older versions for driving the FBO cache
+    expiry mechanism.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 86907a5e4ce33154167b330570491f88218725d3
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Mar 6 18:23:41 2017 +0900
+
+    Only define transform_region for XF86_CRTC_VERSION >= 4
+    
+    Not used with older versions of Xorg. Fixes warning in that case:
+    
+    ../../src/amdgpu_kms.c:328:1: warning: ‘transform_region’ defined but not used [-Wunused-function]
+     transform_region(RegionPtr region, struct pict_f_transform *transform,
+     ^~~~~~~~~~~~~~~~
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 8d2b7d1758e3fcac520a18a0684c073f0ac62389
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Mar 6 18:09:58 2017 +0900
+
+    Use local implementation of RegionDuplicate for older xserver
+    
+    It was only added in xserver 1.15. Fixes build against older xserver.
+    
+    Reported-by: Pali Rohár <pali.rohar@gmail.com>
+    (Ported from radeon commit 80cc892ee1ce54fad3cb7dd11bd9df18c359136f)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit cd73100114a18642d9c40f1df33cef8311e96a8b
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Mar 6 18:07:19 2017 +0900
+
+    Don't use pScrn->is_gpu in AMDGPUCreateScreenResources_KMS
+    
+    Looks like this snuck in accidentally.
+    
+    Brings us back in line with the radeon driver, and fixes the build
+    against older versions of xserver which didn't have the is_gpu field
+    yet.
+    
+    Fixes: 6bab8fabb37e ("Remove info->dri2.drm_fd and info->drmmode->fd")
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 351baa89b9b0ecfb6c666af3a2d10c559a9224a9
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Mar 3 16:44:15 2017 +0900
+
+    Don't call amdgpu_glamor_flush in drmmode_copy_fb
+    
+    AMDGPUWindowExposures_oneshot takes care of it.
+    
+    (Ported from radeon commit d63881623f0686a66a2e3e3c1f84e496aa52ec6b)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit ad53635af150cda9b8da413be5a011d74f972ac7
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Mar 3 16:41:49 2017 +0900
+
+    Move DPMS check from amdgpu_scanout_do_update to amdgpu_scanout_flip
+    
+    When amdgpu_scanout_do_update is called from
+    drmmode_crtc_scanout_update, drmmode_crtc->pending_dpms_mode may still
+    be != DPMSModeOn, e.g. during server startup.
+    
+    Fixes intermittently showing garbage with TearFree enabled.
+    
+    (Ported from radeon commit cc9d6b7db9c2078be1e530a64af6d517c6a42024)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 378bd05c849ad3092f138bdc8917d35d0b967389
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Mar 3 16:36:24 2017 +0900
+
+    Call drmmode_set_desired_modes from a WindowExposures hook
+    
+    This is the earliest opportunity where the root window contents are
+    guaranteed to be initialized, and prevents drmmode_set_mode_major from
+    getting called before drmmode_set_desired_modes via AMDGPUUnblank ->
+    drmmode_crtc_dpms. Also, in contrast to the BlockHandler hook, this is
+    called when running Xorg with -pogo.
+    
+    Fixes intermittently showing garbage on server startup or after server
+    reset.
+    
+    As a bonus, this avoids trouble due to higher layers (e.g. the tigervnc
+    Xorg module) calling AMDGPUBlockHandler_oneshot repeatedly even after
+    we set pScreen->BlockHandler = AMDGPUBlockHandler_KMS.
+    
+    Bugzilla: https://bugs.freedesktop.org/99457
+    (Ported from radeon commits 0a12bf1085505017068dfdfd31d23133e51b45b9 and
+    f0e7948e1c0e984fc27f235f365639e9cf628291)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 8d4d73e05ce34eb353daec7b2c0e7c844113c7de
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Mar 3 16:34:16 2017 +0900
+
+    present: Flush before flipping
+    
+    This isn't necessary for DRI clients, but the Present extension can also
+    be used for presenting normal pixmaps rendered to via the X11 protocol.
+    
+    (Ported from radeon commit 9035b6abea557828e672ee455f0c84e43da0906f)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 88725b68cad92418c9bb03cb7f20526ce238d64e
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Mar 3 16:30:27 2017 +0900
+
+    present: Use async flip for unflip if possible
+    
+    In that case, unflip operations should finish faster in general.
+    
+    (Ported from radeon commit 0a4eb0e12f0c9c653cf4cea6fd62e1a507eb261c)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit b31489c086b4bc50c824e85fa26d97c0f43afb20
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Mar 3 16:28:41 2017 +0900
+
+    present: Also flush before using a flip to unflip
+    
+    Not doing so might result in intermittently scanning out stale contents
+    of the screen pixmap.
+    
+    (Ported from radeon commit 9a951a3e551db58ba50e7a594521ceac54d90615)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit f6a3c87c3097e8d5c1d2159bc90d6541a46ed8be
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Mar 3 16:26:26 2017 +0900
+
+    present: Wait for GPU idle before setting modes for unflip
+    
+    To make sure the screen pixmap contents are up to date when it starts
+    being scanned out.
+    
+    (Ported from radeon commit 244d4bc7f8c8f6bc90f49556c0b9344c8aa40295)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 012ffffb45119059f3610fb8fd6ae103186b3e3c
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Mar 3 16:22:39 2017 +0900
+
+    present: Only call drmModeRmFB after setting modes for unflip
+    
+    Fixes display intermittently blanking when a modeset is used for unflip.
+    
+    (Ported from radeon commit 3ff29e5a14451916bc66b4e0028e9a317f0723f8)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit f4719bb473df897012f8830f46e99cb781d67b6f
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Mar 3 16:19:11 2017 +0900
+
+    Use drmmode_crtc_scanout_free in drmmode_fini
+    
+    We were leaking drmmode_crtc->scanout_damage, which caused trouble on
+    server reset. Fixes server reset with active separate scanout pixmaps.
+    
+    (Cherry picked from radeon commit 0c29deb5a97d9a57e994cc0053c49ddf7aca6ecb)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit af0b24c1aca4cba2692d5aa410e63cb536478dbe
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Mar 2 17:24:03 2017 +0900
+
+    Allow toggling TearFree at runtime via output property
+    
+    Option "TearFree" now sets the default value of the output property.
+    See the manpage update for details.
+    
+    TearFree is now enabled by default for outputs using rotation or other
+    RandR transforms, and for RandR 1.4 slave outputs.
+    
+    (Ported from radeon commit 58cd1600057e41aade0106d4acf78e23eac6e44f)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 77853f02e5b879e7042f55c672cf2d8e6955309f
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Mar 2 17:19:59 2017 +0900
+
+    Factor out drmmode_crtc_scanout_update helper
+    
+    Cleanup in preparation for following change, no functional change
+    intended.
+    
+    (Ported from radeon commit 305e2cbf335837a2ab6a24e9ff65815afe038296)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit d25cc3b2b3b2d257aea247b85fea405d7e84e5b1
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Mar 2 17:15:03 2017 +0900
+
+    Factor out amdgpu_prime_dirty_to_crtc helper
+    
+    Cleanup in preparation for the following change, no functional change
+    intended.
+    
+    (Ported from radeon commit 649644a88347a6d03de68f8c41db03a82deeb23b)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit a6d363008e2b55f0aa6151be1a99f01b97870e91
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Mar 2 17:13:06 2017 +0900
+
+    Don't destroy current FB if drmModeAddFB fails
+    
+    It would probably result in a black screen.
+    
+    (Ported from radeon commit 1351e48efe7a2c28eab447e16f36a00fbd02ae48)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 53926db2355de0a324c205703a0377b498136f65
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Mar 2 17:08:19 2017 +0900
+
+    Fix flip event data leak if calloc or drmModeAddFB fails
+    
+    (Ported from radeon commit 481394e3c9f9f7d88bb66fe9ae8834c87952a8ab)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 45a8ec6257c370eecf43b6b8010863e37b704872
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Mar 2 17:04:36 2017 +0900
+
+    autogen: add default patch prefix
+    
+    (Ported from radeon commit 8e6a4e96b7b27559e186f71b5547abb0a80b96dd)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit ba2aa0a8c12a2bea1e8be01ca3134b518d4cb0f2
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Mar 2 16:55:38 2017 +0900
+
+    Handle rotation in the driver also with Xorg 1.12-1.18
+    
+    We cannot use the HW cursor in that case, but in turn we get more
+    efficient and less teary updates of rotated outputs.
+    
+    (Ported from radeon commit f2bc882f1c1082bed9f496cfab6c8f07a76bc122)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 7f3abf35a2e1225ffd6a777b23f6a7a6355c1691
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Mar 2 16:47:06 2017 +0900
+
+    Fold drmmode_crtc_scanout_allocate into drmmode_crtc_scanout_create
+    
+    Not used anywhere else anymore.
+    
+    (Ported from radeon commit ae921a3150f69c38b5b3c88a9e37d54fdf0d5093)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 03c2db3c67bf5ad3c0744add9e0bb611b6cd3df7
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Mar 2 16:42:04 2017 +0900
+
+    Call drmmode_crtc_scanout_create in drmmode_crtc_shadow_allocate as well
+    
+    Calling drmmode_crtc_scanout_allocate in drmmode_crtc_shadow_allocate
+    resulted in drmmode_crtc_scanout_create called from
+    drmmode_crtc_shadow_create passing an uninitialized pitch value to
+    drmmode_create_bo_pixmap.
+    
+    Fixes issues such as failure to allocate the scanout pixmap or visual
+    corruption and GPUVM faults when attempting to use rotation with Xorg
+    <1.19.
+    
+    Bugzilla: https://bugs.freedesktop.org/99916
+    Fixes: 5f7123808833 ("Pass pitch from drmmode_crtc_scanout_allocate to
+                          drmmode_create_bo_pixmap")
+    (Ported from radeon commit 987a34adb319923ad36e2b47a26837248f187c3e)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 49b092563cb3958911d28a006f155b4f4e38ed73
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Thu Jan 26 11:10:12 2017 +0900
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 457fcc5935c659aab5b88cf26d065180b47ed632
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Thu Jan 26 11:09:07 2017 +0900
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
+commit 5f712380883357d03c9934a753ef302e109aeb14
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Jan 6 17:42:25 2017 +0900
+
+    Pass pitch from drmmode_crtc_scanout_allocate to drmmode_create_bo_pixmap
+    
+    Mostly to align with radeon commit
+    ea30d856ba5e7274c8ea499293b8b0e721b8e082, but also gets rid of a
+    gbm_bo_get_stride call.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit b5c189473dba2cffc9e4df310ce5c86ceca99a94
+Author: Jammy Zhou <Jammy.Zhou@amd.com>
+Date:   Tue Dec 13 12:32:39 2016 +0900
+
+    Use render node for DRI3 if available
+    
+    Signed-off-by: Jammy Zhou <Jammy.Zhou@amd.com>
+    Reviewed-by: Michel Dänzer <michel.daenzer@amd.com>
+    [ Second attempt, let's see if there's any fallout this time... ]
+
+commit edd276185d42962a13faf9ec9eeebc754ef284e7
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Dec 15 12:42:44 2016 +0900
+
+    Simplify drmmode_handle_uevents
+    
+    No functional change intended.
+    
+    Reviewed-by: Jim Qu <Jim.Qu@amd.com>
+
+commit 732cf4d3a248b288532ad0f3443da49e08dc7507
+Author: jimqu <Jim.Qu@amd.com>
+Date:   Tue Dec 13 16:33:26 2016 +0800
+
+    udev_monitor_receive_device() will block when hotplug monitor
+    
+    udev_monitor_receive_device() will block and wait for the event of udev
+    use select() to ensure that this will not block.
+    
+    Signed-off-by: JimQu <Jim.Qu@amd.com>
+    Reviewed-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit d60ea478cf2215ded7e1acf5817a0dae07e54026
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Nov 30 16:28:27 2016 +0900
+
+    Call amdgpu_drm_abort_entry on failure to flip to a scanout pixmap
+    
+    Fixes leaking the corresponding struct amdgpu_drm_queue list entry in
+    that case.
+    
+    (Ported from radeon commit e2942449171fe628a7726e59bcaab65e27d88563)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit aea70298ef0d53fc81aa1fd22c8566920a856223
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Nov 30 16:27:10 2016 +0900
+
+    Call ValidateGC after ChangeClip in amdgpu_sync_scanout_pixmaps
+    
+    The wrong order meant that the clipping region wasn't actually applied,
+    so it always copied the full contents from the other scanout pixmap.
+    
+    (Ported from radeon commit 14c3f59f5157885ad8f941f0bad6c0c5e3db12f8)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 0f79c30619168c6845b143c6ed94ade307383068
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Nov 30 16:25:52 2016 +0900
+
+    Fix amdgpu_scanout_extents_intersect for GPU screens
+    
+    Fixes incorrect screen updates with TearFree enabled on PRIME slave
+    outputs which are not located at (0, 0).
+    
+    (Ported from radeon commit a995f5830916a0fee5126263d1bfe48632be3a15)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 082b6b8ca1878f4b7ab0b25d16b85ba40748ac57
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Nov 30 16:21:28 2016 +0900
+
+    Take current scanout_id into account everywhere involved with TearFree
+    
+    Fixes various potential issues with TearFree enabled, e.g. outputs
+    freezing after display configuration changes.
+    
+    (Ported from radeon commit e543ef3a2fb304cbe3a965fb780632af2e4186f4)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 82729b1f3b9d57f3002ac2689bfbf37ece0bc3f2
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Nov 28 17:47:17 2016 +0900
+
+    Add amdgpu_is_gpu_screen helper
+    
+    This will hopefully decrease the chance of accidentally breaking the
+    build against xserver < 1.13 in the future.
+    
+    (Ported from radeon commit f130b10e63f7526360b41aa0918b4940f63f662a)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 7fe2a8ed67ef82916a1eb5b241c5a602a26e10b2
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Nov 22 16:50:59 2016 +0900
+
+    Don't install Flush/EventCallback for GPU screens
+    
+    Their purpose is to flush GPU rendering commands corresponding to damage
+    events, but there can be no damage events corresponding to GPU screen
+    rendering operations.
+    
+    (Ported from radeon commits 13c6bc5e382765fe567091e1c616c0a26eec04ca and
+    487aa62a2a23b86e4ea4714fdfd465c9e513141f)
+    
+    v2: Squash in radeon fix for build against xserver < 1.13
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com> (v1)
+
+commit ff31320644b4d17b9b3f0abd612c99769d3d9643
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Nov 25 18:34:40 2016 +0900
+
+    Make libdrm >= 2.4.72 requirement explicit
+    
+    And drop compatibility code for older versions.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit f9ba1e8fd48cd967a09c4e083b277505d08d3849
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Nov 22 16:30:59 2016 +0900
+
+    Use DRM_MODE_PAGE_FLIP_TARGET_ABSOLUTE/RELATIVE flags when available
+    
+    (Ported from radeon commits 1106b2f773ad0611c729b27f4c192a26b43ef1e7
+    and 5fea5ef2f07eee4a0f94baab427010b936f1d4b4)
+    
+    v2:
+    * Squash in radeon fix for TearFree regression
+    * Remove preprocessor guards for compatibility with libdrm < 2.4.72
+      (Emil Velikov)
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit e8aa4e7ea59f00d5527654b7181a05aab8c78928
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Oct 26 18:38:20 2016 +0900
+
+    Remove generated header files
+    
+    No longer used.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit d69fd22b6d13052d667929a0e3db61829ce1396e
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Oct 26 18:36:18 2016 +0900
+
+    Stop using AMDGPU(Unique)Chipsets
+    
+    Use libdrm_amdgpu's amdgpu_get_marketing_name for the chipset name, or
+    "Unknown AMD Radeon GPU" as a fallback.
+    
+    v2: Require libdrm_amdgpu >= 2.4.72 for amdgpu_get_marketing_name
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com> (v1)
+
+commit 8a5ff54af32a75ae56d3369a828a50ae28dd1acd
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Oct 26 18:09:18 2016 +0900
+
+    Stop using AMDGPUPciChipsets
+    
+    Not actually used by Xorg.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 298eaf58a57efa6acc53d374eea239b6bb55c0f8
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Oct 26 18:05:58 2016 +0900
+
+    Remove amdpciids.h
+    
+    Not useful anymore.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit a0881d55fe80d639d31cdfeadd6014322c037791
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Oct 26 18:02:39 2016 +0900
+
+    Stop using generated amdgpu_device_match
+    
+    Just match on PCI device ID 0x1002.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 40ddc52b2ae32b17ef7eea1602fdf59b63f06f17
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Oct 26 17:42:36 2016 +0900
+
+    Use family information from libdrm_amdgpu / kernel
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 5c9d1c5097e326c69f1be4427c62a0d348e8a4a6
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Oct 26 17:32:56 2016 +0900
+
+    Move struct amdgpu_gpu_info out of amdgpu_get_tile_config
+    
+    Preparation for the following change, no functional change intended.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit adf7dabdf9c8acd674190e25050b0885a05d0e92
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Nov 21 17:50:22 2016 +0900
+
+    Post-release version bump
+
 commit a00032050873fc99f3ceaa3293468dad1d94d4b1
 Author: Michel Dänzer <michel.daenzer@amd.com>
 Date:   Thu Nov 17 15:17:10 2016 +0900
