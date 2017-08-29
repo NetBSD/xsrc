@@ -1,3 +1,542 @@
+commit 66227060872219c1a0dc84fa4cea6264f7548446
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Mar 16 16:38:15 2017 +0900
+
+    Bump version for 7.9.0 release
+
+commit 9a71445094b728f3d78db8f6808b4782ee19a453
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Mar 8 17:42:56 2017 +0900
+
+    Pass TRUE to drmmode_set_desired_modes the first time for GPU screens
+    
+    This is the only place we call drmmode_set_desired_modes for GPU screens
+    during server startup. Without this change, the display outputs of
+    secondary GPUs may stay on even while Xorg isn't using them.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 67ae5e00a748ad52cf92738d401afff2947b1891
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Mar 8 11:20:30 2017 +0900
+
+    Skip some initialization steps for GPU screens
+    
+    Xorg doesn't use the following functionality of GPU screens, so don't
+    bother initializing it:
+    
+    * DRI page flipping
+    * DRI3 / Present / SYNC fences
+    * XVideo / XvMC
+    * Root window with background None
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit f0e7948e1c0e984fc27f235f365639e9cf628291
+Author: Jochen Rollwagen <joro-2013@t-online.de>
+Date:   Sun Mar 5 11:32:38 2017 +0100
+
+    Fix build for XServer 1.13
+    
+    Latest git build stops with the error message
+    
+    radeon_kms.c: In function 'RADEONWindowExposures_oneshot':
+    radeon_kms.c:1644:45: error: expected expression before 'RegionPtr'
+         pScreen->WindowExposures(pWin, pRegion, RegionPtr pBSRegion);
+    
+    This patch fixes the build.
+    
+    Reviewed-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit d63881623f0686a66a2e3e3c1f84e496aa52ec6b
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Mar 2 16:22:51 2017 +0900
+
+    Don't call radeon_cs_flush_indirect & radeon_bo_wait in drmmode_copy_fb
+    
+    RADEONWindowExposures_oneshot takes care of it.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit cc9d6b7db9c2078be1e530a64af6d517c6a42024
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Mar 1 17:35:59 2017 +0900
+
+    Move DPMS check from radeon_scanout_do_update to radeon_scanout_flip
+    
+    When radeon_scanout_do_update is called from
+    drmmode_crtc_scanout_update, drmmode_crtc->pending_dpms_mode may still
+    be != DPMSModeOn, e.g. during server startup.
+    
+    Fixes intermittently showing garbage with TearFree enabled.
+
+commit 0a12bf1085505017068dfdfd31d23133e51b45b9
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Mar 1 18:00:40 2017 +0900
+
+    Call drmmode_set_desired_modes from a WindowExposures hook
+    
+    This is the earliest opportunity where the root window contents are
+    guaranteed to be initialized, and prevents drmmode_set_mode_major from
+    getting called before drmmode_set_desired_modes via RADEONUnblank ->
+    drmmode_crtc_dpms. Also, in contrast to the BlockHandler hook, this is
+    called when running Xorg with -pogo.
+    
+    Fixes intermittently showing garbage on server startup or after server
+    reset.
+    
+    As a bonus, this avoids trouble due to higher layers (e.g. the tigervnc
+    Xorg module) calling RADEONBlockHandler_oneshot repeatedly even after
+    we set pScreen->BlockHandler = RADEONBlockHandler_KMS.
+    
+    v2:
+    * Drop spaces between XORG_VERSION_NUMERIC arguments
+    * Call radeon_bo_wait after radeon_cs_flush_indirect
+    
+    Bugzilla: https://bugs.freedesktop.org/99457
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com> (v1)
+
+commit df2d749a4db33298c8ce9f2cfb77c20c5538c9cc
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Mar 2 16:05:42 2017 +0900
+
+    Fix bogus indentation
+    
+    Trivial.
+    
+    Fixes: 58cd1600057e ("Allow toggling TearFree at runtime via output property")
+
+commit 9035b6abea557828e672ee455f0c84e43da0906f
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Feb 28 18:13:42 2017 +0900
+
+    present: Flush before flipping
+    
+    This isn't necessary for DRI clients, but the Present extension can also
+    be used for presenting normal pixmaps rendered to via the X11 protocol.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 0a4eb0e12f0c9c653cf4cea6fd62e1a507eb261c
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Feb 10 12:52:02 2017 +0900
+
+    present: Use async flip for unflip if possible
+    
+    In that case, unflip operations should finish faster in general.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 9a951a3e551db58ba50e7a594521ceac54d90615
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Feb 28 18:06:55 2017 +0900
+
+    present: Also flush before using a flip to unflip
+    
+    Not doing so might result in intermittently scanning out stale contents
+    of the screen pixmap.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit f2bc882f1c1082bed9f496cfab6c8f07a76bc122
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Feb 28 17:31:14 2017 +0900
+
+    Handle rotation in the driver also with Xorg 1.12-1.18
+    
+    We cannot use the HW cursor in that case, but in turn we get more
+    efficient and less teary updates of rotated outputs.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit ae921a3150f69c38b5b3c88a9e37d54fdf0d5093
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Feb 28 17:47:09 2017 +0900
+
+    Fold drmmode_crtc_scanout_allocate into drmmode_crtc_scanout_create
+    
+    Not used anywhere else anymore.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 987a34adb319923ad36e2b47a26837248f187c3e
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Feb 28 17:17:20 2017 +0900
+
+    Call drmmode_crtc_scanout_create in drmmode_crtc_shadow_allocate as well
+    
+    Calling drmmode_crtc_scanout_allocate in drmmode_crtc_shadow_allocate
+    resulted in drmmode_crtc_scanout_create called from
+    drmmode_crtc_shadow_create passing an uninitialized pitch value to
+    drmmode_create_bo_pixmap.
+    
+    Fixes issues such as failure to allocate the scanout pixmap or visual
+    corruption and GPUVM faults when attempting to use rotation with Xorg
+    <1.19.
+    
+    Bugzilla: https://bugs.freedesktop.org/99916
+    Fixes: ea30d856ba5e ("Pass pitch from drmmode_crtc_scanout_allocate to drmmode_create_bo_pixmap")
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 244d4bc7f8c8f6bc90f49556c0b9344c8aa40295
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Feb 9 18:55:04 2017 +0900
+
+    present: Wait for screen pixmap BO idle before setting modes for unflip
+    
+    To make sure the screen pixmap contents are up to date when it starts
+    being scanned out.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 3ff29e5a14451916bc66b4e0028e9a317f0723f8
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Feb 9 18:50:40 2017 +0900
+
+    present: Only call drmModeRmFB after setting modes for unflip
+    
+    Fixes display intermittently blanking when a modeset is used for unflip.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 0c29deb5a97d9a57e994cc0053c49ddf7aca6ecb
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Feb 21 16:56:27 2017 +0900
+
+    Use drmmode_crtc_scanout_free in drmmode_fini
+    
+    We were leaking drmmode_crtc->scanout_damage, which caused trouble on
+    server reset. Fixes server reset with active separate scanout pixmaps.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 58cd1600057e41aade0106d4acf78e23eac6e44f
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Dec 1 18:37:57 2016 +0900
+
+    Allow toggling TearFree at runtime via output property
+    
+    Option "TearFree" now sets the default value of the output property.
+    See the manpage update for details.
+    
+    TearFree is now enabled by default for outputs using rotation or other
+    RandR transforms, and for RandR 1.4 slave outputs.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 305e2cbf335837a2ab6a24e9ff65815afe038296
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Feb 21 15:55:13 2017 +0900
+
+    Factor out drmmode_crtc_scanout_update helper
+    
+    Cleanup in preparation for following change, no functional change
+    intended.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 649644a88347a6d03de68f8c41db03a82deeb23b
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Feb 14 17:36:31 2017 +0900
+
+    Factor out radeon_prime_dirty_to_crtc helper
+    
+    Cleanup in preparation for the following change, no functional change
+    intended.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 1351e48efe7a2c28eab447e16f36a00fbd02ae48
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Feb 7 18:43:56 2017 +0900
+
+    Don't destroy current FB if drmModeAddFB fails
+    
+    It would probably result in a black screen.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 481394e3c9f9f7d88bb66fe9ae8834c87952a8ab
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Feb 7 18:39:05 2017 +0900
+
+    Fix flip event data leak if calloc or drmModeAddFB fails
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 80fc78633962c1ec996b1721bfb757b98dc85bfc
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Jan 31 16:25:37 2017 +0900
+
+    Don't handle Option "SwapbuffersWait" at all with glamor
+    
+    It never had any effect with glamor.
+    
+    v2: Better formatting, no functional change from v1.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com> (v1)
+
+commit d611d21d9bf9aaa100ff7a5762e5980634846207
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Jan 24 18:05:45 2017 +0900
+
+    Enable tiling by default with glamor on PALM
+    
+    The DFS check is only relevant for EXA.
+    
+    The lack of tiling prevented DRI3 clients from using page flipping,
+    resulting in tearing.
+    
+    Bugzilla: https://bugs.freedesktop.org/99491
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 55a33205cb9bd8091b4bcd478c2d1d191248681b
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Jan 24 18:22:49 2017 +0900
+
+    Add 10-radeon.conf xorg.conf.d snippet
+    
+    This instructs Xorg >= 1.16 to try loading the radeon driver for devices
+    managed by the radeon kernel driver, even if the ati wrapper driver
+    isn't available.
+    
+    Copied from the amdgpu driver.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 8e6a4e96b7b27559e186f71b5547abb0a80b96dd
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:22 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit e062933b5489705bdcba7a266d14ba6fd3e767ba
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 4fe183111f82d412760b175b3c9c8583acba804a
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
+commit a1787e4615a76ab0bb12498be66591c86a6b07ae
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Jan 18 19:07:11 2017 +0900
+
+    ati: Support loading the amdgpu driver from the ati wrapper
+    
+    If .../share/X11/xorg.conf.d/10-amdgpu.conf doesn't exist, but the ati
+    wrapper is loaded, it will otherwise try to use the radeon driver even
+    for GPUs driven by the amdgpu kernel driver. This can only fail,
+    potentially in bad ways.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 41b82c776b571e1556f300d77c715aebdd87d8e6
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Jan 24 18:14:23 2017 +0900
+
+    .editorconfig: src/ati.c only uses spaces for indentation
+    
+    Trivial.
+
+commit ea30d856ba5e7274c8ea499293b8b0e721b8e082
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Jan 6 17:36:05 2017 +0900
+
+    Pass pitch from drmmode_crtc_scanout_allocate to drmmode_create_bo_pixmap
+    
+    radeon_bo_get_tiling can fail, e.g. for linear BOs.
+    
+    Fixes TearFree not working in those cases.
+    
+    Bugzilla: https://bugs.freedesktop.org/show_bug.cgi?id=97873
+    Fixes: 040a7b80e1fc ("Explicitly set the fbcon pixmap pitch again")
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 720dd07e79b5f5cbbf3ef8bd92300578c485d583
+Author: Jammy Zhou <Jammy.Zhou@amd.com>
+Date:   Mon Dec 19 17:27:19 2016 +0900
+
+    Use render node for DRI3 if available
+    
+    Signed-off-by: Jammy Zhou <Jammy.Zhou@amd.com>
+    (ported from amdgpu commit ea558e645786b08d75307716036045170e97b43e)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+    [ Second attempt, let's see if there's any fallout this time... ]
+
+commit 92fc387a6256ce3c95d62142735783ea07162c54
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Dec 15 12:44:47 2016 +0900
+
+    Simplify drmmode_handle_uevents
+    
+    No functional change intended.
+    
+    Reviewed-by: Jim Qu <Jim.Qu@amd.com>
+    (Cherry picked from amdgpu commit edd276185d42962a13faf9ec9eeebc754ef284e7.)
+
+commit 404c64752774d23a2db9aa3134f6ada3155708c9
+Author: jimqu <Jim.Qu@amd.com>
+Date:   Wed Dec 14 11:46:16 2016 +0900
+
+    udev_monitor_receive_device() will block when hotplug monitor
+    
+    udev_monitor_receive_device() will block and wait for the event of udev
+    use select() to ensure that this will not block.
+    
+    Signed-off-by: JimQu <Jim.Qu@amd.com>
+    Reviewed-by: Michel Dänzer <michel.daenzer@amd.com>
+    (Cherry picked from amdgpu commit 732cf4d3a248b288532ad0f3443da49e08dc7507)
+
+commit a89c0bced423ce3e09f66edafc35642a7cc03b2f
+Author: Jochen Rollwagen <joro-2013@t-online.de>
+Date:   Fri Dec 2 10:56:39 2016 +0100
+
+    Calculate log base 2 in radeon.h based on clz for all platforms
+    
+    This commit replaces the inline assembler code (for x86 platforms) and
+    loop (for non-x86 platforms) in RADEONLog2 with a one-liner version
+    based on clz (count leading zeroes).
+    
+    Reviewed-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit e2942449171fe628a7726e59bcaab65e27d88563
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Nov 21 18:47:53 2016 +0900
+
+    Call radeon_drm_abort_entry on failure to flip to a scanout pixmap
+    
+    Fixes leaking the corresponding struct radeon_drm_queue list entry in
+    that case.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 14c3f59f5157885ad8f941f0bad6c0c5e3db12f8
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Nov 21 18:45:30 2016 +0900
+
+    Call ValidateGC after ChangeClip in radeon_sync_scanout_pixmaps
+    
+    The wrong order meant that the clipping region wasn't actually applied,
+    so it always copied the full contents from the other scanout pixmap.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit a995f5830916a0fee5126263d1bfe48632be3a15
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Nov 21 18:39:00 2016 +0900
+
+    Fix radeon_scanout_extents_intersect for GPU screens
+    
+    Fixes incorrect screen updates with TearFree enabled on PRIME slave
+    outputs which are not located at (0, 0).
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit e543ef3a2fb304cbe3a965fb780632af2e4186f4
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Nov 21 18:33:25 2016 +0900
+
+    Take current scanout_id into account everywhere involved with TearFree
+    
+    Fixes various potential issues with TearFree enabled, e.g. outputs
+    freezing after display configuration changes.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit f130b10e63f7526360b41aa0918b4940f63f662a
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Nov 25 18:12:40 2016 +0900
+
+    Add radeon_is_gpu_screen helper
+    
+    This will hopefully decrease the chance of accidentally breaking the
+    build against xserver < 1.13 in the future.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 487aa62a2a23b86e4ea4714fdfd465c9e513141f
+Author: Jochen Rollwagen <joro-2013@t-online.de>
+Date:   Thu Nov 24 18:44:01 2016 +0100
+
+    fix build for xserver < 1.13
+    
+    same procedure every few patches.....
+    
+    Fixes: 13c6bc5e3827 ("Don't install Flush/EventCallback for GPU screens")
+    Reviewed-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit 5fea5ef2f07eee4a0f94baab427010b936f1d4b4
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Nov 24 18:45:22 2016 +0900
+
+    Pass fb_id into drmmode_page_flip_target_absolute/relative
+    
+    drmmode->fb_id isn't what we need in the TearFree case. Fixes TearFree
+    freezing with
+    
+    (WW) RADEON(0): flip queue failed in radeon_scanout_flip: No such file or directory
+    
+    in the log file.
+    
+    Bugzilla: https://bugs.freedesktop.org/show_bug.cgi?id=98834
+    Fixes: 1106b2f773ad ("Use DRM_MODE_PAGE_FLIP_TARGET_ABSOLUTE/RELATIVE flags when available")
+
+commit 13c6bc5e382765fe567091e1c616c0a26eec04ca
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Aug 1 18:11:57 2016 +0900
+
+    Don't install Flush/EventCallback for GPU screens
+    
+    Their purpose is to flush GPU rendering commands corresponding to damage
+    events, but there can be no damage events corresponding to GPU screen
+    rendering operations.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit f11531c99fcd6473f58b4d10efaf3efd84304d8e
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Nov 21 18:15:05 2016 +0900
+
+    Enable glamor by default with >= R600 and Xorg >= 1.18.3
+    
+    glamor should now perform at least as well as EXA in general, and this
+    allows DRI3 to be enabled by default for >= R600.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 1106b2f773ad0611c729b27f4c192a26b43ef1e7
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Jul 6 15:25:33 2016 +0900
+
+    Use DRM_MODE_PAGE_FLIP_TARGET_ABSOLUTE/RELATIVE flags when available
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit aab80d2203efb8569b26dd02a1c651c792e1ef0c
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Nov 18 12:11:38 2016 +0900
+
+    Post-release version bump
+
 commit 5cbe1ee8e499e1b6b2646e341946292721d07e69
 Author: Michel Dänzer <michel.daenzer@amd.com>
 Date:   Thu Nov 17 11:27:16 2016 +0900
@@ -4991,7 +5530,7 @@ Date:   Fri Jun 29 15:00:44 2012 +0100
     Signed-off-by: Dave Airlie <airlied@redhat.com>
 
 commit 50689ec8dbd4a68527b2ac16cecac298b8d441d0
-Merge: 6a60fcd ae682a6
+Merge: 6a60fcdf0 ae682a6a1
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Fri Jun 29 14:59:47 2012 +0100
 
@@ -7580,7 +8119,7 @@ Date:   Tue Jan 11 14:42:17 2011 -0500
     radeon: fix pitch align in pageflip code
 
 commit e5d0a400d08da2358fac9c2ad12042f125525736
-Merge: 0e432df e27e9b4
+Merge: 0e432dff9 e27e9b4e5
 Author: Alex Deucher <alexdeucher@gmail.com>
 Date:   Mon Jan 10 18:16:49 2011 -0500
 
@@ -8214,7 +8753,7 @@ Date:   Mon Oct 4 12:31:51 2010 -0400
     evergreen: port Karl's UTS/DFS changes to evergreen
 
 commit be8f45cbd313b68ad663f303c64edb4525b8f981
-Merge: e843faf ff5f466
+Merge: e843faf35 ff5f466e6
 Author: Alex Deucher <alexdeucher@gmail.com>
 Date:   Mon Oct 4 12:36:56 2010 -0400
 
@@ -10441,7 +10980,7 @@ Date:   Wed Dec 2 01:36:37 2009 -0500
     The cause is that 2048 is hardcoded in RADEONQueryImageAttributes.
 
 commit efbc2c80ab02879edf3b7b3d65b16c45ddce5017
-Merge: 88a50a3 a612813
+Merge: 88a50a30d a612813c5
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Wed Dec 2 14:30:36 2009 +1000
 
@@ -11627,7 +12166,7 @@ Date:   Tue Sep 8 13:21:07 2009 +1000
     radeon: fix dri2 struct zeroing
 
 commit 6990f2ac6478bf92929a4400ef84fb2142699204
-Merge: 917f2d7 853f4c3
+Merge: 917f2d7cd 853f4c3d1
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Tue Sep 8 11:26:32 2009 +1000
 
@@ -14378,7 +14917,7 @@ Date:   Thu Feb 26 12:10:08 2009 -0500
     R6xx/R7xx: use shadowfb if DRI is disabled
 
 commit 000756e052a291230e5c95e48b69a5aa9c4fab0e
-Merge: 22d7746 8373f43
+Merge: 22d7746bf 8373f4399
 Author: Alex Deucher <alexdeucher@gmail.com>
 Date:   Thu Feb 26 11:44:13 2009 -0500
 
@@ -15087,7 +15626,7 @@ Date:   Fri Jan 30 07:56:14 2009 +1000
     fixes it.
 
 commit bd8021d46e9066e4cd116c03a7b7adcfe2557aff
-Merge: 4f88dd8 20d5dd3
+Merge: 4f88dd83f 20d5dd387
 Author: Alex Deucher <alexdeucher@gmail.com>
 Date:   Wed Jan 28 14:33:14 2009 -0500
 
@@ -15100,7 +15639,7 @@ Date:   Wed Jan 28 14:12:26 2009 -0500
     Move encoder specific data to encoder dev_priv
 
 commit 4f88dd83f290fb38e41256a7f1804008c0f28139
-Merge: 1c5678f 2ca970c
+Merge: 1c5678fc4 2ca970c7a
 Author: Alex Deucher <alexdeucher@gmail.com>
 Date:   Wed Jan 28 13:13:13 2009 -0500
 
@@ -15558,7 +16097,7 @@ Date:   Mon Dec 22 02:18:43 2008 -0500
                then use quad.
 
 commit 4d009d14c9c72f6e1bc8100ec8d9b8037ee4e514
-Merge: d52882d 4e96278
+Merge: d52882d81 4e96278b5
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Mon Dec 22 16:00:01 2008 +1000
 
@@ -15957,7 +16496,7 @@ Date:   Thu Dec 4 12:28:12 2008 -0500
     Fix up US setup after r3xx bicubic merge
 
 commit e13fba853ba19e6b0f081b9b3d9fa76c38a0f82b
-Merge: d296337 79bbdd9
+Merge: d29633708 79bbdd984
 Author: Alex Deucher <alexdeucher@gmail.com>
 Date:   Thu Dec 4 12:25:29 2008 -0500
 
@@ -17218,7 +17757,7 @@ Date:   Wed Jun 25 15:50:16 2008 -0400
     - Make sure 3D is idle too (after composite or textured video)
 
 commit 07be302f6dba61dd15918963fae66502230c74b7
-Merge: 8c9b8de 5245974
+Merge: 8c9b8de03 52459745e
 Author: Jerome Glisse <glisse@freedesktop.org>
 Date:   Wed Jun 25 10:30:45 2008 +0200
 
@@ -17340,7 +17879,7 @@ Date:   Fri Jun 20 07:51:27 2008 +1000
     discovered on irc with wpwrak.
 
 commit 5b323a2cbbc412b6dd4e782438b64ee996558d05
-Merge: dd18caa eed2415
+Merge: dd18caa4b eed241553
 Author: Dave Airlie <airlied@linux.ie>
 Date:   Fri Jun 20 07:49:16 2008 +1000
 
@@ -18334,7 +18873,7 @@ Date:   Wed Mar 19 17:58:34 2008 -0400
     defines it.
 
 commit bed9754ad21d6c0a7f61067b04ba31c430a7cecb
-Merge: 55e446b f71ac0e
+Merge: 55e446b5b f71ac0e40
 Author: Alex Deucher <alex@samba.(none)>
 Date:   Wed Mar 19 16:06:41 2008 -0400
 
@@ -18717,7 +19256,7 @@ Date:   Thu Mar 6 17:46:00 2008 -0500
     AVIVO: don't add outputs for invalid connectors
 
 commit 600dbe080997a01ceaf6be86723189d518bc1281
-Merge: 594743a 5b7875d
+Merge: 594743a99 5b7875d0c
 Author: Alex Deucher <alex@cube.(none)>
 Date:   Thu Mar 6 17:31:37 2008 -0500
 
@@ -18736,7 +19275,7 @@ Date:   Thu Mar 6 14:31:06 2008 -0500
     Bug #14826: Fix a bogus check around xf86SetOperatingState.
 
 commit 651fe23f4c650ed91843dec48db24e18e8b91219
-Merge: 3de2dc8 766f464
+Merge: 3de2dc88c 766f464df
 Author: Adam Jackson <ajax@redhat.com>
 Date:   Thu Mar 6 14:28:27 2008 -0500
 
@@ -19103,7 +19642,7 @@ Date:   Mon Feb 25 07:10:48 2008 +1000
     fixup check for EXA composite pointed out by Alan Swanson
 
 commit 85e470e64f629de72e361c77770e2e29998d1bf4
-Merge: 27ddb39 1b84c76
+Merge: 27ddb39b1 1b84c76f2
 Author: Alex Deucher <alex@samba.(none)>
 Date:   Sun Feb 24 05:37:22 2008 -0500
 
@@ -19801,7 +20340,7 @@ Date:   Mon Jan 14 16:11:09 2008 -0500
     Fixes bug 14001
 
 commit 729da30c80d6545b75c8faea44754634f477cc09
-Merge: 000741e 625a885
+Merge: 000741e25 625a885a9
 Author: Alex Deucher <alex@samba.(none)>
 Date:   Mon Jan 14 10:05:01 2008 -0500
 
@@ -19994,7 +20533,7 @@ Date:   Wed Jan 2 19:48:28 2008 -0500
     RADEON: various avivo tv-out related clean-ups
 
 commit ce34090c758ac91171cb6adb9b8a36e4adbf99cf
-Merge: 2180f04 30cab1d
+Merge: 2180f04b6 30cab1dbe
 Author: Alex Deucher <alex@samba.(none)>
 Date:   Wed Jan 2 16:41:36 2008 -0500
 
@@ -20201,7 +20740,7 @@ Date:   Fri Dec 21 09:45:55 2007 +1000
     set ddc line correctly post-merge
 
 commit 3c31b96afa20913ad947e68fe0c3a662e5eafbdd
-Merge: eb99c3c f5e8c18
+Merge: eb99c3c5c f5e8c1850
 Author: Dave Airlie <airlied@linux.ie>
 Date:   Fri Dec 21 09:36:22 2007 +1000
 
@@ -20242,7 +20781,7 @@ Date:   Wed Dec 19 19:15:19 2007 -0500
     The correct thing to do is filter by the mode's effective memory bandwidth.
 
 commit c1b0b69cc50516c3b7e881b0eb46cb3cd2e9dce6
-Merge: 0e66348 ce4fa1c
+Merge: 0e6634870 ce4fa1ced
 Author: Alex Deucher <alex@botch2.(none)>
 Date:   Wed Dec 19 11:54:50 2007 -0500
 
@@ -20317,14 +20856,14 @@ Date:   Mon Dec 17 20:20:04 2007 -0500
     RADEON: fix typo from merge
 
 commit 19b9d3708852b7efe2b05249c8359dadb924dd94
-Merge: cf685f3 29706ca
+Merge: cf685f37e 29706ca58
 Author: Alex Deucher <alex@samba.(none)>
 Date:   Mon Dec 17 20:07:32 2007 -0500
 
     Merge branch 'atombios-support' of git+ssh://agd5f@git.freedesktop.org/git/xorg/driver/xf86-video-ati into atombios-support
 
 commit cf685f37ec874f0aacd09e7c4eb0402c6daec1b0
-Merge: 2a134af 44d07c4
+Merge: 2a134af01 44d07c4cc
 Author: Alex Deucher <alex@samba.(none)>
 Date:   Mon Dec 17 20:07:07 2007 -0500
 
@@ -20473,7 +21012,7 @@ Date:   Thu Dec 13 18:45:09 2007 -0500
     - Unify the PLL calculation between legacy and avivo chips
 
 commit f5ac34983411e4c4f41ab1817dce582830f398fd
-Merge: f2b2e08 6ccf5b3
+Merge: f2b2e0804 6ccf5b33d
 Author: Alex Deucher <alex@samba.(none)>
 Date:   Wed Dec 12 22:37:44 2007 -0500
 
@@ -20526,7 +21065,7 @@ Date:   Tue Dec 11 14:04:58 2007 -0500
     RADEON: handle HMDI properly (untested) and fix some merge leftovers
 
 commit 3c22ad977c25d5ca2811821fcac6bb8ecd79994a
-Merge: c9a0cee f3d2ec3
+Merge: c9a0cee97 f3d2ec3a5
 Author: Alex Deucher <alex@botch2.(none)>
 Date:   Tue Dec 11 13:11:15 2007 -0500
 
@@ -20582,7 +21121,7 @@ Date:   Mon Dec 10 15:25:56 2007 +1000
     add support for building against legacy servers similiar to Intel codepaths
 
 commit 9c278cb7fa7f18d13bde053fd75221cfba9da377
-Merge: 6451ea2 cc167b9
+Merge: 6451ea2dc cc167b9bb
 Author: Dave Airlie <airlied@linux.ie>
 Date:   Mon Dec 10 15:18:03 2007 +1000
 
@@ -20596,7 +21135,7 @@ Date:   Mon Dec 10 15:18:03 2007 +1000
             src/radeon_output.c
 
 commit 6451ea2dcc4fac762442f699935864f4a8d445f7
-Merge: 0d89556 5896ca4
+Merge: 0d89556bf 5896ca409
 Author: Dave Airlie <airlied@linux.ie>
 Date:   Mon Dec 10 15:08:42 2007 +1000
 
@@ -20656,7 +21195,7 @@ Date:   Thu Dec 6 19:23:06 2007 +1100
     powerpc: build fixes from last merge
 
 commit dbe3d2608ecc9896db9c23b3a347b50748c51e13
-Merge: 48e31cd 21ed435
+Merge: 48e31cdaa 21ed43539
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Thu Dec 6 14:22:03 2007 +1000
 
@@ -20757,7 +21296,7 @@ Date:   Fri Nov 30 20:11:42 2007 -0500
     mode or vesafb etc. after running the driver.
 
 commit af0196f7bf0d1d5d211391149c18935d64ed2b06
-Merge: d9858a2 0175b79
+Merge: d9858a2b3 0175b7998
 Author: Alex Deucher <alex@botch2.(none)>
 Date:   Fri Nov 30 16:40:28 2007 -0500
 
@@ -20789,7 +21328,7 @@ Date:   Fri Nov 30 15:37:42 2007 -0500
     for now.
 
 commit e1945f1f25a34310bd58ce128c8ff27ecc985618
-Merge: b368b0f df7777b
+Merge: b368b0f22 df7777bff
 Author: Alex Deucher <alex@botch2.(none)>
 Date:   Fri Nov 30 14:30:55 2007 -0500
 
@@ -21010,7 +21549,7 @@ Date:   Wed Nov 21 17:03:39 2007 -0500
     Thanks to AMD for the information
 
 commit a12390c832abe423def60e39cd5a9118e5910339
-Merge: d531792 e74dca1
+Merge: d5317922f e74dca194
 Author: Alex Deucher <alex@botch2.(none)>
 Date:   Wed Nov 21 02:24:48 2007 -0500
 
@@ -21063,7 +21602,7 @@ Date:   Wed Nov 21 00:05:42 2007 -0500
     RADEON: store devices ids from bios for each driver output
 
 commit 3975da2ea8cb628f7f66c3f26c5dfa181cd1c532
-Merge: e283aa3 295ce27
+Merge: e283aa332 295ce277b
 Author: Alex Deucher <alex@botch2.(none)>
 Date:   Tue Nov 20 23:52:29 2007 -0500
 
@@ -21163,7 +21702,7 @@ Date:   Tue Nov 20 13:37:00 2007 +1000
     atombios: add all r5xx and r6xx pci ids
 
 commit 5d023e2c3c2ab44ea57ffadc9607025d602c376c
-Merge: 0d1e0c7 c887260
+Merge: 0d1e0c780 c88726034
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Tue Nov 20 13:02:43 2007 +1000
 
@@ -21188,7 +21727,7 @@ Date:   Tue Nov 20 08:15:58 2007 +1000
     r5xx: cleanups after last merge
 
 commit fe2f7a09050fb7a345a1f52239f8f3c4f1053891
-Merge: 744c8cb 49055d8
+Merge: 744c8cb6c 49055d8af
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Tue Nov 20 08:04:32 2007 +1000
 
@@ -21200,7 +21739,7 @@ Date:   Tue Nov 20 08:04:32 2007 +1000
             src/radeon_output.c
 
 commit 744c8cb6c293fcaa687566f52901644e699baace
-Merge: e258fbe e530af7
+Merge: e258fbe41 e530af79a
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Tue Nov 20 07:56:33 2007 +1000
 
@@ -21213,14 +21752,14 @@ Date:   Mon Nov 19 16:35:05 2007 +1000
     makes 2-headed cursor work
 
 commit e530af79adf51b3e95a0eca676c915a34dcbf4a7
-Merge: 69e197f 52aba8d
+Merge: 69e197f2c 52aba8d73
 Author: Alex Deucher <alex@botch2.(none)>
 Date:   Mon Nov 19 00:59:30 2007 -0500
 
     Merge branch 'agd-atom' of /home/alex/git/airlied/xf86-video-ati2 into agd-atom
 
 commit 69e197f2c8002aacf2587754c8d3bd63c88f85b1
-Merge: 5e8940f 862dcab
+Merge: 5e8940fa6 862dcabfe
 Author: Alex Deucher <alex@botch2.(none)>
 Date:   Mon Nov 19 00:57:34 2007 -0500
 
@@ -21251,7 +21790,7 @@ Date:   Mon Nov 19 00:39:19 2007 -0500
     Don't assign a gpio for TV
 
 commit 52aba8d73189ba959f19c0437499d5e7a8829827
-Merge: 862dcab 5e8940f
+Merge: 862dcabfe 5e8940fa6
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Mon Nov 19 15:30:46 2007 +1000
 
@@ -21288,7 +21827,7 @@ Date:   Sun Nov 18 23:43:06 2007 -0500
     fix typo in loop
 
 commit 384cd8f52c89d089c6559e2eedbae45641fcd14e
-Merge: f3f0e4e 234b607
+Merge: f3f0e4ec9 234b60730
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Mon Nov 19 14:02:55 2007 +1000
 
@@ -21357,7 +21896,7 @@ Date:   Sat Nov 17 00:34:56 2007 -0500
     WIP: more new ATOM integration work
 
 commit 67db114d97abed7a607467e5d67c7b4ffa2c347e
-Merge: 7d06a87 ea15346
+Merge: 7d06a8791 ea1534659
 Author: Alex Deucher <alex@botch2.(none)>
 Date:   Fri Nov 16 14:29:53 2007 -0500
 
@@ -21420,7 +21959,7 @@ Date:   Fri Nov 16 14:48:36 2007 +1000
     Add copyright headers
 
 commit 3cfcd2164b400bd0d1cb4ede8eeb01abba9d75c8
-Merge: efac14e 718bfd3
+Merge: efac14e66 718bfd3b6
 Author: Alex Deucher <alex@botch2.(none)>
 Date:   Thu Nov 15 23:25:39 2007 -0500
 
@@ -21941,7 +22480,7 @@ Date:   Thu Oct 4 11:32:48 2007 +0200
     Surprisingly easy, thanks to George's pci-rework changes.
 
 commit 7addf41885ec5658f531624a9c24ea5bd7d22d19
-Merge: 3a958ba 78c6bd3
+Merge: 3a958ba13 78c6bd305
 Author: Michel Dänzer <michel@tungstengraphics.com>
 Date:   Thu Oct 4 11:06:08 2007 +0200
 
@@ -22400,7 +22939,7 @@ Date:   Tue Aug 28 15:37:11 2007 +0300
     It still uses the old probe method though, this is due to the ati wrapper.
 
 commit 7b38d9a1209f87255e5bb0aefe46a363ce4fb6ef
-Merge: 2e3d43a 673f799
+Merge: 2e3d43af1 673f79972
 Author: George Sapountzis <gsap7@yahoo.gr>
 Date:   Tue Aug 28 16:01:12 2007 +0300
 
@@ -22664,14 +23203,14 @@ Date:   Thu Aug 23 19:56:21 2007 +1000
     updated release numbering for randr 1.2
 
 commit 81a8093f2ffdce59d4e8a44f65f3d5c771fd6425
-Merge: c08e6ec 53a67e3
+Merge: c08e6ec9e 53a67e319
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Thu Aug 23 19:51:47 2007 +1000
 
     Merge remote branch 'origin/randr-1.2'
 
 commit c08e6ec9e7ac06caee53689b0ec50ef6a7a0ba37
-Merge: 5793e87 a0d0fcd
+Merge: 5793e8753 a0d0fcd3b
 Author: Dave Airlie <airlied@clockmaker.usersys.redhat.com>
 Date:   Thu Aug 23 19:42:19 2007 +1000
 
@@ -23544,7 +24083,7 @@ Date:   Wed May 30 17:49:01 2007 +1000
     we hang when moving the cursor into the second CRTC.
 
 commit 7fc02657c4d740941fbda5a8823cf45de3eca3f8
-Merge: 800bf53 4c61c0e
+Merge: 800bf5327 4c61c0ee9
 Author: Dave Airlie <airlied@nx6125b.(none)>
 Date:   Wed May 30 17:27:22 2007 +1000
 
@@ -23599,7 +24138,7 @@ Date:   Tue May 29 07:23:24 2007 +1000
     rs480: only has single dac
 
 commit c52322354fe64725733842b3356798c50e7735d5
-Merge: dd6a966 975da59
+Merge: dd6a966e8 975da595f
 Author: Dave Airlie <airlied@nx6125b.(none)>
 Date:   Tue May 29 07:21:48 2007 +1000
 
@@ -24081,7 +24620,7 @@ Date:   Tue May 8 19:27:48 2007 +0200
     remove some old mergedfb cruft
 
 commit 76670f665ebec7cdf40a04bf9379cb3ad4417507
-Merge: 83f81ed a3ee422
+Merge: 83f81ed5e a3ee42207
 Author: Alex Deucher <alex@t41p.hsd1.va.comcast.net>
 Date:   Tue May 8 18:41:25 2007 +0200
 
@@ -24532,7 +25071,7 @@ Date:   Sun Feb 25 23:29:09 2007 +1100
     fix typo
 
 commit 3cfe94d5438961b869766dacbcd13fde8b770ca2
-Merge: 31c018c 3b43788
+Merge: 31c018ca4 3b43788c4
 Author: Dave Airlie <airlied@linux.ie>
 Date:   Sun Feb 25 23:27:19 2007 +1100
 
@@ -24725,7 +25264,7 @@ Date:   Sun Feb 4 11:28:54 2007 +0200
     case because pATI->PCIInfo is now set after ATIProcessOptions() is called.
 
 commit 9d77aabdff919360f0c9333105436c31f1f5749a
-Merge: ff8ea19 57822be
+Merge: ff8ea19fc 57822be75
 Author: George Sapountzis <gsap7@yahoo.gr>
 Date:   Mon Feb 5 19:16:51 2007 +0200
 
@@ -25898,7 +26437,7 @@ Date:   Mon Sep 25 11:35:32 2006 +1000
     radeon: cleanup some bits from superpatch
 
 commit 9827afaa40720a58e2fc029c0bf92ad2fe223d11
-Merge: 10b4b46 ad8259c
+Merge: 10b4b46c1 ad8259c81
 Author: Dave Airlie <airlied@linux.ie>
 Date:   Mon Sep 25 11:25:17 2006 +1000
 
@@ -26043,7 +26582,7 @@ Date:   Fri Sep 22 06:35:34 2006 +1000
     radeon: add enable display function
 
 commit 4a54886d510f26b29d27e5c9a73647554291b1a6
-Merge: 70264d6 9fa176c
+Merge: 70264d645 9fa176c79
 Author: Dave Airlie <airlied@linux.ie>
 Date:   Fri Sep 22 06:00:04 2006 +1000
 
@@ -26659,7 +27198,7 @@ Date:   Thu Jun 15 15:35:05 2006 +0200
     Fix some more cosmetic warnings.
 
 commit ec93e08b24f7c0e583970d08bfe18ad142e6b047
-Merge: 051c49d 6ca9862
+Merge: 051c49d0f 6ca986242
 Author: Michel Dänzer <michel@tungstengraphics.com>
 Date:   Thu Jun 15 15:03:27 2006 +0200
 
@@ -26678,7 +27217,7 @@ Date:   Thu Jun 15 21:24:16 2006 +1000
     remove all printf specifier warnings on Linux
 
 commit 051c49d0f002c72d1d8f15f6df264d8b093d4e95
-Merge: a840afc dfac819
+Merge: a840afc75 dfac8191d
 Author: Michel Dänzer <michel@tungstengraphics.com>
 Date:   Thu Jun 15 13:10:44 2006 +0200
 
@@ -26703,7 +27242,7 @@ Date:   Thu Jun 15 20:59:33 2006 +1000
     some more unused variable cleanups
 
 commit a840afc75a0453b4694e3f987ebdbddc6844a169
-Merge: c90c49d d511ef4
+Merge: c90c49da3 d511ef486
 Author: Michel Dänzer <michel@tungstengraphics.com>
 Date:   Thu Jun 15 12:46:58 2006 +0200
 

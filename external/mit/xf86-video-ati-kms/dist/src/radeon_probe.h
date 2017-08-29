@@ -133,6 +133,7 @@ typedef struct {
 typedef struct
 {
     Bool              HasCRTC2;         /* All cards except original Radeon  */
+    Bool has_page_flip_target;
 
     int fd;                             /* for sharing across zaphod heads   */
     int fd_ref;
@@ -144,6 +145,7 @@ typedef struct
 #ifdef XSERVER_PLATFORM_BUS
     struct xf86_platform_device *platform_dev;
 #endif
+    char *render_node;
 } RADEONEntRec, *RADEONEntPtr;
 
 extern const OptionInfoRec *RADEONOptionsWeak(void);

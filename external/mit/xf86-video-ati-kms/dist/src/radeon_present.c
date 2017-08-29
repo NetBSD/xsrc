@@ -48,6 +48,8 @@
 
 #include "present.h"
 
+static present_screen_info_rec radeon_present_screen_info;
+
 struct radeon_present_vblank_event {
     uint64_t event_id;
     Bool unflip;
@@ -345,11 +347,14 @@ radeon_present_flip(RRCrtcPtr crtc, uint64_t event_id, uint64_t target_msc,
 
     event->event_id = event_id;
 
+    radeon_cs_flush_indirect(scrn);
+
     ret = radeon_do_pageflip(scrn, RADEON_DRM_QUEUE_CLIENT_DEFAULT, handle,
 			     event_id, event, crtc_id,
 			     radeon_present_flip_event,
 			     radeon_present_flip_abort,
-			     sync_flip ? FLIP_VSYNC : FLIP_ASYNC);
+			     sync_flip ? FLIP_VSYNC : FLIP_ASYNC,
+			     target_msc);
     if (!ret)
 	xf86DrvMsg(scrn->scrnIndex, X_ERROR, "present flip failed\n");
     else
@@ -369,8 +374,14 @@ radeon_present_unflip(ScreenPtr screen, uint64_t event_id)
     xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(scrn);
     struct radeon_present_vblank_event *event;
     PixmapPtr pixmap = screen->GetScreenPixmap(screen);
+    enum drmmode_flip_sync flip_sync =
+	(radeon_present_screen_info.capabilities & PresentCapabilityAsync) ?
+	FLIP_ASYNC : FLIP_VSYNC;
     uint32_t handle;
+    int old_fb_id;
     int i;
+
+    radeon_cs_flush_indirect(scrn);
 
     if (!radeon_present_check_unflip(scrn))
 	goto modeset;
@@ -392,16 +403,17 @@ radeon_present_unflip(ScreenPtr screen, uint64_t event_id)
 
     if (radeon_do_pageflip(scrn, RADEON_DRM_QUEUE_CLIENT_DEFAULT, handle,
 			   event_id, event, -1, radeon_present_flip_event,
-			   radeon_present_flip_abort, FLIP_VSYNC))
+			   radeon_present_flip_abort, flip_sync, 0))
 	return;
 
 modeset:
     /* info->drmmode.fb_id still points to the FB for the last flipped BO.
      * Clear it, drmmode_set_mode_major will re-create it
      */
-    drmModeRmFB(info->drmmode.fd, info->drmmode.fb_id);
+    old_fb_id = info->drmmode.fb_id;
     info->drmmode.fb_id = 0;
 
+    radeon_bo_wait(info->front_bo);
     for (i = 0; i < config->num_crtc; i++) {
 	xf86CrtcPtr crtc = config->crtc[i];
 	drmmode_crtc_private_ptr drmmode_crtc = crtc->driver_private;
@@ -416,6 +428,7 @@ modeset:
 	    drmmode_crtc->need_modeset = TRUE;
     }
 
+    drmModeRmFB(info->drmmode.fd, old_fb_id);
     present_event_notify(event_id, 0, 0);
 
     info->drmmode.present_flipping = FALSE;
