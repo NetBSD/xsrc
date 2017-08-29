@@ -69,6 +69,12 @@ struct amdgpu_va {
 	struct amdgpu_bo_va_mgr *vamgr;
 };
 
+struct amdgpu_asic_id {
+	uint32_t did;
+	uint32_t rid;
+	char *marketing_name;
+};
+
 struct amdgpu_device {
 	atomic_t refcount;
 	int fd;
@@ -76,6 +82,8 @@ struct amdgpu_device {
 	unsigned major_version;
 	unsigned minor_version;
 
+	/** Lookup table of asic device id, revision id and marketing name */
+	struct amdgpu_asic_id *asic_ids;
 	/** List of buffer handles. Protected by bo_table_mutex. */
 	struct util_hash_table *bo_handles;
 	/** List of buffer GEM flink names. Protected by bo_table_mutex. */
@@ -85,9 +93,9 @@ struct amdgpu_device {
 	struct drm_amdgpu_info_device dev_info;
 	struct amdgpu_gpu_info info;
 	/** The global VA manager for the whole virtual address space */
-	struct amdgpu_bo_va_mgr *vamgr;
+	struct amdgpu_bo_va_mgr vamgr;
 	/** The VA manager for the 32bit address space */
-	struct amdgpu_bo_va_mgr *vamgr_32;
+	struct amdgpu_bo_va_mgr vamgr_32;
 };
 
 struct amdgpu_bo {
@@ -135,8 +143,6 @@ struct amdgpu_semaphore {
  * Functions.
  */
 
-drm_private void amdgpu_bo_free_internal(amdgpu_bo_handle bo);
-
 drm_private void amdgpu_vamgr_init(struct amdgpu_bo_va_mgr *mgr, uint64_t start,
 		       uint64_t max, uint64_t alignment);
 
@@ -148,6 +154,8 @@ amdgpu_vamgr_find_va(struct amdgpu_bo_va_mgr *mgr, uint64_t size,
 
 drm_private void
 amdgpu_vamgr_free_va(struct amdgpu_bo_va_mgr *mgr, uint64_t va, uint64_t size);
+
+drm_private int amdgpu_parse_asic_ids(struct amdgpu_asic_id **asic_ids);
 
 drm_private int amdgpu_query_gpu_info_init(amdgpu_device_handle dev);
 
@@ -177,28 +185,6 @@ static inline bool update_references(atomic_t *dst, atomic_t *src)
 		}
 	}
 	return false;
-}
-
-/**
- * Assignment between two amdgpu_bo pointers with reference counting.
- *
- * Usage:
- *    struct amdgpu_bo *dst = ... , *src = ...;
- *
- *    dst = src;
- *    // No reference counting. Only use this when you need to move
- *    // a reference from one pointer to another.
- *
- *    amdgpu_bo_reference(&dst, src);
- *    // Reference counters are updated. dst is decremented and src is
- *    // incremented. dst is freed if its reference counter is 0.
- */
-static inline void amdgpu_bo_reference(struct amdgpu_bo **dst,
-					struct amdgpu_bo *src)
-{
-	if (update_references(&(*dst)->refcount, &src->refcount))
-		amdgpu_bo_free_internal(*dst);
-	*dst = src;
 }
 
 #endif

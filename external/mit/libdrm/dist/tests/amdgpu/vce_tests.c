@@ -106,6 +106,11 @@ int suite_vce_tests_init(void)
 	family_id = device_handle->info.family_id;
 	vce_harvest_config = device_handle->info.vce_harvest_config;
 
+	if (family_id >= AMDGPU_FAMILY_RV || family_id == AMDGPU_FAMILY_SI) {
+		printf("\n\nThe ASIC NOT support VCE, all sub-tests will pass\n");
+		return CUE_SUCCESS;
+	}
+
 	r = amdgpu_cs_ctx_create(device_handle, &context_handle);
 	if (r)
 		return CUE_SINIT_FAILED;
@@ -126,18 +131,24 @@ int suite_vce_tests_clean(void)
 {
 	int r;
 
-	r = amdgpu_bo_unmap_and_free(ib_handle, ib_va_handle,
-				     ib_mc_address, IB_SIZE);
-	if (r)
-		return CUE_SCLEAN_FAILED;
+	if (family_id >= AMDGPU_FAMILY_RV || family_id == AMDGPU_FAMILY_SI) {
+		r = amdgpu_device_deinitialize(device_handle);
+		if (r)
+			return CUE_SCLEAN_FAILED;
+	} else {
+		r = amdgpu_bo_unmap_and_free(ib_handle, ib_va_handle,
+					     ib_mc_address, IB_SIZE);
+		if (r)
+			return CUE_SCLEAN_FAILED;
 
-	r = amdgpu_cs_ctx_free(context_handle);
-	if (r)
-		return CUE_SCLEAN_FAILED;
+		r = amdgpu_cs_ctx_free(context_handle);
+		if (r)
+			return CUE_SCLEAN_FAILED;
 
-	r = amdgpu_device_deinitialize(device_handle);
-	if (r)
-		return CUE_SCLEAN_FAILED;
+		r = amdgpu_device_deinitialize(device_handle);
+		if (r)
+			return CUE_SCLEAN_FAILED;
+	}
 
 	return CUE_SUCCESS;
 }
@@ -234,7 +245,11 @@ static void free_resource(struct amdgpu_vce_bo *vce_bo)
 
 static void amdgpu_cs_vce_create(void)
 {
+	unsigned align = (family_id >= AMDGPU_FAMILY_AI) ? 256 : 16;
 	int len, r;
+
+	if (family_id >= AMDGPU_FAMILY_RV || family_id == AMDGPU_FAMILY_SI)
+		return;
 
 	enc.width = vce_create[6];
 	enc.height = vce_create[7];
@@ -250,6 +265,8 @@ static void amdgpu_cs_vce_create(void)
 	memcpy((ib_cpu + len), vce_taskinfo, sizeof(vce_taskinfo));
 	len += sizeof(vce_taskinfo) / 4;
 	memcpy((ib_cpu + len), vce_create, sizeof(vce_create));
+	ib_cpu[len + 8] = ALIGN(enc.width, align);
+	ib_cpu[len + 9] = ALIGN(enc.width, align);
 	len += sizeof(vce_create) / 4;
 	memcpy((ib_cpu + len), vce_feedback, sizeof(vce_feedback));
 	ib_cpu[len + 2] = enc.fb[0].addr >> 32;
@@ -291,10 +308,12 @@ static  void amdgpu_cs_vce_encode_idr(struct amdgpu_vce_encode *enc)
 {
 
 	uint64_t luma_offset, chroma_offset;
-	int len = 0, r;
+	unsigned align = (family_id >= AMDGPU_FAMILY_AI) ? 256 : 16;
+	unsigned luma_size = ALIGN(enc->width, align) * ALIGN(enc->height, 16);
+	int len = 0, i, r;
 
 	luma_offset = enc->vbuf.addr;
-	chroma_offset = luma_offset + enc->width * enc->height;
+	chroma_offset = luma_offset + luma_size;
 
 	memcpy((ib_cpu + len), vce_session, sizeof(vce_session));
 	len += sizeof(vce_session) / 4;
@@ -309,6 +328,10 @@ static  void amdgpu_cs_vce_encode_idr(struct amdgpu_vce_encode *enc)
 	ib_cpu[len + 3] = enc->cpb.addr;
 	len += sizeof(vce_context_buffer) / 4;
 	memcpy((ib_cpu + len), vce_aux_buffer, sizeof(vce_aux_buffer));
+	for (i = 0; i <  8; ++i)
+		ib_cpu[len + 2 + i] = luma_size * 1.5 * (i + 2);
+	for (i = 0; i <  8; ++i)
+		ib_cpu[len + 10 + i] = luma_size * 1.5;
 	len += sizeof(vce_aux_buffer) / 4;
 	memcpy((ib_cpu + len), vce_feedback, sizeof(vce_feedback));
 	ib_cpu[len + 2] = enc->fb[0].addr >> 32;
@@ -319,8 +342,10 @@ static  void amdgpu_cs_vce_encode_idr(struct amdgpu_vce_encode *enc)
 	ib_cpu[len + 10] = luma_offset;
 	ib_cpu[len + 11] = chroma_offset >> 32;
 	ib_cpu[len + 12] = chroma_offset;
-	ib_cpu[len + 73] = 0x7800;
-	ib_cpu[len + 74] = 0x7800 + 0x5000;
+	ib_cpu[len + 14] = ALIGN(enc->width, align);
+	ib_cpu[len + 15] = ALIGN(enc->width, align);
+	ib_cpu[len + 73] = luma_size * 1.5;
+	ib_cpu[len + 74] = luma_size * 2.5;
 	len += sizeof(vce_encode) / 4;
 	enc->ib_len = len;
 	if (!enc->two_instance) {
@@ -332,11 +357,13 @@ static  void amdgpu_cs_vce_encode_idr(struct amdgpu_vce_encode *enc)
 static void amdgpu_cs_vce_encode_p(struct amdgpu_vce_encode *enc)
 {
 	uint64_t luma_offset, chroma_offset;
-	int len, r;
+	int len, i, r;
+	unsigned align = (family_id >= AMDGPU_FAMILY_AI) ? 256 : 16;
+	unsigned luma_size = ALIGN(enc->width, align) * ALIGN(enc->height, 16);
 
 	len = (enc->two_instance) ? enc->ib_len : 0;
 	luma_offset = enc->vbuf.addr;
-	chroma_offset = luma_offset + enc->width * enc->height;
+	chroma_offset = luma_offset + luma_size;
 
 	if (!enc->two_instance) {
 		memcpy((ib_cpu + len), vce_session, sizeof(vce_session));
@@ -353,6 +380,10 @@ static void amdgpu_cs_vce_encode_p(struct amdgpu_vce_encode *enc)
 	ib_cpu[len + 3] = enc->cpb.addr;
 	len += sizeof(vce_context_buffer) / 4;
 	memcpy((ib_cpu + len), vce_aux_buffer, sizeof(vce_aux_buffer));
+	for (i = 0; i <  8; ++i)
+		ib_cpu[len + 2 + i] = luma_size * 1.5 * (i + 2);
+	for (i = 0; i <  8; ++i)
+		ib_cpu[len + 10 + i] = luma_size * 1.5;
 	len += sizeof(vce_aux_buffer) / 4;
 	memcpy((ib_cpu + len), vce_feedback, sizeof(vce_feedback));
 	ib_cpu[len + 2] = enc->fb[1].addr >> 32;
@@ -364,15 +395,17 @@ static void amdgpu_cs_vce_encode_p(struct amdgpu_vce_encode *enc)
 	ib_cpu[len + 10] = luma_offset;
 	ib_cpu[len + 11] = chroma_offset >> 32;
 	ib_cpu[len + 12] = chroma_offset;
+	ib_cpu[len + 14] = ALIGN(enc->width, align);
+	ib_cpu[len + 15] = ALIGN(enc->width, align);
 	ib_cpu[len + 18] = 0;
 	ib_cpu[len + 19] = 0;
 	ib_cpu[len + 56] = 3;
 	ib_cpu[len + 57] = 0;
 	ib_cpu[len + 58] = 0;
-	ib_cpu[len + 59] = 0x7800;
-	ib_cpu[len + 60] = 0x7800 + 0x5000;
+	ib_cpu[len + 59] = luma_size * 1.5;
+	ib_cpu[len + 60] = luma_size * 2.5;
 	ib_cpu[len + 73] = 0;
-	ib_cpu[len + 74] = 0x5000;
+	ib_cpu[len + 74] = luma_size;
 	ib_cpu[len + 81] = 1;
 	ib_cpu[len + 82] = 1;
 	len += sizeof(vce_encode) / 4;
@@ -408,9 +441,13 @@ static void check_result(struct amdgpu_vce_encode *enc)
 static void amdgpu_cs_vce_encode(void)
 {
 	uint32_t vbuf_size, bs_size = 0x154000, cpb_size;
-	int r;
+	unsigned align = (family_id >= AMDGPU_FAMILY_AI) ? 256 : 16;
+	int i, r;
 
-	vbuf_size = enc.width * enc.height * 1.5;
+	if (family_id >= AMDGPU_FAMILY_RV || family_id == AMDGPU_FAMILY_SI)
+		return;
+
+	vbuf_size = ALIGN(enc.width, align) * ALIGN(enc.height, 16) * 1.5;
 	cpb_size = vbuf_size * 10;
 	num_resources = 0;
 	alloc_resource(&enc.fb[0], 4096, AMDGPU_GEM_DOMAIN_GTT);
@@ -429,7 +466,17 @@ static void amdgpu_cs_vce_encode(void)
 
 	r = amdgpu_bo_cpu_map(enc.vbuf.handle, (void **)&enc.vbuf.ptr);
 	CU_ASSERT_EQUAL(r, 0);
-	memcpy(enc.vbuf.ptr, frame, sizeof(frame));
+
+	memset(enc.vbuf.ptr, 0, vbuf_size);
+	for (i = 0; i < enc.height; ++i) {
+		memcpy(enc.vbuf.ptr, (frame + i * enc.width), enc.width);
+		enc.vbuf.ptr += ALIGN(enc.width, align);
+	}
+	for (i = 0; i < enc.height / 2; ++i) {
+		memcpy(enc.vbuf.ptr, ((frame + enc.height * enc.width) + i * enc.width), enc.width);
+		enc.vbuf.ptr += ALIGN(enc.width, align);
+	}
+
 	r = amdgpu_bo_cpu_unmap(enc.vbuf.handle);
 	CU_ASSERT_EQUAL(r, 0);
 
@@ -477,6 +524,9 @@ static void amdgpu_cs_vce_encode(void)
 static void amdgpu_cs_vce_destroy(void)
 {
 	int len, r;
+
+	if (family_id >= AMDGPU_FAMILY_RV || family_id == AMDGPU_FAMILY_SI)
+		return;
 
 	num_resources  = 0;
 	alloc_resource(&enc.fb[0], 4096, AMDGPU_GEM_DOMAIN_GTT);

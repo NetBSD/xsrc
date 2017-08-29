@@ -20,7 +20,7 @@
 
 AC_PREREQ([2.63])
 AC_INIT([libdrm],
-        [2.4.75],
+        [2.4.83],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=DRI],
         [libdrm])
 
@@ -28,6 +28,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
+PKG_PROG_PKG_CONFIG
 
 # Require xorg-macros minimum of 1.12 for XORG_WITH_XSLTPROC
 m4_ifndef([XORG_MACROS_VERSION],
@@ -53,20 +54,39 @@ AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
 AC_FUNC_ALLOCA
 
+save_CFLAGS="$CFLAGS"
+export CFLAGS="$CFLAGS -Werror"
 AC_HEADER_MAJOR
+CFLAGS="$save_CFLAGS"
+
 AC_CHECK_HEADERS([sys/sysctl.h sys/select.h])
 
 # Initialize libtool
 LT_PREREQ([2.2])
 LT_INIT([disable-static])
 
+dnl pthread-stubs is mandatory on BSD platforms, due to the nature of the
+dnl project. Even then there's a notable issue as described in the project README
+case "$host_os" in
+linux* | cygwin* | darwin* | solaris* | *-gnu* | gnu*)
+    pthread_stubs_possible="no"
+    ;;
+* )
+    pthread_stubs_possible="yes"
+    ;;
+esac
 
-
-AC_SUBST(PTHREADSTUBS_CFLAGS)
-AC_SUBST(PTHREADSTUBS_LIBS)
+if test "x$pthread_stubs_possible" = xyes; then
+    PKG_CHECK_MODULES(PTHREADSTUBS, pthread-stubs >= 0.4)
+    AC_SUBST(PTHREADSTUBS_CFLAGS)
+    AC_SUBST(PTHREADSTUBS_LIBS)
+fi
 
 pkgconfigdir=${libdir}/pkgconfig
 AC_SUBST(pkgconfigdir)
+libdrmdatadir=${datadir}/libdrm
+AC_SUBST(libdrmdatadir)
+
 AC_ARG_ENABLE([udev],
               [AS_HELP_STRING([--enable-udev],
                               [Enable support for using udev instead of mknod (default: disabled)])],
@@ -510,6 +530,7 @@ fi
 AC_SUBST(WARN_CFLAGS)
 AC_CONFIG_FILES([
 	Makefile
+	data/Makefile
 	libkms/Makefile
 	libkms/libkms.pc
 	intel/Makefile
