@@ -21,6 +21,9 @@
 /* Have glamor_egl_destroy_textured_pixmap API */
 /* #define HAVE_GLAMOR_EGL_DESTROY_TEXTURED_PIXMAP 1 */
 
+/* Have glamor_finish API */
+#undef HAVE_GLAMOR_FINISH
+
 /* Have glamor_glyphs_init API */
 /* #undef HAVE_GLAMOR_GLYPHS_INIT */
 
@@ -41,6 +44,9 @@
 
 /* Define to 1 if you have the <present.h> header file. */
 #define HAVE_PRESENT_H 1
+
+/* Have RegionDuplicate API */
+#define HAVE_REGIONDUPLICATE 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
