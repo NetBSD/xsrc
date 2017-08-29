@@ -45,6 +45,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <sys/mman.h>
 #include <dirent.h>
 #include <errno.h>
@@ -117,20 +118,80 @@ pci_system_linux_sysfs_create( void )
 
 
 /**
- * Filter out the names "." and ".." from the scanned sysfs entries.
+ * Filter out the names "." and ".." from the scanned sysfs entries, and
+ * domains requiring 32-bits.
  *
  * \param d  Directory entry being processed by \c scandir.
  *
  * \return
- * Zero if the entry name matches either "." or "..", non-zero otherwise.
+ * Zero if the entry name matches either "." or "..", or the domain requires
+ * 32 bits, non-zero otherwise.
  *
  * \sa scandir, populate_entries
  */
 static int
 scan_sys_pci_filter( const struct dirent * d )
 {
+    if (d->d_name[0] != '.') {
+        unsigned dom = 0;
+
+        sscanf(d->d_name, "%x:", &dom);
+        if (dom > USHRT_MAX)
+            return 0;
+    }
+
     return !((strcmp( d->d_name, "." ) == 0)
 	     || (strcmp( d->d_name, ".." ) == 0));
+}
+
+
+static int
+parse_separate_sysfs_files(struct pci_device * dev)
+{
+    static const char *attrs[] = {
+      "vendor",
+      "device",
+      "class",
+      "revision",
+      "subsystem_vendor",
+      "subsystem_device",
+    };
+    char name[256];
+    char resource[512];
+    uint64_t data[6];
+    int fd;
+    int i;
+
+    for (i = 0; i < 6; i++) {
+	snprintf(name, 255, "%s/%04x:%02x:%02x.%1u/%s",
+		 SYS_BUS_PCI,
+		 dev->domain,
+		 dev->bus,
+		 dev->dev,
+		 dev->func,
+		 attrs[i]);
+
+	fd = open(name, O_RDONLY | O_CLOEXEC);
+	if (fd == -1) {
+	    return errno;
+	}
+
+	read(fd, resource, 512);
+	resource[511] = '\0';
+
+	close(fd);
+
+	data[i] = strtoull(resource, NULL, 16);
+    }
+
+    dev->vendor_id = data[0] & 0xffff;
+    dev->device_id = data[1] & 0xffff;
+    dev->device_class = data[2] & 0xffffff;
+    dev->revision = data[3] & 0xff;
+    dev->subvendor_id = data[4] & 0xffff;
+    dev->subdevice_id = data[5] & 0xffff;
+
+    return 0;
 }
 
 
@@ -165,6 +226,10 @@ populate_entries( struct pci_system * p )
 		device->base.dev = dev;
 		device->base.func = func;
 
+
+		err = parse_separate_sysfs_files(& device->base);
+		if (!err)
+		    continue;
 
 		err = pci_device_linux_sysfs_read(& device->base, config, 0,
 						  48, & bytes);
@@ -591,8 +656,8 @@ pci_device_linux_sysfs_map_range(struct pci_device *dev,
 	    /* FIXME: Should we report an error in this case?
 	     */
 	    fprintf(stderr, "error setting MTRR "
-		    "(base = 0x%08lx, size = 0x%08x, type = %u) %s (%d)\n",
-		    sentry.base, sentry.size, sentry.type,
+		    "(base = 0x%016" PRIx64 ", size = 0x%08x, type = %u) %s (%d)\n",
+		    (pciaddr_t)sentry.base, sentry.size, sentry.type,
 		    strerror(errno), errno);
 /*            err = errno;*/
 	}
@@ -666,8 +731,8 @@ pci_device_linux_sysfs_unmap_range(struct pci_device *dev,
 	    /* FIXME: Should we report an error in this case?
 	     */
 	    fprintf(stderr, "error setting MTRR "
-		    "(base = 0x%08lx, size = 0x%08x, type = %u) %s (%d)\n",
-		    sentry.base, sentry.size, sentry.type,
+		    "(base = 0x%016" PRIx64 ", size = 0x%08x, type = %u) %s (%d)\n",
+		    (pciaddr_t)sentry.base, sentry.size, sentry.type,
 		    strerror(errno), errno);
 /*            err = errno;*/
 	}
