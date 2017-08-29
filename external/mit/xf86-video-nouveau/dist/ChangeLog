@@ -1,3 +1,184 @@
+commit a7c190e0c230ed2d5e047ed6aba12d71a4866950
+Author: Lyude <lyude@redhat.com>
+Date:   Fri Apr 21 14:41:17 2017 -0400
+
+    Bump version to 1.0.15
+    
+    Signed-off-by: Lyude <lyude@redhat.com>
+
+commit 3047e99a641d2b8720371aae292750206f5e91fc
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Thu Apr 20 15:57:33 2017 +1000
+
+    fix null pointer deref when building against >=libdrm 2.4.78
+    
+    A new pointer got added to drmEventContext.
+    
+    As a result of us both:
+    - Setting drmEventContext.version to "latest" AND
+    - Not zeroing the struct
+    
+    We end up thwarting libdrm's compatibility checks, resulting in
+    libdrm choosing to call through an invalid pointer.
+    
+    Fix this by zeroing the struct.
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit e9418e434311336e905b70553a5ed740838d90ad
+Author: Mariusz Bialonczyk <manio@skyboo.net>
+Date:   Wed Mar 29 22:07:50 2017 +0200
+
+    Do not register hotplug without RandR
+    
+    When using Xinerama, RandR is automatically disabled, and calling RR
+    routines will trigger an assert() because the RR keys/resources are
+    not set, leading to an Xserver abort.
+    
+    Hotplug makes little sense without RandR, so no need to install a
+    udev monitor if RandR is not available.
+    
+    Ported from xf86-video-intel commit
+    1a489142c8e6a4828348cc9afbd0f430d3b1e2d8, original work by:
+    Chris Wilson <chris@chris-wilson.co.uk>
+    
+    Bugzilla: https://bugs.freedesktop.org/show_bug.cgi?id=98383
+    Signed-off-by: Mariusz Bialonczyk <manio@skyboo.net>
+    Acked-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit e472b47d15634a864c8c981ed588d882aceaf26b
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Tue Mar 21 21:25:33 2017 -0400
+
+    Add Pascal family support, identical to Maxwell
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+    Tested-by: Lyude <lyude@redhat.com>
+
+commit b71de83b7fae0abeb311251e6144294d319062cf
+Author: Lyude <lyude@redhat.com>
+Date:   Tue Mar 7 18:44:43 2017 -0500
+
+    Bump version to 1.0.14
+    
+    Signed-off-by: Lyude <lyude@redhat.com>
+
+commit 924083938c8f209d8f6ff472caf8692a644f7e78
+Author: Lyude <lyude@redhat.com>
+Date:   Fri Mar 3 18:27:42 2017 -0500
+
+    Consider CRTCs disabled when DPMS is off
+    
+    It turns out there's a difference in X between a CRTC being "disabled"
+    and simply having it's DPMS turned off. This is problematic though,
+    because if DPMS is turned off you can't really use the CRTC as a normal
+    CRTC anyway since page flipping and vblanks will be non-functional. As a
+    result, we've been considering DPMS-on CRTCs as enabled and attempt to
+    perform pageflips, vblank waits, etc. on them which inevitably fails. and
+    usually breaks the display the first time any of the CRTCs have their
+    DPMS turned on.
+    
+    This was a problem that didn't really show itself until kernel 4.10 when
+    atomic modesetting was added which caused nouveau to stop trying to
+    fulfill pageflips and vblank waits on disabled CRTCs. I'm not sure how
+    pageflipping disabled CRTCs ever worked in the first place, but since
+    not doing so is the proper behavior anyway I haven't investigated any
+    further.
+    
+    So, copy the ms_crtc_on() function from the modesetting driver and add
+    it here as drmmode_crtc_on(), then use that in all of the places where
+    we should be checking for both DPMS off and disabled CRTCs.
+    
+    This fixes issues with the X ceasing to function (usually) after the
+    first time a CRTC has it's DPMS turned on. Reproduction recipe:
+    
+    - Load up gnome-shell on a machine
+    - Wait for the display to timeout from inactivity and turn itself off
+    - Shake the cursor or press something on the keyboard. Chances are the
+      monitor will come back on, but the display remains black until the
+      next time the X server is restarted.
+    
+    Signed-off-by: Lyude <lyude@redhat.com>
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+
+commit 1516d35b06c9cda399bef01d992805d6e63dcbae
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Sun Oct 16 15:10:10 2016 -0400
+
+    recognize and accelerate GM20x
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+    Reviewed-by: Samuel Pitoiset <samuel.pitoiset@gmail.com>
+
+commit b00b73c3aa0da1d4cee5c9f580ca65a7bd344e0f
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Mon Oct 17 23:23:41 2016 -0400
+
+    copy: add maxwell/pascal copy engine classes
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+    Reviewed-by: Samuel Pitoiset <samuel.pitoiset@gmail.com>
+
+commit 5a3ada3b0ff3d89441faf35d331bb8b6cf5e51c0
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Sun Oct 16 15:03:35 2016 -0400
+
+    nvc0: refactor TIC uploads to allow different specifics per generation
+    
+    This flips GM10x to using the updated format, which is what I tested
+    with. However GM20x and GP10x also use this TIC format.
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+    Reviewed-by: Samuel Pitoiset <samuel.pitoiset@gmail.com>
+
+commit 514441f32c5b948ce87668234ab9f01e8ec28dac
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Sun Oct 16 12:42:18 2016 -0400
+
+    nvc0: rename BEGIN_IMC0 to IMMED_NVC0
+    
+    For consistency with mesa. It wasn't used anywhere previously.
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+    Reviewed-by: Samuel Pitoiset <samuel.pitoiset@gmail.com>
+
+commit 4459c04a6bc208924fac8082920f6786538bc5cd
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Sun Oct 16 12:38:38 2016 -0400
+
+    nvc0: make use of the new hwdefs for TEX_CB_INDEX
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+    Reviewed-by: Samuel Pitoiset <samuel.pitoiset@gmail.com>
+
+commit ea6fd12ea059c6af832bd2180b26d75e00d4ea71
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Sun Oct 16 12:38:02 2016 -0400
+
+    hwdefs: update nvc0_3d, add gm107_texture for new TIC format
+    
+    These are copied directly from the mesa repository.
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+    Acked-by: Samuel Pitoiset <samuel.pitoiset@gmail.com>
+
+commit a24ded627e42d453546c553d609edc073f59cd57
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Thu Sep 25 20:15:51 2014 -0400
+
+    exa: add GM10x acceleration support
+    
+    rendercheck -f a8r8g8b8 passes as much as on a GK208, and xv appears to
+    work. Very lightly tested.
+    
+    Instead of sticking coordinates into pushbufs, the vertex shader is
+    modified to read them from a constbuf, indexed by vertex id. This
+    approach could be used for all nvc0 generations, but I didn't want to
+    rock the boat.
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+    Reviewed-by: Samuel Pitoiset <samuel.pitoiset@gmail.com>
+
 commit e6479845ec0db20dc733c621b7967b751840a552
 Author: Ilia Mirkin <imirkin@alum.mit.edu>
 Date:   Tue Sep 20 00:31:06 2016 -0400
@@ -1006,7 +1187,7 @@ Date:   Mon Mar 17 17:37:31 2014 +0100
     Add support for server managed fds
     
     v2 (Martin Peres):
-    	- Do not define "NVEntPtr pNVEnt" if not needed to avoid some warnings
+            - Do not define "NVEntPtr pNVEnt" if not needed to avoid some warnings
     
     Signed-off-by: Hans de Goede <hdegoede@redhat.com>
     Signed-off-by: Martin Peres <martin.peres@free.fr>
@@ -2867,7 +3048,7 @@ Date:   Mon Jan 17 09:14:31 2011 +1000
         Merge branch 'master' into nvc0
     
         Conflicts:
-        	src/nv_dma.c
+            src/nv_dma.c
     
     commit eba7e173a5006ff50b950d0e8b8154564471a9ce
     Author: Ben Skeggs <bskeggs@redhat.com>
@@ -2968,10 +3149,10 @@ Date:   Mon Jan 17 09:14:31 2011 +1000
         Merge remote branch 'origin/master' into nvc0
     
         Conflicts:
-        	src/drmmode_display.c
-        	src/nouveau_exa.c
-        	src/nv_driver.c
-        	src/nv_type.h
+            src/drmmode_display.c
+            src/nouveau_exa.c
+            src/nv_driver.c
+            src/nv_type.h
     
     commit 8573280871401e29f27fa24d0b7c6ac5e35b2cc1
     Author: Christoph Bumiller <e0425955@student.tuwien.ac.at>
@@ -6001,8 +6182,8 @@ Date:   Wed Mar 25 02:07:15 2009 +0000
     
     You need:
     Section "Monitor"
-    	Identifier "VGA-0"
-    	Option "Enable" "true"
+            Identifier "VGA-0"
+            Option "Enable" "true"
     EndSection
 
 commit 8427b39a2f6cb32496bbbe370b793d5ba78f6b6c
@@ -6330,9 +6511,9 @@ Date:   Thu Mar 12 15:37:59 2009 +0000
     If you're not using randr12 you should be.
     
     Misc fixes included:
-    	Ensure PNVM bit set on PCRTC_CURSOR_CONFIG for consistency
-    	Fix NV11 alpha cursors
-    	Add missing bo unref
+            Ensure PNVM bit set on PCRTC_CURSOR_CONFIG for consistency
+            Fix NV11 alpha cursors
+            Add missing bo unref
 
 commit b988160dfa5a535fd042062d7318ab99fc7efa5a
 Author: Stuart Bennett <stuart@freedesktop.org>
@@ -7757,12 +7938,12 @@ Date:   Mon Oct 20 21:47:07 2008 +0100
     breaks everything using them in ScreenInit on server regeneration
     
     as the rhd guys say:
-    	/* This is strange... if we set virtualX/virtualY like the intel driver
-    	 * does, we limit ourself in the future to this maximum size.
-    	 * The check for this is internally in RandR, no idea why the intel driver
-    	 * actually works this way...
-    	 * Even more curious: if we DON'T update virtual, everything seems to
-    	 * work as expected... */
+            /* This is strange... if we set virtualX/virtualY like the intel driver
+             * does, we limit ourself in the future to this maximum size.
+             * The check for this is internally in RandR, no idea why the intel driver
+             * actually works this way...
+             * Even more curious: if we DON'T update virtual, everything seems to
+             * work as expected... */
     so I'll take that as precedent.
 
 commit 98a4dcb112221fa66d82b87ef9229f5c443daf90
@@ -11346,7 +11527,7 @@ Date:   Sun Jan 20 20:17:28 2008 +0000
     Coincidentally it's what the drm uses too.
     
     bool, true and false are defined in IEEE 1003.1 (2003) and POSIX since C99
-    	(as is stdint.h, which we use already)
+            (as is stdint.h, which we use already)
 
 commit e1714a4f4329728cf897f8953acc480b47a4e5d7
 Author: root <root@dpish.hayton.korsenowski>
@@ -14730,8 +14911,8 @@ Author: Arthur Huillet <arthur.huillet@free.fr>
 Date:   Wed Nov 7 23:03:54 2007 +0100
 
     NV10EXA: added support for R5G6B5 as source and destination (tested only with rendercheck)
-    	 added A8 + A8 via ARGB + ARGB hack, disabled by default because it cannot work
-    	 updated instrumentation to dump pixmap sizes and repeat flag
+             added A8 + A8 via ARGB + ARGB hack, disabled by default because it cannot work
+             updated instrumentation to dump pixmap sizes and repeat flag
 
 commit 3d671bf3b06e64b49254db666980be3a3b3652cc
 Author: Stuart Bennett <sb476@cam.ac.uk>
@@ -15293,7 +15474,7 @@ Date:   Sun Oct 21 19:55:41 2007 +0300
     
     Conflicts:
     
-    	src/nv_exa.c
+            src/nv_exa.c
     
     The above mentioned commit broke EXA copy and solid operations on nv20
     after display mode change. Triggered by running freedroid in fullscreen.
@@ -16919,21 +17100,21 @@ Date:   Wed Feb 28 15:30:52 2007 +1100
     match drm v4 interface changes
     
     context (gr/dma) object handling:
-    	- remove use of flags/dmaobj when creating objects
-    	- move object creation/setup into nv_accel_common.c
-    	- NV04: make PGRAPH complain a bit more if we program the hardware
-    		incorrectly.
-    	- NV04/NV10: enable PGRAPH_DEBUG_3_CTX_METHODS
-    		This bit seems to enable the use of SET_* methods.
-    	- NV04/NV10/NV40: enable PGRAPH_DEBUG_3_IGNORE_PATCHVALID
-    		Objects no longer get PATCH_CONFIG_VALID set in their context.
-    		Not sure how to get this set other than to intercept the
-    		PATCH_EXCEPTION error and enable the flag.  I opted for the
-    		same method NVIDIA use, which makes PGRAPH ignore it.
+            - remove use of flags/dmaobj when creating objects
+            - move object creation/setup into nv_accel_common.c
+            - NV04: make PGRAPH complain a bit more if we program the hardware
+                    incorrectly.
+            - NV04/NV10: enable PGRAPH_DEBUG_3_CTX_METHODS
+                    This bit seems to enable the use of SET_* methods.
+            - NV04/NV10/NV40: enable PGRAPH_DEBUG_3_IGNORE_PATCHVALID
+                    Objects no longer get PATCH_CONFIG_VALID set in their context.
+                    Not sure how to get this set other than to intercept the
+                    PATCH_EXCEPTION error and enable the flag.  I opted for the
+                    same method NVIDIA use, which makes PGRAPH ignore it.
     misc:
-    	- use NV04_SCALED_IMAGE_FROM_MEMORY on all NV_ARCH_04 cards
-    	- fix offScreenBase calculation (EXA)
-    	- move mem alloc/free helpers into nv_mem.c
+            - use NV04_SCALED_IMAGE_FROM_MEMORY on all NV_ARCH_04 cards
+            - fix offScreenBase calculation (EXA)
+            - move mem alloc/free helpers into nv_mem.c
 
 commit 7e5f90b264fdb3081250ff16748164998b6461a6
 Author: Adam Jackson <ajax@benzedrine.nwnk.net>

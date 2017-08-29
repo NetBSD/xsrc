@@ -389,6 +389,9 @@ NVHasKMS(struct pci_device *pci_dev, struct xf86_platform_device *platform_dev)
 	case 0xe0:
 	case 0xf0:
 	case 0x100:
+	case 0x110:
+	case 0x120:
+	case 0x130:
 		break;
 	default:
 		xf86DrvMsg(-1, X_ERROR, "Unknown chipset: NV%02X\n", chipset);
@@ -940,7 +943,11 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
 		pNv->Architecture = NV_KEPLER;
 		break;
 	case 0x110:
+	case 0x120:
 		pNv->Architecture = NV_MAXWELL;
+		break;
+	case 0x130:
+		pNv->Architecture = NV_PASCAL;
 		break;
 	default:
 		return FALSE;

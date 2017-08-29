@@ -299,7 +299,7 @@ nv_window_belongs_to_crtc(ScrnInfoPtr pScrn, int x, int y, int w, int h)
 	for (i = 0; i < xf86_config->num_crtc; i++) {
 		xf86CrtcPtr crtc = xf86_config->crtc[i];
 
-		if (!crtc->enabled)
+		if (!drmmode_crtc_on(crtc))
 			continue;
 
 		if ((x < (crtc->x + crtc->mode.HDisplay)) &&
@@ -2142,7 +2142,7 @@ NVSetupTexturedVideo (ScreenPtr pScreen, XF86VideoAdaptorPtr *textureAdaptor)
 		textureAdaptor[0] = NV40SetupTexturedVideo(pScreen, FALSE);
 		textureAdaptor[1] = NV40SetupTexturedVideo(pScreen, TRUE);
 	} else
-	if (pNv->Architecture >= NV_TESLA && pNv->Architecture < NV_MAXWELL) {
+	if (pNv->Architecture >= NV_TESLA) {
 		textureAdaptor[0] = NV50SetupTexturedVideo(pScreen);
 	}
 }

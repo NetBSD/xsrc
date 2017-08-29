@@ -152,7 +152,7 @@ nouveau_present_flip_check(RRCrtcPtr rrcrtc, WindowPtr window,
 	ScrnInfoPtr scrn = xf86ScreenToScrn(window->drawable.pScreen);
 	xf86CrtcPtr crtc = rrcrtc->devPrivate;
 
-	if (!scrn->vtSema || !crtc->enabled)
+	if (!scrn->vtSema || !drmmode_crtc_on(crtc))
 		return FALSE;
 
 	return TRUE;
@@ -199,7 +199,7 @@ nouveau_present_flip_exec(ScrnInfoPtr scrn, uint64_t event_id, int sync,
 			flip->msc = target_msc;
 
 			for (i = 0; i < config->num_crtc; i++) {
-				if (config->crtc[i]->enabled)
+				if (drmmode_crtc_on(config->crtc[i]))
 					last = i;
 			}
 
@@ -208,7 +208,7 @@ nouveau_present_flip_exec(ScrnInfoPtr scrn, uint64_t event_id, int sync,
 				int crtc = drmmode_crtc(config->crtc[i]);
 				void *user = NULL;
 
-				if (!config->crtc[i]->enabled)
+				if (!drmmode_crtc_on(config->crtc[i]))
 					continue;
 
 				if (token && ((crtc == sync) || (i == last))) {

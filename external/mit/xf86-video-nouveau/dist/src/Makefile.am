@@ -71,54 +71,71 @@ EXTRA_DIST = hwdefs/nv_3ddefs.xml.h \
 	     hwdefs/nv50_texture.h \
 	     hwdefs/nvc0_3d.xml.h \
 	     hwdefs/nvc0_m2mf.xml.h \
+	     hwdefs/gm107_texture.xml.h \
 	     shader/exac8nvc0.fp \
 	     shader/exac8nvc0.fpc \
 	     shader/exac8nve0.fp \
 	     shader/exac8nve0.fpc \
 	     shader/exac8nvf0.fp \
 	     shader/exac8nvf0.fpc \
+	     shader/exac8nv110.fp \
+	     shader/exac8nv110.fpc \
 	     shader/exacanvc0.fp \
 	     shader/exacanvc0.fpc \
 	     shader/exacanve0.fp \
 	     shader/exacanve0.fpc \
 	     shader/exacanvf0.fp \
 	     shader/exacanvf0.fpc \
+	     shader/exacanv110.fp \
+	     shader/exacanv110.fpc \
 	     shader/exacmnvc0.fp \
 	     shader/exacmnvc0.fpc \
 	     shader/exacmnve0.fp \
 	     shader/exacmnve0.fpc \
 	     shader/exacmnvf0.fp \
 	     shader/exacmnvf0.fpc \
+	     shader/exacmnv110.fp \
+	     shader/exacmnv110.fpc \
 	     shader/exas8nvc0.fp \
 	     shader/exas8nvc0.fpc \
 	     shader/exas8nve0.fp \
 	     shader/exas8nve0.fpc \
 	     shader/exas8nvf0.fp \
 	     shader/exas8nvf0.fpc \
+	     shader/exas8nv110.fp \
+	     shader/exas8nv110.fpc \
 	     shader/exasanvc0.fp \
 	     shader/exasanvc0.fpc \
 	     shader/exasanve0.fp \
 	     shader/exasanve0.fpc \
 	     shader/exasanvf0.fp \
 	     shader/exasanvf0.fpc \
+	     shader/exasanv110.fp \
+	     shader/exasanv110.fpc \
 	     shader/exascnvc0.fp \
 	     shader/exascnvc0.fpc \
 	     shader/exascnve0.fp \
 	     shader/exascnve0.fpc \
 	     shader/exascnvf0.fp \
 	     shader/exascnvf0.fpc \
+	     shader/exascnv110.fp \
+	     shader/exascnv110.fpc \
 	     shader/videonvc0.fp \
 	     shader/videonvc0.fpc \
 	     shader/videonve0.fp \
 	     shader/videonve0.fpc \
 	     shader/videonvf0.fp \
 	     shader/videonvf0.fpc \
+	     shader/videonv110.fp \
+	     shader/videonv110.fpc \
 	     shader/xfrm2nvc0.vp \
 	     shader/xfrm2nvc0.vpc \
 	     shader/xfrm2nve0.vp \
 	     shader/xfrm2nve0.vpc \
 	     shader/xfrm2nvf0.vp \
 	     shader/xfrm2nvf0.vpc \
+	     shader/xfrm2nv110.vp \
+	     shader/xfrm2nv110.vpc \
 	     shader/Makefile \
 	     nouveau_local.h \
 	     nouveau_copy.h \

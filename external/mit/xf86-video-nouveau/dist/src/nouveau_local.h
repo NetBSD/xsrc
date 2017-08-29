@@ -237,7 +237,7 @@ BEGIN_NIC0(struct nouveau_pushbuf *push, int subc, int mthd, int size)
 }
 
 static inline void
-BEGIN_IMC0(struct nouveau_pushbuf *push, int subc, int mthd, int data)
+IMMED_NVC0(struct nouveau_pushbuf *push, int subc, int mthd, int data)
 {
 	PUSH_DATA (push, 0x80000000 | (data << 16) | (subc << 13) | (mthd / 4));
 }

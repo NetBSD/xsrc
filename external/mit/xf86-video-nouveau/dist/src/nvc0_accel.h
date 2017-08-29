@@ -7,11 +7,13 @@
 #include "hwdefs/nvc0_m2mf.xml.h"
 #include "hwdefs/nv50_defs.xml.h"
 #include "hwdefs/nv50_texture.h"
+#include "hwdefs/gm107_texture.xml.h"
 #include "hwdefs/nv_3ddefs.xml.h"
 
 /* subchannel assignments, compatible with kepler's fixed layout  */
 #define SUBC_3D(mthd)    0, (mthd)
 #define NVC0_3D(mthd)    SUBC_3D(NVC0_3D_##mthd)
+#define NVE4_3D(mthd)    SUBC_3D(NVE4_3D_##mthd)
 #define SUBC_M2MF(mthd)  2, (mthd)
 #define SUBC_P2MF(mthd)  2, (mthd)
 #define NVC0_M2MF(mthd)  SUBC_M2MF(NVC0_M2MF_##mthd)
@@ -104,6 +106,61 @@ PUSH_DATAu(struct nouveau_pushbuf *push, struct nouveau_bo *bo,
 		PUSH_DATA (push, (bo->offset + delta));
 		BEGIN_1IC0(push, SUBC_P2MF(0x01b0), 1 + dwords);
 		PUSH_DATA (push, 0x001001);
+	}
+}
+
+static __inline__ void
+PUSH_TIC(struct nouveau_pushbuf *push, struct nouveau_bo *bo, unsigned offset,
+	 unsigned width, unsigned height, unsigned pitch, unsigned format)
+{
+	if (push->client->device->chipset < 0x110) {
+		unsigned tic2 = 0xd0001000;
+		if (pitch == 0)
+			tic2 |= 0x00004000;
+		else
+			tic2 |= 0x0005c000;
+		PUSH_DATA(push, format);
+		PUSH_DATA(push, bo->offset + offset);
+		PUSH_DATA(push, ((bo->offset + offset) >> 32) |
+			        (bo->config.nvc0.tile_mode << 18) |
+			        tic2);
+		PUSH_DATA(push, 0x00300000);
+		PUSH_DATA(push, 0x80000000 | width);
+		PUSH_DATA(push, 0x00010000 | height);
+		PUSH_DATA(push, 0x03000000);
+		PUSH_DATA(push, 0x00000000);
+	} else {
+		unsigned tile_mode = bo->config.nvc0.tile_mode;
+		PUSH_DATA(push, (format & 0x3f) | ((format & ~0x3f) << 1));
+		PUSH_DATA(push, bo->offset + offset);
+		if (pitch == 0) {
+			PUSH_DATA(push, ((bo->offset + offset) >> 32) |
+				  GM107_TIC2_2_HEADER_VERSION_BLOCKLINEAR);
+			PUSH_DATA(push, GM107_TIC2_3_LOD_ANISO_QUALITY_2 |
+				  ((tile_mode & 0x007)) |
+				  ((tile_mode & 0x070) >> (4 - 3)) |
+				  ((tile_mode & 0x700) >> (8 - 6)));
+			PUSH_DATA(push, GM107_TIC2_4_SECTOR_PROMOTION_PROMOTE_TO_2_V |
+				  GM107_TIC2_4_BORDER_SIZE_SAMPLER_COLOR |
+				  GM107_TIC2_4_TEXTURE_TYPE_TWO_D |
+				  (width - 1));
+			PUSH_DATA(push, GM107_TIC2_5_NORMALIZED_COORDS |
+				        ((height - 1) & 0xffff));
+			PUSH_DATA(push, GM107_TIC2_6_ANISO_FINE_SPREAD_FUNC_TWO |
+				        GM107_TIC2_6_ANISO_COARSE_SPREAD_FUNC_ONE);
+			PUSH_DATA(push, 0x00000000);
+		} else {
+			PUSH_DATA(push, ((bo->offset + offset) >> 32) |
+				        GM107_TIC2_2_HEADER_VERSION_PITCH);
+			PUSH_DATA(push, GM107_TIC2_3_LOD_ANISO_QUALITY_2 |
+				        (pitch >> 5));
+			PUSH_DATA(push, GM107_TIC2_4_BORDER_SIZE_SAMPLER_COLOR |
+				  GM107_TIC2_4_TEXTURE_TYPE_TWO_D_NO_MIPMAP |
+				  (width - 1));
+			PUSH_DATA(push, GM107_TIC2_5_NORMALIZED_COORDS | (height - 1));
+			PUSH_DATA(push, 0x000000000);
+			PUSH_DATA(push, 0x000000000);
+		}
 	}
 }
 
