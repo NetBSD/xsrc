@@ -7,7 +7,7 @@
       <configItem>
         <name>apl</name>
         <_shortDescription>apl</_shortDescription>
-        <_description>APL keyboard symbols</_description>
+        <_description>APL</_description>
         <languageList>
           <iso639Id>eng</iso639Id>
         </languageList>
@@ -17,42 +17,42 @@
           <configItem>
             <name>dyalog</name>
             <_shortDescription>dlg</_shortDescription>
-            <_description>APL keyboard symbols (Dyalog)</_description>
+            <_description>Dyalog APL complete</_description>
           </configItem>
         </variant>
         <variant>
           <configItem>
             <name>sax</name>
             <_shortDescription>sax</_shortDescription>
-            <_description>APL keyboard symbols (sax)</_description>
+            <_description>APL Keyboard Symbols: sax</_description>
           </configItem>
         </variant>
         <variant>
           <configItem>
             <name>unified</name>
             <_shortDescription>ufd</_shortDescription>
-            <_description>APL keyboard symbols (unified)</_description>
+            <_description>APL Keyboard Symbols: Unified Layout</_description>
           </configItem>
         </variant>
         <variant>
           <configItem>
             <name>apl2</name>
             <_shortDescription>apl2</_shortDescription>
-            <_description>APL keyboard symbols (IBM APL2)</_description>
+            <_description>APL Keyboard Symbols: IBM APL2</_description>
           </configItem>
         </variant>
         <variant>
           <configItem>
             <name>aplplusII</name>
             <_shortDescription>aplII</_shortDescription>
-            <_description>APL keyboard symbols (Manugistics APL*PLUS II)</_description>
+            <_description>APL Keyboard Symbols: Manugistics APL*PLUS II</_description>
           </configItem>
         </variant>
         <variant>
           <configItem>
             <name>aplx</name>
             <_shortDescription>aplx</_shortDescription>
-            <_description>APL keyboard symbols (APLX unified)</_description>
+            <_description>APL Keyboard Symbols: APLX Unified APL Layout</_description>
           </configItem>
         </variant>
       </variantList>
@@ -102,7 +102,7 @@
         <variant>
           <configItem>
             <name>us</name>
-            <_description>German (US keyboard with German letters)</_description>
+            <_description>German (US, with German letters)</_description>
             <languageList>
               <iso639Id>eng</iso639Id>
             </languageList>
@@ -121,7 +121,7 @@
         <variant>
           <configItem>
             <name>pl</name>
-            <_description>Polish (Germany, eliminate dead keys)</_description>
+            <_description>Polish (Germany, no dead keys)</_description>
             <languageList>
               <iso639Id>ger</iso639Id>
               <iso639Id>pol</iso639Id>
@@ -168,6 +168,28 @@
           <configItem>
             <name>neo_qwerty</name>
             <_description>German (Neo qwerty)</_description>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>ru-recom</name>
+            <!-- Keyboard indicator for Russian layouts -->
+            <_shortDescription>ru</_shortDescription>
+            <_description>Russian (Germany, recommended)</_description>
+            <languageList>
+              <iso639Id>rus</iso639Id>
+            </languageList>
+          </configItem>
+        </variant>
+	    <variant>
+          <configItem>
+            <name>ru-translit</name>
+            <!-- Keyboard indicator for Russian layouts -->
+            <_shortDescription>ru</_shortDescription>
+            <_description>Russian (Germany, transliteration)</_description>
+            <languageList>
+              <iso639Id>rus</iso639Id>
+            </languageList>
           </configItem>
         </variant>
       </variantList>
@@ -360,13 +382,13 @@
         <variant>
           <configItem>
             <name>carpalx-intl</name>
-            <_description>English (Carpalx, international with dead keys)</_description>
+            <_description>English (Carpalx, intl., with dead keys)</_description>
           </configItem>
         </variant>
         <variant>
           <configItem>
             <name>carpalx-altgr-intl</name>
-            <_description>English (Carpalx, international AltGr dead keys)</_description>
+            <_description>English (Carpalx, intl., with dead keys)</_description>
           </configItem>
         </variant>
         <variant>
@@ -378,13 +400,13 @@
         <variant>
           <configItem>
             <name>carpalx-full-intl</name>
-            <_description>English (Carpalx, full optimization, international with dead keys)</_description>
+            <_description>English (Carpalx, full optimization, intl., with dead keys)</_description>
           </configItem>
         </variant>
         <variant>
           <configItem>
             <name>carpalx-full-altgr-intl</name>
-            <_description>English (Carpalx, full optimization, international AltGr dead keys)</_description>
+            <_description>English (Carpalx, full optimization, intl., with dead keys)</_description>
           </configItem>
         </variant>
       </variantList>
@@ -402,7 +424,7 @@
         <variant>
           <configItem>
             <name>intl</name>
-            <_description>Polish (international with dead keys)</_description>
+            <_description>Polish (intl., with dead keys)</_description>
           </configItem>
         </variant>
         <variant>
@@ -719,6 +741,15 @@
           <configItem>
             <name>sun_type6</name>
             <_description>Italian (Sun Type 6/7)</_description>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>fur</name>
+            <_description>Friulian (Italy)</_description>
+            <languageList>
+              <iso639Id>fur</iso639Id>
+            </languageList>
           </configItem>
         </variant>
       </variantList>
@@ -1153,7 +1184,7 @@
             <name>mal_enhanced</name>
             <!-- Keyboard indicator for Malayalam layouts -->
             <_shortDescription>ml</_shortDescription>
-            <_description>Malayalam (enhanced Inscript, with rupee sign)</_description>
+            <_description>Malayalam (enhanced Inscript, with rupee)</_description>
             <languageList>
               <iso639Id>mal</iso639Id>
             </languageList>
@@ -1256,6 +1287,17 @@
             <!-- Keyboard indicator for Telugu layouts -->
             <_shortDescription>te</_shortDescription>
             <_description>Telugu (KaGaPa phonetic)</_description>
+            <languageList>
+              <iso639Id>tel</iso639Id>
+            </languageList>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>tel-sarala</name>
+            <!-- Keyboard indicator for Telugu layouts -->
+            <_shortDescription>te</_shortDescription>
+            <_description>Telugu (Sarala)</_description>
             <languageList>
               <iso639Id>tel</iso639Id>
             </languageList>
