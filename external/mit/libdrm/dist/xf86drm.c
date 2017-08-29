@@ -866,8 +866,6 @@ drmVersionPtr drmGetVersion(int fd)
     drmVersionPtr retval;
     drm_version_t *version = drmMalloc(sizeof(*version));
 
-    memclear(*version);
-
     if (drmIoctl(fd, DRM_IOCTL_VERSION, version)) {
         drmFreeKernelVersion(version);
         return NULL;
@@ -994,8 +992,10 @@ char *drmGetBusid(int fd)
     if (drmIoctl(fd, DRM_IOCTL_GET_UNIQUE, &u))
         return NULL;
     u.unique = drmMalloc(u.unique_len + 1);
-    if (drmIoctl(fd, DRM_IOCTL_GET_UNIQUE, &u))
+    if (drmIoctl(fd, DRM_IOCTL_GET_UNIQUE, &u)) {
+        drmFree(u.unique);
         return NULL;
+    }
     u.unique[u.unique_len] = '\0';
 
     return u.unique;
@@ -1523,14 +1523,12 @@ drm_context_t *drmGetReservedContextList(int fd, int *count)
 
     if (!(list   = drmMalloc(res.count * sizeof(*list))))
         return NULL;
-    if (!(retval = drmMalloc(res.count * sizeof(*retval)))) {
-        drmFree(list);
-        return NULL;
-    }
+    if (!(retval = drmMalloc(res.count * sizeof(*retval))))
+        goto err_free_list;
 
     res.contexts = list;
     if (drmIoctl(fd, DRM_IOCTL_RES_CTX, &res))
-        return NULL;
+        goto err_free_context;
 
     for (i = 0; i < res.count; i++)
         retval[i] = list[i].handle;
@@ -1538,6 +1536,12 @@ drm_context_t *drmGetReservedContextList(int fd, int *count)
 
     *count = res.count;
     return retval;
+
+err_free_list:
+    drmFree(list);
+err_free_context:
+    drmFree(retval);
+    return NULL;
 }
 
 void drmFreeReservedContextList(drm_context_t *pt)
@@ -3023,32 +3027,32 @@ static int drmParsePciBusInfo(int maj, int min, drmPciBusInfoPtr info)
 #endif
 }
 
-static int drmCompareBusInfo(drmDevicePtr a, drmDevicePtr b)
+int drmDevicesEqual(drmDevicePtr a, drmDevicePtr b)
 {
     if (a == NULL || b == NULL)
-        return -1;
+        return 0;
 
     if (a->bustype != b->bustype)
-        return -1;
+        return 0;
 
     switch (a->bustype) {
     case DRM_BUS_PCI:
-        return memcmp(a->businfo.pci, b->businfo.pci, sizeof(drmPciBusInfo));
+        return memcmp(a->businfo.pci, b->businfo.pci, sizeof(drmPciBusInfo)) == 0;
 
     case DRM_BUS_USB:
-        return memcmp(a->businfo.usb, b->businfo.usb, sizeof(drmUsbBusInfo));
+        return memcmp(a->businfo.usb, b->businfo.usb, sizeof(drmUsbBusInfo)) == 0;
 
     case DRM_BUS_PLATFORM:
-        return memcmp(a->businfo.platform, b->businfo.platform, sizeof(drmPlatformBusInfo));
+        return memcmp(a->businfo.platform, b->businfo.platform, sizeof(drmPlatformBusInfo)) == 0;
 
     case DRM_BUS_HOST1X:
-        return memcmp(a->businfo.host1x, b->businfo.host1x, sizeof(drmHost1xBusInfo));
+        return memcmp(a->businfo.host1x, b->businfo.host1x, sizeof(drmHost1xBusInfo)) == 0;
 
     default:
         break;
     }
 
-    return -1;
+    return 0;
 }
 
 static int drmGetNodeType(const char *name)
@@ -3663,7 +3667,7 @@ static void drmFoldDuplicatedDevices(drmDevicePtr local_devices[], int count)
 
     for (i = 0; i < count; i++) {
         for (j = i + 1; j < count; j++) {
-            if (drmCompareBusInfo(local_devices[i], local_devices[j]) == 0) {
+            if (drmDevicesEqual(local_devices[i], local_devices[j])) {
                 local_devices[i]->available_nodes |= local_devices[j]->available_nodes;
                 node_type = log2(local_devices[j]->available_nodes);
                 memcpy(local_devices[i]->nodes[node_type],
@@ -3985,7 +3989,7 @@ int drmGetDevices2(uint32_t flags, drmDevicePtr devices[], int max_devices)
             ret = drmProcessUsbDevice(&device, node, node_type, maj, min,
                                       devices != NULL, flags);
             if (ret)
-                goto free_devices;
+                continue;
 
             break;
 
@@ -3993,7 +3997,7 @@ int drmGetDevices2(uint32_t flags, drmDevicePtr devices[], int max_devices)
             ret = drmProcessPlatformDevice(&device, node, node_type, maj, min,
                                            devices != NULL, flags);
             if (ret)
-                goto free_devices;
+                continue;
 
             break;
 
@@ -4001,7 +4005,7 @@ int drmGetDevices2(uint32_t flags, drmDevicePtr devices[], int max_devices)
             ret = drmProcessHost1xDevice(&device, node, node_type, maj, min,
                                          devices != NULL, flags);
             if (ret)
-                goto free_devices;
+                continue;
 
             break;
 
@@ -4139,4 +4143,85 @@ char *drmGetDeviceNameFromFd2(int fd)
 
     return strdup(node);
 #endif
+}
+
+int drmSyncobjCreate(int fd, uint32_t flags, uint32_t *handle)
+{
+    struct drm_syncobj_create args;
+    int ret;
+
+    memclear(args);
+    args.flags = flags;
+    args.handle = 0;
+    ret = drmIoctl(fd, DRM_IOCTL_SYNCOBJ_CREATE, &args);
+    if (ret)
+	return ret;
+    *handle = args.handle;
+    return 0;
+}
+
+int drmSyncobjDestroy(int fd, uint32_t handle)
+{
+    struct drm_syncobj_destroy args;
+
+    memclear(args);
+    args.handle = handle;
+    return drmIoctl(fd, DRM_IOCTL_SYNCOBJ_DESTROY, &args);
+}
+
+int drmSyncobjHandleToFD(int fd, uint32_t handle, int *obj_fd)
+{
+    struct drm_syncobj_handle args;
+    int ret;
+
+    memclear(args);
+    args.fd = -1;
+    args.handle = handle;
+    ret = drmIoctl(fd, DRM_IOCTL_SYNCOBJ_HANDLE_TO_FD, &args);
+    if (ret)
+	return ret;
+    *obj_fd = args.fd;
+    return 0;
+}
+
+int drmSyncobjFDToHandle(int fd, int obj_fd, uint32_t *handle)
+{
+    struct drm_syncobj_handle args;
+    int ret;
+
+    memclear(args);
+    args.fd = obj_fd;
+    args.handle = 0;
+    ret = drmIoctl(fd, DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE, &args);
+    if (ret)
+	return ret;
+    *handle = args.handle;
+    return 0;
+}
+
+int drmSyncobjImportSyncFile(int fd, uint32_t handle, int sync_file_fd)
+{
+    struct drm_syncobj_handle args;
+
+    memclear(args);
+    args.fd = sync_file_fd;
+    args.handle = handle;
+    args.flags = DRM_SYNCOBJ_FD_TO_HANDLE_FLAGS_IMPORT_SYNC_FILE;
+    return drmIoctl(fd, DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE, &args);
+}
+
+int drmSyncobjExportSyncFile(int fd, uint32_t handle, int *sync_file_fd)
+{
+    struct drm_syncobj_handle args;
+    int ret;
+
+    memclear(args);
+    args.fd = -1;
+    args.handle = handle;
+    args.flags = DRM_SYNCOBJ_HANDLE_TO_FD_FLAGS_EXPORT_SYNC_FILE;
+    ret = drmIoctl(fd, DRM_IOCTL_SYNCOBJ_HANDLE_TO_FD, &args);
+    if (ret)
+	return ret;
+    *sync_file_fd = args.fd;
+    return 0;
 }

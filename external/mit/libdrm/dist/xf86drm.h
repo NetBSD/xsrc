@@ -728,7 +728,7 @@ extern void drmMsg(const char *format, ...) DRM_PRINTFLIKE(1, 2);
 extern int drmSetMaster(int fd);
 extern int drmDropMaster(int fd);
 
-#define DRM_EVENT_CONTEXT_VERSION 2
+#define DRM_EVENT_CONTEXT_VERSION 3
 
 typedef struct _drmEventContext {
 
@@ -747,6 +747,13 @@ typedef struct _drmEventContext {
 				  unsigned int tv_sec,
 				  unsigned int tv_usec,
 				  void *user_data);
+
+	void (*page_flip_handler2)(int fd,
+				   unsigned int sequence,
+				   unsigned int tv_sec,
+				   unsigned int tv_usec,
+				   unsigned int crtc_id,
+				   void *user_data);
 
 } drmEventContext, *drmEventContextPtr;
 
@@ -843,6 +850,16 @@ extern void drmFreeDevices(drmDevicePtr devices[], int count);
 #define DRM_DEVICE_GET_PCI_REVISION (1 << 0)
 extern int drmGetDevice2(int fd, uint32_t flags, drmDevicePtr *device);
 extern int drmGetDevices2(uint32_t flags, drmDevicePtr devices[], int max_devices);
+
+extern int drmDevicesEqual(drmDevicePtr a, drmDevicePtr b);
+
+extern int drmSyncobjCreate(int fd, uint32_t flags, uint32_t *handle);
+extern int drmSyncobjDestroy(int fd, uint32_t handle);
+extern int drmSyncobjHandleToFD(int fd, uint32_t handle, int *obj_fd);
+extern int drmSyncobjFDToHandle(int fd, int obj_fd, uint32_t *handle);
+
+extern int drmSyncobjImportSyncFile(int fd, uint32_t handle, int sync_file_fd);
+extern int drmSyncobjExportSyncFile(int fd, uint32_t handle, int *sync_file_fd);
 
 #if defined(__cplusplus)
 }
