@@ -357,7 +357,7 @@ DecideOverlaySupport(xf86CrtcPtr crtc)
                 memEfficiency = (float)SINGLE_3205_133;
                 break;
             default:
-                ErrorF("Unknow DRAM Type!\n");
+                ErrorF("Unknown DRAM Type!\n");
                 mClock = 166;
                 memEfficiency = (float)SINGLE_3205_133;
                 break;

@@ -1,4 +1,7 @@
 /*
+ * Copyright 2016 Kevin Brace
+ * Copyright 2016 The OpenChrome Project
+ *                [https://www.freedesktop.org/wiki/Openchrome]
  * Copyright 2014 SHS SERVICES GmbH
  * Copyright 2006-2009 Luc Verhaegen.
  *
@@ -22,18 +25,18 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef _VIA_VT1632_H_
-#define _VIA_VT1632_H_ 1
+#ifndef _VIA_SII164_H_
+#define _VIA_SII164_H_ 1
 
-#define VIA_VT1632_VEN  0x20
-#define VIA_VT1632_HEN  0x10
-#define VIA_VT1632_DSEL 0x08
-#define VIA_VT1632_BSEL 0x04
-#define VIA_VT1632_EDGE 0x02
-#define VIA_VT1632_PDB  0x01
+#define VIA_SII164_VEN  0x20
+#define VIA_SII164_HEN  0x10
+#define VIA_SII164_DSEL 0x08
+#define VIA_SII164_BSEL 0x04
+#define VIA_SII164_EDGE 0x02
+#define VIA_SII164_PDB  0x01
 
-typedef struct _viaVT1632Rec {
-	I2CDevPtr VT1632I2CDev;
+typedef struct _viaSiI164 {
+	I2CDevPtr SiI164I2CDev;
 
 	int DotclockMin;
 	int DotclockMax;
@@ -41,11 +44,11 @@ typedef struct _viaVT1632Rec {
 	CARD8 Register09;
 	CARD8 Register0A;
 	CARD8 Register0C;
-} viaVT1632Rec, *viaVT1632RecPtr;
+} viaSiI164Rec, *viaSiI164RecPtr;
 
 
-const xf86OutputFuncsRec via_vt1632_funcs;
+const xf86OutputFuncsRec via_sii164_funcs;
 
-Bool viaVT1632Init(ScrnInfoPtr pScrn, I2CBusPtr pI2CBus);
+Bool viaSiI164Init(ScrnInfoPtr pScrn, I2CBusPtr pI2CBus);
 
-#endif /* _VIA_VT1632_H_ */
+#endif /* _VIA_SII164_H_ */

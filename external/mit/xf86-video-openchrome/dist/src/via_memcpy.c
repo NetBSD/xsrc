@@ -528,7 +528,6 @@ viaVidCopyInit(char *copyType, ScreenPtr pScreen)
     McFuncData *curData;
     FILE *cpuInfoFile;
     double cpuFreq;
-    VIAPtr pVia = VIAPTR(pScrn);
 
     if (NULL == (cpuInfoFile = fopen("/proc/cpuinfo", "r"))) {
         return libc_YUV42X;

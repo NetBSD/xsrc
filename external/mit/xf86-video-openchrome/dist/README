@@ -1,9 +1,10 @@
-OpenChrome Version 0.5 Release Note (July 6th, 2016)
-----------------------------------------------------
+OpenChrome DDX Version 0.6 Release Note (March 7th, 2017)
+---------------------------------------------------------
 
-OpenChrome is an open source implementation of X.Org Server 
+OpenChrome DDX is an open source implementation of X.Org Server 
 DDX (Device Dependent X) graphics device driver for VIA Technologies 
 UniChrome and Chrome9 IGPs. (Integrated Graphics Processor)
+OpenChrome DDX handles only 2D and video acceleration.
 Please note that OpenChrome does not support VIA Technologies IGPs 
 that are related to Trident Microsystems (i.e., Apollo MVP4, PLE133, 
 and KLE133) or S3 Graphics (i.e., KM266). Here is the project home 
@@ -19,7 +20,7 @@ Supported Chipsets
 ------------------
 
 - CLE266
-- KM400 / KM400A / KN400 / P4M800
+- KM400(A) / KN400(A) / P4M800
 - K8M800 / K8N800
 - PM800 / PN800 / PM880 / CN333 / CN400
 - P4M800 Pro / VN800 / CN700
@@ -37,40 +38,44 @@ Supported Features
 ------------------
 
 - VGA
-- DVI from an integrated TMDS transmitter (CX700, VX700, and 
-  VX900 chipsets)
-- DVI from VIA Technologies VT1632A TMDS transmitter
-- LVDS flat panel (i.e., laptop LCD flat panel)
+- DVI from an integrated TMDS transmitter (CX700, VX700, and VX800 
+  chipsets)
+- DVI from Silicon Image SiI 164 and VIA Technologies VT1632(A) TMDS 
+  transmitters
+- Flat Panel
 - EXA acceleration (RENDER acceleration)
 - Xv and XvMC
-- Multiple display output (i.e., RandR)
+- Dual monitor support
 
 
 
 Unproven Features
 -----------------
 
-- Standby (ACPI S1 and S3 State) resume
+- Standby resume
 - TV out
-- KMS support (Kernel Mode Setting; requires the use of VIA 
-  Technologies IGP DRM module supporting KMS. See "Where to Obtain 
-  OpenChrome Source Code" chapter for more details.)
+- KMS support
+  (Kernel Mode Setting; requires the use of still in 
+   development KMS supporting OpenChrome DRM. See "Where to Obtain 
+   OpenChrome Source Code" section for more details.)
 
 
 
 Unimplemented Features
 ----------------------
 
-- Hardware cursor support for CLE266, KM400, KM400A, KN400, and 
+- Hardware cursor support for CLE266, KM400(A) / KN400(A), and 
   P4M800 chipsets
-- DVI via Silicon Image SiI 164 TMDS transmitter or Chrontel TMDS 
-  transmitter
+- DVI via Chrontel TMDS transmitter
 - LVDS via VT1631 / VT1636 LVDS transmitter
-- External HDMI transmitter (i.e., Jetway J7F5M-VHE-LF motherboard, 
-  VIA Embedded EPIA-P720 motherboard, etc.)
-- DisplayPort and HDMI support for VX900 chipset (Might work with 
-  the experimental DRM module that supports KMS. See "Where to Obtain 
-  OpenChrome Source Code" chapter for more details.)
+- External HDMI transmitter
+  (i.e., Jetway J7F5M-VHE-LF motherboard, VIA Embedded EPIA-P720 
+  motherboard, etc.)
+- HDMI support for VX900 chipset
+  (HDMI is supported via still in development KMS supporting 
+   OpenChrome DRM. See "Where to Obtain OpenChrome Source Code" 
+   section for more details.)
+- DisplayPort support for VX900 chipset
 
 
 
@@ -79,26 +84,45 @@ OS Support
 
 - X.Org Server Version 1.7 or later
   (It might not work correctly if it is compiled against an older 
-  X.Org Server.)
+   X.Org Server.)
 - Linux Version 2.6.32 or later
   (Note: For Linux Version 4.5 or later, you may have to blacklist 
   vesafb. This is a bug that has not been fixed so far.)
 
 
 
-What's New for OpenChrome Version 0.5
--------------------------------------
+What's New for OpenChrome DDX Version 0.6
+-----------------------------------------
 
-Based on OpenChrome Version 0.4.0 code, OpenChrome Version 0.5 fixes 
-several bugs while adding two new features. 
+OpenChrome DDX Version 0.6 is an improved version of OpenChrome DDX 
+Version 0.5 with a number of improvements made to the code. OpenChrome 
+DDX Version 0.6 is written in a way to completely replace Version 
+0.2.904 through 0.5.
 
-- Major code cleanup
-- Removal of more manual options (BusWidth, ForcePanel, and AccelMethod)
-- Fix for runtime screen resolution change X.Org Server crash bug
-- Fix for CLE266 chipset not being able to function correctly if 
-  "CRT + TV" option was chosen in BIOS setup
-- Initial support for VIA Technologies VT1632A TMDS transmitter for DVI
-- Initial support for multiple display output (i.e., RandR)
+OpenChrome DDX Version 0.6 has added the following new features.
+
+- First official support for CX700, VX700, and VX800 chipsets 
+  integrated TMDS transmitter (i.e., DVI support)
+- Initial support for Silicon Image SiI 164 TMDS transmitter
+
+
+OpenChrome DDX Version 0.6 has the following improvements.
+
+- Improved FP reinitialization when resuming from standby
+  (HP 2133 Mini-Note, FIC CE260 / CE261 based netbooks like 
+   Everex CloudBook and Sylvania g netbook)
+- Improved automatic detection of display resources
+- Improved X Server stability in dual monitor mode
+- Automatic active steering of the display controller channel to the 
+  correct display output device
+
+
+OpenChrome DDX Version 0.6 fixes the following bugs.
+
+- Fix for the disruption of the VT (Virtual Terminal) screen bug 
+  introduced in Version 0.5
+- Fix for HP 2133 Mini-Note's PCIe WLAN getting turned off 
+  inadvertently bug introduced in Version 0.5
 
 
 
@@ -119,17 +143,19 @@ list is for discussing OpenChrome development issues.
 Support for Older Versions
 --------------------------
 
-As a general rule, the older version OpenChrome will not be supported 
-once a new version is out. It is sometimes useful to try out the 
-older version, in order to see if a regression has occurred, but 
-generally speaking, there will be no fixes for the older versions.
-OpenChrome is written so that it can be compiled against X.Org Server 
-Version 1.7 or later and Linux Version 2.6.32 or later. We will likely 
-maintain this minimum platform requirement for the foreseeable future. 
-What this means is that if the user wanted to try the latest OpenChrome, 
-it can do so with an OS that was released around Year 2010. OpenChrome 
-might still compile for anything older than that, but it might not be 
-stable enough to be useful.
+The OpenChrome Project practices rolling release update policy for 
+OpenChrome DDX. What this means is that the older version of 
+OpenChrome DDX will not be supported once a new version is out. 
+It is sometimes useful to try out the older version, in order to see 
+if a regression has occurred, but generally speaking, there will be 
+no fixes for the older versions. OpenChrome DDX is written so that it 
+can be compiled against X.Org Server Version 1.7 or later and Linux 
+Version 2.6.32 or later. We will likely maintain this minimum platform 
+requirement for the foreseeable future. What this means is that if the 
+user wanted to try the latest OpenChrome DDX, it can do so with an OS 
+that was released around Year 2010. OpenChrome DDX might still compile 
+for anything older than that, but it might not be stable enough to be 
+useful.
 
 
 
@@ -165,14 +191,15 @@ notified of the bug.
 Where to Obtain OpenChrome Source Code
 --------------------------------------
 
-The OpenChrome source code repository is located at.
+OpenChrome source code repository is located at.
 
 http://cgit.freedesktop.org/openchrome/xf86-video-openchrome/
 
 
-The experimental DRM (Direct Rendering Manager) module that supports 
-KMS (Kernel Mode Setting) is located at.
+OpenChrome DRM (Direct Rendering Manager) module source code 
+repository is located at.
 
+https://cgit.freedesktop.org/openchrome/drm-openchrome/
 https://cgit.freedesktop.org/openchrome/drm-openchrome/tree/drivers/gpu/drm/via
 
 
@@ -185,14 +212,14 @@ development for more than 10 years. In that process, there were many
 different developers that wrote the code in varying ways. OpenChrome 
 is a unified graphics device driver that supports 12 generations of 
 VIA Technologies IGP starting from CLE266 chipset all the way to 
-VX900 chipset. Even the VIA Technoloiges in house unified graphics 
+VX900 chipset. Even the VIA Technologies in house unified graphics 
 device driver does not support the number of devices OpenChrome does. 
 Furthermore, VIA Technologies IGPs tend to rely heavily on many 
-different kinds of external encoders and transmitters to get the 
-desired functionality. As a result, it is very difficult to get the 
-code right for every possible configuration you can think of.
-    Starting with OpenChrome Version 0.4.0, the project is under new 
+different external encoders and transmitters to display the image. 
+As a result, it is very difficult to get the code right for every 
+possible configuration you can think of.
+    Starting with OpenChrome Version 0.4, the project is under new 
 management, and moving forward, the emphasis will be on device driver 
-reliability, and code maintainability.
+reliability and code maintainability.
 
-(End of this document.)
+(End of document.)

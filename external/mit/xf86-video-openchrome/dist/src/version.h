@@ -1,1 +1,1 @@
-#define BUILDCOMMENT "(openchrome 0.5.0 release)"
+#define BUILDCOMMENT "(openchrome 0.6.0 release)"

@@ -34,7 +34,7 @@
 #include "xf86.h"
 #include "via_driver.h" /* for HAVE_DEBUG */
 
-#if ABI_VIDEODRV_VERSION < 12
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
 #define PIOOFFSET hwp->PIOOffset
 #else
 #define PIOOFFSET 0

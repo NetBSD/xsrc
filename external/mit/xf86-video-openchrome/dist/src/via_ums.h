@@ -1,7 +1,7 @@
 /*
  * Copyright 2016 Kevin Brace
  * Copyright 2005-2016 The OpenChrome Project
- *                     [http://www.freedesktop.org/wiki/Openchrome]
+ *                     [https://www.freedesktop.org/wiki/Openchrome]
  * Copyright 2004-2005 The Unichrome Project  [unichrome.sf.net]
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.
@@ -116,11 +116,21 @@
 #define     VIA_DI_PORT_DVP0        0x1
 #define     VIA_DI_PORT_DVP1        0x2
 #define     VIA_DI_PORT_DFPLOW      0x4
+#define     VIA_DI_PORT_LVDS1       0x4
+#define     VIA_DI_PORT_TMDS        0x4
 #define     VIA_DI_PORT_DFPHIGH     0x8
+#define     VIA_DI_PORT_LVDS2       0x8
+
+/* External TMDS (DVI) Transmitter Type */
+#define     VIA_TMDS_NONE           0x0
+#define     VIA_TMDS_VT1632         0x1
+
 
 typedef struct ViaPanelMode {
-    int Width ;
-    int Height ;
+    int Width;
+    int Height;
+    Bool useDualEdge;
+    Bool useDithering;
 } ViaPanelModeRec, *ViaPanelModePtr ;
 
 typedef struct ViaPanelInfo {
@@ -128,6 +138,9 @@ typedef struct ViaPanelInfo {
     /* Native physical resolution */
     int NativeHeight;
     int NativeWidth;
+    Bool useDualEdge;
+    Bool useDithering;
+
     /* Native resolution index, see via_panel.c */
     CARD8 NativeModeIndex;
     /* Determine if we must use the hardware scaler
@@ -163,7 +176,6 @@ typedef struct _VIABIOSINFO {
     int         TVDeflicker;
     CARD8       TVRegs[0xFF];
     int         TVNumRegs;
-    int         TVDIPort;
 
     /* TV Callbacks */
     void (*TVSave) (ScrnInfoPtr pScrn);
@@ -180,6 +192,21 @@ typedef struct _VIABIOSINFO {
 
 } VIABIOSInfoRec, *VIABIOSInfoPtr;
 
+
+typedef struct _VIATMDSRec {
+    I2CBusPtr pVIATMDSI2CBus;
+} VIATMDSRec, *VIATMDSRecPtr;
+
+typedef struct
+{
+    CARD16 X;
+    CARD16 Y;
+    CARD16 Bpp;
+    CARD8 bRamClock;
+    CARD8 bTuningValue;
+} ViaExpireNumberTable;
+
+
 /* via_ums.c */
 void viaUnmapMMIO(ScrnInfoPtr pScrn);
 void viaDisableVQ(ScrnInfoPtr pScrn);
@@ -189,28 +216,38 @@ Bool umsPreInit(ScrnInfoPtr pScrn);
 Bool umsCrtcInit(ScrnInfoPtr pScrn);
 
 /* via_output.c */
+void viaDIP0SetDisplaySource(ScrnInfoPtr pScrn, CARD8 displaySource);
+void viaDIP0EnableIOPads(ScrnInfoPtr pScrn, CARD8 ioPadState);
+void viaDIP0SetClockDriveStrength(ScrnInfoPtr pScrn,
+                                    CARD8 clockDriveStrength);
+void viaDIP0SetDataDriveStrength(ScrnInfoPtr pScrn,
+                                    CARD8 dataDriveStrength);
+void viaDVP0SetDisplaySource(ScrnInfoPtr pScrn, CARD8 displaySource);
+void viaDVP0EnableIOPads(ScrnInfoPtr pScrn, CARD8 ioPadState);
+void viaDVP0SetClockDriveStrength(ScrnInfoPtr pScrn,
+                                    CARD8 clockDriveStrength);
+void viaDVP0SetDataDriveStrength(ScrnInfoPtr pScrn,
+                                    CARD8 dataDriveStrength);
+void viaDVP1SetDisplaySource(ScrnInfoPtr pScrn, CARD8 displaySource);
+void viaDVP1EnableIOPads(ScrnInfoPtr pScrn, CARD8 ioPadState);
+void viaDVP1SetClockDriveStrength(ScrnInfoPtr pScrn,
+                                    CARD8 clockDriveStrength);
+void viaDVP1SetDataDriveStrength(ScrnInfoPtr pScrn,
+                                    CARD8 dataDriveStrength);
+void viaDFPLowSetDisplaySource(ScrnInfoPtr pScrn, CARD8 displaySource);
+void viaDFPLowEnableIOPads(ScrnInfoPtr pScrn, CARD8 ioPadState);
 void viaOutputDetect(ScrnInfoPtr pScrn);
 CARD32 ViaGetMemoryBandwidth(ScrnInfoPtr pScrn);
 CARD32 ViaModeDotClockTranslate(ScrnInfoPtr pScrn, DisplayModePtr mode);
-void viaTMDSPower(ScrnInfoPtr pScrn, Bool On);
-void ViaTVPower(ScrnInfoPtr pScrn, Bool On);
-void ViaTVSave(ScrnInfoPtr pScrn);
-void ViaTVRestore(ScrnInfoPtr pScrn);
-#ifdef HAVE_DEBUG
-void ViaTVPrintRegs(ScrnInfoPtr pScrn);
-#endif
 void viaProbePinStrapping(ScrnInfoPtr pScrn);
 void ViaSetPrimaryDotclock(ScrnInfoPtr pScrn, CARD32 clock);
 void ViaSetSecondaryDotclock(ScrnInfoPtr pScrn, CARD32 clock);
 void ViaSetUseExternalClock(vgaHWPtr hwp);
 
 /* via_display.c */
-void viaIGA1DPMSControl(ScrnInfoPtr pScrn, CARD8 dpmsControl);
-void viaIGA2DisplayOutput(ScrnInfoPtr pScrn, Bool outputState);
 void viaIGA2DisplayChannel(ScrnInfoPtr pScrn, Bool channelState);
 void viaDisplayInit(ScrnInfoPtr pScrn);
 void ViaGammaDisable(ScrnInfoPtr pScrn);
-void ViaCRTCInit(ScrnInfoPtr pScrn);
 void viaIGAInitCommon(ScrnInfoPtr pScrn);
 void viaIGA1Init(ScrnInfoPtr pScrn);
 void viaIGA1SetFBStartingAddress(xf86CrtcPtr crtc, int x, int y);
@@ -224,13 +261,27 @@ void viaIGA2Save(ScrnInfoPtr pScrn);
 void viaIGA2Restore(ScrnInfoPtr pScrn);
 void ViaShadowCRTCSetMode(ScrnInfoPtr pScrn, DisplayModePtr mode);
 
+/* via_analog.c */
+void via_analog_init(ScrnInfoPtr pScrn);
+
 /* via_lvds.c */
+void viaLVDS1SetIOPadSetting(ScrnInfoPtr pScrn, CARD8 ioPadState);
 void via_lvds_init(ScrnInfoPtr pScrn);
 
-/* in via_bandwidth.c */
-void ViaSetPrimaryFIFO(ScrnInfoPtr pScrn, DisplayModePtr mode);
-void ViaSetSecondaryFIFO(ScrnInfoPtr pScrn, DisplayModePtr mode);
-void ViaDisablePrimaryFIFO(ScrnInfoPtr pScrn);
+/* via_tmds.c */
+void viaExtTMDSSetDisplaySource(ScrnInfoPtr pScrn, CARD8 displaySource);
+void viaExtTMDSEnableIOPads(ScrnInfoPtr pScrn, CARD8 ioPadState);
+void viaExtTMDSSetClockDriveStrength(ScrnInfoPtr pScrn,
+                                        CARD8 clockDriveStrength);
+void viaExtTMDSSetDataDriveStrength(ScrnInfoPtr pScrn,
+                                        CARD8 dataDriveStrength);
+void via_dvi_init(ScrnInfoPtr pScrn);
+
+/*via_tv.c */
+#ifdef HAVE_DEBUG
+void ViaTVPrintRegs(ScrnInfoPtr pScrn);
+#endif
+Bool via_tv_init(ScrnInfoPtr pScrn);
 
 /* via_vt162x.c */
 I2CDevPtr ViaVT162xDetect(ScrnInfoPtr pScrn, I2CBusPtr pBus, CARD8 Address);

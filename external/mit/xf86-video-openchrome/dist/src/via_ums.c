@@ -1,6 +1,6 @@
 /*
  * Copyright 2011-2016 The OpenChrome Project
- *                     [http://www.freedesktop.org/wiki/Openchrome]
+ *                     [https://www.freedesktop.org/wiki/Openchrome]
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -186,7 +186,7 @@ viaMapMMIO(ScrnInfoPtr pScrn)
 
     xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
                "Mapping the frame buffer at address 0x%lX with "
-               "size %u KB.\n",
+               "size %lu KB.\n",
                pVia->FrameBufferBase, pVia->videoRambytes / 1024);
 
 #ifdef HAVE_PCIACCESS
@@ -276,9 +276,6 @@ viaMapMMIO(ScrnInfoPtr pScrn)
     ViaSeqMask(hwp, 0x10, 0x01, 0x01);
 
     viaMMIOEnable(pScrn);
-
-    /* Unlock CRTC. */
-    ViaCrtcMask(hwp, 0x47, 0x00, 0x01);
 
     vgaHWGetIOBase(hwp);
 
@@ -924,6 +921,13 @@ umsCrtcInit(ScrnInfoPtr pScrn)
     VIABIOSInfoPtr pBIOSInfo;
     xf86CrtcPtr iga1, iga2;
 
+    /* 3X5.3B through 3X5.3F are scratch pad registers. */
+    pVia->originalCR3B = hwp->readCrtc(hwp, 0x3B);
+    pVia->originalCR3C = hwp->readCrtc(hwp, 0x3C);
+    pVia->originalCR3D = hwp->readCrtc(hwp, 0x3D);
+    pVia->originalCR3E = hwp->readCrtc(hwp, 0x3E);
+    pVia->originalCR3F = hwp->readCrtc(hwp, 0x3F);
+
     /* Read memory bandwidth from registers. */
     pVia->MemClk = hwp->readCrtc(hwp, 0x3D) >> 4;
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
@@ -1018,34 +1022,12 @@ umsCrtcInit(ScrnInfoPtr pScrn)
     iga2_rec->index = 1;
     iga2->driver_private = iga2_rec;
 
-    /* Init HI_X0 for cursor */
-    switch (pVia->Chipset) {
-    case VIA_CX700:
-    /* case VIA_CN750: */
-    case VIA_P4M890:
-    case VIA_P4M900:
-    case VIA_VX800:
-    case VIA_VX855:
-    case VIA_VX900:
-        /* set 0 as transparent color key for IGA 2 */
-        VIASETREG(HI_TRANSPARENT_COLOR, 0);
-        VIASETREG(HI_INVTCOLOR, 0X00FFFFFF);
-        VIASETREG(ALPHA_V3_PREFIFO_CONTROL, 0xE0000);
-        VIASETREG(ALPHA_V3_FIFO_CONTROL, 0xE0F0000);
-
-        /* set 0 as transparent color key for IGA 1 */
-        VIASETREG(PRIM_HI_TRANSCOLOR, 0);
-        VIASETREG(PRIM_HI_FIFO, 0x0D000D0F);
-        VIASETREG(PRIM_HI_INVTCOLOR, 0x00FFFFFF);
-        VIASETREG(V327_HI_INVTCOLOR, 0x00FFFFFF);
-        break;
-
-    default:
-        VIASETREG(HI_TRANSPARENT_COLOR, 0);
-        VIASETREG(HI_INVTCOLOR, 0X00FFFFFF);
-        VIASETREG(ALPHA_V3_PREFIFO_CONTROL, 0xE0000);
-        VIASETREG(ALPHA_V3_FIFO_CONTROL, 0xE0F0000);
-        break;
+    if (!pScrn->bitsPerPixel) {
+        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+                    "Detected bitsPerPixel to be 0 bit.\n");
+        xf86CrtcDestroy(iga2);
+        xf86CrtcDestroy(iga1);
+        return FALSE;
     }
 
     /*
@@ -1060,8 +1042,8 @@ umsCrtcInit(ScrnInfoPtr pScrn)
      * We should be able to limit the memory available for a mode to 32 MB,
      * but miScanLineWidth fails to catch this properly (apertureSize).
      */
-    max_pitch = 8192 / ((pScrn->bitsPerPixel + 7) >> 3);
-    max_height = max_pitch;
+    max_pitch = (8192 / ((pScrn->bitsPerPixel + 7) >> 3)) - (16 / ((pScrn->bitsPerPixel + 7) >> 3));
+    max_height = 8192 / ((pScrn->bitsPerPixel + 7) >> 3);
 
     xf86CrtcSetSizeRange(pScrn, 320, 200, max_pitch, max_height);
 

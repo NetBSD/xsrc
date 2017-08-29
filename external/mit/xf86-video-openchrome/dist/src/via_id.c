@@ -1,6 +1,6 @@
 /*
  * Copyright 2005-2015 The Openchrome Project
- *                     [http://www.freedesktop.org/wiki/Openchrome]
+ *                     [https://www.freedesktop.org/wiki/Openchrome]
  * Copyright 2004-2005 The Unichrome Project  [unichrome.sf.net]
  *
  * Permission is hereby granted, free of charge, to any person obtaining a

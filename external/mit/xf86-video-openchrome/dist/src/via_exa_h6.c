@@ -171,8 +171,6 @@ viaExaPrepareSolid_H6(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
     VIAPtr pVia = VIAPTR(pScrn);
     ViaTwodContext *tdc = &pVia->td;
 
-    RING_VARS;
-
     if (exaGetPixmapPitch(pPixmap) & 7)
         return FALSE;
 
@@ -227,8 +225,6 @@ viaExaPrepareCopy_H6(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
     ScrnInfoPtr pScrn = xf86ScreenToScrn(pDstPixmap->drawable.pScreen);
     VIAPtr pVia = VIAPTR(pScrn);
     ViaTwodContext *tdc = &pVia->td;
-
-    RING_VARS;
 
     if (pSrcPixmap->drawable.bitsPerPixel != pDstPixmap->drawable.bitsPerPixel)
         return FALSE;

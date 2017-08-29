@@ -1,6 +1,6 @@
 /*
  * Copyright 2005-2015 The Openchrome Project
- *                     [http://www.freedesktop.org/wiki/Openchrome]
+ *                     [https://www.freedesktop.org/wiki/Openchrome]
  * Copyright 2004-2006 Luc Verhaegen.
  * Copyright 2004-2005 The Unichrome Project  [unichrome.sf.net]
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
@@ -179,7 +179,6 @@ typedef enum
     OPTION_TVDOTCRAWL,
     OPTION_TVTYPE,
     OPTION_TVOUTPUT,
-    OPTION_TVDIPORT,
     OPTION_DISABLEVQ,
     OPTION_DISABLEIRQ,
     OPTION_TVDEFLICKER,
@@ -209,7 +208,6 @@ static OptionInfoRec VIAOptions[] = {
     {OPTION_TVDEFLICKER,         "TVDeflicker",      OPTV_INTEGER, {0}, FALSE},
     {OPTION_TVTYPE,              "TVType",           OPTV_ANYSTR,  {0}, FALSE},
     {OPTION_TVOUTPUT,            "TVOutput",         OPTV_ANYSTR,  {0}, FALSE},
-    {OPTION_TVDIPORT,            "TVPort",           OPTV_ANYSTR,  {0}, FALSE},
     {OPTION_DISABLEVQ,           "DisableVQ",        OPTV_BOOLEAN, {0}, FALSE},
     {OPTION_DISABLEIRQ,          "DisableIRQ",       OPTV_BOOLEAN, {0}, FALSE},
     {OPTION_AGP_DMA,             "EnableAGPDMA",     OPTV_BOOLEAN, {0}, FALSE},
@@ -227,7 +225,7 @@ static MODULESETUPPROTO(VIASetup);
 
 static XF86ModuleVersionInfo VIAVersRec = {
     "openchrome",
-    "http://www.freedesktop.org/wiki/Openchrome/",
+    "https://www.freedesktop.org/wiki/Openchrome/",
     MODINFOSTRING1,
     MODINFOSTRING2,
 #ifdef XORG_VERSION_CURRENT
@@ -480,7 +478,7 @@ via_pci_probe(DriverPtr driver, int entity_num,
                 "VIA Technologies does not support this driver in any way.\n");
         xf86Msg(X_NOTICE,
                 "For support, please refer to"
-                " http://www.freedesktop.org/wiki/Openchrome/.\n");
+                " https://www.freedesktop.org/wiki/Openchrome/.\n");
 #ifdef BUILDCOMMENT
         xf86Msg(X_NOTICE, BUILDCOMMENT"\n");
 #endif
@@ -521,7 +519,7 @@ VIAProbe(DriverPtr drv, int flags)
     xf86Msg(X_NOTICE,
             "VIA Technologies does not support this driver in any way.\n");
     xf86Msg(X_NOTICE, "For support, please refer to"
-                      " http://www.freedesktop.org/wiki/Openchrome/.\n");
+                      " https://www.freedesktop.org/wiki/Openchrome/.\n");
 
 #ifdef BUILDCOMMENT
     xf86Msg(X_NOTICE, BUILDCOMMENT"\n");
@@ -629,7 +627,6 @@ static Bool
 VIASetupDefaultOptions(ScrnInfoPtr pScrn)
 {
     VIAPtr pVia = VIAPTR(pScrn);
-    VIABIOSInfoPtr pBIOSInfo = pVia->pBIOSInfo;
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIASetupDefaultOptions - Setting up default chipset options.\n"));
 
@@ -660,17 +657,13 @@ VIASetupDefaultOptions(ScrnInfoPtr pScrn)
     pVia->swov.maxWInterp = 800;
     pVia->swov.maxHInterp = 600;
 
-    pBIOSInfo->TVDIPort = VIA_DI_PORT_DVP1;
-
     switch (pVia->Chipset) {
         case VIA_CLE266:
-            pBIOSInfo->TVDIPort = VIA_DI_PORT_DVP0;
             break;
         case VIA_KM400:
             /* IRQ is not broken on KM400A, but testing (pVia->ChipRev < 0x80)
              * is not enough to make sure we have an older, broken KM400. */
             pVia->DRIIrqEnable = FALSE;
-            pBIOSInfo->TVDIPort = VIA_DI_PORT_DVP0;
             break;
         case VIA_K8M800:
             pVia->DRIIrqEnable = FALSE;
@@ -699,7 +692,6 @@ VIASetupDefaultOptions(ScrnInfoPtr pScrn)
             pVia->agpEnable = FALSE;
             /* FIXME: this needs to be tested */
             pVia->dmaXV = FALSE;
-            pBIOSInfo->TVDIPort = VIA_DI_PORT_DVP0;
             break;
         case VIA_VX800:
         case VIA_VX855:
@@ -1450,30 +1442,6 @@ viaPreInit(ScrnInfoPtr pScrn, int flags)
                    "No default TV output signal type is set.\n");
     }
 
-    /* TV DI Port */
-    if ((s = xf86GetOptValString(VIAOptions, OPTION_TVDIPORT))) {
-        if (!xf86NameCmp(s, "DVP0")) {
-            pBIOSInfo->TVDIPort = VIA_DI_PORT_DVP0;
-            xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
-                       "TV Output Port is DVP0.\n");
-        } else if (!xf86NameCmp(s, "DVP1")) {
-            pBIOSInfo->TVDIPort = VIA_DI_PORT_DVP1;
-            xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
-                       "TV Output Port is DVP1.\n");
-        } else if (!xf86NameCmp(s, "DFPHigh")) {
-            pBIOSInfo->TVDIPort = VIA_DI_PORT_DFPHIGH;
-            xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
-                       "TV Output Port is DFPHigh.\n");
-        } else if (!xf86NameCmp(s, "DFPLow")) {
-            pBIOSInfo->TVDIPort = VIA_DI_PORT_DFPLOW;
-            xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
-                       "TV Output Port is DFPLow.\n");
-        }
-    } else {
-        xf86DrvMsg(pScrn->scrnIndex, X_DEFAULT,
-                   "No default TV output port is set.\n");
-    }
-
     VIAVidHWDiffInit(pScrn);
 
 #ifdef HAVE_DEBUG
@@ -1492,6 +1460,23 @@ viaPreInit(ScrnInfoPtr pScrn, int flags)
     xf86DrvMsg(pScrn->scrnIndex, from, "Will %sscan I2C buses.\n",
                pVia->I2CScan ? "" : "not ");
 #endif /* HAVE_DEBUG */
+
+    /* Checking for VIA Technologies NanoBook reference design.
+       Examples include Everex CloudBook and Sylvania g netbook.
+       It is also called FIC CE260 and CE261 by its ODM (Original 
+       Design Manufacturer) name.
+       This device has its strapping resistors set to a wrong 
+       setting to handle DVI. As a result, we need to make special 
+       accommodations to handle DVI properly. */
+    if ((pVia->Chipset == VIA_CX700) &&
+        (SUBVENDOR_ID(pVia->PciInfo) == 0x1509) &&
+        (SUBSYS_ID(pVia->PciInfo) == 0x2D30)) {
+
+        pVia->isVIANanoBook      = TRUE;
+    } else {
+        pVia->isVIANanoBook      = FALSE;
+    }
+
 
     /* Checking for OLPC XO-1.5. */
     if ((pVia->Chipset == VIA_VX855) &&

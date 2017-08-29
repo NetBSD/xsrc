@@ -30,75 +30,61 @@
 #endif
 
 #include "via_driver.h"
-#include "via_vt1632.h"
+#include "via_sii164.h"
 
 static void
-viaVT1632DumpRegisters(ScrnInfoPtr pScrn, I2CDevPtr pDev)
+viaSiI164DumpRegisters(ScrnInfoPtr pScrn, I2CDevPtr pDev)
 {
     int i;
     CARD8 tmp;
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Entered viaVT1632DumpRegisters.\n"));
+                        "Entered viaSiI164DumpRegisters.\n"));
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Dumping VT1632(A) registers.\n"));
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "SiI 164: dumping registers:\n"));
     for (i = 0; i <= 0x0f; i++) {
         xf86I2CReadByte(pDev, i, &tmp);
-        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "0x%02x: 0x%02x\n", i, tmp));
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "SiI 164: 0x%02x: 0x%02x\n", i, tmp));
     }
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Exiting viaVT1632DumpRegisters.\n"));
+                        "Exiting viaSiI164DumpRegisters.\n"));
 }
 
 static void
-viaVT1632InitRegisters(ScrnInfoPtr pScrn, I2CDevPtr pDev)
+viaSiI164InitRegisters(ScrnInfoPtr pScrn, I2CDevPtr pDev)
 {
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Entered viaVT1632InitRegisters.\n"));
+                        "Entered viaSiI164InitRegisters.\n"));
 
-    /* For Wyse C00X VX855 chipset DVP1 (Digital Video Port 1), use
-     * 12-bit mode with dual edge transfer, along with rising edge
-     * data capture first mode. This is likely true for CX700, VX700,
-     * VX800, and VX900 chipsets as well. */
     xf86I2CWriteByte(pDev, 0x08,
-                        VIA_VT1632_VEN | VIA_VT1632_HEN |
-                        VIA_VT1632_DSEL |
-                        VIA_VT1632_EDGE | VIA_VT1632_PDB);
+                        VIA_SII164_VEN | VIA_SII164_HEN |
+                        VIA_SII164_DSEL | VIA_SII164_EDGE | VIA_SII164_PDB);
 
     /* Route receiver detect bit (Offset 0x09[2]) as the output of
      * MSEN pin. */
     xf86I2CWriteByte(pDev, 0x09, 0x20);
 
-    /* Turning on deskew feature caused screen display issues.
-     * This was observed with Wyse C00X. */
-    xf86I2CWriteByte(pDev, 0x0A, 0x00);
+    xf86I2CWriteByte(pDev, 0x0A, 0x90);
 
-    /* While VIA Technologies VT1632A datasheet insists on setting this
-     * register to 0x89 as the recommended setting, in practice, this
-     * leads to a blank screen on the display with Wyse C00X. According to
-     * Silicon Image SiI 164 datasheet (VT1632A is a pin and mostly
-     * register compatible chip), offset 0x0C is for PLL filter enable,
-     * PLL filter setting, and continuous SYNC enable bits. All of these are
-     * turned off for proper operation. */
-    xf86I2CWriteByte(pDev, 0x0C, 0x00);
+    xf86I2CWriteByte(pDev, 0x0C, 0x89);
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Exiting viaVT1632InitRegisters.\n"));
+                        "Exiting viaSiI164InitRegisters.\n"));
 }
 
 /*
- * Returns TMDS receiver detection state for VIA Technologies VT1632
+ * Returns TMDS receiver detection state for Silicon Image SiI 164
  * external TMDS transmitter.
  */
 static Bool
-viaVT1632Sense(ScrnInfoPtr pScrn, I2CDevPtr pDev)
+viaSiI164Sense(ScrnInfoPtr pScrn, I2CDevPtr pDev)
 {
     CARD8 tmp;
     Bool receiverDetected = FALSE;
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Entered viaVT1632Sense.\n"));
+                        "Entered viaSiI164Sense.\n"));
 
     xf86I2CReadByte(pDev, 0x09, &tmp);
     if (tmp & 0x04) {
@@ -106,216 +92,216 @@ viaVT1632Sense(ScrnInfoPtr pScrn, I2CDevPtr pDev)
     }
 
     xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                "VT1632 %s a TMDS receiver.\n",
+                "SiI 164 %s a TMDS receiver.\n",
                 receiverDetected ? "detected" : "did not detect");
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Exiting viaVT1632Sense.\n"));
+                        "Exiting viaSiI164Sense.\n"));
     return receiverDetected;
 }
 
 static void
-viaVT1632Power(ScrnInfoPtr pScrn, I2CDevPtr pDev, Bool powerState)
+viaSiI164Power(ScrnInfoPtr pScrn, I2CDevPtr pDev, Bool powerState)
 {
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Entered viaVT1632Power.\n"));
+                        "Entered viaSiI164Power.\n"));
 
     xf86I2CMaskByte(pDev, 0x08, powerState ? 0x01 : 0x00, 0x01);
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VT1632 (DVI) Power: %s\n",
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "SiI 164 (DVI) Power: %s\n",
                 powerState ? "On" : "Off");
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Exiting viaVT1632Power.\n"));
+                        "Exiting viaSiI164Power.\n"));
 }
 
 static void
-viaVT1632SaveRegisters(ScrnInfoPtr pScrn, I2CDevPtr pDev,
-                        viaVT1632RecPtr pVIAVT1632Rec)
+viaSiI164SaveRegisters(ScrnInfoPtr pScrn, I2CDevPtr pDev,
+                        viaSiI164RecPtr pSiI164Rec)
 {
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Entered viaVT1632SaveRegisters.\n"));
+                        "Entered viaSiI164SaveRegisters.\n"));
 
     xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                "Saving VT1632 registers.\n");
-    xf86I2CReadByte(pDev, 0x08, &pVIAVT1632Rec->Register08);
-    xf86I2CReadByte(pDev, 0x09, &pVIAVT1632Rec->Register09);
-    xf86I2CReadByte(pDev, 0x0A, &pVIAVT1632Rec->Register0A);
-    xf86I2CReadByte(pDev, 0x0C, &pVIAVT1632Rec->Register0C);
+                "Saving SiI 164 registers.\n");
+    xf86I2CReadByte(pDev, 0x08, &pSiI164Rec->Register08);
+    xf86I2CReadByte(pDev, 0x09, &pSiI164Rec->Register09);
+    xf86I2CReadByte(pDev, 0x0A, &pSiI164Rec->Register0A);
+    xf86I2CReadByte(pDev, 0x0C, &pSiI164Rec->Register0C);
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Exiting viaVT1632SaveRegisters.\n"));
+                        "Exiting viaSiI164SaveRegisters.\n"));
 }
 
 static void
-viaVT1632RestoreRegisters(ScrnInfoPtr pScrn, I2CDevPtr pDev,
-                            viaVT1632RecPtr pVIAVT1632Rec)
+viaSiI164RestoreRegisters(ScrnInfoPtr pScrn, I2CDevPtr pDev,
+                            viaSiI164RecPtr pSiI164Rec)
 {
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Entered viaVT1632RestoreRegisters.\n"));
+                        "Entered viaSiI164RestoreRegisters.\n"));
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Restoring VT1632 registers.\n"));
-    xf86I2CWriteByte(pDev, 0x08, pVIAVT1632Rec->Register08);
-    xf86I2CWriteByte(pDev, 0x09, pVIAVT1632Rec->Register09);
-    xf86I2CWriteByte(pDev, 0x0A, pVIAVT1632Rec->Register0A);
-    xf86I2CWriteByte(pDev, 0x0C, pVIAVT1632Rec->Register0C);
+                        "Restoring SiI 164 registers.\n"));
+    xf86I2CWriteByte(pDev, 0x08, pSiI164Rec->Register08);
+    xf86I2CWriteByte(pDev, 0x09, pSiI164Rec->Register09);
+    xf86I2CWriteByte(pDev, 0x0A, pSiI164Rec->Register0A);
+    xf86I2CWriteByte(pDev, 0x0C, pSiI164Rec->Register0C);
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Exiting viaVT1632RestoreRegisters.\n"));
+                        "Exiting viaSiI164RestoreRegisters.\n"));
 }
 
 static int
-viaVT1632CheckModeValidity(xf86OutputPtr output, DisplayModePtr pMode)
+viaSiI164CheckModeValidity(xf86OutputPtr output, DisplayModePtr pMode)
 {
     ScrnInfoPtr pScrn = output->scrn;
-    viaVT1632RecPtr pVIAVT1632Rec = output->driver_private;
+    viaSiI164RecPtr pSiI164Rec = output->driver_private;
     int status = MODE_OK;
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, 
-                        "Entered viaVT1632CheckModeValidity.\n"));
+                        "Entered viaSiI164CheckModeValidity.\n"));
 
-    if (pMode->Clock < pVIAVT1632Rec->DotclockMin) {
+    if (pMode->Clock < pSiI164Rec->DotclockMin) {
         status = MODE_CLOCK_LOW;
         goto exit;
     }
 
-    if (pMode->Clock > pVIAVT1632Rec->DotclockMax) {
+    if (pMode->Clock > pSiI164Rec->DotclockMax) {
         status = MODE_CLOCK_HIGH;
     }
 
 exit:
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Exiting viaVT1632CheckModeValidity.\n"));
+                        "Exiting viaSiI164CheckModeValidity.\n"));
     return status;
 }
 
 static void
-via_vt1632_create_resources(xf86OutputPtr output)
+via_sii164_create_resources(xf86OutputPtr output)
 {
 }
 
 static void
-via_vt1632_dpms(xf86OutputPtr output, int mode)
+via_sii164_dpms(xf86OutputPtr output, int mode)
 {
     ScrnInfoPtr pScrn = output->scrn;
-    viaVT1632RecPtr pVIAVT1632Rec = output->driver_private;
+    viaSiI164RecPtr pSiI164Rec = output->driver_private;
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Entered via_vt1632_dpms.\n"));
+                        "Entered via_sii164_dpms.\n"));
 
     switch (mode) {
     case DPMSModeOn:
-        viaVT1632Power(pScrn, pVIAVT1632Rec->VT1632I2CDev, TRUE);
+        viaSiI164Power(pScrn, pSiI164Rec->SiI164I2CDev, TRUE);
         break;
     case DPMSModeStandby:
     case DPMSModeSuspend:
     case DPMSModeOff:
-        viaVT1632Power(pScrn, pVIAVT1632Rec->VT1632I2CDev, FALSE);
+        viaSiI164Power(pScrn, pSiI164Rec->SiI164I2CDev, FALSE);
         break;
     default:
         break;
     }
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Exiting via_vt1632_dpms.\n"));
+                        "Exiting via_sii164_dpms.\n"));
 }
 
 static void
-via_vt1632_save(xf86OutputPtr output)
+via_sii164_save(xf86OutputPtr output)
 {
     ScrnInfoPtr pScrn = output->scrn;
-    viaVT1632RecPtr pVIAVT1632Rec = output->driver_private;
+    viaSiI164RecPtr pSiI164Rec = output->driver_private;
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Entered via_vt1632_save.\n"));
+                        "Entered via_sii164_save.\n"));
 
-    viaVT1632SaveRegisters(pScrn, pVIAVT1632Rec->VT1632I2CDev, pVIAVT1632Rec);
+    viaSiI164SaveRegisters(pScrn, pSiI164Rec->SiI164I2CDev, pSiI164Rec);
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Exiting via_vt1632_save.\n"));
+                        "Exiting via_sii164_save.\n"));
 }
 
 static void
-via_vt1632_restore(xf86OutputPtr output)
+via_sii164_restore(xf86OutputPtr output)
 {
     ScrnInfoPtr pScrn = output->scrn;
-    viaVT1632RecPtr pVIAVT1632Rec = output->driver_private;
+    viaSiI164RecPtr pSiI164Rec = output->driver_private;
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Entered via_vt1632_restore.\n"));
+                        "Entered via_sii164_restore.\n"));
 
-    viaVT1632RestoreRegisters(pScrn, pVIAVT1632Rec->VT1632I2CDev,
-                                pVIAVT1632Rec);
+    viaSiI164RestoreRegisters(pScrn, pSiI164Rec->SiI164I2CDev,
+                                pSiI164Rec);
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Exiting via_vt1632_restore.\n"));
+                        "Exiting via_sii164_restore.\n"));
 }
 
 static int
-via_vt1632_mode_valid(xf86OutputPtr output, DisplayModePtr pMode)
+via_sii164_mode_valid(xf86OutputPtr output, DisplayModePtr pMode)
 {
-    return viaVT1632CheckModeValidity(output, pMode);
+    return viaSiI164CheckModeValidity(output, pMode);
 }
 
 static Bool
-via_vt1632_mode_fixup(xf86OutputPtr output, DisplayModePtr mode,
+via_sii164_mode_fixup(xf86OutputPtr output, DisplayModePtr mode,
                    DisplayModePtr adjusted_mode)
 {
     return TRUE;
 }
 
 static void
-via_vt1632_prepare(xf86OutputPtr output)
+via_sii164_prepare(xf86OutputPtr output)
 {
 }
 
 static void
-via_vt1632_commit(xf86OutputPtr output)
+via_sii164_commit(xf86OutputPtr output)
 {
 }
 
 static void
-via_vt1632_mode_set(xf86OutputPtr output, DisplayModePtr mode,
+via_sii164_mode_set(xf86OutputPtr output, DisplayModePtr mode,
                     DisplayModePtr adjusted_mode)
 {
     ScrnInfoPtr pScrn = output->scrn;
     drmmode_crtc_private_ptr iga = output->crtc->driver_private;
-    viaVT1632RecPtr pVIAVT1632Rec = output->driver_private;
+    viaSiI164RecPtr pSiI164Rec = output->driver_private;
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Entered via_vt1632_mode_set.\n"));
+                        "Entered via_sii164_mode_set.\n"));
 
     if (output->crtc) {
         viaExtTMDSSetClockDriveStrength(pScrn, 0x03);
         viaExtTMDSSetDataDriveStrength(pScrn, 0x03);
         viaExtTMDSEnableIOPads(pScrn, 0x03);
 
-        viaVT1632DumpRegisters(pScrn, pVIAVT1632Rec->VT1632I2CDev);
-        viaVT1632InitRegisters(pScrn, pVIAVT1632Rec->VT1632I2CDev);
-        viaVT1632DumpRegisters(pScrn, pVIAVT1632Rec->VT1632I2CDev);
+        viaSiI164DumpRegisters(pScrn, pSiI164Rec->SiI164I2CDev);
+        viaSiI164InitRegisters(pScrn, pSiI164Rec->SiI164I2CDev);
+        viaSiI164DumpRegisters(pScrn, pSiI164Rec->SiI164I2CDev);
 
         viaExtTMDSSetDisplaySource(pScrn, iga->index ? 0x01 : 0x00);
     }
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                "Exiting via_vt1632_mode_set.\n"));
+                "Exiting via_sii164_mode_set.\n"));
 }
 
 static xf86OutputStatus
-via_vt1632_detect(xf86OutputPtr output)
+via_sii164_detect(xf86OutputPtr output)
 {
     xf86MonPtr mon;
     xf86OutputStatus status = XF86OutputStatusDisconnected;
     ScrnInfoPtr pScrn = output->scrn;
-    viaVT1632RecPtr pVIAVT1632Rec = output->driver_private;
+    viaSiI164RecPtr pSiI164Rec = output->driver_private;
 
-    /* Check for the DVI presence via VT1632 first before accessing
+    /* Check for the DVI presence via SiI 164 first before accessing
      * I2C bus. */
-    if (viaVT1632Sense(pScrn, pVIAVT1632Rec->VT1632I2CDev)) {
+    if (viaSiI164Sense(pScrn, pSiI164Rec->SiI164I2CDev)) {
 
         /* Since DVI presence was established, access the I2C bus
          * assigned to DVI. */
-        mon = xf86OutputGetEDID(output, pVIAVT1632Rec->VT1632I2CDev->pI2CBus);
+        mon = xf86OutputGetEDID(output, pSiI164Rec->SiI164I2CDev->pI2CBus);
 
         /* Is the interface type digital? */
         if (mon && DIGITAL(mon->features.input_type)) {
@@ -335,60 +321,62 @@ via_vt1632_detect(xf86OutputPtr output)
 
 #ifdef RANDR_12_INTERFACE
 static Bool
-via_vt1632_set_property(xf86OutputPtr output, Atom property,
+via_sii164_set_property(xf86OutputPtr output, Atom property,
                      RRPropertyValuePtr value)
 {
     return TRUE;
 }
+#endif
 
+#ifdef RANDR_13_INTERFACE
 static Bool
-via_vt1632_get_property(xf86OutputPtr output, Atom property)
+via_sii164_get_property(xf86OutputPtr output, Atom property)
 {
     return FALSE;
 }
 #endif
 
 static void
-via_vt1632_destroy(xf86OutputPtr output)
+via_sii164_destroy(xf86OutputPtr output)
 {
 }
 
-const xf86OutputFuncsRec via_vt1632_funcs = {
-    .create_resources   = via_vt1632_create_resources,
-    .dpms               = via_vt1632_dpms,
-    .save               = via_vt1632_save,
-    .restore            = via_vt1632_restore,
-    .mode_valid         = via_vt1632_mode_valid,
-    .mode_fixup         = via_vt1632_mode_fixup,
-    .prepare            = via_vt1632_prepare,
-    .commit             = via_vt1632_commit,
-    .mode_set           = via_vt1632_mode_set,
-    .detect             = via_vt1632_detect,
+const xf86OutputFuncsRec via_sii164_funcs = {
+    .create_resources   = via_sii164_create_resources,
+    .dpms               = via_sii164_dpms,
+    .save               = via_sii164_save,
+    .restore            = via_sii164_restore,
+    .mode_valid         = via_sii164_mode_valid,
+    .mode_fixup         = via_sii164_mode_fixup,
+    .prepare            = via_sii164_prepare,
+    .commit             = via_sii164_commit,
+    .mode_set           = via_sii164_mode_set,
+    .detect             = via_sii164_detect,
     .get_modes          = xf86OutputGetEDIDModes,
 #ifdef RANDR_12_INTERFACE
-    .set_property       = via_vt1632_set_property,
+    .set_property       = via_sii164_set_property,
 #endif
 #ifdef RANDR_13_INTERFACE
-    .get_property       = via_vt1632_get_property,
+    .get_property       = via_sii164_get_property,
 #endif
-    .destroy            = via_vt1632_destroy,
+    .destroy            = via_sii164_destroy,
 };
 
 Bool
-viaVT1632Init(ScrnInfoPtr pScrn, I2CBusPtr pI2CBus)
+viaSiI164Init(ScrnInfoPtr pScrn, I2CBusPtr pI2CBus)
 {
     xf86OutputPtr output;
     VIAPtr pVia = VIAPTR(pScrn);
-    viaVT1632RecPtr pVIAVT1632Rec = NULL;
+    viaSiI164RecPtr pSiI164Rec = NULL;
     I2CDevPtr pI2CDevice = NULL;
-    I2CSlaveAddr i2cAddr = 0x10;
+    I2CSlaveAddr i2cAddr = 0x70;
     CARD8 buf;
     CARD16 vendorID, deviceID;
     Bool status = FALSE;
     char outputNameBuffer[32];
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Entered viaVT1632Init.\n"));
+                        "Entered viaSiI164Init.\n"));
 
     if (!xf86I2CProbeAddress(pI2CBus, i2cAddr)) {
         xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
@@ -403,7 +391,7 @@ viaVT1632Init(ScrnInfoPtr pScrn, I2CBusPtr pI2CBus)
         goto exit;
     }
 
-    pI2CDevice->DevName = "VT1632";
+    pI2CDevice->DevName = "SiI 164";
     pI2CDevice->SlaveAddr = i2cAddr;
     pI2CDevice->pI2CBus = pI2CBus;
     if (!xf86I2CDevInit(pI2CDevice)) {
@@ -427,52 +415,52 @@ viaVT1632Init(ScrnInfoPtr pScrn, I2CBusPtr pI2CBus)
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
                         "Device ID: 0x%04x\n", deviceID));
 
-    if ((vendorID != 0x1106) || (deviceID != 0x3192)) {
+    if ((vendorID != 0x0001) || (deviceID != 0x0006)) {
         xf86DestroyI2CDevRec(pI2CDevice, TRUE);
         xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
-                    "VT1632 external TMDS transmitter not detected.\n");
+                    "SiI 164 external TMDS transmitter not detected.\n");
         goto exit;
     }
 
     xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
-                "VT1632 external TMDS transmitter detected.\n");
+                "SiI 164 external TMDS transmitter detected.\n");
 
-    pVIAVT1632Rec = xnfcalloc(1, sizeof(viaVT1632Rec));
-    if (!pVIAVT1632Rec) {
+    pSiI164Rec = xnfcalloc(1, sizeof(viaSiI164Rec));
+    if (!pSiI164Rec) {
         xf86DestroyI2CDevRec(pI2CDevice, TRUE);
         xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-                    "Failed to allocate working storage for VT1632.\n");
+                    "Failed to allocate working storage for SiI 164.\n");
         goto exit;
     }
 
-    // Remembering which I2C bus is used for VT1632.
-    pVIAVT1632Rec->VT1632I2CDev = pI2CDevice;
+    // Remembering which I2C bus is used for SiI 164.
+    pSiI164Rec->SiI164I2CDev = pI2CDevice;
 
     xf86I2CReadByte(pI2CDevice, 0x06, &buf);
-    pVIAVT1632Rec->DotclockMin = buf * 1000;
+    pSiI164Rec->DotclockMin = buf * 1000;
 
     xf86I2CReadByte(pI2CDevice, 0x07, &buf);
-    pVIAVT1632Rec->DotclockMax = (buf + 65) * 1000;
+    pSiI164Rec->DotclockMax = (buf + 65) * 1000;
 
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Supported VT1632 Dot Clock Range: "
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Supported SiI 164 Dot Clock Range: "
                 "%d to %d MHz\n",
-                pVIAVT1632Rec->DotclockMin / 1000,
-                pVIAVT1632Rec->DotclockMax / 1000);
+                pSiI164Rec->DotclockMin / 1000,
+                pSiI164Rec->DotclockMax / 1000);
 
     /* The code to dynamically designate the particular DVI (i.e., DVI-1,
      * DVI-2, etc.) for xrandr was borrowed from xf86-video-r128 DDX. */
     sprintf(outputNameBuffer, "DVI-%d", (pVia->numberDVI + 1));
-    output = xf86OutputCreate(pScrn, &via_vt1632_funcs, outputNameBuffer);
+    output = xf86OutputCreate(pScrn, &via_sii164_funcs, outputNameBuffer);
     if (!output) {
-        free(pVIAVT1632Rec);
+        free(pSiI164Rec);
         xf86DestroyI2CDevRec(pI2CDevice, TRUE);
         xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
                     "Failed to allocate X Server display output record for "
-                    "VT1632.\n");
+                    "SiI 164.\n");
         goto exit;
     }
 
-    output->driver_private = pVIAVT1632Rec;
+    output->driver_private = pSiI164Rec;
 
     /* Since there are two (2) display controllers registered with the
      * X.Org Server and both IGA1 and IGA2 can handle DVI without any
@@ -484,12 +472,12 @@ viaVT1632Init(ScrnInfoPtr pScrn, I2CBusPtr pI2CBus)
     output->interlaceAllowed = FALSE;
     output->doubleScanAllowed = FALSE;
 
-    viaVT1632DumpRegisters(pScrn, pI2CDevice);
+    viaSiI164DumpRegisters(pScrn, pI2CDevice);
 
     pVia->numberDVI++;
     status = TRUE;
 exit:
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-                        "Exiting viaVT1632Init.\n"));
+                        "Exiting viaSiI164Init.\n"));
     return status;
 }
