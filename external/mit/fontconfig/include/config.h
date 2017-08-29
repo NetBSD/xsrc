@@ -19,8 +19,10 @@
 /* Architecture prefix to use for cache file names */
 /* #undef FC_ARCHITECTURE */
 
+#if 0
 /* System font directory */
 #define FC_DEFAULT_FONTS "/usr/share/fonts"
+#endif
 
 /* The type of len parameter of the gperf hash/lookup function */
 #define FC_GPERF_SIZE_T size_t
