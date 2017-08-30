@@ -376,17 +376,10 @@ FcCompareValueList (FcObject	     object,
 	return FcTrue;
     }
 
-#if 0
     best = DBL_MAX;
     bestStrong = DBL_MAX;
     bestWeak = DBL_MAX;
     j = 1;
-#else
-    best = 1e99;
-    bestStrong = 1e99;
-    bestWeak = 1e99;
-    j = 0;
-#endif
     for (v1 = v1orig; v1; v1 = FcValueListNext(v1))
     {
 	for (v2 = v2orig, k = 0; v2; v2 = FcValueListNext(v2), k++)
