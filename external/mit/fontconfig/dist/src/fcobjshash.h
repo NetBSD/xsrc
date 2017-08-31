@@ -190,7 +190,7 @@ __inline
 __attribute__ ((__gnu_inline__))
 #endif
 #endif
-const struct FcObjectTypeInfo *
+static const struct FcObjectTypeInfo *
 FcObjectTypeLookup (register const char *str, register unsigned int len)
 {
   enum
