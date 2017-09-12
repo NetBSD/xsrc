@@ -1,8 +1,0 @@
-XCOMM $NetBSD: Imakefile,v 1.6 2003/02/28 22:53:06 tron Exp $
-        DEPLIBS = $(DEPXFTLIB) $(DEPXLIB)
- EXTRA_INCLUDES = -I$(FREETYPE2INCDIR)
-EXTRA_LIBRARIES = $(XFTLIB) $(XLIB)
-           SRCS = xftlsfonts.c
-           OBJS = xftlsfonts.o
-
-ComplexProgramTarget(xftlsfonts)
