@@ -359,7 +359,8 @@ TCXPreInit(ScrnInfoPtr pScrn, int flags)
 
     	/* see if we have more than 1MB vram */
 	pTcx->vramsize = 0x100000;
-	if ((b = sparcPromGetProperty(&psdp->node, "vram", &len)) != NULL) {
+	if (((b = sparcPromGetProperty(&psdp->node, "vram", &len)) != NULL)  &&
+	     (len == 4)) {
 	    memcpy(&v, b, 4);
 	    if ((v > 0) && (v < 3))
 	    	pTcx->vramsize = 0x100000 * v;
