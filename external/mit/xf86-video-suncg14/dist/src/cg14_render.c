@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_render.c,v 1.9 2016/09/16 22:07:25 macallan Exp $ */
+/* $NetBSD: cg14_render.c,v 1.10 2017/10/30 22:09:54 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -381,6 +381,77 @@ void CG14Comp_Add8(Cg14Ptr p,
 			write_sx_io(p, dstx, SX_STBC(72, part - 1, dstoff));
 		}
 #endif
+#ifdef SX_DEBUG
+		d = (uint8_t *)(p->fb + src + srcoff);
+		for (x = 0; x < width; x++) {
+			buffer[x] = c[d[x]>>5];
+		}
+		buffer[x] = 0;
+		xf86Msg(X_ERROR, "%s\n", buffer);
+#endif
+		/* next line */
+		src += srcpitch;
+		dst += dstpitch;
+	}
+}
+
+void CG14Comp_Add8_32(Cg14Ptr p,
+                   uint32_t src, uint32_t srcpitch,
+                   uint32_t dst, uint32_t dstpitch,
+                   int width, int height)
+{
+	int line;
+	uint32_t srcx, dstx, srcoff, dstoff;
+	int pre, full, part, x;
+	uint8_t *d;
+	char buffer[256];
+	ENTER;
+
+	srcoff = src & 7;
+	src &= ~7;
+	dstoff = dst & 7;
+	dst &= ~7;
+	full = width >> 5;	/* chunks of 32 */
+	part = width & 31;	/* leftovers */
+
+#ifdef SX_DEBUG
+	xf86Msg(X_ERROR, "%d %d, %d x %d, %d %d\n", srcpitch, dstpitch,
+	    width, height, full, part);
+#endif
+	/* we do this up to 32 pixels at a time */
+	for (line = 0; line < height; line++) {
+		srcx = src;
+		dstx = dst;
+		for (x = 0; x < full; x++) {
+			/* load source bytes */
+			write_sx_io(p, srcx, SX_LDB(8, 31, srcoff));
+			/* load alpha from destination */
+			write_sx_io(p, dstx, SX_LDUC0(40, 31, dstoff));
+			write_sx_reg(p, SX_INSTRUCTIONS,
+			    SX_ADDV(8, 40, 72, 15));
+			write_sx_reg(p, SX_INSTRUCTIONS,
+			    SX_ADDV(24, 56, 88, 15));
+			/* write clamped values back into dest alpha */
+			write_sx_io(p, dstx, SX_STUC0C(72, 31, dstoff));
+			srcx += 32;
+			dstx += 128;
+		}
+
+		if (part > 0) {
+			/* do leftovers */
+			write_sx_io(p, srcx, SX_LDB(8, part - 1, srcoff));
+			write_sx_io(p, dstx, SX_LDUC0(40, part - 1, dstoff));
+			if (part > 16) {
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_ADDV(8, 40, 72, 15));
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_ADDV(24, 56, 88, part - 17));
+			} else {
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_ADDV(8, 40, 72, part - 1));
+			}
+			write_sx_io(p, dstx, SX_STUC0C(72, part - 1, dstoff));
+		}
 #ifdef SX_DEBUG
 		d = (uint8_t *)(p->fb + src + srcoff);
 		for (x = 0; x < width; x++) {

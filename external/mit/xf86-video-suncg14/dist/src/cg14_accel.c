@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.11 2017/01/14 00:20:16 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.12 2017/10/30 22:09:54 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -995,9 +995,22 @@ CG14Composite(PixmapPtr pDst, int srcX, int srcY,
 				case PICT_a8:
 					src = p->srcoff +
 					    (srcY * p->srcpitch) + srcX;
-					dst = dstoff + (dstY * dstpitch) + dstX;
-					CG14Comp_Add8(p, src, p->srcpitch,
-					    dst, dstpitch, width, height);
+					if (p->dstformat == PICT_a8) {
+						dst = dstoff + 
+						      (dstY * dstpitch) + dstX;
+						CG14Comp_Add8(p,
+						    src, p->srcpitch,
+						    dst, dstpitch,
+						    width, height);
+					} else {
+						dst = dstoff + 
+						      (dstY * dstpitch) +
+						      (dstX << 2);
+						CG14Comp_Add8_32(p,
+						    src, p->srcpitch,
+						    dst, dstpitch,
+						    width, height);
+					}
 					break;
 				case PICT_a8r8g8b8:
 				case PICT_x8r8g8b8:

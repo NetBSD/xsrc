@@ -144,6 +144,8 @@ void CG14Comp_Over32Mask32_noalpha(Cg14Ptr, uint32_t, uint32_t, uint32_t,
 		   uint32_t, uint32_t, uint32_t, int, int);
 void CG14Comp_Add8(Cg14Ptr, uint32_t, uint32_t, uint32_t, uint32_t,
                    int, int);
+void CG14Comp_Add8_32(Cg14Ptr, uint32_t, uint32_t, uint32_t, uint32_t,
+                   int, int);
 void CG14Comp_Add32(Cg14Ptr, uint32_t, uint32_t, uint32_t, uint32_t,
                    int, int);
 
