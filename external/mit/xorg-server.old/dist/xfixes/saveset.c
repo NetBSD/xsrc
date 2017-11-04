@@ -65,6 +65,7 @@ SProcXFixesChangeSaveSet(ClientPtr client)
 {
     register int n;
     REQUEST(xXFixesChangeSaveSetReq);
+    REQUEST_SIZE_MATCH(xXFixesChangeSaveSetReq);
 
     swaps(&stuff->length, n);
     swapl(&stuff->window, n);
