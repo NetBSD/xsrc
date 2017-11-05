@@ -899,6 +899,9 @@ ProcDbeGetVisualInfo(client)
 
 
     REQUEST_AT_LEAST_SIZE(xDbeGetVisualInfoReq);
+    if (stuff->n > UINT32_MAX / sizeof(CARD32))
+        return BadLength;
+    REQUEST_FIXED_SIZE(xDbeGetVisualInfoReq, stuff->n * sizeof(CARD32));
 
     if (stuff->n > (CARD32)(-1L) / sizeof(DrawablePtr))
 	    return BadAlloc;
@@ -1293,7 +1296,7 @@ SProcDbeSwapBuffers(client)
 
     swapl(&stuff->n, n);
     if (stuff->n > UINT32_MAX / sizeof(DbeSwapInfoRec))
-        return BadAlloc;
+        return BadLength;
     REQUEST_FIXED_SIZE(xDbeSwapBuffersReq, stuff->n * sizeof(xDbeSwapInfo));
 
     if (stuff->n != 0)
