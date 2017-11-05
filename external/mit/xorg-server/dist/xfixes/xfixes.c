@@ -162,6 +162,7 @@ SProcXFixesQueryVersion(ClientPtr client)
 {
     register int n;
     REQUEST(xXFixesQueryVersionReq);
+    REQUEST_SIZE_MATCH(xXFixesQueryVersionReq);
 
     swaps(&stuff->length, n);
     swapl(&stuff->majorVersion, n);

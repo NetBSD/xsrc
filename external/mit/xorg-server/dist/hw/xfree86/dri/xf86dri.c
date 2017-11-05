@@ -609,6 +609,7 @@ SProcXF86DRIQueryDirectRenderingCapable(
 {
     register int n;
     REQUEST(xXF86DRIQueryDirectRenderingCapableReq);
+    REQUEST_SIZE_MATCH(xXF86DRIQueryDirectRenderingCapableReq);
     swaps(&stuff->length, n);
     swapl(&stuff->screen, n);
     return ProcXF86DRIQueryDirectRenderingCapable(client);

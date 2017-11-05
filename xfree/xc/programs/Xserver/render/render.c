@@ -1766,6 +1766,9 @@ ProcRenderSetPictureFilter (ClientPtr client)
     name = (char *) (stuff + 1);
     params = (xFixed *) (name + ((stuff->nbytes + 3) & ~3));
     nparams = ((xFixed *) stuff + client->req_len) - params;
+    if (nparams < 0)
+	return BadLength;
+
     result = SetPictureFilter (pPicture, name, stuff->nbytes, params, nparams);
     return result;
 }

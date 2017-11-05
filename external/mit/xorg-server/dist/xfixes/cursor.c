@@ -295,6 +295,7 @@ SProcXFixesSelectCursorInput (ClientPtr client)
 {
     register int n;
     REQUEST(xXFixesSelectCursorInputReq);
+    REQUEST_SIZE_MATCH(xXFixesSelectCursorInputReq);
 
     swaps(&stuff->length, n);
     swapl(&stuff->window, n);
@@ -437,7 +438,7 @@ ProcXFixesSetCursorName (ClientPtr client)
     REQUEST(xXFixesSetCursorNameReq);
     Atom atom;
 
-    REQUEST_AT_LEAST_SIZE(xXFixesSetCursorNameReq);
+    REQUEST_FIXED_SIZE(xXFixesSetCursorNameReq, stuff->nbytes);
     VERIFY_CURSOR(pCursor, stuff->cursor, client, DixSetAttrAccess);
     tchar = (char *) &stuff[1];
     atom = MakeAtom (tchar, stuff->nbytes, TRUE);
