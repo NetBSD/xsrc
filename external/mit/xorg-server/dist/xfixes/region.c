@@ -376,6 +376,7 @@ ProcXFixesCopyRegion (ClientPtr client)
 {
     RegionPtr	pSource, pDestination;
     REQUEST (xXFixesCopyRegionReq);
+    REQUEST_SIZE_MATCH(xXFixesCopyRegionReq);
     
     VERIFY_REGION(pSource, stuff->source, client, DixReadAccess);
     VERIFY_REGION(pDestination, stuff->destination, client, DixWriteAccess);
@@ -393,7 +394,7 @@ SProcXFixesCopyRegion (ClientPtr client)
     REQUEST (xXFixesCopyRegionReq);
 
     swaps (&stuff->length, n);
-    REQUEST_AT_LEAST_SIZE(xXFixesCopyRegionReq);
+    REQUEST_SIZE_MATCH(xXFixesCopyRegionReq);
     swapl (&stuff->source, n);
     swapl (&stuff->destination, n);
     return (*ProcXFixesVector[stuff->xfixesReqType]) (client);
