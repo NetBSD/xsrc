@@ -48,7 +48,7 @@
 #define PACKAGE_NAME "libXcursor"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libXcursor 1.1.11"
+#define PACKAGE_STRING "libXcursor 1.1.15"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libXcursor"
@@ -57,7 +57,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.1.11"
+#define PACKAGE_VERSION "1.1.15"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
@@ -66,10 +66,10 @@
 #define PACKAGE_VERSION_MINOR 1
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 11
+#define PACKAGE_VERSION_PATCHLEVEL 15
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "1.1.11"
+#define VERSION "1.1.15"
