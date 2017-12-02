@@ -41,6 +41,7 @@ in this Software without prior written authorization from The Open Group.
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <limits.h>
 
@@ -60,8 +61,9 @@ FontFileReadDirectory (char *directory, FontDirectoryPtr *pdir)
     char	dir_path[MAXFONTFILENAMELEN];
     char	*ptr;
 #endif
-    FILE       *file;
-    int         count,
+    FILE       *file = 0;
+    int         file_fd,
+                count,
                 i,
                 status;
     struct stat	statb;
@@ -92,7 +94,14 @@ FontFileReadDirectory (char *directory, FontDirectoryPtr *pdir)
     if (dir_file[strlen(dir_file) - 1] != '/')
 	strcat(dir_file, "/");
     strcat(dir_file, FontDirFile);
+#ifndef WIN32
+    file_fd = open(dir_file, O_RDONLY | O_NOFOLLOW);
+    if (file_fd >= 0) {
+	file = fdopen(file_fd, "r");
+    }
+#else
     file = fopen(dir_file, "r");
+#endif
     if (file) {
 	Bool found_font = FALSE;
 	
@@ -258,7 +267,8 @@ ReadFontAlias(char *directory, Bool isFile, FontDirectoryPtr *pdir)
     char		alias[MAXFONTNAMELEN];
     char		font_name[MAXFONTNAMELEN];
     char		alias_file[MAXFONTFILENAMELEN];
-    FILE		*file;
+    int			file_fd;
+    FILE		*file = 0;
     FontDirectoryPtr	dir;
     int			token;
     char		*lexToken;
@@ -276,7 +286,15 @@ ReadFontAlias(char *directory, Bool isFile, FontDirectoryPtr *pdir)
 	    strcat(alias_file, "/");
 	strcat(alias_file, FontAliasFile);
     }
+#ifndef WIN32
+    file_fd = open(alias_file, O_RDONLY | O_NOFOLLOW);
+    if (file_fd >= 0) {
+	file = fdopen(file_fd, "r");
+    }
+#else
     file = fopen(alias_file, "r");
+#endif
+
     if (!file)
 	return ((errno == ENOENT) ? Successful : BadFontPath);
     if (!dir)

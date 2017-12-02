@@ -31,6 +31,11 @@ XcursorImageCreate (int width, int height)
 {
     XcursorImage    *image;
 
+    if (width < 0 || height < 0)
+       return NULL;
+    if (width > XCURSOR_IMAGE_MAX_SIZE || height > XCURSOR_IMAGE_MAX_SIZE)
+       return NULL;
+
     image = malloc (sizeof (XcursorImage) +
 		    width * height * sizeof (XcursorPixel));
     if (!image)
@@ -79,7 +84,7 @@ XcursorCommentCreate (XcursorUInt comment_type, int length)
 {
     XcursorComment  *comment;
 
-    if (length > XCURSOR_COMMENT_MAX_LEN)
+    if (length < 0 || length > XCURSOR_COMMENT_MAX_LEN)
 	return 0;
 
     comment = malloc (sizeof (XcursorComment) + length + 1);
@@ -102,6 +107,9 @@ XcursorComments *
 XcursorCommentsCreate (int size)
 {
     XcursorComments *comments;
+
+    if (size < 0 || size > XCURSOR_COMMENT_MAX_LEN)
+ 	return NULL;
 
     comments = malloc (sizeof (XcursorComments) +
 		       size * sizeof (XcursorComment *));
@@ -397,7 +405,8 @@ _XcursorReadImage (XcursorFile		*file,
     if (!_XcursorReadUInt (file, &head.delay))
 	return 0;
     /* sanity check data */
-    if (head.width >= 0x10000 || head.height > 0x10000)
+    if (head.width > XCURSOR_IMAGE_MAX_SIZE  ||
+	head.height > XCURSOR_IMAGE_MAX_SIZE)
 	return 0;
     if (head.width == 0 || head.height == 0)
 	return 0;
@@ -406,6 +415,8 @@ _XcursorReadImage (XcursorFile		*file,
     
     /* Create the image and initialize it */
     image = XcursorImageCreate (head.width, head.height);
+    if (image == NULL)
+	return NULL;
     if (chunkHeader.version < image->version)
 	image->version = chunkHeader.version;
     image->size = chunkHeader.subtype;
