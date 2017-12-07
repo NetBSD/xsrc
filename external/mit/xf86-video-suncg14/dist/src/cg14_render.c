@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_render.c,v 1.10 2017/10/30 22:09:54 macallan Exp $ */
+/* $NetBSD: cg14_render.c,v 1.11 2017/12/07 19:23:22 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -469,7 +469,7 @@ void CG14Comp_Add8_32(Cg14Ptr p,
 void CG14Comp_Over32(Cg14Ptr p,
                    uint32_t src, uint32_t srcpitch,
                    uint32_t dst, uint32_t dstpitch,
-                   int width, int height)
+                   int width, int height, int flip)
 {
 	uint32_t srcx, dstx, m;
 	int line, x, i;
@@ -484,6 +484,14 @@ void CG14Comp_Over32(Cg14Ptr p,
 		for (x = 0; x < width; x++) {
 			/* fetch source pixel */
 			write_sx_io(p, srcx, SX_LDUQ0(12, 0, srcx & 7));
+			if (flip) {
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_ORS(13, 0, 40, 0));
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_ORS(15, 0, 13, 0));
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_ORS(40, 0, 15, 0));
+			}
 			/* fetch dst pixel */
 			write_sx_io(p, dstx, SX_LDUQ0(20, 0, dstx & 7));
 			/* src is premultiplied with alpha */
@@ -507,7 +515,7 @@ void CG14Comp_Over32Mask(Cg14Ptr p,
                    uint32_t src, uint32_t srcpitch,
                    uint32_t msk, uint32_t mskpitch,
                    uint32_t dst, uint32_t dstpitch,
-                   int width, int height)
+                   int width, int height, int flip)
 {
 	uint32_t srcx, dstx, mskx, m;
 	int line, x, i;
@@ -523,6 +531,14 @@ void CG14Comp_Over32Mask(Cg14Ptr p,
 		for (x = 0; x < width; x++) {
 			/* fetch source pixel */
 			write_sx_io(p, srcx, SX_LDUQ0(12, 0, srcx & 7));
+			if (flip) {
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_ORS(13, 0, 40, 0));
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_ORS(15, 0, 13, 0));
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_ORS(40, 0, 15, 0));
+			}
 			/* fetch mask */
 			write_sx_io(p, mskx & (~7), SX_LDB(9, 0, mskx & 7));
 			/* fetch dst pixel */
@@ -556,7 +572,7 @@ void CG14Comp_Over32Mask_noalpha(Cg14Ptr p,
                    uint32_t src, uint32_t srcpitch,
                    uint32_t msk, uint32_t mskpitch,
                    uint32_t dst, uint32_t dstpitch,
-                   int width, int height)
+                   int width, int height, int flip)
 {
 	uint32_t srcx, dstx, mskx, m;
 	int line, x, i;
@@ -572,6 +588,14 @@ void CG14Comp_Over32Mask_noalpha(Cg14Ptr p,
 		for (x = 0; x < width; x++) {
 			/* fetch source pixel */
 			write_sx_io(p, srcx, SX_LDUQ0(12, 0, srcx & 7));
+			if (flip) {
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_ORS(13, 0, 40, 0));
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_ORS(15, 0, 13, 0));
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_ORS(40, 0, 15, 0));
+			}
 			/* set src alpha to 0xff */
 			write_sx_reg(p, SX_INSTRUCTIONS,
 			    SX_ORS(8, 0, 12, 0));
@@ -607,7 +631,7 @@ void CG14Comp_Over32Mask32_noalpha(Cg14Ptr p,
                    uint32_t src, uint32_t srcpitch,
                    uint32_t msk, uint32_t mskpitch,
                    uint32_t dst, uint32_t dstpitch,
-                   int width, int height)
+                   int width, int height, int flip)
 {
 	uint32_t srcx, dstx, mskx, m;
 	int line, x, i;
@@ -623,6 +647,14 @@ void CG14Comp_Over32Mask32_noalpha(Cg14Ptr p,
 		for (x = 0; x < width; x++) {
 			/* fetch source pixel */
 			write_sx_io(p, srcx, SX_LDUQ0(12, 0, srcx & 7));
+			if (flip) {
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_ORS(13, 0, 40, 0));
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_ORS(15, 0, 13, 0));
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_ORS(40, 0, 15, 0));
+			}
 			/* fetch mask */
 			write_sx_io(p, mskx, SX_LDUQ0(16, 0, mskx & 7));
 			/* fetch dst pixel */

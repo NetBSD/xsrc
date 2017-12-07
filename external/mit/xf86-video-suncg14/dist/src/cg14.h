@@ -135,13 +135,13 @@ void CG14Comp_Over8Solid(Cg14Ptr, uint32_t, uint32_t, uint32_t, uint32_t,
 void CG14Comp_Over32Solid(Cg14Ptr, uint32_t, uint32_t, uint32_t, uint32_t,
                    int, int);
 void CG14Comp_Over32(Cg14Ptr, uint32_t, uint32_t, uint32_t, uint32_t,
-                   int, int);
+                   int, int, int);
 void CG14Comp_Over32Mask(Cg14Ptr, uint32_t, uint32_t, uint32_t, uint32_t,
-                   uint32_t, uint32_t, int, int);
+                   uint32_t, uint32_t, int, int, int);
 void CG14Comp_Over32Mask_noalpha(Cg14Ptr, uint32_t, uint32_t, uint32_t,
-		   uint32_t, uint32_t, uint32_t, int, int);
+		   uint32_t, uint32_t, uint32_t, int, int, int);
 void CG14Comp_Over32Mask32_noalpha(Cg14Ptr, uint32_t, uint32_t, uint32_t,
-		   uint32_t, uint32_t, uint32_t, int, int);
+		   uint32_t, uint32_t, uint32_t, int, int, int);
 void CG14Comp_Add8(Cg14Ptr, uint32_t, uint32_t, uint32_t, uint32_t,
                    int, int);
 void CG14Comp_Add8_32(Cg14Ptr, uint32_t, uint32_t, uint32_t, uint32_t,

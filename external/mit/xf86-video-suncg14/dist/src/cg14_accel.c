@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.12 2017/10/30 22:09:54 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.13 2017/12/07 19:23:22 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -888,10 +888,14 @@ CG14Composite(PixmapPtr pDst, int srcX, int srcY,
 	Cg14Ptr p = GET_CG14_FROM_SCRN(pScrn);
 	uint32_t dstoff, dstpitch;
 	uint32_t dst, msk, src;
+	int flip = 0;
 
 	ENTER;
 	dstoff = exaGetPixmapOffset(pDst);		
 	dstpitch = exaGetPixmapPitch(pDst);
+
+	flip = (PICT_FORMAT_TYPE(p->srcformat) !=
+		PICT_FORMAT_TYPE(p->dstformat));
 
 	switch (p->op) {
 		case PictOpOver:
@@ -943,12 +947,12 @@ CG14Composite(PixmapPtr pDst, int srcX, int srcY,
 							    src, p->srcpitch,
 							    msk, p->mskpitch,
 							    dst, dstpitch,
-							    width, height);
+							    width, height, flip);
 						} else {
 							CG14Comp_Over32(p, 
 							    src, p->srcpitch,
 							    dst, dstpitch,
-							    width, height);
+							    width, height, flip);
 						}
 						break;
 					case PICT_x8r8g8b8:
@@ -967,7 +971,7 @@ CG14Composite(PixmapPtr pDst, int srcX, int srcY,
 							    src, p->srcpitch,
 							    msk, p->mskpitch,
 							    dst, dstpitch,
-							    width, height);
+							    width, height, flip);
 						} else if ((p->mskformat == PICT_a8r8g8b8) ||
 							   (p->mskformat == PICT_a8b8g8r8)) {
 							msk = p->mskoff + 
@@ -977,7 +981,7 @@ CG14Composite(PixmapPtr pDst, int srcX, int srcY,
 							    src, p->srcpitch,
 							    msk, p->mskpitch,
 							    dst, dstpitch,
-							    width, height);
+							    width, height, flip);
 						} else {
 							xf86Msg(X_ERROR, "no src alpha, mask is %x\n", p->mskformat);
 						}
