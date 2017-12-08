@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_render.c,v 1.11 2017/12/07 19:23:22 macallan Exp $ */
+/* $NetBSD: cg14_render.c,v 1.12 2017/12/08 22:49:37 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -471,8 +471,8 @@ void CG14Comp_Over32(Cg14Ptr p,
                    uint32_t dst, uint32_t dstpitch,
                    int width, int height, int flip)
 {
-	uint32_t srcx, dstx, m;
-	int line, x, i;
+	uint32_t srcx, dstx, mskx, m;
+	int line, x, i, num;
 
 	ENTER;
 
@@ -481,33 +481,44 @@ void CG14Comp_Over32(Cg14Ptr p,
 		srcx = src;
 		dstx = dst;
 
-		for (x = 0; x < width; x++) {
-			/* fetch source pixel */
-			write_sx_io(p, srcx, SX_LDUQ0(12, 0, srcx & 7));
+		for (x = 0; x < width; x += 4) {
+			/* we do up to 4 pixels at a time */
+			num = min(4, width - x);
+			if (num <= 0) {
+				xf86Msg(X_ERROR, "wtf?!\n");
+				continue;
+			}
+			/* fetch source pixels */
+			write_sx_io(p, srcx, SX_LDUQ0(12, num - 1, srcx & 7));
 			if (flip) {
 				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_ORS(13, 0, 40, 0));
+				    SX_GATHER(13, 4, 40, num - 1));
 				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_ORS(15, 0, 13, 0));
+				    SX_GATHER(15, 4, 44, num - 1));
 				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_ORS(40, 0, 15, 0));
+				    SX_SCATTER(40, 4, 15, num - 1));
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_SCATTER(44, 4, 13, num - 1));
 			}
-			/* fetch dst pixel */
-			write_sx_io(p, dstx, SX_LDUQ0(20, 0, dstx & 7));
-			/* src is premultiplied with alpha */
-			/* write inverted alpha into SCAM */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_XORV(12, 8, R_SCAM, 0));
-			/* dst * (1 - alpha) + R[13:15] */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_SAXP16X16SR8(20, 12, 24, 3));
+			/* fetch dst pixels */
+			write_sx_io(p, dstx, SX_LDUQ0(44, num - 1, dstx & 7));
+			/* now process up to 4 pixels */
+			for (i = 0; i < num; i++) {
+				int ii = i << 2;
+				/* write inverted alpha into SCAM */
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_XORS(12 + ii, 8, R_SCAM, 0));
+				/* dst * (1 - alpha) + src */
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_SAXP16X16SR8(44 + ii, 12 + ii, 76 + ii, 3));
+			}
 			write_sx_io(p, dstx,
-			    SX_STUQ0C(24, 0, dstx & 7));
-			dstx += 4;
-			srcx += 4;
+			    SX_STUQ0C(76, num - 1, dstx & 7));
+			srcx += 16;
+			dstx += 16;
 		}
-		dst += dstpitch;
 		src += srcpitch;
+		dst += dstpitch;
 	}
 }
 
@@ -518,7 +529,7 @@ void CG14Comp_Over32Mask(Cg14Ptr p,
                    int width, int height, int flip)
 {
 	uint32_t srcx, dstx, mskx, m;
-	int line, x, i;
+	int line, x, i, num;
 
 	ENTER;
 
@@ -528,39 +539,50 @@ void CG14Comp_Over32Mask(Cg14Ptr p,
 		mskx = msk;
 		dstx = dst;
 
-		for (x = 0; x < width; x++) {
-			/* fetch source pixel */
-			write_sx_io(p, srcx, SX_LDUQ0(12, 0, srcx & 7));
+		for (x = 0; x < width; x += 4) {
+			/* we do up to 4 pixels at a time */
+			num = min(4, width - x);
+			if (num <= 0) {
+				xf86Msg(X_ERROR, "wtf?!\n");
+				continue;
+			}
+			/* fetch source pixels */
+			write_sx_io(p, srcx, SX_LDUQ0(12, num - 1, srcx & 7));
 			if (flip) {
 				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_ORS(13, 0, 40, 0));
+				    SX_GATHER(13, 4, 40, num - 1));
 				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_ORS(15, 0, 13, 0));
+				    SX_GATHER(15, 4, 44, num - 1));
 				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_ORS(40, 0, 15, 0));
+				    SX_SCATTER(40, 4, 15, num - 1));
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_SCATTER(44, 4, 13, num - 1));
 			}
 			/* fetch mask */
-			write_sx_io(p, mskx & (~7), SX_LDB(9, 0, mskx & 7));
-			/* fetch dst pixel */
-			write_sx_io(p, dstx, SX_LDUQ0(20, 0, dstx & 7));
-			/* stick mask alpha into SCAM */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_ORS(9, 0, R_SCAM, 0));
-			/* apply mask */
-			/* src is premultiplied with alpha */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_SAXP16X16SR8(12, 0, 16, 3));
-			/* write inverted alpha into SCAM */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_XORV(16, 8, R_SCAM, 0));
-			/* dst * (1 - alpha) + R[13:15] */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_SAXP16X16SR8(20, 16, 24, 3));
+			write_sx_io(p, mskx, SX_LDB(28, num - 1, mskx & 7));
+			/* fetch dst pixels */
+			write_sx_io(p, dstx, SX_LDUQ0(44, num - 1, dstx & 7));
+			/* now process up to 4 pixels */
+			for (i = 0; i < num; i++) {
+				int ii = i << 2;
+				/* mask alpha to SCAM */
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_ORS(28 + i, 0, R_SCAM, 0));
+				/* src * alpha */
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_SAXP16X16SR8(12 + ii, 0, 60 + ii, 3));
+				/* write inverted alpha into SCAM */
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_XORS(28 + i, 8, R_SCAM, 0));
+				/* dst * (1 - alpha) + R[60:] */
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_SAXP16X16SR8(44 + ii, 60 + ii, 76 + ii, 3));
+			}
 			write_sx_io(p, dstx,
-			    SX_STUQ0C(24, 0, dstx & 7));
-			srcx += 4;
-			mskx += 1;
-			dstx += 4;
+			    SX_STUQ0C(76, num - 1, dstx & 7));
+			srcx += 16;
+			mskx += 4;
+			dstx += 16;
 		}
 		src += srcpitch;
 		msk += mskpitch;
@@ -575,51 +597,65 @@ void CG14Comp_Over32Mask_noalpha(Cg14Ptr p,
                    int width, int height, int flip)
 {
 	uint32_t srcx, dstx, mskx, m;
-	int line, x, i;
+	int line, x, i, num;
 
 	ENTER;
 
 	write_sx_reg(p, SX_QUEUED(8), 0xff);
+	write_sx_reg(p, SX_QUEUED(9), 0xff);
+	write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(8, 0, 10, 1));
 	for (line = 0; line < height; line++) {
 		srcx = src;
 		mskx = msk;
 		dstx = dst;
 
-		for (x = 0; x < width; x++) {
-			/* fetch source pixel */
-			write_sx_io(p, srcx, SX_LDUQ0(12, 0, srcx & 7));
+		for (x = 0; x < width; x += 4) {
+			/* we do up to 4 pixels at a time */
+			num = min(4, width - x);
+			if (num <= 0) {
+				xf86Msg(X_ERROR, "wtf?!\n");
+				continue;
+			}
+			/* fetch source pixels */
+			write_sx_io(p, srcx, SX_LDUQ0(12, num - 1, srcx & 7));
 			if (flip) {
 				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_ORS(13, 0, 40, 0));
+				    SX_GATHER(13, 4, 40, num - 1));
 				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_ORS(15, 0, 13, 0));
+				    SX_GATHER(15, 4, 44, num - 1));
 				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_ORS(40, 0, 15, 0));
+				    SX_SCATTER(40, 4, 15, num - 1));
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_SCATTER(44, 4, 13, num - 1));
 			}
-			/* set src alpha to 0xff */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_ORS(8, 0, 12, 0));
 			/* fetch mask */
-			write_sx_io(p, mskx & (~7), SX_LDB(9, 0, mskx & 7));
-			/* fetch dst pixel */
-			write_sx_io(p, dstx, SX_LDUQ0(20, 0, dstx & 7));
-			/* write alpha into SCAM */
+			write_sx_io(p, mskx, SX_LDB(28, num - 1, mskx & 7));
+			/* fetch dst pixels */
+			write_sx_io(p, dstx, SX_LDUQ0(44, num - 1, dstx & 7));
+			/* set src alpha to 0xff */			
 			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_ORS(9, 0, R_SCAM, 0));
-			/* src * alpha + R0 */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_SAXP16X16SR8(12, 0, 16, 3));
-			/* write inverted alpha into SCAM */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_XORV(9, 8, R_SCAM, 0));
-			/* dst * (1 - alpha) + R[13:15] */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_SAXP16X16SR8(20, 16, 24, 3));
+			    SX_SCATTER(8, 4, 12, num - 1));
+			/* now process up to 4 pixels */
+			for (i = 0; i < num; i++) {
+				int ii = i << 2;
+				/* mask alpha to SCAM */
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_ORS(28 + i, 0, R_SCAM, 0));
+				/* src * alpha */
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_SAXP16X16SR8(12 + ii, 0, 60 + ii, 3));
+				/* write inverted alpha into SCAM */
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_XORS(28 + i, 8, R_SCAM, 0));
+				/* dst * (1 - alpha) + R[60:] */
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_SAXP16X16SR8(44 + ii, 60 + ii, 76 + ii, 3));
+			}
 			write_sx_io(p, dstx,
-			    SX_STUQ0C(24, 0, dstx & 7));
-			srcx += 4;
-			mskx += 1;
-			dstx += 4;
+			    SX_STUQ0C(76, num - 1, dstx & 7));
+			srcx += 16;
+			mskx += 4;
+			dstx += 16;
 		}
 		src += srcpitch;
 		msk += mskpitch;
@@ -634,51 +670,65 @@ void CG14Comp_Over32Mask32_noalpha(Cg14Ptr p,
                    int width, int height, int flip)
 {
 	uint32_t srcx, dstx, mskx, m;
-	int line, x, i;
+	int line, x, i, num;
 
 	ENTER;
 
 	write_sx_reg(p, SX_QUEUED(8), 0xff);
+	write_sx_reg(p, SX_QUEUED(9), 0xff);
+	write_sx_reg(p, SX_INSTRUCTIONS, SX_ORS(8, 0, 10, 1));
 	for (line = 0; line < height; line++) {
 		srcx = src;
 		mskx = msk;
 		dstx = dst;
 
-		for (x = 0; x < width; x++) {
-			/* fetch source pixel */
-			write_sx_io(p, srcx, SX_LDUQ0(12, 0, srcx & 7));
+		for (x = 0; x < width; x += 4) {
+			/* we do up to 4 pixels at a time */
+			num = min(4, width - x);
+			if (num <= 0) {
+				xf86Msg(X_ERROR, "wtf?!\n");
+				continue;
+			}
+			/* fetch source pixels */
+			write_sx_io(p, srcx, SX_LDUQ0(12, num - 1, srcx & 7));
 			if (flip) {
 				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_ORS(13, 0, 40, 0));
+				    SX_GATHER(13, 4, 40, num - 1));
 				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_ORS(15, 0, 13, 0));
+				    SX_GATHER(15, 4, 44, num - 1));
 				write_sx_reg(p, SX_INSTRUCTIONS,
-				    SX_ORS(40, 0, 15, 0));
+				    SX_SCATTER(40, 4, 15, num - 1));
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_SCATTER(44, 4, 13, num - 1));
 			}
 			/* fetch mask */
-			write_sx_io(p, mskx, SX_LDUQ0(16, 0, mskx & 7));
-			/* fetch dst pixel */
-			write_sx_io(p, dstx, SX_LDUQ0(20, 0, dstx & 7));
-			/* set src alpha to 0xff */
+			write_sx_io(p, mskx, SX_LDUQ0(28, num - 1, mskx & 7));
+			/* fetch dst pixels */
+			write_sx_io(p, dstx, SX_LDUQ0(44, num - 1, dstx & 7));
+			/* set src alpha to 0xff */			
 			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_ORS(8, 0, 12, 0));
-			/* mask alpha to SCAM */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_ORS(16, 0, R_SCAM, 0));
-			/* src * alpha */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_SAXP16X16SR8(12, 0, 24, 3));
-			/* write inverted alpha into SCAM */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_XORS(16, 8, R_SCAM, 0));
-			/* dst * (1 - alpha) + R[24:31] */
-			write_sx_reg(p, SX_INSTRUCTIONS,
-			    SX_SAXP16X16SR8(20, 24, 28, 3));
+			    SX_SCATTER(8, 4, 12, num - 1));
+			/* now process up to 4 pixels */
+			for (i = 0; i < num; i++) {
+				int ii = i << 2;
+				/* mask alpha to SCAM */
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_ORS(28 + ii, 0, R_SCAM, 0));
+				/* src * alpha */
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_SAXP16X16SR8(12 + ii, 0, 60 + ii, 3));
+				/* write inverted alpha into SCAM */
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_XORS(28 + ii, 8, R_SCAM, 0));
+				/* dst * (1 - alpha) + R[60:] */
+				write_sx_reg(p, SX_INSTRUCTIONS,
+				    SX_SAXP16X16SR8(44 + ii, 60 + ii, 76 + ii, 3));
+			}
 			write_sx_io(p, dstx,
-			    SX_STUQ0C(28, 0, dstx & 7));
-			srcx += 4;
-			mskx += 4;
-			dstx += 4;
+			    SX_STUQ0C(76, num - 1, dstx & 7));
+			srcx += 16;
+			mskx += 16;
+			dstx += 16;
 		}
 		src += srcpitch;
 		msk += mskpitch;
