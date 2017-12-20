@@ -1054,7 +1054,7 @@ fs_read_extent_info(FontPathElementPtr fpe, FSBlockDataPtr blockrec)
     if (numInfos >= (INT_MAX / sizeof(CharInfoRec))) {
 #ifdef DEBUG
 	fprintf(stderr,
-		"fsQueryXExtents16: numInfos (%d) >= %ld\n",
+		"fsQueryXExtents16: numInfos (%d) >= %zu\n",
 		numInfos, (INT_MAX / sizeof(CharInfoRec)));
 #endif
 	pCI = NULL;
