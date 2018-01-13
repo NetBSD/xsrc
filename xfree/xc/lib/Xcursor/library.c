@@ -174,7 +174,7 @@ _XcursorThemeInherits (const char *full)
 		if (*l != '=') continue;
 		l++;
 		while (*l == ' ') l++;
-		result = malloc (strlen (l));
+		result = malloc (strlen (l) + 1);
 		if (result)
 		{
 		    r = result;
