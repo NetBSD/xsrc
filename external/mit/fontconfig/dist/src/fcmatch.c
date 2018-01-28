@@ -703,6 +703,12 @@ FcFontSetMatchInternal (FcFontSet   **sets,
 	    FcBool f = FcTrue;
 
 	    ss = s = strdup (env);
+	    if (ss == NULL)
+	    {
+		    fprintf (stderr, "Fontconfig Error: %s\n",
+			strerror (errno));
+		    exit (1);
+	    }
 	    os = FcObjectSetCreate ();
 	    while (f)
 	    {
@@ -719,6 +725,12 @@ FcFontSetMatchInternal (FcFontSet   **sets,
 		    len = (p - s) + 1;
 		}
 		x = malloc (sizeof (char) * len);
+		if (x == NULL)
+		{
+			fprintf (stderr, "Fontconfig Error: %s\n",
+			    strerror (errno));
+			exit (1);
+		}
 		strncpy (x, s, len - 1);
 		x[len - 1] = 0;
 		if (FcObjectFromName (x) > 0)
