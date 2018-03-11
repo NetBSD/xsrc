@@ -1,14 +1,13 @@
-/* A Bison parser, made by GNU Bison 2.3.  */
+/* A Bison parser, made by GNU Bison 3.0.4.  */
 
-/* Skeleton interface for Bison's Yacc-like parsers in C
+/* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
-   Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
 
-   This program is free software; you can redistribute it and/or modify
+   This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,9 +15,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -33,85 +30,94 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Tokens.  */
+#ifndef YY_YY_GRAM_H_INCLUDED
+# define YY_YY_GRAM_H_INCLUDED
+/* Debug traces.  */
+#ifndef YYDEBUG
+# define YYDEBUG 0
+#endif
+#if YYDEBUG
+extern int yydebug;
+#endif
+
+/* Token type.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
-   /* Put the tokens into the symbol table, so that GDB and other debuggers
-      know about them.  */
-   enum yytokentype {
-     LB = 258,
-     RB = 259,
-     LP = 260,
-     RP = 261,
-     MENUS = 262,
-     MENU = 263,
-     BUTTON = 264,
-     DEFAULT_FUNCTION = 265,
-     PLUS = 266,
-     MINUS = 267,
-     ALL = 268,
-     OR = 269,
-     CURSORS = 270,
-     PIXMAPS = 271,
-     ICONS = 272,
-     COLOR = 273,
-     SAVECOLOR = 274,
-     MONOCHROME = 275,
-     FUNCTION = 276,
-     ICONMGR_SHOW = 277,
-     ICONMGR = 278,
-     WINDOW_FUNCTION = 279,
-     ZOOM = 280,
-     ICONMGRS = 281,
-     ICONMGR_GEOMETRY = 282,
-     ICONMGR_NOSHOW = 283,
-     MAKE_TITLE = 284,
-     GRAYSCALE = 285,
-     ICONIFY_BY_UNMAPPING = 286,
-     DONT_ICONIFY_BY_UNMAPPING = 287,
-     NO_TITLE = 288,
-     AUTO_RAISE = 289,
-     NO_HILITE = 290,
-     ICON_REGION = 291,
-     META = 292,
-     SHIFT = 293,
-     LOCK = 294,
-     CONTROL = 295,
-     WINDOW = 296,
-     TITLE = 297,
-     ICON = 298,
-     ROOT = 299,
-     FRAME = 300,
-     COLON = 301,
-     EQUALS = 302,
-     SQUEEZE_TITLE = 303,
-     DONT_SQUEEZE_TITLE = 304,
-     START_ICONIFIED = 305,
-     NO_TITLE_HILITE = 306,
-     TITLE_HILITE = 307,
-     MOVE = 308,
-     RESIZE = 309,
-     WAIT = 310,
-     SELECT = 311,
-     KILL = 312,
-     LEFT_TITLEBUTTON = 313,
-     RIGHT_TITLEBUTTON = 314,
-     NUMBER = 315,
-     KEYWORD = 316,
-     NKEYWORD = 317,
-     CKEYWORD = 318,
-     CLKEYWORD = 319,
-     FKEYWORD = 320,
-     FSKEYWORD = 321,
-     SKEYWORD = 322,
-     DKEYWORD = 323,
-     JKEYWORD = 324,
-     WINDOW_RING = 325,
-     WARP_CURSOR = 326,
-     ERRORTOKEN = 327,
-     NO_STACKMODE = 328,
-     STRING = 329
-   };
+  enum yytokentype
+  {
+    LB = 258,
+    RB = 259,
+    LP = 260,
+    RP = 261,
+    MENUS = 262,
+    MENU = 263,
+    BUTTON = 264,
+    DEFAULT_FUNCTION = 265,
+    PLUS = 266,
+    MINUS = 267,
+    ALL = 268,
+    OR = 269,
+    CURSORS = 270,
+    PIXMAPS = 271,
+    ICONS = 272,
+    COLOR = 273,
+    SAVECOLOR = 274,
+    MONOCHROME = 275,
+    FUNCTION = 276,
+    ICONMGR_SHOW = 277,
+    ICONMGR = 278,
+    WINDOW_FUNCTION = 279,
+    ZOOM = 280,
+    ICONMGRS = 281,
+    ICONMGR_GEOMETRY = 282,
+    ICONMGR_NOSHOW = 283,
+    MAKE_TITLE = 284,
+    GRAYSCALE = 285,
+    ICONIFY_BY_UNMAPPING = 286,
+    DONT_ICONIFY_BY_UNMAPPING = 287,
+    NO_TITLE = 288,
+    AUTO_RAISE = 289,
+    NO_HILITE = 290,
+    ICON_REGION = 291,
+    META = 292,
+    SHIFT = 293,
+    LOCK = 294,
+    CONTROL = 295,
+    WINDOW = 296,
+    TITLE = 297,
+    ICON = 298,
+    ROOT = 299,
+    FRAME = 300,
+    COLON = 301,
+    EQUALS = 302,
+    SQUEEZE_TITLE = 303,
+    DONT_SQUEEZE_TITLE = 304,
+    START_ICONIFIED = 305,
+    NO_TITLE_HILITE = 306,
+    TITLE_HILITE = 307,
+    MOVE = 308,
+    RESIZE = 309,
+    WAIT = 310,
+    SELECT = 311,
+    KILL = 312,
+    LEFT_TITLEBUTTON = 313,
+    RIGHT_TITLEBUTTON = 314,
+    NUMBER = 315,
+    KEYWORD = 316,
+    NKEYWORD = 317,
+    CKEYWORD = 318,
+    CLKEYWORD = 319,
+    FKEYWORD = 320,
+    FSKEYWORD = 321,
+    SKEYWORD = 322,
+    DKEYWORD = 323,
+    JKEYWORD = 324,
+    WINDOW_RING = 325,
+    WARP_CURSOR = 326,
+    ERRORTOKEN = 327,
+    NO_STACKMODE = 328,
+    STRING = 329
+  };
 #endif
 /* Tokens.  */
 #define LB 258
@@ -187,23 +193,27 @@
 #define NO_STACKMODE 328
 #define STRING 329
 
-
-
-
+/* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef union YYSTYPE
-#line 107 "gram.y"
+
+union YYSTYPE
 {
+#line 107 "gram.y" /* yacc.c:1909  */
+
     int num;
     char *ptr;
-}
-/* Line 1489 of yacc.c.  */
-#line 202 "gram.h"
-	YYSTYPE;
-# define yystype YYSTYPE /* obsolescent; will be withdrawn */
-# define YYSTYPE_IS_DECLARED 1
+
+#line 207 "gram.h" /* yacc.c:1909  */
+};
+
+typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
+# define YYSTYPE_IS_DECLARED 1
 #endif
+
 
 extern YYSTYPE yylval;
 
+int yyparse (void);
+
+#endif /* !YY_YY_GRAM_H_INCLUDED  */
