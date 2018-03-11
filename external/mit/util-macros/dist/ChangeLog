@@ -1,3 +1,83 @@
+commit 771b773b50717884b37f6b2473166b4be4670076
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Mar 4 17:40:10 2018 -0800
+
+    Version bump: 1.19.2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6694c973c8c2b5fae5934a49578f69d2817ab49c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 4 17:29:24 2017 -0700
+
+    Update check for manpage section numbers to not rely on Solaris version
+    
+    Check for a specific file instead of a specific set of versions from
+    uname, to cope with manpage section alignment coming to 11.4 instead
+    of 12.0.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Matthieu Herrb <matthieu@herrb.eu>
+
+commit 39f07f7db58ebbf3dcb64a2bf9098ed5cf3d1223
+Author: Emil Velikov <emil.veliko@collabora.com>
+Date:   Tue Feb 14 11:38:21 2017 +0000
+
+    Rework INSTALL_CMD to touch/echo >&2 only as needed
+    
+    Analogous to previous commit.
+    
+    With this commit we no longer get the following erroneous messages
+    during `make distcheck'.
+    
+    "
+    failed to copy INSTALL from util-macros: installing possibly empty INSTALL.
+    ...
+    failed to copy INSTALL from util-macros: installing possibly empty INSTALL.
+    "
+    
+    Cc: Gaetan Nadon <memsize@videotron.ca>
+    Cc: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Emil Velikov <emil.velikov@collabora.com>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 4fc573e2f3cbbed7baa5e05fb798c2e4f4236f7d
+Author: Emil Velikov <emil.velikov@collabora.com>
+Date:   Tue Feb 14 11:38:20 2017 +0000
+
+    Rework CHANGELOG_CMD to touch/echo >&2 only as needed
+    
+    Currently CHANGELOG_CMD issues a
+    
+      touch ChangeLog; echo "Scary message" >&2
+    
+    even if the file is already present. For example, when running `make
+    distcheck' the following is observed:
+    
+    "
+    /bin/sh: ../../.changelog.tmp: Permission denied
+    git directory not found: installing possibly empty changelog.
+    ...
+    /bin/sh: ../../.changelog.tmp: Permission denied
+    git directory not found: installing possibly empty changelog.
+    "
+    
+    That in itself happens since srcdir is RO, thus shell redirection [to
+    srcddir/.changelog.tmp] fails. At the same time the latter message is
+    wrong and misleading since the file is already there, with the correct
+    contents.
+    
+    Silence the permissing warning (/dev/null is our friend), and add
+    a simple `test -e .../ChangeLog || (...' prior to the touch/echo combo.
+    
+    As we're here also update the message to be more generic, since there
+    are multiple other reasons why things can fail.
+    
+    Cc: Gaetan Nadon <memsize@videotron.ca>
+    Cc: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Emil Velikov <emil.velikov@collabora.com>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
 commit 4b6b1dfea16214b5104b5373341dc8bc7016d0b5
 Author: Matt Turner <mattst88@gmail.com>
 Date:   Sun Jan 29 11:23:47 2017 -0800
@@ -558,7 +638,7 @@ Date:   Thu Nov 3 18:14:15 2011 -0700
     more copies.
     
     Callers should be able to just add
-    	TESTS_ENVIRONMENT = $(XORG_MALLOC_DEBUG_ENV)
+            TESTS_ENVIRONMENT = $(XORG_MALLOC_DEBUG_ENV)
     
     If built with an older xorg-macros, then the tests will simply be
     less stringent, matching what happens on platforms without any
@@ -829,8 +909,8 @@ Date:   Wed Mar 9 10:53:49 2011 -0500
      Interface to module:
      HAVE_GLIB: used in makefiles to conditionally build targets
      with_glib: used in configure.ac to know if GLib has been found
-     --with-glib:	'yes' user instructs the module to use glib
-    		'no' user instructs the module not to use glib
+     --with-glib:   'yes' user instructs the module to use glib
+                    'no' user instructs the module not to use glib
     
     Reviewed-by: Dan Nicholson <dbn.lists@gmail.com>
     Signed-off-by: Gaetan Nadon <memsize@videotron.ca>

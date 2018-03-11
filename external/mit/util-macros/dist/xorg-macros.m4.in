@@ -114,6 +114,17 @@ AC_DEFUN([XORG_MANPAGE_SECTIONS],[
 AC_REQUIRE([AC_CANONICAL_HOST])
 AC_REQUIRE([AC_PROG_SED])
 
+case $host_os in
+    solaris*)
+        # Solaris 2.0 - 11.3 use SysV man page section numbers, so we
+        # check for a man page file found in later versions that use
+        # traditional section numbers instead
+        AC_CHECK_FILE([/usr/share/man/man7/attributes.7],
+                [SYSV_MAN_SECTIONS=false], [SYSV_MAN_SECTIONS=true])
+        ;;
+    *) SYSV_MAN_SECTIONS=false ;;
+esac
+
 if test x$APP_MAN_SUFFIX = x    ; then
     APP_MAN_SUFFIX=1
 fi
@@ -129,9 +140,8 @@ if test x$LIB_MAN_DIR = x    ; then
 fi
 
 if test x$FILE_MAN_SUFFIX = x    ; then
-    case $host_os in
-	# Solaris 2.0 - 11 use SysV man page sections
-	solaris2.?|solaris2.1[[01]])	FILE_MAN_SUFFIX=4  ;;
+    case $SYSV_MAN_SECTIONS in
+	true)				FILE_MAN_SUFFIX=4  ;;
 	*)				FILE_MAN_SUFFIX=5  ;;
     esac
 fi
@@ -140,9 +150,8 @@ if test x$FILE_MAN_DIR = x    ; then
 fi
 
 if test x$MISC_MAN_SUFFIX = x    ; then
-    case $host_os in
-	# Solaris 2.0 - 11 use SysV man page sections
-	solaris2.?|solaris2.1[[01]])	MISC_MAN_SUFFIX=5  ;;
+    case $SYSV_MAN_SECTIONS in
+	true)				MISC_MAN_SUFFIX=5  ;;
 	*)				MISC_MAN_SUFFIX=7  ;;
     esac
 fi
@@ -151,9 +160,8 @@ if test x$MISC_MAN_DIR = x    ; then
 fi
 
 if test x$DRIVER_MAN_SUFFIX = x    ; then
-    case $host_os in
-	# Solaris 2.0 - 11 use SysV man page sections
-	solaris2.?|solaris2.1[[01]])	DRIVER_MAN_SUFFIX=7  ;;
+    case $SYSV_MAN_SECTIONS in
+	true)				DRIVER_MAN_SUFFIX=7  ;;
 	*)				DRIVER_MAN_SUFFIX=4  ;;
     esac
 fi
@@ -162,9 +170,8 @@ if test x$DRIVER_MAN_DIR = x    ; then
 fi
 
 if test x$ADMIN_MAN_SUFFIX = x    ; then
-    case $host_os in
-	# Solaris 2.0 - 11 use SysV man page sections
-	solaris2.?|solaris2.1[[01]])	ADMIN_MAN_SUFFIX=1m ;;
+    case $SYSV_MAN_SECTIONS in
+	true)				ADMIN_MAN_SUFFIX=1m ;;
 	*)				ADMIN_MAN_SUFFIX=8  ;;
     esac
 fi
@@ -1839,7 +1846,8 @@ AC_REQUIRE([PKG_PROG_PKG_CONFIG])
 macros_datadir=`$PKG_CONFIG --print-errors --variable=pkgdatadir xorg-macros`
 INSTALL_CMD="(cp -f "$macros_datadir/INSTALL" \$(top_srcdir)/.INSTALL.tmp && \
 mv \$(top_srcdir)/.INSTALL.tmp \$(top_srcdir)/INSTALL) \
-|| (rm -f \$(top_srcdir)/.INSTALL.tmp; touch \$(top_srcdir)/INSTALL; \
-echo 'util-macros \"pkgdatadir\" from xorg-macros.pc not found: installing possibly empty INSTALL.' >&2)"
+|| (rm -f \$(top_srcdir)/.INSTALL.tmp; test -e \$(top_srcdir)/INSTALL || ( \
+touch \$(top_srcdir)/INSTALL; \
+echo 'failed to copy INSTALL from util-macros: installing empty INSTALL.' >&2))"
 AC_SUBST([INSTALL_CMD])
 ]) # XORG_INSTALL
