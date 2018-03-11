@@ -63,10 +63,11 @@ in this Software without prior written authorization from The Open Group.
 #include	"difs.h"
 #include	"dispatch.h"
 #include	"swaprep.h"
+#include        <X11/fonts/libxfont2.h>
 
 static FontPathElementPtr *font_path_elements = (FontPathElementPtr *) 0;
 static int  num_fpes = 0;
-static FPEFunctions *fpe_functions = (FPEFunctions *) 0;
+static xfont2_fpe_funcs_rec *fpe_functions;
 static int  num_fpe_types = 0;
 
 static int  num_slept_fpes = 0;
@@ -179,7 +180,7 @@ FontWakeup(pointer data, int count, unsigned long *lastSelectMask)
     /* wake up any fpe's that may be waiting for information */
     for (i = 0; i < num_slept_fpes; i++) {
 	fpe = slept_fpes[i];
-	(void) (*fpe_functions[fpe->type].wakeup_fpe) (fpe, lastSelectMask);
+	(void) (*fpe_functions[fpe->type].wakeup_fpe) (fpe);
     }
 }
 
@@ -342,7 +343,8 @@ do_open_font(ClientPtr client, pointer data)
     cfp->clientindex = cPtr->client->index;
 
     if (fontPatternCache && pfont != cPtr->non_cachable_font)
-	CacheFontPattern(fontPatternCache, cPtr->orig_name, cPtr->orig_len, pfont);
+	xfont2_cache_font_pattern(fontPatternCache, cPtr->orig_name,
+                                  cPtr->orig_len, pfont);
 
     /* either pull out the other id or make the array */
     if (pfont->refcnt != 0) {
@@ -459,7 +461,8 @@ OpenFont(
     */
 
     if (fontPatternCache &&
-	  (pfont = FindCachedFontPattern(fontPatternCache, name, namelen)) &&
+	  (pfont = xfont2_find_cached_font_pattern(fontPatternCache, name,
+                                                   namelen)) &&
 	   pfont->info.cachable) {
 	ClientFontPtr cfp;
 
@@ -550,7 +553,7 @@ close_font(FontPtr pfont)
     assert(pfont);
     if (--pfont->refcnt == 0) {
 	if (fontPatternCache)
-	    RemoveCachedFontPattern(fontPatternCache, pfont);
+	    xfont2_remove_cached_font_pattern(fontPatternCache, pfont);
 	fpe = pfont->fpe;
 	free_svrPrivate(pfont->svrPrivate);
 	(*fpe_functions[fpe->type].close_font) (fpe, pfont);
@@ -726,7 +729,7 @@ set_font_path_elements(
     font_path_elements = fplist;
     num_fpes = npaths;
     if (fontPatternCache)
-	EmptyFontPatternCache(fontPatternCache);
+	xfont2_empty_font_pattern_cache(fontPatternCache);
     return FSSuccess;
 bail:
     *bad = validpaths;
@@ -877,11 +880,11 @@ do_list_fonts_and_aliases(ClientPtr client, pointer data)
 		if (cPtr->haveSaved)
 		{
 		    if (cPtr->savedName)
-			(void)AddFontNamesName(cPtr->names, cPtr->savedName,
-					       cPtr->savedNameLen);
+			xfont2_add_font_names_name(cPtr->names, cPtr->savedName,
+                                                   cPtr->savedNameLen);
 		}
 		else
-		    (void)AddFontNamesName(cPtr->names, name, namelen);
+		    xfont2_add_font_names_name(cPtr->names, name, namelen);
 	    }
 
 	    /*
@@ -1032,7 +1035,7 @@ bail:
 	FreeFPE(cPtr->fpe_list[i]);
     fsfree(cPtr->fpe_list);
     if (cPtr->savedName) fsfree(cPtr->savedName);
-    FreeFontNames(names);
+    xfont2_free_font_names(names);
     fsfree(cPtr);
     return TRUE;
 }
@@ -1066,7 +1069,7 @@ ListFonts(
 	fsfree(c);
 	goto badAlloc;
     }
-    c->names = MakeFontNamesRecord(maxNames < 100 ? maxNames : 100);
+    c->names = xfont2_make_font_names_record(maxNames < 100 ? maxNames : 100);
     if (!c->names)
     {
 	fsfree(c->fpe_list);
@@ -1403,52 +1406,17 @@ LoadGlyphRanges(
 
 
 int
-RegisterFPEFunctions(
-    NameCheckFunc name_func,
-    InitFpeFunc   init_func,
-    FreeFpeFunc   free_func,
-    ResetFpeFunc  reset_func,
-    OpenFontFunc  open_func,
-    CloseFontFunc close_func,
-    ListFontsFunc list_func,
-    StartLfwiFunc start_lfwi_func,
-    NextLfwiFunc  next_lfwi_func,
-    WakeupFpeFunc wakeup_func,
-    ClientDiedFunc client_died,
-    LoadGlyphsFunc load_glyphs,
-    StartLaFunc   start_list_alias_func,
-    NextLaFunc    next_list_alias_func,
-    SetPathFunc   set_path_func)
+register_fpe_funcs(const xfont2_fpe_funcs_rec *funcs)
 {
-    FPEFunctions *new;
+    xfont2_fpe_funcs_rec *new;
 
     /* grow the list */
-    new = (FPEFunctions *) fsrealloc(fpe_functions,
-				 (num_fpe_types + 1) * sizeof(FPEFunctions));
+    new = fsrealloc(fpe_functions, (num_fpe_types + 1) * sizeof(*new));
     if (!new)
 	return -1;
     fpe_functions = new;
 
-    fpe_functions[num_fpe_types].name_check = name_func;
-    fpe_functions[num_fpe_types].open_font = open_func;
-    fpe_functions[num_fpe_types].close_font = close_func;
-    fpe_functions[num_fpe_types].wakeup_fpe = wakeup_func;
-    fpe_functions[num_fpe_types].list_fonts = list_func;
-    fpe_functions[num_fpe_types].start_list_fonts_with_info =
-	start_lfwi_func;
-    fpe_functions[num_fpe_types].list_next_font_with_info =
-	next_lfwi_func;
-    fpe_functions[num_fpe_types].init_fpe = init_func;
-    fpe_functions[num_fpe_types].free_fpe = free_func;
-    fpe_functions[num_fpe_types].reset_fpe = reset_func;
-
-    fpe_functions[num_fpe_types].client_died = client_died;
-    fpe_functions[num_fpe_types].load_glyphs = load_glyphs;
-    fpe_functions[num_fpe_types].start_list_fonts_and_aliases =
-	start_list_alias_func;
-    fpe_functions[num_fpe_types].list_next_font_or_alias =
-	next_list_alias_func;
-    fpe_functions[num_fpe_types].set_path_hook = set_path_func;
+    memcpy(&fpe_functions[num_fpe_types], funcs, sizeof(*funcs));
 
     return num_fpe_types++;
 }
@@ -1486,9 +1454,9 @@ static int  fs_handlers_installed = 0;
 static unsigned int last_server_gen;
 
 int
-init_fs_handlers(
+xfs_init_fs_handlers(
     FontPathElementPtr fpe,
-    BlockHandlerProcPtr block_handler)
+    FontBlockHandlerProcPtr block_handler)
 {
     /* if server has reset, make sure the b&w handlers are reinstalled */
     if (last_server_gen < serverGeneration) {
@@ -1511,9 +1479,9 @@ init_fs_handlers(
 }
 
 void
-remove_fs_handlers(
+xfs_remove_fs_handlers(
     FontPathElementPtr fpe,
-    BlockHandlerProcPtr block_handler,
+    FontBlockHandlerProcPtr block_handler,
     Bool        all)
 {
     if (all) {

@@ -58,6 +58,7 @@ in this Software without prior written authorization from The Open Group.
 #include        "closestr.h"
 #include        "globals.h"
 #include	"difs.h"
+#include        "misc.h"
 #include	"dispatch.h"
 #include	<swapreq.h>
 #include	<swaprep.h>
@@ -82,7 +83,7 @@ convert_props(
 {
     int i;
     int data_len, cur_off;
-    char *str;
+    const char *str;
     pointer ptr, off_ptr, string_base;
     fsPropOffset local_offset;
 

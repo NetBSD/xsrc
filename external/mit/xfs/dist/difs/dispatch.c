@@ -253,6 +253,7 @@ ProcEstablishConnection(ClientPtr client)
 	    int lengthword = stuff->length;
 
 	    SendErrToClient(client, FSBadLength, (pointer)&lengthword);
+	    DEALLOCATE_LOCAL(client_auth);
 	    return (FSBadLength);
 	}
 	/* copy carefully in case wire data is not aligned */
@@ -273,6 +274,7 @@ ProcEstablishConnection(ClientPtr client)
 	int lengthword = stuff->length;
 
 	SendErrToClient(client, FSBadLength, (pointer)&lengthword);
+	DEALLOCATE_LOCAL(client_auth);
 	return (FSBadLength);
     }
 
@@ -292,6 +294,7 @@ ProcEstablishConnection(ClientPtr client)
 	authp = (AuthContextPtr) fsalloc(sizeof(AuthContextRec));
 	if (!authp) {
 	    SendErrToClient(client, FSBadAlloc, (pointer) 0);
+	    DEALLOCATE_LOCAL(client_auth);
 	    return FSBadAlloc;
 	}
 	authp->authname =
@@ -303,6 +306,7 @@ ProcEstablishConnection(ClientPtr client)
 	    fsfree((char *) authp->authdata);
 	    fsfree((char *) authp);
 	    SendErrToClient(client, FSBadAlloc, (pointer) 0);
+	    DEALLOCATE_LOCAL(client_auth);
 	    return FSBadAlloc;
 	}
 	memmove( authp->authname, client_auth[auth_index - 1].name, 
@@ -318,6 +322,7 @@ ProcEstablishConnection(ClientPtr client)
 	    fsfree((char *) authp->authdata);
 	    fsfree((char *) authp);
 	    SendErrToClient(client, FSBadAlloc, (pointer) 0);
+	    DEALLOCATE_LOCAL(client_auth);
 	    return FSBadAlloc;
 	}
 	client->auth = client->default_auth = authp;
@@ -601,6 +606,7 @@ ProcCreateAC(ClientPtr client)
 	    int lengthword = stuff->length;
 
 	    SendErrToClient(client, FSBadLength, (pointer)&lengthword);
+	    DEALLOCATE_LOCAL(acp);
 	    return (FSBadLength);
 	}
 	/* copy carefully in case data is not aligned */
@@ -619,6 +625,8 @@ ProcCreateAC(ClientPtr client)
 	int lengthword = stuff->length;
 
 	SendErrToClient(client, FSBadLength, (pointer)&lengthword);
+	if (acp)
+	    DEALLOCATE_LOCAL(acp);
 	return (FSBadLength);
     }
 

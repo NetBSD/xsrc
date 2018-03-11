@@ -111,11 +111,9 @@ in this Software without prior written authorization from The Open Group.
 		 ((char *) &(dst))[1] = ((char *) &(src))[0];
 
 
-#if 0
-extern void NoopDDA(void);
-extern char *NameForAtom(Atom atom);
-#endif
-
+extern int ValidAtom(Atom atom);
+extern const char *NameForAtom(Atom atom);
+extern Atom MakeAtom(const char *string, unsigned int len, Bool makeit);
 
 #define fsCat(x,y) x##_##y
 
@@ -174,5 +172,9 @@ extern	void	CreateSockets(int old_listen_count, OldListenRec *old_listen);
 
 /* os/xfstrans.c */
 extern OldListenRec *_FontTransGetInetdListenInfo (int fd);
+
+extern void BitOrderInvert(unsigned char *buf, int nbytes);
+extern void TwoByteSwap(unsigned char *buf, int nbytes);
+extern void FourByteSwap(unsigned char *buf, int nbytes);
 
 #endif				/* _MISC_H_ */

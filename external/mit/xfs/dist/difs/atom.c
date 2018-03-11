@@ -148,7 +148,7 @@ ValidAtom(Atom atom)
     return (atom != None) && (atom <= lastAtom);
 }
 
-char       *
+const char *
 NameForAtom(Atom atom)
 {
     NodePtr     node;

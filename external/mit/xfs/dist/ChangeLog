@@ -1,3 +1,153 @@
+commit c0ff087474db78b91241c31c00a501782a3da31b
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue Nov 28 12:16:13 2017 -0500
+
+    xfs 1.2.0
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit fedc90e8e3f6c36204de5562bfb726270064a4f1
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Mon Apr 24 17:35:14 2017 -0400
+
+    xfs: port to libXfont2
+    
+    This appears to work, in the sense that xfsinfo and fslsfonts print the
+    same thing before and after.
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 47eceb44ca00569b76e4304ee3b36c8f87d46a3e
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Mon Apr 24 15:33:39 2017 -0400
+
+    xtrans: Simplify an error path when started from inetd
+    
+    The old code is redundant, since our caller looks like:
+    
+        OldListen = _FontTransGetInetdListenInfo (inetdListener);
+        if (OldListen == NULL) {
+            FatalError("failed to initialize OldListen to inetd socket: %s\n",
+                       strerror(errno));
+        }
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit fcdfd5053c21441265645eb381bb9120f972735c
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:21 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit 22c4117e8c7e08f15e42be3120eff58cb04fdd0d
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 89c3df532ae4bd9d5924a445264a9df3a97f6bf6
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
+commit 9e64669db3b19ce11b40e084cf2d366bfd52826f
+Author: Thomas Klausner <wiz@NetBSD.org>
+Date:   Thu Jul 23 13:55:18 2015 +0200
+
+    Include config.h first, and add comment about Xpoll.h.
+    
+    (To avoid having this header moved lower.)
+    
+    Signed-off-by: Thomas Klausner <wiz@NetBSD.org>
+    Reviewed-by: Emil Velikov <emil.l.velikov@gmail.com>
+
+commit 75be718a55376d39b0e517da33ef7a7557ac8f20
+Author: Thomas Klausner <wiz@NetBSD.org>
+Date:   Sun Jul 19 09:55:55 2015 +0200
+
+    Ignore .dirstamp files.
+    
+    Signed-off-by: Thomas Klausner <wiz@NetBSD.org>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1508df2fa02daff7a5cd58ce5d64e42b44ff4065
+Author: Matthew Green <mrg@NetBSD.org>
+Date:   Sun Jul 19 09:54:59 2015 +0200
+
+    FD_SETSIZE fixes.
+    
+    Move X11/Xpoll.h include earlier than sys/select.h to avoid missing
+    out on setting FD_SETSIZE early enough.
+    
+    Signed-off-by: Thomas Klausner <wiz@NetBSD.org>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4fdc960c33724f859be74a630e0d668a74f6637d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jun 8 23:20:06 2015 -0700
+
+    Fix memory leaks when not using alloca
+    
+    Reported by Oracle Parfait 1.5.1:
+    
+    Error: Memory leak (CWE 401)
+       Memory leak of pointer client_auth allocated with FSalloc((prefix->num_auths * 24))
+            at line 256 of difs/dispatch.c in function 'ProcEstablishConnection'.
+              client_auth allocated at line 243 with FSalloc((prefix->num_auths * 24)).
+              client_auth leaks when (((Atom)ad) - ((Atom)(prefix + 8))) > ((stuff->length << 2) - 4) at line 252.
+            malloc called at line 372 of os/utils.c in function 'FSalloc'
+            at line 276 of difs/dispatch.c in function 'ProcEstablishConnection'.
+              client_auth allocated at line 243 with FSalloc((prefix->num_auths * 24)).
+              client_auth leaks when (i + 1) >= ((fsConnClientPrefix*)client->requestBuffer)[1].num_auths at line 251.
+            malloc called at line 372 of os/utils.c in function 'FSalloc'
+    
+    Error: Memory leak (CWE 401)
+       Memory leak of pointer acp allocated with FSalloc((stuff->num_auths * 24))
+            at line 604 of difs/dispatch.c in function 'ProcCreateAC'.
+              acp allocated at line 590 with FSalloc((stuff->num_auths * 24)).
+              acp leaks when ((((Atom)ad) - ((Atom)client->requestBuffer)) + 8) > ((stuff->length << 2) - 4) at line 599.
+            malloc called at line 372 of os/utils.c in function 'FSalloc'
+            at line 622 of difs/dispatch.c in function 'ProcCreateAC'.
+              acp allocated at line 590 with FSalloc((stuff->num_auths * 24)).
+              acp leaks when (i + 1) >= ((fsCreateACReq*)client->requestBuffer)->num_auths at line 597.
+            malloc called at line 372 of os/utils.c in function 'FSalloc'
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3d9bc5a3a8dd36188b0c09d536dcc3c0a8339c31
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Aug 23 13:00:24 2014 -0700
+
+    Add const to port variable passed to TRANS(ReopenCOTSServer)
+    
+    Before this patch, gcc always warns:
+    os/xfstrans.c: In function ‘_FontTransGetInetdListenInfo’:
+    os/xfstrans.c:38:18: warning: initialization discards ‘const’ qualifier from pointer target type [enabled by default]
+         char *port = "0";
+                      ^
+    
+    After this patch, with prior versons of libxtrans, gcc will warn about
+    passing a const to TRANS(ReopenCOTSServer) where non-const is expected.
+    
+    With both this patch & the libxtrans const patches, there are no warnings.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 4bc3e1f01864f09ce87b8eba9b1970ea3715375c
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Thu Aug 21 22:34:59 2014 -0700
