@@ -53,6 +53,9 @@ in this Software without prior written authorization from The Open Group.
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#ifdef HAVE_USLEEP
+#include <unistd.h>
+#endif
 #include <X11/Xos.h>
 #include <X11/Xfuncs.h>
 #include <X11/Xlib.h>
@@ -325,8 +328,7 @@ main(int argc, char *argv[])
 			    usage("low-mark must be greater than 0");
 			}
 			if (himark <= lowmark) {
-			    usage("hi-mark must be greater than low-mark",
-				  NULL);
+			    usage("hi-mark must be greater than low-mark");
 			}
 			if (i >= argc) {
 			    set_font_cache(dpy, himark, lowmark, balance);
