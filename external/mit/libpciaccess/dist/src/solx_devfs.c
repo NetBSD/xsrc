@@ -213,6 +213,11 @@ probe_device_node(di_node_t node, void *arg)
     pci_base->dev = PCI_REG_DEV_G(retbuf[0]);
     pci_base->func  = PCI_REG_FUNC_G(retbuf[0]);
 
+    if (nexus->domain > 0xffff)
+	pci_base->domain_16 = 0xffff;
+    else
+	pci_base->domain_16 = nexus->domain;
+
     /* Get property values */
     for (i = 0; i < NUM_PROPERTIES; i++) {
 	len = di_prop_lookup_ints(DDI_DEV_T_ANY, node,

@@ -915,7 +915,7 @@ pci_system_x86_create(void)
 		if (PCI_VENDOR(reg) == PCI_VENDOR_INVALID ||
 		    PCI_VENDOR(reg) == 0)
 		    continue;
-		device->base.domain = 0;
+		device->base.domain = device->base.domain_16 = 0;
 		device->base.bus = bus;
 		device->base.dev = dev;
 		device->base.func = func;
