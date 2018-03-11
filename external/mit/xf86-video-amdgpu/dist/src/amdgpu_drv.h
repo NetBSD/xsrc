@@ -166,14 +166,37 @@ typedef enum {
 	OPTION_DELETE_DP12,
 } AMDGPUOpts;
 
-#if XF86_CRTC_VERSION >= 5
-#define AMDGPU_PIXMAP_SHARING 1
-#define amdgpu_is_gpu_screen(screen) (screen)->isGPU
-#define amdgpu_is_gpu_scrn(scrn) (scrn)->is_gpu
+static inline ScreenPtr
+amdgpu_master_screen(ScreenPtr screen)
+{
+	if (screen->current_master)
+		return screen->current_master;
+
+	return screen;
+}
+
+static inline ScreenPtr
+amdgpu_dirty_master(PixmapDirtyUpdatePtr dirty)
+{
+	return amdgpu_master_screen(dirty->slave_dst->drawable.pScreen);
+}
+
+static inline DrawablePtr
+amdgpu_dirty_src_drawable(PixmapDirtyUpdatePtr dirty)
+{
+#ifdef HAS_DIRTYTRACKING_DRAWABLE_SRC
+	return dirty->src;
 #else
-#define amdgpu_is_gpu_screen(screen) 0
-#define amdgpu_is_gpu_scrn(scrn) 0
+	return &dirty->src->drawable;
 #endif
+}
+
+static inline Bool
+amdgpu_dirty_src_equals(PixmapDirtyUpdatePtr dirty, PixmapPtr pixmap)
+{
+	return amdgpu_dirty_src_drawable(dirty) == &pixmap->drawable;
+}
+
 
 #define AMDGPU_VSYNC_TIMEOUT	20000	/* Maximum wait for VSYNC (in usecs) */
 
@@ -186,7 +209,6 @@ typedef enum {
 #define AMDGPU_LOGLEVEL_DEBUG 4
 
 /* Other macros */
-#define AMDGPU_ARRAY_SIZE(x)  (sizeof(x)/sizeof(x[0]))
 #define AMDGPU_ALIGN(x,bytes) (((x) + ((bytes) - 1)) & ~((bytes) - 1))
 #define AMDGPUPTR(pScrn)      ((AMDGPUInfoPtr)(pScrn)->driverPrivate)
 
@@ -212,6 +234,13 @@ struct amdgpu_client_priv {
 	uint_fast32_t needs_flush;
 };
 
+struct amdgpu_device_priv {
+	CursorPtr cursor;
+	Bool sprite_visible;
+};
+
+extern DevScreenPrivateKeyRec amdgpu_device_private_key;
+
 typedef struct {
 	EntityInfoPtr pEnt;
 	struct pci_device *PciInfo;
@@ -219,7 +248,7 @@ typedef struct {
 	uint32_t family;
 	struct gbm_device *gbm;
 
-	 Bool(*CloseScreen) (CLOSE_SCREEN_ARGS_DECL);
+	Bool(*CloseScreen) (ScreenPtr pScreen);
 
 	void (*BlockHandler) (BLOCKHANDLER_ARGS_DECL);
 
@@ -252,6 +281,12 @@ typedef struct {
 	CreateScreenResourcesProcPtr CreateScreenResources;
 	CreateWindowProcPtr CreateWindow;
 	WindowExposuresProcPtr WindowExposures;
+	void (*SetCursor) (DeviceIntPtr pDev, ScreenPtr pScreen,
+			   CursorPtr pCursor, int x, int y);
+	void (*MoveCursor) (DeviceIntPtr pDev, ScreenPtr pScreen, int x, int y);
+
+	/* Number of SW cursors currently visible on this screen */
+	int sprites_visible;
 
 	Bool IsSecondary;
 
@@ -301,12 +336,11 @@ typedef struct {
 		AddTrapsProcPtr SavedAddTraps;
 		UnrealizeGlyphProcPtr SavedUnrealizeGlyph;
 #endif
-#ifdef AMDGPU_PIXMAP_SHARING
 		SharePixmapBackingProcPtr SavedSharePixmapBacking;
 		SetSharedPixmapBackingProcPtr SavedSetSharedPixmapBacking;
-#endif
 	} glamor;
 
+	xf86CrtcFuncsRec drmmode_crtc_funcs;
 } AMDGPUInfoRec, *AMDGPUInfoPtr;
 
 
@@ -314,7 +348,13 @@ typedef struct {
 Bool amdgpu_dri3_screen_init(ScreenPtr screen);
 
 /* amdgpu_kms.c */
-Bool amdgpu_scanout_do_update(xf86CrtcPtr xf86_crtc, int scanout_id);
+Bool amdgpu_scanout_do_update(xf86CrtcPtr xf86_crtc, int scanout_id,
+			      PixmapPtr src_pix, BoxPtr extents);
+void AMDGPUWindowExposures_oneshot(WindowPtr pWin, RegionPtr pRegion
+#if XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1,16,99,901,0)
+				   , RegionPtr pBSRegion
+#endif
+				   );
 
 /* amdgpu_present.c */
 Bool amdgpu_present_screen_init(ScreenPtr screen);
@@ -331,7 +371,5 @@ extern xf86CrtcPtr amdgpu_pick_best_crtc(ScrnInfoPtr pScrn,
 					 int x1, int x2, int y1, int y2);
 
 extern AMDGPUEntPtr AMDGPUEntPriv(ScrnInfoPtr pScrn);
-
-drmVBlankSeqType amdgpu_populate_vbl_request_type(xf86CrtcPtr crtc);
 
 #endif /* _AMDGPU_DRV_H_ */

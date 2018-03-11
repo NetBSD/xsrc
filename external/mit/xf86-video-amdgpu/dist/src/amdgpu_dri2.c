@@ -48,14 +48,9 @@
 #include "amdgpu_bo_helper.h"
 #include "amdgpu_version.h"
 
-#include "amdgpu_list.h"
-
+#include <list.h>
 #include <xf86Priv.h>
 #include <X11/extensions/dpmsconst.h>
-
-#if DRI2INFOREC_VERSION >= 9
-#define USE_DRI2_PRIME
-#endif
 
 #define FALLBACK_SWAP_DELAY 16
 
@@ -125,6 +120,7 @@ amdgpu_dri2_create_buffer2(ScreenPtr pScreen,
 			cpp = 2;
 			break;
 		case 24:
+		case 30:
 			cpp = 4;
 			break;
 		default:
@@ -204,14 +200,6 @@ error:
 	return NULL;
 }
 
-DRI2BufferPtr
-amdgpu_dri2_create_buffer(DrawablePtr pDraw, unsigned int attachment,
-			  unsigned int format)
-{
-	return amdgpu_dri2_create_buffer2(pDraw->pScreen, pDraw,
-					  attachment, format);
-}
-
 static void
 amdgpu_dri2_destroy_buffer2(ScreenPtr pScreen,
 			    DrawablePtr drawable, BufferPtr buffers)
@@ -238,11 +226,6 @@ amdgpu_dri2_destroy_buffer2(ScreenPtr pScreen,
 			free(buffers);
 		}
 	}
-}
-
-void amdgpu_dri2_destroy_buffer(DrawablePtr pDraw, DRI2BufferPtr buf)
-{
-	amdgpu_dri2_destroy_buffer2(pDraw->pScreen, pDraw, buf);
 }
 
 static inline PixmapPtr GetDrawablePixmap(DrawablePtr drawable)
@@ -274,17 +257,14 @@ amdgpu_dri2_copy_region2(ScreenPtr pScreen,
 	dst_drawable = &dst_private->pixmap->drawable;
 
 	if (src_private->attachment == DRI2BufferFrontLeft) {
-#ifdef USE_DRI2_PRIME
 		if (drawable->pScreen != pScreen) {
 			src_drawable = DRI2UpdatePrime(drawable, src_buffer);
 			if (!src_drawable)
 				return;
 		} else
-#endif
 			src_drawable = drawable;
 	}
 	if (dst_private->attachment == DRI2BufferFrontLeft) {
-#ifdef USE_DRI2_PRIME
 		if (drawable->pScreen != pScreen) {
 			dst_drawable = DRI2UpdatePrime(drawable, dest_buffer);
 			if (!dst_drawable)
@@ -292,7 +272,6 @@ amdgpu_dri2_copy_region2(ScreenPtr pScreen,
 			if (dst_drawable != drawable)
 				translate = TRUE;
 		} else
-#endif
 			dst_drawable = drawable;
 	}
 
@@ -318,14 +297,6 @@ amdgpu_dri2_copy_region2(ScreenPtr pScreen,
 			      off_y);
 
 	FreeScratchGC(gc);
-}
-
-void
-amdgpu_dri2_copy_region(DrawablePtr pDraw, RegionPtr pRegion,
-			DRI2BufferPtr pDstBuffer, DRI2BufferPtr pSrcBuffer)
-{
-	return amdgpu_dri2_copy_region2(pDraw->pScreen, pDraw, pRegion,
-					pDstBuffer, pSrcBuffer);
 }
 
 enum DRI2FrameEventType {
@@ -362,8 +333,9 @@ static void amdgpu_dri2_unref_buffer(BufferPtr buffer)
 {
 	if (buffer) {
 		struct dri2_buffer_priv *private = buffer->driverPrivate;
-		amdgpu_dri2_destroy_buffer(&(private->pixmap->drawable),
-					   buffer);
+		DrawablePtr draw = &private->pixmap->drawable;
+
+		amdgpu_dri2_destroy_buffer2(draw->pScreen, draw, buffer);
 	}
 }
 
@@ -541,7 +513,6 @@ amdgpu_dri2_schedule_flip(xf86CrtcPtr crtc, ClientPtr client,
 	AMDGPUInfoPtr info = AMDGPUPTR(scrn);
 	struct dri2_buffer_priv *back_priv;
 	DRI2FrameEventPtr flip_info;
-	int ref_crtc_hw_id = drmmode_get_crtc_id(crtc);
 
 	flip_info = calloc(1, sizeof(DRI2FrameEventRec));
 	if (!flip_info)
@@ -561,8 +532,7 @@ amdgpu_dri2_schedule_flip(xf86CrtcPtr crtc, ClientPtr client,
 	/* Page flip the full screen buffer */
 	back_priv = back->driverPrivate;
 	if (amdgpu_do_pageflip(scrn, client, back_priv->pixmap,
-			       AMDGPU_DRM_QUEUE_ID_DEFAULT, flip_info,
-			       ref_crtc_hw_id,
+			       AMDGPU_DRM_QUEUE_ID_DEFAULT, flip_info, crtc,
 			       amdgpu_dri2_flip_event_handler,
 			       amdgpu_dri2_flip_event_abort, FLIP_VSYNC,
 			       target_msc - amdgpu_get_msc_delta(draw, crtc))) {
@@ -600,17 +570,6 @@ can_exchange(ScrnInfoPtr pScrn, DrawablePtr draw,
 	struct dri2_buffer_priv *back_priv = back->driverPrivate;
 	PixmapPtr front_pixmap;
 	PixmapPtr back_pixmap = back_priv->pixmap;
-	xf86CrtcConfigPtr xf86_config = XF86_CRTC_CONFIG_PTR(pScrn);
-	int i;
-
-	for (i = 0; i < xf86_config->num_crtc; i++) {
-		xf86CrtcPtr crtc = xf86_config->crtc[i];
-		drmmode_crtc_private_ptr drmmode_crtc = crtc->driver_private;
-
-		if (crtc->enabled &&
-		    (crtc->rotatedData || drmmode_crtc->scanout[0].bo))
-			return FALSE;
-	}
 
 	if (!update_front(draw, front))
 		return FALSE;
@@ -634,9 +593,10 @@ can_exchange(ScrnInfoPtr pScrn, DrawablePtr draw,
 }
 
 static Bool
-can_flip(ScrnInfoPtr pScrn, DrawablePtr draw,
+can_flip(xf86CrtcPtr crtc, DrawablePtr draw,
 	 DRI2BufferPtr front, DRI2BufferPtr back)
 {
+	ScrnInfoPtr pScrn = crtc->scrn;
 	AMDGPUInfoPtr info = AMDGPUPTR(pScrn);
 	xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(pScrn);
 	int num_crtcs_on;
@@ -644,24 +604,14 @@ can_flip(ScrnInfoPtr pScrn, DrawablePtr draw,
 
 	if (draw->type != DRAWABLE_WINDOW ||
 	    !info->allowPageFlip ||
-	    info->hwcursor_disabled ||
+	    info->sprites_visible > 0 ||
 	    info->drmmode.present_flipping ||
 	    !pScrn->vtSema ||
 	    !DRI2CanFlip(draw))
 		return FALSE;
 
 	for (i = 0, num_crtcs_on = 0; i < config->num_crtc; i++) {
-		xf86CrtcPtr crtc = config->crtc[i];
-		drmmode_crtc_private_ptr drmmode_crtc = crtc->driver_private;
-
-		if (!crtc->enabled)
-			continue;
-
-		if (!drmmode_crtc || drmmode_crtc->rotate.bo ||
-			drmmode_crtc->scanout[0].bo)
-			return FALSE;
-
-		if (drmmode_crtc->pending_dpms_mode == DPMSModeOn)
+		if (drmmode_crtc_can_flip(config->crtc[i]))
 			num_crtcs_on++;
 	}
 
@@ -747,7 +697,7 @@ static void amdgpu_dri2_frame_event_handler(xf86CrtcPtr crtc, uint32_t seq,
 
 	switch (event->type) {
 	case DRI2_FLIP:
-		if (can_flip(scrn, drawable, event->front, event->back) &&
+		if (can_flip(crtc, drawable, event->front, event->back) &&
 		    amdgpu_dri2_schedule_flip(crtc,
 					      event->client,
 					      drawable,
@@ -773,8 +723,8 @@ static void amdgpu_dri2_frame_event_handler(xf86CrtcPtr crtc, uint32_t seq,
 			box.x2 = drawable->width;
 			box.y2 = drawable->height;
 			REGION_INIT(pScreen, &region, &box, 0);
-			amdgpu_dri2_copy_region(drawable, &region, event->front,
-						event->back);
+			amdgpu_dri2_copy_region2(drawable->pScreen, drawable, &region,
+						 event->front, event->back);
 			swap_type = DRI2_BLIT_COMPLETE;
 		}
 
@@ -796,20 +746,6 @@ static void amdgpu_dri2_frame_event_handler(xf86CrtcPtr crtc, uint32_t seq,
 
 cleanup:
 	amdgpu_dri2_frame_event_abort(crtc, event_data);
-}
-
-drmVBlankSeqType amdgpu_populate_vbl_request_type(xf86CrtcPtr crtc)
-{
-	drmVBlankSeqType type = 0;
-	int crtc_id = drmmode_get_crtc_id(crtc);
-
-	if (crtc_id == 1)
-		type |= DRM_VBLANK_SECONDARY;
-	else if (crtc_id > 1)
-		type |= (crtc_id << DRM_VBLANK_HIGH_CRTC_SHIFT) &
-		    DRM_VBLANK_HIGH_CRTC_MASK;
-
-	return type;
 }
 
 /*
@@ -991,13 +927,11 @@ static int amdgpu_dri2_schedule_wait_msc(ClientPtr client, DrawablePtr draw,
 {
 	ScreenPtr screen = draw->pScreen;
 	ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
-	AMDGPUEntPtr pAMDGPUEnt = AMDGPUEntPriv(scrn);
 	DRI2FrameEventPtr wait_info = NULL;
 	uintptr_t drm_queue_seq = 0;
 	xf86CrtcPtr crtc = amdgpu_dri2_drawable_crtc(draw, TRUE);
 	uint32_t msc_delta;
-	drmVBlank vbl;
-	int ret;
+	uint32_t seq;
 	CARD64 current_msc;
 
 	/* Truncate to match kernel interfaces; means occasional overflow
@@ -1036,17 +970,13 @@ static int amdgpu_dri2_schedule_wait_msc(ClientPtr client, DrawablePtr draw,
 	}
 
 	/* Get current count */
-	vbl.request.type = DRM_VBLANK_RELATIVE;
-	vbl.request.type |= amdgpu_populate_vbl_request_type(crtc);
-	vbl.request.sequence = 0;
-	ret = drmWaitVBlank(pAMDGPUEnt->fd, &vbl);
-	if (ret) {
+	if (!drmmode_wait_vblank(crtc, DRM_VBLANK_RELATIVE, 0, 0, NULL, &seq)) {
 		xf86DrvMsg(scrn->scrnIndex, X_WARNING,
 			   "get vblank counter failed: %s\n", strerror(errno));
 		goto out_complete;
 	}
 
-	current_msc = vbl.reply.sequence + msc_delta;
+	current_msc = seq + msc_delta;
 	current_msc &= 0xffffffff;
 
 	drm_queue_seq = amdgpu_drm_queue_alloc(crtc, client, AMDGPU_DRM_QUEUE_ID_DEFAULT,
@@ -1073,12 +1003,9 @@ static int amdgpu_dri2_schedule_wait_msc(ClientPtr client, DrawablePtr draw,
 		 */
 		if (current_msc >= target_msc)
 			target_msc = current_msc;
-		vbl.request.type = DRM_VBLANK_ABSOLUTE | DRM_VBLANK_EVENT;
-		vbl.request.type |= amdgpu_populate_vbl_request_type(crtc);
-		vbl.request.sequence = target_msc - msc_delta;
-		vbl.request.signal = drm_queue_seq;
-		ret = drmWaitVBlank(pAMDGPUEnt->fd, &vbl);
-		if (ret) {
+		if (!drmmode_wait_vblank(crtc, DRM_VBLANK_ABSOLUTE | DRM_VBLANK_EVENT,
+					 target_msc - msc_delta, drm_queue_seq, NULL,
+					 NULL)) {
 			xf86DrvMsg(scrn->scrnIndex, X_WARNING,
 				   "get vblank counter failed: %s\n",
 				   strerror(errno));
@@ -1093,11 +1020,7 @@ static int amdgpu_dri2_schedule_wait_msc(ClientPtr client, DrawablePtr draw,
 	 * If we get here, target_msc has already passed or we don't have one,
 	 * so we queue an event that will satisfy the divisor/remainder equation.
 	 */
-	vbl.request.type = DRM_VBLANK_ABSOLUTE | DRM_VBLANK_EVENT;
-	vbl.request.type |= amdgpu_populate_vbl_request_type(crtc);
-
-	vbl.request.sequence = current_msc - (current_msc % divisor) +
-	    remainder - msc_delta;
+	target_msc = current_msc - (current_msc % divisor) + remainder - msc_delta;
 
 	/*
 	 * If calculated remainder is larger than requested remainder,
@@ -1106,11 +1029,10 @@ static int amdgpu_dri2_schedule_wait_msc(ClientPtr client, DrawablePtr draw,
 	 * that will happen.
 	 */
 	if ((current_msc % divisor) >= remainder)
-		vbl.request.sequence += divisor;
+		target_msc += divisor;
 
-	vbl.request.signal = drm_queue_seq;
-	ret = drmWaitVBlank(pAMDGPUEnt->fd, &vbl);
-	if (ret) {
+	if (!drmmode_wait_vblank(crtc, DRM_VBLANK_ABSOLUTE | DRM_VBLANK_EVENT,
+				 target_msc, drm_queue_seq, NULL, NULL)) {
 		xf86DrvMsg(scrn->scrnIndex, X_WARNING,
 			   "get vblank counter failed: %s\n", strerror(errno));
 		goto out_complete;
@@ -1154,14 +1076,14 @@ static int amdgpu_dri2_schedule_swap(ClientPtr client, DrawablePtr draw,
 {
 	ScreenPtr screen = draw->pScreen;
 	ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
-	AMDGPUEntPtr pAMDGPUEnt = AMDGPUEntPriv(scrn);
 	xf86CrtcPtr crtc = amdgpu_dri2_drawable_crtc(draw, TRUE);
 	uint32_t msc_delta;
-	drmVBlank vbl;
-	int ret, flip = 0;
+	drmVBlankSeqType type;
+	uint32_t seq;
+	int flip = 0;
 	DRI2FrameEventPtr swap_info = NULL;
 	uintptr_t drm_queue_seq;
-	CARD64 current_msc;
+	CARD64 current_msc, event_msc;
 	BoxRec box;
 	RegionRec region;
 
@@ -1224,22 +1146,18 @@ static int amdgpu_dri2_schedule_swap(ClientPtr client, DrawablePtr draw,
 	}
 
 	/* Get current count */
-	vbl.request.type = DRM_VBLANK_RELATIVE;
-	vbl.request.type |= amdgpu_populate_vbl_request_type(crtc);
-	vbl.request.sequence = 0;
-	ret = drmWaitVBlank(pAMDGPUEnt->fd, &vbl);
-	if (ret) {
+	if (!drmmode_wait_vblank(crtc, DRM_VBLANK_RELATIVE, 0, 0, NULL, &seq)) {
 		xf86DrvMsg(scrn->scrnIndex, X_WARNING,
 			   "first get vblank counter failed: %s\n",
 			   strerror(errno));
 		goto blit_fallback;
 	}
 
-	current_msc = vbl.reply.sequence + msc_delta;
+	current_msc = seq + msc_delta;
 	current_msc &= 0xffffffff;
 
 	/* Flips need to be submitted one frame before */
-	if (can_flip(scrn, draw, front, back)) {
+	if (can_flip(crtc, draw, front, back)) {
 		swap_info->type = DRI2_FLIP;
 		flip = 1;
 	}
@@ -1257,14 +1175,13 @@ static int amdgpu_dri2_schedule_swap(ClientPtr client, DrawablePtr draw,
 	 * the swap.
 	 */
 	if (divisor == 0 || current_msc < *target_msc) {
-		vbl.request.type = DRM_VBLANK_ABSOLUTE | DRM_VBLANK_EVENT;
+		type = DRM_VBLANK_ABSOLUTE | DRM_VBLANK_EVENT;
 		/* If non-pageflipping, but blitting/exchanging, we need to use
 		 * DRM_VBLANK_NEXTONMISS to avoid unreliable timestamping later
 		 * on.
 		 */
 		if (flip == 0)
-			vbl.request.type |= DRM_VBLANK_NEXTONMISS;
-		vbl.request.type |= amdgpu_populate_vbl_request_type(crtc);
+			type |= DRM_VBLANK_NEXTONMISS;
 
 		/* If target_msc already reached or passed, set it to
 		 * current_msc to ensure we return a reasonable value back
@@ -1273,17 +1190,15 @@ static int amdgpu_dri2_schedule_swap(ClientPtr client, DrawablePtr draw,
 		if (current_msc >= *target_msc)
 			*target_msc = current_msc;
 
-		vbl.request.sequence = *target_msc - msc_delta;
-		vbl.request.signal = drm_queue_seq;
-		ret = drmWaitVBlank(pAMDGPUEnt->fd, &vbl);
-		if (ret) {
+		if (!drmmode_wait_vblank(crtc, type, *target_msc - msc_delta,
+					 drm_queue_seq, NULL, &seq)) {
 			xf86DrvMsg(scrn->scrnIndex, X_WARNING,
 				   "divisor 0 get vblank counter failed: %s\n",
 				   strerror(errno));
 			goto blit_fallback;
 		}
 
-		*target_msc = vbl.reply.sequence + flip + msc_delta;
+		*target_msc = seq + flip + msc_delta;
 		*target_msc &= 0xffffffff;
 		swap_info->frame = *target_msc;
 
@@ -1295,13 +1210,11 @@ static int amdgpu_dri2_schedule_swap(ClientPtr client, DrawablePtr draw,
 	 * and we need to queue an event that will satisfy the divisor/remainder
 	 * equation.
 	 */
-	vbl.request.type = DRM_VBLANK_ABSOLUTE | DRM_VBLANK_EVENT;
+	type = DRM_VBLANK_ABSOLUTE | DRM_VBLANK_EVENT;
 	if (flip == 0)
-		vbl.request.type |= DRM_VBLANK_NEXTONMISS;
-	vbl.request.type |= amdgpu_populate_vbl_request_type(crtc);
+		type |= DRM_VBLANK_NEXTONMISS;
 
-	vbl.request.sequence = current_msc - (current_msc % divisor) +
-	    remainder - msc_delta;
+	event_msc = current_msc - (current_msc % divisor) + remainder - msc_delta;
 
 	/*
 	 * If the calculated deadline vbl.request.sequence is smaller than
@@ -1314,15 +1227,13 @@ static int amdgpu_dri2_schedule_swap(ClientPtr client, DrawablePtr draw,
 	 * into account, as well as a potential DRM_VBLANK_NEXTONMISS delay
 	 * if we are blitting/exchanging instead of flipping.
 	 */
-	if (vbl.request.sequence <= current_msc)
-		vbl.request.sequence += divisor;
+	if (event_msc <= current_msc)
+		event_msc += divisor;
 
 	/* Account for 1 frame extra pageflip delay if flip > 0 */
-	vbl.request.sequence -= flip;
+	event_msc -= flip;
 
-	vbl.request.signal = drm_queue_seq;
-	ret = drmWaitVBlank(pAMDGPUEnt->fd, &vbl);
-	if (ret) {
+	if (!drmmode_wait_vblank(crtc, type, event_msc, drm_queue_seq, NULL, &seq)) {
 		xf86DrvMsg(scrn->scrnIndex, X_WARNING,
 			   "final get vblank counter failed: %s\n",
 			   strerror(errno));
@@ -1330,7 +1241,7 @@ static int amdgpu_dri2_schedule_swap(ClientPtr client, DrawablePtr draw,
 	}
 
 	/* Adjust returned value for 1 fame pageflip offset of flip > 0 */
-	*target_msc = vbl.reply.sequence + flip + msc_delta;
+	*target_msc = seq + flip + msc_delta;
 	*target_msc &= 0xffffffff;
 	swap_info->frame = *target_msc;
 
@@ -1347,7 +1258,7 @@ blit_fallback:
 		box.y2 = draw->height;
 		REGION_INIT(pScreen, &region, &box, 0);
 
-		amdgpu_dri2_copy_region(draw, &region, front, back);
+		amdgpu_dri2_copy_region2(draw->pScreen, draw, &region, front, back);
 
 		DRI2SwapComplete(client, draw, 0, 0, 0, DRI2_BLIT_COMPLETE, func, data);
 
@@ -1376,10 +1287,6 @@ Bool amdgpu_dri2_screen_init(ScreenPtr pScreen)
 	dri2_info.driverName = SI_DRIVER_NAME;
 	dri2_info.fd = pAMDGPUEnt->fd;
 	dri2_info.deviceName = info->dri2.device_name;
-	dri2_info.version = DRI2INFOREC_VERSION;
-	dri2_info.CreateBuffer = amdgpu_dri2_create_buffer;
-	dri2_info.DestroyBuffer = amdgpu_dri2_destroy_buffer;
-	dri2_info.CopyRegion = amdgpu_dri2_copy_region;
 
 	if (info->drmmode.count_crtcs > 2) {
 		uint64_t cap_value;
@@ -1399,11 +1306,10 @@ Bool amdgpu_dri2_screen_init(ScreenPtr pScreen)
 	}
 
 	if (scheduling_works) {
-		dri2_info.version = 4;
 		dri2_info.ScheduleSwap = amdgpu_dri2_schedule_swap;
 		dri2_info.GetMSC = amdgpu_dri2_get_msc;
 		dri2_info.ScheduleWaitMSC = amdgpu_dri2_schedule_wait_msc;
-		dri2_info.numDrivers = AMDGPU_ARRAY_SIZE(driverNames);
+		dri2_info.numDrivers = ARRAY_SIZE(driverNames);
 		dri2_info.driverNames = driverNames;
 		driverNames[0] = driverNames[1] = dri2_info.driverName;
 
@@ -1423,12 +1329,10 @@ Bool amdgpu_dri2_screen_init(ScreenPtr pScreen)
 		DRI2InfoCnt++;
 	}
 
-#if DRI2INFOREC_VERSION >= 9
 	dri2_info.version = 9;
 	dri2_info.CreateBuffer2 = amdgpu_dri2_create_buffer2;
 	dri2_info.DestroyBuffer2 = amdgpu_dri2_destroy_buffer2;
 	dri2_info.CopyRegion2 = amdgpu_dri2_copy_region2;
-#endif
 
 	info->dri2.enabled = DRI2ScreenInit(pScreen, &dri2_info);
 	return info->dri2.enabled;

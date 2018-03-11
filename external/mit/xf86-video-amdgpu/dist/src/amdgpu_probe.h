@@ -76,13 +76,13 @@ extern void amdgpu_kernel_close_fd(AMDGPUEntPtr pAMDGPUEnt);
 extern const OptionInfoRec *AMDGPUOptionsWeak(void);
 
 extern Bool AMDGPUPreInit_KMS(ScrnInfoPtr, int);
-extern Bool AMDGPUScreenInit_KMS(SCREEN_INIT_ARGS_DECL);
-extern Bool AMDGPUSwitchMode_KMS(SWITCH_MODE_ARGS_DECL);
-extern void AMDGPUAdjustFrame_KMS(ADJUST_FRAME_ARGS_DECL);
-extern Bool AMDGPUEnterVT_KMS(VT_FUNC_ARGS_DECL);
-extern void AMDGPULeaveVT_KMS(VT_FUNC_ARGS_DECL);
-extern void AMDGPUFreeScreen_KMS(FREE_SCREEN_ARGS_DECL);
+extern Bool AMDGPUScreenInit_KMS(ScreenPtr pScreen, int argc, char **argv);
+extern Bool AMDGPUSwitchMode_KMS(ScrnInfoPtr pScrn, DisplayModePtr mode);
+extern void AMDGPUAdjustFrame_KMS(ScrnInfoPtr pScrn, int x, int y);
+extern Bool AMDGPUEnterVT_KMS(ScrnInfoPtr pScrn);
+extern void AMDGPULeaveVT_KMS(ScrnInfoPtr pScrn);
+extern void AMDGPUFreeScreen_KMS(ScrnInfoPtr pScrn);
 
-extern ModeStatus AMDGPUValidMode(SCRN_ARG_TYPE arg, DisplayModePtr mode,
+extern ModeStatus AMDGPUValidMode(ScrnInfoPtr pScrn, DisplayModePtr mode,
 				  Bool verbose, int flag);
 #endif /* _AMDGPU_PROBE_H_ */

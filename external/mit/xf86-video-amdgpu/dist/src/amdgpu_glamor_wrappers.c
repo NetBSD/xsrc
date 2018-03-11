@@ -896,7 +896,7 @@ amdgpu_glamor_triangles(CARD8 op, PicturePtr src, PicturePtr dst,
  * down our screen private, before calling down to the next CloseScreen.
  */
 static Bool
-amdgpu_glamor_close_screen(CLOSE_SCREEN_ARGS_DECL)
+amdgpu_glamor_close_screen(ScreenPtr pScreen)
 {
 	AMDGPUInfoPtr info = AMDGPUPTR(xf86ScreenToScrn(pScreen));
 #ifdef RENDER
@@ -924,7 +924,7 @@ amdgpu_glamor_close_screen(CLOSE_SCREEN_ARGS_DECL)
 	}
 #endif
 
-	return (*pScreen->CloseScreen) (CLOSE_SCREEN_ARGS);
+	return pScreen->CloseScreen(pScreen);
 }
 
 /**
