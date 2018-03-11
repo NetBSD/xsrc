@@ -75,9 +75,6 @@
 /* Have xf86CursorResetCursor API */
 #define HAVE_XF86_CURSOR_RESET_CURSOR 1
 
-/* Have xorg_list API */
-#define HAVE_XORG_LIST 1
-
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
 #define LT_OBJDIR ".libs/"
 
@@ -91,7 +88,7 @@
 #define PACKAGE_NAME "xf86-video-amdgpu"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-video-amdgpu 1.3.0"
+#define PACKAGE_STRING "xf86-video-amdgpu 18.0.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-video-amdgpu"
@@ -100,13 +97,13 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.3.0"
+#define PACKAGE_VERSION "18.0.0"
 
 /* Major version of this package */
-#define PACKAGE_VERSION_MAJOR 1
+#define PACKAGE_VERSION_MAJOR 18
 
 /* Minor version of this package */
-#define PACKAGE_VERSION_MINOR 3
+#define PACKAGE_VERSION_MINOR 0
 
 /* Patch version of this package */
 #define PACKAGE_VERSION_PATCHLEVEL 0
@@ -121,7 +118,7 @@
 #define USE_SYS_ENDIAN_H 1
 
 /* Version number of package */
-#define VERSION "1.3.0"
+#define VERSION "18.0.0"
 
 /* Enable large inode numbers on Mac OS X 10.5.  */
 #ifndef _DARWIN_USE_64_BIT_INODE
