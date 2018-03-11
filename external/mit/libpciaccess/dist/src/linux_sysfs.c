@@ -118,28 +118,18 @@ pci_system_linux_sysfs_create( void )
 
 
 /**
- * Filter out the names "." and ".." from the scanned sysfs entries, and
- * domains requiring 32-bits.
+ * Filter out the names "." and ".." from the scanned sysfs entries.
  *
  * \param d  Directory entry being processed by \c scandir.
  *
  * \return
- * Zero if the entry name matches either "." or "..", or the domain requires
- * 32 bits, non-zero otherwise.
+ * Zero if the entry name matches either "." or ".."
  *
  * \sa scandir, populate_entries
  */
 static int
 scan_sys_pci_filter( const struct dirent * d )
 {
-    if (d->d_name[0] != '.') {
-        unsigned dom = 0;
-
-        sscanf(d->d_name, "%x:", &dom);
-        if (dom > USHRT_MAX)
-            return 0;
-    }
-
     return !((strcmp( d->d_name, "." ) == 0)
 	     || (strcmp( d->d_name, ".." ) == 0));
 }
@@ -218,10 +208,19 @@ populate_entries( struct pci_system * p )
 			(struct pci_device_private *) &p->devices[i];
 
 
-		sscanf(devices[i]->d_name, "%04x:%02x:%02x.%1u",
+		sscanf(devices[i]->d_name, "%x:%02x:%02x.%1u",
 		       & dom, & bus, & dev, & func);
 
 		device->base.domain = dom;
+		/*
+		 * Applications compiled with older versions  do not expect
+		 * 32-bit domain numbers. To keep them working, we keep a 16-bit
+		 * version of the domain number at the previous location.
+		 */
+		if (dom > 0xffff)
+		     device->base.domain_16 = 0xffff;
+		else
+		     device->base.domain_16 = dom;
 		device->base.bus = bus;
 		device->base.dev = dev;
 		device->base.func = func;

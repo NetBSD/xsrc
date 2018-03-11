@@ -23,7 +23,7 @@
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([libpciaccess],[0.13.5],
+AC_INIT([libpciaccess],[0.14],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg&component=libpciaccess],[libpciaccess])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR([.])

@@ -1,3 +1,36 @@
+commit 13854f603f720c45caf51d785a874d3c7e8c5f58
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Mon Oct 23 11:44:32 2017 -0400
+
+    libpciaccess 0.14
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit a167bd6474522a709ff3cbb00476c0e4309cb66f
+Author: Stephen Hemminger <stephen@networkplumber.org>
+Date:   Mon Sep 18 13:17:23 2017 -0400
+
+    linux: support 32 bit PCI domains (v3)
+    
+    The PCI domain may be larger than 16 bits on Microsoft Azure and other
+    virtual environments. PCI busses reported by ACPI are limited to 16
+    bits, but in Azure the domain value for pass through devices is
+    intentionally larger than 16 bits to avoid clashing with local devices.
+    This is needed to support pass through of GPU devices.
+    
+    v3: (ajax)
+    Update FreeBSD and Solaris backends to preserve the full 32-bit domain
+    number, since on those OSes it stands a chance of working already.
+    Update NetBSD and OpenBSD backends to initialize domain_16 compatibly
+    with older libpciaccess; neither backend appears to support more than a
+    handful of domains to begin with though. Trivially update the generic
+    x86 backend for source compatibility, though it still only supports one
+    domain and will never be better.
+    
+    Fixes: https://bugs.freedesktop.org/show_bug.cgi?id=101744
+    Signed-off-by: Stephen Hemminger <sthemmin@microsoft.com>
+    Reviewed-by: Eric Anholt <eric@anholt.net>
+
 commit 4f1ac52e828eed1c410ee66304fcb7a17f25da40
 Author: Emil Velikov <emil.velikov@collabora.com>
 Date:   Tue Apr 4 14:40:41 2017 +0100
