@@ -30,12 +30,18 @@
 
 #ifdef XFS_INETD
 /* xfs special handling for listen socket passed from inetd */
-#include "misc.h"
+
+/* XXX duplicated from misc.h */
+typedef struct {		/* when cloning, need old transport info */
+    int trans_id;
+    int fd;
+    int portnum;
+} OldListenRec;
 
 OldListenRec *
 TRANS(GetInetdListenInfo) (int fd)
 {
-    char *port = "0";
+    const char *port = "0";
     XtransConnInfo inetdCI;
     OldListenRec *old_listen;
     int portnum;
@@ -79,10 +85,7 @@ TRANS(GetInetdListenInfo) (int fd)
 #endif
 
     if (listen (fd, BACKLOG) < 0)
-    {
-	FatalError("listen() failed on inetd socket: %s\n",
-		   strerror(errno));
-    }
+        return NULL;
 
     /* Pass the inetd socket back through the connection setup code
      * the same way as a cloned listening port
