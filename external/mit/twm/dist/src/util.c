@@ -350,7 +350,7 @@ FindBitmap (const char *name, unsigned *widthp, unsigned *heightp)
     pm = XmuLocateBitmapFile (ScreenOfDisplay(dpy, Scr->screen), bigname, NULL,
 			      0, (int *)widthp, (int *)heightp, &HotX, &HotY);
     if (pm == None && Scr->IconDirectory && bigname[0] != '/') {
-	if (bigname != name) free (bigname);
+	free (bigname);
 	/*
 	 * Attempt to find icon in old IconDirectory (now obsolete)
 	 */
@@ -367,7 +367,7 @@ FindBitmap (const char *name, unsigned *widthp, unsigned *heightp)
 	    pm = None;
 	}
     }
-    if (bigname != name) free (bigname);
+    free (bigname);
     if (pm == None) {
 	fprintf (stderr, "%s:  unable to find bitmap \"%s\"\n",
 		 ProgramName, name);
