@@ -23,7 +23,7 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-video-vesa],
-        [2.3.4],
+        [2.4.0],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
         [xf86-video-vesa])
 AC_CONFIG_SRCDIR([Makefile.am])
