@@ -66,7 +66,11 @@
 /* Mandatory functions */
 static const OptionInfoRec * VESAAvailableOptions(int chipid, int busid);
 static void VESAIdentify(int flags);
+#if defined(XSERVER_LIBPCIACCESS) && !defined(HAVE_ISA)
+#define VESAProbe NULL
+#else
 static Bool VESAProbe(DriverPtr drv, int flags);
+#endif
 #ifdef XSERVER_LIBPCIACCESS
 static Bool VESAPciProbe(DriverPtr drv, int entity_num,
      struct pci_device *dev, intptr_t match_data);
@@ -466,6 +470,7 @@ VESAPciProbe(DriverPtr drv, int entity_num, struct pci_device *dev,
 }
 #endif
 
+#ifndef VESAProbe
 static Bool
 VESAProbe(DriverPtr drv, int flags)
 {
@@ -536,6 +541,7 @@ VESAProbe(DriverPtr drv, int flags)
 
     return (foundScreen);
 }
+#endif
 
 #ifdef HAVE_ISA
 static int
@@ -590,7 +596,8 @@ VESAFreeRec(ScrnInfoPtr pScrn)
     }
 #endif
     free(pVesa->monitor);
-    free(pVesa->vbeInfo);
+    if (pVesa->vbeInfo)
+	VBEFreeVBEInfo(pVesa->vbeInfo);
     free(pVesa->pal);
     free(pVesa->savedPal);
     free(pVesa->fonts);
@@ -717,6 +724,9 @@ VESAPreInit(ScrnInfoPtr pScrn, int flags)
 
     xf86SetGamma(pScrn, gzeros);
 
+    /* set up options before loading any modules that may look at them */
+    xf86CollectOptions(pScrn, NULL);
+
     if (pVesa->major >= 2) {
 	/* Load ddc module */
 	if ((pDDCModule = xf86LoadSubModule(pScrn, "ddc")) == NULL) {
@@ -827,7 +837,6 @@ VESAPreInit(ScrnInfoPtr pScrn, int flags)
     }
 
     /* options */
-    xf86CollectOptions(pScrn, NULL);
     if (!(pVesa->Options = malloc(sizeof(VESAOptions)))) {
         vbeFree(pVesa->pVbe);
 	return FALSE;
@@ -838,9 +847,11 @@ VESAPreInit(ScrnInfoPtr pScrn, int flags)
     /* Use shadow by default */
     pVesa->shadowFB = xf86ReturnOptValBool(pVesa->Options, OPTION_SHADOW_FB,
                                            TRUE);
-
-    if (xf86ReturnOptValBool(pVesa->Options, OPTION_DFLT_REFRESH, FALSE))
-	pVesa->defaultRefresh = TRUE;
+    /*  Use default refresh by default. Too many VBE 3.0
+     *   BIOSes are incorrectly implemented.
+     */
+    pVesa->defaultRefresh = xf86ReturnOptValBool(pVesa->Options,
+                                                 OPTION_DFLT_REFRESH, TRUE);
 
     pVesa->ModeSetClearScreen =
         xf86ReturnOptValBool(pVesa->Options,
@@ -1304,9 +1315,10 @@ VESAMapVidMem(ScrnInfoPtr pScrn)
 #endif
 
     xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, DEBUG_VERB,
-		   "virtual address = %p,\n"
+		   "virtual address = %p, VGAbase = %p\n"
 		   "\tphysical address = 0x%lx, size = %ld\n",
-		   pVesa->base, pScrn->memPhysBase, pVesa->mapSize);
+		   pVesa->base, pVesa->VGAbase,
+		   pScrn->memPhysBase, pVesa->mapSize);
 
     return (pVesa->base != NULL);
 }
@@ -1346,6 +1358,27 @@ VESALoadPalette(ScrnInfoPtr pScrn, int numColors, int *indices,
     VESAPtr pVesa = VESAGetRec(pScrn);
     int i, idx;
     int base;
+
+    if (!pVesa->savedPal) {
+#define VESADACDelay()							       \
+	do {                                                                   \
+	   (void)inb(pVesa->ioBase + VGA_IOBASE_COLOR + VGA_IN_STAT_1_OFFSET); \
+	   (void)inb(pVesa->ioBase + VGA_IOBASE_COLOR + VGA_IN_STAT_1_OFFSET); \
+	} while (0)
+
+	for (i = 0; i < numColors; i++) {
+	   idx = indices[i];
+	   outb(pVesa->ioBase + VGA_DAC_WRITE_ADDR, idx);
+	   VESADACDelay();
+	   outb(pVesa->ioBase + VGA_DAC_DATA, colors[idx].red);
+	   VESADACDelay();
+	   outb(pVesa->ioBase + VGA_DAC_DATA, colors[idx].green);
+	   VESADACDelay();
+	   outb(pVesa->ioBase + VGA_DAC_DATA, colors[idx].blue);
+	   VESADACDelay();
+	}
+	return;
+    }
 
     if (pVesa->pal == NULL)
 	pVesa->pal = calloc(1, sizeof(CARD32) * 256);

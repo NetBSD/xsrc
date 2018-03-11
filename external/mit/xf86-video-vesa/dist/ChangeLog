@@ -1,3 +1,126 @@
+commit 07e4a0f0b3bd6308da2e000c12230b1e171e65a7
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Thu Feb 15 14:33:38 2018 -0500
+
+    vesa 2.4.0
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit f7876ce62c751c9b28d5750e1d01def877e666fb
+Author: Ian Lepore <freebsd-xorg@damnhippie.dyndns.org>
+Date:   Wed Jan 31 10:48:09 2018 -0500
+
+    Honor Option "NoDDC" correctly
+    
+    Move xf86CollectOptions before the DDC code so it can actually hear us
+    when we ask to disable DDC.
+    
+    Bugzilla: https://bugs.freedesktop.org/show_bug.cgi?id=46541
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 2cb984533fd7a36151bb8be18a63f678a552ad71
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed Jan 31 10:48:08 2018 -0500
+
+    Use VBEFreeVBEInfo not free
+    
+    A VbeInfoBlock has substructure, just freeing the object will leak.
+    Unfortunately VBEFreeVBEInfo does not check for NULL first so we have
+    to.
+    
+    Bugzilla: https://bugs.freedesktop.org/show_bug.cgi?id=25029
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 9c4f6c7ab011435a492dd5cb1847bf00f290c219
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed Jan 31 10:48:07 2018 -0500
+
+    Fall back to VGA if the palette API isn't supported
+    
+    I ported vesa to use the VBE service back in:
+    
+        commit 55f585a15f42ffe028ff37ea1f63543795dbf56e
+        Author: Adam Jackson <ajax@redhat.com>
+        Date:   Fri Sep 18 17:02:16 2009 -0400
+    
+            Use VBE palette load, not VGA banging.
+    
+    I'm reasonably sure that worked on all the hardware I had handy at the
+    time. But it doesn't work in seabios, which means 8bpp is broken under
+    qemu.
+    
+    We query this API early in initialization, and if it fails ->savedPal
+    will be NULL, so use that as the hint to fall back to VGA banging.
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+    Reviewed-by: Dave Airlie <airlied@redhat.com>
+
+commit c6fdaad9649d3fb6a13a8180c17ea8181aabd375
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed Jan 31 10:48:06 2018 -0500
+
+    Don't build old probe method on sufficiently new servers
+    
+    If we have pciaccess and not ISA support VESAProbe is effectively return
+    FALSE, and the server will issue a potentially confusing fallback
+    message if VESAPciProbe failed and ->Probe is non-NULL.
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit b9f9c95ca2383460aa283adeeee6e0a66eed722b
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:22 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit 8912f4afd4903cf383e32a32e2a5c878e5a9fe03
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 109fb7b040b009dcaba05d36200f9bba97aad2bc
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
+commit 0400b332a90f53b7a1361f832b60f1d4e90fd6e7
+Author: Stefan Dirsch <sndirsch@suse.de>
+Date:   Thu Apr 28 13:56:52 2016 +0200
+
+    Use default refresh by default
+    
+    This seems to be a feature that isn't tested well. Too many VBE 3.0
+    BIOSes are incorrectly implemented.
+    
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Signed-off-by: Stefan Dirsch <sndirsch@suse.de>
+
+commit 2792ba7535dc9cc1c5bb2b37c1f862be36710a32
+Author: Matthew Green <mrg@NetBSD.org>
+Date:   Mon Jul 20 10:55:09 2015 +0200
+
+    When debugging, print the VGAbase as well.
+    
+    Just in case it ends up zero and causes a segmentation fault.
+    
+    Signed-off-by: Thomas Klausner <wiz@NetBSD.org>
+
 commit b49c293e67cd88424ff40a2ca4e58b28528691d7
 Author: Adam Jackson <ajax@redhat.com>
 Date:   Tue Jun 16 11:56:32 2015 -0400
