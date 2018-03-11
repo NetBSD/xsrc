@@ -1,3 +1,1125 @@
+commit 7e18aea984e186dd2ab1144470b0c0e832562ad1
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Mar 6 18:15:45 2018 +0100
+
+    Bump version for 18.0.0 release
+
+commit 504b8721b17a672caf1ed3eab087027c02458cab
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Mar 5 18:41:44 2018 +0100
+
+    Only change Set/MoveCursor hooks from what we expect
+    
+    Since xf86CursorCloseScreen runs after RADEONCloseScreen_KMS,
+    PointPriv->spriteFuncs doesn't point to the same struct in the latter as
+    in RADEONCursorInit_KMS. So we were restoring info->Set/MoveCursor to
+    the wrong struct. Then in the next server generation,
+    info->Set/MoveCursor would end up pointing to
+    drmmode_sprite_set/move_cursor, resulting in an infinite loop if one of
+    them was called.
+    
+    To avoid this, only change the Set/MoveCursor hooks if their values
+    match our expectations, otherwise leave them as is. This is kind of a
+    hack, but the alternative would be invasive and thus risky changes to
+    the way we're wrapping CloseScreen, and it's not even clear that can
+    work without changing xserver code.
+    
+    Fixes: 1fe8ca75974c ("Keep track of how many SW cursors are visible on
+                          each screen")
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit e0d23092337efe4c1e406c9124ca8d8856863e65
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Mar 2 12:13:43 2018 +0100
+
+    modesetting: Update property values at detect and uevent time
+    
+    We were updating the link-status property when a uevent came in, but
+    we also want to update the non-desktop property, and potentially
+    others as well. We also want to check at detect time in case we don't
+    get a hotplug event.
+    
+    This patch updates every property provided by the kernel, sending
+    changes to DIX so it can track things as well.
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+    
+    (Ported from amdgpu commit 374cb8fef4fdbb648af089ee80803ec78321f1b2)
+
+commit aef8fe6e9e94ebecbbb6adf940160d3a7ab4d5ac
+Author: Daniel Martin <consume.noise@gmail.com>
+Date:   Fri Mar 2 12:12:09 2018 +0100
+
+    modesetting: Reset output_id if drmModeGetConnector failed
+    
+    If drmModeGetConnector() fails in drmmode_output_detect(), we have to
+    reset the output_id to -1 too.
+    
+    Yet another spot leading to a potential NULL dereference when handling
+    the mode_output member as output_id was != -1. Though, this case should
+    be very hard to hit.
+    
+    Signed-off-by: Daniel Martin <consume.noise@gmail.com>
+    
+    (Ported from amdgpu commit 10054b6c3d9a755b30abb43020121b9631fa296d)
+
+commit 1ef12a92ca53cd6fbfed3ef8628616445b007c9a
+Author: Daniel Martin <consume.noise@gmail.com>
+Date:   Fri Mar 2 12:08:09 2018 +0100
+
+    modesetting: Use helper to fetch drmModeProperty(Blob)s
+    
+    Replace the various loops to lookup drmModeProperty(Blob)s by
+    introducing helper functions.
+    
+    Signed-off-by: Daniel Martin <consume.noise@gmail.com>
+    
+    (Ported from amdgpu commit fb58e06acd6c6bd59de2dbdadbca27eb1dd0025b)
+
+commit ace1e3871c39a86becdf473a47fdc096e8ef39f5
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Feb 21 17:53:59 2018 +0100
+
+    Disable all unused CRTCs before setting desired modes
+    
+    This might avoid modeset failures in some cases where a CRTC which isn't
+    used by Xorg was enabled before.
+    
+    (Ported from amdgpu commit e3aae7a24296f640c0153d1459f3e0820485468a)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit f2915eb7a4beb6140ebec183aeac02111fc6ba77
+Author: Christoph Haag <haagch@frickel.club>
+Date:   Thu Mar 1 15:07:00 2018 +0100
+
+    fix include order for present.h configure test
+    
+    xorg-server.h defines _XSERVER64 which is used in X.h to choose the
+    correct definition of XID
+    
+    this prevents a failure in the present.h configure test that disables
+    DRI3 on X.Org 1.20
+    
+    Reviewed-and-Tested-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit f777e909fd23e063729ecb038997db445f82ef5e
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Feb 16 16:55:03 2018 +0100
+
+    Don't bail from drmmode_set_desired_modes immediately
+    
+    If we fail to find or set the mode for a CRTC, keep trying for the
+    remaining CRTCs, and only return FALSE if we failed for all CRTCs that
+    should be on.
+    
+    (Ported from amdgpu commit f5ac5f385f41d1547cfd7ccc8bb35a537a8fffeb)
+
+commit 2d63748667d0bcfcd9999e4e41f775eba87897a0
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Feb 15 17:47:14 2018 +0100
+
+    Simplify depth 30 "kernel too old" error message
+    
+    We know it's depth 30, no need to have xf86DrvMsg fill it in.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 680b4ab43f00b1f635f9359281e13a031d09ad24
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Jan 24 12:29:17 2018 +0100
+
+    If glamor is too old for depth 30, fall back to EXA or ShadowFB
+    
+    Instead of not starting up at all.
+    
+    Corresponding to amdgpu commit 37c7260bdef3a53b0f0295a531f33938e9aad8cf.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 16954fab59f95bdca4540c4496b2ec0759c447e9
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Feb 14 18:20:04 2018 +0100
+
+    Call RADEONFreeRec from RADEONFreeScreen_KMS even if info == NULL
+    
+    It's safe now.
+    
+    (Ported from amdgpu commit c9bd1399a13cea2e1331af2c826ca054b88db071)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 6b44b8c584f3b63712858be11277842c97d03426
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Feb 14 18:06:18 2018 +0100
+
+    Don't call RADEONFreeRec from RADEONPreInit_KMS
+    
+    If the latter fails, Xorg will call RADEONFreeScreen_KMS, which calls
+    the former.
+    
+    (Ported from amdgpu commit 103b7285845b786929fb509083c57e074c48f9be)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 8a55e66bfd77dcb2553a43e86215b9d3c87b03f0
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Feb 14 18:13:16 2018 +0100
+
+    Don't use RADEONEntPriv in RADEONFreeRec
+    
+    It crashes if info == NULL.
+    
+    (Ported from amdgpu commits fb8444e731765588c0ff1e9053c1c7b73f5f0907 &
+     cfccf4c4e7e5c73fe4040fabeb1b43283cf29b33)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 703cbb7177c6f69264836e975c1921e552fd60a4
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Feb 14 17:28:10 2018 +0100
+
+    glamor: Allow depth 30 with Xorg >= 1.19.99.1
+    
+    Corresponding to amdgpu commit 6aee5770fb913713bb1b9a1af8f0d0892a66f21a.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 733f606dd6ca8350e6e7f0858bfff5454ddc98ed
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Jan 25 16:59:30 2018 +0100
+
+    Always use screen depth/bpp for KMS framebuffers
+    
+    DRI clients can use depth 32 pixmaps while the screen is depth 24, in
+    which case page flipping would fail.
+    
+    Reported-by: Mario Kleiner <mario.kleiner.de@gmail.com>
+    Reviewed-and-Tested-by: Mario Kleiner <mario.kleiner.de@gmail.com>
+
+commit 83124426040bc1f2dba74c8eeb5a5a9c7c64e664
+Author: Mario Kleiner <mario.kleiner.de@gmail.com>
+Date:   Wed Jan 24 18:19:38 2018 +0100
+
+    Make XvMC extension initialize at depth 30.
+    
+    Signed-off-by: Mario Kleiner <mario.kleiner.de@gmail.com>
+    Reviewed-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit 2d171c892d373b45ef9f1ee068648437e2529a78
+Author: Mario Kleiner <mario.kleiner.de@gmail.com>
+Date:   Wed Jan 24 18:19:37 2018 +0100
+
+    Add missing depth 30 -> cpp=4 handling for DRI2.
+    
+    Missing this apparently didn't cause any ill side effects, only a bit of
+    confusion when looking at xtrace's of DRI2 clients.
+    
+    Signed-off-by: Mario Kleiner <mario.kleiner.de@gmail.com>
+    Reviewed-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit 574bfab4bf1fcd95163a8f33cea2889189429d30
+Author: Mario Kleiner <mario.kleiner.de@gmail.com>
+Date:   Mon Jan 22 03:14:37 2018 +0100
+
+    Support exa screen color depth 30 on Linux 3.16 and later. (v2)
+    
+    Linux 3.16's radeon-kms introduced 10 bpc fb support.
+    Currently, as of X-Server 1.19, this works with exa accel,
+    but not yet when using glamor acceleration.
+    
+    v2: Style fixes, check for glamor first, as suggested
+        by Michel.
+    
+    Signed-off-by: Mario Kleiner <mario.kleiner.de@gmail.com>
+    Reviewed-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit ee7e6c25989e4faf1adfa4754b7edd5a9a4722ce
+Author: Fredrik Höglund <fredrik@kde.org>
+Date:   Mon Jan 22 03:14:36 2018 +0100
+
+    exa: Accelerate ARGB2101010 pictures
+    
+    Tested by Mario on a Radeon HD 4000 series for the r600
+    exa path, and on Radeon HD 5770 for the evergreen exa
+    path.
+    
+    Signed-off-by: Fredrik Höglund <fredrik@kde.org>
+    Reviewed-and-Tested-by: Mario Kleiner <mario.kleiner.de@gmail.com>
+    Reviewed-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit 1f1d4b1fa7d4b22dd8553f7e71251bf17ca7a7b1
+Author: Mario Kleiner <mario.kleiner.de@gmail.com>
+Date:   Mon Jan 22 03:14:35 2018 +0100
+
+    Skip xf86HandleColormaps() at color depth 30. (v2)
+    
+    The hardware gamma luts get bypassed at color
+    depth 30 anyway, so skip their setup.
+    
+    v2: Also don't hook up drmmode_crtc_gamma_set()
+        to .gamma_set for a screen with depth 30,
+        so the server can spare itself the effort of
+        updating and setting unused cluts.
+        Suggested by Michel.
+    
+    Signed-off-by: Mario Kleiner <mario.kleiner.de@gmail.com>
+    Reviewed-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit 21f6753462464acfd3c452393328c977a375ce26
+Author: Mario Kleiner <mario.kleiner.de@gmail.com>
+Date:   Mon Jan 22 03:14:34 2018 +0100
+
+    Define per x-screen individual drmmode_crtc_funcs
+    
+    This allows to en-/disable some functions depending on individual screen
+    settings.
+    
+    Prep work for more efficient depth 30 support.
+    
+    Suggested-by: Michel Dänzer <michel.daenzer@amd.com>
+    Signed-off-by: Mario Kleiner <mario.kleiner.de@gmail.com>
+    Reviewed-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit 1fe8ca75974c5241c3b556b757f9c966c9ce5002
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Dec 27 17:13:30 2017 +0100
+
+    Keep track of how many SW cursors are visible on each screen
+    
+    And use this to determine when we cannot use page flipping for DRI
+    clients. We previously did this based on whether the HW cursor cannot
+    be used on at least one CRTC, which had at least two issues:
+    
+    * Even while the HW cursor cannot be used, no SW cursor may actually be
+      visible (e.g. because all cursors are disabled), in which case we can
+      use page flipping for DRI clients anyway
+    * Even while the HW cursor can be used, there may be SW cursors visible
+      from non-core pointer devices, in which case we cannot use page
+      flipping for DRI clients anyway
+    
+    (Ported from amdgpu commit 69e20839bfeb3ee0b0a732d72de0a32d6c5435fc)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit b4ce8913ac392df339081f6f3e28bf79a239ee75
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Dec 27 17:05:26 2017 +0100
+
+    Move cursor related ScreenInit calls into RADEONCursorInit_KMS
+    
+    And bail if xf86_cursors_init fails.
+    
+    (Ported from amdgpu commit dfccaa7043ccb157a1f8be7313123792bb7e7001)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit ee907e9b9563609cb4a4817e17215b50bb1c7177
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Dec 1 15:49:11 2017 +0100
+
+    Add radeon_dirty_src_drawable helper
+    
+    Allows tidying up radeon_dirty_src_equals and redisplay_dirty slightly.
+    
+    (Cherry picked from amdgpu commit 1d65ac395971571094df21ca0408d5972c6b56ec)
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit fccfd75ecf9ccfa628a8ff9c1fbb7f60c0f10ea5
+Author: Joakim Tjernlund <joakim.tjernlund@infinera.com>
+Date:   Fri Nov 24 17:27:09 2017 +0100
+
+    Fix non GLAMOR build
+    
+    Non GLAMOR builds needs pRADEONEnt so move the USE_GLAMOR define
+    down to make pRADEONEnt defined in this case.
+    
+    Signed-off-by: Joakim Tjernlund <joakim.tjernlund@infinera.com>
+    Reviewed-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit 15350bd5538c21cd4c6b406d565ca765b7e0218a
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Nov 15 18:01:29 2017 +0100
+
+    Use correct ScrnInfoPtr in redisplay_dirty
+    
+    We used the destination pixmap's screen for flushing drawing commands.
+    But when we are the master screen, the destination pixmap is from the
+    slave screen.
+    
+    Fixes crash when the slave screen isn't using the same acceleration
+    architecture as us.
+    
+    Bugzilla: https://bugs.freedesktop.org/103613
+    Fixes: 01b040b4a807 ("Adapt to PixmapDirtyUpdateRec::src being a
+                         DrawablePtr")
+    (Ported from amdgpu commit 3a4f7422913093ed9e26b73ecd7f9e773478cb1e)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 6441210bc53978a2c46c572e9174215b14f9e813
+Author: Daniel Martin <consume.noise@gmail.com>
+Date:   Fri Oct 20 10:05:35 2017 +0200
+
+    modesetting: Check crtc before searching link-status property
+    
+    No need to lookup the link-status property if we don't have a crtc.
+    
+    Signed-off-by: Daniel Martin <consume.noise@gmail.com>
+    (Ported from xserver commit 8d7f7e24261e68459e6f0a865e243473f65fe7ad)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit cafcb55768b58dc63a8c5682000eba21ad904689
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Sep 25 16:18:22 2017 -0700
+
+    modesetting: Skip no-longer-present connectors when resetting BAD links
+    
+    Outputs may have NULL mode_output (connector) pointers if the
+    connector disappears while the server is running. Skip these when
+    resetting outputs with BAD link status.
+    
+    (Ported from xserver commit 37f4e7651a2fd51efa613a08a1e705553be33e76)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 0cd14777b7e39619f231b841a2d73f3122458030
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Oct 20 17:20:30 2017 +0200
+
+    Always call drmModeFreeProperty after drmModeGetProperty
+    
+    We were not doing so in all cases, leaking memory allocated by the
+    latter.
+    
+    (Cherry picked from amdgpu commit f6b39bcd45cb06976ba8a3600df77fc471c63995)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 84c7d9c1c71d9cee9f50f96671032529b606cf04
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Oct 20 17:19:09 2017 +0200
+
+    Call TimerFree for timer created in LeaveVT
+    
+    We were leaking the memory allocated by TimerSet.
+    
+    (Ported from amdgpu commit 84aad09f18fed6b52b0c073f0bbd675a6de07807)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit d588015f4f60ce270bcfd8433215fc981a84f143
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Oct 20 17:13:36 2017 +0200
+
+    Free memory returned by xf86GetEntityInfo
+    
+    We were leaking it.
+    
+    (Ported from amdgpu commit cfccf4c4e7e5c73fe4040fabeb1b43283cf29b33)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit ec90c94881239791d0a66a02fc6d003c73a6c1f3
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Oct 20 16:51:16 2017 +0200
+
+    Free pRADEONEnt memory in RADEONFreeRec
+    
+    We were leaking it.
+    
+    (Inspired by amdgpu commit 9d84934309e4ccd9a43c73d958b8ff10ef2fc990)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit b93ae9b159790e8a979e9d5d567a0e6fccd7d08a
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Oct 19 18:57:45 2017 +0200
+
+    Unreference pixmap's FB with EXA as well in radeon_set_pixmap_bo
+    
+    Not doing so resulted in DRI2 page flips not actually changing the FB
+    being scanned out, showing intermittent flicker of the "back" buffer
+    rendering.
+    
+    Bugzilla: https://bugs.freedesktop.org/102643
+    Fixes: 55e513b978b2 "Use reference counting for tracking KMS framebuffer
+                         lifetimes"
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 61113768bd79ec5c2164835e2e048e8f2a42ce9a
+Author: Darren Salt <devspam@moreofthesa.me.uk>
+Date:   Thu Oct 19 18:17:07 2017 +0200
+
+    Clarify when TearFree is automatically enabled.
+    
+    (Ported from amdgpu commit 2f72be038d22c54620e436af30121dd89f79a003)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 7d435354099119234d443b07e2df1c7b9f97cf3c
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Oct 4 11:11:33 2017 +0200
+
+    Bail if there's a problem with ShadowFB
+    
+    If we hit a problem while setting up ShadowFB, just carrying on trying
+    to set up HW acceleration instead is unlikely to work.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit b71836c9962f8f2eadf0c2188e03faed737c18da
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Oct 4 11:05:49 2017 +0200
+
+    Post-release version bump
+
+commit 34da04daec82077571558ac3fe1ec0c1203a01ad
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Oct 3 12:47:14 2017 +0200
+
+    Fix VT switching with ShadowFB
+    
+    We were trying to call acceleration specific functions from LeaveVT.
+    Instead, memset the scanout buffer to all 0 in LeaveVT and allocate a
+    new one in EnterVT.
+    
+    Bugzilla: https://bugs.freedesktop.org/102948
+    Fixes: 06a465484101 ("Make all active CRTCs scan out an all-black
+                          framebuffer in LeaveVT")
+    Signed-off-by: Michel Dänzer <michel.daenzer@amd.com>
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit f9aca8c1a7a423b9e738c88400ae821bdfbcdb1c
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Sep 8 17:02:59 2017 +0900
+
+    Bump version for 7.10.0 release
+
+commit 5cdd334b3402c2431deb3a87a8d04ef590da53ee
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Aug 30 18:48:19 2017 +0900
+
+    Require xserver >= 1.13
+    
+    xserver 1.13.0 was released on September 6th, 2012, almost 5 years ago.
+    
+    This allows cleaning up a bunch of backwards compatibility code.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+    Reviewed-by: Emil Velikov <emil.l.velikov@gmail.com>
+
+commit 9d9c565c84601f4c6c73ad769f86491088683f7a
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Aug 29 18:07:51 2017 +0900
+
+    Use a timer for unreferencing the all-black FB
+    
+    The timer fires 1 second after LeaveVT. This gives the next DRM master
+    enough time to set up scanout of its own buffers.
+    
+    Fixes prolonged intermittent black screen when switching from Xorg to
+    e.g. the GDM Wayland mode login VT.
+    
+    Fixes: 06a465484101 ("Make all active CRTCs scan out an all-black
+                          framebuffer in LeaveVT")
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit e4a3df19d588a4310fcb889ef34e205d0e92e4d7
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Aug 28 17:54:23 2017 +0900
+
+    Remove drmmode_scanout_free
+    
+    Not used anymore.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 06a465484101f21e99d3a0a62fb03440bcaff93e
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Aug 23 18:00:15 2017 +0900
+
+    Make all active CRTCs scan out an all-black framebuffer in LeaveVT
+    
+    And destroy all other FBs. This is so that other DRM masters can only
+    get access to this all-black FB, not to any other FB we created, while
+    we're switched away and not DRM master.
+    
+    Fixes: 55e513b978b2 ("Use reference counting for tracking KMS
+                          framebuffer lifetimes")
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 7f0cd68d1b0c132e32ae736371bce3e12ed33c7a
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Aug 28 17:53:19 2017 +0900
+
+    Create radeon_master_screen helper
+    
+    Preparatory, no functional change intended yet.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 20f6b56fdb74d88086e8e094013fedbb14e50a24
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Aug 24 17:10:29 2017 +0900
+
+    Create radeon_pixmap_get_fb_ptr helper
+    
+    Preparatory, no functional change intended yet.
+    
+    Also inline radeon_pixmap_create_fb into radeon_pixmap_get_fb, since
+    there's only one call-site anymore.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 4bc992c31059eb50e22df4ebf5b92d08411f41ef
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Aug 23 17:24:53 2017 +0900
+
+    Create drmmode_set_mode helper
+    
+    Preparatory, no functional change intended yet.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 3f6210ca2c8ef60d59efc8139151d3b9838bb875
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Jun 22 18:37:26 2017 +0900
+
+    Create radeon_pixmap_clear helper
+    
+    Preparatory, no functional change intended yet.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 0472a605e0ec8fec1892bbc3a84698b7ef9c5296
+Author: Martin Peres <martin.peres@linux.intel.com>
+Date:   Mon Apr 10 16:48:21 2017 +0300
+
+    modesetting: re-set the crtc's mode when link-status goes BAD
+    
+    Despite all the careful planning of the kernel, a link may become
+    insufficient to handle the currently-set mode. At this point, the
+    kernel should mark this particular configuration as being broken
+    and potentially prune the mode before setting the offending connector's
+    link-status to BAD and send the userspace a hotplug event. This may
+    happen right after a modeset or later on.
+    
+    Upon receiving a hot-plug event, we iterate through the connectors to
+    re-apply the currently-set mode on all the connectors that have a
+    link-status property set to BAD. The kernel may be able to get the
+    link to work by dropping to using a lower link bpp (with the same
+    display bpp). However, the modeset may fail if the kernel has pruned
+    the mode, so to make users aware of this problem a warning is outputed
+    in the logs to warn about having a potentially-black display.
+    
+    This patch does not modify the current behaviour of always propagating
+    the events to the randr clients. This allows desktop environments to
+    re-probe the connectors and select a new resolution based on the new
+    (currated) mode list if a mode disapeared. This behaviour is expected in
+    order to pass the Display Port compliance tests.
+    
+    (Ported from xserver commit bcee1b76aa0db8525b491485e90b8740763d7de6)
+    
+    [ Michel: Bump libdrm dependency to >= 2.4.78 for
+      DRM_MODE_LINK_STATUS_BAD ]
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit d822a0f47070374ad0c1a97b559bae27724dc52a
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Aug 17 16:20:52 2017 +0900
+
+    Make radeon_scanout_do_update take a PixmapPtr instead of a DrawablePtr
+    
+    All callers were already passing in a pixmap.
+    
+    This allows simplifying the rotated scanout case slightly.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 3e24770b1b472fc15df56d06f5f04778c9db63dd
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Aug 9 13:02:34 2017 +0900
+
+    Use xorg_list_append for the DRM event list
+    
+    We were adding entries at the start of the list, i.e. the list was
+    ordered from most recently added to least recently added. However, the
+    corresponding DRM events are generally expected to arrive in the same
+    order as they are queued, which means that radeon_drm_queue_alloc would
+    generally have to traverse the whole list to find the entry
+    corresponding to an arrived event. Fix this by adding entries at the end
+    of the list.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 36ce7920136c0d723c9397a84e7dd5926a9c7943
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Aug 9 19:01:15 2017 +0900
+
+    Consolidate radeon_scanout_flip_abort/handler helpers
+    
+    While at it, make them use crtc->driver_private.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit d314cbfb228bb4b8762714f98d0c114a8ee3f061
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Jul 31 17:12:59 2017 +0900
+
+    Always allow DRI2 page flipping with TearFree
+    
+    Even if TearFree is enabled for the CRTC we're synchronizing to.
+    
+    v2:
+    * Move manpage hunk here from previous change.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com> # v1
+
+commit 4445765af5b97d0cfd10889fe6d6f58f2ce85659
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Feb 9 13:01:03 2017 +0900
+
+    Always allow Present page flipping with TearFree
+    
+    Even if TearFree is active for the the CRTC we're synchronizing to. In
+    that case, for Present flips synchronized to vertical blank, the other
+    scanout buffer is immediately synchronized and flipped to during the
+    target vertical blank period. For Present flips not synchronized to
+    vertical blank, we simply use the MSC and timestamp values of the last
+    vertical blank period for timing purposes, and let the normal TearFree
+    mechanism handle display updates.
+    
+    v2:
+    * Move manpage hunk to next change, since TearFree can still prevent
+      DRI2 page flipping with this change.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com> # v1
+
+commit 65e0c5ea1b4adff21d673dbf54af99704c429627
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Feb 8 17:52:28 2017 +0900
+
+    Pass extents to radeon_scanout_do_update
+    
+    Preparation for following change, no functional change intended yet.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 1443270e52e8562bd8dc3603f301963bd4027cef
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Feb 7 18:58:23 2017 +0900
+
+    Add source drawable parameter to radeon_scanout_do_update
+    
+    Preparation for following changes, no functional change intended yet.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 7c10ee9c88378d773c0bcf651fdc5d9f2c6dc5e5
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Aug 3 18:16:36 2017 +0900
+
+    Handle multiple "pending" Present flips
+    
+    The xserver Present code can submit a flip in response to notifying it
+    that a vblank event arrived. This can happen before the completion event
+    of the previous flip is processed. In that case, we were clearing the
+    drmmode_crtc->flip_pending field prematurely.
+    
+    Prevent this by only clearing drmmode_crtc->flip_pending when it matches
+    the framebuffer being scanned out since the flip whose completion event
+    we're processing.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit e6d7dc2070f4d21a6900916bb70a31839112882c
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Aug 3 17:51:20 2017 +0900
+
+    Wait for pending flips synchronously before turning off a CRTC
+    
+    Allows removing drmmode_clear_pending_flip and the pending_dpms_mode
+    field and cleaning up the code considerably.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit f87acdbfb1b0b6d2769764772a52ea8b81675e20
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Jul 28 12:28:53 2017 +0900
+
+    Create drmmode_crtc_wait_pending_event helper macro
+    
+    Preparation for following change, no functional change intended yet.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 99f1d7a474af3683fe1a66f50c0bb8935478ff0a
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Aug 14 12:23:04 2017 +0900
+
+    Create drmmode_wait_vblank helper
+    
+    Allows cleaning up the code considerably.
+    
+    v2:
+    * Fix "drmWaiVBlank" typo, add blank line for readability (Slava Abramov)
+    * Rename in/out sequence parameters to "target_seq" and "result_seq",
+      hopefully that will be clearer.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com> # v1
+
+commit 49cc61ab970ee28d4509b4e2dd0a57165136889f
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Aug 1 18:45:53 2017 +0900
+
+    Pass reference CRTC to radeon_do_pageflip directly
+    
+    Simplifies the code slightly.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 3f120fa1d5d921656a367751bc079e020e9ab105
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Aug 3 17:42:51 2017 +0900
+
+    Remove drmmode_crtc->scanout_destroy[] array
+    
+    No longer necessary since we're reference counting framebuffers.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com
+
+commit 01b040b4a80754b8c8a305cbe968416182b54246
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Aug 15 17:15:27 2017 +0900
+
+    Adapt to PixmapDirtyUpdateRec::src being a DrawablePtr
+
+commit 5309bde0c4e28adf2b167191c6d7011a19e31eed
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Jul 27 16:11:19 2017 +0900
+
+    Allow DRI page flipping when some CRTCs use separate scanout buffers
+    
+    As long as the CRTC we're synchronizing to doesn't.
+    
+    v2:
+    * Remove redundant checks from can_exchange which still prevented DRI2
+      page flipping
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 9bc3eef74452d924f9101c024f66ad9b14c404c8
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Jul 27 15:46:41 2017 +0900
+
+    Add drmmode_crtc_can_flip helper
+    
+    To reduce code duplication between DRI2 and Present. No functional
+    change intended yet.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit c2d26890691ec105858f086b63170ad94c6f7f05
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Jul 12 12:13:03 2017 +0900
+
+    Use root window (pixmap) instead of screen pixmap for scanout updates
+    
+    Preparation for following changes, no functional change intended yet.
+    
+    v2:
+    * Add drmmode_screen_damage_destroy callback to prevent use-after-free
+      on server shutdown
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 377c9dc7e51cc8ebd06816b08682a8098a49508a
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Jul 27 15:27:54 2017 +0900
+
+    autogen.sh: Pass -f to autoreconf
+    
+    To ensure that any existing copies of autotools files will be replaced
+    with the current versions.
+    
+    (Cherry picked from amdgpu commit a47c0093338d80d84e7033ad15d051925d542ca0)
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit bf0a759e3bced3a93bead033a26871cc340bd309
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Jul 27 15:26:23 2017 +0900
+
+    Makefile.am: Set ACLOCAL_AMFLAGS = -I m4
+    
+    Suggested by one of the tools called by autoreconf.
+    
+    (Cherry picked from amdgpu commit 842bad4b951296ca25f47b50cb358e502bf30ebb)
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit e628f604d032d32971a1ca8670469e88939e3de2
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Jul 27 15:24:37 2017 +0900
+
+    Add AC_CONFIG_MACRO_DIRS([m4]) to configure.ac
+    
+    Suggested by one of the tools called by autoreconf.
+    
+    (Cherry picked from amdgpu commit 227b399badaad9bbef0be5a776ce008d0d243449)
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 7d7abf99b5441ddb04dbee99bc8fa7abc30d4c46
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Jul 26 18:13:35 2017 +0900
+
+    Only handle reflection in the driver with Xorg < 1.16
+    
+    Xorg doesn't handle the hardware cursor correctly in that case for
+    rotation and general transforms, and we can't force the SW cursor.
+    
+    Fixes: f2bc882f1c10 ("Handle rotation in the driver also with Xorg
+                          1.12-1.18")
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 94dc2b80f3ef0b2c17c20501d824fb0447d52e7a
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Mar 14 16:57:17 2017 +0900
+
+    If a TearFree flip fails, fall back to non-TearFree operation
+    
+    In order to avoid possible freeze / log file spam in that case.
+    
+    Bugzilla: https://bugs.freedesktop.org/show_bug.cgi?id=99769
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit aff267ee36cc6a703a532f91f82adc1ba1425ff3
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Mar 14 16:23:45 2017 +0900
+
+    Use drmmode_crtc->scanout_id instead of 0 to check for scanout buffer
+    
+    Preparation for following change, no functional change intended.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit df88d51c5005476e6fbfca3f31b54be079ec5aaa
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Jun 27 19:15:18 2017 +0900
+
+    Use pRADEONEnt->fd exclusively for the DRM file descriptor
+    
+    This brings us closer to amdgpu.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 19626bce4e5e31c863eedb503ea3884ac3f60bea
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Jun 27 18:32:28 2017 +0900
+
+    Improve drmmode_fb_reference debugging code
+    
+    If a reference count is <= 0, call FatalError with the call location
+    (in case it doesn't get resolved in the backtrace printed by
+    FatalError).
+    
+    (Ported from amdgpu commit 1b6ff5fd9933c00ec1ec90dfc62e0b531927749b)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit bc46ffdf71ab3dfa0f95572529e818f2b619d380
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Jun 27 18:19:31 2017 +0900
+
+    Increase reference count of FB assigned to drmmode_crtc->flip_pending
+    
+    Otherwise, it could happen that we destroy the FB before the flip
+    completes, resulting in use-after-free and most likely a crash.
+    
+    (Ported from amdgpu commit af7221e1c4d2dbdfd488eb0976a835584ea8441c)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit c9dd28cb0c9c3de676eadac61e727732510f6b9b
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Jun 22 12:38:55 2017 +0900
+
+    Only call drmmode_scanout_free for non-GPU screens in LeaveVT
+    
+    Destroying the scanout buffers of GPU screens resulted in a crash when
+    switching back to the Xorg VT.
+    
+    Fixes: 4cfa4615f79f ("Use drmmode_crtc_scanout_* helpers for RandR 1.4
+                          scanout pixmaps")
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 78fad9ca1635cca04b89807e3db029477cf46681
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Jun 26 18:58:30 2017 +0900
+
+    Include xf86Pci.h for DRICreatePCIBusID with xserver Git master
+    
+    The declaration has been moved there from dri.h.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit ef95e3a3cc9189c8906fe5b4d70bfa9f1055d7ce
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue Jun 13 09:32:44 2017 -0400
+
+    modesetting: Validate the atom for enum properties
+    
+    The client could have said anything here, and if what they said doesn't
+    actually name an atom NameForAtom() will return NULL, and strcmp() will
+    be unhappy about that.
+    
+    [copied from xserver d4995a3936ae283b9080fdaa0905daa669ebacfc]
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+    Reviewed-and-Tested-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit d80d01a73c2eaba2e3649b7bc0a3541b3ff782f6
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu May 18 11:12:34 2017 +0900
+
+    Update URLs
+    
+    * Point to the amd-gfx mailing list
+    * Specify the component in all bugzilla URLs
+    * Use https:// for all HTML URLs
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 2b7d77b90108911777a11ecaa63435552000c958
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue May 16 11:04:29 2017 -0700
+
+    Use plain glamor_egl_create_textured_screen().
+    
+    Since 5064ffab631 (2014), glamor's implementation of _ext just drops the
+    back_pixmap arg, which we were passing NULL (the default) to anyway.
+    
+    Signed-off-by: Eric Anholt <eric@anholt.net>
+    Reviewed-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit 3a9f7e87c30b9f6334d38dfdd1cb15b28fe37fcb
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu May 11 18:57:25 2017 +0900
+
+    Remove unused struct members from drmmode_display.h
+    
+    (Ported from amdgpu commit 462ac3341e5bfbded9086d3d9043821d19352b3e)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 7dc68e26755466f9056f8c72195ab8690660693d
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue May 2 11:47:58 2017 +0900
+
+    Simplify tracking of PRIME scanout pixmap
+    
+    Remember the shared pixmap passed to drmmode_set_scanout_pixmap for each
+    CRTC, and just compare against that.
+    
+    Fixes leaving stale entries in ScreenRec::pixmap_dirty_list under some
+    circumstances, which would usually result in use-after-free and a crash
+    down the line.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 55e513b978b2afc52b7cafc5bfcb0d1dc78d75f6
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Sat Apr 29 17:05:58 2017 +0900
+
+    Use reference counting for tracking KMS framebuffer lifetimes
+    
+    References are held by the pixmaps corresponding to the FBs (so
+    the same KMS FB can be reused as long as the pixmap exists) and by the
+    CRTCs scanning out from them (so a KMS FB is only destroyed once it's
+    not being scanned out anymore, preventing intermittent black screens and
+    worse issues due to a CRTC turning off when it should be on).
+    
+    v2:
+    * Only increase reference count in drmmode_fb_reference if it was sane
+      before
+    * Make drmmode_fb_reference's indentation match the rest of
+      drmmode_display.h
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 944391b0052466b71bf9919b56139dc197a7e072
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Feb 8 18:14:30 2017 +0900
+
+    Pass pixmap instead of handle to radeon_do_pageflip
+    
+    This brings us in line with amdgpu and prepares for the following
+    change, no functional change intended.
+    
+    (Ported from amdgpu commit e463b849f3e9d7b69e64a65619a22e00e78d297b)
+    
+    v2:
+    * Be more consistent with the amdgpu code, which should make porting
+      the following change to amdgpu easier
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit f32c45194ac6f82cbe42d255ed72f857018778e0
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue May 9 11:18:00 2017 +0900
+
+    Apply gamma correction to HW cursor
+    
+    The display hardware CLUT we're currently using for gamma correction
+    doesn't affect the HW cursor, so we have to apply it manually when
+    uploading the HW cursor data.
+    
+    This currently only works in depth 24/32.
+    
+    (Ported from amdgpu commit 82fa615f38137add75f9cd4bb49c48dd88de916f)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 4c91f36d3058180b5a2d6a23e9b82f5c933d8716
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Apr 17 18:32:31 2017 +0900
+
+    Don't set modes before RADEONWindowExposures_oneshot is called
+    
+    The root window contents may be undefined before that, so we don't want
+    to show anything yet.
+    
+    Fixes a crash on startup with rotation and virtual resolution set in
+    xorg.conf.
+    
+    Bugzilla: https://bugs.freedesktop.org/100276
+    Fixes: cc9d6b7db9c2 ("Move DPMS check from radeon_scanout_do_update to
+                          radeon_scanout_flip")
+    (Ported from amdgpu commit 981bac185cfd74ae50dffc28f57cf34623a9595f)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit d6c29250dbc293c932ca14997eb23399610b106d
+Author: Daniel Stone <daniels@collabora.com>
+Date:   Fri Apr 7 14:27:58 2017 +0100
+
+    Set correct DRM event context version
+    
+    DRM_EVENT_CONTEXT_VERSION is the latest context version supported by
+    whatever version of libdrm is present. We were blindly asserting we
+    supported whatever version that may be, even if we actually didn't.
+    
+    Set the version as 2, which should be bumped only with the appropriate
+    version checks.
+    
+    Signed-off-by: Daniel Stone <daniels@collabora.com>
+    (Ported from xserver commit 0c8e6ed85810e96d84173a52d628863802a78d82)
+    v2: Remove second paragraph of commit log, we always initialize
+        page_flip_handler2 = NULL (Emil Velikov)
+    Reviewed-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com> # v1
+
+commit 23985d3ef3150ef8cad30b92ef0cd8ba6cfa1f4d
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Mar 23 18:06:45 2017 +0900
+
+    manpage: Don't put "'" at the beginning of a line
+    
+    It caused the whole line to be dropped.
+    
+    Fixes: 58cd1600057e ("Allow toggling TearFree at runtime via output
+                          property")
+    Reported-by: Andy Furniss <adf.lists@gmail.com>
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com> (amdgpu commit)
+    (Ported from amdgpu commit 165b51447643ce37f391f25ca6aecb8d76fabaa3)
+
+commit dc30f5e27ef8a8e980adb21c1fea7c4f60c7e896
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Mar 23 18:06:23 2017 +0900
+
+    Post-release version bump
+
 commit 66227060872219c1a0dc84fa4cea6264f7548446
 Author: Michel Dänzer <michel.daenzer@amd.com>
 Date:   Thu Mar 16 16:38:15 2017 +0900

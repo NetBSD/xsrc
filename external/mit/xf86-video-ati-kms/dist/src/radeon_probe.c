@@ -48,7 +48,12 @@
 #include "xf86.h"
 
 #include "xf86drmMode.h"
+
+#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,19,99,1,0)
+#include <xf86Pci.h>
+#else
 #include "dri.h"
+#endif
 
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 #include <xf86_OSproc.h>

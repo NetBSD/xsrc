@@ -23,12 +23,13 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-video-ati],
-        [7.9.0],
-        [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
+        [18.0.0],
+        [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg&component=Driver/Radeon],
         [xf86-video-ati])
 
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_MACRO_DIRS([m4])
 
 AC_CONFIG_AUX_DIR(.)
 
@@ -69,11 +70,11 @@ XORG_DRIVER_CHECK_EXT(XV, videoproto)
 XORG_DRIVER_CHECK_EXT(DPMSExtension, xextproto)
 
 # Checks for libraries.
-PKG_CHECK_MODULES(LIBDRM, [libdrm >= 2.4.60])
+PKG_CHECK_MODULES(LIBDRM, [libdrm >= 2.4.78])
 PKG_CHECK_MODULES(LIBDRM_RADEON, [libdrm_radeon])
 
 # Obtain compiler/linker options for the driver dependencies
-PKG_CHECK_MODULES(XORG, [xorg-server >= 1.10 xproto fontsproto xf86driproto $REQUIRED_MODULES])
+PKG_CHECK_MODULES(XORG, [xorg-server >= 1.13 xproto fontsproto xf86driproto $REQUIRED_MODULES])
 PKG_CHECK_MODULES(XEXT, [xextproto >= 7.0.99.1],
                   HAVE_XEXTPROTO_71="yes"; AC_DEFINE(HAVE_XEXTPROTO_71, 1, [xextproto 7.1 available]),
                   HAVE_XEXTPROTO_71="no")
@@ -171,12 +172,6 @@ AC_CHECK_DECL(xf86CursorResetCursor,
 	      [#include <xorg-server.h>
 	       #include <xf86Cursor.h>])
 
-AC_CHECK_DECL(xorg_list_init,
-	      [AC_DEFINE(HAVE_XORG_LIST, 1, [Have xorg_list API])], [],
-	      [#include <X11/Xdefs.h>
-	      #include "xorg-server.h"
-	      #include "list.h"])
-
 AC_CHECK_HEADERS([misyncshm.h], [], [],
                  [#include <X11/Xdefs.h>
 	          #include <X11/Xfuncproto.h>
@@ -186,8 +181,8 @@ AC_CHECK_HEADERS([misyncshm.h], [], [],
 AC_CHECK_HEADERS([present.h], [], [],
 		 [#include <X11/Xmd.h>
 		 #include <X11/Xproto.h>
-		 #include <X11/X.h>
-		 #include "xorg-server.h"])
+		 #include "xorg-server.h"
+		 #include <X11/X.h>])
 
 AC_CHECK_HEADERS([dri3.h], [], [],
 		 [#include <X11/Xmd.h>

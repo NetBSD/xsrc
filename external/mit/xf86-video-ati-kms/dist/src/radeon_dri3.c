@@ -43,6 +43,7 @@
 static int open_master_node(ScreenPtr screen, int *out)
 {
 	ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
+	RADEONEntPtr pRADEONEnt = RADEONEntPriv(scrn);
 	RADEONInfoPtr info = RADEONPTR(scrn);
 	drm_magic_t magic;
 	int fd;
@@ -76,7 +77,7 @@ static int open_master_node(ScreenPtr screen, int *out)
 		}
 	}
 
-	if (drmAuthMagic(info->dri2.drm_fd, magic) < 0) {
+	if (drmAuthMagic(pRADEONEnt->fd, magic) < 0) {
 		close(fd);
 		return BadMatch;
 	}
