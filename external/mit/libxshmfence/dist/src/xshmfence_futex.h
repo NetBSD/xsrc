@@ -30,6 +30,7 @@
 
 #include <sys/types.h>
 #include <sys/umtx.h>
+#include <limits.h>
 
 static inline int sys_futex(void *addr, int op, int32_t val)
 {
