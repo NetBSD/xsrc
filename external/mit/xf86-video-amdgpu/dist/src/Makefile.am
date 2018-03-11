@@ -62,7 +62,6 @@ EXTRA_DIST = \
 	amdgpu_drm_queue.h \
 	amdgpu_glamor.h \
 	amdgpu_drv.h \
-	amdgpu_list.h \
 	amdgpu_pixmap.h \
 	amdgpu_probe.h \
 	amdgpu_version.h \

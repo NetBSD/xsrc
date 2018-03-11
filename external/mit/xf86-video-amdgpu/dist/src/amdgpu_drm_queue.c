@@ -31,10 +31,11 @@
 #endif
 
 #include <xorg-server.h>
+#include <X11/Xdefs.h>
+#include <list.h>
 
 #include "amdgpu_drv.h"
 #include "amdgpu_drm_queue.h"
-#include "amdgpu_list.h"
 
 
 struct amdgpu_drm_queue_entry {
@@ -105,7 +106,7 @@ amdgpu_drm_queue_alloc(xf86CrtcPtr crtc, ClientPtr client,
 	e->handler = handler;
 	e->abort = abort;
 
-	xorg_list_add(&e->list, &amdgpu_drm_queue);
+	xorg_list_append(&e->list, &amdgpu_drm_queue);
 
 	return e->seq;
 }
