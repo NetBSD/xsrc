@@ -48,6 +48,9 @@ in this Software without prior written authorization from The Open Group.
 
 #include	"config.h"
 
+/* include Xpoll.h early for possible FD_SETSIZE re-definition */
+#include	"X11/Xpoll.h"
+
 #include	<X11/Xtrans/Xtrans.h>
 #include	<stdio.h>
 #include	<errno.h>
@@ -57,7 +60,6 @@ in this Software without prior written authorization from The Open Group.
 
 #include	<X11/fonts/FSproto.h>
 #include	"clientstr.h"
-#include	"X11/Xpoll.h"
 #include	"osdep.h"
 #include	"globals.h"
 #include	"dispatch.h"

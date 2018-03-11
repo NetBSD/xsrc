@@ -50,7 +50,7 @@ in this Software without prior written authorization from The Open Group.
 
 #include	<X11/fonts/FSproto.h>	/* for fsResolution */
 #include	<X11/Xtrans/Xtrans.h>	/* XtransConnInfo */
-#include        <X11/fonts/font.h>	/* FontPatternCachePtr */
+#include        <X11/fonts/libxfont2.h>	/* xfont2_pattern_cache_ptr */
 #include	<X11/Xpoll.h>		/* select & fd_set */
 #include	"client.h"		/* WorkQueuePtr */
 #include	"misc.h"		/* OldListenRec */
@@ -84,7 +84,7 @@ extern Bool NewOutputPending;
 
 extern int ConnectionTranslation[];
 
-extern FontPatternCachePtr fontPatternCache;
+extern xfont2_pattern_cache_ptr fontPatternCache;
 
 extern long LastReapTime;
 extern Bool drone_server;

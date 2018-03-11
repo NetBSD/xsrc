@@ -227,7 +227,7 @@ NoopDDA(void)
 /* block & wakeup handlers */
 
 typedef struct _BlockHandler {
-    BlockHandlerProcPtr	BlockHandler;
+    FontBlockHandlerProcPtr	BlockHandler;
     DifsWakeupFunc	WakeupHandler;
     pointer     	blockData;
     Bool        	deleted;
@@ -252,8 +252,7 @@ BlockHandler(
 
     ++inHandler;
     for (i = 0; i < numHandlers; i++)
-	(*handlers[i].BlockHandler) (handlers[i].blockData,
-				     pTimeout, pReadmask);
+	(*handlers[i].BlockHandler) (handlers[i].blockData);
     if (handlerDeleted) {
 	for (i = 0; i < numHandlers;)
 	    if (handlers[i].deleted) {
@@ -297,7 +296,7 @@ WakeupHandler(
 
 Bool
 RegisterBlockAndWakeupHandlers(
-    BlockHandlerProcPtr blockHandler,
+    FontBlockHandlerProcPtr blockHandler,
     DifsWakeupFunc wakeupHandler,
     pointer     blockData)
 {
@@ -320,7 +319,7 @@ RegisterBlockAndWakeupHandlers(
 
 void
 RemoveBlockAndWakeupHandlers(
-    BlockHandlerProcPtr blockHandler,
+    FontBlockHandlerProcPtr blockHandler,
     DifsWakeupFunc wakeupHandler,
     pointer     blockData)
 {
@@ -527,8 +526,9 @@ Xcalloc(unsigned long n)
 }
 
 int
-set_font_authorizations(char **authorizations, int *authlen, ClientPtr client)
+set_font_authorizations(char **authorizations, int *authlen, void *_client)
 {
+    ClientPtr client = _client;
 #define AUTH1_NAME "hp-hostname-1"
 #define AUTH2_NAME "hp-printername-1"
     static char result[1024];

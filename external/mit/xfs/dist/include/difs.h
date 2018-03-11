@@ -29,7 +29,6 @@
 #include "difsfn.h"
 #include "globals.h"
 #include <X11/fonts/fontstruct.h>
-#include <X11/fonts/fontmisc.h>
 
 typedef int (*InitialFunc)(ClientPtr);
 typedef int (*ProcFunc)(ClientPtr);
@@ -65,6 +64,13 @@ extern int StartListFontsWithInfo ( ClientPtr client, int length, unsigned char 
 extern int LoadGlyphRanges ( ClientPtr client, FontPtr pfont, Bool range_flag, int num_ranges, int item_size, fsChar2b *data );
 extern FontPtr find_old_font ( FSID id );
 extern void DeleteClientFontStuff ( ClientPtr client );
+extern int xfs_init_fs_handlers(FontPathElementPtr fpe,
+                                FontBlockHandlerProcPtr block_handler);
+
+extern void xfs_remove_fs_handlers(FontPathElementPtr fpe,
+                                   FontBlockHandlerProcPtr block_handler,
+                                   Bool all);
+extern int register_fpe_funcs(const xfont2_fpe_funcs_rec *funcs);
 
 /* difs/fontinfo.c */
 extern int convert_props ( FontInfoPtr pinfo, fsPropInfo **props );

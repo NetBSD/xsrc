@@ -130,7 +130,7 @@ extern	void	CleanupChild (int n);
 extern	void	GiveUp (int n);
 extern	void	ServerCacheFlush (int n);
 extern	void	ServerReconfig (int n);
-extern	long	GetTimeInMillis (void);
+extern	unsigned int GetTimeInMillis (void);
 extern	pointer	FSalloc(unsigned long);
 extern	pointer	FScalloc (unsigned long amount);
 extern	pointer	FSrealloc(pointer, unsigned long);

@@ -30,7 +30,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <auth.h>
 #include <X11/fonts/font.h>
 #include <X11/fonts/fontstruct.h>
-#include <X11/fonts/fontmisc.h>
+#include <X11/fonts/libxfont2.h>
 
 typedef void (*DifsWakeupFunc)(pointer data, int result, unsigned long * pReadmask);
 typedef Bool (*DifsWorkFunc) (ClientPtr, pointer);
@@ -39,7 +39,7 @@ extern AuthContextPtr GetClientAuthorization (void);
 extern Bool ClientIsAsleep (ClientPtr client);
 extern Bool ClientSleep (ClientPtr client, Bool (*function) (ClientPtr, pointer), pointer data);
 extern Bool QueueWorkProc (DifsWorkFunc function, ClientPtr client, pointer data);
-extern Bool RegisterBlockAndWakeupHandlers (BlockHandlerProcPtr blockHandler, DifsWakeupFunc wakeupHandler, pointer blockData);
+extern Bool RegisterBlockAndWakeupHandlers (FontBlockHandlerProcPtr blockHandler, DifsWakeupFunc wakeupHandler, pointer blockData);
 #if 0
 extern FontResolutionPtr GetClientResolutions (int *num);
 #endif
@@ -50,7 +50,7 @@ extern int SetDefaultResolutions (char *str);
 #if 0
 extern int client_auth_generation (ClientPtr client);
 #endif
-extern int set_font_authorizations (char **authorizations, int *authlen, ClientPtr client);
+extern int set_font_authorizations (char **authorizations, int *authlen, void *_client);
 extern int strncmpnocase (const char *first, const char *second, int n);
 extern pointer Xalloc (unsigned long m);
 extern pointer Xrealloc (pointer n, unsigned long m);
@@ -59,7 +59,7 @@ extern void ClientWakeup (ClientPtr client);
 extern void InitBlockAndWakeupHandlers (void);
 extern void NoopDDA (void);
 extern void ProcessWorkQueue (void);
-extern void RemoveBlockAndWakeupHandlers (BlockHandlerProcPtr blockHandler, DifsWakeupFunc wakeupHandler, pointer blockData);
+extern void RemoveBlockAndWakeupHandlers (FontBlockHandlerProcPtr blockHandler, DifsWakeupFunc wakeupHandler, pointer blockData);
 extern void SetDefaultPointSize (int ps);
 extern void WakeupHandler (int result, unsigned long * pReadmask);
 extern void Xfree (unsigned long *n);

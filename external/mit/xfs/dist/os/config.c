@@ -58,9 +58,8 @@ in this Software without prior written authorization from The Open Group.
 #include	"globals.h"
 #include	"access.h"
 #include	"difsutils.h"
-#include	<X11/fonts/fontutil.h>
 #include	"difs.h"
-#include	<X11/fonts/fontconf.h>
+#include        <X11/fonts/libxfont2.h>
 
 /* libXfont/src/bitmap/snfstr.h */
 extern void SnfSetFormat(int bit, int byte, int glyph, int scan);
@@ -589,7 +588,7 @@ config_set_glyph_caching_mode(
     t = *val;
     *val = '\0';
     if (!strcmp(parm->parm_name, "deferglyphs")) {
-	ParseGlyphCachingMode(start);
+	xfont2_parse_glyph_caching_mode(start);
     }
     *val = t;
     return val;

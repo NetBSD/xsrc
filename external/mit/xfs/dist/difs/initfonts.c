@@ -49,20 +49,55 @@ in this Software without prior written authorization from The Open Group.
 
 #include	"config.h"
 
+#include        <stddef.h>
 #include        <X11/fonts/font.h>
+#include        <X11/fonts/fontstruct.h>
+#include        <X11/fonts/libxfont2.h>
 #include	"difs.h"
 #include	"globals.h"
 
-FontPatternCachePtr fontPatternCache;
+xfont2_pattern_cache_ptr fontPatternCache;
+
+static unsigned long
+GetServerGeneration(void)
+{
+    return serverGeneration;
+}
+
+static const xfont2_client_funcs_rec xfs_client_funcs = {
+    .version = XFONT2_CLIENT_FUNCS_VERSION,
+    .client_auth_generation = client_auth_generation,
+    .client_signal = ClientSignal,
+    .delete_font_client_id = DeleteFontClientID,
+    .verrorf = NULL,
+    .find_old_font = find_old_font,
+    .get_client_resolutions = GetClientResolutions,
+    .get_default_point_size = GetDefaultPointSize,
+    .get_new_font_client_id = GetNewFontClientID,
+    .get_time_in_millis = GetTimeInMillis,
+    .init_fs_handlers = xfs_init_fs_handlers,
+    .register_fpe_funcs = register_fpe_funcs,
+    .remove_fs_handlers = xfs_remove_fs_handlers,
+    .get_server_client = NULL,
+    .set_font_authorizations = set_font_authorizations,
+    .store_font_client_font = StoreFontClientFont,
+    .make_atom = MakeAtom,
+    .valid_atom = ValidAtom,
+    .name_for_atom = NameForAtom,
+    .get_server_generation = GetServerGeneration,
+    .add_fs_fd = NULL,
+    .remove_fs_fd = NULL,
+    .adjust_fs_wait_for_delay = NULL,
+};
 
 void
 InitFonts(void)
 {
     if (fontPatternCache)
-	FreeFontPatternCache(fontPatternCache);
-    fontPatternCache = MakeFontPatternCache();
+	xfont2_free_font_pattern_cache(fontPatternCache);
+    fontPatternCache = xfont2_make_font_pattern_cache();
 
-    ResetFontPrivateIndex();
+    // ResetFontPrivateIndex();
 
-    register_fpe_functions();
+    xfont2_init(&xfs_client_funcs);
 }
