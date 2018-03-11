@@ -822,7 +822,7 @@ partial alphanumeric_keys
 xkb_symbols "altgr-intl" {
 
    include "us(intl)"
-   name[Group1]= "English (intl., with dead keys)";
+   name[Group1]= "English (intl., with AltGr dead keys)";
 
 // five dead keys moved into level3:
 
@@ -1517,7 +1517,7 @@ partial alphanumeric_keys
 xkb_symbols "carpalx-altgr-intl" {
 
    include "us(carpalx-intl)"
-   name[Group1]= "English (Carpalx, intl., with dead keys)";
+   name[Group1]= "English (Carpalx, intl., with AltGr dead keys)";
 
 // five dead keys moved into level3:
 
@@ -1583,7 +1583,7 @@ partial alphanumeric_keys
 xkb_symbols "carpalx-full-altgr-intl" {
 
    include "us(carpalx-altgr-intl)"
-   name[Group1]= "English (Carpalx, full optimization, intl., with dead keys)";
+   name[Group1]= "English (Carpalx, full optimization, intl., with AltGr dead keys)";
 
     key <AD06> { [	   b,          B,    idiaeresis,       Idiaeresis ] };
     key <AD07> { [	   y,          Y,    adiaeresis,       Adiaeresis ] };
@@ -1638,6 +1638,24 @@ xkb_symbols "cz_sk_de" {
     key <AD10>  { [         p,          P,ocircumflex,  Ocircumflex   ] };
 
     key <SPCE>  { [     space,       space, nobreakspace, nobreakspace] };
+
+    include "level3(ralt_switch)"
+};
+
+// 03 December 2017 - Added us(scn), please refer to
+//                    Cadèmia Siciliana <l10n@cademiasiciliana.org>
+partial alphanumeric_keys
+xkb_symbols "scn" {
+
+    include "us(intl)"
+    name[Group1]="Sicilian (US keyboard)";
+
+    key <AD03> { [      e,       E, U0259,       U018F ] };
+    key <AC03> { [      d,       D, U1E0D,       U1E0C ] };
+    key <AC04> { [      f,       F, U0111,       U0110 ] };
+    key <AC06> { [      h,       H, U1E25,       U1E24 ] };
+    key <AB02> { [      x,       X, U03C7,       U03A7 ] };
+    key <AB09> { [ period, greater, U1D58,  dead_caron ] };
 
     include "level3(ralt_switch)"
 };
