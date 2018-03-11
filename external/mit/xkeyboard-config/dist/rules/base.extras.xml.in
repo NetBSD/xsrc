@@ -192,6 +192,32 @@
             </languageList>
           </configItem>
         </variant>
+	<variant>
+          <configItem>
+            <name>lld</name>
+            <_description>German Ladin</_description>
+            <_shortDescription>de_lld</_shortDescription>
+            <languageList>
+              <iso639Id>ger</iso639Id>
+              <iso639Id>lld</iso639Id>
+            </languageList>
+          </configItem>
+        </variant>
+      </variantList>
+    </layout>
+    <layout>
+      <configItem>
+        <name>hu</name>
+        <_description>Hungarian</_description>
+      </configItem>
+      <variantList>
+        <variant>
+          <configItem>
+            <name>oldhun</name>
+            <_description>Old Hungarian</_description>
+            <_shortDescription>oldhun</_shortDescription>
+          </configItem>
+        </variant>
       </variantList>
     </layout>
     <layout>
@@ -388,7 +414,7 @@
         <variant>
           <configItem>
             <name>carpalx-altgr-intl</name>
-            <_description>English (Carpalx, intl., with dead keys)</_description>
+            <_description>English (Carpalx, intl., with AltGr dead keys)</_description>
           </configItem>
         </variant>
         <variant>
@@ -406,7 +432,18 @@
         <variant>
           <configItem>
             <name>carpalx-full-altgr-intl</name>
-            <_description>English (Carpalx, full optimization, intl., with dead keys)</_description>
+            <_description>English (Carpalx, full optimization, intl., with AltGr dead keys)</_description>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>scn</name>
+            <_description>Sicilian (US keyboard)</_description>
+            <languageList>
+              <iso639Id>eng</iso639Id>
+              <iso639Id>ita</iso639Id>
+              <iso639Id>scn</iso639Id>
+            </languageList>
           </configItem>
         </variant>
       </variantList>
@@ -437,6 +474,12 @@
           <configItem>
             <name>sun_type6</name>
             <_description>Polish (Sun Type 6/7)</_description>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>glagolica</name>
+            <_description>Polish (Glagolica)</_description>
           </configItem>
         </variant>
       </variantList>
@@ -533,6 +576,81 @@
             <_description>Russian (Sun Type 6/7)</_description>
           </configItem>
         </variant>
+        <variant>
+          <configItem>
+            <name>prxn</name>
+            <_shortDescription>ru</_shortDescription>
+            <_description>Russian (Polyglot and Reactionary)</_description>
+            <languageList>
+              <iso639Id>rus</iso639Id>
+              <iso639Id>rus-petr1708</iso639Id>
+              <iso639Id>ukr</iso639Id>
+              <iso639Id>bel</iso639Id>
+              <iso639Id>srp</iso639Id>
+              <iso639Id>mkd</iso639Id>
+              <iso639Id>bul</iso639Id>
+              <iso639Id>chu</iso639Id>
+              <iso639Id>rum-Cyrl</iso639Id>
+              <iso639Id>kaz</iso639Id>
+              <iso639Id>kir</iso639Id>
+              <iso639Id>uzb</iso639Id>
+              <iso639Id>bak</iso639Id>
+              <iso639Id>aze</iso639Id>
+              <iso639Id>tat</iso639Id>
+              <iso639Id>uig</iso639Id>
+              <iso639Id>kdr</iso639Id>
+              <iso639Id>tyv</iso639Id>
+              <iso639Id>kjh</iso639Id>
+              <iso639Id>crh</iso639Id>
+              <iso639Id>tgk</iso639Id>
+              <iso639Id>abk</iso639Id>
+              <iso639Id>sah</iso639Id>
+              <iso639Id>mon</iso639Id>
+              <iso639Id>kal</iso639Id>
+              <iso639Id>sjd</iso639Id>
+              <iso639Id>chv</iso639Id>
+              <iso639Id>oss</iso639Id>
+              <iso639Id>krl</iso639Id>
+              <iso639Id>ale</iso639Id>
+              <iso639Id>wbl</iso639Id>
+              <iso639Id>kur</iso639Id>
+              <iso639Id>niv</iso639Id>
+              <iso639Id>dng</iso639Id>
+              <iso639Id>kom</iso639Id>
+              <iso639Id>udm</iso639Id>
+              <iso639Id>sel</iso639Id>
+              <iso639Id>ulc</iso639Id>
+              <iso639Id>ude</iso639Id>
+              <iso639Id>oac</iso639Id>
+              <iso639Id>oaa</iso639Id>
+              <iso639Id>gld</iso639Id>
+              <iso639Id>eve</iso639Id>
+              <iso639Id>evn</iso639Id>
+              <iso639Id>kca</iso639Id>
+              <iso639Id>itl</iso639Id>
+              <iso639Id>yrk</iso639Id>
+              <iso639Id>neg</iso639Id>
+            </languageList>
+            <countryList>
+              <iso3166Id>RU</iso3166Id>
+              <iso3166Id>RS</iso3166Id>
+              <iso3166Id>BA</iso3166Id>
+              <iso3166Id>ME</iso3166Id>
+              <iso3166Id>MK</iso3166Id>
+              <iso3166Id>BG</iso3166Id>
+              <iso3166Id>MD</iso3166Id>
+              <iso3166Id>UA</iso3166Id>
+              <iso3166Id>BY</iso3166Id>
+              <iso3166Id>KZ</iso3166Id>
+              <iso3166Id>MN</iso3166Id>
+              <iso3166Id>KG</iso3166Id>
+              <iso3166Id>TJ</iso3166Id>
+              <iso3166Id>UZ</iso3166Id>
+              <iso3166Id>TM</iso3166Id>
+              <iso3166Id>AZ</iso3166Id>
+            </countryList>
+          </configItem>
+        </variant>
       </variantList>
     </layout>
     <layout>
@@ -585,6 +703,24 @@
           <configItem>
             <name>sun_type6</name>
             <_description>Arabic (Sun Type 6/7)</_description>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>basic_ext</name>
+            <_description>Arabic (with extensions for Arabic-written other languages and European digits preferred)</_description>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>basic_ext_digits</name>
+            <_description>Arabic (with extensions for Arabic-written other languages and Arabic digits preferred)</_description>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>uga</name>
+            <_description>Ugaritic instead of Arabic</_description>
           </configItem>
         </variant>
       </variantList>
@@ -698,6 +834,12 @@
             <_description>Finnish (Sun Type 6/7)</_description>
           </configItem>
         </variant>
+        <variant>
+          <configItem>
+            <name>fidvorak</name>
+            <_description>Finnish Dvorak</_description>
+          </configItem>
+        </variant>
       </variantList>
     </layout>
     <layout>
@@ -749,6 +891,17 @@
             <_description>Friulian (Italy)</_description>
             <languageList>
               <iso639Id>fur</iso639Id>
+            </languageList>
+          </configItem>
+        </variant>
+	<variant>
+          <configItem>
+            <name>lld</name>
+            <_description>Italian Ladin</_description>
+            <_shortDescription>it_lld</_shortDescription>
+            <languageList>
+              <iso639Id>it</iso639Id>
+              <iso639Id>lld</iso639Id>
             </languageList>
           </configItem>
         </variant>
@@ -996,369 +1149,11 @@
     </layout>
     <layout>
       <configItem>
-        <name>bd</name>
-        <!-- Keyboard indicator for Bangla layouts -->
-        <_shortDescription>bn</_shortDescription>
-        <_description>Bangla</_description>
-        <languageList>
-          <iso639Id>ben</iso639Id>
-          <!-- sat-Beng: http://www.ethnologue.com/language/sat -->
-          <iso639Id>sat</iso639Id>
-        </languageList>
+        <name>trans</name>
+          <!-- Keyboard layouts for transcription and transliteration systems -->
+        <_description>International Phonetic Alphabet</_description>
       </configItem>
-      <variantList>
-        <variant>
-          <configItem>
-            <name>probhat</name>
-            <_description>Bangla (Probhat)</_description>
-          </configItem>
-        </variant>
-      </variantList>
-    </layout>
-    <layout>
-      <configItem>
-        <name>in</name>
-        <!-- Keyboard indicator for Indian layouts -->
-        <_shortDescription>in</_shortDescription>
-        <_description>Indian</_description>
-      </configItem>
-      <variantList>
-        <variant>
-          <configItem>
-            <name>ben</name>
-            <!-- Keyboard indicator for Bangla layouts -->
-            <_shortDescription>bn</_shortDescription>
-            <_description>Bangla (India)</_description>
-            <languageList>
-              <iso639Id>ben</iso639Id>
-              <!-- sat-Beng: http://www.ethnologue.com/language/sat -->
-              <iso639Id>sat</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>ben_probhat</name>
-            <!-- Keyboard indicator for Bangla layouts -->
-            <_shortDescription>bn</_shortDescription>
-            <_description>Bangla (India, Probhat)</_description>
-            <languageList>
-              <iso639Id>ben</iso639Id>
-              <!-- sat-Beng: http://www.ethnologue.com/language/sat -->
-              <iso639Id>sat</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>ben_baishakhi</name>
-            <_description>Bangla (India, Baishakhi)</_description>
-            <languageList>
-              <iso639Id>ben</iso639Id>
-              <!-- sat-Beng: http://www.ethnologue.com/language/sat -->
-              <iso639Id>sat</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>ben_bornona</name>
-            <_description>Bangla (India, Bornona)</_description>
-            <languageList>
-              <iso639Id>ben</iso639Id>
-              <!-- sat-Beng: http://www.ethnologue.com/language/sat -->
-              <iso639Id>sat</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-         <variant>
-          <configItem>
-            <name>ben_gitanjali</name>
-            <_description>Bangla (India, Uni Gitanjali)</_description>
-            <languageList>
-              <iso639Id>ben</iso639Id>
-              <!-- sat-Beng: http://www.ethnologue.com/language/sat -->
-              <iso639Id>sat</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>ben_inscript</name>
-            <_description>Bangla (India, Baishakhi Inscript)</_description>
-            <languageList>
-              <iso639Id>ben</iso639Id>
-              <!-- sat-Beng: http://www.ethnologue.com/language/sat -->
-              <iso639Id>sat</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>eeyek</name>
-            <_description>Manipuri (Eeyek)</_description>
-            <languageList>
-              <iso639Id>mni</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>guj</name>
-            <!-- Keyboard indicator for Gujarati layouts -->
-            <_shortDescription>gu</_shortDescription>
-            <_description>Gujarati</_description>
-            <languageList>
-              <iso639Id>guj</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>guru</name>
-            <!-- Keyboard indicator for Punjabi layouts -->
-            <_shortDescription>pa</_shortDescription>
-            <_description>Punjabi (Gurmukhi)</_description>
-            <languageList>
-              <iso639Id>pan</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>jhelum</name>
-            <!-- Keyboard indicator for Punjabi layouts -->
-            <_shortDescription>pa</_shortDescription>
-            <_description>Punjabi (Gurmukhi Jhelum)</_description>
-            <languageList>
-              <iso639Id>pan</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>kan</name>
-            <!-- Keyboard indicator for Kannada layouts -->
-            <_shortDescription>kn</_shortDescription>
-            <_description>Kannada</_description>
-            <languageList>
-              <iso639Id>kan</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>kan-kagapa</name>
-            <!-- Keyboard indicator for Kannada layouts -->
-            <_shortDescription>kn</_shortDescription>
-            <_description>Kannada (KaGaPa phonetic)</_description>
-            <languageList>
-              <iso639Id>kan</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>mal</name>
-            <!-- Keyboard indicator for Malayalam layouts -->
-            <_shortDescription>ml</_shortDescription>
-            <_description>Malayalam</_description>
-            <languageList>
-              <iso639Id>mal</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>mal_lalitha</name>
-            <!-- Keyboard indicator for Malayalam layouts -->
-            <_shortDescription>ml</_shortDescription>
-            <_description>Malayalam (Lalitha)</_description>
-            <languageList>
-              <iso639Id>mal</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>mal_enhanced</name>
-            <!-- Keyboard indicator for Malayalam layouts -->
-            <_shortDescription>ml</_shortDescription>
-            <_description>Malayalam (enhanced Inscript, with rupee)</_description>
-            <languageList>
-              <iso639Id>mal</iso639Id>
-            </languageList>
-          </configItem>
-         </variant>
-         <variant>
-           <configItem>
-            <name>ori</name>
-            <!-- Keyboard indicator for Oriya layouts -->
-            <_shortDescription>or</_shortDescription>
-            <_description>Oriya</_description>
-            <languageList>
-              <iso639Id>ori</iso639Id>
-              <!-- sat-Orya: http://www.ethnologue.com/language/sat -->
-              <iso639Id>sat</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-           <configItem>
-            <name>olck</name>
-            <!-- Keyboard indicator for Ol Chiki layouts -->
-            <_shortDescription>sat</_shortDescription>
-            <_description>Ol Chiki</_description>
-            <languageList>
-              <!-- sat-Olck: http://www.ethnologue.com/language/sat -->
-              <iso639Id>sat</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>tam_unicode</name>
-            <!-- Keyboard indicator for Tamil layouts -->
-            <_shortDescription>ta</_shortDescription>
-            <_description>Tamil (Unicode)</_description>
-            <languageList>
-              <iso639Id>tam</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>tam_keyboard_with_numerals</name>
-            <!-- Keyboard indicator for Tamil layouts -->
-            <_shortDescription>ta</_shortDescription>
-            <_description>Tamil (keyboard with numerals)</_description>
-            <languageList>
-              <iso639Id>tam</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>tam_TAB</name>
-            <!-- Keyboard indicator for Tamil layouts -->
-            <_shortDescription>ta</_shortDescription>
-            <_description>Tamil (TAB typewriter)</_description>
-            <languageList>
-              <iso639Id>tam</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>tam_TSCII</name>
-            <!-- Keyboard indicator for Tamil layouts -->
-            <_shortDescription>ta</_shortDescription>
-            <_description>Tamil (TSCII typewriter)</_description>
-            <languageList>
-              <iso639Id>tam</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>tam</name>
-            <!-- Keyboard indicator for Tamil layouts -->
-            <_shortDescription>ta</_shortDescription>
-            <_description>Tamil</_description>
-            <languageList>
-              <iso639Id>tam</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>tel</name>
-            <!-- Keyboard indicator for Telugu layouts -->
-            <_shortDescription>te</_shortDescription>
-            <_description>Telugu</_description>
-            <languageList>
-              <iso639Id>tel</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>tel-kagapa</name>
-            <!-- Keyboard indicator for Telugu layouts -->
-            <_shortDescription>te</_shortDescription>
-            <_description>Telugu (KaGaPa phonetic)</_description>
-            <languageList>
-              <iso639Id>tel</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>tel-sarala</name>
-            <!-- Keyboard indicator for Telugu layouts -->
-            <_shortDescription>te</_shortDescription>
-            <_description>Telugu (Sarala)</_description>
-            <languageList>
-              <iso639Id>tel</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>bolnagri</name>
-            <!-- Keyboard indicator for Hindi layouts -->
-            <_shortDescription>hi</_shortDescription>
-            <_description>Hindi (Bolnagri)</_description>
-            <languageList>
-              <iso639Id>hin</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>hin-wx</name>
-            <!-- Keyboard indicator for Hindi layouts -->
-            <_shortDescription>hi</_shortDescription>
-            <_description>Hindi (Wx)</_description>
-            <languageList>
-              <iso639Id>hin</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>hin-kagapa</name>
-            <!-- Keyboard indicator for Hindi layouts -->
-            <_shortDescription>hi</_shortDescription>
-            <_description>Hindi (KaGaPa phonetic)</_description>
-            <languageList>
-              <iso639Id>hin</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>san-kagapa</name>
-            <!-- Keyboard indicator for Sanskrit layouts -->
-            <_shortDescription>sa</_shortDescription>
-            <_description>Sanskrit (KaGaPa phonetic)</_description>
-            <languageList>
-              <iso639Id>san</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>mar-kagapa</name>
-            <!-- Keyboard indicator for Marathi layouts -->
-            <_shortDescription>mr</_shortDescription>
-            <_description>Marathi (KaGaPa phonetic)</_description>
-            <languageList>
-              <iso639Id>mar</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-      </variantList>
+      <variantList/>
     </layout>
   </layoutList>
   <optionList>
@@ -1366,12 +1161,12 @@
           <!-- Tweaking the position of the "(" and ")" keys -->
           <configItem>
               <name>parens</name>
-              <description>Parentheses position</description>
+              <_description>Parentheses position</_description>
           </configItem>
           <option>
               <configItem>
                   <name>parens:swap_brackets</name>
-                  <description>Swap with square brackets</description>
+                  <_description>Swap with square brackets</_description>
               </configItem>
           </option>
       </group>
