@@ -1,6 +1,6 @@
--- $XTermId: INSTALL,v 1.160 2016/09/09 22:56:18 tom Exp $
+-- $XTermId: INSTALL,v 1.163 2017/05/30 08:32:35 tom Exp $
 -------------------------------------------------------------------------------
--- Copyright 1997-2015,2016 by Thomas E. Dickey
+-- Copyright 1997-2016,2017 by Thomas E. Dickey
 --
 --                         All Rights Reserved
 --
@@ -432,6 +432,13 @@ The options (in alphabetic order):
 	further work because colors used for clearing the screen do not
 	match the expected behavior (see vttest for instance).
 
+  --enable-env-terminfo   setenv $TERMINFO if --with-own-terminfo gives value
+
+	Use the custom terminfo directory specified in "--with-own-terminfo"
+	as the $TERMINFO variable for the shells spawned by xterm.  Setting
+	this variable makes most curses (and termcap) applications look in
+	that directory for terminal descriptions.
+
   --enable-exec-xterm     enable "spawn-new-terminal" action
 
   	If your platform supports the process filesystem "cwd" link,
@@ -614,7 +621,7 @@ The options (in alphabetic order):
 	at existing ".desktop" files for xterm and common terminal
 	emulators, to use those.  If none are found, the script uses this
 	default:
-		System;TerminalEmulator;Utility;
+		System;TerminalEmulator;
 
   --with-freetype-config  configure script to use for FreeType
 
