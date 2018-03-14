@@ -67,7 +67,7 @@
 #include "i915_drm.h"
 #include "uthash.h"
 
-#ifdef HAVE_VALGRIND
+#if HAVE_VALGRIND
 #include <valgrind.h>
 #include <memcheck.h>
 #define VG(x) x
@@ -1628,7 +1628,7 @@ int
 drm_intel_gem_bo_map_unsynchronized(drm_intel_bo *bo)
 {
 	drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *) bo->bufmgr;
-#ifdef HAVE_VALGRIND
+#if HAVE_VALGRIND
 	drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *) bo;
 #endif
 	int ret;
