@@ -1,4 +1,4 @@
-/* $NetBSD: xsetwallpaper.c,v 1.1 2011/10/22 22:05:27 jmcneill Exp $ */
+/* $NetBSD: xsetwallpaper.c,v 1.2 2018/03/24 19:43:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: xsetwallpaper.c,v 1.1 2011/10/22 22:05:27 jmcneill Exp $");
+__RCSID("$NetBSD: xsetwallpaper.c,v 1.2 2018/03/24 19:43:31 jmcneill Exp $");
+
+#include <sys/endian.h>
 
 #include <err.h>
 #include <stdio.h>
@@ -57,7 +59,7 @@ main(int argc, char *argv[])
 	int bitmap_pad, srcx, srcy, dstx, dsty;
 	int imagew, imageh, imagebpp;
 	int ch, i;
-	int screen, default_depth;
+	int screen, default_depth, byte_order;
 	Display *display;
 	Colormap colormap;
 	XImage *image;
@@ -96,6 +98,13 @@ main(int argc, char *argv[])
 		data[i + 2] = p;
 	}
 
+#if _BYTE_ORDER == _BIG_ENDIAN
+	for (i = 0; i < imagew * imageh * 4; i += 4) {
+		uint32_t *p = (uint32_t *)&data[i];
+		*p = bswap32(*p);
+	}
+#endif
+
 #ifdef DEBUG
 	printf("%s: %dx%d %dbpp\n", argv[0], imagew, imageh, imagebpp * 8);
 #endif
@@ -109,6 +118,7 @@ main(int argc, char *argv[])
 	screen = DefaultScreen(display);
 	default_depth = DefaultDepth(display, screen);
 	colormap = DefaultColormap(display, 0);
+	byte_order = ImageByteOrder(display);
 
 	/* get root window geometry */
 	if (!XGetGeometry(display, XDefaultRootWindow(display), &window,
@@ -138,13 +148,13 @@ main(int argc, char *argv[])
 		bitmap_pad = 16;
 	else
 		bitmap_pad = 8;
-	image = XCreateImage(display, CopyFromParent, imagebpp * 8,
+	image = XCreateImage(display, CopyFromParent, default_depth,
 	    ZPixmap, 0, (char *)data, imagew, imageh, bitmap_pad, 0);
 	if (image == NULL) {
 		errx(EXIT_FAILURE, "XCreateImage failed");
 	}
 	XInitImage(image);
-	image->byte_order = LSBFirst;	/* ??? */
+	image->byte_order = byte_order;
 
 	/* Create a graphics context for our new pixmap */
 	gc = XCreateGC(display, window, 0, NULL);
