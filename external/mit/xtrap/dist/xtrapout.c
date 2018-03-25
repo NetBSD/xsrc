@@ -110,11 +110,11 @@ extern int opterr;
 
 
 /* Forward declarations */
-static void SetGlobalDone (void );
+static void SetGlobalDone (int);
 static void print_req_callback (XETC *tc , XETrapDatum *data , 
-    char *my_buf );
+    unsigned char *my_buf );
 static void print_evt_callback (XETC *tc , XETrapDatum *data , 
-    char *my_buf );
+    unsigned char *my_buf );
 
 
 FILE *ofp;
@@ -126,14 +126,14 @@ XrmOptionDescRec optionTable [] =
     {"-v",     "*verbose",   XrmoptionSkipArg, (caddr_t) NULL},
 };
 
-static void SetGlobalDone(void)
+static void SetGlobalDone(int unused)
 {
     GlobalDone = 1L;
     fprintf(stderr,"Process Completed!\n");
     return;
 }
 
-static void print_req_callback(XETC *tc, XETrapDatum *data, char *my_buf)
+static void print_req_callback(XETC *tc, XETrapDatum *data, unsigned char *my_buf)
 {
     char *req_type;
     req_type = (data->u.req.reqType == XETrapGetExtOpcode(tc) ? "XTrap" :
@@ -143,7 +143,7 @@ static void print_req_callback(XETC *tc, XETrapDatum *data, char *my_buf)
         (long)data->u.req.id);
 }
 
-static void print_evt_callback(XETC *tc, XETrapDatum *data, char *my_buf)
+static void print_evt_callback(XETC *tc, XETrapDatum *data, unsigned char *my_buf)
 {
     static Time last_time = 0;
     int delta;
@@ -274,8 +274,8 @@ main(int argc, char *argv[])
     XEPrintCurrent(stderr,&ret_cur);
 
     /* Add signal handlers so that we clean up properly */
-    _InitExceptionHandling((void_function)SetGlobalDone);
-    (void)XEEnableCtrlKeys((void_function)SetGlobalDone);
+    _InitExceptionHandling(SetGlobalDone);
+    (void)XEEnableCtrlKeys(SetGlobalDone);
              
     XETrapAppWhileLoop(app,tc,&GlobalDone);
 
