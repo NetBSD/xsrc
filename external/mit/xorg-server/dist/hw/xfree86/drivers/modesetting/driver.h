@@ -139,7 +139,7 @@ xf86CrtcPtr ms_dri2_crtc_covering_drawable(DrawablePtr pDraw);
 xf86CrtcPtr ms_covering_crtc(ScrnInfoPtr scrn, BoxPtr box,
                              xf86CrtcPtr desired, BoxPtr crtc_box_ret);
 
-int ms_get_crtc_ust_msc(xf86CrtcPtr crtc, CARD64 *ust, CARD64 *msc);
+int ms_get_crtc_ust_msc(xf86CrtcPtr crtc, uint64_t *ust, uint64_t *msc);
 
 uint32_t ms_crtc_msc_to_kernel_msc(xf86CrtcPtr crtc, uint64_t expect);
 uint64_t ms_kernel_msc_to_crtc_msc(xf86CrtcPtr crtc, uint32_t sequence);

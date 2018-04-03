@@ -64,7 +64,7 @@ ms_present_get_crtc(WindowPtr window)
 }
 
 static int
-ms_present_get_ust_msc(RRCrtcPtr crtc, CARD64 *ust, CARD64 *msc)
+ms_present_get_ust_msc(RRCrtcPtr crtc, uint64_t *ust, uint64_t *msc)
 {
     xf86CrtcPtr xf86_crtc = crtc->devPrivate;
 

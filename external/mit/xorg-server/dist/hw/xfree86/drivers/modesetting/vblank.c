@@ -196,7 +196,7 @@ ms_kernel_msc_to_crtc_msc(xf86CrtcPtr crtc, uint32_t sequence)
 }
 
 int
-ms_get_crtc_ust_msc(xf86CrtcPtr crtc, CARD64 *ust, CARD64 *msc)
+ms_get_crtc_ust_msc(xf86CrtcPtr crtc, uint64_t *ust, uint64_t *msc)
 {
     uint32_t kernel_msc;
 
