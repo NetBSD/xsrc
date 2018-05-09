@@ -3,7 +3,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: ftzconf.h,v 1.1.1.1 2018/05/09 06:50:05 maya Exp $ */
+/* @(#) $Id: ftzconf.h,v 1.2 2018/05/09 08:08:53 mrg Exp $ */
 
 #ifndef _ZCONF_H
 #define _ZCONF_H

@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    FreeType API for accessing CID font information (specification).     */
 /*                                                                         */
-/*  Copyright 2007-2016 by                                                 */
+/*  Copyright 2007-2018 by                                                 */
 /*  Dereg Clegg and Michael Toftdal.                                       */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -87,7 +87,7 @@ FT_BEGIN_HEADER
   FT_Get_CID_Registry_Ordering_Supplement( FT_Face       face,
                                            const char*  *registry,
                                            const char*  *ordering,
-                                           FT_Int       *supplement);
+                                           FT_Int       *supplement );
 
 
   /**********************************************************************
@@ -97,8 +97,8 @@ FT_BEGIN_HEADER
    *
    * @description:
    *    Retrieve the type of the input face, CID keyed or not.  In
-   *    constrast to the @FT_IS_CID_KEYED macro this function returns
-   *    successfully also for CID-keyed fonts in an SNFT wrapper.
+   *    contrast to the @FT_IS_CID_KEYED macro this function returns
+   *    successfully also for CID-keyed fonts in an SFNT wrapper.
    *
    * @input:
    *    face ::

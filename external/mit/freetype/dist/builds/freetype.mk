@@ -3,7 +3,7 @@
 #
 
 
-# Copyright 1996-2015 by
+# Copyright 1996-2018 by
 # David Turner, Robert Wilhelm, and Werner Lemberg.
 #
 # This file is part of the FreeType project, and may only be used, modified,
@@ -97,7 +97,7 @@ BASE_DIR := $(SRC_DIR)/base
 
 # Other derived directories.
 #
-PUBLIC_DIR   := $(TOP_DIR)/include
+PUBLIC_DIR   := $(TOP_DIR)/include/freetype
 INTERNAL_DIR := $(PUBLIC_DIR)/internal
 SERVICES_DIR := $(INTERNAL_DIR)/services
 CONFIG_DIR   := $(PUBLIC_DIR)/config
@@ -152,6 +152,9 @@ endif
 #
 ifneq ($(wildcard $(OBJ_DIR)/ftoption.h),)
   FTOPTION_H    := $(OBJ_DIR)/ftoption.h
+  FTOPTION_FLAG := $DFT_CONFIG_OPTIONS_H="<ftoption.h>"
+else ifneq ($(wildcard $(BUILD_DIR)/ftoption.h),)
+  FTOPTION_H    := $(BUILD_DIR)/ftoption.h
   FTOPTION_FLAG := $DFT_CONFIG_OPTIONS_H="<ftoption.h>"
 endif
 
@@ -245,6 +248,22 @@ $(FTINIT_OBJ): $(FTINIT_SRC) $(FREETYPE_H)
 	$(FT_COMPILE) $T$(subst /,$(COMPILER_SEP),$@ $<)
 
 
+# ftver component
+#
+#  The VERSIONINFO resource `ftver.rc' contains version and copyright
+#  to be compiled by windres and tagged into DLL usually.
+#
+ifneq ($(RC),)
+  FTVER_SRC := $(BASE_DIR)/ftver.rc
+  FTVER_OBJ := $(OBJ_DIR)/ftver.$O
+
+  OBJECTS_LIST += $(FTVER_OBJ)
+
+  $(FTVER_OBJ): $(FTVER_SRC)
+	$(RC) -o $@ $<
+endif
+
+
 # All FreeType library objects.
 #
 OBJ_M := $(BASE_OBJ_M) $(BASE_EXT_OBJ) $(DRV_OBJS_M)
@@ -326,10 +345,9 @@ remove_ftmodule_h:
 
 .PHONY: clean distclean
 
-# The `config.mk' file must define `clean_freetype' and
-# `distclean_freetype'.  Implementations may use to relay these to either
-# the `std' or `dos' versions from above, or simply provide their own
-# implementation.
+# The `config.mk' file must define `clean_project' and `distclean_project'.
+# Implementations may use to relay these to either the `std' or `dos'
+# versions from above, or simply provide their own implementation.
 #
 clean: clean_project
 distclean: distclean_project remove_config_mk remove_ftmodule_h
