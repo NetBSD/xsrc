@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    The FreeType position independent code services for autofit module.  */
 /*                                                                         */
-/*  Copyright 2009-2018 by                                                 */
+/*  Copyright 2009-2015 by                                                 */
 /*  Oran Agra and Mickey Gabel.                                            */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -16,9 +16,11 @@
 /***************************************************************************/
 
 
-#ifndef AFPIC_H_
-#define AFPIC_H_
+#ifndef __AFPIC_H__
+#define __AFPIC_H__
 
+
+FT_BEGIN_HEADER
 
 #include FT_INTERNAL_PIC_H
 
@@ -40,8 +42,6 @@
 
 #include "aftypes.h"
 
-
-FT_BEGIN_HEADER
 
   typedef struct  AFModulePIC_
   {
@@ -69,7 +69,7 @@ FT_BEGIN_HEADER
 
 
 #define GET_PIC( lib )  \
-          ( (AFModulePIC*)( (lib)->pic_container.autofit ) )
+          ( (AFModulePIC*)((lib)->pic_container.autofit) )
 
 #define AF_SERVICES_GET  \
           ( GET_PIC( library )->af_services )
@@ -93,13 +93,13 @@ FT_BEGIN_HEADER
   FT_Error
   autofit_module_class_pic_init( FT_Library  library );
 
-FT_END_HEADER
-
 #endif /* FT_CONFIG_OPTION_PIC */
 
  /* */
 
-#endif /* AFPIC_H_ */
+FT_END_HEADER
+
+#endif /* __AFPIC_H__ */
 
 
 /* END */

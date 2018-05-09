@@ -5,7 +5,7 @@
 /*    Auto-fitter hinting routines for latin writing system                */
 /*    (specification).                                                     */
 /*                                                                         */
-/*  Copyright 2003-2018 by                                                 */
+/*  Copyright 2003-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -17,8 +17,8 @@
 /***************************************************************************/
 
 
-#ifndef AFLATIN_H_
-#define AFLATIN_H_
+#ifndef __AFLATIN_H__
+#define __AFLATIN_H__
 
 #include "afhints.h"
 
@@ -53,8 +53,6 @@ FT_BEGIN_HEADER
 
 #define AF_LATIN_IS_TOP_BLUE( b ) \
           ( (b)->properties & AF_BLUE_PROPERTY_LATIN_TOP )
-#define AF_LATIN_IS_SUB_TOP_BLUE( b ) \
-          ( (b)->properties & AF_BLUE_PROPERTY_LATIN_SUB_TOP )
 #define AF_LATIN_IS_NEUTRAL_BLUE( b ) \
           ( (b)->properties & AF_BLUE_PROPERTY_LATIN_NEUTRAL )
 #define AF_LATIN_IS_X_HEIGHT_BLUE( b ) \
@@ -67,10 +65,8 @@ FT_BEGIN_HEADER
 
 #define AF_LATIN_BLUE_ACTIVE      ( 1U << 0 ) /* zone height is <= 3/4px   */
 #define AF_LATIN_BLUE_TOP         ( 1U << 1 ) /* we have a top blue zone   */
-#define AF_LATIN_BLUE_SUB_TOP     ( 1U << 2 ) /* we have a subscript top   */
-                                              /* blue zone                 */
-#define AF_LATIN_BLUE_NEUTRAL     ( 1U << 3 ) /* we have neutral blue zone */
-#define AF_LATIN_BLUE_ADJUSTMENT  ( 1U << 4 ) /* used for scale adjustment */
+#define AF_LATIN_BLUE_NEUTRAL     ( 1U << 2 ) /* we have neutral blue zone */
+#define AF_LATIN_BLUE_ADJUSTMENT  ( 1U << 3 ) /* used for scale adjustment */
                                               /* optimization              */
 
 
@@ -78,8 +74,6 @@ FT_BEGIN_HEADER
   {
     AF_WidthRec  ref;
     AF_WidthRec  shoot;
-    FT_Pos       ascender;
-    FT_Pos       descender;
     FT_UInt      flags;
 
   } AF_LatinBlueRec, *AF_LatinBlue;
@@ -188,7 +182,7 @@ FT_BEGIN_HEADER
 
 FT_END_HEADER
 
-#endif /* AFLATIN_H_ */
+#endif /* __AFLATIN_H__ */
 
 
 /* END */

@@ -5,7 +5,7 @@
 /*    Auto-fitter dummy routines to be used if no hinting should be        */
 /*    performed (specification).                                           */
 /*                                                                         */
-/*  Copyright 2003-2018 by                                                 */
+/*  Copyright 2003-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -17,8 +17,8 @@
 /***************************************************************************/
 
 
-#ifndef AFDUMMY_H_
-#define AFDUMMY_H_
+#ifndef __AFDUMMY_H__
+#define __AFDUMMY_H__
 
 #include "aftypes.h"
 
@@ -34,7 +34,7 @@ FT_BEGIN_HEADER
 FT_END_HEADER
 
 
-#endif /* AFDUMMY_H_ */
+#endif /* __AFDUMMY_H__ */
 
 
 /* END */

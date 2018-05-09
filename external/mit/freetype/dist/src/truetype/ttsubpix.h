@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    TrueType Subpixel Hinting.                                           */
 /*                                                                         */
-/*  Copyright 2010-2018 by                                                 */
+/*  Copyright 2010-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -16,8 +16,8 @@
 /***************************************************************************/
 
 
-#ifndef TTSUBPIX_H_
-#define TTSUBPIX_H_
+#ifndef __TTSUBPIX_H__
+#define __TTSUBPIX_H__
 
 #include <ft2build.h>
 #include "ttobjs.h"
@@ -27,7 +27,7 @@
 FT_BEGIN_HEADER
 
 
-#ifdef TT_SUPPORT_SUBPIXEL_HINTING_INFINALITY
+#ifdef TT_CONFIG_OPTION_SUBPIXEL_HINTING
 
   /*************************************************************************/
   /*                                                                       */
@@ -100,12 +100,11 @@ FT_BEGIN_HEADER
 #define SPH_OPTION_SET_COMPATIBLE_WIDTHS   FALSE
 #define SPH_OPTION_SET_RASTERIZER_VERSION  38
 
-#endif /* TT_SUPPORT_SUBPIXEL_HINTING_INFINALITY */
+#endif /* TT_CONFIG_OPTION_SUBPIXEL_HINTING */
 
 
 FT_END_HEADER
 
-#endif /* TTSUBPIX_H_ */
-
+#endif /* __TTSUBPIX_H__ */
 
 /* END */

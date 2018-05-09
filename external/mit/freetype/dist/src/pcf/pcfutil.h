@@ -25,8 +25,8 @@ THE SOFTWARE.
 */
 
 
-#ifndef PCFUTIL_H_
-#define PCFUTIL_H_
+#ifndef __PCFUTIL_H__
+#define __PCFUTIL_H__
 
 
 #include <ft2build.h>
@@ -49,7 +49,7 @@ FT_BEGIN_HEADER
 
 FT_END_HEADER
 
-#endif /* PCFUTIL_H_ */
+#endif /* __PCFUTIL_H__ */
 
 
 /* END */

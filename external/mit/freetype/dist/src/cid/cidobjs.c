@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    CID objects manager (body).                                          */
 /*                                                                         */
-/*  Copyright 1996-2018 by                                                 */
+/*  Copyright 1996-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -26,7 +26,6 @@
 #include FT_SERVICE_POSTSCRIPT_CMAPS_H
 #include FT_INTERNAL_POSTSCRIPT_AUX_H
 #include FT_INTERNAL_POSTSCRIPT_HINTS_H
-#include FT_DRIVER_H
 
 #include "ciderrs.h"
 
@@ -114,16 +113,16 @@
     CID_Size  size = (CID_Size)cidsize;
 
 
-    if ( cidsize->internal->module_data )
+    if ( cidsize->internal )
     {
       PSH_Globals_Funcs  funcs;
 
 
       funcs = cid_size_get_globals_funcs( size );
       if ( funcs )
-        funcs->destroy( (PSH_Globals)cidsize->internal->module_data );
+        funcs->destroy( (PSH_Globals)cidsize->internal );
 
-      cidsize->internal->module_data = NULL;
+      cidsize->internal = NULL;
     }
   }
 
@@ -146,7 +145,7 @@
 
       error = funcs->create( cidsize->face->memory, priv, &globals );
       if ( !error )
-        cidsize->internal->module_data = globals;
+        cidsize->internal = (FT_Size_Internal)(void*)globals;
     }
 
     return error;
@@ -165,7 +164,7 @@
     funcs = cid_size_get_globals_funcs( (CID_Size)size );
 
     if ( funcs )
-      funcs->set_scale( (PSH_Globals)size->internal->module_data,
+      funcs->set_scale( (PSH_Globals)size->internal,
                         size->metrics.x_scale,
                         size->metrics.y_scale,
                         0, 0 );
@@ -335,7 +334,7 @@
 
     /* check the face index */
     /* XXX: handle CID fonts with more than a single face */
-    if ( ( face_index & 0xFFFF ) != 0 )
+    if ( face_index != 0 )
     {
       FT_ERROR(( "cid_face_init: invalid face index\n" ));
       error = FT_THROW( Invalid_Argument );
@@ -355,7 +354,7 @@
       cidface->num_glyphs   = (FT_Long)cid->cid_count;
       cidface->num_charmaps = 0;
 
-      cidface->face_index = face_index & 0xFFFF;
+      cidface->face_index = face_index;
 
       cidface->face_flags |= FT_FACE_FLAG_SCALABLE   | /* scalable outlines */
                              FT_FACE_FLAG_HORIZONTAL | /* horizontal data   */
@@ -464,42 +463,9 @@
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
   FT_LOCAL_DEF( FT_Error )
-  cid_driver_init( FT_Module  module )
+  cid_driver_init( FT_Module  driver )
   {
-    PS_Driver  driver = (PS_Driver)module;
-
-    FT_UInt32  seed;
-
-
-    /* set default property values, cf. `ftt1drv.h' */
-#ifdef T1_CONFIG_OPTION_OLD_ENGINE
-    driver->hinting_engine = FT_HINTING_FREETYPE;
-#else
-    driver->hinting_engine = FT_HINTING_ADOBE;
-#endif
-
-    driver->no_stem_darkening = TRUE;
-
-    driver->darken_params[0] = CFF_CONFIG_OPTION_DARKENING_PARAMETER_X1;
-    driver->darken_params[1] = CFF_CONFIG_OPTION_DARKENING_PARAMETER_Y1;
-    driver->darken_params[2] = CFF_CONFIG_OPTION_DARKENING_PARAMETER_X2;
-    driver->darken_params[3] = CFF_CONFIG_OPTION_DARKENING_PARAMETER_Y2;
-    driver->darken_params[4] = CFF_CONFIG_OPTION_DARKENING_PARAMETER_X3;
-    driver->darken_params[5] = CFF_CONFIG_OPTION_DARKENING_PARAMETER_Y3;
-    driver->darken_params[6] = CFF_CONFIG_OPTION_DARKENING_PARAMETER_X4;
-    driver->darken_params[7] = CFF_CONFIG_OPTION_DARKENING_PARAMETER_Y4;
-
-    /* compute random seed from some memory addresses */
-    seed = (FT_UInt32)( (FT_Offset)(char*)&seed          ^
-                        (FT_Offset)(char*)&module        ^
-                        (FT_Offset)(char*)module->memory );
-    seed = seed ^ ( seed >> 10 ) ^ ( seed >> 20 );
-
-    driver->random_seed = (FT_Int32)seed;
-    if ( driver->random_seed < 0 )
-      driver->random_seed = -driver->random_seed;
-    else if ( driver->random_seed == 0 )
-      driver->random_seed = 123456789;
+    FT_UNUSED( driver );
 
     return FT_Err_Ok;
   }

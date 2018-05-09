@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Auto-fitter hinting routines for CJK writing system (specification). */
 /*                                                                         */
-/*  Copyright 2006-2018 by                                                 */
+/*  Copyright 2006-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -16,8 +16,8 @@
 /***************************************************************************/
 
 
-#ifndef AFCJK_H_
-#define AFCJK_H_
+#ifndef __AFCJK_H__
+#define __AFCJK_H__
 
 #include "afhints.h"
 #include "aflatin.h"
@@ -115,8 +115,7 @@ FT_BEGIN_HEADER
                      AF_CJKMetrics  metrics );
 
   FT_LOCAL( FT_Error )
-  af_cjk_hints_apply( FT_UInt        glyph_index,
-                      AF_GlyphHints  hints,
+  af_cjk_hints_apply( AF_GlyphHints  hints,
                       FT_Outline*    outline,
                       AF_CJKMetrics  metrics );
 
@@ -135,7 +134,7 @@ FT_BEGIN_HEADER
 
 FT_END_HEADER
 
-#endif /* AFCJK_H_ */
+#endif /* __AFCJK_H__ */
 
 
 /* END */

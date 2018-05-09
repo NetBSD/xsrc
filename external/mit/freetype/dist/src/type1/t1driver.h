@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    High-level Type 1 driver interface (specification).                  */
 /*                                                                         */
-/*  Copyright 1996-2018 by                                                 */
+/*  Copyright 1996-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -16,8 +16,8 @@
 /***************************************************************************/
 
 
-#ifndef T1DRIVER_H_
-#define T1DRIVER_H_
+#ifndef __T1DRIVER_H__
+#define __T1DRIVER_H__
 
 
 #include <ft2build.h>
@@ -36,7 +36,7 @@ FT_BEGIN_HEADER
 
 FT_END_HEADER
 
-#endif /* T1DRIVER_H_ */
+#endif /* __T1DRIVER_H__ */
 
 
 /* END */

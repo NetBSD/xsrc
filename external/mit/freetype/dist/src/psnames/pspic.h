@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    The FreeType position independent code services for psnames module.  */
 /*                                                                         */
-/*  Copyright 2009-2018 by                                                 */
+/*  Copyright 2009-2015 by                                                 */
 /*  Oran Agra and Mickey Gabel.                                            */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -16,12 +16,13 @@
 /***************************************************************************/
 
 
-#ifndef PSPIC_H_
-#define PSPIC_H_
+#ifndef __PSPIC_H__
+#define __PSPIC_H__
 
+
+FT_BEGIN_HEADER
 
 #include FT_INTERNAL_PIC_H
-
 
 #ifndef FT_CONFIG_OPTION_PIC
 
@@ -31,9 +32,6 @@
 #else /* FT_CONFIG_OPTION_PIC */
 
 #include FT_SERVICE_POSTSCRIPT_CMAPS_H
-
-
-FT_BEGIN_HEADER
 
   typedef struct  PSModulePIC_
   {
@@ -56,13 +54,13 @@ FT_BEGIN_HEADER
   FT_Error
   psnames_module_class_pic_init( FT_Library  library );
 
-FT_END_HEADER
-
 #endif /* FT_CONFIG_OPTION_PIC */
 
  /* */
 
-#endif /* PSPIC_H_ */
+FT_END_HEADER
+
+#endif /* __PSPIC_H__ */
 
 
 /* END */

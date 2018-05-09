@@ -8,7 +8,7 @@
 /*  be used to parse compressed PCF fonts, as found with many X11 server   */
 /*  distributions.                                                         */
 /*                                                                         */
-/*  Copyright 2004-2018 by                                                 */
+/*  Copyright 2004-2015 by                                                 */
 /*  Albert Chin-A-Young.                                                   */
 /*                                                                         */
 /*  based on code in `src/gzip/ftgzip.c'                                   */
@@ -31,7 +31,7 @@
 
 #include FT_MODULE_ERRORS_H
 
-#undef FTERRORS_H_
+#undef __FTERRORS_H__
 
 #undef  FT_ERR_PREFIX
 #define FT_ERR_PREFIX  LZW_Err_
@@ -330,16 +330,16 @@
   }
 
 
-  static unsigned long
-  ft_lzw_stream_io( FT_Stream       stream,
-                    unsigned long   offset,
-                    unsigned char*  buffer,
-                    unsigned long   count )
+  static FT_ULong
+  ft_lzw_stream_io( FT_Stream  stream,
+                    FT_ULong   pos,
+                    FT_Byte*   buffer,
+                    FT_ULong   count )
   {
     FT_LZWFile  zip = (FT_LZWFile)stream->descriptor.pointer;
 
 
-    return ft_lzw_file_io( zip, offset, buffer, count );
+    return ft_lzw_file_io( zip, pos, buffer, count );
   }
 
 

@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    CID error codes (specification only).                                */
 /*                                                                         */
-/*  Copyright 2001-2018 by                                                 */
+/*  Copyright 2001-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -22,12 +22,12 @@
   /*                                                                       */
   /*************************************************************************/
 
-#ifndef CIDERRS_H_
-#define CIDERRS_H_
+#ifndef __CIDERRS_H__
+#define __CIDERRS_H__
 
 #include FT_MODULE_ERRORS_H
 
-#undef FTERRORS_H_
+#undef __FTERRORS_H__
 
 #undef  FT_ERR_PREFIX
 #define FT_ERR_PREFIX  CID_Err_
@@ -35,7 +35,7 @@
 
 #include FT_ERRORS_H
 
-#endif /* CIDERRS_H_ */
+#endif /* __CIDERRS_H__ */
 
 
 /* END */

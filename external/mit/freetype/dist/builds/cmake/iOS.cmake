@@ -1,6 +1,6 @@
 # iOS.cmake
 #
-# Copyright 2014-2018 by
+# Copyright 2014-2015 by
 # David Turner, Robert Wilhelm, and Werner Lemberg.
 #
 # Written by David Wimsey <david@wimsey.us>
@@ -84,6 +84,11 @@ if (CMAKE_UNAME)
   string(REGEX REPLACE "^([0-9]+)\\.([0-9]+).*$" "\\1"
     DARWIN_MAJOR_VERSION "${CMAKE_HOST_SYSTEM_VERSION}")
 endif (CMAKE_UNAME)
+
+# force the compilers to gcc for iOS
+include(CMakeForceCompiler)
+CMAKE_FORCE_C_COMPILER(gcc gcc)
+CMAKE_FORCE_CXX_COMPILER(g++ g++)
 
 # skip the platform compiler checks for cross compiling
 set(CMAKE_CXX_COMPILER_WORKS TRUE)

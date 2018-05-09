@@ -2,9 +2,9 @@
 /*                                                                         */
 /*  gxvalid.h                                                              */
 /*                                                                         */
-/*    TrueTypeGX/AAT table validation (specification only).                */
+/*    TrueTyeeGX/AAT table validation (specification only).                */
 /*                                                                         */
-/*  Copyright 2005-2018 by                                                 */
+/*  Copyright 2005-2015 by                                                 */
 /*  suzuki toshiya, Masatake YAMATO, Red Hat K.K.,                         */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
@@ -25,8 +25,8 @@
 /***************************************************************************/
 
 
-#ifndef GXVALID_H_
-#define GXVALID_H_
+#ifndef __GXVALID_H__
+#define __GXVALID_H__
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -102,7 +102,7 @@ FT_BEGIN_HEADER
 FT_END_HEADER
 
 
-#endif /* GXVALID_H_ */
+#endif /* __GXVALID_H__ */
 
 
 /* END */

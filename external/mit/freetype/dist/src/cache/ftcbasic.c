@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    The FreeType basic cache interface (body).                           */
 /*                                                                         */
-/*  Copyright 2003-2018 by                                                 */
+/*  Copyright 2003-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -237,14 +237,12 @@
   {
     {
       sizeof ( FTC_BasicFamilyRec ),
-
-      ftc_basic_family_compare, /* FTC_MruNode_CompareFunc  node_compare */
-      ftc_basic_family_init,    /* FTC_MruNode_InitFunc     node_init    */
-      NULL,                     /* FTC_MruNode_ResetFunc    node_reset   */
-      NULL                      /* FTC_MruNode_DoneFunc     node_done    */
+      ftc_basic_family_compare,
+      ftc_basic_family_init,
+      0,                        /* FTC_MruNode_ResetFunc */
+      0                         /* FTC_MruNode_DoneFunc  */
     },
-
-    ftc_basic_family_load_glyph /* FTC_IFamily_LoadGlyphFunc  family_load_glyph */
+    ftc_basic_family_load_glyph
   };
 
 
@@ -252,17 +250,16 @@
   const FTC_GCacheClassRec  ftc_basic_image_cache_class =
   {
     {
-      ftc_inode_new,                  /* FTC_Node_NewFunc      node_new           */
-      ftc_inode_weight,               /* FTC_Node_WeightFunc   node_weight        */
-      ftc_gnode_compare,              /* FTC_Node_CompareFunc  node_compare       */
-      ftc_basic_gnode_compare_faceid, /* FTC_Node_CompareFunc  node_remove_faceid */
-      ftc_inode_free,                 /* FTC_Node_FreeFunc     node_free          */
+      ftc_inode_new,
+      ftc_inode_weight,
+      ftc_gnode_compare,
+      ftc_basic_gnode_compare_faceid,
+      ftc_inode_free,
 
       sizeof ( FTC_GCacheRec ),
-      ftc_gcache_init,                /* FTC_Cache_InitFunc    cache_init         */
-      ftc_gcache_done                 /* FTC_Cache_DoneFunc    cache_done         */
+      ftc_gcache_init,
+      ftc_gcache_done
     },
-
     (FTC_MruListClass)&ftc_basic_image_family_class
   };
 
@@ -304,18 +301,10 @@
     if ( anode )
       *anode  = NULL;
 
-    /*
-     * Internal `FTC_BasicAttr->load_flags' is of type `FT_UInt',
-     * but public `FT_ImageType->flags' is of type `FT_Int32'.
-     *
-     * On 16bit systems, higher bits of type->flags cannot be handled.
-     */
-#if 0xFFFFFFFFUL > FT_UINT_MAX
-    if ( (type->flags & (FT_ULong)FT_UINT_MAX) )
+    if ( (FT_ULong)( type->flags - FT_INT_MIN ) > FT_UINT_MAX )
       FT_TRACE1(( "FTC_ImageCache_Lookup:"
                   " higher bits in load_flags 0x%x are dropped\n",
                   (FT_ULong)type->flags & ~((FT_ULong)FT_UINT_MAX) ));
-#endif
 
     query.attrs.scaler.face_id = type->face_id;
     query.attrs.scaler.width   = type->width;
@@ -385,18 +374,11 @@
     if ( anode )
       *anode  = NULL;
 
-    /*
-     * Internal `FTC_BasicAttr->load_flags' is of type `FT_UInt',
-     * but public `FT_Face->face_flags' is of type `FT_Long'.
-     *
-     * On long > int systems, higher bits of load_flags cannot be handled.
-     */
-#if FT_ULONG_MAX > FT_UINT_MAX
+    /* `FT_Load_Glyph' and `FT_Load_Char' take FT_UInt flags */
     if ( load_flags > FT_UINT_MAX )
       FT_TRACE1(( "FTC_ImageCache_LookupScaler:"
                   " higher bits in load_flags 0x%x are dropped\n",
                   load_flags & ~((FT_ULong)FT_UINT_MAX) ));
-#endif
 
     query.attrs.scaler     = scaler[0];
     query.attrs.load_flags = (FT_UInt)load_flags;
@@ -437,12 +419,11 @@
   {
     {
       sizeof ( FTC_BasicFamilyRec ),
-      ftc_basic_family_compare,     /* FTC_MruNode_CompareFunc  node_compare */
-      ftc_basic_family_init,        /* FTC_MruNode_InitFunc     node_init    */
-      NULL,                         /* FTC_MruNode_ResetFunc    node_reset   */
-      NULL                          /* FTC_MruNode_DoneFunc     node_done    */
+      ftc_basic_family_compare,
+      ftc_basic_family_init,
+      0,                            /* FTC_MruNode_ResetFunc */
+      0                             /* FTC_MruNode_DoneFunc  */
     },
-
     ftc_basic_family_get_count,
     ftc_basic_family_load_bitmap
   };
@@ -452,17 +433,16 @@
   const FTC_GCacheClassRec  ftc_basic_sbit_cache_class =
   {
     {
-      ftc_snode_new,                  /* FTC_Node_NewFunc      node_new           */
-      ftc_snode_weight,               /* FTC_Node_WeightFunc   node_weight        */
-      ftc_snode_compare,              /* FTC_Node_CompareFunc  node_compare       */
-      ftc_basic_gnode_compare_faceid, /* FTC_Node_CompareFunc  node_remove_faceid */
-      ftc_snode_free,                 /* FTC_Node_FreeFunc     node_free          */
+      ftc_snode_new,
+      ftc_snode_weight,
+      ftc_snode_compare,
+      ftc_basic_gnode_compare_faceid,
+      ftc_snode_free,
 
       sizeof ( FTC_GCacheRec ),
-      ftc_gcache_init,                /* FTC_Cache_InitFunc    cache_init         */
-      ftc_gcache_done                 /* FTC_Cache_DoneFunc    cache_done         */
+      ftc_gcache_init,
+      ftc_gcache_done
     },
-
     (FTC_MruListClass)&ftc_basic_sbit_family_class
   };
 
@@ -502,18 +482,10 @@
 
     *ansbit = NULL;
 
-    /*
-     * Internal `FTC_BasicAttr->load_flags' is of type `FT_UInt',
-     * but public `FT_ImageType->flags' is of type `FT_Int32'.
-     *
-     * On 16bit systems, higher bits of type->flags cannot be handled.
-     */
-#if 0xFFFFFFFFUL > FT_UINT_MAX
-    if ( (type->flags & (FT_ULong)FT_UINT_MAX) )
+    if ( (FT_ULong)( type->flags - FT_INT_MIN ) > FT_UINT_MAX )
       FT_TRACE1(( "FTC_ImageCache_Lookup:"
                   " higher bits in load_flags 0x%x are dropped\n",
                   (FT_ULong)type->flags & ~((FT_ULong)FT_UINT_MAX) ));
-#endif
 
     query.attrs.scaler.face_id = type->face_id;
     query.attrs.scaler.width   = type->width;
@@ -585,18 +557,11 @@
 
     *ansbit = NULL;
 
-    /*
-     * Internal `FTC_BasicAttr->load_flags' is of type `FT_UInt',
-     * but public `FT_Face->face_flags' is of type `FT_Long'.
-     *
-     * On long > int systems, higher bits of load_flags cannot be handled.
-     */
-#if FT_ULONG_MAX > FT_UINT_MAX
+    /* `FT_Load_Glyph' and `FT_Load_Char' take FT_UInt flags */
     if ( load_flags > FT_UINT_MAX )
       FT_TRACE1(( "FTC_ImageCache_LookupScaler:"
                   " higher bits in load_flags 0x%x are dropped\n",
                   load_flags & ~((FT_ULong)FT_UINT_MAX) ));
-#endif
 
     query.attrs.scaler     = scaler[0];
     query.attrs.load_flags = (FT_UInt)load_flags;

@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    PS Hinter error codes (specification only).                          */
 /*                                                                         */
-/*  Copyright 2003-2018 by                                                 */
+/*  Copyright 2003-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -22,12 +22,12 @@
   /*                                                                       */
   /*************************************************************************/
 
-#ifndef PSHNTERR_H_
-#define PSHNTERR_H_
+#ifndef __PSHNTERR_H__
+#define __PSHNTERR_H__
 
 #include FT_MODULE_ERRORS_H
 
-#undef FTERRORS_H_
+#undef __FTERRORS_H__
 
 #undef  FT_ERR_PREFIX
 #define FT_ERR_PREFIX  PSH_Err_
@@ -35,7 +35,7 @@
 
 #include FT_ERRORS_H
 
-#endif /* PSHNTERR_H_ */
+#endif /* __PSHNTERR_H__ */
 
 
 /* END */

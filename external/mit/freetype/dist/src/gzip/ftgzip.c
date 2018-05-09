@@ -8,7 +8,7 @@
 /*  parse compressed PCF fonts, as found with many X11 server              */
 /*  distributions.                                                         */
 /*                                                                         */
-/*  Copyright 2002-2018 by                                                 */
+/*  Copyright 2002-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -30,7 +30,7 @@
 
 #include FT_MODULE_ERRORS_H
 
-#undef FTERRORS_H_
+#undef __FTERRORS_H__
 
 #undef  FT_ERR_PREFIX
 #define FT_ERR_PREFIX  Gzip_Err_
@@ -51,29 +51,17 @@
 
 #else /* !FT_CONFIG_OPTION_SYSTEM_ZLIB */
 
-  /* In this case, we include our own modified sources of the ZLib  */
-  /* within the `gzip' component.  The modifications were necessary */
-  /* to #include all files without conflicts, as well as preventing */
-  /* the definition of `extern' functions that may cause linking    */
-  /* conflicts when a program is linked with both FreeType and the  */
-  /* original ZLib.                                                 */
+ /* In this case, we include our own modified sources of the ZLib    */
+ /* within the "ftgzip" component.  The modifications were necessary */
+ /* to #include all files without conflicts, as well as preventing   */
+ /* the definition of "extern" functions that may cause linking      */
+ /* conflicts when a program is linked with both FreeType and the    */
+ /* original ZLib.                                                   */
 
 #ifndef USE_ZLIB_ZCALLOC
-#define MY_ZCALLOC /* prevent all zcalloc() & zfree() in zutil.c */
+#define MY_ZCALLOC /* prevent all zcalloc() & zfree() in zutils.c */
 #endif
 
-  /* Note that our `zlib.h' includes `ftzconf.h' instead of `zconf.h'; */
-  /* the main reason is that even a global `zlib.h' includes `zconf.h' */
-  /* with                                                              */
-  /*                                                                   */
-  /*   #include "zconf.h"                                              */
-  /*                                                                   */
-  /* instead of the expected                                           */
-  /*                                                                   */
-  /*   #include <zconf.h>                                              */
-  /*                                                                   */
-  /* so that configuration with `FT_CONFIG_OPTION_SYSTEM_ZLIB' might   */
-  /* include the wrong `zconf.h' file, leading to errors.              */
 #include "zlib.h"
 
 #undef  SLOW
@@ -317,7 +305,7 @@
     zstream->next_in  = zip->buffer;
 
     if ( inflateInit2( zstream, -MAX_WBITS ) != Z_OK ||
-         !zstream->next_in                           )
+         zstream->next_in == NULL                     )
       error = FT_THROW( Invalid_File_Format );
 
   Exit:
@@ -383,16 +371,14 @@
     FT_Stream  stream  = zip->source;
     FT_ULong   size;
 
+
 #undef read	/* XXX: for SSP */
     if ( stream->read )
     {
       size = stream->read( stream, stream->pos, zip->input,
                            FT_GZIP_BUFFER_SIZE );
       if ( size == 0 )
-      {
-        zip->limit = zip->cursor;
         return FT_THROW( Invalid_Stream_Operation );
-      }
     }
     else
     {
@@ -401,10 +387,7 @@
         size = FT_GZIP_BUFFER_SIZE;
 
       if ( size == 0 )
-      {
-        zip->limit = zip->cursor;
         return FT_THROW( Invalid_Stream_Operation );
-      }
 
       FT_MEM_COPY( zip->input, stream->base + stream->pos, size );
     }
@@ -451,8 +434,7 @@
       }
       else if ( err != Z_OK )
       {
-        zip->limit = zip->cursor;
-        error      = FT_THROW( Invalid_Stream_Operation );
+        error = FT_THROW( Invalid_Stream_Operation );
         break;
       }
     }
@@ -576,22 +558,19 @@
 
       stream->descriptor.pointer = NULL;
     }
-
-    if ( !stream->read )
-      FT_FREE( stream->base );
   }
 
 
-  static unsigned long
-  ft_gzip_stream_io( FT_Stream       stream,
-                     unsigned long   offset,
-                     unsigned char*  buffer,
-                     unsigned long   count )
+  static FT_ULong
+  ft_gzip_stream_io( FT_Stream  stream,
+                     FT_ULong   pos,
+                     FT_Byte*   buffer,
+                     FT_ULong   count )
   {
     FT_GZipFile  zip = (FT_GZipFile)stream->descriptor.pointer;
 
 
-    return ft_gzip_file_io( zip, offset, buffer, count );
+    return ft_gzip_file_io( zip, pos, buffer, count );
   }
 
 
@@ -606,7 +585,7 @@
     old_pos = stream->pos;
     if ( !FT_Stream_Seek( stream, stream->size - 4 ) )
     {
-      result = FT_Stream_ReadULongLE( stream, &error );
+      result = FT_Stream_ReadULong( stream, &error );
       if ( error )
         result = 0;
 
@@ -703,15 +682,11 @@
         }
         error = FT_Err_Ok;
       }
-
-      if ( zip_size )
-        stream->size = zip_size;
-      else
-        stream->size  = 0x7FFFFFFFL;  /* don't know the real size! */
     }
 
+    stream->size  = 0x7FFFFFFFL;  /* don't know the real size! */
     stream->pos   = 0;
-    stream->base  = NULL;
+    stream->base  = 0;
     stream->read  = ft_gzip_stream_io;
     stream->close = ft_gzip_stream_close;
 

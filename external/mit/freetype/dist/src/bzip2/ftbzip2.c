@@ -8,7 +8,7 @@
 /*  parse compressed PCF fonts, as found with many X11 server              */
 /*  distributions.                                                         */
 /*                                                                         */
-/*  Copyright 2010-2018 by                                                 */
+/*  Copyright 2010-2015 by                                                 */
 /*  Joel Klinghed.                                                         */
 /*                                                                         */
 /*  based on `src/gzip/ftgzip.c'                                           */
@@ -32,7 +32,7 @@
 
 #include FT_MODULE_ERRORS_H
 
-#undef FTERRORS_H_
+#undef __FTERRORS_H__
 
 #undef  FT_ERR_PREFIX
 #define FT_ERR_PREFIX  Bzip2_Err_
@@ -180,7 +180,7 @@
     bzstream->next_in  = (char*)zip->buffer;
 
     if ( BZ2_bzDecompressInit( bzstream, 0, 0 ) != BZ_OK ||
-         !bzstream->next_in                              )
+         bzstream->next_in == NULL                       )
       error = FT_THROW( Invalid_File_Format );
 
   Exit:
@@ -254,10 +254,7 @@
       size = stream->read( stream, stream->pos, zip->input,
                            FT_BZIP2_BUFFER_SIZE );
       if ( size == 0 )
-      {
-        zip->limit = zip->cursor;
         return FT_THROW( Invalid_Stream_Operation );
-      }
     }
     else
     {
@@ -266,10 +263,7 @@
         size = FT_BZIP2_BUFFER_SIZE;
 
       if ( size == 0 )
-      {
-        zip->limit = zip->cursor;
         return FT_THROW( Invalid_Stream_Operation );
-      }
 
       FT_MEM_COPY( zip->input, stream->base + stream->pos, size );
     }
@@ -316,8 +310,7 @@
       }
       else if ( err != BZ_OK )
       {
-        zip->limit = zip->cursor;
-        error      = FT_THROW( Invalid_Stream_Operation );
+        error = FT_THROW( Invalid_Stream_Operation );
         break;
       }
     }
@@ -444,16 +437,16 @@
   }
 
 
-  static unsigned long
-  ft_bzip2_stream_io( FT_Stream       stream,
-                      unsigned long   offset,
-                      unsigned char*  buffer,
-                      unsigned long   count )
+  static FT_ULong
+  ft_bzip2_stream_io( FT_Stream  stream,
+                      FT_ULong   pos,
+                      FT_Byte*   buffer,
+                      FT_ULong   count )
   {
     FT_BZip2File  zip = (FT_BZip2File)stream->descriptor.pointer;
 
 
-    return ft_bzip2_file_io( zip, offset, buffer, count );
+    return ft_bzip2_file_io( zip, pos, buffer, count );
   }
 
 

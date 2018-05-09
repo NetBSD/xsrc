@@ -25,8 +25,8 @@ THE SOFTWARE.
 */
 
 
-#ifndef PCFREAD_H_
-#define PCFREAD_H_
+#ifndef __PCFREAD_H__
+#define __PCFREAD_H__
 
 
 #include <ft2build.h>
@@ -39,7 +39,7 @@ FT_BEGIN_HEADER
 
 FT_END_HEADER
 
-#endif /* PCFREAD_H_ */
+#endif /* __PCFREAD_H__ */
 
 
 /* END */

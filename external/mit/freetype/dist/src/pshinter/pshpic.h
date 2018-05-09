@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    The FreeType position independent code services for pshinter module. */
 /*                                                                         */
-/*  Copyright 2009-2018 by                                                 */
+/*  Copyright 2009-2015 by                                                 */
 /*  Oran Agra and Mickey Gabel.                                            */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -16,9 +16,11 @@
 /***************************************************************************/
 
 
-#ifndef PSHPIC_H_
-#define PSHPIC_H_
+#ifndef __PSHPIC_H__
+#define __PSHPIC_H__
 
+
+FT_BEGIN_HEADER
 
 #include FT_INTERNAL_PIC_H
 
@@ -30,8 +32,6 @@
 #else /* FT_CONFIG_OPTION_PIC */
 
 #include FT_INTERNAL_POSTSCRIPT_HINTS_H
-
-FT_BEGIN_HEADER
 
   typedef struct  PSHinterPIC_
   {
@@ -51,13 +51,13 @@ FT_BEGIN_HEADER
   FT_Error
   pshinter_module_class_pic_init( FT_Library  library );
 
-FT_END_HEADER
-
 #endif /* FT_CONFIG_OPTION_PIC */
 
  /* */
 
-#endif /* PSHPIC_H_ */
+FT_END_HEADER
+
+#endif /* __PSHPIC_H__ */
 
 
 /* END */

@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Arithmetic computations (body).                                      */
 /*                                                                         */
-/*  Copyright 1996-2018 by                                                 */
+/*  Copyright 1996-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -68,15 +68,14 @@
 #define FT_COMPONENT  trace_calc
 
 
-  /* transfer sign, leaving a positive number;                        */
-  /* we need an unsigned value to safely negate INT_MIN (or LONG_MIN) */
-#define FT_MOVE_SIGN( x, x_unsigned, s ) \
-  FT_BEGIN_STMNT                         \
-    if ( x < 0 )                         \
-    {                                    \
-      x_unsigned = 0U - (x_unsigned);    \
-      s          = -s;                   \
-    }                                    \
+  /* transfer sign leaving a positive number */
+#define FT_MOVE_SIGN( x, s ) \
+  FT_BEGIN_STMNT             \
+    if ( x < 0 )             \
+    {                        \
+      x = -x;                \
+      s = -s;                \
+    }                        \
   FT_END_STMNT
 
   /* The following three functions are available regardless of whether */
@@ -87,7 +86,8 @@
   FT_EXPORT_DEF( FT_Fixed )
   FT_RoundFix( FT_Fixed  a )
   {
-    return ( ADD_LONG( a, 0x8000L - ( a < 0 ) ) ) & ~0xFFFFL;
+    return a >= 0 ?   ( a + 0x8000L ) & ~0xFFFFL
+                  : -((-a + 0x8000L ) & ~0xFFFFL );
   }
 
 
@@ -96,7 +96,8 @@
   FT_EXPORT_DEF( FT_Fixed )
   FT_CeilFix( FT_Fixed  a )
   {
-    return ( ADD_LONG( a, 0xFFFFL ) ) & ~0xFFFFL;
+    return a >= 0 ?   ( a + 0xFFFFL ) & ~0xFFFFL
+                  : -((-a + 0xFFFFL ) & ~0xFFFFL );
   }
 
 
@@ -105,7 +106,8 @@
   FT_EXPORT_DEF( FT_Fixed )
   FT_FloorFix( FT_Fixed  a )
   {
-    return a & ~0xFFFFL;
+    return a >= 0 ?   a & ~0xFFFFL
+                  : -((-a) & ~0xFFFFL );
   }
 
 #ifndef FT_MSB
@@ -180,20 +182,20 @@
     FT_Long    d_;
 
 
+    FT_MOVE_SIGN( a_, s );
+    FT_MOVE_SIGN( b_, s );
+    FT_MOVE_SIGN( c_, s );
+
     a = (FT_UInt64)a_;
     b = (FT_UInt64)b_;
     c = (FT_UInt64)c_;
-
-    FT_MOVE_SIGN( a_, a, s );
-    FT_MOVE_SIGN( b_, b, s );
-    FT_MOVE_SIGN( c_, c, s );
 
     d = c > 0 ? ( a * b + ( c >> 1 ) ) / c
               : 0x7FFFFFFFUL;
 
     d_ = (FT_Long)d;
 
-    return s < 0 ? NEG_LONG( d_ ) : d_;
+    return s < 0 ? -d_ : d_;
   }
 
 
@@ -209,20 +211,20 @@
     FT_Long    d_;
 
 
+    FT_MOVE_SIGN( a_, s );
+    FT_MOVE_SIGN( b_, s );
+    FT_MOVE_SIGN( c_, s );
+
     a = (FT_UInt64)a_;
     b = (FT_UInt64)b_;
     c = (FT_UInt64)c_;
-
-    FT_MOVE_SIGN( a_, a, s );
-    FT_MOVE_SIGN( b_, b, s );
-    FT_MOVE_SIGN( c_, c, s );
 
     d = c > 0 ? a * b / c
               : 0x7FFFFFFFUL;
 
     d_ = (FT_Long)d;
 
-    return s < 0 ? NEG_LONG( d_ ) : d_;
+    return s < 0 ? -d_ : d_;
   }
 
 
@@ -234,14 +236,26 @@
   {
 #ifdef FT_MULFIX_ASSEMBLER
 
-    return FT_MULFIX_ASSEMBLER( (FT_Int32)a_, (FT_Int32)b_ );
+    return FT_MULFIX_ASSEMBLER( a_, b_ );
 
 #else
 
-    FT_Int64  ab = (FT_Int64)a_ * (FT_Int64)b_;
+    FT_Int     s = 1;
+    FT_UInt64  a, b, c;
+    FT_Long    c_;
 
-    /* this requires arithmetic right shift of signed numbers */
-    return (FT_Long)( ( ab + 0x8000L - ( ab < 0 ) ) >> 16 );
+
+    FT_MOVE_SIGN( a_, s );
+    FT_MOVE_SIGN( b_, s );
+
+    a = (FT_UInt64)a_;
+    b = (FT_UInt64)b_;
+
+    c = ( a * b + 0x8000UL ) >> 16;
+
+    c_ = (FT_Long)c;
+
+    return s < 0 ? -c_ : c_;
 
 #endif /* FT_MULFIX_ASSEMBLER */
   }
@@ -258,18 +272,18 @@
     FT_Long    q_;
 
 
+    FT_MOVE_SIGN( a_, s );
+    FT_MOVE_SIGN( b_, s );
+
     a = (FT_UInt64)a_;
     b = (FT_UInt64)b_;
-
-    FT_MOVE_SIGN( a_, a, s );
-    FT_MOVE_SIGN( b_, b, s );
 
     q = b > 0 ? ( ( a << 16 ) + ( b >> 1 ) ) / b
               : 0x7FFFFFFFUL;
 
     q_ = (FT_Long)q;
 
-    return s < 0 ? NEG_LONG( q_ ) : q_;
+    return s < 0 ? -q_ : q_;
   }
 
 
@@ -423,13 +437,16 @@
 
     /* XXX: this function does not allow 64-bit arguments */
 
+    if ( a_ == 0 || b_ == c_ )
+      return a_;
+
+    FT_MOVE_SIGN( a_, s );
+    FT_MOVE_SIGN( b_, s );
+    FT_MOVE_SIGN( c_, s );
+
     a = (FT_UInt32)a_;
     b = (FT_UInt32)b_;
     c = (FT_UInt32)c_;
-
-    FT_MOVE_SIGN( a_, a, s );
-    FT_MOVE_SIGN( b_, b, s );
-    FT_MOVE_SIGN( c_, c, s );
 
     if ( c == 0 )
       a = 0x7FFFFFFFUL;
@@ -450,13 +467,13 @@
       FT_Add64( &temp, &temp2, &temp );
 
       /* last attempt to ditch long division */
-      a = ( temp.hi == 0 ) ? temp.lo / c
-                           : ft_div64by32( temp.hi, temp.lo, c );
+      a = temp.hi == 0 ? temp.lo / c
+                       : ft_div64by32( temp.hi, temp.lo, c );
     }
 
     a_ = (FT_Long)a;
 
-    return s < 0 ? NEG_LONG( a_ ) : a_;
+    return s < 0 ? -a_ : a_;
   }
 
 
@@ -471,13 +488,16 @@
 
     /* XXX: this function does not allow 64-bit arguments */
 
+    if ( a_ == 0 || b_ == c_ )
+      return a_;
+
+    FT_MOVE_SIGN( a_, s );
+    FT_MOVE_SIGN( b_, s );
+    FT_MOVE_SIGN( c_, s );
+
     a = (FT_UInt32)a_;
     b = (FT_UInt32)b_;
     c = (FT_UInt32)c_;
-
-    FT_MOVE_SIGN( a_, a, s );
-    FT_MOVE_SIGN( b_, b, s );
-    FT_MOVE_SIGN( c_, c, s );
 
     if ( c == 0 )
       a = 0x7FFFFFFFUL;
@@ -493,13 +513,13 @@
       ft_multo64( a, b, &temp );
 
       /* last attempt to ditch long division */
-      a = ( temp.hi == 0 ) ? temp.lo / c
-                           : ft_div64by32( temp.hi, temp.lo, c );
+      a = temp.hi == 0 ? temp.lo / c
+                       : ft_div64by32( temp.hi, temp.lo, c );
     }
 
     a_ = (FT_Long)a;
 
-    return s < 0 ? NEG_LONG( a_ ) : a_;
+    return s < 0 ? -a_ : a_;
   }
 
 
@@ -525,6 +545,9 @@
     FT_Long    sa, sb;
     FT_UInt32  a, b;
 
+
+    if ( a_ == 0 || b_ == 0x10000L )
+      return a_;
 
     /*
      *  This is a clever way of converting a signed number `a' into its
@@ -576,11 +599,14 @@
 
     /* XXX: this function does not allow 64-bit arguments */
 
+    if ( a_ == 0 || b_ == 0x10000L )
+      return a_;
+
+    FT_MOVE_SIGN( a_, s );
+    FT_MOVE_SIGN( b_, s );
+
     a = (FT_UInt32)a_;
     b = (FT_UInt32)b_;
-
-    FT_MOVE_SIGN( a_, a, s );
-    FT_MOVE_SIGN( b_, b, s );
 
     if ( a + ( b >> 8 ) <= 8190UL )
       a = ( a * b + 0x8000UL ) >> 16;
@@ -595,7 +621,7 @@
 
     a_ = (FT_Long)a;
 
-    return s < 0 ? NEG_LONG( a_ ) : a_;
+    return s < 0 ? -a_ : a_;
 
 #endif /* 0 */
 
@@ -615,11 +641,11 @@
 
     /* XXX: this function does not allow 64-bit arguments */
 
+    FT_MOVE_SIGN( a_, s );
+    FT_MOVE_SIGN( b_, s );
+
     a = (FT_UInt32)a_;
     b = (FT_UInt32)b_;
-
-    FT_MOVE_SIGN( a_, a, s );
-    FT_MOVE_SIGN( b_, b, s );
 
     if ( b == 0 )
     {
@@ -648,7 +674,7 @@
 
     q_ = (FT_Long)q;
 
-    return s < 0 ? NEG_LONG( q_ ) : q_;
+    return s < 0 ? -q_ : q_;
   }
 
 
@@ -667,19 +693,13 @@
     if ( !a || !b )
       return;
 
-    xx = ADD_LONG( FT_MulFix( a->xx, b->xx ),
-                   FT_MulFix( a->xy, b->yx ) );
-    xy = ADD_LONG( FT_MulFix( a->xx, b->xy ),
-                   FT_MulFix( a->xy, b->yy ) );
-    yx = ADD_LONG( FT_MulFix( a->yx, b->xx ),
-                   FT_MulFix( a->yy, b->yx ) );
-    yy = ADD_LONG( FT_MulFix( a->yx, b->xy ),
-                   FT_MulFix( a->yy, b->yy ) );
+    xx = FT_MulFix( a->xx, b->xx ) + FT_MulFix( a->xy, b->yx );
+    xy = FT_MulFix( a->xx, b->xy ) + FT_MulFix( a->xy, b->yy );
+    yx = FT_MulFix( a->yx, b->xx ) + FT_MulFix( a->yy, b->yx );
+    yy = FT_MulFix( a->yx, b->xy ) + FT_MulFix( a->yy, b->yy );
 
-    b->xx = xx;
-    b->xy = xy;
-    b->yx = yx;
-    b->yy = yy;
+    b->xx = xx;  b->xy = xy;
+    b->yx = yx;  b->yy = yy;
   }
 
 
@@ -729,19 +749,13 @@
     if ( !a || !b )
       return;
 
-    xx = ADD_LONG( FT_MulDiv( a->xx, b->xx, val ),
-                   FT_MulDiv( a->xy, b->yx, val ) );
-    xy = ADD_LONG( FT_MulDiv( a->xx, b->xy, val ),
-                   FT_MulDiv( a->xy, b->yy, val ) );
-    yx = ADD_LONG( FT_MulDiv( a->yx, b->xx, val ),
-                   FT_MulDiv( a->yy, b->yx, val ) );
-    yy = ADD_LONG( FT_MulDiv( a->yx, b->xy, val ),
-                   FT_MulDiv( a->yy, b->yy, val ) );
+    xx = FT_MulDiv( a->xx, b->xx, val ) + FT_MulDiv( a->xy, b->yx, val );
+    xy = FT_MulDiv( a->xx, b->xy, val ) + FT_MulDiv( a->xy, b->yy, val );
+    yx = FT_MulDiv( a->yx, b->xx, val ) + FT_MulDiv( a->yy, b->yx, val );
+    yy = FT_MulDiv( a->yx, b->xy, val ) + FT_MulDiv( a->yy, b->yy, val );
 
-    b->xx = xx;
-    b->xy = xy;
-    b->yx = yx;
-    b->yy = yy;
+    b->xx = xx;  b->xy = xy;
+    b->yx = yx;  b->yy = yy;
   }
 
 
@@ -760,109 +774,14 @@
     if ( !vector || !matrix )
       return;
 
-    xz = ADD_LONG( FT_MulDiv( vector->x, matrix->xx, val ),
-                   FT_MulDiv( vector->y, matrix->xy, val ) );
-    yz = ADD_LONG( FT_MulDiv( vector->x, matrix->yx, val ),
-                   FT_MulDiv( vector->y, matrix->yy, val ) );
+    xz = FT_MulDiv( vector->x, matrix->xx, val ) +
+         FT_MulDiv( vector->y, matrix->xy, val );
+
+    yz = FT_MulDiv( vector->x, matrix->yx, val ) +
+         FT_MulDiv( vector->y, matrix->yy, val );
 
     vector->x = xz;
     vector->y = yz;
-  }
-
-
-  /* documentation is in ftcalc.h */
-
-  FT_BASE_DEF( FT_UInt32 )
-  FT_Vector_NormLen( FT_Vector*  vector )
-  {
-    FT_Int32   x_ = vector->x;
-    FT_Int32   y_ = vector->y;
-    FT_Int32   b, z;
-    FT_UInt32  x, y, u, v, l;
-    FT_Int     sx = 1, sy = 1, shift;
-
-
-    x = (FT_UInt32)x_;
-    y = (FT_UInt32)y_;
-
-    FT_MOVE_SIGN( x_, x, sx );
-    FT_MOVE_SIGN( y_, y, sy );
-
-    /* trivial cases */
-    if ( x == 0 )
-    {
-      if ( y > 0 )
-        vector->y = sy * 0x10000;
-      return y;
-    }
-    else if ( y == 0 )
-    {
-      if ( x > 0 )
-        vector->x = sx * 0x10000;
-      return x;
-    }
-
-    /* Estimate length and prenormalize by shifting so that */
-    /* the new approximate length is between 2/3 and 4/3.   */
-    /* The magic constant 0xAAAAAAAAUL (2/3 of 2^32) helps  */
-    /* achieve this in 16.16 fixed-point representation.    */
-    l = x > y ? x + ( y >> 1 )
-              : y + ( x >> 1 );
-
-    shift  = 31 - FT_MSB( l );
-    shift -= 15 + ( l >= ( 0xAAAAAAAAUL >> shift ) );
-
-    if ( shift > 0 )
-    {
-      x <<= shift;
-      y <<= shift;
-
-      /* re-estimate length for tiny vectors */
-      l = x > y ? x + ( y >> 1 )
-                : y + ( x >> 1 );
-    }
-    else
-    {
-      x >>= -shift;
-      y >>= -shift;
-      l >>= -shift;
-    }
-
-    /* lower linear approximation for reciprocal length minus one */
-    b = 0x10000 - (FT_Int32)l;
-
-    x_ = (FT_Int32)x;
-    y_ = (FT_Int32)y;
-
-    /* Newton's iterations */
-    do
-    {
-      u = (FT_UInt32)( x_ + ( x_ * b >> 16 ) );
-      v = (FT_UInt32)( y_ + ( y_ * b >> 16 ) );
-
-      /* Normalized squared length in the parentheses approaches 2^32. */
-      /* On two's complement systems, converting to signed gives the   */
-      /* difference with 2^32 even if the expression wraps around.     */
-      z = -(FT_Int32)( u * u + v * v ) / 0x200;
-      z = z * ( ( 0x10000 + b ) >> 8 ) / 0x10000;
-
-      b += z;
-
-    } while ( z > 0 );
-
-    vector->x = sx < 0 ? -(FT_Pos)u : (FT_Pos)u;
-    vector->y = sy < 0 ? -(FT_Pos)v : (FT_Pos)v;
-
-    /* Conversion to signed helps to recover from likely wrap around */
-    /* in calculating the prenormalized length, because it gives the */
-    /* correct difference with 2^32 on two's complement systems.     */
-    l = (FT_UInt32)( 0x10000 + (FT_Int32)( u * x + v * y ) / 0x10000 );
-    if ( shift > 0 )
-      l = ( l + ( 1 << ( shift - 1 ) ) ) >> shift;
-    else
-      l <<= -shift;
-
-    return l;
   }
 
 
@@ -913,36 +832,52 @@
                          FT_Pos  out_x,
                          FT_Pos  out_y )
   {
+    FT_Long  result; /* avoid overflow on 16-bit system */
+
+
+    /* deal with the trivial cases quickly */
+    if ( in_y == 0 )
+    {
+      if ( in_x >= 0 )
+        result = out_y;
+      else
+        result = -out_y;
+    }
+    else if ( in_x == 0 )
+    {
+      if ( in_y >= 0 )
+        result = -out_x;
+      else
+        result = out_x;
+    }
+    else if ( out_y == 0 )
+    {
+      if ( out_x >= 0 )
+        result = in_y;
+      else
+        result = -in_y;
+    }
+    else if ( out_x == 0 )
+    {
+      if ( out_y >= 0 )
+        result = -in_x;
+      else
+        result =  in_x;
+    }
+    else /* general case */
+    {
 #ifdef FT_LONG64
 
-    FT_Int64  delta = (FT_Int64)in_x * out_y - (FT_Int64)in_y * out_x;
+      FT_Int64  delta = (FT_Int64)in_x * out_y - (FT_Int64)in_y * out_x;
 
 
-    return ( delta > 0 ) - ( delta < 0 );
+      if ( delta == 0 )
+        result = 0;
+      else
+        result = 1 - 2 * ( delta < 0 );
 
 #else
 
-    FT_Int  result;
-
-
-    /* we silently ignore overflow errors, since such large values */
-    /* lead to even more (harmless) rendering errors later on      */
-    if ( ADD_LONG( FT_ABS( in_x ), FT_ABS( out_y ) ) <= 131071L &&
-         ADD_LONG( FT_ABS( in_y ), FT_ABS( out_x ) ) <= 131071L )
-    {
-      FT_Long  z1 = MUL_LONG( in_x, out_y );
-      FT_Long  z2 = MUL_LONG( in_y, out_x );
-
-
-      if ( z1 > z2 )
-        result = +1;
-      else if ( z1 < z2 )
-        result = -1;
-      else
-        result = 0;
-    }
-    else /* products might overflow 32 bits */
-    {
       FT_Int64  z1, z2;
 
 
@@ -960,12 +895,12 @@
         result = -1;
       else
         result = 0;
+
+#endif
     }
 
     /* XXX: only the sign of return value, +1/0/-1 must be used */
-    return result;
-
-#endif
+    return (FT_Int)result;
   }
 
 

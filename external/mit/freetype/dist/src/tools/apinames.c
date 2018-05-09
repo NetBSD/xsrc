@@ -22,7 +22,7 @@
 #include <ctype.h>
 
 #define  PROGRAM_NAME     "apinames"
-#define  PROGRAM_VERSION  "0.3"
+#define  PROGRAM_VERSION  "0.2"
 
 #define  LINEBUFF_SIZE  1024
 
@@ -32,8 +32,7 @@ typedef enum  OutputFormat_
   OUTPUT_WINDOWS_DEF,   /* output a Windows .DEF file for Visual C++ or Mingw */
   OUTPUT_BORLAND_DEF,   /* output a Windows .DEF file for Borland C++         */
   OUTPUT_WATCOM_LBC,    /* output a Watcom Linker Command File                */
-  OUTPUT_NETWARE_IMP,   /* output a NetWare ImportFile                        */
-  OUTPUT_GNU_VERMAP     /* output a version map for GNU or Solaris linker     */
+  OUTPUT_NETWARE_IMP    /* output a NetWare ImportFile                        */
 
 } OutputFormat;
 
@@ -91,14 +90,14 @@ names_add( const char*  name,
     max_names += (max_names >> 1) + 4;
     the_names  = (NameRec*)realloc( the_names,
                                     sizeof ( the_names[0] ) * max_names );
-    if ( !the_names )
+    if ( the_names == NULL )
       panic( "not enough memory" );
   }
   nm = &the_names[num_names++];
 
   nm->hash = h;
   nm->name = (char*)malloc( len+1 );
-  if ( !nm->name )
+  if ( nm->name == NULL )
     panic( "not enough memory" );
 
   memcpy( nm->name, name, len );
@@ -160,7 +159,7 @@ names_dump( FILE*         out,
         char         temp[512];
 
 
-        if ( !dll_name )
+        if ( dll_name == NULL )
         {
           fprintf( stderr,
                    "you must provide a DLL name with the -d option!\n" );
@@ -169,7 +168,7 @@ names_dump( FILE*         out,
 
         /* we must omit the .dll suffix from the library name */
         dot = strchr( dll_name, '.' );
-        if ( dot )
+        if ( dot != NULL )
         {
           int  len = dot - dll_name;
 
@@ -191,20 +190,11 @@ names_dump( FILE*         out,
 
     case OUTPUT_NETWARE_IMP:
       {
-        if ( dll_name )
+        if ( dll_name != NULL )
           fprintf( out, "  (%s)\n", dll_name );
         for ( nn = 0; nn < num_names - 1; nn++ )
           fprintf( out, "  %s,\n", the_names[nn].name );
         fprintf( out, "  %s\n", the_names[num_names - 1].name );
-      }
-      break;
-
-    case OUTPUT_GNU_VERMAP:
-      {
-        fprintf( out, "{\n\tglobal:\n" );
-        for ( nn = 0; nn < num_names; nn++ )
-          fprintf( out, "\t\t%s;\n", the_names[nn].name );
-        fprintf( out, "\tlocal:\n\t\t*;\n};\n" );
       }
       break;
 
@@ -333,7 +323,6 @@ usage( void )
    "           -wB    : output .DEF file for Borland C++\n"
    "           -wW    : output Watcom Linker Response File\n"
    "           -wN    : output NetWare Import File\n"
-   "           -wL    : output version map for GNU or Solaris linker\n"
    "\n";
 
   fprintf( stderr,
@@ -382,7 +371,7 @@ int  main( int argc, const char* const*  argv )
           arg += 2;
 
         out = fopen( arg, "wt" );
-        if ( !out )
+        if ( out == NULL )
         {
           fprintf( stderr, "could not open '%s' for writing\n", argv[2] );
           exit(3);
@@ -421,10 +410,6 @@ int  main( int argc, const char* const*  argv )
             format = OUTPUT_NETWARE_IMP;
             break;
 
-          case 'L':
-            format = OUTPUT_GNU_VERMAP;
-            break;
-
           case 0:
             break;
 
@@ -455,7 +440,7 @@ int  main( int argc, const char* const*  argv )
     {
       FILE*  file = fopen( argv[0], "rb" );
 
-      if ( !file )
+      if ( file == NULL )
         fprintf( stderr, "unable to open '%s'\n", argv[0] );
       else
       {

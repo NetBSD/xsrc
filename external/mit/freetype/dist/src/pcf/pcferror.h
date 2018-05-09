@@ -22,12 +22,12 @@
   /*                                                                       */
   /*************************************************************************/
 
-#ifndef PCFERROR_H_
-#define PCFERROR_H_
+#ifndef __PCFERROR_H__
+#define __PCFERROR_H__
 
 #include FT_MODULE_ERRORS_H
 
-#undef FTERRORS_H_
+#undef __FTERRORS_H__
 
 #undef  FT_ERR_PREFIX
 #define FT_ERR_PREFIX  PCF_Err_
@@ -35,7 +35,7 @@
 
 #include FT_ERRORS_H
 
-#endif /* PCFERROR_H_ */
+#endif /* __PCFERROR_H__ */
 
 
 /* END */

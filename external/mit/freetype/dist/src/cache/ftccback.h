@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Callback functions of the caching sub-system (specification only).   */
 /*                                                                         */
-/*  Copyright 2004-2018 by                                                 */
+/*  Copyright 2004-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -15,8 +15,8 @@
 /*                                                                         */
 /***************************************************************************/
 
-#ifndef FTCCBACK_H_
-#define FTCCBACK_H_
+#ifndef __FTCCBACK_H__
+#define __FTCCBACK_H__
 
 #include <ft2build.h>
 #include FT_CACHE_H
@@ -86,7 +86,6 @@
                     FTC_Manager  manager );
 
 
-#endif /* FTCCBACK_H_ */
-
+#endif /* __FTCCBACK_H__ */
 
 /* END */

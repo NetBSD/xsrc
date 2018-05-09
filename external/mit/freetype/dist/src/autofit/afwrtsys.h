@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Auto-fitter writing systems (specification only).                    */
 /*                                                                         */
-/*  Copyright 2013-2018 by                                                 */
+/*  Copyright 2013-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -16,8 +16,8 @@
 /***************************************************************************/
 
 
-#ifndef AFWRTSYS_H_
-#define AFWRTSYS_H_
+#ifndef __AFWRTSYS_H__
+#define __AFWRTSYS_H__
 
   /* Since preprocessor directives can't create other preprocessor */
   /* directives, we have to include the header files manually.     */
@@ -30,7 +30,7 @@
 #include "aflatin2.h"
 #endif
 
-#endif /* AFWRTSYS_H_ */
+#endif /* __AFWRTSYS_H__ */
 
 
   /* The following part can be included multiple times. */

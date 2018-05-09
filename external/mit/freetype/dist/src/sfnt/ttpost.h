@@ -2,10 +2,10 @@
 /*                                                                         */
 /*  ttpost.h                                                               */
 /*                                                                         */
-/*    PostScript name table processing for TrueType and OpenType fonts     */
+/*    Postcript name table processing for TrueType and OpenType fonts      */
 /*    (specification).                                                     */
 /*                                                                         */
-/*  Copyright 1996-2018 by                                                 */
+/*  Copyright 1996-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -17,8 +17,8 @@
 /***************************************************************************/
 
 
-#ifndef TTPOST_H_
-#define TTPOST_H_
+#ifndef __TTPOST_H__
+#define __TTPOST_H__
 
 
 #include <ft2build.h>
@@ -40,7 +40,7 @@ FT_BEGIN_HEADER
 
 FT_END_HEADER
 
-#endif /* TTPOST_H_ */
+#endif /* __TTPOST_H__ */
 
 
 /* END */

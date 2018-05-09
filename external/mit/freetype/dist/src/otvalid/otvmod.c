@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    FreeType's OpenType validation module implementation (body).         */
 /*                                                                         */
-/*  Copyright 2004-2018 by                                                 */
+/*  Copyright 2004-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -240,7 +240,7 @@
   static
   const FT_Service_OTvalidateRec  otvalid_interface =
   {
-    otv_validate        /* validate */
+    otv_validate
   };
 
 
@@ -271,11 +271,11 @@
     0x10000L,
     0x20000L,
 
-    NULL,              /* module-specific interface */
+    0,              /* module-specific interface */
 
-    (FT_Module_Constructor)NULL,                /* module_init   */
-    (FT_Module_Destructor) NULL,                /* module_done   */
-    (FT_Module_Requester)  otvalid_get_service  /* get_interface */
+    (FT_Module_Constructor)0,
+    (FT_Module_Destructor) 0,
+    (FT_Module_Requester)  otvalid_get_service
   };
 
 

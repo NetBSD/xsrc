@@ -5,7 +5,7 @@
 /*    FreeType's TrueTypeGX/AAT validation module implementation           */
 /*    (specification).                                                     */
 /*                                                                         */
-/*  Copyright 2004-2018 by                                                 */
+/*  Copyright 2004-2015 by                                                 */
 /*  suzuki toshiya, Masatake YAMATO, Red Hat K.K.,                         */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
@@ -26,8 +26,8 @@
 /***************************************************************************/
 
 
-#ifndef GXVMOD_H_
-#define GXVMOD_H_
+#ifndef __GXVMOD_H__
+#define __GXVMOD_H__
 
 #include <ft2build.h>
 #include FT_MODULE_H
@@ -45,7 +45,7 @@ FT_BEGIN_HEADER
 
 FT_END_HEADER
 
-#endif /* GXVMOD_H_ */
+#endif /* __GXVMOD_H__ */
 
 
 /* END */

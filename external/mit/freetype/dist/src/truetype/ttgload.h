@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    TrueType Glyph Loader (specification).                               */
 /*                                                                         */
-/*  Copyright 1996-2018 by                                                 */
+/*  Copyright 1996-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -16,8 +16,8 @@
 /***************************************************************************/
 
 
-#ifndef TTGLOAD_H_
-#define TTGLOAD_H_
+#ifndef __TTGLOAD_H__
+#define __TTGLOAD_H__
 
 
 #include <ft2build.h>
@@ -56,7 +56,7 @@ FT_BEGIN_HEADER
 
 FT_END_HEADER
 
-#endif /* TTGLOAD_H_ */
+#endif /* __TTGLOAD_H__ */
 
 
 /* END */

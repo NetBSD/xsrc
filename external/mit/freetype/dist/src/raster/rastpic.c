@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    The FreeType position independent code services for raster module.   */
 /*                                                                         */
-/*  Copyright 2009-2018 by                                                 */
+/*  Copyright 2009-2015 by                                                 */
 /*  Oran Agra and Mickey Gabel.                                            */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -59,9 +59,8 @@
     FT_Memory          memory        = library->memory;
 
 
-    /* XXX: since this function also served the no longer available  */
-    /*      raster5 renderer it uses reference counting, which could */
-    /*      be removed now                                           */
+    /* since this function also serves raster5 renderer, */
+    /* it implements reference counting                  */
     if ( pic_container->raster )
     {
       ((RasterPIC*)pic_container->raster)->ref_count++;
@@ -81,6 +80,21 @@
     FT_Init_Class_ft_standard_raster( &container->ft_standard_raster );
 
     return error;
+  }
+
+
+  /* re-route these init and free functions to the above functions */
+  FT_Error
+  ft_raster5_renderer_class_pic_init( FT_Library  library )
+  {
+    return ft_raster1_renderer_class_pic_init( library );
+  }
+
+
+  void
+  ft_raster5_renderer_class_pic_free( FT_Library  library )
+  {
+    ft_raster1_renderer_class_pic_free( library );
   }
 
 #endif /* FT_CONFIG_OPTION_PIC */

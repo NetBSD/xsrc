@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Type 1 font loader (specification).                                  */
 /*                                                                         */
-/*  Copyright 1996-2018 by                                                 */
+/*  Copyright 1996-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -16,8 +16,8 @@
 /***************************************************************************/
 
 
-#ifndef T1LOAD_H_
-#define T1LOAD_H_
+#ifndef __T1LOAD_H__
+#define __T1LOAD_H__
 
 
 #include <ft2build.h>
@@ -46,7 +46,6 @@ FT_BEGIN_HEADER
 
     FT_Int        num_subrs;
     PS_TableRec   subrs;
-    FT_Hash       subrs_hash;
     FT_Bool       fontdata;
 
     FT_UInt       keywords_encountered; /* T1_LOADER_ENCOUNTERED_XXX */
@@ -70,7 +69,7 @@ FT_BEGIN_HEADER
   T1_Get_Multi_Master( T1_Face           face,
                        FT_Multi_Master*  master );
 
-  FT_LOCAL( FT_Error )
+  FT_LOCAL_DEF( FT_Error )
   T1_Get_MM_Var( T1_Face      face,
                  FT_MM_Var*  *master );
 
@@ -80,25 +79,11 @@ FT_BEGIN_HEADER
                    FT_Fixed*  coords );
 
   FT_LOCAL( FT_Error )
-  T1_Get_MM_Blend( T1_Face    face,
-                   FT_UInt    num_coords,
-                   FT_Fixed*  coords );
-
-  FT_LOCAL( FT_Error )
   T1_Set_MM_Design( T1_Face   face,
                     FT_UInt   num_coords,
                     FT_Long*  coords );
 
-  FT_LOCAL( FT_Error )
-  T1_Reset_MM_Blend( T1_Face  face,
-                     FT_UInt  instance_index );
-
-  FT_LOCAL( FT_Error )
-  T1_Get_Var_Design( T1_Face    face,
-                     FT_UInt    num_coords,
-                     FT_Fixed*  coords );
-
-  FT_LOCAL( FT_Error )
+  FT_LOCAL_DEF( FT_Error )
   T1_Set_Var_Design( T1_Face    face,
                      FT_UInt    num_coords,
                      FT_Fixed*  coords );
@@ -111,7 +96,7 @@ FT_BEGIN_HEADER
 
 FT_END_HEADER
 
-#endif /* T1LOAD_H_ */
+#endif /* __T1LOAD_H__ */
 
 
 /* END */

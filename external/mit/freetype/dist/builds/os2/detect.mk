@@ -3,7 +3,7 @@
 #
 
 
-# Copyright 1996-2018 by
+# Copyright 1996-2015 by
 # David Turner, Robert Wilhelm, and Werner Lemberg.
 #
 # This file is part of the FreeType project, and may only be used, modified,
@@ -65,7 +65,7 @@ ifeq ($(PLATFORM),os2)
     .PHONY: devel
   endif
 
-  setup: std_setup
+  setup: dos_setup
 
 endif   # test PLATFORM os2
 

@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    TrueTypeGX/AAT feat table validation (specification).                */
 /*                                                                         */
-/*  Copyright 2004-2018 by                                                 */
+/*  Copyright 2004-2015 by                                                 */
 /*  suzuki toshiya, Masatake YAMATO, Red Hat K.K.,                         */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
@@ -25,8 +25,8 @@
 /***************************************************************************/
 
 
-#ifndef GXVFEAT_H_
-#define GXVFEAT_H_
+#ifndef __GXVFEAT_H__
+#define __GXVFEAT_H__
 
 
 #include "gxvalid.h"
@@ -167,7 +167,7 @@
   };
 
 
-#endif /* GXVFEAT_H_ */
+#endif /* __GXVFEAT_H__ */
 
 
 /* END */

@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Type 1 font loader (body).                                           */
 /*                                                                         */
-/*  Copyright 1996-2018 by                                                 */
+/*  Copyright 1996-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -66,7 +66,6 @@
 #include FT_MULTIPLE_MASTERS_H
 #include FT_INTERNAL_TYPE1_TYPES_H
 #include FT_INTERNAL_CALC_H
-#include FT_INTERNAL_HASH_H
 
 #include "t1load.h"
 #include "t1errors.h"
@@ -237,7 +236,7 @@
     if ( ncv <= axismap->blend_points[0] )
       return INT_TO_FIXED( axismap->design_points[0] );
 
-    for ( j = 1; j < axismap->num_points; j++ )
+    for ( j = 1; j < axismap->num_points; ++j )
     {
       if ( ncv <= axismap->blend_points[j] )
         return INT_TO_FIXED( axismap->design_points[j - 1] ) +
@@ -321,24 +320,21 @@
 
     mmvar->num_axis        = mmaster.num_axis;
     mmvar->num_designs     = mmaster.num_designs;
-    mmvar->num_namedstyles = 0;                           /* Not supported */
+    mmvar->num_namedstyles = ~0U;                        /* Does not apply */
     mmvar->axis            = (FT_Var_Axis*)&mmvar[1];
                                       /* Point to axes after MM_Var struct */
     mmvar->namedstyle      = NULL;
 
-    for ( i = 0; i < mmaster.num_axis; i++ )
+    for ( i = 0 ; i < mmaster.num_axis; ++i )
     {
       mmvar->axis[i].name    = mmaster.axis[i].name;
-      mmvar->axis[i].minimum = INT_TO_FIXED( mmaster.axis[i].minimum );
-      mmvar->axis[i].maximum = INT_TO_FIXED( mmaster.axis[i].maximum );
+      mmvar->axis[i].minimum = INT_TO_FIXED( mmaster.axis[i].minimum);
+      mmvar->axis[i].maximum = INT_TO_FIXED( mmaster.axis[i].maximum);
       mmvar->axis[i].def     = ( mmvar->axis[i].minimum +
                                    mmvar->axis[i].maximum ) / 2;
                             /* Does not apply.  But this value is in range */
       mmvar->axis[i].strid   = ~0U;                      /* Does not apply */
       mmvar->axis[i].tag     = ~0U;                      /* Does not apply */
-
-      if ( !mmvar->axis[i].name )
-        continue;
 
       if ( ft_strcmp( mmvar->axis[i].name, "Weight" ) == 0 )
         mmvar->axis[i].tag = FT_MAKE_TAG( 'w', 'g', 'h', 't' );
@@ -354,7 +350,7 @@
                         axiscoords,
                         blend->num_axis );
 
-      for ( i = 0; i < mmaster.num_axis; i++ )
+      for ( i = 0; i < mmaster.num_axis; ++i )
         mmvar->axis[i].def = mm_axis_unmap( &blend->design_map[i],
                                             axiscoords[i] );
     }
@@ -366,15 +362,13 @@
   }
 
 
-  static FT_Error
-  t1_set_mm_blend( T1_Face    face,
+  FT_LOCAL_DEF( FT_Error )
+  T1_Set_MM_Blend( T1_Face    face,
                    FT_UInt    num_coords,
                    FT_Fixed*  coords )
   {
     PS_Blend  blend = face->blend;
     FT_UInt   n, m;
-
-    FT_Bool  have_diff = 0;
 
 
     if ( !blend )
@@ -407,70 +401,8 @@
 
         result = FT_MulFix( result, factor );
       }
-
-      if ( blend->weight_vector[n] != result )
-      {
-        blend->weight_vector[n] = result;
-        have_diff               = 1;
-      }
+      blend->weight_vector[n] = result;
     }
-
-    /* return value -1 indicates `no change' */
-    return have_diff ? FT_Err_Ok : -1;
-  }
-
-
-  FT_LOCAL_DEF( FT_Error )
-  T1_Set_MM_Blend( T1_Face    face,
-                   FT_UInt    num_coords,
-                   FT_Fixed*  coords )
-  {
-    FT_Error  error;
-
-
-    error = t1_set_mm_blend( face, num_coords, coords );
-    if ( error )
-      return error;
-
-    if ( num_coords )
-      face->root.face_flags |= FT_FACE_FLAG_VARIATION;
-    else
-      face->root.face_flags &= ~FT_FACE_FLAG_VARIATION;
-
-    return FT_Err_Ok;
-  }
-
-
-  FT_LOCAL_DEF( FT_Error )
-  T1_Get_MM_Blend( T1_Face    face,
-                   FT_UInt    num_coords,
-                   FT_Fixed*  coords )
-  {
-    PS_Blend  blend = face->blend;
-
-    FT_Fixed  axiscoords[4];
-    FT_UInt   i, nc;
-
-
-    if ( !blend )
-      return FT_THROW( Invalid_Argument );
-
-    mm_weights_unmap( blend->weight_vector,
-                      axiscoords,
-                      blend->num_axis );
-
-    nc = num_coords;
-    if ( num_coords > blend->num_axis )
-    {
-      FT_TRACE2(( "T1_Get_MM_Blend: only using first %d of %d coordinates\n",
-                  blend->num_axis, num_coords ));
-      nc = blend->num_axis;
-    }
-
-    for ( i = 0; i < nc; i++ )
-      coords[i] = axiscoords[i];
-    for ( ; i < num_coords; i++ )
-      coords[i] = 0x8000;
 
     return FT_Err_Ok;
   }
@@ -481,7 +413,6 @@
                     FT_UInt   num_coords,
                     FT_Long*  coords )
   {
-    FT_Error  error;
     PS_Blend  blend = face->blend;
     FT_UInt   n, p;
     FT_Fixed  final_blends[T1_MAX_MM_DESIGNS];
@@ -548,28 +479,7 @@
       final_blends[n] = the_blend;
     }
 
-    error = t1_set_mm_blend( face, blend->num_axis, final_blends );
-    if ( error )
-      return error;
-
-    if ( num_coords )
-      face->root.face_flags |= FT_FACE_FLAG_VARIATION;
-    else
-      face->root.face_flags &= ~FT_FACE_FLAG_VARIATION;
-
-    return FT_Err_Ok;
-  }
-
-
-  /* MM fonts don't have named instances, so only the design is reset */
-
-  FT_LOCAL_DEF( FT_Error )
-  T1_Reset_MM_Blend( T1_Face  face,
-                     FT_UInt  instance_index )
-  {
-    FT_UNUSED( instance_index );
-
-    return T1_Set_MM_Blend( face, 0, NULL );
+    return T1_Set_MM_Blend( face, blend->num_axis, final_blends );
   }
 
 
@@ -590,46 +500,10 @@
      if ( num_coords > T1_MAX_MM_AXIS )
        num_coords = T1_MAX_MM_AXIS;
 
-     for ( i = 0; i < num_coords; i++ )
+     for ( i = 0; i < num_coords; ++i )
        lcoords[i] = FIXED_TO_INT( coords[i] );
 
      return T1_Set_MM_Design( face, num_coords, lcoords );
-  }
-
-
-  FT_LOCAL_DEF( FT_Error )
-  T1_Get_Var_Design( T1_Face    face,
-                     FT_UInt    num_coords,
-                     FT_Fixed*  coords )
-  {
-    PS_Blend  blend = face->blend;
-
-    FT_Fixed  axiscoords[4];
-    FT_UInt   i, nc;
-
-
-    if ( !blend )
-      return FT_THROW( Invalid_Argument );
-
-    mm_weights_unmap( blend->weight_vector,
-                      axiscoords,
-                      blend->num_axis );
-
-    nc = num_coords;
-    if ( num_coords > blend->num_axis )
-    {
-      FT_TRACE2(( "T1_Get_Var_Design:"
-                  " only using first %d of %d coordinates\n",
-                  blend->num_axis, num_coords ));
-      nc = blend->num_axis;
-    }
-
-    for ( i = 0; i < nc; i++ )
-      coords[i] = mm_axis_unmap( &blend->design_map[i], axiscoords[i] );
-    for ( ; i < num_coords; i++ )
-      coords[i] = 0;
-
-    return FT_Err_Ok;
   }
 
 
@@ -739,15 +613,6 @@
       {
         error = FT_THROW( Invalid_File_Format );
         goto Exit;
-      }
-
-      name = (FT_Byte*)blend->axis_names[n];
-      if ( name )
-      {
-        FT_TRACE0(( "parse_blend_axis_types:"
-                    " overwriting axis name `%s' with `%*.s'\n",
-                    name, len, token->start ));
-        FT_FREE( name );
       }
 
       if ( FT_ALLOC( blend->axis_names[n], len + 1 ) )
@@ -918,13 +783,6 @@
       if ( num_points <= 0 || num_points > T1_MAX_MM_MAP_POINTS )
       {
         FT_ERROR(( "parse_blend_design_map: incorrect table\n" ));
-        error = FT_THROW( Invalid_File_Format );
-        goto Exit;
-      }
-
-      if ( map->design_points )
-      {
-        FT_ERROR(( "parse_blend_design_map: duplicate table\n" ));
         error = FT_THROW( Invalid_File_Format );
         goto Exit;
       }
@@ -1249,7 +1107,6 @@
     FT_Int      result;
 
 
-    /* input is scaled by 1000 to accommodate default FontMatrix */
     result = T1_ToFixedArray( parser, 6, temp, 3 );
 
     if ( result < 6 )
@@ -1267,12 +1124,15 @@
       return;
     }
 
-    /* atypical case */
+    /* Set Units per EM based on FontMatrix values.  We set the value to */
+    /* 1000 / temp_scale, because temp_scale was already multiplied by   */
+    /* 1000 (in t1_tofixed, from psobjs.c).                              */
+
+    root->units_per_EM = (FT_UShort)FT_DivFix( 1000, temp_scale );
+
+    /* we need to scale the values by 1.0/temp_scale */
     if ( temp_scale != 0x10000L )
     {
-      /* set units per EM based on FontMatrix values */
-      root->units_per_EM = (FT_UShort)FT_DivFix( 1000, temp_scale );
-
       temp[0] = FT_DivFix( temp[0], temp_scale );
       temp[1] = FT_DivFix( temp[1], temp_scale );
       temp[2] = FT_DivFix( temp[2], temp_scale );
@@ -1317,7 +1177,7 @@
     if ( ft_isdigit( *cur ) || *cur == '[' )
     {
       T1_Encoding  encode          = &face->type1.encoding;
-      FT_Int       count, array_size, n;
+      FT_Int       count, n;
       PS_Table     char_table      = &loader->encoding_table;
       FT_Memory    memory          = parser->root.memory;
       FT_Error     error;
@@ -1334,39 +1194,23 @@
       else
         count = (FT_Int)T1_ToInt( parser );
 
-      array_size = count;
-      if ( count > 256 )
-      {
-        FT_TRACE2(( "parse_encoding:"
-                    " only using first 256 encoding array entries\n" ));
-        array_size = 256;
-      }
-
       T1_Skip_Spaces( parser );
       if ( parser->root.cursor >= limit )
         return;
 
-      /* PostScript happily allows overwriting of encoding arrays */
-      if ( encode->char_index )
-      {
-        FT_FREE( encode->char_index );
-        FT_FREE( encode->char_name );
-        T1_Release_Table( char_table );
-      }
-
       /* we use a T1_Table to store our charnames */
-      loader->num_chars = encode->num_chars = array_size;
-      if ( FT_NEW_ARRAY( encode->char_index, array_size )     ||
-           FT_NEW_ARRAY( encode->char_name,  array_size )     ||
+      loader->num_chars = encode->num_chars = count;
+      if ( FT_NEW_ARRAY( encode->char_index, count )     ||
+           FT_NEW_ARRAY( encode->char_name,  count )     ||
            FT_SET_ERROR( psaux->ps_table_funcs->init(
-                           char_table, array_size, memory ) ) )
+                           char_table, count, memory ) ) )
       {
         parser->root.error = error;
         return;
       }
 
       /* We need to `zero' out encoding_table.elements */
-      for ( n = 0; n < array_size; n++ )
+      for ( n = 0; n < count; n++ )
       {
         char*  notdef = (char *)".notdef";
 
@@ -1459,14 +1303,11 @@
 
             len = (FT_UInt)( parser->root.cursor - cur );
 
-            if ( n < array_size )
-            {
-              parser->root.error = T1_Add_Table( char_table, charcode,
-                                                 cur, len + 1 );
-              if ( parser->root.error )
-                return;
-              char_table->elements[charcode][len] = '\0';
-            }
+            parser->root.error = T1_Add_Table( char_table, charcode,
+                                               cur, len + 1 );
+            if ( parser->root.error )
+              return;
+            char_table->elements[charcode][len] = '\0';
 
             n++;
           }
@@ -1529,7 +1370,6 @@
     FT_Memory  memory = parser->root.memory;
     FT_Error   error;
     FT_Int     num_subrs;
-    FT_UInt    count;
 
     PSAux_Service  psaux = (PSAux_Service)face->psaux;
 
@@ -1549,47 +1389,6 @@
     }
 
     num_subrs = (FT_Int)T1_ToInt( parser );
-    if ( num_subrs < 0 )
-    {
-      parser->root.error = FT_THROW( Invalid_File_Format );
-      return;
-    }
-
-    /* we certainly need more than 8 bytes per subroutine */
-    if ( parser->root.limit >= parser->root.cursor                     &&
-         num_subrs > ( parser->root.limit - parser->root.cursor ) >> 3 )
-    {
-      /*
-       * There are two possibilities.  Either the font contains an invalid
-       * value for `num_subrs', or we have a subsetted font where the
-       * subroutine indices are not adjusted, e.g.
-       *
-       *   /Subrs 812 array
-       *     dup 0 { ... } NP
-       *     dup 51 { ... } NP
-       *     dup 681 { ... } NP
-       *   ND
-       *
-       * In both cases, we use a number hash that maps from subr indices to
-       * actual array elements.
-       */
-
-      FT_TRACE0(( "parse_subrs: adjusting number of subroutines"
-                  " (from %d to %d)\n",
-                  num_subrs,
-                  ( parser->root.limit - parser->root.cursor ) >> 3 ));
-      num_subrs = ( parser->root.limit - parser->root.cursor ) >> 3;
-
-      if ( !loader->subrs_hash )
-      {
-        if ( FT_NEW( loader->subrs_hash ) )
-          goto Fail;
-
-        error = ft_hash_num_init( loader->subrs_hash, memory );
-        if ( error )
-          goto Fail;
-      }
-    }
 
     /* position the parser right before the `dup' of the first subr */
     T1_Skip_PS_Token( parser );         /* `array' */
@@ -1610,7 +1409,7 @@
     /*                         */
     /*   `index' + binary data */
     /*                         */
-    for ( count = 0; ; count++ )
+    for (;;)
     {
       FT_Long   idx;
       FT_ULong  size;
@@ -1646,14 +1445,6 @@
         T1_Skip_Spaces  ( parser );
       }
 
-      /* if we use a hash, the subrs index is the key, and a running */
-      /* counter specified for `T1_Add_Table' acts as the value      */
-      if ( loader->subrs_hash )
-      {
-        ft_hash_num_insert( idx, count, loader->subrs_hash, memory );
-        idx = count;
-      }
-
       /* with synthetic fonts it is possible we get here twice */
       if ( loader->num_subrs )
         continue;
@@ -1665,7 +1456,7 @@
       /*                                                         */
       if ( face->type1.private_dict.lenIV >= 0 )
       {
-        FT_Byte*  temp = NULL;
+        FT_Byte*  temp;
 
 
         /* some fonts define empty subr records -- this is not totally */
@@ -1719,7 +1510,7 @@
 
     PSAux_Service  psaux        = (PSAux_Service)face->psaux;
 
-    FT_Byte*       cur          = parser->root.cursor;
+    FT_Byte*       cur;
     FT_Byte*       limit        = parser->root.limit;
     FT_Int         n, num_glyphs;
     FT_Int         notdef_index = 0;
@@ -1731,15 +1522,6 @@
     {
       error = FT_THROW( Invalid_File_Format );
       goto Fail;
-    }
-
-    /* we certainly need more than 8 bytes per glyph */
-    if ( num_glyphs > ( limit - cur ) >> 3 )
-    {
-      FT_TRACE0(( "parse_charstrings: adjusting number of glyphs"
-                  " (from %d to %d)\n",
-                  num_glyphs, ( limit - cur ) >> 3 ));
-      num_glyphs = ( limit - cur ) >> 3;
     }
 
     /* some fonts like Optima-Oblique not only define the /CharStrings */
@@ -1869,7 +1651,7 @@
         if ( face->type1.private_dict.lenIV >= 0 &&
              n < num_glyphs + TABLE_EXTEND       )
         {
-          FT_Byte*  temp = NULL;
+          FT_Byte*  temp;
 
 
           if ( size <= (FT_ULong)face->type1.private_dict.lenIV )
@@ -1895,12 +1677,6 @@
 
         n++;
       }
-    }
-
-    if ( !n )
-    {
-      error = FT_THROW( Invalid_File_Format );
-      goto Fail;
     }
 
     loader->num_glyphs = n;
@@ -2231,7 +2007,7 @@
                 parser->root.error = t1_load_keyword( face,
                                                       loader,
                                                       keyword );
-                if ( parser->root.error )
+                if ( parser->root.error != FT_Err_Ok )
                 {
                   if ( FT_ERR_EQ( parser->root.error, Ignore ) )
                     parser->root.error = FT_Err_Ok;
@@ -2270,7 +2046,18 @@
   {
     FT_UNUSED( face );
 
-    FT_ZERO( loader );
+    FT_MEM_ZERO( loader, sizeof ( *loader ) );
+    loader->num_glyphs = 0;
+    loader->num_chars  = 0;
+
+    /* initialize the tables -- simply set their `init' field to 0 */
+    loader->encoding_table.init  = 0;
+    loader->charstrings.init     = 0;
+    loader->glyph_names.init     = 0;
+    loader->subrs.init           = 0;
+    loader->swap_table.init      = 0;
+    loader->fontdata             = 0;
+    loader->keywords_encountered = 0;
   }
 
 
@@ -2278,7 +2065,6 @@
   t1_done_loader( T1_Loader  loader )
   {
     T1_Parser  parser = &loader->parser;
-    FT_Memory  memory = parser->root.memory;
 
 
     /* finalize tables */
@@ -2287,10 +2073,6 @@
     T1_Release_Table( &loader->glyph_names );
     T1_Release_Table( &loader->swap_table );
     T1_Release_Table( &loader->subrs );
-
-    /* finalize hash */
-    ft_hash_num_free( loader->subrs_hash, memory );
-    FT_FREE( loader->subrs_hash );
 
     /* finalize parser */
     T1_Finalize_Parser( parser );
@@ -2408,15 +2190,11 @@
 
     if ( loader.subrs.init )
     {
+      loader.subrs.init  = 0;
       type1->num_subrs   = loader.num_subrs;
       type1->subrs_block = loader.subrs.block;
       type1->subrs       = loader.subrs.elements;
       type1->subrs_len   = loader.subrs.lengths;
-      type1->subrs_hash  = loader.subrs_hash;
-
-      /* prevent `t1_done_loader' from freeing the propagated data */
-      loader.subrs.init = 0;
-      loader.subrs_hash = NULL;
     }
 
     if ( !IS_INCREMENTAL )
@@ -2491,24 +2269,6 @@
       type1->encoding.code_first = min_char;
       type1->encoding.code_last  = max_char;
       type1->encoding.num_chars  = loader.num_chars;
-    }
-
-    /* some sanitizing to avoid overflows later on; */
-    /* the upper limits are ad-hoc values           */
-    if ( priv->blue_shift > 1000 || priv->blue_shift < 0 )
-    {
-      FT_TRACE2(( "T1_Open_Face:"
-                  " setting unlikely BlueShift value %d to default (7)\n",
-                  priv->blue_shift ));
-      priv->blue_shift = 7;
-    }
-
-    if ( priv->blue_fuzz > 1000 || priv->blue_fuzz < 0 )
-    {
-      FT_TRACE2(( "T1_Open_Face:"
-                  " setting unlikely BlueFuzz value %d to default (1)\n",
-                  priv->blue_fuzz ));
-      priv->blue_fuzz = 1;
     }
 
   Exit:

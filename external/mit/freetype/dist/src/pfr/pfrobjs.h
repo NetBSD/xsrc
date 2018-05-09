@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    FreeType PFR object methods (specification).                         */
 /*                                                                         */
-/*  Copyright 2002-2018 by                                                 */
+/*  Copyright 2002-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -16,8 +16,8 @@
 /***************************************************************************/
 
 
-#ifndef PFROBJS_H_
-#define PFROBJS_H_
+#ifndef __PFROBJS_H__
+#define __PFROBJS_H__
 
 #include "pfrtypes.h"
 
@@ -90,7 +90,7 @@ FT_BEGIN_HEADER
 
 FT_END_HEADER
 
-#endif /* PFROBJS_H_ */
+#endif /* __PFROBJS_H__ */
 
 
 /* END */

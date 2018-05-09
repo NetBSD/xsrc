@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    High-level OpenType driver interface (specification).                */
 /*                                                                         */
-/*  Copyright 1996-2018 by                                                 */
+/*  Copyright 1996-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -16,8 +16,8 @@
 /***************************************************************************/
 
 
-#ifndef CFFDRIVER_H_
-#define CFFDRIVER_H_
+#ifndef __CFFDRIVER_H__
+#define __CFFDRIVER_H__
 
 
 #include <ft2build.h>
@@ -32,7 +32,7 @@ FT_BEGIN_HEADER
 
 FT_END_HEADER
 
-#endif /* CFFDRIVER_H_ */
+#endif /* __CFFDRIVER_H__ */
 
 
 /* END */

@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    PostScript hinter module interface (specification).                  */
 /*                                                                         */
-/*  Copyright 2001-2018 by                                                 */
+/*  Copyright 2001-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -16,8 +16,8 @@
 /***************************************************************************/
 
 
-#ifndef PSHMOD_H_
-#define PSHMOD_H_
+#ifndef __PSHMOD_H__
+#define __PSHMOD_H__
 
 
 #include <ft2build.h>
@@ -33,7 +33,7 @@ FT_BEGIN_HEADER
 FT_END_HEADER
 
 
-#endif /* PSHMOD_H_ */
+#endif /* __PSHMOD_H__ */
 
 
 /* END */

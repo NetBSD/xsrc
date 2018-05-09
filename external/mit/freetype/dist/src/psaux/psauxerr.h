@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    PS auxiliary module error codes (specification only).                */
 /*                                                                         */
-/*  Copyright 2001-2018 by                                                 */
+/*  Copyright 2001-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -23,12 +23,12 @@
   /*                                                                       */
   /*************************************************************************/
 
-#ifndef PSAUXERR_H_
-#define PSAUXERR_H_
+#ifndef __PSAUXERR_H__
+#define __PSAUXERR_H__
 
 #include FT_MODULE_ERRORS_H
 
-#undef FTERRORS_H_
+#undef __FTERRORS_H__
 
 #undef  FT_ERR_PREFIX
 #define FT_ERR_PREFIX  PSaux_Err_
@@ -36,7 +36,7 @@
 
 #include FT_ERRORS_H
 
-#endif /* PSAUXERR_H_ */
+#endif /* __PSAUXERR_H__ */
 
 
 /* END */

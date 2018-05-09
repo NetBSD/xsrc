@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    FreeType PFR bitmap loader (specification).                          */
 /*                                                                         */
-/*  Copyright 2002-2018 by                                                 */
+/*  Copyright 2002-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -16,8 +16,8 @@
 /***************************************************************************/
 
 
-#ifndef PFRSBIT_H_
-#define PFRSBIT_H_
+#ifndef __PFRSBIT_H__
+#define __PFRSBIT_H__
 
 #include "pfrobjs.h"
 
@@ -26,12 +26,11 @@ FT_BEGIN_HEADER
   FT_LOCAL( FT_Error )
   pfr_slot_load_bitmap( PFR_Slot  glyph,
                         PFR_Size  size,
-                        FT_UInt   glyph_index,
-                        FT_Bool   metrics_only );
+                        FT_UInt   glyph_index );
 
 FT_END_HEADER
 
-#endif /* PFRSBIT_H_ */
+#endif /* __PFR_SBIT_H__ */
 
 
 /* END */

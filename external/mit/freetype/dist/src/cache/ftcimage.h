@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    FreeType Generic Image cache (specification)                         */
 /*                                                                         */
-/*  Copyright 2000-2018 by                                                 */
+/*  Copyright 2000-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -32,8 +32,8 @@
   /*************************************************************************/
 
 
-#ifndef FTCIMAGE_H_
-#define FTCIMAGE_H_
+#ifndef __FTCIMAGE_H__
+#define __FTCIMAGE_H__
 
 
 #include <ft2build.h>
@@ -72,8 +72,8 @@ FT_BEGIN_HEADER
 
 #define FTC_IFAMILY_CLASS( x )  ((FTC_IFamilyClass)(x))
 
-#define FTC_CACHE_IFAMILY_CLASS( x ) \
-          FTC_IFAMILY_CLASS( FTC_CACHE_GCACHE_CLASS(x)->family_class )
+#define FTC_CACHE__IFAMILY_CLASS( x ) \
+          FTC_IFAMILY_CLASS( FTC_CACHE__GCACHE_CLASS(x)->family_class )
 
 
   /* can be used as a @FTC_Node_FreeFunc */
@@ -101,7 +101,7 @@ FT_BEGIN_HEADER
 
 FT_END_HEADER
 
-#endif /* FTCIMAGE_H_ */
+#endif /* __FTCIMAGE_H__ */
 
 
 /* END */

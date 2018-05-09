@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    CFF character mapping table (cmap) support (specification).          */
 /*                                                                         */
-/*  Copyright 2002-2018 by                                                 */
+/*  Copyright 2002-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -16,10 +16,10 @@
 /***************************************************************************/
 
 
-#ifndef CFFCMAP_H_
-#define CFFCMAP_H_
+#ifndef __CFFCMAP_H__
+#define __CFFCMAP_H__
 
-#include FT_INTERNAL_CFF_OBJECTS_TYPES_H
+#include "cffobjs.h"
 
 FT_BEGIN_HEADER
 
@@ -61,7 +61,7 @@ FT_BEGIN_HEADER
 
 FT_END_HEADER
 
-#endif /* CFFCMAP_H_ */
+#endif /* __CFFCMAP_H__ */
 
 
 /* END */

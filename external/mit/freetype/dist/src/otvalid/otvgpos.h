@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    OpenType GPOS table validator (specification).                       */
 /*                                                                         */
-/*  Copyright 2004-2018 by                                                 */
+/*  Copyright 2004-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -16,8 +16,8 @@
 /***************************************************************************/
 
 
-#ifndef OTVGPOS_H_
-#define OTVGPOS_H_
+#ifndef __OTVGPOS_H__
+#define __OTVGPOS_H__
 
 
 FT_BEGIN_HEADER
@@ -30,7 +30,7 @@ FT_BEGIN_HEADER
 
 FT_END_HEADER
 
-#endif /* OTVGPOS_H_ */
+#endif /* __OTVGPOS_H__ */
 
 
 /* END */

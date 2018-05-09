@@ -5,7 +5,7 @@
 /*    Load the basic TrueType tables, i.e., tables that can be either in   */
 /*    TTF or OTF fonts (body).                                             */
 /*                                                                         */
-/*  Copyright 1996-2018 by                                                 */
+/*  Copyright 1996-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -151,8 +151,7 @@
 
   /* Here, we                                                         */
   /*                                                                  */
-  /* - check that `num_tables' is valid (and adjust it if necessary); */
-  /*   also return the number of valid table entries                  */
+  /* - check that `num_tables' is valid (and adjust it if necessary)  */
   /*                                                                  */
   /* - look for a `head' table, check its size, and parse it to check */
   /*   whether its `magic' field is correctly set                     */
@@ -168,8 +167,7 @@
   /*                                                                  */
   static FT_Error
   check_table_dir( SFNT_Header  sfnt,
-                   FT_Stream    stream,
-                   FT_UShort*   valid )
+                   FT_Stream    stream )
   {
     FT_Error   error;
     FT_UShort  nn, valid_entries = 0;
@@ -211,10 +209,7 @@
       /* we ignore invalid tables */
 
       if ( table.Offset > stream->size )
-      {
-        FT_TRACE2(( "check_table_dir: table entry %d invalid\n", nn ));
         continue;
-      }
       else if ( table.Length > stream->size - table.Offset )
       {
         /* Some tables have such a simple structure that clipping its     */
@@ -278,11 +273,11 @@
         has_meta = 1;
     }
 
-    *valid = valid_entries;
+    sfnt->num_tables = valid_entries;
 
-    if ( !valid_entries )
+    if ( sfnt->num_tables == 0 )
     {
-      FT_TRACE2(( "check_table_dir: no valid tables found\n" ));
+      FT_TRACE2(( "check_table_dir: no tables found\n" ));
       error = FT_THROW( Unknown_File_Format );
       goto Exit;
     }
@@ -338,7 +333,8 @@
     SFNT_HeaderRec  sfnt;
     FT_Error        error;
     FT_Memory       memory = stream->memory;
-    FT_UShort       nn, valid_entries = 0;
+    TT_TableRec*    entry;
+    FT_Int          nn;
 
     static const FT_Frame_Field  offset_table_fields[] =
     {
@@ -379,113 +375,84 @@
     if ( sfnt.format_tag != TTAG_OTTO )
     {
       /* check first */
-      error = check_table_dir( &sfnt, stream, &valid_entries );
+      error = check_table_dir( &sfnt, stream );
       if ( error )
       {
         FT_TRACE2(( "tt_face_load_font_dir:"
                     " invalid table directory for TrueType\n" ));
+
         goto Exit;
       }
     }
-    else
-      valid_entries = sfnt.num_tables;
 
-    face->num_tables = valid_entries;
+    face->num_tables = sfnt.num_tables;
     face->format_tag = sfnt.format_tag;
 
     if ( FT_QNEW_ARRAY( face->dir_tables, face->num_tables ) )
       goto Exit;
 
-    if ( FT_STREAM_SEEK( sfnt.offset + 12 )      ||
-         FT_FRAME_ENTER( sfnt.num_tables * 16L ) )
+    if ( FT_STREAM_SEEK( sfnt.offset + 12 )       ||
+         FT_FRAME_ENTER( face->num_tables * 16L ) )
       goto Exit;
+
+    entry = face->dir_tables;
 
     FT_TRACE2(( "\n"
                 "  tag    offset    length   checksum\n"
                 "  ----------------------------------\n" ));
 
-    valid_entries = 0;
     for ( nn = 0; nn < sfnt.num_tables; nn++ )
     {
-      TT_TableRec  entry;
-      FT_UShort    i;
-      FT_Bool      duplicate;
-
-
-      entry.Tag      = FT_GET_TAG4();
-      entry.CheckSum = FT_GET_ULONG();
-      entry.Offset   = FT_GET_ULONG();
-      entry.Length   = FT_GET_ULONG();
+      entry->Tag      = FT_GET_TAG4();
+      entry->CheckSum = FT_GET_ULONG();
+      entry->Offset   = FT_GET_ULONG();
+      entry->Length   = FT_GET_ULONG();
 
       /* ignore invalid tables that can't be sanitized */
 
-      if ( entry.Offset > stream->size )
+      if ( entry->Offset > stream->size )
         continue;
-      else if ( entry.Length > stream->size - entry.Offset )
+      else if ( entry->Length > stream->size - entry->Offset )
       {
-        if ( entry.Tag == TTAG_hmtx ||
-             entry.Tag == TTAG_vmtx )
+        if ( entry->Tag == TTAG_hmtx ||
+             entry->Tag == TTAG_vmtx )
         {
 #ifdef FT_DEBUG_LEVEL_TRACE
-          FT_ULong  old_length = entry.Length;
+          FT_ULong  old_length = entry->Length;
 #endif
 
 
           /* make metrics table length a multiple of 4 */
-          entry.Length = ( stream->size - entry.Offset ) & ~3U;
+          entry->Length = ( stream->size - entry->Offset ) & ~3U;
 
           FT_TRACE2(( "  %c%c%c%c  %08lx  %08lx  %08lx"
-                      " (sanitized; original length %08lx)",
-                      (FT_Char)( entry.Tag >> 24 ),
-                      (FT_Char)( entry.Tag >> 16 ),
-                      (FT_Char)( entry.Tag >> 8  ),
-                      (FT_Char)( entry.Tag       ),
-                      entry.Offset,
-                      entry.Length,
-                      entry.CheckSum,
+                      " (sanitized; original length %08lx)\n",
+                      (FT_Char)( entry->Tag >> 24 ),
+                      (FT_Char)( entry->Tag >> 16 ),
+                      (FT_Char)( entry->Tag >> 8  ),
+                      (FT_Char)( entry->Tag       ),
+                      entry->Offset,
+                      entry->Length,
+                      entry->CheckSum,
                       old_length ));
+          entry++;
         }
         else
           continue;
       }
-#ifdef FT_DEBUG_LEVEL_TRACE
-      else
-        FT_TRACE2(( "  %c%c%c%c  %08lx  %08lx  %08lx",
-                    (FT_Char)( entry.Tag >> 24 ),
-                    (FT_Char)( entry.Tag >> 16 ),
-                    (FT_Char)( entry.Tag >> 8  ),
-                    (FT_Char)( entry.Tag       ),
-                    entry.Offset,
-                    entry.Length,
-                    entry.CheckSum ));
-#endif
-
-      /* ignore duplicate tables – the first one wins */
-      duplicate = 0;
-      for ( i = 0; i < valid_entries; i++ )
-      {
-        if ( face->dir_tables[i].Tag == entry.Tag )
-        {
-          duplicate = 1;
-          break;
-        }
-      }
-      if ( duplicate )
-      {
-        FT_TRACE2(( "  (duplicate, ignored)\n" ));
-        continue;
-      }
       else
       {
-        FT_TRACE2(( "\n" ));
-
-        /* we finally have a valid entry */
-        face->dir_tables[valid_entries++] = entry;
+        FT_TRACE2(( "  %c%c%c%c  %08lx  %08lx  %08lx\n",
+                    (FT_Char)( entry->Tag >> 24 ),
+                    (FT_Char)( entry->Tag >> 16 ),
+                    (FT_Char)( entry->Tag >> 8  ),
+                    (FT_Char)( entry->Tag       ),
+                    entry->Offset,
+                    entry->Length,
+                    entry->CheckSum ));
+        entry++;
       }
     }
-
-    /* final adjustment to number of tables */
-    face->num_tables = valid_entries;
 
     FT_FRAME_EXIT();
 
@@ -679,7 +646,7 @@
   /*************************************************************************/
   /*                                                                       */
   /* <Function>                                                            */
-  /*    tt_face_load_maxp                                                  */
+  /*    tt_face_load_max_profile                                           */
   /*                                                                       */
   /* <Description>                                                         */
   /*    Loads the maximum profile into a face object.                      */
@@ -775,6 +742,15 @@
 
         maxProfile->maxTwilightPoints = 0xFFFFU - 4;
       }
+
+      /* we arbitrarily limit recursion to avoid stack exhaustion */
+      if ( maxProfile->maxComponentDepth > 100 )
+      {
+        FT_TRACE0(( "tt_face_load_maxp:"
+                    " abnormally large component depth (%d) set to 100\n",
+                    maxProfile->maxComponentDepth ));
+        maxProfile->maxComponentDepth = 100;
+      }
     }
 
     FT_TRACE3(( "numGlyphs: %u\n", maxProfile->numGlyphs ));
@@ -808,6 +784,7 @@
     FT_Memory     memory = stream->memory;
     FT_ULong      table_pos, table_len;
     FT_ULong      storage_start, storage_limit;
+    FT_UInt       count;
     TT_NameTable  table;
 
     static const FT_Frame_Field  name_table_fields[] =
@@ -825,24 +802,13 @@
     static const FT_Frame_Field  name_record_fields[] =
     {
 #undef  FT_STRUCTURE
-#define FT_STRUCTURE  TT_NameRec
+#define FT_STRUCTURE  TT_NameEntryRec
 
       /* no FT_FRAME_START */
         FT_FRAME_USHORT( platformID ),
         FT_FRAME_USHORT( encodingID ),
         FT_FRAME_USHORT( languageID ),
         FT_FRAME_USHORT( nameID ),
-        FT_FRAME_USHORT( stringLength ),
-        FT_FRAME_USHORT( stringOffset ),
-      FT_FRAME_END
-    };
-
-    static const FT_Frame_Field  langTag_record_fields[] =
-    {
-#undef  FT_STRUCTURE
-#define FT_STRUCTURE  TT_LangTagRec
-
-      /* no FT_FRAME_START */
         FT_FRAME_USHORT( stringLength ),
         FT_FRAME_USHORT( stringOffset ),
       FT_FRAME_END
@@ -858,17 +824,18 @@
 
     table_pos = FT_STREAM_POS();
 
+
     if ( FT_STREAM_READ_FIELDS( name_table_fields, table ) )
       goto Exit;
 
-    /* Some popular Asian fonts have an invalid `storageOffset' value (it */
-    /* should be at least `6 + 12*numNameRecords').  However, the string  */
-    /* offsets, computed as `storageOffset + entry->stringOffset', are    */
-    /* valid pointers within the name table...                            */
-    /*                                                                    */
-    /* We thus can't check `storageOffset' right now.                     */
-    /*                                                                    */
-    storage_start = table_pos + 6 + 12 * table->numNameRecords;
+    /* Some popular Asian fonts have an invalid `storageOffset' value   */
+    /* (it should be at least "6 + 12*num_names").  However, the string */
+    /* offsets, computed as "storageOffset + entry->stringOffset", are  */
+    /* valid pointers within the name table...                          */
+    /*                                                                  */
+    /* We thus can't check `storageOffset' right now.                   */
+    /*                                                                  */
+    storage_start = table_pos + 6 + 12*table->numNameRecords;
     storage_limit = table_pos + table_len;
 
     if ( storage_start > storage_limit )
@@ -878,56 +845,18 @@
       goto Exit;
     }
 
-    /* `name' format 1 contains additional language tag records, */
-    /* which we load first                                       */
-    if ( table->format == 1 )
-    {
-      if ( FT_STREAM_SEEK( storage_start )            ||
-           FT_READ_USHORT( table->numLangTagRecords ) )
-        goto Exit;
+    /* Allocate the array of name records. */
+    count                 = table->numNameRecords;
+    table->numNameRecords = 0;
 
-      storage_start += 2 + 4 * table->numLangTagRecords;
-
-      /* allocate language tag records array */
-      if ( FT_NEW_ARRAY( table->langTags, table->numLangTagRecords ) ||
-           FT_FRAME_ENTER( table->numLangTagRecords * 4 )            )
-        goto Exit;
-
-      /* load language tags */
-      {
-        TT_LangTag  entry = table->langTags;
-        TT_LangTag  limit = entry + table->numLangTagRecords;
-
-
-        for ( ; entry < limit; entry++ )
-        {
-          (void)FT_STREAM_READ_FIELDS( langTag_record_fields, entry );
-
-          /* check that the langTag string is within the table */
-          entry->stringOffset += table_pos + table->storageOffset;
-          if ( entry->stringOffset                       < storage_start ||
-               entry->stringOffset + entry->stringLength > storage_limit )
-          {
-            /* invalid entry; ignore it */
-            entry->stringLength = 0;
-          }
-        }
-      }
-
-      FT_FRAME_EXIT();
-
-      (void)FT_STREAM_SEEK( table_pos + 6 );
-    }
-
-    /* allocate name records array */
-    if ( FT_NEW_ARRAY( table->names, table->numNameRecords ) ||
-         FT_FRAME_ENTER( table->numNameRecords * 12 )        )
+    if ( FT_NEW_ARRAY( table->names, count ) ||
+         FT_FRAME_ENTER( count * 12 )        )
       goto Exit;
 
-    /* load name records */
+    /* Load the name records and determine how much storage is needed */
+    /* to hold the strings themselves.                                */
     {
-      TT_Name  entry = table->names;
-      FT_UInt  count = table->numNameRecords;
+      TT_NameEntryRec*  entry = table->names;
 
 
       for ( ; count > 0; count-- )
@@ -944,37 +873,22 @@
         if ( entry->stringOffset                       < storage_start ||
              entry->stringOffset + entry->stringLength > storage_limit )
         {
-          /* invalid entry; ignore it */
+          /* invalid entry - ignore it */
+          entry->stringOffset = 0;
+          entry->stringLength = 0;
           continue;
-        }
-
-        /* assure that we have a valid language tag ID, and   */
-        /* that the corresponding langTag entry is valid, too */
-        if ( table->format == 1 && entry->languageID >= 0x8000U )
-        {
-          if ( entry->languageID - 0x8000U >= table->numLangTagRecords    ||
-               !table->langTags[entry->languageID - 0x8000U].stringLength )
-          {
-            /* invalid entry; ignore it */
-            continue;
-          }
         }
 
         entry++;
       }
 
-      /* reduce array size to the actually used elements */
-      count = (FT_UInt)( entry - table->names );
-      (void)FT_RENEW_ARRAY( table->names,
-                            table->numNameRecords,
-                            count );
-      table->numNameRecords = count;
+      table->numNameRecords = (FT_UInt)( entry - table->names );
     }
 
     FT_FRAME_EXIT();
 
     /* everything went well, update face->num_names */
-    face->num_names = (FT_UShort)table->numNameRecords;
+    face->num_names = (FT_UShort) table->numNameRecords;
 
   Exit:
     return error;
@@ -984,7 +898,7 @@
   /*************************************************************************/
   /*                                                                       */
   /* <Function>                                                            */
-  /*    tt_face_free_name                                                  */
+  /*    tt_face_free_names                                                 */
   /*                                                                       */
   /* <Description>                                                         */
   /*    Frees the name records.                                            */
@@ -997,36 +911,25 @@
   {
     FT_Memory     memory = face->root.driver->root.memory;
     TT_NameTable  table  = &face->name_table;
+    TT_NameEntry  entry  = table->names;
+    FT_UInt       count  = table->numNameRecords;
 
 
     if ( table->names )
     {
-      TT_Name  entry = table->names;
-      TT_Name  limit = entry + table->numNameRecords;
-
-
-      for ( ; entry < limit; entry++ )
+      for ( ; count > 0; count--, entry++ )
+      {
         FT_FREE( entry->string );
+        entry->stringLength = 0;
+      }
 
+      /* free strings table */
       FT_FREE( table->names );
     }
 
-    if ( table->langTags )
-    {
-      TT_LangTag  entry = table->langTags;
-      TT_LangTag  limit = entry + table->numLangTagRecords;
-
-
-      for ( ; entry < limit; entry++ )
-        FT_FREE( entry->string );
-
-      FT_FREE( table->langTags );
-    }
-
-    table->numNameRecords    = 0;
-    table->numLangTagRecords = 0;
-    table->format            = 0;
-    table->storageOffset     = 0;
+    table->numNameRecords = 0;
+    table->format         = 0;
+    table->storageOffset  = 0;
   }
 
 
@@ -1257,8 +1160,8 @@
 #define FT_STRUCTURE  TT_Postscript
 
       FT_FRAME_START( 32 ),
-        FT_FRAME_LONG ( FormatType ),
-        FT_FRAME_LONG ( italicAngle ),
+        FT_FRAME_ULONG( FormatType ),
+        FT_FRAME_ULONG( italicAngle ),
         FT_FRAME_SHORT( underlinePosition ),
         FT_FRAME_SHORT( underlineThickness ),
         FT_FRAME_ULONG( isFixedPitch ),

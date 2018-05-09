@@ -8,7 +8,7 @@
 /*  be used to parse compressed PCF fonts, as found with many X11 server   */
 /*  distributions.                                                         */
 /*                                                                         */
-/*  Copyright 2005-2018 by                                                 */
+/*  Copyright 2005-2015 by                                                 */
 /*  David Turner.                                                          */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -42,12 +42,7 @@
     state->buf_total += count;
     state->in_eof     = FT_BOOL( count < state->num_bits );
     state->buf_offset = 0;
-
-    state->buf_size <<= 3;
-    if ( state->buf_size > state->num_bits )
-      state->buf_size -= state->num_bits - 1;
-    else
-      return -1; /* not enough data */
+    state->buf_size   = ( state->buf_size << 3 ) - ( state->num_bits - 1 );
 
     if ( count == 0 )  /* end of file */
       return -1;
@@ -71,10 +66,7 @@
     {
       if ( state->free_ent >= state->free_bits )
       {
-        state->num_bits = ++num_bits;
-        if ( num_bits > LZW_MAX_BITS )
-          return -1;
-
+        state->num_bits  = ++num_bits;
         state->free_bits = state->num_bits < state->max_bits
                            ? (FT_UInt)( ( 1UL << num_bits ) - 256 )
                            : state->max_free + 1;
@@ -284,7 +276,7 @@
         state->block_mode = max_bits & LZW_BLOCK_MASK;
         state->max_free   = (FT_UInt)( ( 1UL << state->max_bits ) - 256 );
 
-        if ( state->max_bits > LZW_MAX_BITS || state->max_bits < 12)
+        if ( state->max_bits > LZW_MAX_BITS )
           goto Eof;
 
         state->num_bits = LZW_INIT_BITS;
@@ -295,7 +287,19 @@
         state->free_bits = state->num_bits < state->max_bits
                            ? (FT_UInt)( ( 1UL << state->num_bits ) - 256 )
                            : state->max_free + 1;
-        old_code = -1;
+
+        c = ft_lzwstate_get_code( state );
+        if ( c < 0 || c > 255 )
+          goto Eof;
+
+        old_code = old_char = (FT_UInt)c;
+
+        if ( buffer )
+          buffer[result] = (FT_Byte)old_char;
+
+        if ( ++result >= out_size )
+          goto Exit;
+
         state->phase = FT_LZW_PHASE_CODE;
       }
       /* fall-through */
@@ -315,7 +319,8 @@
 
         if ( code == LZW_CLEAR && state->block_mode )
         {
-          state->free_ent  = LZW_FIRST - 256;
+          /* why not LZW_FIRST-256 ? */
+          state->free_ent  = ( LZW_FIRST - 1 ) - 256;
           state->buf_clear = 1;
 
           /* not quite right, but at least more predictable */
@@ -361,7 +366,7 @@
       {
         while ( state->stack_top > 0 )
         {
-          state->stack_top--;
+          --state->stack_top;
 
           if ( buffer )
             buffer[result] = state->stack[state->stack_top];
@@ -371,7 +376,7 @@
         }
 
         /* now create new entry */
-        if ( state->free_ent < state->max_free && old_code != -1)
+        if ( state->free_ent < state->max_free )
         {
           if ( state->free_ent >= state->prefix_size &&
                ft_lzwstate_prefix_grow( state ) < 0  )

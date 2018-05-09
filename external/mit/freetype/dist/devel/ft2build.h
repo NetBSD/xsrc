@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    FreeType 2 build and setup macros (development version).             */
 /*                                                                         */
-/*  Copyright 1996-2018 by                                                 */
+/*  Copyright 1996-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -27,14 +27,14 @@
   *
   */
 
-#ifndef FT2BUILD_H_
-#define FT2BUILD_H_
+#ifndef __FT2BUILD_H__
+#define __FT2BUILD_H__
 
 #define FT_CONFIG_OPTIONS_H  <ftoption.h>
 
-#include <freetype/config/ftheader.h>
+#include <config/ftheader.h>
 
-#endif /* FT2BUILD_H_ */
+#endif /* __FT2BUILD_H__ */
 
 
 /* END */
