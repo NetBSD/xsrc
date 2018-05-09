@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    FreeType low-level system interface definition (specification).      */
 /*                                                                         */
-/*  Copyright 1996-2016 by                                                 */
+/*  Copyright 1996-2018 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -290,7 +290,7 @@ FT_BEGIN_HEADER
    *     The stream size in bytes.
    *
    *     In case of compressed streams where the size is unknown before
-   *     actually doing the decompression, the value is set to 0x7FFFFFFF. 
+   *     actually doing the decompression, the value is set to 0x7FFFFFFF.
    *     (Note that this size value can occur for normal streams also; it is
    *     thus just a hint.)
    *

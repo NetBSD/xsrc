@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    FreeType PFR glyph loader (body).                                    */
 /*                                                                         */
-/*  Copyright 2002-2016 by                                                 */
+/*  Copyright 2002-2018 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -336,7 +336,7 @@
     /* XXX: we ignore the secondary stroke and edge definitions */
     /*      since we don't support native PFR hinting           */
     /*                                                          */
-    if ( flags & PFR_GLYPH_EXTRA_ITEMS )
+    if ( flags & PFR_GLYPH_SINGLE_EXTRA_ITEMS )
     {
       error = pfr_extra_items_skip( &p, limit );
       if ( error )
@@ -579,7 +579,7 @@
 
     /* ignore extra items when present */
     /*                                 */
-    if ( flags & PFR_GLYPH_EXTRA_ITEMS )
+    if ( flags & PFR_GLYPH_COMPOUND_EXTRA_ITEMS )
     {
       error = pfr_extra_items_skip( &p, limit );
       if ( error )
@@ -756,8 +756,10 @@
 
       count = glyph->num_subs - old_count;
 
-      FT_TRACE4(( "compound glyph with %d elements (offset %lu):\n",
-                  count, offset ));
+      FT_TRACE4(( "compound glyph with %d element%s (offset %lu):\n",
+                  count,
+                  count == 1 ? "" : "s",
+                  offset ));
 
       /* now, load each individual glyph */
       for ( n = 0; n < count; n++ )
@@ -810,7 +812,9 @@
         /* proceed to next sub-glyph */
       }
 
-      FT_TRACE4(( "end compound glyph with %d elements\n", count ));
+      FT_TRACE4(( "end compound glyph with %d element%s\n",
+                  count,
+                  count == 1 ? "" : "s" ));
     }
     else
     {
