@@ -704,7 +704,15 @@
       return 0;
 
     for ( v = 0; sbitset( ddigits, *s ); s++ )
-      v = v * 10 + a2i[(int)*s];
+    {
+      if ( v < ( FT_ULONG_MAX - 9 ) / 10 )
+        v = v * 10 + a2i[(int)*s];
+      else
+      {
+        v = FT_ULONG_MAX;
+        break;
+      }
+    }
 
     return v;
   }
@@ -729,7 +737,15 @@
     }
 
     for ( v = 0; sbitset( ddigits, *s ); s++ )
-      v = v * 10 + a2i[(int)*s];
+    {
+      if ( v < ( FT_LONG_MAX - 9 ) / 10 )
+        v = v * 10 + a2i[(int)*s];
+      else
+      {
+        v = FT_LONG_MAX;
+        break;
+      }
+    }
 
     return ( !neg ) ? v : -v;
   }
@@ -746,7 +762,15 @@
       return 0;
 
     for ( v = 0; sbitset( ddigits, *s ); s++ )
-      v = (unsigned short)( v * 10 + a2i[(int)*s] );
+    {
+      if ( v < ( FT_USHORT_MAX - 9 ) / 10 )
+        v = (unsigned short)( v * 10 + a2i[(int)*s] );
+      else
+      {
+        v = FT_USHORT_MAX;
+        break;
+      }
+    }
 
     return v;
   }
@@ -771,7 +795,15 @@
     }
 
     for ( v = 0; sbitset( ddigits, *s ); s++ )
-      v = (short)( v * 10 + a2i[(int)*s] );
+    {
+      if ( v < ( SHRT_MAX - 9 ) / 10 )
+        v = (short)( v * 10 + a2i[(int)*s] );
+      else
+      {
+        v = SHRT_MAX;
+        break;
+      }
+    }
 
     return (short)( ( !neg ) ? v : -v );
   }
@@ -1119,7 +1151,7 @@
     /* See whether this property type exists yet or not. */
     /* If not, create it.                                */
     propid = ft_hash_str_lookup( name, &(font->proptbl) );
-    if ( propid == NULL )
+    if ( !propid )
     {
       error = bdf_create_property( name, BDF_ATOM, font );
       if ( error )
@@ -1127,7 +1159,7 @@
       propid = ft_hash_str_lookup( name, &(font->proptbl) );
     }
 
-    /* Allocate another property if this is overflow. */
+    /* Allocate another property if this is overflowing. */
     if ( font->props_used == font->props_size )
     {
       if ( font->props_size == 0 )
@@ -1144,7 +1176,7 @@
       }
 
       fp = font->props + font->props_size;
-      FT_MEM_ZERO( fp, sizeof ( bdf_property_t ) );
+      FT_ZERO( fp );
       font->props_size++;
     }
 
@@ -1976,8 +2008,18 @@
       error = _bdf_list_split( &p->list, (char *)" +", line, linelen );
       if ( error )
         goto Exit;
+
       /* at this point, `p->font' can't be NULL */
       p->cnt = p->font->props_size = _bdf_atoul( p->list.field[1] );
+      /* We need at least 4 bytes per property. */
+      if ( p->cnt > p->size / 4 )
+      {
+        p->font->props_size = 0;
+
+        FT_ERROR(( "_bdf_parse_glyphs: " ERRMSG5, lineno, "STARTPROPERTIES" ));
+        error = FT_THROW( Invalid_Argument );
+        goto Exit;
+      }
 
       if ( FT_NEW_ARRAY( p->font->props, p->cnt ) )
       {
@@ -2291,7 +2333,7 @@
         p->font->comments[p->font->comments_len] = 0;
       }
     }
-    else if ( error == FT_Err_Ok )
+    else if ( !error )
       error = FT_THROW( Invalid_File_Format );
 
     *font = p->font;
