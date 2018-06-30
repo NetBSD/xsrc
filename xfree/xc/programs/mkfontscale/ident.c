@@ -213,7 +213,7 @@ pcfIdentify(gzFile f, char **name)
 #define NKEY 20
 
 static char*
-getKeyword(gzFile *f, int *eol)
+getKeyword(gzFile f, int *eol)
 {
     static char keyword[NKEY + 1];
     int c, i;
@@ -236,7 +236,7 @@ getKeyword(gzFile *f, int *eol)
 }
 
 static int
-bdfskip(gzFile *f)
+bdfskip(gzFile f)
 {
     int c;
     do {
@@ -248,7 +248,7 @@ bdfskip(gzFile *f)
 }
 
 static char *
-bdfend(gzFile *f)
+bdfend(gzFile f)
 {
     int c;
     char *buf = NULL;
