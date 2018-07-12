@@ -54,8 +54,17 @@ typedef unsigned int   U032;
 #define VGA_WR08(p,i,d) NV_WR08(p,i,d)
 #define VGA_RD08(p,i)   NV_RD08(p,i)
 
-#define NVDmaNext(pNv, data) \
-     (pNv)->dmaBase[(pNv)->dmaCurrent++] = (data)
+#if defined(__i386__)
+#define _NV_FENCE() outb(0x3D0, 0);
+#elif defined(__powerpc__)
+#define _NV_FENCE() __asm("eieio; sync;");
+#else
+#define _NV_FENCE() mem_barrier();
+#endif
+
+#define NVDmaNext(pNv, data) { \
+     (pNv)->dmaBase[(pNv)->dmaCurrent++] = (data); \
+     _NV_FENCE() }
 
 #define NVDmaStart(pNv, tag, size) {          \
      if((pNv)->dmaFree <= (size))             \
@@ -64,17 +73,13 @@ typedef unsigned int   U032;
      (pNv)->dmaFree -= ((size) + 1);          \
 }
 
-#if defined(__i386__)
-#define _NV_FENCE() outb(0x3D0, 0);
-#else
-#define _NV_FENCE() mem_barrier();
-#endif
-
 #define WRITE_PUT(pNv, data) {       \
   volatile CARD8 scratch;            \
   _NV_FENCE()                        \
   scratch = (pNv)->FbStart[0];       \
+  _NV_FENCE()			     \
   (pNv)->FIFO[0x0010] = (data) << 2; \
+  _NV_FENCE()			     \
   mem_barrier();                     \
 }
 
