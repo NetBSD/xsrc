@@ -2058,11 +2058,22 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
 
     /* Load XAA if needed */
     if (!pNv->NoAccel) {
+    	pNv->UseEXA = 1;
+#ifdef HAVE_XAA_H
 	if (!xf86LoadSubModule(pScrn, "xaa")) {
-	    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Falling back to shadwwfb\n");
+	    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Falling back to shadowfb\n");
 	    pNv->NoAccel = 1;
 	    pNv->ShadowFB = 1;
+	} else
+	    pNv->UseEXA = 0;
+#else
+	if (!xf86LoadSubModule(pScrn, "exa")) {
+	    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Falling back to shadowfb\n");
+	    pNv->NoAccel = 1;
+	    pNv->UseEXA = 0;
+	    pNv->ShadowFB = 1;
 	}
+#endif
     }
 
     /* Load ramdac if needed */
@@ -2591,6 +2602,7 @@ NVScreenInit(SCREEN_INIT_ARGS_DECL)
     if(offscreenHeight > 32767)
         offscreenHeight = 32767;
 
+#ifdef HAVE_XAA_H
     AvailFBArea.x1 = 0;
     AvailFBArea.y1 = 0;
     AvailFBArea.x2 = pScrn->displayWidth;
@@ -2599,7 +2611,10 @@ NVScreenInit(SCREEN_INIT_ARGS_DECL)
     
     if (!pNv->NoAccel)
 	NVAccelInit(pScreen);
-    
+#endif
+    if ((!pNv->NoAccel) && (pNv->UseEXA == 1))
+	NvInitExa(pScreen);
+
     xf86SetBackingStore(pScreen);
     xf86SetSilkenMouse(pScreen);
 

@@ -106,7 +106,7 @@ NVDmaKickoff(NVPtr pNv)
    You can't jump to the location of your put offset.  We write put
    at the jump offset + SKIPS dwords with noop padding in between
    to solve this problem */
-#define SKIPS  8
+#define SKIPS  16
 
 void 
 NVDmaWait (
@@ -176,7 +176,7 @@ NVSetPattern(
     NVDmaNext (pNv, pat1);
 }
 
-static void 
+void 
 NVSetRopSolid(ScrnInfoPtr pScrn, CARD32 rop, CARD32 planemask)
 {
     NVPtr pNv = NVPTR(pScrn);
@@ -282,16 +282,30 @@ void NVResetGraphics(ScrnInfoPtr pScrn)
 void NVSync(ScrnInfoPtr pScrn)
 {
     NVPtr pNv = NVPTR(pScrn);
-
+    int bail = 10000000;
+    
     if(pNv->DMAKickoffCallback)
        (*pNv->DMAKickoffCallback)(pScrn);
 
-    while(READ_GET(pNv) != pNv->dmaPut);
-
-    while(pNv->PGRAPH[0x0700/4]);
+    while((READ_GET(pNv) != pNv->dmaPut) && (bail > 0)) bail--;
+    if (bail == 0) {
+    	xf86Msg(X_ERROR, "DMA drain timeout\n");
+    	goto crap;
+    }
+    
+    bail = 10000000;
+    while((pNv->PGRAPH[0x0700/4]) && (bail > 0)) bail--;
+    if (bail == 0) {
+    	xf86Msg(X_ERROR, "engine stalled\n");
+    	goto crap;
+    }
+    return;
+    
+crap:
+    NVResetGraphics(pScrn);
 }
 
-static void
+ void
 NVDMAKickoffCallback (ScrnInfoPtr pScrn)
 {
    NVPtr pNv = NVPTR(pScrn);

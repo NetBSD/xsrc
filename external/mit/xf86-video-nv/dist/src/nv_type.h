@@ -5,6 +5,7 @@
 #include "vgaHW.h"
 #include "xf86Cursor.h"
 #include "xf86int10.h"
+#include "exa.h"
 
 #define NV_ARCH_04  0x04
 #define NV_ARCH_10  0x10
@@ -128,6 +129,7 @@ typedef struct {
 #ifdef HAVE_XAA_H
     XAAInfoRecPtr       AccelInfoRec;
 #endif
+    ExaDriverPtr 	pExa;
     xf86CursorInfoPtr   CursorInfoRec;
     DGAModePtr          DGAModes;
     int                 numDGAModes;

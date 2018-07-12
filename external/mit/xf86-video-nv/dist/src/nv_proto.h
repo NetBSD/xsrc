@@ -34,8 +34,13 @@ Bool   NVAccelInit(ScreenPtr pScreen);
 void   NVSync(ScrnInfoPtr pScrn);
 void   NVResetGraphics(ScrnInfoPtr pScrn);
 void   NVDmaKickoff(NVPtr pNv);
+void   NVDMAKickoffCallback(ScrnInfoPtr pScrn);
 void   NVDmaWait(NVPtr pNv, int size);
 void   NVWaitVSync(NVPtr pNv);
+void   NVSetRopSolid(ScrnInfoPtr pScrn, CARD32 rop, CARD32 planemask);
+
+/* in nv_exa.c */
+Bool   NvInitExa(ScreenPtr pScreen);
 
 /* in nv_dga.c */
 Bool   NVDGAInit(ScreenPtr pScreen);
