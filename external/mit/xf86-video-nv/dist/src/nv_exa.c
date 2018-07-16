@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: nv_exa.c,v 1.1 2018/07/12 21:19:54 macallan Exp $ */
+/* $NetBSD: nv_exa.c,v 1.2 2018/07/16 09:55:13 rjs Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -238,23 +238,6 @@ NvDownloadFromScreen(PixmapPtr pSrc, int x, int y, int w, int h,
 	return TRUE;
 }
 
-#ifdef __arm__
-static Bool
-NvPrepareAccess(PixmapPtr pPix, int index)
-{
-	ScrnInfoPtr pScrn = xf86Screens[pPix->drawable.pScreen->myNum];
-	NVPtr pNv = NVPTR(pScrn);
-
-	IgsWaitReady(fPtr);
-	return TRUE;	
-}
-
-static void
-NvFinishAccess(PixmapPtr pPix, int index)
-{
-}
-#endif
-
 Bool
 NvInitExa(ScreenPtr pScreen)
 {
@@ -326,9 +309,5 @@ NvInitExa(ScreenPtr pScreen)
 	 */
 	pExa->UploadToScreen = NvUploadToScreen;
 	pExa->DownloadFromScreen = NvDownloadFromScreen;
-#ifdef __arm__
-	pExa->PrepareAccess = IgsPrepareAccess;
-	pExa->FinishAccess = IgsFinishAccess;
-#endif
 	return exaDriverInit(pScreen, pExa);
 }
