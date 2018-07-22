@@ -501,8 +501,10 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 		}
 		fbi->fbi_flags = 0;
 		fbi->fbi_fbsize = lb * info.height;
+		fbi->fbi_fboffset = 0;
 
 	}
+	xf86Msg(X_INFO, "fboffset %x\n", fPtr->fbi.fbi_fboffset);
 	/*
 	 * Allocate room for saving the colormap.
 	 */
@@ -958,7 +960,7 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 		pScrn->PointerMoved = WsfbPointerMoved;
 	}
 
-	fPtr->fbstart = fPtr->fbmem;
+	fPtr->fbstart = fPtr->fbmem + fPtr->fbi.fbi_fboffset;
 #ifdef	WSDISPLAY_TYPE_LUNA
 	if (wstype == WSDISPLAY_TYPE_LUNA) {
 		/*
