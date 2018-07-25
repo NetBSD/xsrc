@@ -1027,8 +1027,8 @@
 #       define R128_PM4_64PIO_128INDBM         (5  << 28)
 #       define R128_PM4_64BM_128INDBM          (6  << 28)
 #       define R128_PM4_64PIO_64VCBM_64INDBM   (7  << 28)
-#       define R128_PM4_64BM_64VCBM_64INDBM    (8  << 28)
-#       define R128_PM4_64PIO_64VCPIO_64INDPIO (15 << 28)
+#       define R128_PM4_64BM_64VCBM_64INDBM    (8U  << 28)
+#       define R128_PM4_64PIO_64VCPIO_64INDPIO (15U << 28)
 #define R128_PM4_BUFFER_WM_CNTL           0x0708
 #       define R128_WMA_SHIFT                  0
 #       define R128_WMB_SHIFT                  8
@@ -1037,7 +1037,7 @@
 #define R128_PM4_BUFFER_DL_RPTR_ADDR      0x070c
 #define R128_PM4_BUFFER_DL_RPTR           0x0710
 #define R128_PM4_BUFFER_DL_WPTR           0x0714
-#       define R128_PM4_BUFFER_DL_DONE    (1 << 31)
+#       define R128_PM4_BUFFER_DL_DONE    (1U << 31)
 #define R128_PM4_BUFFER_DL_WPTR_DELAY     0x0718
 #       define R128_PRE_WRITE_TIMER_SHIFT      0
 #       define R128_PRE_WRITE_LIMIT_SHIFT     23
@@ -1085,7 +1085,7 @@
 #define R128_PM4_STAT                     0x07b8
 #       define R128_PM4_FIFOCNT_MASK      0x0fff
 #       define R128_PM4_BUSY              (1 << 16)
-#       define R128_PM4_GUI_ACTIVE        (1 << 31)
+#       define R128_PM4_GUI_ACTIVE        (1U << 31)
 #define R128_PM4_BUFFER_ADDR              0x07f0
 #define R128_PM4_MICRO_CNTL               0x07fc
 #       define R128_PM4_MICRO_FREERUN     (1 << 30)
@@ -1150,7 +1150,7 @@
 #       define R128_COMPOSITE_SHADOW              (1  << 29)
 #       define R128_TEX_MAP_ALPHA_IN_TEXTURE      (1  << 30)
 #       define R128_TEX_CACHE_LINE_SIZE_8QW       (0  << 31)
-#       define R128_TEX_CACHE_LINE_SIZE_4QW       (1  << 31)
+#       define R128_TEX_CACHE_LINE_SIZE_4QW       (1U  << 31)
 #define R128_SCALE_3D_DATATYPE            0x1a20
 
 #define R128_SETUP_CNTL                   0x1bc4
@@ -1178,7 +1178,7 @@
 #       define R128_SU_POLY_LINE_NOT_LAST (1 << 18)
 #       define R128_SUB_PIX_2BITS         (0 << 19)
 #       define R128_SUB_PIX_4BITS         (1 << 19)
-#       define R128_SET_UP_CONTINUE       (1 << 31)
+#       define R128_SET_UP_CONTINUE       (1U << 31)
 
 #define R128_WINDOW_XY_OFFSET             0x1bcc
 #       define R128_WINDOW_Y_SHIFT        4
@@ -1257,7 +1257,7 @@
 #       define R128_ANTI_ALIAS                 (1 << 21)
 #       define R128_TEX_CACHE_FLUSH            (1 << 23)
 #       define R128_LOD_BIAS_SHIFT             24
-#       define R128_LOD_BIAS_MASK              (0xff << 24)
+#       define R128_LOD_BIAS_MASK              (0xffU << 24)
 #define R128_MISC_3D_STATE_CNTL_REG       0x1ca0
 #       define R128_REF_ALPHA_MASK                  0xff
 #       define R128_MISC_SCALE_3D_NOOP              (0  <<  8)
@@ -1386,11 +1386,11 @@
 #       define R128_SEC_TEX_PITCH_MASK       (0x0f << 16)
 #       define R128_SEC_TEX_SIZE_MASK        (0x0f << 20)
 #       define R128_SEC_TEX_HEIGHT_MASK      (0x0f << 24)
-#       define R128_SEC_TEX_MIN_SIZE_MASK    (0x0f << 28)
+#       define R128_SEC_TEX_MIN_SIZE_MASK    (0x0fU << 28)
 #       define R128_TEX_SIZE_PITCH_SHIFT      0
 #       define R128_SEC_TEX_SIZE_PITCH_SHIFT 16
 #       define R128_TEX_SIZE_PITCH_MASK      (0xffff <<  0)
-#       define R128_SEC_TEX_SIZE_PITCH_MASK  (0xffff << 16)
+#       define R128_SEC_TEX_SIZE_PITCH_MASK  (0xffffU << 16)
 #define R128_PRIM_TEX_0_OFFSET_C          0x1cbc
 #define R128_PRIM_TEX_1_OFFSET_C          0x1cc0
 #define R128_PRIM_TEX_2_OFFSET_C          0x1cc4
@@ -1404,8 +1404,8 @@
 #define R128_PRIM_TEX_10_OFFSET_C         0x1ce4
 #       define R128_TEX_NO_TILE           (0 << 30)
 #       define R128_TEX_TILED_BY_HOST     (1 << 30)
-#       define R128_TEX_TILED_BY_STORAGE  (2 << 30)
-#       define R128_TEX_TILED_BY_STORAGE2 (3 << 30)
+#       define R128_TEX_TILED_BY_STORAGE  (2U << 30)
+#       define R128_TEX_TILED_BY_STORAGE2 (3U << 30)
 
 #define R128_SEC_TEX_CNTL_C               0x1d00
 #       define R128_SEC_SELECT_PRIM_ST    (0  <<  0)
