@@ -106,7 +106,7 @@ NVDmaKickoff(NVPtr pNv)
    You can't jump to the location of your put offset.  We write put
    at the jump offset + SKIPS dwords with noop padding in between
    to solve this problem */
-#define SKIPS  16
+#define SKIPS  8
 
 void 
 NVDmaWait (

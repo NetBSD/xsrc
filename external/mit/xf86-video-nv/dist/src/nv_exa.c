@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: nv_exa.c,v 1.3 2018/07/16 16:30:04 macallan Exp $ */
+/* $NetBSD: nv_exa.c,v 1.4 2018/07/26 21:29:16 macallan Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -65,23 +65,27 @@ NvPrepareCopy
 {
 	ScrnInfoPtr pScrn = xf86Screens[pDstPixmap->drawable.pScreen->myNum];
 	NVPtr pNv = NVPTR(pScrn);
-	int srcpitch, srcoff, dstpitch, dstoff;
+	uint32_t dstpitch, dstoff, srcpitch, srcoff;
 
 	ENTER;
 	if (pSrcPixmap->drawable.bitsPerPixel != 32)
 		xf86Msg(X_ERROR, "%s %d bpp\n", __func__, pSrcPixmap->drawable.bitsPerPixel);
 	planemask |= ~0 << pNv->CurrentLayout.depth;
 	NVSetRopSolid(pScrn, rop, planemask);
-	pNv->DMAKickoffCallback = NVDMAKickoffCallback;
+
 	dstpitch = exaGetPixmapPitch(pDstPixmap);
 	dstoff = exaGetPixmapOffset(pDstPixmap);
 	srcpitch = exaGetPixmapPitch(pSrcPixmap);
 	srcoff = exaGetPixmapOffset(pSrcPixmap);
 
-	NVDmaStart(pNv, SURFACE_PITCH, 3);
+
+	NVDmaStart(pNv, SURFACE_FORMAT, 4);
+	NVDmaNext (pNv, pNv->surfaceFormat);
 	NVDmaNext (pNv, srcpitch | (dstpitch << 16));
 	NVDmaNext (pNv, srcoff);
 	NVDmaNext (pNv, dstoff);
+
+	pNv->DMAKickoffCallback = NVDMAKickoffCallback;
 
 	LEAVE;
 	return TRUE;
@@ -101,6 +105,8 @@ NvCopy
 {
 	ScrnInfoPtr pScrn = xf86Screens[pDstPixmap->drawable.pScreen->myNum];
 	NVPtr pNv = NVPTR(pScrn);
+
+	ENTER;
 
 	NVDmaStart(pNv, BLIT_POINT_SRC, 3);
 	NVDmaNext (pNv, (srcY << 16) | srcX);
@@ -129,26 +135,31 @@ NvPrepareSolid(
 {
 	ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
 	NVPtr pNv = NVPTR(pScrn);
-	int pitch, off;
+	uint32_t pitch, off;
 
 	ENTER;
 	if (pPixmap->drawable.bitsPerPixel != 32)
 		xf86Msg(X_ERROR, "%s %d bpp\n", __func__, pPixmap->drawable.bitsPerPixel);
 	planemask |= ~0 << pNv->CurrentLayout.depth;
 
-
 	pitch = exaGetPixmapPitch(pPixmap);
 	off = exaGetPixmapOffset(pPixmap);
 
-	NVDmaStart(pNv, SURFACE_PITCH, 3);
+	NVDmaStart(pNv, SURFACE_FORMAT, 4);
+	NVDmaNext (pNv, pNv->surfaceFormat);
 	NVDmaNext (pNv, pitch | (pitch << 16));
 	NVDmaNext (pNv, off);
 	NVDmaNext (pNv, off);
 
+	NVDmaStart(pNv, RECT_FORMAT, 1);
+	NVDmaNext (pNv, pNv->rectFormat);
+
 	NVSetRopSolid(pScrn, rop, planemask);
-	pNv->DMAKickoffCallback = NVDMAKickoffCallback;
+
 	NVDmaStart(pNv, RECT_SOLID_COLOR, 1);
 	NVDmaNext (pNv, color);
+
+	pNv->DMAKickoffCallback = NVDMAKickoffCallback;
 
 	LEAVE;
 	return TRUE;
@@ -167,6 +178,7 @@ NvSolid(
 	int w = x2 - x1, h = y2 - y1;
 
 	ENTER;
+
 	NVDmaStart(pNv, RECT_SOLID_RECTS(0), 2);
 	NVDmaNext (pNv, (x1 << 16) | y1);
 	NVDmaNext (pNv, (w << 16) | h);
@@ -203,7 +215,7 @@ NvUploadToScreen(PixmapPtr pDst, int x, int y, int w, int h,
 		src += src_pitch;
 		dst += dst_pitch;
 	}
-	_NV_FENCE()
+
 	LEAVE;
 	return TRUE;
 }
@@ -272,18 +284,17 @@ NvInitExa(ScreenPtr pScreen)
 	pExa->exa_minor = EXA_VERSION_MINOR;
 
 	pExa->memoryBase = pNv->FbStart;
-	pExa->memorySize = pNv->ScratchBufferStart & (~63);
-	pExa->offScreenBase = pScrn->virtualY * 
-				pScrn->displayWidth * pScrn->bitsPerPixel >> 3;
-	pExa->pixmapOffsetAlign = 64;
-	pExa->pixmapPitchAlign = 64;
+	pExa->memorySize = pNv->ScratchBufferStart & (~255);
+	pExa->offScreenBase = (((pScrn->virtualY * pScrn->displayWidth *
+			       pScrn->bitsPerPixel >> 3) + 255) & (~255));
+	pExa->pixmapOffsetAlign = 256;
+	pExa->pixmapPitchAlign = 256;
 
-	pExa->flags = EXA_OFFSCREEN_PIXMAPS |
-		      EXA_SUPPORTS_OFFSCREEN_OVERLAPS |
-		      EXA_MIXED_PIXMAPS;
+	pExa->flags = EXA_OFFSCREEN_PIXMAPS/* |
+		      EXA_MIXED_PIXMAPS*/;
 
-	pExa->maxX = 8192;
-	pExa->maxY = 8192;	
+	pExa->maxX = 4096;
+	pExa->maxY = 4096;	
 
 	pExa->WaitMarker = NvWaitMarker;
 	pExa->PrepareSolid = NvPrepareSolid;
@@ -295,23 +306,23 @@ NvInitExa(ScreenPtr pScreen)
 
 	switch(pNv->CurrentLayout.depth) {
 	case 24:
-		surfaceFormat = SURFACE_FORMAT_DEPTH24;
-		rectFormat = RECT_FORMAT_DEPTH24;
+		pNv->surfaceFormat = SURFACE_FORMAT_DEPTH24;
+		pNv->rectFormat = RECT_FORMAT_DEPTH24;
 		break;
 	case 16:
 	case 15:
-		surfaceFormat = SURFACE_FORMAT_DEPTH16;
-		rectFormat = RECT_FORMAT_DEPTH16;
+		pNv->surfaceFormat = SURFACE_FORMAT_DEPTH16;
+		pNv->rectFormat = RECT_FORMAT_DEPTH16;
 		break;
 	default:
-		surfaceFormat = SURFACE_FORMAT_DEPTH8;
-		rectFormat = RECT_FORMAT_DEPTH8;
+		pNv->surfaceFormat = SURFACE_FORMAT_DEPTH8;
+		pNv->rectFormat = RECT_FORMAT_DEPTH8;
 		break;
 	}
 	NVDmaStart(pNv, SURFACE_FORMAT, 1);
-	NVDmaNext (pNv, surfaceFormat);
+	NVDmaNext (pNv, pNv->surfaceFormat);
 	NVDmaStart(pNv, RECT_FORMAT, 1);
-	NVDmaNext (pNv, rectFormat);
+	NVDmaNext (pNv, pNv->rectFormat);
 
 	pNv->currentRop = ~0;  /* set to something invalid */
 	NVSetRopSolid(pScrn, GXcopy, ~0);

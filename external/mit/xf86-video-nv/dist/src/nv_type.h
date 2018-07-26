@@ -131,6 +131,7 @@ typedef struct {
     XAAInfoRecPtr       AccelInfoRec;
 #endif
     ExaDriverPtr 	pExa;
+    U032		surfaceFormat, rectFormat;
     xf86CursorInfoPtr   CursorInfoRec;
     DGAModePtr          DGAModes;
     int                 numDGAModes;

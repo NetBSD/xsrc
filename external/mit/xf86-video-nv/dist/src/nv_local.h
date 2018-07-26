@@ -57,7 +57,7 @@ typedef unsigned int   U032;
 #if defined(__i386__)
 #define _NV_FENCE() outb(0x3D0, 0);
 #elif defined(__powerpc__)
-#define _NV_FENCE() __asm("eieio; sync;");
+#define _NV_FENCE() __asm("eieio; sync;" ::: "memory");
 #else
 #define _NV_FENCE() mem_barrier();
 #endif
