@@ -325,6 +325,7 @@ pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
+runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -445,6 +446,7 @@ libman_PRE = \
 	XkbGetKeyboardByName.man                \
 	XkbGetMap.man                           \
 	XkbGetNameChanges.man                   \
+	XkbGetNamedDeviceIndicator.man          \
 	XkbGetNamedGeometry.man                 \
 	XkbGetNamedIndicator.man                \
 	XkbGetNames.man                         \
@@ -525,6 +527,7 @@ libman_PRE = \
 	XkbSetIndicatorMap.man                  \
 	XkbSetMap.man                           \
 	XkbSetModActionVMods.man                \
+	XkbSetNamedDeviceIndicator.man          \
 	XkbSetNamedIndicator.man                \
 	XkbSetNames.man                         \
 	XkbSetPtrActionX.man                    \
