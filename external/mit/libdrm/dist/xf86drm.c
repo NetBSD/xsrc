@@ -3036,8 +3036,10 @@ static int drmParseSubsystemType(int maj, int min)
 	sv.drm_dd_major = -1;
 	sv.drm_dd_minor = -1;
 	if (drmSetInterfaceVersion(fd, &sv)) {
-	    (void)close(fd);
-	    return -ENODEV;
+	    /*
+	     * We're probably not the master.  Hope the master already
+	     * set the version to >=1.1 so that we can get the busid.
+	     */
 	}
     }
 
