@@ -3055,7 +3055,7 @@ static int drmParseSubsystemType(int maj, int min)
 
     /* Find a string we know about; otherwise -EINVAL.  */
     ret = -EINVAL;
-    if (strncmp(buf, "pci:", 4) != 0)
+    if (strncmp(buf, "pci:", 4) == 0)
 	ret = DRM_BUS_PCI;
 
     /* We're done with the bus id.  */
