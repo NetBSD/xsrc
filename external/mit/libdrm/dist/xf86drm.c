@@ -89,6 +89,7 @@
 #ifdef __NetBSD__
 #undef DRM_MAJOR
 #define DRM_MAJOR 180
+#include <sys/param.h>
 #include <dev/pci/pcireg.h>
 #include <pci.h>
 #endif
@@ -3128,8 +3129,10 @@ static int drmParsePciBusInfo(int maj, int min, drmPciBusInfoPtr info)
 	sv.drm_dd_major = -1;
 	sv.drm_dd_minor = -1;
 	if (drmSetInterfaceVersion(fd, &sv)) {
-	    (void)close(fd);
-	    return -ENODEV;
+            /*
+	     * We're probably not the master.  Hope the master already
+	     * set the version to >=1.1 so that we can get the busid.
+	     */
 	}
     }
 
