@@ -3347,22 +3347,29 @@ static int drmParsePciDeviceInfo(int maj, int min,
     if ((pcifd = open(fname, O_RDONLY)) == -1)
 	return -errno;
 
+    ret = -1;
     /* Read the id and class pci config registers.  */
     if (pcibus_conf_read(pcifd, businfo.bus, businfo.dev, businfo.func,
 	    PCI_ID_REG, &id) == -1)
-	return -errno;
+	goto out;
     if (pcibus_conf_read(pcifd, businfo.bus, businfo.dev, businfo.func,
 	    PCI_CLASS_REG, &class) == -1)
-	return -errno;
+	goto out;
     if (pcibus_conf_read(pcifd, businfo.bus, businfo.dev, businfo.func,
 	    PCI_SUBSYS_ID_REG, &subsys) == -1)
-	return -errno;
+	goto out;
 
+    ret = 0;
     device->vendor_id = PCI_VENDOR(id);
     device->device_id = PCI_PRODUCT(id);
     device->subvendor_id = PCI_SUBSYS_VENDOR(subsys);
     device->subdevice_id = PCI_SUBSYS_ID(subsys);
     device->revision_id = PCI_REVISION(class);
+out:
+    if (ret == -1)
+	ret = -errno;
+    close(pcifd);
+    return ret;
 #elif defined(__OpenBSD__)
     struct drm_pciinfo pinfo;
     int fd, type;
