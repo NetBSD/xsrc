@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: nv_exa.c,v 1.4 2018/07/26 21:29:16 macallan Exp $ */
+/* $NetBSD: nv_exa.c,v 1.5 2018/10/05 01:53:54 macallan Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -114,7 +114,7 @@ NvCopy
 	NVDmaNext (pNv, (h  << 16) | w);
 
 	if((w * h) >= 512)
-		NVDmaKickoff(pNv); 
+		NVDmaKickoff(pNv);
 
 	LEAVE;
 }
@@ -141,9 +141,19 @@ NvPrepareSolid(
 	if (pPixmap->drawable.bitsPerPixel != 32)
 		xf86Msg(X_ERROR, "%s %d bpp\n", __func__, pPixmap->drawable.bitsPerPixel);
 	planemask |= ~0 << pNv->CurrentLayout.depth;
+	off = exaGetPixmapOffset(pPixmap);
+
+	/* 
+	 * XXX
+	 * on my 6800 Ultra the drawing engine stalls when drawing at least
+	 * rectangles into off-screen memory. Draw them by software until I figure out
+	 * what's going on
+	 */
+	if (off != 0) return FALSE;
+	
+	NVSetRopSolid(pScrn, rop, planemask);
 
 	pitch = exaGetPixmapPitch(pPixmap);
-	off = exaGetPixmapOffset(pPixmap);
 
 	NVDmaStart(pNv, SURFACE_FORMAT, 4);
 	NVDmaNext (pNv, pNv->surfaceFormat);
@@ -153,8 +163,6 @@ NvPrepareSolid(
 
 	NVDmaStart(pNv, RECT_FORMAT, 1);
 	NVDmaNext (pNv, pNv->rectFormat);
-
-	NVSetRopSolid(pScrn, rop, planemask);
 
 	NVDmaStart(pNv, RECT_SOLID_COLOR, 1);
 	NVDmaNext (pNv, color);
@@ -323,6 +331,12 @@ NvInitExa(ScreenPtr pScreen)
 	NVDmaNext (pNv, pNv->surfaceFormat);
 	NVDmaStart(pNv, RECT_FORMAT, 1);
 	NVDmaNext (pNv, pNv->rectFormat);
+
+	NVDmaStart(pNv, PATTERN_COLOR_0, 4);
+	NVDmaNext (pNv, 0xffffffff);
+	NVDmaNext (pNv, 0xffffffff);
+	NVDmaNext (pNv, 0xffffffff);
+	NVDmaNext (pNv, 0xffffffff);
 
 	pNv->currentRop = ~0;  /* set to something invalid */
 	NVSetRopSolid(pScrn, GXcopy, ~0);
