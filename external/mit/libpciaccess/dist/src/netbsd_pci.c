@@ -924,6 +924,9 @@ pci_system_netbsd_create(void)
 	nbuses = 0;
 	snprintf(netbsd_devname, 32, "/dev/pci%d", nbuses);
 	pcifd = open(netbsd_devname, O_RDWR | O_CLOEXEC);
+	if (pcifd == -1)
+		pcifd = open(netbsd_devname, O_RDONLY | O_CLOEXEC);
+
 	while (pcifd > 0) {
 		ioctl(pcifd, PCI_IOC_BUSINFO, &businfo);
 		buses[nbuses].fd = pcifd;
@@ -946,6 +949,8 @@ pci_system_netbsd_create(void)
 		}
 		snprintf(netbsd_devname, 32, "/dev/pci%d", nbuses);
 		pcifd = open(netbsd_devname, O_RDWR);
+		if (pcifd == -1)
+			pcifd = open(netbsd_devname, O_RDONLY | O_CLOEXEC);
 	}
 
 	pci_sys->num_devices = ndevs;
