@@ -165,11 +165,6 @@ xf86OpenConsole()
 #endif
 
     if (serverGeneration == 1) {
-        /* check if we are run with euid==0 */
-        if (geteuid() != 0) {
-            FatalError("xf86OpenConsole: Server must be suid root");
-        }
-
         if (!KeepTty) {
             /*
              * detaching the controlling tty solves problems of kbd character
