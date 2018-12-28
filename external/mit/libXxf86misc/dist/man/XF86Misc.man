@@ -4,7 +4,7 @@
 .\"
 .\"
 .\" Copyright (c) 1996  Joe Moss, The XFree86 Project
-.\" 
+.\"
 .\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/man/XF86Misc.man,v 3.12 2002/12/22 00:46:54 dawes Exp $
 .de ZN
 .ie t \fB\^\\$1\^\fR\\$2
@@ -163,7 +163,7 @@ The device can not be changed
 .IP 2) 3
 The protocol can not be changed to or from Xqueue or OsMouse
 .IP 3) 3
-The buttons field can not be changed 
+The buttons field can not be changed
 .IP 4) 3
 Invalid combinations of parameters are not allowed
 .RE
@@ -172,7 +172,7 @@ The server will generate an error if any of the above is attempted,
 except the first \- the contents of the device field are simply ignored.
 .PP
 A change of the protocol causes the device to be closed and reopened.
-Changes to the baud rate, sample rate, resolution or flags, 
+Changes to the baud rate, sample rate, resolution or flags,
 when applicable to the
 selected protocol, also cause a reopen of the device.
 A reopen can be forced by using the MF_REOPEN flag, except in the

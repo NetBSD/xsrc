@@ -1,3 +1,52 @@
+commit 388f29f98dd264059cc7ee5342e2ca32463de2d3
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Thu Jul 5 12:48:34 2018 -0400
+
+    libXxf86misc 1.0.4
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 19c61f61f4ce33bf791668b73b68ec1230e0777d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 31 21:39:32 2014 -0700
+
+    autogen.sh: Honor NOCONFIGURE=1
+    
+    See http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4d18a5db6d1564a2770aa2f7fa0eee6de7324bfe
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 31 21:38:41 2014 -0700
+
+    configure: Drop AM_MAINTAINER_MODE
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5212bbe8156e935658ebcbfdd8e0120ca4947112
+Author: Egbert Eich <eich@freedesktop.org>
+Date:   Thu May 19 17:16:19 2011 +0200
+
+    Add missing UnlockDisplay() and SyncHandle() to some error paths.
+    
+    Without unlocking the display the application will hang if the
+    code goes into one of the error paths.
+    
+    Signed-off-by: Egbert Eich <eich@freedesktop.org>
+    Reviewed-by: Matt Turner <mattst88@gmail.com>
+
+commit da69add8425b1bd098a96c9873a2e7ed2bd1bae0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Sep 16 22:57:40 2011 -0700
+
+    Strip trailing whitespace
+    
+    Performed with: find * -type f | xargs perl -i -p -e 's{[ \t]+$}{}'
+    git diff -w & git diff -b show no diffs from this change
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit cf3d37b193895268106418e6fdb58a078abe7a3f
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sun Nov 21 13:46:50 2010 -0800
