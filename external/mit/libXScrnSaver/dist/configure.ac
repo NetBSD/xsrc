@@ -22,14 +22,13 @@
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([libXScrnSaver], [1.2.2],
+AC_INIT([libXScrnSaver], [1.2.3],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg], [libXScrnSaver])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
 
 # Initialize Automake
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
-AM_MAINTAINER_MODE
 
 # Initialize libtool
 AC_PROG_LIBTOOL
