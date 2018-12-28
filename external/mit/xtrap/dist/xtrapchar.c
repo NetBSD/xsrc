@@ -134,9 +134,9 @@ static BOOL passive_ctrl;  /* Control key assumed?                 */
 static BOOL shift;         /* Cap's on?                            */
 static BOOL ctrl;          /* Control key?                         */
 static BOOL alt;           /* Alt key?                             */
-KeyCode alt_code;
-KeyCode ctrl_code;
-KeyCode shift_code;
+static KeyCode alt_code;
+static KeyCode ctrl_code;
+static KeyCode shift_code;
 
 
 
@@ -236,7 +236,7 @@ main(int argc, char *argv[])
     {
         printf("Display:  %s \n", DisplayString(dpy));
     }
-    if ((tc = XECreateTC(dpy,0L, NULL)) == False)
+    if ((tc = XECreateTC(dpy,0L, NULL)) == NULL)
     {
         fprintf(stderr,"%s: could not initialize XTrap extension\n", ProgName);
         exit (1L);
@@ -368,12 +368,10 @@ main(int argc, char *argv[])
     exit(0L);
 }
 
-static int get_csi_key(tc, private, param, nparam, inter, ninter, final)
-    XETC    *tc;
-    int     private;
-    int     param[], nparam;
-    int     inter[], ninter;
-    int     final;
+static int get_csi_key(XETC *tc, int private,
+		       int param[], int nparam,
+		       int inter[], int ninter,
+		       int final)
 {
     KeySym keysym = 0;
     switch(param[1])
@@ -445,12 +443,10 @@ static int get_csi_key(tc, private, param, nparam, inter, ninter, final)
      *                                  pointer position)
      *
      */    
-static void send_special(tc, private, param, nparam, inter, ninter, final)
-    XETC    *tc;
-    int     private;
-    int     param[], nparam;
-    int     inter[], ninter;
-    int     final;
+static void send_special(XETC *tc, int private,
+			 int param[], int nparam,
+			 int inter[], int ninter,
+			 int final)
 {
     switch(private)
     {
@@ -619,12 +615,10 @@ static void send_special(tc, private, param, nparam, inter, ninter, final)
     }
 }
 
-static int get_ss3_key(tc, private, param, nparam, inter, ninter, final)
-    XETC    *tc;
-    int     private;
-    int     param[], nparam;
-    int     inter[], ninter;
-    int     final;
+static int get_ss3_key(XETC *tc, int private,
+		       int param[], int nparam,
+		       int inter[], int ninter,
+		       int final)
 {
     KeySym keysym = 0;
     switch(param[1])
@@ -665,9 +659,7 @@ static int get_ss3_key(tc, private, param, nparam, inter, ninter, final)
     return(get_keycode(tc, keysym));
 }
 
-static KeyCode get_typical_char(tc, keysym)
-    XETC    *tc;
-    CARD32  keysym;
+static KeyCode get_typical_char(XETC *tc, CARD32 keysym)
 {
     if (iscntrl(keysym))
     {   

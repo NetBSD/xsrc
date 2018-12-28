@@ -29,11 +29,11 @@ bin_PROGRAMS = \
 	xtrapreset \
 	xtrapinfo
 
+AM_CFLAGS = $(CWARNFLAGS) $(XTRAP_APP_CFLAGS)
 
 # 
 # xtrapchar
 #
-xtrapchar_CFLAGS = $(XTRAP_APP_CFLAGS)
 xtrapchar_LDADD = $(XTRAP_APP_LIBS)
 
 xtrapchar_SOURCES = \
@@ -46,7 +46,7 @@ xtrapchar_SOURCES = \
 #
 # xtrapin
 # 
-xtrapin_CFLAGS = $(XTRAP_APP_CFLAGS) -D_BSD_SOURCE
+xtrapin_CFLAGS = -D_DEFAULT_SOURCE $(AM_CFLAGS)
 xtrapin_LDADD = $(XTRAP_APP_LIBS)
 
 xtrapin_SOURCES = \
@@ -57,7 +57,7 @@ xtrapin_SOURCES = \
 #
 # xtrapout
 #
-xtrapout_CFLAGS = $(XTRAP_APP_CFLAGS) -D_BSD_SOURCE
+xtrapout_CFLAGS = -D_DEFAULT_SOURCE $(AM_CFLAGS)
 xtrapout_LDADD = $(XTRAP_APP_LIBS)
 
 xtrapout_SOURCES = \
@@ -68,7 +68,6 @@ xtrapout_SOURCES = \
 #
 # xtrapproto
 #
-xtrapproto_CFLAGS = $(XTRAP_APP_CFLAGS)
 xtrapproto_LDADD = $(XTRAP_APP_LIBS)
 
 xtrapproto_SOURCES = \
@@ -77,7 +76,6 @@ xtrapproto_SOURCES = \
 #
 # xtrapreset
 #
-xtrapreset_CFLAGS = $(XTRAP_APP_CFLAGS)
 xtrapreset_LDADD = $(XTRAP_APP_LIBS)
 
 xtrapreset_SOURCES = \
@@ -86,7 +84,6 @@ xtrapreset_SOURCES = \
 #
 # xtrapstats
 #
-xtrapstats_CFLAGS = $(XTRAP_APP_CFLAGS)
 xtrapstats_LDADD = $(XTRAP_APP_LIBS)
 
 xtrapstats_SOURCES = \
@@ -95,7 +92,6 @@ xtrapstats_SOURCES = \
 #
 # xtrapinfo
 #
-xtrapinfo_CFLAGS = $(XTRAP_APP_CFLAGS)
 xtrapinfo_LDADD = $(XTRAP_APP_LIBS)
 
 xtrapinfo_SOURCES = \
@@ -113,8 +109,6 @@ appmandir = $(APP_MAN_DIR)
 
 appman_DATA = $(appman_PRE:man=@APP_MAN_SUFFIX@) \
 	      $(man_shadows:=.@APP_MAN_SUFFIX@)
-
-BUILT_SOURCES = shadows.DONE
 
 EXTRA_DIST = $(appman_PRE)
 CLEANFILES = $(appman_DATA) $(BUILT_SOURCES)
@@ -141,7 +135,7 @@ MAN_SUBSTS = \
 SUFFIXES = .$(APP_MAN_SUFFIX) .man
 
 .man.$(APP_MAN_SUFFIX):
-	sed $(MAN_SUBSTS) < $< > $@
+	$(AM_V_GEN)$(SED) $(MAN_SUBSTS) < $< > $@
 
 man_shadows =    \
     xtrapreset   \
@@ -152,8 +146,17 @@ man_shadows =    \
     xtrapchar    \
     xtrapproto
 
-shadows.DONE:
-	-rm -f $(man_shadows:=.@APP_MAN_SUFFIX@)
-	(for i in $(man_shadows:=.@APP_MAN_SUFFIX@) ; do \
-	 echo .so man$(APP_MAN_DIR_SUFFIX)/xtrap.$(APP_MAN_SUFFIX) > $$i; \
-	 done)
+shadowmen = $(man_shadows:=.@APP_MAN_SUFFIX@)
+
+$(shadowmen):
+	 $(AM_V_GEN)echo .so man$(APP_MAN_DIR_SUFFIX)/xtrap.$(APP_MAN_SUFFIX) > $@
+
+EXTRA_DIST += ChangeLog
+MAINTAINERCLEANFILES = ChangeLog
+
+.PHONY: ChangeLog
+
+ChangeLog:
+	$(CHANGELOG_CMD)
+
+dist-hook: ChangeLog
