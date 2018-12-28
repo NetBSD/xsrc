@@ -64,6 +64,7 @@ in this Software without prior written authorization from The Open Group.
 # include <X11/Xthreads.h>
 #endif
 #include <stdio.h>
+#include <unistd.h>
 
 #include <time.h>
 #define Time_t time_t
@@ -107,19 +108,18 @@ SmsGenerateClientID(SmsConn smsConn)
 {
 #if defined(HAVE_UUID_CREATE)
     char *id;
-    char **temp;
+    char *temp;
     uuid_t uuid;
     uint32_t status;
+    size_t len;
 
     uuid_create(&uuid, &status);
 
     uuid_to_string(&uuid, &temp, &status);
 
-    if ((id = malloc (strlen (temp) + 2)) != NULL)
-    {
-        id[0] = '2';
-        strcpy (id+1, temp);
-    }
+    len = strlen(temp) + 2;
+    if ((id = malloc(len)) != NULL)
+        snprintf(id, len, "2%s", temp);
 
     free(temp);
 
