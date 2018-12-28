@@ -67,14 +67,14 @@ main(int argc, char *argv[])
     /* Connect to Server */
     appW = XtAppInitialize(&app,"XTrap",NULL,(Cardinal)0L,
         (int *)&argc, (String *)argv, (String *)NULL,(ArgList)&tmp,
-        (Cardinal)NULL);
+        0);
     dpy = XtDisplay(appW);
 #ifdef DEBUG
     XSynchronize(dpy, True);
 #endif
     printf("Resetting Display:  %s \n", DisplayString(dpy));
 
-    if ((tc = XECreateTC(dpy,0L, NULL)) == False)
+    if ((tc = XECreateTC(dpy,0L, NULL)) == NULL)
     {
         fprintf(stderr,"%s: could not initialize extension\n",argv[0]);
         exit (1L);

@@ -102,8 +102,8 @@ extern int opterr;
 
 static Boolean grabFlag = False;
 
-FILE *ifp;
-XrmOptionDescRec optionTable [] = 
+static FILE *ifp;
+static XrmOptionDescRec optionTable [] = 
 {
     {"-f",     "*script",    XrmoptionSepArg,  (caddr_t) NULL},
     {"-g",     "*grabServer",XrmoptionSkipArg, (caddr_t) NULL},
@@ -173,7 +173,7 @@ main(int argc, char *argv[])
 
     appW = XtAppInitialize(&app,"XTrap",optionTable,(Cardinal)1L,
         (int *)&argc, (String *)argv, (String *)NULL,(ArgList)&tmp,
-        (Cardinal)NULL);
+        0);
 
     dpy = XtDisplay(appW);
 #ifdef DEBUG
@@ -181,7 +181,7 @@ main(int argc, char *argv[])
 #endif
     printf("Display:  %s \n", DisplayString(dpy));
 
-    if ((tc = XECreateTC(dpy,0L, NULL)) == False)
+    if ((tc = XECreateTC(dpy,0L, NULL)) == NULL)
     {
         fprintf(stderr,"%s: could not initialize XTrap extension\n", ProgName);
         exit (1L);

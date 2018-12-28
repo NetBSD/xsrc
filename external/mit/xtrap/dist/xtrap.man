@@ -3,8 +3,7 @@
 .SH NAME
 xtrapreset, xtrapinfo, xtrapstats, xtrapout, xtrapin, xtrapchar, xtrapproto  
 - XTrap sample clients
-.SH SYNTAX
-.NXR "XTrap X Server Extension Sample Clients"
+.SH SYNOPSIS
 .B xtrapreset
 [
 .B \-d[isplay]
@@ -172,15 +171,14 @@ The XTrap X server extension has not been linked into the specified X
 server.
 .SH SOURCES
 .LP
-.EX
 Sources have been posted on UseNet systems via anonymous ftp.
 They are:
+.EX
 East Coast (USA):   export@lcs.mit.edu:contrib/XTrap_v32*.tar.Z
 West Coast (USA):   gatekeeper@pa.dec.com:X11/contrib/XTrap_v32*.tar.Z
-
+.EE
 .SH IMPORTANT NOTE
 .LP
-.EX
 Digital participated in the X Consortium's xtest working group which 
 chose to evolve XTrap functionality into a new extension for X11/R6
 known as the RECORD extension (XTrap input synthesis functionality is
@@ -196,21 +194,23 @@ for details on how to be added to the xtest mailing list.
 If you encounter problems, have questions, etc. with XTrap, please contact 
 via mail, phone, etc. at:
 
+.EX
         Ken Miller
 	miller@zk3.dec.com
 	(VOICE) 603-881-6221
         (FAX)   603 881-2257
+.EE
 
 or paper mail at:
 
+.EX
         Digital Equipment Corp.
         Ken Miller @ ZKO3-3/Y25
         110 Spitbrook Rd.
         Nashua, NH 03062
+.EE
 
 Naturally email is preferred and will get the fastest response.
-.EE
 .SH SEE ALSO
 X(1)
-.NXE "X" 
 
