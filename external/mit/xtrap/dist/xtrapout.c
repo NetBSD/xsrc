@@ -88,6 +88,10 @@ SOFTWARE.
 **--
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <inttypes.h>
 #include <stdio.h>
 #include <X11/extensions/xtraplib.h>
@@ -110,16 +114,16 @@ extern int opterr;
 
 
 /* Forward declarations */
-static void SetGlobalDone (int);
+static void SetGlobalDone (int unused );
 static void print_req_callback (XETC *tc , XETrapDatum *data , 
-    unsigned char *my_buf );
+    BYTE *my_buf );
 static void print_evt_callback (XETC *tc , XETrapDatum *data , 
-    unsigned char *my_buf );
+    BYTE *my_buf );
 
 
-FILE *ofp;
-Bool GlobalDone = False;
-XrmOptionDescRec optionTable [] = 
+static FILE *ofp;
+static Bool GlobalDone = False;
+static XrmOptionDescRec optionTable [] = 
 {
     {"-f",     "*script",    XrmoptionSepArg,  (caddr_t) NULL},
     {"-e",     "*eventFlag", XrmoptionSkipArg, (caddr_t) NULL},
@@ -133,7 +137,7 @@ static void SetGlobalDone(int unused)
     return;
 }
 
-static void print_req_callback(XETC *tc, XETrapDatum *data, unsigned char *my_buf)
+static void print_req_callback(XETC *tc, XETrapDatum *data, BYTE *my_buf)
 {
     char *req_type;
     req_type = (data->u.req.reqType == XETrapGetExtOpcode(tc) ? "XTrap" :
@@ -143,7 +147,7 @@ static void print_req_callback(XETC *tc, XETrapDatum *data, unsigned char *my_bu
         (long)data->u.req.id);
 }
 
-static void print_evt_callback(XETC *tc, XETrapDatum *data, unsigned char *my_buf)
+static void print_evt_callback(XETC *tc, XETrapDatum *data, BYTE *my_buf)
 {
     static Time last_time = 0;
     int delta;
@@ -225,14 +229,14 @@ main(int argc, char *argv[])
 
     appW = XtAppInitialize(&app,"XTrap",optionTable,(Cardinal)2L,
         (int *)&argc, (String *)argv, (String *)NULL,(ArgList)&tmp,
-        (Cardinal)0);
+        0);
 
     dpy = XtDisplay(appW);
 #ifdef DEBUG
     XSynchronize(dpy, True);
 #endif
     fprintf(stderr,"Display:  %s \n", DisplayString(dpy));
-    if ((tc = XECreateTC(dpy,0L, NULL)) == False)
+    if ((tc = XECreateTC(dpy,0L, NULL)) == NULL)
     {
         fprintf(stderr,"%s: could not initialize XTrap extension\n",ProgName);
         exit (1L);
