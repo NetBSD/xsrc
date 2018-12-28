@@ -42,9 +42,9 @@ static /* const */ XExtensionHooks xf86misc_extension_hooks = {
     NULL,				/* error_string */
 };
 
-static XEXT_GENERATE_FIND_DISPLAY (find_display, xf86misc_info, 
-				   xf86misc_extension_name, 
-				   &xf86misc_extension_hooks, 
+static XEXT_GENERATE_FIND_DISPLAY (find_display, xf86misc_info,
+				   xf86misc_extension_name,
+				   &xf86misc_extension_hooks,
 				   0, NULL)
 
 static XEXT_GENERATE_CLOSE_DISPLAY (close_display, xf86misc_info)
@@ -91,7 +91,7 @@ Bool XF86MiscQueryVersion(Display* dpy, int* majorVersion, int* minorVersion)
     SyncHandle();
     if (*majorVersion > 0 || *minorVersion > 5)
 	XF86MiscSetClientVersion(dpy);
-    
+
     return True;
 }
 
@@ -147,6 +147,8 @@ Bool XF86MiscGetMouseSettings(Display* dpy, XF86MiscMouseSettings *mouseinfo)
         if (!(mouseinfo->device = Xcalloc(rep.devnamelen + 1, 1))) {
             _XEatData(dpy, (rep.devnamelen+3) & ~3);
             Xfree(mouseinfo->device);
+	    UnlockDisplay(dpy);
+	    SyncHandle();
             return False;
         }
         _XReadPad(dpy, mouseinfo->device, rep.devnamelen);
@@ -191,13 +193,13 @@ Bool XF86MiscSetMouseSettings(Display* dpy, XF86MiscMouseSettings *mouseinfo)
     XExtDisplayInfo *info = find_display (dpy);
     xXF86MiscSetMouseSettingsReq *req;
     int majorVersion, minorVersion;
-    
+
     XF86MiscCheckExtension (dpy, info, False);
     XF86MiscQueryVersion(dpy, &majorVersion, &minorVersion);
-    
+
     LockDisplay(dpy);
     GetReq(XF86MiscSetMouseSettings, req);
-    
+
     req->reqType = info->codes->major_opcode;
     req->xf86miscReqType = X_XF86MiscSetMouseSettings;
     req->mousetype = mouseinfo->type;
@@ -218,7 +220,7 @@ Bool XF86MiscSetMouseSettings(Display* dpy, XF86MiscMouseSettings *mouseinfo)
 	Data(dpy, mouseinfo->device, req->devnamelen);
 	}
     }
-	
+
     UnlockDisplay(dpy);
     SyncHandle();
     return True;
@@ -291,6 +293,8 @@ Bool XF86MiscGetFilePaths(Display* dpy, XF86MiscFilePaths *filpaths)
         if (!(filpaths->configfile = Xcalloc(rep.configlen + 1, 1))) {
             _XEatData(dpy, ((rep.configlen+3) & ~3) + ((rep.modulelen+3) & ~3)
 			    + ((rep.loglen+3) & ~3));
+	    UnlockDisplay(dpy);
+	    SyncHandle();
             return False;
         }
     }
@@ -301,6 +305,8 @@ Bool XF86MiscGetFilePaths(Display* dpy, XF86MiscFilePaths *filpaths)
 			    + ((rep.loglen+3) & ~3));
             if (filpaths->configfile)
 		    Xfree(filpaths->configfile);
+	    UnlockDisplay(dpy);
+	    SyncHandle();
             return False;
         }
     }
@@ -313,6 +319,8 @@ Bool XF86MiscGetFilePaths(Display* dpy, XF86MiscFilePaths *filpaths)
 		    Xfree(filpaths->configfile);
             if (filpaths->modulepath)
 		    Xfree(filpaths->modulepath);
+	    UnlockDisplay(dpy);
+	    SyncHandle();
             return False;
         }
     }
@@ -374,6 +382,8 @@ Status XF86MiscPassMessage(Display* dpy, int screen,
     if (rep.mesglen) {
         if (!(*retmsg = Xcalloc(rep.mesglen + 1, 1))) {
             _XEatData(dpy, ((rep.mesglen+3) & ~3));
+	    UnlockDisplay(dpy);
+	    SyncHandle();
             return BadAlloc;
         }
         _XReadPad(dpy, *retmsg, rep.mesglen);
