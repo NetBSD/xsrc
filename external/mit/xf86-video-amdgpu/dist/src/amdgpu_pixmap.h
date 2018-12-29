@@ -62,7 +62,7 @@ static inline Bool amdgpu_set_pixmap_bo(PixmapPtr pPix, struct amdgpu_buffer *bo
 	struct amdgpu_pixmap *priv;
 
 	priv = amdgpu_get_pixmap_private(pPix);
-	if (priv == NULL && bo == NULL)
+	if (!priv && !bo)
 		return TRUE;
 
 	if (priv) {

@@ -252,7 +252,7 @@ int amdgpu_bo_map(ScrnInfoPtr pScrn, struct amdgpu_buffer *bo)
 			PROT_READ | PROT_WRITE, MAP_SHARED,
 			fd, args.out.addr_ptr);
 
-		if (ptr == NULL) {
+		if (!ptr) {
 			ErrorF("Failed to mmap the bo\n");
 			return -1;
 		}
@@ -266,7 +266,7 @@ int amdgpu_bo_map(ScrnInfoPtr pScrn, struct amdgpu_buffer *bo)
 
 void amdgpu_bo_unmap(struct amdgpu_buffer *bo)
 {
-	if (bo->cpu_ptr == NULL)
+	if (!bo->cpu_ptr)
 		return;
 
 	if (bo->flags & AMDGPU_BO_FLAGS_GBM) {
@@ -289,9 +289,8 @@ struct amdgpu_buffer *amdgpu_bo_open(amdgpu_device_handle pDev,
 	memset(&alloc_request, 0, sizeof(struct amdgpu_bo_alloc_request));
 
 	bo = (struct amdgpu_buffer *)calloc(1, sizeof(struct amdgpu_buffer));
-	if (bo == NULL) {
+	if (!bo)
 		return NULL;
-	}
 
 	alloc_request.alloc_size = alloc_size;
 	alloc_request.phys_alignment = phys_alignment;
@@ -376,9 +375,8 @@ struct amdgpu_buffer *amdgpu_gem_bo_open_prime(amdgpu_device_handle pDev,
 	struct amdgpu_bo_import_result buffer = {0};
 
 	bo = (struct amdgpu_buffer *)calloc(1, sizeof(struct amdgpu_buffer));
-	if (bo == NULL) {
+	if (!bo)
 		return NULL;
-	}
 
 	if (amdgpu_bo_import(pDev, amdgpu_bo_handle_type_dma_buf_fd,
 			     (uint32_t)fd_handle, &buffer)) {
@@ -401,6 +399,9 @@ Bool amdgpu_set_shared_pixmap_backing(PixmapPtr ppix, void *fd_handle)
 	int ihandle = (int)(long)fd_handle;
 	uint32_t size = ppix->devKind * ppix->drawable.height;
 	Bool ret;
+
+	if (ihandle == -1)
+		return amdgpu_set_pixmap_bo(ppix, NULL);
 
 	if (info->gbm) {
 		struct amdgpu_buffer *bo;

@@ -30,7 +30,6 @@
 #include <xorg-server.h>
 
 struct amdgpu_dri2 {
-	drmVersionPtr pKernelDRMVersion;
 	Bool available;
 	Bool enabled;
 	char *device_name;

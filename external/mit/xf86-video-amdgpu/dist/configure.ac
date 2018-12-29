@@ -23,13 +23,13 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-video-amdgpu],
-        [18.0.0],
+        [18.1.0],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg&component=Driver/AMDgpu],
         [xf86-video-amdgpu])
 
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_MACRO_DIRS([m4])
+AC_CONFIG_MACRO_DIR([m4])
 
 AC_CONFIG_AUX_DIR(.)
 
@@ -70,7 +70,7 @@ XORG_DRIVER_CHECK_EXT(XV, videoproto)
 XORG_DRIVER_CHECK_EXT(DPMSExtension, xextproto)
 
 # Checks for libraries.
-PKG_CHECK_MODULES(LIBDRM, [libdrm >= 2.4.78])
+PKG_CHECK_MODULES(LIBDRM, [libdrm >= 2.4.89])
 PKG_CHECK_MODULES(LIBDRM_AMDGPU, [libdrm_amdgpu >= 2.4.76])
 PKG_CHECK_MODULES(GBM, [gbm])
 
