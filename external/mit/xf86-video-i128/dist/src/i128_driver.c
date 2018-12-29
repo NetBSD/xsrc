@@ -38,9 +38,6 @@
 
 #include "compiler.h"
 
-/* Drivers for PCI hardware need this */
-#include "xf86PciInfo.h"
-
 /* Drivers that need to access the PCI config space directly need this */
 #include "xf86Pci.h"
 
@@ -50,12 +47,9 @@
 /* All drivers initialising the SW cursor need this */
 #include "mipointer.h"
 
-/* All drivers implementing backing store need this */
-#include "mibstore.h"
 #include "micmap.h"
 
 #include "xf86DDC.h"
-#include "vbe.h"
 
 #include "xf86cmap.h"
 #include "fb.h"
@@ -586,7 +580,7 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Acceleration disabled\n");
     } else {
         int from = X_DEFAULT;
-        char *s = xf86GetOptValString(pI128->Options, OPTION_ACCELMETHOD);
+        const char *s = xf86GetOptValString(pI128->Options, OPTION_ACCELMETHOD);
         pI128->NoAccel = FALSE;
         if (!xf86NameCmp(s, "EXA")) {
             pI128->exa = TRUE;
@@ -1557,7 +1551,6 @@ I128ScreenInit(SCREEN_INIT_ARGS_DECL)
         return FALSE;
     }
     
-    miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
     xf86SetSilkenMouse(pScreen);
 
