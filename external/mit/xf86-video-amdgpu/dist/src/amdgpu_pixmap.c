@@ -56,7 +56,7 @@ amdgpu_pixmap_create(ScreenPtr screen, int w, int h, int depth,	unsigned usage)
 		int stride;
 
 		priv = calloc(1, sizeof(struct amdgpu_pixmap));
-		if (priv == NULL)
+		if (!priv)
 			goto fallback_pixmap;
 
 		scrn = xf86ScreenToScrn(screen);

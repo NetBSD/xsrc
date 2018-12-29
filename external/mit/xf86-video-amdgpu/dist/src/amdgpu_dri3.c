@@ -168,6 +168,7 @@ static PixmapPtr amdgpu_dri3_pixmap_from_fd(ScreenPtr screen,
 
 			if (priv) {
 				amdgpu_set_pixmap_private(pixmap, priv);
+				pixmap->usage_hint |= AMDGPU_CREATE_PIXMAP_DRI2;
 				return pixmap;
 			}
 

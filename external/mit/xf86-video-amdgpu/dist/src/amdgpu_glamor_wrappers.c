@@ -209,7 +209,7 @@ amdgpu_glamor_picture_prepare_access_cpu_ro(ScrnInfoPtr scrn,
 	PixmapPtr pixmap;
 	struct amdgpu_pixmap *priv;
 
-	if (picture->pDrawable == NULL)
+	if (!picture->pDrawable)
 		return TRUE;
 
 	pixmap = get_drawable_pixmap(picture->pDrawable);

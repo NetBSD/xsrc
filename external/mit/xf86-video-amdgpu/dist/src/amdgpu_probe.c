@@ -54,9 +54,7 @@
 #include <xf86_OSproc.h>
 #endif
 
-#ifdef XSERVER_PLATFORM_BUS
 #include <xf86platformBus.h>
-#endif
 
 _X_EXPORT int gAMDGPUEntityIndex = -1;
 
@@ -112,12 +110,15 @@ static Bool amdgpu_kernel_mode_enabled(ScrnInfoPtr pScrn, char *busIdString)
 	return TRUE;
 }
 
-static int amdgpu_kernel_open_fd(ScrnInfoPtr pScrn, char *busid,
+static int amdgpu_kernel_open_fd(ScrnInfoPtr pScrn,
+				 struct pci_device *pci_dev,
 				 struct xf86_platform_device *platform_dev)
 {
+	struct pci_device *dev;
+	char *busid;
 	int fd;
 
-#ifdef XF86_PDEV_SERVER_FD
+#ifdef ODEV_ATTRIB_FD
 	if (platform_dev) {
 		fd = xf86_get_platform_device_int_attrib(platform_dev,
 							 ODEV_ATTRIB_FD, -1);
@@ -126,17 +127,32 @@ static int amdgpu_kernel_open_fd(ScrnInfoPtr pScrn, char *busid,
 	}
 #endif
 
+	if (platform_dev)
+		dev = platform_dev->pdev;
+	else
+		dev = pci_dev;
+
+	busid = amdgpu_bus_id(pScrn, dev);
+	if (!busid)
+		return -1;
+
+	if (!amdgpu_kernel_mode_enabled(pScrn, busid)) {
+		free(busid);
+		return -1;
+	}
+
 	fd = drmOpen(NULL, busid);
 	if (fd == -1)
 		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 			   "[drm] Failed to open DRM device for %s: %s\n",
 			   busid, strerror(errno));
+	free(busid);
 	return fd;
 }
 
 void amdgpu_kernel_close_fd(AMDGPUEntPtr pAMDGPUEnt)
 {
-#ifdef XF86_PDEV_SERVER_FD
+#if defined(XSERVER_PLATFORM_BUS) && defined(XF86_PDEV_SERVER_FD)
 	if (!(pAMDGPUEnt->platform_dev &&
 	      pAMDGPUEnt->platform_dev->flags & XF86_PDEV_SERVER_FD))
 #endif
@@ -145,12 +161,12 @@ void amdgpu_kernel_close_fd(AMDGPUEntPtr pAMDGPUEnt)
 }
 
 static Bool amdgpu_open_drm_master(ScrnInfoPtr pScrn, AMDGPUEntPtr pAMDGPUEnt,
-				   char *busid)
+				   struct pci_device *pci_dev)
 {
 	drmSetVersion sv;
 	int err;
 
-	pAMDGPUEnt->fd = amdgpu_kernel_open_fd(pScrn, busid, NULL);
+	pAMDGPUEnt->fd = amdgpu_kernel_open_fd(pScrn, pci_dev, NULL);
 	if (pAMDGPUEnt->fd == -1)
 		return FALSE;
 
@@ -176,7 +192,6 @@ static Bool amdgpu_open_drm_master(ScrnInfoPtr pScrn, AMDGPUEntPtr pAMDGPUEnt,
 static Bool amdgpu_get_scrninfo(int entity_num, struct pci_device *pci_dev)
 {
 	ScrnInfoPtr pScrn = NULL;
-	char *busid;
 	EntityInfoPtr pEnt = NULL;
 	DevUnion *pPriv;
 	AMDGPUEntPtr pAMDGPUEnt;
@@ -186,10 +201,6 @@ static Bool amdgpu_get_scrninfo(int entity_num, struct pci_device *pci_dev)
 
 	if (!pScrn)
 		return FALSE;
-
-	busid = amdgpu_bus_id(pScrn, pci_dev);
-	if (!amdgpu_kernel_mode_enabled(pScrn, busid))
-		goto error;
 
 	pScrn->driverVersion = AMDGPU_VERSION_CURRENT;
 	pScrn->driverName = AMDGPU_DRIVER_NAME;
@@ -226,7 +237,7 @@ static Bool amdgpu_get_scrninfo(int entity_num, struct pci_device *pci_dev)
 			goto error;
 
 		pAMDGPUEnt = pPriv->ptr;
-		if (!amdgpu_open_drm_master(pScrn, pAMDGPUEnt, busid))
+		if (!amdgpu_open_drm_master(pScrn, pAMDGPUEnt, pci_dev))
 			goto error;
 
 		pAMDGPUEnt->fd_ref = 1;
@@ -249,7 +260,6 @@ static Bool amdgpu_get_scrninfo(int entity_num, struct pci_device *pci_dev)
 								 index)
 				       - 1);
 	free(pEnt);
-	free(busid);
 
 	return TRUE;
 
@@ -257,7 +267,6 @@ error_amdgpu:
 	amdgpu_kernel_close_fd(pAMDGPUEnt);
 error:
 	free(pEnt);
-	free(busid);
 	return FALSE;
 }
 
@@ -294,7 +303,6 @@ amdgpu_platform_probe(DriverPtr pDriver,
 {
 	ScrnInfoPtr pScrn;
 	int scr_flags = 0;
-	char *busid;
 	EntityInfoPtr pEnt = NULL;
 	DevUnion *pPriv;
 	AMDGPUEntPtr pAMDGPUEnt;
@@ -309,13 +317,6 @@ amdgpu_platform_probe(DriverPtr pDriver,
 	if (xf86IsEntitySharable(entity_num))
 		xf86SetEntityShared(entity_num);
 	xf86AddEntityToScreen(pScrn, entity_num);
-
-	busid = amdgpu_bus_id(pScrn, dev->pdev);
-	if (!busid)
-		return FALSE;
-
-	if (!amdgpu_kernel_mode_enabled(pScrn, busid))
-		goto error;
 
 	pScrn->driverVersion = AMDGPU_VERSION_CURRENT;
 	pScrn->driverName = AMDGPU_DRIVER_NAME;
@@ -349,7 +350,7 @@ amdgpu_platform_probe(DriverPtr pDriver,
 		pPriv->ptr = xnfcalloc(sizeof(AMDGPUEntRec), 1);
 		pAMDGPUEnt = pPriv->ptr;
 		pAMDGPUEnt->platform_dev = dev;
-		pAMDGPUEnt->fd = amdgpu_kernel_open_fd(pScrn, busid, dev);
+		pAMDGPUEnt->fd = amdgpu_kernel_open_fd(pScrn, NULL, dev);
 		if (pAMDGPUEnt->fd < 0)
 			goto error;
 
@@ -373,7 +374,6 @@ amdgpu_platform_probe(DriverPtr pDriver,
 								 index)
 				       - 1);
 	free(pEnt);
-	free(busid);
 
 	return TRUE;
 
@@ -381,7 +381,6 @@ error_amdgpu:
 	amdgpu_kernel_close_fd(pAMDGPUEnt);
 error:
 	free(pEnt);
-	free(busid);
 	return FALSE;
 }
 #endif
@@ -391,7 +390,7 @@ static const struct pci_id_match amdgpu_device_match[] = {
     {0, 0, 0},
 };
 
-_X_EXPORT DriverRec AMDGPU = {
+DriverRec AMDGPU = {
 	AMDGPU_VERSION_CURRENT,
 	AMDGPU_DRIVER_NAME,
 	AMDGPUIdentify,

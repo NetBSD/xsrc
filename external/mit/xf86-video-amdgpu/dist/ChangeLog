@@ -1,3 +1,906 @@
+commit d5e17dc4c78aee5d37de399728066b9be881e044
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Sep 14 17:00:17 2018 +0200
+
+    Bump version for the 18.1.0 release
+
+commit 6572be49b713a26eca14f16e1854cabf28101288
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Sep 13 11:44:21 2018 +0200
+
+    Bail from drmmode_cm_init if there's no CRTC
+    
+    We would crash due to dereferencing the NULL mode_res->crtc pointer.
+    
+    Bugzilla: https://bugs.freedesktop.org/107913
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit ca5eb9894fff153c0a1df7bdc4a4745713309e27
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Aug 29 18:50:45 2018 +0200
+
+    Bail early from drm_wait_pending_flip if there's no pending flip
+    
+    No need to process any events in that case.
+    
+    v2:
+    * Re-check drmmode_crtc->flip_pending after processing each event
+
+commit a923bedfd91d39977dbf95f296cf9b68439490f2
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Aug 31 12:44:37 2018 +0200
+
+    Do not push the CM_GAMMA_LUT property values in drmmode_crtc_cm_init
+    
+    The crtc->gamma_lut values aren't initialized yet at this point, and
+    the property values are pushed again from drmmode_setup_colormap
+    anyway.
+    
+    Fixes intermittent flicker due to random gamma LUT values during server
+    startup.
+    
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 26770be44b89b83bf39c28f2fe284c8cb92ed0c0
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Aug 29 18:49:19 2018 +0200
+
+    Don't use xorg_list_for_each_entry_safe for signalled flips
+    
+    drm_wait_pending_flip can get called from drm_handle_event, in which
+    case xorg_list_for_each_entry_safe can end up processing the same entry
+    in both. To avoid this, just process the first list entry until the list
+    is empty.
+
+commit 7eea3e2cd74eed22e982319144e18ae5b1087b78
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Aug 29 18:41:19 2018 +0200
+
+    Always delete entry from list in drm_queue_handler
+    
+    We left entries without a handler hook in the list, so the list could
+    keep taking longer to process and use up more memory.
+
+commit b804d7f85d8a07389ba7d3f9b8af8773f852f1c7
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Aug 29 17:34:55 2018 +0200
+
+    glamor: Handle ihandle == -1 in amdgpu_glamor_set_shared_pixmap_backing
+    
+    (Ported from radeon commit de88ea2755611bdcb18d91d8234d2ab5be8ff2e9)
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit ae2a450cb98707c4cab8a8265a284cf708bcd43d
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Aug 29 17:31:49 2018 +0200
+
+    Handle ihandle == -1 in amdgpu_set_shared_pixmap_backing
+    
+    It means to stop using the shared pixmap backing.
+    
+    (Ported from radeon commit 1799680f7bd84e0618f34f4c7486799521ddaf83)
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 34e851d1f284da5afcfe449f349cf1eb5e962408
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Aug 24 17:18:10 2018 +0200
+
+    Use AC_CONFIG_MACRO_DIR instead of AC_CONFIG_MACRO_DIRS
+    
+    Older versions of autoconf only supported the former.
+    
+    (Cherry picked from radeon commit cba8fe4d64819aaa8ba516aa68dbe6d2aa153046)
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit afdfa2a1b6d4b594e0ed345b32279d4a2fd5e188
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Aug 24 17:17:43 2018 +0200
+
+    Add m4 directory
+    
+    Although normally it only warns about it, under some circumstances,
+    aclocal can error out if this directory doesn't exist.
+    
+    Reported-by: John Lumby <johnlumby@hotmail.com>
+    (Cherry picked from radeon commit 7b01c10137aba24c8f61dd9b2a19ea257ad24371)
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit f6cd72e64e85896b6d155bee0930e59771dcb701
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Aug 16 16:31:01 2018 +0200
+
+    Use correct FB handle in amdgpu_do_pageflip
+    
+    We were always using the handle of the client provided FB, which
+    prevented RandR transforms from working, and could result in a black
+    screen.
+    
+    Fixes: 9b6782c821e0 "Store FB for each CRTC in drmmode_flipdata_rec"
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 85cd8eef0cbed7b409b07f58d76dacd34aa3ddea
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Jul 24 18:58:27 2018 +0200
+
+    Remove drmmode_crtc_private_rec::present_vblank_* related code
+    
+    Not needed anymore with the more robust mechanisms for preventing nested
+    drmHandleEvent calls introduced in the previous changes.
+    
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit e52872da69ecc84dafb3355839e35b0383f0d228
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Jul 20 16:56:22 2018 +0200
+
+    Defer vblank event handling while waiting for a pending flip
+    
+    This is to avoid submitting more flips while we are waiting for pending
+    ones to complete.
+    
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 739181c8d3334ff14b5a607895dfdeb29b0d9020
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Jul 25 13:00:15 2018 +0200
+
+    Add amdgpu_drm_handle_event wrapper for drmHandleEvent
+    
+    Instead of processing DRM events directly from drmHandleEvent's
+    callbacks, there are three phases:
+    
+    1. drmHandleEvent is called, and signalled events are re-queued to
+       _signalled lists from its callbacks.
+    2. Signalled page flip completion events are processed.
+    3. Signalled vblank events are processed.
+    
+    This should make sure that we never call drmHandleEvent from one of its
+    callbacks, which would usually result in blocking forever.
+
+commit 6029794e8a35417faf825491a89b85f713c77fc1
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Jul 20 17:07:23 2018 +0200
+
+    Add amdgpu_drm_wait_pending_flip function
+    
+    Replacing the drmmode_crtc_wait_pending_event macro.
+    
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 0148283984c77f7a6e97026edc3093497547e0a4
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Jul 20 16:37:05 2018 +0200
+
+    Move DRM event queue related initialization to amdgpu_drm_queue_init
+    
+    And make amdgpu_drm_queue_handler not directly accessible outside of
+    amdgpu_drm_queue.c.
+    
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 7f65a8c9e03bddf2378aaa928460632ed6b1a688
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Aug 3 17:52:28 2018 +0200
+
+    glamor: Check glamor module version for depth 30 support
+    
+    Instead of the Xorg version. This should allow glamor backported from
+    xserver >= 1.20 to work with older Xorg versions.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 08c4d42f43f80baa4bbc2ff9d0a422202cdc3538
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Aug 2 18:41:04 2018 +0200
+
+    glamor: Use glamor_egl_create_textured_pixmap_from_gbm_bo when possible
+    
+    Inspired by the modesetting driver.
+    
+    (Ported from radeon commit db28d35ce9fd07a2a4703f3df0633d4c8291ff9b)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 9b6782c821e0bdc53336d98f87ddde752faf7902
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Jul 27 17:55:11 2018 +0200
+
+    Store FB for each CRTC in drmmode_flipdata_rec
+    
+    We were only storing the FB provided by the client, but on CRTCs with
+    TearFree enabled, we use a separate FB. This could cause
+    drmmode_flip_handler to fail to clear drmmode_crtc->flip_pending, which
+    could result in a hang when waiting for the pending flip to complete. We
+    were trying to avoid that by always clearing drmmode_crtc->flip_pending
+    when TearFree is enabled, but that wasn't reliable, because
+    drmmode_crtc->tear_free can already be FALSE at this point when
+    disabling TearFree.
+    
+    Now that we're keeping track of each CRTC's flip FB separately,
+    drmmode_flip_handler can reliably clear flip_pending, and we no longer
+    need the TearFree hack.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 2989d40ef74d9966e8e8df2ef7727b2cc48d4960
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Jul 25 18:37:48 2018 +0200
+
+    glamor: Set AMDGPU_CREATE_PIXMAP_DRI2 for DRI3 pixmaps
+    
+    Not doing this resulted in falling back to software for DRI3 client
+    presentation operations with ShadowPrimary.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit f3b2ed37d683f8616a0a31ff63133ddb8fe1a4a3
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Jul 23 18:42:39 2018 +0200
+
+    Use strcpy for RandR output property names
+    
+    Instead of strncpy with the string length. Avoids new warnings with GCC
+    8:
+    
+    ../../src/drmmode_display.c: In function ‘drmmode_output_create_resources’:
+    ../../src/drmmode_display.c:2240:2: warning: ‘strncpy’ output truncated before terminating nul copying 8 bytes from a string of the same length [-Wstringop-truncation]
+      strncpy(tearfree_prop->name, "TearFree", 8);
+      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ../../src/drmmode_display.c:2244:2: warning: ‘strncpy’ output truncated before terminating nul copying 3 bytes from a string of the same length [-Wstringop-truncation]
+      strncpy(tearfree_prop->enums[0].name, "off", 3);
+      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ../../src/drmmode_display.c:2245:2: warning: ‘strncpy’ output truncated before terminating nul copying 2 bytes from a string of the same length [-Wstringop-truncation]
+      strncpy(tearfree_prop->enums[1].name, "on", 2);
+      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ../../src/drmmode_display.c:2247:2: warning: ‘strncpy’ output truncated before terminating nul copying 4 bytes from a string of the same length [-Wstringop-truncation]
+      strncpy(tearfree_prop->enums[2].name, "auto", 4);
+      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    
+    Reviewed-by: Slava Abramov <slava.abramov@amd.com>
+
+commit 5f06d6b8ba570b500956ad26fee711d5ac427818
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Jul 17 19:00:51 2018 +0200
+
+    Remove drmmode_terminate_leases
+    
+    The RandR screen private is already freed when our CloseScreen runs, so
+    this can't do anything useful. This cleanup has to be done by the X
+    server itself.
+
+commit 7cc2d4515a63845a027214daf4d391cf56e35bb3
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Jul 19 16:59:22 2018 +0200
+
+    Remove AMDGPUInfoRec::fbcon_pixmap
+    
+    We always destroy the fbcon pixmap in drmmode_copy_fb anyway.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 46d87187c6a0b8f941cc6f30af1f53a98ff2e635
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Jul 19 12:37:42 2018 +0200
+
+    Don't use DRM_IOCTL_GEM_FLINK in create_pixmap_for_fbcon
+    
+    We don't need it.
+
+commit b8d8416792488f7b15c94234d7e0e35d5ce10ed9
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Jul 19 11:36:19 2018 +0200
+
+    Free previous xf86CrtcRec gamma LUT memory
+    
+    We were leaking it.
+    
+    Also, don't bother allocating new memory if it's already the expected
+    size.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit ae8e02c6fc4ef5d5340b8cd4739e66b19b9e3386
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Jul 13 10:38:56 2018 +0200
+
+    Hardcode "non-desktop" RandR property name
+    
+    It's a bit silly to require current randrproto just for this definition,
+    which can't really change anyway.
+    
+    Suggested-by: Qiang Yu <qiang.yu@amd.com>
+    Reviewed-by: Qiang Yu <Qiang.Yu@amd.com>
+
+commit 1247be21704dd185ce26097e11b3685815ffac4f
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Jul 13 18:30:04 2018 +0200
+
+    Support gamma correction & colormaps at depth 30 as well
+    
+    Only supported with the advanced colour management properties available
+    with DC as of kernel 4.17.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 9dfbae76b179285d142b97852211b900ebfae51d
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Jul 10 18:13:39 2018 +0200
+
+    Move flush from radeon_scanout_do_update to its callers
+    
+    No functional change intended.
+    
+    (Ported from radeon commit 90b94d40449f665f2d12874598062a5e5e5b64cd)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit ace6ea016ce0013a34e1d4637aeacbf4d0e83c79
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Jul 10 18:11:04 2018 +0200
+
+    glamor: Bail CreatePixmap on unsupported pixmap depth
+    
+    Fixes crash in that case.
+    
+    Bugzilla: https://bugs.freedesktop.org/106293
+    (Ported from radeon commit 65c9dfea4e841b7d6f795c7489fede58c5e9631f)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit c160302abcdb18eec35c377d80e34f5bd857df45
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu May 17 09:50:50 2018 +0200
+
+    Bail from dri2_create_buffer2 if we can't get a pixmap
+    
+    We would store the NULL pointer and continue, which would lead to a
+    crash down the road.
+    
+    Bugzilla: https://bugs.freedesktop.org/106293
+    (Ported from radeon commit 3dcfce8d0f495d09d7836caf98ef30d625b78a13)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 61040bdfa360975614fb47aa7ea1b3a1abac3427
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Feb 12 13:51:56 2018 -0800
+
+    Add RandR leases support
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+    (Ported from xserver commit e4e3447603b5fd3a38a92c3f972396d1f81168ad)
+    Reviewed-by: Keith Packard <keithp@keithp.com>
+    Signed-off-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit ab7e39c5a03e24c3ce3ee2f22ada7572bc2d9aa7
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Feb 12 13:51:55 2018 -0800
+
+    modesetting: Create CONNECTOR_ID properties for outputs [v2]
+    
+    This lets a DRM client map between X outputs and kernel connectors.
+    
+    v2:
+            Change CONNECTOR_ID to enum -- Adam Jackson <ajax@nwnk.net>
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+    (Ported from xserver commit 023d4aba8d45e9e3630b944ecfb650c081799b96)
+    Reviewed-by: Keith Packard <keithp@keithp.com>
+    Signed-off-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit 14db71a606128c4a207f43298809af279b77e2a8
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Feb 12 13:51:53 2018 -0800
+
+    modesetting: Record non-desktop kernel property at PreInit time
+    
+    Save any value of the kernel non-desktop property in the xf86Output
+    structure to avoid non-desktop outputs in the default configuration.
+    
+    [Also bump randrproto requirement to a version that defines
+    RR_PROPERTY_NON_DESKTOP - ajax]
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+    (Ported from xserver commit b91c787c4cd2d20685db69426c539938c556128a)
+    Reviewed-by: Keith Packard <keithp@keithp.com>
+    Signed-off-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit baea4fa492f635cdfe746a84be2e337d9aeae8a9
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Jun 26 19:02:21 2018 +0200
+
+    Call drmmode_crtc_gamma_do_set from drmmode_setup_colormap
+    
+    Instead of from drmmode_set_mode_major. There's no need to re-set the
+    gamma LUT on every modeset, the kernel should preserve it.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 19a40758be04e1d451a030f452efb49e8aaad541
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Jun 27 18:36:43 2018 +0200
+
+    Remove #if 0'd code
+    
+    This has always been disabled, no need to keep it.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+    Reviewed-by: Slava Abramov <slava.abramov@amd.com>
+
+commit 8e98195e58f77fd1f354b2707360bd4445aef5b4
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Jun 26 18:40:23 2018 +0200
+
+    Don't apply gamma to HW cursor data if colour management is enabled
+    
+    In that case (with DC as of 4.17 kernels), the display hardware applies
+    gamma to the HW cursor.
+    
+    v2:
+    * Also use all 0s when alpha == 0 in the gamma passthrough case.
+    
+    Bugzilla: https://bugs.freedesktop.org/106578
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 606075b852d8e1d40ed0a56b5a928abdd7012f95
+Author: Leo Li (Sunpeng) <sunpeng.li@amd.com>
+Date:   Fri Jun 15 17:05:52 2018 -0400
+
+    Also compose LUT when setting legacy gamma
+    
+    We compose the two LUTs when pushing non-legacy gamma changes, and the
+    same needs to be done when setting legacy gamma.
+    
+    To do so, we just call push_cm_prop() on the gamma LUT. It will compose
+    the LUTs for us, and fall back to using legacy LUT (upscaled to non-
+    legacy size) if non-legacy is unavailable.
+    
+    It's also possible that the Kernel has no support support for non-
+    legacy color. In which case, we fall back to legacy gamma.
+    
+    v2: Remove per-CRTC check for color management support.
+    
+    Signed-off-by: Leo (Sunpeng) Li <sunpeng.li@amd.com>
+    Signed-off-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit e0a4c0e2155a5fcfad747ea5bddcf5b4b551f151
+Author: Leo Li (Sunpeng) <sunpeng.li@amd.com>
+Date:   Fri Jun 15 17:12:48 2018 -0400
+
+    Compose non-legacy with legacy regamma LUT
+    
+    Frequently, a user may have non-legacy gamma enabled for monitor
+    correction, while using legacy gamma for things like
+    redshift/nightlight.
+    
+    To do so, we compose the two LUTs. Legacy gamma will be applied first,
+    then non-legacy. i.e. non-legacy_LUT(legacy_LUT(in_color)).
+    
+    Note that the staged gamma LUT within the driver-private CRTC will
+    always contain the non-legacy LUT. This is to ensure that we have a
+    cached copy for future compositions.
+    
+    v2: Don't compose LUTs if legacy gamma is disabled (which is the case
+        for deep 30bpp color). The legacy LUT won't be computed here,
+        causing composition to spit out something invalid.
+    
+    v3: Use LUT sizes that are now cached in drmmode.
+    
+    Signed-off-by: Leo (Sunpeng) Li <sunpeng.li@amd.com>
+    
+    [ Michel Dänzer: Replace "crtc->funcs->gamma_set == NULL" with
+      !crtc->funcs->gamma_set ]
+    
+    Signed-off-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit e1fe46013c281f4644ca49915ae0ff081582a5b9
+Author: Leo Li (Sunpeng) <sunpeng.li@amd.com>
+Date:   Fri Jun 15 17:05:39 2018 -0400
+
+    Enable setting of color properties via RandR
+    
+    Setting a color property involves:
+    1. Staging the property onto the driver-private CRTC object
+    2. Pushing the staged property into kernel DRM, for HW programming
+    
+    Add a function to do the staging, and execute the above steps in
+    output_property_set.
+    
+    v2:
+    - Remove per-CRTC check for color management support in stage_cm_prop.
+    - Use switch statement instead of if statements.
+    
+    Signed-off-by: Leo (Sunpeng) Li <sunpeng.li@amd.com>
+    Signed-off-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit 29de2859e296b4e9f0b4ae7564c353c5518f3f08
+Author: Leo Li (Sunpeng) <sunpeng.li@amd.com>
+Date:   Fri Jun 15 17:05:28 2018 -0400
+
+    Update color properties on output_get_property
+    
+    Notify RandR of any updated color properties on the output's CRTC when
+    its get_property() hook is called.
+    
+    v2: Remove per-CRTC check for color management support.
+    
+    Signed-off-by: Leo (Sunpeng) Li <sunpeng.li@amd.com>
+    Signed-off-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit 639acf54b4de6f62000d12cc6dbf4f5e49cae888
+Author: Leo Li (Sunpeng) <sunpeng.li@amd.com>
+Date:   Fri Jun 15 17:04:58 2018 -0400
+
+    Configure color properties when creating output resources
+    
+    List color management properties on outputs if there is kernel support.
+    Otherwise, don't list them at all.
+    
+    v2:
+    - Use switch statement in configure_and_change
+    - Also configure LUT sizes for outputs that don't have an attached CRTC.
+      We can do this since LUT sizes are now cached on the drmmode object.
+    
+    Signed-off-by: Leo (Sunpeng) Li <sunpeng.li@amd.com>
+    
+    [ Michel Dänzer: Drop const from data pointer declaration in
+      rr_configure_and_change_cm_property, to avoid warning when building
+      against xserver 1.13 ]
+    
+    Signed-off-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit 3cf5a281d8481c997029dae164d6fdeca66b9447
+Author: Leo Li (Sunpeng) <sunpeng.li@amd.com>
+Date:   Fri Jun 15 17:04:44 2018 -0400
+
+    Initialize color properties on CRTC during CRTC init
+    
+    And destroy them on the CRTC destroy hook.
+    
+    When initializing color management properties on the private
+    drmmode_crtc, we want to:
+    
+    1. Default its color transform matrix (CTM) to identity
+    2. Program hardware with default color management values (SRGB for
+       de/regamma, identity for CTM)
+    
+    It's possible that cm initialization fails due to memory error or DRM
+    error. In which case, the RandR state may not reflect the actual
+    hardware state.
+    
+    v2:
+    - Use switch statement in push_cm_prop
+    - Get rid of per-CRTC cm support checks. Keep it simple and only check
+      the first CRTC, since kernel will always report all or nothing for AMD
+      hardware.
+    - Remove per-CRTC LUT size caching, drmmode now holds that. Update
+      commit message to reflect this.
+    
+    Signed-off-by: Leo (Sunpeng) Li <sunpeng.li@amd.com>
+    
+    [ Michel Dänzer: Replace "drmmode_crtc->ctm == NULL" with
+      !drmmode_crtc->ctm ]
+    
+    Signed-off-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit 810ed133cd67b3deb38d1af87e252a094e9ee8f2
+Author: Leo Li (Sunpeng) <sunpeng.li@amd.com>
+Date:   Fri Jun 15 17:02:57 2018 -0400
+
+    Cache color property IDs and LUT sizes during pre-init
+    
+    DRM creates property types with unique IDs during kernel driver init.
+    Cache the color property IDs on DDX init for use later, when we need
+    to modify these properties. Also cache the (de)gamma LUT sizes, since
+    they are the same for all CRTCs on AMD hardware.
+    
+    Since these values are the same regardless of the CRTC, they can be
+    cached within the private drmmode_rec object. We can also use any color-
+    management-enabled CRTC to initially fetch them.
+    
+    Also introduce an enumeration of possible color management properties,
+    to provide a easy and unified way of referring to them.
+    
+    v2:
+    - Reorder cm property enum so that LUT sizes are at the end. This allows
+      us to use DEGAMMA_LUT_SIZE as an anchor for iterating over mutable cm
+      properties.
+    - Cache (de)gamma LUT sizes within drmmode, since it's the same for all
+      CRTCs on AMD hardware. Update commit message to reflect this.
+    
+    Signed-off-by: Leo (Sunpeng) Li <sunpeng.li@amd.com>
+    Signed-off-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit 940c8b39f79789d4d5ddb8ab8d25a8ae05932756
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Jun 12 18:45:08 2018 +0200
+
+    Check dimensions passed to drmmode_xf86crtc_resize
+    
+    When enabling a secondary GPU output, Xorg can try resizing the screen
+    beyond the limit advertised by the driver, leading to drmModeAddFB
+    failing and primary GPU outputs turning off. Check for this and bail
+    instead.
+
+commit 74124f2c17dbb4b752707bb7eee398ae099e8a2c
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri May 18 12:31:57 2018 +0200
+
+    Use drmmode_crtc_dpms in drmmode_set_desired_modes
+    
+    Simplifies the latter slightly.
+    
+    Reviewed-by: Leo (Sunpeng) Li <sunpeng.li@amd.com>
+
+commit ceeacb455cd058492a493aac954deab8455804b5
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri May 18 12:13:23 2018 +0200
+
+    Call drmmode_do_crtc_dpms from drmmode_crtc_dpms as well
+    
+    Leo pointed out that drmmode_do_crtc_dpms wasn't getting called when
+    turning off an output with
+    
+     xrandr --output <output> --off
+    
+    This meant that the vblank sequence number and timestamp wouldn't be
+    saved before turning off the CRTC in this case.
+    
+    Reported-by: Leo (Sunpeng) Li <sunpeng.li@amd.com>
+    Reviewed-by: Leo (Sunpeng) Li <sunpeng.li@amd.com>
+
+commit e8e688f3852fb06b0c34ed5bce47c9493bcd1613
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed May 16 16:49:20 2018 +0200
+
+    Replace 'foo == NULL' with '!foo'
+    
+    Shorter and sweeter. :)
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 103bd6f44cc5f1a6cd6cc9a5cb34d0419c4cece9
+Author: Slava Grigorev <slava.grigorev@amd.com>
+Date:   Fri Apr 27 13:04:36 2018 -0400
+
+    Include xf86platformBus.h unconditionally
+    
+    Compilation failed with XSERVER_PLATFORM_BUS undefined:
+    
+    ../../src/amdgpu_probe.c: In function ‘amdgpu_kernel_open_fd’:
+    ../../src/amdgpu_probe.c:133:21: error: dereferencing pointer to incomplete type ‘struct xf86_platform_device’
+       dev = platform_dev->pdev;
+                         ^~
+    
+    Signed-off-by: Slava Grigorev <slava.grigorev@amd.com>
+    
+    [ Michel Dänzer:
+      * Fixed remaining preprocessor guards to work with xserver 1.13
+      * Touched up commit log ]
+
+commit 04947b83cce3a7782e59dece2c7797cc396c1e05
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Apr 26 17:58:08 2018 +0200
+
+    Wait for pending flips in drmmode_output_set_tear_free
+    
+    This prevents a nested call to drmHandleEvent, which would hang.
+    
+    Fixes hangs when disabling TearFree on a CRTC while a DRI3 client is
+    page flipping.
+    
+    Reviewed-by: Samuel Li <Samuel.Li@amd.com>
+
+commit fa30f4601de7a44edfb4a95873bd648946fd4292
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Apr 26 17:55:30 2018 +0200
+
+    Refactor drmmode_output_set_tear_free helper
+    
+    Preparation for the following fix, no functional change intended.
+    
+    Reviewed-by: Samuel Li <Samuel.Li@amd.com>
+
+commit 7db0c8e9d7586cff4312d4b93684d35de3e6376f
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Apr 24 11:56:03 2018 +0200
+
+    Set drmmode_crtc->scanout_id = 0 when TearFree is disabled
+    
+    When disabling TearFree, drmmode_crtc->scanout_id could remain as 1,
+    but drmmode_set_mode_major would destroy drmmode_crtc->scanout[1], so
+    scanout_do_update() would keep bailing, and the scanout buffer would
+    stop being updated.
+    
+    Fixes freeze after disabling TearFree on a CRTC with active RandR
+    rotation or other transform.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 8e544b4a0de6717feb4abf00052d57c5b726b5ce
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Apr 23 18:52:02 2018 +0200
+
+    Simplify drmmode_handle_transform
+    
+    Set crtc->driverIsPerformingTransform for any case we can handle before
+    calling xf86CrtcRotate. We already clear it afterwards when the latter
+    clears crtc->transform_in_use.
+    
+    This should allow our separate scanout buffer mechanism to be used in
+    more cases.
+    
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 463477661c88cab3a87746499e5838c5b9f9a13b
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Apr 23 18:44:06 2018 +0200
+
+    Don't call scanout_flip/update with a legacy RandR scanout buffer
+    
+    It means we are not using our own scanout buffers.
+    
+    Fixes crash when TearFree is supposed to be enabled, but
+    drmmode_handle_transform doesn't set crtc->driverIsPerformingTransform.
+    
+    Bugzilla: https://bugs.freedesktop.org/105736
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 72c3e9c7308fbcdf85708b72f9be14a5f2f8e7b5
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Mar 8 19:07:21 2018 +0100
+
+    Simplify drmmode_crtc_scanout_update
+    
+    Use our own BoxRec for the extents, and RegionEmpty for clearing the
+    scanout damage region.
+
+commit 4dcda0b48d62944c841cd9540f4ad4c7ac8dee47
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Apr 20 17:34:55 2018 +0200
+
+    Update RandR CRTC state if set_mode_major fails in set_desired_modes
+    
+    Without this, RandR would report the CRTC and its outputs as enabled,
+    even though they were actually off due to the failure.
+
+commit 36d01989cd842588f12fdae5b2cba5fdcf9c91dd
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Apr 18 11:17:02 2018 +0200
+
+    Abort scanout_update_pending event when possible
+    
+    We don't need to wait for a non-TearFree scanout update before scanning
+    out from the screen pixmap or before flipping, as the scanout update
+    won't be visible anyway. Instead, just abort it.
+
+commit 04a5c5f7cfacad8d9ccffe81e388cc3da2036cb5
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Apr 18 11:03:14 2018 +0200
+
+    Track DRM event queue sequence number in scanout_update_pending
+    
+    Preparation for next change, no behaviour change intended.
+
+commit 8fcc3a9b43d3907052a83a96e5a2423afab5ad3f
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Apr 18 11:18:59 2018 +0200
+
+    Ignore AMDGPU_DRM_QUEUE_ERROR (0) in amdgpu_drm_abort_entry
+    
+    This allows a following change to be slightly simpler.
+
+commit 720a61000aeb139005bd8125908cec66a6e69554
+Author: Emil Velikov <emil.velikov@collabora.com>
+Date:   Wed Apr 4 15:29:51 2018 +0100
+
+    Remove set but unused amdgpu_dri2::pKernelDRMVersion
+    
+    Signed-off-by: Emil Velikov <emil.velikov@collabora.com>
+    Reviewed-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit 7fb8b49895e225b3908c8bd186539de23afe91d1
+Author: Emil Velikov <emil.velikov@collabora.com>
+Date:   Wed Apr 4 15:29:50 2018 +0100
+
+    Do not export the DriverRec AMDGPU
+    
+    Unused externally and should not be exported.
+    
+    Signed-off-by: Emil Velikov <emil.velikov@collabora.com>
+    Reviewed-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit 00c128b45fc196c3a3a788ddb4453e7521be5860
+Author: Emil Velikov <emil.velikov@collabora.com>
+Date:   Wed Apr 4 15:29:36 2018 +0100
+
+    Move amdgpu_bus_id/amgpu_kernel_mode within amdgpu_kernel_open_fd
+    
+    Small step towards unifying the code paths and removing a handful of
+    duplication.
+    
+    Signed-off-by: Emil Velikov <emil.velikov@collabora.com>
+    Reviewed-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit 9f6a8905611b5b1d8fcd31bebbc9af7ca1355cc3
+Author: Jim Qu <Jim.Qu@amd.com>
+Date:   Tue Apr 17 19:11:16 2018 +0800
+
+    Wait for pending scanout update before calling drmmode_crtc_scanout_free
+    
+    There is a case that when set screen from reverse to normal, the old
+    scanout damage is freed in modesetting before scanout update handler,
+    so it causes segment fault issue.
+    
+    Signed-off-by: Jim Qu <Jim.Qu@amd.com>
+    
+    [ Michel Dänzer: Only call drmmode_crtc_wait_pending_event before
+      drmmode_crtc_scanout_free is actually called, slightly tweak commit
+      message ]
+    Signed-off-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit c6f1559eba551a5a3bf374c7e7e875928f3b138d
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Apr 18 10:41:46 2018 +0200
+
+    Post-release version bump
+
+commit 9f37a44473ded8c669897379acbc750362c15ec6
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Mar 15 16:34:19 2018 +0100
+
+    Bump version for 18.0.1 release
+
+commit 8af989546907ad9fb491d940e1936d3bfc89276b
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Mar 8 18:48:28 2018 +0100
+
+    Pass extents to amdgpu_scanout_do_update by value
+    
+    amdgpu_scanout_extents_intersect could leave the scanout damage region
+    in an invalid state, triggering debugging checks in pixman:
+    
+    *** BUG ***
+    In pixman_region_append_non_o: The expression r->x1 < r->x2 was false
+    Set a breakpoint on '_pixman_log_error' to debug
+
+commit 29649652a08ece7e07741be161b067a4484455ca
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Mar 7 17:51:25 2018 +0100
+
+    Wrap the whole miPointerScreenFuncRec, instead of only Set/MoveCursor
+    
+    We were clobbering entries in mi's global miSpritePointerFuncs struct,
+    which cannot work correctly with multiple primary screens. Instead,
+    assign a pointer to our own wrapper struct to PointPriv->spriteFuncs.
+    
+    Fixes crashes with multiple primary screens.
+    
+    Fixes: 69e20839bfeb ("Keep track of how many SW cursors are visible on
+                          each screen")
+    Reported-by: Mario Kleiner <mario.kleiner.de@gmail.com>
+
+commit b4a28bdcfa7089e1cf708490ddf048b7df4c7eed
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Mar 6 17:59:26 2018 +0100
+
+    Only change Set/MoveCursor hooks from what we expect
+    
+    Since xf86CursorCloseScreen runs after AMDGPUCloseScreen_KMS,
+    PointPriv->spriteFuncs doesn't point to the same struct in the latter as
+    in AMDGPUCursorInit_KMS. So we were restoring info->Set/MoveCursor to
+    the wrong struct. Then in the next server generation,
+    info->Set/MoveCursor would end up pointing to
+    drmmode_sprite_set/move_cursor, resulting in an infinite loop if one of
+    them was called.
+    
+    To avoid this, only change the Set/MoveCursor hooks if their values
+    match our expectations, otherwise leave them as is. This is kind of a
+    hack, but the alternative would be invasive and thus risky changes to
+    the way we're wrapping CloseScreen, and it's not even clear that can
+    work without changing xserver code.
+    
+    Fixes: 69e20839bfeb ("Keep track of how many SW cursors are visible on
+                          each screen")
+    (Ported from radeon commit 504b8721b17a672caf1ed3eab087027c02458cab)
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
 commit 5cfba7b6221779832be915993765cb128a561087
 Author: Michel Dänzer <michel.daenzer@amd.com>
 Date:   Fri Mar 2 18:10:40 2018 +0100

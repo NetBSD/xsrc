@@ -36,6 +36,22 @@
 #include "amdgpu_probe.h"
 #include "amdgpu.h"
 
+/*
+ * Enum of non-legacy color management properties, according to DRM. Note that
+ * the values should be incremental (with the exception of the INVALID member),
+ * as defined by C99. The ordering also matters. Some logics (such as iterators
+ * and bitmasks) depend on these facts.
+ */
+enum drmmode_cm_prop {
+	CM_DEGAMMA_LUT,
+	CM_CTM,
+	CM_GAMMA_LUT,
+	CM_DEGAMMA_LUT_SIZE,
+	CM_GAMMA_LUT_SIZE,
+	CM_NUM_PROPS,
+	CM_INVALID_PROP = -1,
+};
+
 typedef struct {
 	ScrnInfoPtr scrn;
 #ifdef HAVE_LIBUDEV
@@ -49,10 +65,15 @@ typedef struct {
 
 	Bool dri2_flipping;
 	Bool present_flipping;
+
+	/* Cache for DRM property type IDs for CRTC color management */
+	uint32_t cm_prop_ids[CM_NUM_PROPS];
+	/* Lookup table sizes */
+	uint32_t degamma_lut_size;
+	uint32_t gamma_lut_size;
 } drmmode_rec, *drmmode_ptr;
 
 typedef struct {
-	struct drmmode_fb *fb;
 	void *event_data;
 	int flip_count;
 	unsigned int fe_frame;
@@ -60,6 +81,7 @@ typedef struct {
 	xf86CrtcPtr fe_crtc;
 	amdgpu_drm_handler_proc handler;
 	amdgpu_drm_abort_proc abort;
+	struct drmmode_fb *fb[0];
 } drmmode_flipdata_rec, *drmmode_flipdata_ptr;
 
 struct drmmode_fb {
@@ -84,7 +106,7 @@ typedef struct {
 	Bool ignore_damage;
 	RegionRec scanout_last_region;
 	unsigned scanout_id;
-	Bool scanout_update_pending;
+	uintptr_t scanout_update_pending;
 	Bool tear_free;
 
 	PixmapPtr prime_scanout_pixmap;
@@ -97,18 +119,18 @@ typedef struct {
 
 	/* Modeset needed for DPMS on */
 	Bool need_modeset;
+	/* For keeping track of nested calls to drm_wait_pending_flip /
+	 * drm_queue_handle_deferred
+	 */
+	int wait_flip_nesting_level;
 	/* A flip to this FB is pending for this CRTC */
 	struct drmmode_fb *flip_pending;
 	/* The FB currently being scanned out by this CRTC, if any */
 	struct drmmode_fb *fb;
 
-#ifdef HAVE_PRESENT_H
-	/* Deferred processing of Present vblank event */
-	uint64_t present_vblank_event_id;
-	uint64_t present_vblank_usec;
-	unsigned present_vblank_msc;
-	Bool present_flip_expected;
-#endif
+	struct drm_color_lut *degamma_lut;
+	struct drm_color_ctm *ctm;
+	struct drm_color_lut *gamma_lut;
 } drmmode_crtc_private_rec, *drmmode_crtc_private_ptr;
 
 typedef struct {
@@ -131,6 +153,10 @@ typedef struct {
 	int enc_clone_mask;
 	int tear_free;
 } drmmode_output_private_rec, *drmmode_output_private_ptr;
+
+typedef struct {
+	uint32_t lessee_id;
+} drmmode_lease_private_rec, *drmmode_lease_private_ptr;
 
 
 enum drmmode_flip_sync {
@@ -198,10 +224,6 @@ extern int drmmode_page_flip_target_relative(AMDGPUEntPtr pAMDGPUEnt,
 extern Bool drmmode_pre_init(ScrnInfoPtr pScrn, drmmode_ptr drmmode, int cpp);
 extern void drmmode_init(ScrnInfoPtr pScrn, drmmode_ptr drmmode);
 extern void drmmode_fini(ScrnInfoPtr pScrn, drmmode_ptr drmmode);
-extern void drmmode_sprite_set_cursor(DeviceIntPtr pDev, ScreenPtr pScreen,
-				      CursorPtr pCursor, int x, int y);
-extern void drmmode_sprite_move_cursor(DeviceIntPtr pDev, ScreenPtr pScreen, int x,
-				       int y);
 extern void drmmode_set_cursor(ScrnInfoPtr scrn, drmmode_ptr drmmode, int id,
 			       struct amdgpu_buffer *bo);
 void drmmode_adjust_frame(ScrnInfoPtr pScrn, drmmode_ptr drmmode, int x, int y);
@@ -237,6 +259,9 @@ int drmmode_get_current_ust(int drm_fd, CARD64 * ust);
 Bool drmmode_wait_vblank(xf86CrtcPtr crtc, drmVBlankSeqType type,
 			 uint32_t target_seq, unsigned long signal,
 			 uint64_t *ust, uint32_t *result_seq);
+
+
+miPointerSpriteFuncRec drmmode_sprite_funcs;
 
 
 #endif

@@ -264,7 +264,6 @@ typedef struct {
 	struct amdgpu_dri2 dri2;
 
 	/* accel */
-	PixmapPtr fbcon_pixmap;
 	int callback_event_type;
 	uint_fast32_t gpu_flushed;
 	uint_fast32_t gpu_synced;
@@ -281,9 +280,7 @@ typedef struct {
 	CreateScreenResourcesProcPtr CreateScreenResources;
 	CreateWindowProcPtr CreateWindow;
 	WindowExposuresProcPtr WindowExposures;
-	void (*SetCursor) (DeviceIntPtr pDev, ScreenPtr pScreen,
-			   CursorPtr pCursor, int x, int y);
-	void (*MoveCursor) (DeviceIntPtr pDev, ScreenPtr pScreen, int x, int y);
+	miPointerSpriteFuncPtr SpriteFuncs;
 
 	/* Number of SW cursors currently visible on this screen */
 	int sprites_visible;
@@ -349,7 +346,7 @@ Bool amdgpu_dri3_screen_init(ScreenPtr screen);
 
 /* amdgpu_kms.c */
 Bool amdgpu_scanout_do_update(xf86CrtcPtr xf86_crtc, int scanout_id,
-			      PixmapPtr src_pix, BoxPtr extents);
+			      PixmapPtr src_pix, BoxRec extents);
 void AMDGPUWindowExposures_oneshot(WindowPtr pWin, RegionPtr pRegion
 #if XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1,16,99,901,0)
 				   , RegionPtr pBSRegion
