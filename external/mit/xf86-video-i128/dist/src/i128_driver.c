@@ -38,9 +38,6 @@
 
 #include "compiler.h"
 
-/* Drivers for PCI hardware need this */
-#include "xf86PciInfo.h"
-
 /* Drivers that need to access the PCI config space directly need this */
 #include "xf86Pci.h"
 
@@ -53,7 +50,6 @@
 #include "micmap.h"
 
 #include "xf86DDC.h"
-#include "vbe.h"
 
 #include "xf86cmap.h"
 #include "fb.h"
