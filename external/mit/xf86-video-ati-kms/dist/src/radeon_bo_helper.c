@@ -209,10 +209,12 @@ radeon_alloc_pixmap_bo(ScrnInfoPtr pScrn, int width, int height, int depth,
 	if (bitsPerPixel == pScrn->bitsPerPixel)
 	    bo_use |= GBM_BO_USE_SCANOUT;
 
+#ifdef GBM_BO_USE_LINEAR
 	if ((usage_hint == CREATE_PIXMAP_USAGE_BACKING_PIXMAP &&
 	     info->shadow_primary) ||
 	    (usage_hint & 0xffff) == CREATE_PIXMAP_USAGE_SHARED)
 	    bo_use |= GBM_BO_USE_LINEAR;
+#endif
 
 	bo->bo.gbm = gbm_bo_create(info->gbm, width, height, gbm_format, bo_use);
 	if (!bo->bo.gbm) {
