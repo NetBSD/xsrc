@@ -1588,7 +1588,6 @@ Bool R128PreInit(ScrnInfoPtr pScrn, int flags)
 
     info->useEXA = FALSE;
 #ifdef USE_EXA
-#ifndef HAVE_XAA_H
     info->useEXA = TRUE;
 #endif
 

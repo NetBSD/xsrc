@@ -440,12 +440,10 @@ R128UploadToScreenHW(PixmapPtr pDst, int x, int y, int w, int h,
     uint32_t	*s;
 
     if (!R128GetDatatypeBpp(bpp, &datatype)) {
-        R128TRACE(("R128GetDatatypeBpp failed\n"));
 	return FALSE;
     }
 
     if (!R128GetPixmapOffsetPitch(pDst, &dst_pitch_offset)) {
-        R128TRACE(("R128GetPixmapOffsetPitch dest failed\n"));
 	return FALSE;
     }
 
