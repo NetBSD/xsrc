@@ -542,6 +542,7 @@ evdev.m_s.part
 
 rules_files = base evdev xfree98
 lst_files = base.lst evdev.lst
+SUFFIXES = .xml .lst
 dist_files = xkb.dtd README
 rules_DATA = $(rules_files) $(lst_files) $(dist_files)
 xml_in_files = base.xml.in evdev.xml.in base.extras.xml.in evdev.extras.xml.in
@@ -557,6 +558,7 @@ xmldir = $(rulesdir)
 all: all-recursive
 
 .SUFFIXES:
+.SUFFIXES: .xml .lst
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -926,7 +928,7 @@ uninstall-am: uninstall-rulesDATA uninstall-xmlDATA
 
 @CREATE_RULES_SYMLINK_FALSE@install-data-hook:
 
-%.lst: %.xml
+.xml.lst:
 	perl $(srcdir)/xml2lst.pl < $< > $@
 
 base: $(base_parts)
@@ -936,10 +938,10 @@ evdev: $(evdev_parts)
 	HDR="$(srcdir)/HDR" $(srcdir)/merge.sh $@ $(evdev_parts)
 
 $(srcdir)/evdev.xml.in: base.xml.in
-	cp $< $@
+	cp $(srcdir)/base.xml.in $@
 
 $(srcdir)/evdev.extras.xml.in: base.extras.xml.in
-	cp $< $@
+	cp $(srcdir)/base.extras.xml.in $@
 
 @INTLTOOL_XML_NOMERGE_RULE@
 
