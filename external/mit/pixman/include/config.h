@@ -106,6 +106,9 @@
 /* Define to the version of this package. */
 #define PACKAGE_VERSION "0.34.0"
 
+/* enable output that can be piped to gnuplot */
+/* #undef PIXMAN_GNUPLOT */
+
 /* enable TIMER_BEGIN/TIMER_END macros */
 /* #undef PIXMAN_TIMERS */
 
