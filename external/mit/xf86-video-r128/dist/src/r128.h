@@ -70,7 +70,6 @@
 #define _XF86DRI_SERVER_
 #include "r128_dripriv.h"
 #include "dri.h"
-#include "GL/glxint.h"
 #endif
 
 #include "fb.h"
@@ -122,13 +121,14 @@
 #if R128_DEBUG
 #include "r128_version.h"
 
-#define R128TRACE(x)                                          \
-    do {                                                      \
-	ErrorF("(**) %s(%d): ", R128_NAME, pScrn->scrnIndex); \
-	ErrorF x;                                             \
-    } while (0);
+#endif
+
+#if R128_DEBUG
+#define DEBUG(x) x
+
 #else
-#define R128TRACE(x)
+#define DEBUG(x)
+
 #endif
 
 
@@ -342,6 +342,8 @@ typedef struct {
 #ifdef HAVE_XAA_H
     XAAInfoRecPtr     accel;
 #endif
+
+    Bool              noAccel;
     Bool              accelOn;
     Bool	      useEXA;
     Bool	      RenderAccel;
@@ -354,6 +356,7 @@ typedef struct {
     int               fifo_slots;   /* Free slots in the FIFO (64 max)       */
     int               pix24bpp;     /* Depth of pixmap for 24bpp framebuffer */
     Bool              dac6bits;     /* Use 6 bit DAC?                        */
+    Bool              swCursor;
 
 				/* Computed values for Rage 128 */
     int               pitch;
@@ -389,9 +392,6 @@ typedef struct {
     DRIInfoPtr        pDRIInfo;
     int               drmFD;
     drm_context_t     drmCtx;
-    int               numVisualConfigs;
-    __GLXvisualConfig *pVisualConfigs;
-    R128ConfigPrivPtr pVisualConfigsPriv;
 
     drm_handle_t      fbHandle;
 
@@ -509,6 +509,12 @@ do {                                                                         \
     info->fifo_slots -= entries;                                             \
 } while (0)
 
+/* Compute n/d with rounding. */
+static inline int R128Div(int n, int d)
+{
+    return (n + (d / 2)) / d;
+}
+
 extern R128EntPtr R128EntPriv(ScrnInfoPtr pScrn);
 extern void        R128WaitForFifoFunction(ScrnInfoPtr pScrn, int entries);
 extern void        R128WaitForIdle(ScrnInfoPtr pScrn);
@@ -518,7 +524,7 @@ extern void        R128EngineFlush(ScrnInfoPtr pScrn);
 extern unsigned    R128INPLL(ScrnInfoPtr pScrn, int addr);
 extern void        R128WaitForVerticalSync(ScrnInfoPtr pScrn);
 
-extern Bool        R128AccelInit(ScreenPtr pScreen);
+extern Bool R128XAAAccelInit(ScreenPtr pScreen);
 extern void        R128EngineInit(ScrnInfoPtr pScrn);
 extern Bool        R128CursorInit(ScreenPtr pScreen);
 
@@ -528,18 +534,9 @@ extern xf86OutputPtr R128FirstOutput(xf86CrtcPtr crtc);
 extern void        R128InitVideo(ScreenPtr pScreen);
 
 extern void        R128InitCommonRegisters(R128SavePtr save, R128InfoPtr info);
-extern void        R128InitDACRegisters(R128SavePtr orig, R128SavePtr save, xf86OutputPtr output);
 extern void        R128InitRMXRegisters(R128SavePtr orig, R128SavePtr save, xf86OutputPtr output, DisplayModePtr mode);
 extern void        R128InitFPRegisters(R128SavePtr orig, R128SavePtr save, xf86OutputPtr output);
 extern void        R128InitLVDSRegisters(R128SavePtr orig, R128SavePtr save, xf86OutputPtr output);
-extern Bool        R128InitCrtcBase(xf86CrtcPtr crtc, R128SavePtr save, int x, int y);
-extern Bool        R128InitCrtcRegisters(xf86CrtcPtr crtc, R128SavePtr save, DisplayModePtr mode);
-extern void        R128InitPLLRegisters(xf86CrtcPtr crtc, R128SavePtr save, R128PLLPtr pll, double dot_clock);
-extern Bool        R128InitDDARegisters(xf86CrtcPtr crtc, R128SavePtr save, R128PLLPtr pll, DisplayModePtr mode);
-extern Bool        R128InitCrtc2Base(xf86CrtcPtr crtc, R128SavePtr save, int x, int y);
-extern Bool        R128InitCrtc2Registers(xf86CrtcPtr crtc, R128SavePtr save, DisplayModePtr mode);
-extern void        R128InitPLL2Registers(xf86CrtcPtr crtc, R128SavePtr save, R128PLLPtr pll, double dot_clock);
-extern Bool        R128InitDDA2Registers(xf86CrtcPtr crtc, R128SavePtr save, R128PLLPtr pll, DisplayModePtr mode);
 extern void        R128RestoreCommonRegisters(ScrnInfoPtr pScrn, R128SavePtr restore);
 extern void        R128RestoreDACRegisters(ScrnInfoPtr pScrn, R128SavePtr restore);
 extern void        R128RestoreRMXRegisters(ScrnInfoPtr pScrn, R128SavePtr restore);
@@ -614,11 +611,35 @@ extern int         R128CCEStop(ScrnInfoPtr pScrn);
 extern void	   R128CopySwap(uint8_t *dst, uint8_t *src, unsigned int size, int swap);
 
 #ifdef USE_EXA
-extern Bool	   R128EXAInit(ScreenPtr pScreen);
+extern Bool	   R128EXAInit(ScreenPtr pScreen, int total);
 extern Bool	   R128GetDatatypeBpp(int bpp, uint32_t *type);
 extern Bool	   R128GetPixmapOffsetPitch(PixmapPtr pPix, uint32_t *pitch_offset);
 extern void	   R128DoPrepareCopy(ScrnInfoPtr pScrn, uint32_t src_pitch_offset,
 				    uint32_t dst_pitch_offset, uint32_t datatype, int alu, Pixel planemask);
+extern void R128Done(PixmapPtr pPixmap);
+
+#ifdef R128DRI
+extern void EmitCCE2DState(ScrnInfoPtr pScrn);
+#endif
+
+#ifdef RENDER
+extern Bool R128CCECheckComposite(int op,
+                                    PicturePtr pSrcPicture,
+                                    PicturePtr pMaskPicture,
+                                    PicturePtr pDstPicture);
+extern Bool R128CCEPrepareComposite(int op,                                    PicturePtr pSrcPicture,
+                                    PicturePtr pMaskPicture,
+                                    PicturePtr pDstPicture,
+                                    PixmapPtr pSrc,
+                                    PixmapPtr pMask,
+                                    PixmapPtr pDst);
+extern void R128CCEComposite(PixmapPtr pDst,
+                                int srcX, int srcY,
+                                int maskX, int maskY,
+                                int dstX, int dstY,
+                                int w, int h);
+#define R128CCEDoneComposite R128Done
+#endif
 #endif
 
 
