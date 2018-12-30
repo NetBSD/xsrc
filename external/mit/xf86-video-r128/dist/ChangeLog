@@ -1,3 +1,680 @@
+commit 38216bdc81321a8bb70a4c7ce226194537cc63d6
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Oct 22 21:01:12 2018 -0700
+
+    Version bumped to 6.12.0
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 0dc8f6d099e74a61a280e8cd8b7b93b229f95c7f
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Oct 22 20:58:43 2018 -0700
+
+    Remove Dac6Bit option from man page
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 3c292d8f90eae03e6e6806a68a4f749bb39db9ba
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Oct 22 20:46:20 2018 -0700
+
+    Fix for build failure when --disable-dri option is specified
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 9d62b878ce40d9b5f7887c63a4e2498a52253c36
+Author: Helmut Grohne <helmut@subdivi.de>
+Date:   Mon Oct 22 19:06:15 2018 -0700
+
+    Another fix for cross build failure
+    
+    While commit 11b230b removed most usage of AC_CHECK_FILE, one more of
+    it was left in the compilation build script. This will hopefully fix
+    the cross build failure for good.
+    
+    Signed-off-by: Helmut Grohne <helmut@subdivi.de>
+
+commit 1b17c78941762c38e3ea37e0b259270286c18455
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Sat Aug 4 13:38:53 2018 -0700
+
+    Version bumped to 6.11.102
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit b93302435030a8dc878ea330eafd5d8b87f0df03
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Aug 2 13:11:42 2018 -0700
+
+    Consolidate acquisition of many options into two functions
+    
+    Move acquiring of the option settings into r128AcquireOption and
+    r128UMSOption functions.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit d82464bce67d9f7286c10fcb6c0a72d8e2fa6501
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Aug 2 12:59:30 2018 -0700
+
+    Rename R128UMSOption to r128UMSOption
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 1fe5b0c0ab444d7c902a1d348ae4d982cf5c1790
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Aug 2 12:47:54 2018 -0700
+
+    Version bumped to 6.11.101
+    
+    Performed DRI1 and EXA / XAA initialization code refactoring.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit fb625410051dcf2e0bbd3bbcefe83dbc53f9a33c
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Aug 2 12:41:31 2018 -0700
+
+    Hold off enabling acceleration until EXA / XAA are fully initialized
+    
+    The turn on timing is premature. Wait until completion of the
+    initialization process.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit b395a05428831faf7a0502b52c78c99a8a4d6a8e
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Aug 2 12:38:39 2018 -0700
+
+    Consolidate EXA initialization code into R128EXAInit
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 78b21efdce6f1231b0c9c8a4e801ee476acd5dc4
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Aug 2 10:44:15 2018 -0700
+
+    Deprecate R128VerboseInitEXA
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 370dc01505718dc07d444b4534794d0b988d27ad
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Aug 2 10:43:18 2018 -0700
+
+    Deprecate R128AccelInit
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 4685a918ff68e4a9e20df31c37028626b96743cb
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Aug 2 10:42:03 2018 -0700
+
+    Deprecate R128EXAAccelInit
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit d9c7c8306bb8ff4812707bd8a533da4b0b917c1b
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Aug 2 10:22:29 2018 -0700
+
+    Consolidate frame buffer initialization code
+    
+    The previous implementation had duplicated code depending on which
+    standard is being used (i.e., DRI1 and / or EXA).
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit ec61d090f8286703a6557a6917976cffb141dc92
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Fri Jul 27 16:52:03 2018 -0700
+
+    Prevent disabling of EXA inside R128ScreenInit
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 641d3d42b7214d01addfd21efb692531849b4603
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Fri Jul 27 11:22:49 2018 -0700
+
+    Version bumped to 6.11.100
+    
+    Performed code refactoring and made tweaks to initialization behavior.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 7dbb89d6fd11d3521b8a0085f4d9640910081bf2
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Fri Jul 27 11:08:29 2018 -0700
+
+    Move loading of EXA and XAA modules into R128PreInitAccel
+    
+    Moving them away from R128ScreenInit callback function. This is how
+    other DDXs do it.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit c4c05c95ae9f1b02fcbc9f6ee431d466c1c0b519
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Jul 26 19:58:06 2018 -0700
+
+    Move RAMDAC module initialization into R128LegacyMS
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit f54469efcad4a68d86abbd55b79f4660667a5fff
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Jul 26 19:43:27 2018 -0700
+
+    Delete OPTION_DISPLAY option enumeration
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 2a903d7c00d67716815b68fb492b4d40e2f5684d
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Jul 26 19:41:06 2018 -0700
+
+    Delete USE_CRT_ONLY conditional compilation directive
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit b5f0862bbbe604605be19621ba22d60aeb68d4b9
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Jul 26 19:36:22 2018 -0700
+
+    Move many DDX UMS options into R128UMSOption
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 0ef4fbad35a1e6d20cf72c7702ffd7ebf215cdb9
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Jul 26 13:38:16 2018 -0700
+
+    Remove OPTION_DAC_8BIT option
+    
+    It is no longer used.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 4e3638c612831dea400be7d0d85d4d1ea9f9a4c2
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Jul 26 10:11:59 2018 -0700
+
+    Evaluate software cursor option inside R128PreInit
+    
+    Since SWCursor option is referenced only once, it should be handled
+    inside R128PreInit callback function rather than R128ScreenInit
+    callback function.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 15d245de2814128b04dea2b640c4ba0b12926f24
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Wed Jul 25 20:19:06 2018 -0700
+
+    Evaluate EXA related options inside R128PreInit
+    
+    Since AccelMethod and RenderAccel options are referenced only once,
+    it should be handled inside R128PreInit callback function rather
+    than R128ScreenInit callback function.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 680aeee6730aa5b00bbc457b199b7643a6b0a1cb
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Wed Jul 25 19:50:40 2018 -0700
+
+    Evaluate NoAccel option inside R128PreInit
+    
+    Since NoAccel option is referenced only once, it should be handled
+    inside R128PreInit callback function rather than R128ScreenInit
+    callback function.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 23012b520e16fe2687e50c635e6c0a1f9d740c4e
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Jul 24 13:39:57 2018 -0700
+
+    Separate EXA and XAA initialization
+    
+    Starting the process of separating legacy XAA and newer EXA
+    initialization code.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit fbbbcc0d33eb95869bcd0df26f3351f1531711db
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Sat Jul 21 06:15:39 2018 -0700
+
+    Version bumped to 6.11.99
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 321b8997ef72507ac70b5531789ff08ca9d40ce8
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Jul 19 12:02:44 2018 -0700
+
+    Version bumped to 6.11.0
+    
+    Added a temporary fix for some RAGE 128 Pro models misidentifying
+    VGA as DVI and not able to automatically select the proper screen
+    resolution via the use of EDID (Extended Display Identification).
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 1f424303840091a3b96e0a3830a966316c5e4e7f
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Jul 19 09:46:23 2018 -0700
+
+    Reorganize r128_exa.c
+    
+    Stop the use of #include to include r128_exa_render.c inside
+    r128_exa.c.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 3acc004c6bfc17aca397ff2cc8c0b1a0e2d4ee63
+Author: Dylan Aïssi <bob.dybian@gmail.com>
+Date:   Wed Jul 18 07:25:45 2018 -0700
+
+    Fix typo: Initalizing --> Initializing
+    
+    Signed-off-by: Dylan Aïssi <bob.dybian@gmail.com>
+
+commit 11b230ba61c00c69b23c5be592cf88492113355e
+Author: Helmut Grohne <helmut@subdivi.de>
+Date:   Wed Jul 18 07:04:27 2018 -0700
+
+    Fix for cross build failure
+    
+    configure.ac fails to cross build from source, because it abuses
+    AC_CHECK_FILE for finding headers. AC_CHECK_FILE is supposed to find
+    files on the host system. You cannot usually expect the host system
+    to have headers, so this use is incorrect. It happens to also break
+    cross compilation.
+    
+    Signed-off-by: Helmut Grohne <helmut@subdivi.de>
+
+commit d87d1aac04415d74ab32e820e9e351432c66cfdb
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Fri Jul 13 07:18:18 2018 -0700
+
+    Fix for some RAGE 128 Pro causing out of range display error
+    
+    Due to faulty assumptions made by commit 2072d9a, many RAGE 128 Pro
+    VGA display will be detected as DVI, and causes out of range display
+    error with the attached monitor. While this commit is less than
+    perfect and only works on x86 platform, it avoids causing out of
+    range display error. With this fix, there is no longer the need to
+    specify the supported frequency range of the monitor inside xorg.conf.
+    The code was tested on RAGE 128 Pro Ultra 16 MB AGP.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit c857cc319809790a5414ee75fc299d835fe964a7
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Jul 12 16:11:07 2018 -0700
+
+    Convert tabs to white spaces for r128_output.c
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 0a6d7d93acf57bfd8c0005b4a08e6cd054d7a76d
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Sat Jun 30 23:55:19 2018 -0500
+
+    Using __func__ string for debug message function identification
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 09f14ae89073c31118b747b8cd3663d4da9aa170
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Sat Jun 30 22:56:27 2018 -0500
+
+    Remove compilation warnings related to debug messages
+    
+    The variable sizes were not matching the intended print format.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 951af95a6ddb07b13304632eb4faf8b1256399a7
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Sat Jun 30 22:07:08 2018 -0500
+
+    Deprecate R128TRACE macro when generating debug messages
+    
+    Deprecating R128TRACE macro in favor of DEBUG macro used inside
+    OpenChrome DDX.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 16822a6a31731cb457ab35b79e5cd6f04c060625
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Jun 26 17:40:11 2018 -0500
+
+    Move the location R128PreInitDRI is called
+    
+    Merge it into R128LegacyMS function.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit c4c878d2ccb75fa75afe46e0e50ee9975c5c57fc
+Author: Stefan Dirsch <sndirsch@suse.de>
+Date:   Mon Jun 25 15:57:02 2018 +0200
+
+    Include <stdint.h> in order to declare uint32_t
+    
+    Apparently this is needed in src/atipcirename.h since xorg-server
+    1.20 in order to still build this driver.
+    
+    Signed-off-by: Stefan Dirsch <sndirsch@suse.de>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
+commit 6f18a15d237b5a6f4ee9d61634ff9bae827398bd
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Sun Jun 17 20:20:06 2018 -0500
+
+    Move R128InitDDA2Registers to r128_crtc.c
+    
+    It does not make sense for this function to be inside r128_driver.c
+    since it is only called from a function inside r128_crtc.c.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 0be9774d038322a779c34a02461342794090cd58
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Sun Jun 17 20:20:05 2018 -0500
+
+    Move R128InitDDARegisters to r128_crtc.c
+    
+    It does not make sense for this function to be inside r128_driver.c
+    since it is only called from a function inside r128_crtc.c.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 732ab99127538b701f71c43086c617b39d9522aa
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Sun Jun 17 20:20:04 2018 -0500
+
+    Move R128RestorePLL2Registers to r128_crtc.c
+    
+    r128_crtc.c is the more logical place this function should be located.
+    R128PLL2WaitForReadUpdateComplete and R128PLL2WriteUpdate functions were
+    moved as well.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 9cf18d3f147e38c2c560c5904a71c993ca50a25e
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Sun Jun 17 20:20:03 2018 -0500
+
+    Move R128RestorePLLRegisters to r128_crtc.c
+    
+    r128_crtc.c is the more logical place this function should be located.
+    R128PLLWaitForReadUpdateComplete and R128PLLWriteUpdate functions were
+    moved as well.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit b4edfdf93e2d73e149ff550dfc19de3de145fb71
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Sun Jun 17 12:39:33 2018 -0500
+
+    Move R128RestoreDACRegisters to r128_output.c
+    
+    r128_output.c is the more logical place this function should be located.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 61a116603e57e48714fd3e62310f3df79a9fecc3
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Sun Jun 17 12:39:32 2018 -0500
+
+    Move R128InitDACRegisters to r128_output.c
+    
+    It does not make sense for this function to be inside r128_driver.c
+    since it is only called from a function inside r128_output.c.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 6713ef02c5ee44f9c519f99934a595e5a5ac378c
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Sun Jun 17 12:39:31 2018 -0500
+
+    Move R128RestoreCrtc2Registers to r128_crtc.c
+    
+    r128_crtc.c is the more logical place this function should be located.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit dc218b45075ff1ffe497e25b34c528c5259ef398
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Sun Jun 17 12:39:30 2018 -0500
+
+    Move R128RestoreCrtcRegisters to r128_crtc.c
+    
+    r128_crtc.c is the more logical place this function should be located.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit e9564ed077af772dc3f82f15ac4c507ee1c16415
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Sat Jun 16 10:24:37 2018 -0500
+
+    Move R128InitPLL2Registers to r128_crtc.c
+    
+    It does not make sense for this function to be inside r128_driver.c
+    since it is only called from a function inside r128_crtc.c.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 07796aa604200a323edeb79d65d16945b60cbc63
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Sat Jun 16 10:24:36 2018 -0500
+
+    Move R128InitPLLRegisters to r128_crtc.c
+    
+    It does not make sense for this function to be inside r128_driver.c
+    since it is only called from a function inside r128_crtc.c.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit c63eb246927f263b20966a76d80efd9acf9713af
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Sat Jun 16 10:24:35 2018 -0500
+
+    Convert R128Div to an inline function
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 5c494ca862257f1ce839febc8eda68a26353e544
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Sat Jun 16 10:24:34 2018 -0500
+
+    Move R128InitCrtc2Base to r128_crtc.c
+    
+    It does not make sense for this function to be inside r128_driver.c
+    since it is only called from a function inside r128_crtc.c.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 4e3da789346add1ce4505eb06a7e2c18daa2e843
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Sat Jun 16 10:24:33 2018 -0500
+
+    Move R128InitCrtcBase to r128_crtc.c
+    
+    It does not make sense for this function to be inside r128_driver.c
+    since it is only called from a function inside r128_crtc.c.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 7d0526f74f85f4286396cd6b761a0b908d2936df
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Jun 7 16:38:54 2018 -0500
+
+    Move R128InitCrtc2Registers to r128_crtc.c
+    
+    It does not make sense for this function to be inside r128_driver.c
+    since it is only called from a function inside r128_crtc.c.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 1f4d3e04e51d4665a99ea567a19b43bb351ae631
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Jun 7 16:38:22 2018 -0500
+
+    Move R128InitCrtcRegisters to r128_crtc.c
+    
+    It does not make sense for this function to be inside r128_driver.c
+    since it is only called from a function inside r128_crtc.c.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 80158cdedb8b0c2320c917aefd10e90869b00ef8
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Jun 4 19:45:40 2018 -0500
+
+    Move existing mode setting initialization code into R128LegacyMS
+    
+    In preparation of adding a new mode setting code path.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 6572c6cd14e60994e5cd1dc2f8fcc6f88c895c36
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Jun 4 19:45:20 2018 -0500
+
+    Move the location xf86CrtcConfigInit is called inside R128PreInit
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 656f5c276a2a18204d923eabcc1d0d98144505f8
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Jun 4 19:44:59 2018 -0500
+
+    Refactor R128PreInitWeight
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 73cbe46437a9a5affcdd9d605421ceff38616a6a
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Jun 4 19:44:39 2018 -0500
+
+    Remove R128ProbeDDC
+    
+    This removes a VBE (VESA BIOS Extension) related call when probing.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 600c2f47f0edc30adb67b58121be5c4d587ddff4
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Sun Jun 3 01:43:40 2018 -0500
+
+    Move R128PreInitVisual and R128PreInitGamma calls
+    
+    This is similar to how the sample code for PreInit callback function
+    shown in XFree86 DDX Design (ddxDesign.pdf) design guide does it.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 237cfee9d77d8adca0ad00661e6dc99caa28ad26
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Sun Jun 3 01:43:39 2018 -0500
+
+    Move the assignment to monitor field of ScrnInfoRec record
+    
+    This is similar to how the sample code for PreInit callback function
+    shown in XFree86 DDX Design (ddxDesign.pdf) design guide does it.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 3c2a02971b423359747d328e1ce16e6f4f800d9a
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Sun Jun 3 01:43:38 2018 -0500
+
+    Move assignment of color depth variables away from R128PreInitVisual
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 56ff44e0afd4d11d9a9daa4efd3031733b14d464
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Sun Jun 3 01:43:37 2018 -0500
+
+    Move the location where R128PreInitGamma is called
+    
+    This is similar to how the sample code for PreInit callback function
+    shown in XFree86 DDX Design (ddxDesign.pdf) design guide does it.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 71d49f8697906eb0a9a7e4b5956203abef672da7
+Author: Emil Velikov <emil.velikov@collabora.com>
+Date:   Mon Jul 17 13:29:14 2017 +0100
+
+    xf86-video-r128: remove the GlxSetVisualConfigs stub and friends
+    
+    The function was an empty since 2008 at least. Remove it alongside the
+    unused GLX visuals code.
+    
+    With this all the GL/GLX dependencies in the driver are gone.
+    
+    Cc: Adam Jackson <ajax@redhat.com>
+    Cc: Connor Behan <connor.behan@gmail.com>
+    Signed-off-by: Emil Velikov <emil.velikov@collabora.com>
+    Tested-by: Connor Behan <connor.behan@gmail.com>
+
+commit 07273966d12c2693302b13c57c5f3abe8896e11c
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:22 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit b4c89cbe61828abe5e561a886db3c2e0e9ece2ef
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 96940667038cdba4775fb810da2d77290c9eda62
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
+commit 5129d4dbc57e3a00144b6ccc23ca4c6ede9b6509
+Author: Colin Walters <walters@verbum.org>
+Date:   Wed Jan 4 17:37:06 2012 -0500
+
+    autogen.sh: Implement GNOME Build API
+    
+    http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit bb4015a6b9394766d92186b4b71bbd49fa207532
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Thu Jan 26 11:19:23 2017 +1000
+
+    configure: Drop AM_MAINTAINER_MODE
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
 commit b93b78f41154d24371acb1081c423351e8f370fd
 Author: Matt Turner <mattst88@gmail.com>
 Date:   Tue Jan 17 14:43:12 2017 -0800

@@ -102,27 +102,7 @@
 #include "xf86.h"
 
 #ifdef HAVE_XAA_H
-static struct {
-    int rop;
-    int pattern;
-} R128_ROP[] = {
-    { R128_ROP3_ZERO, R128_ROP3_ZERO }, /* GXclear        */
-    { R128_ROP3_DSa,  R128_ROP3_DPa  }, /* Gxand          */
-    { R128_ROP3_SDna, R128_ROP3_PDna }, /* GXandReverse   */
-    { R128_ROP3_S,    R128_ROP3_P    }, /* GXcopy         */
-    { R128_ROP3_DSna, R128_ROP3_DPna }, /* GXandInverted  */
-    { R128_ROP3_D,    R128_ROP3_D    }, /* GXnoop         */
-    { R128_ROP3_DSx,  R128_ROP3_DPx  }, /* GXxor          */
-    { R128_ROP3_DSo,  R128_ROP3_DPo  }, /* GXor           */
-    { R128_ROP3_DSon, R128_ROP3_DPon }, /* GXnor          */
-    { R128_ROP3_DSxn, R128_ROP3_PDxn }, /* GXequiv        */
-    { R128_ROP3_Dn,   R128_ROP3_Dn   }, /* GXinvert       */
-    { R128_ROP3_SDno, R128_ROP3_PDno }, /* GXorReverse    */
-    { R128_ROP3_Sn,   R128_ROP3_Pn   }, /* GXcopyInverted */
-    { R128_ROP3_DSno, R128_ROP3_DPno }, /* GXorInverted   */
-    { R128_ROP3_DSan, R128_ROP3_DPan }, /* GXnand         */
-    { R128_ROP3_ONE,  R128_ROP3_ONE  }  /* GXset          */
-};
+#include "r128_rop.h"
 #endif
 
 extern int getR128EntityIndex(void);
@@ -182,10 +162,13 @@ void R128WaitForFifoFunction(ScrnInfoPtr pScrn, int entries)
 	    info->fifo_slots = INREG(R128_GUI_STAT) & R128_GUI_FIFOCNT_MASK;
 	    if (info->fifo_slots >= entries) return;
 	}
-	R128TRACE(("FIFO timed out: %d entries, stat=0x%08x, probe=0x%08x\n",
-		   INREG(R128_GUI_STAT) & R128_GUI_FIFOCNT_MASK,
-		   INREG(R128_GUI_STAT),
-		   INREG(R128_GUI_PROBE)));
+
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                    "FIFO timed out: %lu entries, "
+                    "stat = 0x%08lx, probe = 0x%08lx\n",
+                    INREG(R128_GUI_STAT) & R128_GUI_FIFOCNT_MASK,
+                    INREG(R128_GUI_STAT),
+                    INREG(R128_GUI_PROBE)));
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		   "FIFO timed out, resetting engine...\n");
 	R128EngineReset(pScrn);
@@ -216,10 +199,13 @@ void R128WaitForIdle(ScrnInfoPtr pScrn)
 		return;
 	    }
 	}
-	R128TRACE(("Idle timed out: %d entries, stat=0x%08x, probe=0x%08x\n",
-		   INREG(R128_GUI_STAT) & R128_GUI_FIFOCNT_MASK,
-		   INREG(R128_GUI_STAT),
-		   INREG(R128_GUI_PROBE)));
+
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Idle timed out: %lu entries, "
+                        "stat = 0x%08lx, probe = 0x%08lx\n",
+                        INREG(R128_GUI_STAT) & R128_GUI_FIFOCNT_MASK,
+                        INREG(R128_GUI_STAT),
+                        INREG(R128_GUI_PROBE)));
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		   "Idle timed out, resetting engine...\n");
 #ifdef R128DRI
@@ -526,10 +512,13 @@ static void R128SubsequentSolidFillTrap(ScrnInfoPtr pScrn, int y, int h,
     int           origdxL   = dxL;
     int           origdxR   = dxR;
 
-    R128TRACE(("Trap %d %d; L %d %d %d %d; R %d %d %d %d\n",
-	       y, h,
-	       left, dxL, dyL, eL,
-	       right, dxR, dyR, eR));
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Trap %d %d; "
+                        "L %d %d %d %d; "
+                        "R %d %d %d %d\n",
+                        y, h,
+                        left, dxL, dyL, eL,
+                        right, dxR, dyR, eR));
 
     if (dxL < 0)    dxL = -dxL; else flags |= (1 << 0) /* | (1 << 8) */;
     if (dxR < 0)    dxR = -dxR; else flags |= (1 << 6);
@@ -680,7 +669,9 @@ static void R128SetupForColor8x8PatternFill(ScrnInfoPtr pScrn,
     R128InfoPtr   info      = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
 
-    R128TRACE(("Color8x8 %d %d %d\n", trans_color, patx, paty));
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Color8x8 %d %d %d\n",
+                        trans_color, patx, paty));
 
     R128WaitForFifo(pScrn, 2);
     OUTREG(R128_DP_GUI_MASTER_CNTL, (info->dp_gui_master_cntl
@@ -708,7 +699,9 @@ static void R128SubsequentColor8x8PatternFillRect( ScrnInfoPtr pScrn,
     R128InfoPtr   info      = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
 
-    R128TRACE(("Color8x8 %d,%d %d,%d %d %d\n", patx, paty, x, y, w, h));
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Color8x8 %d,%d %d,%d %d %d\n",
+                        patx, paty, x, y, w, h));
     R128WaitForFifo(pScrn, 3);
     OUTREG(R128_SRC_Y_X, (paty << 16) | patx);
     OUTREG(R128_DST_Y_X, (y << 16) | x);
@@ -1017,7 +1010,10 @@ void R128EngineInit(ScrnInfoPtr pScrn)
     R128InfoPtr   info      = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
 
-    R128TRACE(("EngineInit (%d/%d)\n", info->CurrentLayout.pixel_code, info->CurrentLayout.bitsPerPixel));
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "EngineInit (%d/%d)\n",
+                        info->CurrentLayout.pixel_code,
+                        info->CurrentLayout.bitsPerPixel));
 
     OUTREG(R128_SCALE_3D_CNTL, 0);
     R128EngineReset(pScrn);
@@ -1029,13 +1025,16 @@ void R128EngineInit(ScrnInfoPtr pScrn)
     case 24: info->datatype = 5; break;
     case 32: info->datatype = 6; break;
     default:
-	R128TRACE(("Unknown depth/bpp = %d/%d (code = %d)\n",
-		   info->CurrentLayout.depth, info->CurrentLayout.bitsPerPixel,
-		   info->CurrentLayout.pixel_code));
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Unknown depth/bpp = %d/%d (code = %d)\n",
+                        info->CurrentLayout.depth,
+                        info->CurrentLayout.bitsPerPixel,
+                        info->CurrentLayout.pixel_code));
     }
     info->pitch = (info->CurrentLayout.displayWidth / 8) * (info->CurrentLayout.pixel_bytes == 3 ? 3 : 1);
 
-    R128TRACE(("Pitch for acceleration = %d\n", info->pitch));
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Pitch for acceleration = %d\n", info->pitch));
 
     R128WaitForFifo(pScrn, 2);
     OUTREG(R128_DEFAULT_OFFSET, pScrn->fbOffset);
@@ -1902,55 +1901,24 @@ void R128CopySwap(uint8_t *dst, uint8_t *src, unsigned int size, int swap)
 
 /* Initialize XAA for supported acceleration and also initialize the
    graphics hardware for acceleration. */
-Bool R128AccelInit(ScreenPtr pScreen)
+#ifdef HAVE_XAA_H
+Bool
+R128XAAAccelInit(ScreenPtr pScreen)
 {
     ScrnInfoPtr   pScrn = xf86ScreenToScrn(pScreen);
     R128InfoPtr   info  = R128PTR(pScrn);
-
-#ifdef USE_EXA
-    if (info->useEXA) {
-        int errmaj = 0, errmin = 0;
-
-        info->exaReq.majorversion = EXA_VERSION_MAJOR;
-        info->exaReq.minorversion = EXA_VERSION_MINOR;
-
-        xf86DrvMsg(pScrn->scrnIndex,X_INFO,"Loading EXA module...\n");
-        if (!LoadSubModule(pScrn->module, "exa", NULL, NULL, NULL, &info->exaReq, &errmaj, &errmin)) {
-            LoaderErrorMsg(NULL, "exa", errmaj, errmin);
-            return FALSE;
-        }
-
-	/* Don't init EXA here because it'll be taken care of in mm init */
-	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Allocating EXA driver...\n");
-	info->ExaDriver = exaDriverAlloc();
-	if (!info->ExaDriver) {
-	    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Could not allocate EXA driver...\n");
-	    info->accelOn = FALSE;
-	}
-
-	return TRUE;
-    }
-#endif
-
-#ifndef HAVE_XAA_H
-    return FALSE;
-#else
     XAAInfoRecPtr a;
-
-    if (!info->useEXA) {
-        if (!xf86LoadSubModule(pScrn, "xaa")) return FALSE;
-    }
 
     if (!(a = info->accel = XAACreateInfoRec())) return FALSE;
 
 #ifdef R128DRI
     if (info->directRenderingEnabled)
-	R128CCEAccelInit(pScrn, a);
+        R128CCEAccelInit(pScrn, a);
     else
 #endif
-	R128MMIOAccelInit(pScrn, a);
+    R128MMIOAccelInit(pScrn, a);
 
     R128EngineInit(pScrn);
     return XAAInit(pScreen, a);
-#endif
 }
+#endif

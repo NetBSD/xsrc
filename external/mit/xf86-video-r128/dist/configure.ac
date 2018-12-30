@@ -23,7 +23,7 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-video-r128],
-        [6.10.2],
+        [6.12.0],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
         [xf86-video-r128])
 AC_CONFIG_SRCDIR([Makefile.am])
@@ -38,8 +38,6 @@ m4_ifndef([XORG_MACROS_VERSION],
           [m4_fatal([must install xorg-macros 1.8 or later before running autoconf/autogen])])
 XORG_MACROS_VERSION(1.8)
 XORG_DEFAULT_OPTIONS
-
-AM_MAINTAINER_MODE
 
 # Initialize libtool
 AC_DISABLE_STATIC
@@ -86,14 +84,26 @@ sdkdir=`$PKG_CONFIG --variable=sdkdir xorg-server`
 # Checks for libraries.
 
 if test "$DRI" != no; then
-	AC_CHECK_FILE([${sdkdir}/dri.h],
-                      [have_dri_h="yes"], [have_dri_h="no"])
-	AC_CHECK_FILE([${sdkdir}/sarea.h],
-                      [have_sarea_h="yes"], [have_sarea_h="no"])
-	AC_CHECK_FILE([${sdkdir}/dristruct.h],
-                      [have_dristruct_h="yes"], [have_dristruct_h="no"])
-	AC_CHECK_FILE([${sdkdir}/damage.h],
-                      [have_damage_h="yes"], [have_damage_h="no"])
+	if test -f "${sdkdir}/dri.h"; then
+		have_dri_h="yes"
+	else
+		have_dri_h="no"
+	fi
+	if test -f "${sdkdir}/sarea.h"; then
+		have_sarea_h="yes"
+	else
+		have_sarea_h="no"
+	fi
+	if test -f "${sdkdir}/dristruct.h"; then
+		have_dristruct_h="yes"
+	else
+		have_dristruct_h="no"
+	fi
+	if test -f "${sdkdir}/damage.h"; then
+		have_damage_h="yes"
+	else
+		have_damage_h="no"
+	fi
 fi
 
 AC_MSG_CHECKING([whether to include DRI support])
@@ -121,7 +131,7 @@ CPPFLAGS="$CPPFLAGS $XORG_CFLAGS"
 AC_MSG_CHECKING([whether to enable EXA support])
 if test "x$EXA" = xyes; then
         AC_MSG_RESULT(yes)
-        AC_CHECK_FILE(${sdkdir}/exa.h, [have_exa_h="yes"], [have_exa_h="no"])
+        AS_IF([test -f "${sdkdir}/exa.h"], [have_exa_h="yes"], [have_exa_h="no"])
 else
         AC_MSG_RESULT(no)
 fi

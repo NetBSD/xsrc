@@ -78,12 +78,6 @@ stable.  EXA is a newer acceleration architecture with better performance for
 the Render and Composite extensions.  The default is
 .B XAA.
 .TP
-.BI "Option \*qDac6Bit\*q \*q" boolean \*q
-Enables or disables the use of 6 bits per color component when in 8 bpp
-mode (emulates VGA mode).  By default, all 8 bits per color component
-are used.  The default is
-.B off.
-.TP
 .BI "Option \*qVideoKey\*q \*q" integer \*q
 This overrides the default pixel value for the YUV video overlay key.
 The default value is
