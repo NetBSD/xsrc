@@ -56,9 +56,8 @@
 #include "windowstr.h"
 
 #include "shadowfb.h"
-				/* GLX/DRI/DRM definitions */
+				/* DRI/DRM definitions */
 #define _XF86DRI_SERVER_
-#include "GL/glxtokens.h"
 #include "sarea.h"
 
 static size_t r128_drm_page_size;
@@ -69,209 +68,6 @@ static void R128DRITransitionMultiToSingle3d(ScreenPtr pScreen);
 static void R128DRITransitionSingleToMulti3d(ScreenPtr pScreen);
 
 static void R128DRIRefreshArea(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
-
-/* Initialize the visual configs that are supported by the hardware.
-   These are combined with the visual configs that the indirect
-   rendering core supports, and the intersection is exported to the
-   client. */
-static Bool R128InitVisualConfigs(ScreenPtr pScreen)
-{
-    ScrnInfoPtr       pScrn            = xf86ScreenToScrn(pScreen);
-    R128InfoPtr       info             = R128PTR(pScrn);
-    int               numConfigs       = 0;
-    __GLXvisualConfig *pConfigs        = NULL;
-    R128ConfigPrivPtr pR128Configs     = NULL;
-    R128ConfigPrivPtr *pR128ConfigPtrs = NULL;
-    int               i, accum, stencil, db;
-
-    switch (info->CurrentLayout.pixel_code) {
-    case 8:  /* 8bpp mode is not support */
-    case 15: /* FIXME */
-    case 24: /* FIXME */
-	xf86DrvMsg(pScreen->myNum, X_ERROR,
-		   "[dri] R128DRIScreenInit failed (depth %d not supported).  "
-		   "Disabling DRI.\n", info->CurrentLayout.pixel_code);
-	return FALSE;
-
-#define R128_USE_ACCUM   1
-#define R128_USE_STENCIL 1
-#define R128_USE_DB      1
-
-    case 16:
-	numConfigs = 1;
-	if (R128_USE_ACCUM)   numConfigs *= 2;
-	if (R128_USE_STENCIL) numConfigs *= 2;
-	if (R128_USE_DB)      numConfigs *= 2;
-
-	if (!(pConfigs
-	      = (__GLXvisualConfig*)calloc(sizeof(__GLXvisualConfig),
-					      numConfigs))) {
-	    return FALSE;
-	}
-	if (!(pR128Configs
-	      = (R128ConfigPrivPtr)calloc(sizeof(R128ConfigPrivRec),
-					     numConfigs))) {
-	    free(pConfigs);
-	    return FALSE;
-	}
-	if (!(pR128ConfigPtrs
-	      = (R128ConfigPrivPtr*)calloc(sizeof(R128ConfigPrivPtr),
-					      numConfigs))) {
-	    free(pConfigs);
-	    free(pR128Configs);
-	    return FALSE;
-	}
-
-	i = 0;
-	for (db = 0; db <= R128_USE_DB; db++) {
-	  for (accum = 0; accum <= R128_USE_ACCUM; accum++) {
-	    for (stencil = 0; stencil <= R128_USE_STENCIL; stencil++) {
-		pR128ConfigPtrs[i] = &pR128Configs[i];
-
-		pConfigs[i].vid                = (VisualID)(-1);
-		pConfigs[i].class              = -1;
-		pConfigs[i].rgba               = TRUE;
-		pConfigs[i].redSize            = 5;
-		pConfigs[i].greenSize          = 6;
-		pConfigs[i].blueSize           = 5;
-		pConfigs[i].alphaSize          = 0;
-		pConfigs[i].redMask            = 0x0000F800;
-		pConfigs[i].greenMask          = 0x000007E0;
-		pConfigs[i].blueMask           = 0x0000001F;
-		pConfigs[i].alphaMask          = 0x00000000;
-		if (accum) { /* Simulated in software */
-		    pConfigs[i].accumRedSize   = 16;
-		    pConfigs[i].accumGreenSize = 16;
-		    pConfigs[i].accumBlueSize  = 16;
-		    pConfigs[i].accumAlphaSize = 0;
-		} else {
-		    pConfigs[i].accumRedSize   = 0;
-		    pConfigs[i].accumGreenSize = 0;
-		    pConfigs[i].accumBlueSize  = 0;
-		    pConfigs[i].accumAlphaSize = 0;
-		}
-		if (db)
-		    pConfigs[i].doubleBuffer       = TRUE;
-		else
-		    pConfigs[i].doubleBuffer       = FALSE;
-		pConfigs[i].stereo             = FALSE;
-		pConfigs[i].bufferSize         = 16;
-		pConfigs[i].depthSize          = 16;
-		if (stencil)
-		    pConfigs[i].stencilSize    = 8; /* Simulated in software */
-		else
-		    pConfigs[i].stencilSize    = 0;
-		pConfigs[i].auxBuffers         = 0;
-		pConfigs[i].level              = 0;
-		if (accum || stencil) {
-		   pConfigs[i].visualRating    = GLX_SLOW_CONFIG;
-		} else {
-		   pConfigs[i].visualRating    = GLX_NONE;
-		}
-		pConfigs[i].transparentPixel   = GLX_NONE;
-		pConfigs[i].transparentRed     = 0;
-		pConfigs[i].transparentGreen   = 0;
-		pConfigs[i].transparentBlue    = 0;
-		pConfigs[i].transparentAlpha   = 0;
-		pConfigs[i].transparentIndex   = 0;
-		i++;
-	    }
-	  }
-	}
-	break;
-
-    case 32:
-	numConfigs = 1;
-	if (R128_USE_ACCUM)   numConfigs *= 2;
-	if (R128_USE_STENCIL) numConfigs *= 2;
-	if (R128_USE_DB)      numConfigs *= 2;
-
-	if (!(pConfigs
-	      = (__GLXvisualConfig*)calloc(sizeof(__GLXvisualConfig),
-					      numConfigs))) {
-	    return FALSE;
-	}
-	if (!(pR128Configs
-	      = (R128ConfigPrivPtr)calloc(sizeof(R128ConfigPrivRec),
-					     numConfigs))) {
-	    free(pConfigs);
-	    return FALSE;
-	}
-	if (!(pR128ConfigPtrs
-	      = (R128ConfigPrivPtr*)calloc(sizeof(R128ConfigPrivPtr),
-					      numConfigs))) {
-	    free(pConfigs);
-	    free(pR128Configs);
-	    return FALSE;
-	}
-
-	i = 0;
-	for (db = 0; db <= R128_USE_DB; db++) {
-	  for (accum = 0; accum <= R128_USE_ACCUM; accum++) {
-	    for (stencil = 0; stencil <= R128_USE_STENCIL; stencil++) {
-		pR128ConfigPtrs[i] = &pR128Configs[i];
-
-		pConfigs[i].vid                = (VisualID)(-1);
-		pConfigs[i].class              = -1;
-		pConfigs[i].rgba               = TRUE;
-		pConfigs[i].redSize            = 8;
-		pConfigs[i].greenSize          = 8;
-		pConfigs[i].blueSize           = 8;
-		pConfigs[i].alphaSize          = 0;
-		pConfigs[i].redMask            = 0x00FF0000;
-		pConfigs[i].greenMask          = 0x0000FF00;
-		pConfigs[i].blueMask           = 0x000000FF;
-		pConfigs[i].alphaMask          = 0x00000000;
-		if (accum) { /* Simulated in software */
-		    pConfigs[i].accumRedSize   = 16;
-		    pConfigs[i].accumGreenSize = 16;
-		    pConfigs[i].accumBlueSize  = 16;
-		    pConfigs[i].accumAlphaSize = 0;
-		} else {
-		    pConfigs[i].accumRedSize   = 0;
-		    pConfigs[i].accumGreenSize = 0;
-		    pConfigs[i].accumBlueSize  = 0;
-		    pConfigs[i].accumAlphaSize = 0;
-		}
-		if (db)
-		    pConfigs[i].doubleBuffer       = TRUE;
-		else
-		    pConfigs[i].doubleBuffer       = FALSE;
-		pConfigs[i].stereo             = FALSE;
-		pConfigs[i].bufferSize         = 24;
-		if (stencil) {
-		    pConfigs[i].depthSize      = 24;
-		    pConfigs[i].stencilSize    = 8;
-		} else {
-		    pConfigs[i].depthSize      = 24;
-		    pConfigs[i].stencilSize    = 0;
-		}
-		pConfigs[i].auxBuffers         = 0;
-		pConfigs[i].level              = 0;
-		if (accum) {
-		   pConfigs[i].visualRating    = GLX_SLOW_CONFIG;
-		} else {
-		   pConfigs[i].visualRating    = GLX_NONE;
-		}
-		pConfigs[i].transparentPixel   = GLX_NONE;
-		pConfigs[i].transparentRed     = 0;
-		pConfigs[i].transparentGreen   = 0;
-		pConfigs[i].transparentBlue    = 0;
-		pConfigs[i].transparentAlpha   = 0;
-		pConfigs[i].transparentIndex   = 0;
-		i++;
-	    }
-	  }
-	}
-	break;
-    }
-
-    info->numVisualConfigs   = numConfigs;
-    info->pVisualConfigs     = pConfigs;
-    info->pVisualConfigsPriv = pR128Configs;
-    GlxSetVisualConfigs(numConfigs, pConfigs, (void**)pR128ConfigPtrs);
-    return TRUE;
-}
 
 /* Create the Rage 128-specific context information */
 static Bool R128CreateContext(ScreenPtr pScreen, VisualPtr visual,
@@ -988,9 +784,8 @@ Bool R128DRIScreenInit(ScreenPtr pScreen)
     int           major, minor, patch;
     drmVersionPtr version;
 
-    /* Check that the GLX, DRI, and DRM modules have been loaded by testing
+    /* Check that the DRI, and DRM modules have been loaded by testing
      * for known symbols in each module. */
-    if (!xf86LoaderCheckSymbol("GlxSetVisualConfigs")) return FALSE;
     if (!xf86LoaderCheckSymbol("drmAvailable"))        return FALSE;
     if (!xf86LoaderCheckSymbol("DRIQueryVersion")) {
       xf86DrvMsg(pScreen->myNum, X_ERROR,
@@ -1204,10 +999,6 @@ Bool R128DRIScreenInit(ScreenPtr pScreen)
 
 				/* FIXME: When are these mappings unmapped? */
 
-    if (!R128InitVisualConfigs(pScreen)) {
-	R128DRICloseScreen(pScreen);
-	return FALSE;
-    }
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "[dri] Visual configs initialized\n");
 
     return TRUE;
@@ -1369,14 +1160,6 @@ void R128DRICloseScreen(ScreenPtr pScreen)
 	}
 	DRIDestroyInfoRec(info->pDRIInfo);
 	info->pDRIInfo = NULL;
-    }
-    if (info->pVisualConfigs) {
-	free(info->pVisualConfigs);
-	info->pVisualConfigs = NULL;
-    }
-    if (info->pVisualConfigsPriv) {
-	free(info->pVisualConfigsPriv);
-	info->pVisualConfigsPriv = NULL;
     }
 }
 

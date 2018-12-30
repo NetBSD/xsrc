@@ -34,8 +34,18 @@
 
 /* The following is based on the kdrive ATI driver. */
 
-#include <stdio.h>
-#include <string.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#if defined(R128DRI) && defined(RENDER)
+#include "xf86.h"
+#include "exa.h"
+
+#include "r128.h"
+#include "r128_reg.h"
+#include "r128_rop.h"
+
 
 static struct {
     Bool dst_alpha;
@@ -172,32 +182,38 @@ R128CheckCompositeTexture(PicturePtr pPict, PicturePtr pDstPict, int op)
         int h = pPict->pDrawable->height;
 
         if (pPict->repeat && ((w & (w - 1)) != 0 || (h & (h - 1)) != 0)) {
-            R128TRACE(("NPOT repeat unsupported (%dx%d)\n", w, h));
+            DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                                "NPOT repeat unsupported (%dx%d)\n", w, h));
 	    return FALSE;
         }
     }
 
     if (pPict->filter != PictFilterNearest && pPict->filter != PictFilterBilinear) {
-	R128TRACE(("Unsupported filter 0x%x\n", pPict->filter));
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "Unsupported filter 0x%x\n",
+                            pPict->filter));
 	return FALSE;
     }
 
     /* The radeon driver has a long explanation about this part that I don't really understand */
     if (pPict->transform != 0 && repeatType == RepeatNone && PICT_FORMAT_A(pPict->format) == 0) {
 	if (!(((op == PictOpSrc) || (op == PictOpClear)) && (PICT_FORMAT_A(pDstPict->format) == 0))) {
-	    R128TRACE(("REPEAT_NONE unsupported for transformed xRGB source\n"));
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "REPEAT_NONE unsupported for "
+                            "transformed xRGB source\n"));
 	    return FALSE;
 	}
     }
     if (!R128TransformAffineOrScaled(pPict->transform)) {
-	R128TRACE(("Non-affine transforms not supported\n"));
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "Non-affine transforms not supported\n"));
 	return FALSE;
     }
 
     return TRUE;
 }
 
-static Bool
+Bool
 R128CCECheckComposite(int op, PicturePtr pSrcPicture, PicturePtr pMaskPicture, PicturePtr pDstPicture)
 {
 #if R128_DEBUG
@@ -210,30 +226,40 @@ R128CCECheckComposite(int op, PicturePtr pSrcPicture, PicturePtr pMaskPicture, P
 
     /* Check for unsupported compositing operations. */
     if (op >= sizeof(R128BlendOp) / sizeof(R128BlendOp[0])) {
-	R128TRACE(("Unsupported Composite op 0x%x\n", op));
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "Unsupported Composite op 0x%x\n", op));
 	return FALSE;
     }
 
     pDstPixmap = R128GetDrawablePixmap(pDstPicture->pDrawable);
     if (pDstPixmap->drawable.width > 1024 || pDstPixmap->drawable.height > 1024) {
-	R128TRACE(("Dest w/h too large (%d,%d).\n", pDstPixmap->drawable.width, pDstPixmap->drawable.height));
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "Dest w/h too large (%d,%d).\n",
+                            pDstPixmap->drawable.width,
+                            pDstPixmap->drawable.height));
 	return FALSE;
     }
 
     if (pSrcPicture->pDrawable) {
         pSrcPixmap = R128GetDrawablePixmap(pSrcPicture->pDrawable);
         if (pSrcPixmap->drawable.width > 1024 || pSrcPixmap->drawable.height > 1024) {
-	    R128TRACE(("Source w/h too large (%d,%d).\n", pSrcPixmap->drawable.width, pSrcPixmap->drawable.height));
+            DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                                "Source w/h too large (%d,%d).\n",
+                                pSrcPixmap->drawable.width,
+                                pSrcPixmap->drawable.height));
 	    return FALSE;
         }
     } else if (pSrcPicture->pSourcePict->type != SourcePictTypeSolidFill) {
-        R128TRACE(("Gradient pictures not supported yet\n"));
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "Gradient pictures not supported yet\n"));
 	return FALSE;
     }
 
     if (pDstPicture->format == PICT_a8) {
         if (R128BlendOp[op].src_alpha || R128BlendOp[op].dst_alpha || pMaskPicture != NULL) {
-	    R128TRACE(("Alpha blending unsupported with A8 dst?\n"));
+            DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                                "Alpha blending unsupported with "
+                                "A8 dst?\n"));
 	    return FALSE;
 	}
     } else {
@@ -246,16 +272,22 @@ R128CCECheckComposite(int op, PicturePtr pSrcPicture, PicturePtr pMaskPicture, P
         if (pMaskPicture->pDrawable) {
 	    pMaskPixmap = R128GetDrawablePixmap(pMaskPicture->pDrawable);
             if (pMaskPixmap->drawable.width > 1024 || pMaskPixmap->drawable.height > 1024) {
-	        R128TRACE(("Mask w/h too large (%d,%d).\n", pMaskPixmap->drawable.width, pMaskPixmap->drawable.height));
+                DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                                    "Mask w/h too large (%d,%d).\n",
+                                    pMaskPixmap->drawable.width,
+                                    pMaskPixmap->drawable.height));
 	        return FALSE;
             }
 	} else if (pMaskPicture->pSourcePict->type != SourcePictTypeSolidFill) {
-	    R128TRACE(("Gradient pictures not supported yet\n"));
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "Gradient pictures not supported yet\n"));
 	    return FALSE;
 	}
 
 	if (pMaskPicture->componentAlpha && R128BlendOp[op].src_alpha) {
-	    R128TRACE(("Component alpha not supported with source alpha blending\n"));
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "Component alpha not supported with "
+                            "source alpha blending\n"));
 	    return FALSE;
 	}
 
@@ -284,7 +316,8 @@ R128TextureSetup(PicturePtr pPict, PixmapPtr pPix, int unit, uint32_t *txsize, u
 
     pitch = exaGetPixmapPitch(pPix);
     if ((pitch & (pitch - 1)) != 0) {
-        R128TRACE(("NPOT pitch 0x%x unsupported\n", pitch));
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "NPOT pitch 0x%x unsupported\n", pitch));
 	return FALSE;
     }
 
@@ -298,7 +331,8 @@ R128TextureSetup(PicturePtr pPict, PixmapPtr pPix, int unit, uint32_t *txsize, u
     } else if (pPict->filter == PictFilterNearest) {
 	*tex_cntl_c |= R128_MIN_BLEND_NEAREST | R128_MAG_BLEND_NEAREST;
     } else {
-	R128TRACE(("Bad filter 0x%x\n", pPict->filter));
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "Bad filter 0x%x\n", pPict->filter));
 	return FALSE;
     }
 
@@ -316,7 +350,9 @@ R128TextureSetup(PicturePtr pPict, PixmapPtr pPix, int unit, uint32_t *txsize, u
     if (pPict->repeat && w == 1 && h == 1) {
         l2p = 0;
     } else if (pPict->repeat && l2p != l2w) {
-        R128TRACE(("Repeat not supported for pitch != width\n"));
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "Repeat not supported for pitch != "
+                            "width\n"));
 	return FALSE;
     }
 
@@ -379,7 +415,7 @@ do {							\
     ADVANCE_RING();					\
 } while(0)
 
-static Bool
+Bool
 R128CCEPrepareComposite(int op, PicturePtr pSrcPicture, PicturePtr pMaskPicture,
     PicturePtr pDstPicture, PixmapPtr pSrc, PixmapPtr pMask, PixmapPtr pDst)
 {
@@ -398,7 +434,8 @@ R128CCEPrepareComposite(int op, PicturePtr pSrcPicture, PicturePtr pMaskPicture,
 
     if (pDstPicture->format == PICT_a8) {
         if (R128BlendOp[op].dst_alpha) {
-	    R128TRACE(("Can't dst alpha blend A8\n"));
+            DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                                "Can't dst alpha blend A8\n"));
 	    return FALSE;
         }
         dstDatatype = R128_DATATYPE_Y8;
@@ -409,7 +446,9 @@ R128CCEPrepareComposite(int op, PicturePtr pSrcPicture, PicturePtr pMaskPicture,
     if (!pSrc) {
 	pSrc = R128SolidPixmap(pScreen, cpu_to_le32(pSrcPicture->pSourcePict->solidFill.color));
 	if (!pSrc) {
-	    R128TRACE(("Failed to create solid scratch pixmap\n"));
+        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                            "Failed to create solid scratch "
+                            "pixmap\n"));
 	    return FALSE;
 	}
 	add_src = TRUE;
@@ -422,7 +461,9 @@ R128CCEPrepareComposite(int op, PicturePtr pSrcPicture, PicturePtr pMaskPicture,
 	        if (!pSrcPicture->pDrawable)
 		    pScreen->DestroyPixmap(pSrc);
 		info->state_2d.has_mask = FALSE;
-	        R128TRACE(("Failed to create solid scratch pixmap\n"));
+            DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                                "Failed to create "
+                                "solid scratch pixmap\n"));
 	        return FALSE;
 	    }
 	    add_msk = TRUE;
@@ -619,7 +660,7 @@ do {								       			\
     OUT_RING(R128FloatAsInt((((float)(_srcY)) + 0.5) / (info->state_2d.heights[0])));	\
 } while (0)
 
-static void
+void
 R128CCEComposite(PixmapPtr pDst, int srcX, int srcY, int maskX, int maskY, int dstX, int dstY, int w, int h)
 {
     ScreenPtr     pScreen   = pDst->drawable.pScreen;
@@ -702,4 +743,4 @@ R128CCEComposite(PixmapPtr pDst, int srcX, int srcY, int maskX, int maskY, int d
     ADVANCE_RING();
 }
 
-#define R128CCEDoneComposite R128Done
+#endif

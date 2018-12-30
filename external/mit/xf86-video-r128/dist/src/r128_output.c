@@ -49,6 +49,29 @@
 
 static void R128ConnectorFindMonitor(ScrnInfoPtr pScrn, xf86OutputPtr output);
 
+/* Define DAC registers for the requested video mode. */
+void R128InitDACRegisters(R128SavePtr orig, R128SavePtr save, xf86OutputPtr output)
+{
+    ScrnInfoPtr pScrn = output->scrn;
+    R128InfoPtr info = R128PTR(pScrn);
+    xf86CrtcPtr crtc = output->crtc;
+    R128CrtcPrivatePtr r128_crtc = crtc->driver_private;
+
+    save->dac_cntl = (R128_DAC_MASK_ALL | R128_DAC_VGA_ADR_EN |
+                      (!r128_crtc->crtc_id ? 0 : R128_DAC_CRT_SEL_CRTC2) |
+                      (info->dac6bits      ? 0 : R128_DAC_8BIT_EN));
+}
+
+/* Write DAC registers */
+void R128RestoreDACRegisters(ScrnInfoPtr pScrn, R128SavePtr restore)
+{
+    R128InfoPtr   info      = R128PTR(pScrn);
+    unsigned char *R128MMIO = info->MMIO;
+
+    OUTREGP(R128_DAC_CNTL, restore->dac_cntl,
+        R128_DAC_RANGE_CNTL | R128_DAC_BLANKING);
+}
+
 static void r128_dpms(xf86OutputPtr output, int mode)
 {
     switch(mode) {
@@ -257,10 +280,10 @@ static R128MonitorType R128DisplayDDCConnected(xf86OutputPtr output)
     if (r128_output->pI2CBus) {
         R128I2CBusPtr pR128I2CBus = &(r128_output->ddc_i2c);
 
-	/* XXX: Radeon does something here to appease old monitors. */
-	OUTREG(pR128I2CBus->ddc_reg, INREG(pR128I2CBus->ddc_reg)  |  mask1);
-	OUTREG(pR128I2CBus->ddc_reg, INREG(pR128I2CBus->ddc_reg)  & ~mask2);
-	*MonInfo = xf86DoEDID_DDC2(XF86_SCRN_ARG(pScrn), r128_output->pI2CBus);
+        /* XXX: Radeon does something here to appease old monitors. */
+        OUTREG(pR128I2CBus->ddc_reg, INREG(pR128I2CBus->ddc_reg)  |  mask1);
+        OUTREG(pR128I2CBus->ddc_reg, INREG(pR128I2CBus->ddc_reg)  & ~mask2);
+        *MonInfo = xf86DoEDID_DDC2(XF86_SCRN_ARG(pScrn), r128_output->pI2CBus);
     } else {
         xf86DrvMsg(pScrn->scrnIndex, X_WARNING, "DDC2/I2C is not properly initialized\n");
         return MT_NONE;
@@ -274,7 +297,7 @@ static R128MonitorType R128DisplayDDCConnected(xf86OutputPtr output)
                 MonType = MT_DFP;
             else
                 MonType = MT_CRT;
-	}
+        }
     }
 
     return MonType;
@@ -320,8 +343,8 @@ DisplayModePtr R128ProbeOutputModes(xf86OutputPtr output)
             }
         }
 
-	xf86SetModeCrtc(mode, INTERLACE_HALVE_V);
-	if (mode->status == MODE_OK)
+        xf86SetModeCrtc(mode, INTERLACE_HALVE_V);
+        if (mode->status == MODE_OK)
             mode->status = R128DoValidMode(output, mode, MODECHECK_FINAL);
     }
 
@@ -390,40 +413,47 @@ static Bool R128I2CInit(xf86OutputPtr output, I2CBusPtr *bus_ptr, char *name)
     return TRUE;
 }
 
-void R128SetupGenericConnectors(ScrnInfoPtr pScrn, R128OutputType *otypes)
-{
-    R128InfoPtr info    = R128PTR(pScrn);
-    R128EntPtr pR128Ent = R128EntPriv(pScrn);
-
-    if (!pR128Ent->HasCRTC2 && !info->isDFP) {
-        otypes[0] = OUTPUT_VGA;
-        otypes[1] = OUTPUT_NONE;
-        return;
-    } else if (!pR128Ent->HasCRTC2) {
-        otypes[0] = OUTPUT_DVI;
-        otypes[1] = OUTPUT_NONE;
-	return;
-    }
-
-    otypes[0] = OUTPUT_LVDS;
-    otypes[1] = OUTPUT_VGA;
-}
-
 void R128GetConnectorInfoFromBIOS(ScrnInfoPtr pScrn, R128OutputType *otypes)
 {
     R128InfoPtr info = R128PTR(pScrn);
-    uint16_t bios_header;
-    int offset;
+    uint16_t bios_header, offset;
+    uint32_t i;
 
-    /* XXX: Currently, this function only finds VGA ports misidentified as DVI. */
-    if (!info->VBIOS || otypes[0] != OUTPUT_DVI) return;
+    for (i = 0; i < R128_MAX_BIOS_CONNECTOR; i++) {
+        otypes[i] = OUTPUT_NONE;
+    }
+
+    /* non-x86 platform */
+    if (!info->VBIOS) {
+        otypes[0] = OUTPUT_VGA;
+    }
 
     bios_header = R128_BIOS16(0x48);
-    offset = R128_BIOS16(bios_header + 0x60);
-
+    offset = R128_BIOS16(bios_header + 0x40);
     if (offset) {
-        otypes[0] = OUTPUT_VGA;
-        xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Found CRT table, assuming VGA connector\n");
+        otypes[0] = OUTPUT_LVDS;
+        xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                    "Found FP table, assuming FP connector.\n");
+    } else {
+        bios_header = R128_BIOS16(0x48);
+        offset = R128_BIOS16(bios_header + 0x34);
+        if (offset) {
+            otypes[0] = OUTPUT_DVI;
+            xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                        "Found DVI table, assuming DVI connector.\n");
+        }
+    }
+
+    offset = R128_BIOS16(bios_header + 0x2e);
+    if (offset) {
+        if (otypes[0] == OUTPUT_NONE) {
+            otypes[0] = OUTPUT_VGA;
+        } else {
+            otypes[1] = OUTPUT_VGA;
+        }
+
+        xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                    "Found CRT table, assuming VGA connector.\n");
     }
 }
 
@@ -438,7 +468,6 @@ Bool R128SetupConnectors(ScrnInfoPtr pScrn)
     int num_dvi = 0;
     int i;
 
-    R128SetupGenericConnectors(pScrn, otypes);
     R128GetConnectorInfoFromBIOS(pScrn, otypes);
 
     for (i = 0; i < R128_MAX_BIOS_CONNECTOR; i++) {
@@ -451,7 +480,7 @@ Bool R128SetupConnectors(ScrnInfoPtr pScrn)
     for (i = 0; i < R128_MAX_BIOS_CONNECTOR; i++) {
         if (otypes[i] == OUTPUT_NONE) continue;
 
-	R128I2CBusRec i2c;
+        R128I2CBusRec i2c;
         R128OutputPrivatePtr r128_output;
 
         r128_output = xnfcalloc(sizeof(R128OutputPrivateRec), 1);
@@ -473,11 +502,11 @@ Bool R128SetupConnectors(ScrnInfoPtr pScrn)
         output->interlaceAllowed = TRUE;
         output->doubleScanAllowed = TRUE;
         output->driver_private = r128_output;
-	output->possible_clones = 0;
-	if (otypes[i] == OUTPUT_LVDS || !pR128Ent->HasCRTC2)
-	    output->possible_crtcs = 1;
-	else
-	    output->possible_crtcs = 2;
+        output->possible_clones = 0;
+        if (otypes[i] == OUTPUT_LVDS || !pR128Ent->HasCRTC2)
+            output->possible_crtcs = 1;
+        else
+            output->possible_crtcs = 2;
 
         if (otypes[i] != OUTPUT_LVDS && info->DDC) {
             i2c.ddc_reg      = R128_GPIO_MONID;
