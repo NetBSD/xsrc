@@ -153,7 +153,7 @@
 /* #undef HAVE_NDIR_H */
 
 /* Define to 1 if you have the `reallocarray' function. */
-#define HAVE_REALLOCARRAY 1
+/* #define HAVE_REALLOCARRAY 1 */
 
 /* Define to 1 if you have the `arc4random_buf' function. */
 #define HAVE_ARC4RANDOM_BUF 1

@@ -46,7 +46,7 @@
 #define HAS_SHM 1
 
 /* Define to 1 if you have the `reallocarray' function. */
-#define HAVE_REALLOCARRAY 1
+/* #define HAVE_REALLOCARRAY 1 */
 
 /* Define to 1 if you have the `strcasecmp' function. */
 #define HAVE_STRCASECMP 1
