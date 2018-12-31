@@ -227,6 +227,12 @@ struct RADEONInt10Save {
 static Bool RADEONMapMMIO(ScrnInfoPtr pScrn);
 static Bool RADEONUnmapMMIO(ScrnInfoPtr pScrn);
 
+static void
+radeonUpdatePacked(ScreenPtr pScreen, shadowBufPtr pBuf)
+{
+    shadowUpdatePacked(pScreen, pBuf);
+}
+
 static void *
 radeonShadowWindow(ScreenPtr screen, CARD32 row, CARD32 offset, int mode,
 		   CARD32 *size, void *closure)
@@ -255,7 +261,7 @@ RADEONCreateScreenResources (ScreenPtr pScreen)
    if (info->r600_shadow_fb) {
        pixmap = pScreen->GetScreenPixmap(pScreen);
 
-       if (!shadowAdd(pScreen, pixmap, shadowUpdatePackedWeak(),
+       if (!shadowAdd(pScreen, pixmap, radeonUpdatePacked,
 		      radeonShadowWindow, 0, NULL))
 	   return FALSE;
    }

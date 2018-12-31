@@ -1,5 +1,5 @@
 /* $OpenBSD: wsfb_driver.c,v 1.19 2003/04/27 16:42:32 matthieu Exp $ */
-/* $NetBSD: igs_driver.c,v 1.14 2016/08/27 05:15:03 macallan Exp $ */
+/* $NetBSD: igs_driver.c,v 1.15 2018/12/31 12:01:31 mrg Exp $ */
 /*
  * Copyright (c) 2001 Matthieu Herrb
  *		 2009 Michael Lorenz
@@ -217,16 +217,15 @@ IgsSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 	static Bool setupDone = FALSE;
 	const char *osname;
 
+#if !(defined __NetBSD__ || defined __OpenBSD__)
 	/* Check that we're being loaded on a OpenBSD or NetBSD system */
-	LoaderGetOS(&osname, NULL, NULL, NULL);
-	if (!osname || (strcmp(osname, "openbsd") != 0 &&
-	                strcmp(osname, "netbsd") != 0)) {
-		if (errmaj)
-			*errmaj = LDR_BADOS;
-		if (errmin)
-			*errmin = 0;
-		return NULL;
-	}
+	if (errmaj)
+		*errmaj = LDR_BADOS;
+	if (errmin)
+		*errmin = 0;
+	return NULL;
+#endif
+
 	if (!setupDone) {
 		setupDone = TRUE;
 		xf86AddDriver(&IGS, module, HaveDriverFuncs);
@@ -594,6 +593,12 @@ IgsPreInit(ScrnInfoPtr pScrn, int flags)
 	return TRUE;
 }
 
+static void
+IgsUpdatePacked(ScreenPtr pScreen, shadowBufPtr pBuf)
+{
+    shadowUpdatePacked(pScreen, pBuf);
+}
+
 static Bool
 IgsCreateScreenResources(ScreenPtr pScreen)
 {
@@ -611,7 +616,7 @@ IgsCreateScreenResources(ScreenPtr pScreen)
 
 	pPixmap = pScreen->GetScreenPixmap(pScreen);
 
-	if (!shadowAdd(pScreen, pPixmap, shadowUpdatePackedWeak(),
+	if (!shadowAdd(pScreen, pPixmap, IgsUpdatePacked,
 		IgsWindowLinear, FALSE, NULL)) {
 		return FALSE;
 	}

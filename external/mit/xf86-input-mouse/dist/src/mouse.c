@@ -794,7 +794,6 @@ InitProtocols(void)
 {
     int classes;
     int i;
-    const char *osname = NULL;
 
     if (osInfo)
         return TRUE;
@@ -820,12 +819,12 @@ InitProtocols(void)
                 !osInfo->CheckProtocol(mouseProtocols[i].name))
                 mouseProtocols[i].id = PROT_UNSUP;
 
+#ifdef __NetBSD__
     /* NetBSD uses PROT_BM for "PS/2". */
-    xf86GetOS(&osname, NULL, NULL, NULL);
-    if (osname && xf86NameCmp(osname, "netbsd") == 0)
-        for (i = 0; mouseProtocols[i].name; i++)
-            if (mouseProtocols[i].id == PROT_PS2)
-                mouseProtocols[i].id = PROT_BM;
+    for (i = 0; mouseProtocols[i].name; i++)
+        if (mouseProtocols[i].id == PROT_PS2)
+            mouseProtocols[i].id = PROT_BM;
+#endif
 
     return TRUE;
 }

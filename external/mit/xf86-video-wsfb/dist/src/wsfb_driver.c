@@ -243,18 +243,15 @@ static pointer
 WsfbSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 {
 	static Bool setupDone = FALSE;
-	const char *osname;
 
+#if !(defined __NetBSD__ || defined __OpenBSD__)
 	/* Check that we're being loaded on a OpenBSD or NetBSD system. */
-	LoaderGetOS(&osname, NULL, NULL, NULL);
-	if (!osname || (strcmp(osname, "openbsd") != 0 &&
-	                strcmp(osname, "netbsd") != 0)) {
-		if (errmaj)
-			*errmaj = LDR_BADOS;
-		if (errmin)
-			*errmin = 0;
-		return NULL;
-	}
+	if (errmaj)
+		*errmaj = LDR_BADOS;
+	if (errmin)
+		*errmin = 0;
+	return NULL;
+#endif
 	if (!setupDone) {
 		setupDone = TRUE;
 		xf86AddDriver(&WSFB, module, HaveDriverFuncs);
@@ -1047,9 +1044,11 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 		    "disabling DGA\n");
 #endif
 	if (fPtr->rotate) {
+#if 0
 		xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Enabling Driver Rotation, "
 		    "disabling RandR\n");
 		xf86DisableRandR();
+#endif
 		if (pScrn->bitsPerPixel == 24)
 			xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
 			    "Rotation might be broken in 24 bpp\n");
@@ -1632,7 +1631,7 @@ memcpy32sw(void *dest, void *src, int len)
 void
 WsfbShadowUpdateSwap32(ScreenPtr pScreen, shadowBufPtr pBuf)
 {
-    RegionPtr	damage = shadowDamage (pBuf);
+    RegionPtr	damage = DamageRegion (pBuf->pDamage);
     PixmapPtr	pShadow = pBuf->pPixmap;
     int		nbox = RegionNumRects (damage);
     BoxPtr	pbox = RegionRects (damage);
@@ -1704,7 +1703,7 @@ WsfbShadowUpdateSplit(ScreenPtr pScreen, shadowBufPtr pBuf)
 {
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     WsfbPtr 	fPtr = WSFBPTR(pScrn);
-    RegionPtr	damage = shadowDamage (pBuf);
+    RegionPtr	damage = DamageRegion (pBuf->pDamage);
     PixmapPtr	pShadow = pBuf->pPixmap;
     int		nbox = RegionNumRects (damage);
     BoxPtr	pbox = RegionRects (damage);
