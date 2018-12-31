@@ -239,11 +239,11 @@ listPossibleVideoDrivers(XF86MatchedDrivers *md)
 /* XXXMRG:  xorg-server 1.10/1.18 -- merge into xf86PlatformMatchDriver()? */
 #ifdef __NetBSD__
 #if defined(__shark)
-    matches[i++] = xnfstrdup("chips");
-    matches[i++] = xnfstrdup("igs");
+    xf86AddMatchedDriver(md, "chips");
+    xf86AddMatchedDriver(md, "igs");
 #elif defined(__sgimips)
-    matches[i++] = xnfstrdup("crime");
-    matches[i++] = xnfstrdup("newport");
+    xf86AddMatchedDriver(md, "crime");
+    xf86AddMatchedDriver(md, "newport");
 #elif defined(__sparc) || defined(__sparc64)
     /* dig through /dev/fb* */
     {
@@ -269,7 +269,7 @@ listPossibleVideoDrivers(XF86MatchedDrivers *md)
 	    if (sbusDeviceTable[dev].fbType == fbt.fb_type) {
 		xf86Msg(X_ERROR,"%s: found %s\n", __func__,
 		    sbusDeviceTable[dev].driverName);
-		matches[i++] = xnfstrdup(sbusDeviceTable[dev].driverName);
+	        xf86AddMatchedDriver(md, sbusDeviceTable[dev].driverName);
 	    }
 	}
     }
