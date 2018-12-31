@@ -11,7 +11,7 @@
 /* #define BUILDERADDR "tech-x11@NetBSD.org" */
 
 /* Operating System Name */
-/* #define OSNAME "NetBSD-7.99.35-i386" */
+/* #define OSNAME "NetBSD-8.99.28-x86_64" */
 
 /* Operating System Vendor */
 /* #define OSVENDOR "The NetBSD Foundation" */
@@ -66,14 +66,8 @@
 /* Has libunwind support */
 /* #undef HAVE_LIBUNWIND */
 
-/* Define to 1 if you have the <byteswap.h> header file. */
-/* #undef HAVE_BYTESWAP_H */
-
 /* Define to 1 if you have the `cbrt' function. */
 #define HAVE_CBRT 1
-
-/* Define to 1 if you have the <dbm.h> header file. */
-/* #undef HAVE_DBM_H */
 
 /* Define to 1 if you have the declaration of `program_invocation_short_name', and
    to 0 if you don't. */
@@ -91,9 +85,6 @@
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
-
-/* Define to 1 if you have the `ffs' function. */
-#define HAVE_FFS 1
 
 /* Define to 1 if you have the `getdtablesize' function. */
 #define HAVE_GETDTABLESIZE 1
@@ -146,20 +137,23 @@
 /* Define to 1 if you have the <linux/fb.h> header file. */
 /* #undef HAVE_LINUX_FB_H */
 
+/* Define to 1 if you have the `mkostemp' function. */
+#define HAVE_MKOSTEMP 1
+
 /* Define to 1 if you have the `mmap' function. */
 #define HAVE_MMAP 1
 
-/* Define to 1 if you have the <ndbm.h> header file. */
-#define HAVE_NDBM_H 1
+/* Define to 1 if you have the function pthread_setname_np(const char*) */
+/* #undef HAVE_PTHREAD_SETNAME_NP_WITHOUT_TID */
+
+/* Define to 1 if you have the function pthread_setname_np(pthread_t, const char*) */
+/* #undef HAVE_PTHREAD_SETNAME_NP_WITH_TID */
 
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 /* #undef HAVE_NDIR_H */
 
 /* Define to 1 if you have the `reallocarray' function. */
-/* #undef HAVE_REALLOCARRAY */
-
-/* Define to 1 if you have the <rpcsvc/dbm.h> header file. */
-/* #undef HAVE_RPCSVC_DBM_H */
+#define HAVE_REALLOCARRAY 1
 
 /* Define to 1 if you have the `arc4random_buf' function. */
 #define HAVE_ARC4RANDOM_BUF 1
@@ -244,9 +238,6 @@
 /* Define to 1 if you have the `timingsafe_memcmp' function. */
 /* #undef HAVE_TIMINGSAFE_MEMCMP */
 
-/* Define to 1 if you have the <tslib.h> header file. */
-/* #undef HAVE_TSLIB_H */
-
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
@@ -260,9 +251,7 @@
 #define HAVE_VASPRINTF 1
 
 /* Support IPv6 for TCP connections */
-#ifndef __NetBSD__	/* Defined by the build */
-# define IPv6 1
-#endif
+#define IPv6 1
 
 /* Support os-specific local connections */
 /* #undef LOCALCONN */
@@ -279,10 +268,8 @@
 /* Internal define for Xinerama */
 #define PANORAMIX 1
 
-#if 0
 /* Support Present extension */
 #define PRESENT 1
-#endif
 
 /* Overall prefix */
 /* #define PROJECTROOT "/usr/X11R7" */
@@ -290,10 +277,8 @@
 /* Support RANDR extension */
 #define RANDR 1
 
-#if 0
 /* Support Record extension */
 #define XRECORD 1
-#endif
 
 /* Support RENDER extension */
 #define RENDER 1
@@ -320,22 +305,13 @@
 /* #undef SVR4 */
 
 /* sysconfdir */
-#define SYSCONFDIR "/usr/X11R7/etc"
+#define SYSCONFDIR "/etc"
 
 /* Support TCP socket connections */
 #define TCPCONN 1
 
-/* Support tslib touchscreen abstraction library */
-/* #undef TSLIB */
-
 /* Support UNIX socket connections */
 #define UNIXCONN 1
-
-/* Define to use byteswap macros from <sys/endian.h> */
-#define USE_SYS_ENDIAN_H 1
-
-/* unaligned word accesses behave as expected */
-/* #undef WORKING_UNALIGNED_INT */
 
 /* Build X string registry */
 /* #undef XREGISTRY */
@@ -358,30 +334,20 @@
 /* Build XFree86 BigFont extension */
 /* #undef XF86BIGFONT */
 
-#if 0
 /* Support XFree86 Video Mode extension */
 #define XF86VIDMODE 1
-#endif
 
 /* Support XFixes extension */
 #define XFIXES 1
 
-#if 0
 /* Build XDGA support */
 #define XFreeXDGA 1
-#endif
 
 /* Support Xinerama extension */
 #define XINERAMA 1
 
-/* Vendor release */
-/* #undef XORG_RELEASE */
-
 /* Current Xorg version */
-#define XORG_VERSION_CURRENT (((1) * 10000000) + ((18) * 100000) + ((4) * 1000) + 0)
-
-/* Xorg release date */
-#define XORG_DATE "2016-07-19"
+#define XORG_VERSION_CURRENT (((1) * 10000000) + ((20) * 100000) + ((3) * 1000) + 0)
 
 /* Build Xv Extension */
 #define XvExtension 1
@@ -404,10 +370,8 @@
 /* Build DRI2 extension */
 #define DRI2 1
 
-#if 0
 /* Build DBE support */
 #define DBE 1
-#endif
 
 /* Vendor name */
 #define XVENDORNAME "The X.Org Foundation"
@@ -471,15 +435,6 @@
 /* Define to 1 if the DTrace Xserver provider probes should be built in */
 /* #undef XSERVER_DTRACE */
 
-/* Define to 16-bit byteswap macro */
-#define bswap_16 bswap16
-
-/* Define to 32-bit byteswap macro */
-#define bswap_32 bswap32
-
-/* Define to 64-bit byteswap macro */
-#define bswap_64 bswap64
-
 /* Define to 1 if typeof works with your compiler. */
 #define HAVE_TYPEOF 1
 
@@ -512,15 +467,14 @@
 #define SHMDIR "/var/shm"
 
 /* Don't let Xdefs.h define 'pointer' */
-/* #define _XTYPEDEF_POINTER       1 */
+#define _XTYPEDEF_POINTER       1
 
 /* Don't let XIproto define 'Pointer' */
-/* #define _XITYPEDEF_POINTER      1 */
+#define _XITYPEDEF_POINTER      1
 
 /* Ask fontsproto to make font path element names const */
 #define FONT_PATH_ELEMENT_NAME_CONST    1
 
-#if 0 /* not yet! */
 /* Build GLAMOR */
 #define GLAMOR 1
 
@@ -529,7 +483,12 @@
 
 /* Build glamor/gbm has linear support */
 #define GLAMOR_HAS_GBM_LINEAR 1
-#endif
+
+/* GBM has modifiers support */
+/* #undef GBM_BO_WITH_MODIFIERS */
+
+/* Glamor can use eglQueryDmaBuf* functions */
+/* #undef GLAMOR_HAS_EGL_QUERY_DMABUF */
 
 #if 0
 /* byte order */
@@ -548,7 +507,19 @@
 /* Define if no local socket credentials interface exists */
 /* #undef NO_LOCAL_CLIENT_CRED */
 
+/* Have setitimer support */
+#define HAVE_SETITIMER 1
+
 /* Have posix_fallocate() */
 #define HAVE_POSIX_FALLOCATE 1
+
+/* Use input thread */
+#define INPUTTHREAD 1
+
+/* Have poll() */
+#define HAVE_POLL 1
+
+/* Have epoll_create1() */
+/* #undef HAVE_EPOLL_CREATE1 */
 
 #endif /* _DIX_CONFIG_H_ */

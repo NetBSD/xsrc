@@ -63,6 +63,7 @@ typedef XID RRMode;
 typedef XID RROutput;
 typedef XID RRCrtc;
 typedef XID RRProvider;
+typedef XID RRLease;
 
 extern int RREventBase, RRErrorBase;
 
@@ -81,6 +82,7 @@ typedef struct _rrCrtc RRCrtcRec, *RRCrtcPtr;
 typedef struct _rrOutput RROutputRec, *RROutputPtr;
 typedef struct _rrProvider RRProviderRec, *RRProviderPtr;
 typedef struct _rrMonitor RRMonitorRec, *RRMonitorPtr;
+typedef struct _rrLease RRLeaseRec, *RRLeasePtr;
 
 struct _rrMode {
     int refcnt;
@@ -130,6 +132,7 @@ struct _rrCrtc {
     struct pict_f_transform f_inverse;
 
     PixmapPtr scanout_pixmap;
+    PixmapPtr scanout_pixmap_back;
 };
 
 struct _rrOutput {
@@ -152,6 +155,7 @@ struct _rrOutput {
     int numUserModes;
     RRModePtr *userModes;
     Bool changed;
+    Bool nonDesktop;
     RRPropertyPtr properties;
     Bool pendingProperties;
     void *devPrivate;
@@ -184,6 +188,20 @@ struct _rrMonitor {
     Bool primary;
     Bool automatic;
     RRMonitorGeometryRec geometry;
+};
+
+typedef enum _rrLeaseState { RRLeaseCreating, RRLeaseRunning, RRLeaseTerminating } RRLeaseState;
+
+struct _rrLease {
+    struct xorg_list list;
+    ScreenPtr screen;
+    RRLease id;
+    RRLeaseState state;
+    void *devPrivate;
+    int numCrtcs;
+    RRCrtcPtr *crtcs;
+    int numOutputs;
+    RROutputPtr *outputs;
 };
 
 #if RANDR_12_INTERFACE
@@ -253,6 +271,15 @@ typedef Bool (*RRProviderSetOffloadSinkProcPtr)(ScreenPtr pScreen,
 typedef void (*RRProviderDestroyProcPtr)(ScreenPtr pScreen,
                                          RRProviderPtr provider);
 
+/* Additions for 1.6 */
+
+typedef int (*RRCreateLeaseProcPtr)(ScreenPtr screen,
+                                    RRLeasePtr lease,
+                                    int *fd);
+
+typedef void (*RRTerminateLeaseProcPtr)(ScreenPtr screen,
+                                        RRLeasePtr lease);
+
 /* These are for 1.0 compatibility */
 
 typedef struct _rrRefresh {
@@ -277,6 +304,19 @@ typedef Bool (*RRSetConfigProcPtr) (ScreenPtr pScreen,
 #endif
 
 typedef Bool (*RRCrtcSetScanoutPixmapProcPtr)(RRCrtcPtr crtc, PixmapPtr pixmap);
+
+typedef Bool (*RRStartFlippingPixmapTrackingProcPtr)(RRCrtcPtr, DrawablePtr,
+                                                     PixmapPtr, PixmapPtr,
+                                                     int x, int y,
+                                                     int dst_x, int dst_y,
+                                                     Rotation rotation);
+
+typedef Bool (*RREnableSharedPixmapFlippingProcPtr)(RRCrtcPtr,
+                                                    PixmapPtr front,
+                                                    PixmapPtr back);
+
+typedef void (*RRDisableSharedPixmapFlippingProcPtr)(RRCrtcPtr);
+
 
 typedef struct _rrScrPriv {
     /*
@@ -304,10 +344,18 @@ typedef struct _rrScrPriv {
     /* TODO #if RANDR_15_INTERFACE */
     RRCrtcSetScanoutPixmapProcPtr rrCrtcSetScanoutPixmap;
 
+    RRStartFlippingPixmapTrackingProcPtr rrStartFlippingPixmapTracking;
+    RREnableSharedPixmapFlippingProcPtr rrEnableSharedPixmapFlipping;
+    RRDisableSharedPixmapFlippingProcPtr rrDisableSharedPixmapFlipping;
+
     RRProviderSetOutputSourceProcPtr rrProviderSetOutputSource;
     RRProviderSetOffloadSinkProcPtr rrProviderSetOffloadSink;
     RRProviderGetPropertyProcPtr rrProviderGetProperty;
     RRProviderSetPropertyProcPtr rrProviderSetProperty;
+
+    RRCreateLeaseProcPtr rrCreateLease;
+    RRTerminateLeaseProcPtr rrTerminateLease;
+
     /*
      * Private part of the structure; not considered part of the ABI
      */
@@ -319,6 +367,7 @@ typedef struct _rrScrPriv {
     Bool configChanged;         /* configuration changed */
     Bool layoutChanged;         /* screen layout changed */
     Bool resourcesChanged;      /* screen resources change */
+    Bool leasesChanged;         /* leases change */
 
     CARD16 minWidth, minHeight;
     CARD16 maxWidth, maxHeight;
@@ -358,6 +407,7 @@ typedef struct _rrScrPriv {
     int numMonitors;
     RRMonitorPtr *monitors;
 
+    struct xorg_list leases;
 } rrScrPrivRec, *rrScrPrivPtr;
 
 extern _X_EXPORT DevPrivateKeyRec rrPrivKeyRec;
@@ -401,7 +451,7 @@ extern RESTYPE RRClientType, RREventType;     /* resource types for event masks 
 extern DevPrivateKeyRec RRClientPrivateKeyRec;
 
 #define RRClientPrivateKey (&RRClientPrivateKeyRec)
-extern _X_EXPORT RESTYPE RRCrtcType, RRModeType, RROutputType, RRProviderType;
+extern _X_EXPORT RESTYPE RRCrtcType, RRModeType, RROutputType, RRProviderType, RRLeaseType;
 
 #define VERIFY_RR_OUTPUT(id, ptr, a)\
     {\
@@ -437,6 +487,16 @@ extern _X_EXPORT RESTYPE RRCrtcType, RRModeType, RROutputType, RRProviderType;
     {\
         int rc = dixLookupResourceByType((void **)&(ptr), id,\
                                          RRProviderType, client, a);\
+        if (rc != Success) {\
+            client->errorValue = id;\
+            return rc;\
+        }\
+    }
+
+#define VERIFY_RR_LEASE(id, ptr, a)\
+    {\
+        int rc = dixLookupResourceByType((void **)&(ptr), id,\
+                                         RRLeaseType, client, a);\
         if (rc != Success) {\
             client->errorValue = id;\
             return rc;\
@@ -535,6 +595,8 @@ extern _X_EXPORT Bool RRInit(void);
 extern _X_EXPORT Bool RRScreenInit(ScreenPtr pScreen);
 
 extern _X_EXPORT RROutputPtr RRFirstOutput(ScreenPtr pScreen);
+
+extern _X_EXPORT Bool RROutputSetNonDesktop(RROutputPtr output, Bool non_desktop);
 
 extern _X_EXPORT CARD16
  RRVerticalRefresh(xRRModeInfo * mode);
@@ -711,6 +773,12 @@ extern _X_EXPORT Bool
  RRReplaceScanoutPixmap(DrawablePtr pDrawable, PixmapPtr pPixmap, Bool enable);
 
 /*
+ * Return if the screen has any scanout_pixmap's attached
+ */
+extern _X_EXPORT Bool
+ RRHasScanoutPixmap(ScreenPtr pScreen);
+
+/*
  * Crtc dispatch
  */
 
@@ -747,6 +815,28 @@ void
 /* rrdispatch.c */
 extern _X_EXPORT Bool
  RRClientKnowsRates(ClientPtr pClient);
+
+/* rrlease.c */
+void
+RRDeliverLeaseEvent(ClientPtr client, WindowPtr window);
+
+extern _X_EXPORT void
+RRLeaseTerminated(RRLeasePtr lease);
+
+extern _X_EXPORT void
+RRLeaseFree(RRLeasePtr lease);
+
+extern _X_EXPORT Bool
+RRCrtcIsLeased(RRCrtcPtr crtc);
+
+extern _X_EXPORT Bool
+RROutputIsLeased(RROutputPtr output);
+
+void
+RRTerminateLease(RRLeasePtr lease);
+
+Bool
+RRLeaseInit(void);
 
 /* rrmode.c */
 /*
@@ -894,13 +984,13 @@ extern _X_EXPORT int
 
 RRChangeOutputProperty(RROutputPtr output, Atom property, Atom type,
                        int format, int mode, unsigned long len,
-                       void *value, Bool sendevent, Bool pending);
+                       const void *value, Bool sendevent, Bool pending);
 
 extern _X_EXPORT int
 
 RRConfigureOutputProperty(RROutputPtr output, Atom property,
                           Bool pending, Bool range, Bool immutable,
-                          int num_values, INT32 *values);
+                          int num_values, const INT32 *values);
 extern _X_EXPORT int
  ProcRRChangeOutputProperty(ClientPtr client);
 
@@ -920,6 +1010,7 @@ extern _X_EXPORT int
  ProcRRDeleteOutputProperty(ClientPtr client);
 
 /* rrprovider.c */
+#define PRIME_SYNC_PROP         "PRIME Synchronization"
 extern _X_EXPORT void
 RRProviderInitErrorValue(void);
 
@@ -1036,6 +1127,12 @@ ProcRRSetMonitor(ClientPtr client);
 
 int
 ProcRRDeleteMonitor(ClientPtr client);
+
+int
+ProcRRCreateLease(ClientPtr client);
+
+int
+ProcRRFreeLease(ClientPtr client);
 
 #endif                          /* _RANDRSTR_H_ */
 

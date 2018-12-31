@@ -187,7 +187,7 @@ xf86OpenConsole()
         /* Check that a supported console driver was found */
         if (fd < 0) {
             char cons_drivers[80] = { 0, };
-            for (i = 0; i < sizeof(supported_drivers) / sizeof(char *); i++) {
+            for (i = 0; i < ARRAY_SIZE(supported_drivers); i++) {
                 if (i) {
                     strcat(cons_drivers, ", ");
                 }
@@ -264,7 +264,7 @@ xf86OpenConsole()
                             "xf86OpenConsole: VT_WAITACTIVE failed\n");
                 }
 
-                signal(SIGUSR1, xf86VTRequest);
+                OsSignal(SIGUSR1, xf86VTRequest);
 
                 vtmode.mode = VT_PROCESS;
                 vtmode.relsig = SIGUSR1;

@@ -17,13 +17,13 @@
 #define XORGSERVER 1
 
 /* Current X.Org version. */
-#define XORG_VERSION_CURRENT (((1) * 10000000) + ((18) * 100000) + ((4) * 1000) + 0)
+#define XORG_VERSION_CURRENT (((1) * 10000000) + ((20) * 100000) + ((3) * 1000) + 0)
 
 /* Name of X server. */
 #define __XSERVERNAME__ "Xorg"
 
 /* URL to go to for support. */
-/* #define __VENDORDWEBSUPPORT__ "http://wiki.x.org" */
+#define __VENDORDWEBSUPPORT__ "http://wiki.x.org"
 
 /* Built-in output drivers. */
 /* #undef DRIVERS */
@@ -35,16 +35,16 @@
 #define XF86CONFIGFILE "xorg.conf"
 
 /* Path to configuration file. */
-#define __XCONFIGFILE__ "xorg.conf"
+#define XCONFIGFILE "xorg.conf"
 
 /* Name of configuration directory. */
-#define __XCONFIGDIR__ "xorg.conf.d"
+#define XCONFIGDIR "xorg.conf.d"
 
 /* Path to loadable modules. */
 /* #define DEFAULT_MODULE_PATH "/usr/X11R7/lib/xorg/modules" */
 
 /* Path to installed libraries. */
-/* #define DEFAULT_LIBRARY_PATH "/usr/X11R7/lib" */
+/* #define DEFAULT_LIBRARY_PATH "/usr/X11R7/lib */
 
 /* Default log location */
 #define DEFAULT_LOGDIR "/var/log"
@@ -78,7 +78,9 @@
 /* #undef HAVE_WALKCONTEXT */
 
 /* Define to 1 if unsigned long is 64 bits. */
-/* #undef _XSERVER64 */
+#ifdef _LP64
+#define _XSERVER64 1
+#endif
 
 /* Building vgahw module */
 #define WITH_VGAHW 1
@@ -125,11 +127,11 @@
 /* Define to 1 if you have the <sys/mkdev.h> header file. */
 /* #undef HAVE_SYS_MKDEV_H */
 
+/* Define to 1 if you have the <sys/sysmacros.h> header file. */
+/* #undef HAVE_SYS_SYSMACROS_H */
+
 /* Path to text files containing PCI IDs */
 #define PCI_TXT_IDS_PATH ""
-
-/* Use SIGIO handlers for input device events by default */
-#define USE_SIGIO_BY_DEFAULT TRUE
 
 /* Build with libdrm support */
 #define WITH_LIBDRM 1
@@ -151,5 +153,8 @@
 
 /* Support APM/ACPI power management in the server */
 /* #undef XF86PM */
+
+/* Fallback input driver if the assigned driver fails */
+#define FALLBACK_INPUT_DRIVER ""
 
 #endif /* _XORG_CONFIG_H_ */

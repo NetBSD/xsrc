@@ -75,6 +75,7 @@ XFixesSelectionCallback(CallbackListPtr *callbacks, void *data, void *args)
     default:
         return;
     }
+    UpdateCurrentTimeIf();
     for (e = selectionEvents; e; e = e->next) {
         if (e->selection == selection->selection && (e->eventMask & eventMask)) {
             xXFixesSelectionNotifyEvent ev = {
@@ -196,7 +197,7 @@ ProcXFixesSelectSelectionInput(ClientPtr client)
                                       pWin, stuff->eventMask);
 }
 
-int
+int _X_COLD
 SProcXFixesSelectSelectionInput(ClientPtr client)
 {
     REQUEST(xXFixesSelectSelectionInputReq);
@@ -209,7 +210,7 @@ SProcXFixesSelectSelectionInput(ClientPtr client)
     return (*ProcXFixesVector[stuff->xfixesReqType]) (client);
 }
 
-void
+void _X_COLD
 SXFixesSelectionNotifyEvent(xXFixesSelectionNotifyEvent * from,
                             xXFixesSelectionNotifyEvent * to)
 {

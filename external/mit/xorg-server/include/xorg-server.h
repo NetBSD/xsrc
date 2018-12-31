@@ -25,7 +25,7 @@
 #define BIGREQS 1
 
 /* Default font path */
-/* #define COMPILEDDEFAULTFONTPATH "/usr/pkg/share/fonts/X11/misc,/usr/pkg/share/fonts/X11/TTF,/usr/pkg/share/fonts/X11/OTF,/usr/pkg/share/fonts/X11/Type1,/usr/pkg/share/fonts/X11/100dpi,/usr/pkg/share/fonts/X11/75dpi,/usr/pkg/share/fonts/X11/cyrillic,/usr/pkg/lib/X11/fonts/misc,/usr/pkg/lib/X11/fonts/TTF,/usr/pkg/lib/X11/fonts/OTF,/usr/pkg/lib/X11/fonts/Type1,/usr/pkg/lib/X11/fonts/100dpi,/usr/pkg/lib/X11/fonts/75dpi,/usr/pkg/lib/X11/fonts/cyrillic" */
+/* #define COMPILEDDEFAULTFONTPATH "/usr/X11R7/share/fonts/X11/misc,/usr/X11R7/share/fonts/X11/TTF,/usr/X11R7/share/fonts/X11/OTF,/usr/X11R7/share/fonts/X11/Type1,/usr/X11R7/share/fonts/X11/100dpi,/usr/X11R7/share/fonts/X11/75dpi,/usr/X11R7/share/fonts/X11/cyrillic,/usr/X11R7/lib/X11/fonts/misc,/usr/X11R7/lib/X11/fonts/TTF,/usr/X11R7/lib/X11/fonts/OTF,/usr/X11R7/lib/X11/fonts/Type1,/usr/X11R7/lib/X11/fonts/100dpi,/usr/X11R7/lib/X11/fonts/75dpi,/usr/X11R7/lib/X11/fonts/cyrillic" */
 
 /* Support Composite Extension */
 #define COMPOSITE 1
@@ -45,11 +45,8 @@
 /* Support SHM */
 #define HAS_SHM 1
 
-/* Define to 1 if you have the `ffs' function. */
-#define HAVE_FFS 1
-
 /* Define to 1 if you have the `reallocarray' function. */
-/* #undef HAVE_REALLOCARRAY */
+#define HAVE_REALLOCARRAY 1
 
 /* Define to 1 if you have the `strcasecmp' function. */
 #define HAVE_STRCASECMP 1
@@ -70,9 +67,7 @@
 #define HAVE_STRNDUP 1
 
 /* Support IPv6 for TCP connections */
-#ifndef __NetBSD__	/* Defined by the build */
-# define IPv6 1
-#endif
+#define IPv6 1
 
 /* Support MIT-SHM Extension */
 #define MITSHM 1
@@ -80,10 +75,8 @@
 /* Internal define for Xinerama */
 #define PANORAMIX 1
 
-#if 0
 /* Support Present extension */
 #define PRESENT 1
-#endif
 
 /* Support RANDR extension */
 #define RANDR 1
@@ -106,14 +99,8 @@
 /* Support TCP socket connections */
 #define TCPCONN 1
 
-/* Support tslib touchscreen abstraction library */
-/* #undef TSLIB */
-
 /* Support UNIX socket connections */
 #define UNIXCONN 1
-
-/* unaligned word accesses behave as expected */
-/* #undef WORKING_UNALIGNED_INT */
 
 /* Support XCMisc extension */
 #define XCMISC 1
@@ -124,7 +111,6 @@
 /* Build XFree86 BigFont extension */
 /* #undef XF86BIGFONT */
 
-#if 0
 /* Support XFree86 Video Mode extension */
 #define XF86VIDMODE 1
 
@@ -136,13 +122,9 @@
 
 /* Support X Input extension */
 #define XINPUT 1
-#endif
 
 /* XKB default rules */
 #define XKB_DFLT_RULES "base"
-
-/* Support loadable input and output drivers */
-/* #undef XLOADABLE */
 
 /* Build DRI extension */
 #define XF86DRI 1
@@ -153,11 +135,8 @@
 /* Build Xorg server */
 #define XORGSERVER 1
 
-/* Vendor release */
-/* #undef XORG_RELEASE */
-
 /* Current Xorg version */
-#define XORG_VERSION_CURRENT (((1) * 10000000) + ((18) * 100000) + ((4) * 1000) + 0)
+#define XORG_VERSION_CURRENT (((1) * 10000000) + ((20) * 100000) + ((3) * 1000) + 0)
 
 /* Build Xv Extension */
 #define XvExtension 1
@@ -190,7 +169,7 @@
 #define __VENDORDWEBSUPPORT__ "http://wiki.x.org"
 
 /* Location of configuration file */
-#define __XCONFIGFILE__ "xorg.conf"
+#define XCONFIGFILE "xorg.conf"
 
 /* Name of X server */
 #define __XSERVERNAME__ "Xorg"
@@ -213,13 +192,11 @@
 /* System has wscons console */
 #define WSCONS_SUPPORT 1
 
-#if 0
 /* Loadable XFree86 server awesomeness */
 #define XFree86LOADER
 
 /* Use libpciaccess */
 #define XSERVER_LIBPCIACCESS 1
-#endif
 
 /* X Access Control Extension */
 #define XACE 1
