@@ -1,6 +1,8 @@
 #ifndef __NV_PROTO_H__
 #define __NV_PROTO_H__
 
+#include <Xdefs.h>
+
 /* in drmmode_display.c */
 Bool drmmode_pre_init(ScrnInfoPtr pScrn, int fd, int cpp);
 void drmmode_adjust_frame(ScrnInfoPtr pScrn, int x, int y);

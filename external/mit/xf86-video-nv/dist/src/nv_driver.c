@@ -2655,7 +2655,9 @@ NVScreenInit(SCREEN_INIT_ARGS_DECL)
                case 32:	refreshArea = NVRefreshArea32;	break;
 	   }
            if(!pNv->RandRRotation) {
+#if 0
                xf86DisableRandR();
+#endif
                xf86DrvMsg(pScrn->scrnIndex, X_INFO,
                           "Driver rotation enabled, RandR disabled\n");
            }

@@ -16754,7 +16754,6 @@ static int sna_create_gc(GCPtr gc)
 
 	gc->freeCompClip = 0;
 	gc->pCompositeClip = 0;
-	gc->pRotatedPixmap = 0;
 
 	fb_gc(gc)->bpp = bits_per_pixel(gc->depth);
 
@@ -17371,7 +17370,8 @@ static void sna_accel_post_damage(struct sna *sna)
 
 	xorg_list_for_each_entry(dirty, &screen->pixmap_dirty_list, ent) {
 		RegionRec region, *damage;
-		PixmapPtr src, dst;
+		DrawablePtr src;
+		PixmapPtr dst;
 		const BoxRec *box;
 		int16_t dx, dy;
 		int n;
@@ -17822,7 +17822,11 @@ bool sna_accel_init(ScreenPtr screen, struct sna *sna)
 	list_init(&sna->flush_pixmaps);
 	list_init(&sna->active_pixmaps);
 
+#if HAVE_NOTIFY_FD
+	SetNotifyFd(sna->kgem.fd, NULL, X_NOTIFY_NONE, NULL);
+#else
 	AddGeneralSocket(sna->kgem.fd);
+#endif
 
 #ifdef DEBUG_MEMORY
 	sna->timer_expire[DEBUG_MEMORY_TIMER] = GetTimeInMillis()+ 10 * 1000;
@@ -17998,7 +18002,11 @@ void sna_accel_close(struct sna *sna)
 	sna_pixmap_expire(sna);
 
 	DeleteCallback(&FlushCallback, sna_accel_flush_callback, sna);
+#if HAVE_NOTIFY_FD
+	RemoveNotifyFd(sna->kgem.fd);
+#else
 	RemoveGeneralSocket(sna->kgem.fd);
+#endif
 
 	kgem_cleanup_cache(&sna->kgem);
 }

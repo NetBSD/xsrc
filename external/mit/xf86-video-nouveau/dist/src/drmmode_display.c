@@ -34,6 +34,7 @@
 #include "xorg-config.h"
 #include "xorgVersion.h"
 #include "Xdefs.h"
+#include "X11/Xdefs.h"
 
 #include "nv_include.h"
 #include "xf86drmMode.h"

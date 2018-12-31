@@ -1210,7 +1210,9 @@ RivaScreenInit(SCREEN_INIT_ARGS_DECL)
                case 16:	refreshArea = RivaRefreshArea16;	break;
                case 32:	refreshArea = RivaRefreshArea32;	break;
 	   }
+#if 0
            xf86DisableRandR();
+#endif
            xf86DrvMsg(pScrn->scrnIndex, X_INFO,
                       "Driver rotation enabled, RandR disabled\n");
 	}

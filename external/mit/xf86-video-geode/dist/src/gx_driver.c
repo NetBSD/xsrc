@@ -1428,7 +1428,9 @@ GXScreenInit(SCREEN_INIT_ARGS_DECL)
 
     /* Set up RandR */
 
+#if 0
     xf86DisableRandR();         /* We provide our own RandR goodness */
+#endif
 
     /* Try to set up the shadow FB for rotation */
 

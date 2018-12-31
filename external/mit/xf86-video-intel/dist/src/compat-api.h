@@ -30,6 +30,11 @@
 
 #include <xorg-server.h>
 #include <xorgVersion.h>
+#include <xf86Module.h>
+
+#if ABI_VIDEODRV_VERSION >= SET_ABI_VERSION(22,0)
+#define HAVE_NOTIFY_FD	1
+#endif
 
 #include <picturestr.h>
 #ifndef GLYPH_HAS_GLYPH_PICTURE_ACCESSOR
@@ -55,8 +60,13 @@
 #define BLOCKHANDLER_ARGS_DECL int arg, pointer blockData, pointer timeout, pointer read_mask
 #define BLOCKHANDLER_ARGS arg, blockData, timeout, read_mask
 
+#if HAVE_NOTIFY_FD
+#define WAKEUPHANDLER_ARGS_DECL int arg, pointer wakeupData, unsigned long result
+#define WAKEUPHANDLER_ARGS arg, wakeupData, result
+#else
 #define WAKEUPHANDLER_ARGS_DECL int arg, pointer wakeupData, unsigned long result, pointer read_mask
 #define WAKEUPHANDLER_ARGS arg, wakeupData, result, read_mask
+#endif
 
 #define CLOSE_SCREEN_ARGS_DECL int scrnIndex, ScreenPtr screen
 #define CLOSE_SCREEN_ARGS scrnIndex, screen
@@ -83,8 +93,13 @@
 
 #define SCREEN_INIT_ARGS_DECL ScreenPtr screen, int argc, char **argv
 
+#if HAVE_NOTIFY_FD
+#define BLOCKHANDLER_ARGS_DECL ScreenPtr arg, pointer timeout
+#define BLOCKHANDLER_ARGS arg, timeout
+#else
 #define BLOCKHANDLER_ARGS_DECL ScreenPtr arg, pointer timeout, pointer read_mask
 #define BLOCKHANDLER_ARGS arg, timeout, read_mask
+#endif
 
 #define WAKEUPHANDLER_ARGS_DECL ScreenPtr arg, unsigned long result, pointer read_mask
 #define WAKEUPHANDLER_ARGS arg, result, read_mask

@@ -8980,7 +8980,9 @@ SISScreenInit(SCREEN_INIT_ARGS_DECL)
 	     case 32: refreshArea = SISRefreshArea32; break;
 	  }
 #if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,3,0,0,0)
+#if 0
 	  xf86DisableRandR();
+#endif
 	  xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 		"Driver rotation enabled, disabling RandR\n");
 #endif
@@ -8993,7 +8995,9 @@ SISScreenInit(SCREEN_INIT_ARGS_DECL)
 	     pScrn->PointerMoved = SISPointerMovedReflect;
 	     refreshArea = SISRefreshAreaReflect;
 #if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,3,0,0,0)
+#if 0
 	     xf86DisableRandR();
+#endif
 	     xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 		  "Driver reflection enabled, disabling RandR\n");
 #endif
@@ -9105,7 +9109,9 @@ SISScreenInit(SCREEN_INIT_ARGS_DECL)
        pSiS->ShadowFB = FALSE;
 #if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,3,0,0,0)
        if(pSiS->CRT1XOffs || pSiS->CRT1YOffs || pSiS->CRT2XOffs || pSiS->CRT2YOffs) {
+#if 0
 	  xf86DisableRandR();
+#endif
 	  xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 		"MergedFB: CRT2Position offset used, disabling RandR\n");
        }

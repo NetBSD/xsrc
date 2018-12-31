@@ -1044,9 +1044,9 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 		    "disabling DGA\n");
 #endif
 	if (fPtr->rotate) {
-#if 0
 		xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Enabling Driver Rotation, "
 		    "disabling RandR\n");
+#if 0
 		xf86DisableRandR();
 #endif
 		if (pScrn->bitsPerPixel == 24)

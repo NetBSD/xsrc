@@ -92,7 +92,11 @@ void _sna_acpi_wakeup(struct sna *sna)
 		DBG(("%s: error [%d], detaching from acpid\n", __FUNCTION__, n));
 
 		/* XXX reattach later? */
+#if HAVE_NOTIFY_FD
+		RemoveNotifyFd(sna->acpi.fd);
+#else
 		RemoveGeneralSocket(sna->acpi.fd);
+#endif
 		sna_acpi_fini(sna);
 		return;
 	}
@@ -200,7 +204,11 @@ void sna_acpi_init(struct sna *sna)
 
 	DBG(("%s: attaching to acpid\n", __FUNCTION__));
 
+#if HAVE_NOTIFY_FD
+	SetNotifyFd(sna->acpi.fd, NULL, X_NOTIFY_NONE, NULL);
+#else
 	AddGeneralSocket(sna->acpi.fd);
+#endif
 	sna->acpi.remain = sizeof(sna->acpi.event) - 1;
 	sna->acpi.offset = 0;
 
