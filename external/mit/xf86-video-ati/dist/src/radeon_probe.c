@@ -62,6 +62,7 @@
 #include "radeon_chipinfo_gen.h"
 
 #ifdef XSERVER_LIBPCIACCESS
+#include "xf86Pci.h"
 #include "radeon_pci_device_match_gen.h"
 
 static Bool radeon_ums_supported(ScrnInfoPtr pScrn, struct pci_device *pci_dev)

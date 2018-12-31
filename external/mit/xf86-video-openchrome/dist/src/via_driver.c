@@ -1643,6 +1643,12 @@ viaShadowWindow(ScreenPtr pScreen, CARD32 row, CARD32 offset, int mode,
     return ((uint8_t *) drm_bo_map(pScrn, pVia->drmmode.front_bo) + row * stride + offset);
 }
 
+static void
+viaUpdatePacked(ScreenPtr pScreen, shadowBufPtr pBuf)
+{
+	shadowUpdatePacked(pScreen, pBuf);
+}
+
 static Bool
 VIACreateScreenResources(ScreenPtr pScreen)
 {
@@ -1675,7 +1681,7 @@ VIACreateScreenResources(ScreenPtr pScreen)
         return FALSE;
 
     if (pVia->shadowFB) {
-        if (!shadowAdd(pScreen, rootPixmap, shadowUpdatePackedWeak(),
+        if (!shadowAdd(pScreen, rootPixmap, viaUpdatePacked,
                         viaShadowWindow, 0, NULL))
             return FALSE;
     }

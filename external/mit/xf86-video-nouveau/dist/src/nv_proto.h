@@ -1,6 +1,13 @@
 #ifndef __NV_PROTO_H__
 #define __NV_PROTO_H__
 
+/* not defined in Xdefs.h for xorg-server 1.20. */
+#if ABI_VIDEODRV_VERSION >= SET_ABI_VERSION(23, 0)
+typedef void * pointer;
+#undef _XTYPEDEF_POINTER
+#define _XTYPEDEF_POINTER
+#endif
+
 #include <Xdefs.h>
 
 /* in drmmode_display.c */

@@ -131,6 +131,7 @@
 /* Define for large files, on AIX-style hosts. */
 /* #undef _LARGE_FILES */
 
+#if 0
 /* Define to 16-bit byteswap macro */
 #define bswap_16 bswap16
 
@@ -139,3 +140,4 @@
 
 /* Define to 64-bit byteswap macro */
 #define bswap_64 bswap64
+#endif

@@ -1203,18 +1203,6 @@ S3VPreInit(ScrnInfoPtr pScrn, int flags)
    vga256InfoRec.directMode = XF86DGADirectPresent;
 #endif
 
-    /*
-     * xf86ValidateModes will check that the mode HTotal and VTotal values
-     * don't exceed the chipset's limit if pScrn->maxHValue and
-     * pScrn->maxVValue are set.  
-     */
-
-    /* todo -  The virge limit is 2048 vertical & horizontal */
-    /* pixels, not clock register settings. */
-			 	/* true for all ViRGE? */
-  pScrn->maxHValue = 2048;
-  pScrn->maxVValue = 2048;
-
     				/* Lower depths default to config file */
   pScrn->virtualX = pScrn->display->virtualX;
 				/* Adjust the virtualX to meet ViRGE hardware */

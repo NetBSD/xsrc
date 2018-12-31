@@ -1037,10 +1037,6 @@ TsengPreInit(ScrnInfoPtr pScrn, int flags)
     else
 	pTseng->Bytesperpixel = 1;  /* this is fake for < 8bpp, but simplifies other code */
 
-    /* hardware limits */
-    pScrn->maxHValue = Tseng_HMAX;
-    pScrn->maxVValue = Tseng_VMAX;
-
     /*
      * This must happen after pScrn->display has been set because
      * xf86SetWeight references it.
@@ -1133,8 +1129,8 @@ TsengPreInit(ScrnInfoPtr pScrn, int flags)
     /* Select valid modes from those available */
     i = xf86ValidateModes(pScrn, pScrn->monitor->Modes,
 	pScrn->display->modes, &pTseng->clockRange,
-	NULL, 32, pScrn->maxHValue, 8*pTseng->Bytesperpixel, /* H limits */
-	0, pScrn->maxVValue,	       /* V limits */
+	NULL, 32, /* XXXMRG pScrn->maxHValue*/ 2048, 8*pTseng->Bytesperpixel, /* H limits */
+	0, /* XXXMRG pScrn->maxVValue*/ 2048,	       /* V limits */
 	pScrn->display->virtualX,
 	pScrn->display->virtualY,
 	pTseng->FbMapSize,

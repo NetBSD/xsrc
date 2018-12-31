@@ -479,6 +479,12 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
     return TRUE;
 }
 
+static void
+CG14UpdatePacked(ScreenPtr pScreen, shadowBufPtr pBuf)
+{
+	shadowUpdatePacked(pScreen, pBuf);
+}
+
 static Bool
 CG14CreateScreenResources(ScreenPtr pScreen)
 {
@@ -496,7 +502,7 @@ CG14CreateScreenResources(ScreenPtr pScreen)
 
     pPixmap = pScreen->GetScreenPixmap(pScreen);
 
-    if (!shadowAdd(pScreen, pPixmap, shadowUpdatePackedWeak(),
+    if (!shadowAdd(pScreen, pPixmap, CG14UpdatePacked,
 	CG14WindowLinear, 0, NULL)) {
 	return FALSE;
     }

@@ -1529,9 +1529,13 @@ void drmmode_init(ScrnInfoPtr pScrn, drmmode_ptr drmmode)
 
 	if (pRADEONEnt->fd_wakeup_registered != serverGeneration &&
 	    info->dri->pKernelDRMVersion->version_minor >= 4) {
+#if HAVE_NOTIFY_FD
+                SetNotifyFd(drmmode->fd, drmmode_notify_fd, X_NOTIFY_READ, drmmode);
+#else
 		AddGeneralSocket(drmmode->fd);
 		RegisterBlockAndWakeupHandlers((BlockHandlerProcPtr)NoopDDA,
 				drm_wakeup_handler, drmmode);
+#endif
 		pRADEONEnt->fd_wakeup_registered = serverGeneration;
 	}
 }

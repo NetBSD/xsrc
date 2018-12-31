@@ -82,7 +82,7 @@
 #define BLOCKHANDLER_ARGS_DECL ScreenPtr arg, pointer pTimeout
 #define BLOCKHANDLER_ARGS arg, pTimeout
 
-#define WAKEUPHANDLER_ARGS_DECL ScreenPtr arg, unsigned long result
+#define WAKEUPHANDLER_ARGS_DECL ScreenPtr arg, int result
 #define WAKEUPHANDLER_ARGS arg, result
 #else
 #define BLOCKHANDLER_ARGS_DECL ScreenPtr arg, pointer pTimeout, pointer pReadmask

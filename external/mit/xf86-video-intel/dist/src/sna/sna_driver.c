@@ -766,17 +766,13 @@ sna_wakeup_handler(WAKEUPHANDLER_ARGS_DECL)
 	if ((int)result < 0)
 		return;
 
-	sna_acpi_wakeup(sna, read_mask);
+	sna_acpi_wakeup(sna);
 
 	sna->WakeupHandler(WAKEUPHANDLER_ARGS);
 
 	sna_accel_wakeup_handler(sna);
 
-	if (FD_ISSET(sna->kgem.fd, (fd_set*)read_mask)) {
-		sna_mode_wakeup(sna);
-		/* Clear the flag so that subsequent ZaphodHeads don't block  */
-		FD_CLR(sna->kgem.fd, (fd_set*)read_mask);
-	}
+	sna_mode_wakeup(sna);
 }
 
 #if HAVE_UDEV

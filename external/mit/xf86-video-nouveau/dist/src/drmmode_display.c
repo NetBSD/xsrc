@@ -697,7 +697,7 @@ drmmode_set_scanout_pixmap(xf86CrtcPtr crtc, PixmapPtr ppix)
 	int c, total_width = 0, max_height = 0, this_x = 0;
 	if (!ppix) {
 		if (crtc->randr_crtc->scanout_pixmap) {
-			PixmapStopDirtyTracking(crtc->randr_crtc->scanout_pixmap, screenpix);
+			PixmapStopDirtyTracking((DrawablePtr)crtc->randr_crtc->scanout_pixmap, screenpix);
 			if (drmmode && drmmode->fb_id) {
 				drmModeRmFB(drmmode->fd, drmmode->fb_id);
 				drmmode->fb_id = 0;
@@ -744,7 +744,7 @@ drmmode_set_scanout_pixmap(xf86CrtcPtr crtc, PixmapPtr ppix)
 	}
 	drmmode_crtc->scanout_pixmap_x = this_x;
 #ifdef HAS_DIRTYTRACKING_ROTATION
-	PixmapStartDirtyTracking(ppix, screenpix, 0, 0, this_x, 0, RR_Rotate_0);
+	PixmapStartDirtyTracking((DrawablePtr)ppix, screenpix, 0, 0, this_x, 0, RR_Rotate_0);
 #elif defined(HAS_DIRTYTRACKING2)
 	PixmapStartDirtyTracking2(ppix, screenpix, 0, 0, this_x, 0);
 #else
@@ -1548,7 +1548,6 @@ drmmode_handle_uevents(ScrnInfoPtr scrn)
 	RRGetInfo(xf86ScrnToScreen(scrn), TRUE);
 	udev_device_unref(dev);
 }
-#endif
 
 #if HAVE_NOTIFY_FD
 static void
@@ -1557,6 +1556,7 @@ drmmode_udev_notify(int fd, int notify, void *data)
 	ScrnInfoPtr scrn = data;
 	drmmode_handle_uevents(scrn);
 }
+#endif
 #endif
 
 static bool has_randr(void)

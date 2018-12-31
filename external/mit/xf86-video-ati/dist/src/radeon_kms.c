@@ -154,6 +154,12 @@ radeonShadowWindow(ScreenPtr screen, CARD32 row, CARD32 offset, int mode,
     return ((uint8_t *)info->front_bo->ptr + row * stride + offset);
 }
 
+static void
+radeonUpdatePacked(ScreenPtr pScreen, shadowBufPtr pBuf)
+{
+	shadowUpdatePacked(pScreen, pBuf);
+}
+
 static Bool RADEONCreateScreenResources_KMS(ScreenPtr pScreen)
 {
     ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
@@ -174,7 +180,7 @@ static Bool RADEONCreateScreenResources_KMS(ScreenPtr pScreen)
     if (info->r600_shadow_fb) {
 	pixmap = pScreen->GetScreenPixmap(pScreen);
 
-	if (!shadowAdd(pScreen, pixmap, shadowUpdatePackedWeak(),
+	if (!shadowAdd(pScreen, pixmap, radeonUpdatePacked,
 		       radeonShadowWindow, 0, NULL))
 	    return FALSE;
     }

@@ -467,7 +467,7 @@
 #define SHMDIR "/var/shm"
 
 /* Don't let Xdefs.h define 'pointer' */
-#define _XTYPEDEF_POINTER       1
+#define _XTYPEDEF_POINTER
 
 /* Don't let XIproto define 'Pointer' */
 #define _XITYPEDEF_POINTER      1
@@ -478,8 +478,10 @@
 /* Build GLAMOR */
 #define GLAMOR 1
 
+#if 0
 /* Build glamor's GBM-based EGL support */
 #define GLAMOR_HAS_GBM 1
+#endif
 
 /* Build glamor/gbm has linear support */
 #define GLAMOR_HAS_GBM_LINEAR 1

@@ -1189,10 +1189,9 @@ char *sna_cpu_features_to_string(unsigned features, char *line);
 int sna_acpi_open(void);
 void sna_acpi_init(struct sna *sna);
 void _sna_acpi_wakeup(struct sna *sna);
-static inline void sna_acpi_wakeup(struct sna *sna, void *read_mask)
+static inline void sna_acpi_wakeup(struct sna *sna)
 {
-	if (sna->acpi.fd >= 0 && FD_ISSET(sna->acpi.fd, (fd_set*)read_mask))
-		_sna_acpi_wakeup(sna);
+	_sna_acpi_wakeup(sna);
 }
 void sna_acpi_fini(struct sna *sna);
 
