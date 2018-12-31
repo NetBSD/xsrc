@@ -454,6 +454,20 @@ ProcVidModeAddModeLine(ClientPtr client)
     DEBUG_P("XF86VidModeAddModeline");
 
     ver = ClientMajorVersion(client);
+
+    if (ver < 2) {
+        REQUEST_AT_LEAST_SIZE(xXF86OldVidModeAddModeLineReq);
+        len =
+            client->req_len -
+            bytes_to_int32(sizeof(xXF86OldVidModeAddModeLineReq));
+    }
+    else {
+        REQUEST_AT_LEAST_SIZE(xXF86VidModeAddModeLineReq);
+        len =
+            client->req_len -
+            bytes_to_int32(sizeof(xXF86VidModeAddModeLineReq));
+    }
+
     if (ver < 2) {
         /* convert from old format */
         stuff = &newstuff;
@@ -501,18 +515,6 @@ ProcVidModeAddModeLine(ClientPtr client)
            stuff->after_vsyncend, stuff->after_vtotal,
            (unsigned long) stuff->after_flags);
 
-    if (ver < 2) {
-        REQUEST_AT_LEAST_SIZE(xXF86OldVidModeAddModeLineReq);
-        len =
-            client->req_len -
-            bytes_to_int32(sizeof(xXF86OldVidModeAddModeLineReq));
-    }
-    else {
-        REQUEST_AT_LEAST_SIZE(xXF86VidModeAddModeLineReq);
-        len =
-            client->req_len -
-            bytes_to_int32(sizeof(xXF86VidModeAddModeLineReq));
-    }
     if (len != stuff->privsize)
         return BadLength;
 
@@ -622,6 +624,20 @@ ProcVidModeDeleteModeLine(ClientPtr client)
     DEBUG_P("XF86VidModeDeleteModeline");
 
     ver = ClientMajorVersion(client);
+
+    if (ver < 2) {
+        REQUEST_AT_LEAST_SIZE(xXF86OldVidModeDeleteModeLineReq);
+        len =
+            client->req_len -
+            bytes_to_int32(sizeof(xXF86OldVidModeDeleteModeLineReq));
+    }
+    else {
+        REQUEST_AT_LEAST_SIZE(xXF86VidModeDeleteModeLineReq);
+        len =
+            client->req_len -
+            bytes_to_int32(sizeof(xXF86VidModeDeleteModeLineReq));
+    }
+
     if (ver < 2) {
         /* convert from old format */
         stuff = &newstuff;
@@ -649,18 +665,6 @@ ProcVidModeDeleteModeLine(ClientPtr client)
            stuff->vdisplay, stuff->vsyncstart, stuff->vsyncend, stuff->vtotal,
            (unsigned long) stuff->flags);
 
-    if (ver < 2) {
-        REQUEST_AT_LEAST_SIZE(xXF86OldVidModeDeleteModeLineReq);
-        len =
-            client->req_len -
-            bytes_to_int32(sizeof(xXF86OldVidModeDeleteModeLineReq));
-    }
-    else {
-        REQUEST_AT_LEAST_SIZE(xXF86VidModeDeleteModeLineReq);
-        len =
-            client->req_len -
-            bytes_to_int32(sizeof(xXF86VidModeDeleteModeLineReq));
-    }
     if (len != stuff->privsize) {
         DebugF("req_len = %ld, sizeof(Req) = %d, privsize = %ld, "
                "len = %d, length = %d\n",
@@ -744,6 +748,20 @@ ProcVidModeModModeLine(ClientPtr client)
     DEBUG_P("XF86VidModeModModeline");
 
     ver = ClientMajorVersion(client);
+
+    if (ver < 2) {
+        REQUEST_AT_LEAST_SIZE(xXF86OldVidModeModModeLineReq);
+        len =
+            client->req_len -
+            bytes_to_int32(sizeof(xXF86OldVidModeModModeLineReq));
+    }
+    else {
+        REQUEST_AT_LEAST_SIZE(xXF86VidModeModModeLineReq);
+        len =
+            client->req_len -
+            bytes_to_int32(sizeof(xXF86VidModeModModeLineReq));
+    }
+
     if (ver < 2) {
         /* convert from old format */
         stuff = &newstuff;
@@ -768,18 +786,6 @@ ProcVidModeModModeLine(ClientPtr client)
            stuff->vdisplay, stuff->vsyncstart, stuff->vsyncend,
            stuff->vtotal, (unsigned long) stuff->flags);
 
-    if (ver < 2) {
-        REQUEST_AT_LEAST_SIZE(xXF86OldVidModeModModeLineReq);
-        len =
-            client->req_len -
-            bytes_to_int32(sizeof(xXF86OldVidModeModModeLineReq));
-    }
-    else {
-        REQUEST_AT_LEAST_SIZE(xXF86VidModeModModeLineReq);
-        len =
-            client->req_len -
-            bytes_to_int32(sizeof(xXF86VidModeModModeLineReq));
-    }
     if (len != stuff->privsize)
         return BadLength;
 
@@ -877,6 +883,19 @@ ProcVidModeValidateModeLine(ClientPtr client)
     DEBUG_P("XF86VidModeValidateModeline");
 
     ver = ClientMajorVersion(client);
+
+    if (ver < 2) {
+        REQUEST_AT_LEAST_SIZE(xXF86OldVidModeValidateModeLineReq);
+        len = client->req_len -
+            bytes_to_int32(sizeof(xXF86OldVidModeValidateModeLineReq));
+    }
+    else {
+        REQUEST_AT_LEAST_SIZE(xXF86VidModeValidateModeLineReq);
+        len =
+            client->req_len -
+            bytes_to_int32(sizeof(xXF86VidModeValidateModeLineReq));
+    }
+
     if (ver < 2) {
         /* convert from old format */
         stuff = &newstuff;
@@ -905,17 +924,6 @@ ProcVidModeValidateModeLine(ClientPtr client)
            stuff->vdisplay, stuff->vsyncstart, stuff->vsyncend, stuff->vtotal,
            (unsigned long) stuff->flags);
 
-    if (ver < 2) {
-        REQUEST_AT_LEAST_SIZE(xXF86OldVidModeValidateModeLineReq);
-        len = client->req_len -
-            bytes_to_int32(sizeof(xXF86OldVidModeValidateModeLineReq));
-    }
-    else {
-        REQUEST_AT_LEAST_SIZE(xXF86VidModeValidateModeLineReq);
-        len =
-            client->req_len -
-            bytes_to_int32(sizeof(xXF86VidModeValidateModeLineReq));
-    }
     if (len != stuff->privsize)
         return BadLength;
 
@@ -1027,6 +1035,20 @@ ProcVidModeSwitchToMode(ClientPtr client)
     DEBUG_P("XF86VidModeSwitchToMode");
 
     ver = ClientMajorVersion(client);
+
+    if (ver < 2) {
+        REQUEST_AT_LEAST_SIZE(xXF86OldVidModeSwitchToModeReq);
+        len =
+            client->req_len -
+            bytes_to_int32(sizeof(xXF86OldVidModeSwitchToModeReq));
+    }
+    else {
+        REQUEST_AT_LEAST_SIZE(xXF86VidModeSwitchToModeReq);
+        len =
+            client->req_len -
+            bytes_to_int32(sizeof(xXF86VidModeSwitchToModeReq));
+    }
+
     if (ver < 2) {
         /* convert from old format */
         stuff = &newstuff;
@@ -1055,18 +1077,6 @@ ProcVidModeSwitchToMode(ClientPtr client)
            stuff->vdisplay, stuff->vsyncstart, stuff->vsyncend, stuff->vtotal,
            (unsigned long) stuff->flags);
 
-    if (ver < 2) {
-        REQUEST_AT_LEAST_SIZE(xXF86OldVidModeSwitchToModeReq);
-        len =
-            client->req_len -
-            bytes_to_int32(sizeof(xXF86OldVidModeSwitchToModeReq));
-    }
-    else {
-        REQUEST_AT_LEAST_SIZE(xXF86VidModeSwitchToModeReq);
-        len =
-            client->req_len -
-            bytes_to_int32(sizeof(xXF86VidModeSwitchToModeReq));
-    }
     if (len != stuff->privsize)
         return BadLength;
 
@@ -1364,7 +1374,7 @@ ProcVidModeGetDotClocks(ClientPtr client)
     WriteToClient(client, sizeof(xXF86VidModeGetDotClocksReply), &rep);
     if (!ClockProg) {
         for (n = 0; n < numClocks; n++) {
-            dotclock = *Clocks++;
+            dotclock = Clocks[n];
             if (client->swapped) {
                 WriteSwappedDataToClient(client, 4, (char *) &dotclock);
             }
@@ -1457,6 +1467,7 @@ ProcVidModeSetGammaRamp(ClientPtr client)
     VidModePtr pVidMode;
 
     REQUEST(xXF86VidModeSetGammaRampReq);
+    REQUEST_AT_LEAST_SIZE(xXF86VidModeSetGammaRampReq);
 
     if (stuff->screen >= screenInfo.numScreens)
         return BadValue;
@@ -1692,7 +1703,7 @@ ProcVidModeDispatch(ClientPtr client)
     }
 }
 
-static int
+static int _X_COLD
 SProcVidModeQueryVersion(ClientPtr client)
 {
     REQUEST(xXF86VidModeQueryVersionReq);
@@ -1700,7 +1711,7 @@ SProcVidModeQueryVersion(ClientPtr client)
     return ProcVidModeQueryVersion(client);
 }
 
-static int
+static int _X_COLD
 SProcVidModeGetModeLine(ClientPtr client)
 {
     REQUEST(xXF86VidModeGetModeLineReq);
@@ -1710,7 +1721,7 @@ SProcVidModeGetModeLine(ClientPtr client)
     return ProcVidModeGetModeLine(client);
 }
 
-static int
+static int _X_COLD
 SProcVidModeGetAllModeLines(ClientPtr client)
 {
     REQUEST(xXF86VidModeGetAllModeLinesReq);
@@ -1720,7 +1731,7 @@ SProcVidModeGetAllModeLines(ClientPtr client)
     return ProcVidModeGetAllModeLines(client);
 }
 
-static int
+static int _X_COLD
 SProcVidModeAddModeLine(ClientPtr client)
 {
     xXF86OldVidModeAddModeLineReq *oldstuff =
@@ -1765,7 +1776,7 @@ SProcVidModeAddModeLine(ClientPtr client)
     return ProcVidModeAddModeLine(client);
 }
 
-static int
+static int _X_COLD
 SProcVidModeDeleteModeLine(ClientPtr client)
 {
     xXF86OldVidModeDeleteModeLineReq *oldstuff =
@@ -1810,7 +1821,7 @@ SProcVidModeDeleteModeLine(ClientPtr client)
     return ProcVidModeDeleteModeLine(client);
 }
 
-static int
+static int _X_COLD
 SProcVidModeModModeLine(ClientPtr client)
 {
     xXF86OldVidModeModModeLineReq *oldstuff =
@@ -1855,7 +1866,7 @@ SProcVidModeModModeLine(ClientPtr client)
     return ProcVidModeModModeLine(client);
 }
 
-static int
+static int _X_COLD
 SProcVidModeValidateModeLine(ClientPtr client)
 {
     xXF86OldVidModeValidateModeLineReq *oldstuff =
@@ -1900,7 +1911,7 @@ SProcVidModeValidateModeLine(ClientPtr client)
     return ProcVidModeValidateModeLine(client);
 }
 
-static int
+static int _X_COLD
 SProcVidModeSwitchMode(ClientPtr client)
 {
     REQUEST(xXF86VidModeSwitchModeReq);
@@ -1911,7 +1922,7 @@ SProcVidModeSwitchMode(ClientPtr client)
     return ProcVidModeSwitchMode(client);
 }
 
-static int
+static int _X_COLD
 SProcVidModeSwitchToMode(ClientPtr client)
 {
     REQUEST(xXF86VidModeSwitchToModeReq);
@@ -1921,7 +1932,7 @@ SProcVidModeSwitchToMode(ClientPtr client)
     return ProcVidModeSwitchToMode(client);
 }
 
-static int
+static int _X_COLD
 SProcVidModeLockModeSwitch(ClientPtr client)
 {
     REQUEST(xXF86VidModeLockModeSwitchReq);
@@ -1932,7 +1943,7 @@ SProcVidModeLockModeSwitch(ClientPtr client)
     return ProcVidModeLockModeSwitch(client);
 }
 
-static int
+static int _X_COLD
 SProcVidModeGetMonitor(ClientPtr client)
 {
     REQUEST(xXF86VidModeGetMonitorReq);
@@ -1942,7 +1953,7 @@ SProcVidModeGetMonitor(ClientPtr client)
     return ProcVidModeGetMonitor(client);
 }
 
-static int
+static int _X_COLD
 SProcVidModeGetViewPort(ClientPtr client)
 {
     REQUEST(xXF86VidModeGetViewPortReq);
@@ -1952,7 +1963,7 @@ SProcVidModeGetViewPort(ClientPtr client)
     return ProcVidModeGetViewPort(client);
 }
 
-static int
+static int _X_COLD
 SProcVidModeSetViewPort(ClientPtr client)
 {
     REQUEST(xXF86VidModeSetViewPortReq);
@@ -1964,7 +1975,7 @@ SProcVidModeSetViewPort(ClientPtr client)
     return ProcVidModeSetViewPort(client);
 }
 
-static int
+static int _X_COLD
 SProcVidModeGetDotClocks(ClientPtr client)
 {
     REQUEST(xXF86VidModeGetDotClocksReq);
@@ -1974,7 +1985,7 @@ SProcVidModeGetDotClocks(ClientPtr client)
     return ProcVidModeGetDotClocks(client);
 }
 
-static int
+static int _X_COLD
 SProcVidModeSetClientVersion(ClientPtr client)
 {
     REQUEST(xXF86VidModeSetClientVersionReq);
@@ -1985,7 +1996,7 @@ SProcVidModeSetClientVersion(ClientPtr client)
     return ProcVidModeSetClientVersion(client);
 }
 
-static int
+static int _X_COLD
 SProcVidModeSetGamma(ClientPtr client)
 {
     REQUEST(xXF86VidModeSetGammaReq);
@@ -1998,7 +2009,7 @@ SProcVidModeSetGamma(ClientPtr client)
     return ProcVidModeSetGamma(client);
 }
 
-static int
+static int _X_COLD
 SProcVidModeGetGamma(ClientPtr client)
 {
     REQUEST(xXF86VidModeGetGammaReq);
@@ -2008,7 +2019,7 @@ SProcVidModeGetGamma(ClientPtr client)
     return ProcVidModeGetGamma(client);
 }
 
-static int
+static int _X_COLD
 SProcVidModeSetGammaRamp(ClientPtr client)
 {
     int length;
@@ -2024,7 +2035,7 @@ SProcVidModeSetGammaRamp(ClientPtr client)
     return ProcVidModeSetGammaRamp(client);
 }
 
-static int
+static int _X_COLD
 SProcVidModeGetGammaRamp(ClientPtr client)
 {
     REQUEST(xXF86VidModeGetGammaRampReq);
@@ -2035,7 +2046,7 @@ SProcVidModeGetGammaRamp(ClientPtr client)
     return ProcVidModeGetGammaRamp(client);
 }
 
-static int
+static int _X_COLD
 SProcVidModeGetGammaRampSize(ClientPtr client)
 {
     REQUEST(xXF86VidModeGetGammaRampSizeReq);
@@ -2045,7 +2056,7 @@ SProcVidModeGetGammaRampSize(ClientPtr client)
     return ProcVidModeGetGammaRampSize(client);
 }
 
-static int
+static int _X_COLD
 SProcVidModeGetPermissions(ClientPtr client)
 {
     REQUEST(xXF86VidModeGetPermissionsReq);
@@ -2055,7 +2066,7 @@ SProcVidModeGetPermissions(ClientPtr client)
     return ProcVidModeGetPermissions(client);
 }
 
-static int
+static int _X_COLD
 SProcVidModeDispatch(ClientPtr client)
 {
     REQUEST(xReq);

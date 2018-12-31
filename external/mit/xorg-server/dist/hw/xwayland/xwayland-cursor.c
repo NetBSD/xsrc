@@ -42,7 +42,7 @@ expand_source_and_mask(CursorPtr cursor, CARD32 *data)
         (cursor->foreGreen & 0xff00) | (cursor->foreGreen >> 8);
     bg = ((cursor->backRed & 0xff00) << 8) |
         (cursor->backGreen & 0xff00) | (cursor->backGreen >> 8);
-    stride = (bits->width / 8 + 3) & ~3;
+    stride = BitmapBytePad(bits->width);
     for (y = 0; y < bits->height; y++)
         for (x = 0; x < bits->width; x++) {
             i = y * stride + x / 8;
@@ -76,6 +76,7 @@ static Bool
 xwl_unrealize_cursor(DeviceIntPtr device, ScreenPtr screen, CursorPtr cursor)
 {
     PixmapPtr pixmap;
+    struct xwl_screen *xwl_screen;
     struct xwl_seat *xwl_seat;
 
     pixmap = dixGetPrivate(&cursor->devPrivates, &xwl_cursor_private_key);
@@ -85,9 +86,9 @@ xwl_unrealize_cursor(DeviceIntPtr device, ScreenPtr screen, CursorPtr cursor)
     dixSetPrivate(&cursor->devPrivates, &xwl_cursor_private_key, NULL);
 
     /* When called from FreeCursor(), device is always NULL */
-    if (device) {
-        xwl_seat = device->public.devicePrivate;
-        if (xwl_seat && cursor == xwl_seat->x_cursor)
+    xwl_screen = xwl_screen_get(screen);
+    xorg_list_for_each_entry(xwl_seat, &xwl_screen->seat_list, link) {
+        if (cursor == xwl_seat->x_cursor)
             xwl_seat->x_cursor = NULL;
     }
 
@@ -95,15 +96,25 @@ xwl_unrealize_cursor(DeviceIntPtr device, ScreenPtr screen, CursorPtr cursor)
 }
 
 static void
+clear_cursor_frame_callback(struct xwl_cursor *xwl_cursor)
+{
+   if (xwl_cursor->frame_cb) {
+       wl_callback_destroy (xwl_cursor->frame_cb);
+       xwl_cursor->frame_cb = NULL;
+   }
+}
+
+static void
 frame_callback(void *data,
                struct wl_callback *callback,
                uint32_t time)
 {
-    struct xwl_seat *xwl_seat = data;
-    xwl_seat->cursor_frame_cb = NULL;
-    if (xwl_seat->cursor_needs_update) {
-        xwl_seat->cursor_needs_update = FALSE;
-        xwl_seat_set_cursor(xwl_seat);
+    struct xwl_cursor *xwl_cursor = data;
+
+    clear_cursor_frame_callback(xwl_cursor);
+    if (xwl_cursor->needs_update) {
+        xwl_cursor->needs_update = FALSE;
+        xwl_cursor->update_proc(xwl_cursor);
     }
 }
 
@@ -114,6 +125,7 @@ static const struct wl_callback_listener frame_listener = {
 void
 xwl_seat_set_cursor(struct xwl_seat *xwl_seat)
 {
+    struct xwl_cursor *xwl_cursor = &xwl_seat->cursor;
     PixmapPtr pixmap;
     CursorPtr cursor;
     int stride;
@@ -124,11 +136,13 @@ xwl_seat_set_cursor(struct xwl_seat *xwl_seat)
     if (!xwl_seat->x_cursor) {
         wl_pointer_set_cursor(xwl_seat->wl_pointer,
                               xwl_seat->pointer_enter_serial, NULL, 0, 0);
+        clear_cursor_frame_callback(xwl_cursor);
+        xwl_cursor->needs_update = FALSE;
         return;
     }
 
-    if (xwl_seat->cursor_frame_cb) {
-        xwl_seat->cursor_needs_update = TRUE;
+    if (xwl_cursor->frame_cb) {
+        xwl_cursor->needs_update = TRUE;
         return;
     }
 
@@ -146,19 +160,69 @@ xwl_seat_set_cursor(struct xwl_seat *xwl_seat)
 
     wl_pointer_set_cursor(xwl_seat->wl_pointer,
                           xwl_seat->pointer_enter_serial,
-                          xwl_seat->cursor,
+                          xwl_cursor->surface,
                           xwl_seat->x_cursor->bits->xhot,
                           xwl_seat->x_cursor->bits->yhot);
-    wl_surface_attach(xwl_seat->cursor,
+    wl_surface_attach(xwl_cursor->surface,
                       xwl_shm_pixmap_get_wl_buffer(pixmap), 0, 0);
-    wl_surface_damage(xwl_seat->cursor, 0, 0,
+    wl_surface_damage(xwl_cursor->surface, 0, 0,
                       xwl_seat->x_cursor->bits->width,
                       xwl_seat->x_cursor->bits->height);
 
-    xwl_seat->cursor_frame_cb = wl_surface_frame(xwl_seat->cursor);
-    wl_callback_add_listener(xwl_seat->cursor_frame_cb, &frame_listener, xwl_seat);
+    xwl_cursor->frame_cb = wl_surface_frame(xwl_cursor->surface);
+    wl_callback_add_listener(xwl_cursor->frame_cb, &frame_listener, xwl_cursor);
 
-    wl_surface_commit(xwl_seat->cursor);
+    wl_surface_commit(xwl_cursor->surface);
+}
+
+void
+xwl_tablet_tool_set_cursor(struct xwl_tablet_tool *xwl_tablet_tool)
+{
+    struct xwl_seat *xwl_seat = xwl_tablet_tool->seat;
+    struct xwl_cursor *xwl_cursor = &xwl_tablet_tool->cursor;
+    PixmapPtr pixmap;
+    CursorPtr cursor;
+    int stride;
+
+    if (!xwl_seat->x_cursor) {
+        zwp_tablet_tool_v2_set_cursor(xwl_tablet_tool->tool,
+                                      xwl_tablet_tool->proximity_in_serial,
+                                      NULL, 0, 0);
+        return;
+    }
+
+    if (xwl_cursor->frame_cb) {
+        xwl_cursor->needs_update = TRUE;
+        return;
+    }
+
+    cursor = xwl_seat->x_cursor;
+    pixmap = dixGetPrivate(&cursor->devPrivates, &xwl_cursor_private_key);
+    if (!pixmap)
+        return;
+
+    stride = cursor->bits->width * 4;
+    if (cursor->bits->argb)
+        memcpy(pixmap->devPrivate.ptr,
+               cursor->bits->argb, cursor->bits->height * stride);
+    else
+        expand_source_and_mask(cursor, pixmap->devPrivate.ptr);
+
+    zwp_tablet_tool_v2_set_cursor(xwl_tablet_tool->tool,
+                                  xwl_tablet_tool->proximity_in_serial,
+                                  xwl_cursor->surface,
+                                  xwl_seat->x_cursor->bits->xhot,
+                                  xwl_seat->x_cursor->bits->yhot);
+    wl_surface_attach(xwl_cursor->surface,
+                      xwl_shm_pixmap_get_wl_buffer(pixmap), 0, 0);
+    wl_surface_damage(xwl_cursor->surface, 0, 0,
+                      xwl_seat->x_cursor->bits->width,
+                      xwl_seat->x_cursor->bits->height);
+
+    xwl_cursor->frame_cb = wl_surface_frame(xwl_cursor->surface);
+    wl_callback_add_listener(xwl_cursor->frame_cb, &frame_listener, xwl_cursor);
+
+    wl_surface_commit(xwl_cursor->surface);
 }
 
 static void
@@ -166,13 +230,26 @@ xwl_set_cursor(DeviceIntPtr device,
                ScreenPtr screen, CursorPtr cursor, int x, int y)
 {
     struct xwl_seat *xwl_seat;
+    struct xwl_tablet_tool *xwl_tablet_tool;
+    Bool cursor_visibility_changed;
 
     xwl_seat = device->public.devicePrivate;
     if (xwl_seat == NULL)
         return;
 
+    cursor_visibility_changed = !!xwl_seat->x_cursor ^ !!cursor;
+
     xwl_seat->x_cursor = cursor;
+
+    if (cursor_visibility_changed)
+        xwl_seat_cursor_visibility_changed(xwl_seat);
+
     xwl_seat_set_cursor(xwl_seat);
+
+    xorg_list_for_each_entry(xwl_tablet_tool, &xwl_seat->tablet_tools, link) {
+        if (xwl_tablet_tool->proximity_in_serial != 0)
+            xwl_tablet_tool_set_cursor(xwl_tablet_tool);
+    }
 }
 
 static void

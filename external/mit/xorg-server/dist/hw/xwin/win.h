@@ -127,11 +127,9 @@
 #include <stdio.h>
 
 #include <errno.h>
-#if defined(XWIN_MULTIWINDOWEXTWM) || defined(XWIN_CLIPBOARD) || defined(XWIN_MULTIWINDOW)
 #define HANDLE void *
 #include <pthread.h>
 #undef HANDLE
-#endif
 
 #ifdef HAVE_MMAP
 #include <sys/mman.h>
@@ -162,11 +160,12 @@
 #include "mipointer.h"
 #include "X11/keysym.h"
 #include "micoord.h"
-#include "dix.h"
 #include "miline.h"
 #include "shadow.h"
 #include "fb.h"
+#ifdef XWIN_MULTIWINDOWEXTWM
 #include "rootless.h"
+#endif
 
 #include "mipict.h"
 #include "picturestr.h"
@@ -287,24 +286,11 @@ typedef Bool (*winCreateColormapProcPtr) (ColormapPtr pColormap);
 
 typedef Bool (*winDestroyColormapProcPtr) (ColormapPtr pColormap);
 
-typedef Bool (*winHotKeyAltTabProcPtr) (ScreenPtr);
-
 typedef Bool (*winCreatePrimarySurfaceProcPtr) (ScreenPtr);
 
 typedef Bool (*winReleasePrimarySurfaceProcPtr) (ScreenPtr);
 
-typedef Bool (*winFinishCreateWindowsWindowProcPtr) (WindowPtr pWin);
-
 typedef Bool (*winCreateScreenResourcesProc) (ScreenPtr);
-
-/*
- * GC (graphics context) privates
- */
-
-typedef struct {
-    HDC hdc;
-    HDC hdcMem;
-} winPrivGCRec, *winPrivGCPtr;
 
 /*
  * Pixmap privates
@@ -329,6 +315,7 @@ typedef struct {
     PALETTEENTRY peColors[WIN_NUM_PALETTE_ENTRIES];
 } winPrivCmapRec, *winPrivCmapPtr;
 
+
 /*
  * Windows Cursor handling.
  */
@@ -348,7 +335,8 @@ typedef struct {
  * Resize modes
  */
 typedef enum {
-    notAllowed,
+    resizeDefault = -1,
+    resizeNotAllowed,
     resizeWithScrollbars,
     resizeWithRandr
 } winResizeMode;
@@ -404,16 +392,10 @@ typedef struct {
     Bool fDecoration;
 #ifdef XWIN_MULTIWINDOWEXTWM
     Bool fMWExtWM;
-    Bool fInternalWM;
-    Bool fAnotherWMRunning;
 #endif
     Bool fRootless;
-#ifdef XWIN_MULTIWINDOW
     Bool fMultiWindow;
-#endif
-#if defined(XWIN_MULTIWINDOW) || defined(XWIN_MULTIWINDOWEXTWM)
     Bool fMultiMonitorOverride;
-#endif
     Bool fMultipleMonitors;
     Bool fLessPointer;
     winResizeMode iResizeMode;
@@ -488,23 +470,17 @@ typedef struct _winPrivScreenRec {
     Bool fRestacking;
 #endif
 
-#ifdef XWIN_MULTIWINDOW
     /* Privates used by multi-window */
     pthread_t ptWMProc;
     pthread_t ptXMsgProc;
     void *pWMInfo;
-#endif
 
-#if defined(XWIN_MULTIWINDOW) || defined(XWIN_MULTIWINDOWEXTWM)
     /* Privates used by both multi-window and rootless */
     Bool fRootWindowShown;
-#endif
 
-#if defined(XWIN_CLIPBOARD) || defined(XWIN_MULTIWINDOW)
     /* Privates used for any module running in a seperate thread */
     pthread_mutex_t pmServerStarted;
     Bool fServerStarted;
-#endif
 
     /* Engine specific functions */
     winAllocateFBProcPtr pwinAllocateFB;
@@ -524,16 +500,9 @@ typedef struct _winPrivScreenRec {
     winStoreColorsProcPtr pwinStoreColors;
     winCreateColormapProcPtr pwinCreateColormap;
     winDestroyColormapProcPtr pwinDestroyColormap;
-    winHotKeyAltTabProcPtr pwinHotKeyAltTab;
     winCreatePrimarySurfaceProcPtr pwinCreatePrimarySurface;
     winReleasePrimarySurfaceProcPtr pwinReleasePrimarySurface;
-
     winCreateScreenResourcesProc pwinCreateScreenResources;
-
-#ifdef XWIN_MULTIWINDOW
-    /* Window Procedures for MultiWindow mode */
-    winFinishCreateWindowsWindowProcPtr pwinFinishCreateWindowsWindow;
-#endif
 
     /* Window Procedures for Rootless mode */
     CreateWindowProcPtr CreateWindow;
@@ -554,6 +523,8 @@ typedef struct _winPrivScreenRec {
     SetShapeProcPtr SetShape;
 
     winCursorRec cursor;
+
+    Bool fNativeGlActive;
 } winPrivScreenRec;
 
 #ifdef XWIN_MULTIWINDOWEXTWM
@@ -726,11 +697,9 @@ Bool
  * winauth.c
  */
 
-#if defined(XWIN_CLIPBOARD) || defined(XWIN_MULTIWINDOW)
 Bool
  winGenerateAuthorization(void);
 void winSetAuthorization(void);
-#endif
 
 /*
  * winblock.c
@@ -738,10 +707,8 @@ void winSetAuthorization(void);
 
 void
 
-winBlockHandler(ScreenPtr pScreen,
-                void *pTimeout, void *pReadMask);
+winBlockHandler(ScreenPtr pScreen, void *pTimeout);
 
-#ifdef XWIN_CLIPBOARD
 /*
  * winclipboardinit.c
  */
@@ -751,7 +718,6 @@ Bool
 
 void
  winClipboardShutdown(void);
-#endif
 
 /*
  * wincmap.c
@@ -923,9 +889,7 @@ Bool
  */
 
 void
-
-winWakeupHandler(ScreenPtr pScreen,
-                 unsigned long ulResult, void *pReadmask);
+winWakeupHandler(ScreenPtr pScreen, int iResult);
 
 /*
  * winwindow.c
@@ -952,7 +916,6 @@ Bool
 void
  winSetShapeRootless(WindowPtr pWindow, int kind);
 
-#ifdef XWIN_MULTIWINDOW
 /*
  * winmultiwindowshape.c
  */
@@ -965,9 +928,7 @@ void
 
 void
  winUpdateRgnMultiWindow(WindowPtr pWindow);
-#endif
 
-#ifdef XWIN_MULTIWINDOW
 /*
  * winmultiwindowwindow.c
  */
@@ -1018,16 +979,13 @@ XID
 
 int
  winAdjustXWindow(WindowPtr pWin, HWND hwnd);
-#endif
 
-#ifdef XWIN_MULTIWINDOW
 /*
  * winmultiwindowwndproc.c
  */
 
 LRESULT CALLBACK
 winTopLevelWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-#endif
 
 /*
  * wintrayicon.c
@@ -1136,9 +1094,6 @@ winMWExtWMUpdateWindowDecoration(win32RootlessWindowPtr pRLWinPriv,
                                  winScreenInfoPtr pScreenInfo);
 
 wBOOL CALLBACK winMWExtWMDecorateWindow(HWND hwnd, LPARAM lParam);
-
-Bool
- winIsInternalWMRunning(winScreenInfoPtr pScreenInfo);
 
 void
  winMWExtWMRestackWindows(ScreenPtr pScreen);

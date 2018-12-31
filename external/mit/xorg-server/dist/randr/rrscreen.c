@@ -41,6 +41,9 @@ RREditConnectionInfo(ScreenPtr pScreen)
     int screen = 0;
     int d;
 
+    if (ConnectionInfo == NULL)
+        return;
+
     connSetup = (xConnSetup *) ConnectionInfo;
     vendor = (char *) connSetup + sizeof(xConnSetup);
     formats = (xPixmapFormat *) ((char *) vendor +
@@ -264,12 +267,12 @@ ProcRRSetScreenSize(ClientPtr client)
         RRCrtcPtr crtc = pScrPriv->crtcs[i];
         RRModePtr mode = crtc->mode;
 
-        if (mode) {
+        if (!RRCrtcIsLeased(crtc) && mode) {
             int source_width = mode->mode.width;
             int source_height = mode->mode.height;
             Rotation rotation = crtc->rotation;
 
-            if (rotation == RR_Rotate_90 || rotation == RR_Rotate_270) {
+            if (rotation & (RR_Rotate_90 | RR_Rotate_270)) {
                 source_width = mode->mode.height;
                 source_height = mode->mode.width;
             }
@@ -391,7 +394,10 @@ rrGetMultiScreenResources(ClientPtr client, Bool query, ScreenPtr pScreen)
 
     update_totals(pScreen, pScrPriv);
 
-    xorg_list_for_each_entry(iter, &pScreen->output_slave_list, output_head) {
+    xorg_list_for_each_entry(iter, &pScreen->slave_list, slave_head) {
+        if (!iter->is_output_slave)
+            continue;
+
         pScrPriv = rrGetScrPriv(iter);
 
         if (query)
@@ -447,7 +453,10 @@ rrGetMultiScreenResources(ClientPtr client, Bool query, ScreenPtr pScreen)
     }
     update_arrays(pScreen, pScrPriv, primary_crtc, has_primary);
 
-    xorg_list_for_each_entry(iter, &pScreen->output_slave_list, output_head) {
+    xorg_list_for_each_entry(iter, &pScreen->slave_list, slave_head) {
+        if (!iter->is_output_slave)
+            continue;
+
         pScrPriv = rrGetScrPriv(iter);
 
         update_arrays(iter, pScrPriv, primary_crtc, has_primary);
@@ -500,7 +509,7 @@ rrGetScreenResources(ClientPtr client, Bool query)
         if (!RRGetInfo(pScreen, query))
             return BadAlloc;
 
-    if (!xorg_list_is_empty(&pScreen->output_slave_list))
+    if (pScreen->output_slaves)
         return rrGetMultiScreenResources(client, query, pScreen);
 
     if (!pScrPriv) {
@@ -549,7 +558,7 @@ rrGetScreenResources(ClientPtr client, Bool query)
 
         extraLen = rep.length << 2;
         if (extraLen) {
-            extra = malloc(extraLen);
+            extra = calloc(1, extraLen);
             if (!extra) {
                 free(modes);
                 return BadAlloc;

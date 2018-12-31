@@ -27,7 +27,6 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <poll.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -54,6 +53,7 @@
 
 struct ms_present_vblank_event {
     uint64_t        event_id;
+    Bool            unflip;
 };
 
 static RRCrtcPtr
@@ -69,40 +69,6 @@ ms_present_get_ust_msc(RRCrtcPtr crtc, CARD64 *ust, CARD64 *msc)
     xf86CrtcPtr xf86_crtc = crtc->devPrivate;
 
     return ms_get_crtc_ust_msc(xf86_crtc, ust, msc);
-}
-
-/*
- * Flush the DRM event queue when full; makes space for new events.
- *
- * Returns a negative value on error, 0 if there was nothing to process,
- * or 1 if we handled any events.
- */
-static int
-ms_flush_drm_events(ScreenPtr screen)
-{
-    ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
-    modesettingPtr ms = modesettingPTR(scrn);
-
-    struct pollfd p = { .fd = ms->fd, .events = POLLIN };
-    int r;
-
-    do {
-            r = poll(&p, 1, 0);
-    } while (r == -1 && (errno == EINTR || errno == EAGAIN));
-
-    /* If there was an error, r will be < 0.  Return that.  If there was
-     * nothing to process, r == 0.  Return that.
-     */
-    if (r <= 0)
-        return r;
-
-    /* Try to handle the event.  If there was an error, return it. */
-    r = drmHandleEvent(ms->fd, &ms->event_context);
-    if (r < 0)
-        return r;
-
-    /* Otherwise return 1 to indicate that we handled an event. */
-    return 1;
 }
 
 /*
@@ -143,13 +109,7 @@ ms_present_queue_vblank(RRCrtcPtr crtc,
                         uint64_t msc)
 {
     xf86CrtcPtr xf86_crtc = crtc->devPrivate;
-    ScreenPtr screen = crtc->pScreen;
-    ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
-    modesettingPtr ms = modesettingPTR(scrn);
-    drmmode_crtc_private_ptr drmmode_crtc = xf86_crtc->driver_private;
     struct ms_present_vblank_event *event;
-    drmVBlank vbl;
-    int ret;
     uint32_t seq;
 
     event = calloc(sizeof(struct ms_present_vblank_event), 1);
@@ -164,22 +124,9 @@ ms_present_queue_vblank(RRCrtcPtr crtc,
         return BadAlloc;
     }
 
-    vbl.request.type =
-        DRM_VBLANK_ABSOLUTE | DRM_VBLANK_EVENT | drmmode_crtc->vblank_pipe;
-    vbl.request.sequence = ms_crtc_msc_to_kernel_msc(xf86_crtc, msc);
-    vbl.request.signal = seq;
-    for (;;) {
-        ret = drmWaitVBlank(ms->fd, &vbl);
-        if (!ret)
-            break;
-        /* If we hit EBUSY, then try to flush events.  If we can't, then
-         * this is an error.
-         */
-        if (errno != EBUSY || ms_flush_drm_events(screen) < 0) {
-	    ms_drm_abort_seq(scrn, seq);
-            return BadAlloc;
-        }
-    }
+    if (!ms_queue_vblank(xf86_crtc, MS_QUEUE_ABSOLUTE, msc, NULL, seq))
+        return BadAlloc;
+
     DebugPresent(("\t\tmq %lld seq %u msc %llu (hw msc %u)\n",
                  (long long) event_id, seq, (long long) msc,
                  vbl.request.sequence));
@@ -214,7 +161,7 @@ ms_present_abort_vblank(RRCrtcPtr crtc, uint64_t event_id, uint64_t msc)
 static void
 ms_present_flush(WindowPtr window)
 {
-#ifdef GLAMOR
+#ifdef GLAMOR_HAS_GBM
     ScreenPtr screen = window->drawable.pScreen;
     ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
     modesettingPtr ms = modesettingPTR(scrn);
@@ -224,291 +171,40 @@ ms_present_flush(WindowPtr window)
 #endif
 }
 
-#ifdef GLAMOR
-
-/*
- * Event data for an in progress flip.
- * This contains a pointer to the vblank event,
- * and information about the flip in progress.
- * a reference to this is stored in the per-crtc
- * flips.
- */
-struct ms_flipdata {
-    ScreenPtr screen;
-    struct ms_present_vblank_event *event;
-    /* number of CRTC events referencing this */
-    int flip_count;
-    uint64_t fe_msc;
-    uint64_t fe_usec;
-    uint32_t old_fb_id;
-};
-
-/*
- * Per crtc pageflipping infomation,
- * These are submitted to the queuing code
- * one of them per crtc per flip.
- */
-struct ms_crtc_pageflip {
-    Bool on_reference_crtc;
-    /* reference to the ms_flipdata */
-    struct ms_flipdata *flipdata;
-};
+#ifdef GLAMOR_HAS_GBM
 
 /**
- * Free an ms_crtc_pageflip.
+ * Callback for the DRM event queue when a flip has completed on all pipes
  *
- * Drops the reference count on the flipdata.
+ * Notify the extension code
  */
 static void
-ms_present_flip_free(struct ms_crtc_pageflip *flip)
+ms_present_flip_handler(modesettingPtr ms, uint64_t msc,
+                        uint64_t ust, void *data)
 {
-    struct ms_flipdata *flipdata = flip->flipdata;
+    struct ms_present_vblank_event *event = data;
 
-    free(flip);
-    if (--flipdata->flip_count > 0)
-        return;
-    free(flipdata);
-}
-
-/**
- * Callback for the DRM event queue when a single flip has completed
- *
- * Once the flip has been completed on all pipes, notify the
- * extension code telling it when that happened
- */
-static void
-ms_flip_handler(uint64_t msc, uint64_t ust, void *data)
-{
-    struct ms_crtc_pageflip *flip = data;
-    ScreenPtr screen = flip->flipdata->screen;
-    ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
-    modesettingPtr ms = modesettingPTR(scrn);
-    struct ms_flipdata *flipdata = flip->flipdata;
-
-    DebugPresent(("\t\tms:fh %lld c %d msc %llu ust %llu\n",
-                  (long long) flipdata->event->event_id,
-                  flipdata->flip_count,
+    DebugPresent(("\t\tms:fc %lld msc %llu ust %llu\n",
+                  (long long) event->event_id,
                   (long long) msc, (long long) ust));
 
-    if (flip->on_reference_crtc) {
-        flipdata->fe_msc = msc;
-        flipdata->fe_usec = ust;
-    }
+    if (event->unflip)
+        ms->drmmode.present_flipping = FALSE;
 
-    if (flipdata->flip_count == 1) {
-        DebugPresent(("\t\tms:fc %lld c %d msc %llu ust %llu\n",
-                      (long long) flipdata->event->event_id,
-                      flipdata->flip_count,
-                      (long long) flipdata->fe_msc, (long long) flipdata->fe_usec));
-
-
-        ms_present_vblank_handler(flipdata->fe_msc,
-                                  flipdata->fe_usec,
-                                  flipdata->event);
-
-        drmModeRmFB(ms->fd, flipdata->old_fb_id);
-    }
-    ms_present_flip_free(flip);
+    ms_present_vblank_handler(msc, ust, event);
 }
 
 /*
  * Callback for the DRM queue abort code.  A flip has been aborted.
  */
 static void
-ms_present_flip_abort(void *data)
+ms_present_flip_abort(modesettingPtr ms, void *data)
 {
-    struct ms_crtc_pageflip *flip = data;
-    struct ms_flipdata *flipdata = flip->flipdata;
+    struct ms_present_vblank_event *event = data;
 
-    DebugPresent(("\t\tms:fa %lld c %d\n", (long long) flipdata->event->event_id, flipdata->flip_count));
+    DebugPresent(("\t\tms:fa %lld\n", (long long) event->event_id));
 
-    if (flipdata->flip_count == 1)
-        free(flipdata->event);
-
-    ms_present_flip_free(flip);
-}
-
-static Bool
-queue_flip_on_crtc(ScreenPtr screen, xf86CrtcPtr crtc,
-                   struct ms_flipdata *flipdata,
-                   int ref_crtc_vblank_pipe, uint32_t flags)
-{
-    ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
-    modesettingPtr ms = modesettingPTR(scrn);
-    drmmode_crtc_private_ptr drmmode_crtc = crtc->driver_private;
-    struct ms_crtc_pageflip *flip;
-    uint32_t seq;
-    int err;
-
-    flip = calloc(1, sizeof(struct ms_crtc_pageflip));
-    if (flip == NULL) {
-        xf86DrvMsg(scrn->scrnIndex, X_WARNING,
-                   "flip queue: carrier alloc failed.\n");
-        return FALSE;
-    }
-
-    /* Only the reference crtc will finally deliver its page flip
-     * completion event. All other crtc's events will be discarded.
-     */
-    flip->on_reference_crtc = (drmmode_crtc->vblank_pipe == ref_crtc_vblank_pipe);
-    flip->flipdata = flipdata;
-
-    seq = ms_drm_queue_alloc(crtc, flip, ms_flip_handler, ms_present_flip_abort);
-    if (!seq) {
-        free(flip);
-        return FALSE;
-    }
-
-    DebugPresent(("\t\tms:fq %lld c %d -> %d seq %llu\n",
-                  (long long) flipdata->event->event_id,
-                  flipdata->flip_count, flipdata->flip_count + 1,
-                  (long long) seq));
-
-    /* take a reference on flipdata for use in flip */
-    flipdata->flip_count++;
-
-    while (drmModePageFlip(ms->fd, drmmode_crtc->mode_crtc->crtc_id,
-                           ms->drmmode.fb_id, flags, (void *) (uintptr_t) seq)) {
-        err = errno;
-        /* We may have failed because the event queue was full.  Flush it
-         * and retry.  If there was nothing to flush, then we failed for
-         * some other reason and should just return an error.
-         */
-        if (ms_flush_drm_events(screen) <= 0) {
-            xf86DrvMsg(scrn->scrnIndex, X_WARNING,
-                       "flip queue failed: %s\n", strerror(err));
-            /* Aborting will also decrement flip_count and free(flip). */
-            ms_drm_abort_seq(scrn, seq);
-            return FALSE;
-        }
-
-        /* We flushed some events, so try again. */
-        xf86DrvMsg(scrn->scrnIndex, X_WARNING, "flip queue retry\n");
-    }
-
-    /* The page flip succeded. */
-    return TRUE;
-}
-
-
-static Bool
-ms_do_pageflip(ScreenPtr screen,
-               PixmapPtr new_front,
-               struct ms_present_vblank_event *event,
-               int ref_crtc_vblank_pipe,
-               Bool async)
-{
-#ifndef GLAMOR_HAS_GBM
-    return FALSE;
-#else
-    ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
-    modesettingPtr ms = modesettingPTR(scrn);
-    xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(scrn);
-    drmmode_bo new_front_bo;
-    uint32_t flags;
-    int i;
-    struct ms_flipdata *flipdata;
-    glamor_block_handler(screen);
-
-    new_front_bo.gbm = glamor_gbm_bo_from_pixmap(screen, new_front);
-    new_front_bo.dumb = NULL;
-    if (!new_front_bo.gbm) {
-        xf86DrvMsg(scrn->scrnIndex, X_ERROR,
-                   "Failed to get GBM bo for flip to new front.\n");
-        return FALSE;
-    }
-
-    flipdata = calloc(1, sizeof(struct ms_flipdata));
-    if (!flipdata) {
-        drmmode_bo_destroy(&ms->drmmode, &new_front_bo);
-        xf86DrvMsg(scrn->scrnIndex, X_ERROR,
-                   "Failed to allocate flipdata.\n");
-        return FALSE;
-    }
-
-    flipdata->event = event;
-    flipdata->screen = screen;
-
-    /*
-     * Take a local reference on flipdata.
-     * if the first flip fails, the sequence abort
-     * code will free the crtc flip data, and drop
-     * it's reference which would cause this to be
-     * freed when we still required it.
-     */
-    flipdata->flip_count++;
-
-    /* Create a new handle for the back buffer */
-    flipdata->old_fb_id = ms->drmmode.fb_id;
-    if (drmModeAddFB(ms->fd, scrn->virtualX, scrn->virtualY,
-                     scrn->depth, scrn->bitsPerPixel,
-                     drmmode_bo_get_pitch(&new_front_bo),
-                     drmmode_bo_get_handle(&new_front_bo), &ms->drmmode.fb_id)) {
-        goto error_out;
-    }
-
-    drmmode_bo_destroy(&ms->drmmode, &new_front_bo);
-
-    flags = DRM_MODE_PAGE_FLIP_EVENT;
-    if (async)
-        flags |= DRM_MODE_PAGE_FLIP_ASYNC;
-
-    /* Queue flips on all enabled CRTCs.
-     *
-     * Note that if/when we get per-CRTC buffers, we'll have to update this.
-     * Right now it assumes a single shared fb across all CRTCs, with the
-     * kernel fixing up the offset of each CRTC as necessary.
-     *
-     * Also, flips queued on disabled or incorrectly configured displays
-     * may never complete; this is a configuration error.
-     */
-    for (i = 0; i < config->num_crtc; i++) {
-        xf86CrtcPtr crtc = config->crtc[i];
-
-        if (!ms_crtc_on(crtc))
-            continue;
-
-        if (!queue_flip_on_crtc(screen, crtc, flipdata,
-                                ref_crtc_vblank_pipe,
-                                flags)) {
-            goto error_undo;
-        }
-    }
-
-    /*
-     * Do we have more than our local reference,
-     * if so and no errors, then drop our local
-     * reference and return now.
-     */
-    if (flipdata->flip_count > 1) {
-        flipdata->flip_count--;
-        return TRUE;
-    }
-
-error_undo:
-
-    /*
-     * Have we just got the local reference?
-     * free the framebuffer if so since nobody successfully
-     * submitted anything
-     */
-    if (flipdata->flip_count == 1) {
-        drmModeRmFB(ms->fd, ms->drmmode.fb_id);
-        ms->drmmode.fb_id = flipdata->old_fb_id;
-    }
-
-error_out:
-    xf86DrvMsg(scrn->scrnIndex, X_WARNING, "Page flip failed: %s\n",
-               strerror(errno));
-    /* if only the local reference - free the structure,
-     * else drop the local reference and return */
-    if (flipdata->flip_count == 1)
-        free(flipdata);
-    else
-        flipdata->flip_count--;
-
-    return FALSE;
-#endif /* GLAMOR_HAS_GBM */
+    free(event);
 }
 
 /*
@@ -518,7 +214,8 @@ static Bool
 ms_present_check_flip(RRCrtcPtr crtc,
                       WindowPtr window,
                       PixmapPtr pixmap,
-                      Bool sync_flip)
+                      Bool sync_flip,
+                      PresentFlipReason *reason)
 {
     ScreenPtr screen = window->drawable.pScreen;
     ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
@@ -526,8 +223,12 @@ ms_present_check_flip(RRCrtcPtr crtc,
     xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(scrn);
     int num_crtcs_on = 0;
     int i;
+    struct gbm_bo *gbm;
 
     if (!ms->drmmode.pageflip)
+        return FALSE;
+
+    if (ms->drmmode.dri2_flipping)
         return FALSE;
 
     if (!scrn->vtSema)
@@ -537,10 +238,8 @@ ms_present_check_flip(RRCrtcPtr crtc,
         drmmode_crtc_private_ptr drmmode_crtc = config->crtc[i]->driver_private;
 
         /* Don't do pageflipping if CRTCs are rotated. */
-#ifdef GLAMOR_HAS_GBM
         if (drmmode_crtc->rotate_bo.gbm)
             return FALSE;
-#endif
 
         if (ms_crtc_on(config->crtc[i]))
             num_crtcs_on++;
@@ -551,8 +250,28 @@ ms_present_check_flip(RRCrtcPtr crtc,
         return FALSE;
 
     /* Check stride, can't change that on flip */
-    if (pixmap->devKind != drmmode_bo_get_pitch(&ms->drmmode.front_bo))
+    if (!ms->atomic_modeset &&
+        pixmap->devKind != drmmode_bo_get_pitch(&ms->drmmode.front_bo))
         return FALSE;
+
+#ifdef GBM_BO_WITH_MODIFIERS
+    /* Check if buffer format/modifier is supported by all active CRTCs */
+    gbm = glamor_gbm_bo_from_pixmap(screen, pixmap);
+    if (gbm) {
+        uint32_t format;
+        uint64_t modifier;
+
+        format = gbm_bo_get_format(gbm);
+        modifier = gbm_bo_get_modifier(gbm);
+        gbm_bo_destroy(gbm);
+
+        if (!drmmode_is_format_supported(scrn, format, modifier)) {
+            if (reason)
+                *reason = PRESENT_FLIP_REASON_BUFFER_FORMAT;
+            return FALSE;
+        }
+    }
+#endif
 
     /* Make sure there's a bo we can get to */
     /* XXX: actually do this.  also...is it sufficient?
@@ -576,22 +295,31 @@ ms_present_flip(RRCrtcPtr crtc,
 {
     ScreenPtr screen = crtc->pScreen;
     ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
+    modesettingPtr ms = modesettingPTR(scrn);
     xf86CrtcPtr xf86_crtc = crtc->devPrivate;
     drmmode_crtc_private_ptr drmmode_crtc = xf86_crtc->driver_private;
     Bool ret;
     struct ms_present_vblank_event *event;
 
-    if (!ms_present_check_flip(crtc, screen->root, pixmap, sync_flip))
+    if (!ms_present_check_flip(crtc, screen->root, pixmap, sync_flip, NULL))
         return FALSE;
 
     event = calloc(1, sizeof(struct ms_present_vblank_event));
     if (!event)
         return FALSE;
 
+    DebugPresent(("\t\tms:pf %lld msc %llu\n",
+                  (long long) event_id, (long long) target_msc));
+
     event->event_id = event_id;
-    ret = ms_do_pageflip(screen, pixmap, event, drmmode_crtc->vblank_pipe, !sync_flip);
+    event->unflip = FALSE;
+
+    ret = ms_do_pageflip(screen, pixmap, event, drmmode_crtc->vblank_pipe, !sync_flip,
+                         ms_present_flip_handler, ms_present_flip_abort);
     if (!ret)
         xf86DrvMsg(scrn->scrnIndex, X_ERROR, "present flip failed\n");
+    else
+        ms->drmmode.present_flipping = TRUE;
 
     return ret;
 }
@@ -603,6 +331,7 @@ static void
 ms_present_unflip(ScreenPtr screen, uint64_t event_id)
 {
     ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
+    modesettingPtr ms = modesettingPTR(scrn);
     PixmapPtr pixmap = screen->GetScreenPixmap(screen);
     xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(scrn);
     int i;
@@ -613,9 +342,11 @@ ms_present_unflip(ScreenPtr screen, uint64_t event_id)
         return;
 
     event->event_id = event_id;
+    event->unflip = TRUE;
 
-    if (ms_present_check_flip(NULL, screen->root, pixmap, TRUE) &&
-        ms_do_pageflip(screen, pixmap, event, -1, FALSE)) {
+    if (ms_present_check_flip(NULL, screen->root, pixmap, TRUE, NULL) &&
+        ms_do_pageflip(screen, pixmap, event, -1, FALSE,
+                       ms_present_flip_handler, ms_present_flip_abort)) {
         return;
     }
 
@@ -643,6 +374,7 @@ ms_present_unflip(ScreenPtr screen, uint64_t event_id)
     }
 
     present_event_notify(event_id, 0, 0);
+    ms->drmmode.present_flipping = FALSE;
 }
 #endif
 
@@ -656,8 +388,9 @@ static present_screen_info_rec ms_present_screen_info = {
     .flush = ms_present_flush,
 
     .capabilities = PresentCapabilityNone,
-#ifdef GLAMOR
-    .check_flip = ms_present_check_flip,
+#ifdef GLAMOR_HAS_GBM
+    .check_flip = NULL,
+    .check_flip2 = ms_present_check_flip,
     .flip = ms_present_flip,
     .unflip = ms_present_unflip,
 #endif

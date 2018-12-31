@@ -16,6 +16,7 @@ typedef struct _xf86CursorInfoRec {
     Bool (*LoadCursorImageCheck) (ScrnInfoPtr pScrn, unsigned char *bits);
     void (*HideCursor) (ScrnInfoPtr pScrn);
     void (*ShowCursor) (ScrnInfoPtr pScrn);
+    Bool (*ShowCursorCheck) (ScrnInfoPtr pScrn);
     unsigned char *(*RealizeCursor) (struct _xf86CursorInfoRec *, CursorPtr);
     Bool (*UseHWCursor) (ScreenPtr, CursorPtr);
 
@@ -41,6 +42,21 @@ xf86DriverLoadCursorImage(xf86CursorInfoPtr infoPtr, unsigned char *bits)
 }
 
 static inline Bool
+xf86DriverHasShowCursor(xf86CursorInfoPtr infoPtr)
+{
+    return infoPtr->ShowCursorCheck || infoPtr->ShowCursor;
+}
+
+static inline Bool
+xf86DriverShowCursor(xf86CursorInfoPtr infoPtr)
+{
+    if(infoPtr->ShowCursorCheck)
+        return infoPtr->ShowCursorCheck(infoPtr->pScrn);
+    infoPtr->ShowCursor(infoPtr->pScrn);
+    return TRUE;
+}
+
+static inline Bool
 xf86DriverHasLoadCursorARGB(xf86CursorInfoPtr infoPtr)
 {
     return infoPtr->LoadCursorARGBCheck || infoPtr->LoadCursorARGB;
@@ -61,6 +77,7 @@ extern _X_EXPORT xf86CursorInfoPtr xf86CreateCursorInfoRec(void);
 extern _X_EXPORT void xf86DestroyCursorInfoRec(xf86CursorInfoPtr);
 extern _X_EXPORT void xf86CursorResetCursor(ScreenPtr pScreen);
 extern _X_EXPORT void xf86ForceHWCursor(ScreenPtr pScreen, Bool on);
+extern _X_EXPORT CursorPtr xf86CurrentCursor(ScreenPtr pScreen);
 
 #define HARDWARE_CURSOR_INVERT_MASK 			0x00000001
 #define HARDWARE_CURSOR_AND_SOURCE_WITH_MASK		0x00000002

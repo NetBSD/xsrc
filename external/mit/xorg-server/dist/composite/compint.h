@@ -156,7 +156,8 @@ typedef struct _CompScreen {
      */
     ChangeWindowAttributesProcPtr ChangeWindowAttributes;
 
-    ScreenBlockHandlerProcPtr BlockHandler;
+    Bool pendingScreenUpdate;
+
     CloseScreenProcPtr CloseScreen;
     int numAlternateVisuals;
     VisualID *alternateVisuals;
@@ -236,6 +237,8 @@ Bool
 compReallocPixmap(WindowPtr pWin, int x, int y,
                   unsigned int w, unsigned int h, int bw);
 
+void compMarkAncestors(WindowPtr pWin);
+
 /*
  * compinit.c
  */
@@ -274,7 +277,7 @@ void
 #endif
 
 void
- compSetPixmap(WindowPtr pWin, PixmapPtr pPixmap);
+ compSetPixmap(WindowPtr pWin, PixmapPtr pPixmap, int bw);
 
 Bool
  compCheckRedirect(WindowPtr pWin);

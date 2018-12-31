@@ -35,9 +35,7 @@ from The Open Group.
 #include "winmsg.h"
 #include "winconfig.h"
 #include "winprefs.h"
-#ifdef XWIN_CLIPBOARD
 #include "X11/Xlocale.h"
-#endif
 #ifdef DPMSExtension
 #include "dpmsproc.h"
 #endif
@@ -66,6 +64,7 @@ typedef WINAPI HRESULT(*SHGETFOLDERPATHPROC) (HWND hwndOwner,
 #include "glx_extinit.h"
 #ifdef XWIN_GLX_WINDOWS
 #include "glx/glwindows.h"
+#include "dri/windowsdri.h"
 #endif
 
 /*
@@ -75,9 +74,6 @@ typedef WINAPI HRESULT(*SHGETFOLDERPATHPROC) (HWND hwndOwner,
 /*
  * Function prototypes
  */
-
-static Bool
- winCheckDisplayNumber(void);
 
 void
  winLogCommandLine(int argc, char *argv[]);
@@ -115,11 +111,11 @@ static PixmapFormatRec g_PixmapFormats[] = {
     {32, 32, BITMAP_SCANLINE_PAD}
 };
 
-const int NUMFORMATS = sizeof(g_PixmapFormats) / sizeof(g_PixmapFormats[0]);
-
 static const ExtensionModule xwinExtensions[] = {
 #ifdef GLXEXT
-  { GlxExtensionInit, "GLX", &noGlxExtension },
+#ifdef XWIN_WINDOWS_DRI
+  { WindowsDRIExtensionInit, "Windows-DRI", &noDriExtension },
+#endif
 #endif
 };
 
@@ -151,9 +147,7 @@ ddxBeforeReset(void)
 {
     winDebug("ddxBeforeReset - Hello\n");
 
-#ifdef XWIN_CLIPBOARD
     winClipboardShutdown();
-#endif
 }
 #endif
 
@@ -193,13 +187,11 @@ ddxGiveUp(enum ExitCode error)
             winDeleteNotifyIcon(winGetScreenPriv(g_ScreenInfo[i].pScreen));
     }
 
-#ifdef XWIN_MULTIWINDOW
     /* Unload libraries for taskbar grouping */
     winPropertyStoreDestroy();
 
     /* Notify the worker threads we're exiting */
     winDeinitMultiWindowWM();
-#endif
 
 #ifdef HAS_DEVWINDOWS
     /* Close our handle to our message queue */
@@ -213,7 +205,7 @@ ddxGiveUp(enum ExitCode error)
 #endif
 
     if (!g_fLogInited) {
-        g_pszLogFile = LogInit(g_pszLogFile, NULL);
+        g_pszLogFile = LogInit(g_pszLogFile, ".old");
         g_fLogInited = TRUE;
     }
     LogClose(error);
@@ -638,7 +630,8 @@ OsVendorInit(void)
          * avoid the second call
          */
         g_fLogInited = TRUE;
-        g_pszLogFile = LogInit(g_pszLogFile, NULL);
+        g_pszLogFile = LogInit(g_pszLogFile, ".old");
+
     }
     LogSetParameter(XLOG_FLUSH, 1);
     LogSetParameter(XLOG_VERBOSITY, g_iLogVerbose);
@@ -692,6 +685,20 @@ OsVendorInit(void)
             }
         }
     }
+
+    /* Work out what the default resize setting should be, and apply it if it
+     was not explicitly specified */
+    {
+        int j;
+        for (j = 0; j < g_iNumScreens; j++) {
+            if (g_ScreenInfo[j].iResizeMode == resizeDefault) {
+                if (g_ScreenInfo[j].fFullScreen)
+                    g_ScreenInfo[j].iResizeMode = resizeNotAllowed;
+                else
+                    g_ScreenInfo[j].iResizeMode = resizeWithRandr;
+                }
+        }
+    }
 }
 
 static void
@@ -702,10 +709,8 @@ winUseMsg(void)
     ErrorF(EXECUTABLE_NAME " Device Dependent Usage:\n");
     ErrorF("\n");
 
-#ifdef XWIN_CLIPBOARD
     ErrorF("-[no]clipboard\n"
            "\tEnable [disable] the clipboard integration. Default is enabled.\n");
-#endif
 
     ErrorF("-clipupdates num_boxes\n"
            "\tUse a clipping region to constrain shadow update blits to\n"
@@ -748,10 +753,6 @@ winUseMsg(void)
 
     ErrorF("-ignoreinput\n" "\tIgnore keyboard and mouse input.\n");
 
-#ifdef XWIN_MULTIWINDOWEXTWM
-    ErrorF("-internalwm\n" "\tRun the internal window manager.\n");
-#endif
-
 #ifdef XWIN_XF86CONFIG
     ErrorF("-keyboard\n"
            "\tSpecify a keyboard device from the configuration file.\n");
@@ -781,9 +782,7 @@ winUseMsg(void)
            "\tUse the entire virtual screen if multiple\n"
            "\tmonitors are present.\n");
 
-#ifdef XWIN_MULTIWINDOW
     ErrorF("-multiwindow\n" "\tRun the server in multi-window mode.\n");
-#endif
 
 #ifdef XWIN_MULTIWINDOWEXTWM
     ErrorF("-mwextwm\n"
@@ -794,14 +793,12 @@ winUseMsg(void)
            "\tDo not draw a window border, title bar, etc.  Windowed\n"
            "\tmode only.\n");
 
-#ifdef XWIN_CLIPBOARD
     ErrorF("-nounicodeclipboard\n"
            "\tDo not use Unicode clipboard even if on a NT-based platform.\n");
 
     ErrorF("-[no]primary\n"
            "\tWhen clipboard integration is enabled, map the X11 PRIMARY selection\n"
            "\tto the Windows clipboard. Default is enabled.\n");
-#endif
 
     ErrorF("-refresh rate_in_Hz\n"
            "\tSpecify an optional refresh rate to use in fullscreen mode\n"
@@ -823,11 +820,6 @@ winUseMsg(void)
            "\t -screen 0 800x600+100+100@2 ; 2nd monitor offset 100,100 size 800x600\n"
            "\t -screen 0 1024x768@3        ; 3rd monitor size 1024x768\n"
            "\t -screen 0 @1 ; on 1st monitor using its full resolution (the default)\n");
-
-    ErrorF("-silent-dup-error\n"
-           "\tIf another instance of " EXECUTABLE_NAME
-           " with the same display number is running\n"
-           "\texit silently and don't display any error message.\n");
 
     ErrorF("-swcursor\n"
            "\tDisable the usage of the Windows cursor and use the X11 software\n"
@@ -877,7 +869,7 @@ ddxUseMsg(void)
 
     /* Log file will not be opened for UseMsg unless we open it now */
     if (!g_fLogInited) {
-        g_pszLogFile = LogInit(g_pszLogFile, NULL);
+        g_pszLogFile = LogInit(g_pszLogFile, ".old");
         g_fLogInited = TRUE;
     }
     LogClose(EXIT_NO_ERROR);
@@ -918,14 +910,6 @@ InitOutput(ScreenInfo * pScreenInfo, int argc, char *argv[])
                    "Exiting.\n");
     }
 
-    /* Check for duplicate invocation on same display number. */
-    if (serverGeneration == 1 && !winCheckDisplayNumber()) {
-        if (g_fSilentDupError)
-            g_fSilentFatalError = TRUE;
-        FatalError("InitOutput - Duplicate invocation on display "
-                   "number: %s.  Exiting.\n", display);
-    }
-
 #ifdef XWIN_XF86CONFIG
     /* Try to read the xorg.conf-style configuration file */
     if (!winReadConfigfile())
@@ -945,10 +929,10 @@ InitOutput(ScreenInfo * pScreenInfo, int argc, char *argv[])
     pScreenInfo->bitmapScanlinePad = BITMAP_SCANLINE_PAD;
     pScreenInfo->bitmapScanlineUnit = BITMAP_SCANLINE_UNIT;
     pScreenInfo->bitmapBitOrder = BITMAP_BIT_ORDER;
-    pScreenInfo->numPixmapFormats = NUMFORMATS;
+    pScreenInfo->numPixmapFormats = ARRAY_SIZE(g_PixmapFormats);
 
     /* Describe how we want common pixmap formats padded */
-    for (i = 0; i < NUMFORMATS; i++) {
+    for (i = 0; i < ARRAY_SIZE(g_PixmapFormats); i++) {
         pScreenInfo->formats[i] = g_PixmapFormats[i];
     }
 
@@ -957,10 +941,8 @@ InitOutput(ScreenInfo * pScreenInfo, int argc, char *argv[])
 
     /* Detect supported engines */
     winDetectSupportedEngines();
-#ifdef XWIN_MULTIWINDOW
     /* Load libraries for taskbar grouping */
     winPropertyStoreInit();
-#endif
 
     /* Store the instance handle */
     g_hInstance = GetModuleHandle(NULL);
@@ -1030,7 +1012,7 @@ InitOutput(ScreenInfo * pScreenInfo, int argc, char *argv[])
         }
     }
 
-#if defined(XWIN_CLIPBOARD) || defined(XWIN_MULTIWINDOW)
+    xorgGlxCreateVendor();
 
     /* Generate a cookie used by internal clients for authorization */
     if (g_fXdmcpEnabled || g_fAuthEnabled)
@@ -1044,76 +1026,8 @@ InitOutput(ScreenInfo * pScreenInfo, int argc, char *argv[])
          */
         setlocale(LC_ALL, "");
     }
-#endif
 
 #if CYGDEBUG || YES
     winDebug("InitOutput - Returning.\n");
 #endif
-}
-
-/*
- * winCheckDisplayNumber - Check if another instance of Cygwin/X is
- * already running on the same display number.  If no one exists,
- * make a mutex to prevent new instances from running on the same display.
- *
- * return FALSE if the display number is already used.
- */
-
-static Bool
-winCheckDisplayNumber(void)
-{
-    int nDisp;
-    HANDLE mutex;
-    char name[MAX_PATH];
-    const char *pszPrefix = '\0';
-    OSVERSIONINFO osvi = { 0 };
-
-    /* Check display range */
-    nDisp = atoi(display);
-    if (nDisp < 0 || nDisp > 65535) {
-        ErrorF("winCheckDisplayNumber - Bad display number: %d\n", nDisp);
-        return FALSE;
-    }
-
-    /* Set first character of mutex name to null */
-    name[0] = '\0';
-
-    /* Get operating system version information */
-    osvi.dwOSVersionInfoSize = sizeof(osvi);
-    GetVersionEx(&osvi);
-
-    /* Want a mutex shared among all terminals on NT > 4.0 */
-    if (osvi.dwPlatformId == VER_PLATFORM_WIN32_NT && osvi.dwMajorVersion >= 5) {
-        pszPrefix = "Global\\";
-    }
-
-    /* Setup Cygwin/X specific part of name */
-    snprintf(name, sizeof(name), "%sCYGWINX_DISPLAY:%d", pszPrefix, nDisp);
-
-    /* Windows automatically releases the mutex when this process exits */
-    mutex = CreateMutex(NULL, FALSE, name);
-    if (!mutex) {
-        LPVOID lpMsgBuf;
-
-        /* Display a fancy error message */
-        FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
-                      FORMAT_MESSAGE_FROM_SYSTEM |
-                      FORMAT_MESSAGE_IGNORE_INSERTS,
-                      NULL,
-                      GetLastError(),
-                      MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                      (LPTSTR) &lpMsgBuf, 0, NULL);
-        ErrorF("winCheckDisplayNumber - CreateMutex failed: %s\n",
-               (LPSTR) lpMsgBuf);
-        LocalFree(lpMsgBuf);
-
-        return FALSE;
-    }
-    if (GetLastError() == ERROR_ALREADY_EXISTS) {
-        ErrorF("winCheckDisplayNumber - "
-               PROJECT_NAME " is already running on display %d\n", nDisp);
-        return FALSE;
-    }
-
-    return TRUE;
 }

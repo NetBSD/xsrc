@@ -27,6 +27,7 @@ sdk_HEADERS =		\
 	gcstruct.h	\
 	globals.h	\
 	glx_extinit.h	\
+	glxvndabi.h	\
 	input.h		\
 	inputstr.h	\
 	list.h		\
@@ -60,6 +61,7 @@ sdk_HEADERS =		\
 	xkbsrv.h	\
 	xkbstr.h        \
 	xkbrules.h      \
+	xserver_poll.h	\
 	xserver-properties.h
 
 nodist_sdk_HEADERS = xorg-server.h
@@ -70,11 +72,12 @@ AM_CFLAGS = $(DIX_CFLAGS)
 EXTRA_DIST = 	\
 	busfault.h dbus-core.h \
 	dix-config-apple-verbatim.h \
-	dixfontstubs.h eventconvert.h eventstr.h inpututils.h \
+	eventconvert.h eventstr.h inpututils.h \
 	probes.h \
 	protocol-versions.h \
 	swaprep.h \
 	swapreq.h \
 	systemd-logind.h \
         vidmodestr.h \
+	xorg-server.h.meson.in \
 	xsha1.h

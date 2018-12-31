@@ -520,7 +520,7 @@ winShadowUpdateDDNL(ScreenPtr pScreen, shadowBufPtr pBuf)
 {
     winScreenPriv(pScreen);
     winScreenInfo *pScreenInfo = pScreenPriv->pScreenInfo;
-    RegionPtr damage = shadowDamage(pBuf);
+    RegionPtr damage = DamageRegion(pBuf->pDamage);
     HRESULT ddrval = DD_OK;
     RECT rcDest, rcSrc;
     POINT ptOrigin;
@@ -658,7 +658,7 @@ winCloseScreenShadowDDNL(ScreenPtr pScreen)
 {
     winScreenPriv(pScreen);
     winScreenInfo *pScreenInfo = pScreenPriv->pScreenInfo;
-    Bool fReturn;
+    Bool fReturn = TRUE;
 
 #if CYGDEBUG
     winDebug("winCloseScreenShadowDDNL - Freeing screen resources\n");
@@ -697,10 +697,8 @@ winCloseScreenShadowDDNL(ScreenPtr pScreen)
         pScreenPriv->hwndScreen = NULL;
     }
 
-#if defined(XWIN_CLIPBOARD) || defined(XWIN_MULTIWINDOW)
     /* Destroy the thread startup mutex */
     pthread_mutex_destroy(&pScreenPriv->pmServerStarted);
-#endif
 
     /* Kill our screeninfo's pointer to the screen */
     pScreenInfo->pScreen = NULL;
@@ -1211,14 +1209,8 @@ winSetEngineFunctionsShadowDDNL(ScreenPtr pScreen)
     pScreenPriv->pwinStoreColors = winStoreColorsShadowDDNL;
     pScreenPriv->pwinCreateColormap = winCreateColormapShadowDDNL;
     pScreenPriv->pwinDestroyColormap = winDestroyColormapShadowDDNL;
-    pScreenPriv->pwinHotKeyAltTab =
-        (winHotKeyAltTabProcPtr) (void (*)(void)) NoopDDA;
     pScreenPriv->pwinCreatePrimarySurface = winCreatePrimarySurfaceShadowDDNL;
     pScreenPriv->pwinReleasePrimarySurface = winReleasePrimarySurfaceShadowDDNL;
-#ifdef XWIN_MULTIWINDOW
-    pScreenPriv->pwinFinishCreateWindowsWindow
-        = (winFinishCreateWindowsWindowProcPtr) (void (*)(void)) NoopDDA;
-#endif
 
     return TRUE;
 }

@@ -59,7 +59,7 @@
  *
  */
 
-int
+int _X_COLD
 SProcXIQueryPointer(ClientPtr client)
 {
     REQUEST(xXIQueryPointerReq);
@@ -110,8 +110,8 @@ ProcXIQueryPointer(ClientPtr client)
 
     rc = dixLookupWindow(&pWin, stuff->win, client, DixGetAttrAccess);
     if (rc != Success) {
-        SendErrorToClient(client, IReqCode, X_XIQueryPointer, stuff->win, rc);
-        return Success;
+        client->errorValue = stuff->win;
+        return rc;
     }
 
     if (pDev->valuator->motionHintWindow)

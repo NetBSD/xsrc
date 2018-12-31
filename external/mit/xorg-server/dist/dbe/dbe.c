@@ -574,6 +574,9 @@ ProcDbeGetVisualInfo(ClientPtr client)
     XdbeScreenVisualInfo *pScrVisInfo;
 
     REQUEST_AT_LEAST_SIZE(xDbeGetVisualInfoReq);
+    if (stuff->n > UINT32_MAX / sizeof(CARD32))
+        return BadLength;
+    REQUEST_FIXED_SIZE(xDbeGetVisualInfoReq, stuff->n * sizeof(CARD32));
 
     if (stuff->n > UINT32_MAX / sizeof(DrawablePtr))
         return BadAlloc;
@@ -811,7 +814,7 @@ ProcDbeDispatch(ClientPtr client)
  *
  *****************************************************************************/
 
-static int
+static int _X_COLD
 SProcDbeGetVersion(ClientPtr client)
 {
     REQUEST(xDbeGetVersionReq);
@@ -844,7 +847,7 @@ SProcDbeGetVersion(ClientPtr client)
  *
  *****************************************************************************/
 
-static int
+static int _X_COLD
 SProcDbeAllocateBackBufferName(ClientPtr client)
 {
     REQUEST(xDbeAllocateBackBufferNameReq);
@@ -877,7 +880,7 @@ SProcDbeAllocateBackBufferName(ClientPtr client)
  *
  *****************************************************************************/
 
-static int
+static int _X_COLD
 SProcDbeDeallocateBackBufferName(ClientPtr client)
 {
     REQUEST(xDbeDeallocateBackBufferNameReq);
@@ -912,7 +915,7 @@ SProcDbeDeallocateBackBufferName(ClientPtr client)
  *
  *****************************************************************************/
 
-static int
+static int _X_COLD
 SProcDbeSwapBuffers(ClientPtr client)
 {
     REQUEST(xDbeSwapBuffersReq);
@@ -924,7 +927,7 @@ SProcDbeSwapBuffers(ClientPtr client)
 
     swapl(&stuff->n);
     if (stuff->n > UINT32_MAX / sizeof(DbeSwapInfoRec))
-        return BadAlloc;
+        return BadLength;
     REQUEST_FIXED_SIZE(xDbeSwapBuffersReq, stuff->n * sizeof(xDbeSwapInfo));
 
     if (stuff->n != 0) {
@@ -960,7 +963,7 @@ SProcDbeSwapBuffers(ClientPtr client)
  *
  *****************************************************************************/
 
-static int
+static int _X_COLD
 SProcDbeGetVisualInfo(ClientPtr client)
 {
     REQUEST(xDbeGetVisualInfoReq);
@@ -991,7 +994,7 @@ SProcDbeGetVisualInfo(ClientPtr client)
  *
  *****************************************************************************/
 
-static int
+static int _X_COLD
 SProcDbeGetBackBufferAttributes(ClientPtr client)
 {
     REQUEST(xDbeGetBackBufferAttributesReq);
@@ -1015,7 +1018,7 @@ SProcDbeGetBackBufferAttributes(ClientPtr client)
  *
  *****************************************************************************/
 
-static int
+static int _X_COLD
 SProcDbeDispatch(ClientPtr client)
 {
     REQUEST(xReq);

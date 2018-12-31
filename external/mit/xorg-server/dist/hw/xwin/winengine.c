@@ -150,9 +150,7 @@ winSetEngine(ScreenPtr pScreen)
 #ifdef XWIN_MULTIWINDOWEXTWM
         || pScreenInfo->fMWExtWM
 #endif
-#ifdef XWIN_MULTIWINDOW
         || pScreenInfo->fMultiWindow
-#endif
         ) {
         winErrorFVerb(2,
                       "winSetEngine - Multi Window or Rootless => ShadowGDI\n");
@@ -203,7 +201,7 @@ winSetEngine(ScreenPtr pScreen)
         return TRUE;
     }
 
-    return TRUE;
+    return FALSE;
 }
 
 /*

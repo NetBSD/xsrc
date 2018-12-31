@@ -149,25 +149,6 @@ QuartzSetupScreen(int index,
     return TRUE;
 }
 
-static const ExtensionModule quartzExtensions[] = {
-    /* PseudoramiX needs to be done before RandR, so
-     * it is in miinitext.c until it can be reordered.
-     * { PseudoramiXExtensionInit, "PseudoramiX", &noPseudoramiXExtension },
-     */
-#ifdef GLXEXT
-    {GlxExtensionInit, "GLX", &noGlxExtension},
-#endif
-};
-
-/*
- * QuartzExtensionInit
- * Initialises XQuartz-specific extensions.
- */
-static void QuartzExtensionInit(void)
-{
-    LoadExtensionList(quartzExtensions, ARRAY_SIZE(quartzExtensions), TRUE);
-}
-
 /*
  * QuartzInitOutput
  *  Quartz display initialization.
@@ -178,6 +159,7 @@ QuartzInitOutput(int argc,
 {
     /* For XQuartz, we want to just use the default signal handler to work better with CrashTracer */
     signal(SIGSEGV, SIG_DFL);
+    signal(SIGABRT, SIG_DFL);
     signal(SIGILL, SIG_DFL);
 #ifdef SIGEMT
     signal(SIGEMT, SIG_DFL);
@@ -207,8 +189,6 @@ QuartzInitOutput(int argc,
 
     // Do display mode specific initialization
     quartzProcs->DisplayInit();
-
-    QuartzExtensionInit();
 }
 
 /*

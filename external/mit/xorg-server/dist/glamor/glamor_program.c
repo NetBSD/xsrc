@@ -122,8 +122,7 @@ static glamor_location_var location_vars[] = {
         .vs_vars = ("uniform vec2 fill_offset;\n"
                     "uniform vec2 fill_size_inv;\n"
                     "varying vec2 fill_pos;\n"),
-        .fs_vars = ("uniform vec2 fill_size_inv;\n"
-                    "varying vec2 fill_pos;\n")
+        .fs_vars = ("varying vec2 fill_pos;\n")
     },
     {
         .location = glamor_program_location_font,
@@ -509,12 +508,13 @@ glamor_set_blend(CARD8 op, glamor_program_alpha alpha, PicturePtr dst)
 static Bool
 use_source_solid(CARD8 op, PicturePtr src, PicturePtr dst, glamor_program *prog)
 {
+    PictSolidFill *solid = &src->pSourcePict->solidFill;
+    float color[4];
 
+    glamor_get_rgba_from_color(&solid->fullcolor, color);
     glamor_set_blend(op, prog->alpha, dst);
+    glUniform4fv(prog->fg_uniform, 1, color);
 
-    glamor_set_color_depth(dst->pDrawable->pScreen, 32,
-                           src->pSourcePict->solidFill.color,
-                           prog->fg_uniform);
     return TRUE;
 }
 
