@@ -14,6 +14,10 @@ DRI3_BUILDDIR = $(top_builddir)/dri3
 DRI3_LIB = $(DRI3_BUILDDIR)/libdri3.la
 endif
 
+if GLX
+GLXVND_LIB = $(top_builddir)/glx/libglxvnd.la
+endif
+
 if GLAMOR_EGL
 GLAMOR_EGL_SUBDIR = glamor_egl
 endif
@@ -36,13 +40,13 @@ endif
 
 SUBDIRS = common ddc x86emu $(INT10_SUBDIR) os-support parser \
 	  ramdac $(VGAHW_SUBDIR) loader modes $(DRI_SUBDIR) \
-	  $(DRI2_SUBDIR) . $(VBE_SUBDIR) i2c dixmods \
+	  $(DRI2_SUBDIR) . $(VBE_SUBDIR) i2c dixmods xkb \
 	  fbdevhw shadowfb exa $(XF86UTILS_SUBDIR) doc man \
 	  $(GLAMOR_EGL_SUBDIR) drivers
 
 DIST_SUBDIRS = common ddc i2c x86emu int10 fbdevhw os-support \
                parser ramdac shadowfb vbe vgahw \
-               loader dixmods dri dri2 exa modes \
+               loader dixmods xkb dri dri2 exa modes \
 	       utils doc man glamor_egl drivers
 
 bin_PROGRAMS = Xorg
@@ -66,10 +70,11 @@ LOCAL_LIBS = \
             ddc/libddc.la \
             i2c/libi2c.la \
             $(XORG_LIBS) \
-            dixmods/libxorgxkb.la \
+            xkb/libxorgxkb.la \
             $(DRI_LIB) \
             $(DRI2_LIB) \
 	    $(DRI3_LIB) \
+	    $(GLXVND_LIB) \
 	    $(top_builddir)/miext/sync/libsync.la \
             $(top_builddir)/mi/libmi.la \
             $(top_builddir)/os/libos.la \
@@ -84,8 +89,8 @@ Xorg_DEPENDENCIES = $(LOCAL_LIBS)
 Xorg_LDFLAGS = $(LD_EXPORT_SYMBOLS_FLAG)
 
 if SUID_WRAPPER
-wrapdir = $(SUID_WRAPPER_DIR)
-wrap_PROGRAMS = Xorg.wrap
+wrapexecdir = $(SUID_WRAPPER_DIR)
+wrapexec_PROGRAMS = Xorg.wrap
 Xorg_wrap_SOURCES = xorg-wrapper.c
 endif
 
@@ -103,14 +108,14 @@ endif
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir) && rm -f X && $(LN_S) Xorg$(EXEEXT) X)
 if INSTALL_SETUID
-	chown root $(DESTDIR)$(bindir)/Xorg
+	chown 0 $(DESTDIR)$(bindir)/Xorg
 	chmod u+s $(DESTDIR)$(bindir)/Xorg
 endif
 if SUID_WRAPPER
 	$(MKDIR_P) $(DESTDIR)$(SUID_WRAPPER_DIR)
 	mv $(DESTDIR)$(bindir)/Xorg $(DESTDIR)$(SUID_WRAPPER_DIR)/Xorg
 	${INSTALL} -m 755 Xorg.sh $(DESTDIR)$(bindir)/Xorg
-	-chown root $(DESTDIR)$(SUID_WRAPPER_DIR)/Xorg.wrap && chmod u+s $(DESTDIR)$(SUID_WRAPPER_DIR)/Xorg.wrap
+	-chown 0 $(DESTDIR)$(SUID_WRAPPER_DIR)/Xorg.wrap && chmod u+s $(DESTDIR)$(SUID_WRAPPER_DIR)/Xorg.wrap
 endif
 
 uninstall-local:
@@ -148,5 +153,5 @@ i2c/libi2c.la:
 dixmods/libdixmods.la:
 	$(AM_V_at)cd dixmods && $(MAKE) libdixmods.la
 
-dixmods/libxorgxkb.la:
-	$(AM_V_at)cd dixmods && $(MAKE) libxorgxkb.la
+xkb/libxorgxkb.la:
+	$(AM_V_at)cd xkb && $(MAKE) libxorgxkb.la

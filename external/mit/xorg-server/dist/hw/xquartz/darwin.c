@@ -50,7 +50,7 @@
 #include <X11/extensions/XIproto.h>
 #include "exevents.h"
 #include "extinit.h"
-
+#include "glx_extinit.h"
 #include "xserver-properties.h"
 
 #include <sys/types.h>
@@ -162,7 +162,6 @@ static PixmapFormatRec formats[] = {
     { 24, 32, BITMAP_SCANLINE_PAD    },
     { 32, 32, BITMAP_SCANLINE_PAD    }
 };
-const int NUMFORMATS = sizeof(formats) / sizeof(formats[0]);
 
 void
 DarwinPrintBanner(void)
@@ -303,6 +302,11 @@ DarwinScreenInit(ScreenPtr pScreen, int argc, char **argv)
    =============================================================================
  */
 
+static void
+DarwinInputHandlerNotify(int fd __unused, int ready __unused, void *data __unused)
+{
+}
+
 /*
  * DarwinMouseProc: Handle the initialization, etc. of a mouse
  */
@@ -362,13 +366,13 @@ DarwinMouseProc(DeviceIntPtr pPointer, int what)
 
     case DEVICE_ON:
         pPointer->public.on = TRUE;
-        AddEnabledDevice(darwinEventReadFD);
+        SetNotifyFd(darwinEventReadFD, DarwinInputHandlerNotify, X_NOTIFY_READ, NULL);
         return Success;
 
     case DEVICE_CLOSE:
     case DEVICE_OFF:
         pPointer->public.on = FALSE;
-        RemoveEnabledDevice(darwinEventReadFD);
+        RemoveNotifyFd(darwinEventReadFD);
         return Success;
     }
 
@@ -431,13 +435,13 @@ DarwinTabletProc(DeviceIntPtr pPointer, int what)
 
     case DEVICE_ON:
         pPointer->public.on = TRUE;
-        AddEnabledDevice(darwinEventReadFD);
+        SetNotifyFd(darwinEventReadFD, DarwinInputHandlerNotify, X_NOTIFY_READ, NULL);
         return Success;
 
     case DEVICE_CLOSE:
     case DEVICE_OFF:
         pPointer->public.on = FALSE;
-        RemoveEnabledDevice(darwinEventReadFD);
+        RemoveNotifyFd(darwinEventReadFD);
         return Success;
     }
     return Success;
@@ -459,12 +463,12 @@ DarwinKeybdProc(DeviceIntPtr pDev, int onoff)
 
     case DEVICE_ON:
         pDev->public.on = TRUE;
-        AddEnabledDevice(darwinEventReadFD);
+        SetNotifyFd(darwinEventReadFD, DarwinInputHandlerNotify, X_NOTIFY_READ, NULL);
         break;
 
     case DEVICE_OFF:
         pDev->public.on = FALSE;
-        RemoveEnabledDevice(darwinEventReadFD);
+        RemoveNotifyFd(darwinEventReadFD);
         break;
 
     case DEVICE_CLOSE:
@@ -654,8 +658,8 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char **argv)
     pScreenInfo->bitmapBitOrder = BITMAP_BIT_ORDER;
 
     // List how we want common pixmap formats to be padded
-    pScreenInfo->numPixmapFormats = NUMFORMATS;
-    for (i = 0; i < NUMFORMATS; i++)
+    pScreenInfo->numPixmapFormats = ARRAY_SIZE(formats);
+    for (i = 0; i < ARRAY_SIZE(formats); i++)
         pScreenInfo->formats[i] = formats[i];
 
     // Discover screens and do mode specific initialization
@@ -666,6 +670,8 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char **argv)
         AddScreen(DarwinScreenInit, argc, argv);
     }
 
+    xorgGlxCreateVendor();
+
     DarwinAdjustScreenOrigins(pScreenInfo);
 }
 
@@ -675,7 +681,6 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char **argv)
 void
 OsVendorFatalError(const char *f, va_list args)
 {
-    X11ApplicationFatalError(f, args);
 }
 
 /*

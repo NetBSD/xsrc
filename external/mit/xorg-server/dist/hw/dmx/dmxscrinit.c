@@ -58,6 +58,8 @@
 #include "mipointer.h"
 #include "micmap.h"
 
+#include <X11/fonts/libxfont2.h>
+
 extern Bool dmxCloseScreen(ScreenPtr pScreen);
 static Bool dmxSaveScreen(ScreenPtr pScreen, int what);
 
@@ -72,6 +74,17 @@ DevPrivateKeyRec dmxScreenPrivateKeyRec;
 DevPrivateKeyRec dmxColormapPrivateKeyRec;
 DevPrivateKeyRec dmxPictPrivateKeyRec;
 DevPrivateKeyRec dmxGlyphSetPrivateKeyRec;
+
+#ifdef DPMSExtension
+static void
+dmxDPMS(ScreenPtr pScreen, int level)
+{
+    DMXScreenInfo *dmxScreen = &dmxScreens[pScreen->myNum];
+    dmxDPMSBackend(dmxScreen, level);
+}
+#else
+#define dmxDPMS NULL
+#endif
 
 /** Initialize the parts of screen \a idx that require access to the
  *  back-end server. */
@@ -101,7 +114,8 @@ dmxBEScreenInit(ScreenPtr pScreen)
     pScreen->blackPixel = dmxScreen->beBlackPixel;
 
     /* Handle screen savers and DPMS on the backend */
-    dmxDPMSInit(dmxScreen);
+    if (dmxDPMSInit(dmxScreen))
+        pScreen->DPMS = dmxDPMS;
 
     /* Create root window for screen */
     mask = CWBackPixel | CWEventMask | CWColormap | CWOverrideRedirect;
@@ -187,7 +201,7 @@ dmxScreenInit(ScreenPtr pScreen, int argc, char *argv[])
 
     if (dmxGeneration != serverGeneration) {
         /* Allocate font private index */
-        dmxFontPrivateIndex = AllocateFontPrivateIndex();
+        dmxFontPrivateIndex = xfont2_allocate_font_private_index();
         if (dmxFontPrivateIndex == -1)
             return FALSE;
 

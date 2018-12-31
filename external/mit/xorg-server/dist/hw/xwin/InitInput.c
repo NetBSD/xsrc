@@ -37,9 +37,7 @@
  * Local function prototypes
  */
 
-#ifdef XWIN_CLIPBOARD
 int winProcEstablishConnection(ClientPtr /* client */ );
-#endif
 
 /*
  * Local global declarations
@@ -89,6 +87,18 @@ DDXRingBell(int volume, int pitch, int duration)
     return;
 }
 
+
+#ifdef HAS_DEVWINDOWS
+static void
+xwinDevWindowsHandlerNotify(int fd, int ready, void *data)
+{
+    /* This should process Windows messages, but instead all of that is delayed
+     * until the wakeup handler is called.
+     */
+    ;
+}
+#endif
+
 /* See Porting Layer Definition - p. 17 */
 void
 InitInput(int argc, char *argv[])
@@ -97,7 +107,6 @@ InitInput(int argc, char *argv[])
     winDebug("InitInput\n");
 #endif
 
-#ifdef XWIN_CLIPBOARD
     /*
      * Wrap some functions at every generation of the server.
      */
@@ -105,7 +114,6 @@ InitInput(int argc, char *argv[])
         winProcEstablishConnectionOrig = InitialVector[2];
         InitialVector[2] = winProcEstablishConnection;
     }
-#endif
 
     if (AllocDevicePair(serverClient, "Windows",
                         &g_pwinPointer, &g_pwinKeyboard,
@@ -129,7 +137,7 @@ InitInput(int argc, char *argv[])
         }
 
         /* Add the message queue as a device to wait for in WaitForSomething */
-        AddEnabledDevice(g_fdMessageQueue);
+        SetNotifyFd(g_fdMessageQueue, xwinDevWindowsHandlerNotify, X_NOTIFY_READ, NULL);
     }
 #endif
 

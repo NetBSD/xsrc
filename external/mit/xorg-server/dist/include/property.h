@@ -51,6 +51,14 @@ SOFTWARE.
 
 typedef struct _Property *PropertyPtr;
 
+typedef struct _PropertyStateRec {
+    WindowPtr win;
+    PropertyPtr prop;
+    int state;
+} PropertyStateRec;
+
+extern CallbackListPtr PropertyStateCallback;
+
 extern _X_EXPORT int dixLookupProperty(PropertyPtr * /*result */ ,
                                        WindowPtr /*pWin */ ,
                                        Atom /*proprty */ ,
@@ -66,15 +74,6 @@ extern _X_EXPORT int dixChangeWindowProperty(ClientPtr pClient,
                                              unsigned long len,
                                              void *value,
                                              Bool sendevent);
-
-extern _X_EXPORT int ChangeWindowProperty(WindowPtr pWin,
-                                          Atom property,
-                                          Atom type,
-                                          int format,
-                                          int mode,
-                                          unsigned long len,
-                                          void *value,
-                                          Bool sendevent);
 
 extern _X_EXPORT int DeleteProperty(ClientPtr /*client */ ,
                                     WindowPtr /*pWin */ ,

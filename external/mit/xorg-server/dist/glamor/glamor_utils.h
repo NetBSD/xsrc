@@ -334,21 +334,6 @@
     DEBUGF("normalized tx %f ty %f \n", (texcoord)[0], (texcoord)[1]);	\
   } while(0)
 
-#define glamor_set_transformed_normalize_tri_tcoords(priv,		\
-						     matrix,		\
-						     xscale,		\
-						     yscale,		\
-						     vtx,		\
-						     texcoords)		\
-    do {								\
-	glamor_set_transformed_point(priv, matrix, xscale, yscale,	\
-				     texcoords, (vtx)[0], (vtx)[1]);    \
-	glamor_set_transformed_point(priv, matrix, xscale, yscale,	\
-				     texcoords+2, (vtx)[2], (vtx)[3]);  \
-	glamor_set_transformed_point(priv, matrix, xscale, yscale,	\
-				     texcoords+4, (vtx)[4], (vtx)[5]);  \
-    } while (0)
-
 #define glamor_set_transformed_normalize_tcoords_ext( priv,		\
 						  matrix,		\
 						  xscale,		\
@@ -366,38 +351,6 @@
     glamor_set_transformed_point(priv, matrix, xscale, yscale,		\
 				 texcoords + 3 * stride, tx1, ty2);     \
   } while (0)
-
-#define glamor_set_transformed_normalize_tcoords( priv,			\
-						  matrix,		\
-						  xscale,		\
-						  yscale,		\
-                                                  tx1, ty1, tx2, ty2,   \
-                                                  texcoords)            \
-  do {									\
-	glamor_set_transformed_normalize_tcoords_ext( priv,		\
-						  matrix,		\
-						  xscale,		\
-						  yscale,		\
-                                                  tx1, ty1, tx2, ty2,   \
-                                                  texcoords,		\
-						  2);			\
-  } while (0)
-
-#define glamor_set_normalize_tri_tcoords(xscale,		\
-					 yscale,		\
-					 vtx,			\
-					 texcoords)		\
-    do {							\
-	_glamor_set_normalize_tpoint(xscale, yscale,		\
-				(vtx)[0], (vtx)[1],		\
-				texcoords);			\
-	_glamor_set_normalize_tpoint(xscale, yscale,		\
-				(vtx)[2], (vtx)[3],		\
-				texcoords+2);			\
-	_glamor_set_normalize_tpoint(xscale, yscale,		\
-				(vtx)[4], (vtx)[5],		\
-				texcoords+4);			\
-    } while (0)
 
 #define glamor_set_repeat_transformed_normalize_tcoords_ext(pixmap, priv, \
 							 repeat_type,	\
@@ -508,15 +461,6 @@
                                       x2, y2, vertices, stride);        \
  } while(0)
 
-#define glamor_set_normalize_tcoords(priv, xscale, yscale,		\
-				     x1, y1, x2, y2,			\
-                                     vertices)		\
-  do {									\
-	glamor_set_normalize_tcoords_ext(priv, xscale, yscale,		\
-				     x1, y1, x2, y2,			\
-                                     vertices, 2);			\
- } while(0)
-
 #define glamor_set_repeat_normalize_tcoords_ext(pixmap, priv, repeat_type, \
 					    xscale, yscale,		\
 					    _x1_, _y1_, _x2_, _y2_,	\
@@ -543,17 +487,6 @@
 				   stride);				\
  } while(0)
 
-#define glamor_set_repeat_normalize_tcoords(priv, repeat_type,		\
-					    xscale, yscale,		\
-					    _x1_, _y1_, _x2_, _y2_,	\
-	                                    vertices)                   \
-  do {									\
-	glamor_set_repeat_normalize_tcoords_ext(priv, repeat_type,	\
-					    xscale, yscale,		\
-					    _x1_, _y1_, _x2_, _y2_,	\
-	                                    vertices, 2);		\
- } while(0)
-
 #define glamor_set_normalize_tcoords_tri_stripe(xscale, yscale,		\
 						x1, y1, x2, y2,		\
 						vertices)               \
@@ -566,51 +499,6 @@
         (vertices)[7] = t_from_x_coord_y(yscale, y2);                   \
 	(vertices)[3] = (vertices)[1];					\
 	(vertices)[5] = (vertices)[7];					\
-    } while(0)
-
-#define glamor_set_tcoords(x1, y1, x2, y2, vertices)            \
-    do {							\
-	(vertices)[0] = (x1);					\
-	(vertices)[2] = (x2);					\
-	(vertices)[4] = (vertices)[2];				\
-	(vertices)[6] = (vertices)[0];				\
-        (vertices)[1] = (y1);                                   \
-        (vertices)[5] = (y2);                                   \
-	(vertices)[3] = (vertices)[1];				\
-	(vertices)[7] = (vertices)[5];				\
-    } while(0)
-
-#define glamor_set_tcoords_ext(x1, y1, x2, y2, vertices, stride)        \
-    do {							\
-	(vertices)[0] = (x1);					\
-	(vertices)[1*stride] = (x2);				\
-	(vertices)[2*stride] = (vertices)[1*stride];		\
-	(vertices)[3*stride] = (vertices)[0];			\
-        (vertices)[1] = (y1);                                   \
-        (vertices)[2*stride + 1] = (y2);			\
-	(vertices)[1*stride + 1] = (vertices)[1];		\
-	(vertices)[3*stride + 1] = (vertices)[2*stride + 1];	\
-    } while(0)
-
-#define glamor_set_normalize_one_vcoord(xscale, yscale, x, y,		\
-					vertices)                       \
-    do {								\
-	(vertices)[0] = v_from_x_coord_x(xscale, x);			\
-        (vertices)[1] = v_from_x_coord_y(yscale, y);                    \
-    } while(0)
-
-#define glamor_set_normalize_tri_vcoords(xscale, yscale, vtx,		\
-					 vertices)                      \
-    do {								\
-	glamor_set_normalize_one_vcoord(xscale, yscale,			\
-					(vtx)[0], (vtx)[1],		\
-					vertices);                      \
-	glamor_set_normalize_one_vcoord(xscale, yscale,			\
-					(vtx)[2], (vtx)[3],		\
-					vertices+2);                    \
-	glamor_set_normalize_one_vcoord(xscale, yscale,			\
-					(vtx)[4], (vtx)[5],		\
-					vertices+4);                    \
     } while(0)
 
 #define glamor_set_tcoords_tri_strip(x1, y1, x2, y2, vertices)          \
@@ -646,25 +534,6 @@
     (vertices)[3 * stride + 1] = _t5_;					\
   } while(0)
 
-#define glamor_set_normalize_vcoords(priv, xscale, yscale,		\
-				     x1, y1, x2, y2,			\
-                                     vertices)				\
-  do {									\
-	glamor_set_normalize_vcoords_ext(priv, xscale, yscale,		\
-				     x1, y1, x2, y2,			\
-                                     vertices, 2);			\
-  } while(0)
-
-#define glamor_set_const_ext(params, nparam, vertices, nverts, stride)	\
-    do {								\
-	int _i_ = 0, _j_ = 0;						\
-	for(; _i_ < nverts; _i_++) {					\
-	    for(_j_ = 0; _j_ < nparam; _j_++) {				\
-		vertices[stride*_i_ + _j_] = params[_j_];		\
-	    }								\
-	}								\
-    } while(0)
-
 #define glamor_set_normalize_vcoords_tri_strip(xscale, yscale,		\
 					       x1, y1, x2, y2,		\
 					       vertices)		\
@@ -692,10 +561,6 @@
         (c)[0] = (float)x;				\
         (c)[1] = (float)y;				\
     } while(0)
-
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
-#endif
 
 #define ALIGN(i,m)	(((i) + (m) - 1) & ~((m) - 1))
 #define MIN(a,b)	((a) < (b) ? (a) : (b))
@@ -736,10 +601,8 @@ format_for_depth(int depth)
     default:
     case 24:
         return PICT_x8r8g8b8;
-#if XORG_VERSION_CURRENT >= 10699900
     case 30:
         return PICT_x2r10g10b10;
-#endif
     case 32:
         return PICT_a8r8g8b8;
     }
@@ -754,6 +617,9 @@ gl_iformat_for_pixmap(PixmapPtr pixmap)
     if (glamor_priv->gl_flavor == GLAMOR_GL_DESKTOP &&
         ((pixmap)->drawable.depth == 1 || (pixmap)->drawable.depth == 8)) {
         return glamor_priv->one_channel_format;
+    } else if (glamor_priv->gl_flavor == GLAMOR_GL_DESKTOP &&
+               (pixmap)->drawable.depth == 30) {
+        return GL_RGB10_A2;
     } else {
         return GL_RGBA;
     }
@@ -767,17 +633,8 @@ format_for_pixmap(PixmapPtr pixmap)
 
 #define REVERT_NONE       		0
 #define REVERT_NORMAL     		1
-#define REVERT_DOWNLOADING_A1		2
 #define REVERT_UPLOADING_A1		3
-#define REVERT_DOWNLOADING_2_10_10_10 	4
-#define REVERT_UPLOADING_2_10_10_10 	5
-#define REVERT_DOWNLOADING_1_5_5_5  	7
-#define REVERT_UPLOADING_1_5_5_5    	8
-#define REVERT_DOWNLOADING_10_10_10_2 	9
-#define REVERT_UPLOADING_10_10_10_2 	10
 
-#define SWAP_NONE_DOWNLOADING  	0
-#define SWAP_DOWNLOADING  	1
 #define SWAP_UPLOADING	  	2
 #define SWAP_NONE_UPLOADING	3
 
@@ -810,7 +667,6 @@ glamor_get_rgba_from_pixel(CARD32 pixel,
         gshift = rbits;
         bshift = gshift + gbits;
         ashift = bshift + bbits;
-#if XORG_VERSION_CURRENT >= 10699900
     }
     else if (PICT_FORMAT_TYPE(format) == PICT_TYPE_BGRA) {
         ashift = 0;
@@ -819,7 +675,6 @@ glamor_get_rgba_from_pixel(CARD32 pixel,
             rshift = PICT_FORMAT_BPP(format) - (rbits + gbits + bbits);
         gshift = rshift + rbits;
         bshift = gshift + gbits;
-#endif
     }
     else {
         return FALSE;
@@ -851,6 +706,15 @@ glamor_get_rgba_from_pixel(CARD32 pixel,
     return TRUE;
 }
 
+static inline void
+glamor_get_rgba_from_color(const xRenderColor *color, float rgba[4])
+{
+    rgba[0] = color->red   / (float)UINT16_MAX;
+    rgba[1] = color->green / (float)UINT16_MAX;
+    rgba[2] = color->blue  / (float)UINT16_MAX;
+    rgba[3] = color->alpha / (float)UINT16_MAX;
+}
+
 inline static Bool
 glamor_is_large_pixmap(PixmapPtr pixmap)
 {
@@ -861,431 +725,56 @@ glamor_is_large_pixmap(PixmapPtr pixmap)
 }
 
 static inline void
-_glamor_dump_pixmap_bits(PixmapPtr pixmap, int x, int y, int w, int h)
-{
-    int i, j;
-    unsigned char *p = (pixmap)->devPrivate.ptr;
-    int stride = (pixmap)->devKind;
-
-    p = p + y * stride + x;
-
-    for (i = 0; i < h; i++) {
-        ErrorF("line %3d: ", i);
-        for (j = 0; j < w; j++)
-            ErrorF("%2d ", (p[j / 8] & (1 << (j % 8))) >> (j % 8));
-        p += stride;
-        ErrorF("\n");
-    }
-}
-
-static inline void
-_glamor_dump_pixmap_byte(PixmapPtr pixmap, int x, int y, int w, int h)
-{
-    int i, j;
-    unsigned char *p = (pixmap)->devPrivate.ptr;
-    int stride = (pixmap)->devKind;
-
-    p = p + y * stride + x;
-
-    for (i = 0; i < h; i++) {
-        ErrorF("line %3d: ", i);
-        for (j = 0; j < w; j++)
-            ErrorF("%2x ", p[j]);
-        p += stride;
-        ErrorF("\n");
-    }
-}
-
-static inline void
-_glamor_dump_pixmap_sword(PixmapPtr pixmap, int x, int y, int w, int h)
-{
-    int i, j;
-    unsigned short *p = (pixmap)->devPrivate.ptr;
-    int stride = (pixmap)->devKind / 2;
-
-    p = p + y * stride + x;
-
-    for (i = 0; i < h; i++) {
-        ErrorF("line %3d: ", i);
-        for (j = 0; j < w; j++)
-            ErrorF("%2x ", p[j]);
-        p += stride;
-        ErrorF("\n");
-    }
-}
-
-static inline void
-_glamor_dump_pixmap_word(PixmapPtr pixmap, int x, int y, int w, int h)
-{
-    int i, j;
-    unsigned int *p = (pixmap)->devPrivate.ptr;
-    int stride = (pixmap)->devKind / 4;
-
-    p = p + y * stride + x;
-
-    for (i = 0; i < h; i++) {
-        ErrorF("line %3d: ", i);
-        for (j = 0; j < w; j++)
-            ErrorF("%2x ", p[j]);
-        p += stride;
-        ErrorF("\n");
-    }
-}
-
-static inline void
-glamor_dump_pixmap(PixmapPtr pixmap, int x, int y, int w, int h)
-{
-    w = ((x + w) > (pixmap)->drawable.width) ? ((pixmap)->drawable.width - x) : w;
-    h = ((y + h) > (pixmap)->drawable.height) ? ((pixmap)->drawable.height - y) : h;
-
-    glamor_prepare_access(&(pixmap)->drawable, GLAMOR_ACCESS_RO);
-    switch ((pixmap)->drawable.depth) {
-    case 8:
-        _glamor_dump_pixmap_byte(pixmap, x, y, w, h);
-        break;
-    case 15:
-    case 16:
-        _glamor_dump_pixmap_sword(pixmap, x, y, w, h);
-        break;
-
-    case 24:
-    case 32:
-        _glamor_dump_pixmap_word(pixmap, x, y, w, h);
-        break;
-    case 1:
-        _glamor_dump_pixmap_bits(pixmap, x, y, w, h);
-        break;
-    default:
-        ErrorF("dump depth %d, not implemented.\n", (pixmap)->drawable.depth);
-    }
-    glamor_finish_access(&(pixmap)->drawable);
-}
-
-static inline void
-_glamor_compare_pixmaps(PixmapPtr pixmap1, PixmapPtr pixmap2,
-                        int x, int y, int w, int h,
-                        PictFormatShort short_format, int all, int diffs)
-{
-    int i, j;
-    unsigned char *p1 = pixmap1->devPrivate.ptr;
-    unsigned char *p2 = pixmap2->devPrivate.ptr;
-    int line_need_printed = 0;
-    int test_code = 0xAABBCCDD;
-    int little_endian = 0;
-    unsigned char *p_test;
-    int bpp = pixmap1->drawable.depth == 8 ? 1 : 4;
-    int stride = pixmap1->devKind;
-
-    assert(pixmap1->devKind == pixmap2->devKind);
-
-    ErrorF("stride:%d, width:%d, height:%d\n", stride, w, h);
-
-    p1 = p1 + y * stride + x;
-    p2 = p2 + y * stride + x;
-
-    if (all) {
-        for (i = 0; i < h; i++) {
-            ErrorF("line %3d: ", i);
-
-            for (j = 0; j < stride; j++) {
-                if (j % bpp == 0)
-                    ErrorF("[%d]%2x:%2x ", j / bpp, p1[j], p2[j]);
-                else
-                    ErrorF("%2x:%2x ", p1[j], p2[j]);
-            }
-
-            p1 += stride;
-            p2 += stride;
-            ErrorF("\n");
-        }
-    }
-    else {
-        if (short_format == PICT_a8r8g8b8) {
-            p_test = (unsigned char *) &test_code;
-            little_endian = (*p_test == 0xDD);
-            bpp = 4;
-
-            for (i = 0; i < h; i++) {
-                line_need_printed = 0;
-
-                for (j = 0; j < stride; j++) {
-                    if (p1[j] != p2[j] &&
-                        (p1[j] - p2[j] > diffs || p2[j] - p1[j] > diffs)) {
-                        if (line_need_printed) {
-                            if (little_endian) {
-                                switch (j % 4) {
-                                case 2:
-                                    ErrorF("[%d]RED:%2x:%2x ", j / bpp, p1[j],
-                                           p2[j]);
-                                    break;
-                                case 1:
-                                    ErrorF("[%d]GREEN:%2x:%2x ", j / bpp, p1[j],
-                                           p2[j]);
-                                    break;
-                                case 0:
-                                    ErrorF("[%d]BLUE:%2x:%2x ", j / bpp, p1[j],
-                                           p2[j]);
-                                    break;
-                                case 3:
-                                    ErrorF("[%d]Alpha:%2x:%2x ", j / bpp, p1[j],
-                                           p2[j]);
-                                    break;
-                                }
-                            }
-                            else {
-                                switch (j % 4) {
-                                case 1:
-                                    ErrorF("[%d]RED:%2x:%2x ", j / bpp, p1[j],
-                                           p2[j]);
-                                    break;
-                                case 2:
-                                    ErrorF("[%d]GREEN:%2x:%2x ", j / bpp, p1[j],
-                                           p2[j]);
-                                    break;
-                                case 3:
-                                    ErrorF("[%d]BLUE:%2x:%2x ", j / bpp, p1[j],
-                                           p2[j]);
-                                    break;
-                                case 0:
-                                    ErrorF("[%d]Alpha:%2x:%2x ", j / bpp, p1[j],
-                                           p2[j]);
-                                    break;
-                                }
-                            }
-                        }
-                        else {
-                            line_need_printed = 1;
-                            j = -1;
-                            ErrorF("line %3d: ", i);
-                            continue;
-                        }
-                    }
-                }
-
-                p1 += stride;
-                p2 += stride;
-                ErrorF("\n");
-            }
-        }                       //more format can be added here.
-        else {                  // the default format, just print.
-            for (i = 0; i < h; i++) {
-                line_need_printed = 0;
-
-                for (j = 0; j < stride; j++) {
-                    if (p1[j] != p2[j]) {
-                        if (line_need_printed) {
-                            ErrorF("[%d]%2x:%2x ", j / bpp, p1[j], p2[j]);
-                        }
-                        else {
-                            line_need_printed = 1;
-                            j = -1;
-                            ErrorF("line %3d: ", i);
-                            continue;
-                        }
-                    }
-                }
-
-                p1 += stride;
-                p2 += stride;
-                ErrorF("\n");
-            }
-        }
-    }
-}
-
-static inline void
-glamor_compare_pixmaps(PixmapPtr pixmap1, PixmapPtr pixmap2,
-                       int x, int y, int w, int h, int all, int diffs)
-{
-    assert(pixmap1->drawable.depth == pixmap2->drawable.depth);
-
-    if (glamor_prepare_access(&pixmap1->drawable, GLAMOR_ACCESS_RO) &&
-        glamor_prepare_access(&pixmap2->drawable, GLAMOR_ACCESS_RO)) {
-        _glamor_compare_pixmaps(pixmap1, pixmap2, x, y, w, h, -1, all, diffs);
-    }
-    glamor_finish_access(&pixmap1->drawable);
-    glamor_finish_access(&pixmap2->drawable);
-}
-
-/* This function is used to compare two pictures.
-   If the picture has no drawable, we use fb functions to generate it. */
-static inline void
-glamor_compare_pictures(ScreenPtr screen,
-                        PicturePtr fst_picture,
-                        PicturePtr snd_picture,
-                        int x_source, int y_source,
-                        int width, int height, int all, int diffs)
-{
-    PixmapPtr fst_pixmap;
-    PixmapPtr snd_pixmap;
-    int fst_generated, snd_generated;
-    int error;
-    int fst_type = -1;
-    int snd_type = -1;          // -1 represent has drawable.
-
-    if (fst_picture->format != snd_picture->format) {
-        ErrorF("Different picture format can not compare!\n");
-        return;
-    }
-
-    if (!fst_picture->pDrawable) {
-        fst_type = fst_picture->pSourcePict->type;
-    }
-
-    if (!snd_picture->pDrawable) {
-        snd_type = snd_picture->pSourcePict->type;
-    }
-
-    if ((fst_type != -1) && (snd_type != -1) && (fst_type != snd_type)) {
-        ErrorF("Different picture type will never be same!\n");
-        return;
-    }
-
-    fst_generated = snd_generated = 0;
-
-    if (!fst_picture->pDrawable) {
-        PicturePtr pixman_pic;
-        PixmapPtr pixmap = NULL;
-        PictFormatShort format;
-
-        format = fst_picture->format;
-
-        pixmap = glamor_create_pixmap(screen,
-                                      width, height,
-                                      PIXMAN_FORMAT_DEPTH(format),
-                                      GLAMOR_CREATE_PIXMAP_CPU);
-
-        pixman_pic = CreatePicture(0,
-                                   &(pixmap)->drawable,
-                                   PictureMatchFormat(screen,
-                                                      PIXMAN_FORMAT_DEPTH
-                                                      (format), format), 0, 0,
-                                   serverClient, &error);
-
-        fbComposite(PictOpSrc, fst_picture, NULL, pixman_pic,
-                    x_source, y_source, 0, 0, 0, 0, width, height);
-
-        glamor_destroy_pixmap(pixmap);
-
-        fst_picture = pixman_pic;
-        fst_generated = 1;
-    }
-
-    if (!snd_picture->pDrawable) {
-        PicturePtr pixman_pic;
-        PixmapPtr pixmap = NULL;
-        PictFormatShort format;
-
-        format = snd_picture->format;
-
-        pixmap = glamor_create_pixmap(screen,
-                                      width, height,
-                                      PIXMAN_FORMAT_DEPTH(format),
-                                      GLAMOR_CREATE_PIXMAP_CPU);
-
-        pixman_pic = CreatePicture(0,
-                                   &(pixmap)->drawable,
-                                   PictureMatchFormat(screen,
-                                                      PIXMAN_FORMAT_DEPTH
-                                                      (format), format), 0, 0,
-                                   serverClient, &error);
-
-        fbComposite(PictOpSrc, snd_picture, NULL, pixman_pic,
-                    x_source, y_source, 0, 0, 0, 0, width, height);
-
-        glamor_destroy_pixmap(pixmap);
-
-        snd_picture = pixman_pic;
-        snd_generated = 1;
-    }
-
-    fst_pixmap = glamor_get_drawable_pixmap(fst_picture->pDrawable);
-    snd_pixmap = glamor_get_drawable_pixmap(snd_picture->pDrawable);
-
-    if (fst_pixmap->drawable.depth != snd_pixmap->drawable.depth) {
-        if (fst_generated)
-            miDestroyPicture(fst_picture);
-        if (snd_generated)
-            miDestroyPicture(snd_picture);
-
-        ErrorF("Different pixmap depth can not compare!\n");
-        return;
-    }
-
-    if ((fst_type == SourcePictTypeLinear) ||
-        (fst_type == SourcePictTypeRadial) ||
-        (fst_type == SourcePictTypeConical) ||
-        (snd_type == SourcePictTypeLinear) ||
-        (snd_type == SourcePictTypeRadial) ||
-        (snd_type == SourcePictTypeConical)) {
-        x_source = y_source = 0;
-    }
-
-    if (glamor_prepare_access(&fst_pixmap->drawable, GLAMOR_ACCESS_RO) &&
-        glamor_prepare_access(&snd_pixmap->drawable, GLAMOR_ACCESS_RO)) {
-        _glamor_compare_pixmaps(fst_pixmap, snd_pixmap,
-                                x_source, y_source,
-                                width, height, fst_picture->format,
-                                all, diffs);
-    }
-    glamor_finish_access(&fst_pixmap->drawable);
-    glamor_finish_access(&snd_pixmap->drawable);
-
-    if (fst_generated)
-        miDestroyPicture(fst_picture);
-    if (snd_generated)
-        miDestroyPicture(snd_picture);
-
-    return;
-}
-
-#ifdef __i386__
-static inline unsigned long
-__fls(unsigned long x)
-{
- asm("bsr %1,%0":"=r"(x)
- :     "rm"(x));
-    return x;
-}
-#else
-static inline unsigned long
-__fls(unsigned long x)
-{
-    int n;
-
-    if (x == 0)
-        return (0);
-    n = 0;
-    if (x <= 0x0000FFFF) {
-        n = n + 16;
-        x = x << 16;
-    }
-    if (x <= 0x00FFFFFF) {
-        n = n + 8;
-        x = x << 8;
-    }
-    if (x <= 0x0FFFFFFF) {
-        n = n + 4;
-        x = x << 4;
-    }
-    if (x <= 0x3FFFFFFF) {
-        n = n + 2;
-        x = x << 2;
-    }
-    if (x <= 0x7FFFFFFF) {
-        n = n + 1;
-    }
-    return 31 - n;
-}
-#endif
-
-static inline void
 glamor_make_current(glamor_screen_private *glamor_priv)
 {
-    if (lastGLContext != &glamor_priv->ctx) {
-        lastGLContext = &glamor_priv->ctx;
+    if (lastGLContext != glamor_priv->ctx.ctx) {
+        lastGLContext = glamor_priv->ctx.ctx;
         glamor_priv->ctx.make_current(&glamor_priv->ctx);
     }
+}
+
+static inline BoxRec
+glamor_no_rendering_bounds(void)
+{
+    BoxRec bounds = {
+        .x1 = 0,
+        .y1 = 0,
+        .x2 = MAXSHORT,
+        .y2 = MAXSHORT,
+    };
+
+    return bounds;
+}
+
+static inline BoxRec
+glamor_start_rendering_bounds(void)
+{
+    BoxRec bounds = {
+        .x1 = MAXSHORT,
+        .y1 = MAXSHORT,
+        .x2 = 0,
+        .y2 = 0,
+    };
+
+    return bounds;
+}
+
+static inline void
+glamor_bounds_union_rect(BoxPtr bounds, xRectangle *rect)
+{
+    bounds->x1 = min(bounds->x1, rect->x);
+    bounds->y1 = min(bounds->y1, rect->y);
+    bounds->x2 = min(SHRT_MAX, max(bounds->x2, rect->x + rect->width));
+    bounds->y2 = min(SHRT_MAX, max(bounds->y2, rect->y + rect->height));
+}
+
+static inline void
+glamor_bounds_union_box(BoxPtr bounds, BoxPtr box)
+{
+    bounds->x1 = min(bounds->x1, box->x1);
+    bounds->y1 = min(bounds->y1, box->y1);
+    bounds->x2 = max(bounds->x2, box->x2);
+    bounds->y2 = max(bounds->y2, box->y2);
 }
 
 /**

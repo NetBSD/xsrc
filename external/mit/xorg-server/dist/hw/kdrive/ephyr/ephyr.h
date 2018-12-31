@@ -27,7 +27,6 @@
 #define _EPHYR_H_
 #include <stdio.h>
 #include <unistd.h>
-#include <signal.h>
 #include <libgen.h>
 #include <xcb/xcb_image.h>
 
@@ -80,10 +79,13 @@ typedef struct _ephyrScrPriv {
     const char *output;         /* Set via -output option */
     unsigned char *fb_data;     /* only used when host bpp != server bpp */
     xcb_shm_segment_info_t shminfo;
+    size_t shmsize;
 
     KdScreenInfo *screen;
     int mynum;                  /* Screen number */
     unsigned long cmap[256];
+
+    ScreenBlockHandlerProcPtr   BlockHandler;
 
     /**
      * Per-screen Xlib-using state for glamor (private to
@@ -168,9 +170,6 @@ Bool
 Bool
  ephyrCreateColormap(ColormapPtr pmap);
 
-void
- ephyrPoll(void);
-
 #ifdef RANDR
 Bool
  ephyrRandRGetInfo(ScreenPtr pScreen, Rotation * rotations);
@@ -193,8 +192,6 @@ void
 extern KdPointerDriver EphyrMouseDriver;
 
 extern KdKeyboardDriver EphyrKeyboardDriver;
-
-extern KdOsFuncs EphyrOsFuncs;
 
 extern Bool ephyrCursorInit(ScreenPtr pScreen);
 

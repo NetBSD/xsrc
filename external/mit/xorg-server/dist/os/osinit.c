@@ -52,6 +52,7 @@ SOFTWARE.
 #include <X11/X.h>
 #include "os.h"
 #include "osdep.h"
+#include "opaque.h"
 #include <X11/Xos.h>
 #include <signal.h>
 #include <errno.h>
@@ -73,8 +74,6 @@ SOFTWARE.
 #ifndef ADMPATH
 #define ADMPATH "/usr/adm/X%smsgs"
 #endif
-
-extern char *display;
 
 #ifdef RLIMIT_DATA
 int limitDataSpace = -1;
@@ -114,10 +113,14 @@ OsSigHandler(int signo)
 #endif
 {
 #ifdef RTLD_DI_SETSIGNAL
-    const char *dlerr = dlerror();
+# define SIGNAL_FOR_RTLD_ERROR SIGQUIT
+    if (signo == SIGNAL_FOR_RTLD_ERROR) {
+        const char *dlerr = dlerror();
 
-    if (dlerr) {
-        LogMessageVerbSigSafe(X_ERROR, 1, "Dynamic loader error: %s\n", dlerr);
+        if (dlerr) {
+            LogMessageVerbSigSafe(X_ERROR, 1,
+                                  "Dynamic loader error: %s\n", dlerr);
+        }
     }
 #endif                          /* RTLD_DI_SETSIGNAL */
 
@@ -147,6 +150,9 @@ OsSigHandler(int signo)
     }
 #endif
 
+    if (signo != SIGQUIT)
+        CoreDump = TRUE;
+
     FatalError("Caught signal %d (%s). Server aborting\n",
                signo, strsignal(signo));
 }
@@ -169,6 +175,7 @@ OsInit(void)
         int i;
 
         int siglist[] = { SIGSEGV, SIGQUIT, SIGILL, SIGFPE, SIGBUS,
+            SIGABRT,
             SIGSYS,
             SIGXCPU,
             SIGXFSZ,
@@ -195,6 +202,9 @@ OsInit(void)
 #ifdef BUSFAULT
         busfault_init();
 #endif
+        server_poll = ospoll_create();
+        if (!server_poll)
+            FatalError("failed to allocate poll structure");
 
 #ifdef HAVE_BACKTRACE
         /*
@@ -214,24 +224,13 @@ OsInit(void)
          * after ourselves.
          */
         {
-            int failure_signal = SIGQUIT;
+            int failure_signal = SIGNAL_FOR_RTLD_ERROR;
 
             dlinfo(RTLD_SELF, RTLD_DI_SETSIGNAL, &failure_signal);
         }
 #endif
 
 #if !defined(XQUARTZ)    /* STDIN is already /dev/null and STDOUT/STDERR is managed by console_redirect.c */
-# if defined(__APPLE__)
-        int devnullfd = open(devnull, O_RDWR, 0);
-        assert(devnullfd > 2);
-
-        dup2(devnullfd, STDIN_FILENO);
-        dup2(devnullfd, STDOUT_FILENO);
-        close(devnullfd);
-# elif !defined(__CYGWIN__)
-        fclose(stdin);
-        fclose(stdout);
-# endif
         /*
          * If a write of zero bytes to stderr returns non-zero, i.e. -1,
          * then writing to stderr failed, and we'll write somewhere else

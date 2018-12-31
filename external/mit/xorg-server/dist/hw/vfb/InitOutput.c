@@ -70,7 +70,7 @@ from The Open Group.
 
 #define VFB_DEFAULT_WIDTH      1280
 #define VFB_DEFAULT_HEIGHT     1024
-#define VFB_DEFAULT_DEPTH         8
+#define VFB_DEFAULT_DEPTH        24
 #define VFB_DEFAULT_WHITEPIXEL    1
 #define VFB_DEFAULT_BLACKPIXEL    0
 #define VFB_DEFAULT_LINEBIAS      0
@@ -471,7 +471,7 @@ vfbSaveScreen(ScreenPtr pScreen, int on)
 
 /* this flushes any changes to the screens out to the mmapped file */
 static void
-vfbBlockHandler(void *blockData, OSTimePtr pTimeout, void *pReadmask)
+vfbBlockHandler(void *blockData, void *timeout)
 {
     int i;
 
@@ -492,7 +492,7 @@ vfbBlockHandler(void *blockData, OSTimePtr pTimeout, void *pReadmask)
 }
 
 static void
-vfbWakeupHandler(void *blockData, int result, void *pReadmask)
+vfbWakeupHandler(void *blockData, int result)
 {
 }
 
@@ -957,26 +957,11 @@ vfbScreenInit(ScreenPtr pScreen, int argc, char **argv)
 
 }                               /* end vfbScreenInit */
 
-static const ExtensionModule vfbExtensions[] = {
-#ifdef GLXEXT
-    { GlxExtensionInit, "GLX", &noGlxExtension },
-#endif
-};
-
-static
-void vfbExtensionInit(void)
-{
-    LoadExtensionList(vfbExtensions, ARRAY_SIZE(vfbExtensions), TRUE);
-}
-
 void
 InitOutput(ScreenInfo * screen_info, int argc, char **argv)
 {
     int i;
     int NumFormats = 0;
-
-    if (serverGeneration == 1)
-        vfbExtensionInit();
 
     /* initialize pixmap formats */
 
@@ -1001,6 +986,8 @@ InitOutput(ScreenInfo * screen_info, int argc, char **argv)
 #endif
         vfbPixmapDepths[32] = TRUE;
     }
+
+    xorgGlxCreateVendor();
 
     for (i = 1; i <= 32; i++) {
         if (vfbPixmapDepths[i]) {

@@ -62,6 +62,8 @@ typedef struct tagREF_TRANSFORM {
 static const glamor_facet glamor_facet_xv_planar = {
     .name = "xv_planar",
 
+    .version = 120,
+
     .source_name = "v_texcoord0",
     .vs_vars = ("attribute vec2 position;\n"
                 "attribute vec2 v_texcoord0;\n"
@@ -208,6 +210,7 @@ glamor_xv_query_image_attributes(int id,
     switch (id) {
     case FOURCC_YV12:
     case FOURCC_I420:
+        *w = ALIGN(*w, 2);
         *h = ALIGN(*h, 2);
         size = ALIGN(*w, 4);
         if (pitches)
@@ -430,11 +433,14 @@ glamor_xv_put_image(glamor_port_private *port_priv,
                 glamor_destroy_pixmap(port_priv->src_pix[i]);
 
         port_priv->src_pix[0] =
-            glamor_create_pixmap(pScreen, width, height, 8, 0);
+            glamor_create_pixmap(pScreen, width, height, 8,
+                                 GLAMOR_CREATE_FBO_NO_FBO);
         port_priv->src_pix[1] =
-            glamor_create_pixmap(pScreen, width >> 1, height >> 1, 8, 0);
+            glamor_create_pixmap(pScreen, width >> 1, height >> 1, 8,
+                                 GLAMOR_CREATE_FBO_NO_FBO);
         port_priv->src_pix[2] =
-            glamor_create_pixmap(pScreen, width >> 1, height >> 1, 8, 0);
+            glamor_create_pixmap(pScreen, width >> 1, height >> 1, 8,
+                                 GLAMOR_CREATE_FBO_NO_FBO);
         port_priv->src_pix_w = width;
         port_priv->src_pix_h = height;
 
