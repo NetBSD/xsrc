@@ -611,10 +611,10 @@ sparcDriverName(void)
     return name;
 }
 
-pointer
+void *
 xf86MapSbusMem(sbusDevicePtr psdp, unsigned long offset, unsigned long size)
 {
-    pointer ret;
+    void * ret;
 
     if (psdp->fd == -1) {
 	psdp->fd = open(psdp->device, O_RDWR);
@@ -623,20 +623,20 @@ xf86MapSbusMem(sbusDevicePtr psdp, unsigned long offset, unsigned long size)
     } else if (psdp->fd < 0)
 	return NULL;
 
-    ret = (pointer) mmap (NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE,
+    ret = mmap (NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE,
 			  psdp->fd, offset);
-    if (ret == (pointer) -1) {
-	ret = (pointer) mmap (NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED,
+    if (ret == (void *) -1) {
+	ret = mmap (NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED,
 			      psdp->fd, offset);
     }
-    if (ret == (pointer) -1)
+    if (ret == (void *) -1)
 	return NULL;
 
     return ret;
 }
 
 void
-xf86UnmapSbusMem(sbusDevicePtr psdp, pointer addr, unsigned long size)
+xf86UnmapSbusMem(sbusDevicePtr psdp, void * addr, unsigned long size)
 {
     munmap (addr, size);
 }
