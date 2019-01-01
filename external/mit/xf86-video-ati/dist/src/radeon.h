@@ -924,8 +924,8 @@ typedef struct {
     int               RageTheatreCompositePort;
     int               RageTheatreSVideoPort;
     int               tunerType;
-    char*             RageTheatreMicrocPath;
-    char*             RageTheatreMicrocType;
+    const char*       RageTheatreMicrocPath;
+    const char*       RageTheatreMicrocType;
     Bool              MM_TABLE_valid;
     struct {
     	uint8_t table_revision;

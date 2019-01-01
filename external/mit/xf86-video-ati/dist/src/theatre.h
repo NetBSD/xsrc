@@ -11,8 +11,8 @@ typedef struct {
 	 int      theatre_num;
 	 uint32_t theatre_id;
 	 int      mode;
-	 char*    microc_path;
-	 char*    microc_type;
+	 const char*    microc_path;
+	 const char*    microc_type;
 	 
 	 uint16_t video_decoder_type;
 	 uint32_t wStandard;
