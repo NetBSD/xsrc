@@ -4674,7 +4674,8 @@ sna_realize_cursor(xf86CursorInfoPtr info, CursorPtr cursor)
 	return NULL;
 }
 
-#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,12,99,901,0)
+/* XXXMRG OsBlockSIGIO() is gone gone, old one remains before porting */
+#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,12,99,901,0) && 0
 static inline int sigio_block(void)
 {
 	OsBlockSIGIO();

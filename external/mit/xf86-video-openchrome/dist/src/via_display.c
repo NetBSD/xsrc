@@ -3846,7 +3846,11 @@ iga1_crtc_commit(xf86CrtcPtr crtc)
                         "Entering iga1_crtc_commit.\n"));
 
     if (crtc->scrn->pScreen != NULL && pVia->drmmode.hwcursor)
+#ifdef HAVE_XF86_CURSOR_RESET_CURSOR
+        xf86CursorResetCursor(crtc->scrn->pScreen);
+#else
         xf86_reload_cursors(crtc->scrn->pScreen);
+#endif
 
     /* Turn on IGA1. */
     viaIGA1DPMSControl(pScrn, 0x00);
@@ -4252,7 +4256,11 @@ iga2_crtc_commit(xf86CrtcPtr crtc)
                         "Entering iga2_crtc_commit.\n"));
 
     if (crtc->scrn->pScreen != NULL && pVia->drmmode.hwcursor)
+#ifdef HAVE_XF86_CURSOR_RESET_CURSOR
+	xf86CursorResetCursor(crtc->scrn->pScreen);
+#else
         xf86_reload_cursors(crtc->scrn->pScreen);
+#endif
 
     /* Turn on IGA2. */
     viaIGA2DisplayOutput(pScrn, TRUE);

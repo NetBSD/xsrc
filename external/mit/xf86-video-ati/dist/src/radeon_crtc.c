@@ -507,7 +507,11 @@ static void
 radeon_crtc_mode_commit(xf86CrtcPtr crtc)
 {
     if (crtc->scrn->pScreen != NULL)
+#ifdef HAVE_XF86_CURSOR_RESET_CURSOR
+	xf86CursorResetCursor(crtc->scrn->pScreen);
+#else
 	xf86_reload_cursors(crtc->scrn->pScreen);
+#endif
 }
 
 void

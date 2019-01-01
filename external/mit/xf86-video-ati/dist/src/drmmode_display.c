@@ -432,7 +432,11 @@ drmmode_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
 
 	if (pScrn->pScreen &&
 		!xf86ReturnOptValBool(info->Options, OPTION_SW_CURSOR, FALSE))
+#ifdef HAVE_XF86_CURSOR_RESET_CURSOR
+		xf86CursorResetCursor(pScrn->pScreen);
+#else
 		xf86_reload_cursors(pScrn->pScreen);
+#endif
 
 done:
 	if (!ret) {
@@ -1477,6 +1481,14 @@ drmmode_flip_handler(int fd, unsigned int frame, unsigned int tv_sec,
 }
 
 
+#if HAVE_NOTIFY_FD
+static void drmmode_notify_fd(int fd, int notify, void *data)
+{
+	drmmode_ptr drmmode = data;
+
+	drmHandleEvent(fd, &drmmode->event_context);
+}
+#else
 static void
 drm_wakeup_handler(pointer data, int err, pointer p)
 {
@@ -1487,6 +1499,7 @@ drm_wakeup_handler(pointer data, int err, pointer p)
 		drmHandleEvent(drmmode->fd, &drmmode->event_context);
 	}
 }
+#endif
 
 Bool drmmode_pre_init(ScrnInfoPtr pScrn, drmmode_ptr drmmode, int cpp)
 {

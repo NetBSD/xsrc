@@ -279,8 +279,12 @@ wsmbEmuFilterEvent(InputInfoPtr pInfo, int button, BOOL press)
 
 void
 wsmbEmuWakeupHandler(pointer data,
-    int i,
-    pointer LastSelectMask)
+/* XXX compat-api.h */
+    int i
+#if ABI_VIDEODRV_VERSION < SET_ABI_VERSION(23, 0)
+    , pointer LastSelectMask
+#endif
+    )
 {
 	InputInfoPtr pInfo = (InputInfoPtr)data;
 	WSDevicePtr priv = (WSDevicePtr)pInfo->private;
@@ -295,7 +299,9 @@ wsmbEmuWakeupHandler(pointer data,
 
 void
 wsmbEmuBlockHandler(pointer data,
+#if ABI_VIDEODRV_VERSION < SET_ABI_VERSION(23, 0)
     struct timeval **waitTime,
+#endif
     pointer LastSelectMask)
 {
 	InputInfoPtr pInfo = (InputInfoPtr) data;
@@ -306,7 +312,9 @@ wsmbEmuBlockHandler(pointer data,
 		ms = priv->emulateMB.expires - GetTimeInMillis();
 		if (ms <= 0)
 			ms = 0;
+#if ABI_VIDEODRV_VERSION < SET_ABI_VERSION(23, 0)
 		AdjustWaitForDelay(waitTime, ms);
+#endif
 	}
 }
 

@@ -258,7 +258,7 @@ static void RADEONAddScreenModes(xf86OutputPtr output, DisplayModePtr *modeList)
     DisplayModePtr  first      = NULL;
     int             count      = 0;
     int             i, width, height;
-    char **ppModeName = pScrn->display->modes;
+    const char **ppModeName = pScrn->display->modes;
 
     first = last = *modeList;
 

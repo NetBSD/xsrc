@@ -2636,8 +2636,8 @@ static Bool RADEONPreInitXv(ScrnInfoPtr pScrn)
     uint16_t bios_header;
     uint16_t pll_info_block;
 #ifdef XvExtension
-    char* microc_path = NULL;
-    char* microc_type = NULL;
+    const char* microc_path = NULL;
+    const char* microc_type = NULL;
     MessageType from;
 
     if (xf86GetOptValInteger(info->Options, OPTION_VIDEO_KEY,
@@ -2871,7 +2871,7 @@ static void RADEONFixZaphodOutputs(ScrnInfoPtr pScrn)
     RADEONInfoPtr info = RADEONPTR(pScrn);
     xf86CrtcConfigPtr   config = XF86_CRTC_CONFIG_PTR(pScrn);
     int o;
-    char *s;
+    const char *s;
 
     if ((s = xf86GetOptValString(info->Options, OPTION_ZAPHOD_HEADS))) {
 	for (o = config->num_output; o > 0; o--) {
@@ -3460,7 +3460,7 @@ Bool RADEONScreenInit(SCREEN_INIT_ARGS_DECL)
     int            hasDRI = 0;
 #ifdef RENDER
     int            subPixelOrder = SubPixelUnknown;
-    char*          s;
+    const char*    s;
 #endif
 
 

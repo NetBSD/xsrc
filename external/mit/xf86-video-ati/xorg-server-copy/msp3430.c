@@ -149,7 +149,7 @@ MSP3430Ptr DetectMSP3430(I2CBusPtr b, I2CSlaveAddr addr)
    
    if(!I2C_WriteRead(&(m->d), NULL, 0, &a, 1))
    {
-       free(m->d.DevName);
+       free(__UNCONST(m->d.DevName));
        free(m);
 	return NULL;
     }
@@ -235,13 +235,13 @@ MSP3430Ptr DetectMSP3430(I2CBusPtr b, I2CSlaveAddr addr)
 		MSP_getProductName(m->chip_id), supported?"":" (unsupported)", rom_version, m->chip_id);
 
 	if (!supported) {
-            free(m->d.DevName);
+            free(__UNCONST(m->d.DevName));
             free(m);
             return NULL;
 	}
    if(!I2CDevInit(&(m->d)))
    {
-       free(m->d.DevName);
+       free(__UNCONST(m->d.DevName));
        free(m);
        return NULL;
    }

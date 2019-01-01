@@ -60,8 +60,14 @@ typedef struct WSDevice {
 
 extern int wsmbEmuTimer(InputInfoPtr);
 extern BOOL wsmbEmuFilterEvent(InputInfoPtr, int, BOOL);
+/* XXX compat-api.h */
+#if ABI_VIDEODRV_VERSION < SET_ABI_VERSION(23, 0)
 extern void wsmbEmuWakeupHandler(pointer, int, pointer);
 extern void wsmbEmuBlockHandler(pointer, struct timeval **, pointer);
+#else
+extern void wsmbEmuWakeupHandler(pointer, int);
+extern void wsmbEmuBlockHandler(pointer, pointer);
+#endif
 extern void wsmbEmuPreInit(InputInfoPtr);
 extern void wsmbEmuOn(InputInfoPtr);
 extern void wsmbEmuFinalize(InputInfoPtr);

@@ -465,7 +465,7 @@ void LXSetupOutput(ScrnInfoPtr);
 
 /* lx_panel.c */
 DisplayModePtr LXGetLegacyPanelMode(ScrnInfoPtr pScrni);
-DisplayModePtr LXGetManualPanelMode(char *modestr);
+DisplayModePtr LXGetManualPanelMode(const char *modestr);
 
 void LXAdjustFrame(ADJUST_FRAME_ARGS_DECL);
 

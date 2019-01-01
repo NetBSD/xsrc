@@ -1605,7 +1605,7 @@ rhdAtomParseI2CRecord(ScrnInfoPtr pScrn, atomBiosHandlePtr handle,
 		      ATOM_I2C_RECORD *Record, int i)
 {
     RADEONInfoPtr info = RADEONPTR (pScrn);
-    uint8_t *temp = &Record->sucI2cId;
+    uint8_t *temp = (uint8_t *)&Record->sucI2cId;
 
     info->BiosConnector[i].i2c_line_mux = *temp;
     info->BiosConnector[i].ucI2cId = *temp;

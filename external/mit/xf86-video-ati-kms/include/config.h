@@ -66,9 +66,8 @@
 /* xextproto 7.1 available */
 #define HAVE_XEXTPROTO_71 1
 
-// XXXMRG
 /* Have xf86CursorResetCursor API */
-#undef HAVE_XF86_CURSOR_RESET_CURSOR
+#define HAVE_XF86_CURSOR_RESET_CURSOR 1
 
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
 #define LT_OBJDIR ".libs/"

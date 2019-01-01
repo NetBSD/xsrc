@@ -108,7 +108,7 @@ static XF86MCAdaptorRec adaptor_template =
 	(xf86XvMCDestroySubpictureProcPtr)NULL
 };
 
-XF86MCAdaptorPtr vlCreateAdaptorXvMC(ScreenPtr pScreen, char *xv_adaptor_name)
+XF86MCAdaptorPtr vlCreateAdaptorXvMC(ScreenPtr pScreen, const char *xv_adaptor_name)
 {
 	XF86MCAdaptorPtr	adaptor;
 	ScrnInfoPtr		pScrn;

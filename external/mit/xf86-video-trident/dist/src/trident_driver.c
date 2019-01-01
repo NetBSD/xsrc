@@ -1010,7 +1010,7 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
     ClockRangePtr clockRanges;
     Bool ddcLoaded = FALSE;
     xf86MonPtr pMon = NULL;
-    char *s;
+    const char *s;
     Bool tmp_bool;
 
     /* Allocate the TRIDENTRec driverPrivate */

@@ -523,7 +523,11 @@ drmmode_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
 	crtc->funcs->gamma_set(crtc, crtc->gamma_red, crtc->gamma_green,
 			       crtc->gamma_blue, crtc->gamma_size);
 
+#ifdef HAVE_XF86_CURSOR_RESET_CURSOR
+	xf86CursorResetCursor(crtc->scrn->pScreen);
+#else   
 	xf86_reload_cursors(crtc->scrn->pScreen);
+#endif
 
 	return TRUE;
 }

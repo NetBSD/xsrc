@@ -228,7 +228,11 @@ drmmode_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
 #endif
 
     if (pScrn->pScreen && drmmode->hwcursor)
+#ifdef HAVE_XF86_CURSOR_RESET_CURSOR
+        xf86CursorResetCursor(pScrn->pScreen);
+#else
         xf86_reload_cursors(pScrn->pScreen);
+#endif
 done:
     free(output_ids);
     return (ret < 0 ? FALSE : TRUE);

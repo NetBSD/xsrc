@@ -85,7 +85,7 @@ XF86VideoAdaptorPtr
 RADEONSetupImageTexturedVideo(ScreenPtr pScreen);
 
 XF86MCAdaptorPtr
-RADEONCreateAdaptorXvMC(ScreenPtr pScreen, char *xv_adaptor_name);
+RADEONCreateAdaptorXvMC(ScreenPtr pScreen, const char *xv_adaptor_name);
 
 void
 RADEONCopyData(ScrnInfoPtr pScrn,

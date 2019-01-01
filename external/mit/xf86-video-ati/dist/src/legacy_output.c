@@ -228,7 +228,7 @@ RADEONGetLVDSInfo (ScrnInfoPtr pScrn, radeon_lvds_ptr lvds)
 {
     RADEONInfoPtr  info       = RADEONPTR(pScrn);
     radeon_native_mode_ptr native_mode = &lvds->native_mode;
-    char* s;
+    const char* s;
 
     if (!RADEONGetLVDSInfoFromBIOS(pScrn, lvds))
 	RADEONGetPanelInfoFromReg(pScrn, lvds);

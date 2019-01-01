@@ -474,7 +474,7 @@ LXPreInit(ScrnInfoPtr pScrni, int flags)
         pGeode->Output = OUTPUT_PANEL | OUTPUT_DCON;
     }
     else if (pGeode->Output & OUTPUT_PANEL) {
-        char *pmode = xf86GetOptValString(GeodeOptions, LX_OPTION_PANEL_MODE);
+        const char *pmode = xf86GetOptValString(GeodeOptions, LX_OPTION_PANEL_MODE);
 
         if (pmode != NULL)
             pGeode->panelMode = LXGetManualPanelMode(pmode);

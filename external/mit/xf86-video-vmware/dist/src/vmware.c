@@ -1331,8 +1331,6 @@ VMWAREScreenInit(SCREEN_INIT_ARGS_DECL)
 				       &pVMWARE->xineramaNumOutputs, "gui");
 
          pVMWARE->xineramaStatic = pVMWARE->xineramaState != NULL;
-
-         free(topology);
        }
     } else if (useXinerama &&
 	       xf86IsOptionSet(options, OPTION_STATIC_XINERAMA)) {
@@ -1344,8 +1342,6 @@ VMWAREScreenInit(SCREEN_INIT_ARGS_DECL)
 				       "static Xinerama");
 
          pVMWARE->xineramaStatic = pVMWARE->xineramaState != NULL;
-
-         free(topology);
        }
     }
 

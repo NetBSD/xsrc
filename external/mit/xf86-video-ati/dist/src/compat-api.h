@@ -38,6 +38,10 @@
 #define xf86ScrnToScreen(s) screenInfo.screens[(s)->scrnIndex]
 #endif
 
+#if ABI_VIDEODRV_VERSION >= SET_ABI_VERSION(22,0)
+#define HAVE_NOTIFY_FD  1
+#endif
+
 #ifndef XF86_SCRN_INTERFACE
 
 #define SCRN_ARG_TYPE int

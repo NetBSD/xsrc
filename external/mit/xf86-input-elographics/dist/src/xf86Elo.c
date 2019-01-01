@@ -338,7 +338,7 @@ xf86EloGetUnframedPacket(unsigned char	*buffer,
    * Okay, give up.
    */
   if (num_bytes != ELO_UNFRAMED_SIZE) {
-    Error("System error while reading from Elographics touchscreen.");
+    ErrorF("System error while reading from Elographics touchscreen.");
     return !Success;
   }
   DBG(4, ErrorF("Read %d bytes\n", num_bytes));

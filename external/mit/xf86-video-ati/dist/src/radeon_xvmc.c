@@ -120,7 +120,7 @@ static XF86MCAdaptorRec adaptor_template =
 };
 
 XF86MCAdaptorPtr
-RADEONCreateAdaptorXvMC(ScreenPtr pScreen, char *xv_adaptor_name)
+RADEONCreateAdaptorXvMC(ScreenPtr pScreen, const char *xv_adaptor_name)
 {
 	XF86MCAdaptorPtr	adaptor;
 	ScrnInfoPtr		pScrn;

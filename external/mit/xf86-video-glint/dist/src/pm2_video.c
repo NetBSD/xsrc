@@ -2595,15 +2595,9 @@ Permedia2ReadInput(int fd, pointer unused)
 static Bool
 xvipcOpen(const char *name, ScrnInfoPtr pScrn)
 {
-    const char *osname;
-
+#ifdef __linux__
     if (xvipc_fd >= 0)
 	return TRUE;
-
-    xf86GetOS(&osname, NULL, NULL, NULL);
-
-    if (!osname || strcmp(osname, "linux"))
-	return FALSE;
 
     for (;;) {
 	DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 2,
@@ -2645,6 +2639,7 @@ xvipcOpen(const char *name, ScrnInfoPtr pScrn)
     xvipc_fd = -1;
 
     xf86DrvMsg(pScrn->scrnIndex, X_WARNING, "Cannot find Permedia 2 kernel driver.\n");
+#endif
 
     return FALSE;
 }

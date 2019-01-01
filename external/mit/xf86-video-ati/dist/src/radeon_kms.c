@@ -926,7 +926,7 @@ Bool RADEONScreenInit_KMS(SCREEN_INIT_ARGS_DECL)
     ScrnInfoPtr    pScrn = xf86ScreenToScrn(pScreen);
     RADEONInfoPtr  info  = RADEONPTR(pScrn);
     int            subPixelOrder = SubPixelUnknown;
-    char*          s;
+    const char*    s;
     void *front_ptr;
     int ret;
 
