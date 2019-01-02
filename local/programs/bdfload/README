@@ -1,0 +1,10 @@
+This will attempt to load a .bdf font into wsdisplay, to be used with
+wsconsctl -dw font=<name>
+Caveats:
+- fonts wider than 16 pixels won't work yet
+- the program does not distinguish between monospace and proportional fonts,
+  and terminal output is necessarily monospace. Proportional fonts should
+  work but the glyphs will be left justified in the character cell so things
+  will look uneven.
+- some drivers may have trouble with font widths that are not a multiple of 4
+- no attempt has been made to make this play nice with vga text mode
