@@ -80,7 +80,7 @@ extern _X_EXPORT void VBESetModeParameters(ScrnInfoPtr pScrn, vbeInfoPtr pVbe);
  * usually just wrap the standard helpers.
  */
 extern _X_EXPORT int VBEValidateModes(ScrnInfoPtr scrp, DisplayModePtr availModes,
-			    char **modeNames, ClockRangePtr clockRanges,
+			    const char **modeNames, ClockRangePtr clockRanges,
 			    int *linePitches, int minPitch, int maxPitch,
 			    int pitchInc, int minHeight, int maxHeight,
 			    int virtualX, int virtualY, int apertureSize,

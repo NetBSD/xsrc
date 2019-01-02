@@ -1449,7 +1449,7 @@ preferredMode(ScrnInfoPtr pScrn, xf86OutputPtr output)
 	return preferred_mode;
 
     if (pScrn->display->modes && *pScrn->display->modes)
-	preferred_mode = *pScrn->display->modes;
+	preferred_mode = (char *)(intptr_t)*pScrn->display->modes;
 
     return preferred_mode;
 }
