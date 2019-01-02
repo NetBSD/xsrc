@@ -215,6 +215,30 @@ VOID IndirectIOCommand_CLEAR(PARSER_TEMP_DATA STACK_BASED * pParserTempData)
     pParserTempData->IndirectData &= ~((0xFFFFFFFF >> (32-pParserTempData->IndirectIOTablePointer[1])) << pParserTempData->IndirectIOTablePointer[2]);
 }
 
+/* from xorg-server 1.18 compiler.h */
+struct __una_u64 { uint64_t x __attribute__((packed)); };
+struct __una_u32 { uint32_t x __attribute__((packed)); };
+
+static __inline__ uint16_t ldw_u(uint16_t *p)
+{
+	uint16_t ret;
+	memmove(&ret, p, sizeof(*p));
+	return ret;
+}
+
+static __inline__ uint32_t ldl_u(uint32_t *p)
+{
+	uint32_t ret;
+	memmove(&ret, p, sizeof(*p));
+	return ret;
+}
+
+static __inline__ void stl_u(uint32_t val, uint32_t *p)
+{
+	struct __una_u32 *ptr = (struct __una_u32 *) p;
+	ptr->x = val;
+}
+
 UINT32 IndirectInputOutput(PARSER_TEMP_DATA STACK_BASED * pParserTempData)
 {
     // if ((pParserTempData->IndirectData & 0x7f)==INDIRECT_IO_MM) pParserTempData->IndirectData|=pParserTempData->CurrentPortID;
