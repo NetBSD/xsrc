@@ -998,7 +998,11 @@ static inline uint32_t pixmap_size(PixmapPtr pixmap)
 
 bool sna_accel_init(ScreenPtr sreen, struct sna *sna);
 void sna_accel_create(struct sna *sna);
+#if ABI_VIDEODRV_VERSION < SET_ABI_VERSION(23, 0)
 void sna_accel_block_handler(struct sna *sna, struct timeval **tv);
+#else
+void sna_accel_block_handler(struct sna *sna, int *tv_msec);
+#endif
 void sna_accel_wakeup_handler(struct sna *sna);
 void sna_accel_watch_flush(struct sna *sna, int enable);
 void sna_accel_flush(struct sna *sna);

@@ -18010,7 +18010,12 @@ void sna_accel_close(struct sna *sna)
 	kgem_cleanup_cache(&sna->kgem);
 }
 
+/* tv changed from timeval to milliseconds in ABI 23 */
+#if ABI_VIDEODRV_VERSION < SET_ABI_VERSION(23, 0)
 void sna_accel_block_handler(struct sna *sna, struct timeval **tv)
+#else
+void sna_accel_block_handler(struct sna *sna, int *tv_msec)
+#endif
 {
 	sigtrap_assert_inactive();
 
@@ -18069,6 +18074,7 @@ restart:
 		if (timeout < 3)
 			goto restart;
 
+#if ABI_VIDEODRV_VERSION < SET_ABI_VERSION(23, 0)
 		if (*tv == NULL) {
 			*tv = &sna->timer_tv;
 			goto set_tv;
@@ -18078,6 +18084,10 @@ set_tv:
 			(*tv)->tv_sec = timeout / 1000;
 			(*tv)->tv_usec = timeout % 1000 * 1000;
 		}
+#else
+		if (*tv_msec > timeout)
+			*tv_msec = timeout;
+#endif
 	}
 
 	sna->kgem.scanout_busy = false;

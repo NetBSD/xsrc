@@ -377,7 +377,7 @@ ProcXF86BigfontQueryFont(ClientPtr client)
 #ifdef HAS_SHM
         if (!badSysCall)
             pDesc = (ShmDescPtr) FontGetPrivate(pFont, FontShmdescIndex);
-        if (pDesc) {
+        if (pDesc && pDesc->attach_addr) {
             pCI = (xCharInfo *) pDesc->attach_addr;
             if (stuff_flags & XF86Bigfont_FLAGS_Shm)
                 shmid = pDesc->shmid;

@@ -740,14 +740,23 @@ sna_block_handler(BLOCKHANDLER_ARGS_DECL)
 #else
 	struct sna *sna = to_sna_from_screen(arg);
 #endif
+#if ABI_VIDEODRV_VERSION < SET_ABI_VERSION(23, 0)
 	struct timeval **tv = timeout;
 
 	DBG(("%s (tv=%ld.%06ld)\n", __FUNCTION__,
 	     *tv ? (*tv)->tv_sec : -1, *tv ? (*tv)->tv_usec : 0));
+#else
+	int *tv = timeout;
+
+	DBG(("%s (tv=%ld.%06ld)\n", __FUNCTION__,
+	     *tv / 1000, *tv % (1000 * 1000)));
+#endif
 
 	sna->BlockHandler(BLOCKHANDLER_ARGS);
 
+#if ABI_VIDEODRV_VERSION < SET_ABI_VERSION(23, 0)
 	if (*tv == NULL || ((*tv)->tv_usec | (*tv)->tv_sec) || has_shadow(sna))
+#endif
 		sna_accel_block_handler(sna, tv);
 }
 
