@@ -2079,7 +2079,7 @@ intel_pageflip_abort(ScrnInfoPtr scrn, xf86CrtcPtr crtc, void *data)
 #if HAVE_NOTIFY_FD
 static void drmmode_notify_fd(int fd, int notify, void *data)
 {
-	struct intel_mode *mode;
+	struct intel_mode *mode = data;
 
 	drmHandleEvent(fd, &mode->event_context);
 }
