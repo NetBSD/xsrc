@@ -269,7 +269,9 @@
 #define PANORAMIX 1
 
 /* Support Present extension */
+#if 0
 #define PRESENT 1
+#endif
 
 /* Overall prefix */
 /* #define PROJECTROOT "/usr/X11R7" */
@@ -278,7 +280,9 @@
 #define RANDR 1
 
 /* Support Record extension */
+#if 0
 #define XRECORD 1
+#endif
 
 /* Support RENDER extension */
 #define RENDER 1
@@ -334,14 +338,18 @@
 /* Build XFree86 BigFont extension */
 /* #undef XF86BIGFONT */
 
+#if 0
 /* Support XFree86 Video Mode extension */
 #define XF86VIDMODE 1
+#endif
 
 /* Support XFixes extension */
 #define XFIXES 1
 
+#if 0
 /* Build XDGA support */
 #define XFreeXDGA 1
+#endif
 
 /* Support Xinerama extension */
 #define XINERAMA 1
@@ -371,7 +379,9 @@
 #define DRI2 1
 
 /* Build DBE support */
+#if 0
 #define DBE 1
+#endif
 
 /* Vendor name */
 #define XVENDORNAME "The X.Org Foundation"
