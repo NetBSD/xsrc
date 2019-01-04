@@ -647,6 +647,9 @@ XF86DGADirectVideo(
 
 
 static void
+#ifdef __NetBSD__
+__attribute__ ((__destructor__))
+#endif
 XF86cleanup(int sig)
 {
     ScrPtr sp;
@@ -703,7 +706,9 @@ XF86DGAGetVideo(
 
     if (!beenHere) {
 	beenHere = 1;
+#ifndef __NetBSD__
 	atexit((void(*)(void))XF86cleanup);
+#endif
 	/* one shot XF86cleanup attempts */
 	signal(SIGSEGV, XF86cleanup);
 #ifdef SIGBUS
