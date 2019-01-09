@@ -1,0 +1,11 @@
+commit 948bc1ae047668df040d62a19cae6d7a49e452fd
+Author: Michael Thayer <michael.thayer@oracle.com>
+Date:   Tue Nov 28 11:58:30 2017 +0100
+
+    vboxvideo 1.0.0
+
+commit ab07f97612d045d8c0a376174b39a294d028fef2
+Author: Michael Thayer <michael.thayer@oracle.com>
+Date:   Sat Oct 14 10:23:47 2017 +0200
+
+    Initial commit.

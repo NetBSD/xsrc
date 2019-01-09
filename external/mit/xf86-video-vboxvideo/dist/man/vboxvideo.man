@@ -1,0 +1,27 @@
+.\" shorthand for double quote that works everywhere.
+.ds q \N'34'
+.TH VBOXVIDEO __drivermansuffix__ __vendorversion__
+.SH NAME
+vboxvideo \- VirtualBox video driver
+.SH SYNOPSIS
+.nf
+.B "Section \*qDevice\*q"
+.BI "  Identifier \*q"  devname \*q
+.B  "  Driver \*qvboxvideo\*q"
+\ \ ...
+.B EndSection
+.fi
+.SH DESCRIPTION
+.B vboxvideo
+is an __xservername__ driver for the VirtualBox virtual video card.
+.SH SUPPORTED HARDWARE
+The
+.B vboxvideo
+driver supports the VirtualBox virtual video card.
+.SH CONFIGURATION DETAILS
+Please refer to __xconfigfile__(__filemansuffix__) for general configuration
+details.
+.SH "SEE ALSO"
+__xservername__(__appmansuffix__), __xconfigfile__(__filemansuffix__), Xserver(__appmansuffix__), X(__miscmansuffix__)
+.SH AUTHORS
+Authors include: Paulo Ce\'sar Pereira de Andrade, Michael Thayer.
