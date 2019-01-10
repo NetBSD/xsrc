@@ -901,15 +901,12 @@ PreInit(ScrnInfoPtr pScrn, int flags)
         return FALSE;
 
     if (flags & PROBE_DETECT) {
-	free(pEnt);
         return FALSE;
     }
 
     /* Allocate driverPrivate */
-    if (!GetRec(pScrn)) {
-	free(pEnt);
+    if (!GetRec(pScrn))
         return FALSE;
-    }
 
     pEnt = xf86GetEntityInfo(pScrn->entityList[0]);
 
