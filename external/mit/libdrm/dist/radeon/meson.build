@@ -28,10 +28,10 @@ libdrm_radeon = shared_library(
     ),
     config_file,
   ],
-  c_args : warn_c_args,
+  c_args : libdrm_c_args,
   include_directories : [inc_root, inc_drm],
   link_with : libdrm,
-  dependencies : [dep_pthread_stubs],
+  dependencies : [dep_pthread_stubs, dep_atomic_ops],
   version : '1.0.1',
   install : true,
 )

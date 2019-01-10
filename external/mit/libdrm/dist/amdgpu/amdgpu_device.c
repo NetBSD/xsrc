@@ -28,61 +28,26 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <sys/stat.h>
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "xf86drm.h"
 #include "amdgpu_drm.h"
 #include "amdgpu_internal.h"
-#include "util_hash_table.h"
 #include "util_math.h"
 
 #define PTR_TO_UINT(x) ((unsigned)((intptr_t)(x)))
-#define UINT_TO_PTR(x) ((void *)((intptr_t)(x)))
 
 static pthread_mutex_t fd_mutex = PTHREAD_MUTEX_INITIALIZER;
-static struct util_hash_table *fd_tab;
+static amdgpu_device_handle fd_list;
 
-static unsigned handle_hash(void *key)
+static int fd_compare(int fd1, int fd2)
 {
-	return PTR_TO_UINT(key);
-}
-
-static int handle_compare(void *key1, void *key2)
-{
-	return PTR_TO_UINT(key1) != PTR_TO_UINT(key2);
-}
-
-static unsigned fd_hash(void *key)
-{
-	int fd = PTR_TO_UINT(key);
-	char *name = drmGetPrimaryDeviceNameFromFd(fd);
-	unsigned result = 0;
-	char *c;
-
-	if (name == NULL)
-		return 0;
-
-	for (c = name; *c; ++c)
-		result += *c;
-
-	free(name);
-
-	return result;
-}
-
-static int fd_compare(void *key1, void *key2)
-{
-	int fd1 = PTR_TO_UINT(key1);
-	int fd2 = PTR_TO_UINT(key2);
 	char *name1 = drmGetPrimaryDeviceNameFromFd(fd1);
 	char *name2 = drmGetPrimaryDeviceNameFromFd(fd2);
 	int result;
@@ -130,15 +95,25 @@ static int amdgpu_get_auth(int fd, int *auth)
 
 static void amdgpu_device_free_internal(amdgpu_device_handle dev)
 {
-	amdgpu_vamgr_deinit(&dev->vamgr_32);
-	amdgpu_vamgr_deinit(&dev->vamgr);
-	util_hash_table_destroy(dev->bo_flink_names);
-	util_hash_table_destroy(dev->bo_handles);
-	pthread_mutex_destroy(&dev->bo_table_mutex);
-	util_hash_table_remove(fd_tab, UINT_TO_PTR(dev->fd));
+	amdgpu_device_handle *node = &fd_list;
+
+	pthread_mutex_lock(&fd_mutex);
+	while (*node != dev && (*node)->next)
+		node = &(*node)->next;
+	*node = (*node)->next;
+	pthread_mutex_unlock(&fd_mutex);
+
 	close(dev->fd);
 	if ((dev->flink_fd >= 0) && (dev->fd != dev->flink_fd))
 		close(dev->flink_fd);
+
+	amdgpu_vamgr_deinit(&dev->vamgr_32);
+	amdgpu_vamgr_deinit(&dev->vamgr);
+	amdgpu_vamgr_deinit(&dev->vamgr_high_32);
+	amdgpu_vamgr_deinit(&dev->vamgr_high);
+	handle_table_fini(&dev->bo_handles);
+	handle_table_fini(&dev->bo_flink_names);
+	pthread_mutex_destroy(&dev->bo_table_mutex);
 	free(dev->marketing_name);
 	free(dev);
 }
@@ -158,17 +133,17 @@ static void amdgpu_device_free_internal(amdgpu_device_handle dev)
  *    // incremented. dst is freed if its reference counter is 0.
  */
 static void amdgpu_device_reference(struct amdgpu_device **dst,
-			     struct amdgpu_device *src)
+				    struct amdgpu_device *src)
 {
 	if (update_references(&(*dst)->refcount, &src->refcount))
 		amdgpu_device_free_internal(*dst);
 	*dst = src;
 }
 
-int amdgpu_device_initialize(int fd,
-			     uint32_t *major_version,
-			     uint32_t *minor_version,
-			     amdgpu_device_handle *device_handle)
+drm_public int amdgpu_device_initialize(int fd,
+					uint32_t *major_version,
+					uint32_t *minor_version,
+					amdgpu_device_handle *device_handle)
 {
 	struct amdgpu_device *dev;
 	drmVersionPtr version;
@@ -181,8 +156,6 @@ int amdgpu_device_initialize(int fd,
 	*device_handle = NULL;
 
 	pthread_mutex_lock(&fd_mutex);
-	if (!fd_tab)
-		fd_tab = util_hash_table_create(fd_hash, fd_compare);
 	r = amdgpu_get_auth(fd, &flag_auth);
 	if (r) {
 		fprintf(stderr, "%s: amdgpu_get_auth (1) failed (%i)\n",
@@ -190,7 +163,11 @@ int amdgpu_device_initialize(int fd,
 		pthread_mutex_unlock(&fd_mutex);
 		return r;
 	}
-	dev = util_hash_table_get(fd_tab, UINT_TO_PTR(fd));
+
+	for (dev = fd_list; dev; dev = dev->next)
+		if (fd_compare(dev->fd, fd) == 0)
+			break;
+
 	if (dev) {
 		r = amdgpu_get_auth(dev->fd, &flag_authexist);
 		if (r) {
@@ -200,7 +177,7 @@ int amdgpu_device_initialize(int fd,
 			return r;
 		}
 		if ((flag_auth) && (!flag_authexist)) {
-			dev->flink_fd = dup(fd);
+			dev->flink_fd = fcntl(fd, F_DUPFD_CLOEXEC, 0);
 		}
 		*major_version = dev->major_version;
 		*minor_version = dev->minor_version;
@@ -234,15 +211,12 @@ int amdgpu_device_initialize(int fd,
 		goto cleanup;
 	}
 
-	dev->fd = dup(fd);
+	dev->fd = fcntl(fd, F_DUPFD_CLOEXEC, 0);
 	dev->flink_fd = dev->fd;
 	dev->major_version = version->version_major;
 	dev->minor_version = version->version_minor;
 	drmFreeVersion(version);
 
-	dev->bo_flink_names = util_hash_table_create(handle_hash,
-						     handle_compare);
-	dev->bo_handles = util_hash_table_create(handle_hash, handle_compare);
 	pthread_mutex_init(&dev->bo_table_mutex, NULL);
 
 	/* Check if acceleration is working. */
@@ -291,7 +265,8 @@ int amdgpu_device_initialize(int fd,
 	*major_version = dev->major_version;
 	*minor_version = dev->minor_version;
 	*device_handle = dev;
-	util_hash_table_set(fd_tab, UINT_TO_PTR(dev->fd), dev);
+	dev->next = fd_list;
+	fd_list = dev;
 	pthread_mutex_unlock(&fd_mutex);
 
 	return 0;
@@ -304,19 +279,20 @@ cleanup:
 	return r;
 }
 
-int amdgpu_device_deinitialize(amdgpu_device_handle dev)
+drm_public int amdgpu_device_deinitialize(amdgpu_device_handle dev)
 {
 	amdgpu_device_reference(&dev, NULL);
 	return 0;
 }
 
-const char *amdgpu_get_marketing_name(amdgpu_device_handle dev)
+drm_public const char *amdgpu_get_marketing_name(amdgpu_device_handle dev)
 {
 	return dev->marketing_name;
 }
 
-int amdgpu_query_sw_info(amdgpu_device_handle dev, enum amdgpu_sw_info info,
-			 void *value)
+drm_public int amdgpu_query_sw_info(amdgpu_device_handle dev,
+				    enum amdgpu_sw_info info,
+				    void *value)
 {
 	uint32_t *val32 = (uint32_t*)value;
 

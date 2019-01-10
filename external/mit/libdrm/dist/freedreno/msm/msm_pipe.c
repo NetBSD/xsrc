@@ -26,10 +26,6 @@
  *    Rob Clark <robclark@freedesktop.org>
  */
 
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
-
 #include "msm_priv.h"
 
 static int query_param(struct fd_pipe *pipe, uint32_t param,
@@ -142,6 +138,12 @@ static void msm_pipe_destroy(struct fd_pipe *pipe)
 {
 	struct msm_pipe *msm_pipe = to_msm_pipe(pipe);
 	close_submitqueue(pipe, msm_pipe->queue_id);
+
+	if (msm_pipe->suballoc_ring) {
+		fd_ringbuffer_del(msm_pipe->suballoc_ring);
+		msm_pipe->suballoc_ring = NULL;
+	}
+
 	free(msm_pipe);
 }
 

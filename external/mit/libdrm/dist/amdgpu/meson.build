@@ -26,18 +26,17 @@ libdrm_amdgpu = shared_library(
   [
     files(
       'amdgpu_asic_id.c', 'amdgpu_bo.c', 'amdgpu_cs.c', 'amdgpu_device.c',
-      'amdgpu_gpu_info.c', 'amdgpu_vamgr.c', 'amdgpu_vm.c', 'util_hash.c',
-      'util_hash_table.c',
+      'amdgpu_gpu_info.c', 'amdgpu_vamgr.c', 'amdgpu_vm.c', 'handle_table.c',
     ),
     config_file,
   ],
   c_args : [
-    warn_c_args,
+    libdrm_c_args,
     '-DAMDGPU_ASIC_ID_TABLE="@0@"'.format(join_paths(datadir_amdgpu, 'amdgpu.ids')),
   ],
   include_directories : [inc_root, inc_drm],
   link_with : libdrm,
-  dependencies : dep_pthread_stubs,
+  dependencies : [dep_pthread_stubs, dep_atomic_ops],
   version : '1.0.0',
   install : true,
 )
