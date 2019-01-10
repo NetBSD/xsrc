@@ -69,7 +69,7 @@ drm_private void amdgpu_vamgr_deinit(struct amdgpu_bo_va_mgr *mgr)
 	pthread_mutex_destroy(&mgr->bo_va_mutex);
 }
 
-static drm_private uint64_t
+static uint64_t
 amdgpu_vamgr_find_va(struct amdgpu_bo_va_mgr *mgr, uint64_t size,
 		     uint64_t alignment, uint64_t base_required)
 {
@@ -130,7 +130,7 @@ amdgpu_vamgr_find_va(struct amdgpu_bo_va_mgr *mgr, uint64_t size,
 	return AMDGPU_INVALID_VA_ADDRESS;
 }
 
-static drm_private void
+static void
 amdgpu_vamgr_free_va(struct amdgpu_bo_va_mgr *mgr, uint64_t va, uint64_t size)
 {
 	struct amdgpu_bo_va_hole *hole, *next;
