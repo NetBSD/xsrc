@@ -105,8 +105,6 @@ __glXDisp_GetTexImage(__GLXclientState * cl, GLbyte * pc)
 
     REQUEST_FIXED_SIZE(xGLXSingleReq, 20);
 
-    REQUEST_FIXED_SIZE(xGLXSingleReq, 20);
-
     cx = __glXForceCurrent(cl, __GLX_GET_SINGLE_CONTEXT_TAG(pc), &error);
     if (!cx) {
         return error;
