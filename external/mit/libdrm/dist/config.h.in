@@ -51,7 +51,7 @@
 /* Have nouveau (nvidia) support */
 #undef HAVE_NOUVEAU
 
-/* Define to 1 if you have the `open_memstream' function. */
+/* Have open_memstream() */
 #undef HAVE_OPEN_MEMSTREAM
 
 /* Have radeon support */

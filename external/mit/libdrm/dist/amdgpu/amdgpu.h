@@ -84,7 +84,12 @@ enum amdgpu_bo_handle_type {
 	amdgpu_bo_handle_type_kms = 1,
 
 	/** DMA-buf fd handle */
-	amdgpu_bo_handle_type_dma_buf_fd = 2
+	amdgpu_bo_handle_type_dma_buf_fd = 2,
+
+	/** KMS handle, but re-importing as a DMABUF handle through
+	 *  drmPrimeHandleToFD is forbidden. (Glamor does that)
+	 */
+	amdgpu_bo_handle_type_kms_noimport = 3,
 };
 
 /** Define known types of GPU VM VA ranges */
@@ -673,6 +678,29 @@ int amdgpu_create_bo_from_user_mem(amdgpu_device_handle dev,
 				    amdgpu_bo_handle *buf_handle);
 
 /**
+ * Validate if the user memory comes from BO
+ *
+ * \param dev - [in] Device handle. See #amdgpu_device_initialize()
+ * \param cpu - [in] CPU address of user allocated memory which we
+ * want to map to GPU address space (make GPU accessible)
+ * (This address must be correctly aligned).
+ * \param size - [in] Size of allocation (must be correctly aligned)
+ * \param buf_handle - [out] Buffer handle for the userptr memory
+ * if the user memory is not from BO, the buf_handle will be NULL.
+ * \param offset_in_bo - [out] offset in this BO for this user memory
+ *
+ *
+ * \return   0 on success\n
+ *          <0 - Negative POSIX Error code
+ *
+*/
+int amdgpu_find_bo_by_cpu_mapping(amdgpu_device_handle dev,
+				  void *cpu,
+				  uint64_t size,
+				  amdgpu_bo_handle *buf_handle,
+				  uint64_t *offset_in_bo);
+
+/**
  * Free previosuly allocated memory
  *
  * \param   dev	       - \c [in] Device handle. See #amdgpu_device_initialize()
@@ -693,7 +721,17 @@ int amdgpu_create_bo_from_user_mem(amdgpu_device_handle dev,
 int amdgpu_bo_free(amdgpu_bo_handle buf_handle);
 
 /**
- * Request CPU access to GPU accessible memory
+ * Increase the reference count of a buffer object
+ *
+ * \param   bo - \c [in]  Buffer object handle to increase the reference count
+ *
+ * \sa amdgpu_bo_alloc(), amdgpu_bo_free()
+ *
+*/
+void amdgpu_bo_inc_ref(amdgpu_bo_handle bo);
+
+/**
+ * Request CPU access to GPU accessable memory
  *
  * \param   buf_handle - \c [in] Buffer handle
  * \param   cpu        - \c [out] CPU address to be used for access

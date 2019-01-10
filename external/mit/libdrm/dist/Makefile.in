@@ -226,12 +226,13 @@ am__klibdrminclude_HEADERS_DIST = include/drm/drm.h \
 	include/drm/drm_fourcc.h include/drm/drm_mode.h \
 	include/drm/drm_sarea.h include/drm/i915_drm.h \
 	include/drm/mach64_drm.h include/drm/mga_drm.h \
-	include/drm/nouveau_drm.h include/drm/qxl_drm.h \
-	include/drm/r128_drm.h include/drm/radeon_drm.h \
-	include/drm/amdgpu_drm.h include/drm/savage_drm.h \
-	include/drm/sis_drm.h include/drm/tegra_drm.h \
-	include/drm/vc4_drm.h include/drm/via_drm.h \
-	include/drm/virtgpu_drm.h include/drm/vmwgfx_drm.h
+	include/drm/msm_drm.h include/drm/nouveau_drm.h \
+	include/drm/qxl_drm.h include/drm/r128_drm.h \
+	include/drm/radeon_drm.h include/drm/amdgpu_drm.h \
+	include/drm/savage_drm.h include/drm/sis_drm.h \
+	include/drm/tegra_drm.h include/drm/vc4_drm.h \
+	include/drm/via_drm.h include/drm/virtgpu_drm.h \
+	include/drm/vmwgfx_drm.h
 HEADERS = $(klibdrminclude_HEADERS) $(libdrminclude_HEADERS)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
@@ -494,6 +495,7 @@ LIBDRM_INCLUDE_H_FILES := \
 	include/drm/i915_drm.h \
 	include/drm/mach64_drm.h \
 	include/drm/mga_drm.h \
+	include/drm/msm_drm.h \
 	include/drm/nouveau_drm.h \
 	include/drm/qxl_drm.h \
 	include/drm/r128_drm.h \
@@ -571,6 +573,7 @@ libdrm_la_LIBADD = @CLOCK_LIB@ -lm
 libdrm_la_CPPFLAGS = -I$(top_srcdir)/include/drm
 AM_CFLAGS = \
 	$(WARN_CFLAGS) \
+	-fvisibility=hidden \
 	$(VALGRIND_CFLAGS)
 
 libdrm_la_SOURCES = $(LIBDRM_FILES)

@@ -22,10 +22,10 @@
 libdrm_nouveau = shared_library(
   'drm_nouveau',
   [files( 'nouveau.c', 'pushbuf.c', 'bufctx.c', 'abi16.c'), config_file],
-  c_args : warn_c_args,
+  c_args : libdrm_c_args,
   include_directories : [inc_root, inc_drm],
   link_with : libdrm,
-  dependencies : dep_threads,
+  dependencies : [dep_threads, dep_atomic_ops],
   version : '2.0.0',
   install : true,
 )

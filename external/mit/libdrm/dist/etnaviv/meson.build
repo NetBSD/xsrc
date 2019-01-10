@@ -30,8 +30,8 @@ libdrm_etnaviv = shared_library(
   ],
   include_directories : [inc_root, inc_drm],
   link_with : libdrm,
-  c_args : warn_c_args,
-  dependencies : [dep_pthread_stubs, dep_rt],
+  c_args : libdrm_c_args,
+  dependencies : [dep_pthread_stubs, dep_rt, dep_atomic_ops],
   version : '1.0.0',
   install : true,
 )

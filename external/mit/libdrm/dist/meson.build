@@ -21,7 +21,7 @@
 project(
   'libdrm',
   ['c'],
-  version : '2.4.91',
+  version : '2.4.96',
   license : 'MIT',
   meson_version : '>= 0.43',
   default_options : ['buildtype=debugoptimized', 'c_std=gnu99'],
@@ -29,11 +29,11 @@ project(
 
 pkg = import('pkgconfig')
 
-with_udev = get_option('udev')
+config = configuration_data()
+
+config.set10('UDEV', get_option('udev'))
 with_freedreno_kgsl = get_option('freedreno-kgsl')
 with_install_tests = get_option('install-test-programs')
-
-config = configuration_data()
 
 if ['freebsd', 'dragonfly', 'netbsd'].contains(host_machine.system())
   dep_pthread_stubs = dependency('pthread-stubs', version : '>= 0.4')
@@ -48,6 +48,7 @@ cc = meson.get_compiler('c')
 intel_atomics = false
 lib_atomics = false
 
+dep_atomic_ops = dependency('atomic_ops', required : false)
 if cc.compiles('''
     int atomic_add(int *i) { return __sync_add_and_fetch (i, 1); }
     int atomic_cmpxchg(int *i, int j, int k) { return __sync_val_compare_and_swap (i, j, k); }
@@ -55,7 +56,8 @@ if cc.compiles('''
     name : 'Intel Atomics')
   intel_atomics = true
   with_atomics = true
-elif cc.has_header('atomic_ops.h')
+  dep_atomic_ops = []
+elif dep_atomic_ops.found()
   lib_atomics = true
   with_atomics = true
 elif cc.has_function('atomic_cas_uint')
@@ -163,13 +165,6 @@ if _libkms != 'false'
   with_libkms = _libkms == 'true' or ['linux', 'freebsd', 'dragonfly'].contains(host_machine.system())
 endif
 
-if with_udev
-  dep_udev = dependency('udev')
-  config.set10('UDEV', true)
-else
-  dep_udev = []
-endif
-
 # Among others FreeBSD does not have a separate dl library.
 if not cc.has_function('dlsym')
   dep_dl = cc.find_library('dl', required : with_nouveau)
@@ -184,20 +179,16 @@ else
   dep_rt = []
 endif
 dep_m = cc.find_library('m', required : false)
-if cc.has_header('sys/sysctl.h')
-  config.set10('HAVE_SYS_SYSCTL_H', true)
-endif
-if cc.has_header('sys/select.h')
-  config.set10('HAVE_SYS_SELECT_H', true)
-endif
+foreach header : ['sys/sysctl.h', 'sys/select.h', 'alloca.h']
+  config.set('HAVE_' + header.underscorify().to_upper(),
+    cc.compiles('#include <@0@>'.format(header), name : '@0@ works'.format(header)))
+endforeach
 if cc.has_header_symbol('sys/sysmacros.h', 'major')
   config.set10('MAJOR_IN_SYSMACROS', true)
 elif cc.has_header_symbol('sys/mkdev.h', 'major')
   config.set10('MAJOR_IN_MKDEV', true)
 endif
-if cc.has_function('open_memstream')
-  config.set10('HAVE_OPEN_MEMSTREAM', true)
-endif
+config.set10('HAVE_OPEN_MEMSTREAM', cc.has_function('open_memstream'))
 
 warn_c_args = []
 foreach a : ['-Wall', '-Wextra', '-Wsign-compare', '-Werror=undef',
@@ -219,6 +210,9 @@ foreach a : ['unused-parameter', 'attributes', 'long-long',
     warn_c_args += '-Wno-@0@'.format(a)
   endif
 endforeach
+
+# all c args:
+libdrm_c_args = warn_c_args + ['-fvisibility=hidden']
 
 
 dep_pciaccess = dependency('pciaccess', version : '>= 0.10', required : with_intel)
@@ -257,10 +251,9 @@ with_man_pages = with_man_pages != 'false' and prog_xslt.found() and prog_sed.fo
 # Used for tets
 prog_bash = find_program('bash')
 
-if cc.compiles('''int foo_hidden(void) __attribute__((visibility(("hidden"))));''',
-               name : 'compiler supports __attribute__(("hidden"))')
-  config.set10('HAVE_VISIBILITY', true)
-endif
+config.set10('HAVE_VISIBILITY',
+  cc.compiles('''int foo_hidden(void) __attribute__((visibility(("hidden"))));''',
+              name : 'compiler supports __attribute__(("hidden"))'))
 
 foreach t : [
              [with_exynos, 'EXYNOS'],
@@ -283,7 +276,7 @@ config_file = configure_file(
   configuration : config,
   output : 'config.h',
 )
-add_project_arguments('-DHAVE_CONFIG_H', language : 'c')
+add_project_arguments('-include', 'config.h', language : 'c')
 
 inc_root = include_directories('.')
 inc_drm = include_directories('include/drm')
@@ -296,8 +289,8 @@ libdrm = shared_library(
    ),
    config_file,
   ],
-  c_args : warn_c_args,
-  dependencies : [dep_udev, dep_valgrind, dep_rt, dep_m],
+  c_args : libdrm_c_args,
+  dependencies : [dep_valgrind, dep_rt, dep_m],
   include_directories : inc_drm,
   version : '2.4.0',
   install : true,
@@ -313,10 +306,11 @@ install_headers(
   'include/drm/drm.h', 'include/drm/drm_fourcc.h', 'include/drm/drm_mode.h',
   'include/drm/drm_sarea.h', 'include/drm/i915_drm.h',
   'include/drm/mach64_drm.h', 'include/drm/mga_drm.h',
-  'include/drm/nouveau_drm.h', 'include/drm/qxl_drm.h',
-  'include/drm/r128_drm.h', 'include/drm/radeon_drm.h',
-  'include/drm/amdgpu_drm.h', 'include/drm/savage_drm.h',
-  'include/drm/sis_drm.h', 'include/drm/tegra_drm.h', 'include/drm/vc4_drm.h',
+  'include/drm/msm_drm.h', 'include/drm/nouveau_drm.h',
+  'include/drm/qxl_drm.h', 'include/drm/r128_drm.h',
+  'include/drm/radeon_drm.h', 'include/drm/amdgpu_drm.h',
+  'include/drm/savage_drm.h', 'include/drm/sis_drm.h',
+  'include/drm/tegra_drm.h', 'include/drm/vc4_drm.h',
   'include/drm/via_drm.h', 'include/drm/virtgpu_drm.h',
   subdir : 'libdrm',
 )

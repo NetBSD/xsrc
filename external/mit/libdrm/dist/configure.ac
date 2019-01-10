@@ -20,7 +20,7 @@
 
 AC_PREREQ([2.63])
 AC_INIT([libdrm],
-        [2.4.91],
+        [2.4.96],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=DRI],
         [libdrm])
 
@@ -189,7 +189,9 @@ AC_CHECK_FUNCS([clock_gettime], [CLOCK_LIB=],
                              [AC_MSG_ERROR([Couldn't find clock_gettime])])])
 AC_SUBST([CLOCK_LIB])
 
-AC_CHECK_FUNCS([open_memstream], [HAVE_OPEN_MEMSTREAM=yes])
+AC_CHECK_FUNCS([open_memstream],
+               [AC_DEFINE([HAVE_OPEN_MEMSTREAM], 1, [Have open_memstream()])],
+               [AC_DEFINE([HAVE_OPEN_MEMSTREAM], 0)])
 
 dnl Use lots of warning flags with with gcc and compatible compilers
 
@@ -345,6 +347,8 @@ AC_SUBST(PCIACCESS_LIBS)
 
 if test "x$UDEV" = xyes; then
 	AC_DEFINE(UDEV, 1, [Have UDEV support])
+else
+	AC_DEFINE(UDEV, 0)
 fi
 
 AC_CANONICAL_HOST
@@ -533,7 +537,11 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([
 
 if test "x$HAVE_ATTRIBUTE_VISIBILITY" = xyes; then
     AC_DEFINE(HAVE_VISIBILITY, 1, [Compiler supports __attribute__(("hidden"))])
+else
+    AC_DEFINE(HAVE_VISIBILITY, 0)
 fi
+
+CFLAGS="$CFLAGS -include config.h"
 
 AC_SUBST(WARN_CFLAGS)
 AC_CONFIG_FILES([
