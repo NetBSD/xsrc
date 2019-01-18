@@ -61,7 +61,7 @@
 #define HAS_SHM 1
 
 /* Has backtrace support */
-/* #undef HAVE_BACKTRACE */
+#define HAVE_BACKTRACE 1
 
 /* Has libunwind support */
 /* #undef HAVE_LIBUNWIND */
