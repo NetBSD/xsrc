@@ -175,8 +175,8 @@ static int bo_map(struct radeon_bo_int *boi, int write)
                 boi, boi->handle, r);
         return r;
     }
-    r = drmMap(boi->bom->fd, args.addr_ptr, args.size, &ptr);
-    if (r)
+    ptr = drm_mmap(0, args.size, PROT_READ|PROT_WRITE, MAP_SHARED, boi->bom->fd, args.addr_ptr);
+    if (ptr == MAP_FAILED)
         return -errno;
     bo_gem->priv_ptr = ptr;
 wait:
