@@ -116,7 +116,10 @@ GLint glxConvertToXVisualType(int visualType);
 ** and DDX layers of the GLX server extension.  The methods provide an
 ** interface for context management on a screen.
 */
+#ifndef __GLXscreen
+#define __GLXscreen __GLXscreen
 typedef struct __GLXscreen __GLXscreen;
+#endif
 struct __GLXscreen {
     void (*destroy) (__GLXscreen * screen);
 

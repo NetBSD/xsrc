@@ -30,7 +30,10 @@
 /* XXX this comment no longer makes sense i think */
 #ifdef GLXEXT
 typedef struct __GLXprovider __GLXprovider;
+#ifndef __GLXscreen
+#define __GLXscreen __GLXscreen
 typedef struct __GLXscreen __GLXscreen;
+#endif
 struct __GLXprovider {
     __GLXscreen *(*screenProbe) (ScreenPtr pScreen);
     const char *name;
