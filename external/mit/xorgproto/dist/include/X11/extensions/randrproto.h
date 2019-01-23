@@ -45,12 +45,16 @@
 #define Time CARD32
 #define KeyCode CARD8
 #define KeySym CARD32
+
+/* All also defined in <randr/randrstr.h> */
+#ifndef RROutput
 #define RROutput CARD32
 #define RRMode CARD32
 #define RRCrtc CARD32
 #define RRProvider CARD32
 #define RRModeFlags CARD32
 #define RRLease CARD32
+#endif
 
 #define Rotation CARD16
 #define SizeID CARD16

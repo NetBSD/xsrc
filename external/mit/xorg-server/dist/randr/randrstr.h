@@ -59,11 +59,15 @@
 
 #define RANDR_INTERFACE_VERSION 0x0104
 
-typedef XID RRMode;
-typedef XID RROutput;
-typedef XID RRCrtc;
-typedef XID RRProvider;
-typedef XID RRLease;
+/* All also defined in <X11/extensions/randrproto.h> */
+#ifndef RROutput
+#define RROutput CARD32
+#define RRMode CARD32
+#define RRCrtc CARD32
+#define RRProvider CARD32
+#define RRModeFlags CARD32
+#define RRLease CARD32
+#endif
 
 extern int RREventBase, RRErrorBase;
 
