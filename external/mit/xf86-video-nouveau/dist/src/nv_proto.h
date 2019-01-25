@@ -2,9 +2,8 @@
 #define __NV_PROTO_H__
 
 /* not defined in Xdefs.h for xorg-server 1.20. */
-#if ABI_VIDEODRV_VERSION >= SET_ABI_VERSION(23, 0)
+#ifndef _XTYPEDEF_POINTER
 typedef void * pointer;
-#undef _XTYPEDEF_POINTER
 #define _XTYPEDEF_POINTER
 #endif
 
