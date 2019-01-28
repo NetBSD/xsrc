@@ -346,6 +346,10 @@ listPossibleVideoDrivers(XF86MatchedDrivers *md)
     xf86AddMatchedDriver(md, "modesetting");
 #endif
 
+#if defined(__NetBSD__) && (defined(__aarch64__) || defined(__arm__))
+    xf86AddMatchedDriver(md, "modesetting");
+#endif
+
 #if !defined(__sun)
     /* Fallback to platform default frame buffer driver */
 #if !defined(__linux__) && defined(__sparc__)
