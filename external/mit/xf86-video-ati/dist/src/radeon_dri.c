@@ -1070,7 +1070,7 @@ static Bool RADEONDRIPciInit(RADEONInfoPtr info, ScreenPtr pScreen)
 	return FALSE;
     }
     xf86DrvMsg(pScreen->myNum, X_INFO,
-	       "[pci] ring handle = 0x%08lx, size = 0x%08lx\n", info->dri->ringHandle, info->dri->ringMapSize);
+	       "[pci] ring handle = 0x%08lx, size = 0x%08x\n", info->dri->ringHandle, info->dri->ringMapSize);
 
     if ((ret = drmMap(info->dri->drmFD, info->dri->ringHandle, info->dri->ringMapSize,
 	       &info->dri->ring)) < 0) {
