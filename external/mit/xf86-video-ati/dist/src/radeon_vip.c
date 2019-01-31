@@ -302,7 +302,8 @@ static Bool RADEONVIP_fifo_write(GENERIC_BUS_Ptr b, uint32_t address, uint32_t c
 	{
 		OUTREG(VIPH_REG_DATA, *(uint32_t*)(buffer + i));
     	write_mem_barrier();
-		while(VIP_BUSY == (status = RADEONVIP_fifo_idle(b, 0x0f)));
+		while(VIP_BUSY == (status = RADEONVIP_fifo_idle(b, 0x0f)))
+			continue;
     	if(VIP_IDLE != status)
 		{
     		xf86DrvMsg(pScrn->scrnIndex, X_INFO, "cannot write to VIPH_REG_DATA\n");
