@@ -2681,7 +2681,7 @@ RADEONDisplayVideo(
      * prevent the buffer offsets from exceeding the hardware limit of 128 MB.
      * The base address must be aligned to a multiple of 4 MB.
      */
-    base_offset = ((info->fbLocation + base_offset) & (~0 << 22)) -
+    base_offset = ((info->fbLocation + base_offset) & (~0U << 22)) -
 	info->fbLocation;
 
     offset1 -= base_offset;
