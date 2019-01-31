@@ -1,4 +1,4 @@
-/* $Id: VBoxVideoIPRT.h,v 1.1.1.1 2019/01/09 23:50:31 mrg Exp $ */
+/* $Id: VBoxVideoIPRT.h,v 1.2 2019/01/31 20:46:43 christos Exp $ */
 /*
  * Copyright (C) 2017 Oracle Corporation
  *
@@ -116,7 +116,11 @@ RT_C_DECLS_END
 #define RT_CLAMP(Value, Min, Max)               ( (Value) > (Max) ? (Max) : (Value) < (Min) ? (Min) : (Value) )
 #define RT_ELEMENTS(aArray)                     ( sizeof(aArray) / sizeof((aArray)[0]) )
 #define RTIOPORT unsigned short
+#ifdef __clang__
+#define RT_NOREF(...)       ((void)0)
+#else
 #define RT_NOREF(...)       (void)(__VA_ARGS__)
+#endif
 #define RT_OFFSETOF(type, member) offsetof(type, member)
 #define RT_ZERO(Obj)        RT_BZERO(&(Obj), sizeof(Obj))
 #define VALID_PTR(ptr)    (   (uintptr_t)(ptr) + 0x1000U >= 0x2000U )
