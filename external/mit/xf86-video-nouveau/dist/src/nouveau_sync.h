@@ -1,6 +1,7 @@
 #ifndef __NOUVEAU_SYNC_H__
 #define __NOUVEAU_SYNC_H__
 
+#include "nv_pointer.h"
 #include "xorg-server.h"
 #include "scrnintstr.h"
 

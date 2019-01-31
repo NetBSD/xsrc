@@ -11,6 +11,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+#include "nv_pointer.h"
+
 /* All drivers should typically include these */
 #include "xorg-config.h"
 #include "xf86.h"
