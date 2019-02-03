@@ -368,6 +368,13 @@ WsfbProbe(DriverPtr drv, int flags)
 					      &devSections)) <= 0)
 		return FALSE;
 
+	/* Do not attach if the modesetting driver is active */
+	if (fbSlotClaimed == TRUE) {
+		DriverPtr fbSlotDrv = xf86GetEntityInfo(0)->driver;
+		if (strcmp(fbSlotDrv->driverName, "modesetting") == 0)
+			return FALSE;
+	}
+
 	for (i = 0; i < numDevSections; i++) {
 		ScrnInfoPtr pScrn = NULL;
 
