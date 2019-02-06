@@ -1532,7 +1532,7 @@ Bool PopUpMenu (MenuRoot *menu, int x, int y, Bool center)
     if (menu == Scr->Keys) {
 	FuncKey *tmpKey;
 	char *tmpStr, *tmpStr2;
-	char modStr[5];
+	char modStr[6];
 	char *oldact = 0;
 	int oldmod = 0;
 	int tmpLen;
