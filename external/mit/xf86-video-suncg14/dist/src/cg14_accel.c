@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.13 2017/12/07 19:23:22 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.14 2019/03/01 02:22:27 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -69,8 +69,17 @@ static void CG14Copy8(PixmapPtr, int, int, int, int, int, int);
 static inline void
 CG14Wait(Cg14Ptr p)
 {
-	/* we just wait until the instruction queue is empty */
-	while ((read_sx_reg(p, SX_CONTROL_STATUS) & SX_MT) != 0) {};
+	int bail = 10000000;
+	/* we wait for the busy bit to clear */
+	while (((read_sx_reg(p, SX_CONTROL_STATUS) & SX_BZ) != 0) &&
+	       (bail > 0)) {
+		bail--;
+	};
+	if (bail == 0) {
+		xf86Msg(X_ERROR, "SX wait for idle timed out %08x %08x\n",
+		    read_sx_reg(p, SX_CONTROL_STATUS),
+		    read_sx_reg(p, SX_ERROR));
+	}
 }
 
 static void
