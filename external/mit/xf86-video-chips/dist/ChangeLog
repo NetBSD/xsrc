@@ -1,3 +1,31 @@
+commit 7d9a0594a0fa1c63d04ad929125233917e2e227c
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Fri Feb 15 15:39:38 2019 -0800
+
+    Version bumped to 1.4.0
+    
+    Bug fix release to address non-HiQVideo Chips & Technologies device
+    initialization code crashing the X Server.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit c5e70111d648777afd1de501214d875cf838fde7
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Feb 12 15:47:07 2019 -0800
+
+    Fix for a faulty new vgaHW ABI conversion on non-HiQ Video devices
+    
+    Unfortunately, commit 989cf4f1fb2ac57f38d363734b71a5cf749db146
+    missed inserting a call to vgaHWSetStdFuncs prior to calling
+    vgaHWGetIOBase for non-HiQ Video devices, so this will cause a crash
+    with the X Server.  The code has three different chipsPreInit* to
+    handle some aspects of a PreInit callback, but only chipsPreInitHiQV
+    function has the correct code.  Added the call to vgaHWSetStdFuncs
+    for chipsPreInit655xx and chipsPreInitWingine functions.  This bug
+    was observed on Chips & Technologies 65548.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
 commit 18c04e66a1018a37c3fe9ff9e074a1837659eca3
 Author: Kevin Brace <kevinbrace@gmx.com>
 Date:   Tue Dec 25 08:24:18 2018 -0600
