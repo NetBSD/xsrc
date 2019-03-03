@@ -86,7 +86,7 @@ static const char	*usage_message =
     "    -best              make the RGB_BEST_MAP\n"
     "    -blue              make the RGB_BLUE_MAP\n"
     "    -default           make the RGB_DEFAULT_MAP\n"
-    "    -delete name       remove a standard colormap\n"
+    "    -delete map        remove a standard colormap\n"
     "    -display dpy       X server to use\n"
     "    -gray              make the RGB_GRAY_MAP\n"
     "    -green             make the RGB_GREEN_MAP\n"
@@ -148,7 +148,7 @@ parse(int argc, char **argv)
 
     snprintf(option, sizeof(option), "%s%s", program_name, ".delete");
     if (XrmGetResource(database, option, (char *) NULL, &type, &value)) {
-	register int i;
+	unsigned int i;
 	for (i=0; i < NPROPERTIES; i++) {
 	    if (strcmp((char *) value.addr, propertyTable[i].nickname) == 0) {
 		propertyTable[i].delete++;
@@ -213,7 +213,7 @@ getDeepestVisual(int visual_class,   /* specifies the desired visual class */
 		 int nvisuals)	/* specifies number of visuals in the list */
 {
     register int	i;
-    unsigned int	maxdepth = 0;
+    int			maxdepth = 0;
     XVisualInfo		*v = NULL;
     
     for (i=0; i < nvisuals; i++, vinfo++)
@@ -276,7 +276,8 @@ visualStringFromClass(int class)
 static int 
 doIndividualColormaps(void)
 {
-    int			i, screen, nvisuals;
+    unsigned int	i;
+    int			screen, nvisuals;
     Status		status = -1;
     XVisualInfo		*vinfo = NULL, *v = NULL, template;
     
