@@ -1843,6 +1843,7 @@ out:
 
 #endif
 
+#ifdef HAVE_LIBUDEV
 #if HAVE_NOTIFY_FD
 static void
 drmmode_udev_notify(int fd, int notify, void *data)
@@ -1850,6 +1851,7 @@ drmmode_udev_notify(int fd, int notify, void *data)
 	ScrnInfoPtr scrn = data;
 	drmmode_handle_uevents(scrn);
 }
+#endif
 #endif
 
 static bool has_randr(void)
