@@ -57,6 +57,7 @@ from the X Consortium.
 #include "xdit_mask.bm"
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 /* Command line options table.  Only resources are entered here...there is a
    pass over the remaining options after XtParseCommand is let loose. */
@@ -324,7 +325,24 @@ VisitFile (char *name, Boolean resetPage)
     else if (name[0] == '|')
 	new_file = popen (name+1, "r");
     else {
+        struct stat stbuf;
+
 	new_file = fopen (name, "r");
+
+        if (!new_file) {
+            perror(name);
+            return;
+        }
+        /* Make sure it is a regular file */
+        if (fstat(fileno(new_file), &stbuf) != 0) {
+            perror(name);
+            return;
+        }
+        if (! S_ISREG(stbuf.st_mode)){
+            fprintf(stderr, "%s is not a regular file.\n", name);
+            return;
+        }
+
 	seek = 1;
     }
     if (!new_file) {

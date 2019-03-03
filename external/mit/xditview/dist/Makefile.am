@@ -55,7 +55,7 @@ dist_appdefault_DATA = \
 bitmapdir = $(includedir)/X11/bitmaps
 dist_bitmap_DATA = ldblarrow rdblarrow
 
-EXTRA_DIST = xdit.bm xdit_mask.bm
+EXTRA_DIST = xdit.bm xdit_mask.bm README.md
 
 MAINTAINERCLEANFILES = ChangeLog INSTALL
 
