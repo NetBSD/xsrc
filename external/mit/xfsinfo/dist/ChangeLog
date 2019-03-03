@@ -1,3 +1,74 @@
+commit 213f67bac941815d6fb076ac9fdeddfd42eeaa58
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Feb 19 14:38:48 2019 -0800
+
+    xfsinfo 1.0.6
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5965f1cbee8fa54f7acef450f582000d8e7c99fc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Nov 21 17:04:08 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9a6eb96075dad5bd27e9f186ccd686db14f7f91f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Nov 16 22:08:11 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a52c1c5bd9751bed74c3bdc2b2c8dd1078f601f4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 23 16:58:16 2018 -0700
+
+    Correctly report maximum request size when sizeof(long) != 4
+    
+    The protocol spec says:
+      The MAXIMUM-REQUEST-LENGTH specifies the largest request size in
+      4-byte units that is accepted by the server
+    
+    The code worked on 32-bit platforms, where longs were 4 bytes, but
+    overreports the number of bytes allowed on platforms with 64-bit longs.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e45c10ebcf0ea9109f97adc2ecd1f28fcacf24ec
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:21 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit 5b02e6a65f0b9370d399a0187b711191631b85f0
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 00540057a4ce52afc69041f400afe16952acdf91
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
 commit 9428c7c023461a04b2cd553e932871cda353e14e
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Tue Dec 30 21:05:36 2014 -0800
