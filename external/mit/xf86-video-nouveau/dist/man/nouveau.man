@@ -63,7 +63,13 @@ GF100, GF104, GF106, GF108, GF110, GF114, GF116, GF117, GF119
 GK104, GK106, GK107, GK110, GK208
 .TP 22
 .B GeForce GTX 750
-GM107
+GM107, GM108
+.TP 22
+.B GeForce GTX 9XX
+GM200, GM204, GM206
+.TP 22
+.B GeForce GTX 10XX
+GP102, GP104, GP106, GP107, GP108
 
 .SH CONFIGURATION DETAILS
 Please refer to __xconfigfile__(__filemansuffix__) for general configuration
@@ -128,8 +134,7 @@ Default: 1.
 .BI "Option \*qDRI\*q \*q" integer \*q
 Define the maximum level of DRI to enable. Valid values are 2 or 3.
 exa acceleration will honor the maximum level if it is supported.
-Under glamor acceleration DRI3 is always enabled if supported,
-as glamor currently does not support DRI2. Default: 2 on exa, 3 on glamor.
+Default: 2.
 .SH "SEE ALSO"
 __xservername__(__appmansuffix__), __xconfigfile__(__filemansuffix__), Xserver(__appmansuffix__), X(__miscmansuffix__)
 .SH AUTHORS

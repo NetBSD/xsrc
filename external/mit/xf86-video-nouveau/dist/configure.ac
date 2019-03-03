@@ -20,79 +20,72 @@
 #
 # Process this file with autoconf to produce a configure script
 
+# Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-video-nouveau],
-        [1.0.15],
-        [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
+        [1.0.16],
+        [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg&component=Driver/nouveau],
         [xf86-video-nouveau])
 
-AC_DEFINE_UNQUOTED([NV_MAJOR_VERSION],
-                   [$(echo $PACKAGE_VERSION | sed -e 's/^\([[0-9]]*\)\.[[0-9]]*\.[[0-9]]*/\1/')],
-                   [Major version])
-AC_DEFINE_UNQUOTED([NV_MINOR_VERSION],
-                   [$(echo $PACKAGE_VERSION | sed -e 's/^[[0-9]]*\.\([[0-9]]*\)\.[[0-9]]*/\1/')],
-                   [Minor version])
-AC_DEFINE_UNQUOTED([NV_PATCHLEVEL],
-                   [$(echo $PACKAGE_VERSION | sed -e 's/^[[0-9]]*\.[[0-9]]*\.\([[0-9]]*\)/\1/')],
-                   [Patch version])
 AC_DEFINE_UNQUOTED([NV_DRIVER_DATE],
                    [$(echo -n \";git log |head -3|tail -1|tr -d '\n';echo -n \")],
                    [Driver date])
 
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR(.)
 
-AM_INIT_AUTOMAKE([dist-bzip2])
+# Initialize Automake
+AM_INIT_AUTOMAKE([foreign dist-bzip2])
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 # Require X.Org macros 1.8 or later for MAN_SUBSTS set by XORG_MANPAGE_SECTIONS
 m4_ifndef([XORG_MACROS_VERSION],
-          [m4_fatal([must install xorg-macros 1.8 or later before running autoconf/autogen])])
+          [m4_fatal([must install xorg-macros 1.8 or later before running autoconf/autogen
+           Hint: either install from source, https://gitlab.freedesktop.org/xorg/util/macros.git or,
+           depending on you distribution, try package 'xutils-dev' or 'xorg-x11-util-macros'])])
 
 XORG_MACROS_VERSION(1.8)
 XORG_DEFAULT_OPTIONS
 
 # Require X.Org server macros (i.e. XORG_DRIVER_CHECK_EXT) to check for required modules
 m4_ifndef([XORG_DRIVER_CHECK_EXT],
-          [m4_fatal([must install xorg-server macros before running autoconf/autogen])])
+          [m4_fatal([must install xorg-server macros before running autoconf/autogen
+           Hint: either install from source, https://gitlab.freedesktop.org/xorg/xserver.git or,
+           depending on your distribution, try package 'xserver-xorg-dev' or 'xorg-x11-server-devel'])])
 
-
-# Checks for programs.
-AC_DISABLE_STATIC
-LT_INIT
-AC_PROG_CC
+# Initialize libtool
+LT_INIT([disable-static])
 
 AH_TOP([#include "xorg-server.h"])
 
+# Define a configure option for an alternate module directory
 AC_ARG_WITH(xorg-module-dir,
             AS_HELP_STRING([--with-xorg-module-dir=DIR],
                            [Default xorg module directory [[default=$libdir/xorg/modules]]]),
             [moduledir="$withval"],
             [moduledir="$libdir/xorg/modules"])
 
-# Checks for extensions
+# Store the list of server defined optional extensions in REQUIRED_MODULES
 XORG_DRIVER_CHECK_EXT(RANDR, randrproto)
 XORG_DRIVER_CHECK_EXT(RENDER, renderproto)
 XORG_DRIVER_CHECK_EXT(XV, videoproto)
 XORG_DRIVER_CHECK_EXT(DPMSExtension, xextproto)
 XORG_DRIVER_CHECK_EXT(DRI2, [dri2proto >= 2.6])
 
-# Checks for pkg-config packages
+# Checks for libraries
 PKG_CHECK_MODULES(LIBDRM, [libdrm >= 2.4.60])
 PKG_CHECK_MODULES(LIBDRM_NOUVEAU, [libdrm_nouveau >= 2.4.25])
-AC_SUBST(LIBDRM_NOUVEAU_CFLAGS)
-AC_SUBST(LIBDRM_NOUVEAU_LIBS)
 
-PKG_CHECK_MODULES(XORG, [xorg-server >= 1.8] xproto fontsproto libdrm $REQUIRED_MODULES)
+# Obtain compiler/linker options for the driver dependencies
+PKG_CHECK_MODULES(XORG, [xorg-server >= 1.8] xproto fontsproto $REQUIRED_MODULES)
 PKG_CHECK_MODULES(XEXT, [xextproto >= 7.0.99.1],
 		  HAVE_XEXTPROTO_71="yes"; AC_DEFINE(HAVE_XEXTPROTO_71, 1, [xextproto 7.1 available]),
 		  HAVE_XEXTPROTO_71="no")
 AM_CONDITIONAL(HAVE_XEXTPROTO_71, [ test "$HAVE_XEXTPROTO_71" = "yes" ])
-sdkdir=$(pkg-config --variable=sdkdir xorg-server)
 
-# Checks for libraries.
 PKG_CHECK_MODULES([PCIACCESS], [pciaccess >= 0.10])
 
 PKG_CHECK_MODULES(LIBUDEV, [libudev], [LIBUDEV=yes], [LIBUDEV=no])
@@ -100,16 +93,11 @@ if test "x$LIBUDEV" = xyes; then
 	AC_DEFINE(HAVE_LIBUDEV, 1, [libudev support])
 fi
 AM_CONDITIONAL(LIBUDEV, [ test "x$LIBUDEV" = "xyes" ] )
-AC_SUBST([LIBUDEV_CFLAGS])
-AC_SUBST([LIBUDEV_LIBS])
-
-# Checks for header files.
-AC_HEADER_STDC
 
 # Use -Wall all the time
 CFLAGS="$CFLAGS -Wall"
 
-# Check for -minline-all-stringops availabtility
+# Check for -minline-all-stringops availability
 OLD_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS -minline-all-stringops"
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[ #include <stdio.h> ]], [[ ]])],
@@ -124,21 +112,17 @@ AC_SUBST([moduledir])
 DRIVER_NAME=nouveau
 AC_SUBST([DRIVER_NAME])
 
-XORG_MANPAGE_SECTIONS
-XORG_RELEASE_VERSION
+AC_CHECK_DECL(xf86CursorResetCursor,
+              [AC_DEFINE(HAVE_XF86_CURSOR_RESET_CURSOR, 1,
+              [Have xf86CursorResetCursor API])], [],
+              [#include <xorg-server.h>
+               #include <xf86Cursor.h>])
 
-AC_CHECK_HEADERS([list.h],
-                 [have_list_h="yes"], [have_list_h="no"],
-                 [#include <X11/Xdefs.h>
-                  #include "xorg-server.h"])
-
-if test "x$have_list_h" = xyes; then
-    AC_CHECK_DECL(xorg_list_init,
-                  [AC_DEFINE(HAVE_XORG_LIST, 1, [Have xorg_list API])], [],
-                  [#include <X11/Xdefs.h>
-                   #include "xorg-server.h"
-                   #include "list.h"])
-fi
+AC_CHECK_DECL(xorg_list_init,
+              [AC_DEFINE(HAVE_XORG_LIST, 1, [Have xorg_list API])], [],
+              [#include <X11/Xdefs.h>
+               #include "xorg-server.h"
+               #include "list.h"])
 
 AC_CONFIG_FILES([
 	Makefile

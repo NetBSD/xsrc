@@ -34,7 +34,7 @@ static PixmapPtr get_drawable_pixmap(DrawablePtr drawable)
 		return (*drawable->pScreen->GetWindowPixmap)((WindowPtr)drawable);
 }
 
-DRI2BufferPtr
+static DRI2BufferPtr
 nouveau_dri2_create_buffer2(ScreenPtr pScreen, DrawablePtr pDraw, unsigned int attachment,
 			   unsigned int format)
 {
@@ -105,7 +105,7 @@ nouveau_dri2_create_buffer2(ScreenPtr pScreen, DrawablePtr pDraw, unsigned int a
 	return &nvbuf->base;
 }
 
-DRI2BufferPtr
+static DRI2BufferPtr
 nouveau_dri2_create_buffer(DrawablePtr pDraw, unsigned int attachment,
 			   unsigned int format)
 {
@@ -113,7 +113,7 @@ nouveau_dri2_create_buffer(DrawablePtr pDraw, unsigned int attachment,
 					   attachment, format);
 }
 
-void
+static void
 nouveau_dri2_destroy_buffer2(ScreenPtr pScreen, DrawablePtr pDraw, DRI2BufferPtr buf)
 {
 	struct nouveau_dri2_buffer *nvbuf;
@@ -127,13 +127,13 @@ nouveau_dri2_destroy_buffer2(ScreenPtr pScreen, DrawablePtr pDraw, DRI2BufferPtr
 	free(nvbuf);
 }
 
-void
+static void
 nouveau_dri2_destroy_buffer(DrawablePtr pDraw, DRI2BufferPtr buf)
 {
 	nouveau_dri2_destroy_buffer2(pDraw->pScreen, pDraw, buf);
 }
 
-void
+static void
 nouveau_dri2_copy_region2(ScreenPtr pScreen, DrawablePtr pDraw, RegionPtr pRegion,
 			 DRI2BufferPtr pDstBuffer, DRI2BufferPtr pSrcBuffer)
 {
@@ -211,7 +211,7 @@ nouveau_dri2_copy_region2(ScreenPtr pScreen, DrawablePtr pDraw, RegionPtr pRegio
 	FreeScratchGC(pGC);
 }
 
-void
+static void
 nouveau_dri2_copy_region(DrawablePtr pDraw, RegionPtr pRegion,
 			 DRI2BufferPtr pDstBuffer, DRI2BufferPtr pSrcBuffer)
 {
@@ -1024,15 +1024,16 @@ nouveau_dri2_fini(ScreenPtr pScreen)
 }
 
 #ifdef DRI3
-static int is_render_node(int fd, struct stat *st)
+static int is_render_node(int fd)
 {
-	if (fstat(fd, st))
+	struct stat st;
+	if (fstat(fd, &st))
 		return 0;
 
-	if (!S_ISCHR(st->st_mode))
+	if (!S_ISCHR(st.st_mode))
 		return 0;
 
-	return st->st_rdev & 0x80;
+	return st.st_rdev & 0x80;
   }
 
 static int
@@ -1041,7 +1042,6 @@ nouveau_dri3_open(ScreenPtr screen, RRProviderPtr provider, int *out)
 	ScrnInfoPtr pScrn = xf86ScreenToScrn(screen);
 	NVPtr pNv = NVPTR(pScrn);
 	int fd = -1;
-	struct stat buff;
 
 #ifdef O_CLOEXEC
 	fd = open(pNv->render_node, O_RDWR | O_CLOEXEC);
@@ -1051,11 +1051,7 @@ nouveau_dri3_open(ScreenPtr screen, RRProviderPtr provider, int *out)
 	if (fd < 0)
 		return -BadAlloc;
 
-	if (fstat(fd, &buff)) {
-		close(fd);
-		return -BadMatch;
-	}
-	if (!is_render_node(fd, &buff)) {
+	if (!is_render_node(fd)) {
 		drm_magic_t magic;
 
 		if (drmGetMagic(fd, &magic) || drmAuthMagic(pNv->dev->fd, magic)) {
@@ -1076,12 +1072,15 @@ static PixmapPtr nouveau_dri3_pixmap_from_fd(ScreenPtr screen, int fd, CARD16 wi
 	struct nouveau_bo *bo = NULL;
 	struct nouveau_pixmap *nvpix;
 
-	if (depth < 8 || depth > 32 || depth % 8)
+	if (depth < 8 || depth > 32)
 		return NULL;
 
 	pixmap = screen->CreatePixmap(screen, 0, 0, depth, 0);
 	if (!pixmap)
 		return NULL;
+
+	if (pixmap->drawable.bitsPerPixel % 8)
+		goto free_pixmap;
 
 	if (!screen->ModifyPixmapHeader(pixmap, width, height, 0, 0, stride, NULL))
 		goto free_pixmap;
@@ -1128,15 +1127,13 @@ nouveau_dri3_screen_init(ScreenPtr screen)
 #ifdef DRI3
 	ScrnInfoPtr pScrn = xf86ScreenToScrn(screen);
 	NVPtr pNv = NVPTR(pScrn);
-	struct stat master, render;
 	char *buf;
 
-	if (is_render_node(pNv->dev->fd, &master))
+	if (is_render_node(pNv->dev->fd))
 		return TRUE;
 
 	buf = drmGetRenderDeviceNameFromFd(pNv->dev->fd);
-	if (buf && stat(buf, &render) == 0 &&
-	    master.st_mode == render.st_mode) {
+	if (buf) {
 		pNv->render_node = buf;
 		if (dri3_screen_init(screen, &nouveau_dri3_screen_info)) {
 			xf86DrvMsg(pScrn->scrnIndex, X_INFO,

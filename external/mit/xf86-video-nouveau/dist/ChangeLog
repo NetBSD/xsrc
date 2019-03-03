@@ -1,3 +1,581 @@
+commit ec2b45d1bf4c31c5420b48c213bf9ee1656adf9d
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Mon Jan 28 23:25:58 2019 -0500
+
+    Bump version to 1.0.16
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit 2376d1ebf2d9a96bc2ebf21d53a9f9841ce5c15b
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Sat Jan 26 23:00:19 2019 -0500
+
+    update known chipsets list
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+    Reviewed-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit ca13913aaf7e3995c3b49d3d80aad7e6cb33291a
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Wed Jan 23 00:29:51 2019 -0500
+
+    Revert "wfb: Fix missing init function decls behind FB_ACCESS_WRAPPER"
+    
+    This reverts commit d7ba24fb6e4fce43adc3c73369c5d1035ae080a9.
+    
+    When built and run against Xorg 1.20.3, part way through init, I got an
+    error about wfbPictureInit not existing despite not having wfb_enabled
+    set.
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit fb2d4d27837ebf3ae2fdcf091495f52d2ad8c822
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Wed Jan 23 00:28:05 2019 -0500
+
+    present: rotated crtc's work fine
+    
+    The "pick best" logic takes rotation into account. However flipping a
+    rotated CRTC can't work, so we disable that.
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit 92db605f0f5ac14957e38e59782ef3ed4808de05
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Mon Jan 21 22:59:54 2019 -0500
+
+    Adapt to PixmapDirtyUpdateRec::src being a DrawablePtr
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit 8a90309401963aa43f89f91e204ec9cac5ade704
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Mon Jan 21 00:52:23 2019 -0500
+
+    config: Suggest upstream to find macros in case they are missing
+    
+    Added upstream suggestion to error message in case xorg macros or
+    xserver macros are missing. No actual package manager references in
+    suggestion since these are 'user' and/or 'distribution' preferences.
+    
+    (Cherry picked from xf86-video-intel 90538ecfff9c324d61419f451d41d26ab026f232)
+    
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit fcddd2c8e6e4a738bf28028e6d4ad5be34c8b2ae
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Mon Jan 21 00:52:22 2019 -0500
+
+    config: Complete bug report URL for Xorg DDX nouveau driver
+    
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit a566c883b3663b685e467788b8b5de6d99ef9ae2
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Mon Jan 21 00:52:21 2019 -0500
+
+    config: Set automake options consistently in one location
+    
+    Avoid use of two manners of setting automake configuration options,
+    and consolidate them into AM_INIT_AUTOMAKE macro.
+    
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit 56e67e09925b0b5544884b279b9cc5552964fd25
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Mon Jan 21 00:52:20 2019 -0500
+
+    config: remove unused sdkdir=$(pkg-config...) statement
+    
+    The sdkdir variable is not used, so remove the statement.
+    
+    (Copied from xf86-video-ati 36bd69affc996c92c40b7360a7fbaa1a3a46abfd)
+    
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit db51fcf52067e4412c96bb4c84d97ceac6c857a6
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Mon Jan 21 00:52:19 2019 -0500
+
+    config: Remove unrequired AC_SUBST for LIBDRM_NOUVEAU and LIBUDEV
+    
+    These macros are called by the PKG_CHECK_MODULES macro, for all
+    versions of pkg-config >= 0.24.0 (released May 23, 2010).
+    
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit f5250b1d46b6442550140b149341e06f7f27ae8d
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Mon Jan 21 00:52:18 2019 -0500
+
+    config: Add comments for main statements
+    
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit ed653f76b17ba4b252fe405e7bd39b36142dae05
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Mon Jan 21 00:52:17 2019 -0500
+
+    config: Use LT_INIT option instead of AC_DISABLE_STATIC
+    
+    Since libtool 2.2 (released March 2008) the preferred initiation of
+    libtool is with the LT_INIT() macro, instead of AC_PROG_LIBTOOL.
+    
+    As we are using LT_INIT anyway we might as well pass the disable-static
+    option directly to it instead of using the AC_DISABLE_STATIC macro.
+    
+    See:
+    - https://www.gnu.org/software/libtool/manual/html_node/LT_005fINIT.html
+    - https://www.x.org/wiki/NewModuleGuidelines/
+    
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit fe3fc188f17f000afae4c307ad5e54f1596fc6ff
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Mon Jan 21 00:52:16 2019 -0500
+
+    config: Utilize util-macros 1.8 for additional man page support
+    
+    Use MAN_SUBST now supplied in XORG_MANPAGE_SECTIONS
+    The value of MAN_SUBST is the same for all X.Org packages.
+    
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit caaac38112fa9066089099655866e0e9f5e3a647
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Mon Jan 21 00:52:15 2019 -0500
+
+    config: remove unrequired AC_HEADER_STDC
+    
+    Autoconf says:
+    "This macro is obsolescent, as current systems have conforming
+    header files. New programs need not use this macro".
+    
+    Was previously required to ensure the system has C header files conforming
+    to ANSI C89 (ISO C90). Specifically, this macro checks for stdlib.h,
+    stdarg.h, string.h, and float.h.
+    
+    This autoconf option was used to provide conditional fallback support
+    via defined STDC_HEADERS.
+    
+    xf86-video-nouveau does not do so, so this macro is obsolete and unused,
+    so let's drop it.
+    
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit 4cf6d02ecbd5d2201d66324ba33f9fcbed67092f
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Mon Jan 21 00:52:14 2019 -0500
+
+    config: Use XORG_DEFAULT_OPTIONS which replaces six XORG_* macros
+    
+    This macro expands into several macros and provide several build functions [0].
+    Refer to the module generated aclocal.m4 file as this is subject to change.
+    
+    At present, this includes:
+    - XORG_CWARNFLAGS: platform adjusted compiler warning flags
+    - XORG_STRICT_OPTION: additional warning flags
+    - XORG_RELEASE_VERSION: defines variables for major, minor and patch level
+    - XORG_CHANGELOG: contains a makefile rule which creates the ChangeLog file from Git
+    - XORG_INSTALL: contains a makefile rule which provides the INSTALL file in the module root directory
+    - XORG_MANPAGE_SECTIONS: platform adjusted man page section number
+    
+    The above macros invoke the following Autoconf macros:
+    - AC_PROG_INSTALL
+    - AC_PROG_CC_C99
+    - AC_PROG_SED
+    - AC_CANONICAL_HOST
+    
+    [0] https://www.x.org/wiki/NewModuleGuidelines/
+    
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit 945f95775a21cbcc721b579f7dc220f1474d1d25
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Mon Jan 21 00:52:13 2019 -0500
+
+    config: libtoolize: put macros in AC_CONFIG_MACRO_DIR, 'm4'
+    
+    As suggested by one tool called by autoreconf. Necessitates change to:
+    - configure.ac: Call AC_CONFIG_MACRO_DIR()
+    - Makefile.am: Set ACLOCAL_AMFLAGS = -I m4
+    - Create placeholder m4 folders
+    - Update gitignore files
+    
+    >From the autoconf documentation:
+    
+     "Starting from version 2.58, autoconf provide the macro AC_CONFIG_MACRO_DIR
+      to declare where additional macro files are to be put and found. The
+      argument passed to this macro is commonly m4."
+      https://autotools.io/autoconf/macros.html
+    
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit 9b60c3bc74c69d607d44c864f60f5fda0b11cd48
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Mon Jan 21 00:52:12 2019 -0500
+
+    gitignore: Update to mirror modern X.org drivers
+    
+    Avoids git showing autoconf/automake generated files (e.g. tarballs) that
+    are local build artifacts and should not be committed.
+    
+    Cherry picked from xf86-video-intel as at:
+    https://gitlab.freedesktop.org/xorg/driver/xf86-video-intel/blob/7c9dbc980b760e0053d83ca2d7cb147613285680/.gitignore
+    
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit 1761769d43ab3ab31b5e5d92e6014fdea21830bd
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Mon Jan 21 00:52:11 2019 -0500
+
+    config: remove AC_PROG_CC as it overrides AC_PROG_C_C99
+    
+    XORG_STRICT_OPTION from XORG_DEFAULT_OPTIONS calls
+    AC_PROG_C_C99. This sets gcc with -std=gnu99.
+    If AC_PROG_CC macro is called afterwards, it resets CC to gcc.
+    
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit e27c0bb6c70b1a68ddf2aeeb0e4346e0a41b8d9c
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Mon Jan 21 00:52:10 2019 -0500
+
+    config: Rely upon list.h as at least xorg-server 1.8 required
+    
+    Fixes: edd1608 ("xorg_list: define the xorg_list* symbols")
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit 6700548071763daf30ab74dbcfb6543ea0db101d
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Mon Jan 21 00:52:09 2019 -0500
+
+    config: Only check for presence of libdrm package once
+    
+    After a version-conditioned check for libdrm was added, no longer necessary
+    to check a second time, especially without a version number check.
+    
+    Fixes: 779b8d4 ("Link against libdrm")
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit 9b2b008eb76c6f4c31d5f71ca01a06254a03f7c9
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Mon Jan 21 00:52:08 2019 -0500
+
+    config, nv: Use xorg-macros PACKAGE_VERSION_{MAJOR, MINOR, PATCHLEVEL}
+    
+    Use xorg-macros provided PACKAGE_VERSION_{MAJOR,MINOR,PATCHLEVEL} rather
+    than rolling our own in xf86-video-nouveau.
+    
+    Macro has been available since xorg-macros 1.1.5 (we rely on >= 1.8)
+    provided that XORG_DEFAULT_OPTIONS is called.
+    
+    Fixes: b82aacd ("configure: require xorg-macros 1.8")
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit b098bdae321182d2f18d791e7f1c665dec21f571
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Mon Jan 21 00:52:07 2019 -0500
+
+    config: Fix typo in comment
+    
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit 764b42babd38b545ccb3b43cd81c989bddf71c77
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Sun Jan 20 22:21:34 2019 -0500
+
+    xv/nv30, nv40: Mark local NV30GetSurfaceFormat and NV40GetSurfaceFormat as static
+    
+    Avoids warnings with gcc 8.2:
+    
+    nv30_xv_tex.c:138:1: warning: no previous prototype for ‘NV30GetSurfaceFormat’ [-Wmissing-prototypes]
+     NV30GetSurfaceFormat(PixmapPtr ppix, int *fmt_ret)
+     ^~~~~~~~~~~~~~~~~~~~
+    
+    nv40_xv_tex.c:138:1: warning: no previous prototype for ‘NV40GetSurfaceFormat’ [-Wmissing-prototypes]
+     NV40GetSurfaceFormat(PixmapPtr ppix, int *fmt_ret)
+     ^~~~~~~~~~~~~~~~~~~~
+    
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit 0fa6ba423593cb5c8e43b8f6569f90f9fcc2b36c
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Sun Jan 20 22:21:33 2019 -0500
+
+    xv: Mark local NVSetupTexturedVideo function as static
+    
+    Avoids warning with gcc 8.2:
+    
+    nouveau_xv.c:2136:1: warning: no previous prototype for ‘NVSetupTexturedVideo’ [-Wmissing-prototypes]
+     NVSetupTexturedVideo (ScreenPtr pScreen, XF86VideoAdaptorPtr *textureAdaptor)
+     ^~~~~~~~~~~~~~~~~~~~
+    
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit 2905ea76571faed91e7d17b5dc6e44758e71ff0b
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Sun Jan 20 22:21:32 2019 -0500
+
+    dri2: Mark local create/destroy buffer and copy region functions as static
+    
+    Avoids warnings with gcc 8.2:
+    
+    nouveau_dri2.c:38:1: warning: no previous prototype for ‘nouveau_dri2_create_buffer2’ [-Wmissing-prototypes]
+     nouveau_dri2_create_buffer2(ScreenPtr pScreen, DrawablePtr pDraw, unsigned int attachment,
+     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+    nouveau_dri2.c:109:1: warning: no previous prototype for ‘nouveau_dri2_create_buffer’ [-Wmissing-prototypes]
+     nouveau_dri2_create_buffer(DrawablePtr pDraw, unsigned int attachment,
+     ^~~~~~~~~~~~~~~~~~~~~~~~~~
+    nouveau_dri2.c:117:1: warning: no previous prototype for ‘nouveau_dri2_destroy_buffer2’ [-Wmissing-prototypes]
+     nouveau_dri2_destroy_buffer2(ScreenPtr pScreen, DrawablePtr pDraw, DRI2BufferPtr buf)
+     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    nouveau_dri2.c:131:1: warning: no previous prototype for ‘nouveau_dri2_destroy_buffer’ [-Wmissing-prototypes]
+     nouveau_dri2_destroy_buffer(DrawablePtr pDraw, DRI2BufferPtr buf)
+     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+    nouveau_dri2.c:137:1: warning: no previous prototype for ‘nouveau_dri2_copy_region2’ [-Wmissing-prototypes]
+     nouveau_dri2_copy_region2(ScreenPtr pScreen, DrawablePtr pDraw, RegionPtr pRegion,
+     ^~~~~~~~~~~~~~~~~~~~~~~~~
+    nouveau_dri2.c:215:1: warning: no previous prototype for ‘nouveau_dri2_copy_region’ [-Wmissing-prototypes]
+     nouveau_dri2_copy_region(DrawablePtr pDraw, RegionPtr pRegion,
+     ^~~~~~~~~~~~~~~~~~~~~~~~
+    
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit eb93278fadaab508ba8c2db65d2d3af2bd421efa
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Sun Jan 20 22:21:31 2019 -0500
+
+    wfb: Remove declaration for undefined function nouveau_wfb_init()
+    
+    Fixes: 794a277 ("nv50: use libwfb for pixmap access when driver pixmaps enabled")
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit 5233f3c84a436e01dabac531c2615e0e9af5f4ac
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Sun Jan 20 21:31:19 2019 -0500
+
+    xv: Avoid shadowed declaration of 'int ret' in NVPutImage
+    
+    Warning reported by gcc 8.2:
+    
+    nouveau_xv.c: In function ‘NVPutImage’:
+    nouveau_xv.c:1369:7: warning: declaration of ‘ret’ shadows a previous local [-Wshadow]
+       int ret = BadImplementation;
+           ^~~
+    nouveau_xv.c:1073:6: note: shadowed declaration is here
+      int ret, i;
+          ^~~
+    
+    Fixes: a50bba6 ("xv: misc cleanups")
+    Cc: Ben Skeggs <bskeggs@redhat.com>
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit 22dd49f60be54c5649a9e80c87c9bfc99e2974b8
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Sun Jan 20 21:31:18 2019 -0500
+
+    xv: Avoid shadowed declaration of 'int i' in NVPutImage
+    
+    int i is accessed outside immediate scope so leave declaration at
+    the highest common scope level:
+    
+      1073:  int ret, i;
+             ...
+             // Highest common scope
+             ...
+      1193:  if (newTTSize <= destination_buffer->size) {
+               ...
+               // Used in this scope
+               ...
+      1248:  } else {
+               ...
+               // Used in this scope
+               ...
+      1316:  }
+             // Not used in this scope
+    
+    Warning reported by gcc 8.2:
+    
+    nouveau_xv.c: In function ‘NVPutImage’:
+    nouveau_xv.c:1195:7: warning: declaration of ‘i’ shadows a previous local [-Wshadow]
+       int i = 0;
+           ^
+    nouveau_xv.c:1073:11: note: shadowed declaration is here
+      int ret, i;
+               ^
+    
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit d7ba24fb6e4fce43adc3c73369c5d1035ae080a9
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Sun Jan 20 19:20:08 2019 -0500
+
+    wfb: Fix missing init function decls behind FB_ACCESS_WRAPPER
+    
+    Fixes warning with xserver 1.20 and gcc 8.2:
+    
+    nv_driver.c:1443:9: warning: implicit declaration of function ‘wfbScreenInit’; did you mean ‘fbScreenInit’? [-Wimplicit-function-declaration]
+       ret = wfbScreenInit(pScreen, FBStart, pScrn->virtualX,
+             ^~~~~~~~~~~~~
+             fbScreenInit
+    
+    (See xserver 706e6d9cd074da606016ed4ecff51e9c2a822087)
+    
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit dbba3246c989a88f8ba5b0c906af58779bef0cdd
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Sun Jan 20 14:50:35 2019 -0500
+
+    xv: Silence build warning regarding const qualifier
+    
+    Silences warning with gcc 8.2:
+    
+    nouveau_xv.c: In function ‘NVInitVideo’:
+    nouveau_xv.c:2247:68: warning: passing argument 2 of ‘vlCreateAdaptorXvMC’ discards ‘const’ qualifier from pointer target type [-Wdiscarded-qualifiers]
+        adaptorsXvMC[0] = vlCreateAdaptorXvMC(pScreen, textureAdaptor[0]->name);
+                                                       ~~~~~~~~~~~~~~~~~^~~~~~
+    In file included from nouveau_xv.c:42:
+    vl_hwmc.h:6:63: note: expected ‘char *’ but argument is of type ‘const char *’
+     XF86MCAdaptorPtr vlCreateAdaptorXvMC(ScreenPtr pScreen, char *xv_adaptor_name);
+                                                             ~~~~~~^~~~~~~~~~~~~~~
+    
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+    Reviewed-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit cc284803fd75e0e340a5481342e0d0f7a5d7fa15
+Author: Rhys Kidd <rhyskidd@gmail.com>
+Date:   Sat Jan 19 15:45:36 2019 -0500
+
+    Check for xf86CursorResetCursor()
+    
+    If it's available, xorg-server calls it on each mode configuration change. It
+    does what xf86_reload_cursors does (and more), so we don't need to call
+    the latter anymore.
+    
+    Avoids gcc 8.2 warning:
+    
+    drmmode_display.c: In function ‘drmmode_set_mode_major’:
+    drmmode_display.c:525:2: warning: ‘xf86_reload_cursors’ is deprecated [-Wdeprecated-declarations]
+      xf86_reload_cursors(crtc->scrn->pScreen);
+      ^~~~~~~~~~~~~~~~~~~
+    In file included from nv_type.h:10,
+                     from nv_include.h:69,
+                     from drmmode_display.c:36:
+    /usr/include/xorg/xf86Crtc.h:1068:37: note: declared here
+     static _X_INLINE _X_DEPRECATED void xf86_reload_cursors(ScreenPtr screen) {}
+                                         ^~~~~~~~~~~~~~~~~~~
+    
+    (Ported from radeon commit d670c5c9851b4eff21c845d26c7d7e4eb5ee0fa9)
+    
+    Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+
+commit a4283f7fee5b0376f62ba305a2a47ee3dc5a822f
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Fri Nov 10 23:28:08 2017 -0500
+
+    drmmode: update logic for dynamic connectors, paths, and tiles
+    
+    This largely copies the code from modesetting with minor adjustments.
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit 8dd1118369460e03ab4963987901dc9e13a2d53d
+Author: Mario Kleiner <mario.kleiner.de@gmail.com>
+Date:   Tue Jun 12 17:58:06 2018 +0200
+
+    Fix colormap handling at screen depth 30. (v2)
+    
+    The various clut handling functions like a setup
+    consistent with the x-screen color depth. Otherwise
+    we observe improper sampling in the gamma tables
+    at depth 30.
+    
+    Tested at depths 16, 24 and 30 and tested at depths
+    24 and 30 that xgamma and gamma table animations work,
+    and with measurement equipment to make sure identity
+    gamma ramps actually are identity mappings at the output.
+    
+    v2: Also deal with X-Server 1.19 and earlier, which as of
+        v1.19.6 lack a fix to color palette handling and can
+        not deal with depths/bpc > 24/8 bpc. On < 1.20 we skip
+        xf86HandleColormaps() setup at > 8 bpc. This disables
+        color palette handling on such servers at > 8 bpc, but
+        still keeps RandR gamma table handling intact.
+    
+        Tested on 1.19.6 and 1.20.0 to do the right thing.
+    
+    Signed-off-by: Mario Kleiner <mario.kleiner.de@gmail.com>
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit c9ce4b8e86525b6e0ecc814b2c5ebb242fb1f107
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Sun Dec 9 13:40:55 2018 -0500
+
+    drmmode: provide better error when failing to set gamma
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit ac8f7b949e50d96f281b09f7fe96c92ea4d178ec
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Fri Feb 9 23:00:27 2018 -0500
+
+    dri3: don't check permissions on render node
+    
+    The permission check fails if udev sets the render node to 0666 but
+    leaves the card at 0660, as is done in at least udev-236.
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit 6e2b4bed7b226dce262c7e14f72a29b003791be8
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Sun Feb 4 13:50:29 2018 -0500
+
+    nv50/xv: add support for depth 30 xv output
+    
+    Ostensibly it should probably be looking at the pixmap format. However
+    it's always the window pixmap, so we can assume it's what we expect.
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit ea83b9bd8c88dad67e6494031f1f65eed823b6f1
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Sun Dec 31 02:22:27 2017 -0500
+
+    dri3: remove bogus condition for creating pixmap
+    
+    Not clear what the depth % 8 was trying to protect against, but it was
+    breaking 30bpp visuals with DRI3. Add it in to ensure that bitsPerPixel
+    % 8 is 0, since there is plenty of bpp/8 math in the driver.
+    
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit 048baf53872f2f93628f2c8637ec832fb4006057
+Author: Ilia Mirkin <imirkin@alum.mit.edu>
+Date:   Sun Dec 10 23:40:51 2017 -0500
+
+    man: remove reference to glamor under DRI option
+    
+    GLAMOR backend was removed a while ago, but the help text stayed on.
+    
+    Reported-by: Jason Zaman <jason@perfinion.com>
+    Signed-off-by: Ilia Mirkin <imirkin@alum.mit.edu>
+
+commit 69aecdd305defdd014bc92b82acc6000988511cf
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue Jun 13 09:23:42 2017 -0400
+
+    modesetting: Validate the atom for enum properties
+    
+    The client could have said anything here, and if what they said doesn't
+    actually name an atom NameForAtom() will return NULL, and strcmp() will
+    be unhappy about that.
+    
+    [copied from xserver d4995a3936ae283b9080fdaa0905daa669ebacfc]
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
 commit a7c190e0c230ed2d5e047ed6aba12d71a4866950
 Author: Lyude <lyude@redhat.com>
 Date:   Fri Apr 21 14:41:17 2017 -0400
