@@ -67,7 +67,7 @@
 #define QUOTE(x)	#x
 #define STRINGIFY(x)	QUOTE(x)
 
-static char *encodings_array[] =
+static const char *encodings_array[] =
     { "ascii-0",
       "iso8859-1", "iso8859-2", "iso8859-3", "iso8859-4", "iso8859-5",
       "iso8859-6", "iso8859-6.8", "iso8859-6.8x", "iso8859-6.16",
@@ -86,7 +86,7 @@ static char *encodings_array[] =
       "gb2312.1980-0", "gb18030.2000-0", "gb18030.2000-1",
       "ksc5601.1987-0", "ksc5601.1992-3"};
 
-static char *extra_encodings_array[] =
+static const char *extra_encodings_array[] =
     { "iso10646-1", "adobe-fontspecific", "microsoft-symbol" };
 
 static ConstListPtr encodings, extra_encodings;
