@@ -46,7 +46,6 @@ static Bool drmmode_xf86crtc_resize(ScrnInfoPtr scrn, int width, int height);
 typedef struct {
     int fd;
     uint32_t fb_id;
-    drmModeResPtr mode_res;
     int cpp;
     drmEventContext event_context;
 #ifdef HAVE_LIBUDEV
@@ -83,6 +82,7 @@ typedef struct {
     drmModeConnectorPtr mode_output;
     drmModeEncoderPtr mode_encoder;
     drmModePropertyBlobPtr edid_blob;
+    drmModePropertyBlobPtr tile_blob;
     int num_props;
     drmmode_prop_ptr props;
 } drmmode_output_private_rec, *drmmode_output_private_ptr;
@@ -477,6 +477,8 @@ drmmode_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
 			continue;
 
 		drmmode_output = output->driver_private;
+		if (drmmode_output->output_id == -1)
+			continue;
 		output_ids[output_count] =
 			drmmode_output->mode_output->connector_id;
 		output_count++;
@@ -520,7 +522,11 @@ drmmode_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
 	crtc->funcs->gamma_set(crtc, crtc->gamma_red, crtc->gamma_green,
 			       crtc->gamma_blue, crtc->gamma_size);
 
+#ifdef HAVE_XF86_CURSOR_RESET_CURSOR
+	xf86CursorResetCursor(crtc->scrn->pScreen);
+#else
 	xf86_reload_cursors(crtc->scrn->pScreen);
+#endif
 
 	return TRUE;
 }
@@ -678,7 +684,8 @@ drmmode_gamma_set(xf86CrtcPtr crtc, CARD16 *red, CARD16 *green, CARD16 *blue,
 				  size, red, green, blue);
 	if (ret != 0) {
 		xf86DrvMsg(crtc->scrn->scrnIndex, X_ERROR,
-			   "failed to set gamma: %s\n", strerror(-ret));
+			   "failed to set gamma with %d entries: %s\n",
+			   size, strerror(-ret));
 	}
 }
 
@@ -694,7 +701,11 @@ drmmode_set_scanout_pixmap(xf86CrtcPtr crtc, PixmapPtr ppix)
 	int c, total_width = 0, max_height = 0, this_x = 0;
 	if (!ppix) {
 		if (crtc->randr_crtc->scanout_pixmap) {
+#ifdef HAS_DIRTYTRACKING_DRAWABLE_SRC
+			PixmapStopDirtyTracking(&crtc->randr_crtc->scanout_pixmap->drawable, screenpix);
+#else
 			PixmapStopDirtyTracking(crtc->randr_crtc->scanout_pixmap, screenpix);
+#endif
 			if (drmmode && drmmode->fb_id) {
 				drmModeRmFB(drmmode->fd, drmmode->fb_id);
 				drmmode->fb_id = 0;
@@ -740,7 +751,10 @@ drmmode_set_scanout_pixmap(xf86CrtcPtr crtc, PixmapPtr ppix)
 		screen->height = screenpix->drawable.height = max_height;
 	}
 	drmmode_crtc->scanout_pixmap_x = this_x;
-#ifdef HAS_DIRTYTRACKING_ROTATION
+
+#ifdef HAS_DIRTYTRACKING_DRAWABLE_SRC
+	PixmapStartDirtyTracking(&ppix->drawable, screenpix, 0, 0, this_x, 0, RR_Rotate_0);
+#elif defined(HAS_DIRTYTRACKING_ROTATION)
 	PixmapStartDirtyTracking(ppix, screenpix, 0, 0, this_x, 0, RR_Rotate_0);
 #elif defined(HAS_DIRTYTRACKING2)
 	PixmapStartDirtyTracking2(ppix, screenpix, 0, 0, this_x, 0);
@@ -770,7 +784,7 @@ static const xf86CrtcFuncsRec drmmode_crtc_funcs = {
 
 
 static unsigned int
-drmmode_crtc_init(ScrnInfoPtr pScrn, drmmode_ptr drmmode, int num)
+drmmode_crtc_init(ScrnInfoPtr pScrn, drmmode_ptr drmmode, drmModeResPtr mode_res, int num)
 {
 	NVPtr pNv = NVPTR(pScrn);
 	NVEntPtr pNVEnt = NVEntPriv(pScrn);
@@ -784,7 +798,7 @@ drmmode_crtc_init(ScrnInfoPtr pScrn, drmmode_ptr drmmode, int num)
 
 	drmmode_crtc = xnfcalloc(sizeof(drmmode_crtc_private_rec), 1);
 	drmmode_crtc->mode_crtc = drmModeGetCrtc(drmmode->fd,
-						 drmmode->mode_res->crtcs[num]);
+						 mode_res->crtcs[num]);
 	drmmode_crtc->drmmode = drmmode;
 	drmmode_crtc->hw_crtc_index = num;
 
@@ -809,13 +823,19 @@ drmmode_output_detect(xf86OutputPtr output)
 	drmmode_output_private_ptr drmmode_output = output->driver_private;
 	drmmode_ptr drmmode = drmmode_output->drmmode;
 	xf86OutputStatus status;
+
+	if (drmmode_output->output_id == -1)
+		return XF86OutputStatusDisconnected;
+
 	drmModeFreeConnector(drmmode_output->mode_output);
 
 	drmmode_output->mode_output =
 		drmModeGetConnector(drmmode->fd, drmmode_output->output_id);
 
-	if (!drmmode_output->mode_output)
+	if (!drmmode_output->mode_output) {
+		drmmode_output->output_id = -1;
 		return XF86OutputStatusDisconnected;
+	}
 
 	switch (drmmode_output->mode_output->connection) {
 	case DRM_MODE_CONNECTED:
@@ -842,6 +862,69 @@ drmmode_output_mode_valid(xf86OutputPtr output, DisplayModePtr mode)
 	return MODE_OK;
 }
 
+static int
+koutput_get_prop_idx(int fd, drmModeConnectorPtr koutput,
+		     int type, const char *name)
+{
+	int idx = -1;
+
+	for (int i = 0; i < koutput->count_props; i++) {
+		drmModePropertyPtr prop = drmModeGetProperty(fd, koutput->props[i]);
+
+		if (!prop)
+			continue;
+
+		if (drm_property_type_is(prop, type) && !strcmp(prop->name, name))
+			idx = i;
+
+		drmModeFreeProperty(prop);
+
+		if (idx > -1)
+			break;
+	}
+
+	return idx;
+}
+
+static drmModePropertyBlobPtr
+koutput_get_prop_blob(int fd, drmModeConnectorPtr koutput, const char *name)
+{
+	drmModePropertyBlobPtr blob = NULL;
+	int idx = koutput_get_prop_idx(fd, koutput, DRM_MODE_PROP_BLOB, name);
+
+	if (idx > -1)
+		blob = drmModeGetPropertyBlob(fd, koutput->prop_values[idx]);
+
+	return blob;
+}
+
+static void
+drmmode_output_attach_tile(xf86OutputPtr output)
+{
+	drmmode_output_private_ptr drmmode_output = output->driver_private;
+	drmModeConnectorPtr koutput = drmmode_output->mode_output;
+	drmmode_ptr drmmode = drmmode_output->drmmode;
+	struct xf86CrtcTileInfo tile_info, *set = NULL;
+
+	if (!koutput) {
+		xf86OutputSetTile(output, NULL);
+		return;
+	}
+
+	drmModeFreePropertyBlob(drmmode_output->tile_blob);
+
+	/* look for a TILE property */
+	drmmode_output->tile_blob =
+		koutput_get_prop_blob(drmmode->fd, koutput, "TILE");
+
+	if (drmmode_output->tile_blob) {
+		if (xf86OutputParseKMSTile(drmmode_output->tile_blob->data, drmmode_output->tile_blob->length, &tile_info) == TRUE)
+			set = &tile_info;
+	}
+	xf86OutputSetTile(output, set);
+}
+
+
 static DisplayModePtr
 drmmode_output_get_modes(xf86OutputPtr output)
 {
@@ -850,27 +933,14 @@ drmmode_output_get_modes(xf86OutputPtr output)
 	drmmode_ptr drmmode = drmmode_output->drmmode;
 	int i;
 	DisplayModePtr Modes = NULL, Mode;
-	drmModePropertyPtr props;
 	xf86MonPtr ddc_mon = NULL;
 
 	if (!koutput)
 		return NULL;
 
 	/* look for an EDID property */
-	for (i = 0; i < koutput->count_props; i++) {
-		props = drmModeGetProperty(drmmode->fd, koutput->props[i]);
-		if (!props || !(props->flags & DRM_MODE_PROP_BLOB))
-			continue;
-
-		if (!strcmp(props->name, "EDID")) {
-			if (drmmode_output->edid_blob)
-				drmModeFreePropertyBlob(drmmode_output->edid_blob);
-			drmmode_output->edid_blob =
-				drmModeGetPropertyBlob(drmmode->fd,
-						       koutput->prop_values[i]);
-		}
-		drmModeFreeProperty(props);
-	}
+	drmmode_output->edid_blob =
+		koutput_get_prop_blob(drmmode->fd, koutput, "EDID");
 
 	if (drmmode_output->edid_blob) {
 		ddc_mon = xf86InterpretEDID(output->scrn->scrnIndex,
@@ -879,6 +949,8 @@ drmmode_output_get_modes(xf86OutputPtr output)
 			ddc_mon->flags |= MONITOR_EDID_COMPLETE_RAWDATA;
 	}
 	xf86OutputSetEDID(output, ddc_mon);
+
+	drmmode_output_attach_tile(output);
 
 	/* modes should already be available */
 	for (i = 0; i < koutput->count_modes; i++) {
@@ -900,6 +972,8 @@ drmmode_output_destroy(xf86OutputPtr output)
 
 	if (drmmode_output->edid_blob)
 		drmModeFreePropertyBlob(drmmode_output->edid_blob);
+	if (drmmode_output->tile_blob)
+		drmModeFreePropertyBlob(drmmode_output->tile_blob);
 	for (i = 0; i < drmmode_output->num_props; i++) {
 		drmModeFreeProperty(drmmode_output->props[i].mode_prop);
 		free(drmmode_output->props[i].atoms);
@@ -917,6 +991,9 @@ drmmode_output_dpms(xf86OutputPtr output, int mode)
 	drmModePropertyPtr props;
 	drmmode_ptr drmmode = drmmode_output->drmmode;
 	int mode_id = -1, i;
+
+	if (!koutput)
+		return;
 
 	for (i = 0; i < koutput->count_props; i++) {
 		props = drmModeGetProperty(drmmode->fd, koutput->props[i]);
@@ -1081,7 +1158,8 @@ drmmode_output_set_property(xf86OutputPtr output, Atom property,
 			if (value->type != XA_ATOM || value->format != 32 || value->size != 1)
 				return FALSE;
 			memcpy(&atom, value->data, 4);
-			name = NameForAtom(atom);
+			if (!(name = NameForAtom(atom)))
+				return FALSE;
 
 			/* search for matching name string, then set its value down */
 			for (j = 0; j < p->mode_prop->count_enums; j++) {
@@ -1226,41 +1304,129 @@ drmmode_zaphod_match(ScrnInfoPtr pScrn, const char *s, char *output_name)
     return FALSE;
 }
 
+static xf86OutputPtr find_output(ScrnInfoPtr pScrn, int id)
+{
+	xf86CrtcConfigPtr   xf86_config = XF86_CRTC_CONFIG_PTR(pScrn);
+	int i;
+	for (i = 0; i < xf86_config->num_output; i++) {
+		xf86OutputPtr output = xf86_config->output[i];
+		drmmode_output_private_ptr drmmode_output;
+
+		drmmode_output = output->driver_private;
+		if (drmmode_output->output_id == id)
+			return output;
+	}
+	return NULL;
+}
+
+static int parse_path_blob(drmModePropertyBlobPtr path_blob, int *conn_base_id, char **path)
+{
+	char *conn;
+	char conn_id[5];
+	int id, len;
+	char *blob_data;
+
+	if (!path_blob)
+		return -1;
+
+	blob_data = path_blob->data;
+	/* we only handle MST paths for now */
+	if (strncmp(blob_data, "mst:", 4))
+		return -1;
+
+	conn = strchr(blob_data + 4, '-');
+	if (!conn)
+		return -1;
+	len = conn - (blob_data + 4);
+	if (len + 1 > 5)
+		return -1;
+	memcpy(conn_id, blob_data + 4, len);
+	conn_id[len] = '\0';
+	id = strtoul(conn_id, NULL, 10);
+
+	*conn_base_id = id;
+
+	*path = conn + 1;
+	return 0;
+}
+
+static void
+drmmode_create_name(ScrnInfoPtr pScrn, drmModeConnectorPtr koutput, char *name,
+                    drmModePropertyBlobPtr path_blob)
+{
+	int ret;
+	char *extra_path;
+	int conn_id;
+	xf86OutputPtr output;
+
+	ret = parse_path_blob(path_blob, &conn_id, &extra_path);
+	if (ret == -1)
+		goto fallback;
+
+	output = find_output(pScrn, conn_id);
+	if (!output)
+		goto fallback;
+
+	snprintf(name, 32, "%s-%s", output->name, extra_path);
+	return;
+
+fallback:
+	if (koutput->connector_type >= ARRAY_SIZE(output_names))
+		snprintf(name, 32, "Unknown%d-%d", koutput->connector_type, koutput->connector_type_id);
+	else if (pScrn->is_gpu)
+		snprintf(name, 32, "%s-%d-%d", output_names[koutput->connector_type], pScrn->scrnIndex - GPU_SCREEN_OFFSET + 1, koutput->connector_type_id);
+	else
+		snprintf(name, 32, "%s-%d", output_names[koutput->connector_type], koutput->connector_type_id);
+}
+
 static unsigned int
-drmmode_output_init(ScrnInfoPtr pScrn, drmmode_ptr drmmode, int num, int crtcshift)
+drmmode_output_init(ScrnInfoPtr pScrn, drmmode_ptr drmmode, drmModeResPtr mode_res, int num, Bool dynamic, int crtcshift)
 {
 	NVPtr pNv = NVPTR(pScrn);
 	xf86OutputPtr output;
+	xf86CrtcConfigPtr xf86_config = XF86_CRTC_CONFIG_PTR(pScrn);
 	drmModeConnectorPtr koutput;
 	drmModeEncoderPtr kencoder;
 	drmmode_output_private_ptr drmmode_output;
 	const char *s;
 	char name[32];
+	drmModePropertyBlobPtr path_blob = NULL;
+	int i;
 
 	koutput = drmModeGetConnector(drmmode->fd,
-				      drmmode->mode_res->connectors[num]);
+				      mode_res->connectors[num]);
 	if (!koutput)
 		return 0;
+
+	path_blob = koutput_get_prop_blob(drmmode->fd, koutput, "PATH");
+
+	drmmode_create_name(pScrn, koutput, name, path_blob);
+
+	if (path_blob)
+		drmModeFreePropertyBlob(path_blob);
+
+	if (path_blob && dynamic) {
+		/* see if we have an output with this name already
+		   and hook stuff up */
+		for (i = 0; i < xf86_config->num_output; i++) {
+			output = xf86_config->output[i];
+
+			if (strncmp(output->name, name, 32))
+				continue;
+
+			drmmode_output = output->driver_private;
+			drmmode_output->output_id = mode_res->connectors[num];
+			drmmode_output->mode_output = koutput;
+			return 1;
+		}
+	}
+
 
 	kencoder = drmModeGetEncoder(drmmode->fd, koutput->encoders[0]);
 	if (!kencoder) {
 		drmModeFreeConnector(koutput);
 		return 0;
 	}
-
-	if (koutput->connector_type >= NUM_OUTPUT_NAMES)
-		snprintf(name, 32, "Unknown%d-%d", koutput->connector_type,
-			 koutput->connector_type_id);
-#ifdef NOUVEAU_PIXMAP_SHARING
-	else if (pScrn->is_gpu)
-		snprintf(name, 32, "%s-%d-%d",
-			 output_names[koutput->connector_type], pScrn->scrnIndex - GPU_SCREEN_OFFSET + 1,
-			 koutput->connector_type_id);
-#endif
-	else
-		snprintf(name, 32, "%s-%d",
-			 output_names[koutput->connector_type],
-			 koutput->connector_type_id);
 
 	if (xf86IsEntityShared(pScrn->entityList[0])) {
 		s = xf86GetOptValString(pNv->Options, OPTION_ZAPHOD_HEADS);
@@ -1299,7 +1465,7 @@ drmmode_output_init(ScrnInfoPtr pScrn, drmmode_ptr drmmode, int num, int crtcshi
 		return 0;
 	}
 
-	drmmode_output->output_id = drmmode->mode_res->connectors[num];
+	drmmode_output->output_id = mode_res->connectors[num];
 	drmmode_output->mode_output = koutput;
 	drmmode_output->mode_encoder = kencoder;
 	drmmode_output->drmmode = drmmode;
@@ -1314,6 +1480,9 @@ drmmode_output_init(ScrnInfoPtr pScrn, drmmode_ptr drmmode, int num, int crtcshi
 
 	output->interlaceAllowed = true;
 	output->doubleScanAllowed = true;
+
+	if (dynamic)
+		output->randr_output = RROutputCreate(xf86ScrnToScreen(pScrn), output->name, strlen(output->name), output);
 
 	return 1;
 }
@@ -1428,6 +1597,7 @@ static const xf86CrtcConfigFuncsRec drmmode_xf86crtc_config_funcs = {
 Bool drmmode_pre_init(ScrnInfoPtr pScrn, int fd, int cpp)
 {
 	drmmode_ptr drmmode;
+	drmModeResPtr mode_res;
 	NVEntPtr pNVEnt = NVEntPriv(pScrn);
 	int i;
 	unsigned int crtcs_needed = 0;
@@ -1440,32 +1610,31 @@ Bool drmmode_pre_init(ScrnInfoPtr pScrn, int fd, int cpp)
 	xf86CrtcConfigInit(pScrn, &drmmode_xf86crtc_config_funcs);
 
 	drmmode->cpp = cpp;
-	drmmode->mode_res = drmModeGetResources(drmmode->fd);
-	if (!drmmode->mode_res)
+	mode_res = drmModeGetResources(drmmode->fd);
+	if (!mode_res)
 		return FALSE;
 
-	xf86CrtcSetSizeRange(pScrn, 320, 200, drmmode->mode_res->max_width,
-			     drmmode->mode_res->max_height);
+	xf86CrtcSetSizeRange(pScrn, 320, 200, mode_res->max_width,
+			     mode_res->max_height);
 
-	if (!drmmode->mode_res->count_connectors ||
-	    !drmmode->mode_res->count_crtcs) {
-		drmModeFreeResources(drmmode->mode_res);
+	if (!mode_res->count_connectors ||
+	    !mode_res->count_crtcs) {
 		free(drmmode);
 		goto done;
 	}
 
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Initializing outputs ...\n");
 	crtcshift = ffs(pNVEnt->assigned_crtcs ^ 0xffffffff) - 1;
-	for (i = 0; i < drmmode->mode_res->count_connectors; i++)
-		crtcs_needed += drmmode_output_init(pScrn, drmmode, i, crtcshift);
+	for (i = 0; i < mode_res->count_connectors; i++)
+		crtcs_needed += drmmode_output_init(pScrn, drmmode, mode_res, i, FALSE, crtcshift);
 
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 		   "%d crtcs needed for screen.\n", crtcs_needed);
 
-	for (i = 0; i < drmmode->mode_res->count_crtcs; i++) {
+	for (i = 0; i < mode_res->count_crtcs; i++) {
 		if (!xf86IsEntityShared(pScrn->entityList[0]) ||
 		    (crtcs_needed && !(pNVEnt->assigned_crtcs & (1 << i))))
-			crtcs_needed -= drmmode_crtc_init(pScrn, drmmode, i);
+			crtcs_needed -= drmmode_crtc_init(pScrn, drmmode, mode_res, i);
 	}
 
 	/* All ZaphodHeads outputs provided with matching crtcs? */
@@ -1475,6 +1644,8 @@ Bool drmmode_pre_init(ScrnInfoPtr pScrn, int fd, int cpp)
 			   crtcs_needed);
 
 done:
+	drmModeFreeResources(mode_res);
+
 #ifdef NOUVEAU_PIXMAP_SHARING
 	xf86ProviderSetup(pScrn, NULL, "nouveau");
 #endif
@@ -1532,19 +1703,141 @@ drmmode_cursor_init(ScreenPtr pScreen)
 }
 
 #ifdef HAVE_LIBUDEV
+
+#define DRM_MODE_LINK_STATUS_GOOD       0
+#define DRM_MODE_LINK_STATUS_BAD        1
+
 static void
 drmmode_handle_uevents(ScrnInfoPtr scrn)
 {
-	drmmode_ptr drmmode = drmmode_from_scrn(scrn);
-	struct udev_device *dev;
+    struct udev_device *dev;
+    drmmode_ptr drmmode = drmmode_from_scrn(scrn);
+    drmModeResPtr mode_res;
+    xf86CrtcConfigPtr  config = XF86_CRTC_CONFIG_PTR(scrn);
+    int i, j;
+    Bool found = FALSE;
+    Bool changed = FALSE;
 
-	dev = udev_monitor_receive_device(drmmode->uevent_monitor);
-	if (!dev)
-		return;
+    while ((dev = udev_monitor_receive_device(drmmode->uevent_monitor))) {
+        udev_device_unref(dev);
+        found = TRUE;
+    }
+    if (!found)
+        return;
 
-	RRGetInfo(xf86ScrnToScreen(scrn), TRUE);
-	udev_device_unref(dev);
+    /* Try to re-set the mode on all the connectors with a BAD link-state:
+     * This may happen if a link degrades and a new modeset is necessary, using
+     * different link-training parameters. If the kernel found that the current
+     * mode is not achievable anymore, it should have pruned the mode before
+     * sending the hotplug event. Try to re-set the currently-set mode to keep
+     * the display alive, this will fail if the mode has been pruned.
+     * In any case, we will send randr events for the Desktop Environment to
+     * deal with it, if it wants to.
+     */
+    for (i = 0; i < config->num_output; i++) {
+        xf86OutputPtr output = config->output[i];
+        xf86CrtcPtr crtc = output->crtc;
+        drmmode_output_private_ptr drmmode_output = output->driver_private;
+        uint32_t con_id, idx;
+        drmModeConnectorPtr koutput;
+
+        if (crtc == NULL || drmmode_output->mode_output == NULL)
+            continue;
+
+        con_id = drmmode_output->mode_output->connector_id;
+        /* Get an updated view of the properties for the current connector and
+         * look for the link-status property
+         */
+        koutput = drmModeGetConnectorCurrent(drmmode->fd, con_id);
+        if (!koutput)
+            continue;
+
+        idx = koutput_get_prop_idx(drmmode->fd, koutput,
+                DRM_MODE_PROP_ENUM, "link-status");
+
+        if ((idx > -1) &&
+                (koutput->prop_values[idx] == DRM_MODE_LINK_STATUS_BAD)) {
+            /* the connector got a link failure, re-set the current mode */
+            drmmode_set_mode_major(crtc, &crtc->mode, crtc->rotation,
+                                   crtc->x, crtc->y);
+
+            xf86DrvMsg(scrn->scrnIndex, X_WARNING,
+                       "hotplug event: connector %u's link-state is BAD, "
+                       "tried resetting the current mode. You may be left"
+                       "with a black screen if this fails...\n", con_id);
+        }
+
+        drmModeFreeConnector(koutput);
+    }
+
+    mode_res = drmModeGetResources(drmmode->fd);
+    if (!mode_res)
+        goto out;
+
+    if (mode_res->count_crtcs != config->num_crtc) {
+        ErrorF("number of CRTCs changed - failed to handle, %d vs %d\n", mode_res->count_crtcs, config->num_crtc);
+        goto out_free_res;
+    }
+
+    /* figure out if we have gotten rid of any connectors
+       traverse old output list looking for outputs */
+    for (i = 0; i < config->num_output; i++) {
+        xf86OutputPtr output = config->output[i];
+        drmmode_output_private_ptr drmmode_output;
+
+        drmmode_output = output->driver_private;
+        found = FALSE;
+        for (j = 0; j < mode_res->count_connectors; j++) {
+            if (mode_res->connectors[j] == drmmode_output->output_id) {
+                found = TRUE;
+                break;
+            }
+        }
+        if (found)
+            continue;
+
+        drmModeFreeConnector(drmmode_output->mode_output);
+        drmmode_output->mode_output = NULL;
+        drmmode_output->output_id = -1;
+
+        changed = TRUE;
+    }
+
+    /* find new output ids we don't have outputs for */
+    for (i = 0; i < mode_res->count_connectors; i++) {
+        found = FALSE;
+
+        for (j = 0; j < config->num_output; j++) {
+            xf86OutputPtr output = config->output[j];
+            drmmode_output_private_ptr drmmode_output;
+
+            drmmode_output = output->driver_private;
+            if (mode_res->connectors[i] == drmmode_output->output_id) {
+                found = TRUE;
+                break;
+            }
+        }
+        if (found)
+            continue;
+
+        changed = TRUE;
+        drmmode_output_init(scrn, drmmode, mode_res, i, TRUE, 0);
+    }
+
+    if (changed) {
+        RRSetChanged(xf86ScrnToScreen(scrn));
+        RRTellChanged(xf86ScrnToScreen(scrn));
+    }
+
+out_free_res:
+    drmModeFreeResources(mode_res);
+out:
+    RRGetInfo(xf86ScrnToScreen(scrn), TRUE);
 }
+
+#undef DRM_MODE_LINK_STATUS_BAD
+#undef DRM_MODE_LINK_STATUS_GOOD
+
 #endif
 
 #if HAVE_NOTIFY_FD

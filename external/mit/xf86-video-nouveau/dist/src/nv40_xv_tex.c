@@ -134,7 +134,7 @@ NV40VideoTexture(ScrnInfoPtr pScrn, struct nouveau_bo *src, int offset,
 	return TRUE;
 }
 
-Bool
+static Bool
 NV40GetSurfaceFormat(PixmapPtr ppix, int *fmt_ret)
 {
 	switch (ppix->drawable.bitsPerPixel) {

@@ -112,6 +112,13 @@ XF86VideoFormatRec NVFormats[NUM_FORMATS_ALL] =
 	{15, DirectColor}, {16, DirectColor}, {24, DirectColor}
 };
 
+#define NUM_FORMATS_NV50 8
+XF86VideoFormatRec NV50Formats[NUM_FORMATS_NV50] =
+{
+	{15, TrueColor}, {16, TrueColor}, {24, TrueColor}, {30, TrueColor},
+	{15, DirectColor}, {16, DirectColor}, {24, DirectColor}, {30, DirectColor}
+};
+
 #define NUM_NV04_OVERLAY_ATTRIBUTES 4
 XF86AttributeRec NV04OverlayAttributes[NUM_NV04_OVERLAY_ATTRIBUTES] =
 {
@@ -1185,7 +1192,6 @@ NVPutImage(ScrnInfoPtr pScrn, short src_x, short src_y, short drw_x,
 
 	if (newTTSize <= destination_buffer->size) {
 		unsigned char *dst;
-		int i = 0;
 
 		/* Upload to GART */
 		nouveau_bo_map(destination_buffer, NOUVEAU_BO_WR, pNv->client);
@@ -1360,7 +1366,7 @@ CPU_copy:
 		pPriv->currentBuffer ^= 1;
 	} else 
 	if (action_flags & USE_TEXTURE) {
-		int ret = BadImplementation;
+		ret = BadImplementation;
 
 		if (pNv->Architecture == NV_ARCH_30) {
 			ret = NV30PutTextureImage(pScrn, pPriv->video_mem,
@@ -2087,8 +2093,8 @@ NV50SetupTexturedVideo (ScreenPtr pScreen)
 	adapt->name		= "Nouveau GeForce 8/9 Textured Video";
 	adapt->nEncodings	= 1;
 	adapt->pEncodings	= &DummyEncodingNV50;
-	adapt->nFormats		= NUM_FORMATS_ALL;
-	adapt->pFormats		= NVFormats;
+	adapt->nFormats		= NUM_FORMATS_NV50;
+	adapt->pFormats		= NV50Formats;
 	adapt->nPorts		= NUM_TEXTURE_PORTS;
 	adapt->pPortPrivates	= (DevUnion*)(&adapt[1]);
 
@@ -2125,7 +2131,7 @@ NV50SetupTexturedVideo (ScreenPtr pScreen)
 	return adapt;
 }
 
-void
+static void
 NVSetupTexturedVideo (ScreenPtr pScreen, XF86VideoAdaptorPtr *textureAdaptor)
 {
 	ScrnInfoPtr          pScrn = xf86ScreenToScrn(pScreen);
@@ -2237,7 +2243,7 @@ NVInitVideo(ScreenPtr pScreen)
 		XF86MCAdaptorPtr *adaptorsXvMC = malloc(sizeof(XF86MCAdaptorPtr));
 		
 		if (adaptorsXvMC) {
-			adaptorsXvMC[0] = vlCreateAdaptorXvMC(pScreen, textureAdaptor[0]->name);
+			adaptorsXvMC[0] = vlCreateAdaptorXvMC(pScreen, (char *)textureAdaptor[0]->name);
 			
 			if (adaptorsXvMC[0]) {
 				vlInitXvMC(pScreen, 1, adaptorsXvMC);

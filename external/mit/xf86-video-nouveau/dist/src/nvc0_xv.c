@@ -89,8 +89,9 @@ nvc0_xv_image_put(ScrnInfoPtr pScrn,
 	PUSH_DATA (push, dst->offset);
 	PUSH_DATA (push, ppix->drawable.width);
 	PUSH_DATA (push, ppix->drawable.height);
-	switch (ppix->drawable.bitsPerPixel) {
+	switch (ppix->drawable.depth) {
 	case 32: PUSH_DATA (push, NV50_SURFACE_FORMAT_BGRA8_UNORM); break;
+	case 30: PUSH_DATA (push, NV50_SURFACE_FORMAT_RGB10_A2_UNORM); break;
 	case 24: PUSH_DATA (push, NV50_SURFACE_FORMAT_BGRX8_UNORM); break;
 	case 16: PUSH_DATA (push, NV50_SURFACE_FORMAT_B5G6R5_UNORM); break;
 	case 15: PUSH_DATA (push, NV50_SURFACE_FORMAT_BGR5_X1_UNORM); break;

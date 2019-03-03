@@ -46,9 +46,6 @@ nouveau_present_crtc(WindowPtr window)
 	if (!crtc)
 		return NULL;
 
-	if (crtc->rotatedData)
-		return NULL;
-
 	return crtc->randr_crtc;
 }
 
@@ -152,7 +149,7 @@ nouveau_present_flip_check(RRCrtcPtr rrcrtc, WindowPtr window,
 	ScrnInfoPtr scrn = xf86ScreenToScrn(window->drawable.pScreen);
 	xf86CrtcPtr crtc = rrcrtc->devPrivate;
 
-	if (!scrn->vtSema || !drmmode_crtc_on(crtc))
+	if (!scrn->vtSema || !drmmode_crtc_on(crtc) || crtc->rotatedData)
 		return FALSE;
 
 	return TRUE;

@@ -140,8 +140,12 @@ static struct NvFamily NVKnownFamilies[] =
   { "GeForce 6",   "NV4x" },
   { "GeForce 7",   "G7x" },
   { "GeForce 8",   "G8x" },
-  { "GeForce GTX 200", "NVA0" },
-  { "GeForce GTX 400", "NVC0" },
+  { "GeForce 9",   "G9x" },
+  { "GeForce GTX 2xx/3xx", "GT2xx" },
+  { "GeForce GTX 4xx/5xx", "GFxxx" },
+  { "GeForce GTX 6xx/7xx", "GKxxx" },
+  { "GeForce GTX 9xx", "GMxxx" },
+  { "GeForce GTX 10xx", "GPxxx" },
   { NULL, NULL}
 };
 
@@ -154,7 +158,7 @@ static XF86ModuleVersionInfo nouveauVersRec =
     MODINFOSTRING1,
     MODINFOSTRING2,
     XORG_VERSION_CURRENT,
-    NV_MAJOR_VERSION, NV_MINOR_VERSION, NV_PATCHLEVEL,
+    PACKAGE_VERSION_MAJOR, PACKAGE_VERSION_MINOR, PACKAGE_VERSION_PATCHLEVEL,
     ABI_CLASS_VIDEODRV,                     /* This is a video driver */
     ABI_VIDEODRV_VERSION,
     MOD_CLASS_VIDEODRV,
@@ -1565,11 +1569,14 @@ NVScreenInit(SCREEN_INIT_ARGS_DECL)
 
 	/*
 	 * Initialize colormap layer.
-	 * Must follow initialization of the default colormap 
+	 * Must follow initialization of the default colormap.
+	 * X-Server < 1.20 mishandles > 256 slots / > 8 bpc color maps, so skip
+	 * color map setup on old servers at > 8 bpc. Gamma luts still work.
 	 */
-	if (xf86_config->num_crtc &&
-	    !xf86HandleColormaps(pScreen, 256, 8, NVLoadPalette,
-				 NULL, CMAP_PALETTED_TRUECOLOR))
+	if (xf86_config->num_crtc && (pScrn->rgbBits <= 8 ||
+	    XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,20,0,0,0)) &&
+	    !xf86HandleColormaps(pScreen, 1 << pScrn->rgbBits, pScrn->rgbBits,
+				 NVLoadPalette, NULL, CMAP_PALETTED_TRUECOLOR))
 		return FALSE;
 
 	/* Report any unused options (only for the first generation) */
