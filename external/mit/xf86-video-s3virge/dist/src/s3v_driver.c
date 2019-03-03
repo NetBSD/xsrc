@@ -478,8 +478,6 @@ S3VPreInit(ScrnInfoPtr pScrn, int flags)
     int i;
     double real;
     ClockRangePtr clockRanges;
-    char *mod = NULL;
-    const char *reqSym = NULL;
     const char *s;
     
     unsigned char config1, config2, m, n, n1, n2, cr66 = 0;

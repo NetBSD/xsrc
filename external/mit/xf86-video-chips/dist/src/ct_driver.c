@@ -2414,6 +2414,7 @@ chipsPreInitWingine(ScrnInfoPtr pScrn, int flags)
         return FALSE;
 
     hwp = VGAHWPTR(pScrn);
+    vgaHWSetStdFuncs(hwp);
     vgaHWGetIOBase(hwp);
 
     /*
@@ -2880,6 +2881,7 @@ chipsPreInit655xx(ScrnInfoPtr pScrn, int flags)
         return FALSE;
 
     hwp = VGAHWPTR(pScrn);
+    vgaHWSetStdFuncs(hwp);
     vgaHWGetIOBase(hwp);
 
     /*
