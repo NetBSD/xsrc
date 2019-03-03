@@ -355,7 +355,7 @@
 #define XINERAMA 1
 
 /* Current Xorg version */
-#define XORG_VERSION_CURRENT (((1) * 10000000) + ((20) * 100000) + ((3) * 1000) + 0)
+#define XORG_VERSION_CURRENT (((1) * 10000000) + ((20) * 100000) + ((4) * 1000) + 0)
 
 /* Build Xv Extension */
 #define XvExtension 1
