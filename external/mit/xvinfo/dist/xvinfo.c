@@ -25,7 +25,6 @@ main(int argc, char *argv[])
 {
     Display *dpy;
     unsigned int ver, rev, eventB, reqB, errorB;
-    int i, j, k, n;
     unsigned int nencode, nadaptors;
     int nscreens, nattr, numImages;
     XvAdaptorInfo *ainfo;
@@ -42,7 +41,7 @@ main(int argc, char *argv[])
         PrintUsage();
 
     if (argc != 1) {
-        for (i = 1; i < argc; i++) {
+        for (int i = 1; i < argc; i++) {
             if (!strcmp(argv[i], "-display")) {
                 if (++i >= argc) {
                     fprintf (stderr, "%s: missing argument to -display\n",
@@ -71,7 +70,7 @@ main(int argc, char *argv[])
         exit(-1);
     }
 
-    if ((Success != XvQueryExtension(dpy, &ver, &rev, &reqB, &eventB, &errorB))) {
+    if (Success != XvQueryExtension(dpy, &ver, &rev, &reqB, &eventB, &errorB)) {
         fprintf(stderr, "%s: No X-Video Extension on %s\n", progname,
                 (disname != NULL) ? disname : XDisplayName(NULL));
         exit(0);
@@ -82,16 +81,21 @@ main(int argc, char *argv[])
 
     nscreens = ScreenCount(dpy);
 
-    for (i = 0; i < nscreens; i++) {
+    for (int i = 0; i < nscreens; i++) {
         fprintf(stdout, "screen #%i\n", i);
-        XvQueryAdaptors(dpy, RootWindow(dpy, i), &nadaptors, &ainfo);
+        if (Success != XvQueryAdaptors(dpy, RootWindow(dpy, i), &nadaptors,
+                                       &ainfo)) {
+            fprintf(stderr, "%s:  Failed to query adaptors on display %s\n",
+                    progname, (disname != NULL) ? disname : XDisplayName(NULL));
+            exit(-1);
+        }
 
         if (!nadaptors) {
             fprintf(stdout, " no adaptors present\n");
             continue;
         }
 
-        for (j = 0; j < nadaptors; j++) {
+        for (unsigned int j = 0; j < nadaptors; j++) {
             fprintf(stdout, "  Adaptor #%i: \"%s\"\n", j, ainfo[j].name);
             fprintf(stdout, "    number of ports: %li\n", ainfo[j].num_ports);
             fprintf(stdout, "    port base: %li\n", ainfo[j].base_id);
@@ -121,7 +125,7 @@ main(int argc, char *argv[])
 
             if (!shortmode) {
                 fprintf(stdout, "    supported visuals:\n");
-                for (k = 0; k < ainfo[j].num_formats; k++, format++) {
+                for (unsigned long k = 0; k < ainfo[j].num_formats; k++, format++) {
                     fprintf(stdout, "      depth %i, visualID 0x%2lx\n",
                             format->depth, format->visual_id);
                 }
@@ -132,7 +136,7 @@ main(int argc, char *argv[])
             if (attributes && nattr) {
                 fprintf(stdout, "    number of attributes: %i\n", nattr);
 
-                for (k = 0; k < nattr; k++) {
+                for (int k = 0; k < nattr; k++) {
                     fprintf(stdout, "      \"%s\" (range %i to %i)\n",
                             attributes[k].name,
                             attributes[k].min_value, attributes[k].max_value);
@@ -178,12 +182,19 @@ main(int argc, char *argv[])
                 fprintf(stdout, "    no port attributes defined\n");
             }
 
-            XvQueryEncodings(dpy, ainfo[j].base_id, &nencode, &encodings);
+            if (Success != XvQueryEncodings(dpy, ainfo[j].base_id, &nencode,
+                                            &encodings)) {
+                fprintf(stderr,
+                        "%s:  Failed to query encodings on display %s\n",
+                        progname,
+                        (disname != NULL) ? disname : XDisplayName(NULL));
+                exit(-1);
+            }
 
             if (encodings && nencode) {
                 unsigned int ImageEncodings = 0;
 
-                for (n = 0; n < nencode; n++) {
+                for (unsigned int n = 0; n < nencode; n++) {
                     if (!strcmp(encodings[n].name, "XV_IMAGE"))
                         ImageEncodings++;
                 }
@@ -192,7 +203,7 @@ main(int argc, char *argv[])
                     fprintf(stdout, "    number of encodings: %i\n",
                             nencode - ImageEncodings);
 
-                    for (n = 0; n < nencode; n++) {
+                    for (unsigned int n = 0; n < nencode; n++) {
                         if (strcmp(encodings[n].name, "XV_IMAGE")) {
                             fprintf(stdout, "      encoding ID #%li: \"%s\"\n",
                                     encodings[n].encoding_id,
@@ -207,7 +218,7 @@ main(int argc, char *argv[])
                 }
 
                 if (ImageEncodings && (ainfo[j].type & XvImageMask)) {
-                    for (n = 0; n < nencode; n++) {
+                    for (unsigned int n = 0; n < nencode; n++) {
                         if (!strcmp(encodings[n].name, "XV_IMAGE")) {
                             fprintf(stdout,
                                     "    maximum XvImage size: %li x %li\n",
@@ -222,7 +233,7 @@ main(int argc, char *argv[])
                     fprintf(stdout, "    Number of image formats: %i\n",
                             numImages);
 
-                    for (n = 0; n < numImages; n++) {
+                    for (int n = 0; n < numImages; n++) {
                         char imageName[5];
 
                         snprintf(imageName, sizeof(imageName), "%c%c%c%c",
@@ -310,5 +321,5 @@ main(int argc, char *argv[])
 
         XvFreeAdaptorInfo(ainfo);
     }
-    return 1;
+    return 0;
 }
