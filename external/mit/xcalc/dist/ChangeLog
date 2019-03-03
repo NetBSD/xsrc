@@ -1,3 +1,125 @@
+commit be5114cebfdc29788cf038d349c0ed6cce4bb536
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Feb 17 13:50:58 2019 -0800
+
+    xcalc 1.0.7
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 85c9feb6e10cea1ef017d702151b14717c40b9d5
+Author: Stéphane Aulery <lkppo@free.fr>
+Date:   Sun Jul 7 22:50:30 2013 +0200
+
+    Reduce scope of i (cppcheck --verbose --enable=all)
+    
+    Signed-off-by: Stéphane Aulery <lkppo@free.fr>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit aa3d39389bfc752486a83933574d0365c74d4e29
+Author: Stéphane Aulery <lkppo@free.fr>
+Date:   Sun Jul 7 22:50:29 2013 +0200
+
+    Reduce scope of cell (cppcheck --verbose --enable=all)
+    
+    Signed-off-by: Stéphane Aulery <lkppo@free.fr>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8d156f428912aecdd493e075b75e735bfbae7dda
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Nov 21 16:59:17 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b8f4da1126dd44b4adc5f83ba5c7e06a2de75996
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Nov 16 21:11:40 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8df4b463f69fc3e7e08ce5de284ed7f318935c1e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 5 12:20:12 2018 -0700
+
+    Reword fall through comments to appease gcc -Wimplicit-fallthrough
+    
+    Gets rid of these warnings:
+    math.c:707:24: warning: this statement may fall through [-Wimplicit-fallthrough=]
+       case kSQR:   flagINV = !flagINV; /* fall through to */
+                    ~~~~~~~~^~~~~~~~~~
+    math.c:708:3: note: here
+       case kSQRT:  if (flagINV) dnum=dnum*dnum;
+       ^~~~
+    math.c:711:24: warning: this statement may fall through [-Wimplicit-fallthrough=]
+       case k10X:   flagINV = !flagINV; /* fall through to */
+                    ~~~~~~~~^~~~~~~~~~
+    math.c:712:3: note: here
+       case kLOG:   if (flagINV) dnum=pow(10.0,dnum);
+       ^~~~
+    math.c:715:24: warning: this statement may fall through [-Wimplicit-fallthrough=]
+       case kEXP:   flagINV = !flagINV; /* fall through to */
+                    ~~~~~~~~^~~~~~~~~~
+    math.c:716:3: note: here
+       case kLN:    if (flagINV) dnum=exp(dnum);
+       ^~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 7a90211e35841758ff11e79a1633494e2055df88
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 5 12:15:19 2018 -0700
+
+    Fix misleading indentation in math.c
+    
+    math.c: In function ‘numeric’:
+    math.c:267:3: warning: this ‘if’ clause does not guard... [-Wmisleading-indentat
+    ion]
+       if ((int) strlen(dispstr) >= MAXDISP)
+       ^~
+    math.c:270:5: note: ...this statement, but the latter is misleadingly indented a
+    s if it were guarded by the ‘if’
+         switch (keynum){
+         ^~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d056a3c6843cf5f6c8b392c46bc4f1b637f87d0b
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:20 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit f5982d0175359f7db28127cba3a42e08352f295b
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 004ce8287f9afab014a44c8bb8ba476ef5930a57
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
 commit 0fba659f91bebe1f92f4de2660bf806fd049350b
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Mon Jan 19 21:26:22 2015 -0800

@@ -210,12 +210,13 @@ DrawDisplay(void)
 void
 numeric(int keynum)
 {
-    char	st[2];
-    int		cell = 0;
+  char st[2];
 
   flagINV=0;
 
   if (rpn && (memop == kSTO || memop == kRCL || memop == kSUM)) {
+      int cell = 0;
+
       switch (keynum) {
 	case kONE:	cell = 1; break;
 	case kTWO:	cell = 2; break;
@@ -267,7 +268,7 @@ numeric(int keynum)
   if ((int) strlen(dispstr) >= MAXDISP)
     return;
 
-    switch (keynum){
+  switch (keynum){
       case kONE:	st[0] = '1'; break;
       case kTWO:	st[0] = '2'; break;
       case kTHREE:	st[0] = '3'; break;
@@ -278,9 +279,9 @@ numeric(int keynum)
       case kEIGHT:	st[0] = '8'; break;
       case kNINE:	st[0] = '9'; break;
       case kZERO:	st[0] = '0'; break;
-    }
-    st[1] = '\0';
-    strcat(dispstr,st);
+  }
+  st[1] = '\0';
+  strcat(dispstr,st);
 
   DrawDisplay();
   if (clrdisp && keynum != kZERO)
@@ -704,15 +705,15 @@ oneop(int keynum)
   case kE:     if (rpn && memop != kENTR) PushNum(dnum); dnum=M_E;  break;
   case kPI:    if (rpn && memop != kENTR) PushNum(dnum); dnum=M_PI;  break;
   case kRECIP: dnum=1.0/dnum;  break;
-  case kSQR:   flagINV = !flagINV; /* fall through to */
+  case kSQR:   flagINV = !flagINV; /* fall through */
   case kSQRT:  if (flagINV) dnum=dnum*dnum;
 	       else dnum=sqrt(dnum);
 	       break;
-  case k10X:   flagINV = !flagINV; /* fall through to */
+  case k10X:   flagINV = !flagINV; /* fall through */
   case kLOG:   if (flagINV) dnum=pow(10.0,dnum);
   	       else dnum=log10(dnum);
 	       break;
-  case kEXP:   flagINV = !flagINV; /* fall through to */
+  case kEXP:   flagINV = !flagINV; /* fall through */
   case kLN:    if (flagINV) dnum=exp(dnum);
 	       else dnum=log(dnum);
 	       break;
@@ -760,13 +761,12 @@ void
 offf(void)
 {
   /* full reset */
-  int i;
   ResetCalc();
   entered=clrdisp=1;
   lift_enabled = 0;
   dnum=mem[0]=0.0;
   if (rpn)
-      for (i=1; i < XCALC_MEMORY; i++)
+      for (int i=1; i < XCALC_MEMORY; i++)
 	  mem[i]=0.0;
   exponent=Dpoint=0;
   DrawDisplay();
