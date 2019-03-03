@@ -21,12 +21,15 @@
 
 SUBDIRS = man
 bin_PROGRAMS = mkfontscale
+bin_SCRIPTS = mkfontdir
 
 AM_CPPFLAGS = @MKFONTSCALE_CFLAGS@ @X11_CFLAGS@ -D_BSD_SOURCE
 AM_CFLAGS = $(CWARNFLAGS)
 mkfontscale_LDADD  = @MKFONTSCALE_LIBS@
 
 mkfontscale_SOURCES = \
+	constlist.c \
+	constlist.h \
 	data.h \
 	hash.c \
 	hash.h \
@@ -55,3 +58,5 @@ ALL_LINT_FLAGS=$(LINT_FLAGS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 lint:
 	$(LINT) $(ALL_LINT_FLAGS) $(mkfontscale_SOURCES)
 endif LINT
+
+EXTRA_DIST = README.md
