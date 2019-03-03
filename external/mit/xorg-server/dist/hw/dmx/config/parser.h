@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.0.5.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -76,7 +76,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 57 "parser.y" /* yacc.c:1909  */
+#line 57 "parser.y" /* yacc.c:1910  */
 
     DMXConfigTokenPtr      token;
     DMXConfigStringPtr     string;
@@ -93,7 +93,7 @@ union YYSTYPE
     DMXConfigVirtualPtr    virtual;
     DMXConfigEntryPtr      entry;
 
-#line 97 "parser.h" /* yacc.c:1909  */
+#line 97 "parser.h" /* yacc.c:1910  */
 };
 
 typedef union YYSTYPE YYSTYPE;
