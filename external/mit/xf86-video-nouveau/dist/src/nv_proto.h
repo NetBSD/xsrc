@@ -61,7 +61,6 @@ Bool NVAccelM2MF(NVPtr pNv, int w, int h, int cpp, uint32_t srco, uint32_t dsto,
 void nouveau_wfb_setup_wrap(ReadMemoryProcPtr *, WriteMemoryProcPtr *,
 			    DrawablePtr);
 void nouveau_wfb_finish_wrap(DrawablePtr);
-void nouveau_wfb_init();
 
 /* in nv_shadow.c */
 void NVRefreshArea(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
