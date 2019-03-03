@@ -253,8 +253,8 @@ CTAGS = ctags
 CSCOPE = cscope
 DIST_SUBDIRS = $(SUBDIRS)
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in AUTHORS \
-	COPYING ChangeLog INSTALL README compile config.guess \
-	config.sub depcomp install-sh missing
+	COPYING ChangeLog INSTALL compile config.guess config.sub \
+	depcomp install-sh missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -365,6 +365,8 @@ PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
+PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
+PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
@@ -445,7 +447,7 @@ bmtoa_SOURCES = bmtoa.c
 atobm_CFLAGS = $(CWARNFLAGS) $(ATOBM_CFLAGS)
 atobm_LDADD = $(ATOBM_LIBS)
 atobm_SOURCES = atobm.c
-EXTRA_DIST = autogen.sh
+EXTRA_DIST = autogen.sh README.md
 bitmapdir = $(includedir)/X11/bitmaps
 dist_bitmap_DATA = \
 	Dashes		\
