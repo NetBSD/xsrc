@@ -1,3 +1,76 @@
+commit 9b5e869ac505bf14b0051dbaabe0de38133f5fd5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Mar 3 11:12:25 2019 -0800
+
+    xditview 1.0.5
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8ec60659b075307e38fab4bcb8fe949830decdee
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Nov 21 17:01:01 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 36242c559543ffa21570ca961ba950ee0d73c9dd
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Nov 16 21:23:12 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3cd0b7e72ed741bdc26ea7ffd5ea2f4ec3af4f96
+Author: Pat Kane <pekane52@gmail.com>
+Date:   Tue Dec 7 22:32:24 2010 -0600
+
+    make sure filename is a regular file.
+    
+    This is the second version of patch.
+    
+    It now uses fstat instead of stat as recommended in
+    review comments from:
+        Philipp Hagemeister <phihag@phihag.de>.
+    Bug was reported by:
+        Krzysztof Żelechowski <giecrilj@stegny.2a.pl>
+    
+    Signed-off-by: Pat Kane <pekane52@gmail.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5383f408b1138913fd6d7d94da70f63bed711857
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:21 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit 27eb7660e2b186c7a4c84ccab14631f5a8d5b571
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit bcf883b274d0d68c56047a9720bb24e9a34d62de
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
 commit d8b43b22c6432e7c927236b6e729a53f737cedfb
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Thu Apr 16 23:07:15 2015 -0700
