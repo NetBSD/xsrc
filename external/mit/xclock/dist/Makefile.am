@@ -42,6 +42,7 @@ dist_appdefault_DATA = \
         app-defaults/XClock
 
 EXTRA_DIST = \
+	README.md \
 	clmask.bit \
 	clock.bit
 
