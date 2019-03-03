@@ -1,3 +1,108 @@
+commit 73884c24e367ab074af49a8e6168cbded6f4f382
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Feb 19 16:07:44 2019 -0800
+
+    xstdcmap 1.0.4
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 70f3ac7b962e279ca793a47a960b9f78da773adf
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Nov 21 17:19:52 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f75cdb45b676ae6e581518ae65282ac514d24e9e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Nov 16 23:26:04 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit bffe5030b03af5afb67dbeb053016ffc7569f48a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Mar 9 20:31:22 2018 -0800
+
+    Fix -Wsign-compare warnings
+    
+    xstdcmap.c: In function ‘parse’:
+    xstdcmap.c:152:14: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+      for (i=0; i < NPROPERTIES; i++) {
+                  ^
+    xstdcmap.c: In function ‘getDeepestVisual’:
+    xstdcmap.c:220:51: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+      if (vinfo->class == visual_class && vinfo->depth > maxdepth)
+                                                       ^
+    xstdcmap.c: In function ‘doIndividualColormaps’:
+    xstdcmap.c:288:17: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+         for (i=0; i < NPROPERTIES; i++) {
+                     ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 385e447e3aecd40db2b0f2110308663b3bc478f6
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:21 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit 61893466e3c144b663edf17a63afe3c8316a0e6b
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 742535f62752d16871d523656c03b6a1bb1fdf4b
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
+commit 62069f9946e82f0d8a57b181b594f4b08b22efd1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jun 3 23:29:49 2014 -0700
+
+    autogen.sh: Honor NOCONFIGURE=1
+    
+    See http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2bac150dd160bf177672a30ae7db7045c91b1a20
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jun 3 23:29:48 2014 -0700
+
+    configure: Drop AM_MAINTAINER_MODE
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 16959f67461cb3bceb5d9428759bc6f8925aa1ee
+Author: Stéphane Aulery <lkppo@free.fr>
+Date:   Thu Jul 4 00:40:01 2013 +0200
+
+    Use the same parameter names in the help.
+    
+    Signed-off-by: Stéphane Aulery <lkppo@free.fr>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit a1569179b99f6c8af86132030077439c1dbd52c2
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sun Feb 10 16:15:08 2013 -0800
