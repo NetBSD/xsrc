@@ -144,8 +144,8 @@ print_server_info(FSServer *svr)
 	    printf(".%d", vendrel % 1000);
 	printf("\n");
     }
-    printf("maximum request size:	%ld longwords (%ld bytes)\n",
-	   FSMaxRequestSize(svr), FSMaxRequestSize(svr) * sizeof(long));
+    printf("maximum request size:	%ld words (%ld bytes)\n",
+	   FSMaxRequestSize(svr), FSMaxRequestSize(svr) * sizeof(CARD32));
     print_catalogue_info(svr);
     print_alternate_info(svr);
     print_extension_info(svr);
