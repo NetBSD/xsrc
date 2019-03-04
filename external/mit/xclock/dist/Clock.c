@@ -1610,8 +1610,8 @@ clock_tic(XtPointer client_data, XtIntervalId *id)
 				RenderHands (w, &tm, False);
 			    }
 			    if (w->clock.show_second_hand &&
-				tm.tm_sec != w->clock.otm.tm_sec ||
-				tv.tv_usec != w->clock.otv.tv_usec)
+				(tm.tm_sec != w->clock.otm.tm_sec ||
+				 tv.tv_usec != w->clock.otv.tv_usec))
 			    {
 				RenderSec (w, &w->clock.otm, &w->clock.otv, False);
 				RenderSec (w, &tm, &tv, False);
@@ -2173,10 +2173,10 @@ SetValues(Widget gcurrent, Widget grequest, Widget gnew,
 	  if (new->clock.update && XtIsRealized( (Widget) new))
 	      new->clock.interval_id = XtAppAddTimeOut(
                                          XtWidgetToApplicationContext(gnew),
-					 abs(new->clock.update)*1000,
+					 fabsl(new->clock.update)*1000,
 				         clock_tic, (XtPointer)gnew);
 
-	  new->clock.show_second_hand =(abs(new->clock.update) <= SECOND_HAND_TIME);
+	  new->clock.show_second_hand =(fabsl(new->clock.update) <= SECOND_HAND_TIME);
 	  if (new->clock.show_second_hand != current->clock.show_second_hand)
 	    redisplay = TRUE;
       }
