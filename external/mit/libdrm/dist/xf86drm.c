@@ -59,6 +59,8 @@
 #endif
 #include <math.h>
 
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+
 /* Not all systems have MAP_FAILED defined */
 #ifndef MAP_FAILED
 #define MAP_FAILED ((void *)-1)
@@ -99,7 +101,7 @@
 #define DRM_MAJOR 226 /* Linux */
 #endif
 
-#ifdef __OpenBSD__
+#if defined(__OpenBSD__) || defined(__DragonFly__)
 struct drm_pciinfo {
 	uint16_t	domain;
 	uint8_t		bus;
@@ -2984,6 +2986,17 @@ static int drmParseSubsystemType(int maj, int min)
     char path[PATH_MAX + 1];
     char link[PATH_MAX + 1] = "";
     char *name;
+    struct {
+        const char *name;
+        int bus_type;
+    } bus_types[] = {
+        { "/pci", DRM_BUS_PCI },
+        { "/usb", DRM_BUS_USB },
+        { "/platform", DRM_BUS_PLATFORM },
+        { "/spi", DRM_BUS_PLATFORM },
+        { "/host1x", DRM_BUS_HOST1X },
+        { "/virtio", DRM_BUS_VIRTIO },
+    };
 
     snprintf(path, PATH_MAX, "/sys/dev/char/%d:%d/device/subsystem",
              maj, min);
@@ -2995,23 +3008,13 @@ static int drmParseSubsystemType(int maj, int min)
     if (!name)
         return -EINVAL;
 
-    if (strncmp(name, "/pci", 4) == 0)
-        return DRM_BUS_PCI;
-
-    if (strncmp(name, "/usb", 4) == 0)
-        return DRM_BUS_USB;
-
-    if (strncmp(name, "/platform", 9) == 0)
-        return DRM_BUS_PLATFORM;
-
-    if (strncmp(name, "/host1x", 7) == 0)
-        return DRM_BUS_HOST1X;
-
-    if (strncmp(name, "/virtio", 7) == 0)
-        return DRM_BUS_VIRTIO;
+    for (unsigned i = 0; i < ARRAY_SIZE(bus_types); i++) {
+        if (strncmp(name, bus_types[i].name, strlen(bus_types[i].name)) == 0)
+            return bus_types[i].bus_type;
+    }
 
     return -EINVAL;
-#elif defined(__OpenBSD__)
+#elif defined(__OpenBSD__) || defined(__DragonFly__)
     return DRM_BUS_PCI;
 #else
 #warning "Missing implementation of drmParseSubsystemType"
@@ -3060,7 +3063,7 @@ static int drmParsePciBusInfo(int maj, int min, drmPciBusInfoPtr info)
     info->func = func;
 
     return 0;
-#elif defined(__OpenBSD__)
+#elif defined(__OpenBSD__) || defined(__DragonFly__)
     struct drm_pciinfo pinfo;
     int fd, type;
 
@@ -3149,7 +3152,6 @@ static int parse_separate_sysfs_files(int maj, int min,
                                       drmPciDeviceInfoPtr device,
                                       bool ignore_revision)
 {
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
     static const char *attrs[] = {
       "revision", /* Older kernels are missing the file, so check for it first */
       "vendor",
@@ -3227,7 +3229,7 @@ static int drmParsePciDeviceInfo(int maj, int min,
         return parse_config_sysfs_file(maj, min, device);
 
     return 0;
-#elif defined(__OpenBSD__)
+#elif defined(__OpenBSD__) || defined(__DragonFly__)
     struct drm_pciinfo pinfo;
     int fd, type;
 
