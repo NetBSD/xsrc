@@ -240,11 +240,15 @@ void TDFXSwapContextFifo(ScreenPtr pScreen)
   ScrnInfoPtr pScrn;
   TDFXPtr pTDFX;
   int dummy, readPos;
+#if 0
   TDFXSAREAPriv *sPriv;
+#endif
 
   pScrn = xf86ScreenToScrn(pScreen);
   pTDFX=TDFXPTR(pScrn);
+#if 0
   sPriv=(TDFXSAREAPriv*)DRIGetSAREAPrivate(pScreen);
+#endif
   /* if (sPriv)
      ErrorF("In FifoPtr=%d FifoRead=%d\n", sPriv->fifoPtr, sPriv->fifoRead); */
 #if 1

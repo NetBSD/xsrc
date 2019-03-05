@@ -644,30 +644,30 @@ TDFXInitChips(ScrnInfoPtr pScrn)
     xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
 		   "TDFXInitChips: numchips = %d\n", pTDFX->numChips);
     xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
-		   "TDFXInitChips: cfgbits = 0x%08lx, initbits = 0x%08lx\n",
+		   "TDFXInitChips: cfgbits = 0x%08x, initbits = 0x%08x\n",
 		   cfgbits, initbits);
     xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
-		   "TDFXInitChips: mem0base = 0x%08lx, mem1base = 0x%08lx\n",
+		   "TDFXInitChips: mem0base = 0x%08x, mem1base = 0x%08x\n",
 		   mem0base, mem1base);
 
     mem0size = 32 * 1024 * 1024; /* Registers are always 32MB */
     mem1size = pScrn->videoRam * 1024 * 2; /* Linear mapping is 2x memory */
 
     xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
-		   "TDFXInitChips: mem0size = 0x%08lx, mem1size = 0x%08lx\n",
+		   "TDFXInitChips: mem0size = 0x%08x, mem1size = 0x%08x\n",
 		   mem0size, mem1size);
 
     mem0bits = TDFXSizeToCfg(mem0size);
     mem1bits = TDFXSizeToCfg(mem1size) << 4;
 
     xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
-		   "TDFXInitChips: mem0bits = 0x%08lx, mem1bits = 0x%08lx\n",
+		   "TDFXInitChips: mem0bits = 0x%08x, mem1bits = 0x%08x\n",
 		   mem0bits, mem1bits);
 
     cfgbits = (cfgbits & ~(0xFF)) | mem0bits | mem1bits;
 
     xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
-		   "TDFXInitChips: cfgbits = 0x%08lx\n", cfgbits);
+		   "TDFXInitChips: cfgbits = 0x%08x\n", cfgbits);
 
     if (pTDFX->numChips == 1) {
       /*
@@ -775,7 +775,6 @@ Bool TDFXI2cInit(ScrnInfoPtr pScrn)
 static xf86MonPtr doTDFXDDC(ScrnInfoPtr pScrn)
 {
   TDFXPtr pTDFX = TDFXPTR(pScrn);
-  I2CBusPtr pI2CBus;
   xf86MonPtr pMon = NULL;
   CARD32 reg;
 
@@ -2237,9 +2236,6 @@ TDFXScreenInit(SCREEN_INIT_ARGS_DECL) {
   TDFXPtr pTDFX;
   VisualPtr visual;
   BoxRec MemBox;
-#ifdef TDFXDRI
-  MessageType driFrom = X_DEFAULT;
-#endif
   int scanlines;
 
   TDFXTRACE("TDFXScreenInit start\n");
@@ -2350,15 +2346,12 @@ TDFXScreenInit(SCREEN_INIT_ARGS_DECL) {
 #ifdef TDFXDRI
   /*
    * Setup DRI after visuals have been established, but before fbScreenInit
-   * is called.   fbScreenInit will eventually call into the drivers
-   * InitGLXVisuals call back.
+   * is called.
    */
   if (!xf86ReturnOptValBool(pTDFX->Options, OPTION_DRI, TRUE) || pTDFX->NoAccel) {
       pTDFX->directRenderingEnabled = FALSE;
-      driFrom = X_CONFIG;
   } else if (pTDFX->texSize < 0) {
       pTDFX->directRenderingEnabled = FALSE;
-      driFrom = X_PROBED;
   } else {
       pTDFX->directRenderingEnabled = TDFXDRIScreenInit(pScreen);
   }
