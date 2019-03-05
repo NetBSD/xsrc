@@ -50,9 +50,15 @@ from The Open Group.
 #include <stdio.h>
 #include <ctype.h>
 #include <grp.h>	/* for initgroups */
-#ifdef AIXV3
-# include <usersec.h>
-#endif
+
+# ifdef HAVE_SETPROCTITLE
+#  include <sys/types.h>
+#  ifdef __linux__
+#   include <bsd/unistd.h>
+#  else
+#   include <unistd.h>
+#  endif
+# endif
 
 #ifndef USE_PAM        /* PAM modules should handle these */
 # ifdef SECURE_RPC
@@ -67,10 +73,6 @@ extern int key_setnet(struct key_netstarg *arg);
 # endif
 #endif /* USE_PAM */
 
-#ifdef __SCO__
-# include <prot.h>
-#endif
-
 #ifdef USE_SELINUX
 #include <selinux/selinux.h>
 #include <selinux/get_context_list.h>
@@ -80,6 +82,10 @@ extern int key_setnet(struct key_netstarg *arg);
 # ifndef RTLD_NOW
 #  define RTLD_NOW 1
 # endif
+
+#ifdef USE_SYSTEMD_DAEMON
+#include <systemd/sd-daemon.h>
+#endif
 
 #ifdef USE_SELINUX
 /* This should be run just before we exec the user session. */
@@ -137,9 +143,12 @@ extern	struct spwd	*getspnam(GETSPNAM_ARGS);
 extern	void	endspent(void);
 # endif
 #endif
-#if defined(CSRG_BASED) || defined(__GLIBC__) || defined(__UNIXWARE__) || defined(__SCO__)
+#if defined(CSRG_BASED) || defined(__GLIBC__)
 # include <pwd.h>
 # include <unistd.h>
+# if defined(__GLIBC__) && !defined(_XOPEN_CRYPT)
+# include <crypt.h>
+# endif
 #else
 extern	struct passwd	*getpwnam(GETPWNAM_ARGS);
 # ifdef linux
@@ -222,7 +231,8 @@ static struct verify_info	verify;
 static Jmp_buf	abortSession;
 
 /* ARGSUSED */
-static SIGVAL
+_X_NORETURN
+static void
 catchTerm (int n)
 {
     Longjmp (abortSession, 1);
@@ -231,7 +241,8 @@ catchTerm (int n)
 static Jmp_buf	pingTime;
 
 /* ARGSUSED */
-static SIGVAL
+_X_NORETURN
+static void
 catchAlrm (int n)
 {
     Longjmp (pingTime, 1);
@@ -240,7 +251,8 @@ catchAlrm (int n)
 static Jmp_buf	tenaciousClient;
 
 /* ARGSUSED */
-static SIGVAL
+_X_NORETURN
+static void
 waitAbort (int n)
 {
 	Longjmp (tenaciousClient, 1);
@@ -354,6 +366,12 @@ ManageSession (struct display *d)
 	exit(UNMANAGE_DISPLAY);
 	}
 
+#ifdef USE_SYSTEMD_DAEMON
+	/* Subsequent notifications will be ignored by systemd
+	 * and calling this function will clean up the env */
+	sd_notify(1, "READY=1");
+#endif
+
     /* tell the possibly dynamically loaded greeter function
      * what data structure formats to expect.
      * These version numbers are registered with The Open Group. */
@@ -461,7 +479,8 @@ DeleteXloginResources (struct display *d, Display *dpy)
 static Jmp_buf syncJump;
 
 /* ARGSUSED */
-static SIGVAL
+_X_NORETURN
+static void
 syncTimeout (int n)
 {
     Longjmp (syncJump, 1);
@@ -585,11 +604,6 @@ StartClient (
     pam_handle_t *pamh = thepamh ();
     int	pam_error;
 #endif
-#ifdef USESECUREWARE
-    char *reason, **smpenv, *smpshell;
-    int ret;
-    extern struct smp_user_info *userp;
-#endif
 
     if (verify->argv) {
 	Debug ("StartSession %s: ", verify->argv[0]);
@@ -615,60 +629,29 @@ StartClient (
 
 	/* Do system-dependent login setup here */
 
-#ifdef USESECUREWARE
-        Debug ("set_identity: uid=%d\n", userp->pw.pw_uid);
-        ret = smp_set_identity (userp, &reason, &smpenv, &smpshell);
-        Debug ("smp_set_identity returns %d luid=%d\n", ret, getluid());
-        switch (ret) {
-          case SMP_FAIL:
-            LogError ("Unable to set identity\n");
-            smp_audit_fail (userp, 0);
-            return 0;
-          case SMP_EXTFAIL:
-            LogError ("Unable to set identity: %s\n", reason);
-            smp_audit_fail (userp, 0);
-            return 0;
-          case SMP_NOTAUTH:
-            LogError ("Authorization failed\n");
-            smp_audit_fail (userp, 0);
-            return 0;
-          case SMP_ACCTLOCK:
-            LogError ("Account is locked\n");
-            smp_audit_fail (userp, 0);
-            return 0;
-          case SMP_COMPLETE:
-            break;
-          default:
-            LogError ("Unhandled identity error %d\n", ret);
-            smp_audit_fail (userp, 0);
-            return 0;
-        }
-#endif
-
-#ifndef AIXV3
-# ifndef HAVE_SETUSERCONTEXT
+#ifndef HAVE_SETUSERCONTEXT
 	if (setgid (verify->gid) < 0) {
 	    LogError ("setgid %d (user \"%s\") failed: %s\n",
 		      verify->gid, name, _SysErrorMsg (errno));
 	    return (0);
 	}
-#  if defined(BSD) && (BSD >= 199103)
+# if defined(BSD) && (BSD >= 199103)
 	if (setlogin (name) < 0) {
 	    LogError ("setlogin for \"%s\" failed: %s\n",
 		      name, _SysErrorMsg (errno));
 	    return (0);
 	}
-#  endif
-#  ifndef QNX4
+# endif
+# ifndef QNX4
 	if (initgroups (name, verify->gid) < 0) {
 	    LogError ("initgroups for \"%s\" failed: %s\n",
 		      name, _SysErrorMsg (errno));
 	    return (0);
 	}
-#  endif   /* QNX4 doesn't support multi-groups, no initgroups() */
-# endif /* !HAVE_SETUSERCONTEXT */
+# endif   /* QNX4 doesn't support multi-groups, no initgroups() */
+#endif /* !HAVE_SETUSERCONTEXT */
 
-# ifdef USE_PAM
+#ifdef USE_PAM
 	if (pamh) {
 	    long i;
 	    char **pam_env;
@@ -687,15 +670,15 @@ StartClient (
 	    }
 
 	}
-# endif
+#endif
 
-# ifndef HAVE_SETUSERCONTEXT
+#ifndef HAVE_SETUSERCONTEXT
 	if (setuid(verify->uid) < 0) {
 	    LogError ("setuid %d (user \"%s\") failed: %s\n",
 		      verify->uid, name, _SysErrorMsg (errno));
 	    return (0);
 	}
-# else /* HAVE_SETUSERCONTEXT */
+#else /* HAVE_SETUSERCONTEXT */
 	/*
 	 * Set the user's credentials: uid, gid, groups,
 	 * environment variables, resource limits, and umask.
@@ -713,18 +696,7 @@ StartClient (
 		      name, _SysErrorMsg (errno));
 	    return (0);
 	}
-# endif /* HAVE_SETUSERCONTEXT */
-#else /* AIXV3 */
-	/*
-	 * Set the user's credentials: uid, gid, groups,
-	 * audit classes, user limits, and umask.
-	 */
-	if (setpcred(name, NULL) == -1) {
-	    LogError ("setpcred for \"%s\" failed: %s\n",
-		      name, _SysErrorMsg (errno));
-	    return (0);
-	}
-#endif /* AIXV3 */
+#endif /* HAVE_SETUSERCONTEXT */
 
 #ifndef USE_PAM		/* PAM modules should handle these */
 	/*
@@ -746,7 +718,7 @@ StartClient (
 	    if (len > 8)
 		bzero (passwd + 8, len - 8);
 	    keyret = getsecretkey(netname,secretkey,passwd);
-	    Debug ("getsecretkey returns %d, key length %d\n",
+	    Debug ("getsecretkey returns %d, key length %lu\n",
 		    keyret, strlen (secretkey));
 	    memcpy(&(netst.st_priv_key), secretkey, HEXKEYBYTES);
 	    netst.st_netname = strdup(netname);
@@ -964,6 +936,8 @@ execute (char **argv, char **environ)
 	    return;
 	}
 	fclose (f);
+	if (program[0] == '\0')
+	    return;
 	e = program + strlen (program) - 1;
 	if (*e == '\n')
 	    *e = '\0';

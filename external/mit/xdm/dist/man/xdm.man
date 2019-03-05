@@ -23,7 +23,7 @@
 .\" from The Open Group.
 .\"
 .\"
-.TH XDM 1 __xorgversion__
+.TH XDM __adminmansuffix__ __xorgversion__
 .SH NAME
 xdm \- X Display Manager with support for XDMCP, host chooser
 .SH SYNOPSIS
@@ -328,10 +328,7 @@ be shared between
 .I xdm
 and the terminal.  This resource specifies the file containing those
 values.  Each entry in the file consists of a display name and the shared
-key.  By default,
-.I xdm
-does not include support for XDM-AUTHENTICATION-1, as it requires DES which
-is not generally distributable because of United States export restrictions.
+key.
 .IP \fBDisplayManager.accessFile\fP
 To prevent unauthorized XDMCP service and to allow forwarding of XDMCP
 IndirectQuery requests, this file contains a database of hostnames which are
@@ -419,8 +416,6 @@ See the sections \fBXDMCP Access Control\fP and \fBChooser\fP.
 Specifies the program used to load the resources.  By default,
 .I xdm
 uses \fI BINDIR/xrdb\fP.
-.IP "\fBDisplayManager.\fP\fIDISPLAY\fP\fB.cpp\fP"
-This specifies the name of the C preprocessor which is used by \fIxrdb\fP.
 .IP "\fBDisplayManager.\fP\fIDISPLAY\fP\fB.setup\fP"
 This specifies a program which is run (as root) before offering the
 Login window.  This may be used to change the appearance of the screen
@@ -606,18 +601,18 @@ of the relevant files.
 Here is a reasonable configuration file, which could be
 named \fIxdm-config\fP:
 .nf
+.ft CW
 
-.ta .5i 4i
+DisplayManager.servers:         XDMDIR/Xservers
+DisplayManager.errorLogFile:    XDMLOGDIR/xdm.log
+DisplayManager*resources:       XDMDIR/Xresources
+DisplayManager*startup:         XDMDIR/Xstartup
+DisplayManager*session:         XDMDIR/Xsession
+DisplayManager.pidFile:         XDMPIDDIR/xdm-pid
+DisplayManager._0.authorize:    true
+DisplayManager*authorize:       false
 
-	DisplayManager.servers:	XDMDIR/Xservers
-	DisplayManager.errorLogFile:	XDMLOGDIR/xdm.log
-	DisplayManager*resources:	XDMDIR/Xresources
-	DisplayManager*startup:	XDMDIR/Xstartup
-	DisplayManager*session:	XDMDIR/Xsession
-	DisplayManager.pidFile:	XDMPIDDIR/xdm-pid
-	DisplayManager._0.authorize:	true
-	DisplayManager*authorize:	false
-
+.ft
 .fi
 .PP
 Note that this file mostly contains references to other files.  Note also
@@ -681,8 +676,8 @@ multiple lines.
 .PP
 Here is an example Xaccess file:
 .LP
-.ta 2i 4i
 .nf
+.ft CW
 \&#
 \&# Xaccess \- XDMCP access control file
 \&#
@@ -691,23 +686,24 @@ Here is an example Xaccess file:
 \&# Direct/Broadcast query entries
 \&#
 
-!xtra.lcs.mit.edu	# disallow direct/broadcast service for xtra
-bambi.ogi.edu	# allow access from this particular display
-*.lcs.mit.edu	# allow access from any display in LCS
+!xtra.lcs.mit.edu       # disallow direct/broadcast service for xtra
+bambi.ogi.edu           # allow access from this particular display
+*.lcs.mit.edu           # allow access from any display in LCS
 
-*.deshaw.com	NOBROADCAST	# allow only direct access
-*.gw.com			# allow direct and broadcast
+*.deshaw.com    NOBROADCAST     # allow only direct access
+*.gw.com                        # allow direct and broadcast
 
 \&#
 \&# Indirect query entries
 \&#
 
-%HOSTS	expo.lcs.mit.edu xenon.lcs.mit.edu \e
-	excess.lcs.mit.edu kanga.lcs.mit.edu
+%HOSTS  expo.lcs.mit.edu xenon.lcs.mit.edu \e
+        excess.lcs.mit.edu kanga.lcs.mit.edu
 
-extract.lcs.mit.edu	xenon.lcs.mit.edu	#force extract to contact xenon
-!xtra.lcs.mit.edu	dummy	#disallow indirect access
-*.lcs.mit.edu	%HOSTS	#all others get to choose
+extract.lcs.mit.edu     xenon.lcs.mit.edu  #force extract to contact xenon
+!xtra.lcs.mit.edu       dummy              #disallow indirect access
+*.lcs.mit.edu           %HOSTS             #all others get to choose
+.ft
 .fi
 .PP
 If compiled with IPv6 support, multicast address groups may also be included
@@ -718,13 +714,14 @@ local network. For IPv4 multicasting, the hop count is used as the TTL.
 .PP
 Examples:
 .LP
-.ta 2.1i 4.5i
 .nf
-rincewind.sample.net	ff02::1	#IPv6 Multicast to ff02::1
-\&		#with a hop count of 1
-ponder.sample.net	CHOOSER 239.192.1.1/16  #Offer a menu of hosts
-\&		#who respond to IPv4 Multicast
-\&		# to 239.192.1.1 with a TTL of 16
+.ft CW
+rincewind.sample.net  ff02::1 #IPv6 Multicast to ff02::1
+                              #with a hop count of 1
+ponder.sample.net     CHOOSER 239.192.1.1/16  #Offer a menu of hosts
+                                              #who respond to IPv4 Multicast
+                                              #to 239.192.1.1 with a
+                                              #TTL of 16
 .fi
 .SH CHOOSER
 .PP
@@ -743,8 +740,8 @@ packets cannot be broadcast, so this feature will not work.
 Example \fIXaccess\fP file using \fIchooser\fP:
 
 .nf
-extract.lcs.mit.edu	CHOOSER %HOSTS	#offer a menu of these hosts
-xtra.lcs.mit.edu	CHOOSER BROADCAST	#offer a menu of all hosts
+extract.lcs.mit.edu CHOOSER %HOSTS      #offer a menu of these hosts
+xtra.lcs.mit.edu    CHOOSER BROADCAST   #offer a menu of all hosts
 .fi
 .PP
 The program to use for \fIchooser\fP is specified by the
@@ -788,13 +785,14 @@ with no addresses may be specified, or the previously supported method
 of setting DisplayManager.requestPort to 0 may be used.
 .PP
 Examples:
-.ta 2i 4i
 .nf
-LISTEN * ff02::1	# Listen on all interfaces and to the
-\&	# ff02::1 IPv6 multicast group.
-LISTEN 10.11.12.13	# Listen only on this interface, as long
-\&	# as no other listen directives appear in
-\&	# file.
+.ft CW
+LISTEN * ff02::1        # Listen on all interfaces and to the
+                        # ff02::1 IPv6 multicast group.
+LISTEN 10.11.12.13      # Listen only on this interface, as long
+                        # as no other listen directives appear in
+                        # file.
+.ft
 .fi
 .SH "IPv6 MULTICAST ADDRESS SPECIFICATION"
 .PP
@@ -825,17 +823,15 @@ line to start the server.  A typical entry for local display number 0 would
 be:
 .nf
 
-  :0 Digital-QV local BINDIR/X :0
+ :0 Digital-QV local BINDIR/X :0
 
 .fi
 The display types are:
-.ta 1i
-.nf
-
-local		local display: \fIxdm\fP must run the server
-foreign		remote display: \fIxdm\fP opens an X connection to a running server
-
-.fi
+.TS
+l l.
+local	local display: \fIxdm\fP must run the server
+foreign	remote display: \fIxdm\fP opens an X connection to a running server
+.TE
 .PP
 The display name must be something that can be passed in the \fB\-display\fP
 option to an X program.  This string is used to generate the display-specific
@@ -869,19 +865,20 @@ As the authentication
 widget reads this database before starting up, it usually contains
 parameters for that widget:
 .nf
-.ta .5i 1i
+.ft CW
 
-	xlogin*login.translations: #override\e
-		Ctrl<Key>R: abort-display()\en\e
-		<Key>F1: set-session-argument(failsafe) finish-field()\en\e
-		<Key>Return: set-session-argument() finish-field()
-	xlogin*borderWidth: 3
-	xlogin*greeting: CLIENTHOST
-\&	#ifdef COLOR
-	xlogin*greetColor: CadetBlue
-	xlogin*failColor: red
-\&	#endif
+        xlogin*login.translations: #override\e
+                Ctrl<Key>R: abort-display()\en\e
+                <Key>F1: set-session-argument(failsafe) finish-field()\en\e
+                <Key>Return: set-session-argument() finish-field()
+        xlogin*borderWidth: 3
+        xlogin*greeting: CLIENTHOST
+\&      #ifdef COLOR
+        xlogin*greetColor: CadetBlue
+        xlogin*failColor: red
+\&      #endif
 
+.ft
 .fi
 .PP
 Please note the translations entry; it specifies
@@ -903,14 +900,13 @@ windows that should appear on the screen along with the Login widget.
 .PP
 In addition to any specified by \fBDisplayManager.exportList\fP,
 the following environment variables are passed:
-.nf
-.ta .5i 2i
-
-	DISPLAY	the associated display name
-	PATH	the value of \fBDisplayManager.\fP\fIDISPLAY\fP\fB.systemPath\fP
-	SHELL	the value of \fBDisplayManager.\fP\fIDISPLAY\fP\fB.systemShell\fP
-	XAUTHORITY	may be set to an authority file
-.fi
+.TS
+l l.
+DISPLAY	the associated display name
+PATH	the value of \fBDisplayManager.\fP\fIDISPLAY\fP\fB.systemPath\fP
+SHELL	the value of \fBDisplayManager.\fP\fIDISPLAY\fP\fB.systemShell\fP
+XAUTHORITY	may be set to an authority file
+.TE
 .PP
 Note that since \fIxdm\fP grabs the keyboard, any other windows will not be
 able to receive keyboard input.  They will be able to interact with
@@ -923,14 +919,17 @@ can be put into the file named by
 \fBDisplayManager.\fP\fIDISPLAY\fP\fB.resources\fP.
 .PP
 Here is a sample \fIXsetup\fP script:
+.sp
+.RS
 .nf
-
-\&	#!/bin/sh
-\&	# Xsetup_0 \- setup script for one workstation
-	xcmsdb < XDMDIR/monitors/alex.0
-	xconsole\0\-geometry\0480x130\-0\-0\0\-notify\0\-verbose\0\-exitOnFail &
-
+.ft CW
+#!/bin/sh
+# Xsetup_0 \- setup script for one workstation
+xcmsdb < XDMDIR/monitors/alex.0
+xconsole\0\-geometry\0480x130\-0\-0\0\-notify\0\-verbose\0\-exitOnFail &
+.ft
 .fi
+.RE
 .SH "AUTHENTICATION WIDGET"
 The authentication widget prompts the user for the username, password, and/or
 other required authentication data from the keyboard.  Nearly every imaginable
@@ -1073,26 +1072,24 @@ but no text will be drawn.
 This specifies the translations used for the login widget.  Refer to the X
 Toolkit documentation for a complete discussion on translations.  The default
 translation table is:
-.nf
-.ta .5i 2i
-
-	Ctrl<Key>H:	delete-previous-character() \en\e
-	Ctrl<Key>D:	delete-character() \en\e
-	Ctrl<Key>B:	move-backward-character() \en\e
-	Ctrl<Key>F:	move-forward-character() \en\e
-	Ctrl<Key>A:	move-to-begining() \en\e
-	Ctrl<Key>E:	move-to-end() \en\e
-	Ctrl<Key>K:	erase-to-end-of-line() \en\e
-	Ctrl<Key>U:	erase-line() \en\e
-	Ctrl<Key>X:	erase-line() \en\e
-	Ctrl<Key>C:	restart-session() \en\e
-	Ctrl<Key>\\\\:	abort-session() \en\e
-	<Key>BackSpace:	delete-previous-character() \en\e
-	<Key>Delete:	delete-previous-character() \en\e
-	<Key>Return:	finish-field() \en\e
-	<Key>:	insert-char() \e
-
-.fi
+.TS
+l l.
+Ctrl<Key>H:	delete-previous-character()
+Ctrl<Key>D:	delete-character()
+Ctrl<Key>B:	move-backward-character()
+Ctrl<Key>F:	move-forward-character()
+Ctrl<Key>A:	move-to-begining()
+Ctrl<Key>E:	move-to-end()
+Ctrl<Key>K:	erase-to-end-of-line()
+Ctrl<Key>U:	erase-line()
+Ctrl<Key>X:	erase-line()
+Ctrl<Key>C:	restart-session()
+Ctrl<Key>\\\\:	abort-session()
+<Key>BackSpace:	delete-previous-character()
+<Key>Delete:	delete-previous-character()
+<Key>Return:	finish-field()
+<Key>:	insert-char()
+.TE
 .PP
 The actions which are supported by the widget are:
 .IP "delete-previous-character"
@@ -1164,19 +1161,17 @@ allowed.
 .PP
 In addition to any specified by \fBDisplayManager.exportList\fP,
 the following environment variables are passed:
-.nf
-.ta .5i 2i
-
-	DISPLAY	the associated display name
-	HOME	the initial working directory of the user
-	LOGNAME	the user name
-	USER	the user name
-	PATH	the value of \fBDisplayManager.\fP\fIDISPLAY\fP\fB.systemPath\fP
-	SHELL	the value of \fBDisplayManager.\fP\fIDISPLAY\fP\fB.systemShell\fP
-	XAUTHORITY	may be set to an authority file
-	WINDOWPATH	may be set to the "window path" leading to the X server
-
-.fi
+.TS
+l l.
+DISPLAY	the associated display name
+HOME	the initial working directory of the user
+LOGNAME	the user name
+USER	the user name
+PATH	the value of \fBDisplayManager.\fP\fIDISPLAY\fP\fB.systemPath\fP
+SHELL	the value of \fBDisplayManager.\fP\fIDISPLAY\fP\fB.systemShell\fP
+XAUTHORITY	may be set to an authority file
+WINDOWPATH	may be set to the "window path" leading to the X server
+.TE
 .PP
 No arguments are passed to the script.
 .I Xdm
@@ -1193,23 +1188,26 @@ Thus this is not a complete example, but
 simply a demonstration of the available functionality.
 .PP
 Here is a sample \fIXstartup\fP script:
+.sp
+.RS
 .nf
-.ta .5i 1i
-
-\&	#!/bin/sh
-\&	#
-\&	# Xstartup
-\&	#
-\&	# This program is run as root after the user is verified
-\&	#
-	if [ \-f /etc/nologin ]; then
-		xmessage\0\-file /etc/nologin\0\-timeout 30\0\-center
-		exit 1
-	fi
-	sessreg\0\-a\0\-l $DISPLAY\0\-x XDMDIR/Xservers $LOGNAME
-	XDMDIR/GiveConsole
-	exit 0
+.ft CW
+#!/bin/sh
+#
+# Xstartup
+#
+# This program is run as root after the user is verified
+#
+if [ \-f /etc/nologin ]; then
+	xmessage\0\-file /etc/nologin\0\-timeout 30\0\-center
+	exit 1
+fi
+sessreg\0\-a\0\-l $DISPLAY\0\-x XDMDIR/Xservers $LOGNAME
+XDMDIR/GiveConsole
+exit 0
+.ft
 .fi
+.RE
 .SH "SESSION PROGRAM"
 .PP
 The \fIXsession\fP program is the command which is run as the user's session.
@@ -1218,20 +1216,18 @@ the permissions of the authorized user.
 .PP
 In addition to any specified by \fBDisplayManager.exportList\fP,
 the following environment variables are passed:
-.nf
-.ta .5i 2i
-
-	DISPLAY	the associated display name
-	HOME	the initial working directory of the user
-	LOGNAME	the user name
-	USER	the user name
-	PATH	the value of \fBDisplayManager.\fP\fIDISPLAY\fP\fB.userPath\fP
-	SHELL	the user's default shell (from \fIgetpwnam\fP)
-	XAUTHORITY	may be set to a non-standard authority file
-	KRB5CCNAME	may be set to a Kerberos credentials cache name
-	WINDOWPATH	may be set to the "window path" leading to the X server
-
-.fi
+.TS
+l l.
+DISPLAY	the associated display name
+HOME	the initial working directory of the user
+LOGNAME	the user name
+USER	the user name
+PATH	the value of \fBDisplayManager.\fP\fIDISPLAY\fP\fB.userPath\fP
+SHELL	the user's default shell (from \fIgetpwnam\fP)
+XAUTHORITY	may be set to a non-standard authority file
+KRB5CCNAME	may be set to a Kerberos credentials cache name
+WINDOWPATH	may be set to the "window path" leading to the X server
+.TE
 .PP
 At most installations, \fIXsession\fP should look in $HOME for
 a file \fI\.xsession,\fP
@@ -1254,52 +1250,58 @@ the special
 in the \fIXresources\fP file, to provide an escape
 from the ordinary session.  It also requires that the .xsession file
 be executable so we don't have to guess what shell it wants to use.
+.sp
+.RS
 .nf
-.ta .5i 1i 1.5i
+.ft CW
+#!/bin/sh
+#
+# Xsession
+#
+# This is the program that is run as the client
+# for the display manager.
 
-\&	#!/bin/sh
-\&	#
-\&	# Xsession
-\&	#
-\&	# This is the program that is run as the client
-\&	# for the display manager.
-
-	case $# in
-	1)
-		case $1 in
-		failsafe)
-			exec xterm \-geometry 80x24\-0\-0
-			;;
-		esac
+case $# in
+1)
+	case $1 in
+	failsafe)
+		exec xterm \-geometry 80x24\-0\-0
+		;;
 	esac
+esac
 
-	startup=$HOME/.xsession
-	resources=$HOME/.Xresources
+startup=$HOME/.xsession
+resources=$HOME/.Xresources
 
-	if [ \-f "$startup" ]; then
-		exec "$startup"
-	else
-		if [ \-f "$resources" ]; then
-			xrdb \-load "$resources"
-		fi
-		twm &
-		xman \-geometry +10\-10 &
-		exec xterm \-geometry 80x24+10+10 \-ls
+if [ \-f "$startup" ]; then
+	exec "$startup"
+else
+	if [ \-f "$resources" ]; then
+		xrdb \-load "$resources"
 	fi
-
+	twm &
+	xman \-geometry +10\-10 &
+	exec xterm \-geometry 80x24+10+10 \-ls
+fi
+.ft
 .fi
+.RE
 .PP
 The user's \fI.xsession\fP file might look something like this
 example.  Don't forget that the file must have execute permission.
+.sp
+.RS
 .nf
-\&	#! /bin/csh
-\&	# no \-f in the previous line so .cshrc gets run to set $PATH
-	twm &
-	xrdb \-merge "$HOME/.Xresources"
-	emacs \-geometry +0+50 &
-	xbiff \-geometry \-430+5 &
-	xterm \-geometry \-0+50 -ls
+.ft CW
+\&      #! /bin/csh
+\&      # no \-f in the previous line so .cshrc gets run to set $PATH
+        twm &
+        xrdb \-merge "$HOME/.Xresources"
+        emacs \-geometry +0+50 &
+        xbiff \-geometry \-430+5 &
+        xterm \-geometry \-0+50 -ls
 .fi
+.RE
 .SH "RESET PROGRAM"
 .PP
 Symmetrical with \fIXstartup\fP,
@@ -1312,18 +1314,20 @@ variables that were passed to \fIXstartup\fP are also
 passed to \fIXreset\fP.
 .PP
 A sample \fIXreset\fP script:
+.sp
+.RS
 .nf
-.ta .5i 1i
-\&	#!/bin/sh
-\&	#
-\&	# Xreset
-\&	#
-\&	# This program is run as root after the session ends
-\&	#
-	sessreg\0\-d\0\-l $DISPLAY\0\-x XDMDIR/Xservers $LOGNAME
-	XDMDIR/TakeConsole
-	exit 0
+#!/bin/sh
+#
+# Xreset
+#
+# This program is run as root after the session ends
+#
+sessreg\0\-d\0\-l $DISPLAY\0\-x XDMDIR/Xservers $LOGNAME
+XDMDIR/TakeConsole
+exit 0
 .fi
+.RE
 .SH "CONTROLLING THE SERVER"
 .I Xdm
 controls local servers using POSIX signals.  SIGHUP is expected to reset the
@@ -1391,22 +1395,16 @@ to run a single session at a time, using the 4.3 \fIinit\fP
 options or other suitable daemon by specifying the server on the command
 line:
 .nf
-.ta .5i
-
-	xdm \-server \(lq:0 SUN-3/60CG4 local BINDIR/X :0\(rq
-
+xdm \-server \(lq:0 SUN-3/60CG4 local BINDIR/X :0\(rq
 .fi
 .PP
 Or, you might have a file server and a collection of X terminals.  The
 configuration for this is identical to the sample above,
 except the \fIXservers\fP file would look like
 .nf
-.ta .5i
-
-	extol:0 VISUAL-19 foreign
-	exalt:0 NCD-19 foreign
-	explode:0 NCR-TOWERVIEW3000 foreign
-
+extol:0 VISUAL-19 foreign
+exalt:0 NCD-19 foreign
+explode:0 NCR-TOWERVIEW3000 foreign
 .fi
 .PP
 This directs
@@ -1456,7 +1454,7 @@ Kerberos credentials cache
 .IR sessreg (__appmansuffix__),
 .IR Xserver (__appmansuffix__),
 .\" .IR chooser (__appmansuffix__), \" except that there isn't a manual for it yet
-.IR xdmshell (__appmansuffix__),
+.IR xdmshell (__adminmansuffix__),
 .IR fonts.conf (__filemansuffix__).
 .br
 .I "X Display Manager Control Protocol"
