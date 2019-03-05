@@ -59,16 +59,13 @@ from the copyright holder.
 #include "dm_error.h"
 
 #ifdef XDMCP
-# ifndef STREAMSCONN
 
-#  include <errno.h>
-#  include "dm_socket.h"
+# include <errno.h>
+# include "dm_socket.h"
 
-#  ifndef X_NO_SYS_UN
-#   include <sys/un.h>
-#  endif
-#  include <netdb.h>
-#  include <arpa/inet.h>
+# include <sys/un.h>
+# include <netdb.h>
+# include <arpa/inet.h>
 
 extern int	chooserFd;
 
@@ -84,10 +81,10 @@ CreateWellKnownSockets (void)
     if (request_port == 0)
 	return;
 
-#  if defined(IPv6) && defined(AF_INET6)
+# if defined(IPv6) && defined(AF_INET6)
     chooserFd = socket (AF_INET6, SOCK_STREAM, 0);
     if (chooserFd == -1)
-#  endif
+# endif
     chooserFd = socket (AF_INET, SOCK_STREAM, 0);
     Debug ("Created chooser socket %d\n", chooserFd);
     if (chooserFd == -1)
@@ -106,11 +103,11 @@ GetChooserAddr (
     char	*addr,
     int		*lenp)
 {
-#  if defined(IPv6) && defined(AF_INET6)
+# if defined(IPv6) && defined(AF_INET6)
     struct sockaddr_storage in_addr;
-#  else
+# else
     struct sockaddr_in	in_addr;
-#  endif
+# endif
     int			len;
     int			retval = 0;
 
@@ -119,12 +116,12 @@ GetChooserAddr (
 	return -1;	/* TODO check other listening sockets */
     if (getsockname (chooserFd, (struct sockaddr *)&in_addr, (void *)&len) < 0)
 	return -1;
-#  if defined(IPv6) && defined(AF_INET6)
+# if defined(IPv6) && defined(AF_INET6)
     if (((struct sockaddr *)&in_addr)->sa_family == AF_INET6)
 	Debug ("Chooser socket port: %d (IPv6)\n",
 	  ntohs(((struct sockaddr_in6 *) &in_addr)->sin6_port));
     else
-#  endif
+# endif
 	Debug ("Chooser socket port: %d\n",
 	  ntohs(((struct sockaddr_in *) &in_addr)->sin_port));
     if (*lenp < len)
@@ -141,15 +138,15 @@ CreateListeningSocket (struct sockaddr *sock_addr, int salen)
 {
     int fd;
     const char *addrstring = "unknown";
-#  if defined(IPv6) && defined(AF_INET6)
+# if defined(IPv6) && defined(AF_INET6)
     char addrbuf[INET6_ADDRSTRLEN];
-#  endif
+# endif
 
     if (request_port == 0)
 	    return -1;
 
     if (debugLevel > 0) {
-#  if defined(IPv6) && defined(AF_INET6)
+# if defined(IPv6) && defined(AF_INET6)
 	void *ipaddr;
 	if (sock_addr->sa_family == AF_INET6) {
 	    ipaddr = & ((struct sockaddr_in6 *) sock_addr)->sin6_addr;
@@ -159,9 +156,9 @@ CreateListeningSocket (struct sockaddr *sock_addr, int salen)
 	addrstring =
 	  inet_ntop(sock_addr->sa_family, ipaddr, addrbuf, sizeof(addrbuf));
 
-#  else
+# else
 	addrstring = inet_ntoa(((struct sockaddr_in *) sock_addr)->sin_addr);
-#  endif
+# endif
 
 	Debug ("creating socket to listen on port %d of address %s\n",
 	  request_port,addrstring);
@@ -175,7 +172,7 @@ CreateListeningSocket (struct sockaddr *sock_addr, int salen)
     }
     RegisterCloseOnFork (fd);
 
-#  if defined(IPv6) && defined(IPV6_V6ONLY)
+# if defined(IPv6) && defined(IPV6_V6ONLY)
     if (sock_addr->sa_family == AF_INET6) {
 	int zero = 0;
 	if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &zero, sizeof(zero)) < 0) {
@@ -183,7 +180,7 @@ CreateListeningSocket (struct sockaddr *sock_addr, int salen)
 	              _SysErrorMsg (errno));
 	}
     }
-#  endif
+# endif
 
     if (bind (fd, sock_addr, salen) == -1)
     {
@@ -249,12 +246,12 @@ FindInList(struct socklist *list, ARRAY8Ptr addr)
 		addrdata = (char *)
 		  &(((struct sockaddr_in *)s->addr)->sin_addr.s_addr);
 		break;
-#  if defined(IPv6) && defined(AF_INET6)
+# if defined(IPv6) && defined(AF_INET6)
 	    case AF_INET6:
 		addrdata = (char *)
 		  &(((struct sockaddr_in6 *)s->addr)->sin6_addr.s6_addr);
 		break;
-#  endif
+# endif
 	    default:
 		/* Unrecognized address family */
 		continue;
@@ -290,16 +287,16 @@ CreateSocklistEntry(ARRAY8Ptr addr)
 	s->addr = (struct sockaddr *) sin;
 
 	bzero (sin, sizeof (struct sockaddr_in));
-#  ifdef BSD44SOCKETS
+# ifdef BSD44SOCKETS
 	sin->sin_len = sizeof(struct sockaddr_in);
-#  endif
+# endif
 	s->salen = sizeof(struct sockaddr_in);
 	s->addrlen = sizeof(struct in_addr);
 	sin->sin_family = AF_INET;
 	sin->sin_port = htons ((short) request_port);
 	memcpy(&sin->sin_addr, addr->data, addr->length);
     }
-#  if defined(IPv6) && defined(AF_INET6)
+# if defined(IPv6) && defined(AF_INET6)
     else if (addr->length == 16) /* IPv6 */
     {
 	struct sockaddr_in6 *sin6;
@@ -312,16 +309,16 @@ CreateSocklistEntry(ARRAY8Ptr addr)
 	s->addr = (struct sockaddr *) sin6;
 
 	bzero (sin6, sizeof (struct sockaddr_in6));
-#   ifdef SIN6_LEN
+#  ifdef SIN6_LEN
 	sin6->sin6_len = sizeof(struct sockaddr_in6);
-#   endif
+#  endif
 	s->salen = sizeof(struct sockaddr_in6);
 	s->addrlen = sizeof(struct in6_addr);
 	sin6->sin6_family = AF_INET6;
 	sin6->sin6_port = htons ((short) request_port);
 	memcpy(&sin6->sin6_addr, addr->data, addr->length);
     }
-#  endif
+# endif
     else {
 	/* Unknown address type */
 	free(s);
@@ -340,13 +337,13 @@ UpdateListener(ARRAY8Ptr addr, void **closure)
     if (addr == NULL || addr->length == 0) {
 	ARRAY8 tmpaddr;
 	struct in_addr in;
-#  if defined(IPv6) && defined(AF_INET6)
+# if defined(IPv6) && defined(AF_INET6)
 	struct in6_addr in6 = in6addr_any;
 	tmpaddr.length = sizeof(in6);
 	tmpaddr.data = (CARD8Ptr) &in6;
 	UpdateListener(&tmpaddr, closure);
 	if (*closure) return;
-#  endif
+# endif
 	in.s_addr = htonl (INADDR_ANY);
 	tmpaddr.length = sizeof(in);
 	tmpaddr.data = (CARD8Ptr) &in;
@@ -379,8 +376,8 @@ UpdateListener(ARRAY8Ptr addr, void **closure)
     *closure = (void *) s;
 }
 
-#  define JOIN_MCAST_GROUP 0
-#  define LEAVE_MCAST_GROUP 1
+# define JOIN_MCAST_GROUP 0
+# define LEAVE_MCAST_GROUP 1
 
 static void
 ChangeMcastMembership(struct socklist *s, struct socklist *g, int op)
@@ -416,13 +413,13 @@ ChangeMcastMembership(struct socklist *s, struct socklist *g, int op)
 	    }
 	    return;
 	}
-#  if defined(IPv6) && defined(AF_INET6)
-#   ifndef IPV6_JOIN_GROUP
-#    define IPV6_JOIN_GROUP IPV6_ADD_MEMBERSHIP
-#   endif
-#   ifndef IPV6_LEAVE_GROUP
-#    define IPV6_LEAVE_GROUP IPV6_DROP_MEMBERSHIP
-#   endif
+# if defined(IPv6) && defined(AF_INET6)
+#  ifndef IPV6_JOIN_GROUP
+#   define IPV6_JOIN_GROUP IPV6_ADD_MEMBERSHIP
+#  endif
+#  ifndef IPV6_LEAVE_GROUP
+#   define IPV6_LEAVE_GROUP IPV6_DROP_MEMBERSHIP
+#  endif
 	case AF_INET6:
 	{
 	    struct ipv6_mreq mreq6;
@@ -459,7 +456,7 @@ ChangeMcastMembership(struct socklist *s, struct socklist *g, int op)
 	    }
 	    return;
 	}
-#  endif
+# endif
     }
 }
 
@@ -553,5 +550,4 @@ void ProcessListenSockets (fd_set *readmask)
     }
 }
 
-# endif /* !STREAMSCONN */
 #endif /* XDMCP */

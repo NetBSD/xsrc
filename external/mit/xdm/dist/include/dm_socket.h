@@ -42,4 +42,8 @@ authorization.
 /* ugly, but we need this after socket.h */
 extern ARRAY8Ptr Accept (struct sockaddr *from, int fromlen, CARD16 displayNumber);
 
+# ifdef DEBUG
+extern void PrintSockAddr (struct sockaddr *a, int len);
+#endif
+
 #endif /* _DM_SOCKET_H_ */

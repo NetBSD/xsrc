@@ -80,10 +80,6 @@ in this Software without prior written authorization from The Open Group.
 #endif
 #if defined(SYSV) && defined(i386)
 # include    <sys/stream.h>
-# ifdef ISC
-#  include    <sys/sioctl.h>
-#  include    <sys/stropts.h>
-# endif
 #endif
 
 #include    "dm_socket.h"
@@ -91,18 +87,9 @@ in this Software without prior written authorization from The Open Group.
 #include    <arpa/inet.h>
 
 #include    <sys/ioctl.h>
-#ifdef STREAMSCONN
-# ifdef WINTCP /* NCR with Wollongong TCP */
-#  include    <netinet/ip.h>
-# endif
-# include    <stropts.h>
-# include    <tiuser.h>
-# include    <netconfig.h>
-# include    <netdir.h>
-#endif
 
 #ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
+# include <sys/param.h>
 # ifdef BSD
 #  if (BSD >= 199103)
 #   define VARIABLE_IFREQ
@@ -206,7 +193,7 @@ static int  pingTry;
 static XdmcpBuffer	directBuffer, broadcastBuffer;
 static XdmcpBuffer	buffer;
 
-#if ((defined(SVR4) && !defined(sun) && !defined(__sgi) && !defined(NCR)) || defined(ISC)) && defined(SIOCGIFCONF)
+#if (defined(SVR4) && !defined(sun) && !defined(__sgi) && !defined(NCR)) && defined(SIOCGIFCONF)
 
 /* Deal with different SIOCGIFCONF ioctl semantics on these OSs */
 
@@ -223,17 +210,6 @@ ifioctl (int fd, int cmd, char *arg)
     {
 	ioc.ic_len = ((struct ifconf *) arg)->ifc_len;
 	ioc.ic_dp = ((struct ifconf *) arg)->ifc_buf;
-# ifdef ISC
-	/* SIOCGIFCONF is somewhat brain damaged on ISC. The argument
-	 * buffer must contain the ifconf structure as header. Ifc_req
-	 * is also not a pointer but a one element array of ifreq
-	 * structures. On return this array is extended by enough
-	 * ifreq fields to hold all interfaces. The return buffer length
-	 * is placed in the buffer header.
-	 */
-        ((struct ifconf *) ioc.ic_dp)->ifc_len =
-                                         ioc.ic_len - sizeof(struct ifconf);
-# endif
     }
     else
     {
@@ -242,22 +218,12 @@ ifioctl (int fd, int cmd, char *arg)
     }
     ret = ioctl(fd, I_STR, (char *) &ioc);
     if (ret >= 0 && cmd == SIOCGIFCONF)
-# ifdef SVR4
 	((struct ifconf *) arg)->ifc_len = ioc.ic_len;
-# endif
-# ifdef ISC
-    {
-	((struct ifconf *) arg)->ifc_len =
-				 ((struct ifconf *)ioc.ic_dp)->ifc_len;
-	((struct ifconf *) arg)->ifc_buf =
-			(caddr_t)((struct ifconf *)ioc.ic_dp)->ifc_req;
-    }
-# endif
     return(ret);
 }
-#else /* ((SVR4 && !sun && !NCR) || ISC) && SIOCGIFCONF */
+#else /* (SVR4 && !sun && !NCR) && SIOCGIFCONF */
 # define ifioctl ioctl
-#endif /* ((SVR4 && !sun) || ISC) && SIOCGIFCONF */
+#endif /* (SVR4 && !sun && !NCR) && SIOCGIFCONF */
 
 
 /* ARGSUSED */
@@ -440,28 +406,6 @@ DisposeHostname (HostName *host)
     free (host);
 }
 
-#if 0
-static void
-RemoveHostname (HostName *host)
-{
-    HostName	**prev, *hosts;
-
-    prev = &hostNamedb;;
-    for (hosts = hostNamedb; hosts; hosts = hosts->next)
-    {
-	if (hosts == host)
-	    break;
-	prev = &hosts->next;
-    }
-    if (!hosts)
-	return;
-    *prev = host->next;
-    DisposeHostname (host);
-    NameTableSize--;
-    RebuildTable (NameTableSize);
-}
-#endif
-
 static void
 EmptyHostnames (void)
 {
@@ -593,57 +537,16 @@ RegisterHostname (char *name)
 
     if (!strcmp (name, BROADCAST_HOSTNAME))
     {
-#ifdef WINTCP /* NCR with Wollongong TCP */
-    int                 ipfd;
-    struct ifconf       *ifcp;
-    struct strioctl     ioc;
-    int			n;
-
-	ifcp = (struct ifconf *)buf;
-	ifcp->ifc_buf = buf+4;
-	ifcp->ifc_len = sizeof (buf) - 4;
-
-	if ((ipfd=open( "/dev/ip", O_RDONLY )) < 0 )
-	    {
-	    t_error( "RegisterHostname() t_open(/dev/ip) failed" );
-	    return;
-	    }
-
-	ioc.ic_cmd = IPIOC_GETIFCONF;
-	ioc.ic_timout = 60;
-	ioc.ic_len = sizeof( buf );
-	ioc.ic_dp = (char *)ifcp;
-
-	if (ioctl (ipfd, (int) I_STR, (char *) &ioc) < 0)
-	    {
-	    perror( "RegisterHostname() ioctl(I_STR(IPIOC_GETIFCONF)) failed" );
-	    close( ipfd );
-	    return;
-	    }
-
-	for (ifr = ifcp->ifc_req, n = ifcp->ifc_len / sizeof (struct ifreq);
-	    --n >= 0;
-	    ifr++)
-#else /* WINTCP */
 	ifc.ifc_len = sizeof (buf);
 	ifc.ifc_buf = buf;
 	if (ifioctl (socketFD, (int) SIOCGIFCONF, (char *) &ifc) < 0)
 	    return;
 
-# ifdef ISC
-#  define IFC_IFC_REQ (struct ifreq *) ifc.ifc_buf
-# else
-#  define IFC_IFC_REQ ifc.ifc_req
-# endif
+	cplim = (char *) ifc.ifc_req + ifc.ifc_len;
 
-	cplim = (char *) IFC_IFC_REQ + ifc.ifc_len;
-
-	for (cp = (char *) IFC_IFC_REQ; cp < cplim; cp += ifr_size (ifr))
-#endif /* WINTCP */
+	for (cp = (char *) ifc.ifc_req; cp < cplim; cp += ifr_size (ifr))
 	{
-#ifndef WINTCP
 	    ifr = (struct ifreq *) cp;
-#endif
 	    if (ifr->ifr_addr.sa_family != AF_INET)
 		continue;
 
@@ -655,31 +558,13 @@ RegisterHostname (char *name)
 		struct ifreq    broad_req;
 
 		broad_req = *ifr;
-# ifdef WINTCP /* NCR with Wollongong TCP */
-		ioc.ic_cmd = IPIOC_GETIFFLAGS;
-		ioc.ic_timout = 0;
-		ioc.ic_len = sizeof( broad_req );
-		ioc.ic_dp = (char *)&broad_req;
-
-		if (ioctl (ipfd, I_STR, (char *) &ioc) != -1 &&
-# else /* WINTCP */
 		if (ifioctl (socketFD, SIOCGIFFLAGS, (char *) &broad_req) != -1 &&
-# endif /* WINTCP */
 		    (broad_req.ifr_flags & IFF_BROADCAST) &&
 		    (broad_req.ifr_flags & IFF_UP)
 		    )
 		{
 		    broad_req = *ifr;
-# ifdef WINTCP /* NCR with Wollongong TCP */
-		    ioc.ic_cmd = IPIOC_GETIFBRDADDR;
-		    ioc.ic_timout = 0;
-		    ioc.ic_len = sizeof( broad_req );
-		    ioc.ic_dp = (char *)&broad_req;
-
-		    if (ioctl (ipfd, I_STR, (char *) &ioc) != -1)
-# else /* WINTCP */
 		    if (ifioctl (socketFD, SIOCGIFBRDADDR, &broad_req) != -1)
-# endif /* WINTCP */
 			broad_addr = broad_req.ifr_addr;
 		    else
 			continue;
@@ -767,21 +652,6 @@ RegisterHostname (char *name)
 
 static ARRAYofARRAY8	AuthenticationNames;
 
-#if 0
-static void
-RegisterAuthenticationName (char *name, int namelen)
-{
-    ARRAY8Ptr	authName;
-    if (!XdmcpReallocARRAYofARRAY8 (&AuthenticationNames,
-				    AuthenticationNames.length + 1))
-	return;
-    authName = &AuthenticationNames.data[AuthenticationNames.length-1];
-    if (!XdmcpAllocARRAY8 (authName, namelen))
-	return;
-    memmove( authName->data, name, namelen);
-}
-#endif
-
 static int
 InitXDMCP (char **argv)
 {
@@ -804,53 +674,15 @@ InitXDMCP (char **argv)
 	header.length += 2 + AuthenticationNames.data[i].length;
     XdmcpWriteHeader (&directBuffer, &header);
     XdmcpWriteARRAYofARRAY8 (&directBuffer, &AuthenticationNames);
-#if defined(STREAMSCONN)
-    if ((socketFD = t_open ("/dev/udp", O_RDWR, 0)) < 0)
-	return 0;
-
-    if (t_bind( socketFD, NULL, NULL ) < 0)
-	{
-	t_close(socketFD);
-	return 0;
-	}
-
-    /*
-     * This part of the code looks contrived. It will actually fit in nicely
-     * when the CLTS part of Xtrans is implemented.
-     */
-    {
-    struct netconfig *nconf;
-
-    if( (nconf=getnetconfigent("udp")) == NULL )
-	{
-	t_unbind(socketFD);
-	t_close(socketFD);
-	return 0;
-	}
-
-    if( netdir_options(nconf, ND_SET_BROADCAST, socketFD, NULL) )
-	{
-	freenetconfigent(nconf);
-	t_unbind(socketFD);
-	t_close(socketFD);
-	return 0;
-	}
-
-    freenetconfigent(nconf);
-    }
-#else
     if ((socketFD = socket (AF_INET, SOCK_DGRAM, 0)) < 0)
 	return 0;
-# if defined(IPv6) && defined(AF_INET6)
+#if defined(IPv6) && defined(AF_INET6)
     socket6FD = socket (AF_INET6, SOCK_DGRAM, 0);
-# endif
 #endif
-#ifndef STREAMSCONN
-# ifdef SO_BROADCAST
+#ifdef SO_BROADCAST
     soopts = 1;
     if (setsockopt (socketFD, SOL_SOCKET, SO_BROADCAST, (char *)&soopts, sizeof (soopts)) < 0)
 	perror ("setsockopt");
-# endif
 #endif
 
     XtAddInput (socketFD, (XtPointer) XtInputReadMask, ReceivePacket,
@@ -886,9 +718,6 @@ Choose (HostName *h)
 	char		buf[1024];
 	XdmcpBuffer	buffer;
 	char		*xdm;
-#if defined(STREAMSCONN)
-        struct  t_call  call, rcv;
-#endif
 
 	xdm = (char *) app_resources.xdmAddress->data;
 	family = (xdm[0] << 8) + xdm[1];
@@ -917,36 +746,6 @@ Choose (HostName *h)
 	    break;
 #endif
 	}
-#if defined(STREAMSCONN)
-	if ((fd = t_open ("/dev/tcp", O_RDWR, NULL)) == -1)
-	{
-	    fprintf (stderr, "Cannot create response endpoint\n");
-	    fflush(stderr);
-	    exit (REMANAGE_DISPLAY);
-	}
-	if (t_bind (fd, NULL, NULL) == -1)
-	{
-	    fprintf (stderr, "Cannot bind response endpoint\n");
-	    fflush(stderr);
-	    t_close (fd);
-	    exit (REMANAGE_DISPLAY);
-	}
-	call.addr.buf=(char *)addr;
-	call.addr.len=len;
-	call.addr.maxlen=len;
-	call.opt.len=0;
-	call.opt.maxlen=0;
-	call.udata.len=0;
-	call.udata.maxlen=0;
-	if (t_connect (fd, &call, NULL) == -1)
-	{
-	    t_error ("Cannot connect to xdm\n");
-	    fflush(stderr);
-	    t_unbind (fd);
-	    t_close (fd);
-	    exit (REMANAGE_DISPLAY);
-	}
-#else
 	if ((fd = socket (family, SOCK_STREAM, 0)) == -1)
 	{
 	    fprintf (stderr, "Cannot create response socket\n");
@@ -957,7 +756,6 @@ Choose (HostName *h)
 	    fprintf (stderr, "Cannot connect to xdm\n");
 	    exit (REMANAGE_DISPLAY);
 	}
-#endif
 	buffer.data = (BYTE *) buf;
 	buffer.size = sizeof (buf);
 	buffer.pointer = 0;
@@ -965,24 +763,8 @@ Choose (HostName *h)
 	XdmcpWriteARRAY8 (&buffer, app_resources.clientAddress);
 	XdmcpWriteCARD16 (&buffer, (CARD16) app_resources.connectionType);
 	XdmcpWriteARRAY8 (&buffer, &h->hostaddr);
-#if defined(STREAMSCONN)
-	if( t_snd (fd, (char *)buffer.data, buffer.pointer, 0) < 0 )
-	{
-	    fprintf (stderr, "Cannot send to xdm\n");
-	    fflush(stderr);
-	    t_unbind (fd);
-	    t_close (fd);
-	    exit (REMANAGE_DISPLAY);
-	}
-	sleep(5);	/* Hack because sometimes the connection gets
-			   closed before the data arrives on the other end. */
-	t_snddis (fd,NULL);
-	t_unbind (fd);
-	t_close (fd);
-#else
 	write (fd, (char *)buffer.data, buffer.pointer);
 	close (fd);
-#endif
     }
     else
     {
@@ -1238,6 +1020,7 @@ DoCheckWilling (Widget w, XEvent *event, String *params, Cardinal *num_params)
 }
 
 /* ARGSUSED */
+_X_NORETURN
 static void
 DoCancel (Widget w, XEvent *event, String *params, Cardinal *num_params)
 {

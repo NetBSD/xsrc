@@ -76,7 +76,8 @@ killWindows (Display *dpy, Window window)
 static Jmp_buf	resetJmp;
 
 /* ARGSUSED */
-static SIGVAL
+_X_NORETURN
+static void
 abortReset (int n)
 {
 	Longjmp (resetJmp, 1);

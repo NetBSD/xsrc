@@ -121,11 +121,10 @@ typedef struct _displayEntry {
 
 static DisplayEntry	*database;
 
-static ARRAY8		localAddress;
-
 ARRAY8Ptr
 getLocalAddress (void)
 {
+    static ARRAY8   localAddress;
     static int	haveLocalAddress;
 
     if (!haveLocalAddress)
@@ -134,22 +133,29 @@ getLocalAddress (void)
 	struct addrinfo *ai;
 
 	if (getaddrinfo(localHostname(), NULL, NULL, &ai) != 0) {
-	    XdmcpAllocARRAY8 (&localAddress, 4);
-	    localAddress.data[0] = 127;
-	    localAddress.data[1] = 0;
-	    localAddress.data[2] = 0;
-	    localAddress.data[3] = 1;
+	    if (XdmcpAllocARRAY8 (&localAddress, 4)) {
+		localAddress.data[0] = 127;
+		localAddress.data[1] = 0;
+		localAddress.data[2] = 0;
+		localAddress.data[3] = 1;
+		haveLocalAddress = 1;
+	    }
 	} else {
 	    if (ai->ai_addr->sa_family == AF_INET) {
-		XdmcpAllocARRAY8 (&localAddress, sizeof(struct in_addr));
-		memcpy(localAddress.data,
-		  &((struct sockaddr_in *)ai->ai_addr)->sin_addr,
-		  sizeof(struct in_addr));
+		if (XdmcpAllocARRAY8 (&localAddress, sizeof(struct in_addr))) {
+		    memcpy(localAddress.data,
+			   &((struct sockaddr_in *)ai->ai_addr)->sin_addr,
+			   sizeof(struct in_addr));
+		    haveLocalAddress = 1;
+		}
 	    } else if (ai->ai_addr->sa_family == AF_INET6) {
-		XdmcpAllocARRAY8 (&localAddress, sizeof(struct in6_addr));
-		memcpy(localAddress.data,
-		  &((struct sockaddr_in6 *)ai->ai_addr)->sin6_addr,
-		  sizeof(struct in6_addr));
+		if (XdmcpAllocARRAY8 (&localAddress, sizeof(struct in6_addr)))
+		{
+		    memcpy(localAddress.data,
+			   &((struct sockaddr_in6 *)ai->ai_addr)->sin6_addr,
+			   sizeof(struct in6_addr));
+		    haveLocalAddress = 1;
+		}
 	    }
 	    freeaddrinfo(ai);
 	}
@@ -158,15 +164,19 @@ getLocalAddress (void)
 
 	hostent = gethostbyname (localHostname());
 	if (hostent != NULL) {
-	    XdmcpAllocARRAY8 (&localAddress, hostent->h_length);
-	    memmove(localAddress.data, hostent->h_addr, hostent->h_length);
+	    if (XdmcpAllocARRAY8 (&localAddress, hostent->h_length)) {
+		memmove(localAddress.data, hostent->h_addr, hostent->h_length);
+		haveLocalAddress = 1;
+	    }
 	} else {
 	    /* Assume 127.0.0.1 */
-	    XdmcpAllocARRAY8 (&localAddress, 4);
-	    localAddress.data[0] = 127;
-	    localAddress.data[1] = 0;
-	    localAddress.data[2] = 0;
-	    localAddress.data[3] = 1;
+	    if (XdmcpAllocARRAY8 (&localAddress, 4)) {
+		localAddress.data[0] = 127;
+		localAddress.data[1] = 0;
+		localAddress.data[2] = 0;
+		localAddress.data[3] = 1;
+		haveLocalAddress = 1;
+	    }
 	}
 # endif
 
@@ -304,6 +314,11 @@ tryagain:
     if (!hostOrAlias)
 	return NULL;
     h = malloc (sizeof (DisplayEntry));
+    if (!h)
+    {
+	LogOutOfMem ("ReadHostEntry: DisplayEntry\n");
+	return NULL;
+    }
     h->hopCount = 1;
     if (*hostOrAlias == ALIAS_CHARACTER)
     {
@@ -423,6 +438,11 @@ tryagain:
     if (!displayOrAlias)
 	return NULL;
     d = malloc (sizeof (DisplayEntry));
+    if (!d)
+    {
+	LogOutOfMem ("ReadDisplayEntry: DisplayEntry\n");
+	return NULL;
+    }
     d->notAllowed = 0;
     d->notBroadcast = 0;
     d->chooser = 0;
@@ -667,7 +687,7 @@ scanHostlist (
 /* Returns non-0 iff string is matched by pattern.  Does case folding.
  */
 static int
-patternMatch (char *string, char *pattern)
+patternMatch (const char *string, char *pattern)
 {
     int	    p, s;
 

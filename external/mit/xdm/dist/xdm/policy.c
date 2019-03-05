@@ -196,9 +196,6 @@ SelectConnectionTypeIndex (
 	  case FamilyInternet6:
 #  endif /* IPv6 */
 # endif /* TCPCONN */
-# if defined(DNETCONN)
-	  case FamilyDECnet:
-# endif /* DNETCONN */
 	    return i;
 	}
     } /* for */

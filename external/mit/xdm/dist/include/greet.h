@@ -65,9 +65,9 @@ struct dlfuncs {
     void (*_DeleteXloginResources)(struct display *d, Display *dpy);
     int (*_source)(char **environ, char *file);
     char **(*_defaultEnv)(void);
-    char **(*_setEnv)(char **e, char *name, char *value);
+    char **(*_setEnv)(char **e, const char *name, const char *value);
     char **(*_putEnv)(const char *string, char **env);
-    char **(*_parseArgs)(char **argv, char *string);
+    char **(*_parseArgs)(char **argv, const char *string);
     void (*_printEnv)(char **e);
     char **(*_systemEnv)(struct display *d, char *user, char *home);
     void (*_LogOutOfMem)(const char * fmt, ...);
@@ -149,9 +149,9 @@ extern	void    (*__xdm_SessionExit)(struct display *d, int status, int removeAut
 extern	void    (*__xdm_DeleteXloginResources)(struct display *d, Display *dpy);
 extern	int     (*__xdm_source)(char **environ, char *file);
 extern	char    **(*__xdm_defaultEnv)(void);
-extern	char    **(*__xdm_setEnv)(char **e, char *name, char *value);
+extern	char    **(*__xdm_setEnv)(char **e, const char *name, const char *value);
 extern	char    **(*__xdm_putEnv)(const char *string, char **env);
-extern	char    **(*__xdm_parseArgs)(char **argv, char *string);
+extern	char    **(*__xdm_parseArgs)(char **argv, const char *string);
 extern	void    (*__xdm_printEnv)(char **e);
 extern	char    **(*__xdm_systemEnv)(struct display *d, char *user, char *home);
 extern	void    (*__xdm_LogOutOfMem)(const char * fmt, ...);

@@ -42,16 +42,18 @@ in this Software without prior written authorization from The Open Group.
 
 # include "dm_socket.h"
 # include <arpa/inet.h>
-
-# ifndef X_NO_SYS_UN
-#  include <sys/un.h>
-# endif
+# include <sys/un.h>
 
 # include <ctype.h>
 # include <errno.h>
 
-# if defined(STREAMSCONN)
-#  include       <tiuser.h>
+
+# ifdef HAVE_SETPROCTITLE
+#  ifdef __linux__
+#   include <bsd/unistd.h>
+#  else
+#   include <unistd.h>
+#  endif
 # endif
 
 # include <time.h>
@@ -128,6 +130,11 @@ RememberIndirectClient (
 	    connectionType == i->connectionType)
 	    return 1;
     i = malloc (sizeof (IndirectUsersRec));
+    if (!i)
+    {
+	LogOutOfMem ("RememberIndirectClient\n");
+	return 0;
+    }
     if (!XdmcpCopyARRAY8 (clientAddress, &i->client))
     {
 	free (i);
@@ -212,6 +219,10 @@ FormatChooserArgument (char *buf, int len)
 # endif
 
 	    port = NetaddrPort((XdmcpNetaddr)addr_buf, &portlen);
+	    if (port == NULL) {
+		LogError ("Cannot get port for chooser socket\n");
+		return 0;
+	    }
 	    result_buf[0] = netfamily >> 8;
 	    result_buf[1] = netfamily & 0xFF;
 	    result_buf[2] = port[0];
@@ -289,25 +300,14 @@ RegisterIndirectChoice (
 {
     ChoicePtr	c;
     int		insert;
-# if 0
-    int		found = 0;
-# endif
 
     Debug ("Got indirect choice back\n");
     for (c = choices; c; c = c->next) {
 	if (XdmcpARRAY8Equal (clientAddress, &c->client) &&
 	    connectionType == c->connectionType) {
-# if 0
-	    found = 1;
-# endif
 	    break;
 	}
     }
-# if 0
-    if (!found)
-	return 0;
-# endif
-
     insert = 0;
     if (!c)
     {
@@ -408,68 +408,18 @@ ProcessChooserSocket (int fd)
     ARRAY8	clientAddress = {0, NULL};
     CARD16	connectionType;
     ARRAY8	choice = {0, NULL};
-# if defined(STREAMSCONN)
-    struct t_call *call;
-    int flags=0;
-# endif
 
     Debug ("Process chooser socket\n");
     len = sizeof (buf);
-# if defined(STREAMSCONN)
-    call = (struct t_call *)t_alloc( fd, T_CALL, T_ALL );
-    if( call == NULL )
-    {
-	t_error( "ProcessChooserSocket: t_alloc failed" );
-	LogError ("Cannot setup to listen on chooser connection\n");
-	return;
-    }
-    if( t_listen( fd, call ) < 0 )
-    {
-	t_error( "ProcessChooserSocket: t_listen failed" );
-	t_free( (char *)call, T_CALL );
-	LogError ("Cannot listen on chooser connection\n");
-	return;
-    }
-    client_fd = t_open ("/dev/tcp", O_RDWR, NULL);
-    if (client_fd == -1)
-    {
-	t_error( "ProcessChooserSocket: t_open failed" );
-	t_free( (char *)call, T_CALL );
-	LogError ("Cannot open new chooser connection\n");
-	return;
-    }
-    if( t_bind( client_fd, NULL, NULL ) < 0 )
-    {
-	t_error( "ProcessChooserSocket: t_bind failed" );
-	t_free( (char *)call, T_CALL );
-	LogError ("Cannot bind new chooser connection\n");
-        t_close (client_fd);
-	return;
-    }
-    if( t_accept (fd, client_fd, call) < 0 )
-    {
-	t_error( "ProcessChooserSocket: t_accept failed" );
-	LogError ("Cannot accept chooser connection\n");
-	t_free( (char *)call, T_CALL );
-        t_unbind (client_fd);
-        t_close (client_fd);
-	return;
-    }
-# else
     client_fd = accept (fd, (struct sockaddr *)buf, (void *)&len);
     if (client_fd == -1)
     {
 	LogError ("Cannot accept chooser connection\n");
 	return;
     }
-# endif
     Debug ("Accepted %d\n", client_fd);
 
-# if defined(STREAMSCONN)
-    len = t_rcv (client_fd, buf, sizeof (buf),&flags);
-# else
     len = read (client_fd, buf, sizeof (buf));
-# endif
     Debug ("Read returns %d\n", len);
     if (len > 0)
     {
@@ -499,13 +449,7 @@ ProcessChooserSocket (int fd)
 	LogError ("Choice response read error: %s\n", _SysErrorMsg(errno));
     }
 
-# if defined(STREAMSCONN)
-    t_unbind (client_fd);
-    t_free( (char *)call, T_CALL );
-    t_close (client_fd);
-# else
     close (client_fd);
-# endif
 }
 
 void
