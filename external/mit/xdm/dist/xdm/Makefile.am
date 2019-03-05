@@ -22,11 +22,11 @@
 bin_PROGRAMS = xdm
 
 AM_CPPFLAGS = -I$(top_srcdir)/include
-AM_CFLAGS = $(CWARNFLAGS) $(XDM_CFLAGS)
+AM_CFLAGS = $(CWARNFLAGS) $(XDM_CFLAGS) $(SYSTEMD_DAEMON_CFLAGS)
 
 # The xdm binary needs to export symbols so that they can be used from
 # libXdmGreet.so loaded through a dlopen call from session.c
-AM_LDFLAGS = $(XDM_LIBS) -export-dynamic
+AM_LDFLAGS = $(XDM_LIBS) $(SYSTEMD_DAEMON_LIBS) -export-dynamic
 
 xdm_SOURCES =		\
         access.c	\
@@ -47,7 +47,6 @@ xdm_SOURCES =		\
         server.c	\
         session.c	\
         socket.c	\
-        streams.c	\
         util.c		\
         xdmcp.c
 

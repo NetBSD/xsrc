@@ -54,9 +54,6 @@ from The Open Group.
 #ifdef __NetBSD__
 # include <sys/param.h>
 #endif
-#ifdef USESECUREWARE
-# include <prot.h>
-#endif
 
 #ifndef sigmask
 # define sigmask(m)  (1 << ((m - 1)))
@@ -90,7 +87,7 @@ from The Open Group.
 extern FILE    *fdopen();
 #endif
 
-static SIGVAL	StopAll (int n), RescanNotify (int n);
+static void	StopAll (int n), RescanNotify (int n);
 static void	RescanServers (void);
 static void	RestartDisplay (struct display *d, int forceReserver);
 static void	ScanServers (void);
@@ -110,7 +107,7 @@ static int TitleLen;
 #endif
 
 #ifndef UNRELIABLE_SIGNALS
-static SIGVAL ChildNotify (int n);
+static void ChildNotify (int n);
 #endif
 
 static long StorePid (void);
@@ -129,12 +126,13 @@ main (int argc, char **argv)
     if (((oldumask = umask(022)) & 002) == 002)
 	(void) umask (oldumask);
 #ifndef NOXDMTITLE
-    Title = argv[0];
-    TitleLen = (argv[argc - 1] + strlen(argv[argc - 1])) - Title;
-#endif
-
-#ifdef USESECUREWARE
-    set_auth_parameters (argc, argv);
+    if (argc > 0) {
+        Title = argv[0];
+        TitleLen = (argv[argc - 1] + strlen(argv[argc - 1])) - Title;
+    } else {
+        Title = NULL;
+        TitleLen = 0;
+    }
 #endif
 
     /*
@@ -168,7 +166,48 @@ main (int argc, char **argv)
 	exit (1);
     }
 
-    LogInfo ("Starting\n");
+    LogInfo ("Starting %s\n", PACKAGE_STRING);
+    if (debugLevel > 0)
+    {
+	Debug("%s was built with these options:\n", PACKAGE_STRING);
+#ifdef USE_PAM
+	Debug(" - USE_PAM = yes\n");
+#else
+	Debug(" - USE_PAM = no\n");
+#endif
+#ifdef USE_SELINUX
+	Debug(" - USE_SELINUX = yes\n");
+#else
+	Debug(" - USE_SELINUX = no\n");
+#endif
+#ifdef USE_SYSTEMD_DAEMON
+	Debug(" - USE_SYSTEMD_DAEMON = yes\n");
+#else
+	Debug(" - USE_SYSTEMD_DAEMON = no\n");
+#endif
+#ifdef USE_XFT
+	Debug(" - USE_XFT = yes\n");
+#else
+	Debug(" - USE_XFT = no\n");
+#endif
+#ifdef USE_XINERAMA
+	Debug(" - USE_XINERAMA = yes\n");
+#else
+	Debug(" - USE_XINERAMA = no\n");
+#endif
+#ifdef XPM
+	Debug(" - XPM = yes\n");
+#else
+	Debug(" - XPM = no\n");
+#endif
+#ifdef HAVE_ARC4RANDOM
+	Debug(" - Random number source: arc4random()\n\n");
+#elif defined(DEV_RANDOM)
+	Debug(" - Random number source: %s\n", DEV_RANDOM);
+#else
+	Debug(" - Random number source: built-in PRNG\n\n");
+#endif
+    }
 
     if (atexit (RemovePid))
 	LogError ("could not register RemovePid() with atexit()\n");
@@ -237,7 +276,7 @@ main (int argc, char **argv)
 }
 
 /* ARGSUSED */
-static SIGVAL
+static void
 RescanNotify (int n)
 {
     int olderrno = errno;
@@ -254,7 +293,6 @@ static void
 ScanServers (void)
 {
     char	lineBuf[10240];
-    int		len;
     FILE	*serversFile;
     struct stat	statb;
     static DisplayType	acceptableTypes[] =
@@ -279,10 +317,12 @@ ScanServers (void)
 	}
 	while (fgets (lineBuf, sizeof (lineBuf)-1, serversFile))
 	{
-	    len = strlen (lineBuf);
-	    if (lineBuf[len-1] == '\n')
-		lineBuf[len-1] = '\0';
-	    ParseDisplay (lineBuf, acceptableTypes, NumTypes);
+	    size_t len = strlen (lineBuf);
+	    if (len > 0) {
+		if (lineBuf[len-1] == '\n')
+		    lineBuf[len-1] = '\0';
+		ParseDisplay (lineBuf, acceptableTypes, NumTypes);
+	    }
 	}
 	fclose (serversFile);
     }
@@ -381,7 +421,7 @@ RescanIfMod (void)
  */
 
 /* ARGSUSED */
-static SIGVAL
+static void
 StopAll (int n)
 {
     int olderrno = errno;
@@ -424,15 +464,12 @@ int	ChildReady;
 
 #ifndef UNRELIABLE_SIGNALS
 /* ARGSUSED */
-static SIGVAL
+static void
 ChildNotify (int n)
 {
     int olderrno = errno;
 
     ChildReady = 1;
-# ifdef ISC
-    (void) Signal (SIGCHLD, ChildNotify);
-# endif
     errno = olderrno;
 }
 #endif
@@ -536,7 +573,8 @@ WaitForChild (void)
 		  time(&now);
 		  crash = d->lastReserv &&
 		    ((now - d->lastReserv) < XDM_BROKEN_INTERVAL);
-		  Debug("time %i %i try %i of %i%s\n", now, d->lastReserv,
+		  Debug("time %lli %lli try %i of %i%s\n", 
+			(long long)now, (long long)d->lastReserv,
 			d->reservTries, d->reservAttempts,
 			crash ? " crash" : "");
 
@@ -932,6 +970,7 @@ StorePid (void)
 		     LogError ("process-id directory %s cannot be created\n",
 			       pidDir);
 		}
+		free(pidDir);
 	    }
 
 	    pidFd = open (pidFile, O_WRONLY|O_CREAT|O_EXCL, 0666);
@@ -1000,31 +1039,6 @@ RemovePid (void)
 		      _SysErrorMsg (errno));
 }
 
-#if 0
-void
-UnlockPidFile (void)
-{
-    if (lockPidFile)
-# ifdef F_SETLK
-    {
-	struct flock lock_data;
-	lock_data.l_type = F_UNLCK;
-	lock_data.l_whence = SEEK_SET;
-	lock_data.l_start = lock_data.l_len = 0;
-	(void) fcntl(pidFd, F_SETLK, &lock_data);
-    }
-# else
-#  ifdef F_ULOCK
-	lockf (pidFd, F_ULOCK, 0);
-#  else
-	flock (pidFd, LOCK_UN);
-#  endif
-# endif
-    close (pidFd);
-    fclose (pidFilePtr);
-}
-#endif
-
 #ifndef HAVE_SETPROCTITLE
 void SetTitle (char *name, ...)
 {
@@ -1034,25 +1048,27 @@ void SetTitle (char *name, ...)
     char	*s;
     va_list	args;
 
-    va_start(args,name);
-    *p++ = '-';
-    --left;
-    s = name;
-    while (s)
-    {
-	while (*s && left > 0)
-	{
-	    *p++ = *s++;
-	    left--;
-	}
-	s = va_arg (args, char *);
+    if (p != NULL && left > 0) {
+        va_start(args,name);
+        *p++ = '-';
+        --left;
+        s = name;
+        while (s)
+        {
+            while (*s && left > 0)
+            {
+                *p++ = *s++;
+                left--;
+            }
+            s = va_arg (args, char *);
+        }
+        while (left > 0)
+        {
+            *p++ = ' ';
+            --left;
+        }
+        va_end(args);
     }
-    while (left > 0)
-    {
-	*p++ = ' ';
-	--left;
-    }
-    va_end(args);
 # endif
 }
 #endif

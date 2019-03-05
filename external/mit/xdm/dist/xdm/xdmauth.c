@@ -44,7 +44,7 @@ static char	auth_name[256];
 static int	auth_name_len;
 
 static void
-XdmPrintDataHex (char *s, char *a, int l)
+XdmPrintDataHex (const char *s, const char *a, int l)
 {
     int	i;
 
@@ -56,7 +56,7 @@ XdmPrintDataHex (char *s, char *a, int l)
 
 # ifdef XDMCP
 static void
-XdmPrintArray8Hex (char *s, ARRAY8Ptr a)
+XdmPrintArray8Hex (const char *s, ARRAY8Ptr a)
 {
     XdmPrintDataHex (s, (char *) a->data, a->length);
 }
@@ -234,7 +234,7 @@ XdmGetKey(struct protoDisplay *pdpy, ARRAY8Ptr displayID)
 	if (line[0] == '#' || sscanf (line, "%s %s", id, key) != 2)
 	    continue;
 	bzero(line, sizeof(line));
-	Debug ("Key entry for \"%s\" %d bytes\n", id, strlen(key));
+	Debug ("Key entry for \"%s\" %ld bytes\n", id, strlen(key));
 	if (strlen (id) == displayID->length &&
 	    !strncmp (id, (char *)displayID->data, displayID->length))
 	{

@@ -14,7 +14,7 @@ libXdmGreet_la_LIBADD = $(XDMGREET_LIBS)
 AM_CPPFLAGS = -I$(top_srcdir)/include
 AM_CFLAGS = $(CWARNFLAGS) $(XDMGREET_CFLAGS) -DGREET_LIB
 
-libXdmGreet_la_LDFLAGS = -module -avoid-version
+libXdmGreet_la_LDFLAGS = -module -avoid-version -no-undefined
 
 if LINT
 ALL_LINT_FLAGS=$(LINT_FLAGS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \

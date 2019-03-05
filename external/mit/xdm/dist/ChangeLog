@@ -1,3 +1,754 @@
+commit a03a628e2adeac10aa0fc494a5f04f25e3b31d7e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Mar 2 14:02:19 2019 -0800
+
+    xdm 1.1.12
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5f941a815b7bad49a766987660094b01046c8e7d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Feb 25 14:22:27 2019 -0800
+
+    Use sed instead of the C pre-processor to generate config files
+    
+    Fixes: https://bugs.freedesktop.org/show_bug.cgi?id=93359
+    while avoiding https://bugs.freedesktop.org/show_bug.cgi?id=107368
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit dd7402c2f1e828cc3b0fae036b62f74b8014814b
+Author: David Carlier <devnexen@gmail.com>
+Date:   Wed May 4 17:46:15 2016 +0100
+
+    fix length format in StartClient() debug message
+    
+    changing the printf-like format as strlen returns an unsigned type
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 42ae3d66283a9efa0c510d5d438f821549656fe6
+Author: David Carlier <devnexen@gmail.com>
+Date:   Wed May 4 17:46:15 2016 +0100
+
+    fix memory leak in StorePid()
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 7a56946260616f7f5ff43ecbaac1f2ada9b0afcd
+Author: Chí-Thanh Christopher Nguyễn <chithanh@gentoo.org>
+Date:   Mon Jan 6 15:52:47 2014 +0000
+
+    xdm uses setproctitle without proper includes for Linux libbsd
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 786b2c7ed39fb0cdd4c34e51f5c58f980087dcc1
+Author: Chí-Thanh Christopher Nguyễn <chithanh@gentoo.org>
+Date:   Mon Jan 6 15:52:00 2014 +0000
+
+    xdm uses arc4random without proper includes for Linux libbsd
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 16d74befa4430eb024d81ee4070520afff697d60
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Nov 21 17:01:20 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a7623a6555689cb3d1acfc66c0562985b106a85b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Nov 16 21:30:06 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 768a8c524642955527066ba90be6ffd511e30ed5
+Author: Björn Esser <besser82@fedoraproject.org>
+Date:   Thu Aug 16 15:42:34 2018 -0400
+
+    glibc: Include <crypt.h> if needed, fix build with 2.28
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit b6853380678b793bad81ac09b2f872f8225ccec6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 5 12:28:27 2018 -0700
+
+    Add missing brackets to multi-statement if in SaveServerAuthorizations
+    
+    Introduced by commit 5222d28e8d8e5b4cc
+    
+    Reported by gcc 7.3:
+    
+    auth.c: In function ‘SaveServerAuthorizations’:
+    auth.c:447:6: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+          if (auths[i]->data_length > 0)
+          ^~
+    auth.c:452:3: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+       (void) fflush (auth_file);
+       ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Matthieu Herrb <matthieu@herrb.eu>
+
+commit 50bd014ad8ed0b0af1e9e8130779acd0473a6899
+Author: Matthieu Herrb <matthieu@herrb.eu>
+Date:   Sun Oct 1 09:43:53 2017 +0200
+
+    chown before chmod
+    
+    This prevents a malicious user logging out from calling
+    chmod while still owning /dev/console and thus by-passing
+    the '622' mode that is set here.
+    
+    Issue reported by Tim Chase. Thanks.
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4743378ccf1defe5984ad71797283b98029aa920
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jan 16 16:21:37 2017 -0800
+
+    Install xdm man pages under admin section (8), not user programs (1)
+    
+    As best I can tell, it was historically under section 1 mainly because
+    the old X Consortium Imake configs only supported installing program
+    man pages there, and didn't have an option for using other sections.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 53a781392bdd785db8a12572a7323de35a16d896
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:21 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit 6004d4b43e76522528cb93f56b38f4f5130d4e1f
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 62e239d1ea3294239830f39ac8e4d21b6b17ec8d
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
+commit 02c5858734585795f53b90a245afafb3c606c5ce
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jan 28 09:02:06 2016 -0800
+
+    Remove non-existent cpp resource from man page
+    
+    From what I can see in the ancient X Consortium archives, the cpp
+    resource was added in X11R4 and documented but never actually used,
+    and removed in X11R5 without remembering to remove it from the man page.
+    
+    Reported-by: John Smith <wempwer@gmail.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Matthieu Herrb <matthieu@herrb.eu>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 994d32ad92e12aa381f222db68db9997a602197e
+Author: Matthieu Herrb <matthieu@herrb.eu>
+Date:   Tue Jan 5 21:31:12 2016 +0100
+
+    Missed on arc4random() conversion.
+    
+    Signed-off-by: Matthieu Herrb <matthieu@herrb.eu>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5defb9365b7bfb758024ed203b30ee245285b77f
+Author: Matthieu Herrb <matthieu@herrb.eu>
+Date:   Mon Oct 26 17:09:53 2015 +0100
+
+    Unifdef X_NO_SYS_UN
+    
+    Nothing has set that since the modularization
+    
+    Signed-off-by: Matthieu Herrb <matthieu@herrb.eu>
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 720378013765a5bad7bddbb775aa6845c6d9c4af
+Author: Matthieu Herrb <matthieu@herrb.eu>
+Date:   Mon Oct 26 16:59:09 2015 +0100
+
+    Remove AIXV3, SCO, Unixware, OS/2 support
+    
+    Signed-off-by: Matthieu Herrb <matthieu@herrb.eu>
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 82298bc7aa1b1715adce9de1cf61c6335bc659d8
+Author: Matthieu Herrb <matthieu@herrb.eu>
+Date:   Tue Dec 1 19:15:50 2015 +0100
+
+    Remove #if 0'd code
+    
+    Signed-off-by: Matthieu Herrb <matthieu@herrb.eu>
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c0c3ad0cc5a6e5cf528245fb7f4e47b91163333c
+Author: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+Date:   Sun Oct 18 22:35:00 2015 -0700
+
+    Fixup various format warnings in PrintProtoDisplay
+    
+    protodpy.c:52:35: warning: format specifies type 'unsigned int' but the argument has type 'struct protoDisplay *' [-Wformat]
+        Debug ("ProtoDisplay 0x%x\n", pdpy);
+                               ~~     ^~~~
+    protodpy.c:54:20: warning: incompatible pointer types passing 'XdmcpNetaddr' (aka 'char *') to parameter of type 'struct sockaddr *'
+          [-Wincompatible-pointer-types]
+        PrintSockAddr (pdpy->address, pdpy->addrlen);
+                       ^~~~~~~~~~~~~
+    ../include/dm_socket.h:46:45: note: passing argument to parameter 'a' here
+    extern void PrintSockAddr (struct sockaddr *a, int len);
+                                                ^
+    protodpy.c:55:41: warning: format specifies type 'int' but the argument has type 'unsigned long' [-Wformat]
+        Debug ("\tdate %d (%d from now)\n", pdpy->date, time(0) - pdpy->date);
+                       ~~                   ^~~~~~~~~~
+                       %lu
+    protodpy.c:55:53: warning: format specifies type 'int' but the argument has type 'unsigned long' [-Wformat]
+        Debug ("\tdate %d (%d from now)\n", pdpy->date, time(0) - pdpy->date);
+                           ~~                           ^~~~~~~~~~~~~~~~~~~~
+                           %lu
+    protodpy.c:57:32: warning: format specifies type 'int' but the argument has type 'CARD32' (aka 'unsigned long') [-Wformat]
+        Debug ("\tsessionID %d\n", pdpy->sessionID);
+                            ~~     ^~~~~~~~~~~~~~~
+                            %lu
+    
+    Signed-off-by: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+
+commit d5aa455a2575fca74219bb567ae4cb8c63a8401d
+Author: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+Date:   Sun Oct 18 22:21:05 2015 -0700
+
+    Silence -Wmissing-noreturn warnings
+    
+    choose.c:463:1: warning: function 'RunChooser' could be declared with attribute 'noreturn' [-Wmissing-noreturn]
+    chooser.c:1062:1: warning: function 'DoCancel' could be declared with attribute 'noreturn' [-Wmissing-noreturn]
+    reset.c:81:1: warning: function 'abortReset' could be declared with attribute 'noreturn' [-Wmissing-noreturn]
+    server.c:154:1: warning: function 'serverPauseAbort' could be declared with attribute 'noreturn' [-Wmissing-noreturn]
+    server.c:161:1: warning: function 'serverPauseUsr1' could be declared with attribute 'noreturn' [-Wmissing-noreturn]
+    server.c:236:1: warning: function 'abortOpen' could be declared with attribute 'noreturn' [-Wmissing-noreturn]
+    server.c:329:1: warning: function 'PingLost' could be declared with attribute 'noreturn' [-Wmissing-noreturn]
+    server.c:348:1: warning: function 'PingLostSig' could be declared with attribute 'noreturn' [-Wmissing-noreturn]
+    session.c:231:1: warning: function 'catchTerm' could be declared with attribute 'noreturn' [-Wmissing-noreturn]
+    session.c:293:1: warning: function 'SessionPingFailed' could be declared with attribute 'noreturn' [-Wmissing-noreturn]
+    session.c:240:1: warning: function 'catchAlrm' could be declared with attribute 'noreturn' [-Wmissing-noreturn]
+    session.c:249:1: warning: function 'waitAbort' could be declared with attribute 'noreturn' [-Wmissing-noreturn]
+    session.c:330:1: warning: function 'ManageSession' could be declared with attribute 'noreturn' [-Wmissing-noreturn]
+    session.c:471:1: warning: function 'syncTimeout' could be declared with attribute 'noreturn' [-Wmissing-noreturn]
+    session.c:519:1: warning: function 'SessionExit' could be declared with attribute 'noreturn' [-Wmissing-noreturn]
+    
+    Signed-off-by: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+
+commit 6cc5153d77f9f48b8dd16e17e48eac4d6ef13929
+Author: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+Date:   Sun Oct 18 22:13:31 2015 -0700
+
+    Add missing prototype for PrintSockAddr
+    
+    protodpy.c:53:5: error: implicit declaration of function 'PrintSockAddr' is invalid in C99 [-Werror,-Wimplicit-function-declaration]
+        PrintSockAddr (pdpy->address, pdpy->addrlen);
+        ^
+    
+    Signed-off-by: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+
+commit 68de911889c66133cc6e2f5c64b18a02e84de500
+Author: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+Date:   Sun Oct 18 22:12:14 2015 -0700
+
+    Add missing return type (void) for PrintProtoDisplay
+    
+    protodpy.c:49:1: error: type specifier missing, defaults to 'int' [-Werror,-Wimplicit-int]
+    PrintProtoDisplay (struct protoDisplay *pdpy)
+    ^
+    
+    Signed-off-by: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+
+commit 0d8bb02d5ab7af1dc505987c9468c11caf3b889d
+Author: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+Date:   Sun Oct 18 22:10:41 2015 -0700
+
+    xdm: Add missing include of <arpa/inet.h> for inet_ntop
+    
+    netaddr.c:226:2: error: implicit declaration of function 'inet_ntop' is invalid in C99 [-Werror,-Wimplicit-function-declaration]
+            inet_ntop(a->sa_family, &((struct sockaddr_in6 *) a)->sin6_addr,
+            ^
+    
+    Signed-off-by: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+
+commit 29ec7d1a3bad0222c58a6be2a3a5d81706ce26e5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 27 18:47:14 2015 -0700
+
+    Get rid of an extraneous ; at the end of a C source line
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f4ddb33f2168acfee0034379c2f69c82e0aa768a
+Author: Egbert Eich <eich@suse.de>
+Date:   Fri May 22 10:36:03 2015 +0200
+
+    dm: Don't crash if argc == 0
+    
+    It is not guaranteed that argc > 0. So make sure we don't crash
+    if no valid command line arguments are given.
+    
+    Signed-off-by: Egbert Eich <eich@suse.de>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d0e32620bfb3bc8803bffcec3f0f3b1db6440d51
+Author: Matthieu Herrb <matthieu@herrb.eu>
+Date:   Sat Mar 14 20:05:25 2015 +0100
+
+    Allow the greeter to set the input fields bg color
+    
+    A new 'inpColor' resource is added for that.
+    
+    Signed-off-by: Matthieu Herrb <matthieu@herrb.eu>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6abf2827dd4f0dc1a4972c431131de94fb978199
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Feb 26 23:05:24 2015 -0800
+
+    Mark LogPanic as noreturn per gcc's suggestion
+    
+    error.c: In function ‘LogPanic’:
+    error.c:93:1: warning: function might be candidate for attribute ‘noreturn’
+     [-Wsuggest-attribute=noreturn]
+     LogPanic (const char * fmt, ...)
+     ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d26ca678071aeaf41d91985ebf8a194231667b24
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Feb 26 22:32:21 2015 -0800
+
+    Only free input or output to realloc, not both
+    
+    In error cleanup path, check to see if realloc returned NULL,
+    if so, free the still valid input pointer; otherwise the input is
+    no longer valid, so ignore it and free the realloc output pointer.
+    Avoids potential double free if you run out of memory at the exact
+    right spot.
+    
+    Introduced-by: commit d39dbde390f0f609c03dbd79f0bcc6a3486ca8a3
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit bd28d86465fc6ba48f6f35ddeb8df9275960b1de
+Author: Jon TURNEY <jon.turney@dronecode.org.uk>
+Date:   Mon Feb 23 11:36:41 2015 +0000
+
+    Link libXdmGreet with -no-undefined libtool flag
+    
+    "Use -no-undefined to assure libtool that the library has no unresolved symbols
+    at link time, so that libtool will build a shared library on platforms that
+    require that all symbols are resolved when the library is linked."
+    
+    With a recent libtool (since 2.4.5 or so), "can't build <target> shared library
+    unless -no-undefined is specified" is an error, rather than a warning, if
+    ./configure'd --enable-shared.
+    
+    http://tinderbox.x.org/builds/2015-02-22-0009/logs/app-xdm/#build
+    
+    Signed-off-by: Jon TURNEY <jon.turney@dronecode.org.uk>
+
+commit cdc7b575452a621fb467004d607288af6dd4c802
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Nov 4 21:44:05 2014 -0800
+
+    Only pass -u & -w args to sessreg if --with-{u,w}tmp-file=path specified
+    
+    If not specified, let sessreg use its builtin defaults instead of
+    replicating the logic here (and possibly getting it wrong), especially
+    since in sessreg-1.0.8 and earlier, using the -u & -w flags forces
+    the use of the utmp/wtmp code and not the newer utmpx/wtmpx code.
+    
+    If --without-{u,w}tmp-file or --with-{u,w}tmp-file=none is specified,
+    pass "none" as arguments to sessreg to disable writing to that file.
+    
+    v2: better handling of --with & --without arguments when not passing path,
+    add documentation of the 3 choices to README
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a69c64584f614eeaeac92a068715ced5777b0ec9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Aug 1 22:58:54 2014 -0700
+
+    Protect against unlikely NULL pointer dereference in FormatChooserArgument
+    
+    NetaddrPort should only return NULL if it wasn't compiled with
+    support for the address family in use, but checking to be sure
+    makes static analyzer complain less.
+    
+    Error: Null pointer dereference (CWE 476)
+       Read from null pointer port
+            at line 219 of xdm/choose.c in function 'FormatChooserArgument'.
+              Function NetaddrPort may return constant 'NULL' at line 77,
+               called at line 216.
+              Null pointer introduced at line 77 of xdm/netaddr.c in function
+               'NetaddrPort'.
+            at line 220 of xdm/choose.c in function 'FormatChooserArgument'.
+              Function NetaddrPort may return constant 'NULL' at line 77,
+               called at line 216.
+              Null pointer introduced at line 77 of xdm/netaddr.c in function
+               'NetaddrPort'.
+    
+    [ This bug was found by the Parfait 1.4.0 bug checking tool.
+      http://labs.oracle.com/pls/apex/f?p=labs:49:::::P49_PROJECT_ID:13 ]
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 95e6f0ed0730c296b6c52b024c67d86507de1348
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 31 21:39:32 2014 -0700
+
+    autogen.sh: Honor NOCONFIGURE=1
+    
+    See http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c1375955b733ee8281520e283c7cfb3d93f6d2cf
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 31 21:38:41 2014 -0700
+
+    configure: Drop AM_MAINTAINER_MODE
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f5737904cb77fa546523615bf1582979b2744607
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Oct 18 22:54:29 2013 -0700
+
+    Ensure fgets read at least one byte before modifying string
+    
+    If a file has a \0 byte (binary file, strange encoding, corruption),
+    fgets() can return a string starting with a \0 byte - check for that
+    before checking to see if the byte before the \0 is a \n, so we don't
+    reach back before the start of our memory buffer.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Acked-by: walter harms <wharms@bfs.de>
+
+commit a2773de6ea289d85d6b021221f911fc983b08ee5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 1 11:34:40 2013 -0700
+
+    Show compile time options in Debug output
+    
+    When debugging, helps figure out which options the distro or builder
+    chose to enable or disable.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Acked-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 3bedc0fef371ade80db85d17ae4deb1d692b027a
+Author: Matthieu Herrb <matthieu.herrb@laas.fr>
+Date:   Sun Aug 18 11:07:54 2013 +0200
+
+    Fix format string for systems where time_t is 64 bits long.
+    
+    Signed-off-by: Matthieu Herrb <matthieu.herrb@laas.fr>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a0ab1f13b749e9486f5d50e16e67a9de6733b8a4
+Author: Thomas Klausner <wiz@NetBSD.org>
+Date:   Sun Jun 2 22:20:41 2013 +0200
+
+    Add wrapper function for write.
+    
+    gcc-4.5.4 on NetBSD complains:
+    xdm/prngc.c: In function ‘get_prngd_bytes’:
+    xdm/prngc.c:133:2: error: passing argument 1 of ‘atomicio’ from incompatible pointer type
+    xdm/prngc.c:46:16: note: expected ‘ssize_t (*)(int,  void *, size_t)’ but argument is of type ‘ssize_t (*)(int,  const void *, size_t)’
+    
+    The problem is that the read(2) and write(2) syscalls differ
+    in the const-ness of their second argument. The wrapper
+    function gets rid of the difference.
+    
+    Signed-off-by: Thomas Klausner <wiz@NetBSD.org>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a13b3c0681834fde049bf6b225e9547327458026
+Author: Thomas Klausner <wiz@NetBSD.org>
+Date:   Fri Jun 28 19:35:39 2013 +0200
+
+    Use appropriate format string.
+    
+    Fixes clang warning:
+    format specifies type 'int' but the argument has type 'unsigned long'
+    
+    Signed-off-by: Thomas Klausner <wiz@NetBSD.org>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 04e9edeb73dcd7de12e140ca38403c9772d8bebc
+Author: Eric S. Raymond <esr@thyrsus.com>
+Date:   Wed Jun 19 06:58:27 2013 -0400
+
+    Don't rely on the ability to set tab stops.
+    
+    Instead, use TBL and CW fonts in examples.
+
+commit 8d1eb5c74413e4c9a21f689fc106949b121c0117
+Author: mancha <mancha1@hush.com>
+Date:   Wed May 22 07:20:26 2013 -0700
+
+    Handle NULL returns from glibc 2.17+ crypt().
+    
+    Starting with glibc 2.17 (eglibc 2.17), crypt() fails with EINVAL
+    (w/ NULL return) if the salt violates specifications. Additionally,
+    on FIPS-140 enabled Linux systems, DES/MD5-encrypted passwords
+    passed to crypt() fail with EPERM (w/ NULL return).
+    
+    If using glibc's crypt(), check return value to avoid a possible
+    NULL pointer dereference.
+    
+    Reviewed-by: Matthieu Herrb <matthieu@herrb.eu>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+Notes:
+    Fixes CVE-2013-2179
+
+commit 642d73c50ae19a55975919c84191da15b31608a4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Apr 21 15:37:00 2013 -0700
+
+    Avoid fd leak when fdopen() fails in openFiles()
+    
+    Found by parfait 1.1 bug checker:
+       File Descriptor Leak: Leaked File Descriptor newfd
+            at line 590 of xdm/auth.c in function 'openFiles'.
+              newfd initialized at line 573 with open
+              newfd leaks when newfd >= 0 at line 574.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4ecaac617be1ef59be532671d07f062e52111f3a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Apr 19 16:33:12 2013 -0700
+
+    Remove old man page note about XDM-AUTHENTICATION-1
+    
+    It is enabled by default now, when building with current versions of libXdmcp.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Matthieu Herrb <matthieu@herrb.eu>
+
+commit b1af740f2824b00fd2e073f847e0873b406bc1ad
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Apr 1 23:37:45 2013 -0700
+
+    Stop leaking address struct on every call to getLocalAddress()
+    
+    getLocalAddress() checks the haveLocalAddress static variable to see
+    if it's already set up an address struct, and if not allocates memory
+    to do so and stores a pointer in the localAddress static variable.
+    
+    Unfortunately, it never then set haveLocalAddress, so every time it was
+    called it simply overwrote the previous allocation with a new one.
+    
+    Now we check to see if the allocation succeeded, and if so, then set
+    haveLocalAddress so we don't repeat and waste time & memory on later
+    calls.
+    
+    Reported-by: Ilja Van Sprundel <ivansprundel@ioactive.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 87f9c9d8cae9461f22f9b55056433336bea354c8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Feb 23 10:29:02 2013 -0800
+
+    Assume signal handlers return void, as C89 requires
+    
+    Drops use of autoconf's obsolete AC_TYPE_SIGNAL & RETSIGTYPE
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit fa8adede758e2b1e8ae38c84d032b354f0250f49
+Author: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+Date:   Thu Jan 24 10:11:28 2013 -0800
+
+    Look for pam in both pam/ and security/ paths
+    
+    Signed-off-by: Jeremy Huddleston Sequoia <jeremyhu@apple.com>
+
+commit 2cef6bcd280f44e115ff238d4f2a1ccb10aaf09f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Dec 26 20:43:08 2012 -0800
+
+    Remove old Interactive Unix ("ISC") code from xdm
+    
+    Interactive Systems Corp (ISC) made a SVR3 port for i386 systems.
+    It was purchased by Sun in 1992 to beef up Solaris x86 support.
+    Sun ended sales of ISC Unix in 2001, and ended support in 2006.
+    
+    Mostly performed via "unifdef -UISC" followed by imdent,
+    and then manual cleanup.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b6a3c34ee853c5143c7c21a1ed47cfe1cab4e871
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Dec 26 20:43:08 2012 -0800
+
+    Remove unused NCR/Wollongong TCP ("WINTCP") code from xdm
+    
+    Has never been converted to build in modular builds, so has been unusable
+    since X11R7.0 release in 2005.  Was only used with an ancient SVR3 variant
+    from NCR, with the TCP stack addon from Wollongong (now a long forgotten
+    part of Attachmate).
+    
+    Mostly performed via "unifdef -UWINTCP" followed by imdent,
+    and then manual cleanup.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2e38a23baa19b2bcb3747135e86b289c1e076293
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Dec 26 20:43:08 2012 -0800
+
+    Remove unused DECnet ("DNETCONN") code from xdm
+    
+    Has never been converted to build in modular builds, so has been unusable
+    since X11R7.0 release in 2005.  DNETCONN support was removed from xtrans
+    back in 2008.
+    
+    Mostly performed via "unifdef -UDNETCONN" followed by imdent,
+    and then manual cleanup.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d44bdc127d4838eb67402843ceb122df59ef328e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Dec 26 20:43:08 2012 -0800
+
+    Remove unused TLI ("STREAMSCONN") code from xdm
+    
+    Has never been converted to build in modular builds, so has been unusable
+    since X11R7.0 release in 2005.  All known platforms with TLI/XTI support
+    that X11R7 & later releases run on also have (and mostly prefer) BSD
+    socket support for their networking API.
+    
+    Mostly performed via "unifdef -USTREAMSCONN", followed by imdent,
+    and then manual cleanup.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 78403f6a7420798bf24798811c8c6b936c9ccb34
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jan 6 19:34:30 2012 -0800
+
+    Add some missing malloc failure checks
+    
+    Flagged by Solaris Studio 12.3 code analyzer
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ad7a54288f62c0266540279dac775ebee68f092e
+Author: Matthieu Herrb <matthieu.herrb@laas.fr>
+Date:   Thu Dec 15 22:14:23 2011 +0100
+
+    replace <varargs.h> by <stdarg.h>. Spotted my Marco Peereboom with clang.
+    
+    Reviewed-by: Mark Kettenis <kettenis@openbsd.org>
+    Signed-off-by: Matthieu Herrb <matthieu.herrb@laas.fr>
+
+commit a02edebf21aae37f8564d7b9fad01d5d2942ad8d
+Author: Matthieu Herrb <matthieu.herrb@laas.fr>
+Date:   Mon Nov 7 17:01:44 2011 +0100
+
+    Fix build outside of source dir. Fixes distcheck too.
+    
+    Signed-off-by: Matthieu Herrb <matthieu.herrb@laas.fr>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 284532c0884893728b75ca37f5d2a9a33f7bc8db
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Sat Oct 22 17:14:46 2011 +0200
+
+    greeter: link against -lXrender if xft is enabled
+    
+    XmuCvtStringToXftColor uses XRenderParseColor, so require xrender for
+    the xft option, and link against it.
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8eee942be0db913511b4c53f94829e1201dfdf00
+Author: Michał Górny <mgorny@gentoo.org>
+Date:   Wed Sep 28 21:25:17 2011 +0200
+
+    Support systemd startup notification.
+    
+    If libsystemd-daemon support is enabled, xdm uses it to announce its
+    startup as soon as the session is established. This gives the user
+    opportunity to delay I/O-intensive operations until the X server is
+    started so that they would not interfere with its loading while keeping
+    the machine busy when user types in his/her login.
+    
+    Reviewed-by: Jamey Sharp <jamey@minilop.net>
+    Reviewed-by: Gaetan Nadon <memsize@videotron.ca>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c43eb799774743bc50233eff6643c51a5fbe6899
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Sep 20 19:22:48 2011 -0700
+
+    Fix warnings about printing longs with int type format strings
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 618039261b0c7f14eb3b32c8f636464369724407
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Sep 20 19:11:20 2011 -0700
+
+    Mark some chars as const to fix gcc -Wwrite-strings warnings
+    
+    Can't fix all the warnings, due to the Xt API, but can fix a bunch.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 011a2710a69cd345a8ee3a6b2f15407b4c3b355a
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Sun Sep 25 00:56:15 2011 -0700
+
+    Require xt >= 1.0 for appdefaultdir
+    
+    https://bugs.freedesktop.org/show_bug.cgi?id=7237
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+
 commit 23949f9a4c30b5dfa67a88b3dd2523f09f163d91
 Author: Jeremy Huddleston <jeremyhu@apple.com>
 Date:   Sun Sep 25 00:41:25 2011 -0700
@@ -803,7 +1554,7 @@ Date:   Mon Aug 30 15:51:16 2010 -0400
     
     The one from X11/Xosdefs.h will be used through already included headers:
     # if defined(__OpenBSD__) || defined(__NetBSD__) || defined(__FreeBSD__) \
-    	|| defined(__APPLE__) || defined(__DragonFly__)
+            || defined(__APPLE__) || defined(__DragonFly__)
     #  ifndef CSRG_BASED
     #   define CSRG_BASED
     #  endif
@@ -995,10 +1746,10 @@ Date:   Sun Aug 22 17:47:39 2010 -0400
     It seems to be a simple omission in the man page.
     Refer to resource.c:
     
-    char	*randomFile;
-    char	*randomDevice;
-    char	*prngdSocket;
-    int	prngdPort;
+    char    *randomFile;
+    char    *randomDevice;
+    char    *prngdSocket;
+    int     prngdPort;
     
     Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
     Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
@@ -1071,7 +1822,7 @@ Date:   Tue Mar 16 18:29:09 2010 -0700
      X Consortium bug #4559 (reported 30 Sep 1991)
     
     Text based on the X11R4 release notes description of xdmshell from:
-    	http://ftp.x.org/pub/X11R4/RELNOTES.txt
+            http://ftp.x.org/pub/X11R4/RELNOTES.txt
     
     Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
     Reviewed-by: Fernando Carrijo <fcarrijo@yahoo.com.br>

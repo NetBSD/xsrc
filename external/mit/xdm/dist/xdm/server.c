@@ -49,7 +49,7 @@ static int receivedUsr1;
 static int serverPause (unsigned t, pid_t serverPid);
 
 /* ARGSUSED */
-static SIGVAL
+static void
 CatchUsr1 (int n)
 {
     int olderrno = errno;
@@ -62,9 +62,9 @@ CatchUsr1 (int n)
     errno = olderrno;
 }
 
-char *_SysErrorMsg (int n)
+const char *_SysErrorMsg (int n)
 {
-    char *s = strerror(n);
+    const char *s = strerror(n);
     return (s ? s : "unknown error");
 }
 
@@ -149,14 +149,16 @@ static Jmp_buf	pauseAbort;
 static int	serverPauseRet;
 
 /* ARGSUSED */
-static SIGVAL
+_X_NORETURN
+static void
 serverPauseAbort (int n)
 {
     Longjmp (pauseAbort, 1);
 }
 
 /* ARGSUSED */
-static SIGVAL
+_X_NORETURN
+static void
 serverPauseUsr1 (int n)
 {
     Debug ("display manager paused til SIGUSR1\n");
@@ -231,7 +233,8 @@ serverPause (unsigned t, pid_t serverPid)
 static Jmp_buf	openAbort;
 
 /* ARGSUSED */
-static SIGVAL
+_X_NORETURN
+static void
 abortOpen (int n)
 {
 	Longjmp (openAbort, 1);
@@ -239,29 +242,15 @@ abortOpen (int n)
 
 #ifdef XDMCP
 
-# ifdef STREAMSCONN
-#  include <tiuser.h>
-# endif
 
 static void
 GetRemoteAddress (struct display *d, int fd)
 {
     char    buf[512];
     int	    len = sizeof (buf);
-# ifdef STREAMSCONN
-    struct netbuf	netb;
-# endif
 
     free (d->peer);
-# ifdef STREAMSCONN
-    netb.maxlen = sizeof(buf);
-    netb.buf = buf;
-    t_getname(fd, &netb, REMOTENAME);
-    len = 8;
-    /* lucky for us, t_getname returns something that looks like a sockaddr */
-# else
     getpeername (fd, (struct sockaddr *) buf, (void *)&len);
-# endif
     d->peerlen = 0;
     if (len)
     {
@@ -299,17 +288,6 @@ WaitForServer (struct display *d)
 	    errno = 0;
 	    (void) XSetIOErrorHandler (openErrorHandler);
 	    d->dpy = XOpenDisplay (d->name);
-#ifdef STREAMSCONN
-	    {
-		/* For some reason, the next XOpenDisplay we do is
-		   going to fail, so we might as well get that out
-		   of the way.  There is something broken here. */
-		Display *bogusDpy = XOpenDisplay (d->name);
-		Debug ("bogus XOpenDisplay %s\n",
-		       bogusDpy ? "succeeded" : "failed");
-		if (bogusDpy) XCloseDisplay(bogusDpy); /* just in case */
-	    }
-#endif
 	    (void) alarm ((unsigned) 0);
 	    (void) Signal (SIGALRM, SIG_DFL);
 	    (void) XSetIOErrorHandler ((int (*)(Display *)) 0);
@@ -349,6 +327,7 @@ ResetServer (struct display *d)
 
 static Jmp_buf	pingTime;
 
+_X_NORETURN
 static void
 PingLost (void)
 {
@@ -364,7 +343,8 @@ PingLostIOErr (Display *dpy)
 }
 
 /* ARGSUSED */
-static SIGVAL
+_X_NORETURN
+static void
 PingLostSig (int n)
 {
     PingLost();
@@ -374,7 +354,7 @@ int
 PingServer (struct display *d, Display *alternateDpy)
 {
     int	    (*oldError)(Display *);
-    SIGVAL  (*oldSig)(int);
+    void  (*oldSig)(int);
     int	    oldAlarm;
     static Display *aDpy;
 

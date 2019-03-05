@@ -225,7 +225,7 @@ ParseDisplay (char *source, DisplayType *acceptableTypes, int numAcceptable)
 }
 
 static struct displayMatch {
-	char		*name;
+	const char	*name;
 	DisplayType	type;
 } displayTypes[] = {
 	{ "local",		{ Local, Permanent, FromFile } },

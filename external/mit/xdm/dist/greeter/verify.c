@@ -41,18 +41,14 @@ from The Open Group.
 #include	<pwd.h>
 
 #if defined(USE_PAM)
-# include	<security/pam_appl.h>
 # include	<stdlib.h>
 #elif defined(HAVE_GETSPNAM)
 # include	<shadow.h>
 # include	<errno.h>
 #elif defined(USE_BSDAUTH)
 # include	<login_cap.h>
-# include	<varargs.h>
+# include	<stdarg.h>
 # include	<bsd_auth.h>
-#elif defined(USESECUREWARE)
-# include       <sys/types.h>
-# include       <prot.h>
 #endif
 
 #include	"greet.h"
@@ -61,7 +57,7 @@ from The Open Group.
 extern char *crypt(const char *, const char *);
 #endif
 
-static char *envvars[] = {
+static const char *envvars[] = {
     "TZ",			/* SYSV and SVR4, but never hurts */
 #if defined(sony) && !defined(SYSTYPE_SYSV) && !defined(_SYSTYPE_SYSV)
     "bootdev",
@@ -94,8 +90,8 @@ static char **
 userEnv (struct display *d, int useSystemPath, char *user, char *home, char *shell)
 {
     char	**env;
-    char	**envvar;
-    char	*str;
+    const char	**envvar;
+    const char	*str;
 
     env = defaultEnv ();
     env = setEnv (env, "DISPLAY", d->name);
@@ -227,99 +223,7 @@ Verify (struct display *d, struct greet_info *greet, struct verify_info *verify)
 			break;
 		}
 	}
-#elif defined(USESECUREWARE) /* !USE_BSDAUTH */
-/*
- * This is a global variable and will be referenced in at least session.c
- */
-struct smp_user_info *userp = 0;
-
-_X_INTERNAL
-int
-Verify (struct display *d, struct greet_info *greet, struct verify_info *verify)
-{
-  int ret, pwtries = 0, nis, delay;
-  char *reason = 0;
-  struct passwd	*p;
-  char *shell, *home, **argv;
-
-  Debug ("Verify %s ...\n", greet->name);
-
-  p = getpwnam (greet->name);
-  endpwent();
-
-  if (!p || strlen (greet->name) == 0) {
-    LogError ("getpwnam() failed.\n");
-    bzero(greet->password, strlen(greet->password));
-    return 0;
-  }
-
-  ret = smp_check_user (SMP_LOGIN, greet->name, 0, 0, &userp, &pwtries,
-    &reason, &nis, &delay);
-  if (ret != SMP_RETIRED && userp->retired)
-    ret = userp->result = SMP_RETIRED;
-  Debug ("smp_check_user returns %d\n", ret);
-
-  switch (ret) {
-    case SMP_FAIL:
-      Debug ("Out of memory in smp_check_user\n");
-      goto smp_fail;
-    case SMP_EXTFAIL:
-      Debug ("SMP_EXTFAIL: %s", reason);
-      goto smp_fail;
-    case SMP_NOTAUTH:
-      Debug ("Not authorized\n");
-      goto smp_fail;
-    case SMP_TERMLOCK:
-      Debug ("Terminal is locked!\n");
-      goto smp_fail;
-    case SMP_ACCTLOCK:
-      Debug ("Account is locked\n");
-      goto smp_fail;
-    case SMP_RETIRED:
-      Debug ("Account is retired\n");
-      goto smp_fail;
-    case SMP_OVERRIDE:
-      Debug ("On override device ... proceeding\n");
-      break;
-    case SMP_NULLPW:
-      Debug ("NULL password entry\n");
-      if (!greet->allow_null_passwd) {
-        goto smp_fail;
-      }
-      break;
-    case SMP_BADUSER:
-      Debug ("User not found in protected password database\n");
-      goto smp_fail;
-    case SMP_PWREQ:
-      Debug ("Password change required\n");
-      goto smp_fail;
-    case SMP_HASPW:
-      break;
-    default:
-      Debug ("Unhandled smp_check_user return %d\n", ret);
-smp_fail:
-      sleep(delay);
-      smp_audit_fail (userp, 0);
-      bzero(greet->password, strlen(greet->password));
-      return 0;
-      break;
-  }
-
-  if (ret != SMP_NULLPW) {
-    /*
-     * If we require a password, check it.
-     */
-    ret = smp_check_pw (greet->password, userp, &reason);
-    switch (ret) {
-      case SMP_CANCHANGE:
-      case SMP_CANTCHANGE:
-      case SMP_OVERRIDE:
-        break;
-      default:
-        goto smp_fail;
-    }
-  }
-#else /* !USE_BSDAUTH && !USESECUREWARE */
+#else /* !USE_BSDAUTH */
 _X_INTERNAL
 int
 Verify (struct display *d, struct greet_info *greet, struct verify_info *verify)
@@ -330,6 +234,7 @@ Verify (struct display *d, struct greet_info *greet, struct verify_info *verify)
 	struct spwd	*sp;
 #  endif
 	char		*user_pass = NULL;
+	char		*crypted_pass = NULL;
 # endif
 # ifdef __OpenBSD__
 	char            *s;
@@ -465,7 +370,9 @@ Verify (struct display *d, struct greet_info *greet, struct verify_info *verify)
 #  if defined(ultrix) || defined(__ultrix__)
 	if (authenticate_user(p, greet->password, NULL) < 0)
 #  else
-	if (strcmp (crypt (greet->password, user_pass), user_pass))
+	crypted_pass = crypt (greet->password, user_pass);
+	if ((crypted_pass == NULL)
+	    || (strcmp (crypted_pass, user_pass)))
 #  endif
 	{
 		if(!greet->allow_null_passwd || strlen(p->pw_passwd) > 0) {

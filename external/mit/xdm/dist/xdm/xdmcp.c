@@ -46,9 +46,7 @@ from The Open Group.
 
 # include	"dm_socket.h"
 
-# ifndef X_NO_SYS_UN
-#  include	<sys/un.h>
-# endif
+# include	<sys/un.h>
 # include	<netdb.h>
 # include	<arpa/inet.h>
 
@@ -74,14 +72,11 @@ static void request_respond (struct sockaddr *from, int fromlen, int length, int
 static void send_accept (struct sockaddr *to, int tolen, CARD32 sessionID, ARRAY8Ptr authenticationName, ARRAY8Ptr authenticationData, ARRAY8Ptr authorizationName, ARRAY8Ptr authorizationData, int fd);
 static void send_alive (struct sockaddr *from, int fromlen, int length, int fd);
 static void send_decline (struct sockaddr *to, int tolen, ARRAY8Ptr authenticationName, ARRAY8Ptr authenticationData, ARRAY8Ptr status, int fd);
-static void send_failed (struct sockaddr *from, int fromlen, char *name, CARD32 sessionID, char *reason, int fd);
+static void send_failed (struct sockaddr *from, int fromlen, const char *name, CARD32 sessionID, const char *reason, int fd);
 static void send_refuse (struct sockaddr *from, int fromlen, CARD32 sessionID, int fd);
 static void send_unwilling (struct sockaddr *from, int fromlen, ARRAY8Ptr authenticationName, ARRAY8Ptr status, int fd);
 static void send_willing (struct sockaddr *from, int fromlen, ARRAY8Ptr authenticationName, ARRAY8Ptr status, int fd);
 
-# ifdef STREAMSCONN
-int	xdmcpFd = -1;
-# endif
 int	chooserFd = -1;
 # if defined(IPv6) && defined(AF_INET6)
 int	chooserFd6 = -1;
@@ -95,14 +90,6 @@ int	WellKnownSocketsMax;
 void
 DestroyWellKnownSockets (void)
 {
-# ifdef STREAMSCONN
-    if (xdmcpFd != -1)
-    {
-	close (xdmcpFd);
-	FD_CLR(xdmcpFd, &WellKnownSocketsMask);
-	xdmcpFd = -1;
-    }
-# endif
     if (chooserFd != -1)
     {
 	close (chooserFd);
@@ -137,9 +124,6 @@ int
 AnyWellKnownSockets (void)
 {
     return
-# ifdef STREAMS_CONN
-      xdmcpFd != -1 ||
-# endif
 # if defined(IPv6) && defined(AF_INET6)
       chooserFd6 != -1 ||
 # endif
@@ -411,28 +395,14 @@ WaitForSomething (void)
 		nready, Rescan, ChildReady);
 	if (nready > 0)
 	{
-# ifdef STREAMSCONN
-	    if (xdmcpFd >= 0 && FD_ISSET (xdmcpFd, &reads))
-		ProcessRequestSocket (xdmcpFd);
-# endif
 	    if (chooserFd >= 0 && FD_ISSET (chooserFd, &reads))
 	    {
-# ifdef ISC
-	        if (!ChildReady) {
-	           WaitForSomething ();
-                } else
-# endif
 		ProcessChooserSocket (chooserFd);
 		FD_CLR(chooserFd, &reads);
 	    }
 # if defined(IPv6) && defined(AF_INET6)
 	    if (chooserFd6 >= 0 && FD_ISSET (chooserFd6, &reads))
 	    {
-#  ifdef ISC
-	        if (!ChildReady) {
-	           WaitForSomething ();
-                } else
-#  endif
 		ProcessChooserSocket (chooserFd6);
 		FD_CLR(chooserFd6, &reads);
 	    }
@@ -713,10 +683,6 @@ NetworkAddressToName(
 	    return name;
 	}
 # endif /* IPv6 */
-# ifdef DNET
-    case FamilyDECnet:
-	return NULL;
-# endif /* DNET */
     default:
 	return NULL;
     }
@@ -1300,7 +1266,7 @@ abort:
 void
 SendFailed (
     struct display  *d,
-    char	    *reason)
+    const char	    *reason)
 {
     Debug ("Display start failed, sending Failed\n");
     send_failed ((struct sockaddr *)(d->from), d->fromlen, d->name,
@@ -1311,9 +1277,9 @@ static void
 send_failed (
     struct sockaddr *from,
     int		    fromlen,
-    char	    *name,
+    const char	    *name,
     CARD32	    sessionID,
-    char	    *reason,
+    const char	    *reason,
     int		    fd)
 {
     static char	buf[256];
@@ -1416,7 +1382,7 @@ NetworkAddressToHostname (
 # else
 	    char dotted[20];
 # endif
-	    char *local_name = "";
+	    const char *local_name = "";
 	    int af_type;
 
 # if defined(IPv6) && defined(AF_INET6)
@@ -1496,106 +1462,10 @@ NetworkAddressToHostname (
 	    name = strdup (local_name);
 	    break;
 	}
-# ifdef DNET
-    case FamilyDECnet:
-	break;
-# endif /* DNET */
     default:
 	break;
     }
     return name;
 }
-
-# if 0
-static int
-HostnameToNetworkAddress (
-char	    *name,
-CARD16	    connectionType,
-ARRAY8Ptr   connectionAddress)
-{
-    switch (connectionType)
-    {
-    case FamilyInternet:
-	{
-	    struct hostent	*hostent;
-
-	    hostent = gethostbyname (name);
-	    if (!hostent)
-		return FALSE;
-	    if (!XdmcpAllocARRAY8 (connectionAddress, hostent->h_length))
-		return FALSE;
-	    memmove( connectionAddress->data, hostent->h_addr, hostent->h_length);
-	    return TRUE;
-	}
-#  ifdef DNET
-    case FamilyDECnet:
-	return FALSE;
-#  endif
-    }
-    return FALSE;
-}
-
-/*
- * converts a display name into a network address, using
- * the same rules as XOpenDisplay (algorithm cribbed from there)
- */
-static int
-NameToNetworkAddress(
-char	    *name,
-CARD16Ptr   connectionTypep,
-ARRAY8Ptr   connectionAddress,
-CARD16Ptr   displayNumber)
-{
-    char    *colon, *display_number;
-    char    hostname[1024];
-    int	    dnet = FALSE;
-    CARD16  number;
-    CARD16  connectionType;
-
-    colon = strchr(name, ':');
-    if (!colon)
-	return FALSE;
-    if (colon != name)
-    {
-	if (colon - name > sizeof (hostname))
-	    return FALSE;
-	strncpy (hostname, name, colon - name);
-	hostname[colon - name] = '\0';
-    }
-    else
-    {
-	strcpy (hostname, localHostname ());
-    }
-    if (colon[1] == ':')
-    {
-	dnet = TRUE;
-	colon++;
-    }
-#  ifndef DNETCONN
-    if (dnet)
-	return FALSE;
-#  endif
-    display_number = colon + 1;
-    while (*display_number && *display_number != '.')
-    {
-	if (!isascii (*display_number) || !isdigit(*display_number))
-	    return FALSE;
-    }
-    if (display_number == colon + 1)
-	return FALSE;
-    number = atoi (colon + 1);
-#  ifdef DNETCONN
-    if (dnet)
-	connectionType = FamilyDECnet;
-    else
-#  endif
-	connectionType = FamilyInternet;
-    if (!HostnameToNetworkAddress (hostname, connectionType, connectionAddress))
-	return FALSE;
-    *displayNumber = number;
-    *connectionTypep = connectionType;
-    return TRUE;
-}
-# endif
 
 #endif /* XDMCP */

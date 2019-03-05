@@ -41,13 +41,12 @@ from The Open Group.
 
 # include "dm_socket.h"
 
-# ifdef UNIXCONN
-#  ifndef X_NO_SYS_UN
-#   include <sys/un.h>		/* struct sockaddr_un */
-#  endif
+# if defined(IPv6) && defined(AF_INET6)
+#  include        <arpa/inet.h>
 # endif
-# ifdef DNETCONN
-#  include <netdnet/dn.h>		/* struct sockaddr_dn */
+
+# ifdef UNIXCONN
+#  include <sys/un.h>		/* struct sockaddr_un */
 # endif
 
 /* given an XdmcpNetaddr, returns the socket protocol family used,
@@ -55,12 +54,7 @@ from The Open Group.
 
 int NetaddrFamily(XdmcpNetaddr netaddrp)
 {
-# ifdef STREAMSCONN
-    short family = *(short *)netaddrp;
-    return family;
-# else
     return ((struct sockaddr *)netaddrp)->sa_family;
-# endif
 }
 
 
@@ -70,25 +64,20 @@ int NetaddrFamily(XdmcpNetaddr netaddrp)
 
 char * NetaddrPort(XdmcpNetaddr netaddrp, int *lenp)
 {
-# ifdef STREAMSCONN
-    *lenp = 2;
-    return netaddrp+2;
-# else
     switch (NetaddrFamily(netaddrp))
     {
     case AF_INET:
 	*lenp = 2;
 	return (char *)&(((struct sockaddr_in *)netaddrp)->sin_port);
-#  if defined(IPv6) && defined(AF_INET6)
+# if defined(IPv6) && defined(AF_INET6)
     case AF_INET6:
 	*lenp = 2;
 	return (char *)&(((struct sockaddr_in6 *)netaddrp)->sin6_port);
-#  endif
+# endif
     default:
 	*lenp = 0;
 	return NULL;
     }
-# endif
 }
 
 
@@ -97,21 +86,17 @@ char * NetaddrPort(XdmcpNetaddr netaddrp, int *lenp)
 
 char * NetaddrAddress(XdmcpNetaddr netaddrp, int *lenp)
 {
-# ifdef STREAMSCONN
-    *lenp = 4;
-    return netaddrp+4;
-# else
     switch (NetaddrFamily(netaddrp)) {
-#  ifdef UNIXCONN
+# ifdef UNIXCONN
     case AF_UNIX:
 	*lenp = strlen(((struct sockaddr_un *)netaddrp)->sun_path);
         return (char *) (((struct sockaddr_un *)netaddrp)->sun_path);
-#  endif
-#  ifdef TCPCONN
+# endif
+# ifdef TCPCONN
     case AF_INET:
         *lenp = sizeof (struct in_addr);
         return (char *) &(((struct sockaddr_in *)netaddrp)->sin_addr);
-#   if defined(IPv6) && defined(AF_INET6)
+#  if defined(IPv6) && defined(AF_INET6)
     case AF_INET6:
     {
 	struct in6_addr *a = &(((struct sockaddr_in6 *)netaddrp)->sin6_addr);
@@ -123,21 +108,15 @@ char * NetaddrAddress(XdmcpNetaddr netaddrp, int *lenp)
 	    return (char *) &(a->s6_addr);
 	}
     }
-#   endif
 #  endif
-#  ifdef DNETCONN
-    case AF_DECnet:
-        *lenp = sizeof (struct dn_naddr);
-        return (char *) &(((struct sockaddr_dn *)netaddrp)->sdn_add);
-#  endif
-#  ifdef AF_CHAOS
+# endif
+# ifdef AF_CHAOS
     case AF_CHAOS:
-#  endif
+# endif
     default:
 	*lenp = 0;
 	return NULL;
     }
-# endif /* STREAMSCONN else */
 }
 
 
@@ -152,53 +131,42 @@ int ConvertAddr (XdmcpNetaddr saddr, int *len, char **addr)
     if ((len == NULL) || (saddr == NULL))
         return -1;
     *addr = NetaddrAddress(saddr, len);
-# ifdef STREAMSCONN
-    /* kludge */
-    if (NetaddrFamily(saddr) == 2)
-	retval = FamilyInternet;
-# else
     switch (NetaddrFamily(saddr))
     {
-#  ifdef AF_UNSPEC
+# ifdef AF_UNSPEC
       case AF_UNSPEC:
 	retval = FamilyLocal;
 	break;
-#  endif
-#  ifdef AF_UNIX
-#   ifndef hpux
+# endif
+# ifdef AF_UNIX
+#  ifndef hpux
       case AF_UNIX:
         retval = FamilyLocal;
 	break;
-#   endif
 #  endif
-#  ifdef TCPCONN
+# endif
+# ifdef TCPCONN
       case AF_INET:
         retval = FamilyInternet;
 	break;
-#   if defined(IPv6) && defined(AF_INET6)
+#  if defined(IPv6) && defined(AF_INET6)
       case AF_INET6:
 	if (*len == sizeof(struct in_addr))
 	    retval = FamilyInternet;
 	else
 	    retval = FamilyInternet6;
 	break;
-#   endif
 #  endif
-#  ifdef DNETCONN
-      case AF_DECnet:
-        retval = FamilyDECnet;
-	break;
-#  endif
-#  ifdef AF_CHAOS
+# endif
+# ifdef AF_CHAOS
     case AF_CHAOS:
 	retval = FamilyChaos;
 	break;
-#  endif
+# endif
       default:
 	retval = -1;
         break;
     }
-# endif /* STREAMSCONN else */
     Debug ("ConvertAddr returning %d for family %d\n", retval,
 	   NetaddrFamily(saddr));
     return retval;

@@ -128,12 +128,8 @@ int	choiceTimeout;	/* chooser choice timeout */
 #ifndef DEF_RANDOM_FILE
 # define DEF_RANDOM_FILE "/dev/mem"
 #endif
-#ifdef __SCO__
-# define DEF_PRNGD_SOCKET "/etc/egd-pool"
-#else
-# ifndef DEF_PRNGD_SOCKET
-#  define DEF_PRNGD_SOCKET "/tmp/entropy"
-# endif
+#ifndef DEF_PRNGD_SOCKET
+# define DEF_PRNGD_SOCKET "/tmp/entropy"
 #endif
 #ifndef DEF_PRNGD_PORT
 # define DEF_PRNGD_PORT "0"
@@ -145,10 +141,10 @@ int	choiceTimeout;	/* chooser choice timeout */
 #define DEF_UDP_PORT	"177"	    /* registered XDMCP port, dont change */
 
 struct dmResources {
-	char	*name, *class;
-	int	type;
-	char	**dm_value;
-	char	*default_value;
+	const char	*name, *class;
+	int		type;
+	char		**dm_value;
+	const char	*default_value;
 } DmResources[] = {
 { "servers",	"Servers", 	DM_STRING,	&servers,
 				DEF_SERVER_LINE} ,
@@ -203,10 +199,10 @@ struct dmResources {
 #define boffset(f)	XtOffsetOf(struct display, f)
 
 struct displayResource {
-	char	*name, *class;
-	int	type;
-	int	offset;
-	char	*default_value;
+	const char	*name, *class;
+	int		type;
+	int		offset;
+	const char	*default_value;
 };
 
 /* resources for managing the server */
@@ -289,15 +285,16 @@ XrmDatabase	DmResourceDB;
 
 static void
 GetResource (
-    char    *name,
-    char    *class,
-    int	    valueType,
-    char    **valuep,
-    char    *default_value)
+    const char    *name,
+    const char    *class,
+    int            valueType,
+    char         **valuep,
+    const char    *default_value)
 {
     char	*type;
     XrmValue	value;
-    char	*string, *new_string;
+    const char	*string;
+    char	*new_string;
     char	str_buf[50];
     int	len;
 

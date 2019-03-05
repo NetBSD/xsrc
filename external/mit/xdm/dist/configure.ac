@@ -22,8 +22,8 @@ dnl Process this file with autoconf to create configure.
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([xdm], [1.1.11],
-        [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg], [xdm])
+AC_INIT([xdm], [1.1.12],
+        [https://gitlab.freedesktop.org/xorg/app/xdm/issues], [xdm])
 AC_USE_SYSTEM_EXTENSIONS
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_MACRO_DIR([m4])
@@ -31,7 +31,6 @@ AC_CONFIG_HEADERS(config.h)
 
 # Initialize Automake
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
-AM_MAINTAINER_MODE
 
 # Initialize libtool
 AC_DISABLE_STATIC
@@ -95,9 +94,6 @@ AC_CHECK_DECL(key_setnet,
 #include <rpc/key_prot.h>
 ])
 
-# Checks for typedefs, structures, and compiler characteristics.
-AC_TYPE_SIGNAL
-
 # Check for system library functions
 # Required system libraries have been searched for and are listed in $LIBS
 AC_FUNC_FORK
@@ -120,6 +116,10 @@ AC_ARG_WITH(pam, AS_HELP_STRING([--with-pam],
 	[Use PAM for authentication (default is autodetected)]),
 	[USE_PAM=$withval], [USE_PAM=auto])
 if test "x$USE_PAM" != "xno" ; then
+    AC_CHECK_HEADERS([security/pam_appl.h pam/pam_appl.h],
+                     [found=yes ; break ;], [found=no])
+    AS_IF([test "x$USE_PAM" = "xyes" -a  "x$found" = "xno"],
+	[AC_MSG_ERROR([PAM support requested, but we could not find the pam headers.])])
     AC_SEARCH_LIBS([pam_open_session], [pam],
 	[AC_CHECK_FUNC([pam_open_session],
 	    [AC_DEFINE(USE_PAM,1,[Use PAM for authentication])]
@@ -146,6 +146,7 @@ if test "x$USE_SELINUX" != "xno" ; then
 fi
 
 # Check whether to install systemd unit files, as suggested in daemon(7).
+# When a full path is specified, this does not require systemd installed.
 AC_ARG_WITH([systemdsystemunitdir], AS_HELP_STRING([--with-systemdsystemunitdir=DIR],
 	[Directory for systemd service files (default from the System and Service Manager)]),,
 	[with_systemdsystemunitdir=auto])
@@ -165,6 +166,21 @@ AS_IF([test "x$with_systemdsystemunitdir" != "xno"], [
 	AC_SUBST([systemdsystemunitdir], [$with_systemdsystemunitdir])
 ])
 AM_CONDITIONAL(HAVE_SYSTEMD, [test "x$with_systemdsystemunitdir" != "xno"])
+
+# Check whether to enable systemd startup notification.
+# This requires libsystemd-daemon.
+AC_ARG_WITH([systemd-daemon], AS_HELP_STRING([--with-systemd-daemon],
+	[Add support for systemd startup notification (default is autodetected)]),
+	[USE_SYSTEMD_DAEMON=$withval], [USE_SYSTEMD_DAEMON=auto])
+AS_IF([test "x$USE_SYSTEMD_DAEMON" != "xno"], [
+    PKG_CHECK_MODULES([SYSTEMD_DAEMON], [libsystemd-daemon],
+	[AC_DEFINE(USE_SYSTEMD_DAEMON,1,[Use systemd startup notification])],
+	[AS_IF([test "x$USE_SYSTEMD_DAEMON" = "xyes"],
+	    [AC_MSG_ERROR([systemd startup notification support requested, but libsystemd-daemon not found.])]
+	)]
+    )
+])
+AM_CONDITIONAL(USE_SYSTEMD_DAEMON, [test "x$USE_SYSTEMD_DAEMON" != "xno"])
 
 # FIXME: Find better test for which OS'es use su -m  - for now, just try to
 # mirror the Imakefile setting of:
@@ -263,44 +279,44 @@ AC_ARG_WITH(config-type,
 	[SERVERSTYPE="$withval"], [SERVERSTYPE="ws"])
 AC_SUBST(SERVERSTYPE)
 
-# Ideally we'd just pull out UTMP_FILE & WTMP_FILE from <utmp.h>
-# but that's not easy to do in autoconf
 AC_ARG_WITH(utmp_file,
 	AS_HELP_STRING([--with-utmp-file=<pathname>],
-	 [specify file to pass to sessreg -u for current logins]),
+	 [specify file to pass to sessreg -u for current logins])
+AS_HELP_STRING([--without-utmp-file],
+	 [specify passing "none" to sessreg -u to not record logins in utmp]),
 	[UTMP_FILE="$withval"])
 if test "x$UTMP_FILE" = "xyes" ; then
-	AC_MSG_ERROR([path was not specified to --with-utmp-file])
-fi
-if test "x$UTMP_FILE" = "x" ; then
-	for UTMP_FILE in /var/adm/utmpx /var/run/utmp /var/log/utmp /var/adm/utmp /usr/adm/utmp /etc/utmp ; do
-		AC_CHECK_FILE([$UTMP_FILE], [break], [UTMP_FILE=""])
-	done
-	if test "x$UTMP_FILE" = "x" ; then
-		UTMP_FILE="/var/run/utmp"
-	fi
+	UTMP_FILE=""
+elif test "x$UTMP_FILE" = "xno" ; then
+	UTMP_FILE="none"
 fi
 AC_MSG_CHECKING([for path to file listing current logins for sessreg])
-AC_MSG_RESULT([$UTMP_FILE])
+if test "x$UTMP_FILE" = "x" ; then
+	AC_MSG_RESULT([use sessreg default])
+else
+	AC_MSG_RESULT([$UTMP_FILE])
+fi
+AM_CONDITIONAL(SET_UTMP_FILE, test x$UTMP_FILE != x)
 AC_SUBST(UTMP_FILE)
 
 AC_ARG_WITH(wtmp_file,
 	AS_HELP_STRING([--with-wtmp-file=<pathname>],
-	 [specify file to pass to sessreg -w for login history]),
+	 [specify file to pass to sessreg -w for login history])
+AS_HELP_STRING([--without-wtmp-file],
+	 [specify passing "none" to sessreg -w to not record logins in wtmp]),
 	[WTMP_FILE="$withval"])
 if test "x$WTMP_FILE" = "xyes" ; then
-	AC_MSG_ERROR([path was not specified to --with-wtmp-file])
-fi
-if test "x$WTMP_FILE" = "x" ; then
-	for WTMP_FILE in /var/adm/wtmpx /var/log/wtmp /var/adm/wtmp /usr/adm/wtmp /etc/wtmp ; do
-		AC_CHECK_FILE([$WTMP_FILE], [break], [WTMP_FILE=""])
-	done
-	if test "x$WTMP_FILE" = "x" ; then
-		WTMP_FILE="/var/log/wtmp"
-	fi
+	WTMP_FILE=""
+elif test "x$WTMP_FILE" = "xno" ; then
+	WTMP_FILE="none"
 fi
 AC_MSG_CHECKING([for path to file listing login history for sessreg])
-AC_MSG_RESULT([$WTMP_FILE])
+if test "x$WTMP_FILE" = "x" ; then
+	AC_MSG_RESULT([use sessreg default])
+else
+	AC_MSG_RESULT([$WTMP_FILE])
+fi
+AM_CONDITIONAL(SET_WTMP_FILE, test x$WTMP_FILE != x)
 AC_SUBST(WTMP_FILE)
 
 case $host_os in
@@ -312,7 +328,7 @@ AC_SUBST(SHELL_CMD)
 
 # Checks for pkg-config packages
 
-PKG_CHECK_MODULES(XDM, xmu x11 xau)
+PKG_CHECK_MODULES(XDM, [xmu x11 xau xproto >= 7.0.17])
 
 PKG_CHECK_EXISTS(xinerama, [
 	AC_DEFINE([USE_XINERAMA], 1,
@@ -329,10 +345,10 @@ AC_ARG_WITH(xft,
 	AS_HELP_STRING([--with-xft],
 			[Use Xft to draw text (default is YES if installed)]),
 	[USE_XFT="$withval"],
-	PKG_CHECK_EXISTS(xft, [USE_XFT="yes"], [USE_XFT="no"]))
+	PKG_CHECK_EXISTS(xft xrender, [USE_XFT="yes"], [USE_XFT="no"]))
 
 if test "x$USE_XFT" = "xyes" ; then
-	PKG_CHECK_MODULES(XFT, xft)
+	PKG_CHECK_MODULES(XFT, xft xrender)
 	GREETER_CFLAGS="$GREETER_CFLAGS $XFT_CFLAGS"
 	GREETER_LIBS="$GREETER_LIBS $XFT_LIBS"
 	AC_DEFINE([USE_XFT], 1,
@@ -383,7 +399,7 @@ PKG_CHECK_MODULES(AUTH, xau)
 # Greeter
 #
 
-PKG_CHECK_MODULES(XDMGREET, xt x11 xext)
+PKG_CHECK_MODULES(XDMGREET, xt >= 1.0 x11 xext)
 
 GREETERLIB="${XDMLIBDIR}/libXdmGreet.so"
 AX_DEFINE_DIR(DEF_GREETER_LIB, GREETERLIB, [Location of Xdm Greeter library])

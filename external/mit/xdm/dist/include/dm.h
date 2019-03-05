@@ -78,10 +78,6 @@ from The Open Group.
 #   include <sys/wait.h>
 #  else
 #   define _POSIX_SOURCE
-#   ifdef __SCO__
-#    include <sys/procset.h>
-#    include <sys/siginfo.h>
-#   endif
 #   include <sys/wait.h>
 #   undef _POSIX_SOURCE
 #  endif
@@ -105,7 +101,13 @@ typedef union wait	waitType;
 # endif /* X_NOT_POSIX */
 
 # ifdef USE_PAM
-#  include <security/pam_appl.h>
+#  ifdef HAVE_SECURITY_PAM_APPL_H
+#   include <security/pam_appl.h>
+#  elif defined(HAVE_PAM_PAM_APPL_H)
+#   include <pam/pam_appl.h>
+#  else
+#   error "Unable to determine pam headers"
+#  endif
 # endif
 
 # ifdef CSRG_BASED
@@ -370,7 +372,7 @@ extern void ForgetIndirectClient ( ARRAY8Ptr clientAddress, CARD16 connectionTyp
 extern void ProcessChooserSocket (int fd);
 
 /* in chooser.c */
-extern void RunChooser (struct display *d);
+extern void RunChooser (struct display *d) _X_NORETURN;
 
 /* in daemon.c */
 extern void BecomeDaemon (void);
@@ -400,9 +402,6 @@ extern int NetaddrFamily (XdmcpNetaddr netaddrp);
 extern int addressEqual (XdmcpNetaddr a1, int len1, XdmcpNetaddr a2, int len2);
 
 /* in policy.c */
-# if 0
-extern ARRAY8Ptr Accept (/* struct sockaddr *from, int fromlen, CARD16 displayNumber */);
-# endif
 extern ARRAY8Ptr ChooseAuthentication (ARRAYofARRAY8Ptr authenticationNames);
 extern int CheckAuthentication (struct protoDisplay *pdpy, ARRAY8Ptr displayID, ARRAY8Ptr name, ARRAY8Ptr data);
 extern int SelectAuthorizationTypeIndex (ARRAY8Ptr authenticationName, ARRAYofARRAY8Ptr authorizationNames);
@@ -434,21 +433,21 @@ extern int source (char **environ, char *file);
 extern void ClearCloseOnFork (int fd);
 extern void DeleteXloginResources (struct display *d, Display *dpy);
 extern void LoadXloginResources (struct display *d);
-extern void ManageSession (struct display *d);
+extern void ManageSession (struct display *d) _X_NORETURN;
 extern void SecureDisplay (struct display *d, Display *dpy);
-extern void SessionExit (struct display *d, int status, int removeAuth);
-extern void SessionPingFailed (struct display *d);
+extern void SessionExit (struct display *d, int status, int removeAuth) _X_NORETURN;
+extern void SessionPingFailed (struct display *d) _X_NORETURN;
 extern void SetupDisplay (struct display *d);
 extern void UnsecureDisplay (struct display *d, Display *dpy);
 extern void execute(char **argv, char **environ);
 
 /* server.c */
-extern char *_SysErrorMsg (int n);
+extern const char *_SysErrorMsg (int n);
 extern int StartServer (struct display *d);
 extern int WaitForServer (struct display *d);
 extern void ResetServer (struct display *d);
 
-/* socket.c or streams.c */
+/* socket.c */
 extern int GetChooserAddr (char *addr, int *lenp);
 extern void CreateWellKnownSockets (void);
 extern void UpdateListenSockets (void);
@@ -462,10 +461,10 @@ extern int Asprintf(char ** ret, const char *restrict format, ...)
     _X_ATTRIBUTE_PRINTF(2,3);
 # endif
 extern char *localHostname (void);
-extern char **parseArgs (char **argv, char *string);
-extern char **setEnv (char **e, char *name, char *value);
+extern char **parseArgs (char **argv, const char *string);
+extern char **setEnv (char **e, const char *name, const char *value);
 extern char **putEnv(const char *string, char **env);
-extern char *getEnv (char **e, char *name);
+extern char *getEnv (char **e, const char *name);
 extern void CleanUpChild (void);
 extern void freeArgs (char **argv);
 extern void freeEnv (char **env);
@@ -478,7 +477,7 @@ extern int Verify (struct display *d, struct greet_info *greet, struct verify_in
 extern char *NetworkAddressToHostname (CARD16 connectionType, ARRAY8Ptr connectionAddress);
 extern int AnyWellKnownSockets (void);
 extern void DestroyWellKnownSockets (void);
-extern void SendFailed (struct display *d, char *reason);
+extern void SendFailed (struct display *d, const char *reason);
 extern void StopDisplay (struct display *d);
 extern void WaitForChild (void);
 extern void WaitForSomething (void);
@@ -495,10 +494,8 @@ extern void ProcessRequestSocket(int fd);
 
 # include <stdlib.h>
 
-# define SIGVAL RETSIGTYPE
-
-# if defined(X_NOT_POSIX) || defined(__UNIXOS2__) || defined(__NetBSD__) && defined(__sparc__)
-#  if defined(SYSV) || defined(__UNIXOS2__)
+# if defined(X_NOT_POSIX) || defined(__NetBSD__) && defined(__sparc__)
+#  if defined(SYSV)
 #   define SIGNALS_RESET_WHEN_CAUGHT
 #   define UNRELIABLE_SIGNALS
 #  endif
@@ -511,8 +508,8 @@ extern void ProcessRequestSocket(int fd);
 #  define Jmp_buf		sigjmp_buf
 # endif
 
-typedef SIGVAL (*SIGFUNC)(int);
+typedef void (*SIGFUNC)(int);
 
-SIGVAL (*Signal(int, SIGFUNC Handler))(int);
+void (*Signal(int, SIGFUNC Handler))(int);
 
 #endif /* _DM_H_ */

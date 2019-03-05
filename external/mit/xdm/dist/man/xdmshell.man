@@ -44,7 +44,7 @@
 .\" DEALINGS IN THE SOFTWARE.
 .\"
 .\"
-.TH XDMSHELL __appmansuffix__ __xorgversion__
+.TH XDMSHELL __adminmansuffix__ __xorgversion__
 .SH NAME
 xdmshell \- shell for starting xdm on login
 .SH SYNOPSIS
@@ -66,7 +66,7 @@ disable logins on that line until somebody types the following as root:
 .RE
 .LP
 On some platforms, one alternative is to disable logins on the console
-and always run \fIxdm\fP(__appmansuffix__) from \fI/etc/inittab\fP.
+and always run \fIxdm\fP(__adminmansuffix__) from \fI/etc/inittab\fP.
 .LP
 Another approach is to set up an account whose shell is the \fIxdmshell\fP
 program found in the xdm distribution.  This program is not installed by
@@ -104,5 +104,5 @@ login to the console directly.  Whether or not this is desirable depends on
 the particular site.
 .SH "SEE ALSO"
 .IR X (__miscmansuffix__),
-.IR xdm (__appmansuffix__),
+.IR xdm (__adminmansuffix__),
 .IR xinit (__appmansuffix__)
