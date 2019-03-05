@@ -1,3 +1,128 @@
+commit affd8b212f7ddeaf3ebfcbfca87ff4a9d4ef3d6a
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Fri Feb 15 16:21:00 2019 -0800
+
+    Version bumped to 1.5.0
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 0d36f238a32a6eac3eb7c2f44c3326d6bac84cb0
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Jan 28 20:41:34 2019 -0800
+
+    Eliminate log message parameter type compilation warnings
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 37023cd1d0ddfb61a7e607c8b50fbb14c30cd8ae
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Jan 28 20:23:20 2019 -0800
+
+    Changing result parameter type for ScreenWakeupHandlerProcPtr
+    
+    For ABI_VIDEODRV_VERSION >= 23, it was changed to int from unsigned
+    long.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+    Reviewed-by: Matt Turner <mattst88@gmail.com>
+
+commit f144b07e0b46fb35d401b1deeec8b3b45d697372
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Dec 25 07:39:46 2018 -0600
+
+    Eliminate set but not used variable compilation warnings
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 790b72944e18dfd637e057cde88fc74e3449c246
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Dec 25 07:38:18 2018 -0600
+
+    Eliminate unused variable compilation warning
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 7ebcfcfae6c947a968611ce112fe781ecc34b7f2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 7 19:14:00 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b753fcfa21085eb87d219a84011eeb16e8bfcd7d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 18 16:34:01 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit dfe3f54292b3fd37230fb017c80e91038eedfbb5
+Author: Emil Velikov <emil.velikov@collabora.com>
+Date:   Mon Jul 17 12:07:43 2017 +0100
+
+    xf86-video-tdfx: remove the GlxSetVisualConfigs stub and friends
+    
+    The function was an empty since 2008 at least. Remove it alongside the
+    unused GLX visuals code.
+    
+    With this all the GL/GLX dependencies in the driver are gone.
+    
+    Cc: Guillem Jover <guillem@hadrons.org>
+    Cc: Adam Jackson <ajax@redhat.com>
+    Signed-off-by: Emil Velikov <emil.velikov@collabora.com>
+
+commit 2ddfad3b4b888d26c9878b0a95d57a9912a5c006
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:22 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit 9ba9c1fbb7905f44dee2c0b9eb4760505b4bac8a
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 951b08c8f8e3f305e575935600728e2fb3be09da
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
+commit c9b6d179fb3cded181fa99c3603e332e3433200e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jun 1 21:03:14 2014 -0700
+
+    autogen.sh: Honor NOCONFIGURE=1
+    
+    See http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit be42d3f24802f76f2ec8953e7b3fb8107ca7b755
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jun 1 21:03:13 2014 -0700
+
+    configure: Drop AM_MAINTAINER_MODE
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 4dd4a5da0697d33df0f456ccf224d5be945b7aab
 Author: Matt Turner <mattst88@gmail.com>
 Date:   Tue Jan 17 14:48:21 2017 -0800

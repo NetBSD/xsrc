@@ -26,7 +26,6 @@
 #include "sarea.h"
 #define _XF86DRI_SERVER_
 #include "dri.h"
-#include "GL/glxint.h"
 #include "tdfx_dri.h"
 #include "tdfx_dripriv.h"
 #endif
@@ -276,9 +275,6 @@ typedef struct _TDFXRec {
   Bool directRenderingEnabled;
   DRIInfoPtr pDRIInfo;
   int drmSubFD;
-  int numVisualConfigs;
-  __GLXvisualConfig* pVisualConfigs;
-  TDFXConfigPrivPtr pVisualConfigsPriv;
   TDFXRegRec DRContextRegs;
 #endif
   /* State for video */
