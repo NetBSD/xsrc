@@ -8,8 +8,6 @@
 #include "xf86Pci.h"
 #include "fb.h"
 #include "miline.h"
-#include "GL/glxint.h"
-#include "GL/glxtokens.h"
 #include "tdfx.h"
 #include "tdfx_dri.h"
 #include "tdfx_dripriv.h"
@@ -34,211 +32,6 @@ static void TDFXDRIMoveBuffers(WindowPtr pParent, DDXPointRec ptOldOrg,
 			       RegionPtr prgnSrc, CARD32 index);
 static void TDFXDRITransitionTo2d(ScreenPtr pScreen);
 static void TDFXDRITransitionTo3d(ScreenPtr pScreen);
-
-static Bool
-TDFXInitVisualConfigs(ScreenPtr pScreen)
-{
-  ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
-  TDFXPtr pTDFX = TDFXPTR(pScrn);
-  int numConfigs = 0;
-  __GLXvisualConfig *pConfigs = 0;
-  TDFXConfigPrivPtr pTDFXConfigs = 0;
-  TDFXConfigPrivPtr *pTDFXConfigPtrs = 0;
-  int i, db, stencil, accum, depth;
-
-  switch (pScrn->bitsPerPixel) {
-  case 8:
-  case 16:
-    numConfigs = 16;
-
-    if (!(pConfigs = (__GLXvisualConfig*)calloc(sizeof(__GLXvisualConfig),
-						   numConfigs))) {
-      return FALSE;
-    }
-    if (!(pTDFXConfigs = (TDFXConfigPrivPtr)calloc(sizeof(TDFXConfigPrivRec),
-						     numConfigs))) {
-      free(pConfigs);
-      return FALSE;
-    }
-    if (!(pTDFXConfigPtrs = (TDFXConfigPrivPtr*)calloc(sizeof(TDFXConfigPrivPtr),
-							 numConfigs))) {
-      free(pConfigs);
-      free(pTDFXConfigs);
-      return FALSE;
-    }
-    for (i=0; i<numConfigs; i++)
-      pTDFXConfigPtrs[i] = &pTDFXConfigs[i];
-
-    i=0;
-    depth=1;
-    for (db = 0; db <=1; db++) {
-      for (depth = 0; depth<=1; depth++) {
-	for (accum = 0; accum <= 1; accum++) {
-	  for (stencil = 0; stencil <= 1; stencil++) {
-	    pConfigs[i].vid = -1;
-	    pConfigs[i].class = -1;
-	    pConfigs[i].rgba = TRUE;
-	    pConfigs[i].redSize = 5;
-	    pConfigs[i].greenSize = 6;
-	    pConfigs[i].blueSize = 5;
-	    pConfigs[i].redMask = 0x0000F800;
-	    pConfigs[i].greenMask = 0x000007E0;
-	    pConfigs[i].blueMask = 0x0000001F;
-	    pConfigs[i].alphaMask = 0;
-	    if (accum) {
-	      pConfigs[i].accumRedSize = 16;
-	      pConfigs[i].accumGreenSize = 16;
-	      pConfigs[i].accumBlueSize = 16;
-	      pConfigs[i].accumAlphaSize = 0;
-	    } else {
-	      pConfigs[i].accumRedSize = 0;
-	      pConfigs[i].accumGreenSize = 0;
-	      pConfigs[i].accumBlueSize = 0;
-	      pConfigs[i].accumAlphaSize = 0;
-	    }
-	    if (db)
-	      pConfigs[i].doubleBuffer = TRUE;
-	    else
-	      pConfigs[i].doubleBuffer = FALSE;
-	    pConfigs[i].stereo = FALSE;
-	    pConfigs[i].bufferSize = 16;
-	    if (depth) {
-	      if (pTDFX->cpp>2)
-		pConfigs[i].depthSize = 24;
-	      else
-		pConfigs[i].depthSize = 16;
-	    } else {
-	      pConfigs[i].depthSize = 0;
-	    }
-	    if (stencil)
-	      pConfigs[i].stencilSize = 8;
-	    else
-	      pConfigs[i].stencilSize = 0;
-	    pConfigs[i].auxBuffers = 0;
-	    pConfigs[i].level = 0;
-	    if (stencil || accum)
-	      pConfigs[i].visualRating = GLX_SLOW_CONFIG;
-	    else
-	      pConfigs[i].visualRating = GLX_NONE;
-	    pConfigs[i].transparentPixel = GLX_NONE;
-	    pConfigs[i].transparentRed = 0;
-	    pConfigs[i].transparentGreen = 0;
-	    pConfigs[i].transparentBlue = 0;
-	    pConfigs[i].transparentAlpha = 0;
-	    pConfigs[i].transparentIndex = 0;
-	    i++;
-	  }
-	}
-      }
-    }
-    if (i!=numConfigs) {
-      xf86DrvMsg(pScreen->myNum, X_ERROR,
-                 "[dri] TDFXInitVisualConfigs: wrong number of visuals\n");
-      return FALSE;
-    }
-    break; /* 16bpp */
-
-  case 24:
-  case 32:
-    numConfigs = 8;
-
-    pConfigs = (__GLXvisualConfig*) calloc(sizeof(__GLXvisualConfig), numConfigs);
-    if (!pConfigs)
-      return FALSE;
-
-    pTDFXConfigs = (TDFXConfigPrivPtr) calloc(sizeof(TDFXConfigPrivRec), numConfigs);
-    if (!pTDFXConfigs) {
-      free(pConfigs);
-      return FALSE;
-    }
-
-    pTDFXConfigPtrs = (TDFXConfigPrivPtr *) calloc(sizeof(TDFXConfigPrivPtr), numConfigs);
-    if (!pTDFXConfigPtrs) {
-      free(pConfigs);
-      free(pTDFXConfigs);
-      return FALSE;
-    }
-
-    for (i = 0; i < numConfigs; i++)
-      pTDFXConfigPtrs[i] = &pTDFXConfigs[i];
-
-    i=0;
-    for (db = 0; db <=1; db++) {
-      for (depth = 0; depth<=1; depth++) {
-         /*stencil = depth;*/  /* Z and stencil share the same memory */
-	for (accum = 0; accum <= 1; accum++) {
-           /*for (stencil = 0; stencil <=1; stencil++) {*/
-           stencil = depth;
-	    pConfigs[i].vid = -1;
-	    pConfigs[i].class = -1;
-	    pConfigs[i].rgba = TRUE;
-	    pConfigs[i].redSize = 8;
-	    pConfigs[i].greenSize = 8;
-	    pConfigs[i].blueSize = 8;
-	    pConfigs[i].alphaSize = (pScrn->bitsPerPixel==32) ? 8 : 0;
-	    pConfigs[i].redMask   = 0x00ff0000;
-	    pConfigs[i].greenMask = 0x0000ff00;
-	    pConfigs[i].blueMask  = 0x000000ff;
-	    pConfigs[i].alphaMask = (pScrn->bitsPerPixel==32) ? 0xff000000 : 0;
-	    if (accum) {
-	      pConfigs[i].accumRedSize = 16;
-	      pConfigs[i].accumGreenSize = 16;
-	      pConfigs[i].accumBlueSize = 16;
-	      pConfigs[i].accumAlphaSize = (pScrn->bitsPerPixel==32) ? 16 : 0;
-	    } else {
-	      pConfigs[i].accumRedSize = 0;
-	      pConfigs[i].accumGreenSize = 0;
-	      pConfigs[i].accumBlueSize = 0;
-	      pConfigs[i].accumAlphaSize = 0;
-	    }
-	    if (db)
-	      pConfigs[i].doubleBuffer = TRUE;
-	    else
-	      pConfigs[i].doubleBuffer = FALSE;
-	    pConfigs[i].stereo = FALSE;
-	    pConfigs[i].bufferSize = (pScrn->bitsPerPixel==32) ? 32 : 24;
-	    if (depth) {
-	      if (pTDFX->cpp > 2)
-		pConfigs[i].depthSize = 24;
-	      else
-		pConfigs[i].depthSize = 16;
-	    } else {
-	      pConfigs[i].depthSize = 0;
-	    }
-	    if (stencil)
-	      pConfigs[i].stencilSize = 8;
-	    else
-	      pConfigs[i].stencilSize = 0;
-	    pConfigs[i].auxBuffers = 0;
-	    pConfigs[i].level = 0;
-	    if (accum)
-	      pConfigs[i].visualRating = GLX_SLOW_CONFIG;
-	    else
-	      pConfigs[i].visualRating = GLX_NONE;
-	    pConfigs[i].transparentPixel = GLX_NONE;
-	    pConfigs[i].transparentRed = 0;
-	    pConfigs[i].transparentGreen = 0;
-	    pConfigs[i].transparentBlue = 0;
-	    pConfigs[i].transparentAlpha = 0;
-	    pConfigs[i].transparentIndex = 0;
-	    i++;
-         /*}*/
-	}
-      }
-    }
-    if (i!=numConfigs) {
-      xf86DrvMsg(pScreen->myNum, X_ERROR,
-                 "[dri] TDFXInitVisualConfigs: wrong number of visuals\n");
-      return FALSE;
-    }
-    break;
-  }
-  pTDFX->numVisualConfigs = numConfigs;
-  pTDFX->pVisualConfigs = pConfigs;
-  pTDFX->pVisualConfigsPriv = pTDFXConfigs;
-  GlxSetVisualConfigs(numConfigs, pConfigs, (void**)pTDFXConfigPtrs);
-  return TRUE;
-}
 
 static void
 TDFXDoWakeupHandler(WAKEUPHANDLER_ARGS_DECL)
@@ -304,9 +97,8 @@ Bool TDFXDRIScreenInit(ScreenPtr pScreen)
     return FALSE;
   }
 
-    /* Check that the GLX, DRI, and DRM modules have been loaded by testing
+    /* Check that the DRI, and DRM modules have been loaded by testing
        for canonical symbols in each module. */
-    if (!xf86LoaderCheckSymbol("GlxSetVisualConfigs")) return FALSE;
     if (!xf86LoaderCheckSymbol("drmAvailable"))        return FALSE;
     if (!xf86LoaderCheckSymbol("DRIQueryVersion")) {
       xf86DrvMsg(pScreen->myNum, X_ERROR,
@@ -457,11 +249,6 @@ Bool TDFXDRIScreenInit(ScreenPtr pScreen)
   xf86DrvMsg(pScreen->myNum, X_INFO, "[drm] Registers = 0x%08x\n",
 	       pTDFXDRI->regs);
 
-  if (!(TDFXInitVisualConfigs(pScreen))) {
-    TDFXDRICloseScreen(pScreen);
-    xf86DrvMsg(pScreen->myNum, X_ERROR, "TDFXInitVisualConfigs failed, disabling DRI.\n");
-    return FALSE;
-  }
   xf86DrvMsg(pScrn->scrnIndex, X_INFO, "visual configs initialized\n" );
 
   return TRUE;
@@ -483,8 +270,6 @@ TDFXDRICloseScreen(ScreenPtr pScreen)
     DRIDestroyInfoRec(pTDFX->pDRIInfo);
     pTDFX->pDRIInfo=0;
   }
-  if (pTDFX->pVisualConfigs) free(pTDFX->pVisualConfigs);
-  if (pTDFX->pVisualConfigsPriv) free(pTDFX->pVisualConfigsPriv);
 }
 
 static Bool
