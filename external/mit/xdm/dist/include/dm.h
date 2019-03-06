@@ -101,6 +101,9 @@ typedef union wait	waitType;
 # endif /* X_NOT_POSIX */
 
 # ifdef USE_PAM
+#  ifdef HAVE_SECURITY_PAM_TYPES_H
+#   include <security/pam_types.h>
+#  endif
 #  ifdef HAVE_SECURITY_PAM_APPL_H
 #   include <security/pam_appl.h>
 #  elif defined(HAVE_PAM_PAM_APPL_H)
