@@ -32,11 +32,7 @@
  * %End-Header%
  */
 
-#ifdef _WIN32
-#define _WIN32_WINNT 0x0500
-#include <windows.h>
-#define UUID MYUUID
-#endif
+#include <sys/param.h>
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -81,14 +77,10 @@
 #include <sys/syscall.h>
 #endif
 
-#include "all-io.h"
 #include "uuidP.h"
-#include "uuidd.h"
 #include "randutils.h"
-#include "strutils.h"
-#include "c.h"
-#include "md5.h"
-#include "sha1.h"
+
+#define read_all(a,b,c)	read(a,b,c)
 
 #ifdef HAVE_TLS
 #define THREAD_LOCAL static __thread
@@ -98,30 +90,6 @@
 
 /* index with UUID_VARIANT_xxx and shift 5 bits */
 static unsigned char variant_bits[] = { 0x00, 0x04, 0x06, 0x07 };
-
-#ifdef _WIN32
-static void gettimeofday (struct timeval *tv, void *dummy)
-{
-	FILETIME	ftime;
-	uint64_t	n;
-
-	GetSystemTimeAsFileTime (&ftime);
-	n = (((uint64_t) ftime.dwHighDateTime << 32)
-	     + (uint64_t) ftime.dwLowDateTime);
-	if (n) {
-		n /= 10;
-		n -= ((369 * 365 + 89) * (uint64_t) 86400) * 1000000;
-	}
-
-	tv->tv_sec = n / 1000000;
-	tv->tv_usec = n % 1000000;
-}
-
-static int getuid (void)
-{
-	return 1;
-}
-#endif
 
 /*
  * Get the ethernet hardware address, if we can find it...
@@ -151,7 +119,7 @@ static int get_node_id(unsigned char *node_id)
  * just sizeof(struct ifreq)
  */
 #ifdef HAVE_SA_LEN
-#define ifreq_size(i) max(sizeof(struct ifreq),\
+#define ifreq_size(i) MAX(sizeof(struct ifreq),\
      sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
 #else
 #define ifreq_size(i) sizeof(struct ifreq)
@@ -172,7 +140,7 @@ static int get_node_id(unsigned char *node_id)
 	for (i = 0; i < n; i+= ifreq_size(*ifrp) ) {
 		ifrp = (struct ifreq *)((char *) ifc.ifc_buf+i);
 		strncpy(ifr.ifr_name, ifrp->ifr_name, IFNAMSIZ);
-#ifdef SIOCGIFHWADDR
+#if defined(SIOCGIFHWADDR) && !defined(__sun)
 		if (ioctl(sd, SIOCGIFHWADDR, &ifr) < 0)
 			continue;
 		a = (unsigned char *) &ifr.ifr_hwaddr.sa_data;
@@ -334,79 +302,7 @@ try_again:
 	return ret;
 }
 
-#if defined(HAVE_UUIDD) && defined(HAVE_SYS_UN_H)
-
-/*
- * Try using the uuidd daemon to generate the UUID
- *
- * Returns 0 on success, non-zero on failure.
- */
-static int get_uuid_via_daemon(int op, uuid_t out, int *num)
-{
-	char op_buf[64];
-	int op_len;
-	int s;
-	ssize_t ret;
-	int32_t reply_len = 0, expected = 16;
-	struct sockaddr_un srv_addr;
-
-	if (sizeof(UUIDD_SOCKET_PATH) > sizeof(srv_addr.sun_path))
-		return -1;
-
-	if ((s = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
-		return -1;
-
-	srv_addr.sun_family = AF_UNIX;
-	xstrncpy(srv_addr.sun_path, UUIDD_SOCKET_PATH, sizeof(srv_addr.sun_path));
-
-	if (connect(s, (const struct sockaddr *) &srv_addr,
-		    sizeof(struct sockaddr_un)) < 0)
-		goto fail;
-
-	op_buf[0] = op;
-	op_len = 1;
-	if (op == UUIDD_OP_BULK_TIME_UUID) {
-		memcpy(op_buf+1, num, sizeof(*num));
-		op_len += sizeof(*num);
-		expected += sizeof(*num);
-	}
-
-	ret = write(s, op_buf, op_len);
-	if (ret < 1)
-		goto fail;
-
-	ret = read_all(s, (char *) &reply_len, sizeof(reply_len));
-	if (ret < 0)
-		goto fail;
-
-	if (reply_len != expected)
-		goto fail;
-
-	ret = read_all(s, op_buf, reply_len);
-
-	if (op == UUIDD_OP_BULK_TIME_UUID)
-		memcpy(op_buf+16, num, sizeof(int));
-
-	memcpy(out, op_buf, 16);
-
-	close(s);
-	return ((ret == expected) ? 0 : -1);
-
-fail:
-	close(s);
-	return -1;
-}
-
-#else /* !defined(HAVE_UUIDD) && defined(HAVE_SYS_UN_H) */
-static int get_uuid_via_daemon(int op __attribute__((__unused__)),
-				uuid_t out __attribute__((__unused__)),
-				int *num __attribute__((__unused__)))
-{
-	return -1;
-}
-#endif
-
-int __uuid_generate_time(uuid_t out, int *num)
+static int __uuid_generate_time(uuid_t out, int *num)
 {
 	static unsigned char node_id[6];
 	static int has_init = 0;
@@ -444,44 +340,6 @@ int __uuid_generate_time(uuid_t out, int *num)
  * the UUID anyway, but returns -1. Otherwise, returns 0.
  */
 static int uuid_generate_time_generic(uuid_t out) {
-#ifdef HAVE_TLS
-	THREAD_LOCAL int		num = 0;
-	THREAD_LOCAL struct uuid	uu;
-	THREAD_LOCAL time_t		last_time = 0;
-	time_t				now;
-
-	if (num > 0) {
-		now = time(NULL);
-		if (now > last_time+1)
-			num = 0;
-	}
-	if (num <= 0) {
-		num = 1000;
-		if (get_uuid_via_daemon(UUIDD_OP_BULK_TIME_UUID,
-					out, &num) == 0) {
-			last_time = time(NULL);
-			uuid_unpack(out, &uu);
-			num--;
-			return 0;
-		}
-		num = 0;
-	}
-	if (num > 0) {
-		uu.time_low++;
-		if (uu.time_low == 0) {
-			uu.time_mid++;
-			if (uu.time_mid == 0)
-				uu.time_hi_and_version++;
-		}
-		num--;
-		uuid_pack(&uu, out);
-		return 0;
-	}
-#else
-	if (get_uuid_via_daemon(UUIDD_OP_TIME_UUID, out, 0) == 0)
-		return 0;
-#endif
-
 	return __uuid_generate_time(out, NULL);
 }
 
@@ -490,19 +348,12 @@ static int uuid_generate_time_generic(uuid_t out) {
  *
  * Discards return value from uuid_generate_time_generic()
  */
-void uuid_generate_time(uuid_t out)
+static void uuid_generate_time(uuid_t out)
 {
 	(void)uuid_generate_time_generic(out);
 }
 
-
-int uuid_generate_time_safe(uuid_t out)
-{
-	return uuid_generate_time_generic(out);
-}
-
-
-void __uuid_generate_random(uuid_t out, int *num)
+static void __uuid_generate_random(uuid_t out, int *num)
 {
 	uuid_t	buf;
 	struct uuid uu;
@@ -557,54 +408,3 @@ void uuid_generate(uuid_t out)
 	else
 		uuid_generate_time(out);
 }
-
-/*
- * Generate an MD5 hashed (predictable) UUID based on a well-known UUID
- * providing the namespace and an arbitrary binary string.
- */
-void uuid_generate_md5(uuid_t out, const uuid_t ns, const char *name, size_t len)
-{
-	UL_MD5_CTX ctx;
-	char hash[UL_MD5LENGTH];
-
-	ul_MD5Init(&ctx);
-	/* hash concatenation of well-known UUID with name */
-	ul_MD5Update(&ctx, ns, sizeof(uuid_t));
-	ul_MD5Update(&ctx, (const unsigned char *)name, len);
-
-	ul_MD5Final((unsigned char *)hash, &ctx);
-
-	memcpy(out, hash, sizeof(uuid_t));
-
-	out[6] &= ~(UUID_TYPE_MASK << UUID_TYPE_SHIFT);
-	out[6] |= (UUID_TYPE_DCE_MD5 << UUID_TYPE_SHIFT);
-
-	out[8] &= ~(UUID_VARIANT_MASK << UUID_VARIANT_SHIFT);
-	out[8] |= (variant_bits[UUID_VARIANT_DCE] << UUID_VARIANT_SHIFT);
-}
-
-/*
- * Generate a SHA1 hashed (predictable) UUID based on a well-known UUID
- * providing the namespace and an arbitrary binary string.
- */
-void uuid_generate_sha1(uuid_t out, const uuid_t ns, const char *name, size_t len)
-{
-	UL_SHA1_CTX ctx;
-	char hash[UL_SHA1LENGTH];
-
-	ul_SHA1Init(&ctx);
-	/* hash concatenation of well-known UUID with name */
-	ul_SHA1Update(&ctx, ns, sizeof(uuid_t));
-	ul_SHA1Update(&ctx, (const unsigned char *)name, len);
-
-	ul_SHA1Final((unsigned char *)hash, &ctx);
-
-	memcpy(out, hash, sizeof(uuid_t));
-
-	out[6] &= ~(UUID_TYPE_MASK << UUID_TYPE_SHIFT);
-	out[6] |= (UUID_TYPE_DCE_SHA1 << UUID_TYPE_SHIFT);
-
-	out[8] &= ~(UUID_VARIANT_MASK << UUID_VARIANT_SHIFT);
-	out[8] |= (variant_bits[UUID_VARIANT_DCE] << UUID_VARIANT_SHIFT);
-}
-

@@ -89,11 +89,7 @@ extern void uuid_copy(uuid_t dst, const uuid_t src);
 /* gen_uuid.c */
 extern void uuid_generate(uuid_t out);
 extern void uuid_generate_random(uuid_t out);
-extern void uuid_generate_time(uuid_t out);
 extern int uuid_generate_time_safe(uuid_t out);
-
-extern void uuid_generate_md5(uuid_t out, const uuid_t ns, const char *name, size_t len);
-extern void uuid_generate_sha1(uuid_t out, const uuid_t ns, const char *name, size_t len);
 
 /* isnull.c */
 extern int uuid_is_null(const uuid_t uu);
