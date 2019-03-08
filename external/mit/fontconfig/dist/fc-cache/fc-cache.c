@@ -96,6 +96,7 @@ static void
 usage (char *program, int error)
 {
     FILE *file = error ? stderr : stdout;
+#if HAVE_GETOPT_LONG
     fprintf (file, _("usage: %s [-EfqrsvVh] [--quick] [-y SYSROOT] [--error-on-no-fonts] [--force|--really-force] [--sysroot=SYSROOT] [--system-only] [--verbose] [--version] [--help] [dirs]\n"),
 	     program);
 #else
