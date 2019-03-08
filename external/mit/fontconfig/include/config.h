@@ -5,23 +5,31 @@
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
 /* The normal alignment of `double', in bytes. */
-#define ALIGNOF_DOUBLE 4
+#define ALIGNOF_DOUBLE 8
 
 /* The normal alignment of `void *', in bytes. */
-#define ALIGNOF_VOID_P 4
+#define ALIGNOF_VOID_P 8
 
 /* Use libxml2 instead of Expat */
 /* #undef ENABLE_LIBXML2 */
 
+#if 0
+/* Define to 1 if translation of program messages to the user's native
+   language is requested. */
+#define ENABLE_NLS 1
+#endif
+
+#if 0
 /* Additional font directories */
-#define FC_ADD_FONTS "yes"
+#define FC_ADD_FONTS "/usr/X11R7/lib/X11/fonts,/usr/pkg/share/fonts/urw,/usr/pkg/share/ghostscript/fonts,/usr/pkg/share/fonts/X11"
+#endif
 
 /* Architecture prefix to use for cache file names */
 /* #undef FC_ARCHITECTURE */
 
 #if 0
 /* System font directory */
-#define FC_DEFAULT_FONTS "/usr/share/fonts"
+#define FC_DEFAULT_FONTS "/usr/pkg/share/fonts/X11"
 #endif
 
 /* The type of len parameter of the gperf hash/lookup function */
@@ -35,6 +43,23 @@
    instead. Don't use 'offsetof (struct s, d[0])', as this doesn't work with
    MSVC and with C++ compilers. */
 #define FLEXIBLE_ARRAY_MEMBER /**/
+
+/* Gettext package */
+#define GETTEXT_PACKAGE "fontconfig"
+
+/* Define to 1 if you have the Mac OS X function CFLocaleCopyCurrent in the
+   CoreFoundation framework. */
+/* #undef HAVE_CFLOCALECOPYCURRENT */
+
+/* Define to 1 if you have the Mac OS X function CFPreferencesCopyAppValue in
+   the CoreFoundation framework. */
+/* #undef HAVE_CFPREFERENCESCOPYAPPVALUE */
+
+#if 0
+/* Define if the GNU dcgettext() function is already present or preinstalled.
+   */
+#define HAVE_DCGETTEXT 1
+#endif
 
 /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
    */
@@ -55,14 +80,11 @@
 /* Define to 1 if you have the `fstatvfs' function. */
 #define HAVE_FSTATVFS 1
 
-/* FT_Bitmap_Size structure includes y_ppem field */
-#define HAVE_FT_BITMAP_SIZE_Y_PPEM 1
+/* Define to 1 if you have the `FT_Done_MM_Var' function. */
+#define HAVE_FT_DONE_MM_VAR 1
 
 /* Define to 1 if you have the `FT_Get_BDF_Property' function. */
 #define HAVE_FT_GET_BDF_PROPERTY 1
-
-/* Define to 1 if you have the `FT_Get_Next_Char' function. */
-#define HAVE_FT_GET_NEXT_CHAR 1
 
 /* Define to 1 if you have the `FT_Get_PS_Font_Info' function. */
 #define HAVE_FT_GET_PS_FONT_INFO 1
@@ -72,9 +94,6 @@
 
 /* Define to 1 if you have the `FT_Has_PS_Glyph_Names' function. */
 #define HAVE_FT_HAS_PS_GLYPH_NAMES 1
-
-/* Define to 1 if you have the `FT_Select_Size' function. */
-#define HAVE_FT_SELECT_SIZE 1
 
 /* Define to 1 if you have the `getexecname' function. */
 /* #undef HAVE_GETEXECNAME */
@@ -90,6 +109,14 @@
 
 /* Define to 1 if you have the `getprogname' function. */
 #define HAVE_GETPROGNAME 1
+
+#if 0
+/* Define if the GNU gettext() function is already present or preinstalled. */
+#define HAVE_GETTEXT 1
+#endif
+
+/* Define if you have the iconv() function and it works. */
+#define HAVE_ICONV 1
 
 /* Have Intel __sync_* atomic primitives */
 #define HAVE_INTEL_ATOMIC_PRIMITIVES 1
@@ -163,6 +190,12 @@
 /* Define to 1 if you have the <stdlib.h> header file. */
 #define HAVE_STDLIB_H 1
 
+/* Define to 1 if you have the `strerror' function. */
+#define HAVE_STRERROR 1
+
+/* Define to 1 if you have the `strerror_r' function. */
+#define HAVE_STRERROR_R 1
+
 /* Define to 1 if you have the <strings.h> header file. */
 #define HAVE_STRINGS_H 1
 
@@ -216,12 +249,6 @@
 /* Define to 1 if you have the <sys/vfs.h> header file. */
 /* #undef HAVE_SYS_VFS_H */
 
-/* Define to 1 if `usLowerOpticalPointSize' is a member of `TT_OS2'. */
-#define HAVE_TT_OS2_USLOWEROPTICALPOINTSIZE 1
-
-/* Define to 1 if `usUpperOpticalPointSize' is a member of `TT_OS2'. */
-#define HAVE_TT_OS2_USUPPEROPTICALPOINTSIZE 1
-
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
@@ -247,13 +274,13 @@
 #define PACKAGE "fontconfig"
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "https://bugs.freedesktop.org/enter_bug.cgi?product=fontconfig"
+#define PACKAGE_BUGREPORT "https://gitlab.freedesktop.org/fontconfig/fontconfig/issues/new"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "fontconfig"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "fontconfig 2.12.4"
+#define PACKAGE_STRING "fontconfig 2.13.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "fontconfig"
@@ -262,7 +289,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.12.4"
+#define PACKAGE_VERSION "2.13.1"
 
 /* Define to necessary symbol if this constant uses a non-standard name on
    your system. */
@@ -284,7 +311,7 @@
 /* #undef SIZEOF_VOIDP */
 
 /* The size of `void *', as computed by sizeof. */
-#define SIZEOF_VOID_P 4
+#define SIZEOF_VOID_P 8
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -315,7 +342,7 @@
 
 
 /* Version number of package */
-#define VERSION "2.12.4"
+#define VERSION "2.13.1"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
