@@ -44,7 +44,8 @@
 	</refsynopsisdiv>
 	<refsect1><title>Description</title>
 	    <para>
-Creates an empty FcBlanks object.
+FcBlanks is deprecated.
+This function always returns NULL.
 	    </para>
 	</refsect1>
     </refentry>
@@ -94,7 +95,8 @@ Creates an empty FcBlanks object.
 	</refsynopsisdiv>
 	<refsect1><title>Description</title>
 	    <para>
-Destroys an FcBlanks object, freeing any associated memory.
+FcBlanks is deprecated.
+This function does nothing.
 	    </para>
 	</refsect1>
     </refentry>
@@ -145,8 +147,8 @@ Destroys an FcBlanks object, freeing any associated memory.
 	</refsynopsisdiv>
 	<refsect1><title>Description</title>
 	    <para>
-Adds a single character to an FcBlanks object, returning FcFalse
-if this process ran out of memory.
+FcBlanks is deprecated.
+This function always returns FALSE.
 	    </para>
 	</refsect1>
     </refentry>
@@ -197,8 +199,8 @@ if this process ran out of memory.
 	</refsynopsisdiv>
 	<refsect1><title>Description</title>
 	    <para>
-Returns whether the specified FcBlanks object contains the indicated Unicode
-value.
+FcBlanks is deprecated.
+This function always returns FALSE.
 	    </para>
 	</refsect1>
     </refentry>

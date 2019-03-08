@@ -1,3 +1,28 @@
+2017-11-07  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* m4/gettext.m4: New file, from gettext-0.19.8.1.
+	* m4/iconv.m4: New file, from gettext-0.19.8.1.
+	* m4/lib-ld.m4: New file, from gettext-0.19.8.1.
+	* m4/lib-link.m4: New file, from gettext-0.19.8.1.
+	* m4/lib-prefix.m4: New file, from gettext-0.19.8.1.
+	* m4/nls.m4: New file, from gettext-0.19.8.1.
+	* m4/po.m4: New file, from gettext-0.19.8.1.
+	* m4/progtest.m4: New file, from gettext-0.19.8.1.
+	* Makefile.am (EXTRA_DIST): Add config.rpath.
+	* configure.ac (AC_CONFIG_FILES): Add po/Makefile.in.
+
+2017-11-07  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* m4/gettext.m4: New file, from gettext-0.19.8.1.
+	* m4/iconv.m4: New file, from gettext-0.19.8.1.
+	* m4/lib-ld.m4: New file, from gettext-0.19.8.1.
+	* m4/lib-link.m4: New file, from gettext-0.19.8.1.
+	* m4/lib-prefix.m4: New file, from gettext-0.19.8.1.
+	* m4/nls.m4: New file, from gettext-0.19.8.1.
+	* m4/po.m4: New file, from gettext-0.19.8.1.
+	* m4/progtest.m4: New file, from gettext-0.19.8.1.
+	* configure.ac (AC_CONFIG_FILES): Add po/Makefile.in.
+
 commit 13087e38ace4f092667ab08617ced1d559f3d2e2
 Author: Akira TAGOH <akira@tagoh.org>
 Date:   Wed Apr 6 21:05:36 2016 +0900
@@ -11426,7 +11451,7 @@ commit e690fbb20ec41ef018a32ac01118a41103c01289
 Author: Behdad Esfahbod <behdad@behdad.org>
 Date:	Wed Aug 13 03:30:23 2008 -0400
 
-    Get rid of $Id: ChangeLog,v 1.1.1.5 2017/08/29 08:32:28 mrg Exp $ tags
+    Get rid of $Id: ChangeLog,v 1.1.1.6 2019/03/08 09:40:40 mrg Exp $ tags
 
  COPYING			 | 2 +-
  Makefile.am			 | 2 +-
