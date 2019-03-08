@@ -1,8 +1,4 @@
-if FREETYPE_PCF_LONG_FAMILY_NAMES
-check_SCRIPTS=run-test271.sh
-else
 check_SCRIPTS=run-test.sh
-endif
 TEST_EXTENSIONS = \
 	.sh \
 	$(NULL)
@@ -12,15 +8,25 @@ AM_TESTS_ENVIRONMENT= \
 	EXEEXT=${EXEEXT}; export EXEEXT; \
 	$(NULL)
 
+BUILT_SOURCES = $(builddir)/out.expected
+
 SH_LOG_COMPILER = sh
+TESTS=run-test.sh
+
+TESTDATA =			\
+	4x6.pcf			\
+	8x16.pcf		\
+	fonts.conf.in		\
+	test-90-synthetic.json	\
+	$(NULL)
 
 if FREETYPE_PCF_LONG_FAMILY_NAMES
-TESTS=run-test271.sh
+$(builddir)/out.expected: $(srcdir)/out.expected-long-family-names Makefile
+	cp $(srcdir)/out.expected-long-family-names $(builddir)/out.expected
 else
-TESTS=run-test.sh
+$(builddir)/out.expected: $(srcdir)/out.expected-no-long-family-names Makefile
+	cp $(srcdir)/out.expected-no-long-family-names $(builddir)/out.expected
 endif
-
-TESTDATA=4x6.pcf 8x16.pcf out.expected out271.expected fonts.conf.in
 
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)
 
@@ -54,8 +60,39 @@ check_PROGRAMS += test-bz96676
 test_bz96676_LDADD = $(top_builddir)/src/libfontconfig.la
 TESTS += test-bz96676
 
-EXTRA_DIST=run-test.sh run-test271.sh $(TESTDATA)
+check_PROGRAMS += test-name-parse
+test_name_parse_LDADD = $(top_builddir)/src/libfontconfig.la
+TESTS += test-name-parse
 
-CLEANFILES=
+if ENABLE_JSONC
+check_PROGRAMS += test-conf
+test_conf_CFLAGS = $(JSONC_CFLAGS)
+test_conf_LDADD = $(top_builddir)/src/libfontconfig.la $(JSONC_LIBS)
+TESTS += run-test-conf.sh
+endif
+
+check_PROGRAMS += test-bz106618
+test_bz106618_LDADD = $(top_builddir)/src/libfontconfig.la
+
+check_PROGRAMS += test-hash
+test_hash_CFLAGS = -I$(top_builddir) -I$(top_builddir)/src $(UUID_CFLAGS)
+test_hash_LDADD = $(UUID_LIBS)
+TESTS += test-hash
+
+check_PROGRAMS += test-bz106632
+test_bz106632_CFLAGS =					\
+	-I$(top_builddir)				\
+	-I$(top_builddir)/src				\
+	-I$(top_srcdir)					\
+	-I$(top_srcdir)/src				\
+	-DFONTFILE='"$(abs_top_srcdir)/test/4x6.pcf"'	\
+	-DHAVE_CONFIG_H					\
+	$(NULL)
+test_bz106632_LDADD = $(top_builddir)/src/libfontconfig.la
+TESTS += test-bz106632
+
+EXTRA_DIST=run-test.sh run-test-conf.sh $(TESTDATA) out.expected-long-family-names out.expected-no-long-family-names
+
+CLEANFILES=out out1 out2 fonts.conf out.expected
 
 -include $(top_srcdir)/git.mk

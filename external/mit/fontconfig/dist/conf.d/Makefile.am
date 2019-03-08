@@ -29,13 +29,14 @@ CONF_LINKS = \
 	10-hinting-$(PREFERRED_HINTING).conf	\
 	10-scale-bitmap-fonts.conf \
 	20-unhint-small-vera.conf \
-	30-urw-aliases.conf \
 	30-metric-aliases.conf \
 	40-nonlatin.conf \
+	45-generic.conf \
 	45-latin.conf \
 	49-sansserif.conf \
 	50-user.conf \
 	51-local.conf \
+	60-generic.conf \
 	60-latin.conf \
 	65-fonts-persian.conf \
 	65-nonlatin.conf \
@@ -68,13 +69,14 @@ template_DATA =				\
 	11-lcdfilter-light.conf		\
 	20-unhint-small-vera.conf	\
 	25-unhint-nonlatin.conf		\
-	30-urw-aliases.conf		\
 	30-metric-aliases.conf		\
 	40-nonlatin.conf		\
+	45-generic.conf			\
 	45-latin.conf			\
 	49-sansserif.conf		\
 	50-user.conf			\
 	51-local.conf			\
+	60-generic.conf			\
 	60-latin.conf			\
 	65-fonts-persian.conf		\
 	65-khmer.conf			\

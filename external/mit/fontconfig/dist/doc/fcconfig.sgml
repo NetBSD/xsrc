@@ -829,11 +829,8 @@ If <parameter>config</parameter> is NULL, the current configuration is used.
 	</refsynopsisdiv>
 	<refsect1><title>Description</title>
 	    <para>
-Returns the FcBlanks object associated with the given configuration, if no
-blanks were present in the configuration, this function will return 0.
-The returned FcBlanks object if not NULL, is valid as long as the owning
-FcConfig is alive.
-If <parameter>config</parameter> is NULL, the current configuration is used.
+FcBlanks is deprecated.
+This function always returns NULL.
 	    </para>
 	</refsect1>
     </refentry>
@@ -1593,6 +1590,66 @@ parse error, semantic error or allocation failure. Otherwise returns FcTrue.
    TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
    PERFORMANCE OF THIS SOFTWARE.
  -->
+    <refentry id="FcConfigParseAndLoadFromMemory">
+	<refmeta>
+	    <refentrytitle>FcConfigParseAndLoadFromMemory</refentrytitle>
+	    <manvolnum>3</manvolnum>
+	    <refmiscinfo class="software">Fontconfig &version;</refmiscinfo>
+	</refmeta>
+	<refnamediv>
+	    <refname>FcConfigParseAndLoadFromMemory</refname>
+	    <refpurpose>load a configuration from memory</refpurpose>
+	</refnamediv>
+	<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>
+#include &lt;fontconfig/fontconfig.h&gt;
+	</funcsynopsisinfo>
+	<funcprototype>
+	    <funcdef>FcBool <function>FcConfigParseAndLoadFromMemory</function></funcdef>
+		<paramdef>FcConfig *<parameter>config</parameter></paramdef>
+		<paramdef>const FcChar8 *<parameter>buffer</parameter></paramdef>
+		<paramdef>FcBool <parameter>complain</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+	</refsynopsisdiv>
+	<refsect1><title>Description</title>
+	    <para>
+Walks the configuration in 'memory' and constructs the internal representation
+in 'config'.  Any includes files referenced from within 'memory' will be loaded
+and dparsed.  If 'complain' is FcFalse, no warning will be displayed if
+'file' does not exist. Error and warning messages will be output to stderr.
+Returns FcFalse if fsome error occurred while loading the file, either a
+parse error, semantic error or allocation failure. Otherwise returns FcTrue.
+	    </para>
+	</refsect1>
+	<refsect1><title>Since</title>
+	    <para>version 2.12.5</para>
+	</refsect1>
+    </refentry>
+<!--
+   fontconfig/doc/func.sgml
+  
+   Copyright © 2003 Keith Packard
+  
+   Permission to use, copy, modify, distribute, and sell this software and its
+   documentation for any purpose is hereby granted without fee, provided that
+   the above copyright notice appear in all copies and that both that
+   copyright notice and this permission notice appear in supporting
+   documentation, and that the name of the author(s) not be used in
+   advertising or publicity pertaining to distribution of the software without
+   specific, written prior permission.  The authors make no
+   representations about the suitability of this software for any purpose.  It
+   is provided "as is" without express or implied warranty.
+  
+   THE AUTHOR(S) DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+   INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
+   EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+   CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
+   DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+   TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+   PERFORMANCE OF THIS SOFTWARE.
+ -->
     <refentry id="FcConfigGetSysRoot">
 	<refmeta>
 	    <refentrytitle>FcConfigGetSysRoot</refentrytitle>
@@ -1678,5 +1735,173 @@ this function calls FcConfigSetCurrent() internally.
 	</refsect1>
 	<refsect1><title>Since</title>
 	    <para>version 2.10.92</para>
+	</refsect1>
+    </refentry>
+<!--
+   fontconfig/doc/func.sgml
+  
+   Copyright © 2003 Keith Packard
+  
+   Permission to use, copy, modify, distribute, and sell this software and its
+   documentation for any purpose is hereby granted without fee, provided that
+   the above copyright notice appear in all copies and that both that
+   copyright notice and this permission notice appear in supporting
+   documentation, and that the name of the author(s) not be used in
+   advertising or publicity pertaining to distribution of the software without
+   specific, written prior permission.  The authors make no
+   representations about the suitability of this software for any purpose.  It
+   is provided "as is" without express or implied warranty.
+  
+   THE AUTHOR(S) DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+   INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
+   EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+   CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
+   DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+   TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+   PERFORMANCE OF THIS SOFTWARE.
+ -->
+    <refentry id="FcConfigFileInfoIterInit">
+	<refmeta>
+	    <refentrytitle>FcConfigFileInfoIterInit</refentrytitle>
+	    <manvolnum>3</manvolnum>
+	    <refmiscinfo class="software">Fontconfig &version;</refmiscinfo>
+	</refmeta>
+	<refnamediv>
+	    <refname>FcConfigFileInfoIterInit</refname>
+	    <refpurpose>Initialize the iterator</refpurpose>
+	</refnamediv>
+	<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>
+#include &lt;fontconfig/fontconfig.h&gt;
+	</funcsynopsisinfo>
+	<funcprototype>
+	    <funcdef>void <function>FcConfigFileInfoIterInit</function></funcdef>
+		<paramdef>FcConfig *<parameter>config</parameter></paramdef>
+		<paramdef>FcConfigFileInfoIter *<parameter>iter</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+	</refsynopsisdiv>
+	<refsect1><title>Description</title>
+	    <para>
+Initialize 'iter' with the first iterator in the config file information list.
+	    </para>
+	</refsect1>
+	<refsect1><title>Since</title>
+	    <para>version 2.12.91</para>
+	</refsect1>
+    </refentry>
+<!--
+   fontconfig/doc/func.sgml
+  
+   Copyright © 2003 Keith Packard
+  
+   Permission to use, copy, modify, distribute, and sell this software and its
+   documentation for any purpose is hereby granted without fee, provided that
+   the above copyright notice appear in all copies and that both that
+   copyright notice and this permission notice appear in supporting
+   documentation, and that the name of the author(s) not be used in
+   advertising or publicity pertaining to distribution of the software without
+   specific, written prior permission.  The authors make no
+   representations about the suitability of this software for any purpose.  It
+   is provided "as is" without express or implied warranty.
+  
+   THE AUTHOR(S) DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+   INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
+   EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+   CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
+   DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+   TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+   PERFORMANCE OF THIS SOFTWARE.
+ -->
+    <refentry id="FcConfigFileInfoIterNext">
+	<refmeta>
+	    <refentrytitle>FcConfigFileInfoIterNext</refentrytitle>
+	    <manvolnum>3</manvolnum>
+	    <refmiscinfo class="software">Fontconfig &version;</refmiscinfo>
+	</refmeta>
+	<refnamediv>
+	    <refname>FcConfigFileInfoIterNext</refname>
+	    <refpurpose>Set the iterator to point to the next list</refpurpose>
+	</refnamediv>
+	<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>
+#include &lt;fontconfig/fontconfig.h&gt;
+	</funcsynopsisinfo>
+	<funcprototype>
+	    <funcdef>FcBool <function>FcConfigFileInfoIterNext</function></funcdef>
+		<paramdef>FcConfig *<parameter>config</parameter></paramdef>
+		<paramdef>FcConfigFileInfoIter *<parameter>iter</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+	</refsynopsisdiv>
+	<refsect1><title>Description</title>
+	    <para>
+Set 'iter' to point to the next node in the config file information list.
+If there is no next node, FcFalse is returned.
+	    </para>
+	</refsect1>
+	<refsect1><title>Since</title>
+	    <para>version 2.12.91</para>
+	</refsect1>
+    </refentry>
+<!--
+   fontconfig/doc/func.sgml
+  
+   Copyright © 2003 Keith Packard
+  
+   Permission to use, copy, modify, distribute, and sell this software and its
+   documentation for any purpose is hereby granted without fee, provided that
+   the above copyright notice appear in all copies and that both that
+   copyright notice and this permission notice appear in supporting
+   documentation, and that the name of the author(s) not be used in
+   advertising or publicity pertaining to distribution of the software without
+   specific, written prior permission.  The authors make no
+   representations about the suitability of this software for any purpose.  It
+   is provided "as is" without express or implied warranty.
+  
+   THE AUTHOR(S) DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+   INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
+   EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+   CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
+   DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+   TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+   PERFORMANCE OF THIS SOFTWARE.
+ -->
+    <refentry id="FcConfigFileInfoIterGet">
+	<refmeta>
+	    <refentrytitle>FcConfigFileInfoIterGet</refentrytitle>
+	    <manvolnum>3</manvolnum>
+	    <refmiscinfo class="software">Fontconfig &version;</refmiscinfo>
+	</refmeta>
+	<refnamediv>
+	    <refname>FcConfigFileInfoIterGet</refname>
+	    <refpurpose>Obtain the configuration file information</refpurpose>
+	</refnamediv>
+	<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>
+#include &lt;fontconfig/fontconfig.h&gt;
+	</funcsynopsisinfo>
+	<funcprototype>
+	    <funcdef>FcBool <function>FcConfigFileInfoIterGet</function></funcdef>
+		<paramdef>FcConfig *<parameter>config</parameter></paramdef>
+		<paramdef>FcConfigFileInfoIter *<parameter>iter</parameter></paramdef>
+		<paramdef>FcChar8 **<parameter>name</parameter></paramdef>
+		<paramdef>FcChar8 **<parameter>description</parameter></paramdef>
+		<paramdef>FcBool *<parameter>enabled</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+	</refsynopsisdiv>
+	<refsect1><title>Description</title>
+	    <para>
+Obtain the filename, the description and the flag whether it is enabled or not
+for 'iter' where points to current configuration file information.
+If the iterator is invalid, FcFalse is returned.
+	    </para>
+	</refsect1>
+	<refsect1><title>Since</title>
+	    <para>version 2.12.91</para>
 	</refsect1>
     </refentry>
