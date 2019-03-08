@@ -65,6 +65,7 @@ typedef struct {
 
 	Bool dri2_flipping;
 	Bool present_flipping;
+	uint32_t vrr_prop_id;
 
 	/* Cache for DRM property type IDs for CRTC color management */
 	uint32_t cm_prop_ids[CM_NUM_PROPS];
@@ -89,6 +90,12 @@ struct drmmode_fb {
 	uint32_t handle;
 };
 
+enum drmmode_scanout_status {
+	DRMMODE_SCANOUT_OK,
+	DRMMODE_SCANOUT_FLIP_FAILED = 1u << 0,
+	DRMMODE_SCANOUT_VBLANK_FAILED = 1u << 1,
+};
+
 struct drmmode_scanout {
 	struct amdgpu_buffer *bo;
 	PixmapPtr pixmap;
@@ -99,7 +106,15 @@ typedef struct {
 	drmmode_ptr drmmode;
 	drmModeCrtcPtr mode_crtc;
 	int hw_id;
-	struct amdgpu_buffer *cursor_buffer;
+
+	CursorPtr cursor;
+	int cursor_x;
+	int cursor_y;
+	int cursor_xhot;
+	int cursor_yhot;
+	unsigned cursor_id;
+	struct amdgpu_buffer *cursor_buffer[2];
+
 	struct drmmode_scanout rotate;
 	struct drmmode_scanout scanout[2];
 	DamagePtr scanout_damage;
@@ -108,6 +123,8 @@ typedef struct {
 	unsigned scanout_id;
 	uintptr_t scanout_update_pending;
 	Bool tear_free;
+	enum drmmode_scanout_status scanout_status;
+	Bool vrr_enabled;
 
 	PixmapPtr prime_scanout_pixmap;
 
@@ -164,6 +181,15 @@ enum drmmode_flip_sync {
     FLIP_ASYNC,
 };
 
+
+/**
+ * Return TRUE if kernel supports non-legacy color management.
+ */
+static inline Bool
+drmmode_cm_enabled(drmmode_ptr drmmode)
+{
+	return drmmode->cm_prop_ids[CM_GAMMA_LUT_SIZE] != 0;
+}
 
 /* Can the page flip ioctl be used for this CRTC? */
 static inline Bool
@@ -224,8 +250,6 @@ extern int drmmode_page_flip_target_relative(AMDGPUEntPtr pAMDGPUEnt,
 extern Bool drmmode_pre_init(ScrnInfoPtr pScrn, drmmode_ptr drmmode, int cpp);
 extern void drmmode_init(ScrnInfoPtr pScrn, drmmode_ptr drmmode);
 extern void drmmode_fini(ScrnInfoPtr pScrn, drmmode_ptr drmmode);
-extern void drmmode_set_cursor(ScrnInfoPtr scrn, drmmode_ptr drmmode, int id,
-			       struct amdgpu_buffer *bo);
 void drmmode_adjust_frame(ScrnInfoPtr pScrn, drmmode_ptr drmmode, int x, int y);
 extern Bool drmmode_set_desired_modes(ScrnInfoPtr pScrn, drmmode_ptr drmmode,
 				      Bool set_hw);
@@ -234,7 +258,7 @@ extern Bool drmmode_setup_colormap(ScreenPtr pScreen, ScrnInfoPtr pScrn);
 
 extern void drmmode_crtc_scanout_destroy(drmmode_ptr drmmode,
 					 struct drmmode_scanout *scanout);
-void drmmode_crtc_scanout_free(drmmode_crtc_private_ptr drmmode_crtc);
+void drmmode_crtc_scanout_free(xf86CrtcPtr crtc);
 PixmapPtr drmmode_crtc_scanout_create(xf86CrtcPtr crtc,
 				      struct drmmode_scanout *scanout,
 				      int width, int height);
@@ -255,6 +279,7 @@ Bool amdgpu_do_pageflip(ScrnInfoPtr scrn, ClientPtr client,
 			uint32_t target_msc);
 int drmmode_crtc_get_ust_msc(xf86CrtcPtr crtc, CARD64 *ust, CARD64 *msc);
 int drmmode_get_current_ust(int drm_fd, CARD64 * ust);
+void drmmode_crtc_set_vrr(xf86CrtcPtr crtc, Bool enabled);
 
 Bool drmmode_wait_vblank(xf86CrtcPtr crtc, drmVBlankSeqType type,
 			 uint32_t target_seq, unsigned long signal,

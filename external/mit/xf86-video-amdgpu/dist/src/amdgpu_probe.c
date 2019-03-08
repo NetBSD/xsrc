@@ -252,6 +252,14 @@ static Bool amdgpu_get_scrninfo(int entity_num, struct pci_device *pci_dev)
 		}
 	} else {
 		pAMDGPUEnt = pPriv->ptr;
+
+		if (pAMDGPUEnt->fd_ref == ARRAY_SIZE(pAMDGPUEnt->scrn)) {
+			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+				   "Only up to %u Zaphod instances supported\n",
+				   (unsigned)ARRAY_SIZE(pAMDGPUEnt->scrn));
+			goto error;
+		}
+
 		pAMDGPUEnt->fd_ref++;
 	}
 
@@ -366,6 +374,14 @@ amdgpu_platform_probe(DriverPtr pDriver,
 		}
 	} else {
 		pAMDGPUEnt = pPriv->ptr;
+
+		if (pAMDGPUEnt->fd_ref == ARRAY_SIZE(pAMDGPUEnt->scrn)) {
+			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+				   "Only up to %u Zaphod instances supported\n",
+				   (unsigned)ARRAY_SIZE(pAMDGPUEnt->scrn));
+			goto error;
+		}
+
 		pAMDGPUEnt->fd_ref++;
 	}
 

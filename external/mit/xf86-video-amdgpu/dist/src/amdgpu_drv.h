@@ -164,6 +164,7 @@ typedef enum {
 	OPTION_SHADOW_PRIMARY,
 	OPTION_TEAR_FREE,
 	OPTION_DELETE_DP12,
+	OPTION_VARIABLE_REFRESH,
 } AMDGPUOpts;
 
 static inline ScreenPtr
@@ -239,6 +240,10 @@ struct amdgpu_device_priv {
 	Bool sprite_visible;
 };
 
+struct amdgpu_window_priv {
+	Bool variable_refresh;
+};
+
 extern DevScreenPrivateKeyRec amdgpu_device_private_key;
 
 typedef struct {
@@ -270,6 +275,7 @@ typedef struct {
 	Bool use_glamor;
 	Bool force_accel;
 	Bool shadow_primary;
+	Bool vrr_support;
 	int tear_free;
 
 	/* general */
@@ -285,12 +291,11 @@ typedef struct {
 	/* Number of SW cursors currently visible on this screen */
 	int sprites_visible;
 
-	Bool IsSecondary;
+	int instance_id;
 
 	Bool shadow_fb;
 	void *fb_shadow;
 	struct amdgpu_buffer *front_buffer;
-	struct amdgpu_buffer *cursor_buffer[32];
 
 	uint64_t vram_size;
 	uint64_t gart_size;
@@ -301,6 +306,7 @@ typedef struct {
 	int group_bytes;
 
 	/* kms pageflipping */
+	WindowPtr flip_window;
 	Bool allowPageFlip;
 
 	/* cursor size */
@@ -345,6 +351,7 @@ typedef struct {
 Bool amdgpu_dri3_screen_init(ScreenPtr screen);
 
 /* amdgpu_kms.c */
+Bool amdgpu_window_has_variable_refresh(WindowPtr win);
 Bool amdgpu_scanout_do_update(xf86CrtcPtr xf86_crtc, int scanout_id,
 			      PixmapPtr src_pix, BoxRec extents);
 void AMDGPUWindowExposures_oneshot(WindowPtr pWin, RegionPtr pRegion
@@ -354,6 +361,7 @@ void AMDGPUWindowExposures_oneshot(WindowPtr pWin, RegionPtr pRegion
 				   );
 
 /* amdgpu_present.c */
+void amdgpu_present_set_screen_vrr(ScrnInfoPtr scrn, Bool vrr_enabled);
 Bool amdgpu_present_screen_init(ScreenPtr screen);
 
 /* amdgpu_sync.c */

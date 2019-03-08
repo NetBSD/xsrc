@@ -38,6 +38,8 @@ amdgpu_get_gbm_format(int depth, int bitsPerPixel)
 	case 8:
 		return GBM_FORMAT_R8;
 #endif
+	case 15:
+		return GBM_FORMAT_ARGB1555;
 	case 16:
 		return GBM_FORMAT_RGB565;
 	case 32:
@@ -148,6 +150,8 @@ Bool amdgpu_bo_get_handle(struct amdgpu_buffer *bo, uint32_t *handle)
 				handle) == 0;
 }
 
+#ifdef USE_GLAMOR
+
 static void amdgpu_pixmap_do_get_tiling_info(PixmapPtr pixmap)
 {
 	struct amdgpu_pixmap *priv = amdgpu_get_pixmap_private(pixmap);
@@ -163,6 +167,8 @@ static void amdgpu_pixmap_do_get_tiling_info(PixmapPtr pixmap)
 				&gem_metadata, sizeof(gem_metadata)) == 0)
 		priv->tiling_info = gem_metadata.data.tiling_info;
 }
+
+#endif
 
 uint64_t amdgpu_pixmap_get_tiling_info(PixmapPtr pixmap)
 {
@@ -207,16 +213,17 @@ Bool amdgpu_pixmap_get_handle(PixmapPtr pixmap, uint32_t *handle)
 
 		r = drmPrimeFDToHandle(pAMDGPUEnt->fd, fd, &priv->handle);
 		close(fd);
-		if (r == 0)
-			goto get_tiling_info;
+		if (r)
+			return FALSE;
+
+		amdgpu_pixmap_do_get_tiling_info(pixmap);
+		goto success;
 	}
 #endif
 
 	if (!priv->bo || !amdgpu_bo_get_handle(priv->bo, &priv->handle))
 		return FALSE;
 
- get_tiling_info:
-	amdgpu_pixmap_do_get_tiling_info(pixmap);
  success:
 	priv->handle_valid = TRUE;
 	*handle = priv->handle;

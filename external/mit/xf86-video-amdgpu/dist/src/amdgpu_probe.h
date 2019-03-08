@@ -65,8 +65,8 @@ typedef struct {
 	unsigned long fd_wakeup_registered;	/* server generation for which fd has been registered for wakeup handling */
 	int fd_wakeup_ref;
 	unsigned int assigned_crtcs;
-	ScrnInfoPtr primary_scrn;
-	ScrnInfoPtr secondary_scrn;
+	unsigned int num_scrns;
+	ScrnInfoPtr scrn[6];
 	struct xf86_platform_device *platform_dev;
 	char *render_node;
 } AMDGPUEntRec, *AMDGPUEntPtr;
