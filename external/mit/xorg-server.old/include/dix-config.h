@@ -80,7 +80,7 @@
 /* #undef HAVE_ASM_MTRR_H */
 
 /* Has backtrace support */
-/* #undef HAVE_BACKTRACE */
+#define HAVE_BACKTRACE 1
 
 /* Define to 1 if you have the <byteswap.h> header file. */
 /* #undef HAVE_BYTESWAP_H */

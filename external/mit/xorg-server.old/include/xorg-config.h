@@ -115,7 +115,7 @@
 /* #undef HAS_APERTURE_DRV */
 
 /* Has backtrace support */
-/* #undef HAVE_BACKTRACE */
+#define HAVE_BACKTRACE 1
 
 /* Name of the period field in struct kbd_repeat */
 /* #undef LNX_KBD_PERIOD_NAME */
