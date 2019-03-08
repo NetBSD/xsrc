@@ -88,6 +88,22 @@ amdgpu_present_get_ust_msc(RRCrtcPtr crtc, CARD64 *ust, CARD64 *msc)
 }
 
 /*
+ * Changes the variable refresh state for every CRTC on the screen.
+ */
+void
+amdgpu_present_set_screen_vrr(ScrnInfoPtr scrn, Bool vrr_enabled)
+{
+	xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(scrn);
+	xf86CrtcPtr crtc;
+	int i;
+
+	for (i = 0; i < config->num_crtc; i++) {
+		crtc = config->crtc[i];
+		drmmode_crtc_set_vrr(crtc, vrr_enabled);
+	}
+}
+
+/*
  * Flush the DRM event queue when full; this
  * makes space for new requests
  */
@@ -157,7 +173,8 @@ amdgpu_present_queue_vblank(RRCrtcPtr crtc, uint64_t event_id, uint64_t msc)
 					       AMDGPU_DRM_QUEUE_CLIENT_DEFAULT,
 					       event_id, event,
 					       amdgpu_present_vblank_handler,
-					       amdgpu_present_vblank_abort);
+					       amdgpu_present_vblank_abort,
+					       FALSE);
 	if (drm_queue_seq == AMDGPU_DRM_QUEUE_ERROR) {
 		free(event);
 		return BadAlloc;
@@ -238,6 +255,7 @@ amdgpu_present_check_flip(RRCrtcPtr crtc, WindowPtr window, PixmapPtr pixmap,
 	xf86CrtcPtr xf86_crtc = crtc->devPrivate;
 	ScreenPtr screen = window->drawable.pScreen;
 	ScrnInfoPtr scrn = xf86_crtc->scrn;
+	PixmapPtr screen_pixmap = screen->GetScreenPixmap(screen);
 	xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(scrn);
 	AMDGPUInfoPtr info = AMDGPUPTR(scrn);
 	int num_crtcs_on;
@@ -255,12 +273,23 @@ amdgpu_present_check_flip(RRCrtcPtr crtc, WindowPtr window, PixmapPtr pixmap,
 	if (info->drmmode.dri2_flipping)
 		return FALSE;
 
-	/* The kernel driver doesn't handle flipping between BOs with different
-	 * tiling parameters correctly yet
-	 */
-	if (amdgpu_pixmap_get_tiling_info(pixmap) !=
-	    amdgpu_pixmap_get_tiling_info(screen->GetScreenPixmap(screen)))
+#if XORG_VERSION_CURRENT <= XORG_VERSION_NUMERIC(1, 20, 99, 1, 0)
+	if (pixmap->devKind != screen_pixmap->devKind)
 		return FALSE;
+#endif
+
+	/* Only DC supports advanced color management features, so we can use
+	 * drmmode_cm_enabled as a proxy for "Is DC enabled?"
+	 */
+	if (info->dri2.pKernelDRMVersion->version_minor < 31 ||
+	    !drmmode_cm_enabled(&info->drmmode)) {
+		/* The kernel driver doesn't handle flipping between BOs with
+		 * different tiling parameters correctly
+		 */
+		if (amdgpu_pixmap_get_tiling_info(pixmap) !=
+		    amdgpu_pixmap_get_tiling_info(screen_pixmap))
+			return FALSE;
+	}
 
 	for (i = 0, num_crtcs_on = 0; i < config->num_crtc; i++) {
 		if (drmmode_crtc_can_flip(config->crtc[i]))
@@ -271,6 +300,8 @@ amdgpu_present_check_flip(RRCrtcPtr crtc, WindowPtr window, PixmapPtr pixmap,
 
 	if (num_crtcs_on == 0)
 		return FALSE;
+
+	info->flip_window = window;
 
 	return TRUE;
 }
@@ -312,13 +343,12 @@ amdgpu_present_flip(RRCrtcPtr crtc, uint64_t event_id, uint64_t target_msc,
                    PixmapPtr pixmap, Bool sync_flip)
 {
 	xf86CrtcPtr xf86_crtc = crtc->devPrivate;
-	ScreenPtr screen = crtc->pScreen;
 	ScrnInfoPtr scrn = xf86_crtc->scrn;
 	AMDGPUInfoPtr info = AMDGPUPTR(scrn);
 	struct amdgpu_present_vblank_event *event;
 	Bool ret = FALSE;
 
-	if (!amdgpu_present_check_flip(crtc, screen->root, pixmap, sync_flip))
+	if (!amdgpu_present_check_flip(crtc, info->flip_window, pixmap, sync_flip))
 		return ret;
 
 	event = calloc(1, sizeof(struct amdgpu_present_vblank_event));
@@ -326,6 +356,16 @@ amdgpu_present_flip(RRCrtcPtr crtc, uint64_t event_id, uint64_t target_msc,
 		return ret;
 
 	event->event_id = event_id;
+
+	/* A window can only flip if it covers the entire X screen.
+	 * Only one window can flip at a time.
+	 *
+	 * If the window also has the variable refresh property then
+	 * variable refresh supported can be enabled on every CRTC.
+	 */
+	if (info->vrr_support &&
+	    amdgpu_window_has_variable_refresh(info->flip_window))
+		amdgpu_present_set_screen_vrr(scrn, TRUE);
 
 	amdgpu_glamor_flush(scrn);
 
@@ -358,6 +398,8 @@ amdgpu_present_unflip(ScreenPtr screen, uint64_t event_id)
 		(amdgpu_present_screen_info.capabilities & PresentCapabilityAsync) ?
 		FLIP_ASYNC : FLIP_VSYNC;
 	int i;
+
+	amdgpu_present_set_screen_vrr(scrn, FALSE);
 
 	if (!amdgpu_present_check_unflip(scrn))
 		goto modeset;

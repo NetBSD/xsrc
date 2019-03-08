@@ -29,6 +29,8 @@
 
 #include "xf86xv.h"
 
+#ifdef USE_GLAMOR
+
 #define GLAMOR_FOR_XORG  1
 #include <glamor.h>
 
@@ -70,5 +72,24 @@ void amdgpu_glamor_exchange_buffers(PixmapPtr src, PixmapPtr dst);
 PixmapPtr amdgpu_glamor_set_pixmap_bo(DrawablePtr drawable, PixmapPtr pixmap);
 
 XF86VideoAdaptorPtr amdgpu_glamor_xv_init(ScreenPtr pScreen, int num_adapt);
+
+#else /* !USE_GLAMOR */
+
+static inline Bool amdgpu_glamor_pre_init(ScrnInfoPtr scrn) { return FALSE; }
+static inline Bool amdgpu_glamor_init(ScreenPtr screen) { return FALSE; }
+static inline void amdgpu_glamor_fini(ScreenPtr screen) { }
+static inline Bool amdgpu_glamor_create_screen_resources(ScreenPtr screen) { return FALSE; }
+
+static inline Bool amdgpu_glamor_create_textured_pixmap(PixmapPtr pixmap, struct amdgpu_buffer *bo) { return TRUE; }
+
+static inline void amdgpu_glamor_exchange_buffers(PixmapPtr src, PixmapPtr dst) {}
+static inline PixmapPtr amdgpu_glamor_set_pixmap_bo(DrawablePtr drawable, PixmapPtr pixmap) { return pixmap; }
+
+static inline XF86VideoAdaptorPtr amdgpu_glamor_xv_init(ScreenPtr pScreen, int num_adapt) { return NULL; }
+
+static inline void amdgpu_glamor_flush(ScrnInfoPtr pScrn) { }
+static inline void amdgpu_glamor_finish(ScrnInfoPtr pScrn) { }
+
+#endif /* USE_GLAMOR */
 
 #endif /* AMDGPU_GLAMOR_H */

@@ -46,7 +46,8 @@ void amdgpu_drm_queue_handle_deferred(xf86CrtcPtr crtc);
 uintptr_t amdgpu_drm_queue_alloc(xf86CrtcPtr crtc, ClientPtr client,
 				 uint64_t id, void *data,
 				 amdgpu_drm_handler_proc handler,
-				 amdgpu_drm_abort_proc abort);
+				 amdgpu_drm_abort_proc abort,
+				 Bool is_flip);
 void amdgpu_drm_abort_client(ClientPtr client);
 void amdgpu_drm_abort_entry(uintptr_t seq);
 void amdgpu_drm_abort_id(uint64_t id);

@@ -28,6 +28,8 @@
 #include "config.h"
 #endif
 
+#ifdef USE_GLAMOR
+
 #include <xf86.h>
 
 #include "amdgpu_bo_helper.h"
@@ -75,11 +77,17 @@ Bool amdgpu_glamor_pre_init(ScrnInfoPtr scrn)
 	pointer glamor_module;
 	CARD32 version;
 
+#if XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1,20,99,0,0)
 	if (scrn->depth < 24) {
+#else
+	if (scrn->depth < 15) {
+#endif
 		xf86DrvMsg(scrn->scrnIndex, X_ERROR,
-			   "glamor requires depth >= 24, disabling.\n");
+			   "Depth %d not supported with glamor, disabling\n",
+			   scrn->depth);
 		return FALSE;
 	}
+
 #if XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1,15,0,0,0)
 	if (!xf86LoaderCheckSymbol("glamor_egl_init")) {
 		xf86DrvMsg(scrn->scrnIndex, X_ERROR,
@@ -207,7 +215,7 @@ amdgpu_glamor_create_pixmap(ScreenPtr screen, int w, int h, int depth,
 
 			usage |= AMDGPU_CREATE_PIXMAP_LINEAR |
 				 AMDGPU_CREATE_PIXMAP_GTT;
-		} else {
+		} else if (usage != CREATE_PIXMAP_USAGE_BACKING_PIXMAP) {
 			pixmap = glamor_create_pixmap(screen, w, h, depth, usage);
 			if (pixmap)
 				return pixmap;
@@ -517,3 +525,5 @@ XF86VideoAdaptorPtr amdgpu_glamor_xv_init(ScreenPtr pScreen, int num_adapt)
 {
 	return glamor_xv_init(pScreen, num_adapt);
 }
+
+#endif /* USE_GLAMOR */

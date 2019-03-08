@@ -1,3 +1,810 @@
+commit 9534bf3bb33d14cd3a5af08e36ef42b309647fc7
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Mar 6 12:05:14 2019 +0100
+
+    Bump version for the 19.0.0 release
+
+commit a2b32e72fdaff3007a79b84929997d8176c2d512
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Mar 1 17:42:08 2019 +0100
+
+    present: Don't check tiling parameters with DC & DRM minor version >= 31
+    
+    Current DC handles any changes of tiling parameters for flips.
+    
+    v2:
+    * Just check all tiling bits if DRM minor < 31 or DC is disabled.
+    
+    Reviewed-by: Nicholas Kazlauskas <nicholas.kazlauskas@amd.com>
+
+commit 2798244be78df3ef3a7841597577506bfbe50156
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Mar 1 17:47:24 2019 +0100
+
+    Make drmmode_cm_enabled an inline function
+    
+    So that it can be used outside of drmmode_display.c as well.
+    
+    Reviewed-by: Nicholas Kazlauskas <nicholas.kazlauskas@amd.com>
+
+commit 72653455e4f652ca6c7c290c7f1e8a889b77f5ce
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Mar 1 17:35:48 2019 +0100
+
+    Revert "Remove set but unused amdgpu_dri2::pKernelDRMVersion"
+    
+    This reverts commit 720a61000aeb139005bd8125908cec66a6e69554.
+    
+    We're going to make use of it now.
+    
+    Reviewed-by: Nicholas Kazlauskas <nicholas.kazlauskas@amd.com>
+
+commit 28cd209ebf20561e65d14fa2e8bbfaedf6965948
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Feb 27 17:35:26 2019 +0100
+
+    Revert "gitlab-ci: Only run docker-image stage if relevant source files change"
+    
+    This reverts commit 9c23076b9e81c36ac2408c491f9b2d546829ee8e.
+    
+    Some scenarios have come to light where this failed to ensure the docker
+    image exists:
+    
+    * If the master branch of a forked repository is used for an MR which
+      doesn't modify .gitlab-ci.yml, the docker-image job may not run.
+    * If the docker-image job of the first pipeline in a forked repository
+      is cancelled or fails for any reason, and .gitlab-ci.yml isn't
+      modified for the next pipeline run.
+
+commit 09be74a3d1dd9604336d9a27f98d132b262dcbaf
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Feb 28 17:31:55 2019 +0100
+
+    dri2: Call drm_queue_handle_deferred in dri2_deferred_event
+    
+    drm_queue_handler just puts the event on the signalled list; without
+    calling drm_queue_handle_deferred, actual processing of the event may be
+    delayed indefinitely, e.g. until another event arrives from the kernel.
+    
+    This could result in DRI2 clients hanging during DPMS off.
+    
+    Fixes: 739181c8d3334 "Add amdgpu_drm_handle_event wrapper for
+                          drmHandleEvent"
+    Reviewed-by: Aaron Liu <aaron.liu@amd.com>
+    Tested-by: Aaron Liu <aaron.liu@amd.com>
+
+commit a636f42b496b0604ca00a144690ece61d1a88a27
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Feb 27 18:43:27 2019 +0100
+
+    present: Check that flip and screen pixmap pitches match
+    
+    If they don't, flipping will result in corrupted display.
+    
+    Test case:
+    
+    * Run Xorg at 1920x1080 with no window manager
+    * glxgears -geometry 2048x1080
+    
+    The Present extension code in xserver 1.21 will check for this.
+    
+    Tested-by: Jax Lin <jax.lin@amd.com>
+
+commit bd090f389f19f1f4a3f662ffdd891345a3899539
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Feb 12 17:57:17 2019 +0100
+
+    Call amdgpu_present_set_screen_vrr from amdgpu_vrr_property_update
+    
+    If the window is currently flipping.
+    
+    This might make a difference when the property gets disabled: Variable
+    refresh will now be disabled immediately in that case, instead of only
+    when the window can no longer use page flipping at all.
+    
+    Reviewed-by: Nicholas Kazlauskas <nicholas.kazlauskas@amd.com>
+
+commit d9be5d712d469595e1e610f7294bc670ca3b1985
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Feb 12 12:26:25 2019 +0100
+
+    Make use of property request wrappers for VRR property
+    
+    Instead of scanning for PropertyNotify events. Reasons:
+    
+    * Works even if no client listens to PropertyNotify events for the
+      window.
+    * No overhead on delivery of unrelated events, and no overhead at all
+      if Option "VariableRefresh" is disabled.
+    
+    v2:
+    * Use shorter variable name amdgpu_vrr_atom.
+    * Call MakeAtom regardless of info->instance_id, for robustness vs VRR
+      being enabled in some but not all AMDGPU screens.
+    
+    Reviewed-by: Nicholas Kazlauskas <nicholas.kazlauskas@amd.com>
+
+commit ef8fbe33b7d97f7fb5518db9c0e4d2dcbf2fab6f
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Jan 17 18:41:11 2019 +0100
+
+    Wrap change/delete window property request handlers
+    
+    Preparation for the following change.
+    
+    v2:
+    * Add comments explaining what the wrappers are wrapping.
+    * Use global amdgpu_property_vectors_wrapped to keep track of whether
+      the vectors need to be (un)wrapped, for robustness against VRR being
+      enabled in some but not all AMDGPU screens.
+    
+    Reviewed-by: Nicholas Kazlauskas <nicholas.kazlauskas@amd.com>
+
+commit 09a45ff8fe3ac07bafa3a0822b1598c41f9ca200
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Feb 12 13:01:04 2019 +0100
+
+    Don't enable the VRR support code for GPU screens
+    
+    Windows aren't associated with GPU screens, and amdgpu_present_flip is
+    never called for them, so VRR can never actually be enabled for them.
+    
+    Reviewed-by: Nicholas Kazlauskas <nicholas.kazlauskas@amd.com>
+
+commit 2a3d00dc7ed2b4fca698e2d699e1b94da6d0ddb8
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Feb 12 18:12:23 2019 +0100
+
+    Don't register a window private if VRR is disabled
+    
+    It's not used in that case.
+    
+    Reviewed-by: Nicholas Kazlauskas <nicholas.kazlauskas@amd.com>
+
+commit 5f91be77e059d0c4a4268ec10cbd9aa1052f53eb
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Feb 11 18:32:07 2019 +0100
+
+    gitlab-ci: Don't rely on $CI_PROJECT_NAME
+    
+    The name of a forked repository can be changed later, in which case this
+    would fail to refer to the main repository.
+    
+    Pointed out by Eric Engestrom in
+    https://gitlab.freedesktop.org/mesa/mesa/merge_requests/224 .
+
+commit 9c23076b9e81c36ac2408c491f9b2d546829ee8e
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Feb 7 17:35:13 2019 +0100
+
+    gitlab-ci: Only run docker-image stage if relevant source files change
+    
+    Otherwise there's normally no need to run it. It will also run when a
+    new branch is created, which ensures that the docker image always exists
+    (e.g. in a newly forked repository).
+    
+    Inspired by https://gitlab.freedesktop.org/mesa/mesa/merge_requests/143
+
+commit 9045fb310f88780e250e60b80431ca153330e61b
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Jan 24 18:31:40 2019 +0100
+
+    Keep waiting for a pending flip if drm_handle_event returns 0
+    
+    drm_wait_pending_flip stopped waiting if drm_handle_event returned 0,
+    but that might have processed only some unrelated DRM events. As long as
+    the flip is pending, we have to keep waiting for its completion event.
+    
+    Noticed while working on the previous fix.
+    
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 3ff2cc225f6bc08364ee007fa54e9d0150adaf11
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Jan 22 18:36:56 2019 +0100
+
+    Call drmHandleEvent again if it was interrupted by a signal
+    
+    drmHandleEvent can be interrupted by a signal in read(), in which case
+    it doesn't process any events but returns -1, which
+    drm_handle_event propagated to its callers. This could cause the
+    following failure cascade:
+    
+    1. drm_wait_pending_flip stopped waiting for a pending flip.
+    2. Its caller cleared drmmode_crtc->flip_pending before the flip
+       completed.
+    3. Another flip was attempted but got an unexpected EBUSY error because
+       the previous flip was still pending.
+    4. TearFree was disabled due to the error.
+    
+    The solution is to call drmHandleEvent if it was interrupted by a
+    signal. We can do that in drm_handle_event, because when that is called,
+    either it is known that there are events ready to be processed, or the
+    caller has to wait for events to arrive anyway.
+    
+    v2:
+    * Use ErrorF instead of xf86DrvMsg with hard-coded screen 0.
+    
+    Bugzilla: https://bugs.freedesktop.org/109364
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com> # v1
+
+commit e72a02ba1d35743fefd939458b9d8cddce86e7f5
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Jan 16 10:26:59 2019 +0100
+
+    Only update drmmode_crtc->flip_pending after actually submitting a flip
+    
+    And only clear it if it matches the framebuffer of the completed flip
+    being processed.
+    
+    Fixes
+    
+     (WW) AMDGPU(0): flip queue failed: Device or resource busy
+     (WW) AMDGPU(0): Page flip failed: Device or resource busy
+     (EE) AMDGPU(0): present flip failed
+    
+    due to clobbering drmmode_crtc->flip_pending.
+    
+    Reproducer: Enable TearFree, run warzone2100 fullscreen, toggle
+    Vertical sync on/off under Video Options. Discovered while investigating
+    https://bugs.freedesktop.org/109364 .
+    
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit a1b479c7d0066c481af920f297d6af9009dda11e
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Jan 15 17:55:27 2019 +0100
+
+    Don't allow TearFree scanout flips to complete in the same vblank period
+    
+    We were using a relative target of 0, meaning "complete the flip ASAP".
+    This could result in the flip sometimes, but not always completing in
+    the same vertical blank period where the corresponding drawing occurred,
+    potentially causing judder artifacts with applications updating their
+    window contents synchronized to the display refresh. A good way to test
+    this is the vsynctester.com site in a windowed browser, where the judder
+    results in the large "VSYNC" text intermittently appearing red or cyan
+    instead of the expected gray.
+    
+    To avoid this, use a relative target MSC of 1, meaning that if a
+    vertical blank period is in progress, the flip will only complete in the
+    next one.
+    
+    Reported by Julian Tempel and Brandon Wright in
+    https://bugs.freedesktop.org/106175 .
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit bf326f2ea19daa6c8da23d6788ff301ae70b8e69
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Jan 10 18:33:04 2019 +0100
+
+    glamor: Avoid glamor_create_pixmap for pixmaps backing windows
+    
+    If the compositing manager uses direct rendering (as is usually the case
+    these days), the storage of a pixmap allocated by glamor_create_pixmap
+    needs to be reallocated for sharing it with the compositing manager.
+    Instead, allocate pixmap storage which can be shared directly.
+    
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit ebd32b1c07208f8dbe853e089f5e4b7c6a7a658a
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Jan 9 18:57:08 2019 +0100
+
+    dri2: Flush in dri2_create_buffer2 after calling glamor_set_pixmap_bo
+    
+    To make sure the client can't use the shared pixmap storage for direct
+    rendering first, which could produce garbage.
+    
+    Bugzilla: https://bugs.freedesktop.org/109235
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit d168532ee739f7e33a2798051e64ba445dd3859f
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Jan 9 17:24:11 2019 +0100
+
+    dri3: Flush if necessary in dri3_fd_from_pixmap
+    
+    To make sure the client can't use the shared pixmap storage for direct
+    rendering first, which could produce garbage.
+    
+    Bugzilla: https://bugs.freedesktop.org/109235
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 2058c4c469b172d4a3b0443f75466d84281a64c7
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Jan 10 17:03:04 2019 +0100
+
+    Only call drmmode_validate_leases if RandR is enabled
+    
+    It would crash if RandR is disabled, e.g. because Xinerama is enabled.
+    
+    Bugzilla: https://bugs.freedesktop.org/109230
+    (Ported from radeon commit b1c01698f577577e4a88bad0ae08fb5d998e7ebb)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit f3c0939a0cbb93c367ece3d41dc69824f585af42
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Jan 10 17:00:12 2019 +0100
+
+    Only call drmmode_uevent_init if RandR is enabled
+    
+    There's no point in listening for hotplug events if RandR is disabled,
+    as there's no other mechanism for them to be propagated. We were already
+    mostly ignoring them in that case.
+    
+    Inspired by
+    https://gitlab.freedesktop.org/xorg/driver/xf86-video-intel/commit/1a489142c8e6a4828348cc9afbd0f430d3b1e2d8
+    (via https://bugs.freedesktop.org/109230#c11).
+    (Ported from radeon commit 38db1bbcfc019c92884c7819a6630c70e543f6b2)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit f3ddda618ec86650ed85f8b140a5db1394676748
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Dec 17 17:54:05 2018 +0100
+
+    gitlab-ci: Use kaniko instead of docker-in-docker for image generation
+    
+    kaniko can also work in unprivileged runners.
+    
+    Based on v2 of
+    https://gitlab.freedesktop.org/xorg/xserver/merge_requests/92 .
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit b689dc5081493377a31759d24a8dc9fcde12948a
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Dec 18 16:39:28 2018 +0100
+
+    Remove superfluous vrr_flipping field and clean up related code
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 233a0be82d5c317e58002f4daf836d4f95048465
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Dec 18 16:42:53 2018 +0100
+
+    Don't clear info->flip_window in present_unflip
+    
+    present_unflip can get called between present_check_flip and
+    present_flip, in which case the latter would pass a NULL WindowPtr to
+    the former, resulting in a crash.
+    
+    present_flip should never get called for a window which has already been
+    destroyed, so there's no need to clear info->flip_window.
+    
+    Bugzilla: https://bugs.freedesktop.org/109067
+    Fixes: 2d18b37159edc "Check last flip window instead of screen root
+                          before flipping"
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit d4eab5d108c4569f3a9e2892704ea89b7ee797b6
+Author: Mario Kleiner <mario.kleiner.de@gmail.com>
+Date:   Wed Dec 19 07:56:15 2018 +0100
+
+    Fix crash when page flipping in multi-X-Screen/Zaphod mode
+    
+    amdgpu_do_pageflip() indexed the flipdata->fb[] array
+    indexing over config->num_crtc, but the flip completion
+    routines, e.g., drmmode_flip_handler(), index that array
+    via the crtc hw id from drmmode_get_crtc_id(crtc).
+    
+    This is mismatched and causes indexing into the wrong
+    array slot at flip completion -> Server crash.
+    
+    Always use drmmode_get_crtc_id(crtc) for indexing into
+    the array to fix this.
+    
+    Tested on a dual-X-Screen setup with one video output
+    assigned to each X-Screen, page-flipping an OpenGL app
+    on either of both X-Screens. This used to crash when
+    flipping on X-Screen 1, now it doesn't anymore.
+    
+    Fixes: 9b6782c821e0 "Store FB for each CRTC in drmmode_flipdata_rec"
+    (Ported from radeon commit 0058fd2ebf4c900b12f129984e98886a7ac84b2f)
+    Reviewed-by: Michel Dänzer <michel.daenzer@amd.com>
+    Signed-off-by: Mario Kleiner <mario.kleiner.de@gmail.com>
+
+commit 0d60233d26ec70d4e1faa343b438e33829c6d5e4
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Nov 22 19:02:20 2018 +0100
+
+    Use two HW cursor buffers per CRTC
+    
+    Switch to the other buffer when xf86_config->cursor changes. Avoids
+    these issues possible when re-using the same buffer:
+    
+    * The HW may intermittently display a mix of the old and new cursor
+      images.
+    * If the hotspot changes, the HW may intermittently display the new
+      cursor image at the location corresponding to the old image's hotspot.
+    
+    Bugzilla: https://bugs.freedesktop.org/108832
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit b04697de5270e8e45744a7025c24df1f454a4cf0
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Nov 23 18:41:00 2018 +0100
+
+    Update cursor position in drmmode_show_cursor if hotspot changed
+    
+    The cursor position is updated to be consistent with the new hotspot in
+    the same ioctl call.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit b344e1559e936046ef02c777fc4f6bcefa3830bc
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Nov 23 18:22:25 2018 +0100
+
+    Use drmIoctl in drmmode_show_cursor
+    
+    This should be functionally equivalent to what drmModeSetCursor(2) do
+    behind the scenes, but allows for new tricks in following changes.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit e95044e45350870fa7e237860e89ade91ac03550
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Nov 22 17:54:45 2018 +0100
+
+    Drop AMDGPUInfoRec::cursor_buffer array
+    
+    Not needed or even useful for anything.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 13c85e8a136e8626ba84656c6f8321394750f5c7
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Nov 22 17:50:19 2018 +0100
+
+    Don't use GBM for allocating HW cursor BOs
+    
+    GBM doesn't really buy us anything for the cursor BOs. This simplifies
+    the code and following changes.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit bcfa6c258fdf41a9928f8a3c78fc528d0fafee25
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Nov 21 18:32:04 2018 +0100
+
+    Automatically try re-enabling TearFree after a flip failed
+    
+    Specifically, after both the page flip and vblank ioctls failed, but
+    then the vblank ioctl started working again. This can happen
+    intermittently e.g. when hotplugging a DP display. Previously, TearFree
+    would stay disabled in that case until a modeset was triggered somehow.
+    
+    Bugzilla: https://bugs.freedesktop.org/103791
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 4e7a24ac5a64e402146953ec5850d13c05742116
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Nov 21 17:54:18 2018 +0100
+
+    Cancel pending scanout update in drmmode_crtc_scanout_update
+    
+    drmmode_crtc_scanout_update does the equivalent of a scanout update,
+    so no need to do it again. This might also avoid issues if there's a
+    pending scanout update at this point.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 500fadb16285146e91f62fce3a0ce1360ca684ba
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Nov 21 12:42:22 2018 +0100
+
+    Perform scanout buffer update immediately if drmmode_wait_vblank fails
+    
+    Otherwise the damaged screen contents may never be displayed in that
+    case.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit be862ed459b06ab7dfc80b5c3d1e2ac7e9327a6e
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Dec 11 11:47:16 2018 +0100
+
+    Generate docker image as part of CI pipeline
+    
+    This removes the dependency on an externally generated docker image, and
+    should make it easier to update the docker image or make other changes
+    related to it.
+    
+    v2:
+    * If the image doesn't exist, try pulling it from the main repo's
+      registry.
+    * Use debian:testing-slim as the base, might result in a slightly
+      smaller image.
+    
+    v3:
+    * Prevent installation of packages which are only recommended, for an
+      even smaller image.
+    * Add recommendation to remove new image from source repository in
+      favour of the main repository's.
+    
+    Acked-by: Alex Deucher <alexander.deucher@amd.com> # v2
+
+commit b11ee02c4596ddee3c9ff2141be5c91815efacc3
+Author: Nicholas Kazlauskas <nicholas.kazlauskas@amd.com>
+Date:   Thu Oct 4 09:51:40 2018 -0400
+
+    Support CRTC variable refresh for windows using Present flips
+    
+    This patch adds support for setting the CRTC variable refresh property
+    for suitable windows flipping via the Present extension.
+    
+    The "VariableRefresh" Option is added to AMDGPU in this patch. This
+    option defaults to false, and must be set to "true" in an X conf
+    file for variable refresh support in the driver.
+    
+    In order for a window to be suitable for variable refresh it must have
+    the _VARIABLE_REFRESH property with a 32-bit CARDINAL value of 1.
+    
+    Then the window must pass the checks required to be suitable for
+    Present extension flips - it must cover the entire X screen and no
+    other window may already be flipping.
+    
+    With these conditions met every CRTC for the X screen will have their
+    variable refresh property set to true.
+    
+    Signed-off-by: Nicholas Kazlauskas <nicholas.kazlauskas@amd.com>
+
+commit 2d18b37159edc526c73a36143fe9b5d6b75e610a
+Author: Nicholas Kazlauskas <nicholas.kazlauskas@amd.com>
+Date:   Tue Nov 13 09:08:01 2018 -0500
+
+    Check last flip window instead of screen root before flipping
+    
+    A significant amount of time can pass between the X call into
+    check_flip for a window and when amdgpu_present_flip actually occurs.
+    To ensure that flipping is still possible there was an additional check
+    performed on screen->root in amdgpu_present_flip - but what should
+    be checked instead is the window itself. This only really worked before
+    because X ensures that the window has the same dimensions as the screen
+    to allow for present extension flipping.
+    
+    This patch tracks the flip window between calls to check_flip and flip
+    and uses that window instead of screen->root.
+    
+    Signed-off-by: Nicholas Kazlauskas <nicholas.kazlauskas@amd.com>
+
+commit 13c94a373b4858a2d2aa14c22b5f98d53c84c0d9
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Nov 15 16:40:46 2018 +0100
+
+    Skip gamma correction of cursor data if premultiplied R/G/B > alpha
+    
+    The un-premultiplied R/G/B values would overflow the gamma LUT, so just
+    pass through the data unchanged, and leave it up to the HW how to
+    interpret such weird premultiplied alpha pixels.
+    
+    Bugzilla: https://bugs.freedesktop.org/108355
+
+commit 51ba6dddee40c3688d4c7b12eabeab516ed153b7
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Nov 9 11:00:04 2018 +0100
+
+    Move deferred vblank events to separate drm_vblank_deferred list
+    
+    It was still possible for nested xorg_list_for_each_entry_safe loops
+    to occur over the drm_vblank_signalled list, which could mess up that
+    list. Moving deferred events to a separate list allows processing the
+    drm_vblank_signalled list without xorg_list_for_each_entry_safe.
+    
+    v2:
+    * Refactor drm_handle_vblank_signalled helper function, less code
+      duplication => better readability (Alex Deucher)
+    
+    Bugzilla: https://bugs.freedesktop.org/108600
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit e2c7369cae65069aa93eed1c0b678f975ce5c274
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Nov 5 19:02:31 2018 +0100
+
+    Explicitly keep track of whether a DRM event is for a flip or not
+    
+    When an async flip is performed, and TearFree is enabled on the CRTC
+    used for timing, we schedule a vblank event for completing the page
+    flip. The DRM event queuing code treated this event like a vblank event,
+    but it needs to be treated like a page flip event.
+    
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit eda571222f5a6be47f8897e82d85199bb9d95251
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Mon Nov 5 18:07:54 2018 +0100
+
+    Use drm_abort_one in drm_queue_handler
+    
+    At this point, we've already established that e->handler is NULL, no
+    need to check again in drm_queue_handle_one. This also makes it clearer
+    what's happening.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 426f9a49655f01863cf4d898f525e5f95984e0c4
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Nov 6 12:06:20 2018 +0100
+
+    Relax detection of non-premultiplied alpha cursor data
+    
+    The stricter detection broke the cursor in some games. Apparently those
+    use cursor data with premultiplied alpha, but with some pixels having
+    r/g/b values larger than the alpha value (which corresponds to original
+    r/g/b values > 1.0), triggering the workaround.
+    
+    Relax the detection to match what's in the X server since 1.18.4, but
+    keep the workaround for older versions.
+    
+    Bugzilla: https://bugs.freedesktop.org/108650
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit a9da219e13bd0cdec65554382b5cd15abc3e3778
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Nov 14 09:58:28 2018 +0100
+
+    Add README.md to EXTRA_DIST
+    
+    Otherwise it isn't included in the generated tarballs.
+    
+    Suggested-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 1cb338253af9c539fc1f13fc12b255ed6303f8b1
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Oct 24 18:07:31 2018 +0200
+
+    man: This driver supports colour depths 8, 15 and 16
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 0734cdf544ffd3f2ac8749ad0e4bf43f8a5cea50
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Oct 5 12:35:37 2018 +0200
+
+    glamor: Can work at depth >= 15 with current xserver Git master
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit ad6dfb0124860cf67730bde85867f81d9258c84d
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Oct 19 11:02:41 2018 +0200
+
+    Detect and fix up non-premultiplied cursor data
+    
+    X server >= 1.18 already had code for this, but it only caught cases
+    where some pixels have 0 for alpha and non-0 for a non-alpha component.
+    Turns out some apps (e.g. the Civilization VI game) use
+    non-premultiplied cursor data which doesn't have such pixels, but can
+    still result in visual artifacts.
+    
+    This uses the method suggested by Kamil in
+    https://bugs.freedesktop.org/92309#c19: check for pixels where any
+    colour component value is larger than the alpha value, which isn't
+    possible with premultiplied alpha.
+    
+    There can still be non-premultiplied data which won't be caught by this,
+    but that should result in slightly incorrect colours and/or blending at
+    the worst, not wildly incorrect colours such as shown in the bug report
+    below.
+    
+    v2:
+    * Disable the check with current xserver Git master, which already does
+      the same check now.
+    
+    Bugzilla: https://bugs.freedesktop.org/108355
+    Suggested-by: Kamil Páral <kamil.paral@gmail.com>
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit c9d43c1deb9a9cfc41a8d6439caf46d12d220853
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Oct 4 12:54:13 2018 +0200
+
+    Allow up to six instances in Zaphod mode
+    
+    Corresponding to up to six CRTCs being available in the hardware.
+    
+    v2:
+    * Move instance overflow check from PreInit to the probe hooks, in
+      order to further minimize wasted effort.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com> # v1
+
+commit aa572683d86174be2bfc09d4e173ae2a9907d40e
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Oct 10 17:28:35 2018 +0200
+
+    Fix condition for calling set_pixmap_bo in drmmode_xf86crtc_resize
+    
+    This matches CreateScreenResources_KMS.
+    
+    Fixes crash when resizing the screen (e.g. using xrandr) with depth <
+    24.
+    
+    Bugzilla: https://bugs.freedesktop.org/104914
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 05a1ba9abc941dec616ef7f836f4c54ac93ff9be
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Oct 2 18:01:14 2018 +0200
+
+    Add GitLab CI configuration
+    
+    Builds the driver against all supported versions of xserver, with both
+    gcc and clang for xserver >= 1.18 (older versions cause warnings with
+    clang). Compiler warnings are treated as errors.
+    
+    The xserver 1.15 build uses standalone glamor, the xserver 1.13 & 1.14
+    builds use --disable-glamor.
+    
+    With the latest xserver version, make install and make distcheck are
+    tested as well.
+
+commit babbd38057559471ab3cb6970010b9a4adf1ef3d
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Oct 2 17:55:03 2018 +0200
+
+    Fix --disable-glamor build
+    
+    We were still relying on the glamor.h header being picked up implicitly.
+
+commit b6ee7f92cfaa2c134bee101cf89983db73f4c28d
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Oct 2 17:52:10 2018 +0200
+
+    Cast return value of amdgpu_get_marketing_name to char*
+    
+    Avoids compiler warning with xserver < 1.16:
+    
+    ../../src/amdgpu_kms.c: In function ‘AMDGPUPreInitChipType_KMS’:
+    ../../src/amdgpu_kms.c:1203:17: warning: assignment discards ‘const’ qualifier from pointer target type [-Wdiscarded-qualifiers]
+      pScrn->chipset = amdgpu_get_marketing_name(pAMDGPUEnt->pDev);
+                     ^
+
+commit 955373a3e69baa241a1f267e96d04ddb902f689f
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Sep 25 18:40:01 2018 +0200
+
+    Make wait_pending_flip / handle_deferred symmetric in set_mode_major
+    
+    We were always calling the latter, but not always the former, which
+    could result in handling deferred DRM events prematurely.
+    
+    Acked-by: Slava Abramov <slava.abramov@amd.com>
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 0cd2c337d2c02b8ec2bd994d6124b4aaaad10741
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Sep 20 17:35:40 2018 +0200
+
+    Handle pending scanout update in drmmode_crtc_scanout_free
+    
+    We have to wait for a pending scanout flip or abort a pending scanout
+    update, otherwise the corresponding event handler will likely crash
+    after drmmode_crtc_scanout_free cleaned up the data structures.
+    
+    Fixes crash after VT switch while dedicated scanout pixmaps are enabled
+    for any CRTC.
+    
+    Acked-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit ac5b6f96e97aaf95f4e668b4057006b221cffaec
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Sep 20 18:53:05 2018 +0200
+
+    Convert README to markdown
+    
+    And update it a little for the current Gitlab infrastructure.
+
+commit 451fe96809771ed4e2be3851a65f5360ba9912cb
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Sep 20 18:48:43 2018 +0200
+
+    Post-release version bump
+
 commit d5e17dc4c78aee5d37de399728066b9be881e044
 Author: Michel Dänzer <michel.daenzer@amd.com>
 Date:   Fri Sep 14 17:00:17 2018 +0200
