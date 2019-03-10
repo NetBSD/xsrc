@@ -1,5 +1,4 @@
-/**************************************************************************
- *
+/*
  * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
  *
@@ -7,7 +6,7 @@
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
  * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sub license, and/or sell copies of the Software, and to
+ * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
@@ -17,13 +16,12 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
  * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- **************************************************************************/
+ */
 
 #ifndef INTELTEX_INC
 #define INTELTEX_INC
@@ -31,14 +29,11 @@
 #include "main/mtypes.h"
 #include "main/formats.h"
 #include "brw_context.h"
-
-struct intel_renderbuffer;
+#include "intel_mipmap_tree.h"
 
 void intelInitTextureFuncs(struct dd_function_table *functions);
 
 void intelInitTextureImageFuncs(struct dd_function_table *functions);
-
-void intelInitTextureSubImageFuncs(struct dd_function_table *functions);
 
 void intelInitTextureCopyImageFuncs(struct dd_function_table *functions);
 
@@ -48,24 +43,16 @@ void intelSetTexBuffer(__DRIcontext *pDRICtx,
 		       GLint target, __DRIdrawable *pDraw);
 void intelSetTexBuffer2(__DRIcontext *pDRICtx,
 			GLint target, GLint format, __DRIdrawable *pDraw);
+void intelReleaseTexBuffer(__DRIcontext *pDRICtx, GLint target,
+                           __DRIdrawable *dPriv);
 
 struct intel_mipmap_tree *
 intel_miptree_create_for_teximage(struct brw_context *brw,
 				  struct intel_texture_object *intelObj,
 				  struct intel_texture_image *intelImage,
-				  bool expect_accelerated_upload);
+                                  enum intel_miptree_create_flags flags);
 
-GLuint intel_finalize_mipmap_tree(struct brw_context *brw, GLuint unit);
-
-bool
-intel_texsubimage_tiled_memcpy(struct gl_context *ctx,
-                               GLuint dims,
-                               struct gl_texture_image *texImage,
-                               GLint xoffset, GLint yoffset, GLint zoffset,
-                               GLsizei width, GLsizei height, GLsizei depth,
-                               GLenum format, GLenum type,
-                               const GLvoid *pixels,
-                               const struct gl_pixelstore_attrib *packing,
-                               bool for_glTexImage);
+void intel_finalize_mipmap_tree(struct brw_context *brw,
+                                struct gl_texture_object *tex_obj);
 
 #endif

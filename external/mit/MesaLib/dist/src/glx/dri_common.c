@@ -73,6 +73,10 @@ dri_message(int level, const char *f, ...)
    }
 }
 
+#ifndef GL_LIB_NAME
+#define GL_LIB_NAME "libGL.so.1"
+#endif
+
 #ifndef DEFAULT_DRIVER_DIR
 /* this is normally defined in Mesa/configs/default with DRI_DRIVER_SEARCH_PATH */
 #define DEFAULT_DRIVER_DIR "/usr/local/lib/dri"
@@ -99,11 +103,7 @@ driOpenDriver(const char *driverName)
    int len;
 
    /* Attempt to make sure libGL symbols will be visible to the driver */
-#ifdef __NetBSD__ // base only, pkgsrc didn't get bumped for time_t
-   glhandle = dlopen("libGL.so.2", RTLD_NOW | RTLD_GLOBAL);
-#else
-   glhandle = dlopen("libGL.so.1", RTLD_NOW | RTLD_GLOBAL);
-#endif
+   glhandle = dlopen(GL_LIB_NAME, RTLD_NOW | RTLD_GLOBAL);
 
    libPaths = NULL;
    if (geteuid() == getuid()) {
@@ -161,10 +161,9 @@ driGetDriverExtensions(void *handle, const char *driver_name)
 {
    const __DRIextension **extensions = NULL;
    const __DRIextension **(*get_extensions)(void);
-   char *get_extensions_name;
+   char *get_extensions_name = loader_get_extensions_name(driver_name);
 
-   if (asprintf(&get_extensions_name, "%s_%s",
-                __DRI_DRIVER_GET_EXTENSIONS, driver_name) != -1) {
+   if (get_extensions_name) {
       get_extensions = dlsym(handle, get_extensions_name);
       if (get_extensions) {
          free(get_extensions_name);
@@ -243,10 +242,8 @@ static const struct
       __ATTRIB(__DRI_ATTRIB_MAX_PBUFFER_PIXELS, maxPbufferPixels),
       __ATTRIB(__DRI_ATTRIB_OPTIMAL_PBUFFER_WIDTH, optimalPbufferWidth),
       __ATTRIB(__DRI_ATTRIB_OPTIMAL_PBUFFER_HEIGHT, optimalPbufferHeight),
-#if 0
       __ATTRIB(__DRI_ATTRIB_SWAP_METHOD, swapMethod),
-#endif
-__ATTRIB(__DRI_ATTRIB_BIND_TO_TEXTURE_RGB, bindToTextureRgb),
+      __ATTRIB(__DRI_ATTRIB_BIND_TO_TEXTURE_RGB, bindToTextureRgb),
       __ATTRIB(__DRI_ATTRIB_BIND_TO_TEXTURE_RGBA, bindToTextureRgba),
       __ATTRIB(__DRI_ATTRIB_BIND_TO_MIPMAP_TEXTURE,
                      bindToMipmapTexture),
@@ -257,8 +254,7 @@ __ATTRIB(__DRI_ATTRIB_BIND_TO_TEXTURE_RGB, bindToTextureRgb),
 static int
 scalarEqual(struct glx_config *mode, unsigned int attrib, unsigned int value)
 {
-   unsigned int glxValue;
-   int i;
+   unsigned glxValue, i;
 
    for (i = 0; i < ARRAY_SIZE(attribMap); i++)
       if (attribMap[i].attrib == attrib) {
@@ -319,6 +315,19 @@ driConfigEqual(const __DRIcoreExtension *core,
          if (config->bindToTextureTargets != GLX_DONT_CARE &&
              glxValue != config->bindToTextureTargets)
             return GL_FALSE;
+         break;
+
+      case __DRI_ATTRIB_SWAP_METHOD:
+         if (value == __DRI_ATTRIB_SWAP_EXCHANGE)
+            glxValue = GLX_SWAP_EXCHANGE_OML;
+         else if (value == __DRI_ATTRIB_SWAP_COPY)
+            glxValue = GLX_SWAP_COPY_OML;
+         else
+            glxValue = GLX_SWAP_UNDEFINED_OML;
+
+         if (!scalarEqual(config, attrib, glxValue))
+            return GL_FALSE;
+
          break;
 
       default:
@@ -387,12 +396,25 @@ driDestroyConfigs(const __DRIconfig **configs)
    free(configs);
 }
 
+static struct glx_config *
+driInferDrawableConfig(struct glx_screen *psc, GLXDrawable draw)
+{
+   unsigned int fbconfig = 0;
+
+   if (__glXGetDrawableAttribute(psc->dpy, draw, GLX_FBCONFIG_ID, &fbconfig)) {
+      return glx_config_find_fbconfig(psc->configs, fbconfig);
+   }
+
+   return NULL;
+}
+
 _X_HIDDEN __GLXDRIdrawable *
 driFetchDrawable(struct glx_context *gc, GLXDrawable glxDrawable)
 {
    struct glx_display *const priv = __glXInitialize(gc->psc->dpy);
    __GLXDRIdrawable *pdraw;
    struct glx_screen *psc;
+   struct glx_config *config = gc->config;
 
    if (priv == NULL)
       return NULL;
@@ -409,8 +431,13 @@ driFetchDrawable(struct glx_context *gc, GLXDrawable glxDrawable)
       return pdraw;
    }
 
-   pdraw = psc->driScreen->createDrawable(psc, glxDrawable,
-                                          glxDrawable, gc->config);
+   if (config == NULL)
+      config = driInferDrawableConfig(gc->psc, glxDrawable);
+   if (config == NULL)
+      return NULL;
+
+   pdraw = psc->driScreen->createDrawable(psc, glxDrawable, glxDrawable,
+                                          config);
 
    if (pdraw == NULL) {
       ErrorMessageF("failed to create drawable\n");
@@ -466,7 +493,7 @@ _X_HIDDEN bool
 dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
                          unsigned *major_ver, unsigned *minor_ver,
                          uint32_t *render_type, uint32_t *flags, unsigned *api,
-                         int *reset, unsigned *error)
+                         int *reset, int *release, unsigned *error)
 {
    unsigned i;
    bool got_profile = false;
@@ -476,6 +503,7 @@ dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
    *minor_ver = 0;
    *render_type = GLX_RGBA_TYPE;
    *reset = __DRI_CTX_RESET_NO_NOTIFICATION;
+   *release = __DRI_CTX_RELEASE_BEHAVIOR_FLUSH;
    *flags = 0;
    *api = __DRI_API_OPENGL;
 
@@ -521,6 +549,19 @@ dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
             return false;
          }
          break;
+      case GLX_CONTEXT_RELEASE_BEHAVIOR_ARB:
+         switch (attribs[i * 2 + 1]) {
+         case GLX_CONTEXT_RELEASE_BEHAVIOR_NONE_ARB:
+            *release = __DRI_CTX_RELEASE_BEHAVIOR_NONE;
+            break;
+         case GLX_CONTEXT_RELEASE_BEHAVIOR_FLUSH_ARB:
+            *release = __DRI_CTX_RELEASE_BEHAVIOR_FLUSH;
+            break;
+         default:
+            *error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;
+            return false;
+         }
+         break;
       default:
 	 /* If an unknown attribute is received, fail.
 	  */
@@ -548,9 +589,18 @@ dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
       case GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB:
 	 *api = __DRI_API_OPENGL;
 	 break;
-      case GLX_CONTEXT_ES2_PROFILE_BIT_EXT:
-	 *api = __DRI_API_GLES2;
-	 break;
+      case GLX_CONTEXT_ES_PROFILE_BIT_EXT:
+         if (*major_ver >= 3)
+            *api = __DRI_API_GLES3;
+         else if (*major_ver == 2 && *minor_ver == 0)
+            *api = __DRI_API_GLES2;
+         else if (*major_ver == 1 && *minor_ver < 2)
+            *api = __DRI_API_GLES;
+         else {
+            *error = __DRI_CTX_ERROR_BAD_API;
+            return false;
+         }
+         break;
       default:
 	 *error = __DRI_CTX_ERROR_BAD_API;
 	 return false;
@@ -578,19 +628,6 @@ dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
 
    if (*major_ver >= 3 && *render_type == GLX_COLOR_INDEX_TYPE) {
       *error = __DRI_CTX_ERROR_BAD_FLAG;
-      return false;
-   }
-
-   /* The GLX_EXT_create_context_es2_profile spec says:
-    *
-    *     "... If the version requested is 2.0, and the
-    *     GLX_CONTEXT_ES2_PROFILE_BIT_EXT bit is set in the
-    *     GLX_CONTEXT_PROFILE_MASK_ARB attribute (see below), then the context
-    *     returned will implement OpenGL ES 2.0. This is the only way in which
-    *     an implementation may request an OpenGL ES 2.0 context."
-    */
-   if (*api == __DRI_API_GLES2 && (*major_ver != 2 || *minor_ver != 0)) {
-      *error = __DRI_CTX_ERROR_BAD_API;
       return false;
    }
 

@@ -122,6 +122,14 @@ struct disk_cache_put_job {
    struct cache_item_metadata cache_item_metadata;
 };
 
+#ifdef __HAVE_ATOMIC64_OPS
+#define cache_size_adjust(size, val)	p_atomic_add(size, val)
+#else
+	// XXX no locking
+#define cache_size_adjust(size, val)	(size) += (val)
+#endif
+
+
 /* Create a directory named 'path' if it does not already exist.
  *
  * Returns: 0 if path already exists as a directory or if created.
@@ -642,7 +650,7 @@ evict_lru_item(struct disk_cache *cache)
    free(dir_path);
 
    if (size) {
-      p_atomic_add(cache->size, - (uint64_t)size);
+      cache_size_adjust(cache->size, - (uint64_t)size);
       return;
    }
 
@@ -664,7 +672,7 @@ evict_lru_item(struct disk_cache *cache)
    free(dir_path);
 
    if (size)
-      p_atomic_add(cache->size, - (uint64_t)size);
+      cache_size_adjust(cache->size, - (uint64_t)size);
 }
 
 void
@@ -686,7 +694,7 @@ disk_cache_remove(struct disk_cache *cache, const cache_key key)
    free(filename);
 
    if (sb.st_blocks)
-      p_atomic_add(cache->size, - (uint64_t)sb.st_blocks * 512);
+      cache_size_adjust(cache->size, - (uint64_t)sb.st_blocks * 512);
 }
 
 static ssize_t
@@ -993,7 +1001,7 @@ cache_put(void *job, int thread_index)
       goto done;
    }
 
-   p_atomic_add(dc_job->cache->size, sb.st_blocks * 512);
+   cache_size_adjust(dc_job->cache->size, sb.st_blocks * 512);
 
  done:
    if (fd_final != -1)

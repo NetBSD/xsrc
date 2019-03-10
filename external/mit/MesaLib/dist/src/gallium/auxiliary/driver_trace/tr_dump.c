@@ -63,7 +63,6 @@ static mtx_t call_mutex = _MTX_INITIALIZER_NP;
 static long unsigned call_no = 0;
 static boolean dumping = FALSE;
 
-
 static inline void
 trace_dump_write(const char *buf, size_t size)
 {
@@ -171,9 +170,14 @@ trace_dump_trace_flush(void)
    }
 }
 
-static void
+static boolean trace_dump_has_begun = FALSE;
+
+static void __attribute__((__destructor__))
 trace_dump_trace_close(void)
 {
+   if (!trace_dump_has_begun)
+      return;
+
    if (stream) {
       trace_dump_writes("</trace>\n");
       if (close_stream) {
@@ -233,7 +237,7 @@ trace_dump_trace_begin(void)
        * screen multiple times, so we only write </trace> tag and close at exit
        * time.
        */
-      atexit(trace_dump_trace_close);
+      trace_dump_has_begun = TRUE;
    }
 
    return TRUE;

@@ -46,10 +46,15 @@ static once_flag atexit_once_flag = ONCE_FLAG_INIT;
 static struct list_head queue_list;
 static mtx_t exit_mutex = _MTX_INITIALIZER_NP;
 
-static void
+static int global_init_called = 0;
+
+static void __attribute__((__destructor__))
 atexit_handler(void)
 {
    struct util_queue *iter;
+
+   if (!global_init_called)
+      return;
 
    mtx_lock(&exit_mutex);
    /* Wait for all queues to assert idle. */
@@ -63,7 +68,7 @@ static void
 global_init(void)
 {
    LIST_INITHEAD(&queue_list);
-   atexit(atexit_handler);
+   global_init_called = 1;
 }
 
 static void

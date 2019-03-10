@@ -1095,7 +1095,7 @@ i915_init_compile(struct i915_context *i915,
    p->decl = p->declarations;
    p->decl_s = 0;
    p->decl_t = 0;
-   p->temp_flag = ~0x0 << I915_MAX_TEMPORARY;
+   p->temp_flag = ~0x0U << I915_MAX_TEMPORARY;
    p->utemp_flag = ~0x7;
 
    /* initialize the first program word */

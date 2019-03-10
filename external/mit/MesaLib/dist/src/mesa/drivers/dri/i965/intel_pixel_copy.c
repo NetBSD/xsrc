@@ -1,5 +1,4 @@
-/**************************************************************************
- *
+/*
  * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
  *
@@ -7,7 +6,7 @@
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
  * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sub license, and/or sell copies of the Software, and to
+ * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
@@ -17,17 +16,16 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
  * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- **************************************************************************/
+ */
 
-#include "main/glheader.h"
 #include "main/image.h"
 #include "main/state.h"
+#include "main/stencil.h"
 #include "main/mtypes.h"
 #include "main/condrender.h"
 #include "main/fbobject.h"
@@ -103,7 +101,7 @@ do_blit_copypixels(struct gl_context * ctx,
       return false;
    }
 
-   if (draw_irb->mt->num_samples > 1 || read_irb->mt->num_samples > 1) {
+   if (draw_irb->mt->surf.samples > 1 || read_irb->mt->surf.samples > 1) {
       perf_debug("glCopyPixels() fallback: multisampled buffers\n");
       return false;
    }
@@ -118,14 +116,14 @@ do_blit_copypixels(struct gl_context * ctx,
       return false;
    }
 
-   if (ctx->Stencil._Enabled) {
+   if (brw->stencil_enabled) {
       perf_debug("glCopyPixels(): Unsupported stencil test state\n");
       return false;
    }
 
    if (ctx->Fog.Enabled ||
        ctx->Texture._MaxEnabledTexImageUnit != -1 ||
-       ctx->FragmentProgram._Enabled) {
+       _mesa_arb_fragment_program_enabled(ctx)) {
       perf_debug("glCopyPixels(): Unsupported fragment shader state\n");
       return false;
    }
@@ -136,16 +134,13 @@ do_blit_copypixels(struct gl_context * ctx,
       return false;
    }
 
-   if (!ctx->Color.ColorMask[0][0] ||
-       !ctx->Color.ColorMask[0][1] ||
-       !ctx->Color.ColorMask[0][2] ||
-       !ctx->Color.ColorMask[0][3]) {
+   if (GET_COLORMASK(ctx->Color.ColorMask, 0) != 0xf) {
       perf_debug("glCopyPixels(): Unsupported color mask state\n");
       return false;
    }
 
    if (ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F) {
-      perf_debug("glCopyPixles(): Unsupported pixel zoom\n");
+      perf_debug("glCopyPixels(): Unsupported pixel zoom\n");
       return false;
    }
 
@@ -175,13 +170,13 @@ do_blit_copypixels(struct gl_context * ctx,
 
    if (!intel_miptree_blit(brw,
                            read_irb->mt, read_irb->mt_level, read_irb->mt_layer,
-                           srcx, srcy, _mesa_is_winsys_fbo(read_fb),
+                           srcx, srcy, read_fb->FlipY,
                            draw_irb->mt, draw_irb->mt_level, draw_irb->mt_layer,
-                           dstx, dsty, _mesa_is_winsys_fbo(fb),
+                           dstx, dsty, fb->FlipY,
                            width, height,
                            (ctx->Color.ColorLogicOpEnabled ?
-                            ctx->Color.LogicOp : GL_COPY))) {
-      DBG("%s: blit failure\n", __FUNCTION__);
+                            ctx->Color._LogicOp : COLOR_LOGICOP_COPY))) {
+      DBG("%s: blit failure\n", __func__);
       return false;
    }
 
@@ -190,7 +185,7 @@ do_blit_copypixels(struct gl_context * ctx,
 
 out:
 
-   DBG("%s: success\n", __FUNCTION__);
+   DBG("%s: success\n", __func__);
    return true;
 }
 
@@ -201,12 +196,15 @@ intelCopyPixels(struct gl_context * ctx,
                 GLsizei width, GLsizei height,
                 GLint destx, GLint desty, GLenum type)
 {
-   DBG("%s\n", __FUNCTION__);
+   struct brw_context *brw = brw_context(ctx);
+
+   DBG("%s\n", __func__);
 
    if (!_mesa_check_conditional_render(ctx))
       return;
 
-   if (do_blit_copypixels(ctx, srcx, srcy, width, height, destx, desty, type))
+   if (brw->screen->devinfo.gen < 6 &&
+       do_blit_copypixels(ctx, srcx, srcy, width, height, destx, desty, type))
       return;
 
    /* this will use swrast if needed */

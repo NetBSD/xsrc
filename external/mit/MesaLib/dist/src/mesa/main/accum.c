@@ -28,11 +28,11 @@
 #include "context.h"
 #include "format_unpack.h"
 #include "format_pack.h"
+#include "framebuffer.h"
 #include "imports.h"
 #include "macros.h"
 #include "state.h"
 #include "mtypes.h"
-#include "main/dispatch.h"
 
 
 void GLAPIENTRY
@@ -50,57 +50,6 @@ _mesa_ClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
       return;
 
    COPY_4FV( ctx->Accum.ClearColor, tmp );
-}
-
-
-void GLAPIENTRY
-_mesa_Accum( GLenum op, GLfloat value )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VERTICES(ctx, 0);
-
-   switch (op) {
-   case GL_ADD:
-   case GL_MULT:
-   case GL_ACCUM:
-   case GL_LOAD:
-   case GL_RETURN:
-      /* OK */
-      break;
-   default:
-      _mesa_error(ctx, GL_INVALID_ENUM, "glAccum(op)");
-      return;
-   }
-
-   if (ctx->DrawBuffer->Visual.haveAccumBuffer == 0) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glAccum(no accum buffer)");
-      return;
-   }
-
-   if (ctx->DrawBuffer != ctx->ReadBuffer) {
-      /* See GLX_SGI_make_current_read or WGL_ARB_make_current_read,
-       * or GL_EXT_framebuffer_blit.
-       */
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glAccum(different read/draw buffers)");
-      return;
-   }
-
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
-
-   if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-      _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
-                  "glAccum(incomplete framebuffer)");
-      return;
-   }
-
-   if (ctx->RasterDiscard)
-      return;
-
-   if (ctx->RenderMode == GL_RENDER) {
-      _mesa_accum(ctx, op, value);
-   }
 }
 
 
@@ -124,6 +73,8 @@ _mesa_clear_accum_buffer(struct gl_context *ctx)
    if (!accRb)
       return;   /* missing accum buffer, not an error */
 
+   _mesa_update_draw_buffer_bounds(ctx, ctx->DrawBuffer);
+
    /* bounds, with scissor */
    x = ctx->DrawBuffer->_Xmin;
    y = ctx->DrawBuffer->_Ymin;
@@ -131,7 +82,8 @@ _mesa_clear_accum_buffer(struct gl_context *ctx)
    height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
 
    ctx->Driver.MapRenderbuffer(ctx, accRb, x, y, width, height,
-                               GL_MAP_WRITE_BIT, &accMap, &accRowStride);
+                               GL_MAP_WRITE_BIT, &accMap, &accRowStride,
+                               ctx->DrawBuffer->FlipY);
 
    if (!accMap) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glAccum");
@@ -186,7 +138,8 @@ accum_scale_or_bias(struct gl_context *ctx, GLfloat value,
 
    ctx->Driver.MapRenderbuffer(ctx, accRb, xpos, ypos, width, height,
                                GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
-                               &accMap, &accRowStride);
+                               &accMap, &accRowStride,
+                               ctx->DrawBuffer->FlipY);
 
    if (!accMap) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glAccum");
@@ -255,7 +208,8 @@ accum_or_load(struct gl_context *ctx, GLfloat value,
 
    /* Map accum buffer */
    ctx->Driver.MapRenderbuffer(ctx, accRb, xpos, ypos, width, height,
-                               mappingFlags, &accMap, &accRowStride);
+                               mappingFlags, &accMap, &accRowStride,
+                               ctx->DrawBuffer->FlipY);
    if (!accMap) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glAccum");
       return;
@@ -264,7 +218,8 @@ accum_or_load(struct gl_context *ctx, GLfloat value,
    /* Map color buffer */
    ctx->Driver.MapRenderbuffer(ctx, colorRb, xpos, ypos, width, height,
                                GL_MAP_READ_BIT,
-                               &colorMap, &colorRowStride);
+                               &colorMap, &colorRowStride,
+                               ctx->DrawBuffer->FlipY);
    if (!colorMap) {
       ctx->Driver.UnmapRenderbuffer(ctx, accRb);
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glAccum");
@@ -337,7 +292,7 @@ accum_return(struct gl_context *ctx, GLfloat value,
    /* Map accum buffer */
    ctx->Driver.MapRenderbuffer(ctx, accRb, xpos, ypos, width, height,
                                GL_MAP_READ_BIT,
-                               &accMap, &accRowStride);
+                               &accMap, &accRowStride, fb->FlipY);
    if (!accMap) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glAccum");
       return;
@@ -346,10 +301,10 @@ accum_return(struct gl_context *ctx, GLfloat value,
    /* Loop over destination buffers */
    for (buffer = 0; buffer < fb->_NumColorDrawBuffers; buffer++) {
       struct gl_renderbuffer *colorRb = fb->_ColorDrawBuffers[buffer];
-      const GLboolean masking = (!ctx->Color.ColorMask[buffer][RCOMP] ||
-                                 !ctx->Color.ColorMask[buffer][GCOMP] ||
-                                 !ctx->Color.ColorMask[buffer][BCOMP] ||
-                                 !ctx->Color.ColorMask[buffer][ACOMP]);
+      const GLboolean masking = (!GET_COLORMASK_BIT(ctx->Color.ColorMask, buffer, 0) ||
+                                 !GET_COLORMASK_BIT(ctx->Color.ColorMask, buffer, 1) ||
+                                 !GET_COLORMASK_BIT(ctx->Color.ColorMask, buffer, 2) ||
+                                 !GET_COLORMASK_BIT(ctx->Color.ColorMask, buffer, 3));
       GLbitfield mappingFlags = GL_MAP_WRITE_BIT;
 
       if (masking)
@@ -357,7 +312,8 @@ accum_return(struct gl_context *ctx, GLfloat value,
 
       /* Map color buffer */
       ctx->Driver.MapRenderbuffer(ctx, colorRb, xpos, ypos, width, height,
-                                  mappingFlags, &colorMap, &colorRowStride);
+                                  mappingFlags, &colorMap, &colorRowStride,
+                                  fb->FlipY);
       if (!colorMap) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glAccum");
          continue;
@@ -388,19 +344,19 @@ accum_return(struct gl_context *ctx, GLfloat value,
                   _mesa_unpack_rgba_row(colorRb->Format, width, colorMap, dest);
 
                   /* use the dest colors where mask[channel] = 0 */
-                  if (ctx->Color.ColorMask[buffer][RCOMP] == 0) {
+                  if (!GET_COLORMASK_BIT(ctx->Color.ColorMask, buffer, 0)) {
                      for (i = 0; i < width; i++)
                         rgba[i][RCOMP] = dest[i][RCOMP];
                   }
-                  if (ctx->Color.ColorMask[buffer][GCOMP] == 0) {
+                  if (!GET_COLORMASK_BIT(ctx->Color.ColorMask, buffer, 1)) {
                      for (i = 0; i < width; i++)
                         rgba[i][GCOMP] = dest[i][GCOMP];
                   }
-                  if (ctx->Color.ColorMask[buffer][BCOMP] == 0) {
+                  if (!GET_COLORMASK_BIT(ctx->Color.ColorMask, buffer, 2)) {
                      for (i = 0; i < width; i++)
                         rgba[i][BCOMP] = dest[i][BCOMP];
                   }
-                  if (ctx->Color.ColorMask[buffer][ACOMP] == 0) {
+                  if (!GET_COLORMASK_BIT(ctx->Color.ColorMask, buffer, 3)) {
                      for (i = 0; i < width; i++)
                         rgba[i][ACOMP] = dest[i][ACOMP];
                   }
@@ -436,8 +392,8 @@ accum_return(struct gl_context *ctx, GLfloat value,
  * signed 16-bit color channels could implement hardware accumulation
  * operations, but no driver does so at this time.
  */
-void
-_mesa_accum(struct gl_context *ctx, GLenum op, GLfloat value)
+static void
+accum(struct gl_context *ctx, GLenum op, GLfloat value)
 {
    GLint xpos, ypos, width, height;
 
@@ -448,6 +404,8 @@ _mesa_accum(struct gl_context *ctx, GLenum op, GLfloat value)
 
    if (!_mesa_check_conditional_render(ctx))
       return;
+
+   _mesa_update_draw_buffer_bounds(ctx, ctx->DrawBuffer);
 
    xpos = ctx->DrawBuffer->_Xmin;
    ypos = ctx->DrawBuffer->_Ymin;
@@ -477,7 +435,7 @@ _mesa_accum(struct gl_context *ctx, GLenum op, GLfloat value)
       accum_return(ctx, value, xpos, ypos, width, height);
       break;
    default:
-      _mesa_problem(ctx, "invalid mode in _mesa_accum()");
+      unreachable("invalid mode in _mesa_Accum()");
       break;
    }
 }
@@ -488,4 +446,55 @@ _mesa_init_accum( struct gl_context *ctx )
 {
    /* Accumulate buffer group */
    ASSIGN_4V( ctx->Accum.ClearColor, 0.0, 0.0, 0.0, 0.0 );
+}
+
+
+void GLAPIENTRY
+_mesa_Accum( GLenum op, GLfloat value )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+
+   switch (op) {
+   case GL_ADD:
+   case GL_MULT:
+   case GL_ACCUM:
+   case GL_LOAD:
+   case GL_RETURN:
+      /* OK */
+      break;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "glAccum(op)");
+      return;
+   }
+
+   if (ctx->DrawBuffer->Visual.haveAccumBuffer == 0) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glAccum(no accum buffer)");
+      return;
+   }
+
+   if (ctx->DrawBuffer != ctx->ReadBuffer) {
+      /* See GLX_SGI_make_current_read or WGL_ARB_make_current_read,
+       * or GL_EXT_framebuffer_blit.
+       */
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glAccum(different read/draw buffers)");
+      return;
+   }
+
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
+
+   if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+      _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
+                  "glAccum(incomplete framebuffer)");
+      return;
+   }
+
+   if (ctx->RasterDiscard)
+      return;
+
+   if (ctx->RenderMode == GL_RENDER) {
+      accum(ctx, op, value);
+   }
 }

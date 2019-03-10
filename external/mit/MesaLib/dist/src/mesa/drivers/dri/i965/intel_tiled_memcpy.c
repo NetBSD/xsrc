@@ -64,6 +64,10 @@ ror(uint32_t n, uint32_t d)
    return (n >> d) | (n << (32 - d));
 }
 
+/* Handle conflicting declaration and conflicting macro in netbsd */
+#undef bswap32
+#define bswap32(n) __builtin_bswap32(n)
+#if 0
 static inline uint32_t
 bswap32(uint32_t n)
 {
@@ -76,6 +80,7 @@ bswap32(uint32_t n)
           (n << 24);
 #endif
 }
+#endif
 
 /**
  * Copy RGBA to BGRA - swap R and B.

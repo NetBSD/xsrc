@@ -99,7 +99,6 @@ struct vl_compositor_state
 struct vl_compositor
 {
    struct pipe_context *pipe;
-   struct u_upload_mgr *upload;
 
    struct pipe_framebuffer_state fb_state;
    struct pipe_vertex_buffer vertex_buf;
@@ -113,13 +112,29 @@ struct vl_compositor
 
    void *vs;
    void *fs_video_buffer;
-   void *fs_weave;
+   void *fs_weave_rgb;
    void *fs_rgba;
+
+   struct {
+      struct {
+         void *y;
+         void *uv;
+      } weave;
+      struct {
+         void *y;
+         void *uv;
+      } bob;
+   } fs_yuv;
 
    struct {
       void *rgb;
       void *yuv;
    } fs_palette;
+
+   struct {
+      void *y;
+      void *uv;
+   } fs_rgb_yuv;
 };
 
 /**
@@ -137,8 +152,10 @@ vl_compositor_init_state(struct vl_compositor_state *state, struct pipe_context 
 /**
  * set yuv -> rgba conversion matrix
  */
-void
-vl_compositor_set_csc_matrix(struct vl_compositor_state *settings, const vl_csc_matrix *matrix);
+bool
+vl_compositor_set_csc_matrix(struct vl_compositor_state *settings,
+                             const vl_csc_matrix *matrix,
+                             float luma_min, float luma_max);
 
 /**
  * reset dirty area, so it's cleared with the clear colour
@@ -233,6 +250,30 @@ void
 vl_compositor_set_layer_rotation(struct vl_compositor_state *state,
                                  unsigned layer,
                                  enum vl_compositor_rotation rotate);
+
+/**
+ * deinterlace yuv buffer with full abilities
+ */
+void
+vl_compositor_yuv_deint_full(struct vl_compositor_state *state,
+                             struct vl_compositor *compositor,
+                             struct pipe_video_buffer *src,
+                             struct pipe_video_buffer *dst,
+                             struct u_rect *src_rect,
+                             struct u_rect *dst_rect,
+                             enum vl_compositor_deinterlace deinterlace);
+
+/**
++ * convert rgb to yuv
++ */
+void
+vl_compositor_convert_rgb_to_yuv(struct vl_compositor_state *state,
+                                 struct vl_compositor *compositor,
+                                 unsigned layer,
+                                 struct pipe_resource *src_res,
+                                 struct pipe_video_buffer *dst,
+                                 struct u_rect *src_rect,
+                                 struct u_rect *dst_rect);
 
 /*@}*/
 

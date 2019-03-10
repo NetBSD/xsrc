@@ -992,7 +992,6 @@ gen_device_info_update_from_masks(struct gen_device_info *devinfo,
 {
    struct {
       struct drm_i915_query_topology_info base;
-      uint8_t data[100];
    } topology;
 
    assert((slice_mask & 0xff) == slice_mask);

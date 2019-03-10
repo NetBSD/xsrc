@@ -56,7 +56,7 @@ static void radeon_vcn_enc_get_param(struct radeon_encoder *enc, struct pipe_pic
       enc->enc_pic.crop_bottom = (align(enc->base.height, 16) - enc->base.height) / 2;
    } else if (u_reduce_video_profile(picture->profile) == PIPE_VIDEO_FORMAT_HEVC) {
       struct pipe_h265_enc_picture_desc *pic = (struct pipe_h265_enc_picture_desc *)picture;
-      enc->enc_pic.picture_type = pic->picture_type;
+      enc->enc_pic.picture_type = (enum pipe_h264_enc_picture_type)pic->picture_type;
       enc->enc_pic.frame_num = pic->frame_num;
       enc->enc_pic.pic_order_cnt = pic->pic_order_cnt;
       enc->enc_pic.pic_order_cnt_type = pic->pic_order_cnt_type;

@@ -183,9 +183,15 @@ static struct driver_config_entry *driver_config_cache = NULL;
 /* Called as an atexit function. Otherwise, this would have to be called with
  * driver_config_mutex locked.
  */
-static void
+static Bool e_next_ever_null = False;
+
+static void __attribute__((__destructor__))
 clear_driver_config_cache()
 {
+
+   if (!e_next_ever_null)
+      return;
+
    while (driver_config_cache) {
       struct driver_config_entry *e = driver_config_cache;
       driver_config_cache = e->next;
@@ -276,7 +282,7 @@ glXGetDriverConfig(const char *driverName)
    driver_config_cache = e;
 
    if (!e->next)
-      atexit(clear_driver_config_cache);
+      e_next_ever_null = True;
 
 out:
    pthread_mutex_unlock(&driver_config_mutex);
