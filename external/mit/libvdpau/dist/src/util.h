@@ -38,7 +38,7 @@ static char * getenv_wrapper(const char *name)
     }
 }
 
-#ifndef HAVE_SECURE_GETENV
+#if 0 // Just substituting it for the above equivalent
 #  ifdef HAVE___SECURE_GETENV
 #    define secure_getenv __secure_getenv
 #  else

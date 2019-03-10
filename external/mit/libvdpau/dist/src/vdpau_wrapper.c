@@ -118,7 +118,7 @@ static VdpStatus _vdp_open_driver(
     char const * vdpau_trace;
     char const * func_name;
 
-    vdpau_driver = secure_getenv("VDPAU_DRIVER");
+    vdpau_driver = getenv_wrapper("VDPAU_DRIVER");
     if (vdpau_driver) {
         if (strchr(vdpau_driver, '/')) {
             vdpau_driver = NULL;
@@ -133,7 +133,7 @@ static VdpStatus _vdp_open_driver(
     }
 
     /* Don't allow setuid apps to use VDPAU_DRIVER_PATH */
-    vdpau_driver_path = secure_getenv("VDPAU_DRIVER_PATH");
+    vdpau_driver_path = getenv_wrapper("VDPAU_DRIVER_PATH");
     if (vdpau_driver_path &&
         snprintf(vdpau_driver_lib, sizeof(vdpau_driver_lib),
                  DRIVER_LIB_FORMAT, vdpau_driver_path, vdpau_driver) <
@@ -181,7 +181,7 @@ static VdpStatus _vdp_open_driver(
 
     _vdp_backend_dll = _vdp_driver_dll;
 
-    vdpau_trace = secure_getenv("VDPAU_TRACE");
+    vdpau_trace = getenv_wrapper("VDPAU_TRACE");
     if (vdpau_trace && atoi(vdpau_trace)) {
         SetDllHandle * set_dll_handle;
 

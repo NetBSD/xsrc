@@ -132,7 +132,7 @@ _vdp_DRI2Connect(Display * dpy, XID window, char **driverName, char **deviceName
    req->driverType = DRI2DriverVDPAU;
 #ifdef DRI2DriverPrimeShift
    {
-      char *prime = secure_getenv("DRI_PRIME");
+      char *prime = getenv_wrapper("DRI_PRIME");
       if (prime) {
          unsigned int primeid;
          errno = 0;
