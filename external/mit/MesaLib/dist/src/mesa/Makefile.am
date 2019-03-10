@@ -21,7 +21,12 @@
 
 SUBDIRS = . main/tests
 
-if HAVE_X11_DRIVER
+# state tracker tests depend on libmesagallium.la
+if HAVE_GALLIUM
+SUBDIRS += state_tracker/tests
+endif
+
+if HAVE_XLIB_GLX
 SUBDIRS += drivers/x11
 endif
 
@@ -33,63 +38,66 @@ if HAVE_OSMESA
 SUBDIRS += drivers/osmesa
 endif
 
-gldir = $(includedir)/GL
-gl_HEADERS = $(top_srcdir)/include/GL/*.h
-
-.PHONY: $(BUILDDIR)main/git_sha1.h.tmp
-$(BUILDDIR)main/git_sha1.h.tmp:
-	@touch main/git_sha1.h.tmp
-	@if test -d $(top_srcdir)/.git; then \
-		if which git > /dev/null; then \
-		    git --git-dir=$(top_srcdir)/.git log -n 1 --oneline | \
-			sed 's/^\([^ ]*\) .*/#define MESA_GIT_SHA1 "git-\1"/' \
-			> main/git_sha1.h.tmp ; \
-		fi \
-	fi
-
-$(BUILDDIR)main/git_sha1.h: $(BUILDDIR)main/git_sha1.h.tmp
-	@echo "updating main/git_sha1.h"
-	@if ! cmp -s main/git_sha1.h.tmp main/git_sha1.h; then \
-		mv main/git_sha1.h.tmp main/git_sha1.h ;\
-	else \
-		rm main/git_sha1.h.tmp ;\
-	fi
-
-# include glapi_gen.mk for generating glapi headers for GLES
-GLAPI = $(top_srcdir)/src/mapi/glapi/gen
-include $(GLAPI)/glapi_gen.mk
-
-BUILDDIR = $(builddir)/
 include Makefile.sources
+
+EXTRA_DIST = \
+	drivers/SConscript \
+	main/meson.build \
+	program/meson.build \
+	meson.build \
+	main/format_fallback.py \
+	main/format_info.py \
+	main/format_pack.py \
+	main/format_parser.py \
+	main/format_unpack.py \
+	main/formats.csv \
+	main/get_hash_generator.py \
+	main/get_hash_params.py \
+	program/program_lexer.l \
+	program/program_parse.y \
+	SConscript \
+	swrast/NOTES \
+	swrast_setup/NOTES \
+	tnl/NOTES \
+	tnl_dd
 
 BUILT_SOURCES = \
 	main/get_hash.h \
-        main/format_info.c \
-	$(BUILDDIR)main/git_sha1.h \
-	$(BUILDDIR)program/program_parse.tab.c \
-	$(BUILDDIR)program/lex.yy.c
+	main/format_fallback.c \
+	main/format_info.h \
+	main/format_pack.c \
+	main/format_unpack.c \
+	program/program_parse.tab.c \
+	program/lex.yy.c
 CLEANFILES = \
 	$(BUILT_SOURCES) \
-	$(BUILDDIR)program/program_parse.tab.h \
-	$(BUILDDIR)main/git_sha1.h.tmp
+	program/program_parse.tab.h
 
-GET_HASH_GEN = main/get_hash_generator.py
+PYTHON_GEN = $(AM_V_GEN)$(PYTHON) $(PYTHON_FLAGS)
 
-main/get_hash.h: $(GLAPI)/gl_and_es_API.xml main/get_hash_params.py 	\
-		 $(GET_HASH_GEN) Makefile
-	$(AM_V_GEN)set -e;						\
-	$(PYTHON2) $(PYTHON_FLAGS) $(srcdir)/$(GET_HASH_GEN)		\
-		-f $< > $@.tmp;						\
-	mv $@.tmp $@;
+main/get_hash.h: ../mapi/glapi/gen/gl_and_es_API.xml main/get_hash_params.py \
+                 main/get_hash_generator.py
+	$(PYTHON_GEN) $(srcdir)/main/get_hash_generator.py \
+		-f $(srcdir)/../mapi/glapi/gen/gl_and_es_API.xml > $@
 
-main/format_info.c: main/formats.csv                                    \
+main/format_fallback.c: main/format_fallback.py \
+                        main/format_parser.py \
+	                main/formats.csv
+	$(PYTHON_GEN) $(srcdir)/main/format_fallback.py $(srcdir)/main/formats.csv $@
+
+main/format_info.h: main/formats.csv \
                     main/format_parser.py main/format_info.py
-	$(AM_V_GEN)set -e;						\
-	$(PYTHON2) $(PYTHON_FLAGS) $(srcdir)/main/format_info.py        \
-                   $< > $@.tmp;                                         \
-	mv $@.tmp $@;
+	$(PYTHON_GEN) $(srcdir)/main/format_info.py $(srcdir)/main/formats.csv > $@
 
-main/formats.c: main/format_info.c
+main/format_pack.c: main/format_pack.py main/formats.csv \
+                    main/format_parser.py
+	$(PYTHON_GEN) $(srcdir)/main/format_pack.py $(srcdir)/main/formats.csv > $@
+
+main/format_unpack.c: main/format_unpack.py main/formats.csv	\
+                      main/format_parser.py
+	$(PYTHON_GEN) $(srcdir)/main/format_unpack.py $(srcdir)/main/formats.csv > $@
+
+main/formats.c: main/format_info.h
 
 noinst_LTLIBRARIES = $(ARCH_LIBS)
 if NEED_LIBMESA
@@ -102,8 +110,15 @@ noinst_LTLIBRARIES += libmesagallium.la
 endif
 
 AM_CPPFLAGS = $(DEFINES) $(INCLUDE_DIRS)
-AM_CFLAGS = $(LLVM_CFLAGS) $(VISIBILITY_CFLAGS)
-AM_CXXFLAGS = $(LLVM_CFLAGS) $(VISIBILITY_CXXFLAGS)
+AM_CFLAGS = \
+	$(VDPAU_CFLAGS) \
+	$(LLVM_CFLAGS) \
+	$(VISIBILITY_CFLAGS) \
+	$(MSVC2013_COMPAT_CFLAGS)
+AM_CXXFLAGS = \
+	$(LLVM_CFLAGS) \
+	$(VISIBILITY_CXXFLAGS) \
+	$(MSVC2013_COMPAT_CXXFLAGS)
 
 ARCH_LIBS =
 
@@ -135,35 +150,39 @@ endif
 libmesa_la_SOURCES = \
 	$(MESA_FILES) \
 	$(PROGRAM_FILES) \
+	$(PROGRAM_NIR_FILES) \
 	$(MESA_ASM_FILES_FOR_ARCH)
 
 libmesa_la_LIBADD = \
-	$(top_builddir)/src/glsl/libglsl.la \
+	$(top_builddir)/src/compiler/glsl/libglsl.la \
 	$(ARCH_LIBS)
 
 libmesagallium_la_SOURCES = \
 	$(MESA_GALLIUM_FILES) \
 	$(PROGRAM_FILES) \
+	$(PROGRAM_NIR_FILES) \
 	$(MESA_ASM_FILES_FOR_ARCH)
 
 libmesagallium_la_LIBADD = \
-	$(top_builddir)/src/glsl/libglsl.la \
+	$(top_builddir)/src/compiler/glsl/libglsl.la \
 	$(ARCH_LIBS)
 
 libmesa_sse41_la_SOURCES = \
-	main/streaming-load-memcpy.c
-libmesa_sse41_la_CFLAGS = $(AM_CFLAGS) -msse4.1
+	$(X86_SSE41_FILES)
 
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = gl.pc
+libmesa_sse41_la_CFLAGS = $(AM_CFLAGS) $(SSE41_CFLAGS)
 
-$(BUILDDIR)program/lex.yy.c: program/program_lexer.l
-	$(AM_V_at)$(MKDIR_P) program
-	$(AM_V_GEN) $(LEX) --never-interactive --outfile=$@ $<
+MKDIR_GEN = $(AM_V_at)$(MKDIR_P) $(@D)
+YACC_GEN = $(AM_V_GEN)$(YACC) $(YFLAGS)
+LEX_GEN = $(AM_V_GEN)$(LEX) $(LFLAGS)
 
-$(BUILDDIR)program/program_parse.tab.c $(BUILDDIR)program/program_parse.tab.h: program/program_parse.y
-	$(AM_V_at)$(MKDIR_P) program
-	$(AM_V_GEN) $(YACC) -p "_mesa_program_" -v -d --output=$(BUILDDIR)program/program_parse.tab.c $<
+program/lex.yy.c: program/program_lexer.l
+	$(MKDIR_GEN)
+	$(LEX_GEN) -o $@ $(srcdir)/program/program_lexer.l
+
+program/program_parse.tab.c program/program_parse.tab.h: program/program_parse.y
+	$(MKDIR_GEN)
+	$(YACC_GEN) -o $@ -p "_mesa_program_" --defines=$(builddir)/program/program_parse.tab.h $(srcdir)/program/program_parse.y
 
 if GEN_ASM_OFFSETS
 matypes.h: $(gen_matypes_SOURCES)

@@ -15,7 +15,7 @@ struct nv30_surface {
    uint16_t depth;
 };
 
-static INLINE struct nv30_surface *
+static inline struct nv30_surface *
 nv30_surface(struct pipe_surface *ps)
 {
    return (struct nv30_surface *)ps;
@@ -32,13 +32,13 @@ struct nv30_miptree {
    struct nv30_miptree_level level[13];
    uint32_t uniform_pitch;
    uint32_t layer_size;
-   boolean swizzled;
+   bool swizzled;
    unsigned ms_mode;
    unsigned ms_x:1;
    unsigned ms_y:1;
 };
 
-static INLINE struct nv30_miptree *
+static inline struct nv30_miptree *
 nv30_miptree(struct pipe_resource *pt)
 {
    return (struct nv30_miptree *)pt;
@@ -64,9 +64,6 @@ nv30_resource_copy_region(struct pipe_context *pipe,
                           unsigned dstx, unsigned dsty, unsigned dstz,
                           struct pipe_resource *src, unsigned src_level,
                           const struct pipe_box *src_box);
-
-void
-nv30_resource_resolve(struct pipe_context *, const struct pipe_resolve_info *);
 
 void
 nv30_blit(struct pipe_context *pipe,

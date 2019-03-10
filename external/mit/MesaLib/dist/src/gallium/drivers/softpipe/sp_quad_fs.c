@@ -55,19 +55,11 @@ struct quad_shade_stage
 };
 
 
-/** cast wrapper */
-static INLINE struct quad_shade_stage *
-quad_shade_stage(struct quad_stage *qs)
-{
-   return (struct quad_shade_stage *) qs;
-}
-
-
 /**
  * Execute fragment shader for the four fragments in the quad.
  * \return TRUE if quad is alive, FALSE if all four pixels are killed
  */
-static INLINE boolean
+static inline boolean
 shade_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
@@ -80,7 +72,7 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
 
    /* run shader */
    machine->flatshade_color = softpipe->rasterizer->flatshade ? TRUE : FALSE;
-   return softpipe->fs_variant->run( softpipe->fs_variant, machine, quad );
+   return softpipe->fs_variant->run( softpipe->fs_variant, machine, quad, softpipe->early_depth );
 }
 
 

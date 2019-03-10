@@ -29,14 +29,17 @@
 #ifndef ST_MESA_TO_TGSI_H
 #define ST_MESA_TO_TGSI_H
 
-#if defined __cplusplus
-extern "C" {
-#endif
-
 #include "main/glheader.h"
+#include "main/mtypes.h"
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_defines.h"
+
+#include "compiler/glsl_types.h"
+
+#if defined __cplusplus
+extern "C" {
+#endif
 
 struct gl_context;
 struct gl_program;
@@ -51,23 +54,20 @@ st_translate_mesa_program(
    struct ureg_program *ureg,
    const struct gl_program *program,
    GLuint numInputs,
-   const GLuint inputMapping[],
+   const ubyte inputMapping[],
    const ubyte inputSemanticName[],
    const ubyte inputSemanticIndex[],
-   const GLuint interpMode[],
+   const ubyte interpMode[],
    GLuint numOutputs,
-   const GLuint outputMapping[],
+   const ubyte outputMapping[],
    const ubyte outputSemanticName[],
-   const ubyte outputSemanticIndex[],
-   boolean passthrough_edgeflags,
-   boolean clamp_color);
+   const ubyte outputSemanticIndex[]);
 
-void
-st_free_tokens(const struct tgsi_token *tokens);
+enum tgsi_texture_type
+st_translate_texture_target(gl_texture_index textarget, GLboolean shadow);
 
-unsigned
-st_translate_texture_target(GLuint textarget, GLboolean shadow);
-
+enum tgsi_return_type
+st_translate_texture_type(enum glsl_base_type type);
 
 #if defined __cplusplus
 } /* extern "C" */

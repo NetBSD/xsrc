@@ -106,7 +106,7 @@ struct xa_shaders {
     struct cso_hash *fs_hash;
 };
 
-static INLINE void
+static inline void
 src_in_mask(struct ureg_program *ureg,
 	    struct ureg_dst dst,
 	    struct ureg_src src,
@@ -239,10 +239,10 @@ radial_gradient(struct ureg_program *ureg,
     ureg_MUL(ureg, temp0,
 	     ureg_scalar(const0124, TGSI_SWIZZLE_W), ureg_src(temp2));
     ureg_MUL(ureg, temp3, ureg_src(temp1), ureg_src(temp1));
-    ureg_SUB(ureg, temp2, ureg_src(temp3), ureg_src(temp0));
+    ureg_ADD(ureg, temp2, ureg_src(temp3), ureg_negate(ureg_src(temp0)));
     ureg_RSQ(ureg, temp2, ureg_abs(ureg_src(temp2)));
     ureg_RCP(ureg, temp2, ureg_src(temp2));
-    ureg_SUB(ureg, temp1, ureg_src(temp2), ureg_src(temp1));
+    ureg_ADD(ureg, temp1, ureg_src(temp2), ureg_negate(ureg_src(temp1)));
     ureg_ADD(ureg, temp0,
 	     ureg_scalar(coords, TGSI_SWIZZLE_Z),
 	     ureg_scalar(coords, TGSI_SWIZZLE_Z));
@@ -271,7 +271,7 @@ create_vs(struct pipe_context *pipe, unsigned vs_traits)
     boolean is_yuv = (vs_traits & VS_YUV) != 0;
     unsigned input_slot = 0;
 
-    ureg = ureg_create(TGSI_PROCESSOR_VERTEX);
+    ureg = ureg_create(PIPE_SHADER_VERTEX);
     if (ureg == NULL)
 	return 0;
 
@@ -339,6 +339,16 @@ create_yuv_shader(struct pipe_context *pipe, struct ureg_program *ureg)
     u_sampler = ureg_DECL_sampler(ureg, 1);
     v_sampler = ureg_DECL_sampler(ureg, 2);
 
+    ureg_DECL_sampler_view(ureg, 0, TGSI_TEXTURE_2D,
+                           TGSI_RETURN_TYPE_FLOAT, TGSI_RETURN_TYPE_FLOAT,
+                           TGSI_RETURN_TYPE_FLOAT, TGSI_RETURN_TYPE_FLOAT);
+    ureg_DECL_sampler_view(ureg, 1, TGSI_TEXTURE_2D,
+                           TGSI_RETURN_TYPE_FLOAT, TGSI_RETURN_TYPE_FLOAT,
+                           TGSI_RETURN_TYPE_FLOAT, TGSI_RETURN_TYPE_FLOAT);
+    ureg_DECL_sampler_view(ureg, 2, TGSI_TEXTURE_2D,
+                           TGSI_RETURN_TYPE_FLOAT, TGSI_RETURN_TYPE_FLOAT,
+                           TGSI_RETURN_TYPE_FLOAT, TGSI_RETURN_TYPE_FLOAT);
+
     matrow0 = ureg_DECL_constant(ureg, 0);
     matrow1 = ureg_DECL_constant(ureg, 1);
     matrow2 = ureg_DECL_constant(ureg, 2);
@@ -368,7 +378,7 @@ create_yuv_shader(struct pipe_context *pipe, struct ureg_program *ureg)
     return ureg_create_shader_and_destroy(ureg, pipe);
 }
 
-static INLINE void
+static inline void
 xrender_tex(struct ureg_program *ureg,
 	    struct ureg_dst dst,
 	    struct ureg_src coords,
@@ -459,7 +469,7 @@ create_fs(struct pipe_context *pipe, unsigned fs_traits)
     (void)print_fs_traits;
 #endif
 
-    ureg = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+    ureg = ureg_create(PIPE_SHADER_FRAGMENT);
     if (ureg == NULL)
 	return 0;
 
@@ -475,6 +485,9 @@ create_fs(struct pipe_context *pipe, unsigned fs_traits)
     }
     if (is_composite) {
 	src_sampler = ureg_DECL_sampler(ureg, 0);
+        ureg_DECL_sampler_view(ureg, 0, TGSI_TEXTURE_2D,
+                               TGSI_RETURN_TYPE_FLOAT, TGSI_RETURN_TYPE_FLOAT,
+                               TGSI_RETURN_TYPE_FLOAT, TGSI_RETURN_TYPE_FLOAT);
 	src_input = ureg_DECL_fs_input(ureg,
 				       TGSI_SEMANTIC_GENERIC, 0,
 				       TGSI_INTERPOLATE_PERSPECTIVE);
@@ -494,12 +507,18 @@ create_fs(struct pipe_context *pipe, unsigned fs_traits)
 
     if (has_mask) {
 	mask_sampler = ureg_DECL_sampler(ureg, 1);
+        ureg_DECL_sampler_view(ureg, 1, TGSI_TEXTURE_2D,
+                               TGSI_RETURN_TYPE_FLOAT, TGSI_RETURN_TYPE_FLOAT,
+                               TGSI_RETURN_TYPE_FLOAT, TGSI_RETURN_TYPE_FLOAT);
 	mask_pos = ureg_DECL_fs_input(ureg,
 				      TGSI_SEMANTIC_GENERIC, 1,
 				      TGSI_INTERPOLATE_PERSPECTIVE);
     }
 #if 0				/* unused right now */
     dst_sampler = ureg_DECL_sampler(ureg, 2);
+    ureg_DECL_sampler_view(ureg, 2, TGSI_TEXTURE_2D,
+                           TGSI_RETURN_TYPE_FLOAT, TGSI_RETURN_TYPE_FLOAT,
+                           TGSI_RETURN_TYPE_FLOAT, TGSI_RETURN_TYPE_FLOAT);
     dst_pos = ureg_DECL_fs_input(ureg,
 				 TGSI_SEMANTIC_POSITION, 2,
 				 TGSI_INTERPOLATE_PERSPECTIVE);
@@ -617,7 +636,7 @@ xa_shaders_destroy(struct xa_shaders *sc)
     FREE(sc);
 }
 
-static INLINE void *
+static inline void *
 shader_from_cache(struct pipe_context *pipe,
 		  unsigned type, struct cso_hash *hash, unsigned key)
 {

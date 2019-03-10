@@ -33,11 +33,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "main/glheader.h"
 #include "main/imports.h"
-#include "main/colormac.h"
 #include "main/context.h"
 #include "main/enums.h"
 #include "main/image.h"
-#include "main/simple_list.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
 
@@ -46,7 +44,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_ioctl.h"
 #include "radeon_tex.h"
 
-#include "xmlpool.h"
+#include "util/xmlpool.h"
 
 
 
@@ -95,7 +93,7 @@ static void radeonSetTexWrap( radeonTexObjPtr t, GLenum swrap, GLenum twrap )
       is_clamp_to_border = GL_TRUE;
       break;
    default:
-      _mesa_problem(NULL, "bad S wrap mode in %s", __FUNCTION__);
+      _mesa_problem(NULL, "bad S wrap mode in %s", __func__);
    }
 
    if (t->base.Target != GL_TEXTURE_1D) {
@@ -129,7 +127,7 @@ static void radeonSetTexWrap( radeonTexObjPtr t, GLenum swrap, GLenum twrap )
 	 is_clamp_to_border = GL_TRUE;
 	 break;
       default:
-	 _mesa_problem(NULL, "bad T wrap mode in %s", __FUNCTION__);
+	 _mesa_problem(NULL, "bad T wrap mode in %s", __func__);
       }
    }
 
@@ -259,11 +257,12 @@ static void radeonTexEnv( struct gl_context *ctx, GLenum target,
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    GLuint unit = ctx->Texture.CurrentUnit;
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+   struct gl_fixedfunc_texture_unit *texUnit =
+      &ctx->Texture.FixedFuncUnit[unit];
 
    if ( RADEON_DEBUG & RADEON_STATE ) {
       fprintf( stderr, "%s( %s )\n",
-	       __FUNCTION__, _mesa_lookup_enum_by_nr( pname ) );
+	       __func__, _mesa_enum_to_string( pname ) );
    }
 
    switch ( pname ) {
@@ -330,12 +329,12 @@ void radeonTexUpdateParameters(struct gl_context *ctx, GLuint unit)
 
 static void radeonTexParameter( struct gl_context *ctx,
 				struct gl_texture_object *texObj,
-				GLenum pname, const GLfloat *params )
+				GLenum pname )
 {
    radeonTexObj* t = radeon_tex_obj(texObj);
 
-   radeon_print(RADEON_TEXTURE, RADEON_VERBOSE, "%s( %s )\n", __FUNCTION__,
-	       _mesa_lookup_enum_by_nr( pname ) );
+   radeon_print(RADEON_TEXTURE, RADEON_VERBOSE, "%s( %s )\n", __func__,
+	       _mesa_enum_to_string( pname ) );
 
    switch ( pname ) {
    case GL_TEXTURE_BASE_LEVEL:
@@ -358,8 +357,8 @@ static void radeonDeleteTexture( struct gl_context *ctx,
    int i;
 
    radeon_print(RADEON_TEXTURE, RADEON_NORMAL,
-	 "%s( %p (target = %s) )\n", __FUNCTION__, (void *)texObj,
-	       _mesa_lookup_enum_by_nr( texObj->Target ) );
+	 "%s( %p (target = %s) )\n", __func__, (void *)texObj,
+	       _mesa_enum_to_string( texObj->Target ) );
 
    if ( rmesa ) {
      radeon_firevertices(&rmesa->radeon);

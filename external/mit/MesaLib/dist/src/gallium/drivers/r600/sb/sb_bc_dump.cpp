@@ -27,6 +27,7 @@
 #include "sb_bc.h"
 #include "sb_shader.h"
 #include "sb_pass.h"
+#include "eg_sq.h" // V_SQ_CF_INDEX_0/1
 
 namespace r600_sb {
 
@@ -156,6 +157,9 @@ void bc_dump::dump(cf_node& n) {
 
 		s << "  ES:" << n.bc.elem_size;
 
+		if (n.bc.mark)
+			s << " MARK";
+
 	} else {
 
 		if (n.bc.op_ptr->flags & CF_CLAUSE) {
@@ -165,13 +169,14 @@ void bc_dump::dump(cf_node& n) {
 		s << " @" << (n.bc.addr << 1);
 
 		if (n.bc.op_ptr->flags & CF_ALU) {
+			static const char *index_mode[] = {"", " CF_INDEX_0", " CF_INDEX_1"};
 
 			for (int k = 0; k < 4; ++k) {
 				bc_kcache &kc = n.bc.kc[k];
 				if (kc.mode) {
 					s << " KC" << k << "[CB" << kc.bank << ":" <<
 							(kc.addr << 4) << "-" <<
-							(((kc.addr + kc.mode) << 4) - 1) << "]";
+							(((kc.addr + kc.mode) << 4) - 1) << index_mode[kc.index_mode] << "]";
 				}
 			}
 		}
@@ -181,6 +186,9 @@ void bc_dump::dump(cf_node& n) {
 
 		if (n.bc.pop_count)
 			s << " POP:" << n.bc.pop_count;
+
+		if (n.bc.count && (n.bc.op_ptr->flags & CF_EMIT))
+			s << " STREAM" << n.bc.count;
 	}
 
 	if (!n.bc.barrier)
@@ -227,7 +235,7 @@ static void print_dst(sb_ostream &s, bc_alu &alu)
 		reg_char = 'T';
 	}
 
-	if (alu.write_mask || alu.op_ptr->src_count == 3) {
+	if (alu.write_mask || (alu.op_ptr->src_count == 3 && alu.op < LDS_OP2_LDS_ADD)) {
 		s << reg_char;
 		print_sel(s, sel, alu.dst_rel, alu.index_mode, 0);
 	} else {
@@ -275,6 +283,28 @@ static void print_src(sb_ostream &s, bc_alu &alu, unsigned idx)
 		need_sel = 0;
 		need_chan = 0;
 		switch (sel) {
+		case ALU_SRC_LDS_OQ_A:
+			s << "LDS_OQ_A";
+			need_chan = 1;
+			break;
+		case ALU_SRC_LDS_OQ_B:
+			s << "LDS_OQ_B";
+			need_chan = 1;
+			break;
+		case ALU_SRC_LDS_OQ_A_POP:
+			s << "LDS_OQ_A_POP";
+			need_chan = 1;
+			break;
+		case ALU_SRC_LDS_OQ_B_POP:
+			s << "LDS_OQ_B_POP";
+			need_chan = 1;
+			break;
+		case ALU_SRC_LDS_DIRECT_A:
+			s << "LDS_A["; s.print_zw_hex(src->value.u, 8); s << "]";
+			break;
+		case ALU_SRC_LDS_DIRECT_B:
+			s << "LDS_B["; s.print_zw_hex(src->value.u, 8); s << "]";
+			break;
 		case ALU_SRC_PS:
 			s << "PS";
 			break;
@@ -302,6 +332,27 @@ static void print_src(sb_ostream &s, bc_alu &alu, unsigned idx)
 			break;
 		case ALU_SRC_0:
 			s << "0";
+			break;
+		case ALU_SRC_TIME_LO:
+			s << "TIME_LO";
+			break;
+		case ALU_SRC_TIME_HI:
+			s << "TIME_HI";
+			break;
+		case ALU_SRC_MASK_LO:
+			s << "MASK_LO";
+			break;
+		case ALU_SRC_MASK_HI:
+			s << "MASK_HI";
+			break;
+		case ALU_SRC_HW_WAVE_ID:
+			s << "HW_WAVE_ID";
+			break;
+		case ALU_SRC_SIMD_ID:
+			s << "SIMD_ID";
+			break;
+		case ALU_SRC_SE_ID:
+			s << "SE_ID";
 			break;
 		default:
 			s << "??IMM_" <<  sel;
@@ -348,6 +399,18 @@ void bc_dump::dump(alu_node& n) {
 			s << "  " << scl_bs[n.bc.bank_swizzle];
 		else
 			s << "  " << vec_bs[n.bc.bank_swizzle];
+	}
+
+	if (ctx.is_cayman()) {
+		if (n.bc.op == ALU_OP1_MOVA_INT) {
+			static const char *mova_str[] = { " AR_X", " PC", " CF_IDX0", " CF_IDX1",
+				" Unknown MOVA_INT dest" };
+			s << mova_str[std::min(n.bc.dst_gpr, 4u)];  // CM_V_SQ_MOVA_DST_AR_*
+		}
+	}
+
+	if (n.bc.lds_idx_offset) {
+		s << " IDX_OFFSET:" << n.bc.lds_idx_offset;
 	}
 
 	sblog << s.str() << "\n";
@@ -412,23 +475,29 @@ bc_dump::bc_dump(shader& s, bytecode* bc)  :
 void bc_dump::dump(fetch_node& n) {
 	sb_ostringstream s;
 	static const char * fetch_type[] = {"VERTEX", "INSTANCE", ""};
+	unsigned gds = n.bc.op_ptr->flags & FF_GDS;
+	bool gds_has_ret = gds && n.bc.op >= FETCH_OP_GDS_ADD_RET &&
+		n.bc.op <= FETCH_OP_GDS_USHORT_READ_RET;
+	bool show_dst = !gds || (gds && gds_has_ret);
 
 	s << n.bc.op_ptr->name;
 	fill_to(s, 20);
 
-	s << "R";
-	print_sel(s, n.bc.dst_gpr, n.bc.dst_rel, INDEX_LOOP, 0);
-	s << ".";
-	for (int k = 0; k < 4; ++k)
-		s << chans[n.bc.dst_sel[k]];
-	s << ", ";
+	if (show_dst) {
+		s << "R";
+		print_sel(s, n.bc.dst_gpr, n.bc.dst_rel, INDEX_LOOP, 0);
+		s << ".";
+		for (int k = 0; k < 4; ++k)
+			s << chans[n.bc.dst_sel[k]];
+		s << ", ";
+	}
 
 	s << "R";
 	print_sel(s, n.bc.src_gpr, n.bc.src_rel, INDEX_LOOP, 0);
 	s << ".";
 
 	unsigned vtx = n.bc.op_ptr->flags & FF_VTX;
-	unsigned num_src_comp = vtx ? ctx.is_cayman() ? 2 : 1 : 4;
+	unsigned num_src_comp = gds ? 3 : vtx ? ctx.is_cayman() ? 2 : 1 : 4;
 
 	for (unsigned k = 0; k < num_src_comp; ++k)
 		s << chans[n.bc.src_sel[k]];
@@ -437,14 +506,28 @@ void bc_dump::dump(fetch_node& n) {
 		s << " + " << n.bc.offset[0] << "b ";
 	}
 
-	s << ",   RID:" << n.bc.resource_id;
+	if (!gds)
+		s << ",   RID:" << n.bc.resource_id;
 
-	if (vtx) {
+	if (gds) {
+		s << " UAV:" << n.bc.uav_id;
+		if (n.bc.uav_index_mode)
+			s << " UAV:SQ_CF_INDEX_" << (n.bc.uav_index_mode - V_SQ_CF_INDEX_0);
+		if (n.bc.bcast_first_req)
+			s << " BFQ";
+		if (n.bc.alloc_consume)
+			s << " AC";
+	} else if (vtx) {
 		s << "  " << fetch_type[n.bc.fetch_type];
 		if (!ctx.is_cayman() && n.bc.mega_fetch_count)
 			s << " MFC:" << n.bc.mega_fetch_count;
 		if (n.bc.fetch_whole_quad)
 			s << " FWQ";
+		if (ctx.is_egcm() && n.bc.resource_index_mode)
+			s << " RIM:SQ_CF_INDEX_" << (n.bc.resource_index_mode - V_SQ_CF_INDEX_0);
+		if (ctx.is_egcm() && n.bc.sampler_index_mode)
+			s << " SID:SQ_CF_INDEX_" << (n.bc.sampler_index_mode - V_SQ_CF_INDEX_0);
+
 		s << " UCF:" << n.bc.use_const_fields
 				<< " FMT(DTA:" << n.bc.data_format
 				<< " NUM:" << n.bc.num_format_all
@@ -460,6 +543,22 @@ void bc_dump::dump(fetch_node& n) {
 		for (unsigned k = 0; k < 3; ++k)
 			if (n.bc.offset[k])
 				s << " O" << chans[k] << ":" << n.bc.offset[k];
+		if (ctx.is_egcm() && n.bc.resource_index_mode)
+			s << " RIM:SQ_CF_INDEX_" << (n.bc.resource_index_mode - V_SQ_CF_INDEX_0);
+		if (ctx.is_egcm() && n.bc.sampler_index_mode)
+			s << " SID:SQ_CF_INDEX_" << (n.bc.sampler_index_mode - V_SQ_CF_INDEX_0);
+	}
+
+	if (n.bc.op_ptr->flags & FF_MEM) {
+		s << ", ELEM_SIZE:" << n.bc.elem_size;
+		if (n.bc.uncached)
+			s << ", UNCACHED";
+		if (n.bc.indexed)
+			s << ", INDEXED";
+		if (n.bc.burst_count)
+			s << ", BURST_COUNT:" << n.bc.burst_count;
+		s << ", ARRAY_BASE:" << n.bc.array_base;
+		s << ", ARRAY_SIZE:" << n.bc.array_size;
 	}
 
 	sblog << s.str() << "\n";

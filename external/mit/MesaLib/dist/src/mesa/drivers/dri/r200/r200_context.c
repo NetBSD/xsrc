@@ -37,7 +37,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/api_arrayelt.h"
 #include "main/api_exec.h"
 #include "main/context.h"
-#include "main/simple_list.h"
 #include "main/imports.h"
 #include "main/extensions.h"
 #include "main/version.h"
@@ -66,7 +65,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_span.h"
 
 #include "utils.h"
-#include "xmlpool.h" /* for symbolic values of enum-type options */
+#include "util/xmlpool.h" /* for symbolic values of enum-type options */
 
 /* Return various strings for glGetString().
  */
@@ -143,27 +142,6 @@ static void r200InitDriverFuncs( struct dd_function_table *functions )
 }
 
 
-static void r200_get_lock(radeonContextPtr radeon)
-{
-   r200ContextPtr rmesa = (r200ContextPtr)radeon;
-   drm_radeon_sarea_t *sarea = radeon->sarea;
-
-   R200_STATECHANGE( rmesa, ctx );
-   if (rmesa->radeon.sarea->tiling_enabled) {
-      rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= R200_COLOR_TILE_ENABLE;
-   }
-   else rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] &= ~R200_COLOR_TILE_ENABLE;
-
-   if ( sarea->ctx_owner != rmesa->radeon.dri.hwContext ) {
-      sarea->ctx_owner = rmesa->radeon.dri.hwContext;
-   }
-
-}
-
-static void r200_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr rmesa)
-{
-}
-
 static void r200_emit_query_finish(radeonContextPtr radeon)
 {
    BATCH_LOCALS(radeon);
@@ -180,9 +158,6 @@ static void r200_emit_query_finish(radeonContextPtr radeon)
 
 static void r200_init_vtbl(radeonContextPtr radeon)
 {
-   radeon->vtbl.get_lock = r200_get_lock;
-   radeon->vtbl.update_viewport_offset = r200UpdateViewportOffset;
-   radeon->vtbl.emit_cs_header = r200_vtbl_emit_cs_header;
    radeon->vtbl.swtcl_flush = r200_swtcl_flush;
    radeon->vtbl.fallback = r200Fallback;
    radeon->vtbl.update_scissor = r200_vtbl_update_scissor;
@@ -199,10 +174,7 @@ static void r200_init_vtbl(radeonContextPtr radeon)
 GLboolean r200CreateContext( gl_api api,
 			     const struct gl_config *glVisual,
 			     __DRIcontext *driContextPriv,
-			     unsigned major_version,
-			     unsigned minor_version,
-			     uint32_t flags,
-                             bool notify_reset,
+			     const struct __DriverContextConfig *ctx_config,
 			     unsigned *error,
 			     void *sharedContextPrivate)
 {
@@ -214,17 +186,16 @@ GLboolean r200CreateContext( gl_api api,
    int i;
    int tcl_mode;
 
-   if (flags & ~__DRI_CTX_FLAG_DEBUG) {
+   if (ctx_config->flags & ~(__DRI_CTX_FLAG_DEBUG | __DRI_CTX_FLAG_NO_ERROR)) {
       *error = __DRI_CTX_ERROR_UNKNOWN_FLAG;
       return false;
    }
 
-   if (notify_reset) {
+   if (ctx_config->attribute_mask) {
       *error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;
       return false;
    }
 
-   assert(glVisual);
    assert(driContextPriv);
    assert(screen);
 
@@ -245,26 +216,18 @@ GLboolean r200CreateContext( gl_api api,
     * the default textures.
     */
    driParseConfigFiles (&rmesa->radeon.optionCache, &screen->optionCache,
-			screen->driScreen->myNum, "r200");
+			screen->driScreen->myNum, "r200", NULL);
    rmesa->radeon.initialMaxAnisotropy = driQueryOptionf(&rmesa->radeon.optionCache,
 							"def_max_anisotropy");
 
-   if ( sPriv->drm_version.major == 1
-       && driQueryOptionb( &rmesa->radeon.optionCache, "hyperz" ) ) {
-      if ( sPriv->drm_version.minor < 13 )
-	 fprintf( stderr, "DRM version 1.%d too old to support HyperZ, "
-			  "disabling.\n", sPriv->drm_version.minor );
-      else
-	 rmesa->using_hyperz = GL_TRUE;
-   }
+   if (driQueryOptionb( &rmesa->radeon.optionCache, "hyperz"))
+      rmesa->using_hyperz = GL_TRUE;
  
-   if ( sPriv->drm_version.minor >= 15 )
-      rmesa->texmicrotile = GL_TRUE;
-
    /* Init default driver functions then plug in our R200-specific functions
     * (the texture functions are especially important)
     */
    _mesa_init_driver_functions(&functions);
+   _tnl_init_driver_draw_function(&functions);
    r200InitDriverFuncs(&functions);
    r200InitIoctlFuncs(&functions);
    r200InitStateFuncs(&rmesa->radeon, &functions);
@@ -285,7 +248,7 @@ GLboolean r200CreateContext( gl_api api,
 
    ctx = &rmesa->radeon.glCtx;
 
-   driContextSetFlags(ctx, flags);
+   driContextSetFlags(ctx, ctx_config->flags);
 
    /* Initialize the software rasterizer and helper modules.
     */
@@ -374,6 +337,7 @@ GLboolean r200CreateContext( gl_api api,
    ctx->Extensions.ARB_texture_env_combine = true;
    ctx->Extensions.ARB_texture_env_dot3 = true;
    ctx->Extensions.ARB_texture_env_crossbar = true;
+   ctx->Extensions.ARB_texture_filter_anisotropic = true;
    ctx->Extensions.ARB_texture_mirror_clamp_to_edge = true;
    ctx->Extensions.ARB_vertex_program = true;
    ctx->Extensions.ATI_fragment_shader = (ctx->Const.MaxTextureUnits == 6);
@@ -389,6 +353,7 @@ GLboolean r200CreateContext( gl_api api,
    ctx->Extensions.EXT_texture_filter_anisotropic = true;
    ctx->Extensions.EXT_texture_mirror_clamp = true;
    ctx->Extensions.MESA_pack_invert = true;
+   ctx->Extensions.NV_fog_distance = true;
    ctx->Extensions.NV_texture_rectangle = true;
    ctx->Extensions.OES_EGL_image = true;
 
@@ -397,14 +362,8 @@ GLboolean r200CreateContext( gl_api api,
 	others get the bit ordering right but don't actually do YUV-RGB conversion */
       ctx->Extensions.MESA_ycbcr_texture = true;
    }
-   if (rmesa->radeon.glCtx.Mesa_DXTn) {
-      ctx->Extensions.EXT_texture_compression_s3tc = true;
-      ctx->Extensions.ANGLE_texture_compression_dxt = true;
-   }
-   else if (driQueryOptionb (&rmesa->radeon.optionCache, "force_s3tc_enable")) {
-      ctx->Extensions.EXT_texture_compression_s3tc = true;
-      ctx->Extensions.ANGLE_texture_compression_dxt = true;
-   }
+   ctx->Extensions.EXT_texture_compression_s3tc = true;
+   ctx->Extensions.ANGLE_texture_compression_dxt = true;
 
 #if 0
    r200InitDriverFuncs( ctx );
@@ -424,7 +383,7 @@ GLboolean r200CreateContext( gl_api api,
       (getenv("R200_GART_CLIENT_TEXTURES") != 0);
 
    tcl_mode = driQueryOptioni(&rmesa->radeon.optionCache, "tcl_mode");
-   if (driQueryOptionb(&rmesa->radeon.optionCache, "no_rast")) {
+   if (getenv("R200_NO_RAST")) {
       fprintf(stderr, "disabling 3D acceleration\n");
       FALLBACK(rmesa, R200_FALLBACK_DISABLE, 1);
    }
@@ -437,6 +396,7 @@ GLboolean r200CreateContext( gl_api api,
       TCL_FALLBACK(&rmesa->radeon.glCtx, R200_TCL_FALLBACK_TCL_DISABLE, 1);
    }
 
+   _mesa_override_extensions(ctx);
    _mesa_compute_version(ctx);
 
    /* Exec table initialization requires the version to be computed */

@@ -1,5 +1,5 @@
 /**********************************************************
- * Copyright 2009 VMware, Inc.  All rights reserved.
+ * Copyright 2009-2015 VMware, Inc.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -57,7 +57,7 @@ struct vmw_svga_winsys_surface
    unsigned next_present_no;
    uint32_t present_fences[VMW_MAX_PRESENTS];
 
-   pipe_mutex mutex;
+   mtx_t mutex;
    struct svga_winsys_buffer *buf; /* Current backing guest buffer */
    uint32_t mapcount; /* Number of mappers */
    uint32_t map_mode; /* PIPE_TRANSFER_[READ|WRITE] */
@@ -68,7 +68,7 @@ struct vmw_svga_winsys_surface
 };
 
 
-static INLINE struct svga_winsys_surface *
+static inline struct svga_winsys_surface *
 svga_winsys_surface(struct vmw_svga_winsys_surface *surf)
 {
    assert(!surf || surf->sid != SVGA3D_INVALID_ID);
@@ -76,7 +76,7 @@ svga_winsys_surface(struct vmw_svga_winsys_surface *surf)
 }
 
 
-static INLINE struct vmw_svga_winsys_surface *
+static inline struct vmw_svga_winsys_surface *
 vmw_svga_winsys_surface(struct svga_winsys_surface *surf)
 {
    return (struct vmw_svga_winsys_surface *)surf;
@@ -94,5 +94,8 @@ void
 vmw_svga_winsys_surface_unmap(struct svga_winsys_context *swc,
                               struct svga_winsys_surface *srf,
                               boolean *rebind);
+enum pipe_error
+vmw_svga_winsys_surface_invalidate(struct svga_winsys_context *swc,
+                                   struct svga_winsys_surface *srf);
 
 #endif /* VMW_SURFACE_H_ */

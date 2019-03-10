@@ -25,13 +25,13 @@ struct nv50_blend_stateobj {
 struct nv50_rasterizer_stateobj {
    struct pipe_rasterizer_state pipe;
    int size;
-   uint32_t state[48];
+   uint32_t state[49];
 };
 
 struct nv50_zsa_stateobj {
    struct pipe_depth_stencil_alpha_state pipe;
    int size;
-   uint32_t state[29];
+   uint32_t state[38];
 };
 
 struct nv50_constbuf {
@@ -41,7 +41,7 @@ struct nv50_constbuf {
    } u;
    uint32_t size; /* max 65536 */
    uint32_t offset;
-   boolean user; /* should only be TRUE if u.data is valid and non-NULL */
+   bool user; /* should only be true if u.data is valid and non-NULL */
 };
 
 struct nv50_vertex_element {
@@ -56,20 +56,26 @@ struct nv50_vertex_stateobj {
    unsigned num_elements;
    uint32_t instance_elts;
    uint32_t instance_bufs;
-   boolean need_conversion;
+   bool need_conversion;
    unsigned vertex_size;
    unsigned packet_vertex_limit;
    struct nv50_vertex_element element[0];
+};
+
+struct nv50_window_rect_stateobj {
+   bool inclusive;
+   unsigned rects;
+   struct pipe_scissor_state rect[PIPE_MAX_WINDOW_RECTANGLES];
 };
 
 struct nv50_so_target {
    struct pipe_stream_output_target pipe;
    struct pipe_query *pq;
    unsigned stride;
-   boolean clean;
+   bool clean;
 };
 
-static INLINE struct nv50_so_target *
+static inline struct nv50_so_target *
 nv50_so_target(struct pipe_stream_output_target *ptarg)
 {
    return (struct nv50_so_target *)ptarg;

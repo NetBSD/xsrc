@@ -24,18 +24,9 @@ include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = \
-	-Wall -pedantic \
+	-pedantic \
 	$(GALLIUM_CFLAGS) \
 	$(VISIBILITY_CFLAGS)
-
-AM_CPPFLAGS = \
-	$(GALLIUM_PIPE_LOADER_DEFINES) \
-	-DPIPE_SEARCH_DIR=\"$(libdir)/gallium-pipe\"
-
-if HAVE_GALLIUM_STATIC_TARGETS
-AM_CPPFLAGS += \
-	-DGALLIUM_STATIC_TARGETS=1
-endif
 
 xa_includedir = $(includedir)
 xa_include_HEADERS = \
@@ -46,3 +37,5 @@ xa_include_HEADERS = \
 noinst_LTLIBRARIES = libxatracker.la
 
 libxatracker_la_SOURCES = $(C_SOURCES)
+
+EXTRA_DIST = README xa-indent.sh meson.build

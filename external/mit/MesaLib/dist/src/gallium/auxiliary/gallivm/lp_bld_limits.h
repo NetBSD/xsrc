@@ -49,9 +49,11 @@
 
 #define LP_MAX_TGSI_IMMEDIATES 4096
 
-#define LP_MAX_TGSI_PREDS 16
+#define LP_MAX_TGSI_CONSTS 4096
 
 #define LP_MAX_TGSI_CONST_BUFFERS 16
+
+#define LP_MAX_TGSI_CONST_BUFFER_SIZE (LP_MAX_TGSI_CONSTS * sizeof(float[4]))
 
 /*
  * For quick access we cache registers in statically
@@ -84,7 +86,7 @@
  * actually try to allocate the maximum and run out of memory and crash.  So
  * stick with something reasonable here.
  */
-static INLINE int
+static inline int
 gallivm_get_shader_param(enum pipe_shader_cap param)
 {
    switch(param) {
@@ -96,15 +98,15 @@ gallivm_get_shader_param(enum pipe_shader_cap param)
    case PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH:
       return LP_MAX_TGSI_NESTING;
    case PIPE_SHADER_CAP_MAX_INPUTS:
-      return PIPE_MAX_SHADER_INPUTS;
+      return 32;
+   case PIPE_SHADER_CAP_MAX_OUTPUTS:
+      return 32;
    case PIPE_SHADER_CAP_MAX_CONST_BUFFER_SIZE:
-      return sizeof(float[4]) * 4096;
+      return LP_MAX_TGSI_CONST_BUFFER_SIZE;
    case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
       return PIPE_MAX_CONSTANT_BUFFERS;
    case PIPE_SHADER_CAP_MAX_TEMPS:
       return LP_MAX_TGSI_TEMPS;
-   case PIPE_SHADER_CAP_MAX_PREDS:
-      return LP_MAX_TGSI_PREDS;
    case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
       return 1;
    case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:
@@ -116,16 +118,35 @@ gallivm_get_shader_param(enum pipe_shader_cap param)
       return 1;
    case PIPE_SHADER_CAP_INTEGERS:
       return 1;
+   case PIPE_SHADER_CAP_INT64_ATOMICS:
+   case PIPE_SHADER_CAP_FP16:
+      return 0;
    case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
       return PIPE_MAX_SAMPLERS;
    case PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS:
       return PIPE_MAX_SHADER_SAMPLER_VIEWS;
    case PIPE_SHADER_CAP_PREFERRED_IR:
       return PIPE_SHADER_IR_TGSI;
+   case PIPE_SHADER_CAP_SUPPORTED_IRS:
+      return 1 << PIPE_SHADER_IR_TGSI;
    case PIPE_SHADER_CAP_TGSI_SQRT_SUPPORTED:
+   case PIPE_SHADER_CAP_TGSI_ANY_INOUT_DECL_RANGE:
       return 1;
-   case PIPE_SHADER_CAP_DOUBLES:
+   case PIPE_SHADER_CAP_TGSI_DROUND_SUPPORTED:
+   case PIPE_SHADER_CAP_TGSI_DFRACEXP_DLDEXP_SUPPORTED:
+   case PIPE_SHADER_CAP_TGSI_LDEXP_SUPPORTED:
+   case PIPE_SHADER_CAP_TGSI_FMA_SUPPORTED:
+   case PIPE_SHADER_CAP_MAX_SHADER_BUFFERS:
+   case PIPE_SHADER_CAP_MAX_SHADER_IMAGES:
+   case PIPE_SHADER_CAP_LOWER_IF_THRESHOLD:
+   case PIPE_SHADER_CAP_TGSI_SKIP_MERGE_REGISTERS:
+   case PIPE_SHADER_CAP_MAX_HW_ATOMIC_COUNTERS:
+   case PIPE_SHADER_CAP_MAX_HW_ATOMIC_COUNTER_BUFFERS:
       return 0;
+   case PIPE_SHADER_CAP_SCALAR_ISA:
+      return 1;
+   case PIPE_SHADER_CAP_MAX_UNROLL_ITERATIONS_HINT:
+      return 32;
    }
    /* if we get here, we missed a shader cap above (and should have seen
     * a compiler warning.)

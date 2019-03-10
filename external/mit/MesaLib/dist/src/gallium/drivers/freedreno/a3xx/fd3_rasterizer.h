@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2013 Rob Clark <robclark@freedesktop.org>
  *
@@ -44,7 +42,7 @@ struct fd3_rasterizer_stateobj {
 	uint32_t pc_prim_vtx_cntl;
 };
 
-static INLINE struct fd3_rasterizer_stateobj *
+static inline struct fd3_rasterizer_stateobj *
 fd3_rasterizer_stateobj(struct pipe_rasterizer_state *rast)
 {
 	return (struct fd3_rasterizer_stateobj *)rast;

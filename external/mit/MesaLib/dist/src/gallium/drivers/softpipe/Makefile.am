@@ -24,8 +24,11 @@ include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = \
-	$(GALLIUM_DRIVER_CFLAGS)
+	$(GALLIUM_DRIVER_CFLAGS) \
+	$(MSVC2013_COMPAT_CFLAGS)
 
 noinst_LTLIBRARIES = libsoftpipe.la
 
 libsoftpipe_la_SOURCES = $(C_SOURCES)
+
+EXTRA_DIST = SConscript meson.build

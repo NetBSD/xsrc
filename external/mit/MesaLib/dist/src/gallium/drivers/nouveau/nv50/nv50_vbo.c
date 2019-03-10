@@ -27,6 +27,7 @@
 #include "translate/translate.h"
 
 #include "nv50/nv50_context.h"
+#include "nv50/nv50_query_hw.h"
 #include "nv50/nv50_resource.h"
 
 #include "nv50/nv50_3d.xml.h"
@@ -58,7 +59,7 @@ nv50_vertex_state_create(struct pipe_context *pipe,
     so->num_elements = num_elements;
     so->instance_elts = 0;
     so->instance_bufs = 0;
-    so->need_conversion = FALSE;
+    so->need_conversion = false;
 
     memset(so->vb_access_size, 0, sizeof(so->vb_access_size));
 
@@ -75,7 +76,7 @@ nv50_vertex_state_create(struct pipe_context *pipe,
         enum pipe_format fmt = ve->src_format;
 
         so->element[i].pipe = elements[i];
-        so->element[i].state = nv50_format_table[fmt].vtx;
+        so->element[i].state = nv50_vertex_format[fmt].vtx;
 
         if (!so->element[i].state) {
             switch (util_format_get_nr_components(fmt)) {
@@ -88,8 +89,11 @@ nv50_vertex_state_create(struct pipe_context *pipe,
                 FREE(so);
                 return NULL;
             }
-            so->element[i].state = nv50_format_table[fmt].vtx;
-            so->need_conversion = TRUE;
+            so->element[i].state = nv50_vertex_format[fmt].vtx;
+            so->need_conversion = true;
+            pipe_debug_message(&nouveau_context(pipe)->debug, FALLBACK,
+                               "Converting vertex element %d, no hw format %s",
+                               i, util_format_name(ve->src_format));
         }
         so->element[i].state |= i;
 
@@ -137,13 +141,13 @@ nv50_emit_vtxattr(struct nv50_context *nv50, struct pipe_vertex_buffer *vb,
                   struct pipe_vertex_element *ve, unsigned attr)
 {
    struct nouveau_pushbuf *push = nv50->base.pushbuf;
-   const void *data = (const uint8_t *)vb->user_buffer + ve->src_offset;
+   const void *data = (const uint8_t *)vb->buffer.user + ve->src_offset;
    float v[4];
    const unsigned nc = util_format_get_nr_components(ve->src_format);
    const struct util_format_description *desc =
       util_format_description(ve->src_format);
 
-   assert(vb->user_buffer);
+   assert(vb->is_user_buffer);
 
    if (desc->channel[0].pure_integer) {
       if (desc->channel[0].type == UTIL_FORMAT_TYPE_SIGNED) {
@@ -188,7 +192,7 @@ nv50_emit_vtxattr(struct nv50_context *nv50, struct pipe_vertex_buffer *vb,
    }
 }
 
-static INLINE void
+static inline void
 nv50_user_vbuf_range(struct nv50_context *nv50, unsigned vbi,
                      uint32_t *base, uint32_t *size)
 {
@@ -196,7 +200,7 @@ nv50_user_vbuf_range(struct nv50_context *nv50, unsigned vbi,
    if (unlikely(nv50->vertex->instance_bufs & (1 << vbi))) {
       /* TODO: use min and max instance divisor to get a proper range */
       *base = 0;
-      *size = nv50->vtxbuf[vbi].buffer->width0;
+      *size = nv50->vtxbuf[vbi].buffer.resource->width0;
    } else {
       /* NOTE: if there are user buffers, we *must* have index bounds */
       assert(nv50->vb_elt_limit != ~0);
@@ -223,13 +227,13 @@ nv50_upload_user_buffers(struct nv50_context *nv50,
       nv50_user_vbuf_range(nv50, b, &base, &size);
 
       limits[b] = base + size - 1;
-      addrs[b] = nouveau_scratch_data(&nv50->base, vb->user_buffer, base, size,
+      addrs[b] = nouveau_scratch_data(&nv50->base, vb->buffer.user, base, size,
                                       &bo);
       if (addrs[b])
-         BCTX_REFN_bo(nv50->bufctx_3d, VERTEX_TMP, NOUVEAU_BO_GART |
+         BCTX_REFN_bo(nv50->bufctx_3d, 3D_VERTEX_TMP, NOUVEAU_BO_GART |
                       NOUVEAU_BO_RD, bo);
    }
-   nv50->base.vbo_dirty = TRUE;
+   nv50->base.vbo_dirty = true;
 }
 
 static void
@@ -262,10 +266,10 @@ nv50_update_user_vbufs(struct nv50_context *nv50)
          struct nouveau_bo *bo;
          const uint32_t bo_flags = NOUVEAU_BO_GART | NOUVEAU_BO_RD;
          written |= 1 << b;
-         address[b] = nouveau_scratch_data(&nv50->base, vb->user_buffer,
+         address[b] = nouveau_scratch_data(&nv50->base, vb->buffer.user,
                                            base, size, &bo);
          if (address[b])
-            BCTX_REFN_bo(nv50->bufctx_3d, VERTEX_TMP, bo_flags, bo);
+            BCTX_REFN_bo(nv50->bufctx_3d, 3D_VERTEX_TMP, bo_flags, bo);
       }
 
       BEGIN_NV04(push, NV50_3D(VERTEX_ARRAY_LIMIT_HIGH(i)), 2);
@@ -275,14 +279,14 @@ nv50_update_user_vbufs(struct nv50_context *nv50)
       PUSH_DATAh(push, address[b] + ve->src_offset);
       PUSH_DATA (push, address[b] + ve->src_offset);
    }
-   nv50->base.vbo_dirty = TRUE;
+   nv50->base.vbo_dirty = true;
 }
 
-static INLINE void
+static inline void
 nv50_release_user_vbufs(struct nv50_context *nv50)
 {
    if (nv50->vbo_user) {
-      nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_VERTEX_TMP);
+      nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_3D_VERTEX_TMP);
       nouveau_scratch_done(&nv50->base);
    }
 }
@@ -313,11 +317,11 @@ nv50_vertex_arrays_validate(struct nv50_context *nv50)
       /* if vertex buffer was written by GPU - flush VBO cache */
       assert(nv50->num_vtxbufs <= PIPE_MAX_ATTRIBS);
       for (i = 0; i < nv50->num_vtxbufs; ++i) {
-         struct nv04_resource *buf = nv04_resource(nv50->vtxbuf[i].buffer);
-         if (buf && buf->status & NOUVEAU_BUFFER_STATUS_GPU_WRITING) {
+         struct nv04_resource *buf = nv04_resource(nv50->vtxbuf[i].buffer.resource);
+         if (!nv50->vtxbuf[i].is_user_buffer &&
+             buf && buf->status & NOUVEAU_BUFFER_STATUS_GPU_WRITING) {
             buf->status &= ~NOUVEAU_BUFFER_STATUS_GPU_WRITING;
-            nv50->base.vbo_dirty = TRUE;
-            break;
+            nv50->base.vbo_dirty = true;
          }
       }
    }
@@ -382,11 +386,16 @@ nv50_vertex_arrays_validate(struct nv50_context *nv50)
       if (nv50->vbo_user & (1 << b)) {
          address = addrs[b] + ve->pipe.src_offset;
          limit = addrs[b] + limits[b];
+      } else
+      if (!vb->buffer.resource) {
+         BEGIN_NV04(push, NV50_3D(VERTEX_ARRAY_FETCH(i)), 1);
+         PUSH_DATA (push, 0);
+         continue;
       } else {
-         struct nv04_resource *buf = nv04_resource(vb->buffer);
+         struct nv04_resource *buf = nv04_resource(vb->buffer.resource);
          if (!(refd & (1 << b))) {
             refd |= 1 << b;
-            BCTX_REFN(nv50->bufctx_3d, VERTEX, buf, RD);
+            BCTX_REFN(nv50->bufctx_3d, 3D_VERTEX, buf, RD);
          }
          address = buf->address + vb->buffer_offset + ve->pipe.src_offset;
          limit = buf->address + buf->base.width0 - 1;
@@ -418,7 +427,7 @@ nv50_vertex_arrays_validate(struct nv50_context *nv50)
 #define NV50_PRIM_GL_CASE(n) \
    case PIPE_PRIM_##n: return NV50_3D_VERTEX_BEGIN_GL_PRIMITIVE_##n
 
-static INLINE unsigned
+static inline unsigned
 nv50_prim_gl(unsigned prim)
 {
    switch (prim) {
@@ -472,6 +481,10 @@ nv50_draw_arrays(struct nv50_context *nv50,
    if (nv50->state.index_bias) {
       BEGIN_NV04(push, NV50_3D(VB_ELEMENT_BASE), 1);
       PUSH_DATA (push, 0);
+      if (nv50->screen->base.class_3d >= NV84_3D_CLASS) {
+         BEGIN_NV04(push, NV84_3D(VERTEX_ID_BASE), 1);
+         PUSH_DATA (push, 0);
+      }
       nv50->state.index_bias = 0;
    }
 
@@ -581,31 +594,36 @@ nv50_draw_elements_inline_u32_short(struct nouveau_pushbuf *push,
 }
 
 static void
-nv50_draw_elements(struct nv50_context *nv50, boolean shorten,
+nv50_draw_elements(struct nv50_context *nv50, bool shorten,
+                   const struct pipe_draw_info *info,
                    unsigned mode, unsigned start, unsigned count,
-                   unsigned instance_count, int32_t index_bias)
+                   unsigned instance_count, int32_t index_bias,
+		   unsigned index_size)
 {
    struct nouveau_pushbuf *push = nv50->base.pushbuf;
    unsigned prim;
-   const unsigned index_size = nv50->idxbuf.index_size;
 
    prim = nv50_prim_gl(mode);
 
    if (index_bias != nv50->state.index_bias) {
       BEGIN_NV04(push, NV50_3D(VB_ELEMENT_BASE), 1);
       PUSH_DATA (push, index_bias);
+      if (nv50->screen->base.class_3d >= NV84_3D_CLASS) {
+         BEGIN_NV04(push, NV84_3D(VERTEX_ID_BASE), 1);
+         PUSH_DATA (push, index_bias);
+      }
       nv50->state.index_bias = index_bias;
    }
 
-   if (nv50->idxbuf.buffer) {
-      struct nv04_resource *buf = nv04_resource(nv50->idxbuf.buffer);
+   if (!info->has_user_indices) {
+      struct nv04_resource *buf = nv04_resource(info->index.resource);
       unsigned pb_start;
       unsigned pb_bytes;
-      const unsigned base = (buf->offset + nv50->idxbuf.offset) & ~3;
+      const unsigned base = buf->offset & ~3;
 
-      start += ((buf->offset + nv50->idxbuf.offset) & 3) >> (index_size >> 1);
+      start += (buf->offset & 3) >> (index_size >> 1);
 
-      assert(nouveau_resource_mapped_by_gpu(nv50->idxbuf.buffer));
+      assert(nouveau_resource_mapped_by_gpu(info->index.resource));
 
       /* This shouldn't have to be here. The going theory is that the buffer
        * is being filled in by PGRAPH, and it's not done yet by the time it
@@ -614,13 +632,14 @@ nv50_draw_elements(struct nv50_context *nv50, boolean shorten,
        * pushbuf submit, but it's probably not a big performance difference.
        */
       if (buf->fence_wr && !nouveau_fence_signalled(buf->fence_wr))
-         nouveau_fence_wait(buf->fence_wr);
+         nouveau_fence_wait(buf->fence_wr, &nv50->base.debug);
 
       while (instance_count--) {
          BEGIN_NV04(push, NV50_3D(VERTEX_BEGIN_GL), 1);
          PUSH_DATA (push, prim);
 
-         nouveau_pushbuf_space(push, 8, 0, 1);
+         nouveau_pushbuf_space(push, 16, 0, 1);
+         PUSH_REFN(push, buf->bo, NOUVEAU_BO_RD | buf->domain);
 
          switch (index_size) {
          case 4:
@@ -657,7 +676,7 @@ nv50_draw_elements(struct nv50_context *nv50, boolean shorten,
          prim |= NV50_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
       }
    } else {
-      const void *data = nv50->idxbuf.user_buffer;
+      const void *data = info->index.user;
 
       while (instance_count--) {
          BEGIN_NV04(push, NV50_3D(VERTEX_BEGIN_GL), 1);
@@ -685,6 +704,7 @@ nv50_draw_elements(struct nv50_context *nv50, boolean shorten,
          prim |= NV50_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
       }
    }
+   NOUVEAU_DRV_STAT(&nv50->screen->base, draw_calls_indexed, 1);
 }
 
 static void
@@ -722,9 +742,9 @@ nva0_draw_stream_output(struct nv50_context *nv50,
       BEGIN_NV04(push, NVA0_3D(DRAW_TFB_BASE), 1);
       PUSH_DATA (push, 0);
       BEGIN_NV04(push, NVA0_3D(DRAW_TFB_STRIDE), 1);
-      PUSH_DATA (push, 0);
-      BEGIN_NV04(push, NVA0_3D(DRAW_TFB_BYTES), 1);
-      nv50_query_pushbuf_submit(push, so->pq, 0x4);
+      PUSH_DATA (push, so->stride);
+      nv50_hw_query_pushbuf_submit(push, NVA0_3D_DRAW_TFB_BYTES,
+                                   nv50_query(so->pq), 0x4);
       BEGIN_NV04(push, NV50_3D(VERTEX_END_GL), 1);
       PUSH_DATA (push, 0);
 
@@ -737,9 +757,9 @@ nv50_draw_vbo_kick_notify(struct nouveau_pushbuf *chan)
 {
    struct nv50_screen *screen = chan->user_priv;
 
-   nouveau_fence_update(&screen->base, TRUE);
+   nouveau_fence_update(&screen->base, true);
 
-   nv50_bufctx_fence(screen->cur_ctx->bufctx_3d, TRUE);
+   nv50_bufctx_fence(screen->cur_ctx->bufctx_3d, true);
 }
 
 void
@@ -747,7 +767,11 @@ nv50_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
    struct nouveau_pushbuf *push = nv50->base.pushbuf;
-   int i, s;
+   bool tex_dirty = false;
+   int s;
+
+   if (info->index_size && !info->has_user_indices)
+      BCTX_REFN(nv50->bufctx_3d, 3D_INDEX, nv04_resource(info->index.resource), RD);
 
    /* NOTE: caller must ensure that (min_index + index_bias) is >= 0 */
    nv50->vb_elt_first = info->min_index + info->index_bias;
@@ -759,11 +783,11 @@ nv50_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
     * if index count is larger and we expect repeated vertices, suggest upload.
     */
    nv50->vbo_push_hint = /* the 64 is heuristic */
-      !(info->indexed && ((nv50->vb_elt_limit + 64) < info->count));
+      !(info->index_size && ((nv50->vb_elt_limit + 64) < info->count));
 
-   if (nv50->vbo_user && !(nv50->dirty & (NV50_NEW_ARRAYS | NV50_NEW_VERTEX))) {
+   if (nv50->vbo_user && !(nv50->dirty_3d & (NV50_NEW_3D_ARRAYS | NV50_NEW_3D_VERTEX))) {
       if (!!nv50->vbo_fifo != nv50->vbo_push_hint)
-         nv50->dirty |= NV50_NEW_ARRAYS;
+         nv50->dirty_3d |= NV50_NEW_3D_ARRAYS;
       else
       if (!nv50->vbo_fifo)
          nv50_update_user_vbufs(nv50);
@@ -772,42 +796,48 @@ nv50_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    if (unlikely(nv50->num_so_targets && !nv50->gmtyprog))
       nv50->state.prim_size = nv50_pipe_prim_to_prim_size[info->mode];
 
-   nv50_state_validate(nv50, ~0, 8); /* 8 as minimum, we use flush_notify */
+   nv50_state_validate_3d(nv50, ~0);
 
    push->kick_notify = nv50_draw_vbo_kick_notify;
 
    for (s = 0; s < 3 && !nv50->cb_dirty; ++s) {
-      uint32_t valid = nv50->constbuf_valid[s];
-
-      while (valid && !nv50->cb_dirty) {
-         const unsigned i = ffs(valid) - 1;
-         struct pipe_resource *res;
-
-         valid &= ~(1 << i);
-         if (nv50->constbuf[s][i].user)
-            continue;
-
-         res = nv50->constbuf[s][i].u.buf;
-         if (!res)
-            continue;
-
-         if (res->flags & PIPE_RESOURCE_FLAG_MAP_COHERENT)
-            nv50->cb_dirty = TRUE;
-      }
+      if (nv50->constbuf_coherent[s])
+         nv50->cb_dirty = true;
    }
 
    /* If there are any coherent constbufs, flush the cache */
    if (nv50->cb_dirty) {
       BEGIN_NV04(push, NV50_3D(CODE_CB_FLUSH), 1);
       PUSH_DATA (push, 0);
-      nv50->cb_dirty = FALSE;
+      nv50->cb_dirty = false;
+   }
+
+   for (s = 0; s < 3 && !tex_dirty; ++s) {
+      if (nv50->textures_coherent[s])
+         tex_dirty = true;
+   }
+
+   if (tex_dirty) {
+      BEGIN_NV04(push, NV50_3D(TEX_CACHE_CTL), 1);
+      PUSH_DATA (push, 0x20);
+   }
+
+   if (nv50->screen->base.class_3d >= NVA0_3D_CLASS &&
+       nv50->seamless_cube_map != nv50->state.seamless_cube_map) {
+      nv50->state.seamless_cube_map = nv50->seamless_cube_map;
+      BEGIN_NV04(push, SUBC_3D(NVA0_3D_TEX_MISC), 1);
+      PUSH_DATA (push, nv50->seamless_cube_map ? NVA0_3D_TEX_MISC_SEAMLESS_CUBE_MAP : 0);
+   }
+
+   if (nv50->vertprog->mul_zero_wins != nv50->state.mul_zero_wins) {
+      nv50->state.mul_zero_wins = nv50->vertprog->mul_zero_wins;
+      BEGIN_NV04(push, NV50_3D(UNK1690), 1);
+      PUSH_DATA (push, 0x00010000 * !!nv50->state.mul_zero_wins);
    }
 
    if (nv50->vbo_fifo) {
       nv50_push_vbo(nv50, info);
-      push->kick_notify = nv50_default_kick_notify;
-      nouveau_pushbuf_bufctx(push, NULL);
-      return;
+      goto cleanup;
    }
 
    if (nv50->state.instance_base != info->start_instance) {
@@ -817,25 +847,16 @@ nv50_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       PUSH_DATA (push, info->start_instance);
    }
 
-   for (i = 0; i < nv50->num_vtxbufs && !nv50->base.vbo_dirty; ++i) {
-      if (!nv50->vtxbuf[i].buffer)
-         continue;
-      if (nv50->vtxbuf[i].buffer->flags & PIPE_RESOURCE_FLAG_MAP_COHERENT)
-         nv50->base.vbo_dirty = TRUE;
-   }
-
-   if (!nv50->base.vbo_dirty && nv50->idxbuf.buffer &&
-       nv50->idxbuf.buffer->flags & PIPE_RESOURCE_FLAG_MAP_COHERENT)
-      nv50->base.vbo_dirty = TRUE;
+   nv50->base.vbo_dirty |= !!nv50->vtxbufs_coherent;
 
    if (nv50->base.vbo_dirty) {
       BEGIN_NV04(push, NV50_3D(VERTEX_ARRAY_FLUSH), 1);
       PUSH_DATA (push, 0);
-      nv50->base.vbo_dirty = FALSE;
+      nv50->base.vbo_dirty = false;
    }
 
-   if (info->indexed) {
-      boolean shorten = info->max_index <= 65535;
+   if (info->index_size) {
+      bool shorten = info->max_index <= 65535;
 
       if (info->primitive_restart != nv50->state.prim_restart) {
          if (info->primitive_restart) {
@@ -844,7 +865,7 @@ nv50_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
             PUSH_DATA (push, info->restart_index);
 
             if (info->restart_index > 65535)
-               shorten = FALSE;
+               shorten = false;
          } else {
             BEGIN_NV04(push, NV50_3D(PRIM_RESTART_ENABLE), 1);
             PUSH_DATA (push, 0);
@@ -856,12 +877,12 @@ nv50_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
          PUSH_DATA (push, info->restart_index);
 
          if (info->restart_index > 65535)
-            shorten = FALSE;
+            shorten = false;
       }
 
-      nv50_draw_elements(nv50, shorten,
+      nv50_draw_elements(nv50, shorten, info,
                          info->mode, info->start, info->count,
-                         info->instance_count, info->index_bias);
+                         info->instance_count, info->index_bias, info->index_size);
    } else
    if (unlikely(info->count_from_stream_output)) {
       nva0_draw_stream_output(nv50, info);
@@ -870,9 +891,13 @@ nv50_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
                        info->mode, info->start, info->count,
                        info->instance_count);
    }
+
+cleanup:
    push->kick_notify = nv50_default_kick_notify;
 
    nv50_release_user_vbufs(nv50);
 
    nouveau_pushbuf_bufctx(push, NULL);
+
+   nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_3D_INDEX);
 }

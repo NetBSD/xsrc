@@ -23,10 +23,12 @@
  */
 
 
+#include "c99_math.h"
 #include "main/glheader.h"
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/mtypes.h"
+#include "main/teximage.h"
 #include "swrast/s_aaline.h"
 #include "swrast/s_context.h"
 #include "swrast/s_span.h"
@@ -114,11 +116,11 @@ compute_plane(GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1,
    const GLfloat b = pz * py;
    const GLfloat c = px * px + py * py;
    const GLfloat d = -(a * x0 + b * y0 + c * z0);
-   if (a == 0.0 && b == 0.0 && c == 0.0 && d == 0.0) {
-      plane[0] = 0.0;
-      plane[1] = 0.0;
-      plane[2] = 1.0;
-      plane[3] = 0.0;
+   if (a == 0.0F && b == 0.0F && c == 0.0F && d == 0.0F) {
+      plane[0] = 0.0F;
+      plane[1] = 0.0F;
+      plane[2] = 1.0F;
+      plane[3] = 0.0F;
    }
    else {
       plane[0] = a;
@@ -133,9 +135,9 @@ compute_plane(GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1,
 static inline void
 constant_plane(GLfloat value, GLfloat plane[4])
 {
-   plane[0] = 0.0;
-   plane[1] = 0.0;
-   plane[2] = -1.0;
+   plane[0] = 0.0F;
+   plane[1] = 0.0F;
+   plane[2] = -1.0F;
    plane[3] = value;
 }
 
@@ -158,8 +160,8 @@ static inline GLfloat
 solve_plane_recip(GLfloat x, GLfloat y, const GLfloat plane[4])
 {
    const GLfloat denom = plane[3] + plane[0] * x + plane[1] * y;
-   if (denom == 0.0)
-      return 0.0;
+   if (denom == 0.0F)
+      return 0.0F;
    else
       return -plane[2] / denom;
 }
@@ -202,7 +204,7 @@ compute_lambda(const GLfloat sPlane[4], const GLfloat tPlane[4],
    if (rho2 == 0.0F)
       return 0.0;
    else
-      return (GLfloat) (LOGF(rho2) * 1.442695 * 0.5);/* 1.442695 = 1/log(2) */
+      return logf(rho2) * 1.442695f * 0.5f;/* 1.442695 = 1/log(2) */
 }
 
 
@@ -372,7 +374,7 @@ segment(struct gl_context *ctx,
       if (x0 < x1) {
          xLeft = x0 - line->halfWidth;
          xRight = x1 + line->halfWidth;
-         if (line->dy >= 0.0) {
+         if (line->dy >= 0.0F) {
             yBot = y0 - 3.0F * line->halfWidth;
             yTop = y0 + line->halfWidth;
          }
@@ -384,7 +386,7 @@ segment(struct gl_context *ctx,
       else {
          xLeft = x1 - line->halfWidth;
          xRight = x0 + line->halfWidth;
-         if (line->dy <= 0.0) {
+         if (line->dy <= 0.0F) {
             yBot = y1 - 3.0F * line->halfWidth;
             yTop = y1 + line->halfWidth;
          }
@@ -418,7 +420,7 @@ segment(struct gl_context *ctx,
       if (y0 < y1) {
          yBot = y0 - line->halfWidth;
          yTop = y1 + line->halfWidth;
-         if (line->dx >= 0.0) {
+         if (line->dx >= 0.0F) {
             xLeft = x0 - 3.0F * line->halfWidth;
             xRight = x0 + line->halfWidth;
          }
@@ -430,7 +432,7 @@ segment(struct gl_context *ctx,
       else {
          yBot = y1 - line->halfWidth;
          yTop = y0 + line->halfWidth;
-         if (line->dx <= 0.0) {
+         if (line->dx <= 0.0F) {
             xLeft = x1 - 3.0F * line->halfWidth;
             xRight = x1 + line->halfWidth;
          }
@@ -476,7 +478,7 @@ _swrast_choose_aa_line_function(struct gl_context *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   ASSERT(ctx->Line.SmoothFlag);
+   assert(ctx->Line.SmoothFlag);
 
    if (ctx->Texture._EnabledCoordUnits != 0
        || _swrast_use_fragment_program(ctx)

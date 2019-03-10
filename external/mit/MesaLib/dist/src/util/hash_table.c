@@ -42,10 +42,12 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include "hash_table.h"
 #include "ralloc.h"
 #include "macros.h"
+#include "main/hash.h"
 
 static const uint32_t deleted_key_value;
 
@@ -110,6 +112,7 @@ entry_is_present(const struct hash_table *ht, struct hash_entry *entry)
 
 struct hash_table *
 _mesa_hash_table_create(void *mem_ctx,
+                        uint32_t (*key_hash_function)(const void *key),
                         bool (*key_equals_function)(const void *a,
                                                     const void *b))
 {
@@ -123,6 +126,7 @@ _mesa_hash_table_create(void *mem_ctx,
    ht->size = hash_sizes[ht->size_index].size;
    ht->rehash = hash_sizes[ht->size_index].rehash;
    ht->max_entries = hash_sizes[ht->size_index].max_entries;
+   ht->key_hash_function = key_hash_function;
    ht->key_equals_function = key_equals_function;
    ht->table = rzalloc_array(ht, struct hash_entry, ht->size);
    ht->entries = 0;
@@ -133,6 +137,28 @@ _mesa_hash_table_create(void *mem_ctx,
       ralloc_free(ht);
       return NULL;
    }
+
+   return ht;
+}
+
+struct hash_table *
+_mesa_hash_table_clone(struct hash_table *src, void *dst_mem_ctx)
+{
+   struct hash_table *ht;
+
+   ht = ralloc(dst_mem_ctx, struct hash_table);
+   if (ht == NULL)
+      return NULL;
+
+   memcpy(ht, src, sizeof(struct hash_table));
+
+   ht->table = ralloc_array(ht, struct hash_entry, ht->size);
+   if (ht->table == NULL) {
+      ralloc_free(ht);
+      return NULL;
+   }
+
+   memcpy(ht->table, src->table, ht->size * sizeof(struct hash_entry));
 
    return ht;
 }
@@ -151,13 +177,37 @@ _mesa_hash_table_destroy(struct hash_table *ht,
       return;
 
    if (delete_function) {
-      struct hash_entry *entry;
-
       hash_table_foreach(ht, entry) {
          delete_function(entry);
       }
    }
    ralloc_free(ht);
+}
+
+/**
+ * Deletes all entries of the given hash table without deleting the table
+ * itself or changing its structure.
+ *
+ * If delete_function is passed, it gets called on each entry present.
+ */
+void
+_mesa_hash_table_clear(struct hash_table *ht,
+                       void (*delete_function)(struct hash_entry *entry))
+{
+   struct hash_entry *entry;
+
+   for (entry = ht->table; entry != ht->table + ht->size; entry++) {
+      if (entry->key == NULL)
+         continue;
+
+      if (delete_function != NULL && entry->key != ht->deleted_key)
+         delete_function(entry);
+
+      entry->key = NULL;
+   }
+
+   ht->entries = 0;
+   ht->deleted_entries = 0;
 }
 
 /** Sets the value of the key pointer used for deleted entries in the table.
@@ -176,15 +226,8 @@ _mesa_hash_table_set_deleted_key(struct hash_table *ht, const void *deleted_key)
    ht->deleted_key = deleted_key;
 }
 
-/**
- * Finds a hash table entry with the given key and hash of that key.
- *
- * Returns NULL if no entry is found.  Note that the data pointer may be
- * modified by the user.
- */
-struct hash_entry *
-_mesa_hash_table_search(struct hash_table *ht, uint32_t hash,
-                        const void *key)
+static struct hash_entry *
+hash_table_search(struct hash_table *ht, uint32_t hash, const void *key)
 {
    uint32_t start_hash_address = hash % ht->size;
    uint32_t hash_address = start_hash_address;
@@ -210,11 +253,36 @@ _mesa_hash_table_search(struct hash_table *ht, uint32_t hash,
    return NULL;
 }
 
+/**
+ * Finds a hash table entry with the given key and hash of that key.
+ *
+ * Returns NULL if no entry is found.  Note that the data pointer may be
+ * modified by the user.
+ */
+struct hash_entry *
+_mesa_hash_table_search(struct hash_table *ht, const void *key)
+{
+   assert(ht->key_hash_function);
+   return hash_table_search(ht, ht->key_hash_function(key), key);
+}
+
+struct hash_entry *
+_mesa_hash_table_search_pre_hashed(struct hash_table *ht, uint32_t hash,
+                                  const void *key)
+{
+   assert(ht->key_hash_function == NULL || hash == ht->key_hash_function(key));
+   return hash_table_search(ht, hash, key);
+}
+
+static struct hash_entry *
+hash_table_insert(struct hash_table *ht, uint32_t hash,
+                  const void *key, void *data);
+
 static void
-_mesa_hash_table_rehash(struct hash_table *ht, int new_size_index)
+_mesa_hash_table_rehash(struct hash_table *ht, unsigned new_size_index)
 {
    struct hash_table old_ht;
-   struct hash_entry *table, *entry;
+   struct hash_entry *table;
 
    if (new_size_index >= ARRAY_SIZE(hash_sizes))
       return;
@@ -235,24 +303,20 @@ _mesa_hash_table_rehash(struct hash_table *ht, int new_size_index)
    ht->deleted_entries = 0;
 
    hash_table_foreach(&old_ht, entry) {
-      _mesa_hash_table_insert(ht, entry->hash,
-                              entry->key, entry->data);
+      hash_table_insert(ht, entry->hash, entry->key, entry->data);
    }
 
    ralloc_free(old_ht.table);
 }
 
-/**
- * Inserts the key with the given hash into the table.
- *
- * Note that insertion may rearrange the table on a resize or rehash,
- * so previously found hash_entries are no longer valid after this function.
- */
-struct hash_entry *
-_mesa_hash_table_insert(struct hash_table *ht, uint32_t hash,
-                        const void *key, void *data)
+static struct hash_entry *
+hash_table_insert(struct hash_table *ht, uint32_t hash,
+                  const void *key, void *data)
 {
    uint32_t start_hash_address, hash_address;
+   struct hash_entry *available_entry = NULL;
+
+   assert(key != NULL);
 
    if (ht->entries >= ht->max_entries) {
       _mesa_hash_table_rehash(ht, ht->size_index + 1);
@@ -267,13 +331,11 @@ _mesa_hash_table_insert(struct hash_table *ht, uint32_t hash,
       uint32_t double_hash;
 
       if (!entry_is_present(ht, entry)) {
-         if (entry_is_deleted(ht, entry))
-            ht->deleted_entries--;
-         entry->hash = hash;
-         entry->key = key;
-         entry->data = data;
-         ht->entries++;
-         return entry;
+         /* Stash the first available entry we find */
+         if (available_entry == NULL)
+            available_entry = entry;
+         if (entry_is_free(entry))
+            break;
       }
 
       /* Implement replacement when another insert happens
@@ -287,7 +349,8 @@ _mesa_hash_table_insert(struct hash_table *ht, uint32_t hash,
        * required to avoid memory leaks, perform a search
        * before inserting.
        */
-      if (entry->hash == hash &&
+      if (!entry_is_deleted(ht, entry) &&
+          entry->hash == hash &&
           ht->key_equals_function(key, entry->key)) {
          entry->key = key;
          entry->data = data;
@@ -300,10 +363,41 @@ _mesa_hash_table_insert(struct hash_table *ht, uint32_t hash,
       hash_address = (hash_address + double_hash) % ht->size;
    } while (hash_address != start_hash_address);
 
+   if (available_entry) {
+      if (entry_is_deleted(ht, available_entry))
+         ht->deleted_entries--;
+      available_entry->hash = hash;
+      available_entry->key = key;
+      available_entry->data = data;
+      ht->entries++;
+      return available_entry;
+   }
+
    /* We could hit here if a required resize failed. An unchecked-malloc
     * application could ignore this result.
     */
    return NULL;
+}
+
+/**
+ * Inserts the key with the given hash into the table.
+ *
+ * Note that insertion may rearrange the table on a resize or rehash,
+ * so previously found hash_entries are no longer valid after this function.
+ */
+struct hash_entry *
+_mesa_hash_table_insert(struct hash_table *ht, const void *key, void *data)
+{
+   assert(ht->key_hash_function);
+   return hash_table_insert(ht, ht->key_hash_function(key), key, data);
+}
+
+struct hash_entry *
+_mesa_hash_table_insert_pre_hashed(struct hash_table *ht, uint32_t hash,
+                                   const void *key, void *data)
+{
+   assert(ht->key_hash_function == NULL || hash == ht->key_hash_function(key));
+   return hash_table_insert(ht, hash, key, data);
 }
 
 /**
@@ -322,6 +416,15 @@ _mesa_hash_table_remove(struct hash_table *ht,
    entry->key = ht->deleted_key;
    ht->entries--;
    ht->deleted_entries++;
+}
+
+/**
+ * Removes the entry with the corresponding key, if exists.
+ */
+void _mesa_hash_table_remove_key(struct hash_table *ht,
+                                 const void *key)
+{
+   _mesa_hash_table_remove(ht, _mesa_hash_table_search(ht, key));
 }
 
 /**
@@ -385,38 +488,30 @@ _mesa_hash_table_random_entry(struct hash_table *ht,
 
 
 /**
- * Quick FNV-1 hash implementation based on:
+ * Quick FNV-1a hash implementation based on:
  * http://www.isthe.com/chongo/tech/comp/fnv/
  *
- * FNV-1 is not be the best hash out there -- Jenkins's lookup3 is supposed to
- * be quite good, and it probably beats FNV.  But FNV has the advantage that
- * it involves almost no code.  For an improvement on both, see Paul
+ * FNV-1a is not be the best hash out there -- Jenkins's lookup3 is supposed
+ * to be quite good, and it probably beats FNV.  But FNV has the advantage
+ * that it involves almost no code.  For an improvement on both, see Paul
  * Hsieh's http://www.azillionmonkeys.com/qed/hash.html
  */
 uint32_t
 _mesa_hash_data(const void *data, size_t size)
 {
-   uint32_t hash = 2166136261ul;
-   const uint8_t *bytes = data;
-
-   while (size-- != 0) {
-      hash ^= *bytes;
-      hash = hash * 0x01000193;
-      bytes++;
-   }
-
-   return hash;
+   return _mesa_fnv32_1a_accumulate_block(_mesa_fnv32_1a_offset_bias,
+                                          data, size);
 }
 
-/** FNV-1 string hash implementation */
+/** FNV-1a string hash implementation */
 uint32_t
-_mesa_hash_string(const char *key)
+_mesa_hash_string(const void *_key)
 {
-   uint32_t hash = 2166136261ul;
+   uint32_t hash = _mesa_fnv32_1a_offset_bias;
+   const char *key = _key;
 
    while (*key != 0) {
-      hash ^= *key;
-      hash = hash * 0x01000193;
+      hash = _mesa_fnv32_1a_accumulate(hash, *key);
       key++;
    }
 
@@ -437,4 +532,150 @@ bool
 _mesa_key_pointer_equal(const void *a, const void *b)
 {
    return a == b;
+}
+
+/**
+ * Hash table wrapper which supports 64-bit keys.
+ *
+ * TODO: unify all hash table implementations.
+ */
+
+struct hash_key_u64 {
+   uint64_t value;
+};
+
+static uint32_t
+key_u64_hash(const void *key)
+{
+   return _mesa_hash_data(key, sizeof(struct hash_key_u64));
+}
+
+static bool
+key_u64_equals(const void *a, const void *b)
+{
+   const struct hash_key_u64 *aa = a;
+   const struct hash_key_u64 *bb = b;
+
+   return aa->value == bb->value;
+}
+
+struct hash_table_u64 *
+_mesa_hash_table_u64_create(void *mem_ctx)
+{
+   struct hash_table_u64 *ht;
+
+   ht = CALLOC_STRUCT(hash_table_u64);
+   if (!ht)
+      return NULL;
+
+   if (sizeof(void *) == 8) {
+      ht->table = _mesa_hash_table_create(mem_ctx, _mesa_hash_pointer,
+                                          _mesa_key_pointer_equal);
+   } else {
+      ht->table = _mesa_hash_table_create(mem_ctx, key_u64_hash,
+                                          key_u64_equals);
+   }
+
+   if (ht->table)
+      _mesa_hash_table_set_deleted_key(ht->table, uint_key(DELETED_KEY_VALUE));
+
+   return ht;
+}
+
+void
+_mesa_hash_table_u64_destroy(struct hash_table_u64 *ht,
+                             void (*delete_function)(struct hash_entry *entry))
+{
+   if (!ht)
+      return;
+
+   if (ht->deleted_key_data) {
+      if (delete_function) {
+         struct hash_table *table = ht->table;
+         struct hash_entry deleted_entry;
+
+         /* Create a fake entry for the delete function. */
+         deleted_entry.hash = table->key_hash_function(table->deleted_key);
+         deleted_entry.key = table->deleted_key;
+         deleted_entry.data = ht->deleted_key_data;
+
+         delete_function(&deleted_entry);
+      }
+      ht->deleted_key_data = NULL;
+   }
+
+   _mesa_hash_table_destroy(ht->table, delete_function);
+   free(ht);
+}
+
+void
+_mesa_hash_table_u64_insert(struct hash_table_u64 *ht, uint64_t key,
+                            void *data)
+{
+   if (key == DELETED_KEY_VALUE) {
+      ht->deleted_key_data = data;
+      return;
+   }
+
+   if (sizeof(void *) == 8) {
+      _mesa_hash_table_insert(ht->table, (void *)(uintptr_t)key, data);
+   } else {
+      struct hash_key_u64 *_key = CALLOC_STRUCT(hash_key_u64);
+
+      if (!_key)
+         return;
+      _key->value = key;
+
+      _mesa_hash_table_insert(ht->table, _key, data);
+   }
+}
+
+static struct hash_entry *
+hash_table_u64_search(struct hash_table_u64 *ht, uint64_t key)
+{
+   if (sizeof(void *) == 8) {
+      return _mesa_hash_table_search(ht->table, (void *)(uintptr_t)key);
+   } else {
+      struct hash_key_u64 _key = { .value = key };
+      return _mesa_hash_table_search(ht->table, &_key);
+   }
+}
+
+void *
+_mesa_hash_table_u64_search(struct hash_table_u64 *ht, uint64_t key)
+{
+   struct hash_entry *entry;
+
+   if (key == DELETED_KEY_VALUE)
+      return ht->deleted_key_data;
+
+   entry = hash_table_u64_search(ht, key);
+   if (!entry)
+      return NULL;
+
+   return entry->data;
+}
+
+void
+_mesa_hash_table_u64_remove(struct hash_table_u64 *ht, uint64_t key)
+{
+   struct hash_entry *entry;
+
+   if (key == DELETED_KEY_VALUE) {
+      ht->deleted_key_data = NULL;
+      return;
+   }
+
+   entry = hash_table_u64_search(ht, key);
+   if (!entry)
+      return;
+
+   if (sizeof(void *) == 8) {
+      _mesa_hash_table_remove(ht->table, entry);
+   } else {
+      struct hash_key *_key = (struct hash_key *)entry->key;
+
+      _mesa_hash_table_remove(ht->table, entry);
+      free(_key);
+   }
 }

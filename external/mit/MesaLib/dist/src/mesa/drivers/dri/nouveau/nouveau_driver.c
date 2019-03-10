@@ -24,6 +24,7 @@
  *
  */
 
+#include <stdio.h>
 #include "main/mtypes.h"
 #include "main/fbobject.h"
 
@@ -34,7 +35,7 @@
 
 #include "drivers/common/meta.h"
 
-const char const *nouveau_vendor_string = "Nouveau";
+const char * const nouveau_vendor_string = "Nouveau";
 
 const char *
 nouveau_get_renderer_string(unsigned chipset)
@@ -131,7 +132,13 @@ nouveau_clear(struct gl_context *ctx, GLbitfield buffers)
 			else
 				value = pack_rgba_clamp_f(s->format, color);
 
-			mask = pack_rgba_i(s->format, ctx->Color.ColorMask[0]);
+			const uint8_t colormask[4] = {
+				GET_COLORMASK_BIT(ctx->Color.ColorMask, 0, 0) ? 0xff : 0,
+				GET_COLORMASK_BIT(ctx->Color.ColorMask, 0, 1) ? 0xff : 0,
+				GET_COLORMASK_BIT(ctx->Color.ColorMask, 0, 2) ? 0xff : 0,
+				GET_COLORMASK_BIT(ctx->Color.ColorMask, 0, 3) ? 0xff : 0,
+			};
+			mask = pack_rgba_i(s->format, colormask);
 
 			if (mask)
 				context_drv(ctx)->surface_fill(

@@ -311,6 +311,27 @@ namespace clover {
       }
    };
 
+   template<typename T>
+   class equals_t {
+   public:
+      equals_t(T &&x) : x(x) {}
+
+      template<typename S>
+      bool
+      operator()(S &&y) const {
+         return x == y;
+      }
+
+   private:
+      T x;
+   };
+
+   template<typename T>
+   equals_t<T>
+   equals(T &&x) {
+      return { std::forward<T>(x) };
+   }
+
    class name_equals {
    public:
       name_equals(const std::string &name) : name(name) {
@@ -332,9 +353,9 @@ namespace clover {
       key_equals_t(T &&x) : x(x) {
       }
 
-      template<typename S>
+      template<typename P>
       bool
-      operator()(const std::pair<T, S> &p) const {
+      operator()(const P &p) const {
          return p.first == x;
       }
 

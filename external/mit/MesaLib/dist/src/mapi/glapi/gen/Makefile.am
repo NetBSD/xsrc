@@ -20,15 +20,21 @@ XORG_INDENT_FLAGS = -linux -bad -bap -blf -bli0 -cbi0 -cdw -nce -cs -i4 -lc80 -p
 
 MESA_DIR = $(top_builddir)/src/mesa
 MESA_GLAPI_DIR = $(top_builddir)/src/mapi/glapi
-MESA_MAPI_DIR = $(top_builddir)/src/mapi
+MESA_MAPI_DIR = $(top_srcdir)/src/mapi
 MESA_GLX_DIR = $(top_builddir)/src/glx
 
 MESA_GLAPI_OUTPUTS = \
 	$(MESA_GLAPI_DIR)/glapi_mapi_tmp.h \
 	$(MESA_GLAPI_DIR)/glprocs.h \
 	$(MESA_GLAPI_DIR)/glapitemp.h \
-	$(MESA_GLAPI_DIR)/glapitable.h \
-	$(MESA_GLAPI_DIR)/glapi_gentable.c
+	$(MESA_GLAPI_DIR)/glapitable.h
+
+if HAVE_APPLEDRI
+MESA_GLAPI_OUTPUTS += $(MESA_GLAPI_DIR)/glapi_gentable.c
+endif
+if HAVE_WINDOWSDRI
+MESA_GLAPI_OUTPUTS += $(MESA_GLAPI_DIR)/glapi_gentable.c
+endif
 
 MESA_GLAPI_ASM_OUTPUTS =
 if HAVE_X86_ASM
@@ -48,6 +54,8 @@ BUILT_SOURCES = \
 	$(MESA_GLAPI_ASM_OUTPUTS) \
 	$(MESA_DIR)/main/enums.c \
 	$(MESA_DIR)/main/api_exec.c \
+	$(MESA_DIR)/main/marshal_generated.c \
+	$(MESA_DIR)/main/marshal_generated.h \
 	$(MESA_DIR)/main/dispatch.h \
 	$(MESA_DIR)/main/remap_helper.h \
 	$(MESA_GLX_DIR)/indirect.c \
@@ -57,16 +65,18 @@ BUILT_SOURCES = \
 	$(MESA_GLX_DIR)/indirect_size.c
 EXTRA_DIST= \
 	$(BUILT_SOURCES) \
+	$(MESA_GLAPI_DIR)/glapi_gentable.c \
 	$(MESA_GLAPI_DIR)/glapi_x86.S \
 	$(MESA_GLAPI_DIR)/glapi_x86-64.S \
 	$(MESA_GLAPI_DIR)/glapi_sparc.S \
 	$(COMMON_GLX) \
-	extension_helper.py \
+	apiexec.py \
 	gl_apitemp.py \
 	gl_enums.py \
 	gl_genexec.py \
 	gl_gentable.py \
-	gl_offsets.py \
+	gl_marshal.py \
+	gl_marshal_h.py \
 	gl_procs.py \
 	gl_SPARC_asm.py \
 	gl_table.py \
@@ -76,23 +86,19 @@ EXTRA_DIST= \
 	glX_proto_send.py \
 	glX_proto_size.py \
 	glX_server_table.py \
-	mesadef.py \
+	marshal_XML.py \
 	remap_helper.py \
-	gl_API.dtd
+	static_data.py \
+	SConscript \
+	gl_API.dtd \
+	meson.build
 
 ######################################################################
 
 XORG_GLX_DIR = $(XORG_BASE)/glx
 XORG_GLAPI_DIR = $(XORG_BASE)/glx
 
-XORG_GLAPI_OUTPUTS = \
-	$(XORG_GLAPI_DIR)/glprocs.h \
-	$(XORG_GLAPI_DIR)/glapitable.h \
-	$(XORG_GLAPI_DIR)/dispatch.h \
-	$(XORG_GLAPI_DIR)/glapi_gentable.c
-
 XORG_OUTPUTS = \
-	$(XORG_GLAPI_OUTPUTS) \
 	$(XORG_GLX_DIR)/indirect_dispatch.c \
 	$(XORG_GLX_DIR)/indirect_dispatch_swap.c \
 	$(XORG_GLX_DIR)/indirect_dispatch.h \
@@ -103,24 +109,31 @@ XORG_OUTPUTS = \
 	$(XORG_GLX_DIR)/indirect_size_get.h \
 	$(XORG_GLX_DIR)/indirect_table.c
 
+.PHONY: $(XORG_OUTPUTS)
+
 ######################################################################
 
 API_XML = \
 	gl_API.xml \
 	es_EXT.xml \
 	gl_and_es_API.xml \
+	gl_and_glX_API.xml \
 	ARB_base_instance.xml \
 	ARB_blend_func_extended.xml \
+	ARB_bindless_texture.xml \
 	ARB_clear_buffer_object.xml \
 	ARB_clear_texture.xml \
+	ARB_clip_control.xml \
 	ARB_color_buffer_float.xml \
 	ARB_compressed_texture_pixel_storage.xml \
 	ARB_compute_shader.xml \
+	ARB_compute_variable_group_size.xml \
 	ARB_copy_buffer.xml \
 	ARB_copy_image.xml \
 	ARB_debug_output.xml \
 	ARB_depth_buffer_float.xml \
 	ARB_depth_clamp.xml \
+	ARB_direct_state_access.xml \
 	ARB_draw_buffers.xml \
 	ARB_draw_buffers_blend.xml \
 	ARB_draw_elements_base_vertex.xml \
@@ -128,15 +141,23 @@ API_XML = \
 	ARB_draw_instanced.xml \
 	ARB_ES2_compatibility.xml \
 	ARB_ES3_compatibility.xml \
+	ARB_framebuffer_no_attachments.xml \
 	ARB_framebuffer_object.xml \
-	ARB_geometry_shader4.xml \
 	ARB_get_program_binary.xml \
+	ARB_get_texture_sub_image.xml \
+	ARB_gl_spirv.xml \
+	ARB_gpu_shader_fp64.xml \
+	ARB_gpu_shader_int64.xml \
 	ARB_gpu_shader5.xml \
+	ARB_indirect_parameters.xml \
 	ARB_instanced_arrays.xml \
 	ARB_internalformat_query.xml \
+	ARB_internalformat_query2.xml \
 	ARB_invalidate_subdata.xml \
 	ARB_map_buffer_range.xml \
 	ARB_multi_bind.xml \
+	ARB_pipeline_statistics_query.xml \
+	ARB_program_interface_query.xml \
 	ARB_robustness.xml \
 	ARB_sample_shading.xml \
 	ARB_sampler_objects.xml \
@@ -144,7 +165,11 @@ API_XML = \
 	ARB_separate_shader_objects.xml \
 	ARB_shader_atomic_counters.xml \
 	ARB_shader_image_load_store.xml \
+	ARB_shader_subroutine.xml \
+	ARB_shader_storage_buffer_object.xml \
+	ARB_sparse_buffer.xml \
 	ARB_sync.xml \
+	ARB_tessellation_shader.xml \
 	ARB_texture_barrier.xml \
 	ARB_texture_buffer_object.xml \
 	ARB_texture_buffer_range.xml \
@@ -160,14 +185,19 @@ API_XML = \
 	ARB_texture_view.xml \
 	ARB_uniform_buffer_object.xml \
 	ARB_vertex_array_object.xml \
+	ARB_vertex_attrib_64bit.xml \
 	ARB_vertex_attrib_binding.xml \
 	ARB_viewport_array.xml \
+	AMD_depth_clamp_separate.xml \
 	AMD_draw_buffers_blend.xml \
+	AMD_gpu_shader_int64.xml \
 	AMD_performance_monitor.xml \
 	ARB_vertex_type_2_10_10_10_rev.xml \
 	APPLE_object_purgeable.xml \
 	APPLE_vertex_array_object.xml \
 	EXT_draw_buffers2.xml \
+	EXT_external_objects.xml \
+	EXT_external_objects_fd.xml \
 	EXT_framebuffer_object.xml \
 	EXT_gpu_shader4.xml \
 	EXT_packed_depth_stencil.xml \
@@ -176,8 +206,16 @@ API_XML = \
 	EXT_texture_array.xml \
 	EXT_texture_integer.xml \
 	EXT_transform_feedback.xml \
+	EXT_vertex_attrib_64bit.xml \
+	EXT_window_rectangles.xml \
+	GREMEDY_string_marker.xml \
 	INTEL_performance_query.xml \
 	KHR_debug.xml \
+	KHR_context_flush_control.xml \
+	KHR_robustness.xml \
+	KHR_robustness_es.xml \
+	KHR_texture_compression_astc.xml \
+	MESA_tile_raster_order.xml \
 	NV_conditional_render.xml \
 	NV_primitive_restart.xml \
 	NV_texture_barrier.xml \
@@ -185,6 +223,7 @@ API_XML = \
 	OES_EGL_image.xml \
 	OES_fixed_point.xml \
 	OES_single_precision.xml \
+	OES_texture_compression_astc.xml \
 	GL3x.xml \
 	GL4x.xml
 
@@ -192,11 +231,12 @@ COMMON = $(API_XML) \
 	gl_XML.py \
 	glX_XML.py \
 	license.py \
+	static_data.py \
 	typeexpr.py
 
 COMMON_GLX = $(COMMON) glX_API.xml glX_XML.py glX_proto_common.py
 
-PYTHON_GEN = $(AM_V_GEN) $(PYTHON2) $(PYTHON_FLAGS)
+PYTHON_GEN = $(AM_V_GEN)$(PYTHON) $(PYTHON_FLAGS)
 
 ######################################################################
 
@@ -228,65 +268,71 @@ $(XORG_GLAPI_DIR)/%.h: $(MESA_GLAPI_DIR)/%.h
 ######################################################################
 
 $(MESA_GLAPI_DIR)/glapi_mapi_tmp.h: $(MESA_MAPI_DIR)/mapi_abi.py $(COMMON)
-	$(PYTHON_GEN) $< \
-		--printer glapi --mode lib $(srcdir)/gl_and_es_API.xml > $@
+	$(PYTHON_GEN) $(MESA_MAPI_DIR)/mapi_abi.py \
+		--printer glapi $(srcdir)/gl_and_es_API.xml > $@
 
 $(MESA_GLAPI_DIR)/glprocs.h: gl_procs.py $(COMMON)
-	$(PYTHON_GEN) $< -c -f $(srcdir)/gl_and_es_API.xml > $@
+	$(PYTHON_GEN) $(srcdir)/gl_procs.py -c -f $(srcdir)/gl_and_es_API.xml > $@
 
 $(MESA_GLAPI_DIR)/glapitemp.h: gl_apitemp.py $(COMMON)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_and_es_API.xml > $@
+	$(PYTHON_GEN) $(srcdir)/gl_apitemp.py -f $(srcdir)/gl_and_es_API.xml > $@
 
 $(MESA_GLAPI_DIR)/glapitable.h: gl_table.py $(COMMON)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_and_es_API.xml > $@
+	$(PYTHON_GEN) $(srcdir)/gl_table.py -f $(srcdir)/gl_and_es_API.xml > $@
 
 $(MESA_GLAPI_DIR)/glapi_gentable.c: gl_gentable.py $(COMMON)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_and_es_API.xml > $@
+	$(PYTHON_GEN) $(srcdir)/gl_gentable.py -f $(srcdir)/gl_and_es_API.xml > $@
 
 ######################################################################
 
 $(MESA_GLAPI_DIR)/glapi_x86.S: gl_x86_asm.py $(COMMON)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_and_es_API.xml > $@
+	$(PYTHON_GEN) $(srcdir)/gl_x86_asm.py -f $(srcdir)/gl_and_es_API.xml > $@
 
 $(MESA_GLAPI_DIR)/glapi_x86-64.S: gl_x86-64_asm.py $(COMMON)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_and_es_API.xml > $@
+	$(PYTHON_GEN) $(srcdir)/gl_x86-64_asm.py -f $(srcdir)/gl_and_es_API.xml > $@
 
 $(MESA_GLAPI_DIR)/glapi_sparc.S: gl_SPARC_asm.py $(COMMON)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_and_es_API.xml > $@
+	$(PYTHON_GEN) $(srcdir)/gl_SPARC_asm.py -f $(srcdir)/gl_and_es_API.xml > $@
 
 ######################################################################
 
-$(MESA_DIR)/main/enums.c: gl_enums.py $(COMMON)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_and_es_API.xml > $@
+$(MESA_DIR)/main/enums.c: gl_enums.py $(srcdir)/../registry/gl.xml
+	$(PYTHON_GEN) $(srcdir)/gl_enums.py -f $(srcdir)/../registry/gl.xml > $@
 
-$(MESA_DIR)/main/api_exec.c: gl_genexec.py $(COMMON)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_and_es_API.xml > $@
+$(MESA_DIR)/main/api_exec.c: gl_genexec.py apiexec.py $(COMMON)
+	$(PYTHON_GEN) $(srcdir)/gl_genexec.py -f $(srcdir)/gl_and_es_API.xml > $@
+
+$(MESA_DIR)/main/marshal_generated.c: gl_marshal.py marshal_XML.py $(COMMON)
+	$(PYTHON_GEN) $(srcdir)/gl_marshal.py -f $(srcdir)/gl_and_es_API.xml > $@
+
+$(MESA_DIR)/main/marshal_generated.h: gl_marshal_h.py marshal_XML.py $(COMMON)
+	$(PYTHON_GEN) $(srcdir)/gl_marshal_h.py -f $(srcdir)/gl_and_es_API.xml > $@
 
 $(MESA_DIR)/main/dispatch.h: gl_table.py $(COMMON)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_and_es_API.xml -m remap_table > $@
+	$(PYTHON_GEN) $(srcdir)/gl_table.py -f $(srcdir)/gl_and_es_API.xml -m remap_table > $@
 
 $(MESA_DIR)/main/remap_helper.h: remap_helper.py $(COMMON)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_and_es_API.xml > $@
+	$(PYTHON_GEN) $(srcdir)/remap_helper.py -f $(srcdir)/gl_and_es_API.xml > $@
 
 ######################################################################
 
 $(MESA_GLX_DIR)/indirect.c: glX_proto_send.py $(COMMON_GLX)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml -m proto \
+	$(PYTHON_GEN) $(srcdir)/glX_proto_send.py -f $(srcdir)/gl_API.xml -m proto \
 	  | $(INDENT) $(INDENT_FLAGS) > $@
 
 $(MESA_GLX_DIR)/indirect.h: glX_proto_send.py $(COMMON_GLX)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml -m init_h > $@
+	$(PYTHON_GEN) $(srcdir)/glX_proto_send.py -f $(srcdir)/gl_API.xml -m init_h > $@
 
 $(MESA_GLX_DIR)/indirect_init.c: glX_proto_send.py $(COMMON_GLX)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml -m init_c > $@
+	$(PYTHON_GEN) $(srcdir)/glX_proto_send.py -f $(srcdir)/gl_API.xml -m init_c > $@
 
 $(MESA_GLX_DIR)/indirect_size.h $(XORG_GLX_DIR)/indirect_size.h: glX_proto_size.py $(COMMON_GLX)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml -m size_h --only-set \
-	    -h _INDIRECT_SIZE_H_ \
+	$(PYTHON_GEN) $(srcdir)/glX_proto_size.py -f $(srcdir)/gl_API.xml -m size_h --only-set \
+	    --header-tag _INDIRECT_SIZE_H_ \
 	  | $(INDENT) $(INDENT_FLAGS) > $@
 
 $(MESA_GLX_DIR)/indirect_size.c: glX_proto_size.py $(COMMON_GLX)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml -m size_c --only-set \
+	$(PYTHON_GEN) $(srcdir)/glX_proto_size.py -f $(srcdir)/gl_API.xml -m size_c --only-set \
 	  | $(INDENT) $(INDENT_FLAGS) > $@
 
 ######################################################################
@@ -305,7 +351,7 @@ $(XORG_GLX_DIR)/indirect_dispatch.h: glX_proto_recv.py gl_and_glX_API.xml $(COMM
 
 $(XORG_GLX_DIR)/indirect_size_get.h: glX_proto_size.py $(COMMON_GLX)
 	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml -m size_h \
-           --only-get -h '_INDIRECT_SIZE_GET_H_' \
+           --only-get --header-tag '_INDIRECT_SIZE_GET_H_' \
 	  | $(INDENT) $(XORG_INDENT_FLAGS) > $@
 
 $(XORG_GLX_DIR)/indirect_size_get.c: glX_proto_size.py $(COMMON_GLX)
@@ -314,7 +360,7 @@ $(XORG_GLX_DIR)/indirect_size_get.c: glX_proto_size.py $(COMMON_GLX)
 
 $(XORG_GLX_DIR)/indirect_reqsize.h: glX_proto_size.py $(COMMON_GLX)
 	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml -m reqsize_h \
-           --only-get -h '_INDIRECT_SIZE_GET_H_' \
+           --only-get --header-tag '_INDIRECT_SIZE_GET_H_' \
 	  | $(INDENT) $(XORG_INDENT_FLAGS) > $@
 
 $(XORG_GLX_DIR)/indirect_reqsize.c: glX_proto_size.py $(COMMON_GLX)

@@ -26,8 +26,9 @@
  */
 
 
+#include "c99_math.h"
+#include "main/errors.h"
 #include "main/glheader.h"
-#include "main/colormac.h"
 #include "main/macros.h"
 #include "main/imports.h"
 #include "main/mtypes.h"
@@ -45,8 +46,8 @@ struct fog_stage_data {
 #define FOG_STAGE_DATA(stage) ((struct fog_stage_data *)stage->privatePtr)
 
 #define FOG_EXP_TABLE_SIZE 256
-#define FOG_MAX (10.0)
-#define EXP_FOG_MAX .0006595
+#define FOG_MAX (10.0F)
+#define EXP_FOG_MAX .0006595F
 #define FOG_INCR (FOG_MAX/FOG_EXP_TABLE_SIZE)
 static GLfloat exp_table[FOG_EXP_TABLE_SIZE];
 static GLfloat inited = 0;
@@ -54,7 +55,7 @@ static GLfloat inited = 0;
 #if 1
 #define NEG_EXP( result, narg )						\
 do {									\
-   GLfloat f = (GLfloat) (narg * (1.0/FOG_INCR));			\
+   GLfloat f = (GLfloat) (narg * (1.0F / FOG_INCR));			\
    GLint k = (GLint) f;							\
    if (k > FOG_EXP_TABLE_SIZE-2) 					\
       result = (GLfloat) EXP_FOG_MAX;					\
@@ -78,7 +79,7 @@ init_static_data( void )
    GLfloat f = 0.0F;
    GLint i = 0;
    for ( ; i < FOG_EXP_TABLE_SIZE ; i++, f += FOG_INCR) {
-      exp_table[i] = EXPF(-f);
+      exp_table[i] = expf(-f);
    }
    inited = 1;
 }
@@ -186,7 +187,7 @@ run_fog_stage(struct gl_context *ctx, struct tnl_pipeline_stage *stage)
 	    NOTE should avoid going through array twice */
 	 coord = input->start;
 	 for (i = 0; i < input->count; i++) {
-	    *coord = FABSF(*coord);
+	    *coord = fabsf(*coord);
 	    STRIDE_F(coord, input->stride);
 	 }
       }
@@ -201,7 +202,7 @@ run_fog_stage(struct gl_context *ctx, struct tnl_pipeline_stage *stage)
 	 input->count = VB->EyePtr->count;
 	 coord = VB->EyePtr->start;
 	 for (i = 0 ; i < VB->EyePtr->count; i++) {
-	    input->data[i][0] = FABSF(coord[2]);
+	    input->data[i][0] = fabsf(coord[2]);
 	    STRIDE_F(coord, VB->EyePtr->stride);
 	 }
       }

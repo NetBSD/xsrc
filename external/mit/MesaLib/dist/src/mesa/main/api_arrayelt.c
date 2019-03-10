@@ -48,7 +48,7 @@
 typedef void (GLAPIENTRY *array_func)( const void * );
 
 typedef struct {
-   const struct gl_vertex_attrib_array *array;
+   const struct gl_array_attributes *array;
    const struct gl_vertex_buffer_binding *binding;
    int offset;
 } AEarray;
@@ -56,7 +56,7 @@ typedef struct {
 typedef void (GLAPIENTRY *attrib_func)( GLuint indx, const void *data );
 
 typedef struct {
-   const struct gl_vertex_attrib_array *array;
+   const struct gl_array_attributes *array;
    const struct gl_vertex_buffer_binding *binding;
    attrib_func func;
    GLuint index;
@@ -65,17 +65,18 @@ typedef struct {
 typedef struct {
    AEarray arrays[32];
    AEattrib attribs[VERT_ATTRIB_MAX + 1];
-   GLuint NewState;
 
    /* List of VBOs we need to map before executing ArrayElements */
    struct gl_buffer_object *vbo[VERT_ATTRIB_MAX];
    GLuint nr_vbos;
    GLboolean mapped_vbos;  /**< Any currently mapped VBOs? */
+
+   bool dirty_state;
 } AEcontext;
 
 
 /** Cast wrapper */
-static INLINE AEcontext *
+static inline AEcontext *
 AE_CONTEXT(struct gl_context *ctx)
 {
    return (AEcontext *) ctx->aelt_context;
@@ -87,10 +88,17 @@ AE_CONTEXT(struct gl_context *ctx)
  * in the range [0, 7].  Luckily these type tokens are sequentially
  * numbered in gl.h, except for GL_DOUBLE.
  */
-static INLINE int
+static inline int
 TYPE_IDX(GLenum t)
 {
    return t == GL_DOUBLE ? 7 : t & 7;
+}
+
+
+bool
+_ae_is_state_dirty(struct gl_context *ctx)
+{
+   return AE_CONTEXT(ctx)->dirty_state;
 }
 
 
@@ -1258,12 +1266,37 @@ VertexAttribI4uiv(GLuint index, const GLuint *v)
    CALL_VertexAttribI4uivEXT(GET_DISPATCH(), (index, v));
 }
 
+/* GL_DOUBLE unconverted attributes */
+
+static void GLAPIENTRY
+VertexAttribL1dv(GLuint index, const GLdouble *v)
+{
+   CALL_VertexAttribL1dv(GET_DISPATCH(), (index, v));
+}
+
+static void GLAPIENTRY
+VertexAttribL2dv(GLuint index, const GLdouble *v)
+{
+   CALL_VertexAttribL2dv(GET_DISPATCH(), (index, v));
+}
+
+static void GLAPIENTRY
+VertexAttribL3dv(GLuint index, const GLdouble *v)
+{
+   CALL_VertexAttribL3dv(GET_DISPATCH(), (index, v));
+}
+
+static void GLAPIENTRY
+VertexAttribL4dv(GLuint index, const GLdouble *v)
+{
+   CALL_VertexAttribL4dv(GET_DISPATCH(), (index, v));
+}
 
 /*
  * Array [unnormalized/normalized/integer][size][type] of VertexAttrib
  * functions
  */
-static attrib_func AttribFuncsARB[3][4][NUM_TYPES] = {
+static const attrib_func AttribFuncsARB[4][4][NUM_TYPES] = {
    {
       /* non-normalized */
       {
@@ -1405,7 +1438,55 @@ static attrib_func AttribFuncsARB[3][4][NUM_TYPES] = {
          NULL, /* GL_FLOAT */
          NULL  /* GL_DOUBLE */
       }
+   },
+   {
+      /* double-valued */
+      {
+         /* size 1 */
+         NULL,
+         NULL,
+         NULL,
+         NULL,
+         NULL,
+         NULL,
+         NULL,
+         (attrib_func) VertexAttribL1dv,
+      },
+      {
+         /* size 2 */
+         NULL,
+         NULL,
+         NULL,
+         NULL,
+         NULL,
+         NULL,
+         NULL,
+         (attrib_func) VertexAttribL2dv,
+      },
+      {
+         /* size 3 */
+         NULL,
+         NULL,
+         NULL,
+         NULL,
+         NULL,
+         NULL,
+         NULL,
+         (attrib_func) VertexAttribL3dv,
+      },
+      {
+         /* size 4 */
+         NULL,
+         NULL,
+         NULL,
+         NULL,
+         NULL,
+         NULL,
+         NULL,
+         (attrib_func) VertexAttribL4dv,
+      }
    }
+
 };
 
 
@@ -1438,7 +1519,7 @@ _ae_create_context(struct gl_context *ctx)
    if (!ctx->aelt_context)
       return GL_FALSE;
 
-   AE_CONTEXT(ctx)->NewState = ~0;
+   AE_CONTEXT(ctx)->dirty_state = true;
    return GL_TRUE;
 }
 
@@ -1493,7 +1574,7 @@ _ae_update_state(struct gl_context *ctx)
    /* conventional vertex arrays */
    if (vao->VertexAttrib[VERT_ATTRIB_COLOR_INDEX].Enabled) {
       aa->array = &vao->VertexAttrib[VERT_ATTRIB_COLOR_INDEX];
-      aa->binding = &vao->VertexBinding[aa->array->VertexBinding];
+      aa->binding = &vao->BufferBinding[aa->array->BufferBindingIndex];
       aa->offset = IndexFuncs[TYPE_IDX(aa->array->Type)];
       check_vbo(actx, aa->binding->BufferObj);
       aa++;
@@ -1501,7 +1582,7 @@ _ae_update_state(struct gl_context *ctx)
 
    if (vao->VertexAttrib[VERT_ATTRIB_EDGEFLAG].Enabled) {
       aa->array = &vao->VertexAttrib[VERT_ATTRIB_EDGEFLAG];
-      aa->binding = &vao->VertexBinding[aa->array->VertexBinding];
+      aa->binding = &vao->BufferBinding[aa->array->BufferBindingIndex];
       aa->offset = _gloffset_EdgeFlagv;
       check_vbo(actx, aa->binding->BufferObj);
       aa++;
@@ -1509,7 +1590,7 @@ _ae_update_state(struct gl_context *ctx)
 
    if (vao->VertexAttrib[VERT_ATTRIB_NORMAL].Enabled) {
       aa->array = &vao->VertexAttrib[VERT_ATTRIB_NORMAL];
-      aa->binding = &vao->VertexBinding[aa->array->VertexBinding];
+      aa->binding = &vao->BufferBinding[aa->array->BufferBindingIndex];
       aa->offset = NormalFuncs[TYPE_IDX(aa->array->Type)];
       check_vbo(actx, aa->binding->BufferObj);
       aa++;
@@ -1517,7 +1598,7 @@ _ae_update_state(struct gl_context *ctx)
 
    if (vao->VertexAttrib[VERT_ATTRIB_COLOR0].Enabled) {
       aa->array = &vao->VertexAttrib[VERT_ATTRIB_COLOR0];
-      aa->binding = &vao->VertexBinding[aa->array->VertexBinding];
+      aa->binding = &vao->BufferBinding[aa->array->BufferBindingIndex];
       aa->offset = ColorFuncs[aa->array->Size-3][TYPE_IDX(aa->array->Type)];
       check_vbo(actx, aa->binding->BufferObj);
       aa++;
@@ -1525,7 +1606,7 @@ _ae_update_state(struct gl_context *ctx)
 
    if (vao->VertexAttrib[VERT_ATTRIB_COLOR1].Enabled) {
       aa->array = &vao->VertexAttrib[VERT_ATTRIB_COLOR1];
-      aa->binding = &vao->VertexBinding[aa->array->VertexBinding];
+      aa->binding = &vao->BufferBinding[aa->array->BufferBindingIndex];
       aa->offset = SecondaryColorFuncs[TYPE_IDX(aa->array->Type)];
       check_vbo(actx, aa->binding->BufferObj);
       aa++;
@@ -1533,22 +1614,22 @@ _ae_update_state(struct gl_context *ctx)
 
    if (vao->VertexAttrib[VERT_ATTRIB_FOG].Enabled) {
       aa->array = &vao->VertexAttrib[VERT_ATTRIB_FOG];
-      aa->binding = &vao->VertexBinding[aa->array->VertexBinding];
+      aa->binding = &vao->BufferBinding[aa->array->BufferBindingIndex];
       aa->offset = FogCoordFuncs[TYPE_IDX(aa->array->Type)];
       check_vbo(actx, aa->binding->BufferObj);
       aa++;
    }
 
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
-      struct gl_vertex_attrib_array *attribArray =
+      struct gl_array_attributes *attribArray =
          &vao->VertexAttrib[VERT_ATTRIB_TEX(i)];
       if (attribArray->Enabled) {
          /* NOTE: we use generic glVertexAttribNV functions here.
           * If we ever remove GL_NV_vertex_program this will have to change.
           */
          at->array = attribArray;
-         at->binding = &vao->VertexBinding[attribArray->VertexBinding];
-         ASSERT(!at->array->Normalized);
+         at->binding = &vao->BufferBinding[attribArray->BufferBindingIndex];
+         assert(!at->array->Normalized);
          at->func = AttribFuncsNV[at->array->Normalized]
                                  [at->array->Size-1]
                                  [TYPE_IDX(at->array->Type)];
@@ -1560,18 +1641,20 @@ _ae_update_state(struct gl_context *ctx)
 
    /* generic vertex attribute arrays */
    for (i = 1; i < VERT_ATTRIB_GENERIC_MAX; i++) {  /* skip zero! */
-      struct gl_vertex_attrib_array *attribArray =
+      struct gl_array_attributes *attribArray =
          &vao->VertexAttrib[VERT_ATTRIB_GENERIC(i)];
       if (attribArray->Enabled) {
          GLint intOrNorm;
          at->array = attribArray;
-         at->binding = &vao->VertexBinding[attribArray->VertexBinding];
+         at->binding = &vao->BufferBinding[attribArray->BufferBindingIndex];
          /* Note: we can't grab the _glapi_Dispatch->VertexAttrib1fvNV
           * function pointer here (for float arrays) since the pointer may
           * change from one execution of _ae_ArrayElement() to
           * the next.  Doing so caused UT to break.
           */
-         if (at->array->Integer)
+         if (at->array->Doubles)
+            intOrNorm = 3;
+         else if (at->array->Integer)
             intOrNorm = 2;
          else if (at->array->Normalized)
             intOrNorm = 1;
@@ -1594,7 +1677,7 @@ _ae_update_state(struct gl_context *ctx)
        * issued as the last (provoking) attribute).
        */
       aa->array = &vao->VertexAttrib[VERT_ATTRIB_GENERIC0];
-      aa->binding = &vao->VertexBinding[aa->array->VertexBinding];
+      aa->binding = &vao->BufferBinding[aa->array->BufferBindingIndex];
       assert(aa->array->Size >= 2); /* XXX fix someday? */
       aa->offset = VertexFuncs[aa->array->Size-2][TYPE_IDX(aa->array->Type)];
       check_vbo(actx, aa->binding->BufferObj);
@@ -1602,7 +1685,7 @@ _ae_update_state(struct gl_context *ctx)
    }
    else if (vao->VertexAttrib[VERT_ATTRIB_POS].Enabled) {
       aa->array = &vao->VertexAttrib[VERT_ATTRIB_POS];
-      aa->binding = &vao->VertexBinding[aa->array->VertexBinding];
+      aa->binding = &vao->BufferBinding[aa->array->BufferBindingIndex];
       aa->offset = VertexFuncs[aa->array->Size-2][TYPE_IDX(aa->array->Type)];
       check_vbo(actx, aa->binding->BufferObj);
       aa++;
@@ -1610,12 +1693,12 @@ _ae_update_state(struct gl_context *ctx)
 
    check_vbo(actx, vao->IndexBufferObj);
 
-   ASSERT(at - actx->attribs <= VERT_ATTRIB_MAX);
-   ASSERT(aa - actx->arrays < 32);
+   assert(at - actx->attribs <= VERT_ATTRIB_MAX);
+   assert(aa - actx->arrays < 32);
    at->func = NULL;  /* terminate the list */
    aa->offset = -1;  /* terminate the list */
 
-   actx->NewState = 0;
+   actx->dirty_state = false;
 }
 
 
@@ -1632,7 +1715,7 @@ _ae_map_vbos(struct gl_context *ctx)
    if (actx->mapped_vbos)
       return;
 
-   if (actx->NewState)
+   if (actx->dirty_state)
       _ae_update_state(ctx);
 
    for (i = 0; i < actx->nr_vbos; i++)
@@ -1659,7 +1742,7 @@ _ae_unmap_vbos(struct gl_context *ctx)
    if (!actx->mapped_vbos)
       return;
 
-   assert (!actx->NewState);
+   assert (!actx->dirty_state);
 
    for (i = 0; i < actx->nr_vbos; i++)
       ctx->Driver.UnmapBuffer(ctx, actx->vbo[i], MAP_INTERNAL);
@@ -1692,7 +1775,7 @@ _ae_ArrayElement(GLint elt)
       return;
    }
 
-   if (actx->NewState) {
+   if (actx->dirty_state) {
       assert(!actx->mapped_vbos);
       _ae_update_state(ctx);
    }
@@ -1727,7 +1810,7 @@ _ae_ArrayElement(GLint elt)
 
 
 void
-_ae_invalidate_state(struct gl_context *ctx, GLuint new_state)
+_ae_invalidate_state(struct gl_context *ctx)
 {
    AEcontext *actx = AE_CONTEXT(ctx);
 
@@ -1740,11 +1823,10 @@ _ae_invalidate_state(struct gl_context *ctx, GLuint new_state)
     * Luckily, neither the drivers nor tnl muck with the state that
     * concerns us here:
     */
-   new_state &= _NEW_ARRAY | _NEW_PROGRAM;
-   if (new_state) {
-      assert(!actx->mapped_vbos);
-      actx->NewState |= new_state;
-   }
+   assert(ctx->NewState & _NEW_ARRAY);
+
+   assert(!actx->mapped_vbos);
+   actx->dirty_state = true;
 }
 
 

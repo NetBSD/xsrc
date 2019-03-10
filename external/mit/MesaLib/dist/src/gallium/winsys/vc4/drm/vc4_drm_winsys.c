@@ -22,13 +22,20 @@
  */
 
 #include <unistd.h>
+#include <fcntl.h>
 
+#include "renderonly/renderonly.h"
 #include "vc4_drm_public.h"
-
 #include "vc4/vc4_screen.h"
 
 struct pipe_screen *
 vc4_drm_screen_create(int fd)
 {
-	return vc4_screen_create(dup(fd));
+   return vc4_screen_create(fcntl(fd, F_DUPFD_CLOEXEC, 3), NULL);
+}
+
+struct pipe_screen *
+vc4_drm_screen_create_renderonly(struct renderonly *ro)
+{
+   return vc4_screen_create(ro->gpu_fd, ro);
 }

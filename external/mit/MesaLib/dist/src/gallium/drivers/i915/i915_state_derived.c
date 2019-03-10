@@ -57,7 +57,6 @@ static uint find_mapping(const struct i915_fragment_shader* fs, int unit)
 static void calculate_vertex_layout(struct i915_context *i915)
 {
    const struct i915_fragment_shader *fs = i915->fs;
-   const enum interp_mode colorInterp = i915->rasterizer->color_interp;
    struct vertex_info vinfo;
    boolean texCoords[I915_TEX_UNITS], colors[2], fog, needW, face;
    uint i;
@@ -107,12 +106,12 @@ static void calculate_vertex_layout(struct i915_context *i915)
    /* pos */
    src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_POSITION, 0);
    if (needW) {
-      draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_LINEAR, src);
+      draw_emit_vertex_attr(&vinfo, EMIT_4F, src);
       vinfo.hwfmt[0] |= S4_VFMT_XYZW;
       vinfo.attrib[0].emit = EMIT_4F;
    }
    else {
-      draw_emit_vertex_attr(&vinfo, EMIT_3F, INTERP_LINEAR, src);
+      draw_emit_vertex_attr(&vinfo, EMIT_3F, src);
       vinfo.hwfmt[0] |= S4_VFMT_XYZ;
       vinfo.attrib[0].emit = EMIT_3F;
    }
@@ -123,21 +122,21 @@ static void calculate_vertex_layout(struct i915_context *i915)
    /* primary color */
    if (colors[0]) {
       src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_COLOR, 0);
-      draw_emit_vertex_attr(&vinfo, EMIT_4UB_BGRA, colorInterp, src);
+      draw_emit_vertex_attr(&vinfo, EMIT_4UB_BGRA, src);
       vinfo.hwfmt[0] |= S4_VFMT_COLOR;
    }
 
    /* secondary color */
    if (colors[1]) {
       src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_COLOR, 1);
-      draw_emit_vertex_attr(&vinfo, EMIT_4UB_BGRA, colorInterp, src);
+      draw_emit_vertex_attr(&vinfo, EMIT_4UB_BGRA, src);
       vinfo.hwfmt[0] |= S4_VFMT_SPEC_FOG;
    }
 
    /* fog coord, not fog blend factor */
    if (fog) {
       src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_FOG, 0);
-      draw_emit_vertex_attr(&vinfo, EMIT_1F, INTERP_PERSPECTIVE, src);
+      draw_emit_vertex_attr(&vinfo, EMIT_1F, src);
       vinfo.hwfmt[0] |= S4_VFMT_FOG_PARAM;
    }
 
@@ -146,8 +145,13 @@ static void calculate_vertex_layout(struct i915_context *i915)
       uint hwtc;
       if (texCoords[i]) {
          hwtc = TEXCOORDFMT_4D;
-         src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_GENERIC, fs->generic_mapping[i]);
-         draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
+         if (fs->generic_mapping[i] == I915_SEMANTIC_POS) {
+            src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_POSITION, 0);
+         }
+         else {
+            src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_GENERIC, fs->generic_mapping[i]);
+         }
+         draw_emit_vertex_attr(&vinfo, EMIT_4F, src);
       }
       else {
          hwtc = TEXCOORDFMT_NOT_PRESENT;
@@ -164,7 +168,7 @@ static void calculate_vertex_layout(struct i915_context *i915)
        * module by adding an extra shader output.
        */
       src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_FACE, 0);
-      draw_emit_vertex_attr(&vinfo, EMIT_1F, INTERP_CONSTANT, src);
+      draw_emit_vertex_attr(&vinfo, EMIT_1F, src);
       vinfo.hwfmt[1] &= ~(TEXCOORDFMT_NOT_PRESENT << (slot * 4));
       vinfo.hwfmt[1] |= TEXCOORDFMT_1D << (slot * 4);
    }
@@ -212,6 +216,23 @@ void i915_update_derived(struct i915_context *i915)
    if (I915_DBG_ON(DBG_ATOMS))
       i915_dump_dirty(i915, __FUNCTION__);
 
+   if (!i915->fs) {
+      i915->dirty &= ~(I915_NEW_FS_CONSTANTS | I915_NEW_FS);
+      i915->hardware_dirty &= ~(I915_HW_PROGRAM | I915_HW_CONSTANTS);
+   }
+
+   if (!i915->vs)
+      i915->dirty &= ~I915_NEW_VS;
+
+   if (!i915->blend)
+      i915->dirty &= ~I915_NEW_BLEND;
+
+   if (!i915->rasterizer)
+      i915->dirty &= ~I915_NEW_RASTERIZER;
+
+   if (!i915->depth_stencil)
+      i915->dirty &= ~I915_NEW_DEPTH_STENCIL;
+   
    for (i = 0; atoms[i]; i++)
       if (atoms[i]->dirty & i915->dirty)
          atoms[i]->update(i915);

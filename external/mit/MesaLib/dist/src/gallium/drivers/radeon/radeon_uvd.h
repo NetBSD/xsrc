@@ -25,26 +25,20 @@
  *
  **************************************************************************/
 
-/*
- * Authors:
- *      Christian König <christian.koenig@amd.com>
- *
- */
-
 #ifndef RADEON_UVD_H
 #define RADEON_UVD_H
 
-#include "../../winsys/radeon/drm/radeon_winsys.h"
+#include "radeon/radeon_winsys.h"
 #include "vl/vl_video_buffer.h"
 
 /* UVD uses PM4 packet type 0 and 2 */
-#define RUVD_PKT_TYPE_S(x)		(((x) & 0x3) << 30)
+#define RUVD_PKT_TYPE_S(x)		(((unsigned)(x) & 0x3) << 30)
 #define RUVD_PKT_TYPE_G(x)		(((x) >> 30) & 0x3)
 #define RUVD_PKT_TYPE_C			0x3FFFFFFF
-#define RUVD_PKT_COUNT_S(x)		(((x) & 0x3FFF) << 16)
+#define RUVD_PKT_COUNT_S(x)		(((unsigned)(x) & 0x3FFF) << 16)
 #define RUVD_PKT_COUNT_G(x)		(((x) >> 16) & 0x3FFF)
 #define RUVD_PKT_COUNT_C		0xC000FFFF
-#define RUVD_PKT0_BASE_INDEX_S(x)	(((x) & 0xFFFF) << 0)
+#define RUVD_PKT0_BASE_INDEX_S(x)	(((unsigned)(x) & 0xFFFF) << 0)
 #define RUVD_PKT0_BASE_INDEX_G(x)	(((x) >> 0) & 0xFFFF)
 #define RUVD_PKT0_BASE_INDEX_C		0xFFFF0000
 #define RUVD_PKT0(index, count)		(RUVD_PKT_TYPE_S(0) | RUVD_PKT0_BASE_INDEX_S(index) | RUVD_PKT_COUNT_S(count))
@@ -56,12 +50,20 @@
 #define RUVD_GPCOM_VCPU_DATA1		0xEF14
 #define RUVD_ENGINE_CNTL		0xEF18
 
+#define RUVD_GPCOM_VCPU_CMD_SOC15		0x2070c
+#define RUVD_GPCOM_VCPU_DATA0_SOC15		0x20710
+#define RUVD_GPCOM_VCPU_DATA1_SOC15		0x20714
+#define RUVD_ENGINE_CNTL_SOC15			0x20718
+
 /* UVD commands to VCPU */
 #define RUVD_CMD_MSG_BUFFER		0x00000000
 #define RUVD_CMD_DPB_BUFFER		0x00000001
 #define RUVD_CMD_DECODING_TARGET_BUFFER	0x00000002
 #define RUVD_CMD_FEEDBACK_BUFFER	0x00000003
+#define RUVD_CMD_SESSION_CONTEXT_BUFFER	0x00000005
 #define RUVD_CMD_BITSTREAM_BUFFER	0x00000100
+#define RUVD_CMD_ITSCALING_TABLE_BUFFER	0x00000204
+#define RUVD_CMD_CONTEXT_BUFFER		0x00000206
 
 /* UVD message types */
 #define RUVD_MSG_CREATE		0
@@ -73,6 +75,9 @@
 #define RUVD_CODEC_VC1		0x00000001
 #define RUVD_CODEC_MPEG2	0x00000003
 #define RUVD_CODEC_MPEG4	0x00000004
+#define RUVD_CODEC_H264_PERF	0x00000007
+#define RUVD_CODEC_MJPEG	0x00000008
+#define RUVD_CODEC_H265		0x00000010
 
 /* UVD decode target buffer tiling mode */
 #define RUVD_TILE_LINEAR	0x00000000
@@ -105,6 +110,11 @@
 #define RUVD_VC1_PROFILE_SIMPLE		0x00000000
 #define RUVD_VC1_PROFILE_MAIN		0x00000001
 #define RUVD_VC1_PROFILE_ADVANCED	0x00000002
+
+enum ruvd_surface_type {
+	RUVD_SURFACE_TYPE_LEGACY = 0,
+	RUVD_SURFACE_TYPE_GFX9
+};
 
 struct ruvd_mvc_element {
 	uint16_t	viewOrderIndex;
@@ -169,6 +179,75 @@ struct ruvd_h264 {
 		uint32_t			viewId0;
 		struct ruvd_mvc_element	mvcElements[1];
 	} mvc;
+};
+
+struct ruvd_h265 {
+	uint32_t	sps_info_flags;
+	uint32_t	pps_info_flags;
+
+	uint8_t		chroma_format;
+	uint8_t		bit_depth_luma_minus8;
+	uint8_t		bit_depth_chroma_minus8;
+	uint8_t		log2_max_pic_order_cnt_lsb_minus4;
+
+	uint8_t		sps_max_dec_pic_buffering_minus1;
+	uint8_t		log2_min_luma_coding_block_size_minus3;
+	uint8_t		log2_diff_max_min_luma_coding_block_size;
+	uint8_t		log2_min_transform_block_size_minus2;
+
+	uint8_t		log2_diff_max_min_transform_block_size;
+	uint8_t		max_transform_hierarchy_depth_inter;
+	uint8_t		max_transform_hierarchy_depth_intra;
+	uint8_t		pcm_sample_bit_depth_luma_minus1;
+
+	uint8_t		pcm_sample_bit_depth_chroma_minus1;
+	uint8_t		log2_min_pcm_luma_coding_block_size_minus3;
+	uint8_t		log2_diff_max_min_pcm_luma_coding_block_size;
+	uint8_t		num_extra_slice_header_bits;
+
+	uint8_t		num_short_term_ref_pic_sets;
+	uint8_t		num_long_term_ref_pic_sps;
+	uint8_t		num_ref_idx_l0_default_active_minus1;
+	uint8_t		num_ref_idx_l1_default_active_minus1;
+
+	int8_t		pps_cb_qp_offset;
+	int8_t		pps_cr_qp_offset;
+	int8_t		pps_beta_offset_div2;
+	int8_t		pps_tc_offset_div2;
+
+	uint8_t		diff_cu_qp_delta_depth;
+	uint8_t		num_tile_columns_minus1;
+	uint8_t		num_tile_rows_minus1;
+	uint8_t		log2_parallel_merge_level_minus2;
+
+	uint16_t	column_width_minus1[19];
+	uint16_t	row_height_minus1[21];
+
+	int8_t		init_qp_minus26;
+	uint8_t		num_delta_pocs_ref_rps_idx;
+	uint8_t		curr_idx;
+	uint8_t		reserved1;
+	int32_t		curr_poc;
+	uint8_t		ref_pic_list[16];
+	int32_t		poc_list[16];
+	uint8_t		ref_pic_set_st_curr_before[8];
+	uint8_t		ref_pic_set_st_curr_after[8];
+	uint8_t		ref_pic_set_lt_curr[8];
+
+	uint8_t		ucScalingListDCCoefSizeID2[6];
+	uint8_t		ucScalingListDCCoefSizeID3[2];
+
+	uint8_t		highestTid;
+	uint8_t		isNonRef;
+
+	uint8_t 	p010_mode;
+	uint8_t 	msb_mode;
+	uint8_t 	luma_10to8;
+	uint8_t 	chroma_10to8;
+	uint8_t 	sclr_luma10to8;
+	uint8_t 	sclr_chroma10to8;
+
+	uint8_t 	direct_reflist[2][15];
 };
 
 struct ruvd_vc1 {
@@ -321,12 +400,16 @@ struct ruvd_msg {
 			uint32_t	dt_chroma_top_offset;
 			uint32_t	dt_chroma_bottom_offset;
 			uint32_t	dt_surf_tile_config;
-			uint32_t	dt_reserved[3];
+			uint32_t	dt_uv_surf_tile_config;
+			// re-use dt_wa_chroma_top_offset as dt_ext_info for UV pitch in stoney
+			uint32_t	dt_wa_chroma_top_offset;
+			uint32_t	dt_wa_chroma_bottom_offset;
 
 			uint32_t	reserved[16];
 
 			union {
 				struct ruvd_h264	h264;
+				struct ruvd_h265	h265;
 				struct ruvd_vc1		vc1;
 				struct ruvd_mpeg2	mpeg2;
 				struct ruvd_mpeg4	mpeg4;
@@ -344,15 +427,15 @@ struct ruvd_msg {
 };
 
 /* driver dependent callback */
-typedef struct radeon_winsys_cs_handle* (*ruvd_set_dtb)
+typedef struct pb_buffer* (*ruvd_set_dtb)
 (struct ruvd_msg* msg, struct vl_video_buffer *vb);
 
 /* create an UVD decode */
-struct pipe_video_codec *ruvd_create_decoder(struct pipe_context *context,
-					     const struct pipe_video_codec *templat,
-					     ruvd_set_dtb set_dtb);
+struct pipe_video_codec *si_common_uvd_create_decoder(struct pipe_context *context,
+						      const struct pipe_video_codec *templat,
+						      ruvd_set_dtb set_dtb);
 
 /* fill decoding target field from the luma and chroma surfaces */
-void ruvd_set_dt_surfaces(struct ruvd_msg *msg, struct radeon_surface *luma,
-			  struct radeon_surface *chroma);
+void si_uvd_set_dt_surfaces(struct ruvd_msg *msg, struct radeon_surf *luma,
+			    struct radeon_surf *chroma, enum ruvd_surface_type type);
 #endif

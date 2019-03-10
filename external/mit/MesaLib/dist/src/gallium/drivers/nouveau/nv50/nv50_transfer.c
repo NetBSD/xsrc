@@ -3,7 +3,7 @@
 
 #include "nv50/nv50_context.h"
 
-#include "nv50/nv50_defs.xml.h"
+#include "nv50/g80_defs.xml.h"
 
 struct nv50_transfer {
    struct pipe_transfer base;
@@ -163,7 +163,7 @@ nv50_sifc_linear_u8(struct nouveau_context *nv,
    offset &= ~0xff;
 
    BEGIN_NV04(push, NV50_2D(DST_FORMAT), 2);
-   PUSH_DATA (push, NV50_SURFACE_FORMAT_R8_UNORM);
+   PUSH_DATA (push, G80_SURFACE_FORMAT_R8_UNORM);
    PUSH_DATA (push, 1);
    BEGIN_NV04(push, NV50_2D(DST_PITCH), 5);
    PUSH_DATA (push, 262144);
@@ -173,7 +173,7 @@ nv50_sifc_linear_u8(struct nouveau_context *nv,
    PUSH_DATA (push, dst->offset + offset);
    BEGIN_NV04(push, NV50_2D(SIFC_BITMAP_ENABLE), 2);
    PUSH_DATA (push, 0);
-   PUSH_DATA (push, NV50_SURFACE_FORMAT_R8_UNORM);
+   PUSH_DATA (push, G80_SURFACE_FORMAT_R8_UNORM);
    BEGIN_NV04(push, NV50_2D(SIFC_WIDTH), 10);
    PUSH_DATA (push, size);
    PUSH_DATA (push, 1);
@@ -187,14 +187,7 @@ nv50_sifc_linear_u8(struct nouveau_context *nv,
    PUSH_DATA (push, 0);
 
    while (count) {
-      unsigned nr;
-
-      if (!PUSH_SPACE(push, 16))
-         break;
-      nr = PUSH_AVAIL(push);
-      assert(nr >= 16);
-      nr = MIN2(count, nr - 1);
-      nr = MIN2(nr, NV04_PFIFO_MAX_PACKET_LEN);
+      unsigned nr = MIN2(count, NV04_PFIFO_MAX_PACKET_LEN);
 
       BEGIN_NI04(push, NV50_2D(SIFC_DATA), nr);
       PUSH_DATAp(push, src, nr);
@@ -365,43 +358,37 @@ nv50_miptree_transfer_unmap(struct pipe_context *pctx,
             tx->rect[0].base += mt->layer_stride;
          tx->rect[1].base += tx->nblocksy * tx->base.stride;
       }
+
+      /* Allow the copies above to finish executing before freeing the source */
+      nouveau_fence_work(nv50->screen->base.fence.current,
+                         nouveau_fence_unref_bo, tx->rect[1].bo);
+   } else {
+      nouveau_bo_ref(NULL, &tx->rect[1].bo);
    }
 
-   nouveau_bo_ref(NULL, &tx->rect[1].bo);
    pipe_resource_reference(&transfer->resource, NULL);
 
    FREE(tx);
 }
 
-void
-nv50_cb_push(struct nouveau_context *nv,
-             struct nouveau_bo *bo, unsigned domain,
-             unsigned base, unsigned size,
-             unsigned offset, unsigned words, const uint32_t *data)
+static void
+nv50_cb_bo_push(struct nouveau_context *nv,
+                struct nouveau_bo *bo, unsigned domain,
+                unsigned bufid,
+                unsigned offset, unsigned words,
+                const uint32_t *data)
 {
    struct nouveau_pushbuf *push = nv->pushbuf;
-   struct nouveau_bufctx *bctx = nv50_context(&nv->pipe)->bufctx;
 
    assert(!(offset & 3));
-   size = align(size, 0x100);
-
-   nouveau_bufctx_refn(bctx, 0, bo, NOUVEAU_BO_WR | domain);
-   nouveau_pushbuf_bufctx(push, bctx);
-   nouveau_pushbuf_validate(push);
 
    while (words) {
-      unsigned nr;
+      unsigned nr = MIN2(words, NV04_PFIFO_MAX_PACKET_LEN);
 
-      nr = PUSH_AVAIL(push);
-      nr = MIN2(nr - 7, words);
-      nr = MIN2(nr, NV04_PFIFO_MAX_PACKET_LEN - 1);
-
-      BEGIN_NV04(push, NV50_3D(CB_DEF_ADDRESS_HIGH), 3);
-      PUSH_DATAh(push, bo->offset + base);
-      PUSH_DATA (push, bo->offset + base);
-      PUSH_DATA (push, (NV50_CB_TMP << 16) | (size & 0xffff));
+      PUSH_SPACE(push, nr + 3);
+      PUSH_REFN (push, bo, NOUVEAU_BO_WR | domain);
       BEGIN_NV04(push, NV50_3D(CB_ADDR), 1);
-      PUSH_DATA (push, (offset << 6) | NV50_CB_TMP);
+      PUSH_DATA (push, (offset << 6) | bufid);
       BEGIN_NI04(push, NV50_3D(CB_DATA(0)), nr);
       PUSH_DATAp(push, data, nr);
 
@@ -409,6 +396,41 @@ nv50_cb_push(struct nouveau_context *nv,
       data += nr;
       offset += nr * 4;
    }
+}
 
-   nouveau_bufctx_reset(bctx, 0);
+void
+nv50_cb_push(struct nouveau_context *nv,
+             struct nv04_resource *res,
+             unsigned offset, unsigned words, const uint32_t *data)
+{
+   struct nv50_context *nv50 = nv50_context(&nv->pipe);
+   struct nv50_constbuf *cb = NULL;
+   int s, bufid;
+   /* Go through all the constbuf binding points of this buffer and try to
+    * find one which contains the region to be updated.
+    */
+   /* XXX compute? */
+   for (s = 0; s < 3 && !cb; s++) {
+      uint16_t bindings = res->cb_bindings[s];
+      while (bindings) {
+         int i = ffs(bindings) - 1;
+         uint32_t cb_offset = nv50->constbuf[s][i].offset;
+
+         bindings &= ~(1 << i);
+         if (cb_offset <= offset &&
+             cb_offset + nv50->constbuf[s][i].size >= offset + words * 4) {
+            cb = &nv50->constbuf[s][i];
+            bufid = s * 16 + i;
+            break;
+         }
+      }
+   }
+
+   if (cb) {
+      nv50_cb_bo_push(nv, res->bo, res->domain,
+                      bufid, offset - cb->offset, words, data);
+   } else {
+      nv->push_data(nv, res->bo, res->offset + offset, res->domain,
+                    words * 4, data);
+   }
 }

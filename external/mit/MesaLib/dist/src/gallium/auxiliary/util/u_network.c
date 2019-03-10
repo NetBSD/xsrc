@@ -2,12 +2,14 @@
 #include "pipe/p_compiler.h"
 #include "util/u_network.h"
 #include "util/u_debug.h"
+#include "util/u_string.h"
 
+#include <stdio.h>
 #if defined(PIPE_SUBSYSTEM_WINDOWS_USER)
 #  include <winsock2.h>
 #  include <windows.h>
-#elif defined(PIPE_OS_LINUX) || defined(PIPE_OS_HAIKU) || \
-   defined(PIPE_OS_APPLE) || defined(PIPE_OS_CYGWIN) || defined(PIPE_OS_SOLARIS)
+#  include <ws2tcpip.h>
+#elif defined(PIPE_OS_UNIX)
 #  include <sys/socket.h>
 #  include <netinet/in.h>
 #  include <unistd.h>
@@ -18,7 +20,7 @@
 #endif
 
 boolean
-u_socket_init()
+u_socket_init(void)
 {
 #if defined(PIPE_SUBSYSTEM_WINDOWS_USER)
    WORD wVersionRequested;
@@ -42,7 +44,7 @@ u_socket_init()
 }
 
 void
-u_socket_stop()
+u_socket_stop(void)
 {
 #if defined(PIPE_SUBSYSTEM_WINDOWS_USER)
    WSACleanup();
@@ -55,8 +57,7 @@ u_socket_close(int s)
    if (s < 0)
       return;
 
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_HAIKU) \
-    || defined(PIPE_OS_APPLE) || defined(PIPE_OS_SOLARIS)
+#if defined(PIPE_OS_UNIX)
    shutdown(s, SHUT_RDWR);
    close(s);
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
@@ -110,27 +111,34 @@ int
 u_socket_connect(const char *hostname, uint16_t port)
 {
 #if defined(PIPE_HAVE_SOCKETS)
-   int s;
-   struct sockaddr_in sa;
-   struct hostent *host = NULL;
+   int s, r;
+   struct addrinfo hints, *addr;
+   char portString[20];
 
-   memset(&sa, 0, sizeof(struct sockaddr_in));
-   host = gethostbyname(hostname);
-   if (!host)
-      return -1;
+   memset(&hints, 0, sizeof hints);
+   hints.ai_family = AF_UNSPEC; // AF_INET or AF_INET6 to force version
+   hints.ai_socktype = SOCK_STREAM;
 
-   memcpy((char *)&sa.sin_addr,host->h_addr_list[0],host->h_length);
-   sa.sin_family= host->h_addrtype;
-   sa.sin_port = htons(port);
+   util_snprintf(portString, sizeof(portString), "%d", port);
 
-   s = socket(host->h_addrtype, SOCK_STREAM, IPPROTO_TCP);
-   if (s < 0)
-      return -1;
-
-   if (connect(s, (struct sockaddr *)&sa, sizeof(sa))) {
-      u_socket_close(s);
+   r = getaddrinfo(hostname, portString, NULL, &addr);
+   if (r != 0) {
       return -1;
    }
+
+   s = socket(addr->ai_family, SOCK_STREAM, IPPROTO_TCP);
+   if (s < 0) {
+      freeaddrinfo(addr);
+      return -1;
+   }
+
+   if (connect(s, addr->ai_addr, (int) addr->ai_addrlen)) {
+      u_socket_close(s);
+      freeaddrinfo(addr);
+      return -1;
+   }
+
+   freeaddrinfo(addr);
 
    return s;
 #else
@@ -171,8 +179,7 @@ u_socket_listen_on_port(uint16_t portnum)
 void
 u_socket_block(int s, boolean block)
 {
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_HAIKU) \
-    || defined(PIPE_OS_APPLE) || defined(PIPE_OS_SOLARIS)
+#if defined(PIPE_OS_UNIX)
    int old = fcntl(s, F_GETFL, 0);
    if (old == -1)
       return;

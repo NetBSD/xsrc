@@ -38,7 +38,7 @@
  */
 
 #include "glapi/glapi_priv.h"
-#include "glapi/glapitable.h"
+#include "glapitable.h"
 
 
 #if !(defined(USE_X86_ASM) || defined(USE_X86_64_ASM) || defined(USE_SPARC_ASM))
@@ -97,6 +97,13 @@
  */
 #include <GLES/glplatform.h>
 
+
+/* Redefine GL_API to avoid MSVC/MinGW warnings about different dllimport
+ * attributes for these prototypes vs those in the GLES/gl.h header.
+ */
+#undef GL_API
+#define GL_API KEYWORD1
+
 GL_API void GL_APIENTRY glClearDepthf (GLclampf depth);
 GL_API void GL_APIENTRY glClipPlanef (GLenum plane, const GLfloat *equation);
 GL_API void GL_APIENTRY glFrustumf (GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
@@ -143,6 +150,30 @@ GL_API void GL_APIENTRY glTexParameterx (GLenum target, GLenum pname, GLfixed pa
 GL_API void GL_APIENTRY glTexParameterxv (GLenum target, GLenum pname, const GLfixed *params);
 GL_API void GL_APIENTRY glTranslatex (GLfixed x, GLfixed y, GLfixed z);
 GL_API void GL_APIENTRY glPointSizePointerOES (GLenum type, GLsizei stride, const GLvoid *pointer);
+GL_API void GL_APIENTRY glBlendBarrier (void);
+GL_API void GL_APIENTRY glPrimitiveBoundingBox (GLfloat minX, GLfloat minY, GLfloat minZ, GLfloat minW, GLfloat maxX, GLfloat maxY, GLfloat maxZ, GLfloat maxW);
+
+/* Enable frame pointer elimination on Windows, otherwise forgetting to add
+ * APIENTRY to _mesa_* entrypoints will not cause crashes on debug builds, as
+ * the initial ESP value is saved in the EBP in the function prologue, then
+ * restored on the epilogue, clobbering any corruption in the ESP pointer due
+ * to mismatch in the callee calling convention.
+ *
+ * On MSVC it's not sufficient to enable /Oy -- other optimizations must be
+ * enabled or frame pointer will be used regardless.
+ *
+ * We don't do this when NDEBUG is defined since, frame pointer omission
+ * optimization compiler flag are already specified on release builds, and
+ * because on profile builds we must have frame pointers or certain profilers
+ * might fail to unwind the stack.
+ */
+#if defined(_WIN32) && !defined(NDEBUG)
+#  if defined(_MSC_VER)
+#    pragma optimize( "gty", on )
+#  elif defined(__GNUC__)
+#    pragma GCC optimize ("omit-frame-pointer")
+#  endif
+#endif
 
 #include "glapi/glapitemp.h"
 

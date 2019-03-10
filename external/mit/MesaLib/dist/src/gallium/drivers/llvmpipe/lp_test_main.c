@@ -147,6 +147,7 @@ write_elem(struct lp_type type, void *dst, unsigned index, double value)
       if(type.sign) {
          long long lvalue = (long long)value;
          lvalue = MIN2(lvalue, ((long long)1 << (type.width - 1)) - 1);
+         lvalue = MAX2(lvalue, -((long long)1 << (type.width - 1)));
          switch(type.width) {
          case 8:
             *((int8_t *)dst + index) = (int8_t)lvalue;
@@ -200,16 +201,24 @@ random_elem(struct lp_type type, void *dst, unsigned index)
       }
       else {
          unsigned long long mask;
-	 if (type.fixed)
+         if (type.fixed)
             mask = ((unsigned long long)1 << (type.width / 2)) - 1;
          else if (type.sign)
             mask = ((unsigned long long)1 << (type.width - 1)) - 1;
          else
             mask = ((unsigned long long)1 << type.width) - 1;
          value += (double)(mask & rand());
+         if (!type.fixed && !type.sign && type.width == 32) {
+            /*
+             * rand only returns half the possible range
+             * XXX 64bit values...
+             */
+            if(rand() & 1)
+               value += (double)0x80000000;
+         }
       }
    }
-   if(!type.sign)
+   if(type.sign)
       if(rand() & 1)
          value = -value;
    write_elem(type, dst, index, value);
@@ -376,6 +385,9 @@ int main(int argc, char **argv)
    fpstate = util_fpstate_get();
    util_fpstate_set_denorms_to_zero(fpstate);
 
+   if (!lp_build_init())
+      return 1;
+
    for(i = 1; i < argc; ++i) {
       if(strcmp(argv[i], "-v") == 0)
          ++verbose;
@@ -387,8 +399,6 @@ int main(int argc, char **argv)
          n = atoi(argv[i]);
    }
 
-   lp_build_init();
-
 #ifdef DEBUG
    if (verbose >= 2) {
       gallivm_debug |= GALLIVM_DEBUG_IR;
@@ -396,9 +406,7 @@ int main(int argc, char **argv)
    }
 #endif
 
-   util_cpu_detect();
-
-   if(fp) {
+   if (fp) {
       /* Warm up the caches */
       test_some(0, NULL, 100);
 
@@ -412,8 +420,10 @@ int main(int argc, char **argv)
    else
       success = test_all(verbose, fp);
 
-   if(fp)
+   if (fp)
       fclose(fp);
+
+   LLVMShutdown();
 
    return success ? 0 : 1;
 }

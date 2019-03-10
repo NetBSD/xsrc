@@ -25,11 +25,13 @@
  *    Keith Whitwell <keithw@vmware.com> Brian Paul
  */
 
+#include "main/errors.h"
 #include "main/imports.h"
 #include "main/bufferobj.h"
-#include "main/colormac.h"
 #include "main/mtypes.h"
 #include "main/samplerobj.h"
+#include "main/state.h"
+#include "main/stencil.h"
 #include "main/teximage.h"
 #include "program/prog_parameter.h"
 #include "program/prog_statevars.h"
@@ -62,12 +64,9 @@ _swrast_update_rasterflags( struct gl_context *ctx )
    if (ctx->Depth.Test)                   rasterMask |= DEPTH_BIT;
    if (swrast->_FogEnabled)               rasterMask |= FOG_BIT;
    if (ctx->Scissor.EnableFlags)          rasterMask |= CLIP_BIT;
-   if (ctx->Stencil._Enabled)             rasterMask |= STENCIL_BIT;
+   if (_mesa_stencil_is_enabled(ctx))     rasterMask |= STENCIL_BIT;
    for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
-      if (!ctx->Color.ColorMask[i][0] ||
-          !ctx->Color.ColorMask[i][1] ||
-          !ctx->Color.ColorMask[i][2] ||
-          !ctx->Color.ColorMask[i][3]) {
+      if (GET_COLORMASK(ctx->Color.ColorMask, i) != 0xf) {
          rasterMask |= MASKING_BIT;
          break;
       }
@@ -95,10 +94,7 @@ _swrast_update_rasterflags( struct gl_context *ctx )
    }
 
    for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
-      if (ctx->Color.ColorMask[i][0] +
-          ctx->Color.ColorMask[i][1] +
-          ctx->Color.ColorMask[i][2] +
-          ctx->Color.ColorMask[i][3] == 0) {
+      if (GET_COLORMASK(ctx->Color.ColorMask, i) == 0) {
          rasterMask |= MULTI_DRAW_BIT; /* all RGBA channels disabled */
          break;
       }
@@ -109,7 +105,7 @@ _swrast_update_rasterflags( struct gl_context *ctx )
       rasterMask |= FRAGPROG_BIT;
    }
 
-   if (ctx->ATIFragmentShader._Enabled) {
+   if (_mesa_ati_fragment_shader_enabled(ctx)) {
       rasterMask |= ATIFRAGSHADER_BIT;
    }
 
@@ -190,7 +186,7 @@ _swrast_update_texture_env( struct gl_context *ctx )
 
    for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
       const struct gl_tex_env_combine_state *combine =
-         ctx->Texture.Unit[i]._CurrentCombine;
+         ctx->Texture.FixedFuncUnit[i]._CurrentCombine;
       GLuint term;
       for (term = 0; term < combine->_NumArgsRGB; term++) {
          if (combine->SourceRGB[term] == GL_PRIMARY_COLOR) {
@@ -221,13 +217,13 @@ _swrast_update_deferred_texture(struct gl_context *ctx)
    }
    else {
       GLboolean use_fprog = _swrast_use_fragment_program(ctx);
-      const struct gl_fragment_program *fprog
-         = ctx->FragmentProgram._Current;
-      if (use_fprog && (fprog->Base.OutputsWritten & (1 << FRAG_RESULT_DEPTH))) {
+      const struct gl_program *fprog = ctx->FragmentProgram._Current;
+      if (use_fprog &&
+          (fprog->info.outputs_written & (1 << FRAG_RESULT_DEPTH))) {
          /* Z comes from fragment program/shader */
          swrast->_DeferredTexture = GL_FALSE;
       }
-      else if (use_fprog && fprog->UsesKill) {
+      else if (use_fprog && fprog->info.fs.uses_discard) {
          swrast->_DeferredTexture = GL_FALSE;
       }
       else if (ctx->Query.CurrentOcclusionObject) {
@@ -248,9 +244,10 @@ static void
 _swrast_update_fog_state( struct gl_context *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   const struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
+   const struct gl_program *fp = ctx->FragmentProgram._Current;
 
-   assert(fp == NULL || fp->Base.Target == GL_FRAGMENT_PROGRAM_ARB);
+   assert(fp == NULL || fp->Target == GL_FRAGMENT_PROGRAM_ARB);
+   (void) fp; /* silence unused var warning */
 
    /* determine if fog is needed, and if so, which fog mode */
    swrast->_FogEnabled = (!_swrast_use_fragment_program(ctx) &&
@@ -269,7 +266,7 @@ _swrast_update_fragment_program(struct gl_context *ctx, GLbitfield newState)
       return;
 
    _mesa_load_state_parameters(ctx,
-                               ctx->FragmentProgram._Current->Base.Parameters);
+                               ctx->FragmentProgram._Current->Parameters);
 }
 
 
@@ -288,7 +285,7 @@ _swrast_update_specular_vertex_add(struct gl_context *ctx)
    swrast->SpecularVertexAdd = (separateSpecular
                                 && ctx->Texture._MaxEnabledTexImageUnit == -1
                                 && !_swrast_use_fragment_program(ctx)
-                                && !ctx->ATIFragmentShader._Enabled);
+                                && !_mesa_ati_fragment_shader_enabled(ctx));
 }
 
 
@@ -351,7 +348,7 @@ _swrast_validate_triangle( struct gl_context *ctx,
 
    _swrast_validate_derived( ctx );
    swrast->choose_triangle( ctx );
-   ASSERT(swrast->Triangle);
+   assert(swrast->Triangle);
 
    if (swrast->SpecularVertexAdd) {
       /* separate specular color, but no texture */
@@ -373,7 +370,7 @@ _swrast_validate_line( struct gl_context *ctx, const SWvertex *v0, const SWverte
 
    _swrast_validate_derived( ctx );
    swrast->choose_line( ctx );
-   ASSERT(swrast->Line);
+   assert(swrast->Line);
 
    if (swrast->SpecularVertexAdd) {
       swrast->SpecLine = swrast->Line;
@@ -408,7 +405,7 @@ _swrast_validate_point( struct gl_context *ctx, const SWvertex *v0 )
  * Called via swrast->BlendFunc.  Examine GL state to choose a blending
  * function, then call it.
  */
-static void _ASMAPI
+static void
 _swrast_validate_blend_func(struct gl_context *ctx, GLuint n, const GLubyte mask[],
                             GLvoid *src, const GLvoid *dst,
                             GLenum chanType )
@@ -500,11 +497,12 @@ _swrast_update_active_attribs(struct gl_context *ctx)
     */
    if (_swrast_use_fragment_program(ctx)) {
       /* fragment program/shader */
-      attribsMask = ctx->FragmentProgram._Current->Base.InputsRead;
+      attribsMask = ctx->FragmentProgram._Current->info.inputs_read;
       attribsMask &= ~VARYING_BIT_POS; /* WPOS is always handled specially */
    }
-   else if (ctx->ATIFragmentShader._Enabled) {
-      attribsMask = ~0;  /* XXX fix me */
+   else if (_mesa_ati_fragment_shader_enabled(ctx)) {
+      attribsMask = VARYING_BIT_COL0 | VARYING_BIT_COL1 |
+                    VARYING_BIT_FOGC | VARYING_BITS_TEX_ANY;
    }
    else {
       /* fixed function */
@@ -900,11 +898,16 @@ void
 _swrast_render_finish( struct gl_context *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   struct gl_query_object *query = ctx->Query.CurrentOcclusionObject;
 
    _swrast_flush(ctx);
 
    if (swrast->Driver.SpanRenderFinish)
       swrast->Driver.SpanRenderFinish( ctx );
+
+   if (query && (query->Target == GL_ANY_SAMPLES_PASSED ||
+                 query->Target == GL_ANY_SAMPLES_PASSED_CONSERVATIVE))
+      query->Result = !!query->Result;
 }
 
 

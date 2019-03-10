@@ -29,7 +29,12 @@
   *   Keith Whitwell <keithw@vmware.com>
   */
 
-#define INTEL_MASK(high, low) (((1<<((high)-(low)+1))-1)<<(low))
+#ifndef BRW_DEFINES_H
+#define BRW_DEFINES_H
+
+#include "util/macros.h"
+
+#define INTEL_MASK(high, low) (((1u<<((high)-(low)+1))-1)<<(low))
 /* Using the GNU statement expression extension */
 #define SET_FIELD(value, field)                                         \
    ({                                                                   \
@@ -38,10 +43,14 @@
       fieldval & field ## _MASK;                                        \
    })
 
+#define GET_BITS(data, high, low) ((data & INTEL_MASK((high), (low))) >> (low))
 #define GET_FIELD(word, field) (((word)  & field ## _MASK) >> field ## _SHIFT)
 
-#ifndef BRW_DEFINES_H
-#define BRW_DEFINES_H
+/**
+ * For use with masked MMIO registers where the upper 16 bits control which
+ * of the lower bits are committed to the register.
+ */
+#define REG_MASK(value) ((value) << 16)
 
 /* 3D state:
  */
@@ -51,38 +60,10 @@
 # define GEN4_3DPRIM_VERTEXBUFFER_ACCESS_SEQUENTIAL (0 << 15)
 # define GEN4_3DPRIM_VERTEXBUFFER_ACCESS_RANDOM     (1 << 15)
 # define GEN7_3DPRIM_INDIRECT_PARAMETER_ENABLE      (1 << 10)
+# define GEN7_3DPRIM_PREDICATE_ENABLE               (1 << 8)
 /* DW1 */
 # define GEN7_3DPRIM_VERTEXBUFFER_ACCESS_SEQUENTIAL (0 << 8)
 # define GEN7_3DPRIM_VERTEXBUFFER_ACCESS_RANDOM     (1 << 8)
-
-#define _3DPRIM_POINTLIST         0x01
-#define _3DPRIM_LINELIST          0x02
-#define _3DPRIM_LINESTRIP         0x03
-#define _3DPRIM_TRILIST           0x04
-#define _3DPRIM_TRISTRIP          0x05
-#define _3DPRIM_TRIFAN            0x06
-#define _3DPRIM_QUADLIST          0x07
-#define _3DPRIM_QUADSTRIP         0x08
-#define _3DPRIM_LINELIST_ADJ      0x09
-#define _3DPRIM_LINESTRIP_ADJ     0x0A
-#define _3DPRIM_TRILIST_ADJ       0x0B
-#define _3DPRIM_TRISTRIP_ADJ      0x0C
-#define _3DPRIM_TRISTRIP_REVERSE  0x0D
-#define _3DPRIM_POLYGON           0x0E
-#define _3DPRIM_RECTLIST          0x0F
-#define _3DPRIM_LINELOOP          0x10
-#define _3DPRIM_POINTLIST_BF      0x11
-#define _3DPRIM_LINESTRIP_CONT    0x12
-#define _3DPRIM_LINESTRIP_BF      0x13
-#define _3DPRIM_LINESTRIP_CONT_BF 0x14
-#define _3DPRIM_TRIFAN_NOSTIPPLE  0x15
-
-/* We use this offset to be able to pass native primitive types in struct
- * _mesa_prim::mode.  Native primitive types are BRW_PRIM_OFFSET +
- * native_type, which should be different from all GL types and still fit in
- * the 8 bits avialable. */
-
-#define BRW_PRIM_OFFSET           0x80
 
 #define BRW_ANISORATIO_2     0
 #define BRW_ANISORATIO_4     1
@@ -128,13 +109,6 @@
 #define BRW_CLIP_API_OGL     0
 #define BRW_CLIP_API_DX      1
 
-#define BRW_CLIPMODE_NORMAL              0
-#define BRW_CLIPMODE_CLIP_ALL            1
-#define BRW_CLIPMODE_CLIP_NON_REJECTED   2
-#define BRW_CLIPMODE_REJECT_ALL          3
-#define BRW_CLIPMODE_ACCEPT_ALL          4
-#define BRW_CLIPMODE_KERNEL_CLIP         5
-
 #define BRW_CLIP_NDCSPACE     0
 #define BRW_CLIP_SCREENSPACE  1
 
@@ -171,8 +145,6 @@
 
 #define BRW_FRONTWINDING_CW      0
 #define BRW_FRONTWINDING_CCW     1
-
-#define BRW_SPRITE_POINT_ENABLE  16
 
 #define BRW_CUT_INDEX_ENABLE     (1 << 10)
 
@@ -212,9 +184,6 @@
 #define BRW_ADDRESS_ROUNDING_ENABLE_R_MAG	0x02
 #define BRW_ADDRESS_ROUNDING_ENABLE_R_MIN	0x01
 
-#define BRW_POLYGON_FRONT_FACING     0
-#define BRW_POLYGON_BACK_FACING      1
-
 #define BRW_PREFILTER_ALWAYS     0x0
 #define BRW_PREFILTER_NEVER      0x1
 #define BRW_PREFILTER_LESS       0x2
@@ -237,7 +206,7 @@
  * Chipset Graphics Controller Programmer's Reference Manual,
  * Volume 2: 3D/Media", Revision 1.0b as of January 2008,
  * available at
- *     http://intellinuxgraphics.org/documentation.html
+ *     https://01.org/linuxgraphics/documentation/hardware-specification-prms
  * at the time of this writing).
  *
  * These appear to be supported on at least some
@@ -274,6 +243,7 @@
 #define GEN8_SURFACE_TILING_W                       (1 << 12)
 #define GEN8_SURFACE_TILING_X                       (2 << 12)
 #define GEN8_SURFACE_TILING_Y                       (3 << 12)
+#define GEN8_SURFACE_SAMPLER_L2_BYPASS_DISABLE      (1 << 9)
 #define BRW_SURFACE_RC_READ_WRITE	(1 << 8)
 #define BRW_SURFACE_MIPLAYOUT_SHIFT	10
 #define BRW_SURFACE_MIPMAPLAYOUT_BELOW   0
@@ -285,223 +255,8 @@
 #define BRW_SURFACE_WRITEDISABLE_R_SHIFT	16
 #define BRW_SURFACE_WRITEDISABLE_A_SHIFT	17
 
-#define BRW_SURFACEFORMAT_R32G32B32A32_FLOAT             0x000
-#define BRW_SURFACEFORMAT_R32G32B32A32_SINT              0x001
-#define BRW_SURFACEFORMAT_R32G32B32A32_UINT              0x002
-#define BRW_SURFACEFORMAT_R32G32B32A32_UNORM             0x003
-#define BRW_SURFACEFORMAT_R32G32B32A32_SNORM             0x004
-#define BRW_SURFACEFORMAT_R64G64_FLOAT                   0x005
-#define BRW_SURFACEFORMAT_R32G32B32X32_FLOAT             0x006
-#define BRW_SURFACEFORMAT_R32G32B32A32_SSCALED           0x007
-#define BRW_SURFACEFORMAT_R32G32B32A32_USCALED           0x008
-#define BRW_SURFACEFORMAT_R32G32B32A32_SFIXED            0x020
-#define BRW_SURFACEFORMAT_R64G64_PASSTHRU                0x021
-#define BRW_SURFACEFORMAT_R32G32B32_FLOAT                0x040
-#define BRW_SURFACEFORMAT_R32G32B32_SINT                 0x041
-#define BRW_SURFACEFORMAT_R32G32B32_UINT                 0x042
-#define BRW_SURFACEFORMAT_R32G32B32_UNORM                0x043
-#define BRW_SURFACEFORMAT_R32G32B32_SNORM                0x044
-#define BRW_SURFACEFORMAT_R32G32B32_SSCALED              0x045
-#define BRW_SURFACEFORMAT_R32G32B32_USCALED              0x046
-#define BRW_SURFACEFORMAT_R32G32B32_SFIXED               0x050
-#define BRW_SURFACEFORMAT_R16G16B16A16_UNORM             0x080
-#define BRW_SURFACEFORMAT_R16G16B16A16_SNORM             0x081
-#define BRW_SURFACEFORMAT_R16G16B16A16_SINT              0x082
-#define BRW_SURFACEFORMAT_R16G16B16A16_UINT              0x083
-#define BRW_SURFACEFORMAT_R16G16B16A16_FLOAT             0x084
-#define BRW_SURFACEFORMAT_R32G32_FLOAT                   0x085
-#define BRW_SURFACEFORMAT_R32G32_SINT                    0x086
-#define BRW_SURFACEFORMAT_R32G32_UINT                    0x087
-#define BRW_SURFACEFORMAT_R32_FLOAT_X8X24_TYPELESS       0x088
-#define BRW_SURFACEFORMAT_X32_TYPELESS_G8X24_UINT        0x089
-#define BRW_SURFACEFORMAT_L32A32_FLOAT                   0x08A
-#define BRW_SURFACEFORMAT_R32G32_UNORM                   0x08B
-#define BRW_SURFACEFORMAT_R32G32_SNORM                   0x08C
-#define BRW_SURFACEFORMAT_R64_FLOAT                      0x08D
-#define BRW_SURFACEFORMAT_R16G16B16X16_UNORM             0x08E
-#define BRW_SURFACEFORMAT_R16G16B16X16_FLOAT             0x08F
-#define BRW_SURFACEFORMAT_A32X32_FLOAT                   0x090
-#define BRW_SURFACEFORMAT_L32X32_FLOAT                   0x091
-#define BRW_SURFACEFORMAT_I32X32_FLOAT                   0x092
-#define BRW_SURFACEFORMAT_R16G16B16A16_SSCALED           0x093
-#define BRW_SURFACEFORMAT_R16G16B16A16_USCALED           0x094
-#define BRW_SURFACEFORMAT_R32G32_SSCALED                 0x095
-#define BRW_SURFACEFORMAT_R32G32_USCALED                 0x096
-#define BRW_SURFACEFORMAT_R32G32_FLOAT_LD                0x097
-#define BRW_SURFACEFORMAT_R32G32_SFIXED                  0x0A0
-#define BRW_SURFACEFORMAT_R64_PASSTHRU                   0x0A1
-#define BRW_SURFACEFORMAT_B8G8R8A8_UNORM                 0x0C0
-#define BRW_SURFACEFORMAT_B8G8R8A8_UNORM_SRGB            0x0C1
-#define BRW_SURFACEFORMAT_R10G10B10A2_UNORM              0x0C2
-#define BRW_SURFACEFORMAT_R10G10B10A2_UNORM_SRGB         0x0C3
-#define BRW_SURFACEFORMAT_R10G10B10A2_UINT               0x0C4
-#define BRW_SURFACEFORMAT_R10G10B10_SNORM_A2_UNORM       0x0C5
-#define BRW_SURFACEFORMAT_R8G8B8A8_UNORM                 0x0C7
-#define BRW_SURFACEFORMAT_R8G8B8A8_UNORM_SRGB            0x0C8
-#define BRW_SURFACEFORMAT_R8G8B8A8_SNORM                 0x0C9
-#define BRW_SURFACEFORMAT_R8G8B8A8_SINT                  0x0CA
-#define BRW_SURFACEFORMAT_R8G8B8A8_UINT                  0x0CB
-#define BRW_SURFACEFORMAT_R16G16_UNORM                   0x0CC
-#define BRW_SURFACEFORMAT_R16G16_SNORM                   0x0CD
-#define BRW_SURFACEFORMAT_R16G16_SINT                    0x0CE
-#define BRW_SURFACEFORMAT_R16G16_UINT                    0x0CF
-#define BRW_SURFACEFORMAT_R16G16_FLOAT                   0x0D0
-#define BRW_SURFACEFORMAT_B10G10R10A2_UNORM              0x0D1
-#define BRW_SURFACEFORMAT_B10G10R10A2_UNORM_SRGB         0x0D2
-#define BRW_SURFACEFORMAT_R11G11B10_FLOAT                0x0D3
-#define BRW_SURFACEFORMAT_R32_SINT                       0x0D6
-#define BRW_SURFACEFORMAT_R32_UINT                       0x0D7
-#define BRW_SURFACEFORMAT_R32_FLOAT                      0x0D8
-#define BRW_SURFACEFORMAT_R24_UNORM_X8_TYPELESS          0x0D9
-#define BRW_SURFACEFORMAT_X24_TYPELESS_G8_UINT           0x0DA
-#define BRW_SURFACEFORMAT_L16A16_UNORM                   0x0DF
-#define BRW_SURFACEFORMAT_I24X8_UNORM                    0x0E0
-#define BRW_SURFACEFORMAT_L24X8_UNORM                    0x0E1
-#define BRW_SURFACEFORMAT_A24X8_UNORM                    0x0E2
-#define BRW_SURFACEFORMAT_I32_FLOAT                      0x0E3
-#define BRW_SURFACEFORMAT_L32_FLOAT                      0x0E4
-#define BRW_SURFACEFORMAT_A32_FLOAT                      0x0E5
-#define BRW_SURFACEFORMAT_B8G8R8X8_UNORM                 0x0E9
-#define BRW_SURFACEFORMAT_B8G8R8X8_UNORM_SRGB            0x0EA
-#define BRW_SURFACEFORMAT_R8G8B8X8_UNORM                 0x0EB
-#define BRW_SURFACEFORMAT_R8G8B8X8_UNORM_SRGB            0x0EC
-#define BRW_SURFACEFORMAT_R9G9B9E5_SHAREDEXP             0x0ED
-#define BRW_SURFACEFORMAT_B10G10R10X2_UNORM              0x0EE
-#define BRW_SURFACEFORMAT_L16A16_FLOAT                   0x0F0
-#define BRW_SURFACEFORMAT_R32_UNORM                      0x0F1
-#define BRW_SURFACEFORMAT_R32_SNORM                      0x0F2
-#define BRW_SURFACEFORMAT_R10G10B10X2_USCALED            0x0F3
-#define BRW_SURFACEFORMAT_R8G8B8A8_SSCALED               0x0F4
-#define BRW_SURFACEFORMAT_R8G8B8A8_USCALED               0x0F5
-#define BRW_SURFACEFORMAT_R16G16_SSCALED                 0x0F6
-#define BRW_SURFACEFORMAT_R16G16_USCALED                 0x0F7
-#define BRW_SURFACEFORMAT_R32_SSCALED                    0x0F8
-#define BRW_SURFACEFORMAT_R32_USCALED                    0x0F9
-#define BRW_SURFACEFORMAT_B5G6R5_UNORM                   0x100
-#define BRW_SURFACEFORMAT_B5G6R5_UNORM_SRGB              0x101
-#define BRW_SURFACEFORMAT_B5G5R5A1_UNORM                 0x102
-#define BRW_SURFACEFORMAT_B5G5R5A1_UNORM_SRGB            0x103
-#define BRW_SURFACEFORMAT_B4G4R4A4_UNORM                 0x104
-#define BRW_SURFACEFORMAT_B4G4R4A4_UNORM_SRGB            0x105
-#define BRW_SURFACEFORMAT_R8G8_UNORM                     0x106
-#define BRW_SURFACEFORMAT_R8G8_SNORM                     0x107
-#define BRW_SURFACEFORMAT_R8G8_SINT                      0x108
-#define BRW_SURFACEFORMAT_R8G8_UINT                      0x109
-#define BRW_SURFACEFORMAT_R16_UNORM                      0x10A
-#define BRW_SURFACEFORMAT_R16_SNORM                      0x10B
-#define BRW_SURFACEFORMAT_R16_SINT                       0x10C
-#define BRW_SURFACEFORMAT_R16_UINT                       0x10D
-#define BRW_SURFACEFORMAT_R16_FLOAT                      0x10E
-#define BRW_SURFACEFORMAT_A8P8_UNORM_PALETTE0            0x10F
-#define BRW_SURFACEFORMAT_A8P8_UNORM_PALETTE1            0x110
-#define BRW_SURFACEFORMAT_I16_UNORM                      0x111
-#define BRW_SURFACEFORMAT_L16_UNORM                      0x112
-#define BRW_SURFACEFORMAT_A16_UNORM                      0x113
-#define BRW_SURFACEFORMAT_L8A8_UNORM                     0x114
-#define BRW_SURFACEFORMAT_I16_FLOAT                      0x115
-#define BRW_SURFACEFORMAT_L16_FLOAT                      0x116
-#define BRW_SURFACEFORMAT_A16_FLOAT                      0x117
-#define BRW_SURFACEFORMAT_L8A8_UNORM_SRGB                0x118
-#define BRW_SURFACEFORMAT_R5G5_SNORM_B6_UNORM            0x119
-#define BRW_SURFACEFORMAT_B5G5R5X1_UNORM                 0x11A
-#define BRW_SURFACEFORMAT_B5G5R5X1_UNORM_SRGB            0x11B
-#define BRW_SURFACEFORMAT_R8G8_SSCALED                   0x11C
-#define BRW_SURFACEFORMAT_R8G8_USCALED                   0x11D
-#define BRW_SURFACEFORMAT_R16_SSCALED                    0x11E
-#define BRW_SURFACEFORMAT_R16_USCALED                    0x11F
-#define BRW_SURFACEFORMAT_P8A8_UNORM_PALETTE0            0x122
-#define BRW_SURFACEFORMAT_P8A8_UNORM_PALETTE1            0x123
-#define BRW_SURFACEFORMAT_A1B5G5R5_UNORM                 0x124
-#define BRW_SURFACEFORMAT_A4B4G4R4_UNORM                 0x125
-#define BRW_SURFACEFORMAT_L8A8_UINT                      0x126
-#define BRW_SURFACEFORMAT_L8A8_SINT                      0x127
-#define BRW_SURFACEFORMAT_R8_UNORM                       0x140
-#define BRW_SURFACEFORMAT_R8_SNORM                       0x141
-#define BRW_SURFACEFORMAT_R8_SINT                        0x142
-#define BRW_SURFACEFORMAT_R8_UINT                        0x143
-#define BRW_SURFACEFORMAT_A8_UNORM                       0x144
-#define BRW_SURFACEFORMAT_I8_UNORM                       0x145
-#define BRW_SURFACEFORMAT_L8_UNORM                       0x146
-#define BRW_SURFACEFORMAT_P4A4_UNORM                     0x147
-#define BRW_SURFACEFORMAT_A4P4_UNORM                     0x148
-#define BRW_SURFACEFORMAT_R8_SSCALED                     0x149
-#define BRW_SURFACEFORMAT_R8_USCALED                     0x14A
-#define BRW_SURFACEFORMAT_P8_UNORM_PALETTE0              0x14B
-#define BRW_SURFACEFORMAT_L8_UNORM_SRGB                  0x14C
-#define BRW_SURFACEFORMAT_P8_UNORM_PALETTE1              0x14D
-#define BRW_SURFACEFORMAT_P4A4_UNORM_PALETTE1            0x14E
-#define BRW_SURFACEFORMAT_A4P4_UNORM_PALETTE1            0x14F
-#define BRW_SURFACEFORMAT_Y8_SNORM                       0x150
-#define BRW_SURFACEFORMAT_L8_UINT                        0x152
-#define BRW_SURFACEFORMAT_L8_SINT                        0x153
-#define BRW_SURFACEFORMAT_I8_UINT                        0x154
-#define BRW_SURFACEFORMAT_I8_SINT                        0x155
-#define BRW_SURFACEFORMAT_DXT1_RGB_SRGB                  0x180
-#define BRW_SURFACEFORMAT_R1_UINT                        0x181
-#define BRW_SURFACEFORMAT_YCRCB_NORMAL                   0x182
-#define BRW_SURFACEFORMAT_YCRCB_SWAPUVY                  0x183
-#define BRW_SURFACEFORMAT_P2_UNORM_PALETTE0              0x184
-#define BRW_SURFACEFORMAT_P2_UNORM_PALETTE1              0x185
-#define BRW_SURFACEFORMAT_BC1_UNORM                      0x186
-#define BRW_SURFACEFORMAT_BC2_UNORM                      0x187
-#define BRW_SURFACEFORMAT_BC3_UNORM                      0x188
-#define BRW_SURFACEFORMAT_BC4_UNORM                      0x189
-#define BRW_SURFACEFORMAT_BC5_UNORM                      0x18A
-#define BRW_SURFACEFORMAT_BC1_UNORM_SRGB                 0x18B
-#define BRW_SURFACEFORMAT_BC2_UNORM_SRGB                 0x18C
-#define BRW_SURFACEFORMAT_BC3_UNORM_SRGB                 0x18D
-#define BRW_SURFACEFORMAT_MONO8                          0x18E
-#define BRW_SURFACEFORMAT_YCRCB_SWAPUV                   0x18F
-#define BRW_SURFACEFORMAT_YCRCB_SWAPY                    0x190
-#define BRW_SURFACEFORMAT_DXT1_RGB                       0x191
-#define BRW_SURFACEFORMAT_FXT1                           0x192
-#define BRW_SURFACEFORMAT_R8G8B8_UNORM                   0x193
-#define BRW_SURFACEFORMAT_R8G8B8_SNORM                   0x194
-#define BRW_SURFACEFORMAT_R8G8B8_SSCALED                 0x195
-#define BRW_SURFACEFORMAT_R8G8B8_USCALED                 0x196
-#define BRW_SURFACEFORMAT_R64G64B64A64_FLOAT             0x197
-#define BRW_SURFACEFORMAT_R64G64B64_FLOAT                0x198
-#define BRW_SURFACEFORMAT_BC4_SNORM                      0x199
-#define BRW_SURFACEFORMAT_BC5_SNORM                      0x19A
-#define BRW_SURFACEFORMAT_R16G16B16_FLOAT                0x19B
-#define BRW_SURFACEFORMAT_R16G16B16_UNORM                0x19C
-#define BRW_SURFACEFORMAT_R16G16B16_SNORM                0x19D
-#define BRW_SURFACEFORMAT_R16G16B16_SSCALED              0x19E
-#define BRW_SURFACEFORMAT_R16G16B16_USCALED              0x19F
-#define BRW_SURFACEFORMAT_BC6H_SF16                      0x1A1
-#define BRW_SURFACEFORMAT_BC7_UNORM                      0x1A2
-#define BRW_SURFACEFORMAT_BC7_UNORM_SRGB                 0x1A3
-#define BRW_SURFACEFORMAT_BC6H_UF16                      0x1A4
-#define BRW_SURFACEFORMAT_PLANAR_420_8                   0x1A5
-#define BRW_SURFACEFORMAT_R8G8B8_UNORM_SRGB              0x1A8
-#define BRW_SURFACEFORMAT_ETC1_RGB8                      0x1A9
-#define BRW_SURFACEFORMAT_ETC2_RGB8                      0x1AA
-#define BRW_SURFACEFORMAT_EAC_R11                        0x1AB
-#define BRW_SURFACEFORMAT_EAC_RG11                       0x1AC
-#define BRW_SURFACEFORMAT_EAC_SIGNED_R11                 0x1AD
-#define BRW_SURFACEFORMAT_EAC_SIGNED_RG11                0x1AE
-#define BRW_SURFACEFORMAT_ETC2_SRGB8                     0x1AF
-#define BRW_SURFACEFORMAT_R16G16B16_UINT                 0x1B0
-#define BRW_SURFACEFORMAT_R16G16B16_SINT                 0x1B1
-#define BRW_SURFACEFORMAT_R32_SFIXED                     0x1B2
-#define BRW_SURFACEFORMAT_R10G10B10A2_SNORM              0x1B3
-#define BRW_SURFACEFORMAT_R10G10B10A2_USCALED            0x1B4
-#define BRW_SURFACEFORMAT_R10G10B10A2_SSCALED            0x1B5
-#define BRW_SURFACEFORMAT_R10G10B10A2_SINT               0x1B6
-#define BRW_SURFACEFORMAT_B10G10R10A2_SNORM              0x1B7
-#define BRW_SURFACEFORMAT_B10G10R10A2_USCALED            0x1B8
-#define BRW_SURFACEFORMAT_B10G10R10A2_SSCALED            0x1B9
-#define BRW_SURFACEFORMAT_B10G10R10A2_UINT               0x1BA
-#define BRW_SURFACEFORMAT_B10G10R10A2_SINT               0x1BB
-#define BRW_SURFACEFORMAT_R64G64B64A64_PASSTHRU          0x1BC
-#define BRW_SURFACEFORMAT_R64G64B64_PASSTHRU             0x1BD
-#define BRW_SURFACEFORMAT_ETC2_RGB8_PTA                  0x1C0
-#define BRW_SURFACEFORMAT_ETC2_SRGB8_PTA                 0x1C1
-#define BRW_SURFACEFORMAT_ETC2_EAC_RGBA8                 0x1C2
-#define BRW_SURFACEFORMAT_ETC2_EAC_SRGB8_A8              0x1C3
-#define BRW_SURFACEFORMAT_R8G8B8_UINT                    0x1C8
-#define BRW_SURFACEFORMAT_R8G8B8_SINT                    0x1C9
-#define BRW_SURFACEFORMAT_RAW                            0x1FF
+#define GEN9_SURFACE_ASTC_HDR_FORMAT_BIT                 0x100
+
 #define BRW_SURFACE_FORMAT_SHIFT	18
 #define BRW_SURFACE_FORMAT_MASK		INTEL_MASK(26, 18)
 
@@ -528,9 +283,11 @@
 #define GEN7_SURFACE_ARYSPC_FULL	(0 << 10)
 #define GEN7_SURFACE_ARYSPC_LOD0	(1 << 10)
 
-/* Surface state DW0 */
+/* Surface state DW1 */
 #define GEN8_SURFACE_MOCS_SHIFT         24
 #define GEN8_SURFACE_MOCS_MASK          INTEL_MASK(30, 24)
+#define GEN8_SURFACE_QPITCH_SHIFT       0
+#define GEN8_SURFACE_QPITCH_MASK        INTEL_MASK(14, 0)
 
 /* Surface state DW2 */
 #define BRW_SURFACE_HEIGHT_SHIFT	19
@@ -551,6 +308,7 @@
 #define BRW_SURFACE_PITCH_MASK		INTEL_MASK(19, 3)
 #define BRW_SURFACE_TILED		(1 << 1)
 #define BRW_SURFACE_TILED_Y		(1 << 0)
+#define HSW_SURFACE_IS_INTEGER_FORMAT   (1 << 18)
 
 /* Surface state DW4 */
 #define BRW_SURFACE_MIN_LOD_SHIFT	28
@@ -587,6 +345,9 @@
 #define GEN7_SURFACE_MOCS_SHIFT                 16
 #define GEN7_SURFACE_MOCS_MASK                  INTEL_MASK(19, 16)
 
+#define GEN9_SURFACE_MIP_TAIL_START_LOD_SHIFT      8
+#define GEN9_SURFACE_MIP_TAIL_START_LOD_MASK       INTEL_MASK(11, 8)
+
 /* Surface state DW6 */
 #define GEN7_SURFACE_MCS_ENABLE                 (1 << 0)
 #define GEN7_SURFACE_MCS_PITCH_SHIFT            3
@@ -601,8 +362,11 @@
 #define GEN8_SURFACE_AUX_MODE_MCS               1
 #define GEN8_SURFACE_AUX_MODE_APPEND            2
 #define GEN8_SURFACE_AUX_MODE_HIZ               3
+#define GEN9_SURFACE_AUX_MODE_CCS_E             5
 
 /* Surface state DW7 */
+#define GEN9_SURFACE_RT_COMPRESSION_SHIFT       30
+#define GEN9_SURFACE_RT_COMPRESSION_MASK        INTEL_MASK(30, 30)
 #define GEN7_SURFACE_CLEAR_COLOR_SHIFT		28
 #define GEN7_SURFACE_SCS_R_SHIFT                25
 #define GEN7_SURFACE_SCS_R_MASK                 INTEL_MASK(27, 25)
@@ -640,7 +404,7 @@
 
 #define GEN7_SAMPLER_LOD_BIAS_MASK              INTEL_MASK(13, 1)
 #define GEN7_SAMPLER_LOD_BIAS_SHIFT             1
-#define GEN7_SAMPLER_EWA_ANISOTROPIC_ALGORIHTM  (1 << 0)
+#define GEN7_SAMPLER_EWA_ANISOTROPIC_ALGORITHM  (1 << 0)
 
 /* SAMPLER_STATE DW1 */
 #define GEN4_SAMPLER_MIN_LOD_MASK               INTEL_MASK(31, 22)
@@ -694,780 +458,6 @@ enum brw_wrap_mode {
 #define BRW_VERTEX_SUBPIXEL_PRECISION_8BITS  0
 #define BRW_VERTEX_SUBPIXEL_PRECISION_4BITS  1
 
-/* Execution Unit (EU) defines
- */
-
-#define BRW_ALIGN_1   0
-#define BRW_ALIGN_16  1
-
-#define BRW_ADDRESS_DIRECT                        0
-#define BRW_ADDRESS_REGISTER_INDIRECT_REGISTER    1
-
-#define BRW_CHANNEL_X     0
-#define BRW_CHANNEL_Y     1
-#define BRW_CHANNEL_Z     2
-#define BRW_CHANNEL_W     3
-
-enum brw_compression {
-   BRW_COMPRESSION_NONE       = 0,
-   BRW_COMPRESSION_2NDHALF    = 1,
-   BRW_COMPRESSION_COMPRESSED = 2,
-};
-
-#define GEN6_COMPRESSION_1Q		0
-#define GEN6_COMPRESSION_2Q		1
-#define GEN6_COMPRESSION_3Q		2
-#define GEN6_COMPRESSION_4Q		3
-#define GEN6_COMPRESSION_1H		0
-#define GEN6_COMPRESSION_2H		2
-
-enum PACKED brw_conditional_mod {
-   BRW_CONDITIONAL_NONE = 0,
-   BRW_CONDITIONAL_Z    = 1,
-   BRW_CONDITIONAL_NZ   = 2,
-   BRW_CONDITIONAL_EQ   = 1,	/* Z */
-   BRW_CONDITIONAL_NEQ  = 2,	/* NZ */
-   BRW_CONDITIONAL_G    = 3,
-   BRW_CONDITIONAL_GE   = 4,
-   BRW_CONDITIONAL_L    = 5,
-   BRW_CONDITIONAL_LE   = 6,
-   BRW_CONDITIONAL_R    = 7,
-   BRW_CONDITIONAL_O    = 8,
-   BRW_CONDITIONAL_U    = 9,
-};
-
-#define BRW_DEBUG_NONE        0
-#define BRW_DEBUG_BREAKPOINT  1
-
-#define BRW_DEPENDENCY_NORMAL         0
-#define BRW_DEPENDENCY_NOTCLEARED     1
-#define BRW_DEPENDENCY_NOTCHECKED     2
-#define BRW_DEPENDENCY_DISABLE        3
-
-#define BRW_EXECUTE_1     0
-#define BRW_EXECUTE_2     1
-#define BRW_EXECUTE_4     2
-#define BRW_EXECUTE_8     3
-#define BRW_EXECUTE_16    4
-#define BRW_EXECUTE_32    5
-
-#define BRW_HORIZONTAL_STRIDE_0   0
-#define BRW_HORIZONTAL_STRIDE_1   1
-#define BRW_HORIZONTAL_STRIDE_2   2
-#define BRW_HORIZONTAL_STRIDE_4   3
-
-#define BRW_INSTRUCTION_NORMAL    0
-#define BRW_INSTRUCTION_SATURATE  1
-
-#define BRW_MASK_ENABLE   0
-#define BRW_MASK_DISABLE  1
-
-/** @{
- *
- * Gen6 has replaced "mask enable/disable" with WECtrl, which is
- * effectively the same but much simpler to think about.  Now, there
- * are two contributors ANDed together to whether channels are
- * executed: The predication on the instruction, and the channel write
- * enable.
- */
-/**
- * This is the default value.  It means that a channel's write enable is set
- * if the per-channel IP is pointing at this instruction.
- */
-#define BRW_WE_NORMAL		0
-/**
- * This is used like BRW_MASK_DISABLE, and causes all channels to have
- * their write enable set.  Note that predication still contributes to
- * whether the channel actually gets written.
- */
-#define BRW_WE_ALL		1
-/** @} */
-
-enum opcode {
-   /* These are the actual hardware opcodes. */
-   BRW_OPCODE_MOV =	1,
-   BRW_OPCODE_SEL =	2,
-   BRW_OPCODE_NOT =	4,
-   BRW_OPCODE_AND =	5,
-   BRW_OPCODE_OR =	6,
-   BRW_OPCODE_XOR =	7,
-   BRW_OPCODE_SHR =	8,
-   BRW_OPCODE_SHL =	9,
-   BRW_OPCODE_ASR =	12,
-   BRW_OPCODE_CMP =	16,
-   BRW_OPCODE_CMPN =	17,
-   BRW_OPCODE_CSEL =	18,  /**< Gen8+ */
-   BRW_OPCODE_F32TO16 = 19,  /**< Gen7 only */
-   BRW_OPCODE_F16TO32 = 20,  /**< Gen7 only */
-   BRW_OPCODE_BFREV =	23,  /**< Gen7+ */
-   BRW_OPCODE_BFE =	24,  /**< Gen7+ */
-   BRW_OPCODE_BFI1 =	25,  /**< Gen7+ */
-   BRW_OPCODE_BFI2 =	26,  /**< Gen7+ */
-   BRW_OPCODE_JMPI =	32,
-   BRW_OPCODE_IF =	34,
-   BRW_OPCODE_IFF =	35,  /**< Pre-Gen6 */
-   BRW_OPCODE_ELSE =	36,
-   BRW_OPCODE_ENDIF =	37,
-   BRW_OPCODE_DO =	38,
-   BRW_OPCODE_WHILE =	39,
-   BRW_OPCODE_BREAK =	40,
-   BRW_OPCODE_CONTINUE = 41,
-   BRW_OPCODE_HALT =	42,
-   BRW_OPCODE_MSAVE =	44,  /**< Pre-Gen6 */
-   BRW_OPCODE_MRESTORE = 45, /**< Pre-Gen6 */
-   BRW_OPCODE_PUSH =	46,  /**< Pre-Gen6 */
-   BRW_OPCODE_POP =	47,  /**< Pre-Gen6 */
-   BRW_OPCODE_WAIT =	48,
-   BRW_OPCODE_SEND =	49,
-   BRW_OPCODE_SENDC =	50,
-   BRW_OPCODE_MATH =	56,  /**< Gen6+ */
-   BRW_OPCODE_ADD =	64,
-   BRW_OPCODE_MUL =	65,
-   BRW_OPCODE_AVG =	66,
-   BRW_OPCODE_FRC =	67,
-   BRW_OPCODE_RNDU =	68,
-   BRW_OPCODE_RNDD =	69,
-   BRW_OPCODE_RNDE =	70,
-   BRW_OPCODE_RNDZ =	71,
-   BRW_OPCODE_MAC =	72,
-   BRW_OPCODE_MACH =	73,
-   BRW_OPCODE_LZD =	74,
-   BRW_OPCODE_FBH =	75,  /**< Gen7+ */
-   BRW_OPCODE_FBL =	76,  /**< Gen7+ */
-   BRW_OPCODE_CBIT =	77,  /**< Gen7+ */
-   BRW_OPCODE_ADDC =	78,  /**< Gen7+ */
-   BRW_OPCODE_SUBB =	79,  /**< Gen7+ */
-   BRW_OPCODE_SAD2 =	80,
-   BRW_OPCODE_SADA2 =	81,
-   BRW_OPCODE_DP4 =	84,
-   BRW_OPCODE_DPH =	85,
-   BRW_OPCODE_DP3 =	86,
-   BRW_OPCODE_DP2 =	87,
-   BRW_OPCODE_LINE =	89,
-   BRW_OPCODE_PLN =	90,  /**< G45+ */
-   BRW_OPCODE_MAD =	91,  /**< Gen6+ */
-   BRW_OPCODE_LRP =	92,  /**< Gen6+ */
-   BRW_OPCODE_NOP =	126,
-
-   /* These are compiler backend opcodes that get translated into other
-    * instructions.
-    */
-   FS_OPCODE_FB_WRITE = 128,
-   FS_OPCODE_BLORP_FB_WRITE,
-   FS_OPCODE_REP_FB_WRITE,
-   SHADER_OPCODE_RCP,
-   SHADER_OPCODE_RSQ,
-   SHADER_OPCODE_SQRT,
-   SHADER_OPCODE_EXP2,
-   SHADER_OPCODE_LOG2,
-   SHADER_OPCODE_POW,
-   SHADER_OPCODE_INT_QUOTIENT,
-   SHADER_OPCODE_INT_REMAINDER,
-   SHADER_OPCODE_SIN,
-   SHADER_OPCODE_COS,
-
-   SHADER_OPCODE_TEX,
-   SHADER_OPCODE_TXD,
-   SHADER_OPCODE_TXF,
-   SHADER_OPCODE_TXL,
-   SHADER_OPCODE_TXS,
-   FS_OPCODE_TXB,
-   SHADER_OPCODE_TXF_CMS,
-   SHADER_OPCODE_TXF_UMS,
-   SHADER_OPCODE_TXF_MCS,
-   SHADER_OPCODE_LOD,
-   SHADER_OPCODE_TG4,
-   SHADER_OPCODE_TG4_OFFSET,
-
-   /**
-    * Combines multiple sources of size 1 into a larger virtual GRF.
-    * For example, parameters for a send-from-GRF message.  Or, updating
-    * channels of a size 4 VGRF used to store vec4s such as texturing results.
-    *
-    * This will be lowered into MOVs from each source to consecutive reg_offsets
-    * of the destination VGRF.
-    *
-    * src[0] may be BAD_FILE.  If so, the lowering pass skips emitting the MOV,
-    * but still reserves the first channel of the destination VGRF.  This can be
-    * used to reserve space for, say, a message header set up by the generators.
-    */
-   SHADER_OPCODE_LOAD_PAYLOAD,
-
-   SHADER_OPCODE_SHADER_TIME_ADD,
-
-   SHADER_OPCODE_UNTYPED_ATOMIC,
-   SHADER_OPCODE_UNTYPED_SURFACE_READ,
-
-   SHADER_OPCODE_GEN4_SCRATCH_READ,
-   SHADER_OPCODE_GEN4_SCRATCH_WRITE,
-   SHADER_OPCODE_GEN7_SCRATCH_READ,
-
-   FS_OPCODE_DDX,
-   FS_OPCODE_DDY,
-   FS_OPCODE_PIXEL_X,
-   FS_OPCODE_PIXEL_Y,
-   FS_OPCODE_CINTERP,
-   FS_OPCODE_LINTERP,
-   FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD,
-   FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD_GEN7,
-   FS_OPCODE_VARYING_PULL_CONSTANT_LOAD,
-   FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7,
-   FS_OPCODE_MOV_DISPATCH_TO_FLAGS,
-   FS_OPCODE_DISCARD_JUMP,
-   FS_OPCODE_SET_OMASK,
-   FS_OPCODE_SET_SAMPLE_ID,
-   FS_OPCODE_SET_SIMD4X2_OFFSET,
-   FS_OPCODE_PACK_HALF_2x16_SPLIT,
-   FS_OPCODE_UNPACK_HALF_2x16_SPLIT_X,
-   FS_OPCODE_UNPACK_HALF_2x16_SPLIT_Y,
-   FS_OPCODE_PLACEHOLDER_HALT,
-   FS_OPCODE_INTERPOLATE_AT_CENTROID,
-   FS_OPCODE_INTERPOLATE_AT_SAMPLE,
-   FS_OPCODE_INTERPOLATE_AT_SHARED_OFFSET,
-   FS_OPCODE_INTERPOLATE_AT_PER_SLOT_OFFSET,
-
-   VS_OPCODE_URB_WRITE,
-   VS_OPCODE_PULL_CONSTANT_LOAD,
-   VS_OPCODE_PULL_CONSTANT_LOAD_GEN7,
-   VS_OPCODE_UNPACK_FLAGS_SIMD4X2,
-
-   /**
-    * Write geometry shader output data to the URB.
-    *
-    * Unlike VS_OPCODE_URB_WRITE, this opcode doesn't do an implied move from
-    * R0 to the first MRF.  This allows the geometry shader to override the
-    * "Slot {0,1} Offset" fields in the message header.
-    */
-   GS_OPCODE_URB_WRITE,
-
-   /**
-    * Terminate the geometry shader thread by doing an empty URB write.
-    *
-    * This opcode doesn't do an implied move from R0 to the first MRF.  This
-    * allows the geometry shader to override the "GS Number of Output Vertices
-    * for Slot {0,1}" fields in the message header.
-    */
-   GS_OPCODE_THREAD_END,
-
-   /**
-    * Set the "Slot {0,1} Offset" fields of a URB_WRITE message header.
-    *
-    * - dst is the MRF containing the message header.
-    *
-    * - src0.x indicates which portion of the URB should be written to (e.g. a
-    *   vertex number)
-    *
-    * - src1 is an immediate multiplier which will be applied to src0
-    *   (e.g. the size of a single vertex in the URB).
-    *
-    * Note: the hardware will apply this offset *in addition to* the offset in
-    * vec4_instruction::offset.
-    */
-   GS_OPCODE_SET_WRITE_OFFSET,
-
-   /**
-    * Set the "GS Number of Output Vertices for Slot {0,1}" fields of a
-    * URB_WRITE message header.
-    *
-    * - dst is the MRF containing the message header.
-    *
-    * - src0.x is the vertex count.  The upper 16 bits will be ignored.
-    */
-   GS_OPCODE_SET_VERTEX_COUNT,
-
-   /**
-    * Set DWORD 2 of dst to the immediate value in src.  Used by geometry
-    * shaders to initialize DWORD 2 of R0, which needs to be 0 in order for
-    * scratch reads and writes to operate correctly.
-    */
-   GS_OPCODE_SET_DWORD_2_IMMED,
-
-   /**
-    * Prepare the dst register for storage in the "Channel Mask" fields of a
-    * URB_WRITE message header.
-    *
-    * DWORD 4 of dst is shifted left by 4 bits, so that later,
-    * GS_OPCODE_SET_CHANNEL_MASKS can OR DWORDs 0 and 4 together to form the
-    * final channel mask.
-    *
-    * Note: since GS_OPCODE_SET_CHANNEL_MASKS ORs DWORDs 0 and 4 together to
-    * form the final channel mask, DWORDs 0 and 4 of the dst register must not
-    * have any extraneous bits set prior to execution of this opcode (that is,
-    * they should be in the range 0x0 to 0xf).
-    */
-   GS_OPCODE_PREPARE_CHANNEL_MASKS,
-
-   /**
-    * Set the "Channel Mask" fields of a URB_WRITE message header.
-    *
-    * - dst is the MRF containing the message header.
-    *
-    * - src.x is the channel mask, as prepared by
-    *   GS_OPCODE_PREPARE_CHANNEL_MASKS.  DWORDs 0 and 4 are OR'ed together to
-    *   form the final channel mask.
-    */
-   GS_OPCODE_SET_CHANNEL_MASKS,
-
-   /**
-    * Get the "Instance ID" fields from the payload.
-    *
-    * - dst is the GRF for gl_InvocationID.
-    */
-   GS_OPCODE_GET_INSTANCE_ID,
-};
-
-enum brw_derivative_quality {
-   BRW_DERIVATIVE_BY_HINT = 0,
-   BRW_DERIVATIVE_FINE = 1,
-   BRW_DERIVATIVE_COARSE = 2,
-};
-
-enum brw_urb_write_flags {
-   BRW_URB_WRITE_NO_FLAGS = 0,
-
-   /**
-    * Causes a new URB entry to be allocated, and its address stored in the
-    * destination register (gen < 7).
-    */
-   BRW_URB_WRITE_ALLOCATE = 0x1,
-
-   /**
-    * Causes the current URB entry to be deallocated (gen < 7).
-    */
-   BRW_URB_WRITE_UNUSED = 0x2,
-
-   /**
-    * Causes the thread to terminate.
-    */
-   BRW_URB_WRITE_EOT = 0x4,
-
-   /**
-    * Indicates that the given URB entry is complete, and may be sent further
-    * down the 3D pipeline (gen < 7).
-    */
-   BRW_URB_WRITE_COMPLETE = 0x8,
-
-   /**
-    * Indicates that an additional offset (which may be different for the two
-    * vec4 slots) is stored in the message header (gen == 7).
-    */
-   BRW_URB_WRITE_PER_SLOT_OFFSET = 0x10,
-
-   /**
-    * Indicates that the channel masks in the URB_WRITE message header should
-    * not be overridden to 0xff (gen == 7).
-    */
-   BRW_URB_WRITE_USE_CHANNEL_MASKS = 0x20,
-
-   /**
-    * Indicates that the data should be sent to the URB using the
-    * URB_WRITE_OWORD message rather than URB_WRITE_HWORD (gen == 7).  This
-    * causes offsets to be interpreted as multiples of an OWORD instead of an
-    * HWORD, and only allows one OWORD to be written.
-    */
-   BRW_URB_WRITE_OWORD = 0x40,
-
-   /**
-    * Convenient combination of flags: end the thread while simultaneously
-    * marking the given URB entry as complete.
-    */
-   BRW_URB_WRITE_EOT_COMPLETE = BRW_URB_WRITE_EOT | BRW_URB_WRITE_COMPLETE,
-
-   /**
-    * Convenient combination of flags: mark the given URB entry as complete
-    * and simultaneously allocate a new one.
-    */
-   BRW_URB_WRITE_ALLOCATE_COMPLETE =
-      BRW_URB_WRITE_ALLOCATE | BRW_URB_WRITE_COMPLETE,
-};
-
-#ifdef __cplusplus
-/**
- * Allow brw_urb_write_flags enums to be ORed together.
- */
-inline brw_urb_write_flags
-operator|(brw_urb_write_flags x, brw_urb_write_flags y)
-{
-   return static_cast<brw_urb_write_flags>(static_cast<int>(x) |
-                                           static_cast<int>(y));
-}
-#endif
-
-enum PACKED brw_predicate {
-   BRW_PREDICATE_NONE                =  0,
-   BRW_PREDICATE_NORMAL              =  1,
-   BRW_PREDICATE_ALIGN1_ANYV         =  2,
-   BRW_PREDICATE_ALIGN1_ALLV         =  3,
-   BRW_PREDICATE_ALIGN1_ANY2H        =  4,
-   BRW_PREDICATE_ALIGN1_ALL2H        =  5,
-   BRW_PREDICATE_ALIGN1_ANY4H        =  6,
-   BRW_PREDICATE_ALIGN1_ALL4H        =  7,
-   BRW_PREDICATE_ALIGN1_ANY8H        =  8,
-   BRW_PREDICATE_ALIGN1_ALL8H        =  9,
-   BRW_PREDICATE_ALIGN1_ANY16H       = 10,
-   BRW_PREDICATE_ALIGN1_ALL16H       = 11,
-   BRW_PREDICATE_ALIGN1_ANY32H       = 12,
-   BRW_PREDICATE_ALIGN1_ALL32H       = 13,
-   BRW_PREDICATE_ALIGN16_REPLICATE_X =  2,
-   BRW_PREDICATE_ALIGN16_REPLICATE_Y =  3,
-   BRW_PREDICATE_ALIGN16_REPLICATE_Z =  4,
-   BRW_PREDICATE_ALIGN16_REPLICATE_W =  5,
-   BRW_PREDICATE_ALIGN16_ANY4H       =  6,
-   BRW_PREDICATE_ALIGN16_ALL4H       =  7,
-};
-
-#define BRW_ARCHITECTURE_REGISTER_FILE    0
-#define BRW_GENERAL_REGISTER_FILE         1
-#define BRW_MESSAGE_REGISTER_FILE         2
-#define BRW_IMMEDIATE_VALUE               3
-
-#define BRW_HW_REG_TYPE_UD  0
-#define BRW_HW_REG_TYPE_D   1
-#define BRW_HW_REG_TYPE_UW  2
-#define BRW_HW_REG_TYPE_W   3
-#define BRW_HW_REG_TYPE_F   7
-#define GEN8_HW_REG_TYPE_UQ 8
-#define GEN8_HW_REG_TYPE_Q  9
-
-#define BRW_HW_REG_NON_IMM_TYPE_UB  4
-#define BRW_HW_REG_NON_IMM_TYPE_B   5
-#define GEN7_HW_REG_NON_IMM_TYPE_DF 6
-#define GEN8_HW_REG_NON_IMM_TYPE_HF 10
-
-#define BRW_HW_REG_IMM_TYPE_UV  4 /* Gen6+ packed unsigned immediate vector */
-#define BRW_HW_REG_IMM_TYPE_VF  5 /* packed float immediate vector */
-#define BRW_HW_REG_IMM_TYPE_V   6 /* packed int imm. vector; uword dest only */
-#define GEN8_HW_REG_IMM_TYPE_DF 10
-#define GEN8_HW_REG_IMM_TYPE_HF 11
-
-/* SNB adds 3-src instructions (MAD and LRP) that only operate on floats, so
- * the types were implied. IVB adds BFE and BFI2 that operate on doublewords
- * and unsigned doublewords, so a new field is also available in the da3src
- * struct (part of struct brw_instruction.bits1 in brw_structs.h) to select
- * dst and shared-src types. The values are different from BRW_REGISTER_TYPE_*.
- */
-#define BRW_3SRC_TYPE_F  0
-#define BRW_3SRC_TYPE_D  1
-#define BRW_3SRC_TYPE_UD 2
-#define BRW_3SRC_TYPE_DF 3
-
-#define BRW_ARF_NULL                  0x00
-#define BRW_ARF_ADDRESS               0x10
-#define BRW_ARF_ACCUMULATOR           0x20
-#define BRW_ARF_FLAG                  0x30
-#define BRW_ARF_MASK                  0x40
-#define BRW_ARF_MASK_STACK            0x50
-#define BRW_ARF_MASK_STACK_DEPTH      0x60
-#define BRW_ARF_STATE                 0x70
-#define BRW_ARF_CONTROL               0x80
-#define BRW_ARF_NOTIFICATION_COUNT    0x90
-#define BRW_ARF_IP                    0xA0
-#define BRW_ARF_TDR                   0xB0
-#define BRW_ARF_TIMESTAMP             0xC0
-
-#define BRW_MRF_COMPR4			(1 << 7)
-
-#define BRW_AMASK   0
-#define BRW_IMASK   1
-#define BRW_LMASK   2
-#define BRW_CMASK   3
-
-
-
-#define BRW_THREAD_NORMAL     0
-#define BRW_THREAD_ATOMIC     1
-#define BRW_THREAD_SWITCH     2
-
-#define BRW_VERTICAL_STRIDE_0                 0
-#define BRW_VERTICAL_STRIDE_1                 1
-#define BRW_VERTICAL_STRIDE_2                 2
-#define BRW_VERTICAL_STRIDE_4                 3
-#define BRW_VERTICAL_STRIDE_8                 4
-#define BRW_VERTICAL_STRIDE_16                5
-#define BRW_VERTICAL_STRIDE_32                6
-#define BRW_VERTICAL_STRIDE_64                7
-#define BRW_VERTICAL_STRIDE_128               8
-#define BRW_VERTICAL_STRIDE_256               9
-#define BRW_VERTICAL_STRIDE_ONE_DIMENSIONAL   0xF
-
-#define BRW_WIDTH_1       0
-#define BRW_WIDTH_2       1
-#define BRW_WIDTH_4       2
-#define BRW_WIDTH_8       3
-#define BRW_WIDTH_16      4
-
-#define BRW_STATELESS_BUFFER_BOUNDARY_1K      0
-#define BRW_STATELESS_BUFFER_BOUNDARY_2K      1
-#define BRW_STATELESS_BUFFER_BOUNDARY_4K      2
-#define BRW_STATELESS_BUFFER_BOUNDARY_8K      3
-#define BRW_STATELESS_BUFFER_BOUNDARY_16K     4
-#define BRW_STATELESS_BUFFER_BOUNDARY_32K     5
-#define BRW_STATELESS_BUFFER_BOUNDARY_64K     6
-#define BRW_STATELESS_BUFFER_BOUNDARY_128K    7
-#define BRW_STATELESS_BUFFER_BOUNDARY_256K    8
-#define BRW_STATELESS_BUFFER_BOUNDARY_512K    9
-#define BRW_STATELESS_BUFFER_BOUNDARY_1M      10
-#define BRW_STATELESS_BUFFER_BOUNDARY_2M      11
-
-#define BRW_POLYGON_FACING_FRONT      0
-#define BRW_POLYGON_FACING_BACK       1
-
-/**
- * Message target: Shared Function ID for where to SEND a message.
- *
- * These are enumerated in the ISA reference under "send - Send Message".
- * In particular, see the following tables:
- * - G45 PRM, Volume 4, Table 14-15 "Message Descriptor Definition"
- * - Sandybridge PRM, Volume 4 Part 2, Table 8-16 "Extended Message Descriptor"
- * - Ivybridge PRM, Volume 1 Part 1, section 3.2.7 "GPE Function IDs"
- */
-enum brw_message_target {
-   BRW_SFID_NULL                     = 0,
-   BRW_SFID_MATH                     = 1, /* Only valid on Gen4-5 */
-   BRW_SFID_SAMPLER                  = 2,
-   BRW_SFID_MESSAGE_GATEWAY          = 3,
-   BRW_SFID_DATAPORT_READ            = 4,
-   BRW_SFID_DATAPORT_WRITE           = 5,
-   BRW_SFID_URB                      = 6,
-   BRW_SFID_THREAD_SPAWNER           = 7,
-   BRW_SFID_VME                      = 8,
-
-   GEN6_SFID_DATAPORT_SAMPLER_CACHE  = 4,
-   GEN6_SFID_DATAPORT_RENDER_CACHE   = 5,
-   GEN6_SFID_DATAPORT_CONSTANT_CACHE = 9,
-
-   GEN7_SFID_DATAPORT_DATA_CACHE     = 10,
-   GEN7_SFID_PIXEL_INTERPOLATOR      = 11,
-   HSW_SFID_DATAPORT_DATA_CACHE_1    = 12,
-   HSW_SFID_CRE                      = 13,
-};
-
-#define GEN7_MESSAGE_TARGET_DP_DATA_CACHE     10
-
-#define BRW_SAMPLER_RETURN_FORMAT_FLOAT32     0
-#define BRW_SAMPLER_RETURN_FORMAT_UINT32      2
-#define BRW_SAMPLER_RETURN_FORMAT_SINT32      3
-
-#define BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE              0
-#define BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE             0
-#define BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS        0
-#define BRW_SAMPLER_MESSAGE_SIMD8_KILLPIX             1
-#define BRW_SAMPLER_MESSAGE_SIMD4X2_SAMPLE_LOD        1
-#define BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_LOD         1
-#define BRW_SAMPLER_MESSAGE_SIMD4X2_SAMPLE_GRADIENTS  2
-#define BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_GRADIENTS    2
-#define BRW_SAMPLER_MESSAGE_SIMD4X2_SAMPLE_COMPARE    0
-#define BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_COMPARE     2
-#define BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_BIAS_COMPARE 0
-#define BRW_SAMPLER_MESSAGE_SIMD4X2_SAMPLE_LOD_COMPARE 1
-#define BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_LOD_COMPARE  1
-#define BRW_SAMPLER_MESSAGE_SIMD4X2_RESINFO           2
-#define BRW_SAMPLER_MESSAGE_SIMD16_RESINFO            2
-#define BRW_SAMPLER_MESSAGE_SIMD4X2_LD                3
-#define BRW_SAMPLER_MESSAGE_SIMD8_LD                  3
-#define BRW_SAMPLER_MESSAGE_SIMD16_LD                 3
-
-#define GEN5_SAMPLER_MESSAGE_SAMPLE              0
-#define GEN5_SAMPLER_MESSAGE_SAMPLE_BIAS         1
-#define GEN5_SAMPLER_MESSAGE_SAMPLE_LOD          2
-#define GEN5_SAMPLER_MESSAGE_SAMPLE_COMPARE      3
-#define GEN5_SAMPLER_MESSAGE_SAMPLE_DERIVS       4
-#define GEN5_SAMPLER_MESSAGE_SAMPLE_BIAS_COMPARE 5
-#define GEN5_SAMPLER_MESSAGE_SAMPLE_LOD_COMPARE  6
-#define GEN5_SAMPLER_MESSAGE_SAMPLE_LD           7
-#define GEN7_SAMPLER_MESSAGE_SAMPLE_GATHER4      8
-#define GEN5_SAMPLER_MESSAGE_LOD                 9
-#define GEN5_SAMPLER_MESSAGE_SAMPLE_RESINFO      10
-#define GEN7_SAMPLER_MESSAGE_SAMPLE_GATHER4_C    16
-#define GEN7_SAMPLER_MESSAGE_SAMPLE_GATHER4_PO   17
-#define GEN7_SAMPLER_MESSAGE_SAMPLE_GATHER4_PO_C 18
-#define HSW_SAMPLER_MESSAGE_SAMPLE_DERIV_COMPARE 20
-#define GEN7_SAMPLER_MESSAGE_SAMPLE_LD_MCS       29
-#define GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DMS       30
-#define GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DSS       31
-
-/* for GEN5 only */
-#define BRW_SAMPLER_SIMD_MODE_SIMD4X2                   0
-#define BRW_SAMPLER_SIMD_MODE_SIMD8                     1
-#define BRW_SAMPLER_SIMD_MODE_SIMD16                    2
-#define BRW_SAMPLER_SIMD_MODE_SIMD32_64                 3
-
-#define BRW_DATAPORT_OWORD_BLOCK_1_OWORDLOW   0
-#define BRW_DATAPORT_OWORD_BLOCK_1_OWORDHIGH  1
-#define BRW_DATAPORT_OWORD_BLOCK_2_OWORDS     2
-#define BRW_DATAPORT_OWORD_BLOCK_4_OWORDS     3
-#define BRW_DATAPORT_OWORD_BLOCK_8_OWORDS     4
-
-#define BRW_DATAPORT_OWORD_DUAL_BLOCK_1OWORD     0
-#define BRW_DATAPORT_OWORD_DUAL_BLOCK_4OWORDS    2
-
-#define BRW_DATAPORT_DWORD_SCATTERED_BLOCK_8DWORDS   2
-#define BRW_DATAPORT_DWORD_SCATTERED_BLOCK_16DWORDS  3
-
-/* This one stays the same across generations. */
-#define BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ          0
-/* GEN4 */
-#define BRW_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ     1
-#define BRW_DATAPORT_READ_MESSAGE_MEDIA_BLOCK_READ          2
-#define BRW_DATAPORT_READ_MESSAGE_DWORD_SCATTERED_READ      3
-/* G45, GEN5 */
-#define G45_DATAPORT_READ_MESSAGE_RENDER_UNORM_READ	    1
-#define G45_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ     2
-#define G45_DATAPORT_READ_MESSAGE_AVC_LOOP_FILTER_READ	    3
-#define G45_DATAPORT_READ_MESSAGE_MEDIA_BLOCK_READ          4
-#define G45_DATAPORT_READ_MESSAGE_DWORD_SCATTERED_READ      6
-/* GEN6 */
-#define GEN6_DATAPORT_READ_MESSAGE_RENDER_UNORM_READ	    1
-#define GEN6_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ     2
-#define GEN6_DATAPORT_READ_MESSAGE_MEDIA_BLOCK_READ          4
-#define GEN6_DATAPORT_READ_MESSAGE_OWORD_UNALIGN_BLOCK_READ  5
-#define GEN6_DATAPORT_READ_MESSAGE_DWORD_SCATTERED_READ      6
-
-#define BRW_DATAPORT_READ_TARGET_DATA_CACHE      0
-#define BRW_DATAPORT_READ_TARGET_RENDER_CACHE    1
-#define BRW_DATAPORT_READ_TARGET_SAMPLER_CACHE   2
-
-#define BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE                0
-#define BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE_REPLICATED     1
-#define BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_DUAL_SOURCE_SUBSPAN01         2
-#define BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_DUAL_SOURCE_SUBSPAN23         3
-#define BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_SINGLE_SOURCE_SUBSPAN01       4
-
-#define BRW_DATAPORT_WRITE_MESSAGE_OWORD_BLOCK_WRITE                0
-#define BRW_DATAPORT_WRITE_MESSAGE_OWORD_DUAL_BLOCK_WRITE           1
-#define BRW_DATAPORT_WRITE_MESSAGE_MEDIA_BLOCK_WRITE                2
-#define BRW_DATAPORT_WRITE_MESSAGE_DWORD_SCATTERED_WRITE            3
-#define BRW_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE              4
-#define BRW_DATAPORT_WRITE_MESSAGE_STREAMED_VERTEX_BUFFER_WRITE     5
-#define BRW_DATAPORT_WRITE_MESSAGE_FLUSH_RENDER_CACHE               7
-
-/* GEN6 */
-#define GEN6_DATAPORT_WRITE_MESSAGE_DWORD_ATOMIC_WRITE              7
-#define GEN6_DATAPORT_WRITE_MESSAGE_OWORD_BLOCK_WRITE               8
-#define GEN6_DATAPORT_WRITE_MESSAGE_OWORD_DUAL_BLOCK_WRITE          9
-#define GEN6_DATAPORT_WRITE_MESSAGE_MEDIA_BLOCK_WRITE               10
-#define GEN6_DATAPORT_WRITE_MESSAGE_DWORD_SCATTERED_WRITE           11
-#define GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE             12
-#define GEN6_DATAPORT_WRITE_MESSAGE_STREAMED_VB_WRITE               13
-#define GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_UNORM_WRITE       14
-
-/* GEN7 */
-#define GEN7_DATAPORT_WRITE_MESSAGE_OWORD_DUAL_BLOCK_WRITE          10
-#define GEN7_DATAPORT_DC_OWORD_BLOCK_READ                           0
-#define GEN7_DATAPORT_DC_UNALIGNED_OWORD_BLOCK_READ                 1
-#define GEN7_DATAPORT_DC_OWORD_DUAL_BLOCK_READ                      2
-#define GEN7_DATAPORT_DC_DWORD_SCATTERED_READ                       3
-#define GEN7_DATAPORT_DC_BYTE_SCATTERED_READ                        4
-#define GEN7_DATAPORT_DC_UNTYPED_SURFACE_READ                       5
-#define GEN7_DATAPORT_DC_UNTYPED_ATOMIC_OP                          6
-#define GEN7_DATAPORT_DC_MEMORY_FENCE                               7
-#define GEN7_DATAPORT_DC_OWORD_BLOCK_WRITE                          8
-#define GEN7_DATAPORT_DC_OWORD_DUAL_BLOCK_WRITE                     10
-#define GEN7_DATAPORT_DC_DWORD_SCATTERED_WRITE                      11
-#define GEN7_DATAPORT_DC_BYTE_SCATTERED_WRITE                       12
-#define GEN7_DATAPORT_DC_UNTYPED_SURFACE_WRITE                      13
-
-#define GEN7_DATAPORT_SCRATCH_READ                            ((1 << 18) | \
-                                                               (0 << 17))
-#define GEN7_DATAPORT_SCRATCH_WRITE                           ((1 << 18) | \
-                                                               (1 << 17))
-#define GEN7_DATAPORT_SCRATCH_NUM_REGS_SHIFT                        12
-
-#define GEN7_PIXEL_INTERPOLATOR_LOC_SHARED_OFFSET     0
-#define GEN7_PIXEL_INTERPOLATOR_LOC_SAMPLE            1
-#define GEN7_PIXEL_INTERPOLATOR_LOC_CENTROID          2
-#define GEN7_PIXEL_INTERPOLATOR_LOC_PER_SLOT_OFFSET   3
-
-/* HSW */
-#define HSW_DATAPORT_DC_PORT0_OWORD_BLOCK_READ                      0
-#define HSW_DATAPORT_DC_PORT0_UNALIGNED_OWORD_BLOCK_READ            1
-#define HSW_DATAPORT_DC_PORT0_OWORD_DUAL_BLOCK_READ                 2
-#define HSW_DATAPORT_DC_PORT0_DWORD_SCATTERED_READ                  3
-#define HSW_DATAPORT_DC_PORT0_BYTE_SCATTERED_READ                   4
-#define HSW_DATAPORT_DC_PORT0_MEMORY_FENCE                          7
-#define HSW_DATAPORT_DC_PORT0_OWORD_BLOCK_WRITE                     8
-#define HSW_DATAPORT_DC_PORT0_OWORD_DUAL_BLOCK_WRITE                10
-#define HSW_DATAPORT_DC_PORT0_DWORD_SCATTERED_WRITE                 11
-#define HSW_DATAPORT_DC_PORT0_BYTE_SCATTERED_WRITE                  12
-
-#define HSW_DATAPORT_DC_PORT1_UNTYPED_SURFACE_READ                  1
-#define HSW_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_OP                     2
-#define HSW_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_OP_SIMD4X2             3
-#define HSW_DATAPORT_DC_PORT1_MEDIA_BLOCK_READ                      4
-#define HSW_DATAPORT_DC_PORT1_TYPED_SURFACE_READ                    5
-#define HSW_DATAPORT_DC_PORT1_TYPED_ATOMIC_OP                       6
-#define HSW_DATAPORT_DC_PORT1_TYPED_ATOMIC_OP_SIMD4X2               7
-#define HSW_DATAPORT_DC_PORT1_UNTYPED_SURFACE_WRITE                 9
-#define HSW_DATAPORT_DC_PORT1_MEDIA_BLOCK_WRITE                     10
-#define HSW_DATAPORT_DC_PORT1_ATOMIC_COUNTER_OP                     11
-#define HSW_DATAPORT_DC_PORT1_ATOMIC_COUNTER_OP_SIMD4X2             12
-#define HSW_DATAPORT_DC_PORT1_TYPED_SURFACE_WRITE                   13
-
-/* dataport atomic operations. */
-#define BRW_AOP_AND                   1
-#define BRW_AOP_OR                    2
-#define BRW_AOP_XOR                   3
-#define BRW_AOP_MOV                   4
-#define BRW_AOP_INC                   5
-#define BRW_AOP_DEC                   6
-#define BRW_AOP_ADD                   7
-#define BRW_AOP_SUB                   8
-#define BRW_AOP_REVSUB                9
-#define BRW_AOP_IMAX                  10
-#define BRW_AOP_IMIN                  11
-#define BRW_AOP_UMAX                  12
-#define BRW_AOP_UMIN                  13
-#define BRW_AOP_CMPWR                 14
-#define BRW_AOP_PREDEC                15
-
-#define BRW_MATH_FUNCTION_INV                              1
-#define BRW_MATH_FUNCTION_LOG                              2
-#define BRW_MATH_FUNCTION_EXP                              3
-#define BRW_MATH_FUNCTION_SQRT                             4
-#define BRW_MATH_FUNCTION_RSQ                              5
-#define BRW_MATH_FUNCTION_SIN                              6
-#define BRW_MATH_FUNCTION_COS                              7
-#define BRW_MATH_FUNCTION_SINCOS                           8 /* gen4, gen5 */
-#define BRW_MATH_FUNCTION_FDIV                             9 /* gen6+ */
-#define BRW_MATH_FUNCTION_POW                              10
-#define BRW_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER   11
-#define BRW_MATH_FUNCTION_INT_DIV_QUOTIENT                 12
-#define BRW_MATH_FUNCTION_INT_DIV_REMAINDER                13
-#define GEN8_MATH_FUNCTION_INVM                            14
-#define GEN8_MATH_FUNCTION_RSQRTM                          15
-
-#define BRW_MATH_INTEGER_UNSIGNED     0
-#define BRW_MATH_INTEGER_SIGNED       1
-
-#define BRW_MATH_PRECISION_FULL        0
-#define BRW_MATH_PRECISION_PARTIAL     1
-
-#define BRW_MATH_SATURATE_NONE         0
-#define BRW_MATH_SATURATE_SATURATE     1
-
-#define BRW_MATH_DATA_VECTOR  0
-#define BRW_MATH_DATA_SCALAR  1
-
-#define BRW_URB_OPCODE_WRITE_HWORD  0
-#define BRW_URB_OPCODE_WRITE_OWORD  1
-
-#define BRW_URB_SWIZZLE_NONE          0
-#define BRW_URB_SWIZZLE_INTERLEAVE    1
-#define BRW_URB_SWIZZLE_TRANSPOSE     2
-
-#define BRW_SCRATCH_SPACE_SIZE_1K     0
-#define BRW_SCRATCH_SPACE_SIZE_2K     1
-#define BRW_SCRATCH_SPACE_SIZE_4K     2
-#define BRW_SCRATCH_SPACE_SIZE_8K     3
-#define BRW_SCRATCH_SPACE_SIZE_16K    4
-#define BRW_SCRATCH_SPACE_SIZE_32K    5
-#define BRW_SCRATCH_SPACE_SIZE_64K    6
-#define BRW_SCRATCH_SPACE_SIZE_128K   7
-#define BRW_SCRATCH_SPACE_SIZE_256K   8
-#define BRW_SCRATCH_SPACE_SIZE_512K   9
-#define BRW_SCRATCH_SPACE_SIZE_1M     10
-#define BRW_SCRATCH_SPACE_SIZE_2M     11
-
 
 #define CMD_URB_FENCE                 0x6000
 #define CMD_CS_URB_STATE              0x6001
@@ -1499,6 +489,8 @@ enum brw_message_target {
 /* DW3: PS */
 
 #define _3DSTATE_SAMPLER_STATE_POINTERS_VS	0x782B /* GEN7+ */
+#define _3DSTATE_SAMPLER_STATE_POINTERS_HS	0x782C /* GEN7+ */
+#define _3DSTATE_SAMPLER_STATE_POINTERS_DS	0x782D /* GEN7+ */
 #define _3DSTATE_SAMPLER_STATE_POINTERS_GS	0x782E /* GEN7+ */
 #define _3DSTATE_SAMPLER_STATE_POINTERS_PS	0x782F /* GEN7+ */
 
@@ -1572,12 +564,9 @@ enum brw_message_target {
 # define GEN7_URB_ENTRY_SIZE_SHIFT                      16
 # define GEN7_URB_STARTING_ADDRESS_SHIFT                25
 
-/* "GS URB Entry Allocation Size" is a U9-1 field, so the maximum gs_size
- * is 2^9, or 512.  It's counted in multiples of 64 bytes.
- */
-#define GEN7_MAX_GS_URB_ENTRY_SIZE_BYTES		(512*64)
-
 #define _3DSTATE_PUSH_CONSTANT_ALLOC_VS         0x7912 /* GEN7+ */
+#define _3DSTATE_PUSH_CONSTANT_ALLOC_HS         0x7913 /* GEN7+ */
+#define _3DSTATE_PUSH_CONSTANT_ALLOC_DS         0x7914 /* GEN7+ */
 #define _3DSTATE_PUSH_CONSTANT_ALLOC_GS         0x7915 /* GEN7+ */
 #define _3DSTATE_PUSH_CONSTANT_ALLOC_PS         0x7916 /* GEN7+ */
 # define GEN7_PUSH_CONSTANT_BUFFER_OFFSET_SHIFT         16
@@ -1586,7 +575,7 @@ enum brw_message_target {
 # define GEN6_CC_VIEWPORT_MODIFY			(1 << 12)
 # define GEN6_SF_VIEWPORT_MODIFY			(1 << 11)
 # define GEN6_CLIP_VIEWPORT_MODIFY			(1 << 10)
-# define GEN7_NUM_VIEWPORTS				16
+# define GEN6_NUM_VIEWPORTS				16
 
 #define _3DSTATE_VIEWPORT_STATE_POINTERS_CC	0x7823 /* GEN7+ */
 #define _3DSTATE_VIEWPORT_STATE_POINTERS_SF_CL	0x7821 /* GEN7+ */
@@ -1601,6 +590,7 @@ enum brw_message_target {
 # define GEN6_VS_BINDING_TABLE_ENTRY_COUNT_SHIFT	18
 # define GEN6_VS_FLOATING_POINT_MODE_IEEE_754		(0 << 16)
 # define GEN6_VS_FLOATING_POINT_MODE_ALT		(1 << 16)
+# define HSW_VS_UAV_ACCESS_ENABLE                       (1 << 12)
 /* DW4 */
 # define GEN6_VS_DISPATCH_START_GRF_SHIFT		20
 # define GEN6_VS_URB_READ_LENGTH_SHIFT			11
@@ -1611,6 +601,8 @@ enum brw_message_target {
 # define GEN6_VS_STATISTICS_ENABLE			(1 << 10)
 # define GEN6_VS_CACHE_DISABLE				(1 << 1)
 # define GEN6_VS_ENABLE					(1 << 0)
+/* Gen8+ DW7 */
+# define GEN8_VS_SIMD8_ENABLE                           (1 << 2)
 /* Gen8+ DW8 */
 # define GEN8_VS_URB_ENTRY_OUTPUT_OFFSET_SHIFT          21
 # define GEN8_VS_URB_OUTPUT_LENGTH_SHIFT                16
@@ -1624,6 +616,7 @@ enum brw_message_target {
 # define GEN6_GS_BINDING_TABLE_ENTRY_COUNT_SHIFT	18
 # define GEN6_GS_FLOATING_POINT_MODE_IEEE_754		(0 << 16)
 # define GEN6_GS_FLOATING_POINT_MODE_ALT		(1 << 16)
+# define HSW_GS_UAV_ACCESS_ENABLE       		(1 << 12)
 /* DW4 */
 # define GEN7_GS_OUTPUT_VERTEX_SIZE_SHIFT		23
 # define GEN7_GS_OUTPUT_TOPOLOGY_SHIFT			17
@@ -1639,9 +632,8 @@ enum brw_message_target {
 # define GEN7_GS_CONTROL_DATA_FORMAT_GSCTL_SID		1
 # define GEN7_GS_CONTROL_DATA_HEADER_SIZE_SHIFT		20
 # define GEN7_GS_INSTANCE_CONTROL_SHIFT			15
-# define GEN7_GS_DISPATCH_MODE_SINGLE			(0 << 11)
-# define GEN7_GS_DISPATCH_MODE_DUAL_INSTANCE		(1 << 11)
-# define GEN7_GS_DISPATCH_MODE_DUAL_OBJECT		(2 << 11)
+# define GEN7_GS_DISPATCH_MODE_SHIFT                    11
+# define GEN7_GS_DISPATCH_MODE_MASK                     INTEL_MASK(12, 11)
 # define GEN6_GS_STATISTICS_ENABLE			(1 << 10)
 # define GEN6_GS_SO_STATISTICS_ENABLE			(1 << 9)
 # define GEN6_GS_RENDERING_ENABLE			(1 << 8)
@@ -1658,6 +650,11 @@ enum brw_message_target {
 # define GEN6_GS_SVBI_POSTINCREMENT_VALUE_MASK		INTEL_MASK(25, 16)
 # define GEN6_GS_ENABLE					(1 << 15)
 
+/* Gen8+ DW8 */
+# define GEN8_GS_STATIC_OUTPUT                          (1 << 30)
+# define GEN8_GS_STATIC_VERTEX_COUNT_SHIFT              16
+# define GEN8_GS_STATIC_VERTEX_COUNT_MASK               INTEL_MASK(26, 16)
+
 /* Gen8+ DW9 */
 # define GEN8_GS_URB_ENTRY_OUTPUT_OFFSET_SHIFT          21
 # define GEN8_GS_URB_OUTPUT_LENGTH_SHIFT                16
@@ -1666,19 +663,77 @@ enum brw_message_target {
 # define BRW_GS_EDGE_INDICATOR_0			(1 << 8)
 # define BRW_GS_EDGE_INDICATOR_1			(1 << 9)
 
-/* GS Thread Payload
- */
-/* R0 */
-# define GEN7_GS_PAYLOAD_INSTANCE_ID_SHIFT		27
-
-/* 3DSTATE_GS "Output Vertex Size" has an effective maximum of 62.  It's
- * counted in multiples of 16 bytes.
- */
-#define GEN7_MAX_GS_OUTPUT_VERTEX_SIZE_BYTES		(62*16)
-
 #define _3DSTATE_HS                             0x781B /* GEN7+ */
+/* DW1 */
+# define GEN7_HS_SAMPLER_COUNT_MASK                     INTEL_MASK(29, 27)
+# define GEN7_HS_SAMPLER_COUNT_SHIFT                    27
+# define GEN7_HS_BINDING_TABLE_ENTRY_COUNT_MASK         INTEL_MASK(25, 18)
+# define GEN7_HS_BINDING_TABLE_ENTRY_COUNT_SHIFT        18
+# define GEN7_HS_FLOATING_POINT_MODE_IEEE_754           (0 << 16)
+# define GEN7_HS_FLOATING_POINT_MODE_ALT                (1 << 16)
+# define GEN7_HS_MAX_THREADS_SHIFT                      0
+/* DW2 */
+# define GEN7_HS_ENABLE                                 (1 << 31)
+# define GEN7_HS_STATISTICS_ENABLE                      (1 << 29)
+# define GEN8_HS_MAX_THREADS_SHIFT                      8
+# define GEN7_HS_INSTANCE_COUNT_MASK                    INTEL_MASK(3, 0)
+# define GEN7_HS_INSTANCE_COUNT_SHIFT                   0
+/* DW5 */
+# define GEN7_HS_SINGLE_PROGRAM_FLOW                    (1 << 27)
+# define GEN7_HS_VECTOR_MASK_ENABLE                     (1 << 26)
+# define HSW_HS_ACCESSES_UAV                            (1 << 25)
+# define GEN7_HS_INCLUDE_VERTEX_HANDLES                 (1 << 24)
+# define GEN7_HS_DISPATCH_START_GRF_MASK                INTEL_MASK(23, 19)
+# define GEN7_HS_DISPATCH_START_GRF_SHIFT               19
+# define GEN7_HS_URB_READ_LENGTH_MASK                   INTEL_MASK(16, 11)
+# define GEN7_HS_URB_READ_LENGTH_SHIFT                  11
+# define GEN7_HS_URB_ENTRY_READ_OFFSET_MASK             INTEL_MASK(9, 4)
+# define GEN7_HS_URB_ENTRY_READ_OFFSET_SHIFT            4
+
 #define _3DSTATE_TE                             0x781C /* GEN7+ */
+/* DW1 */
+# define GEN7_TE_PARTITIONING_SHIFT                     12
+# define GEN7_TE_OUTPUT_TOPOLOGY_SHIFT                  8
+# define GEN7_TE_DOMAIN_SHIFT                           4
+//# define GEN7_TE_MODE_SW                                (1 << 1)
+# define GEN7_TE_ENABLE                                 (1 << 0)
+
 #define _3DSTATE_DS                             0x781D /* GEN7+ */
+/* DW2 */
+# define GEN7_DS_SINGLE_DOMAIN_POINT_DISPATCH           (1 << 31)
+# define GEN7_DS_VECTOR_MASK_ENABLE                     (1 << 30)
+# define GEN7_DS_SAMPLER_COUNT_MASK                     INTEL_MASK(29, 27)
+# define GEN7_DS_SAMPLER_COUNT_SHIFT                    27
+# define GEN7_DS_BINDING_TABLE_ENTRY_COUNT_MASK         INTEL_MASK(25, 18)
+# define GEN7_DS_BINDING_TABLE_ENTRY_COUNT_SHIFT        18
+# define GEN7_DS_FLOATING_POINT_MODE_IEEE_754           (0 << 16)
+# define GEN7_DS_FLOATING_POINT_MODE_ALT                (1 << 16)
+# define HSW_DS_ACCESSES_UAV                            (1 << 14)
+/* DW4 */
+# define GEN7_DS_DISPATCH_START_GRF_MASK                INTEL_MASK(24, 20)
+# define GEN7_DS_DISPATCH_START_GRF_SHIFT               20
+# define GEN7_DS_URB_READ_LENGTH_MASK                   INTEL_MASK(17, 11)
+# define GEN7_DS_URB_READ_LENGTH_SHIFT                  11
+# define GEN7_DS_URB_ENTRY_READ_OFFSET_MASK             INTEL_MASK(9, 4)
+# define GEN7_DS_URB_ENTRY_READ_OFFSET_SHIFT            4
+/* DW5 */
+# define GEN7_DS_MAX_THREADS_SHIFT                      25
+# define HSW_DS_MAX_THREADS_SHIFT                       21
+# define GEN7_DS_STATISTICS_ENABLE                      (1 << 10)
+# define GEN7_DS_SIMD8_DISPATCH_ENABLE                  (1 << 3)
+# define GEN7_DS_COMPUTE_W_COORDINATE_ENABLE            (1 << 2)
+# define GEN7_DS_CACHE_DISABLE                          (1 << 1)
+# define GEN7_DS_ENABLE                                 (1 << 0)
+/* Gen8+ DW8 */
+# define GEN8_DS_URB_ENTRY_OUTPUT_OFFSET_MASK           INTEL_MASK(26, 21)
+# define GEN8_DS_URB_ENTRY_OUTPUT_OFFSET_SHIFT          21
+# define GEN8_DS_URB_OUTPUT_LENGTH_MASK                 INTEL_MASK(20, 16)
+# define GEN8_DS_URB_OUTPUT_LENGTH_SHIFT                16
+# define GEN8_DS_USER_CLIP_DISTANCE_MASK                INTEL_MASK(15, 8)
+# define GEN8_DS_USER_CLIP_DISTANCE_SHIFT               8
+# define GEN8_DS_USER_CULL_DISTANCE_MASK                INTEL_MASK(7, 0)
+# define GEN8_DS_USER_CULL_DISTANCE_SHIFT               0
+
 
 #define _3DSTATE_CLIP				0x7812 /* GEN6+ */
 /* DW1 */
@@ -1687,6 +742,7 @@ enum brw_message_target {
 # define GEN7_CLIP_VERTEX_SUBPIXEL_PRECISION_8          (0 << 19)
 # define GEN7_CLIP_VERTEX_SUBPIXEL_PRECISION_4          (1 << 19)
 # define GEN7_CLIP_EARLY_CULL                           (1 << 18)
+# define GEN8_CLIP_FORCE_USER_CLIP_DISTANCE_BITMASK     (1 << 17)
 # define GEN7_CLIP_CULLMODE_BOTH                        (0 << 16)
 # define GEN7_CLIP_CULLMODE_NONE                        (1 << 16)
 # define GEN7_CLIP_CULLMODE_FRONT                       (2 << 16)
@@ -1726,6 +782,7 @@ enum brw_message_target {
 # define GEN6_SF_SWIZZLE_ENABLE				(1 << 21)
 # define GEN6_SF_POINT_SPRITE_UPPERLEFT			(0 << 20)
 # define GEN6_SF_POINT_SPRITE_LOWERLEFT			(1 << 20)
+# define GEN9_SF_LINE_WIDTH_SHIFT			12 /* U11.7 */
 # define GEN6_SF_URB_ENTRY_READ_LENGTH_SHIFT		11
 # define GEN6_SF_URB_ENTRY_READ_OFFSET_SHIFT		4
 /* DW2 */
@@ -1830,10 +887,18 @@ enum brw_message_target {
 /* DW12: attr 0-7 wrap shortest enables */
 /* DW13: attr 8-16 wrap shortest enables */
 
+/* DW4-5: Attribute active components (gen9) */
+#define GEN9_SBE_ACTIVE_COMPONENT_NONE			0
+#define GEN9_SBE_ACTIVE_COMPONENT_XY			1
+#define GEN9_SBE_ACTIVE_COMPONENT_XYZ			2
+#define GEN9_SBE_ACTIVE_COMPONENT_XYZW			3
+
 #define _3DSTATE_SBE_SWIZ                       0x7851 /* GEN8+ */
 
 #define _3DSTATE_RASTER                         0x7850 /* GEN8+ */
 /* DW1 */
+# define GEN9_RASTER_VIEWPORT_Z_FAR_CLIP_TEST_ENABLE    (1 << 26)
+# define GEN9_RASTER_CONSERVATIVE_RASTERIZATION_ENABLE  (1 << 24)
 # define GEN8_RASTER_FRONT_WINDING_CCW                  (1 << 21)
 # define GEN8_RASTER_CULL_BOTH                          (0 << 16)
 # define GEN8_RASTER_CULL_NONE                          (1 << 16)
@@ -1844,6 +909,7 @@ enum brw_message_target {
 # define GEN8_RASTER_LINE_AA_ENABLE                     (1 << 2)
 # define GEN8_RASTER_SCISSOR_ENABLE                     (1 << 1)
 # define GEN8_RASTER_VIEWPORT_Z_CLIP_TEST_ENABLE        (1 << 0)
+# define GEN9_RASTER_VIEWPORT_Z_NEAR_CLIP_TEST_ENABLE   (1 << 0)
 
 /* Gen8 BLEND_STATE */
 /* DW0 */
@@ -1954,6 +1020,26 @@ enum brw_message_target {
 # define GEN8_WM_DS_BF_STENCIL_TEST_MASK_SHIFT          8
 # define GEN8_WM_DS_BF_STENCIL_WRITE_MASK_MASK          INTEL_MASK(7, 0)
 # define GEN8_WM_DS_BF_STENCIL_WRITE_MASK_SHIFT         0
+/* DW3 */
+# define GEN9_WM_DS_STENCIL_REF_MASK                    INTEL_MASK(15, 8)
+# define GEN9_WM_DS_STENCIL_REF_SHIFT                   8
+# define GEN9_WM_DS_BF_STENCIL_REF_MASK                 INTEL_MASK(7, 0)
+# define GEN9_WM_DS_BF_STENCIL_REF_SHIFT                0
+
+enum brw_pixel_shader_coverage_mask_mode {
+   BRW_PSICMS_OFF     = 0, /* PS does not use input coverage masks. */
+   BRW_PSICMS_NORMAL  = 1, /* Input Coverage masks based on outer conservatism
+                            * and factors in SAMPLE_MASK.  If Pixel is
+                            * conservatively covered, all samples are enabled.
+                            */
+
+   BRW_PSICMS_INNER   = 2, /* Input Coverage masks based on inner conservatism
+                            * and factors in SAMPLE_MASK.  If Pixel is
+                            * conservatively *FULLY* covered, all samples are
+                            * enabled.
+                            */
+   BRW_PCICMS_DEPTH   = 3,
+};
 
 #define _3DSTATE_PS_EXTRA                       0x784F /* GEN8+ */
 /* DW1 */
@@ -1961,33 +1047,18 @@ enum brw_message_target {
 # define GEN8_PSX_PIXEL_SHADER_NO_RT_WRITE              (1 << 30)
 # define GEN8_PSX_OMASK_TO_RENDER_TARGET                (1 << 29)
 # define GEN8_PSX_KILL_ENABLE                           (1 << 28)
-# define GEN8_PSX_PSCDEPTH_OFF                          (0 << 26)
-# define GEN8_PSX_PSCDEPTH_ON                           (1 << 26)
-# define GEN8_PSX_PSCDEPTH_ON_GE                        (2 << 26)
-# define GEN8_PSX_PSCDEPTH_ON_LE                        (3 << 26)
+# define GEN8_PSX_COMPUTED_DEPTH_MODE_SHIFT             26
 # define GEN8_PSX_FORCE_COMPUTED_DEPTH                  (1 << 25)
 # define GEN8_PSX_USES_SOURCE_DEPTH                     (1 << 24)
 # define GEN8_PSX_USES_SOURCE_W                         (1 << 23)
 # define GEN8_PSX_ATTRIBUTE_ENABLE                      (1 << 8)
 # define GEN8_PSX_SHADER_DISABLES_ALPHA_TO_COVERAGE     (1 << 7)
 # define GEN8_PSX_SHADER_IS_PER_SAMPLE                  (1 << 6)
-# define GEN8_PSX_SHADER_COMPUTES_STENCIL               (1 << 5)
+# define GEN9_PSX_SHADER_COMPUTES_STENCIL               (1 << 5)
+# define GEN9_PSX_SHADER_PULLS_BARY                     (1 << 3)
 # define GEN8_PSX_SHADER_HAS_UAV                        (1 << 2)
 # define GEN8_PSX_SHADER_USES_INPUT_COVERAGE_MASK       (1 << 1)
-
-enum brw_wm_barycentric_interp_mode {
-   BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC		= 0,
-   BRW_WM_PERSPECTIVE_CENTROID_BARYCENTRIC	= 1,
-   BRW_WM_PERSPECTIVE_SAMPLE_BARYCENTRIC	= 2,
-   BRW_WM_NONPERSPECTIVE_PIXEL_BARYCENTRIC	= 3,
-   BRW_WM_NONPERSPECTIVE_CENTROID_BARYCENTRIC	= 4,
-   BRW_WM_NONPERSPECTIVE_SAMPLE_BARYCENTRIC	= 5,
-   BRW_WM_BARYCENTRIC_INTERP_MODE_COUNT  = 6
-};
-#define BRW_WM_NONPERSPECTIVE_BARYCENTRIC_BITS \
-   ((1 << BRW_WM_NONPERSPECTIVE_PIXEL_BARYCENTRIC) | \
-    (1 << BRW_WM_NONPERSPECTIVE_CENTROID_BARYCENTRIC) | \
-    (1 << BRW_WM_NONPERSPECTIVE_SAMPLE_BARYCENTRIC))
+# define GEN9_PSX_SHADER_NORMAL_COVERAGE_MASK_SHIFT     0
 
 #define _3DSTATE_WM				0x7814 /* GEN6+ */
 /* DW1: kernel pointer */
@@ -2106,11 +1177,11 @@ enum brw_wm_barycentric_interp_mode {
 # define GEN7_WM_DEPTH_RESOLVE				(1 << 28)
 # define GEN7_WM_HIERARCHICAL_DEPTH_RESOLVE		(1 << 27)
 # define GEN7_WM_KILL_ENABLE				(1 << 25)
-# define GEN7_WM_PSCDEPTH_OFF			        (0 << 23)
-# define GEN7_WM_PSCDEPTH_ON			        (1 << 23)
-# define GEN7_WM_PSCDEPTH_ON_GE			        (2 << 23)
-# define GEN7_WM_PSCDEPTH_ON_LE			        (3 << 23)
+# define GEN7_WM_COMPUTED_DEPTH_MODE_SHIFT              23
 # define GEN7_WM_USES_SOURCE_DEPTH			(1 << 20)
+# define GEN7_WM_EARLY_DS_CONTROL_NORMAL                (0 << 21)
+# define GEN7_WM_EARLY_DS_CONTROL_PSEXEC                (1 << 21)
+# define GEN7_WM_EARLY_DS_CONTROL_PREPS                 (2 << 21)
 # define GEN7_WM_USES_SOURCE_W			        (1 << 19)
 # define GEN7_WM_POSITION_ZW_PIXEL			(0 << 17)
 # define GEN7_WM_POSITION_ZW_CENTROID			(2 << 17)
@@ -2135,6 +1206,7 @@ enum brw_wm_barycentric_interp_mode {
 /* DW2 */
 # define GEN7_WM_MSDISPMODE_PERSAMPLE			(0 << 31)
 # define GEN7_WM_MSDISPMODE_PERPIXEL			(1 << 31)
+# define HSW_WM_UAV_ONLY                                (1 << 30)
 
 #define _3DSTATE_PS				0x7820 /* GEN7+ */
 /* DW1: kernel pointer */
@@ -2142,6 +1214,7 @@ enum brw_wm_barycentric_interp_mode {
 # define GEN7_PS_SPF_MODE				(1 << 31)
 # define GEN7_PS_VECTOR_MASK_ENABLE			(1 << 30)
 # define GEN7_PS_SAMPLER_COUNT_SHIFT			27
+# define GEN7_PS_SAMPLER_COUNT_MASK                     INTEL_MASK(29, 27)
 # define GEN7_PS_BINDING_TABLE_ENTRY_COUNT_SHIFT	18
 # define GEN7_PS_FLOATING_POINT_MODE_IEEE_754		(0 << 16)
 # define GEN7_PS_FLOATING_POINT_MODE_ALT		(1 << 16)
@@ -2157,6 +1230,8 @@ enum brw_wm_barycentric_interp_mode {
 # define GEN7_PS_RENDER_TARGET_FAST_CLEAR_ENABLE	(1 << 8)
 # define GEN7_PS_DUAL_SOURCE_BLEND_ENABLE		(1 << 7)
 # define GEN7_PS_RENDER_TARGET_RESOLVE_ENABLE		(1 << 6)
+# define GEN9_PS_RENDER_TARGET_RESOLVE_FULL             (3 << 6)
+# define HSW_PS_UAV_ACCESS_ENABLE			(1 << 5)
 # define GEN7_PS_POSOFFSET_NONE				(0 << 3)
 # define GEN7_PS_POSOFFSET_CENTROID			(2 << 3)
 # define GEN7_PS_POSOFFSET_SAMPLE			(3 << 3)
@@ -2258,6 +1333,8 @@ enum brw_wm_barycentric_interp_mode {
 /* DW2: start address */
 /* DW3: end address. */
 
+#define _3DSTATE_3D_MODE                     0x791e
+
 #define CMD_MI_FLUSH                  0x0200
 
 # define BLT_X_SHIFT					0
@@ -2275,51 +1352,333 @@ enum brw_wm_barycentric_interp_mode {
 
 #define GEN6_MI_REPORT_PERF_COUNT ((0x28 << 23) | (3 - 2))
 
-/* Bitfields for the URB_WRITE message, DW2 of message header: */
-#define URB_WRITE_PRIM_END		0x1
-#define URB_WRITE_PRIM_START		0x2
-#define URB_WRITE_PRIM_TYPE_SHIFT	2
-
+#define GEN8_MI_REPORT_PERF_COUNT ((0x28 << 23) | (4 - 2))
 
 /* Maximum number of entries that can be addressed using a binding table
  * pointer of type SURFTYPE_BUFFER
  */
 #define BRW_MAX_NUM_BUFFER_ENTRIES	(1 << 27)
 
-/* Memory Object Control State:
- * Specifying zero for L3 means "uncached in L3", at least on Haswell
- * and Baytrail, since there are no PTE flags for setting L3 cacheability.
- * On Ivybridge, the PTEs do have a cache-in-L3 bit, so setting MOCS to 0
- * may still respect that.
- */
-#define GEN7_MOCS_L3                    1
+#define MEDIA_VFE_STATE                         0x7000
+/* GEN7 DW2, GEN8+ DW3 */
+# define MEDIA_VFE_STATE_MAX_THREADS_SHIFT      16
+# define MEDIA_VFE_STATE_MAX_THREADS_MASK       INTEL_MASK(31, 16)
+# define MEDIA_VFE_STATE_URB_ENTRIES_SHIFT      8
+# define MEDIA_VFE_STATE_URB_ENTRIES_MASK       INTEL_MASK(15, 8)
+# define MEDIA_VFE_STATE_RESET_GTW_TIMER_SHIFT  7
+# define MEDIA_VFE_STATE_RESET_GTW_TIMER_MASK   INTEL_MASK(7, 7)
+# define MEDIA_VFE_STATE_BYPASS_GTW_SHIFT       6
+# define MEDIA_VFE_STATE_BYPASS_GTW_MASK        INTEL_MASK(6, 6)
+# define GEN7_MEDIA_VFE_STATE_GPGPU_MODE_SHIFT  2
+# define GEN7_MEDIA_VFE_STATE_GPGPU_MODE_MASK   INTEL_MASK(2, 2)
+/* GEN7 DW4, GEN8+ DW5 */
+# define MEDIA_VFE_STATE_URB_ALLOC_SHIFT        16
+# define MEDIA_VFE_STATE_URB_ALLOC_MASK         INTEL_MASK(31, 16)
+# define MEDIA_VFE_STATE_CURBE_ALLOC_SHIFT      0
+# define MEDIA_VFE_STATE_CURBE_ALLOC_MASK       INTEL_MASK(15, 0)
 
-/* Ivybridge only: cache in LLC.
- * Specifying zero here means to use the PTE values set by the kernel;
- * non-zero overrides the PTE values.
- */
-#define IVB_MOCS_LLC                    (1 << 1)
+#define MEDIA_CURBE_LOAD                        0x7001
+#define MEDIA_INTERFACE_DESCRIPTOR_LOAD         0x7002
+/* GEN7 DW4, GEN8+ DW5 */
+# define MEDIA_CURBE_READ_LENGTH_SHIFT          16
+# define MEDIA_CURBE_READ_LENGTH_MASK           INTEL_MASK(31, 16)
+# define MEDIA_CURBE_READ_OFFSET_SHIFT          0
+# define MEDIA_CURBE_READ_OFFSET_MASK           INTEL_MASK(15, 0)
+/* GEN7 DW5, GEN8+ DW6 */
+# define MEDIA_BARRIER_ENABLE_SHIFT             21
+# define MEDIA_BARRIER_ENABLE_MASK              INTEL_MASK(21, 21)
+# define MEDIA_SHARED_LOCAL_MEMORY_SIZE_SHIFT   16
+# define MEDIA_SHARED_LOCAL_MEMORY_SIZE_MASK    INTEL_MASK(20, 16)
+# define MEDIA_GPGPU_THREAD_COUNT_SHIFT         0
+# define MEDIA_GPGPU_THREAD_COUNT_MASK          INTEL_MASK(7, 0)
+# define GEN8_MEDIA_GPGPU_THREAD_COUNT_SHIFT    0
+# define GEN8_MEDIA_GPGPU_THREAD_COUNT_MASK     INTEL_MASK(9, 0)
+/* GEN7 DW6, GEN8+ DW7 */
+# define CROSS_THREAD_READ_LENGTH_SHIFT         0
+# define CROSS_THREAD_READ_LENGTH_MASK          INTEL_MASK(7, 0)
+#define MEDIA_STATE_FLUSH                       0x7004
+#define GPGPU_WALKER                            0x7105
+/* GEN7 DW0 */
+# define GEN7_GPGPU_INDIRECT_PARAMETER_ENABLE   (1 << 10)
+# define GEN7_GPGPU_PREDICATE_ENABLE            (1 << 8)
+/* GEN8+ DW2 */
+# define GPGPU_WALKER_INDIRECT_LENGTH_SHIFT     0
+# define GPGPU_WALKER_INDIRECT_LENGTH_MASK      INTEL_MASK(15, 0)
+/* GEN7 DW2, GEN8+ DW4 */
+# define GPGPU_WALKER_SIMD_SIZE_SHIFT           30
+# define GPGPU_WALKER_SIMD_SIZE_MASK            INTEL_MASK(31, 30)
+# define GPGPU_WALKER_THREAD_DEPTH_MAX_SHIFT    16
+# define GPGPU_WALKER_THREAD_DEPTH_MAX_MASK     INTEL_MASK(21, 16)
+# define GPGPU_WALKER_THREAD_HEIGHT_MAX_SHIFT   8
+# define GPGPU_WALKER_THREAD_HEIGHT_MAX_MASK    INTEL_MASK(31, 8)
+# define GPGPU_WALKER_THREAD_WIDTH_MAX_SHIFT    0
+# define GPGPU_WALKER_THREAD_WIDTH_MAX_MASK     INTEL_MASK(5, 0)
 
-/* Baytrail only: snoop in CPU cache */
-#define BYT_MOCS_SNOOP                  (1 << 1)
+#define CMD_MI				(0x0 << 29)
+#define CMD_2D				(0x2 << 29)
+#define CMD_3D				(0x3 << 29)
 
-/* Haswell only: LLC/eLLC controls (write-back or uncached).
- * Specifying zero here means to use the PTE values set by the kernel,
- * which is useful since it offers additional control (write-through
- * cacheing and age).  Non-zero overrides the PTE values.
- */
-#define HSW_MOCS_UC_LLC_UC_ELLC         (1 << 1)
-#define HSW_MOCS_WB_LLC_WB_ELLC         (2 << 1)
-#define HSW_MOCS_UC_LLC_WB_ELLC         (3 << 1)
+#define MI_NOOP				(CMD_MI | 0)
 
-/* Broadwell: these defines always use all available caches (L3, LLC, eLLC),
- * and let you force write-back (WB) or write-through (WT) caching, or leave
- * it up to the page table entry (PTE) specified by the kernel.
- */
-#define BDW_MOCS_WB  0x78
-#define BDW_MOCS_WT  0x58
-#define BDW_MOCS_PTE 0x18
+#define MI_BATCH_BUFFER_END		(CMD_MI | 0xA << 23)
 
-#include "intel_chipset.h"
+#define MI_FLUSH			(CMD_MI | (4 << 23))
+#define FLUSH_MAP_CACHE				(1 << 0)
+#define INHIBIT_FLUSH_RENDER_CACHE		(1 << 2)
+
+#define MI_STORE_DATA_IMM		(CMD_MI | (0x20 << 23))
+#define MI_LOAD_REGISTER_IMM		(CMD_MI | (0x22 << 23))
+#define MI_LOAD_REGISTER_REG		(CMD_MI | (0x2A << 23))
+
+#define MI_FLUSH_DW			(CMD_MI | (0x26 << 23))
+
+#define MI_STORE_REGISTER_MEM		(CMD_MI | (0x24 << 23))
+# define MI_STORE_REGISTER_MEM_USE_GGTT		(1 << 22)
+# define MI_STORE_REGISTER_MEM_PREDICATE	(1 << 21)
+
+/* Load a value from memory into a register.  Only available on Gen7+. */
+#define GEN7_MI_LOAD_REGISTER_MEM	(CMD_MI | (0x29 << 23))
+# define MI_LOAD_REGISTER_MEM_USE_GGTT		(1 << 22)
+
+/* Manipulate the predicate bit based on some register values. Only on Gen7+ */
+#define GEN7_MI_PREDICATE		(CMD_MI | (0xC << 23))
+# define MI_PREDICATE_LOADOP_KEEP		(0 << 6)
+# define MI_PREDICATE_LOADOP_LOAD		(2 << 6)
+# define MI_PREDICATE_LOADOP_LOADINV		(3 << 6)
+# define MI_PREDICATE_COMBINEOP_SET		(0 << 3)
+# define MI_PREDICATE_COMBINEOP_AND		(1 << 3)
+# define MI_PREDICATE_COMBINEOP_OR		(2 << 3)
+# define MI_PREDICATE_COMBINEOP_XOR		(3 << 3)
+# define MI_PREDICATE_COMPAREOP_TRUE		(0 << 0)
+# define MI_PREDICATE_COMPAREOP_FALSE		(1 << 0)
+# define MI_PREDICATE_COMPAREOP_SRCS_EQUAL	(2 << 0)
+# define MI_PREDICATE_COMPAREOP_DELTAS_EQUAL	(3 << 0)
+
+#define HSW_MI_MATH			(CMD_MI | (0x1a << 23))
+
+#define MI_MATH_ALU2(opcode, operand1, operand2) \
+   ( ((MI_MATH_OPCODE_##opcode) << 20) | ((MI_MATH_OPERAND_##operand1) << 10) | \
+     ((MI_MATH_OPERAND_##operand2) << 0) )
+
+#define MI_MATH_ALU1(opcode, operand1) \
+   ( ((MI_MATH_OPCODE_##opcode) << 20) | ((MI_MATH_OPERAND_##operand1) << 10) )
+
+#define MI_MATH_ALU0(opcode) \
+   ( ((MI_MATH_OPCODE_##opcode) << 20) )
+
+#define MI_MATH_OPCODE_NOOP      0x000
+#define MI_MATH_OPCODE_LOAD      0x080
+#define MI_MATH_OPCODE_LOADINV   0x480
+#define MI_MATH_OPCODE_LOAD0     0x081
+#define MI_MATH_OPCODE_LOAD1     0x481
+#define MI_MATH_OPCODE_ADD       0x100
+#define MI_MATH_OPCODE_SUB       0x101
+#define MI_MATH_OPCODE_AND       0x102
+#define MI_MATH_OPCODE_OR        0x103
+#define MI_MATH_OPCODE_XOR       0x104
+#define MI_MATH_OPCODE_STORE     0x180
+#define MI_MATH_OPCODE_STOREINV  0x580
+
+#define MI_MATH_OPERAND_R0   0x00
+#define MI_MATH_OPERAND_R1   0x01
+#define MI_MATH_OPERAND_R2   0x02
+#define MI_MATH_OPERAND_R3   0x03
+#define MI_MATH_OPERAND_R4   0x04
+#define MI_MATH_OPERAND_SRCA 0x20
+#define MI_MATH_OPERAND_SRCB 0x21
+#define MI_MATH_OPERAND_ACCU 0x31
+#define MI_MATH_OPERAND_ZF   0x32
+#define MI_MATH_OPERAND_CF   0x33
+
+#define XY_SETUP_BLT_CMD		(CMD_2D | (0x01 << 22))
+
+#define XY_COLOR_BLT_CMD		(CMD_2D | (0x50 << 22))
+
+#define XY_SRC_COPY_BLT_CMD             (CMD_2D | (0x53 << 22))
+
+#define XY_FAST_COPY_BLT_CMD             (CMD_2D | (0x42 << 22))
+
+#define XY_TEXT_IMMEDIATE_BLIT_CMD	(CMD_2D | (0x31 << 22))
+# define XY_TEXT_BYTE_PACKED		(1 << 16)
+
+/* BR00 */
+#define XY_BLT_WRITE_ALPHA	(1 << 21)
+#define XY_BLT_WRITE_RGB	(1 << 20)
+#define XY_SRC_TILED		(1 << 15)
+#define XY_DST_TILED		(1 << 11)
+
+/* BR00 */
+#define XY_FAST_SRC_TILED_64K        (3 << 20)
+#define XY_FAST_SRC_TILED_Y          (2 << 20)
+#define XY_FAST_SRC_TILED_X          (1 << 20)
+
+#define XY_FAST_DST_TILED_64K        (3 << 13)
+#define XY_FAST_DST_TILED_Y          (2 << 13)
+#define XY_FAST_DST_TILED_X          (1 << 13)
+
+/* BR13 */
+#define BR13_8			(0x0 << 24)
+#define BR13_565		(0x1 << 24)
+#define BR13_8888		(0x3 << 24)
+#define BR13_16161616		(0x4 << 24)
+#define BR13_32323232		(0x5 << 24)
+
+/* Pipeline Statistics Counter Registers */
+#define IA_VERTICES_COUNT               0x2310
+#define IA_PRIMITIVES_COUNT             0x2318
+#define VS_INVOCATION_COUNT             0x2320
+#define HS_INVOCATION_COUNT             0x2300
+#define DS_INVOCATION_COUNT             0x2308
+#define GS_INVOCATION_COUNT             0x2328
+#define GS_PRIMITIVES_COUNT             0x2330
+#define CL_INVOCATION_COUNT             0x2338
+#define CL_PRIMITIVES_COUNT             0x2340
+#define PS_INVOCATION_COUNT             0x2348
+#define CS_INVOCATION_COUNT             0x2290
+#define PS_DEPTH_COUNT                  0x2350
+
+#define GEN6_SO_PRIM_STORAGE_NEEDED     0x2280
+#define GEN7_SO_PRIM_STORAGE_NEEDED(n)  (0x5240 + (n) * 8)
+
+#define GEN6_SO_NUM_PRIMS_WRITTEN       0x2288
+#define GEN7_SO_NUM_PRIMS_WRITTEN(n)    (0x5200 + (n) * 8)
+
+#define GEN7_SO_WRITE_OFFSET(n)         (0x5280 + (n) * 4)
+
+#define TIMESTAMP                       0x2358
+
+#define BCS_SWCTRL                      0x22200
+# define BCS_SWCTRL_SRC_Y               (1 << 0)
+# define BCS_SWCTRL_DST_Y               (1 << 1)
+
+#define OACONTROL                       0x2360
+# define OACONTROL_COUNTER_SELECT_SHIFT  2
+# define OACONTROL_ENABLE_COUNTERS       (1 << 0)
+
+/* Auto-Draw / Indirect Registers */
+#define GEN7_3DPRIM_END_OFFSET          0x2420
+#define GEN7_3DPRIM_START_VERTEX        0x2430
+#define GEN7_3DPRIM_VERTEX_COUNT        0x2434
+#define GEN7_3DPRIM_INSTANCE_COUNT      0x2438
+#define GEN7_3DPRIM_START_INSTANCE      0x243C
+#define GEN7_3DPRIM_BASE_VERTEX         0x2440
+
+/* Auto-Compute / Indirect Registers */
+#define GEN7_GPGPU_DISPATCHDIMX         0x2500
+#define GEN7_GPGPU_DISPATCHDIMY         0x2504
+#define GEN7_GPGPU_DISPATCHDIMZ         0x2508
+
+#define GEN7_CACHE_MODE_0               0x7000
+#define GEN7_CACHE_MODE_1               0x7004
+# define GEN9_FLOAT_BLEND_OPTIMIZATION_ENABLE (1 << 4)
+# define GEN8_HIZ_NP_PMA_FIX_ENABLE        (1 << 11)
+# define GEN8_HIZ_NP_EARLY_Z_FAILS_DISABLE (1 << 13)
+# define GEN9_PARTIAL_RESOLVE_DISABLE_IN_VC (1 << 1)
+# define GEN8_HIZ_PMA_MASK_BITS \
+   REG_MASK(GEN8_HIZ_NP_PMA_FIX_ENABLE | GEN8_HIZ_NP_EARLY_Z_FAILS_DISABLE)
+
+#define GEN7_GT_MODE                    0x7008
+# define GEN9_SUBSLICE_HASHING_8x8      (0 << 8)
+# define GEN9_SUBSLICE_HASHING_16x4     (1 << 8)
+# define GEN9_SUBSLICE_HASHING_8x4      (2 << 8)
+# define GEN9_SUBSLICE_HASHING_16x16    (3 << 8)
+# define GEN9_SUBSLICE_HASHING_MASK_BITS REG_MASK(3 << 8)
+
+/* Predicate registers */
+#define MI_PREDICATE_SRC0               0x2400
+#define MI_PREDICATE_SRC1               0x2408
+#define MI_PREDICATE_DATA               0x2410
+#define MI_PREDICATE_RESULT             0x2418
+#define MI_PREDICATE_RESULT_1           0x241C
+#define MI_PREDICATE_RESULT_2           0x2214
+
+#define HSW_CS_GPR(n) (0x2600 + (n) * 8)
+
+/* L3 cache control registers. */
+#define GEN7_L3SQCREG1                     0xb010
+/* L3SQ general and high priority credit initialization. */
+# define IVB_L3SQCREG1_SQGHPCI_DEFAULT     0x00730000
+# define VLV_L3SQCREG1_SQGHPCI_DEFAULT     0x00d30000
+# define HSW_L3SQCREG1_SQGHPCI_DEFAULT     0x00610000
+# define GEN7_L3SQCREG1_CONV_DC_UC         (1 << 24)
+# define GEN7_L3SQCREG1_CONV_IS_UC         (1 << 25)
+# define GEN7_L3SQCREG1_CONV_C_UC          (1 << 26)
+# define GEN7_L3SQCREG1_CONV_T_UC          (1 << 27)
+
+#define GEN7_L3CNTLREG2                    0xb020
+# define GEN7_L3CNTLREG2_SLM_ENABLE        (1 << 0)
+# define GEN7_L3CNTLREG2_URB_ALLOC_SHIFT   1
+# define GEN7_L3CNTLREG2_URB_ALLOC_MASK    INTEL_MASK(6, 1)
+# define GEN7_L3CNTLREG2_URB_LOW_BW        (1 << 7)
+# define GEN7_L3CNTLREG2_ALL_ALLOC_SHIFT   8
+# define GEN7_L3CNTLREG2_ALL_ALLOC_MASK    INTEL_MASK(13, 8)
+# define GEN7_L3CNTLREG2_RO_ALLOC_SHIFT    14
+# define GEN7_L3CNTLREG2_RO_ALLOC_MASK     INTEL_MASK(19, 14)
+# define GEN7_L3CNTLREG2_RO_LOW_BW         (1 << 20)
+# define GEN7_L3CNTLREG2_DC_ALLOC_SHIFT    21
+# define GEN7_L3CNTLREG2_DC_ALLOC_MASK     INTEL_MASK(26, 21)
+# define GEN7_L3CNTLREG2_DC_LOW_BW         (1 << 27)
+
+#define GEN7_L3CNTLREG3                    0xb024
+# define GEN7_L3CNTLREG3_IS_ALLOC_SHIFT    1
+# define GEN7_L3CNTLREG3_IS_ALLOC_MASK     INTEL_MASK(6, 1)
+# define GEN7_L3CNTLREG3_IS_LOW_BW         (1 << 7)
+# define GEN7_L3CNTLREG3_C_ALLOC_SHIFT     8
+# define GEN7_L3CNTLREG3_C_ALLOC_MASK      INTEL_MASK(13, 8)
+# define GEN7_L3CNTLREG3_C_LOW_BW          (1 << 14)
+# define GEN7_L3CNTLREG3_T_ALLOC_SHIFT     15
+# define GEN7_L3CNTLREG3_T_ALLOC_MASK      INTEL_MASK(20, 15)
+# define GEN7_L3CNTLREG3_T_LOW_BW          (1 << 21)
+
+#define HSW_SCRATCH1                       0xb038
+#define HSW_SCRATCH1_L3_ATOMIC_DISABLE     (1 << 27)
+
+#define HSW_ROW_CHICKEN3                   0xe49c
+#define HSW_ROW_CHICKEN3_L3_ATOMIC_DISABLE (1 << 6)
+
+#define GEN8_L3CNTLREG                     0x7034
+# define GEN8_L3CNTLREG_SLM_ENABLE         (1 << 0)
+# define GEN8_L3CNTLREG_URB_ALLOC_SHIFT    1
+# define GEN8_L3CNTLREG_URB_ALLOC_MASK     INTEL_MASK(7, 1)
+# define GEN8_L3CNTLREG_RO_ALLOC_SHIFT     11
+# define GEN8_L3CNTLREG_RO_ALLOC_MASK      INTEL_MASK(17, 11)
+# define GEN8_L3CNTLREG_DC_ALLOC_SHIFT     18
+# define GEN8_L3CNTLREG_DC_ALLOC_MASK      INTEL_MASK(24, 18)
+# define GEN8_L3CNTLREG_ALL_ALLOC_SHIFT    25
+# define GEN8_L3CNTLREG_ALL_ALLOC_MASK     INTEL_MASK(31, 25)
+
+#define GEN10_CACHE_MODE_SS            0x0e420
+#define GEN10_FLOAT_BLEND_OPTIMIZATION_ENABLE (1 << 4)
+
+#define INSTPM                             0x20c0
+# define INSTPM_CONSTANT_BUFFER_ADDRESS_OFFSET_DISABLE (1 << 6)
+
+#define CS_DEBUG_MODE2                     0x20d8 /* Gen9+ */
+# define CSDBG2_CONSTANT_BUFFER_ADDRESS_OFFSET_DISABLE (1 << 4)
+
+#define GEN7_RPSTAT1                       0xA01C
+#define  GEN7_RPSTAT1_CURR_GT_FREQ_SHIFT   7
+#define  GEN7_RPSTAT1_CURR_GT_FREQ_MASK    INTEL_MASK(13, 7)
+#define  GEN7_RPSTAT1_PREV_GT_FREQ_SHIFT   0
+#define  GEN7_RPSTAT1_PREV_GT_FREQ_MASK    INTEL_MASK(6, 0)
+
+#define GEN9_RPSTAT0                       0xA01C
+#define  GEN9_RPSTAT0_CURR_GT_FREQ_SHIFT   23
+#define  GEN9_RPSTAT0_CURR_GT_FREQ_MASK    INTEL_MASK(31, 23)
+#define  GEN9_RPSTAT0_PREV_GT_FREQ_SHIFT   0
+#define  GEN9_RPSTAT0_PREV_GT_FREQ_MASK    INTEL_MASK(8, 0)
+
+#define SLICE_COMMON_ECO_CHICKEN1          0x731c /* Gen9+ */
+# define GLK_SCEC_BARRIER_MODE_GPGPU       (0 << 7)
+# define GLK_SCEC_BARRIER_MODE_3D_HULL     (1 << 7)
+# define GLK_SCEC_BARRIER_MODE_MASK        REG_MASK(1 << 7)
+
+#define HALF_SLICE_CHICKEN7                0xE194
+# define TEXEL_OFFSET_FIX_ENABLE           (1 << 1)
+# define TEXEL_OFFSET_FIX_MASK             REG_MASK(1 << 1)
+
+#define GEN11_SAMPLER_MODE                                  0xE18C
+# define HEADERLESS_MESSAGE_FOR_PREEMPTABLE_CONTEXTS        (1 << 5)
+# define HEADERLESS_MESSAGE_FOR_PREEMPTABLE_CONTEXTS_MASK   REG_MASK(1 << 5)
 
 #endif

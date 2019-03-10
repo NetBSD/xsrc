@@ -25,9 +25,15 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
+#include <stdlib.h>
+#include <stdint.h>
+
 #include "entry.h"
 #include "u_current.h"
-#include "u_macros.h"
+#include "util/u_endian.h"
+
+#define _U_STRINGIFY(x) #x
+#define U_STRINGIFY(x) _U_STRINGIFY(x)
 
 /* define macros for use by assembly dispatchers */
 #define ENTRY_CURRENT_TABLE U_STRINGIFY(u_current_table)
@@ -47,11 +53,15 @@
 #   endif
 #elif defined(USE_X86_64_ASM) && defined(__GNUC__) && defined(GLX_USE_TLS)
 #   include "entry_x86-64_tls.h"
+#elif defined(USE_PPC64LE_ASM) && defined(__GNUC__) && defined(PIPE_ARCH_LITTLE_ENDIAN)
+#   ifdef GLX_USE_TLS
+#      include "entry_ppc64le_tls.h"
+#   else
+#      include "entry_ppc64le_tsd.h"
+#   endif
 #else
 
-#include <stdlib.h>
-
-static INLINE const struct mapi_table *
+static inline const struct _glapi_table *
 entry_current_get(void)
 {
 #ifdef MAPI_MODE_BRIDGE

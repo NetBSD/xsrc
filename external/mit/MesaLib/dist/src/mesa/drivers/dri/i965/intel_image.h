@@ -1,5 +1,4 @@
-/**************************************************************************
- *
+/*
  * Copyright 2006 VMware, Inc.
  * All Rights Reserved.
  *
@@ -7,7 +6,7 @@
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
  * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sub license, and/or sell copies of the Software, and to
+ * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
@@ -17,13 +16,12 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
  * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- **************************************************************************/
+ */
 
 #ifndef INTEL_IMAGE_H
 #define INTEL_IMAGE_H
@@ -42,7 +40,7 @@
 #include <xf86drm.h>
 
 #include "main/mtypes.h"
-#include "intel_bufmgr.h"
+#include "brw_bufmgr.h"
 #include <GL/internal/dri_interface.h>
 
 #ifdef __cplusplus
@@ -67,11 +65,13 @@ struct intel_image_format {
 };
 
 struct __DRIimageRec {
-   drm_intel_bo *bo;
+   struct intel_screen *screen;
+   struct brw_bo *bo;
    uint32_t pitch; /**< in bytes */
    GLenum internal_format;
    uint32_t dri_format;
-   GLuint format;
+   GLuint format; /**< mesa_format or mesa_array_format */
+   uint64_t modifier; /**< fb modifier (fourcc) */
    uint32_t offset;
 
    /*
@@ -80,7 +80,7 @@ struct __DRIimageRec {
     */
    uint32_t strides[3];
    uint32_t offsets[3];
-   struct intel_image_format *planar_format;
+   const struct intel_image_format *planar_format;
 
    /* particular miptree level */
    GLuint width;
@@ -89,18 +89,27 @@ struct __DRIimageRec {
    GLuint tile_y;
    bool has_depthstencil;
 
+   /** The image was created with EGL_EXT_image_dma_buf_import. */
+   bool dma_buf_imported;
+
+   /** Offset of the auxiliary compression surface in the bo. */
+   uint32_t aux_offset;
+
+   /** Pitch of the auxiliary compression surface. */
+   uint32_t aux_pitch;
+
+   /** Total size in bytes of the auxiliary compression surface. */
+   uint32_t aux_size;
+
    /**
     * Provided by EGL_EXT_image_dma_buf_import.
-    *
-    * The flag is set in order to restrict the use of the image later on.
-    *
-    * See intel_image_target_texture_2d()
+    * \{
     */
-   bool dma_buf_imported;
    enum __DRIYUVColorSpace yuv_color_space;
    enum __DRISampleRange sample_range;
    enum __DRIChromaSiting horizontal_siting;
    enum __DRIChromaSiting vertical_siting;
+   /* \} */
 
    void *data;
 };

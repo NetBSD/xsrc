@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2012-2013 Rob Clark <robclark@freedesktop.org>
  *
@@ -34,12 +32,14 @@
 
 struct fd2_blend_stateobj {
 	struct pipe_blend_state base;
-	uint32_t rb_blendcontrol;
+	uint32_t rb_blendcontrol_rgb;
+	uint32_t rb_blendcontrol_alpha;
+	uint32_t rb_blendcontrol_no_alpha_rgb;
 	uint32_t rb_colorcontrol;   /* must be OR'd w/ zsa->rb_colorcontrol */
 	uint32_t rb_colormask;
 };
 
-static INLINE struct fd2_blend_stateobj *
+static inline struct fd2_blend_stateobj *
 fd2_blend_stateobj(struct pipe_blend_state *blend)
 {
 	return (struct fd2_blend_stateobj *)blend;

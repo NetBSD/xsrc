@@ -68,7 +68,7 @@ struct util_hash_table_item
 };
 
 
-static INLINE struct util_hash_table_item *
+static inline struct util_hash_table_item *
 util_hash_table_item(struct cso_hash_iter iter)
 {
    return (struct util_hash_table_item *)cso_hash_iter_data(iter);
@@ -82,7 +82,7 @@ util_hash_table_create(unsigned (*hash)(void *key),
    struct util_hash_table *ht;
    
    ht = MALLOC_STRUCT(util_hash_table);
-   if(!ht)
+   if (!ht)
       return NULL;
    
    ht->cso = cso_hash_create();
@@ -98,7 +98,7 @@ util_hash_table_create(unsigned (*hash)(void *key),
 }
 
 
-static INLINE struct cso_hash_iter
+static inline struct cso_hash_iter
 util_hash_table_find_iter(struct util_hash_table *ht,
                           void *key,
                           unsigned key_hash)
@@ -118,7 +118,7 @@ util_hash_table_find_iter(struct util_hash_table *ht,
 }
 
 
-static INLINE struct util_hash_table_item *
+static inline struct util_hash_table_item *
 util_hash_table_find_item(struct util_hash_table *ht,
                           void *key,
                           unsigned key_hash)
@@ -154,14 +154,14 @@ util_hash_table_set(struct util_hash_table *ht,
    key_hash = ht->hash(key);
 
    item = util_hash_table_find_item(ht, key, key_hash);
-   if(item) {
+   if (item) {
       /* TODO: key/value destruction? */
       item->value = value;
       return PIPE_OK;
    }
    
    item = MALLOC_STRUCT(util_hash_table_item);
-   if(!item)
+   if (!item)
       return PIPE_ERROR_OUT_OF_MEMORY;
    
    item->key = key;
@@ -191,7 +191,7 @@ util_hash_table_get(struct util_hash_table *ht,
    key_hash = ht->hash(key);
 
    item = util_hash_table_find_item(ht, key, key_hash);
-   if(!item)
+   if (!item)
       return NULL;
    
    return item->value;
@@ -267,6 +267,23 @@ util_hash_table_foreach(struct util_hash_table *ht,
    }
 
    return PIPE_OK;
+}
+
+
+static enum pipe_error
+util_hash_inc(UNUSED void *k, UNUSED void *v, void *d)
+{
+   ++*(size_t *)d;
+   return PIPE_OK;
+}
+
+
+size_t
+util_hash_table_count(struct util_hash_table *ht)
+{
+	size_t count = 0;
+	util_hash_table_foreach(ht, util_hash_inc, &count);
+	return count;
 }
 
 

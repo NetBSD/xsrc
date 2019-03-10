@@ -50,39 +50,6 @@ glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count)
 
 
 /*
-** GLX_SGIX_swap_group
-*/
-void
-glXJoinSwapGroupSGIX(Display * dpy, GLXDrawable drawable, GLXDrawable member)
-{
-   (void) dpy;
-   (void) drawable;
-   (void) member;
-}
-
-
-/*
-** GLX_SGIX_swap_barrier
-*/
-void
-glXBindSwapBarrierSGIX(Display * dpy, GLXDrawable drawable, int barrier)
-{
-   (void) dpy;
-   (void) drawable;
-   (void) barrier;
-}
-
-Bool
-glXQueryMaxSwapBarriersSGIX(Display * dpy, int screen, int *max)
-{
-   (void) dpy;
-   (void) screen;
-   (void) max;
-   return False;
-}
-
-
-/*
 ** GLX_OML_sync_control
 */
 Bool
@@ -263,19 +230,3 @@ glXGetFBConfigFromVisualSGIX(Display * dpy, XVisualInfo * visinfo)
    return NULL;
 }
 #endif
-
-
-_X_EXPORT
-GLX_ALIAS_VOID(glXDestroyGLXPbufferSGIX,
-               (Display * dpy, GLXDrawable pbuf),
-               (dpy, pbuf), glXDestroyPbuffer)
-
-     _X_EXPORT GLX_ALIAS_VOID(glXSelectEventSGIX,
-                           (Display * dpy, GLXDrawable drawable,
-                            unsigned long mask), (dpy, drawable, mask),
-                           glXSelectEvent)
-
-     _X_EXPORT GLX_ALIAS_VOID(glXGetSelectedEventSGIX,
-                           (Display * dpy, GLXDrawable drawable,
-                            unsigned long *mask), (dpy, drawable, mask),
-                           glXGetSelectedEvent)

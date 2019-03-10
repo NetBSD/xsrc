@@ -21,11 +21,17 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
+EXTRA_DIST = osmesa.def SConscript meson.build
+
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src \
-	-I$(top_srcdir)/src/mapi \
+	-I$(top_srcdir)/src/gallium/include \
+	-I$(top_srcdir)/src/gallium/auxiliary \
 	-I$(top_builddir)/src/mapi \
+	-I$(top_srcdir)/src/mapi \
+	-I$(top_builddir)/src/mapi/glapi \
+	-I$(top_srcdir)/src/mapi/glapi \
 	-I$(top_srcdir)/src/mesa/ \
 	$(DEFINES)
 AM_CFLAGS = $(PTHREAD_CFLAGS) \
@@ -37,7 +43,6 @@ nodist_EXTRA_lib@OSMESA_LIB@_la_SOURCES = dummy.cpp
 lib@OSMESA_LIB@_la_SOURCES = osmesa.c
 
 lib@OSMESA_LIB@_la_LDFLAGS = \
-	-module \
 	-no-undefined \
 	-version-number @OSMESA_VERSION@ \
 	$(GC_SECTIONS) \

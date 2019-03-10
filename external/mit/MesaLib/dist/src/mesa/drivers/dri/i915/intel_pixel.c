@@ -28,6 +28,7 @@
 #include "main/accum.h"
 #include "main/enums.h"
 #include "main/state.h"
+#include "main/stencil.h"
 #include "main/bufferobj.h"
 #include "main/context.h"
 #include "swrast/swrast.h"
@@ -61,7 +62,7 @@ intel_check_blit_fragment_ops(struct gl_context * ctx, bool src_alpha_is_one)
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
-   if (ctx->FragmentProgram._Enabled) {
+   if (_mesa_arb_fragment_program_enabled(ctx)) {
       DBG("fallback due to fragment program\n");
       return false;
    }
@@ -82,10 +83,7 @@ intel_check_blit_fragment_ops(struct gl_context * ctx, bool src_alpha_is_one)
       return false;
    }
 
-   if (!(ctx->Color.ColorMask[0][0] &&
-	 ctx->Color.ColorMask[0][1] &&
-	 ctx->Color.ColorMask[0][2] &&
-	 ctx->Color.ColorMask[0][3])) {
+   if (GET_COLORMASK(ctx->Color.ColorMask, 0) != 0xf) {
       DBG("fallback due to color masking\n");
       return false;
    }
@@ -110,7 +108,7 @@ intel_check_blit_fragment_ops(struct gl_context * ctx, bool src_alpha_is_one)
       return false;
    }
 
-   if (ctx->Stencil._Enabled) {
+   if (_mesa_stencil_is_enabled(ctx)) {
       DBG("fallback due to image stencil\n");
       return false;
    }
@@ -126,7 +124,6 @@ intel_check_blit_fragment_ops(struct gl_context * ctx, bool src_alpha_is_one)
 void
 intelInitPixelFuncs(struct dd_function_table *functions)
 {
-   functions->Accum = _mesa_accum;
    functions->Bitmap = intelBitmap;
    functions->CopyPixels = intelCopyPixels;
    functions->DrawPixels = intelDrawPixels;

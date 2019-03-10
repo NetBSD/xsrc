@@ -41,39 +41,89 @@
 #include "brw_defines.h"
 #include "brw_state.h"
 #include "intel_batchbuffer.h"
-#include "intel_reg.h"
+
+uint64_t
+brw_timebase_scale(struct brw_context *brw, uint64_t gpu_timestamp)
+{
+   const struct gen_device_info *devinfo = &brw->screen->devinfo;
+
+   return (1000000000ull * gpu_timestamp) / devinfo->timestamp_frequency;
+}
+
+/* As best we know currently, the Gen HW timestamps are 36bits across
+ * all platforms, which we need to account for when calculating a
+ * delta to measure elapsed time.
+ *
+ * The timestamps read via glGetTimestamp() / brw_get_timestamp() sometimes
+ * only have 32bits due to a kernel bug and so in that case we make sure to
+ * treat all raw timestamps as 32bits so they overflow consistently and remain
+ * comparable. (Note: the timestamps being passed here are not from the kernel
+ * so we don't need to be taking the upper 32bits in this buggy kernel case we
+ * are just clipping to 32bits here for consistency.)
+ */
+uint64_t
+brw_raw_timestamp_delta(struct brw_context *brw, uint64_t time0, uint64_t time1)
+{
+   if (brw->screen->hw_has_timestamp == 2) {
+      /* Kernel clips timestamps to 32bits in this case, so we also clip
+       * PIPE_CONTROL timestamps for consistency.
+       */
+      return (uint32_t)time1 - (uint32_t)time0;
+   } else {
+      if (time0 > time1) {
+         return (1ULL << 36) + time1 - time0;
+      } else {
+         return time1 - time0;
+      }
+   }
+}
 
 /**
  * Emit PIPE_CONTROLs to write the current GPU timestamp into a buffer.
  */
 void
-brw_write_timestamp(struct brw_context *brw, drm_intel_bo *query_bo, int idx)
+brw_write_timestamp(struct brw_context *brw, struct brw_bo *query_bo, int idx)
 {
-   if (brw->gen == 6) {
+   const struct gen_device_info *devinfo = &brw->screen->devinfo;
+
+   if (devinfo->gen == 6) {
       /* Emit Sandybridge workaround flush: */
       brw_emit_pipe_control_flush(brw,
                                   PIPE_CONTROL_CS_STALL |
                                   PIPE_CONTROL_STALL_AT_SCOREBOARD);
    }
 
-   brw_emit_pipe_control_write(brw, PIPE_CONTROL_WRITE_TIMESTAMP,
-                               query_bo, idx * sizeof(uint64_t), 0, 0);
+   uint32_t flags = PIPE_CONTROL_WRITE_TIMESTAMP;
+
+   if (devinfo->gen == 9 && devinfo->gt == 4)
+      flags |= PIPE_CONTROL_CS_STALL;
+
+   brw_emit_pipe_control_write(brw, flags,
+                               query_bo, idx * sizeof(uint64_t), 0);
 }
 
 /**
  * Emit PIPE_CONTROLs to write the PS_DEPTH_COUNT register into a buffer.
  */
 void
-brw_write_depth_count(struct brw_context *brw, drm_intel_bo *query_bo, int idx)
+brw_write_depth_count(struct brw_context *brw, struct brw_bo *query_bo, int idx)
 {
-   /* Emit Sandybridge workaround flush: */
-   if (brw->gen == 6)
-      intel_emit_post_sync_nonzero_flush(brw);
+   const struct gen_device_info *devinfo = &brw->screen->devinfo;
+   uint32_t flags = PIPE_CONTROL_WRITE_DEPTH_COUNT | PIPE_CONTROL_DEPTH_STALL;
 
-   brw_emit_pipe_control_write(brw,
-                               PIPE_CONTROL_WRITE_DEPTH_COUNT
-                               | PIPE_CONTROL_DEPTH_STALL,
-                               query_bo, idx * sizeof(uint64_t), 0, 0);
+   if (devinfo->gen == 9 && devinfo->gt == 4)
+      flags |= PIPE_CONTROL_CS_STALL;
+
+   if (devinfo->gen >= 10) {
+      /* "Driver must program PIPE_CONTROL with only Depth Stall Enable bit set
+       * prior to programming a PIPE_CONTROL with Write PS Depth Count Post sync
+       * operation."
+       */
+      brw_emit_pipe_control_flush(brw, PIPE_CONTROL_DEPTH_STALL);
+   }
+
+   brw_emit_pipe_control_write(brw, flags,
+                               query_bo, idx * sizeof(uint64_t), 0);
 }
 
 /**
@@ -84,11 +134,12 @@ brw_queryobj_get_results(struct gl_context *ctx,
 			 struct brw_query_object *query)
 {
    struct brw_context *brw = brw_context(ctx);
+   UNUSED const struct gen_device_info *devinfo = &brw->screen->devinfo;
 
    int i;
    uint64_t *results;
 
-   assert(brw->gen < 6);
+   assert(devinfo->gen < 6);
 
    if (query->bo == NULL)
       return;
@@ -97,28 +148,33 @@ brw_queryobj_get_results(struct gl_context *ctx,
     * still contributing to it, flush it now so the results will be present
     * when mapped.
     */
-   if (drm_intel_bo_references(brw->batch.bo, query->bo))
+   if (brw_batch_references(&brw->batch, query->bo))
       intel_batchbuffer_flush(brw);
 
    if (unlikely(brw->perf_debug)) {
-      if (drm_intel_bo_busy(query->bo)) {
+      if (brw_bo_busy(query->bo)) {
          perf_debug("Stalling on the GPU waiting for a query object.\n");
       }
    }
 
-   drm_intel_bo_map(query->bo, false);
-   results = query->bo->virtual;
+   results = brw_bo_map(brw, query->bo, MAP_READ);
    switch (query->Base.Target) {
    case GL_TIME_ELAPSED_EXT:
       /* The query BO contains the starting and ending timestamps.
        * Subtract the two and convert to nanoseconds.
        */
-      query->Base.Result += 1000 * ((results[1] >> 32) - (results[0] >> 32));
+      query->Base.Result = brw_raw_timestamp_delta(brw, results[0], results[1]);
+      query->Base.Result = brw_timebase_scale(brw, query->Base.Result);
       break;
 
    case GL_TIMESTAMP:
       /* The query BO contains a single timestamp value in results[0]. */
-      query->Base.Result = 1000 * (results[0] >> 32);
+      query->Base.Result = brw_timebase_scale(brw, results[0]);
+
+      /* Ensure the scaled timestamp overflows according to
+       * GL_QUERY_COUNTER_BITS
+       */
+      query->Base.Result &= (1ull << ctx->Const.QueryCounterBits.Timestamp) - 1;
       break;
 
    case GL_SAMPLES_PASSED_ARB:
@@ -153,12 +209,12 @@ brw_queryobj_get_results(struct gl_context *ctx,
    default:
       unreachable("Unrecognized query target in brw_queryobj_get_results()");
    }
-   drm_intel_bo_unmap(query->bo);
+   brw_bo_unmap(query->bo);
 
    /* Now that we've processed the data stored in the query's buffer object,
     * we can release it.
     */
-   drm_intel_bo_unreference(query->bo);
+   brw_bo_unreference(query->bo);
    query->bo = NULL;
 }
 
@@ -190,7 +246,7 @@ brw_delete_query(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct brw_query_object *query = (struct brw_query_object *)q;
 
-   drm_intel_bo_unreference(query->bo);
+   brw_bo_unreference(query->bo);
    free(query);
 }
 
@@ -205,8 +261,9 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct brw_context *brw = brw_context(ctx);
    struct brw_query_object *query = (struct brw_query_object *)q;
+   UNUSED const struct gen_device_info *devinfo = &brw->screen->devinfo;
 
-   assert(brw->gen < 6);
+   assert(devinfo->gen < 6);
 
    switch (query->Base.Target) {
    case GL_TIME_ELAPSED_EXT:
@@ -229,8 +286,9 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
        * obtain the time elapsed.  Notably, this includes time elapsed while
        * the system was doing other work, such as running other applications.
        */
-      drm_intel_bo_unreference(query->bo);
-      query->bo = drm_intel_bo_alloc(brw->bufmgr, "timer query", 4096, 4096);
+      brw_bo_unreference(query->bo);
+      query->bo =
+         brw_bo_alloc(brw->bufmgr, "timer query", 4096, BRW_MEMZONE_OTHER);
       brw_write_timestamp(brw, query->bo, 0);
       break;
 
@@ -244,7 +302,7 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
        * Since we're starting a new query, we need to be sure to throw away
        * any previous occlusion query results.
        */
-      drm_intel_bo_unreference(query->bo);
+      brw_bo_unreference(query->bo);
       query->bo = NULL;
       query->last_index = -1;
 
@@ -255,7 +313,7 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
        * so turn them on now.
        */
       brw->stats_wm++;
-      brw->state.dirty.brw |= BRW_NEW_STATS_WM;
+      brw->ctx.NewDriverState |= BRW_NEW_STATS_WM;
       break;
 
    default:
@@ -276,8 +334,9 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct brw_context *brw = brw_context(ctx);
    struct brw_query_object *query = (struct brw_query_object *)q;
+   UNUSED const struct gen_device_info *devinfo = &brw->screen->devinfo;
 
-   assert(brw->gen < 6);
+   assert(devinfo->gen < 6);
 
    switch (query->Base.Target) {
    case GL_TIME_ELAPSED_EXT:
@@ -312,7 +371,7 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
       brw->query.obj = NULL;
 
       brw->stats_wm--;
-      brw->state.dirty.brw |= BRW_NEW_STATS_WM;
+      brw->ctx.NewDriverState |= BRW_NEW_STATS_WM;
       break;
 
    default:
@@ -329,8 +388,10 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
 static void brw_wait_query(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct brw_query_object *query = (struct brw_query_object *)q;
+   UNUSED const struct gen_device_info *devinfo =
+      &brw_context(ctx)->screen->devinfo;
 
-   assert(brw_context(ctx)->gen < 6);
+   assert(devinfo->gen < 6);
 
    brw_queryobj_get_results(ctx, query);
    query->Base.Ready = true;
@@ -346,8 +407,9 @@ static void brw_check_query(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct brw_context *brw = brw_context(ctx);
    struct brw_query_object *query = (struct brw_query_object *)q;
+   UNUSED const struct gen_device_info *devinfo = &brw->screen->devinfo;
 
-   assert(brw->gen < 6);
+   assert(devinfo->gen < 6);
 
    /* From the GL_ARB_occlusion_query spec:
     *
@@ -356,10 +418,10 @@ static void brw_check_query(struct gl_context *ctx, struct gl_query_object *q)
     *      not ready yet on the first time it is queried.  This ensures that
     *      the async query will return true in finite time.
     */
-   if (query->bo && drm_intel_bo_references(brw->batch.bo, query->bo))
+   if (query->bo && brw_batch_references(&brw->batch, query->bo))
       intel_batchbuffer_flush(brw);
 
-   if (query->bo == NULL || !drm_intel_bo_busy(query->bo)) {
+   if (query->bo == NULL || !brw_bo_busy(query->bo)) {
       brw_queryobj_get_results(ctx, query);
       query->Base.Ready = true;
    }
@@ -375,8 +437,9 @@ static void
 ensure_bo_has_space(struct gl_context *ctx, struct brw_query_object *query)
 {
    struct brw_context *brw = brw_context(ctx);
+   UNUSED const struct gen_device_info *devinfo = &brw->screen->devinfo;
 
-   assert(brw->gen < 6);
+   assert(devinfo->gen < 6);
 
    if (!query->bo || query->last_index * 2 + 1 >= 4096 / sizeof(uint64_t)) {
 
@@ -388,7 +451,7 @@ ensure_bo_has_space(struct gl_context *ctx, struct brw_query_object *query)
          brw_queryobj_get_results(ctx, query);
       }
 
-      query->bo = drm_intel_bo_alloc(brw->bufmgr, "query", 4096, 1);
+      query->bo = brw_bo_alloc(brw->bufmgr, "query", 4096, BRW_MEMZONE_OTHER);
       query->last_index = 0;
    }
 }
@@ -419,9 +482,6 @@ brw_emit_query_begin(struct brw_context *brw)
    struct gl_context *ctx = &brw->ctx;
    struct brw_query_object *query = brw->query.obj;
 
-   if (brw->hw_ctx)
-      return;
-
    /* Skip if we're not doing any queries, or we've already recorded the
     * initial query value for this batchbuffer.
     */
@@ -446,9 +506,6 @@ brw_emit_query_end(struct brw_context *brw)
 {
    struct brw_query_object *query = brw->query.obj;
 
-   if (brw->hw_ctx)
-      return;
-
    if (!brw->query.begin_emitted)
       return;
 
@@ -465,7 +522,7 @@ brw_emit_query_end(struct brw_context *brw)
  * current GPU time.  This is unlike GL_TIME_ELAPSED, which measures the
  * time while the query is active.
  */
-static void
+void
 brw_query_counter(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct brw_context *brw = brw_context(ctx);
@@ -473,9 +530,12 @@ brw_query_counter(struct gl_context *ctx, struct gl_query_object *q)
 
    assert(q->Target == GL_TIMESTAMP);
 
-   drm_intel_bo_unreference(query->bo);
-   query->bo = drm_intel_bo_alloc(brw->bufmgr, "timestamp query", 4096, 4096);
+   brw_bo_unreference(query->bo);
+   query->bo =
+      brw_bo_alloc(brw->bufmgr, "timestamp query", 4096, BRW_MEMZONE_OTHER);
    brw_write_timestamp(brw, query->bo, 0);
+
+   query->flushed = false;
 }
 
 /**
@@ -489,14 +549,65 @@ brw_get_timestamp(struct gl_context *ctx)
    struct brw_context *brw = brw_context(ctx);
    uint64_t result = 0;
 
-   drm_intel_reg_read(brw->bufmgr, TIMESTAMP, &result);
+   switch (brw->screen->hw_has_timestamp) {
+   case 3: /* New kernel, always full 36bit accuracy */
+      brw_reg_read(brw->bufmgr, TIMESTAMP | 1, &result);
+      break;
+   case 2: /* 64bit kernel, result is left-shifted by 32bits, losing 4bits */
+      brw_reg_read(brw->bufmgr, TIMESTAMP, &result);
+      result = result >> 32;
+      break;
+   case 1: /* 32bit kernel, result is 36bit wide but may be inaccurate! */
+      brw_reg_read(brw->bufmgr, TIMESTAMP, &result);
+      break;
+   }
 
-   /* See logic in brw_queryobj_get_results() */
-   result = result >> 32;
-   result *= 80;
-   result &= (1ull << 36) - 1;
+   /* Scale to nanosecond units */
+   result = brw_timebase_scale(brw, result);
 
+   /* Ensure the scaled timestamp overflows according to
+    * GL_QUERY_COUNTER_BITS.  Technically this isn't required if
+    * querying GL_TIMESTAMP via glGetInteger but it seems best to keep
+    * QueryObject and GetInteger timestamps consistent.
+    */
+   result &= (1ull << ctx->Const.QueryCounterBits.Timestamp) - 1;
    return result;
+}
+
+/**
+ * Is this type of query written by PIPE_CONTROL?
+ */
+bool
+brw_is_query_pipelined(struct brw_query_object *query)
+{
+   switch (query->Base.Target) {
+   case GL_TIMESTAMP:
+   case GL_TIME_ELAPSED:
+   case GL_ANY_SAMPLES_PASSED:
+   case GL_ANY_SAMPLES_PASSED_CONSERVATIVE:
+   case GL_SAMPLES_PASSED_ARB:
+      return true;
+
+   case GL_PRIMITIVES_GENERATED:
+   case GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN:
+   case GL_TRANSFORM_FEEDBACK_STREAM_OVERFLOW_ARB:
+   case GL_TRANSFORM_FEEDBACK_OVERFLOW_ARB:
+   case GL_VERTICES_SUBMITTED_ARB:
+   case GL_PRIMITIVES_SUBMITTED_ARB:
+   case GL_VERTEX_SHADER_INVOCATIONS_ARB:
+   case GL_GEOMETRY_SHADER_INVOCATIONS:
+   case GL_GEOMETRY_SHADER_PRIMITIVES_EMITTED_ARB:
+   case GL_FRAGMENT_SHADER_INVOCATIONS_ARB:
+   case GL_CLIPPING_INPUT_PRIMITIVES_ARB:
+   case GL_CLIPPING_OUTPUT_PRIMITIVES_ARB:
+   case GL_COMPUTE_SHADER_INVOCATIONS_ARB:
+   case GL_TESS_CONTROL_SHADER_PATCHES_ARB:
+   case GL_TESS_EVALUATION_SHADER_INVOCATIONS_ARB:
+      return false;
+
+   default:
+      unreachable("Unrecognized query target in is_query_pipelined()");
+   }
 }
 
 /* Initialize query object functions used on all generations. */
@@ -504,7 +615,6 @@ void brw_init_common_queryobj_functions(struct dd_function_table *functions)
 {
    functions->NewQueryObject = brw_new_query_object;
    functions->DeleteQuery = brw_delete_query;
-   functions->QueryCounter = brw_query_counter;
    functions->GetTimestamp = brw_get_timestamp;
 }
 
@@ -515,4 +625,5 @@ void gen4_init_queryobj_functions(struct dd_function_table *functions)
    functions->EndQuery = brw_end_query;
    functions->CheckQuery = brw_check_query;
    functions->WaitQuery = brw_wait_query;
+   functions->QueryCounter = brw_query_counter;
 }

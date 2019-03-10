@@ -66,13 +66,13 @@ struct wrapper_sw_displaytarget
    void *ptr;
 };
 
-static INLINE struct wrapper_sw_winsys *
+static inline struct wrapper_sw_winsys *
 wrapper_sw_winsys(struct sw_winsys *ws)
 {
    return (struct wrapper_sw_winsys *)ws;
 }
 
-static INLINE struct wrapper_sw_displaytarget *
+static inline struct wrapper_sw_displaytarget *
 wrapper_sw_displaytarget(struct sw_displaytarget *dt)
 {
    return (struct wrapper_sw_displaytarget *)dt;
@@ -83,6 +83,19 @@ wrapper_sw_displaytarget(struct sw_displaytarget *dt)
  * Functions
  */
 
+
+static boolean
+wsw_is_dt_format_supported(struct sw_winsys *ws,
+                           unsigned tex_usage,
+                           enum pipe_format format)
+{
+   struct wrapper_sw_winsys *wsw = wrapper_sw_winsys(ws);
+
+   return wsw->screen->is_format_supported(wsw->screen, format,
+                                           PIPE_TEXTURE_2D, 0, 0,
+                                           PIPE_BIND_RENDER_TARGET |
+                                           PIPE_BIND_DISPLAY_TARGET);
+}
 
 static boolean
 wsw_dt_get_stride(struct wrapper_sw_displaytarget *wdt, unsigned *stride)
@@ -135,6 +148,7 @@ wsw_dt_create(struct sw_winsys *ws,
               enum pipe_format format,
               unsigned width, unsigned height,
               unsigned alignment,
+              const void *front_private,
               unsigned *stride)
 {
    struct wrapper_sw_winsys *wsw = wrapper_sw_winsys(ws);
@@ -171,7 +185,8 @@ wsw_dt_from_handle(struct sw_winsys *ws,
    struct wrapper_sw_winsys *wsw = wrapper_sw_winsys(ws);
    struct pipe_resource *tex;
 
-   tex = wsw->screen->resource_from_handle(wsw->screen, templ, whandle);
+   tex = wsw->screen->resource_from_handle(wsw->screen, templ, whandle,
+                                           PIPE_HANDLE_USAGE_FRAMEBUFFER_WRITE);
    if (!tex)
       return NULL;
 
@@ -187,7 +202,8 @@ wsw_dt_get_handle(struct sw_winsys *ws,
    struct wrapper_sw_displaytarget *wdt = wrapper_sw_displaytarget(dt);
    struct pipe_resource *tex = wdt->tex;
 
-   return wsw->screen->resource_get_handle(wsw->screen, tex, whandle);
+   return wsw->screen->resource_get_handle(wsw->screen, NULL, tex, whandle,
+                                           PIPE_HANDLE_USAGE_FRAMEBUFFER_WRITE);
 }
 
 static void *
@@ -276,6 +292,7 @@ wrapper_sw_winsys_wrap_pipe_screen(struct pipe_screen *screen)
    if (!wsw)
       goto err;
 
+   wsw->base.is_displaytarget_format_supported = wsw_is_dt_format_supported;
    wsw->base.displaytarget_create = wsw_dt_create;
    wsw->base.displaytarget_from_handle = wsw_dt_from_handle;
    wsw->base.displaytarget_get_handle = wsw_dt_get_handle;
@@ -285,7 +302,7 @@ wrapper_sw_winsys_wrap_pipe_screen(struct pipe_screen *screen)
    wsw->base.destroy = wsw_destroy;
 
    wsw->screen = screen;
-   wsw->pipe = screen->context_create(screen, NULL);
+   wsw->pipe = screen->context_create(screen, NULL, 0);
    if (!wsw->pipe)
       goto err_free;
 

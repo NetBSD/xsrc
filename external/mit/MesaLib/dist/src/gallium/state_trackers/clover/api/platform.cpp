@@ -22,6 +22,8 @@
 
 #include "api/util.hpp"
 #include "core/platform.hpp"
+#include "git_sha1.h"
+#include "util/u_debug.h"
 
 using namespace clover;
 
@@ -56,12 +58,15 @@ clover::GetPlatformInfo(cl_platform_id d_platform, cl_platform_info param,
       buf.as_string() = "FULL_PROFILE";
       break;
 
-   case CL_PLATFORM_VERSION:
-      buf.as_string() = "OpenCL 1.1 MESA " PACKAGE_VERSION;
-      break;
+   case CL_PLATFORM_VERSION: {
+      static const std::string version_string =
+            debug_get_option("CLOVER_PLATFORM_VERSION_OVERRIDE", "1.1");
 
+      buf.as_string() = "OpenCL " + version_string + " Mesa " PACKAGE_VERSION MESA_GIT_SHA1;
+      break;
+   }
    case CL_PLATFORM_NAME:
-      buf.as_string() = "Default";
+      buf.as_string() = "Clover";
       break;
 
    case CL_PLATFORM_VENDOR:
@@ -84,6 +89,16 @@ clover::GetPlatformInfo(cl_platform_id d_platform, cl_platform_info param,
 
 } catch (error &e) {
    return e.get();
+}
+
+void *
+clover::GetExtensionFunctionAddressForPlatform(cl_platform_id d_platform,
+                                               const char *p_name) try {
+   obj(d_platform);
+   return GetExtensionFunctionAddress(p_name);
+
+} catch (error &e) {
+   return NULL;
 }
 
 void *
@@ -111,6 +126,12 @@ clGetPlatformInfo(cl_platform_id d_platform, cl_platform_info param,
 CLOVER_ICD_API void *
 clGetExtensionFunctionAddress(const char *p_name) {
    return GetExtensionFunctionAddress(p_name);
+}
+
+CLOVER_ICD_API void *
+clGetExtensionFunctionAddressForPlatform(cl_platform_id d_platform,
+                                         const char *p_name) {
+   return GetExtensionFunctionAddressForPlatform(d_platform, p_name);
 }
 
 CLOVER_ICD_API cl_int

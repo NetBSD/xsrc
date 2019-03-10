@@ -46,10 +46,10 @@
  * May be used to implement the position_invariant option.
  */
 static void
-_mesa_insert_mvp_dp4_code(struct gl_context *ctx, struct gl_vertex_program *vprog)
+insert_mvp_dp4_code(struct gl_context *ctx, struct gl_program *vprog)
 {
    struct prog_instruction *newInst;
-   const GLuint origLen = vprog->Base.NumInstructions;
+   const GLuint origLen = vprog->arb.NumInstructions;
    const GLuint newLen = origLen + 4;
    GLuint i;
 
@@ -57,7 +57,7 @@ _mesa_insert_mvp_dp4_code(struct gl_context *ctx, struct gl_vertex_program *vpro
     * Setup state references for the modelview/projection matrix.
     * XXX we should check if these state vars are already declared.
     */
-   static const gl_state_index mvpState[4][STATE_LENGTH] = {
+   static const gl_state_index16 mvpState[4][STATE_LENGTH] = {
       { STATE_MVP_MATRIX, 0, 0, 0, 0 },  /* state.matrix.mvp.row[0] */
       { STATE_MVP_MATRIX, 0, 1, 1, 0 },  /* state.matrix.mvp.row[1] */
       { STATE_MVP_MATRIX, 0, 2, 2, 0 },  /* state.matrix.mvp.row[2] */
@@ -66,12 +66,11 @@ _mesa_insert_mvp_dp4_code(struct gl_context *ctx, struct gl_vertex_program *vpro
    GLint mvpRef[4];
 
    for (i = 0; i < 4; i++) {
-      mvpRef[i] = _mesa_add_state_reference(vprog->Base.Parameters,
-                                            mvpState[i]);
+      mvpRef[i] = _mesa_add_state_reference(vprog->Parameters, mvpState[i]);
    }
 
    /* Alloc storage for new instructions */
-   newInst = _mesa_alloc_instructions(newLen);
+   newInst = rzalloc_array(vprog, struct prog_instruction, newLen);
    if (!newInst) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY,
                   "glProgramString(inserting position_invariant code)");
@@ -100,24 +99,24 @@ _mesa_insert_mvp_dp4_code(struct gl_context *ctx, struct gl_vertex_program *vpro
    }
 
    /* Append original instructions after new instructions */
-   _mesa_copy_instructions (newInst + 4, vprog->Base.Instructions, origLen);
+   _mesa_copy_instructions (newInst + 4, vprog->arb.Instructions, origLen);
 
    /* free old instructions */
-   _mesa_free_instructions(vprog->Base.Instructions, origLen);
+   ralloc_free(vprog->arb.Instructions);
 
    /* install new instructions */
-   vprog->Base.Instructions = newInst;
-   vprog->Base.NumInstructions = newLen;
-   vprog->Base.InputsRead |= VERT_BIT_POS;
-   vprog->Base.OutputsWritten |= BITFIELD64_BIT(VARYING_SLOT_POS);
+   vprog->arb.Instructions = newInst;
+   vprog->arb.NumInstructions = newLen;
+   vprog->info.inputs_read |= VERT_BIT_POS;
+   vprog->info.outputs_written |= BITFIELD64_BIT(VARYING_SLOT_POS);
 }
 
 
 static void
-_mesa_insert_mvp_mad_code(struct gl_context *ctx, struct gl_vertex_program *vprog)
+insert_mvp_mad_code(struct gl_context *ctx, struct gl_program *vprog)
 {
    struct prog_instruction *newInst;
-   const GLuint origLen = vprog->Base.NumInstructions;
+   const GLuint origLen = vprog->arb.NumInstructions;
    const GLuint newLen = origLen + 4;
    GLuint hposTemp;
    GLuint i;
@@ -126,7 +125,7 @@ _mesa_insert_mvp_mad_code(struct gl_context *ctx, struct gl_vertex_program *vpro
     * Setup state references for the modelview/projection matrix.
     * XXX we should check if these state vars are already declared.
     */
-   static const gl_state_index mvpState[4][STATE_LENGTH] = {
+   static const gl_state_index16 mvpState[4][STATE_LENGTH] = {
       { STATE_MVP_MATRIX, 0, 0, 0, STATE_MATRIX_TRANSPOSE },
       { STATE_MVP_MATRIX, 0, 1, 1, STATE_MATRIX_TRANSPOSE },
       { STATE_MVP_MATRIX, 0, 2, 2, STATE_MATRIX_TRANSPOSE },
@@ -135,12 +134,11 @@ _mesa_insert_mvp_mad_code(struct gl_context *ctx, struct gl_vertex_program *vpro
    GLint mvpRef[4];
 
    for (i = 0; i < 4; i++) {
-      mvpRef[i] = _mesa_add_state_reference(vprog->Base.Parameters,
-                                            mvpState[i]);
+      mvpRef[i] = _mesa_add_state_reference(vprog->Parameters, mvpState[i]);
    }
 
    /* Alloc storage for new instructions */
-   newInst = _mesa_alloc_instructions(newLen);
+   newInst = rzalloc_array(vprog, struct prog_instruction, newLen);
    if (!newInst) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY,
                   "glProgramString(inserting position_invariant code)");
@@ -148,7 +146,7 @@ _mesa_insert_mvp_mad_code(struct gl_context *ctx, struct gl_vertex_program *vpro
    }
 
    /* TEMP hposTemp; */
-   hposTemp = vprog->Base.NumTemporaries++;
+   hposTemp = vprog->arb.NumTemporaries++;
 
    /*
     * Generated instructions:
@@ -202,26 +200,26 @@ _mesa_insert_mvp_mad_code(struct gl_context *ctx, struct gl_vertex_program *vpro
 
 
    /* Append original instructions after new instructions */
-   _mesa_copy_instructions (newInst + 4, vprog->Base.Instructions, origLen);
+   _mesa_copy_instructions (newInst + 4, vprog->arb.Instructions, origLen);
 
    /* free old instructions */
-   _mesa_free_instructions(vprog->Base.Instructions, origLen);
+   ralloc_free(vprog->arb.Instructions);
 
    /* install new instructions */
-   vprog->Base.Instructions = newInst;
-   vprog->Base.NumInstructions = newLen;
-   vprog->Base.InputsRead |= VERT_BIT_POS;
-   vprog->Base.OutputsWritten |= BITFIELD64_BIT(VARYING_SLOT_POS);
+   vprog->arb.Instructions = newInst;
+   vprog->arb.NumInstructions = newLen;
+   vprog->info.inputs_read |= VERT_BIT_POS;
+   vprog->info.outputs_written |= BITFIELD64_BIT(VARYING_SLOT_POS);
 }
 
 
 void
-_mesa_insert_mvp_code(struct gl_context *ctx, struct gl_vertex_program *vprog)
+_mesa_insert_mvp_code(struct gl_context *ctx, struct gl_program *vprog)
 {
    if (ctx->Const.ShaderCompilerOptions[MESA_SHADER_VERTEX].OptimizeForAOS)
-      _mesa_insert_mvp_dp4_code( ctx, vprog );
+      insert_mvp_dp4_code( ctx, vprog );
    else
-      _mesa_insert_mvp_mad_code( ctx, vprog );
+      insert_mvp_mad_code( ctx, vprog );
 }
       
 
@@ -240,22 +238,21 @@ _mesa_insert_mvp_code(struct gl_context *ctx, struct gl_vertex_program *vprog)
  * \param saturate True if writes to color outputs should be clamped to [0, 1]
  *
  * \note
- * This function sets \c VARYING_BIT_FOGC in \c fprog->Base.InputsRead.
+ * This function sets \c VARYING_BIT_FOGC in \c fprog->info.inputs_read.
  *
  * \todo With a little work, this function could be adapted to add fog code
  * to vertex programs too.
  */
 void
-_mesa_append_fog_code(struct gl_context *ctx,
-		      struct gl_fragment_program *fprog, GLenum fog_mode,
-		      GLboolean saturate)
+_mesa_append_fog_code(struct gl_context *ctx, struct gl_program *fprog,
+                      GLenum fog_mode, GLboolean saturate)
 {
-   static const gl_state_index fogPStateOpt[STATE_LENGTH]
+   static const gl_state_index16 fogPStateOpt[STATE_LENGTH]
       = { STATE_INTERNAL, STATE_FOG_PARAMS_OPTIMIZED, 0, 0, 0 };
-   static const gl_state_index fogColorState[STATE_LENGTH]
+   static const gl_state_index16 fogColorState[STATE_LENGTH]
       = { STATE_FOG_COLOR, 0, 0, 0, 0};
    struct prog_instruction *newInst, *inst;
-   const GLuint origLen = fprog->Base.NumInstructions;
+   const GLuint origLen = fprog->arb.NumInstructions;
    const GLuint newLen = origLen + 5;
    GLuint i;
    GLint fogPRefOpt, fogColorRef; /* state references */
@@ -267,13 +264,13 @@ _mesa_append_fog_code(struct gl_context *ctx,
       return;
    }
 
-   if (!(fprog->Base.OutputsWritten & (1 << FRAG_RESULT_COLOR))) {
+   if (!(fprog->info.outputs_written & (1 << FRAG_RESULT_COLOR))) {
       /* program doesn't output color, so nothing to do */
       return;
    }
 
    /* Alloc storage for new instructions */
-   newInst = _mesa_alloc_instructions(newLen);
+   newInst = rzalloc_array(fprog, struct prog_instruction, newLen);
    if (!newInst) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY,
                   "glProgramString(inserting fog_option code)");
@@ -281,23 +278,23 @@ _mesa_append_fog_code(struct gl_context *ctx,
    }
 
    /* Copy orig instructions into new instruction buffer */
-   _mesa_copy_instructions(newInst, fprog->Base.Instructions, origLen);
+   _mesa_copy_instructions(newInst, fprog->arb.Instructions, origLen);
 
    /* PARAM fogParamsRefOpt = internal optimized fog params; */
    fogPRefOpt
-      = _mesa_add_state_reference(fprog->Base.Parameters, fogPStateOpt);
+      = _mesa_add_state_reference(fprog->Parameters, fogPStateOpt);
    /* PARAM fogColorRef = state.fog.color; */
    fogColorRef
-      = _mesa_add_state_reference(fprog->Base.Parameters, fogColorState);
+      = _mesa_add_state_reference(fprog->Parameters, fogColorState);
 
    /* TEMP colorTemp; */
-   colorTemp = fprog->Base.NumTemporaries++;
+   colorTemp = fprog->arb.NumTemporaries++;
    /* TEMP fogFactorTemp; */
-   fogFactorTemp = fprog->Base.NumTemporaries++;
+   fogFactorTemp = fprog->arb.NumTemporaries++;
 
    /* Scan program to find where result.color is written */
    inst = newInst;
-   for (i = 0; i < fprog->Base.NumInstructions; i++) {
+   for (i = 0; i < fprog->arb.NumInstructions; i++) {
       if (inst->Opcode == OPCODE_END)
          break;
       if (inst->DstReg.File == PROGRAM_OUTPUT &&
@@ -305,7 +302,7 @@ _mesa_append_fog_code(struct gl_context *ctx,
          /* change the instruction to write to colorTemp w/ clamping */
          inst->DstReg.File = PROGRAM_TEMPORARY;
          inst->DstReg.Index = colorTemp;
-         inst->SaturateMode = saturate;
+         inst->Saturate = saturate;
          /* don't break (may be several writes to result.color) */
       }
       inst++;
@@ -331,11 +328,11 @@ _mesa_append_fog_code(struct gl_context *ctx,
       inst->SrcReg[2].File = PROGRAM_STATE_VAR;
       inst->SrcReg[2].Index = fogPRefOpt;
       inst->SrcReg[2].Swizzle = SWIZZLE_YYYY;
-      inst->SaturateMode = SATURATE_ZERO_ONE;
+      inst->Saturate = GL_TRUE;
       inst++;
    }
    else {
-      ASSERT(fog_mode == GL_EXP || fog_mode == GL_EXP2);
+      assert(fog_mode == GL_EXP || fog_mode == GL_EXP2);
       /* fogPRefOpt.z = d/ln(2), fogPRefOpt.w = d/sqrt(ln(2) */
       /* EXP: MUL fogFactorTemp.x, fogPRefOpt.z, fragment.fogcoord.x; */
       /* EXP2: MUL fogFactorTemp.x, fogPRefOpt.w, fragment.fogcoord.x; */
@@ -374,7 +371,7 @@ _mesa_append_fog_code(struct gl_context *ctx,
       inst->SrcReg[0].Index = fogFactorTemp;
       inst->SrcReg[0].Negate = NEGATE_XYZW;
       inst->SrcReg[0].Swizzle = SWIZZLE_XXXX;
-      inst->SaturateMode = SATURATE_ZERO_ONE;
+      inst->Saturate = GL_TRUE;
       inst++;
    }
    /* LRP result.color.xyz, fogFactorTemp.xxxx, colorTemp, fogColorRef; */
@@ -406,13 +403,13 @@ _mesa_append_fog_code(struct gl_context *ctx,
    inst++;
 
    /* free old instructions */
-   _mesa_free_instructions(fprog->Base.Instructions, origLen);
+   ralloc_free(fprog->arb.Instructions);
 
    /* install new instructions */
-   fprog->Base.Instructions = newInst;
-   fprog->Base.NumInstructions = inst - newInst;
-   fprog->Base.InputsRead |= VARYING_BIT_FOGC;
-   assert(fprog->Base.OutputsWritten & (1 << FRAG_RESULT_COLOR));
+   fprog->arb.Instructions = newInst;
+   fprog->arb.NumInstructions = inst - newInst;
+   fprog->info.inputs_read |= VARYING_BIT_FOGC;
+   assert(fprog->info.outputs_written & (1 << FRAG_RESULT_COLOR));
 }
 
 
@@ -426,7 +423,6 @@ is_texture_instruction(const struct prog_instruction *inst)
    case OPCODE_TXD:
    case OPCODE_TXL:
    case OPCODE_TXP:
-   case OPCODE_TXP_NV:
       return GL_TRUE;
    default:
       return GL_FALSE;
@@ -449,8 +445,8 @@ _mesa_count_texture_indirections(struct gl_program *prog)
    GLbitfield aluTemps = 0x0;
    GLuint i;
 
-   for (i = 0; i < prog->NumInstructions; i++) {
-      const struct prog_instruction *inst = prog->Instructions + i;
+   for (i = 0; i < prog->arb.NumInstructions; i++) {
+      const struct prog_instruction *inst = prog->arb.Instructions + i;
 
       if (is_texture_instruction(inst)) {
          if (((inst->SrcReg[0].File == PROGRAM_TEMPORARY) && 
@@ -478,7 +474,7 @@ _mesa_count_texture_indirections(struct gl_program *prog)
          tempsOutput |= (1 << inst->DstReg.Index);
    }
 
-   prog->NumTexIndirections = indirections;
+   prog->arb.NumTexIndirections = indirections;
 }
 
 
@@ -490,9 +486,10 @@ void
 _mesa_count_texture_instructions(struct gl_program *prog)
 {
    GLuint i;
-   prog->NumTexInstructions = 0;
-   for (i = 0; i < prog->NumInstructions; i++) {
-      prog->NumTexInstructions += is_texture_instruction(prog->Instructions + i);
+   prog->arb.NumTexInstructions = 0;
+   for (i = 0; i < prog->arb.NumInstructions; i++) {
+      prog->arb.NumTexInstructions +=
+         is_texture_instruction(prog->arb.Instructions + i);
    }
 }
 
@@ -521,8 +518,8 @@ _mesa_remove_output_reads(struct gl_program *prog, gl_register_file type)
       outputMap[i] = -1;
 
    /* look for instructions which read from varying vars */
-   for (i = 0; i < prog->NumInstructions; i++) {
-      struct prog_instruction *inst = prog->Instructions + i;
+   for (i = 0; i < prog->arb.NumInstructions; i++) {
+      struct prog_instruction *inst = prog->arb.Instructions + i;
       const GLuint numSrc = _mesa_num_inst_src_regs(inst->Opcode);
       GLuint j;
       for (j = 0; j < numSrc; j++) {
@@ -546,8 +543,8 @@ _mesa_remove_output_reads(struct gl_program *prog, gl_register_file type)
       return; /* nothing to be done */
 
    /* look for instructions which write to the varying vars identified above */
-   for (i = 0; i < prog->NumInstructions; i++) {
-      struct prog_instruction *inst = prog->Instructions + i;
+   for (i = 0; i < prog->arb.NumInstructions; i++) {
+      struct prog_instruction *inst = prog->arb.Instructions + i;
       if (inst->DstReg.File == type &&
           outputMap[inst->DstReg.Index] >= 0) {
          /* change inst to write to the temp reg, instead of the varying */
@@ -563,8 +560,8 @@ _mesa_remove_output_reads(struct gl_program *prog, gl_register_file type)
 
       /* Look for END instruction and insert the new varying writes */
       endPos = -1;
-      for (i = 0; i < prog->NumInstructions; i++) {
-         struct prog_instruction *inst = prog->Instructions + i;
+      for (i = 0; i < prog->arb.NumInstructions; i++) {
+         struct prog_instruction *inst = prog->arb.Instructions + i;
          if (inst->Opcode == OPCODE_END) {
             endPos = i;
             _mesa_insert_instructions(prog, i, numVaryingReads);
@@ -575,7 +572,7 @@ _mesa_remove_output_reads(struct gl_program *prog, gl_register_file type)
       assert(endPos >= 0);
 
       /* insert new MOV instructions here */
-      inst = prog->Instructions + endPos;
+      inst = prog->arb.Instructions + endPos;
       for (var = 0; var < VARYING_SLOT_MAX; var++) {
          if (outputMap[var] >= 0) {
             /* MOV VAR[var], TEMP[tmp]; */
@@ -590,93 +587,29 @@ _mesa_remove_output_reads(struct gl_program *prog, gl_register_file type)
    }
 }
 
-
-/**
- * Make the given fragment program into a "no-op" shader.
- * Actually, just copy the incoming fragment color (or texcoord)
- * to the output color.
- * This is for debug/test purposes.
- */
 void
-_mesa_nop_fragment_program(struct gl_context *ctx, struct gl_fragment_program *prog)
+_mesa_program_fragment_position_to_sysval(struct gl_program *prog)
 {
-   struct prog_instruction *inst;
-   GLuint inputAttr;
+   GLuint i;
 
-   inst = _mesa_alloc_instructions(2);
-   if (!inst) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "_mesa_nop_fragment_program");
+   if (prog->Target != GL_FRAGMENT_PROGRAM_ARB ||
+       !(prog->info.inputs_read & BITFIELD64_BIT(VARYING_SLOT_POS)))
       return;
+
+   prog->info.inputs_read &= ~BITFIELD64_BIT(VARYING_SLOT_POS);
+   prog->info.system_values_read |= 1 << SYSTEM_VALUE_FRAG_COORD;
+
+   for (i = 0; i < prog->arb.NumInstructions; i++) {
+      struct prog_instruction *inst = prog->arb.Instructions + i;
+      const GLuint numSrc = _mesa_num_inst_src_regs(inst->Opcode);
+      GLuint j;
+
+      for (j = 0; j < numSrc; j++) {
+         if (inst->SrcReg[j].File == PROGRAM_INPUT &&
+             inst->SrcReg[j].Index == VARYING_SLOT_POS) {
+            inst->SrcReg[j].File = PROGRAM_SYSTEM_VALUE;
+            inst->SrcReg[j].Index = SYSTEM_VALUE_FRAG_COORD;
+         }
+      }
    }
-
-   _mesa_init_instructions(inst, 2);
-
-   inst[0].Opcode = OPCODE_MOV;
-   inst[0].DstReg.File = PROGRAM_OUTPUT;
-   inst[0].DstReg.Index = FRAG_RESULT_COLOR;
-   inst[0].SrcReg[0].File = PROGRAM_INPUT;
-   if (prog->Base.InputsRead & VARYING_BIT_COL0)
-      inputAttr = VARYING_SLOT_COL0;
-   else
-      inputAttr = VARYING_SLOT_TEX0;
-   inst[0].SrcReg[0].Index = inputAttr;
-
-   inst[1].Opcode = OPCODE_END;
-
-   _mesa_free_instructions(prog->Base.Instructions,
-                           prog->Base.NumInstructions);
-
-   prog->Base.Instructions = inst;
-   prog->Base.NumInstructions = 2;
-   prog->Base.InputsRead = BITFIELD64_BIT(inputAttr);
-   prog->Base.OutputsWritten = BITFIELD64_BIT(FRAG_RESULT_COLOR);
-}
-
-
-/**
- * \sa _mesa_nop_fragment_program
- * Replace the given vertex program with a "no-op" program that just
- * transforms vertex position and emits color.
- */
-void
-_mesa_nop_vertex_program(struct gl_context *ctx, struct gl_vertex_program *prog)
-{
-   struct prog_instruction *inst;
-   GLuint inputAttr;
-
-   /*
-    * Start with a simple vertex program that emits color.
-    */
-   inst = _mesa_alloc_instructions(2);
-   if (!inst) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "_mesa_nop_vertex_program");
-      return;
-   }
-
-   _mesa_init_instructions(inst, 2);
-
-   inst[0].Opcode = OPCODE_MOV;
-   inst[0].DstReg.File = PROGRAM_OUTPUT;
-   inst[0].DstReg.Index = VARYING_SLOT_COL0;
-   inst[0].SrcReg[0].File = PROGRAM_INPUT;
-   if (prog->Base.InputsRead & VERT_BIT_COLOR0)
-      inputAttr = VERT_ATTRIB_COLOR0;
-   else
-      inputAttr = VERT_ATTRIB_TEX0;
-   inst[0].SrcReg[0].Index = inputAttr;
-
-   inst[1].Opcode = OPCODE_END;
-
-   _mesa_free_instructions(prog->Base.Instructions,
-                           prog->Base.NumInstructions);
-
-   prog->Base.Instructions = inst;
-   prog->Base.NumInstructions = 2;
-   prog->Base.InputsRead = BITFIELD64_BIT(inputAttr);
-   prog->Base.OutputsWritten = BITFIELD64_BIT(VARYING_SLOT_COL0);
-
-   /*
-    * Now insert code to do standard modelview/projection transformation.
-    */
-   _mesa_insert_mvp_code(ctx, prog);
 }

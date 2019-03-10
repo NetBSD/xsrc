@@ -71,10 +71,29 @@ lp_build_sub(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b);
 
+
+LLVMValueRef
+lp_build_mul_norm(struct gallivm_state *gallivm,
+                  struct lp_type wide_type,
+                  LLVMValueRef a,
+                  LLVMValueRef b);
+
 LLVMValueRef
 lp_build_mul(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b);
+
+LLVMValueRef
+lp_build_mul_32_lohi_cpu(struct lp_build_context *bld,
+                         LLVMValueRef a,
+                         LLVMValueRef b,
+                         LLVMValueRef *res_hi);
+
+LLVMValueRef
+lp_build_mul_32_lohi(struct lp_build_context *bld,
+                     LLVMValueRef a,
+                     LLVMValueRef b,
+                     LLVMValueRef *res_hi);
 
 LLVMValueRef
 lp_build_mul_imm(struct lp_build_context *bld,
@@ -85,6 +104,21 @@ LLVMValueRef
 lp_build_div(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b);
+
+
+/* llvm.fmuladd.* intrinsic */
+LLVMValueRef
+lp_build_fmuladd(LLVMBuilderRef builder,
+                 LLVMValueRef a,
+                 LLVMValueRef b,
+                 LLVMValueRef c);
+
+/* a * b + c */
+LLVMValueRef
+lp_build_mad(struct lp_build_context *bld,
+             LLVMValueRef a,
+             LLVMValueRef b,
+             LLVMValueRef c);
 
 
 /**
@@ -138,7 +172,7 @@ lp_build_lerp_3d(struct lp_build_context *bld,
 enum gallivm_nan_behavior {
    /* Results are undefined with NaN. Results in fastest code */
    GALLIVM_NAN_BEHAVIOR_UNDEFINED,
-   /* If input is NaN, NaN is returned */
+   /* If one of the inputs is NaN, NaN is returned */
    GALLIVM_NAN_RETURN_NAN,
    /* If one of the inputs is NaN, the other operand is returned */
    GALLIVM_NAN_RETURN_OTHER,
@@ -146,7 +180,13 @@ enum gallivm_nan_behavior {
     * but we guarantee the second operand is not a NaN.
     * In min/max it will be as fast as undefined with sse opcodes,
     * and archs having native return_other can benefit too. */
-   GALLIVM_NAN_RETURN_OTHER_SECOND_NONNAN
+   GALLIVM_NAN_RETURN_OTHER_SECOND_NONNAN,
+   /* If one of the inputs is NaN, NaN is returned,
+    * but we guarantee the first operand is not a NaN.
+    * In min/max it will be as fast as undefined with sse opcodes,
+    * and archs having native return_nan can benefit too. */
+   GALLIVM_NAN_RETURN_NAN_FIRST_NONNAN,
+
 };
 
 LLVMValueRef

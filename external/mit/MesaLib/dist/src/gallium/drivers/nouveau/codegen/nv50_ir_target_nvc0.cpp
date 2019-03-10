@@ -104,7 +104,9 @@ static const struct opProperties _initProps[] =
    { OP_MUL,    0x3, 0x0, 0x0, 0x8, 0x2, 0x2 | 0x8 },
    { OP_MAX,    0x3, 0x3, 0x0, 0x0, 0x2, 0x2 },
    { OP_MIN,    0x3, 0x3, 0x0, 0x0, 0x2, 0x2 },
-   { OP_MAD,    0x7, 0x0, 0x0, 0x8, 0x6, 0x2 | 0x8 }, // special c[] constraint
+   { OP_MAD,    0x7, 0x0, 0x0, 0x8, 0x6, 0x2 }, // special c[] constraint
+   { OP_FMA,    0x7, 0x0, 0x0, 0x8, 0x6, 0x2 }, // keep the same as OP_MAD
+   { OP_SHLADD, 0x5, 0x0, 0x0, 0x0, 0x4, 0x6 },
    { OP_MADSP,  0x0, 0x0, 0x0, 0x0, 0x6, 0x2 },
    { OP_ABS,    0x0, 0x0, 0x0, 0x0, 0x1, 0x0 },
    { OP_NEG,    0x0, 0x1, 0x0, 0x0, 0x1, 0x0 },
@@ -127,6 +129,7 @@ static const struct opProperties _initProps[] =
    { OP_LG2,    0x1, 0x1, 0x0, 0x8, 0x0, 0x0 },
    { OP_RCP,    0x1, 0x1, 0x0, 0x8, 0x0, 0x0 },
    { OP_RSQ,    0x1, 0x1, 0x0, 0x8, 0x0, 0x0 },
+   { OP_SQRT,   0x1, 0x1, 0x0, 0x8, 0x0, 0x0 },
    { OP_DFDX,   0x1, 0x0, 0x0, 0x0, 0x0, 0x0 },
    { OP_DFDY,   0x1, 0x0, 0x0, 0x0, 0x0, 0x0 },
    { OP_CALL,   0x0, 0x0, 0x0, 0x0, 0x1, 0x0 },
@@ -141,7 +144,9 @@ static const struct opProperties _initProps[] =
    // saturate only:
    { OP_LINTERP, 0x0, 0x0, 0x0, 0x8, 0x0, 0x0 },
    { OP_PINTERP, 0x0, 0x0, 0x0, 0x8, 0x0, 0x0 },
-   // nve4 ops:
+};
+
+static const struct opProperties _initPropsNVE4[] = {
    { OP_SULDB,   0x0, 0x0, 0x0, 0x0, 0x2, 0x0 },
    { OP_SUSTB,   0x0, 0x0, 0x0, 0x0, 0x2, 0x0 },
    { OP_SUSTP,   0x0, 0x0, 0x0, 0x0, 0x2, 0x0 },
@@ -150,20 +155,53 @@ static const struct opProperties _initProps[] =
    { OP_SUEAU,   0x0, 0x0, 0x0, 0x0, 0x6, 0x2 }
 };
 
+static const struct opProperties _initPropsGM107[] = {
+   { OP_SULDB,   0x0, 0x0, 0x0, 0x0, 0x0, 0x2 },
+   { OP_SULDP,   0x0, 0x0, 0x0, 0x0, 0x0, 0x2 },
+   { OP_SUSTB,   0x0, 0x0, 0x0, 0x0, 0x0, 0x4 },
+   { OP_SUSTP,   0x0, 0x0, 0x0, 0x0, 0x0, 0x4 },
+   { OP_SUREDB,  0x0, 0x0, 0x0, 0x0, 0x0, 0x4 },
+   { OP_SUREDP,  0x0, 0x0, 0x0, 0x0, 0x0, 0x4 },
+   { OP_XMAD,    0x0, 0x0, 0x0, 0x0, 0x6, 0x2 },
+};
+
+void TargetNVC0::initProps(const struct opProperties *props, int size)
+{
+   for (int i = 0; i < size; ++i) {
+      const struct opProperties *prop = &props[i];
+
+      for (int s = 0; s < 3; ++s) {
+         if (prop->mNeg & (1 << s))
+            opInfo[prop->op].srcMods[s] |= NV50_IR_MOD_NEG;
+         if (prop->mAbs & (1 << s))
+            opInfo[prop->op].srcMods[s] |= NV50_IR_MOD_ABS;
+         if (prop->mNot & (1 << s))
+            opInfo[prop->op].srcMods[s] |= NV50_IR_MOD_NOT;
+         if (prop->fConst & (1 << s))
+            opInfo[prop->op].srcFiles[s] |= 1 << (int)FILE_MEMORY_CONST;
+         if (prop->fImmd & (1 << s))
+            opInfo[prop->op].srcFiles[s] |= 1 << (int)FILE_IMMEDIATE;
+         if (prop->fImmd & 8)
+            opInfo[prop->op].immdBits = 0xffffffff;
+      }
+      if (prop->mSat & 8)
+         opInfo[prop->op].dstMods = NV50_IR_MOD_SAT;
+   }
+}
+
 void TargetNVC0::initOpInfo()
 {
    unsigned int i, j;
 
-   static const uint32_t commutative[(OP_LAST + 31) / 32] =
+   static const operation commutative[] =
    {
-      // ADD, MAD, MUL, AND, OR, XOR, MAX, MIN
-      0x0670ca00, 0x0000003f, 0x00000000, 0x00000000
+      OP_ADD, OP_MUL, OP_MAD, OP_FMA, OP_AND, OP_OR, OP_XOR, OP_MAX, OP_MIN,
+      OP_SET_AND, OP_SET_OR, OP_SET_XOR, OP_SET, OP_SELP, OP_SLCT
    };
 
-   static const uint32_t shortForm[(OP_LAST + 31) / 32] =
+   static const operation shortForm[] =
    {
-      // ADD, MAD, MUL, AND, OR, XOR, PRESIN, PREEX2, SFN, CVT, PINTERP, MOV
-      0x0670ca00, 0x00000000, 0x00000000, 0x00000000
+      OP_ADD, OP_MUL, OP_MAD, OP_FMA, OP_AND, OP_OR, OP_XOR, OP_MAX, OP_MIN
    };
 
    static const operation noDest[] =
@@ -202,45 +240,36 @@ void TargetNVC0::initOpInfo()
 
       opInfo[i].hasDest = 1;
       opInfo[i].vector = (i >= OP_TEX && i <= OP_TEXCSAA);
-      opInfo[i].commutative = (commutative[i / 32] >> (i % 32)) & 1;
+      opInfo[i].commutative = false; /* set below */
       opInfo[i].pseudo = (i < OP_MOV);
       opInfo[i].predicate = !opInfo[i].pseudo;
       opInfo[i].flow = (i >= OP_BRA && i <= OP_JOIN);
-      opInfo[i].minEncSize = (shortForm[i / 32] & (1 << (i % 32))) ? 4 : 8;
+      opInfo[i].minEncSize = 8; /* set below */
    }
-   for (i = 0; i < sizeof(noDest) / sizeof(noDest[0]); ++i)
+   for (i = 0; i < ARRAY_SIZE(commutative); ++i)
+      opInfo[commutative[i]].commutative = true;
+   for (i = 0; i < ARRAY_SIZE(shortForm); ++i)
+      opInfo[shortForm[i]].minEncSize = 4;
+   for (i = 0; i < ARRAY_SIZE(noDest); ++i)
       opInfo[noDest[i]].hasDest = 0;
-   for (i = 0; i < sizeof(noPred) / sizeof(noPred[0]); ++i)
+   for (i = 0; i < ARRAY_SIZE(noPred); ++i)
       opInfo[noPred[i]].predicate = 0;
 
-   for (i = 0; i < sizeof(_initProps) / sizeof(_initProps[0]); ++i) {
-      const struct opProperties *prop = &_initProps[i];
-
-      for (int s = 0; s < 3; ++s) {
-         if (prop->mNeg & (1 << s))
-            opInfo[prop->op].srcMods[s] |= NV50_IR_MOD_NEG;
-         if (prop->mAbs & (1 << s))
-            opInfo[prop->op].srcMods[s] |= NV50_IR_MOD_ABS;
-         if (prop->mNot & (1 << s))
-            opInfo[prop->op].srcMods[s] |= NV50_IR_MOD_NOT;
-         if (prop->fConst & (1 << s))
-            opInfo[prop->op].srcFiles[s] |= 1 << (int)FILE_MEMORY_CONST;
-         if (prop->fImmd & (1 << s))
-            opInfo[prop->op].srcFiles[s] |= 1 << (int)FILE_IMMEDIATE;
-         if (prop->fImmd & 8)
-            opInfo[prop->op].immdBits = 0xffffffff;
-      }
-      if (prop->mSat & 8)
-         opInfo[prop->op].dstMods = NV50_IR_MOD_SAT;
-   }
+   initProps(_initProps, ARRAY_SIZE(_initProps));
+   if (chipset >= NVISA_GM107_CHIPSET)
+      initProps(_initPropsGM107, ARRAY_SIZE(_initPropsGM107));
+   else if (chipset >= NVISA_GK104_CHIPSET)
+      initProps(_initPropsNVE4, ARRAY_SIZE(_initPropsNVE4));
 }
 
 unsigned int
 TargetNVC0::getFileSize(DataFile file) const
 {
+   const unsigned int gprs = (chipset >= NVISA_GK20A_CHIPSET) ? 255 : 63;
+   const unsigned int smregs = (chipset >= NVISA_GK104_CHIPSET) ? 65536 : 32768;
    switch (file) {
    case FILE_NULL:          return 0;
-   case FILE_GPR:           return (chipset >= NVISA_GK20A_CHIPSET) ? 255 : 63;
+   case FILE_GPR:           return MIN2(gprs, smregs / threads);
    case FILE_PREDICATE:     return 7;
    case FILE_FLAGS:         return 1;
    case FILE_ADDRESS:       return 0;
@@ -248,6 +277,7 @@ TargetNVC0::getFileSize(DataFile file) const
    case FILE_MEMORY_CONST:  return 65536;
    case FILE_SHADER_INPUT:  return 0x400;
    case FILE_SHADER_OUTPUT: return 0x400;
+   case FILE_MEMORY_BUFFER: return 0xffffffff;
    case FILE_MEMORY_GLOBAL: return 0xffffffff;
    case FILE_MEMORY_SHARED: return 16 << 10;
    case FILE_MEMORY_LOCAL:  return 48 << 10;
@@ -286,14 +316,19 @@ TargetNVC0::getSVAddress(DataFile shaderFile, const Symbol *sym) const
    case SV_CLIP_DISTANCE:  return 0x2c0 + idx * 4;
    case SV_POINT_COORD:    return 0x2e0 + idx * 4;
    case SV_FACE:           return 0x3fc;
-   case SV_TESS_FACTOR:    return 0x000 + idx * 4;
+   case SV_TESS_OUTER:     return 0x000 + idx * 4;
+   case SV_TESS_INNER:     return 0x010 + idx * 4;
    case SV_TESS_COORD:     return 0x2f0 + idx * 4;
    case SV_NTID:           return kepler ? (0x00 + idx * 4) : ~0;
    case SV_NCTAID:         return kepler ? (0x0c + idx * 4) : ~0;
    case SV_GRIDID:         return kepler ? 0x18 : ~0;
+   case SV_WORK_DIM:       return 0x1c;
    case SV_SAMPLE_INDEX:   return 0;
    case SV_SAMPLE_POS:     return 0;
    case SV_SAMPLE_MASK:    return 0;
+   case SV_BASEVERTEX:     return 0;
+   case SV_BASEINSTANCE:   return 0;
+   case SV_DRAWID:         return 0;
    default:
       return 0xffffffff;
    }
@@ -319,16 +354,35 @@ TargetNVC0::insnCanLoad(const Instruction *i, int s,
    // indirect loads can only be done by OP_LOAD/VFETCH/INTERP on nvc0
    if (ld->src(0).isIndirect(0))
       return false;
+   // these are implemented using shf.r and shf.l which can't load consts
+   if ((i->op == OP_SHL || i->op == OP_SHR) && typeSizeof(i->sType) == 8 &&
+       sf == FILE_MEMORY_CONST)
+      return false;
+   // constant buffer loads can't be used with cbcc xmads
+   if (i->op == OP_XMAD && sf == FILE_MEMORY_CONST &&
+       (i->subOp & NV50_IR_SUBOP_XMAD_CMODE_MASK) == NV50_IR_SUBOP_XMAD_CBCC)
+      return false;
+   // constant buffer loads for the third operand can't be used with psl/mrg xmads
+   if (i->op == OP_XMAD && sf == FILE_MEMORY_CONST && s == 2 &&
+       (i->subOp & (NV50_IR_SUBOP_XMAD_PSL | NV50_IR_SUBOP_XMAD_MRG)))
+      return false;
+   // for xmads, immediates can't have the h1 flag set
+   if (i->op == OP_XMAD && sf == FILE_IMMEDIATE && s < 2 &&
+       i->subOp & NV50_IR_SUBOP_XMAD_H1(s))
+      return false;
 
    for (int k = 0; i->srcExists(k); ++k) {
       if (i->src(k).getFile() == FILE_IMMEDIATE) {
          if (k == 2 && i->op == OP_SUCLAMP) // special case
             continue;
+         if (k == 1 && i->op == OP_SHLADD) // special case
+            continue;
          if (i->getSrc(k)->reg.data.u64 != 0)
             return false;
       } else
       if (i->src(k).getFile() != FILE_GPR &&
-          i->src(k).getFile() != FILE_PREDICATE) {
+          i->src(k).getFile() != FILE_PREDICATE &&
+          i->src(k).getFile() != FILE_FLAGS) {
          return false;
       }
    }
@@ -337,22 +391,34 @@ TargetNVC0::insnCanLoad(const Instruction *i, int s,
    if (sf == FILE_IMMEDIATE) {
       Storage &reg = ld->getSrc(0)->asImm()->reg;
 
-      if (opInfo[i->op].immdBits != 0xffffffff) {
-         if (i->sType == TYPE_F32) {
+      if (opInfo[i->op].immdBits != 0xffffffff || typeSizeof(i->sType) > 4) {
+         switch (i->sType) {
+         case TYPE_F64:
+            if (reg.data.u64 & 0x00000fffffffffffULL)
+               return false;
+            break;
+         case TYPE_F32:
             if (reg.data.u32 & 0xfff)
                return false;
-         } else
-         if (i->sType == TYPE_S32 || i->sType == TYPE_U32) {
+            break;
+         case TYPE_S32:
+         case TYPE_U32:
             // with u32, 0xfffff counts as 0xffffffff as well
             if (reg.data.s32 > 0x7ffff || reg.data.s32 < -0x80000)
                return false;
-         }
-      } else
-      if (i->op == OP_MAD || i->op == OP_FMA) {
-         // requires src == dst, cannot decide before RA
-         // (except if we implement more constraints)
-         if (ld->getSrc(0)->asImm()->reg.data.u32 & 0xfff)
+            // XMADs can only have 16-bit immediates
+            if (i->op == OP_XMAD && reg.data.u32 > 0xffff)
+               return false;
+            break;
+         case TYPE_U8:
+         case TYPE_S8:
+         case TYPE_U16:
+         case TYPE_S16:
+         case TYPE_F16:
+            break;
+         default:
             return false;
+         }
       } else
       if (i->op == OP_ADD && i->sType == TYPE_F32) {
          // add f32 LIMM cannot saturate
@@ -365,12 +431,28 @@ TargetNVC0::insnCanLoad(const Instruction *i, int s,
 }
 
 bool
+TargetNVC0::insnCanLoadOffset(const Instruction *insn, int s, int offset) const
+{
+   const ValueRef& ref = insn->src(s);
+   offset += insn->src(s).get()->reg.data.offset;
+   if (ref.getFile() == FILE_MEMORY_CONST &&
+       (insn->op != OP_LOAD || insn->subOp != NV50_IR_SUBOP_LDC_IS))
+      return offset >= -0x8000 && offset < 0x8000;
+   return true;
+}
+
+bool
 TargetNVC0::isAccessSupported(DataFile file, DataType ty) const
 {
    if (ty == TYPE_NONE)
       return false;
-   if (file == FILE_MEMORY_CONST && getChipset() >= 0xe0) // wrong encoding ?
-      return typeSizeof(ty) <= 8;
+   if (file == FILE_MEMORY_CONST) {
+      if (getChipset() >= NVISA_GM107_CHIPSET)
+         return typeSizeof(ty) <= 4;
+      else
+      if (getChipset() >= NVISA_GK104_CHIPSET) // wrong encoding ?
+         return typeSizeof(ty) <= 8;
+   }
    if (ty == TYPE_B96)
       return false;
    return true;
@@ -379,11 +461,11 @@ TargetNVC0::isAccessSupported(DataFile file, DataType ty) const
 bool
 TargetNVC0::isOpSupported(operation op, DataType ty) const
 {
-   if ((op == OP_MAD || op == OP_FMA) && (ty != TYPE_F32))
-      return false;
    if (op == OP_SAD && ty != TYPE_S32 && ty != TYPE_U32)
       return false;
    if (op == OP_POW || op == OP_SQRT || op == OP_DIV || op == OP_MOD)
+      return false;
+   if (op == OP_XMAD)
       return false;
    return true;
 }
@@ -404,6 +486,7 @@ TargetNVC0::isModSupported(const Instruction *insn, int s, Modifier mod) const
       case OP_XOR:
       case OP_POPCNT:
       case OP_BFIND:
+      case OP_XMAD:
          break;
       case OP_SET:
          if (insn->sType != TYPE_F32)
@@ -419,11 +502,17 @@ TargetNVC0::isModSupported(const Instruction *insn, int s, Modifier mod) const
          if (s == 0)
             return insn->src(1).mod.neg() ? false : true;
          break;
+      case OP_SHLADD:
+         if (s == 1)
+            return false;
+         if (insn->src(s ? 0 : 2).mod.neg())
+            return false;
+         break;
       default:
          return false;
       }
    }
-   if (s >= 3)
+   if (s >= opInfo[insn->op].srcNr || s >= 3)
       return false;
    return (mod & Modifier(opInfo[insn->op].srcMods[s])) == mod;
 }
@@ -584,20 +673,36 @@ bool TargetNVC0::canDualIssue(const Instruction *a, const Instruction *b) const
       // not if the 2nd instruction isn't necessarily executed
       if (clA == OPCLASS_TEXTURE || clA == OPCLASS_FLOW)
          return false;
+
+      // Check that a and b don't write to the same sources, nor that b reads
+      // anything that a writes.
+      if (!a->canCommuteDefDef(b) || !a->canCommuteDefSrc(b))
+         return false;
+
       // anything with MOV
       if (a->op == OP_MOV || b->op == OP_MOV)
          return true;
       if (clA == clB) {
-         // only F32 arith or integer additions
-         if (clA != OPCLASS_ARITH)
+         switch (clA) {
+         // there might be more
+         case OPCLASS_COMPARE:
+            if ((a->op == OP_MIN || a->op == OP_MAX) &&
+                (b->op == OP_MIN || b->op == OP_MAX))
+               break;
             return false;
+         case OPCLASS_ARITH:
+            break;
+         default:
+            return false;
+         }
+         // only F32 arith or integer additions
          return (a->dType == TYPE_F32 || a->op == OP_ADD ||
                  b->dType == TYPE_F32 || b->op == OP_ADD);
       }
       // nothing with TEXBAR
       if (a->op == OP_TEXBAR || b->op == OP_TEXBAR)
          return false;
-      // no loads and stores accessing the the same space
+      // no loads and stores accessing the same space
       if ((clA == OPCLASS_LOAD && clB == OPCLASS_STORE) ||
           (clB == OPCLASS_LOAD && clA == OPCLASS_STORE))
          if (a->src(0).getFile() == b->src(0).getFile())

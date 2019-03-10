@@ -33,12 +33,13 @@
 #define DRI_SCREEN_H
 
 #include "dri_util.h"
-#include "xmlconfig.h"
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 #include "state_tracker/st_api.h"
+#include "state_tracker/opencl_interop.h"
+#include "os/os_thread.h"
 #include "postprocess/filters.h"
 
 struct dri_context;
@@ -59,12 +60,6 @@ struct dri_screen
    boolean throttling_enabled;
    int default_throttle_frames;
 
-   /** Configuration cache with default values for all contexts */
-   driOptionCache optionCacheDefaults;
-
-   /** The screen's effective configuration options */
-   driOptionCache optionCache;
-
    struct st_config_options options;
 
    /* Which postprocessing filters are enabled. */
@@ -80,14 +75,24 @@ struct dri_screen
    boolean d_depth_bits_last;
    boolean sd_depth_bits_last;
    boolean auto_fake_front;
+   boolean has_reset_status_query;
    enum pipe_texture_target target;
+
+   boolean swrast_no_present;
 
    /* hooks filled in by dri2 & drisw */
    __DRIimage * (*lookup_egl_image)(struct dri_screen *ctx, void *handle);
+
+   /* OpenCL interop */
+   mtx_t opencl_func_mutex;
+   opencl_dri_event_add_ref_t opencl_dri_event_add_ref;
+   opencl_dri_event_release_t opencl_dri_event_release;
+   opencl_dri_event_wait_t opencl_dri_event_wait;
+   opencl_dri_event_get_fence_t opencl_dri_event_get_fence;
 };
 
 /** cast wrapper */
-static INLINE struct dri_screen *
+static inline struct dri_screen *
 dri_screen(__DRIscreen * sPriv)
 {
    return (struct dri_screen *)sPriv->driverPrivate;
@@ -99,6 +104,7 @@ struct __DRIimageRec {
    unsigned layer;
    uint32_t dri_format;
    uint32_t dri_components;
+   unsigned use;
 
    void *loader_private;
 
@@ -112,9 +118,7 @@ struct __DRIimageRec {
 
 };
 
-#ifndef __NOT_HAVE_DRM_H
-
-static INLINE boolean
+static inline boolean
 dri_with_format(__DRIscreen * sPriv)
 {
    const __DRIdri2LoaderExtension *loader = sPriv->dri2.loader;
@@ -124,24 +128,17 @@ dri_with_format(__DRIscreen * sPriv)
        && (loader->getBuffersWithFormat != NULL);
 }
 
-#else
-
-static INLINE boolean
-dri_with_format(__DRIscreen * sPriv)
-{
-   return TRUE;
-}
-
-#endif
+void
+dri_fill_st_visual(struct st_visual *stvis,
+                   const struct dri_screen *screen,
+                   const struct gl_config *mode);
 
 void
-dri_fill_st_visual(struct st_visual *stvis, struct dri_screen *screen,
-                   const struct gl_config *mode);
+dri_init_options(struct dri_screen *screen);
 
 const __DRIconfig **
 dri_init_screen_helper(struct dri_screen *screen,
-                       struct pipe_screen *pscreen,
-                       const char* driver_name);
+                       struct pipe_screen *pscreen);
 
 void
 dri_destroy_screen_helper(struct dri_screen * screen);
@@ -149,7 +146,6 @@ dri_destroy_screen_helper(struct dri_screen * screen);
 void
 dri_destroy_screen(__DRIscreen * sPriv);
 
-extern struct pipe_screen *kms_swrast_create_screen(int fd);
 extern const struct __DriverAPIRec dri_kms_driver_api;
 
 extern const struct __DriverAPIRec galliumdrm_driver_api;

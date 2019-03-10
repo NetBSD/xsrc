@@ -119,7 +119,7 @@ static GLuint get_bitmap_rect(GLsizei width, GLsizei height,
    GLuint count = 0;
 
    DBG("%s %d,%d %dx%d bitmap %dx%d skip %d src_offset %d mask %d\n",
-       __FUNCTION__, x,y,w,h,width,height,unpack->SkipPixels, src_offset, mask);
+       __func__, x,y,w,h,width,height,unpack->SkipPixels, src_offset, mask);
 
    if (invert) {
       first = h-1;
@@ -158,7 +158,7 @@ static GLuint get_bitmap_rect(GLsizei width, GLsizei height,
  * Returns the low Y value of the vertical range given, flipped according to
  * whether the framebuffer is or not.
  */
-static INLINE int
+static inline int
 y_flip(struct gl_framebuffer *fb, int y, int height)
 {
    if (_mesa_is_user_fbo(fb))
@@ -262,8 +262,8 @@ do_blit_bitmap( struct gl_context *ctx,
 	 int h = MIN2(DY, height - py);
 	 int w = MIN2(DX, width - px);
 	 GLuint sz = ALIGN(ALIGN(w,8) * h, 64)/8;
-	 GLenum logic_op = ctx->Color.ColorLogicOpEnabled ?
-	    ctx->Color.LogicOp : GL_COPY;
+         const enum gl_logicop_mode logic_op = ctx->Color.ColorLogicOpEnabled ?
+            ctx->Color._LogicOp : COLOR_LOGICOP_COPY;
 
 	 assert(sz <= sizeof(stipple));
 	 memset(stipple, 0, sz);

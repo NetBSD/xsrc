@@ -27,6 +27,7 @@
 
 
 #include "main/glheader.h"
+#include "compiler/shader_enums.h"
 
 
 #ifdef __cplusplus
@@ -36,12 +37,6 @@ extern "C" {
 
 struct gl_context;
 struct gl_program_parameter_list;
-
-/**
- * Number of STATE_* values we need to address any GL state.
- * Used to dimension arrays.
- */
-#define STATE_LENGTH 5
 
 
 /**
@@ -117,7 +112,6 @@ typedef enum gl_state_index_ {
    STATE_CURRENT_ATTRIB,        /* ctx->Current vertex attrib value */
    STATE_CURRENT_ATTRIB_MAYBE_VP_CLAMPED,        /* ctx->Current vertex attrib value after passthrough vertex processing */
    STATE_NORMAL_SCALE,
-   STATE_TEXRECT_SCALE,
    STATE_FOG_PARAMS_OPTIMIZED,  /* for faster fog calc */
    STATE_POINT_SIZE_CLAMPED,    /* includes implementation dependent size clamp */
    STATE_LIGHT_SPOT_DIR_NORMALIZED,   /* pre-normalized spot dir */
@@ -128,9 +122,15 @@ typedef enum gl_state_index_ {
    STATE_PT_BIAS,               /**< Pixel transfer RGBA bias */
    STATE_FB_SIZE,               /**< (width-1, height-1, 0, 0) */
    STATE_FB_WPOS_Y_TRANSFORM,   /**< (1, 0, -1, height) if a FBO is bound, (-1, height, 1, 0) otherwise */
+   STATE_TCS_PATCH_VERTICES_IN, /**< gl_PatchVerticesIn for TCS (integer) */
+   STATE_TES_PATCH_VERTICES_IN, /**< gl_PatchVerticesIn for TES (integer) */
+   /**
+    * A single enum gl_blend_support_qualifier value representing the
+    * currently active advanced blending equation, or zero if disabled.
+    */
+   STATE_ADVANCED_BLENDING_MODE,
    STATE_INTERNAL_DRIVER	/* first available state index for drivers (must be last) */
 } gl_state_index;
-
 
 
 extern void
@@ -139,11 +139,11 @@ _mesa_load_state_parameters(struct gl_context *ctx,
 
 
 extern GLbitfield
-_mesa_program_state_flags(const gl_state_index state[STATE_LENGTH]);
+_mesa_program_state_flags(const gl_state_index16 state[STATE_LENGTH]);
 
 
 extern char *
-_mesa_program_state_string(const gl_state_index state[STATE_LENGTH]);
+_mesa_program_state_string(const gl_state_index16 state[STATE_LENGTH]);
 
 
 

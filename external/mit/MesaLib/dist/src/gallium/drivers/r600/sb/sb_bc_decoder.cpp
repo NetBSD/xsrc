@@ -32,6 +32,7 @@ int bc_decoder::decode_cf(unsigned &i, bc_cf& bc) {
 	int r = 0;
 	uint32_t dw0 = dw[i];
 	uint32_t dw1 = dw[i+1];
+	assert(i+1 <= ndw);
 
 	if ((dw1 >> 29) & 1) { // CF_ALU
 		return decode_cf_alu(i, bc);
@@ -259,7 +260,7 @@ int bc_decoder::decode_cf_mem(unsigned & i, bc_cf& bc) {
 		bc.end_of_program = w1.get_END_OF_PROGRAM();
 		bc.valid_pixel_mode = w1.get_VALID_PIXEL_MODE();
 		bc.mark = w1.get_MARK();
-		bc.array_size = w1.get_ARRAY_SIZE();
+		bc.array_size = w1.get_ARR_SIZE();
 		bc.comp_mask = w1.get_COMP_MASK();
 
 	} else if (ctx.is_cayman()) {
@@ -268,7 +269,7 @@ int bc_decoder::decode_cf_mem(unsigned & i, bc_cf& bc) {
 		bc.burst_count = w1.get_BURST_COUNT();
 		bc.mark = w1.get_MARK();
 		bc.valid_pixel_mode = w1.get_VALID_PIXEL_MODE();
-		bc.array_size = w1.get_ARRAY_SIZE();
+		bc.array_size = w1.get_ARR_SIZE();
 		bc.comp_mask = w1.get_COMP_MASK();
 
 	} else { // r67
@@ -278,7 +279,7 @@ int bc_decoder::decode_cf_mem(unsigned & i, bc_cf& bc) {
 		bc.end_of_program = w1.get_END_OF_PROGRAM();
 		bc.valid_pixel_mode = w1.get_VALID_PIXEL_MODE();
 		bc.whole_quad_mode = w1.get_WHOLE_QUAD_MODE();
-		bc.array_size = w1.get_ARRAY_SIZE();
+		bc.array_size = w1.get_ARR_SIZE();
 		bc.comp_mask = w1.get_COMP_MASK();
 		bc.whole_quad_mode = w1.get_WHOLE_QUAD_MODE();
 	}
@@ -309,16 +310,53 @@ int bc_decoder::decode_alu(unsigned & i, bc_alu& bc) {
 		ALU_WORD1_OP3_ALL w1(dw1);
 		bc.set_op(r600_isa_alu_by_opcode(ctx.isa, w1.get_ALU_INST(), 1));
 
-		bc.bank_swizzle = w1.get_BANK_SWIZZLE();
-		bc.clamp = w1.get_CLAMP();
-		bc.dst_chan = w1.get_DST_CHAN();
-		bc.dst_gpr = w1.get_DST_GPR();
-		bc.dst_rel = w1.get_DST_REL();
+		if (bc.op == ALU_OP3_LDS_IDX_OP) {
+			ALU_WORD0_LDS_IDX_OP_EGCM iw0(dw0);
+			ALU_WORD1_LDS_IDX_OP_EGCM iw1(dw1);
+			bc.index_mode = iw0.get_INDEX_MODE();
+			bc.last = iw0.get_LAST();
+			bc.pred_sel = iw0.get_PRED_SEL();
+			bc.src[0].chan = iw0.get_SRC0_CHAN();
+			bc.src[0].sel = iw0.get_SRC0_SEL();
+			bc.src[0].rel = iw0.get_SRC0_REL();
 
-		bc.src[2].chan = w1.get_SRC2_CHAN();
-		bc.src[2].sel = w1.get_SRC2_SEL();
-		bc.src[2].neg = w1.get_SRC2_NEG();
-		bc.src[2].rel = w1.get_SRC2_REL();
+			bc.src[1].chan = iw0.get_SRC1_CHAN();
+			bc.src[1].sel = iw0.get_SRC1_SEL();
+			bc.src[1].rel = iw0.get_SRC1_REL();
+
+			bc.bank_swizzle = iw1.get_BANK_SWIZZLE();
+			bc.src[2].chan = iw1.get_SRC2_CHAN();
+			bc.src[2].sel = iw1.get_SRC2_SEL();
+			bc.src[2].rel = iw1.get_SRC2_REL();
+			bc.dst_chan = iw1.get_DST_CHAN();
+			// TODO: clean up
+			for (size_t k = 0, e = r600_alu_op_table_size(); k != e; k++) {
+				if (((r600_alu_op_table[k].opcode[1] >> 8) & 0xff) == iw1.get_LDS_OP()) {
+					bc.op_ptr = &r600_alu_op_table[k];
+					bc.op = k;
+					break;
+				}
+			}
+			bc.lds_idx_offset =
+				(iw0.get_IDX_OFFSET_4() << 4) |
+				(iw0.get_IDX_OFFSET_5() << 5) |
+				(iw1.get_IDX_OFFSET_1() << 1) |
+				(iw1.get_IDX_OFFSET_0() << 0) |
+				(iw1.get_IDX_OFFSET_2() << 2) |
+				(iw1.get_IDX_OFFSET_3() << 3);
+		}
+		else {
+			bc.bank_swizzle = w1.get_BANK_SWIZZLE();
+			bc.clamp = w1.get_CLAMP();
+			bc.dst_chan = w1.get_DST_CHAN();
+			bc.dst_gpr = w1.get_DST_GPR();
+			bc.dst_rel = w1.get_DST_REL();
+
+			bc.src[2].chan = w1.get_SRC2_CHAN();
+			bc.src[2].sel = w1.get_SRC2_SEL();
+			bc.src[2].neg = w1.get_SRC2_NEG();
+			bc.src[2].rel = w1.get_SRC2_REL();
+		}
 
 	} else { // op2
 		if (ctx.is_r600()) {
@@ -372,7 +410,28 @@ int bc_decoder::decode_fetch(unsigned & i, bc_fetch& bc) {
 
 	unsigned fetch_opcode = dw0 & 0x1F;
 
-	bc.set_op(r600_isa_fetch_by_opcode(ctx.isa, fetch_opcode));
+	if (fetch_opcode == 2) { // MEM_INST_MEM
+		unsigned mem_op = (dw0 >> 8) & 0x7;
+		unsigned gds_op;
+		if (mem_op == 0 || mem_op == 2) {
+			fetch_opcode = mem_op == 0 ? FETCH_OP_READ_SCRATCH : FETCH_OP_READ_MEM;
+		} else if (mem_op == 4) {
+			gds_op = (dw1 >> 9) & 0x1f;
+			if ((dw1 >> 9) & 0x20)
+				fetch_opcode = FETCH_OP_GDS_ADD_RET + gds_op;
+			else
+				fetch_opcode = FETCH_OP_GDS_ADD + gds_op;
+		} else if (mem_op == 5)
+			fetch_opcode = FETCH_OP_TF_WRITE;
+		bc.set_op(fetch_opcode);
+	} else
+		bc.set_op(r600_isa_fetch_by_opcode(ctx.isa, fetch_opcode));
+
+	if (bc.op_ptr->flags & FF_MEM)
+		return decode_fetch_mem(i, bc);
+
+	if (bc.op_ptr->flags & FF_GDS)
+		return decode_fetch_gds(i, bc);
 
 	if (bc.op_ptr->flags & FF_VTX)
 		return decode_fetch_vtx(i, bc);
@@ -435,6 +494,84 @@ int bc_decoder::decode_fetch(unsigned & i, bc_fetch& bc) {
 	bc.src_sel[3] = w2.get_SRC_SEL_W();
 
 	i += 4;
+	return r;
+}
+
+int bc_decoder::decode_fetch_gds(unsigned & i, bc_fetch& bc) {
+	int r = 0;
+	uint32_t dw0 = dw[i];
+	uint32_t dw1 = dw[i+1];
+	uint32_t dw2 = dw[i+2];
+	uint32_t tmp;
+	/* GDS instructions align to 4 words boundaries */
+	i+= 4;
+	assert(i <= ndw);
+
+	MEM_GDS_WORD0_EGCM w0(dw0);
+	bc.src_gpr = w0.get_SRC_GPR();
+	tmp = w0.get_SRC_REL_MODE();
+	bc.src_rel_global = (tmp == 2);
+	bc.src_sel[0] = w0.get_SRC_SEL_X();
+	bc.src_sel[1] = w0.get_SRC_SEL_Y();
+	bc.src_sel[2] = w0.get_SRC_SEL_Z();
+
+	MEM_GDS_WORD1_EGCM w1(dw1);
+	bc.dst_gpr = w1.get_DST_GPR();
+	tmp = w1.get_DST_REL_MODE();
+	bc.dst_rel_global = (tmp == 2);
+	bc.src2_gpr = w1.get_SRC_GPR();
+	bc.alloc_consume = w1.get_ALLOC_CONSUME();
+	bc.uav_id = w1.get_UAV_ID();
+	bc.uav_index_mode = w1.get_UAV_INDEX_MODE();
+	bc.bcast_first_req = w1.get_BCAST_FIRST_REQ();
+
+	MEM_GDS_WORD2_EGCM w2(dw2);
+	bc.dst_sel[0] = w2.get_DST_SEL_X();
+	bc.dst_sel[1] = w2.get_DST_SEL_Y();
+	bc.dst_sel[2] = w2.get_DST_SEL_Z();
+	bc.dst_sel[3] = w2.get_DST_SEL_W();
+	return r;
+}
+
+int bc_decoder::decode_fetch_mem(unsigned & i, bc_fetch& bc) {
+	int r = 0;
+	uint32_t dw0 = dw[i];
+	uint32_t dw1 = dw[i+1];
+	uint32_t dw2 = dw[i+2];
+
+	i += 4; // MEM instructions align to 4 words boundaries
+	assert(i < ndw);
+
+	MEM_RD_WORD0_R7EGCM w0(dw0);
+	bc.elem_size = w0.get_ELEM_SIZE();
+	bc.fetch_whole_quad = w0.get_FETCH_WHOLE_QUAD();
+	bc.uncached = w0.get_UNCACHED();
+	bc.indexed = w0.get_INDEXED();
+	bc.src_sel[1] = w0.get_SRC_SEL_Y();
+	bc.src_gpr = w0.get_SRC_GPR();
+	bc.src_rel = w0.get_SRC_REL();
+	bc.src_sel[0] = w0.get_SRC_SEL_X();
+	bc.burst_count = w0.get_BURST_COUNT();
+	bc.lds_req = w0.get_LDS_REQ();
+	bc.coalesced_read = w0.get_COALESCED_READ();
+
+	MEM_RD_WORD1_R7EGCM w1(dw1);
+	bc.dst_gpr = w1.get_DST_GPR();
+	bc.dst_rel = w1.get_DST_REL();
+	bc.dst_sel[0] = w1.get_DST_SEL_X();
+	bc.dst_sel[1] = w1.get_DST_SEL_Y();
+	bc.dst_sel[2] = w1.get_DST_SEL_Z();
+	bc.dst_sel[3] = w1.get_DST_SEL_W();
+	bc.data_format = w1.get_DATA_FORMAT();
+	bc.num_format_all = w1.get_NUM_FORMAT_ALL();
+	bc.format_comp_all = w1.get_FORMAT_COMP_ALL();
+	bc.srf_mode_all = w1.get_SRF_MODE_ALL();
+
+	MEM_RD_WORD2_R7EGCM w2(dw2);
+	bc.array_base = w2.get_ARRAY_BASE();
+	bc.endian_swap = w2.get_ENDIAN_SWAP();
+	bc.array_size = w2.get_ARR_SIZE();
+
 	return r;
 }
 

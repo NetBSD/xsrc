@@ -25,6 +25,8 @@
 #include <stdio.h>
 #include <fcntl.h>
 
+#include <nvif/class.h>
+
 #include "nouveau_screen.h"
 #include "nouveau_context.h"
 #include "nouveau_vp3_video.h"
@@ -83,10 +85,10 @@ nouveau_vp3_video_buffer_create(struct pipe_context *pipe,
    struct pipe_sampler_view sv_templ;
    struct pipe_surface surf_templ;
 
-   assert(templat->interlaced);
    if (getenv("XVMC_VL") || templat->buffer_format != PIPE_FORMAT_NV12)
       return vl_video_buffer_create(pipe, templat);
 
+   assert(templat->interlaced);
    assert(templat->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
 
    buffer = CALLOC_STRUCT(nouveau_vp3_video_buffer);
@@ -139,8 +141,8 @@ nouveau_vp3_video_buffer_create(struct pipe_context *pipe,
          goto error;
 
       for (j = 0; j < nr_components; ++j, ++component) {
-         sv_templ.swizzle_r = sv_templ.swizzle_g = sv_templ.swizzle_b = PIPE_SWIZZLE_RED + j;
-         sv_templ.swizzle_a = PIPE_SWIZZLE_ONE;
+         sv_templ.swizzle_r = sv_templ.swizzle_g = sv_templ.swizzle_b = PIPE_SWIZZLE_X + j;
+         sv_templ.swizzle_a = PIPE_SWIZZLE_1;
 
          buffer->sampler_view_components[component] = pipe->create_sampler_view(pipe, res, &sv_templ);
          if (!buffer->sampler_view_components[component])
@@ -351,6 +353,16 @@ nouveau_vp3_load_firmware(struct nouveau_vp3_decoder *dec,
    return 0;
 }
 
+static const struct nouveau_mclass
+nouveau_decoder_msvld[] = {
+   { G98_MSVLD, -1 },
+   { IGT21A_MSVLD, -1 },
+   { GT212_MSVLD, -1 },
+   { GF100_MSVLD, -1 },
+   { GK104_MSVLD, -1 },
+   {}
+};
+
 static int
 firmware_present(struct pipe_screen *pscreen, enum pipe_video_profile profile)
 {
@@ -368,13 +380,7 @@ firmware_present(struct pipe_screen *pscreen, enum pipe_video_profile profile)
       struct nvc0_fifo nvc0_args = {};
       struct nve0_fifo nve0_args = {.engine = NVE0_FIFO_ENGINE_BSP};
       void *data = NULL;
-      int size, oclass;
-      if (chipset < 0xc0)
-         oclass = 0x85b1;
-      else if (chipset < 0xe0)
-         oclass = 0x90b1;
-      else
-         oclass = 0x95b1;
+      int size;
 
       if (chipset < 0xc0) {
          data = &nv04_data;
@@ -393,7 +399,10 @@ firmware_present(struct pipe_screen *pscreen, enum pipe_video_profile profile)
                          data, size, &channel);
 
       if (channel) {
-         nouveau_object_new(channel, 0, oclass, NULL, 0, &bsp);
+         ret = nouveau_object_mclass(channel, nouveau_decoder_msvld);
+         if (ret >= 0)
+            nouveau_object_new(channel, 0, nouveau_decoder_msvld[ret].oclass,
+                               NULL, 0, &bsp);
          if (bsp)
             screen->firmware_info.profiles_present |= 1;
          nouveau_object_del(&bsp);
@@ -437,6 +446,7 @@ nouveau_vp3_screen_get_video_param(struct pipe_screen *pscreen,
       /* VP3 does not support MPEG4, VP4+ do. */
       return entrypoint == PIPE_VIDEO_ENTRYPOINT_BITSTREAM &&
          profile >= PIPE_VIDEO_PROFILE_MPEG1 &&
+         profile < PIPE_VIDEO_PROFILE_HEVC_MAIN &&
          (!vp3 || codec != PIPE_VIDEO_FORMAT_MPEG4) &&
          firmware_present(pscreen, profile);
    case PIPE_VIDEO_CAP_NPOT_TEXTURES:

@@ -25,8 +25,7 @@
 #define VC4_QPU_DEFINES_H
 
 #include <assert.h>
-
-#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+#include <util/macros.h>
 
 enum qpu_op_add {
         QPU_A_NOP,
@@ -74,7 +73,7 @@ enum qpu_raddr {
         QPU_R_ELEM_QPU = 38,
         QPU_R_NOP,
         QPU_R_XY_PIXEL_COORD = 41,
-        QPU_R_MS_REV_FLAGS = 41,
+        QPU_R_MS_REV_FLAGS = 42,
         QPU_R_VPM = 48,
         QPU_R_VPM_LD_BUSY,
         QPU_R_VPM_LD_WAIT,
@@ -148,8 +147,11 @@ enum qpu_mux {
         QPU_MUX_A,
         QPU_MUX_B,
 
-        /* non-hardware mux values */
-        QPU_MUX_IMM,
+        /**
+         * Non-hardware mux value, stores a small immediate field to be
+         * programmed into raddr_b in the qpu_reg.index.
+         */
+        QPU_MUX_SMALL_IMM,
 };
 
 enum qpu_cond {
@@ -161,6 +163,23 @@ enum qpu_cond {
         QPU_COND_NC,
         QPU_COND_CS,
         QPU_COND_CC,
+};
+
+enum qpu_branch_cond {
+        QPU_COND_BRANCH_ALL_ZS,
+        QPU_COND_BRANCH_ALL_ZC,
+        QPU_COND_BRANCH_ANY_ZS,
+        QPU_COND_BRANCH_ANY_ZC,
+        QPU_COND_BRANCH_ALL_NS,
+        QPU_COND_BRANCH_ALL_NC,
+        QPU_COND_BRANCH_ANY_NS,
+        QPU_COND_BRANCH_ANY_NC,
+        QPU_COND_BRANCH_ALL_CS,
+        QPU_COND_BRANCH_ALL_CC,
+        QPU_COND_BRANCH_ANY_CS,
+        QPU_COND_BRANCH_ANY_CC,
+
+        QPU_COND_BRANCH_ALWAYS = 15
 };
 
 enum qpu_pack_mul {
@@ -196,15 +215,15 @@ enum qpu_pack_a {
         QPU_PACK_A_8D_SAT,
 };
 
-enum qpu_unpack_r4 {
-        QPU_UNPACK_R4_NOP,
-        QPU_UNPACK_R4_F16A_TO_F32,
-        QPU_UNPACK_R4_F16B_TO_F32,
-        QPU_UNPACK_R4_8D_REP,
-        QPU_UNPACK_R4_8A,
-        QPU_UNPACK_R4_8B,
-        QPU_UNPACK_R4_8C,
-        QPU_UNPACK_R4_8D,
+enum qpu_unpack {
+        QPU_UNPACK_NOP,
+        QPU_UNPACK_16A,
+        QPU_UNPACK_16B,
+        QPU_UNPACK_8D_REP,
+        QPU_UNPACK_8A,
+        QPU_UNPACK_8B,
+        QPU_UNPACK_8C,
+        QPU_UNPACK_8D,
 };
 
 #define QPU_MASK(high, low) ((((uint64_t)1<<((high)-(low)+1))-1)<<(low))
@@ -218,11 +237,20 @@ enum qpu_unpack_r4 {
 
 #define QPU_GET_FIELD(word, field) ((uint32_t)(((word)  & field ## _MASK) >> field ## _SHIFT))
 
+#define QPU_UPDATE_FIELD(inst, value, field)                              \
+        (((inst) & ~(field ## _MASK)) | QPU_SET_FIELD(value, field))
+
 #define QPU_SIG_SHIFT                   60
 #define QPU_SIG_MASK                    QPU_MASK(63, 60)
 
 #define QPU_UNPACK_SHIFT                57
 #define QPU_UNPACK_MASK                 QPU_MASK(59, 57)
+
+#define QPU_LOAD_IMM_MODE_SHIFT         57
+#define QPU_LOAD_IMM_MODE_MASK          QPU_MASK(59, 57)
+# define QPU_LOAD_IMM_MODE_U32          0
+# define QPU_LOAD_IMM_MODE_I2           1
+# define QPU_LOAD_IMM_MODE_U2           3
 
 /**
  * If set, the pack field means PACK_MUL or R4 packing, instead of normal
@@ -237,6 +265,16 @@ enum qpu_unpack_r4 {
 #define QPU_COND_ADD_MASK               QPU_MASK(51, 49)
 #define QPU_COND_MUL_SHIFT              46
 #define QPU_COND_MUL_MASK               QPU_MASK(48, 46)
+
+
+#define QPU_BRANCH_COND_SHIFT           52
+#define QPU_BRANCH_COND_MASK            QPU_MASK(55, 52)
+
+#define QPU_BRANCH_REL                  ((uint64_t)1 << 51)
+#define QPU_BRANCH_REG                  ((uint64_t)1 << 50)
+
+#define QPU_BRANCH_RADDR_A_SHIFT        45
+#define QPU_BRANCH_RADDR_A_MASK         QPU_MASK(49, 45)
 
 #define QPU_SF                          ((uint64_t)1 << 45)
 
@@ -254,6 +292,10 @@ enum qpu_unpack_r4 {
 #define QPU_RADDR_B_MASK                QPU_MASK(17, 12)
 #define QPU_SMALL_IMM_SHIFT             12
 #define QPU_SMALL_IMM_MASK              QPU_MASK(17, 12)
+/* Small immediate value for rotate-by-r5, and 49-63 are "rotate by n
+ * channels"
+ */
+#define QPU_SMALL_IMM_MUL_ROT		48
 
 #define QPU_ADD_A_SHIFT                 9
 #define QPU_ADD_A_MASK                  QPU_MASK(11, 9)
@@ -268,5 +310,11 @@ enum qpu_unpack_r4 {
 
 #define QPU_OP_ADD_SHIFT                24
 #define QPU_OP_ADD_MASK                 QPU_MASK(28, 24)
+
+#define QPU_LOAD_IMM_SHIFT              0
+#define QPU_LOAD_IMM_MASK               QPU_MASK(31, 0)
+
+#define QPU_BRANCH_TARGET_SHIFT         0
+#define QPU_BRANCH_TARGET_MASK          QPU_MASK(31, 0)
 
 #endif /* VC4_QPU_DEFINES_H */

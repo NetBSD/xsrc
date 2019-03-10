@@ -75,9 +75,34 @@ indirect_create_context_attribs(struct glx_screen *base,
    return indirect_create_context(base, config_base, shareList, 0);
 }
 
-__thread void *__glX_tls_Context = NULL;
+#ifdef GLX_USE_APPLEGL
+#warning Indirect GLX tests are not built
+extern "C" struct glx_context *
+applegl_create_context(struct glx_screen *base,
+		       struct glx_config *config_base,
+		       struct glx_context *shareList,
+		       int renderType)
+{
+   return indirect_create_context(base, config_base, shareList, renderType);
+}
+#endif
 
-#if defined(HAVE_PTHREAD) && !defined(GLX_USE_TLS)
+/* This is necessary so that we don't have to link with glxcurrent.c
+ * which would require us to link with X libraries and what not.
+ */
+GLubyte dummyBuffer[__GLX_BUFFER_LIMIT_SIZE];
+struct glx_context_vtable dummyVtable;
+struct glx_context dummyContext = {
+   &dummyBuffer[0],
+   &dummyBuffer[0],
+   &dummyBuffer[0],
+   &dummyBuffer[__GLX_BUFFER_LIMIT_SIZE],
+   sizeof(dummyBuffer),
+   &dummyVtable
+};
+__thread void *__glX_tls_Context = &dummyContext;
+
+#if !defined(GLX_USE_TLS)
 extern "C" struct glx_context *
 __glXGetCurrentContext()
 {

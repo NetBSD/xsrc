@@ -41,39 +41,57 @@
 
 
 /**
- * Flip the order of the 2 bytes in each word in the given array.
+ * Flip the order of the 2 bytes in each word in the given array (src) and
+ * store the result in another array (dst). For in-place byte-swapping this
+ * function can be called with the same array for src and dst.
  *
- * \param p array.
+ * \param dst the array where byte-swapped data will be stored.
+ * \param src the array with the source data we want to byte-swap.
  * \param n number of words.
  */
-void
-_mesa_swap2( GLushort *p, GLuint n )
+static void
+swap2_copy( GLushort *dst, GLushort *src, GLuint n )
 {
    GLuint i;
    for (i = 0; i < n; i++) {
-      p[i] = (p[i] >> 8) | ((p[i] << 8) & 0xff00);
+      dst[i] = (src[i] >> 8) | ((src[i] << 8) & 0xff00);
    }
 }
 
-
+void
+_mesa_swap2(GLushort *p, GLuint n)
+{
+   swap2_copy(p, p, n);
+}
 
 /*
- * Flip the order of the 4 bytes in each word in the given array.
+ * Flip the order of the 4 bytes in each word in the given array (src) and
+ * store the result in another array (dst). For in-place byte-swapping this
+ * function can be called with the same array for src and dst.
+ *
+ * \param dst the array where byte-swapped data will be stored.
+ * \param src the array with the source data we want to byte-swap.
+ * \param n number of words.
  */
-void
-_mesa_swap4( GLuint *p, GLuint n )
+static void
+swap4_copy( GLuint *dst, GLuint *src, GLuint n )
 {
    GLuint i, a, b;
    for (i = 0; i < n; i++) {
-      b = p[i];
+      b = src[i];
       a =  (b >> 24)
 	| ((b >> 8) & 0xff00)
 	| ((b << 8) & 0xff0000)
 	| ((b << 24) & 0xff000000);
-      p[i] = a;
+      dst[i] = a;
    }
 }
 
+void
+_mesa_swap4(GLuint *p, GLuint n)
+{
+   swap4_copy(p, p, n);
+}
 
 /**
  * Return the byte offset of a specific pixel in an image (1D, 2D or 3D).
@@ -109,7 +127,7 @@ _mesa_image_offset( GLuint dimensions,
    GLint skipimages;       /* for 3-D volume images */
    GLintptr offset;
 
-   ASSERT(dimensions >= 1 && dimensions <= 3);
+   assert(dimensions >= 1 && dimensions <= 3);
 
    alignment = packing->Alignment;
    if (packing->RowLength > 0) {
@@ -133,8 +151,8 @@ _mesa_image_offset( GLuint dimensions,
 
    if (type == GL_BITMAP) {
       /* BITMAP data */
-      GLint bytes_per_row;
-      GLint bytes_per_image;
+      GLintptr bytes_per_row;
+      GLintptr bytes_per_image;
       /* components per pixel for color or stencil index: */
       const GLint comp_per_pixel = 1;
 
@@ -142,7 +160,7 @@ _mesa_image_offset( GLuint dimensions,
       assert(format == GL_COLOR_INDEX || format == GL_STENCIL_INDEX);
 
       bytes_per_row = alignment
-                    * CEILING( comp_per_pixel*pixels_per_row, 8*alignment );
+                    * DIV_ROUND_UP( comp_per_pixel*pixels_per_row, 8*alignment );
 
       bytes_per_image = bytes_per_row * rows_per_image;
 
@@ -152,8 +170,8 @@ _mesa_image_offset( GLuint dimensions,
    }
    else {
       /* Non-BITMAP data */
-      GLint bytes_per_pixel, bytes_per_row, remainder, bytes_per_image;
-      GLint topOfImage;
+      GLintptr bytes_per_pixel, bytes_per_row, remainder, bytes_per_image;
+      GLintptr topOfImage;
 
       bytes_per_pixel = _mesa_bytes_per_pixel( format, type );
 
@@ -165,7 +183,7 @@ _mesa_image_offset( GLuint dimensions,
       if (remainder > 0)
          bytes_per_row += (alignment - remainder);
 
-      ASSERT(bytes_per_row % alignment == 0);
+      assert(bytes_per_row % alignment == 0);
 
       bytes_per_image = bytes_per_row * rows_per_image;
 
@@ -279,7 +297,7 @@ _mesa_image_row_stride( const struct gl_pixelstore_attrib *packing,
 {
    GLint bytesPerRow, remainder;
 
-   ASSERT(packing);
+   assert(packing);
 
    if (type == GL_BITMAP) {
       if (packing->RowLength == 0) {
@@ -327,7 +345,7 @@ _mesa_image_image_stride( const struct gl_pixelstore_attrib *packing,
 {
    GLint bytesPerRow, bytesPerImage, remainder;
 
-   ASSERT(packing);
+   assert(packing);
 
    if (type == GL_BITMAP) {
       if (packing->RowLength == 0) {
@@ -390,9 +408,7 @@ _mesa_expand_bitmap(GLsizei width, GLsizei height,
    const GLint srcStride = _mesa_image_row_stride(unpack, width,
                                                   GL_COLOR_INDEX, GL_BITMAP);
    GLint row, col;
-
-#define SET_PIXEL(COL, ROW) \
-   destBuffer[(ROW) * destStride + (COL)] = onValue;
+   GLubyte *dstRow = destBuffer;
 
    for (row = 0; row < height; row++) {
       const GLubyte *src = srcRow;
@@ -403,7 +419,7 @@ _mesa_expand_bitmap(GLsizei width, GLsizei height,
          for (col = 0; col < width; col++) {
 
             if (*src & mask) {
-               SET_PIXEL(col, row);
+               dstRow[col] = onValue;
             }
 
             if (mask == 128U) {
@@ -425,7 +441,7 @@ _mesa_expand_bitmap(GLsizei width, GLsizei height,
          for (col = 0; col < width; col++) {
 
             if (*src & mask) {
-               SET_PIXEL(col, row);
+               dstRow[col] = onValue;
             }
 
             if (mask == 1U) {
@@ -443,9 +459,8 @@ _mesa_expand_bitmap(GLsizei width, GLsizei height,
       }
 
       srcRow += srcStride;
+      dstRow += destStride;
    } /* row */
-
-#undef SET_PIXEL
 }
 
 
@@ -467,7 +482,7 @@ _mesa_convert_colors(GLenum srcType, const GLvoid *src,
    if (!tempBuffer)
       return;
 
-   ASSERT(srcType != dstType);
+   assert(srcType != dstType);
 
    switch (srcType) {
    case GL_UNSIGNED_BYTE:
@@ -490,7 +505,7 @@ _mesa_convert_colors(GLenum srcType, const GLvoid *src,
          const GLubyte (*src1)[4] = (const GLubyte (*)[4]) src;
          GLfloat (*dst4)[4] = (GLfloat (*)[4]) (useTemp ? tempBuffer : dst);
          GLuint i;
-         ASSERT(dstType == GL_FLOAT);
+         assert(dstType == GL_FLOAT);
          for (i = 0; i < count; i++) {
             if (!mask || mask[i]) {
                dst4[i][RCOMP] = UBYTE_TO_FLOAT(src1[i][RCOMP]);
@@ -523,7 +538,7 @@ _mesa_convert_colors(GLenum srcType, const GLvoid *src,
          const GLushort (*src2)[4] = (const GLushort (*)[4]) src;
          GLfloat (*dst4)[4] = (GLfloat (*)[4]) (useTemp ? tempBuffer : dst);
          GLuint i;
-         ASSERT(dstType == GL_FLOAT);
+         assert(dstType == GL_FLOAT);
          for (i = 0; i < count; i++) {
             if (!mask || mask[i]) {
                dst4[i][RCOMP] = USHORT_TO_FLOAT(src2[i][RCOMP]);
@@ -552,7 +567,7 @@ _mesa_convert_colors(GLenum srcType, const GLvoid *src,
          const GLfloat (*src4)[4] = (const GLfloat (*)[4]) src;
          GLushort (*dst2)[4] = (GLushort (*)[4]) (useTemp ? tempBuffer : dst);
          GLuint i;
-         ASSERT(dstType == GL_UNSIGNED_SHORT);
+         assert(dstType == GL_UNSIGNED_SHORT);
          for (i = 0; i < count; i++) {
             if (!mask || mask[i]) {
                UNCLAMPED_FLOAT_TO_USHORT(dst2[i][RCOMP], src4[i][RCOMP]);
@@ -566,7 +581,7 @@ _mesa_convert_colors(GLenum srcType, const GLvoid *src,
       }
       break;
    default:
-      _mesa_problem(NULL, "Invalid datatype in _mesa_convert_colors");
+      unreachable("Invalid datatype in _mesa_convert_colors");
    }
 
    free(tempBuffer);
@@ -598,8 +613,8 @@ _mesa_clip_drawpixels(const struct gl_context *ctx,
       unpack->RowLength = *width;
    }
 
-   ASSERT(ctx->Pixel.ZoomX == 1.0F);
-   ASSERT(ctx->Pixel.ZoomY == 1.0F || ctx->Pixel.ZoomY == -1.0F);
+   assert(ctx->Pixel.ZoomX == 1.0F);
+   assert(ctx->Pixel.ZoomY == 1.0F || ctx->Pixel.ZoomY == -1.0F);
 
    /* left clipping */
    if (*destX < buffer->_Xmin) {
@@ -652,7 +667,7 @@ _mesa_clip_drawpixels(const struct gl_context *ctx,
  * so that the image region is entirely within the window bounds.
  * Note: this is different from _mesa_clip_drawpixels() in that the
  * scissor box is ignored, and we use the bounds of the current readbuffer
- * surface.
+ * surface or the attached image.
  *
  * \return  GL_TRUE if region to read is in bounds
  *          GL_FALSE if region is completely out of bounds (nothing to read)
@@ -664,6 +679,18 @@ _mesa_clip_readpixels(const struct gl_context *ctx,
                       struct gl_pixelstore_attrib *pack)
 {
    const struct gl_framebuffer *buffer = ctx->ReadBuffer;
+   struct gl_renderbuffer *rb = buffer->_ColorReadBuffer;
+   GLsizei clip_width;
+   GLsizei clip_height;
+
+   if (rb) {
+      clip_width = rb->Width;
+      clip_height = rb->Height;
+   } else {
+      clip_width = buffer->Width;
+      clip_height = buffer->Height;
+   }
+
 
    if (pack->RowLength == 0) {
       pack->RowLength = *width;
@@ -676,8 +703,8 @@ _mesa_clip_readpixels(const struct gl_context *ctx,
       *srcX = 0;
    }
    /* right clipping */
-   if (*srcX + *width > (GLsizei) buffer->Width)
-      *width -= (*srcX + *width - buffer->Width);
+   if (*srcX + *width > clip_width)
+      *width -= (*srcX + *width - clip_width);
 
    if (*width <= 0)
       return GL_FALSE;
@@ -689,8 +716,8 @@ _mesa_clip_readpixels(const struct gl_context *ctx,
       *srcY = 0;
    }
    /* top clipping */
-   if (*srcY + *height > (GLsizei) buffer->Height)
-      *height -= (*srcY + *height - buffer->Height);
+   if (*srcY + *height > clip_height)
+      *height -= (*srcY + *height - clip_height);
 
    if (*height <= 0)
       return GL_FALSE;
@@ -783,20 +810,20 @@ clip_right_or_top(GLint *srcX0, GLint *srcX1,
 
    if (*dstX1 > maxValue) {
       /* X1 outside right edge */
-      ASSERT(*dstX0 < maxValue); /* X0 should be inside right edge */
+      assert(*dstX0 < maxValue); /* X0 should be inside right edge */
       t = (GLfloat) (maxValue - *dstX0) / (GLfloat) (*dstX1 - *dstX0);
       /* chop off [t, 1] part */
-      ASSERT(t >= 0.0 && t <= 1.0);
+      assert(t >= 0.0 && t <= 1.0);
       *dstX1 = maxValue;
       bias = (*srcX0 < *srcX1) ? 0.5F : -0.5F;
       *srcX1 = *srcX0 + (GLint) (t * (*srcX1 - *srcX0) + bias);
    }
    else if (*dstX0 > maxValue) {
       /* X0 outside right edge */
-      ASSERT(*dstX1 < maxValue); /* X1 should be inside right edge */
+      assert(*dstX1 < maxValue); /* X1 should be inside right edge */
       t = (GLfloat) (maxValue - *dstX1) / (GLfloat) (*dstX0 - *dstX1);
       /* chop off [t, 1] part */
-      ASSERT(t >= 0.0 && t <= 1.0);
+      assert(t >= 0.0 && t <= 1.0);
       *dstX0 = maxValue;
       bias = (*srcX0 < *srcX1) ? -0.5F : 0.5F;
       *srcX0 = *srcX1 + (GLint) (t * (*srcX0 - *srcX1) + bias);
@@ -816,20 +843,20 @@ clip_left_or_bottom(GLint *srcX0, GLint *srcX1,
 
    if (*dstX0 < minValue) {
       /* X0 outside left edge */
-      ASSERT(*dstX1 > minValue); /* X1 should be inside left edge */
+      assert(*dstX1 > minValue); /* X1 should be inside left edge */
       t = (GLfloat) (minValue - *dstX0) / (GLfloat) (*dstX1 - *dstX0);
       /* chop off [0, t] part */
-      ASSERT(t >= 0.0 && t <= 1.0);
+      assert(t >= 0.0 && t <= 1.0);
       *dstX0 = minValue;
       bias = (*srcX0 < *srcX1) ? 0.5F : -0.5F;
       *srcX0 = *srcX0 + (GLint) (t * (*srcX1 - *srcX0) + bias);
    }
    else if (*dstX1 < minValue) {
       /* X1 outside left edge */
-      ASSERT(*dstX0 > minValue); /* X0 should be inside left edge */
+      assert(*dstX0 > minValue); /* X0 should be inside left edge */
       t = (GLfloat) (minValue - *dstX1) / (GLfloat) (*dstX0 - *dstX1);
       /* chop off [0, t] part */
-      ASSERT(t >= 0.0 && t <= 1.0);
+      assert(t >= 0.0 && t <= 1.0);
       *dstX1 = minValue;
       bias = (*srcX0 < *srcX1) ? -0.5F : 0.5F;
       *srcX1 = *srcX1 + (GLint) (t * (*srcX0 - *srcX1) + bias);
@@ -852,19 +879,21 @@ clip_left_or_bottom(GLint *srcX0, GLint *srcX1,
  */
 GLboolean
 _mesa_clip_blit(struct gl_context *ctx,
+                const struct gl_framebuffer *readFb,
+                const struct gl_framebuffer *drawFb,
                 GLint *srcX0, GLint *srcY0, GLint *srcX1, GLint *srcY1,
                 GLint *dstX0, GLint *dstY0, GLint *dstX1, GLint *dstY1)
 {
    const GLint srcXmin = 0;
-   const GLint srcXmax = ctx->ReadBuffer->Width;
+   const GLint srcXmax = readFb->Width;
    const GLint srcYmin = 0;
-   const GLint srcYmax = ctx->ReadBuffer->Height;
+   const GLint srcYmax = readFb->Height;
 
    /* these include scissor bounds */
-   const GLint dstXmin = ctx->DrawBuffer->_Xmin;
-   const GLint dstXmax = ctx->DrawBuffer->_Xmax;
-   const GLint dstYmin = ctx->DrawBuffer->_Ymin;
-   const GLint dstYmax = ctx->DrawBuffer->_Ymax;
+   const GLint dstXmin = drawFb->_Xmin;
+   const GLint dstXmax = drawFb->_Xmax;
+   const GLint dstYmin = drawFb->_Ymin;
+   const GLint dstYmax = drawFb->_Ymax;
 
    /*
    printf("PreClipX:  src: %d .. %d  dst: %d .. %d\n",
@@ -925,25 +954,64 @@ _mesa_clip_blit(struct gl_context *ctx,
           *srcY0, *srcY1, *dstY0, *dstY1);
    */
 
-   ASSERT(*dstX0 >= dstXmin);
-   ASSERT(*dstX0 <= dstXmax);
-   ASSERT(*dstX1 >= dstXmin);
-   ASSERT(*dstX1 <= dstXmax);
+   assert(*dstX0 >= dstXmin);
+   assert(*dstX0 <= dstXmax);
+   assert(*dstX1 >= dstXmin);
+   assert(*dstX1 <= dstXmax);
 
-   ASSERT(*dstY0 >= dstYmin);
-   ASSERT(*dstY0 <= dstYmax);
-   ASSERT(*dstY1 >= dstYmin);
-   ASSERT(*dstY1 <= dstYmax);
+   assert(*dstY0 >= dstYmin);
+   assert(*dstY0 <= dstYmax);
+   assert(*dstY1 >= dstYmin);
+   assert(*dstY1 <= dstYmax);
 
-   ASSERT(*srcX0 >= srcXmin);
-   ASSERT(*srcX0 <= srcXmax);
-   ASSERT(*srcX1 >= srcXmin);
-   ASSERT(*srcX1 <= srcXmax);
+   assert(*srcX0 >= srcXmin);
+   assert(*srcX0 <= srcXmax);
+   assert(*srcX1 >= srcXmin);
+   assert(*srcX1 <= srcXmax);
 
-   ASSERT(*srcY0 >= srcYmin);
-   ASSERT(*srcY0 <= srcYmax);
-   ASSERT(*srcY1 >= srcYmin);
-   ASSERT(*srcY1 <= srcYmax);
+   assert(*srcY0 >= srcYmin);
+   assert(*srcY0 <= srcYmax);
+   assert(*srcY1 >= srcYmin);
+   assert(*srcY1 <= srcYmax);
 
    return GL_TRUE;
+}
+
+/**
+ * Swap the bytes in a 2D image.
+ *
+ * using the packing information this swaps the bytes
+ * according to the format and type of data being input.
+ * It takes into a/c various packing parameters like
+ * Alignment and RowLength.
+ */
+void
+_mesa_swap_bytes_2d_image(GLenum format, GLenum type,
+                          const struct gl_pixelstore_attrib *packing,
+                          GLsizei width, GLsizei height,
+                          GLvoid *dst, const GLvoid *src)
+{
+   GLint swapSize = _mesa_sizeof_packed_type(type);
+
+   assert(packing->SwapBytes);
+
+   if (swapSize == 2 || swapSize == 4) {
+      int swapsPerPixel = _mesa_bytes_per_pixel(format, type) / swapSize;
+      int stride = _mesa_image_row_stride(packing, width, format, type);
+      int row;
+      uint8_t *dstrow;
+      const uint8_t *srcrow;
+      assert(swapsPerPixel > 0);
+      assert(_mesa_bytes_per_pixel(format, type) % swapSize == 0);
+      dstrow = dst;
+      srcrow = src;
+      for (row = 0; row < height; row++) {
+         if (swapSize == 2)
+            swap2_copy((GLushort *)dstrow, (GLushort *)srcrow, width * swapsPerPixel);
+         else if (swapSize == 4)
+            swap4_copy((GLuint *)dstrow, (GLuint *)srcrow, width * swapsPerPixel);
+         dstrow += stride;
+         srcrow += stride;
+      }
+   }
 }

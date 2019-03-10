@@ -246,6 +246,12 @@ lp_build_coord_repeat_npot_linear_int(struct lp_build_sample_context *bld,
    mask = lp_build_compare(int_coord_bld->gallivm, int_coord_bld->type,
                            PIPE_FUNC_LESS, *coord0_i, int_coord_bld->zero);
    *coord0_i = lp_build_select(int_coord_bld, mask, length_minus_one, *coord0_i);
+   /*
+    * We should never get values too large - except if coord was nan or inf,
+    * in which case things go terribly wrong...
+    * Alternatively, could use fract_safe above...
+    */
+   *coord0_i = lp_build_min(int_coord_bld, *coord0_i, length_minus_one);
 }
 
 
@@ -490,6 +496,10 @@ lp_build_sample_wrap_linear_float(struct lp_build_sample_context *bld,
          *coord1 = lp_build_add(coord_bld, coord, half);
          coord = lp_build_sub(coord_bld, coord, half);
          *weight = lp_build_fract(coord_bld, coord);
+         /*
+          * It is important for this comparison to be unordered
+          * (or need fract_safe above).
+          */
          mask = lp_build_compare(coord_bld->gallivm, coord_bld->type,
                                  PIPE_FUNC_LESS, coord, coord_bld->zero);
          *coord0 = lp_build_select(coord_bld, mask, length_minus_one, coord);
@@ -514,7 +524,8 @@ lp_build_sample_wrap_linear_float(struct lp_build_sample_context *bld,
          coord = lp_build_sub(coord_bld, coord, half);
       }
       /* clamp to [0, length - 1] */
-      coord = lp_build_min(coord_bld, coord, length_minus_one);
+      coord = lp_build_min_ext(coord_bld, coord, length_minus_one,
+                               GALLIVM_NAN_RETURN_OTHER_SECOND_NONNAN);
       coord = lp_build_max(coord_bld, coord, coord_bld->zero);
       *coord1 = lp_build_add(coord_bld, coord, coord_bld->one);
       /* convert to int, compute lerp weight */
@@ -568,10 +579,12 @@ lp_build_sample_fetch_image_nearest(struct lp_build_sample_context *bld,
    LLVMValueRef rgba8;
    struct lp_build_context u8n;
    LLVMTypeRef u8n_vec_type;
+   struct lp_type fetch_type;
 
    lp_build_context_init(&u8n, bld->gallivm, lp_type_unorm(8, bld->vector_width));
    u8n_vec_type = lp_build_vec_type(bld->gallivm, u8n.type);
 
+   fetch_type = lp_type_uint(bld->texel_type.width);
    if (util_format_is_rgba8_variant(bld->format_desc)) {
       /*
        * Given the format is a rgba8, just read the pixels as is,
@@ -580,7 +593,8 @@ lp_build_sample_fetch_image_nearest(struct lp_build_sample_context *bld,
       rgba8 = lp_build_gather(bld->gallivm,
                               bld->texel_type.length,
                               bld->format_desc->block.bits,
-                              bld->texel_type.width,
+                              fetch_type,
+                              TRUE,
                               data_ptr, offset, TRUE);
 
       rgba8 = LLVMBuildBitCast(builder, rgba8, u8n_vec_type, "");
@@ -589,9 +603,11 @@ lp_build_sample_fetch_image_nearest(struct lp_build_sample_context *bld,
       rgba8 = lp_build_fetch_rgba_aos(bld->gallivm,
                                       bld->format_desc,
                                       u8n.type,
+                                      TRUE,
                                       data_ptr, offset,
                                       x_subcoord,
-                                      y_subcoord);
+                                      y_subcoord,
+                                      bld->cache);
    }
 
    *colors = rgba8;
@@ -704,9 +720,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
          offset = lp_build_add(&bld->int_coord_bld, offset, z_offset);
       }
    }
-   if (bld->static_texture_state->target == PIPE_TEXTURE_CUBE ||
-       bld->static_texture_state->target == PIPE_TEXTURE_1D_ARRAY ||
-       bld->static_texture_state->target == PIPE_TEXTURE_2D_ARRAY) {
+   if (has_layer_coord(bld->static_texture_state->target)) {
       LLVMValueRef z_offset;
       /* The r coord is the cube face in [0,5] or array layer */
       z_offset = lp_build_mul(&bld->int_coord_bld, r, img_stride_vec);
@@ -781,9 +795,7 @@ lp_build_sample_image_nearest_afloat(struct lp_build_sample_context *bld,
                                             &z_icoord);
       }
    }
-   if (bld->static_texture_state->target == PIPE_TEXTURE_CUBE ||
-       bld->static_texture_state->target == PIPE_TEXTURE_1D_ARRAY ||
-       bld->static_texture_state->target == PIPE_TEXTURE_2D_ARRAY) {
+   if (has_layer_coord(bld->static_texture_state->target)) {
       z_icoord = r;
    }
 
@@ -915,14 +927,17 @@ lp_build_sample_fetch_image_linear(struct lp_build_sample_context *bld,
             LLVMValueRef rgba8;
 
             if (util_format_is_rgba8_variant(bld->format_desc)) {
+               struct lp_type fetch_type;
                /*
                 * Given the format is a rgba8, just read the pixels as is,
                 * without any swizzling. Swizzling will be done later.
                 */
+               fetch_type = lp_type_uint(bld->texel_type.width);
                rgba8 = lp_build_gather(bld->gallivm,
                                        bld->texel_type.length,
                                        bld->format_desc->block.bits,
-                                       bld->texel_type.width,
+                                       fetch_type,
+                                       TRUE,
                                        data_ptr, offset[k][j][i], TRUE);
 
                rgba8 = LLVMBuildBitCast(builder, rgba8, u8n_vec_type, "");
@@ -931,9 +946,11 @@ lp_build_sample_fetch_image_linear(struct lp_build_sample_context *bld,
                rgba8 = lp_build_fetch_rgba_aos(bld->gallivm,
                                                bld->format_desc,
                                                u8n.type,
+                                               TRUE,
                                                data_ptr, offset[k][j][i],
                                                x_subcoord[i],
-                                               y_subcoord[j]);
+                                               y_subcoord[j],
+                                               bld->cache);
             }
 
             neighbors[k][j][i] = rgba8;
@@ -1130,9 +1147,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                                    &x_subcoord[0], &x_subcoord[1]);
 
    /* add potential cube/array/mip offsets now as they are constant per pixel */
-   if (bld->static_texture_state->target == PIPE_TEXTURE_CUBE ||
-       bld->static_texture_state->target == PIPE_TEXTURE_1D_ARRAY ||
-       bld->static_texture_state->target == PIPE_TEXTURE_2D_ARRAY) {
+   if (has_layer_coord(bld->static_texture_state->target)) {
       LLVMValueRef z_offset;
       z_offset = lp_build_mul(&bld->int_coord_bld, r, img_stride_vec);
       /* The r coord is the cube face in [0,5] or array layer */
@@ -1301,9 +1316,7 @@ lp_build_sample_image_linear_afloat(struct lp_build_sample_context *bld,
                                   &x_offset1, &x_subcoord[1]);
 
    /* add potential cube/array/mip offsets now as they are constant per pixel */
-   if (bld->static_texture_state->target == PIPE_TEXTURE_CUBE ||
-       bld->static_texture_state->target == PIPE_TEXTURE_1D_ARRAY ||
-       bld->static_texture_state->target == PIPE_TEXTURE_2D_ARRAY) {
+   if (has_layer_coord(bld->static_texture_state->target)) {
       LLVMValueRef z_offset;
       z_offset = lp_build_mul(&bld->int_coord_bld, r, img_stride_vec);
       /* The r coord is the cube face in [0,5] or array layer */
@@ -1400,6 +1413,9 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
    LLVMValueRef mipoff1 = NULL;
    LLVMValueRef colors0;
    LLVMValueRef colors1;
+   boolean use_floats = util_cpu_caps.has_avx &&
+                        !util_cpu_caps.has_avx2 &&
+                        bld->coord_type.length > 4;
 
    /* sample the first mipmap level */
    lp_build_mipmap_level_sizes(bld, ilevel0,
@@ -1414,7 +1430,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
       mipoff0 = lp_build_get_mip_offsets(bld, ilevel0);
    }
 
-   if (util_cpu_caps.has_avx && bld->coord_type.length > 4) {
+   if (use_floats) {
       if (img_filter == PIPE_TEX_FILTER_NEAREST) {
          lp_build_sample_image_nearest_afloat(bld,
                                               size0,
@@ -1505,7 +1521,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
             mipoff1 = lp_build_get_mip_offsets(bld, ilevel1);
          }
 
-         if (util_cpu_caps.has_avx && bld->coord_type.length > 4) {
+         if (use_floats) {
             if (img_filter == PIPE_TEX_FILTER_NEAREST) {
                lp_build_sample_image_nearest_afloat(bld,
                                                     size1,

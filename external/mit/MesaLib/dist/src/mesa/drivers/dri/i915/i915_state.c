@@ -34,6 +34,7 @@
 #include "main/dd.h"
 #include "main/state.h"
 #include "main/stencil.h"
+#include "main/viewport.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 
@@ -126,7 +127,7 @@ i915_update_stencil(struct gl_context * ctx)
                  S5_STENCIL_PASS_Z_PASS_SHIFT));
 
    /* Set back state if different from front. */
-   if (ctx->Stencil._TestTwoSide) {
+   if (_mesa_stencil_is_two_sided(ctx)) {
       set_ctx_bits(I915_CTXREG_BF_STENCIL_OPS,
                    BFO_STENCIL_REF_MASK |
                    BFO_STENCIL_TEST_MASK |
@@ -196,9 +197,9 @@ i915AlphaFunc(struct gl_context * ctx, GLenum func, GLfloat ref)
 }
 
 /* This function makes sure that the proper enables are
- * set for LogicOp, Independant Alpha Blend, and Blending.
+ * set for LogicOp, Independent Alpha Blend, and Blending.
  * It needs to be called from numerous places where we
- * could change the LogicOp or Independant Alpha Blend without subsequent
+ * could change the LogicOp or Independent Alpha Blend without subsequent
  * calls to glEnable.
  */
 static void
@@ -240,7 +241,7 @@ i915BlendColor(struct gl_context * ctx, const GLfloat color[4])
    GLubyte r, g, b, a;
    GLuint dw;
 
-   DBG("%s\n", __FUNCTION__);
+   DBG("%s\n", __func__);
    
    UNCLAMPED_FLOAT_TO_UBYTE(r, color[RCOMP]);
    UNCLAMPED_FLOAT_TO_UBYTE(g, color[GCOMP]);
@@ -356,7 +357,7 @@ i915DepthFunc(struct gl_context * ctx, GLenum func)
    int test = intel_translate_compare_func(func);
    GLuint dw;
 
-   DBG("%s\n", __FUNCTION__);
+   DBG("%s\n", __func__);
    
    dw = i915->state.Ctx[I915_CTXREG_LIS6];
    dw &= ~S6_DEPTH_TEST_FUNC_MASK;
@@ -373,7 +374,7 @@ i915DepthMask(struct gl_context * ctx, GLboolean flag)
    struct i915_context *i915 = I915_CONTEXT(ctx);
    GLuint dw;
 
-   DBG("%s flag (%d)\n", __FUNCTION__, flag);
+   DBG("%s flag (%d)\n", __func__, flag);
 
    if (!ctx->DrawBuffer || !ctx->DrawBuffer->Visual.depthBits)
       flag = false;
@@ -401,26 +402,17 @@ void
 intelCalcViewport(struct gl_context * ctx)
 {
    struct intel_context *intel = intel_context(ctx);
+   float scale[3], translate[3];
+
+   _mesa_get_viewport_xform(ctx, 0, scale, translate);
 
    if (_mesa_is_winsys_fbo(ctx->DrawBuffer)) {
-      _math_matrix_viewport(&intel->ViewportMatrix,
-			    ctx->ViewportArray[0].X,
-			    ctx->DrawBuffer->Height - ctx->ViewportArray[0].Y,
-			    ctx->ViewportArray[0].Width,
-			    -ctx->ViewportArray[0].Height,
-			    ctx->ViewportArray[0].Near,
-			    ctx->ViewportArray[0].Far,
-			    1.0);
-   } else {
-      _math_matrix_viewport(&intel->ViewportMatrix,
-			    ctx->ViewportArray[0].X,
-			    ctx->ViewportArray[0].Y,
-			    ctx->ViewportArray[0].Width,
-			    ctx->ViewportArray[0].Height,
-			    ctx->ViewportArray[0].Near,
-			    ctx->ViewportArray[0].Far,
-			    1.0);
+      scale[1] = -scale[1];
+      translate[1] = ctx->DrawBuffer->Height - translate[1];
    }
+
+   _math_matrix_viewport(&intel->ViewportMatrix,
+                         scale, translate, 1.0);
 }
 
 
@@ -509,7 +501,7 @@ i915Scissor(struct gl_context * ctx)
    if (!ctx->DrawBuffer)
       return;
 
-   DBG("%s %d,%d %dx%d\n", __FUNCTION__,
+   DBG("%s %d,%d %dx%d\n", __func__,
        ctx->Scissor.ScissorArray[0].X,     ctx->Scissor.ScissorArray[0].Y,
        ctx->Scissor.ScissorArray[0].Width, ctx->Scissor.ScissorArray[0].Height);
 
@@ -520,7 +512,7 @@ i915Scissor(struct gl_context * ctx)
       x2 = ctx->Scissor.ScissorArray[0].X
          + ctx->Scissor.ScissorArray[0].Width - 1;
       y2 = y1 + ctx->Scissor.ScissorArray[0].Height - 1;
-      DBG("%s %d..%d,%d..%d (inverted)\n", __FUNCTION__, x1, x2, y1, y2);
+      DBG("%s %d..%d,%d..%d (inverted)\n", __func__, x1, x2, y1, y2);
    }
    else {
       /* FBO - not inverted
@@ -531,7 +523,7 @@ i915Scissor(struct gl_context * ctx)
          + ctx->Scissor.ScissorArray[0].Width - 1;
       y2 = ctx->Scissor.ScissorArray[0].Y
          + ctx->Scissor.ScissorArray[0].Height - 1;
-      DBG("%s %d..%d,%d..%d (not inverted)\n", __FUNCTION__, x1, x2, y1, y2);
+      DBG("%s %d..%d,%d..%d (not inverted)\n", __func__, x1, x2, y1, y2);
    }
    
    x1 = CLAMP(x1, 0, ctx->DrawBuffer->Width - 1);
@@ -539,7 +531,7 @@ i915Scissor(struct gl_context * ctx)
    x2 = CLAMP(x2, 0, ctx->DrawBuffer->Width - 1);
    y2 = CLAMP(y2, 0, ctx->DrawBuffer->Height - 1);
    
-   DBG("%s %d..%d,%d..%d (clamped)\n", __FUNCTION__, x1, x2, y1, y2);
+   DBG("%s %d..%d,%d..%d (clamped)\n", __func__, x1, x2, y1, y2);
 
    I915_STATECHANGE(i915, I915_UPLOAD_BUFFERS);
    i915->state.Buffer[I915_DESTREG_SR1] = (y1 << 16) | (x1 & 0xffff);
@@ -547,16 +539,16 @@ i915Scissor(struct gl_context * ctx)
 }
 
 static void
-i915LogicOp(struct gl_context * ctx, GLenum opcode)
+i915LogicOp(struct gl_context * ctx, enum gl_logicop_mode opcode)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
-   int tmp = intel_translate_logic_op(opcode);
 
-   DBG("%s\n", __FUNCTION__);
-   
+   DBG("%s\n", __func__);
+
+   assert((unsigned)opcode <= 15);
    I915_STATECHANGE(i915, I915_UPLOAD_CTX);
    i915->state.Ctx[I915_CTXREG_STATE4] &= ~LOGICOP_MASK;
-   i915->state.Ctx[I915_CTXREG_STATE4] |= LOGIC_OP_FUNC(tmp);
+   i915->state.Ctx[I915_CTXREG_STATE4] |= LOGIC_OP_FUNC(opcode);
 }
 
 
@@ -567,7 +559,7 @@ i915CullFaceFrontFace(struct gl_context * ctx, GLenum unused)
    struct i915_context *i915 = I915_CONTEXT(ctx);
    GLuint mode, dw;
 
-   DBG("%s %d\n", __FUNCTION__,
+   DBG("%s %d\n", __func__,
        ctx->DrawBuffer ? ctx->DrawBuffer->Name : 0);
 
    if (!ctx->Polygon.CullFlag) {
@@ -603,7 +595,7 @@ i915LineWidth(struct gl_context * ctx, GLfloat widthf)
    int lis4 = i915->state.Ctx[I915_CTXREG_LIS4] & ~S4_LINE_WIDTH_MASK;
    int width;
 
-   DBG("%s\n", __FUNCTION__);
+   DBG("%s\n", __func__);
    
    width = (int) (widthf * 2);
    width = CLAMP(width, 1, 0xf);
@@ -622,7 +614,7 @@ i915PointSize(struct gl_context * ctx, GLfloat size)
    int lis4 = i915->state.Ctx[I915_CTXREG_LIS4] & ~S4_POINT_WIDTH_MASK;
    GLint point_size = (int) round(size);
 
-   DBG("%s\n", __FUNCTION__);
+   DBG("%s\n", __func__);
    
    point_size = CLAMP(point_size, 1, 255);
    lis4 |= point_size << S4_POINT_WIDTH_SHIFT;
@@ -658,20 +650,17 @@ i915_update_sprite_point_enable(struct gl_context *ctx)
    /* _NEW_PROGRAM */
    struct i915_fragment_program *p =
       (struct i915_fragment_program *) ctx->FragmentProgram._Current;
-   const GLbitfield64 inputsRead = p->FragProg.Base.InputsRead;
+   const GLbitfield64 inputsRead = p->FragProg.info.inputs_read;
    struct i915_context *i915 = i915_context(ctx);
    GLuint s4 = i915->state.Ctx[I915_CTXREG_LIS4] & ~S4_VFMT_MASK;
-   int i;
    GLuint coord_replace_bits = 0x0;
-   GLuint tex_coord_unit_bits = 0x0;
 
-   for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
-      /* _NEW_POINT */
-      if (ctx->Point.CoordReplace[i] && ctx->Point.PointSprite)
-         coord_replace_bits |= (1 << i);
-      if (inputsRead & VARYING_BIT_TEX(i))
-         tex_coord_unit_bits |= (1 << i);
-   }
+   /* _NEW_POINT */
+   if (ctx->Point.PointSprite)
+      coord_replace_bits = ctx->Point.CoordReplace;
+
+   GLuint tex_coord_unit_bits =
+      (GLuint)((inputsRead & VARYING_BITS_TEX_ANY) >> VARYING_SLOT_TEX0);
 
    /*
     * Here we can't enable the SPRITE_POINT_ENABLE bit when the mis-match
@@ -705,7 +694,7 @@ i915ColorMask(struct gl_context * ctx,
    struct i915_context *i915 = I915_CONTEXT(ctx);
    GLuint tmp = i915->state.Ctx[I915_CTXREG_LIS5] & ~S5_WRITEDISABLE_MASK;
 
-   DBG("%s r(%d) g(%d) b(%d) a(%d)\n", __FUNCTION__, r, g, b,
+   DBG("%s r(%d) g(%d) b(%d) a(%d)\n", __func__, r, g, b,
        a);
 
    if (!r)
@@ -734,7 +723,7 @@ update_specular(struct gl_context * ctx)
 static void
 i915LightModelfv(struct gl_context * ctx, GLenum pname, const GLfloat * param)
 {
-   DBG("%s\n", __FUNCTION__);
+   DBG("%s\n", __func__);
    
    if (pname == GL_LIGHT_MODEL_COLOR_CONTROL) {
       update_specular(ctx);
@@ -936,11 +925,12 @@ i915_init_packets(struct i915_context *i915)
        * piece changes.
        */
       i915->state.Ctx[I915_CTXREG_LI] = (_3DSTATE_LOAD_STATE_IMMEDIATE_1 |
-                                         I1_LOAD_S(2) |
-                                         I1_LOAD_S(4) |
-                                         I1_LOAD_S(5) | I1_LOAD_S(6) | (3));
+                                         I1_LOAD_S(2) | I1_LOAD_S(3) |
+                                         I1_LOAD_S(4) | I1_LOAD_S(5) |
+                                         I1_LOAD_S(6) | (4));
       i915->state.Ctx[I915_CTXREG_LIS2] = 0;
       i915->state.Ctx[I915_CTXREG_LIS4] = 0;
+      i915->state.Ctx[I915_CTXREG_LIS3] = 0;
       i915->state.Ctx[I915_CTXREG_LIS5] = 0;
 
       if (i915->intel.ctx.Visual.rgbBits == 16)
@@ -988,11 +978,11 @@ i915_init_packets(struct i915_context *i915)
       i915->state.Buffer[I915_DESTREG_DV0] = _3DSTATE_DST_BUF_VARS_CMD;
 
       /* scissor */
-      i915->state.Buffer[I915_DESTREG_SENABLE] =
-         (_3DSTATE_SCISSOR_ENABLE_CMD | DISABLE_SCISSOR_RECT);
       i915->state.Buffer[I915_DESTREG_SR0] = _3DSTATE_SCISSOR_RECT_0_CMD;
       i915->state.Buffer[I915_DESTREG_SR1] = 0;
       i915->state.Buffer[I915_DESTREG_SR2] = 0;
+      i915->state.Buffer[I915_DESTREG_SENABLE] =
+         (_3DSTATE_SCISSOR_ENABLE_CMD | DISABLE_SCISSOR_RECT);
    }
 
    i915->state.RasterRules[I915_RASTER_RULES] = _3DSTATE_RASTER_RULES_CMD |

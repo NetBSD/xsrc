@@ -29,7 +29,7 @@
  * ushorts, uints, etc.
  */
 
-
+#include <stdio.h>
 #include "glheader.h"
 #include "imports.h"
 #include "blend.h"
@@ -44,6 +44,7 @@
 #include "renderbuffer.h"
 #include "texobj.h"
 #include "glformats.h"
+#include "state.h"
 
 
 
@@ -130,7 +131,7 @@ _mesa_initialize_window_framebuffer(struct gl_framebuffer *fb,
 
    memset(fb, 0, sizeof(struct gl_framebuffer));
 
-   mtx_init(&fb->Mutex, mtx_plain);
+   simple_mtx_init(&fb->Mutex, mtx_plain);
 
    fb->RefCount = 1;
 
@@ -157,6 +158,12 @@ _mesa_initialize_window_framebuffer(struct gl_framebuffer *fb,
    fb->_Status = GL_FRAMEBUFFER_COMPLETE_EXT;
    fb->_AllColorBuffersFixedPoint = !visual->floatMode;
    fb->_HasSNormOrFloatColorBuffer = visual->floatMode;
+   fb->_HasAttachments = true;
+   fb->FlipY = true;
+
+   fb->SampleLocationTable = NULL;
+   fb->ProgrammableSampleLocations = 0;
+   fb->SampleLocationPixelGrid = 0;
 
    compute_depth_max(fb);
 }
@@ -181,8 +188,11 @@ _mesa_initialize_user_framebuffer(struct gl_framebuffer *fb, GLuint name)
    fb->_ColorDrawBufferIndexes[0] = BUFFER_COLOR0;
    fb->ColorReadBuffer = GL_COLOR_ATTACHMENT0_EXT;
    fb->_ColorReadBufferIndex = BUFFER_COLOR0;
+   fb->SampleLocationTable = NULL;
+   fb->ProgrammableSampleLocations = 0;
+   fb->SampleLocationPixelGrid = 0;
    fb->Delete = _mesa_destroy_framebuffer;
-   mtx_init(&fb->Mutex, mtx_plain);
+   simple_mtx_init(&fb->Mutex, mtx_plain);
 }
 
 
@@ -208,14 +218,12 @@ _mesa_destroy_framebuffer(struct gl_framebuffer *fb)
 void
 _mesa_free_framebuffer_data(struct gl_framebuffer *fb)
 {
-   GLuint i;
-
    assert(fb);
    assert(fb->RefCount == 0);
 
-   mtx_destroy(&fb->Mutex);
+   simple_mtx_destroy(&fb->Mutex);
 
-   for (i = 0; i < BUFFER_COUNT; i++) {
+   for (unsigned i = 0; i < BUFFER_COUNT; i++) {
       struct gl_renderbuffer_attachment *att = &fb->Attachment[i];
       if (att->Renderbuffer) {
          _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
@@ -223,10 +231,13 @@ _mesa_free_framebuffer_data(struct gl_framebuffer *fb)
       if (att->Texture) {
          _mesa_reference_texobj(&att->Texture, NULL);
       }
-      ASSERT(!att->Renderbuffer);
-      ASSERT(!att->Texture);
+      assert(!att->Renderbuffer);
+      assert(!att->Texture);
       att->Type = GL_NONE;
    }
+
+   free(fb->SampleLocationTable);
+   fb->SampleLocationTable = NULL;
 }
 
 
@@ -244,23 +255,22 @@ _mesa_reference_framebuffer_(struct gl_framebuffer **ptr,
       GLboolean deleteFlag = GL_FALSE;
       struct gl_framebuffer *oldFb = *ptr;
 
-      mtx_lock(&oldFb->Mutex);
-      ASSERT(oldFb->RefCount > 0);
+      simple_mtx_lock(&oldFb->Mutex);
+      assert(oldFb->RefCount > 0);
       oldFb->RefCount--;
       deleteFlag = (oldFb->RefCount == 0);
-      mtx_unlock(&oldFb->Mutex);
-      
+      simple_mtx_unlock(&oldFb->Mutex);
+
       if (deleteFlag)
          oldFb->Delete(oldFb);
 
       *ptr = NULL;
    }
-   assert(!*ptr);
 
    if (fb) {
-      mtx_lock(&fb->Mutex);
+      simple_mtx_lock(&fb->Mutex);
       fb->RefCount++;
-      mtx_unlock(&fb->Mutex);
+      simple_mtx_unlock(&fb->Mutex);
       *ptr = fb;
    }
 }
@@ -270,8 +280,7 @@ _mesa_reference_framebuffer_(struct gl_framebuffer **ptr,
  * Resize the given framebuffer's renderbuffers to the new width and height.
  * This should only be used for window-system framebuffers, not
  * user-created renderbuffers (i.e. made with GL_EXT_framebuffer_object).
- * This will typically be called via ctx->Driver.ResizeBuffers() or directly
- * from a device driver.
+ * This will typically be called directly from a device driver.
  *
  * \note it's possible for ctx to be null since a window can be resized
  * without a currently bound rendering context.
@@ -280,8 +289,6 @@ void
 _mesa_resize_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
                          GLuint width, GLuint height)
 {
-   GLuint i;
-
    /* XXX I think we could check if the size is not changing
     * and return early.
     */
@@ -289,15 +296,15 @@ _mesa_resize_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
    /* Can only resize win-sys framebuffer objects */
    assert(_mesa_is_winsys_fbo(fb));
 
-   for (i = 0; i < BUFFER_COUNT; i++) {
+   for (unsigned i = 0; i < BUFFER_COUNT; i++) {
       struct gl_renderbuffer_attachment *att = &fb->Attachment[i];
       if (att->Type == GL_RENDERBUFFER_EXT && att->Renderbuffer) {
          struct gl_renderbuffer *rb = att->Renderbuffer;
          /* only resize if size is changing */
          if (rb->Width != width || rb->Height != height) {
             if (rb->AllocStorage(ctx, rb, rb->InternalFormat, width, height)) {
-               ASSERT(rb->Width == width);
-               ASSERT(rb->Height == height);
+               assert(rb->Width == width);
+               assert(rb->Height == height);
             }
             else {
                _mesa_error(ctx, GL_OUT_OF_MEMORY, "Resizing framebuffer");
@@ -312,7 +319,7 @@ _mesa_resize_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
 
    if (ctx) {
       /* update scissor / window bounds */
-      _mesa_update_draw_buffer_bounds(ctx);
+      _mesa_update_draw_buffer_bounds(ctx, ctx->DrawBuffer);
       /* Signal new buffer state so that swrast will update its clipping
        * info (the CLIP_BIT flag).
        */
@@ -321,65 +328,18 @@ _mesa_resize_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
 }
 
 /**
- * Examine all the framebuffer's renderbuffers to update the Width/Height
- * fields of the framebuffer.  If we have renderbuffers with different
- * sizes, set the framebuffer's width and height to the min size.
- * Note: this is only intended for user-created framebuffers, not
- * window-system framebuffes.
- */
-static void
-update_framebuffer_size(struct gl_context *ctx, struct gl_framebuffer *fb)
-{
-   GLuint minWidth = ~0, minHeight = ~0;
-   GLuint i;
-
-   /* user-created framebuffers only */
-   assert(_mesa_is_user_fbo(fb));
-
-   for (i = 0; i < BUFFER_COUNT; i++) {
-      struct gl_renderbuffer_attachment *att = &fb->Attachment[i];
-      const struct gl_renderbuffer *rb = att->Renderbuffer;
-      if (rb) {
-         minWidth = MIN2(minWidth, rb->Width);
-         minHeight = MIN2(minHeight, rb->Height);
-      }
-   }
-
-   if (minWidth != ~0) {
-      fb->Width = minWidth;
-      fb->Height = minHeight;
-   }
-   else {
-      fb->Width = 0;
-      fb->Height = 0;
-   }
-}
-
-
-/**
- * Calculate the inclusive bounding box for the scissor of a specific viewport
+ * Given a bounding box, intersect the bounding box with the scissor of
+ * a specified vieport.
  *
  * \param ctx     GL context.
- * \param buffer  Framebuffer to be checked against
  * \param idx     Index of the desired viewport
  * \param bbox    Bounding box for the scissored viewport.  Stored as xmin,
  *                xmax, ymin, ymax.
- *
- * \warning This function assumes that the framebuffer dimensions are up to
- * date (e.g., update_framebuffer_size has been recently called on \c buffer).
- *
- * \sa _mesa_clip_to_region
  */
 void
-_mesa_scissor_bounding_box(const struct gl_context *ctx,
-                           const struct gl_framebuffer *buffer,
-                           unsigned idx, int *bbox)
+_mesa_intersect_scissor_bounding_box(const struct gl_context *ctx,
+                                     unsigned idx, int *bbox)
 {
-   bbox[0] = 0;
-   bbox[2] = 0;
-   bbox[1] = buffer->Width;
-   bbox[3] = buffer->Height;
-
    if (ctx->Scissor.EnableFlags & (1u << idx)) {
       if (ctx->Scissor.ScissorArray[idx].X > bbox[0]) {
          bbox[0] = ctx->Scissor.ScissorArray[idx].X;
@@ -401,9 +361,36 @@ _mesa_scissor_bounding_box(const struct gl_context *ctx,
          bbox[2] = bbox[3];
       }
    }
+}
 
-   ASSERT(bbox[0] <= bbox[1]);
-   ASSERT(bbox[2] <= bbox[3]);
+/**
+ * Calculate the inclusive bounding box for the scissor of a specific viewport
+ *
+ * \param ctx     GL context.
+ * \param buffer  Framebuffer to be checked against
+ * \param idx     Index of the desired viewport
+ * \param bbox    Bounding box for the scissored viewport.  Stored as xmin,
+ *                xmax, ymin, ymax.
+ *
+ * \warning This function assumes that the framebuffer dimensions are up to
+ * date.
+ *
+ * \sa _mesa_clip_to_region
+ */
+static void
+scissor_bounding_box(const struct gl_context *ctx,
+                     const struct gl_framebuffer *buffer,
+                     unsigned idx, int *bbox)
+{
+   bbox[0] = 0;
+   bbox[2] = 0;
+   bbox[1] = buffer->Width;
+   bbox[3] = buffer->Height;
+
+   _mesa_intersect_scissor_bounding_box(ctx, idx, bbox);
+
+   assert(bbox[0] <= bbox[1]);
+   assert(bbox[2] <= bbox[3]);
 }
 
 /**
@@ -413,21 +400,16 @@ _mesa_scissor_bounding_box(const struct gl_context *ctx,
  * \param ctx  the GL context.
  */
 void
-_mesa_update_draw_buffer_bounds(struct gl_context *ctx)
+_mesa_update_draw_buffer_bounds(struct gl_context *ctx,
+                                struct gl_framebuffer *buffer)
 {
-   struct gl_framebuffer *buffer = ctx->DrawBuffer;
    int bbox[4];
 
    if (!buffer)
       return;
 
-   if (_mesa_is_user_fbo(buffer)) {
-      /* user-created framebuffer size depends on the renderbuffers */
-      update_framebuffer_size(ctx, buffer);
-   }
-
    /* Default to the first scissor as that's always valid */
-   _mesa_scissor_bounding_box(ctx, buffer, 0, bbox);
+   scissor_bounding_box(ctx, buffer, 0, bbox);
    buffer->_Xmin = bbox[0];
    buffer->_Ymin = bbox[2];
    buffer->_Xmax = bbox[1];
@@ -452,20 +434,11 @@ void
 _mesa_update_framebuffer_visual(struct gl_context *ctx,
 				struct gl_framebuffer *fb)
 {
-   GLuint i;
-
    memset(&fb->Visual, 0, sizeof(fb->Visual));
    fb->Visual.rgbMode = GL_TRUE; /* assume this */
 
-#if 0 /* this _might_ be needed */
-   if (fb->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-      /* leave visual fields zero'd */
-      return;
-   }
-#endif
-
    /* find first RGB renderbuffer */
-   for (i = 0; i < BUFFER_COUNT; i++) {
+   for (unsigned i = 0; i < BUFFER_COUNT; i++) {
       if (fb->Attachment[i].Renderbuffer) {
          const struct gl_renderbuffer *rb = fb->Attachment[i].Renderbuffer;
          const GLenum baseFormat = _mesa_get_format_base_format(rb->Format);
@@ -493,7 +466,7 @@ _mesa_update_framebuffer_visual(struct gl_context *ctx,
    }
 
    fb->Visual.floatMode = GL_FALSE;
-   for (i = 0; i < BUFFER_COUNT; i++) {
+   for (unsigned i = 0; i < BUFFER_COUNT; i++) {
       if (fb->Attachment[i].Renderbuffer) {
          const struct gl_renderbuffer *rb = fb->Attachment[i].Renderbuffer;
          const mesa_format fmt = rb->Format;
@@ -587,7 +560,7 @@ _mesa_update_framebuffer_visual(struct gl_context *ctx,
  * writing colors.
  */
 static void
-update_color_draw_buffers(struct gl_context *ctx, struct gl_framebuffer *fb)
+update_color_draw_buffers(struct gl_framebuffer *fb)
 {
    GLuint output;
 
@@ -595,8 +568,8 @@ update_color_draw_buffers(struct gl_context *ctx, struct gl_framebuffer *fb)
    fb->_ColorDrawBuffers[0] = NULL;
 
    for (output = 0; output < fb->_NumColorDrawBuffers; output++) {
-      GLint buf = fb->_ColorDrawBufferIndexes[output];
-      if (buf >= 0) {
+      gl_buffer_index buf = fb->_ColorDrawBufferIndexes[output];
+      if (buf != BUFFER_NONE) {
          fb->_ColorDrawBuffers[output] = fb->Attachment[buf].Renderbuffer;
       }
       else {
@@ -611,18 +584,17 @@ update_color_draw_buffers(struct gl_context *ctx, struct gl_framebuffer *fb)
  * Unlike the DrawBuffer, we can only read from one (or zero) color buffers.
  */
 static void
-update_color_read_buffer(struct gl_context *ctx, struct gl_framebuffer *fb)
+update_color_read_buffer(struct gl_framebuffer *fb)
 {
-   (void) ctx;
-   if (fb->_ColorReadBufferIndex == -1 ||
+   if (fb->_ColorReadBufferIndex == BUFFER_NONE ||
        fb->DeletePending ||
        fb->Width == 0 ||
        fb->Height == 0) {
       fb->_ColorReadBuffer = NULL; /* legal! */
    }
    else {
-      ASSERT(fb->_ColorReadBufferIndex >= 0);
-      ASSERT(fb->_ColorReadBufferIndex < BUFFER_COUNT);
+      assert(fb->_ColorReadBufferIndex >= 0);
+      assert(fb->_ColorReadBufferIndex < BUFFER_COUNT);
       fb->_ColorReadBuffer
          = fb->Attachment[fb->_ColorReadBufferIndex].Renderbuffer;
    }
@@ -652,8 +624,14 @@ update_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
        * context state (GL_READ_BUFFER too).
        */
       if (fb->ColorDrawBuffer[0] != ctx->Color.DrawBuffer[0]) {
-         _mesa_drawbuffers(ctx, ctx->Const.MaxDrawBuffers,
+         _mesa_drawbuffers(ctx, fb, ctx->Const.MaxDrawBuffers,
                            ctx->Color.DrawBuffer, NULL);
+      }
+
+      /* Call device driver function if fb is the bound draw buffer. */
+      if (fb == ctx->DrawBuffer) {
+         if (ctx->Driver.DrawBufferAllocate)
+            ctx->Driver.DrawBufferAllocate(ctx);
       }
    }
    else {
@@ -670,32 +648,29 @@ update_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
     * read-state if this FB is bound as ctx->DrawBuffer), but no
     * harm.
     */
-   update_color_draw_buffers(ctx, fb);
-   update_color_read_buffer(ctx, fb);
+   update_color_draw_buffers(fb);
+   update_color_read_buffer(fb);
 
    compute_depth_max(fb);
 }
 
 
 /**
- * Update state related to the current draw/read framebuffers.
+ * Update state related to the draw/read framebuffers.
  */
 void
-_mesa_update_framebuffer(struct gl_context *ctx)
+_mesa_update_framebuffer(struct gl_context *ctx,
+                         struct gl_framebuffer *readFb,
+                         struct gl_framebuffer *drawFb)
 {
-   struct gl_framebuffer *drawFb;
-   struct gl_framebuffer *readFb;
-
    assert(ctx);
-   drawFb = ctx->DrawBuffer;
-   readFb = ctx->ReadBuffer;
 
    update_framebuffer(ctx, drawFb);
    if (readFb != drawFb)
       update_framebuffer(ctx, readFb);
 
-   _mesa_update_clamp_vertex_color(ctx);
-   _mesa_update_clamp_fragment_color(ctx);
+   _mesa_update_clamp_vertex_color(ctx, drawFb);
+   _mesa_update_clamp_fragment_color(ctx, drawFb);
 }
 
 
@@ -756,7 +731,7 @@ renderbuffer_exists(struct gl_context *ctx,
          if (!readBuf) {
             return GL_FALSE;
          }
-         ASSERT(_mesa_get_format_bits(readBuf->Format, GL_RED_BITS) > 0 ||
+         assert(_mesa_get_format_bits(readBuf->Format, GL_RED_BITS) > 0 ||
                 _mesa_get_format_bits(readBuf->Format, GL_ALPHA_BITS) > 0 ||
                 _mesa_get_format_bits(readBuf->Format, GL_TEXTURE_LUMINANCE_SIZE) > 0 ||
                 _mesa_get_format_bits(readBuf->Format, GL_TEXTURE_INTENSITY_SIZE) > 0 ||
@@ -822,73 +797,136 @@ _mesa_dest_buffer_exists(struct gl_context *ctx, GLenum format)
 
 
 /**
- * Used to answer the GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES query.
+ * Used to answer the GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES queries (using
+ * GetIntegerv, GetFramebufferParameteriv, etc)
+ *
+ * If @fb is NULL, the method returns the value for the current bound
+ * framebuffer.
  */
 GLenum
-_mesa_get_color_read_format(struct gl_context *ctx)
+_mesa_get_color_read_format(struct gl_context *ctx,
+                            struct gl_framebuffer *fb,
+                            const char *caller)
 {
-   if (!ctx->ReadBuffer || !ctx->ReadBuffer->_ColorReadBuffer) {
-      /* The spec is unclear how to handle this case, but NVIDIA's
-       * driver generates GL_INVALID_OPERATION.
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
+
+   if (fb == NULL)
+      fb = ctx->ReadBuffer;
+
+   if (!fb || !fb->_ColorReadBuffer) {
+      /*
+       * From OpenGL 4.5 spec, section 18.2.2 "ReadPixels":
+       *
+       *    "An INVALID_OPERATION error is generated by GetIntegerv if pname
+       *     is IMPLEMENTATION_COLOR_READ_FORMAT or IMPLEMENTATION_COLOR_-
+       *     READ_TYPE and any of:
+       *      * the read framebuffer is not framebuffer complete.
+       *      * the read framebuffer is a framebuffer object, and the selected
+       *        read buffer (see section 18.2.1) has no image attached.
+       *      * the selected read buffer is NONE."
+       *
+       * There is not equivalent quote for GetFramebufferParameteriv or
+       * GetNamedFramebufferParameteriv, but from section 9.2.3 "Framebuffer
+       * Object Queries":
+       *
+       *    "Values of framebuffer-dependent state are identical to those that
+       *     would be obtained were the framebuffer object bound and queried
+       *     using the simple state queries in that table."
+       *
+       * Where "using the simple state queries" refer to use GetIntegerv. So
+       * we will assume that on that situation the same error should be
+       * triggered too.
        */
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT: "
-                  "no GL_READ_BUFFER)");
+                  "%s(GL_IMPLEMENTATION_COLOR_READ_FORMAT: no GL_READ_BUFFER)",
+                  caller);
       return GL_NONE;
    }
    else {
-      const GLenum format = ctx->ReadBuffer->_ColorReadBuffer->Format;
-      const GLenum data_type = _mesa_get_format_datatype(format);
+      const mesa_format format = fb->_ColorReadBuffer->Format;
 
-      if (format == MESA_FORMAT_B8G8R8A8_UNORM)
-         return GL_BGRA;
-      else if (format == MESA_FORMAT_B5G6R5_UNORM)
-         return GL_BGR;
-
-      switch (data_type) {
-      case GL_UNSIGNED_INT:
-      case GL_INT:
+      switch (format) {
+      case MESA_FORMAT_RGBA_UINT8:
          return GL_RGBA_INTEGER;
+      case MESA_FORMAT_B8G8R8A8_UNORM:
+         return GL_BGRA;
+      case MESA_FORMAT_B5G6R5_UNORM:
+      case MESA_FORMAT_R11G11B10_FLOAT:
+         return GL_RGB;
+      case MESA_FORMAT_RG_FLOAT32:
+      case MESA_FORMAT_RG_FLOAT16:
+      case MESA_FORMAT_R8G8_UNORM:
+      case MESA_FORMAT_R8G8_SNORM:
+         return GL_RG;
+      case MESA_FORMAT_RG_SINT32:
+      case MESA_FORMAT_RG_UINT32:
+      case MESA_FORMAT_RG_SINT16:
+      case MESA_FORMAT_RG_UINT16:
+      case MESA_FORMAT_RG_SINT8:
+      case MESA_FORMAT_RG_UINT8:
+         return GL_RG_INTEGER;
+      case MESA_FORMAT_R_FLOAT32:
+      case MESA_FORMAT_R_FLOAT16:
+      case MESA_FORMAT_R_UNORM16:
+      case MESA_FORMAT_R_UNORM8:
+      case MESA_FORMAT_R_SNORM16:
+      case MESA_FORMAT_R_SNORM8:
+         return GL_RED;
+      case MESA_FORMAT_R_SINT32:
+      case MESA_FORMAT_R_UINT32:
+      case MESA_FORMAT_R_SINT16:
+      case MESA_FORMAT_R_UINT16:
+      case MESA_FORMAT_R_SINT8:
+      case MESA_FORMAT_R_UINT8:
+         return GL_RED_INTEGER;
       default:
-         return GL_RGBA;
+         break;
       }
+
+      if (_mesa_is_format_integer(format))
+         return GL_RGBA_INTEGER;
+      else
+         return GL_RGBA;
    }
 }
 
 
 /**
- * Used to answer the GL_IMPLEMENTATION_COLOR_READ_TYPE_OES query.
+ * Used to answer the GL_IMPLEMENTATION_COLOR_READ_TYPE_OES queries (using
+ * GetIntegerv, GetFramebufferParameteriv, etc)
+ *
+ * If @fb is NULL, the method returns the value for the current bound
+ * framebuffer.
  */
 GLenum
-_mesa_get_color_read_type(struct gl_context *ctx)
+_mesa_get_color_read_type(struct gl_context *ctx,
+                          struct gl_framebuffer *fb,
+                          const char *caller)
 {
-   if (!ctx->ReadBuffer || !ctx->ReadBuffer->_ColorReadBuffer) {
-      /* The spec is unclear how to handle this case, but NVIDIA's
-       * driver generates GL_INVALID_OPERATION.
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
+
+   if (fb == NULL)
+      fb = ctx->ReadBuffer;
+
+   if (!fb || !fb->_ColorReadBuffer) {
+      /*
+       * See comment on _mesa_get_color_read_format
        */
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE: "
-                  "no GL_READ_BUFFER)");
+                  "%s(GL_IMPLEMENTATION_COLOR_READ_TYPE: no GL_READ_BUFFER)",
+                  caller);
       return GL_NONE;
    }
    else {
-      const GLenum format = ctx->ReadBuffer->_ColorReadBuffer->Format;
-      const GLenum data_type = _mesa_get_format_datatype(format);
+      const mesa_format format = fb->_ColorReadBuffer->Format;
+      GLenum data_type;
+      GLuint comps;
 
-      if (format == MESA_FORMAT_B5G6R5_UNORM)
-         return GL_UNSIGNED_SHORT_5_6_5_REV;
+      _mesa_uncompressed_format_to_type_and_comps(format, &data_type, &comps);
 
-      switch (data_type) {
-      case GL_SIGNED_NORMALIZED:
-         return GL_BYTE;
-      case GL_UNSIGNED_INT:
-      case GL_INT:
-      case GL_FLOAT:
-         return data_type;
-      case GL_UNSIGNED_NORMALIZED:
-      default:
-         return GL_UNSIGNED_BYTE;
-      }
+      return data_type;
    }
 }
 
@@ -919,14 +957,12 @@ _mesa_get_read_renderbuffer_for_format(const struct gl_context *ctx,
 void
 _mesa_print_framebuffer(const struct gl_framebuffer *fb)
 {
-   GLuint i;
-
    fprintf(stderr, "Mesa Framebuffer %u at %p\n", fb->Name, (void *) fb);
    fprintf(stderr, "  Size: %u x %u  Status: %s\n", fb->Width, fb->Height,
-           _mesa_lookup_enum_by_nr(fb->_Status));
+           _mesa_enum_to_string(fb->_Status));
    fprintf(stderr, "  Attachments:\n");
 
-   for (i = 0; i < BUFFER_COUNT; i++) {
+   for (unsigned i = 0; i < BUFFER_COUNT; i++) {
       const struct gl_renderbuffer_attachment *att = &fb->Attachment[i];
       if (att->Type == GL_TEXTURE) {
          const struct gl_texture_image *texImage = att->Renderbuffer->TexImage;
@@ -949,4 +985,67 @@ _mesa_print_framebuffer(const struct gl_framebuffer *fb)
          fprintf(stderr, "  %2d: none\n", i);
       }
    }
+}
+
+bool
+_mesa_is_front_buffer_reading(const struct gl_framebuffer *fb)
+{
+   if (!fb || _mesa_is_user_fbo(fb))
+      return false;
+
+   return fb->_ColorReadBufferIndex == BUFFER_FRONT_LEFT;
+}
+
+bool
+_mesa_is_front_buffer_drawing(const struct gl_framebuffer *fb)
+{
+   if (!fb || _mesa_is_user_fbo(fb))
+      return false;
+
+   return (fb->_NumColorDrawBuffers >= 1 &&
+           fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT);
+}
+
+static inline GLuint
+_mesa_geometric_nonvalidated_samples(const struct gl_framebuffer *buffer)
+{
+   return buffer->_HasAttachments ?
+      buffer->Visual.samples :
+      buffer->DefaultGeometry.NumSamples;
+}
+
+bool
+_mesa_is_multisample_enabled(const struct gl_context *ctx)
+{
+   /* The sample count may not be validated by the driver, but when it is set,
+    * we know that is in a valid range and no driver should ever validate a
+    * multisampled framebuffer to non-multisampled and vice-versa.
+    */
+   return ctx->Multisample.Enabled &&
+          ctx->DrawBuffer &&
+          _mesa_geometric_nonvalidated_samples(ctx->DrawBuffer) >= 1;
+}
+
+/**
+ * Is alpha testing enabled and applicable to the currently bound
+ * framebuffer?
+ */
+bool
+_mesa_is_alpha_test_enabled(const struct gl_context *ctx)
+{
+   bool buffer0_is_integer = ctx->DrawBuffer->_IntegerBuffers & 0x1;
+   return (ctx->Color.AlphaEnabled && !buffer0_is_integer);
+}
+
+/**
+ * Is alpha to coverage enabled and applicable to the currently bound
+ * framebuffer?
+ */
+bool
+_mesa_is_alpha_to_coverage_enabled(const struct gl_context *ctx)
+{
+   bool buffer0_is_integer = ctx->DrawBuffer->_IntegerBuffers & 0x1;
+   return (ctx->Multisample.SampleAlphaToCoverage &&
+           _mesa_is_multisample_enabled(ctx) &&
+           !buffer0_is_integer);
 }

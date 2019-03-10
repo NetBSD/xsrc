@@ -37,14 +37,13 @@
 
 #include "pipe/p_compiler.h" /* for boolean */
 #include "pipe/p_format.h"
-
+#include "state_tracker/winsys_handle.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 
-struct winsys_handle;
 struct pipe_screen;
 struct pipe_context;
 struct pipe_resource;
@@ -90,6 +89,7 @@ struct sw_winsys
                             enum pipe_format format,
                             unsigned width, unsigned height,
                             unsigned alignment,
+                            const void *front_private,
                             unsigned *stride );
 
    /**

@@ -30,13 +30,11 @@
 
 
 #include "glheader.h"
-#include "colormac.h"
 #include "context.h"
 #include "enums.h"
 #include "feedback.h"
 #include "macros.h"
 #include "mtypes.h"
-#include "main/dispatch.h"
 
 
 #define FB_3D		0x01
@@ -90,7 +88,7 @@ _mesa_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer )
    ctx->Feedback.Type = type;
    ctx->Feedback.BufferSize = size;
    ctx->Feedback.Buffer = buffer;
-   ctx->Feedback.Count = 0;	              /* Becaues of this. */
+   ctx->Feedback.Count = 0;	              /* Because of this. */
 }
 
 
@@ -416,7 +414,7 @@ _mesa_RenderMode( GLenum mode )
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glRenderMode %s\n", _mesa_lookup_enum_by_nr(mode));
+      _mesa_debug(ctx, "glRenderMode %s\n", _mesa_enum_to_string(mode));
 
    FLUSH_VERTICES(ctx, _NEW_RENDERMODE);
 

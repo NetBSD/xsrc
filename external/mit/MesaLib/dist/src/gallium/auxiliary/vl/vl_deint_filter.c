@@ -47,6 +47,7 @@
 #include "util/u_draw.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_format.h"
 
 #include "vl_types.h"
 #include "vl_video_buffer.h"
@@ -66,7 +67,7 @@ create_vert_shader(struct vl_deint_filter *filter)
    struct ureg_src i_vpos;
    struct ureg_dst o_vpos, o_vtex;
 
-   shader = ureg_create(TGSI_PROCESSOR_VERTEX);
+   shader = ureg_create(PIPE_SHADER_VERTEX);
    if (!shader)
       return NULL;
 
@@ -91,7 +92,7 @@ create_copy_frag_shader(struct vl_deint_filter *filter, unsigned field)
    struct ureg_dst o_fragment;
    struct ureg_dst t_tex;
 
-   shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+   shader = ureg_create(PIPE_SHADER_FRAGMENT);
    if (!shader) {
       return NULL;
    }
@@ -135,7 +136,7 @@ create_deint_frag_shader(struct vl_deint_filter *filter, unsigned field,
    struct ureg_dst t_a, t_b;
    struct ureg_dst t_weave, t_linear;
 
-   shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+   shader = ureg_create(PIPE_SHADER_FRAGMENT);
    if (!shader) {
       return NULL;
    }
@@ -172,21 +173,21 @@ create_deint_frag_shader(struct vl_deint_filter *filter, unsigned field,
       // cur vs prev2
       ureg_TEX(shader, t_a, TGSI_TEXTURE_2D_ARRAY, ureg_src(t_comp_bot), sampler_cur);
       ureg_TEX(shader, t_b, TGSI_TEXTURE_2D_ARRAY, ureg_src(t_comp_bot), sampler_prevprev);
-      ureg_SUB(shader, ureg_writemask(t_diff, TGSI_WRITEMASK_X), ureg_src(t_a), ureg_src(t_b));
+      ureg_ADD(shader, ureg_writemask(t_diff, TGSI_WRITEMASK_X), ureg_src(t_a), ureg_negate(ureg_src(t_b)));
       // prev vs next
       ureg_TEX(shader, t_a, TGSI_TEXTURE_2D_ARRAY, ureg_src(t_comp_top), sampler_prev);
       ureg_TEX(shader, t_b, TGSI_TEXTURE_2D_ARRAY, ureg_src(t_comp_top), sampler_next);
-      ureg_SUB(shader, ureg_writemask(t_diff, TGSI_WRITEMASK_Y), ureg_src(t_a), ureg_src(t_b));
+      ureg_ADD(shader, ureg_writemask(t_diff, TGSI_WRITEMASK_Y), ureg_src(t_a), ureg_negate(ureg_src(t_b)));
    } else {
       /* interpolating bottom field -> current field is a top field */
       // cur vs prev2
       ureg_TEX(shader, t_a, TGSI_TEXTURE_2D_ARRAY, ureg_src(t_comp_top), sampler_cur);
       ureg_TEX(shader, t_b, TGSI_TEXTURE_2D_ARRAY, ureg_src(t_comp_top), sampler_prevprev);
-      ureg_SUB(shader, ureg_writemask(t_diff, TGSI_WRITEMASK_X), ureg_src(t_a), ureg_src(t_b));
+      ureg_ADD(shader, ureg_writemask(t_diff, TGSI_WRITEMASK_X), ureg_src(t_a), ureg_negate(ureg_src(t_b)));
       // prev vs next
       ureg_TEX(shader, t_a, TGSI_TEXTURE_2D_ARRAY, ureg_src(t_comp_bot), sampler_prev);
       ureg_TEX(shader, t_b, TGSI_TEXTURE_2D_ARRAY, ureg_src(t_comp_bot), sampler_next);
-      ureg_SUB(shader, ureg_writemask(t_diff, TGSI_WRITEMASK_Y), ureg_src(t_a), ureg_src(t_b));
+      ureg_ADD(shader, ureg_writemask(t_diff, TGSI_WRITEMASK_Y), ureg_src(t_a), ureg_negate(ureg_src(t_b)));
    }
 
    // absolute maximum of differences
@@ -214,8 +215,9 @@ create_deint_frag_shader(struct vl_deint_filter *filter, unsigned field,
             ureg_imm4f(shader, -0.02353f, 0, 0, 0));
    ureg_MUL(shader, ureg_saturate(ureg_writemask(t_diff, TGSI_WRITEMASK_X)),
             ureg_src(t_diff), ureg_imm4f(shader, 31.8750f, 0, 0, 0));
-   ureg_LRP(shader, ureg_writemask(o_fragment, TGSI_WRITEMASK_X), ureg_src(t_diff),
+   ureg_LRP(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_X), ureg_src(t_diff),
             ureg_src(t_linear), ureg_src(t_weave));
+   ureg_MOV(shader, o_fragment, ureg_scalar(ureg_src(t_tex), TGSI_SWIZZLE_X));
 
    ureg_release_temporary(shader, t_tex);
    ureg_release_temporary(shader, t_comp_top);
@@ -253,7 +255,13 @@ vl_deint_filter_init(struct vl_deint_filter *filter, struct pipe_context *pipe,
 
    /* TODO: handle other than 4:2:0 subsampling */
    memset(&templ, 0, sizeof(templ));
-   templ.buffer_format = PIPE_FORMAT_YV12;
+   templ.buffer_format = pipe->screen->get_video_param
+   (
+      pipe->screen,
+      PIPE_VIDEO_PROFILE_UNKNOWN,
+      PIPE_VIDEO_ENTRYPOINT_UNKNOWN,
+      PIPE_VIDEO_CAP_PREFERED_FORMAT
+   );
    templ.chroma_format = PIPE_VIDEO_CHROMA_FORMAT_420;
    templ.width = video_width;
    templ.height = video_height;
@@ -265,16 +273,28 @@ vl_deint_filter_init(struct vl_deint_filter *filter, struct pipe_context *pipe,
    memset(&rs_state, 0, sizeof(rs_state));
    rs_state.half_pixel_center = true;
    rs_state.bottom_edge_rule = true;
-   rs_state.depth_clip = 1;
+   rs_state.depth_clip_near = 1;
+   rs_state.depth_clip_far = 1;
+
    filter->rs_state = pipe->create_rasterizer_state(pipe, &rs_state);
    if (!filter->rs_state)
       goto error_rs_state;
 
    memset(&blend, 0, sizeof blend);
-   blend.rt[0].colormask = PIPE_MASK_RGBA;
-   filter->blend = pipe->create_blend_state(pipe, &blend);
-   if (!filter->blend)
-      goto error_blend;
+   blend.rt[0].colormask = PIPE_MASK_R;
+   filter->blend[0] = pipe->create_blend_state(pipe, &blend);
+   if (!filter->blend[0])
+      goto error_blendR;
+
+   blend.rt[0].colormask = PIPE_MASK_G;
+   filter->blend[1] = pipe->create_blend_state(pipe, &blend);
+   if (!filter->blend[1])
+      goto error_blendG;
+
+   blend.rt[0].colormask = PIPE_MASK_B;
+   filter->blend[2] = pipe->create_blend_state(pipe, &blend);
+   if (!filter->blend[2])
+      goto error_blendB;
 
    memset(&sampler, 0, sizeof(sampler));
    sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
@@ -290,7 +310,7 @@ vl_deint_filter_init(struct vl_deint_filter *filter, struct pipe_context *pipe,
       goto error_sampler;
 
    filter->quad = vl_vb_upload_quads(pipe);
-   if(!filter->quad.buffer)
+   if(!filter->quad.buffer.resource)
       goto error_quad;
 
    memset(&ve, 0, sizeof(ve));
@@ -343,15 +363,21 @@ error_vs:
    pipe->delete_vertex_elements_state(pipe, filter->ves);
 
 error_ves:
-   pipe_resource_reference(&filter->quad.buffer, NULL);
+   pipe_resource_reference(&filter->quad.buffer.resource, NULL);
 
 error_quad:
    pipe->delete_sampler_state(pipe, filter->sampler);
 
 error_sampler:
-   pipe->delete_blend_state(pipe, filter->blend);
+   pipe->delete_blend_state(pipe, filter->blend[2]);
 
-error_blend:
+error_blendB:
+   pipe->delete_blend_state(pipe, filter->blend[1]);
+
+error_blendG:
+   pipe->delete_blend_state(pipe, filter->blend[0]);
+
+error_blendR:
    pipe->delete_rasterizer_state(pipe, filter->rs_state);
 
 error_rs_state:
@@ -367,10 +393,12 @@ vl_deint_filter_cleanup(struct vl_deint_filter *filter)
    assert(filter);
 
    filter->pipe->delete_sampler_state(filter->pipe, filter->sampler[0]);
-   filter->pipe->delete_blend_state(filter->pipe, filter->blend);
+   filter->pipe->delete_blend_state(filter->pipe, filter->blend[0]);
+   filter->pipe->delete_blend_state(filter->pipe, filter->blend[1]);
+   filter->pipe->delete_blend_state(filter->pipe, filter->blend[2]);
    filter->pipe->delete_rasterizer_state(filter->pipe, filter->rs_state);
    filter->pipe->delete_vertex_elements_state(filter->pipe, filter->ves);
-   pipe_resource_reference(&filter->quad.buffer, NULL);
+   pipe_resource_reference(&filter->quad.buffer.resource, NULL);
 
    filter->pipe->delete_vs_state(filter->pipe, filter->vs);
    filter->pipe->delete_fs_state(filter->pipe, filter->fs_copy_top);
@@ -420,12 +448,15 @@ vl_deint_filter_render(struct vl_deint_filter *filter,
    struct pipe_sampler_view **next_sv;
    struct pipe_sampler_view *sampler_views[4];
    struct pipe_surface **dst_surfaces;
-   int j;
+   const unsigned *plane_order;
+   int i;
+   unsigned j;
 
    assert(filter && prevprev && prev && cur && next && field <= 1);
 
    /* set up destination and source */
    dst_surfaces = filter->video_buffer->get_surfaces(filter->video_buffer);
+   plane_order = vl_video_buffer_plane_order(filter->video_buffer->buffer_format);
    cur_sv = cur->get_sampler_view_components(cur);
    prevprev_sv = prevprev->get_sampler_view_components(prevprev);
    prev_sv = prev->get_sampler_view_components(prev);
@@ -433,7 +464,6 @@ vl_deint_filter_render(struct vl_deint_filter *filter,
 
    /* set up pipe state */
    filter->pipe->bind_rasterizer_state(filter->pipe, filter->rs_state);
-   filter->pipe->bind_blend_state(filter->pipe, filter->blend);
    filter->pipe->set_vertex_buffers(filter->pipe, 0, 1, &filter->quad);
    filter->pipe->bind_vertex_elements_state(filter->pipe, filter->ves);
    filter->pipe->bind_vs_state(filter->pipe, filter->vs);
@@ -443,19 +473,19 @@ vl_deint_filter_render(struct vl_deint_filter *filter,
    /* prepare viewport */
    memset(&viewport, 0, sizeof(viewport));
    viewport.scale[2] = 1;
-   viewport.scale[3] = 1;
 
    /* prepare framebuffer */
    memset(&fb_state, 0, sizeof(fb_state));
    fb_state.nr_cbufs = 1;
 
    /* process each plane separately */
-   for (j = 0; j < 3; j++) {
-      /* select correct YV12 surfaces */
-      int k = j == 1 ? 2 :
-              j == 2 ? 1 : 0;
-      struct pipe_surface *blit_surf = dst_surfaces[2 * k + field];
-      struct pipe_surface *dst_surf = dst_surfaces[2 * k + 1 - field];
+   for (i = 0, j = 0; i < VL_NUM_COMPONENTS; ++i) {
+      struct pipe_surface *blit_surf = dst_surfaces[field];
+      struct pipe_surface *dst_surf = dst_surfaces[1 - field];
+      int k = plane_order[i];
+
+      /* bind blend state for this component in the plane */
+      filter->pipe->bind_blend_state(filter->pipe, filter->blend[j]);
 
       /* update render target state */
       viewport.scale[0] = blit_surf->texture->width0;
@@ -464,10 +494,10 @@ vl_deint_filter_render(struct vl_deint_filter *filter,
       fb_state.height = blit_surf->texture->height0;
 
       /* update sampler view sources  */
-      sampler_views[0] = prevprev_sv[j];
-      sampler_views[1] = prev_sv[j];
-      sampler_views[2] = cur_sv[j];
-      sampler_views[3] = next_sv[j];
+      sampler_views[0] = prevprev_sv[k];
+      sampler_views[1] = prev_sv[k];
+      sampler_views[2] = cur_sv[k];
+      sampler_views[3] = next_sv[k];
       filter->pipe->set_sampler_views(filter->pipe, PIPE_SHADER_FRAGMENT, 0, 4, sampler_views);
 
       /* blit current field */
@@ -480,11 +510,16 @@ vl_deint_filter_render(struct vl_deint_filter *filter,
       /* blit or interpolate other field */
       fb_state.cbufs[0] = dst_surf;
       filter->pipe->set_framebuffer_state(filter->pipe, &fb_state);
-      if (j > 0 && filter->skip_chroma) {
+      if (i > 0 && filter->skip_chroma) {
          util_draw_arrays(filter->pipe, PIPE_PRIM_QUADS, 0, 4);
       } else {
          filter->pipe->bind_fs_state(filter->pipe, field ? filter->fs_deint_top : filter->fs_deint_bottom);
          util_draw_arrays(filter->pipe, PIPE_PRIM_QUADS, 0, 4);
+      }
+
+      if (++j >= util_format_get_nr_components(dst_surf->format)) {
+         dst_surfaces += 2;
+         j = 0;
       }
    }
 }

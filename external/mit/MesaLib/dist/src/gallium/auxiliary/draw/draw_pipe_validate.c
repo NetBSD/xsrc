@@ -156,9 +156,10 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
     */
    stage->next = next;
 
-   /* drawing wide lines? */
-   wide_lines = (roundf(rast->line_width) > draw->pipeline.wide_line_threshold
-                 && !rast->line_smooth);
+   /* drawing wide, non-AA lines? */
+   wide_lines = rast->line_width != 1.0f &&
+                roundf(rast->line_width) > draw->pipeline.wide_line_threshold &&
+                !rast->line_smooth;
 
    /* drawing large/sprite points (but not AA points)? */
    if (rast->sprite_coord_enable && draw->pipeline.point_sprite)
@@ -221,7 +222,11 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
       need_det = TRUE;
    }
 
-   if (rast->flatshade && precalc_flat) {
+   if (precalc_flat) {
+      /*
+       * could only run the stage if either rast->flatshade is true
+       * or there's constant interpolated values.
+       */
       draw->pipeline.flatshade->next = next;
       next = draw->pipeline.flatshade;
    }
@@ -322,7 +327,7 @@ static void validate_destroy( struct draw_stage *stage )
 struct draw_stage *draw_validate_stage( struct draw_context *draw )
 {
    struct draw_stage *stage = CALLOC_STRUCT(draw_stage);
-   if (stage == NULL)
+   if (!stage)
       return NULL;
 
    stage->draw = draw;

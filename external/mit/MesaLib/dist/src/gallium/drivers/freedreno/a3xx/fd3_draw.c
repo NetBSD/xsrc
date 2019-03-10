@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2013 Rob Clark <robclark@freedesktop.org>
  *
@@ -39,15 +37,26 @@
 #include "fd3_context.h"
 #include "fd3_emit.h"
 #include "fd3_program.h"
-#include "fd3_util.h"
+#include "fd3_format.h"
 #include "fd3_zsa.h"
 
+static inline uint32_t
+add_sat(uint32_t a, int32_t b)
+{
+	int64_t ret = (uint64_t)a + (int64_t)b;
+	if (ret > ~0U)
+		return ~0U;
+	if (ret < 0)
+		return 0;
+	return (uint32_t)ret;
+}
 
 static void
 draw_impl(struct fd_context *ctx, struct fd_ringbuffer *ring,
-		struct fd3_emit *emit)
+		struct fd3_emit *emit, unsigned index_offset)
 {
 	const struct pipe_draw_info *info = emit->info;
+	enum pc_di_primtype primtype = ctx->primtypes[info->mode];
 
 	fd3_emit_state(ctx, ring, emit);
 
@@ -58,18 +67,24 @@ draw_impl(struct fd_context *ctx, struct fd_ringbuffer *ring,
 	OUT_RING(ring, 0x0000000b);             /* PC_VERTEX_REUSE_BLOCK_CNTL */
 
 	OUT_PKT0(ring, REG_A3XX_VFD_INDEX_MIN, 4);
-	OUT_RING(ring, info->min_index);        /* VFD_INDEX_MIN */
-	OUT_RING(ring, info->max_index);        /* VFD_INDEX_MAX */
+	OUT_RING(ring, add_sat(info->min_index, info->index_bias)); /* VFD_INDEX_MIN */
+	OUT_RING(ring, add_sat(info->max_index, info->index_bias)); /* VFD_INDEX_MAX */
 	OUT_RING(ring, info->start_instance);   /* VFD_INSTANCEID_OFFSET */
-	OUT_RING(ring, info->start);            /* VFD_INDEX_OFFSET */
+	OUT_RING(ring, info->index_size ? info->index_bias : info->start); /* VFD_INDEX_OFFSET */
 
 	OUT_PKT0(ring, REG_A3XX_PC_RESTART_INDEX, 1);
 	OUT_RING(ring, info->primitive_restart ? /* PC_RESTART_INDEX */
 			info->restart_index : 0xffffffff);
 
-	fd_draw_emit(ctx, ring,
-			emit->key.binning_pass ? IGNORE_VISIBILITY : USE_VISIBILITY,
-			info);
+	/* points + psize -> spritelist: */
+	if (ctx->rasterizer->point_size_per_vertex &&
+			fd3_emit_get_vp(emit)->writes_psize &&
+			(info->mode == PIPE_PRIM_POINTS))
+		primtype = DI_PT_POINTLIST_PSIZE;
+
+	fd_draw_emit(ctx->batch, ring, primtype,
+			emit->binning_pass ? IGNORE_VISIBILITY : USE_VISIBILITY,
+			info, index_offset);
 }
 
 /* fixup dirty shader state in case some "unrelated" (from the state-
@@ -83,50 +98,37 @@ fixup_shader_state(struct fd_context *ctx, struct ir3_shader_key *key)
 	struct ir3_shader_key *last_key = &fd3_ctx->last_key;
 
 	if (!ir3_shader_key_equal(last_key, key)) {
-		ctx->dirty |= FD_DIRTY_PROG;
-
-		if (last_key->has_per_samp || key->has_per_samp) {
-			if ((last_key->vsaturate_s != key->vsaturate_s) ||
-					(last_key->vsaturate_t != key->vsaturate_t) ||
-					(last_key->vsaturate_r != key->vsaturate_r))
-				ctx->prog.dirty |= FD_SHADER_DIRTY_VP;
-
-			if ((last_key->fsaturate_s != key->fsaturate_s) ||
-					(last_key->fsaturate_t != key->fsaturate_t) ||
-					(last_key->fsaturate_r != key->fsaturate_r))
-				ctx->prog.dirty |= FD_SHADER_DIRTY_FP;
+		if (ir3_shader_key_changes_fs(last_key, key)) {
+			ctx->dirty_shader[PIPE_SHADER_FRAGMENT] |= FD_DIRTY_SHADER_PROG;
+			ctx->dirty |= FD_DIRTY_PROG;
 		}
 
-		if (last_key->color_two_side != key->color_two_side)
-			ctx->prog.dirty |= FD_SHADER_DIRTY_FP;
-
-		if (last_key->half_precision != key->half_precision)
-			ctx->prog.dirty |= FD_SHADER_DIRTY_FP;
-
-		if (last_key->alpha != key->alpha)
-			ctx->prog.dirty |= FD_SHADER_DIRTY_FP;
+		if (ir3_shader_key_changes_vs(last_key, key)) {
+			ctx->dirty_shader[PIPE_SHADER_VERTEX] |= FD_DIRTY_SHADER_PROG;
+			ctx->dirty |= FD_DIRTY_PROG;
+		}
 
 		fd3_ctx->last_key = *key;
 	}
 }
 
-static void
-fd3_draw(struct fd_context *ctx, const struct pipe_draw_info *info)
+static bool
+fd3_draw_vbo(struct fd_context *ctx, const struct pipe_draw_info *info,
+             unsigned index_offset)
 {
 	struct fd3_context *fd3_ctx = fd3_context(ctx);
 	struct fd3_emit emit = {
+		.debug = &ctx->debug,
 		.vtx  = &ctx->vtx,
 		.prog = &ctx->prog,
 		.info = info,
 		.key = {
-			/* do binning pass first: */
-			.binning_pass = true,
-			.color_two_side = ctx->rasterizer ? ctx->rasterizer->light_twoside : false,
-			.alpha = util_format_is_alpha(pipe_surface_format(ctx->framebuffer.cbufs[0])),
-			// TODO set .half_precision based on render target format,
-			// ie. float16 and smaller use half, float32 use full..
-			.half_precision = !!(fd_mesa_debug & FD_DBG_FRAGHALF),
-			.has_per_samp = fd3_ctx->fsaturate || fd3_ctx->vsaturate,
+			.color_two_side = ctx->rasterizer->light_twoside,
+			.vclamp_color = ctx->rasterizer->clamp_vertex_color,
+			.fclamp_color = ctx->rasterizer->clamp_fragment_color,
+			.half_precision = ctx->in_blit &&
+					fd_half_precision(&ctx->batch->framebuffer),
+			.has_per_samp = (fd3_ctx->fsaturate || fd3_ctx->vsaturate),
 			.vsaturate_s = fd3_ctx->vsaturate_s,
 			.vsaturate_t = fd3_ctx->vsaturate_t,
 			.vsaturate_r = fd3_ctx->vsaturate_r,
@@ -134,227 +136,47 @@ fd3_draw(struct fd_context *ctx, const struct pipe_draw_info *info)
 			.fsaturate_t = fd3_ctx->fsaturate_t,
 			.fsaturate_r = fd3_ctx->fsaturate_r,
 		},
-		.rasterflat = ctx->rasterizer && ctx->rasterizer->flatshade,
+		.rasterflat = ctx->rasterizer->flatshade,
+		.sprite_coord_enable = ctx->rasterizer->sprite_coord_enable,
+		.sprite_coord_mode = ctx->rasterizer->sprite_coord_mode,
 	};
-	unsigned dirty;
+
+	if (fd3_needs_manual_clipping(ctx->prog.vp, ctx->rasterizer))
+		emit.key.ucp_enables = ctx->rasterizer->clip_plane_enable;
 
 	fixup_shader_state(ctx, &emit.key);
 
-	dirty = ctx->dirty;
-	emit.dirty = dirty & ~(FD_DIRTY_BLEND);
-	draw_impl(ctx, ctx->binning_ring, &emit);
-
-	/* and now regular (non-binning) pass: */
-	emit.key.binning_pass = false;
-	emit.dirty = dirty;
-	emit.vp = NULL;   /* we changed key so need to refetch vp */
-	draw_impl(ctx, ctx->ring, &emit);
-}
-
-/* clear operations ignore viewport state, so we need to reset it
- * based on framebuffer state:
- */
-static void
-reset_viewport(struct fd_ringbuffer *ring, struct pipe_framebuffer_state *pfb)
-{
-	float half_width = pfb->width * 0.5f;
-	float half_height = pfb->height * 0.5f;
-
-	OUT_PKT0(ring, REG_A3XX_GRAS_CL_VPORT_XOFFSET, 4);
-	OUT_RING(ring, A3XX_GRAS_CL_VPORT_XOFFSET(half_width - 0.5));
-	OUT_RING(ring, A3XX_GRAS_CL_VPORT_XSCALE(half_width));
-	OUT_RING(ring, A3XX_GRAS_CL_VPORT_YOFFSET(half_height - 0.5));
-	OUT_RING(ring, A3XX_GRAS_CL_VPORT_YSCALE(-half_height));
-}
-
-/* binning pass cmds for a clear:
- * NOTE: newer blob drivers don't use binning for clear, which is probably
- * preferable since it is low vtx count.  However that doesn't seem to
- * actually work for me.  Not sure if it is depending on support for
- * clear pass (rather than using solid-fill shader), or something else
- * that newer blob is doing differently.  Once that is figured out, we
- * can remove fd3_clear_binning().
- */
-static void
-fd3_clear_binning(struct fd_context *ctx, unsigned dirty)
-{
-	struct fd3_context *fd3_ctx = fd3_context(ctx);
-	struct fd_ringbuffer *ring = ctx->binning_ring;
-	struct fd3_emit emit = {
-		.vtx  = &fd3_ctx->solid_vbuf_state,
-		.prog = &ctx->solid_prog,
-		.key = {
-			.binning_pass = true,
-			.half_precision = true,
-		},
-		.dirty = dirty,
-	};
-
-	fd3_emit_state(ctx, ring, &emit);
-	fd3_emit_vertex_bufs(ring, &emit);
-	reset_viewport(ring, &ctx->framebuffer);
-
-	OUT_PKT0(ring, REG_A3XX_PC_PRIM_VTX_CNTL, 1);
-	OUT_RING(ring, A3XX_PC_PRIM_VTX_CNTL_STRIDE_IN_VPC(0) |
-			A3XX_PC_PRIM_VTX_CNTL_POLYMODE_FRONT_PTYPE(PC_DRAW_TRIANGLES) |
-			A3XX_PC_PRIM_VTX_CNTL_POLYMODE_BACK_PTYPE(PC_DRAW_TRIANGLES) |
-			A3XX_PC_PRIM_VTX_CNTL_PROVOKING_VTX_LAST);
-	OUT_PKT0(ring, REG_A3XX_VFD_INDEX_MIN, 4);
-	OUT_RING(ring, 0);            /* VFD_INDEX_MIN */
-	OUT_RING(ring, 2);            /* VFD_INDEX_MAX */
-	OUT_RING(ring, 0);            /* VFD_INSTANCEID_OFFSET */
-	OUT_RING(ring, 0);            /* VFD_INDEX_OFFSET */
-	OUT_PKT0(ring, REG_A3XX_PC_RESTART_INDEX, 1);
-	OUT_RING(ring, 0xffffffff);   /* PC_RESTART_INDEX */
-
-	fd_event_write(ctx, ring, PERFCOUNTER_STOP);
-
-	fd_draw(ctx, ring, DI_PT_RECTLIST, IGNORE_VISIBILITY,
-			DI_SRC_SEL_AUTO_INDEX, 2, INDEX_SIZE_IGN, 0, 0, NULL);
-}
-
-static void
-fd3_clear(struct fd_context *ctx, unsigned buffers,
-		const union pipe_color_union *color, double depth, unsigned stencil)
-{
-	struct fd3_context *fd3_ctx = fd3_context(ctx);
-	struct fd_ringbuffer *ring = ctx->ring;
 	unsigned dirty = ctx->dirty;
-	unsigned ce, i;
-	struct fd3_emit emit = {
-		.vtx  = &fd3_ctx->solid_vbuf_state,
-		.prog = &ctx->solid_prog,
-		.key = {
-			.half_precision = true,
-		},
-	};
+	const struct ir3_shader_variant *vp = fd3_emit_get_vp(&emit);
+	const struct ir3_shader_variant *fp = fd3_emit_get_fp(&emit);
 
-	dirty &= FD_DIRTY_FRAMEBUFFER | FD_DIRTY_SCISSOR;
-	dirty |= FD_DIRTY_PROG;
+	/* do regular pass first, since that is more likely to fail compiling: */
+
+	if (!vp || !fp)
+		return false;
+
+	ctx->stats.vs_regs += ir3_shader_halfregs(vp);
+	ctx->stats.fs_regs += ir3_shader_halfregs(fp);
+
+	emit.binning_pass = false;
 	emit.dirty = dirty;
+	draw_impl(ctx, ctx->batch->draw, &emit, index_offset);
 
-	fd3_clear_binning(ctx, dirty);
+	/* and now binning pass: */
+	emit.binning_pass = true;
+	emit.dirty = dirty & ~(FD_DIRTY_BLEND);
+	emit.vp = NULL;   /* we changed key so need to refetch vp */
+	emit.fp = NULL;
+	draw_impl(ctx, ctx->batch->binning, &emit, index_offset);
 
-	/* emit generic state now: */
-	fd3_emit_state(ctx, ring, &emit);
-	reset_viewport(ring, &ctx->framebuffer);
+	fd_context_all_clean(ctx);
 
-	OUT_PKT0(ring, REG_A3XX_RB_BLEND_ALPHA, 1);
-	OUT_RING(ring, A3XX_RB_BLEND_ALPHA_UINT(0xff) |
-			A3XX_RB_BLEND_ALPHA_FLOAT(1.0));
-
-	OUT_PKT0(ring, REG_A3XX_RB_RENDER_CONTROL, 1);
-	OUT_RINGP(ring, A3XX_RB_RENDER_CONTROL_ALPHA_TEST_FUNC(FUNC_NEVER),
-			&fd3_ctx->rbrc_patches);
-
-	if (buffers & PIPE_CLEAR_DEPTH) {
-		OUT_PKT0(ring, REG_A3XX_RB_DEPTH_CONTROL, 1);
-		OUT_RING(ring, A3XX_RB_DEPTH_CONTROL_Z_WRITE_ENABLE |
-				A3XX_RB_DEPTH_CONTROL_Z_ENABLE |
-				A3XX_RB_DEPTH_CONTROL_ZFUNC(FUNC_ALWAYS));
-
-		fd_wfi(ctx, ring);
-		OUT_PKT0(ring, REG_A3XX_GRAS_CL_VPORT_ZOFFSET, 2);
-		OUT_RING(ring, A3XX_GRAS_CL_VPORT_ZOFFSET(0.0));
-		OUT_RING(ring, A3XX_GRAS_CL_VPORT_ZSCALE(depth));
-		ctx->dirty |= FD_DIRTY_VIEWPORT;
-	} else {
-		OUT_PKT0(ring, REG_A3XX_RB_DEPTH_CONTROL, 1);
-		OUT_RING(ring, A3XX_RB_DEPTH_CONTROL_ZFUNC(FUNC_NEVER));
-	}
-
-	if (buffers & PIPE_CLEAR_STENCIL) {
-		OUT_PKT0(ring, REG_A3XX_RB_STENCILREFMASK, 2);
-		OUT_RING(ring, A3XX_RB_STENCILREFMASK_STENCILREF(stencil) |
-				A3XX_RB_STENCILREFMASK_STENCILMASK(stencil) |
-				A3XX_RB_STENCILREFMASK_STENCILWRITEMASK(0xff));
-		OUT_RING(ring, A3XX_RB_STENCILREFMASK_STENCILREF(0) |
-				A3XX_RB_STENCILREFMASK_STENCILMASK(0) |
-				0xff000000 | // XXX ???
-				A3XX_RB_STENCILREFMASK_STENCILWRITEMASK(0xff));
-
-		OUT_PKT0(ring, REG_A3XX_RB_STENCIL_CONTROL, 1);
-		OUT_RING(ring, A3XX_RB_STENCIL_CONTROL_STENCIL_ENABLE |
-				A3XX_RB_STENCIL_CONTROL_FUNC(FUNC_ALWAYS) |
-				A3XX_RB_STENCIL_CONTROL_FAIL(STENCIL_KEEP) |
-				A3XX_RB_STENCIL_CONTROL_ZPASS(STENCIL_REPLACE) |
-				A3XX_RB_STENCIL_CONTROL_ZFAIL(STENCIL_KEEP) |
-				A3XX_RB_STENCIL_CONTROL_FUNC_BF(FUNC_NEVER) |
-				A3XX_RB_STENCIL_CONTROL_FAIL_BF(STENCIL_KEEP) |
-				A3XX_RB_STENCIL_CONTROL_ZPASS_BF(STENCIL_KEEP) |
-				A3XX_RB_STENCIL_CONTROL_ZFAIL_BF(STENCIL_KEEP));
-	} else {
-		OUT_PKT0(ring, REG_A3XX_RB_STENCILREFMASK, 2);
-		OUT_RING(ring, A3XX_RB_STENCILREFMASK_STENCILREF(0) |
-				A3XX_RB_STENCILREFMASK_STENCILMASK(0) |
-				A3XX_RB_STENCILREFMASK_STENCILWRITEMASK(0));
-		OUT_RING(ring, A3XX_RB_STENCILREFMASK_BF_STENCILREF(0) |
-				A3XX_RB_STENCILREFMASK_BF_STENCILMASK(0) |
-				A3XX_RB_STENCILREFMASK_BF_STENCILWRITEMASK(0));
-
-		OUT_PKT0(ring, REG_A3XX_RB_STENCIL_CONTROL, 1);
-		OUT_RING(ring, A3XX_RB_STENCIL_CONTROL_FUNC(FUNC_NEVER) |
-				A3XX_RB_STENCIL_CONTROL_FAIL(STENCIL_KEEP) |
-				A3XX_RB_STENCIL_CONTROL_ZPASS(STENCIL_KEEP) |
-				A3XX_RB_STENCIL_CONTROL_ZFAIL(STENCIL_KEEP) |
-				A3XX_RB_STENCIL_CONTROL_FUNC_BF(FUNC_NEVER) |
-				A3XX_RB_STENCIL_CONTROL_FAIL_BF(STENCIL_KEEP) |
-				A3XX_RB_STENCIL_CONTROL_ZPASS_BF(STENCIL_KEEP) |
-				A3XX_RB_STENCIL_CONTROL_ZFAIL_BF(STENCIL_KEEP));
-	}
-
-	if (buffers & PIPE_CLEAR_COLOR) {
-		ce = 0xf;
-	} else {
-		ce = 0x0;
-	}
-
-	for (i = 0; i < 4; i++) {
-		OUT_PKT0(ring, REG_A3XX_RB_MRT_CONTROL(i), 1);
-		OUT_RING(ring, A3XX_RB_MRT_CONTROL_ROP_CODE(ROP_COPY) |
-				A3XX_RB_MRT_CONTROL_DITHER_MODE(DITHER_ALWAYS) |
-				A3XX_RB_MRT_CONTROL_COMPONENT_ENABLE(ce));
-
-		OUT_PKT0(ring, REG_A3XX_RB_MRT_BLEND_CONTROL(i), 1);
-		OUT_RING(ring, A3XX_RB_MRT_BLEND_CONTROL_RGB_SRC_FACTOR(FACTOR_ONE) |
-				A3XX_RB_MRT_BLEND_CONTROL_RGB_BLEND_OPCODE(BLEND_DST_PLUS_SRC) |
-				A3XX_RB_MRT_BLEND_CONTROL_RGB_DEST_FACTOR(FACTOR_ZERO) |
-				A3XX_RB_MRT_BLEND_CONTROL_ALPHA_SRC_FACTOR(FACTOR_ONE) |
-				A3XX_RB_MRT_BLEND_CONTROL_ALPHA_BLEND_OPCODE(BLEND_DST_PLUS_SRC) |
-				A3XX_RB_MRT_BLEND_CONTROL_ALPHA_DEST_FACTOR(FACTOR_ZERO) |
-				A3XX_RB_MRT_BLEND_CONTROL_CLAMP_ENABLE);
-	}
-
-	OUT_PKT0(ring, REG_A3XX_GRAS_SU_MODE_CONTROL, 1);
-	OUT_RING(ring, A3XX_GRAS_SU_MODE_CONTROL_LINEHALFWIDTH(0));
-
-	fd3_emit_vertex_bufs(ring, &emit);
-
-	fd3_emit_constant(ring, SB_FRAG_SHADER, 0, 0, 4, color->ui, NULL);
-
-	OUT_PKT0(ring, REG_A3XX_PC_PRIM_VTX_CNTL, 1);
-	OUT_RING(ring, A3XX_PC_PRIM_VTX_CNTL_STRIDE_IN_VPC(0) |
-			A3XX_PC_PRIM_VTX_CNTL_POLYMODE_FRONT_PTYPE(PC_DRAW_TRIANGLES) |
-			A3XX_PC_PRIM_VTX_CNTL_POLYMODE_BACK_PTYPE(PC_DRAW_TRIANGLES) |
-			A3XX_PC_PRIM_VTX_CNTL_PROVOKING_VTX_LAST);
-	OUT_PKT0(ring, REG_A3XX_VFD_INDEX_MIN, 4);
-	OUT_RING(ring, 0);            /* VFD_INDEX_MIN */
-	OUT_RING(ring, 2);            /* VFD_INDEX_MAX */
-	OUT_RING(ring, 0);            /* VFD_INSTANCEID_OFFSET */
-	OUT_RING(ring, 0);            /* VFD_INDEX_OFFSET */
-	OUT_PKT0(ring, REG_A3XX_PC_RESTART_INDEX, 1);
-	OUT_RING(ring, 0xffffffff);   /* PC_RESTART_INDEX */
-
-	fd_event_write(ctx, ring, PERFCOUNTER_STOP);
-
-	fd_draw(ctx, ring, DI_PT_RECTLIST, USE_VISIBILITY,
-			DI_SRC_SEL_AUTO_INDEX, 2, INDEX_SIZE_IGN, 0, 0, NULL);
+	return true;
 }
 
 void
 fd3_draw_init(struct pipe_context *pctx)
 {
 	struct fd_context *ctx = fd_context(pctx);
-	ctx->draw = fd3_draw;
-	ctx->clear = fd3_clear;
+	ctx->draw_vbo = fd3_draw_vbo;
 }

@@ -30,7 +30,6 @@
 #include "main/context.h"
 #include "main/macros.h"
 #include "main/enums.h"
-#include "main/colormac.h"
 #include "main/dd.h"
 
 #include "intel_screen.h"
@@ -58,7 +57,7 @@ intel_translate_shadow_compare_func(GLenum func)
        return COMPAREFUNC_NEVER;
    }
 
-   fprintf(stderr, "Unknown value in %s: %x\n", __FUNCTION__, func);
+   fprintf(stderr, "Unknown value in %s: %x\n", __func__, func);
    return COMPAREFUNC_NEVER;
 }
 
@@ -84,7 +83,7 @@ intel_translate_compare_func(GLenum func)
       return COMPAREFUNC_ALWAYS;
    }
 
-   fprintf(stderr, "Unknown value in %s: %x\n", __FUNCTION__, func);
+   fprintf(stderr, "Unknown value in %s: %x\n", __func__, func);
    return COMPAREFUNC_ALWAYS;
 }
 
@@ -149,47 +148,6 @@ intel_translate_blend_factor(GLenum factor)
       return BLENDFACT_INV_CONST_ALPHA;
    }
 
-   fprintf(stderr, "Unknown value in %s: %x\n", __FUNCTION__, factor);
+   fprintf(stderr, "Unknown value in %s: %x\n", __func__, factor);
    return BLENDFACT_ZERO;
-}
-
-int
-intel_translate_logic_op(GLenum opcode)
-{
-   switch (opcode) {
-   case GL_CLEAR:
-      return LOGICOP_CLEAR;
-   case GL_AND:
-      return LOGICOP_AND;
-   case GL_AND_REVERSE:
-      return LOGICOP_AND_RVRSE;
-   case GL_COPY:
-      return LOGICOP_COPY;
-   case GL_COPY_INVERTED:
-      return LOGICOP_COPY_INV;
-   case GL_AND_INVERTED:
-      return LOGICOP_AND_INV;
-   case GL_NOOP:
-      return LOGICOP_NOOP;
-   case GL_XOR:
-      return LOGICOP_XOR;
-   case GL_OR:
-      return LOGICOP_OR;
-   case GL_OR_INVERTED:
-      return LOGICOP_OR_INV;
-   case GL_NOR:
-      return LOGICOP_NOR;
-   case GL_EQUIV:
-      return LOGICOP_EQUIV;
-   case GL_INVERT:
-      return LOGICOP_INV;
-   case GL_OR_REVERSE:
-      return LOGICOP_OR_RVRSE;
-   case GL_NAND:
-      return LOGICOP_NAND;
-   case GL_SET:
-      return LOGICOP_SET;
-   default:
-      return LOGICOP_SET;
-   }
 }

@@ -47,7 +47,6 @@ nv98_decoder_bsp(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
    int ret;
    struct nouveau_bo *bsp_bo = dec->bsp_bo[comm_seq % NOUVEAU_VP3_VIDEO_QDEPTH];
    struct nouveau_bo *inter_bo = dec->inter_bo[comm_seq & 1];
-   unsigned fence_extra = 0;
    struct nouveau_pushbuf_refn bo_refs[] = {
       { bsp_bo, NOUVEAU_BO_RD | NOUVEAU_BO_VRAM },
       { inter_bo, NOUVEAU_BO_WR | NOUVEAU_BO_VRAM },
@@ -56,14 +55,10 @@ nv98_decoder_bsp(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
 #endif
       { dec->bitplane_bo, NOUVEAU_BO_RDWR | NOUVEAU_BO_VRAM },
    };
-   int num_refs = sizeof(bo_refs)/sizeof(*bo_refs);
+   int num_refs = ARRAY_SIZE(bo_refs);
 
    if (!dec->bitplane_bo)
       num_refs--;
-
-#if NOUVEAU_VP3_DEBUG_FENCE
-   fence_extra = 4;
-#endif
 
    bsp_size = NOUVEAU_VP3_BSP_RESERVED_SIZE;
    for (i = 0; i < num_buffers; i++)
@@ -77,7 +72,7 @@ nv98_decoder_bsp(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
       bsp_size += (1 << 20) - 1;
       bsp_size &= ~((1 << 20) - 1);
 
-      ret = nouveau_bo_new(dec->bitplane_bo->device, NOUVEAU_BO_VRAM, 0, bsp_size, NULL, &tmp_bo);
+      ret = nouveau_bo_new(dec->client->device, NOUVEAU_BO_VRAM, 0, bsp_size, NULL, &tmp_bo);
       if (ret) {
          debug_printf("reallocating bsp %u -> %u failed with %i\n",
                       bsp_bo ? (unsigned)bsp_bo->size : 0, bsp_size, ret);
@@ -90,7 +85,7 @@ nv98_decoder_bsp(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
    if (!inter_bo || bsp_bo->size * 4 > inter_bo->size) {
       struct nouveau_bo *tmp_bo = NULL;
 
-      ret = nouveau_bo_new(dec->bitplane_bo->device, NOUVEAU_BO_VRAM, 0, bsp_bo->size * 4, NULL, &tmp_bo);
+      ret = nouveau_bo_new(dec->client->device, NOUVEAU_BO_VRAM, 0, bsp_bo->size * 4, NULL, &tmp_bo);
       if (ret) {
          debug_printf("reallocating inter %u -> %u failed with %i\n",
                       inter_bo ? (unsigned)inter_bo->size : 0, (unsigned)bsp_bo->size * 4, ret);
@@ -106,12 +101,13 @@ nv98_decoder_bsp(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
       return -1;
    }
 
-   caps = nouveau_vp3_bsp(dec, desc, target, comm_seq,
-                          num_buffers, data, num_bytes);
+   nouveau_vp3_bsp_begin(dec);
+   nouveau_vp3_bsp_next(dec, num_buffers, data, num_bytes);
+   caps = nouveau_vp3_bsp_end(dec, desc);
 
    nouveau_vp3_vp_caps(dec, desc, target, comm_seq, vp_caps, is_ref, refs);
 
-   nouveau_pushbuf_space(push, 6 + (codec == PIPE_VIDEO_FORMAT_MPEG4_AVC ? 9 : 8) + fence_extra + 2, num_refs, 0);
+   nouveau_pushbuf_space(push, 32, num_refs, 0);
    nouveau_pushbuf_refn(push, bo_refs, num_refs);
 
    bsp_addr = bsp_bo->offset >> 8;

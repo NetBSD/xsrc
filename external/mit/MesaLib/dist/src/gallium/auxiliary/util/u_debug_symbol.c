@@ -34,9 +34,9 @@
 
 #include "pipe/p_compiler.h"
 #include "os/os_thread.h"
-#include "u_string.h"
+#include "util/u_string.h"
 
-#include "u_debug.h"
+#include "util/u_debug.h"
 #include "u_debug_symbol.h"
 #include "u_hash_table.h"
 
@@ -82,18 +82,10 @@ getDbgHelpProcAddress(LPCSTR lpProcName)
          hModule = LoadLibraryA("mgwhelp.dll");
          if (!hModule) {
             _debug_printf("warning: mgwhelp.dll not found: symbol names will not be resolved\n"
-                          "warning: download it from http://code.google.com/p/jrfonseca/wiki/DrMingw#MgwHelp\n");
+                          "warning: download it from https://github.com/jrfonseca/drmingw/#mgwhelp\n");
          }
       }
-
-      /*
-       * bfdhelp.dll was the predecessor of mgwhelp.dll.  It is available from
-       * http://people.freedesktop.org/~jrfonseca/bfdhelp/ for now.
-       */
-      if (!hModule) {
-         hModule = LoadLibraryA("bfdhelp.dll");
-      }
-   #endif
+#endif
 
       /*
        * Fallback to the real DbgHelp.
@@ -154,7 +146,7 @@ DBGHELP_DISPATCH(SymGetLineFromAddr64,
 #undef DBGHELP_DISPATCH
 
 
-static INLINE boolean
+static inline boolean
 debug_symbol_name_dbghelp(const void *addr, char* buf, unsigned size)
 {
    DWORD64 dwAddr = (DWORD64)(uintptr_t)addr;
@@ -235,7 +227,7 @@ debug_symbol_name_dbghelp(const void *addr, char* buf, unsigned size)
  *
  * To fix this, post-process the output with tools/addr2line.sh
  */
-static INLINE boolean
+static inline boolean
 debug_symbol_name_glibc(const void *addr, char* buf, unsigned size)
 {
    char** syms = backtrace_symbols((void**)&addr, 1);
@@ -279,7 +271,7 @@ debug_symbol_print(const void *addr)
 }
 
 struct util_hash_table* symbols_hash;
-pipe_static_mutex(symbols_mutex);
+static mtx_t symbols_mutex = _MTX_INITIALIZER_NP;
 
 static unsigned hash_ptr(void* p)
 {
@@ -304,12 +296,12 @@ debug_symbol_name_cached(const void *addr)
    static boolean first = TRUE;
 
    if (first) {
-      pipe_mutex_init(symbols_mutex);
+      (void) mtx_init(&symbols_mutex, mtx_plain);
       first = FALSE;
    }
 #endif
 
-   pipe_mutex_lock(symbols_mutex);
+   mtx_lock(&symbols_mutex);
    if(!symbols_hash)
       symbols_hash = util_hash_table_create(hash_ptr, compare_ptr);
    name = util_hash_table_get(symbols_hash, (void*)addr);
@@ -317,10 +309,10 @@ debug_symbol_name_cached(const void *addr)
    {
       char buf[1024];
       debug_symbol_name(addr, buf, sizeof(buf));
-      name = strdup(buf);
+      name = util_strdup(buf);
 
       util_hash_table_set(symbols_hash, (void*)addr, (void*)name);
    }
-   pipe_mutex_unlock(symbols_mutex);
+   mtx_unlock(&symbols_mutex);
    return name;
 }

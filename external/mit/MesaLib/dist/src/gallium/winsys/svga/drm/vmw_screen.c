@@ -1,5 +1,5 @@
 /**********************************************************
- * Copyright 2009 VMware, Inc.  All rights reserved.
+ * Copyright 2009-2015 VMware, Inc.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -31,9 +31,15 @@
 #include "util/u_memory.h"
 #include "pipe/p_compiler.h"
 #include "util/u_hash_table.h"
-#include <sys/types.h>
+#ifdef MAJOR_IN_MKDEV
+#include <sys/mkdev.h>
+#endif
+#ifdef MAJOR_IN_SYSMACROS
+#include <sys/sysmacros.h>
+#endif
 #include <sys/stat.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 static struct util_hash_table *dev_hash = NULL;
 
@@ -57,7 +63,7 @@ static unsigned vmw_dev_hash(void *key)
  */
 
 struct vmw_winsys_screen *
-vmw_winsys_create( int fd, boolean use_old_scanout_flag )
+vmw_winsys_create( int fd )
 {
    struct vmw_winsys_screen *vws;
    struct stat stat_buf;
@@ -83,9 +89,9 @@ vmw_winsys_create( int fd, boolean use_old_scanout_flag )
 
    vws->device = stat_buf.st_rdev;
    vws->open_count = 1;
-   vws->ioctl.drm_fd = dup(fd);
-   vws->use_old_scanout_flag = use_old_scanout_flag;
+   vws->ioctl.drm_fd = fcntl(fd, F_DUPFD_CLOEXEC, 3);
    vws->base.have_gb_dma = TRUE;
+   vws->base.need_to_rebind_resources = FALSE;
 
    if (!vmw_ioctl_init(vws))
       goto out_no_ioctl;
@@ -102,6 +108,9 @@ vmw_winsys_create( int fd, boolean use_old_scanout_flag )
 
    if (util_hash_table_set(dev_hash, &vws->device, vws) != PIPE_OK)
       goto out_no_hash_insert;
+
+   cnd_init(&vws->cs_cond);
+   mtx_init(&vws->cs_mutex, mtx_plain);
 
    return vws;
 out_no_hash_insert:
@@ -127,6 +136,8 @@ vmw_winsys_destroy(struct vmw_winsys_screen *vws)
       vws->fence_ops->destroy(vws->fence_ops);
       vmw_ioctl_cleanup(vws);
       close(vws->ioctl.drm_fd);
+      mtx_destroy(&vws->cs_mutex);
+      cnd_destroy(&vws->cs_cond);
       FREE(vws);
    }
 }

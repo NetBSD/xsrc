@@ -31,7 +31,6 @@
 #include "main/mtypes.h"
 #include "main/imports.h"
 #include "main/macros.h"
-#include "main/colormac.h"
 #include "main/renderbuffer.h"
 #include "main/framebuffer.h"
 
@@ -177,7 +176,7 @@ i915_emit_invarient_state(struct intel_context *intel)
 {
    BATCH_LOCALS;
 
-   BEGIN_BATCH(17);
+   BEGIN_BATCH(15);
 
    OUT_BATCH(_3DSTATE_AA_CMD |
              AA_LINE_ECAAR_WIDTH_ENABLE |
@@ -201,17 +200,12 @@ i915_emit_invarient_state(struct intel_context *intel)
              CSB_TCB(3, 3) |
              CSB_TCB(4, 4) | CSB_TCB(5, 5) | CSB_TCB(6, 6) | CSB_TCB(7, 7));
 
-   /* Need to initialize this to zero.
-    */
-   OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 | I1_LOAD_S(3) | (0));
+   OUT_BATCH(_3DSTATE_SCISSOR_RECT_0_CMD);
+   OUT_BATCH(0);
    OUT_BATCH(0);
 
    /* XXX: Use this */
    OUT_BATCH(_3DSTATE_SCISSOR_ENABLE_CMD | DISABLE_SCISSOR_RECT);
-
-   OUT_BATCH(_3DSTATE_SCISSOR_RECT_0_CMD);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
 
    OUT_BATCH(_3DSTATE_DEPTH_SUBRECT_DISABLE);
 
@@ -356,7 +350,7 @@ i915_emit_state(struct intel_context *intel)
    assert(get_dirty(state) == 0);
 
    if (INTEL_DEBUG & DEBUG_STATE)
-      fprintf(stderr, "%s dirty: %x\n", __FUNCTION__, dirty);
+      fprintf(stderr, "%s dirty: %x\n", __func__, dirty);
 
    if (dirty & I915_UPLOAD_INVARIENT) {
       if (INTEL_DEBUG & DEBUG_STATE)
@@ -415,10 +409,10 @@ i915_emit_state(struct intel_context *intel)
 
       OUT_BATCH(state->Buffer[I915_DESTREG_DV0]);
       OUT_BATCH(state->Buffer[I915_DESTREG_DV1]);
-      OUT_BATCH(state->Buffer[I915_DESTREG_SENABLE]);
       OUT_BATCH(state->Buffer[I915_DESTREG_SR0]);
       OUT_BATCH(state->Buffer[I915_DESTREG_SR1]);
       OUT_BATCH(state->Buffer[I915_DESTREG_SR2]);
+      OUT_BATCH(state->Buffer[I915_DESTREG_SENABLE]);
 
       if (state->Buffer[I915_DESTREG_DRAWRECT0] != MI_NOOP)
          OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT0]);
@@ -615,14 +609,6 @@ i915_set_draw_region(struct intel_context *intel,
       value |= DV_PF_8888;
    }
 
-   /* This isn't quite safe, thus being hidden behind an option.  When changing
-    * the value of this bit, the pipeline needs to be MI_FLUSHed.  And it
-    * can only be set when a depth buffer is already defined.
-    */
-   if (intel->is_945 && intel->use_early_z &&
-       depth_region->tiling != I915_TILING_NONE)
-      value |= CLASSIC_EARLY_DEPTH;
-
    if (depth_region && depth_region->cpp == 4) {
       value |= DEPTH_FRMT_24_FIXED_8_OTHER;
    }
@@ -732,9 +718,9 @@ i915_update_draw_buffer(struct intel_context *intel)
     */
    if (ctx->NewState & _NEW_BUFFERS) {
       /* this updates the DrawBuffer->_NumColorDrawBuffers fields, etc */
-      _mesa_update_framebuffer(ctx);
+      _mesa_update_framebuffer(ctx, ctx->ReadBuffer, ctx->DrawBuffer);
       /* this updates the DrawBuffer's Width/Height if it's a FBO */
-      _mesa_update_draw_buffer_bounds(ctx);
+      _mesa_update_draw_buffer_bounds(ctx, ctx->DrawBuffer);
    }
 
    if (fb->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {

@@ -26,6 +26,7 @@
 #include "brw_context.h"
 #include "brw_defines.h"
 #include "brw_multisample_state.h"
+#include "main/framebuffer.h"
 
 void
 gen6_get_sample_position(struct gl_context *ctx,
@@ -34,7 +35,7 @@ gen6_get_sample_position(struct gl_context *ctx,
 {
    uint8_t bits;
 
-   switch (fb->Visual.samples) {
+   switch (_mesa_geometric_samples(fb)) {
    case 1:
       result[0] = result[1] = 0.5f;
       return;
@@ -47,6 +48,9 @@ gen6_get_sample_position(struct gl_context *ctx,
    case 8:
       bits = brw_multisample_positions_8x[index >> 2] >> (8 * (index & 3));
       break;
+   case 16:
+      bits = brw_multisample_positions_16x[index >> 2] >> (8 * (index & 3));
+      break;
    default:
       unreachable("Not implemented");
    }
@@ -57,110 +61,60 @@ gen6_get_sample_position(struct gl_context *ctx,
 }
 
 /**
- * 3DSTATE_MULTISAMPLE
+ * Sample index layout shows the numbering of slots in a rectangular
+ * grid of samples with in a pixel. Sample number layout shows the
+ * rectangular grid of samples roughly corresponding to the real sample
+ * locations with in a pixel. Sample number layout matches the sample
+ * index layout in case of 2X and 4x MSAA, but they are different in
+ * case of 8X MSAA.
+ *
+ * 8X MSAA sample index layout    8x MSAA sample number layout
+ *           ---------                      ---------
+ *           | 0 | 1 |                      | 1 | 0 |
+ *           ---------                      ---------
+ *
+ * 4X MSAA sample index / number layout
+ *           ---------
+ *           | 0 | 1 |
+ *           ---------
+ *           | 2 | 3 |
+ *           ---------
+ *
+ * 8X MSAA sample index layout    8x MSAA sample number layout
+ *           ---------                      ---------
+ *           | 0 | 1 |                      | 5 | 2 |
+ *           ---------                      ---------
+ *           | 2 | 3 |                      | 4 | 6 |
+ *           ---------                      ---------
+ *           | 4 | 5 |                      | 0 | 3 |
+ *           ---------                      ---------
+ *           | 6 | 7 |                      | 7 | 1 |
+ *           ---------                      ---------
+ *
+ * 16X MSAA sample index layout  16x MSAA sample number layout
+ *         -----------------            -----------------
+ *         | 0 | 1 | 2 | 3 |            |15 |10 | 9 | 7 |
+ *         -----------------            -----------------
+ *         | 4 | 5 | 6 | 7 |            | 4 | 1 | 3 |13 |
+ *         -----------------            -----------------
+ *         | 8 | 9 |10 |11 |            |12 | 2 | 0 | 6 |
+ *         -----------------            -----------------
+ *         |12 |13 |14 |15 |            |11 | 8 | 5 |14 |
+ *         -----------------            -----------------
+ *
+ * A sample map is used to map sample indices to sample numbers.
  */
 void
-gen6_emit_3dstate_multisample(struct brw_context *brw,
-                              unsigned num_samples)
+gen6_set_sample_maps(struct gl_context *ctx)
 {
-   uint32_t number_of_multisamples = 0;
-   uint32_t sample_positions_3210 = 0;
-   uint32_t sample_positions_7654 = 0;
+   uint8_t map_2x[2] = {1, 0};
+   uint8_t map_4x[4] = {0, 1, 2, 3};
+   uint8_t map_8x[8] = {3, 7, 5, 0, 1, 2, 4, 6};
+   uint8_t map_16x[16] = { 15, 10, 9, 7, 4, 1, 3, 13,
+                           12, 2, 0, 6, 11, 8, 5, 14 };
 
-   assert(brw->gen < 8);
-
-   switch (num_samples) {
-   case 0:
-   case 1:
-      number_of_multisamples = MS_NUMSAMPLES_1;
-      break;
-   case 4:
-      number_of_multisamples = MS_NUMSAMPLES_4;
-      sample_positions_3210 = brw_multisample_positions_4x;
-      break;
-   case 8:
-      number_of_multisamples = MS_NUMSAMPLES_8;
-      sample_positions_3210 = brw_multisample_positions_8x[0];
-      sample_positions_7654 = brw_multisample_positions_8x[1];
-      break;
-   default:
-      unreachable("Unrecognized num_samples in gen6_emit_3dstate_multisample");
-   }
-
-   /* 3DSTATE_MULTISAMPLE is nonpipelined. */
-   intel_emit_post_sync_nonzero_flush(brw);
-
-   int len = brw->gen >= 7 ? 4 : 3;
-   BEGIN_BATCH(len);
-   OUT_BATCH(_3DSTATE_MULTISAMPLE << 16 | (len - 2));
-   OUT_BATCH(MS_PIXEL_LOCATION_CENTER | number_of_multisamples);
-   OUT_BATCH(sample_positions_3210);
-   if (brw->gen >= 7)
-      OUT_BATCH(sample_positions_7654);
-   ADVANCE_BATCH();
+   memcpy(ctx->Const.SampleMap2x, map_2x, sizeof(map_2x));
+   memcpy(ctx->Const.SampleMap4x, map_4x, sizeof(map_4x));
+   memcpy(ctx->Const.SampleMap8x, map_8x, sizeof(map_8x));
+   memcpy(ctx->Const.SampleMap16x, map_16x, sizeof(map_16x));
 }
-
-
-unsigned
-gen6_determine_sample_mask(struct brw_context *brw)
-{
-   struct gl_context *ctx = &brw->ctx;
-   float coverage = 1.0;
-   float coverage_invert = false;
-   unsigned sample_mask = ~0u;
-
-   /* BRW_NEW_NUM_SAMPLES */
-   unsigned num_samples = brw->num_samples;
-
-   if (ctx->Multisample._Enabled) {
-      if (ctx->Multisample.SampleCoverage) {
-         coverage = ctx->Multisample.SampleCoverageValue;
-         coverage_invert = ctx->Multisample.SampleCoverageInvert;
-      }
-      if (ctx->Multisample.SampleMask) {
-         sample_mask = ctx->Multisample.SampleMaskValue;
-      }
-   }
-
-   if (num_samples > 1) {
-      int coverage_int = (int) (num_samples * coverage + 0.5);
-      uint32_t coverage_bits = (1 << coverage_int) - 1;
-      if (coverage_invert)
-         coverage_bits ^= (1 << num_samples) - 1;
-      return coverage_bits & sample_mask;
-   } else {
-      return 1;
-   }
-}
-
-
-/**
- * 3DSTATE_SAMPLE_MASK
- */
-void
-gen6_emit_3dstate_sample_mask(struct brw_context *brw, unsigned mask)
-{
-   BEGIN_BATCH(2);
-   OUT_BATCH(_3DSTATE_SAMPLE_MASK << 16 | (2 - 2));
-   OUT_BATCH(mask);
-   ADVANCE_BATCH();
-}
-
-
-static void upload_multisample_state(struct brw_context *brw)
-{
-   /* BRW_NEW_NUM_SAMPLES */
-   gen6_emit_3dstate_multisample(brw, brw->num_samples);
-   gen6_emit_3dstate_sample_mask(brw, gen6_determine_sample_mask(brw));
-}
-
-
-const struct brw_tracked_state gen6_multisample_state = {
-   .dirty = {
-      .mesa = _NEW_MULTISAMPLE,
-      .brw = (BRW_NEW_CONTEXT |
-              BRW_NEW_NUM_SAMPLES),
-      .cache = 0
-   },
-   .emit = upload_multisample_state
-};

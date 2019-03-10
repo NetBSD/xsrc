@@ -46,12 +46,12 @@ struct cull_stage {
 };
 
 
-static INLINE struct cull_stage *cull_stage( struct draw_stage *stage )
+static inline struct cull_stage *cull_stage( struct draw_stage *stage )
 {
    return (struct cull_stage *)stage;
 }
 
-static INLINE boolean
+static inline boolean
 cull_distance_is_out(float dist)
 {
    return (dist < 0.0f) || util_is_inf_or_nan(dist);
@@ -68,15 +68,17 @@ static void cull_point( struct draw_stage *stage,
 {
    const unsigned num_written_culldistances =
       draw_current_shader_num_written_culldistances(stage->draw);
+   const unsigned num_written_clipdistances =
+      draw_current_shader_num_written_clipdistances(stage->draw);
    unsigned i;
 
    debug_assert(num_written_culldistances);
 
    for (i = 0; i < num_written_culldistances; ++i) {
-      unsigned cull_idx = i / 4;
+      unsigned cull_idx = (num_written_clipdistances + i) / 4;
       unsigned out_idx =
-         draw_current_shader_culldistance_output(stage->draw, cull_idx);
-      unsigned idx = i % 4;
+         draw_current_shader_ccdistance_output(stage->draw, cull_idx);
+      unsigned idx = (num_written_clipdistances + i) % 4;
       float cull1 = header->v[0]->data[out_idx][idx];
       boolean vert1_out = cull_distance_is_out(cull1);
       if (vert1_out)
@@ -96,15 +98,17 @@ static void cull_line( struct draw_stage *stage,
 {
    const unsigned num_written_culldistances =
       draw_current_shader_num_written_culldistances(stage->draw);
+   const unsigned num_written_clipdistances =
+      draw_current_shader_num_written_clipdistances(stage->draw);
    unsigned i;
 
    debug_assert(num_written_culldistances);
 
    for (i = 0; i < num_written_culldistances; ++i) {
-      unsigned cull_idx = i / 4;
+      unsigned cull_idx = (num_written_clipdistances + i) / 4;
       unsigned out_idx =
-         draw_current_shader_culldistance_output(stage->draw, cull_idx);
-      unsigned idx = i % 4;
+         draw_current_shader_ccdistance_output(stage->draw, cull_idx);
+      unsigned idx = (num_written_clipdistances + i) % 4;
       float cull1 = header->v[0]->data[out_idx][idx];
       float cull2 = header->v[1]->data[out_idx][idx];
       boolean vert1_out = cull_distance_is_out(cull1);
@@ -125,15 +129,16 @@ static void cull_tri( struct draw_stage *stage,
 {
    const unsigned num_written_culldistances =
       draw_current_shader_num_written_culldistances(stage->draw);
-
+   const unsigned num_written_clipdistances =
+      draw_current_shader_num_written_clipdistances(stage->draw);
    /* Do the distance culling */
    if (num_written_culldistances) {
       unsigned i;
       for (i = 0; i < num_written_culldistances; ++i) {
-         unsigned cull_idx = i / 4;
+         unsigned cull_idx = (num_written_clipdistances + i) / 4;
          unsigned out_idx =
-            draw_current_shader_culldistance_output(stage->draw, cull_idx);
-         unsigned idx = i % 4;
+            draw_current_shader_ccdistance_output(stage->draw, cull_idx);
+         unsigned idx = (num_written_clipdistances + i) % 4;
          float cull1 = header->v[0]->data[out_idx][idx];
          float cull2 = header->v[1]->data[out_idx][idx];
          float cull3 = header->v[2]->data[out_idx][idx];
@@ -174,6 +179,16 @@ static void cull_tri( struct draw_stage *stage,
 
          if ((face & cull_stage(stage)->cull_face) == 0) {
             /* triangle is not culled, pass to next stage */
+            stage->next->tri( stage->next, header );
+         }
+      } else {
+         /*
+          * With zero area, this is back facing (because the spec says
+          * it's front facing if sign is positive?).
+          * Some apis apparently do not allow us to cull zero area tris
+          * here, in case of fill mode line (which is rather lame).
+          */
+         if ((PIPE_FACE_BACK & cull_stage(stage)->cull_face) == 0) {
             stage->next->tri( stage->next, header );
          }
       }
@@ -251,7 +266,7 @@ static void cull_destroy( struct draw_stage *stage )
 struct draw_stage *draw_cull_stage( struct draw_context *draw )
 {
    struct cull_stage *cull = CALLOC_STRUCT(cull_stage);
-   if (cull == NULL)
+   if (!cull)
       goto fail;
 
    cull->stage.draw = draw;

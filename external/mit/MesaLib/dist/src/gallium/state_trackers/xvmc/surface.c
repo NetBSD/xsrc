@@ -34,6 +34,7 @@
 #include "pipe/p_video_state.h"
 #include "pipe/p_state.h"
 
+#include "util/macros.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
@@ -226,8 +227,8 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
 
    XvMCContextPrivate *context_priv;
    XvMCSurfacePrivate *target_surface_priv;
-   XvMCSurfacePrivate *past_surface_priv;
-   XvMCSurfacePrivate *future_surface_priv;
+   MAYBE_UNUSED XvMCSurfacePrivate *past_surface_priv;
+   MAYBE_UNUSED XvMCSurfacePrivate *future_surface_priv;
    XvMCMacroBlock *xvmc_mb;
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Rendering to surface %p, with past %p and future %p\n",
@@ -355,6 +356,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    struct pipe_context *pipe;
    struct vl_compositor *compositor;
    struct vl_compositor_state *cstate;
+   struct vl_screen *vscreen;
 
    XvMCSurfacePrivate *surface_priv;
    XvMCContextPrivate *context_priv;
@@ -386,9 +388,10 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    pipe = context_priv->pipe;
    compositor = &context_priv->compositor;
    cstate = &context_priv->cstate;
+   vscreen = context_priv->vscreen;
 
-   tex = vl_screen_texture_from_drawable(context_priv->vscreen, drawable);
-   dirty_area = vl_screen_get_dirty_area(context_priv->vscreen);
+   tex = vscreen->texture_from_drawable(vscreen, (void *)drawable);
+   dirty_area = vscreen->get_dirty_area(vscreen);
 
    memset(&surf_templ, 0, sizeof(surf_templ));
    surf_templ.format = tex->format;
@@ -444,11 +447,8 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for display. Pushing to front buffer.\n", surface);
 
-   pipe->screen->flush_frontbuffer
-   (
-      pipe->screen, tex, 0, 0,
-      vl_screen_get_private(context_priv->vscreen), NULL
-   );
+   pipe->screen->flush_frontbuffer(pipe->screen, tex, 0, 0,
+                                   vscreen->get_private(vscreen), NULL);
 
    if(dump_window == -1) {
       dump_window = debug_get_num_option("XVMC_DUMP", 0);
@@ -489,7 +489,7 @@ Status XvMCGetSurfaceStatus(Display *dpy, XvMCSurface *surface, int *status)
    *status = 0;
 
    if (surface_priv->fence)
-      if (!pipe->screen->fence_signalled(pipe->screen, surface_priv->fence))
+      if (!pipe->screen->fence_finish(pipe->screen, NULL, surface_priv->fence, 0))
          *status |= XVMC_RENDERING;
 
    return Success;

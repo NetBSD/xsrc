@@ -20,12 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-AUTOMAKE_OPTIONS = subdir-objects
-
 include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CPPFLAGS = \
+	-I$(top_srcdir)/include/drm-uapi \
 	$(GALLIUM_DRIVER_CFLAGS) \
 	$(LIBDRM_CFLAGS) \
 	$(NOUVEAU_CFLAGS)
@@ -48,6 +47,8 @@ nouveau_compiler_SOURCES = \
 
 nouveau_compiler_LDADD = \
 	libnouveau.la \
-	../../auxiliary/libgallium.la \
+	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/util/libmesautil.la \
 	$(GALLIUM_COMMON_LIB_DEPS)
+
+EXTRA_DIST = codegen/lib nvc0/mme meson.build

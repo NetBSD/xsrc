@@ -32,6 +32,8 @@
 #include "pipe/p_compiler.h"
 #include "util/u_debug.h"
 
+struct st_context;
+
 extern void
 st_print_current(void);
 
@@ -46,6 +48,10 @@ st_print_current(void);
 #define DEBUG_SCREEN    0x80
 #define DEBUG_DRAW      0x100
 #define DEBUG_BUFFER    0x200
+#define DEBUG_WIREFRAME 0x400
+#define DEBUG_PRECOMPILE   0x800
+#define DEBUG_GREMEDY   0x1000
+#define DEBUG_NOREADPIXCACHE 0x2000
 
 #ifdef DEBUG
 extern int ST_DEBUG;
@@ -57,7 +63,9 @@ extern int ST_DEBUG;
 
 void st_debug_init( void );
 
-static INLINE void
+void st_update_debug_callback(struct st_context *st);
+
+static inline void
 ST_DBG( unsigned flag, const char *fmt, ... )
 {
     if (ST_DEBUG & flag)

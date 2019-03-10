@@ -6,8 +6,16 @@ from sys import executable as python_cmd
 
 env = env.Clone()
 
+env.MSVC2013Compat()
+
 env.Prepend(CPPPATH = [
     '#include',
+    xmlpool_options.dir.dir, # Dir to generated xmlpool/options.h
+    '#src',
+    '#src/mapi',
+    '#src/mesa',
+    '#src/gallium/include',
+    '#src/gallium/auxiliary',
     '#src/util',
 ])
 
@@ -26,10 +34,39 @@ mesautil_sources = (
     source_lists['MESA_UTIL_GENERATED_FILES']
 )
 
-mesautil = env.ConvenienceLibrary(
+mesautilenv = env.Clone()
+
+if env['dri']:
+    mesautil_sources += source_lists['XMLCONFIG_FILES']
+
+    mesautilenv.AppendUnique(LIBS = [
+        'expat',
+    ])
+
+mesautil = mesautilenv.ConvenienceLibrary(
     target = 'mesautil',
     source = mesautil_sources,
 )
 
 env.Alias('mesautil', mesautil)
 Export('mesautil')
+
+
+u_atomic_test = env.Program(
+    target = 'u_atomic_test',
+    source = ['u_atomic_test.c'],
+)
+env.UnitTest("u_atomic_test", u_atomic_test)
+
+roundeven_test = env.Program(
+    target = 'roundeven_test',
+    source = ['roundeven_test.c'],
+)
+env.UnitTest("roundeven_test", roundeven_test)
+
+env.Prepend(LIBS = [mesautil])
+mesa_sha1_test = env.Program(
+    target = 'mesa-sha1_test',
+    source = ['mesa-sha1_test.c'],
+)
+env.UnitTest("mesa-sha1_test", mesa_sha1_test)

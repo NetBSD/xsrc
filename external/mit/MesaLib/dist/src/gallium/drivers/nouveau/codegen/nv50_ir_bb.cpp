@@ -291,7 +291,7 @@ void BasicBlock::permuteAdjacent(Instruction *a, Instruction *b)
 
    if (b->prev)
       b->prev->next = b;
-   if (a->prev)
+   if (a->next)
       a->next->prev = a;
 }
 
@@ -331,6 +331,9 @@ BasicBlock::splitBefore(Instruction *insn, bool attach)
 {
    BasicBlock *bb = new BasicBlock(func);
    assert(!insn || insn->op != OP_PHI);
+
+   bb->joinAt = joinAt;
+   joinAt = NULL;
 
    splitCommon(insn, bb, attach);
    return bb;

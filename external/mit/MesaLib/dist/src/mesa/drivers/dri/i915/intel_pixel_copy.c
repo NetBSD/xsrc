@@ -28,6 +28,7 @@
 #include "main/glheader.h"
 #include "main/image.h"
 #include "main/state.h"
+#include "main/stencil.h"
 #include "main/mtypes.h"
 #include "main/condrender.h"
 #include "main/fbobject.h"
@@ -111,14 +112,14 @@ do_blit_copypixels(struct gl_context * ctx,
       return false;
    }
 
-   if (ctx->Stencil._Enabled) {
+   if (_mesa_stencil_is_enabled(ctx)) {
       perf_debug("glCopyPixels(): Unsupported stencil test state\n");
       return false;
    }
 
    if (ctx->Fog.Enabled ||
        ctx->Texture._MaxEnabledTexImageUnit != -1 ||
-       ctx->FragmentProgram._Enabled) {
+       _mesa_arb_fragment_program_enabled(ctx)) {
       perf_debug("glCopyPixels(): Unsupported fragment shader state\n");
       return false;
    }
@@ -129,16 +130,13 @@ do_blit_copypixels(struct gl_context * ctx,
       return false;
    }
 
-   if (!ctx->Color.ColorMask[0][0] ||
-       !ctx->Color.ColorMask[0][1] ||
-       !ctx->Color.ColorMask[0][2] ||
-       !ctx->Color.ColorMask[0][3]) {
+   if (GET_COLORMASK(ctx->Color.ColorMask, 0) != 0xf) {
       perf_debug("glCopyPixels(): Unsupported color mask state\n");
       return false;
    }
 
    if (ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F) {
-      perf_debug("glCopyPixles(): Unsupported pixel zoom\n");
+      perf_debug("glCopyPixels(): Unsupported pixel zoom\n");
       return false;
    }
 
@@ -175,8 +173,8 @@ do_blit_copypixels(struct gl_context * ctx,
                            dstx, dsty, _mesa_is_winsys_fbo(fb),
                            width, height,
                            (ctx->Color.ColorLogicOpEnabled ?
-                            ctx->Color.LogicOp : GL_COPY))) {
-      DBG("%s: blit failure\n", __FUNCTION__);
+                            ctx->Color._LogicOp : COLOR_LOGICOP_COPY))) {
+      DBG("%s: blit failure\n", __func__);
       return false;
    }
 
@@ -186,7 +184,7 @@ do_blit_copypixels(struct gl_context * ctx,
 out:
    intel_check_front_buffer_rendering(intel);
 
-   DBG("%s: success\n", __FUNCTION__);
+   DBG("%s: success\n", __func__);
    return true;
 }
 
@@ -197,7 +195,7 @@ intelCopyPixels(struct gl_context * ctx,
                 GLsizei width, GLsizei height,
                 GLint destx, GLint desty, GLenum type)
 {
-   DBG("%s\n", __FUNCTION__);
+   DBG("%s\n", __func__);
 
    if (!_mesa_check_conditional_render(ctx))
       return;

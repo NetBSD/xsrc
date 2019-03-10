@@ -3,18 +3,18 @@
 /*
  * (C) Copyright IBM Corporation 2004, 2005
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sub license,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
  * Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.  IN NO EVENT SHALL
@@ -31,26 +31,55 @@
 #include "glxclient.h"
 #include "indirect_size.h"
 #include "glapi.h"
-#include "glthread.h"
 #include <GL/glxproto.h>
-#ifdef USE_XCB
 #include <X11/Xlib-xcb.h>
 #include <xcb/xcb.h>
 #include <xcb/glx.h>
-#endif /* USE_XCB */
-
-#define __GLX_PAD(n) (((n) + 3) & ~3)
+#include <limits.h>
 
 #if defined(__i386__) && defined(__GNUC__) && !defined(__CYGWIN__) && !defined(__MINGW32__)
 #define FASTCALL __attribute__((fastcall))
 #else
 #define FASTCALL
 #endif
-#if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
+#if defined(__GNUC__)
 #define NOINLINE __attribute__((noinline))
 #else
 #define NOINLINE
 #endif
+
+static _X_INLINE int
+safe_add(int a, int b)
+{
+    if (a < 0 || b < 0)
+        return -1;
+    if (INT_MAX - a < b)
+        return -1;
+    return a + b;
+}
+
+static _X_INLINE int
+safe_mul(int a, int b)
+{
+    if (a < 0 || b < 0)
+        return -1;
+    if (a == 0 || b == 0)
+        return 0;
+    if (a > INT_MAX / b)
+        return -1;
+    return a * b;
+}
+
+static _X_INLINE int
+safe_pad(int a)
+{
+    int ret;
+    if (a < 0)
+        return -1;
+    if ((ret = safe_add(a, 3)) < 0)
+        return -1;
+    return ret & (GLuint) ~ 3;
+}
 
 #ifndef __GNUC__
 #define __builtin_expect(x, y) x
@@ -114,7 +143,7 @@ __glXReadPixelReply(Display * dpy, struct glx_context *gc, unsigned max_dim,
 
     size = reply.length * 4;
     if (size != 0) {
-        void *buf = Xmalloc(size);
+        void *buf = malloc(size);
 
         if (buf == NULL) {
             _XEatData(dpy, size);
@@ -129,7 +158,7 @@ __glXReadPixelReply(Display * dpy, struct glx_context *gc, unsigned max_dim,
 
             __glEmptyImage(gc, 3, width, height, depth, format, type,
                            buf, dest);
-            Xfree(buf);
+            free(buf);
         }
     }
 }
@@ -362,7 +391,11 @@ __indirect_glCallLists(GLsizei n, GLenum type, const GLvoid * lists)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glCallLists_size(type);
-    const GLuint cmdlen = 12 + __GLX_PAD((compsize * n));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(compsize, n));
+    if (0 + safe_pad(safe_mul(compsize, n)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -376,7 +409,7 @@ __indirect_glCallLists(GLsizei n, GLenum type, const GLvoid * lists)
             (void) memcpy((void *) (gc->pc + 4), (void *) (&n), 4);
             (void) memcpy((void *) (gc->pc + 8), (void *) (&type), 4);
             (void) memcpy((void *) (gc->pc + 12), (void *) (lists),
-                          (compsize * n));
+                          safe_mul(compsize, n));
             gc->pc += cmdlen;
             if (__builtin_expect(gc->pc > gc->limit, 0)) {
                 (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -389,7 +422,7 @@ __indirect_glCallLists(GLsizei n, GLenum type, const GLvoid * lists)
             (void) memcpy((void *) (pc + 4), (void *) (&op), 4);
             (void) memcpy((void *) (pc + 8), (void *) (&n), 4);
             (void) memcpy((void *) (pc + 12), (void *) (&type), 4);
-            __glXSendLargeCommand(gc, pc, 16, lists, (compsize * n));
+            __glXSendLargeCommand(gc, pc, 16, lists, safe_mul(compsize, n));
         }
     }
 }
@@ -491,7 +524,11 @@ __indirect_glBitmap(GLsizei width, GLsizei height, GLfloat xorig,
     const GLuint compsize =
         (bitmap != NULL) ? __glImageSize(width, height, 1, GL_COLOR_INDEX,
                                          GL_BITMAP, 0) : 0;
-    const GLuint cmdlen = 48 + __GLX_PAD(compsize);
+    const GLuint cmdlen = 48 + safe_pad(compsize);
+    if (0 + safe_pad(compsize) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (__builtin_expect(gc->currentDpy != NULL, 1)) {
         if (cmdlen <= gc->maxSmallRenderCommandSize) {
             if ((gc->pc + cmdlen) > gc->bufEnd) {
@@ -505,8 +542,8 @@ __indirect_glBitmap(GLsizei width, GLsizei height, GLfloat xorig,
             (void) memcpy((void *) (gc->pc + 40), (void *) (&xmove), 4);
             (void) memcpy((void *) (gc->pc + 44), (void *) (&ymove), 4);
             if (compsize > 0) {
-                (*gc->fillImage) (gc, 2, width, height, 1, GL_COLOR_INDEX,
-                                  GL_BITMAP, bitmap, gc->pc + 48, gc->pc + 4);
+                gc->fillImage(gc, 2, width, height, 1, GL_COLOR_INDEX,
+                              GL_BITMAP, bitmap, gc->pc + 48, gc->pc + 4);
             } else {
                 (void) memcpy(gc->pc + 4, default_pixel_store_2D,
                               default_pixel_store_2D_size);
@@ -2271,10 +2308,15 @@ __indirect_glFogfv(GLenum pname, const GLfloat * params)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glFogfv_size(pname);
-    const GLuint cmdlen = 8 + __GLX_PAD((compsize * 4));
+    const GLuint cmdlen = 8 + safe_pad(safe_mul(compsize, 4));
+    if (0 + safe_pad(safe_mul(compsize, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     emit_header(gc->pc, X_GLrop_Fogfv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&pname), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (params), (compsize * 4));
+    (void) memcpy((void *) (gc->pc + 8), (void *) (params),
+                  safe_mul(compsize, 4));
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -2302,10 +2344,15 @@ __indirect_glFogiv(GLenum pname, const GLint * params)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glFogiv_size(pname);
-    const GLuint cmdlen = 8 + __GLX_PAD((compsize * 4));
+    const GLuint cmdlen = 8 + safe_pad(safe_mul(compsize, 4));
+    if (0 + safe_pad(safe_mul(compsize, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     emit_header(gc->pc, X_GLrop_Fogiv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&pname), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (params), (compsize * 4));
+    (void) memcpy((void *) (gc->pc + 8), (void *) (params),
+                  safe_mul(compsize, 4));
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -2363,11 +2410,16 @@ __indirect_glLightfv(GLenum light, GLenum pname, const GLfloat * params)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glLightfv_size(pname);
-    const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(compsize, 4));
+    if (0 + safe_pad(safe_mul(compsize, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     emit_header(gc->pc, X_GLrop_Lightfv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&light), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&pname), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (params), (compsize * 4));
+    (void) memcpy((void *) (gc->pc + 12), (void *) (params),
+                  safe_mul(compsize, 4));
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -2396,11 +2448,16 @@ __indirect_glLightiv(GLenum light, GLenum pname, const GLint * params)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glLightiv_size(pname);
-    const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(compsize, 4));
+    if (0 + safe_pad(safe_mul(compsize, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     emit_header(gc->pc, X_GLrop_Lightiv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&light), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&pname), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (params), (compsize * 4));
+    (void) memcpy((void *) (gc->pc + 12), (void *) (params),
+                  safe_mul(compsize, 4));
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -2428,10 +2485,15 @@ __indirect_glLightModelfv(GLenum pname, const GLfloat * params)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glLightModelfv_size(pname);
-    const GLuint cmdlen = 8 + __GLX_PAD((compsize * 4));
+    const GLuint cmdlen = 8 + safe_pad(safe_mul(compsize, 4));
+    if (0 + safe_pad(safe_mul(compsize, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     emit_header(gc->pc, X_GLrop_LightModelfv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&pname), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (params), (compsize * 4));
+    (void) memcpy((void *) (gc->pc + 8), (void *) (params),
+                  safe_mul(compsize, 4));
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -2459,10 +2521,15 @@ __indirect_glLightModeliv(GLenum pname, const GLint * params)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glLightModeliv_size(pname);
-    const GLuint cmdlen = 8 + __GLX_PAD((compsize * 4));
+    const GLuint cmdlen = 8 + safe_pad(safe_mul(compsize, 4));
+    if (0 + safe_pad(safe_mul(compsize, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     emit_header(gc->pc, X_GLrop_LightModeliv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&pname), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (params), (compsize * 4));
+    (void) memcpy((void *) (gc->pc + 8), (void *) (params),
+                  safe_mul(compsize, 4));
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -2520,11 +2587,16 @@ __indirect_glMaterialfv(GLenum face, GLenum pname, const GLfloat * params)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glMaterialfv_size(pname);
-    const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(compsize, 4));
+    if (0 + safe_pad(safe_mul(compsize, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     emit_header(gc->pc, X_GLrop_Materialfv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&face), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&pname), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (params), (compsize * 4));
+    (void) memcpy((void *) (gc->pc + 12), (void *) (params),
+                  safe_mul(compsize, 4));
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -2553,11 +2625,16 @@ __indirect_glMaterialiv(GLenum face, GLenum pname, const GLint * params)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glMaterialiv_size(pname);
-    const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(compsize, 4));
+    if (0 + safe_pad(safe_mul(compsize, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     emit_header(gc->pc, X_GLrop_Materialiv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&face), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&pname), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (params), (compsize * 4));
+    (void) memcpy((void *) (gc->pc + 12), (void *) (params),
+                  safe_mul(compsize, 4));
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -2601,11 +2678,15 @@ __indirect_glPolygonStipple(const GLubyte *mask)
     const GLuint compsize =
         (mask != NULL) ? __glImageSize(32, 32, 1, GL_COLOR_INDEX, GL_BITMAP,
                                        0) : 0;
-    const GLuint cmdlen = 24 + __GLX_PAD(compsize);
+    const GLuint cmdlen = 24 + safe_pad(compsize);
+    if (0 + safe_pad(compsize) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     emit_header(gc->pc, X_GLrop_PolygonStipple, cmdlen);
     if (compsize > 0) {
-        (*gc->fillImage) (gc, 2, 32, 32, 1, GL_COLOR_INDEX, GL_BITMAP, mask,
-                          gc->pc + 24, gc->pc + 4);
+        gc->fillImage(gc, 2, 32, 32, 1, GL_COLOR_INDEX, GL_BITMAP, mask,
+                      gc->pc + 24, gc->pc + 4);
     } else {
         (void) memcpy(gc->pc + 4, default_pixel_store_2D,
                       default_pixel_store_2D_size);
@@ -2670,11 +2751,16 @@ __indirect_glTexParameterfv(GLenum target, GLenum pname,
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glTexParameterfv_size(pname);
-    const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(compsize, 4));
+    if (0 + safe_pad(safe_mul(compsize, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     emit_header(gc->pc, X_GLrop_TexParameterfv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&pname), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (params), (compsize * 4));
+    (void) memcpy((void *) (gc->pc + 12), (void *) (params),
+                  safe_mul(compsize, 4));
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -2703,11 +2789,16 @@ __indirect_glTexParameteriv(GLenum target, GLenum pname, const GLint * params)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glTexParameteriv_size(pname);
-    const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(compsize, 4));
+    if (0 + safe_pad(safe_mul(compsize, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     emit_header(gc->pc, X_GLrop_TexParameteriv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&pname), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (params), (compsize * 4));
+    (void) memcpy((void *) (gc->pc + 12), (void *) (params),
+                  safe_mul(compsize, 4));
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -2723,7 +2814,11 @@ __glx_TexImage_1D2D(unsigned opcode, unsigned dim, GLenum target, GLint level,
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize =
         __glImageSize(width, height, 1, format, type, target);
-    const GLuint cmdlen = 56 + __GLX_PAD(compsize);
+    const GLuint cmdlen = 56 + safe_pad(compsize);
+    if (0 + safe_pad(compsize) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (__builtin_expect(gc->currentDpy != NULL, 1)) {
         if (cmdlen <= gc->maxSmallRenderCommandSize) {
             if ((gc->pc + cmdlen) > gc->bufEnd) {
@@ -2740,8 +2835,8 @@ __glx_TexImage_1D2D(unsigned opcode, unsigned dim, GLenum target, GLint level,
             (void) memcpy((void *) (gc->pc + 48), (void *) (&format), 4);
             (void) memcpy((void *) (gc->pc + 52), (void *) (&type), 4);
             if ((compsize > 0) && (pixels != NULL)) {
-                (*gc->fillImage) (gc, dim, width, height, 1, format, type,
-                                  pixels, gc->pc + 56, gc->pc + 4);
+                gc->fillImage(gc, dim, width, height, 1, format, type, pixels,
+                              gc->pc + 56, gc->pc + 4);
             } else {
                 (void) memcpy(gc->pc + 4, default_pixel_store_2D,
                               default_pixel_store_2D_size);
@@ -2812,11 +2907,16 @@ __indirect_glTexEnvfv(GLenum target, GLenum pname, const GLfloat * params)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glTexEnvfv_size(pname);
-    const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(compsize, 4));
+    if (0 + safe_pad(safe_mul(compsize, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     emit_header(gc->pc, X_GLrop_TexEnvfv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&pname), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (params), (compsize * 4));
+    (void) memcpy((void *) (gc->pc + 12), (void *) (params),
+                  safe_mul(compsize, 4));
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -2845,11 +2945,16 @@ __indirect_glTexEnviv(GLenum target, GLenum pname, const GLint * params)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glTexEnviv_size(pname);
-    const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(compsize, 4));
+    if (0 + safe_pad(safe_mul(compsize, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     emit_header(gc->pc, X_GLrop_TexEnviv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&pname), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (params), (compsize * 4));
+    (void) memcpy((void *) (gc->pc + 12), (void *) (params),
+                  safe_mul(compsize, 4));
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -2878,11 +2983,16 @@ __indirect_glTexGendv(GLenum coord, GLenum pname, const GLdouble * params)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glTexGendv_size(pname);
-    const GLuint cmdlen = 12 + __GLX_PAD((compsize * 8));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(compsize, 8));
+    if (0 + safe_pad(safe_mul(compsize, 8)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     emit_header(gc->pc, X_GLrop_TexGendv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&coord), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&pname), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (params), (compsize * 8));
+    (void) memcpy((void *) (gc->pc + 12), (void *) (params),
+                  safe_mul(compsize, 8));
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -2911,11 +3021,16 @@ __indirect_glTexGenfv(GLenum coord, GLenum pname, const GLfloat * params)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glTexGenfv_size(pname);
-    const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(compsize, 4));
+    if (0 + safe_pad(safe_mul(compsize, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     emit_header(gc->pc, X_GLrop_TexGenfv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&coord), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&pname), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (params), (compsize * 4));
+    (void) memcpy((void *) (gc->pc + 12), (void *) (params),
+                  safe_mul(compsize, 4));
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -2944,11 +3059,16 @@ __indirect_glTexGeniv(GLenum coord, GLenum pname, const GLint * params)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glTexGeniv_size(pname);
-    const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(compsize, 4));
+    if (0 + safe_pad(safe_mul(compsize, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     emit_header(gc->pc, X_GLrop_TexGeniv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&coord), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&pname), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (params), (compsize * 4));
+    (void) memcpy((void *) (gc->pc + 12), (void *) (params),
+                  safe_mul(compsize, 4));
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -3592,7 +3712,11 @@ void
 __indirect_glPixelMapfv(GLenum map, GLsizei mapsize, const GLfloat * values)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12 + __GLX_PAD((mapsize * 4));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(mapsize, 4));
+    if (0 + safe_pad(safe_mul(mapsize, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (mapsize < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -3606,7 +3730,7 @@ __indirect_glPixelMapfv(GLenum map, GLsizei mapsize, const GLfloat * values)
             (void) memcpy((void *) (gc->pc + 4), (void *) (&map), 4);
             (void) memcpy((void *) (gc->pc + 8), (void *) (&mapsize), 4);
             (void) memcpy((void *) (gc->pc + 12), (void *) (values),
-                          (mapsize * 4));
+                          safe_mul(mapsize, 4));
             gc->pc += cmdlen;
             if (__builtin_expect(gc->pc > gc->limit, 0)) {
                 (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -3619,7 +3743,7 @@ __indirect_glPixelMapfv(GLenum map, GLsizei mapsize, const GLfloat * values)
             (void) memcpy((void *) (pc + 4), (void *) (&op), 4);
             (void) memcpy((void *) (pc + 8), (void *) (&map), 4);
             (void) memcpy((void *) (pc + 12), (void *) (&mapsize), 4);
-            __glXSendLargeCommand(gc, pc, 16, values, (mapsize * 4));
+            __glXSendLargeCommand(gc, pc, 16, values, safe_mul(mapsize, 4));
         }
     }
 }
@@ -3629,7 +3753,11 @@ void
 __indirect_glPixelMapuiv(GLenum map, GLsizei mapsize, const GLuint * values)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12 + __GLX_PAD((mapsize * 4));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(mapsize, 4));
+    if (0 + safe_pad(safe_mul(mapsize, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (mapsize < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -3643,7 +3771,7 @@ __indirect_glPixelMapuiv(GLenum map, GLsizei mapsize, const GLuint * values)
             (void) memcpy((void *) (gc->pc + 4), (void *) (&map), 4);
             (void) memcpy((void *) (gc->pc + 8), (void *) (&mapsize), 4);
             (void) memcpy((void *) (gc->pc + 12), (void *) (values),
-                          (mapsize * 4));
+                          safe_mul(mapsize, 4));
             gc->pc += cmdlen;
             if (__builtin_expect(gc->pc > gc->limit, 0)) {
                 (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -3656,7 +3784,7 @@ __indirect_glPixelMapuiv(GLenum map, GLsizei mapsize, const GLuint * values)
             (void) memcpy((void *) (pc + 4), (void *) (&op), 4);
             (void) memcpy((void *) (pc + 8), (void *) (&map), 4);
             (void) memcpy((void *) (pc + 12), (void *) (&mapsize), 4);
-            __glXSendLargeCommand(gc, pc, 16, values, (mapsize * 4));
+            __glXSendLargeCommand(gc, pc, 16, values, safe_mul(mapsize, 4));
         }
     }
 }
@@ -3666,7 +3794,11 @@ void
 __indirect_glPixelMapusv(GLenum map, GLsizei mapsize, const GLushort * values)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12 + __GLX_PAD((mapsize * 2));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(mapsize, 2));
+    if (0 + safe_pad(safe_mul(mapsize, 2)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (mapsize < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -3680,7 +3812,7 @@ __indirect_glPixelMapusv(GLenum map, GLsizei mapsize, const GLushort * values)
             (void) memcpy((void *) (gc->pc + 4), (void *) (&map), 4);
             (void) memcpy((void *) (gc->pc + 8), (void *) (&mapsize), 4);
             (void) memcpy((void *) (gc->pc + 12), (void *) (values),
-                          (mapsize * 2));
+                          safe_mul(mapsize, 2));
             gc->pc += cmdlen;
             if (__builtin_expect(gc->pc > gc->limit, 0)) {
                 (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -3693,7 +3825,7 @@ __indirect_glPixelMapusv(GLenum map, GLsizei mapsize, const GLushort * values)
             (void) memcpy((void *) (pc + 4), (void *) (&op), 4);
             (void) memcpy((void *) (pc + 8), (void *) (&map), 4);
             (void) memcpy((void *) (pc + 12), (void *) (&mapsize), 4);
-            __glXSendLargeCommand(gc, pc, 16, values, (mapsize * 2));
+            __glXSendLargeCommand(gc, pc, 16, values, safe_mul(mapsize, 2));
         }
     }
 }
@@ -3756,9 +3888,8 @@ __indirect_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
                                                           state->storePack.
                                                           swapEndian, 0),
                                       NULL);
-        (void) memcpy(pixels, xcb_glx_read_pixels_data(reply),
-                      xcb_glx_read_pixels_data_length(reply) *
-                      sizeof(GLvoid));
+        __glEmptyImage(gc, 3, width, height, 1, format, type,
+                       xcb_glx_read_pixels_data(reply), pixels);
         free(reply);
 #else
         GLubyte const *pc =
@@ -3789,7 +3920,11 @@ __indirect_glDrawPixels(GLsizei width, GLsizei height, GLenum format,
     const GLuint compsize =
         (pixels != NULL) ? __glImageSize(width, height, 1, format, type,
                                          0) : 0;
-    const GLuint cmdlen = 40 + __GLX_PAD(compsize);
+    const GLuint cmdlen = 40 + safe_pad(compsize);
+    if (0 + safe_pad(compsize) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (__builtin_expect(gc->currentDpy != NULL, 1)) {
         if (cmdlen <= gc->maxSmallRenderCommandSize) {
             if ((gc->pc + cmdlen) > gc->bufEnd) {
@@ -3801,8 +3936,8 @@ __indirect_glDrawPixels(GLsizei width, GLsizei height, GLenum format,
             (void) memcpy((void *) (gc->pc + 32), (void *) (&format), 4);
             (void) memcpy((void *) (gc->pc + 36), (void *) (&type), 4);
             if (compsize > 0) {
-                (*gc->fillImage) (gc, 2, width, height, 1, format, type,
-                                  pixels, gc->pc + 40, gc->pc + 4);
+                gc->fillImage(gc, 2, width, height, 1, format, type, pixels,
+                              gc->pc + 40, gc->pc + 4);
             } else {
                 (void) memcpy(gc->pc + 4, default_pixel_store_2D,
                               default_pixel_store_2D_size);
@@ -3882,7 +4017,9 @@ __indirect_glGetLightfv(GLenum light, GLenum pname, GLfloat * params)
                                                           currentContextTag,
                                                           light, pname),
                                       NULL);
-        if (xcb_glx_get_lightfv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_lightfv_data_length(reply) == 1)
             (void) memcpy(params, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(params, xcb_glx_get_lightfv_data(reply),
@@ -3922,7 +4059,9 @@ __indirect_glGetLightiv(GLenum light, GLenum pname, GLint * params)
                                                           currentContextTag,
                                                           light, pname),
                                       NULL);
-        if (xcb_glx_get_lightiv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_lightiv_data_length(reply) == 1)
             (void) memcpy(params, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(params, xcb_glx_get_lightiv_data(reply),
@@ -3960,7 +4099,9 @@ __indirect_glGetMapdv(GLenum target, GLenum query, GLdouble * v)
                                     xcb_glx_get_mapdv(c,
                                                       gc->currentContextTag,
                                                       target, query), NULL);
-        if (xcb_glx_get_mapdv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_mapdv_data_length(reply) == 1)
             (void) memcpy(v, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(v, xcb_glx_get_mapdv_data(reply),
@@ -3998,7 +4139,9 @@ __indirect_glGetMapfv(GLenum target, GLenum query, GLfloat * v)
                                     xcb_glx_get_mapfv(c,
                                                       gc->currentContextTag,
                                                       target, query), NULL);
-        if (xcb_glx_get_mapfv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_mapfv_data_length(reply) == 1)
             (void) memcpy(v, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(v, xcb_glx_get_mapfv_data(reply),
@@ -4036,7 +4179,9 @@ __indirect_glGetMapiv(GLenum target, GLenum query, GLint * v)
                                     xcb_glx_get_mapiv(c,
                                                       gc->currentContextTag,
                                                       target, query), NULL);
-        if (xcb_glx_get_mapiv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_mapiv_data_length(reply) == 1)
             (void) memcpy(v, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(v, xcb_glx_get_mapiv_data(reply),
@@ -4076,7 +4221,9 @@ __indirect_glGetMaterialfv(GLenum face, GLenum pname, GLfloat * params)
                                                                 currentContextTag,
                                                                 face, pname),
                                          NULL);
-        if (xcb_glx_get_materialfv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_materialfv_data_length(reply) == 1)
             (void) memcpy(params, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(params, xcb_glx_get_materialfv_data(reply),
@@ -4116,7 +4263,9 @@ __indirect_glGetMaterialiv(GLenum face, GLenum pname, GLint * params)
                                                                 currentContextTag,
                                                                 face, pname),
                                          NULL);
-        if (xcb_glx_get_materialiv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_materialiv_data_length(reply) == 1)
             (void) memcpy(params, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(params, xcb_glx_get_materialiv_data(reply),
@@ -4155,7 +4304,9 @@ __indirect_glGetPixelMapfv(GLenum map, GLfloat * values)
                                                                   gc->
                                                                   currentContextTag,
                                                                   map), NULL);
-        if (xcb_glx_get_pixel_mapfv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_pixel_mapfv_data_length(reply) == 1)
             (void) memcpy(values, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(values, xcb_glx_get_pixel_mapfv_data(reply),
@@ -4194,7 +4345,9 @@ __indirect_glGetPixelMapuiv(GLenum map, GLuint * values)
                                                                     currentContextTag,
                                                                     map),
                                            NULL);
-        if (xcb_glx_get_pixel_mapuiv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_pixel_mapuiv_data_length(reply) == 1)
             (void) memcpy(values, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(values, xcb_glx_get_pixel_mapuiv_data(reply),
@@ -4233,7 +4386,9 @@ __indirect_glGetPixelMapusv(GLenum map, GLushort * values)
                                                                     currentContextTag,
                                                                     map),
                                            NULL);
-        if (xcb_glx_get_pixel_mapusv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_pixel_mapusv_data_length(reply) == 1)
             (void) memcpy(values, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(values, xcb_glx_get_pixel_mapusv_data(reply),
@@ -4272,9 +4427,8 @@ __indirect_glGetPolygonStipple(GLubyte *mask)
                                                                           currentContextTag,
                                                                           0),
                                               NULL);
-        (void) memcpy(mask, xcb_glx_get_polygon_stipple_data(reply),
-                      xcb_glx_get_polygon_stipple_data_length(reply) *
-                      sizeof(GLubyte));
+        __glEmptyImage(gc, 3, 32, 32, 1, GL_COLOR_INDEX, GL_BITMAP,
+                       xcb_glx_get_polygon_stipple_data(reply), mask);
         free(reply);
 #else
         GLubyte const *pc =
@@ -4309,7 +4463,9 @@ __indirect_glGetTexEnvfv(GLenum target, GLenum pname, GLfloat * params)
                                                               currentContextTag,
                                                               target, pname),
                                         NULL);
-        if (xcb_glx_get_tex_envfv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_tex_envfv_data_length(reply) == 1)
             (void) memcpy(params, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(params, xcb_glx_get_tex_envfv_data(reply),
@@ -4349,7 +4505,9 @@ __indirect_glGetTexEnviv(GLenum target, GLenum pname, GLint * params)
                                                               currentContextTag,
                                                               target, pname),
                                         NULL);
-        if (xcb_glx_get_tex_enviv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_tex_enviv_data_length(reply) == 1)
             (void) memcpy(params, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(params, xcb_glx_get_tex_enviv_data(reply),
@@ -4389,7 +4547,9 @@ __indirect_glGetTexGendv(GLenum coord, GLenum pname, GLdouble * params)
                                                               currentContextTag,
                                                               coord, pname),
                                         NULL);
-        if (xcb_glx_get_tex_gendv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_tex_gendv_data_length(reply) == 1)
             (void) memcpy(params, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(params, xcb_glx_get_tex_gendv_data(reply),
@@ -4429,7 +4589,9 @@ __indirect_glGetTexGenfv(GLenum coord, GLenum pname, GLfloat * params)
                                                               currentContextTag,
                                                               coord, pname),
                                         NULL);
-        if (xcb_glx_get_tex_genfv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_tex_genfv_data_length(reply) == 1)
             (void) memcpy(params, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(params, xcb_glx_get_tex_genfv_data(reply),
@@ -4469,7 +4631,9 @@ __indirect_glGetTexGeniv(GLenum coord, GLenum pname, GLint * params)
                                                               currentContextTag,
                                                               coord, pname),
                                         NULL);
-        if (xcb_glx_get_tex_geniv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_tex_geniv_data_length(reply) == 1)
             (void) memcpy(params, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(params, xcb_glx_get_tex_geniv_data(reply),
@@ -4515,9 +4679,15 @@ __indirect_glGetTexImage(GLenum target, GLint level, GLenum format,
                                                               storePack.
                                                               swapEndian),
                                         NULL);
-        (void) memcpy(pixels, xcb_glx_get_tex_image_data(reply),
-                      xcb_glx_get_tex_image_data_length(reply) *
-                      sizeof(GLvoid));
+        if (reply->height == 0) {
+            reply->height = 1;
+        }
+        if (reply->depth == 0) {
+            reply->depth = 1;
+        }
+        __glEmptyImage(gc, 3, reply->width, reply->height, reply->depth,
+                       format, type, xcb_glx_get_tex_image_data(reply),
+                       pixels);
         free(reply);
 #else
         GLubyte const *pc =
@@ -4558,7 +4728,9 @@ __indirect_glGetTexParameterfv(GLenum target, GLenum pname, GLfloat * params)
                                                                           target,
                                                                           pname),
                                               NULL);
-        if (xcb_glx_get_tex_parameterfv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_tex_parameterfv_data_length(reply) == 1)
             (void) memcpy(params, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(params, xcb_glx_get_tex_parameterfv_data(reply),
@@ -4599,7 +4771,9 @@ __indirect_glGetTexParameteriv(GLenum target, GLenum pname, GLint * params)
                                                                           target,
                                                                           pname),
                                               NULL);
-        if (xcb_glx_get_tex_parameteriv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_tex_parameteriv_data_length(reply) == 1)
             (void) memcpy(params, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(params, xcb_glx_get_tex_parameteriv_data(reply),
@@ -4639,7 +4813,9 @@ __indirect_glGetTexLevelParameterfv(GLenum target, GLint level, GLenum pname,
                                                     (c, gc->currentContextTag,
                                                      target, level, pname),
                                                     NULL);
-        if (xcb_glx_get_tex_level_parameterfv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_tex_level_parameterfv_data_length(reply) == 1)
             (void) memcpy(params, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(params,
@@ -4682,7 +4858,9 @@ __indirect_glGetTexLevelParameteriv(GLenum target, GLint level, GLenum pname,
                                                     (c, gc->currentContextTag,
                                                      target, level, pname),
                                                     NULL);
-        if (xcb_glx_get_tex_level_parameteriv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_tex_level_parameteriv_data_length(reply) == 1)
             (void) memcpy(params, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(params,
@@ -5168,8 +5346,12 @@ __indirect_glDeleteTextures(GLsizei n, const GLuint * textures)
     struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
 #ifndef USE_XCB
-    const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
+    const GLuint cmdlen = 4 + safe_pad(safe_mul(n, 4));
 #endif
+    if (0 + safe_pad(safe_mul(n, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -5183,7 +5365,7 @@ __indirect_glDeleteTextures(GLsizei n, const GLuint * textures)
         GLubyte const *pc =
             __glXSetupSingleRequest(gc, X_GLsop_DeleteTextures, cmdlen);
         (void) memcpy((void *) (pc + 0), (void *) (&n), 4);
-        (void) memcpy((void *) (pc + 4), (void *) (textures), (n * 4));
+        (void) memcpy((void *) (pc + 4), (void *) (textures), safe_mul(n, 4));
         UnlockDisplay(dpy);
         SyncHandle();
 #endif /* USE_XCB */
@@ -5199,13 +5381,20 @@ glDeleteTexturesEXT(GLsizei n, const GLuint * textures)
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
     if (gc->isDirect) {
-        GET_DISPATCH()->DeleteTextures(n, textures);
+        const _glapi_proc *const disp_table = (_glapi_proc *) GET_DISPATCH();
+        PFNGLDELETETEXTURESEXTPROC p =
+            (PFNGLDELETETEXTURESEXTPROC) disp_table[327];
+        p(n, textures);
     } else
 #endif
     {
         struct glx_context *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
-        const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
+        const GLuint cmdlen = 4 + safe_pad(safe_mul(n, 4));
+        if (0 + safe_pad(safe_mul(n, 4)) < 0) {
+            __glXSetError(gc, GL_INVALID_VALUE);
+            return;
+        }
         if (n < 0) {
             __glXSetError(gc, GL_INVALID_VALUE);
             return;
@@ -5215,7 +5404,8 @@ glDeleteTexturesEXT(GLsizei n, const GLuint * textures)
                 __glXSetupVendorRequest(gc, X_GLXVendorPrivate,
                                         X_GLvop_DeleteTexturesEXT, cmdlen);
             (void) memcpy((void *) (pc + 0), (void *) (&n), 4);
-            (void) memcpy((void *) (pc + 4), (void *) (textures), (n * 4));
+            (void) memcpy((void *) (pc + 4), (void *) (textures),
+                          safe_mul(n, 4));
             UnlockDisplay(dpy);
             SyncHandle();
         }
@@ -5270,7 +5460,9 @@ glGenTexturesEXT(GLsizei n, GLuint * textures)
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
     if (gc->isDirect) {
-        GET_DISPATCH()->GenTextures(n, textures);
+        const _glapi_proc *const disp_table = (_glapi_proc *) GET_DISPATCH();
+        PFNGLGENTEXTURESEXTPROC p = (PFNGLGENTEXTURESEXTPROC) disp_table[328];
+        p(n, textures);
     } else
 #endif
     {
@@ -5335,7 +5527,9 @@ glIsTextureEXT(GLuint texture)
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
     if (gc->isDirect) {
-        return GET_DISPATCH()->IsTexture(texture);
+        const _glapi_proc *const disp_table = (_glapi_proc *) GET_DISPATCH();
+        PFNGLISTEXTUREEXTPROC p = (PFNGLISTEXTUREEXTPROC) disp_table[330];
+        return p(texture);
     } else
 #endif
     {
@@ -5362,7 +5556,12 @@ __indirect_glPrioritizeTextures(GLsizei n, const GLuint * textures,
                                 const GLclampf * priorities)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 8 + __GLX_PAD((n * 4)) + __GLX_PAD((n * 4));
+    const GLuint cmdlen =
+        8 + safe_pad(safe_mul(n, 4)) + safe_pad(safe_mul(n, 4));
+    if (0 + safe_pad(safe_mul(n, 4)) + safe_pad(safe_mul(n, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -5370,9 +5569,10 @@ __indirect_glPrioritizeTextures(GLsizei n, const GLuint * textures,
     if (__builtin_expect(n >= 0, 1)) {
         emit_header(gc->pc, X_GLrop_PrioritizeTextures, cmdlen);
         (void) memcpy((void *) (gc->pc + 4), (void *) (&n), 4);
-        (void) memcpy((void *) (gc->pc + 8), (void *) (textures), (n * 4));
-        (void) memcpy((void *) (gc->pc + 8 + (n * 4)), (void *) (priorities),
-                      (n * 4));
+        (void) memcpy((void *) (gc->pc + 8), (void *) (textures),
+                      safe_mul(n, 4));
+        (void) memcpy((void *) (gc->pc + 8 + safe_mul(n, 4)),
+                      (void *) (priorities), safe_mul(n, 4));
         gc->pc += cmdlen;
         if (__builtin_expect(gc->pc > gc->limit, 0)) {
             (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -5390,7 +5590,11 @@ __glx_TexSubImage_1D2D(unsigned opcode, unsigned dim, GLenum target,
     const GLuint compsize =
         (pixels != NULL) ? __glImageSize(width, height, 1, format, type,
                                          target) : 0;
-    const GLuint cmdlen = 60 + __GLX_PAD(compsize);
+    const GLuint cmdlen = 60 + safe_pad(compsize);
+    if (0 + safe_pad(compsize) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (__builtin_expect(gc->currentDpy != NULL, 1)) {
         if (cmdlen <= gc->maxSmallRenderCommandSize) {
             if ((gc->pc + cmdlen) > gc->bufEnd) {
@@ -5407,8 +5611,8 @@ __glx_TexSubImage_1D2D(unsigned opcode, unsigned dim, GLenum target,
             (void) memcpy((void *) (gc->pc + 52), (void *) (&type), 4);
             (void) memset((void *) (gc->pc + 56), 0, 4);
             if (compsize > 0) {
-                (*gc->fillImage) (gc, dim, width, height, 1, format, type,
-                                  pixels, gc->pc + 60, gc->pc + 4);
+                gc->fillImage(gc, dim, width, height, 1, format, type, pixels,
+                              gc->pc + 60, gc->pc + 4);
             } else {
                 (void) memcpy(gc->pc + 4, default_pixel_store_2D,
                               default_pixel_store_2D_size);
@@ -5499,7 +5703,11 @@ __indirect_glColorTable(GLenum target, GLenum internalformat, GLsizei width,
     const GLuint compsize =
         (table != NULL) ? __glImageSize(width, 1, 1, format, type,
                                         target) : 0;
-    const GLuint cmdlen = 44 + __GLX_PAD(compsize);
+    const GLuint cmdlen = 44 + safe_pad(compsize);
+    if (0 + safe_pad(compsize) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (__builtin_expect(gc->currentDpy != NULL, 1)) {
         if (cmdlen <= gc->maxSmallRenderCommandSize) {
             if ((gc->pc + cmdlen) > gc->bufEnd) {
@@ -5513,8 +5721,8 @@ __indirect_glColorTable(GLenum target, GLenum internalformat, GLsizei width,
             (void) memcpy((void *) (gc->pc + 36), (void *) (&format), 4);
             (void) memcpy((void *) (gc->pc + 40), (void *) (&type), 4);
             if (compsize > 0) {
-                (*gc->fillImage) (gc, 1, width, 1, 1, format, type, table,
-                                  gc->pc + 44, gc->pc + 4);
+                gc->fillImage(gc, 1, width, 1, 1, format, type, table,
+                              gc->pc + 44, gc->pc + 4);
             } else {
                 (void) memcpy(gc->pc + 4, default_pixel_store_1D,
                               default_pixel_store_1D_size);
@@ -5547,11 +5755,16 @@ __indirect_glColorTableParameterfv(GLenum target, GLenum pname,
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glColorTableParameterfv_size(pname);
-    const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(compsize, 4));
+    if (0 + safe_pad(safe_mul(compsize, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     emit_header(gc->pc, X_GLrop_ColorTableParameterfv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&pname), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (params), (compsize * 4));
+    (void) memcpy((void *) (gc->pc + 12), (void *) (params),
+                  safe_mul(compsize, 4));
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -5565,11 +5778,16 @@ __indirect_glColorTableParameteriv(GLenum target, GLenum pname,
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glColorTableParameteriv_size(pname);
-    const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(compsize, 4));
+    if (0 + safe_pad(safe_mul(compsize, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     emit_header(gc->pc, X_GLrop_ColorTableParameteriv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&pname), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (params), (compsize * 4));
+    (void) memcpy((void *) (gc->pc + 12), (void *) (params),
+                  safe_mul(compsize, 4));
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -5622,9 +5840,8 @@ __indirect_glGetColorTable(GLenum target, GLenum format, GLenum type,
                                                                   storePack.
                                                                   swapEndian),
                                           NULL);
-        (void) memcpy(table, xcb_glx_get_color_table_data(reply),
-                      xcb_glx_get_color_table_data_length(reply) *
-                      sizeof(GLvoid));
+        __glEmptyImage(gc, 3, reply->width, 1, 1, format, type,
+                       xcb_glx_get_color_table_data(reply), table);
         free(reply);
 #else
         GLubyte const *pc =
@@ -5645,13 +5862,17 @@ __indirect_glGetColorTable(GLenum target, GLenum format, GLenum type,
 
 #define X_GLvop_GetColorTableSGI 4098
 void
-glGetColorTableEXT(GLenum target, GLenum format, GLenum type, GLvoid * table)
+gl_dispatch_stub_343(GLenum target, GLenum format, GLenum type,
+                     GLvoid * table)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
     if (gc->isDirect) {
-        GET_DISPATCH()->GetColorTable(target, format, type, table);
+        const _glapi_proc *const disp_table = (_glapi_proc *) GET_DISPATCH();
+        PFNGLGETCOLORTABLESGIPROC p =
+            (PFNGLGETCOLORTABLESGIPROC) disp_table[343];
+        p(target, format, type, table);
     } else
 #endif
     {
@@ -5697,7 +5918,9 @@ __indirect_glGetColorTableParameterfv(GLenum target, GLenum pname,
                                                       (c,
                                                        gc->currentContextTag,
                                                        target, pname), NULL);
-        if (xcb_glx_get_color_table_parameterfv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_color_table_parameterfv_data_length(reply) == 1)
             (void) memcpy(params, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(params,
@@ -5721,13 +5944,16 @@ __indirect_glGetColorTableParameterfv(GLenum target, GLenum pname,
 
 #define X_GLvop_GetColorTableParameterfvSGI 4099
 void
-glGetColorTableParameterfvEXT(GLenum target, GLenum pname, GLfloat * params)
+gl_dispatch_stub_344(GLenum target, GLenum pname, GLfloat * params)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
     if (gc->isDirect) {
-        GET_DISPATCH()->GetColorTableParameterfv(target, pname, params);
+        const _glapi_proc *const disp_table = (_glapi_proc *) GET_DISPATCH();
+        PFNGLGETCOLORTABLEPARAMETERFVSGIPROC p =
+            (PFNGLGETCOLORTABLEPARAMETERFVSGIPROC) disp_table[344];
+        p(target, pname, params);
     } else
 #endif
     {
@@ -5769,7 +5995,9 @@ __indirect_glGetColorTableParameteriv(GLenum target, GLenum pname,
                                                       (c,
                                                        gc->currentContextTag,
                                                        target, pname), NULL);
-        if (xcb_glx_get_color_table_parameteriv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_color_table_parameteriv_data_length(reply) == 1)
             (void) memcpy(params, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(params,
@@ -5793,13 +6021,16 @@ __indirect_glGetColorTableParameteriv(GLenum target, GLenum pname,
 
 #define X_GLvop_GetColorTableParameterivSGI 4100
 void
-glGetColorTableParameterivEXT(GLenum target, GLenum pname, GLint * params)
+gl_dispatch_stub_345(GLenum target, GLenum pname, GLint * params)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
     if (gc->isDirect) {
-        GET_DISPATCH()->GetColorTableParameteriv(target, pname, params);
+        const _glapi_proc *const disp_table = (_glapi_proc *) GET_DISPATCH();
+        PFNGLGETCOLORTABLEPARAMETERIVSGIPROC p =
+            (PFNGLGETCOLORTABLEPARAMETERIVSGIPROC) disp_table[345];
+        p(target, pname, params);
     } else
 #endif
     {
@@ -5829,7 +6060,11 @@ __indirect_glColorSubTable(GLenum target, GLsizei start, GLsizei count,
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize =
         (data != NULL) ? __glImageSize(count, 1, 1, format, type, target) : 0;
-    const GLuint cmdlen = 44 + __GLX_PAD(compsize);
+    const GLuint cmdlen = 44 + safe_pad(compsize);
+    if (0 + safe_pad(compsize) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (__builtin_expect(gc->currentDpy != NULL, 1)) {
         if (cmdlen <= gc->maxSmallRenderCommandSize) {
             if ((gc->pc + cmdlen) > gc->bufEnd) {
@@ -5842,8 +6077,8 @@ __indirect_glColorSubTable(GLenum target, GLsizei start, GLsizei count,
             (void) memcpy((void *) (gc->pc + 36), (void *) (&format), 4);
             (void) memcpy((void *) (gc->pc + 40), (void *) (&type), 4);
             if (compsize > 0) {
-                (*gc->fillImage) (gc, 1, count, 1, 1, format, type, data,
-                                  gc->pc + 44, gc->pc + 4);
+                gc->fillImage(gc, 1, count, 1, 1, format, type, data,
+                              gc->pc + 44, gc->pc + 4);
             } else {
                 (void) memcpy(gc->pc + 4, default_pixel_store_1D,
                               default_pixel_store_1D_size);
@@ -5898,7 +6133,11 @@ __glx_ConvolutionFilter_1D2D(unsigned opcode, unsigned dim, GLenum target,
     const GLuint compsize =
         (image != NULL) ? __glImageSize(width, height, 1, format, type,
                                         target) : 0;
-    const GLuint cmdlen = 48 + __GLX_PAD(compsize);
+    const GLuint cmdlen = 48 + safe_pad(compsize);
+    if (0 + safe_pad(compsize) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (__builtin_expect(gc->currentDpy != NULL, 1)) {
         if (cmdlen <= gc->maxSmallRenderCommandSize) {
             if ((gc->pc + cmdlen) > gc->bufEnd) {
@@ -5913,8 +6152,8 @@ __glx_ConvolutionFilter_1D2D(unsigned opcode, unsigned dim, GLenum target,
             (void) memcpy((void *) (gc->pc + 40), (void *) (&format), 4);
             (void) memcpy((void *) (gc->pc + 44), (void *) (&type), 4);
             if (compsize > 0) {
-                (*gc->fillImage) (gc, dim, width, height, 1, format, type,
-                                  image, gc->pc + 48, gc->pc + 4);
+                gc->fillImage(gc, dim, width, height, 1, format, type, image,
+                              gc->pc + 48, gc->pc + 4);
             } else {
                 (void) memcpy(gc->pc + 4, default_pixel_store_2D,
                               default_pixel_store_2D_size);
@@ -5987,11 +6226,16 @@ __indirect_glConvolutionParameterfv(GLenum target, GLenum pname,
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glConvolutionParameterfv_size(pname);
-    const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(compsize, 4));
+    if (0 + safe_pad(safe_mul(compsize, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     emit_header(gc->pc, X_GLrop_ConvolutionParameterfv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&pname), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (params), (compsize * 4));
+    (void) memcpy((void *) (gc->pc + 12), (void *) (params),
+                  safe_mul(compsize, 4));
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -6021,11 +6265,16 @@ __indirect_glConvolutionParameteriv(GLenum target, GLenum pname,
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint compsize = __glConvolutionParameteriv_size(pname);
-    const GLuint cmdlen = 12 + __GLX_PAD((compsize * 4));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(compsize, 4));
+    if (0 + safe_pad(safe_mul(compsize, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     emit_header(gc->pc, X_GLrop_ConvolutionParameteriv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&pname), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (params), (compsize * 4));
+    (void) memcpy((void *) (gc->pc + 12), (void *) (params),
+                  safe_mul(compsize, 4));
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -6094,9 +6343,11 @@ __indirect_glGetConvolutionFilter(GLenum target, GLenum format, GLenum type,
                                                   target, format, type,
                                                   state->storePack.
                                                   swapEndian), NULL);
-        (void) memcpy(image, xcb_glx_get_convolution_filter_data(reply),
-                      xcb_glx_get_convolution_filter_data_length(reply) *
-                      sizeof(GLvoid));
+        if (reply->height == 0) {
+            reply->height = 1;
+        }
+        __glEmptyImage(gc, 3, reply->width, reply->height, 1, format, type,
+                       xcb_glx_get_convolution_filter_data(reply), image);
         free(reply);
 #else
         GLubyte const *pc =
@@ -6124,7 +6375,10 @@ gl_dispatch_stub_356(GLenum target, GLenum format, GLenum type,
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
     if (gc->isDirect) {
-        GET_DISPATCH()->GetConvolutionFilter(target, format, type, image);
+        const _glapi_proc *const disp_table = (_glapi_proc *) GET_DISPATCH();
+        PFNGLGETCONVOLUTIONFILTEREXTPROC p =
+            (PFNGLGETCONVOLUTIONFILTEREXTPROC) disp_table[356];
+        p(target, format, type, image);
     } else
 #endif
     {
@@ -6171,7 +6425,9 @@ __indirect_glGetConvolutionParameterfv(GLenum target, GLenum pname,
                                                       (c,
                                                        gc->currentContextTag,
                                                        target, pname), NULL);
-        if (xcb_glx_get_convolution_parameterfv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_convolution_parameterfv_data_length(reply) == 1)
             (void) memcpy(params, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(params,
@@ -6201,7 +6457,10 @@ gl_dispatch_stub_357(GLenum target, GLenum pname, GLfloat * params)
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
     if (gc->isDirect) {
-        GET_DISPATCH()->GetConvolutionParameterfv(target, pname, params);
+        const _glapi_proc *const disp_table = (_glapi_proc *) GET_DISPATCH();
+        PFNGLGETCONVOLUTIONPARAMETERFVEXTPROC p =
+            (PFNGLGETCONVOLUTIONPARAMETERFVEXTPROC) disp_table[357];
+        p(target, pname, params);
     } else
 #endif
     {
@@ -6243,7 +6502,9 @@ __indirect_glGetConvolutionParameteriv(GLenum target, GLenum pname,
                                                       (c,
                                                        gc->currentContextTag,
                                                        target, pname), NULL);
-        if (xcb_glx_get_convolution_parameteriv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_convolution_parameteriv_data_length(reply) == 1)
             (void) memcpy(params, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(params,
@@ -6273,7 +6534,10 @@ gl_dispatch_stub_358(GLenum target, GLenum pname, GLint * params)
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
     if (gc->isDirect) {
-        GET_DISPATCH()->GetConvolutionParameteriv(target, pname, params);
+        const _glapi_proc *const disp_table = (_glapi_proc *) GET_DISPATCH();
+        PFNGLGETCONVOLUTIONPARAMETERIVEXTPROC p =
+            (PFNGLGETCONVOLUTIONPARAMETERIVEXTPROC) disp_table[358];
+        p(target, pname, params);
     } else
 #endif
     {
@@ -6321,9 +6585,8 @@ __indirect_glGetHistogram(GLenum target, GLboolean reset, GLenum format,
                                                               storePack.
                                                               swapEndian),
                                         NULL);
-        (void) memcpy(values, xcb_glx_get_histogram_data(reply),
-                      xcb_glx_get_histogram_data_length(reply) *
-                      sizeof(GLvoid));
+        __glEmptyImage(gc, 3, reply->width, 1, 1, format, type,
+                       xcb_glx_get_histogram_data(reply), values);
         free(reply);
 #else
         GLubyte const *pc =
@@ -6352,7 +6615,10 @@ gl_dispatch_stub_361(GLenum target, GLboolean reset, GLenum format,
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
     if (gc->isDirect) {
-        GET_DISPATCH()->GetHistogram(target, reset, format, type, values);
+        const _glapi_proc *const disp_table = (_glapi_proc *) GET_DISPATCH();
+        PFNGLGETHISTOGRAMEXTPROC p =
+            (PFNGLGETHISTOGRAMEXTPROC) disp_table[361];
+        p(target, reset, format, type, values);
     } else
 #endif
     {
@@ -6398,7 +6664,9 @@ __indirect_glGetHistogramParameterfv(GLenum target, GLenum pname,
                                                     xcb_glx_get_histogram_parameterfv
                                                     (c, gc->currentContextTag,
                                                      target, pname), NULL);
-        if (xcb_glx_get_histogram_parameterfv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_histogram_parameterfv_data_length(reply) == 1)
             (void) memcpy(params, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(params,
@@ -6428,7 +6696,10 @@ gl_dispatch_stub_362(GLenum target, GLenum pname, GLfloat * params)
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
     if (gc->isDirect) {
-        GET_DISPATCH()->GetHistogramParameterfv(target, pname, params);
+        const _glapi_proc *const disp_table = (_glapi_proc *) GET_DISPATCH();
+        PFNGLGETHISTOGRAMPARAMETERFVEXTPROC p =
+            (PFNGLGETHISTOGRAMPARAMETERFVEXTPROC) disp_table[362];
+        p(target, pname, params);
     } else
 #endif
     {
@@ -6469,7 +6740,9 @@ __indirect_glGetHistogramParameteriv(GLenum target, GLenum pname,
                                                     xcb_glx_get_histogram_parameteriv
                                                     (c, gc->currentContextTag,
                                                      target, pname), NULL);
-        if (xcb_glx_get_histogram_parameteriv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_histogram_parameteriv_data_length(reply) == 1)
             (void) memcpy(params, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(params,
@@ -6499,7 +6772,10 @@ gl_dispatch_stub_363(GLenum target, GLenum pname, GLint * params)
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
     if (gc->isDirect) {
-        GET_DISPATCH()->GetHistogramParameteriv(target, pname, params);
+        const _glapi_proc *const disp_table = (_glapi_proc *) GET_DISPATCH();
+        PFNGLGETHISTOGRAMPARAMETERIVEXTPROC p =
+            (PFNGLGETHISTOGRAMPARAMETERIVEXTPROC) disp_table[363];
+        p(target, pname, params);
     } else
 #endif
     {
@@ -6544,8 +6820,8 @@ __indirect_glGetMinmax(GLenum target, GLboolean reset, GLenum format,
                                                         type,
                                                         state->storePack.
                                                         swapEndian), NULL);
-        (void) memcpy(values, xcb_glx_get_minmax_data(reply),
-                      xcb_glx_get_minmax_data_length(reply) * sizeof(GLvoid));
+        __glEmptyImage(gc, 3, 2, 1, 1, format, type,
+                       xcb_glx_get_minmax_data(reply), values);
         free(reply);
 #else
         GLubyte const *pc =
@@ -6574,7 +6850,9 @@ gl_dispatch_stub_364(GLenum target, GLboolean reset, GLenum format,
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
     if (gc->isDirect) {
-        GET_DISPATCH()->GetMinmax(target, reset, format, type, values);
+        const _glapi_proc *const disp_table = (_glapi_proc *) GET_DISPATCH();
+        PFNGLGETMINMAXEXTPROC p = (PFNGLGETMINMAXEXTPROC) disp_table[364];
+        p(target, reset, format, type, values);
     } else
 #endif
     {
@@ -6620,7 +6898,9 @@ __indirect_glGetMinmaxParameterfv(GLenum target, GLenum pname,
                                                  xcb_glx_get_minmax_parameterfv
                                                  (c, gc->currentContextTag,
                                                   target, pname), NULL);
-        if (xcb_glx_get_minmax_parameterfv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_minmax_parameterfv_data_length(reply) == 1)
             (void) memcpy(params, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(params, xcb_glx_get_minmax_parameterfv_data(reply),
@@ -6648,7 +6928,10 @@ gl_dispatch_stub_365(GLenum target, GLenum pname, GLfloat * params)
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
     if (gc->isDirect) {
-        GET_DISPATCH()->GetMinmaxParameterfv(target, pname, params);
+        const _glapi_proc *const disp_table = (_glapi_proc *) GET_DISPATCH();
+        PFNGLGETMINMAXPARAMETERFVEXTPROC p =
+            (PFNGLGETMINMAXPARAMETERFVEXTPROC) disp_table[365];
+        p(target, pname, params);
     } else
 #endif
     {
@@ -6688,7 +6971,9 @@ __indirect_glGetMinmaxParameteriv(GLenum target, GLenum pname, GLint * params)
                                                  xcb_glx_get_minmax_parameteriv
                                                  (c, gc->currentContextTag,
                                                   target, pname), NULL);
-        if (xcb_glx_get_minmax_parameteriv_data_length(reply) == 0)
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_minmax_parameteriv_data_length(reply) == 1)
             (void) memcpy(params, &reply->datum, sizeof(reply->datum));
         else
             (void) memcpy(params, xcb_glx_get_minmax_parameteriv_data(reply),
@@ -6716,7 +7001,10 @@ gl_dispatch_stub_366(GLenum target, GLenum pname, GLint * params)
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
     if (gc->isDirect) {
-        GET_DISPATCH()->GetMinmaxParameteriv(target, pname, params);
+        const _glapi_proc *const disp_table = (_glapi_proc *) GET_DISPATCH();
+        PFNGLGETMINMAXPARAMETERIVEXTPROC p =
+            (PFNGLGETMINMAXPARAMETERIVEXTPROC) disp_table[366];
+        p(target, pname, params);
     } else
 #endif
     {
@@ -6810,7 +7098,11 @@ __glx_TexImage_3D4D(unsigned opcode, unsigned dim, GLenum target, GLint level,
     const GLuint compsize =
         (pixels != NULL) ? __glImageSize(width, height, depth, format, type,
                                          target) : 0;
-    const GLuint cmdlen = 84 + __GLX_PAD(compsize);
+    const GLuint cmdlen = 84 + safe_pad(compsize);
+    if (0 + safe_pad(compsize) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (__builtin_expect(gc->currentDpy != NULL, 1)) {
         if (cmdlen <= gc->maxSmallRenderCommandSize) {
             if ((gc->pc + cmdlen) > gc->bufEnd) {
@@ -6831,8 +7123,8 @@ __glx_TexImage_3D4D(unsigned opcode, unsigned dim, GLenum target, GLint level,
             (void) memcpy((void *) (gc->pc + 80),
                           (void *) ((pixels == NULL) ? one : zero), 4);
             if (compsize > 0) {
-                (*gc->fillImage) (gc, dim, width, height, depth, format, type,
-                                  pixels, gc->pc + 84, gc->pc + 4);
+                gc->fillImage(gc, dim, width, height, depth, format, type,
+                              pixels, gc->pc + 84, gc->pc + 4);
             } else {
                 (void) memcpy(gc->pc + 4, default_pixel_store_4D,
                               default_pixel_store_4D_size);
@@ -6887,7 +7179,11 @@ __glx_TexSubImage_3D4D(unsigned opcode, unsigned dim, GLenum target,
     const GLuint compsize =
         (pixels != NULL) ? __glImageSize(width, height, depth, format, type,
                                          target) : 0;
-    const GLuint cmdlen = 92 + __GLX_PAD(compsize);
+    const GLuint cmdlen = 92 + safe_pad(compsize);
+    if (0 + safe_pad(compsize) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (__builtin_expect(gc->currentDpy != NULL, 1)) {
         if (cmdlen <= gc->maxSmallRenderCommandSize) {
             if ((gc->pc + cmdlen) > gc->bufEnd) {
@@ -6908,8 +7204,8 @@ __glx_TexSubImage_3D4D(unsigned opcode, unsigned dim, GLenum target,
             (void) memcpy((void *) (gc->pc + 84), (void *) (&type), 4);
             (void) memset((void *) (gc->pc + 88), 0, 4);
             if (compsize > 0) {
-                (*gc->fillImage) (gc, dim, width, height, depth, format, type,
-                                  pixels, gc->pc + 92, gc->pc + 4);
+                gc->fillImage(gc, dim, width, height, depth, format, type,
+                              pixels, gc->pc + 92, gc->pc + 4);
             } else {
                 (void) memcpy(gc->pc + 4, default_pixel_store_4D,
                               default_pixel_store_4D_size);
@@ -6979,13 +7275,13 @@ __indirect_glCopyTexSubImage3D(GLenum target, GLint level, GLint xoffset,
     }
 }
 
-#define X_GLrop_ActiveTextureARB 197
+#define X_GLrop_ActiveTexture 197
 void
-__indirect_glActiveTextureARB(GLenum texture)
+__indirect_glActiveTexture(GLenum texture)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 8;
-    emit_header(gc->pc, X_GLrop_ActiveTextureARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_ActiveTexture, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&texture), 4);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
@@ -6993,13 +7289,13 @@ __indirect_glActiveTextureARB(GLenum texture)
     }
 }
 
-#define X_GLrop_MultiTexCoord1dvARB 198
+#define X_GLrop_MultiTexCoord1dv 198
 void
-__indirect_glMultiTexCoord1dARB(GLenum target, GLdouble s)
+__indirect_glMultiTexCoord1d(GLenum target, GLdouble s)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord1dvARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord1dv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 8);
     (void) memcpy((void *) (gc->pc + 12), (void *) (&target), 4);
     gc->pc += cmdlen;
@@ -7008,13 +7304,13 @@ __indirect_glMultiTexCoord1dARB(GLenum target, GLdouble s)
     }
 }
 
-#define X_GLrop_MultiTexCoord1dvARB 198
+#define X_GLrop_MultiTexCoord1dv 198
 void
-__indirect_glMultiTexCoord1dvARB(GLenum target, const GLdouble * v)
+__indirect_glMultiTexCoord1dv(GLenum target, const GLdouble * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord1dvARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord1dv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (v), 8);
     (void) memcpy((void *) (gc->pc + 12), (void *) (&target), 4);
     gc->pc += cmdlen;
@@ -7053,13 +7349,13 @@ __indirect_glMultiTexCoord1fvARB(GLenum target, const GLfloat * v)
     }
 }
 
-#define X_GLrop_MultiTexCoord1ivARB 200
+#define X_GLrop_MultiTexCoord1iv 200
 void
-__indirect_glMultiTexCoord1iARB(GLenum target, GLint s)
+__indirect_glMultiTexCoord1i(GLenum target, GLint s)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord1ivARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord1iv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&s), 4);
     gc->pc += cmdlen;
@@ -7068,13 +7364,13 @@ __indirect_glMultiTexCoord1iARB(GLenum target, GLint s)
     }
 }
 
-#define X_GLrop_MultiTexCoord1ivARB 200
+#define X_GLrop_MultiTexCoord1iv 200
 void
-__indirect_glMultiTexCoord1ivARB(GLenum target, const GLint * v)
+__indirect_glMultiTexCoord1iv(GLenum target, const GLint * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord1ivARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord1iv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (v), 4);
     gc->pc += cmdlen;
@@ -7083,13 +7379,13 @@ __indirect_glMultiTexCoord1ivARB(GLenum target, const GLint * v)
     }
 }
 
-#define X_GLrop_MultiTexCoord1svARB 201
+#define X_GLrop_MultiTexCoord1sv 201
 void
-__indirect_glMultiTexCoord1sARB(GLenum target, GLshort s)
+__indirect_glMultiTexCoord1s(GLenum target, GLshort s)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord1svARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord1sv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&s), 2);
     gc->pc += cmdlen;
@@ -7098,13 +7394,13 @@ __indirect_glMultiTexCoord1sARB(GLenum target, GLshort s)
     }
 }
 
-#define X_GLrop_MultiTexCoord1svARB 201
+#define X_GLrop_MultiTexCoord1sv 201
 void
-__indirect_glMultiTexCoord1svARB(GLenum target, const GLshort * v)
+__indirect_glMultiTexCoord1sv(GLenum target, const GLshort * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord1svARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord1sv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (v), 2);
     gc->pc += cmdlen;
@@ -7113,13 +7409,13 @@ __indirect_glMultiTexCoord1svARB(GLenum target, const GLshort * v)
     }
 }
 
-#define X_GLrop_MultiTexCoord2dvARB 202
+#define X_GLrop_MultiTexCoord2dv 202
 void
-__indirect_glMultiTexCoord2dARB(GLenum target, GLdouble s, GLdouble t)
+__indirect_glMultiTexCoord2d(GLenum target, GLdouble s, GLdouble t)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord2dvARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord2dv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 8);
     (void) memcpy((void *) (gc->pc + 12), (void *) (&t), 8);
     (void) memcpy((void *) (gc->pc + 20), (void *) (&target), 4);
@@ -7129,13 +7425,13 @@ __indirect_glMultiTexCoord2dARB(GLenum target, GLdouble s, GLdouble t)
     }
 }
 
-#define X_GLrop_MultiTexCoord2dvARB 202
+#define X_GLrop_MultiTexCoord2dv 202
 void
-__indirect_glMultiTexCoord2dvARB(GLenum target, const GLdouble * v)
+__indirect_glMultiTexCoord2dv(GLenum target, const GLdouble * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord2dvARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord2dv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (v), 16);
     (void) memcpy((void *) (gc->pc + 20), (void *) (&target), 4);
     gc->pc += cmdlen;
@@ -7175,13 +7471,13 @@ __indirect_glMultiTexCoord2fvARB(GLenum target, const GLfloat * v)
     }
 }
 
-#define X_GLrop_MultiTexCoord2ivARB 204
+#define X_GLrop_MultiTexCoord2iv 204
 void
-__indirect_glMultiTexCoord2iARB(GLenum target, GLint s, GLint t)
+__indirect_glMultiTexCoord2i(GLenum target, GLint s, GLint t)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord2ivARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord2iv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&s), 4);
     (void) memcpy((void *) (gc->pc + 12), (void *) (&t), 4);
@@ -7191,13 +7487,13 @@ __indirect_glMultiTexCoord2iARB(GLenum target, GLint s, GLint t)
     }
 }
 
-#define X_GLrop_MultiTexCoord2ivARB 204
+#define X_GLrop_MultiTexCoord2iv 204
 void
-__indirect_glMultiTexCoord2ivARB(GLenum target, const GLint * v)
+__indirect_glMultiTexCoord2iv(GLenum target, const GLint * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord2ivARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord2iv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (v), 8);
     gc->pc += cmdlen;
@@ -7206,13 +7502,13 @@ __indirect_glMultiTexCoord2ivARB(GLenum target, const GLint * v)
     }
 }
 
-#define X_GLrop_MultiTexCoord2svARB 205
+#define X_GLrop_MultiTexCoord2sv 205
 void
-__indirect_glMultiTexCoord2sARB(GLenum target, GLshort s, GLshort t)
+__indirect_glMultiTexCoord2s(GLenum target, GLshort s, GLshort t)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord2svARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord2sv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&s), 2);
     (void) memcpy((void *) (gc->pc + 10), (void *) (&t), 2);
@@ -7222,13 +7518,13 @@ __indirect_glMultiTexCoord2sARB(GLenum target, GLshort s, GLshort t)
     }
 }
 
-#define X_GLrop_MultiTexCoord2svARB 205
+#define X_GLrop_MultiTexCoord2sv 205
 void
-__indirect_glMultiTexCoord2svARB(GLenum target, const GLshort * v)
+__indirect_glMultiTexCoord2sv(GLenum target, const GLshort * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord2svARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord2sv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (v), 4);
     gc->pc += cmdlen;
@@ -7237,14 +7533,14 @@ __indirect_glMultiTexCoord2svARB(GLenum target, const GLshort * v)
     }
 }
 
-#define X_GLrop_MultiTexCoord3dvARB 206
+#define X_GLrop_MultiTexCoord3dv 206
 void
-__indirect_glMultiTexCoord3dARB(GLenum target, GLdouble s, GLdouble t,
-                                GLdouble r)
+__indirect_glMultiTexCoord3d(GLenum target, GLdouble s, GLdouble t,
+                             GLdouble r)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 32;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord3dvARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord3dv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 8);
     (void) memcpy((void *) (gc->pc + 12), (void *) (&t), 8);
     (void) memcpy((void *) (gc->pc + 20), (void *) (&r), 8);
@@ -7255,13 +7551,13 @@ __indirect_glMultiTexCoord3dARB(GLenum target, GLdouble s, GLdouble t,
     }
 }
 
-#define X_GLrop_MultiTexCoord3dvARB 206
+#define X_GLrop_MultiTexCoord3dv 206
 void
-__indirect_glMultiTexCoord3dvARB(GLenum target, const GLdouble * v)
+__indirect_glMultiTexCoord3dv(GLenum target, const GLdouble * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 32;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord3dvARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord3dv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (v), 24);
     (void) memcpy((void *) (gc->pc + 28), (void *) (&target), 4);
     gc->pc += cmdlen;
@@ -7303,13 +7599,13 @@ __indirect_glMultiTexCoord3fvARB(GLenum target, const GLfloat * v)
     }
 }
 
-#define X_GLrop_MultiTexCoord3ivARB 208
+#define X_GLrop_MultiTexCoord3iv 208
 void
-__indirect_glMultiTexCoord3iARB(GLenum target, GLint s, GLint t, GLint r)
+__indirect_glMultiTexCoord3i(GLenum target, GLint s, GLint t, GLint r)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord3ivARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord3iv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&s), 4);
     (void) memcpy((void *) (gc->pc + 12), (void *) (&t), 4);
@@ -7320,13 +7616,13 @@ __indirect_glMultiTexCoord3iARB(GLenum target, GLint s, GLint t, GLint r)
     }
 }
 
-#define X_GLrop_MultiTexCoord3ivARB 208
+#define X_GLrop_MultiTexCoord3iv 208
 void
-__indirect_glMultiTexCoord3ivARB(GLenum target, const GLint * v)
+__indirect_glMultiTexCoord3iv(GLenum target, const GLint * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 20;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord3ivARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord3iv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (v), 12);
     gc->pc += cmdlen;
@@ -7335,14 +7631,13 @@ __indirect_glMultiTexCoord3ivARB(GLenum target, const GLint * v)
     }
 }
 
-#define X_GLrop_MultiTexCoord3svARB 209
+#define X_GLrop_MultiTexCoord3sv 209
 void
-__indirect_glMultiTexCoord3sARB(GLenum target, GLshort s, GLshort t,
-                                GLshort r)
+__indirect_glMultiTexCoord3s(GLenum target, GLshort s, GLshort t, GLshort r)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord3svARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord3sv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&s), 2);
     (void) memcpy((void *) (gc->pc + 10), (void *) (&t), 2);
@@ -7353,13 +7648,13 @@ __indirect_glMultiTexCoord3sARB(GLenum target, GLshort s, GLshort t,
     }
 }
 
-#define X_GLrop_MultiTexCoord3svARB 209
+#define X_GLrop_MultiTexCoord3sv 209
 void
-__indirect_glMultiTexCoord3svARB(GLenum target, const GLshort * v)
+__indirect_glMultiTexCoord3sv(GLenum target, const GLshort * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord3svARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord3sv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (v), 6);
     gc->pc += cmdlen;
@@ -7368,14 +7663,14 @@ __indirect_glMultiTexCoord3svARB(GLenum target, const GLshort * v)
     }
 }
 
-#define X_GLrop_MultiTexCoord4dvARB 210
+#define X_GLrop_MultiTexCoord4dv 210
 void
-__indirect_glMultiTexCoord4dARB(GLenum target, GLdouble s, GLdouble t,
-                                GLdouble r, GLdouble q)
+__indirect_glMultiTexCoord4d(GLenum target, GLdouble s, GLdouble t,
+                             GLdouble r, GLdouble q)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 40;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord4dvARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord4dv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&s), 8);
     (void) memcpy((void *) (gc->pc + 12), (void *) (&t), 8);
     (void) memcpy((void *) (gc->pc + 20), (void *) (&r), 8);
@@ -7387,13 +7682,13 @@ __indirect_glMultiTexCoord4dARB(GLenum target, GLdouble s, GLdouble t,
     }
 }
 
-#define X_GLrop_MultiTexCoord4dvARB 210
+#define X_GLrop_MultiTexCoord4dv 210
 void
-__indirect_glMultiTexCoord4dvARB(GLenum target, const GLdouble * v)
+__indirect_glMultiTexCoord4dv(GLenum target, const GLdouble * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 40;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord4dvARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord4dv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (v), 32);
     (void) memcpy((void *) (gc->pc + 36), (void *) (&target), 4);
     gc->pc += cmdlen;
@@ -7436,14 +7731,14 @@ __indirect_glMultiTexCoord4fvARB(GLenum target, const GLfloat * v)
     }
 }
 
-#define X_GLrop_MultiTexCoord4ivARB 212
+#define X_GLrop_MultiTexCoord4iv 212
 void
-__indirect_glMultiTexCoord4iARB(GLenum target, GLint s, GLint t, GLint r,
-                                GLint q)
+__indirect_glMultiTexCoord4i(GLenum target, GLint s, GLint t, GLint r,
+                             GLint q)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord4ivARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord4iv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&s), 4);
     (void) memcpy((void *) (gc->pc + 12), (void *) (&t), 4);
@@ -7455,13 +7750,13 @@ __indirect_glMultiTexCoord4iARB(GLenum target, GLint s, GLint t, GLint r,
     }
 }
 
-#define X_GLrop_MultiTexCoord4ivARB 212
+#define X_GLrop_MultiTexCoord4iv 212
 void
-__indirect_glMultiTexCoord4ivARB(GLenum target, const GLint * v)
+__indirect_glMultiTexCoord4iv(GLenum target, const GLint * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 24;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord4ivARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord4iv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (v), 16);
     gc->pc += cmdlen;
@@ -7470,14 +7765,14 @@ __indirect_glMultiTexCoord4ivARB(GLenum target, const GLint * v)
     }
 }
 
-#define X_GLrop_MultiTexCoord4svARB 213
+#define X_GLrop_MultiTexCoord4sv 213
 void
-__indirect_glMultiTexCoord4sARB(GLenum target, GLshort s, GLshort t,
-                                GLshort r, GLshort q)
+__indirect_glMultiTexCoord4s(GLenum target, GLshort s, GLshort t, GLshort r,
+                             GLshort q)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord4svARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord4sv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&s), 2);
     (void) memcpy((void *) (gc->pc + 10), (void *) (&t), 2);
@@ -7489,13 +7784,13 @@ __indirect_glMultiTexCoord4sARB(GLenum target, GLshort s, GLshort t,
     }
 }
 
-#define X_GLrop_MultiTexCoord4svARB 213
+#define X_GLrop_MultiTexCoord4sv 213
 void
-__indirect_glMultiTexCoord4svARB(GLenum target, const GLshort * v)
+__indirect_glMultiTexCoord4sv(GLenum target, const GLshort * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16;
-    emit_header(gc->pc, X_GLrop_MultiTexCoord4svARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_MultiTexCoord4sv, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (v), 8);
     gc->pc += cmdlen;
@@ -7504,19 +7799,1148 @@ __indirect_glMultiTexCoord4svARB(GLenum target, const GLshort * v)
     }
 }
 
-#define X_GLrop_SampleCoverageARB 229
+#define X_GLrop_SampleCoverage 229
 void
-__indirect_glSampleCoverageARB(GLclampf value, GLboolean invert)
+__indirect_glSampleCoverage(GLclampf value, GLboolean invert)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_SampleCoverageARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_SampleCoverage, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&value), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&invert), 1);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
     }
+}
+
+#define X_GLrop_BlendFuncSeparate 4134
+void
+__indirect_glBlendFuncSeparate(GLenum sfactorRGB, GLenum dfactorRGB,
+                               GLenum sfactorAlpha, GLenum dfactorAlpha)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 20;
+    emit_header(gc->pc, X_GLrop_BlendFuncSeparate, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&sfactorRGB), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&dfactorRGB), 4);
+    (void) memcpy((void *) (gc->pc + 12), (void *) (&sfactorAlpha), 4);
+    (void) memcpy((void *) (gc->pc + 16), (void *) (&dfactorAlpha), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_FogCoorddv 4125
+void
+__indirect_glFogCoordd(GLdouble coord)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 12;
+    emit_header(gc->pc, X_GLrop_FogCoorddv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&coord), 8);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_FogCoorddv 4125
+void
+__indirect_glFogCoorddv(const GLdouble * coord)
+{
+    generic_8_byte(X_GLrop_FogCoorddv, coord);
+}
+
+#define X_GLrop_PointParameterf 2065
+void
+__indirect_glPointParameterf(GLenum pname, GLfloat param)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 12;
+    emit_header(gc->pc, X_GLrop_PointParameterf, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&pname), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&param), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_PointParameterfv 2066
+void
+__indirect_glPointParameterfv(GLenum pname, const GLfloat * params)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint compsize = __glPointParameterfv_size(pname);
+    const GLuint cmdlen = 8 + safe_pad(safe_mul(compsize, 4));
+    if (0 + safe_pad(safe_mul(compsize, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
+    emit_header(gc->pc, X_GLrop_PointParameterfv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&pname), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (params),
+                  safe_mul(compsize, 4));
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_PointParameteri 4221
+void
+__indirect_glPointParameteri(GLenum pname, GLint param)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 12;
+    emit_header(gc->pc, X_GLrop_PointParameteri, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&pname), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&param), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_PointParameteriv 4222
+void
+__indirect_glPointParameteriv(GLenum pname, const GLint * params)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint compsize = __glPointParameteriv_size(pname);
+    const GLuint cmdlen = 8 + safe_pad(safe_mul(compsize, 4));
+    if (0 + safe_pad(safe_mul(compsize, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
+    emit_header(gc->pc, X_GLrop_PointParameteriv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&pname), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (params),
+                  safe_mul(compsize, 4));
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_SecondaryColor3bv 4126
+void
+__indirect_glSecondaryColor3b(GLbyte red, GLbyte green, GLbyte blue)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 8;
+    emit_header(gc->pc, X_GLrop_SecondaryColor3bv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 1);
+    (void) memcpy((void *) (gc->pc + 5), (void *) (&green), 1);
+    (void) memcpy((void *) (gc->pc + 6), (void *) (&blue), 1);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_SecondaryColor3bv 4126
+void
+__indirect_glSecondaryColor3bv(const GLbyte *v)
+{
+    generic_3_byte(X_GLrop_SecondaryColor3bv, v);
+}
+
+#define X_GLrop_SecondaryColor3dv 4130
+void
+__indirect_glSecondaryColor3d(GLdouble red, GLdouble green, GLdouble blue)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 28;
+    emit_header(gc->pc, X_GLrop_SecondaryColor3dv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 8);
+    (void) memcpy((void *) (gc->pc + 12), (void *) (&green), 8);
+    (void) memcpy((void *) (gc->pc + 20), (void *) (&blue), 8);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_SecondaryColor3dv 4130
+void
+__indirect_glSecondaryColor3dv(const GLdouble * v)
+{
+    generic_24_byte(X_GLrop_SecondaryColor3dv, v);
+}
+
+#define X_GLrop_SecondaryColor3iv 4128
+void
+__indirect_glSecondaryColor3i(GLint red, GLint green, GLint blue)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 16;
+    emit_header(gc->pc, X_GLrop_SecondaryColor3iv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&green), 4);
+    (void) memcpy((void *) (gc->pc + 12), (void *) (&blue), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_SecondaryColor3iv 4128
+void
+__indirect_glSecondaryColor3iv(const GLint * v)
+{
+    generic_12_byte(X_GLrop_SecondaryColor3iv, v);
+}
+
+#define X_GLrop_SecondaryColor3sv 4127
+void
+__indirect_glSecondaryColor3s(GLshort red, GLshort green, GLshort blue)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 12;
+    emit_header(gc->pc, X_GLrop_SecondaryColor3sv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 2);
+    (void) memcpy((void *) (gc->pc + 6), (void *) (&green), 2);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&blue), 2);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_SecondaryColor3sv 4127
+void
+__indirect_glSecondaryColor3sv(const GLshort * v)
+{
+    generic_6_byte(X_GLrop_SecondaryColor3sv, v);
+}
+
+#define X_GLrop_SecondaryColor3ubv 4131
+void
+__indirect_glSecondaryColor3ub(GLubyte red, GLubyte green, GLubyte blue)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 8;
+    emit_header(gc->pc, X_GLrop_SecondaryColor3ubv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 1);
+    (void) memcpy((void *) (gc->pc + 5), (void *) (&green), 1);
+    (void) memcpy((void *) (gc->pc + 6), (void *) (&blue), 1);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_SecondaryColor3ubv 4131
+void
+__indirect_glSecondaryColor3ubv(const GLubyte *v)
+{
+    generic_3_byte(X_GLrop_SecondaryColor3ubv, v);
+}
+
+#define X_GLrop_SecondaryColor3uiv 4133
+void
+__indirect_glSecondaryColor3ui(GLuint red, GLuint green, GLuint blue)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 16;
+    emit_header(gc->pc, X_GLrop_SecondaryColor3uiv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&green), 4);
+    (void) memcpy((void *) (gc->pc + 12), (void *) (&blue), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_SecondaryColor3uiv 4133
+void
+__indirect_glSecondaryColor3uiv(const GLuint * v)
+{
+    generic_12_byte(X_GLrop_SecondaryColor3uiv, v);
+}
+
+#define X_GLrop_SecondaryColor3usv 4132
+void
+__indirect_glSecondaryColor3us(GLushort red, GLushort green, GLushort blue)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 12;
+    emit_header(gc->pc, X_GLrop_SecondaryColor3usv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 2);
+    (void) memcpy((void *) (gc->pc + 6), (void *) (&green), 2);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&blue), 2);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_SecondaryColor3usv 4132
+void
+__indirect_glSecondaryColor3usv(const GLushort * v)
+{
+    generic_6_byte(X_GLrop_SecondaryColor3usv, v);
+}
+
+#define X_GLrop_WindowPos3fv 230
+void
+__indirect_glWindowPos3f(GLfloat x, GLfloat y, GLfloat z)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 16;
+    emit_header(gc->pc, X_GLrop_WindowPos3fv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&y), 4);
+    (void) memcpy((void *) (gc->pc + 12), (void *) (&z), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_WindowPos3fv 230
+void
+__indirect_glWindowPos3fv(const GLfloat * v)
+{
+    generic_12_byte(X_GLrop_WindowPos3fv, v);
+}
+
+#define X_GLrop_BeginQuery 231
+void
+__indirect_glBeginQuery(GLenum target, GLuint id)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 12;
+    emit_header(gc->pc, X_GLrop_BeginQuery, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&id), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLsop_DeleteQueries 161
+void
+__indirect_glDeleteQueries(GLsizei n, const GLuint * ids)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    Display *const dpy = gc->currentDpy;
+#ifndef USE_XCB
+    const GLuint cmdlen = 4 + safe_pad(safe_mul(n, 4));
+#endif
+    if (0 + safe_pad(safe_mul(n, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
+    if (n < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
+    if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
+#ifdef USE_XCB
+        xcb_connection_t *c = XGetXCBConnection(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        xcb_glx_delete_queries(c, gc->currentContextTag, n, ids);
+#else
+        GLubyte const *pc =
+            __glXSetupSingleRequest(gc, X_GLsop_DeleteQueries, cmdlen);
+        (void) memcpy((void *) (pc + 0), (void *) (&n), 4);
+        (void) memcpy((void *) (pc + 4), (void *) (ids), safe_mul(n, 4));
+        UnlockDisplay(dpy);
+        SyncHandle();
+#endif /* USE_XCB */
+    }
+    return;
+}
+
+#define X_GLrop_EndQuery 232
+void
+__indirect_glEndQuery(GLenum target)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 8;
+    emit_header(gc->pc, X_GLrop_EndQuery, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLsop_GenQueries 162
+void
+__indirect_glGenQueries(GLsizei n, GLuint * ids)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    Display *const dpy = gc->currentDpy;
+#ifndef USE_XCB
+    const GLuint cmdlen = 4;
+#endif
+    if (n < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
+    if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
+#ifdef USE_XCB
+        xcb_connection_t *c = XGetXCBConnection(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        xcb_glx_gen_queries_reply_t *reply =
+            xcb_glx_gen_queries_reply(c,
+                                      xcb_glx_gen_queries(c,
+                                                          gc->
+                                                          currentContextTag,
+                                                          n), NULL);
+        (void) memcpy(ids, xcb_glx_gen_queries_data(reply),
+                      xcb_glx_gen_queries_data_length(reply) *
+                      sizeof(GLuint));
+        free(reply);
+#else
+        GLubyte const *pc =
+            __glXSetupSingleRequest(gc, X_GLsop_GenQueries, cmdlen);
+        (void) memcpy((void *) (pc + 0), (void *) (&n), 4);
+        (void) __glXReadReply(dpy, 4, ids, GL_TRUE);
+        UnlockDisplay(dpy);
+        SyncHandle();
+#endif /* USE_XCB */
+    }
+    return;
+}
+
+#define X_GLsop_GetQueryObjectiv 165
+void
+__indirect_glGetQueryObjectiv(GLuint id, GLenum pname, GLint * params)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    Display *const dpy = gc->currentDpy;
+#ifndef USE_XCB
+    const GLuint cmdlen = 8;
+#endif
+    if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        xcb_connection_t *c = XGetXCBConnection(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        xcb_glx_get_query_objectiv_reply_t *reply =
+            xcb_glx_get_query_objectiv_reply(c,
+                                             xcb_glx_get_query_objectiv(c,
+                                                                        gc->
+                                                                        currentContextTag,
+                                                                        id,
+                                                                        pname),
+                                             NULL);
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_query_objectiv_data_length(reply) == 1)
+            (void) memcpy(params, &reply->datum, sizeof(reply->datum));
+        else
+            (void) memcpy(params, xcb_glx_get_query_objectiv_data(reply),
+                          xcb_glx_get_query_objectiv_data_length(reply) *
+                          sizeof(GLint));
+        free(reply);
+#else
+        GLubyte const *pc =
+            __glXSetupSingleRequest(gc, X_GLsop_GetQueryObjectiv, cmdlen);
+        (void) memcpy((void *) (pc + 0), (void *) (&id), 4);
+        (void) memcpy((void *) (pc + 4), (void *) (&pname), 4);
+        (void) __glXReadReply(dpy, 4, params, GL_FALSE);
+        UnlockDisplay(dpy);
+        SyncHandle();
+#endif /* USE_XCB */
+    }
+    return;
+}
+
+#define X_GLsop_GetQueryObjectuiv 166
+void
+__indirect_glGetQueryObjectuiv(GLuint id, GLenum pname, GLuint * params)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    Display *const dpy = gc->currentDpy;
+#ifndef USE_XCB
+    const GLuint cmdlen = 8;
+#endif
+    if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        xcb_connection_t *c = XGetXCBConnection(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        xcb_glx_get_query_objectuiv_reply_t *reply =
+            xcb_glx_get_query_objectuiv_reply(c,
+                                              xcb_glx_get_query_objectuiv(c,
+                                                                          gc->
+                                                                          currentContextTag,
+                                                                          id,
+                                                                          pname),
+                                              NULL);
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_query_objectuiv_data_length(reply) == 1)
+            (void) memcpy(params, &reply->datum, sizeof(reply->datum));
+        else
+            (void) memcpy(params, xcb_glx_get_query_objectuiv_data(reply),
+                          xcb_glx_get_query_objectuiv_data_length(reply) *
+                          sizeof(GLuint));
+        free(reply);
+#else
+        GLubyte const *pc =
+            __glXSetupSingleRequest(gc, X_GLsop_GetQueryObjectuiv, cmdlen);
+        (void) memcpy((void *) (pc + 0), (void *) (&id), 4);
+        (void) memcpy((void *) (pc + 4), (void *) (&pname), 4);
+        (void) __glXReadReply(dpy, 4, params, GL_FALSE);
+        UnlockDisplay(dpy);
+        SyncHandle();
+#endif /* USE_XCB */
+    }
+    return;
+}
+
+#define X_GLsop_GetQueryiv 164
+void
+__indirect_glGetQueryiv(GLenum target, GLenum pname, GLint * params)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    Display *const dpy = gc->currentDpy;
+#ifndef USE_XCB
+    const GLuint cmdlen = 8;
+#endif
+    if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        xcb_connection_t *c = XGetXCBConnection(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        xcb_glx_get_queryiv_reply_t *reply =
+            xcb_glx_get_queryiv_reply(c,
+                                      xcb_glx_get_queryiv(c,
+                                                          gc->
+                                                          currentContextTag,
+                                                          target, pname),
+                                      NULL);
+        /* the XXX_data_length() xcb function name is misleading, it returns the number */
+        /* of elements, not the length of the data part. A single element is embedded. */
+        if (xcb_glx_get_queryiv_data_length(reply) == 1)
+            (void) memcpy(params, &reply->datum, sizeof(reply->datum));
+        else
+            (void) memcpy(params, xcb_glx_get_queryiv_data(reply),
+                          xcb_glx_get_queryiv_data_length(reply) *
+                          sizeof(GLint));
+        free(reply);
+#else
+        GLubyte const *pc =
+            __glXSetupSingleRequest(gc, X_GLsop_GetQueryiv, cmdlen);
+        (void) memcpy((void *) (pc + 0), (void *) (&target), 4);
+        (void) memcpy((void *) (pc + 4), (void *) (&pname), 4);
+        (void) __glXReadReply(dpy, 4, params, GL_FALSE);
+        UnlockDisplay(dpy);
+        SyncHandle();
+#endif /* USE_XCB */
+    }
+    return;
+}
+
+#define X_GLsop_IsQuery 163
+GLboolean
+__indirect_glIsQuery(GLuint id)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    Display *const dpy = gc->currentDpy;
+    GLboolean retval = (GLboolean) 0;
+#ifndef USE_XCB
+    const GLuint cmdlen = 4;
+#endif
+    if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        xcb_connection_t *c = XGetXCBConnection(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        xcb_glx_is_query_reply_t *reply =
+            xcb_glx_is_query_reply(c,
+                                   xcb_glx_is_query(c, gc->currentContextTag,
+                                                    id), NULL);
+        retval = reply->ret_val;
+        free(reply);
+#else
+        GLubyte const *pc =
+            __glXSetupSingleRequest(gc, X_GLsop_IsQuery, cmdlen);
+        (void) memcpy((void *) (pc + 0), (void *) (&id), 4);
+        retval = (GLboolean) __glXReadReply(dpy, 0, NULL, GL_FALSE);
+        UnlockDisplay(dpy);
+        SyncHandle();
+#endif /* USE_XCB */
+    }
+    return retval;
+}
+
+#define X_GLrop_BlendEquationSeparate 4228
+void
+__indirect_glBlendEquationSeparate(GLenum modeRGB, GLenum modeA)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 12;
+    emit_header(gc->pc, X_GLrop_BlendEquationSeparate, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&modeRGB), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&modeA), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_DrawBuffers 233
+void
+__indirect_glDrawBuffers(GLsizei n, const GLenum * bufs)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 8 + safe_pad(safe_mul(n, 4));
+    if (0 + safe_pad(safe_mul(n, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
+    if (n < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
+    if (__builtin_expect((n >= 0) && (gc->currentDpy != NULL), 1)) {
+        if (cmdlen <= gc->maxSmallRenderCommandSize) {
+            if ((gc->pc + cmdlen) > gc->bufEnd) {
+                (void) __glXFlushRenderBuffer(gc, gc->pc);
+            }
+            emit_header(gc->pc, X_GLrop_DrawBuffers, cmdlen);
+            (void) memcpy((void *) (gc->pc + 4), (void *) (&n), 4);
+            (void) memcpy((void *) (gc->pc + 8), (void *) (bufs),
+                          safe_mul(n, 4));
+            gc->pc += cmdlen;
+            if (__builtin_expect(gc->pc > gc->limit, 0)) {
+                (void) __glXFlushRenderBuffer(gc, gc->pc);
+            }
+        } else {
+            const GLint op = X_GLrop_DrawBuffers;
+            const GLuint cmdlenLarge = cmdlen + 4;
+            GLubyte *const pc = __glXFlushRenderBuffer(gc, gc->pc);
+            (void) memcpy((void *) (pc + 0), (void *) (&cmdlenLarge), 4);
+            (void) memcpy((void *) (pc + 4), (void *) (&op), 4);
+            (void) memcpy((void *) (pc + 8), (void *) (&n), 4);
+            __glXSendLargeCommand(gc, pc, 12, bufs, safe_mul(n, 4));
+        }
+    }
+}
+
+#define X_GLrop_VertexAttrib1dv 4197
+void
+__indirect_glVertexAttrib1d(GLuint index, GLdouble x)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 16;
+    emit_header(gc->pc, X_GLrop_VertexAttrib1dv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&x), 8);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib1dv 4197
+void
+__indirect_glVertexAttrib1dv(GLuint index, const GLdouble * v)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 16;
+    emit_header(gc->pc, X_GLrop_VertexAttrib1dv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 8);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib1sv 4189
+void
+__indirect_glVertexAttrib1s(GLuint index, GLshort x)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 12;
+    emit_header(gc->pc, X_GLrop_VertexAttrib1sv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&x), 2);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib1sv 4189
+void
+__indirect_glVertexAttrib1sv(GLuint index, const GLshort * v)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 12;
+    emit_header(gc->pc, X_GLrop_VertexAttrib1sv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 2);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib2dv 4198
+void
+__indirect_glVertexAttrib2d(GLuint index, GLdouble x, GLdouble y)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 24;
+    emit_header(gc->pc, X_GLrop_VertexAttrib2dv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&x), 8);
+    (void) memcpy((void *) (gc->pc + 16), (void *) (&y), 8);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib2dv 4198
+void
+__indirect_glVertexAttrib2dv(GLuint index, const GLdouble * v)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 24;
+    emit_header(gc->pc, X_GLrop_VertexAttrib2dv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 16);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib2sv 4190
+void
+__indirect_glVertexAttrib2s(GLuint index, GLshort x, GLshort y)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 12;
+    emit_header(gc->pc, X_GLrop_VertexAttrib2sv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&x), 2);
+    (void) memcpy((void *) (gc->pc + 10), (void *) (&y), 2);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib2sv 4190
+void
+__indirect_glVertexAttrib2sv(GLuint index, const GLshort * v)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 12;
+    emit_header(gc->pc, X_GLrop_VertexAttrib2sv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib3dv 4199
+void
+__indirect_glVertexAttrib3d(GLuint index, GLdouble x, GLdouble y, GLdouble z)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 32;
+    emit_header(gc->pc, X_GLrop_VertexAttrib3dv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&x), 8);
+    (void) memcpy((void *) (gc->pc + 16), (void *) (&y), 8);
+    (void) memcpy((void *) (gc->pc + 24), (void *) (&z), 8);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib3dv 4199
+void
+__indirect_glVertexAttrib3dv(GLuint index, const GLdouble * v)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 32;
+    emit_header(gc->pc, X_GLrop_VertexAttrib3dv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 24);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib3sv 4191
+void
+__indirect_glVertexAttrib3s(GLuint index, GLshort x, GLshort y, GLshort z)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 16;
+    emit_header(gc->pc, X_GLrop_VertexAttrib3sv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&x), 2);
+    (void) memcpy((void *) (gc->pc + 10), (void *) (&y), 2);
+    (void) memcpy((void *) (gc->pc + 12), (void *) (&z), 2);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib3sv 4191
+void
+__indirect_glVertexAttrib3sv(GLuint index, const GLshort * v)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 16;
+    emit_header(gc->pc, X_GLrop_VertexAttrib3sv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 6);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib4Nbv 4235
+void
+__indirect_glVertexAttrib4Nbv(GLuint index, const GLbyte *v)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 12;
+    emit_header(gc->pc, X_GLrop_VertexAttrib4Nbv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib4Niv 4237
+void
+__indirect_glVertexAttrib4Niv(GLuint index, const GLint * v)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 24;
+    emit_header(gc->pc, X_GLrop_VertexAttrib4Niv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 16);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib4Nsv 4236
+void
+__indirect_glVertexAttrib4Nsv(GLuint index, const GLshort * v)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 16;
+    emit_header(gc->pc, X_GLrop_VertexAttrib4Nsv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 8);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib4Nubv 4201
+void
+__indirect_glVertexAttrib4Nub(GLuint index, GLubyte x, GLubyte y, GLubyte z,
+                              GLubyte w)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 12;
+    emit_header(gc->pc, X_GLrop_VertexAttrib4Nubv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&x), 1);
+    (void) memcpy((void *) (gc->pc + 9), (void *) (&y), 1);
+    (void) memcpy((void *) (gc->pc + 10), (void *) (&z), 1);
+    (void) memcpy((void *) (gc->pc + 11), (void *) (&w), 1);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib4Nubv 4201
+void
+__indirect_glVertexAttrib4Nubv(GLuint index, const GLubyte *v)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 12;
+    emit_header(gc->pc, X_GLrop_VertexAttrib4Nubv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib4Nuiv 4239
+void
+__indirect_glVertexAttrib4Nuiv(GLuint index, const GLuint * v)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 24;
+    emit_header(gc->pc, X_GLrop_VertexAttrib4Nuiv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 16);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib4Nusv 4238
+void
+__indirect_glVertexAttrib4Nusv(GLuint index, const GLushort * v)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 16;
+    emit_header(gc->pc, X_GLrop_VertexAttrib4Nusv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 8);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib4bv 4230
+void
+__indirect_glVertexAttrib4bv(GLuint index, const GLbyte *v)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 12;
+    emit_header(gc->pc, X_GLrop_VertexAttrib4bv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib4dv 4200
+void
+__indirect_glVertexAttrib4d(GLuint index, GLdouble x, GLdouble y, GLdouble z,
+                            GLdouble w)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 40;
+    emit_header(gc->pc, X_GLrop_VertexAttrib4dv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&x), 8);
+    (void) memcpy((void *) (gc->pc + 16), (void *) (&y), 8);
+    (void) memcpy((void *) (gc->pc + 24), (void *) (&z), 8);
+    (void) memcpy((void *) (gc->pc + 32), (void *) (&w), 8);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib4dv 4200
+void
+__indirect_glVertexAttrib4dv(GLuint index, const GLdouble * v)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 40;
+    emit_header(gc->pc, X_GLrop_VertexAttrib4dv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 32);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib4iv 4231
+void
+__indirect_glVertexAttrib4iv(GLuint index, const GLint * v)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 24;
+    emit_header(gc->pc, X_GLrop_VertexAttrib4iv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 16);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib4sv 4192
+void
+__indirect_glVertexAttrib4s(GLuint index, GLshort x, GLshort y, GLshort z,
+                            GLshort w)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 16;
+    emit_header(gc->pc, X_GLrop_VertexAttrib4sv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&x), 2);
+    (void) memcpy((void *) (gc->pc + 10), (void *) (&y), 2);
+    (void) memcpy((void *) (gc->pc + 12), (void *) (&z), 2);
+    (void) memcpy((void *) (gc->pc + 14), (void *) (&w), 2);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib4sv 4192
+void
+__indirect_glVertexAttrib4sv(GLuint index, const GLshort * v)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 16;
+    emit_header(gc->pc, X_GLrop_VertexAttrib4sv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 8);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib4ubv 4232
+void
+__indirect_glVertexAttrib4ubv(GLuint index, const GLubyte *v)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 12;
+    emit_header(gc->pc, X_GLrop_VertexAttrib4ubv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib4uiv 4234
+void
+__indirect_glVertexAttrib4uiv(GLuint index, const GLuint * v)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 24;
+    emit_header(gc->pc, X_GLrop_VertexAttrib4uiv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 16);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_VertexAttrib4usv 4233
+void
+__indirect_glVertexAttrib4usv(GLuint index, const GLushort * v)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 16;
+    emit_header(gc->pc, X_GLrop_VertexAttrib4usv, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 8);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_ClampColor 234
+void
+__indirect_glClampColor(GLenum target, GLenum clamp)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 12;
+    emit_header(gc->pc, X_GLrop_ClampColor, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&clamp), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_BindProgramARB 4180
+void
+__indirect_glBindProgramARB(GLenum target, GLuint program)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 12;
+    emit_header(gc->pc, X_GLrop_BindProgramARB, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&program), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLvop_DeleteProgramsARB 1294
+void
+__indirect_glDeleteProgramsARB(GLsizei n, const GLuint * programs)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    Display *const dpy = gc->currentDpy;
+    const GLuint cmdlen = 4 + safe_pad(safe_mul(n, 4));
+    if (0 + safe_pad(safe_mul(n, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
+    if (n < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
+    if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
+        GLubyte const *pc =
+            __glXSetupVendorRequest(gc, X_GLXVendorPrivate,
+                                    X_GLvop_DeleteProgramsARB, cmdlen);
+        (void) memcpy((void *) (pc + 0), (void *) (&n), 4);
+        (void) memcpy((void *) (pc + 4), (void *) (programs), safe_mul(n, 4));
+        UnlockDisplay(dpy);
+        SyncHandle();
+    }
+    return;
+}
+
+#define X_GLvop_GenProgramsARB 1295
+void
+__indirect_glGenProgramsARB(GLsizei n, GLuint * programs)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    Display *const dpy = gc->currentDpy;
+    const GLuint cmdlen = 4;
+    if (n < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
+    if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
+        GLubyte const *pc =
+            __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
+                                    X_GLvop_GenProgramsARB, cmdlen);
+        (void) memcpy((void *) (pc + 0), (void *) (&n), 4);
+        (void) __glXReadReply(dpy, 4, programs, GL_TRUE);
+        UnlockDisplay(dpy);
+        SyncHandle();
+    }
+    return;
 }
 
 #define X_GLvop_GetProgramStringARB 1308
@@ -7557,6 +8981,26 @@ __indirect_glGetProgramivARB(GLenum target, GLenum pname, GLint * params)
         SyncHandle();
     }
     return;
+}
+
+#define X_GLvop_IsProgramARB 1304
+GLboolean
+__indirect_glIsProgramARB(GLuint program)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    Display *const dpy = gc->currentDpy;
+    GLboolean retval = (GLboolean) 0;
+    const GLuint cmdlen = 4;
+    if (__builtin_expect(dpy != NULL, 1)) {
+        GLubyte const *pc =
+            __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
+                                    X_GLvop_IsProgramARB, cmdlen);
+        (void) memcpy((void *) (pc + 0), (void *) (&program), 4);
+        retval = (GLboolean) __glXReadReply(dpy, 0, NULL, GL_FALSE);
+        UnlockDisplay(dpy);
+        SyncHandle();
+    }
+    return retval;
 }
 
 #define X_GLrop_ProgramEnvParameter4dvARB 4185
@@ -7715,7 +9159,11 @@ __indirect_glProgramStringARB(GLenum target, GLenum format, GLsizei len,
                               const GLvoid * string)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 16 + __GLX_PAD(len);
+    const GLuint cmdlen = 16 + safe_pad(len);
+    if (0 + safe_pad(len) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (len < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -7748,36 +9196,6 @@ __indirect_glProgramStringARB(GLenum target, GLenum format, GLsizei len,
     }
 }
 
-#define X_GLrop_VertexAttrib1dvARB 4197
-void
-__indirect_glVertexAttrib1dARB(GLuint index, GLdouble x)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 16;
-    emit_header(gc->pc, X_GLrop_VertexAttrib1dvARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&x), 8);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib1dvARB 4197
-void
-__indirect_glVertexAttrib1dvARB(GLuint index, const GLdouble * v)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 16;
-    emit_header(gc->pc, X_GLrop_VertexAttrib1dvARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 8);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
 #define X_GLrop_VertexAttrib1fvARB 4193
 void
 __indirect_glVertexAttrib1fARB(GLuint index, GLfloat x)
@@ -7802,67 +9220,6 @@ __indirect_glVertexAttrib1fvARB(GLuint index, const GLfloat * v)
     emit_header(gc->pc, X_GLrop_VertexAttrib1fvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (v), 4);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib1svARB 4189
-void
-__indirect_glVertexAttrib1sARB(GLuint index, GLshort x)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_VertexAttrib1svARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&x), 2);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib1svARB 4189
-void
-__indirect_glVertexAttrib1svARB(GLuint index, const GLshort * v)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_VertexAttrib1svARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 2);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib2dvARB 4198
-void
-__indirect_glVertexAttrib2dARB(GLuint index, GLdouble x, GLdouble y)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 24;
-    emit_header(gc->pc, X_GLrop_VertexAttrib2dvARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&x), 8);
-    (void) memcpy((void *) (gc->pc + 16), (void *) (&y), 8);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib2dvARB 4198
-void
-__indirect_glVertexAttrib2dvARB(GLuint index, const GLdouble * v)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 24;
-    emit_header(gc->pc, X_GLrop_VertexAttrib2dvARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 16);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -7900,70 +9257,6 @@ __indirect_glVertexAttrib2fvARB(GLuint index, const GLfloat * v)
     }
 }
 
-#define X_GLrop_VertexAttrib2svARB 4190
-void
-__indirect_glVertexAttrib2sARB(GLuint index, GLshort x, GLshort y)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_VertexAttrib2svARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&x), 2);
-    (void) memcpy((void *) (gc->pc + 10), (void *) (&y), 2);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib2svARB 4190
-void
-__indirect_glVertexAttrib2svARB(GLuint index, const GLshort * v)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_VertexAttrib2svARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 4);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib3dvARB 4199
-void
-__indirect_glVertexAttrib3dARB(GLuint index, GLdouble x, GLdouble y,
-                               GLdouble z)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 32;
-    emit_header(gc->pc, X_GLrop_VertexAttrib3dvARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&x), 8);
-    (void) memcpy((void *) (gc->pc + 16), (void *) (&y), 8);
-    (void) memcpy((void *) (gc->pc + 24), (void *) (&z), 8);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib3dvARB 4199
-void
-__indirect_glVertexAttrib3dvARB(GLuint index, const GLdouble * v)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 32;
-    emit_header(gc->pc, X_GLrop_VertexAttrib3dvARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 24);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
 #define X_GLrop_VertexAttrib3fvARB 4195
 void
 __indirect_glVertexAttrib3fARB(GLuint index, GLfloat x, GLfloat y, GLfloat z)
@@ -7990,196 +9283,6 @@ __indirect_glVertexAttrib3fvARB(GLuint index, const GLfloat * v)
     emit_header(gc->pc, X_GLrop_VertexAttrib3fvARB, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (v), 12);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib3svARB 4191
-void
-__indirect_glVertexAttrib3sARB(GLuint index, GLshort x, GLshort y, GLshort z)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 16;
-    emit_header(gc->pc, X_GLrop_VertexAttrib3svARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&x), 2);
-    (void) memcpy((void *) (gc->pc + 10), (void *) (&y), 2);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (&z), 2);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib3svARB 4191
-void
-__indirect_glVertexAttrib3svARB(GLuint index, const GLshort * v)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 16;
-    emit_header(gc->pc, X_GLrop_VertexAttrib3svARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 6);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib4NbvARB 4235
-void
-__indirect_glVertexAttrib4NbvARB(GLuint index, const GLbyte *v)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_VertexAttrib4NbvARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 4);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib4NivARB 4237
-void
-__indirect_glVertexAttrib4NivARB(GLuint index, const GLint * v)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 24;
-    emit_header(gc->pc, X_GLrop_VertexAttrib4NivARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 16);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib4NsvARB 4236
-void
-__indirect_glVertexAttrib4NsvARB(GLuint index, const GLshort * v)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 16;
-    emit_header(gc->pc, X_GLrop_VertexAttrib4NsvARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 8);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib4NubvARB 4201
-void
-__indirect_glVertexAttrib4NubARB(GLuint index, GLubyte x, GLubyte y,
-                                 GLubyte z, GLubyte w)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_VertexAttrib4NubvARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&x), 1);
-    (void) memcpy((void *) (gc->pc + 9), (void *) (&y), 1);
-    (void) memcpy((void *) (gc->pc + 10), (void *) (&z), 1);
-    (void) memcpy((void *) (gc->pc + 11), (void *) (&w), 1);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib4NubvARB 4201
-void
-__indirect_glVertexAttrib4NubvARB(GLuint index, const GLubyte *v)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_VertexAttrib4NubvARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 4);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib4NuivARB 4239
-void
-__indirect_glVertexAttrib4NuivARB(GLuint index, const GLuint * v)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 24;
-    emit_header(gc->pc, X_GLrop_VertexAttrib4NuivARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 16);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib4NusvARB 4238
-void
-__indirect_glVertexAttrib4NusvARB(GLuint index, const GLushort * v)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 16;
-    emit_header(gc->pc, X_GLrop_VertexAttrib4NusvARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 8);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib4bvARB 4230
-void
-__indirect_glVertexAttrib4bvARB(GLuint index, const GLbyte *v)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_VertexAttrib4bvARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 4);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib4dvARB 4200
-void
-__indirect_glVertexAttrib4dARB(GLuint index, GLdouble x, GLdouble y,
-                               GLdouble z, GLdouble w)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 40;
-    emit_header(gc->pc, X_GLrop_VertexAttrib4dvARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&x), 8);
-    (void) memcpy((void *) (gc->pc + 16), (void *) (&y), 8);
-    (void) memcpy((void *) (gc->pc + 24), (void *) (&z), 8);
-    (void) memcpy((void *) (gc->pc + 32), (void *) (&w), 8);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib4dvARB 4200
-void
-__indirect_glVertexAttrib4dvARB(GLuint index, const GLdouble * v)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 40;
-    emit_header(gc->pc, X_GLrop_VertexAttrib4dvARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 32);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -8220,392 +9323,391 @@ __indirect_glVertexAttrib4fvARB(GLuint index, const GLfloat * v)
     }
 }
 
-#define X_GLrop_VertexAttrib4ivARB 4231
+#define X_GLrop_BindFramebuffer 236
 void
-__indirect_glVertexAttrib4ivARB(GLuint index, const GLint * v)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 24;
-    emit_header(gc->pc, X_GLrop_VertexAttrib4ivARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 16);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib4svARB 4192
-void
-__indirect_glVertexAttrib4sARB(GLuint index, GLshort x, GLshort y, GLshort z,
-                               GLshort w)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 16;
-    emit_header(gc->pc, X_GLrop_VertexAttrib4svARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&x), 2);
-    (void) memcpy((void *) (gc->pc + 10), (void *) (&y), 2);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (&z), 2);
-    (void) memcpy((void *) (gc->pc + 14), (void *) (&w), 2);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib4svARB 4192
-void
-__indirect_glVertexAttrib4svARB(GLuint index, const GLshort * v)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 16;
-    emit_header(gc->pc, X_GLrop_VertexAttrib4svARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 8);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib4ubvARB 4232
-void
-__indirect_glVertexAttrib4ubvARB(GLuint index, const GLubyte *v)
+__indirect_glBindFramebuffer(GLenum target, GLuint framebuffer)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_VertexAttrib4ubvARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 4);
+    emit_header(gc->pc, X_GLrop_BindFramebuffer, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&framebuffer), 4);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
     }
 }
 
-#define X_GLrop_VertexAttrib4uivARB 4234
+#define X_GLrop_BindRenderbuffer 235
 void
-__indirect_glVertexAttrib4uivARB(GLuint index, const GLuint * v)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 24;
-    emit_header(gc->pc, X_GLrop_VertexAttrib4uivARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 16);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_VertexAttrib4usvARB 4233
-void
-__indirect_glVertexAttrib4usvARB(GLuint index, const GLushort * v)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 16;
-    emit_header(gc->pc, X_GLrop_VertexAttrib4usvARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (v), 8);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_BeginQueryARB 231
-void
-__indirect_glBeginQueryARB(GLenum target, GLuint id)
+__indirect_glBindRenderbuffer(GLenum target, GLuint renderbuffer)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_BeginQueryARB, cmdlen);
+    emit_header(gc->pc, X_GLrop_BindRenderbuffer, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&id), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&renderbuffer), 4);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
     }
 }
 
-#define X_GLsop_DeleteQueriesARB 161
+#define X_GLrop_BlitFramebuffer 4330
 void
-__indirect_glDeleteQueriesARB(GLsizei n, const GLuint * ids)
+__indirect_glBlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1,
+                             GLint srcY1, GLint dstX0, GLint dstY0,
+                             GLint dstX1, GLint dstY1, GLbitfield mask,
+                             GLenum filter)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    Display *const dpy = gc->currentDpy;
-#ifndef USE_XCB
-    const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
-#endif
-    if (n < 0) {
-        __glXSetError(gc, GL_INVALID_VALUE);
-        return;
-    }
-    if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
-#ifdef USE_XCB
-        xcb_connection_t *c = XGetXCBConnection(dpy);
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-        xcb_glx_delete_queries_arb(c, gc->currentContextTag, n, ids);
-#else
-        GLubyte const *pc =
-            __glXSetupSingleRequest(gc, X_GLsop_DeleteQueriesARB, cmdlen);
-        (void) memcpy((void *) (pc + 0), (void *) (&n), 4);
-        (void) memcpy((void *) (pc + 4), (void *) (ids), (n * 4));
-        UnlockDisplay(dpy);
-        SyncHandle();
-#endif /* USE_XCB */
-    }
-    return;
-}
-
-#define X_GLrop_EndQueryARB 232
-void
-__indirect_glEndQueryARB(GLenum target)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 8;
-    emit_header(gc->pc, X_GLrop_EndQueryARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
+    const GLuint cmdlen = 44;
+    emit_header(gc->pc, X_GLrop_BlitFramebuffer, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&srcX0), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&srcY0), 4);
+    (void) memcpy((void *) (gc->pc + 12), (void *) (&srcX1), 4);
+    (void) memcpy((void *) (gc->pc + 16), (void *) (&srcY1), 4);
+    (void) memcpy((void *) (gc->pc + 20), (void *) (&dstX0), 4);
+    (void) memcpy((void *) (gc->pc + 24), (void *) (&dstY0), 4);
+    (void) memcpy((void *) (gc->pc + 28), (void *) (&dstX1), 4);
+    (void) memcpy((void *) (gc->pc + 32), (void *) (&dstY1), 4);
+    (void) memcpy((void *) (gc->pc + 36), (void *) (&mask), 4);
+    (void) memcpy((void *) (gc->pc + 40), (void *) (&filter), 4);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
     }
 }
 
-#define X_GLsop_GenQueriesARB 162
-void
-__indirect_glGenQueriesARB(GLsizei n, GLuint * ids)
+#define X_GLvop_CheckFramebufferStatus 1427
+GLenum
+__indirect_glCheckFramebufferStatus(GLenum target)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
-#ifndef USE_XCB
+    GLenum retval = (GLenum) 0;
     const GLuint cmdlen = 4;
-#endif
+    if (__builtin_expect(dpy != NULL, 1)) {
+        GLubyte const *pc =
+            __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
+                                    X_GLvop_CheckFramebufferStatus, cmdlen);
+        (void) memcpy((void *) (pc + 0), (void *) (&target), 4);
+        retval = (GLenum) __glXReadReply(dpy, 0, NULL, GL_FALSE);
+        UnlockDisplay(dpy);
+        SyncHandle();
+    }
+    return retval;
+}
+
+#define X_GLrop_DeleteFramebuffers 4320
+void
+__indirect_glDeleteFramebuffers(GLsizei n, const GLuint * framebuffers)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 8 + safe_pad(safe_mul(n, 4));
+    if (0 + safe_pad(safe_mul(n, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
+    if (n < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
+    if (__builtin_expect(n >= 0, 1)) {
+        emit_header(gc->pc, X_GLrop_DeleteFramebuffers, cmdlen);
+        (void) memcpy((void *) (gc->pc + 4), (void *) (&n), 4);
+        (void) memcpy((void *) (gc->pc + 8), (void *) (framebuffers),
+                      safe_mul(n, 4));
+        gc->pc += cmdlen;
+        if (__builtin_expect(gc->pc > gc->limit, 0)) {
+            (void) __glXFlushRenderBuffer(gc, gc->pc);
+        }
+    }
+}
+
+#define X_GLrop_DeleteRenderbuffers 4317
+void
+__indirect_glDeleteRenderbuffers(GLsizei n, const GLuint * renderbuffers)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 8 + safe_pad(safe_mul(n, 4));
+    if (0 + safe_pad(safe_mul(n, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
+    if (n < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
+    if (__builtin_expect(n >= 0, 1)) {
+        emit_header(gc->pc, X_GLrop_DeleteRenderbuffers, cmdlen);
+        (void) memcpy((void *) (gc->pc + 4), (void *) (&n), 4);
+        (void) memcpy((void *) (gc->pc + 8), (void *) (renderbuffers),
+                      safe_mul(n, 4));
+        gc->pc += cmdlen;
+        if (__builtin_expect(gc->pc > gc->limit, 0)) {
+            (void) __glXFlushRenderBuffer(gc, gc->pc);
+        }
+    }
+}
+
+#define X_GLrop_FramebufferRenderbuffer 4324
+void
+__indirect_glFramebufferRenderbuffer(GLenum target, GLenum attachment,
+                                     GLenum renderbuffertarget,
+                                     GLuint renderbuffer)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 20;
+    emit_header(gc->pc, X_GLrop_FramebufferRenderbuffer, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&attachment), 4);
+    (void) memcpy((void *) (gc->pc + 12), (void *) (&renderbuffertarget), 4);
+    (void) memcpy((void *) (gc->pc + 16), (void *) (&renderbuffer), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_FramebufferTexture1D 4321
+void
+__indirect_glFramebufferTexture1D(GLenum target, GLenum attachment,
+                                  GLenum textarget, GLuint texture,
+                                  GLint level)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 24;
+    emit_header(gc->pc, X_GLrop_FramebufferTexture1D, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&attachment), 4);
+    (void) memcpy((void *) (gc->pc + 12), (void *) (&textarget), 4);
+    (void) memcpy((void *) (gc->pc + 16), (void *) (&texture), 4);
+    (void) memcpy((void *) (gc->pc + 20), (void *) (&level), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_FramebufferTexture2D 4322
+void
+__indirect_glFramebufferTexture2D(GLenum target, GLenum attachment,
+                                  GLenum textarget, GLuint texture,
+                                  GLint level)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 24;
+    emit_header(gc->pc, X_GLrop_FramebufferTexture2D, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&attachment), 4);
+    (void) memcpy((void *) (gc->pc + 12), (void *) (&textarget), 4);
+    (void) memcpy((void *) (gc->pc + 16), (void *) (&texture), 4);
+    (void) memcpy((void *) (gc->pc + 20), (void *) (&level), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_FramebufferTexture3D 4323
+void
+__indirect_glFramebufferTexture3D(GLenum target, GLenum attachment,
+                                  GLenum textarget, GLuint texture,
+                                  GLint level, GLint layer)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 28;
+    emit_header(gc->pc, X_GLrop_FramebufferTexture3D, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&attachment), 4);
+    (void) memcpy((void *) (gc->pc + 12), (void *) (&textarget), 4);
+    (void) memcpy((void *) (gc->pc + 16), (void *) (&texture), 4);
+    (void) memcpy((void *) (gc->pc + 20), (void *) (&level), 4);
+    (void) memcpy((void *) (gc->pc + 24), (void *) (&layer), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_FramebufferTextureLayer 237
+void
+__indirect_glFramebufferTextureLayer(GLenum target, GLenum attachment,
+                                     GLuint texture, GLint level, GLint layer)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 24;
+    emit_header(gc->pc, X_GLrop_FramebufferTextureLayer, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&attachment), 4);
+    (void) memcpy((void *) (gc->pc + 12), (void *) (&texture), 4);
+    (void) memcpy((void *) (gc->pc + 16), (void *) (&level), 4);
+    (void) memcpy((void *) (gc->pc + 20), (void *) (&layer), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLvop_GenFramebuffers 1426
+void
+__indirect_glGenFramebuffers(GLsizei n, GLuint * framebuffers)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    Display *const dpy = gc->currentDpy;
+    const GLuint cmdlen = 4;
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
     }
     if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
-#ifdef USE_XCB
-        xcb_connection_t *c = XGetXCBConnection(dpy);
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-        xcb_glx_gen_queries_arb_reply_t *reply =
-            xcb_glx_gen_queries_arb_reply(c,
-                                          xcb_glx_gen_queries_arb(c,
-                                                                  gc->
-                                                                  currentContextTag,
-                                                                  n), NULL);
-        (void) memcpy(ids, xcb_glx_gen_queries_arb_data(reply),
-                      xcb_glx_gen_queries_arb_data_length(reply) *
-                      sizeof(GLuint));
-        free(reply);
-#else
         GLubyte const *pc =
-            __glXSetupSingleRequest(gc, X_GLsop_GenQueriesARB, cmdlen);
+            __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
+                                    X_GLvop_GenFramebuffers, cmdlen);
         (void) memcpy((void *) (pc + 0), (void *) (&n), 4);
-        (void) __glXReadReply(dpy, 4, ids, GL_TRUE);
+        (void) __glXReadReply(dpy, 4, framebuffers, GL_TRUE);
         UnlockDisplay(dpy);
         SyncHandle();
-#endif /* USE_XCB */
     }
     return;
 }
 
-#define X_GLsop_GetQueryObjectivARB 165
+#define X_GLvop_GenRenderbuffers 1423
 void
-__indirect_glGetQueryObjectivARB(GLuint id, GLenum pname, GLint * params)
+__indirect_glGenRenderbuffers(GLsizei n, GLuint * renderbuffers)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
-#ifndef USE_XCB
-    const GLuint cmdlen = 8;
-#endif
-    if (__builtin_expect(dpy != NULL, 1)) {
-#ifdef USE_XCB
-        xcb_connection_t *c = XGetXCBConnection(dpy);
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-        xcb_glx_get_query_objectiv_arb_reply_t *reply =
-            xcb_glx_get_query_objectiv_arb_reply(c,
-                                                 xcb_glx_get_query_objectiv_arb
-                                                 (c, gc->currentContextTag,
-                                                  id, pname), NULL);
-        if (xcb_glx_get_query_objectiv_arb_data_length(reply) == 0)
-            (void) memcpy(params, &reply->datum, sizeof(reply->datum));
-        else
-            (void) memcpy(params, xcb_glx_get_query_objectiv_arb_data(reply),
-                          xcb_glx_get_query_objectiv_arb_data_length(reply) *
-                          sizeof(GLint));
-        free(reply);
-#else
+    const GLuint cmdlen = 4;
+    if (n < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
+    if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
         GLubyte const *pc =
-            __glXSetupSingleRequest(gc, X_GLsop_GetQueryObjectivARB, cmdlen);
-        (void) memcpy((void *) (pc + 0), (void *) (&id), 4);
-        (void) memcpy((void *) (pc + 4), (void *) (&pname), 4);
+            __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
+                                    X_GLvop_GenRenderbuffers, cmdlen);
+        (void) memcpy((void *) (pc + 0), (void *) (&n), 4);
+        (void) __glXReadReply(dpy, 4, renderbuffers, GL_TRUE);
+        UnlockDisplay(dpy);
+        SyncHandle();
+    }
+    return;
+}
+
+#define X_GLrop_GenerateMipmap 4325
+void
+__indirect_glGenerateMipmap(GLenum target)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 8;
+    emit_header(gc->pc, X_GLrop_GenerateMipmap, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLvop_GetFramebufferAttachmentParameteriv 1428
+void
+__indirect_glGetFramebufferAttachmentParameteriv(GLenum target,
+                                                 GLenum attachment,
+                                                 GLenum pname, GLint * params)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    Display *const dpy = gc->currentDpy;
+    const GLuint cmdlen = 12;
+    if (__builtin_expect(dpy != NULL, 1)) {
+        GLubyte const *pc =
+            __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
+                                    X_GLvop_GetFramebufferAttachmentParameteriv,
+                                    cmdlen);
+        (void) memcpy((void *) (pc + 0), (void *) (&target), 4);
+        (void) memcpy((void *) (pc + 4), (void *) (&attachment), 4);
+        (void) memcpy((void *) (pc + 8), (void *) (&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy);
         SyncHandle();
-#endif /* USE_XCB */
     }
     return;
 }
 
-#define X_GLsop_GetQueryObjectuivARB 166
+#define X_GLvop_GetRenderbufferParameteriv 1424
 void
-__indirect_glGetQueryObjectuivARB(GLuint id, GLenum pname, GLuint * params)
+__indirect_glGetRenderbufferParameteriv(GLenum target, GLenum pname,
+                                        GLint * params)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
-#ifndef USE_XCB
     const GLuint cmdlen = 8;
-#endif
     if (__builtin_expect(dpy != NULL, 1)) {
-#ifdef USE_XCB
-        xcb_connection_t *c = XGetXCBConnection(dpy);
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-        xcb_glx_get_query_objectuiv_arb_reply_t *reply =
-            xcb_glx_get_query_objectuiv_arb_reply(c,
-                                                  xcb_glx_get_query_objectuiv_arb
-                                                  (c, gc->currentContextTag,
-                                                   id, pname), NULL);
-        if (xcb_glx_get_query_objectuiv_arb_data_length(reply) == 0)
-            (void) memcpy(params, &reply->datum, sizeof(reply->datum));
-        else
-            (void) memcpy(params, xcb_glx_get_query_objectuiv_arb_data(reply),
-                          xcb_glx_get_query_objectuiv_arb_data_length(reply) *
-                          sizeof(GLuint));
-        free(reply);
-#else
         GLubyte const *pc =
-            __glXSetupSingleRequest(gc, X_GLsop_GetQueryObjectuivARB, cmdlen);
-        (void) memcpy((void *) (pc + 0), (void *) (&id), 4);
-        (void) memcpy((void *) (pc + 4), (void *) (&pname), 4);
-        (void) __glXReadReply(dpy, 4, params, GL_FALSE);
-        UnlockDisplay(dpy);
-        SyncHandle();
-#endif /* USE_XCB */
-    }
-    return;
-}
-
-#define X_GLsop_GetQueryivARB 164
-void
-__indirect_glGetQueryivARB(GLenum target, GLenum pname, GLint * params)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    Display *const dpy = gc->currentDpy;
-#ifndef USE_XCB
-    const GLuint cmdlen = 8;
-#endif
-    if (__builtin_expect(dpy != NULL, 1)) {
-#ifdef USE_XCB
-        xcb_connection_t *c = XGetXCBConnection(dpy);
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-        xcb_glx_get_queryiv_arb_reply_t *reply =
-            xcb_glx_get_queryiv_arb_reply(c,
-                                          xcb_glx_get_queryiv_arb(c,
-                                                                  gc->
-                                                                  currentContextTag,
-                                                                  target,
-                                                                  pname),
-                                          NULL);
-        if (xcb_glx_get_queryiv_arb_data_length(reply) == 0)
-            (void) memcpy(params, &reply->datum, sizeof(reply->datum));
-        else
-            (void) memcpy(params, xcb_glx_get_queryiv_arb_data(reply),
-                          xcb_glx_get_queryiv_arb_data_length(reply) *
-                          sizeof(GLint));
-        free(reply);
-#else
-        GLubyte const *pc =
-            __glXSetupSingleRequest(gc, X_GLsop_GetQueryivARB, cmdlen);
+            __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
+                                    X_GLvop_GetRenderbufferParameteriv,
+                                    cmdlen);
         (void) memcpy((void *) (pc + 0), (void *) (&target), 4);
         (void) memcpy((void *) (pc + 4), (void *) (&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy);
         SyncHandle();
-#endif /* USE_XCB */
     }
     return;
 }
 
-#define X_GLsop_IsQueryARB 163
+#define X_GLvop_IsFramebuffer 1425
 GLboolean
-__indirect_glIsQueryARB(GLuint id)
+__indirect_glIsFramebuffer(GLuint framebuffer)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     GLboolean retval = (GLboolean) 0;
-#ifndef USE_XCB
     const GLuint cmdlen = 4;
-#endif
     if (__builtin_expect(dpy != NULL, 1)) {
-#ifdef USE_XCB
-        xcb_connection_t *c = XGetXCBConnection(dpy);
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-        xcb_glx_is_query_arb_reply_t *reply =
-            xcb_glx_is_query_arb_reply(c,
-                                       xcb_glx_is_query_arb(c,
-                                                            gc->
-                                                            currentContextTag,
-                                                            id), NULL);
-        retval = reply->ret_val;
-        free(reply);
-#else
         GLubyte const *pc =
-            __glXSetupSingleRequest(gc, X_GLsop_IsQueryARB, cmdlen);
-        (void) memcpy((void *) (pc + 0), (void *) (&id), 4);
+            __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
+                                    X_GLvop_IsFramebuffer, cmdlen);
+        (void) memcpy((void *) (pc + 0), (void *) (&framebuffer), 4);
         retval = (GLboolean) __glXReadReply(dpy, 0, NULL, GL_FALSE);
         UnlockDisplay(dpy);
         SyncHandle();
-#endif /* USE_XCB */
     }
     return retval;
 }
 
-#define X_GLrop_DrawBuffersARB 233
-void
-__indirect_glDrawBuffersARB(GLsizei n, const GLenum * bufs)
+#define X_GLvop_IsRenderbuffer 1422
+GLboolean
+__indirect_glIsRenderbuffer(GLuint renderbuffer)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 8 + __GLX_PAD((n * 4));
-    if (n < 0) {
-        __glXSetError(gc, GL_INVALID_VALUE);
-        return;
+    Display *const dpy = gc->currentDpy;
+    GLboolean retval = (GLboolean) 0;
+    const GLuint cmdlen = 4;
+    if (__builtin_expect(dpy != NULL, 1)) {
+        GLubyte const *pc =
+            __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
+                                    X_GLvop_IsRenderbuffer, cmdlen);
+        (void) memcpy((void *) (pc + 0), (void *) (&renderbuffer), 4);
+        retval = (GLboolean) __glXReadReply(dpy, 0, NULL, GL_FALSE);
+        UnlockDisplay(dpy);
+        SyncHandle();
     }
-    if (__builtin_expect((n >= 0) && (gc->currentDpy != NULL), 1)) {
-        if (cmdlen <= gc->maxSmallRenderCommandSize) {
-            if ((gc->pc + cmdlen) > gc->bufEnd) {
-                (void) __glXFlushRenderBuffer(gc, gc->pc);
-            }
-            emit_header(gc->pc, X_GLrop_DrawBuffersARB, cmdlen);
-            (void) memcpy((void *) (gc->pc + 4), (void *) (&n), 4);
-            (void) memcpy((void *) (gc->pc + 8), (void *) (bufs), (n * 4));
-            gc->pc += cmdlen;
-            if (__builtin_expect(gc->pc > gc->limit, 0)) {
-                (void) __glXFlushRenderBuffer(gc, gc->pc);
-            }
-        } else {
-            const GLint op = X_GLrop_DrawBuffersARB;
-            const GLuint cmdlenLarge = cmdlen + 4;
-            GLubyte *const pc = __glXFlushRenderBuffer(gc, gc->pc);
-            (void) memcpy((void *) (pc + 0), (void *) (&cmdlenLarge), 4);
-            (void) memcpy((void *) (pc + 4), (void *) (&op), 4);
-            (void) memcpy((void *) (pc + 8), (void *) (&n), 4);
-            __glXSendLargeCommand(gc, pc, 12, bufs, (n * 4));
-        }
-    }
+    return retval;
 }
 
-#define X_GLrop_ClampColorARB 234
+#define X_GLrop_RenderbufferStorage 4318
 void
-__indirect_glClampColorARB(GLenum target, GLenum clamp)
+__indirect_glRenderbufferStorage(GLenum target, GLenum internalformat,
+                                 GLsizei width, GLsizei height)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_ClampColorARB, cmdlen);
+    const GLuint cmdlen = 20;
+    emit_header(gc->pc, X_GLrop_RenderbufferStorage, cmdlen);
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&clamp), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&internalformat), 4);
+    (void) memcpy((void *) (gc->pc + 12), (void *) (&width), 4);
+    (void) memcpy((void *) (gc->pc + 16), (void *) (&height), 4);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -8661,83 +9763,6 @@ __indirect_glSamplePatternSGIS(GLenum pattern)
     }
 }
 
-#define X_GLrop_PointParameterfEXT 2065
-void
-__indirect_glPointParameterfEXT(GLenum pname, GLfloat param)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_PointParameterfEXT, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&pname), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&param), 4);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_PointParameterfvEXT 2066
-void
-__indirect_glPointParameterfvEXT(GLenum pname, const GLfloat * params)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint compsize = __glPointParameterfvEXT_size(pname);
-    const GLuint cmdlen = 8 + __GLX_PAD((compsize * 4));
-    emit_header(gc->pc, X_GLrop_PointParameterfvEXT, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&pname), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (params), (compsize * 4));
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_SecondaryColor3bvEXT 4126
-void
-__indirect_glSecondaryColor3bEXT(GLbyte red, GLbyte green, GLbyte blue)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 8;
-    emit_header(gc->pc, X_GLrop_SecondaryColor3bvEXT, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 1);
-    (void) memcpy((void *) (gc->pc + 5), (void *) (&green), 1);
-    (void) memcpy((void *) (gc->pc + 6), (void *) (&blue), 1);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_SecondaryColor3bvEXT 4126
-void
-__indirect_glSecondaryColor3bvEXT(const GLbyte *v)
-{
-    generic_3_byte(X_GLrop_SecondaryColor3bvEXT, v);
-}
-
-#define X_GLrop_SecondaryColor3dvEXT 4130
-void
-__indirect_glSecondaryColor3dEXT(GLdouble red, GLdouble green, GLdouble blue)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 28;
-    emit_header(gc->pc, X_GLrop_SecondaryColor3dvEXT, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 8);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (&green), 8);
-    (void) memcpy((void *) (gc->pc + 20), (void *) (&blue), 8);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_SecondaryColor3dvEXT 4130
-void
-__indirect_glSecondaryColor3dvEXT(const GLdouble * v)
-{
-    generic_24_byte(X_GLrop_SecondaryColor3dvEXT, v);
-}
-
 #define X_GLrop_SecondaryColor3fvEXT 4129
 void
 __indirect_glSecondaryColor3fEXT(GLfloat red, GLfloat green, GLfloat blue)
@@ -8761,142 +9786,6 @@ __indirect_glSecondaryColor3fvEXT(const GLfloat * v)
     generic_12_byte(X_GLrop_SecondaryColor3fvEXT, v);
 }
 
-#define X_GLrop_SecondaryColor3ivEXT 4128
-void
-__indirect_glSecondaryColor3iEXT(GLint red, GLint green, GLint blue)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 16;
-    emit_header(gc->pc, X_GLrop_SecondaryColor3ivEXT, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&green), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (&blue), 4);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_SecondaryColor3ivEXT 4128
-void
-__indirect_glSecondaryColor3ivEXT(const GLint * v)
-{
-    generic_12_byte(X_GLrop_SecondaryColor3ivEXT, v);
-}
-
-#define X_GLrop_SecondaryColor3svEXT 4127
-void
-__indirect_glSecondaryColor3sEXT(GLshort red, GLshort green, GLshort blue)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_SecondaryColor3svEXT, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 2);
-    (void) memcpy((void *) (gc->pc + 6), (void *) (&green), 2);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&blue), 2);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_SecondaryColor3svEXT 4127
-void
-__indirect_glSecondaryColor3svEXT(const GLshort * v)
-{
-    generic_6_byte(X_GLrop_SecondaryColor3svEXT, v);
-}
-
-#define X_GLrop_SecondaryColor3ubvEXT 4131
-void
-__indirect_glSecondaryColor3ubEXT(GLubyte red, GLubyte green, GLubyte blue)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 8;
-    emit_header(gc->pc, X_GLrop_SecondaryColor3ubvEXT, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 1);
-    (void) memcpy((void *) (gc->pc + 5), (void *) (&green), 1);
-    (void) memcpy((void *) (gc->pc + 6), (void *) (&blue), 1);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_SecondaryColor3ubvEXT 4131
-void
-__indirect_glSecondaryColor3ubvEXT(const GLubyte *v)
-{
-    generic_3_byte(X_GLrop_SecondaryColor3ubvEXT, v);
-}
-
-#define X_GLrop_SecondaryColor3uivEXT 4133
-void
-__indirect_glSecondaryColor3uiEXT(GLuint red, GLuint green, GLuint blue)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 16;
-    emit_header(gc->pc, X_GLrop_SecondaryColor3uivEXT, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&green), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (&blue), 4);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_SecondaryColor3uivEXT 4133
-void
-__indirect_glSecondaryColor3uivEXT(const GLuint * v)
-{
-    generic_12_byte(X_GLrop_SecondaryColor3uivEXT, v);
-}
-
-#define X_GLrop_SecondaryColor3usvEXT 4132
-void
-__indirect_glSecondaryColor3usEXT(GLushort red, GLushort green, GLushort blue)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_SecondaryColor3usvEXT, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&red), 2);
-    (void) memcpy((void *) (gc->pc + 6), (void *) (&green), 2);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&blue), 2);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_SecondaryColor3usvEXT 4132
-void
-__indirect_glSecondaryColor3usvEXT(const GLushort * v)
-{
-    generic_6_byte(X_GLrop_SecondaryColor3usvEXT, v);
-}
-
-#define X_GLrop_FogCoorddvEXT 4125
-void
-__indirect_glFogCoorddEXT(GLdouble coord)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_FogCoorddvEXT, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&coord), 8);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_FogCoorddvEXT 4125
-void
-__indirect_glFogCoorddvEXT(const GLdouble * coord)
-{
-    generic_8_byte(X_GLrop_FogCoorddvEXT, coord);
-}
-
 #define X_GLrop_FogCoordfvEXT 4124
 void
 __indirect_glFogCoordfEXT(GLfloat coord)
@@ -8918,47 +9807,6 @@ __indirect_glFogCoordfvEXT(const GLfloat * coord)
     generic_4_byte(X_GLrop_FogCoordfvEXT, coord);
 }
 
-#define X_GLrop_BlendFuncSeparateEXT 4134
-void
-__indirect_glBlendFuncSeparateEXT(GLenum sfactorRGB, GLenum dfactorRGB,
-                                  GLenum sfactorAlpha, GLenum dfactorAlpha)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 20;
-    emit_header(gc->pc, X_GLrop_BlendFuncSeparateEXT, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&sfactorRGB), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&dfactorRGB), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (&sfactorAlpha), 4);
-    (void) memcpy((void *) (gc->pc + 16), (void *) (&dfactorAlpha), 4);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_WindowPos3fvMESA 230
-void
-__indirect_glWindowPos3fMESA(GLfloat x, GLfloat y, GLfloat z)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 16;
-    emit_header(gc->pc, X_GLrop_WindowPos3fvMESA, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&x), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&y), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (&z), 4);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_WindowPos3fvMESA 230
-void
-__indirect_glWindowPos3fvMESA(const GLfloat * v)
-{
-    generic_12_byte(X_GLrop_WindowPos3fvMESA, v);
-}
-
 #define X_GLvop_AreProgramsResidentNV 1293
 GLboolean
 __indirect_glAreProgramsResidentNV(GLsizei n, const GLuint * ids,
@@ -8967,7 +9815,11 @@ __indirect_glAreProgramsResidentNV(GLsizei n, const GLuint * ids,
     struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
     GLboolean retval = (GLboolean) 0;
-    const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
+    const GLuint cmdlen = 4 + safe_pad(safe_mul(n, 4));
+    if (0 + safe_pad(safe_mul(n, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return 0;
+    }
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return 0;
@@ -8977,50 +9829,12 @@ __indirect_glAreProgramsResidentNV(GLsizei n, const GLuint * ids,
             __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
                                     X_GLvop_AreProgramsResidentNV, cmdlen);
         (void) memcpy((void *) (pc + 0), (void *) (&n), 4);
-        (void) memcpy((void *) (pc + 4), (void *) (ids), (n * 4));
+        (void) memcpy((void *) (pc + 4), (void *) (ids), safe_mul(n, 4));
         retval = (GLboolean) __glXReadReply(dpy, 1, residences, GL_FALSE);
         UnlockDisplay(dpy);
         SyncHandle();
     }
     return retval;
-}
-
-#define X_GLrop_BindProgramNV 4180
-void
-__indirect_glBindProgramNV(GLenum target, GLuint program)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_BindProgramNV, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&program), 4);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLvop_DeleteProgramsNV 1294
-void
-__indirect_glDeleteProgramsNV(GLsizei n, const GLuint * programs)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    Display *const dpy = gc->currentDpy;
-    const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
-    if (n < 0) {
-        __glXSetError(gc, GL_INVALID_VALUE);
-        return;
-    }
-    if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
-        GLubyte const *pc =
-            __glXSetupVendorRequest(gc, X_GLXVendorPrivate,
-                                    X_GLvop_DeleteProgramsNV, cmdlen);
-        (void) memcpy((void *) (pc + 0), (void *) (&n), 4);
-        (void) memcpy((void *) (pc + 4), (void *) (programs), (n * 4));
-        UnlockDisplay(dpy);
-        SyncHandle();
-    }
-    return;
 }
 
 #define X_GLrop_ExecuteProgramNV 4181
@@ -9038,29 +9852,6 @@ __indirect_glExecuteProgramNV(GLenum target, GLuint id,
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
     }
-}
-
-#define X_GLvop_GenProgramsNV 1295
-void
-__indirect_glGenProgramsNV(GLsizei n, GLuint * programs)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    Display *const dpy = gc->currentDpy;
-    const GLuint cmdlen = 4;
-    if (n < 0) {
-        __glXSetError(gc, GL_INVALID_VALUE);
-        return;
-    }
-    if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
-        GLubyte const *pc =
-            __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
-                                    X_GLvop_GenProgramsNV, cmdlen);
-        (void) memcpy((void *) (pc + 0), (void *) (&n), 4);
-        (void) __glXReadReply(dpy, 4, programs, GL_TRUE);
-        UnlockDisplay(dpy);
-        SyncHandle();
-    }
-    return;
 }
 
 #define X_GLvop_GetProgramParameterdvNV 1297
@@ -9230,33 +10021,17 @@ __indirect_glGetVertexAttribivNV(GLuint index, GLenum pname, GLint * params)
     return;
 }
 
-#define X_GLvop_IsProgramNV 1304
-GLboolean
-__indirect_glIsProgramNV(GLuint program)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    Display *const dpy = gc->currentDpy;
-    GLboolean retval = (GLboolean) 0;
-    const GLuint cmdlen = 4;
-    if (__builtin_expect(dpy != NULL, 1)) {
-        GLubyte const *pc =
-            __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
-                                    X_GLvop_IsProgramNV, cmdlen);
-        (void) memcpy((void *) (pc + 0), (void *) (&program), 4);
-        retval = (GLboolean) __glXReadReply(dpy, 0, NULL, GL_FALSE);
-        UnlockDisplay(dpy);
-        SyncHandle();
-    }
-    return retval;
-}
-
 #define X_GLrop_LoadProgramNV 4183
 void
 __indirect_glLoadProgramNV(GLenum target, GLuint id, GLsizei len,
                            const GLubyte *program)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 16 + __GLX_PAD(len);
+    const GLuint cmdlen = 16 + safe_pad(len);
+    if (0 + safe_pad(len) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (len < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -9280,7 +10055,11 @@ __indirect_glProgramParameters4dvNV(GLenum target, GLuint index, GLsizei num,
                                     const GLdouble * params)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 16 + __GLX_PAD((num * 32));
+    const GLuint cmdlen = 16 + safe_pad(safe_mul(num, 32));
+    if (0 + safe_pad(safe_mul(num, 32)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (num < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -9290,7 +10069,8 @@ __indirect_glProgramParameters4dvNV(GLenum target, GLuint index, GLsizei num,
         (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
         (void) memcpy((void *) (gc->pc + 8), (void *) (&index), 4);
         (void) memcpy((void *) (gc->pc + 12), (void *) (&num), 4);
-        (void) memcpy((void *) (gc->pc + 16), (void *) (params), (num * 32));
+        (void) memcpy((void *) (gc->pc + 16), (void *) (params),
+                      safe_mul(num, 32));
         gc->pc += cmdlen;
         if (__builtin_expect(gc->pc > gc->limit, 0)) {
             (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -9304,7 +10084,11 @@ __indirect_glProgramParameters4fvNV(GLenum target, GLuint index, GLsizei num,
                                     const GLfloat * params)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 16 + __GLX_PAD((num * 16));
+    const GLuint cmdlen = 16 + safe_pad(safe_mul(num, 16));
+    if (0 + safe_pad(safe_mul(num, 16)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (num < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -9314,7 +10098,8 @@ __indirect_glProgramParameters4fvNV(GLenum target, GLuint index, GLsizei num,
         (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
         (void) memcpy((void *) (gc->pc + 8), (void *) (&index), 4);
         (void) memcpy((void *) (gc->pc + 12), (void *) (&num), 4);
-        (void) memcpy((void *) (gc->pc + 16), (void *) (params), (num * 16));
+        (void) memcpy((void *) (gc->pc + 16), (void *) (params),
+                      safe_mul(num, 16));
         gc->pc += cmdlen;
         if (__builtin_expect(gc->pc > gc->limit, 0)) {
             (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -9327,7 +10112,11 @@ void
 __indirect_glRequestResidentProgramsNV(GLsizei n, const GLuint * ids)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 8 + __GLX_PAD((n * 4));
+    const GLuint cmdlen = 8 + safe_pad(safe_mul(n, 4));
+    if (0 + safe_pad(safe_mul(n, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -9335,7 +10124,7 @@ __indirect_glRequestResidentProgramsNV(GLsizei n, const GLuint * ids)
     if (__builtin_expect(n >= 0, 1)) {
         emit_header(gc->pc, X_GLrop_RequestResidentProgramsNV, cmdlen);
         (void) memcpy((void *) (gc->pc + 4), (void *) (&n), 4);
-        (void) memcpy((void *) (gc->pc + 8), (void *) (ids), (n * 4));
+        (void) memcpy((void *) (gc->pc + 8), (void *) (ids), safe_mul(n, 4));
         gc->pc += cmdlen;
         if (__builtin_expect(gc->pc > gc->limit, 0)) {
             (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -9782,7 +10571,11 @@ void
 __indirect_glVertexAttribs1dvNV(GLuint index, GLsizei n, const GLdouble * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12 + __GLX_PAD((n * 8));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(n, 8));
+    if (0 + safe_pad(safe_mul(n, 8)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -9791,7 +10584,7 @@ __indirect_glVertexAttribs1dvNV(GLuint index, GLsizei n, const GLdouble * v)
         emit_header(gc->pc, X_GLrop_VertexAttribs1dvNV, cmdlen);
         (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
         (void) memcpy((void *) (gc->pc + 8), (void *) (&n), 4);
-        (void) memcpy((void *) (gc->pc + 12), (void *) (v), (n * 8));
+        (void) memcpy((void *) (gc->pc + 12), (void *) (v), safe_mul(n, 8));
         gc->pc += cmdlen;
         if (__builtin_expect(gc->pc > gc->limit, 0)) {
             (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -9804,7 +10597,11 @@ void
 __indirect_glVertexAttribs1fvNV(GLuint index, GLsizei n, const GLfloat * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12 + __GLX_PAD((n * 4));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(n, 4));
+    if (0 + safe_pad(safe_mul(n, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -9813,7 +10610,7 @@ __indirect_glVertexAttribs1fvNV(GLuint index, GLsizei n, const GLfloat * v)
         emit_header(gc->pc, X_GLrop_VertexAttribs1fvNV, cmdlen);
         (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
         (void) memcpy((void *) (gc->pc + 8), (void *) (&n), 4);
-        (void) memcpy((void *) (gc->pc + 12), (void *) (v), (n * 4));
+        (void) memcpy((void *) (gc->pc + 12), (void *) (v), safe_mul(n, 4));
         gc->pc += cmdlen;
         if (__builtin_expect(gc->pc > gc->limit, 0)) {
             (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -9826,7 +10623,11 @@ void
 __indirect_glVertexAttribs1svNV(GLuint index, GLsizei n, const GLshort * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12 + __GLX_PAD((n * 2));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(n, 2));
+    if (0 + safe_pad(safe_mul(n, 2)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -9835,7 +10636,7 @@ __indirect_glVertexAttribs1svNV(GLuint index, GLsizei n, const GLshort * v)
         emit_header(gc->pc, X_GLrop_VertexAttribs1svNV, cmdlen);
         (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
         (void) memcpy((void *) (gc->pc + 8), (void *) (&n), 4);
-        (void) memcpy((void *) (gc->pc + 12), (void *) (v), (n * 2));
+        (void) memcpy((void *) (gc->pc + 12), (void *) (v), safe_mul(n, 2));
         gc->pc += cmdlen;
         if (__builtin_expect(gc->pc > gc->limit, 0)) {
             (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -9848,7 +10649,11 @@ void
 __indirect_glVertexAttribs2dvNV(GLuint index, GLsizei n, const GLdouble * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12 + __GLX_PAD((n * 16));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(n, 16));
+    if (0 + safe_pad(safe_mul(n, 16)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -9857,7 +10662,7 @@ __indirect_glVertexAttribs2dvNV(GLuint index, GLsizei n, const GLdouble * v)
         emit_header(gc->pc, X_GLrop_VertexAttribs2dvNV, cmdlen);
         (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
         (void) memcpy((void *) (gc->pc + 8), (void *) (&n), 4);
-        (void) memcpy((void *) (gc->pc + 12), (void *) (v), (n * 16));
+        (void) memcpy((void *) (gc->pc + 12), (void *) (v), safe_mul(n, 16));
         gc->pc += cmdlen;
         if (__builtin_expect(gc->pc > gc->limit, 0)) {
             (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -9870,7 +10675,11 @@ void
 __indirect_glVertexAttribs2fvNV(GLuint index, GLsizei n, const GLfloat * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12 + __GLX_PAD((n * 8));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(n, 8));
+    if (0 + safe_pad(safe_mul(n, 8)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -9879,7 +10688,7 @@ __indirect_glVertexAttribs2fvNV(GLuint index, GLsizei n, const GLfloat * v)
         emit_header(gc->pc, X_GLrop_VertexAttribs2fvNV, cmdlen);
         (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
         (void) memcpy((void *) (gc->pc + 8), (void *) (&n), 4);
-        (void) memcpy((void *) (gc->pc + 12), (void *) (v), (n * 8));
+        (void) memcpy((void *) (gc->pc + 12), (void *) (v), safe_mul(n, 8));
         gc->pc += cmdlen;
         if (__builtin_expect(gc->pc > gc->limit, 0)) {
             (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -9892,7 +10701,11 @@ void
 __indirect_glVertexAttribs2svNV(GLuint index, GLsizei n, const GLshort * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12 + __GLX_PAD((n * 4));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(n, 4));
+    if (0 + safe_pad(safe_mul(n, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -9901,7 +10714,7 @@ __indirect_glVertexAttribs2svNV(GLuint index, GLsizei n, const GLshort * v)
         emit_header(gc->pc, X_GLrop_VertexAttribs2svNV, cmdlen);
         (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
         (void) memcpy((void *) (gc->pc + 8), (void *) (&n), 4);
-        (void) memcpy((void *) (gc->pc + 12), (void *) (v), (n * 4));
+        (void) memcpy((void *) (gc->pc + 12), (void *) (v), safe_mul(n, 4));
         gc->pc += cmdlen;
         if (__builtin_expect(gc->pc > gc->limit, 0)) {
             (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -9914,7 +10727,11 @@ void
 __indirect_glVertexAttribs3dvNV(GLuint index, GLsizei n, const GLdouble * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12 + __GLX_PAD((n * 24));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(n, 24));
+    if (0 + safe_pad(safe_mul(n, 24)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -9923,7 +10740,7 @@ __indirect_glVertexAttribs3dvNV(GLuint index, GLsizei n, const GLdouble * v)
         emit_header(gc->pc, X_GLrop_VertexAttribs3dvNV, cmdlen);
         (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
         (void) memcpy((void *) (gc->pc + 8), (void *) (&n), 4);
-        (void) memcpy((void *) (gc->pc + 12), (void *) (v), (n * 24));
+        (void) memcpy((void *) (gc->pc + 12), (void *) (v), safe_mul(n, 24));
         gc->pc += cmdlen;
         if (__builtin_expect(gc->pc > gc->limit, 0)) {
             (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -9936,7 +10753,11 @@ void
 __indirect_glVertexAttribs3fvNV(GLuint index, GLsizei n, const GLfloat * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12 + __GLX_PAD((n * 12));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(n, 12));
+    if (0 + safe_pad(safe_mul(n, 12)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -9945,7 +10766,7 @@ __indirect_glVertexAttribs3fvNV(GLuint index, GLsizei n, const GLfloat * v)
         emit_header(gc->pc, X_GLrop_VertexAttribs3fvNV, cmdlen);
         (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
         (void) memcpy((void *) (gc->pc + 8), (void *) (&n), 4);
-        (void) memcpy((void *) (gc->pc + 12), (void *) (v), (n * 12));
+        (void) memcpy((void *) (gc->pc + 12), (void *) (v), safe_mul(n, 12));
         gc->pc += cmdlen;
         if (__builtin_expect(gc->pc > gc->limit, 0)) {
             (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -9958,7 +10779,11 @@ void
 __indirect_glVertexAttribs3svNV(GLuint index, GLsizei n, const GLshort * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12 + __GLX_PAD((n * 6));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(n, 6));
+    if (0 + safe_pad(safe_mul(n, 6)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -9967,7 +10792,7 @@ __indirect_glVertexAttribs3svNV(GLuint index, GLsizei n, const GLshort * v)
         emit_header(gc->pc, X_GLrop_VertexAttribs3svNV, cmdlen);
         (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
         (void) memcpy((void *) (gc->pc + 8), (void *) (&n), 4);
-        (void) memcpy((void *) (gc->pc + 12), (void *) (v), (n * 6));
+        (void) memcpy((void *) (gc->pc + 12), (void *) (v), safe_mul(n, 6));
         gc->pc += cmdlen;
         if (__builtin_expect(gc->pc > gc->limit, 0)) {
             (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -9980,7 +10805,11 @@ void
 __indirect_glVertexAttribs4dvNV(GLuint index, GLsizei n, const GLdouble * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12 + __GLX_PAD((n * 32));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(n, 32));
+    if (0 + safe_pad(safe_mul(n, 32)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -9989,7 +10818,7 @@ __indirect_glVertexAttribs4dvNV(GLuint index, GLsizei n, const GLdouble * v)
         emit_header(gc->pc, X_GLrop_VertexAttribs4dvNV, cmdlen);
         (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
         (void) memcpy((void *) (gc->pc + 8), (void *) (&n), 4);
-        (void) memcpy((void *) (gc->pc + 12), (void *) (v), (n * 32));
+        (void) memcpy((void *) (gc->pc + 12), (void *) (v), safe_mul(n, 32));
         gc->pc += cmdlen;
         if (__builtin_expect(gc->pc > gc->limit, 0)) {
             (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -10002,7 +10831,11 @@ void
 __indirect_glVertexAttribs4fvNV(GLuint index, GLsizei n, const GLfloat * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12 + __GLX_PAD((n * 16));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(n, 16));
+    if (0 + safe_pad(safe_mul(n, 16)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -10011,7 +10844,7 @@ __indirect_glVertexAttribs4fvNV(GLuint index, GLsizei n, const GLfloat * v)
         emit_header(gc->pc, X_GLrop_VertexAttribs4fvNV, cmdlen);
         (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
         (void) memcpy((void *) (gc->pc + 8), (void *) (&n), 4);
-        (void) memcpy((void *) (gc->pc + 12), (void *) (v), (n * 16));
+        (void) memcpy((void *) (gc->pc + 12), (void *) (v), safe_mul(n, 16));
         gc->pc += cmdlen;
         if (__builtin_expect(gc->pc > gc->limit, 0)) {
             (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -10024,7 +10857,11 @@ void
 __indirect_glVertexAttribs4svNV(GLuint index, GLsizei n, const GLshort * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12 + __GLX_PAD((n * 8));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(n, 8));
+    if (0 + safe_pad(safe_mul(n, 8)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -10033,7 +10870,7 @@ __indirect_glVertexAttribs4svNV(GLuint index, GLsizei n, const GLshort * v)
         emit_header(gc->pc, X_GLrop_VertexAttribs4svNV, cmdlen);
         (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
         (void) memcpy((void *) (gc->pc + 8), (void *) (&n), 4);
-        (void) memcpy((void *) (gc->pc + 12), (void *) (v), (n * 8));
+        (void) memcpy((void *) (gc->pc + 12), (void *) (v), safe_mul(n, 8));
         gc->pc += cmdlen;
         if (__builtin_expect(gc->pc > gc->limit, 0)) {
             (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -10046,7 +10883,11 @@ void
 __indirect_glVertexAttribs4ubvNV(GLuint index, GLsizei n, const GLubyte *v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12 + __GLX_PAD((n * 4));
+    const GLuint cmdlen = 12 + safe_pad(safe_mul(n, 4));
+    if (0 + safe_pad(safe_mul(n, 4)) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (n < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -10055,42 +10896,11 @@ __indirect_glVertexAttribs4ubvNV(GLuint index, GLsizei n, const GLubyte *v)
         emit_header(gc->pc, X_GLrop_VertexAttribs4ubvNV, cmdlen);
         (void) memcpy((void *) (gc->pc + 4), (void *) (&index), 4);
         (void) memcpy((void *) (gc->pc + 8), (void *) (&n), 4);
-        (void) memcpy((void *) (gc->pc + 12), (void *) (v), (n * 4));
+        (void) memcpy((void *) (gc->pc + 12), (void *) (v), safe_mul(n, 4));
         gc->pc += cmdlen;
         if (__builtin_expect(gc->pc > gc->limit, 0)) {
             (void) __glXFlushRenderBuffer(gc, gc->pc);
         }
-    }
-}
-
-#define X_GLrop_PointParameteriNV 4221
-void
-__indirect_glPointParameteriNV(GLenum pname, GLint param)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_PointParameteriNV, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&pname), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&param), 4);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_PointParameterivNV 4222
-void
-__indirect_glPointParameterivNV(GLenum pname, const GLint * params)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint compsize = __glPointParameterivNV_size(pname);
-    const GLuint cmdlen = 8 + __GLX_PAD((compsize * 4));
-    emit_header(gc->pc, X_GLrop_PointParameterivNV, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&pname), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (params), (compsize * 4));
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
     }
 }
 
@@ -10116,7 +10926,11 @@ __indirect_glGetProgramNamedParameterdvNV(GLuint id, GLsizei len,
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
-    const GLuint cmdlen = 8 + __GLX_PAD(len);
+    const GLuint cmdlen = 8 + safe_pad(len);
+    if (0 + safe_pad(len) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (len < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -10144,7 +10958,11 @@ __indirect_glGetProgramNamedParameterfvNV(GLuint id, GLsizei len,
 {
     struct glx_context *const gc = __glXGetCurrentContext();
     Display *const dpy = gc->currentDpy;
-    const GLuint cmdlen = 8 + __GLX_PAD(len);
+    const GLuint cmdlen = 8 + safe_pad(len);
+    if (0 + safe_pad(len) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (len < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -10171,7 +10989,11 @@ __indirect_glProgramNamedParameter4dNV(GLuint id, GLsizei len,
                                        GLdouble y, GLdouble z, GLdouble w)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 44 + __GLX_PAD(len);
+    const GLuint cmdlen = 44 + safe_pad(len);
+    if (0 + safe_pad(len) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (len < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -10199,7 +11021,11 @@ __indirect_glProgramNamedParameter4dvNV(GLuint id, GLsizei len,
                                         const GLdouble * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 44 + __GLX_PAD(len);
+    const GLuint cmdlen = 44 + safe_pad(len);
+    if (0 + safe_pad(len) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (len < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -10224,7 +11050,11 @@ __indirect_glProgramNamedParameter4fNV(GLuint id, GLsizei len,
                                        GLfloat y, GLfloat z, GLfloat w)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 28 + __GLX_PAD(len);
+    const GLuint cmdlen = 28 + safe_pad(len);
+    if (0 + safe_pad(len) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (len < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -10252,7 +11082,11 @@ __indirect_glProgramNamedParameter4fvNV(GLuint id, GLsizei len,
                                         const GLfloat * v)
 {
     struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 28 + __GLX_PAD(len);
+    const GLuint cmdlen = 28 + safe_pad(len);
+    if (0 + safe_pad(len) < 0) {
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
     if (len < 0) {
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
@@ -10267,21 +11101,6 @@ __indirect_glProgramNamedParameter4fvNV(GLuint id, GLsizei len,
         if (__builtin_expect(gc->pc > gc->limit, 0)) {
             (void) __glXFlushRenderBuffer(gc, gc->pc);
         }
-    }
-}
-
-#define X_GLrop_BlendEquationSeparateEXT 4228
-void
-__indirect_glBlendEquationSeparateEXT(GLenum modeRGB, GLenum modeA)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 12;
-    emit_header(gc->pc, X_GLrop_BlendEquationSeparateEXT, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&modeRGB), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&modeA), 4);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
     }
 }
 
@@ -10315,394 +11134,33 @@ __indirect_glBindRenderbufferEXT(GLenum target, GLuint renderbuffer)
     }
 }
 
-#define X_GLvop_CheckFramebufferStatusEXT 1427
-GLenum
-__indirect_glCheckFramebufferStatusEXT(GLenum target)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    Display *const dpy = gc->currentDpy;
-    GLenum retval = (GLenum) 0;
-    const GLuint cmdlen = 4;
-    if (__builtin_expect(dpy != NULL, 1)) {
-        GLubyte const *pc =
-            __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
-                                    X_GLvop_CheckFramebufferStatusEXT,
-                                    cmdlen);
-        (void) memcpy((void *) (pc + 0), (void *) (&target), 4);
-        retval = (GLenum) __glXReadReply(dpy, 0, NULL, GL_FALSE);
-        UnlockDisplay(dpy);
-        SyncHandle();
-    }
-    return retval;
-}
 
-#define X_GLrop_DeleteFramebuffersEXT 4320
-void
-__indirect_glDeleteFramebuffersEXT(GLsizei n, const GLuint * framebuffers)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 8 + __GLX_PAD((n * 4));
-    if (n < 0) {
-        __glXSetError(gc, GL_INVALID_VALUE);
-        return;
-    }
-    if (__builtin_expect(n >= 0, 1)) {
-        emit_header(gc->pc, X_GLrop_DeleteFramebuffersEXT, cmdlen);
-        (void) memcpy((void *) (gc->pc + 4), (void *) (&n), 4);
-        (void) memcpy((void *) (gc->pc + 8), (void *) (framebuffers),
-                      (n * 4));
-        gc->pc += cmdlen;
-        if (__builtin_expect(gc->pc > gc->limit, 0)) {
-            (void) __glXFlushRenderBuffer(gc, gc->pc);
-        }
-    }
-}
-
-#define X_GLrop_DeleteRenderbuffersEXT 4317
-void
-__indirect_glDeleteRenderbuffersEXT(GLsizei n, const GLuint * renderbuffers)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 8 + __GLX_PAD((n * 4));
-    if (n < 0) {
-        __glXSetError(gc, GL_INVALID_VALUE);
-        return;
-    }
-    if (__builtin_expect(n >= 0, 1)) {
-        emit_header(gc->pc, X_GLrop_DeleteRenderbuffersEXT, cmdlen);
-        (void) memcpy((void *) (gc->pc + 4), (void *) (&n), 4);
-        (void) memcpy((void *) (gc->pc + 8), (void *) (renderbuffers),
-                      (n * 4));
-        gc->pc += cmdlen;
-        if (__builtin_expect(gc->pc > gc->limit, 0)) {
-            (void) __glXFlushRenderBuffer(gc, gc->pc);
-        }
-    }
-}
-
-#define X_GLrop_FramebufferRenderbufferEXT 4324
-void
-__indirect_glFramebufferRenderbufferEXT(GLenum target, GLenum attachment,
-                                        GLenum renderbuffertarget,
-                                        GLuint renderbuffer)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 20;
-    emit_header(gc->pc, X_GLrop_FramebufferRenderbufferEXT, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&attachment), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (&renderbuffertarget), 4);
-    (void) memcpy((void *) (gc->pc + 16), (void *) (&renderbuffer), 4);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_FramebufferTexture1DEXT 4321
-void
-__indirect_glFramebufferTexture1DEXT(GLenum target, GLenum attachment,
-                                     GLenum textarget, GLuint texture,
-                                     GLint level)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 24;
-    emit_header(gc->pc, X_GLrop_FramebufferTexture1DEXT, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&attachment), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (&textarget), 4);
-    (void) memcpy((void *) (gc->pc + 16), (void *) (&texture), 4);
-    (void) memcpy((void *) (gc->pc + 20), (void *) (&level), 4);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_FramebufferTexture2DEXT 4322
-void
-__indirect_glFramebufferTexture2DEXT(GLenum target, GLenum attachment,
-                                     GLenum textarget, GLuint texture,
-                                     GLint level)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 24;
-    emit_header(gc->pc, X_GLrop_FramebufferTexture2DEXT, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&attachment), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (&textarget), 4);
-    (void) memcpy((void *) (gc->pc + 16), (void *) (&texture), 4);
-    (void) memcpy((void *) (gc->pc + 20), (void *) (&level), 4);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_FramebufferTexture3DEXT 4323
-void
-__indirect_glFramebufferTexture3DEXT(GLenum target, GLenum attachment,
-                                     GLenum textarget, GLuint texture,
-                                     GLint level, GLint zoffset)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 28;
-    emit_header(gc->pc, X_GLrop_FramebufferTexture3DEXT, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&attachment), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (&textarget), 4);
-    (void) memcpy((void *) (gc->pc + 16), (void *) (&texture), 4);
-    (void) memcpy((void *) (gc->pc + 20), (void *) (&level), 4);
-    (void) memcpy((void *) (gc->pc + 24), (void *) (&zoffset), 4);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLvop_GenFramebuffersEXT 1426
-void
-__indirect_glGenFramebuffersEXT(GLsizei n, GLuint * framebuffers)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    Display *const dpy = gc->currentDpy;
-    const GLuint cmdlen = 4;
-    if (n < 0) {
-        __glXSetError(gc, GL_INVALID_VALUE);
-        return;
-    }
-    if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
-        GLubyte const *pc =
-            __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
-                                    X_GLvop_GenFramebuffersEXT, cmdlen);
-        (void) memcpy((void *) (pc + 0), (void *) (&n), 4);
-        (void) __glXReadReply(dpy, 4, framebuffers, GL_TRUE);
-        UnlockDisplay(dpy);
-        SyncHandle();
-    }
-    return;
-}
-
-#define X_GLvop_GenRenderbuffersEXT 1423
-void
-__indirect_glGenRenderbuffersEXT(GLsizei n, GLuint * renderbuffers)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    Display *const dpy = gc->currentDpy;
-    const GLuint cmdlen = 4;
-    if (n < 0) {
-        __glXSetError(gc, GL_INVALID_VALUE);
-        return;
-    }
-    if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
-        GLubyte const *pc =
-            __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
-                                    X_GLvop_GenRenderbuffersEXT, cmdlen);
-        (void) memcpy((void *) (pc + 0), (void *) (&n), 4);
-        (void) __glXReadReply(dpy, 4, renderbuffers, GL_TRUE);
-        UnlockDisplay(dpy);
-        SyncHandle();
-    }
-    return;
-}
-
-#define X_GLrop_GenerateMipmapEXT 4325
-void
-__indirect_glGenerateMipmapEXT(GLenum target)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 8;
-    emit_header(gc->pc, X_GLrop_GenerateMipmapEXT, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLvop_GetFramebufferAttachmentParameterivEXT 1428
-void
-__indirect_glGetFramebufferAttachmentParameterivEXT(GLenum target,
-                                                    GLenum attachment,
-                                                    GLenum pname,
-                                                    GLint * params)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    Display *const dpy = gc->currentDpy;
-    const GLuint cmdlen = 12;
-    if (__builtin_expect(dpy != NULL, 1)) {
-        GLubyte const *pc =
-            __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
-                                    X_GLvop_GetFramebufferAttachmentParameterivEXT,
-                                    cmdlen);
-        (void) memcpy((void *) (pc + 0), (void *) (&target), 4);
-        (void) memcpy((void *) (pc + 4), (void *) (&attachment), 4);
-        (void) memcpy((void *) (pc + 8), (void *) (&pname), 4);
-        (void) __glXReadReply(dpy, 4, params, GL_FALSE);
-        UnlockDisplay(dpy);
-        SyncHandle();
-    }
-    return;
-}
-
-#define X_GLvop_GetRenderbufferParameterivEXT 1424
-void
-__indirect_glGetRenderbufferParameterivEXT(GLenum target, GLenum pname,
-                                           GLint * params)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    Display *const dpy = gc->currentDpy;
-    const GLuint cmdlen = 8;
-    if (__builtin_expect(dpy != NULL, 1)) {
-        GLubyte const *pc =
-            __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
-                                    X_GLvop_GetRenderbufferParameterivEXT,
-                                    cmdlen);
-        (void) memcpy((void *) (pc + 0), (void *) (&target), 4);
-        (void) memcpy((void *) (pc + 4), (void *) (&pname), 4);
-        (void) __glXReadReply(dpy, 4, params, GL_FALSE);
-        UnlockDisplay(dpy);
-        SyncHandle();
-    }
-    return;
-}
-
-#define X_GLvop_IsFramebufferEXT 1425
-GLboolean
-__indirect_glIsFramebufferEXT(GLuint framebuffer)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    Display *const dpy = gc->currentDpy;
-    GLboolean retval = (GLboolean) 0;
-    const GLuint cmdlen = 4;
-    if (__builtin_expect(dpy != NULL, 1)) {
-        GLubyte const *pc =
-            __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
-                                    X_GLvop_IsFramebufferEXT, cmdlen);
-        (void) memcpy((void *) (pc + 0), (void *) (&framebuffer), 4);
-        retval = (GLboolean) __glXReadReply(dpy, 0, NULL, GL_FALSE);
-        UnlockDisplay(dpy);
-        SyncHandle();
-    }
-    return retval;
-}
-
-#define X_GLvop_IsRenderbufferEXT 1422
-GLboolean
-__indirect_glIsRenderbufferEXT(GLuint renderbuffer)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    Display *const dpy = gc->currentDpy;
-    GLboolean retval = (GLboolean) 0;
-    const GLuint cmdlen = 4;
-    if (__builtin_expect(dpy != NULL, 1)) {
-        GLubyte const *pc =
-            __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
-                                    X_GLvop_IsRenderbufferEXT, cmdlen);
-        (void) memcpy((void *) (pc + 0), (void *) (&renderbuffer), 4);
-        retval = (GLboolean) __glXReadReply(dpy, 0, NULL, GL_FALSE);
-        UnlockDisplay(dpy);
-        SyncHandle();
-    }
-    return retval;
-}
-
-#define X_GLrop_RenderbufferStorageEXT 4318
-void
-__indirect_glRenderbufferStorageEXT(GLenum target, GLenum internalformat,
-                                    GLsizei width, GLsizei height)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 20;
-    emit_header(gc->pc, X_GLrop_RenderbufferStorageEXT, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&internalformat), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (&width), 4);
-    (void) memcpy((void *) (gc->pc + 16), (void *) (&height), 4);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_BlitFramebufferEXT 4330
-void
-__indirect_glBlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1,
-                                GLint srcY1, GLint dstX0, GLint dstY0,
-                                GLint dstX1, GLint dstY1, GLbitfield mask,
-                                GLenum filter)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 44;
-    emit_header(gc->pc, X_GLrop_BlitFramebufferEXT, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&srcX0), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&srcY0), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (&srcX1), 4);
-    (void) memcpy((void *) (gc->pc + 16), (void *) (&srcY1), 4);
-    (void) memcpy((void *) (gc->pc + 20), (void *) (&dstX0), 4);
-    (void) memcpy((void *) (gc->pc + 24), (void *) (&dstY0), 4);
-    (void) memcpy((void *) (gc->pc + 28), (void *) (&dstX1), 4);
-    (void) memcpy((void *) (gc->pc + 32), (void *) (&dstY1), 4);
-    (void) memcpy((void *) (gc->pc + 36), (void *) (&mask), 4);
-    (void) memcpy((void *) (gc->pc + 40), (void *) (&filter), 4);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_FramebufferTextureLayerEXT 237
-void
-__indirect_glFramebufferTextureLayerEXT(GLenum target, GLenum attachment,
-                                        GLuint texture, GLint level,
-                                        GLint layer)
-{
-    struct glx_context *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 24;
-    emit_header(gc->pc, X_GLrop_FramebufferTextureLayerEXT, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&attachment), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (&texture), 4);
-    (void) memcpy((void *) (gc->pc + 16), (void *) (&level), 4);
-    (void) memcpy((void *) (gc->pc + 20), (void *) (&layer), 4);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-
-#ifdef GLX_SHARED_GLAPI
+#ifdef GLX_INDIRECT_RENDERING
 
 static const struct proc_pair {
     const char *name;
     _glapi_proc proc;
 } proc_pairs[20] = {
-    {
-    "AreTexturesResidentEXT", (_glapi_proc) glAreTexturesResidentEXT}, {
-    "DeleteTexturesEXT", (_glapi_proc) glDeleteTexturesEXT}, {
-    "GenTexturesEXT", (_glapi_proc) glGenTexturesEXT}, {
-    "GetColorTableEXT", (_glapi_proc) glGetColorTableEXT}, {
-    "GetColorTableParameterfvEXT",
-            (_glapi_proc) glGetColorTableParameterfvEXT}, {
-    "GetColorTableParameterfvSGI",
-            (_glapi_proc) glGetColorTableParameterfvEXT}, {
-    "GetColorTableParameterivEXT",
-            (_glapi_proc) glGetColorTableParameterivEXT}, {
-    "GetColorTableParameterivSGI",
-            (_glapi_proc) glGetColorTableParameterivEXT}, {
-    "GetColorTableSGI", (_glapi_proc) glGetColorTableEXT}, {
-    "GetConvolutionFilterEXT", (_glapi_proc) gl_dispatch_stub_356}, {
-    "GetConvolutionParameterfvEXT", (_glapi_proc) gl_dispatch_stub_357}, {
-    "GetConvolutionParameterivEXT", (_glapi_proc) gl_dispatch_stub_358}, {
-    "GetHistogramEXT", (_glapi_proc) gl_dispatch_stub_361}, {
-    "GetHistogramParameterfvEXT", (_glapi_proc) gl_dispatch_stub_362}, {
-    "GetHistogramParameterivEXT", (_glapi_proc) gl_dispatch_stub_363}, {
-    "GetMinmaxEXT", (_glapi_proc) gl_dispatch_stub_364}, {
-    "GetMinmaxParameterfvEXT", (_glapi_proc) gl_dispatch_stub_365}, {
-    "GetMinmaxParameterivEXT", (_glapi_proc) gl_dispatch_stub_366}, {
-    "GetSeparableFilterEXT", (_glapi_proc) gl_dispatch_stub_359}, {
-    "IsTextureEXT", (_glapi_proc) glIsTextureEXT}
+    {"AreTexturesResidentEXT", (_glapi_proc) glAreTexturesResidentEXT},
+    {"DeleteTexturesEXT", (_glapi_proc) glDeleteTexturesEXT},
+    {"GenTexturesEXT", (_glapi_proc) glGenTexturesEXT},
+    {"GetColorTableEXT", (_glapi_proc) gl_dispatch_stub_343},
+    {"GetColorTableParameterfvEXT", (_glapi_proc) gl_dispatch_stub_344},
+    {"GetColorTableParameterfvSGI", (_glapi_proc) gl_dispatch_stub_344},
+    {"GetColorTableParameterivEXT", (_glapi_proc) gl_dispatch_stub_345},
+    {"GetColorTableParameterivSGI", (_glapi_proc) gl_dispatch_stub_345},
+    {"GetColorTableSGI", (_glapi_proc) gl_dispatch_stub_343},
+    {"GetConvolutionFilterEXT", (_glapi_proc) gl_dispatch_stub_356},
+    {"GetConvolutionParameterfvEXT", (_glapi_proc) gl_dispatch_stub_357},
+    {"GetConvolutionParameterivEXT", (_glapi_proc) gl_dispatch_stub_358},
+    {"GetHistogramEXT", (_glapi_proc) gl_dispatch_stub_361},
+    {"GetHistogramParameterfvEXT", (_glapi_proc) gl_dispatch_stub_362},
+    {"GetHistogramParameterivEXT", (_glapi_proc) gl_dispatch_stub_363},
+    {"GetMinmaxEXT", (_glapi_proc) gl_dispatch_stub_364},
+    {"GetMinmaxParameterfvEXT", (_glapi_proc) gl_dispatch_stub_365},
+    {"GetMinmaxParameterivEXT", (_glapi_proc) gl_dispatch_stub_366},
+    {"GetSeparableFilterEXT", (_glapi_proc) gl_dispatch_stub_359},
+    {"IsTextureEXT", (_glapi_proc) glIsTextureEXT}
 };
 
 static int
@@ -10729,7 +11187,7 @@ __indirect_get_proc_address(const char *name)
     return (pair) ? pair->proc : NULL;
 }
 
-#endif /* GLX_SHARED_GLAPI */
+#endif /* GLX_INDIRECT_RENDERING */
 
 
 #undef FASTCALL

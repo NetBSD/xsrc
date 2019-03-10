@@ -46,22 +46,33 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = dri.pc
 
 driincludedir = $(includedir)/GL/internal
-driinclude_HEADERS = $(top_srcdir)/include/GL/internal/dri_interface.h
+driinclude_HEADERS = \
+	$(top_srcdir)/include/GL/internal/dri_interface.h
 
 nodist_EXTRA_mesa_dri_drivers_la_SOURCES = dummy.cpp
 mesa_dri_drivers_la_SOURCES =
 mesa_dri_drivers_la_LDFLAGS = \
-        -module -avoid-version -shared -shrext .so \
-        $(BSYMBOLIC) \
-        $(GC_SECTIONS) \
-        $()
+	-shared \
+	-shrext .so \
+	-module \
+	-no-undefined \
+	-avoid-version \
+	$(LD_BUILD_ID) \
+	$(BSYMBOLIC) \
+	$(GC_SECTIONS) \
+	$(LD_NO_UNDEFINED)
+
 mesa_dri_drivers_la_LIBADD = \
         ../../libmesa.la \
         common/libmegadriver_stub.la \
         common/libdricommon.la \
+        $(top_builddir)/src/util/libxmlconfig.la \
+        $(top_builddir)/src/mapi/shared-glapi/libglapi.la \
         $(MEGADRIVERS_DEPS) \
         $(DRI_LIB_DEPS) \
         $()
+
+EXTRA_DIST = meson.build
 
 if NEED_MEGADRIVER
 dri_LTLIBRARIES = mesa_dri_drivers.la
@@ -76,6 +87,12 @@ all-local: mesa_dri_drivers.la
 		ln -f $(top_builddir)/$(LIB_DIR)/mesa_dri_drivers.so \
 		      $(top_builddir)/$(LIB_DIR)/$$i; \
 	done;
+
+clean-local:
+	$(AM_V_GEN)$(RM) $(top_builddir)/$(LIB_DIR)/mesa_dri_drivers.so;
+	$(AM_V_GEN)for i in $(MEGADRIVERS); do \
+		$(RM) $(top_builddir)/$(LIB_DIR)/$$i; \
+	done;
 endif
 
 # hardlink each megadriver instance, but don't actually have
@@ -85,6 +102,11 @@ install-data-hook:
 		ln -f $(DESTDIR)$(dridir)/mesa_dri_drivers.so \
 		      $(DESTDIR)$(dridir)/$$i; \
 	done;
-	$(RM) -f $(DESTDIR)$(dridir)/mesa_dri_drivers.*
+	$(RM) $(DESTDIR)$(dridir)/mesa_dri_drivers.*
+
+uninstall-hook:
+	for i in $(MEGADRIVERS); do \
+		$(RM) $(DESTDIR)$(dridir)/$$i; \
+	done;
 
 endif

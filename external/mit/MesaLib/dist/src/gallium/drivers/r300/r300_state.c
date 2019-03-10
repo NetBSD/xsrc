@@ -27,7 +27,6 @@
 #include "util/u_half.h"
 #include "util/u_helpers.h"
 #include "util/u_math.h"
-#include "util/u_mm.h"
 #include "util/u_memory.h"
 #include "util/u_pack_color.h"
 #include "util/u_transfer.h"
@@ -834,45 +833,6 @@ static void r300_set_stencil_ref(struct pipe_context* pipe,
     r300_mark_atom_dirty(r300, &r300->dsa_state);
 }
 
-static void r300_tex_set_tiling_flags(struct r300_context *r300,
-                                      struct r300_resource *tex,
-                                      unsigned level)
-{
-    /* Check if the macrotile flag needs to be changed.
-     * Skip changing the flags otherwise. */
-    if (tex->tex.macrotile[tex->surface_level] !=
-        tex->tex.macrotile[level]) {
-        r300->rws->buffer_set_tiling(tex->buf, r300->cs,
-                tex->tex.microtile, tex->tex.macrotile[level],
-                0, 0, 0, 0, 0,
-                tex->tex.stride_in_bytes[0], false);
-
-        tex->surface_level = level;
-    }
-}
-
-/* This switcheroo is needed just because of goddamned MACRO_SWITCH. */
-static void r300_fb_set_tiling_flags(struct r300_context *r300,
-                               const struct pipe_framebuffer_state *state)
-{
-    unsigned i;
-
-    /* Set tiling flags for new surfaces. */
-    for (i = 0; i < state->nr_cbufs; i++) {
-        if (!state->cbufs[i])
-            continue;
-
-        r300_tex_set_tiling_flags(r300,
-                                  r300_resource(state->cbufs[i]->texture),
-                                  state->cbufs[i]->u.tex.level);
-    }
-    if (state->zsbuf) {
-        r300_tex_set_tiling_flags(r300,
-                                  r300_resource(state->zsbuf->texture),
-                                  state->zsbuf->u.tex.level);
-    }
-}
-
 static void r300_print_fb_surf_info(struct pipe_surface *surf, unsigned index,
                                     const char *binding)
 {
@@ -940,30 +900,6 @@ void r300_mark_fb_state_dirty(struct r300_context *r300,
     }
 
     /* The size of the rest of atoms stays the same. */
-}
-
-static unsigned r300_get_num_samples(struct r300_context *r300)
-{
-    struct pipe_framebuffer_state* fb =
-            (struct pipe_framebuffer_state*)r300->fb_state.state;
-    unsigned i, num_samples;
-
-    if (!fb->nr_cbufs && !fb->zsbuf)
-        return 1;
-
-    num_samples = 6;
-
-    for (i = 0; i < fb->nr_cbufs; i++)
-        if (fb->cbufs[i])
-            num_samples = MIN2(num_samples, fb->cbufs[i]->texture->nr_samples);
-
-    if (fb->zsbuf)
-        num_samples = MIN2(num_samples, fb->zsbuf->texture->nr_samples);
-
-    if (!num_samples)
-        num_samples = 1;
-
-    return num_samples;
 }
 
 static void
@@ -1041,13 +977,6 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
     /* Re-swizzle the blend color. */
     r300_set_blend_color(pipe, &((struct r300_blend_color_state*)r300->blend_color_state.state)->state);
 
-    if (r300->screen->info.drm_minor < 12) {
-       /* The tiling flags are dependent on the surface miplevel, unfortunately.
-        * This workarounds a bad design decision in old kernels which were
-        * rewriting tile fields in registers. */
-        r300_fb_set_tiling_flags(r300, state);
-    }
-
     if (unlock_zbuffer) {
         pipe_surface_reference(&r300->locked_zbuffer, NULL);
     }
@@ -1073,7 +1002,7 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
         }
     }
 
-    r300->num_samples = r300_get_num_samples(r300);
+    r300->num_samples = util_framebuffer_get_num_samples(state);
 
     /* Set up AA config. */
     if (r300->num_samples > 1) {
@@ -1149,7 +1078,7 @@ static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
     struct r300_context* r300 = r300_context(pipe);
     struct r300_fragment_shader* fs = (struct r300_fragment_shader*)shader;
 
-    if (fs == NULL) {
+    if (!fs) {
         r300->fs.state = NULL;
         return;
     }
@@ -1180,7 +1109,6 @@ static void r300_delete_fs_state(struct pipe_context* pipe, void* shader)
 static void r300_set_polygon_stipple(struct pipe_context* pipe,
                                      const struct pipe_poly_stipple* state)
 {
-    /* XXX no idea how to set this up, but not terribly important */
 }
 
 /* Create a new rasterizer state based on the CSO rasterizer state.
@@ -1414,6 +1342,7 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     boolean last_two_sided_color = r300->two_sided_color;
     boolean last_msaa_enable = r300->msaa_enable;
     boolean last_flatshade = r300->flatshade;
+    boolean last_clip_halfz = r300->clip_halfz;
 
     if (r300->draw && rs) {
         draw_set_rasterizer_state(r300->draw, &rs->rs_draw, state);
@@ -1425,12 +1354,14 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
         r300->two_sided_color = rs->rs.light_twoside;
         r300->msaa_enable = rs->rs.multisample;
         r300->flatshade = rs->rs.flatshade;
+        r300->clip_halfz = rs->rs.clip_halfz;
     } else {
         r300->polygon_offset_enabled = FALSE;
         r300->sprite_coord_enable = 0;
         r300->two_sided_color = FALSE;
         r300->msaa_enable = FALSE;
         r300->flatshade = FALSE;
+        r300->clip_halfz = FALSE;
     }
 
     UPDATE_STATE(state, r300->rs_state);
@@ -1451,6 +1382,10 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
             r300->fs_status == FRAGMENT_SHADER_VALID) {
             r300->fs_status = FRAGMENT_SHADER_MAYBE_DIRTY;
         }
+    }
+
+    if (r300->screen->caps.has_tcl && last_clip_halfz != r300->clip_halfz) {
+        r300_mark_atom_dirty(r300, &r300->vs_state);
     }
 }
 
@@ -1533,7 +1468,7 @@ static void*
 }
 
 static void r300_bind_sampler_states(struct pipe_context* pipe,
-                                     unsigned shader,
+                                     enum pipe_shader_type shader,
                                      unsigned start, unsigned count,
                                      void** states)
 {
@@ -1586,7 +1521,8 @@ static uint32_t r300_assign_texture_cache_region(unsigned index, unsigned num)
         return R300_TX_CACHE(num + index);
 }
 
-static void r300_set_sampler_views(struct pipe_context* pipe, unsigned shader,
+static void r300_set_sampler_views(struct pipe_context* pipe,
+                                   enum pipe_shader_type shader,
                                    unsigned start, unsigned count,
                                    struct pipe_sampler_view** views)
 {
@@ -1836,44 +1772,13 @@ static void r300_set_vertex_buffers_swtcl(struct pipe_context* pipe,
         return;
 
     for (i = 0; i < count; i++) {
-        if (buffers[i].user_buffer) {
+        if (buffers[i].is_user_buffer) {
             draw_set_mapped_vertex_buffer(r300->draw, start_slot + i,
-                                          buffers[i].user_buffer, ~0);
-        } else if (buffers[i].buffer) {
+                                          buffers[i].buffer.user, ~0);
+        } else if (buffers[i].buffer.resource) {
             draw_set_mapped_vertex_buffer(r300->draw, start_slot + i,
-                                          r300_resource(buffers[i].buffer)->malloced_buffer, ~0);
+                                          r300_resource(buffers[i].buffer.resource)->malloced_buffer, ~0);
         }
-    }
-}
-
-static void r300_set_index_buffer_hwtcl(struct pipe_context* pipe,
-                                        const struct pipe_index_buffer *ib)
-{
-    struct r300_context* r300 = r300_context(pipe);
-
-    if (ib) {
-        pipe_resource_reference(&r300->index_buffer.buffer, ib->buffer);
-        memcpy(&r300->index_buffer, ib, sizeof(*ib));
-    } else {
-        pipe_resource_reference(&r300->index_buffer.buffer, NULL);
-    }
-}
-
-static void r300_set_index_buffer_swtcl(struct pipe_context* pipe,
-                                        const struct pipe_index_buffer *ib)
-{
-    struct r300_context* r300 = r300_context(pipe);
-
-    if (ib) {
-        const void *buf = NULL;
-        if (ib->user_buffer) {
-            buf = ib->user_buffer;
-        } else if (ib->buffer) {
-            buf = r300_resource(ib->buffer)->malloced_buffer;
-        }
-        draw_set_indexes(r300->draw,
-                         (const ubyte *) buf + ib->offset,
-                         ib->index_size, ~0);
     }
 }
 
@@ -1968,7 +1873,7 @@ static void r300_bind_vertex_elements_state(struct pipe_context *pipe,
     struct r300_context *r300 = r300_context(pipe);
     struct r300_vertex_element_state *velems = state;
 
-    if (velems == NULL) {
+    if (!velems) {
         return;
     }
 
@@ -2014,7 +1919,7 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
     struct r300_context* r300 = r300_context(pipe);
     struct r300_vertex_shader* vs = (struct r300_vertex_shader*)shader;
 
-    if (vs == NULL) {
+    if (!vs) {
         r300->vs_state.state = NULL;
         return;
     }
@@ -2066,8 +1971,8 @@ static void r300_delete_vs_state(struct pipe_context* pipe, void* shader)
 }
 
 static void r300_set_constant_buffer(struct pipe_context *pipe,
-                                     uint shader, uint index,
-                                     struct pipe_constant_buffer *cb)
+                                     enum pipe_shader_type shader, uint index,
+                                     const struct pipe_constant_buffer *cb)
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_constant_buffer *cbuf;
@@ -2131,7 +2036,7 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
     }
 }
 
-static void r300_texture_barrier(struct pipe_context *pipe)
+static void r300_texture_barrier(struct pipe_context *pipe, unsigned flags)
 {
     struct r300_context *r300 = r300_context(pipe);
 
@@ -2188,10 +2093,8 @@ void r300_init_state_functions(struct r300_context* r300)
 
     if (r300->screen->caps.has_tcl) {
         r300->context.set_vertex_buffers = r300_set_vertex_buffers_hwtcl;
-        r300->context.set_index_buffer = r300_set_index_buffer_hwtcl;
     } else {
         r300->context.set_vertex_buffers = r300_set_vertex_buffers_swtcl;
-        r300->context.set_index_buffer = r300_set_index_buffer_swtcl;
     }
 
     r300->context.create_vertex_elements_state = r300_create_vertex_elements_state;

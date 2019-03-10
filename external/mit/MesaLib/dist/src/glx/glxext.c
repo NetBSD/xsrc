@@ -38,6 +38,8 @@
  */
 
 #include <assert.h>
+#include <stdbool.h>
+
 #include "glxclient.h"
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
@@ -46,6 +48,8 @@
 #include "apple/apple_visual.h"
 #endif
 #include "glxextensions.h"
+
+#include "util/debug.h"
 
 #include <X11/Xlib-xcb.h>
 #include <xcb/xcb.h>
@@ -138,13 +142,21 @@ __glXWireToEvent(Display *dpy, XEvent *event, xEvent *wire)
       if (!glxDraw)
 	 return False;
 
+      aevent->serial = _XSetLastRequestRead(dpy, (xGenericReply *) wire);
+      aevent->send_event = (awire->type & 0x80) != 0;
+      aevent->display = dpy;
       aevent->event_type = awire->event_type;
       aevent->drawable = glxDraw->xDrawable;
       aevent->ust = ((CARD64)awire->ust_hi << 32) | awire->ust_lo;
       aevent->msc = ((CARD64)awire->msc_hi << 32) | awire->msc_lo;
 
-      if (awire->sbc < glxDraw->lastEventSbc)
-	 glxDraw->eventSbcWrap += 0x100000000;
+      /* Handle 32-Bit wire sbc wraparound in both directions to cope with out
+       * of sequence 64-Bit sbc's
+       */
+      if ((int64_t) awire->sbc < ((int64_t) glxDraw->lastEventSbc - 0x40000000))
+         glxDraw->eventSbcWrap += 0x100000000;
+      if ((int64_t) awire->sbc > ((int64_t) glxDraw->lastEventSbc + 0x40000000))
+         glxDraw->eventSbcWrap -= 0x100000000;
       glxDraw->lastEventSbc = awire->sbc;
       aevent->sbc = awire->sbc + glxDraw->eventSbcWrap;
       return True;
@@ -256,6 +268,13 @@ glx_display_free(struct glx_display *priv)
       (*priv->dri3Display->destroyDisplay) (priv->dri3Display);
    priv->dri3Display = NULL;
 #endif /* GLX_USE_DRM */
+
+#if defined(GLX_USE_WINDOWSGL)
+   if (priv->windowsdriDisplay)
+      (*priv->windowsdriDisplay->destroyDisplay) (priv->windowsdriDisplay);
+   priv->windowsdriDisplay = NULL;
+#endif /* GLX_USE_WINDOWSGL */
+
 #endif /* GLX_DIRECT_RENDERING && !GLX_USE_APPLEGL */
 
    free((char *) priv);
@@ -324,9 +343,12 @@ static GLint
 convert_from_x_visual_type(int visualType)
 {
    static const int glx_visual_types[] = {
-      GLX_STATIC_GRAY, GLX_GRAY_SCALE,
-      GLX_STATIC_COLOR, GLX_PSEUDO_COLOR,
-      GLX_TRUE_COLOR, GLX_DIRECT_COLOR
+      [StaticGray]  = GLX_STATIC_GRAY,
+      [GrayScale]   = GLX_GRAY_SCALE,
+      [StaticColor] = GLX_STATIC_COLOR,
+      [PseudoColor] = GLX_PSEUDO_COLOR,
+      [TrueColor]   = GLX_TRUE_COLOR,
+      [DirectColor] = GLX_DIRECT_COLOR,
    };
 
    if (visualType < ARRAY_SIZE(glx_visual_types))
@@ -382,8 +404,6 @@ __glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
       count -= __GLX_MIN_CONFIG_PROPS;
 #endif
    }
-
-   config->sRGBCapable = GL_FALSE;
 
    /*
     ** Additional properties may be in a list at the end
@@ -509,7 +529,17 @@ __glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
          config->visualSelectGroup = *bp++;
          break;
       case GLX_SWAP_METHOD_OML:
-         config->swapMethod = *bp++;
+         if (*bp == GLX_SWAP_UNDEFINED_OML ||
+             *bp == GLX_SWAP_COPY_OML ||
+             *bp == GLX_SWAP_EXCHANGE_OML) {
+            config->swapMethod = *bp++;
+         } else {
+            /* X servers with old HW drivers may return any value here, so
+             * assume GLX_SWAP_METHOD_UNDEFINED.
+             */
+            config->swapMethod = GLX_SWAP_UNDEFINED_OML;
+            bp++;
+         }
          break;
 #endif
       case GLX_SAMPLE_BUFFERS_SGIS:
@@ -552,7 +582,7 @@ __glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
          i = count;
          break;
       default:
-         if(getenv("LIBGL_DIAGNOSTIC")) {
+         if(env_var_as_boolean("LIBGL_DIAGNOSTIC", false)) {
              long int tagvalue = *bp++;
              fprintf(stderr, "WARNING: unknown GLX tag from server: "
                      "tag 0x%lx value 0x%lx\n", tag, tagvalue);
@@ -584,7 +614,7 @@ __glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
     *     GLXPbuffer drawables."
     */
    if (config->floatMode)
-      config->drawableType &= ~(GLX_WINDOW_BIT|GLX_PIXMAP_BIT);
+      config->drawableType &= GLX_PBUFFER_BIT;
 }
 
 static struct glx_config *
@@ -631,6 +661,8 @@ createConfigsFromProperties(Display * dpy, int nvisuals, int nprops,
        */
       m->drawableType = GLX_WINDOW_BIT | GLX_PIXMAP_BIT | GLX_PBUFFER_BIT;
 #endif
+      /* Older X servers don't send this so we default it here. */
+      m->sRGBCapable = GL_FALSE;
        __glXInitializeVisualConfigFromTags(m, nprops, props,
                                           tagged_only, GL_TRUE);
       m->screen = screen;
@@ -733,8 +765,11 @@ glx_screen_init(struct glx_screen *psc,
    psc->dpy = priv->dpy;
    psc->display = priv;
 
-   getVisualConfigs(psc, priv, screen);
-   getFBConfigs(psc, priv, screen);
+   if (!getVisualConfigs(psc, priv, screen))
+      return GL_FALSE;
+
+   if (!getFBConfigs(psc, priv, screen))
+      return GL_FALSE;
 
    return GL_TRUE;
 }
@@ -792,6 +827,12 @@ AllocAndFetchScreenConfigs(Display * dpy, struct glx_display * priv)
       if (psc == NULL && priv->driDisplay)
 	 psc = (*priv->driDisplay->createScreen) (i, priv);
 #endif /* GLX_USE_DRM */
+
+#ifdef GLX_USE_WINDOWSGL
+      if (psc == NULL && priv->windowsdriDisplay)
+	 psc = (*priv->windowsdriDisplay->createScreen) (i, priv);
+#endif
+
       if (psc == NULL && priv->driswDisplay)
 	 psc = (*priv->driswDisplay->createScreen) (i, priv);
 #endif /* GLX_DIRECT_RENDERING && !GLX_USE_APPLEGL */
@@ -869,8 +910,8 @@ __glXInitialize(Display * dpy)
    dpyPriv->glXDrawHash = __glxHashCreate();
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-   glx_direct = (getenv("LIBGL_ALWAYS_INDIRECT") == NULL);
-   glx_accel = (getenv("LIBGL_ALWAYS_SOFTWARE") == NULL);
+   glx_direct = !env_var_as_boolean("LIBGL_ALWAYS_INDIRECT", false);
+   glx_accel = !env_var_as_boolean("LIBGL_ALWAYS_SOFTWARE", false);
 
    dpyPriv->drawHash = __glxHashCreate();
 
@@ -882,7 +923,7 @@ __glXInitialize(Display * dpy)
 #if defined(GLX_USE_DRM)
    if (glx_direct && glx_accel) {
 #if defined(HAVE_DRI3)
-      if (!getenv("LIBGL_DRI3_DISABLE"))
+      if (!env_var_as_boolean("LIBGL_DRI3_DISABLE", false))
          dpyPriv->dri3Display = dri3_create_display(dpy);
 #endif /* HAVE_DRI3 */
       dpyPriv->dri2Display = dri2CreateDisplay(dpy);
@@ -899,6 +940,12 @@ __glXInitialize(Display * dpy)
       return NULL;
    }
 #endif
+
+#ifdef GLX_USE_WINDOWSGL
+   if (glx_direct && glx_accel)
+      dpyPriv->windowsdriDisplay = driwindowsCreateDisplay(dpy);
+#endif
+
    if (!AllocAndFetchScreenConfigs(dpy, dpyPriv)) {
       free(dpyPriv);
       return NULL;

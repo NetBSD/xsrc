@@ -72,6 +72,22 @@ static const GLfloat cos_constants[4] = { 1.0,
    -1.0 / (6 * 5 * 4 * 3 * 2 * 1)
 };
 
+/* texcoord_mapping[unit] = index | TEXCOORD_{TEX,VAR} */
+#define TEXCOORD_TEX (0<<7)
+#define TEXCOORD_VAR (1<<7)
+
+static unsigned
+get_texcoord_mapping(struct i915_fragment_program *p, uint8_t texcoord)
+{
+   for (unsigned i = 0; i < p->ctx->Const.MaxTextureCoordUnits; i++) {
+      if (p->texcoord_mapping[i] == texcoord)
+         return i;
+   }
+
+   /* blah */
+   return p->ctx->Const.MaxTextureCoordUnits - 1;
+}
+
 /**
  * Retrieve a ureg for the given source register.  Will emit
  * constants, apply swizzling and negation as needed.
@@ -79,9 +95,10 @@ static const GLfloat cos_constants[4] = { 1.0,
 static GLuint
 src_vector(struct i915_fragment_program *p,
            const struct prog_src_register *source,
-           const struct gl_fragment_program *program)
+           const struct gl_program *program)
 {
    GLuint src;
+   unsigned unit;
 
    switch (source->File) {
 
@@ -119,8 +136,10 @@ src_vector(struct i915_fragment_program *p,
       case VARYING_SLOT_TEX5:
       case VARYING_SLOT_TEX6:
       case VARYING_SLOT_TEX7:
+         unit = get_texcoord_mapping(p, (source->Index -
+                                         VARYING_SLOT_TEX0) | TEXCOORD_TEX);
          src = i915_emit_decl(p, REG_TYPE_T,
-                              T_TEX0 + (source->Index - VARYING_SLOT_TEX0),
+                              T_TEX0 + unit,
                               D0_CHANNEL_ALL);
 	 break;
 
@@ -132,8 +151,10 @@ src_vector(struct i915_fragment_program *p,
       case VARYING_SLOT_VAR0 + 5:
       case VARYING_SLOT_VAR0 + 6:
       case VARYING_SLOT_VAR0 + 7:
+         unit = get_texcoord_mapping(p, (source->Index -
+                                         VARYING_SLOT_VAR0) | TEXCOORD_VAR);
          src = i915_emit_decl(p, REG_TYPE_T,
-                              T_TEX0 + (source->Index - VARYING_SLOT_VAR0),
+                              T_TEX0 + unit,
                               D0_CHANNEL_ALL);
          break;
 
@@ -163,11 +184,12 @@ src_vector(struct i915_fragment_program *p,
        */
    case PROGRAM_CONSTANT:
    case PROGRAM_STATE_VAR:
-   case PROGRAM_UNIFORM:
-      src = i915_emit_param4fv(p,
-	 &program->Base.Parameters->ParameterValues[source->Index][0].f);
+   case PROGRAM_UNIFORM: {
+      struct gl_program_parameter_list *params = program->Parameters;
+      unsigned offset = params->ParameterValueOffset[source->Index];
+      src = i915_emit_param4fv(p, &params->ParameterValues[offset].f);
       break;
-
+   }
    default:
       i915_program_error(p, "Bad source->File: %d", source->File);
       return 0;
@@ -220,7 +242,7 @@ get_result_flags(const struct prog_instruction *inst)
 {
    GLuint flags = 0;
 
-   if (inst->SaturateMode == SATURATE_ZERO_ONE)
+   if (inst->Saturate)
       flags |= A0_DEST_SATURATE;
    if (inst->DstReg.WriteMask & WRITEMASK_X)
       flags |= A0_DEST_CHANNEL_X;
@@ -257,8 +279,8 @@ translate_tex_src_target(struct i915_fragment_program *p, GLubyte bit)
 #define EMIT_TEX( OP )						\
 do {								\
    GLuint dim = translate_tex_src_target( p, inst->TexSrcTarget );	\
-   const struct gl_fragment_program *program = &p->FragProg;	\
-   GLuint unit = program->Base.SamplerUnits[inst->TexSrcUnit];	\
+   const struct gl_program *program = &p->FragProg;	\
+   GLuint unit = program->SamplerUnits[inst->TexSrcUnit];	\
    GLuint sampler = i915_emit_decl(p, REG_TYPE_S,		\
 				   unit, dim);			\
    GLuint coord = src_vector( p, &inst->SrcReg[0], program);	\
@@ -292,13 +314,13 @@ do {									\
  */
 static bool calc_live_regs( struct i915_fragment_program *p )
 {
-    const struct gl_fragment_program *program = &p->FragProg;
+    const struct gl_program *program = &p->FragProg;
     GLuint regsUsed = ~((1 << I915_MAX_TEMPORARY) - 1);
     uint8_t live_components[I915_MAX_TEMPORARY] = { 0, };
     GLint i;
    
-    for (i = program->Base.NumInstructions - 1; i >= 0; i--) {
-        struct prog_instruction *inst = &program->Base.Instructions[i];
+    for (i = program->arb.NumInstructions - 1; i >= 0; i--) {
+        struct prog_instruction *inst = &program->arb.Instructions[i];
         int opArgs = _mesa_num_inst_src_regs(inst->Opcode);
         int a;
 
@@ -340,8 +362,8 @@ static bool calc_live_regs( struct i915_fragment_program *p )
 static GLuint get_live_regs( struct i915_fragment_program *p, 
                              const struct prog_instruction *inst )
 {
-    const struct gl_fragment_program *program = &p->FragProg;
-    GLuint nr = inst - program->Base.Instructions;
+    const struct gl_program *program = &p->FragProg;
+    GLuint nr = inst - program->arb.Instructions;
 
     return p->usedRegs[nr];
 }
@@ -361,11 +383,11 @@ static GLuint get_live_regs( struct i915_fragment_program *p,
 static void
 upload_program(struct i915_fragment_program *p)
 {
-   const struct gl_fragment_program *program = &p->FragProg;
-   const struct prog_instruction *inst = program->Base.Instructions;
+   const struct gl_program *program = &p->FragProg;
+   const struct prog_instruction *inst = program->arb.Instructions;
 
    if (INTEL_DEBUG & DEBUG_WM)
-      _mesa_print_program(&program->Base);
+      _mesa_print_program(program);
 
    /* Is this a parse-failed program?  Ensure a valid program is
     * loaded, as the flagging of an error isn't sufficient to stop
@@ -381,9 +403,9 @@ upload_program(struct i915_fragment_program *p)
       return;
    }
 
-   if (program->Base.NumInstructions > I915_MAX_INSN) {
+   if (program->arb.NumInstructions > I915_MAX_INSN) {
       i915_program_error(p, "Exceeded max instructions (%d out of %d)",
-			 program->Base.NumInstructions, I915_MAX_INSN);
+                         program->arb.NumInstructions, I915_MAX_INSN);
       return;
    }
 
@@ -577,26 +599,6 @@ upload_program(struct i915_fragment_program *p)
                          0, src0, T0_TEXKILL);
          break;
 
-      case OPCODE_KIL_NV:
-	 if (inst->DstReg.CondMask == COND_TR) {
-	    tmp = i915_get_utemp(p);
-
-	    /* The KIL instruction discards the fragment if any component of
-	     * the source is < 0.  Emit an immediate operand of {-1}.xywz.
-	     */
-	    i915_emit_texld(p, get_live_regs(p, inst),
-			    tmp, A0_DEST_CHANNEL_ALL,
-			    0, /* use a dummy dest reg */
-			    negate(swizzle(tmp, ONE, ONE, ONE, ONE),
-				   1, 1, 1, 1),
-			    T0_TEXKILL);
-	 } else {
-	    p->error = 1;
-	    i915_program_error(p, "Unsupported KIL_NV condition code: %d",
-			       inst->DstReg.CondMask);
-	 }
-	 break;
-
       case OPCODE_LG2:
          src0 = src_vector(p, &inst->SrcReg[0], program);
 
@@ -671,21 +673,7 @@ upload_program(struct i915_fragment_program *p)
          break;
 
       case OPCODE_MIN:
-         src0 = src_vector(p, &inst->SrcReg[0], program);
-         src1 = src_vector(p, &inst->SrcReg[1], program);
-         tmp = i915_get_utemp(p);
-         flags = get_result_flags(inst);
-
-         i915_emit_arith(p,
-                         A0_MAX,
-                         tmp, flags & A0_DEST_CHANNEL_ALL, 0,
-                         negate(src0, 1, 1, 1, 1),
-                         negate(src1, 1, 1, 1, 1), 0);
-
-         i915_emit_arith(p,
-                         A0_MOV,
-                         get_result_vector(p, inst),
-                         flags, 0, negate(tmp, 1, 1, 1, 1), 0, 0);
+         EMIT_2ARG_ARITH(A0_MIN);
          break;
 
       case OPCODE_MOV:
@@ -802,68 +790,6 @@ upload_program(struct i915_fragment_program *p)
          }
          break;
 
-      case OPCODE_SEQ:
-	 tmp = i915_get_utemp(p);
-	 flags = get_result_flags(inst);
-	 dst = get_result_vector(p, inst);
-
-         /* If both operands are uniforms or constants, we get 5 instructions
-          * like:
-          *
-          *     U[1] = MOV CONST[1]
-          *     U[0].xyz = SGE CONST[0].xxxx, U[1]
-          *     U[1] = MOV CONST[1].-x-y-z-w
-          *     R[0].xyz = SGE CONST[0].-x-x-x-x, U[1]
-          *     R[0].xyz = MUL R[0], U[0]
-          *
-          * This code is stupid.  Instead of having the individual calls to
-          * i915_emit_arith generate the moves to utemps, do it in the caller.
-          * This results in code like:
-          *
-          *     U[1] = MOV CONST[1]
-          *     U[0].xyz = SGE CONST[0].xxxx, U[1]
-          *     R[0].xyz = SGE CONST[0].-x-x-x-x, U[1].-x-y-z-w
-          *     R[0].xyz = MUL R[0], U[0]
-          */
-         src0 = src_vector(p, &inst->SrcReg[0], program);
-         src1 = src_vector(p, &inst->SrcReg[1], program);
-
-         if (GET_UREG_TYPE(src0) == REG_TYPE_CONST
-             && GET_UREG_TYPE(src1) == REG_TYPE_CONST) {
-            unsigned tmp = i915_get_utemp(p);
-
-            i915_emit_arith(p, A0_MOV, tmp, A0_DEST_CHANNEL_ALL, 0,
-                            src1, 0, 0);
-
-            src1 = tmp;
-         }
-
-	 /* tmp = src1 >= src2 */
-	 i915_emit_arith(p,
-			 A0_SGE,
-			 tmp,
-			 flags, 0,
-			 src0,
-			 src1,
-			 0);
-	 /* dst = src1 <= src2 */
-	 i915_emit_arith(p,
-			 A0_SGE,
-			 dst,
-			 flags, 0,
-			 negate(src0, 1, 1, 1, 1),
-			 negate(src1, 1, 1, 1, 1),
-			 0);
-	 /* dst = tmp && dst */
-	 i915_emit_arith(p,
-			 A0_MUL,
-			 dst,
-			 flags, 0,
-			 dst,
-			 tmp,
-			 0);
-	 break;
-
       case OPCODE_SIN:
          src0 = src_vector(p, &inst->SrcReg[0], program);
          tmp = i915_get_utemp(p);
@@ -952,94 +878,8 @@ upload_program(struct i915_fragment_program *p)
 	 EMIT_2ARG_ARITH(A0_SGE);
 	 break;
 
-      case OPCODE_SGT:
-	 i915_emit_arith(p,
-			 A0_SLT,
-			 get_result_vector( p, inst ),
-			 get_result_flags( inst ), 0,
-			 negate(src_vector( p, &inst->SrcReg[0], program),
-				1, 1, 1, 1),
-			 negate(src_vector( p, &inst->SrcReg[1], program),
-				1, 1, 1, 1),
-			 0);
-         break;
-
-      case OPCODE_SLE:
-	 i915_emit_arith(p,
-			 A0_SGE,
-			 get_result_vector( p, inst ),
-			 get_result_flags( inst ), 0,
-			 negate(src_vector( p, &inst->SrcReg[0], program),
-				1, 1, 1, 1),
-			 negate(src_vector( p, &inst->SrcReg[1], program),
-				1, 1, 1, 1),
-			 0);
-         break;
-
       case OPCODE_SLT:
          EMIT_2ARG_ARITH(A0_SLT);
-         break;
-
-      case OPCODE_SNE:
-	 tmp = i915_get_utemp(p);
-	 flags = get_result_flags(inst);
-	 dst = get_result_vector(p, inst);
-
-         /* If both operands are uniforms or constants, we get 5 instructions
-          * like:
-          *
-          *     U[1] = MOV CONST[1]
-          *     U[0].xyz = SLT CONST[0].xxxx, U[1]
-          *     U[1] = MOV CONST[1].-x-y-z-w
-          *     R[0].xyz = SLT CONST[0].-x-x-x-x, U[1]
-          *     R[0].xyz = MUL R[0], U[0]
-          *
-          * This code is stupid.  Instead of having the individual calls to
-          * i915_emit_arith generate the moves to utemps, do it in the caller.
-          * This results in code like:
-          *
-          *     U[1] = MOV CONST[1]
-          *     U[0].xyz = SLT CONST[0].xxxx, U[1]
-          *     R[0].xyz = SLT CONST[0].-x-x-x-x, U[1].-x-y-z-w
-          *     R[0].xyz = MUL R[0], U[0]
-          */
-         src0 = src_vector(p, &inst->SrcReg[0], program);
-         src1 = src_vector(p, &inst->SrcReg[1], program);
-
-         if (GET_UREG_TYPE(src0) == REG_TYPE_CONST
-             && GET_UREG_TYPE(src1) == REG_TYPE_CONST) {
-            unsigned tmp = i915_get_utemp(p);
-
-            i915_emit_arith(p, A0_MOV, tmp, A0_DEST_CHANNEL_ALL, 0,
-                            src1, 0, 0);
-
-            src1 = tmp;
-         }
-
-	 /* tmp = src1 < src2 */
-	 i915_emit_arith(p,
-			 A0_SLT,
-			 tmp,
-			 flags, 0,
-			 src0,
-			 src1,
-			 0);
-	 /* dst = src1 > src2 */
-	 i915_emit_arith(p,
-			 A0_SLT,
-			 dst,
-			 flags, 0,
-			 negate(src0, 1, 1, 1, 1),
-			 negate(src1, 1, 1, 1, 1),
-			 0);
-	 /* dst = tmp || dst */
-	 i915_emit_arith(p,
-			 A0_ADD,
-			 dst,
-			 flags | A0_DEST_SATURATE, 0,
-			 dst,
-			 tmp,
-			 0);
          break;
 
       case OPCODE_SSG:
@@ -1190,27 +1030,54 @@ fixup_depth_write(struct i915_fragment_program *p)
    }
 }
 
+static void
+check_texcoord_mapping(struct i915_fragment_program *p)
+{
+   GLbitfield64 inputs = p->FragProg.info.inputs_read;
+   unsigned unit = 0;
+
+   for (unsigned i = 0; i < p->ctx->Const.MaxTextureCoordUnits; i++) {
+      if (inputs & VARYING_BIT_TEX(i)) {
+         if (unit >= p->ctx->Const.MaxTextureCoordUnits) {
+            unit++;
+            break;
+         }
+         p->texcoord_mapping[unit++] = i | TEXCOORD_TEX;
+      }
+      if (inputs & VARYING_BIT_VAR(i)) {
+         if (unit >= p->ctx->Const.MaxTextureCoordUnits) {
+            unit++;
+            break;
+         }
+         p->texcoord_mapping[unit++] = i | TEXCOORD_VAR;
+      }
+   }
+
+   if (unit > p->ctx->Const.MaxTextureCoordUnits)
+      i915_program_error(p, "Too many texcoord units");
+}
 
 static void
 check_wpos(struct i915_fragment_program *p)
 {
-   GLbitfield64 inputs = p->FragProg.Base.InputsRead;
+   GLbitfield64 inputs = p->FragProg.info.inputs_read;
    GLint i;
+   unsigned unit = 0;
 
-   p->wpos_tex = -1;
+   p->wpos_tex = I915_WPOS_TEX_INVALID;
+
+   if ((inputs & VARYING_BIT_POS) == 0)
+      return;
 
    for (i = 0; i < p->ctx->Const.MaxTextureCoordUnits; i++) {
-      if (inputs & (VARYING_BIT_TEX(i) | VARYING_BIT_VAR(i)))
-         continue;
-      else if (inputs & VARYING_BIT_POS) {
-         p->wpos_tex = i;
-         inputs &= ~VARYING_BIT_POS;
-      }
+      unit += !!(inputs & VARYING_BIT_TEX(i));
+      unit += !!(inputs & VARYING_BIT_VAR(i));
    }
 
-   if (inputs & VARYING_BIT_POS) {
+   if (unit < p->ctx->Const.MaxTextureCoordUnits)
+      p->wpos_tex = unit;
+   else
       i915_program_error(p, "No free texcoord for wpos value");
-   }
 }
 
 
@@ -1221,11 +1088,12 @@ translate_program(struct i915_fragment_program *p)
 
    if (INTEL_DEBUG & DEBUG_WM) {
       printf("fp:\n");
-      _mesa_print_program(&p->FragProg.Base);
+      _mesa_print_program(&p->FragProg);
       printf("\n");
    }
 
    i915_init_program(i915, p);
+   check_texcoord_mapping(p);
    check_wpos(p);
    upload_program(p);
    fixup_depth_write(p);
@@ -1241,7 +1109,7 @@ track_params(struct i915_fragment_program *p)
    GLint i;
 
    if (p->nr_params)
-      _mesa_load_state_parameters(p->ctx, p->FragProg.Base.Parameters);
+      _mesa_load_state_parameters(p->ctx, p->FragProg.Parameters);
 
    for (i = 0; i < p->nr_params; i++) {
       GLint reg = p->param[i].reg;
@@ -1252,46 +1120,24 @@ track_params(struct i915_fragment_program *p)
    p->on_hardware = 0;          /* overkill */
 }
 
-
-static void
-i915BindProgram(struct gl_context * ctx, GLenum target, struct gl_program *prog)
-{
-   if (target == GL_FRAGMENT_PROGRAM_ARB) {
-      struct i915_context *i915 = I915_CONTEXT(ctx);
-      struct i915_fragment_program *p = (struct i915_fragment_program *) prog;
-
-      if (i915->current_program == p)
-         return;
-
-      if (i915->current_program) {
-         i915->current_program->on_hardware = 0;
-         i915->current_program->params_uptodate = 0;
-      }
-
-      i915->current_program = p;
-
-      assert(p->on_hardware == 0);
-      assert(p->params_uptodate == 0);
-
-   }
-}
-
 static struct gl_program *
-i915NewProgram(struct gl_context * ctx, GLenum target, GLuint id)
+i915NewProgram(struct gl_context * ctx, GLenum target, GLuint id,
+               bool is_arb_asm)
 {
    switch (target) {
-   case GL_VERTEX_PROGRAM_ARB:
-      return _mesa_init_vertex_program(ctx, CALLOC_STRUCT(gl_vertex_program),
-                                       target, id);
+   case GL_VERTEX_PROGRAM_ARB: {
+      struct gl_program *prog = rzalloc(NULL, struct gl_program);
+      return _mesa_init_gl_program(prog, target, id, is_arb_asm);
+   }
 
    case GL_FRAGMENT_PROGRAM_ARB:{
          struct i915_fragment_program *prog =
-            CALLOC_STRUCT(i915_fragment_program);
+            rzalloc(NULL, struct i915_fragment_program);
          if (prog) {
             i915_init_program(I915_CONTEXT(ctx), prog);
 
-            return _mesa_init_fragment_program(ctx, &prog->FragProg,
-                                               target, id);
+            return _mesa_init_gl_program(&prog->FragProg, target, id,
+                                         is_arb_asm);
          }
          else
             return NULL;
@@ -1300,7 +1146,7 @@ i915NewProgram(struct gl_context * ctx, GLenum target, GLuint id)
    default:
       /* Just fallback:
        */
-      return _mesa_new_program(ctx, target, id);
+      return _mesa_new_program(ctx, target, id, is_arb_asm);
    }
 }
 
@@ -1390,9 +1236,10 @@ i915ValidateFragmentProgram(struct i915_context *i915)
    struct i915_fragment_program *p =
       (struct i915_fragment_program *) ctx->FragmentProgram._Current;
 
-   const GLbitfield64 inputsRead = p->FragProg.Base.InputsRead;
+   const GLbitfield64 inputsRead = p->FragProg.info.inputs_read;
    GLuint s4 = i915->state.Ctx[I915_CTXREG_LIS4] & ~S4_VFMT_MASK;
    GLuint s2 = S2_TEXCOORD_NONE;
+   GLuint s3 = 0;
    int i, offset = 0;
 
    /* Important:
@@ -1407,12 +1254,10 @@ i915ValidateFragmentProgram(struct i915_context *i915)
    intel->coloroffset = 0;
    intel->specoffset = 0;
 
-   if (inputsRead & VARYING_BITS_TEX_ANY || p->wpos_tex != -1) {
-      EMIT_ATTR(_TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, S4_VFMT_XYZW, 16);
-   }
-   else {
-      EMIT_ATTR(_TNL_ATTRIB_POS, EMIT_3F_VIEWPORT, S4_VFMT_XYZ, 12);
-   }
+   /* Always emit W to get consistent perspective
+    * correct interpolation of primary/secondary colors.
+    */
+   EMIT_ATTR(_TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, S4_VFMT_XYZW, 16);
 
    /* Handle gl_PointSize builtin var here */
    if (ctx->Point._Attenuated || ctx->VertexProgram.PointSizeEnabled)
@@ -1434,28 +1279,31 @@ i915ValidateFragmentProgram(struct i915_context *i915)
 
    for (i = 0; i < p->ctx->Const.MaxTextureCoordUnits; i++) {
       if (inputsRead & VARYING_BIT_TEX(i)) {
+         int unit = get_texcoord_mapping(p, i | TEXCOORD_TEX);
          int sz = VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]->size;
 
-         s2 &= ~S2_TEXCOORD_FMT(i, S2_TEXCOORD_FMT0_MASK);
-         s2 |= S2_TEXCOORD_FMT(i, SZ_TO_HW(sz));
+         s2 &= ~S2_TEXCOORD_FMT(unit, S2_TEXCOORD_FMT0_MASK);
+         s2 |= S2_TEXCOORD_FMT(unit, SZ_TO_HW(sz));
 
          EMIT_ATTR(_TNL_ATTRIB_TEX0 + i, EMIT_SZ(sz), 0, sz * 4);
       }
-      else if (inputsRead & VARYING_BIT_VAR(i)) {
+      if (inputsRead & VARYING_BIT_VAR(i)) {
+         int unit = get_texcoord_mapping(p, i | TEXCOORD_VAR);
          int sz = VB->AttribPtr[_TNL_ATTRIB_GENERIC0 + i]->size;
 
-         s2 &= ~S2_TEXCOORD_FMT(i, S2_TEXCOORD_FMT0_MASK);
-         s2 |= S2_TEXCOORD_FMT(i, SZ_TO_HW(sz));
+         s2 &= ~S2_TEXCOORD_FMT(unit, S2_TEXCOORD_FMT0_MASK);
+         s2 |= S2_TEXCOORD_FMT(unit, SZ_TO_HW(sz));
 
          EMIT_ATTR(_TNL_ATTRIB_GENERIC0 + i, EMIT_SZ(sz), 0, sz * 4);
       }
-      else if (i == p->wpos_tex) {
+      if (i == p->wpos_tex) {
 	 int wpos_size = 4 * sizeof(float);
          /* If WPOS is required, duplicate the XYZ position data in an
           * unused texture coordinate:
           */
          s2 &= ~S2_TEXCOORD_FMT(i, S2_TEXCOORD_FMT0_MASK);
          s2 |= S2_TEXCOORD_FMT(i, SZ_TO_HW(wpos_size));
+         s3 |= S3_TEXCOORD_PERSPECTIVE_DISABLE(i);
 
          intel->wpos_offset = offset;
          EMIT_PAD(wpos_size);
@@ -1463,9 +1311,8 @@ i915ValidateFragmentProgram(struct i915_context *i915)
    }
 
    if (s2 != i915->state.Ctx[I915_CTXREG_LIS2] ||
+       s3 != i915->state.Ctx[I915_CTXREG_LIS3] ||
        s4 != i915->state.Ctx[I915_CTXREG_LIS4]) {
-      int k;
-
       I915_STATECHANGE(i915, I915_UPLOAD_CTX);
 
       /* Must do this *after* statechange, so as not to affect
@@ -1483,10 +1330,10 @@ i915ValidateFragmentProgram(struct i915_context *i915)
       intel->vertex_size >>= 2;
 
       i915->state.Ctx[I915_CTXREG_LIS2] = s2;
+      i915->state.Ctx[I915_CTXREG_LIS3] = s3;
       i915->state.Ctx[I915_CTXREG_LIS4] = s4;
 
-      k = intel->vtbl.check_vertex_size(intel, intel->vertex_size);
-      assert(k);
+      assert(intel->vtbl.check_vertex_size(intel, intel->vertex_size));
    }
 
    if (!p->params_uptodate)
@@ -1504,7 +1351,6 @@ i915ValidateFragmentProgram(struct i915_context *i915)
 void
 i915InitFragProgFuncs(struct dd_function_table *functions)
 {
-   functions->BindProgram = i915BindProgram;
    functions->NewProgram = i915NewProgram;
    functions->DeleteProgram = i915DeleteProgram;
    functions->IsProgramNative = i915IsProgramNative;

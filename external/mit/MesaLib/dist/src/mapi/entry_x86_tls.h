@@ -26,7 +26,12 @@
  */
 
 #include <string.h>
-#include "u_macros.h"
+
+#ifdef HAVE_FUNC_ATTRIBUTE_VISIBILITY
+#define HIDDEN __attribute__((visibility("hidden")))
+#else
+#define HIDDEN
+#endif
 
 __asm__(".text");
 
@@ -72,8 +77,8 @@ __asm__(".text");
 extern unsigned long
 x86_current_tls();
 
-static char x86_entry_start[];
-static char x86_entry_end[];
+extern char x86_entry_start[] HIDDEN;
+extern char x86_entry_end[] HIDDEN;
 
 void
 entry_patch_public(void)
@@ -113,7 +118,7 @@ entry_generate(int slot)
       0xff, 0xa0, 0x34, 0x12, 0x00, 0x00, /* jmp *0x1234(%eax) */
       0x90, 0x90, 0x90, 0x90              /* nop's */
    };
-   void *code;
+   char *code;
    mapi_func entry;
 
    code = u_execmem_alloc(sizeof(code_templ));

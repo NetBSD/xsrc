@@ -43,7 +43,6 @@ extern void r200InitTnlFuncs( struct gl_context *ctx );
 
 extern void r200UpdateMaterial( struct gl_context *ctx );
 
-extern void r200UpdateViewportOffset( struct gl_context *ctx );
 extern void r200UpdateWindow( struct gl_context *ctx );
 extern void r200UpdateDrawBuffer(struct gl_context *ctx);
 
@@ -55,7 +54,7 @@ extern void r200_vtbl_update_scissor( struct gl_context *ctx );
 extern void r200Fallback( struct gl_context *ctx, GLuint bit, GLboolean mode );
 #define FALLBACK( rmesa, bit, mode ) do {				\
    if ( 0 ) fprintf( stderr, "FALLBACK in %s: #%d=%d\n",		\
-		     __FUNCTION__, bit, mode );				\
+		     __func__, bit, mode );				\
    r200Fallback( &rmesa->radeon.glCtx, bit, mode );				\
 } while (0)
 

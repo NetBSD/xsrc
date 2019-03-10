@@ -35,14 +35,11 @@
  */
 
 /* XXX these includes should probably go into imports.h or glheader.h */
-#if defined(USE_SSE_ASM) && defined(__linux__)
-#include <linux/version.h>
-#endif
 #if defined(USE_SSE_ASM) && defined(__FreeBSD__)
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #endif
-#if defined(USE_SSE_ASM) && defined(__OpenBSD__)
+#if defined(USE_SSE_ASM) && (defined(__OpenBSD__) || defined(__NetBSD__))
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <machine/cpu.h>
@@ -57,6 +54,7 @@
 #endif
 #endif
 
+#include "main/errors.h"
 #include "main/imports.h"
 #include "common_x86_asm.h"
 
@@ -68,12 +66,12 @@ static int detection_debug = GL_FALSE;
 
 /* No reason for this to be public.
  */
-extern GLuint	_ASMAPI _mesa_x86_has_cpuid(void);
-extern void	_ASMAPI _mesa_x86_cpuid(GLuint op, GLuint *reg_eax, GLuint *reg_ebx, GLuint *reg_ecx, GLuint *reg_edx);
-extern GLuint	_ASMAPI _mesa_x86_cpuid_eax(GLuint op);
-extern GLuint	_ASMAPI _mesa_x86_cpuid_ebx(GLuint op);
-extern GLuint	_ASMAPI _mesa_x86_cpuid_ecx(GLuint op);
-extern GLuint	_ASMAPI _mesa_x86_cpuid_edx(GLuint op);
+extern GLuint _mesa_x86_has_cpuid(void);
+extern void _mesa_x86_cpuid(GLuint op, GLuint *reg_eax, GLuint *reg_ebx, GLuint *reg_ecx, GLuint *reg_edx);
+extern GLuint _mesa_x86_cpuid_eax(GLuint op);
+extern GLuint _mesa_x86_cpuid_ebx(GLuint op);
+extern GLuint _mesa_x86_cpuid_ecx(GLuint op);
+extern GLuint _mesa_x86_cpuid_edx(GLuint op);
 
 
 #if defined(USE_SSE_ASM)
@@ -224,7 +222,7 @@ _mesa_get_x86_features(void)
 #ifdef USE_X86_ASM
    _mesa_x86_cpu_features = 0x0;
 
-   if (_mesa_getenv( "MESA_NO_ASM")) {
+   if (getenv( "MESA_NO_ASM")) {
       return;
    }
 
@@ -307,7 +305,7 @@ _mesa_get_x86_features(void)
 
 #ifdef USE_MMX_ASM
    if ( cpu_has_mmx ) {
-      if ( _mesa_getenv( "MESA_NO_MMX" ) == 0 ) {
+      if ( getenv( "MESA_NO_MMX" ) == 0 ) {
 	 if (detection_debug)
 	    _mesa_debug(NULL, "MMX cpu detected.\n");
       } else {
@@ -318,7 +316,7 @@ _mesa_get_x86_features(void)
 
 #ifdef USE_3DNOW_ASM
    if ( cpu_has_3dnow ) {
-      if ( _mesa_getenv( "MESA_NO_3DNOW" ) == 0 ) {
+      if ( getenv( "MESA_NO_3DNOW" ) == 0 ) {
 	 if (detection_debug)
 	    _mesa_debug(NULL, "3DNow! cpu detected.\n");
       } else {
@@ -329,10 +327,10 @@ _mesa_get_x86_features(void)
 
 #ifdef USE_SSE_ASM
    if ( cpu_has_xmm ) {
-      if ( _mesa_getenv( "MESA_NO_SSE" ) == 0 ) {
+      if ( getenv( "MESA_NO_SSE" ) == 0 ) {
 	 if (detection_debug)
 	    _mesa_debug(NULL, "SSE cpu detected.\n");
-         if ( _mesa_getenv( "MESA_FORCE_SSE" ) == 0 ) {
+         if ( getenv( "MESA_FORCE_SSE" ) == 0 ) {
             _mesa_check_os_sse_support();
          }
       } else {
@@ -344,13 +342,13 @@ _mesa_get_x86_features(void)
 
 #elif defined(USE_X86_64_ASM)
    {
-      unsigned int uninitialized_var(eax), uninitialized_var(ebx),
-                   uninitialized_var(ecx), uninitialized_var(edx);
+      unsigned int eax, ebx, ecx, edx;
 
       /* Always available on x86-64. */
       _mesa_x86_cpu_features |= X86_FEATURE_XMM | X86_FEATURE_XMM2;
 
-      __get_cpuid(1, &eax, &ebx, &ecx, &edx);
+      if (!__get_cpuid(1, &eax, &ebx, &ecx, &edx))
+         return;
 
       if (ecx & bit_SSE4_1)
          _mesa_x86_cpu_features |= X86_FEATURE_SSE4_1;

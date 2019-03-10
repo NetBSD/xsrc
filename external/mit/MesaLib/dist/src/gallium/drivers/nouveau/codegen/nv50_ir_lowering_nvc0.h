@@ -20,10 +20,37 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <tr1/unordered_set>
-
 #include "codegen/nv50_ir.h"
 #include "codegen/nv50_ir_build_util.h"
+
+/* On nvc0, surface info is obtained via the surface binding points passed
+ * to the SULD/SUST instructions.
+ * On nve4, surface info is stored in c[] and is used by various special
+ * instructions, e.g. for clamping coordinates or generating an address.
+ * They couldn't just have added an equivalent to TIC now, couldn't they ?
+ */
+#define NVC0_SU_INFO_ADDR   0x00
+#define NVC0_SU_INFO_FMT    0x04
+#define NVC0_SU_INFO_DIM_X  0x08
+#define NVC0_SU_INFO_PITCH  0x0c
+#define NVC0_SU_INFO_DIM_Y  0x10
+#define NVC0_SU_INFO_ARRAY  0x14
+#define NVC0_SU_INFO_DIM_Z  0x18
+#define NVC0_SU_INFO_UNK1C  0x1c
+#define NVC0_SU_INFO_WIDTH  0x20
+#define NVC0_SU_INFO_HEIGHT 0x24
+#define NVC0_SU_INFO_DEPTH  0x28
+#define NVC0_SU_INFO_TARGET 0x2c
+#define NVC0_SU_INFO_BSIZE  0x30
+#define NVC0_SU_INFO_RAW_X  0x34
+#define NVC0_SU_INFO_MS_X   0x38
+#define NVC0_SU_INFO_MS_Y   0x3c
+
+#define NVC0_SU_INFO__STRIDE 0x40
+
+#define NVC0_SU_INFO_DIM(i)  (0x08 + (i) * 8)
+#define NVC0_SU_INFO_SIZE(i) (0x20 + (i) * 4)
+#define NVC0_SU_INFO_MS(i)   (0x38 + (i) * 4)
 
 namespace nv50_ir {
 
@@ -36,8 +63,12 @@ private:
    // we want to insert calls to the builtin library only after optimization
    void handleDIV(Instruction *); // integer division, modulus
    void handleRCPRSQ(Instruction *); // double precision float recip/rsqrt
+   void handleFTZ(Instruction *);
+   void handleSET(CmpInstruction *);
+   void handleTEXLOD(TexInstruction *);
+   void handleShift(Instruction *);
 
-private:
+protected:
    BuildUtil bld;
 };
 
@@ -56,10 +87,11 @@ private:
 
    struct TexUse
    {
-      TexUse(Instruction *use, const Instruction *tex)
-         : insn(use), tex(tex), level(-1) { }
+      TexUse(Instruction *use, const Instruction *tex, bool after)
+         : insn(use), tex(tex), after(after), level(-1) { }
       Instruction *insn;
       const Instruction *tex; // or split / mov
+      bool after;
       int level;
    };
    struct Limits
@@ -70,18 +102,17 @@ private:
    };
    bool insertTextureBarriers(Function *);
    inline bool insnDominatedBy(const Instruction *, const Instruction *) const;
-   void findFirstUses(const Instruction *tex, const Instruction *def,
-                      std::list<TexUse>&,
-                      std::tr1::unordered_set<const Instruction *>&);
-   void findOverwritingDefs(const Instruction *tex, Instruction *insn,
-                            const BasicBlock *term,
-                            std::list<TexUse>&);
+   void findFirstUses(Instruction *texi, std::list<TexUse> &uses);
+   void findFirstUsesBB(int minGPR, int maxGPR, Instruction *start,
+                        const Instruction *texi, std::list<TexUse> &uses,
+                        unordered_set<const BasicBlock *> &visited);
    void addTexUse(std::list<TexUse>&, Instruction *, const Instruction *);
    const Instruction *recurseDef(const Instruction *);
 
 private:
    LValue *rZero;
    LValue *carry;
+   LValue *pOne;
    const bool needTexBar;
 };
 
@@ -104,33 +135,55 @@ protected:
    bool handleTXQ(TexInstruction *);
    virtual bool handleManualTXD(TexInstruction *);
    bool handleTXLQ(TexInstruction *);
+   bool handleSUQ(TexInstruction *);
    bool handleATOM(Instruction *);
    bool handleCasExch(Instruction *, bool needCctl);
+   void handleSurfaceOpGM107(TexInstruction *);
    void handleSurfaceOpNVE4(TexInstruction *);
+   void handleSurfaceOpNVC0(TexInstruction *);
+   void handleSharedATOM(Instruction *);
+   void handleSharedATOMNVE4(Instruction *);
+   void handleLDST(Instruction *);
+   bool handleBUFQ(Instruction *);
+   void handlePIXLD(Instruction *);
 
    void checkPredicate(Instruction *);
+   Value *loadMsAdjInfo32(TexInstruction::Target targ, uint32_t index, int slot, Value *ind, bool bindless);
+
+   virtual bool visit(Instruction *);
 
 private:
    virtual bool visit(Function *);
    virtual bool visit(BasicBlock *);
-   virtual bool visit(Instruction *);
 
    void readTessCoord(LValue *dst, int c);
 
-   Value *loadResInfo32(Value *ptr, uint32_t off);
+   Value *loadResInfo32(Value *ptr, uint32_t off, uint16_t base);
+   Value *loadResInfo64(Value *ptr, uint32_t off, uint16_t base);
+   Value *loadResLength32(Value *ptr, uint32_t off, uint16_t base);
+   Value *loadSuInfo32(Value *ptr, int slot, uint32_t off, bool bindless);
+   Value *loadBufInfo64(Value *ptr, uint32_t off);
+   Value *loadBufLength32(Value *ptr, uint32_t off);
+   Value *loadUboInfo64(Value *ptr, uint32_t off);
+   Value *loadUboLength32(Value *ptr, uint32_t off);
    Value *loadMsInfo32(Value *ptr, uint32_t off);
-   Value *loadTexHandle(Value *ptr, unsigned int slot);
 
    void adjustCoordinatesMS(TexInstruction *);
+   void processSurfaceCoordsGM107(TexInstruction *);
    void processSurfaceCoordsNVE4(TexInstruction *);
+   void processSurfaceCoordsNVC0(TexInstruction *);
+   void convertSurfaceFormat(TexInstruction *);
+   void insertOOBSurfaceOpResult(TexInstruction *);
+   Value *calculateSampleOffset(Value *sampleID);
 
 protected:
+   Value *loadTexHandle(Value *ptr, unsigned int slot);
+
    BuildUtil bld;
 
 private:
    const Target *const targ;
 
-   Symbol *gMemBase;
    LValue *gpEmitAddress;
 };
 

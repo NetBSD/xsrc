@@ -1,12 +1,12 @@
-#ifndef __glxext_h_
-#define __glxext_h_ 1
+#ifndef __glx_glxext_h_
+#define __glx_glxext_h_ 1
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /*
-** Copyright (c) 2013-2014 The Khronos Group Inc.
+** Copyright (c) 2013-2018 The Khronos Group Inc.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and/or associated documentation files (the
@@ -31,12 +31,10 @@ extern "C" {
 ** This header is generated from the Khronos OpenGL / OpenGL ES XML
 ** API Registry. The current version of the Registry, generator scripts
 ** used to make the header, and the header can be found at
-**   http://www.opengl.org/registry/
-**
-** Khronos $Revision: 1.1.1.6 $ on $Date: 2014/12/18 06:02:10 $
+**   https://github.com/KhronosGroup/OpenGL-Registry
 */
 
-#define GLX_GLXEXT_VERSION 20140810
+#define GLX_GLXEXT_VERSION 20180525
 
 /* Generated C header for:
  * API: glx
@@ -178,6 +176,11 @@ GLXContext glXCreateContextAttribsARB (Display *dpy, GLXFBConfig config, GLXCont
 #endif
 #endif /* GLX_ARB_create_context */
 
+#ifndef GLX_ARB_create_context_no_error
+#define GLX_ARB_create_context_no_error 1
+#define GLX_CONTEXT_OPENGL_NO_ERROR_ARB   0x31B3
+#endif /* GLX_ARB_create_context_no_error */
+
 #ifndef GLX_ARB_create_context_profile
 #define GLX_ARB_create_context_profile 1
 #define GLX_CONTEXT_CORE_PROFILE_BIT_ARB  0x00000001
@@ -250,6 +253,26 @@ __GLXextFuncPtr glXGetProcAddressARB (const GLubyte *procName);
 #define GLX_GPU_NUM_SIMD_AMD              0x21A6
 #define GLX_GPU_NUM_RB_AMD                0x21A7
 #define GLX_GPU_NUM_SPI_AMD               0x21A8
+typedef unsigned int ( *PFNGLXGETGPUIDSAMDPROC) (unsigned int maxCount, unsigned int *ids);
+typedef int ( *PFNGLXGETGPUINFOAMDPROC) (unsigned int id, int property, GLenum dataType, unsigned int size, void *data);
+typedef unsigned int ( *PFNGLXGETCONTEXTGPUIDAMDPROC) (GLXContext ctx);
+typedef GLXContext ( *PFNGLXCREATEASSOCIATEDCONTEXTAMDPROC) (unsigned int id, GLXContext share_list);
+typedef GLXContext ( *PFNGLXCREATEASSOCIATEDCONTEXTATTRIBSAMDPROC) (unsigned int id, GLXContext share_context, const int *attribList);
+typedef Bool ( *PFNGLXDELETEASSOCIATEDCONTEXTAMDPROC) (GLXContext ctx);
+typedef Bool ( *PFNGLXMAKEASSOCIATEDCONTEXTCURRENTAMDPROC) (GLXContext ctx);
+typedef GLXContext ( *PFNGLXGETCURRENTASSOCIATEDCONTEXTAMDPROC) (void);
+typedef void ( *PFNGLXBLITCONTEXTFRAMEBUFFERAMDPROC) (GLXContext dstCtx, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+#ifdef GLX_GLXEXT_PROTOTYPES
+unsigned int glXGetGPUIDsAMD (unsigned int maxCount, unsigned int *ids);
+int glXGetGPUInfoAMD (unsigned int id, int property, GLenum dataType, unsigned int size, void *data);
+unsigned int glXGetContextGPUIDAMD (GLXContext ctx);
+GLXContext glXCreateAssociatedContextAMD (unsigned int id, GLXContext share_list);
+GLXContext glXCreateAssociatedContextAttribsAMD (unsigned int id, GLXContext share_context, const int *attribList);
+Bool glXDeleteAssociatedContextAMD (GLXContext ctx);
+Bool glXMakeAssociatedContextCurrentAMD (GLXContext ctx);
+GLXContext glXGetCurrentAssociatedContextAMD (void);
+void glXBlitContextFramebufferAMD (GLXContext dstCtx, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+#endif
 #endif /* GLX_AMD_gpu_association */
 
 #ifndef GLX_EXT_buffer_age
@@ -296,6 +319,15 @@ GLXContext glXImportContextEXT (Display *dpy, GLXContextID contextID);
 void glXFreeContextEXT (Display *dpy, GLXContext context);
 #endif
 #endif /* GLX_EXT_import_context */
+
+#ifndef GLX_EXT_libglvnd
+#define GLX_EXT_libglvnd 1
+#define GLX_VENDOR_NAMES_EXT              0x20F6
+#endif /* GLX_EXT_libglvnd */
+
+#ifndef GLX_EXT_no_config_context
+#define GLX_EXT_no_config_context 1
+#endif /* GLX_EXT_no_config_context */
 
 #ifndef GLX_EXT_stereo_tree
 #define GLX_EXT_stereo_tree 1
@@ -475,6 +507,16 @@ Bool glXSet3DfxModeMESA (int mode);
 #endif
 #endif /* GLX_MESA_set_3dfx_mode */
 
+#ifndef GLX_MESA_swap_control
+#define GLX_MESA_swap_control 1
+typedef int ( *PFNGLXGETSWAPINTERVALMESAPROC) (void);
+typedef int ( *PFNGLXSWAPINTERVALMESAPROC) (unsigned int interval);
+#ifdef GLX_GLXEXT_PROTOTYPES
+int glXGetSwapIntervalMESA (void);
+int glXSwapIntervalMESA (unsigned int interval);
+#endif
+#endif /* GLX_MESA_swap_control */
+
 #ifndef GLX_NV_copy_buffer
 #define GLX_NV_copy_buffer 1
 typedef void ( *PFNGLXCOPYBUFFERSUBDATANVPROC) (Display *dpy, GLXContext readCtx, GLXContext writeCtx, GLenum readTarget, GLenum writeTarget, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size);
@@ -522,6 +564,11 @@ unsigned int *glXEnumerateVideoDevicesNV (Display *dpy, int screen, int *nelemen
 int glXBindVideoDeviceNV (Display *dpy, unsigned int video_slot, unsigned int video_device, const int *attrib_list);
 #endif
 #endif /* GLX_NV_present_video */
+
+#ifndef GLX_NV_robustness_video_memory_purge
+#define GLX_NV_robustness_video_memory_purge 1
+#define GLX_GENERATE_RESET_ON_VIDEO_MEMORY_PURGE_NV 0x20F7
+#endif /* GLX_NV_robustness_video_memory_purge */
 
 #ifndef GLX_NV_swap_group
 #define GLX_NV_swap_group 1

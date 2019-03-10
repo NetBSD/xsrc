@@ -54,7 +54,7 @@ struct fetch_pipeline_middle_end {
 
 
 /** cast wrapper */
-static INLINE struct fetch_pipeline_middle_end *
+static inline struct fetch_pipeline_middle_end *
 fetch_pipeline_middle_end(struct draw_pt_middle_end *middle)
 {
    return (struct fetch_pipeline_middle_end *) middle;
@@ -117,7 +117,7 @@ fetch_pipeline_prepare(struct draw_pt_middle_end *middle,
                             draw->clip_user,
                             point_clip ? draw->guard_band_points_xy :
                                          draw->guard_band_xy,
-                            draw->identity_viewport,
+                            draw->bypass_viewport,
                             draw->rasterizer->clip_halfz,
                             (draw->vs.edgeflag_output ? TRUE : FALSE) );
 
@@ -299,6 +299,16 @@ fetch_pipeline_generic(struct draw_pt_middle_end *middle,
       FREE(vert_info->verts);
       vert_info = &gs_vert_info;
       prim_info = &gs_prim_info;
+
+      /*
+       * pt emit can only handle ushort number of vertices (see
+       * render->allocate_vertices).
+       * vsplit guarantees there's never more than 4096, however GS can
+       * easily blow this up (by a factor of 256 (or even 1024) max).
+       */
+      if (vert_info->count > 65535) {
+         opt |= PT_PIPELINE;
+      }
    } else {
       if (draw_prim_assembler_is_required(draw, prim_info, vert_info)) {
          draw_prim_assembler_run(draw, prim_info, vert_info,
@@ -359,6 +369,16 @@ fetch_pipeline_generic(struct draw_pt_middle_end *middle,
 }
 
 
+static inline unsigned
+prim_type(unsigned prim, unsigned flags)
+{
+   if (flags & DRAW_LINE_LOOP_AS_STRIP)
+      return PIPE_PRIM_LINE_STRIP;
+   else
+      return prim;
+}
+
+
 static void
 fetch_pipeline_run(struct draw_pt_middle_end *middle,
                    const unsigned *fetch_elts,
@@ -380,7 +400,7 @@ fetch_pipeline_run(struct draw_pt_middle_end *middle,
    prim_info.start = 0;
    prim_info.count = draw_count;
    prim_info.elts = draw_elts;
-   prim_info.prim = fpme->input_prim;
+   prim_info.prim = prim_type(fpme->input_prim, prim_flags);
    prim_info.flags = prim_flags;
    prim_info.primitive_count = 1;
    prim_info.primitive_lengths = &draw_count;
@@ -408,7 +428,7 @@ fetch_pipeline_linear_run(struct draw_pt_middle_end *middle,
    prim_info.start = 0;
    prim_info.count = count;
    prim_info.elts = NULL;
-   prim_info.prim = fpme->input_prim;
+   prim_info.prim = prim_type(fpme->input_prim, prim_flags);
    prim_info.flags = prim_flags;
    prim_info.primitive_count = 1;
    prim_info.primitive_lengths = &count;
@@ -439,7 +459,7 @@ fetch_pipeline_linear_run_elts(struct draw_pt_middle_end *middle,
    prim_info.start = 0;
    prim_info.count = draw_count;
    prim_info.elts = draw_elts;
-   prim_info.prim = fpme->input_prim;
+   prim_info.prim = prim_type(fpme->input_prim, prim_flags);
    prim_info.flags = prim_flags;
    prim_info.primitive_count = 1;
    prim_info.primitive_lengths = &draw_count;

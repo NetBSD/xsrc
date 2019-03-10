@@ -29,6 +29,8 @@
 #include "main/condrender.h"
 #include "main/context.h"
 #include "main/format_pack.h"
+#include "main/format_utils.h"
+#include "main/glformats.h"
 #include "main/image.h"
 #include "main/imports.h"
 #include "main/macros.h"
@@ -53,7 +55,8 @@ fast_draw_rgb_ubyte_pixels(struct gl_context *ctx,
                            GLint x, GLint y,
                            GLsizei width, GLsizei height,
                            const struct gl_pixelstore_attrib *unpack,
-                           const GLvoid *pixels)
+                           const GLvoid *pixels,
+                           bool flip_y)
 {
    const GLubyte *src = (const GLubyte *)
       _mesa_image_address2d(unpack, pixels, width,
@@ -65,7 +68,8 @@ fast_draw_rgb_ubyte_pixels(struct gl_context *ctx,
    GLint dstRowStride;
 
    ctx->Driver.MapRenderbuffer(ctx, rb, x, y, width, height,
-                               GL_MAP_WRITE_BIT, &dst, &dstRowStride);
+                               GL_MAP_WRITE_BIT, &dst, &dstRowStride,
+                               flip_y);
 
    if (!dst) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels");
@@ -100,7 +104,8 @@ fast_draw_rgba_ubyte_pixels(struct gl_context *ctx,
                            GLint x, GLint y,
                            GLsizei width, GLsizei height,
                            const struct gl_pixelstore_attrib *unpack,
-                           const GLvoid *pixels)
+                           const GLvoid *pixels,
+                           bool flip_y)
 {
    const GLubyte *src = (const GLubyte *)
       _mesa_image_address2d(unpack, pixels, width,
@@ -112,7 +117,8 @@ fast_draw_rgba_ubyte_pixels(struct gl_context *ctx,
    GLint dstRowStride;
 
    ctx->Driver.MapRenderbuffer(ctx, rb, x, y, width, height,
-                               GL_MAP_WRITE_BIT, &dst, &dstRowStride);
+                               GL_MAP_WRITE_BIT, &dst, &dstRowStride,
+                               flip_y);
 
    if (!dst) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels");
@@ -149,7 +155,8 @@ fast_draw_generic_pixels(struct gl_context *ctx,
                          GLsizei width, GLsizei height,
                          GLenum format, GLenum type,
                          const struct gl_pixelstore_attrib *unpack,
-                         const GLvoid *pixels)
+                         const GLvoid *pixels,
+                         bool flip_y)
 {
    const GLubyte *src = (const GLubyte *)
       _mesa_image_address2d(unpack, pixels, width,
@@ -162,7 +169,8 @@ fast_draw_generic_pixels(struct gl_context *ctx,
    GLint dstRowStride;
 
    ctx->Driver.MapRenderbuffer(ctx, rb, x, y, width, height,
-                               GL_MAP_WRITE_BIT, &dst, &dstRowStride);
+                               GL_MAP_WRITE_BIT, &dst, &dstRowStride,
+                               flip_y);
 
    if (!dst) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels");
@@ -195,6 +203,7 @@ fast_draw_rgba_pixels(struct gl_context *ctx, GLint x, GLint y,
                       const struct gl_pixelstore_attrib *userUnpack,
                       const GLvoid *pixels)
 {
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct gl_pixelstore_attrib unpack;
@@ -226,7 +235,7 @@ fast_draw_rgba_pixels(struct gl_context *ctx, GLint x, GLint y,
        (rb->Format == MESA_FORMAT_B8G8R8X8_UNORM ||
         rb->Format == MESA_FORMAT_B8G8R8A8_UNORM)) {
       fast_draw_rgb_ubyte_pixels(ctx, rb, x, y, width, height,
-                                 &unpack, pixels);
+                                 &unpack, pixels, fb->FlipY);
       return GL_TRUE;
    }
 
@@ -235,14 +244,15 @@ fast_draw_rgba_pixels(struct gl_context *ctx, GLint x, GLint y,
        (rb->Format == MESA_FORMAT_B8G8R8X8_UNORM ||
         rb->Format == MESA_FORMAT_B8G8R8A8_UNORM)) {
       fast_draw_rgba_ubyte_pixels(ctx, rb, x, y, width, height,
-                                  &unpack, pixels);
+                                  &unpack, pixels, fb->FlipY);
       return GL_TRUE;
    }
 
    if (_mesa_format_matches_format_and_type(rb->Format, format, type,
-                                            ctx->Unpack.SwapBytes)) {
+                                            ctx->Unpack.SwapBytes, NULL)) {
       fast_draw_generic_pixels(ctx, rb, x, y, width, height,
-                               format, type, &unpack, pixels);
+                               format, type, &unpack, pixels,
+                               fb->FlipY);
       return GL_TRUE;
    }
 
@@ -262,7 +272,7 @@ draw_stencil_pixels( struct gl_context *ctx, GLint x, GLint y,
                      const struct gl_pixelstore_attrib *unpack,
                      const GLvoid *pixels )
 {
-   const GLboolean zoom = ctx->Pixel.ZoomX != 1.0 || ctx->Pixel.ZoomY != 1.0;
+   const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    const GLenum destType = GL_UNSIGNED_BYTE;
    GLint row;
    GLubyte *values;
@@ -307,8 +317,8 @@ draw_depth_pixels( struct gl_context *ctx, GLint x, GLint y,
                    const GLvoid *pixels )
 {
    const GLboolean scaleOrBias
-      = ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0;
-   const GLboolean zoom = ctx->Pixel.ZoomX != 1.0 || ctx->Pixel.ZoomY != 1.0;
+      = ctx->Pixel.DepthScale != 1.0f || ctx->Pixel.DepthBias != 0.0f;
+   const GLboolean zoom = ctx->Pixel.ZoomX != 1.0f || ctx->Pixel.ZoomY != 1.0f;
    SWspan span;
 
    INIT_SPAN(span, GL_BITMAP);
@@ -371,7 +381,7 @@ draw_depth_pixels( struct gl_context *ctx, GLint x, GLint y,
       while (skipPixels < width) {
          const GLint spanWidth = MIN2(width - skipPixels, SWRAST_MAX_WIDTH);
          GLint row;
-         ASSERT(span.end <= SWRAST_MAX_WIDTH);
+         assert(span.end <= SWRAST_MAX_WIDTH);
          for (row = 0; row < height; row++) {
             const GLvoid *zSrc = _mesa_image_address2d(unpack,
                                                       pixels, width, height,
@@ -413,8 +423,7 @@ draw_rgba_pixels( struct gl_context *ctx, GLint x, GLint y,
                   const GLvoid *pixels )
 {
    const GLint imgX = x, imgY = y;
-   const GLboolean zoom = ctx->Pixel.ZoomX!=1.0 || ctx->Pixel.ZoomY!=1.0;
-   GLfloat *convImage = NULL;
+   const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    GLbitfield transferOps = ctx->_ImageTransferState;
    SWspan span;
 
@@ -447,11 +456,56 @@ draw_rgba_pixels( struct gl_context *ctx, GLint x, GLint y,
    {
       const GLbitfield interpMask = span.interpMask;
       const GLbitfield arrayMask = span.arrayMask;
-      const GLint srcStride
-         = _mesa_image_row_stride(unpack, width, format, type);
       GLint skipPixels = 0;
       /* use span array for temp color storage */
       GLfloat *rgba = (GLfloat *) span.array->attribs[VARYING_SLOT_COL0];
+      void *tempImage = NULL;
+
+      /* We have to deal with GL_COLOR_INDEX manually because
+       * _mesa_format_convert does not handle this format. So what we do here is
+       * convert it to RGBA ubyte first and then convert from that to dst as
+       * usual.
+       */
+      if (format == GL_COLOR_INDEX) {
+         /* This will handle byte swapping and transferops if needed */
+         tempImage =
+            _mesa_unpack_color_index_to_rgba_ubyte(ctx, 2,
+                                                   pixels, format, type,
+                                                   width, height, 1,
+                                                   unpack,
+                                                   transferOps);
+         if (!tempImage) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels");
+            return;
+         }
+
+         transferOps = 0;
+         pixels = tempImage;
+         format = GL_RGBA;
+         type = GL_UNSIGNED_BYTE;
+      } else if (unpack->SwapBytes) {
+         /* We have to handle byte-swapping scenarios before calling
+          * _mesa_format_convert
+          */
+         GLint swapSize = _mesa_sizeof_packed_type(type);
+         if (swapSize == 2 || swapSize == 4) {
+            int imageStride = _mesa_image_image_stride(unpack, width, height, format, type);
+
+            tempImage = malloc(imageStride);
+            if (!tempImage) {
+               _mesa_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels");
+               return;
+            }
+
+            _mesa_swap_bytes_2d_image(format, type, unpack,
+                                      width, height, tempImage, pixels);
+
+            pixels = tempImage;
+         }
+      }
+
+      const GLint srcStride
+         = _mesa_image_row_stride(unpack, width, format, type);
 
       /* if the span is wider than SWRAST_MAX_WIDTH we have to do it in chunks */
       while (skipPixels < width) {
@@ -462,11 +516,15 @@ draw_rgba_pixels( struct gl_context *ctx, GLint x, GLint y,
                                                       type, 0, skipPixels);
          GLint row;
 
+         /* get image row as float/RGBA */
+         uint32_t srcMesaFormat = _mesa_format_from_format_and_type(format, type);
          for (row = 0; row < height; row++) {
-            /* get image row as float/RGBA */
-            _mesa_unpack_color_span_float(ctx, spanWidth, GL_RGBA, rgba,
-                                     format, type, source, unpack,
-                                     transferOps);
+            int dstRowStride = 4 * width * sizeof(float);
+            _mesa_format_convert(rgba, RGBA32_FLOAT, dstRowStride,
+                                 (void*)source, srcMesaFormat, srcStride,
+                                 spanWidth, 1, NULL);
+            if (transferOps)
+               _mesa_apply_rgba_transfer_ops(ctx, transferOps, spanWidth, (GLfloat (*)[4])rgba);
 	    /* Set these for each row since the _swrast_write_* functions
 	     * may change them while clipping/rendering.
 	     */
@@ -491,9 +549,9 @@ draw_rgba_pixels( struct gl_context *ctx, GLint x, GLint y,
 
       /* XXX this is ugly/temporary, to undo above change */
       span.array->ChanType = CHAN_TYPE;
-   }
 
-   free(convImage);
+      free(tempImage);
+   }
 
    swrast_render_finish(ctx);
 }
@@ -551,10 +609,10 @@ draw_depth_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
 {
    const GLint imgX = x, imgY = y;
    const GLboolean scaleOrBias
-      = ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0;
+      = ctx->Pixel.DepthScale != 1.0F || ctx->Pixel.DepthBias != 0.0F;
    const GLuint stencilMask = ctx->Stencil.WriteMask[0];
    const GLenum stencilType = GL_UNSIGNED_BYTE;
-   const GLboolean zoom = ctx->Pixel.ZoomX != 1.0 || ctx->Pixel.ZoomY != 1.0;
+   const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    struct gl_renderbuffer *depthRb, *stencilRb;
    struct gl_pixelstore_attrib clippedUnpack = *unpack;
 
@@ -568,8 +626,8 @@ draw_depth_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
    
    depthRb = ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
    stencilRb = ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
-   ASSERT(depthRb);
-   ASSERT(stencilRb);
+   assert(depthRb);
+   assert(stencilRb);
 
    if (depthRb == stencilRb &&
        (depthRb->Format == MESA_FORMAT_S8_UINT_Z24_UNORM ||

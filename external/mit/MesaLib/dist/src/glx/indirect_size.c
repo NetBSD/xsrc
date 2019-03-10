@@ -3,18 +3,18 @@
 /*
  * (C) Copyright IBM Corporation 2004
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sub license,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
  * Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.  IN NO EVENT SHALL
@@ -26,6 +26,7 @@
  */
 
 
+#include <X11/Xfuncproto.h>
 #include <GL/gl.h>
 #include "indirect_size.h"
 
@@ -41,29 +42,20 @@
 #define FASTCALL
 #endif
 
-#if (defined(__GNUC__) && !defined(__CYGWIN__) && !defined(__MINGW32__)) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590) && defined(__ELF__))
-#define INTERNAL  __attribute__((visibility("internal")))
-#else
-#define INTERNAL
-#endif
 
-
-#if defined(__CYGWIN__) || defined(__MINGW32__) || defined(GLX_USE_APPLEGL)
-#undef HAVE_ALIAS
-#endif
-#ifdef HAVE_ALIAS
+#ifdef HAVE_FUNC_ATTRIBUTE_ALIAS
 #define ALIAS2(from,to) \
-    INTERNAL PURE FASTCALL GLint __gl ## from ## _size( GLenum e ) \
+    _X_INTERNAL PURE FASTCALL GLint __gl ## from ## _size( GLenum e ) \
         __attribute__ ((alias( # to )));
 #define ALIAS(from,to) ALIAS2( from, __gl ## to ## _size )
 #else
 #define ALIAS(from,to) \
-    INTERNAL PURE FASTCALL GLint __gl ## from ## _size( GLenum e ) \
+    _X_INTERNAL PURE FASTCALL GLint __gl ## from ## _size( GLenum e ) \
     { return __gl ## to ## _size( e ); }
 #endif
 
 
-INTERNAL PURE FASTCALL GLint
+_X_INTERNAL PURE FASTCALL GLint
 __glCallLists_size(GLenum e)
 {
     switch (e) {
@@ -87,7 +79,7 @@ __glCallLists_size(GLenum e)
     }
 }
 
-INTERNAL PURE FASTCALL GLint
+_X_INTERNAL PURE FASTCALL GLint
 __glFogfv_size(GLenum e)
 {
     switch (e) {
@@ -106,7 +98,7 @@ __glFogfv_size(GLenum e)
     }
 }
 
-INTERNAL PURE FASTCALL GLint
+_X_INTERNAL PURE FASTCALL GLint
 __glLightfv_size(GLenum e)
 {
     switch (e) {
@@ -128,7 +120,7 @@ __glLightfv_size(GLenum e)
     }
 }
 
-INTERNAL PURE FASTCALL GLint
+_X_INTERNAL PURE FASTCALL GLint
 __glLightModelfv_size(GLenum e)
 {
     switch (e) {
@@ -144,7 +136,7 @@ __glLightModelfv_size(GLenum e)
     }
 }
 
-INTERNAL PURE FASTCALL GLint
+_X_INTERNAL PURE FASTCALL GLint
 __glMaterialfv_size(GLenum e)
 {
     switch (e) {
@@ -163,7 +155,7 @@ __glMaterialfv_size(GLenum e)
     }
 }
 
-INTERNAL PURE FASTCALL GLint
+_X_INTERNAL PURE FASTCALL GLint
 __glTexParameterfv_size(GLenum e)
 {
     switch (e) {
@@ -219,7 +211,7 @@ __glTexParameterfv_size(GLenum e)
     }
 }
 
-INTERNAL PURE FASTCALL GLint
+_X_INTERNAL PURE FASTCALL GLint
 __glTexEnvfv_size(GLenum e)
 {
     switch (e) {
@@ -256,7 +248,7 @@ __glTexEnvfv_size(GLenum e)
     }
 }
 
-INTERNAL PURE FASTCALL GLint
+_X_INTERNAL PURE FASTCALL GLint
 __glTexGendv_size(GLenum e)
 {
     switch (e) {
@@ -270,7 +262,7 @@ __glTexGendv_size(GLenum e)
     }
 }
 
-INTERNAL PURE FASTCALL GLint
+_X_INTERNAL PURE FASTCALL GLint
 __glMap1d_size(GLenum e)
 {
     switch (e) {
@@ -292,7 +284,7 @@ __glMap1d_size(GLenum e)
     }
 }
 
-INTERNAL PURE FASTCALL GLint
+_X_INTERNAL PURE FASTCALL GLint
 __glMap2d_size(GLenum e)
 {
     switch (e) {
@@ -314,7 +306,7 @@ __glMap2d_size(GLenum e)
     }
 }
 
-INTERNAL PURE FASTCALL GLint
+_X_INTERNAL PURE FASTCALL GLint
 __glColorTableParameterfv_size(GLenum e)
 {
     switch (e) {
@@ -326,7 +318,7 @@ __glColorTableParameterfv_size(GLenum e)
     }
 }
 
-INTERNAL PURE FASTCALL GLint
+_X_INTERNAL PURE FASTCALL GLint
 __glConvolutionParameterfv_size(GLenum e)
 {
     switch (e) {
@@ -345,8 +337,8 @@ __glConvolutionParameterfv_size(GLenum e)
     }
 }
 
-INTERNAL PURE FASTCALL GLint
-__glPointParameterfvEXT_size(GLenum e)
+_X_INTERNAL PURE FASTCALL GLint
+__glPointParameterfv_size(GLenum e)
 {
     switch (e) {
     case GL_POINT_SIZE_MIN:
@@ -382,7 +374,6 @@ ALIAS(Fogiv, Fogfv)
     ALIAS(Map2f, Map2d)
     ALIAS(ColorTableParameteriv, ColorTableParameterfv)
     ALIAS(ConvolutionParameteriv, ConvolutionParameterfv)
-    ALIAS(PointParameterivNV, PointParameterfvEXT)
+    ALIAS(PointParameteriv, PointParameterfv)
 #undef PURE
 #undef FASTCALL
-#undef INTERNAL

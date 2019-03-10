@@ -66,6 +66,8 @@ struct draw_stage;
 struct vbuf_render;
 struct tgsi_exec_machine;
 struct tgsi_sampler;
+struct tgsi_image;
+struct tgsi_buffer;
 struct draw_pt_front_end;
 struct draw_assembler;
 struct draw_llvm;
@@ -86,11 +88,10 @@ struct draw_vertex_buffer {
 struct vertex_header {
    unsigned clipmask:DRAW_TOTAL_CLIP_PLANES;
    unsigned edgeflag:1;
-   unsigned have_clipdist:1;
+   unsigned pad:1;
    unsigned vertex_id:16;
 
-   float clip[4];
-   float pre_clip_pos[4];
+   float clip_pos[4];
 
    /* This will probably become float (*data)[4] soon:
     */
@@ -102,7 +103,7 @@ struct vertex_header {
 
 
 /* maximum number of shader variants we can cache */
-#define DRAW_MAX_SHADER_VARIANTS 128
+#define DRAW_MAX_SHADER_VARIANTS 512
 
 /**
  * Private context for the drawing module.
@@ -252,6 +253,7 @@ struct draw_context
 
    struct pipe_viewport_state viewports[PIPE_MAX_VIEWPORTS];
    boolean identity_viewport;
+   boolean bypass_viewport;
 
    /** Vertex shader state */
    struct {
@@ -260,13 +262,15 @@ struct draw_context
       uint position_output;
       uint edgeflag_output;
       uint clipvertex_output;
-      uint clipdistance_output[2];
+      uint ccdistance_output[2];
 
       /** Fields for TGSI interpreter / execution */
       struct {
          struct tgsi_exec_machine *machine;
 
          struct tgsi_sampler *sampler;
+         struct tgsi_image *image;
+         struct tgsi_buffer *buffer;
       } tgsi;
 
       struct translate *fetch;
@@ -286,6 +290,8 @@ struct draw_context
          struct tgsi_exec_machine *machine;
 
          struct tgsi_sampler *sampler;
+         struct tgsi_image *image;
+         struct tgsi_buffer *buffer;
       } tgsi;
 
    } gs;
@@ -354,8 +360,9 @@ struct draw_vertex_info {
 };
 
 /* these flags are set if the primitive is a segment of a larger one */
-#define DRAW_SPLIT_BEFORE 0x1
-#define DRAW_SPLIT_AFTER  0x2
+#define DRAW_SPLIT_BEFORE        0x1
+#define DRAW_SPLIT_AFTER         0x2
+#define DRAW_LINE_LOOP_AS_STRIP  0x4
 
 struct draw_prim_info {
    boolean linear;
@@ -399,9 +406,8 @@ uint draw_current_shader_outputs(const struct draw_context *draw);
 uint draw_current_shader_position_output(const struct draw_context *draw);
 uint draw_current_shader_viewport_index_output(const struct draw_context *draw);
 uint draw_current_shader_clipvertex_output(const struct draw_context *draw);
-uint draw_current_shader_clipdistance_output(const struct draw_context *draw, int index);
+uint draw_current_shader_ccdistance_output(const struct draw_context *draw, int index);
 uint draw_current_shader_num_written_clipdistances(const struct draw_context *draw);
-uint draw_current_shader_culldistance_output(const struct draw_context *draw, int index);
 uint draw_current_shader_num_written_culldistances(const struct draw_context *draw);
 int draw_alloc_extra_vertex_attrib(struct draw_context *draw,
                                    uint semantic_name, uint semantic_index);
@@ -478,19 +484,21 @@ void
 draw_stats_clipper_primitives(struct draw_context *draw,
                               const struct draw_prim_info *prim_info);
 
+void draw_update_clip_flags(struct draw_context *draw);
+void draw_update_viewport_flags(struct draw_context *draw);
+
 /** 
  * Return index i from the index buffer.
- * If the index buffer would overflow we return the
- * maximum possible index.
+ * If the index buffer would overflow we return index 0.
  */
 #define DRAW_GET_IDX(_elts, _i)                   \
-   (((_i) >= draw->pt.user.eltMax) ? DRAW_MAX_FETCH_IDX : (_elts)[_i])
+   (((_i) >= draw->pt.user.eltMax) ? 0 : (_elts)[_i])
 
 /**
  * Return index of the given viewport clamping it
  * to be between 0 <= and < PIPE_MAX_VIEWPORTS
  */
-static INLINE unsigned
+static inline unsigned
 draw_clamp_viewport_idx(int idx)
 {
    return ((PIPE_MAX_VIEWPORTS > idx && idx >= 0) ? idx : 0);
@@ -499,14 +507,14 @@ draw_clamp_viewport_idx(int idx)
 /**
  * Adds two unsigned integers and if the addition
  * overflows then it returns the value from
- * from the overflow_value variable.
+ * the overflow_value variable.
  */
-static INLINE unsigned
+static inline unsigned
 draw_overflow_uadd(unsigned a, unsigned b,
                    unsigned overflow_value)
 {
    unsigned res = a + b;
-   if (res < a || res < b) {
+   if (res < a) {
       res = overflow_value;
    }
    return res;

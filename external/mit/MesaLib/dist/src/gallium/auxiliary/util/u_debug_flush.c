@@ -44,7 +44,7 @@
 #include "util/u_memory.h"
 #include "util/u_debug_flush.h"
 #include "util/u_hash_table.h"
-#include "util/u_double_list.h"
+#include "util/list.h"
 #include "util/u_inlines.h"
 #include "util/u_string.h"
 #include "os/os_thread.h"
@@ -53,7 +53,7 @@
 struct debug_flush_buf {
    /* Atomic */
    struct pipe_reference reference; /* Must be the first member. */
-   pipe_mutex mutex;
+   mtx_t mutex;
    /* Immutable */
    boolean supports_unsync;
    unsigned bt_depth;
@@ -77,7 +77,7 @@ struct debug_flush_ctx {
    struct list_head head;
 };
 
-pipe_static_mutex(list_mutex);
+static mtx_t list_mutex = _MTX_INITIALIZER_NP;
 static struct list_head ctx_list = {&ctx_list, &ctx_list};
 
 static struct debug_stack_frame *
@@ -116,7 +116,7 @@ debug_flush_buf_create(boolean supports_unsync, unsigned bt_depth)
    fbuf->supports_unsync = supports_unsync;
    fbuf->bt_depth = bt_depth;
    pipe_reference_init(&fbuf->reference, 1);
-   pipe_mutex_init(fbuf->mutex);
+   (void) mtx_init(&fbuf->mutex, mtx_plain);
 
    return fbuf;
 out_no_buf:
@@ -132,8 +132,7 @@ debug_flush_buf_reference(struct debug_flush_buf **dst,
    struct debug_flush_buf *fbuf = *dst;
 
    if (pipe_reference(&(*dst)->reference, &src->reference)) {
-      if (fbuf->map_frame)
-         FREE(fbuf->map_frame);
+      FREE(fbuf->map_frame);
 
       FREE(fbuf);
    }
@@ -146,14 +145,14 @@ debug_flush_item_destroy(struct debug_flush_item *item)
 {
    debug_flush_buf_reference(&item->fbuf, NULL);
 
-   if (item->ref_frame)
-      FREE(item->ref_frame);
+   FREE(item->ref_frame);
 
    FREE(item);
 }
 
 struct debug_flush_ctx *
-debug_flush_ctx_create(boolean catch_reference_of_mapped, unsigned bt_depth)
+debug_flush_ctx_create(UNUSED boolean catch_reference_of_mapped,
+                       unsigned bt_depth)
 {
    struct debug_flush_ctx *fctx = CALLOC_STRUCT(debug_flush_ctx);
 
@@ -167,9 +166,9 @@ debug_flush_ctx_create(boolean catch_reference_of_mapped, unsigned bt_depth)
       goto out_no_ref_hash;
 
    fctx->bt_depth = bt_depth;
-   pipe_mutex_lock(list_mutex);
+   mtx_lock(&list_mutex);
    list_addtail(&fctx->head, &ctx_list);
-   pipe_mutex_unlock(list_mutex);
+   mtx_unlock(&list_mutex);
 
    return fctx;
 
@@ -217,7 +216,7 @@ debug_flush_map(struct debug_flush_buf *fbuf, unsigned flags)
    if (!fbuf)
       return;
 
-   pipe_mutex_lock(fbuf->mutex);
+   mtx_lock(&fbuf->mutex);
    if (fbuf->mapped) {
       debug_flush_alert("Recursive map detected.", "Map",
                         2, fbuf->bt_depth, TRUE, TRUE, NULL);
@@ -229,12 +228,12 @@ debug_flush_map(struct debug_flush_buf *fbuf, unsigned flags)
    }
    fbuf->map_frame = debug_flush_capture_frame(1, fbuf->bt_depth);
    fbuf->mapped = TRUE;
-   pipe_mutex_unlock(fbuf->mutex);
+   mtx_unlock(&fbuf->mutex);
 
    if (mapped_sync) {
       struct debug_flush_ctx *fctx;
 
-      pipe_mutex_lock(list_mutex);
+      mtx_lock(&list_mutex);
       LIST_FOR_EACH_ENTRY(fctx, &ctx_list, head) {
          struct debug_flush_item *item =
             util_hash_table_get(fctx->ref_hash, fbuf);
@@ -246,7 +245,7 @@ debug_flush_map(struct debug_flush_buf *fbuf, unsigned flags)
                               FALSE, FALSE, item->ref_frame);
          }
       }
-      pipe_mutex_unlock(list_mutex);
+      mtx_unlock(&list_mutex);
    }
 }
 
@@ -256,20 +255,24 @@ debug_flush_unmap(struct debug_flush_buf *fbuf)
    if (!fbuf)
       return;
 
-   pipe_mutex_lock(fbuf->mutex);
+   mtx_lock(&fbuf->mutex);
    if (!fbuf->mapped)
       debug_flush_alert("Unmap not previously mapped detected.", "Map",
                         2, fbuf->bt_depth, FALSE, TRUE, NULL);
 
    fbuf->mapped_sync = FALSE;
    fbuf->mapped = FALSE;
-   if (fbuf->map_frame) {
-      FREE(fbuf->map_frame);
-      fbuf->map_frame = NULL;
-   }
-   pipe_mutex_unlock(fbuf->mutex);
+   FREE(fbuf->map_frame);
+   fbuf->map_frame = NULL;
+   mtx_unlock(&fbuf->mutex);
 }
 
+
+/**
+ * Add the given buffer to the list of active buffers.  Active buffers
+ * are those which are referenced by the command buffer currently being
+ * constructed.
+ */
 void
 debug_flush_cb_reference(struct debug_flush_ctx *fctx,
                          struct debug_flush_buf *fbuf)
@@ -281,14 +284,14 @@ debug_flush_cb_reference(struct debug_flush_ctx *fctx,
 
    item = util_hash_table_get(fctx->ref_hash, fbuf);
 
-   pipe_mutex_lock(fbuf->mutex);
+   mtx_lock(&fbuf->mutex);
    if (fbuf->mapped_sync) {
       debug_flush_alert("Reference of mapped buffer detected.", "Reference",
                         2, fctx->bt_depth, TRUE, TRUE, NULL);
       debug_flush_alert(NULL, "Map", 0, fbuf->bt_depth, FALSE,
                         FALSE, fbuf->map_frame);
    }
-   pipe_mutex_unlock(fbuf->mutex);
+   mtx_unlock(&fbuf->mutex);
 
    if (!item) {
       item = CALLOC_STRUCT(debug_flush_item);
@@ -313,30 +316,35 @@ out_no_item:
 }
 
 static enum pipe_error
-debug_flush_might_flush_cb(void *key, void *value, void *data)
+debug_flush_might_flush_cb(UNUSED void *key, void *value, void *data)
 {
    struct debug_flush_item *item =
       (struct debug_flush_item *) value;
    struct debug_flush_buf *fbuf = item->fbuf;
-   const char *reason = (const char *) data;
-   char message[80];
 
-   util_snprintf(message, sizeof(message),
-                 "%s referenced mapped buffer detected.", reason);
-
-   pipe_mutex_lock(fbuf->mutex);
+   mtx_lock(&fbuf->mutex);
    if (fbuf->mapped_sync) {
+      const char *reason = (const char *) data;
+      char message[80];
+
+      util_snprintf(message, sizeof(message),
+                    "%s referenced mapped buffer detected.", reason);
+
       debug_flush_alert(message, reason, 3, item->bt_depth, TRUE, TRUE, NULL);
       debug_flush_alert(NULL, "Map", 0, fbuf->bt_depth, TRUE, FALSE,
                         fbuf->map_frame);
       debug_flush_alert(NULL, "First reference", 0, item->bt_depth, FALSE,
                         FALSE, item->ref_frame);
    }
-   pipe_mutex_unlock(fbuf->mutex);
+   mtx_unlock(&fbuf->mutex);
 
    return PIPE_OK;
 }
 
+/**
+ * Called when we're about to possibly flush a command buffer.
+ * We check if any active buffers are in a mapped state.  If so, print an alert.
+ */
 void
 debug_flush_might_flush(struct debug_flush_ctx *fctx)
 {
@@ -349,7 +357,7 @@ debug_flush_might_flush(struct debug_flush_ctx *fctx)
 }
 
 static enum pipe_error
-debug_flush_flush_cb(void *key, void *value, void *data)
+debug_flush_flush_cb(UNUSED void *key, void *value, UNUSED void *data)
 {
    struct debug_flush_item *item =
       (struct debug_flush_item *) value;
@@ -360,6 +368,11 @@ debug_flush_flush_cb(void *key, void *value, void *data)
 }
 
 
+/**
+ * Called when we flush a command buffer.  Two things are done:
+ * 1. Check if any of the active buffers are currently mapped (alert if so).
+ * 2. Discard/unreference all the active buffers.
+ */
 void
 debug_flush_flush(struct debug_flush_ctx *fctx)
 {

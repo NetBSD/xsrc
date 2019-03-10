@@ -16,9 +16,14 @@ env.Append(LIBS = [
     'user32',
     'kernel32',
     'ws2_32',
+    'advapi32',
 ])
 
-env.Prepend(LIBS = [mesautil])
+env.Prepend(LIBS = [
+    mesautil,
+    nir,
+    spirv
+])
 
 sources = ['libgl_gdi.c']
 drivers = []
@@ -30,27 +35,23 @@ if env['llvm']:
     env.Append(CPPDEFINES = 'HAVE_LLVMPIPE')
     drivers += [llvmpipe]
 
+    if env['swr']:
+        env.Append(CPPDEFINES = 'HAVE_SWR')
+        drivers += [swr]
+
 if env['gcc'] and env['machine'] != 'x86_64':
     # DEF parser in certain versions of MinGW is busted, as does not behave as
     # MSVC.  mingw-w64 works fine.
     sources += ['#src/gallium/state_trackers/wgl/opengl32.mingw.def']
 else:
     sources += ['#src/gallium/state_trackers/wgl/opengl32.def']
-    
-drivers += [trace, rbug]
 
 env['no_import_lib'] = 1
-
-# when GLES is enabled, gl* and _glapi_* belong to bridge_glapi and
-# shared_glapi respectively
-if env['gles']:
-    env.Prepend(LIBPATH = [shared_glapi.dir])
-    glapi = [bridge_glapi, 'libglapi']
 
 opengl32 = env.SharedLibrary(
     target ='opengl32',
     source = sources,
-    LIBS = wgl + ws_gdi + glapi + mesa + drivers + gallium + glsl + env['LIBS'],
+    LIBS = wgl + ws_gdi + glapi + compiler + mesa + drivers + gallium + glsl + nir + env['LIBS'],
 )
 
 env.Alias('opengl32', opengl32)

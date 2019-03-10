@@ -64,14 +64,14 @@ and create a window, you must do the following to use the X/Mesa interface:
 #ifndef XMESA_H
 #define XMESA_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include "xmesa_x.h"
 #include "GL/gl.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define XMESA_MAJOR_VERSION 6
 #define XMESA_MINOR_VERSION 3
@@ -83,14 +83,6 @@ extern "C" {
  */
 #define XMESA_VERSION 1
 #define XMESA_EXTENSIONS 2
-
-
-/*
- * Values passed to XMesaSetFXmode:
- */
-#define XMESA_FX_WINDOW       1
-#define XMESA_FX_FULLSCREEN   2
-
 
 
 typedef struct xmesa_context *XMesaContext;
@@ -241,6 +233,12 @@ extern XMesaBuffer XMesaGetCurrentReadBuffer( void );
 
 
 /*
+ * Return display of current context.
+ */
+extern Display *XMesaGetCurrentDisplay( void );
+
+
+/*
  * Swap the front and back buffers for the given buffer.  No action is
  * taken if the buffer is not double buffered.
  */
@@ -334,20 +332,6 @@ extern unsigned long XMesaDitherColor( XMesaContext xmesa,
 				       GLfloat green,
 				       GLfloat blue,
 				       GLfloat alpha );
-
-
-
-/*
- * 3Dfx Glide driver only!
- * Set 3Dfx/Glide full-screen or window rendering mode.
- * Input:  mode - either XMESA_FX_WINDOW (window rendering mode) or
- *                XMESA_FX_FULLSCREEN (full-screen rendering mode)
- * Return:  GL_TRUE if success
- *          GL_FALSE if invalid mode or if not using 3Dfx driver
- *
- * New in Mesa 2.6.
- */
-extern GLboolean XMesaSetFXmode( GLint mode );
 
 
 

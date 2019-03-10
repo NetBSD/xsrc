@@ -38,7 +38,6 @@
 #include "sp_setup.h"
 #include "sp_state.h"
 #include "draw/draw_context.h"
-#include "draw/draw_vertex.h"
 #include "pipe/p_shader_tokens.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
@@ -125,10 +124,11 @@ struct setup_context {
 /**
  * Clip setup->quad against the scissor/surface bounds.
  */
-static INLINE void
+static inline void
 quad_clip(struct setup_context *setup, struct quad_header *quad)
 {
-   const struct pipe_scissor_state *cliprect = &setup->softpipe->cliprect;
+   unsigned viewport_index = quad[0].input.viewport_index;
+   const struct pipe_scissor_state *cliprect = &setup->softpipe->cliprect[viewport_index];
    const int minx = (int) cliprect->minx;
    const int maxx = (int) cliprect->maxx;
    const int miny = (int) cliprect->miny;
@@ -156,10 +156,10 @@ quad_clip(struct setup_context *setup, struct quad_header *quad)
 /**
  * Emit a quad (pass to next stage) with clipping.
  */
-static INLINE void
+static inline void
 clip_emit_quad(struct setup_context *setup, struct quad_header *quad)
 {
-   quad_clip( setup, quad );
+   quad_clip(setup, quad);
 
    if (quad->inout.mask) {
       struct softpipe_context *sp = setup->softpipe;
@@ -178,14 +178,14 @@ clip_emit_quad(struct setup_context *setup, struct quad_header *quad)
  * Given an X or Y coordinate, return the block/quad coordinate that it
  * belongs to.
  */
-static INLINE int
+static inline int
 block(int x)
 {
    return x & ~(2-1);
 }
 
 
-static INLINE int
+static inline int
 block_x(int x)
 {
    return x & ~(16-1);
@@ -562,17 +562,21 @@ static void
 setup_fragcoord_coeff(struct setup_context *setup, uint slot)
 {
    const struct tgsi_shader_info *fsInfo = &setup->softpipe->fs_variant->info;
+   boolean origin_lower_left =
+         fsInfo->properties[TGSI_PROPERTY_FS_COORD_ORIGIN];
+   boolean pixel_center_integer =
+         fsInfo->properties[TGSI_PROPERTY_FS_COORD_PIXEL_CENTER];
 
    /*X*/
-   setup->coef[slot].a0[0] = fsInfo->pixel_center_integer ? 0.0f : 0.5f;
+   setup->coef[slot].a0[0] = pixel_center_integer ? 0.0f : 0.5f;
    setup->coef[slot].dadx[0] = 1.0f;
    setup->coef[slot].dady[0] = 0.0f;
    /*Y*/
    setup->coef[slot].a0[1] =
-		   (fsInfo->origin_lower_left ? setup->softpipe->framebuffer.height-1 : 0)
-		   + (fsInfo->pixel_center_integer ? 0.0f : 0.5f);
+		   (origin_lower_left ? setup->softpipe->framebuffer.height-1 : 0)
+		   + (pixel_center_integer ? 0.0f : 0.5f);
    setup->coef[slot].dadx[1] = 0.0f;
-   setup->coef[slot].dady[1] = fsInfo->origin_lower_left ? -1.0f : 1.0f;
+   setup->coef[slot].dady[1] = origin_lower_left ? -1.0f : 1.0f;
    /*Z*/
    setup->coef[slot].a0[2] = setup->posCoef.a0[2];
    setup->coef[slot].dadx[2] = setup->posCoef.dadx[2];
@@ -594,9 +598,11 @@ setup_tri_coefficients(struct setup_context *setup)
 {
    struct softpipe_context *softpipe = setup->softpipe;
    const struct tgsi_shader_info *fsInfo = &setup->softpipe->fs_variant->info;
-   const struct vertex_info *vinfo = softpipe_get_vertex_info(softpipe);
+   const struct sp_setup_info *sinfo = &softpipe->setup_info;
    uint fragSlot;
    float v[3];
+
+   assert(sinfo->valid);
 
    /* z and w are done by linear interpolation:
     */
@@ -613,15 +619,16 @@ setup_tri_coefficients(struct setup_context *setup)
    /* setup interpolation for all the remaining attributes:
     */
    for (fragSlot = 0; fragSlot < fsInfo->num_inputs; fragSlot++) {
-      const uint vertSlot = vinfo->attrib[fragSlot].src_index;
+      const uint vertSlot = sinfo->attrib[fragSlot].src_index;
       uint j;
 
-      switch (vinfo->attrib[fragSlot].interp_mode) {
-      case INTERP_CONSTANT:
-         for (j = 0; j < TGSI_NUM_CHANNELS; j++)
+      switch (sinfo->attrib[fragSlot].interp) {
+      case SP_INTERP_CONSTANT:
+         for (j = 0; j < TGSI_NUM_CHANNELS; j++) {
             const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         }
          break;
-      case INTERP_LINEAR:
+      case SP_INTERP_LINEAR:
          for (j = 0; j < TGSI_NUM_CHANNELS; j++) {
             tri_apply_cylindrical_wrap(setup->vmin[vertSlot][j],
                                        setup->vmid[vertSlot][j],
@@ -631,7 +638,7 @@ setup_tri_coefficients(struct setup_context *setup)
             tri_linear_coeff(setup, &setup->coef[fragSlot], j, v);
          }
          break;
-      case INTERP_PERSPECTIVE:
+      case SP_INTERP_PERSPECTIVE:
          for (j = 0; j < TGSI_NUM_CHANNELS; j++) {
             tri_apply_cylindrical_wrap(setup->vmin[vertSlot][j],
                                        setup->vmid[vertSlot][j],
@@ -641,7 +648,7 @@ setup_tri_coefficients(struct setup_context *setup)
             tri_persp_coeff(setup, &setup->coef[fragSlot], j, v);
          }
          break;
-      case INTERP_POS:
+      case SP_INTERP_POS:
          setup_fragcoord_coeff(setup, fragSlot);
          break;
       default:
@@ -703,9 +710,10 @@ static void
 subtriangle(struct setup_context *setup,
             struct edge *eleft,
             struct edge *eright,
-            int lines)
+            int lines,
+            unsigned viewport_index)
 {
-   const struct pipe_scissor_state *cliprect = &setup->softpipe->cliprect;
+   const struct pipe_scissor_state *cliprect = &setup->softpipe->cliprect[viewport_index];
    const int minx = (int) cliprect->minx;
    const int maxx = (int) cliprect->maxx;
    const int miny = (int) cliprect->miny;
@@ -803,6 +811,7 @@ sp_setup_tri(struct setup_context *setup,
 {
    float det;
    uint layer = 0;
+   unsigned viewport_index = 0;
 #if DEBUG_VERTS
    debug_printf("Setup triangle:\n");
    print_vertex(setup, v0);
@@ -836,24 +845,30 @@ sp_setup_tri(struct setup_context *setup,
    setup->span.right[1] = 0;
    /*   setup->span.z_mode = tri_z_mode( setup->ctx ); */
    if (setup->softpipe->layer_slot > 0) {
-      layer = *(unsigned *)v1[setup->softpipe->layer_slot];
+      layer = *(unsigned *)setup->vprovoke[setup->softpipe->layer_slot];
       layer = MIN2(layer, setup->max_layer);
    }
    setup->quad[0].input.layer = layer;
+
+   if (setup->softpipe->viewport_index_slot > 0) {
+      unsigned *udata = (unsigned*)v0[setup->softpipe->viewport_index_slot];
+      viewport_index = sp_clamp_viewport_idx(*udata);
+   }
+   setup->quad[0].input.viewport_index = viewport_index;
 
    /*   init_constant_attribs( setup ); */
 
    if (setup->oneoverarea < 0.0) {
       /* emaj on left:
        */
-      subtriangle( setup, &setup->emaj, &setup->ebot, setup->ebot.lines );
-      subtriangle( setup, &setup->emaj, &setup->etop, setup->etop.lines );
+      subtriangle(setup, &setup->emaj, &setup->ebot, setup->ebot.lines, viewport_index);
+      subtriangle(setup, &setup->emaj, &setup->etop, setup->etop.lines, viewport_index);
    }
    else {
       /* emaj on right:
        */
-      subtriangle( setup, &setup->ebot, &setup->emaj, setup->ebot.lines );
-      subtriangle( setup, &setup->etop, &setup->emaj, setup->etop.lines );
+      subtriangle(setup, &setup->ebot, &setup->emaj, setup->ebot.lines, viewport_index);
+      subtriangle(setup, &setup->etop, &setup->emaj, setup->etop.lines, viewport_index);
    }
 
    flush_spans( setup );
@@ -953,10 +968,12 @@ setup_line_coefficients(struct setup_context *setup,
 {
    struct softpipe_context *softpipe = setup->softpipe;
    const struct tgsi_shader_info *fsInfo = &setup->softpipe->fs_variant->info;
-   const struct vertex_info *vinfo = softpipe_get_vertex_info(softpipe);
+   const struct sp_setup_info *sinfo = &softpipe->setup_info;
    uint fragSlot;
    float area;
    float v[2];
+
+   assert(sinfo->valid);
 
    /* use setup->vmin, vmax to point to vertices */
    if (softpipe->rasterizer->flatshade_first)
@@ -988,15 +1005,15 @@ setup_line_coefficients(struct setup_context *setup,
    /* setup interpolation for all the remaining attributes:
     */
    for (fragSlot = 0; fragSlot < fsInfo->num_inputs; fragSlot++) {
-      const uint vertSlot = vinfo->attrib[fragSlot].src_index;
+      const uint vertSlot = sinfo->attrib[fragSlot].src_index;
       uint j;
 
-      switch (vinfo->attrib[fragSlot].interp_mode) {
-      case INTERP_CONSTANT:
+      switch (sinfo->attrib[fragSlot].interp) {
+      case SP_INTERP_CONSTANT:
          for (j = 0; j < TGSI_NUM_CHANNELS; j++)
             const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
          break;
-      case INTERP_LINEAR:
+      case SP_INTERP_LINEAR:
          for (j = 0; j < TGSI_NUM_CHANNELS; j++) {
             line_apply_cylindrical_wrap(setup->vmin[vertSlot][j],
                                         setup->vmax[vertSlot][j],
@@ -1005,7 +1022,7 @@ setup_line_coefficients(struct setup_context *setup,
             line_linear_coeff(setup, &setup->coef[fragSlot], j, v);
          }
          break;
-      case INTERP_PERSPECTIVE:
+      case SP_INTERP_PERSPECTIVE:
          for (j = 0; j < TGSI_NUM_CHANNELS; j++) {
             line_apply_cylindrical_wrap(setup->vmin[vertSlot][j],
                                         setup->vmax[vertSlot][j],
@@ -1014,7 +1031,7 @@ setup_line_coefficients(struct setup_context *setup,
             line_persp_coeff(setup, &setup->coef[fragSlot], j, v);
          }
          break;
-      case INTERP_POS:
+      case SP_INTERP_POS:
          setup_fragcoord_coeff(setup, fragSlot);
          break;
       default:
@@ -1035,7 +1052,7 @@ setup_line_coefficients(struct setup_context *setup,
 /**
  * Plot a pixel in a line segment.
  */
-static INLINE void
+static inline void
 plot(struct setup_context *setup, int x, int y)
 {
    const int iy = y & 1;
@@ -1050,7 +1067,7 @@ plot(struct setup_context *setup, int x, int y)
       /* flush prev quad, start new quad */
 
       if (setup->quad[0].input.x0 != -1)
-         clip_emit_quad( setup, &setup->quad[0] );
+         clip_emit_quad(setup, &setup->quad[0]);
 
       setup->quad[0].input.x0 = quadX;
       setup->quad[0].input.y0 = quadY;
@@ -1079,6 +1096,7 @@ sp_setup_line(struct setup_context *setup,
    int dy = y1 - y0;
    int xstep, ystep;
    uint layer = 0;
+   unsigned viewport_index = 0;
 
 #if DEBUG_VERTS
    debug_printf("Setup line:\n");
@@ -1123,10 +1141,16 @@ sp_setup_line(struct setup_context *setup,
    setup->quad[0].input.x0 = setup->quad[0].input.y0 = -1;
    setup->quad[0].inout.mask = 0x0;
    if (setup->softpipe->layer_slot > 0) {
-      layer = *(unsigned *)v1[setup->softpipe->layer_slot];
+      layer = *(unsigned *)setup->vprovoke[setup->softpipe->layer_slot];
       layer = MIN2(layer, setup->max_layer);
    }
    setup->quad[0].input.layer = layer;
+
+   if (setup->softpipe->viewport_index_slot > 0) {
+      unsigned *udata = (unsigned*)setup->vprovoke[setup->softpipe->viewport_index_slot];
+      viewport_index = sp_clamp_viewport_idx(*udata);
+   }
+   setup->quad[0].input.viewport_index = viewport_index;
 
    /* XXX temporary: set coverage to 1.0 so the line appears
     * if AA mode happens to be enabled.
@@ -1179,7 +1203,7 @@ sp_setup_line(struct setup_context *setup,
 
    /* draw final quad */
    if (setup->quad[0].inout.mask) {
-      clip_emit_quad( setup, &setup->quad[0] );
+      clip_emit_quad(setup, &setup->quad[0]);
    }
 }
 
@@ -1216,13 +1240,16 @@ sp_setup_point(struct setup_context *setup,
    const boolean round = (boolean) setup->softpipe->rasterizer->point_smooth;
    const float x = v0[0][0];  /* Note: data[0] is always position */
    const float y = v0[0][1];
-   const struct vertex_info *vinfo = softpipe_get_vertex_info(softpipe);
+   const struct sp_setup_info *sinfo = &softpipe->setup_info;
    uint fragSlot;
    uint layer = 0;
+   unsigned viewport_index = 0;
 #if DEBUG_VERTS
    debug_printf("Setup point:\n");
    print_vertex(setup, v0);
 #endif
+
+   assert(sinfo->valid);
 
    if (setup->softpipe->no_rast || setup->softpipe->rasterizer->rasterizer_discard)
       return;
@@ -1234,6 +1261,12 @@ sp_setup_point(struct setup_context *setup,
       layer = MIN2(layer, setup->max_layer);
    }
    setup->quad[0].input.layer = layer;
+
+   if (setup->softpipe->viewport_index_slot > 0) {
+      unsigned *udata = (unsigned*)v0[setup->softpipe->viewport_index_slot];
+      viewport_index = sp_clamp_viewport_idx(*udata);
+   }
+   setup->quad[0].input.viewport_index = viewport_index;
 
    /* For points, all interpolants are constant-valued.
     * However, for point sprites, we'll need to setup texcoords appropriately.
@@ -1258,22 +1291,22 @@ sp_setup_point(struct setup_context *setup,
    const_coeff(setup, &setup->posCoef, 0, 3);
 
    for (fragSlot = 0; fragSlot < fsInfo->num_inputs; fragSlot++) {
-      const uint vertSlot = vinfo->attrib[fragSlot].src_index;
+      const uint vertSlot = sinfo->attrib[fragSlot].src_index;
       uint j;
 
-      switch (vinfo->attrib[fragSlot].interp_mode) {
-      case INTERP_CONSTANT:
+      switch (sinfo->attrib[fragSlot].interp) {
+      case SP_INTERP_CONSTANT:
          /* fall-through */
-      case INTERP_LINEAR:
+      case SP_INTERP_LINEAR:
          for (j = 0; j < TGSI_NUM_CHANNELS; j++)
             const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
          break;
-      case INTERP_PERSPECTIVE:
+      case SP_INTERP_PERSPECTIVE:
          for (j = 0; j < TGSI_NUM_CHANNELS; j++)
             point_persp_coeff(setup, setup->vprovoke,
                               &setup->coef[fragSlot], vertSlot, j);
          break;
-      case INTERP_POS:
+      case SP_INTERP_POS:
          setup_fragcoord_coeff(setup, fragSlot);
          break;
       default:
@@ -1296,7 +1329,7 @@ sp_setup_point(struct setup_context *setup,
       setup->quad[0].input.x0 = (int) x - ix;
       setup->quad[0].input.y0 = (int) y - iy;
       setup->quad[0].inout.mask = (1 << ix) << (2 * iy);
-      clip_emit_quad( setup, &setup->quad[0] );
+      clip_emit_quad(setup, &setup->quad[0]);
    }
    else {
       if (round) {
@@ -1357,7 +1390,7 @@ sp_setup_point(struct setup_context *setup,
                if (setup->quad[0].inout.mask) {
                   setup->quad[0].input.x0 = ix;
                   setup->quad[0].input.y0 = iy;
-                  clip_emit_quad( setup, &setup->quad[0] );
+                  clip_emit_quad(setup, &setup->quad[0]);
                }
             }
          }
@@ -1404,7 +1437,7 @@ sp_setup_point(struct setup_context *setup,
                setup->quad[0].inout.mask = mask;
                setup->quad[0].input.x0 = ix;
                setup->quad[0].input.y0 = iy;
-               clip_emit_quad( setup, &setup->quad[0] );
+               clip_emit_quad(setup, &setup->quad[0]);
             }
          }
       }

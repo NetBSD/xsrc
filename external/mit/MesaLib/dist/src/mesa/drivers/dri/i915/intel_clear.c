@@ -81,7 +81,6 @@ static void
 intelClear(struct gl_context *ctx, GLbitfield mask)
 {
    struct intel_context *intel = intel_context(ctx);
-   const GLuint colorMask = *((GLuint *) & ctx->Color.ColorMask[0]);
    GLbitfield tri_mask = 0;
    GLbitfield blit_mask = 0;
    GLbitfield swrast_mask = 0;
@@ -94,7 +93,7 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
    }
 
    if (0)
-      fprintf(stderr, "%s\n", __FUNCTION__);
+      fprintf(stderr, "%s\n", __func__);
 
    /* Get SW clears out of the way: Anything without an intel_renderbuffer */
    for (i = 0; i < BUFFER_COUNT; i++) {
@@ -113,7 +112,7 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
    }
 
    /* HW color buffers (front, back, aux, generic FBO, etc) */
-   if (colorMask == ~0) {
+   if (GET_COLORMASK(ctx->Color.ColorMask, 0) == 0xf) {
       /* clear all R,G,B,A */
       blit_mask |= (mask & BUFFER_BITS_COLOR);
    }
@@ -179,7 +178,7 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
 
    if (tri_mask) {
       debug_mask("tri", tri_mask);
-      if (ctx->API == API_OPENGLES)
+      if (!ctx->Extensions.ARB_fragment_shader)
 	 _mesa_meta_Clear(&intel->ctx, tri_mask);
       else
 	 _mesa_meta_glsl_Clear(&intel->ctx, tri_mask);

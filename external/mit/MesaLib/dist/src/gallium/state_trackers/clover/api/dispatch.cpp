@@ -122,16 +122,16 @@ namespace clover {
       clReleaseDevice,
       clCreateImage,
       clCreateProgramWithBuiltInKernels,
-      NULL, // clCompileProgram
-      NULL, // clLinkProgram
+      clCompileProgram,
+      clLinkProgram,
       clUnloadPlatformCompiler,
-      NULL, // clGetKernelArgInfo
-      NULL, // clEnqueueFillBuffer
-      NULL, // clEnqueueFillImage
-      NULL, // clEnqueueMigrateMemObjects
+      clGetKernelArgInfo,
+      clEnqueueFillBuffer,
+      clEnqueueFillImage,
+      clEnqueueMigrateMemObjects,
       clEnqueueMarkerWithWaitList,
       clEnqueueBarrierWithWaitList,
-      NULL, // clGetExtensionFunctionAddressForPlatform
+      GetExtensionFunctionAddressForPlatform,
       NULL, // clCreateFromGLTexture
       NULL, // clGetDeviceIDsFromD3D11KHR
       NULL, // clCreateFromD3D11BufferKHR

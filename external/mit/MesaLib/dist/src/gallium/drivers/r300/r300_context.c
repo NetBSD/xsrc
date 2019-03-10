@@ -24,9 +24,9 @@
 
 #include "util/u_memory.h"
 #include "util/u_sampler.h"
-#include "util/u_simple_list.h"
+#include "util/simple_list.h"
 #include "util/u_upload_mgr.h"
-#include "os/os_time.h"
+#include "util/os_time.h"
 #include "vl/vl_decoder.h"
 #include "vl/vl_video_buffer.h"
 
@@ -63,7 +63,7 @@ static void r300_release_referenced_objects(struct r300_context *r300)
     }
 
     /* Manually-created vertex buffers. */
-    pipe_resource_reference(&r300->dummy_vb.buffer, NULL);
+    pipe_vertex_buffer_unreference(&r300->dummy_vb);
     pb_reference(&r300->vbo, NULL);
 
     r300->context.delete_depth_stencil_alpha_state(&r300->context,
@@ -88,17 +88,21 @@ static void r300_destroy_context(struct pipe_context* context)
 
     if (r300->uploader)
         u_upload_destroy(r300->uploader);
+    if (r300->context.stream_uploader)
+        u_upload_destroy(r300->context.stream_uploader);
 
     /* XXX: This function assumes r300->query_list was initialized */
     r300_release_referenced_objects(r300);
 
     if (r300->cs)
         r300->rws->cs_destroy(r300->cs);
+    if (r300->ctx)
+        r300->rws->ctx_destroy(r300->ctx);
 
     rc_destroy_regalloc_state(&r300->fs_regalloc_state);
 
     /* XXX: No way to tell if this was initialized or not? */
-    util_slab_destroy(&r300->pool_transfers);
+    slab_destroy_child(&r300->pool_transfers);
 
     /* Free the structs allocated in r300_setup_atoms() */
     if (r300->aa_state.state) {
@@ -154,7 +158,6 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     boolean is_rv350 = r300->screen->caps.is_rv350;
     boolean is_r500 = r300->screen->caps.is_r500;
     boolean has_tcl = r300->screen->caps.has_tcl;
-    boolean drm_2_6_0 = r300->screen->info.drm_minor >= 6;
 
     /* Create the actual atom list.
      *
@@ -173,11 +176,11 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     R300_INIT_ATOM(gpu_flush, 9);
     R300_INIT_ATOM(aa_state, 4);
     R300_INIT_ATOM(fb_state, 0);
-    R300_INIT_ATOM(hyperz_state, is_r500 || (is_rv350 && drm_2_6_0) ? 10 : 8);
+    R300_INIT_ATOM(hyperz_state, is_r500 || is_rv350 ? 10 : 8);
     /* ZB (unpipelined), SC. */
     R300_INIT_ATOM(ztop_state, 2);
     /* ZB, FG. */
-    R300_INIT_ATOM(dsa_state, is_r500 ? (drm_2_6_0 ? 10 : 8) : 6);
+    R300_INIT_ATOM(dsa_state, is_r500 ? 10 : 6);
     /* RB3D. */
     R300_INIT_ATOM(blend_state, 8);
     R300_INIT_ATOM(blend_color_state, is_r500 ? 3 : 2);
@@ -189,7 +192,7 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     /* VAP. */
     R300_INIT_ATOM(viewport_state, 9);
     R300_INIT_ATOM(pvs_flush, 2);
-    R300_INIT_ATOM(vap_invariant_state, is_r500 ? 11 : 9);
+    R300_INIT_ATOM(vap_invariant_state, is_r500 || !has_tcl ? 11 : 9);
     R300_INIT_ATOM(vertex_stream_state, 0);
     R300_INIT_ATOM(vs_state, 0);
     R300_INIT_ATOM(vs_constants, 0);
@@ -313,6 +316,14 @@ static void r300_init_states(struct pipe_context *pipe)
 
         if (r300->screen->caps.is_r500) {
             OUT_CB_REG(R500_VAP_TEX_TO_COLOR_CNTL, 0);
+        } else if (!r300->screen->caps.has_tcl) {
+            /* RSxxx:
+             * Static VAP setup since r300_emit_vs_state() is never called.
+             */
+            OUT_CB_REG(R300_VAP_CNTL, R300_PVS_NUM_SLOTS(10) |
+                                      R300_PVS_NUM_CNTLRS(5) |
+                                      R300_PVS_NUM_FPUS(2) |
+                                      R300_PVS_VF_MAX_VTX_NUM(5));
         }
         END_CB;
     }
@@ -351,9 +362,7 @@ static void r300_init_states(struct pipe_context *pipe)
         OUT_CB_REG(R300_ZB_DEPTHCLEARVALUE, 0);
         OUT_CB_REG(R300_SC_HYPERZ, R300_SC_HYPERZ_ADJ_2);
 
-        if (r300->screen->caps.is_r500 ||
-            (r300->screen->caps.is_rv350 &&
-             r300->screen->info.drm_minor >= 6)) {
+        if (r300->screen->caps.is_r500 || r300->screen->caps.is_rv350) {
             OUT_CB_REG(R300_GB_Z_PEQ_CONFIG, 0);
         }
         END_CB;
@@ -361,7 +370,7 @@ static void r300_init_states(struct pipe_context *pipe)
 }
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
-                                         void *priv)
+                                         void *priv, unsigned flags)
 {
     struct r300_context* r300 = CALLOC_STRUCT(r300_context);
     struct r300_screen* r300screen = r300_screen(screen);
@@ -378,11 +387,13 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     r300->context.destroy = r300_destroy_context;
 
-    util_slab_create(&r300->pool_transfers,
-                     sizeof(struct pipe_transfer), 64,
-                     UTIL_SLAB_SINGLETHREADED);
+    slab_create_child(&r300->pool_transfers, &r300screen->pool_transfers);
 
-    r300->cs = rws->cs_create(rws, RING_GFX, r300_flush_callback, r300, NULL);
+    r300->ctx = rws->ctx_create(rws);
+    if (!r300->ctx)
+        goto fail;
+
+    r300->cs = rws->cs_create(r300->ctx, RING_GFX, r300_flush_callback, r300);
     if (r300->cs == NULL)
         goto fail;
 
@@ -415,8 +426,11 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->context.create_video_codec = vl_create_decoder;
     r300->context.create_video_buffer = vl_video_buffer_create;
 
-    r300->uploader = u_upload_create(&r300->context, 256 * 1024, 4,
-                                     PIPE_BIND_CUSTOM);
+    r300->uploader = u_upload_create(&r300->context, 128 * 1024,
+                                     PIPE_BIND_CUSTOM, PIPE_USAGE_STREAM, 0);
+    r300->context.stream_uploader = u_upload_create(&r300->context, 1024 * 1024,
+                                                    0, PIPE_USAGE_STREAM, 0);
+    r300->context.const_uploader = r300->context.stream_uploader;
 
     r300->blitter = util_blitter_create(&r300->context);
     if (r300->blitter == NULL)
@@ -457,7 +471,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
         vb.height0 = 1;
         vb.depth0 = 1;
 
-        r300->dummy_vb.buffer = screen->resource_create(screen, &vb);
+        r300->dummy_vb.buffer.resource = screen->resource_create(screen, &vb);
         r300->context.set_vertex_buffers(&r300->context, 0, 1, &r300->dummy_vb);
     }
 

@@ -1,7 +1,7 @@
-#!/usr/bin/env python
 
 # (C) Copyright IBM Corporation 2004, 2005
 # (C) Copyright Apple Inc. 2011
+# Copyright (C) 2015 Intel Corporation
 # All Rights Reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -29,9 +29,12 @@
 # Based on code ogiginally by:
 #    Ian Romanick <idr@us.ibm.com>
 
+from __future__ import print_function
+
+import argparse
+
 import license
 import gl_XML, glX_XML
-import sys, getopt
 
 header = """/* GLXEXT is the define used in the xserver when the GLX extension is being
  * built.  Hijack this to determine whether this file is being built for the
@@ -42,7 +45,7 @@ header = """/* GLXEXT is the define used in the xserver when the GLX extension i
 #endif
 
 #if (defined(GLXEXT) && defined(HAVE_BACKTRACE)) \\
-	|| (!defined(GLXEXT) && defined(DEBUG) && !defined(_WIN32_WCE) && !defined(__CYGWIN__) && !defined(__MINGW32__) && !defined(__OpenBSD__) && !defined(__NetBSD__) && !defined(__DragonFly__))
+	|| (!defined(GLXEXT) && defined(DEBUG) && !defined(__CYGWIN__) && !defined(__MINGW32__) && !defined(__OpenBSD__) && !defined(__NetBSD__) && !defined(__DragonFly__))
 #define USE_BACKTRACE
 #endif
 
@@ -55,6 +58,7 @@ header = """/* GLXEXT is the define used in the xserver when the GLX extension i
 #endif
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "main/glheader.h"
 
@@ -100,7 +104,7 @@ static void
 __glapi_gentable_set_remaining_noop(struct _glapi_table *disp) {
     GLuint entries = _glapi_get_dispatch_table_size();
     void **dispatch = (void **) disp;
-    int i;
+    unsigned i;
 
     /* ISO C is annoying sometimes */
     union {_glapi_proc p; void *v;} p;
@@ -111,9 +115,12 @@ __glapi_gentable_set_remaining_noop(struct _glapi_table *disp) {
             dispatch[i] = p.v;
 }
 
+"""
+
+footer = """
 struct _glapi_table *
 _glapi_create_table_from_handle(void *handle, const char *symbol_prefix) {
-    struct _glapi_table *disp = calloc(1, _glapi_get_dispatch_table_size() * sizeof(_glapi_proc));
+    struct _glapi_table *disp = calloc(_glapi_get_dispatch_table_size(), sizeof(_glapi_proc));
     char symboln[512];
 
     if(!disp)
@@ -121,33 +128,47 @@ _glapi_create_table_from_handle(void *handle, const char *symbol_prefix) {
 
     if(symbol_prefix == NULL)
         symbol_prefix = "";
-"""
 
-footer = """
-    __glapi_gentable_set_remaining_noop(disp);
+    /* Note: This code relies on _glapi_table_func_names being sorted by the
+     * entry point index of each function.
+     */
+    for (int func_index = 0; func_index < GLAPI_TABLE_COUNT; ++func_index) {
+        const char *name = _glapi_table_func_names[func_index];
+        void ** procp = &((void **)disp)[func_index];
 
-    return disp;
-}
-"""
-
-body_template = """
-    if(!disp->%(name)s) {
-        void ** procp = (void **) &disp->%(name)s;
-        snprintf(symboln, sizeof(symboln), "%%s%(entry_point)s", symbol_prefix);
+        snprintf(symboln, sizeof(symboln), \"%s%s\", symbol_prefix, name);
 #ifdef _WIN32
         *procp = GetProcAddress(handle, symboln);
 #else
         *procp = dlsym(handle, symboln);
 #endif
     }
+    __glapi_gentable_set_remaining_noop(disp);
+
+    return disp;
+}
+
+void
+ _glapi_table_patch(struct _glapi_table *table, const char *name, void *wrapper)
+{
+   for (int func_index = 0; func_index < GLAPI_TABLE_COUNT; ++func_index) {
+      if (!strcmp(_glapi_table_func_names[func_index], name)) {
+            ((void **)table)[func_index] = wrapper;
+            return;
+         }
+   }
+   fprintf(stderr, "could not patch %s in dispatch table\\n", name);
+}
+
 """
+
 
 class PrintCode(gl_XML.gl_print_base):
 
     def __init__(self):
         gl_XML.gl_print_base.__init__(self)
 
-        self.name = "gl_gen_table.py (from Mesa)"
+        self.name = "gl_gentable.py (from Mesa)"
         self.license = license.bsd_license_template % ( \
 """Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
 (C) Copyright IBM Corporation 2004, 2005
@@ -168,41 +189,66 @@ class PrintCode(gl_XML.gl_print_base):
 
 
     def printRealHeader(self):
-        print header
+        print(header)
         return
 
 
     def printRealFooter(self):
-        print footer
+        print(footer)
         return
 
 
     def printBody(self, api):
-        for f in api.functionIterateByOffset():
-            for entry_point in f.entry_points:
-                vars = { 'entry_point' : entry_point,
-                         'name' : f.name }
 
-                print body_template % vars
+        # Determine how many functions have a defined offset.
+        func_count = 0
+        for f in api.functions_by_name.values():
+            if f.offset != -1:
+                func_count += 1
+
+        # Build the mapping from offset to function name.
+        funcnames = [None] * func_count
+        for f in api.functions_by_name.values():
+            if f.offset != -1:
+                if not (funcnames[f.offset] is None):
+                    raise Exception("Function table has more than one function with same offset (offset %d, func %s)" % (f.offset, f.name))
+                funcnames[f.offset] = f.name
+
+        # Check that the table has no gaps.  We expect a function at every offset,
+        # and the code which generates the table relies on this.
+        for i in range(0, func_count):
+            if funcnames[i] is None:
+                raise Exception("Function table has no function at offset %d" % (i))
+
+        print("#define GLAPI_TABLE_COUNT %d" % func_count)
+        print("static const char * const _glapi_table_func_names[GLAPI_TABLE_COUNT] = {")
+        for i in range(0, func_count):
+            print("    /* %5d */ \"%s\"," % (i, funcnames[i]))
+        print("};")
+
         return
 
-def show_usage():
-    print "Usage: %s [-f input_file_name]" % sys.argv[0]
-    sys.exit(1)
 
-if __name__ == '__main__':
-    file_name = "gl_API.xml"
+def _parser():
+    """Parse arguments and return a namespace object."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f',
+                        dest='filename',
+                        default='gl_API.xml',
+                        help='An XML file description of an API')
 
-    try:
-        (args, trail) = getopt.getopt(sys.argv[1:], "m:f:")
-    except Exception,e:
-        show_usage()
+    return parser.parse_args()
 
-    for (arg,val) in args:
-        if arg == "-f":
-            file_name = val
+
+def main():
+    """Main function."""
+    args = _parser()
 
     printer = PrintCode()
 
-    api = gl_XML.parse_GL_API(file_name, glX_XML.glx_item_factory())
+    api = gl_XML.parse_GL_API(args.filename, glX_XML.glx_item_factory())
     printer.Print(api)
+
+
+if __name__ == '__main__':
+    main()

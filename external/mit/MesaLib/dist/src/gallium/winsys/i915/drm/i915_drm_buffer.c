@@ -1,4 +1,3 @@
-
 #include "state_tracker/drm_driver.h"
 #include "i915_drm_winsys.h"
 #include "util/u_memory.h"
@@ -72,7 +71,7 @@ i915_drm_buffer_create_tiled(struct i915_winsys *iws,
 
    buf->bo = drm_intel_bo_alloc_tiled(idws->gem_manager,
                                       i915_drm_type_to_name(type),
-		   		      *stride, height, 1,
+                                      *stride, height, 1,
                                       &tiling_mode, &pitch, 0);
 
    if (!buf->bo)
@@ -91,6 +90,7 @@ err:
 static struct i915_winsys_buffer *
 i915_drm_buffer_from_handle(struct i915_winsys *iws,
                             struct winsys_handle *whandle,
+                            unsigned height,
                             enum i915_winsys_buffer_tile *tiling,
                             unsigned *stride)
 {
@@ -98,7 +98,10 @@ i915_drm_buffer_from_handle(struct i915_winsys *iws,
    struct i915_drm_buffer *buf;
    uint32_t tile = 0, swizzle = 0;
 
-   if (whandle->type != DRM_API_HANDLE_TYPE_SHARED)
+   if ((whandle->type != WINSYS_HANDLE_TYPE_SHARED) && (whandle->type != WINSYS_HANDLE_TYPE_FD))
+      return NULL;
+
+   if (whandle->offset != 0)
       return NULL;
 
    buf = CALLOC_STRUCT(i915_drm_buffer);
@@ -106,7 +109,14 @@ i915_drm_buffer_from_handle(struct i915_winsys *iws,
       return NULL;
 
    buf->magic = 0xDEAD1337;
-   buf->bo = drm_intel_bo_gem_create_from_name(idws->gem_manager, "gallium3d_from_handle", whandle->handle);
+
+   if (whandle->type == WINSYS_HANDLE_TYPE_SHARED)
+       buf->bo = drm_intel_bo_gem_create_from_name(idws->gem_manager, "gallium3d_from_handle", whandle->handle);
+   else if (whandle->type == WINSYS_HANDLE_TYPE_FD) {
+       int fd = (int) whandle->handle;
+       buf->bo = drm_intel_bo_gem_create_from_prime(idws->gem_manager, fd, height * whandle->stride);
+   }
+
    buf->flinked = TRUE;
    buf->flink = whandle->handle;
 
@@ -133,7 +143,7 @@ i915_drm_buffer_get_handle(struct i915_winsys *iws,
 {
    struct i915_drm_buffer *buf = i915_drm_buffer(buffer);
 
-   if (whandle->type == DRM_API_HANDLE_TYPE_SHARED) {
+   if (whandle->type == WINSYS_HANDLE_TYPE_SHARED) {
       if (!buf->flinked) {
          if (drm_intel_bo_flink(buf->bo, &buf->flink))
             return FALSE;
@@ -141,8 +151,14 @@ i915_drm_buffer_get_handle(struct i915_winsys *iws,
       }
 
       whandle->handle = buf->flink;
-   } else if (whandle->type == DRM_API_HANDLE_TYPE_KMS) {
+   } else if (whandle->type == WINSYS_HANDLE_TYPE_KMS) {
       whandle->handle = buf->bo->handle;
+   } else if (whandle->type == WINSYS_HANDLE_TYPE_FD) {
+      int fd;
+
+      if (drm_intel_bo_gem_export_to_prime(buf->bo, &fd))
+         return FALSE;
+      whandle->handle = fd;
    } else {
       assert(!"unknown usage");
       return FALSE;

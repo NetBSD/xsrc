@@ -32,7 +32,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <errno.h>
 #include "radeon_common.h"
-#include "main/simple_list.h"
+#include "radeon_fog.h"
+#include "util/simple_list.h"
 
 #if defined(USE_X86_ASM)
 #define COPY_DWORDS( dst, src, nr )					\
@@ -60,7 +61,7 @@ void radeonEmitVec4(uint32_t *out, const GLvoid * data, int stride, int count)
 
 	if (RADEON_DEBUG & RADEON_VERTS)
 		fprintf(stderr, "%s count %d stride %d out %p data %p\n",
-			__FUNCTION__, count, stride, (void *)out, (void *)data);
+			__func__, count, stride, (void *)out, (void *)data);
 
 	if (stride == 4)
 		COPY_DWORDS(out, data, count);
@@ -78,7 +79,7 @@ void radeonEmitVec8(uint32_t *out, const GLvoid * data, int stride, int count)
 
 	if (RADEON_DEBUG & RADEON_VERTS)
 		fprintf(stderr, "%s count %d stride %d out %p data %p\n",
-			__FUNCTION__, count, stride, (void *)out, (void *)data);
+			__func__, count, stride, (void *)out, (void *)data);
 
 	if (stride == 8)
 		COPY_DWORDS(out, data, count * 2);
@@ -97,7 +98,7 @@ void radeonEmitVec12(uint32_t *out, const GLvoid * data, int stride, int count)
 
 	if (RADEON_DEBUG & RADEON_VERTS)
 		fprintf(stderr, "%s count %d stride %d out %p data %p\n",
-			__FUNCTION__, count, stride, (void *)out, (void *)data);
+			__func__, count, stride, (void *)out, (void *)data);
 
 	if (stride == 12) {
 		COPY_DWORDS(out, data, count * 3);
@@ -118,7 +119,7 @@ void radeonEmitVec16(uint32_t *out, const GLvoid * data, int stride, int count)
 
 	if (RADEON_DEBUG & RADEON_VERTS)
 		fprintf(stderr, "%s count %d stride %d out %p data %p\n",
-			__FUNCTION__, count, stride, (void *)out, (void *)data);
+			__func__, count, stride, (void *)out, (void *)data);
 
 	if (stride == 16)
 		COPY_DWORDS(out, data, count * 4);
@@ -165,6 +166,41 @@ void rcommon_emit_vector(struct gl_context * ctx, struct radeon_aos *aos,
 	radeon_bo_unmap(aos->bo);
 }
 
+void rcommon_emit_vecfog(struct gl_context *ctx, struct radeon_aos *aos,
+			 GLvoid *data, int stride, int count)
+{
+	int i;
+	float *out;
+	int size = 1;
+	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+
+	if (RADEON_DEBUG & RADEON_VERTS)
+		fprintf(stderr, "%s count %d stride %d\n",
+			__func__, count, stride);
+
+	if (stride == 0) {
+		radeonAllocDmaRegion( rmesa, &aos->bo, &aos->offset, size * 4, 32 );
+		count = 1;
+		aos->stride = 0;
+	} else {
+		radeonAllocDmaRegion(rmesa, &aos->bo, &aos->offset, size * count * 4, 32);
+		aos->stride = size;
+	}
+
+	aos->components = size;
+	aos->count = count;
+
+	/* Emit the data */
+	radeon_bo_map(aos->bo, 1);
+	out = (float*)((char*)aos->bo->ptr + aos->offset);
+	for (i = 0; i < count; i++) {
+		out[0] = radeonComputeFogBlendFactor( ctx, *(GLfloat *)data );
+		out++;
+		data += stride;
+	}
+	radeon_bo_unmap(aos->bo);
+}
+
 void radeon_init_dma(radeonContextPtr rmesa)
 {
 	make_empty_list(&rmesa->dma.free);
@@ -182,7 +218,7 @@ void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
 		rmesa->dma.minimum_size = (size + 15) & (~15);
 
 	radeon_print(RADEON_DMA, RADEON_NORMAL, "%s size %d minimum_size %Zi\n",
-			__FUNCTION__, size, rmesa->dma.minimum_size);
+			__func__, size, rmesa->dma.minimum_size);
 
 	if (is_empty_list(&rmesa->dma.free)
 	      || last_elem(&rmesa->dma.free)->bo->size < size) {
@@ -195,7 +231,7 @@ again_alloc:
 					    RADEON_GEM_DOMAIN_GTT, 0);
 
 		if (!dma_bo->bo) {
-			rcommonFlushCmdBuf(rmesa, __FUNCTION__);
+			rcommonFlushCmdBuf(rmesa, __func__);
 			goto again_alloc;
 		}
 		insert_at_head(&rmesa->dma.reserved, dma_bo);
@@ -231,10 +267,10 @@ void radeonAllocDmaRegion(radeonContextPtr rmesa,
 			  int bytes, int alignment)
 {
 	if (RADEON_DEBUG & RADEON_IOCTL)
-		fprintf(stderr, "%s %d\n", __FUNCTION__, bytes);
+		fprintf(stderr, "%s %d\n", __func__, bytes);
 
 	if (rmesa->dma.flush)
-		rmesa->dma.flush(rmesa->glCtx);
+		rmesa->dma.flush(&rmesa->glCtx);
 
 	assert(rmesa->dma.current_used == rmesa->dma.current_vertexptr);
 
@@ -261,24 +297,24 @@ void radeonFreeDmaRegions(radeonContextPtr rmesa)
 	struct radeon_dma_bo *dma_bo;
 	struct radeon_dma_bo *temp;
 	if (RADEON_DEBUG & RADEON_DMA)
-		fprintf(stderr, "%s\n", __FUNCTION__);
+		fprintf(stderr, "%s\n", __func__);
 
 	foreach_s(dma_bo, temp, &rmesa->dma.free) {
 		remove_from_list(dma_bo);
 	        radeon_bo_unref(dma_bo->bo);
-		FREE(dma_bo);
+		free(dma_bo);
 	}
 
 	foreach_s(dma_bo, temp, &rmesa->dma.wait) {
 		remove_from_list(dma_bo);
 	        radeon_bo_unref(dma_bo->bo);
-		FREE(dma_bo);
+		free(dma_bo);
 	}
 
 	foreach_s(dma_bo, temp, &rmesa->dma.reserved) {
 		remove_from_list(dma_bo);
 	        radeon_bo_unref(dma_bo->bo);
-		FREE(dma_bo);
+		free(dma_bo);
 	}
 }
 
@@ -288,7 +324,7 @@ void radeonReturnDmaRegion(radeonContextPtr rmesa, int return_bytes)
 		return;
 
 	if (RADEON_DEBUG & RADEON_IOCTL)
-		fprintf(stderr, "%s %d\n", __FUNCTION__, return_bytes);
+		fprintf(stderr, "%s %d\n", __func__, return_bytes);
 	rmesa->dma.current_used -= return_bytes;
 	rmesa->dma.current_vertexptr = rmesa->dma.current_used;
 }
@@ -325,12 +361,7 @@ void radeonReleaseDmaRegions(radeonContextPtr rmesa)
 			++reserved;
 
 		fprintf(stderr, "%s: free %zu, wait %zu, reserved %zu, minimum_size: %zu\n",
-		      __FUNCTION__, free, wait, reserved, rmesa->dma.minimum_size);
-	}
-
-	if (!rmesa->radeonScreen->driScreen->dri2.enabled) {
-		/* request updated cs processing information from kernel */
-		legacy_track_pending(rmesa->radeonScreen->bom, 0);
+		      __func__, free, wait, reserved, rmesa->dma.minimum_size);
 	}
 
 	/* move waiting bos to free list.
@@ -340,20 +371,18 @@ void radeonReleaseDmaRegions(radeonContextPtr rmesa)
 			WARN_ONCE("Leaking dma buffer object!\n");
 			radeon_bo_unref(dma_bo->bo);
 			remove_from_list(dma_bo);
-			FREE(dma_bo);
+			free(dma_bo);
 			continue;
 		}
 		/* free objects that are too small to be used because of large request */
 		if (dma_bo->bo->size < rmesa->dma.minimum_size) {
 		   radeon_bo_unref(dma_bo->bo);
 		   remove_from_list(dma_bo);
-		   FREE(dma_bo);
+		   free(dma_bo);
 		   continue;
 		}
 		if (!radeon_bo_is_idle(dma_bo->bo)) {
-			if (rmesa->radeonScreen->driScreen->dri2.enabled)
-				break;
-			continue;
+			break;
 		}
 		remove_from_list(dma_bo);
 		dma_bo->expire_counter = expire_at;
@@ -367,7 +396,7 @@ void radeonReleaseDmaRegions(radeonContextPtr rmesa)
 		if (dma_bo->bo->size < rmesa->dma.minimum_size) {
 		   radeon_bo_unref(dma_bo->bo);
 		   remove_from_list(dma_bo);
-		   FREE(dma_bo);
+		   free(dma_bo);
 		   continue;
 		}
 		remove_from_list(dma_bo);
@@ -381,7 +410,7 @@ void radeonReleaseDmaRegions(radeonContextPtr rmesa)
 			break;
 		remove_from_list(dma_bo);
 	        radeon_bo_unref(dma_bo->bo);
-		FREE(dma_bo);
+		free(dma_bo);
 	}
 
 }
@@ -395,7 +424,7 @@ void rcommon_flush_last_swtcl_prim( struct gl_context *ctx  )
 	struct radeon_dma *dma = &rmesa->dma;
 
 	if (RADEON_DEBUG & RADEON_IOCTL)
-		fprintf(stderr, "%s\n", __FUNCTION__);
+		fprintf(stderr, "%s\n", __func__);
 	dma->flush = NULL;
 
 	radeon_bo_unmap(rmesa->swtcl.bo);
@@ -425,12 +454,12 @@ rcommonAllocDmaLowVerts( radeonContextPtr rmesa, int nverts, int vsize )
 	GLuint bytes = vsize * nverts;
 	void *head;
 	if (RADEON_DEBUG & RADEON_IOCTL)
-		fprintf(stderr, "%s\n", __FUNCTION__);
+		fprintf(stderr, "%s\n", __func__);
 
 	if(is_empty_list(&rmesa->dma.reserved)
 	      ||rmesa->dma.current_vertexptr + bytes > first_elem(&rmesa->dma.reserved)->bo->size) {
 		if (rmesa->dma.flush) {
-			rmesa->dma.flush(rmesa->glCtx);
+			rmesa->dma.flush(&rmesa->glCtx);
 		}
 
                 radeonRefillCurrentDmaRegion(rmesa, bytes);
@@ -440,13 +469,13 @@ rcommonAllocDmaLowVerts( radeonContextPtr rmesa, int nverts, int vsize )
 
         if (!rmesa->dma.flush) {
 		/* if cmdbuf flushed DMA restart */
-                rmesa->glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
+                rmesa->glCtx.Driver.NeedFlush |= FLUSH_STORED_VERTICES;
                 rmesa->dma.flush = rcommon_flush_last_swtcl_prim;
         }
 
-	ASSERT( vsize == rmesa->swtcl.vertex_size * 4 );
-        ASSERT( rmesa->dma.flush == rcommon_flush_last_swtcl_prim );
-        ASSERT( rmesa->dma.current_used +
+	assert( vsize == rmesa->swtcl.vertex_size * 4 );
+        assert( rmesa->dma.flush == rcommon_flush_last_swtcl_prim );
+        assert( rmesa->dma.current_used +
                 rmesa->swtcl.numverts * rmesa->swtcl.vertex_size * 4 ==
                 rmesa->dma.current_vertexptr );
 
@@ -467,10 +496,10 @@ void radeonReleaseArrays( struct gl_context *ctx, GLuint newinputs )
    radeonContextPtr radeon = RADEON_CONTEXT( ctx );
    int i;
 	if (RADEON_DEBUG & RADEON_IOCTL)
-		fprintf(stderr, "%s\n", __FUNCTION__);
+		fprintf(stderr, "%s\n", __func__);
 
    if (radeon->dma.flush) {
-       radeon->dma.flush(radeon->glCtx);
+       radeon->dma.flush(&radeon->glCtx);
    }
    for (i = 0; i < radeon->tcl.aos_count; i++) {
       if (radeon->tcl.aos[i].bo) {

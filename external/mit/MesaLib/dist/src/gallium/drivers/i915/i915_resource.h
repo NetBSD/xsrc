@@ -86,7 +86,7 @@ struct i915_texture {
    struct i915_winsys_buffer *buffer;
 };
 
-unsigned i915_texture_offset(struct i915_texture *tex,
+unsigned i915_texture_offset(const struct i915_texture *tex,
                              unsigned level, unsigned layer);
 void i915_init_screen_resource_functions(struct i915_screen *is);
 void i915_init_resource_functions(struct i915_context *i915);
@@ -94,14 +94,14 @@ void i915_init_resource_functions(struct i915_context *i915);
 extern struct u_resource_vtbl i915_buffer_vtbl;
 extern struct u_resource_vtbl i915_texture_vtbl;
 
-static INLINE struct i915_texture *i915_texture(struct pipe_resource *resource)
+static inline struct i915_texture *i915_texture(struct pipe_resource *resource)
 {
    struct i915_texture *tex = (struct i915_texture *)resource;
    assert(tex->b.vtbl == &i915_texture_vtbl);
    return tex;
 }
 
-static INLINE struct i915_buffer *i915_buffer(struct pipe_resource *resource)
+static inline struct i915_buffer *i915_buffer(struct pipe_resource *resource)
 {
    struct i915_buffer *tex = (struct i915_buffer *)resource;
    assert(tex->b.vtbl == &i915_buffer_vtbl);
@@ -128,5 +128,11 @@ i915_user_buffer_create(struct pipe_screen *screen,
 struct pipe_resource *
 i915_buffer_create(struct pipe_screen *screen,
 		   const struct pipe_resource *template);
+
+void
+i915_buffer_subdata(struct pipe_context *rm_ctx,
+                    struct pipe_resource *resource,
+                    unsigned usage, unsigned offset,
+                    unsigned size, const void *data);
 
 #endif /* I915_RESOURCE_H */

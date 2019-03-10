@@ -80,23 +80,21 @@ static ushort indices[3] = { 0, 2, 1 };
 
 static void set_viewport( float x, float y,
                           float width, float height,
-                          float near, float far)
+                          float zNear, float zFar)
 {
-   float z = far;
+   float z = zFar;
    float half_width = (float)width / 2.0f;
    float half_height = (float)height / 2.0f;
-   float half_depth = ((float)far - (float)near) / 2.0f;
+   float half_depth = ((float)zFar - (float)zNear) / 2.0f;
    struct pipe_viewport_state vp;
 
    vp.scale[0] = half_width;
    vp.scale[1] = half_height;
    vp.scale[2] = half_depth;
-   vp.scale[3] = 1.0f;
 
    vp.translate[0] = half_width + x;
    vp.translate[1] = half_height + y;
    vp.translate[2] = half_depth + z;
-   vp.translate[3] = 0.0f;
 
    ctx->set_viewport_states( ctx, 0, 1, &vp );
 }
@@ -106,7 +104,6 @@ static void set_vertices( void )
 {
    struct pipe_vertex_element ve[3];
    struct pipe_vertex_buffer vbuf[2];
-   struct pipe_index_buffer ibuf;
    void *handle;
 
    memset(ve, 0, sizeof ve);
@@ -135,7 +132,7 @@ static void set_vertices( void )
    /* vertex data */
    vbuf[0].stride = sizeof( struct vertex );
    vbuf[0].buffer_offset = 0;
-   vbuf[0].buffer = pipe_buffer_create_with_data(ctx,
+   vbuf[0].buffer.resource = pipe_buffer_create_with_data(ctx,
                                                  PIPE_BIND_VERTEX_BUFFER,
                                                  PIPE_USAGE_DEFAULT,
                                                  sizeof(vertices),
@@ -144,25 +141,13 @@ static void set_vertices( void )
    /* instance data */
    vbuf[1].stride = sizeof( inst_data[0] );
    vbuf[1].buffer_offset = 0;
-   vbuf[1].buffer = pipe_buffer_create_with_data(ctx,
+   vbuf[1].buffer.resource = pipe_buffer_create_with_data(ctx,
                                                  PIPE_BIND_VERTEX_BUFFER,
                                                  PIPE_USAGE_DEFAULT,
                                                  sizeof(inst_data),
                                                  inst_data);
 
    ctx->set_vertex_buffers(ctx, 0, 2, vbuf);
-
-   /* index data */
-   ibuf.buffer = pipe_buffer_create_with_data(ctx,
-                                              PIPE_BIND_INDEX_BUFFER,
-                                              PIPE_USAGE_DEFAULT,
-                                              sizeof(indices),
-                                              indices);
-   ibuf.offset = 0;
-   ibuf.index_size = 2;
-
-   ctx->set_index_buffer(ctx, &ibuf);
-
 }
 
 static void set_vertex_shader( void )
@@ -205,15 +190,28 @@ static void draw( void )
 
    ctx->clear(ctx, PIPE_CLEAR_COLOR, &clear_color, 0, 0);
 
+
    util_draw_init_info(&info);
-   info.indexed = (draw_elements != 0);
+   info.index_size = draw_elements ? 2 : 0;
    info.mode = PIPE_PRIM_TRIANGLES;
    info.start = 0;
    info.count = 3;
    /* draw NUM_INST triangles */
    info.instance_count = NUM_INST;
 
+   /* index data */
+   if (info.index_size) {
+      info.index.resource =
+         pipe_buffer_create_with_data(ctx,
+                                      PIPE_BIND_INDEX_BUFFER,
+                                      PIPE_USAGE_DEFAULT,
+                                      sizeof(indices),
+                                      indices);
+   }
+
    ctx->draw_vbo(ctx, &info);
+
+   pipe_resource_reference(&info.index.resource, NULL);
 
    ctx->flush(ctx, NULL, 0);
 
@@ -248,10 +246,11 @@ static void init( void )
       exit(1);
    }
    
-   ctx = screen->context_create(screen, NULL);
+   ctx = screen->context_create(screen, NULL, 0);
    if (ctx == NULL)
       exit(3);
 
+   memset(&templat, 0, sizeof(templat));
    templat.target = PIPE_TEXTURE_2D;
    templat.format = formats[i];
    templat.width0 = WIDTH;
@@ -259,7 +258,6 @@ static void init( void )
    templat.depth0 = 1;
    templat.array_size = 1;
    templat.last_level = 0;
-   templat.nr_samples = 1;
    templat.bind = (PIPE_BIND_RENDER_TARGET |
                    PIPE_BIND_DISPLAY_TARGET);
    
@@ -308,7 +306,8 @@ static void init( void )
       rasterizer.cull_face = PIPE_FACE_NONE;
       rasterizer.half_pixel_center = 1;
       rasterizer.bottom_edge_rule = 1;
-      rasterizer.depth_clip = 1;
+      rasterizer.depth_clip_near = 1;
+      rasterizer.depth_clip_far = 1;
       handle = ctx->create_rasterizer_state(ctx, &rasterizer);
       ctx->bind_rasterizer_state(ctx, handle);
    }
