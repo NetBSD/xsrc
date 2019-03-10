@@ -13,15 +13,15 @@
  */
 
 
-#define CTX_LIGHT_ENABLED           	9872
-#define CTX_LIGHT_SHADE_MODEL       	9876
-#define CTX_LIGHT_COLOR_MAT_FACE    	9884
-#define CTX_LIGHT_COLOR_MAT_MODE    	9888
-#define CTX_LIGHT_COLOR_MAT_MASK    	9892
-#define CTX_LIGHT_COLOR_MAT_ENABLED 	9896
-#define CTX_LIGHT_ENABLED_LIST      	9912
-#define CTX_LIGHT_NEED_VERTS        	10177
-#define CTX_LIGHT_BASE_COLOR        	10180
+#define CTX_LIGHT_ENABLED           	12188
+#define CTX_LIGHT_SHADE_MODEL       	12190
+#define CTX_LIGHT_COLOR_MAT_FACE    	12194
+#define CTX_LIGHT_COLOR_MAT_MODE    	12196
+#define CTX_LIGHT_COLOR_MAT_MASK    	12200
+#define CTX_LIGHT_COLOR_MAT_ENABLED 	12189
+#define CTX_LIGHT_ENABLED_LIGHTS    	12208
+#define CTX_LIGHT_NEED_VERTS        	12213
+#define CTX_LIGHT_BASE_COLOR        	12216
 
 
 /* =============================================================
@@ -38,16 +38,16 @@
 #define VB_PROJ_CLIP_PTR       	32
 #define VB_CLIP_OR_MASK        	40
 #define VB_CLIP_MASK           	48
-#define VB_NORMAL_PTR          	128
+#define VB_NORMAL_PTR          	120
 #define VB_EDGE_FLAG           	64
-#define VB_TEX0_COORD_PTR      	176
-#define VB_TEX1_COORD_PTR      	184
-#define VB_TEX2_COORD_PTR      	192
-#define VB_TEX3_COORD_PTR      	200
-#define VB_INDEX_PTR           	160
-#define VB_COLOR_PTR           	136
-#define VB_SECONDARY_COLOR_PTR 	144
-#define VB_FOG_COORD_PTR       	152
+#define VB_TEX0_COORD_PTR      	168
+#define VB_TEX1_COORD_PTR      	176
+#define VB_TEX2_COORD_PTR      	184
+#define VB_TEX3_COORD_PTR      	192
+#define VB_INDEX_PTR           	152
+#define VB_COLOR_PTR           	128
+#define VB_SECONDARY_COLOR_PTR 	136
+#define VB_FOG_COORD_PTR       	144
 #define VB_PRIMITIVE           	96
 
 
@@ -56,14 +56,14 @@
  */
 
 #define VERT_BIT_OBJ           	0x1
-#define VERT_BIT_NORM          	0x4
-#define VERT_BIT_RGBA          	0x8
-#define VERT_BIT_SPEC_RGB      	0x10
-#define VERT_BIT_FOG_COORD     	0x20
-#define VERT_BIT_TEX0          	0x100
-#define VERT_BIT_TEX1          	0x200
-#define VERT_BIT_TEX2          	0x400
-#define VERT_BIT_TEX3          	0x800
+#define VERT_BIT_NORM          	0x2
+#define VERT_BIT_RGBA          	0x4
+#define VERT_BIT_SPEC_RGB      	0x8
+#define VERT_BIT_FOG_COORD     	0x10
+#define VERT_BIT_TEX0          	0x80
+#define VERT_BIT_TEX1          	0x100
+#define VERT_BIT_TEX2          	0x200
+#define VERT_BIT_TEX3          	0x400
 
 
 /* =============================================================
@@ -105,35 +105,33 @@
  * Offsets for struct gl_light
  */
 
-#define LIGHT_NEXT              	0
-#define LIGHT_PREV              	8
 
-#define LIGHT_AMBIENT           	16
-#define LIGHT_DIFFUSE           	32
-#define LIGHT_SPECULAR          	48
-#define LIGHT_EYE_POSITION      	64
-#define LIGHT_SPOT_DIRECTION    	80
-#define LIGHT_SPOT_EXPONENT     	96
-#define LIGHT_SPOT_CUTOFF       	100
-#define LIGHT_COS_CUTOFF        	104
-#define LIGHT_CONST_ATTEN       	108
-#define LIGHT_LINEAR_ATTEN      	112
-#define LIGHT_QUADRATIC_ATTEN   	116
-#define LIGHT_ENABLED           	120
+#define LIGHT_AMBIENT           	0
+#define LIGHT_DIFFUSE           	16
+#define LIGHT_SPECULAR          	32
+#define LIGHT_EYE_POSITION      	48
+#define LIGHT_SPOT_DIRECTION    	64
+#define LIGHT_SPOT_EXPONENT     	80
+#define LIGHT_SPOT_CUTOFF       	84
+#define LIGHT_COS_CUTOFF        	88
+#define LIGHT_CONST_ATTEN       	92
+#define LIGHT_LINEAR_ATTEN      	96
+#define LIGHT_QUADRATIC_ATTEN   	100
+#define LIGHT_ENABLED           	104
 
-#define LIGHT_FLAGS             	124
+#define LIGHT_FLAGS             	108
 
-#define LIGHT_POSITION          	128
-#define LIGHT_VP_INF_NORM       	144
-#define LIGHT_H_INF_NORM        	156
-#define LIGHT_NORM_DIRECTION    	168
-#define LIGHT_VP_INF_SPOT_ATTEN 	184
+#define LIGHT_POSITION          	112
+#define LIGHT_VP_INF_NORM       	128
+#define LIGHT_H_INF_NORM        	140
+#define LIGHT_NORM_DIRECTION    	152
+#define LIGHT_VP_INF_SPOT_ATTEN 	168
 
-#define LIGHT_MAT_AMBIENT       	188
-#define LIGHT_MAT_DIFFUSE       	212
-#define LIGHT_MAT_SPECULAR      	236
+#define LIGHT_MAT_AMBIENT       	172
+#define LIGHT_MAT_DIFFUSE       	196
+#define LIGHT_MAT_SPECULAR      	220
 
-#define SIZEOF_GL_LIGHT         	264
+#define SIZEOF_GL_LIGHT         	244
 
 /*
  * Flags for struct gl_light
@@ -153,7 +151,7 @@
 #define LIGHT_MODEL_AMBIENT       	0
 #define LIGHT_MODEL_LOCAL_VIEWER  	16
 #define LIGHT_MODEL_TWO_SIDE      	17
-#define LIGHT_MODEL_COLOR_CONTROL 	20
+#define LIGHT_MODEL_COLOR_CONTROL 	18
 
 
 #endif /* __ASM_TYPES_H__ */
