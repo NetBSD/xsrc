@@ -21,28 +21,28 @@
  * Authors:
  *      Adam Rak <adam.rak@streamnovation.com>
  */
- 
 #ifndef EVERGREEN_COMPUTE_INTERNAL_H
 #define EVERGREEN_COMPUTE_INTERNAL_H
 
+#include "ac_binary.h"
 #include "r600_asm.h"
-
-struct r600_kernel {
-	unsigned count;
 #ifdef HAVE_OPENCL
-	LLVMModuleRef llvm_module;
+#include <llvm-c/Core.h>
 #endif
-	struct r600_resource *code_bo;
-	struct r600_bytecode bc;
-};
 
 struct r600_pipe_compute {
 	struct r600_context *ctx;
 
-	unsigned num_kernels;
-	struct r600_kernel *kernels;
+	struct ac_shader_binary binary;
 
-	struct r600_kernel *active_kernel;
+	enum pipe_shader_ir ir_type;
+
+	/* tgsi selector */
+	struct r600_pipe_shader_selector *sel;
+
+	struct r600_resource *code_bo;
+	struct r600_bytecode bc;
+
 	unsigned local_size;
 	unsigned private_size;
 	unsigned input_size;

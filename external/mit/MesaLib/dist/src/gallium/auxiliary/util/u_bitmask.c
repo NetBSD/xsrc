@@ -66,7 +66,7 @@ util_bitmask_create(void)
    struct util_bitmask *bm;
    
    bm = MALLOC_STRUCT(util_bitmask);
-   if(!bm)
+   if (!bm)
       return NULL;
    
    bm->words = (util_bitmask_word *)CALLOC(UTIL_BITMASK_INITIAL_WORDS, sizeof(util_bitmask_word));
@@ -85,7 +85,7 @@ util_bitmask_create(void)
 /**
  * Resize the bitmask if necessary 
  */
-static INLINE boolean
+static inline boolean
 util_bitmask_resize(struct util_bitmask *bm,
                     unsigned minimum_index)
 {
@@ -114,7 +114,7 @@ util_bitmask_resize(struct util_bitmask *bm,
    new_words = (util_bitmask_word *)REALLOC((void *)bm->words,
                                             bm->size / UTIL_BITMASK_BITS_PER_BYTE,
                                             new_size / UTIL_BITMASK_BITS_PER_BYTE);
-   if(!new_words)
+   if (!new_words)
       return FALSE;
    
    memset(new_words + bm->size/UTIL_BITMASK_BITS_PER_WORD, 
@@ -131,7 +131,7 @@ util_bitmask_resize(struct util_bitmask *bm,
 /**
  * Lazily update the filled.
  */
-static INLINE void
+static inline void
 util_bitmask_filled_set(struct util_bitmask *bm,
                         unsigned index)
 {
@@ -144,7 +144,7 @@ util_bitmask_filled_set(struct util_bitmask *bm,
    }
 }
 
-static INLINE void
+static inline void
 util_bitmask_filled_unset(struct util_bitmask *bm,
                           unsigned index)
 {
@@ -320,9 +320,9 @@ util_bitmask_get_first_index(struct util_bitmask *bm)
 void
 util_bitmask_destroy(struct util_bitmask *bm)
 {
-   assert(bm);
-
-   FREE(bm->words);
-   FREE(bm);
+   if (bm) {
+      FREE(bm->words);
+      FREE(bm);
+   }
 }
 

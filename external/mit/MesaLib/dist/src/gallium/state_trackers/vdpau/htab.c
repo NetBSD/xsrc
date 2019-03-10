@@ -29,76 +29,61 @@
 #include "os/os_thread.h"
 #include "vdpau_private.h"
 
-#ifdef VL_HANDLES
 static struct handle_table *htab = NULL;
-pipe_static_mutex(htab_lock);
-#endif
+static mtx_t htab_lock = _MTX_INITIALIZER_NP;
 
 boolean vlCreateHTAB(void)
 {
-#ifdef VL_HANDLES
    boolean ret;
+
    /* Make sure handle table handles match VDPAU handles. */
    assert(sizeof(unsigned) <= sizeof(vlHandle));
-   pipe_mutex_lock(htab_lock);
+   mtx_lock(&htab_lock);
    if (!htab)
       htab = handle_table_create();
    ret = htab != NULL;
-   pipe_mutex_unlock(htab_lock);
+   mtx_unlock(&htab_lock);
    return ret;
-#else
-   return TRUE;
-#endif
 }
 
 void vlDestroyHTAB(void)
 {
-#ifdef VL_HANDLES
-   pipe_mutex_lock(htab_lock);
+   mtx_lock(&htab_lock);
    if (htab && !handle_table_get_first_handle(htab)) {
       handle_table_destroy(htab);
       htab = NULL;
    }
-   pipe_mutex_unlock(htab_lock);
-#endif
+   mtx_unlock(&htab_lock);
 }
 
 vlHandle vlAddDataHTAB(void *data)
 {
-   assert(data);
-#ifdef VL_HANDLES
    vlHandle handle = 0;
-   pipe_mutex_lock(htab_lock);
+
+   assert(data);
+   mtx_lock(&htab_lock);
    if (htab)
       handle = handle_table_add(htab, data);
-   pipe_mutex_unlock(htab_lock);
+   mtx_unlock(&htab_lock);
    return handle;
-#else
-   return (vlHandle)data;
-#endif
 }
 
 void* vlGetDataHTAB(vlHandle handle)
 {
-   assert(handle);
-#ifdef VL_HANDLES
    void *data = NULL;
-   pipe_mutex_lock(htab_lock);
+
+   assert(handle);
+   mtx_lock(&htab_lock);
    if (htab)
       data = handle_table_get(htab, handle);
-   pipe_mutex_unlock(htab_lock);
+   mtx_unlock(&htab_lock);
    return data;
-#else
-   return (void*)handle;
-#endif
 }
 
 void vlRemoveDataHTAB(vlHandle handle)
 {
-#ifdef VL_HANDLES
-   pipe_mutex_lock(htab_lock);
+   mtx_lock(&htab_lock);
    if (htab)
       handle_table_remove(htab, handle);
-   pipe_mutex_unlock(htab_lock);
-#endif
+   mtx_unlock(&htab_lock);
 }

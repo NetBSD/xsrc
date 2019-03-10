@@ -20,13 +20,14 @@
  */
 
 #include "main/glheader.h"
-#include "main/colormac.h"
 #include "main/macros.h"
 #include "main/atifragshader.h"
 #include "main/samplerobj.h"
 #include "swrast/s_atifragshader.h"
 #include "swrast/s_context.h"
 
+#define ATI_FS_INPUT_PRIMARY 0
+#define ATI_FS_INPUT_SECONDARY 1
 
 /**
  * State for executing ATI fragment shader.
@@ -437,13 +438,13 @@ execute_shader(struct gl_context *ctx, const struct ati_fragment_shader *shader,
 		     for (i = 0; i < 3; i++) {
 			dst[optype][i] =
 			   (src[optype][2][i] >
-			    0.5) ? src[optype][0][i] : src[optype][1][i];
+			    0.5F) ? src[optype][0][i] : src[optype][1][i];
 		     }
 		  }
 		  else {
 		     dst[optype][3] =
 			(src[optype][2][3] >
-			 0.5) ? src[optype][0][3] : src[optype][1][3];
+			 0.5F) ? src[optype][0][3] : src[optype][1][3];
 		  }
 		  break;
 
@@ -571,7 +572,7 @@ _swrast_exec_fragment_shader(struct gl_context * ctx, SWspan *span)
    GLuint i;
 
    /* incoming colors should be floats */
-   ASSERT(span->array->ChanType == GL_FLOAT);
+   assert(span->array->ChanType == GL_FLOAT);
 
    for (i = 0; i < span->end; i++) {
       if (span->array->mask[i]) {

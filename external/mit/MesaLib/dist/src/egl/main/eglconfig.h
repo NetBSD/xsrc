@@ -34,8 +34,14 @@
 
 #include <assert.h>
 #include <stddef.h>
+#include "c99_compat.h"
+
 #include "egltypedefs.h"
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* update _eglValidationTable and _eglOffsetOfConfig before updating this
  * struct */
@@ -80,13 +86,16 @@ struct _egl_config
 
    /* extensions */
    EGLint YInvertedNOK;
+   EGLint FramebufferTargetAndroid;
+   EGLint RecordableAndroid;
+   EGLint ComponentType;
 };
 
 
 /**
  * Map an EGL attribute enum to the offset of the member in _EGLConfig.
  */
-static INLINE EGLint
+static inline EGLint
 _eglOffsetOfConfig(EGLint attr)
 {
    switch (attr) {
@@ -127,6 +136,9 @@ _eglOffsetOfConfig(EGLint attr)
    ATTRIB_MAP(EGL_CONFORMANT,                Conformant);
    /* extensions */
    ATTRIB_MAP(EGL_Y_INVERTED_NOK,            YInvertedNOK);
+   ATTRIB_MAP(EGL_FRAMEBUFFER_TARGET_ANDROID, FramebufferTargetAndroid);
+   ATTRIB_MAP(EGL_RECORDABLE_ANDROID,        RecordableAndroid);
+   ATTRIB_MAP(EGL_COLOR_COMPONENT_TYPE_EXT,  ComponentType);
 #undef ATTRIB_MAP
    default:
       return -1;
@@ -141,7 +153,7 @@ _eglOffsetOfConfig(EGLint attr)
  * in the attribute enums.  The separation is to catch application errors.
  * Drivers should never set a key that is an invalid attribute.
  */
-static INLINE void
+static inline void
 _eglSetConfigKey(_EGLConfig *conf, EGLint key, EGLint val)
 {
    EGLint offset = _eglOffsetOfConfig(key);
@@ -153,7 +165,7 @@ _eglSetConfigKey(_EGLConfig *conf, EGLint key, EGLint val)
 /**
  * Return the value for a given key.
  */
-static INLINE EGLint
+static inline EGLint
 _eglGetConfigKey(const _EGLConfig *conf, EGLint key)
 {
    EGLint offset = _eglOffsetOfConfig(key);
@@ -162,11 +174,11 @@ _eglGetConfigKey(const _EGLConfig *conf, EGLint key)
 }
 
 
-PUBLIC void
+extern void
 _eglInitConfig(_EGLConfig *config, _EGLDisplay *dpy, EGLint id);
 
 
-PUBLIC EGLConfig
+extern EGLConfig
 _eglLinkConfig(_EGLConfig *conf);
 
 
@@ -177,32 +189,32 @@ _eglLookupConfig(EGLConfig config, _EGLDisplay *dpy);
 /**
  * Return the handle of a linked config.
  */
-static INLINE EGLConfig
+static inline EGLConfig
 _eglGetConfigHandle(_EGLConfig *conf)
 {
    return (EGLConfig) conf;
 }
 
 
-PUBLIC EGLBoolean
+extern EGLBoolean
 _eglValidateConfig(const _EGLConfig *conf, EGLBoolean for_matching);
 
 
-PUBLIC EGLBoolean
+extern EGLBoolean
 _eglMatchConfig(const _EGLConfig *conf, const _EGLConfig *criteria);
 
 
-PUBLIC EGLBoolean
+extern EGLBoolean
 _eglParseConfigAttribList(_EGLConfig *conf, _EGLDisplay *dpy,
                           const EGLint *attrib_list);
 
 
-PUBLIC EGLint
+extern EGLint
 _eglCompareConfigs(const _EGLConfig *conf1, const _EGLConfig *conf2,
                    const _EGLConfig *criteria, EGLBoolean compare_id);
 
 
-PUBLIC EGLBoolean
+extern EGLBoolean
 _eglFilterConfigArray(_EGLArray *array, EGLConfig *configs,
                       EGLint config_size, EGLint *num_configs,
                       EGLBoolean (*match)(const _EGLConfig *, void *),
@@ -222,5 +234,9 @@ _eglGetConfigAttrib(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, EGLint 
 extern EGLBoolean
 _eglGetConfigs(_EGLDriver *drv, _EGLDisplay *dpy, EGLConfig *configs, EGLint config_size, EGLint *num_config);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* EGLCONFIG_INCLUDED */

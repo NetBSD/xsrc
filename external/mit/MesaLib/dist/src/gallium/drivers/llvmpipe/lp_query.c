@@ -33,7 +33,7 @@
 #include "draw/draw_context.h"
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
-#include "os/os_time.h"
+#include "util/os_time.h"
 #include "lp_context.h"
 #include "lp_flush.h"
 #include "lp_fence.h"
@@ -125,6 +125,7 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
       }
       break;
    case PIPE_QUERY_OCCLUSION_PREDICATE:
+   case PIPE_QUERY_OCCLUSION_PREDICATE_CONSERVATIVE:
       for (i = 0; i < num_threads; i++) {
          /* safer (still not guaranteed) when there's an overflow */
          vresult->b = vresult->b || pq->end[i];
@@ -155,6 +156,7 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
       *result = pq->num_primitives_written;
       break;
    case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
+   case PIPE_QUERY_SO_OVERFLOW_ANY_PREDICATE:
       vresult->b = pq->num_primitives_generated > pq->num_primitives_written;
       break;
    case PIPE_QUERY_SO_STATISTICS: {
@@ -184,7 +186,7 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
 }
 
 
-static void
+static boolean
 llvmpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
@@ -215,6 +217,7 @@ llvmpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
       pq->num_primitives_generated = llvmpipe->so_stats.primitives_storage_needed;
       break;
    case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
+   case PIPE_QUERY_SO_OVERFLOW_ANY_PREDICATE:
       pq->num_primitives_written = llvmpipe->so_stats.num_primitives_written;
       pq->num_primitives_generated = llvmpipe->so_stats.primitives_storage_needed;
       break;
@@ -229,16 +232,18 @@ llvmpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
       break;
    case PIPE_QUERY_OCCLUSION_COUNTER:
    case PIPE_QUERY_OCCLUSION_PREDICATE:
+   case PIPE_QUERY_OCCLUSION_PREDICATE_CONSERVATIVE:
       llvmpipe->active_occlusion_queries++;
       llvmpipe->dirty |= LP_NEW_OCCLUSION_QUERY;
       break;
    default:
       break;
    }
+   return true;
 }
 
 
-static void
+static bool
 llvmpipe_end_query(struct pipe_context *pipe, struct pipe_query *q)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
@@ -263,6 +268,7 @@ llvmpipe_end_query(struct pipe_context *pipe, struct pipe_query *q)
          llvmpipe->so_stats.primitives_storage_needed - pq->num_primitives_generated;
       break;
    case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
+   case PIPE_QUERY_SO_OVERFLOW_ANY_PREDICATE:
       pq->num_primitives_written =
          llvmpipe->so_stats.num_primitives_written - pq->num_primitives_written;
       pq->num_primitives_generated =
@@ -290,6 +296,7 @@ llvmpipe_end_query(struct pipe_context *pipe, struct pipe_query *q)
       break;
    case PIPE_QUERY_OCCLUSION_COUNTER:
    case PIPE_QUERY_OCCLUSION_PREDICATE:
+   case PIPE_QUERY_OCCLUSION_PREDICATE_CONSERVATIVE:
       assert(llvmpipe->active_occlusion_queries);
       llvmpipe->active_occlusion_queries--;
       llvmpipe->dirty |= LP_NEW_OCCLUSION_QUERY;
@@ -297,6 +304,8 @@ llvmpipe_end_query(struct pipe_context *pipe, struct pipe_query *q)
    default:
       break;
    }
+
+   return true;
 }
 
 boolean
@@ -314,9 +323,14 @@ llvmpipe_check_render_cond(struct llvmpipe_context *lp)
 
    b = pipe->get_query_result(pipe, lp->render_cond_query, wait, (void*)&result);
    if (b)
-      return (!result == lp->render_cond_cond);
+      return ((!result) == lp->render_cond_cond);
    else
       return TRUE;
+}
+
+static void
+llvmpipe_set_active_query_state(struct pipe_context *pipe, boolean enable)
+{
 }
 
 void llvmpipe_init_query_funcs(struct llvmpipe_context *llvmpipe )
@@ -326,6 +340,7 @@ void llvmpipe_init_query_funcs(struct llvmpipe_context *llvmpipe )
    llvmpipe->pipe.begin_query = llvmpipe_begin_query;
    llvmpipe->pipe.end_query = llvmpipe_end_query;
    llvmpipe->pipe.get_query_result = llvmpipe_get_query_result;
+   llvmpipe->pipe.set_active_query_state = llvmpipe_set_active_query_state;
 }
 
 

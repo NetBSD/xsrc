@@ -58,6 +58,39 @@ struct RelocInfo
    RelocEntry entry[0];
 };
 
+struct FixupData {
+   FixupData(bool force, bool flat, uint8_t alphatest) :
+      force_persample_interp(force), flatshade(flat), alphatest(alphatest) {}
+   bool force_persample_interp;
+   bool flatshade;
+   uint8_t alphatest;
+};
+
+struct FixupEntry;
+typedef void (*FixupApply)(const FixupEntry*, uint32_t*, const FixupData&);
+
+struct FixupEntry
+{
+   FixupEntry(FixupApply apply, int ipa, int reg, int loc) :
+      apply(apply), ipa(ipa), reg(reg), loc(loc) {}
+
+   FixupApply apply;
+   union {
+      struct {
+         uint32_t ipa:4; // SC mode used to identify colors
+         uint32_t reg:8; // The reg used for perspective division
+         uint32_t loc:20; // Let's hope we don't have more than 1M-sized shaders
+      };
+      uint32_t val;
+   };
+};
+
+struct FixupInfo
+{
+   uint32_t count;
+   FixupEntry entry[0];
+};
+
 class CodeEmitter
 {
 public:
@@ -78,6 +111,9 @@ public:
 
    inline void *getRelocInfo() const { return relocInfo; }
 
+   bool addInterp(int ipa, int reg, FixupApply apply);
+   inline void *getFixupInfo() const { return fixupInfo; }
+
    virtual void prepareEmission(Program *);
    virtual void prepareEmission(Function *);
    virtual void prepareEmission(BasicBlock *);
@@ -92,6 +128,7 @@ protected:
    uint32_t codeSizeLimit;
 
    RelocInfo *relocInfo;
+   FixupInfo *fixupInfo;
 };
 
 
@@ -136,7 +173,17 @@ public:
    // The address chosen is supplied to the relocation routine.
    virtual void getBuiltinCode(const uint32_t **code, uint32_t *size) const = 0;
 
-   virtual void parseDriverInfo(const struct nv50_ir_prog_info *info) { }
+   virtual void parseDriverInfo(const struct nv50_ir_prog_info *info) {
+      if (info->type == PIPE_SHADER_COMPUTE) {
+         threads = info->prop.cp.numThreads[0] *
+            info->prop.cp.numThreads[1] *
+            info->prop.cp.numThreads[2];
+         if (threads == 0)
+            threads = info->target >= NVISA_GK104_CHIPSET ? 1024 : 512;
+      } else {
+         threads = 32; // doesn't matter, just not too big.
+      }
+   }
 
    virtual bool runLegalizePass(Program *, CGStage stage) const = 0;
 
@@ -151,8 +198,8 @@ public:
       uint8_t srcNr;
       uint8_t srcMods[3];
       uint8_t dstMods;
-      uint8_t srcFiles[3];
-      uint8_t dstFiles;
+      uint16_t srcFiles[3];
+      uint16_t dstFiles;
       unsigned int minEncSize  : 4;
       unsigned int vector      : 1;
       unsigned int predicate   : 1;
@@ -170,6 +217,8 @@ public:
 
    virtual bool insnCanLoad(const Instruction *insn, int s,
                             const Instruction *ld) const = 0;
+   virtual bool insnCanLoadOffset(const Instruction *insn, int s,
+                                  int offset) const = 0;
    virtual bool isOpSupported(operation, DataType) const = 0;
    virtual bool isAccessSupported(DataFile, DataType) const = 0;
    virtual bool isModSupported(const Instruction *,
@@ -210,6 +259,7 @@ public:
 
 protected:
    uint32_t chipset;
+   uint32_t threads;
 
    DataFile nativeFileMap[DATA_FILE_COUNT];
 

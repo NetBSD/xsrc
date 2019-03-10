@@ -102,9 +102,8 @@ call_once(once_flag *flag, void (*func)(void))
 static inline int
 cnd_broadcast(cnd_t *cond)
 {
-    if (!cond) return thrd_error;
-    pthread_cond_broadcast(cond);
-    return thrd_success;
+    assert(cond != NULL);
+    return (pthread_cond_broadcast(cond) == 0) ? thrd_success : thrd_error;
 }
 
 // 7.25.3.2
@@ -119,28 +118,29 @@ cnd_destroy(cnd_t *cond)
 static inline int
 cnd_init(cnd_t *cond)
 {
-    if (!cond) return thrd_error;
-    pthread_cond_init(cond, NULL);
-    return thrd_success;
+    assert(cond != NULL);
+    return (pthread_cond_init(cond, NULL) == 0) ? thrd_success : thrd_error;
 }
 
 // 7.25.3.4
 static inline int
 cnd_signal(cnd_t *cond)
 {
-    if (!cond) return thrd_error;
-    pthread_cond_signal(cond);
-    return thrd_success;
+    assert(cond != NULL);
+    return (pthread_cond_signal(cond) == 0) ? thrd_success : thrd_error;
 }
 
 // 7.25.3.5
 static inline int
-cnd_timedwait(cnd_t *cond, mtx_t *mtx, const xtime *xt)
+cnd_timedwait(cnd_t *cond, mtx_t *mtx, const struct timespec *abs_time)
 {
-    struct timespec abs_time;
     int rt;
-    if (!cond || !mtx || !xt) return thrd_error;
-    rt = pthread_cond_timedwait(cond, mtx, &abs_time);
+
+    assert(mtx != NULL);
+    assert(cond != NULL);
+    assert(abs_time != NULL);
+
+    rt = pthread_cond_timedwait(cond, mtx, abs_time);
     if (rt == ETIMEDOUT)
         return thrd_busy;
     return (rt == 0) ? thrd_success : thrd_error;
@@ -150,9 +150,9 @@ cnd_timedwait(cnd_t *cond, mtx_t *mtx, const xtime *xt)
 static inline int
 cnd_wait(cnd_t *cond, mtx_t *mtx)
 {
-    if (!cond || !mtx) return thrd_error;
-    pthread_cond_wait(cond, mtx);
-    return thrd_success;
+    assert(mtx != NULL);
+    assert(cond != NULL);
+    return (pthread_cond_wait(cond, mtx) == 0) ? thrd_success : thrd_error;
 }
 
 
@@ -161,29 +161,55 @@ cnd_wait(cnd_t *cond, mtx_t *mtx)
 static inline void
 mtx_destroy(mtx_t *mtx)
 {
-    assert(mtx);
+    assert(mtx != NULL);
     pthread_mutex_destroy(mtx);
 }
+
+/*
+ * XXX: Workaround when building with -O0 and without pthreads link.
+ *
+ * In such cases constant folding and dead code elimination won't be
+ * available, thus the compiler will always add the pthread_mutexattr*
+ * functions into the binary. As we try to link, we'll fail as the
+ * symbols are unresolved.
+ *
+ * Ideally we'll enable the optimisations locally, yet that does not
+ * seem to work.
+ *
+ * So the alternative workaround is to annotate the symbols as weak.
+ * Thus the linker will be happy and things don't clash when building
+ * with -O1 or greater.
+ */
+#if defined(HAVE_FUNC_ATTRIBUTE_WEAK) && !defined(__CYGWIN__)
+__attribute__((weak))
+int pthread_mutexattr_init(pthread_mutexattr_t *attr);
+
+__attribute__((weak))
+int pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type);
+
+__attribute__((weak))
+int pthread_mutexattr_destroy(pthread_mutexattr_t *attr);
+#endif
 
 // 7.25.4.2
 static inline int
 mtx_init(mtx_t *mtx, int type)
 {
     pthread_mutexattr_t attr;
-    if (!mtx) return thrd_error;
+    assert(mtx != NULL);
     if (type != mtx_plain && type != mtx_timed && type != mtx_try
       && type != (mtx_plain|mtx_recursive)
       && type != (mtx_timed|mtx_recursive)
       && type != (mtx_try|mtx_recursive))
         return thrd_error;
-    pthread_mutexattr_init(&attr);
-    if ((type & mtx_recursive) != 0) {
-#if defined(__linux__) || defined(__linux)
-        pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE_NP);
-#else
-        pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-#endif
+
+    if ((type & mtx_recursive) == 0) {
+        pthread_mutex_init(mtx, NULL);
+        return thrd_success;
     }
+
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
     pthread_mutex_init(mtx, &attr);
     pthread_mutexattr_destroy(&attr);
     return thrd_success;
@@ -193,9 +219,8 @@ mtx_init(mtx_t *mtx, int type)
 static inline int
 mtx_lock(mtx_t *mtx)
 {
-    if (!mtx) return thrd_error;
-    pthread_mutex_lock(mtx);
-    return thrd_success;
+    assert(mtx != NULL);
+    return (pthread_mutex_lock(mtx) == 0) ? thrd_success : thrd_error;
 }
 
 static inline int
@@ -206,22 +231,21 @@ thrd_yield(void);
 
 // 7.25.4.4
 static inline int
-mtx_timedlock(mtx_t *mtx, const xtime *xt)
+mtx_timedlock(mtx_t *mtx, const struct timespec *ts)
 {
-    if (!mtx || !xt) return thrd_error;
+    assert(mtx != NULL);
+    assert(ts != NULL);
+
     {
 #ifdef EMULATED_THREADS_USE_NATIVE_TIMEDLOCK
-    struct timespec ts;
     int rt;
-    ts.tv_sec = xt->sec;
-    ts.tv_nsec = xt->nsec;
-    rt = pthread_mutex_timedlock(mtx, &ts);
+    rt = pthread_mutex_timedlock(mtx, ts);
     if (rt == 0)
         return thrd_success;
     return (rt == ETIMEDOUT) ? thrd_busy : thrd_error;
 #else
     time_t expire = time(NULL);
-    expire += xt->sec;
+    expire += ts->tv_sec;
     while (mtx_trylock(mtx) != thrd_success) {
         time_t now = time(NULL);
         if (expire < now)
@@ -238,7 +262,7 @@ mtx_timedlock(mtx_t *mtx, const xtime *xt)
 static inline int
 mtx_trylock(mtx_t *mtx)
 {
-    if (!mtx) return thrd_error;
+    assert(mtx != NULL);
     return (pthread_mutex_trylock(mtx) == 0) ? thrd_success : thrd_busy;
 }
 
@@ -246,9 +270,8 @@ mtx_trylock(mtx_t *mtx)
 static inline int
 mtx_unlock(mtx_t *mtx)
 {
-    if (!mtx) return thrd_error;
-    pthread_mutex_unlock(mtx);
-    return thrd_success;
+    assert(mtx != NULL);
+    return (pthread_mutex_unlock(mtx) == 0) ? thrd_success : thrd_error;
 }
 
 
@@ -258,7 +281,7 @@ static inline int
 thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
 {
     struct impl_thrd_param *pack;
-    if (!thr) return thrd_error;
+    assert(thr != NULL);
     pack = (struct impl_thrd_param *)malloc(sizeof(struct impl_thrd_param));
     if (!pack) return thrd_nomem;
     pack->func = func;
@@ -312,13 +335,10 @@ thrd_join(thrd_t thr, int *res)
 
 // 7.25.5.7
 static inline void
-thrd_sleep(const xtime *xt)
+thrd_sleep(const struct timespec *time_point, struct timespec *remaining)
 {
-    struct timespec req;
-    assert(xt);
-    req.tv_sec = xt->sec;
-    req.tv_nsec = xt->nsec;
-    nanosleep(&req, NULL);
+    assert(time_point != NULL);
+    nanosleep(time_point, remaining);
 }
 
 // 7.25.5.8
@@ -334,7 +354,7 @@ thrd_yield(void)
 static inline int
 tss_create(tss_t *key, tss_dtor_t dtor)
 {
-    if (!key) return thrd_error;
+    assert(key != NULL);
     return (pthread_key_create(key, dtor) == 0) ? thrd_success : thrd_error;
 }
 
@@ -362,14 +382,15 @@ tss_set(tss_t key, void *val)
 
 /*-------------------- 7.25.7 Time functions --------------------*/
 // 7.25.6.1
+#ifndef HAVE_TIMESPEC_GET
 static inline int
-xtime_get(xtime *xt, int base)
+timespec_get(struct timespec *ts, int base)
 {
-    if (!xt) return 0;
+    if (!ts) return 0;
     if (base == TIME_UTC) {
-        xt->sec = time(NULL);
-        xt->nsec = 0;
+        clock_gettime(CLOCK_REALTIME, ts);
         return base;
     }
     return 0;
 }
+#endif

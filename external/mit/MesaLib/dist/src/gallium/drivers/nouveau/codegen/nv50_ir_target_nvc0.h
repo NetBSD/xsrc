@@ -31,10 +31,14 @@ namespace nv50_ir {
 
 #define NVC0_BUILTIN_COUNT 4
 
+struct opProperties;
+
 class TargetNVC0 : public Target
 {
 public:
    TargetNVC0(unsigned int chipset);
+
+   void initProps(const struct opProperties *props, int size);
 
    virtual CodeEmitter *getCodeEmitter(Program::Type);
 
@@ -48,6 +52,8 @@ public:
 
    virtual bool insnCanLoad(const Instruction *insn, int s,
                             const Instruction *ld) const;
+   virtual bool insnCanLoadOffset(const Instruction *insn, int s,
+                                  int offset) const;
    virtual bool isOpSupported(operation, DataType) const;
    virtual bool isAccessSupported(DataFile, DataType) const;
    virtual bool isModSupported(const Instruction *, int s, Modifier) const;

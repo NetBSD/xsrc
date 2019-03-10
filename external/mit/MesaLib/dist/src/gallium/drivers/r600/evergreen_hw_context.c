@@ -35,7 +35,7 @@ void evergreen_dma_copy_buffer(struct r600_context *rctx,
 			       uint64_t src_offset,
 			       uint64_t size)
 {
-	struct radeon_winsys_cs *cs = rctx->b.rings.dma.cs;
+	struct radeon_cmdbuf *cs = rctx->b.dma.cs;
 	unsigned i, ncopy, csize, sub_cmd, shift;
 	struct r600_resource *rdst = (struct r600_resource*)dst;
 	struct r600_resource *rsrc = (struct r600_resource*)src;
@@ -60,19 +60,17 @@ void evergreen_dma_copy_buffer(struct r600_context *rctx,
 	}
 	ncopy = (size / EG_DMA_COPY_MAX_SIZE) + !!(size % EG_DMA_COPY_MAX_SIZE);
 
-	r600_need_dma_space(&rctx->b, ncopy * 5);
+	r600_need_dma_space(&rctx->b, ncopy * 5, rdst, rsrc);
 	for (i = 0; i < ncopy; i++) {
 		csize = size < EG_DMA_COPY_MAX_SIZE ? size : EG_DMA_COPY_MAX_SIZE;
-		/* emit reloc before writting cs so that cs is always in consistent state */
-		r600_context_bo_reloc(&rctx->b, &rctx->b.rings.dma, rsrc, RADEON_USAGE_READ,
-				      RADEON_PRIO_MIN);
-		r600_context_bo_reloc(&rctx->b, &rctx->b.rings.dma, rdst, RADEON_USAGE_WRITE,
-				      RADEON_PRIO_MIN);
-		cs->buf[cs->cdw++] = DMA_PACKET(DMA_PACKET_COPY, sub_cmd, csize);
-		cs->buf[cs->cdw++] = dst_offset & 0xffffffff;
-		cs->buf[cs->cdw++] = src_offset & 0xffffffff;
-		cs->buf[cs->cdw++] = (dst_offset >> 32UL) & 0xff;
-		cs->buf[cs->cdw++] = (src_offset >> 32UL) & 0xff;
+		/* emit reloc before writing cs so that cs is always in consistent state */
+		radeon_add_to_buffer_list(&rctx->b, &rctx->b.dma, rsrc, RADEON_USAGE_READ, 0);
+		radeon_add_to_buffer_list(&rctx->b, &rctx->b.dma, rdst, RADEON_USAGE_WRITE, 0);
+		radeon_emit(cs, DMA_PACKET(DMA_PACKET_COPY, sub_cmd, csize));
+		radeon_emit(cs, dst_offset & 0xffffffff);
+		radeon_emit(cs, src_offset & 0xffffffff);
+		radeon_emit(cs, (dst_offset >> 32UL) & 0xff);
+		radeon_emit(cs, (src_offset >> 32UL) & 0xff);
 		dst_offset += csize << shift;
 		src_offset += csize << shift;
 		size -= csize;
@@ -84,9 +82,10 @@ void evergreen_dma_copy_buffer(struct r600_context *rctx,
 
 void evergreen_cp_dma_clear_buffer(struct r600_context *rctx,
 				   struct pipe_resource *dst, uint64_t offset,
-				   unsigned size, uint32_t clear_value)
+				   unsigned size, uint32_t clear_value,
+				   enum r600_coherency coher)
 {
-	struct radeon_winsys_cs *cs = rctx->b.rings.gfx.cs;
+	struct radeon_cmdbuf *cs = rctx->b.gfx.cs;
 
 	assert(size);
 	assert(rctx->screen->b.has_cp_dma);
@@ -100,15 +99,7 @@ void evergreen_cp_dma_clear_buffer(struct r600_context *rctx,
 	offset += r600_resource(dst)->gpu_address;
 
 	/* Flush the cache where the resource is bound. */
-	rctx->b.flags |= R600_CONTEXT_INV_CONST_CACHE |
-			 R600_CONTEXT_INV_VERTEX_CACHE |
-			 R600_CONTEXT_INV_TEX_CACHE |
-			 R600_CONTEXT_FLUSH_AND_INV |
-			 R600_CONTEXT_FLUSH_AND_INV_CB |
-			 R600_CONTEXT_FLUSH_AND_INV_DB |
-			 R600_CONTEXT_FLUSH_AND_INV_CB_META |
-			 R600_CONTEXT_FLUSH_AND_INV_DB_META |
-			 R600_CONTEXT_STREAMOUT_FLUSH |
+	rctx->b.flags |= r600_get_flush_flags(coher) |
 			 R600_CONTEXT_WAIT_3D_IDLE;
 
 	while (size) {
@@ -116,7 +107,9 @@ void evergreen_cp_dma_clear_buffer(struct r600_context *rctx,
 		unsigned byte_count = MIN2(size, CP_DMA_MAX_BYTE_COUNT);
 		unsigned reloc;
 
-		r600_need_cs_space(rctx, 10 + (rctx->b.flags ? R600_MAX_FLUSH_CS_DWORDS : 0), FALSE);
+		r600_need_cs_space(rctx,
+				   10 + (rctx->b.flags ? R600_MAX_FLUSH_CS_DWORDS : 0) +
+				   R600_MAX_PFP_SYNC_ME_DWORDS, FALSE, 0);
 
 		/* Flush the caches for the first copy only. */
 		if (rctx->b.flags) {
@@ -129,9 +122,9 @@ void evergreen_cp_dma_clear_buffer(struct r600_context *rctx,
 		}
 
 		/* This must be done after r600_need_cs_space. */
-		reloc = r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx,
+		reloc = radeon_add_to_buffer_list(&rctx->b, &rctx->b.gfx,
 					      (struct r600_resource*)dst, RADEON_USAGE_WRITE,
-					      RADEON_PRIO_MIN);
+					      RADEON_PRIO_CP_DMA);
 
 		radeon_emit(cs, PKT3(PKT3_CP_DMA, 4, 0));
 		radeon_emit(cs, clear_value);	/* DATA [31:0] */
@@ -147,9 +140,11 @@ void evergreen_cp_dma_clear_buffer(struct r600_context *rctx,
 		offset += byte_count;
 	}
 
-	/* Invalidate the read caches. */
-	rctx->b.flags |= R600_CONTEXT_INV_CONST_CACHE |
-			 R600_CONTEXT_INV_VERTEX_CACHE |
-			 R600_CONTEXT_INV_TEX_CACHE;
+	/* CP DMA is executed in ME, but index buffers are read by PFP.
+	 * This ensures that ME (CP DMA) is idle before PFP starts fetching
+	 * indices. If we wanted to execute CP DMA in PFP, this packet
+	 * should precede it.
+	 */
+	if (coher == R600_COHERENCY_SHADER)
+		r600_emit_pfp_sync_me(rctx);
 }
-

@@ -29,6 +29,7 @@ LDADD = \
 	$(DLOPEN_LIBS)
 
 TESTS = \
+	clear \
 	collision \
 	delete_and_lookup \
 	delete_management \
@@ -37,8 +38,11 @@ TESTS = \
 	insert_many \
 	null_destroy \
 	random_entry \
+	remove_key \
 	remove_null \
 	replacement \
 	$()
 
-EXTRA_PROGRAMS = $(TESTS)
+check_PROGRAMS = $(TESTS)
+
+EXTRA_DIST = meson.build

@@ -32,7 +32,7 @@
 #include "nv30/nv30_context.h"
 #include "nv30/nv30_format.h"
 
-static INLINE uint32_t
+static inline uint32_t
 pack_rgba(enum pipe_format format, const float *rgba)
 {
    union util_color uc;
@@ -40,7 +40,7 @@ pack_rgba(enum pipe_format format, const float *rgba)
    return uc.ui[0];
 }
 
-static INLINE uint32_t
+static inline uint32_t
 pack_zeta(enum pipe_format format, double depth, unsigned stencil)
 {
    uint32_t zuint = (uint32_t)(depth * 4294967295.0);
@@ -58,7 +58,7 @@ nv30_clear(struct pipe_context *pipe, unsigned buffers,
    struct pipe_framebuffer_state *fb = &nv30->framebuffer;
    uint32_t colr = 0, zeta = 0, mode = 0;
 
-   if (!nv30_state_validate(nv30, TRUE))
+   if (!nv30_state_validate(nv30, NV30_NEW_FRAMEBUFFER | NV30_NEW_SCISSOR, true))
       return;
 
    if (buffers & PIPE_CLEAR_COLOR && fb->nr_cbufs) {
@@ -73,8 +73,13 @@ nv30_clear(struct pipe_context *pipe, unsigned buffers,
       zeta = pack_zeta(fb->zsbuf->format, depth, stencil);
       if (buffers & PIPE_CLEAR_DEPTH)
          mode |= NV30_3D_CLEAR_BUFFERS_DEPTH;
-      if (buffers & PIPE_CLEAR_STENCIL)
+      if (buffers & PIPE_CLEAR_STENCIL) {
          mode |= NV30_3D_CLEAR_BUFFERS_STENCIL;
+         BEGIN_NV04(push, NV30_3D(STENCIL_ENABLE(0)), 2);
+         PUSH_DATA (push, 0);
+         PUSH_DATA (push, 0x000000ff);
+         nv30->dirty |= NV30_NEW_ZSA;
+      }
    }
 
    /*XXX: wtf? fixes clears sometimes not clearing on nv3x... */
@@ -96,7 +101,8 @@ nv30_clear(struct pipe_context *pipe, unsigned buffers,
 static void
 nv30_clear_render_target(struct pipe_context *pipe, struct pipe_surface *ps,
                          const union pipe_color_union *color,
-                         unsigned x, unsigned y, unsigned w, unsigned h)
+                         unsigned x, unsigned y, unsigned w, unsigned h,
+                         bool render_condition_enabled)
 {
    struct nv30_context *nv30 = nv30_context(pipe);
    struct nv30_surface *sf = nv30_surface(ps);
@@ -122,7 +128,7 @@ nv30_clear_render_target(struct pipe_context *pipe, struct pipe_surface *ps,
 
    refn.bo = mt->base.bo;
    refn.flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_WR;
-   if (nouveau_pushbuf_space(push, 16, 1, 0) ||
+   if (nouveau_pushbuf_space(push, 32, 1, 0) ||
        nouveau_pushbuf_refn (push, &refn, 1))
       return;
 
@@ -155,7 +161,8 @@ nv30_clear_render_target(struct pipe_context *pipe, struct pipe_surface *ps,
 static void
 nv30_clear_depth_stencil(struct pipe_context *pipe, struct pipe_surface *ps,
                          unsigned buffers, double depth, unsigned stencil,
-                         unsigned x, unsigned y, unsigned w, unsigned h)
+                         unsigned x, unsigned y, unsigned w, unsigned h,
+                         bool render_condition_enabled)
 {
    struct nv30_context *nv30 = nv30_context(pipe);
    struct nv30_surface *sf = nv30_surface(ps);

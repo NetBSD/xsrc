@@ -1,5 +1,5 @@
 /**********************************************************
- * Copyright 2009 VMware, Inc.  All rights reserved.
+ * Copyright 2009-2015 VMware, Inc.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -69,7 +69,7 @@ struct vmw_gmr_buffer
 extern const struct pb_vtbl vmw_gmr_buffer_vtbl;
 
 
-static INLINE struct vmw_gmr_buffer *
+static inline struct vmw_gmr_buffer *
 vmw_gmr_buffer(struct pb_buffer *buf)
 {
    assert(buf);
@@ -86,7 +86,7 @@ struct vmw_gmr_bufmgr
 };
 
 
-static INLINE struct vmw_gmr_bufmgr *
+static inline struct vmw_gmr_bufmgr *
 vmw_gmr_bufmgr(struct pb_manager *mgr)
 {
    assert(mgr);
@@ -154,7 +154,7 @@ vmw_gmr_buffer_unmap(struct pb_buffer *_buf)
 static void
 vmw_gmr_buffer_get_base_buffer(struct pb_buffer *buf,
                            struct pb_buffer **base_buf,
-                           unsigned *offset)
+                           pb_size *offset)
 {
    *base_buf = buf;
    *offset = 0;
@@ -266,7 +266,7 @@ vmw_gmr_bufmgr_region_ptr(struct pb_buffer *buf,
                           struct SVGAGuestPtr *ptr)
 {
    struct pb_buffer *base_buf;
-   unsigned offset = 0;
+   pb_size offset = 0;
    struct vmw_gmr_buffer *gmr_buf;
    
    pb_get_base_buffer( buf, &base_buf, &offset );

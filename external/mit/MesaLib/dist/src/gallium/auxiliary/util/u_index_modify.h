@@ -25,48 +25,27 @@
 
 struct pipe_context;
 struct pipe_resource;
-struct pipe_index_buffer;
 
 void util_shorten_ubyte_elts_to_userptr(struct pipe_context *context,
-					struct pipe_index_buffer *ib,
+					const struct pipe_draw_info *info,
+                                        unsigned add_transfer_flags,
 					int index_bias,
 					unsigned start,
 					unsigned count,
 					void *out);
 
-void util_shorten_ubyte_elts(struct pipe_context *context,
-			     struct pipe_index_buffer *ib,
-			     struct pipe_resource **out_buf,
-			     int index_bias,
-			     unsigned start,
-			     unsigned count);
-
-
-
 void util_rebuild_ushort_elts_to_userptr(struct pipe_context *context,
-					 struct pipe_index_buffer *ib,
+					 const struct pipe_draw_info *info,
+                                         unsigned add_transfer_flags,
 					 int index_bias,
 					 unsigned start, unsigned count,
 					 void *out);
 
-void util_rebuild_ushort_elts(struct pipe_context *context,
-			      struct pipe_index_buffer *ib,
-			      struct pipe_resource **out_buf,
-			      int index_bias,
-			      unsigned start, unsigned count);
-
-
-
 void util_rebuild_uint_elts_to_userptr(struct pipe_context *context,
-				       struct pipe_index_buffer *ib,
+				       const struct pipe_draw_info *info,
+                                       unsigned add_transfer_flags,
 				       int index_bias,
 				       unsigned start, unsigned count,
 				       void *out);
-
-void util_rebuild_uint_elts(struct pipe_context *context,
-			    struct pipe_index_buffer *ib,
-			    struct pipe_resource **out_buf,
-			    int index_bias,
-			    unsigned start, unsigned count);
 
 #endif

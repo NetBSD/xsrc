@@ -47,20 +47,23 @@ main(int argc, char **argv)
 {
    struct hash_table *ht;
    struct hash_entry *entry;
-   int size = 10000;
+   unsigned size = 10000;
    uint32_t keys[size];
    uint32_t i;
 
-   ht = _mesa_hash_table_create(NULL, uint32_t_key_equals);
+   (void) argc;
+   (void) argv;
+
+   ht = _mesa_hash_table_create(NULL, key_value, uint32_t_key_equals);
 
    for (i = 0; i < size; i++) {
       keys[i] = i;
 
-      _mesa_hash_table_insert(ht, i, keys + i, NULL);
+      _mesa_hash_table_insert(ht, keys + i, NULL);
    }
 
    for (i = 0; i < size; i++) {
-      entry = _mesa_hash_table_search(ht, i, keys + i);
+      entry = _mesa_hash_table_search(ht, keys + i);
       assert(entry);
       assert(key_value(entry->key) == i);
    }

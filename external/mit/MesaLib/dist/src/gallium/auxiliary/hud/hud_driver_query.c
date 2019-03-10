@@ -33,21 +33,179 @@
 
 #include "hud/hud_private.h"
 #include "pipe/p_screen.h"
-#include "os/os_time.h"
+#include "util/os_time.h"
+#include "util/u_math.h"
 #include "util/u_memory.h"
 #include <stdio.h>
 
+// Must be a power of two
 #define NUM_QUERIES 8
 
+struct hud_batch_query_context {
+   unsigned num_query_types;
+   unsigned allocated_query_types;
+   unsigned *query_types;
+
+   boolean failed;
+   struct pipe_query *query[NUM_QUERIES];
+   union pipe_query_result *result[NUM_QUERIES];
+   unsigned head, pending, results;
+};
+
+void
+hud_batch_query_update(struct hud_batch_query_context *bq,
+                       struct pipe_context *pipe)
+{
+   if (!bq || bq->failed)
+      return;
+
+   if (bq->query[bq->head])
+      pipe->end_query(pipe, bq->query[bq->head]);
+
+   bq->results = 0;
+
+   while (bq->pending) {
+      unsigned idx = (bq->head - bq->pending + 1) % NUM_QUERIES;
+      struct pipe_query *query = bq->query[idx];
+
+      if (!bq->result[idx])
+         bq->result[idx] = MALLOC(sizeof(bq->result[idx]->batch[0]) *
+                                  bq->num_query_types);
+      if (!bq->result[idx]) {
+         fprintf(stderr, "gallium_hud: out of memory.\n");
+         bq->failed = TRUE;
+         return;
+      }
+
+      if (!pipe->get_query_result(pipe, query, FALSE, bq->result[idx]))
+         break;
+
+      ++bq->results;
+      --bq->pending;
+   }
+
+   bq->head = (bq->head + 1) % NUM_QUERIES;
+
+   if (bq->pending == NUM_QUERIES) {
+      fprintf(stderr,
+              "gallium_hud: all queries busy after %i frames, dropping data.\n",
+              NUM_QUERIES);
+
+      assert(bq->query[bq->head]);
+
+      pipe->destroy_query(pipe, bq->query[bq->head]);
+      bq->query[bq->head] = NULL;
+   }
+
+   ++bq->pending;
+
+   if (!bq->query[bq->head]) {
+      bq->query[bq->head] = pipe->create_batch_query(pipe,
+                                                     bq->num_query_types,
+                                                     bq->query_types);
+
+      if (!bq->query[bq->head]) {
+         fprintf(stderr,
+                 "gallium_hud: create_batch_query failed. You may have "
+                 "selected too many or incompatible queries.\n");
+         bq->failed = TRUE;
+         return;
+      }
+   }
+}
+
+void
+hud_batch_query_begin(struct hud_batch_query_context *bq,
+                      struct pipe_context *pipe)
+{
+   if (!bq || bq->failed || !bq->query[bq->head])
+      return;
+
+   if (!pipe->begin_query(pipe, bq->query[bq->head])) {
+      fprintf(stderr,
+              "gallium_hud: could not begin batch query. You may have "
+              "selected too many or incompatible queries.\n");
+      bq->failed = TRUE;
+   }
+}
+
+static boolean
+batch_query_add(struct hud_batch_query_context **pbq,
+                unsigned query_type, unsigned *result_index)
+{
+   struct hud_batch_query_context *bq = *pbq;
+   unsigned i;
+
+   if (!bq) {
+      bq = CALLOC_STRUCT(hud_batch_query_context);
+      if (!bq)
+         return false;
+      *pbq = bq;
+   }
+
+   for (i = 0; i < bq->num_query_types; ++i) {
+      if (bq->query_types[i] == query_type) {
+         *result_index = i;
+         return true;
+      }
+   }
+
+   if (bq->num_query_types == bq->allocated_query_types) {
+      unsigned new_alloc = MAX2(16, bq->allocated_query_types * 2);
+      unsigned *new_query_types
+         = REALLOC(bq->query_types,
+                   bq->allocated_query_types * sizeof(unsigned),
+                   new_alloc * sizeof(unsigned));
+      if (!new_query_types)
+         return false;
+      bq->query_types = new_query_types;
+      bq->allocated_query_types = new_alloc;
+   }
+
+   bq->query_types[bq->num_query_types] = query_type;
+   *result_index = bq->num_query_types++;
+   return true;
+}
+
+void
+hud_batch_query_cleanup(struct hud_batch_query_context **pbq,
+                        struct pipe_context *pipe)
+{
+   struct hud_batch_query_context *bq = *pbq;
+   unsigned idx;
+
+   if (!bq)
+      return;
+
+   *pbq = NULL;
+
+   if (bq->query[bq->head] && !bq->failed)
+      pipe->end_query(pipe, bq->query[bq->head]);
+
+   for (idx = 0; idx < NUM_QUERIES; ++idx) {
+      if (bq->query[idx])
+         pipe->destroy_query(pipe, bq->query[idx]);
+      FREE(bq->result[idx]);
+   }
+
+   FREE(bq->query_types);
+   FREE(bq);
+}
+
 struct query_info {
-   struct pipe_context *pipe;
-   unsigned query_type;
-   unsigned result_index; /* unit depends on query_type */
+   struct hud_batch_query_context *batch;
+   enum pipe_query_type query_type;
+
+   /** index to choose fields in pipe_query_data_pipeline_statistics,
+    * for example.
+    */
+   unsigned result_index;
+   enum pipe_driver_query_result_type result_type;
+   enum pipe_driver_query_type type;
 
    /* Ring of queries. If a query is busy, we use another slot. */
    struct pipe_query *query[NUM_QUERIES];
    unsigned head, tail;
-   unsigned num_queries;
 
    uint64_t last_time;
    uint64_t results_cumulative;
@@ -55,14 +213,28 @@ struct query_info {
 };
 
 static void
-query_new_value(struct hud_graph *gr)
+query_new_value_batch(struct query_info *info)
 {
-   struct query_info *info = gr->query_data;
-   struct pipe_context *pipe = info->pipe;
-   uint64_t now = os_time_get();
+   struct hud_batch_query_context *bq = info->batch;
+   unsigned result_index = info->result_index;
+   unsigned idx = (bq->head - bq->pending) % NUM_QUERIES;
+   unsigned results = bq->results;
 
+   while (results) {
+      info->results_cumulative += bq->result[idx]->batch[result_index].u64;
+      ++info->num_results;
+
+      --results;
+      idx = (idx - 1) % NUM_QUERIES;
+   }
+}
+
+static void
+query_new_value_normal(struct query_info *info, struct pipe_context *pipe)
+{
    if (info->last_time) {
-      pipe->end_query(pipe, info->query[info->head]);
+      if (info->query[info->head])
+         pipe->end_query(pipe, info->query[info->head]);
 
       /* read query results */
       while (1) {
@@ -70,8 +242,14 @@ query_new_value(struct hud_graph *gr)
          union pipe_query_result result;
          uint64_t *res64 = (uint64_t *)&result;
 
-         if (pipe->get_query_result(pipe, query, FALSE, &result)) {
-            info->results_cumulative += res64[info->result_index];
+         if (query && pipe->get_query_result(pipe, query, FALSE, &result)) {
+            if (info->type == PIPE_DRIVER_QUERY_TYPE_FLOAT) {
+               assert(info->result_index == 0);
+               info->results_cumulative += (uint64_t) (result.f * 1000.0f);
+            }
+            else {
+               info->results_cumulative += res64[info->result_index];
+            }
             info->num_results++;
 
             if (info->tail == info->head)
@@ -88,7 +266,8 @@ query_new_value(struct hud_graph *gr)
                        "gallium_hud: all queries are busy after %i frames, "
                        "can't add another query\n",
                        NUM_QUERIES);
-               pipe->destroy_query(pipe, info->query[info->head]);
+               if (info->query[info->head])
+                  pipe->destroy_query(pipe, info->query[info->head]);
                info->query[info->head] =
                      pipe->create_query(pipe, info->query_type, 0);
             }
@@ -104,38 +283,76 @@ query_new_value(struct hud_graph *gr)
             break;
          }
       }
-
-      if (info->num_results && info->last_time + gr->pane->period <= now) {
-         /* compute the average value across all frames */
-         hud_graph_add_value(gr, info->results_cumulative / info->num_results);
-
-         info->last_time = now;
-         info->results_cumulative = 0;
-         info->num_results = 0;
-      }
-
-      pipe->begin_query(pipe, info->query[info->head]);
    }
    else {
       /* initialize */
-      info->last_time = now;
       info->query[info->head] = pipe->create_query(pipe, info->query_type, 0);
-      pipe->begin_query(pipe, info->query[info->head]);
    }
 }
 
 static void
-free_query_info(void *ptr)
+begin_query(struct hud_graph *gr, struct pipe_context *pipe)
+{
+   struct query_info *info = gr->query_data;
+
+   assert(!info->batch);
+   if (info->query[info->head])
+      pipe->begin_query(pipe, info->query[info->head]);
+}
+
+static void
+query_new_value(struct hud_graph *gr, struct pipe_context *pipe)
+{
+   struct query_info *info = gr->query_data;
+   uint64_t now = os_time_get();
+
+   if (info->batch) {
+      query_new_value_batch(info);
+   } else {
+      query_new_value_normal(info, pipe);
+   }
+
+   if (!info->last_time) {
+      info->last_time = now;
+      return;
+   }
+
+   if (info->num_results && info->last_time + gr->pane->period <= now) {
+      double value;
+
+      switch (info->result_type) {
+      default:
+      case PIPE_DRIVER_QUERY_RESULT_TYPE_AVERAGE:
+         value = info->results_cumulative / info->num_results;
+         break;
+      case PIPE_DRIVER_QUERY_RESULT_TYPE_CUMULATIVE:
+         value = info->results_cumulative;
+         break;
+      }
+
+      if (info->type == PIPE_DRIVER_QUERY_TYPE_FLOAT) {
+         value /= 1000.0;
+      }
+
+      hud_graph_add_value(gr, value);
+
+      info->last_time = now;
+      info->results_cumulative = 0;
+      info->num_results = 0;
+   }
+}
+
+static void
+free_query_info(void *ptr, struct pipe_context *pipe)
 {
    struct query_info *info = ptr;
 
-   if (info->last_time) {
-      struct pipe_context *pipe = info->pipe;
+   if (!info->batch && info->last_time) {
       int i;
 
       pipe->end_query(pipe, info->query[info->head]);
 
-      for (i = 0; i < Elements(info->query); i++) {
+      for (i = 0; i < ARRAY_SIZE(info->query); i++) {
          if (info->query[i]) {
             pipe->destroy_query(pipe, info->query[i]);
          }
@@ -144,11 +361,20 @@ free_query_info(void *ptr)
    FREE(info);
 }
 
+
+/**
+ * \param result_index  to select fields of pipe_query_data_pipeline_statistics,
+ *                      for example.
+ */
 void
-hud_pipe_query_install(struct hud_pane *pane, struct pipe_context *pipe,
-                       const char *name, unsigned query_type,
+hud_pipe_query_install(struct hud_batch_query_context **pbq,
+                       struct hud_pane *pane,
+                       const char *name,
+                       enum pipe_query_type query_type,
                        unsigned result_index,
-                       uint64_t max_value, boolean uses_byte_units)
+                       uint64_t max_value, enum pipe_driver_query_type type,
+                       enum pipe_driver_query_result_type result_type,
+                       unsigned flags)
 {
    struct hud_graph *gr;
    struct query_info *info;
@@ -157,33 +383,47 @@ hud_pipe_query_install(struct hud_pane *pane, struct pipe_context *pipe,
    if (!gr)
       return;
 
-   strcpy(gr->name, name);
+   strncpy(gr->name, name, sizeof(gr->name));
+   gr->name[sizeof(gr->name) - 1] = '\0';
    gr->query_data = CALLOC_STRUCT(query_info);
-   if (!gr->query_data) {
-      FREE(gr);
-      return;
-   }
+   if (!gr->query_data)
+      goto fail_gr;
 
    gr->query_new_value = query_new_value;
    gr->free_query_data = free_query_info;
 
    info = gr->query_data;
-   info->pipe = pipe;
-   info->query_type = query_type;
-   info->result_index = result_index;
+   info->result_type = result_type;
+   info->type = type;
+
+   if (flags & PIPE_DRIVER_QUERY_FLAG_BATCH) {
+      if (!batch_query_add(pbq, query_type, &info->result_index))
+         goto fail_info;
+      info->batch = *pbq;
+   } else {
+      gr->begin_query = begin_query;
+      info->query_type = query_type;
+      info->result_index = result_index;
+   }
 
    hud_pane_add_graph(pane, gr);
+   pane->type = type; /* must be set before updating the max_value */
+
    if (pane->max_value < max_value)
       hud_pane_set_max_value(pane, max_value);
-   if (uses_byte_units)
-      pane->uses_byte_units = TRUE;
+   return;
+
+fail_info:
+   FREE(info);
+fail_gr:
+   FREE(gr);
 }
 
 boolean
-hud_driver_query_install(struct hud_pane *pane, struct pipe_context *pipe,
+hud_driver_query_install(struct hud_batch_query_context **pbq,
+                         struct hud_pane *pane, struct pipe_screen *screen,
                          const char *name)
 {
-   struct pipe_screen *screen = pipe->screen;
    struct pipe_driver_query_info query;
    unsigned num_queries, i;
    boolean found = FALSE;
@@ -204,7 +444,9 @@ hud_driver_query_install(struct hud_pane *pane, struct pipe_context *pipe,
    if (!found)
       return FALSE;
 
-   hud_pipe_query_install(pane, pipe, query.name, query.query_type, 0,
-                      query.max_value, query.uses_byte_units);
+   hud_pipe_query_install(pbq, pane, query.name, query.query_type, 0,
+                          query.max_value.u64, query.type, query.result_type,
+                          query.flags);
+
    return TRUE;
 }

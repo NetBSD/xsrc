@@ -26,11 +26,13 @@
 #include <stdbool.h>
 #include "glheader.h"
 #include "context.h"
+#include "debug_output.h"
 #include "get.h"
 #include "enums.h"
 #include "extensions.h"
 #include "mtypes.h"
-
+#include "macros.h"
+#include "version.h"
 
 /**
  * Return the string for a glGetString(GL_SHADING_LANGUAGE_VERSION) query.
@@ -58,6 +60,14 @@ shading_language_version(struct gl_context *ctx)
          return (const GLubyte *) "4.10";
       case 420:
          return (const GLubyte *) "4.20";
+      case 430:
+         return (const GLubyte *) "4.30";
+      case 440:
+         return (const GLubyte *) "4.40";
+      case 450:
+         return (const GLubyte *) "4.50";
+      case 460:
+         return (const GLubyte *) "4.60";
       default:
          _mesa_problem(ctx,
                        "Invalid GLSL version in shading_language_version()");
@@ -66,10 +76,20 @@ shading_language_version(struct gl_context *ctx)
       break;
 
    case API_OPENGLES2:
-      return (ctx->Version < 30)
-         ? (const GLubyte *) "OpenGL ES GLSL ES 1.0.16"
-         : (const GLubyte *) "OpenGL ES GLSL ES 3.0";
-
+      switch (ctx->Version) {
+      case 20:
+         return (const GLubyte *) "OpenGL ES GLSL ES 1.0.16";
+      case 30:
+         return (const GLubyte *) "OpenGL ES GLSL ES 3.00";
+      case 31:
+         return (const GLubyte *) "OpenGL ES GLSL ES 3.10";
+      case 32:
+         return (const GLubyte *) "OpenGL ES GLSL ES 3.20";
+      default:
+         _mesa_problem(ctx,
+                       "Invalid OpenGL ES version in shading_language_version()");
+         return (const GLubyte *) 0;
+      }
    case API_OPENGLES:
       /* fall-through */
 
@@ -107,7 +127,7 @@ _mesa_GetString( GLenum name )
    assert(ctx->Driver.GetString);
    {
       /* Give the driver the chance to handle this query */
-      const GLubyte *str = (*ctx->Driver.GetString)(ctx, name);
+      const GLubyte *str = ctx->Driver.GetString(ctx, name);
       if (str)
          return str;
    }
@@ -124,6 +144,8 @@ _mesa_GetString( GLenum name )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetString(GL_EXTENSIONS)");
             return (const GLubyte *) 0;
          }
+         if (!ctx->Extensions.String)
+            ctx->Extensions.String = _mesa_make_extension_string(ctx);
          return (const GLubyte *) ctx->Extensions.String;
       case GL_SHADING_LANGUAGE_VERSION:
          if (ctx->API == API_OPENGLES)
@@ -165,6 +187,25 @@ _mesa_GetStringi(GLenum name, GLuint index)
          return (const GLubyte *) 0;
       }
       return _mesa_get_enabled_extension(ctx, index);
+   case GL_SHADING_LANGUAGE_VERSION:
+      {
+         char *version;
+         int num;
+         if (!_mesa_is_desktop_gl(ctx) || ctx->Version < 43) {
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glGetStringi(GL_SHADING_LANGUAGE_VERSION): "
+                        "supported only in GL4.3 and later");
+            return (const GLubyte *) 0;
+         }
+         num = _mesa_get_shading_language_version(ctx, index, &version);
+         if (index >= num) {
+            _mesa_error(ctx, GL_INVALID_VALUE,
+                        "glGetStringi(GL_SHADING_LANGUAGE_VERSION, index=%d)",
+                        index);
+            return (const GLubyte *) 0;
+         }
+         return (const GLubyte *) version;
+      }
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetStringi");
       return (const GLubyte *) 0;
@@ -189,12 +230,18 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
 {
    GET_CURRENT_CONTEXT(ctx);
    const GLuint clientUnit = ctx->Array.ActiveTexture;
+   const char *callerstr;
+
+   if (_mesa_is_desktop_gl(ctx))
+      callerstr = "glGetPointerv";
+   else
+      callerstr = "glGetPointervKHR";
 
    if (!params)
       return;
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glGetPointerv %s\n", _mesa_lookup_enum_by_nr(pname));
+      _mesa_debug(ctx, "%s %s\n", callerstr, _mesa_enum_to_string(pname));
 
    switch (pname) {
       case GL_VERTEX_ARRAY_POINTER:
@@ -254,10 +301,7 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
          break;
       case GL_DEBUG_CALLBACK_FUNCTION_ARB:
       case GL_DEBUG_CALLBACK_USER_PARAM_ARB:
-         if (!_mesa_is_desktop_gl(ctx))
-            goto invalid_pname;
-         else
-            *params = _mesa_get_debug_state_ptr(ctx, pname);
+         *params = _mesa_get_debug_state_ptr(ctx, pname);
          break;
       default:
          goto invalid_pname;
@@ -266,7 +310,7 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
    return;
 
 invalid_pname:
-   _mesa_error( ctx, GL_INVALID_ENUM, "glGetPointerv" );
+   _mesa_error( ctx, GL_INVALID_ENUM, "%s", callerstr);
    return;
 }
 
@@ -284,66 +328,21 @@ _mesa_GetError( void )
    GLenum e = ctx->ErrorValue;
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
 
+   /* From Issue (3) of the KHR_no_error spec:
+    *
+    *    "Should glGetError() always return NO_ERROR or have undefined
+    *    results?
+    *
+    *    RESOLVED: It should for all errors except OUT_OF_MEMORY."
+    */
+   if (_mesa_is_no_error_enabled(ctx) && e != GL_OUT_OF_MEMORY) {
+      e = GL_NO_ERROR;
+   }
+
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glGetError <-- %s\n", _mesa_lookup_enum_by_nr(e));
+      _mesa_debug(ctx, "glGetError <-- %s\n", _mesa_enum_to_string(e));
 
    ctx->ErrorValue = (GLenum) GL_NO_ERROR;
    ctx->ErrorDebugCount = 0;
    return e;
-}
-
-/**
- * Returns an error code specified by GL_ARB_robustness, or GL_NO_ERROR.
- * \return current context status
- */
-GLenum GLAPIENTRY
-_mesa_GetGraphicsResetStatusARB( void )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   GLenum status = GL_NO_ERROR;
-
-   /* The ARB_robustness specification says:
-    *
-    *     "If the reset notification behavior is NO_RESET_NOTIFICATION_ARB,
-    *     then the implementation will never deliver notification of reset
-    *     events, and GetGraphicsResetStatusARB will always return NO_ERROR."
-    */
-   if (ctx->Const.ResetStrategy == GL_NO_RESET_NOTIFICATION_ARB) {
-      if (MESA_VERBOSE & VERBOSE_API)
-         _mesa_debug(ctx,
-                     "glGetGraphicsResetStatusARB always returns GL_NO_ERROR "
-                     "because reset notifictation was not requested at context "
-                     "creation.\n");
-
-      return GL_NO_ERROR;
-   }
-
-   if (ctx->Driver.GetGraphicsResetStatus) {
-      /* Query the reset status of this context from the driver core.
-       */
-      status = ctx->Driver.GetGraphicsResetStatus(ctx);
-
-      mtx_lock(&ctx->Shared->Mutex);
-
-      /* If this context has not been affected by a GPU reset, check to see if
-       * some other context in the share group has been affected by a reset.
-       * If another context saw a reset but this context did not, assume that
-       * this context was not guilty.
-       */
-      if (status != GL_NO_ERROR) {
-         ctx->Shared->ShareGroupReset = true;
-      } else if (ctx->Shared->ShareGroupReset && !ctx->ShareGroupReset) {
-         status = GL_INNOCENT_CONTEXT_RESET_ARB;
-      }
-
-      ctx->ShareGroupReset = ctx->Shared->ShareGroupReset;
-      mtx_unlock(&ctx->Shared->Mutex);
-   }
-
-   if (!ctx->Driver.GetGraphicsResetStatus && (MESA_VERBOSE & VERBOSE_API))
-      _mesa_debug(ctx,
-                  "glGetGraphicsResetStatusARB always returns GL_NO_ERROR "
-                  "because the driver doesn't track reset status.\n");
-
-   return status;
 }

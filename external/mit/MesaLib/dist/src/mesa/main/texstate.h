@@ -32,9 +32,17 @@
 #define TEXSTATE_H
 
 
-#include "compiler.h"
+#include "enums.h"
+#include "macros.h"
 #include "mtypes.h"
 
+
+static inline struct gl_texture_unit *
+_mesa_get_tex_unit(struct gl_context *ctx, GLuint unit)
+{
+   assert(unit < ARRAY_SIZE(ctx->Texture.Unit));
+   return &(ctx->Texture.Unit[unit]);
+}
 
 /**
  * Return pointer to current texture unit.
@@ -43,8 +51,33 @@
 static inline struct gl_texture_unit *
 _mesa_get_current_tex_unit(struct gl_context *ctx)
 {
-   ASSERT(ctx->Texture.CurrentUnit < Elements(ctx->Texture.Unit));
-   return &(ctx->Texture.Unit[ctx->Texture.CurrentUnit]);
+   return _mesa_get_tex_unit(ctx, ctx->Texture.CurrentUnit);
+}
+
+
+/**
+ * Return pointer to current fixed-func texture unit.
+ * This the texture unit set by glActiveTexture(), not glClientActiveTexture().
+ * \return NULL if the current unit is not a fixed-func texture unit
+ */
+static inline struct gl_fixedfunc_texture_unit *
+_mesa_get_current_fixedfunc_tex_unit(struct gl_context *ctx)
+{
+   unsigned unit = ctx->Texture.CurrentUnit;
+
+   if (unit >= ARRAY_SIZE(ctx->Texture.FixedFuncUnit))
+      return NULL;
+
+   return &ctx->Texture.FixedFuncUnit[unit];
+}
+
+
+static inline GLuint
+_mesa_max_tex_unit(struct gl_context *ctx)
+{
+   /* See OpenGL spec for glActiveTexture: */
+   return MAX2(ctx->Const.MaxCombinedTextureImageUnits,
+               ctx->Const.MaxTextureCoordUnits);
 }
 
 
@@ -62,6 +95,9 @@ _mesa_print_texunit_state( struct gl_context *ctx, GLuint unit );
 /*@{*/
 
 extern void GLAPIENTRY
+_mesa_ActiveTexture_no_error( GLenum target );
+
+extern void GLAPIENTRY
 _mesa_ActiveTexture( GLenum target );
 
 extern void GLAPIENTRY
@@ -75,8 +111,11 @@ _mesa_ClientActiveTexture( GLenum target );
  */
 /*@{*/
 
-extern void 
-_mesa_update_texture( struct gl_context *ctx, GLuint new_state );
+extern void
+_mesa_update_texture_matrices(struct gl_context *ctx);
+
+extern void
+_mesa_update_texture_state(struct gl_context *ctx);
 
 extern GLboolean
 _mesa_init_texture( struct gl_context *ctx );

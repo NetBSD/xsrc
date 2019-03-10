@@ -23,17 +23,14 @@
 
 #include <gtest/gtest.h>
 
-extern "C" {
 #include "GL/gl.h"
 #include "GL/glext.h"
-#include "main/compiler.h"
-}
 
 #include "program/prog_statevars.h"
 
 TEST(program_state_string, depth_range)
 {
-   const gl_state_index state[STATE_LENGTH] = {
+   const gl_state_index16 state[STATE_LENGTH] = {
       STATE_DEPTH_RANGE
    };
 

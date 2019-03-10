@@ -7,8 +7,7 @@ xvmcdir = $(XVMC_LIB_INSTALL_DIR)
 xvmc_LTLIBRARIES = libXvMCgallium.la
 
 nodist_EXTRA_libXvMCgallium_la_SOURCES = dummy.cpp
-libXvMCgallium_la_SOURCES = \
-	$(top_srcdir)/src/gallium/auxiliary/vl/vl_winsys_dri.c
+libXvMCgallium_la_SOURCES =
 
 libXvMCgallium_la_LDFLAGS = \
 	-shared \
@@ -25,58 +24,45 @@ endif # HAVE_LD_VERSION_SCRIPT
 
 libXvMCgallium_la_LIBADD = \
 	$(top_builddir)/src/gallium/state_trackers/xvmc/libxvmctracker.la \
+	$(top_builddir)/src/gallium/auxiliary/libgalliumvlwinsys.la \
+	$(top_builddir)/src/gallium/auxiliary/libgalliumvl.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/util/libmesautil.la \
 	$(XVMC_LIBS) \
+	$(VL_LIBS) \
+	$(XCB_DRI3_LIBS) \
 	$(LIBDRM_LIBS) \
 	$(GALLIUM_COMMON_LIB_DEPS)
 
+EXTRA_libXvMCgallium_la_DEPENDENCIES = xvmc.sym
+EXTRA_DIST = xvmc.sym meson.build
+
+TARGET_DRIVERS =
+TARGET_CPPFLAGS =
+TARGET_LIB_DEPS =
+
+include $(top_srcdir)/src/gallium/drivers/nouveau/Automake.inc
+
+include $(top_srcdir)/src/gallium/drivers/r600/Automake.inc
 
 if HAVE_GALLIUM_STATIC_TARGETS
 
-MEGADRIVERS =
-STATIC_TARGET_CPPFLAGS = -DGALLIUM_STATIC_TARGETS=1
-STATIC_TARGET_LIB_DEPS = \
-	$(top_builddir)/src/loader/libloader.la
-
-if HAVE_GALLIUM_NOUVEAU
-MEGADRIVERS += nouveau
-STATIC_TARGET_CPPFLAGS += -DGALLIUM_NOUVEAU
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/winsys/nouveau/drm/libnouveaudrm.la \
-	$(top_builddir)/src/gallium/drivers/nouveau/libnouveau.la \
-	$(NOUVEAU_LIBS)
-endif
-
-if HAVE_GALLIUM_R600
-MEGADRIVERS += r600
-STATIC_TARGET_CPPFLAGS += -DGALLIUM_R600
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
-	$(top_builddir)/src/gallium/drivers/radeon/libradeon.la \
-	$(top_builddir)/src/gallium/drivers/r600/libr600.la \
-	$(RADEON_LIBS)
-endif
-
 libXvMCgallium_la_SOURCES += target.c
-libXvMCgallium_la_CPPFLAGS = $(STATIC_TARGET_CPPFLAGS)
-libXvMCgallium_la_LIBADD += $(STATIC_TARGET_LIB_DEPS)
+libXvMCgallium_la_CPPFLAGS = $(TARGET_CPPFLAGS)
+libXvMCgallium_la_LIBADD += \
+	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader_static.la \
+	$(GALLIUM_PIPE_LOADER_WINSYS_LIBS) \
+	$(TARGET_LIB_DEPS) \
+	$(TARGET_COMPILER_LIB_DEPS) \
+	$(TARGET_RADEON_WINSYS) $(TARGET_RADEON_COMMON)
 
 else # HAVE_GALLIUM_STATIC_TARGETS
-
-libXvMCgallium_la_CPPFLAGS = \
-	$(GALLIUM_PIPE_LOADER_DEFINES) \
-	-DPIPE_SEARCH_DIR=\"$(libdir)/gallium-pipe\"
-
-# XXX: Use the pipe-loader-client over pipe-loader ?
 libXvMCgallium_la_LIBADD += \
-	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader.la \
-	$(GALLIUM_PIPE_LOADER_WINSYS_LIBS) \
-	$(GALLIUM_PIPE_LOADER_LIBS)
+	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader_dynamic.la
 
 endif # HAVE_GALLIUM_STATIC_TARGETS
 
-if HAVE_MESA_LLVM
+if HAVE_GALLIUM_LLVM
 libXvMCgallium_la_LIBADD += $(LLVM_LIBS)
 libXvMCgallium_la_LDFLAGS += $(LLVM_LDFLAGS)
 endif
@@ -85,7 +71,7 @@ endif
 # libXvMCgallium.so in the set of final installed files.
 install-data-hook:
 	$(AM_V_GEN)dest_dir=$(DESTDIR)/$(xvmcdir);			\
-	for i in $(MEGADRIVERS); do					\
+	for i in $(TARGET_DRIVERS); do					\
 		j=libXvMCgallium.$(LIB_EXT);				\
 		k=libXvMC$${i}.$(LIB_EXT);				\
 		l=$${k}.$(XVMC_MAJOR).$(XVMC_MINOR).0;			\
@@ -98,4 +84,10 @@ install-data-hook:
 		ln -sf $${l}						\
 		       $${dest_dir}/$${k};				\
 	done;								\
-	$(RM) -f $${dest_dir}/libXvMCgallium.*
+	$(RM) $${dest_dir}/libXvMCgallium.*;				\
+	$(RM) -d $${dest_dir} &>/dev/null || true
+
+uninstall-hook:
+	for i in $(TARGET_DRIVERS); do					\
+		$(RM) $(DESTDIR)$(xvmcdir)/libXvMC$${i}.so{,.$(XVMC_MAJOR){,.$(XVMC_MINOR){,.0}}}; \
+	done;

@@ -30,7 +30,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-#include <dlfcn.h>
 
 #include "backend.h"
 
@@ -45,41 +44,18 @@ struct backend_desc {
 
 static const struct backend_desc backends[] = {
    { "gbm_dri.so", &gbm_dri_backend },
-   { "gbm_gallium_drm.so", NULL },
 };
 
 static const void *
 load_backend(const struct backend_desc *backend)
 {
-   char path[PATH_MAX];
    const void *init = NULL;
-   void *module;
-   const char *name;
-   const char *entrypoint = "gbm_backend";
 
    if (backend == NULL)
       return NULL;
 
-   name = backend->name;
-
    if (backend->builtin) {
       init = backend->builtin;
-   } else { 
-      if (name[0] != '/')
-         snprintf(path, sizeof path, MODULEDIR "/%s", name);
-      else
-         snprintf(path, sizeof path, "%s", name);
-
-      module = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
-      if (!module) {
-         fprintf(stderr,
-                 "failed to load module: %s\n", dlerror());
-         return NULL;
-      }
-
-      init = dlsym(module, entrypoint);
-      if (!init)
-         return NULL;
    }
 
    return init;
@@ -89,7 +65,7 @@ static const struct backend_desc *
 find_backend(const char *name)
 {
    const struct backend_desc *backend = NULL;
-   int i;
+   unsigned i;
 
    for (i = 0; i < ARRAY_SIZE(backends); ++i) {
       if (strcmp(backends[i].name, name) == 0) {
@@ -106,7 +82,7 @@ _gbm_create_device(int fd)
 {
    const struct gbm_backend *backend = NULL;
    struct gbm_device *dev = NULL;
-   int i;
+   unsigned i;
    const char *b;
 
    b = getenv("GBM_BACKEND");

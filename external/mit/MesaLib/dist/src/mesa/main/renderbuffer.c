@@ -38,11 +38,13 @@
 void
 _mesa_init_renderbuffer(struct gl_renderbuffer *rb, GLuint name)
 {
-   mtx_init(&rb->Mutex, mtx_plain);
+   GET_CURRENT_CONTEXT(ctx);
+
+   simple_mtx_init(&rb->Mutex, mtx_plain);
 
    rb->ClassID = 0;
    rb->Name = name;
-   rb->RefCount = 0;
+   rb->RefCount = 1;
    rb->Delete = _mesa_delete_renderbuffer;
 
    /* The rest of these should be set later by the caller of this function or
@@ -53,7 +55,23 @@ _mesa_init_renderbuffer(struct gl_renderbuffer *rb, GLuint name)
    rb->Width = 0;
    rb->Height = 0;
    rb->Depth = 0;
-   rb->InternalFormat = GL_RGBA;
+
+   /* In GL 3, the initial format is GL_RGBA according to Table 6.26
+    * on page 302 of the GL 3.3 spec.
+    *
+    * In GLES 3, the initial format is GL_RGBA4 according to Table 6.15
+    * on page 258 of the GLES 3.0.4 spec.
+    *
+    * If the context is current, set the initial format based on the
+    * specs. If the context is not current, we cannot determine the
+    * API, so default to GL_RGBA.
+    */
+   if (ctx && _mesa_is_gles(ctx)) {
+      rb->InternalFormat = GL_RGBA4;
+   } else {
+      rb->InternalFormat = GL_RGBA;
+   }
+
    rb->Format = MESA_FORMAT_NONE;
 }
 
@@ -83,19 +101,15 @@ _mesa_new_renderbuffer(struct gl_context *ctx, GLuint name)
 void
 _mesa_delete_renderbuffer(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
-   mtx_destroy(&rb->Mutex);
+   simple_mtx_destroy(&rb->Mutex);
    free(rb->Label);
    free(rb);
 }
 
-
-/**
- * Attach a renderbuffer to a framebuffer.
- * \param bufferName  one of the BUFFER_x tokens
- */
-void
-_mesa_add_renderbuffer(struct gl_framebuffer *fb,
-                       gl_buffer_index bufferName, struct gl_renderbuffer *rb)
+static void
+validate_and_init_renderbuffer_attachment(struct gl_framebuffer *fb,
+                                          gl_buffer_index bufferName,
+                                          struct gl_renderbuffer *rb)
 {
    assert(fb);
    assert(rb);
@@ -119,6 +133,40 @@ _mesa_add_renderbuffer(struct gl_framebuffer *fb,
 
    fb->Attachment[bufferName].Type = GL_RENDERBUFFER_EXT;
    fb->Attachment[bufferName].Complete = GL_TRUE;
+}
+
+
+/**
+ * Attach a renderbuffer to a framebuffer.
+ * \param bufferName  one of the BUFFER_x tokens
+ *
+ * This function avoids adding a reference and is therefore intended to be
+ * used with a freshly created renderbuffer.
+ */
+void
+_mesa_attach_and_own_rb(struct gl_framebuffer *fb,
+                        gl_buffer_index bufferName,
+                        struct gl_renderbuffer *rb)
+{
+   assert(rb->RefCount == 1);
+
+   validate_and_init_renderbuffer_attachment(fb, bufferName, rb);
+
+   _mesa_reference_renderbuffer(&fb->Attachment[bufferName].Renderbuffer,
+                                NULL);
+   fb->Attachment[bufferName].Renderbuffer = rb;
+}
+
+/**
+ * Attach a renderbuffer to a framebuffer.
+ * \param bufferName  one of the BUFFER_x tokens
+ */
+void
+_mesa_attach_and_reference_rb(struct gl_framebuffer *fb,
+                              gl_buffer_index bufferName,
+                              struct gl_renderbuffer *rb)
+{
+   validate_and_init_renderbuffer_attachment(fb, bufferName, rb);
    _mesa_reference_renderbuffer(&fb->Attachment[bufferName].Renderbuffer, rb);
 }
 
@@ -153,12 +201,11 @@ _mesa_reference_renderbuffer_(struct gl_renderbuffer **ptr,
       GLboolean deleteFlag = GL_FALSE;
       struct gl_renderbuffer *oldRb = *ptr;
 
-      mtx_lock(&oldRb->Mutex);
-      ASSERT(oldRb->RefCount > 0);
+      simple_mtx_lock(&oldRb->Mutex);
+      assert(oldRb->RefCount > 0);
       oldRb->RefCount--;
-      /*printf("RB DECR %p (%d) to %d\n", (void*) oldRb, oldRb->Name, oldRb->RefCount);*/
       deleteFlag = (oldRb->RefCount == 0);
-      mtx_unlock(&oldRb->Mutex);
+      simple_mtx_unlock(&oldRb->Mutex);
 
       if (deleteFlag) {
          GET_CURRENT_CONTEXT(ctx);
@@ -171,10 +218,9 @@ _mesa_reference_renderbuffer_(struct gl_renderbuffer **ptr,
 
    if (rb) {
       /* reference new renderbuffer */
-      mtx_lock(&rb->Mutex);
+      simple_mtx_lock(&rb->Mutex);
       rb->RefCount++;
-      /*printf("RB INCR %p (%d) to %d\n", (void*) rb, rb->Name, rb->RefCount);*/
-      mtx_unlock(&rb->Mutex);
+      simple_mtx_unlock(&rb->Mutex);
       *ptr = rb;
    }
 }

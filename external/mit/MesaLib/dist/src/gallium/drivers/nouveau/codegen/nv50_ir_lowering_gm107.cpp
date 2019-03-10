@@ -41,61 +41,144 @@ namespace nv50_ir {
    ((QOP_##q << 6) | (QOP_##r << 4) |           \
     (QOP_##s << 2) | (QOP_##t << 0))
 
+#define SHFL_BOUND_QUAD 0x1c03
+
+void
+GM107LegalizeSSA::handlePFETCH(Instruction *i)
+{
+   Value *src0;
+
+   if (i->src(0).getFile() == FILE_GPR && !i->srcExists(1))
+      return;
+
+   bld.setPosition(i, false);
+   src0 = bld.getSSA();
+
+   if (i->srcExists(1))
+      bld.mkOp2(OP_ADD , TYPE_U32, src0, i->getSrc(0), i->getSrc(1));
+   else
+      bld.mkOp1(OP_MOV , TYPE_U32, src0, i->getSrc(0));
+
+   i->setSrc(0, src0);
+   i->setSrc(1, NULL);
+}
+
+void
+GM107LegalizeSSA::handleLOAD(Instruction *i)
+{
+   if (i->src(0).getFile() != FILE_MEMORY_CONST)
+      return;
+   if (i->src(0).isIndirect(0))
+      return;
+   if (typeSizeof(i->dType) != 4)
+      return;
+
+   i->op = OP_MOV;
+}
+
+bool
+GM107LegalizeSSA::visit(Instruction *i)
+{
+   switch (i->op) {
+   case OP_PFETCH:
+      handlePFETCH(i);
+      break;
+   case OP_LOAD:
+      handleLOAD(i);
+      break;
+   default:
+      break;
+   }
+   return true;
+}
+
 bool
 GM107LoweringPass::handleManualTXD(TexInstruction *i)
 {
-   static const uint8_t qOps[4][2] =
-   {
-      { QUADOP(MOV2, ADD,  MOV2, ADD),  QUADOP(MOV2, MOV2, ADD,  ADD) }, // l0
-      { QUADOP(SUBR, MOV2, SUBR, MOV2), QUADOP(MOV2, MOV2, ADD,  ADD) }, // l1
-      { QUADOP(MOV2, ADD,  MOV2, ADD),  QUADOP(SUBR, SUBR, MOV2, MOV2) }, // l2
-      { QUADOP(SUBR, MOV2, SUBR, MOV2), QUADOP(SUBR, SUBR, MOV2, MOV2) }, // l3
-   };
+   // See NVC0LoweringPass::handleManualTXD for rationale. This function
+   // implements the same logic, but using SM50-friendly primitives.
+   static const uint8_t qOps[2] =
+      { QUADOP(MOV2, ADD,  MOV2, ADD),  QUADOP(MOV2, MOV2, ADD,  ADD) };
    Value *def[4][4];
-   Value *crd[3];
+   Value *crd[3], *arr, *shadow;
    Value *tmp;
    Instruction *tex, *add;
-   Value *zero = bld.loadImm(bld.getSSA(), 0);
+   Value *quad = bld.mkImm(SHFL_BOUND_QUAD);
    int l, c;
-   const int dim = i->tex.target.getDim();
+   const int dim = i->tex.target.getDim() + i->tex.target.isCube();
    const int array = i->tex.target.isArray();
+   const int indirect = i->tex.rIndirectSrc >= 0;
 
    i->op = OP_TEX; // no need to clone dPdx/dPdy later
 
    for (c = 0; c < dim; ++c)
       crd[c] = bld.getScratch();
+   arr = bld.getScratch();
+   shadow = bld.getScratch();
    tmp = bld.getScratch();
 
    for (l = 0; l < 4; ++l) {
-      // mov coordinates from lane l to all lanes
+      Value *src[3], *val;
+      Value *lane = bld.mkImm(l);
       bld.mkOp(OP_QUADON, TYPE_NONE, NULL);
+      // Make sure lane 0 has the appropriate array/depth compare values
+      if (l != 0) {
+         if (array)
+            bld.mkOp3(OP_SHFL, TYPE_F32, arr, i->getSrc(0), lane, quad);
+         if (i->tex.target.isShadow())
+            bld.mkOp3(OP_SHFL, TYPE_F32, shadow, i->getSrc(array + dim + indirect), lane, quad);
+      }
+
+      // mov coordinates from lane l to all lanes
       for (c = 0; c < dim; ++c) {
-         bld.mkOp2(OP_SHFL, TYPE_F32, crd[c], i->getSrc(c + array), bld.mkImm(l));
-         add = bld.mkOp2(OP_QUADOP, TYPE_F32, crd[c], crd[c], zero);
-         add->subOp = 0x00;
-         add->lanes = 1; /* abused for .ndv */
+         bld.mkOp3(OP_SHFL, TYPE_F32, crd[c], i->getSrc(c + array), lane, quad);
       }
 
       // add dPdx from lane l to lanes dx
       for (c = 0; c < dim; ++c) {
-         bld.mkOp2(OP_SHFL, TYPE_F32, tmp, i->dPdx[c].get(), bld.mkImm(l));
+         bld.mkOp3(OP_SHFL, TYPE_F32, tmp, i->dPdx[c].get(), lane, quad);
          add = bld.mkOp2(OP_QUADOP, TYPE_F32, crd[c], tmp, crd[c]);
-         add->subOp = qOps[l][0];
+         add->subOp = qOps[0];
          add->lanes = 1; /* abused for .ndv */
       }
 
       // add dPdy from lane l to lanes dy
       for (c = 0; c < dim; ++c) {
-         bld.mkOp2(OP_SHFL, TYPE_F32, tmp, i->dPdy[c].get(), bld.mkImm(l));
+         bld.mkOp3(OP_SHFL, TYPE_F32, tmp, i->dPdy[c].get(), lane, quad);
          add = bld.mkOp2(OP_QUADOP, TYPE_F32, crd[c], tmp, crd[c]);
-         add->subOp = qOps[l][1];
+         add->subOp = qOps[1];
          add->lanes = 1; /* abused for .ndv */
+      }
+
+      // normalize cube coordinates if necessary
+      if (i->tex.target.isCube()) {
+         for (c = 0; c < 3; ++c)
+            src[c] = bld.mkOp1v(OP_ABS, TYPE_F32, bld.getSSA(), crd[c]);
+         val = bld.getScratch();
+         bld.mkOp2(OP_MAX, TYPE_F32, val, src[0], src[1]);
+         bld.mkOp2(OP_MAX, TYPE_F32, val, src[2], val);
+         bld.mkOp1(OP_RCP, TYPE_F32, val, val);
+         for (c = 0; c < 3; ++c)
+            src[c] = bld.mkOp2v(OP_MUL, TYPE_F32, bld.getSSA(), crd[c], val);
+      } else {
+         for (c = 0; c < dim; ++c)
+            src[c] = crd[c];
       }
 
       // texture
       bld.insert(tex = cloneForward(func, i));
+      if (l != 0) {
+         if (array)
+            tex->setSrc(0, arr);
+         if (i->tex.target.isShadow())
+            tex->setSrc(array + dim + indirect, shadow);
+      }
       for (c = 0; c < dim; ++c)
-         tex->setSrc(c + array, crd[c]);
+         tex->setSrc(c + array, src[c]);
+      // broadcast results from lane 0 to all lanes
+      if (l != 0)
+         for (c = 0; i->defExists(c); ++c)
+            bld.mkOp3(OP_SHFL, TYPE_F32, tex->getDef(c), tex->getDef(c), bld.mkImm(0), quad);
       bld.mkOp(OP_QUADPOP, TYPE_NONE, NULL);
 
       // save results
@@ -138,8 +221,8 @@ GM107LoweringPass::handleDFDX(Instruction *insn)
       break;
    }
 
-   shfl = bld.mkOp2(OP_SHFL, TYPE_F32, bld.getScratch(),
-                    insn->getSrc(0), bld.mkImm(xid));
+   shfl = bld.mkOp3(OP_SHFL, TYPE_F32, bld.getScratch(), insn->getSrc(0),
+                    bld.mkImm(xid), bld.mkImm(SHFL_BOUND_QUAD));
    shfl->subOp = NV50_IR_SUBOP_SHFL_BFLY;
    insn->op = OP_QUADOP;
    insn->subOp = qop;
@@ -176,7 +259,76 @@ GM107LoweringPass::handlePOPCNT(Instruction *i)
                            i->getSrc(0), i->getSrc(1));
    i->setSrc(0, tmp);
    i->setSrc(1, NULL);
-   return TRUE;
+   return true;
+}
+
+bool
+GM107LoweringPass::handleSUQ(TexInstruction *suq)
+{
+   Value *ind = suq->getIndirectR();
+   Value *handle;
+   const int slot = suq->tex.r;
+   const int mask = suq->tex.mask;
+
+   if (suq->tex.bindless)
+      handle = ind;
+   else
+      handle = loadTexHandle(ind, slot + 32);
+
+   suq->tex.r = 0xff;
+   suq->tex.s = 0x1f;
+
+   suq->setIndirectR(NULL);
+   suq->setSrc(0, handle);
+   suq->tex.rIndirectSrc = 0;
+   suq->setSrc(1, bld.loadImm(NULL, 0));
+   suq->tex.query = TXQ_DIMS;
+   suq->op = OP_TXQ;
+
+   // We store CUBE / CUBE_ARRAY as a 2D ARRAY. Make sure that depth gets
+   // divided by 6.
+   if (mask & 0x4 && suq->tex.target.isCube()) {
+      int d = util_bitcount(mask & 0x3);
+      bld.setPosition(suq, true);
+      bld.mkOp2(OP_DIV, TYPE_U32, suq->getDef(d), suq->getDef(d),
+                bld.loadImm(NULL, 6));
+   }
+
+   // Samples come from a different query. If we want both samples and dims,
+   // create a second suq.
+   if (mask & 0x8) {
+      int d = util_bitcount(mask & 0x7);
+      Value *dst = suq->getDef(d);
+      TexInstruction *samples = suq;
+      assert(dst);
+
+      if (mask != 0x8) {
+         suq->setDef(d, NULL);
+         suq->tex.mask &= 0x7;
+         samples = cloneShallow(func, suq);
+         for (int i = 0; i < d; i++)
+            samples->setDef(d, NULL);
+         samples->setDef(0, dst);
+         suq->bb->insertAfter(suq, samples);
+      }
+      samples->tex.mask = 0x4;
+      samples->tex.query = TXQ_TYPE;
+   }
+
+   if (suq->tex.target.isMS()) {
+      bld.setPosition(suq, true);
+
+      if (mask & 0x1)
+         bld.mkOp2(OP_SHR, TYPE_U32, suq->getDef(0), suq->getDef(0),
+                   loadMsAdjInfo32(suq->tex.target, 0, slot, ind, suq->tex.bindless));
+      if (mask & 0x2) {
+         int d = util_bitcount(mask & 0x1);
+         bld.mkOp2(OP_SHR, TYPE_U32, suq->getDef(d), suq->getDef(d),
+                   loadMsAdjInfo32(suq->tex.target, 1, slot, ind, suq->tex.bindless));
+      }
+   }
+
+   return true;
 }
 
 //
@@ -193,99 +345,18 @@ GM107LoweringPass::visit(Instruction *i)
       checkPredicate(i);
 
    switch (i->op) {
-   case OP_TEX:
-   case OP_TXB:
-   case OP_TXL:
-   case OP_TXF:
-   case OP_TXG:
-      return handleTEX(i->asTex());
-   case OP_TXD:
-      return handleTXD(i->asTex());
-   case OP_TXLQ:
-      return handleTXLQ(i->asTex());
-   case OP_TXQ:
-      return handleTXQ(i->asTex());
-   case OP_EX2:
-      bld.mkOp1(OP_PREEX2, TYPE_F32, i->getDef(0), i->getSrc(0));
-      i->setSrc(0, i->getDef(0));
-      break;
-   case OP_POW:
-      return handlePOW(i);
-   case OP_DIV:
-      return handleDIV(i);
-   case OP_MOD:
-      return handleMOD(i);
-   case OP_SQRT:
-      return handleSQRT(i);
-   case OP_EXPORT:
-      return handleEXPORT(i);
    case OP_PFETCH:
       return handlePFETCH(i);
-   case OP_EMIT:
-   case OP_RESTART:
-      return handleOUT(i);
-   case OP_RDSV:
-      return handleRDSV(i);
-   case OP_WRSV:
-      return handleWRSV(i);
-   case OP_LOAD:
-      if (i->src(0).getFile() == FILE_SHADER_INPUT) {
-         if (prog->getType() == Program::TYPE_COMPUTE) {
-            i->getSrc(0)->reg.file = FILE_MEMORY_CONST;
-            i->getSrc(0)->reg.fileIndex = 0;
-         } else
-         if (prog->getType() == Program::TYPE_GEOMETRY &&
-             i->src(0).isIndirect(0)) {
-            // XXX: this assumes vec4 units
-            Value *ptr = bld.mkOp2v(OP_SHL, TYPE_U32, bld.getSSA(),
-                                    i->getIndirect(0, 0), bld.mkImm(4));
-            i->setIndirect(0, 0, ptr);
-         } else {
-            i->op = OP_VFETCH;
-            assert(prog->getType() != Program::TYPE_FRAGMENT); // INTERP
-         }
-      } else if (i->src(0).getFile() == FILE_MEMORY_CONST) {
-         if (i->src(0).isIndirect(1)) {
-            Value *ptr;
-            if (i->src(0).isIndirect(0))
-               ptr = bld.mkOp3v(OP_INSBF, TYPE_U32, bld.getSSA(),
-                                i->getIndirect(0, 1), bld.mkImm(0x1010),
-                                i->getIndirect(0, 0));
-            else
-               ptr = bld.mkOp2v(OP_SHL, TYPE_U32, bld.getSSA(),
-                                i->getIndirect(0, 1), bld.mkImm(16));
-            i->setIndirect(0, 1, NULL);
-            i->setIndirect(0, 0, ptr);
-            i->subOp = NV50_IR_SUBOP_LDC_IS;
-         }
-      }
-      break;
-   case OP_ATOM:
-   {
-      const bool cctl = i->src(0).getFile() == FILE_MEMORY_GLOBAL;
-      handleATOM(i);
-      handleCasExch(i, cctl);
-   }
-      break;
-   case OP_SULDB:
-   case OP_SULDP:
-   case OP_SUSTB:
-   case OP_SUSTP:
-   case OP_SUREDB:
-   case OP_SUREDP:
-      handleSurfaceOpNVE4(i->asTex());
-      break;
    case OP_DFDX:
    case OP_DFDY:
-      handleDFDX(i);
-      break;
+      return handleDFDX(i);
    case OP_POPCNT:
-      handlePOPCNT(i);
-      break;
+      return handlePOPCNT(i);
+   case OP_SUQ:
+      return handleSUQ(i->asTex());
    default:
-      break;
+      return NVC0LoweringPass::visit(i);
    }
-   return true;
 }
 
 } // namespace nv50_ir

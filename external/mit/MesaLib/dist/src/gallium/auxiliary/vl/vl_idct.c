@@ -148,7 +148,7 @@ create_mismatch_vert_shader(struct vl_idct *idct)
    struct ureg_dst t_tex;
    struct ureg_dst o_vpos, o_addr[2];
 
-   shader = ureg_create(TGSI_PROCESSOR_VERTEX);
+   shader = ureg_create(PIPE_SHADER_VERTEX);
    if (!shader)
       return NULL;
 
@@ -200,7 +200,7 @@ create_mismatch_frag_shader(struct vl_idct *idct)
 
    unsigned i;
 
-   shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+   shader = ureg_create(PIPE_SHADER_FRAGMENT);
    if (!shader)
       return NULL;
 
@@ -264,7 +264,7 @@ create_stage1_vert_shader(struct vl_idct *idct)
    struct ureg_dst t_tex, t_start;
    struct ureg_dst o_vpos, o_l_addr[2], o_r_addr[2];
 
-   shader = ureg_create(TGSI_PROCESSOR_VERTEX);
+   shader = ureg_create(PIPE_SHADER_VERTEX);
    if (!shader)
       return NULL;
 
@@ -321,15 +321,13 @@ static void *
 create_stage1_frag_shader(struct vl_idct *idct)
 {
    struct ureg_program *shader;
-
    struct ureg_src l_addr[2], r_addr[2];
-
    struct ureg_dst l[4][2], r[2];
    struct ureg_dst *fragment;
+   unsigned i;
+   int j;
 
-   int i, j;
-
-   shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+   shader = ureg_create(PIPE_SHADER_FRAGMENT);
    if (!shader)
       return NULL;
 
@@ -518,7 +516,9 @@ init_state(struct vl_idct *idct)
    rs_state.point_size = 1;
    rs_state.half_pixel_center = true;
    rs_state.bottom_edge_rule = true;
-   rs_state.depth_clip = 1;
+   rs_state.depth_clip_near = 1;
+   rs_state.depth_clip_far = 1;
+
    idct->rs_state = idct->pipe->create_rasterizer_state(idct->pipe, &rs_state);
    if (!idct->rs_state)
       goto error_rs_state;
@@ -609,7 +609,6 @@ init_source(struct vl_idct *idct, struct vl_idct_buffer *buffer)
    buffer->viewport_mismatch.scale[0] = tex->width0;
    buffer->viewport_mismatch.scale[1] = tex->height0;
    buffer->viewport_mismatch.scale[2] = 1;
-   buffer->viewport_mismatch.scale[3] = 1;
 
    return true;
 }
@@ -653,7 +652,6 @@ init_intermediate(struct vl_idct *idct, struct vl_idct_buffer *buffer)
    buffer->viewport.scale[0] = tex->width0;
    buffer->viewport.scale[1] = tex->height0;
    buffer->viewport.scale[2] = 1;
-   buffer->viewport.scale[3] = 1;
 
    return true;
 

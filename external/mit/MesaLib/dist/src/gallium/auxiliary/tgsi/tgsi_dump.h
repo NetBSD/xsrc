@@ -32,16 +32,23 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
 
+#include <stdio.h>
+
 #if defined __cplusplus
 extern "C" {
 #endif
 
-void
+#define TGSI_DUMP_FLOAT_AS_HEX (1 << 0)
+
+bool
 tgsi_dump_str(
    const struct tgsi_token *tokens,
    uint flags,
    char *str,
    size_t size);
+
+void
+tgsi_dump_to_file(const struct tgsi_token *tokens, uint flags, FILE *file);
 
 void
 tgsi_dump(

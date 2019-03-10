@@ -34,7 +34,7 @@
 
 #include "os/os_thread.h"
 
-#include "util/u_double_list.h"
+#include "util/list.h"
 
 
 /* Guess the storage size of cached surfaces and try and keep it under
@@ -53,18 +53,22 @@
 
 struct svga_winsys_surface;
 struct svga_screen;
+struct svga_context;
 
 /**
  * Same as svga_winsys_screen::surface_create.
  */
 struct svga_host_surface_cache_key
 {
-   SVGA3dSurfaceFlags flags;
+   SVGA3dSurfaceAllFlags flags;
    SVGA3dSurfaceFormat format;
    SVGA3dSize size;
-   uint32_t numFaces:24;
-   uint32_t numMipLevels:7;
+   uint32_t numFaces:3;
+   uint32_t arraySize:16;
+   uint32_t numMipLevels:6;
    uint32_t cachable:1;         /* False if this is a shared surface */
+   uint32_t sampleCount:5;
+   uint32_t scanout:1;
 };
 
 
@@ -92,16 +96,17 @@ struct svga_host_surface_cache_entry
  * A cache entry can be in the following stages:
  * 1. empty (entry->handle = NULL)
  * 2. holding a buffer in a validate list
- * 3. holding a flushed buffer (not in any validate list) with an active fence
- * 4. holding a flushed buffer with an expired fence
+ * 3. holding a buffer in an invalidate list
+ * 4. holding a flushed buffer (not in any validate list) with an active fence
+ * 5. holding a flushed buffer with an expired fence
  * 
- * An entry progresses from 1 -> 2 -> 3 -> 4. When we need an entry to put a 
+ * An entry progresses from 1 -> 2 -> 3 -> 4 -> 5. When we need an entry to put a 
  * buffer into we preferentially take from 1, or from the least recently used 
- * buffer from 3/4.
+ * buffer from 4/5.
  */
 struct svga_host_surface_cache 
 {
-   pipe_mutex mutex;
+   mtx_t mutex;
    
    /* Unused buffers are put in buckets to speed up lookups */
    struct list_head bucket[SVGA_HOST_SURFACE_CACHE_BUCKETS];
@@ -110,8 +115,11 @@ struct svga_host_surface_cache
     * (3 and 4) */
    struct list_head unused;
    
-   /* Entries with buffers still in validate lists (2) */
+   /* Entries with buffers still in validate list (2) */
    struct list_head validated;
+   
+   /* Entries with buffers still in invalidate list (3) */
+   struct list_head invalidated;
    
    /** Empty entries (1) */
    struct list_head empty;
@@ -129,6 +137,7 @@ svga_screen_cache_cleanup(struct svga_screen *svgascreen);
 
 void
 svga_screen_cache_flush(struct svga_screen *svgascreen,
+                        struct svga_context *svga,
                         struct pipe_fence_handle *fence);
 
 enum pipe_error
@@ -137,6 +146,8 @@ svga_screen_cache_init(struct svga_screen *svgascreen);
 
 struct svga_winsys_surface *
 svga_screen_surface_create(struct svga_screen *svgascreen,
+                           unsigned bind_flags, enum pipe_resource_usage usage,
+                           boolean *validated,
                            struct svga_host_surface_cache_key *key);
 
 void

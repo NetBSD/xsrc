@@ -33,6 +33,7 @@
 #include "main/context.h"
 #include "main/colormac.h"
 #include "main/fbobject.h"
+#include "main/framebuffer.h"
 #include "main/macros.h"
 #include "main/mipmap.h"
 #include "main/image.h"
@@ -244,7 +245,6 @@ clear_buffers(struct gl_context *ctx, GLbitfield buffers)
 {
    if (_mesa_is_winsys_fbo(ctx->DrawBuffer)) {
       /* this is a window system framebuffer */
-      const GLuint *colorMask = (GLuint *) &ctx->Color.ColorMask[0];
       const XMesaContext xmesa = XMESA_CONTEXT(ctx);
       XMesaBuffer b = XMESA_BUFFER(ctx->DrawBuffer);
       const GLint x = ctx->DrawBuffer->_Xmin;
@@ -263,7 +263,8 @@ clear_buffers(struct gl_context *ctx, GLbitfield buffers)
       XMesaSetForeground(xmesa->display, b->cleargc, xmesa->clearpixel);
 
       /* we can't handle color or index masking */
-      if (*colorMask == 0xffffffff && ctx->Color.IndexMask == 0xffffffff) {
+      if (GET_COLORMASK(ctx->Color.ColorMask, 0) == 0xf &&
+          ctx->Color.IndexMask == 0xffffffff) {
          if (buffers & BUFFER_BIT_FRONT_LEFT) {
             /* clear front color buffer */
             struct gl_renderbuffer *frontRb
@@ -386,10 +387,10 @@ xmesa_DrawPixels_8R8G8B( struct gl_context *ctx,
          const int rowLength = clippedUnpack.RowLength;
          XMesaImage ximage;
 
-         ASSERT(xmesa->xm_visual->dithered_pf == PF_8R8G8B);
-         ASSERT(xmesa->xm_visual->undithered_pf == PF_8R8G8B);
-         ASSERT(dpy);
-         ASSERT(gc);
+         assert(xmesa->xm_visual->dithered_pf == PF_8R8G8B);
+         assert(xmesa->xm_visual->undithered_pf == PF_8R8G8B);
+         assert(dpy);
+         assert(gc);
 
          /* This is a little tricky since all coordinates up to now have
           * been in the OpenGL bottom-to-top orientation.  X is top-to-bottom
@@ -518,9 +519,9 @@ xmesa_DrawPixels_5R6G5B( struct gl_context *ctx,
          const int rowLength = clippedUnpack.RowLength;
          XMesaImage ximage;
 
-         ASSERT(xmesa->xm_visual->undithered_pf == PF_5R6G5B);
-         ASSERT(dpy);
-         ASSERT(gc);
+         assert(xmesa->xm_visual->undithered_pf == PF_5R6G5B);
+         assert(dpy);
+         assert(gc);
 
          /* This is a little tricky since all coordinates up to now have
           * been in the OpenGL bottom-to-top orientation.  X is top-to-bottom
@@ -614,8 +615,8 @@ xmesa_CopyPixels( struct gl_context *ctx,
       struct xmesa_renderbuffer *dstXrb
          = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]);
 
-      ASSERT(dpy);
-      ASSERT(gc);
+      assert(dpy);
+      assert(gc);
 
       /* Note: we don't do any special clipping work here.  We could,
        * but X will do it for us.
@@ -678,17 +679,20 @@ enable( struct gl_context *ctx, GLenum pname, GLboolean state )
  * Called when the driver should update its state, based on the new_state
  * flags.
  */
-void
-xmesa_update_state( struct gl_context *ctx, GLbitfield new_state )
+static void
+xmesa_update_state(struct gl_context *ctx)
 {
+   GLbitfield new_state = ctx->NewState;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+
+   if (new_state & (_NEW_SCISSOR | _NEW_BUFFERS | _NEW_VIEWPORT))
+      _mesa_update_draw_buffer_bounds(ctx, ctx->DrawBuffer);
 
    /* Propagate statechange information to swrast and swrast_setup
     * modules.  The X11 driver has no internal GL-dependent state.
     */
    _swrast_InvalidateState( ctx, new_state );
    _tnl_InvalidateState( ctx, new_state );
-   _vbo_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
 
    if (_mesa_is_user_fbo(ctx->DrawBuffer))

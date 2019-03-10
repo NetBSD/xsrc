@@ -40,24 +40,38 @@
  * \param size  point diameter in pixels
  * \sa glPointSize().
  */
-void GLAPIENTRY
-_mesa_PointSize( GLfloat size )
+static ALWAYS_INLINE void
+point_size(struct gl_context *ctx, GLfloat size, bool no_error)
 {
-   GET_CURRENT_CONTEXT(ctx);
-
-   if (size <= 0.0) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glPointSize" );
-      return;
-   }
-
    if (ctx->Point.Size == size)
       return;
+
+   if (!no_error && size <= 0.0F) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glPointSize");
+      return;
+   }
 
    FLUSH_VERTICES(ctx, _NEW_POINT);
    ctx->Point.Size = size;
 
    if (ctx->Driver.PointSize)
       ctx->Driver.PointSize(ctx, size);
+}
+
+
+void GLAPIENTRY
+_mesa_PointSize_no_error(GLfloat size)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   point_size(ctx, size, true);
+}
+
+
+void GLAPIENTRY
+_mesa_PointSize( GLfloat size )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   point_size(ctx, size, false);
 }
 
 
@@ -103,7 +117,7 @@ _mesa_PointParameterfv( GLenum pname, const GLfloat *params)
     * If point parameters aren't supported, then this function shouldn't even
     * exist.
     */
-   ASSERT(!(ctx->Extensions.ARB_point_sprite
+   assert(!(ctx->Extensions.ARB_point_sprite
             || ctx->Extensions.NV_point_sprite)
           || ctx->Extensions.EXT_point_parameters);
 
@@ -119,9 +133,9 @@ _mesa_PointParameterfv( GLenum pname, const GLfloat *params)
             return;
          FLUSH_VERTICES(ctx, _NEW_POINT);
          COPY_3V(ctx->Point.Params, params);
-         ctx->Point._Attenuated = (ctx->Point.Params[0] != 1.0 ||
-                                   ctx->Point.Params[1] != 0.0 ||
-                                   ctx->Point.Params[2] != 0.0);
+         ctx->Point._Attenuated = (ctx->Point.Params[0] != 1.0F ||
+                                   ctx->Point.Params[1] != 0.0F ||
+                                   ctx->Point.Params[2] != 0.0F);
          break;
       case GL_POINT_SIZE_MIN_EXT:
          if (params[0] < 0.0F) {
@@ -209,7 +223,7 @@ _mesa_PointParameterfv( GLenum pname, const GLfloat *params)
    }
 
    if (ctx->Driver.PointParameterfv)
-      (*ctx->Driver.PointParameterfv)(ctx, pname, params);
+      ctx->Driver.PointParameterfv(ctx, pname, params);
 }
 
 
@@ -225,8 +239,6 @@ _mesa_PointParameterfv( GLenum pname, const GLfloat *params)
 void
 _mesa_init_point(struct gl_context *ctx)
 {
-   GLuint i;
-
    ctx->Point.SmoothFlag = GL_FALSE;
    ctx->Point.Size = 1.0;
    ctx->Point.Params[0] = 1.0;
@@ -253,7 +265,5 @@ _mesa_init_point(struct gl_context *ctx)
 
    ctx->Point.SpriteRMode = GL_ZERO; /* GL_NV_point_sprite (only!) */
    ctx->Point.SpriteOrigin = GL_UPPER_LEFT; /* GL_ARB_point_sprite */
-   for (i = 0; i < Elements(ctx->Point.CoordReplace); i++) {
-      ctx->Point.CoordReplace[i] = GL_FALSE; /* GL_ARB/NV_point_sprite */
-   }
+   ctx->Point.CoordReplace = 0; /* GL_ARB/NV_point_sprite */
 }

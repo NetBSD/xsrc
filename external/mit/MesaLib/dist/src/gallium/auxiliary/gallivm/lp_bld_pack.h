@@ -58,6 +58,11 @@ lp_build_interleave2(struct gallivm_state *gallivm,
                      LLVMValueRef b,
                      unsigned lo_hi);
 
+LLVMValueRef
+lp_build_uninterleave1(struct gallivm_state *gallivm,
+                       unsigned num_elems,
+                       LLVMValueRef a,
+                       unsigned lo_hi);
 
 void
 lp_build_unpack2(struct gallivm_state *gallivm,
@@ -67,6 +72,14 @@ lp_build_unpack2(struct gallivm_state *gallivm,
                  LLVMValueRef *dst_lo,
                  LLVMValueRef *dst_hi);
 
+
+void
+lp_build_unpack2_native(struct gallivm_state *gallivm,
+                        struct lp_type src_type,
+                        struct lp_type dst_type,
+                        LLVMValueRef src,
+                        LLVMValueRef *dst_lo,
+                        LLVMValueRef *dst_hi);
 
 void
 lp_build_unpack(struct gallivm_state *gallivm,
@@ -110,6 +123,14 @@ lp_build_pack2(struct gallivm_state *gallivm,
                struct lp_type dst_type,
                LLVMValueRef lo,
                LLVMValueRef hi);
+
+
+LLVMValueRef
+lp_build_pack2_native(struct gallivm_state *gallivm,
+                      struct lp_type src_type,
+                      struct lp_type dst_type,
+                      LLVMValueRef lo,
+                      LLVMValueRef hi);
 
 
 LLVMValueRef

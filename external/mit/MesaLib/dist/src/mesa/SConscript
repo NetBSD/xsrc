@@ -3,50 +3,44 @@
 
 
 Import('*')
-import filecmp
-import os
-import subprocess
 from sys import executable as python_cmd
 
 env = env.Clone()
 
+env.MSVC2013Compat()
+
 env.Append(CPPPATH = [
+    '../compiler/nir',  # for generated nir_opcodes.h, etc
+    '../compiler/glsl',  # for generated headers
     '#/src',
-    '#/src/mapi',
-    '#/src/glsl',
-    '#/src/mesa',
     Dir('../mapi'), # src/mapi build path
+    '#/src/mapi',
     Dir('.'), # src/mesa build path
+    '#/src/mesa',
+    Dir('main'),  # src/mesa/main/ build path
+    '#/src/mesa/main',
+    '#/src/gallium/include',
+    '#/src/gallium/auxiliary',
 ])
 
 if env['platform'] == 'windows':
     env.Append(CPPDEFINES = [
         '_GDI32_', # prevent gl* being declared __declspec(dllimport) in MS headers
         'BUILD_GL32', # declare gl* as __declspec(dllexport) in Mesa headers
-    ])
-    if not env['gles']:
-        # prevent _glapi_* from being declared __declspec(dllimport)
-        env.Append(CPPDEFINES = ['_GLAPI_NO_EXPORTS'])
-else:
-    env.Append(CPPDEFINES = [
-        ('HAVE_DLOPEN', '1'),
+        '_GLAPI_NO_EXPORTS', # prevent _glapi_* from being declared __declspec(dllimport)
     ])
 
 # parse Makefile.sources
 source_lists = env.ParseSourceList('Makefile.sources')
 
-env.Append(YACCFLAGS = '-d -p "_mesa_program_"')
-program_lex = env.CFile('program/lex.yy.c', 'program/program_lexer.l')
-program_parse = env.CFile('program/program_parse.tab.c',
-                          'program/program_parse.y')
-program_sources = source_lists['PROGRAM_FILES'] + [
-    program_lex,
-    program_parse[0],
-]
+env.Append(YACCFLAGS = ['-d', '-p', '_mesa_program_'])
+env.CFile('program/lex.yy.c', 'program/program_lexer.l')
+env.CFile('program/program_parse.tab.c', 'program/program_parse.y')
 
 mesa_sources = (
     source_lists['MESA_FILES'] +
-    program_sources +
+    source_lists['PROGRAM_FILES'] +
+    source_lists['PROGRAM_NIR_FILES'] +
     source_lists['STATETRACKER_FILES']
 )
 
@@ -55,22 +49,42 @@ GLAPI = '#src/mapi/glapi/'
 get_hash_header = env.CodeGenerate(
       target = 'main/get_hash.h',
       script = 'main/get_hash_generator.py',
-      source = GLAPI + 'gen/gl_and_es_API.xml',
+      source = [GLAPI + 'gen/gl_and_es_API.xml'] + env.Glob(GLAPI + 'gen/*.xml'),
       command = python_cmd + ' $SCRIPT ' + ' -f $SOURCE > $TARGET'
 )
 
 format_info = env.CodeGenerate(
-      target = 'main/format_info.c',
+      target = 'main/format_info.h',
       script = 'main/format_info.py',
       source = 'main/formats.csv',
       command = python_cmd + ' $SCRIPT ' + ' $SOURCE > $TARGET'
 )
 
+format_pack = env.CodeGenerate(
+      target = 'main/format_pack.c',
+      script = 'main/format_pack.py',
+      source = 'main/formats.csv',
+      command = python_cmd + ' $SCRIPT ' + ' $SOURCE > $TARGET'
+)
+
+format_unpack = env.CodeGenerate(
+      target = 'main/format_unpack.c',
+      script = 'main/format_unpack.py',
+      source = 'main/formats.csv',
+      command = python_cmd + ' $SCRIPT ' + ' $SOURCE > $TARGET'
+)
+
+format_fallback = env.CodeGenerate(
+      target = 'main/format_fallback.c',
+      script = 'main/format_fallback.py',
+      source = 'main/formats.csv',
+      command = python_cmd + ' $SCRIPT ' + ' $SOURCE ' + ' $TARGET'
+)
+
 #
 # Assembly sources
 #
-if (env['gcc'] or env['clang']) and \
-   env['platform'] not in ('cygwin', 'darwin', 'windows', 'haiku'):
+if env['platform'] not in ('cygwin', 'darwin', 'windows', 'haiku'):
     if env['machine'] == 'x86':
         env.Append(CPPDEFINES = [
             'USE_X86_ASM',
@@ -103,45 +117,24 @@ if (env['gcc'] or env['clang']) and \
         )
         # Add the dir containing the generated header (somewhere inside  the
         # build dir) to the include path
-        env.Append(CPPPATH = [matypes[0].dir])
+        env.Prepend(CPPPATH = [matypes[0].dir])
 
 
-def write_git_sha1_h_file(filename):
-    """Mesa looks for a git_sha1.h file at compile time in order to display
-    the current git hash id in the GL_VERSION string.  This function tries
-    to retrieve the git hashid and write the header file.  An empty file
-    will be created if anything goes wrong."""
+# The marshal_generated.c file is generated from the GL/ES API.xml file
+env.CodeGenerate(
+    target = 'main/marshal_generated.c',
+    script = GLAPI + 'gen/gl_marshal.py',
+    source = [GLAPI + 'gen/gl_and_es_API.xml'] + env.Glob(GLAPI + 'gen/*.xml'),
+    command = python_cmd + ' $SCRIPT -f $SOURCE > $TARGET'
+    )
 
-    args = [ 'git', 'log', '-n', '1', '--oneline' ]
-    try:
-        (commit, foo) = subprocess.Popen(args, stdout=subprocess.PIPE).communicate()
-    except:
-        # git log command didn't work
-        if not os.path.exists(filename):
-            # create an empty file if none already exists
-            f = open(filename, "w")
-            f.close()
-        return
-
-    commit = '#define MESA_GIT_SHA1 "git-%s"\n' % commit[0:7]
-    tempfile = "git_sha1.h.tmp"
-    f = open(tempfile, "w")
-    f.write(commit)
-    f.close()
-    if not os.path.exists(filename) or not filecmp.cmp(tempfile, filename):
-        # The filename does not exist or it's different from the new file,
-        # so replace old file with new.
-        if os.path.exists(filename):
-            os.remove(filename)
-        os.rename(tempfile, filename)
-    return
-
-
-# Create the git_sha1.h header file
-write_git_sha1_h_file("main/git_sha1.h")
-# and update CPPPATH so the git_sha1.h header can be found
-env.Append(CPPPATH = ["#" + env['build_dir'] + "/mesa/main"])
-
+# The marshal_generated.h file is generated from the GL/ES API.xml file
+env.CodeGenerate(
+    target = 'main/marshal_generated.h',
+    script = GLAPI + 'gen/gl_marshal_h.py',
+    source = [GLAPI + 'gen/gl_and_es_API.xml'] + env.Glob(GLAPI + 'gen/*.xml'),
+    command = python_cmd + ' $SCRIPT -f $SOURCE > $TARGET'
+    )
 
 #
 # Libraries

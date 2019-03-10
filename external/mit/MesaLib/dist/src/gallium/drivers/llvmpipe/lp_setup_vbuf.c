@@ -108,21 +108,21 @@ lp_setup_unmap_vertices(struct vbuf_render *vbr,
                        ushort min_index,
                        ushort max_index )
 {
-   struct lp_setup_context *setup = lp_setup_context(vbr);
+   MAYBE_UNUSED struct lp_setup_context *setup = lp_setup_context(vbr);
    assert( setup->vertex_buffer_size >= (max_index+1) * setup->vertex_size );
    /* do nothing */
 }
 
 
 static void
-lp_setup_set_primitive(struct vbuf_render *vbr, unsigned prim)
+lp_setup_set_primitive(struct vbuf_render *vbr, enum pipe_prim_type prim)
 {
    lp_setup_context(vbr)->prim = prim;
 }
 
 typedef const float (*const_float4_ptr)[4];
 
-static INLINE const_float4_ptr get_vert( const void *vertex_buffer,
+static inline const_float4_ptr get_vert( const void *vertex_buffer,
                                          int index,
                                          int stride )
 {
@@ -571,7 +571,7 @@ lp_setup_pipeline_statistics(
       stats->gs_invocations;
    llvmpipe->pipeline_statistics.gs_primitives +=
       stats->gs_primitives;
-   if (!llvmpipe_rasterization_disabled(llvmpipe)) {
+   if (!setup->rasterizer_discard) {
       llvmpipe->pipeline_statistics.c_invocations +=
          stats->c_invocations;
    } else {

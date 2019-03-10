@@ -39,12 +39,7 @@
 #include <GL/internal/dri_interface.h>
 #include <stdbool.h>
 #include "loader.h"
-
-#if (__GNUC__ >= 3)
-#define PRINTFLIKE(f, a) __attribute__ ((format(__printf__, f, a)))
-#else
-#define PRINTFLIKE(f, a)
-#endif
+#include "util/macros.h" /* for PRINTFLIKE */
 
 typedef struct __GLXDRIconfigPrivateRec __GLXDRIconfigPrivate;
 
@@ -83,6 +78,6 @@ extern bool
 dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
                          unsigned *major_ver, unsigned *minor_ver,
                          uint32_t *render_type, uint32_t *flags, unsigned *api,
-                         int *reset, unsigned *error);
+                         int *reset, int *release, unsigned *error);
 
 #endif /* _DRI_COMMON_H */

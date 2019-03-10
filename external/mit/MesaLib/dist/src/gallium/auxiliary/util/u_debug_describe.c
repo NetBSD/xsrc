@@ -30,7 +30,7 @@
 #include "util/u_string.h"
 
 void
-debug_describe_reference(char* buf, const struct pipe_reference*ptr)
+debug_describe_reference(char* buf, UNUSED const struct pipe_reference*ptr)
 {
    strcpy(buf, "pipe_object");
 }
@@ -78,6 +78,15 @@ debug_describe_sampler_view(char* buf, const struct pipe_sampler_view *ptr)
    char res[128];
    debug_describe_resource(res, ptr->texture);
    util_sprintf(buf, "pipe_sampler_view<%s,%s>", res, util_format_short_name(ptr->format));
+}
+
+void
+debug_describe_image_view(char* buf, const struct pipe_image_view *ptr)
+{
+   char res[128];
+   debug_describe_resource(res, ptr->resource);
+   util_sprintf(buf, "pipe_image_view<%s,%s>", res,
+                util_format_short_name(ptr->format));
 }
 
 void

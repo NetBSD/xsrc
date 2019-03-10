@@ -51,36 +51,14 @@
 #include "texobj.h"
 #include "texstate.h"
 #include "varray.h"
+#include "vbo/vbo.h"
+#include "viewport.h"
 #include "blend.h"
 
 
 /**
- * Update the following fields:
- *   ctx->VertexProgram._Enabled
- *   ctx->FragmentProgram._Enabled
- *   ctx->ATIFragmentShader._Enabled
- * This needs to be done before texture state validation.
- */
-static void
-update_program_enables(struct gl_context *ctx)
-{
-   /* These _Enabled flags indicate if the user-defined ARB/NV vertex/fragment
-    * program is enabled AND valid.  Similarly for ATI fragment shaders.
-    * GLSL shaders not relevant here.
-    */
-   ctx->VertexProgram._Enabled = ctx->VertexProgram.Enabled
-      && ctx->VertexProgram.Current->Base.Instructions;
-   ctx->FragmentProgram._Enabled = ctx->FragmentProgram.Enabled
-      && ctx->FragmentProgram.Current->Base.Instructions;
-   ctx->ATIFragmentShader._Enabled = ctx->ATIFragmentShader.Enabled
-      && ctx->ATIFragmentShader.Current->Instructions[0];
-}
-
-
-/**
- * Update the ctx->Vertex/Geometry/FragmentProgram._Current pointers to point
- * to the current/active programs.  Then call ctx->Driver.BindProgram() to
- * tell the driver which programs to use.
+ * Update the ctx->*Program._Current pointers to point to the
+ * current/active programs.
  *
  * Programs may come from 3 sources: GLSL shaders, ARB/NV_vertex/fragment
  * programs or programs derived from fixed-function state.
@@ -94,16 +72,24 @@ update_program_enables(struct gl_context *ctx)
 static GLbitfield
 update_program(struct gl_context *ctx)
 {
-   const struct gl_shader_program *vsProg =
+   struct gl_program *vsProg =
       ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX];
-   const struct gl_shader_program *gsProg =
+   struct gl_program *tcsProg =
+      ctx->_Shader->CurrentProgram[MESA_SHADER_TESS_CTRL];
+   struct gl_program *tesProg =
+      ctx->_Shader->CurrentProgram[MESA_SHADER_TESS_EVAL];
+   struct gl_program *gsProg =
       ctx->_Shader->CurrentProgram[MESA_SHADER_GEOMETRY];
-   struct gl_shader_program *fsProg =
+   struct gl_program *fsProg =
       ctx->_Shader->CurrentProgram[MESA_SHADER_FRAGMENT];
-   const struct gl_vertex_program *prevVP = ctx->VertexProgram._Current;
-   const struct gl_fragment_program *prevFP = ctx->FragmentProgram._Current;
-   const struct gl_geometry_program *prevGP = ctx->GeometryProgram._Current;
-   GLbitfield new_state = 0x0;
+   struct gl_program *csProg =
+      ctx->_Shader->CurrentProgram[MESA_SHADER_COMPUTE];
+   const struct gl_program *prevVP = ctx->VertexProgram._Current;
+   const struct gl_program *prevFP = ctx->FragmentProgram._Current;
+   const struct gl_program *prevGP = ctx->GeometryProgram._Current;
+   const struct gl_program *prevTCP = ctx->TessCtrlProgram._Current;
+   const struct gl_program *prevTEP = ctx->TessEvalProgram._Current;
+   const struct gl_program *prevCP = ctx->ComputeProgram._Current;
 
    /*
     * Set the ctx->VertexProgram._Current and ctx->FragmentProgram._Current
@@ -114,209 +100,175 @@ update_program(struct gl_context *ctx)
     * follows:
     *   1. OpenGL 2.0/ARB vertex/fragment shaders
     *   2. ARB/NV vertex/fragment programs
-    *   3. Programs derived from fixed-function state.
+    *   3. ATI fragment shader
+    *   4. Programs derived from fixed-function state.
     *
     * Note: it's possible for a vertex shader to get used with a fragment
     * program (and vice versa) here, but in practice that shouldn't ever
     * come up, or matter.
     */
 
-   if (fsProg && fsProg->LinkStatus
-       && fsProg->_LinkedShaders[MESA_SHADER_FRAGMENT]) {
+   if (fsProg) {
       /* Use GLSL fragment shader */
-      _mesa_reference_shader_program(ctx,
-                                     &ctx->_Shader->_CurrentFragmentProgram,
-				     fsProg);
-      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
-                               gl_fragment_program(fsProg->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program));
-      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram,
-			       NULL);
+      _mesa_reference_program(ctx, &ctx->FragmentProgram._Current, fsProg);
+      _mesa_reference_program(ctx, &ctx->FragmentProgram._TexEnvProgram,
+                              NULL);
    }
-   else if (ctx->FragmentProgram._Enabled) {
+   else if (_mesa_arb_fragment_program_enabled(ctx)) {
       /* Use user-defined fragment program */
-      _mesa_reference_shader_program(ctx,
-                                     &ctx->_Shader->_CurrentFragmentProgram,
-				     NULL);
-      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
-                               ctx->FragmentProgram.Current);
-      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram,
-			       NULL);
+      _mesa_reference_program(ctx, &ctx->FragmentProgram._Current,
+                              ctx->FragmentProgram.Current);
+      _mesa_reference_program(ctx, &ctx->FragmentProgram._TexEnvProgram,
+			      NULL);
+   }
+   else if (_mesa_ati_fragment_shader_enabled(ctx) &&
+            ctx->ATIFragmentShader.Current->Program) {
+       /* Use the enabled ATI fragment shader's associated program */
+      _mesa_reference_program(ctx, &ctx->FragmentProgram._Current,
+                              ctx->ATIFragmentShader.Current->Program);
+      _mesa_reference_program(ctx, &ctx->FragmentProgram._TexEnvProgram,
+                              NULL);
    }
    else if (ctx->FragmentProgram._MaintainTexEnvProgram) {
       /* Use fragment program generated from fixed-function state */
       struct gl_shader_program *f = _mesa_get_fixed_func_fragment_program(ctx);
 
-      _mesa_reference_shader_program(ctx,
-                                     &ctx->_Shader->_CurrentFragmentProgram,
-				     f);
-      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
-			       gl_fragment_program(f->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program));
-      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram,
-			       gl_fragment_program(f->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program));
+      _mesa_reference_program(ctx, &ctx->FragmentProgram._Current,
+			      f->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program);
+      _mesa_reference_program(ctx, &ctx->FragmentProgram._TexEnvProgram,
+			      f->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program);
    }
    else {
       /* No fragment program */
-      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, NULL);
-      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram,
-			       NULL);
+      _mesa_reference_program(ctx, &ctx->FragmentProgram._Current, NULL);
+      _mesa_reference_program(ctx, &ctx->FragmentProgram._TexEnvProgram,
+			      NULL);
    }
 
-   if (gsProg && gsProg->LinkStatus
-       && gsProg->_LinkedShaders[MESA_SHADER_GEOMETRY]) {
+   if (gsProg) {
       /* Use GLSL geometry shader */
-      _mesa_reference_geomprog(ctx, &ctx->GeometryProgram._Current,
-			       gl_geometry_program(gsProg->_LinkedShaders[MESA_SHADER_GEOMETRY]->Program));
+      _mesa_reference_program(ctx, &ctx->GeometryProgram._Current, gsProg);
    } else {
       /* No geometry program */
-      _mesa_reference_geomprog(ctx, &ctx->GeometryProgram._Current, NULL);
+      _mesa_reference_program(ctx, &ctx->GeometryProgram._Current, NULL);
+   }
+
+   if (tesProg) {
+      /* Use GLSL tessellation evaluation shader */
+      _mesa_reference_program(ctx, &ctx->TessEvalProgram._Current, tesProg);
+   }
+   else {
+      /* No tessellation evaluation program */
+      _mesa_reference_program(ctx, &ctx->TessEvalProgram._Current, NULL);
+   }
+
+   if (tcsProg) {
+      /* Use GLSL tessellation control shader */
+      _mesa_reference_program(ctx, &ctx->TessCtrlProgram._Current, tcsProg);
+   }
+   else {
+      /* No tessellation control program */
+      _mesa_reference_program(ctx, &ctx->TessCtrlProgram._Current, NULL);
    }
 
    /* Examine vertex program after fragment program as
     * _mesa_get_fixed_func_vertex_program() needs to know active
     * fragprog inputs.
     */
-   if (vsProg && vsProg->LinkStatus
-       && vsProg->_LinkedShaders[MESA_SHADER_VERTEX]) {
+   if (vsProg) {
       /* Use GLSL vertex shader */
-      _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current,
-			       gl_vertex_program(vsProg->_LinkedShaders[MESA_SHADER_VERTEX]->Program));
+      assert(VP_MODE_SHADER == ctx->VertexProgram._VPMode);
+      _mesa_reference_program(ctx, &ctx->VertexProgram._Current, vsProg);
    }
-   else if (ctx->VertexProgram._Enabled) {
+   else if (_mesa_arb_vertex_program_enabled(ctx)) {
       /* Use user-defined vertex program */
-      _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current,
-                               ctx->VertexProgram.Current);
+      assert(VP_MODE_SHADER == ctx->VertexProgram._VPMode);
+      _mesa_reference_program(ctx, &ctx->VertexProgram._Current,
+                              ctx->VertexProgram.Current);
    }
    else if (ctx->VertexProgram._MaintainTnlProgram) {
       /* Use vertex program generated from fixed-function state */
-      _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current,
-                               _mesa_get_fixed_func_vertex_program(ctx));
-      _mesa_reference_vertprog(ctx, &ctx->VertexProgram._TnlProgram,
-                               ctx->VertexProgram._Current);
+      assert(VP_MODE_FF == ctx->VertexProgram._VPMode);
+      _mesa_reference_program(ctx, &ctx->VertexProgram._Current,
+                              _mesa_get_fixed_func_vertex_program(ctx));
+      _mesa_reference_program(ctx, &ctx->VertexProgram._TnlProgram,
+                              ctx->VertexProgram._Current);
    }
    else {
       /* no vertex program */
-      _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current, NULL);
+      assert(VP_MODE_FF == ctx->VertexProgram._VPMode);
+      _mesa_reference_program(ctx, &ctx->VertexProgram._Current, NULL);
+   }
+
+   if (csProg) {
+      /* Use GLSL compute shader */
+      _mesa_reference_program(ctx, &ctx->ComputeProgram._Current, csProg);
+   } else {
+      /* no compute program */
+      _mesa_reference_program(ctx, &ctx->ComputeProgram._Current, NULL);
    }
 
    /* Let the driver know what's happening:
     */
-   if (ctx->FragmentProgram._Current != prevFP) {
-      new_state |= _NEW_PROGRAM;
-      if (ctx->Driver.BindProgram) {
-         ctx->Driver.BindProgram(ctx, GL_FRAGMENT_PROGRAM_ARB,
-                          (struct gl_program *) ctx->FragmentProgram._Current);
+   if (ctx->FragmentProgram._Current != prevFP ||
+       ctx->VertexProgram._Current != prevVP ||
+       ctx->GeometryProgram._Current != prevGP ||
+       ctx->TessEvalProgram._Current != prevTEP ||
+       ctx->TessCtrlProgram._Current != prevTCP ||
+       ctx->ComputeProgram._Current != prevCP)
+      return _NEW_PROGRAM;
+
+   return 0;
+}
+
+
+static GLbitfield
+update_single_program_constants(struct gl_context *ctx,
+                                struct gl_program *prog,
+                                gl_shader_stage stage)
+{
+   if (prog) {
+      const struct gl_program_parameter_list *params = prog->Parameters;
+      if (params && params->StateFlags & ctx->NewState) {
+         if (ctx->DriverFlags.NewShaderConstants[stage])
+            ctx->NewDriverState |= ctx->DriverFlags.NewShaderConstants[stage];
+         else
+            return _NEW_PROGRAM_CONSTANTS;
       }
    }
-
-   if (ctx->GeometryProgram._Current != prevGP) {
-      new_state |= _NEW_PROGRAM;
-      if (ctx->Driver.BindProgram) {
-         ctx->Driver.BindProgram(ctx, MESA_GEOMETRY_PROGRAM,
-                            (struct gl_program *) ctx->GeometryProgram._Current);
-      }
-   }
-
-   if (ctx->VertexProgram._Current != prevVP) {
-      new_state |= _NEW_PROGRAM;
-      if (ctx->Driver.BindProgram) {
-         ctx->Driver.BindProgram(ctx, GL_VERTEX_PROGRAM_ARB,
-                            (struct gl_program *) ctx->VertexProgram._Current);
-      }
-   }
-
-   return new_state;
+   return 0;
 }
 
 
 /**
+ * This updates fixed-func state constants such as gl_ModelViewMatrix.
  * Examine shader constants and return either _NEW_PROGRAM_CONSTANTS or 0.
  */
 static GLbitfield
 update_program_constants(struct gl_context *ctx)
 {
-   GLbitfield new_state = 0x0;
+   GLbitfield new_state =
+      update_single_program_constants(ctx, ctx->VertexProgram._Current,
+                                      MESA_SHADER_VERTEX) |
+      update_single_program_constants(ctx, ctx->FragmentProgram._Current,
+                                      MESA_SHADER_FRAGMENT);
 
-   if (ctx->FragmentProgram._Current) {
-      const struct gl_program_parameter_list *params =
-         ctx->FragmentProgram._Current->Base.Parameters;
-      if (params && params->StateFlags & ctx->NewState) {
-         new_state |= _NEW_PROGRAM_CONSTANTS;
-      }
-   }
+   if (ctx->API == API_OPENGL_COMPAT &&
+       ctx->Const.GLSLVersionCompat >= 150) {
+      new_state |=
+         update_single_program_constants(ctx, ctx->GeometryProgram._Current,
+                                         MESA_SHADER_GEOMETRY);
 
-   if (ctx->GeometryProgram._Current) {
-      const struct gl_program_parameter_list *params =
-         ctx->GeometryProgram._Current->Base.Parameters;
-      /*FIXME: StateFlags is always 0 because we have unnamed constant
-       *       not state changes */
-      if (params /*&& params->StateFlags & ctx->NewState*/) {
-         new_state |= _NEW_PROGRAM_CONSTANTS;
-      }
-   }
-
-   if (ctx->VertexProgram._Current) {
-      const struct gl_program_parameter_list *params =
-         ctx->VertexProgram._Current->Base.Parameters;
-      if (params && params->StateFlags & ctx->NewState) {
-         new_state |= _NEW_PROGRAM_CONSTANTS;
+      if (_mesa_has_ARB_tessellation_shader(ctx)) {
+         new_state |=
+            update_single_program_constants(ctx, ctx->TessCtrlProgram._Current,
+                                            MESA_SHADER_TESS_CTRL) |
+            update_single_program_constants(ctx, ctx->TessEvalProgram._Current,
+                                            MESA_SHADER_TESS_EVAL);
       }
    }
 
    return new_state;
-}
-
-
-
-
-static void
-update_viewport_matrix(struct gl_context *ctx)
-{
-   const GLfloat depthMax = ctx->DrawBuffer->_DepthMaxF;
-   unsigned i;
-
-   ASSERT(depthMax > 0);
-
-   /* Compute scale and bias values. This is really driver-specific
-    * and should be maintained elsewhere if at all.
-    * NOTE: RasterPos uses this.
-    */
-   for (i = 0; i < ctx->Const.MaxViewports; i++) {
-      _math_matrix_viewport(&ctx->ViewportArray[i]._WindowMap,
-                            ctx->ViewportArray[i].X, ctx->ViewportArray[i].Y,
-                            ctx->ViewportArray[i].Width, ctx->ViewportArray[i].Height,
-                            ctx->ViewportArray[i].Near, ctx->ViewportArray[i].Far,
-                            depthMax);
-   }
-}
-
-
-/**
- * Update derived multisample state.
- */
-static void
-update_multisample(struct gl_context *ctx)
-{
-   ctx->Multisample._Enabled = GL_FALSE;
-   if (ctx->Multisample.Enabled &&
-       ctx->DrawBuffer &&
-       ctx->DrawBuffer->Visual.sampleBuffers)
-      ctx->Multisample._Enabled = GL_TRUE;
-}
-
-
-/**
- * Update the ctx->VertexProgram._TwoSideEnabled flag.
- */
-static void
-update_twoside(struct gl_context *ctx)
-{
-   if (ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX] ||
-       ctx->VertexProgram._Enabled) {
-      ctx->VertexProgram._TwoSideEnabled = ctx->VertexProgram.TwoSideEnabled;
-   } else {
-      ctx->VertexProgram._TwoSideEnabled = (ctx->Light.Enabled &&
-					    ctx->Light.Model.TwoSide);
-   }
 }
 
 
@@ -336,110 +288,100 @@ void
 _mesa_update_state_locked( struct gl_context *ctx )
 {
    GLbitfield new_state = ctx->NewState;
-   GLbitfield prog_flags = _NEW_PROGRAM;
    GLbitfield new_prog_state = 0x0;
+   const GLbitfield computed_states = ~(_NEW_CURRENT_ATTRIB | _NEW_LINE);
 
-   if (new_state == _NEW_CURRENT_ATTRIB) 
+   /* we can skip a bunch of state validation checks if the dirty
+    * state matches one or more bits in 'computed_states'.
+    */
+   if ((new_state & computed_states) == 0)
       goto out;
 
    if (MESA_VERBOSE & VERBOSE_STATE)
       _mesa_print_state("_mesa_update_state", new_state);
 
-   /* Determine which state flags effect vertex/fragment program state */
-   if (ctx->FragmentProgram._MaintainTexEnvProgram) {
-      prog_flags |= (_NEW_BUFFERS | _NEW_TEXTURE | _NEW_FOG |
-		     _NEW_VARYING_VP_INPUTS | _NEW_LIGHT | _NEW_POINT |
-		     _NEW_RENDERMODE | _NEW_PROGRAM | _NEW_FRAG_CLAMP |
-		     _NEW_COLOR);
-   }
-   if (ctx->VertexProgram._MaintainTnlProgram) {
-      prog_flags |= (_NEW_VARYING_VP_INPUTS | _NEW_TEXTURE |
-                     _NEW_TEXTURE_MATRIX | _NEW_TRANSFORM | _NEW_POINT |
-                     _NEW_FOG | _NEW_LIGHT |
-                     _MESA_NEW_NEED_EYE_COORDS);
-   }
-
-   /*
-    * Now update derived state info
-    */
-
-   if (new_state & prog_flags)
-      update_program_enables( ctx );
-
-   if (new_state & (_NEW_MODELVIEW|_NEW_PROJECTION))
-      _mesa_update_modelview_project( ctx, new_state );
-
-   if (new_state & (_NEW_PROGRAM|_NEW_TEXTURE|_NEW_TEXTURE_MATRIX))
-      _mesa_update_texture( ctx, new_state );
-
    if (new_state & _NEW_BUFFERS)
-      _mesa_update_framebuffer(ctx);
+      _mesa_update_framebuffer(ctx, ctx->ReadBuffer, ctx->DrawBuffer);
 
-   if (new_state & (_NEW_SCISSOR | _NEW_BUFFERS | _NEW_VIEWPORT))
-      _mesa_update_draw_buffer_bounds( ctx );
+   /* Handle Core and Compatibility contexts separately. */
+   if (ctx->API == API_OPENGL_COMPAT ||
+       ctx->API == API_OPENGLES) {
+      GLbitfield prog_flags = _NEW_PROGRAM;
 
-   if (new_state & _NEW_LIGHT)
-      _mesa_update_lighting( ctx );
+      /* Determine which state flags effect vertex/fragment program state */
+      if (ctx->FragmentProgram._MaintainTexEnvProgram) {
+         prog_flags |= (_NEW_BUFFERS | _NEW_TEXTURE_OBJECT | _NEW_FOG |
+                        _NEW_VARYING_VP_INPUTS | _NEW_LIGHT | _NEW_POINT |
+                        _NEW_RENDERMODE | _NEW_PROGRAM | _NEW_FRAG_CLAMP |
+                        _NEW_COLOR | _NEW_TEXTURE_STATE);
+      }
+      if (ctx->VertexProgram._MaintainTnlProgram) {
+         prog_flags |= (_NEW_VARYING_VP_INPUTS | _NEW_TEXTURE_OBJECT |
+                        _NEW_TEXTURE_MATRIX | _NEW_TRANSFORM | _NEW_POINT |
+                        _NEW_FOG | _NEW_LIGHT | _NEW_TEXTURE_STATE |
+                        _MESA_NEW_NEED_EYE_COORDS);
+      }
 
-   if (new_state & (_NEW_LIGHT | _NEW_PROGRAM))
-      update_twoside( ctx );
-
-   if (new_state & (_NEW_STENCIL | _NEW_BUFFERS))
-      _mesa_update_stencil( ctx );
-
-   if (new_state & _NEW_PIXEL)
-      _mesa_update_pixel( ctx, new_state );
-
-   if (new_state & (_NEW_BUFFERS | _NEW_VIEWPORT))
-      update_viewport_matrix(ctx);
-
-   if (new_state & (_NEW_MULTISAMPLE | _NEW_BUFFERS))
-      update_multisample( ctx );
-
-   /* ctx->_NeedEyeCoords is now up to date.
-    *
-    * If the truth value of this variable has changed, update for the
-    * new lighting space and recompute the positions of lights and the
-    * normal transform.
-    *
-    * If the lighting space hasn't changed, may still need to recompute
-    * light positions & normal transforms for other reasons.
-    */
-   if (new_state & _MESA_NEW_NEED_EYE_COORDS) 
-      _mesa_update_tnl_spaces( ctx, new_state );
-
-   if (new_state & prog_flags) {
-      /* When we generate programs from fixed-function vertex/fragment state
-       * this call may generate/bind a new program.  If so, we need to
-       * propogate the _NEW_PROGRAM flag to the driver.
+      /*
+       * Now update derived state info
        */
-      new_prog_state |= update_program( ctx );
-   }
+      if (new_state & (_NEW_MODELVIEW|_NEW_PROJECTION))
+         _mesa_update_modelview_project( ctx, new_state );
 
-   if (new_state & _NEW_ARRAY)
-      _mesa_update_vao_client_arrays(ctx, ctx->Array.VAO);
+      if (new_state & _NEW_TEXTURE_MATRIX)
+         _mesa_update_texture_matrices(ctx);
 
-   if (ctx->Const.CheckArrayBounds &&
-       new_state & (_NEW_ARRAY | _NEW_PROGRAM | _NEW_BUFFER_OBJECT)) {
-      _mesa_update_vao_max_element(ctx, ctx->Array.VAO);
+      if (new_state & (_NEW_TEXTURE_OBJECT | _NEW_TEXTURE_STATE | _NEW_PROGRAM))
+         _mesa_update_texture_state(ctx);
+
+      if (new_state & _NEW_LIGHT)
+         _mesa_update_lighting(ctx);
+
+      if (new_state & _NEW_PIXEL)
+         _mesa_update_pixel( ctx );
+
+      /* ctx->_NeedEyeCoords is now up to date.
+       *
+       * If the truth value of this variable has changed, update for the
+       * new lighting space and recompute the positions of lights and the
+       * normal transform.
+       *
+       * If the lighting space hasn't changed, may still need to recompute
+       * light positions & normal transforms for other reasons.
+       */
+      if (new_state & _MESA_NEW_NEED_EYE_COORDS)
+         _mesa_update_tnl_spaces( ctx, new_state );
+
+      if (new_state & prog_flags) {
+         /* When we generate programs from fixed-function vertex/fragment state
+          * this call may generate/bind a new program.  If so, we need to
+          * propogate the _NEW_PROGRAM flag to the driver.
+          */
+         new_prog_state |= update_program(ctx);
+      }
+   } else {
+      /* GL Core and GLES 2/3 contexts */
+      if (new_state & (_NEW_TEXTURE_OBJECT | _NEW_PROGRAM))
+         _mesa_update_texture_state(ctx);
+
+      if (new_state & _NEW_PROGRAM)
+         update_program(ctx);
    }
 
  out:
    new_prog_state |= update_program_constants(ctx);
+
+   ctx->NewState |= new_prog_state;
+   vbo_exec_invalidate_state(ctx);
 
    /*
     * Give the driver a chance to act upon the new_state flags.
     * The driver might plug in different span functions, for example.
     * Also, this is where the driver can invalidate the state of any
     * active modules (such as swrast_setup, swrast, tnl, etc).
-    *
-    * Set ctx->NewState to zero to avoid recursion if
-    * Driver.UpdateState() has to call FLUSH_VERTICES().  (fixed?)
     */
-   new_state = ctx->NewState | new_prog_state;
+   ctx->Driver.UpdateState(ctx);
    ctx->NewState = 0;
-   ctx->Driver.UpdateState(ctx, new_state);
-   ctx->Array.VAO->NewArrays = 0x0;
 }
 
 
@@ -480,8 +422,12 @@ _mesa_update_state( struct gl_context *ctx )
  */
 void
 _mesa_set_varying_vp_inputs( struct gl_context *ctx,
-                             GLbitfield64 varying_inputs )
+                             GLbitfield varying_inputs )
 {
+   if (ctx->API != API_OPENGL_COMPAT &&
+       ctx->API != API_OPENGLES)
+      return;
+
    if (ctx->varying_vp_inputs != varying_inputs) {
       ctx->varying_vp_inputs = varying_inputs;
 
@@ -495,7 +441,7 @@ _mesa_set_varying_vp_inputs( struct gl_context *ctx,
           ctx->FragmentProgram._TexEnvProgram) {
          ctx->NewState |= _NEW_VARYING_VP_INPUTS;
       }
-      /*printf("%s %x\n", __FUNCTION__, varying_inputs);*/
+      /*printf("%s %x\n", __func__, varying_inputs);*/
    }
 }
 
@@ -517,4 +463,77 @@ _mesa_set_vp_override(struct gl_context *ctx, GLboolean flag)
        */
       ctx->NewState |= _NEW_PROGRAM;
    }
+}
+
+
+static void
+set_vertex_processing_mode(struct gl_context *ctx, gl_vertex_processing_mode m)
+{
+   if (ctx->VertexProgram._VPMode == m)
+      return;
+
+   /* On change we may get new maps into the current values */
+   ctx->NewDriverState |= ctx->DriverFlags.NewArray;
+
+   /* Finally memorize the value */
+   ctx->VertexProgram._VPMode = m;
+}
+
+
+/**
+ * Update ctx->VertexProgram._VPMode.
+ * This is to distinguish whether we're running
+ *   a vertex program/shader,
+ *   a fixed-function TNL program or
+ *   a fixed function vertex transformation without any program.
+ */
+void
+_mesa_update_vertex_processing_mode(struct gl_context *ctx)
+{
+   if (ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX])
+      set_vertex_processing_mode(ctx, VP_MODE_SHADER);
+   else if (_mesa_arb_vertex_program_enabled(ctx))
+      set_vertex_processing_mode(ctx, VP_MODE_SHADER);
+   else
+      set_vertex_processing_mode(ctx, VP_MODE_FF);
+}
+
+
+/**
+ * Set the _DrawVAO and the net enabled arrays.
+ * The vao->_Enabled bitmask is transformed due to position/generic0
+ * as stored in vao->_AttributeMapMode. Then the filter bitmask is applied
+ * to filter out arrays unwanted for the currently executed draw operation.
+ * For example, the generic attributes are masked out form the _DrawVAO's
+ * enabled arrays when a fixed function array draw is executed.
+ */
+void
+_mesa_set_draw_vao(struct gl_context *ctx, struct gl_vertex_array_object *vao,
+                   GLbitfield filter)
+{
+   struct gl_vertex_array_object **ptr = &ctx->Array._DrawVAO;
+   bool new_array = false;
+   if (*ptr != vao) {
+      _mesa_reference_vao_(ctx, ptr, vao);
+
+      new_array = true;
+   }
+
+   if (vao->NewArrays) {
+      _mesa_update_vao_derived_arrays(ctx, vao);
+      vao->NewArrays = 0;
+
+      new_array = true;
+   }
+
+   /* May shuffle the position and generic0 bits around, filter out unwanted */
+   const GLbitfield enabled = filter & _mesa_get_vao_vp_inputs(vao);
+   if (ctx->Array._DrawVAOEnabledAttribs != enabled)
+      new_array = true;
+
+   if (new_array)
+      ctx->NewDriverState |= ctx->DriverFlags.NewArray;
+
+   ctx->Array._DrawVAOEnabledAttribs = enabled;
+   _mesa_set_varying_vp_inputs(ctx, enabled);
 }

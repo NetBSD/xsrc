@@ -70,7 +70,7 @@ struct pb_ondemand_manager
 
 extern const struct pb_vtbl pb_ondemand_buffer_vtbl;
 
-static INLINE struct pb_ondemand_buffer *
+static inline struct pb_ondemand_buffer *
 pb_ondemand_buffer(struct pb_buffer *buf)
 {
    assert(buf);
@@ -80,7 +80,7 @@ pb_ondemand_buffer(struct pb_buffer *buf)
    return (struct pb_ondemand_buffer *)buf;
 }
 
-static INLINE struct pb_ondemand_manager *
+static inline struct pb_ondemand_manager *
 pb_ondemand_manager(struct pb_manager *mgr)
 {
    assert(mgr);
@@ -151,7 +151,7 @@ pb_ondemand_buffer_instantiate(struct pb_ondemand_buffer *buf)
          return PIPE_ERROR_OUT_OF_MEMORY;
       
       map = pb_map(buf->buffer, PB_USAGE_CPU_READ, NULL);
-      if(!map) {
+      if (!map) {
          pb_reference(&buf->buffer, NULL);
          return PIPE_ERROR;
       }
@@ -241,7 +241,7 @@ pb_ondemand_manager_create_buffer(struct pb_manager *_mgr,
    struct pb_ondemand_buffer *buf;
    
    buf = CALLOC_STRUCT(pb_ondemand_buffer);
-   if(!buf)
+   if (!buf)
       return NULL;
 
    pipe_reference_init(&buf->base.reference, 1);
@@ -288,11 +288,11 @@ pb_ondemand_manager_create(struct pb_manager *provider)
 {
    struct pb_ondemand_manager *mgr;
 
-   if(!provider)
+   if (!provider)
       return NULL;
    
    mgr = CALLOC_STRUCT(pb_ondemand_manager);
-   if(!mgr)
+   if (!mgr)
       return NULL;
    
    mgr->base.destroy = pb_ondemand_manager_destroy;

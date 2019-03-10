@@ -42,10 +42,10 @@
 #define I830_UPLOAD_STIPPLE          0x4
 #define I830_UPLOAD_INVARIENT        0x8
 #define I830_UPLOAD_RASTER_RULES     0x10
-#define I830_UPLOAD_TEX(i)           (0x10<<(i))
-#define I830_UPLOAD_TEXBLEND(i)      (0x100<<(i))
-#define I830_UPLOAD_TEX_ALL          (0x0f0)
-#define I830_UPLOAD_TEXBLEND_ALL     (0xf00)
+#define I830_UPLOAD_TEX(i)           (0x0100<<(i))
+#define I830_UPLOAD_TEXBLEND(i)      (0x1000<<(i))
+#define I830_UPLOAD_TEX_ALL          (0x0f00)
+#define I830_UPLOAD_TEXBLEND_ALL     (0xf000)
 
 /* State structure offsets - these will probably disappear.
  */
@@ -55,10 +55,10 @@
 #define I830_DESTREG_DBUFADDR1 3
 #define I830_DESTREG_DV0 4
 #define I830_DESTREG_DV1 5
-#define I830_DESTREG_SENABLE 6
-#define I830_DESTREG_SR0 7
-#define I830_DESTREG_SR1 8
-#define I830_DESTREG_SR2 9
+#define I830_DESTREG_SR0 6
+#define I830_DESTREG_SR1 7
+#define I830_DESTREG_SR2 8
+#define I830_DESTREG_SENABLE 9
 #define I830_DESTREG_DRAWRECT0 10
 #define I830_DESTREG_DRAWRECT1 11
 #define I830_DESTREG_DRAWRECT2 12
@@ -216,7 +216,7 @@ extern void i830_update_provoking_vertex(struct gl_context *ctx);
  * Inline conversion functions.  These are better-typed than the
  * macros used previously:
  */
-static INLINE struct i830_context *
+static inline struct i830_context *
 i830_context(struct gl_context * ctx)
 {
    return (struct i830_context *) ctx;

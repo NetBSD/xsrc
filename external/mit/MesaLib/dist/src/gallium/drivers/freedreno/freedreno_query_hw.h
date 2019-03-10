@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2014 Rob Clark <robclark@freedesktop.org>
  *
@@ -29,7 +27,7 @@
 #ifndef FREEDRENO_QUERY_HW_H_
 #define FREEDRENO_QUERY_HW_H_
 
-#include "util/u_double_list.h"
+#include "util/list.h"
 
 #include "freedreno_query.h"
 #include "freedreno_context.h"
@@ -76,10 +74,15 @@ struct fd_hw_sample_provider {
 	/* stages applicable to the query type: */
 	enum fd_render_stage active;
 
+	/* Optional hook for enabling a counter.  Guaranteed to happen
+	 * at least once before the first ->get_sample() in a batch.
+	 */
+	void (*enable)(struct fd_context *ctx, struct fd_ringbuffer *ring);
+
 	/* when a new sample is required, emit appropriate cmdstream
 	 * and return a sample object:
 	 */
-	struct fd_hw_sample *(*get_sample)(struct fd_context *ctx,
+	struct fd_hw_sample *(*get_sample)(struct fd_batch *batch,
 			struct fd_ringbuffer *ring);
 
 	/* accumulate the results from specified sample period: */
@@ -102,7 +105,7 @@ struct fd_hw_sample {
 	 * This way we can defer allocation until total # of requested
 	 * samples, and total # of tiles, is known.
 	 */
-	struct fd_bo *bo;
+	struct pipe_resource *prsc;
 	uint32_t num_tiles;
 	uint32_t tile_stride;
 };
@@ -114,18 +117,17 @@ struct fd_hw_query {
 
 	const struct fd_hw_sample_provider *provider;
 
-	/* list of fd_hw_sample_period in previous submits: */
+	/* list of fd_hw_sample_periods: */
 	struct list_head periods;
-
-	/* list of fd_hw_sample_period's in current submit: */
-	struct list_head current_periods;
 
 	/* if active and not paused, the current sample period (not
 	 * yet added to current_periods):
 	 */
 	struct fd_hw_sample_period *period;
 
-	struct list_head list;  /* list-node in ctx->active_queries */
+	struct list_head list;   /* list-node in batch->active_queries */
+
+	int no_wait_cnt;         /* see fd_hw_get_query_result */
 };
 
 static inline struct fd_hw_query *
@@ -136,14 +138,14 @@ fd_hw_query(struct fd_query *q)
 
 struct fd_query * fd_hw_create_query(struct fd_context *ctx, unsigned query_type);
 /* helper for sample providers: */
-struct fd_hw_sample * fd_hw_sample_init(struct fd_context *ctx, uint32_t size);
+struct fd_hw_sample * fd_hw_sample_init(struct fd_batch *batch, uint32_t size);
 /* don't call directly, use fd_hw_sample_reference() */
 void __fd_hw_sample_destroy(struct fd_context *ctx, struct fd_hw_sample *samp);
-void fd_hw_query_prepare(struct fd_context *ctx, uint32_t num_tiles);
-void fd_hw_query_prepare_tile(struct fd_context *ctx, uint32_t n,
+void fd_hw_query_prepare(struct fd_batch *batch, uint32_t num_tiles);
+void fd_hw_query_prepare_tile(struct fd_batch *batch, uint32_t n,
 		struct fd_ringbuffer *ring);
-void fd_hw_query_set_stage(struct fd_context *ctx,
-		struct fd_ringbuffer *ring, enum fd_render_stage stage);
+void fd_hw_query_set_stage(struct fd_batch *batch, enum fd_render_stage stage);
+void fd_hw_query_enable(struct fd_batch *batch, struct fd_ringbuffer *ring);
 void fd_hw_query_register_provider(struct pipe_context *pctx,
 		const struct fd_hw_sample_provider *provider);
 void fd_hw_query_init(struct pipe_context *pctx);
@@ -157,8 +159,7 @@ fd_hw_sample_reference(struct fd_context *ctx,
 
 	if (pipe_reference(&(*ptr)->reference, &samp->reference))
 		__fd_hw_sample_destroy(ctx, old_samp);
-	if (ptr)
-		*ptr = samp;
+	*ptr = samp;
 }
 
 #endif /* FREEDRENO_QUERY_HW_H_ */

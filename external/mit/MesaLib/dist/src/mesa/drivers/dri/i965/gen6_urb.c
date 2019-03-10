@@ -46,25 +46,16 @@
  * Sandybridge GT1 has 32kB of URB space, while GT2 has 64kB.
  * (See the Sandybridge PRM, Volume 2, Part 1, Section 1.4.7: 3DSTATE_URB.)
  */
-static void
-gen6_upload_urb( struct brw_context *brw )
+void
+gen6_upload_urb(struct brw_context *brw, unsigned vs_size,
+                bool gs_present, unsigned gs_size)
 {
    int nr_vs_entries, nr_gs_entries;
    int total_urb_size = brw->urb.size * 1024; /* in bytes */
-
-   /* CACHE_NEW_VS_PROG */
-   unsigned vs_size = MAX2(brw->vs.prog_data->base.urb_entry_size, 1);
-
-   /* We use the same VUE layout for VS outputs and GS outputs (as it's what
-    * the SF and Clipper expect), so we can simply make the GS URB entry size
-    * the same as for the VS.  This may technically be too large in cases
-    * where we have few vertex attributes and a lot of varyings, since the VS
-    * size is determined by the larger of the two.  For now, it's safe.
-    */
-   unsigned gs_size = vs_size;
+   const struct gen_device_info *devinfo = &brw->screen->devinfo;
 
    /* Calculate how many entries fit in each stage's section of the URB */
-   if (brw->ff_gs.prog_active) {
+   if (gs_present) {
       nr_vs_entries = (total_urb_size/2) / (vs_size * 128);
       nr_gs_entries = (total_urb_size/2) / (gs_size * 128);
    } else {
@@ -73,17 +64,18 @@ gen6_upload_urb( struct brw_context *brw )
    }
 
    /* Then clamp to the maximum allowed by the hardware */
-   if (nr_vs_entries > brw->urb.max_vs_entries)
-      nr_vs_entries = brw->urb.max_vs_entries;
+   if (nr_vs_entries > devinfo->urb.max_entries[MESA_SHADER_VERTEX])
+      nr_vs_entries = devinfo->urb.max_entries[MESA_SHADER_VERTEX];
 
-   if (nr_gs_entries > brw->urb.max_gs_entries)
-      nr_gs_entries = brw->urb.max_gs_entries;
+   if (nr_gs_entries > devinfo->urb.max_entries[MESA_SHADER_GEOMETRY])
+      nr_gs_entries = devinfo->urb.max_entries[MESA_SHADER_GEOMETRY];
 
    /* Finally, both must be a multiple of 4 (see 3DSTATE_URB in the PRM). */
    brw->urb.nr_vs_entries = ROUND_DOWN_TO(nr_vs_entries, 4);
    brw->urb.nr_gs_entries = ROUND_DOWN_TO(nr_gs_entries, 4);
 
-   assert(brw->urb.nr_vs_entries >= brw->urb.min_vs_entries);
+   assert(brw->urb.nr_vs_entries >=
+          devinfo->urb.min_entries[MESA_SHADER_VERTEX]);
    assert(brw->urb.nr_vs_entries % 4 == 0);
    assert(brw->urb.nr_gs_entries % 4 == 0);
    assert(vs_size <= 5);
@@ -109,16 +101,53 @@ gen6_upload_urb( struct brw_context *brw )
     * doesn't exist on Gen6).  So for now we just do a full pipeline flush as
     * a workaround.
     */
-   if (brw->urb.gen6_gs_previously_active && !brw->ff_gs.prog_active)
-      intel_batchbuffer_emit_mi_flush(brw);
-   brw->urb.gen6_gs_previously_active = brw->ff_gs.prog_active;
+   if (brw->urb.gs_present && !gs_present)
+      brw_emit_mi_flush(brw);
+   brw->urb.gs_present = gs_present;
+}
+
+static void
+upload_urb(struct brw_context *brw)
+{
+   /* BRW_NEW_VS_PROG_DATA */
+   const struct brw_vue_prog_data *vs_vue_prog_data =
+      brw_vue_prog_data(brw->vs.base.prog_data);
+   const unsigned vs_size = MAX2(vs_vue_prog_data->urb_entry_size, 1);
+
+   /* BRW_NEW_GEOMETRY_PROGRAM, BRW_NEW_GS_PROG_DATA */
+   const bool gs_present =
+      brw->ff_gs.prog_active || brw->programs[MESA_SHADER_GEOMETRY];
+
+   /* Whe using GS to do transform feedback only we use the same VUE layout for
+    * VS outputs and GS outputs (as it's what the SF and Clipper expect), so we
+    * can simply make the GS URB entry size the same as for the VS.  This may
+    * technically be too large in cases where we have few vertex attributes and
+    * a lot of varyings, since the VS size is determined by the larger of the
+    * two. For now, it's safe.
+    *
+    * For user-provided GS the assumption above does not hold since the GS
+    * outputs can be different from the VS outputs.
+    */
+   unsigned gs_size = vs_size;
+   if (brw->programs[MESA_SHADER_GEOMETRY]) {
+      const struct brw_vue_prog_data *gs_vue_prog_data =
+         brw_vue_prog_data(brw->gs.base.prog_data);
+      gs_size = gs_vue_prog_data->urb_entry_size;
+      assert(gs_size >= 1);
+   }
+
+   gen6_upload_urb(brw, vs_size, gs_present, gs_size);
 }
 
 const struct brw_tracked_state gen6_urb = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_CONTEXT,
-      .cache = (CACHE_NEW_VS_PROG | CACHE_NEW_FF_GS_PROG),
+      .brw = BRW_NEW_BLORP |
+             BRW_NEW_CONTEXT |
+             BRW_NEW_FF_GS_PROG_DATA |
+             BRW_NEW_GEOMETRY_PROGRAM |
+             BRW_NEW_GS_PROG_DATA |
+             BRW_NEW_VS_PROG_DATA,
    },
-   .emit = gen6_upload_urb,
+   .emit = upload_urb,
 };

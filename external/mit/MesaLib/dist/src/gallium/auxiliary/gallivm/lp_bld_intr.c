@@ -45,11 +45,56 @@
 
 
 #include "util/u_debug.h"
+#include "util/u_string.h"
+#include "util/bitscan.h"
 
 #include "lp_bld_const.h"
 #include "lp_bld_intr.h"
 #include "lp_bld_type.h"
 #include "lp_bld_pack.h"
+#include "lp_bld_debug.h"
+
+
+void
+lp_format_intrinsic(char *name,
+                    size_t size,
+                    const char *name_root,
+                    LLVMTypeRef type)
+{
+   unsigned length = 0;
+   unsigned width;
+   char c;
+
+   LLVMTypeKind kind = LLVMGetTypeKind(type);
+   if (kind == LLVMVectorTypeKind) {
+      length = LLVMGetVectorSize(type);
+      type = LLVMGetElementType(type);
+      kind = LLVMGetTypeKind(type);
+   }
+
+   switch (kind) {
+   case LLVMIntegerTypeKind:
+      c = 'i';
+      width = LLVMGetIntTypeWidth(type);
+      break;
+   case LLVMFloatTypeKind:
+      c = 'f';
+      width = 32;
+      break;
+   case LLVMDoubleTypeKind:
+      c = 'f';
+      width = 64;
+      break;
+   default:
+      unreachable("unexpected LLVMTypeKind");
+   }
+
+   if (length) {
+      util_snprintf(name, size, "%s.v%u%c%u", name_root, length, c, width);
+   } else {
+      util_snprintf(name, size, "%s.%c%u", name_root, c, width);
+   }
+}
 
 
 LLVMValueRef
@@ -76,15 +121,111 @@ lp_declare_intrinsic(LLVMModuleRef module,
 }
 
 
+#if HAVE_LLVM < 0x0400
+static LLVMAttribute lp_attr_to_llvm_attr(enum lp_func_attr attr)
+{
+   switch (attr) {
+   case LP_FUNC_ATTR_ALWAYSINLINE: return LLVMAlwaysInlineAttribute;
+   case LP_FUNC_ATTR_INREG: return LLVMInRegAttribute;
+   case LP_FUNC_ATTR_NOALIAS: return LLVMNoAliasAttribute;
+   case LP_FUNC_ATTR_NOUNWIND: return LLVMNoUnwindAttribute;
+   case LP_FUNC_ATTR_READNONE: return LLVMReadNoneAttribute;
+   case LP_FUNC_ATTR_READONLY: return LLVMReadOnlyAttribute;
+   default:
+      _debug_printf("Unhandled function attribute: %x\n", attr);
+      return 0;
+   }
+}
+
+#else
+
+static const char *attr_to_str(enum lp_func_attr attr)
+{
+   switch (attr) {
+   case LP_FUNC_ATTR_ALWAYSINLINE: return "alwaysinline";
+   case LP_FUNC_ATTR_INREG: return "inreg";
+   case LP_FUNC_ATTR_NOALIAS: return "noalias";
+   case LP_FUNC_ATTR_NOUNWIND: return "nounwind";
+   case LP_FUNC_ATTR_READNONE: return "readnone";
+   case LP_FUNC_ATTR_READONLY: return "readonly";
+   case LP_FUNC_ATTR_WRITEONLY: return "writeonly";
+   case LP_FUNC_ATTR_INACCESSIBLE_MEM_ONLY: return "inaccessiblememonly";
+   case LP_FUNC_ATTR_CONVERGENT: return "convergent";
+   default:
+      _debug_printf("Unhandled function attribute: %x\n", attr);
+      return 0;
+   }
+}
+
+#endif
+
+void
+lp_add_function_attr(LLVMValueRef function_or_call,
+                     int attr_idx, enum lp_func_attr attr)
+{
+
+#if HAVE_LLVM < 0x0400
+   LLVMAttribute llvm_attr = lp_attr_to_llvm_attr(attr);
+   if (LLVMIsAFunction(function_or_call)) {
+      if (attr_idx == -1) {
+         LLVMAddFunctionAttr(function_or_call, llvm_attr);
+      } else {
+         LLVMAddAttribute(LLVMGetParam(function_or_call, attr_idx - 1), llvm_attr);
+      }
+   } else {
+      LLVMAddInstrAttribute(function_or_call, attr_idx, llvm_attr);
+   }
+#else
+
+   LLVMModuleRef module;
+   if (LLVMIsAFunction(function_or_call)) {
+      module = LLVMGetGlobalParent(function_or_call);
+   } else {
+      LLVMBasicBlockRef bb = LLVMGetInstructionParent(function_or_call);
+      LLVMValueRef function = LLVMGetBasicBlockParent(bb);
+      module = LLVMGetGlobalParent(function);
+   }
+   LLVMContextRef ctx = LLVMGetModuleContext(module);
+
+   const char *attr_name = attr_to_str(attr);
+   unsigned kind_id = LLVMGetEnumAttributeKindForName(attr_name,
+                                                      strlen(attr_name));
+   LLVMAttributeRef llvm_attr = LLVMCreateEnumAttribute(ctx, kind_id, 0);
+
+   if (LLVMIsAFunction(function_or_call))
+      LLVMAddAttributeAtIndex(function_or_call, attr_idx, llvm_attr);
+   else
+      LLVMAddCallSiteAttribute(function_or_call, attr_idx, llvm_attr);
+#endif
+}
+
+static void
+lp_add_func_attributes(LLVMValueRef function, unsigned attrib_mask)
+{
+   /* NoUnwind indicates that the intrinsic never raises a C++ exception.
+    * Set it for all intrinsics.
+    */
+   attrib_mask |= LP_FUNC_ATTR_NOUNWIND;
+   attrib_mask &= ~LP_FUNC_ATTR_LEGACY;
+
+   while (attrib_mask) {
+      enum lp_func_attr attr = 1u << u_bit_scan(&attrib_mask);
+      lp_add_function_attr(function, -1, attr);
+   }
+}
+
 LLVMValueRef
 lp_build_intrinsic(LLVMBuilderRef builder,
                    const char *name,
                    LLVMTypeRef ret_type,
                    LLVMValueRef *args,
-                   unsigned num_args)
+                   unsigned num_args,
+                   unsigned attr_mask)
 {
    LLVMModuleRef module = LLVMGetGlobalParent(LLVMGetBasicBlockParent(LLVMGetInsertBlock(builder)));
-   LLVMValueRef function;
+   LLVMValueRef function, call;
+   bool set_callsite_attrs = HAVE_LLVM >= 0x0400 &&
+                             !(attr_mask & LP_FUNC_ATTR_LEGACY);
 
    function = LLVMGetNamedFunction(module, name);
    if(!function) {
@@ -99,9 +240,19 @@ lp_build_intrinsic(LLVMBuilderRef builder,
       }
 
       function = lp_declare_intrinsic(module, name, ret_type, arg_types, num_args);
+
+      if (!set_callsite_attrs)
+         lp_add_func_attributes(function, attr_mask);
+
+      if (gallivm_debug & GALLIVM_DEBUG_IR) {
+         lp_debug_dump_value(function);
+      }
    }
 
-   return LLVMBuildCall(builder, function, args, num_args, "");
+   call = LLVMBuildCall(builder, function, args, num_args, "");
+   if (set_callsite_attrs)
+      lp_add_func_attributes(call, attr_mask);
+   return call;
 }
 
 
@@ -111,7 +262,7 @@ lp_build_intrinsic_unary(LLVMBuilderRef builder,
                          LLVMTypeRef ret_type,
                          LLVMValueRef a)
 {
-   return lp_build_intrinsic(builder, name, ret_type, &a, 1);
+   return lp_build_intrinsic(builder, name, ret_type, &a, 1, 0);
 }
 
 
@@ -127,7 +278,7 @@ lp_build_intrinsic_binary(LLVMBuilderRef builder,
    args[0] = a;
    args[1] = b;
 
-   return lp_build_intrinsic(builder, name, ret_type, args, 2);
+   return lp_build_intrinsic(builder, name, ret_type, args, 2, 0);
 }
 
 
@@ -189,9 +340,9 @@ lp_build_intrinsic_binary_anylength(struct gallivm_state *gallivm,
       unsigned num_vec = src_type.length / intrin_length;
       LLVMValueRef tmp[LP_MAX_VECTOR_LENGTH];
 
-      /* don't support arbitrary size here as this is so yuck */
+      /* don't support arbitrary size here as this is so yuck */
       if (src_type.length % intrin_length) {
-         /* FIXME: This is something which should be supported
+         /* FIXME: This is something which should be supported
           * but there doesn't seem to be any need for it currently
           * so crash and burn.
           */
@@ -242,7 +393,7 @@ lp_build_intrinsic_map(struct gallivm_state *gallivm,
       LLVMValueRef res_elem;
       for(j = 0; j < num_args; ++j)
          arg_elems[j] = LLVMBuildExtractElement(builder, args[j], index, "");
-      res_elem = lp_build_intrinsic(builder, name, ret_elem_type, arg_elems, num_args);
+      res_elem = lp_build_intrinsic(builder, name, ret_elem_type, arg_elems, num_args, 0);
       res = LLVMBuildInsertElement(builder, res, res_elem, index, "");
    }
 

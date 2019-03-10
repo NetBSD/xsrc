@@ -22,7 +22,8 @@ nv50_resource_create(struct pipe_screen *screen,
 static struct pipe_resource *
 nv50_resource_from_handle(struct pipe_screen * screen,
                           const struct pipe_resource *templ,
-                          struct winsys_handle *whandle)
+                          struct winsys_handle *whandle,
+                          unsigned usage)
 {
    if (templ->target == PIPE_BUFFER)
       return NULL;
@@ -32,8 +33,8 @@ nv50_resource_from_handle(struct pipe_screen * screen,
 
 struct pipe_surface *
 nv50_surface_from_buffer(struct pipe_context *pipe,
-			 struct pipe_resource *pbuf,
-			 const struct pipe_surface *templ)
+                         struct pipe_resource *pbuf,
+                         const struct pipe_surface *templ)
 {
    struct nv50_surface *sf = CALLOC_STRUCT(nv50_surface);
    if (!sf)
@@ -65,11 +66,9 @@ nv50_surface_from_buffer(struct pipe_context *pipe,
 
 static struct pipe_surface *
 nv50_surface_create(struct pipe_context *pipe,
-		    struct pipe_resource *pres,
-		    const struct pipe_surface *templ)
+                    struct pipe_resource *pres,
+                    const struct pipe_surface *templ)
 {
-   /* surfaces are assumed to be miptrees all over the place. */
-   assert(pres->target != PIPE_BUFFER);
    if (unlikely(pres->target == PIPE_BUFFER))
       return nv50_surface_from_buffer(pipe, pres, templ);
    return nv50_miptree_surface_new(pipe, pres, templ);
@@ -86,14 +85,23 @@ nv50_surface_destroy(struct pipe_context *pipe, struct pipe_surface *ps)
 }
 
 void
+nv50_invalidate_resource(struct pipe_context *pipe, struct pipe_resource *res)
+{
+   if (res->target == PIPE_BUFFER)
+      nouveau_buffer_invalidate(pipe, res);
+}
+
+void
 nv50_init_resource_functions(struct pipe_context *pcontext)
 {
    pcontext->transfer_map = u_transfer_map_vtbl;
    pcontext->transfer_flush_region = u_transfer_flush_region_vtbl;
    pcontext->transfer_unmap = u_transfer_unmap_vtbl;
-   pcontext->transfer_inline_write = u_transfer_inline_write_vtbl;
+   pcontext->buffer_subdata = u_default_buffer_subdata;
+   pcontext->texture_subdata = u_default_texture_subdata;
    pcontext->create_surface = nv50_surface_create;
    pcontext->surface_destroy = nv50_surface_destroy;
+   pcontext->invalidate_resource = nv50_invalidate_resource;
 }
 
 void

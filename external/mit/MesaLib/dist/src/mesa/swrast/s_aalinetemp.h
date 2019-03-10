@@ -44,7 +44,7 @@ NAME(plot)(struct gl_context *ctx, struct LineInfo *line, int ix, int iy)
 
    (void) swrast;
 
-   if (coverage == 0.0)
+   if (coverage == 0.0F)
       return;
 
    line->span.end++;
@@ -123,7 +123,7 @@ NAME(line)(struct gl_context *ctx, const SWvertex *v0, const SWvertex *v1)
                                  ctx->Const.MinLineWidthAA,
                                  ctx->Const.MaxLineWidthAA);
 
-   if (line.len == 0.0 || IS_INF_OR_NAN(line.len))
+   if (line.len == 0.0F || IS_INF_OR_NAN(line.len))
       return;
 
    INIT_SPAN(line.span, GL_LINE);
@@ -179,9 +179,12 @@ NAME(line)(struct gl_context *ctx, const SWvertex *v0, const SWvertex *v1)
          if (attr >= VARYING_SLOT_TEX0 && attr < VARYING_SLOT_VAR0) {
             const GLuint u = attr - VARYING_SLOT_TEX0;
             const struct gl_texture_object *obj = ctx->Texture.Unit[u]._Current;
-            const struct gl_texture_image *texImage = obj->Image[0][obj->BaseLevel];
-            line.texWidth[attr]  = (GLfloat) texImage->Width;
-            line.texHeight[attr] = (GLfloat) texImage->Height;
+            if (obj) {
+               const struct gl_texture_image *texImage =
+                  _mesa_base_tex_image(obj);
+               line.texWidth[attr]  = (GLfloat) texImage->Width;
+               line.texHeight[attr] = (GLfloat) texImage->Height;
+            }
          }
       ATTRIB_LOOP_END
    }

@@ -39,6 +39,7 @@
 #include "main/state.h"
 #include "main/dd.h"
 #include "main/fbobject.h"
+#include "main/state.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -426,11 +427,7 @@ intel_draw_point(struct intel_context *intel, intelVertexPtr v0)
    GLuint *vb = intel_get_prim_space(intel, 1);
    int j;
 
-   /* Adjust for sub pixel position -- still required for conform. */
-   *(float *) &vb[0] = v0->v.x;
-   *(float *) &vb[1] = v0->v.y;
-   for (j = 2; j < vertsize; j++)
-      vb[j] = v0->ui[j];
+   COPY_DWORDS(j, vb, vertsize, v0);
 }
 
 
@@ -440,7 +437,7 @@ intel_draw_point(struct intel_context *intel, intelVertexPtr v0)
  ***********************************************************************/
 
 /* Currently not working - VERT_ATTRIB_POINTSIZE isn't correctly
- * represented in the fragment program InputsRead field.
+ * represented in the fragment program info.inputs_read field.
  */
 static void
 intel_atten_point(struct intel_context *intel, intelVertexPtr v0)
@@ -670,16 +667,16 @@ do {							\
  ***********************************************************************/
 
 static const GLuint hw_prim[GL_POLYGON + 1] = {
-   PRIM3D_POINTLIST,
-   PRIM3D_LINELIST,
-   PRIM3D_LINELIST,
-   PRIM3D_LINELIST,
-   PRIM3D_TRILIST,
-   PRIM3D_TRILIST,
-   PRIM3D_TRILIST,
-   PRIM3D_TRILIST,
-   PRIM3D_TRILIST,
-   PRIM3D_TRILIST
+   [GL_POINTS] = PRIM3D_POINTLIST,
+   [GL_LINES] = PRIM3D_LINELIST,
+   [GL_LINE_LOOP] = PRIM3D_LINELIST,
+   [GL_LINE_STRIP] = PRIM3D_LINELIST,
+   [GL_TRIANGLES] = PRIM3D_TRILIST,
+   [GL_TRIANGLE_STRIP] = PRIM3D_TRILIST,
+   [GL_TRIANGLE_FAN] = PRIM3D_TRILIST,
+   [GL_QUADS] = PRIM3D_TRILIST,
+   [GL_QUAD_STRIP] = PRIM3D_TRILIST,
+   [GL_POLYGON] = PRIM3D_TRILIST,
 };
 
 #define RASTERIZE(x) intelRasterPrimitive( ctx, x, hw_prim[x] )
@@ -798,7 +795,7 @@ intel_fallback_tri(struct intel_context *intel,
    SWvertex v[3];
 
    if (0)
-      fprintf(stderr, "\n%s\n", __FUNCTION__);
+      fprintf(stderr, "\n%s\n", __func__);
 
    INTEL_FIREVERTICES(intel);
 
@@ -819,7 +816,7 @@ intel_fallback_line(struct intel_context *intel,
    SWvertex v[2];
 
    if (0)
-      fprintf(stderr, "\n%s\n", __FUNCTION__);
+      fprintf(stderr, "\n%s\n", __func__);
 
    INTEL_FIREVERTICES(intel);
 
@@ -838,7 +835,7 @@ intel_fallback_point(struct intel_context *intel,
    SWvertex v[1];
 
    if (0)
-      fprintf(stderr, "\n%s\n", __FUNCTION__);
+      fprintf(stderr, "\n%s\n", __func__);
 
    INTEL_FIREVERTICES(intel);
 
@@ -891,31 +888,16 @@ intelRenderClippedPoly(struct gl_context * ctx, const GLuint * elts, GLuint n)
 {
    struct intel_context *intel = intel_context(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    GLuint prim = intel->render_primitive;
 
    /* Render the new vertices as an unclipped polygon.
     */
-   {
-      GLuint *tmp = VB->Elts;
-      VB->Elts = (GLuint *) elts;
-      tnl->Driver.Render.PrimTabElts[GL_POLYGON] (ctx, 0, n,
-                                                  PRIM_BEGIN | PRIM_END);
-      VB->Elts = tmp;
-   }
+   _tnl_RenderClippedPolygon(ctx, elts, n);
 
    /* Restore the render primitive
     */
    if (prim != GL_POLYGON)
       tnl->Driver.Render.PrimitiveNotify(ctx, prim);
-}
-
-static void
-intelRenderClippedLine(struct gl_context * ctx, GLuint ii, GLuint jj)
-{
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-
-   tnl->Driver.Render.Line(ctx, ii, jj);
 }
 
 static void
@@ -928,10 +910,18 @@ intelFastRenderClippedPoly(struct gl_context * ctx, const GLuint * elts, GLuint 
    const GLuint *start = (const GLuint *) V(elts[0]);
    int i, j;
 
-   for (i = 2; i < n; i++) {
-      COPY_DWORDS(j, vb, vertsize, V(elts[i - 1]));
-      COPY_DWORDS(j, vb, vertsize, V(elts[i]));
-      COPY_DWORDS(j, vb, vertsize, start);
+   if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION) {
+      for (i = 2; i < n; i++) {
+         COPY_DWORDS(j, vb, vertsize, V(elts[i - 1]));
+         COPY_DWORDS(j, vb, vertsize, V(elts[i]));
+         COPY_DWORDS(j, vb, vertsize, start);
+      }
+   } else {
+      for (i = 2; i < n; i++) {
+         COPY_DWORDS(j, vb, vertsize, start);
+         COPY_DWORDS(j, vb, vertsize, V(elts[i - 1]));
+         COPY_DWORDS(j, vb, vertsize, V(elts[i]));
+      }
    }
 }
 
@@ -966,12 +956,12 @@ intelChooseRenderState(struct gl_context * ctx)
         ctx->Polygon.OffsetFill) ? DD_TRI_OFFSET : 0) |
       (ctx->Line.StippleFlag ? DD_LINE_STIPPLE : 0) |
       (ctx->Point._Attenuated ? DD_POINT_ATTEN : 0);
-   const struct gl_fragment_program *fprog = ctx->FragmentProgram._Current;
-   bool have_wpos = (fprog && (fprog->Base.InputsRead & VARYING_BIT_POS));
+   const struct gl_program *fprog = ctx->FragmentProgram._Current;
+   bool have_wpos = (fprog && (fprog->info.inputs_read & VARYING_BIT_POS));
    GLuint index = 0;
 
    if (INTEL_DEBUG & DEBUG_STATE)
-      fprintf(stderr, "\n%s\n", __FUNCTION__);
+      fprintf(stderr, "\n%s\n", __func__);
 
    if ((flags & (ANY_FALLBACK_FLAGS | ANY_RASTER_FLAGS)) || have_wpos) {
 
@@ -1036,23 +1026,23 @@ intelChooseRenderState(struct gl_context * ctx)
       else {
          tnl->Driver.Render.PrimTabVerts = _tnl_render_tab_verts;
          tnl->Driver.Render.PrimTabElts = _tnl_render_tab_elts;
-         tnl->Driver.Render.ClippedLine = intelRenderClippedLine;
+         tnl->Driver.Render.ClippedLine = _tnl_RenderClippedLine;
          tnl->Driver.Render.ClippedPolygon = intelRenderClippedPoly;
       }
    }
 }
 
 static const GLenum reduced_prim[GL_POLYGON + 1] = {
-   GL_POINTS,
-   GL_LINES,
-   GL_LINES,
-   GL_LINES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES
+   [GL_POINTS] = GL_POINTS,
+   [GL_LINES] = GL_LINES,
+   [GL_LINE_LOOP] = GL_LINES,
+   [GL_LINE_STRIP] = GL_LINES,
+   [GL_TRIANGLES] = GL_TRIANGLES,
+   [GL_TRIANGLE_STRIP] = GL_TRIANGLES,
+   [GL_TRIANGLE_FAN] = GL_TRIANGLES,
+   [GL_QUADS] = GL_TRIANGLES,
+   [GL_QUAD_STRIP] = GL_TRIANGLES,
+   [GL_POLYGON] = GL_TRIANGLES
 };
 
 
@@ -1133,8 +1123,8 @@ intelRasterPrimitive(struct gl_context * ctx, GLenum rprim, GLuint hwprim)
    struct intel_context *intel = intel_context(ctx);
 
    if (0)
-      fprintf(stderr, "%s %s %x\n", __FUNCTION__,
-              _mesa_lookup_enum_by_nr(rprim), hwprim);
+      fprintf(stderr, "%s %s %x\n", __func__,
+              _mesa_enum_to_string(rprim), hwprim);
 
    intel->vtbl.reduced_primitive_state(intel, rprim);
 
@@ -1158,7 +1148,7 @@ intelRenderPrimitive(struct gl_context * ctx, GLenum prim)
                          ctx->Polygon.BackMode != GL_FILL);
 
    if (0)
-      fprintf(stderr, "%s %s\n", __FUNCTION__, _mesa_lookup_enum_by_nr(prim));
+      fprintf(stderr, "%s %s\n", __func__, _mesa_enum_to_string(prim));
 
    /* Let some clipping routines know which primitive they're dealing
     * with.
@@ -1267,12 +1257,6 @@ intelFallback(struct intel_context *intel, GLbitfield bit, bool mode)
       }
    }
 }
-
-union fi
-{
-   GLfloat f;
-   GLint i;
-};
 
 /**********************************************************************/
 /*                            Initialization.                         */

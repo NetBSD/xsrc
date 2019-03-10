@@ -28,6 +28,7 @@
 #include "main/imports.h"
 #include "main/bufferobj.h"
 #include "main/varray.h"
+#include "vbo/vbo.h"
 
 #include "brw_context.h"
 #include "brw_defines.h"
@@ -51,14 +52,14 @@ can_cut_index_handle_restart_index(struct gl_context *ctx,
 
    bool cut_index_will_work;
 
-   switch (ib->type) {
-   case GL_UNSIGNED_BYTE:
+   switch (ib->index_size) {
+   case 1:
       cut_index_will_work = ctx->Array.RestartIndex == 0xff;
       break;
-   case GL_UNSIGNED_SHORT:
+   case 2:
       cut_index_will_work = ctx->Array.RestartIndex == 0xffff;
       break;
-   case GL_UNSIGNED_INT:
+   case 4:
       cut_index_will_work = ctx->Array.RestartIndex == 0xffffffff;
       break;
    default:
@@ -79,9 +80,10 @@ can_cut_index_handle_prims(struct gl_context *ctx,
                            const struct _mesa_index_buffer *ib)
 {
    struct brw_context *brw = brw_context(ctx);
+   const struct gen_device_info *devinfo = &brw->screen->devinfo;
 
    /* Otherwise Haswell can do it all. */
-   if (brw->gen >= 8 || brw->is_haswell)
+   if (devinfo->gen >= 8 || devinfo->is_haswell)
       return true;
 
    if (!can_cut_index_handle_restart_index(ctx, ib)) {
@@ -91,7 +93,7 @@ can_cut_index_handle_prims(struct gl_context *ctx,
       return false;
    }
 
-   for (int i = 0; i < nr_prims; i++) {
+   for (unsigned i = 0; i < nr_prims; i++) {
       switch (prim[i].mode) {
       case GL_POINTS:
       case GL_LINES:
@@ -138,14 +140,6 @@ brw_handle_primitive_restart(struct gl_context *ctx,
       return GL_FALSE;
    }
 
-   /* If the driver has requested software handling of primitive restarts,
-    * then the VBO module has already taken care of things, and we can
-    * just draw as normal.
-    */
-   if (ctx->Const.PrimitiveRestartInSoftware) {
-      return GL_FALSE;
-   }
-
    /* If we have set the in_progress flag, then we are in the middle
     * of handling the primitive restart draw.
     */
@@ -169,7 +163,8 @@ brw_handle_primitive_restart(struct gl_context *ctx,
       /* Cut index should work for primitive restart, so use it
        */
       brw->prim_restart.enable_cut_index = true;
-      brw_draw_prims(ctx, prims, nr_prims, ib, GL_FALSE, -1, -1, NULL, indirect);
+      brw_draw_prims(ctx, prims, nr_prims, ib, GL_FALSE, -1, -1, NULL, 0,
+                     indirect);
       brw->prim_restart.enable_cut_index = false;
    } else {
       /* Not all the primitive draw modes are supported by the cut index,
@@ -183,43 +178,3 @@ brw_handle_primitive_restart(struct gl_context *ctx,
    /* The primitive restart draw was completed, so return true. */
    return GL_TRUE;
 }
-
-static void
-haswell_upload_cut_index(struct brw_context *brw)
-{
-   struct gl_context *ctx = &brw->ctx;
-
-   /* Don't trigger on Ivybridge */
-   if (brw->gen < 8 && !brw->is_haswell)
-      return;
-
-   const unsigned cut_index_setting =
-      ctx->Array._PrimitiveRestart ? HSW_CUT_INDEX_ENABLE : 0;
-
-   /* BRW_NEW_INDEX_BUFFER */
-   unsigned cut_index;
-   if (brw->ib.ib) {
-      cut_index = _mesa_primitive_restart_index(ctx, brw->ib.type);
-   } else {
-      /* There's no index buffer, but primitive restart may still apply
-       * to glDrawArrays and such.  FIXED_INDEX mode only applies to drawing
-       * operations that use an index buffer, so we can ignore it and use
-       * the GL restart index directly.
-       */
-      cut_index = ctx->Array.RestartIndex;
-   }
-
-   BEGIN_BATCH(2);
-   OUT_BATCH(_3DSTATE_VF << 16 | cut_index_setting | (2 - 2));
-   OUT_BATCH(cut_index);
-   ADVANCE_BATCH();
-}
-
-const struct brw_tracked_state haswell_cut_index = {
-   .dirty = {
-      .mesa  = _NEW_TRANSFORM,
-      .brw   = BRW_NEW_INDEX_BUFFER,
-      .cache = 0,
-   },
-   .emit = haswell_upload_cut_index,
-};

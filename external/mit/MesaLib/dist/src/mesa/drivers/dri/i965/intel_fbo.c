@@ -1,5 +1,4 @@
-/**************************************************************************
- *
+/*
  * Copyright 2006 VMware, Inc.
  * All Rights Reserved.
  *
@@ -7,7 +6,7 @@
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
  * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sub license, and/or sell copies of the Software, and to
+ * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
@@ -17,14 +16,12 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
  * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- **************************************************************************/
-
+ */
 
 #include "main/enums.h"
 #include "main/imports.h"
@@ -36,9 +33,9 @@
 #include "main/context.h"
 #include "main/teximage.h"
 #include "main/image.h"
-#include "main/set.h"
 #include "main/condrender.h"
 #include "util/hash_table.h"
+#include "util/set.h"
 
 #include "swrast/swrast.h"
 #include "drivers/common/meta.h"
@@ -52,21 +49,9 @@
 #include "intel_screen.h"
 #include "intel_tex.h"
 #include "brw_context.h"
+#include "brw_defines.h"
 
 #define FILE_DEBUG_FLAG DEBUG_FBO
-
-/**
- * Create a new framebuffer object.
- */
-static struct gl_framebuffer *
-intel_new_framebuffer(struct gl_context * ctx, GLuint name)
-{
-   /* Only drawable state in intel_framebuffer at this time, just use Mesa's
-    * class
-    */
-   return _mesa_new_framebuffer(ctx, name);
-}
-
 
 /** Called by gl_renderbuffer::Delete() */
 static void
@@ -74,7 +59,7 @@ intel_delete_renderbuffer(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
-   ASSERT(irb);
+   assert(irb);
 
    intel_miptree_release(&irb->mt);
    intel_miptree_release(&irb->singlesample_mt);
@@ -120,14 +105,15 @@ intel_map_renderbuffer(struct gl_context *ctx,
 		       GLuint x, GLuint y, GLuint w, GLuint h,
 		       GLbitfield mode,
 		       GLubyte **out_map,
-		       GLint *out_stride)
+		       GLint *out_stride,
+		       bool flip_y)
 {
    struct brw_context *brw = brw_context(ctx);
    struct swrast_renderbuffer *srb = (struct swrast_renderbuffer *)rb;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    struct intel_mipmap_tree *mt;
    void *map;
-   int stride;
+   ptrdiff_t stride;
 
    if (srb->Buffer) {
       /* this is a malloc'd renderbuffer (accum buffer), not an irb */
@@ -158,7 +144,7 @@ intel_map_renderbuffer(struct gl_context *ctx,
          irb->singlesample_mt =
             intel_miptree_create_for_renderbuffer(brw, irb->mt->format,
                                                   rb->Width, rb->Height,
-                                                  0 /*num_samples*/);
+                                                  1 /*num_samples*/);
          if (!irb->singlesample_mt)
             goto fail;
          irb->singlesample_mt_is_tmp = true;
@@ -177,20 +163,20 @@ intel_map_renderbuffer(struct gl_context *ctx,
     * upside-down.  So we need to ask for a rectangle on flipped vertically, and
     * we then return a pointer to the bottom of it with a negative stride.
     */
-   if (rb->Name == 0) {
+   if (flip_y) {
       y = rb->Height - y - h;
    }
 
    intel_miptree_map(brw, mt, irb->mt_level, irb->mt_layer,
 		     x, y, w, h, mode, &map, &stride);
 
-   if (rb->Name == 0) {
+   if (flip_y) {
       map += (h - 1) * stride;
       stride = -stride;
    }
 
-   DBG("%s: rb %d (%s) mt mapped: (%d, %d) (%dx%d) -> %p/%d\n",
-       __FUNCTION__, rb->Name, _mesa_get_format_name(rb->Format),
+   DBG("%s: rb %d (%s) mt mapped: (%d, %d) (%dx%d) -> %p/%"PRIdPTR"\n",
+       __func__, rb->Name, _mesa_get_format_name(rb->Format),
        x, y, w, h, map, stride);
 
    *out_map = map;
@@ -214,7 +200,7 @@ intel_unmap_renderbuffer(struct gl_context *ctx,
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    struct intel_mipmap_tree *mt;
 
-   DBG("%s: rb %d (%s)\n", __FUNCTION__,
+   DBG("%s: rb %d (%s)\n", __func__,
        rb->Name, _mesa_get_format_name(rb->Format));
 
    if (srb->Buffer) {
@@ -264,6 +250,7 @@ static mesa_format
 intel_renderbuffer_format(struct gl_context * ctx, GLenum internalFormat)
 {
    struct brw_context *brw = brw_context(ctx);
+   MAYBE_UNUSED const struct gen_device_info *devinfo = &brw->screen->devinfo;
 
    switch (internalFormat) {
    default:
@@ -285,7 +272,7 @@ intel_renderbuffer_format(struct gl_context * ctx, GLenum internalFormat)
       if (brw->has_separate_stencil) {
 	 return MESA_FORMAT_S_UINT8;
       } else {
-	 assert(!brw->must_use_separate_stencil);
+	 assert(!devinfo->must_use_separate_stencil);
 	 return MESA_FORMAT_Z24_UNORM_S8_UINT;
       }
    }
@@ -297,20 +284,21 @@ intel_alloc_private_renderbuffer_storage(struct gl_context * ctx, struct gl_rend
                                          GLuint width, GLuint height)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_screen *screen = brw->intelScreen;
+   struct intel_screen *screen = brw->screen;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
    assert(rb->Format != MESA_FORMAT_NONE);
 
    rb->NumSamples = intel_quantize_num_samples(screen, rb->NumSamples);
+   rb->NumStorageSamples = rb->NumSamples;
    rb->Width = width;
    rb->Height = height;
-   rb->_BaseFormat = _mesa_base_fbo_format(ctx, internalFormat);
+   rb->_BaseFormat = _mesa_get_format_base_format(rb->Format);
 
    intel_miptree_release(&irb->mt);
 
-   DBG("%s: %s: %s (%dx%d)\n", __FUNCTION__,
-       _mesa_lookup_enum_by_nr(internalFormat),
+   DBG("%s: %s: %s (%dx%d)\n", __func__,
+       _mesa_enum_to_string(internalFormat),
        _mesa_get_format_name(rb->Format), width, height);
 
    if (width == 0 || height == 0)
@@ -318,7 +306,7 @@ intel_alloc_private_renderbuffer_storage(struct gl_context * ctx, struct gl_rend
 
    irb->mt = intel_miptree_create_for_renderbuffer(brw, rb->Format,
 						   width, height,
-                                                   rb->NumSamples);
+                                                   MAX2(rb->NumSamples, 1));
    if (!irb->mt)
       return false;
 
@@ -340,6 +328,35 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
    return intel_alloc_private_renderbuffer_storage(ctx, rb, internalFormat, width, height);
 }
 
+static mesa_format
+fallback_rgbx_to_rgba(struct intel_screen *screen, struct gl_renderbuffer *rb,
+                      mesa_format original_format)
+{
+   mesa_format format = original_format;
+
+   /* The base format and internal format must be derived from the user-visible
+    * format (that is, the gl_config's format), even if we internally use
+    * choose a different format for the renderbuffer. Otherwise, rendering may
+    * use incorrect channel write masks.
+    */
+   rb->_BaseFormat = _mesa_get_format_base_format(original_format);
+   rb->InternalFormat = rb->_BaseFormat;
+
+   if (!screen->mesa_format_supports_render[original_format]) {
+      /* The glRenderbufferStorage paths in core Mesa detect if the driver
+       * does not support the user-requested format, and then searches for
+       * a fallback format. The DRI code bypasses core Mesa, though. So we do
+       * the fallbacks here.
+       *
+       * We must support MESA_FORMAT_R8G8B8X8 on Android because the Android
+       * framework requires HAL_PIXEL_FORMAT_RGBX8888 winsys surfaces.
+       */
+      format = _mesa_format_fallback_rgbx_to_rgba(original_format);
+      assert(screen->mesa_format_supports_render[format]);
+   }
+   return format;
+}
+
 static void
 intel_image_target_renderbuffer_storage(struct gl_context *ctx,
 					struct gl_renderbuffer *rb,
@@ -347,57 +364,48 @@ intel_image_target_renderbuffer_storage(struct gl_context *ctx,
 {
    struct brw_context *brw = brw_context(ctx);
    struct intel_renderbuffer *irb;
-   __DRIscreen *screen;
+   __DRIscreen *dri_screen = brw->screen->driScrnPriv;
    __DRIimage *image;
 
-   screen = brw->intelScreen->driScrnPriv;
-   image = screen->dri2.image->lookupEGLImage(screen, image_handle,
-					      screen->loaderPrivate);
+   image = dri_screen->dri2.image->lookupEGLImage(dri_screen, image_handle,
+                                                  dri_screen->loaderPrivate);
    if (image == NULL)
       return;
 
    if (image->planar_format && image->planar_format->nplanes > 1) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
             "glEGLImageTargetRenderbufferStorage(planar buffers are not "
-               "supported as render targets.");
+               "supported as render targets.)");
       return;
    }
 
-   /* Buffers originating from outside are for read-only. */
-   if (image->dma_buf_imported) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-            "glEGLImageTargetRenderbufferStorage(dma buffers are read-only)");
-      return;
-   }
+   rb->Format = fallback_rgbx_to_rgba(brw->screen, rb, image->format);
+
+   mesa_format chosen_format = rb->Format == image->format ?
+      image->format : rb->Format;
 
    /* __DRIimage is opaque to the core so it has to be checked here */
-   switch (image->format) {
-   case MESA_FORMAT_R8G8B8A8_UNORM:
+   if (!brw->mesa_format_supports_render[chosen_format]) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-            "glEGLImageTargetRenderbufferStorage(unsupported image format");
+            "glEGLImageTargetRenderbufferStorage(unsupported image format)");
       return;
-      break;
-   default:
-      break;
    }
 
    irb = intel_renderbuffer(rb);
    intel_miptree_release(&irb->mt);
-   irb->mt = intel_miptree_create_for_bo(brw,
-                                         image->bo,
-                                         image->format,
-                                         image->offset,
-                                         image->width,
-                                         image->height,
-                                         image->pitch);
+
+   /* Disable creation of the miptree's aux buffers because the driver exposes
+    * no EGL API to manage them. That is, there is no API for resolving the aux
+    * buffer's content to the main buffer nor for invalidating the aux buffer's
+    * content.
+    */
+   irb->mt = intel_miptree_create_for_dri_image(brw, image, GL_TEXTURE_2D,
+                                                rb->Format, false);
    if (!irb->mt)
       return;
 
-   rb->InternalFormat = image->internal_format;
    rb->Width = image->width;
    rb->Height = image->height;
-   rb->Format = image->format;
-   rb->_BaseFormat = _mesa_base_fbo_format(ctx, image->internal_format);
    rb->NeedsFinishRenderTexture = true;
    irb->layer_count = 1;
 }
@@ -414,7 +422,8 @@ static GLboolean
 intel_alloc_window_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
                            GLenum internalFormat, GLuint width, GLuint height)
 {
-   ASSERT(rb->Name == 0);
+   (void) ctx;
+   assert(rb->Name == 0);
    rb->Width = width;
    rb->Height = height;
    rb->InternalFormat = internalFormat;
@@ -427,39 +436,38 @@ static GLboolean
 intel_nop_alloc_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
                         GLenum internalFormat, GLuint width, GLuint height)
 {
+   (void) rb;
+   (void) internalFormat;
+   (void) width;
+   (void) height;
    _mesa_problem(ctx, "intel_nop_alloc_storage should never be called.");
    return false;
 }
 
 /**
- * Create a new intel_renderbuffer which corresponds to an on-screen window,
- * not a user-created renderbuffer.
+ * Create an intel_renderbuffer for a __DRIdrawable. This function is
+ * unrelated to GL renderbuffers (that is, those created by
+ * glGenRenderbuffers).
  *
  * \param num_samples must be quantized.
  */
 struct intel_renderbuffer *
-intel_create_renderbuffer(mesa_format format, unsigned num_samples)
+intel_create_winsys_renderbuffer(struct intel_screen *screen,
+                                 mesa_format format, unsigned num_samples)
 {
-   struct intel_renderbuffer *irb;
-   struct gl_renderbuffer *rb;
-
-   GET_CURRENT_CONTEXT(ctx);
-
-   irb = CALLOC_STRUCT(intel_renderbuffer);
-   if (!irb) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "creating renderbuffer");
+   struct intel_renderbuffer *irb = CALLOC_STRUCT(intel_renderbuffer);
+   if (!irb)
       return NULL;
-   }
 
-   rb = &irb->Base.Base;
+   struct gl_renderbuffer *rb = &irb->Base.Base;
    irb->layer_count = 1;
 
    _mesa_init_renderbuffer(rb, 0);
    rb->ClassID = INTEL_RB_CLASS;
-   rb->_BaseFormat = _mesa_get_format_base_format(format);
-   rb->Format = format;
-   rb->InternalFormat = rb->_BaseFormat;
    rb->NumSamples = num_samples;
+   rb->NumStorageSamples = num_samples;
+
+   rb->Format = fallback_rgbx_to_rgba(screen, rb, format);
 
    /* intel-specific methods */
    rb->Delete = intel_delete_renderbuffer;
@@ -470,18 +478,19 @@ intel_create_renderbuffer(mesa_format format, unsigned num_samples)
 
 /**
  * Private window-system buffers (as opposed to ones shared with the display
- * server created with intel_create_renderbuffer()) are most similar in their
+ * server created with intel_create_winsys_renderbuffer()) are most similar in their
  * handling to user-created renderbuffers, but they have a resize handler that
  * may be called at intel_update_renderbuffers() time.
  *
  * \param num_samples must be quantized.
  */
 struct intel_renderbuffer *
-intel_create_private_renderbuffer(mesa_format format, unsigned num_samples)
+intel_create_private_renderbuffer(struct intel_screen *screen,
+                                  mesa_format format, unsigned num_samples)
 {
    struct intel_renderbuffer *irb;
 
-   irb = intel_create_renderbuffer(format, num_samples);
+   irb = intel_create_winsys_renderbuffer(screen, format, num_samples);
    irb->Base.Base.AllocStorage = intel_alloc_private_renderbuffer_storage;
 
    return irb;
@@ -536,35 +545,21 @@ intel_renderbuffer_update_wrapper(struct brw_context *brw,
 
    intel_miptree_check_level_layer(mt, level, layer);
    irb->mt_level = level;
+   irb->mt_layer = layer;
 
-   int layer_multiplier;
-   switch (mt->msaa_layout) {
-      case INTEL_MSAA_LAYOUT_UMS:
-      case INTEL_MSAA_LAYOUT_CMS:
-         layer_multiplier = mt->num_samples;
-         break;
-
-      default:
-         layer_multiplier = 1;
-   }
-
-   irb->mt_layer = layer_multiplier * layer;
-
-   if (layered) {
-      irb->layer_count = image->TexObject->NumLayers ?: mt->level[level].depth / layer_multiplier;
-   } else {
+   if (!layered) {
       irb->layer_count = 1;
+   } else if (mt->target != GL_TEXTURE_3D && image->TexObject->NumLayers > 0) {
+      irb->layer_count = image->TexObject->NumLayers;
+   } else {
+      irb->layer_count = mt->surf.dim == ISL_SURF_DIM_3D ?
+                            minify(mt->surf.logical_level0_px.depth, level) :
+                            mt->surf.logical_level0_px.array_len;
    }
 
    intel_miptree_reference(&irb->mt, mt);
 
    intel_renderbuffer_set_draw_offset(irb);
-
-   if (mt->hiz_mt == NULL && brw_is_hiz_depth_format(brw, rb->Format)) {
-      intel_miptree_alloc_hiz(brw, mt);
-      if (!mt->hiz_mt)
-	 return false;
-   }
 
    return true;
 }
@@ -638,6 +633,7 @@ intel_render_texture(struct gl_context * ctx,
       static GLuint msg_id = 0;                                               \
       if (unlikely(ctx->Const.ContextFlags & GL_CONTEXT_FLAG_DEBUG_BIT)) {    \
          _mesa_gl_debug(ctx, &msg_id,                                         \
+                        MESA_DEBUG_SOURCE_API,                                \
                         MESA_DEBUG_TYPE_OTHER,                                \
                         MESA_DEBUG_SEVERITY_MEDIUM,                           \
                         __VA_ARGS__);                                         \
@@ -653,14 +649,15 @@ static void
 intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
    struct brw_context *brw = brw_context(ctx);
+   const struct gen_device_info *devinfo = &brw->screen->devinfo;
    struct intel_renderbuffer *depthRb =
       intel_get_renderbuffer(fb, BUFFER_DEPTH);
    struct intel_renderbuffer *stencilRb =
       intel_get_renderbuffer(fb, BUFFER_STENCIL);
    struct intel_mipmap_tree *depth_mt = NULL, *stencil_mt = NULL;
-   int i;
+   unsigned i;
 
-   DBG("%s() on fb %p (%s)\n", __FUNCTION__,
+   DBG("%s() on fb %p (%s)\n", __func__,
        fb, (fb == ctx->DrawBuffer ? "drawbuffer" :
 	    (fb == ctx->ReadBuffer ? "readbuffer" : "other buffer")));
 
@@ -673,15 +670,27 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
    }
 
    if (depth_mt && stencil_mt) {
-      if (brw->gen >= 6) {
+      if (devinfo->gen >= 6) {
+         const unsigned d_width = depth_mt->surf.phys_level0_sa.width;
+         const unsigned d_height = depth_mt->surf.phys_level0_sa.height;
+         const unsigned d_depth = depth_mt->surf.dim == ISL_SURF_DIM_3D ?
+                                     depth_mt->surf.phys_level0_sa.depth :
+                                     depth_mt->surf.phys_level0_sa.array_len;
+
+         const unsigned s_width = stencil_mt->surf.phys_level0_sa.width;
+         const unsigned s_height = stencil_mt->surf.phys_level0_sa.height;
+         const unsigned s_depth = stencil_mt->surf.dim == ISL_SURF_DIM_3D ?
+                                     stencil_mt->surf.phys_level0_sa.depth :
+                                     stencil_mt->surf.phys_level0_sa.array_len;
+
          /* For gen >= 6, we are using the lod/minimum-array-element fields
           * and supporting layered rendering. This means that we must restrict
           * the depth & stencil attachments to match in various more retrictive
           * ways. (width, height, depth, LOD and layer)
           */
-	 if (depth_mt->physical_width0 != stencil_mt->physical_width0 ||
-             depth_mt->physical_height0 != stencil_mt->physical_height0 ||
-             depth_mt->physical_depth0 != stencil_mt->physical_depth0 ||
+	 if (d_width != s_width ||
+             d_height != s_height ||
+             d_depth != s_depth ||
              depthRb->mt_level != stencilRb->mt_level ||
 	     depthRb->mt_layer != stencilRb->mt_layer) {
 	    fbo_incomplete(fb,
@@ -714,7 +723,7 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
                            "instead of S8\n",
                            _mesa_get_format_name(stencil_mt->format));
 	 }
-	 if (brw->gen < 7 && !intel_renderbuffer_has_hiz(depthRb)) {
+	 if (devinfo->gen < 7 && !intel_renderbuffer_has_hiz(depthRb)) {
 	    /* Before Gen7, separate depth and stencil buffers can be used
 	     * only if HiZ is enabled. From the Sandybridge PRM, Volume 2,
 	     * Part 1, Bit 3DSTATE_DEPTH_BUFFER.SeparateStencilBufferEnable:
@@ -727,7 +736,7 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
       }
    }
 
-   for (i = 0; i < Elements(fb->Attachment); i++) {
+   for (i = 0; i < ARRAY_SIZE(fb->Attachment); i++) {
       struct gl_renderbuffer *rb;
       struct intel_renderbuffer *irb;
 
@@ -777,11 +786,13 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
  */
 static GLbitfield
 intel_blit_framebuffer_with_blitter(struct gl_context *ctx,
+                                    const struct gl_framebuffer *readFb,
+                                    const struct gl_framebuffer *drawFb,
                                     GLint srcX0, GLint srcY0,
                                     GLint srcX1, GLint srcY1,
                                     GLint dstX0, GLint dstY0,
                                     GLint dstX1, GLint dstY1,
-                                    GLbitfield mask, GLenum filter)
+                                    GLbitfield mask)
 {
    struct brw_context *brw = brw_context(ctx);
 
@@ -791,9 +802,7 @@ intel_blit_framebuffer_with_blitter(struct gl_context *ctx,
    intel_prepare_render(brw);
 
    if (mask & GL_COLOR_BUFFER_BIT) {
-      GLint i;
-      const struct gl_framebuffer *drawFb = ctx->DrawBuffer;
-      const struct gl_framebuffer *readFb = ctx->ReadBuffer;
+      unsigned i;
       struct gl_renderbuffer *src_rb = readFb->_ColorReadBuffer;
       struct intel_renderbuffer *src_irb = intel_renderbuffer(src_rb);
 
@@ -829,8 +838,8 @@ intel_blit_framebuffer_with_blitter(struct gl_context *ctx,
        * results are undefined if any destination pixels have a dependency on
        * source pixels.
        */
-      for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
-         struct gl_renderbuffer *dst_rb = ctx->DrawBuffer->_ColorDrawBuffers[i];
+      for (i = 0; i < drawFb->_NumColorDrawBuffers; i++) {
+         struct gl_renderbuffer *dst_rb = drawFb->_ColorDrawBuffers[i];
          struct intel_renderbuffer *dst_irb = intel_renderbuffer(dst_rb);
 
          if (!dst_irb) {
@@ -839,14 +848,23 @@ intel_blit_framebuffer_with_blitter(struct gl_context *ctx,
             return mask;
          }
 
+         if (ctx->Color.sRGBEnabled &&
+             _mesa_get_format_color_encoding(src_irb->mt->format) !=
+             _mesa_get_format_color_encoding(dst_irb->mt->format)) {
+            perf_debug("glBlitFramebuffer() with sRGB conversion cannot be "
+                       "handled by BLT path.\n");
+            return mask;
+         }
+
          if (!intel_miptree_blit(brw,
                                  src_irb->mt,
                                  src_irb->mt_level, src_irb->mt_layer,
-                                 srcX0, srcY0, src_rb->Name == 0,
+                                 srcX0, srcY0, readFb->FlipY,
                                  dst_irb->mt,
                                  dst_irb->mt_level, dst_irb->mt_layer,
-                                 dstX0, dstY0, dst_rb->Name == 0,
-                                 dstX1 - dstX0, dstY1 - dstY0, GL_COPY)) {
+                                 dstX0, dstY0, drawFb->FlipY,
+                                 dstX1 - dstX0, dstY1 - dstY0,
+                                 COLOR_LOGICOP_COPY)) {
             perf_debug("glBlitFramebuffer(): unknown blit failure.  "
                        "Falling back to software rendering.\n");
             return mask;
@@ -861,11 +879,14 @@ intel_blit_framebuffer_with_blitter(struct gl_context *ctx,
 
 static void
 intel_blit_framebuffer(struct gl_context *ctx,
+                       struct gl_framebuffer *readFb,
+                       struct gl_framebuffer *drawFb,
                        GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                        GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                        GLbitfield mask, GLenum filter)
 {
    struct brw_context *brw = brw_context(ctx);
+   const struct gen_device_info *devinfo = &brw->screen->devinfo;
 
    /* Page 679 of OpenGL 4.4 spec says:
     *    "Added BlitFramebuffer to commands affected by conditional rendering in
@@ -874,38 +895,41 @@ intel_blit_framebuffer(struct gl_context *ctx,
    if (!_mesa_check_conditional_render(ctx))
       return;
 
-   mask = brw_blorp_framebuffer(brw,
+   if (devinfo->gen < 6) {
+      /* On gen4-5, try BLT first.
+       *
+       * Gen4-5 have a single ring for both 3D and BLT operations, so there's
+       * no inter-ring synchronization issues like on Gen6+.  It is apparently
+       * faster than using the 3D pipeline.  Original Gen4 also has to rebase
+       * and copy miptree slices in order to render to unaligned locations.
+       */
+      mask = intel_blit_framebuffer_with_blitter(ctx, readFb, drawFb,
+                                                 srcX0, srcY0, srcX1, srcY1,
+                                                 dstX0, dstY0, dstX1, dstY1,
+                                                 mask);
+      if (mask == 0x0)
+         return;
+   }
+
+   mask = brw_blorp_framebuffer(brw, readFb, drawFb,
                                 srcX0, srcY0, srcX1, srcY1,
                                 dstX0, dstY0, dstX1, dstY1,
                                 mask, filter);
    if (mask == 0x0)
       return;
 
-   if (brw->gen >= 8 && (mask & GL_STENCIL_BUFFER_BIT)) {
-      brw_meta_fbo_stencil_blit(brw_context(ctx),
-                                srcX0, srcY0, srcX1, srcY1,
-                                dstX0, dstY0, dstX1, dstY1);
-      mask &= ~GL_STENCIL_BUFFER_BIT;
-      if (mask == 0x0)
-         return;
-   }
-
-   /* Try using the BLT engine. */
-   mask = intel_blit_framebuffer_with_blitter(ctx,
-                                              srcX0, srcY0, srcX1, srcY1,
-                                              dstX0, dstY0, dstX1, dstY1,
-                                              mask, filter);
-   if (mask == 0x0)
-      return;
-
-   mask = _mesa_meta_BlitFramebuffer(ctx,
+   mask = _mesa_meta_BlitFramebuffer(ctx, readFb, drawFb,
                                      srcX0, srcY0, srcX1, srcY1,
                                      dstX0, dstY0, dstX1, dstY1,
                                      mask, filter);
    if (mask == 0x0)
       return;
 
-   _swrast_BlitFramebuffer(ctx,
+   if (devinfo->gen >= 8 && (mask & GL_STENCIL_BUFFER_BIT)) {
+      assert(!"Invalid blit");
+   }
+
+   _swrast_BlitFramebuffer(ctx, readFb, drawFb,
                            srcX0, srcY0, srcX1, srcY1,
                            dstX0, dstY0, dstX1, dstY1,
                            mask, filter);
@@ -920,47 +944,6 @@ intel_renderbuffer_has_hiz(struct intel_renderbuffer *irb)
    return intel_miptree_level_has_hiz(irb->mt, irb->mt_level);
 }
 
-bool
-intel_renderbuffer_resolve_hiz(struct brw_context *brw,
-			       struct intel_renderbuffer *irb)
-{
-   if (irb->mt)
-      return intel_miptree_slice_resolve_hiz(brw,
-                                             irb->mt,
-                                             irb->mt_level,
-                                             irb->mt_layer);
-
-   return false;
-}
-
-void
-intel_renderbuffer_att_set_needs_depth_resolve(struct gl_renderbuffer_attachment *att)
-{
-   struct intel_renderbuffer *irb = intel_renderbuffer(att->Renderbuffer);
-   if (irb->mt) {
-      if (att->Layered) {
-         intel_miptree_set_all_slices_need_depth_resolve(irb->mt, irb->mt_level);
-      } else {
-         intel_miptree_slice_set_needs_depth_resolve(irb->mt,
-                                                     irb->mt_level,
-                                                     irb->mt_layer);
-      }
-   }
-}
-
-bool
-intel_renderbuffer_resolve_depth(struct brw_context *brw,
-				 struct intel_renderbuffer *irb)
-{
-   if (irb->mt)
-      return intel_miptree_slice_resolve_depth(brw,
-                                               irb->mt,
-                                               irb->mt_level,
-                                               irb->mt_layer);
-
-   return false;
-}
-
 void
 intel_renderbuffer_move_to_temp(struct brw_context *brw,
                                 struct intel_renderbuffer *irb,
@@ -971,43 +954,36 @@ intel_renderbuffer_move_to_temp(struct brw_context *brw,
    struct intel_mipmap_tree *new_mt;
    int width, height, depth;
 
-   intel_miptree_get_dimensions_for_image(rb->TexImage, &width, &height, &depth);
+   intel_get_image_dims(rb->TexImage, &width, &height, &depth);
 
-   new_mt = intel_miptree_create(brw, rb->TexImage->TexObject->Target,
+   assert(irb->align_wa_mt == NULL);
+   new_mt = intel_miptree_create(brw, GL_TEXTURE_2D,
                                  intel_image->base.Base.TexFormat,
-                                 intel_image->base.Base.Level,
-                                 intel_image->base.Base.Level,
-                                 width, height, depth,
-                                 true,
-                                 irb->mt->num_samples,
-                                 INTEL_MIPTREE_TILING_ANY,
-                                 false);
+                                 0, 0,
+                                 width, height, 1,
+                                 irb->mt->surf.samples,
+                                 MIPTREE_CREATE_BUSY);
 
-   if (brw_is_hiz_depth_format(brw, new_mt->format)) {
-      intel_miptree_alloc_hiz(brw, new_mt);
-   }
+   if (!invalidate)
+      intel_miptree_copy_slice(brw, intel_image->mt,
+                               intel_image->base.Base.Level, irb->mt_layer,
+                               new_mt, 0, 0);
 
-   intel_miptree_copy_teximage(brw, intel_image, new_mt, invalidate);
-
-   intel_miptree_reference(&irb->mt, intel_image->mt);
-   intel_renderbuffer_set_draw_offset(irb);
+   intel_miptree_reference(&irb->align_wa_mt, new_mt);
    intel_miptree_release(&new_mt);
+
+   irb->draw_x = 0;
+   irb->draw_y = 0;
 }
 
 void
-brw_render_cache_set_clear(struct brw_context *brw)
+brw_cache_sets_clear(struct brw_context *brw)
 {
-   struct set_entry *entry;
+   hash_table_foreach(brw->render_cache, render_entry)
+      _mesa_hash_table_remove(brw->render_cache, render_entry);
 
-   set_foreach(brw->render_cache, entry) {
-      _mesa_set_remove(brw->render_cache, entry);
-   }
-}
-
-void
-brw_render_cache_set_add_bo(struct brw_context *brw, drm_intel_bo *bo)
-{
-   _mesa_set_add(brw->render_cache, _mesa_hash_pointer(bo), bo);
+   set_foreach(brw->depth_cache, depth_entry)
+      _mesa_set_remove(brw->depth_cache, depth_entry);
 }
 
 /**
@@ -1022,13 +998,107 @@ brw_render_cache_set_add_bo(struct brw_context *brw, drm_intel_bo *bo)
  * necessary is flushed before another use of that BO, but for reuse from
  * different caches within a batchbuffer, it's all our responsibility.
  */
-void
-brw_render_cache_set_check_flush(struct brw_context *brw, drm_intel_bo *bo)
+static void
+flush_depth_and_render_caches(struct brw_context *brw, struct brw_bo *bo)
 {
-   if (!_mesa_set_search(brw->render_cache, _mesa_hash_pointer(bo), bo))
-      return;
+   const struct gen_device_info *devinfo = &brw->screen->devinfo;
 
-   intel_batchbuffer_emit_mi_flush(brw);
+   if (devinfo->gen >= 6) {
+      brw_emit_pipe_control_flush(brw,
+                                  PIPE_CONTROL_DEPTH_CACHE_FLUSH |
+                                  PIPE_CONTROL_RENDER_TARGET_FLUSH |
+                                  PIPE_CONTROL_CS_STALL);
+
+      brw_emit_pipe_control_flush(brw,
+                                  PIPE_CONTROL_TEXTURE_CACHE_INVALIDATE |
+                                  PIPE_CONTROL_CONST_CACHE_INVALIDATE);
+   } else {
+      brw_emit_mi_flush(brw);
+   }
+
+   brw_cache_sets_clear(brw);
+}
+
+void
+brw_cache_flush_for_read(struct brw_context *brw, struct brw_bo *bo)
+{
+   if (_mesa_hash_table_search(brw->render_cache, bo) ||
+       _mesa_set_search(brw->depth_cache, bo))
+      flush_depth_and_render_caches(brw, bo);
+}
+
+static void *
+format_aux_tuple(enum isl_format format, enum isl_aux_usage aux_usage)
+{
+   return (void *)(uintptr_t)((uint32_t)format << 8 | aux_usage);
+}
+
+void
+brw_cache_flush_for_render(struct brw_context *brw, struct brw_bo *bo,
+                           enum isl_format format,
+                           enum isl_aux_usage aux_usage)
+{
+   if (_mesa_set_search(brw->depth_cache, bo))
+      flush_depth_and_render_caches(brw, bo);
+
+   /* Check to see if this bo has been used by a previous rendering operation
+    * but with a different format or aux usage.  If it has, flush the render
+    * cache so we ensure that it's only in there with one format or aux usage
+    * at a time.
+    *
+    * Even though it's not obvious, this can easily happen in practice.
+    * Suppose a client is blending on a surface with sRGB encode enabled on
+    * gen9.  This implies that you get AUX_USAGE_CCS_D at best.  If the client
+    * then disables sRGB decode and continues blending we will flip on
+    * AUX_USAGE_CCS_E without doing any sort of resolve in-between (this is
+    * perfectly valid since CCS_E is a subset of CCS_D).  However, this means
+    * that we have fragments in-flight which are rendering with UNORM+CCS_E
+    * and other fragments in-flight with SRGB+CCS_D on the same surface at the
+    * same time and the pixel scoreboard and color blender are trying to sort
+    * it all out.  This ends badly (i.e. GPU hangs).
+    *
+    * To date, we have never observed GPU hangs or even corruption to be
+    * associated with switching the format, only the aux usage.  However,
+    * there are comments in various docs which indicate that the render cache
+    * isn't 100% resilient to format changes.  We may as well be conservative
+    * and flush on format changes too.  We can always relax this later if we
+    * find it to be a performance problem.
+    */
+   struct hash_entry *entry = _mesa_hash_table_search(brw->render_cache, bo);
+   if (entry && entry->data != format_aux_tuple(format, aux_usage))
+      flush_depth_and_render_caches(brw, bo);
+}
+
+void
+brw_render_cache_add_bo(struct brw_context *brw, struct brw_bo *bo,
+                        enum isl_format format,
+                        enum isl_aux_usage aux_usage)
+{
+#ifndef NDEBUG
+   struct hash_entry *entry = _mesa_hash_table_search(brw->render_cache, bo);
+   if (entry) {
+      /* Otherwise, someone didn't do a flush_for_render and that would be
+       * very bad indeed.
+       */
+      assert(entry->data == format_aux_tuple(format, aux_usage));
+   }
+#endif
+
+   _mesa_hash_table_insert(brw->render_cache, bo,
+                           format_aux_tuple(format, aux_usage));
+}
+
+void
+brw_cache_flush_for_depth(struct brw_context *brw, struct brw_bo *bo)
+{
+   if (_mesa_hash_table_search(brw->render_cache, bo))
+      flush_depth_and_render_caches(brw, bo);
+}
+
+void
+brw_depth_cache_add_bo(struct brw_context *brw, struct brw_bo *bo)
+{
+   _mesa_set_add(brw->depth_cache, bo);
 }
 
 /**
@@ -1039,7 +1109,6 @@ void
 intel_fbo_init(struct brw_context *brw)
 {
    struct dd_function_table *dd = &brw->ctx.Driver;
-   dd->NewFramebuffer = intel_new_framebuffer;
    dd->NewRenderbuffer = intel_new_renderbuffer;
    dd->MapRenderbuffer = intel_map_renderbuffer;
    dd->UnmapRenderbuffer = intel_unmap_renderbuffer;
@@ -1049,5 +1118,8 @@ intel_fbo_init(struct brw_context *brw)
    dd->EGLImageTargetRenderbufferStorage =
       intel_image_target_renderbuffer_storage;
 
-   brw->render_cache = _mesa_set_create(brw, _mesa_key_pointer_equal);
+   brw->render_cache = _mesa_hash_table_create(brw, _mesa_hash_pointer,
+                                               _mesa_key_pointer_equal);
+   brw->depth_cache = _mesa_set_create(brw, _mesa_hash_pointer,
+                                       _mesa_key_pointer_equal);
 }

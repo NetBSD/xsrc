@@ -4,7 +4,7 @@
 #include "nouveau/drm/nouveau_drm_public.h"
 
 static struct pipe_screen *
-create_screen(int fd)
+create_screen(int fd, const struct pipe_screen_config *config)
 {
    struct pipe_screen *screen;
 
@@ -24,7 +24,7 @@ static const struct drm_conf_ret throttle_ret = {
 
 static const struct drm_conf_ret share_fd_ret = {
    .type = DRM_CONF_BOOL,
-   .val.val_int = true,
+   .val.val_bool = true,
 };
 
 static const struct drm_conf_ret *drm_configuration(enum drm_conf conf)
@@ -41,4 +41,4 @@ static const struct drm_conf_ret *drm_configuration(enum drm_conf conf)
 }
 
 PUBLIC
-DRM_DRIVER_DESCRIPTOR("nouveau", "nouveau", create_screen, drm_configuration)
+DRM_DRIVER_DESCRIPTOR("nouveau", create_screen, drm_configuration)

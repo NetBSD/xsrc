@@ -6,9 +6,9 @@
 
 struct nouveau_statebuf_builder
 {
-	uint32_t* p;
+   uint32_t* p;
 #ifdef DEBUG
-	uint32_t* pend;
+   uint32_t* pend;
 #endif
 };
 
@@ -20,9 +20,9 @@ struct nouveau_statebuf_builder
 #define sb_data(sb, v) *(sb).p++ = (v)
 #endif
 
-static INLINE uint32_t sb_header(unsigned subc, unsigned mthd, unsigned size)
+static inline uint32_t sb_header(unsigned subc, unsigned mthd, unsigned size)
 {
-	return (size << 18) | (subc << 13) | mthd;
+   return (size << 18) | (subc << 13) | mthd;
 }
 
 #define sb_method(sb, v, n)  sb_data(sb, sb_header(SUBC_3D(v), n));

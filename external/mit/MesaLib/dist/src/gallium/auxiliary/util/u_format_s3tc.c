@@ -24,138 +24,19 @@
  **************************************************************************/
 
 #include "u_dl.h"
-#include "u_math.h"
 #include "u_format.h"
 #include "u_format_s3tc.h"
 #include "util/format_srgb.h"
+#include "util/u_math.h"
+#include "../../../mesa/main/texcompress_s3tc_tmp.h"
 
 
-#if defined(_WIN32) || defined(WIN32)
-#define DXTN_LIBNAME "dxtn.dll"
-#elif defined(__APPLE__)
-#define DXTN_LIBNAME "libtxc_dxtn.dylib"
-#else
-#define DXTN_LIBNAME "libtxc_dxtn.so"
-#endif
+util_format_dxtn_fetch_t util_format_dxt1_rgb_fetch = (util_format_dxtn_fetch_t)fetch_2d_texel_rgb_dxt1;
+util_format_dxtn_fetch_t util_format_dxt1_rgba_fetch = (util_format_dxtn_fetch_t)fetch_2d_texel_rgba_dxt1;
+util_format_dxtn_fetch_t util_format_dxt3_rgba_fetch = (util_format_dxtn_fetch_t)fetch_2d_texel_rgba_dxt3;
+util_format_dxtn_fetch_t util_format_dxt5_rgba_fetch = (util_format_dxtn_fetch_t)fetch_2d_texel_rgba_dxt5;
 
-
-static void
-util_format_dxt1_rgb_fetch_stub(int src_stride,
-                                const uint8_t *src,
-                                int col, int row,
-                                uint8_t *dst)
-{
-   assert(0);
-}
-
-
-static void
-util_format_dxt1_rgba_fetch_stub(int src_stride,
-                                 const uint8_t *src,
-                                 int col, int row,
-                                 uint8_t *dst )
-{
-   assert(0);
-}
-
-
-static void
-util_format_dxt3_rgba_fetch_stub(int src_stride,
-                                 const uint8_t *src,
-                                 int col, int row,
-                                 uint8_t *dst )
-{
-   assert(0);
-}
-
-
-static void
-util_format_dxt5_rgba_fetch_stub(int src_stride,
-                                 const uint8_t *src,
-                                 int col, int row,
-                                 uint8_t *dst )
-{
-   assert(0);
-}
-
-
-static void
-util_format_dxtn_pack_stub(int src_comps,
-                           int width, int height,
-                           const uint8_t *src,
-                           enum util_format_dxtn dst_format,
-                           uint8_t *dst,
-                           int dst_stride)
-{
-   assert(0);
-}
-
-
-boolean util_format_s3tc_enabled = FALSE;
-
-util_format_dxtn_fetch_t util_format_dxt1_rgb_fetch = util_format_dxt1_rgb_fetch_stub;
-util_format_dxtn_fetch_t util_format_dxt1_rgba_fetch = util_format_dxt1_rgba_fetch_stub;
-util_format_dxtn_fetch_t util_format_dxt3_rgba_fetch = util_format_dxt3_rgba_fetch_stub;
-util_format_dxtn_fetch_t util_format_dxt5_rgba_fetch = util_format_dxt5_rgba_fetch_stub;
-
-util_format_dxtn_pack_t util_format_dxtn_pack = util_format_dxtn_pack_stub;
-
-
-void
-util_format_s3tc_init(void)
-{
-   static boolean first_time = TRUE;
-   struct util_dl_library *library = NULL;
-   util_dl_proc fetch_2d_texel_rgb_dxt1;
-   util_dl_proc fetch_2d_texel_rgba_dxt1;
-   util_dl_proc fetch_2d_texel_rgba_dxt3;
-   util_dl_proc fetch_2d_texel_rgba_dxt5;
-   util_dl_proc tx_compress_dxtn;
-
-   if (!first_time)
-      return;
-   first_time = FALSE;
-
-   if (util_format_s3tc_enabled)
-      return;
-
-   library = util_dl_open(DXTN_LIBNAME);
-   if (!library) {
-      debug_printf("couldn't open " DXTN_LIBNAME ", software DXTn "
-                   "compression/decompression unavailable\n");
-      return;
-   }
-
-   fetch_2d_texel_rgb_dxt1 =
-         util_dl_get_proc_address(library, "fetch_2d_texel_rgb_dxt1");
-   fetch_2d_texel_rgba_dxt1 =
-         util_dl_get_proc_address(library, "fetch_2d_texel_rgba_dxt1");
-   fetch_2d_texel_rgba_dxt3 =
-         util_dl_get_proc_address(library, "fetch_2d_texel_rgba_dxt3");
-   fetch_2d_texel_rgba_dxt5 =
-         util_dl_get_proc_address(library, "fetch_2d_texel_rgba_dxt5");
-   tx_compress_dxtn =
-         util_dl_get_proc_address(library, "tx_compress_dxtn");
-
-   if (!util_format_dxt1_rgb_fetch ||
-       !util_format_dxt1_rgba_fetch ||
-       !util_format_dxt3_rgba_fetch ||
-       !util_format_dxt5_rgba_fetch ||
-       !util_format_dxtn_pack) {
-      debug_printf("couldn't reference all symbols in " DXTN_LIBNAME
-                   ", software DXTn compression/decompression "
-                   "unavailable\n");
-      util_dl_close(library);
-      return;
-   }
-
-   util_format_dxt1_rgb_fetch = (util_format_dxtn_fetch_t)fetch_2d_texel_rgb_dxt1;
-   util_format_dxt1_rgba_fetch = (util_format_dxtn_fetch_t)fetch_2d_texel_rgba_dxt1;
-   util_format_dxt3_rgba_fetch = (util_format_dxtn_fetch_t)fetch_2d_texel_rgba_dxt3;
-   util_format_dxt5_rgba_fetch = (util_format_dxtn_fetch_t)fetch_2d_texel_rgba_dxt5;
-   util_format_dxtn_pack = (util_format_dxtn_pack_t)tx_compress_dxtn;
-   util_format_s3tc_enabled = TRUE;
-}
+util_format_dxtn_pack_t util_format_dxtn_pack = (util_format_dxtn_pack_t)tx_compress_dxtn;
 
 
 /*
@@ -235,7 +116,7 @@ util_format_dxt5_rgba_fetch_rgba_float(float *dst, const uint8_t *src, unsigned 
  * Block decompression.
  */
 
-static INLINE void
+static inline void
 util_format_dxtn_rgb_unpack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride,
                                         const uint8_t *src_row, unsigned src_stride,
                                         unsigned width, unsigned height,
@@ -312,7 +193,7 @@ util_format_dxt5_rgba_unpack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride,
                                            16, FALSE);
 }
 
-static INLINE void
+static inline void
 util_format_dxtn_rgb_unpack_rgba_float(float *dst_row, unsigned dst_stride,
                                        const uint8_t *src_row, unsigned src_stride,
                                        unsigned width, unsigned height,
@@ -400,7 +281,7 @@ util_format_dxt5_rgba_unpack_rgba_float(float *dst_row, unsigned dst_stride,
  * Block compression.
  */
 
-static INLINE void
+static inline void
 util_format_dxtn_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride,
                                   const uint8_t *src, unsigned src_stride,
                                   unsigned width, unsigned height,
@@ -478,7 +359,7 @@ util_format_dxt5_rgba_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride,
                                      16, FALSE);
 }
 
-static INLINE void
+static inline void
 util_format_dxtn_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride,
                                  const float *src, unsigned src_stride,
                                  unsigned width, unsigned height,

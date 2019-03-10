@@ -49,7 +49,7 @@ struct malloc_buffer
 
 extern const struct pb_vtbl malloc_buffer_vtbl;
 
-static INLINE struct malloc_buffer *
+static inline struct malloc_buffer *
 malloc_buffer(struct pb_buffer *buf)
 {
    assert(buf);
@@ -132,7 +132,7 @@ pb_malloc_buffer_create(pb_size size,
    /* TODO: do a single allocation */
    
    buf = CALLOC_STRUCT(malloc_buffer);
-   if(!buf)
+   if (!buf)
       return NULL;
 
    pipe_reference_init(&buf->base.reference, 1);

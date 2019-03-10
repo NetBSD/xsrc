@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
  *
@@ -42,13 +40,14 @@ struct fd_ringbuffer;
 void fd_draw_init(struct pipe_context *pctx);
 
 static inline void
-fd_draw(struct fd_context *ctx, struct fd_ringbuffer *ring,
+fd_draw(struct fd_batch *batch, struct fd_ringbuffer *ring,
 		enum pc_di_primtype primtype,
 		enum pc_di_vis_cull_mode vismode,
 		enum pc_di_src_sel src_sel, uint32_t count,
+		uint8_t instances,
 		enum pc_di_index_size idx_type,
 		uint32_t idx_size, uint32_t idx_offset,
-		struct fd_bo *idx_bo)
+		struct pipe_resource *idx_buffer)
 {
 	/* for debug after a lock up, write a unique counter value
 	 * to scratch7 for each draw, to make it easier to match up
@@ -58,12 +57,12 @@ fd_draw(struct fd_context *ctx, struct fd_ringbuffer *ring,
 	 */
 	emit_marker(ring, 7);
 
-	if (is_a3xx_p0(ctx->screen)) {
+	if (is_a3xx_p0(batch->ctx->screen)) {
 		/* dummy-draw workaround: */
 		OUT_PKT3(ring, CP_DRAW_INDX, 3);
 		OUT_RING(ring, 0x00000000);
 		OUT_RING(ring, DRAW(1, DI_SRC_SEL_AUTO_INDEX,
-				INDEX_SIZE_IGN, USE_VISIBILITY));
+							INDEX_SIZE_IGN, USE_VISIBILITY, 0));
 		OUT_RING(ring, 0);             /* NumIndices */
 
 		/* ugg, hard-code register offset to avoid pulling in the
@@ -73,26 +72,33 @@ fd_draw(struct fd_context *ctx, struct fd_ringbuffer *ring,
 		OUT_RING(ring, 0);
 	}
 
-	OUT_PKT3(ring, CP_DRAW_INDX, idx_bo ? 5 : 3);
-	OUT_RING(ring, 0x00000000);        /* viz query info. */
-	if (vismode == USE_VISIBILITY) {
-		/* leave vis mode blank for now, it will be patched up when
-		 * we know if we are binning or not
-		 */
-		OUT_RINGP(ring, DRAW(primtype, src_sel, idx_type, 0),
-				&ctx->draw_patches);
+	if (is_a20x(batch->ctx->screen)) {
+		OUT_PKT3(ring, CP_DRAW_INDX, idx_buffer ? 4 : 2);
+		OUT_RING(ring, 0x00000000);
+		OUT_RING(ring, DRAW_A20X(primtype, src_sel, idx_type, vismode, count));
 	} else {
-		OUT_RING(ring, DRAW(primtype, src_sel, idx_type, vismode));
+		OUT_PKT3(ring, CP_DRAW_INDX, idx_buffer ? 5 : 3);
+		OUT_RING(ring, 0x00000000);        /* viz query info. */
+		if (vismode == USE_VISIBILITY) {
+			/* leave vis mode blank for now, it will be patched up when
+			 * we know if we are binning or not
+			 */
+			OUT_RINGP(ring, DRAW(primtype, src_sel, idx_type, 0, instances),
+					&batch->draw_patches);
+		} else {
+			OUT_RING(ring, DRAW(primtype, src_sel, idx_type, vismode, instances));
+		}
+		OUT_RING(ring, count);             /* NumIndices */
 	}
-	OUT_RING(ring, count);             /* NumIndices */
-	if (idx_bo) {
-		OUT_RELOC(ring, idx_bo, idx_offset, 0, 0);
+
+	if (idx_buffer) {
+		OUT_RELOC(ring, fd_resource(idx_buffer)->bo, idx_offset, 0, 0);
 		OUT_RING (ring, idx_size);
 	}
 
 	emit_marker(ring, 7);
 
-	fd_reset_wfi(ctx);
+	fd_reset_wfi(batch);
 }
 
 
@@ -111,34 +117,36 @@ size2indextype(unsigned index_size)
 
 /* this is same for a2xx/a3xx, so split into helper: */
 static inline void
-fd_draw_emit(struct fd_context *ctx, struct fd_ringbuffer *ring,
+fd_draw_emit(struct fd_batch *batch, struct fd_ringbuffer *ring,
+		enum pc_di_primtype primtype,
 		enum pc_di_vis_cull_mode vismode,
-		const struct pipe_draw_info *info)
+		const struct pipe_draw_info *info,
+		unsigned index_offset)
 {
-	struct pipe_index_buffer *idx = &ctx->indexbuf;
-	struct fd_bo *idx_bo = NULL;
+	struct pipe_resource *idx_buffer = NULL;
 	enum pc_di_index_size idx_type = INDEX_SIZE_IGN;
 	enum pc_di_src_sel src_sel;
 	uint32_t idx_size, idx_offset;
 
-	if (info->indexed) {
-		assert(!idx->user_buffer);
+	if (info->index_size) {
+		assert(!info->has_user_indices);
 
-		idx_bo = fd_resource(idx->buffer)->bo;
-		idx_type = size2indextype(idx->index_size);
-		idx_size = idx->index_size * info->count;
-		idx_offset = idx->offset + (info->start * idx->index_size);
+		idx_buffer = info->index.resource;
+		idx_type = size2indextype(info->index_size);
+		idx_size = info->index_size * info->count;
+		idx_offset = index_offset + info->start * info->index_size;
 		src_sel = DI_SRC_SEL_DMA;
 	} else {
-		idx_bo = NULL;
+		idx_buffer = NULL;
 		idx_type = INDEX_SIZE_IGN;
 		idx_size = 0;
 		idx_offset = 0;
 		src_sel = DI_SRC_SEL_AUTO_INDEX;
 	}
 
-	fd_draw(ctx, ring, ctx->primtypes[info->mode], vismode, src_sel,
-			info->count, idx_type, idx_size, idx_offset, idx_bo);
+	fd_draw(batch, ring, primtype, vismode, src_sel,
+			info->count, info->instance_count - 1,
+			idx_type, idx_size, idx_offset, idx_buffer);
 }
 
 #endif /* FREEDRENO_DRAW_H_ */

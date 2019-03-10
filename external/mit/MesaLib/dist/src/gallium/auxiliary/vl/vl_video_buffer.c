@@ -62,6 +62,18 @@ const enum pipe_format const_resource_formats_VUYA[3] = {
    PIPE_FORMAT_NONE
 };
 
+const enum pipe_format const_resource_formats_YUVX[3] = {
+   PIPE_FORMAT_R8G8B8X8_UNORM,
+   PIPE_FORMAT_NONE,
+   PIPE_FORMAT_NONE
+};
+
+const enum pipe_format const_resource_formats_VUYX[3] = {
+   PIPE_FORMAT_B8G8R8X8_UNORM,
+   PIPE_FORMAT_NONE,
+   PIPE_FORMAT_NONE
+};
+
 const enum pipe_format const_resource_formats_YUYV[3] = {
    PIPE_FORMAT_R8G8_R8B8_UNORM,
    PIPE_FORMAT_NONE,
@@ -71,6 +83,12 @@ const enum pipe_format const_resource_formats_YUYV[3] = {
 const enum pipe_format const_resource_formats_UYVY[3] = {
    PIPE_FORMAT_G8R8_B8R8_UNORM,
    PIPE_FORMAT_NONE,
+   PIPE_FORMAT_NONE
+};
+
+const enum pipe_format const_resource_formats_P016[3] = {
+   PIPE_FORMAT_R16_UNORM,
+   PIPE_FORMAT_R16G16_UNORM,
    PIPE_FORMAT_NONE
 };
 
@@ -102,11 +120,20 @@ vl_video_buffer_formats(struct pipe_screen *screen, enum pipe_format format)
    case PIPE_FORMAT_B8G8R8A8_UNORM:
       return const_resource_formats_VUYA;
 
+   case PIPE_FORMAT_R8G8B8X8_UNORM:
+      return const_resource_formats_YUVX;
+
+   case PIPE_FORMAT_B8G8R8X8_UNORM:
+      return const_resource_formats_VUYX;
+
    case PIPE_FORMAT_YUYV:
       return const_resource_formats_YUYV;
 
    case PIPE_FORMAT_UYVY:
       return const_resource_formats_UYVY;
+
+   case PIPE_FORMAT_P016:
+      return const_resource_formats_P016;
 
    default:
       return NULL;
@@ -125,6 +152,7 @@ vl_video_buffer_plane_order(enum pipe_format format)
    case PIPE_FORMAT_B8G8R8A8_UNORM:
    case PIPE_FORMAT_YUYV:
    case PIPE_FORMAT_UYVY:
+   case PIPE_FORMAT_P016:
       return const_resource_plane_order_YUV;
 
    default:
@@ -164,11 +192,11 @@ vl_video_buffer_is_format_supported(struct pipe_screen *screen,
          continue;
 
       /* we at least need to sample from it */
-      if (!screen->is_format_supported(screen, format, PIPE_TEXTURE_2D, 0, PIPE_BIND_SAMPLER_VIEW))
+      if (!screen->is_format_supported(screen, format, PIPE_TEXTURE_2D, 0, 0, PIPE_BIND_SAMPLER_VIEW))
          return false;
 
       format = vl_video_buffer_surface_format(format);
-      if (!screen->is_format_supported(screen, format, PIPE_TEXTURE_2D, 0, PIPE_BIND_RENDER_TARGET))
+      if (!screen->is_format_supported(screen, format, PIPE_TEXTURE_2D, 0, 0, PIPE_BIND_RENDER_TARGET))
          return false;
    }
 
@@ -220,6 +248,8 @@ vl_video_buffer_template(struct pipe_resource *templ,
                          unsigned depth, unsigned array_size,
                          unsigned usage, unsigned plane)
 {
+   unsigned height = tmpl->height;
+
    memset(templ, 0, sizeof(*templ));
    if (depth > 1)
       templ->target = PIPE_TEXTURE_3D;
@@ -229,20 +259,14 @@ vl_video_buffer_template(struct pipe_resource *templ,
       templ->target = PIPE_TEXTURE_2D;
    templ->format = resource_format;
    templ->width0 = tmpl->width;
-   templ->height0 = tmpl->height;
    templ->depth0 = depth;
    templ->array_size = array_size;
-   templ->bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
+   templ->bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET | tmpl->bind;
    templ->usage = usage;
 
-   if (plane > 0) {
-      if (tmpl->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
-         templ->width0 /= 2;
-         templ->height0 /= 2;
-      } else if (tmpl->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_422) {
-         templ->width0 /= 2;
-      }
-   }
+   vl_video_buffer_adjust_size(&templ->width0, &height, plane,
+                               tmpl->chroma_format, false);
+   templ->height0 = height;
 }
 
 static void
@@ -285,7 +309,7 @@ vl_video_buffer_sampler_view_planes(struct pipe_video_buffer *buffer)
          u_sampler_view_default_template(&sv_templ, buf->resources[i], buf->resources[i]->format);
 
          if (util_format_get_nr_components(buf->resources[i]->format) == 1)
-            sv_templ.swizzle_r = sv_templ.swizzle_g = sv_templ.swizzle_b = sv_templ.swizzle_a = PIPE_SWIZZLE_RED;
+            sv_templ.swizzle_r = sv_templ.swizzle_g = sv_templ.swizzle_b = sv_templ.swizzle_a = PIPE_SWIZZLE_X;
 
          buf->sampler_view_planes[i] = pipe->create_sampler_view(pipe, buf->resources[i], &sv_templ);
          if (!buf->sampler_view_planes[i])
@@ -332,8 +356,8 @@ vl_video_buffer_sampler_view_components(struct pipe_video_buffer *buffer)
 
          memset(&sv_templ, 0, sizeof(sv_templ));
          u_sampler_view_default_template(&sv_templ, res, sampler_format[plane_order[i]]);
-         sv_templ.swizzle_r = sv_templ.swizzle_g = sv_templ.swizzle_b = PIPE_SWIZZLE_RED + j;
-         sv_templ.swizzle_a = PIPE_SWIZZLE_ONE;
+         sv_templ.swizzle_r = sv_templ.swizzle_g = sv_templ.swizzle_b = PIPE_SWIZZLE_X + j;
+         sv_templ.swizzle_a = PIPE_SWIZZLE_1;
          buf->sampler_view_components[component] = pipe->create_sampler_view(pipe, res, &sv_templ);
          if (!buf->sampler_view_components[component])
             goto error;

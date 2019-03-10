@@ -26,10 +26,18 @@
  promote the sale, use or other dealings in this Software without
  prior written authorization.
 */
+
+#ifndef GLX_ERROR_H
+#define GLX_ERROR_H
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <X11/Xlib.h>
 #include <xcb/xcb.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void __glXSendError(Display * dpy, int_fast8_t errorCode,
 		    uint_fast32_t resourceID, uint_fast16_t minorCode,
@@ -37,3 +45,9 @@ void __glXSendError(Display * dpy, int_fast8_t errorCode,
 
 _X_HIDDEN void __glXSendErrorForXcb(Display * dpy,
 				    const xcb_generic_error_t *err);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

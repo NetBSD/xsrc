@@ -1,5 +1,3 @@
-AUTOMAKE_OPTIONS = subdir-objects
-
 include $(top_srcdir)/src/gallium/Automake.inc
 
 lib_LTLIBRARIES = lib@OPENCL_LIBNAME@.la
@@ -7,7 +5,7 @@ lib_LTLIBRARIES = lib@OPENCL_LIBNAME@.la
 lib@OPENCL_LIBNAME@_la_LDFLAGS = \
 	$(LLVM_LDFLAGS) \
 	-no-undefined \
-	-version-number 1:0 \
+	-version-number @OPENCL_VERSION@:0 \
 	$(GC_SECTIONS) \
 	$(LD_NO_UNDEFINED)
 
@@ -17,19 +15,18 @@ lib@OPENCL_LIBNAME@_la_LDFLAGS += \
 endif
 
 lib@OPENCL_LIBNAME@_la_LIBADD = \
-	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader_client.la \
+	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader_dynamic.la \
 	$(top_builddir)/src/gallium/state_trackers/clover/libclover.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/util/libmesautil.la \
-	$(GALLIUM_PIPE_LOADER_WINSYS_LIBS) \
-	$(GALLIUM_PIPE_LOADER_CLIENT_LIBS) \
-	-ldl \
+	$(EXPAT_LIBS) \
+	$(LIBELF_LIBS) \
+	$(DLOPEN_LIBS) \
 	-lclangCodeGen \
-	-lclangFrontendTool \
 	-lclangFrontend \
+	-lclangFrontendTool \
 	-lclangDriver \
 	-lclangSerialization \
-	-lclangCodeGen \
 	-lclangParse \
 	-lclangSema \
 	-lclangAnalysis \
@@ -37,14 +34,17 @@ lib@OPENCL_LIBNAME@_la_LIBADD = \
 	-lclangEdit \
 	-lclangLex \
 	-lclangBasic \
-	$(LLVM_LIBS)
+	$(LLVM_LIBS) \
+	$(PTHREAD_LIBS)
 
 nodist_EXTRA_lib@OPENCL_LIBNAME@_la_SOURCES = dummy.cpp
 lib@OPENCL_LIBNAME@_la_SOURCES =
 
+EXTRA_lib@OPENCL_LIBNAME@_la_DEPENDENCIES = opencl.sym
+EXTRA_DIST = mesa.icd opencl.sym meson.build
 
 if HAVE_CLOVER_ICD
-icddir = /etc/OpenCL/vendors/
+icddir = $(sysconfdir)/OpenCL/vendors/
 icd_DATA = mesa.icd
 endif
 

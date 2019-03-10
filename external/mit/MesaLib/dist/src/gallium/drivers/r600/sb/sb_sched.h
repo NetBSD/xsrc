@@ -32,6 +32,8 @@ namespace r600_sb {
 typedef sb_map<node*, unsigned> uc_map;
 
 // resource trackers for scheduler
+// rp = read port
+// uc = use count
 
 typedef sb_set<unsigned> kc_lines;
 
@@ -64,6 +66,7 @@ public:
 class literal_tracker {
 	literal lt[4];
 	unsigned uc[4];
+
 public:
 	literal_tracker() : lt(), uc() {}
 
@@ -124,6 +127,8 @@ class alu_group_tracker {
 	bool has_kill;
 	bool updates_exec_mask;
 
+	bool consumes_lds_oqa;
+	bool produces_lds_oqa;
 	unsigned chan_count[4];
 
 	// param index + 1 (0 means that group doesn't refer to Params)
@@ -163,6 +168,8 @@ public:
 	unsigned literal_slot_count() { return (literal_count() + 1) >> 1; };
 	unsigned slot_count() { return inst_count() + literal_slot_count(); }
 
+	bool get_consumes_lds_oqa() { return consumes_lds_oqa; }
+	bool get_produces_lds_oqa() { return produces_lds_oqa; }
 	alu_group_node* emit();
 
 	rp_kcache_tracker& kcache() { return kc; }
@@ -209,6 +216,7 @@ class alu_clause_tracker {
 
 	bool push_exec_mask;
 
+	unsigned outstanding_lds_oqa_reads;
 public:
 	container_node conflict_nodes;
 
@@ -217,6 +225,8 @@ public:
 	// bottom-up)
 	value *current_ar;
 	value *current_pr;
+	// current values of CF_IDX registers that need preloading
+	value *current_idx[2];
 
 	alu_clause_tracker(shader &sh);
 
@@ -233,7 +243,7 @@ public:
 	void new_group();
 	bool is_empty();
 
-	alu_node* create_ar_load();
+	alu_node* create_ar_load(value *v, chan_select ar_channel);
 
 	void discard_current_group();
 
@@ -254,6 +264,7 @@ class post_scheduler : public pass {
 
 	val_set cleared_interf;
 
+	void emit_index_registers();
 public:
 
 	post_scheduler(shader &sh) : pass(sh),
@@ -261,11 +272,14 @@ public:
 		live(), ucm(), alu(sh),	regmap(), cleared_interf() {}
 
 	virtual int run();
-	void run_on(container_node *n);
-	void schedule_bb(bb_node *bb);
+	bool run_on(container_node *n);
+	bool schedule_bb(bb_node *bb);
 
-	void process_alu(container_node *c);
-	void schedule_alu(container_node *c);
+	void load_index_register(value *v, unsigned idx);
+	void process_fetch(container_node *c);
+
+	bool process_alu(container_node *c);
+	bool schedule_alu(container_node *c);
 	bool prepare_alu_group();
 
 	void release_op(node *n);

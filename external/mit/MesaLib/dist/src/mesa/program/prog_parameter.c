@@ -37,388 +37,6 @@
 #include "prog_statevars.h"
 
 
-struct gl_program_parameter_list *
-_mesa_new_parameter_list(void)
-{
-   return CALLOC_STRUCT(gl_program_parameter_list);
-}
-
-
-struct gl_program_parameter_list *
-_mesa_new_parameter_list_sized(unsigned size)
-{
-   struct gl_program_parameter_list *p = _mesa_new_parameter_list();
-
-   if ((p != NULL) && (size != 0)) {
-      p->Size = size;
-
-      /* alloc arrays */
-      p->Parameters = (struct gl_program_parameter *)
-	 calloc(1, size * sizeof(struct gl_program_parameter));
-
-      p->ParameterValues = (gl_constant_value (*)[4])
-         _mesa_align_malloc(size * 4 *sizeof(gl_constant_value), 16);
-
-
-      if ((p->Parameters == NULL) || (p->ParameterValues == NULL)) {
-	 free(p->Parameters);
-	 _mesa_align_free(p->ParameterValues);
-	 free(p);
-	 p = NULL;
-      }
-   }
-
-   return p;
-}
-
-
-/**
- * Free a parameter list and all its parameters
- */
-void
-_mesa_free_parameter_list(struct gl_program_parameter_list *paramList)
-{
-   GLuint i;
-   for (i = 0; i < paramList->NumParameters; i++) {
-      free((void *)paramList->Parameters[i].Name);
-   }
-   free(paramList->Parameters);
-   _mesa_align_free(paramList->ParameterValues);
-   free(paramList);
-}
-
-
-/**
- * Add a new parameter to a parameter list.
- * Note that parameter values are usually 4-element GLfloat vectors.
- * When size > 4 we'll allocate a sequential block of parameters to
- * store all the values (in blocks of 4).
- *
- * \param paramList  the list to add the parameter to
- * \param type  type of parameter, such as 
- * \param name  the parameter name, will be duplicated/copied!
- * \param size  number of elements in 'values' vector (1..4, or more)
- * \param datatype  GL_FLOAT, GL_FLOAT_VECx, GL_INT, GL_INT_VECx or GL_NONE.
- * \param values  initial parameter value, up to 4 gl_constant_values, or NULL
- * \param state  state indexes, or NULL
- * \return  index of new parameter in the list, or -1 if error (out of mem)
- */
-GLint
-_mesa_add_parameter(struct gl_program_parameter_list *paramList,
-                    gl_register_file type, const char *name,
-                    GLuint size, GLenum datatype,
-                    const gl_constant_value *values,
-                    const gl_state_index state[STATE_LENGTH])
-{
-   const GLuint oldNum = paramList->NumParameters;
-   const GLuint sz4 = (size + 3) / 4; /* no. of new param slots needed */
-
-   assert(size > 0);
-
-   if (oldNum + sz4 > paramList->Size) {
-      /* Need to grow the parameter list array (alloc some extra) */
-      paramList->Size = paramList->Size + 4 * sz4;
-
-      /* realloc arrays */
-      paramList->Parameters = (struct gl_program_parameter *)
-	 _mesa_realloc(paramList->Parameters,
-		       oldNum * sizeof(struct gl_program_parameter),
-		       paramList->Size * sizeof(struct gl_program_parameter));
-
-      paramList->ParameterValues = (gl_constant_value (*)[4])
-         _mesa_align_realloc(paramList->ParameterValues,         /* old buf */
-                             oldNum * 4 * sizeof(gl_constant_value),/* old sz */
-                             paramList->Size*4*sizeof(gl_constant_value),/*new*/
-                             16);
-   }
-
-   if (!paramList->Parameters ||
-       !paramList->ParameterValues) {
-      /* out of memory */
-      paramList->NumParameters = 0;
-      paramList->Size = 0;
-      return -1;
-   }
-   else {
-      GLuint i, j;
-
-      paramList->NumParameters = oldNum + sz4;
-
-      memset(&paramList->Parameters[oldNum], 0,
-             sz4 * sizeof(struct gl_program_parameter));
-
-      for (i = 0; i < sz4; i++) {
-         struct gl_program_parameter *p = paramList->Parameters + oldNum + i;
-         p->Name = name ? _mesa_strdup(name) : NULL;
-         p->Type = type;
-         p->Size = size;
-         p->DataType = datatype;
-         if (values) {
-            if (size >= 4) {
-               COPY_4V(paramList->ParameterValues[oldNum + i], values);
-            }
-            else {
-               /* copy 1, 2 or 3 values */
-               GLuint remaining = size % 4;
-               assert(remaining < 4);
-               for (j = 0; j < remaining; j++) {
-                  paramList->ParameterValues[oldNum + i][j].f = values[j].f;
-               }
-               /* fill in remaining positions with zeros */
-               for (; j < 4; j++) {
-                  paramList->ParameterValues[oldNum + i][j].f = 0.0f;
-               }
-            }
-            values += 4;
-            p->Initialized = GL_TRUE;
-         }
-         else {
-            /* silence valgrind */
-            for (j = 0; j < 4; j++)
-            	paramList->ParameterValues[oldNum + i][j].f = 0;
-         }
-         size -= 4;
-      }
-
-      if (state) {
-         for (i = 0; i < STATE_LENGTH; i++)
-            paramList->Parameters[oldNum].StateIndexes[i] = state[i];
-      }
-
-      return (GLint) oldNum;
-   }
-}
-
-
-/**
- * Add a new named constant to the parameter list.
- * This will be used when the program contains something like this:
- *    PARAM myVals = { 0, 1, 2, 3 };
- *
- * \param paramList  the parameter list
- * \param name  the name for the constant
- * \param values  four float values
- * \return index/position of the new parameter in the parameter list
- */
-GLint
-_mesa_add_named_constant(struct gl_program_parameter_list *paramList,
-                         const char *name, const gl_constant_value values[4],
-                         GLuint size)
-{
-   /* first check if this is a duplicate constant */
-   GLint pos;
-   for (pos = 0; pos < (GLint)paramList->NumParameters; pos++) {
-      const gl_constant_value *pvals = paramList->ParameterValues[pos];
-      if (pvals[0].u == values[0].u &&
-          pvals[1].u == values[1].u &&
-          pvals[2].u == values[2].u &&
-          pvals[3].u == values[3].u &&
-          strcmp(paramList->Parameters[pos].Name, name) == 0) {
-         /* Same name and value is already in the param list - reuse it */
-         return pos;
-      }
-   }
-   /* not found, add new parameter */
-   return _mesa_add_parameter(paramList, PROGRAM_CONSTANT, name,
-                              size, GL_NONE, values, NULL);
-}
-
-
-/**
- * Add a new unnamed constant to the parameter list.  This will be used
- * when a fragment/vertex program contains something like this:
- *    MOV r, { 0, 1, 2, 3 };
- * If swizzleOut is non-null we'll search the parameter list for an
- * existing instance of the constant which matches with a swizzle.
- *
- * \param paramList  the parameter list
- * \param values  four float values
- * \param swizzleOut  returns swizzle mask for accessing the constant
- * \return index/position of the new parameter in the parameter list.
- */
-GLint
-_mesa_add_typed_unnamed_constant(struct gl_program_parameter_list *paramList,
-                           const gl_constant_value values[4], GLuint size,
-                           GLenum datatype, GLuint *swizzleOut)
-{
-   GLint pos;
-   ASSERT(size >= 1);
-   ASSERT(size <= 4);
-
-   if (swizzleOut &&
-       _mesa_lookup_parameter_constant(paramList, values,
-                                       size, &pos, swizzleOut)) {
-      return pos;
-   }
-
-   /* Look for empty space in an already unnamed constant parameter
-    * to add this constant.  This will only work for single-element
-    * constants because we rely on smearing (i.e. .yyyy or .zzzz).
-    */
-   if (size == 1 && swizzleOut) {
-      for (pos = 0; pos < (GLint) paramList->NumParameters; pos++) {
-         struct gl_program_parameter *p = paramList->Parameters + pos;
-         if (p->Type == PROGRAM_CONSTANT && p->Size + size <= 4) {
-            /* ok, found room */
-            gl_constant_value *pVal = paramList->ParameterValues[pos];
-            GLuint swz = p->Size; /* 1, 2 or 3 for Y, Z, W */
-            pVal[p->Size] = values[0];
-            p->Size++;
-            *swizzleOut = MAKE_SWIZZLE4(swz, swz, swz, swz);
-            return pos;
-         }
-      }
-   }
-
-   /* add a new parameter to store this constant */
-   pos = _mesa_add_parameter(paramList, PROGRAM_CONSTANT, NULL,
-                             size, datatype, values, NULL);
-   if (pos >= 0 && swizzleOut) {
-      if (size == 1)
-         *swizzleOut = SWIZZLE_XXXX;
-      else
-         *swizzleOut = SWIZZLE_NOOP;
-   }
-   return pos;
-}
-
-/**
- * Add a new unnamed constant to the parameter list.  This will be used
- * when a fragment/vertex program contains something like this:
- *    MOV r, { 0, 1, 2, 3 };
- * If swizzleOut is non-null we'll search the parameter list for an
- * existing instance of the constant which matches with a swizzle.
- *
- * \param paramList  the parameter list
- * \param values  four float values
- * \param swizzleOut  returns swizzle mask for accessing the constant
- * \return index/position of the new parameter in the parameter list.
- * \sa _mesa_add_typed_unnamed_constant
- */
-GLint
-_mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
-                           const gl_constant_value values[4], GLuint size,
-                           GLuint *swizzleOut)
-{
-   return _mesa_add_typed_unnamed_constant(paramList, values, size, GL_NONE,
-                                           swizzleOut);
-}
-
-#if 0 /* not used yet */
-/**
- * Returns the number of 4-component registers needed to store a piece
- * of GL state.  For matrices this may be as many as 4 registers,
- * everything else needs
- * just 1 register.
- */
-static GLuint
-sizeof_state_reference(const GLint *stateTokens)
-{
-   if (stateTokens[0] == STATE_MATRIX) {
-      GLuint rows = stateTokens[4] - stateTokens[3] + 1;
-      assert(rows >= 1);
-      assert(rows <= 4);
-      return rows;
-   }
-   else {
-      return 1;
-   }
-}
-#endif
-
-
-/**
- * Add a new state reference to the parameter list.
- * This will be used when the program contains something like this:
- *    PARAM ambient = state.material.front.ambient;
- *
- * \param paramList  the parameter list
- * \param stateTokens  an array of 5 (STATE_LENGTH) state tokens
- * \return index of the new parameter.
- */
-GLint
-_mesa_add_state_reference(struct gl_program_parameter_list *paramList,
-                          const gl_state_index stateTokens[STATE_LENGTH])
-{
-   const GLuint size = 4; /* XXX fix */
-   char *name;
-   GLint index;
-
-   /* Check if the state reference is already in the list */
-   for (index = 0; index < (GLint) paramList->NumParameters; index++) {
-      if (!memcmp(paramList->Parameters[index].StateIndexes,
-		  stateTokens, STATE_LENGTH * sizeof(gl_state_index))) {
-	 return index;
-      }
-   }
-
-   name = _mesa_program_state_string(stateTokens);
-   index = _mesa_add_parameter(paramList, PROGRAM_STATE_VAR, name,
-                               size, GL_NONE,
-                               NULL, (gl_state_index *) stateTokens);
-   paramList->StateFlags |= _mesa_program_state_flags(stateTokens);
-
-   /* free name string here since we duplicated it in add_parameter() */
-   free(name);
-
-   return index;
-}
-
-
-/**
- * Lookup a parameter value by name in the given parameter list.
- * \return pointer to the float[4] values.
- */
-gl_constant_value *
-_mesa_lookup_parameter_value(const struct gl_program_parameter_list *paramList,
-                             GLsizei nameLen, const char *name)
-{
-   GLint i = _mesa_lookup_parameter_index(paramList, nameLen, name);
-   if (i < 0)
-      return NULL;
-   else
-      return paramList->ParameterValues[i];
-}
-
-
-/**
- * Given a program parameter name, find its position in the list of parameters.
- * \param paramList  the parameter list to search
- * \param nameLen  length of name (in chars).
- *                 If length is negative, assume that name is null-terminated.
- * \param name  the name to search for
- * \return index of parameter in the list.
- */
-GLint
-_mesa_lookup_parameter_index(const struct gl_program_parameter_list *paramList,
-                             GLsizei nameLen, const char *name)
-{
-   GLint i;
-
-   if (!paramList)
-      return -1;
-
-   if (nameLen == -1) {
-      /* name is null-terminated */
-      for (i = 0; i < (GLint) paramList->NumParameters; i++) {
-         if (paramList->Parameters[i].Name &&
-	     strcmp(paramList->Parameters[i].Name, name) == 0)
-            return i;
-      }
-   }
-   else {
-      /* name is not null-terminated, use nameLen */
-      for (i = 0; i < (GLint) paramList->NumParameters; i++) {
-         if (paramList->Parameters[i].Name &&
-	     strncmp(paramList->Parameters[i].Name, name, nameLen) == 0
-             && strlen(paramList->Parameters[i].Name) == (size_t)nameLen)
-            return i;
-      }
-   }
-   return -1;
-}
-
-
 /**
  * Look for a float vector in the given parameter list.  The float vector
  * may be of length 1, 2, 3 or 4.  If swizzleOut is non-null, we'll try
@@ -431,10 +49,10 @@ _mesa_lookup_parameter_index(const struct gl_program_parameter_list *paramList,
  *                    vector elements if found.
  * \return GL_TRUE if found, GL_FALSE if not found
  */
-GLboolean
-_mesa_lookup_parameter_constant(const struct gl_program_parameter_list *list,
-                                const gl_constant_value v[], GLuint vSize,
-                                GLint *posOut, GLuint *swizzleOut)
+static GLboolean
+lookup_parameter_constant(const struct gl_program_parameter_list *list,
+                          const gl_constant_value v[], GLuint vSize,
+                          GLint *posOut, GLuint *swizzleOut)
 {
    GLuint i;
 
@@ -448,11 +66,13 @@ _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *list,
 
    for (i = 0; i < list->NumParameters; i++) {
       if (list->Parameters[i].Type == PROGRAM_CONSTANT) {
+         unsigned offset = list->ParameterValueOffset[i];
+
          if (!swizzleOut) {
             /* swizzle not allowed */
             GLuint j, match = 0;
             for (j = 0; j < vSize; j++) {
-               if (v[j].u == list->ParameterValues[i][j].u)
+               if (v[j].u == list->ParameterValues[offset + j].u)
                   match++;
             }
             if (match == vSize) {
@@ -466,7 +86,7 @@ _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *list,
                 /* look for v[0] anywhere within float[4] value */
                 GLuint j;
                 for (j = 0; j < list->Parameters[i].Size; j++) {
-                   if (list->ParameterValues[i][j].u == v[0].u) {
+                   if (list->ParameterValues[offset + j].u == v[0].u) {
                       /* found it */
                       *posOut = i;
                       *swizzleOut = MAKE_SWIZZLE4(j, j, j, j);
@@ -479,13 +99,13 @@ _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *list,
                 GLuint swz[4];
                 GLuint match = 0, j, k;
                 for (j = 0; j < vSize; j++) {
-                   if (v[j].u == list->ParameterValues[i][j].u) {
+                   if (v[j].u == list->ParameterValues[offset + j].u) {
                       swz[j] = j;
                       match++;
                    }
                    else {
                       for (k = 0; k < list->Parameters[i].Size; k++) {
-                         if (v[j].u == list->ParameterValues[i][k].u) {
+                         if (v[j].u == list->ParameterValues[offset + k].u) {
                             swz[j] = k;
                             match++;
                             break;
@@ -513,70 +133,278 @@ _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *list,
 
 
 struct gl_program_parameter_list *
-_mesa_clone_parameter_list(const struct gl_program_parameter_list *list)
+_mesa_new_parameter_list(void)
 {
-   struct gl_program_parameter_list *clone;
-   GLuint i;
+   return CALLOC_STRUCT(gl_program_parameter_list);
+}
 
-   clone = _mesa_new_parameter_list();
-   if (!clone)
-      return NULL;
 
-   /** Not too efficient, but correct */
-   for (i = 0; i < list->NumParameters; i++) {
-      struct gl_program_parameter *p = list->Parameters + i;
-      struct gl_program_parameter *pCopy;
-      GLuint size = MIN2(p->Size, 4);
-      GLint j = _mesa_add_parameter(clone, p->Type, p->Name, size, p->DataType,
-                                    list->ParameterValues[i], NULL);
-      ASSERT(j >= 0);
-      pCopy = clone->Parameters + j;
-      /* copy state indexes */
-      if (p->Type == PROGRAM_STATE_VAR) {
-         GLint k;
-         for (k = 0; k < STATE_LENGTH; k++) {
-            pCopy->StateIndexes[k] = p->StateIndexes[k];
-         }
+struct gl_program_parameter_list *
+_mesa_new_parameter_list_sized(unsigned size)
+{
+   struct gl_program_parameter_list *p = _mesa_new_parameter_list();
+
+   if ((p != NULL) && (size != 0)) {
+      p->Size = size;
+
+      /* alloc arrays */
+      p->Parameters = (struct gl_program_parameter *)
+         calloc(size, sizeof(struct gl_program_parameter));
+
+      p->ParameterValueOffset = (unsigned *) calloc(size, sizeof(unsigned));
+
+      p->ParameterValues = (gl_constant_value *)
+         _mesa_align_malloc(size * 4 *sizeof(gl_constant_value), 16);
+
+
+      if ((p->Parameters == NULL) || (p->ParameterValues == NULL)) {
+         free(p->Parameters);
+         _mesa_align_free(p->ParameterValues);
+         free(p);
+         p = NULL;
       }
-      else {
-         clone->Parameters[j].Size = p->Size;
-      }
-      
    }
 
-   clone->StateFlags = list->StateFlags;
-
-   return clone;
+   return p;
 }
 
 
 /**
- * Return a new parameter list which is listA + listB.
+ * Free a parameter list and all its parameters
  */
-struct gl_program_parameter_list *
-_mesa_combine_parameter_lists(const struct gl_program_parameter_list *listA,
-                              const struct gl_program_parameter_list *listB)
+void
+_mesa_free_parameter_list(struct gl_program_parameter_list *paramList)
 {
-   struct gl_program_parameter_list *list;
+   GLuint i;
+   for (i = 0; i < paramList->NumParameters; i++) {
+      free((void *)paramList->Parameters[i].Name);
+   }
+   free(paramList->Parameters);
+   free(paramList->ParameterValueOffset);
+   _mesa_align_free(paramList->ParameterValues);
+   free(paramList);
+}
 
-   if (listA) {
-      list = _mesa_clone_parameter_list(listA);
-      if (list && listB) {
-         GLuint i;
-         for (i = 0; i < listB->NumParameters; i++) {
-            struct gl_program_parameter *param = listB->Parameters + i;
-            _mesa_add_parameter(list, param->Type, param->Name, param->Size,
-                                param->DataType,
-                                listB->ParameterValues[i],
-                                param->StateIndexes);
+
+/**
+ * Make sure there are enough unused parameter slots. Reallocate the list
+ * if needed.
+ *
+ * \param paramList        where to reserve parameter slots
+ * \param reserve_slots    number of slots to reserve
+ */
+void
+_mesa_reserve_parameter_storage(struct gl_program_parameter_list *paramList,
+                                unsigned reserve_slots)
+{
+   const GLuint oldNum = paramList->NumParameters;
+
+   if (oldNum + reserve_slots > paramList->Size) {
+      /* Need to grow the parameter list array (alloc some extra) */
+      paramList->Size = paramList->Size + 4 * reserve_slots;
+
+      /* realloc arrays */
+      paramList->Parameters =
+         realloc(paramList->Parameters,
+                 paramList->Size * sizeof(struct gl_program_parameter));
+
+      paramList->ParameterValueOffset =
+         realloc(paramList->ParameterValueOffset,
+                 paramList->Size * sizeof(unsigned));
+
+      paramList->ParameterValues = (gl_constant_value *)
+         _mesa_align_realloc(paramList->ParameterValues,         /* old buf */
+                             oldNum * 4 * sizeof(gl_constant_value),/* old sz */
+                             paramList->Size*4*sizeof(gl_constant_value),/*new*/
+                             16);
+   }
+}
+
+
+/**
+ * Add a new parameter to a parameter list.
+ * Note that parameter values are usually 4-element GLfloat vectors.
+ * When size > 4 we'll allocate a sequential block of parameters to
+ * store all the values (in blocks of 4).
+ *
+ * \param paramList  the list to add the parameter to
+ * \param type  type of parameter, such as 
+ * \param name  the parameter name, will be duplicated/copied!
+ * \param size  number of elements in 'values' vector (1..4, or more)
+ * \param datatype  GL_FLOAT, GL_FLOAT_VECx, GL_INT, GL_INT_VECx or GL_NONE.
+ * \param values  initial parameter value, up to 4 gl_constant_values, or NULL
+ * \param state  state indexes, or NULL
+ * \return  index of new parameter in the list, or -1 if error (out of mem)
+ */
+GLint
+_mesa_add_parameter(struct gl_program_parameter_list *paramList,
+                    gl_register_file type, const char *name,
+                    GLuint size, GLenum datatype,
+                    const gl_constant_value *values,
+                    const gl_state_index16 state[STATE_LENGTH],
+                    bool pad_and_align)
+{
+   assert(0 < size && size <=4);
+   const GLuint oldNum = paramList->NumParameters;
+   unsigned oldValNum = pad_and_align ?
+      align(paramList->NumParameterValues, 4) : paramList->NumParameterValues;
+
+   _mesa_reserve_parameter_storage(paramList, 1);
+
+   if (!paramList->Parameters || !paramList->ParameterValueOffset ||
+       !paramList->ParameterValues) {
+      /* out of memory */
+      paramList->NumParameters = 0;
+      paramList->Size = 0;
+      return -1;
+   }
+
+   paramList->NumParameters = oldNum + 1;
+
+   unsigned pad = pad_and_align ? align(size, 4) : size;
+   paramList->NumParameterValues = oldValNum + pad;
+
+   memset(&paramList->Parameters[oldNum], 0,
+          sizeof(struct gl_program_parameter));
+
+   struct gl_program_parameter *p = paramList->Parameters + oldNum;
+   p->Name = strdup(name ? name : "");
+   p->Type = type;
+   p->Size = size;
+   p->DataType = datatype;
+
+   paramList->ParameterValueOffset[oldNum] = oldValNum;
+   if (values) {
+      if (size >= 4) {
+         COPY_4V(paramList->ParameterValues + oldValNum, values);
+      } else {
+         /* copy 1, 2 or 3 values */
+         assert(size < 4);
+         unsigned j;
+         for (j = 0; j < size; j++) {
+            paramList->ParameterValues[oldValNum + j].f = values[j].f;
+         }
+
+         /* Zero out padding (if any) to avoid valgrind errors */
+         for (; j < pad; j++) {
+            paramList->ParameterValues[oldValNum + j].f = 0;
+         }
+      }
+   } else {
+      for (unsigned j = 0; j < 4; j++) {
+         paramList->ParameterValues[oldValNum + j].f = 0;
+      }
+   }
+
+   if (state) {
+      for (unsigned i = 0; i < STATE_LENGTH; i++)
+         paramList->Parameters[oldNum].StateIndexes[i] = state[i];
+   }
+
+   return (GLint) oldNum;
+}
+
+
+/**
+ * Add a new unnamed constant to the parameter list.  This will be used
+ * when a fragment/vertex program contains something like this:
+ *    MOV r, { 0, 1, 2, 3 };
+ * If swizzleOut is non-null we'll search the parameter list for an
+ * existing instance of the constant which matches with a swizzle.
+ *
+ * \param paramList  the parameter list
+ * \param values  four float values
+ * \param swizzleOut  returns swizzle mask for accessing the constant
+ * \return index/position of the new parameter in the parameter list.
+ */
+GLint
+_mesa_add_typed_unnamed_constant(struct gl_program_parameter_list *paramList,
+                           const gl_constant_value values[4], GLuint size,
+                           GLenum datatype, GLuint *swizzleOut)
+{
+   GLint pos;
+   assert(size >= 1);
+   assert(size <= 4);
+
+   if (swizzleOut &&
+       lookup_parameter_constant(paramList, values, size, &pos, swizzleOut)) {
+      return pos;
+   }
+
+   /* Look for empty space in an already unnamed constant parameter
+    * to add this constant.  This will only work for single-element
+    * constants because we rely on smearing (i.e. .yyyy or .zzzz).
+    */
+   if (size == 1 && swizzleOut) {
+      for (pos = 0; pos < (GLint) paramList->NumParameters; pos++) {
+         struct gl_program_parameter *p = paramList->Parameters + pos;
+         unsigned offset = paramList->ParameterValueOffset[pos];
+         if (p->Type == PROGRAM_CONSTANT && p->Size + size <= 4) {
+            /* ok, found room */
+            gl_constant_value *pVal = paramList->ParameterValues + offset;
+            GLuint swz = p->Size; /* 1, 2 or 3 for Y, Z, W */
+            pVal[p->Size] = values[0];
+            p->Size++;
+            *swizzleOut = MAKE_SWIZZLE4(swz, swz, swz, swz);
+            return pos;
          }
       }
    }
-   else if (listB) {
-      list = _mesa_clone_parameter_list(listB);
+
+   /* add a new parameter to store this constant */
+   pos = _mesa_add_parameter(paramList, PROGRAM_CONSTANT, NULL,
+                             size, datatype, values, NULL, true);
+   if (pos >= 0 && swizzleOut) {
+      if (size == 1)
+         *swizzleOut = SWIZZLE_XXXX;
+      else
+         *swizzleOut = SWIZZLE_NOOP;
    }
-   else {
-      list = NULL;
+   return pos;
+}
+
+GLint
+_mesa_add_sized_state_reference(struct gl_program_parameter_list *paramList,
+                                const gl_state_index16 stateTokens[STATE_LENGTH],
+                                const unsigned size, bool pad_and_align)
+{
+   char *name;
+   GLint index;
+
+   /* Check if the state reference is already in the list */
+   for (index = 0; index < (GLint) paramList->NumParameters; index++) {
+      if (!memcmp(paramList->Parameters[index].StateIndexes,
+                  stateTokens,
+                  sizeof(paramList->Parameters[index].StateIndexes))) {
+         return index;
+      }
    }
-   return list;
+
+   name = _mesa_program_state_string(stateTokens);
+   index = _mesa_add_parameter(paramList, PROGRAM_STATE_VAR, name,
+                               size, GL_NONE, NULL, stateTokens,
+                               pad_and_align);
+   paramList->StateFlags |= _mesa_program_state_flags(stateTokens);
+
+   /* free name string here since we duplicated it in add_parameter() */
+   free(name);
+
+   return index;
+}
+
+
+/**
+ * Add a new state reference to the parameter list.
+ * This will be used when the program contains something like this:
+ *    PARAM ambient = state.material.front.ambient;
+ *
+ * \param paramList  the parameter list
+ * \param stateTokens  an array of 5 (STATE_LENGTH) state tokens
+ * \return index of the new parameter.
+ */
+GLint
+_mesa_add_state_reference(struct gl_program_parameter_list *paramList,
+                          const gl_state_index16 stateTokens[STATE_LENGTH])
+{
+   return _mesa_add_sized_state_reference(paramList, stateTokens, 4, true);
 }

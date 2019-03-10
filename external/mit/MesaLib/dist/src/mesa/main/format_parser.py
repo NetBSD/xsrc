@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #
 # Copyright 2009 VMware, Inc.
 # Copyright 2014 Intel Corporation
@@ -24,6 +23,8 @@
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+import sys
+
 VOID = 'x'
 UNSIGNED = 'u'
 SIGNED = 's'
@@ -37,9 +38,6 @@ RGB = 'rgb'
 SRGB = 'srgb'
 YUV = 'yuv'
 ZS = 'zs'
-
-def is_power_of_two(x):
-   return not bool(x & (x - 1))
 
 VERY_LARGE = 99999999999999999999999
 
@@ -63,7 +61,13 @@ class Channel:
       return s
 
    def __eq__(self, other):
+      if other is None:
+         return False
+
       return self.type == other.type and self.norm == other.norm and self.size == other.size
+
+   def __ne__(self, other):
+      return not self.__eq__(other)
 
    def max(self):
       """Returns the maximum representable number."""
@@ -98,9 +102,9 @@ class Channel:
       else:
          return 1
 
-   def is_power_of_two(self):
-      """Returns true if the size of this channel is a power of two."""
-      return is_power_of_two(self.size)
+   def datatype(self):
+      """Returns the datatype corresponding to a channel type and size"""
+      return _get_datatype(self.type, self.size)
 
 class Swizzle:
    """Describes a swizzle operation.
@@ -218,8 +222,8 @@ class Swizzle:
       component, exactly as you would expect.
       """
       rev = [Swizzle.SWIZZLE_NONE] * 4
-      for i in xrange(4):
-         for j in xrange(4):
+      for i in range(4):
+         for j in range(4):
             if self.__list[j] == i and rev[i] == Swizzle.SWIZZLE_NONE:
                rev[i] = j
       return Swizzle(rev)
@@ -228,7 +232,7 @@ class Swizzle:
 class Format:
    """Describes a pixel format."""
 
-   def __init__(self, name, layout, block_width, block_height, channels, swizzle, colorspace):
+   def __init__(self, name, layout, block_width, block_height, block_depth, channels, swizzle, colorspace):
       """Constructs a Format from some metadata and a list of channels.
 
       The channel objects must be unique to this Format and should not be
@@ -242,6 +246,7 @@ class Format:
       layout -- One of 'array', 'packed' 'other', or a compressed layout
       block_width -- The block width if the format is compressed, 1 otherwise
       block_height -- The block height if the format is compressed, 1 otherwise
+      block_depth -- The block depth if the format is compressed, 1 otherwise
       channels -- A list of Channel objects
       swizzle -- A Swizzle from this format to rgba
       colorspace -- one of 'rgb', 'srgb', 'yuv', or 'zs'
@@ -250,6 +255,7 @@ class Format:
       self.layout = layout
       self.block_width = block_width
       self.block_height = block_height
+      self.block_depth = block_depth
       self.channels = channels
       assert isinstance(swizzle, Swizzle)
       self.swizzle = swizzle
@@ -362,7 +368,7 @@ class Format:
 
    def is_compressed(self):
       """Returns true if this is a compressed format."""
-      return self.block_width != 1 or self.block_height != 1
+      return self.block_width != 1 or self.block_height != 1 or self.block_depth != 1
 
    def is_int(self):
       """Returns true if this format is an integer format.
@@ -469,6 +475,49 @@ class Format:
             return channel
       return None
 
+   def datatype(self):
+      """Returns the datatype corresponding to a format's channel type and size"""
+      if self.layout == PACKED:
+         if self.block_size() == 8:
+            return 'uint8_t'
+         if self.block_size() == 16:
+            return 'uint16_t'
+         if self.block_size() == 32:
+            return 'uint32_t'
+         else:
+            assert False
+      else:
+         return _get_datatype(self.channel_type(), self.channel_size())
+
+def _get_datatype(type, size):
+   if type == FLOAT:
+      if size == 32:
+         return 'float'
+      elif size == 16:
+         return 'uint16_t'
+      else:
+         assert False
+   elif type == UNSIGNED:
+      if size <= 8:
+         return 'uint8_t'
+      elif size <= 16:
+         return 'uint16_t'
+      elif size <= 32:
+         return 'uint32_t'
+      else:
+         assert False
+   elif type == SIGNED:
+      if size <= 8:
+         return 'int8_t'
+      elif size <= 16:
+         return 'int16_t'
+      elif size <= 32:
+         return 'int32_t'
+      else:
+         assert False
+   else:
+      assert False
+
 def _parse_channels(fields, layout, colorspace, swizzle):
    channels = []
    for field in fields:
@@ -490,7 +539,7 @@ def _parse_channels(fields, layout, colorspace, swizzle):
    return channels
 
 def parse(filename):
-   """Parse a format descrition in CSV format.
+   """Parse a format description in CSV format.
 
    This function parses the given CSV file and returns an iterable of
    channels."""
@@ -513,9 +562,13 @@ def parse(filename):
          layout = fields[1]
          block_width = int(fields[2])
          block_height = int(fields[3])
-         colorspace = fields[9]
+         block_depth = int(fields[4])
+         colorspace = fields[10]
 
-         swizzle = Swizzle(fields[8])
-         channels = _parse_channels(fields[4:8], layout, colorspace, swizzle)
+         try:
+            swizzle = Swizzle(fields[9])
+         except:
+            sys.exit("error parsing swizzle for format " + name)
+         channels = _parse_channels(fields[5:9], layout, colorspace, swizzle)
 
-         yield Format(name, layout, block_width, block_height, channels, swizzle, colorspace)
+         yield Format(name, layout, block_width, block_height, block_depth, channels, swizzle, colorspace)

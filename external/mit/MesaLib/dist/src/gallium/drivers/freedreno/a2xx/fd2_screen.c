@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2013 Rob Clark <robclark@freedesktop.org>
  *
@@ -38,22 +36,32 @@ fd2_screen_is_format_supported(struct pipe_screen *pscreen,
 		enum pipe_format format,
 		enum pipe_texture_target target,
 		unsigned sample_count,
+		unsigned storage_sample_count,
 		unsigned usage)
 {
 	unsigned retval = 0;
 
 	if ((target >= PIPE_MAX_TEXTURE_TYPES) ||
-			(sample_count > 1) || /* TODO add MSAA */
-			!util_format_is_supported(format, usage)) {
+			(sample_count > 1)) { /* TODO add MSAA */
 		DBG("not supported: format=%s, target=%d, sample_count=%d, usage=%x",
 				util_format_name(format), target, sample_count, usage);
 		return FALSE;
 	}
 
+	if (MAX2(1, sample_count) != MAX2(1, storage_sample_count))
+		return false;
+
 	/* TODO figure out how to render to other formats.. */
 	if ((usage & PIPE_BIND_RENDER_TARGET) &&
-			((format != PIPE_FORMAT_B8G8R8A8_UNORM) &&
-			 (format != PIPE_FORMAT_B8G8R8X8_UNORM))) {
+			((format != PIPE_FORMAT_B5G6R5_UNORM) &&
+			 (format != PIPE_FORMAT_B5G5R5A1_UNORM) &&
+			 (format != PIPE_FORMAT_B5G5R5X1_UNORM) &&
+			 (format != PIPE_FORMAT_B4G4R4A4_UNORM) &&
+			 (format != PIPE_FORMAT_B4G4R4X4_UNORM) &&
+			 (format != PIPE_FORMAT_B8G8R8A8_UNORM) &&
+			 (format != PIPE_FORMAT_B8G8R8X8_UNORM) &&
+			 (format != PIPE_FORMAT_R8G8B8A8_UNORM) &&
+			 (format != PIPE_FORMAT_R8G8B8X8_UNORM))) {
 		DBG("not supported render target: format=%s, target=%d, sample_count=%d, usage=%x",
 				util_format_name(format), target, sample_count, usage);
 		return FALSE;
@@ -61,7 +69,7 @@ fd2_screen_is_format_supported(struct pipe_screen *pscreen,
 
 	if ((usage & (PIPE_BIND_SAMPLER_VIEW |
 				PIPE_BIND_VERTEX_BUFFER)) &&
-			(fd2_pipe2surface(format) != ~0)) {
+			(fd2_pipe2surface(format) != (enum a2xx_sq_surfaceformat)~0)) {
 		retval |= usage & (PIPE_BIND_SAMPLER_VIEW |
 				PIPE_BIND_VERTEX_BUFFER);
 	}
@@ -70,7 +78,7 @@ fd2_screen_is_format_supported(struct pipe_screen *pscreen,
 				PIPE_BIND_DISPLAY_TARGET |
 				PIPE_BIND_SCANOUT |
 				PIPE_BIND_SHARED)) &&
-			(fd2_pipe2color(format) != ~0)) {
+			(fd2_pipe2color(format) != (enum a2xx_colorformatx)~0)) {
 		retval |= usage & (PIPE_BIND_RENDER_TARGET |
 				PIPE_BIND_DISPLAY_TARGET |
 				PIPE_BIND_SCANOUT |
@@ -78,19 +86,14 @@ fd2_screen_is_format_supported(struct pipe_screen *pscreen,
 	}
 
 	if ((usage & PIPE_BIND_DEPTH_STENCIL) &&
-			(fd_pipe2depth(format) != ~0)) {
+			(fd_pipe2depth(format) != (enum adreno_rb_depth_format)~0)) {
 		retval |= PIPE_BIND_DEPTH_STENCIL;
 	}
 
 	if ((usage & PIPE_BIND_INDEX_BUFFER) &&
-			(fd_pipe2index(format) != ~0)) {
+			(fd_pipe2index(format) != (enum pc_di_index_size)~0)) {
 		retval |= PIPE_BIND_INDEX_BUFFER;
 	}
-
-	if (usage & PIPE_BIND_TRANSFER_READ)
-		retval |= PIPE_BIND_TRANSFER_READ;
-	if (usage & PIPE_BIND_TRANSFER_WRITE)
-		retval |= PIPE_BIND_TRANSFER_WRITE;
 
 	if (retval != usage) {
 		DBG("not supported: format=%s, target=%d, sample_count=%d, "
@@ -104,6 +107,7 @@ fd2_screen_is_format_supported(struct pipe_screen *pscreen,
 void
 fd2_screen_init(struct pipe_screen *pscreen)
 {
+	fd_screen(pscreen)->max_rts = 1;
 	pscreen->context_create = fd2_context_create;
 	pscreen->is_format_supported = fd2_screen_is_format_supported;
 }

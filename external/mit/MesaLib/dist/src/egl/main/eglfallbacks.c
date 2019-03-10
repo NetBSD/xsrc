@@ -32,9 +32,6 @@
 #include "eglconfig.h"
 #include "eglcontext.h"
 #include "eglsurface.h"
-#include "eglmisc.h"
-#include "eglscreen.h"
-#include "eglmode.h"
 #include "eglsync.h"
 
 
@@ -52,8 +49,6 @@ _eglReturnFalse(void)
 void
 _eglInitDriverFallbacks(_EGLDriver *drv)
 {
-   memset(&drv->API, 0, sizeof(drv->API));
-
    /* the driver has to implement these */
    drv->API.Initialize = NULL;
    drv->API.Terminate = NULL;
@@ -62,46 +57,30 @@ _eglInitDriverFallbacks(_EGLDriver *drv)
    drv->API.ChooseConfig = _eglChooseConfig;
    drv->API.GetConfigAttrib = _eglGetConfigAttrib;
 
-   drv->API.CreateContext = (CreateContext_t) _eglReturnFalse;
-   drv->API.DestroyContext = (DestroyContext_t) _eglReturnFalse;
-   drv->API.MakeCurrent = (MakeCurrent_t) _eglReturnFalse;
+   drv->API.CreateContext = (void*) _eglReturnFalse;
+   drv->API.DestroyContext = (void*) _eglReturnFalse;
+   drv->API.MakeCurrent = (void*) _eglReturnFalse;
    drv->API.QueryContext = _eglQueryContext;
 
-   drv->API.CreateWindowSurface = (CreateWindowSurface_t) _eglReturnFalse;
-   drv->API.CreatePixmapSurface = (CreatePixmapSurface_t) _eglReturnFalse;
-   drv->API.CreatePbufferSurface = (CreatePbufferSurface_t) _eglReturnFalse;
+   drv->API.CreateWindowSurface = (void*) _eglReturnFalse;
+   drv->API.CreatePixmapSurface = (void*) _eglReturnFalse;
+   drv->API.CreatePbufferSurface = (void*) _eglReturnFalse;
    drv->API.CreatePbufferFromClientBuffer =
-      (CreatePbufferFromClientBuffer_t) _eglReturnFalse;
-   drv->API.DestroySurface = (DestroySurface_t) _eglReturnFalse;
+      (void*) _eglReturnFalse;
+   drv->API.DestroySurface = (void*) _eglReturnFalse;
    drv->API.QuerySurface = _eglQuerySurface;
    drv->API.SurfaceAttrib = _eglSurfaceAttrib;
 
-   drv->API.BindTexImage = (BindTexImage_t) _eglReturnFalse;
-   drv->API.ReleaseTexImage = (ReleaseTexImage_t) _eglReturnFalse;
-   drv->API.CopyBuffers = (CopyBuffers_t) _eglReturnFalse;
-   drv->API.SwapBuffers = (SwapBuffers_t) _eglReturnFalse;
+   drv->API.BindTexImage = (void*) _eglReturnFalse;
+   drv->API.ReleaseTexImage = (void*) _eglReturnFalse;
+   drv->API.CopyBuffers = (void*) _eglReturnFalse;
+   drv->API.SwapBuffers = (void*) _eglReturnFalse;
+   drv->API.SetDamageRegion = (void*) _eglReturnFalse;
    drv->API.SwapInterval = _eglSwapInterval;
 
-   drv->API.WaitClient = (WaitClient_t) _eglReturnFalse;
-   drv->API.WaitNative = (WaitNative_t) _eglReturnFalse;
-   drv->API.GetProcAddress = (GetProcAddress_t) _eglReturnFalse;
-   drv->API.QueryString = _eglQueryString;
-
-#ifdef EGL_MESA_screen_surface
-   drv->API.CopyContextMESA = (CopyContextMESA_t) _eglReturnFalse;
-   drv->API.CreateScreenSurfaceMESA =
-      (CreateScreenSurfaceMESA_t) _eglReturnFalse;
-   drv->API.ShowScreenSurfaceMESA = (ShowScreenSurfaceMESA_t) _eglReturnFalse;
-   drv->API.ChooseModeMESA = _eglChooseModeMESA;
-   drv->API.GetModesMESA = _eglGetModesMESA;
-   drv->API.GetModeAttribMESA = _eglGetModeAttribMESA;
-   drv->API.GetScreensMESA = _eglGetScreensMESA;
-   drv->API.ScreenPositionMESA = _eglScreenPositionMESA;
-   drv->API.QueryScreenMESA = _eglQueryScreenMESA;
-   drv->API.QueryScreenSurfaceMESA = _eglQueryScreenSurfaceMESA;
-   drv->API.QueryScreenModeMESA = _eglQueryScreenModeMESA;
-   drv->API.QueryModeStringMESA = _eglQueryModeStringMESA;
-#endif /* EGL_MESA_screen_surface */
+   drv->API.WaitClient = (void*) _eglReturnFalse;
+   drv->API.WaitNative = (void*) _eglReturnFalse;
+   drv->API.GetProcAddress = (void*) _eglReturnFalse;
 
    drv->API.CreateImageKHR = NULL;
    drv->API.DestroyImageKHR = NULL;
@@ -109,15 +88,16 @@ _eglInitDriverFallbacks(_EGLDriver *drv)
    drv->API.CreateSyncKHR = NULL;
    drv->API.DestroySyncKHR = NULL;
    drv->API.ClientWaitSyncKHR = NULL;
+   drv->API.WaitSyncKHR = NULL;
    drv->API.SignalSyncKHR = NULL;
-   drv->API.GetSyncAttribKHR = _eglGetSyncAttribKHR;
+   drv->API.GetSyncAttrib = _eglGetSyncAttrib;
+   drv->API.DupNativeFenceFDANDROID = NULL;
 
-#ifdef EGL_MESA_drm_image
    drv->API.CreateDRMImageMESA = NULL;
    drv->API.ExportDRMImageMESA = NULL;
-#endif
 
-#ifdef EGL_NOK_swap_region
    drv->API.SwapBuffersRegionNOK = NULL;
-#endif
+
+   drv->API.ExportDMABUFImageQueryMESA = NULL;
+   drv->API.ExportDMABUFImageMESA = NULL;
 }

@@ -40,7 +40,7 @@
 
 #include "util/u_math.h"
 
-#if defined(__GNUC__) && __GNUC__ >= 4
+#if defined(__GNUC__)
 #define XA_EXPORT __attribute__ ((visibility("default")))
 #else
 #define XA_EXPORT
@@ -74,8 +74,6 @@ struct xa_surface {
 struct xa_tracker {
     enum xa_formats *supported_formats;
     unsigned int format_map[XA_LAST_SURFACE_TYPE][2];
-    int d_depth_bits_last;
-    int ds_depth_bits_last;
     struct pipe_loader_device *dev;
     struct pipe_screen *screen;
     struct xa_context *default_ctx;
@@ -123,7 +121,7 @@ struct xa_context {
     const struct xa_composite *comp;
 };
 
-static INLINE void
+static inline void
 xa_scissor_reset(struct xa_context *ctx)
 {
     ctx->scissor.maxx = 0;
@@ -133,7 +131,7 @@ xa_scissor_reset(struct xa_context *ctx)
     ctx->scissor_valid = FALSE;
 }
 
-static INLINE void
+static inline void
 xa_scissor_update(struct xa_context *ctx, unsigned minx, unsigned miny,
 		unsigned maxx, unsigned maxy)
 {
@@ -189,13 +187,13 @@ struct xa_shaders;
  * Inline utilities
  */
 
-static INLINE int
+static inline int
 xa_min(int a, int b)
 {
     return ((a <= b) ? a : b);
 }
 
-static INLINE void
+static inline void
 xa_pixel_to_float4(uint32_t pixel, float *color)
 {
     uint32_t	    r, g, b, a;
@@ -210,7 +208,7 @@ xa_pixel_to_float4(uint32_t pixel, float *color)
     color[3] = ((float)a) / 255.;
 }
 
-static INLINE void
+static inline void
 xa_pixel_to_float4_a8(uint32_t pixel, float *color)
 {
     uint32_t a;

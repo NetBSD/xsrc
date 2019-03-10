@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2014 Rob Clark <robclark@freedesktop.org>
  *
@@ -27,6 +25,7 @@
  */
 
 #include "tgsi/tgsi_text.h"
+#include "tgsi/tgsi_ureg.h"
 
 #include "freedreno_program.h"
 #include "freedreno_context.h"
@@ -36,7 +35,7 @@ fd_fp_state_bind(struct pipe_context *pctx, void *hwcso)
 {
 	struct fd_context *ctx = fd_context(pctx);
 	ctx->prog.fp = hwcso;
-	ctx->prog.dirty |= FD_SHADER_DIRTY_FP;
+	ctx->dirty_shader[PIPE_SHADER_FRAGMENT] |= FD_DIRTY_SHADER_PROG;
 	ctx->dirty |= FD_DIRTY_PROG;
 }
 
@@ -45,7 +44,7 @@ fd_vp_state_bind(struct pipe_context *pctx, void *hwcso)
 {
 	struct fd_context *ctx = fd_context(pctx);
 	ctx->prog.vp = hwcso;
-	ctx->prog.dirty |= FD_SHADER_DIRTY_VP;
+	ctx->dirty_shader[PIPE_SHADER_VERTEX] |= FD_DIRTY_SHADER_PROG;
 	ctx->dirty |= FD_DIRTY_PROG;
 }
 
@@ -62,15 +61,6 @@ static const char *solid_vp =
 	"DCL IN[0]                                   \n"
 	"DCL OUT[0], POSITION                        \n"
 	"  0: MOV OUT[0], IN[0]                      \n"
-	"  1: END                                    \n";
-
-static const char *blit_fp =
-	"FRAG                                        \n"
-	"PROPERTY FS_COLOR0_WRITES_ALL_CBUFS 1       \n"
-	"DCL IN[0], TEXCOORD[0], PERSPECTIVE         \n"
-	"DCL OUT[0], COLOR                           \n"
-	"DCL SAMP[0]                                 \n"
-	"  0: TEX OUT[0], IN[0], SAMP[0], 2D         \n"
 	"  1: END                                    \n";
 
 static const char *blit_vp =
@@ -91,7 +81,8 @@ static void * assemble_tgsi(struct pipe_context *pctx,
 			.tokens = toks,
 	};
 
-	tgsi_text_translate(src, toks, ARRAY_SIZE(toks));
+	bool ret = tgsi_text_translate(src, toks, ARRAY_SIZE(toks));
+	assume(ret);
 
 	if (frag)
 		return pctx->create_fs_state(pctx, &cso);
@@ -99,9 +90,41 @@ static void * assemble_tgsi(struct pipe_context *pctx,
 		return pctx->create_vs_state(pctx, &cso);
 }
 
+static void *
+fd_prog_blit(struct pipe_context *pctx, int rts, bool depth)
+{
+	int i;
+	struct ureg_src tc;
+	struct ureg_program *ureg;
+
+	debug_assert(rts <= MAX_RENDER_TARGETS);
+
+	ureg = ureg_create(PIPE_SHADER_FRAGMENT);
+	if (!ureg)
+		return NULL;
+
+	tc = ureg_DECL_fs_input(
+			ureg, TGSI_SEMANTIC_GENERIC, 0, TGSI_INTERPOLATE_PERSPECTIVE);
+	for (i = 0; i < rts; i++)
+		ureg_TEX(ureg, ureg_DECL_output(ureg, TGSI_SEMANTIC_COLOR, i),
+				 TGSI_TEXTURE_2D, tc, ureg_DECL_sampler(ureg, i));
+	if (depth)
+		ureg_TEX(ureg,
+				 ureg_writemask(
+						 ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 0),
+						 TGSI_WRITEMASK_Z),
+				 TGSI_TEXTURE_2D, tc, ureg_DECL_sampler(ureg, rts));
+
+	ureg_END(ureg);
+
+	return ureg_create_shader_and_destroy(ureg, pctx);
+}
+
+
 void fd_prog_init(struct pipe_context *pctx)
 {
 	struct fd_context *ctx = fd_context(pctx);
+	int i;
 
 	pctx->bind_fs_state = fd_fp_state_bind;
 	pctx->bind_vs_state = fd_vp_state_bind;
@@ -113,16 +136,29 @@ void fd_prog_init(struct pipe_context *pctx)
 
 	ctx->solid_prog.fp = assemble_tgsi(pctx, solid_fp, true);
 	ctx->solid_prog.vp = assemble_tgsi(pctx, solid_vp, false);
-	ctx->blit_prog.fp = assemble_tgsi(pctx, blit_fp, true);
-	ctx->blit_prog.vp = assemble_tgsi(pctx, blit_vp, false);
+	ctx->blit_prog[0].vp = assemble_tgsi(pctx, blit_vp, false);
+	ctx->blit_prog[0].fp = fd_prog_blit(pctx, 1, false);
+	for (i = 1; i < ctx->screen->max_rts; i++) {
+		ctx->blit_prog[i].vp = ctx->blit_prog[0].vp;
+		ctx->blit_prog[i].fp = fd_prog_blit(pctx, i + 1, false);
+	}
+
+	ctx->blit_z.vp = ctx->blit_prog[0].vp;
+	ctx->blit_z.fp = fd_prog_blit(pctx, 0, true);
+	ctx->blit_zs.vp = ctx->blit_prog[0].vp;
+	ctx->blit_zs.fp = fd_prog_blit(pctx, 1, true);
 }
 
 void fd_prog_fini(struct pipe_context *pctx)
 {
 	struct fd_context *ctx = fd_context(pctx);
+	int i;
 
 	pctx->delete_vs_state(pctx, ctx->solid_prog.vp);
 	pctx->delete_fs_state(pctx, ctx->solid_prog.fp);
-	pctx->delete_vs_state(pctx, ctx->blit_prog.vp);
-	pctx->delete_fs_state(pctx, ctx->blit_prog.fp);
+	pctx->delete_vs_state(pctx, ctx->blit_prog[0].vp);
+	for (i = 0; i < ctx->screen->max_rts; i++)
+		pctx->delete_fs_state(pctx, ctx->blit_prog[i].fp);
+	pctx->delete_fs_state(pctx, ctx->blit_z.fp);
+	pctx->delete_fs_state(pctx, ctx->blit_zs.fp);
 }

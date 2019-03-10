@@ -41,11 +41,16 @@ _mesa_SampleCoverage(GLclampf value, GLboolean invert)
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   FLUSH_VERTICES(ctx, 0);
+   value = CLAMP(value, 0.0f, 1.0f);
 
-   ctx->Multisample.SampleCoverageValue = (GLfloat) CLAMP(value, 0.0, 1.0);
+   if (ctx->Multisample.SampleCoverageInvert == invert &&
+       ctx->Multisample.SampleCoverageValue == value)
+      return;
+
+   FLUSH_VERTICES(ctx, ctx->DriverFlags.NewSampleMask ? 0 : _NEW_MULTISAMPLE);
+   ctx->NewDriverState |= ctx->DriverFlags.NewSampleMask;
+   ctx->Multisample.SampleCoverageValue = value;
    ctx->Multisample.SampleCoverageInvert = invert;
-   ctx->NewState |= _NEW_MULTISAMPLE;
 }
 
 
@@ -62,6 +67,8 @@ _mesa_init_multisample(struct gl_context *ctx)
    ctx->Multisample.SampleCoverage = GL_FALSE;
    ctx->Multisample.SampleCoverageValue = 1.0;
    ctx->Multisample.SampleCoverageInvert = GL_FALSE;
+   ctx->Multisample.SampleShading = GL_FALSE;
+   ctx->Multisample.MinSampleShadingValue = 0.0f;
 
    /* ARB_texture_multisample / GL3.2 additions */
    ctx->Multisample.SampleMask = GL_FALSE;
@@ -80,24 +87,60 @@ _mesa_GetMultisamplefv(GLenum pname, GLuint index, GLfloat * val)
 
    switch (pname) {
    case GL_SAMPLE_POSITION: {
-      if ((int) index >= ctx->DrawBuffer->Visual.samples) {
+      if (index >= ctx->DrawBuffer->Visual.samples) {
          _mesa_error( ctx, GL_INVALID_VALUE, "glGetMultisamplefv(index)" );
          return;
       }
 
       ctx->Driver.GetSamplePosition(ctx, ctx->DrawBuffer, index, val);
 
-      /* winsys FBOs are upside down */
-      if (_mesa_is_winsys_fbo(ctx->DrawBuffer))
+      /* FBOs can be upside down (winsys always are)*/
+      if (ctx->DrawBuffer->FlipY)
          val[1] = 1.0f - val[1];
 
       return;
    }
 
+   case GL_PROGRAMMABLE_SAMPLE_LOCATION_ARB:
+      if (!ctx->Extensions.ARB_sample_locations) {
+         _mesa_error( ctx, GL_INVALID_ENUM, "glGetMultisamplefv(pname)" );
+         return;
+      }
+
+      if (index >= MAX_SAMPLE_LOCATION_TABLE_SIZE * 2) {
+         _mesa_error( ctx, GL_INVALID_VALUE, "glGetMultisamplefv(index)" );
+         return;
+      }
+
+      if (ctx->DrawBuffer->SampleLocationTable)
+         *val = ctx->DrawBuffer->SampleLocationTable[index];
+      else
+         *val = 0.5f;
+
+      return;
+
    default:
       _mesa_error( ctx, GL_INVALID_ENUM, "glGetMultisamplefv(pname)" );
       return;
    }
+}
+
+static void
+sample_maski(struct gl_context *ctx, GLuint index, GLbitfield mask)
+{
+   if (ctx->Multisample.SampleMaskValue == mask)
+      return;
+
+   FLUSH_VERTICES(ctx, ctx->DriverFlags.NewSampleMask ? 0 : _NEW_MULTISAMPLE);
+   ctx->NewDriverState |= ctx->DriverFlags.NewSampleMask;
+   ctx->Multisample.SampleMaskValue = mask;
+}
+
+void GLAPIENTRY
+_mesa_SampleMaski_no_error(GLuint index, GLbitfield mask)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   sample_maski(ctx, index, mask);
 }
 
 void GLAPIENTRY
@@ -115,27 +158,45 @@ _mesa_SampleMaski(GLuint index, GLbitfield mask)
       return;
    }
 
-   FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
-   ctx->Multisample.SampleMaskValue = mask;
+   sample_maski(ctx, index, mask);
+}
+
+static void
+min_sample_shading(struct gl_context *ctx, GLclampf value)
+{
+   value = CLAMP(value, 0.0f, 1.0f);
+
+   if (ctx->Multisample.MinSampleShadingValue == value)
+      return;
+
+   FLUSH_VERTICES(ctx,
+                  ctx->DriverFlags.NewSampleShading ? 0 : _NEW_MULTISAMPLE);
+   ctx->NewDriverState |= ctx->DriverFlags.NewSampleShading;
+   ctx->Multisample.MinSampleShadingValue = value;
 }
 
 /**
  * Called via glMinSampleShadingARB
  */
 void GLAPIENTRY
+_mesa_MinSampleShading_no_error(GLclampf value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   min_sample_shading(ctx, value);
+}
+
+void GLAPIENTRY
 _mesa_MinSampleShading(GLclampf value)
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   if (!ctx->Extensions.ARB_sample_shading || !_mesa_is_desktop_gl(ctx)) {
+   if (!_mesa_has_ARB_sample_shading(ctx) &&
+       !_mesa_has_OES_sample_shading(ctx)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glMinSampleShading");
       return;
    }
 
-   FLUSH_VERTICES(ctx, 0);
-
-   ctx->Multisample.MinSampleShadingValue = CLAMP(value, 0.0, 1.0);
-   ctx->NewState |= _NEW_MULTISAMPLE;
+   min_sample_shading(ctx, value);
 }
 
 /**
@@ -148,8 +209,75 @@ _mesa_MinSampleShading(GLclampf value)
  */
 GLenum
 _mesa_check_sample_count(struct gl_context *ctx, GLenum target,
-                         GLenum internalFormat, GLsizei samples)
+                         GLenum internalFormat, GLsizei samples,
+                         GLsizei storageSamples)
 {
+   /* Section 4.4 (Framebuffer objects), page 198 of the OpenGL ES 3.0.0
+    * specification says:
+    *
+    *     "If internalformat is a signed or unsigned integer format and samples
+    *     is greater than zero, then the error INVALID_OPERATION is generated."
+    *
+    * This restriction is relaxed for OpenGL ES 3.1.
+    */
+   if ((ctx->API == API_OPENGLES2 && ctx->Version == 30) &&
+       _mesa_is_enum_format_integer(internalFormat)
+       && samples > 0) {
+      return GL_INVALID_OPERATION;
+   }
+
+   if (ctx->Extensions.AMD_framebuffer_multisample_advanced &&
+       target == GL_RENDERBUFFER) {
+      if (!_mesa_is_depth_or_stencil_format(internalFormat)) {
+         /* From the AMD_framebuffer_multisample_advanced spec:
+          *
+          *    "An INVALID_OPERATION error is generated if <internalformat>
+          *     is a color format and <storageSamples> is greater than
+          *     the implementation-dependent limit MAX_COLOR_FRAMEBUFFER_-
+          *     STORAGE_SAMPLES_AMD."
+          */
+         if (samples > ctx->Const.MaxColorFramebufferSamples)
+            return GL_INVALID_OPERATION;
+
+         /* From the AMD_framebuffer_multisample_advanced spec:
+          *
+          *    "An INVALID_OPERATION error is generated if <internalformat>
+          *     is a color format and <storageSamples> is greater than
+          *     the implementation-dependent limit MAX_COLOR_FRAMEBUFFER_-
+          *     STORAGE_SAMPLES_AMD."
+          */
+         if (storageSamples > ctx->Const.MaxColorFramebufferStorageSamples)
+            return GL_INVALID_OPERATION;
+
+         /* From the AMD_framebuffer_multisample_advanced spec:
+          *
+          *    "An INVALID_OPERATION error is generated if <storageSamples> is
+          *     greater than <samples>."
+          */
+         if (storageSamples > samples)
+            return GL_INVALID_OPERATION;
+
+         /* Color renderbuffer sample counts are now fully validated
+          * according to AMD_framebuffer_multisample_advanced.
+          */
+         return GL_NO_ERROR;
+      } else {
+         /* From the AMD_framebuffer_multisample_advanced spec:
+          *
+          *    "An INVALID_OPERATION error is generated if <internalformat> is
+          *     a depth or stencil format and <storageSamples> is not equal to
+          *     <samples>."
+          */
+         if (storageSamples != samples)
+            return GL_INVALID_OPERATION;
+      }
+   } else {
+      /* If the extension is unsupported, it's not possible to set
+       * storageSamples differently.
+       */
+      assert(samples == storageSamples);
+   }
+
    /* If ARB_internalformat_query is supported, then treat its highest
     * returned sample count as the absolute maximum for this format; it is
     * allowed to exceed MAX_SAMPLES.
@@ -160,10 +288,15 @@ _mesa_check_sample_count(struct gl_context *ctx, GLenum target,
     * for <internalformat> then the error INVALID_OPERATION is generated."
     */
    if (ctx->Extensions.ARB_internalformat_query) {
-      GLint buffer[16];
-      int count = ctx->Driver.QuerySamplesForFormat(ctx, target,
-                                                    internalFormat, buffer);
-      int limit = count ? buffer[0] : -1;
+      GLint buffer[16] = {-1};
+      GLint limit;
+
+      ctx->Driver.QueryInternalFormat(ctx, target, internalFormat,
+                                      GL_SAMPLES, buffer);
+      /* since the query returns samples sorted in descending order,
+       * the first element is the greatest supported sample value.
+       */
+      limit = buffer[0];
 
       return samples > limit ? GL_INVALID_OPERATION : GL_NO_ERROR;
    }

@@ -72,7 +72,7 @@ struct i915_fp_compile {
    uint temp_flag;       /**< Tracks temporary regs which are in use */
    uint utemp_flag;      /**< Tracks TYPE_U temporary regs which are in use */
 
-   uint register_phases[16];
+   uint register_phases[I915_MAX_TEMPORARY];
    uint nr_tex_indirect;
    uint nr_tex_insn;
    uint nr_alu_insn;
@@ -136,7 +136,7 @@ struct i915_fp_compile {
 
 /* One neat thing about the UREG representation:  
  */
-static INLINE int
+static inline int
 swizzle(int reg, uint x, uint y, uint z, uint w)
 {
    assert(x <= SRC_ONE);
@@ -296,7 +296,6 @@ struct i915_full_instruction
 {
    struct tgsi_instruction             Instruction;
 /*
-   struct tgsi_instruction_predicate   Predicate;
    struct tgsi_instruction_label       Label;
 */
    struct tgsi_instruction_texture     Texture;

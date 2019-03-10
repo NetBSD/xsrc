@@ -188,7 +188,7 @@ nv30_rasterizer_state_create(struct pipe_context *pipe,
    SB_DATA  (so, cso->flatshade_first);
 
    SB_MTHD30(so, DEPTH_CONTROL, 1);
-   SB_DATA  (so, cso->depth_clip ? 0x00000001 : 0x00000010);
+   SB_DATA  (so, cso->depth_clip_near ? 0x00000001 : 0x00000010);
    return so;
 }
 
@@ -211,6 +211,7 @@ static void *
 nv30_zsa_state_create(struct pipe_context *pipe,
                       const struct pipe_depth_stencil_alpha_state *cso)
 {
+   struct nouveau_object *eng3d = nv30_context(pipe)->screen->eng3d;
    struct nv30_zsa_stateobj *so;
 
    so = CALLOC_STRUCT(nv30_zsa_stateobj);
@@ -222,6 +223,13 @@ nv30_zsa_state_create(struct pipe_context *pipe,
    SB_DATA  (so, nvgl_comparison_op(cso->depth.func));
    SB_DATA  (so, cso->depth.writemask);
    SB_DATA  (so, cso->depth.enabled);
+
+   if (eng3d->oclass == NV35_3D_CLASS || eng3d->oclass >= NV40_3D_CLASS) {
+      SB_MTHD35(so, DEPTH_BOUNDS_TEST_ENABLE, 3);
+      SB_DATA  (so, cso->depth.bounds_test);
+      SB_DATA  (so, fui(cso->depth.bounds_min));
+      SB_DATA  (so, fui(cso->depth.bounds_max));
+   }
 
    if (cso->stencil[0].enabled) {
       SB_MTHD30(so, STENCIL_ENABLE(0), 3);
@@ -318,8 +326,9 @@ nv30_set_sample_mask(struct pipe_context *pipe, unsigned sample_mask)
 }
 
 static void
-nv30_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
-                         struct pipe_constant_buffer *cb)
+nv30_set_constant_buffer(struct pipe_context *pipe,
+                         enum pipe_shader_type shader, uint index,
+                         const struct pipe_constant_buffer *cb)
 {
    struct nv30_context *nv30 = nv30_context(pipe);
    struct pipe_resource *buf = cb ? cb->buffer : NULL;
@@ -371,8 +380,9 @@ nv30_set_framebuffer_state(struct pipe_context *pipe,
        struct nv30_miptree *zeta_mt = nv30_miptree(fb->zsbuf->texture);
 
        if (color_mt->swizzled != zeta_mt->swizzled ||
-           (util_format_get_blocksize(fb->zsbuf->format) > 2) !=
-           (util_format_get_blocksize(fb->cbufs[0]->format) > 2)) {
+           (color_mt->swizzled &&
+            (util_format_get_blocksize(fb->zsbuf->format) > 2) !=
+            (util_format_get_blocksize(fb->cbufs[0]->format) > 2))) {
           nv30->framebuffer.zsbuf = NULL;
           debug_printf("Mismatched color and zeta formats, ignoring zeta.\n");
        }
@@ -428,23 +438,6 @@ nv30_set_vertex_buffers(struct pipe_context *pipe,
     nv30->dirty |= NV30_NEW_ARRAYS;
 }
 
-static void
-nv30_set_index_buffer(struct pipe_context *pipe,
-                      const struct pipe_index_buffer *ib)
-{
-    struct nv30_context *nv30 = nv30_context(pipe);
-
-    if (ib) {
-       pipe_resource_reference(&nv30->idxbuf.buffer, ib->buffer);
-       nv30->idxbuf.index_size = ib->index_size;
-       nv30->idxbuf.offset = ib->offset;
-       nv30->idxbuf.user_buffer = ib->user_buffer;
-    } else {
-       pipe_resource_reference(&nv30->idxbuf.buffer, NULL);
-       nv30->idxbuf.user_buffer = NULL;
-    }
-}
-
 void
 nv30_state_init(struct pipe_context *pipe)
 {
@@ -471,5 +464,4 @@ nv30_state_init(struct pipe_context *pipe)
    pipe->set_viewport_states = nv30_set_viewport_states;
 
    pipe->set_vertex_buffers = nv30_set_vertex_buffers;
-   pipe->set_index_buffer = nv30_set_index_buffer;
 }

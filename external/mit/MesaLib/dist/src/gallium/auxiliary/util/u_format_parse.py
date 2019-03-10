@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 
 '''
 /**************************************************************************
@@ -28,6 +27,9 @@
  *
  **************************************************************************/
 '''
+
+
+from __future__ import division
 
 
 VOID, UNSIGNED, SIGNED, FIXED, FLOAT = range(5)
@@ -70,14 +72,20 @@ class Channel:
         return s
 
     def __eq__(self, other):
+        if other is None:
+            return False
+
         return self.type == other.type and self.norm == other.norm and self.pure == other.pure and self.size == other.size
+
+    def __ne__(self, other):
+        return not self == other
 
     def max(self):
         '''Maximum representable number.'''
         if self.type == FLOAT:
             return VERY_LARGE
         if self.type == FIXED:
-            return (1 << (self.size/2)) - 1
+            return (1 << (self.size // 2)) - 1
         if self.norm:
             return 1
         if self.type == UNSIGNED:
@@ -91,7 +99,7 @@ class Channel:
         if self.type == FLOAT:
             return -VERY_LARGE
         if self.type == FIXED:
-            return -(1 << (self.size/2))
+            return -(1 << (self.size // 2))
         if self.type == UNSIGNED:
             return 0
         if self.norm:
@@ -313,7 +321,7 @@ def _parse_channels(fields, layout, colorspace, swizzles):
     return channels
 
 def parse(filename):
-    '''Parse the format descrition in CSV format in terms of the 
+    '''Parse the format description in CSV format in terms of the
     Channel and Format classes above.'''
 
     stream = open(filename)
@@ -330,6 +338,9 @@ def parse(filename):
             continue
 
         fields = [field.strip() for field in line.split(',')]
+        if len (fields) == 10:
+           fields += fields[4:9]
+        assert len (fields) == 15
         
         name = fields[0]
         layout = fields[1]
@@ -339,8 +350,8 @@ def parse(filename):
         le_swizzles = [_swizzle_parse_map[swizzle] for swizzle in fields[8]]
         le_channels = _parse_channels(fields[4:8], layout, colorspace, le_swizzles)
 
-        be_swizzles = [_swizzle_parse_map[swizzle] for swizzle in fields[8]]
-        be_channels = _parse_channels(fields[4:8], layout, colorspace, be_swizzles)
+        be_swizzles = [_swizzle_parse_map[swizzle] for swizzle in fields[14]]
+        be_channels = _parse_channels(fields[10:14], layout, colorspace, be_swizzles)
 
         le_shift = 0
         for channel in le_channels:
@@ -353,6 +364,8 @@ def parse(filename):
             be_shift += channel.size
 
         assert le_shift == be_shift
+        for i in range(4):
+            assert (le_swizzles[i] != SWIZZLE_NONE) == (be_swizzles[i] != SWIZZLE_NONE)
 
         format = Format(name, layout, block_width, block_height, le_channels, le_swizzles, be_channels, be_swizzles, colorspace)
         formats.append(format)

@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2013 Rob Clark <robclark@freedesktop.org>
  *
@@ -31,8 +29,6 @@
 
 #include "util/u_upload_mgr.h"
 
-#include "freedreno_drmif.h"
-
 #include "freedreno_context.h"
 
 #include "ir3_shader.h"
@@ -41,53 +37,12 @@
 struct fd3_context {
 	struct fd_context base;
 
-	/* Keep track of writes to RB_RENDER_CONTROL which need to be patched
-	 * once we know whether or not to use GMEM, and GMEM tile pitch.
-	 */
-	struct util_dynarray rbrc_patches;
-
 	struct fd_bo *vs_pvt_mem, *fs_pvt_mem;
 
 	/* This only needs to be 4 * num_of_pipes bytes (ie. 32 bytes).  We
 	 * could combine it with another allocation.
 	 */
 	struct fd_bo *vsc_size_mem;
-
-	/* vertex buf used for clear/gmem->mem vertices, and mem->gmem
-	 * vertices:
-	 */
-	struct pipe_resource *solid_vbuf;
-
-	/* vertex buf used for mem->gmem tex coords:
-	 */
-	struct pipe_resource *blit_texcoord_vbuf;
-
-	/* vertex state for solid_vbuf:
-	 *    - solid_vbuf / 12 / R32G32B32_FLOAT
-	 */
-	struct fd_vertex_state solid_vbuf_state;
-
-	/* vertex state for blit_prog:
-	 *    - blit_texcoord_vbuf / 8 / R32G32_FLOAT
-	 *    - solid_vbuf / 12 / R32G32B32_FLOAT
-	 */
-	struct fd_vertex_state blit_vbuf_state;
-
-
-	/*
-	 * Border color layout *appears* to be as arrays of 0x40 byte
-	 * elements, with frag shader elements starting at (16 x 0x40).
-	 * But at some point I should probably experiment more with
-	 * samplers in vertex shaders to be sure.  Unclear about why
-	 * there is this offset when there are separate VS and FS base
-	 * addr regs.
-	 *
-	 * The first 8 bytes of each entry are the requested border
-	 * color in fp16.  Unclear about the rest.. could be used for
-	 * other formats, or could simply be for aligning the pitch
-	 * to 32 pixels.
-	 */
-#define BORDERCOLOR_SIZE 0x40
 
 	struct u_upload_mgr *border_color_uploader;
 	struct pipe_resource *border_color_buf;
@@ -112,13 +67,13 @@ struct fd3_context {
 	struct ir3_shader_key last_key;
 };
 
-static INLINE struct fd3_context *
+static inline struct fd3_context *
 fd3_context(struct fd_context *ctx)
 {
 	return (struct fd3_context *)ctx;
 }
 
 struct pipe_context *
-fd3_context_create(struct pipe_screen *pscreen, void *priv);
+fd3_context_create(struct pipe_screen *pscreen, void *priv, unsigned flags);
 
 #endif /* FD3_CONTEXT_H_ */

@@ -84,9 +84,14 @@ enum util_format_layout {
    UTIL_FORMAT_LAYOUT_BPTC = 7,
 
    /**
+    * ASTC
+    */
+   UTIL_FORMAT_LAYOUT_ASTC = 8,
+
+   /**
     * Everything else that doesn't fit in any of the above layouts.
     */
-   UTIL_FORMAT_LAYOUT_OTHER = 8
+   UTIL_FORMAT_LAYOUT_OTHER = 9
 };
 
 
@@ -109,18 +114,6 @@ enum util_format_type {
    UTIL_FORMAT_TYPE_SIGNED = 2,
    UTIL_FORMAT_TYPE_FIXED = 3,
    UTIL_FORMAT_TYPE_FLOAT = 4
-};
-
-
-enum util_format_swizzle {
-   UTIL_FORMAT_SWIZZLE_X = 0,
-   UTIL_FORMAT_SWIZZLE_Y = 1,
-   UTIL_FORMAT_SWIZZLE_Z = 2,
-   UTIL_FORMAT_SWIZZLE_W = 3,
-   UTIL_FORMAT_SWIZZLE_0 = 4,
-   UTIL_FORMAT_SWIZZLE_1 = 5,
-   UTIL_FORMAT_SWIZZLE_NONE = 6,
-   UTIL_FORMAT_SWIZZLE_MAX = 7  /**< Number of enums counter (must be last) */
 };
 
 
@@ -425,7 +418,7 @@ util_format_description(enum pipe_format format);
  * Format query functions.
  */
 
-static INLINE const char *
+static inline const char *
 util_format_name(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
@@ -438,7 +431,7 @@ util_format_name(enum pipe_format format)
    return desc->name;
 }
 
-static INLINE const char *
+static inline const char *
 util_format_short_name(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
@@ -454,7 +447,7 @@ util_format_short_name(enum pipe_format format)
 /**
  * Whether this format is plain, see UTIL_FORMAT_LAYOUT_PLAIN for more info.
  */
-static INLINE boolean
+static inline boolean
 util_format_is_plain(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
@@ -466,7 +459,7 @@ util_format_is_plain(enum pipe_format format)
    return desc->layout == UTIL_FORMAT_LAYOUT_PLAIN ? TRUE : FALSE;
 }
 
-static INLINE boolean 
+static inline boolean 
 util_format_is_compressed(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
@@ -481,6 +474,7 @@ util_format_is_compressed(enum pipe_format format)
    case UTIL_FORMAT_LAYOUT_RGTC:
    case UTIL_FORMAT_LAYOUT_ETC:
    case UTIL_FORMAT_LAYOUT_BPTC:
+   case UTIL_FORMAT_LAYOUT_ASTC:
       /* XXX add other formats in the future */
       return TRUE;
    default:
@@ -488,7 +482,7 @@ util_format_is_compressed(enum pipe_format format)
    }
 }
 
-static INLINE boolean 
+static inline boolean 
 util_format_is_s3tc(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
@@ -501,28 +495,41 @@ util_format_is_s3tc(enum pipe_format format)
    return desc->layout == UTIL_FORMAT_LAYOUT_S3TC ? TRUE : FALSE;
 }
 
-static INLINE boolean 
+static inline boolean
+util_format_is_etc(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+
+   assert(desc);
+   if (!desc) {
+      return FALSE;
+   }
+
+   return desc->layout == UTIL_FORMAT_LAYOUT_ETC ? TRUE : FALSE;
+}
+
+static inline boolean 
 util_format_is_srgb(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
    return desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB;
 }
 
-static INLINE boolean
+static inline boolean
 util_format_has_depth(const struct util_format_description *desc)
 {
    return desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS &&
-          desc->swizzle[0] != UTIL_FORMAT_SWIZZLE_NONE;
+          desc->swizzle[0] != PIPE_SWIZZLE_NONE;
 }
 
-static INLINE boolean
+static inline boolean
 util_format_has_stencil(const struct util_format_description *desc)
 {
    return desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS &&
-          desc->swizzle[1] != UTIL_FORMAT_SWIZZLE_NONE;
+          desc->swizzle[1] != PIPE_SWIZZLE_NONE;
 }
 
-static INLINE boolean
+static inline boolean
 util_format_is_depth_or_stencil(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
@@ -536,7 +543,7 @@ util_format_is_depth_or_stencil(enum pipe_format format)
           util_format_has_stencil(desc);
 }
 
-static INLINE boolean
+static inline boolean
 util_format_is_depth_and_stencil(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
@@ -550,16 +557,49 @@ util_format_is_depth_and_stencil(enum pipe_format format)
           util_format_has_stencil(desc);
 }
 
+/**
+ * For depth-stencil formats, return the equivalent depth-only format.
+ */
+static inline boolean
+util_format_get_depth_only(enum pipe_format format)
+{
+   switch (format) {
+   case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+      return PIPE_FORMAT_Z24X8_UNORM;
+
+   case PIPE_FORMAT_S8_UINT_Z24_UNORM:
+      return PIPE_FORMAT_X8Z24_UNORM;
+
+   case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
+      return PIPE_FORMAT_Z32_FLOAT;
+
+   default:
+      return format;
+   }
+}
+
+static inline boolean
+util_format_is_yuv(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+
+   assert(desc);
+   if (!desc) {
+      return FALSE;
+   }
+
+   return desc->colorspace == UTIL_FORMAT_COLORSPACE_YUV;
+}
 
 /**
  * Calculates the depth format type based upon the incoming format description.
  */
-static INLINE unsigned
+static inline unsigned
 util_get_depth_format_type(const struct util_format_description *desc)
 {
    unsigned depth_channel = desc->swizzle[0];
    if (desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS &&
-       depth_channel != UTIL_FORMAT_SWIZZLE_NONE) {
+       depth_channel != PIPE_SWIZZLE_NONE) {
       return desc->channel[depth_channel].type;
    } else {
       return UTIL_FORMAT_TYPE_VOID;
@@ -581,7 +621,7 @@ util_get_depth_format_mrd(const struct util_format_description *desc);
  * Return whether this is an RGBA, Z, S, or combined ZS format.
  * Useful for initializing pipe_blit_info::mask.
  */
-static INLINE unsigned
+static inline unsigned
 util_format_get_mask(enum pipe_format format)
 {
    const struct util_format_description *desc =
@@ -611,7 +651,7 @@ util_format_get_mask(enum pipe_format format)
  *
  * That is, the channels whose values are preserved.
  */
-static INLINE unsigned
+static inline unsigned
 util_format_colormask(const struct util_format_description *desc)
 {
    unsigned colormask;
@@ -643,7 +683,7 @@ util_format_colormask(const struct util_format_description *desc)
  * @param desc       a format description to check colormask with
  * @param colormask  a bit mask for channels, matches format of PIPE_MASK_RGBA
  */
-static INLINE boolean
+static inline boolean
 util_format_colormask_full(const struct util_format_description *desc, unsigned colormask)
 {
    return (~colormask & util_format_colormask(desc)) == 0;
@@ -686,6 +726,9 @@ util_format_is_pure_uint(enum pipe_format format);
 boolean
 util_format_is_snorm(enum pipe_format format);
 
+boolean
+util_format_is_snorm8(enum pipe_format format);
+
 /**
  * Check if the src format can be blitted to the destination format with
  * a simple memcpy.  For example, blitting from RGBA to RGBx is OK, but not
@@ -696,20 +739,13 @@ util_is_format_compatible(const struct util_format_description *src_desc,
                           const struct util_format_description *dst_desc);
 
 /**
- * Whether the format is supported by Gallium for the given bindings.
- * This covers S3TC textures and floating-point render targets.
- */
-boolean
-util_format_is_supported(enum pipe_format format, unsigned bind);
-
-/**
  * Whether this format is a rgab8 variant.
  *
  * That is, any format that matches the
  *
  *   PIPE_FORMAT_?8?8?8?8_UNORM
  */
-static INLINE boolean
+static inline boolean
 util_format_is_rgba8_variant(const struct util_format_description *desc)
 {
    unsigned chan;
@@ -737,7 +773,7 @@ util_format_is_rgba8_variant(const struct util_format_description *desc)
 /**
  * Return total bits needed for the pixel format per block.
  */
-static INLINE uint
+static inline uint
 util_format_get_blocksizebits(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
@@ -753,7 +789,7 @@ util_format_get_blocksizebits(enum pipe_format format)
 /**
  * Return bytes per block (not pixel) for the given format.
  */
-static INLINE uint
+static inline uint
 util_format_get_blocksize(enum pipe_format format)
 {
    uint bits = util_format_get_blocksizebits(format);
@@ -768,7 +804,7 @@ util_format_get_blocksize(enum pipe_format format)
    return bytes;
 }
 
-static INLINE uint
+static inline uint
 util_format_get_blockwidth(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
@@ -781,7 +817,7 @@ util_format_get_blockwidth(enum pipe_format format)
    return desc->block.width;
 }
 
-static INLINE uint
+static inline uint
 util_format_get_blockheight(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
@@ -794,7 +830,7 @@ util_format_get_blockheight(enum pipe_format format)
    return desc->block.height;
 }
 
-static INLINE unsigned
+static inline unsigned
 util_format_get_nblocksx(enum pipe_format format,
                          unsigned x)
 {
@@ -802,7 +838,7 @@ util_format_get_nblocksx(enum pipe_format format,
    return (x + blockwidth - 1) / blockwidth;
 }
 
-static INLINE unsigned
+static inline unsigned
 util_format_get_nblocksy(enum pipe_format format,
                          unsigned y)
 {
@@ -810,7 +846,7 @@ util_format_get_nblocksy(enum pipe_format format,
    return (y + blockheight - 1) / blockheight;
 }
 
-static INLINE unsigned
+static inline unsigned
 util_format_get_nblocks(enum pipe_format format,
                         unsigned width,
                         unsigned height)
@@ -818,14 +854,14 @@ util_format_get_nblocks(enum pipe_format format,
    return util_format_get_nblocksx(format, width) * util_format_get_nblocksy(format, height);
 }
 
-static INLINE size_t
+static inline size_t
 util_format_get_stride(enum pipe_format format,
                        unsigned width)
 {
    return util_format_get_nblocksx(format, width) * util_format_get_blocksize(format);
 }
 
-static INLINE size_t
+static inline size_t
 util_format_get_2d_size(enum pipe_format format,
                         size_t stride,
                         unsigned height)
@@ -833,7 +869,7 @@ util_format_get_2d_size(enum pipe_format format,
    return util_format_get_nblocksy(format, height) * stride;
 }
 
-static INLINE uint
+static inline uint
 util_format_get_component_bits(enum pipe_format format,
                                enum util_format_colorspace colorspace,
                                uint component)
@@ -863,13 +899,13 @@ util_format_get_component_bits(enum pipe_format format,
    }
 
    switch (desc->swizzle[component]) {
-   case UTIL_FORMAT_SWIZZLE_X:
+   case PIPE_SWIZZLE_X:
       return desc->channel[0].size;
-   case UTIL_FORMAT_SWIZZLE_Y:
+   case PIPE_SWIZZLE_Y:
       return desc->channel[1].size;
-   case UTIL_FORMAT_SWIZZLE_Z:
+   case PIPE_SWIZZLE_Z:
       return desc->channel[2].size;
-   case UTIL_FORMAT_SWIZZLE_W:
+   case PIPE_SWIZZLE_W:
       return desc->channel[3].size;
    default:
       return 0;
@@ -880,7 +916,7 @@ util_format_get_component_bits(enum pipe_format format,
  * Given a linear RGB colorspace format, return the corresponding SRGB
  * format, or PIPE_FORMAT_NONE if none.
  */
-static INLINE enum pipe_format
+static inline enum pipe_format
 util_format_srgb(enum pipe_format format)
 {
    if (util_format_is_srgb(format))
@@ -921,6 +957,35 @@ util_format_srgb(enum pipe_format format)
       return PIPE_FORMAT_B5G6R5_SRGB;
    case PIPE_FORMAT_BPTC_RGBA_UNORM:
       return PIPE_FORMAT_BPTC_SRGBA;
+   case PIPE_FORMAT_ASTC_4x4:
+      return PIPE_FORMAT_ASTC_4x4_SRGB;
+   case PIPE_FORMAT_ASTC_5x4:
+      return PIPE_FORMAT_ASTC_5x4_SRGB;
+   case PIPE_FORMAT_ASTC_5x5:
+      return PIPE_FORMAT_ASTC_5x5_SRGB;
+   case PIPE_FORMAT_ASTC_6x5:
+      return PIPE_FORMAT_ASTC_6x5_SRGB;
+   case PIPE_FORMAT_ASTC_6x6:
+      return PIPE_FORMAT_ASTC_6x6_SRGB;
+   case PIPE_FORMAT_ASTC_8x5:
+      return PIPE_FORMAT_ASTC_8x5_SRGB;
+   case PIPE_FORMAT_ASTC_8x6:
+      return PIPE_FORMAT_ASTC_8x6_SRGB;
+   case PIPE_FORMAT_ASTC_8x8:
+      return PIPE_FORMAT_ASTC_8x8_SRGB;
+   case PIPE_FORMAT_ASTC_10x5:
+      return PIPE_FORMAT_ASTC_10x5_SRGB;
+   case PIPE_FORMAT_ASTC_10x6:
+      return PIPE_FORMAT_ASTC_10x6_SRGB;
+   case PIPE_FORMAT_ASTC_10x8:
+      return PIPE_FORMAT_ASTC_10x8_SRGB;
+   case PIPE_FORMAT_ASTC_10x10:
+      return PIPE_FORMAT_ASTC_10x10_SRGB;
+   case PIPE_FORMAT_ASTC_12x10:
+      return PIPE_FORMAT_ASTC_12x10_SRGB;
+   case PIPE_FORMAT_ASTC_12x12:
+      return PIPE_FORMAT_ASTC_12x12_SRGB;
+
    default:
       return PIPE_FORMAT_NONE;
    }
@@ -930,7 +995,7 @@ util_format_srgb(enum pipe_format format)
  * Given an sRGB format, return the corresponding linear colorspace format.
  * For non sRGB formats, return the format unchanged.
  */
-static INLINE enum pipe_format
+static inline enum pipe_format
 util_format_linear(enum pipe_format format)
 {
    switch (format) {
@@ -968,6 +1033,34 @@ util_format_linear(enum pipe_format format)
       return PIPE_FORMAT_B5G6R5_UNORM;
    case PIPE_FORMAT_BPTC_SRGBA:
       return PIPE_FORMAT_BPTC_RGBA_UNORM;
+   case PIPE_FORMAT_ASTC_4x4_SRGB:
+      return PIPE_FORMAT_ASTC_4x4;
+   case PIPE_FORMAT_ASTC_5x4_SRGB:
+      return PIPE_FORMAT_ASTC_5x4;
+   case PIPE_FORMAT_ASTC_5x5_SRGB:
+      return PIPE_FORMAT_ASTC_5x5;
+   case PIPE_FORMAT_ASTC_6x5_SRGB:
+      return PIPE_FORMAT_ASTC_6x5;
+   case PIPE_FORMAT_ASTC_6x6_SRGB:
+      return PIPE_FORMAT_ASTC_6x6;
+   case PIPE_FORMAT_ASTC_8x5_SRGB:
+      return PIPE_FORMAT_ASTC_8x5;
+   case PIPE_FORMAT_ASTC_8x6_SRGB:
+      return PIPE_FORMAT_ASTC_8x6;
+   case PIPE_FORMAT_ASTC_8x8_SRGB:
+      return PIPE_FORMAT_ASTC_8x8;
+   case PIPE_FORMAT_ASTC_10x5_SRGB:
+      return PIPE_FORMAT_ASTC_10x5;
+   case PIPE_FORMAT_ASTC_10x6_SRGB:
+      return PIPE_FORMAT_ASTC_10x6;
+   case PIPE_FORMAT_ASTC_10x8_SRGB:
+      return PIPE_FORMAT_ASTC_10x8;
+   case PIPE_FORMAT_ASTC_10x10_SRGB:
+      return PIPE_FORMAT_ASTC_10x10;
+   case PIPE_FORMAT_ASTC_12x10_SRGB:
+      return PIPE_FORMAT_ASTC_12x10;
+   case PIPE_FORMAT_ASTC_12x12_SRGB:
+      return PIPE_FORMAT_ASTC_12x12;
    default:
       return format;
    }
@@ -977,7 +1070,7 @@ util_format_linear(enum pipe_format format)
  * Given a depth-stencil format, return the corresponding stencil-only format.
  * For stencil-only formats, return the format unchanged.
  */
-static INLINE enum pipe_format
+static inline enum pipe_format
 util_format_stencil_only(enum pipe_format format)
 {
    switch (format) {
@@ -1006,7 +1099,7 @@ util_format_stencil_only(enum pipe_format format)
  * Converts PIPE_FORMAT_*I* to PIPE_FORMAT_*R*.
  * This is identity for non-intensity formats.
  */
-static INLINE enum pipe_format
+static inline enum pipe_format
 util_format_intensity_to_red(enum pipe_format format)
 {
    switch (format) {
@@ -1044,7 +1137,7 @@ util_format_intensity_to_red(enum pipe_format format)
  * Converts PIPE_FORMAT_*L* to PIPE_FORMAT_*R*.
  * This is identity for non-luminance formats.
  */
-static INLINE enum pipe_format
+static inline enum pipe_format
 util_format_luminance_to_red(enum pipe_format format)
 {
    switch (format) {
@@ -1122,7 +1215,7 @@ util_format_luminance_to_red(enum pipe_format format)
  * Return the number of components stored.
  * Formats with block size != 1x1 will always have 1 component (the block).
  */
-static INLINE unsigned
+static inline unsigned
 util_format_get_nr_components(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
@@ -1133,7 +1226,7 @@ util_format_get_nr_components(enum pipe_format format)
  * Return the index of the first non-void channel
  * -1 if no non-void channels
  */
-static INLINE int
+static inline int
 util_format_get_first_non_void_channel(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
@@ -1217,6 +1310,19 @@ util_format_translate(enum pipe_format dst_format,
                       unsigned src_x, unsigned src_y,
                       unsigned width, unsigned height);
 
+boolean
+util_format_translate_3d(enum pipe_format dst_format,
+                         void *dst, unsigned dst_stride,
+                         unsigned dst_slice_stride,
+                         unsigned dst_x, unsigned dst_y,
+                         unsigned dst_z,
+                         enum pipe_format src_format,
+                         const void *src, unsigned src_stride,
+                         unsigned src_slice_stride,
+                         unsigned src_x, unsigned src_y,
+                         unsigned src_z, unsigned width,
+                         unsigned height, unsigned depth);
+
 /*
  * Swizzle operations.
  */
@@ -1232,14 +1338,14 @@ void util_format_compose_swizzles(const unsigned char swz1[4],
 
 /* Apply the swizzle provided in \param swz (which is one of PIPE_SWIZZLE_x)
  * to \param src and store the result in \param dst.
- * \param is_integer determines the value written for PIPE_SWIZZLE_ONE.
+ * \param is_integer determines the value written for PIPE_SWIZZLE_1.
  */
 void util_format_apply_color_swizzle(union pipe_color_union *dst,
                                      const union pipe_color_union *src,
                                      const unsigned char swz[4],
                                      const boolean is_integer);
 
-void util_format_swizzle_4f(float *dst, const float *src,
+void pipe_swizzle_4f(float *dst, const float *src,
                             const unsigned char swz[4]);
 
 void util_format_unswizzle_4f(float *dst, const float *src,

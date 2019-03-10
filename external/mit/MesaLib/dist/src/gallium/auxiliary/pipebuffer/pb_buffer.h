@@ -87,9 +87,9 @@ struct pb_desc
 
 
 /**
- * Size. Regular (32bit) unsigned for now.
+ * 64-bit type for GPU buffer sizes and offsets.
  */
-typedef unsigned pb_size;
+typedef uint64_t pb_size;
 
 
 /**
@@ -98,8 +98,8 @@ typedef unsigned pb_size;
 struct pb_buffer 
 {
    struct pipe_reference  reference;
-   unsigned               size;
    unsigned               alignment;
+   pb_size                size;
    unsigned               usage;
 
    /**
@@ -158,36 +158,36 @@ struct pb_vtbl
 
 /* Accessor functions for pb->vtbl:
  */
-static INLINE void *
+static inline void *
 pb_map(struct pb_buffer *buf, 
        unsigned flags, void *flush_ctx)
 {
    assert(buf);
-   if(!buf)
+   if (!buf)
       return NULL;
    assert(pipe_is_referenced(&buf->reference));
    return buf->vtbl->map(buf, flags, flush_ctx);
 }
 
 
-static INLINE void 
+static inline void 
 pb_unmap(struct pb_buffer *buf)
 {
    assert(buf);
-   if(!buf)
+   if (!buf)
       return;
    assert(pipe_is_referenced(&buf->reference));
    buf->vtbl->unmap(buf);
 }
 
 
-static INLINE void
+static inline void
 pb_get_base_buffer( struct pb_buffer *buf,
 		    struct pb_buffer **base_buf,
 		    pb_size *offset )
 {
    assert(buf);
-   if(!buf) {
+   if (!buf) {
       base_buf = NULL;
       offset = 0;
       return;
@@ -200,39 +200,39 @@ pb_get_base_buffer( struct pb_buffer *buf,
 }
 
 
-static INLINE enum pipe_error 
+static inline enum pipe_error 
 pb_validate(struct pb_buffer *buf, struct pb_validate *vl, unsigned flags)
 {
    assert(buf);
-   if(!buf)
+   if (!buf)
       return PIPE_ERROR;
    assert(buf->vtbl->validate);
    return buf->vtbl->validate(buf, vl, flags);
 }
 
 
-static INLINE void 
+static inline void 
 pb_fence(struct pb_buffer *buf, struct pipe_fence_handle *fence)
 {
    assert(buf);
-   if(!buf)
+   if (!buf)
       return;
    assert(buf->vtbl->fence);
    buf->vtbl->fence(buf, fence);
 }
 
 
-static INLINE void 
+static inline void 
 pb_destroy(struct pb_buffer *buf)
 {
    assert(buf);
-   if(!buf)
+   if (!buf)
       return;
    assert(!pipe_is_referenced(&buf->reference));
    buf->vtbl->destroy(buf);
 }
 
-static INLINE void
+static inline void
 pb_reference(struct pb_buffer **dst,
              struct pb_buffer *src)
 {
@@ -248,7 +248,7 @@ pb_reference(struct pb_buffer **dst,
  * Utility function to check whether the provided alignment is consistent with
  * the requested or not.
  */
-static INLINE boolean
+static inline boolean
 pb_check_alignment(pb_size requested, pb_size provided)
 {
    if(!requested)
@@ -265,7 +265,7 @@ pb_check_alignment(pb_size requested, pb_size provided)
  * Utility function to check whether the provided alignment is consistent with
  * the requested or not.
  */
-static INLINE boolean
+static inline boolean
 pb_check_usage(unsigned requested, unsigned provided)
 {
    return (requested & provided) == requested ? TRUE : FALSE;

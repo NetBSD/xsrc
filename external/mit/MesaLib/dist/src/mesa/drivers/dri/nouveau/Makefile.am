@@ -23,16 +23,24 @@
 
 include Makefile.sources
 
+EXTRA_DIST = \
+	nouveau_render_t.c \
+	nouveau_swtnl_t.c \
+	nouveau_vbo_t.c \
+	meson.build
+
 AM_CFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/ \
 	-I$(top_srcdir)/src/mapi \
 	-I$(top_srcdir)/src/mesa/ \
+	-I$(top_srcdir)/src/gallium/include \
+	-I$(top_srcdir)/src/gallium/auxiliary \
 	-I$(top_srcdir)/src/mesa/drivers/dri/common \
 	$(DEFINES) \
 	$(VISIBILITY_CFLAGS) \
-	$(NOUVEAU_CFLAGS)
+	$(NVVIEUX_CFLAGS)
 
 noinst_LTLIBRARIES = libnouveau_dri.la
 libnouveau_dri_la_SOURCES = $(NOUVEAU_C_FILES)
-libnouveau_dri_la_LIBADD = $(NOUVEAU_LIBS)
+libnouveau_dri_la_LIBADD = $(NVVIEUX_LIBS)

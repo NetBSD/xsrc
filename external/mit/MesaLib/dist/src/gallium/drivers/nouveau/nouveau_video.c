@@ -73,7 +73,7 @@ nouveau_vpe_fini(struct nouveau_decoder *dec) {
    if (!dec->cmds)
       return;
 
-   nouveau_pushbuf_space(push, 8, 2, 0);
+   nouveau_pushbuf_space(push, 16, 2, 0);
    nouveau_bufctx_reset(dec->bufctx, NV31_VIDEO_BIND_CMD);
 
 #define BCTX_ARGS dec->bufctx, NV31_VIDEO_BIND_CMD, NOUVEAU_BO_RD
@@ -100,7 +100,7 @@ nouveau_vpe_fini(struct nouveau_decoder *dec) {
    dec->current = dec->future = dec->past = 8;
 }
 
-static INLINE void
+static inline void
 nouveau_vpe_mb_dct_blocks(struct nouveau_decoder *dec, const struct pipe_mpeg12_macroblock *mb)
 {
    int cbb;
@@ -125,7 +125,7 @@ nouveau_vpe_mb_dct_blocks(struct nouveau_decoder *dec, const struct pipe_mpeg12_
    }
 }
 
-static INLINE void
+static inline void
 nouveau_vpe_mb_data_blocks(struct nouveau_decoder *dec, const struct pipe_mpeg12_macroblock *mb)
 {
    int cbb;
@@ -143,7 +143,7 @@ nouveau_vpe_mb_data_blocks(struct nouveau_decoder *dec, const struct pipe_mpeg12
    }
 }
 
-static INLINE void
+static inline void
 nouveau_vpe_mb_dct_header(struct nouveau_decoder *dec,
                           const struct pipe_mpeg12_macroblock *mb,
                           bool luma)
@@ -187,7 +187,7 @@ nouveau_vpe_mb_dct_header(struct nouveau_decoder *dec,
                      x | (y << NV17_MPEG_CMD_MB_COORDS_Y__SHIFT));
 }
 
-static INLINE unsigned int
+static inline unsigned int
 nouveau_vpe_mb_mv_flags(bool luma, int mv_h, int mv_v, bool forward, bool first, bool vert)
 {
    unsigned mc_header = 0;
@@ -228,7 +228,7 @@ static int div_up(int val, int mult) {
    return val / mult;
 }
 
-static INLINE void
+static inline void
 nouveau_vpe_mb_mv(struct nouveau_decoder *dec, unsigned mc_header,
                    bool luma, bool frame, bool forward, bool vert,
                    int x, int y, const short motions[2],
@@ -296,16 +296,16 @@ nouveau_vpe_mb_mv_header(struct nouveau_decoder *dec,
       case PIPE_MPEG12_MO_TYPE_DUAL_PRIME: {
          base = NV17_MPEG_CMD_CHROMA_MV_HEADER_COUNT_2;
          if (forward) {
-            nouveau_vpe_mb_mv(dec, base, luma, frame, TRUE, FALSE,
-                              x, y, mb->PMV[0][0], dec->past, TRUE);
-            nouveau_vpe_mb_mv(dec, base, luma, frame, TRUE, TRUE,
-                              x, y2, mb->PMV[0][0], dec->past, FALSE);
+            nouveau_vpe_mb_mv(dec, base, luma, frame, true, false,
+                              x, y, mb->PMV[0][0], dec->past, true);
+            nouveau_vpe_mb_mv(dec, base, luma, frame, true, true,
+                              x, y2, mb->PMV[0][0], dec->past, false);
          }
          if (backward && forward) {
-            nouveau_vpe_mb_mv(dec, base, luma, frame, !forward, TRUE,
-                              x, y, mb->PMV[1][0], dec->future, TRUE);
-            nouveau_vpe_mb_mv(dec, base, luma, frame, !forward, FALSE,
-                              x, y2, mb->PMV[1][1], dec->future, FALSE);
+            nouveau_vpe_mb_mv(dec, base, luma, frame, !forward, true,
+                              x, y, mb->PMV[1][0], dec->future, true);
+            nouveau_vpe_mb_mv(dec, base, luma, frame, !forward, false,
+                              x, y2, mb->PMV[1][1], dec->future, false);
          } else assert(!backward);
          break;
       }
@@ -320,13 +320,13 @@ nouveau_vpe_mb_mv_header(struct nouveau_decoder *dec,
          if (frame)
             base |= NV17_MPEG_CMD_CHROMA_MV_HEADER_TYPE_FRAME;
          if (forward)
-            nouveau_vpe_mb_mv(dec, base, luma, frame, TRUE,
+            nouveau_vpe_mb_mv(dec, base, luma, frame, true,
                               dec->picture_structure != PIPE_MPEG12_PICTURE_STRUCTURE_FIELD_TOP,
-                              x, y, mb->PMV[0][0], dec->past, TRUE);
+                              x, y, mb->PMV[0][0], dec->past, true);
          if (backward && forward)
-            nouveau_vpe_mb_mv(dec, base, luma, frame, FALSE,
+            nouveau_vpe_mb_mv(dec, base, luma, frame, false,
                               dec->picture_structure == PIPE_MPEG12_PICTURE_STRUCTURE_FIELD_TOP,
-                              x, y, mb->PMV[0][1], dec->future, TRUE);
+                              x, y, mb->PMV[0][1], dec->future, true);
          else assert(!backward);
          break;
       }
@@ -341,11 +341,11 @@ mv1:
        base |= NV17_MPEG_CMD_CHROMA_MV_HEADER_TYPE_FRAME;
     /* frame 16x16 */
    if (forward)
-       nouveau_vpe_mb_mv(dec, base, luma, frame, TRUE, FALSE,
-                         x, y, mb->PMV[0][0], dec->past, TRUE);
+       nouveau_vpe_mb_mv(dec, base, luma, frame, true, false,
+                         x, y, mb->PMV[0][0], dec->past, true);
    if (backward)
-       nouveau_vpe_mb_mv(dec, base, luma, frame, !forward, FALSE,
-                         x, y, mb->PMV[0][1], dec->future, TRUE);
+       nouveau_vpe_mb_mv(dec, base, luma, frame, !forward, false,
+                         x, y, mb->PMV[0][1], dec->future, true);
     return;
 
 mv2:
@@ -353,20 +353,20 @@ mv2:
    if (!frame)
       base |= NV17_MPEG_CMD_CHROMA_MV_HEADER_MV_SPLIT_HALF_MB;
    if (forward) {
-      nouveau_vpe_mb_mv(dec, base, luma, frame, TRUE,
+      nouveau_vpe_mb_mv(dec, base, luma, frame, true,
                         mb->motion_vertical_field_select & PIPE_MPEG12_FS_FIRST_FORWARD,
-                        x, y, mb->PMV[0][0], dec->past, TRUE);
-      nouveau_vpe_mb_mv(dec, base, luma, frame, TRUE,
+                        x, y, mb->PMV[0][0], dec->past, true);
+      nouveau_vpe_mb_mv(dec, base, luma, frame, true,
                         mb->motion_vertical_field_select & PIPE_MPEG12_FS_SECOND_FORWARD,
-                        x, y2, mb->PMV[1][0], dec->past, FALSE);
+                        x, y2, mb->PMV[1][0], dec->past, false);
    }
    if (backward) {
       nouveau_vpe_mb_mv(dec, base, luma, frame, !forward,
                         mb->motion_vertical_field_select & PIPE_MPEG12_FS_FIRST_BACKWARD,
-                        x, y, mb->PMV[0][1], dec->future, TRUE);
+                        x, y, mb->PMV[0][1], dec->future, true);
       nouveau_vpe_mb_mv(dec, base, luma, frame, !forward,
                         mb->motion_vertical_field_select & PIPE_MPEG12_FS_SECOND_BACKWARD,
-                        x, y2, mb->PMV[1][1], dec->future, FALSE);
+                        x, y2, mb->PMV[1][1], dec->future, false);
    }
 }
 
@@ -381,8 +381,6 @@ nouveau_decoder_surface_index(struct nouveau_decoder *dec,
 
    unsigned i;
 
-   if (!buf)
-      return 8;
    for (i = 0; i < dec->num_surfaces; ++i) {
       if (dec->surfaces[i] == buf)
          return i;
@@ -440,14 +438,14 @@ nouveau_decoder_decode_macroblock(struct pipe_video_codec *decoder,
    mb = (const struct pipe_mpeg12_macroblock *)pipe_mb;
    for (i = 0; i < num_macroblocks; ++i, mb++) {
       if (mb->macroblock_type & PIPE_MPEG12_MB_TYPE_INTRA) {
-         nouveau_vpe_mb_dct_header(dec, mb, TRUE);
-         nouveau_vpe_mb_dct_header(dec, mb, FALSE);
+         nouveau_vpe_mb_dct_header(dec, mb, true);
+         nouveau_vpe_mb_dct_header(dec, mb, false);
       } else {
-         nouveau_vpe_mb_mv_header(dec, mb, TRUE);
-         nouveau_vpe_mb_dct_header(dec, mb, TRUE);
+         nouveau_vpe_mb_mv_header(dec, mb, true);
+         nouveau_vpe_mb_dct_header(dec, mb, true);
 
-         nouveau_vpe_mb_mv_header(dec, mb, FALSE);
-         nouveau_vpe_mb_dct_header(dec, mb, FALSE);
+         nouveau_vpe_mb_mv_header(dec, mb, false);
+         nouveau_vpe_mb_dct_header(dec, mb, false);
       }
       if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT)
          nouveau_vpe_mb_dct_blocks(dec, mb);
@@ -553,7 +551,7 @@ nouveau_create_decoder(struct pipe_context *context,
                                &mpeg);
    if (ret < 0) {
       debug_printf("Creation failed: %s (%i)\n", strerror(-ret), ret);
-      return NULL;
+      goto fail;
    }
 
    dec->mpeg = mpeg;
@@ -659,7 +657,7 @@ nouveau_video_buffer_sampler_view_planes(struct pipe_video_buffer *buffer)
          u_sampler_view_default_template(&sv_templ, buf->resources[i], buf->resources[i]->format);
 
          if (util_format_get_nr_components(buf->resources[i]->format) == 1)
-            sv_templ.swizzle_r = sv_templ.swizzle_g = sv_templ.swizzle_b = sv_templ.swizzle_a = PIPE_SWIZZLE_RED;
+            sv_templ.swizzle_r = sv_templ.swizzle_g = sv_templ.swizzle_b = sv_templ.swizzle_a = PIPE_SWIZZLE_X;
 
          buf->sampler_view_planes[i] = pipe->create_sampler_view(pipe, buf->resources[i], &sv_templ);
          if (!buf->sampler_view_planes[i])
@@ -697,8 +695,8 @@ nouveau_video_buffer_sampler_view_components(struct pipe_video_buffer *buffer)
          if (!buf->sampler_view_components[component]) {
             memset(&sv_templ, 0, sizeof(sv_templ));
             u_sampler_view_default_template(&sv_templ, buf->resources[i], buf->resources[i]->format);
-            sv_templ.swizzle_r = sv_templ.swizzle_g = sv_templ.swizzle_b = PIPE_SWIZZLE_RED + j;
-            sv_templ.swizzle_a = PIPE_SWIZZLE_ONE;
+            sv_templ.swizzle_r = sv_templ.swizzle_g = sv_templ.swizzle_b = PIPE_SWIZZLE_X + j;
+            sv_templ.swizzle_a = PIPE_SWIZZLE_1;
             buf->sampler_view_components[component] = pipe->create_sampler_view(pipe, buf->resources[i], &sv_templ);
             if (!buf->sampler_view_components[component])
                goto error;
@@ -833,7 +831,7 @@ error:
 static int
 nouveau_screen_get_video_param(struct pipe_screen *pscreen,
                                enum pipe_video_profile profile,
-			       enum pipe_video_entrypoint entrypoint,
+                               enum pipe_video_entrypoint entrypoint,
                                enum pipe_video_cap param)
 {
    switch (param) {

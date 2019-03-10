@@ -118,6 +118,35 @@ CopyPropagation::visit(BasicBlock *bb)
 
 // =============================================================================
 
+class MergeSplits : public Pass
+{
+private:
+   virtual bool visit(BasicBlock *);
+};
+
+// For SPLIT / MERGE pairs that operate on the same registers, replace the
+// post-merge def with the SPLIT's source.
+bool
+MergeSplits::visit(BasicBlock *bb)
+{
+   Instruction *i, *next, *si;
+
+   for (i = bb->getEntry(); i; i = next) {
+      next = i->next;
+      if (i->op != OP_MERGE || typeSizeof(i->dType) != 8)
+         continue;
+      si = i->getSrc(0)->getInsn();
+      if (si->op != OP_SPLIT || si != i->getSrc(1)->getInsn())
+         continue;
+      i->def(0).replace(si->getSrc(0), false);
+      delete_Instruction(prog, i);
+   }
+
+   return true;
+}
+
+// =============================================================================
+
 class LoadPropagation : public Pass
 {
 private:
@@ -126,7 +155,7 @@ private:
    void checkSwapSrc01(Instruction *);
 
    bool isCSpaceLoad(Instruction *);
-   bool isImmd32Load(Instruction *);
+   bool isImmdLoad(Instruction *);
    bool isAttribOrSharedLoad(Instruction *);
 };
 
@@ -137,11 +166,15 @@ LoadPropagation::isCSpaceLoad(Instruction *ld)
 }
 
 bool
-LoadPropagation::isImmd32Load(Instruction *ld)
+LoadPropagation::isImmdLoad(Instruction *ld)
 {
-   if (!ld || (ld->op != OP_MOV) || (typeSizeof(ld->dType) != 4))
+   if (!ld || (ld->op != OP_MOV) ||
+       ((typeSizeof(ld->dType) != 4) && (typeSizeof(ld->dType) != 8)))
       return false;
-   return ld->src(0).getFile() == FILE_IMMEDIATE;
+
+   // A 0 can be replaced with a register, so it doesn't count as an immediate.
+   ImmediateValue val;
+   return ld->src(0).getImmediate(val) && !val.isInteger(0);
 }
 
 bool
@@ -157,23 +190,37 @@ LoadPropagation::isAttribOrSharedLoad(Instruction *ld)
 void
 LoadPropagation::checkSwapSrc01(Instruction *insn)
 {
-   if (!prog->getTarget()->getOpInfo(insn).commutative)
-      if (insn->op != OP_SET && insn->op != OP_SLCT)
+   const Target *targ = prog->getTarget();
+   if (!targ->getOpInfo(insn).commutative) {
+      if (insn->op != OP_SET && insn->op != OP_SLCT &&
+          insn->op != OP_SUB && insn->op != OP_XMAD)
          return;
+      // XMAD is only commutative if both the CBCC and MRG flags are not set.
+      if (insn->op == OP_XMAD &&
+          (insn->subOp & NV50_IR_SUBOP_XMAD_CMODE_MASK) == NV50_IR_SUBOP_XMAD_CBCC)
+         return;
+      if (insn->op == OP_XMAD && (insn->subOp & NV50_IR_SUBOP_XMAD_MRG))
+         return;
+   }
    if (insn->src(1).getFile() != FILE_GPR)
+      return;
+   // This is the special OP_SET used for alphatesting, we can't reverse its
+   // arguments as that will confuse the fixup code.
+   if (insn->op == OP_SET && insn->subOp)
       return;
 
    Instruction *i0 = insn->getSrc(0)->getInsn();
    Instruction *i1 = insn->getSrc(1)->getInsn();
 
-   if (isCSpaceLoad(i0)) {
-      if (!isCSpaceLoad(i1))
-         insn->swapSources(0, 1);
-      else
-         return;
-   } else
-   if (isImmd32Load(i0)) {
-      if (!isCSpaceLoad(i1) && !isImmd32Load(i1))
+   // Swap sources to inline the less frequently used source. That way,
+   // optimistically, it will eventually be able to remove the instruction.
+   int i0refs = insn->getSrc(0)->refCount();
+   int i1refs = insn->getSrc(1)->refCount();
+
+   if ((isCSpaceLoad(i0) || isImmdLoad(i0)) && targ->insnCanLoad(insn, 1, i0)) {
+      if ((!isImmdLoad(i1) && !isCSpaceLoad(i1)) ||
+          !targ->insnCanLoad(insn, 1, i1) ||
+          i0refs < i1refs)
          insn->swapSources(0, 1);
       else
          return;
@@ -193,6 +240,17 @@ LoadPropagation::checkSwapSrc01(Instruction *insn)
    else
    if (insn->op == OP_SLCT)
       insn->asCmp()->setCond = inverseCondCode(insn->asCmp()->setCond);
+   else
+   if (insn->op == OP_SUB) {
+      insn->src(0).mod = insn->src(0).mod ^ Modifier(NV50_IR_MOD_NEG);
+      insn->src(1).mod = insn->src(1).mod ^ Modifier(NV50_IR_MOD_NEG);
+   } else
+   if (insn->op == OP_XMAD) {
+      // swap h1 flags
+      uint16_t h1 = (insn->subOp >> 1 & NV50_IR_SUBOP_XMAD_H1(0)) |
+                    (insn->subOp << 1 & NV50_IR_SUBOP_XMAD_H1(1));
+      insn->subOp = (insn->subOp & ~NV50_IR_SUBOP_XMAD_H1_MASK) | h1;
+   }
 }
 
 bool
@@ -205,6 +263,9 @@ LoadPropagation::visit(BasicBlock *bb)
       next = i->next;
 
       if (i->op == OP_CALL) // calls have args as sources, they must be in regs
+         continue;
+
+      if (i->op == OP_PFETCH) // pfetch expects arg1 to be a reg
          continue;
 
       if (i->srcExists(1))
@@ -232,6 +293,72 @@ LoadPropagation::visit(BasicBlock *bb)
 
 // =============================================================================
 
+class IndirectPropagation : public Pass
+{
+private:
+   virtual bool visit(BasicBlock *);
+
+   BuildUtil bld;
+};
+
+bool
+IndirectPropagation::visit(BasicBlock *bb)
+{
+   const Target *targ = prog->getTarget();
+   Instruction *next;
+
+   for (Instruction *i = bb->getEntry(); i; i = next) {
+      next = i->next;
+
+      bld.setPosition(i, false);
+
+      for (int s = 0; i->srcExists(s); ++s) {
+         Instruction *insn;
+         ImmediateValue imm;
+         if (!i->src(s).isIndirect(0))
+            continue;
+         insn = i->getIndirect(s, 0)->getInsn();
+         if (!insn)
+            continue;
+         if (insn->op == OP_ADD && !isFloatType(insn->dType)) {
+            if (insn->src(0).getFile() != targ->nativeFile(FILE_ADDRESS) ||
+                !insn->src(1).getImmediate(imm) ||
+                !targ->insnCanLoadOffset(i, s, imm.reg.data.s32))
+               continue;
+            i->setIndirect(s, 0, insn->getSrc(0));
+            i->setSrc(s, cloneShallow(func, i->getSrc(s)));
+            i->src(s).get()->reg.data.offset += imm.reg.data.u32;
+         } else if (insn->op == OP_SUB && !isFloatType(insn->dType)) {
+            if (insn->src(0).getFile() != targ->nativeFile(FILE_ADDRESS) ||
+                !insn->src(1).getImmediate(imm) ||
+                !targ->insnCanLoadOffset(i, s, -imm.reg.data.s32))
+               continue;
+            i->setIndirect(s, 0, insn->getSrc(0));
+            i->setSrc(s, cloneShallow(func, i->getSrc(s)));
+            i->src(s).get()->reg.data.offset -= imm.reg.data.u32;
+         } else if (insn->op == OP_MOV) {
+            if (!insn->src(0).getImmediate(imm) ||
+                !targ->insnCanLoadOffset(i, s, imm.reg.data.s32))
+               continue;
+            i->setIndirect(s, 0, NULL);
+            i->setSrc(s, cloneShallow(func, i->getSrc(s)));
+            i->src(s).get()->reg.data.offset += imm.reg.data.u32;
+         } else if (insn->op == OP_SHLADD) {
+            if (!insn->src(2).getImmediate(imm) ||
+                !targ->insnCanLoadOffset(i, s, imm.reg.data.s32))
+               continue;
+            i->setIndirect(s, 0, bld.mkOp2v(
+               OP_SHL, TYPE_U32, bld.getSSA(), insn->getSrc(0), insn->getSrc(1)));
+            i->setSrc(s, cloneShallow(func, i->getSrc(s)));
+            i->src(s).get()->reg.data.offset += imm.reg.data.u32;
+         }
+      }
+   }
+   return true;
+}
+
+// =============================================================================
+
 // Evaluate constant expressions.
 class ConstantFolding : public Pass
 {
@@ -243,14 +370,17 @@ private:
 
    void expr(Instruction *, ImmediateValue&, ImmediateValue&);
    void expr(Instruction *, ImmediateValue&, ImmediateValue&, ImmediateValue&);
-   void opnd(Instruction *, ImmediateValue&, int s);
+   /* true if i was deleted */
+   bool opnd(Instruction *i, ImmediateValue&, int s);
+   void opnd3(Instruction *, ImmediateValue&);
 
    void unary(Instruction *, const ImmediateValue&);
 
    void tryCollapseChainedMULs(Instruction *, const int s, ImmediateValue&);
 
-   // TGSI 'true' is converted to -1 by F2I(NEG(SET)), track back to SET
    CmpInstruction *findOriginForTestWithZero(Value *);
+
+   bool createMul(DataType ty, Value *def, Value *a, int64_t b, Value *c);
 
    unsigned int foldCount;
 
@@ -285,18 +415,23 @@ ConstantFolding::visit(BasicBlock *bb)
       if (i->srcExists(2) &&
           i->src(0).getImmediate(src0) &&
           i->src(1).getImmediate(src1) &&
-          i->src(2).getImmediate(src2))
+          i->src(2).getImmediate(src2)) {
          expr(i, src0, src1, src2);
-      else
+      } else
       if (i->srcExists(1) &&
-          i->src(0).getImmediate(src0) && i->src(1).getImmediate(src1))
+          i->src(0).getImmediate(src0) && i->src(1).getImmediate(src1)) {
          expr(i, src0, src1);
-      else
-      if (i->srcExists(0) && i->src(0).getImmediate(src0))
-         opnd(i, src0, 0);
-      else
-      if (i->srcExists(1) && i->src(1).getImmediate(src1))
-         opnd(i, src1, 1);
+      } else
+      if (i->srcExists(0) && i->src(0).getImmediate(src0)) {
+         if (opnd(i, src0, 0))
+            continue;
+      } else
+      if (i->srcExists(1) && i->src(1).getImmediate(src1)) {
+         if (opnd(i, src1, 1))
+            continue;
+      }
+      if (i->srcExists(2) && i->src(2).getImmediate(src2))
+         opnd3(i, src2);
    }
    return true;
 }
@@ -307,26 +442,36 @@ ConstantFolding::findOriginForTestWithZero(Value *value)
    if (!value)
       return NULL;
    Instruction *insn = value->getInsn();
+   if (!insn)
+      return NULL;
 
-   while (insn && insn->op != OP_SET) {
-      Instruction *next = NULL;
-      switch (insn->op) {
-      case OP_NEG:
-      case OP_ABS:
-      case OP_CVT:
-         next = insn->getSrc(0)->getInsn();
-         if (insn->sType != next->dType)
+   if (insn->asCmp() && insn->op != OP_SLCT)
+      return insn->asCmp();
+
+   /* Sometimes mov's will sneak in as a result of other folding. This gets
+    * cleaned up later.
+    */
+   if (insn->op == OP_MOV)
+      return findOriginForTestWithZero(insn->getSrc(0));
+
+   /* Deal with AND 1.0 here since nv50 can't fold into boolean float */
+   if (insn->op == OP_AND) {
+      int s = 0;
+      ImmediateValue imm;
+      if (!insn->src(s).getImmediate(imm)) {
+         s = 1;
+         if (!insn->src(s).getImmediate(imm))
             return NULL;
-         break;
-      case OP_MOV:
-         next = insn->getSrc(0)->getInsn();
-         break;
-      default:
-         return NULL;
       }
-      insn = next;
+      if (imm.reg.data.f32 != 1.0f)
+         return NULL;
+      /* TODO: Come up with a way to handle the condition being inverted */
+      if (insn->src(!s).mod != Modifier(0))
+         return NULL;
+      return findOriginForTestWithZero(insn->getSrc(!s));
    }
-   return insn ? insn->asCmp() : NULL;
+
+   return NULL;
 }
 
 void
@@ -408,6 +553,7 @@ ConstantFolding::expr(Instruction *i,
 {
    struct Storage *const a = &imm0.reg, *const b = &imm1.reg;
    struct Storage res;
+   DataType type = i->dType;
 
    memset(&res.data, 0, sizeof(res.data));
 
@@ -422,7 +568,9 @@ ConstantFolding::expr(Instruction *i,
             b->data.f32 = 0.0f;
       }
       switch (i->dType) {
-      case TYPE_F32: res.data.f32 = a->data.f32 * b->data.f32; break;
+      case TYPE_F32:
+         res.data.f32 = a->data.f32 * b->data.f32 * exp2f(i->postFactor);
+         break;
       case TYPE_F64: res.data.f64 = a->data.f64 * b->data.f64; break;
       case TYPE_S32:
          if (i->subOp == NV50_IR_SUBOP_MUL_HIGH) {
@@ -458,6 +606,16 @@ ConstantFolding::expr(Instruction *i,
       case TYPE_F64: res.data.f64 = a->data.f64 + b->data.f64; break;
       case TYPE_S32:
       case TYPE_U32: res.data.u32 = a->data.u32 + b->data.u32; break;
+      default:
+         return;
+      }
+      break;
+   case OP_SUB:
+      switch (i->dType) {
+      case TYPE_F32: res.data.f32 = a->data.f32 - b->data.f32; break;
+      case TYPE_F64: res.data.f64 = a->data.f64 - b->data.f64; break;
+      case TYPE_S32:
+      case TYPE_U32: res.data.u32 = a->data.u32 - b->data.u32; break;
       default:
          return;
       }
@@ -543,6 +701,23 @@ ConstantFolding::expr(Instruction *i,
    case OP_POPCNT:
       res.data.u32 = util_bitcount(a->data.u32 & b->data.u32);
       break;
+   case OP_PFETCH:
+      // The two arguments to pfetch are logically added together. Normally
+      // the second argument will not be constant, but that can happen.
+      res.data.u32 = a->data.u32 + b->data.u32;
+      type = TYPE_U32;
+      break;
+   case OP_MERGE:
+      switch (i->dType) {
+      case TYPE_U64:
+      case TYPE_S64:
+      case TYPE_F64:
+         res.data.u64 = (((uint64_t)b->data.u32) << 32) | a->data.u32;
+         break;
+      default:
+         return;
+      }
+      break;
    default:
       return;
    }
@@ -550,29 +725,44 @@ ConstantFolding::expr(Instruction *i,
 
    i->src(0).mod = Modifier(0);
    i->src(1).mod = Modifier(0);
+   i->postFactor = 0;
 
    i->setSrc(0, new_ImmediateValue(i->bb->getProgram(), res.data.u32));
    i->setSrc(1, NULL);
 
    i->getSrc(0)->reg.data = res.data;
+   i->getSrc(0)->reg.type = type;
+   i->getSrc(0)->reg.size = typeSizeof(type);
 
-   if (i->op == OP_MAD || i->op == OP_FMA) {
+   switch (i->op) {
+   case OP_MAD:
+   case OP_FMA: {
+      ImmediateValue src0, src1 = *i->getSrc(0)->asImm();
+
+      // Move the immediate into position 1, where we know it might be
+      // emittable. However it might not be anyways, as there may be other
+      // restrictions, so move it into a separate LValue.
+      bld.setPosition(i, false);
       i->op = OP_ADD;
-
-      i->setSrc(1, i->getSrc(0));
-      i->src(1).mod = i->src(2).mod;
+      i->setSrc(1, bld.mkMov(bld.getSSA(type), i->getSrc(0), type)->getDef(0));
       i->setSrc(0, i->getSrc(2));
+      i->src(0).mod = i->src(2).mod;
       i->setSrc(2, NULL);
 
-      ImmediateValue src0;
       if (i->src(0).getImmediate(src0))
-         expr(i, src0, *i->getSrc(1)->asImm());
-      if (i->saturate && !prog->getTarget()->isSatSupported(i)) {
-         bld.setPosition(i, false);
-         i->setSrc(1, bld.loadImm(NULL, res.data.u32));
-      }
-   } else {
-      i->op = i->saturate ? OP_SAT : OP_MOV; /* SAT handled by unary() */
+         expr(i, src0, src1);
+      else
+         opnd(i, src1, 1);
+      break;
+   }
+   case OP_PFETCH:
+      // Leave PFETCH alone... we just folded its 2 args into 1.
+      break;
+   default:
+      i->op = i->saturate ? OP_SAT : OP_MOV;
+      if (i->saturate)
+         unary(i, *i->getSrc(0)->asImm());
+      break;
    }
    i->subOp = 0;
 }
@@ -596,6 +786,37 @@ ConstantFolding::expr(Instruction *i,
       res.data.u32 = ((a->data.u32 << offset) & bitmask) | (c->data.u32 & ~bitmask);
       break;
    }
+   case OP_MAD:
+   case OP_FMA: {
+      switch (i->dType) {
+      case TYPE_F32:
+         res.data.f32 = a->data.f32 * b->data.f32 * exp2f(i->postFactor) +
+            c->data.f32;
+         break;
+      case TYPE_F64:
+         res.data.f64 = a->data.f64 * b->data.f64 + c->data.f64;
+         break;
+      case TYPE_S32:
+         if (i->subOp == NV50_IR_SUBOP_MUL_HIGH) {
+            res.data.s32 = ((int64_t)a->data.s32 * b->data.s32 >> 32) + c->data.s32;
+            break;
+         }
+         /* fallthrough */
+      case TYPE_U32:
+         if (i->subOp == NV50_IR_SUBOP_MUL_HIGH) {
+            res.data.u32 = ((uint64_t)a->data.u32 * b->data.u32 >> 32) + c->data.u32;
+            break;
+         }
+         res.data.u32 = a->data.u32 * b->data.u32 + c->data.u32;
+         break;
+      default:
+         return;
+      }
+      break;
+   }
+   case OP_SHLADD:
+      res.data.u32 = (a->data.u32 << b->data.u32) + c->data.u32;
+      break;
    default:
       return;
    }
@@ -610,6 +831,8 @@ ConstantFolding::expr(Instruction *i,
    i->setSrc(2, NULL);
 
    i->getSrc(0)->reg.data = res.data;
+   i->getSrc(0)->reg.type = i->dType;
+   i->getSrc(0)->reg.size = typeSizeof(i->dType);
 
    i->op = OP_MOV;
 }
@@ -653,7 +876,7 @@ ConstantFolding::tryCollapseChainedMULs(Instruction *mul2,
    Instruction *insn;
    Instruction *mul1 = NULL; // mul1 before mul2
    int e = 0;
-   float f = imm2.reg.data.f32;
+   float f = imm2.reg.data.f32 * exp2f(mul2->postFactor);
    ImmediateValue imm1;
 
    assert(mul2->op == OP_MUL && mul2->dType == TYPE_F32);
@@ -673,6 +896,7 @@ ConstantFolding::tryCollapseChainedMULs(Instruction *mul2,
             mul1->setSrc(s1, bld.loadImm(NULL, f * imm1.reg.data.f32));
             mul1->src(s1).mod = Modifier(0);
             mul2->def(0).replace(mul1->getDef(0), false);
+            mul1->saturate = mul2->saturate;
          } else
          if (prog->getTarget()->isPostMultiplySupported(OP_MUL, f, e)) {
             // c = mul a, b
@@ -681,8 +905,8 @@ ConstantFolding::tryCollapseChainedMULs(Instruction *mul2,
             mul2->def(0).replace(mul1->getDef(0), false);
             if (f < 0)
                mul1->src(0).mod *= Modifier(NV50_IR_MOD_NEG);
+            mul1->saturate = mul2->saturate;
          }
-         mul1->saturate = mul2->saturate;
          return;
       }
    }
@@ -710,15 +934,117 @@ ConstantFolding::tryCollapseChainedMULs(Instruction *mul2,
 }
 
 void
+ConstantFolding::opnd3(Instruction *i, ImmediateValue &imm2)
+{
+   switch (i->op) {
+   case OP_MAD:
+   case OP_FMA:
+      if (imm2.isInteger(0)) {
+         i->op = OP_MUL;
+         i->setSrc(2, NULL);
+         foldCount++;
+         return;
+      }
+      break;
+   case OP_SHLADD:
+      if (imm2.isInteger(0)) {
+         i->op = OP_SHL;
+         i->setSrc(2, NULL);
+         foldCount++;
+         return;
+      }
+      break;
+   default:
+      return;
+   }
+}
+
+bool
+ConstantFolding::createMul(DataType ty, Value *def, Value *a, int64_t b, Value *c)
+{
+   const Target *target = prog->getTarget();
+   int64_t absB = llabs(b);
+
+   //a * (2^shl) -> a << shl
+   if (b >= 0 && util_is_power_of_two_or_zero64(b)) {
+      int shl = util_logbase2_64(b);
+
+      Value *res = c ? bld.getSSA(typeSizeof(ty)) : def;
+      bld.mkOp2(OP_SHL, ty, res, a, bld.mkImm(shl));
+      if (c)
+         bld.mkOp2(OP_ADD, ty, def, res, c);
+
+      return true;
+   }
+
+   //a * (2^shl + 1) -> a << shl + a
+   //a * -(2^shl + 1) -> -a << shl + a
+   //a * (2^shl - 1) -> a << shl - a
+   //a * -(2^shl - 1) -> -a << shl - a
+   if (typeSizeof(ty) == 4 &&
+       (util_is_power_of_two_or_zero64(absB - 1) ||
+        util_is_power_of_two_or_zero64(absB + 1)) &&
+       target->isOpSupported(OP_SHLADD, TYPE_U32)) {
+      bool subA = util_is_power_of_two_or_zero64(absB + 1);
+      int shl = subA ? util_logbase2_64(absB + 1) : util_logbase2_64(absB - 1);
+
+      Value *res = c ? bld.getSSA() : def;
+      Instruction *insn = bld.mkOp3(OP_SHLADD, TYPE_U32, res, a, bld.mkImm(shl), a);
+      if (b < 0)
+         insn->src(0).mod = Modifier(NV50_IR_MOD_NEG);
+      if (subA)
+         insn->src(2).mod = Modifier(NV50_IR_MOD_NEG);
+
+      if (c)
+         bld.mkOp2(OP_ADD, TYPE_U32, def, res, c);
+
+      return true;
+   }
+
+   if (typeSizeof(ty) == 4 && b >= 0 && b <= 0xffff &&
+       target->isOpSupported(OP_XMAD, TYPE_U32)) {
+      Value *tmp = bld.mkOp3v(OP_XMAD, TYPE_U32, bld.getSSA(),
+                              a, bld.mkImm((uint32_t)b), c ? c : bld.mkImm(0));
+      bld.mkOp3(OP_XMAD, TYPE_U32, def, a, bld.mkImm((uint32_t)b), tmp)->subOp =
+         NV50_IR_SUBOP_XMAD_PSL | NV50_IR_SUBOP_XMAD_H1(0);
+
+      return true;
+   }
+
+   return false;
+}
+
+bool
 ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
 {
    const int t = !s;
    const operation op = i->op;
    Instruction *newi = i;
+   bool deleted = false;
 
    switch (i->op) {
+   case OP_SPLIT: {
+      bld.setPosition(i, false);
+
+      uint8_t size = i->getDef(0)->reg.size;
+      uint8_t bitsize = size * 8;
+      uint32_t mask = (1ULL << bitsize) - 1;
+      assert(bitsize <= 32);
+
+      uint64_t val = imm0.reg.data.u64;
+      for (int8_t d = 0; i->defExists(d); ++d) {
+         Value *def = i->getDef(d);
+         assert(def->reg.size == size);
+
+         newi = bld.mkMov(def, bld.mkImm((uint32_t)(val & mask)), TYPE_U32);
+         val >>= bitsize;
+      }
+      delete_Instruction(prog, i);
+      deleted = true;
+      break;
+   }
    case OP_MUL:
-      if (i->dType == TYPE_F32)
+      if (i->dType == TYPE_F32 && !i->precise)
          tryCollapseChainedMULs(i, s, imm0);
 
       if (i->subOp == NV50_IR_SUBOP_MUL_HIGH) {
@@ -729,6 +1055,7 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
             newi = bld.mkCmp(OP_SET, CC_LT, TYPE_S32, i->getDef(0),
                              TYPE_S32, i->getSrc(t), bld.mkImm(0));
             delete_Instruction(prog, i);
+            deleted = true;
          } else if (imm0.isInteger(0) || imm0.isInteger(1)) {
             // The high bits can't be set in this case (either mul by 0 or
             // unsigned by 1)
@@ -753,9 +1080,10 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
          i->op = OP_MOV;
          i->setSrc(0, new_ImmediateValue(prog, 0u));
          i->src(0).mod = Modifier(0);
+         i->postFactor = 0;
          i->setSrc(1, NULL);
       } else
-      if (imm0.isInteger(1) || imm0.isInteger(-1)) {
+      if (!i->postFactor && (imm0.isInteger(1) || imm0.isInteger(-1))) {
          if (imm0.isNegative())
             i->src(t).mod = i->src(t).mod ^ Modifier(NV50_IR_MOD_NEG);
          i->op = i->src(t).mod.getOp();
@@ -768,22 +1096,66 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
             i->src(0).mod = 0;
          i->setSrc(1, NULL);
       } else
-      if (imm0.isInteger(2) || imm0.isInteger(-2)) {
+      if (!i->postFactor && (imm0.isInteger(2) || imm0.isInteger(-2))) {
          if (imm0.isNegative())
             i->src(t).mod = i->src(t).mod ^ Modifier(NV50_IR_MOD_NEG);
          i->op = OP_ADD;
          i->setSrc(s, i->getSrc(t));
          i->src(s).mod = i->src(t).mod;
       } else
-      if (!isFloatType(i->sType) && !imm0.isNegative() && imm0.isPow2()) {
-         i->op = OP_SHL;
-         imm0.applyLog2();
-         i->setSrc(0, i->getSrc(t));
-         i->src(0).mod = i->src(t).mod;
-         i->setSrc(1, new_ImmediateValue(prog, imm0.reg.data.u32));
-         i->src(1).mod = 0;
+      if (!isFloatType(i->dType) && !i->src(t).mod) {
+         bld.setPosition(i, false);
+         int64_t b = typeSizeof(i->dType) == 8 ? imm0.reg.data.s64 : imm0.reg.data.s32;
+         if (createMul(i->dType, i->getDef(0), i->getSrc(t), b, NULL)) {
+            delete_Instruction(prog, i);
+            deleted = true;
+         }
+      } else
+      if (i->postFactor && i->sType == TYPE_F32) {
+         /* Can't emit a postfactor with an immediate, have to fold it in */
+         i->setSrc(s, new_ImmediateValue(
+                      prog, imm0.reg.data.f32 * exp2f(i->postFactor)));
+         i->postFactor = 0;
       }
       break;
+   case OP_FMA:
+   case OP_MAD:
+      if (imm0.isInteger(0)) {
+         i->setSrc(0, i->getSrc(2));
+         i->src(0).mod = i->src(2).mod;
+         i->setSrc(1, NULL);
+         i->setSrc(2, NULL);
+         i->op = i->src(0).mod.getOp();
+         if (i->op != OP_CVT)
+            i->src(0).mod = 0;
+      } else
+      if (i->subOp != NV50_IR_SUBOP_MUL_HIGH &&
+          (imm0.isInteger(1) || imm0.isInteger(-1))) {
+         if (imm0.isNegative())
+            i->src(t).mod = i->src(t).mod ^ Modifier(NV50_IR_MOD_NEG);
+         if (s == 0) {
+            i->setSrc(0, i->getSrc(1));
+            i->src(0).mod = i->src(1).mod;
+         }
+         i->setSrc(1, i->getSrc(2));
+         i->src(1).mod = i->src(2).mod;
+         i->setSrc(2, NULL);
+         i->op = OP_ADD;
+      } else
+      if (!isFloatType(i->dType) && !i->subOp && !i->src(t).mod && !i->src(2).mod) {
+         bld.setPosition(i, false);
+         int64_t b = typeSizeof(i->dType) == 8 ? imm0.reg.data.s64 : imm0.reg.data.s32;
+         if (createMul(i->dType, i->getDef(0), i->getSrc(t), b, i->getSrc(2))) {
+            delete_Instruction(prog, i);
+            deleted = true;
+         }
+      }
+      break;
+   case OP_SUB:
+      if (imm0.isInteger(0) && s == 0 && typeSizeof(i->dType) == 8 &&
+          !isFloatType(i->dType))
+         break;
+      /* fallthrough */
    case OP_ADD:
       if (i->usesFlags())
          break;
@@ -791,6 +1163,8 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
          if (s == 0) {
             i->setSrc(0, i->getSrc(1));
             i->src(0).mod = i->src(1).mod;
+            if (i->op == OP_SUB)
+               i->src(0).mod = i->src(0).mod ^ Modifier(NV50_IR_MOD_NEG);
          }
          i->setSrc(1, NULL);
          i->op = i->src(0).mod.getOp();
@@ -844,6 +1218,7 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
             bld.mkOp2(OP_SHR, TYPE_U32, i->getDef(0), tB, bld.mkImm(s));
 
          delete_Instruction(prog, i);
+         deleted = true;
       } else
       if (imm0.reg.data.s32 == -1) {
          i->op = OP_NEG;
@@ -876,43 +1251,171 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
             bld.mkOp1(OP_NEG, TYPE_S32, i->getDef(0), tB);
 
          delete_Instruction(prog, i);
+         deleted = true;
       }
       break;
 
    case OP_MOD:
-      if (i->sType == TYPE_U32 && imm0.isPow2()) {
+      if (s == 1 && imm0.isPow2()) {
          bld.setPosition(i, false);
-         i->op = OP_AND;
-         i->setSrc(1, bld.loadImm(NULL, imm0.reg.data.u32 - 1));
+         if (i->sType == TYPE_U32) {
+            i->op = OP_AND;
+            i->setSrc(1, bld.loadImm(NULL, imm0.reg.data.u32 - 1));
+         } else if (i->sType == TYPE_S32) {
+            // Do it on the absolute value of the input, and then restore the
+            // sign. The only odd case is MIN_INT, but that should work out
+            // as well, since MIN_INT mod any power of 2 is 0.
+            //
+            // Technically we don't have to do any of this since MOD is
+            // undefined with negative arguments in GLSL, but this seems like
+            // the nice thing to do.
+            Value *abs = bld.mkOp1v(OP_ABS, TYPE_S32, bld.getSSA(), i->getSrc(0));
+            Value *neg, *v1, *v2;
+            bld.mkCmp(OP_SET, CC_LT, TYPE_S32,
+                      (neg = bld.getSSA(1, prog->getTarget()->nativeFile(FILE_PREDICATE))),
+                      TYPE_S32, i->getSrc(0), bld.loadImm(NULL, 0));
+            Value *mod = bld.mkOp2v(OP_AND, TYPE_U32, bld.getSSA(), abs,
+                                    bld.loadImm(NULL, imm0.reg.data.u32 - 1));
+            bld.mkOp1(OP_NEG, TYPE_S32, (v1 = bld.getSSA()), mod)
+               ->setPredicate(CC_P, neg);
+            bld.mkOp1(OP_MOV, TYPE_S32, (v2 = bld.getSSA()), mod)
+               ->setPredicate(CC_NOT_P, neg);
+            newi = bld.mkOp2(OP_UNION, TYPE_S32, i->getDef(0), v1, v2);
+
+            delete_Instruction(prog, i);
+            deleted = true;
+         }
+      } else if (s == 1) {
+         // In this case, we still want the optimized lowering that we get
+         // from having division by an immediate.
+         //
+         // a % b == a - (a/b) * b
+         bld.setPosition(i, false);
+         Value *div = bld.mkOp2v(OP_DIV, i->sType, bld.getSSA(),
+                                 i->getSrc(0), i->getSrc(1));
+         newi = bld.mkOp2(OP_ADD, i->sType, i->getDef(0), i->getSrc(0),
+                          bld.mkOp2v(OP_MUL, i->sType, bld.getSSA(), div, i->getSrc(1)));
+         // TODO: Check that target supports this. In this case, we know that
+         // all backends do.
+         newi->src(1).mod = Modifier(NV50_IR_MOD_NEG);
+
+         delete_Instruction(prog, i);
+         deleted = true;
       }
       break;
 
    case OP_SET: // TODO: SET_AND,OR,XOR
    {
+      /* This optimizes the case where the output of a set is being compared
+       * to zero. Since the set can only produce 0/-1 (int) or 0/1 (float), we
+       * can be a lot cleverer in our comparison.
+       */
       CmpInstruction *si = findOriginForTestWithZero(i->getSrc(t));
       CondCode cc, ccZ;
-      if (i->src(t).mod != Modifier(0))
-         return;
-      if (imm0.reg.data.u32 != 0 || !si || si->op != OP_SET)
-         return;
+      if (imm0.reg.data.u32 != 0 || !si)
+         return false;
       cc = si->setCond;
       ccZ = (CondCode)((unsigned int)i->asCmp()->setCond & ~CC_U);
+      // We do everything assuming var (cmp) 0, reverse the condition if 0 is
+      // first.
       if (s == 0)
          ccZ = reverseCondCode(ccZ);
-      switch (ccZ) {
-      case CC_LT: cc = CC_FL; break;
-      case CC_GE: cc = CC_TR; break;
-      case CC_EQ: cc = inverseCondCode(cc); break;
-      case CC_LE: cc = inverseCondCode(cc); break;
-      case CC_GT: break;
-      case CC_NE: break;
-      default:
-         return;
+      // If there is a negative modifier, we need to undo that, by flipping
+      // the comparison to zero.
+      if (i->src(t).mod.neg())
+         ccZ = reverseCondCode(ccZ);
+      // If this is a signed comparison, we expect the input to be a regular
+      // boolean, i.e. 0/-1. However the rest of the logic assumes that true
+      // is positive, so just flip the sign.
+      if (i->sType == TYPE_S32) {
+         assert(!isFloatType(si->dType));
+         ccZ = reverseCondCode(ccZ);
       }
+      switch (ccZ) {
+      case CC_LT: cc = CC_FL; break; // bool < 0 -- this is never true
+      case CC_GE: cc = CC_TR; break; // bool >= 0 -- this is always true
+      case CC_EQ: cc = inverseCondCode(cc); break; // bool == 0 -- !bool
+      case CC_LE: cc = inverseCondCode(cc); break; // bool <= 0 -- !bool
+      case CC_GT: break; // bool > 0 -- bool
+      case CC_NE: break; // bool != 0 -- bool
+      default:
+         return false;
+      }
+
+      // Update the condition of this SET to be identical to the origin set,
+      // but with the updated condition code. The original SET should get
+      // DCE'd, ideally.
+      i->op = si->op;
       i->asCmp()->setCond = cc;
       i->setSrc(0, si->src(0));
       i->setSrc(1, si->src(1));
+      if (si->srcExists(2))
+         i->setSrc(2, si->src(2));
       i->sType = si->sType;
+   }
+      break;
+
+   case OP_AND:
+   {
+      Instruction *src = i->getSrc(t)->getInsn();
+      ImmediateValue imm1;
+      if (imm0.reg.data.u32 == 0) {
+         i->op = OP_MOV;
+         i->setSrc(0, new_ImmediateValue(prog, 0u));
+         i->src(0).mod = Modifier(0);
+         i->setSrc(1, NULL);
+      } else if (imm0.reg.data.u32 == ~0U) {
+         i->op = i->src(t).mod.getOp();
+         if (t) {
+            i->setSrc(0, i->getSrc(t));
+            i->src(0).mod = i->src(t).mod;
+         }
+         i->setSrc(1, NULL);
+      } else if (src->asCmp()) {
+         CmpInstruction *cmp = src->asCmp();
+         if (!cmp || cmp->op == OP_SLCT || cmp->getDef(0)->refCount() > 1)
+            return false;
+         if (!prog->getTarget()->isOpSupported(cmp->op, TYPE_F32))
+            return false;
+         if (imm0.reg.data.f32 != 1.0)
+            return false;
+         if (cmp->dType != TYPE_U32)
+            return false;
+
+         cmp->dType = TYPE_F32;
+         if (i->src(t).mod != Modifier(0)) {
+            assert(i->src(t).mod == Modifier(NV50_IR_MOD_NOT));
+            i->src(t).mod = Modifier(0);
+            cmp->setCond = inverseCondCode(cmp->setCond);
+         }
+         i->op = OP_MOV;
+         i->setSrc(s, NULL);
+         if (t) {
+            i->setSrc(0, i->getSrc(t));
+            i->setSrc(t, NULL);
+         }
+      } else if (prog->getTarget()->isOpSupported(OP_EXTBF, TYPE_U32) &&
+                 src->op == OP_SHR &&
+                 src->src(1).getImmediate(imm1) &&
+                 i->src(t).mod == Modifier(0) &&
+                 util_is_power_of_two_or_zero(imm0.reg.data.u32 + 1)) {
+         // low byte = offset, high byte = width
+         uint32_t ext = (util_last_bit(imm0.reg.data.u32) << 8) | imm1.reg.data.u32;
+         i->op = OP_EXTBF;
+         i->setSrc(0, src->getSrc(0));
+         i->setSrc(1, new_ImmediateValue(prog, ext));
+      } else if (src->op == OP_SHL &&
+                 src->src(1).getImmediate(imm1) &&
+                 i->src(t).mod == Modifier(0) &&
+                 util_is_power_of_two_or_zero(~imm0.reg.data.u32 + 1) &&
+                 util_last_bit(~imm0.reg.data.u32) <= imm1.reg.data.u32) {
+         i->op = OP_MOV;
+         i->setSrc(s, NULL);
+         if (t) {
+            i->setSrc(0, i->getSrc(t));
+            i->setSrc(t, NULL);
+         }
+      }
    }
       break;
 
@@ -922,13 +1425,69 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
          break;
       // try to concatenate shifts
       Instruction *si = i->getSrc(0)->getInsn();
-      if (!si || si->op != OP_SHL)
+      if (!si)
          break;
       ImmediateValue imm1;
-      if (si->src(1).getImmediate(imm1)) {
+      switch (si->op) {
+      case OP_SHL:
+         if (si->src(1).getImmediate(imm1)) {
+            bld.setPosition(i, false);
+            i->setSrc(0, si->getSrc(0));
+            i->setSrc(1, bld.loadImm(NULL, imm0.reg.data.u32 + imm1.reg.data.u32));
+         }
+         break;
+      case OP_SHR:
+         if (si->src(1).getImmediate(imm1) && imm0.reg.data.u32 == imm1.reg.data.u32) {
+            bld.setPosition(i, false);
+            i->op = OP_AND;
+            i->setSrc(0, si->getSrc(0));
+            i->setSrc(1, bld.loadImm(NULL, ~((1 << imm0.reg.data.u32) - 1)));
+         }
+         break;
+      case OP_MUL:
+         int muls;
+         if (isFloatType(si->dType))
+            return false;
+         if (si->src(1).getImmediate(imm1))
+            muls = 1;
+         else if (si->src(0).getImmediate(imm1))
+            muls = 0;
+         else
+            return false;
+
          bld.setPosition(i, false);
-         i->setSrc(0, si->getSrc(0));
-         i->setSrc(1, bld.loadImm(NULL, imm0.reg.data.u32 + imm1.reg.data.u32));
+         i->op = OP_MUL;
+         i->setSrc(0, si->getSrc(!muls));
+         i->setSrc(1, bld.loadImm(NULL, imm1.reg.data.u32 << imm0.reg.data.u32));
+         break;
+      case OP_SUB:
+      case OP_ADD:
+         int adds;
+         if (isFloatType(si->dType))
+            return false;
+         if (si->op != OP_SUB && si->src(0).getImmediate(imm1))
+            adds = 0;
+         else if (si->src(1).getImmediate(imm1))
+            adds = 1;
+         else
+            return false;
+         if (si->src(!adds).mod != Modifier(0))
+            return false;
+         // SHL(ADD(x, y), z) = ADD(SHL(x, z), SHL(y, z))
+
+         // This is more operations, but if one of x, y is an immediate, then
+         // we can get a situation where (a) we can use ISCADD, or (b)
+         // propagate the add bit into an indirect load.
+         bld.setPosition(i, false);
+         i->op = si->op;
+         i->setSrc(adds, bld.loadImm(NULL, imm1.reg.data.u32 << imm0.reg.data.u32));
+         i->setSrc(!adds, bld.mkOp2v(OP_SHL, i->dType,
+                                     bld.getSSA(i->def(0).getSize(), i->def(0).getFile()),
+                                     si->getSrc(!adds),
+                                     bld.mkImm(imm0.reg.data.u32)));
+         break;
+      default:
+         return false;
       }
    }
       break;
@@ -953,7 +1512,7 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
       case TYPE_S32: res = util_last_bit_signed(imm0.reg.data.s32) - 1; break;
       case TYPE_U32: res = util_last_bit(imm0.reg.data.u32) - 1; break;
       default:
-         return;
+         return false;
       }
       if (i->subOp == NV50_IR_SUBOP_BFIND_SAMT && res >= 0)
          res = 31 - res;
@@ -974,11 +1533,132 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
       i->op = OP_MOV;
       break;
    }
-   default:
-      return;
+   case OP_CVT: {
+      Storage res;
+
+      // TODO: handle 64-bit values properly
+      if (typeSizeof(i->dType) == 8 || typeSizeof(i->sType) == 8)
+         return false;
+
+      // TODO: handle single byte/word extractions
+      if (i->subOp)
+         return false;
+
+      bld.setPosition(i, true); /* make sure bld is init'ed */
+
+#define CASE(type, dst, fmin, fmax, imin, imax, umin, umax) \
+   case type: \
+      switch (i->sType) { \
+      case TYPE_F64: \
+         res.data.dst = util_iround(i->saturate ? \
+                                    CLAMP(imm0.reg.data.f64, fmin, fmax) : \
+                                    imm0.reg.data.f64); \
+         break; \
+      case TYPE_F32: \
+         res.data.dst = util_iround(i->saturate ? \
+                                    CLAMP(imm0.reg.data.f32, fmin, fmax) : \
+                                    imm0.reg.data.f32); \
+         break; \
+      case TYPE_S32: \
+         res.data.dst = i->saturate ? \
+                        CLAMP(imm0.reg.data.s32, imin, imax) : \
+                        imm0.reg.data.s32; \
+         break; \
+      case TYPE_U32: \
+         res.data.dst = i->saturate ? \
+                        CLAMP(imm0.reg.data.u32, umin, umax) : \
+                        imm0.reg.data.u32; \
+         break; \
+      case TYPE_S16: \
+         res.data.dst = i->saturate ? \
+                        CLAMP(imm0.reg.data.s16, imin, imax) : \
+                        imm0.reg.data.s16; \
+         break; \
+      case TYPE_U16: \
+         res.data.dst = i->saturate ? \
+                        CLAMP(imm0.reg.data.u16, umin, umax) : \
+                        imm0.reg.data.u16; \
+         break; \
+      default: return false; \
+      } \
+      i->setSrc(0, bld.mkImm(res.data.dst)); \
+      break
+
+      switch(i->dType) {
+      CASE(TYPE_U16, u16, 0, UINT16_MAX, 0, UINT16_MAX, 0, UINT16_MAX);
+      CASE(TYPE_S16, s16, INT16_MIN, INT16_MAX, INT16_MIN, INT16_MAX, 0, INT16_MAX);
+      CASE(TYPE_U32, u32, 0, UINT32_MAX, 0, INT32_MAX, 0, UINT32_MAX);
+      CASE(TYPE_S32, s32, INT32_MIN, INT32_MAX, INT32_MIN, INT32_MAX, 0, INT32_MAX);
+      case TYPE_F32:
+         switch (i->sType) {
+         case TYPE_F64:
+            res.data.f32 = i->saturate ?
+               CLAMP(imm0.reg.data.f64, 0.0f, 1.0f) :
+               imm0.reg.data.f64;
+            break;
+         case TYPE_F32:
+            res.data.f32 = i->saturate ?
+               CLAMP(imm0.reg.data.f32, 0.0f, 1.0f) :
+               imm0.reg.data.f32;
+            break;
+         case TYPE_U16: res.data.f32 = (float) imm0.reg.data.u16; break;
+         case TYPE_U32: res.data.f32 = (float) imm0.reg.data.u32; break;
+         case TYPE_S16: res.data.f32 = (float) imm0.reg.data.s16; break;
+         case TYPE_S32: res.data.f32 = (float) imm0.reg.data.s32; break;
+         default:
+            return false;
+         }
+         i->setSrc(0, bld.mkImm(res.data.f32));
+         break;
+      case TYPE_F64:
+         switch (i->sType) {
+         case TYPE_F64:
+            res.data.f64 = i->saturate ?
+               CLAMP(imm0.reg.data.f64, 0.0f, 1.0f) :
+               imm0.reg.data.f64;
+            break;
+         case TYPE_F32:
+            res.data.f64 = i->saturate ?
+               CLAMP(imm0.reg.data.f32, 0.0f, 1.0f) :
+               imm0.reg.data.f32;
+            break;
+         case TYPE_U16: res.data.f64 = (double) imm0.reg.data.u16; break;
+         case TYPE_U32: res.data.f64 = (double) imm0.reg.data.u32; break;
+         case TYPE_S16: res.data.f64 = (double) imm0.reg.data.s16; break;
+         case TYPE_S32: res.data.f64 = (double) imm0.reg.data.s32; break;
+         default:
+            return false;
+         }
+         i->setSrc(0, bld.mkImm(res.data.f64));
+         break;
+      default:
+         return false;
+      }
+#undef CASE
+
+      i->setType(i->dType); /* Remove i->sType, which we don't need anymore */
+      i->op = OP_MOV;
+      i->saturate = 0;
+      i->src(0).mod = Modifier(0); /* Clear the already applied modifier */
+      break;
    }
+   default:
+      return false;
+   }
+
+   // This can get left behind some of the optimizations which simplify
+   // saturatable values.
+   if (newi->op == OP_MOV && newi->saturate) {
+      ImmediateValue tmp;
+      newi->saturate = 0;
+      newi->op = OP_SAT;
+      if (newi->src(0).getImmediate(tmp))
+         unary(newi, tmp);
+   }
+
    if (newi->op != op)
       foldCount++;
+   return deleted;
 }
 
 // =============================================================================
@@ -1068,6 +1748,7 @@ ModifierFolding::visit(BasicBlock *bb)
 // SLCT(a, b, const) -> cc(const) ? a : b
 // RCP(RCP(a)) -> a
 // MUL(MUL(a, b), const) -> MUL_Xconst(a, b)
+// EXTBF(RDSV(COMBINED_TID)) -> RDSV(TID)
 class AlgebraicOpt : public Pass
 {
 private:
@@ -1080,8 +1761,12 @@ private:
    void handleRCP(Instruction *);
    void handleSLCT(Instruction *);
    void handleLOGOP(Instruction *);
-   void handleCVT(Instruction *);
+   void handleCVT_NEG(Instruction *);
+   void handleCVT_CVT(Instruction *);
+   void handleCVT_EXTBF(Instruction *);
    void handleSUCLAMP(Instruction *);
+   void handleNEG(Instruction *);
+   void handleEXTBF_RDSV(Instruction *);
 
    BuildUtil bld;
 };
@@ -1142,7 +1827,8 @@ AlgebraicOpt::handleADD(Instruction *add)
       return false;
 
    bool changed = false;
-   if (!changed && prog->getTarget()->isOpSupported(OP_MAD, add->dType))
+   // we can't optimize to MAD if the add is precise
+   if (!add->precise && prog->getTarget()->isOpSupported(OP_MAD, add->dType))
       changed = tryADDToMADOrSAD(add, OP_MAD);
    if (!changed && prog->getTarget()->isOpSupported(OP_SAD, add->dType))
       changed = tryADDToMADOrSAD(add, OP_SAD);
@@ -1172,14 +1858,15 @@ AlgebraicOpt::tryADDToMADOrSAD(Instruction *add, operation toOp)
    else
       return false;
 
-   if ((src0->getUniqueInsn() && src0->getUniqueInsn()->bb != add->bb) ||
-       (src1->getUniqueInsn() && src1->getUniqueInsn()->bb != add->bb))
-      return false;
-
    src = add->getSrc(s);
 
-   if (src->getInsn()->postFactor)
+   if (src->getUniqueInsn() && src->getUniqueInsn()->bb != add->bb)
       return false;
+
+   if (src->getInsn()->saturate || src->getInsn()->postFactor ||
+       src->getInsn()->dnz || src->getInsn()->precise)
+      return false;
+
    if (toOp == OP_SAD) {
       ImmediateValue imm;
       if (!src->getInsn()->src(2).getImmediate(imm))
@@ -1187,6 +1874,10 @@ AlgebraicOpt::tryADDToMADOrSAD(Instruction *add, operation toOp)
       if (!imm.isInteger(0))
          return false;
    }
+
+   if (typeSizeof(add->dType) != typeSizeof(src->getInsn()->dType) ||
+       isFloatType(add->dType) != isFloatType(src->getInsn()->dType))
+      return false;
 
    mod[0] = add->src(0).mod;
    mod[1] = add->src(1).mod;
@@ -1198,6 +1889,9 @@ AlgebraicOpt::tryADDToMADOrSAD(Instruction *add, operation toOp)
 
    add->op = toOp;
    add->subOp = src->getInsn()->subOp; // potentially mul-high
+   add->dnz = src->getInsn()->dnz;
+   add->dType = src->getInsn()->dType; // sign matters for imad hi
+   add->sType = src->getInsn()->sType;
 
    add->setSrc(2, add->src(s ? 0 : 1));
 
@@ -1236,15 +1930,24 @@ AlgebraicOpt::handleMINMAX(Instruction *minmax)
    }
 }
 
+// rcp(rcp(a)) = a
+// rcp(sqrt(a)) = rsq(a)
 void
 AlgebraicOpt::handleRCP(Instruction *rcp)
 {
    Instruction *si = rcp->getSrc(0)->getUniqueInsn();
 
-   if (si && si->op == OP_RCP) {
+   if (!si)
+      return;
+
+   if (si->op == OP_RCP) {
       Modifier mod = rcp->src(0).mod * si->src(0).mod;
       rcp->op = mod.getOp();
       rcp->setSrc(0, si->getSrc(0));
+   } else if (si->op == OP_SQRT) {
+      rcp->op = OP_RSQ;
+      rcp->setSrc(0, si->getSrc(0));
+      rcp->src(0).mod = rcp->src(0).mod * si->src(0).mod;
    }
 }
 
@@ -1331,12 +2034,12 @@ AlgebraicOpt::handleLOGOP(Instruction *logop)
 // nv50:
 //  F2I(NEG(I2F(ABS(SET))))
 void
-AlgebraicOpt::handleCVT(Instruction *cvt)
+AlgebraicOpt::handleCVT_NEG(Instruction *cvt)
 {
+   Instruction *insn = cvt->getSrc(0)->getInsn();
    if (cvt->sType != TYPE_F32 ||
        cvt->dType != TYPE_S32 || cvt->src(0).mod != Modifier(0))
       return;
-   Instruction *insn = cvt->getSrc(0)->getInsn();
    if (!insn || insn->op != OP_NEG || insn->dType != TYPE_F32)
       return;
    if (insn->src(0).mod != Modifier(0))
@@ -1364,6 +2067,148 @@ AlgebraicOpt::handleCVT(Instruction *cvt)
    bset->setDef(0, cvt->getDef(0));
    cvt->bb->insertAfter(cvt, bset);
    delete_Instruction(prog, cvt);
+}
+
+// F2I(TRUNC()) and so on can be expressed as a single CVT. If the earlier CVT
+// does a type conversion, this becomes trickier as there might be range
+// changes/etc. We could handle those in theory as long as the range was being
+// reduced or kept the same.
+void
+AlgebraicOpt::handleCVT_CVT(Instruction *cvt)
+{
+   Instruction *insn = cvt->getSrc(0)->getInsn();
+   RoundMode rnd = insn->rnd;
+
+   if (insn->saturate ||
+       insn->subOp ||
+       insn->dType != insn->sType ||
+       insn->dType != cvt->sType)
+      return;
+
+   switch (insn->op) {
+   case OP_CEIL:
+      rnd = ROUND_PI;
+      break;
+   case OP_FLOOR:
+      rnd = ROUND_MI;
+      break;
+   case OP_TRUNC:
+      rnd = ROUND_ZI;
+      break;
+   case OP_CVT:
+      break;
+   default:
+      return;
+   }
+
+   if (!isFloatType(cvt->dType) || !isFloatType(insn->sType))
+      rnd = (RoundMode)(rnd & 3);
+
+   cvt->rnd = rnd;
+   cvt->setSrc(0, insn->getSrc(0));
+   cvt->src(0).mod *= insn->src(0).mod;
+   cvt->sType = insn->sType;
+}
+
+// Some shaders extract packed bytes out of words and convert them to
+// e.g. float. The Fermi+ CVT instruction can extract those directly, as can
+// nv50 for word sizes.
+//
+// CVT(EXTBF(x, byte/word))
+// CVT(AND(bytemask, x))
+// CVT(AND(bytemask, SHR(x, 8/16/24)))
+// CVT(SHR(x, 16/24))
+void
+AlgebraicOpt::handleCVT_EXTBF(Instruction *cvt)
+{
+   Instruction *insn = cvt->getSrc(0)->getInsn();
+   ImmediateValue imm;
+   Value *arg = NULL;
+   unsigned width, offset;
+   if ((cvt->sType != TYPE_U32 && cvt->sType != TYPE_S32) || !insn)
+      return;
+   if (insn->op == OP_EXTBF && insn->src(1).getImmediate(imm)) {
+      width = (imm.reg.data.u32 >> 8) & 0xff;
+      offset = imm.reg.data.u32 & 0xff;
+      arg = insn->getSrc(0);
+
+      if (width != 8 && width != 16)
+         return;
+      if (width == 8 && offset & 0x7)
+         return;
+      if (width == 16 && offset & 0xf)
+         return;
+   } else if (insn->op == OP_AND) {
+      int s;
+      if (insn->src(0).getImmediate(imm))
+         s = 0;
+      else if (insn->src(1).getImmediate(imm))
+         s = 1;
+      else
+         return;
+
+      if (imm.reg.data.u32 == 0xff)
+         width = 8;
+      else if (imm.reg.data.u32 == 0xffff)
+         width = 16;
+      else
+         return;
+
+      arg = insn->getSrc(!s);
+      Instruction *shift = arg->getInsn();
+      offset = 0;
+      if (shift && shift->op == OP_SHR &&
+          shift->sType == cvt->sType &&
+          shift->src(1).getImmediate(imm) &&
+          ((width == 8 && (imm.reg.data.u32 & 0x7) == 0) ||
+           (width == 16 && (imm.reg.data.u32 & 0xf) == 0))) {
+         arg = shift->getSrc(0);
+         offset = imm.reg.data.u32;
+      }
+      // We just AND'd the high bits away, which means this is effectively an
+      // unsigned value.
+      cvt->sType = TYPE_U32;
+   } else if (insn->op == OP_SHR &&
+              insn->sType == cvt->sType &&
+              insn->src(1).getImmediate(imm)) {
+      arg = insn->getSrc(0);
+      if (imm.reg.data.u32 == 24) {
+         width = 8;
+         offset = 24;
+      } else if (imm.reg.data.u32 == 16) {
+         width = 16;
+         offset = 16;
+      } else {
+         return;
+      }
+   }
+
+   if (!arg)
+      return;
+
+   // Irrespective of what came earlier, we can undo a shift on the argument
+   // by adjusting the offset.
+   Instruction *shift = arg->getInsn();
+   if (shift && shift->op == OP_SHL &&
+       shift->src(1).getImmediate(imm) &&
+       ((width == 8 && (imm.reg.data.u32 & 0x7) == 0) ||
+        (width == 16 && (imm.reg.data.u32 & 0xf) == 0)) &&
+       imm.reg.data.u32 <= offset) {
+      arg = shift->getSrc(0);
+      offset -= imm.reg.data.u32;
+   }
+
+   // The unpackSnorm lowering still leaves a few shifts behind, but it's too
+   // annoying to detect them.
+
+   if (width == 8) {
+      cvt->sType = cvt->sType == TYPE_U32 ? TYPE_U8 : TYPE_S8;
+   } else {
+      assert(width == 16);
+      cvt->sType = cvt->sType == TYPE_U32 ? TYPE_U16 : TYPE_S16;
+   }
+   cvt->setSrc(0, arg);
+   cvt->subOp = offset >> 3;
 }
 
 // SUCLAMP dst, (ADD b imm), k, 0 -> SUCLAMP dst, b, k, imm (if imm fits s6)
@@ -1407,6 +2252,69 @@ AlgebraicOpt::handleSUCLAMP(Instruction *insn)
    insn->setSrc(0, add->getSrc(s));
 }
 
+// NEG(AND(SET, 1)) -> SET
+void
+AlgebraicOpt::handleNEG(Instruction *i) {
+   Instruction *src = i->getSrc(0)->getInsn();
+   ImmediateValue imm;
+   int b;
+
+   if (isFloatType(i->sType) || !src || src->op != OP_AND)
+      return;
+
+   if (src->src(0).getImmediate(imm))
+      b = 1;
+   else if (src->src(1).getImmediate(imm))
+      b = 0;
+   else
+      return;
+
+   if (!imm.isInteger(1))
+      return;
+
+   Instruction *set = src->getSrc(b)->getInsn();
+   if ((set->op == OP_SET || set->op == OP_SET_AND ||
+       set->op == OP_SET_OR || set->op == OP_SET_XOR) &&
+       !isFloatType(set->dType)) {
+      i->def(0).replace(set->getDef(0), false);
+   }
+}
+
+// EXTBF(RDSV(COMBINED_TID)) -> RDSV(TID)
+void
+AlgebraicOpt::handleEXTBF_RDSV(Instruction *i)
+{
+   Instruction *rdsv = i->getSrc(0)->getUniqueInsn();
+   if (rdsv->op != OP_RDSV ||
+       rdsv->getSrc(0)->asSym()->reg.data.sv.sv != SV_COMBINED_TID)
+      return;
+   // Avoid creating more RDSV instructions
+   if (rdsv->getDef(0)->refCount() > 1)
+      return;
+
+   ImmediateValue imm;
+   if (!i->src(1).getImmediate(imm))
+      return;
+
+   int index;
+   if (imm.isInteger(0x1000))
+      index = 0;
+   else
+   if (imm.isInteger(0x0a10))
+      index = 1;
+   else
+   if (imm.isInteger(0x061a))
+      index = 2;
+   else
+      return;
+
+   bld.setPosition(i, false);
+
+   i->op = OP_RDSV;
+   i->setSrc(0, bld.mkSysVal(SV_TID, index));
+   i->setSrc(1, NULL);
+}
+
 bool
 AlgebraicOpt::visit(BasicBlock *bb)
 {
@@ -1436,10 +2344,19 @@ AlgebraicOpt::visit(BasicBlock *bb)
          handleLOGOP(i);
          break;
       case OP_CVT:
-         handleCVT(i);
+         handleCVT_NEG(i);
+         handleCVT_CVT(i);
+         if (prog->getTarget()->isOpSupported(OP_EXTBF, TYPE_U32))
+             handleCVT_EXTBF(i);
          break;
       case OP_SUCLAMP:
          handleSUCLAMP(i);
+         break;
+      case OP_NEG:
+         handleNEG(i);
+         break;
+      case OP_EXTBF:
+         handleEXTBF_RDSV(i);
          break;
       default:
          break;
@@ -1447,6 +2364,261 @@ AlgebraicOpt::visit(BasicBlock *bb)
    }
 
    return true;
+}
+
+// =============================================================================
+
+// ADD(SHL(a, b), c) -> SHLADD(a, b, c)
+// MUL(a, b) -> a few XMADs
+// MAD/FMA(a, b, c) -> a few XMADs
+class LateAlgebraicOpt : public Pass
+{
+private:
+   virtual bool visit(Instruction *);
+
+   void handleADD(Instruction *);
+   void handleMULMAD(Instruction *);
+   bool tryADDToSHLADD(Instruction *);
+
+   BuildUtil bld;
+};
+
+void
+LateAlgebraicOpt::handleADD(Instruction *add)
+{
+   Value *src0 = add->getSrc(0);
+   Value *src1 = add->getSrc(1);
+
+   if (src0->reg.file != FILE_GPR || src1->reg.file != FILE_GPR)
+      return;
+
+   if (prog->getTarget()->isOpSupported(OP_SHLADD, add->dType))
+      tryADDToSHLADD(add);
+}
+
+// ADD(SHL(a, b), c) -> SHLADD(a, b, c)
+bool
+LateAlgebraicOpt::tryADDToSHLADD(Instruction *add)
+{
+   Value *src0 = add->getSrc(0);
+   Value *src1 = add->getSrc(1);
+   ImmediateValue imm;
+   Instruction *shl;
+   Value *src;
+   int s;
+
+   if (add->saturate || add->usesFlags() || typeSizeof(add->dType) == 8
+       || isFloatType(add->dType))
+      return false;
+
+   if (src0->getUniqueInsn() && src0->getUniqueInsn()->op == OP_SHL)
+      s = 0;
+   else
+   if (src1->getUniqueInsn() && src1->getUniqueInsn()->op == OP_SHL)
+      s = 1;
+   else
+      return false;
+
+   src = add->getSrc(s);
+   shl = src->getUniqueInsn();
+
+   if (shl->bb != add->bb || shl->usesFlags() || shl->subOp || shl->src(0).mod)
+      return false;
+
+   if (!shl->src(1).getImmediate(imm))
+      return false;
+
+   add->op = OP_SHLADD;
+   add->setSrc(2, add->src(!s));
+   // SHL can't have any modifiers, but the ADD source may have had
+   // one. Preserve it.
+   add->setSrc(0, shl->getSrc(0));
+   if (s == 1)
+      add->src(0).mod = add->src(1).mod;
+   add->setSrc(1, new_ImmediateValue(shl->bb->getProgram(), imm.reg.data.u32));
+   add->src(1).mod = Modifier(0);
+
+   return true;
+}
+
+// MUL(a, b) -> a few XMADs
+// MAD/FMA(a, b, c) -> a few XMADs
+void
+LateAlgebraicOpt::handleMULMAD(Instruction *i)
+{
+   // TODO: handle NV50_IR_SUBOP_MUL_HIGH
+   if (!prog->getTarget()->isOpSupported(OP_XMAD, TYPE_U32))
+      return;
+   if (isFloatType(i->dType) || typeSizeof(i->dType) != 4)
+      return;
+   if (i->subOp || i->usesFlags() || i->flagsDef >= 0)
+      return;
+
+   assert(!i->src(0).mod);
+   assert(!i->src(1).mod);
+   assert(i->op == OP_MUL ? 1 : !i->src(2).mod);
+
+   bld.setPosition(i, false);
+
+   Value *a = i->getSrc(0);
+   Value *b = i->getSrc(1);
+   Value *c = i->op == OP_MUL ? bld.mkImm(0) : i->getSrc(2);
+
+   Value *tmp0 = bld.getSSA();
+   Value *tmp1 = bld.getSSA();
+
+   Instruction *insn = bld.mkOp3(OP_XMAD, TYPE_U32, tmp0, b, a, c);
+   insn->setPredicate(i->cc, i->getPredicate());
+
+   insn = bld.mkOp3(OP_XMAD, TYPE_U32, tmp1, b, a, bld.mkImm(0));
+   insn->setPredicate(i->cc, i->getPredicate());
+   insn->subOp = NV50_IR_SUBOP_XMAD_MRG | NV50_IR_SUBOP_XMAD_H1(1);
+
+   Value *pred = i->getPredicate();
+   i->setPredicate(i->cc, NULL);
+
+   i->op = OP_XMAD;
+   i->setSrc(0, b);
+   i->setSrc(1, tmp1);
+   i->setSrc(2, tmp0);
+   i->subOp = NV50_IR_SUBOP_XMAD_PSL | NV50_IR_SUBOP_XMAD_CBCC;
+   i->subOp |= NV50_IR_SUBOP_XMAD_H1(0) | NV50_IR_SUBOP_XMAD_H1(1);
+
+   i->setPredicate(i->cc, pred);
+}
+
+bool
+LateAlgebraicOpt::visit(Instruction *i)
+{
+   switch (i->op) {
+   case OP_ADD:
+      handleADD(i);
+      break;
+   case OP_MUL:
+   case OP_MAD:
+   case OP_FMA:
+      handleMULMAD(i);
+      break;
+   default:
+      break;
+   }
+
+   return true;
+}
+
+// =============================================================================
+
+// Split 64-bit MUL and MAD
+class Split64BitOpPreRA : public Pass
+{
+private:
+   virtual bool visit(BasicBlock *);
+   void split64MulMad(Function *, Instruction *, DataType);
+
+   BuildUtil bld;
+};
+
+bool
+Split64BitOpPreRA::visit(BasicBlock *bb)
+{
+   Instruction *i, *next;
+   Modifier mod;
+
+   for (i = bb->getEntry(); i; i = next) {
+      next = i->next;
+
+      DataType hTy;
+      switch (i->dType) {
+      case TYPE_U64: hTy = TYPE_U32; break;
+      case TYPE_S64: hTy = TYPE_S32; break;
+      default:
+         continue;
+      }
+
+      if (i->op == OP_MAD || i->op == OP_MUL)
+         split64MulMad(func, i, hTy);
+   }
+
+   return true;
+}
+
+void
+Split64BitOpPreRA::split64MulMad(Function *fn, Instruction *i, DataType hTy)
+{
+   assert(i->op == OP_MAD || i->op == OP_MUL);
+   assert(!isFloatType(i->dType) && !isFloatType(i->sType));
+   assert(typeSizeof(hTy) == 4);
+
+   bld.setPosition(i, true);
+
+   Value *zero = bld.mkImm(0u);
+   Value *carry = bld.getSSA(1, FILE_FLAGS);
+
+   // We want to compute `d = a * b (+ c)?`, where a, b, c and d are 64-bit
+   // values (a, b and c might be 32-bit values), using 32-bit operations. This
+   // gives the following operations:
+   // * `d.low = low(a.low * b.low) (+ c.low)?`
+   // * `d.high = low(a.high * b.low) + low(a.low * b.high)
+   //           + high(a.low * b.low) (+ c.high)?`
+   //
+   // To compute the high bits, we can split in the following operations:
+   // * `tmp1   = low(a.high * b.low) (+ c.high)?`
+   // * `tmp2   = low(a.low * b.high) + tmp1`
+   // * `d.high = high(a.low * b.low) + tmp2`
+   //
+   // mkSplit put lower bits at index 0 and higher bits at index 1
+
+   Value *op1[2];
+   if (i->getSrc(0)->reg.size == 8)
+      bld.mkSplit(op1, 4, i->getSrc(0));
+   else {
+      op1[0] = i->getSrc(0);
+      op1[1] = zero;
+   }
+   Value *op2[2];
+   if (i->getSrc(1)->reg.size == 8)
+      bld.mkSplit(op2, 4, i->getSrc(1));
+   else {
+      op2[0] = i->getSrc(1);
+      op2[1] = zero;
+   }
+
+   Value *op3[2] = { NULL, NULL };
+   if (i->op == OP_MAD) {
+      if (i->getSrc(2)->reg.size == 8)
+         bld.mkSplit(op3, 4, i->getSrc(2));
+      else {
+         op3[0] = i->getSrc(2);
+         op3[1] = zero;
+      }
+   }
+
+   Value *tmpRes1Hi = bld.getSSA();
+   if (i->op == OP_MAD)
+      bld.mkOp3(OP_MAD, hTy, tmpRes1Hi, op1[1], op2[0], op3[1]);
+   else
+      bld.mkOp2(OP_MUL, hTy, tmpRes1Hi, op1[1], op2[0]);
+
+   Value *tmpRes2Hi = bld.mkOp3v(OP_MAD, hTy, bld.getSSA(), op1[0], op2[1], tmpRes1Hi);
+
+   Value *def[2] = { bld.getSSA(), bld.getSSA() };
+
+   // If it was a MAD, add the carry from the low bits
+   // It is not needed if it was a MUL, since we added high(a.low * b.low) to
+   // d.high
+   if (i->op == OP_MAD)
+      bld.mkOp3(OP_MAD, hTy, def[0], op1[0], op2[0], op3[0])->setFlagsDef(1, carry);
+   else
+      bld.mkOp2(OP_MUL, hTy, def[0], op1[0], op2[0]);
+
+   Instruction *hiPart3 = bld.mkOp3(OP_MAD, hTy, def[1], op1[0], op2[0], tmpRes2Hi);
+   hiPart3->subOp = NV50_IR_SUBOP_MUL_HIGH;
+   if (i->op == OP_MAD)
+      hiPart3->setFlagsSrc(3, carry);
+
+   bld.mkOp2(OP_MERGE, i->dType, i->getDef(0), def[0], def[1]);
+
+   delete_Instruction(fn->getProgram(), i);
 }
 
 // =============================================================================
@@ -1562,8 +2734,15 @@ MemoryOpt::combineLd(Record *rec, Instruction *ld)
    if (((size == 0x8) && (MIN2(offLd, offRc) & 0x7)) ||
        ((size == 0xc) && (MIN2(offLd, offRc) & 0xf)))
       return false;
+   // for compute indirect loads are not guaranteed to be aligned
+   if (prog->getType() == Program::TYPE_COMPUTE && rec->rel[0])
+      return false;
 
    assert(sizeRc + sizeLd <= 16 && offRc != offLd);
+
+   // lock any stores that overlap with the load being merged into the
+   // existing record.
+   lockStores(ld);
 
    for (j = 0; sizeRc; sizeRc -= rec->insn->getDef(j)->reg.size, ++j);
 
@@ -1614,8 +2793,16 @@ MemoryOpt::combineSt(Record *rec, Instruction *st)
    if (!prog->getTarget()->
        isAccessSupported(st->getSrc(0)->reg.file, typeOfSize(size)))
       return false;
+   // no unaligned stores
    if (size == 8 && MIN2(offRc, offSt) & 0x7)
       return false;
+   // for compute indirect stores are not guaranteed to be aligned
+   if (prog->getType() == Program::TYPE_COMPUTE && rec->rel[0])
+      return false;
+
+   // remove any existing load/store records for the store being merged into
+   // the existing record.
+   purgeRecords(st, DATA_FILE_COUNT);
 
    st->takeExtraSources(0, extra); // save predicate and indirect address
 
@@ -1716,7 +2903,7 @@ MemoryOpt::findRecord(const Instruction *insn, bool load, bool& isAdj) const
    Record *it = load ? loads[sym->reg.file] : stores[sym->reg.file];
 
    for (; it; it = it->next) {
-      if (it->locked && insn->op != OP_LOAD)
+      if (it->locked && insn->op != OP_LOAD && insn->op != OP_VFETCH)
          continue;
       if ((it->offset >> 4) != (sym->reg.data.offset >> 4) ||
           it->rel[0] != insn->getIndirect(0, 0) ||
@@ -1824,7 +3011,7 @@ MemoryOpt::replaceStFromSt(Instruction *restrict st, Record *rec)
       // get non-replaced sources after values covered by st
       for (; offR < endR; offR += ri->getSrc(s)->reg.size, ++s)
          vals[k++] = ri->getSrc(s);
-      assert((unsigned int)k <= Elements(vals));
+      assert((unsigned int)k <= ARRAY_SIZE(vals));
       for (s = 0; s < k; ++s)
          st->setSrc(s + 1, vals[s]);
       st->setSrc(0, ri->getSrc(0));
@@ -1854,11 +3041,15 @@ MemoryOpt::Record::overlaps(const Instruction *ldst) const
    Record that;
    that.set(ldst);
 
-   if (this->fileIndex != that.fileIndex)
+   // This assumes that images/buffers can't overlap. They can.
+   // TODO: Plumb the restrict logic through, and only skip when it's a
+   // restrict situation, or there can implicitly be no writes.
+   if (this->fileIndex != that.fileIndex && this->rel[1] == that.rel[1])
       return false;
 
    if (this->rel[0] || that.rel[0])
       return this->base == that.base;
+
    return
       (this->offset < that.offset + that.size) &&
       (this->offset + this->size > that.offset);
@@ -1926,6 +3117,12 @@ MemoryOpt::runOpt(BasicBlock *bb)
          }
       } else
       if (ldst->op == OP_STORE || ldst->op == OP_EXPORT) {
+         if (typeSizeof(ldst->dType) == 4 &&
+             ldst->src(1).getFile() == FILE_GPR &&
+             ldst->getSrc(1)->getInsn()->op == OP_NOP) {
+            delete_Instruction(prog, ldst);
+            continue;
+         }
          isLoad = false;
       } else {
          // TODO: maybe have all fixed ops act as barrier ?
@@ -1952,6 +3149,8 @@ MemoryOpt::runOpt(BasicBlock *bb)
          continue;
       }
       if (ldst->getPredicate()) // TODO: handle predicated ld/st
+         continue;
+      if (ldst->perPatch) // TODO: create separate per-patch lists
          continue;
 
       if (isLoad) {
@@ -2004,6 +3203,7 @@ MemoryOpt::runOpt(BasicBlock *bb)
 class FlatteningPass : public Pass
 {
 private:
+   virtual bool visit(Function *);
    virtual bool visit(BasicBlock *);
 
    bool tryPredicateConditional(BasicBlock *);
@@ -2012,6 +3212,8 @@ private:
    inline bool isConstantCondition(Value *pred);
    inline bool mayPredicate(const Instruction *, const Value *pred) const;
    inline void removeFlow(Instruction *);
+
+   uint8_t gpr_unit;
 };
 
 bool
@@ -2033,9 +3235,15 @@ FlatteningPass::isConstantCondition(Value *pred)
          file = ld->src(0).getFile();
       } else {
          file = insn->src(s).getFile();
-         // catch $r63 on NVC0
-         if (file == FILE_GPR && insn->getSrc(s)->reg.data.id > prog->maxGPR)
-            file = FILE_IMMEDIATE;
+         // catch $r63 on NVC0 and $r63/$r127 on NV50. Unfortunately maxGPR is
+         // in register "units", which can vary between targets.
+         if (file == FILE_GPR) {
+            Value *v = insn->getSrc(s);
+            int bytes = v->reg.data.id * MIN2(v->reg.size, 4);
+            int units = bytes >> gpr_unit;
+            if (units > prog->maxGPR)
+               file = FILE_IMMEDIATE;
+         }
       }
       if (file != FILE_IMMEDIATE && file != FILE_MEMORY_CONST)
          return false;
@@ -2141,6 +3349,14 @@ FlatteningPass::tryPropagateBranch(BasicBlock *bb)
 }
 
 bool
+FlatteningPass::visit(Function *fn)
+{
+   gpr_unit = prog->getTarget()->getFileUnit(FILE_GPR);
+
+   return true;
+}
+
+bool
 FlatteningPass::visit(BasicBlock *bb)
 {
    if (tryPredicateConditional(bb))
@@ -2153,13 +3369,14 @@ FlatteningPass::visit(BasicBlock *bb)
          insn = insn->prev;
          if (insn && !insn->getPredicate() &&
              !insn->asFlow() &&
+             insn->op != OP_DISCARD &&
              insn->op != OP_TEXBAR &&
              !isTextureOp(insn->op) && // probably just nve4
              !isSurfaceOp(insn->op) && // not confirmed
              insn->op != OP_LINTERP && // probably just nve4
              insn->op != OP_PINTERP && // probably just nve4
-             ((insn->op != OP_LOAD && insn->op != OP_STORE) ||
-              typeSizeof(insn->dType) <= 4) &&
+             ((insn->op != OP_LOAD && insn->op != OP_STORE && insn->op != OP_ATOM) ||
+              (typeSizeof(insn->dType) <= 4 && !insn->src(0).isIndirect(0))) &&
              !insn->isNop()) {
             insn->join = 1;
             bb->remove(bb->getExit());
@@ -2236,6 +3453,145 @@ FlatteningPass::tryPredicateConditional(BasicBlock *bb)
 
 // =============================================================================
 
+// Fold Immediate into MAD; must be done after register allocation due to
+// constraint SDST == SSRC2
+// TODO:
+// Does NVC0+ have other situations where this pass makes sense?
+class PostRaLoadPropagation : public Pass
+{
+private:
+   virtual bool visit(Instruction *);
+
+   void handleMADforNV50(Instruction *);
+   void handleMADforNVC0(Instruction *);
+};
+
+static bool
+post_ra_dead(Instruction *i)
+{
+   for (int d = 0; i->defExists(d); ++d)
+      if (i->getDef(d)->refCount())
+         return false;
+   return true;
+}
+
+// Fold Immediate into MAD; must be done after register allocation due to
+// constraint SDST == SSRC2
+void
+PostRaLoadPropagation::handleMADforNV50(Instruction *i)
+{
+   if (i->def(0).getFile() != FILE_GPR ||
+       i->src(0).getFile() != FILE_GPR ||
+       i->src(1).getFile() != FILE_GPR ||
+       i->src(2).getFile() != FILE_GPR ||
+       i->getDef(0)->reg.data.id != i->getSrc(2)->reg.data.id)
+      return;
+
+   if (i->getDef(0)->reg.data.id >= 64 ||
+       i->getSrc(0)->reg.data.id >= 64)
+      return;
+
+   if (i->flagsSrc >= 0 && i->getSrc(i->flagsSrc)->reg.data.id != 0)
+      return;
+
+   if (i->getPredicate())
+      return;
+
+   Value *vtmp;
+   Instruction *def = i->getSrc(1)->getInsn();
+
+   if (def && def->op == OP_SPLIT && typeSizeof(def->sType) == 4)
+      def = def->getSrc(0)->getInsn();
+   if (def && def->op == OP_MOV && def->src(0).getFile() == FILE_IMMEDIATE) {
+      vtmp = i->getSrc(1);
+      if (isFloatType(i->sType)) {
+         i->setSrc(1, def->getSrc(0));
+      } else {
+         ImmediateValue val;
+         // getImmediate() has side-effects on the argument so this *shouldn't*
+         // be folded into the assert()
+         MAYBE_UNUSED bool ret = def->src(0).getImmediate(val);
+         assert(ret);
+         if (i->getSrc(1)->reg.data.id & 1)
+            val.reg.data.u32 >>= 16;
+         val.reg.data.u32 &= 0xffff;
+         i->setSrc(1, new_ImmediateValue(prog, val.reg.data.u32));
+      }
+
+      /* There's no post-RA dead code elimination, so do it here
+       * XXX: if we add more code-removing post-RA passes, we might
+       *      want to create a post-RA dead-code elim pass */
+      if (post_ra_dead(vtmp->getInsn())) {
+         Value *src = vtmp->getInsn()->getSrc(0);
+         // Careful -- splits will have already been removed from the
+         // functions. Don't double-delete.
+         if (vtmp->getInsn()->bb)
+            delete_Instruction(prog, vtmp->getInsn());
+         if (src->getInsn() && post_ra_dead(src->getInsn()))
+            delete_Instruction(prog, src->getInsn());
+      }
+   }
+}
+
+void
+PostRaLoadPropagation::handleMADforNVC0(Instruction *i)
+{
+   if (i->def(0).getFile() != FILE_GPR ||
+       i->src(0).getFile() != FILE_GPR ||
+       i->src(1).getFile() != FILE_GPR ||
+       i->src(2).getFile() != FILE_GPR ||
+       i->getDef(0)->reg.data.id != i->getSrc(2)->reg.data.id)
+      return;
+
+   // TODO: gm107 can also do this for S32, maybe other chipsets as well
+   if (i->dType != TYPE_F32)
+      return;
+
+   if ((i->src(2).mod | Modifier(NV50_IR_MOD_NEG)) != Modifier(NV50_IR_MOD_NEG))
+      return;
+
+   ImmediateValue val;
+   int s;
+
+   if (i->src(0).getImmediate(val))
+      s = 1;
+   else if (i->src(1).getImmediate(val))
+      s = 0;
+   else
+      return;
+
+   if ((i->src(s).mod | Modifier(NV50_IR_MOD_NEG)) != Modifier(NV50_IR_MOD_NEG))
+      return;
+
+   if (s == 1)
+      i->swapSources(0, 1);
+
+   Instruction *imm = i->getSrc(1)->getInsn();
+   i->setSrc(1, imm->getSrc(0));
+   if (post_ra_dead(imm))
+      delete_Instruction(prog, imm);
+}
+
+bool
+PostRaLoadPropagation::visit(Instruction *i)
+{
+   switch (i->op) {
+   case OP_FMA:
+   case OP_MAD:
+      if (prog->getTarget()->getChipset() < 0xc0)
+         handleMADforNV50(i);
+      else
+         handleMADforNVC0(i);
+      break;
+   default:
+      break;
+   }
+
+   return true;
+}
+
+// =============================================================================
+
 // Common subexpression elimination. Stupid O^2 implementation.
 class LocalCSE : public Pass
 {
@@ -2274,6 +3630,11 @@ Instruction::isActionEqual(const Instruction *that) const
          return false;
    } else
    if (this->asFlow()) {
+      return false;
+   } else
+   if (this->op == OP_PHI && this->bb != that->bb) {
+      /* TODO: we could probably be a bit smarter here by following the
+       * control flow, but honestly, it is quite painful to check */
       return false;
    } else {
       if (this->ipa != that->ipa ||
@@ -2330,11 +3691,13 @@ Instruction::isResultEqual(const Instruction *that) const
    if (that->srcExists(s))
       return false;
 
-   if (op == OP_LOAD || op == OP_VFETCH) {
+   if (op == OP_LOAD || op == OP_VFETCH || op == OP_ATOM) {
       switch (src(0).getFile()) {
       case FILE_MEMORY_CONST:
       case FILE_SHADER_INPUT:
          return true;
+      case FILE_SHADER_OUTPUT:
+         return bb->getProgram()->getType() == Program::TYPE_TESSELLATION_EVAL;
       default:
          return false;
       }
@@ -2359,6 +3722,8 @@ GlobalCSE::visit(BasicBlock *bb)
       ik = phi->getSrc(0)->getInsn();
       if (!ik)
          continue; // probably a function input
+      if (ik->defCount(0xff) > 1)
+         continue; // too painful to check if we can really push this forward
       for (s = 1; phi->srcExists(s); ++s) {
          if (phi->getSrc(s)->refCount() > 1)
             break;
@@ -2367,6 +3732,7 @@ GlobalCSE::visit(BasicBlock *bb)
             break;
       }
       if (!phi->srcExists(s)) {
+         assert(ik->op != OP_PHI);
          Instruction *entry = bb->getEntry();
          ik->bb->remove(ik);
          if (!entry || entry->op != OP_JOIN)
@@ -2415,7 +3781,7 @@ LocalCSE::visit(BasicBlock *bb)
       for (ir = bb->getFirst(); ir; ir = ir->next)
          ir->serial = serial++;
 
-      for (ir = bb->getEntry(); ir; ir = next) {
+      for (ir = bb->getFirst(); ir; ir = next) {
          int s;
          Value *src = NULL;
 
@@ -2492,27 +3858,48 @@ DeadCodeElim::buryAll(Program *prog)
 bool
 DeadCodeElim::visit(BasicBlock *bb)
 {
-   Instruction *next;
+   Instruction *prev;
 
-   for (Instruction *i = bb->getFirst(); i; i = next) {
-      next = i->next;
+   for (Instruction *i = bb->getExit(); i; i = prev) {
+      prev = i->prev;
       if (i->isDead()) {
          ++deadCount;
          delete_Instruction(prog, i);
       } else
-      if (i->defExists(1) && (i->op == OP_VFETCH || i->op == OP_LOAD)) {
+      if (i->defExists(1) &&
+          i->subOp == 0 &&
+          (i->op == OP_VFETCH || i->op == OP_LOAD)) {
          checkSplitLoad(i);
       } else
       if (i->defExists(0) && !i->getDef(0)->refCount()) {
          if (i->op == OP_ATOM ||
              i->op == OP_SUREDP ||
-             i->op == OP_SUREDB)
+             i->op == OP_SUREDB) {
             i->setDef(0, NULL);
+            if (i->op == OP_ATOM && i->subOp == NV50_IR_SUBOP_ATOM_EXCH) {
+               i->cache = CACHE_CV;
+               i->op = OP_STORE;
+               i->subOp = 0;
+            }
+         } else if (i->op == OP_LOAD && i->subOp == NV50_IR_SUBOP_LOAD_LOCKED) {
+            i->setDef(0, i->getDef(1));
+            i->setDef(1, NULL);
+         }
       }
    }
    return true;
 }
 
+// Each load can go into up to 4 destinations, any of which might potentially
+// be dead (i.e. a hole). These can always be split into 2 loads, independent
+// of where the holes are. We find the first contiguous region, put it into
+// the first load, and then put the second contiguous region into the second
+// load. There can be at most 2 contiguous regions.
+//
+// Note that there are some restrictions, for example it's not possible to do
+// a 64-bit load that's not 64-bit aligned, so such a load has to be split
+// up. Also hardware doesn't support 96-bit loads, so those also have to be
+// split into a 64-bit and 32-bit load.
 void
 DeadCodeElim::checkSplitLoad(Instruction *ld1)
 {
@@ -2533,6 +3920,8 @@ DeadCodeElim::checkSplitLoad(Instruction *ld1)
    addr1 = ld1->getSrc(0)->reg.data.offset;
    n1 = n2 = 0;
    size1 = size2 = 0;
+
+   // Compute address/width for first load
    for (d = 0; ld1->defExists(d); ++d) {
       if (mask & (1 << d)) {
          if (size1 && (addr1 & 0x7))
@@ -2546,15 +3935,33 @@ DeadCodeElim::checkSplitLoad(Instruction *ld1)
          break;
       }
    }
+
+   // Scale back the size of the first load until it can be loaded. This
+   // typically happens for TYPE_B96 loads.
+   while (n1 &&
+          !prog->getTarget()->isAccessSupported(ld1->getSrc(0)->reg.file,
+                                                typeOfSize(size1))) {
+      size1 -= def1[--n1]->reg.size;
+      d--;
+   }
+
+   // Compute address/width for second load
    for (addr2 = addr1 + size1; ld1->defExists(d); ++d) {
       if (mask & (1 << d)) {
+         assert(!size2 || !(addr2 & 0x7));
          def2[n2] = ld1->getDef(d);
          size2 += def2[n2++]->reg.size;
-      } else {
+      } else if (!n2) {
          assert(!n2);
          addr2 += ld1->getDef(d)->reg.size;
+      } else {
+         break;
       }
    }
+
+   // Make sure that we've processed all the values
+   for (; ld1->defExists(d); ++d)
+      assert(!(mask & (1 << d)));
 
    updateLdStOffset(ld1, addr1, func);
    ld1->setType(typeOfSize(size1));
@@ -2589,12 +3996,16 @@ Program::optimizeSSA(int level)
 {
    RUN_PASS(1, DeadCodeElim, buryAll);
    RUN_PASS(1, CopyPropagation, run);
+   RUN_PASS(1, MergeSplits, run);
    RUN_PASS(2, GlobalCSE, run);
    RUN_PASS(1, LocalCSE, run);
    RUN_PASS(2, AlgebraicOpt, run);
    RUN_PASS(2, ModifierFolding, run); // before load propagation -> less checks
    RUN_PASS(1, ConstantFolding, foldAll);
+   RUN_PASS(0, Split64BitOpPreRA, run);
+   RUN_PASS(2, LateAlgebraicOpt, run);
    RUN_PASS(1, LoadPropagation, run);
+   RUN_PASS(1, IndirectPropagation, run);
    RUN_PASS(2, MemoryOpt, run);
    RUN_PASS(2, LocalCSE, run);
    RUN_PASS(0, DeadCodeElim, buryAll);
@@ -2606,6 +4017,8 @@ bool
 Program::optimizePostRA(int level)
 {
    RUN_PASS(2, FlatteningPass, run);
+   RUN_PASS(2, PostRaLoadPropagation, run);
+
    return true;
 }
 

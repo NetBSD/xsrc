@@ -155,59 +155,38 @@
 
 /* Single item copy macros */
 #define __GLX_PUT_CHAR(offset,a)                \
-   *((INT8 *) (pc + offset)) = a
+   do {                                         \
+      int8_t __tmp = (a);                       \
+      memcpy((pc + (offset)), &__tmp, 1);       \
+   } while (0)
 
-#ifndef _CRAY
 #define __GLX_PUT_SHORT(offset,a)               \
-   *((INT16 *) (pc + offset)) = a
+   do {                                         \
+      int16_t __tmp = (a);                      \
+      memcpy((pc + (offset)), &__tmp, 2);       \
+   } while (0)
 
 #define __GLX_PUT_LONG(offset,a)                \
-   *((INT32 *) (pc + offset)) = a
+   do {                                         \
+      int32_t __tmp = (a);                      \
+      memcpy((pc + (offset)), &__tmp, 4);       \
+   } while (0)
 
 #define __GLX_PUT_FLOAT(offset,a)               \
-   *((FLOAT32 *) (pc + offset)) = a
-
-#else
-#define __GLX_PUT_SHORT(offset,a)               \
-   { GLubyte *cp = (pc+offset);                 \
-      int shift = (64-16) - ((int)(cp) >> (64-6));                      \
-      *(int *)cp = (*(int *)cp & ~(0xffff << shift)) | ((a & 0xffff) << shift); }
-
-#define __GLX_PUT_LONG(offset,a)                \
-   { GLubyte *cp = (pc+offset);                 \
-      int shift = (64-32) - ((int)(cp) >> (64-6));                      \
-      *(int *)cp = (*(int *)cp & ~(0xffffffff << shift)) | ((a & 0xffffffff) << shift); }
-
-#define __GLX_PUT_FLOAT(offset,a)               \
-   gl_put_float((pc + offset),a)
+   do {                                         \
+      float __tmp = (a);                        \
+      memcpy((pc + (offset)), &__tmp, 4);       \
+   } while (0)
 
 #define __GLX_PUT_DOUBLE(offset,a)              \
-   gl_put_double(pc + offset, a)
-
-extern void gl_put_float( /*GLubyte *, struct cray_single */ );
-extern void gl_put_double( /*GLubyte *, struct cray_double */ );
-#endif
-
-#ifndef _CRAY
-
-#ifdef __GLX_ALIGN64
-/*
-** This can certainly be done better for a particular machine
-** architecture!
-*/
-#define __GLX_PUT_DOUBLE(offset,a)              \
-   __GLX_MEM_COPY(pc + offset, &a, 8)
-#else
-#define __GLX_PUT_DOUBLE(offset,a)              \
-   *((FLOAT64 *) (pc + offset)) = a
-#endif
-
-#endif
+   do {                                         \
+      double __tmp = (a);                       \
+      memcpy((pc + (offset)), &__tmp, 8);       \
+   } while (0)
 
 #define __GLX_PUT_CHAR_ARRAY(offset,a,alen)                 \
    __GLX_MEM_COPY(pc + offset, a, alen * __GLX_SIZE_INT8)
 
-#ifndef _CRAY
 #define __GLX_PUT_SHORT_ARRAY(offset,a,alen)                \
    __GLX_MEM_COPY(pc + offset, a, alen * __GLX_SIZE_INT16)
 
@@ -220,24 +199,5 @@ extern void gl_put_double( /*GLubyte *, struct cray_double */ );
 #define __GLX_PUT_DOUBLE_ARRAY(offset,a,alen)                  \
    __GLX_MEM_COPY(pc + offset, a, alen * __GLX_SIZE_FLOAT64)
 
-#else
-#define __GLX_PUT_SHORT_ARRAY(offset,a,alen)                            \
-   gl_put_short_array((GLubyte *)(pc + offset), a, alen * __GLX_SIZE_INT16)
-
-#define __GLX_PUT_LONG_ARRAY(offset,a,alen)                             \
-   gl_put_long_array((GLubyte *)(pc + offset), (long *)a, alen * __GLX_SIZE_INT32)
-
-#define __GLX_PUT_FLOAT_ARRAY(offset,a,alen)                            \
-   gl_put_float_array((GLubyte *)(pc + offset), (float *)a, alen * __GLX_SIZE_FLOAT32)
-
-#define __GLX_PUT_DOUBLE_ARRAY(offset,a,alen)                           \
-   gl_put_double_array((GLubyte *)(pc + offset), (double *)a, alen * __GLX_SIZE_FLOAT64)
-
-extern gl_put_short_array(GLubyte *, short *, int);
-extern gl_put_long_array(GLubyte *, long *, int);
-extern gl_put_float_array(GLubyte *, float *, int);
-extern gl_put_double_array(GLubyte *, double *, int);
-
-#endif /* _CRAY */
 
 #endif /* !__GLX_packrender_h__ */

@@ -28,7 +28,6 @@
 #include "main/imports.h"
 #include "main/format_pack.h"
 #include "main/format_unpack.h"
-#include "main/core.h"
 #include "main/stencil.h"
 
 #include "s_context.h"
@@ -280,7 +279,7 @@ compute_pass_fail_masks(GLuint n, const GLubyte origMask[],
 {
    GLuint i;
    for (i = 0; i < n; i++) {
-      ASSERT(newMask[i] == 0 || newMask[i] == 1);
+      assert(newMask[i] == 0 || newMask[i] == 1);
       passMask[i] = origMask[i] & newMask[i];
       failMask[i] = origMask[i] & (newMask[i] ^ 1);
    }
@@ -580,7 +579,8 @@ _swrast_clear_stencil_buffer(struct gl_context *ctx)
    }
 
    ctx->Driver.MapRenderbuffer(ctx, rb, x, y, width, height,
-                               mapMode, &map, &rowStride);
+                               mapMode, &map, &rowStride,
+                               ctx->DrawBuffer->FlipY);
    if (!map) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glClear(stencil)");
       return;

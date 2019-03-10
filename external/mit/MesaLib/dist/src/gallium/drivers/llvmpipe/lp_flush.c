@@ -32,6 +32,7 @@
 
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
+#include "util/u_debug_image.h"
 #include "util/u_string.h"
 #include "draw/draw_context.h"
 #include "lp_flush.h"
@@ -81,7 +82,8 @@ llvmpipe_finish( struct pipe_context *pipe,
    struct pipe_fence_handle *fence = NULL;
    llvmpipe_flush(pipe, &fence, reason);
    if (fence) {
-      pipe->screen->fence_finish(pipe->screen, fence, PIPE_TIMEOUT_INFINITE);
+      pipe->screen->fence_finish(pipe->screen, NULL, fence,
+                                 PIPE_TIMEOUT_INFINITE);
       pipe->screen->fence_reference(pipe->screen, &fence, NULL);
    }
 }

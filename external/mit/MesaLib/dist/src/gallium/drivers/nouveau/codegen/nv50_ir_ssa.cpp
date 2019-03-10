@@ -87,6 +87,7 @@ DominatorTree::DominatorTree(Graph *cfgraph) : cfg(cfgraph),
       LABEL(i) = i;
       SEMI(i) = ANCESTOR(i) = -1;
    }
+   assert(i == count);
 
    build();
 
@@ -168,7 +169,7 @@ void DominatorTree::build()
    do {
       p = 0;
       for (v = 1; v < count; ++v) {
-         nw = &BasicBlock::get(vert[DOM(v)])->dom;;
+         nw = &BasicBlock::get(vert[DOM(v)])->dom;
          nv = &BasicBlock::get(vert[v])->dom;
          if (nw->getGraph() && !nv->getGraph()) {
             ++p;

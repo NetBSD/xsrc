@@ -35,14 +35,16 @@ libxatracker_la_SOURCES =
 
 libxatracker_la_LIBADD = \
 	$(top_builddir)/src/gallium/state_trackers/xa/libxatracker.la \
+	$(top_builddir)/src/gallium/auxiliary/libgalliumvl_stub.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
+	$(top_builddir)/src/compiler/nir/libnir.la \
 	$(top_builddir)/src/util/libmesautil.la \
 	$(LIBDRM_LIBS) \
 	$(GALLIUM_COMMON_LIB_DEPS)
 
 libxatracker_la_LDFLAGS = \
 	-no-undefined \
-	-version-number $(XA_MAJOR):$(XA_MINOR):$(XA_TINY) \
+	-version-number $(XA_MAJOR):$(XA_MINOR):$(XA_PATCH) \
 	$(GC_SECTIONS) \
 	$(LD_NO_UNDEFINED)
 
@@ -51,66 +53,38 @@ libxatracker_la_LDFLAGS += \
 	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/xa/xa.sym
 endif
 
+EXTRA_libxatracker_la_DEPENDENCIES = xa.sym
+EXTRA_DIST = xa.sym meson.build
+
 if HAVE_GALLIUM_STATIC_TARGETS
 
-STATIC_TARGET_CPPFLAGS =
-STATIC_TARGET_LIB_DEPS = \
-	$(top_builddir)/src/loader/libloader.la
+TARGET_DRIVERS =
+TARGET_CPPFLAGS =
+TARGET_LIB_DEPS =
 
-if HAVE_GALLIUM_I915
-STATIC_TARGET_CPPFLAGS += -DGALLIUM_I915
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/winsys/i915/drm/libi915drm.la \
-	$(top_builddir)/src/gallium/drivers/i915/libi915.la \
-	$(INTEL_LIBS)
-endif
+include $(top_srcdir)/src/gallium/drivers/i915/Automake.inc
 
-if HAVE_GALLIUM_ILO
-STATIC_TARGET_CPPFLAGS += -DGALLIUM_ILO
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/winsys/intel/drm/libintelwinsys.la \
-	$(top_builddir)/src/gallium/drivers/ilo/libilo.la \
-	$(INTEL_LIBS)
-endif
+include $(top_srcdir)/src/gallium/drivers/nouveau/Automake.inc
 
-if HAVE_GALLIUM_NOUVEAU
-STATIC_TARGET_CPPFLAGS += -DGALLIUM_NOUVEAU
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/winsys/nouveau/drm/libnouveaudrm.la \
-	$(top_builddir)/src/gallium/drivers/nouveau/libnouveau.la \
-	$(NOUVEAU_LIBS)
-endif
+include $(top_srcdir)/src/gallium/drivers/svga/Automake.inc
 
-if HAVE_GALLIUM_SVGA
-STATIC_TARGET_CPPFLAGS += -DGALLIUM_VMWGFX
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/winsys/svga/drm/libsvgadrm.la \
-	$(top_builddir)/src/gallium/drivers/svga/libsvga.la
-endif
-
-if HAVE_GALLIUM_FREEDRENO
-STATIC_TARGET_CPPFLAGS += -DGALLIUM_FREEDRENO
-STATIC_TARGET_LIB_DEPS += \
-	$(top_builddir)/src/gallium/winsys/freedreno/drm/libfreedrenodrm.la \
-	$(top_builddir)/src/gallium/drivers/freedreno/libfreedreno.la \
-	$(FREEDRENO_LIBS)
-
-endif
+include $(top_srcdir)/src/gallium/drivers/freedreno/Automake.inc
 
 libxatracker_la_SOURCES += target.c
-libxatracker_la_CPPFLAGS = $(STATIC_TARGET_CPPFLAGS)
-libxatracker_la_LIBADD += $(STATIC_TARGET_LIB_DEPS)
+libxatracker_la_CPPFLAGS = $(TARGET_CPPFLAGS)
+libxatracker_la_LIBADD += \
+	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader_static.la \
+	$(GALLIUM_PIPE_LOADER_WINSYS_LIBS) \
+	$(TARGET_LIB_DEPS)
 
 else # HAVE_GALLIUM_STATIC_TARGETS
 
 libxatracker_la_LIBADD += \
-	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader.la \
-	$(GALLIUM_PIPE_LOADER_WINSYS_LIBS) \
-	$(GALLIUM_PIPE_LOADER_LIBS)
+	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader_dynamic.la
 
 endif # HAVE_GALLIUM_STATIC_TARGETS
 
-if HAVE_MESA_LLVM
+if HAVE_GALLIUM_LLVM
 libxatracker_la_LIBADD += $(LLVM_LIBS)
 libxatracker_la_LDFLAGS += $(LLVM_LDFLAGS)
 endif

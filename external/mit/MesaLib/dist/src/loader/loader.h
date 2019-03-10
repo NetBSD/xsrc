@@ -27,27 +27,36 @@
 #ifndef LOADER_H
 #define LOADER_H
 
+#include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Helpers to figure out driver and device name, eg. from pci-id, etc. */
 
-#define _LOADER_DRI          (1 << 0)
-#define _LOADER_GALLIUM      (1 << 1)
+int
+loader_open_device(const char *);
+
+int
+loader_open_render_node(const char *name);
 
 int
 loader_get_pci_id_for_fd(int fd, int *vendor_id, int *chip_id);
 
 char *
-loader_get_driver_for_fd(int fd, unsigned driver_types);
+loader_get_driver_for_fd(int fd);
 
 char *
 loader_get_device_name_for_fd(int fd);
 
 /* Function to get a different device than the one we are to use by default,
  * if the user requests so and it is possible. The initial fd will be closed
- * if neccessary. The returned fd is potentially a render-node.
+ * if necessary. The returned fd is potentially a render-node.
  */
 
 int
-loader_get_user_preferred_fd(int default_fd, int *different_device);
+loader_get_user_preferred_fd(int default_fd, bool *different_device);
 
 /* for logging.. keep this aligned with egllog.h so we can just use
  * _eglLog directly.
@@ -60,5 +69,12 @@ loader_get_user_preferred_fd(int default_fd, int *different_device);
 
 void
 loader_set_logger(void (*logger)(int level, const char *fmt, ...));
+
+char *
+loader_get_extensions_name(const char *driver_name);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LOADER_H */

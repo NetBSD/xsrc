@@ -41,12 +41,12 @@ do {									\
 	 GLuint idx = inlist[i];					\
 	 GLfloat dp = CLIP_DOTPROD(idx, A, B, C, D );			\
 									\
-	 if (!IS_NEGATIVE(dpPrev)) {					\
+	 if (dpPrev >= 0.0f) {						\
 	    outlist[outcount++] = idxPrev;				\
 	 }								\
 									\
 	 if (DIFFERENT_SIGNS(dp, dpPrev)) {				\
-	    if (IS_NEGATIVE(dp)) {					\
+	    if (dp < 0.0f) {						\
 	       /* Going out of bounds.  Avoid division by zero as we	\
 		* know dp != dpPrev from DIFFERENT_SIGNS, above.	\
 		*/							\
@@ -85,15 +85,15 @@ do {									\
    if (mask & PLANE_BIT) {						\
       const GLfloat dp0 = CLIP_DOTPROD( v0, A, B, C, D );		\
       const GLfloat dp1 = CLIP_DOTPROD( v1, A, B, C, D );		\
-      const GLboolean neg_dp0 = IS_NEGATIVE(dp0);			\
-      const GLboolean neg_dp1 = IS_NEGATIVE(dp1);			\
+      const GLboolean neg_dp0 = dp0 < 0.0f;				\
+      const GLboolean neg_dp1 = dp1 < 0.0f;				\
       									\
       /* For regular clipping, we know from the clipmask that one	\
        * (or both) of these must be negative (otherwise we wouldn't	\
        * be here).							\
        * For userclip, there is only a single bit for all active	\
        * planes, so we can end up here when there is nothing to do,	\
-       * hence the second IS_NEGATIVE() test:				\
+       * hence the second < 0.0f test:					\
        */								\
       if (neg_dp0 && neg_dp1)						\
          return; /* both vertices outside clip plane: discard */	\
@@ -124,7 +124,6 @@ TAG(clip_line)( struct gl_context *ctx, GLuint v0, GLuint v1, GLubyte mask )
    GLuint newvert = VB->Count;
    GLfloat t0 = 0;
    GLfloat t1 = 0;
-   GLuint p;
    const GLuint v0_orig = v0;
 
    if (mask & CLIP_FRUSTUM_BITS) {
@@ -137,14 +136,14 @@ TAG(clip_line)( struct gl_context *ctx, GLuint v0, GLuint v1, GLubyte mask )
    }
 
    if (mask & CLIP_USER_BIT) {
-      for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
-	 if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
-            const GLfloat a = ctx->Transform._ClipUserPlane[p][0];
-            const GLfloat b = ctx->Transform._ClipUserPlane[p][1];
-            const GLfloat c = ctx->Transform._ClipUserPlane[p][2];
-            const GLfloat d = ctx->Transform._ClipUserPlane[p][3];
-	    LINE_CLIP( CLIP_USER_BIT, a, b, c, d );
-	 }
+      GLbitfield enabled = ctx->Transform.ClipPlanesEnabled;
+      while (enabled) {
+         const int p = u_bit_scan(&enabled);
+         const GLfloat a = ctx->Transform._ClipUserPlane[p][0];
+         const GLfloat b = ctx->Transform._ClipUserPlane[p][1];
+         const GLfloat c = ctx->Transform._ClipUserPlane[p][2];
+         const GLfloat d = ctx->Transform._ClipUserPlane[p][3];
+         LINE_CLIP( CLIP_USER_BIT, a, b, c, d );
       }
    }
 
@@ -155,7 +154,7 @@ TAG(clip_line)( struct gl_context *ctx, GLuint v0, GLuint v1, GLubyte mask )
       newvert++;
    }
    else {
-      ASSERT(t0 == 0.0);
+      assert(t0 == 0.0);
    }
 
    /* Note: we need to use vertex v0_orig when computing the new
@@ -174,7 +173,7 @@ TAG(clip_line)( struct gl_context *ctx, GLuint v0, GLuint v1, GLubyte mask )
       newvert++;
    }
    else {
-      ASSERT(t1 == 0.0);
+      assert(t1 == 0.0);
    }
 
    tnl->Driver.Render.ClippedLine( ctx, v0, v1 );
@@ -194,7 +193,6 @@ TAG(clip_tri)( struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2, GLubyte 
    GLuint pv = v2;
    GLuint vlist[2][MAX_CLIPPED_VERTICES];
    GLuint *inlist = vlist[0], *outlist = vlist[1];
-   GLuint p;
    GLuint n = 3;
 
    ASSIGN_3V(inlist, v2, v0, v1 ); /* pv rotated to slot zero */
@@ -226,20 +224,20 @@ TAG(clip_tri)( struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2, GLubyte 
    }
 
    if (mask & CLIP_USER_BIT) {
-      for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
-         if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
-            const GLfloat a = ctx->Transform._ClipUserPlane[p][0];
-            const GLfloat b = ctx->Transform._ClipUserPlane[p][1];
-            const GLfloat c = ctx->Transform._ClipUserPlane[p][2];
-            const GLfloat d = ctx->Transform._ClipUserPlane[p][3];
-            POLY_CLIP( CLIP_USER_BIT, a, b, c, d );
-         }
+      GLbitfield enabled = ctx->Transform.ClipPlanesEnabled;
+      while (enabled) {
+         const int p = u_bit_scan(&enabled);
+         const GLfloat a = ctx->Transform._ClipUserPlane[p][0];
+         const GLfloat b = ctx->Transform._ClipUserPlane[p][1];
+         const GLfloat c = ctx->Transform._ClipUserPlane[p][2];
+         const GLfloat d = ctx->Transform._ClipUserPlane[p][3];
+         POLY_CLIP( CLIP_USER_BIT, a, b, c, d );
       }
    }
 
    if (ctx->Light.ShadeModel == GL_FLAT) {
       if (pv != inlist[0]) {
-	 ASSERT( inlist[0] >= VB->Count );
+	 assert( inlist[0] >= VB->Count );
 	 tnl->Driver.Render.CopyPV( ctx, inlist[0], pv );
       }
    }
@@ -274,7 +272,6 @@ TAG(clip_quad)( struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint 
    GLuint pv = v3;
    GLuint vlist[2][MAX_CLIPPED_VERTICES];
    GLuint *inlist = vlist[0], *outlist = vlist[1];
-   GLuint p;
    GLuint n = 4;
 
    ASSIGN_4V(inlist, v3, v0, v1, v2 ); /* pv rotated to slot zero */
@@ -289,20 +286,20 @@ TAG(clip_quad)( struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint 
    }
 
    if (mask & CLIP_USER_BIT) {
-      for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
-	 if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
-            const GLfloat a = ctx->Transform._ClipUserPlane[p][0];
-            const GLfloat b = ctx->Transform._ClipUserPlane[p][1];
-            const GLfloat c = ctx->Transform._ClipUserPlane[p][2];
-            const GLfloat d = ctx->Transform._ClipUserPlane[p][3];
-	    POLY_CLIP( CLIP_USER_BIT, a, b, c, d );
-	 }
+      GLbitfield enabled = ctx->Transform.ClipPlanesEnabled;
+      while (enabled) {
+         const int p = u_bit_scan(&enabled);
+         const GLfloat a = ctx->Transform._ClipUserPlane[p][0];
+         const GLfloat b = ctx->Transform._ClipUserPlane[p][1];
+         const GLfloat c = ctx->Transform._ClipUserPlane[p][2];
+         const GLfloat d = ctx->Transform._ClipUserPlane[p][3];
+         POLY_CLIP( CLIP_USER_BIT, a, b, c, d );
       }
    }
 
    if (ctx->Light.ShadeModel == GL_FLAT) {
       if (pv != inlist[0]) {
-	 ASSERT( inlist[0] >= VB->Count );
+	 assert( inlist[0] >= VB->Count );
 	 tnl->Driver.Render.CopyPV( ctx, inlist[0], pv );
       }
    }

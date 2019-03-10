@@ -28,51 +28,114 @@ AM_CFLAGS = \
 	-I$(top_srcdir)/src/ \
 	-I$(top_srcdir)/src/mapi \
 	-I$(top_srcdir)/src/mesa/ \
+	-I$(top_srcdir)/src/gallium/include \
+	-I$(top_srcdir)/src/gallium/auxiliary \
+	-I$(top_builddir)/src/util \
 	-I$(top_srcdir)/src/mesa/drivers/dri/common \
-	-I$(top_srcdir)/src/mesa/drivers/dri/intel/server \
 	-I$(top_srcdir)/src/gtest/include \
-	-I$(top_builddir)/src/mesa/drivers/dri/common \
+	-I$(top_builddir)/src/compiler/glsl \
+	-I$(top_builddir)/src/compiler/nir \
+	-I$(top_srcdir)/src/compiler/nir \
+	-I$(top_builddir)/src/intel \
+	-I$(top_srcdir)/src/intel \
+	-I$(top_srcdir)/include/drm-uapi \
 	$(DEFINES) \
 	$(VISIBILITY_CFLAGS) \
-	$(INTEL_CFLAGS)
+	$(WNO_OVERRIDE_INIT) \
+	$(LIBDRM_CFLAGS) \
+	$(VALGRIND_CFLAGS) \
+	-msse2 -mstackrealign
 
 AM_CXXFLAGS = $(AM_CFLAGS)
 
-gen8_instruction_CFLAGS = $(AM_CFLAGS) -fkeep-inline-functions
+I965_PERGEN_LIBS = \
+	libi965_gen4.la \
+	libi965_gen45.la \
+	libi965_gen5.la \
+	libi965_gen6.la \
+	libi965_gen7.la \
+	libi965_gen75.la \
+	libi965_gen8.la \
+	libi965_gen9.la \
+	libi965_gen10.la \
+	libi965_gen11.la
 
-noinst_LTLIBRARIES = libi965_dri.la
-libi965_dri_la_SOURCES = $(i965_FILES)
-libi965_dri_la_LIBADD = $(INTEL_LIBS)
+libi965_gen4_la_SOURCES = $(i965_gen4_FILES)
+libi965_gen4_la_CFLAGS = $(AM_CFLAGS) -DGEN_VERSIONx10=40
 
-TEST_LIBS = \
+libi965_gen45_la_SOURCES = $(i965_gen45_FILES)
+libi965_gen45_la_CFLAGS = $(AM_CFLAGS) -DGEN_VERSIONx10=45
+
+libi965_gen5_la_SOURCES = $(i965_gen5_FILES)
+libi965_gen5_la_CFLAGS = $(AM_CFLAGS) -DGEN_VERSIONx10=50
+
+libi965_gen6_la_SOURCES = $(i965_gen6_FILES)
+libi965_gen6_la_CFLAGS = $(AM_CFLAGS) -DGEN_VERSIONx10=60
+
+libi965_gen7_la_SOURCES = $(i965_gen7_FILES)
+libi965_gen7_la_CFLAGS = $(AM_CFLAGS) -DGEN_VERSIONx10=70
+
+libi965_gen75_la_SOURCES = $(i965_gen75_FILES)
+libi965_gen75_la_CFLAGS = $(AM_CFLAGS) -DGEN_VERSIONx10=75
+
+libi965_gen8_la_SOURCES = $(i965_gen8_FILES)
+libi965_gen8_la_CFLAGS = $(AM_CFLAGS) -DGEN_VERSIONx10=80
+
+libi965_gen9_la_SOURCES = $(i965_gen9_FILES)
+libi965_gen9_la_CFLAGS = $(AM_CFLAGS) -DGEN_VERSIONx10=90
+
+libi965_gen10_la_SOURCES = $(i965_gen10_FILES)
+libi965_gen10_la_CFLAGS = $(AM_CFLAGS) -DGEN_VERSIONx10=100
+
+libi965_gen11_la_SOURCES = $(i965_gen11_FILES)
+libi965_gen11_la_CFLAGS = $(AM_CFLAGS) -DGEN_VERSIONx10=110
+
+noinst_LTLIBRARIES = \
 	libi965_dri.la \
-	../common/libdricommon.la \
-	../common/libmegadriver_stub.la \
-        ../../../libmesa.la \
-	$(DRI_LIB_DEPS) \
-        $(CLOCK_LIB) \
-	../common/libdri_test_stubs.la
+	libintel_tiled_memcpy.la \
+	libintel_tiled_memcpy_sse41.la \
+	$(I965_PERGEN_LIBS)
 
-TESTS = \
-        test_eu_compact \
-        test_vec4_copy_propagation \
-        test_vec4_register_coalesce
+libintel_tiled_memcpy_la_SOURCES = \
+	$(intel_tiled_memcpy_FILES)
+libintel_tiled_memcpy_la_CFLAGS = \
+	$(AM_CFLAGS)
 
-check_PROGRAMS = $(TESTS)
+libintel_tiled_memcpy_sse41_la_SOURCES = \
+	$(intel_tiled_memcpy_sse41_FILES)
+libintel_tiled_memcpy_sse41_la_CFLAGS = \
+	$(AM_CFLAGS) $(SSE41_CFLAGS)
 
-test_vec4_register_coalesce_SOURCES = \
-	test_vec4_register_coalesce.cpp
-test_vec4_register_coalesce_LDADD = \
-        $(TEST_LIBS) \
-        $(top_builddir)/src/gtest/libgtest.la
+libi965_dri_la_SOURCES = \
+	$(i965_FILES) \
+	$(i965_oa_GENERATED_FILES)
+libi965_dri_la_LIBADD = \
+	$(top_builddir)/src/intel/common/libintel_common.la \
+	$(top_builddir)/src/intel/dev/libintel_dev.la \
+	$(top_builddir)/src/intel/isl/libisl.la \
+	$(top_builddir)/src/intel/compiler/libintel_compiler.la \
+	$(top_builddir)/src/intel/blorp/libblorp.la \
+	$(I965_PERGEN_LIBS) \
+	libintel_tiled_memcpy.la \
+	libintel_tiled_memcpy_sse41.la \
+	$(LIBDRM_LIBS)
 
-test_vec4_copy_propagation_SOURCES = \
-	test_vec4_copy_propagation.cpp
-test_vec4_copy_propagation_LDADD = \
-        $(TEST_LIBS) \
-        $(top_builddir)/src/gtest/libgtest.la
+BUILT_SOURCES = $(i965_oa_GENERATED_FILES)
+CLEANFILES = $(BUILT_SOURCES)
 
-test_eu_compact_SOURCES = \
-	test_eu_compact.c
-nodist_EXTRA_test_eu_compact_SOURCES = dummy.cpp
-test_eu_compact_LDADD = $(TEST_LIBS)
+EXTRA_DIST = \
+	brw_oa.py \
+	$(i965_oa_xml_FILES) \
+	$(intel_tiled_memcpy_dep_FILES) \
+	meson.build
+
+brw_oa_metrics.c: brw_oa.py $(i965_oa_xml_FILES)
+	$(PYTHON) $(PYTHON_FLAGS) $(srcdir)/brw_oa.py \
+	--code=$(builddir)/brw_oa_metrics.c \
+	--header=$(builddir)/brw_oa_metrics.h \
+	$(i965_oa_xml_FILES:%=$(srcdir)/%)
+
+brw_oa_metrics.h: brw_oa_metrics.c
+
+intel_tiled_memcpy_normal.c: $(intel_tiled_memcpy_dep_FILES)
+intel_tiled_memcpy_sse41.c: $(intel_tiled_memcpy_dep_FILES)

@@ -56,13 +56,13 @@ struct llvmpipe_screen
    unsigned timestamp;
 
    struct lp_rasterizer *rast;
-   pipe_mutex rast_mutex;
+   mtx_t rast_mutex;
 };
 
 
 
 
-static INLINE struct llvmpipe_screen *
+static inline struct llvmpipe_screen *
 llvmpipe_screen( struct pipe_screen *pipe )
 {
    return (struct llvmpipe_screen *)pipe;

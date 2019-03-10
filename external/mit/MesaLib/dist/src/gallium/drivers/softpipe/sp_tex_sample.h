@@ -38,10 +38,12 @@ struct sp_sampler;
 
 typedef void (*wrap_nearest_func)(float s,
                                   unsigned size,
+                                  int offset,
                                   int *icoord);
 
 typedef void (*wrap_linear_func)(float s, 
                                  unsigned size,
+                                 int offset,
                                  int *icoord0,
                                  int *icoord1,
                                  float *w);
@@ -51,17 +53,30 @@ typedef float (*compute_lambda_func)(const struct sp_sampler_view *sp_sview,
                                      const float t[TGSI_QUAD_SIZE],
                                      const float p[TGSI_QUAD_SIZE]);
 
-typedef void (*img_filter_func)(struct sp_sampler_view *sp_sview,
-                                struct sp_sampler *sp_samp,
-                                float s,
-                                float t,
-                                float p,
-                                unsigned level,
-                                unsigned face_id,
+struct img_filter_args {
+   float s;
+   float t;
+   float p;
+   unsigned level;
+   unsigned face_id;
+   const int8_t *offset;
+   bool gather_only;
+   int gather_comp;
+};
+
+typedef void (*img_filter_func)(const struct sp_sampler_view *sp_sview,
+                                const struct sp_sampler *sp_samp,
+                                const struct img_filter_args *args,
                                 float *rgba);
 
-typedef void (*mip_filter_func)(struct sp_sampler_view *sp_sview,
-                                struct sp_sampler *sp_samp,
+struct filter_args {
+   enum tgsi_sampler_control control;
+   const int8_t *offset;
+   const uint *faces;
+};
+
+typedef void (*mip_filter_func)(const struct sp_sampler_view *sp_sview,
+                                const struct sp_sampler *sp_samp,
                                 img_filter_func min_filter,
                                 img_filter_func mag_filter,
                                 const float s[TGSI_QUAD_SIZE],
@@ -69,20 +84,14 @@ typedef void (*mip_filter_func)(struct sp_sampler_view *sp_sview,
                                 const float p[TGSI_QUAD_SIZE],
                                 const float c0[TGSI_QUAD_SIZE],
                                 const float lod[TGSI_QUAD_SIZE],
-                                enum tgsi_sampler_control control,
+                                const struct filter_args *args,
                                 float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE]);
 
 
-typedef void (*filter_func)(struct sp_sampler_view *sp_sview,
-                            struct sp_sampler *sp_samp,
-                            const float s[TGSI_QUAD_SIZE],
-                            const float t[TGSI_QUAD_SIZE],
-                            const float p[TGSI_QUAD_SIZE],
-                            const float c0[TGSI_QUAD_SIZE],
-                            const float lod[TGSI_QUAD_SIZE],
-                            enum tgsi_sampler_control control,
-                            float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE]);
-
+typedef void (*mip_level_func)(const struct sp_sampler_view *sp_sview,
+                               const struct sp_sampler *sp_samp,
+                               const float lod[TGSI_QUAD_SIZE],
+                               float level[TGSI_QUAD_SIZE]);
 
 typedef void (*fetch_func)(struct sp_sampler_view *sp_sview,
                            const int i[TGSI_QUAD_SIZE],
@@ -102,11 +111,7 @@ struct sp_sampler_view
 
    boolean need_swizzle;
    boolean pot2d;
-
-   filter_func get_samples;
-
-   /* this is just abusing the sampler_view object as local storage */
-   unsigned faces[TGSI_QUAD_SIZE];
+   boolean need_cube_convert;
 
    /* these are different per shader type */
    struct softpipe_tex_tile_cache *cache;
@@ -114,6 +119,10 @@ struct sp_sampler_view
 
 };
 
+struct sp_filter_funcs {
+   mip_level_func relative_level;
+   mip_filter_func filter;
+};
 
 struct sp_sampler {
    struct pipe_sampler_state base;
@@ -130,7 +139,7 @@ struct sp_sampler {
    wrap_linear_func linear_texcoord_t;
    wrap_linear_func linear_texcoord_p;
 
-   mip_filter_func mip_filter;
+   const struct sp_filter_funcs *filter_funcs;
 };
 
 
@@ -146,7 +155,8 @@ struct sp_tgsi_sampler
 };
 
 compute_lambda_func
-softpipe_get_lambda_func(const struct pipe_sampler_view *view, unsigned shader);
+softpipe_get_lambda_func(const struct pipe_sampler_view *view,
+                         enum pipe_shader_type shader);
 
 
 void *

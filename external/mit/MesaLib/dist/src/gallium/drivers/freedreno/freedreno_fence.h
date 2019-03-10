@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
  *
@@ -29,37 +27,26 @@
 #ifndef FREEDRENO_FENCE_H_
 #define FREEDRENO_FENCE_H_
 
-#include "util/u_inlines.h"
-#include "util/u_double_list.h"
+#include "pipe/p_context.h"
 
+void fd_fence_populate(struct pipe_fence_handle *fence,
+		uint32_t timestamp, int fence_fd);
+void fd_fence_ref(struct pipe_screen *pscreen,
+		struct pipe_fence_handle **ptr,
+		struct pipe_fence_handle *pfence);
+boolean fd_fence_finish(struct pipe_screen *screen,
+		struct pipe_context *ctx,
+		struct pipe_fence_handle *pfence,
+		uint64_t timeout);
+void fd_create_fence_fd(struct pipe_context *pctx,
+		struct pipe_fence_handle **pfence, int fd,
+		enum pipe_fd_type type);
+void fd_fence_server_sync(struct pipe_context *pctx,
+		struct pipe_fence_handle *fence);
+int fd_fence_get_fd(struct pipe_screen *pscreen,
+		struct pipe_fence_handle *pfence);
 
-struct fd_fence {
-	int ref;
-};
-
-boolean fd_fence_wait(struct fd_fence *fence);
-boolean fd_fence_signalled(struct fd_fence *fence);
-void fd_fence_del(struct fd_fence *fence);
-
-static INLINE void
-fd_fence_ref(struct fd_fence *fence, struct fd_fence **ref)
-{
-	if (fence)
-		++fence->ref;
-
-	if (*ref) {
-		if (--(*ref)->ref == 0)
-			fd_fence_del(*ref);
-	}
-
-	*ref = fence;
-}
-
-static INLINE struct fd_fence *
-fd_fence(struct pipe_fence_handle *fence)
-{
-	return (struct fd_fence *)fence;
-}
-
+struct fd_batch;
+struct pipe_fence_handle * fd_fence_create(struct fd_batch *batch);
 
 #endif /* FREEDRENO_FENCE_H_ */

@@ -17,7 +17,9 @@ util_format_etc1_rgb8_unpack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride, 
 }
 
 void
-util_format_etc1_rgb8_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height)
+util_format_etc1_rgb8_pack_rgba_8unorm(UNUSED uint8_t *dst_row, UNUSED unsigned dst_stride,
+                                       UNUSED const uint8_t *src_row, UNUSED unsigned src_stride,
+                                       UNUSED unsigned width, UNUSED unsigned height)
 {
    assert(0);
 }
@@ -57,7 +59,9 @@ util_format_etc1_rgb8_unpack_rgba_float(float *dst_row, unsigned dst_stride, con
 }
 
 void
-util_format_etc1_rgb8_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride, const float *src_row, unsigned src_stride, unsigned width, unsigned height)
+util_format_etc1_rgb8_pack_rgba_float(UNUSED uint8_t *dst_row, UNUSED unsigned dst_stride,
+                                      UNUSED const float *src_row, UNUSED unsigned src_stride,
+                                      UNUSED unsigned width, UNUSED unsigned height)
 {
    assert(0);
 }
@@ -65,11 +69,10 @@ util_format_etc1_rgb8_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride, con
 void
 util_format_etc1_rgb8_fetch_rgba_float(float *dst, const uint8_t *src, unsigned i, unsigned j)
 {
-   const unsigned bw = 4, bh = 4;
    struct etc1_block block;
    uint8_t tmp[3];
 
-   assert(i < bw && j < bh);
+   assert(i < 4 && j < 4); /* check i, j against 4x4 block size */
 
    etc1_parse_block(&block, src);
    etc1_fetch_texel(&block, i, j, tmp);

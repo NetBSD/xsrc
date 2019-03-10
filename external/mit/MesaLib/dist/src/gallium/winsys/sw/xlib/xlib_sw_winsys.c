@@ -92,7 +92,7 @@ struct xlib_sw_winsys
 
 
 /** Cast wrapper */
-static INLINE struct xlib_displaytarget *
+static inline struct xlib_displaytarget *
 xlib_displaytarget(struct sw_displaytarget *dt)
 {
    return (struct xlib_displaytarget *) dt;
@@ -268,7 +268,7 @@ xlib_displaytarget_destroy(struct sw_winsys *ws,
             xlib_dt->tempImage->data = NULL;
       }
       else {
-         FREE(xlib_dt->data);
+         align_free(xlib_dt->data);
          if (xlib_dt->tempImage && xlib_dt->tempImage->data == xlib_dt->data) {
             xlib_dt->tempImage->data = NULL;
          }
@@ -391,10 +391,12 @@ xlib_displaytarget_create(struct sw_winsys *winsys,
                           enum pipe_format format,
                           unsigned width, unsigned height,
                           unsigned alignment,
+                          const void *front_private,
                           unsigned *stride)
 {
    struct xlib_displaytarget *xlib_dt;
    unsigned nblocksy, size;
+   int ignore;
 
    xlib_dt = CALLOC_STRUCT(xlib_displaytarget);
    if (!xlib_dt)
@@ -409,7 +411,8 @@ xlib_displaytarget_create(struct sw_winsys *winsys,
    xlib_dt->stride = align(util_format_get_stride(format, width), alignment);
    size = xlib_dt->stride * nblocksy;
 
-   if (!debug_get_option_xlib_no_shm()) {
+   if (!debug_get_option_xlib_no_shm() &&
+       XQueryExtension(xlib_dt->display, "MIT-SHM", &ignore, &ignore, &ignore)) {
       xlib_dt->data = alloc_shm(xlib_dt, size);
       if (xlib_dt->data) {
          xlib_dt->shm = True;

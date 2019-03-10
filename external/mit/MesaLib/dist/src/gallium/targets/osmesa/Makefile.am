@@ -33,8 +33,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/gallium/drivers \
 	-I$(top_srcdir)/src/gallium/winsys \
 	-I$(top_srcdir)/src/gallium/auxiliary \
-	-DGALLIUM_SOFTPIPE \
-	-DGALLIUM_TRACE
+	-DGALLIUM_SOFTPIPE
 
 lib_LTLIBRARIES = lib@OSMESA_LIB@.la
 
@@ -42,7 +41,6 @@ nodist_EXTRA_lib@OSMESA_LIB@_la_SOURCES = dummy.cpp
 lib@OSMESA_LIB@_la_SOURCES = target.c
 
 lib@OSMESA_LIB@_la_LDFLAGS = \
-	-module \
 	-no-undefined \
 	-version-number @OSMESA_VERSION@ \
 	$(GC_SECTIONS) \
@@ -61,19 +59,33 @@ lib@OSMESA_LIB@_la_LIBADD = \
 	$(top_builddir)/src/mesa/libmesagallium.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/gallium/winsys/sw/null/libws_null.la \
-	$(top_builddir)/src/gallium/drivers/trace/libtrace.la \
 	$(top_builddir)/src/gallium/drivers/softpipe/libsoftpipe.la \
 	$(top_builddir)/src/gallium/state_trackers/osmesa/libosmesa.la \
 	$(top_builddir)/src/mapi/glapi/libglapi.la \
 	$(SHARED_GLAPI_LIB) \
 	$(OSMESA_LIB_DEPS) \
-	$(CLOCK_LIB)
+	$(CLOCK_LIB) \
+	$(LIBUNWIND_LIBS)
 
-if HAVE_MESA_LLVM
+if HAVE_GALLIUM_LLVM
 AM_CPPFLAGS += -DGALLIUM_LLVMPIPE
 lib@OSMESA_LIB@_la_LDFLAGS += $(LLVM_LDFLAGS)
 lib@OSMESA_LIB@_la_LIBADD += $(top_builddir)/src/gallium/drivers/llvmpipe/libllvmpipe.la $(LLVM_LIBS)
 endif
+
+if HAVE_GALLIUM_SWR
+AM_CPPFLAGS += -DGALLIUM_SWR
+lib@OSMESA_LIB@_la_LDFLAGS += $(LLVM_LDFLAGS)
+lib@OSMESA_LIB@_la_LIBADD += $(top_builddir)/src/gallium/drivers/swr/libmesaswr.la $(LLVM_LIBS)
+endif
+
+EXTRA_lib@OSMESA_LIB@_la_DEPENDENCIES = osmesa.sym
+EXTRA_DIST = \
+	osmesa.sym \
+	osmesa.def \
+	osmesa.mingw.def \
+	SConscript \
+	meson.build
 
 include $(top_srcdir)/install-gallium-links.mk
 

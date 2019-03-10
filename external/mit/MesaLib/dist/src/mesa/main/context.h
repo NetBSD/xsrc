@@ -49,8 +49,11 @@
 #define CONTEXT_H
 
 
+#include "errors.h"
 #include "imports.h"
+#include "extensions.h"
 #include "mtypes.h"
+#include "vbo/vbo.h"
 
 
 #ifdef __cplusplus
@@ -77,7 +80,7 @@ _mesa_create_visual( GLboolean dbFlag,
                      GLint accumGreenBits,
                      GLint accumBlueBits,
                      GLint accumAlphaBits,
-                     GLint numSamples );
+                     GLuint numSamples );
 
 extern GLboolean
 _mesa_initialize_visual( struct gl_config *v,
@@ -93,7 +96,7 @@ _mesa_initialize_visual( struct gl_config *v,
                          GLint accumGreenBits,
                          GLint accumBlueBits,
                          GLint accumAlphaBits,
-                         GLint numSamples );
+                         GLuint numSamples );
 
 extern void
 _mesa_destroy_visual( struct gl_config *vis );
@@ -111,12 +114,6 @@ _mesa_initialize_context( struct gl_context *ctx,
                           struct gl_context *share_list,
                           const struct dd_function_table *driverFunctions);
 
-extern struct gl_context *
-_mesa_create_context(gl_api api,
-                     const struct gl_config *visual,
-                     struct gl_context *share_list,
-                     const struct dd_function_table *driverFunctions);
-
 extern void
 _mesa_free_context_data( struct gl_context *ctx );
 
@@ -126,10 +123,6 @@ _mesa_destroy_context( struct gl_context *ctx );
 
 extern void
 _mesa_copy_context(const struct gl_context *src, struct gl_context *dst, GLuint mask);
-
-
-extern void
-_mesa_check_init_viewport(struct gl_context *ctx, GLuint width, GLuint height);
 
 extern GLboolean
 _mesa_make_current( struct gl_context *ctx, struct gl_framebuffer *drawBuffer,
@@ -147,18 +140,14 @@ extern void
 _mesa_init_constants(struct gl_constants *consts, gl_api api);
 
 extern void
-_mesa_init_get_hash(struct gl_context *ctx);
-
-extern void
 _mesa_notifySwapBuffers(struct gl_context *gc);
 
 
 extern struct _glapi_table *
 _mesa_get_dispatch(struct gl_context *ctx);
 
-
-extern GLboolean
-_mesa_valid_to_render(struct gl_context *ctx, const char *where);
+extern void
+_mesa_set_context_lost_dispatch(struct gl_context *ctx);
 
 
 
@@ -166,17 +155,7 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where);
 /*@{*/
 
 extern void
-_mesa_record_error( struct gl_context *ctx, GLenum error );
-
-
-extern void
-_mesa_finish(struct gl_context *ctx);
-
-extern void
 _mesa_flush(struct gl_context *ctx);
-
-extern int
-_mesa_generic_nop(void);
 
 extern void GLAPIENTRY
 _mesa_Finish( void );
@@ -228,9 +207,9 @@ _mesa_inside_dlist_begin_end(const struct gl_context *ctx)
 #define FLUSH_VERTICES(ctx, newstate)				\
 do {								\
    if (MESA_VERBOSE & VERBOSE_STATE)				\
-      _mesa_debug(ctx, "FLUSH_VERTICES in %s\n", MESA_FUNCTION);\
+      _mesa_debug(ctx, "FLUSH_VERTICES in %s\n", __func__);	\
    if (ctx->Driver.NeedFlush & FLUSH_STORED_VERTICES)		\
-      ctx->Driver.FlushVertices(ctx, FLUSH_STORED_VERTICES);	\
+      vbo_exec_FlushVertices(ctx, FLUSH_STORED_VERTICES);	\
    ctx->NewState |= newstate;					\
 } while (0)
 
@@ -247,10 +226,26 @@ do {								\
 #define FLUSH_CURRENT(ctx, newstate)				\
 do {								\
    if (MESA_VERBOSE & VERBOSE_STATE)				\
-      _mesa_debug(ctx, "FLUSH_CURRENT in %s\n", MESA_FUNCTION);	\
+      _mesa_debug(ctx, "FLUSH_CURRENT in %s\n", __func__);	\
    if (ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT)		\
-      ctx->Driver.FlushVertices(ctx, FLUSH_UPDATE_CURRENT);	\
+      vbo_exec_FlushVertices(ctx, FLUSH_UPDATE_CURRENT);	\
    ctx->NewState |= newstate;					\
+} while (0)
+
+/**
+ * Flush vertices.
+ *
+ * \param ctx GL context.
+ *
+ * Checks if dd_function_table::NeedFlush is marked to flush stored vertices
+ * or current state and calls dd_function_table::FlushVertices if so.
+ */
+#define FLUSH_FOR_DRAW(ctx)                                     \
+do {                                                            \
+   if (MESA_VERBOSE & VERBOSE_STATE)                            \
+      _mesa_debug(ctx, "FLUSH_FOR_DRAW in %s\n", __func__);     \
+   if (ctx->Driver.NeedFlush)                                   \
+      vbo_exec_FlushVertices(ctx, ctx->Driver.NeedFlush);       \
 } while (0)
 
 /**
@@ -288,7 +283,7 @@ do {									\
 /**
  * Checks if the context is for Desktop GL (Compatibility or Core)
  */
-static inline GLboolean
+static inline bool
 _mesa_is_desktop_gl(const struct gl_context *ctx)
 {
    return ctx->API == API_OPENGL_COMPAT || ctx->API == API_OPENGL_CORE;
@@ -298,7 +293,7 @@ _mesa_is_desktop_gl(const struct gl_context *ctx)
 /**
  * Checks if the context is for any GLES version
  */
-static inline GLboolean
+static inline bool
 _mesa_is_gles(const struct gl_context *ctx)
 {
    return ctx->API == API_OPENGLES || ctx->API == API_OPENGLES2;
@@ -306,9 +301,9 @@ _mesa_is_gles(const struct gl_context *ctx)
 
 
 /**
- * Checks if the context is for GLES 3.x
+ * Checks if the context is for GLES 3.0 or later
  */
-static inline GLboolean
+static inline bool
 _mesa_is_gles3(const struct gl_context *ctx)
 {
    return ctx->API == API_OPENGLES2 && ctx->Version >= 30;
@@ -316,15 +311,79 @@ _mesa_is_gles3(const struct gl_context *ctx)
 
 
 /**
- * Checks if the context supports geometry shaders.
+ * Checks if the context is for GLES 3.1 or later
  */
-static inline GLboolean
-_mesa_has_geometry_shaders(const struct gl_context *ctx)
+static inline bool
+_mesa_is_gles31(const struct gl_context *ctx)
 {
-   return _mesa_is_desktop_gl(ctx) &&
-      (ctx->Version >= 32 || ctx->Extensions.ARB_geometry_shader4);
+   return ctx->API == API_OPENGLES2 && ctx->Version >= 31;
 }
 
+
+/**
+ * Checks if the context is for GLES 3.2 or later
+ */
+static inline bool
+_mesa_is_gles32(const struct gl_context *ctx)
+{
+   return ctx->API == API_OPENGLES2 && ctx->Version >= 32;
+}
+
+
+static inline bool
+_mesa_is_no_error_enabled(const struct gl_context *ctx)
+{
+   return ctx->Const.ContextFlags & GL_CONTEXT_FLAG_NO_ERROR_BIT_KHR;
+}
+
+
+/**
+ * Checks if the context supports geometry shaders.
+ */
+static inline bool
+_mesa_has_geometry_shaders(const struct gl_context *ctx)
+{
+   return _mesa_has_OES_geometry_shader(ctx) ||
+          (_mesa_is_desktop_gl(ctx) && ctx->Version >= 32);
+}
+
+
+/**
+ * Checks if the context supports compute shaders.
+ */
+static inline bool
+_mesa_has_compute_shaders(const struct gl_context *ctx)
+{
+   return _mesa_has_ARB_compute_shader(ctx) ||
+      (ctx->API == API_OPENGLES2 && ctx->Version >= 31);
+}
+
+/**
+ * Checks if the context supports tessellation.
+ */
+static inline GLboolean
+_mesa_has_tessellation(const struct gl_context *ctx)
+{
+   /* _mesa_has_EXT_tessellation_shader(ctx) is redundant with the OES
+    * check, so don't bother calling it.
+    */
+   return _mesa_has_OES_tessellation_shader(ctx) ||
+          _mesa_has_ARB_tessellation_shader(ctx);
+}
+
+static inline bool
+_mesa_has_texture_cube_map_array(const struct gl_context *ctx)
+{
+   return _mesa_has_ARB_texture_cube_map_array(ctx) ||
+          _mesa_has_OES_texture_cube_map_array(ctx);
+}
+
+static inline bool
+_mesa_has_texture_view(const struct gl_context *ctx)
+{
+   return _mesa_has_ARB_texture_view(ctx) ||
+          _mesa_has_OES_texture_view(ctx);
+}
 
 #ifdef __cplusplus
 }

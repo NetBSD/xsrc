@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2013 Rob Clark <robclark@freedesktop.org>
  *
@@ -33,7 +31,7 @@
 
 #include "fd3_rasterizer.h"
 #include "fd3_context.h"
-#include "fd3_util.h"
+#include "fd3_format.h"
 
 void *
 fd3_rasterizer_state_create(struct pipe_context *pctx,
@@ -50,7 +48,7 @@ fd3_rasterizer_state_create(struct pipe_context *pctx,
 
 	if (cso->point_size_per_vertex) {
 		psize_min = util_get_min_point_size(cso);
-		psize_max = 8192;
+		psize_max = 4092;
 	} else {
 		/* Force the point size to be as if the vertex output was disabled. */
 		psize_min = cso->point_size;
@@ -65,15 +63,16 @@ fd3_rasterizer_state_create(struct pipe_context *pctx,
 	if (cso->multisample)
 		TODO
 */
-	so->gras_cl_clip_cntl = A3XX_GRAS_CL_CLIP_CNTL_IJ_PERSP_CENTER; /* ??? */
+	so->gras_cl_clip_cntl = A3XX_GRAS_CL_CLIP_CNTL_IJ_PERSP_CENTER /* ??? */ |
+		COND(cso->clip_halfz, A3XX_GRAS_CL_CLIP_CNTL_ZERO_GB_SCALE_Z);
 	so->gras_su_point_minmax =
-			A3XX_GRAS_SU_POINT_MINMAX_MIN(psize_min/2) |
-			A3XX_GRAS_SU_POINT_MINMAX_MAX(psize_max/2);
-	so->gras_su_point_size   = A3XX_GRAS_SU_POINT_SIZE(cso->point_size/2);
+			A3XX_GRAS_SU_POINT_MINMAX_MIN(psize_min) |
+			A3XX_GRAS_SU_POINT_MINMAX_MAX(psize_max);
+	so->gras_su_point_size   = A3XX_GRAS_SU_POINT_SIZE(cso->point_size);
 	so->gras_su_poly_offset_scale =
 			A3XX_GRAS_SU_POLY_OFFSET_SCALE_VAL(cso->offset_scale);
 	so->gras_su_poly_offset_offset =
-			A3XX_GRAS_SU_POLY_OFFSET_OFFSET(cso->offset_units);
+			A3XX_GRAS_SU_POLY_OFFSET_OFFSET(cso->offset_units * 2.0f);
 
 	so->gras_su_mode_control =
 			A3XX_GRAS_SU_MODE_CONTROL_LINEHALFWIDTH(cso->line_width/2.0);
@@ -81,6 +80,10 @@ fd3_rasterizer_state_create(struct pipe_context *pctx,
 	so->pc_prim_vtx_cntl =
 		A3XX_PC_PRIM_VTX_CNTL_POLYMODE_FRONT_PTYPE(fd_polygon_mode(cso->fill_front)) |
 		A3XX_PC_PRIM_VTX_CNTL_POLYMODE_BACK_PTYPE(fd_polygon_mode(cso->fill_back));
+
+	if (cso->fill_front != PIPE_POLYGON_MODE_FILL ||
+		cso->fill_back != PIPE_POLYGON_MODE_FILL)
+		so->pc_prim_vtx_cntl |= A3XX_PC_PRIM_VTX_CNTL_POLYMODE_ENABLE;
 
 	if (cso->cull_face & PIPE_FACE_FRONT)
 		so->gras_su_mode_control |= A3XX_GRAS_SU_MODE_CONTROL_CULL_FRONT;
@@ -93,6 +96,8 @@ fd3_rasterizer_state_create(struct pipe_context *pctx,
 
 	if (cso->offset_tri)
 		so->gras_su_mode_control |= A3XX_GRAS_SU_MODE_CONTROL_POLY_OFFSET;
+	if (!cso->depth_clip_near)
+		so->gras_cl_clip_cntl |= A3XX_GRAS_CL_CLIP_CNTL_CLIP_DISABLE;
 
 	return so;
 }

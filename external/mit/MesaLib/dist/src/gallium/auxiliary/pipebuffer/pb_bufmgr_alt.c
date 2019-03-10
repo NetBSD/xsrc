@@ -50,7 +50,7 @@ struct pb_alt_manager
 };
 
 
-static INLINE struct pb_alt_manager *
+static inline struct pb_alt_manager *
 pb_alt_manager(struct pb_manager *mgr)
 {
    assert(mgr);
@@ -67,7 +67,7 @@ pb_alt_manager_create_buffer(struct pb_manager *_mgr,
    struct pb_buffer *buf;
    
    buf = mgr->provider1->create_buffer(mgr->provider1, size, desc);
-   if(buf)
+   if (buf)
       return buf;
    
    buf = mgr->provider2->create_buffer(mgr->provider2, size, desc);

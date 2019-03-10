@@ -19,8 +19,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-AUTOMAKE_OPTIONS = subdir-objects
-
 AM_CFLAGS = $(DEFINES) -I$(top_srcdir)/src/gtest/include
 AM_CXXFLAGS = $(DEFINES) -I$(top_srcdir)/src/gtest/include
 
@@ -31,6 +29,7 @@ libgtest_la_SOURCES = \
 	src/gtest_main.cc
 
 EXTRA_DIST = \
+	include \
 	src/gtest.cc \
 	src/gtest-death-test.cc \
 	src/gtest-filepath.cc \
@@ -38,4 +37,5 @@ EXTRA_DIST = \
 	src/gtest-port.cc \
 	src/gtest-printers.cc \
 	src/gtest-test-part.cc \
-	src/gtest-typed-test.cc
+	src/gtest-typed-test.cc \
+	meson.build

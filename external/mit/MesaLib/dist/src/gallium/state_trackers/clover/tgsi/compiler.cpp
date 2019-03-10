@@ -22,7 +22,8 @@
 
 #include <sstream>
 
-#include "core/compiler.hpp"
+#include "tgsi/invocation.hpp"
+#include "core/error.hpp"
 
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_text.h"
@@ -32,7 +33,7 @@ using namespace clover;
 
 namespace {
    void
-   read_header(const std::string &header, module &m) {
+   read_header(const std::string &header, module &m, std::string &r_log) {
       std::istringstream ls(header);
       std::string line;
 
@@ -40,13 +41,15 @@ namespace {
          std::istringstream ts(line);
          std::string name, tok;
          module::size_t offset;
-         compat::vector<module::argument> args;
+         std::vector<module::argument> args;
 
          if (!(ts >> name))
             continue;
 
-         if (!(ts >> offset))
-            throw build_error("invalid kernel start address");
+         if (!(ts >> offset)) {
+            r_log = "invalid kernel start address";
+            throw build_error();
+         }
 
          while (ts >> tok) {
             if (tok == "scalar")
@@ -67,8 +70,10 @@ namespace {
                args.push_back({ module::argument::image3d_wr, 4 });
             else if (tok == "sampler")
                args.push_back({ module::argument::sampler, 0 });
-            else
-               throw build_error("invalid kernel argument");
+            else {
+               r_log = "invalid kernel argument";
+               throw build_error();
+            }
          }
 
          m.syms.push_back({ name, 0, offset, args });
@@ -76,24 +81,40 @@ namespace {
    }
 
    void
-   read_body(const char *source, module &m) {
+   read_body(const char *source, module &m, std::string &r_log) {
       tgsi_token prog[1024];
 
-      if (!tgsi_text_translate(source, prog, Elements(prog)))
-         throw build_error("translate failed");
+      if (!tgsi_text_translate(source, prog, ARRAY_SIZE(prog))) {
+         r_log = "translate failed";
+         throw build_error();
+      }
 
       unsigned sz = tgsi_num_tokens(prog) * sizeof(tgsi_token);
-      m.secs.push_back({ 0, module::section::text, sz, { (char *)prog, sz } });
+      std::vector<char> data( (char *)prog, (char *)prog + sz );
+      m.secs.push_back({ 0, module::section::text_executable, sz, data });
    }
 }
 
 module
-clover::compile_program_tgsi(const compat::string &source) {
-   const char *body = source.find("COMP\n");
+clover::tgsi::compile_program(const std::string &source, std::string &r_log) {
+   const size_t body_pos = source.find("COMP\n");
+   if (body_pos == std::string::npos) {
+      r_log = "invalid source";
+      throw build_error();
+   }
+
+   const char *body = &source[body_pos];
    module m;
 
-   read_header({ source.begin(), body }, m);
-   read_body(body, m);
+   read_header({ source.begin(), source.begin() + body_pos }, m, r_log);
+   read_body(body, m, r_log);
 
    return m;
+}
+
+module
+clover::tgsi::link_program(const std::vector<module> &modules)
+{
+   assert(modules.size() == 1 && "Not implemented");
+   return modules[0];
 }

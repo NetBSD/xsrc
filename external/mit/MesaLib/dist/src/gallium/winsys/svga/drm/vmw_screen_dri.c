@@ -1,5 +1,5 @@
 /**********************************************************
- * Copyright 2009 VMware, Inc.  All rights reserved.
+ * Copyright 2009-2015 VMware, Inc.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -111,7 +111,7 @@ svga_drm_winsys_screen_create(int fd)
 			       &drm_compat, "vmwgfx drm driver"))
       return NULL;
 
-   vws = vmw_winsys_create( fd, FALSE );
+   vws = vmw_winsys_create(fd);
    if (!vws)
       goto out_no_vws;
 
@@ -124,38 +124,6 @@ svga_drm_winsys_screen_create(int fd)
 
 out_no_vws:
    return NULL;
-}
-
-static INLINE boolean
-vmw_dri1_intersect_src_bbox(struct drm_clip_rect *dst,
-			    int dst_x,
-			    int dst_y,
-			    const struct drm_clip_rect *src,
-			    const struct drm_clip_rect *bbox)
-{
-   int xy1;
-   int xy2;
-
-   xy1 = ((int)src->x1 > (int)bbox->x1 + dst_x) ? src->x1 :
-      (int)bbox->x1 + dst_x;
-   xy2 = ((int)src->x2 < (int)bbox->x2 + dst_x) ? src->x2 :
-      (int)bbox->x2 + dst_x;
-   if (xy1 >= xy2 || xy1 < 0)
-      return FALSE;
-
-   dst->x1 = xy1;
-   dst->x2 = xy2;
-
-   xy1 = ((int)src->y1 > (int)bbox->y1 + dst_y) ? src->y1 :
-      (int)bbox->y1 + dst_y;
-   xy2 = ((int)src->y2 < (int)bbox->y2 + dst_y) ? src->y2 :
-      (int)bbox->y2 + dst_y;
-   if (xy1 >= xy2 || xy1 < 0)
-      return FALSE;
-
-   dst->y1 = xy1;
-   dst->y2 = xy2;
-   return TRUE;
 }
 
 /**
@@ -178,13 +146,19 @@ vmw_drm_gb_surface_from_handle(struct svga_winsys_screen *sws,
     struct vmw_svga_winsys_surface *vsrf;
     struct svga_winsys_surface *ssrf;
     struct vmw_winsys_screen *vws = vmw_winsys_screen(sws);
-    SVGA3dSurfaceFlags flags;
+    SVGA3dSurfaceAllFlags flags;
     uint32_t mip_levels;
     struct vmw_buffer_desc desc;
     struct pb_manager *provider = vws->pools.gmr;
     struct pb_buffer *pb_buf;
     uint32_t handle;
     int ret;
+
+    if (whandle->offset != 0) {
+       fprintf(stderr, "Attempt to import unsupported winsys offset %u\n",
+               whandle->offset);
+       return NULL;
+    }
 
     ret = vmw_ioctl_gb_surface_ref(vws, whandle, &flags, format,
                                    &mip_levels, &handle, &desc.region);
@@ -253,12 +227,18 @@ vmw_drm_surface_from_handle(struct svga_winsys_screen *sws,
     int ret;
     int i;
 
+    if (whandle->offset != 0) {
+       fprintf(stderr, "Attempt to import unsupported winsys offset %u\n",
+               whandle->offset);
+       return NULL;
+    }
+
     switch (whandle->type) {
-    case DRM_API_HANDLE_TYPE_SHARED:
-    case DRM_API_HANDLE_TYPE_KMS:
+    case WINSYS_HANDLE_TYPE_SHARED:
+    case WINSYS_HANDLE_TYPE_KMS:
        handle = whandle->handle;
        break;
-    case DRM_API_HANDLE_TYPE_FD:
+    case WINSYS_HANDLE_TYPE_FD:
        ret = drmPrimeFDToHandle(vws->ioctl.drm_fd, whandle->handle,
                                 &handle);
        if (ret) {
@@ -283,7 +263,7 @@ vmw_drm_surface_from_handle(struct svga_winsys_screen *sws,
     /*
      * Need to close the handle we got from prime.
      */
-    if (whandle->type == DRM_API_HANDLE_TYPE_FD)
+    if (whandle->type == WINSYS_HANDLE_TYPE_FD)
        vmw_ioctl_surface_destroy(vws, handle);
 
     if (ret) {
@@ -357,13 +337,14 @@ vmw_drm_surface_get_handle(struct svga_winsys_screen *sws,
     vsrf = vmw_svga_winsys_surface(surface);
     whandle->handle = vsrf->sid;
     whandle->stride = stride;
+    whandle->offset = 0;
 
     switch (whandle->type) {
-    case DRM_API_HANDLE_TYPE_SHARED:
-    case DRM_API_HANDLE_TYPE_KMS:
+    case WINSYS_HANDLE_TYPE_SHARED:
+    case WINSYS_HANDLE_TYPE_KMS:
        whandle->handle = vsrf->sid;
        break;
-    case DRM_API_HANDLE_TYPE_FD:
+    case WINSYS_HANDLE_TYPE_FD:
        ret = drmPrimeHandleToFD(vws->ioctl.drm_fd, vsrf->sid, DRM_CLOEXEC,
 				(int *)&whandle->handle);
        if (ret) {
