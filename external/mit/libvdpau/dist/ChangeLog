@@ -1,0 +1,1102 @@
+commit af517f56d64118520aa0c8456318dd9ec3307e94
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Mon Aug 31 13:59:50 2015 -0700
+
+    Bump version to 1.1.1
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit d1f9c16b1a8187110e501c9116d21ffee25c0ba4
+Author: José Hiram Soltren <jsoltren@nvidia.com>
+Date:   Mon Aug 17 16:01:44 2015 -0500
+
+    Use secure_getenv(3) to improve security
+    
+    This patch is in response to the following security vulnerabilities
+    (CVEs) reported to NVIDIA against libvdpau:
+    
+    CVE-2015-5198
+    CVE-2015-5199
+    CVE-2015-5200
+    
+    To address these CVEs, this patch:
+    
+    - replaces all uses of getenv(3) with secure_getenv(3);
+    - uses secure_getenv(3) when available, with a fallback option;
+    - protects VDPAU_DRIVER against directory traversal by checking for '/'
+    
+    On platforms where secure_getenv(3) is not available, the C preprocessor
+    will print a warning at compile time. Then, a preprocessor macro will
+    replace secure_getenv(3) with our getenv_wrapper(), which utilizes the check:
+    
+      getuid() == geteuid() && getgid() == getegid()
+    
+    See getuid(2) and getgid(2) for further details.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+    Reviewed-by: Florian Weimer <fweimer@redhat.com>
+
+commit 47fd4e8ec55e37f9d9e7583090f35929bfe63937
+Author: Bibhuti Prusty <bprusty@nvidia.com>
+Date:   Mon May 11 17:26:17 2015 +0000
+
+    Add tracing for HEVC picture info
+    
+    Signed-off-by: Bibhuti Bhushan Prusty <bprusty@nvidia.com>
+    Reviewed-by: José Hiram Soltren <jsoltren@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 77e9c3456ab0cd2190381754ca6f82e3710b67a9
+Author: José Hiram Soltren <jsoltren@nvidia.com>
+Date:   Thu Apr 23 15:43:21 2015 -0500
+
+    Fix Doxygen typo: s/no queued/not queued/
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+    Reviewed-by: Robert Morell <rmorell@nvidia.com>
+
+commit 3b3bf77ad67957be69b76c1c94dce981d75c4e9a
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Wed Mar 18 23:50:31 2015 +0000
+
+    autogen.sh: update/copy over from mesa
+    
+    This commit addresses three concerns:
+     - Places quotes around variables. Otherwise things will fail badly if
+    either one of then contains space.
+     - Adds --force to autoreconf, which will ensure that the build is
+    regenerated, if one updates autotools.
+     - Honours the NOCONFIGURE variable, which is set by gnome-continuous
+    (iirc).
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit e4681ab2b71638a48fc857669903f7ac7ec8b3cb
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Wed Mar 18 23:50:30 2015 +0000
+
+    configure.ac: remove AM_MAINTAINER_MODE
+    
+    Using this macro can lead to various security issues, as pointed out in
+    the automake manual. Follow the example set by most X components and
+    remove it from the build.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 19b9af8db20a1d3db882647e95682f46ecdf266e
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Wed Mar 18 23:50:29 2015 +0000
+
+    .gitignore: add compile
+    
+    Yet another artefact from the autotools buildsystem.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 01e45a95380aafc9ea2d3662114dbde7146a8fc8
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Sat Feb 7 11:45:19 2015 -0800
+
+    Remove pdflatex dependency
+    
+    PDF documentation isn't enabled, so pdflatex isn't used.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 0962da95cdf1d87a883d1d0db7d2697d6d103348
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Mon Mar 16 14:31:31 2015 -0700
+
+    Bump version to 1.1
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 0b3d6a0387c1a4b494349c9385c81e06992d80ad
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Mon Mar 16 12:15:17 2015 -0700
+
+    Change HEVC profile numbers to 100 through 104
+    
+    libvdpau 1.0 contained an error in its HEVC picture info structures.  Rather
+    than try to maintain backward compatibility with the incorrect definition, the
+    existing VdpPictureInfoHEVC was updated to contain the fixed definition.  Since
+    the new structure is no longer compatible with the ABI defined by libvdpau 1.0,
+    change the profile numbers for HEVC so that software built against the incorrect
+    definition will not recognize the new profiles.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+    Reviewed-by: José Hiram Soltren <jsoltren@nvidia.com>
+
+commit 8e1e235cbd81ed49b2646cf344503587b4e7a70a
+Author: José Hiram Soltren <jsoltren@nvidia.com>
+Date:   Fri Mar 13 13:39:35 2015 -0500
+
+    Fix error in sizes of H265 column width and row height, arrays
+    
+    An NVIDIA internal hardware document noted:
+    
+     #define MAX_TILE_COLS 20
+     #define MAX_TILE_ROWS 22
+    
+    As of this writing the VDPAU API writes:
+    
+        /** Only need to set 0..num_tile_columns_minus1. The struct
+            definition reserves up to the maximum of 22. Invalid values are
+            ignored. */
+        uint16_t column_width_minus1[22];
+        /** Only need to set 0..num_tile_rows_minus1. The struct
+            definition reserves up to the maximum of 20. Invalid values are
+            ignored.*/
+        uint16_t row_height_minus1[20];
+    
+    This is not correct. The correct definitions ought to be:
+    
+        uint16_t column_width_minus1[20];
+        uint16_t row_height_minus1[22];
+    
+    The H.265 Specification does not give an explicit range for the sizes
+    of these arrays. It is possible to calculate an upper limit for a particular
+    video frame implicitly using these equations:
+    
+    MinCbLog2SizeY = log2_min_luma_coding_block_size_minus3 + 3 (7-10)
+    CtbLog2SizeY = MinCbLog2SizeY + log2_diff_max_min_luma_coding_block_size (7-11)
+    CtbSizeY = 1 << CtbLog2SizeY (7-13)
+    PicWidthInCtbsY = Ceil( pic_width_in_luma_samples ÷ CtbSizeY ) (7-15)
+    num_tile_columns_minus1 ϵ [0, PicWidthInCtbsY − 1]
+    
+    (num_tile_rows_minus1 is similar)
+    
+    For a video with:
+    log2_min_luma_coding_block_size_minus3 = 0
+    log2_diff_max_min_luma_coding_block_size = 0
+    pic_width_in_luma_samples = 4096
+    
+    num_tile_columns_minus1 < 512
+    
+    This seems patological. Perhaps we could cap column_width_minus1[] and
+    row_height_minus1[] at 32 or 64 elements apiece if other hardware
+    implementations saw a reason to do so.
+    
+    This change as proposed does not alter the size of VdpPictureInfoHEVC, but
+    it *does* change the ABI. We can either add it as a fixup to the just
+    released VDPAU 1.0, or create a follow-on patch structure. Since few have
+    adopted VdpPictureInfoHEVC since Monday my preference is to fix the
+    existing structure.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+    Acked-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 686633d21b10293a10c1d6ba77499b0d67c23056
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Mon Mar 9 14:22:56 2015 -0700
+
+    Bump version to 1.0
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 705a8166e03446f77143455c270d9f69fc459eb8
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Thu Jan 29 13:11:25 2015 -0800
+
+    Use member groups to simplify documentation
+    
+    For lists of fields that are copied or derived from the video bitstreams, use
+    Doxygen member groups to document them once as a block, rather than copying the
+    text "Copy of the <whatever> bitstream field." all over the place.  This groups
+    the fields together in the HTML.
+    
+    Reviewed-by: Christian König <christian.koenig@amd.com>
+    v2: Rebase on top of José's HEVC work.
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+    Reviewed-by: José Hiram Soltren <jsoltren@nvidia.com>
+
+commit c199b6107fda78cc575f0bdace6327e85add7fa9
+Author: José Hiram Soltren <jsoltren@nvidia.com>
+Date:   Mon Feb 9 12:40:11 2015 -0600
+
+    Extend the VDPAU API to support H.265/HEVC Decoding
+    
+    This patch adds an API for player applications to utilize VDPAU for
+    hardware-accelerated playback of H.265/HEVC streams.
+    
+    The goals of this API are:
+    - enable hardware accelerated decoding of H.265/HEVC content under VDPAU;
+    - provide a reference implementation for H.265/HEVC hardware decoding that
+      is vendor agnostic;
+    - provide enough data for H.265/HEVC hardware acceleration implementations
+      from multiple vendors to be able to use the same API;
+    
+    This patch is written against "version one" of the H.265/HEVC Specification,
+    Rec. ITU-T H.265 (04/2013), available at:
+    
+        http://handle.itu.int/11.1002/1000/12296
+    
+    A future patch against this header may address bug fixes, and may support
+    the new features described in "version two" of the H.265/HEVC Specification,
+    Rec. ITU-T H.265 v2 (10/2014).
+    
+    Note that the API does need to be self documenting with Doxygen markup,
+    which we (NVIDIA) will generate and post as an update to our public VDPAU
+    documentation.
+    
+    This is version 8 of the patch.
+    
+    Version 1 was the original version.
+    
+    Version 2 was a minor cleanup change.
+    
+    Version 3 incorporated 10- and 12-bit formats.
+    
+    Version 4 clarified some documentation related to H.265/HEVC support.
+    
+    Version 5 clarified some documentation related to H.265/HEVC support
+    and correcting the Specification URI above.
+    
+    Version 6 further corrected the Specification URI above, re-ordered the
+    fields in VdpPictureInfoHEVC to agree with the Specification, and added
+    additional documentation for some fields. It also corrected some cosmetic
+    indentation errors.
+    
+    Version 7 removed the sps_sub_layer_ordering_info_present_flag, added a
+    note on implementing clauses 8.3 through 8.7, clarified the meaning of
+    sps_max_dec_pic_buffering_minus1, moved the scaling lists to follow
+    scaling_list_enabled_flag, clarified comments on pps_beta_offset_div2
+    and pps_tc_offset_div2, and added "Ignored otherwise." or "Invalid
+    values are ignored" comments to several fields.
+    
+    Version 8 truncated a number of fields related to reference pictures to
+    8 bit types, e.g. uint8_t.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+    Acked-by: Christian König <christian.koenig@amd.com>
+
+commit 1836c6bc73a1f505490f67144e2d37c4d8646685
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Fri Dec 19 09:33:09 2014 -0800
+
+    Bump version to 0.9
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 3282da12b84ee9eb73e6a93988e419c6d2f43d4e
+Author: Karthikeyan Sreenivasan <ksreenivasan@nvidia.com>
+Date:   Thu Dec 11 13:09:03 2014 -0800
+
+    Add support for H.264 Hi444PP in VDPAU API
+    
+    The current patch adds a new struct VdpPictureInfoH264Predictive which
+    contains the necessary fields to support High 444 Predictive Profile.
+    
+    The patch adds VDP_DECODER_PROFILE_H264_HIGH_444_PREDICTIVE (currently
+    only with 8 bit depth support). Additional profiles and levels will
+    be added in a future update.
+    
+    Videos of VDP_DECODER_PROFILE_H264_HIGH_444_PREDICTIVE profile must use
+    VdpPictureInfoH264Predictive.
+    
+    This patch adds lossless decode support to VDPAU API via the
+    qpprimey_zero_transform_bypass_flag in struct
+    VdpPictureInfoH264Predictive.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+    Reviewed-by: José Hiram Soltren <jsoltren@nvidia.com>
+    Reviewed-by: Christian König <christian.koenig@amd.com>
+    Acked-by: Rémi Denis-Courmont <remi@remlab.net>
+
+commit 3e191f7d4524a077adce5e54742347ffa49fee24
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Thu Nov 20 13:25:05 2014 -0800
+
+    vdpau.h: define a more strict ABI policy
+    
+    Because structures defined in vdpau.h may be used outside of the libvdpau
+    interface itself, it's important for them to not change, even to add new fields
+    to the end.  Clarify this by tightening the restriction on how structures can be
+    modified.
+    
+    This means that we can also *relax* the restriction on versioned structures that
+    says that they can only be extended by adding fields to the end.  As long as
+    uint32_t struct_version is the first field of the structure, the implementation
+    can look at that to determine the complete layout of the rest of the fields.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+    Reviewed-by: Christian König <christian.koenig@amd.com>
+
+commit 3162456bb876ffe4bd606968071857e87226d76f
+Author: Rémi Denis-Courmont <remid@nvidia.com>
+Date:   Wed Oct 29 14:47:02 2014 +0200
+
+    vdpau_wrapper: protect concurrent access to _imp_get_proc_address
+    
+    The wrapper, as it's currently written, cannot cope with more than one
+    VdpGetProcAddress implementation. Luckily, this should hardly ever
+    happen.
+    
+    This patch protects access to the _imp_get_proc_address variable to
+    conform to the memory model, and ensures that a single VDPAU
+    implementation is used - failing safe if not so.
+    
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 9899f7b79f4c33b05d27b0409ab17268dc476b06
+Author: Rémi Denis-Courmont <remid@nvidia.com>
+Date:   Wed Oct 29 14:47:01 2014 +0200
+
+    vdpau_wrapper: make initialization of library handles thread-safe
+    
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit c285f0a78cb87340dc9d6a373f69c92ad95f3fe2
+Author: Rémi Denis-Courmont <remid@nvidia.com>
+Date:   Wed Oct 29 14:47:00 2014 +0200
+
+    vdpau_wrapper: make the fixes initialization thread-safe
+    
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 06215a32a6e321f27a5c56aa2c6d91c2771a6cc0
+Author: Rémi Denis-Courmont <remid@nvidia.com>
+Date:   Wed Oct 29 14:46:59 2014 +0200
+
+    configure: add test for POSIX threads
+    
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit ea92efbf0eb25c0f3681d1416b798f25cded727d
+Author: Rémi Denis-Courmont <remid@nvidia.com>
+Date:   Tue Oct 28 17:28:39 2014 +0200
+
+    vdpau: define some more H.264/AVC decoding profiles
+    
+    Signed-off-by: Rémi Denis-Courmont <remid@nvidia.com>
+    Reviewed-by: José Hiram Soltren <jsoltren@nvidia.com>
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit a50e71b209e16abf94e79a9e72e866b22eb959e5
+Author: Rémi Denis-Courmont <remid@nvidia.com>
+Date:   Tue Oct 28 17:28:38 2014 +0200
+
+    vdpau.h: improve constant expansion safety
+    
+    Signed-off-by: Rémi Denis-Courmont <remid@nvidia.com>
+    Reviewed-by: José Hiram Soltren <jsoltren@nvidia.com>
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 9cb73ed998a6a90b311b32719f04343e53daa3d3
+Author: Rémi Denis-Courmont <remid@nvidia.com>
+Date:   Tue Oct 28 17:20:09 2014 +0200
+
+    test: fix incomplete prototype
+    
+    Signed-off-by: Rémi Denis-Courmont <remid@nvidia.com>
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 63375e140bf73e779e47a2e9793259ea8de4eeef
+Author: Rémi Denis-Courmont <remid@nvidia.com>
+Date:   Wed Oct 29 08:36:13 2014 +0200
+
+    test: remove assignment-as-truth-value warning
+    
+    Signed-off-by: Rémi Denis-Courmont <remid@nvidia.com>
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit ad1e737a33c2421996e6c0505eccd2c0dc73e2fa
+Author: Rémi Denis-Courmont <remid@nvidia.com>
+Date:   Tue Oct 28 17:20:07 2014 +0200
+
+    test: do not clobber CFLAGS
+    
+    Signed-off-by: Rémi Denis-Courmont <remid@nvidia.com>
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit ce52a8779336d8619b45c6e3790a58da925e7845
+Author: Rémi Denis-Courmont <remid@nvidia.com>
+Date:   Tue Oct 28 17:20:06 2014 +0200
+
+    vdpau_wrapper: remove unused parameter warnings
+    
+    Signed-off-by: Rémi Denis-Courmont <remid@nvidia.com>
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 753e17579d1a3063fd43db25aa63f1047fa97791
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Tue Oct 28 12:59:33 2014 -0700
+
+    vdpau_x11.h: update stale comment about how libvdpau finds drivers
+    
+    When this comment was written, it wasn't clear how the library was going to
+    figure out which back-end driver to load.  Since then, the wrapper has been
+    updated to make DRI2 that "VDPAU-specific X extension."
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+    Reviewed-by: José Hiram Soltren <jsoltren@nvidia.com>
+
+commit 2eac88762628498c0d57c56a4ec871927e313e5f
+Author: José Hiram Soltren <jsoltren@nvidia.com>
+Date:   Tue Oct 28 13:25:14 2014 -0500
+
+    vdpau_x11 - fix typo
+    
+    Signed-off-by: José Hiram Soltren <jsoltren@nvidia.com>
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit a2386ece473462b311c359f02975d2f8faeffe59
+Author: Robert Morell <rmorell@nvidia.com>
+Date:   Fri Sep 5 19:16:28 2014 -0700
+
+    vdpau_trace: Fix GCC 4.8 build warnings
+    
+    vdpau_trace.cpp: In function 'void _vdp_cap_dump_video_mixer_attribute_value(VdpVideoMixerAttribute, const void*, bool)':
+    vdpau_trace.cpp:539:48: error: cast from type 'const void*' to type 'const float (**)[3][4]' casts away qualifiers [-Werror=cast-qual]
+                     ptr = *(VdpCSCMatrix const * *)value;
+                                                    ^
+    vdpau_trace.cpp: In function 'void _vdp_cap_dump_bitstream_buffer_list(uint32_t, const VdpBitstreamBuffer*)':
+    vdpau_trace.cpp:1175:52: error: cast from type 'const void* const' to type 'uint8_t* {aka unsigned char*}' casts away qualifiers [-Werror=cast-qual]
+                 uint8_t * ptr = (uint8_t * )buffers[0].bitstream;
+                                                        ^
+    
+    Signed-off-by: Robert Morell <rmorell@nvidia.com>
+    Reviewed-by: Stephen Warren <swarren@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit a5c724f8d9e7192f5cdb96ad943ba24052d232b1
+Author: José Hiram Soltren <jsoltren@nvidia.com>
+Date:   Tue Aug 26 16:41:06 2014 -0500
+
+    Clarify type of source_surface as VDP_INVALID_HANDLE
+    
+    (version 2, supercedes "Clarify type of source_surface")
+    
+    VDPAU takes special action if source_surface is VDP_INVALID_HANDLE,
+    not if it is NULL, in both VdpOutputSurfaceRenderOutputSurface
+    and VdpOutputSurfaceRenderBitmapSurface.
+    
+    Reviewed-by: Christian König <christian.koenig@amd.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 6cb973e59d7b3fa50404d9d0ec30476ad1753bfd
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Sat Jul 19 11:01:47 2014 -0700
+
+    vdpau: do not export _vdp_DRI2* functions
+    
+    Neither one is part of the public API, thus should never be used outside
+    of the library itself.
+    
+    Add macro PRIVATE, that is used to annotate the function visibility by
+    setting __attribute__((visibility("hidden"))).
+    
+    v2: Provide only PRIVATE macro. Requested by Aaron.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 9d27eb0a3947603c061607b94515e906d47c1b8a
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Sat Jul 19 08:22:37 2014 -0700
+
+    trace: properly annotate private functions as static
+    
+    The following three were never a part of the public API and as such
+    should have never been exported by libvdpau_trace.so
+    
+    Correct that by marking them as static, thus allowing the compiler
+    to hide them from the exported namespace.
+    
+    _vdp_cap_init_planes_adapt_surface_video
+    _vdp_cap_init_planes_adapt_surface_bitmap
+    _vdp_cap_init_planes_adapt_surface_output
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 6dd2fa1ffb567b5062293816deb2fc66723f2860
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Tue Jul 1 09:16:05 2014 -0700
+
+    Bump version to 0.8
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit ee9491a1216f47e10cbb551391a01c7fcde940d2
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 10 13:12:30 2014 -0700
+
+    Add VDPAU_DRIVER_PATH support
+    
+    Allow the user to specify the location of the backend driver,
+    via the VDPAU_DRIVER_PATH environment variable. This allows
+    easier testing of VDPAU backends without the need to rebuild
+    libvdpau.
+    
+    Inspired by LIBGL_DRIVERS_PATH from mesa.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Acked-by: Stephen Warren <swarren@nvidia.com>
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 186195b1a84f2517205522e7ab8e0f62ad61c329
+Author: Reimar Döffinger <Reimar.Doeffinger@gmx.de>
+Date:   Tue Feb 18 14:48:16 2014 -0800
+
+    Fix incorrect VdpPictureInfo typedef.
+    
+    VdpPictureInfo should not be a pointer, otherwise the
+    VdpDecoderRender function signature asks for a pointer to a pointer.
+    But it really does expect a pointer directly to e.g. VdpPictureInfoH264.
+    
+    Signed-off-by: Reimar Döffinger <Reimar.Doeffinger@gmx.de>
+    Tested-by: Reimar Döffinger <Reimar.Doeffinger@gmx.de>
+    Reviewed-by: Stephen Warren <swarren@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 903d961a802ae65a9ecf014929a3ad3f50c6faf6
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Fri Jan 17 11:12:24 2014 -0800
+
+    trace: remove trailing whitespace
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 7748591f9ba57483528972e36693536f27ce1f20
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Thu Aug 1 13:42:28 2013 -0700
+
+    Bump version to 0.7
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 556e43bf1640c998aed137a38d403df8c72067bd
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Thu Aug 1 13:48:17 2013 -0700
+
+    trace: delete unused _vdp_cap_dump_point
+    
+    Nothing actually uses VdpPoint, so this tracing function was never called.  I
+    left the VdpPoint type in vdpau.h for now, just in case anyone actually uses it
+    themselves.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 30ca342707d77649fa79fa19ba3f6658b2c59092
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Thu Aug 1 13:38:50 2013 -0700
+
+    Make init_config and init_fixes static
+    
+    Fixes -Wmissing-prototypes warnings.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 22a2f15f3e5f36641f72211da9f786b6778d0481
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed Jul 24 20:29:28 2013 -0700
+
+    vdpau: add prime support at connection setup
+    
+    This just ports the code from the mesa glx setup into vdpau,
+    this just picks the correct driver to load on the client side,
+    
+    at least for gallium/vl code we need another similiar change
+    inside the driver code to pick the correct drm device.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+    Tested-by: Martin Peres <martin.peres@ensi-bourges.fr>
+    Tested-by: Hohahiu <rakothedin@gmail.com>
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+    Bug: https://bugs.freedesktop.org/show_bug.cgi?id=67283
+
+commit e6c11e0be829b0a80a3b020f7f9f56e0c7d0585a
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Mon Jul 22 13:54:13 2013 -0700
+
+    Don't leak the vdpau_wrapper.cfg file pointer
+    
+    init_config opens vdpau_wrapper.cfg and reads its contents, but never closes it.
+    This causes a file descriptor leak if libvdpau is unloaded and reloaded.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+    Reviewed-by: Andy Ritger <aritger@nvidia.com>
+    Reviewed-by: Josep Torra <josep@fluendo.com>
+
+commit 626037b813cf19d9a0ddde9c4a5a39f8df951478
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Mon Jul 22 14:43:23 2013 -0700
+
+    init_config: remove unused local variable 'ret'
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit af29b18ed000c0f82bf3805902393e7bb0e5b7e7
+Author: Kiran Pawar <kpawar@nvidia.com>
+Date:   Mon Aug 1 02:07:29 2011 -0700
+
+    trace: fix Coverity dead code warnings
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 5a5969684bdfeca3bd0dd9b21c1da406b225dab1
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Fri Feb 1 15:34:34 2013 -0800
+
+    Bump version to 0.6
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit d00042fdb33ba4c2a263fef65254f77f18bac9c2
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Thu Jan 24 15:06:32 2013 -0800
+
+    test: add a dlclose test
+    
+    Closing an X display that had a VDPAU device created on it causes a crash.
+    
+    Work around an identical libXext dlclose bug with the "Generic Event Extension"
+    by dlopening libXext.so.6 and leaving it open.
+    
+    Original bug discovered and fixed by Robert Morell <rmorell@nvidia.com> in
+    commit 3b43955c7324e1d213a3134387767722f34e2356.
+    
+    v2: Don't SKIP if creating the device fails.  Just attempting to create the
+    device installs the DRI2 extension that causes the problem.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+    Reviewed-by: Robert Morell <rmorell@nvidia.com>
+
+commit 99d6a9b2102b6098c1b7e7f5ed9222ba3db13ce6
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Thu Jan 24 08:14:46 2013 -0600
+
+    Use AC_CONFIG_HEADERS instead of AM_CONFIG_HEADER to appease automake 1.13
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 3b43955c7324e1d213a3134387767722f34e2356
+Author: Robert Morell <rmorell@nvidia.com>
+Date:   Tue Jan 22 13:26:56 2013 -0800
+
+    Fix leaked extension info on library unload
+    
+    In this sequence:
+    dlopen(libvdpau.so)
+    vdp_device_create_x11(dpy, ...)
+    dlclose(libvdpau.so)
+    XCloseDisplay(dpy)
+    
+    the process will attempt to call the address at which DRI2CloseDisplay
+    was previously mapped, possibly resulting in a SEGV.
+    
+    Instead of tracking displays to which we've added hooks and cleaning up
+    the extension on library unload or display close, simply clean up after
+    ourselves once we have the data we need.
+    
+    Signed-off-by: Robert Morell <rmorell@nvidia.com>
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+    Tested-by: Aaron Plattner <aplattner@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit fb5f05b0b395bdfee1808b85f673fcf901afca3f
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Thu Jan 24 08:16:46 2013 -0600
+
+    Change mailing list to vdpau@lists.freedesktop.org
+    
+    Users should address questions there instead of to xorg@lists.freedesktop.org.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+    Acked-by: Robert Morell <rmorell@nvidia.com>
+
+commit 837c63d77f2cedf8345328efa9961739def47607
+Author: James Le Cuirot <chewi@aura-online.co.uk>
+Date:   Fri Jan 18 01:22:55 2013 -0800
+
+    Make use of dri2proto_CFLAGS when building.
+    
+    Signed-off-by: James Le Cuirot <chewi@aura-online.co.uk>
+    Reviewed-by: Robert Morell <rmorell@nvidia.com>
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 365566616381f7219f7fa7f603bcd4e96fad41f2
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Tue Sep 4 09:32:35 2012 -0700
+
+    Bump version to 0.5
+    
+    Also add authors to the AUTHORS file.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit ca9e637c61e80145f0625a590c91429db67d0a40
+Author: Stephen Warren <swarren@wwwdotorg.org>
+Date:   Tue May 1 20:27:24 2012 -0700
+
+    Implement workarounds for Adobe Flash bugs
+    
+    Implement two workarounds:
+    
+    1) Swap U and V planes to VdpVideoSurfacePutBitsYCbCr to fix blue-tinged
+       videos.
+    
+    2) Disable VdpPresentationQueueSetBackgroundColor, so that Flash doesn't
+       set the background to pure black or pure white, which would cause the
+       VDPAU image to bleed through to other parts of the desktop with those
+       very common colors.
+    
+    These workarounds are only enabled when running under Flash player, and
+    may be individually controlled via /etc/vdpau_wrapper.cfg, should they
+    ever need to be disabled.
+    
+    Note that this code stores the VDPAU backend function pointers as global
+    variables, which is technically incorrect. However, the likelihood of
+    any known VDPAU implementation ever returning different values for these
+    pointers within a single process is zero. If this becomes a problem, a
+    hash table of VdpDevice to the stored pointers should be implemented.
+    
+    Signed-off-by: Stephen Warren <swarren@wwwdotorg.org>
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+    [aplattner@nvidia.com: fixed distcheck by changing it to dist_libvdpausysconf_DATA]
+
+commit 4262513e67c3572ed19bd796ec6180cdde7ccb7e
+Author: Kiran Pawar <kpawar@nvidia.com>
+Date:   Fri Aug 5 11:45:18 2011 +0530
+
+    vdpau_wrapper.c: Track dynamic library handles and free them on exit using __attribute__((destructor))
+    
+    Signed-off-by: Kiran Pawar <kpawar@nvidia.com>
+    Tested-by: Aaron Plattner <aplattner@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit c4a2273edb161c2e3c7847a91db4aa514c073fe3
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Wed Sep 8 10:11:28 2010 -0700
+
+    Bump version to 0.4.1
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 581d8bbcd36b85fb368446180053204118829fc1
+Author: Anssi Hannula <anssi.hannula@iki.fi>
+Date:   Sun Sep 5 13:04:17 2010 +0300
+
+    vdpau.h: Clarify video mixer field amount recommendation
+    
+    Reviewed-by: Stephen Warren <swarren@nvidia.com>
+    Signed-off-by: Anssi Hannula <anssi.hannula@iki.fi>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 7a10510e181fdbc45943debd769c5bc6e963d802
+Author: Stephen Warren <swarren@nvidia.com>
+Date:   Wed Feb 10 14:51:58 2010 -0800
+
+    More doc issues pointed out by Xine authors.
+    
+      * Fix Doxygen warning; it gets confused by quotes.
+      * Add subsection names, so part of the title doesn't get swallowed as the
+        subsection name.
+      * Document data required from MPEG-4 Part 2 & DivX bitstream.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 74b9e369ab9e3094742595b0f1deabe30f00cefc
+Author: Stephen Warren <swarren@nvidia.com>
+Date:   Mon Feb 8 10:49:10 2010 -0800
+
+    vpdau.h: Fix typo and clarify wording.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 76fdf83a7690ce366edbd4816b3c4b6728eeb9ee
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Thu Jan 28 15:01:25 2010 -0800
+
+    Bump version to 0.4
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 341c7e49b8c98f1a7b1a3ae719f15acd694719ca
+Author: Stephen Warren <swarren@nvidia.com>
+Date:   Thu Jan 28 15:00:32 2010 -0800
+
+    trace: Fix a picture info bracket mismatch.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit f3bbd295d310d6ea44f00fa6c787a7427f01cd05
+Author: Stephen Warren <swarren@nvidia.com>
+Date:   Thu Jan 28 14:58:40 2010 -0800
+
+    YV12 documentation fix.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 4e2b6f38f640f341ec49336aaaccfb136decbdff
+Author: Stephen Warren <swarren@nvidia.com>
+Date:   Thu Jan 28 14:56:59 2010 -0800
+
+    Documentation enhancements for Uoti from ffmpeg.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 97331f1c8ee7c83f0dd6dff0ecc5bc51bf78022b
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Wed Jan 27 18:17:23 2010 -0800
+
+    Update the COPYING copyright date to include recent changes
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 3c02e5c68ef9480a0f9e5c3af5b09e6b3dcd981d
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Wed Jan 27 18:16:41 2010 -0800
+
+    Query DRI2 for the driver name.
+    
+    If the VDPAU_DRIVER environment variable is not set, use DRI2Connect to query
+    the VDPAU driver name from the X server.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+    Reviewed-by: Stephen Warren <swarren@nvidia.com>
+
+commit a9c69d294ae41fffadb432caa66917a4e7d107a8
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Mon Dec 14 10:52:41 2009 -0800
+
+    $(docdir) apparently requires autoconf 2.60
+
+commit 72c3ea0d5705ac5b21e5096742d9ec57573e543d
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Fri Nov 20 11:54:36 2009 -0800
+
+    Bump version to 0.3
+
+commit e864d59682b91bf9d596c2dadc657c932fae32e1
+Author: Stephen Warren <swarren@nvidia.com>
+Date:   Tue Nov 17 14:04:33 2009 -0800
+
+    Update VDPAU_VERSION and add VDPAU_INTERFACE_VERSION
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 0537b13e292bc772e984872a3986e41fb51f9258
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Tue Nov 17 00:18:05 2009 -0800
+
+    Move VDPAU drivers into their own module directory.
+    
+    * Add a --with-module-dir configure parameter.
+    
+    * Pass the moduledir into the wrapper.  Use it to construct the path to search
+      for drivers.  Require drivers to end in a ".1" version, in case we ever want
+      to rev. the interface between the wrapper and the drivers.
+    
+    * If no driver is found in the new module dir, look for one in the default
+      search paths.  This is intended to find libvdpau_nvidia.so for drivers that
+      predate the change to move it, and can be removed in the future.
+    
+    * Stash the moduledir into vdpau.pc.  Drivers can find this with
+      `pkg-config --variable=moduledir vdpau`.
+    
+    * Add a version to libvdpau_trace.so in case the interface between it and
+      libvdpau.so ever changes.
+    
+    * Install libvdpau_trace.so.1 to moduledir instead of libdir.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+    Acked-by: Stephen Warren <swarren@nvidia.com>
+
+commit f1f2b25e39b7092a94067f1c787a9b5c5c58bb5d
+Author: Stephen Warren <swarren@nvidia.com>
+Date:   Fri Oct 23 15:47:32 2009 -0700
+
+    Documentation updates.
+    
+    Signed-off-by: Stephen Warren <swarren@nvidia.com>
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit cf794deacff4e9cec47d539a717d12c8865543ea
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Fri Oct 23 14:55:17 2009 -0700
+
+    Fix distcheck.
+    
+    * Uninstall the docs if they were installed.
+    * Remember to distribute Doxyfile and vdpau_data_flow.png in the
+      tarball.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+    Reviewed-by: Stephen Warren <swarren@nvidia.com>
+
+commit fceec0aa07e4acb471e80c0ecb7a1d5724025874
+Author: Aaron Plattner <aaron@weasel.nvidia.com>
+Date:   Fri Sep 25 17:24:01 2009 -0700
+
+    Build documentation.
+    
+    Detect when doxygen, dot, and pdflatex are installed.  When they are, enable
+    documentation.  Add --enable-documentation and --disable-documentation to
+    override the autodetection.  Install the docs to the configured docdir (usually
+    $prefix/share/doc/libvdpau).
+
+commit 2af62b19ede3365a437225ae71a2d5ee203e7b47
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Thu Sep 17 11:33:00 2009 -0700
+
+    Use XORG_CHANGELOG to generate the changelog.
+    
+    Steal the XORG_CHANGELOG macro from X.Org and stash it in acinclude.m4.
+
+commit f13dd1050569359016a925dfd7a4af234ce68668
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Mon Sep 14 14:01:05 2009 -0700
+
+    Bump version to 0.2 for new features
+
+commit 46e791147ac43ecd2fbfbc6bdf3bebda9030b51e
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Fri Sep 4 12:27:12 2009 -0700
+
+    Updates for the NVIDIA 190.32 driver release.
+    
+    Add profiles for MPEG-4 part 2, DivX 4, and DivX 5.  Also add new high quality
+    scaling options.
+
+commit 50925e6b95aa9eaebd26c35f1f8f6af7acec4814
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Mon Aug 17 17:25:43 2009 -0700
+
+    Add a check for -ldl, stolen from xorg-server's configure.ac.
+    
+    Signed-off-by: Nicolas Chauvet <kwizart@gmail.com>
+
+commit 7fa59a29b65da47cbee52d92280306edda5ae317
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Wed Jul 8 16:16:48 2009 -0700
+
+    libvdpau_trace cleanups
+
+commit 240441a8a26cad8319170edd0d0d163bb6d6c3ff
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Wed Mar 25 10:08:11 2009 -0700
+
+    vdpau.h typo fix: "thread_1" should have been "thread_2"
+
+commit 48baffd9a00a02f3e4e3971133989127aeb9ce15
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Sun Mar 15 12:01:04 2009 -0700
+
+    VDPAU trace: Dump picture info for H.264 and VC-1
+
+commit 2fe18543d702b6be96fc547e286af0edce542fc6
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Sun Mar 15 12:00:22 2009 -0700
+
+    vdpau{,_x11}.h: Trailing whitespace removal
+
+commit 2fe9e460ee0e48101df5d50ab768b8c9225587e0
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Sun Mar 15 11:58:32 2009 -0700
+
+    vdpau.h: Document exact bitstream data requirements
+
+commit 9f2ccd388312649942c6b1f56b497b039541ceb2
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Sun Mar 15 11:52:26 2009 -0700
+
+    Trace VDP_VIDEO_MIXER_ATTRIBUTE_SKIP_CHROMA_DEINTERLACE
+    
+    I forgot to include this change in commit
+    1290f7c190e38f483b0203e932715a68b899e35c.
+
+commit 1290f7c190e38f483b0203e932715a68b899e35c
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Thu Mar 5 17:15:47 2009 -0800
+
+    Docs: Fix some VdpDecoderRender references that should have been VdpVideoMixerRender.
+
+commit 84eda285a526d31a81e7e082da0fde566c9353e0
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Wed Feb 18 09:13:35 2009 -0800
+
+    Add a "Skip chroma deinterlace" feature, improve VdpVideoMixer documentation.
+
+commit 1f9395341d09886a95a0d4fdad6c2a359c0d636d
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Sat Feb 14 15:16:29 2009 -0800
+
+    Print dlerror() when various libdl calls fail.
+    
+    Without printouts, it's impossible to tell why VDPAU initialization fails when
+    it can't open the backend or trace libraries or can't find various symbols.
+
+commit 3bd1c7efd002973e673fd88ef37c15ddd6e028ae
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Fri Feb 13 13:37:27 2009 -0800
+
+    Update VC-1 SP/MP range reduction documentation.
+
+commit 15cab0dd011633105cafa150366a4ef8e6dc8a1f
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Fri Feb 6 12:27:56 2009 -0800
+
+    Fix a typo in the VdpOutputSurfaceRenderBitmapSurface documentation.
+
+commit b9cf19db769d80652e57f7c6173e692e374942b0
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Wed Jan 14 10:46:35 2009 -0800
+
+    Add some authors
+
+commit d3906368d902d19acd8827d0e6b1b97c42be20ff
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Wed Jan 14 10:32:56 2009 -0800
+
+    Disable static libraries by default and remove version info from libvdpau_trace.
+
+commit d2e66e58f6588a90f3ea4c4e95a861704d640965
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Wed Jan 14 10:06:56 2009 -0800
+
+    Add a .gitignore.
+
+commit 094f3ab6be32623dd36356027ac067d5607a4d80
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Tue Jan 13 17:25:04 2009 -0800
+
+    Include the right headers.
+
+commit ae7d5d2425137cd3e7da338a80bdcad3f50f4ce7
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Tue Jan 13 16:58:45 2009 -0800
+
+    Add autoconf stuff.
+
+commit b11a35a13b478615d60fe1908665b8f4349aa780
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Tue Jan 13 16:18:44 2009 -0800
+
+    Initial commit.
