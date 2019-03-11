@@ -34,7 +34,6 @@ if HAVE_X11
 noinst_LTLIBRARIES = libpbutil.la
 
 bin_PROGRAMS = \
-	corender \
 	glsync \
 	glthreads \
 	glxdemo \
@@ -66,11 +65,6 @@ endif
 libpbutil_la_SOURCES = \
 	pbutil.c \
 	pbutil.h
-
-corender_SOURCES = \
-	corender.c \
-	ipc.c \
-	ipc.h
 
 xrotfontdemo_SOURCES = \
 	xrotfontdemo.c \

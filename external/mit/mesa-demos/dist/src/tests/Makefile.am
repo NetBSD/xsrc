@@ -95,6 +95,7 @@ noinst_PROGRAMS = \
 	fogcoord \
 	fptest1 \
 	fptexture \
+	front-back-modes \
 	$(GETPROCADDRESS) \
 	getteximage \
 	glutfx \
@@ -103,6 +104,7 @@ noinst_PROGRAMS = \
 	jkrahntest \
 	lineclip \
 	linehacks \
+	line-sample \
 	manytex \
 	mapbufrange \
 	minmag \

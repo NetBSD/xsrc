@@ -50,7 +50,7 @@
  * Much mucking with by:
  * Gavin Bell
  */
-#if defined(_WIN32)
+#if defined(_MSC_VER)
 #pragma warning (disable:4244)          /* disable bogus conversion warnings */
 #endif
 #include <math.h>

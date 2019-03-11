@@ -1,4 +1,4 @@
-/* $Id: sharedtex_mt.c,v 1.1.1.1 2014/12/16 06:01:19 mrg Exp $ */
+/* $Id: sharedtex_mt.c,v 1.1.1.2 2019/03/11 06:59:40 mrg Exp $ */
 
 /*
  * Test sharing of display lists and texture objects between GLX contests.
@@ -423,6 +423,13 @@ EventLoop(void)
    while (1) {
       int i;
       XEvent event;
+
+      /* Do we have an event? */
+      if (XPending(gDpy) == 0) {
+         usleep(10000);
+         continue;
+      }
+
       XNextEvent(gDpy, &event);
       for (i = 0; i < NumWindows; i++) {
 	 struct window *h = &Windows[i];

@@ -42,6 +42,12 @@ EGL_X11_DEMOS = \
 	xeglthreads
 endif
 
+if HAVE_WAYLAND
+EGL_WL_DEMOS = \
+	eglgears_wayland \
+	egltri_wayland
+endif
+
 if HAVE_DRM
 if HAVE_GBM
 EGL_DRM_DEMOS = \
@@ -50,20 +56,14 @@ endif
 endif
 
 if HAVE_EGL
+bin_PROGRAMS = \
+	eglinfo
 noinst_PROGRAMS = \
-	demo1 \
-	demo2 \
-	demo3 \
-	eglinfo \
-	eglgears_screen \
-	egltri_screen \
 	peglgears \
 	$(EGL_DRM_DEMOS) \
-	$(EGL_X11_DEMOS)
+	$(EGL_X11_DEMOS) \
+	$(EGL_WL_DEMOS)
 endif
-
-egltri_screen_SOURCES = egltri.c
-eglgears_screen_SOURCES = eglgears.c
 
 egltri_x11_SOURCES = egltri.c
 eglgears_x11_SOURCES = eglgears.c
@@ -73,11 +73,17 @@ egltri_x11_LDFLAGS = $(AM_LDFLAGS) $(X11_LIBS)
 xeglgears_LDFLAGS = $(AM_LDFLAGS) $(X11_LIBS)
 xeglthreads_LDFLAGS = $(AM_LDFLAGS) $(X11_LIBS) -pthread
 
-eglgears_screen_LDADD = ../eglut/libeglut_screen.la
-egltri_screen_LDADD = ../eglut/libeglut_screen.la
-
 eglgears_x11_LDADD = ../eglut/libeglut_x11.la
 egltri_x11_LDADD = ../eglut/libeglut_x11.la
+
+egltri_wayland_SOURCES = egltri.c
+eglgears_wayland_SOURCES = eglgears.c
+
+eglgears_x11_LDFLAGS = $(AM_LDFLAGS) $(X11_LIBS)
+egltri_x11_LDFLAGS = $(AM_LDFLAGS) $(X11_LIBS)
+
+eglgears_wayland_LDADD = ../eglut/libeglut_wayland.la
+egltri_wayland_LDADD = ../eglut/libeglut_wayland.la
 
 eglkms_SOURCES = eglkms.c
 eglkms_CFLAGS = $(AM_CFLAGS) $(DRM_CFLAGS) $(GBM_CFLAGS)

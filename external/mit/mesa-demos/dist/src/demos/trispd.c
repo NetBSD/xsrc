@@ -95,6 +95,7 @@ static void Display( void )
    pixelRate = triRate * Size;
    printf("Rate: %d tri in %gs = %g tri/s  %d pixels/s\n",
           triCount, t1-t0, triRate, (int)pixelRate);
+   fflush(stdout);
 
    glutSwapBuffers();
 }

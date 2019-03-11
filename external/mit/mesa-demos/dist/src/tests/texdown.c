@@ -34,6 +34,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <malloc.h>
 #include <math.h>
 #include <GL/glew.h>
 #include "glut_wrap.h"
@@ -162,7 +163,6 @@ MeasureDownloadRate(void)
    const int h = TexHeight + 2 * TexBorder;
    const int image_bytes = align(w * h * BytesPerTexel(Format), ALIGN);
    const int bytes = image_bytes * NR_TEXOBJ;
-   GLubyte *orig_texImage, *orig_getImage;
    GLubyte *texImage;
    GLdouble t0, t1, time;
    int count;
@@ -173,18 +173,17 @@ MeasureDownloadRate(void)
    printf("allocating %d bytes for %d %dx%d images\n",
 	  bytes, NR_TEXOBJ, w, h);
 
-   orig_texImage = (GLubyte *) malloc(bytes + ALIGN);
-   orig_getImage = (GLubyte *) malloc(image_bytes + ALIGN);
-   if (!orig_texImage || !orig_getImage) {
+#ifdef _WIN32
+   texImage = (GLubyte *) _aligned_malloc(bytes, ALIGN);
+#else
+   texImage = (GLubyte *) aligned_alloc(ALIGN, bytes);
+#endif
+   if (!texImage) {
       DownloadRate = 0.0;
-      free(orig_texImage);
-      free(orig_getImage);
       return;
    }
 
-   printf("alloc %p %p\n", orig_texImage, orig_getImage);
-
-   texImage = (GLubyte *)align((unsigned long)orig_texImage, ALIGN);
+   printf("alloc %p\n", texImage);
 
    for (i = 1; !(((unsigned long)texImage) & i); i<<=1)
       ;
@@ -285,8 +284,11 @@ MeasureDownloadRate(void)
    DownloadRate = total / time;
 
 
-   free(orig_texImage); 
-   free(orig_getImage); 
+#ifdef _WIN32
+   _aligned_free(texImage);
+#else
+   free(texImage);
+#endif
 
    {
       GLint err = glGetError();

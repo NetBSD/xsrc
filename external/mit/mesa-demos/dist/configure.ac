@@ -25,7 +25,7 @@
 dnl Process this file with autoconf to create configure.
 
 AC_PREREQ([2.59])
-AC_INIT([mesa-demos], [8.2.0],
+AC_INIT([mesa-demos], [8.4.0],
     [https://bugs.freedesktop.org/enter_bug.cgi?product=Mesa&component=Demos])
 AC_CANONICAL_HOST
 
@@ -67,21 +67,24 @@ DEMO_CFLAGS="$DEMO_CFLAGS $GL_CFLAGS"
 DEMO_LIBS="$DEMO_LIBS $GL_LIBS"
 
 dnl Check for GLUT
-GLUT_CFLAGS=""
-GLUT_LIBS=-lglut
 glut_enabled=yes
 AC_ARG_WITH([glut],
 	[AS_HELP_STRING([--with-glut=DIR],
 			[glut install directory])],
 	[GLUT_CFLAGS="-I$withval/include"
-	 GLUT_LIBS="-L$withval/lib -lglut"])
-AC_CHECK_HEADER([GL/glut.h],
-		[],
-		[glut_enabled=no])
-AC_CHECK_LIB([glut],
-		[glutInit],
-		[],
-		[glut_enabled=no])
+	 GLUT_LIBS="-L$withval/lib -lglut"],
+	[GLUT_CFLAGS=""
+	 GLUT_LIBS="-lglut"]
+        )
+AS_IF([test "x$with_glut" != xno],
+      [AC_CHECK_HEADER([GL/glut.h],
+                       [],
+                       [glut_enabled=no])
+       AC_CHECK_LIB([glut],
+                    [glutInit],
+                    [],
+                    [glut_enabled=no])],
+      [glut_enabled=no])
 
 dnl Check for FreeGLUT 2.6 or later
 AC_EGREP_HEADER([glutInitContextProfile],
@@ -205,9 +208,9 @@ fi
 
 AC_ARG_ENABLE([wayland],
     [AS_HELP_STRING([--enable-wayland],
-        [enable support for wayland @<:@default=no@:>@])],
+        [enable support for wayland @<:@default=auto@:>@])],
     [wayland_enabled="$enableval"],
-    [wayland_enabled=no])
+    [wayland_enabled=auto])
 
 if test "x$wayland_enabled" != "xno"; then
     PKG_CHECK_MODULES(WAYLAND, [wayland-client wayland-egl], [wayland_enabled=yes], [wayland_enabled=no])

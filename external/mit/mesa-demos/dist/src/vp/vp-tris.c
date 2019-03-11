@@ -86,7 +86,7 @@ static void args(int argc, char *argv[])
 
 static void Init( void )
 {
-   GLint errno;
+   GLint errnum;
    GLuint prognum;
    char buf[16 * 1024];
    GLuint sz;
@@ -132,9 +132,9 @@ static void Init( void )
       assert(glIsProgramARB(prognum));
    }
 
-   errno = glGetError();
-   printf("glGetError = %d\n", errno);
-   if (errno != GL_NO_ERROR)
+   errnum = glGetError();
+   printf("glGetError = %d\n", errnum);
+   if (errnum != GL_NO_ERROR)
    {
       GLint errorpos;
 

@@ -276,6 +276,7 @@ ValidateShaderProgram(GLuint program)
       GLsizei len;
       GetProgramInfoLog(program, 1000, &len, log);
       fprintf(stderr, "Program validation error:\n%s\n", log);
+      fflush(stderr);
       return 0;
    }
 

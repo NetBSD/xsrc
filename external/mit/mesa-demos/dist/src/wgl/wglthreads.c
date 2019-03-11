@@ -56,8 +56,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#pragma comment(lib, "opengl32.lib")
-
 
 /*
  * Each window/thread/context:
@@ -78,7 +76,7 @@ struct winthread {
 };
 
 
-#define MAX_WINTHREADS 100
+#define MAX_WINTHREADS 128
 static struct winthread WinThreads[MAX_WINTHREADS];
 static int NumWinThreads = 2;
 static HANDLE ExitEvent = NULL;
@@ -382,30 +380,17 @@ WndProc(HWND hWnd,
         WPARAM wParam,
         LPARAM lParam )
 {
-   int i;
+   struct winthread *wt = (struct winthread *)(INT_PTR)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
    switch (uMsg) {
    case WM_KEYDOWN:
-      for (i = 0; i < NumWinThreads; i++) {
-         struct winthread *wt = &WinThreads[i];
-
-         if (hWnd == wt->Win) {
-            keypress(wParam, wt);
-            break;
-         }
-      }
+      keypress(wParam, wt);
       break;
    case WM_SIZE:
-      for (i = 0; i < NumWinThreads; i++) {
-         struct winthread *wt = &WinThreads[i];
-
-         if (hWnd == wt->Win) {
-            RECT r;
-
-            GetClientRect(hWnd, &r);
-            resize(wt, r.right, r.bottom);
-            break;
-         }
+      {
+         RECT r;
+         GetClientRect(hWnd, &r);
+         resize(wt, r.right, r.bottom);
       }
       break;
    case WM_DESTROY:
@@ -430,7 +415,7 @@ create_window(struct winthread *wt, HGLRC shareCtx)
    int ypos = (wt->Index / 8) * (width + 20);
    HWND win;
    HDC hdc;
-   PIXELFORMATDESCRIPTOR pfd = {0};
+   PIXELFORMATDESCRIPTOR pfd;
    int visinfo;
    HGLRC ctx;
 
@@ -458,11 +443,14 @@ create_window(struct winthread *wt, HGLRC shareCtx)
       Error("Couldn't create window");
    }
 
+   SetWindowLongPtr(win, GWLP_USERDATA, (LONG_PTR)wt);
+
    hdc = GetDC(win);
    if (!hdc) {
       Error("Couldn't obtain HDC");
    }
 
+   memset(&pfd, 0, sizeof(pfd));
    pfd.cColorBits = 24;
    pfd.cDepthBits = 24;
    pfd.dwFlags = PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;

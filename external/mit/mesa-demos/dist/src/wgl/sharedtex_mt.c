@@ -36,8 +36,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#pragma comment(lib, "opengl32.lib")
-
 struct thread_init_arg {
    int id;
 };
@@ -118,7 +116,7 @@ initMainthread(void)
 {
    WNDCLASS wc = {0};
    HWND win;
-   PIXELFORMATDESCRIPTOR pfd = {0};
+   PIXELFORMATDESCRIPTOR pfd;
    int visinfo;
 
    wc.lpfnWndProc = WndProc;
@@ -147,6 +145,7 @@ initMainthread(void)
       Error("Couldn't obtain HDC");
    }
 
+   memset(&pfd, 0, sizeof(pfd));
    pfd.cColorBits = 24;
    pfd.cDepthBits = 24;
    pfd.dwFlags = PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;
@@ -405,7 +404,7 @@ threadRunner (void *arg)
 {
    struct thread_init_arg *tia = (struct thread_init_arg *) arg;
    struct window *win;
-   PIXELFORMATDESCRIPTOR pfd = {0};
+   PIXELFORMATDESCRIPTOR pfd;
    int visinfo;
 
    win = &Windows[tia->id];
@@ -419,6 +418,7 @@ threadRunner (void *arg)
    if(tia->id > 0)
       WaitForSingleObject(Windows[tia->id - 1].hEventInitialised, INFINITE);
 
+   memset(&pfd, 0, sizeof(pfd));
    pfd.cColorBits = 24;
    pfd.cDepthBits = 24;
    pfd.dwFlags = PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;
@@ -508,7 +508,6 @@ int
 main(int argc, char *argv[])
 {
    struct thread_init_arg tia[MAX_WINDOWS];
-   struct window *h[MAX_WINDOWS];
    HANDLE threads[MAX_WINDOWS];
    int i;
 
@@ -518,10 +517,10 @@ main(int argc, char *argv[])
       return -1;
 
    /* four windows and contexts sharing display lists and texture objects */
-   h[0] = AddWindow( 10,  10, gCtx);
-   h[1] = AddWindow(330,  10, gCtx);
-   h[2] = AddWindow( 10, 350, gCtx);
-   h[3] = AddWindow(330, 350, gCtx);
+   AddWindow( 10,  10, gCtx);
+   AddWindow(330,  10, gCtx);
+   AddWindow( 10, 350, gCtx);
+   AddWindow(330, 350, gCtx);
 
    for (i = 0; i < NumWindows; i++) {
       Windows[i].hEventInitialised = CreateEvent(NULL, TRUE, FALSE, NULL);

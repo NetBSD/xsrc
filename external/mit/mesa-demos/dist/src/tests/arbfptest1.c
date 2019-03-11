@@ -57,16 +57,16 @@ static void Key( unsigned char key, int x, int y )
 static void load_program(const char *prog, GLuint prognum)
 {
    int a;	
-   GLint errorpos, errno;
+   GLint errorpos, errnum;
    
    glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, prognum);
    glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
                         strlen(prog), (const GLubyte *) prog);
 
    assert(glIsProgramARB(prognum));
-   errno = glGetError();
-   printf("glGetError = %d\n", errno);
-   if (errno != GL_NO_ERROR)
+   errnum = glGetError();
+   printf("glGetError = %d\n", errnum);
+   if (errnum != GL_NO_ERROR)
    {
       glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorpos);
       printf("errorpos: %d\n", errorpos);

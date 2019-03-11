@@ -267,6 +267,7 @@ static void test_uniform_neg_location(void)
 
    program = make_program("#version 110\nvoid main() { gl_Position = vec4(1.0, 1.0, 1.0, 1.0); }\n", NULL);
    assert_no_error();
+   (void)program;
    glUniform1i(-1, 1);
    assert_no_error();
    glUniform1i(-200, 1);

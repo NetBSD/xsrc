@@ -358,6 +358,11 @@ init(void)
 
    make_texture();
    glEnable(GL_TEXTURE_2D);
+
+   /* Enable automatic normalizing to get proper lighting when torus is
+    * scaled down via glScalef
+    */
+   glEnable(GL_NORMALIZE);
 }
 
 

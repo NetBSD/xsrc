@@ -50,20 +50,12 @@ endif
 if HAVE_EGL
 if HAVE_VG
 noinst_PROGRAMS = \
-	lion_screen \
-	sp_screen \
 	$(EGL_X11_DEMOS)
 endif
 endif
 
-lion_screen_SOURCES = lion.c lion-render.c lion-render.h
-sp_screen_SOURCES = sp.c
-
 lion_x11_SOURCES = lion.c lion-render.c lion-render.h
 sp_x11_SOURCES = sp.c
-
-lion_screen_LDADD = ../eglut/libeglut_screen.la
-sp_screen_LDADD = ../eglut/libeglut_screen.la
 
 lion_x11_LDADD = ../eglut/libeglut_x11.la
 sp_x11_LDADD = ../eglut/libeglut_x11.la

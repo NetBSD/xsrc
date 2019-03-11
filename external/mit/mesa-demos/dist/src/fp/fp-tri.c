@@ -71,7 +71,7 @@ static void args(int argc, char *argv[])
 static void Init( void )
 {
    GLuint Texture;
-   GLint errno;
+   GLint errnum;
    GLuint prognum;
    char buf[50000];
    GLuint sz;
@@ -101,9 +101,9 @@ static void Init( void )
    glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
                       sz, (const GLubyte *)buf);
 
-   errno = glGetError();
-   printf("glGetError = 0x%x\n", errno);
-   if (errno != GL_NO_ERROR) {
+   errnum = glGetError();
+   printf("glGetError = 0x%x\n", errnum);
+   if (errnum != GL_NO_ERROR) {
       GLint errorpos;
 
       glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorpos);
