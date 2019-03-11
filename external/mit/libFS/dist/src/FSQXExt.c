@@ -78,13 +78,15 @@ FSQueryXExtents8(
     fsQueryXExtents8Reply reply;
     FSXCharInfo *ext;
     fsXCharInfo local_exts;
-    int         i;
+
+    if (str_len > (FSMaxRequestBytes(svr) - SIZEOF(fsQueryXExtents8Req)))
+        return FSBadLength;
 
     GetReq(QueryXExtents8, req);
     req->fid = fid;
-    req->range = range_type;
-    req->num_ranges = str_len;
-    req->length += (str_len + 3) >> 2;
+    req->range = (BOOL) range_type;
+    req->num_ranges = (CARD32) str_len;
+    req->length += (CARD16) ((str_len + 3) >> 2);
     _FSSend(svr, (char *) str, str_len);
 
     /* get back the info */
@@ -102,7 +104,7 @@ FSQueryXExtents8(
     *extents = ext;
     if (!ext)
 	return FSBadAlloc;
-    for (i = 0; i < reply.num_extents; i++) {
+    for (CARD32 i = 0; i < reply.num_extents; i++) {
 	_FSReadPad(svr, (char *) &local_exts, SIZEOF(fsXCharInfo));
 	_FS_convert_char_info(&local_exts, &ext[i]);
     }
@@ -124,13 +126,17 @@ FSQueryXExtents16(
     fsQueryXExtents16Reply reply;
     FSXCharInfo *ext;
     fsXCharInfo local_exts;
-    int         i;
+
+    /* Relies on fsChar2b & fsChar2b_version1 being the same size */
+    if (str_len > ((FSMaxRequestBytes(svr) - SIZEOF(fsQueryXExtents16Req))
+                    / SIZEOF(fsChar2b)))
+        return FSBadLength;
 
     GetReq(QueryXExtents16, req);
     req->fid = fid;
-    req->range = range_type;
-    req->num_ranges = str_len;
-    req->length += ((str_len * SIZEOF(fsChar2b)) + 3) >> 2;
+    req->range = (BOOL) range_type;
+    req->num_ranges = (CARD32) str_len;
+    req->length += (CARD16) (((str_len * SIZEOF(fsChar2b)) + 3) >> 2);
     if (FSProtocolVersion(svr) == 1)
     {
 	fsChar2b_version1 *swapped_str;
@@ -138,7 +144,7 @@ FSQueryXExtents16(
 	swapped_str = FSmalloc(SIZEOF(fsChar2b_version1) * str_len);
 	if (!swapped_str)
 	    return FSBadAlloc;
-	for (i = 0; i < str_len; i++) {
+	for (unsigned long i = 0; i < str_len; i++) {
 	    swapped_str[i].low = str[i].low;
 	    swapped_str[i].high = str[i].high;
 	}
@@ -162,7 +168,7 @@ FSQueryXExtents16(
     *extents = ext;
     if (!ext)
 	return FSBadAlloc;
-    for (i = 0; i < reply.num_extents; i++) {
+    for (CARD32 i = 0; i < reply.num_extents; i++) {
 	_FSReadPad(svr, (char *) &local_exts, SIZEOF(fsXCharInfo));
 	_FS_convert_char_info(&local_exts, &ext[i]);
     }

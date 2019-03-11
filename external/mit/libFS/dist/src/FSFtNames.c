@@ -61,7 +61,6 @@ FSListFonts(
     int		 maxNames,
     int		*actualCount)
 {
-    long        nbytes;
     unsigned int i,
                 length;
     char      **flist;
@@ -71,10 +70,24 @@ FSListFonts(
     unsigned long rlen;
 
     GetReq(ListFonts, req);
-    req->maxNames = maxNames;
-    nbytes = req->nbytes = pattern ? strlen(pattern) : 0;
-    req->length += (nbytes + 3) >> 2;
-    _FSSend(svr, pattern, nbytes);
+    req->maxNames = (CARD32) maxNames;
+    req->nbytes = 0;
+    if (pattern != NULL) {
+        size_t nbytes;
+
+#ifdef HAVE_STRNLEN
+        nbytes = strnlen(pattern, FSMaxRequestBytes(svr));
+#else
+        nbytes = strlen(pattern);
+#endif
+
+        if (nbytes <= (FSMaxRequestBytes(svr) - SIZEOF(fsListFontsReq))) {
+            req->nbytes = (CARD16) nbytes;
+            req->length += (CARD16) ((nbytes + 3) >> 2);
+            _FSSend(svr, pattern, (long) nbytes);
+        }
+    }
+
     if (!_FSReply(svr, (fsReply *) & rep,
 	  (SIZEOF(fsListFontsReply) - SIZEOF(fsGenericReply)) >> 2, fsFalse))
 	return (char **) NULL;

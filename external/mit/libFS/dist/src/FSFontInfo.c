@@ -64,9 +64,7 @@ FSListFontsWithXInfo(
     FSPropOffset	***offsets,
     unsigned char	***prop_data)
 {
-    long        nbytes;
-    int         i,
-                j;
+    int         i;
     size_t      size = 0;
     FSXFontInfoHeader **fhdr = (FSXFontInfoHeader **) NULL;
     FSPropInfo **pi = (FSPropInfo **) NULL;
@@ -81,10 +79,24 @@ FSListFontsWithXInfo(
     Bool eat_data = True;
 
     GetReq(ListFontsWithXInfo, req);
-    req->maxNames = maxNames;
-    nbytes = req->nbytes = pattern ? strlen(pattern) : 0;
-    req->length += (nbytes + 3) >> 2;
-    _FSSend(svr, pattern, nbytes);
+    req->maxNames = (CARD32) maxNames;
+    req->nbytes = 0;
+    if (pattern != NULL) {
+        size_t nbytes;
+
+#ifdef HAVE_STRNLEN
+        nbytes = strnlen(pattern, FSMaxRequestBytes(svr));
+#else
+        nbytes = strlen(pattern);
+#endif
+
+        if (nbytes <= (FSMaxRequestBytes(svr) -
+                       SIZEOF(fsListFontsWithXInfoReq))) {
+            req->nbytes = (CARD16) nbytes;
+            req->length += (CARD16) ((nbytes + 3) >> 2);
+            _FSSend(svr, pattern, (long) nbytes);
+        }
+    }
 
     for (i = 0;; i++) {
 	if (FSProtocolVersion(svr) > 1)
@@ -179,7 +191,7 @@ FSListFontsWithXInfo(
 	if (!pd[i])
 	    goto cleanpo;
 	/* get offsets */
-	for (j=0; j<pi[i]->num_offsets; j++)
+	for (unsigned int j = 0; j < pi[i]->num_offsets; j++)
 	{
 	    _FSReadPad(svr, (char *) &local_po, SIZEOF(fsPropOffset));
 	    po[i][j].name.position = local_po.name.position;
@@ -197,6 +209,8 @@ FSListFontsWithXInfo(
 
 	if (FSProtocolVersion(svr) != 1)
 	{
+	    unsigned long	nbytes;
+
 	    /* get the name */
 	    _FSRead(svr, flist[i], (long) reply.nameLength);
 	    flist[i][reply.nameLength] = '\0';
@@ -230,7 +244,7 @@ cleanfhdr:
     FSfree(fhdr[i]);
 /* Error cleanup for all previously filled in items in the arrays */
 badmem:
-    for (j = (i - 1); j >= 0; j--) {
+    for (int j = (i - 1); j >= 0; j--) {
 	FSfree(pi[j]);
 	FSfree(po[j]);
 	FSfree(pd[j]);

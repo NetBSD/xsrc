@@ -71,14 +71,16 @@ FSQueryXBitmaps8(
     fsOffset32 local_offs;
     unsigned char *gd;
     int         left;
-    int		i;
+
+    if (str_len > (FSMaxRequestBytes(svr) - SIZEOF(fsQueryXBitmaps8Req)))
+        return FSBadLength;
 
     GetReq(QueryXBitmaps8, req);
     req->fid = fid;
-    req->range = range_type;
+    req->range = (BOOL) range_type;
     req->format = format;
-    req->num_ranges = str_len;
-    req->length += (str_len + 3) >> 2;
+    req->num_ranges = (CARD32) str_len;
+    req->length += (CARD16) ((str_len + 3) >> 2);
     _FSSend(svr, (char *) str, str_len);
 
     /* get back the info */
@@ -110,7 +112,7 @@ FSQueryXBitmaps8(
 	FSfree(offs);
 	return FSBadAlloc;
     }
-    for (i=0; i<reply.num_chars; i++)
+    for (CARD32 i = 0; i < reply.num_chars; i++)
     {
 	_FSReadPad(svr, (char *) &local_offs, (SIZEOF(fsOffset32)));
 	offs->position = local_offs.position;
@@ -140,14 +142,18 @@ FSQueryXBitmaps16(
     fsOffset32 local_offs;
     unsigned char *gd;
     int         left;
-    int		i;
+
+    /* Relies on fsChar2b & fsChar2b_version1 being the same size */
+    if (str_len > ((FSMaxRequestBytes(svr) - SIZEOF(fsQueryXBitmaps16Req))
+                    / SIZEOF(fsChar2b)))
+        return FSBadLength;
 
     GetReq(QueryXBitmaps16, req);
     req->fid = fid;
-    req->range = range_type;
+    req->range = (BOOL) range_type;
     req->format = format;
-    req->num_ranges = str_len;
-    req->length += ((str_len * SIZEOF(fsChar2b)) + 3) >> 2;
+    req->num_ranges = (CARD32) str_len;
+    req->length += (CARD16) (((str_len * SIZEOF(fsChar2b)) + 3) >> 2);
     if (FSProtocolVersion(svr) == 1)
     {
 	fsChar2b_version1 *swapped_str;
@@ -157,7 +163,7 @@ FSQueryXBitmaps16(
 	swapped_str = FSmalloc(SIZEOF(fsChar2b_version1) * str_len);
 	if (!swapped_str)
 	    return FSBadAlloc;
-	for (i = 0; i < str_len; i++) {
+	for (unsigned long i = 0; i < str_len; i++) {
 	    swapped_str[i].low = str[i].low;
 	    swapped_str[i].high = str[i].high;
 	}
@@ -195,7 +201,7 @@ FSQueryXBitmaps16(
 	FSfree(offs);
 	return FSBadAlloc;
     }
-    for (i=0; i<reply.num_chars; i++)
+    for (CARD32 i = 0; i < reply.num_chars; i++)
     {
 	_FSReadPad(svr, (char *) &local_offs, (SIZEOF(fsOffset32)));
 	offs->position = local_offs.position;

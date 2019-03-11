@@ -22,8 +22,8 @@
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([libFS], [1.0.7],
-        [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg], [libFS])
+AC_INIT([libFS], [1.0.8],
+        [https://gitlab.freedesktop.org/xorg/lib/libFS/issues], [libFS])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
 
@@ -52,7 +52,7 @@ PKG_CHECK_MODULES(FS, xproto >= 7.0.17 fontsproto xtrans)
 XTRANS_CONNECTION_FLAGS
 
 # Checks for library functions.
-AC_CHECK_FUNCS([strlcpy])
+AC_CHECK_FUNCS([strlcpy strnlen])
 
 # Allow checking code with lint, sparse, etc.
 XORG_WITH_LINT

@@ -74,7 +74,6 @@ FSQueryXInfo(
     unsigned char *pdata;
     fsPropInfo local_pi;
     fsPropOffset local_po;
-    int j;
 
     GetReq(QueryXInfo, req);
     req->id = fid;
@@ -107,7 +106,7 @@ FSQueryXInfo(
 	return FSBadAlloc;
     }
     /* get offsets */
-    for (j=0; j<props->num_offsets; j++)
+    for (unsigned int j = 0; j < props->num_offsets; j++)
     {
 	_FSReadPad(svr, (char *) &local_po, SIZEOF(fsPropOffset));
 	offset_data[j].name.position = local_po.name.position;

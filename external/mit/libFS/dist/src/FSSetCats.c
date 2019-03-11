@@ -60,27 +60,44 @@ FSSetCatalogues(
     int		  num,
     char	**cats)
 {
-    int         nbytes;
     fsSetCataloguesReq *req;
     char        buf[256];
-    int         i;
-    int         len, tlen, tnum;
+    int         i, tnum;
+    size_t      len;
 
     for (i = 0, tnum = 0, len = 0; i < num; i++) {
-	if ((tlen = strlen(cats[i])) < 256) {
+	size_t	tlen;
+
+#ifdef HAVE_STRNLEN
+	tlen = strnlen(cats[i], 256);
+#else
+	tlen = strlen(cats[i]);
+#endif
+	if (tlen < 256) {
 	    len += tlen;
 	    tnum++;
 	}
     }
 
+    if ((tnum > 255) ||
+        (len > (FSMaxRequestBytes(svr) - SIZEOF(fsSetCataloguesReq))))
+        return FSBadLength;
+
     GetReq(SetCatalogues, req);
-    req->num_catalogues = tnum;
-    req->length += (len + 3) >> 2;
+    req->num_catalogues = (CARD8) tnum;
+    req->length += (CARD16) ((len + 3) >> 2);
 
     for (i = 0; i < num; i++) {
+	size_t nbytes;
+
+#ifdef HAVE_STRNLEN
+	nbytes = strnlen(cats[i], 256);
+#else
 	nbytes = strlen(cats[i]);
+#endif
+
 	if (nbytes < 256) {
-	    buf[0] = nbytes;
+	    buf[0] = (CARD8) nbytes;
 	    memcpy(&buf[1], cats[i], nbytes);
 	    nbytes++;
 	    _FSSend(svr, buf, (long) nbytes);

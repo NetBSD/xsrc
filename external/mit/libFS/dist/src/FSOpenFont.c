@@ -62,22 +62,29 @@ FSOpenBitmapFont(
     const char		*name,
     Font		*otherid)
 {
-    unsigned int nbytes;
+    size_t	nbytes;
     fsOpenBitmapFontReq *req;
     fsOpenBitmapFontReply reply;
     Font        fid;
     char        buf[256];
 
-    nbytes = name ? strlen(name) : 0;
-    if (nbytes > 255) return 0;
+#ifdef HAVE_STRNLEN
+    nbytes = strnlen(name, 256);
+#else
+    nbytes = strlen(name);
+#endif
+
+    if ((nbytes == 0) || (nbytes > 255) ||
+        (nbytes > (FSMaxRequestBytes(svr) - SIZEOF(fsOpenBitmapFontReq))))
+        return 0;
     GetReq(OpenBitmapFont, req);
-    buf[0] = nbytes;
+    buf[0] = (CARD8) nbytes;
     memcpy(&buf[1], name, nbytes);
     nbytes++;
     req->fid = fid = svr->resource_id++;
     req->format_hint = hint;
     req->format_mask = fmask;
-    req->length += (nbytes + 3) >> 2;
+    req->length += (CARD16) ((nbytes + 3) >> 2);
     _FSSend(svr, buf, (long) nbytes);
     if (!_FSReply(svr, (fsReply *) & reply,
 		  (SIZEOF(fsOpenBitmapFontReply)-SIZEOF(fsGenericReply)) >> 2,
