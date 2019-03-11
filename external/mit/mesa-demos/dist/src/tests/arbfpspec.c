@@ -105,7 +105,7 @@ static void SpecialKey( int key, int x, int y )
 
 static void Init( void )
 {
-   GLint errno;
+   GLint errnum;
    GLuint prognum, fprognum;
 	
    static const char prog[] = 
@@ -141,9 +141,9 @@ static void Init( void )
                         strlen(prog), (const GLubyte *) prog);
 
    assert(glIsProgramARB(prognum));
-   errno = glGetError();
-   printf("glGetError = %d\n", errno);
-   if (errno != GL_NO_ERROR)
+   errnum = glGetError();
+   printf("glGetError = %d\n", errnum);
+   if (errnum != GL_NO_ERROR)
    {
       GLint errorpos;
 
@@ -155,9 +155,9 @@ static void Init( void )
    glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, fprognum);
    glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
                         strlen(fprog), (const GLubyte *) fprog);
-   errno = glGetError();
-   printf("glGetError = %d\n", errno);
-   if (errno != GL_NO_ERROR)
+   errnum = glGetError();
+   printf("glGetError = %d\n", errnum);
+   if (errnum != GL_NO_ERROR)
    {
       GLint errorpos;
 

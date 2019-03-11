@@ -368,10 +368,12 @@ init(int argc, char *argv[])
       printf("GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
       printf("GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
       printf("GL_EXTENSIONS = %s\n", (char *) glGetString(GL_EXTENSIONS));
+      fflush(stdout);
     }
     else if ( strcmp(argv[i], "-exit")==0) {
       autoexit = 30;
       printf("Auto Exit after %i seconds.\n", autoexit );
+      fflush(stdout);
     }
     else if (strcmp(argv[i], "-noanim") == 0) {
       Animate = GL_FALSE;

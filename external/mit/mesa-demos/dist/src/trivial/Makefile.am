@@ -170,6 +170,7 @@ bin_PROGRAMS = \
 	tri-tex-1d \
 	tri-tex-3d \
 	tri-tex \
+	tri-tex-stipple \
 	tri-tri \
 	tri-unfilled \
 	tri-unfilled-clip \

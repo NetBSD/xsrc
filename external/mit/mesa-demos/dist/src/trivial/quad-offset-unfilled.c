@@ -112,7 +112,7 @@ static void Draw(void)
    glEnd();
 
 
-   glDisable(GL_POLYGON_OFFSET_FILL);
+   glDisable(GL_POLYGON_OFFSET_LINE);
 
    glFlush();
 

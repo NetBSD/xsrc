@@ -115,13 +115,13 @@ Draw(void)
    glClearColor(0.2, 0.2, 0.8, 0.0);
    glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-#if 0
-   DrawStencilPixels(x0, y0, WIDTH, HEIGHT, (GLubyte*) Image);
-#else
-   glWindowPos2i(x0, y0);
-   glDrawPixels(WIDTH, HEIGHT, GL_STENCIL_INDEX,
-                GL_UNSIGNED_BYTE, (GLubyte*) Image);
-#endif
+   if (0) {
+      DrawStencilPixels(x0, y0, WIDTH, HEIGHT, (GLubyte*) Image);
+   } else {
+      glWindowPos2i(x0, y0);
+      glDrawPixels(WIDTH, HEIGHT, GL_STENCIL_INDEX,
+                   GL_UNSIGNED_BYTE, (GLubyte*) Image);
+   }
 
    glReadPixels(x0, y0, WIDTH, HEIGHT, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, tmp);
 

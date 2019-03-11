@@ -25,8 +25,7 @@ static GLfloat MaxLineWidth;
 static GLfloat Xrot = 0, Yrot = 0;
 static int uLineWidth = -1, uInverseViewportSize = -1;
 
-static const int NumPoints = 50;
-static float Points[100][3], Colors[100][3];
+static int NumPoints = 50;
 
 static const GLfloat Red[4] = {1, 0, 0, 1};
 static const GLfloat Green[4] = {0, 1, 0, 0};
@@ -46,8 +45,6 @@ CheckError(int line)
 static void
 Redisplay(void)
 {
-   int i;
-
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
    glPushMatrix();
@@ -63,12 +60,7 @@ Redisplay(void)
       glLineWidth(LineWidth);
    }
 
-   glBegin(GL_LINES);
-   for (i = 0; i < NumPoints; i++) {
-      glColor3fv(Colors[i]);
-      glVertex3fv(Points[i]);
-   }
-   glEnd();
+   glDrawArrays(GL_LINES, 0, NumPoints / 2);
 
    glPopMatrix();
 
@@ -160,18 +152,38 @@ Key(unsigned char key, int x, int y)
 
 
 static void
-MakePoints(void)
+MakePointsVBO(void)
 {
+   struct vert {
+      GLfloat pos[3];
+      GLfloat color[3];
+   };
+   struct vert *v;
+   GLuint vbo;
    int i;
+
+   glGenBuffers(1, &vbo);
+   glBindBuffer(GL_ARRAY_BUFFER, vbo);
+   glBufferData(GL_ARRAY_BUFFER, NumPoints * sizeof(struct vert),
+                NULL, GL_STATIC_DRAW);
+
+   v = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
    for (i = 0; i < NumPoints; i++) {
-      Colors[i][0] = (rand() % 1000) / 1000.0;
-      Colors[i][1] = (rand() % 1000) / 1000.0;
-      Colors[i][2] = (rand() % 1000) / 1000.0;
-      Points[i][0] = ((rand() % 2000) - 1000.0) / 500.0;
-      Points[i][1] = ((rand() % 2000) - 1000.0) / 500.0;
-      Points[i][2] = ((rand() % 2000) - 1000.0) / 500.0;
+      v[i].color[0] = (rand() % 1000) / 1000.0;
+      v[i].color[1] = (rand() % 1000) / 1000.0;
+      v[i].color[2] = (rand() % 1000) / 1000.0;
+      v[i].pos[0] = ((rand() % 2000) - 1000.0) / 500.0;
+      v[i].pos[1] = ((rand() % 2000) - 1000.0) / 500.0;
+      v[i].pos[2] = ((rand() % 2000) - 1000.0) / 500.0;
    }
+   glUnmapBuffer(GL_ARRAY_BUFFER);
+
+   glVertexPointer(3, GL_FLOAT, sizeof(struct vert), (void *) 0);
+   glEnable(GL_VERTEX_ARRAY);
+   glColorPointer(3, GL_FLOAT, sizeof(struct vert), (void *) sizeof(float[3]));
+   glEnable(GL_COLOR_ARRAY);
 }
+
 
 static void
 Init(void)
@@ -295,7 +307,7 @@ Init(void)
       MaxLineWidth = r[1];
    }
 
-   MakePoints();
+   MakePointsVBO();
 }
 
 
@@ -303,6 +315,18 @@ int
 main(int argc, char *argv[])
 {
    glutInit(&argc, argv);
+
+   if (argc > 1) {
+      int n = atoi(argv[1]);
+      if (n > 0) {
+         NumPoints = n;
+      }
+      else {
+         printf("Invalid number of points\n");
+         return 1;
+      }
+   }
+
    glutInitWindowSize(WinWidth, WinHeight);
    glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
    Win = glutCreateWindow(argv[0]);

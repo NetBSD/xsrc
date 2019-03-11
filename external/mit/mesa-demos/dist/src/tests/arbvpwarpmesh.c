@@ -158,7 +158,7 @@ static void SpecialKey( int key, int x, int y )
 static void Init( void )
 {
    GLuint prognum;
-   GLint errno;
+   GLint errnum;
 	
    /*
     * c[0..3] = modelview matrix
@@ -200,10 +200,10 @@ static void Init( void )
    glBindProgramARB(GL_VERTEX_PROGRAM_ARB, prognum);
    glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
             strlen(prog), (const GLubyte *)prog);
-   errno = glGetError();	
-   printf("glGetError = %d\n", errno);
+   errnum = glGetError();	
+   printf("glGetError = %d\n", errnum);
 
-	if (errno != GL_NO_ERROR) 
+	if (errnum != GL_NO_ERROR) 
 	{
 		GLint errorpos;
 

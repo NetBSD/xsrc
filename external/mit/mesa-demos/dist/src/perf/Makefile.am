@@ -48,6 +48,7 @@ bin_PROGRAMS = \
 	fbobind \
 	fill \
 	genmipmap \
+	glsl-compile-time \
 	readpixels \
 	swapbuffers \
 	teximage \
@@ -57,3 +58,4 @@ bin_PROGRAMS = \
 endif
 
 glslstateschange_LDADD = libperf.la ../util/libutil.la
+glsl_compile_time_LDADD = ../util/libutil.la

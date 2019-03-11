@@ -41,19 +41,15 @@ if HAVE_GLESV1
 noinst_PROGRAMS = \
 	bindtex \
 	clear \
-	drawtex_screen \
 	drawtex_x11 \
 	eglfbdev \
 	es1_info \
-	gears_screen \
 	gears_x11 \
 	msaa \
 	pbuffer\
 	render_tex \
 	texture_from_pixmap \
-	torus_screen \
 	torus_x11 \
-	tri_screen \
 	tri_x11 \
 	two_win
 endif
@@ -71,20 +67,10 @@ two_win_LDADD = $(X11_LIBS)
 clear_LDADD = ../eglut/libeglut_x11.la $(EGL_LIBS) $(X11_LIBS)
 clear_LDFLAGS =
 
-drawtex_screen_SOURCES = drawtex.c
-gears_screen_SOURCES = gears.c
-torus_screen_SOURCES = torus.c
-tri_screen_SOURCES = tri.c
-
 drawtex_x11_SOURCES = drawtex.c
 gears_x11_SOURCES = gears.c
 torus_x11_SOURCES = torus.c
 tri_x11_SOURCES = tri.c
-
-drawtex_screen_LDADD = ../eglut/libeglut_screen.la
-gears_screen_LDADD = ../eglut/libeglut_screen.la
-torus_screen_LDADD = ../eglut/libeglut_screen.la
-tri_screen_LDADD = ../eglut/libeglut_screen.la
 
 drawtex_x11_LDADD = ../eglut/libeglut_x11.la
 gears_x11_LDADD = ../eglut/libeglut_x11.la

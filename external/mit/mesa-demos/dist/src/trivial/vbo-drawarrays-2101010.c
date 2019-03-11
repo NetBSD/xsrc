@@ -53,7 +53,7 @@ GLuint arrayObj, elementObj;
 
 static void Init( void )
 {
-   GLint errno;
+   GLint errnum;
    GLuint prognum;
    int color_size = 4;
 
@@ -83,9 +83,9 @@ static void Init( void )
 		      strlen(prog1), (const GLubyte *) prog1);
 
    assert(glIsProgramARB(prognum));
-   errno = glGetError();
+   errnum = glGetError();
 
-   if (errno != GL_NO_ERROR)
+   if (errnum != GL_NO_ERROR)
    {
       GLint errorpos;
 

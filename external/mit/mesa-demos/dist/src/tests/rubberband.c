@@ -26,13 +26,15 @@ struct rect
 static struct rect OldRect, NewRect;
 
 static GLboolean ButtonDown = GL_FALSE;
-static GLboolean LogicOp = 0*GL_TRUE;
+static GLboolean LogicOp = GL_TRUE;
 
 static GLboolean RedrawBackground = GL_TRUE;
 
 static const GLfloat red[4] = {1.0, 0.2, 0.2, 1.0};
 static const GLfloat green[4] = {0.2, 1.0, 0.2, 1.0};
 static const GLfloat blue[4] = {0.2, 0.2, 1.0, 1.0};
+
+static int color = 0;
 
 
 /*
@@ -46,16 +48,18 @@ DrawRect(const struct rect *r)
    if (LogicOp) {
       glLogicOp(GL_XOR);
       glEnable(GL_COLOR_LOGIC_OP);
+
+      if (color == 0)
+         glColor3f(1, 1, 1);
+      else
+         glColor3ub(152, 105, 58);
    }
    else {
       glEnable(GL_BLEND);
       glBlendFunc(GL_ONE, GL_ONE);
       glBlendEquation(GL_FUNC_SUBTRACT);
+      glColor3f(1, 1, 1);
    }
-
-   glColor3f(1, 1, 1);
-
-   glLineWidth(3.0);
 
    glBegin(GL_LINE_LOOP);
    glVertex2i(r->x0, r->y0);
@@ -97,6 +101,7 @@ DrawBackground(void)
    glWindowPos2i((Width - ImgWidth) / 2, (Height - ImgHeight) / 2);
    glDrawPixels(ImgWidth, ImgHeight, ImgFormat, GL_UNSIGNED_BYTE, Image);
 
+   glColor3f(1, 1, 1);
    glWindowPos2i(10, 10);
    PrintString(s);
 
@@ -149,9 +154,27 @@ Key(unsigned char key, int x, int y)
    (void) x;
    (void) y;
    switch (key) {
+   case '1':
+      glLineWidth(1);
+      break;
+   case '2':
+      glLineWidth(2);
+      break;
+   case '3':
+      glLineWidth(3);
+      break;
+   case '4':
+      glLineWidth(4);
+      break;
    case 'b':
    case 'B':
       LogicOp = GL_FALSE;
+      break;
+   case 'c':
+   case 'C':
+      color = !color;
+      printf("using color %d\n", color);
+      fflush(stdout);
       break;
    case 'l':
    case 'L':
@@ -225,6 +248,7 @@ Init(void)
 
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+   glLineWidth(3);
 }
 
 

@@ -104,7 +104,7 @@ static void SpecialKey( int key, int x, int y )
 
 static void Init( void )
 {
-   GLint errno;
+   GLint errnum;
    GLuint prognum;
 	
    /* borrowed from an nvidia demo:
@@ -145,9 +145,9 @@ static void Init( void )
                         strlen(prog), (const GLubyte *) prog);
 
    assert(glIsProgramARB(prognum));
-   errno = glGetError();
-   printf("glGetError = %d\n", errno);
-   if (errno != GL_NO_ERROR)
+   errnum = glGetError();
+   printf("glGetError = %d\n", errnum);
+   if (errnum != GL_NO_ERROR)
    {
       GLint errorpos;
 

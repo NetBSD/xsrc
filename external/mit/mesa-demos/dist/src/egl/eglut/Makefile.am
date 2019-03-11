@@ -33,17 +33,12 @@ if HAVE_WAYLAND
 eglut_wayland = libeglut_wayland.la
 endif
 
-noinst_LTLIBRARIES = libeglut_screen.la $(eglut_x11) $(eglut_wayland)
+noinst_LTLIBRARIES = $(eglut_x11) $(eglut_wayland)
 endif
-
-libeglut_screen_la_SOURCES = \
-	eglut.c \
-	eglut.h \
-	eglutint.h \
-	eglut_screen.c
 
 libeglut_x11_la_SOURCES = \
 	eglut.c \
+	eglut.h \
 	eglutint.h \
 	eglut_x11.c
 libeglut_x11_la_CFLAGS = $(X11_CFLAGS) $(EGL_CFLAGS)
@@ -52,6 +47,7 @@ libeglut_x11_la_LIBADD = $(X11_LIBS) $(EGL_LIBS)
 
 libeglut_wayland_la_SOURCES = \
 	eglut.c \
+	eglut.h \
 	eglutint.h \
 	eglut_wayland.c
 

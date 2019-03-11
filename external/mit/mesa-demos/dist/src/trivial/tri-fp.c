@@ -37,7 +37,7 @@ GLenum doubleBuffer;
 
 static void Init(void)
 {
-   GLint errno;
+   GLint errnum;
    GLuint prognum;
    static const char *prog1 =
       "!!ARBfp1.0\n"
@@ -57,9 +57,9 @@ static void Init(void)
    glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
                       strlen(prog1), (const GLubyte *)prog1);
    
-   errno = glGetError();
-   printf("glGetError = 0x%x\n", errno);
-   if (errno != GL_NO_ERROR) {
+   errnum = glGetError();
+   printf("glGetError = 0x%x\n", errnum);
+   if (errnum != GL_NO_ERROR) {
       GLint errorpos;
 
       glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorpos);

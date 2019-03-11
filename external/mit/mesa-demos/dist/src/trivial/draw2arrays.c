@@ -22,7 +22,7 @@ GLubyte color[][4] =
 
 static void Init( void )
 {
-   GLint errno;
+   GLint errnum;
    GLuint prognum;
    
    static const char *prog1 =
@@ -37,9 +37,9 @@ static void Init( void )
 		      strlen(prog1), (const GLubyte *) prog1);
 
    assert(glIsProgramARB(prognum));
-   errno = glGetError();
-   printf("glGetError = %d\n", errno);
-   if (errno != GL_NO_ERROR)
+   errnum = glGetError();
+   printf("glGetError = %d\n", errnum);
+   if (errnum != GL_NO_ERROR)
    {
       GLint errorpos;
 

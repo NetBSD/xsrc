@@ -55,6 +55,25 @@ PrintConfigs(EGLDisplay d)
    printf("Configurations:\n");
    printf("     bf lv colorbuffer dp st  ms    vis   cav bi  renderable  supported\n");
    printf("  id sz  l  r  g  b  a th cl ns b    id   eat nd gl es es2 vg surfaces \n");
+   /*        ^  ^   ^  ^  ^  ^  ^ ^  ^  ^  ^    ^    ^   ^  ^  ^  ^   ^  ^
+    *        |  |   |  |  |  |  | |  |  |  |    |    |   |  |  |  |   |  |
+    *        |  |   |  |  |  |  | |  |  |  |    |    |   |  |  |  |   |  EGL_SURFACE_TYPE
+    *        |  |   |  |  |  |  | |  |  |  |    |    |   |  EGL_RENDERABLE_TYPE
+    *        |  |   |  |  |  |  | |  |  |  |    |    |   EGL_BIND_TO_TEXTURE_RGB/EGL_BIND_TO_TEXTURE_RGBA
+    *        |  |   |  |  |  |  | |  |  |  |    |    EGL_CONFIG_CAVEAT
+    *        |  |   |  |  |  |  | |  |  |  |    EGL_NATIVE_VISUAL_ID/EGL_NATIVE_VISUAL_TYPE
+    *        |  |   |  |  |  |  | |  |  |  EGL_SAMPLE_BUFFERS
+    *        |  |   |  |  |  |  | |  |  EGL_SAMPLES
+    *        |  |   |  |  |  |  | |  EGL_STENCIL_SIZE
+    *        |  |   |  |  |  |  | EGL_DEPTH_SIZE
+    *        |  |   |  |  |  |  EGL_ALPHA_SIZE
+    *        |  |   |  |  |  EGL_BLUE_SIZE
+    *        |  |   |  |  EGL_GREEN_SIZE
+    *        |  |   |  EGL_RED_SIZE
+    *        |  |   EGL_LEVEL
+    *        |  EGL_BUFFER_SIZE
+    *        EGL_CONFIG_ID
+    */
    printf("---------------------------------------------------------------------\n");
    for (i = 0; i < numConfigs; i++) {
       EGLint id, size, level;
@@ -93,10 +112,8 @@ PrintConfigs(EGLDisplay d)
          strcat(surfString, "pb,");
       if (surfaces & EGL_PIXMAP_BIT)
          strcat(surfString, "pix,");
-#ifdef EGL_MESA_screen_surface
-      if (surfaces & EGL_SCREEN_BIT_MESA)
-         strcat(surfString, "scrn,");
-#endif
+      if (surfaces & EGL_STREAM_BIT_KHR)
+         strcat(surfString, "str,");
       if (strlen(surfString) > 0)
          surfString[strlen(surfString) - 1] = 0;
 
@@ -117,54 +134,18 @@ PrintConfigs(EGLDisplay d)
 }
 
 
-/**
- * Print table of all available configurations.
- */
-static void
-PrintModes(EGLDisplay d)
-{
-#ifdef EGL_MESA_screen_surface
-   const char *extensions = eglQueryString(d, EGL_EXTENSIONS);
-   if (strstr(extensions, "EGL_MESA_screen_surface")) {
-      EGLScreenMESA screens[MAX_SCREENS];
-      EGLint numScreens = 1, scrn;
-      EGLModeMESA modes[MAX_MODES];
-
-      eglGetScreensMESA(d, screens, MAX_SCREENS, &numScreens);
-      printf("Number of Screens: %d\n\n", numScreens);
-
-      for (scrn = 0; scrn < numScreens; scrn++) {
-         EGLint numModes, i;
-
-         eglGetModesMESA(d, screens[scrn], modes, MAX_MODES, &numModes);
-
-         printf("Screen %d Modes:\n", scrn);
-         printf("  id  width height refresh  name\n");
-         printf("-----------------------------------------\n");
-         for (i = 0; i < numModes; i++) {
-            EGLint id, w, h, r;
-            const char *str;
-            eglGetModeAttribMESA(d, modes[i], EGL_MODE_ID_MESA, &id);
-            eglGetModeAttribMESA(d, modes[i], EGL_WIDTH, &w);
-            eglGetModeAttribMESA(d, modes[i], EGL_HEIGHT, &h);
-            eglGetModeAttribMESA(d, modes[i], EGL_REFRESH_RATE_MESA, &r);
-            str = eglQueryModeStringMESA(d, modes[i]);
-            printf("0x%02x %5d  %5d   %.3f  %s\n", id, w, h, r / 1000.0, str);
-         }
-      }
-   }
-#endif
-}
-
-static void
+static const char *
 PrintExtensions(EGLDisplay d)
 {
    const char *extensions, *p, *end, *next;
    int column;
 
-   printf("EGL extensions string:\n");
+   puts(d == EGL_NO_DISPLAY ? "EGL client extensions string:" :
+                              "EGL extensions string:");
 
    extensions = eglQueryString(d, EGL_EXTENSIONS);
+   if (!extensions)
+      return NULL;
 
    column = 0;
    end = extensions + strlen(extensions);
@@ -191,17 +172,19 @@ PrintExtensions(EGLDisplay d)
 
    if (column > 0)
       printf("\n");
+
+   return extensions;
 }
 
-int
-main(int argc, char *argv[])
+static int
+doOneDisplay(EGLDisplay d, const char *name)
 {
    int maj, min;
-   EGLDisplay d = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 
+   printf("%s:\n", name);
    if (!eglInitialize(d, &maj, &min)) {
-      printf("eglinfo: eglInitialize failed\n");
-      exit(1);
+      printf("eglinfo: eglInitialize failed\n\n");
+      return 1;
    }
 
    printf("EGL API version: %d.%d\n", maj, min);
@@ -214,10 +197,51 @@ main(int argc, char *argv[])
    PrintExtensions(d);
 
    PrintConfigs(d);
-
-   PrintModes(d);
-
    eglTerminate(d);
-
+   printf("\n");
    return 0;
+}
+
+int
+main(int argc, char *argv[])
+{
+   int ret = 0;
+   const char *clientext;
+
+   clientext = PrintExtensions(EGL_NO_DISPLAY);
+   printf("\n");
+
+   if (strstr(clientext, "EGL_EXT_platform_base")) {
+       PFNEGLGETPLATFORMDISPLAYEXTPROC getPlatformDisplay =
+           (PFNEGLGETPLATFORMDISPLAYEXTPROC)
+           eglGetProcAddress("eglGetPlatformDisplayEXT");
+       if (strstr(clientext, "EGL_KHR_platform_android"))
+           ret += doOneDisplay(getPlatformDisplay(EGL_PLATFORM_ANDROID_KHR,
+                                                  EGL_DEFAULT_DISPLAY,
+                                                  NULL), "Android platform");
+       if (strstr(clientext, "EGL_MESA_platform_gbm") ||
+           strstr(clientext, "EGL_KHR_platform_gbm"))
+           ret += doOneDisplay(getPlatformDisplay(EGL_PLATFORM_GBM_MESA,
+                                                  EGL_DEFAULT_DISPLAY,
+                                                  NULL), "GBM platform");
+       if (strstr(clientext, "EGL_EXT_platform_wayland") ||
+           strstr(clientext, "EGL_KHR_platform_wayland"))
+           ret += doOneDisplay(getPlatformDisplay(EGL_PLATFORM_WAYLAND_EXT,
+                                                  EGL_DEFAULT_DISPLAY,
+                                                  NULL), "Wayland platform");
+       if (strstr(clientext, "EGL_EXT_platform_x11") ||
+           strstr(clientext, "EGL_KHR_platform_x11"))
+           ret += doOneDisplay(getPlatformDisplay(EGL_PLATFORM_X11_EXT,
+                                                  EGL_DEFAULT_DISPLAY,
+                                                  NULL), "X11 platform");
+       if (strstr(clientext, "EGL_EXT_platform_device"))
+           ret += doOneDisplay(getPlatformDisplay(EGL_PLATFORM_DEVICE_EXT,
+                                                  EGL_DEFAULT_DISPLAY,
+                                                  NULL), "Device platform");
+   }
+   else {
+      ret = doOneDisplay(eglGetDisplay(EGL_DEFAULT_DISPLAY), "Default display");
+   }
+
+   return ret;
 }

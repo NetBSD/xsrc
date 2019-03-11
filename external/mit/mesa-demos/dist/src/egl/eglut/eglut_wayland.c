@@ -94,6 +94,7 @@ _eglutNativeInitDisplay(void)
    wl_registry_destroy(registry);
 
    _eglut->surface_type = EGL_WINDOW_BIT;
+   _eglut->redisplay = 1;
 }
 
 void
@@ -149,19 +150,27 @@ static const struct wl_callback_listener frame_listener = {
 
 static void
 draw(void *data, struct wl_callback *callback, uint32_t time)
-{	
+{
    struct window *window = (struct window *)data;
    struct eglut_window *win = _eglut->current;
 
+   if (callback) {
+      wl_callback_destroy(callback);
+      window->callback = NULL;
+   }
+
+   /* Our client doesn't want to push another frame; go back to sleep. */
+   if (!_eglut->redisplay)
+      return;
+   _eglut->redisplay = 0;
+
    if (win->display_cb)
       win->display_cb();
-   eglSwapBuffers(_eglut->dpy, win->surface);
-
-   if (callback)
-      wl_callback_destroy(callback);
 
    window->callback = wl_surface_frame(window->surface);
    wl_callback_add_listener(window->callback, &frame_listener, window);
+
+   eglSwapBuffers(_eglut->dpy, win->surface);
 }
 
 void
@@ -170,29 +179,44 @@ _eglutNativeEventLoop(void)
    struct pollfd pollfd;
    int ret;
 
-   draw(&window, NULL, 0);
-
    pollfd.fd = wl_display_get_fd(display.display);
    pollfd.events = POLLIN;
    pollfd.revents = 0;
 
    while (1) {
-      wl_display_dispatch_pending(display.display);
+      /* If we need to flush but can't, don't do anything at all which could
+       * push further events into the socket. */
+      if (!(pollfd.events & POLLOUT)) {
+         wl_display_dispatch_pending(display.display);
 
-      if (_eglut->idle_cb)
-         _eglut->idle_cb();
+         if (_eglut->idle_cb)
+            _eglut->idle_cb();
+
+         /* Client wants to redraw, but we have no frame event to trigger the
+          * redraw; kickstart it by redrawing immediately. */
+         if (_eglut->redisplay && !window.callback)
+            draw(&window, NULL, 0);
+      }
 
       ret = wl_display_flush(display.display);
-      if (ret < 0 && errno == EAGAIN)
-         pollfd.events |= POLLOUT;
-      else if (ret < 0)
-         break;
+      if (ret < 0 && errno != EAGAIN)
+         break; /* fatal error; socket is broken */
+      else if (ret < 0 && errno == EAGAIN)
+         pollfd.events |= POLLOUT; /* need to wait until we can flush */
+      else
+         pollfd.events &= ~POLLOUT; /* successfully flushed */
 
-      if (poll(&pollfd, 1, _eglut->redisplay ? 0 : -1) == -1)
+      if (poll(&pollfd, 1, -1) == -1)
          break;
 
       if (pollfd.revents & (POLLERR | POLLHUP))
          break;
+
+      if (pollfd.events & POLLOUT) {
+	 if (!(pollfd.revents & POLLOUT))
+            continue; /* block until we can flush */
+         pollfd.events &= ~POLLOUT;
+      }
 
       if (pollfd.revents & POLLIN) {
          ret = wl_display_dispatch(display.display);
@@ -200,23 +224,12 @@ _eglutNativeEventLoop(void)
             break;
       }
 
-      if (pollfd.revents & POLLOUT) {
-         ret = wl_display_flush(display.display);
-         if (ret == 0)
-            pollfd.events &= ~POLLOUT;
-         else if (ret == -1 && errno != EAGAIN)
-            break;
-      }
-
-      if (_eglut->redisplay) {
-         struct eglut_window *win = _eglut->current;
-
-         _eglut->redisplay = 0;
-
-         if (win->display_cb)
-            win->display_cb();
-
-         eglSwapBuffers(_eglut->dpy, win->surface);
-      }
+      ret = wl_display_flush(display.display);
+      if (ret < 0 && errno != EAGAIN)
+         break; /* fatal error; socket is broken */
+      else if (ret < 0 && errno == EAGAIN)
+         pollfd.events |= POLLOUT; /* need to wait until we can flush */
+      else
+         pollfd.events &= ~POLLOUT; /* successfully flushed */
    }
 }
