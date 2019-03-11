@@ -1,0 +1,506 @@
+commit f250616a10ef8bbefc2fc62df6a3afb461fedcdd
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Mar 9 21:30:15 2018 -0800
+
+    transset 1.0.2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0e08633cb33874840915db81b8c11503ec9efa0c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu May 7 22:52:22 2015 -0700
+
+    Fix warnings about signed vs. unsigned comparison
+    
+    Part of https://bugs.freedesktop.org/show_bug.cgi?id=25542
+    
+    dsimple.c:262:19: warning: comparison of integers of different signs: 'int' and
+          'unsigned int' [-Wsign-compare]
+        for (i = 0; i < nchildren; i++) {
+                    ~ ^ ~~~~~~~~~
+    dsimple.c:296:19: warning: comparison of integers of different signs: 'int' and
+          'unsigned int' [-Wsign-compare]
+        for (i = 0; i < nchildren; i++) {
+                    ~ ^ ~~~~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 7c0c3afd6f5bfc02fd98a2da03f7fb7d6567ccf3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Dec 31 00:24:49 2014 -0800
+
+    Only use property pointer if XGetWindowProperty returns success
+    
+    In Xlib versions prior to 1.6, if XGetWindowProperty returns a failure,
+    it didn't always set the property pointer to NULL, and could leave it
+    uninitialized.
+    
+    Reported by Oracle Parfait 1.5.1:
+    Error: Uninitialised memory (CWE 456)
+       Possible access to uninitialised memory '&data'
+            at line 298 of transSet.c in function 'main'.
+              &data allocated at line 154.
+            at line 299 of transSet.c in function 'main'.
+              &data allocated at line 154.
+            at line 300 of transSet.c in function 'main'.
+              &data allocated at line 154.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Hans de Goede <hdegoede@redhat.com>
+
+commit eeebd3cd6bb4373ca6da5c0b6d5caa1a41d5bffc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 31 21:39:32 2014 -0700
+
+    autogen.sh: Honor NOCONFIGURE=1
+    
+    See http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9380d6ff8b7dd1805d21caef9865537d2ce075ba
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 31 21:38:41 2014 -0700
+
+    configure: Drop AM_MAINTAINER_MODE
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 39db25e110cfedcec99394dfa7614ca248685c0d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri May 17 17:47:14 2013 -0700
+
+    transset 1.0.1
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit fc4bf3cda6d14cac9272f8399bb6dc614c1ef956
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Feb 22 22:05:39 2013 -0800
+
+    Add the options to the man page (they were all missing before)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f59b8db649c1596a38ce20025417c4060d442d64
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Feb 22 21:33:25 2013 -0800
+
+    Store min & max as doubles, not floats
+    
+    Since atof generates doubles, and we use them to compare/limit the values
+    of the double "d", might as well keep them in the same format instead of
+    doing unnecessary conversions.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e79903a50b0a9cba9d0e41fc2e389117f3ff42ef
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Feb 22 21:27:00 2013 -0800
+
+    Typo fixes in verbose message & comment
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit da0682051e880faa2ef1accac388040bb52b46d8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Feb 22 21:22:43 2013 -0800
+
+    Use correct variable for printing current opacity
+    
+    Found by clang:
+    transSet.c:303:30: warning: variable 'opacity' is uninitialized when used here
+          [-Wuninitialized]
+                        (double) opacity / OPAQUE);
+                                 ^~~~~~~
+    
+    When running transset -v, it prints the current opacity of a window
+    before changing it, but was printing garbage - after this fix, correctly
+    prints the value set by the previous run.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 65f010b8c4ef0e4fa5fc6a0679173f81c7a4b626
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Feb 22 21:17:59 2013 -0800
+
+    Move release date from transset.c to configure.ac so we remember to update it
+    
+    Currently our 2012 release prints:
+       released: 2007-09-21
+    when you run transset --version
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6cd34b45c87717ae7901993e32b99a43652fa0f3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Feb 22 21:14:09 2013 -0800
+
+    Include PACKAGE_STRING in --version output
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2b57aeb0ea616cfca8e6fcbd844960269af8c533
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Feb 22 21:11:04 2013 -0800
+
+    Combine usage message into single string/call
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a2485424bd0f184700dd0a4f0823fb4c4cf25f66
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Thu Jun 7 19:33:28 2012 +0900
+
+    Fix program name in usage information, transset instead of transset-df.
+
+commit 49d17bde62694c2f0e2bb7883641bd60830c6bd5
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Tue Jun 5 14:55:54 2012 +0900
+
+    transset 1.0.0
+
+commit 5f23076c05c58e790eaffa66ed6b676f5f736555
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Tue Jun 5 14:43:11 2012 +0900
+
+    Rename dpy to disp in function parameter to avoid shadowing dpy global declaration.
+
+commit 8cc91040c81e5e33e6422066763bcc231c778011
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Tue Jun 5 14:29:19 2012 +0900
+
+    Add missing const keywords on Fatal_Error() and program_name to clear GCC warnings.
+
+commit ef2753866bf0b51a38484ae5a86562d5057fabab
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Tue Jun 5 14:27:02 2012 +0900
+
+    Add _X_ATTRIBUTE_PRINTF attribute to Fatal_Error() to clear GCC warning.
+
+commit bd4ca2af9f39e3282e319e6d31450e04b1b16e64
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Tue Jun 5 14:26:08 2012 +0900
+
+    Add _X_NORETURN to Usage() to clear GCC warning.
+
+commit dcdc705fe7af9e834714219a618ddfd74b70294f
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Tue Jun 5 14:18:42 2012 +0900
+
+    Use _X_NORETURN from xproto 7.0.17 instead of checking __GNUC__.
+
+commit 051275fbad049b6b88da4350683aa391e9e8b94f
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Tue Jun 5 14:08:30 2012 +0900
+
+    Add autogen.sh to EXTRA_DIST.
+
+commit c70e20694b27928429715b964f32e0abc519cb19
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Tue Jun 5 12:37:09 2012 +0900
+
+    Clear GCC warning (-Wmaybe-uninitialized).
+
+commit 7018537e9003a1fd311a5875d12f135b9057c184
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Fri Feb 10 10:44:51 2012 +0900
+
+    Add copyright statement and update accordingly COPYING file.
+    
+    Reviewed-by: Gaetan Nadon<memsize@videotron.ca>
+
+commit 43fb446ddc881f089200ec0d732631d3d7a46544
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Mon Jan 23 11:49:16 2012 +0900
+
+    Update README.
+
+commit cbc473428a71299255d11bfc1dcc7db6a9985eec
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Jan 20 15:00:14 2012 -0500
+
+    config: add dependency on xproto
+    
+    transSet.c includes <X11/Xatom.h>
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 6c6df06a876eac0a2cf04e4c1020bd8590e3f87c
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Jan 20 14:47:42 2012 -0500
+
+    Remove XFree86 and IMakefile version control information in source code
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit ced0d07de735fc4f2fec47b64eeb8d6bd1cdf7ac
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Jan 20 14:37:58 2012 -0500
+
+    config: upgrade, comment and fix autoconf warnings
+    
+    In the same way other xorg modules have been.
+    
+     - minimum autoconf level is 2.60
+     - AC_CONFIG_HEADER (singular) is obsolete
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 7ffbc93b24e3d9a27046d6c52501c0b81a32bd37
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Jan 20 14:18:31 2012 -0500
+
+    make: remove $(LIBOBJS) dead code
+    
+    Starting at Autoconf 2.53, the use of LIBOBJS is an error.
+    http://www.gnu.org/software/autoconf/manual/autoconf.html#
+    AC_005fLIBOBJ-vs-LIBOBJS
+    
+    There are no system functions to override in this module.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 0530b5b6f17febd1f50234aa242b7c0a83ebbcd3
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Jan 20 13:59:46 2012 -0500
+
+    man: normalize man page header/footer
+    
+    Do not hard coded man page section number.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 77b57c63393ad16588b1da1503640c3af9657e07
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Jan 20 12:16:14 2012 -0500
+
+    man: use X.Org makefile which will also fix failing distcheck
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 1dceb7139994565d1142b12938560c0650a636f4
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Jan 20 11:48:32 2012 -0500
+
+    autogen.sh: use the X.Org version
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 33c0e20c588fa87ac2b9f2f89267024a349727c3
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Jan 20 11:39:27 2012 -0500
+
+    AUTHORS: remove empty file
+    
+    Not required when Automake is initialized with "foreign" keyword.
+    It can be added with proper content anytime.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit ad4179a465586d0f3d70adc2f0d2ca78a1dad84c
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Wed Dec 14 20:26:17 2011 +0900
+
+    Get rid of useless includes.
+
+commit d371dac4aeffa1ff782d5dd44479b42c3fe3a282
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Wed Dec 14 20:06:22 2011 +0900
+
+    Use enum for selected method for readability sake.
+
+commit 79549aefac1c7babbcb54e270520caaee8982b15
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Wed Dec 14 19:28:41 2011 +0900
+
+    Use Bool rather than int type for booleans.
+
+commit 84d26bdf9c96b51dccedd89b70095bae1b13fdd5
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Wed Dec 14 19:24:55 2011 +0900
+
+    Fix GCC warning (-Wuninitialized).
+
+commit 7fe1a565a902798a8d69ea0c3f2c8c2e7055189c
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Wed Dec 14 19:09:16 2011 +0900
+
+    Close property the Display and fix error exit code value.
+
+commit 55597dda964d335e5f63892c1b37c36b90eeffb4
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Wed Dec 14 19:05:31 2011 +0900
+
+    Remove useless malloc().
+
+commit 3dbf96b34c732c74bc96abeb7d371579d20ce56f
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Wed Dec 14 19:04:57 2011 +0900
+
+    Free properly memory allocated by XQueryTree().
+
+commit 8605d0178461b98099c5dee33b19eb8204487487
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Sun Oct 30 20:33:40 2011 +0900
+
+    Fix coding style.
+
+commit e4d0f93a64dbb9b77ee6a32dcf85ce1b65449e9d
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Sun Oct 30 20:17:51 2011 +0900
+
+    Add missing static qualifiers.
+
+commit b2c269400d3138802831e583b5b42fd20846b0ce
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Sun Oct 30 20:12:22 2011 +0900
+
+    Fix GCC warning about old-style function definitions.
+
+commit f8a9c03bafc1a8c1981076cd31299d9a2096dfca
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Sun Oct 30 20:02:03 2011 +0900
+
+    Add INSTALL file.
+
+commit b042c46a6cb03284d3b8f4c9bc1f363b9c7a66e8
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Sun Oct 30 17:26:49 2011 +0900
+
+    Add .gitignore.
+
+commit 2fe8dadbd42a17acff20a95e889fe6769d49a4ca
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Sun Oct 30 17:22:18 2011 +0900
+
+    Get rid of unused code from dsimple.c.
+
+commit 6da6193021802ba1455a953e6e21707e88f18985
+Merge: 705d787 c63bf55
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Sun Oct 30 16:47:08 2011 +0900
+
+    Merge branch 'transset-df'
+
+commit c63bf55e69fc50e08b9bf500e9b05cf36ce48680
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Sun Oct 30 16:46:01 2011 +0900
+
+    2007-09-21 Daniel Forchheimer <n04df@student.lth.se>
+            Release v6
+            * transSet.c
+            Select flag: --actual
+            Set transparency to the actual focused X11 window
+            Thanks to Roman Divacky for the patch
+
+commit 88d9e28837f71f391402654c33394635d27d4b30
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Sun Oct 30 16:45:00 2011 +0900
+
+    2006-01-10 Daniel Forchheimer <n04df@efd.lth.se>
+            Release v5
+            * transSet.c:
+            Applied patch so that transset-df compiles with gcc 2.95
+            Thanks to Andreas Kohn for the patch
+
+commit 470ea5431ffe0a54995c93506ab5e55ce534e039
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Sun Oct 30 16:43:09 2011 +0900
+
+    2005-03-13 Daniel Forchheimer <n04df@efd.lth.se>
+            Release v4
+            Bugfix: select by name or id didn't work in many
+                    windowmanagers like xfce and wmaker.
+            * transSet.c:
+            Function get_top_window() fixes the bug
+            Options verbose, no-regex
+            * dsimple.c:
+            Window_With_Name_Regex() now takes same arguments as Window_With_Name()
+            * Makefile:
+            Added simple install instructions
+    
+    2005-02-08 Daniel Forchheimer <n04df@efd.lth.se>
+            Select name now takes a regular expression
+            Fixed all warnings
+            * dsimple.c:
+            Window_With_Name_Regex()
+            * transSet.c:
+            use the new regex function
+            print the name (if possible)
+            * dsimple.h:
+            Added the new functions to avoid warnings
+
+commit 30300bf213557b99bcfd3d92587f6a96e9494124
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Sun Oct 30 16:41:56 2011 +0900
+
+    2005-01-14  Daniel Forchheimer <n04df@efd.lth.se>
+            Release v3
+            * transSet.c:
+            Select by name (-n, --name)
+            Select by id    (-i, --id)
+
+commit ed0236ce0b9fcdbd7e7874327c65610b3f13d47e
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Sun Oct 30 16:41:04 2011 +0900
+
+    2005-01-14  Daniel Forchheimer <n04df@efd.lth.se>
+            * transSet.c:
+            Options increase/decrease
+            Options maximum/minimum
+
+commit 55a5a8da9b0a2b997096319e8d990a70ee31ac94
+Author: Arnaud Fontaine <arnau@debian.org>
+Date:   Sun Oct 30 16:40:04 2011 +0900
+
+    2005-01-13  Daniel Forchheimer  <n04df@efd.lth.se>
+    
+            * transSet.c: (main):
+            Forked transset-df of transset
+            Added flags
+            Added select without clicking
+            Wrote usage
+    
+            * dsimple.c:
+            Added function to select without clicking
+
+commit 705d787a5b35a8409c482526b5c2955aa5371b1e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Oct 21 18:32:26 2011 -0700
+
+    Remove unneccessary configure steps
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6ceb665aeb5164bc5668786fc718dd0b0ba2a76c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Oct 21 18:30:58 2011 -0700
+
+    Drop unnecessary dependencies
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0f8d2e6b1526de1558312c1b994318867d92f245
+Author: Stuart Kreitman <stuart.kreitman@oracle.com>
+Date:   Mon Nov 23 16:41:59 2009 -0800
+
+    Convert to autoconf/automake
+
+commit bb69f00c4876d80daf0c01706bbcc52dc30302d5
+Author: Keith Packard <keithp@keithp.com>
+Date:   Tue Jan 20 20:03:02 2004 +0000
+
+    2004-01-20  Keith Packard  <keithp@keithp.com>
+    
+            * transSet.c: (main):
+            Change property name to _NET_WM_WINDOW_OPACITY
+            Report values as doubles.
+            Delete property when opaque.
+
+commit 59e751294611cb043252e6b8180601ac71b17bcf
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Nov 24 17:12:27 2003 +0000
+
+    Initial revision

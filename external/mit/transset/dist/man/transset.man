@@ -1,0 +1,113 @@
+.\" Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+.\"
+.\" Permission is hereby granted, free of charge, to any person obtaining a
+.\" copy of this software and associated documentation files (the "Software"),
+.\" to deal in the Software without restriction, including without limitation
+.\" the rights to use, copy, modify, merge, publish, distribute, sublicense,
+.\" and/or sell copies of the Software, and to permit persons to whom the
+.\" Software is furnished to do so, subject to the following conditions:
+.\"
+.\" The above copyright notice and this permission notice (including the next
+.\" paragraph) shall be included in all copies or substantial portions of the
+.\" Software.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+.\" IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+.\" FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+.\" THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+.\" LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+.\" FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+.\" DEALINGS IN THE SOFTWARE.
+.\"
+.ds q \N'34'
+.TH TRANSSET __appmansuffix__ __xorgversion__
+.SH NAME
+transset \- Set transparency on a window
+.SH SYNOPSIS
+.B transset
+[\fI-options ...\fP] [\fIopacity\fP]
+.SH DESCRIPTION
+.B transset
+is a simple program for X servers supporting the XFIXES, DAMAGE,
+and COMPOSITE extensions.  It lets the user set the transparency on a window.
+.PP
+The \fIopacity\fP value is a number from 0 to 1, with zero being fully
+transparent and 1 being fully opaque.
+If no \fIopacity\fP argument is given, a default value of 0.75 is used for the
+opacity value.  If neither \fB--inc\fP nor \fB--dec\fP are given, the
+opacity is treated as an absolute value and set to the given opacity
+value.  If \fB--inc\fP or \fB--dec\fP is specified, then the opacity is
+treated as a relative value to increase or decrease the current opacity by.
+.SH OPTIONS
+.PP
+.TP 8
+.B -display \fIdisplay\fP
+This option specifies the server to use; see \fIX(__miscmansuffix__)\fP.
+.PP
+.TP 8
+.BR -h ", " --help
+This option displays a help message and exits.
+.PP
+.TP 8
+.BR -t ", " --toggle
+This option forces a toggle of opacity.  If the current opacity is not set
+to fully opaque (opacity 1.0), it will be reset to fully opaque.
+If the window is already fully opaque, the opacity will be set normally.
+.PP
+.TP 8
+.BR -c ", " --click
+This option selects the target window by waiting for the user to click the
+mouse - the topmost window under the mouse cursor when the mouse click occurs
+will be used as the target.
+.PP
+.TP 8
+.BR -p ", " --point
+This option selects the window currently under the cursor to be the target.
+.PP
+.TP 8
+.BR -a ", " --actual
+This option selects the window that currently has input focus to be the target.
+.PP
+.TP 8
+.BR -n ", " --name " \fIname\fP"
+This option selects the target window by name, where \fIname\fP is matched as
+a regular expression, unless \fB--no-regex\fP is also specified.
+.PP
+.TP 8
+.B --no-regex
+This option disables treating the \fIname\fP argument to \fB--name\fP as a
+regular expression.
+.PP
+.TP 8
+.BR -i ", " --id
+This option selects the target window by window id.
+.PP
+.TP 8
+.B --inc
+This option increases the window opacity by the given \fIopacity\fP argument.
+.PP
+.TP 8
+.B --dec
+This option decreases the window opacity by the given \fIopacity\fP argument.
+.PP
+.TP 8
+.BR -m ", " --min " \fIopacity\fP"
+This option sets the minimum possible opacity value.  It defaults to 0 if this
+option is not given.
+.PP
+.TP 8
+.BR -x ", " --max " \fIopacity\fP"
+This option sets the maximum possible opacity value.  It defaults to 1 if this
+option is not given.
+.PP
+.TP 8
+.BR -v ", " --verbose
+This option prints some additional debug info as the program operates.
+.PP
+.TP 8
+.BR -V ", " --version
+This option prints the program version number and exits.
+.SH BUGS
+Probably.  Please report any you find to https://bugs.freedesktop.org/enter_bug.cgi?product=xorg.
+.SH AUTHORS
+Matthew Hawn
