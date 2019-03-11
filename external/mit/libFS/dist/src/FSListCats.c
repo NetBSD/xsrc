@@ -61,9 +61,7 @@ FSListCatalogues(
     int		 maxNames,
     int		*actualCount)
 {
-    long        nbytes;
-    int         i,
-                length;
+    int         length;
     char      **clist;
     char       *c;
     fsListCataloguesReply rep;
@@ -71,10 +69,24 @@ FSListCatalogues(
     unsigned long rlen;
 
     GetReq(ListCatalogues, req);
-    req->maxNames = maxNames;
-    nbytes = req->nbytes = pattern ? strlen(pattern) : 0;
-    req->length += (nbytes + 3) >> 2;
-    _FSSend(svr, pattern, nbytes);
+    req->maxNames = (CARD32) maxNames;
+    req->nbytes = 0;
+    if (pattern != NULL) {
+        size_t nbytes;
+
+#ifdef HAVE_STRNLEN
+        nbytes = strnlen(pattern, FSMaxRequestBytes(svr));
+#else
+        nbytes = strlen(pattern);
+#endif
+
+        if (nbytes <= (FSMaxRequestBytes(svr) - SIZEOF(fsListCataloguesReq))) {
+            req->nbytes = (CARD16) nbytes;
+            req->length += (CARD16) ((nbytes + 3) >> 2);
+            _FSSend(svr, pattern, (long) nbytes);
+        }
+    }
+
     if (!_FSReply(svr, (fsReply *) & rep,
     (SIZEOF(fsListCataloguesReply) - SIZEOF(fsGenericReply)) >> 2, fsFalse))
 	return (char **) NULL;
@@ -101,7 +113,7 @@ FSListCatalogues(
 	_FSReadPad(svr, c, (long) rlen);
 	/* unpack */
 	length = *c;
-	for (i = 0; i < rep.num_catalogues; i++) {
+	for (CARD32 i = 0; i < rep.num_catalogues; i++) {
 	    clist[i] = c + 1;
 	    c += length + 1;
 	    length = *c;

@@ -1,3 +1,149 @@
+commit 02de7390e58f00a3701f656a2b205dc6c8dafb58
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Mar 10 15:39:06 2019 -0700
+
+    libFS 1.0.8
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e8642e3203f9793c2cca19b2df334b4160c56742
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 7 19:29:44 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6052aa6479be8059c9294ced6e3a33e2316bb2d5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 18 21:46:25 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d3af455fb236931fadb6e863e5a4ed509c61d868
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 23 19:26:02 2018 -0700
+
+    Don't try to send strings larger than protocol allows in requests
+    
+    Also clears up all "Loss of precision on implicit conversion" warnings
+    from Oracle's Parfait static analyser.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 12d64c65200930885c694d018ec66d8946b3a214
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 23 13:51:25 2018 -0700
+
+    Fix sign comparison warning in loop index in FSQueryXInfo
+    
+    FSQXInfo.c: In function ‘FSQueryXInfo’:
+    FSQXInfo.c:110:16: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+         for (j=0; j<props->num_offsets; j++)
+                    ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3eb9c6bbfb4e6caf6efb5dec8744f257c2d63be7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 23 13:47:35 2018 -0700
+
+    Fix sign comparison warning in loop indexes in FSQueryXExtents{8,16}
+    
+    FSQXExt.c: In function ‘FSQueryXExtents8’:
+    FSQXExt.c:105:19: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+         for (i = 0; i < reply.num_extents; i++) {
+                       ^
+    FSQXExt.c: In function ‘FSQueryXExtents16’:
+    FSQXExt.c:141:16: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+      for (i = 0; i < str_len; i++) {
+                    ^
+    FSQXExt.c:165:19: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+         for (i = 0; i < reply.num_extents; i++) {
+                       ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8213b7070c039ea16d0112eff01cc7420031c089
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 23 13:44:59 2018 -0700
+
+    Fix sign comparison warning in loop indexes in FSQueryXBitmaps{8,16}
+    
+    FSQGlyphs.c: In function ‘FSQueryXBitmaps8’:
+    FSQGlyphs.c:113:16: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+         for (i=0; i<reply.num_chars; i++)
+                    ^
+    FSQGlyphs.c: In function ‘FSQueryXBitmaps16’:
+    FSQGlyphs.c:160:16: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+      for (i = 0; i < str_len; i++) {
+                    ^
+    FSQGlyphs.c:198:16: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+         for (i=0; i<reply.num_chars; i++)
+                    ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit caee4c2bf188484f117e5bd866e3b56c8506593e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 23 13:40:30 2018 -0700
+
+    Fix sign comparison warning in loop index in FSListCatalogues
+    
+    FSListCats.c: In function ‘FSListCatalogues’:
+    FSListCats.c:104:16: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+      for (i = 0; i < rep.num_catalogues; i++) {
+                    ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b37bbeb7ca931b0f5170e877b0bbfd0959d344b7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 23 13:34:04 2018 -0700
+
+    Fix sign comparison warning in loop index in FSListFontsWithXInfo
+    
+    FSFontInfo.c: In function ‘FSListFontsWithXInfo’:
+    FSFontInfo.c:182:13: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+      for (j=0; j<pi[i]->num_offsets; j++)
+                 ^
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit fed3794a5204eace3926f13573b10f0b51f85fbc
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 13:52:49 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit 89f456580ea831652f119158f8b257dfd531a7e1
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 4ef3748251ac2139b73b137dcef529421447652b
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
 commit a9db12661e7412dd935706c92db6d7bc46238782
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Thu Apr 30 21:14:46 2015 -0700

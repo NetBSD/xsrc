@@ -110,6 +110,9 @@ extern FSServer *_FSHeadOfServerList;
 #define	FSlibServerClosing	(1L << 1)
 
 
+/* FSMaxRequestBytes - returns FSMaxRequestSize converted to bytes */
+#define FSMaxRequestBytes(svr)	((svr)->max_request_size << 2)
+
 /*
  * GetReq - Get the next available FS request packet in the buffer and
  * return it.

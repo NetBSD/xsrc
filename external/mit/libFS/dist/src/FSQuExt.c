@@ -64,9 +64,20 @@ FSQueryExtension(
 {
     fsQueryExtensionReply rep;
     fsQueryExtensionReq *req;
+    size_t namelen;
+
+#ifdef HAVE_STRNLEN
+    namelen = name ? strnlen(name, 256) : 0;
+#else
+    namelen = name ? strlen(name) : 0;
+#endif
+
+    if ((namelen == 0) || (namelen > 255) ||
+        (namelen > (FSMaxRequestBytes(svr) - SIZEOF(fsQueryExtensionReq))))
+        return False;
 
     GetReq(QueryExtension, req);
-    req->nbytes = name ? strlen(name) : 0;
+    req->nbytes = (CARD8) namelen;
     req->length += (req->nbytes + 3) >> 2;
     _FSSend(svr, name, (long) req->nbytes);
     if (!_FSReply(svr, (fsReply *) & rep,
