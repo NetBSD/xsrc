@@ -147,7 +147,7 @@ XCompositeExtAddDisplay (XCompositeExtInfo	*extinfo,
 	 */
 	XExtCodes *codes = XAddExtension(dpy);
 	if (!codes) {
-	    XFree(info);
+	    Xfree(info);
 	    return NULL;
 	}
         XESetCloseDisplay (dpy, codes->extension, XCompositeCloseDisplay);
