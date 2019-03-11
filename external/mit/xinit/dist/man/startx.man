@@ -76,8 +76,6 @@ looks for the following files, in order:
 .PP
 .I $(HOME)/.startxrc
 .PP
-.I __libdir__/sys.startxrc
-.PP
 .I $(HOME)/.xinitrc
 .PP
 .I __xinitdir__/xinitrc
