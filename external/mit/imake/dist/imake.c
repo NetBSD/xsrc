@@ -444,7 +444,7 @@ showit(FILE *fd)
 	char	buf[ BUFSIZ ];
 	int	red;
 
-	fseek(fd, 0, 0);
+	fseek(fd, 0, SEEK_SET);
 	while ((red = fread(buf, 1, BUFSIZ, fd)) > 0)
 		writetmpfile(stdout, buf, red, "stdout");
 	if (red < 0)
@@ -1964,7 +1964,7 @@ ReadLine(FILE *tmpfd, const char *tmpfname)
 		/*
 		 * Slurp it all up.
 		 */
-		fseek(tmpfd, 0, 0);
+		fseek(tmpfd, 0, SEEK_SET);
 		if (fstat(fileno(tmpfd), &st) < 0)
 			LogFatal("cannot stat %s for size", tmpMakefile);
 		pline = buf = Emalloc((int)st.st_size+1);
@@ -1973,7 +1973,7 @@ ReadLine(FILE *tmpfd, const char *tmpfname)
 			LogFatal("cannot read %s", tmpMakefile);
 		end = buf + total_red;
 		*end = '\0';
-		fseek(tmpfd, 0, 0);
+		fseek(tmpfd, 0, SEEK_SET);
 #if defined(SYSV) || defined(WIN32) || defined(USE_FREOPEN)
 		tmpfd = freopen(tmpfname, "w+", tmpfd);
 # ifdef WIN32

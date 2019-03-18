@@ -1,3 +1,80 @@
+commit 5d1d5150e5863f019e407d572556a8a08e834c1e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Mar 16 16:25:02 2019 -0700
+
+    imake 1.0.8
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5366d1c2e0865b84e009127e75a5bd9a2d278fe3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 7 20:28:00 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ed90f727ce513717b5d4809ecbc1909a7281dd3d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 7 20:27:55 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 67ec423f8f617ddd09f304b1966114049c81833e
+Author: Andrew Savchenko <bircoph@gmail.com>
+Date:   Fri Feb 16 17:31:16 2018 +0000
+
+    imake support for lcc compiler
+    
+    https://bugs.freedesktop.org/show_bug.cgi?id=105136
+    
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 373a53cdcb59c53599cc95f2dccf8cd42e748443
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:22 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit 94430c9cffc4ba5780f76c8130878f23d499811e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 11 17:02:10 2015 -0800
+
+    README: reword status section
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b1e8e29448467d875b2efe5c83043ec2770e18d6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 8 09:41:42 2014 -0800
+
+    Use SEEK_* names instead of raw numbers for fseek whence argument
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6d42b63eb7c9c7da89d431db6f28aff1928bb22a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Jun 4 18:14:59 2014 -0700
+
+    autogen.sh: Honor NOCONFIGURE=1
+    
+    See http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5e32ede6f904e024f3956484aceb4a4be37d423f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Jun 4 18:14:59 2014 -0700
+
+    configure: Drop AM_MAINTAINER_MODE
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 4063190bf2fd7e3c61b80e98d72e134609612bf8
 Author: Julien Cristau <jcristau@debian.org>
 Date:   Wed May 21 20:51:03 2014 +0200

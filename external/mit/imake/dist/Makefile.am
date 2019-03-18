@@ -101,6 +101,7 @@ CLEANFILES = \
 	mkhtmlindex
 
 EXTRA_DIST = \
+	README.md \
 	makeg \
 	xmkmf.cpp \
 	mdepend.cpp \
