@@ -237,24 +237,17 @@ static Bool I830GetEarlyOptions(ScrnInfoPtr scrn)
 	return TRUE;
 }
 
-static Bool intel_option_cast_string_to_bool(intel_screen_private *intel,
-					     int id, Bool val)
-{
-#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,7,99,901,0)
-	xf86getBoolValue(&val, xf86GetOptValString(intel->Options, id));
-	return val;
-#else
-	return val;
-#endif
-}
-
 static void intel_check_dri_option(ScrnInfoPtr scrn)
 {
 	intel_screen_private *intel = intel_get_screen_private(scrn);
+	unsigned level;
 
 	intel->dri2 = intel->dri3 = DRI_NONE;
-	if (!intel_option_cast_string_to_bool(intel, OPTION_DRI, TRUE))
-		intel->dri2 = intel->dri3 = DRI_DISABLED;
+	level = intel_option_cast_to_unsigned(intel->Options, OPTION_DRI, DEFAULT_DRI_LEVEL);
+	if (level < 3 || INTEL_INFO(intel)->gen < 040)
+		intel->dri3 = DRI_DISABLED;
+	if (level < 2)
+		intel->dri2 = DRI_DISABLED;
 
 	if (scrn->depth != 16 && scrn->depth != 24 && scrn->depth != 30) {
 		xf86DrvMsg(scrn->scrnIndex, X_CONFIG,
@@ -371,8 +364,8 @@ static Bool can_accelerate_blt(struct intel_screen_private *intel)
 	if (INTEL_INFO(intel)->gen == -1)
 		return FALSE;
 
-	if (xf86ReturnOptValBool(intel->Options, OPTION_ACCEL_DISABLE, FALSE) ||
-	    !intel_option_cast_string_to_bool(intel, OPTION_ACCEL_METHOD, TRUE)) {
+	if (!xf86ReturnOptValBool(intel->Options, OPTION_ACCEL_ENABLE, TRUE) ||
+	    !intel_option_cast_to_bool(intel->Options, OPTION_ACCEL_METHOD, TRUE)) {
 		xf86DrvMsg(intel->scrn->scrnIndex, X_CONFIG,
 			   "Disabling hardware acceleration.\n");
 		return FALSE;
@@ -663,8 +656,9 @@ redisplay_dirty(ScreenPtr screen, PixmapDirtyUpdatePtr dirty)
 }
 
 static void
-intel_dirty_update(ScreenPtr screen)
+intel_dirty_update(intel_screen_private *intel)
 {
+	ScreenPtr screen = xf86ScrnToScreen(intel->scrn);
 	RegionPtr region;
 	PixmapDirtyUpdatePtr ent;
 
@@ -681,6 +675,7 @@ intel_dirty_update(ScreenPtr screen)
 }
 #endif
 
+#if !HAVE_NOTIFY_FD
 static void
 I830BlockHandler(BLOCKHANDLER_ARGS_DECL)
 {
@@ -698,9 +693,22 @@ I830BlockHandler(BLOCKHANDLER_ARGS_DECL)
 	intel_uxa_block_handler(intel);
 	intel_video_block_handler(intel);
 #ifdef INTEL_PIXMAP_SHARING
-	intel_dirty_update(screen);
+	intel_dirty_update(intel);
 #endif
 }
+#else
+static void
+I830BlockHandler(void *data, void *timeout)
+{
+	intel_screen_private *intel = data;
+
+	intel_uxa_block_handler(intel);
+	intel_video_block_handler(intel);
+#ifdef INTEL_PIXMAP_SHARING
+	intel_dirty_update(intel);
+#endif
+}
+#endif
 
 static Bool
 intel_init_initial_framebuffer(ScrnInfoPtr scrn)
@@ -739,6 +747,8 @@ intel_flush_callback(CallbackListPtr *list,
 }
 
 #if HAVE_UDEV
+#include <sys/stat.h>
+
 static void
 I830HandleUEvents(int fd, void *closure)
 {
@@ -775,6 +785,15 @@ I830HandleUEvents(int fd, void *closure)
 	udev_device_unref(dev);
 }
 
+static int has_randr(void)
+{
+#if HAS_DIXREGISTERPRIVATEKEY
+	return dixPrivateKeyRegistered(rrPrivKey);
+#else
+	return *rrPrivKey;
+#endif
+}
+
 static void
 I830UeventInit(ScrnInfoPtr scrn)
 {
@@ -783,6 +802,10 @@ I830UeventInit(ScrnInfoPtr scrn)
 	struct udev_monitor *mon;
 	Bool hotplug;
 	MessageType from = X_CONFIG;
+
+	/* Without RR, nothing we can do here */
+	if (!has_randr())
+		return;
 
 	if (!xf86GetOptValBool(intel->Options, OPTION_HOTPLUG, &hotplug)) {
 		from = X_DEFAULT;
@@ -943,8 +966,14 @@ I830ScreenInit(SCREEN_INIT_ARGS_DECL)
 			   "Hardware cursor initialization failed\n");
 	}
 
+#if !HAVE_NOTIFY_FD
 	intel->BlockHandler = screen->BlockHandler;
 	screen->BlockHandler = I830BlockHandler;
+#else
+	RegisterBlockAndWakeupHandlers(I830BlockHandler,
+				       (ServerWakeupHandlerProcPtr)NoopDDA,
+				       intel);
+#endif
 
 #ifdef INTEL_PIXMAP_SHARING
 	screen->StartPixmapTracking = PixmapStartDirtyTracking;
@@ -966,7 +995,11 @@ I830ScreenInit(SCREEN_INIT_ARGS_DECL)
 	if (!miCreateDefColormap(screen))
 		return FALSE;
 
-	if (!xf86HandleColormaps(screen, 256, 8, I830LoadPalette, NULL,
+	/* X-Server < 1.20 mishandles > 256 slots / > 8 bpc color maps. */
+	if ((scrn->rgbBits <= 8 ||
+	    XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,20,0,0,0)) &&
+	    !xf86HandleColormaps(screen, 1 << scrn->rgbBits, scrn->rgbBits,
+				 I830LoadPalette, NULL,
 				 CMAP_RELOAD_ON_MODE_SWITCH |
 				 CMAP_PALETTED_TRUECOLOR)) {
 		return FALSE;
@@ -1167,8 +1200,6 @@ static Bool I830CloseScreen(CLOSE_SCREEN_ARGS_DECL)
 	}
 
 	intel_sync_close(screen);
-
-	xf86GARTCloseScreen(scrn->scrnIndex);
 
 	scrn->vtSema = FALSE;
 	return TRUE;
