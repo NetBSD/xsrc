@@ -43,6 +43,28 @@
 	xorg_backtrace(); \
 	FatalError("%s:%d assertion '%s' failed\n", __func__, __LINE__, #E); \
 } while (0)
+
+#define warn_unless(E) \
+({ \
+	bool fail = !(E); \
+	if (unlikely(fail)) { \
+		static int __warn_once__; \
+		if (!__warn_once__) { \
+			xorg_backtrace(); \
+			ErrorF("%s:%d assertion '%s' failed\n", __func__, __LINE__, #E); \
+			__warn_once__ = 1; \
+		} \
+	} \
+	unlikely(fail); \
+})
+
+#define dbg(EXPR) EXPR
+
+#else
+
+#define warn_unless(E) ({ bool fail = !(E); unlikely(fail); })
+#define dbg(EXPR)
+
 #endif
 
 #endif /* __XASSERT_H__ */

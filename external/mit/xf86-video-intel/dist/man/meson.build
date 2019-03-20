@@ -1,0 +1,23 @@
+configure_file(input : 'intel.man',
+	       output : 'intel.4',
+	       command : [
+		 'sed',
+		 '-e',
+		 's/__appmansuffix__/@0@/g'.format(man_config.get('appmansuffix')),
+		 '-e',
+		 's/__filemansuffix__/@0@/g'.format(man_config.get('filemansuffix')),
+		 '-e',
+		 's/__drivermansuffix__/@0@/g'.format(man_config.get('drivermansuffix')),
+		 '-e',
+		 's/__miscmansuffix__/@0@/g'.format(man_config.get('miscmansuffix')),
+		 '-e',
+		 's/__xservername__/@0@/g'.format(man_config.get('xservername')),
+		 '-e',
+		 's/__xconfigfile__/@0@/g'.format(man_config.get('xconfigfile')),
+		 '-e',
+		 's/__vendorversion__/@0@/g'.format(man_config.get('vendorversion')),
+		 '@INPUT@'
+	       ],
+	       capture : true,
+	       install_dir: join_paths(get_option('mandir'), 'man4'),
+	       install : true)

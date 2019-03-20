@@ -55,11 +55,14 @@ static inline void mark_dri3_pixmap(struct sna *sna, struct sna_pixmap *priv, st
 	if (bo->exec)
 		sna->kgem.flush = 1;
 	if (bo == priv->gpu_bo)
-		priv->flush |= 3;
+		priv->flush |= FLUSH_READ | FLUSH_WRITE;
 	else
 		priv->shm = true;
 
-	sna_accel_watch_flush(sna, 1);
+	sna_watch_flush(sna, 1);
+
+	kgem_bo_submit(&sna->kgem, bo);
+	kgem_bo_unclean(&sna->kgem, bo);
 }
 
 static void sna_sync_flush(struct sna *sna, struct sna_pixmap *priv)
@@ -270,6 +273,8 @@ static PixmapPtr sna_dri3_pixmap_from_fd(ScreenPtr screen,
 		priv->ptr = MAKE_STATIC_PTR(pixmap->devPrivate.ptr);
 	} else {
 		assert(priv->gpu_bo == bo);
+		priv->create = kgem_can_create_2d(&sna->kgem,
+						  width, height, depth);
 		priv->pinned |= PIN_DRI3;
 	}
 	list_add(&priv->cow_list, &sna->dri3.pixmaps);
@@ -323,6 +328,15 @@ static int sna_dri3_fd_from_pixmap(ScreenPtr screen,
 		DBG(("%s: pixmap pitch (%d) too large for DRI3 protocol\n",
 		     __FUNCTION__, bo->pitch));
 		return -1;
+	}
+
+	if (bo->tiling && !sna->kgem.can_fence) {
+		if (!sna_pixmap_change_tiling(pixmap, I915_TILING_NONE)) {
+			DBG(("%s: unable to discard GPU tiling (%d) for DRI3 protocol\n",
+			     __FUNCTION__, bo->tiling));
+			return -1;
+		}
+		bo = priv->gpu_bo;
 	}
 
 	fd = kgem_bo_export_to_prime(&sna->kgem, bo);

@@ -130,7 +130,7 @@ static int sna_video_overlay_stop(ddStopVideo_ARGS)
 
 	DBG(("%s()\n", __FUNCTION__));
 
-	REGION_EMPTY(scrn->pScreen, &video->clip);
+	REGION_EMPTY(to_screen_from_sna(sna), &video->clip);
 
 	request.flags = 0;
 	(void)drmIoctl(sna->kgem.fd,
@@ -474,15 +474,13 @@ sna_video_overlay_put_image(ddPutImage_ARGS)
 	if (src_h >= (drw_h * 8))
 		drw_h = src_h / 7;
 
-	clip.extents.x1 = draw->x + drw_x;
-	clip.extents.y1 = draw->y + drw_y;
-	clip.extents.x2 = clip.extents.x1 + drw_w;
-	clip.extents.y2 = clip.extents.y1 + drw_h;
-	clip.data = NULL;
+	init_video_region(&clip, draw, drw_x, drw_y, drw_w, drw_h);
 
 	DBG(("%s: always_on_top=%d\n", __FUNCTION__, video->AlwaysOnTop));
-	if (!video->AlwaysOnTop)
+	if (!video->AlwaysOnTop) {
+		ValidateGC(draw, gc);
 		RegionIntersect(&clip, &clip, gc->pCompositeClip);
+	}
 	if (box_empty(&clip.extents))
 		goto invisible;
 
@@ -551,15 +549,7 @@ sna_video_overlay_put_image(ddPutImage_ARGS)
 	ret = Success;
 	if (sna_video_overlay_show
 	    (sna, video, &frame, crtc, &dstBox, src_w, src_h, drw_w, drw_h)) {
-		//xf86XVFillKeyHelperDrawable(draw, video->color_key, &clip);
-		if (!video->AlwaysOnTop && !RegionEqual(&video->clip, &clip) &&
-		    sna_blt_fill_boxes(sna, GXcopy,
-				       __sna_pixmap_get_bo(sna->front),
-				       sna->front->drawable.bitsPerPixel,
-				       video->color_key,
-				       region_rects(&clip),
-				       region_num_rects(&clip)))
-			RegionCopy(&video->clip, &clip);
+		sna_video_fill_colorkey(video, &clip);
 		sna_window_set_port((WindowPtr)draw, port);
 	} else {
 		DBG(("%s: failed to show video frame\n", __FUNCTION__));

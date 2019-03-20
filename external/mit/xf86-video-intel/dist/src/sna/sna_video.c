@@ -59,6 +59,17 @@
 #include "intel_options.h"
 
 #include <xf86xv.h>
+#if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__)
+#include <sys/types.h>
+#include <sys/endian.h>
+#ifdef __OpenBSD__
+#define bswap_32 swap32
+#else
+#define bswap_32 bswap32
+#endif
+#else
+#include <byteswap.h>
+#endif
 
 #ifdef SNA_XVMC
 #define _SNA_XVMC_SERVER_
@@ -233,7 +244,29 @@ sna_video_frame_set_rotation(struct sna_video *video,
 	/* Determine the desired destination pitch (representing the
 	 * chroma's pitch in the planar case).
 	 */
-	if (is_planar_fourcc(frame->id)) {
+	if (is_nv12_fourcc(frame->id)) {
+		assert((width & 1) == 0);
+		assert((height & 1) == 0);
+		if (rotation & (RR_Rotate_90 | RR_Rotate_270)) {
+			frame->pitch[0] = ALIGN(height, align);
+			frame->pitch[1] = ALIGN(height, align);
+			frame->size = width * frame->pitch[1] +
+				width / 2 * frame->pitch[0];
+		} else {
+			frame->pitch[0] = ALIGN(width, align);
+			frame->pitch[1] = ALIGN(width, align);
+			frame->size = height * frame->pitch[1] +
+				height / 2 * frame->pitch[0];
+		}
+
+		if (rotation & (RR_Rotate_90 | RR_Rotate_270)) {
+			frame->UBufOffset = (int)frame->pitch[1] * width;
+			frame->VBufOffset = frame->UBufOffset;
+		} else {
+			frame->UBufOffset = (int)frame->pitch[1] * height;
+			frame->VBufOffset = frame->UBufOffset;
+		}
+	} else if (is_planar_fourcc(frame->id)) {
 		assert((width & 1) == 0);
 		assert((height & 1) == 0);
 		if (rotation & (RR_Rotate_90 | RR_Rotate_270)) {
@@ -259,6 +292,7 @@ sna_video_frame_set_rotation(struct sna_video *video,
 	} else {
 		switch (frame->id) {
 		case FOURCC_RGB888:
+		case FOURCC_AYUV:
 			if (rotation & (RR_Rotate_90 | RR_Rotate_270)) {
 				frame->pitch[0] = ALIGN((height << 2), align);
 				frame->size = (int)frame->pitch[0] * width;
@@ -297,6 +331,78 @@ sna_video_frame_set_rotation(struct sna_video *video,
 	assert(frame->size);
 }
 
+static void plane_dims(const struct sna_video_frame *frame, int sub,
+		       int *x, int *y, int *w, int *h)
+{
+	*x = frame->image.x1;
+	*y = frame->image.y1;
+	*w = frame->image.x2 - frame->image.x1;
+	*h = frame->image.y2 - frame->image.y1;
+
+	if (sub) {
+		*x >>= 1; *w >>= 1;
+		*y >>= 1; *h >>= 1;
+	}
+}
+
+static void sna_memcpy_cbcr_plane(struct sna_video *video,
+				  uint16_t *dst, const uint16_t *src,
+				  const struct sna_video_frame *frame)
+{
+	int dstPitch = frame->pitch[0] >> 1, srcPitch;
+	const uint16_t *s;
+	int i, j = 0;
+	int x, y, w, h;
+
+	plane_dims(frame, 1, &x, &y, &w, &h);
+
+	srcPitch = ALIGN((frame->width >> 1), 2);
+
+	src += y * srcPitch + x;
+	if (!video->textured)
+		x = y = 0;
+
+	switch (frame->rotation) {
+	case RR_Rotate_0:
+		dst += y * dstPitch + x;
+		if (srcPitch == dstPitch && srcPitch == w)
+			memcpy(dst, src, (srcPitch * h) << 1);
+		else while (h--) {
+			memcpy(dst, src, w << 1);
+			src += srcPitch;
+			dst += dstPitch;
+		}
+		break;
+	case RR_Rotate_90:
+		for (i = 0; i < h; i++) {
+			s = src;
+			for (j = 0; j < w; j++)
+				dst[i + ((x + w - j - 1) * dstPitch)] = *s++;
+			src += srcPitch;
+		}
+		break;
+	case RR_Rotate_180:
+		for (i = 0; i < h; i++) {
+			s = src;
+			for (j = 0; j < w; j++) {
+				dst[(x + w - j - 1) +
+				    ((h - i - 1) * dstPitch)] = *s++;
+			}
+			src += srcPitch;
+		}
+		break;
+	case RR_Rotate_270:
+		for (i = 0; i < h; i++) {
+			s = src;
+			for (j = 0; j < w; j++) {
+				dst[(h - i - 1) + (x + j * dstPitch)] = *s++;
+			}
+			src += srcPitch;
+		}
+		break;
+	}
+}
+
 static void sna_memcpy_plane(struct sna_video *video,
 			     uint8_t *dst, const uint8_t *src,
 			     const struct sna_video_frame *frame, int sub)
@@ -306,15 +412,11 @@ static void sna_memcpy_plane(struct sna_video *video,
 	int i, j = 0;
 	int x, y, w, h;
 
-	x = frame->image.x1;
-	y = frame->image.y1;
-	w = frame->image.x2 - frame->image.x1;
-	h = frame->image.y2 - frame->image.y1;
-	if (sub) {
-		x >>= 1; w >>= 1;
-		y >>= 1; h >>= 1;
+	plane_dims(frame, sub, &x, &y, &w, &h);
+
+	if (sub)
 		srcPitch = ALIGN((frame->width >> 1), 4);
-	} else
+	else
 		srcPitch = ALIGN(frame->width, 4);
 
 	src += y * srcPitch + x;
@@ -360,6 +462,17 @@ static void sna_memcpy_plane(struct sna_video *video,
 		}
 		break;
 	}
+}
+
+static void
+sna_copy_nv12_data(struct sna_video *video,
+		   const struct sna_video_frame *frame,
+		   const uint8_t *src, uint8_t *dst)
+{
+	sna_memcpy_plane(video, dst, src, frame, 0);
+	src += frame->height * ALIGN(frame->width, 4);
+	dst += frame->UBufOffset;
+	sna_memcpy_cbcr_plane(video, (void*)dst, (void*)src, frame);
 }
 
 static void
@@ -483,6 +596,72 @@ sna_copy_packed_data(struct sna_video *video,
 	}
 }
 
+static void
+sna_copy_ayuv_data(struct sna_video *video,
+		   const struct sna_video_frame *frame,
+		   const uint8_t *buf,
+		   uint8_t *dst)
+{
+	int pitch = frame->width << 2;
+	const uint32_t *src_dw;
+	const uint8_t *src;
+	uint32_t *dst_dw = (uint32_t *)dst;
+	int x, y, w, h;
+	int i, j;
+
+	if (video->textured) {
+		/* XXX support copying cropped extents */
+		x = y = 0;
+		w = frame->width;
+		h = frame->height;
+	} else {
+		x = frame->image.x1;
+		y = frame->image.y1;
+		w = frame->image.x2 - frame->image.x1;
+		h = frame->image.y2 - frame->image.y1;
+	}
+
+	src = buf + (y * pitch) + (x << 2);
+	src_dw = (uint32_t *)src;
+
+	switch (frame->rotation) {
+	case RR_Rotate_0:
+		for (i = 0; i < h; i++) {
+			for (j = 0; j < w; j++) {
+				/*
+				 * Have to reverse bytes order, because the only
+				 * player which supports AYUV format currently is
+				 * Gstreamer and it supports in bad way, even though
+				 * spec says MSB:AYUV, we get the bytes opposite way.
+				 */
+				dst_dw[i * w + j] = bswap_32(src_dw[i * w + j]);
+			}
+		}
+		break;
+	case RR_Rotate_90:
+		for (i = 0; i < h; i++) {
+			for (j = 0; j < w; j++) {
+				dst_dw[(w - j - 1) * h + i] = bswap_32(src_dw[i * w + j]);
+			}
+		}
+		break;
+	case RR_Rotate_180:
+		for (i = 0; i < h; i++) {
+			for (j = 0; j < w; j++) {
+				dst_dw[(h - i - 1) * w + w - j - 1] = bswap_32(src_dw[i * w + j]);
+			}
+		}
+		break;
+	case RR_Rotate_270:
+		for (i = 0; i < h; i++) {
+			for (j = 0; j < w; j++) {
+				dst_dw[(w - j - 1) * h + i] = bswap_32(src_dw[i * w + j]);
+			}
+		}
+		break;
+	}
+}
+
 bool
 sna_video_copy_data(struct sna_video *video,
 		    struct sna_video_frame *frame,
@@ -503,10 +682,31 @@ sna_video_copy_data(struct sna_video *video,
 	assert(frame->size);
 
 	/* In the common case, we can simply the upload in a single pwrite */
-	if (frame->rotation == RR_Rotate_0 && !video->tiled) {
+	if (frame->rotation == RR_Rotate_0 && !video->tiled && !is_ayuv_fourcc(frame->id)) {
 		DBG(("%s: unrotated, untiled fast paths: is-planar?=%d\n",
 		     __FUNCTION__, is_planar_fourcc(frame->id)));
-		if (is_planar_fourcc(frame->id)) {
+		if (is_nv12_fourcc(frame->id)) {
+			int w = frame->image.x2 - frame->image.x1;
+			int h = frame->image.y2 - frame->image.y1;
+			if (ALIGN(h, 2) == frame->height &&
+			    ALIGN(w, 4) == frame->pitch[0] &&
+			    ALIGN(w, 4) == frame->pitch[1]) {
+				if (frame->bo) {
+					if (!kgem_bo_write(&video->sna->kgem, frame->bo,
+							   buf, frame->size))
+						goto use_gtt;
+				} else {
+					frame->bo = kgem_create_buffer(&video->sna->kgem, frame->size,
+								       KGEM_BUFFER_WRITE | KGEM_BUFFER_WRITE_INPLACE,
+								       (void **)&dst);
+					if (frame->bo == NULL)
+						return false;
+
+					memcpy(dst, buf, frame->size);
+				}
+				return true;
+			}
+		} else if (is_planar_fourcc(frame->id)) {
 			int w = frame->image.x2 - frame->image.x1;
 			int h = frame->image.y2 - frame->image.y1;
 			if (ALIGN(h, 2) == frame->height &&
@@ -583,12 +783,82 @@ use_gtt: /* copy data, must use GTT so that we keep the overlay uncached */
 			return false;
 	}
 
-	if (is_planar_fourcc(frame->id))
+	if (is_nv12_fourcc(frame->id))
+		sna_copy_nv12_data(video, frame, buf, dst);
+	else if (is_planar_fourcc(frame->id))
 		sna_copy_planar_data(video, frame, buf, dst);
+	else if (is_ayuv_fourcc(frame->id))
+		sna_copy_ayuv_data(video, frame, buf, dst);
 	else
 		sna_copy_packed_data(video, frame, buf, dst);
 
 	return true;
+}
+
+void sna_video_fill_colorkey(struct sna_video *video,
+			     const RegionRec *clip)
+{
+	struct sna *sna = video->sna;
+	PixmapPtr front = sna->front;
+	struct kgem_bo *bo = __sna_pixmap_get_bo(front);
+	uint8_t *dst, *tmp;
+	int w, width;
+
+	if (video->AlwaysOnTop || RegionEqual(&video->clip, (RegionPtr)clip))
+		return;
+
+	assert(bo);
+	if (!wedged(sna) &&
+	    sna_blt_fill_boxes(sna, GXcopy, bo,
+			       front->drawable.bitsPerPixel,
+			       video->color_key,
+			       region_rects(clip),
+			       region_num_rects(clip))) {
+		RegionCopy(&video->clip, (RegionPtr)clip);
+		return;
+	}
+
+	dst = kgem_bo_map__gtt(&sna->kgem, bo);
+	if (dst == NULL)
+		return;
+
+	w = front->drawable.bitsPerPixel/8;
+	width = (clip->extents.x2 - clip->extents.x1) * w;
+	tmp = malloc(width);
+	if (tmp == NULL)
+		return;
+
+	memcpy(tmp, &video->color_key, w);
+	while (2 * w < width) {
+		memcpy(tmp + w, tmp, w);
+		w *= 2;
+	}
+	if (w < width)
+		memcpy(tmp + w, tmp, width - w);
+
+	if (sigtrap_get() == 0) {
+		const BoxRec *box = region_rects(clip);
+		int n = region_num_rects(clip);
+
+		w = front->drawable.bitsPerPixel/8;
+		do {
+			int y = box->y1;
+			uint8_t *row = dst + y*bo->pitch + w*box->x1;
+
+			width = (box->x2 - box->x1) * w;
+			while (y < box->y2) {
+				memcpy(row, tmp, width);
+				row += bo->pitch;
+				y++;
+			}
+			box++;
+		} while (--n);
+		sigtrap_put();
+
+		RegionCopy(&video->clip, (RegionPtr)clip);
+	}
+
+	free(tmp);
 }
 
 XvAdaptorPtr sna_xv_adaptor_alloc(struct sna *sna)

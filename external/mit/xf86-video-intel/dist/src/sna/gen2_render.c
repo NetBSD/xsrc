@@ -35,6 +35,7 @@
 #include "sna_reg.h"
 #include "sna_render.h"
 #include "sna_render_inline.h"
+#include "sna_video.h"
 
 #include "gen2_render.h"
 
@@ -48,8 +49,10 @@
 
 #define MAX_3D_SIZE 2048
 #define MAX_3D_PITCH 8192
+#define MAX_INLINE (1 << 18)
 
 #define BATCH(v) batch_emit(sna, v)
+#define BATCH_ALIGNED(v, a) batch_emit_aligned(sna, v, a)
 #define BATCH_F(v) batch_emit_float(sna, v)
 #define VERTEX(v) batch_emit_float(sna, v)
 
@@ -566,7 +569,8 @@ gen2_get_batch(struct sna *sna, const struct sna_composite_op *op)
 {
 	kgem_set_mode(&sna->kgem, KGEM_RENDER, op->dst.bo);
 
-	if (!kgem_check_batch(&sna->kgem, INVARIANT_SIZE+40)) {
+	/* +7 for i830 3DSTATE_BUFFER_INFO w/a */
+	if (!kgem_check_batch(&sna->kgem, INVARIANT_SIZE+40+7)) {
 		DBG(("%s: flushing batch: size %d > %d\n",
 		     __FUNCTION__, INVARIANT_SIZE+40,
 		     sna->kgem.surface-sna->kgem.nbatch));
@@ -596,39 +600,50 @@ gen2_get_batch(struct sna *sna, const struct sna_composite_op *op)
 		gen2_emit_invariant(sna);
 }
 
-static void gen2_emit_target(struct sna *sna, const struct sna_composite_op *op)
+static void gen2_emit_target(struct sna *sna,
+			     struct kgem_bo *bo,
+			     int width,
+			     int height,
+			     int format)
 {
-	assert(!too_large(op->dst.width, op->dst.height));
-	assert(op->dst.bo->pitch >= 8 && op->dst.bo->pitch <= MAX_3D_PITCH);
+	assert(!too_large(width, height));
+	assert(bo->pitch >= 8 && bo->pitch <= MAX_3D_PITCH);
 	assert(sna->render.vertex_offset == 0);
 
-	assert(op->dst.bo->unique_id);
-	if (sna->render_state.gen2.target == op->dst.bo->unique_id) {
-		kgem_bo_mark_dirty(op->dst.bo);
+	assert(bo->unique_id);
+	if (sna->render_state.gen2.target == bo->unique_id) {
+		kgem_bo_mark_dirty(bo);
 		return;
 	}
 
-	BATCH(_3DSTATE_BUF_INFO_CMD);
+	/*
+	 * i830 w/a: 3DSTATE_BUFFER_INFO
+	 * must not straddle two cachelines.
+	 */
+	if (intel_get_device_id(sna->dev) == 0x3577)
+		BATCH_ALIGNED(_3DSTATE_BUF_INFO_CMD, 8);
+	else
+		BATCH(_3DSTATE_BUF_INFO_CMD);
 	BATCH(BUF_3D_ID_COLOR_BACK |
-	      gen2_buf_tiling(op->dst.bo->tiling) |
-	      BUF_3D_PITCH(op->dst.bo->pitch));
+	      gen2_buf_tiling(bo->tiling) |
+	      BUF_3D_PITCH(bo->pitch));
 	BATCH(kgem_add_reloc(&sna->kgem, sna->kgem.nbatch,
-			     op->dst.bo,
+			     bo,
 			     I915_GEM_DOMAIN_RENDER << 16 |
 			     I915_GEM_DOMAIN_RENDER,
 			     0));
 
 	BATCH(_3DSTATE_DST_BUF_VARS_CMD);
-	BATCH(gen2_get_dst_format(op->dst.format));
+	BATCH(gen2_get_dst_format(format));
 
 	BATCH(_3DSTATE_DRAW_RECT_CMD);
 	BATCH(0);
 	BATCH(0);	/* ymin, xmin */
-	BATCH(DRAW_YMAX(op->dst.height - 1) |
-	      DRAW_XMAX(op->dst.width - 1));
+	BATCH(DRAW_YMAX(height - 1) |
+	      DRAW_XMAX(width - 1));
 	BATCH(0);	/* yorig, xorig */
 
-	sna->render_state.gen2.target = op->dst.bo->unique_id;
+	sna->render_state.gen2.target = bo->unique_id;
 }
 
 static void gen2_disable_logic_op(struct sna *sna)
@@ -701,7 +716,11 @@ static void gen2_emit_composite_state(struct sna *sna,
 		kgem_clear_dirty(&sna->kgem);
 	}
 
-	gen2_emit_target(sna, op);
+	gen2_emit_target(sna,
+			 op->dst.bo,
+			 op->dst.width,
+			 op->dst.height,
+			 op->dst.format);
 
 	unwind = sna->kgem.nbatch;
 	BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 |
@@ -1190,7 +1209,13 @@ inline static int gen2_get_rectangles(struct sna *sna,
 			sna->render.vertex_offset = sna->kgem.nbatch;
 			BATCH(PRIM3D_INLINE | PRIM3D_RECTLIST);
 		}
-	}
+
+		need = 0;
+	} else
+		need = sna->kgem.nbatch - sna->render.vertex_offset;
+
+	if (rem > MAX_INLINE - need)
+		rem = MAX_INLINE -need;
 
 	if (want > 1 && want * size > rem)
 		want = rem / size;
@@ -1572,12 +1597,12 @@ gen2_composite_picture(struct sna *sna,
 		if (channel->repeat &&
 		    (x >= 0 &&
 		     y >= 0 &&
-		     x + w < pixmap->drawable.width &&
-		     y + h < pixmap->drawable.height)) {
+		     x + w <= pixmap->drawable.width &&
+		     y + h <= pixmap->drawable.height)) {
 			struct sna_pixmap *priv = sna_pixmap(pixmap);
 			if (priv && priv->clear) {
 				DBG(("%s: converting large pixmap source into solid [%08x]\n", __FUNCTION__, priv->clear_color));
-				return gen2_composite_solid_init(sna, channel, priv->clear_color);
+				return gen2_composite_solid_init(sna, channel, solid_color(picture->format, priv->clear_color));
 			}
 		}
 	} else
@@ -1619,7 +1644,9 @@ gen2_composite_set_target(struct sna *sna,
 	} else
 		sna_render_picture_extents(dst, &box);
 
-	hint = PREFER_GPU | FORCE_GPU | RENDER_GPU;
+	hint = PREFER_GPU | RENDER_GPU;
+	if (!need_tiling(sna, op->dst.width, op->dst.height))
+		hint |= FORCE_GPU;
 	if (!partial) {
 		hint |= IGNORE_DAMAGE;
 		if (w == op->dst.width && h == op->dst.height)
@@ -2423,7 +2450,11 @@ static void gen2_emit_composite_spans_state(struct sna *sna,
 	uint32_t unwind;
 
 	gen2_get_batch(sna, &op->base);
-	gen2_emit_target(sna, &op->base);
+	gen2_emit_target(sna,
+			 op->base.dst.bo,
+			 op->base.dst.width,
+			 op->base.dst.height,
+			 op->base.dst.format);
 
 	unwind = sna->kgem.nbatch;
 	BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 |
@@ -2706,7 +2737,11 @@ static void gen2_emit_fill_composite_state(struct sna *sna,
 	uint32_t ls1;
 
 	gen2_get_batch(sna, op);
-	gen2_emit_target(sna, op);
+	gen2_emit_target(sna,
+			 op->dst.bo,
+			 op->dst.width,
+			 op->dst.height,
+			 op->dst.format);
 
 	ls1 = sna->kgem.nbatch;
 	BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 |
@@ -2868,7 +2903,11 @@ static void gen2_emit_fill_state(struct sna *sna,
 	uint32_t ls1;
 
 	gen2_get_batch(sna, op);
-	gen2_emit_target(sna, op);
+	gen2_emit_target(sna,
+			 op->dst.bo,
+			 op->dst.width,
+			 op->dst.height,
+			 op->dst.format);
 
 	ls1 = sna->kgem.nbatch;
 	BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 |
@@ -3102,6 +3141,276 @@ gen2_render_fill_one(struct sna *sna, PixmapPtr dst, struct kgem_bo *bo,
 }
 
 static void
+gen2_emit_video_state(struct sna *sna,
+		      struct sna_video *video,
+		      struct sna_video_frame *frame,
+		      PixmapPtr pixmap,
+		      struct kgem_bo *dst_bo,
+		      int width, int height,
+		      bool bilinear)
+{
+	uint32_t ms1, v, unwind;
+
+	gen2_emit_target(sna, dst_bo, width, height,
+			 sna_format_for_depth(pixmap->drawable.depth));
+
+	unwind = sna->kgem.nbatch;
+	BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 |
+	      I1_LOAD_S(2) | I1_LOAD_S(3) | I1_LOAD_S(8) | 2);
+	BATCH(1 << 12);
+	BATCH(S3_CULLMODE_NONE | S3_VERTEXHAS_XY);
+	BATCH(S8_ENABLE_COLOR_BUFFER_WRITE);
+	if (memcmp(sna->kgem.batch + sna->render_state.gen2.ls1 + 1,
+		   sna->kgem.batch + unwind + 1,
+		   3 * sizeof(uint32_t)) == 0)
+		sna->kgem.nbatch = unwind;
+	else
+		sna->render_state.gen2.ls1 = unwind;
+
+	gen2_disable_logic_op(sna);
+
+	unwind = sna->kgem.nbatch;
+	BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_2 |
+	      LOAD_TEXTURE_BLEND_STAGE(0) | 1);
+	BATCH(TB0C_LAST_STAGE | TB0C_RESULT_SCALE_1X | TB0C_OUTPUT_WRITE_CURRENT |
+	      TB0C_OP_ARG1 | TB0C_ARG1_SEL_TEXEL0);
+	BATCH(TB0A_RESULT_SCALE_1X | TB0A_OUTPUT_WRITE_CURRENT |
+	      TB0A_OP_ARG1 | TB0A_ARG1_SEL_ONE);
+	if (memcmp(sna->kgem.batch + sna->render_state.gen2.ls2 + 1,
+		   sna->kgem.batch + unwind + 1,
+		   2 * sizeof(uint32_t)) == 0)
+		sna->kgem.nbatch = unwind;
+	else
+		sna->render_state.gen2.ls2 = unwind;
+
+	BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_2 | LOAD_TEXTURE_MAP(0) | 4);
+	BATCH(kgem_add_reloc(&sna->kgem, sna->kgem.nbatch,
+			     frame->bo,
+			     I915_GEM_DOMAIN_SAMPLER << 16,
+			     0));
+	ms1 = MAPSURF_422 | TM0S1_COLORSPACE_CONVERSION;
+	switch (frame->id) {
+	case FOURCC_YUY2:
+		ms1 |= MT_422_YCRCB_NORMAL;
+		break;
+	case FOURCC_UYVY:
+		ms1 |= MT_422_YCRCB_SWAPY;
+		break;
+	}
+	BATCH(((frame->height - 1) << TM0S1_HEIGHT_SHIFT) |
+	      ((frame->width - 1)  << TM0S1_WIDTH_SHIFT) |
+	      ms1 |
+	      gen2_sampler_tiling_bits(frame->bo->tiling));
+	BATCH((frame->pitch[0] / 4 - 1) << TM0S2_PITCH_SHIFT | TM0S2_MAP_2D);
+	if (bilinear)
+		BATCH(FILTER_LINEAR << TM0S3_MAG_FILTER_SHIFT |
+		      FILTER_LINEAR << TM0S3_MIN_FILTER_SHIFT |
+		      MIPFILTER_NONE << TM0S3_MIP_FILTER_SHIFT);
+	else
+		BATCH(FILTER_NEAREST << TM0S3_MAG_FILTER_SHIFT |
+		      FILTER_NEAREST << TM0S3_MIN_FILTER_SHIFT |
+		      MIPFILTER_NONE << TM0S3_MIP_FILTER_SHIFT);
+	BATCH(0);	/* default color */
+
+	BATCH(_3DSTATE_MAP_COORD_SET_CMD | TEXCOORD_SET(0) |
+	      ENABLE_TEXCOORD_PARAMS | TEXCOORDS_ARE_NORMAL | TEXCOORDTYPE_CARTESIAN |
+	      ENABLE_ADDR_V_CNTL | TEXCOORD_ADDR_V_MODE(TEXCOORDMODE_CLAMP) |
+	      ENABLE_ADDR_U_CNTL | TEXCOORD_ADDR_U_MODE(TEXCOORDMODE_CLAMP));
+
+	v = _3DSTATE_VERTEX_FORMAT_2_CMD | TEXCOORDFMT_2D;
+	if (sna->render_state.gen2.vft != v) {
+		BATCH(v);
+		sna->render_state.gen2.vft = v;
+	}
+}
+
+static void
+gen2_video_get_batch(struct sna *sna, struct kgem_bo *bo)
+{
+	kgem_set_mode(&sna->kgem, KGEM_RENDER, bo);
+
+	if (!kgem_check_batch(&sna->kgem, 120) ||
+	    !kgem_check_reloc(&sna->kgem, 4) ||
+	    !kgem_check_exec(&sna->kgem, 2)) {
+		_kgem_submit(&sna->kgem);
+		_kgem_set_mode(&sna->kgem, KGEM_RENDER);
+	}
+
+	if (sna->render_state.gen2.need_invariant)
+		gen2_emit_invariant(sna);
+}
+
+static int
+gen2_get_inline_rectangles(struct sna *sna, int want, int floats_per_vertex)
+{
+	int size = floats_per_vertex * 3;
+	int rem = batch_space(sna) - 1;
+
+	if (rem > MAX_INLINE)
+		rem = MAX_INLINE;
+
+	if (size * want > rem)
+		want = rem / size;
+
+	return want;
+}
+
+static bool
+gen2_render_video(struct sna *sna,
+		  struct sna_video *video,
+		  struct sna_video_frame *frame,
+		  RegionPtr dstRegion,
+		  PixmapPtr pixmap)
+{
+	struct sna_pixmap *priv = sna_pixmap(pixmap);
+	const BoxRec *pbox = region_rects(dstRegion);
+	int nbox = region_num_rects(dstRegion);
+	int dst_width = dstRegion->extents.x2 - dstRegion->extents.x1;
+	int dst_height = dstRegion->extents.y2 - dstRegion->extents.y1;
+	int src_width = frame->src.x2 - frame->src.x1;
+	int src_height = frame->src.y2 - frame->src.y1;
+	float src_offset_x, src_offset_y;
+	float src_scale_x, src_scale_y;
+	int pix_xoff, pix_yoff;
+	struct kgem_bo *dst_bo;
+	bool bilinear;
+	int copy = 0;
+
+	DBG(("%s: src:%dx%d (frame:%dx%d) -> dst:%dx%d\n", __FUNCTION__,
+	     src_width, src_height, frame->width, frame->height, dst_width, dst_height));
+
+	assert(priv->gpu_bo);
+	dst_bo = priv->gpu_bo;
+
+	bilinear = src_width != dst_width || src_height != dst_height;
+
+	src_scale_x = (float)src_width / dst_width / frame->width;
+	src_offset_x = (float)frame->src.x1 / frame->width - dstRegion->extents.x1 * src_scale_x;
+
+	src_scale_y = (float)src_height / dst_height / frame->height;
+	src_offset_y = (float)frame->src.y1 / frame->height - dstRegion->extents.y1 * src_scale_y;
+	DBG(("%s: src offset (%f, %f), scale (%f, %f)\n",
+	     __FUNCTION__, src_offset_x, src_offset_y, src_scale_x, src_scale_y));
+
+	if (too_large(pixmap->drawable.width, pixmap->drawable.height) ||
+	    dst_bo->pitch > MAX_3D_PITCH) {
+		int bpp = pixmap->drawable.bitsPerPixel;
+
+		if (too_large(dst_width, dst_height))
+			return false;
+
+		dst_bo = kgem_create_2d(&sna->kgem,
+					dst_width, dst_height, bpp,
+					kgem_choose_tiling(&sna->kgem,
+							   I915_TILING_X,
+							   dst_width, dst_height, bpp),
+					0);
+		if (!dst_bo)
+			return false;
+
+		pix_xoff = -dstRegion->extents.x1;
+		pix_yoff = -dstRegion->extents.y1;
+		copy = 1;
+	} else {
+		/* Set up the offset for translating from the given region
+		 * (in screen coordinates) to the backing pixmap.
+		 */
+#ifdef COMPOSITE
+		pix_xoff = -pixmap->screen_x + pixmap->drawable.x;
+		pix_yoff = -pixmap->screen_y + pixmap->drawable.y;
+#else
+		pix_xoff = 0;
+		pix_yoff = 0;
+#endif
+
+		dst_width  = pixmap->drawable.width;
+		dst_height = pixmap->drawable.height;
+	}
+
+	gen2_video_get_batch(sna, dst_bo);
+	gen2_emit_video_state(sna, video, frame, pixmap,
+			      dst_bo, dst_width, dst_height, bilinear);
+	do {
+		int nbox_this_time = gen2_get_inline_rectangles(sna, nbox, 4);
+		if (nbox_this_time == 0) {
+			gen2_video_get_batch(sna, dst_bo);
+			gen2_emit_video_state(sna, video, frame, pixmap,
+					      dst_bo, dst_width, dst_height, bilinear);
+			nbox_this_time = gen2_get_inline_rectangles(sna, nbox, 4);
+			assert(nbox_this_time);
+		}
+		nbox -= nbox_this_time;
+
+		BATCH(PRIM3D_INLINE | PRIM3D_RECTLIST |
+		      ((12 * nbox_this_time) - 1));
+		do {
+			int box_x1 = pbox->x1;
+			int box_y1 = pbox->y1;
+			int box_x2 = pbox->x2;
+			int box_y2 = pbox->y2;
+
+			pbox++;
+
+			DBG(("%s: dst (%d, %d), (%d, %d) + (%d, %d); src (%f, %f), (%f, %f)\n",
+			     __FUNCTION__, box_x1, box_y1, box_x2, box_y2, pix_xoff, pix_yoff,
+			     box_x1 * src_scale_x + src_offset_x,
+			     box_y1 * src_scale_y + src_offset_y,
+			     box_x2 * src_scale_x + src_offset_x,
+			     box_y2 * src_scale_y + src_offset_y));
+
+			/* bottom right */
+			BATCH_F(box_x2 + pix_xoff);
+			BATCH_F(box_y2 + pix_yoff);
+			BATCH_F(box_x2 * src_scale_x + src_offset_x);
+			BATCH_F(box_y2 * src_scale_y + src_offset_y);
+
+			/* bottom left */
+			BATCH_F(box_x1 + pix_xoff);
+			BATCH_F(box_y2 + pix_yoff);
+			BATCH_F(box_x1 * src_scale_x + src_offset_x);
+			BATCH_F(box_y2 * src_scale_y + src_offset_y);
+
+			/* top left */
+			BATCH_F(box_x1 + pix_xoff);
+			BATCH_F(box_y1 + pix_yoff);
+			BATCH_F(box_x1 * src_scale_x + src_offset_x);
+			BATCH_F(box_y1 * src_scale_y + src_offset_y);
+		} while (--nbox_this_time);
+	} while (nbox);
+
+	if (copy) {
+#ifdef COMPOSITE
+		pix_xoff = -pixmap->screen_x + pixmap->drawable.x;
+		pix_yoff = -pixmap->screen_y + pixmap->drawable.y;
+#else
+		pix_xoff = 0;
+		pix_yoff = 0;
+#endif
+		sna_blt_copy_boxes(sna, GXcopy,
+				   dst_bo, -dstRegion->extents.x1, -dstRegion->extents.y1,
+				   priv->gpu_bo, pix_xoff, pix_yoff,
+				   pixmap->drawable.bitsPerPixel,
+				   region_rects(dstRegion),
+				   region_num_rects(dstRegion));
+
+		kgem_bo_destroy(&sna->kgem, dst_bo);
+	}
+
+	if (!DAMAGE_IS_ALL(priv->gpu_damage)) {
+		if ((pix_xoff | pix_yoff) == 0) {
+			sna_damage_add(&priv->gpu_damage, dstRegion);
+		} else {
+			sna_damage_add_boxes(&priv->gpu_damage,
+					     region_rects(dstRegion),
+					     region_num_rects(dstRegion),
+					     pix_xoff, pix_yoff);
+		}
+	}
+
+	return true;
+}
+
+static void
 gen2_render_copy_setup_source(struct sna_composite_channel *channel,
 			      const DrawableRec *draw,
 			      struct kgem_bo *bo)
@@ -3176,7 +3485,11 @@ static void gen2_emit_copy_state(struct sna *sna, const struct sna_composite_op 
 			      PIPELINE_FLUSH_TEXTURE_CACHE);
 		kgem_clear_dirty(&sna->kgem);
 	}
-	gen2_emit_target(sna, op);
+	gen2_emit_target(sna,
+			 op->dst.bo,
+			 op->dst.width,
+			 op->dst.height,
+			 op->dst.format);
 
 	ls1 = sna->kgem.nbatch;
 	BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 |
@@ -3511,7 +3824,7 @@ const char *gen2_render_init(struct sna *sna, const char *backend)
 	render->copy = gen2_render_copy;
 	render->copy_boxes = gen2_render_copy_boxes;
 
-	/* XXX YUV color space conversion for video? */
+	render->video = gen2_render_video;
 
 	render->reset = gen2_render_reset;
 	render->flush = gen2_render_flush;

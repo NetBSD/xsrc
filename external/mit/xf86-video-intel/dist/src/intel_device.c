@@ -38,6 +38,12 @@
 #include <dirent.h>
 #include <errno.h>
 
+#if MAJOR_IN_MKDEV
+#include <sys/mkdev.h>
+#elif MAJOR_IN_SYSMACROS
+#include <sys/sysmacros.h>
+#endif
+
 #include <pciaccess.h>
 
 #include <xorg-server.h>
@@ -197,9 +203,15 @@ static inline struct intel_device *intel_device(ScrnInfoPtr scrn)
 	return xf86GetEntityPrivate(scrn->entityList[0], intel_device_key)->ptr;
 }
 
+static const char *kernel_module_names[] ={
+	"i915",
+	NULL,
+};
+
 static int is_i915_device(int fd)
 {
 	drm_version_t version;
+	const char **kn;
 	char name[5] = "";
 
 	memset(&version, 0, sizeof(version));
@@ -209,7 +221,22 @@ static int is_i915_device(int fd)
 	if (drmIoctl(fd, DRM_IOCTL_VERSION, &version))
 		return 0;
 
-	return strcmp("i915", name) == 0;
+	for (kn = kernel_module_names; *kn; kn++)
+		if (strcmp(*kn, name) == 0)
+			return 1;
+
+	return 0;
+}
+
+static int load_i915_kernel_module(void)
+{
+	const char **kn;
+
+	for (kn = kernel_module_names; *kn; kn++)
+		if (xf86LoadKernelModule(*kn))
+			return 0;
+
+	return -1;
 }
 
 static int is_i915_gem(int fd)
@@ -336,7 +363,7 @@ static int __intel_open_device__pci(const struct pci_device *pci)
 
 		sprintf(path + base, "driver");
 		if (stat(path, &st)) {
-			if (xf86LoadKernelModule("i915"))
+			if (load_i915_kernel_module())
 				return -1;
 			(void)xf86LoadKernelModule("fbcon");
 		}
@@ -399,7 +426,7 @@ static int __intel_open_device__legacy(const struct pci_device *pci)
 
 	ret = drmCheckModesettingSupported(id);
 	if (ret) {
-		if (xf86LoadKernelModule("i915"))
+		if (load_i915_kernel_module() == 0)
 			ret = drmCheckModesettingSupported(id);
 		if (ret)
 			return -1;
@@ -440,7 +467,7 @@ static char *find_master_node(int fd)
 
 	sprintf(buf, "/dev/dri/card%d", (int)(st.st_rdev & 0x7f));
 	if (stat(buf, &master) == 0 &&
-	    st.st_mode == master.st_mode &&
+	    S_ISCHR(master.st_mode) &&
 	    (st.st_rdev & 0x7f) == master.st_rdev)
 		return strdup(buf);
 
@@ -451,19 +478,19 @@ static char *find_master_node(int fd)
 static int is_render_node(int fd, struct stat *st)
 {
 	if (fstat(fd, st))
-		return 0;
+		return -1;
 
 	if (!S_ISCHR(st->st_mode))
-		return 0;
+		return -1;
 
 	return st->st_rdev & 0x80;
 }
 
 static char *find_render_node(int fd)
 {
-#if defined(USE_RENDERNODE)
 	struct stat master, render;
 	char buf[128];
+	int i;
 
 	/* Are we a render-node ourselves? */
 	if (is_render_node(fd, &master))
@@ -471,10 +498,18 @@ static char *find_render_node(int fd)
 
 	sprintf(buf, "/dev/dri/renderD%d", (int)((master.st_rdev | 0x80) & 0xbf));
 	if (stat(buf, &render) == 0 &&
-	    master.st_mode == render.st_mode &&
-	    render.st_rdev == ((master.st_rdev | 0x80) & 0xbf))
+	    S_ISCHR(render.st_mode) &&
+	    render.st_rdev == (master.st_rdev | 0x80))
 		return strdup(buf);
-#endif
+
+	/* Misaligned card <-> renderD, do a full search */
+	for (i = 0; i < 16; i++) {
+		sprintf(buf, "/dev/dri/renderD%d", i + 128);
+		if (stat(buf, &render) == 0 &&
+		    S_ISCHR(render.st_mode) &&
+		    render.st_rdev == (master.st_rdev | 0x80))
+			return strdup(buf);
+	}
 
 	return NULL;
 }
@@ -608,6 +643,27 @@ err_path:
 	return -1;
 }
 
+void intel_close_device(int entity_num)
+{
+	struct intel_device *dev;
+
+	if (intel_device_key == -1)
+		return;
+
+	dev = xf86GetEntityPrivate(entity_num, intel_device_key)->ptr;
+	xf86GetEntityPrivate(entity_num, intel_device_key)->ptr = NULL;
+	if (!dev)
+		return;
+
+	if (dev->master_count == 0) /* Don't close server-fds */
+		close(dev->fd);
+
+	if (dev->render_node != dev->master_node)
+		free(dev->render_node);
+	free(dev->master_node);
+	free(dev);
+}
+
 int __intel_peek_fd(ScrnInfoPtr scrn)
 {
 	struct intel_device *dev;
@@ -670,6 +726,12 @@ struct intel_device *intel_get_device(ScrnInfoPtr scrn, int *fd)
 
 	*fd = dev->fd;
 	return dev;
+}
+
+const char *intel_get_master_name(struct intel_device *dev)
+{
+	assert(dev && dev->master_node);
+	return dev->master_node;
 }
 
 const char *intel_get_client_name(struct intel_device *dev)

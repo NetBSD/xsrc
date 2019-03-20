@@ -24,10 +24,6 @@
 #ifndef FB_H
 #define FB_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <xorg-server.h>
 #include <servermd.h>
 #include <gcstruct.h>

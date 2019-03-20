@@ -105,8 +105,10 @@ read_boxes_inplace__cpu(struct kgem *kgem,
 	if (!download_inplace__cpu(kgem, dst, bo, box, n))
 		return false;
 
+	if (bo->tiling == I915_TILING_Y)
+		return false;
+
 	assert(kgem_bo_can_map__cpu(kgem, bo, false));
-	assert(bo->tiling != I915_TILING_Y);
 
 	src = kgem_bo_map__cpu(kgem, bo);
 	if (src == NULL)
@@ -281,6 +283,9 @@ fallback:
 		if (box[n].y2 > extents.y2)
 			extents.y2 = box[n].y2;
 	}
+	if (!can_blt && sna->render.max_3d_size == 0)
+		goto fallback;
+
 	if (kgem_bo_can_map(kgem, src_bo)) {
 		/* Is it worth detiling? */
 		if ((extents.y2 - extents.y1 - 1) * src_bo->pitch < 4096)
@@ -477,6 +482,7 @@ fallback:
 			goto fallback;
 		_kgem_set_mode(kgem, KGEM_BLT);
 	}
+	kgem_bcs_set_tiling(&sna->kgem, src_bo, NULL);
 
 	tmp_nbox = nbox;
 	tmp_box = box;
@@ -539,6 +545,7 @@ fallback:
 				break;
 
 			_kgem_set_mode(kgem, KGEM_BLT);
+			kgem_bcs_set_tiling(&sna->kgem, src_bo, NULL);
 			tmp_box += nbox_this_time;
 		} while (1);
 	} else {
@@ -597,6 +604,7 @@ fallback:
 				break;
 
 			_kgem_set_mode(kgem, KGEM_BLT);
+			kgem_bcs_set_tiling(&sna->kgem, src_bo, NULL);
 			tmp_box += nbox_this_time;
 		} while (1);
 	}
@@ -666,8 +674,10 @@ write_boxes_inplace__tiled(struct kgem *kgem,
 {
 	uint8_t *dst;
 
+	if (bo->tiling == I915_TILING_Y)
+		return false;
+
 	assert(kgem->has_wc_mmap || kgem_bo_can_map__cpu(kgem, bo, true));
-	assert(bo->tiling != I915_TILING_Y);
 
 	if (kgem_bo_can_map__cpu(kgem, bo, true)) {
 		dst = kgem_bo_map__cpu(kgem, bo);
@@ -778,6 +788,15 @@ static bool __upload_inplace(struct kgem *kgem,
 	if (FORCE_INPLACE)
 		return FORCE_INPLACE > 0;
 
+	if (bo->exec)
+		return false;
+
+	if (bo->flush)
+		return true;
+
+	if (kgem_bo_can_map__cpu(kgem, bo, true))
+		return true;
+
 	/* If we are writing through the GTT, check first if we might be
 	 * able to almagamate a series of small writes into a single
 	 * operation.
@@ -849,6 +868,8 @@ bool sna_write_boxes(struct sna *sna, PixmapPtr dst,
 		if (box[n].y2 > extents.y2)
 			extents.y2 = box[n].y2;
 	}
+	if (!can_blt && sna->render.max_3d_size == 0)
+		goto fallback;
 
 	/* Try to avoid switching rings... */
 	if (!can_blt || kgem->ring == KGEM_RENDER ||
@@ -1038,6 +1059,7 @@ tile:
 			goto fallback;
 		_kgem_set_mode(kgem, KGEM_BLT);
 	}
+	kgem_bcs_set_tiling(&sna->kgem, NULL, dst_bo);
 
 	if (kgem->gen >= 0100) {
 		cmd |= 8;
@@ -1129,6 +1151,7 @@ tile:
 			if (nbox) {
 				_kgem_submit(kgem);
 				_kgem_set_mode(kgem, KGEM_BLT);
+				kgem_bcs_set_tiling(&sna->kgem, NULL, dst_bo);
 			}
 
 			kgem_bo_destroy(kgem, src_bo);
@@ -1224,6 +1247,7 @@ tile:
 			if (nbox) {
 				_kgem_submit(kgem);
 				_kgem_set_mode(kgem, KGEM_BLT);
+				kgem_bcs_set_tiling(&sna->kgem, NULL, dst_bo);
 			}
 
 			kgem_bo_destroy(kgem, src_bo);
@@ -1541,6 +1565,7 @@ tile:
 			goto fallback;
 		_kgem_set_mode(kgem, KGEM_BLT);
 	}
+	kgem_bcs_set_tiling(&sna->kgem, NULL, dst_bo);
 
 	if (sna->kgem.gen >= 0100) {
 		cmd |= 8;
@@ -1636,6 +1661,7 @@ tile:
 			if (nbox) {
 				_kgem_submit(kgem);
 				_kgem_set_mode(kgem, KGEM_BLT);
+				kgem_bcs_set_tiling(&sna->kgem, NULL, dst_bo);
 			}
 
 			kgem_bo_destroy(kgem, src_bo);
@@ -1732,6 +1758,7 @@ tile:
 			if (nbox) {
 				_kgem_submit(kgem);
 				_kgem_set_mode(kgem, KGEM_BLT);
+				kgem_bcs_set_tiling(&sna->kgem, NULL, dst_bo);
 			}
 
 			kgem_bo_destroy(kgem, src_bo);

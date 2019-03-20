@@ -65,6 +65,12 @@
 #define MI_LOAD_SCAN_LINES_DISPLAY_PIPEA	(0)
 #define MI_LOAD_SCAN_LINES_DISPLAY_PIPEB	(0x1<<20)
 
+#define MI_LOAD_REGISTER_IMM		(0x22<<23 | (3-2))
+
+#define BCS_SWCTRL                      0x22200
+# define BCS_SWCTRL_SRC_Y               (1 << 0)
+# define BCS_SWCTRL_DST_Y               (1 << 1)
+
 /* BLT commands */
 #define COLOR_BLT_CMD		((2<<29)|(0x40<<22)|(0x3))
 #define COLOR_BLT_WRITE_ALPHA	(1<<21)

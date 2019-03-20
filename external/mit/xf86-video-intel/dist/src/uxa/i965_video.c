@@ -37,7 +37,6 @@
 #include "fourcc.h"
 
 #include "intel.h"
-#include "intel_xvmc.h"
 #include "intel_uxa.h"
 #include "i830_reg.h"
 #include "i965_reg.h"
@@ -102,7 +101,7 @@ static const uint32_t ps_kernel_packed_static[][4] = {
 #include "exa_wm_xy.g4b"
 #include "exa_wm_src_affine.g4b"
 #include "exa_wm_src_sample_argb.g4b"
-#include "exa_wm_yuv_rgb.g4b"
+#include "exa_wm_yuv_rgb_bt601.g4b"
 #include "exa_wm_write.g4b"
 };
 
@@ -110,7 +109,7 @@ static const uint32_t ps_kernel_planar_static[][4] = {
 #include "exa_wm_xy.g4b"
 #include "exa_wm_src_affine.g4b"
 #include "exa_wm_src_sample_planar.g4b"
-#include "exa_wm_yuv_rgb.g4b"
+#include "exa_wm_yuv_rgb_bt601.g4b"
 #include "exa_wm_write.g4b"
 };
 
@@ -123,7 +122,7 @@ static const uint32_t ps_kernel_packed_static_gen5[][4] = {
 #include "exa_wm_xy.g4b.gen5"
 #include "exa_wm_src_affine.g4b.gen5"
 #include "exa_wm_src_sample_argb.g4b.gen5"
-#include "exa_wm_yuv_rgb.g4b.gen5"
+#include "exa_wm_yuv_rgb_bt601.g4b.gen5"
 #include "exa_wm_write.g4b.gen5"
 };
 
@@ -131,7 +130,7 @@ static const uint32_t ps_kernel_planar_static_gen5[][4] = {
 #include "exa_wm_xy.g4b.gen5"
 #include "exa_wm_src_affine.g4b.gen5"
 #include "exa_wm_src_sample_planar.g4b.gen5"
-#include "exa_wm_yuv_rgb.g4b.gen5"
+#include "exa_wm_yuv_rgb_bt601.g4b.gen5"
 #include "exa_wm_write.g4b.gen5"
 };
 
@@ -139,14 +138,14 @@ static const uint32_t ps_kernel_planar_static_gen5[][4] = {
 static const uint32_t ps_kernel_packed_static_gen6[][4] = {
 #include "exa_wm_src_affine.g6b"
 #include "exa_wm_src_sample_argb.g6b"
-#include "exa_wm_yuv_rgb.g6b"
+#include "exa_wm_yuv_rgb_bt601.g6b"
 #include "exa_wm_write.g6b"
 };
 
 static const uint32_t ps_kernel_planar_static_gen6[][4] = {
 #include "exa_wm_src_affine.g6b"
 #include "exa_wm_src_sample_planar.g6b"
-#include "exa_wm_yuv_rgb.g6b"
+#include "exa_wm_yuv_rgb_bt601.g6b"
 #include "exa_wm_write.g6b"
 };
 
@@ -154,14 +153,14 @@ static const uint32_t ps_kernel_planar_static_gen6[][4] = {
 static const uint32_t ps_kernel_packed_static_gen7[][4] = {
 #include "exa_wm_src_affine.g7b"
 #include "exa_wm_src_sample_argb.g7b"
-#include "exa_wm_yuv_rgb.g7b"
+#include "exa_wm_yuv_rgb_bt601.g7b"
 #include "exa_wm_write.g7b"
 };
 
 static const uint32_t ps_kernel_planar_static_gen7[][4] = {
 #include "exa_wm_src_affine.g7b"
 #include "exa_wm_src_sample_planar.g7b"
-#include "exa_wm_yuv_rgb.g7b"
+#include "exa_wm_yuv_rgb_bt601.g7b"
 #include "exa_wm_write.g7b"
 };
 

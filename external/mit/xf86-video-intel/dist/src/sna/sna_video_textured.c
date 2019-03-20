@@ -36,23 +36,48 @@
 
 #define MAKE_ATOM(a) MakeAtom(a, sizeof(a) - 1, true)
 
-static Atom xvBrightness, xvContrast, xvSyncToVblank;
+static Atom xvBrightness, xvContrast, xvSyncToVblank, xvColorspace;
 
 static XvFormatRec Formats[] = {
-	{15}, {16}, {24}
+	{15}, {16}, {24}, {30}
 };
 
 static const XvAttributeRec Attributes[] = {
 	{XvSettable | XvGettable, -1, 1, (char *)"XV_SYNC_TO_VBLANK"},
+	{XvSettable | XvGettable, 0, 1, (char *)"XV_COLORSPACE"}, /* BT.601, BT.709 */
 	//{XvSettable | XvGettable, -128, 127, (char *)"XV_BRIGHTNESS"},
 	//{XvSettable | XvGettable, 0, 255, (char *)"XV_CONTRAST"},
 };
 
-static const XvImageRec Images[] = {
+static const XvImageRec gen2_Images[] = {
+	XVIMAGE_YUY2,
+	XVIMAGE_UYVY,
+};
+
+static const XvImageRec gen3_Images[] = {
 	XVIMAGE_YUY2,
 	XVIMAGE_YV12,
 	XVIMAGE_I420,
 	XVIMAGE_UYVY,
+	XVMC_YUV,
+};
+
+static const XvImageRec gen4_Images[] = {
+	XVIMAGE_YUY2,
+	XVIMAGE_YV12,
+	XVIMAGE_I420,
+	XVIMAGE_NV12,
+	XVIMAGE_UYVY,
+	XVMC_YUV,
+};
+
+static const XvImageRec gen9_Images[] = {
+	XVIMAGE_YUY2,
+	XVIMAGE_YV12,
+	XVIMAGE_I420,
+	XVIMAGE_NV12,
+	XVIMAGE_UYVY,
+	XVIMAGE_AYUV,
 	XVMC_YUV,
 };
 
@@ -88,6 +113,11 @@ sna_video_textured_set_attribute(ddSetPortAttribute_ARGS)
 			return BadValue;
 
 		video->SyncToVblank = value;
+	} else if (attribute == xvColorspace) {
+		if (value < 0 || value > 1)
+			return BadValue;
+
+		video->colorspace = value;
 	} else
 		return BadMatch;
 
@@ -105,6 +135,8 @@ sna_video_textured_get_attribute(ddGetPortAttribute_ARGS)
 		*value = video->contrast;
 	else if (attribute == xvSyncToVblank)
 		*value = video->SyncToVblank;
+	else if (attribute == xvColorspace)
+		*value = video->colorspace;
 	else
 		return BadMatch;
 
@@ -149,15 +181,16 @@ sna_video_textured_put_image(ddPutImage_ARGS)
 	BoxRec dstBox;
 	RegionRec clip;
 	xf86CrtcPtr crtc;
+	int16_t dx, dy;
 	bool flush = false;
 	bool ret;
 
-	clip.extents.x1 = draw->x + drw_x;
-	clip.extents.y1 = draw->y + drw_y;
-	clip.extents.x2 = clip.extents.x1 + drw_w;
-	clip.extents.y2 = clip.extents.y1 + drw_h;
-	clip.data = NULL;
+	if (wedged(sna))
+		return BadAlloc;
 
+	init_video_region(&clip, draw, drw_x, drw_y, drw_w, drw_h);
+
+	ValidateGC(draw, gc);
 	RegionIntersect(&clip, &clip, gc->pCompositeClip);
 	if (!RegionNotEmpty(&clip))
 		return Success;
@@ -180,6 +213,9 @@ sna_video_textured_put_image(ddPutImage_ARGS)
 				   src_w, src_h, drw_w, drw_h,
 				   &clip))
 		return Success;
+
+	if (get_drawable_deltas(draw, pixmap, &dx, &dy))
+		RegionTranslate(&clip, dx, dy);
 
 	flags = MOVE_WRITE | __MOVE_FORCE;
 	if (clip.data)
@@ -234,7 +270,7 @@ sna_video_textured_put_image(ddPutImage_ARGS)
 		DBG(("%s: failed to render video\n", __FUNCTION__));
 		ret = BadAlloc;
 	} else
-		DamageDamageRegion(draw, &clip);
+		DamageDamageRegion(&pixmap->drawable, &clip);
 
 	kgem_bo_destroy(&sna->kgem, frame.bo);
 
@@ -289,10 +325,30 @@ sna_video_textured_query(ddQueryImageAttributes_ARGS)
 			offsets[2] = size;
 		size += tmp;
 		break;
+	case FOURCC_NV12:
+		*h = (*h + 1) & ~1;
+		size = (*w + 3) & ~3;
+		if (pitches)
+			pitches[0] = size;
+		size *= *h;
+		if (offsets)
+			offsets[1] = size;
+		tmp = (*w + 3) & ~3;
+		if (pitches)
+			pitches[1] = tmp;
+		tmp *= (*h >> 1);
+		size += tmp;
+		break;
 	case FOURCC_UYVY:
 	case FOURCC_YUY2:
 	default:
 		size = *w << 1;
+		if (pitches)
+			pitches[0] = size;
+		size *= *h;
+		break;
+	case FOURCC_AYUV:
+		size = *w << 2;
 		if (pitches)
 			pitches[0] = size;
 		size *= *h;
@@ -314,9 +370,15 @@ void sna_video_textured_setup(struct sna *sna, ScreenPtr screen)
 	struct sna_video *video;
 	int nports, i;
 
+	if (sna->scrn->depth == 8) {
+		xf86DrvMsg(sna->scrn->scrnIndex, X_INFO,
+			   "Textured video not supported in 8bpp mode\n");
+		return;
+	}
+
 	if (!sna->render.video) {
 		xf86DrvMsg(sna->scrn->scrnIndex, X_INFO,
-			   "Textured video not supported on this hardware\n");
+			   "Textured video not supported on this hardware or backend\n");
 		return;
 	}
 
@@ -362,8 +424,19 @@ void sna_video_textured_setup(struct sna *sna, ScreenPtr screen)
 						 ARRAY_SIZE(Formats));
 	adaptor->nAttributes = ARRAY_SIZE(Attributes);
 	adaptor->pAttributes = (XvAttributeRec *)Attributes;
-	adaptor->nImages = ARRAY_SIZE(Images);
-	adaptor->pImages = (XvImageRec *)Images;
+	if (sna->kgem.gen < 030) {
+		adaptor->nImages = ARRAY_SIZE(gen2_Images);
+		adaptor->pImages = (XvImageRec *)gen2_Images;
+	} else if (sna->kgem.gen < 040) {
+		adaptor->nImages = ARRAY_SIZE(gen3_Images);
+		adaptor->pImages = (XvImageRec *)gen3_Images;
+	} else if (sna->kgem.gen < 0110) {
+		adaptor->nImages = ARRAY_SIZE(gen4_Images);
+		adaptor->pImages = (XvImageRec *)gen4_Images;
+	} else {
+		adaptor->nImages = ARRAY_SIZE(gen9_Images);
+		adaptor->pImages = (XvImageRec *)gen9_Images;
+	}
 #if XORG_XV_VERSION < 2
 	adaptor->ddAllocatePort = sna_xv_alloc_port;
 	adaptor->ddFreePort = sna_xv_free_port;
@@ -386,6 +459,7 @@ void sna_video_textured_setup(struct sna *sna, ScreenPtr screen)
 		v->sna = sna;
 		v->textured = true;
 		v->alignment = 4;
+		v->colorspace = 1; /* BT.709 */
 		v->SyncToVblank = (sna->flags & SNA_NO_WAIT) == 0;
 
 		RegionNull(&v->clip);
@@ -406,6 +480,7 @@ void sna_video_textured_setup(struct sna *sna, ScreenPtr screen)
 
 	xvBrightness = MAKE_ATOM("XV_BRIGHTNESS");
 	xvContrast = MAKE_ATOM("XV_CONTRAST");
+	xvColorspace = MAKE_ATOM("XV_COLORSPACE");
 	xvSyncToVblank = MAKE_ATOM("XV_SYNC_TO_VBLANK");
 
 	DBG(("%s: '%s' initialized %d ports\n", __FUNCTION__, adaptor->name, adaptor->nPorts));

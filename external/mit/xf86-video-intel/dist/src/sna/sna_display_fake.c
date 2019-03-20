@@ -96,12 +96,6 @@ sna_crtc_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
 }
 
 static void
-sna_crtc_gamma_set(xf86CrtcPtr crtc,
-		       CARD16 *red, CARD16 *green, CARD16 *blue, int size)
-{
-}
-
-static void
 sna_crtc_destroy(xf86CrtcPtr crtc)
 {
 }
@@ -109,7 +103,6 @@ sna_crtc_destroy(xf86CrtcPtr crtc)
 static const xf86CrtcFuncsRec sna_crtc_funcs = {
 	.dpms = sna_crtc_dpms,
 	.set_mode_major = sna_crtc_set_mode_major,
-	.gamma_set = sna_crtc_gamma_set,
 	.destroy = sna_crtc_destroy,
 };
 
@@ -192,7 +185,7 @@ static const xf86OutputFuncsRec sna_output_funcs = {
 static Bool
 sna_mode_resize(ScrnInfoPtr scrn, int width, int height)
 {
-	ScreenPtr screen = scrn->pScreen;
+	ScreenPtr screen = xf86ScrnToScreen(scrn);
 	PixmapPtr new_front;
 
 	DBG(("%s (%d, %d) -> (%d, %d)\n", __FUNCTION__,
@@ -262,6 +255,7 @@ static bool add_fake_output(struct sna *sna, bool late)
 	output->mm_height = 0;
 	output->interlaceAllowed = FALSE;
 	output->subpixel_order = SubPixelNone;
+	output->status = XF86OutputStatusDisconnected;
 
 	output->possible_crtcs = ~((1 << sna->mode.num_real_crtc) - 1);
 	output->possible_clones = ~((1 << sna->mode.num_real_output) - 1);
@@ -297,6 +291,8 @@ static bool add_fake_output(struct sna *sna, bool late)
 
 		RRCrtcSetRotations(crtc->randr_crtc,
 				   RR_Rotate_All | RR_Reflect_All);
+		if (!RRCrtcGammaSetSize(crtc->randr_crtc, 256))
+			goto err;
 	}
 
 	sna->mode.num_fake++;
@@ -312,13 +308,16 @@ err:
 			continue;
 
 		xf86OutputDestroy(output);
+		i--;
 	}
 
 	for (i = 0; i < xf86_config->num_crtc; i++) {
 		crtc = xf86_config->crtc[i];
 		if (crtc->driver_private)
 			continue;
+
 		xf86CrtcDestroy(crtc);
+		i--;
 	}
 	sna->mode.num_fake = -1;
 	return false;

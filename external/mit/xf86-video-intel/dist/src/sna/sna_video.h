@@ -38,6 +38,8 @@ THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define FOURCC_XVMC (('C' << 24) + ('M' << 16) + ('V' << 8) + 'X')
 #define FOURCC_RGB565 ((16 << 24) + ('B' << 16) + ('G' << 8) + 'R')
 #define FOURCC_RGB888 ((24 << 24) + ('B' << 16) + ('G' << 8) + 'R')
+#define FOURCC_NV12 (('2' << 24) + ('1' << 16) + ('V' << 8) + 'N')
+#define FOURCC_AYUV (('V' << 24) + ('U' << 16) + ('Y' << 8) + 'A')
 
 /*
  * Below, a dummy picture type that is used in XvPutImage
@@ -69,8 +71,27 @@ THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	XvTopToBottom \
 }
 
+/* no standard define for this */
+#define XVIMAGE_NV12 { \
+	FOURCC_NV12, XvYUV, LSBFirst,				\
+	{'N','V','1','2', 0x00,0x00,0x00,0x10,0x80,0x00,0x00,0xAA,0x00,0x38,0x9B,0x71}, \
+	12, XvPlanar, 2, 0, 0, 0, 0, 8, 8, 8, 1, 2, 2, 1, 2, 2, \
+	{'Y','U','V', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, \
+	XvTopToBottom \
+}
+
+#define XVIMAGE_AYUV { \
+	FOURCC_AYUV, XvYUV, LSBFirst, \
+	{'A', 'Y', 'U', 'V', 0x00, 0x00, 0x00, 0x10, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71}, \
+	32, XvPacked, 1, 0, 0, 0, 0, 8, 8, 8, 1, 1, 1, 1, 1, 1, \
+	{'A', 'Y', 'U', 'V', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, \
+	XvTopToBottom \
+}
+
 struct sna_video {
 	struct sna *sna;
+
+	int idx; /* XXX expose struct plane instead? */
 
 	int brightness;
 	int contrast;
@@ -88,6 +109,9 @@ struct sna_video {
 	unsigned color_key_changed;
 	bool has_color_key;
 
+	unsigned colorspace;
+	unsigned colorspace_changed;
+
 	/** YUV data buffers */
 	struct kgem_bo *old_buf[2];
 	struct kgem_bo *buf;
@@ -96,7 +120,6 @@ struct sna_video {
 	int alignment;
 	bool tiled;
 	bool textured;
-	int plane;
 
 	struct kgem_bo *bo[4];
 	RegionRec clip;
@@ -158,6 +181,27 @@ static inline int is_planar_fourcc(int id)
 	case FOURCC_YV12:
 	case FOURCC_I420:
 	case FOURCC_XVMC:
+	case FOURCC_NV12:
+		return 1;
+	default:
+		return 0;
+	}
+}
+
+static inline int is_nv12_fourcc(int id)
+{
+	switch (id) {
+	case FOURCC_NV12:
+		return 1;
+	default:
+		return 0;
+	}
+}
+
+static inline int is_ayuv_fourcc(int id)
+{
+	switch (id) {
+	case FOURCC_AYUV:
 		return 1;
 	default:
 		return 0;
@@ -193,6 +237,9 @@ bool
 sna_video_copy_data(struct sna_video *video,
 		    struct sna_video_frame *frame,
 		    const uint8_t *buf);
+void
+sna_video_fill_colorkey(struct sna_video *video,
+			const RegionRec *clip);
 
 void sna_video_buffer_fini(struct sna_video *video);
 
@@ -208,6 +255,28 @@ static inline void
 sna_window_set_port(WindowPtr window, XvPortPtr port)
 {
 	((void **)__get_private(window, sna_window_key))[2] = port;
+}
+
+static inline int offset_and_clip(int x, int dx)
+{
+	x += dx;
+	if (x <= 0)
+		return 0;
+	if (x >= MAXSHORT)
+		return MAXSHORT;
+	return x;
+}
+
+static inline void init_video_region(RegionRec *region,
+				     DrawablePtr draw,
+				     int drw_x, int drw_y,
+				     int drw_w, int drw_h)
+{
+	region->extents.x1 = offset_and_clip(draw->x, drw_x);
+	region->extents.y1 = offset_and_clip(draw->y, drw_y);
+	region->extents.x2 = offset_and_clip(draw->x, drw_x + drw_w);
+	region->extents.y2 = offset_and_clip(draw->y, drw_y + drw_h);
+	region->data = NULL;
 }
 
 #endif /* SNA_VIDEO_H */

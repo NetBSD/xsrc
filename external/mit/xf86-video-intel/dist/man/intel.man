@@ -27,9 +27,9 @@ supports the i810, i810-DC100, i810e, i815, i830M, 845G, 852GM, 855GM,
 865G, 915G, 915GM, 945G, 945GM, 965G, 965Q, 946GZ, 965GM, 945GME,
 G33, Q33, Q35, G35, GM45, G45, Q45, G43, G41 chipsets, Pineview-M in
 Atom N400 series, Pineview-D in Atom D400/D500 series,
-Intel(R) HD Graphics: 2000-6000,
-Intel(R) Iris(TM) Graphics: 5100/6100, and
-Intel(R) Iris(TM) Pro Graphics: 5200/6200/P6300.
+Intel(R) HD Graphics,
+Intel(R) Iris(TM) Graphics,
+Intel(R) Iris(TM) Pro Graphics.
 
 .SH CONFIGURATION DETAILS
 Please refer to __xconfigfile__(__filemansuffix__) for general configuration
@@ -112,8 +112,8 @@ The default is 8192 if AGP allocable memory is < 128 MB, 16384 if < 192 MB,
 24576 if higher. DRI require at least a value of 16384. Higher values may give
 better 3D performance, at expense of available system memory.
 .TP
-.BI "Option \*qNoAccel\*q \*q" boolean \*q
-Disable or enable acceleration.
+.BI "Option \*qAccel\*q \*q" boolean \*q
+Enable or disable acceleration.
 .IP
 Default: acceleration is enabled.
 
@@ -122,8 +122,8 @@ The following driver
 .B Options
 are supported for the 830M and later chipsets:
 .TP
-.BI "Option \*qNoAccel\*q \*q" boolean \*q
-Disable or enable acceleration.
+.BI "Option \*qAccel\*q \*q" boolean \*q
+Enable or disable acceleration.
 .IP
 Default: acceleration is enabled.
 .TP
@@ -201,6 +201,16 @@ that choice by specifying the entry under /sys/class/backlight to use.
 .IP
 Default: Automatic selection.
 .TP
+.BI "Option \*qCustomEDID\*q \*q" string \*q
+Override the probed EDID on particular outputs. Sometimes the manufacturer
+supplied EDID is corrupt or lacking a few usable modes and supplying a
+corrected EDID may be easier than specifying every modeline. This option
+allows to pass the path to load an EDID from per output. The format is a
+comma separated string of output:path pairs, e.g.
+DP1:/path/to/dp1.edid,DP2:/path/to/dp2.edid
+.IP
+Default: No override, use manufacturer supplied EDIDs.
+.TP
 .BI "Option \*qFallbackDebug\*q \*q" boolean \*q
 Enable printing of debugging information on acceleration fallbacks to the
 server log.
@@ -225,6 +235,15 @@ i.e. perform synchronous rendering.
 .IP
 Default: Disabled
 .TP
+.BI "Option \*qHWRotation\*q \*q" boolean \*q
+Override the use of native hardware rotation and force the use of software,
+but GPU accelerated where possible, rotation. On some platforms the hardware
+can scanout directly into a rotated output bypassing the intermediate rendering
+and extra allocations required for software implemented rotation (i.e. native
+rotation uses less resources, is quicker and uses less power). This allows you
+to disable the native rotation in case of errors.
+.IP
+Default: Enabled (use hardware rotation)
 .TP
 .BI "Option \*qVSync\*q \*q" boolean \*q
 This option controls the use of commands to synchronise rendering with the
@@ -324,13 +343,29 @@ Default: 0
 .BI "Option \*qZaphodHeads\*q \*q" string \*q
 .IP
 Specify the randr output(s) to use with zaphod mode for a particular driver
-instance.  If you this option you must use it with all instances of the
-driver
+instance.  If you set this option you must use it with all instances of the
+driver. By default, each head is assigned only one CRTC (which limits
+using multiple outputs with that head to cloned mode). CRTC can be manually
+assigned to individual heads by preceding the output names with a comma
+delimited list of pipe numbers followed by a colon. Note that different pipes
+may be limited in their functionality and some outputs may only work with
+different pipes.
 .br
 For example:
+
+.RS
 .B
 Option \*qZaphodHeads\*q \*qLVDS1,VGA1\*q
-will assign xrandr outputs LVDS1 and VGA0 to this instance of the driver.
+
+will assign xrandr outputs LVDS1 and VGA1 to this instance of the driver.
+.RE
+
+.RS
+.B
+Option \*qZaphodHeads\*q \*q0,2:HDMI1,DP2\*q
+
+will assign xrandr outputs HDMI1 and DP2 and CRTCs 0 and 2 to this instance of the driver.
+.RE
 
 .SH OUTPUT CONFIGURATION
 On 830M and better chipsets, the driver supports runtime configuration of
@@ -431,11 +466,11 @@ First DVI SDVO output
 Second DVI SDVO output
 
 .SS "TMDS-1", "TMDS-2", "HDMI-1", "HDMI-2"
-DVI/HDMI outputs. Avaliable common properties include:
+DVI/HDMI outputs. Available common properties include:
 .TP
 \fBBROADCAST_RGB\fP - method used to set RGB color range
 Adjusting this property allows you to set RGB color range on each
-channel in order to match HDTV requirment(default 0 for full
+channel in order to match HDTV requirement(default 0 for full
 range). Setting 1 means RGB color range is 16-235, 0 means RGB color
 range is 0-255 on each channel.  (Full range is 0-255, not 16-235)
 

@@ -193,7 +193,7 @@ Bool intel_xvmc_adaptor_init(ScreenPtr pScreen)
 	intel_screen_private *intel = intel_get_screen_private(scrn);
 	struct pci_device *pci;
 	static XF86MCAdaptorRec *pAdapt;
-	char *name;
+	const char *name;
 	char buf[64];
 
 	if (!intel->XvMCEnabled)

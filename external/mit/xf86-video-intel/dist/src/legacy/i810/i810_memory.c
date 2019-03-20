@@ -76,7 +76,7 @@ I810AllocateGARTMemory(ScrnInfoPtr pScrn)
    unsigned long size = pScrn->videoRam * 1024UL;
    I810Ptr pI810 = I810PTR(pScrn);
    int key;
-   long tom = 0;
+   unsigned long tom = 0;
    unsigned long physical;
 
    if (!xf86AgpGARTSupported() || !xf86AcquireGART(pScrn->scrnIndex)) {
@@ -132,8 +132,8 @@ I810AllocateGARTMemory(ScrnInfoPtr pScrn)
     * Keep it 512K aligned for the sake of tiled regions.
     */
 
-   tom += 0x7ffff;
-   tom &= ~0x7ffff;
+   tom += 0x7ffffUL;
+   tom &= ~0x7ffffUL;
 
    if ((key = xf86AllocateGARTMemory(pScrn->scrnIndex, size, 1, NULL)) != -1) {
       pI810->DcacheOffset = tom;

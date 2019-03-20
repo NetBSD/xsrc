@@ -21,7 +21,7 @@ should make one more snapshot before an imminent release.
    Before kernel 3.19, O_NONBLOCK support is broken and so we must avoid
    reading if we are not expecting an event.
 
- * Backwards compatibilty fix for fake triple buffering with PRIME and
+ * Backwards compatibility fix for fake triple buffering with PRIME and
    Xorg-1.15
    https://bugs.freedesktop.org/show_bug.cgi?id=85144#c12
 
@@ -51,7 +51,7 @@ should make one more snapshot before an imminent release.
 Snapshot 2.99.916 (2014-09-08)
 ==============================
 Quick update for MST in UXA - we need to hook up the RandR outputs for
-dynamicaly added connectors.
+dynamically added connectors.
 
 
 Snapshot 2.99.915 (2014-09-08)
@@ -503,7 +503,7 @@ release.
    backlight property is queried whilst the connector is disabled
    https://bugs.freedesktop.org/show_bug.cgi?id=70406
 
- * Pad GETCONNECTOR ioctl for compatability between 32/64-bit userspace
+ * Pad GETCONNECTOR ioctl for compatibility between 32/64-bit userspace
    and kernel
 
  * Handle long glyph runs correctly
@@ -523,7 +523,7 @@ snapshot beforehand to push out the bug fixes from the last week.
 
  * Fix video output using sprites when changing the image size
 
- * Apply more restrictive tile constaints for 915g class devices
+ * Apply more restrictive tile constraints for 915g class devices
    https://bugs.launchpad.net/ubuntu/+source/xserver-xorg-video-intel/+bug/1232546
 
  * Ensure all overlapping rectangles are drawn for XRenderFillRectangles
@@ -1132,7 +1132,7 @@ operation.
  * Explicitly prevent ring-switching for synchronized rendering to
    scanouts (for vsync).
 
- * Clip dirty region to slave pixmaps (otherwise UDL is nigh unusuable)
+ * Clip dirty region to slave pixmaps (otherwise UDL is nigh unusable)
    https://bugs.freedesktop.org/show_bug.cgi?id=59539
 
 
@@ -1226,7 +1226,7 @@ Release 2.20.15 (2012-12-03)
 ============================
 And lo, enabling more of the common acceleration paths for gen4 revealed
 another lurking bug - something is wrong with how we prepare Y-tiling
-surfaces for rendering. For the time being, we can surreptiously disable
+surfaces for rendering. For the time being, we can surreptitiously disable
 them for gen4 and avoid hitting GPU hangs.
 
  * Avoid clobbering the render state after failing to convert the
@@ -1515,7 +1515,7 @@ Release 2.20.5 (2012-08-26)
 Another silly bug found, another small bugfix release. The goal was for
 the driver to bind to all Intel devices supported by the kernel.
 Unfortunately we were too successful and started claiming Pouslbo,
-Medfield and Cedarview devices which are still encumbered by propietary
+Medfield and Cedarview devices which are still encumbered by proprietary
 IP and not supported by this driver.
 
 Bugs fixed since 2.20.4:

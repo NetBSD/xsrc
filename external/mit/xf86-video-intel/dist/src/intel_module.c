@@ -126,6 +126,21 @@ static const struct intel_device_info intel_skylake_info = {
 	.gen = 0110,
 };
 
+static const struct intel_device_info intel_broxton_info = {
+	.gen = 0111,
+};
+
+static const struct intel_device_info intel_kabylake_info = {
+	.gen = 0112,
+};
+
+static const struct intel_device_info intel_geminilake_info = {
+	.gen = 0113,
+};
+
+static const struct intel_device_info intel_coffeelake_info = {
+	.gen = 0114,
+};
 
 static const SymTabRec intel_chipsets[] = {
 	{PCI_CHIP_I810,				"i810"},
@@ -234,30 +249,84 @@ static const SymTabRec intel_chipsets[] = {
 	{0x0157, "HD Graphics"},
 
 	/* Broadwell Marketing names */
-	{0x1602, "HD graphics"},
-	{0x1606, "HD graphics"},
-	{0x160B, "HD graphics"},
-	{0x160A, "HD graphics"},
-	{0x160D, "HD graphics"},
-	{0x160E, "HD graphics"},
-	{0x1612, "HD graphics 5600"},
-	{0x1616, "HD graphics 5500"},
-	{0x161B, "HD graphics"},
-	{0x161A, "HD graphics"},
-	{0x161D, "HD graphics"},
-	{0x161E, "HD graphics 5300"},
-	{0x1622, "Iris Pro graphics 6200"},
-	{0x1626, "HD graphics 6000"},
-	{0x162B, "Iris graphics 6100"},
-	{0x162A, "Iris Pro graphics P6300"},
-	{0x162D, "HD graphics"},
-	{0x162E, "HD graphics"},
-	{0x1632, "HD graphics"},
-	{0x1636, "HD graphics"},
-	{0x163B, "HD graphics"},
-	{0x163A, "HD graphics"},
-	{0x163D, "HD graphics"},
-	{0x163E, "HD graphics"},
+	{0x1602, "HD Graphics"},
+	{0x1606, "HD Graphics"},
+	{0x160B, "HD Graphics"},
+	{0x160A, "HD Graphics"},
+	{0x160D, "HD Graphics"},
+	{0x160E, "HD Graphics"},
+	{0x1612, "HD Graphics 5600"},
+	{0x1616, "HD Graphics 5500"},
+	{0x161B, "HD Graphics"},
+	{0x161A, "HD Graphics"},
+	{0x161D, "HD Graphics"},
+	{0x161E, "HD Graphics 5300"},
+	{0x1622, "Iris Pro Graphics 6200"},
+	{0x1626, "HD Graphics 6000"},
+	{0x162B, "Iris Graphics 6100"},
+	{0x162A, "Iris Pro Graphics P6300"},
+	{0x162D, "HD Graphics"},
+	{0x162E, "HD Graphics"},
+	{0x1632, "HD Graphics"},
+	{0x1636, "HD Graphics"},
+	{0x163B, "HD Graphics"},
+	{0x163A, "HD Graphics"},
+	{0x163D, "HD Graphics"},
+	{0x163E, "HD Graphics"},
+
+	/* Cherryview (Cherrytrail/Braswell) */
+	{0x22b0, "HD Graphics"},
+	{0x22b1, "HD Graphics"},
+	{0x22b2, "HD Graphics"},
+	{0x22b3, "HD Graphics"},
+
+	/* Skylake */
+	{0x1902, "HD Graphics 510"},
+	{0x1906, "HD Graphics 510"},
+	{0x190B, "HD Graphics 510"},
+	{0x1912, "HD Graphics 530"},
+	{0x1916, "HD Graphics 520"},
+	{0x191B, "HD Graphics 530"},
+	{0x191D, "HD Graphics P530"},
+	{0x191E, "HD Graphics 515"},
+	{0x1921, "HD Graphics 520"},
+	{0x1926, "Iris Graphics 540"},
+	{0x1927, "Iris Graphics 550"},
+	{0x192B, "Iris Graphics 555"},
+	{0x192D, "Iris Graphics P555"},
+	{0x1932, "Iris Pro Graphics 580"},
+	{0x193A, "Iris Pro Graphics P580"},
+	{0x193B, "Iris Pro Graphics 580"},
+	{0x193D, "Iris Pro Graphics P580"},
+
+	/* Broxton (Apollolake) */
+	{0x5A84, "HD Graphics 505"},
+	{0x5A85, "HD Graphics 500"},
+
+	/* Kabylake */
+	{0x5916, "HD Graphics 620"},
+	{0x591E, "HD Graphics 615"},
+
+	/*Coffeelake*/
+	{0x3E90, "HD Graphics"},
+	{0x3E93, "HD Graphics"},
+	{0x3E99, "HD Graphics"},
+	{0x3E91, "HD Graphics"},
+	{0x3E92, "HD Graphics"},
+	{0x3E96, "HD Graphics"},
+	{0x3E9A, "HD Graphics"},
+	{0x3E9B, "HD Graphics"},
+	{0x3E94, "HD Graphics"},
+	{0x3EA1, "HD Graphics"},
+	{0x3EA4, "HD Graphics"},
+	{0x3EA0, "HD Graphics"},
+	{0x3EA3, "HD Graphics"},
+	{0x3EA9, "HD Graphics"},
+	{0x3EA2, "HD Graphics"},
+	{0x3EA5, "HD Graphics"},
+	{0x3EA6, "HD Graphics"},
+	{0x3EA7, "HD Graphics"},
+	{0x3EA8, "HD Graphics"},
 
 	/* When adding new identifiers, also update:
 	 * 1. intel_identify()
@@ -305,18 +374,16 @@ static const struct pci_id_match intel_device_match[] = {
 	INTEL_IVB_D_IDS(&intel_ivybridge_info),
 	INTEL_IVB_M_IDS(&intel_ivybridge_info),
 
-	INTEL_HSW_D_IDS(&intel_haswell_info),
-	INTEL_HSW_M_IDS(&intel_haswell_info),
-
-	INTEL_VLV_D_IDS(&intel_valleyview_info),
-	INTEL_VLV_M_IDS(&intel_valleyview_info),
-
-	INTEL_BDW_D_IDS(&intel_broadwell_info),
-	INTEL_BDW_M_IDS(&intel_broadwell_info),
-
+	INTEL_HSW_IDS(&intel_haswell_info),
+	INTEL_VLV_IDS(&intel_valleyview_info),
+	INTEL_BDW_IDS(&intel_broadwell_info),
 	INTEL_CHV_IDS(&intel_cherryview_info),
-
 	INTEL_SKL_IDS(&intel_skylake_info),
+	INTEL_BXT_IDS(&intel_broxton_info),
+	INTEL_KBL_IDS(&intel_kabylake_info),
+	INTEL_GLK_IDS(&intel_geminilake_info),
+
+	INTEL_CFL_IDS(&intel_coffeelake_info),
 
 	INTEL_VGA_DEVICE(PCI_MATCH_ANY, &intel_generic_info),
 #endif
@@ -448,9 +515,9 @@ static void intel_identify(int flags)
 	if (unique != stack)
 		free(unique);
 
-	xf86Msg(X_INFO, INTEL_NAME ": Driver for Intel(R) HD Graphics: 2000-6000\n");
-	xf86Msg(X_INFO, INTEL_NAME ": Driver for Intel(R) Iris(TM) Graphics: 5100, 6100\n");
-	xf86Msg(X_INFO, INTEL_NAME ": Driver for Intel(R) Iris(TM) Pro Graphics: 5200, 6200, P6300\n");
+	xf86Msg(X_INFO, INTEL_NAME ": Driver for Intel(R) HD Graphics\n");
+	xf86Msg(X_INFO, INTEL_NAME ": Driver for Intel(R) Iris(TM) Graphics\n");
+	xf86Msg(X_INFO, INTEL_NAME ": Driver for Intel(R) Iris(TM) Pro Graphics\n");
 }
 
 static Bool intel_driver_func(ScrnInfoPtr pScrn,
@@ -506,6 +573,9 @@ static enum accel_method { NOACCEL, SNA, UXA } get_accel_method(void)
 	XF86ConfDevicePtr dev;
 
 	if (hosted())
+		return SNA;
+
+	if (xf86configptr == NULL) /* X -configure */
 		return SNA;
 
 	dev = _xf86findDriver("intel", xf86configptr->conf_device_lst);
@@ -582,10 +652,17 @@ intel_scrn_create(DriverPtr		driver,
 	case NOACCEL:
 #endif
 	case UXA:
-		  return intel_init_scrn(scrn);
+		return intel_init_scrn(scrn);
 #endif
 
-	default: break;
+	default:
+#if USE_SNA
+		return sna_init_scrn(scrn, entity_num);
+#elif USE_UXA
+		return intel_init_scrn(scrn);
+#else
+		break;
+#endif
 	}
 #endif
 
@@ -604,6 +681,8 @@ static Bool intel_pci_probe(DriverPtr		driver,
 			    struct pci_device	*pci,
 			    intptr_t		match_data)
 {
+	Bool ret;
+
 	if (intel_open_device(entity_num, pci, NULL) == -1) {
 #if UMS
 		switch (pci->device_id) {
@@ -621,7 +700,11 @@ static Bool intel_pci_probe(DriverPtr		driver,
 #endif
 	}
 
-	return intel_scrn_create(driver, entity_num, match_data, 0);
+	ret = intel_scrn_create(driver, entity_num, match_data, 0);
+	if (!ret)
+		intel_close_device(entity_num);
+
+	return ret;
 }
 
 #ifdef XSERVER_PLATFORM_BUS
@@ -644,9 +727,16 @@ intel_platform_probe(DriverPtr driver,
 
 	/* if we get any flags we don't understand fail to probe for now */
 	if (flags)
-		return FALSE;
+		goto err;
 
-	return intel_scrn_create(driver, entity_num, match_data, scrn_flags);
+	if (!intel_scrn_create(driver, entity_num, match_data, scrn_flags))
+		goto err;
+
+	return TRUE;
+
+err:
+	intel_close_device(entity_num);
+	return FALSE;
 }
 #endif
 

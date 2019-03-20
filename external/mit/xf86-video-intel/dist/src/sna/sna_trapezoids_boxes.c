@@ -198,7 +198,7 @@ composite_aligned_boxes(struct sna *sna,
 	if (op == PictOpClear && sna->clear)
 		src = sna->clear;
 
-	DBG(("%s: clipped extents (%d, %d), (%d, %d);  now offset by (%d, %d), orgin (%d, %d)\n",
+	DBG(("%s: clipped extents (%d, %d), (%d, %d);  now offset by (%d, %d), origin (%d, %d)\n",
 	     __FUNCTION__,
 	     clip.extents.x1, clip.extents.y1,
 	     clip.extents.x2, clip.extents.y2,
@@ -591,6 +591,8 @@ lerp32_opacity(PixmapPtr scratch,
 {
 	uint32_t *ptr;
 	int stride, i;
+
+	sigtrap_assert_active();
 
 	ptr = (uint32_t*)((uint8_t *)scratch->devPrivate.ptr + scratch->devKind * y);
 	ptr += x;

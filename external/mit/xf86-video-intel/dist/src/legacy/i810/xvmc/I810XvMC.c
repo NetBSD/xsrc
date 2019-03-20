@@ -61,7 +61,7 @@ static int event_base;
 // Arguments: pI810XvMC private data structure from the current context.
 // Notes: We faked the drmMapBufs for the i810's security so now we have
 //   to insert an allocated page into the correct spot in the faked
-//   list to keep up appearences.
+//   list to keep up appearances.
 //   Concept for this function was taken from Mesa sources.
 // Returns: drmBufPtr containing the information about the allocated page.
 ***************************************************************************/
@@ -188,7 +188,7 @@ _X_EXPORT Status XvMCCreateContext(Display *display, XvPortID port,
 
   /* Check for drm */
   if(! drmAvailable()) {
-    printf("Direct Rendering is not avilable on this system!\n");
+    printf("Direct Rendering is not available on this system!\n");
     return BadAlloc;
   }
 
@@ -3279,7 +3279,7 @@ _X_EXPORT Status XvMCSyncSurface(Display *display,XvMCSurface *surface) {
 //   display - Connection to X server
 //   surface - Surface to flush
 // Info:
-//   This command is a noop for i810 becuase we always dispatch buffers in
+//   This command is a noop for i810 because we always dispatch buffers in
 //   render. There is little gain to be had with 4k buffers.
 // Returns: Status
 ***************************************************************************/

@@ -29,6 +29,7 @@
 #include <xcb/dri3.h>
 #include <xcb/sync.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include "dri3.h"
 
@@ -109,11 +110,44 @@ void dri3_fence_free(Display *dpy, struct dri3_fence *fence)
 	xcb_sync_destroy_fence(c, fence->xid);
 }
 
+static void dri3_query_version(xcb_connection_t *c, int *major, int *minor)
+{
+	xcb_dri3_query_version_reply_t *reply;
+
+	reply = xcb_dri3_query_version_reply(c,
+					     xcb_dri3_query_version(c,
+								    XCB_DRI3_MAJOR_VERSION,
+								    XCB_DRI3_MINOR_VERSION),
+					     NULL);
+	if (reply != NULL) {
+		*major = reply->major_version;
+		*minor = reply->minor_version;
+		free(reply);
+	}
+}
+
+static int dri3_exists(xcb_connection_t *c)
+{
+	const xcb_query_extension_reply_t *ext;
+	int major, minor;
+
+	major = minor = -1;
+
+	ext = xcb_get_extension_data(c, &xcb_dri3_id);
+	if (ext != NULL && ext->present)
+		dri3_query_version(c, &major, &minor);
+
+	return major >= 0;
+}
+
 int dri3_open__full(Display *dpy, Window root, unsigned provider)
 {
 	xcb_connection_t *c = XGetXCBConnection(dpy);
 	xcb_dri3_open_cookie_t cookie;
 	xcb_dri3_open_reply_t *reply;
+
+	if (!dri3_exists(c))
+		return -1;
 
 	cookie = xcb_dri3_open(c, root, provider);
 	reply = xcb_dri3_open_reply(c, cookie, NULL);

@@ -1,0 +1,14 @@
+AM_CFLAGS = @CWARNFLAGS@ $(X11_CFLAGS) $(DRM_CFLAGS)
+LDADD = $(X11_LIBS) $(DRM_LIBS) $(CLOCK_GETTIME_LIBS)
+
+check_PROGRAMS =
+
+if DRI2
+check_PROGRAMS += dri2-swap
+endif
+
+if DRI3
+check_PROGRAMS += dri3-swap
+AM_CFLAGS += $(X11_DRI3_CFLAGS)
+LDADD += $(X11_DRI3_LIBS)
+endif
