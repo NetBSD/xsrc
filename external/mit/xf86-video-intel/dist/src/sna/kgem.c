@@ -691,7 +691,6 @@ static void *__kgem_bo_map__cpu(struct kgem *kgem, struct kgem_bo *bo)
 retry:
 	arg.handle = bo->handle;
 	arg.size = bytes(bo);
-	arg.flags = 0;
 	if ((err = do_ioctl(kgem->fd, LOCAL_IOCTL_I915_GEM_MMAP, &arg))) {
 		DBG(("%s: failed %d, throttling/cleaning caches\n",
 		     __FUNCTION__, err));

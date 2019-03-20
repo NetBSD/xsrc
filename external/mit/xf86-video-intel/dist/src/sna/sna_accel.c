@@ -38,6 +38,7 @@
 
 #include <X11/fonts/font.h>
 #include <X11/fonts/fontstruct.h>
+#undef FontSetPrivate
 
 #include <dixfontstr.h>
 

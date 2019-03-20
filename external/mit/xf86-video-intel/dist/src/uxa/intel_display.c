@@ -393,8 +393,13 @@ intel_crtc_apply(xf86CrtcPtr crtc)
 		}
 	}
 
-	if (scrn->pScreen)
+	if (scrn->pScreen) {
+#ifdef HAVE_XF86_CURSOR_RESET_CURSOR
+		xf86CursorResetCursor(scrn->pScreen);
+#else   
 		xf86_reload_cursors(scrn->pScreen);
+#endif
+	}
 
 done:
 	free(output_ids);
