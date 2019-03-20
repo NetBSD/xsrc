@@ -30,6 +30,7 @@
 
 #include <xorg-server.h>
 #include <xorgVersion.h>
+#include <xf86Module.h>
 
 #include <picturestr.h>
 #ifndef GLYPH_HAS_GLYPH_PICTURE_ACCESSOR
@@ -39,7 +40,17 @@
 
 #ifndef XF86_HAS_SCRN_CONV
 #define xf86ScreenToScrn(s) xf86Screens[(s)->myNum]
+#if XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1,1,0,0,0)
 #define xf86ScrnToScreen(s) screenInfo.screens[(s)->scrnIndex]
+#else
+#define xf86ScrnToScreen(s) ((s)->pScreen)
+#endif
+#else
+#define xf86ScrnToScreen(s) ((s)->pScreen)
+#endif
+
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) >= 22
+#define HAVE_NOTIFY_FD 1
 #endif
 
 #ifndef XF86_SCRN_INTERFACE
@@ -129,6 +140,17 @@ static inline const BoxRec *
 region_rects(const RegionRec *r)
 {
 	return r->data ? (const BoxRec *)(r->data + 1) :  &r->extents;
+}
+
+inline static void
+region_get_boxes(const RegionRec *r, const BoxRec **s, const BoxRec **e)
+{
+	int n;
+	if (r->data)
+		*s = region_boxptr(r), n = r->data->numRects;
+	else
+		*s = &r->extents, n = 1;
+	*e = *s + n;
 }
 
 #ifndef INCLUDE_LEGACY_REGION_DEFINES
@@ -221,6 +243,21 @@ static inline void FreePixmap(PixmapPtr pixmap)
 	miHandleExposures(pSrcDrawable, pDstDrawable, \
 			  pGC, srcx, srcy, width, height, \
 			  dstx, dsty)
+#endif
+
+#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,12,99,901,0)
+#define isGPU(S) (S)->is_gpu
+#else
+#define isGPU(S) 0
+#endif
+
+#if HAS_DIRTYTRACKING_ROTATION
+#define PixmapSyncDirtyHelper(d, dd) PixmapSyncDirtyHelper(d)
+#endif
+
+#if !HAVE_NOTIFY_FD
+#define SetNotifyFd(fd, cb, mode, data) AddGeneralSocket(fd);
+#define RemoveNotifyFd(fd) RemoveGeneralSocket(fd)
 #endif
 
 #endif

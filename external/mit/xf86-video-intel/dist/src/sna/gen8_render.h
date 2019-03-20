@@ -335,6 +335,7 @@
 #define PIPE_CONTROL_IS_FLUSH      (1 << 11)
 #define PIPE_CONTROL_TC_FLUSH      (1 << 10)
 #define PIPE_CONTROL_NOTIFY_ENABLE (1 << 8)
+#define PIPE_CONTROL_FLUSH         (1 << 7)
 #define PIPE_CONTROL_GLOBAL_GTT    (1 << 2)
 #define PIPE_CONTROL_LOCAL_PGTT    (0 << 2)
 #define PIPE_CONTROL_STALL_AT_SCOREBOARD   (1 << 1)

@@ -124,9 +124,11 @@ int intel_entity_get_devid(int index);
 int intel_open_device(int entity_num,
 		      const struct pci_device *pci,
 		      struct xf86_platform_device *dev);
+void intel_close_device(int entity_num);
 int __intel_peek_fd(ScrnInfoPtr scrn);
 struct intel_device *intel_get_device(ScrnInfoPtr scrn, int *fd);
 int intel_has_render_node(struct intel_device *dev);
+const char *intel_get_master_name(struct intel_device *dev);
 const char *intel_get_client_name(struct intel_device *dev);
 int intel_get_client_fd(struct intel_device *dev);
 int intel_get_device_id(struct intel_device *dev);

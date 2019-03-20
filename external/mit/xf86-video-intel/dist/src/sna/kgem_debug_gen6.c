@@ -985,7 +985,7 @@ int kgem_gen6_decode_3d(struct kgem *kgem, uint32_t offset)
 		assert(len == 7);
 		kgem_debug_print(data, offset, 0,
 			  "3DSTATE_DEPTH_BUFFER\n");
-		kgem_debug_print(data, offset, 1, "%s, %s, pitch = %d bytes, %stiled, HiZ %d, Seperate Stencil %d\n",
+		kgem_debug_print(data, offset, 1, "%s, %s, pitch = %d bytes, %stiled, HiZ %d, Separate Stencil %d\n",
 			  get_965_surfacetype(data[1] >> 29),
 			  get_965_depthformat((data[1] >> 18) & 0x7),
 			  (data[1] & 0x0001ffff) + 1,

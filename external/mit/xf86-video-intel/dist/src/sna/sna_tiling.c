@@ -369,8 +369,7 @@ sna_tiling_composite_spans_boxes(struct sna *sna,
 				 const BoxRec *box, int nbox, float opacity)
 {
 	while (nbox--)
-		sna_tiling_composite_spans_box(sna, op->base.priv, box++, opacity);
-	(void)sna;
+		sna_tiling_composite_spans_box(sna, op, box++, opacity);
 }
 
 fastcall static void
@@ -581,6 +580,7 @@ sna_tiling_composite_spans(uint32_t op,
 	tile->rects = tile->rects_embedded;
 	tile->rect_count = 0;
 	tile->rect_size = ARRAY_SIZE(tile->rects_embedded);
+	COMPILE_TIME_ASSERT(sizeof(tile->rects_embedded[0]) >= sizeof(struct sna_tile_span));
 
 	tmp->box   = sna_tiling_composite_spans_box;
 	tmp->boxes = sna_tiling_composite_spans_boxes;

@@ -245,6 +245,17 @@ void intel_batch_submit(ScrnInfoPtr scrn)
 	if (intel->batch_used == 0)
 		return;
 
+	if (intel->current_batch == I915_EXEC_BLT &&
+	    INTEL_INFO(intel)->gen >= 060) {
+		OUT_BATCH(MI_FLUSH_DW);
+		OUT_BATCH(0);
+		OUT_BATCH(0);
+		OUT_BATCH(0);
+		OUT_BATCH(MI_LOAD_REGISTER_IMM);
+		OUT_BATCH(BCS_SWCTRL);
+		OUT_BATCH((BCS_SWCTRL_DST_Y | BCS_SWCTRL_SRC_Y) << 16);
+	}
+
 	/* Mark the end of the batchbuffer. */
 	OUT_BATCH(MI_BATCH_BUFFER_END);
 	/* Emit a padding dword if we aren't going to be quad-word aligned. */

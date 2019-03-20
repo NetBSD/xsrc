@@ -197,13 +197,10 @@ void test_compare(struct test *t,
 		  const char *info)
 {
 	XImage out_image, ref_image;
-	Pixmap tmp;
-	char *out, *ref;
+	uint32_t *out, *ref;
 	char buf[600];
 	uint32_t mask;
 	int i, j;
-	XGCValues gcv;
-	GC gc;
 
 	if (w * h * 4 > t->out.max_shm_size)
 		return test_compare_fallback(t,
@@ -214,37 +211,24 @@ void test_compare(struct test *t,
 	test_init_image(&out_image, &t->out.shm, out_format, w, h);
 	test_init_image(&ref_image, &t->ref.shm, ref_format, w, h);
 
-	gcv.graphics_exposures = 0;
-
 	die_unless(out_image.depth == ref_image.depth);
 	die_unless(out_image.bits_per_pixel == ref_image.bits_per_pixel);
 	die_unless(out_image.bits_per_pixel == 32);
 
-	mask = depth_mask(out_image.depth);
+	XShmGetImage(t->out.dpy, out_draw, &out_image, x, y, AllPlanes);
+	out = (uint32_t *)out_image.data;
 
-	tmp = XCreatePixmap(t->out.dpy, out_draw, w, h, out_image.depth);
-	gc = XCreateGC(t->out.dpy, tmp, GCGraphicsExposures, &gcv);
-	XCopyArea(t->out.dpy, out_draw, tmp, gc, x, y, w, h, 0, 0);
-	XShmGetImage(t->out.dpy, tmp, &out_image, 0, 0, AllPlanes);
-	XFreeGC(t->out.dpy, gc);
-	XFreePixmap(t->out.dpy, tmp);
-	out = out_image.data;
-
-	tmp = XCreatePixmap(t->ref.dpy, ref_draw, w, h, ref_image.depth);
-	gc = XCreateGC(t->ref.dpy, tmp, GCGraphicsExposures, &gcv);
-	XCopyArea(t->ref.dpy, ref_draw, tmp, gc, x, y, w, h, 0, 0);
-	XShmGetImage(t->ref.dpy, tmp, &ref_image, 0, 0, AllPlanes);
-	XFreeGC(t->ref.dpy, gc);
-	XFreePixmap(t->ref.dpy, tmp);
-	ref = ref_image.data;
+	XShmGetImage(t->ref.dpy, ref_draw, &ref_image, x, y, AllPlanes);
+	ref = (uint32_t *)ref_image.data;
 
 	/* Start with an exact comparison. However, one quicky desires
 	 * a fuzzy comparator to hide hardware inaccuracies...
 	 */
+	mask = depth_mask(out_image.depth);
 	for (j = 0; j < h; j++) {
 		for (i = 0; i < w; i++) {
-			uint32_t a = ((uint32_t *)out)[i] & mask;
-			uint32_t b = ((uint32_t *)ref)[i] & mask;
+			uint32_t a = out[i] & mask;
+			uint32_t b = ref[i] & mask;
 			if (a != b && pixel_difference(a, b) > MAX_DELTA) {
 				show_pixels(buf,
 					    &out_image, &ref_image,
@@ -255,8 +239,8 @@ void test_compare(struct test *t,
 				    x,i, y,j, a, b, pixel_difference(a, b), buf, info);
 			}
 		}
-		out += out_image.bytes_per_line;
-		ref += ref_image.bytes_per_line;
+		out = (uint32_t *)((char *)out + out_image.bytes_per_line);
+		ref = (uint32_t *)((char *)ref + ref_image.bytes_per_line);
 	}
 }
 

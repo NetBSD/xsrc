@@ -244,6 +244,7 @@ intel_present_check_flip(RRCrtcPtr              crtc,
 	ScrnInfoPtr             scrn = xf86ScreenToScrn(screen);
 	intel_screen_private    *intel = intel_get_screen_private(scrn);
         dri_bo                  *bo;
+	uint32_t		tiling, swizzle;
 
 	if (!scrn->vtSema)
 		return FALSE;
@@ -265,6 +266,12 @@ intel_present_check_flip(RRCrtcPtr              crtc,
         bo = intel_get_pixmap_bo(pixmap);
         if (!bo)
                 return FALSE;
+
+	if (drm_intel_bo_get_tiling(bo, &tiling, &swizzle))
+		return FALSE;
+
+	if (tiling == I915_TILING_Y)
+		return FALSE;
 
 	return TRUE;
 }
@@ -343,29 +350,33 @@ intel_present_unflip(ScreenPtr screen, uint64_t event_id)
 {
 	ScrnInfoPtr                             scrn = xf86ScreenToScrn(screen);
 	intel_screen_private                    *intel = intel_get_screen_private(scrn);
-	struct intel_present_vblank_event       *event;
 	PixmapPtr                               pixmap = screen->GetScreenPixmap(screen);
+	struct intel_present_vblank_event       *event = NULL;
 	dri_bo                                  *bo;
-	Bool                                    ret;
 
 	if (!intel_present_check_flip(NULL, screen->root, pixmap, true))
-		return;
+		goto fail;
 
 	bo = intel_get_pixmap_bo(pixmap);
 	if (!bo)
-		return;
+		goto fail;
 
 	event = calloc(1, sizeof(struct intel_present_vblank_event));
 	if (!event)
-		return;
+		goto fail;
 
 	event->event_id = event_id;
 
-	ret = intel_do_pageflip(intel, bo, -1, FALSE, event, intel_present_flip_event, intel_present_flip_abort);
-	if (!ret) {
-		xf86DrvMsg(scrn->scrnIndex, X_ERROR,
-			   "present unflip failed\n");
-	}
+	if (!intel_do_pageflip(intel, bo, -1, FALSE, event,
+			       intel_present_flip_event,
+			       intel_present_flip_abort))
+		goto fail;
+
+	return;
+fail:
+	xf86SetDesiredModes(scrn);
+	present_event_notify(event_id, 0, 0);
+	free(event);
 }
 
 static present_screen_info_rec intel_present_screen_info = {

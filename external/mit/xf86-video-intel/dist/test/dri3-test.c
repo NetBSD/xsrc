@@ -93,14 +93,9 @@ static const struct pci_id_match ids[] = {
 	INTEL_IVB_D_IDS(070),
 	INTEL_IVB_M_IDS(070),
 
-	INTEL_HSW_D_IDS(075),
-	INTEL_HSW_M_IDS(075),
-
-	INTEL_VLV_D_IDS(071),
-	INTEL_VLV_M_IDS(071),
-
-	INTEL_BDW_D_IDS(0100),
-	INTEL_BDW_M_IDS(0100),
+	INTEL_HSW_IDS(075),
+	INTEL_VLV_IDS(071),
+	INTEL_BDW_IDS(0100),
 };
 
 static int i915_gen(int device)
@@ -1020,6 +1015,67 @@ fail:
 	return 1;
 }
 
+static int gem_set_tiling(int fd, uint32_t handle, int tiling, int stride)
+{
+	struct drm_i915_gem_set_tiling set_tiling;
+
+	set_tiling.handle = handle;
+	set_tiling.tiling_mode = tiling;
+	set_tiling.stride = stride;
+
+	return drmIoctl(fd, DRM_IOCTL_I915_GEM_SET_TILING, &set_tiling) == 0;
+}
+
+static int test_tiling(Display *dpy, int device)
+{
+	Window root = RootWindow(dpy, DefaultScreen(dpy));
+	const int tiling[] = { I915_TILING_NONE, I915_TILING_X, I915_TILING_Y };
+	int line = -1;
+	int t;
+
+	_x_error_occurred = 0;
+
+	for (t = 0; t < sizeof(tiling)/sizeof(tiling[0]); t++) {
+		uint32_t src;
+		int src_fd;
+		Pixmap src_pix;
+
+		src = gem_create(device, 4*4096);
+		if (!src) {
+			line = __LINE__;
+			goto fail;
+		}
+
+		gem_set_tiling(device, src, tiling[t], 512);
+
+		src_fd = gem_export(device, src);
+		if (src_fd < 0) {
+			line = __LINE__;
+			goto fail;
+		}
+
+		src_pix = dri3_create_pixmap(dpy, root,
+					     128, 32, 32,
+					     src_fd, 32, 512, 4*4096);
+		XSync(dpy, True);
+		if (_x_error_occurred) {
+			line = __LINE__;
+			goto fail;
+		}
+		XFreePixmap(dpy, src_pix);
+		_x_error_occurred = 0;
+
+		close(src_fd);
+		gem_close(device, src);
+	}
+
+	return 0;
+
+fail:
+	printf("%s failed with tiling %d, line %d\n", __func__, tiling[t], line);
+	return 1;
+}
+
 static int
 _check_error_handler(Display     *display,
 		     XErrorEvent *event)
@@ -1060,6 +1116,7 @@ int main(void)
 
 	error += test_bad_size(dpy, device);
 	error += test_bad_pitch(dpy, device);
+	error += test_tiling(dpy, device);
 
 	error += test_shm(dpy, device, 400, 300);
 	error += test_shm(dpy, device, 300, 400);

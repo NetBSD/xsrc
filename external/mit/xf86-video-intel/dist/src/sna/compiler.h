@@ -32,13 +32,14 @@
 #define likely(expr) (__builtin_expect (!!(expr), 1))
 #define unlikely(expr) (__builtin_expect (!!(expr), 0))
 #define noinline __attribute__((noinline))
-#define force_inline inline __attribute__((always_inline))
+#define force_inline inline /* __attribute__((always_inline)) */
 #define fastcall __attribute__((regparm(3)))
 #define must_check __attribute__((warn_unused_result))
 #define constant __attribute__((const))
 #define pure __attribute__((pure))
 #define tightly_packed __attribute__((__packed__))
 #define flatten __attribute__((flatten))
+#define nonnull __attribute__((nonnull))
 #define page_aligned __attribute__((aligned(4096)))
 #else
 #define likely(expr) (expr)
@@ -51,18 +52,15 @@
 #define pure
 #define tighly_packed
 #define flatten
+#define nonnull
 #define page_aligned
 #endif
 
 #define HAS_GCC(major, minor) defined(__GNUC__) && (__GNUC__ > (major) || __GNUC__ == (major) && __GNUC_MINOR__ >= (minor))
 
 #if HAS_GCC(4, 5)
-#define sse2 __attribute__((target("sse2,fpmath=sse")))
-#define sse4_2 __attribute__((target("sse4.2,sse2,fpmath=sse")))
-#endif
-
-#if HAS_GCC(4, 7)
-#define avx2 __attribute__((target("avx2,sse4.2,sse2,fpmath=sse")))
+#define sse2 fast __attribute__((target("sse2,fpmath=sse")))
+#define sse4_2 fast __attribute__((target("sse4.2,sse2,fpmath=sse")))
 #endif
 
 #if HAS_GCC(4, 6) && defined(__OPTIMIZE__)
@@ -71,10 +69,17 @@
 #define fast
 #endif
 
-#if HAS_GCC(4, 6) && defined(__OPTIMIZE__)
-#define fast_memcpy __attribute__((optimize("Ofast"))) __attribute__((target("inline-all-stringops")))
-#elif HAS_GCC(4, 5) && defined(__OPTIMIZE__)
-#define fast_memcpy __attribute__((target("inline-all-stringops")))
+#if HAS_GCC(4, 7)
+#define avx2 fast __attribute__((target("avx2,avx,sse4.2,sse2,fpmath=sse")))
+#define assume_aligned(ptr, align) __builtin_assume_aligned((ptr), (align))
+#define assume_misaligned(ptr, align, offset) __builtin_assume_aligned((ptr), (align), (offset))
+#else
+#define assume_aligned(ptr, align) (ptr)
+#define assume_misaligned(ptr, align, offset) (ptr)
+#endif
+
+#if HAS_GCC(4, 5) && defined(__OPTIMIZE__)
+#define fast_memcpy fast __attribute__((target("inline-all-stringops")))
 #else
 #define fast_memcpy
 #endif

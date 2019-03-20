@@ -403,15 +403,140 @@ static void trap_tests(struct test *t,
 	free(traps);
 }
 
+enum edge {
+	EDGE_SHARP = PolyEdgeSharp,
+	EDGE_SMOOTH,
+};
+
+static const char *edge_name(enum edge edge)
+{
+	switch (edge) {
+	default:
+	case EDGE_SHARP: return "sharp";
+	case EDGE_SMOOTH: return "smooth";
+	}
+}
+
+static void set_edge(Display *dpy, Picture p, enum edge edge)
+{
+	XRenderPictureAttributes a;
+
+	a.poly_edge = edge;
+	XRenderChangePicture(dpy, p, CPPolyEdge, &a);
+}
+
+static void edge_test(struct test *t,
+		      enum mask mask,
+		      enum edge edge,
+		      enum target target)
+{
+	struct test_target out, ref;
+	XRenderColor white = { 0xffff, 0xffff, 0xffff, 0xffff };
+	Picture src_ref, src_out;
+	XTrapezoid trap;
+	int left_or_right, p;
+
+	test_target_create_render(&t->out, target, &out);
+	set_edge(t->out.dpy, out.picture, edge);
+	src_out = XRenderCreateSolidFill(t->out.dpy, &white);
+
+	test_target_create_render(&t->ref, target, &ref);
+	set_edge(t->ref.dpy, ref.picture, edge);
+	src_ref = XRenderCreateSolidFill(t->ref.dpy, &white);
+
+	printf("Testing edges (with mask %s and %s edges) (%s): ",
+	       mask_name(mask),
+	       edge_name(edge),
+	       test_target_name(target));
+	fflush(stdout);
+
+	for (left_or_right = 0; left_or_right <= 1; left_or_right++) {
+		for (p = -64; p <= out.width + 64; p++) {
+			char buf[80];
+
+			if (left_or_right) {
+				trap.left.p1.x = 0;
+				trap.left.p1.y = 0;
+				trap.left.p2.x = 0;
+				trap.left.p2.y = out.height << 16;
+
+				trap.right.p1.x = p << 16;
+				trap.right.p1.y = 0;
+				trap.right.p2.x = out.width << 16;
+				trap.right.p2.y = out.height << 16;
+			} else {
+				trap.right.p1.x = out.width << 16;
+				trap.right.p1.y = 0;
+				trap.right.p2.x = out.width << 16;
+				trap.right.p2.y = out.height << 16;
+
+				trap.left.p1.x = 0;
+				trap.left.p1.y = 0;
+				trap.left.p2.x = p << 16;
+				trap.left.p2.y = out.height << 16;
+			}
+
+			trap.top = 0;
+			trap.bottom = out.height << 16;
+
+			sprintf(buf,
+				"trap=((%d, %d), (%d, %d)), ((%d, %d), (%d, %d))\n",
+				trap.left.p1.x >> 16, trap.left.p1.y >> 16,
+				trap.left.p2.x >> 16, trap.left.p2.y >> 16,
+				trap.right.p1.x >> 16, trap.right.p1.y >> 16,
+				trap.right.p2.x >> 16, trap.right.p2.y >> 16);
+
+			clear(&t->out, &out);
+			XRenderCompositeTrapezoids(t->out.dpy,
+						   PictOpSrc,
+						   src_out,
+						   out.picture,
+						   mask_format(t->out.dpy, mask),
+						   0, 0,
+						   &trap, 1);
+
+			clear(&t->ref, &ref);
+			XRenderCompositeTrapezoids(t->ref.dpy,
+						   PictOpSrc,
+						   src_ref,
+						   ref.picture,
+						   mask_format(t->ref.dpy, mask),
+						   0, 0,
+						   &trap, 1);
+
+			test_compare(t,
+				     out.draw, out.format,
+				     ref.draw, ref.format,
+				     0, 0, out.width, out.height,
+				     buf);
+		}
+	}
+
+	XRenderFreePicture(t->out.dpy, src_out);
+	test_target_destroy_render(&t->out, &out);
+
+	XRenderFreePicture(t->ref.dpy, src_ref);
+	test_target_destroy_render(&t->ref, &ref);
+
+	printf("pass\n");
+}
+
 int main(int argc, char **argv)
 {
 	struct test test;
 	int i, dx, dy;
 	enum target target;
 	enum mask mask;
+	enum edge edge;
 	enum trapezoid trapezoid;
 
 	test_init(&test, argc, argv);
+
+	for (target = TARGET_FIRST; target <= TARGET_LAST; target++) {
+		for (mask = MASK_NONE; mask <= MASK_A8; mask++)
+			for (edge = EDGE_SHARP; edge <= EDGE_SMOOTH; edge++)
+				edge_test(&test, mask, edge, target);
+	}
 
 	for (i = 0; i <= DEFAULT_ITERATIONS; i++) {
 		int reps = REPS(i), sets = SETS(i);

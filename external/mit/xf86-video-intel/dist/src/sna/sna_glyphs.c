@@ -74,7 +74,7 @@
 #define NO_GLYPHS_VIA_MASK 0
 #define FORCE_SMALL_MASK 0 /* -1 = never, 1 = always */
 #define NO_GLYPHS_SLOW 0
-#define NO_DISCARD_MASK 0
+#define DISCARD_MASK 0 /* -1 = never, 1 = always */
 
 #define CACHE_PICTURE_SIZE 1024
 #define GLYPH_MIN_SIZE 8
@@ -185,7 +185,7 @@ void sna_glyphs_close(struct sna *sna)
  */
 bool sna_glyphs_create(struct sna *sna)
 {
-	ScreenPtr screen = sna->scrn->pScreen;
+	ScreenPtr screen = to_screen_from_sna(sna);
 	pixman_color_t white = { 0xffff, 0xffff, 0xffff, 0xffff };
 	unsigned int formats[] = {
 		PIXMAN_a8,
@@ -1094,6 +1094,9 @@ sna_glyph_get_image(GlyphPtr g, ScreenPtr s)
 
 static inline bool use_small_mask(struct sna *sna, int16_t width, int16_t height, int depth)
 {
+	if (depth < 8)
+		return true;
+
 	if (FORCE_SMALL_MASK)
 		return FORCE_SMALL_MASK > 0;
 
@@ -1156,12 +1159,6 @@ glyphs_via_mask(struct sna *sna,
 	src_x += box.x1 - list->xOff;
 	src_y += box.y1 - list->yOff;
 
-	if (format->depth < 8) {
-		format = PictureMatchFormat(screen, 8, PICT_a8);
-		if (!format)
-			return false;
-	}
-
 	component_alpha = NeedsComponent(format->format);
 	if (use_small_mask(sna, width, height, format->depth)) {
 		pixman_image_t *mask_image;
@@ -1179,7 +1176,7 @@ use_small_mask:
 			return false;
 
 		mask_image =
-			pixman_image_create_bits(format->depth << 24 | format->format,
+			pixman_image_create_bits(pixmap->drawable.bitsPerPixel << 24 | format->format,
 						 width, height,
 						 pixmap->devPrivate.ptr,
 						 pixmap->devKind);
@@ -1386,10 +1383,11 @@ next_image:
 					DBG(("%s: atlas format=%08x, mask format=%08x\n",
 					     __FUNCTION__,
 					     (int)p->atlas->format,
-					     (int)(format->depth << 24 | format->format)));
+					     (int)mask->format));
 
 					memset(&tmp, 0, sizeof(tmp));
-					if (p->atlas->format == (format->depth << 24 | format->format)) {
+					if (p->atlas->format == mask->format ||
+					    alphaless(p->atlas->format) == mask->format) {
 						ok = sna->render.composite(sna, PictOpAdd,
 									   p->atlas, NULL, mask,
 									   0, 0, 0, 0, 0, 0,
@@ -1561,6 +1559,9 @@ skip_glyph:
 		}
 	}
 
+	assert(format);
+	DBG(("%s: format=%08d, depth=%d\n",
+	     __FUNCTION__, format->format, format->depth));
 out:
 	if (list_extents != stack_extents)
 		free(list_extents);
@@ -1573,24 +1574,34 @@ static bool can_discard_mask(uint8_t op, PicturePtr src, PictFormatPtr mask,
 	PictFormatPtr g;
 	uint32_t color;
 
-	if (NO_DISCARD_MASK)
-		return false;
+	if (DISCARD_MASK)
+		return DISCARD_MASK > 0;
 
 	DBG(("%s: nlist=%d, mask=%08x, depth %d, op=%d (bounded? %d)\n",
 	     __FUNCTION__, nlist,
 	     mask ? (unsigned)mask->format : 0, mask ? mask->depth : 0,
 	     op, op_is_bounded(op)));
 
-	if (nlist == 1 && list->len == 1)
-		return true;
+	if (nlist == 1 && list->len == 1) {
+		if (mask == list->format)
+			return true;
 
-	if (!op_is_bounded(op))
+		g = list->format;
+		goto skip;
+	}
+
+	if (!op_is_bounded(op)) {
+		DBG(("%s: unbounded op, not discarding\n", __FUNCTION__));
 		return false;
+	}
 
 	/* No glyphs overlap and we are not performing a mask conversion. */
 	g = glyphs_format(nlist, list, glyphs);
-	if (mask == g)
+	if (mask == g) {
+		DBG(("%s: mask matches glyphs format, no conversion, so discard mask\n",
+		     __FUNCTION__));
 		return true;
+	}
 
 	DBG(("%s: preferred mask format %08x, depth %d\n",
 	     __FUNCTION__, g ? (unsigned)g->format : 0,  g ? g->depth : 0));
@@ -1605,18 +1616,41 @@ static bool can_discard_mask(uint8_t op, PicturePtr src, PictFormatPtr mask,
 
 			list++;
 		}
+
+		if (!sna_picture_is_solid(src, &color))
+			return false;
+
+		return color >> 24 == 0xff;
 	} else {
-		if (PICT_FORMAT_A(mask->format) >= PICT_FORMAT_A(g->format))
+skip:
+		if (mask->format == g->format)
 			return true;
 
-		if (g->depth != 1)
-			return false;
-	}
+		if (mask->format == alphaless(g->format))
+			return true;
 
-	if (!sna_picture_is_solid(src, &color))
+		if (PICT_FORMAT_TYPE(g->format) == PICT_TYPE_A &&
+		    PICT_FORMAT_TYPE(mask->format) != PICT_TYPE_A)
+			return true;
+
 		return false;
+	}
+}
 
-	return color >> 24 == 0xff;
+static uint32_t pixman_format(PictFormatPtr short_format)
+{
+	uint32_t bpp;
+
+	bpp = short_format->depth;
+	if (bpp <= 1)
+		bpp = 1;
+	else if (bpp <= 8)
+		bpp = 8;
+	else if (bpp <= 16)
+		bpp = 16;
+	else
+		bpp = 32;
+	return bpp << 24 | short_format->format;
 }
 
 static void
@@ -1756,7 +1790,7 @@ next:
 		if (sigtrap_get() == 0) {
 			if (mask_format) {
 				pixman_composite_glyphs(op, src_image, dst_image,
-							mask_format->format | (mask_format->depth << 24),
+							pixman_format(mask_format),
 							src_x + src_dx + region.extents.x1 - dst_x,
 							src_y + src_dy + region.extents.y1 - dst_y,
 							region.extents.x1, region.extents.y1,
@@ -1815,10 +1849,10 @@ out:
 			     x, y,
 			     mask_format->depth,
 			     (long)mask_format->format,
-			     (long)(mask_format->depth << 24 | mask_format->format),
+			     (long)pixman_format(mask_format),
 			     NeedsComponent(mask_format->format)));
 			mask_image =
-				pixman_image_create_bits(mask_format->depth << 24 | mask_format->format,
+				pixman_image_create_bits(pixman_format(mask_format),
 							 region.extents.x2 - region.extents.x1,
 							 region.extents.y2 - region.extents.y1,
 							 NULL, 0);
@@ -2086,12 +2120,6 @@ glyphs_via_image(struct sna *sna,
 	src_x += box.x1 - list->xOff;
 	src_y += box.y1 - list->yOff;
 
-	if (format->depth < 8) {
-		format = PictureMatchFormat(screen, 8, PICT_a8);
-		if (!format)
-			return false;
-	}
-
 	DBG(("%s: small mask [format=%lx, depth=%d, size=%d], rendering glyphs to upload buffer\n",
 	     __FUNCTION__, (unsigned long)format->format,
 	     format->depth, (uint32_t)width*height*format->depth));
@@ -2104,7 +2132,7 @@ glyphs_via_image(struct sna *sna,
 		return false;
 
 	mask_image =
-		pixman_image_create_bits(format->depth << 24 | format->format,
+		pixman_image_create_bits(pixmap->drawable.bitsPerPixel << 24 | format->format,
 					 width, height,
 					 pixmap->devPrivate.ptr,
 					 pixmap->devKind);

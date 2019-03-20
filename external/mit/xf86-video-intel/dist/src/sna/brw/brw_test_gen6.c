@@ -98,14 +98,14 @@ static const uint32_t ps_kernel_masknoca_projective[][4] = {
 static const uint32_t ps_kernel_packed[][4] = {
 #include "exa_wm_src_affine.g6b"
 #include "exa_wm_src_sample_argb.g6b"
-#include "exa_wm_yuv_rgb.g6b"
+#include "exa_wm_yuv_rgb_bt601.g6b"
 #include "exa_wm_write.g6b"
 };
 
 static const uint32_t ps_kernel_planar[][4] = {
 #include "exa_wm_src_affine.g6b"
 #include "exa_wm_src_sample_planar.g6b"
-#include "exa_wm_yuv_rgb.g6b"
+#include "exa_wm_yuv_rgb_bt601.g6b"
 #include "exa_wm_write.g6b"
 };
 

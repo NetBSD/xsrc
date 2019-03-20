@@ -171,7 +171,7 @@ static XF86MCAdaptorPtr ppAdapt[1] =
  *
  *  I810InitMC
  *
- *  Initialize the hardware motion compenstation extention for this 
+ *  Initialize the hardware motion compensation extension for this
  *  hardware. The initialization routines want the address of the pointers
  *  to the structures, not the address of the structures. This means we
  *  allocate (or create static?) the pointer memory and pass that 

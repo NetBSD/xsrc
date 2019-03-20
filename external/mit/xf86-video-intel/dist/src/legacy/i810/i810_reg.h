@@ -245,7 +245,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * not sure they refer to local (graphics) memory.
  *
  * These details are for the local memory control registers,
- * (pp301-310).  The test machines are not equiped with local memory,
+ * (pp301-310).  The test machines are not equipped with local memory,
  * so nothing is tested.  Only a single row seems to be supported.
  */
 #define DRAM_ROW_TYPE      0x3000

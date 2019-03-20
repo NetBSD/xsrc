@@ -34,6 +34,12 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 
+#if MAJOR_IN_MKDEV
+#include <sys/mkdev.h>
+#elif MAJOR_IN_SYSMACROS
+#include <sys/sysmacros.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,6 +48,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <errno.h>
 
 #include <xorg-server.h>
 #include <xf86.h>
@@ -84,7 +91,7 @@ void backlight_init(struct backlight *b)
 	b->has_power = 0;
 }
 
-#ifdef __OpenBSD__
+#ifdef HAVE_DEV_WSCONS_WSCONSIO_H
 
 #include <dev/wscons/wsconsio.h>
 #include <xf86Priv.h>
@@ -122,6 +129,11 @@ int backlight_get(struct backlight *b)
 	return param.curval;
 }
 
+char *backlight_find_for_device(struct pci_device *pci)
+{
+	return NULL;
+}
+
 int backlight_open(struct backlight *b, char *iface)
 {
 	struct wsdisplay_param param;
@@ -146,12 +158,9 @@ int backlight_open(struct backlight *b, char *iface)
 	return param.curval;
 }
 
-enum backlight_type backlight_exists(const char *iface)
+int backlight_exists(const char *iface)
 {
-	if (iface != NULL)
-		return BL_NONE;
-
-	return BL_PLATFORM;
+	return iface == NULL;
 }
 
 int backlight_on(struct backlight *b)
@@ -163,6 +172,7 @@ int backlight_off(struct backlight *b)
 {
 	return 0;
 }
+
 #else
 
 static int
@@ -213,6 +223,24 @@ __backlight_read(const char *iface, const char *file)
 }
 
 static int
+writen(int fd, const char *value, int len)
+{
+	int ret;
+
+	do {
+		ret = write(fd, value, len);
+		if (ret < 0) {
+			if (errno == EAGAIN || errno == EINTR)
+				continue;
+
+			return ret;
+		}
+	} while (value += ret, len -= ret);
+
+	return 0;
+}
+
+static int
 __backlight_write(const char *iface, const char *file, const char *value)
 {
 	int fd, ret;
@@ -221,7 +249,7 @@ __backlight_write(const char *iface, const char *file, const char *value)
 	if (fd < 0)
 		return -1;
 
-	ret = write(fd, value, strlen(value)+1);
+	ret = writen(fd, value, strlen(value)+1);
 	close(fd);
 
 	return ret;
@@ -244,10 +272,10 @@ static const char *known_interfaces[] = {
 	"intel_backlight",
 };
 
-static enum backlight_type __backlight_type(const char *iface)
+static int __backlight_type(const char *iface)
 {
 	char buf[1024];
-	int fd, v;
+	int fd, v, i;
 
 	v = -1;
 	fd = __backlight_open(iface, "type", O_RDONLY);
@@ -261,37 +289,39 @@ static enum backlight_type __backlight_type(const char *iface)
 		buf[v] = '\0';
 
 		if (strcmp(buf, "raw") == 0)
-			v = BL_RAW;
+			v = BL_RAW << 8;
 		else if (strcmp(buf, "platform") == 0)
-			v = BL_PLATFORM;
+			v = BL_PLATFORM << 8;
 		else if (strcmp(buf, "firmware") == 0)
-			v = BL_FIRMWARE;
+			v = BL_FIRMWARE << 8;
 		else
-			v = BL_NAMED;
+			v = BL_NAMED << 8;
 	} else
-		v = BL_NAMED;
+		v = BL_NAMED << 8;
 
-	if (v == BL_NAMED) {
-		int i;
-		for (i = 0; i < ARRAY_SIZE(known_interfaces); i++) {
-			if (strcmp(iface, known_interfaces[i]) == 0)
-				break;
-		}
-		v += i;
+	for (i = 0; i < ARRAY_SIZE(known_interfaces); i++) {
+		if (strcmp(iface, known_interfaces[i]) == 0)
+			break;
 	}
+	v += i;
 
 	return v;
 }
 
-enum backlight_type backlight_exists(const char *iface)
+static int __backlight_exists(const char *iface)
 {
 	if (__backlight_read(iface, "brightness") < 0)
-		return BL_NONE;
+		return -1;
 
 	if (__backlight_read(iface, "max_brightness") <= 0)
-		return BL_NONE;
+		return -1;
 
 	return __backlight_type(iface);
+}
+
+int backlight_exists(const char *iface)
+{
+	return __backlight_exists(iface) != -1;
 }
 
 static int __backlight_init(struct backlight *b, char *iface, int fd)
@@ -399,7 +429,50 @@ __backlight_find(void)
 			continue;
 
 		/* Fallback to priority list of known iface for old kernels */
-		v = backlight_exists(de->d_name);
+		v = __backlight_exists(de->d_name);
+		if (v < 0)
+			continue;
+
+		if (v < best_type) {
+			char *copy = strdup(de->d_name);
+			if (copy) {
+				free(best_iface);
+				best_iface = copy;
+				best_type = v;
+			}
+		}
+	}
+	closedir(dir);
+
+	return best_iface;
+}
+
+char *backlight_find_for_device(struct pci_device *pci)
+{
+	char path[200];
+	unsigned best_type = INT_MAX;
+	char *best_iface = NULL;
+	DIR *dir;
+	struct dirent *de;
+
+	snprintf(path, sizeof(path),
+		 "/sys/bus/pci/devices/%04x:%02x:%02x.%d/backlight",
+		 pci->domain, pci->bus, pci->dev, pci->func);
+
+	dir = opendir(path);
+	if (dir == NULL)
+		return NULL;
+
+	while ((de = readdir(dir))) {
+		int v;
+
+		if (*de->d_name == '.')
+			continue;
+
+		v = __backlight_exists(de->d_name);
+		if (v < 0)
+			continue;
+
 		if (v < best_type) {
 			char *copy = strdup(de->d_name);
 			if (copy) {
@@ -416,14 +489,17 @@ __backlight_find(void)
 
 int backlight_open(struct backlight *b, char *iface)
 {
-	int level;
+	int level, type;
 
 	if (iface == NULL)
 		iface = __backlight_find();
 	if (iface == NULL)
 		goto err;
 
-	b->type = __backlight_type(iface);
+	type = __backlight_type(iface);
+	if (type < 0)
+		goto err;
+	b->type = type >> 8;
 
 	b->max = __backlight_read(iface, "max_brightness");
 	if (b->max <= 0)
@@ -447,7 +523,7 @@ err:
 int backlight_set(struct backlight *b, int level)
 {
 	char val[BACKLIGHT_VALUE_LEN];
-	int len, ret = 0;
+	int len;
 
 	if (b->iface == NULL)
 		return 0;
@@ -456,10 +532,7 @@ int backlight_set(struct backlight *b, int level)
 		level = b->max;
 
 	len = snprintf(val, BACKLIGHT_VALUE_LEN, "%d\n", level);
-	if (write(b->fd, val, len) != len)
-		ret = -1;
-
-	return ret;
+	return writen(b->fd, val, len);
 }
 
 int backlight_get(struct backlight *b)
@@ -517,43 +590,6 @@ void backlight_disable(struct backlight *b)
 void backlight_close(struct backlight *b)
 {
 	backlight_disable(b);
-	if (b->pid)
+	if (b->pid > 0)
 		waitpid(b->pid, NULL, 0);
-}
-
-char *backlight_find_for_device(struct pci_device *pci)
-{
-	char path[200];
-	unsigned best_type = INT_MAX;
-	char *best_iface = NULL;
-	DIR *dir;
-	struct dirent *de;
-
-	snprintf(path, sizeof(path),
-		 "/sys/bus/pci/devices/%04x:%02x:%02x.%d/backlight",
-		 pci->domain, pci->bus, pci->dev, pci->func);
-
-	dir = opendir(path);
-	if (dir == NULL)
-		return NULL;
-
-	while ((de = readdir(dir))) {
-		int v;
-
-		if (*de->d_name == '.')
-			continue;
-
-		v = backlight_exists(de->d_name);
-		if (v < best_type) {
-			char *copy = strdup(de->d_name);
-			if (copy) {
-				free(best_iface);
-				best_iface = copy;
-				best_type = v;
-			}
-		}
-	}
-	closedir(dir);
-
-	return best_iface;
 }

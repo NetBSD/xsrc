@@ -30,7 +30,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef _INTEL_BATCHBUFFER_H
 #define _INTEL_BATCHBUFFER_H
 
-#define BATCH_RESERVED		16
+#define BATCH_RESERVED		64
 
 
 void intel_batch_init(ScrnInfoPtr scrn);
@@ -202,6 +202,23 @@ do {									\
 
 #define BEGIN_BATCH(n)	__BEGIN_BATCH(n,RENDER_BATCH)
 #define BEGIN_BATCH_BLT(n)	__BEGIN_BATCH(n,BLT_BATCH)
+#define BEGIN_BATCH_BLT_TILED(n) \
+do { \
+	if (INTEL_INFO(intel)->gen < 060) { \
+		__BEGIN_BATCH(n, BLT_BATCH); \
+	} else { \
+		__BEGIN_BATCH(n+7, BLT_BATCH); \
+		OUT_BATCH(MI_FLUSH_DW); \
+		OUT_BATCH(0); \
+		OUT_BATCH(0); \
+		OUT_BATCH(0); \
+		OUT_BATCH(MI_LOAD_REGISTER_IMM); \
+		OUT_BATCH(BCS_SWCTRL); \
+		OUT_BATCH((BCS_SWCTRL_DST_Y | BCS_SWCTRL_SRC_Y) << 16 | \
+			  ((intel->BR_tiling[0] == I915_TILING_Y) ? BCS_SWCTRL_DST_Y : 0) | \
+			  ((intel->BR_tiling[1] == I915_TILING_Y) ? BCS_SWCTRL_SRC_Y : 0)); \
+	} \
+} while (0)
 
 #define ADVANCE_BATCH() do {						\
 	if (intel->batch_emitting == 0)					\

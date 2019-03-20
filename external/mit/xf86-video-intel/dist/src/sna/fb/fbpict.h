@@ -24,10 +24,6 @@
 #ifndef FBPICT_H
 #define FBPICT_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <xorg-server.h>
 #include <picturestr.h>
 

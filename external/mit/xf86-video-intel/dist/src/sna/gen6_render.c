@@ -101,17 +101,45 @@ static const struct gt_info gt2_info = {
 	.gt = 2,
 };
 
-static const uint32_t ps_kernel_packed[][4] = {
+static const uint32_t ps_kernel_packed_bt601[][4] = {
 #include "exa_wm_src_affine.g6b"
 #include "exa_wm_src_sample_argb.g6b"
-#include "exa_wm_yuv_rgb.g6b"
+#include "exa_wm_yuv_rgb_bt601.g6b"
 #include "exa_wm_write.g6b"
 };
 
-static const uint32_t ps_kernel_planar[][4] = {
+static const uint32_t ps_kernel_planar_bt601[][4] = {
 #include "exa_wm_src_affine.g6b"
 #include "exa_wm_src_sample_planar.g6b"
-#include "exa_wm_yuv_rgb.g6b"
+#include "exa_wm_yuv_rgb_bt601.g6b"
+#include "exa_wm_write.g6b"
+};
+
+static const uint32_t ps_kernel_nv12_bt601[][4] = {
+#include "exa_wm_src_affine.g6b"
+#include "exa_wm_src_sample_nv12.g6b"
+#include "exa_wm_yuv_rgb_bt601.g6b"
+#include "exa_wm_write.g6b"
+};
+
+static const uint32_t ps_kernel_packed_bt709[][4] = {
+#include "exa_wm_src_affine.g6b"
+#include "exa_wm_src_sample_argb.g6b"
+#include "exa_wm_yuv_rgb_bt709.g6b"
+#include "exa_wm_write.g6b"
+};
+
+static const uint32_t ps_kernel_planar_bt709[][4] = {
+#include "exa_wm_src_affine.g6b"
+#include "exa_wm_src_sample_planar.g6b"
+#include "exa_wm_yuv_rgb_bt709.g6b"
+#include "exa_wm_write.g6b"
+};
+
+static const uint32_t ps_kernel_nv12_bt709[][4] = {
+#include "exa_wm_src_affine.g6b"
+#include "exa_wm_src_sample_nv12.g6b"
+#include "exa_wm_yuv_rgb_bt709.g6b"
 #include "exa_wm_write.g6b"
 };
 
@@ -141,8 +169,14 @@ static const struct wm_kernel_info {
 	NOKERNEL(OPACITY, brw_wm_kernel__affine_opacity, 2),
 	NOKERNEL(OPACITY_P, brw_wm_kernel__projective_opacity, 2),
 
-	KERNEL(VIDEO_PLANAR, ps_kernel_planar, 7),
-	KERNEL(VIDEO_PACKED, ps_kernel_packed, 2),
+
+	KERNEL(VIDEO_PLANAR_BT601, ps_kernel_planar_bt601, 7),
+	KERNEL(VIDEO_NV12_BT601, ps_kernel_nv12_bt601, 7),
+	KERNEL(VIDEO_PACKED_BT601, ps_kernel_packed_bt601, 2),
+
+	KERNEL(VIDEO_PLANAR_BT709, ps_kernel_planar_bt709, 7),
+	KERNEL(VIDEO_NV12_BT709, ps_kernel_nv12_bt709, 7),
+	KERNEL(VIDEO_PACKED_BT709, ps_kernel_packed_bt709, 2),
 };
 #undef KERNEL
 
@@ -261,7 +295,7 @@ static uint32_t gen6_get_card_format(PictFormat format)
 		return GEN6_SURFACEFORMAT_R8G8B8A8_UNORM;
 	case PICT_x8b8g8r8:
 		return GEN6_SURFACEFORMAT_R8G8B8X8_UNORM;
-#ifdef PICT_a2r10g10b10
+#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,6,99,900,0)
 	case PICT_a2r10g10b10:
 		return GEN6_SURFACEFORMAT_B10G10R10A2_UNORM;
 	case PICT_x2r10g10b10:
@@ -291,7 +325,7 @@ static uint32_t gen6_get_dest_format(PictFormat format)
 	case PICT_a8b8g8r8:
 	case PICT_x8b8g8r8:
 		return GEN6_SURFACEFORMAT_R8G8B8A8_UNORM;
-#ifdef PICT_a2r10g10b10
+#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,6,99,900,0)
 	case PICT_a2r10g10b10:
 	case PICT_x2r10g10b10:
 		return GEN6_SURFACEFORMAT_B10G10R10A2_UNORM;
@@ -1554,7 +1588,7 @@ static void gen6_emit_video_state(struct sna *sna,
 				  const struct sna_composite_op *op)
 {
 	struct sna_video_frame *frame = op->priv;
-	uint32_t src_surf_format;
+	uint32_t src_surf_format[6];
 	uint32_t src_surf_base[6];
 	int src_width[6];
 	int src_height[6];
@@ -1574,22 +1608,27 @@ static void gen6_emit_video_state(struct sna *sna,
 	src_surf_base[5] = frame->UBufOffset;
 
 	if (is_planar_fourcc(frame->id)) {
-		src_surf_format = GEN6_SURFACEFORMAT_R8_UNORM;
-		src_width[1]  = src_width[0]  = frame->width;
-		src_height[1] = src_height[0] = frame->height;
-		src_pitch[1]  = src_pitch[0]  = frame->pitch[1];
-		src_width[4]  = src_width[5]  = src_width[2]  = src_width[3] =
-			frame->width / 2;
-		src_height[4] = src_height[5] = src_height[2] = src_height[3] =
-			frame->height / 2;
-		src_pitch[4]  = src_pitch[5]  = src_pitch[2]  = src_pitch[3] =
-			frame->pitch[0];
+		for (n = 0; n < 2; n++) {
+			src_surf_format[n] = GEN6_SURFACEFORMAT_R8_UNORM;
+			src_width[n]  = frame->width;
+			src_height[n] = frame->height;
+			src_pitch[n]  = frame->pitch[1];
+		}
+		for (; n < 6; n++) {
+			if (is_nv12_fourcc(frame->id))
+				src_surf_format[n] = GEN6_SURFACEFORMAT_R8G8_UNORM;
+			else
+				src_surf_format[n] = GEN6_SURFACEFORMAT_R8_UNORM;
+			src_width[n]  = frame->width / 2;
+			src_height[n] = frame->height / 2;
+			src_pitch[n]  = frame->pitch[0];
+		}
 		n_src = 6;
 	} else {
 		if (frame->id == FOURCC_UYVY)
-			src_surf_format = GEN6_SURFACEFORMAT_YCRCB_SWAPY;
+			src_surf_format[0] = GEN6_SURFACEFORMAT_YCRCB_SWAPY;
 		else
-			src_surf_format = GEN6_SURFACEFORMAT_YCRCB_NORMAL;
+			src_surf_format[0] = GEN6_SURFACEFORMAT_YCRCB_NORMAL;
 
 		src_width[0]  = frame->width;
 		src_height[0] = frame->height;
@@ -1612,10 +1651,33 @@ static void gen6_emit_video_state(struct sna *sna,
 					       src_width[n],
 					       src_height[n],
 					       src_pitch[n],
-					       src_surf_format);
+					       src_surf_format[n]);
 	}
 
 	gen6_emit_state(sna, op, offset | dirty);
+}
+
+static unsigned select_video_kernel(const struct sna_video *video,
+				    const struct sna_video_frame *frame)
+{
+	switch (frame->id) {
+	case FOURCC_YV12:
+	case FOURCC_I420:
+	case FOURCC_XVMC:
+		return video->colorspace ?
+			GEN6_WM_KERNEL_VIDEO_PLANAR_BT709 :
+			GEN6_WM_KERNEL_VIDEO_PLANAR_BT601;
+
+	case FOURCC_NV12:
+		return video->colorspace ?
+			GEN6_WM_KERNEL_VIDEO_NV12_BT709 :
+			GEN6_WM_KERNEL_VIDEO_NV12_BT601;
+
+	default:
+		return video->colorspace ?
+			GEN6_WM_KERNEL_VIDEO_PACKED_BT709 :
+			GEN6_WM_KERNEL_VIDEO_PACKED_BT601;
+	}
 }
 
 static bool
@@ -1633,9 +1695,9 @@ gen6_render_video(struct sna *sna,
 	int src_height = frame->src.y2 - frame->src.y1;
 	float src_offset_x, src_offset_y;
 	float src_scale_x, src_scale_y;
-	int nbox, pix_xoff, pix_yoff;
 	unsigned filter;
 	const BoxRec *box;
+	int nbox;
 
 	DBG(("%s: src=(%d, %d), dst=(%d, %d), %dx[(%d, %d), (%d, %d)...]\n",
 	     __FUNCTION__,
@@ -1670,9 +1732,7 @@ gen6_render_video(struct sna *sna,
 		GEN6_SET_FLAGS(SAMPLER_OFFSET(filter, SAMPLER_EXTEND_PAD,
 					       SAMPLER_FILTER_NEAREST, SAMPLER_EXTEND_NONE),
 			       NO_BLEND,
-			       is_planar_fourcc(frame->id) ?
-			       GEN6_WM_KERNEL_VIDEO_PLANAR :
-			       GEN6_WM_KERNEL_VIDEO_PACKED,
+			       select_video_kernel(video, frame),
 			       2);
 	tmp.priv = frame;
 
@@ -1686,17 +1746,6 @@ gen6_render_video(struct sna *sna,
 	gen6_align_vertex(sna, &tmp);
 	gen6_emit_video_state(sna, &tmp);
 
-	/* Set up the offset for translating from the given region (in screen
-	 * coordinates) to the backing pixmap.
-	 */
-#ifdef COMPOSITE
-	pix_xoff = -pixmap->screen_x + pixmap->drawable.x;
-	pix_yoff = -pixmap->screen_y + pixmap->drawable.y;
-#else
-	pix_xoff = 0;
-	pix_yoff = 0;
-#endif
-
 	src_scale_x = (float)src_width / dst_width / frame->width;
 	src_offset_x = (float)frame->src.x1 / frame->width - dstRegion->extents.x1 * src_scale_x;
 
@@ -1706,35 +1755,27 @@ gen6_render_video(struct sna *sna,
 	box = region_rects(dstRegion);
 	nbox = region_num_rects(dstRegion);
 	while (nbox--) {
-		BoxRec r;
-
-		r.x1 = box->x1 + pix_xoff;
-		r.x2 = box->x2 + pix_xoff;
-		r.y1 = box->y1 + pix_yoff;
-		r.y2 = box->y2 + pix_yoff;
-
 		gen6_get_rectangles(sna, &tmp, 1, gen6_emit_video_state);
 
-		OUT_VERTEX(r.x2, r.y2);
+		OUT_VERTEX(box->x2, box->y2);
 		OUT_VERTEX_F(box->x2 * src_scale_x + src_offset_x);
 		OUT_VERTEX_F(box->y2 * src_scale_y + src_offset_y);
 
-		OUT_VERTEX(r.x1, r.y2);
+		OUT_VERTEX(box->x1, box->y2);
 		OUT_VERTEX_F(box->x1 * src_scale_x + src_offset_x);
 		OUT_VERTEX_F(box->y2 * src_scale_y + src_offset_y);
 
-		OUT_VERTEX(r.x1, r.y1);
+		OUT_VERTEX(box->x1, box->y1);
 		OUT_VERTEX_F(box->x1 * src_scale_x + src_offset_x);
 		OUT_VERTEX_F(box->y1 * src_scale_y + src_offset_y);
 
-		if (!DAMAGE_IS_ALL(priv->gpu_damage)) {
-			sna_damage_add_box(&priv->gpu_damage, &r);
-			sna_damage_subtract_box(&priv->cpu_damage, &r);
-		}
 		box++;
 	}
-
 	gen4_vertex_flush(sna);
+
+	if (!DAMAGE_IS_ALL(priv->gpu_damage))
+		sna_damage_add(&priv->gpu_damage, dstRegion);
+
 	return true;
 }
 
@@ -1815,12 +1856,12 @@ gen6_composite_picture(struct sna *sna,
 		if (channel->repeat &&
 		    (x >= 0 &&
 		     y >= 0 &&
-		     x + w < pixmap->drawable.width &&
-		     y + h < pixmap->drawable.height)) {
+		     x + w <= pixmap->drawable.width &&
+		     y + h <= pixmap->drawable.height)) {
 			struct sna_pixmap *priv = sna_pixmap(pixmap);
 			if (priv && priv->clear) {
 				DBG(("%s: converting large pixmap source into solid [%08x]\n", __FUNCTION__, priv->clear_color));
-				return gen4_channel_init_solid(sna, channel, priv->clear_color);
+				return gen4_channel_init_solid(sna, channel, solid_color(picture->format, priv->clear_color));
 			}
 		}
 	} else
@@ -1927,7 +1968,9 @@ gen6_composite_set_target(struct sna *sna,
 	} else
 		sna_render_picture_extents(dst, &box);
 
-	hint = PREFER_GPU | FORCE_GPU | RENDER_GPU;
+	hint = PREFER_GPU | RENDER_GPU;
+	if (!need_tiling(sna, op->dst.width, op->dst.height))
+		hint |= FORCE_GPU;
 	if (!partial) {
 		hint |= IGNORE_DAMAGE;
 		if (w == op->dst.width && h == op->dst.height)
@@ -1965,46 +2008,77 @@ gen6_composite_set_target(struct sna *sna,
 
 static bool
 try_blt(struct sna *sna,
-	PicturePtr dst, PicturePtr src,
-	int width, int height)
+	uint8_t op,
+	PicturePtr src,
+	PicturePtr mask,
+	PicturePtr dst,
+	int16_t src_x, int16_t src_y,
+	int16_t msk_x, int16_t msk_y,
+	int16_t dst_x, int16_t dst_y,
+	int16_t width, int16_t height,
+	unsigned flags,
+	struct sna_composite_op *tmp)
 {
 	struct kgem_bo *bo;
 
 	if (sna->kgem.mode == KGEM_BLT) {
 		DBG(("%s: already performing BLT\n", __FUNCTION__));
-		return true;
+		goto execute;
 	}
 
 	if (too_large(width, height)) {
 		DBG(("%s: operation too large for 3D pipe (%d, %d)\n",
 		     __FUNCTION__, width, height));
-		return true;
+		goto execute;
 	}
 
 	bo = __sna_drawable_peek_bo(dst->pDrawable);
 	if (bo == NULL)
-		return true;
-	if (bo->rq)
-		return RQ_IS_BLT(bo->rq);
+		goto execute;
+
+	if (untiled_tlb_miss(bo))
+		goto execute;
+
+	if (bo->rq) {
+		if (RQ_IS_BLT(bo->rq))
+			goto execute;
+
+		return false;
+	}
+
+	if (bo->tiling == I915_TILING_Y)
+		goto upload;
+
+	if (src->pDrawable == dst->pDrawable &&
+	    can_switch_to_blt(sna, bo, 0))
+		goto execute;
 
 	if (sna_picture_is_solid(src, NULL) && can_switch_to_blt(sna, bo, 0))
-		return true;
+		goto execute;
 
 	if (src->pDrawable) {
-		bo = __sna_drawable_peek_bo(src->pDrawable);
-		if (bo == NULL)
-			return true;
+		struct kgem_bo *s = __sna_drawable_peek_bo(src->pDrawable);
+		if (s == NULL)
+			goto execute;
 
-		if (prefer_blt_bo(sna, bo))
-			return true;
+		if (prefer_blt_bo(sna, s, bo))
+			goto execute;
 	}
 
 	if (sna->kgem.ring == KGEM_BLT) {
 		DBG(("%s: already performing BLT\n", __FUNCTION__));
-		return true;
+		goto execute;
 	}
 
-	return false;
+upload:
+	flags |= COMPOSITE_UPLOAD;
+execute:
+	return sna_blt_composite(sna, op,
+				 src, dst,
+				 src_x, src_y,
+				 dst_x, dst_y,
+				 width, height,
+				 flags, tmp);
 }
 
 static bool
@@ -2234,13 +2308,13 @@ gen6_render_composite(struct sna *sna,
 	     width, height, sna->kgem.ring));
 
 	if (mask == NULL &&
-	    try_blt(sna, dst, src, width, height) &&
-	    sna_blt_composite(sna, op,
-			      src, dst,
-			      src_x, src_y,
-			      dst_x, dst_y,
-			      width, height,
-			      flags, tmp))
+	    try_blt(sna, op,
+		    src, mask, dst,
+		    src_x, src_y,
+		    msk_x, msk_y,
+		    dst_x, dst_y,
+		    width, height,
+		    flags, tmp))
 		return true;
 
 	if (gen6_composite_fallback(sna, src, mask, dst))
@@ -2676,19 +2750,27 @@ static inline bool prefer_blt_copy(struct sna *sna,
 	if (sna->kgem.ring == KGEM_BLT)
 		return true;
 
-	if (src_bo == dst_bo && can_switch_to_blt(sna, dst_bo, flags))
+	if (flags & COPY_DRI && !sna->kgem.has_semaphores)
+		return false;
+
+	if ((flags & COPY_SMALL || src_bo == dst_bo) &&
+	    can_switch_to_blt(sna, dst_bo, flags))
 		return true;
 
 	if (untiled_tlb_miss(src_bo) ||
 	    untiled_tlb_miss(dst_bo))
 		return true;
 
-	if (force_blt_ring(sna))
+	if (force_blt_ring(sna, dst_bo))
 		return true;
 
 	if (kgem_bo_is_render(dst_bo) ||
 	    kgem_bo_is_render(src_bo))
 		return false;
+
+	if (flags & COPY_LAST &&
+            can_switch_to_blt(sna, dst_bo, flags))
+		return true;
 
 	if (prefer_render_ring(sna, dst_bo))
 		return false;
@@ -2696,7 +2778,7 @@ static inline bool prefer_blt_copy(struct sna *sna,
 	if (!prefer_blt_ring(sna, dst_bo, flags))
 		return false;
 
-	return prefer_blt_bo(sna, src_bo) || prefer_blt_bo(sna, dst_bo);
+	return prefer_blt_bo(sna, src_bo, dst_bo);
 }
 
 static bool
@@ -2758,8 +2840,7 @@ fallback_blt:
 		assert(src->depth == dst->depth);
 		assert(src->width == dst->width);
 		assert(src->height == dst->height);
-		return sna_render_copy_boxes__overlap(sna, alu,
-						      src, src_bo,
+		return sna_render_copy_boxes__overlap(sna, alu, dst, dst_bo,
 						      src_dx, src_dy,
 						      dst_dx, dst_dy,
 						      box, n, &extents);

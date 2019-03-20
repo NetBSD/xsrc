@@ -56,6 +56,15 @@ static force_inline void batch_emit(struct sna *sna, uint32_t dword)
 	sna->kgem.batch[sna->kgem.nbatch++] = dword;
 }
 
+static force_inline void batch_emit_aligned(struct sna *sna, uint32_t dword, unsigned align)
+{
+	assert(sna->kgem.mode != KGEM_NONE);
+	assert(sna->kgem.nbatch + KGEM_BATCH_RESERVED < sna->kgem.surface);
+	while (sna->kgem.nbatch & (align-1))
+		sna->kgem.batch[sna->kgem.nbatch++] = 0;
+	sna->kgem.batch[sna->kgem.nbatch++] = dword;
+}
+
 static force_inline void batch_emit64(struct sna *sna, uint64_t qword)
 {
 	assert(sna->kgem.mode != KGEM_NONE);
@@ -302,6 +311,12 @@ color_convert(uint32_t pixel,
 
 	DBG(("%s: dst=%08x [%08x]\n", __FUNCTION__, pixel, dst_format));
 	return pixel;
+}
+
+inline static uint32_t
+solid_color(uint32_t format, uint32_t pixel)
+{
+	return color_convert(pixel, format, PICT_a8r8g8b8);
 }
 
 inline static bool dst_use_gpu(PixmapPtr pixmap)

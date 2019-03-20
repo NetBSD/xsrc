@@ -43,7 +43,7 @@ struct backlight {
 	int pid, fd;
 };
 
-enum backlight_type backlight_exists(const char *iface);
+int backlight_exists(const char *iface);
 
 void backlight_init(struct backlight *backlight);
 int backlight_open(struct backlight *backlight, char *iface);

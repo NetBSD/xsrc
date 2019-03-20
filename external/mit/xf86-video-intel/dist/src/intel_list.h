@@ -306,8 +306,7 @@ list_is_empty(const struct list *head)
     list_entry((ptr)->prev, type, member)
 
 #define __container_of(ptr, sample, member)				\
-    (void *)((char *)(ptr)						\
-	     - ((char *)&(sample)->member - (char *)(sample)))
+    (void *)((char *)(ptr) - ((char *)&(sample)->member - (char *)(sample)))
 /**
  * Loop through the list given by head and set pos to struct in the list.
  *
@@ -392,16 +391,49 @@ static inline void list_move_tail(struct list *list, struct list *head)
 #define list_last_entry(ptr, type, member) \
     list_entry((ptr)->prev, type, member)
 
-#define list_for_each_entry_reverse(pos, head, member)				\
+#define list_for_each_entry_reverse(pos, head, member)			\
     for (pos = __container_of((head)->prev, pos, member);		\
 	 &pos->member != (head);					\
 	 pos = __container_of(pos->member.prev, pos, member))
 
 #endif
 
+#define list_for_each_entry_safe_from(pos, tmp, head, member)		\
+    for (tmp = __container_of(pos->member.next, pos, member);		\
+	 &pos->member != (head);					\
+	 pos = tmp, tmp = __container_of(tmp->member.next, tmp, member))
+
 #undef container_of
 #define container_of(ptr, type, member) \
 	((type *)((char *)(ptr) - (char *) &((type *)0)->member))
+
+static inline void __list_splice(const struct list *list,
+				 struct list *prev,
+				 struct list *next)
+{
+	struct list *first = list->next;
+	struct list *last = list->prev;
+
+	first->prev = prev;
+	prev->next = first;
+
+	last->next = next;
+	next->prev = last;
+}
+
+static inline void list_splice(const struct list *list,
+			       struct list *head)
+{
+	if (!list_is_empty(list))
+		__list_splice(list, head, head->next);
+}
+
+static inline void list_splice_tail(const struct list *list,
+				    struct list *head)
+{
+	if (!list_is_empty(list))
+		__list_splice(list, head->prev, head);
+}
 
 static inline int list_is_singular(const struct list *list)
 {

@@ -154,6 +154,8 @@ struct sna_pixmap {
 #define MAPPED_GTT 1
 #define MAPPED_CPU 2
 	uint8_t flush :2;
+#define FLUSH_READ 1
+#define FLUSH_WRITE 2
 	uint8_t shm :1;
 	uint8_t clear :1;
 	uint8_t header :1;
@@ -179,18 +181,31 @@ static inline WindowPtr get_root_window(ScreenPtr screen)
 #endif
 }
 
+#if !NDEBUG
+static PixmapPtr check_pixmap(PixmapPtr pixmap)
+{
+	if (pixmap != NULL) {
+		assert(pixmap->refcnt >= 1);
+		assert(pixmap->devKind != 0xdeadbeef);
+	}
+	return pixmap;
+}
+#else
+#define check_pixmap(p) p
+#endif
+
 static inline PixmapPtr get_window_pixmap(WindowPtr window)
 {
 	assert(window);
 	assert(window->drawable.type != DRAWABLE_PIXMAP);
-	return fbGetWindowPixmap(window);
+	return check_pixmap(fbGetWindowPixmap(window));
 }
 
 static inline PixmapPtr get_drawable_pixmap(DrawablePtr drawable)
 {
 	assert(drawable);
 	if (drawable->type == DRAWABLE_PIXMAP)
-		return (PixmapPtr)drawable;
+		return check_pixmap((PixmapPtr)drawable);
 	else
 		return get_window_pixmap((WindowPtr)drawable);
 }
@@ -244,11 +259,12 @@ struct sna {
 #define SNA_NO_VSYNC		0x40
 #define SNA_TRIPLE_BUFFER	0x80
 #define SNA_TEAR_FREE		0x100
-#define SNA_FORCE_SHADOW	0x200
-#define SNA_FLUSH_GTT		0x400
+#define SNA_WANT_TEAR_FREE	0x200
+#define SNA_FORCE_SHADOW	0x400
+#define SNA_FLUSH_GTT		0x800
 #define SNA_PERFORMANCE		0x1000
 #define SNA_POWERSAVE		0x2000
-#define SNA_REMOVE_OUTPUTS	0x4000
+#define SNA_NO_DPMS		0x4000
 #define SNA_HAS_FLIP		0x10000
 #define SNA_HAS_ASYNC_FLIP	0x20000
 #define SNA_LINEAR_FB		0x40000
@@ -265,7 +281,13 @@ struct sna {
 #define AVX 0x80
 #define AVX2 0x100
 
-	unsigned watch_flush;
+	bool ignore_copy_area : 1;
+
+	unsigned watch_shm_flush;
+	unsigned watch_dri_flush;
+	unsigned damage_event;
+	bool needs_shm_flush;
+	bool needs_dri_flush;
 
 	struct timeval timer_tv;
 	uint32_t timer_expire[NUM_TIMERS];
@@ -284,8 +306,15 @@ struct sna {
 		struct kgem_bo *shadow;
 		unsigned front_active;
 		unsigned shadow_active;
+		unsigned rr_active;
 		unsigned flip_active;
+		unsigned hidden;
+		bool shadow_enabled;
 		bool dirty;
+
+		struct drm_event_vblank *shadow_events;
+		int shadow_nevent;
+		int shadow_size;
 
 		int max_crtc_width, max_crtc_height;
 		RegionRec shadow_region;
@@ -318,7 +347,8 @@ struct sna {
 		uint32_t fg, bg;
 		int size;
 
-		int active;
+		bool disable;
+		bool active;
 		int last_x;
 		int last_y;
 
@@ -331,8 +361,9 @@ struct sna {
 	} cursor;
 
 	struct sna_dri2 {
-		bool available;
-		bool open;
+		bool available : 1;
+		bool enable : 1;
+		bool open : 1;
 
 #if HAVE_DRI2
 		void *flip_pending;
@@ -341,8 +372,11 @@ struct sna {
 	} dri2;
 
 	struct sna_dri3 {
-		bool available;
-		bool open;
+		bool available :1;
+		bool override : 1;
+		bool enable : 1;
+		bool open :1;
+
 #if HAVE_DRI3
 		SyncScreenCreateFenceFunc create_fence;
 		struct list pixmaps;
@@ -353,6 +387,9 @@ struct sna {
 		bool available;
 		bool open;
 #if HAVE_PRESENT
+		struct list vblank_queue;
+		uint64_t unflip;
+		void *freed_info;
 #endif
 	} present;
 
@@ -364,8 +401,10 @@ struct sna {
 	EntityInfoPtr pEnt;
 	const struct intel_device_info *info;
 
+#if !HAVE_NOTIFY_FD
 	ScreenBlockHandlerProcPtr BlockHandler;
 	ScreenWakeupHandlerProcPtr WakeupHandler;
+#endif
 	CloseScreenProcPtr CloseScreen;
 
 	PicturePtr clear;
@@ -383,6 +422,7 @@ struct sna {
 		struct gen6_render_state gen6;
 		struct gen7_render_state gen7;
 		struct gen8_render_state gen8;
+		struct gen9_render_state gen9;
 	} render_state;
 
 	/* Broken-out options. */
@@ -420,7 +460,7 @@ bool sna_mode_pre_init(ScrnInfoPtr scrn, struct sna *sna);
 bool sna_mode_fake_init(struct sna *sna, int num_fake);
 bool sna_mode_wants_tear_free(struct sna *sna);
 void sna_mode_adjust_frame(struct sna *sna, int x, int y);
-extern void sna_mode_discover(struct sna *sna);
+extern void sna_mode_discover(struct sna *sna, bool tell);
 extern void sna_mode_check(struct sna *sna);
 extern bool sna_mode_disable(struct sna *sna);
 extern void sna_mode_enable(struct sna *sna);
@@ -434,6 +474,7 @@ extern void sna_shadow_unset_crtc(struct sna *sna, xf86CrtcPtr crtc);
 extern bool sna_pixmap_discard_shadow_damage(struct sna_pixmap *priv,
 					     const RegionRec *region);
 extern void sna_mode_set_primary(struct sna *sna);
+extern bool sna_mode_find_hotplug_connector(struct sna *sna, unsigned id);
 extern void sna_mode_close(struct sna *sna);
 extern void sna_mode_fini(struct sna *sna);
 
@@ -441,9 +482,13 @@ extern void sna_crtc_config_notify(ScreenPtr screen);
 
 extern bool sna_cursors_init(ScreenPtr screen, struct sna *sna);
 
+extern CARD32 sna_mode_coldplug(OsTimerPtr timer, CARD32 now, void *data);
+#define COLDPLUG_DELAY_MS 2000
+
 typedef void (*sna_flip_handler_t)(struct drm_event_vblank *e,
 				   void *data);
 
+extern bool sna_needs_page_flip(struct sna *sna, struct kgem_bo *bo);
 extern int sna_page_flip(struct sna *sna,
 			 struct kgem_bo *bo,
 			 sna_flip_handler_t handler,
@@ -452,13 +497,22 @@ extern int sna_page_flip(struct sna *sna,
 pure static inline struct sna *
 to_sna(ScrnInfoPtr scrn)
 {
-	return (struct sna *)(scrn->driverPrivate);
+	struct sna *sna = scrn->driverPrivate;
+	assert(sna->scrn == scrn);
+	return sna;
 }
 
 pure static inline struct sna *
 to_sna_from_screen(ScreenPtr screen)
 {
 	return to_sna(xf86ScreenToScrn(screen));
+}
+
+pure static inline ScreenPtr to_screen_from_sna(struct sna *sna)
+{
+	ScreenPtr screen = xf86ScrnToScreen(sna->scrn);
+	assert(!screen || sna == to_sna_from_screen(screen));
+	return screen;
 }
 
 pure static inline struct sna *
@@ -498,11 +552,10 @@ to_sna_from_kgem(struct kgem *kgem)
 extern xf86CrtcPtr sna_covering_crtc(struct sna *sna,
 				     const BoxRec *box,
 				     xf86CrtcPtr desired);
+extern xf86CrtcPtr sna_primary_crtc(struct sna *sna);
 
 extern bool sna_wait_for_scanline(struct sna *sna, PixmapPtr pixmap,
 				  xf86CrtcPtr crtc, const BoxRec *clip);
-
-xf86CrtcPtr sna_mode_first_crtc(struct sna *sna);
 
 const struct ust_msc {
 	uint64_t msc;
@@ -536,6 +589,11 @@ static inline uint64_t ust64(int tv_sec, int tv_usec)
 	return (uint64_t)tv_sec * 1000000 + tv_usec;
 }
 
+static inline uint64_t swap_ust(const struct ust_msc *swap)
+{
+	return ust64(swap->tv_sec, swap->tv_usec);
+}
+
 #if HAVE_DRI2
 bool sna_dri2_open(struct sna *sna, ScreenPtr pScreen);
 void sna_dri2_page_flip_handler(struct sna *sna, struct drm_event_vblank *event);
@@ -567,19 +625,74 @@ bool sna_present_open(struct sna *sna, ScreenPtr pScreen);
 void sna_present_update(struct sna *sna);
 void sna_present_close(struct sna *sna, ScreenPtr pScreen);
 void sna_present_vblank_handler(struct drm_event_vblank *event);
+void sna_present_cancel_flip(struct sna *sna);
 #else
 static inline bool sna_present_open(struct sna *sna, ScreenPtr pScreen) { return false; }
 static inline void sna_present_update(struct sna *sna) { }
 static inline void sna_present_close(struct sna *sna, ScreenPtr pScreen) { }
 static inline void sna_present_vblank_handler(struct drm_event_vblank *event) { }
+static inline void sna_present_cancel_flip(struct sna *sna) { }
 #endif
 
-extern bool sna_crtc_set_sprite_rotation(xf86CrtcPtr crtc, uint32_t rotation);
-extern int sna_crtc_to_pipe(xf86CrtcPtr crtc);
-extern uint32_t sna_crtc_to_sprite(xf86CrtcPtr crtc);
-extern uint32_t sna_crtc_id(xf86CrtcPtr crtc);
-extern bool sna_crtc_is_on(xf86CrtcPtr crtc);
+extern unsigned sna_crtc_count_sprites(xf86CrtcPtr crtc);
+extern bool sna_crtc_set_sprite_rotation(xf86CrtcPtr crtc, unsigned idx, uint32_t rotation);
+extern void sna_crtc_set_sprite_colorspace(xf86CrtcPtr crtc, unsigned idx, int colorspace);
+extern uint32_t sna_crtc_to_sprite(xf86CrtcPtr crtc, unsigned idx);
 extern bool sna_crtc_is_transformed(xf86CrtcPtr crtc);
+bool sna_has_sprite_format(struct sna *sna, uint32_t format);
+
+#define CRTC_VBLANK 0x7
+#define CRTC_ON 0x80000000
+
+uint32_t sna_crtc_id(xf86CrtcPtr crtc);
+
+struct sna_crtc_public {
+	unsigned long flags;
+	struct list vblank_queue;
+};
+
+static inline unsigned long *sna_crtc_flags(xf86CrtcPtr crtc)
+{
+	struct sna_crtc_public *pub = crtc->driver_private;
+	assert(pub);
+	return &pub->flags;
+}
+
+static inline struct list *sna_crtc_vblank_queue(xf86CrtcPtr crtc)
+{
+	struct sna_crtc_public *pub = crtc->driver_private;
+	assert(pub);
+	return &pub->vblank_queue;
+}
+
+static inline unsigned sna_crtc_pipe(xf86CrtcPtr crtc)
+{
+	return *sna_crtc_flags(crtc) >> 8 & 0xff;
+}
+
+static inline bool sna_crtc_is_on(xf86CrtcPtr crtc)
+{
+	return *sna_crtc_flags(crtc) & CRTC_ON;
+}
+
+static inline void sna_crtc_set_vblank(xf86CrtcPtr crtc)
+{
+	DBG(("%s: current vblank count: %d\n", __FUNCTION__, *sna_crtc_flags(crtc) & CRTC_VBLANK));
+	assert((*sna_crtc_flags(crtc) & CRTC_VBLANK) < CRTC_VBLANK);
+	++*sna_crtc_flags(crtc);
+}
+
+static inline void sna_crtc_clear_vblank(xf86CrtcPtr crtc)
+{
+	DBG(("%s: current vblank count: %d\n", __FUNCTION__, *sna_crtc_flags(crtc) & CRTC_VBLANK));
+	assert(*sna_crtc_flags(crtc) & CRTC_VBLANK);
+	--*sna_crtc_flags(crtc);
+}
+
+static inline bool sna_crtc_has_vblank(xf86CrtcPtr crtc)
+{
+	return *sna_crtc_flags(crtc) & CRTC_VBLANK;
+}
 
 CARD32 sna_format_for_depth(int depth);
 CARD32 sna_render_format_for_depth(int depth);
@@ -998,15 +1111,14 @@ static inline uint32_t pixmap_size(PixmapPtr pixmap)
 
 bool sna_accel_init(ScreenPtr sreen, struct sna *sna);
 void sna_accel_create(struct sna *sna);
-void sna_accel_block_handler(struct sna *sna, struct timeval **tv);
-void sna_accel_wakeup_handler(struct sna *sna);
-void sna_accel_watch_flush(struct sna *sna, int enable);
+void sna_accel_block(struct sna *sna, struct timeval **tv);
 void sna_accel_flush(struct sna *sna);
 void sna_accel_enter(struct sna *sna);
 void sna_accel_leave(struct sna *sna);
 void sna_accel_close(struct sna *sna);
 void sna_accel_free(struct sna *sna);
 
+void sna_watch_flush(struct sna *sna, int enable);
 void sna_copy_fbcon(struct sna *sna);
 
 bool sna_composite_create(struct sna *sna);
@@ -1127,6 +1239,16 @@ memcpy_blt(const void *src, void *dst, int bpp,
 	   uint16_t width, uint16_t height);
 
 void
+affine_blt(const void *src, void *dst, int bpp,
+	   int16_t src_x, int16_t src_y,
+	   int16_t src_width, int16_t src_height,
+	   int32_t src_stride,
+	   int16_t dst_x, int16_t dst_y,
+	   uint16_t dst_width, uint16_t dst_height,
+	   int32_t dst_stride,
+	   const struct pixman_f_transform *t);
+
+void
 memmove_box(const void *src, void *dst,
 	    int bpp, int32_t stride,
 	    const BoxRec *box,
@@ -1180,6 +1302,31 @@ box_intersect(BoxPtr a, const BoxRec *b)
 		return false;
 
 	return true;
+}
+
+const BoxRec *
+__find_clip_box_for_y(const BoxRec *begin, const BoxRec *end, int16_t y);
+inline static const BoxRec *
+find_clip_box_for_y(const BoxRec *begin, const BoxRec *end, int16_t y)
+{
+	/* Special case for incremental trapezoid clipping */
+	if (begin == end)
+		return end;
+
+	/* Quick test if scanline is within range of clip boxes */
+	if (begin->y2 > y) {
+		assert(end == begin + 1 ||
+		       __find_clip_box_for_y(begin, end, y) == begin);
+		return begin;
+	}
+	if (y >= end[-1].y2) {
+		assert(end == begin + 1 ||
+		       __find_clip_box_for_y(begin, end, y) == end);
+		return end;
+	}
+
+	/* Otherwise bisect to find the first box crossing y */
+	return __find_clip_box_for_y(begin, end, y);
 }
 
 unsigned sna_cpu_detect(void);
@@ -1236,5 +1383,18 @@ static inline void sigtrap_put(void)
 #include <stdio.h>
 extern int getline(char **line, size_t *len, FILE *file);
 #endif
+
+static inline void add_shm_flush(struct sna *sna, struct sna_pixmap *priv)
+{
+	if (!priv->shm)
+		return;
+
+	DBG(("%s: marking handle=%d for SHM flush\n",
+	     __FUNCTION__, priv->cpu_bo->handle));
+
+	assert(!priv->flush);
+	sna_add_flush_pixmap(sna, priv, priv->cpu_bo);
+	sna->needs_shm_flush = true;
+}
 
 #endif /* _SNA_H */

@@ -121,7 +121,6 @@ typedef struct intel_screen_private {
 
 	void *modes;
 	drm_intel_bo *front_buffer, *back_buffer;
-	unsigned int back_name;
 	long front_pitch, front_tiling;
 
 	dri_bufmgr *bufmgr;
@@ -169,6 +168,7 @@ typedef struct intel_screen_private {
 	const struct intel_device_info *info;
 
 	unsigned int BR[20];
+	unsigned int BR_tiling[2];
 
 	CloseScreenProcPtr CloseScreen;
 
@@ -196,7 +196,9 @@ typedef struct intel_screen_private {
 
 	int colorKey;
 	XF86VideoAdaptorPtr adaptor;
+#if !HAVE_NOTIFY_FD
 	ScreenBlockHandlerProcPtr BlockHandler;
+#endif
 	Bool overlayOn;
 
 	struct {
@@ -285,8 +287,6 @@ typedef struct intel_screen_private {
 	Bool has_kernel_flush;
 	Bool needs_flush;
 
-	struct _DRI2FrameEvent *pending_flip[MAX_PIPES];
-
 	/* Broken-out options. */
 	OptionInfoPtr Options;
 
@@ -368,6 +368,7 @@ typedef void (*intel_drm_abort_proc)(ScrnInfoPtr scrn,
 
 extern uint32_t intel_drm_queue_alloc(ScrnInfoPtr scrn, xf86CrtcPtr crtc, void *data, intel_drm_handler_proc handler, intel_drm_abort_proc abort);
 extern void intel_drm_abort(ScrnInfoPtr scrn, Bool (*match)(void *data, void *match_data), void *match_data);
+extern void intel_drm_abort_seq(ScrnInfoPtr scrn, uint32_t seq);
 
 extern int intel_get_pipe_from_crtc_id(drm_intel_bufmgr *bufmgr, xf86CrtcPtr crtc);
 extern int intel_crtc_id(xf86CrtcPtr crtc);
@@ -408,7 +409,6 @@ typedef struct _DRI2FrameEvent {
 	ClientPtr client;
 	enum DRI2FrameEventType type;
 	int frame;
-	int pipe;
 
 	struct list drawable_resource, client_resource;
 
@@ -418,7 +418,12 @@ typedef struct _DRI2FrameEvent {
 	DRI2BufferPtr front;
 	DRI2BufferPtr back;
 
-	struct _DRI2FrameEvent *chain;
+	/* current scanout for triple buffer */
+	int old_width;
+	int old_height;
+	int old_pitch;
+	int old_tiling;
+	dri_bo *old_buffer;
 } DRI2FrameEventRec, *DRI2FrameEventPtr;
 
 extern Bool intel_do_pageflip(intel_screen_private *intel,
@@ -456,10 +461,6 @@ extern xf86CrtcPtr intel_covering_crtc(ScrnInfoPtr scrn, BoxPtr box,
 
 Bool I830DRI2ScreenInit(ScreenPtr pScreen);
 void I830DRI2CloseScreen(ScreenPtr pScreen);
-void I830DRI2FrameEventHandler(unsigned int frame, unsigned int tv_sec,
-			       unsigned int tv_usec, DRI2FrameEventPtr flip_info);
-void I830DRI2FlipEventHandler(unsigned int frame, unsigned int tv_sec,
-			      unsigned int tv_usec, DRI2FrameEventPtr flip_info);
 
 /* intel_dri3.c */
 Bool intel_dri3_screen_init(ScreenPtr screen);

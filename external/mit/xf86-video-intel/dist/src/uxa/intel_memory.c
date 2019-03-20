@@ -42,7 +42,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * This is the video memory allocator.  Our memory allocation is different from
  * other graphics chips, where you have a fixed amount of graphics memory
  * available that you want to put to the best use.  Instead, we have almost no
- * memory pre-allocated, and we have to choose an appropriate amount of sytem
+ * memory pre-allocated, and we have to choose an appropriate amount of system
  * memory to use.
  *
  * The allocations we might do:

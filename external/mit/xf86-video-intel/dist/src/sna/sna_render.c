@@ -54,13 +54,13 @@ sna_format_for_depth(int depth)
 {
 	switch (depth) {
 	case 1: return PICT_a1;
-	case 4: return PICT_a4;
+	case 4: return PICT_x4a4;
 	case 8: return PICT_a8;
 	case 15: return PICT_x1r5g5b5;
 	case 16: return PICT_r5g6b5;
 	default: assert(0);
 	case 24: return PICT_x8r8g8b8;
-#ifdef PICT_x2r10g10b10
+#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,6,99,900,0)
 	case 30: return PICT_x2r10g10b10;
 #endif
 	case 32: return PICT_a8r8g8b8;
@@ -272,18 +272,6 @@ no_render_context_switch(struct kgem *kgem,
 }
 
 static void
-no_render_retire(struct kgem *kgem)
-{
-	(void)kgem;
-}
-
-static void
-no_render_expire(struct kgem *kgem)
-{
-	(void)kgem;
-}
-
-static void
 no_render_fini(struct sna *sna)
 {
 	(void)sna;
@@ -316,8 +304,6 @@ const char *no_render_init(struct sna *sna)
 	render->fini = no_render_fini;
 
 	sna->kgem.context_switch = no_render_context_switch;
-	sna->kgem.retire = no_render_retire;
-	sna->kgem.expire = no_render_expire;
 	if (sna->kgem.has_blt)
 		sna->kgem.ring = KGEM_BLT;
 
@@ -407,10 +393,7 @@ use_cpu_bo(struct sna *sna, PixmapPtr pixmap, const BoxRec *box, bool blt)
 		}
 	}
 
-	if (priv->shm) {
-		assert(!priv->flush);
-		sna_add_flush_pixmap(sna, priv, priv->cpu_bo);
-	}
+	add_shm_flush(sna, priv);
 
 	DBG(("%s for box=(%d, %d), (%d, %d)\n",
 	     __FUNCTION__, box->x1, box->y1, box->x2, box->y2));
@@ -567,6 +550,7 @@ static struct kgem_bo *upload(struct sna *sna,
 			assert(priv->gpu_damage == NULL);
 			assert(priv->gpu_bo == NULL);
 			assert(bo->proxy != NULL);
+			sna_damage_all(&priv->cpu_damage, pixmap);
 			kgem_proxy_bo_attach(bo, &priv->gpu_bo);
 		}
 	}
@@ -627,10 +611,7 @@ sna_render_pixmap_bo(struct sna *sna,
 		    !priv->cpu_bo->snoop && priv->cpu_bo->pitch < 4096) {
 			DBG(("%s: CPU all damaged\n", __FUNCTION__));
 			channel->bo = priv->cpu_bo;
-			if (priv->shm) {
-				assert(!priv->flush);
-				sna_add_flush_pixmap(sna, priv, priv->cpu_bo);
-			}
+			add_shm_flush(sna, priv);
 			goto done;
 		}
 	}
@@ -1275,6 +1256,7 @@ sna_render_picture_extract(struct sna *sna,
 			assert(priv->gpu_damage == NULL);
 			assert(priv->gpu_bo == NULL);
 			assert(bo->proxy != NULL);
+			sna_damage_all(&priv->cpu_damage, pixmap);
 			kgem_proxy_bo_attach(bo, &priv->gpu_bo);
 		}
 	}
@@ -1338,6 +1320,8 @@ sna_render_picture_convolve(struct sna *sna,
 	 */
 	DBG(("%s: origin=(%d,%d) kernel=%dx%d, size=%dx%d\n",
 	     __FUNCTION__, x_off, y_off, cw, ch, w, h));
+	if (cw*ch > 32) /* too much loss of precision from quantization! */
+		return -1;
 
 	assert(picture->pDrawable);
 	assert(picture->filter == PictFilterConvolution);
@@ -1388,9 +1372,9 @@ sna_render_picture_convolve(struct sna *sna,
 			alpha = CreateSolidPicture(0, &color, &error);
 			if (alpha) {
 				sna_composite(PictOpAdd, picture, alpha, tmp,
-					      x, y,
+					      x-(x_off+i), y-(y_off+j),
 					      0, 0,
-					      x_off+i, y_off+j,
+					      0, 0,
 					      w, h);
 				FreePicture(alpha, 0);
 			}
@@ -2183,11 +2167,11 @@ copy_overlap(struct sna *sna, uint8_t alu,
 	ret = (sna->render.copy_boxes(sna, GXcopy,
 				      draw, bo, src_dx, src_dy,
 				      &tmp->drawable, tmp_bo, -extents->x1, -extents->y1,
-				      box, n , 0) &&
+				      box, n, 0) &&
 	       sna->render.copy_boxes(sna, alu,
 				      &tmp->drawable, tmp_bo, -extents->x1, -extents->y1,
 				      draw, bo, dst_dx, dst_dy,
-				      box, n , 0));
+				      box, n, 0));
 
 	screen->DestroyPixmap(tmp);
 	return ret;
@@ -2308,16 +2292,22 @@ static bool can_copy_cpu(struct sna *sna,
 			 struct kgem_bo *src,
 			 struct kgem_bo *dst)
 {
-	if (src->tiling != dst->tiling)
-		return false;
+	DBG(("%s: tiling=%d:%d, pitch=%d:%d, can_map=%d:%d[%d]\n",
+	     __FUNCTION__,
+	     src->tiling, dst->tiling,
+	     src->pitch, dst->pitch,
+	     kgem_bo_can_map__cpu(&sna->kgem, src, false),
+	     kgem_bo_can_map__cpu(&sna->kgem, dst, true),
+	     sna->kgem.has_wc_mmap));
 
-	if (src->pitch != dst->pitch)
+	if (src->tiling != dst->tiling)
 		return false;
 
 	if (!kgem_bo_can_map__cpu(&sna->kgem, src, false))
 		return false;
 
-	if (!kgem_bo_can_map__cpu(&sna->kgem, dst, true))
+	if (!kgem_bo_can_map__cpu(&sna->kgem, dst, true) &&
+	    !sna->kgem.has_wc_mmap)
 		return false;
 
 	DBG(("%s -- yes, src handle=%d, dst handle=%d\n", __FUNCTION__, src->handle, dst->handle));
@@ -2330,31 +2320,65 @@ memcpy_copy_boxes(struct sna *sna, uint8_t op,
 		  const DrawableRec *dst_draw, struct kgem_bo *dst_bo, int16_t dx, int16_t dy,
 		  const BoxRec *box, int n, unsigned flags)
 {
+	memcpy_box_func detile = NULL;
 	void *dst, *src;
-	bool clipped;
 
 	if (op != GXcopy)
 		return false;
 
-	clipped = (n > 1 ||
-		   box->x1 + dx > 0 ||
-		   box->y1 + dy > 0 ||
-		   box->x2 + dx < dst_draw->width ||
-		   box->y2 + dy < dst_draw->height);
+	if (src_draw->depth != dst_draw->depth)
+		return false;
 
 	dst = src = NULL;
-	if (!clipped && can_copy_cpu(sna, src_bo, dst_bo)) {
-		dst = kgem_bo_map__cpu(&sna->kgem, dst_bo);
+	if (can_copy_cpu(sna, src_bo, dst_bo)) {
+		if (src_bo->pitch != dst_bo->pitch ||
+		    dx != sx || dy != sy || n > 1 ||
+		    box->x1 + dx > 0 ||
+		    box->y1 + dy > 0 ||
+		    box->x2 + dx < dst_draw->width ||
+		    box->y2 + dy < dst_draw->height) {
+			if (dx != sx) /* not implemented in memcpy yet */
+				goto use_gtt;
+
+			switch (dst_bo->tiling) {
+			default:
+			case I915_TILING_Y:
+				goto use_gtt;
+
+			case I915_TILING_X:
+				detile = sna->kgem.memcpy_between_tiled_x;
+				if (detile == NULL)
+					goto use_gtt;
+				break;
+
+			case I915_TILING_NONE:
+				break;
+			}
+		}
+
+		if (kgem_bo_can_map__cpu(&sna->kgem, dst_bo, true))
+			dst = kgem_bo_map__cpu(&sna->kgem, dst_bo);
+		else
+			dst = kgem_bo_map__wc(&sna->kgem, dst_bo);
 		src = kgem_bo_map__cpu(&sna->kgem, src_bo);
 	}
 
 	if (dst == NULL || src == NULL) {
+use_gtt:
 		dst = kgem_bo_map__gtt(&sna->kgem, dst_bo);
 		src = kgem_bo_map__gtt(&sna->kgem, src_bo);
 		if (dst == NULL || src == NULL)
 			return false;
+
+		kgem_bo_sync__gtt(&sna->kgem, dst_bo);
+		kgem_bo_sync__gtt(&sna->kgem, src_bo);
+
+		detile = NULL;
 	} else {
-		kgem_bo_sync__cpu_full(&sna->kgem, dst_bo, true);
+		if (dst == dst_bo->map__wc)
+			kgem_bo_sync__gtt(&sna->kgem, dst_bo);
+		else
+			kgem_bo_sync__cpu_full(&sna->kgem, dst_bo, true);
 		kgem_bo_sync__cpu_full(&sna->kgem, src_bo, false);
 	}
 
@@ -2362,7 +2386,16 @@ memcpy_copy_boxes(struct sna *sna, uint8_t op,
 	     __FUNCTION__, sx, sy, dx, dy, n));
 
 	if (sigtrap_get() == 0) {
-		do {
+		if (detile) {
+			do {
+				detile(src, dst, dst_draw->bitsPerPixel,
+				       src_bo->pitch, dst_bo->pitch,
+				       box->x1 + sx, box->y1 + sy,
+				       box->x1 + dx, box->y1 + dy,
+				       box->x2 - box->x1, box->y2 - box->y1);
+				box++;
+			} while (--n);
+		} else do {
 			memcpy_blt(src, dst, dst_draw->bitsPerPixel,
 				   src_bo->pitch, dst_bo->pitch,
 				   box->x1 + sx, box->y1 + sy,
@@ -2380,4 +2413,5 @@ void
 sna_render_mark_wedged(struct sna *sna)
 {
 	sna->render.copy_boxes = memcpy_copy_boxes;
+	sna->render.prefer_gpu = 0;
 }

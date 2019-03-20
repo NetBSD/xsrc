@@ -30,8 +30,8 @@
 
 #include "sna.h"
 
-#define NO_RING_SWITCH 0
-#define PREFER_RENDER 0
+#define NO_RING_SWITCH(sna) (!(sna)->kgem.has_semaphores)
+#define PREFER_RENDER 0 /* -1 -> BLT, 1 -> RENDER */
 
 static inline bool is_uncached(struct sna *sna,
 			       struct kgem_bo *bo)
@@ -46,40 +46,28 @@ inline static bool can_switch_to_blt(struct sna *sna,
 	if (sna->kgem.ring != KGEM_RENDER)
 		return true;
 
-	if (NO_RING_SWITCH)
+	if (bo && RQ_IS_BLT(bo->rq))
+		return true;
+
+	if (bo && bo->tiling == I915_TILING_Y)
 		return false;
 
-	if (!sna->kgem.has_semaphores)
+	if (bo && !kgem_bo_can_blt(&sna->kgem, bo))
+		return false;
+
+	if (sna->render_state.gt < 2)
+		return true;
+
+	if (bo && RQ_IS_RENDER(bo->rq))
+		return false;
+
+	if (NO_RING_SWITCH(sna))
 		return false;
 
 	if (flags & COPY_LAST)
 		return true;
 
-	if (bo && RQ_IS_BLT(bo->rq))
-		return true;
-
-	if (sna->render_state.gt < 2)
-		return true;
-
 	return kgem_ring_is_idle(&sna->kgem, KGEM_BLT);
-}
-
-inline static bool can_switch_to_render(struct sna *sna,
-					struct kgem_bo *bo)
-{
-	if (sna->kgem.ring == KGEM_RENDER)
-		return true;
-
-	if (NO_RING_SWITCH)
-		return false;
-
-	if (!sna->kgem.has_semaphores)
-		return false;
-
-	if (bo && !RQ_IS_BLT(bo->rq) && !is_uncached(sna, bo))
-		return true;
-
-	return !kgem_ring_is_idle(&sna->kgem, KGEM_RENDER);
 }
 
 static inline bool untiled_tlb_miss(struct kgem_bo *bo)
@@ -90,27 +78,54 @@ static inline bool untiled_tlb_miss(struct kgem_bo *bo)
 	return bo->tiling == I915_TILING_NONE && bo->pitch >= 4096;
 }
 
-static int prefer_blt_bo(struct sna *sna, struct kgem_bo *bo)
+static int prefer_blt_bo(struct sna *sna,
+			 struct kgem_bo *src,
+			 struct kgem_bo *dst)
 {
+	assert(dst != NULL);
+
 	if (PREFER_RENDER)
 		return PREFER_RENDER < 0;
 
-	if (bo->rq)
-		return RQ_IS_BLT(bo->rq);
+	if (dst->rq)
+		return RQ_IS_BLT(dst->rq);
 
 	if (sna->flags & SNA_POWERSAVE)
 		return true;
 
-	return bo->tiling == I915_TILING_NONE || is_uncached(sna, bo);
+	if (src) {
+		if (sna->render_state.gt > 1)
+			return false;
+
+		if (src->rq)
+			return RQ_IS_BLT(src->rq);
+
+		if (src->tiling == I915_TILING_Y)
+			return false;
+        } else {
+                if (sna->render_state.gt > 2)
+                        return false;
+        }
+
+	if (sna->render_state.gt < 2)
+		return true;
+
+	return dst->tiling == I915_TILING_NONE || is_uncached(sna, dst);
 }
 
-inline static bool force_blt_ring(struct sna *sna)
+inline static bool force_blt_ring(struct sna *sna, struct kgem_bo *bo)
 {
-	if (sna->flags & SNA_POWERSAVE)
-		return true;
-
 	if (sna->kgem.mode == KGEM_RENDER)
 		return false;
+
+	if (NO_RING_SWITCH(sna))
+		return sna->kgem.ring == KGEM_BLT;
+
+	if (bo->tiling == I915_TILING_Y)
+		return false;
+
+	if (sna->flags & SNA_POWERSAVE)
+		return true;
 
 	if (sna->render_state.gt < 2)
 		return true;
@@ -118,29 +133,40 @@ inline static bool force_blt_ring(struct sna *sna)
 	return false;
 }
 
-inline static bool prefer_blt_ring(struct sna *sna,
-				   struct kgem_bo *bo,
-				   unsigned flags)
+nonnull inline static bool
+prefer_blt_ring(struct sna *sna, struct kgem_bo *bo, unsigned flags)
 {
 	if (PREFER_RENDER)
 		return PREFER_RENDER < 0;
 
-	assert(!force_blt_ring(sna));
-	assert(!kgem_bo_is_render(bo));
+	assert(!force_blt_ring(sna, bo));
+	assert(!kgem_bo_is_render(bo) || NO_RING_SWITCH(sna));
+
+	if (kgem_bo_is_blt(bo))
+		return true;
 
 	return can_switch_to_blt(sna, bo, flags);
 }
 
-inline static bool prefer_render_ring(struct sna *sna,
-				      struct kgem_bo *bo)
+nonnull inline static bool
+prefer_render_ring(struct sna *sna, struct kgem_bo *bo)
 {
+	if (sna->kgem.ring == KGEM_RENDER)
+		return true;
+
+	if (sna->kgem.ring != KGEM_NONE && NO_RING_SWITCH(sna))
+                return false;
+
+	if (kgem_bo_is_render(bo))
+		return true;
+
 	if (sna->flags & SNA_POWERSAVE)
 		return false;
 
-	if (sna->render_state.gt < 2)
-		return false;
+	if (!prefer_blt_bo(sna, NULL, bo))
+		return true;
 
-	return can_switch_to_render(sna, bo);
+	return !kgem_ring_is_idle(&sna->kgem, KGEM_RENDER);
 }
 
 inline static bool
@@ -153,12 +179,8 @@ prefer_blt_composite(struct sna *sna, struct sna_composite_op *tmp)
 	    untiled_tlb_miss(tmp->src.bo))
 		return true;
 
-	if (force_blt_ring(sna))
+	if (force_blt_ring(sna, tmp->dst.bo))
 		return true;
-
-	if (kgem_bo_is_render(tmp->dst.bo) ||
-	    kgem_bo_is_render(tmp->src.bo))
-		return false;
 
 	if (prefer_render_ring(sna, tmp->dst.bo))
 		return false;
@@ -166,12 +188,11 @@ prefer_blt_composite(struct sna *sna, struct sna_composite_op *tmp)
 	if (!prefer_blt_ring(sna, tmp->dst.bo, 0))
 		return false;
 
-	return prefer_blt_bo(sna, tmp->dst.bo) || prefer_blt_bo(sna, tmp->src.bo);
+	return prefer_blt_bo(sna, tmp->src.bo, tmp->dst.bo);
 }
 
-static inline bool prefer_blt_fill(struct sna *sna,
-				   struct kgem_bo *bo,
-				   unsigned flags)
+nonnull static inline bool
+prefer_blt_fill(struct sna *sna, struct kgem_bo *bo, unsigned flags)
 {
 	if (PREFER_RENDER)
 		return PREFER_RENDER < 0;
@@ -179,24 +200,21 @@ static inline bool prefer_blt_fill(struct sna *sna,
 	if (untiled_tlb_miss(bo))
 		return true;
 
-	if (force_blt_ring(sna))
+	if (force_blt_ring(sna, bo))
 		return true;
 
 	if ((flags & (FILL_POINTS | FILL_SPANS)) == 0) {
-		if (kgem_bo_is_render(bo))
-			return false;
-
 		if (prefer_render_ring(sna, bo))
 			return false;
 
 		if (!prefer_blt_ring(sna, bo, 0))
 			return false;
 	} else {
-	    if (can_switch_to_blt(sna, bo, 0))
+	    if (can_switch_to_blt(sna, bo, COPY_LAST))
 		    return true;
 	}
 
-	return prefer_blt_bo(sna, bo);
+	return prefer_blt_bo(sna, NULL, bo);
 }
 
 void gen6_render_context_switch(struct kgem *kgem, int new_mode);

@@ -148,6 +148,11 @@ struct sna_composite_op {
 		struct {
 			uint32_t flags;
 		} gen8;
+
+		struct {
+			uint32_t flags;
+			uint8_t wm_kernel;
+		} gen9;
 	} u;
 
 	void *priv;
@@ -238,8 +243,9 @@ struct sna_render {
 			  int16_t w, int16_t h,
 			  unsigned flags,
 			  struct sna_composite_op *tmp);
-#define COMPOSITE_PARTIAL 0x1
-#define COMPOSITE_FALLBACK 0x80000000
+#define COMPOSITE_PARTIAL	0x1
+#define COMPOSITE_UPLOAD	0x40000000
+#define COMPOSITE_FALLBACK	0x80000000
 
 	bool (*check_composite_spans)(struct sna *sna, uint8_t op,
 				      PicturePtr dst, PicturePtr src,
@@ -286,6 +292,8 @@ struct sna_render {
 #define COPY_LAST 0x1
 #define COPY_SYNC 0x2
 #define COPY_NO_OVERLAP 0x4
+#define COPY_SMALL 0x8
+#define COPY_DRI 0x10
 
 	bool (*copy)(struct sna *sna, uint8_t alu,
 		     PixmapPtr src, struct kgem_bo *src_bo,
@@ -429,8 +437,14 @@ enum {
 	GEN6_WM_KERNEL_OPACITY,
 	GEN6_WM_KERNEL_OPACITY_P,
 
-	GEN6_WM_KERNEL_VIDEO_PLANAR,
-	GEN6_WM_KERNEL_VIDEO_PACKED,
+	GEN6_WM_KERNEL_VIDEO_PLANAR_BT601,
+	GEN6_WM_KERNEL_VIDEO_NV12_BT601,
+	GEN6_WM_KERNEL_VIDEO_PACKED_BT601,
+
+	GEN6_WM_KERNEL_VIDEO_PLANAR_BT709,
+	GEN6_WM_KERNEL_VIDEO_NV12_BT709,
+	GEN6_WM_KERNEL_VIDEO_PACKED_BT709,
+
 	GEN6_KERNEL_COUNT
 };
 
@@ -479,8 +493,15 @@ enum {
 	GEN7_WM_KERNEL_OPACITY,
 	GEN7_WM_KERNEL_OPACITY_P,
 
-	GEN7_WM_KERNEL_VIDEO_PLANAR,
-	GEN7_WM_KERNEL_VIDEO_PACKED,
+	GEN7_WM_KERNEL_VIDEO_PLANAR_BT601,
+	GEN7_WM_KERNEL_VIDEO_NV12_BT601,
+	GEN7_WM_KERNEL_VIDEO_PACKED_BT601,
+
+	GEN7_WM_KERNEL_VIDEO_PLANAR_BT709,
+	GEN7_WM_KERNEL_VIDEO_NV12_BT709,
+	GEN7_WM_KERNEL_VIDEO_PACKED_BT709,
+
+	GEN7_WM_KERNEL_VIDEO_RGB,
 	GEN7_WM_KERNEL_COUNT
 };
 
@@ -531,14 +552,21 @@ enum {
 	GEN8_WM_KERNEL_OPACITY,
 	GEN8_WM_KERNEL_OPACITY_P,
 
-	GEN8_WM_KERNEL_VIDEO_PLANAR,
-	GEN8_WM_KERNEL_VIDEO_PACKED,
+	GEN8_WM_KERNEL_VIDEO_PLANAR_BT601,
+	GEN8_WM_KERNEL_VIDEO_NV12_BT601,
+	GEN8_WM_KERNEL_VIDEO_PACKED_BT601,
+
+	GEN8_WM_KERNEL_VIDEO_PLANAR_BT709,
+	GEN8_WM_KERNEL_VIDEO_NV12_BT709,
+	GEN8_WM_KERNEL_VIDEO_PACKED_BT709,
+
+	GEN8_WM_KERNEL_VIDEO_RGB,
 	GEN8_WM_KERNEL_COUNT
 };
 
 struct gen8_render_state {
 	unsigned gt;
-
+	const struct gt_info *info;
 	struct kgem_bo *general_bo;
 
 	uint32_t vs_state;
@@ -563,6 +591,67 @@ struct gen8_render_state {
 
 	bool needs_invariant;
 	bool emit_flush;
+};
+
+enum {
+	GEN9_WM_KERNEL_NOMASK = 0,
+	GEN9_WM_KERNEL_NOMASK_P,
+
+	GEN9_WM_KERNEL_MASK,
+	GEN9_WM_KERNEL_MASK_P,
+
+	GEN9_WM_KERNEL_MASKCA,
+	GEN9_WM_KERNEL_MASKCA_P,
+
+	GEN9_WM_KERNEL_MASKSA,
+	GEN9_WM_KERNEL_MASKSA_P,
+
+	GEN9_WM_KERNEL_OPACITY,
+	GEN9_WM_KERNEL_OPACITY_P,
+
+	GEN9_WM_KERNEL_VIDEO_PLANAR_BT601,
+	GEN9_WM_KERNEL_VIDEO_NV12_BT601,
+	GEN9_WM_KERNEL_VIDEO_PACKED_BT601,
+
+	GEN9_WM_KERNEL_VIDEO_PLANAR_BT709,
+	GEN9_WM_KERNEL_VIDEO_NV12_BT709,
+	GEN9_WM_KERNEL_VIDEO_PACKED_BT709,
+
+	GEN9_WM_KERNEL_VIDEO_AYUV_BT601,
+	GEN9_WM_KERNEL_VIDEO_AYUV_BT709,
+
+	GEN9_WM_KERNEL_VIDEO_RGB,
+	GEN9_WM_KERNEL_COUNT
+};
+
+struct gen9_render_state {
+	unsigned gt;
+	const struct gt_info *info;
+	struct kgem_bo *general_bo;
+
+	uint32_t vs_state;
+	uint32_t sf_state;
+	uint32_t sf_mask_state;
+	uint32_t wm_state;
+	uint32_t wm_kernel[GEN9_WM_KERNEL_COUNT][3];
+
+	uint32_t cc_blend;
+
+	uint32_t drawrect_offset;
+	uint32_t drawrect_limit;
+	uint32_t blend;
+	uint32_t samplers;
+	uint32_t kernel;
+
+	uint16_t num_sf_outputs;
+	uint16_t ve_id;
+	uint16_t last_primitive;
+	int16_t floats_per_vertex;
+	uint16_t surface_table;
+
+	bool needs_invariant;
+	bool emit_flush;
+	bool ve_dirty;
 };
 
 struct sna_static_stream {
@@ -620,6 +709,7 @@ const char *gen5_render_init(struct sna *sna, const char *backend);
 const char *gen6_render_init(struct sna *sna, const char *backend);
 const char *gen7_render_init(struct sna *sna, const char *backend);
 const char *gen8_render_init(struct sna *sna, const char *backend);
+const char *gen9_render_init(struct sna *sna, const char *backend);
 
 void sna_render_mark_wedged(struct sna *sna);
 

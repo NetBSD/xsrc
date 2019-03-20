@@ -1,0 +1,42 @@
+option('sna', type : 'boolean', value : true,
+       description : 'Build with SNA support')
+option('uxa', type : 'boolean', value : true,
+       description : 'Build with UXA support')
+option('xaa', type : 'boolean', value : true,
+       description : 'Build with XAA support')
+option('ums', type : 'boolean', value : true,
+       description : 'Build with UMS support')
+option('kms', type : 'boolean', value : true,
+       description : 'Build with KMS support')
+option('dri1', type : 'boolean', value : true,
+       description : 'Build DRI1 support')
+option('dri2', type : 'boolean', value : true,
+       description : 'Build with DRI2 support')
+option('dri3', type : 'boolean', value : true,
+       description : 'Build with DRI3 support')
+option('present', type : 'boolean', value : true,
+       description : 'Enable Present support')
+option('xvmc', type : 'boolean', value : true,
+       description : 'Enable XvMC support')
+option('valgrind', type : 'boolean', value : true,
+       description : 'Enable valgrindified ioctls for debugging')
+option('default-dri', type : 'combo', value : '2', choices : [ '1', '2', '3' ],
+       description : 'Select the default maximum DRI level')
+option('default-accel', type : 'combo', value : 'sna', choices : [ 'sna', 'uxa', 'none' ],
+       description : 'Select the default acceleration method')
+option('tools', type : 'boolean', value : true,
+       description : 'Enable building and installing the miscellaneous tools')
+option('backlight', type : 'boolean', value : true,
+       description : 'Enable control of the backlight')
+option('backlight-helper', type : 'boolean', value : true,
+       description : 'Enable building the backlight helper executable for running X under a normal user')
+option('tearfree', type : 'boolean', value : false,
+       description : 'Enable use of TearFree by default')
+option('use-create2', type : 'boolean', value : false,
+       description : 'Enable use of create2 ioctl (experimental)')
+option('async-swap', type : 'boolean', value : false,
+       description : 'Enable use of asynchronous swaps (experimental)')
+option('internal-debug', type : 'combo', value : 'no', choices : [ 'no', 'sync', 'memory', 'pixmap', 'full' ],
+       description : 'Enable internal debugging')
+option('xorg-module-dir', type : 'string', value : '@libdir@/xorg/modules',
+       description : 'Default xorg module directory')

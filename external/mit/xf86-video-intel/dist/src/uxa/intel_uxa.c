@@ -176,6 +176,24 @@ intel_uxa_check_solid(DrawablePtr drawable, int alu, Pixel planemask)
 	return TRUE;
 }
 
+static Bool
+intel_uxa_check_bo_tiling(intel_screen_private *intel,
+			  PixmapPtr pixmap,
+			  unsigned *tiling_out)
+{
+	struct intel_uxa_pixmap *priv;
+
+	priv = intel_uxa_get_pixmap_private(pixmap);
+	if (!priv)
+		return FALSE;
+
+	if (priv->tiling == I915_TILING_Y && INTEL_INFO(intel)->gen < 060)
+		return FALSE;
+
+	*tiling_out = priv->tiling;
+	return TRUE;
+}
+
 /**
  * Sets up hardware state for a series of solid fills.
  */
@@ -188,6 +206,9 @@ intel_uxa_prepare_solid(PixmapPtr pixmap, int alu, Pixel planemask, Pixel fg)
 		NULL,		/* batch_bo */
 		intel_uxa_get_pixmap_bo(pixmap),
 	};
+
+	if (!intel_uxa_check_bo_tiling(intel, pixmap, &intel->BR_tiling[0]))
+		return FALSE;
 
 	if (!intel_uxa_check_pitch_2d(pixmap))
 		return FALSE;
@@ -236,7 +257,7 @@ static void intel_uxa_solid(PixmapPtr pixmap, int x1, int y1, int x2, int y2)
 
 	{
 		int len = INTEL_INFO(intel)->gen >= 0100 ? 7 : 6;
-		BEGIN_BATCH_BLT(len);
+		BEGIN_BATCH_BLT_TILED(len);
 
 		cmd = XY_COLOR_BLT_CMD | (len - 2);
 
@@ -310,6 +331,10 @@ intel_uxa_prepare_copy(PixmapPtr source, PixmapPtr dest, int xdir,
 		intel_uxa_get_pixmap_bo(dest),
 	};
 
+	if (!intel_uxa_check_bo_tiling(intel, dest, &intel->BR_tiling[0]) ||
+	    !intel_uxa_check_bo_tiling(intel, source, &intel->BR_tiling[1]))
+		return FALSE;
+
 	if (!intel_uxa_get_aperture_space(scrn, bo_table, ARRAY_SIZE(bo_table)))
 		return FALSE;
 
@@ -375,7 +400,7 @@ intel_uxa_copy(PixmapPtr dest, int src_x1, int src_y1, int dst_x1,
 
 	{
 		int len = INTEL_INFO(intel)->gen >= 0100 ? 10 : 8;
-		BEGIN_BATCH_BLT(len);
+		BEGIN_BATCH_BLT_TILED(len);
 
 		cmd = XY_SRC_COPY_BLT_CMD | (len - 2);
 
@@ -1068,7 +1093,7 @@ Bool intel_uxa_create_screen_resources(ScreenPtr screen)
 	ScrnInfoPtr scrn = xf86ScreenToScrn(screen);
 	PixmapPtr pixmap;
 	intel_screen_private *intel = intel_get_screen_private(scrn);
-	dri_bo *bo = intel->front_buffer;
+	dri_bo *bo = intel->front_buffer, *old_bo;
 	int old_width, old_height, old_pitch;
 
 	if (!uxa_resources_init(screen))
@@ -1081,6 +1106,7 @@ Bool intel_uxa_create_screen_resources(ScreenPtr screen)
 	old_width = pixmap->drawable.width;
 	old_height = pixmap->drawable.height;
 	old_pitch = pixmap->devKind;
+	old_bo = intel_uxa_get_pixmap_bo(pixmap);
 
 	if (!screen->ModifyPixmapHeader(pixmap,
 					scrn->virtualX,
@@ -1102,6 +1128,9 @@ Bool intel_uxa_create_screen_resources(ScreenPtr screen)
 err:
 	screen->ModifyPixmapHeader(pixmap,
 				   old_width, old_height, -1, -1, old_pitch, NULL);
+	if (old_bo)
+		intel_uxa_set_pixmap_bo(pixmap, old_bo);
+
 	return FALSE;
 }
 

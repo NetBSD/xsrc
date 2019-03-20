@@ -1,0 +1,1 @@
+static const char git_version[] = "@VCS_TAG@";

@@ -57,7 +57,7 @@ define(`mask_dw_dy', `g6.4<0,1,0>F')
 define(`mask_wo',    `g6.12<0,1,0>F')
 
 /*
- * Local variables. Pairs must be aligned on even reg boundry
+ * Local variables. Pairs must be aligned on even reg boundary
  */
 
 /* this holds the X dest coordinates */

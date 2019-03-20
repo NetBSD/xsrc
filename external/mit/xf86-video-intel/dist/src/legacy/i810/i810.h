@@ -218,7 +218,6 @@ typedef struct _I810Rec {
    int LockHeld;
    DRIInfoPtr pDRIInfo;
    int drmSubFD;
-   int numVisualConfigs;
    unsigned long dcacheHandle;
    unsigned long backHandle;
    unsigned long zHandle;

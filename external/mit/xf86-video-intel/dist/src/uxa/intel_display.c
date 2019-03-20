@@ -89,11 +89,11 @@ struct intel_mode {
 	struct list outputs;
 	struct list crtcs;
 
-	void *pageflip_data;
-	intel_pageflip_handler_proc pageflip_handler;
-	intel_pageflip_abort_proc pageflip_abort;
-
-	Bool delete_dp_12_displays;
+	struct {
+		intel_pageflip_handler_proc handler;
+		intel_pageflip_abort_proc abort;
+		void *data;
+	} pageflip;
 };
 
 struct intel_pageflip {
@@ -114,7 +114,6 @@ struct intel_crtc {
 	struct list link;
 	PixmapPtr scanout_pixmap;
 	uint32_t scanout_fb_id;
-	int32_t vblank_offset;
 	uint32_t msc_prev;
 	uint64_t msc_high;
 };
@@ -193,7 +192,7 @@ intel_output_backlight_init(xf86OutputPtr output)
 
 	str = xf86GetOptValString(intel->Options, OPTION_BACKLIGHT);
 	if (str != NULL) {
-		if (backlight_exists(str) != BL_NONE) {
+		if (backlight_exists(str)) {
 			intel_output->backlight_active_level =
 				backlight_open(&intel_output->backlight,
 					       strdup(str));
@@ -689,9 +688,11 @@ intel_set_scanout_pixmap(xf86CrtcPtr crtc, PixmapPtr ppix)
 	}
 
 	bo = intel_get_pixmap_bo(ppix);
-	if (intel->front_buffer) {
-		ErrorF("have front buffer\n");
-	}
+	if (!bo)
+		return FALSE;
+
+	if (intel->front_buffer)
+		return FALSE;
 
 	drm_intel_bo_disable_reuse(bo);
 
@@ -867,6 +868,48 @@ intel_output_attach_edid(xf86OutputPtr output)
 	xf86OutputSetEDID(output, mon);
 }
 
+static void
+intel_output_attach_tile(xf86OutputPtr output)
+{
+#if XF86_OUTPUT_VERSION >= 3
+	struct intel_output *intel_output = output->driver_private;
+	drmModeConnectorPtr koutput = intel_output->mode_output;
+	struct intel_mode *mode = intel_output->mode;
+	drmModePropertyBlobPtr blob = NULL;
+	struct xf86CrtcTileInfo tile_info, *set = NULL;
+	int i;
+
+	for (i = 0; koutput && i < koutput->count_props; i++) {
+		drmModePropertyPtr props;
+
+		props = drmModeGetProperty(mode->fd, koutput->props[i]);
+		if (!props)
+			continue;
+
+		if (!(props->flags & DRM_MODE_PROP_BLOB)) {
+			drmModeFreeProperty(props);
+			continue;
+		}
+
+		if (!strcmp(props->name, "TILE")) {
+			blob = drmModeGetPropertyBlob(mode->fd,
+						      koutput->prop_values[i]);
+		}
+		drmModeFreeProperty(props);
+	}
+
+	if (blob) {
+		if (xf86OutputParseKMSTile(blob->data,
+					   blob->length,
+					   &tile_info))
+			set = &tile_info;
+		drmModeFreePropertyBlob(blob);
+	}
+
+	xf86OutputSetTile(output, set);
+#endif
+}
+
 static DisplayModePtr
 intel_output_panel_edid(xf86OutputPtr output, DisplayModePtr modes)
 {
@@ -922,6 +965,7 @@ intel_output_get_modes(xf86OutputPtr output)
 	int i;
 
 	intel_output_attach_edid(output);
+	intel_output_attach_tile(output);
 
 	if (!koutput)
 		return Modes;
@@ -1492,6 +1536,7 @@ intel_output_init(ScrnInfoPtr scrn, struct intel_mode *mode, drmModeResPtr mode_
 			intel_output = output->driver_private;
 			intel_output->output_id = mode_res->connectors[num];
 			intel_output->mode_output = koutput;
+			RROutputChanged(output->randr_output, TRUE);
 			return;
 		}
 	}
@@ -1650,9 +1695,6 @@ intel_pageflip_abort(ScrnInfoPtr scrn, xf86CrtcPtr crtc, void *data);
 static void
 intel_pageflip_complete(struct intel_mode *mode);
 
-static void
-intel_drm_abort_seq (ScrnInfoPtr scrn, uint32_t seq);
-
 Bool
 intel_do_pageflip(intel_screen_private *intel,
 		  dri_bo *new_front,
@@ -1671,22 +1713,29 @@ intel_do_pageflip(intel_screen_private *intel,
 	uint32_t new_fb_id;
 	uint32_t flags;
 	uint32_t seq;
+	int err = 0;
 	int i;
+
+	/*
+	 * We only have a single length queue in the kernel, so any
+	 * attempts to schedule a second flip before processing the first
+	 * is a bug. Punt it back to the caller.
+	 */
+	if (mode->flip_count)
+		return FALSE;
 
 	/*
 	 * Create a new handle for the back buffer
 	 */
 	if (drmModeAddFB(mode->fd, scrn->virtualX, scrn->virtualY,
 			 scrn->depth, scrn->bitsPerPixel, pitch,
-			 new_front->handle, &new_fb_id))
+			 new_front->handle, &new_fb_id)) {
+		err = errno;
 		goto error_out;
+	}
 
 	drm_intel_bo_disable_reuse(new_front);
         intel_flush(intel);
-
-	mode->pageflip_data = pageflip_data;
-	mode->pageflip_handler = pageflip_handler;
-	mode->pageflip_abort = pageflip_abort;
 
 	/*
 	 * Queue flips on all enabled CRTCs
@@ -1699,6 +1748,7 @@ intel_do_pageflip(intel_screen_private *intel,
 	 */
 	mode->fe_msc = 0;
 	mode->fe_usec = 0;
+	memset(&mode->pageflip, 0, sizeof(mode->pageflip));
 
 	flags = DRM_MODE_PAGE_FLIP_EVENT;
 	if (async)
@@ -1711,8 +1761,7 @@ intel_do_pageflip(intel_screen_private *intel,
 
 		flip = calloc(1, sizeof(struct intel_pageflip));
 		if (flip == NULL) {
-			xf86DrvMsg(scrn->scrnIndex, X_WARNING,
-				   "flip queue: carrier alloc failed.\n");
+			err = errno;
 			goto error_undo;
 		}
 
@@ -1724,32 +1773,29 @@ intel_do_pageflip(intel_screen_private *intel,
 
 		seq = intel_drm_queue_alloc(scrn, config->crtc[i], flip, intel_pageflip_handler, intel_pageflip_abort);
 		if (!seq) {
+			err = errno;
 			free(flip);
 			goto error_undo;
 		}
 
-again:
+		mode->flip_count++;
+
 		if (drmModePageFlip(mode->fd,
 				    crtc_id(crtc),
 				    new_fb_id,
 				    flags, (void *)(uintptr_t)seq)) {
-			if (intel_mode_read_drm_events(intel)) {
-				xf86DrvMsg(scrn->scrnIndex, X_WARNING,
-					   "flip queue retry\n");
-				goto again;
-			}
-			xf86DrvMsg(scrn->scrnIndex, X_WARNING,
-				   "flip queue failed: %s\n", strerror(errno));
-			if (seq)
-				intel_drm_abort_seq(scrn, seq);
-			free(flip);
+			err = errno;
+			intel_drm_abort_seq(scrn, seq);
 			goto error_undo;
 		}
-		mode->flip_count++;
 	}
 
 	mode->old_fb_id = mode->fb_id;
 	mode->fb_id = new_fb_id;
+
+	mode->pageflip.data = pageflip_data;
+	mode->pageflip.handler = pageflip_handler;
+	mode->pageflip.abort = pageflip_abort;
 
 	if (!mode->flip_count)
 		intel_pageflip_complete(mode);
@@ -1765,7 +1811,7 @@ error_undo:
 
 error_out:
 	xf86DrvMsg(scrn->scrnIndex, X_WARNING, "Page flip failed: %s\n",
-		   strerror(errno));
+		   strerror(err));
 
 	mode->flip_count = 0;
 	return FALSE;
@@ -1839,7 +1885,7 @@ intel_drm_abort(ScrnInfoPtr scrn, Bool (*match)(void *data, void *match_data), v
 /*
  * Abort by drm queue sequence number
  */
-static void
+void
 intel_drm_abort_seq(ScrnInfoPtr scrn, uint32_t seq)
 {
 	struct intel_drm_queue *q;
@@ -1911,7 +1957,6 @@ intel_sequence_to_crtc_msc(xf86CrtcPtr crtc, uint32_t sequence)
 {
 	struct intel_crtc *intel_crtc = crtc->driver_private;
 
-        sequence += intel_crtc->vblank_offset;
         if ((int32_t) (sequence - intel_crtc->msc_prev) < -0x40000000)
                 intel_crtc->msc_high += 0x100000000L;
         intel_crtc->msc_prev = sequence;
@@ -1935,37 +1980,10 @@ intel_get_crtc_msc_ust(ScrnInfoPtr scrn, xf86CrtcPtr crtc, uint64_t *msc, uint64
         return 0;
 }
 
-/*
- * Convert a 64-bit adjusted MSC value into a 32-bit kernel sequence number,
- * removing the high 32 bits and subtracting out the vblank_offset term.
- *
- * This also updates the vblank_offset when it notices that the value should
- * change.
- */
-
-#define MAX_VBLANK_OFFSET       1000
-
 uint32_t
 intel_crtc_msc_to_sequence(ScrnInfoPtr scrn, xf86CrtcPtr crtc, uint64_t expect)
 {
-	struct intel_crtc *intel_crtc = crtc->driver_private;
-        uint64_t msc, ust;
-
-	if (intel_get_crtc_msc_ust(scrn, crtc, &msc, &ust) == 0) {
-		int64_t diff = expect - msc;
-
-		/* We're way off here, assume that the kernel has lost its mind
-		 * and smack the vblank back to something sensible
-		 */
-		if (diff < -MAX_VBLANK_OFFSET || diff > MAX_VBLANK_OFFSET) {
-			intel_crtc->vblank_offset += (int32_t) diff;
-			if (intel_crtc->vblank_offset > -MAX_VBLANK_OFFSET &&
-			    intel_crtc->vblank_offset < MAX_VBLANK_OFFSET)
-				intel_crtc->vblank_offset = 0;
-		}
-	}
-
-        return (uint32_t) (expect - intel_crtc->vblank_offset);
+        return (uint32_t)expect;
 }
 
 /*
@@ -1998,14 +2016,13 @@ intel_drm_handler(int fd, uint32_t frame, uint32_t sec, uint32_t usec, void *use
 static void
 intel_pageflip_complete(struct intel_mode *mode)
 {
-	/* Release framebuffer */
-	drmModeRmFB(mode->fd, mode->old_fb_id);
-
-	if (!mode->pageflip_handler)
+	if (!mode->pageflip.handler)
 		return;
 
-	mode->pageflip_handler(mode->fe_msc, mode->fe_usec,
-			       mode->pageflip_data);
+	/* Release framebuffer */
+	drmModeRmFB(mode->fd, mode->old_fb_id);
+	mode->pageflip.handler(mode->fe_msc, mode->fe_usec,
+			       mode->pageflip.data);
 }
 
 /*
@@ -2045,6 +2062,7 @@ intel_pageflip_handler(ScrnInfoPtr scrn, xf86CrtcPtr crtc,
 
 	if (!mode)
 		return;
+
 	intel_pageflip_complete(mode);
 }
 
@@ -2060,18 +2078,18 @@ intel_pageflip_abort(ScrnInfoPtr scrn, xf86CrtcPtr crtc, void *data)
 	if (!mode)
 		return;
 
-	/* Release framebuffer */
-	drmModeRmFB(mode->fd, mode->old_fb_id);
-
-	if (!mode->pageflip_abort)
+	if (!mode->pageflip.abort)
 		return;
 
-	mode->pageflip_abort(mode->pageflip_data);
+	/* Release framebuffer */
+	drmModeRmFB(mode->fd, mode->old_fb_id);
+	mode->pageflip.abort(mode->pageflip.data);
 }
 
 /*
  * Check for pending DRM events and process them.
  */
+#if !HAVE_NOTIFY_FD
 static void
 drm_wakeup_handler(pointer data, int err, pointer p)
 {
@@ -2086,6 +2104,14 @@ drm_wakeup_handler(pointer data, int err, pointer p)
 	if (FD_ISSET(mode->fd, read_mask))
 		drmHandleEvent(mode->fd, &mode->event_context);
 }
+#else
+static void
+drm_notify_fd(int fd, int ready, void *data)
+{
+	struct intel_mode *mode = data;
+	drmHandleEvent(mode->fd, &mode->event_context);
+}
+#endif
 
 /*
  * If there are any available, read drm_events
@@ -2231,10 +2257,6 @@ Bool intel_mode_pre_init(ScrnInfoPtr scrn, int fd, int cpp)
 		intel->use_pageflipping = TRUE;
 	}
 
-	if (xf86ReturnOptValBool(intel->Options, OPTION_DELETE_DP12, FALSE)) {
-		mode->delete_dp_12_displays = TRUE;
-	}
-
 	intel->modes = mode;
 	drmModeFreeResources(mode_res);
 	return TRUE;
@@ -2250,9 +2272,11 @@ intel_mode_init(struct intel_screen_private *intel)
 	 * registration within ScreenInit and not PreInit.
 	 */
 	mode->flip_count = 0;
-	AddGeneralSocket(mode->fd);
+	SetNotifyFd(mode->fd, drm_notify_fd, X_NOTIFY_READ, mode);
+#if !HAVE_NOTIFY_FD
 	RegisterBlockAndWakeupHandlers((BlockHandlerProcPtr)NoopDDA,
 				       drm_wakeup_handler, mode);
+#endif
 }
 
 void
@@ -2276,9 +2300,11 @@ intel_mode_close(intel_screen_private *intel)
 
         intel_drm_abort_scrn(intel->scrn);
 
+#if !HAVE_NOTIFY_FD
 	RemoveBlockAndWakeupHandlers((BlockHandlerProcPtr)NoopDDA,
 				     drm_wakeup_handler, mode);
-	RemoveGeneralSocket(mode->fd);
+#endif
+	RemoveNotifyFd(mode->fd);
 }
 
 void
@@ -2498,12 +2524,11 @@ intel_mode_hotplug(struct intel_screen_private *intel)
 	int i, j;
 	Bool found;
 	Bool changed = FALSE;
-	struct intel_mode *mode = intel->modes;
+
 	mode_res = drmModeGetResources(intel->drmSubFD);
 	if (!mode_res)
 		goto out;
 
-restart_destroy:
 	for (i = 0; i < config->num_output; i++) {
 		xf86OutputPtr output = config->output[i];
 		struct intel_output *intel_output;
@@ -2522,13 +2547,9 @@ restart_destroy:
 		drmModeFreeConnector(intel_output->mode_output);
 		intel_output->mode_output = NULL;
 		intel_output->output_id = -1;
+		RROutputChanged(output->randr_output, TRUE);
 
 		changed = TRUE;
-		if (mode->delete_dp_12_displays) {
-			RROutputDestroy(output->randr_output);
-			xf86OutputDestroy(output);
-			goto restart_destroy;
-		}
 	}
 
 	/* find new output ids we don't have outputs for */
@@ -2552,10 +2573,8 @@ restart_destroy:
 		intel_output_init(scrn, intel->modes, mode_res, i, 1);
 	}
 
-	if (changed) {
-		RRSetChanged(xf86ScrnToScreen(scrn));
+	if (changed)
 		RRTellChanged(xf86ScrnToScreen(scrn));
-	}
 
 	drmModeFreeResources(mode_res);
 out:

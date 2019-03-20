@@ -107,6 +107,15 @@ static inline uint32_t color(uint8_t red, uint8_t green, uint8_t blue, uint8_t a
 	return alpha << 24 | ra >> 8 << 16 | ga >> 8 << 8 | ba >> 8;
 }
 
+static inline uint32_t xrender_color(const XRenderColor *c)
+{
+	uint32_t ra = c->red * c->alpha;
+	uint32_t ga = c->green * c->alpha;
+	uint32_t ba = c->blue * c->alpha;
+
+	return c->alpha >> 8 << 24 | ra >> 24 << 16 | ga >> 24 << 8 | ba >> 24;
+}
+
 void test_timer_start(struct test_display *t, struct timespec *tv);
 double test_timer_stop(struct test_display *t, struct timespec *tv);
 
