@@ -117,7 +117,7 @@ util_fast_exp2(float x)
    union fi epart;
 
    if(x > 129.00000f)
-      return 3.402823466e+38f;
+      return FLT_MAX;
 
    if (x < -126.99999f)
       return 0.0f;
