@@ -921,15 +921,19 @@ util_format_test_cases[] =
 
 #if !defined(PIPE_CC_MSVC)
 
+#ifdef NAN
    /* NaNs */
    {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0x7c01), UNPACKED_1x1(        NAN, 0.0, 0.0, 1.0)},
    {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0xfc01), UNPACKED_1x1(       -NAN, 0.0, 0.0, 1.0)},
    {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0x7fff), UNPACKED_1x1(        NAN, 0.0, 0.0, 1.0)},
    {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0xffff), UNPACKED_1x1(       -NAN, 0.0, 0.0, 1.0)},
+#endif
 
+#ifdef INFINITY
    /* Inf */
    {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0x7c00), UNPACKED_1x1(        INFINITY, 0.0, 0.0, 1.0)},
    {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0xfc00), UNPACKED_1x1(       -INFINITY, 0.0, 0.0, 1.0)},
+#endif
 
 #endif
 
