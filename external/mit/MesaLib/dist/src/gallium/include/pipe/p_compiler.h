@@ -69,7 +69,7 @@ extern "C" {
 #endif
 
 
-#if !defined(__HAIKU__) && !defined(__USE_MISC)
+#if !defined(__HAIKU__) && !defined(__USE_MISC) && !defined(_NETBSD_SOURCE)
 #if !defined(PIPE_OS_ANDROID)
 typedef unsigned int       uint;
 #endif
@@ -142,7 +142,7 @@ typedef unsigned char boolean;
 
 #define PIPE_ALIGN_STACK
 
-#elif defined(SWIG)
+#elif defined(SWIG) || defined(__lint__)
 
 #define PIPE_ALIGN_TYPE(_alignment, _type) _type
 #define PIPE_ALIGN_VAR(_alignment)
@@ -163,6 +163,10 @@ typedef unsigned char boolean;
 #elif defined(_MSC_VER)
 
 #define PIPE_READ_WRITE_BARRIER() _ReadWriteBarrier()
+
+#elif defined(__lint__)
+
+#define PIPE_READ_WRITE_BARRIER() /* */
 
 #else
 
