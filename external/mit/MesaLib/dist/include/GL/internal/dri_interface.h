@@ -43,9 +43,11 @@
 #ifdef HAVE_LIBDRM
 #include <drm.h>
 #else
+#ifndef _DRM_H_
 typedef unsigned int drm_context_t;
 typedef unsigned int drm_drawable_t;
 typedef struct drm_clip_rect drm_clip_rect_t;
+#endif
 #endif
 
 #include <stdint.h>
