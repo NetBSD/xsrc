@@ -43,10 +43,19 @@ __asm__(".text\n"
 
 #ifndef __ILP32__
 
+#if defined(__NetBSD__) && defined(MAPI_MODE_GLAPI)
+#define STUB_ASM_CODE(slot)                              \
+   "movq " ENTRY_CURRENT_TABLE "@GOTTPOFF(%rip), %rax\n\t"  \
+   "movq %fs:(%rax), %r11\n\t"                           \
+   "testq %r11, %r11\n\t"                                \
+   "cmoveq table_noop_array@GOTPCREL(%rip), %r11\n\t"    \
+   "jmp *(8 * " slot ")(%r11)"
+#else
 #define STUB_ASM_CODE(slot)                              \
    "movq " ENTRY_CURRENT_TABLE "@GOTTPOFF(%rip), %rax\n\t"  \
    "movq %fs:(%rax), %r11\n\t"                           \
    "jmp *(8 * " slot ")(%r11)"
+#endif
 
 #else
 

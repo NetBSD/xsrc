@@ -65,7 +65,7 @@ u_current_get_context_internal(void);
 static inline const struct _glapi_table *
 u_current_get_table(void)
 {
-#ifdef GLX_USE_TLS
+#if defined(GLX_USE_TLS) && !defined(__NetBSD__)
    return u_current_table;
 #else
    return (likely(u_current_table) ?
