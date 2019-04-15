@@ -36,10 +36,10 @@
 
 static pthread_mutex_t sync_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-WEAK uint64_t
-__atomic_fetch_add_8(long long *ptr, long long val, int memorder)
+WEAK long long
+__atomic_fetch_add_8(volatile long long *ptr, long long val, int memorder)
 {
-   uint64_t r;
+   long long r;
 
    pthread_mutex_lock(&sync_mutex);
    *ptr += val;
@@ -49,10 +49,10 @@ __atomic_fetch_add_8(long long *ptr, long long val, int memorder)
    return r;
 }
 
-WEAK uint64_t
-__atomic_fetch_sub_8(long long *ptr, long long val, int memorder)
+WEAK long long
+__atomic_fetch_sub_8(volatile long long *ptr, long long val, int memorder)
 {
-   uint64_t r;
+   long long r;
 
    pthread_mutex_lock(&sync_mutex);
    *ptr -= val;
@@ -62,10 +62,10 @@ __atomic_fetch_sub_8(long long *ptr, long long val, int memorder)
    return r;
 }
 
-WEAK uint64_t
-__sync_val_compare_and_swap_8(uint64_t *ptr, uint64_t oldval, uint64_t newval)
+WEAK long long
+__sync_val_compare_and_swap_8(volatile long long *ptr, long long oldval, long long newval)
 {
-   uint64_t r;
+   long long r;
 
    pthread_mutex_lock(&sync_mutex);
    r = *ptr;
