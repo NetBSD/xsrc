@@ -39,8 +39,12 @@
 #define PLATFORM_HAS_WGL 0
 #define EPOXY_IMPORTEXPORT
 #else
-#ifdef __NetBSD__ /* XXX enable egl in xsrc */
-#define PLATFORM_HAS_EGL 0
+#ifdef __NetBSD__
+# if defined(__amd64__) || defined(__i386__) || defined(__aarch64__) // XXX evbarm32
+#  define PLATFORM_HAS_EGL 1
+# else
+#  define PLATFORM_HAS_EGL 0
+# endif
 #else
 #define PLATFORM_HAS_EGL 1
 #endif

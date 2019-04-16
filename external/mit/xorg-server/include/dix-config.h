@@ -488,10 +488,8 @@
 /* Build GLAMOR */
 #define GLAMOR 1
 
-#if 0
 /* Build glamor's GBM-based EGL support */
 #define GLAMOR_HAS_GBM 1
-#endif
 
 /* Build glamor/gbm has linear support */
 #define GLAMOR_HAS_GBM_LINEAR 1
