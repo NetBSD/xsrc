@@ -39,7 +39,7 @@
 #define PLATFORM_HAS_WGL 0
 #define EPOXY_IMPORTEXPORT
 #else
-#ifdef __NetBSD__
+#if defined(__NetBSD__) && !defined(PLATFORM_HAS_EGL)
 # if defined(__amd64__) || defined(__i386__) || defined(__aarch64__) // XXX evbarm32
 #  define PLATFORM_HAS_EGL 1
 # else
