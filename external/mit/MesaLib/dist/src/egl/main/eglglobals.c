@@ -162,7 +162,10 @@ _eglPointerIsDereferencable(void *p)
 {
 #ifdef HAVE_MINCORE
    uintptr_t addr = (uintptr_t) p;
-   unsigned char valid = 0;
+#ifdef __linux__
+   unsigned
+#endif
+   char valid = 0;
    const long page_size = getpagesize();
 
    if (p == NULL)
