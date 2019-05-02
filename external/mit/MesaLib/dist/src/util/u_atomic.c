@@ -63,7 +63,11 @@ __atomic_fetch_sub_8(volatile long long *ptr, long long val, int memorder)
 }
 
 WEAK long long
-__sync_val_compare_and_swap_8(volatile long long *ptr, long long oldval, long long newval)
+__sync_val_compare_and_swap_8(volatile long long *ptr, long long oldval, long long newval
+#ifdef __clang__
+	, ...
+#endif
+)
 {
    long long r;
 
