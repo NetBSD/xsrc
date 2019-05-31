@@ -1137,7 +1137,6 @@ __glXDrawableInit(__GLXdrawable * drawable,
     drawable->pDraw = pDraw;
     drawable->type = type;
     drawable->drawId = drawId;
-    drawable->otherId = 0;
     drawable->config = config;
     drawable->eventMask = 0;
 
@@ -1172,10 +1171,8 @@ DoCreateGLXDrawable(ClientPtr client, __GLXscreen * pGlxScreen,
      * Windows aren't refcounted, so track both the X and the GLX window
      * so we get called regardless of destruction order.
      */
-    // XXXMRG xorg-server 1.10
-    if (drawableId != glxDrawableId && (type == GLX_DRAWABLE_WINDOW /*|| type == GLX_DRAWABLE_PIXMAP*/) &&
+    if (drawableId != glxDrawableId && type == GLX_DRAWABLE_WINDOW &&
         !AddResource(pDraw->id, __glXDrawableRes, pGlxDraw))
-	/*pGlxDraw->destroy (pGlxDraw);*/
         return BadAlloc;
 
     return Success;
