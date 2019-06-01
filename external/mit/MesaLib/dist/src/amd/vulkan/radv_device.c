@@ -329,7 +329,7 @@ radv_physical_device_init(struct radv_physical_device *device,
 	    device->rad_info.chip_class > GFX9)
 		fprintf(stderr, "WARNING: radv is not a conformant vulkan implementation, testing use only.\n");
 
-	radv_get_driver_uuid(&device->device_uuid);
+	radv_get_driver_uuid(&device->driver_uuid);
 	radv_get_device_uuid(&device->rad_info, &device->device_uuid);
 
 	if (device->rad_info.family == CHIP_STONEY ||
@@ -726,8 +726,7 @@ void radv_GetPhysicalDeviceFeatures(
 		.alphaToOne                               = true,
 		.multiViewport                            = true,
 		.samplerAnisotropy                        = true,
-		.textureCompressionETC2                   = pdevice->rad_info.chip_class >= GFX9 ||
-		                                            pdevice->rad_info.family == CHIP_STONEY,
+		.textureCompressionETC2                   = radv_device_supports_etc(pdevice),
 		.textureCompressionASTC_LDR               = false,
 		.textureCompressionBC                     = true,
 		.occlusionQueryPrecise                    = true,
@@ -794,7 +793,7 @@ void radv_GetPhysicalDeviceFeatures2(
 			features->storageBuffer16BitAccess = enabled;
 			features->uniformAndStorageBuffer16BitAccess = enabled;
 			features->storagePushConstant16 = enabled;
-			features->storageInputOutput16 = enabled;
+			features->storageInputOutput16 = enabled && HAVE_LLVM >= 0x900;
 			break;
 		}
 		case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_YCBCR_CONVERSION_FEATURES: {
@@ -978,7 +977,7 @@ void radv_GetPhysicalDeviceProperties(
 		.maxCullDistances                         = 8,
 		.maxCombinedClipAndCullDistances          = 8,
 		.discreteQueuePriorities                  = 2,
-		.pointSizeRange                           = { 0.125, 255.875 },
+		.pointSizeRange                           = { 0.0, 8192.0 },
 		.lineWidthRange                           = { 0.0, 7.9921875 },
 		.pointSizeGranularity                     = (1.0 / 8.0),
 		.lineWidthGranularity                     = (1.0 / 128.0),

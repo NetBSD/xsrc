@@ -33,7 +33,7 @@ endif
 
 libxvmc_gallium = shared_library(
   'XvMCgallium',
-  'target.c',
+  ['target.c', xmlpool_options_h],
   c_args : c_vis_args,
   cpp_args : cpp_vis_args,
   link_args : [xvmc_link_args, ld_args_gc_sections],
@@ -47,6 +47,9 @@ libxvmc_gallium = shared_library(
   ],
   dependencies : [dep_thread, driver_r600, driver_nouveau],
   link_depends : xvmc_link_depends,
+  # Will be deleted during installation, see install_megadrivers.py
+  install : true,
+  install_dir : xvmc_drivers_path,
 )
 
 foreach d : [[with_gallium_r600, 'r600'], [with_gallium_nouveau, 'nouveau']]

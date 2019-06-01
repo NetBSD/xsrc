@@ -309,16 +309,16 @@ cross_validate_types_and_qualifiers(struct gl_context *ctx,
     *    "The invariance of varyings that are declared in both the vertex
     *     and fragment shaders must match."
     */
-   if (input->data.invariant != output->data.invariant &&
+   if (input->data.explicit_invariant != output->data.explicit_invariant &&
        prog->data->Version < (prog->IsES ? 300 : 430)) {
       linker_error(prog,
                    "%s shader output `%s' %s invariant qualifier, "
                    "but %s shader input %s invariant qualifier\n",
                    _mesa_shader_stage_to_string(producer_stage),
                    output->name,
-                   (output->data.invariant) ? "has" : "lacks",
+                   (output->data.explicit_invariant) ? "has" : "lacks",
                    _mesa_shader_stage_to_string(consumer_stage),
-                   (input->data.invariant) ? "has" : "lacks");
+                   (input->data.explicit_invariant) ? "has" : "lacks");
       return;
    }
 
@@ -773,8 +773,20 @@ cross_validate_outputs_to_inputs(struct gl_context *ctx,
 
                output = explicit_locations[idx][input->data.location_frac].var;
 
-               if (output == NULL ||
-                   input->data.location != output->data.location) {
+               if (output == NULL) {
+                  /* A linker failure should only happen when there is no
+                   * output declaration and there is Static Use of the
+                   * declared input.
+                   */
+                  if (input->data.used) {
+                     linker_error(prog,
+                                  "%s shader input `%s' with explicit location "
+                                  "has no matching output\n",
+                                  _mesa_shader_stage_to_string(consumer->Stage),
+                                  input->name);
+                     break;
+                  }
+               } else if (input->data.location != output->data.location) {
                   linker_error(prog,
                                "%s shader input `%s' with explicit location "
                                "has no matching output\n",
@@ -804,7 +816,7 @@ cross_validate_outputs_to_inputs(struct gl_context *ctx,
              */
             assert(!input->data.assigned);
             if (input->data.used && !input->get_interface_type() &&
-                !input->data.explicit_location && !prog->SeparateShader)
+                !input->data.explicit_location)
                linker_error(prog,
                             "%s shader input `%s' "
                             "has no matching output in the previous stage\n",
@@ -1166,8 +1178,7 @@ tfeedback_decl::store(struct gl_context *ctx, struct gl_shader_program *prog,
          return false;
       }
 
-      if ((this->offset / 4) / info->Buffers[buffer].Stride !=
-          (xfb_offset - 1) / info->Buffers[buffer].Stride) {
+      if (xfb_offset > info->Buffers[buffer].Stride) {
          linker_error(prog, "xfb_offset (%d) overflows xfb_stride (%d) for "
                       "buffer (%d)", xfb_offset * 4,
                       info->Buffers[buffer].Stride * 4, buffer);
@@ -2124,9 +2135,11 @@ class tfeedback_candidate_generator : public program_resource_visitor
 {
 public:
    tfeedback_candidate_generator(void *mem_ctx,
-                                 hash_table *tfeedback_candidates)
+                                 hash_table *tfeedback_candidates,
+                                 gl_shader_stage stage)
       : mem_ctx(mem_ctx),
         tfeedback_candidates(tfeedback_candidates),
+        stage(stage),
         toplevel_var(NULL),
         varying_floats(0)
    {
@@ -2136,10 +2149,17 @@ public:
    {
       /* All named varying interface blocks should be flattened by now */
       assert(!var->is_interface_instance());
+      assert(var->data.mode == ir_var_shader_out);
 
       this->toplevel_var = var;
       this->varying_floats = 0;
-      program_resource_visitor::process(var, false);
+      const glsl_type *t =
+         var->data.from_named_ifc_block ? var->get_interface_type() : var->type;
+      if (!var->data.patch && stage == MESA_SHADER_TESS_CTRL) {
+         assert(t->is_array());
+         t = t->fields.array;
+      }
+      program_resource_visitor::process(var, t, false);
    }
 
 private:
@@ -2172,6 +2192,8 @@ private:
     * Hash table in which tfeedback_candidate objects should be stored.
     */
    hash_table * const tfeedback_candidates;
+
+   gl_shader_stage stage;
 
    /**
     * Pointer to the toplevel variable that is being traversed.
@@ -2503,8 +2525,28 @@ assign_varying_locations(struct gl_context *ctx,
                  producer->Stage == MESA_SHADER_GEOMETRY));
 
          if (num_tfeedback_decls > 0) {
-            tfeedback_candidate_generator g(mem_ctx, tfeedback_candidates);
-            g.process(output_var);
+            tfeedback_candidate_generator g(mem_ctx, tfeedback_candidates, producer->Stage);
+            /* From OpenGL 4.6 (Core Profile) spec, section 11.1.2.1
+             * ("Vertex Shader Variables / Output Variables")
+             *
+             * "Each program object can specify a set of output variables from
+             * one shader to be recorded in transform feedback mode (see
+             * section 13.3). The variables that can be recorded are those
+             * emitted by the first active shader, in order, from the
+             * following list:
+             *
+             *  * geometry shader
+             *  * tessellation evaluation shader
+             *  * tessellation control shader
+             *  * vertex shader"
+             *
+             * But on OpenGL ES 3.2, section 11.1.2.1 ("Vertex Shader
+             * Variables / Output Variables") tessellation control shader is
+             * not included in the stages list.
+             */
+            if (!prog->IsES || producer->Stage != MESA_SHADER_TESS_CTRL) {
+               g.process(output_var);
+            }
          }
 
          ir_variable *const input_var =
