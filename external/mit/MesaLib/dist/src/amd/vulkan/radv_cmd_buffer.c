@@ -338,13 +338,13 @@ radv_reset_cmd_buffer(struct radv_cmd_buffer *cmd_buffer)
 		unsigned eop_bug_offset;
 		void *fence_ptr;
 
-		radv_cmd_buffer_upload_alloc(cmd_buffer, 8, 0,
+		radv_cmd_buffer_upload_alloc(cmd_buffer, 8, 8,
 					     &cmd_buffer->gfx9_fence_offset,
 					     &fence_ptr);
 		cmd_buffer->gfx9_fence_bo = cmd_buffer->upload.upload_bo;
 
 		/* Allocate a buffer for the EOP bug on GFX9. */
-		radv_cmd_buffer_upload_alloc(cmd_buffer, 16 * num_db, 0,
+		radv_cmd_buffer_upload_alloc(cmd_buffer, 16 * num_db, 8,
 					     &eop_bug_offset, &fence_ptr);
 		cmd_buffer->gfx9_eop_bug_va =
 			radv_buffer_get_va(cmd_buffer->upload.upload_bo);
@@ -414,6 +414,8 @@ radv_cmd_buffer_upload_alloc(struct radv_cmd_buffer *cmd_buffer,
 			     unsigned *out_offset,
 			     void **ptr)
 {
+	assert(util_is_power_of_two_nonzero(alignment));
+
 	uint64_t offset = align(cmd_buffer->upload.offset, alignment);
 	if (offset + size > cmd_buffer->upload.size) {
 		if (!radv_cmd_buffer_resize_upload_buf(cmd_buffer, size))
@@ -4243,10 +4245,15 @@ static void radv_handle_depth_image_transition(struct radv_cmd_buffer *cmd_buffe
 	if (!radv_image_has_htile(image))
 		return;
 
-	if (src_layout == VK_IMAGE_LAYOUT_UNDEFINED &&
-	           radv_layout_has_htile(image, dst_layout, dst_queue_mask)) {
-		/* TODO: merge with the clear if applicable */
-		radv_initialize_htile(cmd_buffer, image, range, 0);
+	if (src_layout == VK_IMAGE_LAYOUT_UNDEFINED) {
+		uint32_t clear_value = vk_format_is_stencil(image->vk_format) ? 0xfffff30f : 0xfffc000f;
+
+		if (radv_layout_is_htile_compressed(image, dst_layout,
+						    dst_queue_mask)) {
+			clear_value = 0;
+		}
+
+		radv_initialize_htile(cmd_buffer, image, range, clear_value);
 	} else if (!radv_layout_is_htile_compressed(image, src_layout, src_queue_mask) &&
 	           radv_layout_is_htile_compressed(image, dst_layout, dst_queue_mask)) {
 		uint32_t clear_value = vk_format_is_stencil(image->vk_format) ? 0xfffff30f : 0xfffc000f;
@@ -4709,7 +4716,7 @@ void radv_CmdBindTransformFeedbackBuffersEXT(
 		enabled_mask |= 1 << idx;
 	}
 
-	cmd_buffer->state.streamout.enabled_mask = enabled_mask;
+	cmd_buffer->state.streamout.enabled_mask |= enabled_mask;
 
 	cmd_buffer->state.dirty |= RADV_CMD_DIRTY_STREAMOUT_BUFFER;
 }
