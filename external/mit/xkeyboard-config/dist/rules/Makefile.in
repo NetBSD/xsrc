@@ -216,7 +216,6 @@ am__relativize = \
 ACLOCAL = @ACLOCAL@
 ADMIN_MAN_DIR = @ADMIN_MAN_DIR@
 ADMIN_MAN_SUFFIX = @ADMIN_MAN_SUFFIX@
-ALL_LINGUAS = @ALL_LINGUAS@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 APP_MAN_DIR = @APP_MAN_DIR@
@@ -228,6 +227,7 @@ AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
+CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
@@ -239,6 +239,7 @@ DRIVER_MAN_SUFFIX = @DRIVER_MAN_SUFFIX@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
+EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 FILE_MAN_DIR = @FILE_MAN_DIR@
 FILE_MAN_SUFFIX = @FILE_MAN_SUFFIX@
@@ -246,20 +247,13 @@ GETTEXT_MACRO_VERSION = @GETTEXT_MACRO_VERSION@
 GETTEXT_PACKAGE = @GETTEXT_PACKAGE@
 GMSGFMT = @GMSGFMT@
 GMSGFMT_015 = @GMSGFMT_015@
+GREP = @GREP@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 INTLLIBS = @INTLLIBS@
-INTLTOOL_EXTRACT = @INTLTOOL_EXTRACT@
-INTLTOOL_MERGE = @INTLTOOL_MERGE@
-INTLTOOL_PERL = @INTLTOOL_PERL@
-INTLTOOL_UPDATE = @INTLTOOL_UPDATE@
-INTLTOOL_V_MERGE = @INTLTOOL_V_MERGE@
-INTLTOOL_V_MERGE_OPTIONS = @INTLTOOL_V_MERGE_OPTIONS@
-INTLTOOL__v_MERGE_ = @INTLTOOL__v_MERGE_@
-INTLTOOL__v_MERGE_0 = @INTLTOOL__v_MERGE_0@
 INTL_MACOSX_LIBS = @INTL_MACOSX_LIBS@
 LDFLAGS = @LDFLAGS@
 LIBICONV = @LIBICONV@
@@ -334,8 +328,6 @@ htmldir = @htmldir@
 includedir = @includedir@
 infodir = @infodir@
 install_sh = @install_sh@
-intltool__v_merge_options_ = @intltool__v_merge_options_@
-intltool__v_merge_options_0 = @intltool__v_merge_options_0@
 libdir = @libdir@
 libexecdir = @libexecdir@
 localedir = @localedir@
@@ -543,16 +535,14 @@ evdev.m_s.part
 rules_files = base evdev xfree98
 lst_files = base.lst evdev.lst
 SUFFIXES = .xml .lst
-dist_files = xkb.dtd README
+dist_files = xkb.dtd xkb.its README
 rules_DATA = $(rules_files) $(lst_files) $(dist_files)
-xml_in_files = base.xml.in evdev.xml.in base.extras.xml.in evdev.extras.xml.in
-xml_DATA = $(xml_in_files:.xml.in=.xml) 
-EXTRA_DIST = $(xml_in_files) xfree98 \
+xml_DATA = base.xml evdev.xml base.extras.xml evdev.extras.xml
+EXTRA_DIST = $(xml_DATA) xfree98 \
             $(all_parts_dist) \
             xml2lst.pl merge.sh $(dist_files)
 
-CLEANFILES = base base.xml base.lst evdev evdev.xml evdev.lst base.extras.xml evdev.extras.xml
-MAINTAINERCLEANFILES = $(srcdir)/evdev.xml.in $(srcdir)/evdev.extras.xml.in
+CLEANFILES = base base.lst evdev evdev.lst
 rulesdir = $(xkb_base)/rules
 xmldir = $(rulesdir)
 all: all-recursive
@@ -827,7 +817,6 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
 clean: clean-recursive
 
 clean-am: clean-generic mostlyclean-am
@@ -940,13 +929,11 @@ base: $(base_parts)
 evdev: $(evdev_parts)
 	HDR="$(srcdir)/HDR" $(srcdir)/merge.sh $@ $(evdev_parts)
 
-$(srcdir)/evdev.xml.in: base.xml.in
-	cp $(srcdir)/base.xml.in $@
+$(srcdir)/evdev.xml: base.xml
+	cp $(srcdir)/base.xml $@
 
-$(srcdir)/evdev.extras.xml.in: base.extras.xml.in
-	cp $(srcdir)/base.extras.xml.in $@
-
-@INTLTOOL_XML_NOMERGE_RULE@
+$(srcdir)/evdev.extras.xml: base.extras.xml
+	cp $(srcdir)/base.extras.xml $@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
