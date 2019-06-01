@@ -223,27 +223,23 @@ base: $(base_parts)
 evdev: $(evdev_parts)
 	HDR="$(srcdir)/HDR" $(srcdir)/merge.sh $@ $(evdev_parts)
 
-dist_files = xkb.dtd README
+dist_files = xkb.dtd xkb.its README
 
 rules_DATA = $(rules_files) $(lst_files) $(dist_files)
 
-xml_in_files = base.xml.in evdev.xml.in base.extras.xml.in evdev.extras.xml.in
-xml_DATA = $(xml_in_files:.xml.in=.xml) 
+xml_DATA = base.xml evdev.xml base.extras.xml evdev.extras.xml
 
-$(srcdir)/evdev.xml.in: base.xml.in
-	cp $(srcdir)/base.xml.in $@
+$(srcdir)/evdev.xml: base.xml
+	cp $(srcdir)/base.xml $@
 
-$(srcdir)/evdev.extras.xml.in: base.extras.xml.in
-	cp $(srcdir)/base.extras.xml.in $@
+$(srcdir)/evdev.extras.xml: base.extras.xml
+	cp $(srcdir)/base.extras.xml $@
 
-EXTRA_DIST= $(xml_in_files) xfree98 \
+EXTRA_DIST= $(xml_DATA) xfree98 \
             $(all_parts_dist) \
             xml2lst.pl merge.sh $(dist_files)
 
-CLEANFILES = base base.xml base.lst evdev evdev.xml evdev.lst base.extras.xml evdev.extras.xml
-MAINTAINERCLEANFILES = $(srcdir)/evdev.xml.in $(srcdir)/evdev.extras.xml.in
+CLEANFILES = base base.lst evdev evdev.lst
 
 rulesdir = $(xkb_base)/rules
 xmldir = $(rulesdir)
-
-@INTLTOOL_XML_NOMERGE_RULE@
