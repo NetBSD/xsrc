@@ -1,3 +1,20 @@
+commit 79f686765238ddd0e4753f9d4ee62b5a5296610e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Mar 20 20:58:15 2019 -0700
+
+    mkfontscale 1.2.1
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 29cab25240cf30f546671f265167a2eeadfd4c75
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Mar 7 13:23:00 2019 -0800
+
+    Revert "Use autoconf instead of sed to substitute @bindir@ in mkfontdir.in"
+    
+    This reverts commit 1f9d14bec07092d62da29a5a233cefbf84d47289.
+    It caused https://gitlab.freedesktop.org/xorg/app/mkfontscale/issues/5
+
 commit 8fbafcfe7e5ef4a2030e3963f31143bba2c8786f
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sat Mar 2 14:16:48 2019 -0800
