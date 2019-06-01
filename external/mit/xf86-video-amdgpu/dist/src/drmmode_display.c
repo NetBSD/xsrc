@@ -2142,6 +2142,51 @@ drmmode_output_mode_valid(xf86OutputPtr output, DisplayModePtr pModes)
 	return MODE_OK;
 }
 
+static void
+drmmode_output_attach_tile(xf86OutputPtr output)
+{
+#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1, 17, 99, 901, 0)
+	drmmode_output_private_ptr drmmode_output = output->driver_private;
+	drmModeConnectorPtr koutput = drmmode_output->mode_output;
+	AMDGPUEntPtr pAMDGPUEnt = AMDGPUEntPriv(output->scrn);
+	struct xf86CrtcTileInfo tile_info, *set = NULL;
+	int i;
+
+	if (!koutput) {
+		xf86OutputSetTile(output, NULL);
+		return;
+	}
+
+	/* look for a TILE property */
+	for (i = 0; i < koutput->count_props; i++) {
+		drmModePropertyPtr props;
+		props = drmModeGetProperty(pAMDGPUEnt->fd, koutput->props[i]);
+		if (!props)
+			continue;
+
+		if (!(props->flags & DRM_MODE_PROP_BLOB)) {
+			drmModeFreeProperty(props);
+			continue;
+		}
+
+		if (!strcmp(props->name, "TILE")) {
+			drmModeFreePropertyBlob(drmmode_output->tile_blob);
+			drmmode_output->tile_blob =
+				drmModeGetPropertyBlob(pAMDGPUEnt->fd,
+						       koutput->prop_values[i]);
+		}
+		drmModeFreeProperty(props);
+	}
+	if (drmmode_output->tile_blob) {
+		if (xf86OutputParseKMSTile(drmmode_output->tile_blob->data,
+					   drmmode_output->tile_blob->length,
+					   &tile_info) == TRUE)
+			set = &tile_info;
+	}
+	xf86OutputSetTile(output, set);
+#endif
+}
+
 static int
 koutput_get_prop_idx(int fd, drmModeConnectorPtr koutput,
         int type, const char *name)
@@ -2213,6 +2258,8 @@ static DisplayModePtr drmmode_output_get_modes(xf86OutputPtr output)
 	}
 	xf86OutputSetEDID(output, mon);
 
+	drmmode_output_attach_tile(output);
+
 	/* modes should already be available */
 	for (i = 0; i < koutput->count_modes; i++) {
 		Mode = xnfalloc(sizeof(DisplayModeRec));
@@ -2230,8 +2277,11 @@ static void drmmode_output_destroy(xf86OutputPtr output)
 	drmmode_output_private_ptr drmmode_output = output->driver_private;
 	int i;
 
-	if (drmmode_output->edid_blob)
-		drmModeFreePropertyBlob(drmmode_output->edid_blob);
+	drmModeFreePropertyBlob(drmmode_output->edid_blob);
+#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1, 17, 99, 901, 0)
+	drmModeFreePropertyBlob(drmmode_output->tile_blob);
+#endif
+
 	for (i = 0; i < drmmode_output->num_props; i++) {
 		drmModeFreeProperty(drmmode_output->props[i].mode_prop);
 		free(drmmode_output->props[i].atoms);

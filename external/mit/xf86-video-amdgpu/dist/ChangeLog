@@ -1,3 +1,23 @@
+commit bd4ffd4ebbdf1c43ab9e1ef9ba8b812fd2dde4a4
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Mar 19 18:44:31 2019 +0100
+
+    Bump version for the 19.0.1 release
+
+commit 6ee857726166f495abcd68e4ff60e3a09593d079
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Mon Mar 23 11:33:23 2015 +1000
+
+    modesetting: add tile property support
+    
+    This adds tiling support to the driver, it retrieves the tile info from
+    the kernel and translates it into the server format and exposes the
+    property.
+    
+    (Ported from xserver commits 8fb8bbb3062f1a06621ab7030a9e89d5e8367b35
+     and 6abdb54a11dac4e8854ff94ecdcb90a14321ab31)
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
 commit 9534bf3bb33d14cd3a5af08e36ef42b309647fc7
 Author: Michel Dänzer <michel.daenzer@amd.com>
 Date:   Wed Mar 6 12:05:14 2019 +0100
