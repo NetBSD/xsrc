@@ -244,8 +244,8 @@ static XtResource resources[] = {
 #define TEXT_X_INC(w)		F_MAX_WIDTH(text)
 #define TEXT_Y_INC(w)		(F_ASCENT(text) + F_DESCENT(text))
 
-#define PROMPT_X_INC(w)	F_MAX_WIDTH(prompt)
-#define PROMPT_Y_INC(w)	(F_ASCENT(prompt) + F_DESCENT(prompt))
+#define PROMPT_X_INC(w)		F_MAX_WIDTH(prompt)
+#define PROMPT_Y_INC(w)		(F_ASCENT(prompt) + F_DESCENT(prompt))
 
 #define GREET_X_INC(w)		F_MAX_WIDTH(greet)
 #define GREET_Y_INC(w)		(F_ASCENT(greet) + F_DESCENT(greet))
@@ -253,8 +253,11 @@ static XtResource resources[] = {
 #define FAIL_X_INC(w)		F_MAX_WIDTH(fail)
 #define FAIL_Y_INC(w)		(F_ASCENT(fail) + F_DESCENT(fail))
 
-#define Y_INC(w)	max (TEXT_Y_INC(w), PROMPT_Y_INC(w))
+#define Y_ASCENT(w)	max (F_ASCENT(prompt), F_ASCENT(text))
+#define Y_DESCENT(w)	max (F_DESCENT(prompt), F_DESCENT(text))
+#define Y_INC(w)	(Y_ASCENT(w) + Y_DESCENT(w))
 
+#define CURSOR_W	5
 
 #define PROMPT_TEXT(w,n) 	((w)->login.prompts[n].promptText)
 #define DEF_PROMPT_TEXT(w,n) 	((w)->login.prompts[n].defaultPrompt)
@@ -272,13 +275,12 @@ static XtResource resources[] = {
 
 #ifdef USE_XFT
 
-# define TEXT_COLOR(f)		(w->login.f##color.pixel)
-
-# define TEXT_WIDTH(f, m, l) 	XmuXftTextWidth(XtDisplay (w), \
-					w->login.f##Face, (FcChar8 *) m, l)
 static int
 XmuXftTextWidth(Display *dpy, XftFont *font, FcChar8 *string, int len);
 
+# define TEXT_COLOR(f)		(w->login.f##color.pixel)
+# define TEXT_WIDTH(f, m, l) 	XmuXftTextWidth(XtDisplay (w), \
+				w->login.f##Face, (FcChar8 *) m, l)
 # define DRAW_STRING(f, x, y, m, l) \
 	/* Debug("DRAW_STRING(%s, %d, %d, %s, %d)\n", #f, x, y, m, l); */ \
 	XftDrawString8 (w->login.draw, &w->login.f##color, w->login.f##Face, \
@@ -287,9 +289,7 @@ XmuXftTextWidth(Display *dpy, XftFont *font, FcChar8 *string, int len);
 #else
 
 # define TEXT_COLOR(f)		(w->login.f##pixel)
-
 # define TEXT_WIDTH(f, m, l) 	(XTextWidth (w->login.f##Font, m, l))
-
 # define DRAW_STRING(f, x, y, m, l) \
 	XDrawString (XtDisplay (w), XtWindow (w), w->login.f##GC, x, y, m, l)
 
@@ -300,18 +300,19 @@ XmuXftTextWidth(Display *dpy, XftFont *font, FcChar8 *string, int len);
 
 /* Padded width of logo image, if compiled with XPM support */
 #ifdef XPM
-# define LOGO_W(w)     ((w)->login.logoWidth + ((w)->login.logoPadding * 2))
+# define LOGO_PAD(w)   ((w)->login.logoPadding)
+# define LOGO_W(w)     ((w)->login.logoWidth + (LOGO_PAD(w) * 2))
 #else
+# define LOGO_PAD(w)   0
 # define LOGO_W(w)     0
 #endif
 
 #define TEXT_PROMPT_W(w, m) (STRING_WIDTH(prompt, m) + w->login.inframeswidth)
 
-#define DEF_PROMPT_W(w,n) TEXT_PROMPT_W(w, w->login.prompts[n].defaultPrompt)
-#define CUR_PROMPT_W(w,n)  (max(MAX_DEF_PROMPT_W(w), PROMPT_TEXT(w,n) ? \
-		     TEXT_PROMPT_W(w, PROMPT_TEXT(w,n)) : 0))
-
-#define MAX_DEF_PROMPT_W(w) (max(DEF_PROMPT_W(w,0), DEF_PROMPT_W(w,1)))
+#define DEF_PROMPT_W(w,n)	TEXT_PROMPT_W(w, w->login.prompts[n].defaultPrompt)
+#define MAX_DEF_PROMPT_W(w)	(max(DEF_PROMPT_W(w,0), DEF_PROMPT_W(w,1)))
+#define CUR_PROMPT_W(w,n)	(max(MAX_DEF_PROMPT_W(w), PROMPT_TEXT(w,n) ? \
+					TEXT_PROMPT_W(w, PROMPT_TEXT(w,n)) : 0))
 
 #define GREETING(w)	((w)->login.secure_session  && !(w)->login.allow_access ?\
 				(w)->login.greeting : (w)->login.unsecure_greet)
@@ -319,32 +320,32 @@ XmuXftTextWidth(Display *dpy, XftFont *font, FcChar8 *string, int len);
 			     	STRING_WIDTH (greet, GREETING(w))) / 2))
 #define GREET_Y(w)	(GREETING(w)[0] ? 2 * GREET_Y_INC (w) : 0)
 #define GREET_W(w)	(max (STRING_WIDTH (greet, w->login.greeting), \
-			      STRING_WIDTH (greet, w->login.unsecure_greet)) \
-			 + LOGO_W(w))
+			      STRING_WIDTH (greet, w->login.unsecure_greet)))
+
+#define SEP_X(w)	((w)->login.outframewidth + LOGO_PAD(w))
+#define SEP_Y(w)	(GREET_Y(w) + GREET_Y_INC(w))
+#define SEP_W(w)	((w)->core.width - 2*(w->login.outframewidth) - LOGO_W(w) - LOGO_PAD(w))
+#define SEP_H(w)	((w)->login.inframeswidth * 2)
 
 #define PROMPT_X(w)	(2 * PROMPT_X_INC(w))
-#define PROMPT_Y(w,n)	((GREET_Y(w) + GREET_Y_INC(w) +\
-			  F_ASCENT(greet) + Y_INC(w)) + \
-			 (n * PROMPT_SPACE_Y(w)))
-#define PROMPT_W(w)	(w->core.width - (2 * TEXT_X_INC(w)))
-#define PROMPT_H(w)	(5 * Y_INC(w) / 4)
+#define PROMPT_Y(w,n) 	((SEP_Y(w) + ((n)+1) * GREET_Y_INC(w) + 2 * (w)->login.inframeswidth))
+#define PROMPT_W(w)	(w->core.width - PROMPT_X(w) - 2 * TEXT_X_INC(w) - LOGO_W(w))
+#define PROMPT_H(w)	Y_INC(w)
+
 #define VALUE_X(w,n)	(PROMPT_X(w) + CUR_PROMPT_W(w,n))
-#define CURSOR_W	5
-#define MAX_VALUE_W(w,n) (PROMPT_W(w) - VALUE_X (w,n) - CURSOR_W - 1 - \
-			  (w->login.inframeswidth * 2) - LOGO_W(w))
-#define PROMPT_SPACE_Y(w)	(10 * Y_INC(w) / 5)
+#define VALUE_Y(w,n)	(PROMPT_Y(w,n))
+#define VALUE_W(w,n)	(PROMPT_W(w) - VALUE_X(w,n) + PROMPT_X(w) - CURSOR_W)
+#define VALUE_H(w,n)	Y_INC(w)
 
 #define ERROR_X(w,m)	((int)(w->core.width - LOGO_W(w) - STRING_WIDTH (fail, m)) / 2)
-#define FAIL_X(w)	ERROR_X(w, w->login.fail)
-#define FAIL_Y(w)	(PROMPT_Y(w,1) + 2 * FAIL_Y_INC (w) + F_ASCENT(fail))
-
 #define ERROR_W(w,m)	(STRING_WIDTH (fail, m) + LOGO_W(w))
 
+#define FAIL_X(w)	ERROR_X(w, w->login.fail)
+#define FAIL_Y(w)	(PROMPT_Y(w,1) + 2 * FAIL_Y_INC (w) + F_ASCENT(fail))
 #define FAIL_W(w)	max(ERROR_W(w, w->login.failMsg), \
 			    ERROR_W(w, w->login.passwdChangeMsg))
 
 #define PAD_X(w)	(2 * (PROMPT_X(w) + max (GREET_X_INC(w), FAIL_X_INC(w))))
-
 #define PAD_Y(w)	(max (max (Y_INC(w), GREET_Y_INC(w)),\
 			     FAIL_Y_INC(w)))
 
@@ -357,7 +358,7 @@ realizeValue (LoginWidget w, int cursor, int promptNum, GC gc)
 {
     loginPromptState state = PROMPT_STATE(w, promptNum);
     char *text = VALUE_TEXT(w, promptNum);
-    int	x, y, height, width, curoff;
+    int	x, y, height, width, curoff, offset, textlen;
 
     XDM_ASSERT(promptNum >= 0 && promptNum <= LAST_PROMPT);
 
@@ -384,28 +385,28 @@ realizeValue (LoginWidget w, int cursor, int promptNum, GC gc)
     }
 
     x = VALUE_X (w,promptNum);
-    y = PROMPT_Y (w,promptNum);
+    y = VALUE_Y (w,promptNum);
 
-    height = PROMPT_H(w) - (w->login.inframeswidth * 2);
-    width = MAX_VALUE_W(w,promptNum);
+    height = Y_INC(w);
+    width = VALUE_W(w,promptNum);
 
-    if (cursor > VALUE_SHOW_START(w, promptNum))
-	curoff = TEXT_WIDTH (text, text, cursor);
+    offset = VALUE_SHOW_START(w, promptNum);
+    if (cursor > offset)
+	curoff = TEXT_WIDTH (text, text + offset, cursor - offset);
     else
 	curoff = 0;
-
 
     if (gc == w->login.bgGC) {
 	if (curoff < width) {
 	    XFillRectangle (XtDisplay (w), XtWindow (w), gc,
-			    x + curoff, y - TEXT_Y_INC(w),
+			    x + curoff, y - Y_ASCENT(w),
 			    width - curoff, height);
 	}
     } else if ((state == LOGIN_PROMPT_ECHO_ON) || (state == LOGIN_TEXT_INFO) ||
 	       ((state == LOGIN_PROMPT_ECHO_OFF) && (w->login.echo_passwd == True)))
     {
-	int offset = max(cursor, VALUE_SHOW_START(w, promptNum));
-	int textlen = strlen (text + offset);
+	offset = max(cursor, VALUE_SHOW_START(w, promptNum));
+	textlen = strlen (text + offset);
 
 	if (TEXT_WIDTH (text, text + offset, textlen) > (width - curoff)) {
 	    /* Recalculate amount of text that can fit in field */
@@ -426,7 +427,7 @@ realizeValue (LoginWidget w, int cursor, int promptNum, GC gc)
 
 	    /* Erase old string */
 	    XFillRectangle (XtDisplay (w), XtWindow (w), w->login.bgGC,
-			    x, y - TEXT_Y_INC(w), width, height);
+			    x, y - Y_ASCENT(w), width, height);
 
 	    DRAW_STRING(text, x, y, text + offset, textlen);
 	} else {
@@ -461,16 +462,16 @@ static void
 realizeCursor (LoginWidget w, GC gc)
 {
     int	x, y;
-    int height, width;
+    int ascent, descent;
 
     if (w->login.state != PROMPTING) {
 	return;
     }
 
     x = VALUE_X (w, w->login.activePrompt);
-    y = PROMPT_Y (w, w->login.activePrompt);
-    height = (F_ASCENT(text) + F_DESCENT(text));
-    width = 1;
+    y = VALUE_Y (w, w->login.activePrompt);
+    ascent = F_ASCENT(text);
+    descent = F_DESCENT(text);
 
     switch (PROMPT_STATE(w, w->login.activePrompt)) {
     case LOGIN_PROMPT_NOT_SHOWN:
@@ -496,33 +497,35 @@ realizeCursor (LoginWidget w, GC gc)
 		/* Move cursor one pixel per character to give some feedback
 		   without giving away the password length */
 		if (PROMPT_CURSOR(w, w->login.activePrompt) <
-		    MAX_VALUE_W(w, w->login.activePrompt))
+		    VALUE_W(w, w->login.activePrompt))
 		    x += PROMPT_CURSOR(w, w->login.activePrompt);
 		else
-		    x += MAX_VALUE_W(w, w->login.activePrompt);
+		    x += VALUE_W(w, w->login.activePrompt);
 	    }
 	}
 	break;
     }
 
     XFillRectangle (XtDisplay (w), XtWindow (w), gc,
-		    x, y+1 - F_ASCENT(text), width, height-1);
+		    x, y - ascent + 1, 1, ascent + descent - 2);
+
     XDrawPoint     (XtDisplay (w), XtWindow (w), gc,
-		    x-1 , y - F_ASCENT(text));
+		    x-1 , y - ascent);
     XDrawPoint     (XtDisplay (w), XtWindow (w), gc,
-		    x+1 , y - F_ASCENT(text));
+		    x+1 , y - ascent);
     XDrawPoint     (XtDisplay (w), XtWindow (w), gc,
-		    x-1 , y - F_ASCENT(text)+height);
+		    x-1 , y + descent - 1);
     XDrawPoint     (XtDisplay (w), XtWindow (w), gc,
-		    x+1 , y - F_ASCENT(text)+height);
+		    x+1 , y - descent - 1);
+
     XDrawPoint     (XtDisplay (w), XtWindow (w), gc,
-		    x-2 , y - F_ASCENT(text));
+		    x-2 , y - ascent);
     XDrawPoint     (XtDisplay (w), XtWindow (w), gc,
-		    x+2 , y - F_ASCENT(text));
+		    x+2 , y - ascent);
     XDrawPoint     (XtDisplay (w), XtWindow (w), gc,
-		    x-2 , y - F_ASCENT(text)+height);
+		    x-2 , y + descent - 1);
     XDrawPoint     (XtDisplay (w), XtWindow (w), gc,
-		    x+2 , y - F_ASCENT(text)+height);
+		    x+2 , y + descent - 1);
 
     XFlush (XtDisplay(w));
 }
@@ -718,14 +721,9 @@ draw_it (LoginWidget w)
     }
 
     /* make separator line */
-    gr_line_x = w->login.outframewidth;
-    gr_line_y = GREET_Y(w) + GREET_Y_INC(w);
-    gr_line_w = w->core.width - 2*(w->login.outframewidth);
-
-#ifdef XPM
-    gr_line_x += w->login.logoPadding;
-    gr_line_w -= w->login.logoWidth + (3 * (w->login.logoPadding));
-#endif /* XPM */
+    gr_line_x = SEP_X(w);
+    gr_line_y = SEP_Y(w);
+    gr_line_w = SEP_W(w);
 
     for(i=1;i<=(w->login.sepwidth);i++)
     {
@@ -733,18 +731,17 @@ draw_it (LoginWidget w)
         gr_line_x,           gr_line_y + i-1,
         gr_line_x+gr_line_w, gr_line_y + i-1);
       XDrawLine(XtDisplay (w), XtWindow (w), w->login.hiGC,
-        gr_line_x,           gr_line_y + 2*(w->login.inframeswidth) -i,
-        gr_line_x+gr_line_w, gr_line_y + 2*(w->login.inframeswidth) -i);
+        gr_line_x,           gr_line_y + SEP_H(w) -i,
+        gr_line_x+gr_line_w, gr_line_y + SEP_H(w) -i);
     }
 
     for (p = 0; p < NUM_PROMPTS ; p++)
     {
-	int in_frame_x = VALUE_X(w,p) - w->login.inframeswidth - 3;
-	int in_frame_y
-	    = PROMPT_Y(w,p) - w->login.inframeswidth - 1 - TEXT_Y_INC(w);
+	int in_frame_x = VALUE_X(w,p) - w->login.inframeswidth;
+	int in_frame_y = VALUE_Y(w,p) - Y_ASCENT(w) - w->login.inframeswidth;
 
-	int in_width = PROMPT_W(w) - VALUE_X(w,p) - LOGO_W(w);
-	int in_height = PROMPT_H(w) + w->login.inframeswidth + 2;
+	int in_width = VALUE_W(w,p) + CURSOR_W + 2 * w->login.inframeswidth;
+	int in_height = Y_INC(w) + 2 * w->login.inframeswidth;
 
 	GC topLeftGC, botRightGC, inpGC;
 
@@ -963,11 +960,11 @@ realizeDeleteChar (LoginWidget ctx)
 	int redrawFrom = PROMPT_CURSOR(ctx, promptNum);
 
 	if (PROMPT_CURSOR(ctx,promptNum) <  (int)strlen(VALUE_TEXT(ctx,promptNum))) {
-	    if (redrawFrom < VALUE_SHOW_START(ctx, ctx->login.activePrompt)) {
-		redrawFrom = 0;
-		EraseValue (ctx, redrawFrom, promptNum);
-		VALUE_SHOW_START(ctx, ctx->login.activePrompt)
-		    = PROMPT_CURSOR(ctx,promptNum);
+	    if (redrawFrom <= VALUE_SHOW_START(ctx, ctx->login.activePrompt)) {
+		if (redrawFrom > 0)
+			redrawFrom--;
+		EraseValue (ctx, 0, promptNum);
+		VALUE_SHOW_START(ctx, ctx->login.activePrompt) = redrawFrom;
 	    } else {
 		EraseValue (ctx, redrawFrom, promptNum);
 	    }
