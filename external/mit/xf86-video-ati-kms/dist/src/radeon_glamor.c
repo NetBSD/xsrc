@@ -109,9 +109,14 @@ radeon_glamor_pre_init(ScrnInfoPtr scrn)
 			   "glamor may not work (well) with GPUs < RV515.\n");
 	}
 
+#if XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1,20,99,0,0)
 	if (scrn->depth < 24) {
+#else
+	if (scrn->depth < 15) {
+#endif
 		xf86DrvMsg(scrn->scrnIndex, s ? X_ERROR : X_WARNING,
-			   "glamor requires depth >= 24, disabling.\n");
+			   "Depth %d not supported with glamor, disabling\n",
+			   scrn->depth);
 		return FALSE;
 	}
 
