@@ -506,6 +506,8 @@ realizeCursor (LoginWidget w, GC gc)
 	break;
     }
 
+    x += 2;
+
     XFillRectangle (XtDisplay (w), XtWindow (w), gc,
 		    x, y - ascent + 1, 1, ascent + descent - 2);
 
