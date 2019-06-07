@@ -345,7 +345,7 @@ XmuXftTextWidth(Display *dpy, XftFont *font, FcChar8 *string, int len);
 #define FAIL_W(w)	max(ERROR_W(w, w->login.failMsg), \
 			    ERROR_W(w, w->login.passwdChangeMsg))
 
-#define PAD_X(w)	(2 * (PROMPT_X(w) + max (GREET_X_INC(w), FAIL_X_INC(w))))
+#define PAD_X(w)	(2 * (PROMPT_X(w) + max (GREET_X_INC(w), FAIL_X_INC(w)) + 4*w->login.outframewidth))
 #define PAD_Y(w)	(max (max (Y_INC(w), GREET_Y_INC(w)),\
 			     FAIL_Y_INC(w)))
 
