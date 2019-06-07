@@ -255,7 +255,7 @@ static XtResource resources[] = {
 
 #define Y_ASCENT(w)	max (F_ASCENT(prompt), F_ASCENT(text))
 #define Y_DESCENT(w)	max (F_DESCENT(prompt), F_DESCENT(text))
-#define Y_INC(w)	(Y_ASCENT(w) + Y_DESCENT(w))
+#define Y_INC(w)	((Y_ASCENT(w) + Y_DESCENT(w)) * 5 / 4)
 
 #define CURSOR_W	5
 
@@ -332,7 +332,8 @@ XmuXftTextWidth(Display *dpy, XftFont *font, FcChar8 *string, int len);
 #define PROMPT_W(w)	(w->core.width - PROMPT_X(w) - 2 * TEXT_X_INC(w) - LOGO_W(w))
 #define PROMPT_H(w)	Y_INC(w)
 
-#define VALUE_X(w,n)	(PROMPT_X(w) + CUR_PROMPT_W(w,n))
+#define VALUE_HPAD(w,n)	(TEXT_X_INC(w)/8)
+#define VALUE_X(w,n)	(PROMPT_X(w) + CUR_PROMPT_W(w,n) + VALUE_HPAD(w,n))
 #define VALUE_Y(w,n)	(PROMPT_Y(w,n))
 #define VALUE_W(w,n)	(PROMPT_W(w) - VALUE_X(w,n) + PROMPT_X(w) - CURSOR_W)
 #define VALUE_H(w,n)	Y_INC(w)
@@ -384,7 +385,7 @@ realizeValue (LoginWidget w, int cursor, int promptNum, GC gc)
 	text[i] = 0;
     }
 
-    x = VALUE_X (w,promptNum);
+    x = VALUE_X (w,promptNum) + VALUE_HPAD(w,promptNum);
     y = VALUE_Y (w,promptNum);
 
     height = Y_INC(w);
@@ -468,7 +469,8 @@ realizeCursor (LoginWidget w, GC gc)
 	return;
     }
 
-    x = VALUE_X (w, w->login.activePrompt);
+    x = VALUE_X (w, w->login.activePrompt)
+      + VALUE_HPAD(w, w->login.activePrompt);
     y = VALUE_Y (w, w->login.activePrompt);
     ascent = F_ASCENT(text);
     descent = F_DESCENT(text);
@@ -742,7 +744,8 @@ draw_it (LoginWidget w)
 	int in_frame_x = VALUE_X(w,p) - w->login.inframeswidth;
 	int in_frame_y = VALUE_Y(w,p) - Y_ASCENT(w) - w->login.inframeswidth;
 
-	int in_width = VALUE_W(w,p) + CURSOR_W + 2 * w->login.inframeswidth;
+	int in_width = VALUE_W(w,p) + CURSOR_W + 2 * w->login.inframeswidth
+		+ 2 * VALUE_HPAD(w,p);
 	int in_height = Y_INC(w) + 2 * w->login.inframeswidth;
 
 	GC topLeftGC, botRightGC, inpGC;
