@@ -255,7 +255,7 @@ static XtResource resources[] = {
 
 #define Y_ASCENT(w)	max (F_ASCENT(prompt), F_ASCENT(text))
 #define Y_DESCENT(w)	max (F_DESCENT(prompt), F_DESCENT(text))
-#define Y_INC(w)	((Y_ASCENT(w) + Y_DESCENT(w)) * 5 / 4)
+#define Y_INC(w)	(Y_ASCENT(w) + Y_DESCENT(w))
 
 #define CURSOR_W	5
 
@@ -316,7 +316,7 @@ XmuXftTextWidth(Display *dpy, XftFont *font, FcChar8 *string, int len);
 
 #define GREETING(w)	((w)->login.secure_session  && !(w)->login.allow_access ?\
 				(w)->login.greeting : (w)->login.unsecure_greet)
-#define GREET_X(w)	((int)((w->core.width - \
+#define GREET_X(w)	((int)((w->core.width - LOGO_W(w) + LOGO_PAD(w) - \
 			     	STRING_WIDTH (greet, GREETING(w))) / 2))
 #define GREET_Y(w)	(GREETING(w)[0] ? 2 * GREET_Y_INC (w) : 0)
 #define GREET_W(w)	(max (STRING_WIDTH (greet, w->login.greeting), \
@@ -333,6 +333,7 @@ XmuXftTextWidth(Display *dpy, XftFont *font, FcChar8 *string, int len);
 #define PROMPT_H(w)	Y_INC(w)
 
 #define VALUE_HPAD(w,n)	(TEXT_X_INC(w)/8)
+#define VALUE_VPAD(w,n)	((Y_INC(w)+3)/4)
 #define VALUE_X(w,n)	(PROMPT_X(w) + CUR_PROMPT_W(w,n) + VALUE_HPAD(w,n))
 #define VALUE_Y(w,n)	(PROMPT_Y(w,n))
 #define VALUE_W(w,n)	(PROMPT_W(w) - VALUE_X(w,n) + PROMPT_X(w) - CURSOR_W)
@@ -388,7 +389,7 @@ realizeValue (LoginWidget w, int cursor, int promptNum, GC gc)
     x = VALUE_X (w,promptNum) + VALUE_HPAD(w,promptNum);
     y = VALUE_Y (w,promptNum);
 
-    height = Y_INC(w);
+    height = VALUE_H(w,promptNum);
     width = VALUE_W(w,promptNum);
 
     offset = VALUE_SHOW_START(w, promptNum);
@@ -742,11 +743,13 @@ draw_it (LoginWidget w)
     for (p = 0; p < NUM_PROMPTS ; p++)
     {
 	int in_frame_x = VALUE_X(w,p) - w->login.inframeswidth;
-	int in_frame_y = VALUE_Y(w,p) - Y_ASCENT(w) - w->login.inframeswidth;
+	int in_frame_y = VALUE_Y(w,p) - Y_ASCENT(w) - w->login.inframeswidth
+		- VALUE_VPAD(w,p);
 
 	int in_width = VALUE_W(w,p) + CURSOR_W + 2 * w->login.inframeswidth
 		+ 2 * VALUE_HPAD(w,p);
-	int in_height = Y_INC(w) + 2 * w->login.inframeswidth;
+	int in_height = VALUE_H(w,p) + 2 * w->login.inframeswidth
+		+ 2 * VALUE_VPAD(w,p);
 
 	GC topLeftGC, botRightGC, inpGC;
 
@@ -788,12 +791,8 @@ draw_it (LoginWidget w)
     }
 
     if (GREETING(w)[0]) {
-	int gx = GREET_X(w);
-
-#ifdef XPM
-	gx -= ((w->login.logoWidth/2) + w->login.logoPadding);
-#endif
-	DRAW_STRING (greet, gx, GREET_Y(w), GREETING(w), strlen (GREETING(w)));
+	DRAW_STRING (greet, GREET_X(w), GREET_Y(w),
+		     GREETING(w), strlen (GREETING(w)));
     }
     for (p = 0; p < NUM_PROMPTS ; p++) {
 	if (PROMPT_STATE(w, p) != LOGIN_PROMPT_NOT_SHOWN) {
