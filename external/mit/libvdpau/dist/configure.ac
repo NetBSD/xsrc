@@ -1,6 +1,6 @@
 AC_PREREQ(2.60)
 
-AC_INIT(libvdpau, 1.1.1, [vdpau@lists.freedesktop.org], libvdpau)
+AC_INIT(libvdpau, 1.2, [vdpau@lists.freedesktop.org], libvdpau)
 AM_INIT_AUTOMAKE([dist-bzip2 foreign])
 
 AC_CONFIG_HEADERS(config.h)
