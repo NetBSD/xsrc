@@ -22,8 +22,8 @@ dnl
 dnl Process this file with autoconf to create configure.
 
 AC_PREREQ([2.60])
-AC_INIT([xorgproto], [2018.4],
-        [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg])
+AC_INIT([xorgproto], [2019.1],
+        [https://gitlab.freedesktop.org/xorg/proto/xorgproto/issues])
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
 
 # Require xorg-macros: XORG_DEFAULT_OPTIONS
@@ -129,6 +129,15 @@ AC_CONFIG_FILES([applewmproto.pc
 		 renderproto.pc
 		 resourceproto.pc
 		 scrnsaverproto.pc
+		 specs/Makefile
+		 specs/bigreqsproto/Makefile
+		 specs/fontsproto/Makefile
+		 specs/kbproto/Makefile
+		 specs/recordproto/Makefile
+		 specs/scrnsaverproto/Makefile
+		 specs/xcmiscproto/Makefile
+		 specs/xextproto/Makefile
+		 specs/xproto/Makefile
 		 trapproto.pc
 		 videoproto.pc
 		 windowswmproto.pc
