@@ -28,7 +28,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-static char * getenv_wrapper(const char *name)
+static inline char * getenv_wrapper(const char *name)
 {
     if (getuid() == geteuid() && getgid() == getegid()) {
         return getenv(name);

@@ -33,6 +33,9 @@
  *   and José Hiram Soltren (jsoltren@nvidia.com)
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #define NEED_REPLIES
 #include <X11/Xlibint.h>
