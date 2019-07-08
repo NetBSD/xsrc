@@ -838,12 +838,65 @@ typedef int VdpBool;
  */
 typedef uint32_t VdpChromaType;
 
-/** \hideinitializer \brief 4:2:0 chroma format. */
+/** \hideinitializer \brief 4:2:0 chroma format. Undefined field/frame based
+ *  Video surfaces allocated with this chroma type have undefined
+ *  field/frame structure. The implementation is free to internally morph
+ *  the surface between frame/field(NV12/NV24) as required by
+ *  VdpVideoDecoder operation. Interop with OpenGL allows registration
+ *  of these surfaces for either field- or frame-based interop. But, an implicit
+ *  field/frame structure conversion may be performed.
+ */
 #define VDP_CHROMA_TYPE_420 ((VdpChromaType)0)
-/** \hideinitializer \brief 4:2:2 chroma format. */
+/** \hideinitializer \brief 4:2:2 chroma format. Undefined field/frame based
+ *  Video surfaces allocated with this chroma type have undefined
+ *  field/frame structure. The implementation is free to internally morph
+ *  the surface between frame/field(NV12/NV24) as required by
+ *  VdpVideoDecoder operation. Interop with OpenGL allows registration
+ *  of these surfaces for either field- or frame-based interop. But, an implicit
+ *  field/frame structure conversion may be performed.
+ */
 #define VDP_CHROMA_TYPE_422 ((VdpChromaType)1)
-/** \hideinitializer \brief 4:4:4 chroma format. */
+/** \hideinitializer \brief 4:4:4 chroma format. Undefined field/frame based
+ *  Video surfaces allocated with this chroma type have undefined
+ *  field/frame structure. The implementation is free to internally morph
+ *  the surface between frame/field(NV12/NV24) as required by
+ *  VdpVideoDecoder operation. Interop with OpenGL allows registration
+ *  of these surfaces for either field- or frame-based interop. But, an implicit
+ *  field/frame structure conversion may be performed.
+ */
 #define VDP_CHROMA_TYPE_444 ((VdpChromaType)2)
+
+/** \hideinitializer \brief 4:2:0 chroma format. Field based.
+ *  Video surfaces allocated with this chroma type can only be
+ *  interoped with OpenGL if the matching field/frame structure is
+ *  specified in the OpenGL API */
+#define VDP_CHROMA_TYPE_420_FIELD ((VdpChromaType)3)
+/** \hideinitializer \brief 4:2:2 chroma format. Field based.
+ *  Video surfaces allocated with this chroma type can only be
+ *  interoped with OpenGL if the matching field/frame structure is
+ *  specified in the OpenGL API */
+#define VDP_CHROMA_TYPE_422_FIELD ((VdpChromaType)4)
+/** \hideinitializer \brief 4:4:4 chroma format. Field based.
+ *  Video surfaces allocated with this chroma type can only be
+ *  interoped with OpenGL if the matching field/frame structure is
+ *  specified in the OpenGL API */
+#define VDP_CHROMA_TYPE_444_FIELD ((VdpChromaType)5)
+
+/** \hideinitializer \brief 4:2:0 chroma format. Frame based.
+ *  Video surfaces allocated with this chroma type can only be
+ *  interoped with OpenGL if the matching field/frame structure is
+ *  specified in the OpenGL API */
+#define VDP_CHROMA_TYPE_420_FRAME ((VdpChromaType)6)
+/** \hideinitializer \brief 4:2:2 chroma format. Frame based.
+ *  Video surfaces allocated with this chroma type can only be
+ *  interoped with OpenGL if the matching field/frame structure is
+ *  specified in the OpenGL API */
+#define VDP_CHROMA_TYPE_422_FRAME ((VdpChromaType)7)
+/** \hideinitializer \brief 4:4:4 chroma format. Frame based.
+ *  Video surfaces allocated with this chroma type can only be
+ *  interoped with OpenGL if the matching field/frame structure is
+ *  specified in the OpenGL API */
+#define VDP_CHROMA_TYPE_444_FRAME ((VdpChromaType)8)
 
 /**
  * \brief The set of all known YCbCr surface formats.
@@ -930,6 +983,32 @@ typedef uint32_t VdpYCbCrFormat;
  * Applications should access this data via a uint32_t pointer.
  */
 #define VDP_YCBCR_FORMAT_V8U8Y8A8 ((VdpYCbCrFormat)5)
+/**
+ * \hideinitializer
+ * \brief The "Y_UV_444" YCbCr surface format.
+ *
+ * This format has two planes, a Y plane and a UV plane.
+ *
+ * The Y plane is an array of byte-sized Y components.
+ * Applications should access this data via a uint8_t pointer.
+ *
+ * The UV plane is an array of interleaved byte-sized U and V
+ * components, in the order U, V, U, V. Applications should
+ * access this data via a uint8_t pointer.
+ */
+#define VDP_YCBCR_FORMAT_Y_UV_444     ((VdpYCbCrFormat)6)
+/**
+ * \hideinitializer
+ * \brief The "Y_U_V_444" YCbCr surface format.
+ *
+ * This format has three planes, a Y plane, a V plane, and a U
+ * plane.
+ *
+ * Each of the planes is an array of byte-sized components.
+ *
+ * Applications should access this data via a uint8_t pointer.
+ */
+#define VDP_YCBCR_FORMAT_Y_U_V_444     ((VdpYCbCrFormat)7)
 
 /**
  * \brief  The set of all known RGB surface formats.
@@ -1704,7 +1783,7 @@ typedef VdpStatus VdpVideoSurfacePutBitsYCbCr(
  * - The Hardware that implements \ref VdpPresentationQueue
  *   "VdpPresentationQueue" functionality,
  *
- * VdpVideoSurfaces are directly displayable using a \ref
+ * VdpOutputSurfaces are directly displayable using a \ref
  * VdpPresentationQueue "VdpPresentationQueue" object.
  *
  * @{
@@ -2620,6 +2699,46 @@ typedef uint32_t VdpDecoderProfile;
 /** \hideinitializer */
 #define VDP_DECODER_LEVEL_HEVC_6_2      186
 
+typedef enum {
+    VDP_VIDEO_SURFACE_FIELD_STRUCTURE         = (1 << 0),
+    VDP_VIDEO_SURFACE_FRAME_STRUCTURE         = (1 << 1)
+} VdpVideoSurfaceSupportedPictureStructure;
+
+typedef enum {
+    VDP_DECODER_PROFILE_MAX_LEVEL                      = 0,
+    VDP_DECODER_PROFILE_MAX_MACROBLOCKS                = 1,
+    VDP_DECODER_PROFILE_MAX_WIDTH                      = 2,
+    VDP_DECODER_PROFILE_MAX_HEIGHT                     = 3,
+    VDP_DECODER_PROFILE_SUPPORTED_PICTURE_STRUCTURE    = 4,
+    /**
+     * A list of supported chroma types, stored as a bitmask of 1 shifted
+     * by each supported VdpChromaType value.  E.g.,
+     *   (1 << VDP_CHROMA_TYPE_420) |
+     *   (1 << VDP_CHROMA_TYPE_422) |
+     *   (1 << VDP_CHROMA_TYPE_444)
+     */
+    VDP_DECODER_PROFILE_SUPPORTED_CHROMA_TYPES         = 5
+} VdpDecoderCapability;
+
+/**
+  * \brief Query the supported value of the requested capability, for
+  *       the specified profile on the specified device.
+  * \param[in] device The device to query.
+  * \param[in] profile The decoder profile for which information is requested.
+  * \param[in] capability The decoder profile capability for which the value
+  *       is requested.
+  * \param[out] capability_value The value of the requested capability.
+  * \return VdpStatus The completion status of the operation.
+  */
+
+typedef VdpStatus VdpDecoderQueryProfileCapability(
+    VdpDevice                   device,
+    VdpDecoderProfile           profile,
+    /* output parameters follow */
+    VdpDecoderCapability        capability,
+    void *                      capability_value
+);
+
 /**
  * \brief Query the implementation's VdpDecoder capabilities.
  * \param[in] device The device to query.
@@ -3298,6 +3417,64 @@ typedef struct {
         correspond to positions in the RefPics array. */
     uint8_t RefPicSetLtCurr[8];
 } VdpPictureInfoHEVC;
+
+/**
+ * \brief Picture parameter information for an HEVC 444 picture.
+ *
+ * Note: VDPAU clients must use VdpPictureInfoHEVC444 to describe the
+ * attributes of a frame being decoded with
+ * VDP_DECODER_PROFILE_HEVC_MAIN_444.
+ */
+typedef struct {
+    /** \ref VdpPictureInfoHEVC struct. */
+    VdpPictureInfoHEVC pictureInfo;
+
+    /* SPS Range Extensions for Main 444, Main 10, etc. */
+    uint8_t sps_range_extension_flag;
+    /* sps extension for transform_skip_rotation_enabled_flag */
+    uint8_t transformSkipRotationEnableFlag;
+    /* sps extension for transform_skip_context_enabled_flag */
+    uint8_t transformSkipContextEnableFlag;
+    /* sps implicit_rdpcm_enabled_flag */
+    uint8_t implicitRdpcmEnableFlag;
+    /* sps explicit_rdpcm_enabled_flag */
+    uint8_t explicitRdpcmEnableFlag;
+    /* sps extended_precision_processing_flag,always 0 in current profile */
+    uint8_t extendedPrecisionProcessingFlag;
+    /* sps intra_smoothing_disabled_flag */
+    uint8_t intraSmoothingDisabledFlag;
+    /* sps high_precision_offsets_enabled_flag */
+    uint8_t highPrecisionOffsetsEnableFlag;
+    /* sps persistent_rice_adaptation_enabled_flag */
+    uint8_t persistentRiceAdaptationEnableFlag;
+    /* sps cabac_bypass_alignment_enabled_flag, always 0 in current profile */
+    uint8_t cabacBypassAlignmentEnableFlag;
+    /* sps intraBlockCopyEnableFlag, always 0 not used by the spec as of now */
+    uint8_t intraBlockCopyEnableFlag;
+
+    /* PPS Range Extensions for Main 444, Main 10, etc. */
+    uint8_t pps_range_extension_flag;
+    /* pps extension log2_max_transform_skip_block_size_minus2, 0...5 */
+    uint8_t log2MaxTransformSkipSize;
+    /* pps cross_component_prediction_enabled_flag */
+    uint8_t crossComponentPredictionEnableFlag;
+    /* pps chroma_qp_adjustment_enabled_flag */
+    uint8_t chromaQpAdjustmentEnableFlag;
+    /* pps diff_cu_chroma_qp_adjustment_depth, 0...3 */
+    uint8_t diffCuChromaQpAdjustmentDepth;
+    /* pps chroma_qp_adjustment_table_size_minus1+1, 1...6 */
+    uint8_t chromaQpAdjustmentTableSize;
+    /* pps log2_sao_offset_scale_luma, max(0,bitdepth-10), */
+    /* maxBitdepth 16 for future. */
+    uint8_t log2SaoOffsetScaleLuma;
+    /* pps log2_sao_offset_scale_chroma */
+    uint8_t log2SaoOffsetScaleChroma;
+    /* -[12,+12] */
+    int8_t cb_qp_adjustment[6];
+    /* -[12,+12] */
+    int8_t cr_qp_adjustment[6];
+
+} VdpPictureInfoHEVC444;
 
 /**
  * \brief Decode a compressed field/frame and render the result
@@ -4587,6 +4764,8 @@ typedef uint32_t VdpFuncId;
 #define VDP_FUNC_ID_PRESENTATION_QUEUE_QUERY_SURFACE_STATUS                     ((VdpFuncId)65)
 /** \hideinitializer */
 #define VDP_FUNC_ID_PREEMPTION_CALLBACK_REGISTER                                ((VdpFuncId)66)
+/** \hideinitializer */
+#define VDP_FUNC_ID_DECODER_QUERY_CAPABILITY                                    ((VdpFuncId)67)
 
 #define VDP_FUNC_ID_BASE_WINSYS 0x1000
 

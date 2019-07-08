@@ -1,3 +1,117 @@
+commit 1b468dea984207a3fad4fdf4f6648f62300b2936
+Author: ManojGuptaBonda <mbonda@nvidia.com>
+Date:   Mon Dec 31 17:02:30 2018 +0530
+
+    Add HEVC 444 support in VDPAU API
+    
+    Added new VdpPictureInfoHEVC444 structure for HEVC444 support.
+    having the SPS,PPS range extension variables that are defined for HEVC
+    444. VdpPictureInfoHEVC is part of VdpPictureInfoHEVC444.
+    
+    New VdpYCbCr Formats are added to be used in get/putbits for YUV 4:4:4
+    surfaces.
+    
+    Added the capability bits for chromatypes supported.
+    
+    Add support to return the supported chroma types in
+    VdpDecoderQueryProfileCapability API. The supported chroma types
+    are returned in a bitmask.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 52a6ea26bae0c4b2c5bace65dd7cc09c8e677bda
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Tue Nov 20 11:10:36 2018 -0800
+
+    Fix typos from commit 53eeb07f68d483fee86ad872884aee890d5aa393
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 53eeb07f68d483fee86ad872884aee890d5aa393
+Author: ManojGuptaBonda <mbonda@nvidia.com>
+Date:   Tue Nov 20 13:29:37 2018 +0530
+
+    Add new frame and field mode chroma types. Add VdpDecoderQueryProfileCapability API
+    
+    Chroma types :
+        VDP_CHROMA_TYPE_420
+        VDP_CHROMA_TYPE_422
+        VDP_CHROMA_TYPE_444
+    
+    already exist, surfaces of these types could be transparently used with
+    any VdpVideoDecoder. The implementation is free to internally convert
+    the surface between frame/field(NV12/NV24) as required by
+    VdpVideoDecoder operation. The interop API would allow registration of
+    these surfaces for either field or frame based interop.
+    
+    This change adds new enums for frame and field chroma types:
+        VDP_CHROMA_TYPE_420_FIELD
+        VDP_CHROMA_TYPE_422_FIELD
+        VDP_CHROMA_TYPE_444_FIELD
+        VDP_CHROMA_TYPE_420_FRAME
+        VDP_CHROMA_TYPE_422_FRAME
+        VDP_CHROMA_TYPE_444_FRAME
+    
+    So that frame/field based video surfaces can be created and exposed via
+    VDPAU OpenGL interop.
+    
+    The new chroma types could only be used by a VdpVideoDecoder that
+    supports output to field/frame surfaces respectively. Internal surface
+    convertion is not allowed. The interop API would allow registration
+    of these surfaces to field/frame based interop only. This will avoid
+    implicit conversions and allocation of shadow surface.
+    
+    Existing VdpDecoderQueryCapabilities() returns maxlevel, maxwidth,
+    height and macro blocks for a given decoder profile. Since it is not
+    possible to extend this API to return more capabilities, adding new API
+    VdpDecoderQueryProfileCapability(). In this change, new API will be able
+    to return supported picture structure along with other existing
+    capabilities.
+    
+    VdpDecoderQueryProfileCapability() can be extended in future to query
+    newer capabilities exposed. VdpDecoderCapabilities defines the
+    capabilities that can be queried.
+    
+    This function returns queried capability of the requested profile on the
+    underlying h/w. By design, only one capability can be queried at a time.
+    
+    Signed-off-by: Manoj Bonda <mbonda@nvidia.com>
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit a21bf7aa438f5dd40d0a300a3167aa3d6f26dccc
+Author: José Hiram Soltren <jsoltren@nvidia.com>
+Date:   Wed Sep 9 15:05:01 2015 -0500
+
+    Fix doc error on displayable surface types
+    
+    VdpVideoSurface is not directly displayable in the current
+    implementation of VDPAU. VdpOutputSurface is. Make the documentation
+    consistent with reality.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit fb5362be7a6d6f89f76c5e171c339f5fa1916d38
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Mon Sep 7 21:16:58 2015 -0700
+
+    util.h: Make getenv_wrapper() static inline
+    
+    Otherwise, GCC generates a "‘getenv_wrapper’ defined but not used" warning.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+
+commit 1cda354bdfd0c9ca107293b84b52f4464fdbedcc
+Author: Rico Tzschichholz <ricotz@ubuntu.com>
+Date:   Tue Sep 1 10:45:11 2015 +0200
+
+    mesa_dri2: Add missing include of config.h to define _GNU_SOURCE
+    
+    Fix build with -Wimplicit-function-declaration while secure_getenv() is
+    guarded by __USE_GNU.
+    
+    Reviewed-by: Aaron Plattner <aplattner@nvidia.com>
+    Tested-by: Stefan Dirsch <sndirsch@suse.de>
+
 commit af517f56d64118520aa0c8456318dd9ec3307e94
 Author: Aaron Plattner <aplattner@nvidia.com>
 Date:   Mon Aug 31 13:59:50 2015 -0700
