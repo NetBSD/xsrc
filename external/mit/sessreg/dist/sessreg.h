@@ -103,6 +103,13 @@
 # define TTYS_FILE	"/etc/ttys"
 #endif
 
+#ifndef _PATH_WTMPX
+# define _PATH_WTMPX	"/var/log/wtmp"
+#endif
+#ifndef _PATH_UTMPX
+# define _PATH_UTMPX	"/var/log/utmp"
+#endif
+
 #ifndef WTMPX_FILE
 # define WTMPX_FILE	_PATH_WTMPX
 #endif
