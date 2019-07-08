@@ -1,6 +1,4 @@
 /*
- * $Id: xcalibratewire.h,v 1.1.1.1 2018/03/14 07:25:46 mrg Exp $
- *
  * Copyright © 2003 Philip Blundell
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
