@@ -1,5 +1,5 @@
 /*
- * Copyright © 2013 Intel Corporation
+ * Copyright 2017  Emmanuele Bassi 
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,41 +21,36 @@
  * IN THE SOFTWARE.
  */
 
-/** @file wgl.h
+/** @file common.h
  *
- * Provides an implementation of a WGL dispatch layer using a hidden
- * vtable.
+ * A common header file, used to define macros and shared symbols.
  */
 
-#ifndef EPOXY_WGL_H
-#define EPOXY_WGL_H
+#ifndef EPOXY_COMMON_H
+#define EPOXY_COMMON_H
 
-#include <windows.h>
-
-#include "epoxy/common.h"
-
-#undef wglUseFontBitmaps
-#undef wglUseFontOutlines
-
-#if defined(__wglxext_h_)
-#error epoxy/wgl.h must be included before (or in place of) wgl.h
+#ifdef __cplusplus
+# define EPOXY_BEGIN_DECLS      extern "C" {
+# define EPOXY_END_DECLS        }
 #else
-#define __wglxext_h_
+# define EPOXY_BEGIN_DECLS
+# define EPOXY_END_DECLS
 #endif
 
-#ifdef UNICODE
-#define wglUseFontBitmaps wglUseFontBitmapsW
-#else
-#define wglUseFontBitmaps wglUseFontBitmapsA
+#ifndef EPOXY_PUBLIC
+# if defined(_MSC_VER)
+#  define EPOXY_PUBLIC __declspec(dllimport) extern
+# else
+#  define EPOXY_PUBLIC extern
+# endif
 #endif
 
-EPOXY_BEGIN_DECLS
+#if defined(_MSC_VER) && !defined(__bool_true_false_are_defined) && (_MSC_VER < 1800)
+typedef unsigned char bool;
+# define false 0
+# define true 1
+#else
+# include <stdbool.h>
+#endif
 
-#include "epoxy/wgl_generated.h"
-
-EPOXY_PUBLIC bool epoxy_has_wgl_extension(HDC hdc, const char *extension);
-EPOXY_PUBLIC void epoxy_handle_external_wglMakeCurrent(void);
-
-EPOXY_END_DECLS
-
-#endif /* EPOXY_WGL_H */
+#endif /* EPOXY_COMMON_H */

@@ -21,28 +21,24 @@
  * IN THE SOFTWARE.
  */
 
-#include <stdbool.h>
+#include "config.h"
 
 #ifdef _WIN32
-#define PLATFORM_HAS_EGL 0
-#define PLATFORM_HAS_GLX 0
+#define PLATFORM_HAS_EGL ENABLE_EGL
+#define PLATFORM_HAS_GLX ENABLE_GLX
 #define PLATFORM_HAS_WGL 1
-#define EPOXY_IMPORTEXPORT __declspec(dllexport)
 #elif defined(__APPLE__)
-#define PLATFORM_HAS_EGL 0
-#define PLATFORM_HAS_GLX 0
+#define PLATFORM_HAS_EGL ENABLE_EGL
+#define PLATFORM_HAS_GLX ENABLE_GLX
 #define PLATFORM_HAS_WGL 0
-#define EPOXY_IMPORTEXPORT
 #elif defined(ANDROID)
-#define PLATFORM_HAS_EGL 1
+#define PLATFORM_HAS_EGL ENABLE_EGL
 #define PLATFORM_HAS_GLX 0
 #define PLATFORM_HAS_WGL 0
-#define EPOXY_IMPORTEXPORT
 #else
-#define PLATFORM_HAS_EGL 1
-#define PLATFORM_HAS_GLX 1
+#define PLATFORM_HAS_EGL ENABLE_EGL
+#define PLATFORM_HAS_GLX ENABLE_GLX
 #define PLATFORM_HAS_WGL 0
-#define EPOXY_IMPORTEXPORT
 #endif
 
 #include "epoxy/gl.h"
@@ -56,20 +52,15 @@
 #include "epoxy/wgl.h"
 #endif
 
-#ifndef PUBLIC
-#  ifdef _WIN32
-#    define PUBLIC __declspec(dllexport)
-#  elif (defined(__GNUC__) && __GNUC__ >= 4) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
-#    define PUBLIC __attribute__((visibility("default")))
-#  else
-#    define PUBLIC
-#  endif
-#endif
-
 #if defined(__GNUC__)
 #define PACKED __attribute__((__packed__))
+#define ENDPACKED
+#elif defined (_MSC_VER)
+#define PACKED __pragma(pack(push,1))
+#define ENDPACKED __pragma(pack(pop))
 #else
 #define PACKED
+#define ENDPACKED
 #endif
 
 /* On win32, we're going to need to keep a per-thread dispatch table,
@@ -171,6 +162,8 @@ bool epoxy_conservative_has_glx_extension(const char *name);
 int epoxy_conservative_egl_version(void);
 bool epoxy_conservative_has_egl_extension(const char *name);
 bool epoxy_conservative_has_wgl_extension(const char *name);
+void *epoxy_conservative_egl_dlsym(const char *name, bool exit_if_fails);
+void *epoxy_conservative_glx_dlsym(const char *name, bool exit_if_fails);
 
 bool epoxy_extension_in_string(const char *extension_list, const char *ext);
 
