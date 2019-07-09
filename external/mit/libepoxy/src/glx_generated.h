@@ -6,6 +6,7 @@
 #include <inttypes.h>
 #include <stddef.h>
 
+#include "epoxy/common.h"
 #include "epoxy/gl.h"
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -121,6 +122,7 @@ typedef struct {
 #define GLX_EXT_fbconfig_packed_float 1
 #define GLX_EXT_framebuffer_sRGB 1
 #define GLX_EXT_import_context 1
+#define GLX_EXT_libglvnd 1
 #define GLX_EXT_stereo_tree 1
 #define GLX_EXT_swap_control 1
 #define GLX_EXT_swap_control_tear 1
@@ -140,6 +142,7 @@ typedef struct {
 #define GLX_NV_float_buffer 1
 #define GLX_NV_multisample_coverage 1
 #define GLX_NV_present_video 1
+#define GLX_NV_robustness_video_memory_purge 1
 #define GLX_NV_swap_group 1
 #define GLX_NV_video_capture 1
 #define GLX_NV_video_out 1
@@ -289,6 +292,8 @@ typedef struct {
 #define GLX_LATE_SWAPS_TEAR_EXT                                  0x20F3
 #define GLX_BACK_BUFFER_AGE_EXT                                  0x20F4
 #define GLX_STEREO_TREE_EXT                                      0x20F5
+#define GLX_VENDOR_NAMES_EXT                                     0x20F6
+#define GLX_GENERATE_RESET_ON_VIDEO_MEMORY_PURGE_NV              0x20F7
 #define GLX_GPU_FASTEST_TARGET_GPUS_AMD                          0x21A2
 #define GLX_GPU_RAM_AMD                                          0x21A3
 #define GLX_GPU_CLOCK_AMD                                        0x21A4
@@ -577,265 +582,265 @@ typedef Bool (GLAPIENTRY *PFNGLXWAITFORSBCOMLPROC)(Display * dpy, GLXDrawable dr
 typedef void (GLAPIENTRY *PFNGLXWAITGLPROC)(void);
 typedef int (GLAPIENTRY *PFNGLXWAITVIDEOSYNCSGIPROC)(int divisor, int remainder, unsigned int * count);
 typedef void (GLAPIENTRY *PFNGLXWAITXPROC)(void);
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXBindChannelToWindowSGIX)(Display * display, int screen, int channel, Window window);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXBindChannelToWindowSGIX)(Display * display, int screen, int channel, Window window);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXBindHyperpipeSGIX)(Display * dpy, int hpId);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXBindHyperpipeSGIX)(Display * dpy, int hpId);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXBindSwapBarrierNV)(Display * dpy, GLuint group, GLuint barrier);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXBindSwapBarrierNV)(Display * dpy, GLuint group, GLuint barrier);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXBindSwapBarrierSGIX)(Display * dpy, GLXDrawable drawable, int barrier);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXBindSwapBarrierSGIX)(Display * dpy, GLXDrawable drawable, int barrier);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXBindTexImageEXT)(Display * dpy, GLXDrawable drawable, int buffer, const int * attrib_list);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXBindTexImageEXT)(Display * dpy, GLXDrawable drawable, int buffer, const int * attrib_list);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXBindVideoCaptureDeviceNV)(Display * dpy, unsigned int video_capture_slot, GLXVideoCaptureDeviceNV device);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXBindVideoCaptureDeviceNV)(Display * dpy, unsigned int video_capture_slot, GLXVideoCaptureDeviceNV device);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXBindVideoDeviceNV)(Display * dpy, unsigned int video_slot, unsigned int video_device, const int * attrib_list);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXBindVideoDeviceNV)(Display * dpy, unsigned int video_slot, unsigned int video_device, const int * attrib_list);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXBindVideoImageNV)(Display * dpy, GLXVideoDeviceNV VideoDevice, GLXPbuffer pbuf, int iVideoBuffer);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXBindVideoImageNV)(Display * dpy, GLXVideoDeviceNV VideoDevice, GLXPbuffer pbuf, int iVideoBuffer);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXBlitContextFramebufferAMD)(GLXContext dstCtx, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXBlitContextFramebufferAMD)(GLXContext dstCtx, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXChannelRectSGIX)(Display * display, int screen, int channel, int x, int y, int w, int h);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXChannelRectSGIX)(Display * display, int screen, int channel, int x, int y, int w, int h);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXChannelRectSyncSGIX)(Display * display, int screen, int channel, GLenum synctype);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXChannelRectSyncSGIX)(Display * display, int screen, int channel, GLenum synctype);
 
-extern EPOXY_IMPORTEXPORT GLXFBConfig * (EPOXY_CALLSPEC *epoxy_glXChooseFBConfig)(Display * dpy, int screen, const int * attrib_list, int * nelements);
+EPOXY_PUBLIC GLXFBConfig * (EPOXY_CALLSPEC *epoxy_glXChooseFBConfig)(Display * dpy, int screen, const int * attrib_list, int * nelements);
 
-extern EPOXY_IMPORTEXPORT GLXFBConfigSGIX * (EPOXY_CALLSPEC *epoxy_glXChooseFBConfigSGIX)(Display * dpy, int screen, int * attrib_list, int * nelements);
+EPOXY_PUBLIC GLXFBConfigSGIX * (EPOXY_CALLSPEC *epoxy_glXChooseFBConfigSGIX)(Display * dpy, int screen, int * attrib_list, int * nelements);
 
-extern EPOXY_IMPORTEXPORT XVisualInfo * (EPOXY_CALLSPEC *epoxy_glXChooseVisual)(Display * dpy, int screen, int * attribList);
+EPOXY_PUBLIC XVisualInfo * (EPOXY_CALLSPEC *epoxy_glXChooseVisual)(Display * dpy, int screen, int * attribList);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXCopyBufferSubDataNV)(Display * dpy, GLXContext readCtx, GLXContext writeCtx, GLenum readTarget, GLenum writeTarget, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXCopyBufferSubDataNV)(Display * dpy, GLXContext readCtx, GLXContext writeCtx, GLenum readTarget, GLenum writeTarget, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXCopyContext)(Display * dpy, GLXContext src, GLXContext dst, unsigned long mask);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXCopyContext)(Display * dpy, GLXContext src, GLXContext dst, unsigned long mask);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXCopyImageSubDataNV)(Display * dpy, GLXContext srcCtx, GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ, GLXContext dstCtx, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei width, GLsizei height, GLsizei depth);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXCopyImageSubDataNV)(Display * dpy, GLXContext srcCtx, GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ, GLXContext dstCtx, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei width, GLsizei height, GLsizei depth);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXCopySubBufferMESA)(Display * dpy, GLXDrawable drawable, int x, int y, int width, int height);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXCopySubBufferMESA)(Display * dpy, GLXDrawable drawable, int x, int y, int width, int height);
 
-extern EPOXY_IMPORTEXPORT GLXContext (EPOXY_CALLSPEC *epoxy_glXCreateAssociatedContextAMD)(unsigned int id, GLXContext share_list);
+EPOXY_PUBLIC GLXContext (EPOXY_CALLSPEC *epoxy_glXCreateAssociatedContextAMD)(unsigned int id, GLXContext share_list);
 
-extern EPOXY_IMPORTEXPORT GLXContext (EPOXY_CALLSPEC *epoxy_glXCreateAssociatedContextAttribsAMD)(unsigned int id, GLXContext share_context, const int * attribList);
+EPOXY_PUBLIC GLXContext (EPOXY_CALLSPEC *epoxy_glXCreateAssociatedContextAttribsAMD)(unsigned int id, GLXContext share_context, const int * attribList);
 
-extern EPOXY_IMPORTEXPORT GLXContext (EPOXY_CALLSPEC *epoxy_glXCreateContext)(Display * dpy, XVisualInfo * vis, GLXContext shareList, Bool direct);
+EPOXY_PUBLIC GLXContext (EPOXY_CALLSPEC *epoxy_glXCreateContext)(Display * dpy, XVisualInfo * vis, GLXContext shareList, Bool direct);
 
-extern EPOXY_IMPORTEXPORT GLXContext (EPOXY_CALLSPEC *epoxy_glXCreateContextAttribsARB)(Display * dpy, GLXFBConfig config, GLXContext share_context, Bool direct, const int * attrib_list);
+EPOXY_PUBLIC GLXContext (EPOXY_CALLSPEC *epoxy_glXCreateContextAttribsARB)(Display * dpy, GLXFBConfig config, GLXContext share_context, Bool direct, const int * attrib_list);
 
-extern EPOXY_IMPORTEXPORT GLXContext (EPOXY_CALLSPEC *epoxy_glXCreateContextWithConfigSGIX)(Display * dpy, GLXFBConfigSGIX config, int render_type, GLXContext share_list, Bool direct);
+EPOXY_PUBLIC GLXContext (EPOXY_CALLSPEC *epoxy_glXCreateContextWithConfigSGIX)(Display * dpy, GLXFBConfigSGIX config, int render_type, GLXContext share_list, Bool direct);
 
-extern EPOXY_IMPORTEXPORT GLXPbufferSGIX (EPOXY_CALLSPEC *epoxy_glXCreateGLXPbufferSGIX)(Display * dpy, GLXFBConfigSGIX config, unsigned int width, unsigned int height, int * attrib_list);
+EPOXY_PUBLIC GLXPbufferSGIX (EPOXY_CALLSPEC *epoxy_glXCreateGLXPbufferSGIX)(Display * dpy, GLXFBConfigSGIX config, unsigned int width, unsigned int height, int * attrib_list);
 
-extern EPOXY_IMPORTEXPORT GLXPixmap (EPOXY_CALLSPEC *epoxy_glXCreateGLXPixmap)(Display * dpy, XVisualInfo * visual, Pixmap pixmap);
+EPOXY_PUBLIC GLXPixmap (EPOXY_CALLSPEC *epoxy_glXCreateGLXPixmap)(Display * dpy, XVisualInfo * visual, Pixmap pixmap);
 
-extern EPOXY_IMPORTEXPORT GLXPixmap (EPOXY_CALLSPEC *epoxy_glXCreateGLXPixmapMESA)(Display * dpy, XVisualInfo * visual, Pixmap pixmap, Colormap cmap);
+EPOXY_PUBLIC GLXPixmap (EPOXY_CALLSPEC *epoxy_glXCreateGLXPixmapMESA)(Display * dpy, XVisualInfo * visual, Pixmap pixmap, Colormap cmap);
 
-extern EPOXY_IMPORTEXPORT GLXPixmap (EPOXY_CALLSPEC *epoxy_glXCreateGLXPixmapWithConfigSGIX)(Display * dpy, GLXFBConfigSGIX config, Pixmap pixmap);
+EPOXY_PUBLIC GLXPixmap (EPOXY_CALLSPEC *epoxy_glXCreateGLXPixmapWithConfigSGIX)(Display * dpy, GLXFBConfigSGIX config, Pixmap pixmap);
 
-extern EPOXY_IMPORTEXPORT GLXContext (EPOXY_CALLSPEC *epoxy_glXCreateNewContext)(Display * dpy, GLXFBConfig config, int render_type, GLXContext share_list, Bool direct);
+EPOXY_PUBLIC GLXContext (EPOXY_CALLSPEC *epoxy_glXCreateNewContext)(Display * dpy, GLXFBConfig config, int render_type, GLXContext share_list, Bool direct);
 
-extern EPOXY_IMPORTEXPORT GLXPbuffer (EPOXY_CALLSPEC *epoxy_glXCreatePbuffer)(Display * dpy, GLXFBConfig config, const int * attrib_list);
+EPOXY_PUBLIC GLXPbuffer (EPOXY_CALLSPEC *epoxy_glXCreatePbuffer)(Display * dpy, GLXFBConfig config, const int * attrib_list);
 
-extern EPOXY_IMPORTEXPORT GLXPixmap (EPOXY_CALLSPEC *epoxy_glXCreatePixmap)(Display * dpy, GLXFBConfig config, Pixmap pixmap, const int * attrib_list);
+EPOXY_PUBLIC GLXPixmap (EPOXY_CALLSPEC *epoxy_glXCreatePixmap)(Display * dpy, GLXFBConfig config, Pixmap pixmap, const int * attrib_list);
 
-extern EPOXY_IMPORTEXPORT GLXWindow (EPOXY_CALLSPEC *epoxy_glXCreateWindow)(Display * dpy, GLXFBConfig config, Window win, const int * attrib_list);
+EPOXY_PUBLIC GLXWindow (EPOXY_CALLSPEC *epoxy_glXCreateWindow)(Display * dpy, GLXFBConfig config, Window win, const int * attrib_list);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXCushionSGI)(Display * dpy, Window window, float cushion);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXCushionSGI)(Display * dpy, Window window, float cushion);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXDelayBeforeSwapNV)(Display * dpy, GLXDrawable drawable, GLfloat seconds);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXDelayBeforeSwapNV)(Display * dpy, GLXDrawable drawable, GLfloat seconds);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXDeleteAssociatedContextAMD)(GLXContext ctx);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXDeleteAssociatedContextAMD)(GLXContext ctx);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXDestroyContext)(Display * dpy, GLXContext ctx);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXDestroyContext)(Display * dpy, GLXContext ctx);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXDestroyGLXPbufferSGIX)(Display * dpy, GLXPbufferSGIX pbuf);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXDestroyGLXPbufferSGIX)(Display * dpy, GLXPbufferSGIX pbuf);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXDestroyGLXPixmap)(Display * dpy, GLXPixmap pixmap);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXDestroyGLXPixmap)(Display * dpy, GLXPixmap pixmap);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXDestroyGLXVideoSourceSGIX)(Display * dpy, GLXVideoSourceSGIX glxvideosource);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXDestroyGLXVideoSourceSGIX)(Display * dpy, GLXVideoSourceSGIX glxvideosource);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXDestroyHyperpipeConfigSGIX)(Display * dpy, int hpId);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXDestroyHyperpipeConfigSGIX)(Display * dpy, int hpId);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXDestroyPbuffer)(Display * dpy, GLXPbuffer pbuf);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXDestroyPbuffer)(Display * dpy, GLXPbuffer pbuf);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXDestroyPixmap)(Display * dpy, GLXPixmap pixmap);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXDestroyPixmap)(Display * dpy, GLXPixmap pixmap);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXDestroyWindow)(Display * dpy, GLXWindow win);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXDestroyWindow)(Display * dpy, GLXWindow win);
 
-extern EPOXY_IMPORTEXPORT GLXVideoCaptureDeviceNV * (EPOXY_CALLSPEC *epoxy_glXEnumerateVideoCaptureDevicesNV)(Display * dpy, int screen, int * nelements);
+EPOXY_PUBLIC GLXVideoCaptureDeviceNV * (EPOXY_CALLSPEC *epoxy_glXEnumerateVideoCaptureDevicesNV)(Display * dpy, int screen, int * nelements);
 
-extern EPOXY_IMPORTEXPORT unsigned int * (EPOXY_CALLSPEC *epoxy_glXEnumerateVideoDevicesNV)(Display * dpy, int screen, int * nelements);
+EPOXY_PUBLIC unsigned int * (EPOXY_CALLSPEC *epoxy_glXEnumerateVideoDevicesNV)(Display * dpy, int screen, int * nelements);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXFreeContextEXT)(Display * dpy, GLXContext context);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXFreeContextEXT)(Display * dpy, GLXContext context);
 
-extern EPOXY_IMPORTEXPORT unsigned int (EPOXY_CALLSPEC *epoxy_glXGetAGPOffsetMESA)(const void * pointer);
+EPOXY_PUBLIC unsigned int (EPOXY_CALLSPEC *epoxy_glXGetAGPOffsetMESA)(const void * pointer);
 
-extern EPOXY_IMPORTEXPORT const char * (EPOXY_CALLSPEC *epoxy_glXGetClientString)(Display * dpy, int name);
+EPOXY_PUBLIC const char * (EPOXY_CALLSPEC *epoxy_glXGetClientString)(Display * dpy, int name);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXGetConfig)(Display * dpy, XVisualInfo * visual, int attrib, int * value);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXGetConfig)(Display * dpy, XVisualInfo * visual, int attrib, int * value);
 
-extern EPOXY_IMPORTEXPORT unsigned int (EPOXY_CALLSPEC *epoxy_glXGetContextGPUIDAMD)(GLXContext ctx);
+EPOXY_PUBLIC unsigned int (EPOXY_CALLSPEC *epoxy_glXGetContextGPUIDAMD)(GLXContext ctx);
 
-extern EPOXY_IMPORTEXPORT GLXContextID (EPOXY_CALLSPEC *epoxy_glXGetContextIDEXT)(const GLXContext context);
+EPOXY_PUBLIC GLXContextID (EPOXY_CALLSPEC *epoxy_glXGetContextIDEXT)(const GLXContext context);
 
-extern EPOXY_IMPORTEXPORT GLXContext (EPOXY_CALLSPEC *epoxy_glXGetCurrentAssociatedContextAMD)(void);
+EPOXY_PUBLIC GLXContext (EPOXY_CALLSPEC *epoxy_glXGetCurrentAssociatedContextAMD)(void);
 
-extern EPOXY_IMPORTEXPORT GLXContext (EPOXY_CALLSPEC *epoxy_glXGetCurrentContext)(void);
+EPOXY_PUBLIC GLXContext (EPOXY_CALLSPEC *epoxy_glXGetCurrentContext)(void);
 
-extern EPOXY_IMPORTEXPORT Display * (EPOXY_CALLSPEC *epoxy_glXGetCurrentDisplay)(void);
+EPOXY_PUBLIC Display * (EPOXY_CALLSPEC *epoxy_glXGetCurrentDisplay)(void);
 
-extern EPOXY_IMPORTEXPORT Display * (EPOXY_CALLSPEC *epoxy_glXGetCurrentDisplayEXT)(void);
+EPOXY_PUBLIC Display * (EPOXY_CALLSPEC *epoxy_glXGetCurrentDisplayEXT)(void);
 
-extern EPOXY_IMPORTEXPORT GLXDrawable (EPOXY_CALLSPEC *epoxy_glXGetCurrentDrawable)(void);
+EPOXY_PUBLIC GLXDrawable (EPOXY_CALLSPEC *epoxy_glXGetCurrentDrawable)(void);
 
-extern EPOXY_IMPORTEXPORT GLXDrawable (EPOXY_CALLSPEC *epoxy_glXGetCurrentReadDrawable)(void);
+EPOXY_PUBLIC GLXDrawable (EPOXY_CALLSPEC *epoxy_glXGetCurrentReadDrawable)(void);
 
-extern EPOXY_IMPORTEXPORT GLXDrawable (EPOXY_CALLSPEC *epoxy_glXGetCurrentReadDrawableSGI)(void);
+EPOXY_PUBLIC GLXDrawable (EPOXY_CALLSPEC *epoxy_glXGetCurrentReadDrawableSGI)(void);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXGetFBConfigAttrib)(Display * dpy, GLXFBConfig config, int attribute, int * value);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXGetFBConfigAttrib)(Display * dpy, GLXFBConfig config, int attribute, int * value);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXGetFBConfigAttribSGIX)(Display * dpy, GLXFBConfigSGIX config, int attribute, int * value);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXGetFBConfigAttribSGIX)(Display * dpy, GLXFBConfigSGIX config, int attribute, int * value);
 
-extern EPOXY_IMPORTEXPORT GLXFBConfigSGIX (EPOXY_CALLSPEC *epoxy_glXGetFBConfigFromVisualSGIX)(Display * dpy, XVisualInfo * vis);
+EPOXY_PUBLIC GLXFBConfigSGIX (EPOXY_CALLSPEC *epoxy_glXGetFBConfigFromVisualSGIX)(Display * dpy, XVisualInfo * vis);
 
-extern EPOXY_IMPORTEXPORT GLXFBConfig * (EPOXY_CALLSPEC *epoxy_glXGetFBConfigs)(Display * dpy, int screen, int * nelements);
+EPOXY_PUBLIC GLXFBConfig * (EPOXY_CALLSPEC *epoxy_glXGetFBConfigs)(Display * dpy, int screen, int * nelements);
 
-extern EPOXY_IMPORTEXPORT unsigned int (EPOXY_CALLSPEC *epoxy_glXGetGPUIDsAMD)(unsigned int maxCount, unsigned int * ids);
+EPOXY_PUBLIC unsigned int (EPOXY_CALLSPEC *epoxy_glXGetGPUIDsAMD)(unsigned int maxCount, unsigned int * ids);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXGetGPUInfoAMD)(unsigned int id, int property, GLenum dataType, unsigned int size, void * data);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXGetGPUInfoAMD)(unsigned int id, int property, GLenum dataType, unsigned int size, void * data);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXGetMscRateOML)(Display * dpy, GLXDrawable drawable, int32_t * numerator, int32_t * denominator);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXGetMscRateOML)(Display * dpy, GLXDrawable drawable, int32_t * numerator, int32_t * denominator);
 
-extern EPOXY_IMPORTEXPORT __GLXextFuncPtr (EPOXY_CALLSPEC *epoxy_glXGetProcAddress)(const GLubyte * procName);
+EPOXY_PUBLIC __GLXextFuncPtr (EPOXY_CALLSPEC *epoxy_glXGetProcAddress)(const GLubyte * procName);
 
-extern EPOXY_IMPORTEXPORT __GLXextFuncPtr (EPOXY_CALLSPEC *epoxy_glXGetProcAddressARB)(const GLubyte * procName);
+EPOXY_PUBLIC __GLXextFuncPtr (EPOXY_CALLSPEC *epoxy_glXGetProcAddressARB)(const GLubyte * procName);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXGetSelectedEvent)(Display * dpy, GLXDrawable draw, unsigned long * event_mask);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXGetSelectedEvent)(Display * dpy, GLXDrawable draw, unsigned long * event_mask);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXGetSelectedEventSGIX)(Display * dpy, GLXDrawable drawable, unsigned long * mask);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXGetSelectedEventSGIX)(Display * dpy, GLXDrawable drawable, unsigned long * mask);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXGetSyncValuesOML)(Display * dpy, GLXDrawable drawable, int64_t * ust, int64_t * msc, int64_t * sbc);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXGetSyncValuesOML)(Display * dpy, GLXDrawable drawable, int64_t * ust, int64_t * msc, int64_t * sbc);
 
-extern EPOXY_IMPORTEXPORT Status (EPOXY_CALLSPEC *epoxy_glXGetTransparentIndexSUN)(Display * dpy, Window overlay, Window underlay, long * pTransparentIndex);
+EPOXY_PUBLIC Status (EPOXY_CALLSPEC *epoxy_glXGetTransparentIndexSUN)(Display * dpy, Window overlay, Window underlay, long * pTransparentIndex);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXGetVideoDeviceNV)(Display * dpy, int screen, int numVideoDevices, GLXVideoDeviceNV * pVideoDevice);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXGetVideoDeviceNV)(Display * dpy, int screen, int numVideoDevices, GLXVideoDeviceNV * pVideoDevice);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXGetVideoInfoNV)(Display * dpy, int screen, GLXVideoDeviceNV VideoDevice, unsigned long * pulCounterOutputPbuffer, unsigned long * pulCounterOutputVideo);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXGetVideoInfoNV)(Display * dpy, int screen, GLXVideoDeviceNV VideoDevice, unsigned long * pulCounterOutputPbuffer, unsigned long * pulCounterOutputVideo);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXGetVideoSyncSGI)(unsigned int * count);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXGetVideoSyncSGI)(unsigned int * count);
 
-extern EPOXY_IMPORTEXPORT XVisualInfo * (EPOXY_CALLSPEC *epoxy_glXGetVisualFromFBConfig)(Display * dpy, GLXFBConfig config);
+EPOXY_PUBLIC XVisualInfo * (EPOXY_CALLSPEC *epoxy_glXGetVisualFromFBConfig)(Display * dpy, GLXFBConfig config);
 
-extern EPOXY_IMPORTEXPORT XVisualInfo * (EPOXY_CALLSPEC *epoxy_glXGetVisualFromFBConfigSGIX)(Display * dpy, GLXFBConfigSGIX config);
+EPOXY_PUBLIC XVisualInfo * (EPOXY_CALLSPEC *epoxy_glXGetVisualFromFBConfigSGIX)(Display * dpy, GLXFBConfigSGIX config);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXHyperpipeAttribSGIX)(Display * dpy, int timeSlice, int attrib, int size, void * attribList);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXHyperpipeAttribSGIX)(Display * dpy, int timeSlice, int attrib, int size, void * attribList);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXHyperpipeConfigSGIX)(Display * dpy, int networkId, int npipes, GLXHyperpipeConfigSGIX * cfg, int * hpId);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXHyperpipeConfigSGIX)(Display * dpy, int networkId, int npipes, GLXHyperpipeConfigSGIX * cfg, int * hpId);
 
-extern EPOXY_IMPORTEXPORT GLXContext (EPOXY_CALLSPEC *epoxy_glXImportContextEXT)(Display * dpy, GLXContextID contextID);
+EPOXY_PUBLIC GLXContext (EPOXY_CALLSPEC *epoxy_glXImportContextEXT)(Display * dpy, GLXContextID contextID);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXIsDirect)(Display * dpy, GLXContext ctx);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXIsDirect)(Display * dpy, GLXContext ctx);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXJoinSwapGroupNV)(Display * dpy, GLXDrawable drawable, GLuint group);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXJoinSwapGroupNV)(Display * dpy, GLXDrawable drawable, GLuint group);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXJoinSwapGroupSGIX)(Display * dpy, GLXDrawable drawable, GLXDrawable member);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXJoinSwapGroupSGIX)(Display * dpy, GLXDrawable drawable, GLXDrawable member);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXLockVideoCaptureDeviceNV)(Display * dpy, GLXVideoCaptureDeviceNV device);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXLockVideoCaptureDeviceNV)(Display * dpy, GLXVideoCaptureDeviceNV device);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXMakeAssociatedContextCurrentAMD)(GLXContext ctx);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXMakeAssociatedContextCurrentAMD)(GLXContext ctx);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXMakeContextCurrent)(Display * dpy, GLXDrawable draw, GLXDrawable read, GLXContext ctx);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXMakeContextCurrent)(Display * dpy, GLXDrawable draw, GLXDrawable read, GLXContext ctx);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXMakeCurrent)(Display * dpy, GLXDrawable drawable, GLXContext ctx);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXMakeCurrent)(Display * dpy, GLXDrawable drawable, GLXContext ctx);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXMakeCurrentReadSGI)(Display * dpy, GLXDrawable draw, GLXDrawable read, GLXContext ctx);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXMakeCurrentReadSGI)(Display * dpy, GLXDrawable draw, GLXDrawable read, GLXContext ctx);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXNamedCopyBufferSubDataNV)(Display * dpy, GLXContext readCtx, GLXContext writeCtx, GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXNamedCopyBufferSubDataNV)(Display * dpy, GLXContext readCtx, GLXContext writeCtx, GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXQueryChannelDeltasSGIX)(Display * display, int screen, int channel, int * x, int * y, int * w, int * h);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXQueryChannelDeltasSGIX)(Display * display, int screen, int channel, int * x, int * y, int * w, int * h);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXQueryChannelRectSGIX)(Display * display, int screen, int channel, int * dx, int * dy, int * dw, int * dh);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXQueryChannelRectSGIX)(Display * display, int screen, int channel, int * dx, int * dy, int * dw, int * dh);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXQueryContext)(Display * dpy, GLXContext ctx, int attribute, int * value);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXQueryContext)(Display * dpy, GLXContext ctx, int attribute, int * value);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXQueryContextInfoEXT)(Display * dpy, GLXContext context, int attribute, int * value);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXQueryContextInfoEXT)(Display * dpy, GLXContext context, int attribute, int * value);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXQueryCurrentRendererIntegerMESA)(int attribute, unsigned int * value);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXQueryCurrentRendererIntegerMESA)(int attribute, unsigned int * value);
 
-extern EPOXY_IMPORTEXPORT const char * (EPOXY_CALLSPEC *epoxy_glXQueryCurrentRendererStringMESA)(int attribute);
+EPOXY_PUBLIC const char * (EPOXY_CALLSPEC *epoxy_glXQueryCurrentRendererStringMESA)(int attribute);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXQueryDrawable)(Display * dpy, GLXDrawable draw, int attribute, unsigned int * value);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXQueryDrawable)(Display * dpy, GLXDrawable draw, int attribute, unsigned int * value);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXQueryExtension)(Display * dpy, int * errorb, int * event);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXQueryExtension)(Display * dpy, int * errorb, int * event);
 
-extern EPOXY_IMPORTEXPORT const char * (EPOXY_CALLSPEC *epoxy_glXQueryExtensionsString)(Display * dpy, int screen);
+EPOXY_PUBLIC const char * (EPOXY_CALLSPEC *epoxy_glXQueryExtensionsString)(Display * dpy, int screen);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXQueryFrameCountNV)(Display * dpy, int screen, GLuint * count);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXQueryFrameCountNV)(Display * dpy, int screen, GLuint * count);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXQueryGLXPbufferSGIX)(Display * dpy, GLXPbufferSGIX pbuf, int attribute, unsigned int * value);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXQueryGLXPbufferSGIX)(Display * dpy, GLXPbufferSGIX pbuf, int attribute, unsigned int * value);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXQueryHyperpipeAttribSGIX)(Display * dpy, int timeSlice, int attrib, int size, void * returnAttribList);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXQueryHyperpipeAttribSGIX)(Display * dpy, int timeSlice, int attrib, int size, void * returnAttribList);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXQueryHyperpipeBestAttribSGIX)(Display * dpy, int timeSlice, int attrib, int size, void * attribList, void * returnAttribList);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXQueryHyperpipeBestAttribSGIX)(Display * dpy, int timeSlice, int attrib, int size, void * attribList, void * returnAttribList);
 
-extern EPOXY_IMPORTEXPORT GLXHyperpipeConfigSGIX * (EPOXY_CALLSPEC *epoxy_glXQueryHyperpipeConfigSGIX)(Display * dpy, int hpId, int * npipes);
+EPOXY_PUBLIC GLXHyperpipeConfigSGIX * (EPOXY_CALLSPEC *epoxy_glXQueryHyperpipeConfigSGIX)(Display * dpy, int hpId, int * npipes);
 
-extern EPOXY_IMPORTEXPORT GLXHyperpipeNetworkSGIX * (EPOXY_CALLSPEC *epoxy_glXQueryHyperpipeNetworkSGIX)(Display * dpy, int * npipes);
+EPOXY_PUBLIC GLXHyperpipeNetworkSGIX * (EPOXY_CALLSPEC *epoxy_glXQueryHyperpipeNetworkSGIX)(Display * dpy, int * npipes);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXQueryMaxSwapBarriersSGIX)(Display * dpy, int screen, int * max);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXQueryMaxSwapBarriersSGIX)(Display * dpy, int screen, int * max);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXQueryMaxSwapGroupsNV)(Display * dpy, int screen, GLuint * maxGroups, GLuint * maxBarriers);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXQueryMaxSwapGroupsNV)(Display * dpy, int screen, GLuint * maxGroups, GLuint * maxBarriers);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXQueryRendererIntegerMESA)(Display * dpy, int screen, int renderer, int attribute, unsigned int * value);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXQueryRendererIntegerMESA)(Display * dpy, int screen, int renderer, int attribute, unsigned int * value);
 
-extern EPOXY_IMPORTEXPORT const char * (EPOXY_CALLSPEC *epoxy_glXQueryRendererStringMESA)(Display * dpy, int screen, int renderer, int attribute);
+EPOXY_PUBLIC const char * (EPOXY_CALLSPEC *epoxy_glXQueryRendererStringMESA)(Display * dpy, int screen, int renderer, int attribute);
 
-extern EPOXY_IMPORTEXPORT const char * (EPOXY_CALLSPEC *epoxy_glXQueryServerString)(Display * dpy, int screen, int name);
+EPOXY_PUBLIC const char * (EPOXY_CALLSPEC *epoxy_glXQueryServerString)(Display * dpy, int screen, int name);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXQuerySwapGroupNV)(Display * dpy, GLXDrawable drawable, GLuint * group, GLuint * barrier);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXQuerySwapGroupNV)(Display * dpy, GLXDrawable drawable, GLuint * group, GLuint * barrier);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXQueryVersion)(Display * dpy, int * maj, int * min);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXQueryVersion)(Display * dpy, int * maj, int * min);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXQueryVideoCaptureDeviceNV)(Display * dpy, GLXVideoCaptureDeviceNV device, int attribute, int * value);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXQueryVideoCaptureDeviceNV)(Display * dpy, GLXVideoCaptureDeviceNV device, int attribute, int * value);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXReleaseBuffersMESA)(Display * dpy, GLXDrawable drawable);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXReleaseBuffersMESA)(Display * dpy, GLXDrawable drawable);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXReleaseTexImageEXT)(Display * dpy, GLXDrawable drawable, int buffer);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXReleaseTexImageEXT)(Display * dpy, GLXDrawable drawable, int buffer);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXReleaseVideoCaptureDeviceNV)(Display * dpy, GLXVideoCaptureDeviceNV device);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXReleaseVideoCaptureDeviceNV)(Display * dpy, GLXVideoCaptureDeviceNV device);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXReleaseVideoDeviceNV)(Display * dpy, int screen, GLXVideoDeviceNV VideoDevice);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXReleaseVideoDeviceNV)(Display * dpy, int screen, GLXVideoDeviceNV VideoDevice);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXReleaseVideoImageNV)(Display * dpy, GLXPbuffer pbuf);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXReleaseVideoImageNV)(Display * dpy, GLXPbuffer pbuf);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXResetFrameCountNV)(Display * dpy, int screen);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXResetFrameCountNV)(Display * dpy, int screen);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXSelectEvent)(Display * dpy, GLXDrawable draw, unsigned long event_mask);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXSelectEvent)(Display * dpy, GLXDrawable draw, unsigned long event_mask);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXSelectEventSGIX)(Display * dpy, GLXDrawable drawable, unsigned long mask);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXSelectEventSGIX)(Display * dpy, GLXDrawable drawable, unsigned long mask);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXSendPbufferToVideoNV)(Display * dpy, GLXPbuffer pbuf, int iBufferType, unsigned long * pulCounterPbuffer, GLboolean bBlock);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXSendPbufferToVideoNV)(Display * dpy, GLXPbuffer pbuf, int iBufferType, unsigned long * pulCounterPbuffer, GLboolean bBlock);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXSet3DfxModeMESA)(int mode);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXSet3DfxModeMESA)(int mode);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXSwapBuffers)(Display * dpy, GLXDrawable drawable);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXSwapBuffers)(Display * dpy, GLXDrawable drawable);
 
-extern EPOXY_IMPORTEXPORT int64_t (EPOXY_CALLSPEC *epoxy_glXSwapBuffersMscOML)(Display * dpy, GLXDrawable drawable, int64_t target_msc, int64_t divisor, int64_t remainder);
+EPOXY_PUBLIC int64_t (EPOXY_CALLSPEC *epoxy_glXSwapBuffersMscOML)(Display * dpy, GLXDrawable drawable, int64_t target_msc, int64_t divisor, int64_t remainder);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXSwapIntervalEXT)(Display * dpy, GLXDrawable drawable, int interval);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXSwapIntervalEXT)(Display * dpy, GLXDrawable drawable, int interval);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXSwapIntervalSGI)(int interval);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXSwapIntervalSGI)(int interval);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXUseXFont)(Font font, int first, int count, int list);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXUseXFont)(Font font, int first, int count, int list);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXWaitForMscOML)(Display * dpy, GLXDrawable drawable, int64_t target_msc, int64_t divisor, int64_t remainder, int64_t * ust, int64_t * msc, int64_t * sbc);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXWaitForMscOML)(Display * dpy, GLXDrawable drawable, int64_t target_msc, int64_t divisor, int64_t remainder, int64_t * ust, int64_t * msc, int64_t * sbc);
 
-extern EPOXY_IMPORTEXPORT Bool (EPOXY_CALLSPEC *epoxy_glXWaitForSbcOML)(Display * dpy, GLXDrawable drawable, int64_t target_sbc, int64_t * ust, int64_t * msc, int64_t * sbc);
+EPOXY_PUBLIC Bool (EPOXY_CALLSPEC *epoxy_glXWaitForSbcOML)(Display * dpy, GLXDrawable drawable, int64_t target_sbc, int64_t * ust, int64_t * msc, int64_t * sbc);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXWaitGL)(void);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXWaitGL)(void);
 
-extern EPOXY_IMPORTEXPORT int (EPOXY_CALLSPEC *epoxy_glXWaitVideoSyncSGI)(int divisor, int remainder, unsigned int * count);
+EPOXY_PUBLIC int (EPOXY_CALLSPEC *epoxy_glXWaitVideoSyncSGI)(int divisor, int remainder, unsigned int * count);
 
-extern EPOXY_IMPORTEXPORT void (EPOXY_CALLSPEC *epoxy_glXWaitX)(void);
+EPOXY_PUBLIC void (EPOXY_CALLSPEC *epoxy_glXWaitX)(void);
 
 #define glXBindChannelToWindowSGIX epoxy_glXBindChannelToWindowSGIX
 #define glXBindHyperpipeSGIX epoxy_glXBindHyperpipeSGIX
