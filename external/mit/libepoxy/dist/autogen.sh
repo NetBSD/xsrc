@@ -4,11 +4,13 @@ srcdir=`dirname $0`
 test -z "$srcdir" && srcdir=.
 
 ORIGDIR=`pwd`
-cd $srcdir
+cd "$srcdir"
 
-autoreconf -v --install || exit 1
-cd $ORIGDIR || exit $?
+mkdir m4 || exit 1
+
+autoreconf -v --install || exit $?
+cd "$ORIGDIR" || exit $?
 
 if test -z "$NOCONFIGURE"; then
-    $srcdir/configure "$@"
+    exec "$srcdir/configure" "$@"
 fi

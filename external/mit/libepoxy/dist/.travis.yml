@@ -1,13 +1,32 @@
-language: c
+sudo: false
+
+branches:
+  except:
+    - debian
+    - khronos-registry
+
+os:
+  - linux
+
 compiler:
   - gcc
   - clang
 
+language:
+  - c
+
+services:
+  - docker
+
 before_install:
-  - "export DISPLAY=:99.0"
-  - "/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -ac -screen 0 1280x1024x24"
-install:
-  - sudo apt-get update
-  - sudo apt-get install xutils-dev libgl1-mesa-dev libegl1-mesa-dev libgl1-mesa-dri libgles1-mesa-dev libgles2-mesa-dev
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker pull ebassi/epoxyci ; fi
+
+before_script:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo FROM ebassi/epoxyci > Dockerfile ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo ADD . /root >> Dockerfile ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker build -t withgit . ; fi
+
 script:
-  - ./autogen.sh && make && make check
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker run withgit /bin/sh -c "cd /root && CC=$CC ./epoxy-run-tests.sh" ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker run withgit /bin/sh -c "cd /root && CC=$CC ./epoxy-run-tests.sh -Denable-glx=no" ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker run withgit /bin/sh -c "cd /root && CC=$CC ./epoxy-run-tests.sh -Denable-egl=no" ; fi

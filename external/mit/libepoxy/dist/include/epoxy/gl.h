@@ -25,16 +25,14 @@
  *
  * Provides an implementation of a GL dispatch layer using either
  * global function pointers or a hidden vtable.
+ *
+ * You should include `<epoxy/gl.h>` instead of `<GL/gl.h>` and `<GL/glext.h>`.
  */
 
 #ifndef EPOXY_GL_H
 #define EPOXY_GL_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <stdbool.h>
+#include "epoxy/common.h"
 
 #if defined(__gl_h_) || defined(__glext_h_)
 #error epoxy/gl.h must be included before (or in place of) GL/gl.h
@@ -51,7 +49,6 @@ extern "C" {
 /* APIENTRY and GLAPIENTRY are not used on Linux or Mac. */
 #define APIENTRY
 #define GLAPIENTRY
-#define EPOXY_IMPORTEXPORT
 #define EPOXY_CALLSPEC
 #define GLAPI
 #define KHRONOS_APIENTRY
@@ -68,10 +65,6 @@ extern "C" {
 
 #ifndef EPOXY_CALLSPEC
 #define EPOXY_CALLSPEC __stdcall
-#endif
-
-#ifndef EPOXY_IMPORTEXPORT
-#define EPOXY_IMPORTEXPORT __declspec(dllimport)
 #endif
 
 #ifndef GLAPI
@@ -91,14 +84,14 @@ extern "C" {
 #define GLAPIENTRYP GLAPIENTRY *
 #endif
 
+EPOXY_BEGIN_DECLS
+
 #include "epoxy/gl_generated.h"
 
-EPOXY_IMPORTEXPORT bool epoxy_has_gl_extension(const char *extension);
-EPOXY_IMPORTEXPORT bool epoxy_is_desktop_gl(void);
-EPOXY_IMPORTEXPORT int epoxy_gl_version(void);
+EPOXY_PUBLIC bool epoxy_has_gl_extension(const char *extension);
+EPOXY_PUBLIC bool epoxy_is_desktop_gl(void);
+EPOXY_PUBLIC int epoxy_gl_version(void);
 
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
+EPOXY_END_DECLS
 
 #endif /* EPOXY_GL_H */
