@@ -6084,7 +6084,7 @@ xtermOpenApplication(XtAppContext * app_context_return,
 #endif /* OPT_SESSION_MGT */
     init_colored_cursor(XtDisplay(result));
 
-    XtSetErrorHandler((XtErrorHandler) 0);
+    XtSetErrorHandler(NULL);
 
     return result;
 }

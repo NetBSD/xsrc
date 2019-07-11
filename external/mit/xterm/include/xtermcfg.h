@@ -231,10 +231,10 @@
  * g++ support for __attribute__() is haphazard.
  */
 #ifndef __cplusplus
-/* #undef GCC_PRINTF */
-/* #undef GCC_PRINTFLIKE */
-/* #undef GCC_NORETURN */
-/* #undef GCC_UNUSED */
+#define GCC_PRINTF 	1
+#define GCC_PRINTFLIKE(fmt,var) __attribute__((__format__(__printf__,fmt,var)))
+#define GCC_NORETURN 	__attribute__((__noreturn__))
+#define GCC_UNUSED 	__attribute__((__unused__))
 #endif
 
 #ifndef HAVE_X11_XPOLL_H
