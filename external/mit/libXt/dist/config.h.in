@@ -36,8 +36,7 @@
 /* Define to 1 if Xalloca.h should include <alloca.h> */
 #undef INCLUDE_ALLOCA_H
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
 
 /* Name of package */
@@ -81,6 +80,12 @@
 
 /* Define to 1 to use XKB for keysym resolution. */
 #undef XKB
+
+/* Define to 1 to enable geo-tattler traces. */
+#undef XT_GEO_TATTLER
+
+/* Define to 1 to use standard C const feature. */
+#undef _CONST_X_STRING
 
 /* app default data directory */
 #undef appdefaultdir
