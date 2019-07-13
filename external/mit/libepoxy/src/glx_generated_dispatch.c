@@ -11,8 +11,8 @@
 #include "dispatch_common.h"
 #include "epoxy/glx.h"
 
-#ifdef __GNUC__
-#define EPOXY_NOINLINE __attribute__((noinline))
+#if defined(__GNUC__) || defined(__lint__)
+#define EPOXY_NOINLINE __attribute__((__noinline__))
 #elif defined (_MSC_VER)
 #define EPOXY_NOINLINE __declspec(noinline)
 #endif
