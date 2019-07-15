@@ -264,6 +264,7 @@ populate_entries( struct pci_system * p )
     if (err) {
 	free(p->devices);
 	p->devices = NULL;
+	p->num_devices = 0;
     }
 
     return err;
