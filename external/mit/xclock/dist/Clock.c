@@ -613,7 +613,7 @@ Initialize (Widget request, Widget new, ArgList args, Cardinal *num_args)
        }
 #endif /* NO_I18N */
 
-       (void) gettimeofday(&tv, NULL);
+       X_GETTIMEOFDAY(&tv);
        tm = *localtime(&tv.tv_sec);
        str = TimeString (w, &tm);
        len = strlen(str);
@@ -1611,7 +1611,7 @@ clock_tic(XtPointer client_data, XtIntervalId *id)
 			    }
 			    if (w->clock.show_second_hand &&
 				(tm.tm_sec != w->clock.otm.tm_sec ||
-				 tv.tv_usec != w->clock.otv.tv_usec))
+				tv.tv_usec != w->clock.otv.tv_usec))
 			    {
 				RenderSec (w, &w->clock.otm, &w->clock.otv, False);
 				RenderSec (w, &tm, &tv, False);
@@ -2173,7 +2173,7 @@ SetValues(Widget gcurrent, Widget grequest, Widget gnew,
 	  if (new->clock.update && XtIsRealized( (Widget) new))
 	      new->clock.interval_id = XtAppAddTimeOut(
                                          XtWidgetToApplicationContext(gnew),
-					 fabsl(new->clock.update)*1000,
+					 fabsf(new->clock.update)*1000,
 				         clock_tic, (XtPointer)gnew);
 
 	  new->clock.show_second_hand =(fabsl(new->clock.update) <= SECOND_HAND_TIME);
