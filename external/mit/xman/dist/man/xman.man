@@ -152,7 +152,7 @@ n(n) New
 o(o) Old
 
 .fi
-Xman will read any section that is of the from \fIman<character>\fP, where
+Xman will read any section that is of the form \fIman<character>\fP, where
 <character> is an upper or lower case letter (they are treated distinctly) or
 a numeral (0-9).  Be warned, however, that man(__appmansuffix__) and
 catman(__adminmansuffix__) will not search directories that are non-standard.

@@ -78,20 +78,3 @@ BorderWidth(Widget w)
 {
     return ((int) w->core.border_width);
 }
-
-/*
- * These functions have got to be able to get at the widget tree, I don't see
- * any way around this one.
- */
-
-/*	Function Name: Name
- *	Description: This function returns the correct popup child
- *	Arguments: w - widget
- *	Returns: the popup child.
- */
-
-char *
-Name(Widget w)
-{
-    return (w->core.name);
-}

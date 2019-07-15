@@ -1120,7 +1120,7 @@ PrintText(Widget w, int start_line, int num_lines, int location)
                 *bufp++ = *c;
                 break;
             }
-            /* else fall through to default, because this was a real underscore. */
+            /* else fall through - to default, because this was a real underscore. */
 
         default:
             if (italicflag) {   /* font change? */

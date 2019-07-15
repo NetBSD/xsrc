@@ -210,7 +210,7 @@ typedef struct _Xman_Resources {
 
 ManpageGlobals *InitPsuedoGlobals(void);
 Widget CreateManpage(FILE * file);
-void CreateManpageWidget(ManpageGlobals * man_globals, char *name,
+void CreateManpageWidget(ManpageGlobals * man_globals, String name,
                          Boolean full_instance);
 void FormUpWidgets(Widget parent,
                    const char **full_size, const char **half_size);
@@ -289,4 +289,3 @@ void MakeSearchWidget(ManpageGlobals * man_globals, Widget parent);
 int Width(Widget);
 int Height(Widget);
 int BorderWidth(Widget);
-char *Name(Widget);

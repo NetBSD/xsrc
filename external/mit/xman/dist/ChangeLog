@@ -1,3 +1,145 @@
+commit aed0ca367a69a7defd29bbbe357914b1b45ca4b9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 14 13:10:32 2019 -0700
+
+    xman 1.1.5
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8e32cbc5f586ba7382941d355342b1f14bcc1f5e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri May 31 13:45:40 2019 -0700
+
+    Pass -D_CONST_X_STRING to make libXt declare String as const char *
+    
+    Clears up 62 gcc -Wdiscarded-qualifiers warnings in the xman build
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 63973d9097d4f914c7637937f3af502116375d58
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri May 31 13:43:57 2019 -0700
+
+    Change fallback_resources from char * to String type
+    
+    Matches declaration of the libXt XtAppInitialize function that the
+    array is passed to.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4f5cc99e46d0795615b9adc668b4c738529cb54a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri May 31 13:42:50 2019 -0700
+
+    Make CreateManpageWidget use String type for name argument
+    
+    Matches declaration of the libXt XtCreatePopupShell function that the
+    name argument is passed to.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c84cd5c224e20e51cee89bf12e07d7c70b75938f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri May 31 13:21:37 2019 -0700
+
+    Delete unused function Name() from tkfuncs.c
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit bda000d1619d18aeeb37e84eda090341f38e81ea
+Author: Matthieu Herrb <matthieu@herrb.eu>
+Date:   Fri Mar 8 21:35:33 2019 +0100
+
+    Fix typo in manual page.
+    
+    reported by Alejandro G. Peregrina on OpenBSD tech@ list
+    
+    Signed-off-by: Matthieu Herrb <matthieu@herrb.eu>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ea5c4d25577b20a459358eff9f2d8a100dcf794f
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Thu Apr 30 23:38:10 2015 +0200
+
+    If we have man-db, don't try and emulate man's pipeline
+    
+    Just let man itself do the formatting / zsoelim / ... dance.  This
+    became necessary with man-db 2.7.0 moving zsoelim out of $PATH.
+    
+    Debian bug#764792 <https://bugs.debian.org/764792>
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6aefab8b5831b52042afc482a50a43e3a4eba5b9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Nov 21 17:14:35 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e7e8014eeee800d887f8e0264a4657c7918e7591
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Nov 16 22:36:52 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6758ad5a88b0d64ebbd008a0561239935a7be443
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat May 5 15:05:45 2018 -0700
+
+    Change fall through comment in ScrollByL.c to match gcc's requirements
+    
+    Needs to match one of the regexps shown under
+    https://gcc.gnu.org/onlinedocs/gcc-7.3.0/gcc/Warning-Options.html#index-Wimplicit-fallthrough
+    
+    Silences warning from gcc 7.3 of:
+    
+    ScrollByL.c: In function ‘PrintText’:
+    ScrollByL.c:1109:16: warning: this statement may fall through [-Wimplicit-fallthrough=]
+                 if (*(c + 1) == BACKSPACE) {
+                    ^
+    ScrollByL.c:1125:9: note: here
+             default:
+             ^~~~~~~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 652ca3b948f6ae1f84d72b5a5bb841d7c893e5e4
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:21 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit 4e8efb3fca88799f1101020ee7c9af9c34cfe8a4
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 231eec8d26187e4d3bd84d439a9d0a90d28780bb
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
 commit 27ae1a020119b5254c0238ef60a1ba602befba56
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Fri Mar 6 19:06:48 2015 -0800
