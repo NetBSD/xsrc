@@ -661,6 +661,13 @@ static Boolean
 ConstructCommand(char *cmdbuf, const char *path,
                  const char *filename, const char *tempfile)
 {
+#ifdef HAVE_MANDB
+    int used = snprintf(cmdbuf, BUFSIZ, "man -l %s > %s 2>/dev/null",
+                        filename, tempfile);
+    if (used >= BUFSIZ - 1)
+	return FALSE;
+    return TRUE;
+#else
     /* The original code did the following to produce a command line:
      *   sprintf(cmdbuf,"cd %s ; %s %s %s > %s %s", path, TBL,
      *      filename, FORMAT, man_globals->tempfile, "2> /dev/null");
@@ -783,6 +790,7 @@ ConstructCommand(char *cmdbuf, const char *path,
         return (FALSE);
 
     return (TRUE);
+#endif /* man-db */
 }
 #endif                          /* HANDLE_ROFFSEQ */
 

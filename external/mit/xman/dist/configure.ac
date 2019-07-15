@@ -23,8 +23,8 @@ dnl Process this file with autoconf to create configure.
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([xman], [1.1.4],
-        [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg], [xman])
+AC_INIT([xman], [1.1.5],
+        [https://gitlab.freedesktop.org/xorg/app/xman/issues], [xman])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
 
@@ -42,6 +42,11 @@ AC_CANONICAL_HOST
 AC_CHECK_PROG([GROFF], [groff], [found], [missing])
 if test "x$GROFF" = "xfound" ; then
    AC_DEFINE([HAS_GROFF], 1, [Define to 1 if you have the groff package.])
+fi
+
+AC_CHECK_PROG([MANDB], [mandb], [yes], [no])
+if test x"$MANDB" = xyes; then
+	AC_DEFINE([HAVE_MANDB], 1, [Define if the man implementation is man-db])
 fi
 
 AC_CHECK_FUNCS([mkstemp])

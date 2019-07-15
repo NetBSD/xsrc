@@ -237,8 +237,8 @@ CTAGS = ctags
 CSCOPE = cscope
 DIST_SUBDIRS = $(SUBDIRS)
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in COPYING \
-	ChangeLog INSTALL README compile config.guess config.sub \
-	depcomp install-sh missing
+	ChangeLog INSTALL compile config.guess config.sub depcomp \
+	install-sh missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -330,6 +330,7 @@ LIB_MAN_DIR = @LIB_MAN_DIR@
 LIB_MAN_SUFFIX = @LIB_MAN_SUFFIX@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
+MANDB = @MANDB@
 MAN_SUBSTS = @MAN_SUBSTS@
 MISC_MAN_DIR = @MISC_MAN_DIR@
 MISC_MAN_SUFFIX = @MISC_MAN_SUFFIX@
@@ -344,6 +345,8 @@ PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
+PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
+PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
@@ -407,7 +410,7 @@ top_srcdir = @top_srcdir@
 SUBDIRS = man
 helpdir = @HELPDIR@
 dist_help_DATA = xman.help
-AM_CFLAGS = $(CWARNFLAGS) $(XMAN_CFLAGS) \
+AM_CFLAGS = $(CWARNFLAGS) $(XMAN_CFLAGS) -D_CONST_X_STRING \
 	-D_BSD_SOURCE -DHELPFILE=\"$(helpdir)/xman.help\"
 
 xman_LDADD = $(XMAN_LIBS)
@@ -438,6 +441,7 @@ xman_SOURCES = \
 DISTCHECK_CONFIGURE_FLAGS = --with-appdefaultdir=\$${datadir}/X11/app-defaults
 dist_appdefault_DATA = app-defaults/Xman
 MAINTAINERCLEANFILES = ChangeLog INSTALL
+EXTRA_DIST = README.md
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 

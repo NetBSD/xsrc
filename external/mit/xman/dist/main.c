@@ -83,7 +83,7 @@ static XtResource my_resources[] = {
  * The resource that we absolutely need.
  */
 
-static char *fallback_resources[] = {
+static String fallback_resources[] = {
     "Xman*quitButton.translations:	#override \\n   <Btn1Up>: Quit() reset()",
     "Xman*helpButton.sensitive:                    FALSE",
     "Xman*manpageButton.sensitive:                 FALSE",

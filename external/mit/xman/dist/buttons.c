@@ -212,7 +212,7 @@ InitPsuedoGlobals(void)
 
 void
 CreateManpageWidget(ManpageGlobals * man_globals,
-                    char *name, Boolean full_instance)
+                    String name, Boolean full_instance)
 {
     Arg arglist[MANPAGEARGS];   /* An argument list for widget creation */
     Cardinal num_args;          /* The number of arguments in the list. */
