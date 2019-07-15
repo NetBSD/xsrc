@@ -179,7 +179,7 @@ drm_public void drmFree(void *pt)
 }
 
 /**
- * Call ioctl, restarting if it is interupted
+ * Call ioctl, restarting if it is interrupted
  */
 drm_public int
 drmIoctl(int fd, unsigned long request, void *arg)
@@ -289,7 +289,7 @@ static int drmMatchBusID(const char *id1, const char *id2, int pci_domain_ok)
  *
  * \internal
  * Checks for failure. If failure was caused by signal call chown again.
- * If any other failure happened then it will output error mesage using
+ * If any other failure happened then it will output error message using
  * drmMsg() call.
  */
 #if !UDEV
@@ -750,8 +750,8 @@ drm_public int drmOpen(const char *name, const char *busid)
  */
 drm_public int drmOpenWithType(const char *name, const char *busid, int type)
 {
-    if (!drmAvailable() && name != NULL && drm_server_info &&
-        drm_server_info->load_module) {
+    if (name != NULL && drm_server_info &&
+        drm_server_info->load_module && !drmAvailable()) {
         /* try to load the kernel module */
         if (!drm_server_info->load_module(name)) {
             drmMsg("[drm] failed to load kernel module \"%s\"\n", name);
@@ -1458,7 +1458,7 @@ drm_public int drmDMA(int fd, drmDMAReqPtr request)
  *
  * \param fd file descriptor.
  * \param context context.
- * \param flags flags that determine the sate of the hardware when the function
+ * \param flags flags that determine the state of the hardware when the function
  * returns.
  *
  * \return always zero.
@@ -2743,6 +2743,24 @@ drm_public int drmDropMaster(int fd)
         return drmIoctl(fd, DRM_IOCTL_DROP_MASTER, NULL);
 }
 
+drm_public int drmIsMaster(int fd)
+{
+        /* Detect master by attempting something that requires master.
+         *
+         * Authenticating magic tokens requires master and 0 is an
+         * internal kernel detail which we could use. Attempting this on
+         * a master fd would fail therefore fail with EINVAL because 0
+         * is invalid.
+         *
+         * A non-master fd will fail with EACCES, as the kernel checks
+         * for master before attempting to do anything else.
+         *
+         * Since we don't want to leak implementation details, use
+         * EACCES.
+         */
+        return drmAuthMagic(fd, 0) != -EACCES;
+}
+
 drm_public char *drmGetDeviceNameFromFd(int fd)
 {
     char name[128];
@@ -3510,69 +3528,97 @@ free_device:
     return ret;
 }
 
-static int drmParsePlatformBusInfo(int maj, int min, drmPlatformBusInfoPtr info)
+static int drmParseOFBusInfo(int maj, int min, char *fullname)
 {
 #ifdef __linux__
-    char path[PATH_MAX + 1], *name;
+    char path[PATH_MAX + 1], *name, *tmp_name;
 
     snprintf(path, sizeof(path), "/sys/dev/char/%d:%d/device", maj, min);
 
     name = sysfs_uevent_get(path, "OF_FULLNAME");
-    if (!name)
-        return -ENOENT;
+    tmp_name = name;
+    if (!name) {
+        /* If the device lacks OF data, pick the MODALIAS info */
+        name = sysfs_uevent_get(path, "MODALIAS");
+        if (!name)
+            return -ENOENT;
 
-    strncpy(info->fullname, name, DRM_PLATFORM_DEVICE_NAME_LEN);
-    info->fullname[DRM_PLATFORM_DEVICE_NAME_LEN - 1] = '\0';
+        /* .. and strip the MODALIAS=[platform,usb...]: part. */
+        tmp_name = strrchr(name, ':');
+        if (!tmp_name) {
+            free(name);
+            return -ENOENT;
+        }
+        tmp_name++;
+    }
+
+    strncpy(fullname, tmp_name, DRM_PLATFORM_DEVICE_NAME_LEN);
+    fullname[DRM_PLATFORM_DEVICE_NAME_LEN - 1] = '\0';
     free(name);
 
     return 0;
 #else
-#warning "Missing implementation of drmParsePlatformBusInfo"
+#warning "Missing implementation of drmParseOFBusInfo"
     return -EINVAL;
 #endif
 }
 
-static int drmParsePlatformDeviceInfo(int maj, int min,
-                                      drmPlatformDeviceInfoPtr info)
+static int drmParseOFDeviceInfo(int maj, int min, char ***compatible)
 {
 #ifdef __linux__
-    char path[PATH_MAX + 1], *value;
+    char path[PATH_MAX + 1], *value, *tmp_name;
     unsigned int count, i;
     int err;
 
     snprintf(path, sizeof(path), "/sys/dev/char/%d:%d/device", maj, min);
 
     value = sysfs_uevent_get(path, "OF_COMPATIBLE_N");
-    if (!value)
-        return -ENOENT;
+    if (value) {
+        sscanf(value, "%u", &count);
+        free(value);
+    } else {
+        /* Assume one entry if the device lack OF data */
+        count = 1;
+    }
 
-    sscanf(value, "%u", &count);
-    free(value);
-
-    info->compatible = calloc(count + 1, sizeof(*info->compatible));
-    if (!info->compatible)
+    *compatible = calloc(count + 1, sizeof(char *));
+    if (!*compatible)
         return -ENOMEM;
 
     for (i = 0; i < count; i++) {
         value = sysfs_uevent_get(path, "OF_COMPATIBLE_%u", i);
+        tmp_name = value;
         if (!value) {
-            err = -ENOENT;
-            goto free;
+            /* If the device lacks OF data, pick the MODALIAS info */
+            value = sysfs_uevent_get(path, "MODALIAS");
+            if (!value) {
+                err = -ENOENT;
+                goto free;
+            }
+
+            /* .. and strip the MODALIAS=[platform,usb...]: part. */
+            tmp_name = strrchr(value, ':');
+            if (!tmp_name) {
+                free(value);
+                return -ENOENT;
+            }
+            tmp_name = strdup(tmp_name + 1);
+            free(value);
         }
 
-        info->compatible[i] = value;
+        (*compatible)[i] = tmp_name;
     }
 
     return 0;
 
 free:
     while (i--)
-        free(info->compatible[i]);
+        free((*compatible)[i]);
 
-    free(info->compatible);
+    free(*compatible);
     return err;
 #else
-#warning "Missing implementation of drmParsePlatformDeviceInfo"
+#warning "Missing implementation of drmParseOFDeviceInfo"
     return -EINVAL;
 #endif
 }
@@ -3595,7 +3641,7 @@ static int drmProcessPlatformDevice(drmDevicePtr *device,
 
     dev->businfo.platform = (drmPlatformBusInfoPtr)ptr;
 
-    ret = drmParsePlatformBusInfo(maj, min, dev->businfo.platform);
+    ret = drmParseOFBusInfo(maj, min, dev->businfo.platform->fullname);
     if (ret < 0)
         goto free_device;
 
@@ -3603,7 +3649,7 @@ static int drmProcessPlatformDevice(drmDevicePtr *device,
         ptr += sizeof(drmPlatformBusInfo);
         dev->deviceinfo.platform = (drmPlatformDeviceInfoPtr)ptr;
 
-        ret = drmParsePlatformDeviceInfo(maj, min, dev->deviceinfo.platform);
+        ret = drmParseOFDeviceInfo(maj, min, &dev->deviceinfo.platform->compatible);
         if (ret < 0)
             goto free_device;
     }
@@ -3615,73 +3661,6 @@ static int drmProcessPlatformDevice(drmDevicePtr *device,
 free_device:
     free(dev);
     return ret;
-}
-
-static int drmParseHost1xBusInfo(int maj, int min, drmHost1xBusInfoPtr info)
-{
-#ifdef __linux__
-    char path[PATH_MAX + 1], *name;
-
-    snprintf(path, sizeof(path), "/sys/dev/char/%d:%d/device", maj, min);
-
-    name = sysfs_uevent_get(path, "OF_FULLNAME");
-    if (!name)
-        return -ENOENT;
-
-    strncpy(info->fullname, name, DRM_HOST1X_DEVICE_NAME_LEN);
-    info->fullname[DRM_HOST1X_DEVICE_NAME_LEN - 1] = '\0';
-    free(name);
-
-    return 0;
-#else
-#warning "Missing implementation of drmParseHost1xBusInfo"
-    return -EINVAL;
-#endif
-}
-
-static int drmParseHost1xDeviceInfo(int maj, int min,
-                                    drmHost1xDeviceInfoPtr info)
-{
-#ifdef __linux__
-    char path[PATH_MAX + 1], *value;
-    unsigned int count, i;
-    int err;
-
-    snprintf(path, sizeof(path), "/sys/dev/char/%d:%d/device", maj, min);
-
-    value = sysfs_uevent_get(path, "OF_COMPATIBLE_N");
-    if (!value)
-        return -ENOENT;
-
-    sscanf(value, "%u", &count);
-    free(value);
-
-    info->compatible = calloc(count + 1, sizeof(*info->compatible));
-    if (!info->compatible)
-        return -ENOMEM;
-
-    for (i = 0; i < count; i++) {
-        value = sysfs_uevent_get(path, "OF_COMPATIBLE_%u", i);
-        if (!value) {
-            err = -ENOENT;
-            goto free;
-        }
-
-        info->compatible[i] = value;
-    }
-
-    return 0;
-
-free:
-    while (i--)
-        free(info->compatible[i]);
-
-    free(info->compatible);
-    return err;
-#else
-#warning "Missing implementation of drmParseHost1xDeviceInfo"
-    return -EINVAL;
-#endif
 }
 
 static int drmProcessHost1xDevice(drmDevicePtr *device,
@@ -3702,7 +3681,7 @@ static int drmProcessHost1xDevice(drmDevicePtr *device,
 
     dev->businfo.host1x = (drmHost1xBusInfoPtr)ptr;
 
-    ret = drmParseHost1xBusInfo(maj, min, dev->businfo.host1x);
+    ret = drmParseOFBusInfo(maj, min, dev->businfo.host1x->fullname);
     if (ret < 0)
         goto free_device;
 
@@ -3710,7 +3689,7 @@ static int drmProcessHost1xDevice(drmDevicePtr *device,
         ptr += sizeof(drmHost1xBusInfo);
         dev->deviceinfo.host1x = (drmHost1xDeviceInfoPtr)ptr;
 
-        ret = drmParseHost1xDeviceInfo(maj, min, dev->deviceinfo.host1x);
+        ret = drmParseOFDeviceInfo(maj, min, &dev->deviceinfo.host1x->compatible);
         if (ret < 0)
             goto free_device;
     }
@@ -4275,5 +4254,82 @@ drm_public int drmSyncobjSignal(int fd, const uint32_t *handles,
     args.count_handles = handle_count;
 
     ret = drmIoctl(fd, DRM_IOCTL_SYNCOBJ_SIGNAL, &args);
+    return ret;
+}
+
+drm_public int drmSyncobjTimelineSignal(int fd, const uint32_t *handles,
+					uint64_t *points, uint32_t handle_count)
+{
+    struct drm_syncobj_timeline_array args;
+    int ret;
+
+    memclear(args);
+    args.handles = (uintptr_t)handles;
+    args.points = (uintptr_t)points;
+    args.count_handles = handle_count;
+
+    ret = drmIoctl(fd, DRM_IOCTL_SYNCOBJ_TIMELINE_SIGNAL, &args);
+    return ret;
+}
+
+drm_public int drmSyncobjTimelineWait(int fd, uint32_t *handles, uint64_t *points,
+				      unsigned num_handles,
+				      int64_t timeout_nsec, unsigned flags,
+				      uint32_t *first_signaled)
+{
+    struct drm_syncobj_timeline_wait args;
+    int ret;
+
+    memclear(args);
+    args.handles = (uintptr_t)handles;
+    args.points = (uintptr_t)points;
+    args.timeout_nsec = timeout_nsec;
+    args.count_handles = num_handles;
+    args.flags = flags;
+
+    ret = drmIoctl(fd, DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT, &args);
+    if (ret < 0)
+        return -errno;
+
+    if (first_signaled)
+        *first_signaled = args.first_signaled;
+    return ret;
+}
+
+
+drm_public int drmSyncobjQuery(int fd, uint32_t *handles, uint64_t *points,
+			       uint32_t handle_count)
+{
+    struct drm_syncobj_timeline_array args;
+    int ret;
+
+    memclear(args);
+    args.handles = (uintptr_t)handles;
+    args.points = (uintptr_t)points;
+    args.count_handles = handle_count;
+
+    ret = drmIoctl(fd, DRM_IOCTL_SYNCOBJ_QUERY, &args);
+    if (ret)
+        return ret;
+    return 0;
+}
+
+drm_public int drmSyncobjTransfer(int fd,
+				  uint32_t dst_handle, uint64_t dst_point,
+				  uint32_t src_handle, uint64_t src_point,
+				  uint32_t flags)
+{
+    struct drm_syncobj_transfer args;
+    int ret;
+
+    memclear(args);
+    args.src_handle = src_handle;
+    args.dst_handle = dst_handle;
+    args.src_point = src_point;
+    args.dst_point = dst_point;
+    args.flags = flags;
+
+    ret = drmIoctl(fd, DRM_IOCTL_SYNCOBJ_TRANSFER, &args);
+
     return ret;
 }

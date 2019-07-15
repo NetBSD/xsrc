@@ -87,8 +87,8 @@ enum amdgpu_bo_handle_type {
 	/** DMA-buf fd handle */
 	amdgpu_bo_handle_type_dma_buf_fd = 2,
 
-	/** KMS handle, but re-importing as a DMABUF handle through
-	 *  drmPrimeHandleToFD is forbidden. (Glamor does that)
+	/** Deprecated in favour of and same behaviour as
+	 * amdgpu_bo_handle_type_kms, use that instead of this
 	 */
 	amdgpu_bo_handle_type_kms_noimport = 3,
 };
@@ -702,7 +702,7 @@ int amdgpu_find_bo_by_cpu_mapping(amdgpu_device_handle dev,
 				  uint64_t *offset_in_bo);
 
 /**
- * Free previosuly allocated memory
+ * Free previously allocated memory
  *
  * \param   dev	       - \c [in] Device handle. See #amdgpu_device_initialize()
  * \param   buf_handle - \c [in]  Buffer handle to free
@@ -732,7 +732,7 @@ int amdgpu_bo_free(amdgpu_bo_handle buf_handle);
 void amdgpu_bo_inc_ref(amdgpu_bo_handle bo);
 
 /**
- * Request CPU access to GPU accessable memory
+ * Request CPU access to GPU accessible memory
  *
  * \param   buf_handle - \c [in] Buffer handle
  * \param   cpu        - \c [out] CPU address to be used for access
@@ -910,6 +910,21 @@ int amdgpu_cs_ctx_create(amdgpu_device_handle dev,
  *
 */
 int amdgpu_cs_ctx_free(amdgpu_context_handle context);
+
+/**
+ * Override the submission priority for the given context using a master fd.
+ *
+ * \param   dev        - \c [in] device handle
+ * \param   context    - \c [in] context handle for context id
+ * \param   master_fd  - \c [in] The master fd to authorize the override.
+ * \param   priority   - \c [in] The priority to assign to the context.
+ *
+ * \return 0 on success or a a negative Posix error code on failure.
+ */
+int amdgpu_cs_ctx_override_priority(amdgpu_device_handle dev,
+                                    amdgpu_context_handle context,
+                                    int master_fd,
+                                    unsigned priority);
 
 /**
  * Query reset state for the specific GPU Context
@@ -1263,7 +1278,7 @@ int amdgpu_read_mm_registers(amdgpu_device_handle dev, unsigned dword_offset,
  * \notes \n
  * It is client responsibility to correctly handle VA assignments and usage.
  * Neither kernel driver nor libdrm_amdpgu are able to prevent and
- * detect wrong va assignemnt.
+ * detect wrong va assignment.
  *
  * It is client responsibility to correctly handle multi-GPU cases and to pass
  * the corresponding arrays of all devices handles where corresponding VA will
@@ -1502,6 +1517,23 @@ int amdgpu_cs_syncobj_signal(amdgpu_device_handle dev,
 			     const uint32_t *syncobjs, uint32_t syncobj_count);
 
 /**
+ * Signal kernel timeline sync objects.
+ *
+ * \param dev           - \c [in] device handle
+ * \param syncobjs      - \c [in] array of sync object handles
+ * \param points	- \c [in] array of timeline points
+ * \param syncobj_count - \c [in] number of handles in syncobjs
+ *
+ * \return   0 on success\n
+ *          <0 - Negative POSIX Error code
+ *
+*/
+int amdgpu_cs_syncobj_timeline_signal(amdgpu_device_handle dev,
+				      const uint32_t *syncobjs,
+				      uint64_t *points,
+				      uint32_t syncobj_count);
+
+/**
  *  Wait for one or all sync objects to signal.
  *
  * \param   dev	    - \c [in] self-explanatory
@@ -1520,6 +1552,45 @@ int amdgpu_cs_syncobj_wait(amdgpu_device_handle dev,
 			   uint32_t *handles, unsigned num_handles,
 			   int64_t timeout_nsec, unsigned flags,
 			   uint32_t *first_signaled);
+
+/**
+ *  Wait for one or all sync objects on their points to signal.
+ *
+ * \param   dev	    - \c [in] self-explanatory
+ * \param   handles - \c [in] array of sync object handles
+ * \param   points - \c [in] array of sync points to wait
+ * \param   num_handles - \c [in] self-explanatory
+ * \param   timeout_nsec - \c [in] self-explanatory
+ * \param   flags   - \c [in] a bitmask of DRM_SYNCOBJ_WAIT_FLAGS_*
+ * \param   first_signaled - \c [in] self-explanatory
+ *
+ * \return   0 on success\n
+ *          -ETIME - Timeout
+ *          <0 - Negative POSIX Error code
+ *
+ */
+int amdgpu_cs_syncobj_timeline_wait(amdgpu_device_handle dev,
+				    uint32_t *handles, uint64_t *points,
+				    unsigned num_handles,
+				    int64_t timeout_nsec, unsigned flags,
+				    uint32_t *first_signaled);
+/**
+ *  Query sync objects payloads.
+ *
+ * \param   dev	    - \c [in] self-explanatory
+ * \param   handles - \c [in] array of sync object handles
+ * \param   points - \c [out] array of sync points returned, which presents
+ * syncobj payload.
+ * \param   num_handles - \c [in] self-explanatory
+ *
+ * \return   0 on success\n
+ *          -ETIME - Timeout
+ *          <0 - Negative POSIX Error code
+ *
+ */
+int amdgpu_cs_syncobj_query(amdgpu_device_handle dev,
+			    uint32_t *handles, uint64_t *points,
+			    unsigned num_handles);
 
 /**
  *  Export kernel sync object to shareable fd.
@@ -1579,6 +1650,62 @@ int amdgpu_cs_syncobj_export_sync_file(amdgpu_device_handle dev,
 int amdgpu_cs_syncobj_import_sync_file(amdgpu_device_handle dev,
 				       uint32_t syncobj,
 				       int sync_file_fd);
+/**
+ *  Export kernel timeline sync object to a sync_file.
+ *
+ * \param   dev		- \c [in] device handle
+ * \param   syncobj	- \c [in] sync object handle
+ * \param   point	- \c [in] timeline point
+ * \param   flags	- \c [in] flags
+ * \param   sync_file_fd - \c [out] sync_file file descriptor.
+ *
+ * \return   0 on success\n
+ *          <0 - Negative POSIX Error code
+ *
+ */
+int amdgpu_cs_syncobj_export_sync_file2(amdgpu_device_handle dev,
+					uint32_t syncobj,
+					uint64_t point,
+					uint32_t flags,
+					int *sync_file_fd);
+
+/**
+ *  Import kernel timeline sync object from a sync_file.
+ *
+ * \param   dev		- \c [in] device handle
+ * \param   syncobj	- \c [in] sync object handle
+ * \param   point	- \c [in] timeline point
+ * \param   sync_file_fd - \c [in] sync_file file descriptor.
+ *
+ * \return   0 on success\n
+ *          <0 - Negative POSIX Error code
+ *
+ */
+int amdgpu_cs_syncobj_import_sync_file2(amdgpu_device_handle dev,
+					uint32_t syncobj,
+					uint64_t point,
+					int sync_file_fd);
+
+/**
+ *  transfer between syncbojs.
+ *
+ * \param   dev		- \c [in] device handle
+ * \param   dst_handle	- \c [in] sync object handle
+ * \param   dst_point	- \c [in] timeline point, 0 presents dst is binary
+ * \param   src_handle	- \c [in] sync object handle
+ * \param   src_point	- \c [in] timeline point, 0 presents src is binary
+ * \param   flags	- \c [in] flags
+ *
+ * \return   0 on success\n
+ *          <0 - Negative POSIX Error code
+ *
+ */
+int amdgpu_cs_syncobj_transfer(amdgpu_device_handle dev,
+			       uint32_t dst_handle,
+			       uint64_t dst_point,
+			       uint32_t src_handle,
+			       uint64_t src_point,
+			       uint32_t flags);
 
 /**
  * Export an amdgpu fence as a handle (syncobj or fd).

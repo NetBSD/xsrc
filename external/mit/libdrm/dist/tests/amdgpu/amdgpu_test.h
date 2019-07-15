@@ -194,6 +194,49 @@ CU_BOOL suite_vm_tests_enable(void);
  */
 extern CU_TestInfo vm_tests[];
 
+
+/**
+ * Initialize ras test suite
+ */
+int suite_ras_tests_init();
+
+/**
+ * Deinitialize deadlock test suite
+ */
+int suite_ras_tests_clean();
+
+/**
+ * Decide if the suite is enabled by default or not.
+ */
+CU_BOOL suite_ras_tests_enable(void);
+
+/**
+ * Tests in ras test suite
+ */
+extern CU_TestInfo ras_tests[];
+
+
+/**
+ * Initialize syncobj timeline test suite
+ */
+int suite_syncobj_timeline_tests_init();
+
+/**
+ * Deinitialize syncobj timeline test suite
+ */
+int suite_syncobj_timeline_tests_clean();
+
+/**
+ * Decide if the suite is enabled by default or not.
+ */
+CU_BOOL suite_syncobj_timeline_tests_enable(void);
+
+/**
+ * Tests in syncobj timeline test suite
+ */
+extern CU_TestInfo syncobj_timeline_tests[];
+
+
 /**
  * Helper functions
  */
