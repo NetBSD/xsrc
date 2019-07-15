@@ -408,6 +408,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = man
 AM_CFLAGS = $(CWARNFLAGS) $(XCLOCK_CFLAGS)
+AM_CPPFLAGS = -D_CONST_X_STRING
 xclock_LDADD = $(XCLOCK_LIBS)
 xclock_SOURCES = \
         Clock.c \

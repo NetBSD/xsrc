@@ -1,3 +1,60 @@
+commit 755004c87b50e6334c07b0f4b9458a32b8c92566
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 14 11:34:07 2019 -0700
+
+    xclock 1.0.9
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0172a3b11f777692ea06c1f3718390ce06b3dcd4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jun 9 15:06:32 2019 -0700
+
+    Clear -Wsign-compare warning from gcc 7.3
+    
+    xclock.c: In function ‘quit’:
+    xclock.c:133:27: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+      event->xclient.data.l[0] != wm_delete_window) {
+                               ^~
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8ef7efe5863ecf6d578900e8ca7398fc10cd566a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jun 9 15:04:53 2019 -0700
+
+    Use _CONST_X_STRING to make libXt declare String as const char *
+    
+    Clears up 31 of 95 gcc -Wdiscarded-qualifiers warnings from gcc 7.3
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 683d3c0cf8c86fb6626e9e85fc0bb99a27833280
+Author: Jon Turney <jon.turney@dronecode.org.uk>
+Date:   Sat May 4 01:25:22 2019 +0100
+
+    Consistently use X_GETTIMEOFDAY
+    
+    After 7ad730d8, use X_GETTIMEOFDAY() in Initialize() as well as
+    clock_tic(), to fix compilation on non-POSIX systems where the
+    gymnastics that X_GETTIMEOFDAY does are necessary (i.e. Win32)
+
+commit d528eca772620bc06c182e03265fc5f70a4d35f7
+Author: Niclas Zeising <zeising@daemonic.se>
+Date:   Wed Feb 27 15:25:28 2019 +0100
+
+    Use fabsf when dealing with floating point numbers
+
+commit a212539500a17f265815e77b9a6047279824315f
+Author: Niclas Zeising <zeising@daemonic.se>
+Date:   Wed Feb 27 15:22:41 2019 +0100
+
+    Fix logic sourrouning && and ||
+    
+    Fix the logic sorrounding && and ||.  && has higher precedence than ||,
+    and as such, the if statement probably was incorrect.  Fix this by
+    adding parenthesises around the || statement.
+
 commit 9af0790d71fc321d97486aa40b055656d99050c2
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Tue Feb 19 14:12:54 2019 -0800
