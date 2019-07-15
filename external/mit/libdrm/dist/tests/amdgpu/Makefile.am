@@ -33,4 +33,6 @@ amdgpu_test_SOURCES = \
 	vcn_tests.c \
 	uve_ib.h \
 	deadlock_tests.c \
-	vm_tests.c
+	vm_tests.c	\
+	ras_tests.c \
+	syncobj_tests.c
