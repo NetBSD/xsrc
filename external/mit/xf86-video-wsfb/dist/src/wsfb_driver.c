@@ -545,7 +545,7 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 
 	/* Handle depth */
 	default_depth = fPtr->fbi.fbi_bitsperpixel <= 24 ? fPtr->fbi.fbi_bitsperpixel : 24;
-	bitsperpixel = fPtr->fbi.fbi_bitsperpixel;
+	bitsperpixel = fPtr->fbi.fbi_bitsperpixel == 15 ? 16 : fPtr->fbi.fbi_bitsperpixel;
 #if defined(__NetBSD__) && defined(WSDISPLAY_TYPE_LUNA)
 	if (wstype == WSDISPLAY_TYPE_LUNA) {
 		/*
@@ -882,6 +882,7 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 	case 8:
 		len = fPtr->fbi.fbi_stride * fPtr->fbi.fbi_height;
 		break;
+	case 15:
 	case 16:
 		if (fPtr->fbi.fbi_stride == fPtr->fbi.fbi_width) {
 			xf86Msg(X_ERROR, "Bogus stride == width in 16bit colour\n");
