@@ -505,10 +505,21 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 		}
 		fbi->fbi_flags = 0;
 		fbi->fbi_fbsize = lb * info.height;
-		fbi->fbi_fboffset = 0;
-
+#ifdef	WSDISPLAY_TYPE_LUNA
+		if (wstype == WSDISPLAY_TYPE_LUNA) {
+			/*
+			 * XXX
+			 * LUNA's FB seems to have 64 dot (8 byte) offset.
+			 * This might be able to be changed in kernel
+			 * lunafb driver, but current setting was pulled
+			 * from 4.4BSD-Lite2/luna68k.
+			 */
+			fbi->fbi_fboffset = 8;
+		} else
+#endif
+			fbi->fbi_fboffset = 0;
 	}
-	xf86Msg(X_INFO, "fboffset %x\n", fPtr->fbi.fbi_fboffset);
+	xf86Msg(X_INFO, "fboffset %x\n", (int)fPtr->fbi.fbi_fboffset);
 	/*
 	 * Allocate room for saving the colormap.
 	 */
@@ -927,7 +938,7 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 		return FALSE;
 	}
 	len = max(len, fPtr->fbi.fbi_fbsize);
-	fPtr->fbmem = wsfb_mmap(len, 0, fPtr->fd);
+	fPtr->fbmem = wsfb_mmap(len + fPtr->fbi.fbi_fboffset, 0, fPtr->fd);
 
 	if (fPtr->fbmem == NULL) {
 		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
@@ -966,17 +977,6 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 	}
 
 	fPtr->fbstart = fPtr->fbmem + fPtr->fbi.fbi_fboffset;
-#ifdef	WSDISPLAY_TYPE_LUNA
-	if (wstype == WSDISPLAY_TYPE_LUNA) {
-		/*
-		 * XXX
-		 * LUNA's FB seems to have 64 dot (8 byte) offset.
-		 * This might be able to be changed in kernel lunafb driver,
-		 * but current setting was pulled from 4.4BSD-Lite2/luna68k.
-		 */
-		fPtr->fbstart += 8;
-	}
-#endif
 
 	if (fPtr->shadowFB) {
 		fPtr->shadow = calloc(1, fPtr->fbi.fbi_stride * pScrn->virtualY);
@@ -1163,7 +1163,7 @@ WsfbCloseScreen(CLOSE_SCREEN_ARGS_DECL)
 
 	if (pScrn->vtSema) {
 		WsfbRestore(pScrn);
-		if (munmap(fPtr->fbmem, fPtr->fbmem_len) == -1) {
+		if (munmap(fPtr->fbmem, fPtr->fbmem_len + fPtr->fbi.fbi_fboffset) == -1) {
 			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 				   "munmap: %s\n", strerror(errno));
 		}
@@ -1203,7 +1203,7 @@ WsfbWindowLinear(ScreenPtr pScreen, CARD32 row, CARD32 offset, int mode,
 			return NULL;
 		fPtr->fbi.fbi_stride = *size;
 	}
-	return ((CARD8 *)fPtr->fbmem + row * fPtr->fbi.fbi_stride + offset);
+	return ((CARD8 *)fPtr->fbstart + row * fPtr->fbi.fbi_stride + offset);
 }
 
 static void
@@ -1448,7 +1448,7 @@ WsfbRestore(ScrnInfoPtr pScrn)
 	}
 
 	/* Clear the screen. */
-	memset(fPtr->fbmem, 0, fPtr->fbmem_len);
+	memset(fPtr->fbstart, 0, fPtr->fbmem_len);
 
 	/* Restore the text mode. */
 	mode = WSDISPLAYIO_MODE_EMUL;
