@@ -31,6 +31,7 @@
 #include "gcstruct.h"
 #include "xf86sbusBus.h"
 #include "exa.h"
+#include <sparc/sxreg.h>
 
 /* Various offsets in virtual (ie. mmap()) spaces Linux and Solaris support. */
 #define CG14_REGS_VOFF		0x00000000	/* registers */
@@ -100,7 +101,8 @@ typedef struct {
 	uint32_t	fillcolour;
 	int		op;
 	Bool		source_is_solid, no_source_pixmap;
-	int		xdir, ydir;	
+	int		xdir, ydir;
+	int		queuecount;
 	ExaDriverPtr 	pExa;
 } Cg14Rec, *Cg14Ptr;
 
@@ -123,7 +125,14 @@ read_sx_reg(Cg14Ptr p, int reg)
 static inline void
 write_sx_io(Cg14Ptr p, int reg, uint32_t val)
 {
+	if (p->queuecount > 6) {
+		/* let the queue drain to avoid stalling the CPU */
+		do { } while 
+		    ((read_sx_reg(p, SX_CONTROL_STATUS) & SX_MT) == 0);
+		p->queuecount = 0;
+	}
 	*(volatile uint32_t *)(p->sxio + (reg & ~7)) = val;
+	p->queuecount++;
 }
 
 Bool CG14SetupCursor(ScreenPtr);

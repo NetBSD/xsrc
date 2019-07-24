@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_accel.c,v 1.14 2019/03/01 02:22:27 macallan Exp $ */
+/* $NetBSD: cg14_accel.c,v 1.15 2019/07/24 16:07:59 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -41,7 +41,6 @@
 #include "compiler.h"
 
 #include "cg14.h"
-#include <sparc/sxreg.h>
 
 /*#define SX_DEBUG*/
 
@@ -1121,6 +1120,7 @@ CG14InitAccel(ScreenPtr pScreen)
 	pExa->UploadToScreen = CG14UploadToScreen;
 	pExa->DownloadFromScreen = CG14DownloadFromScreen;
 
+	p->queuecount = 0;
 	/* do some hardware init */
 	write_sx_reg(p, SX_PLANEMASK, 0xffffffff);
 	p->last_mask = 0xffffffff;

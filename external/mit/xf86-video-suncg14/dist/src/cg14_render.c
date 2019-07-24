@@ -1,4 +1,4 @@
-/* $NetBSD: cg14_render.c,v 1.12 2017/12/08 22:49:37 macallan Exp $ */
+/* $NetBSD: cg14_render.c,v 1.13 2019/07/24 16:07:59 macallan Exp $ */
 /*
  * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
@@ -41,7 +41,6 @@
 #include "compiler.h"
 
 #include "cg14.h"
-#include <sparc/sxreg.h>
 
 /*#define SX_SINGLE*/
 /*#define SX_RENDER_DEBUG*/
