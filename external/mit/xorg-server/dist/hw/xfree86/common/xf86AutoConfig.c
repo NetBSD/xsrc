@@ -346,7 +346,9 @@ listPossibleVideoDrivers(XF86MatchedDrivers *md)
     xf86AddMatchedDriver(md, "modesetting");
 #endif
 
-#if defined(__NetBSD__) && (defined(__aarch64__) || defined(__arm__))
+#if defined(__NetBSD__) && \
+    (defined(__aarch64__) || defined(__arm__) || \
+     defined(__i386__) || defined(__amd64__))
     xf86AddMatchedDriver(md, "modesetting");
 #endif
 
