@@ -346,25 +346,24 @@ listPossibleVideoDrivers(XF86MatchedDrivers *md)
     xf86AddMatchedDriver(md, "modesetting");
 #endif
 
-#if defined(__NetBSD__) && (defined(__aarch64__) || defined(__arm__))
+#if defined(__NetBSD__) && \
+    (defined(__aarch64__) || defined(__arm__) || \
+     defined(__i386__) || defined(__amd64__))
     xf86AddMatchedDriver(md, "modesetting");
 #endif
 
-#if !defined(__sun)
-    /* Fallback to platform default frame buffer driver */
-#if !defined(__linux__) && defined(__sparc__)
-    xf86AddMatchedDriver(md, "wsfb");
-#else
+#if defined(__linux__)
     xf86AddMatchedDriver(md, "fbdev");
 #endif
-#endif                          /* !__sun */
 
     /* Fallback to platform default hardware */
 #if defined(__i386__) || defined(__amd64__) || defined(__hurd__)
     xf86AddMatchedDriver(md, "vesa");
 #elif defined(__sparc__) && !defined(__sun)
     xf86AddMatchedDriver(md, "sunffb");
-#elif defined(__NetBSD__)
+#endif
+    
+#if defined(__NetBSD__)
     xf86AddMatchedDriver(md, "wsfb");
 #endif
 }
