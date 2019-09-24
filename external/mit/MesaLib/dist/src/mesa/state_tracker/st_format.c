@@ -169,6 +169,8 @@ st_mesa_format_to_pipe_format(const struct st_context *st,
       return PIPE_FORMAT_AL88_SRGB;
    case MESA_FORMAT_L_SRGB8:
       return PIPE_FORMAT_L8_SRGB;
+   case MESA_FORMAT_R_SRGB8:
+      return PIPE_FORMAT_R8_SRGB;
    case MESA_FORMAT_BGR_SRGB8:
       return PIPE_FORMAT_R8G8B8_SRGB;
    case MESA_FORMAT_A8B8G8R8_SRGB:
@@ -600,6 +602,13 @@ st_mesa_format_to_pipe_format(const struct st_context *st,
          return PIPE_FORMAT_R8G8B8A8_SRGB;
       return PIPE_FORMAT_ASTC_12x12_SRGB;
 
+   case MESA_FORMAT_ATC_RGB:
+      return PIPE_FORMAT_ATC_RGB;
+   case MESA_FORMAT_ATC_RGBA_EXPLICIT:
+      return PIPE_FORMAT_ATC_RGBA_EXPLICIT;
+   case MESA_FORMAT_ATC_RGBA_INTERPOLATED:
+      return PIPE_FORMAT_ATC_RGBA_INTERPOLATED;
+
    default:
       return PIPE_FORMAT_NONE;
    }
@@ -719,6 +728,8 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
       return MESA_FORMAT_A8L8_SRGB;
    case PIPE_FORMAT_L8_SRGB:
       return MESA_FORMAT_L_SRGB8;
+   case PIPE_FORMAT_R8_SRGB:
+      return MESA_FORMAT_R_SRGB8;
    case PIPE_FORMAT_R8G8B8_SRGB:
       return MESA_FORMAT_BGR_SRGB8;
    case PIPE_FORMAT_ABGR8888_SRGB:
@@ -1084,6 +1095,13 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
    case PIPE_FORMAT_ASTC_12x12_SRGB:
       return MESA_FORMAT_SRGB8_ALPHA8_ASTC_12x12;
 
+   case PIPE_FORMAT_ATC_RGB:
+      return MESA_FORMAT_ATC_RGB;
+   case PIPE_FORMAT_ATC_RGBA_EXPLICIT:
+      return MESA_FORMAT_ATC_RGBA_EXPLICIT;
+   case PIPE_FORMAT_ATC_RGBA_INTERPOLATED:
+      return MESA_FORMAT_ATC_RGBA_INTERPOLATED;
+
    default:
       return MESA_FORMAT_NONE;
    }
@@ -1422,6 +1440,10 @@ static const struct format_mapping format_map[] = {
       { GL_SLUMINANCE_EXT, GL_SLUMINANCE8_EXT, GL_COMPRESSED_SLUMINANCE_EXT,
         0 },
       { PIPE_FORMAT_L8_SRGB, DEFAULT_SRGBA_FORMATS }
+   },
+   {
+      { GL_SR8_EXT, 0 },
+      { PIPE_FORMAT_R8_SRGB, 0 }
    },
 
    /* 16-bit float formats */
@@ -2348,6 +2370,8 @@ st_ChooseTextureFormat(struct gl_context *ctx, GLenum target,
       bindings |= PIPE_BIND_DEPTH_STENCIL;
    else if (is_renderbuffer || internalFormat == 3 || internalFormat == 4 ||
             internalFormat == GL_RGB || internalFormat == GL_RGBA ||
+            internalFormat == GL_RGBA2 ||
+            internalFormat == GL_RGB4 || internalFormat == GL_RGBA4 ||
             internalFormat == GL_RGB8 || internalFormat == GL_RGBA8 ||
             internalFormat == GL_BGRA ||
             internalFormat == GL_RGB16F ||
@@ -2449,7 +2473,7 @@ st_QuerySamplesForFormat(struct gl_context *ctx, GLenum target,
    /* If an sRGB framebuffer is unsupported, sRGB formats behave like linear
     * formats.
     */
-   if (!ctx->Extensions.EXT_framebuffer_sRGB) {
+   if (!ctx->Extensions.EXT_sRGB) {
       internalFormat = _mesa_get_linear_internalformat(internalFormat);
    }
 

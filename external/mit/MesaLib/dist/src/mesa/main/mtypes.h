@@ -457,6 +457,21 @@ struct gl_colorbuffer_attrib
 
 
 /**
+ * Vertex format to describe a vertex element.
+ */
+struct gl_vertex_format
+{
+   GLenum16 Type;        /**< datatype: GL_FLOAT, GL_INT, etc */
+   GLenum16 Format;      /**< default: GL_RGBA, but may be GL_BGRA */
+   GLubyte Size:5;       /**< components per element (1,2,3,4) */
+   GLubyte Normalized:1; /**< GL_ARB_vertex_program */
+   GLubyte Integer:1;    /**< Integer-valued? */
+   GLubyte Doubles:1;    /**< double values are not converted to floats */
+   GLubyte _ElementSize; /**< Size of each element in bytes */
+};
+
+
+/**
  * Current attribute group (GL_CURRENT_BIT).
  */
 struct gl_current_attrib
@@ -588,6 +603,7 @@ struct gl_hint_attrib
    GLenum16 TextureCompression;   /**< GL_ARB_texture_compression */
    GLenum16 GenerateMipmap;       /**< GL_SGIS_generate_mipmap */
    GLenum16 FragmentShaderDerivative; /**< GL_ARB_fragment_shader */
+   GLuint MaxShaderCompilerThreads; /**< GL_ARB_parallel_shader_compile */
 };
 
 
@@ -1324,7 +1340,9 @@ typedef enum
    USAGE_SHADER_STORAGE_BUFFER = 0x8,
    USAGE_TRANSFORM_FEEDBACK_BUFFER = 0x10,
    USAGE_PIXEL_PACK_BUFFER = 0x20,
-   USAGE_DISABLE_MINMAX_CACHE = 0x40,
+   USAGE_ARRAY_BUFFER = 0x40,
+   USAGE_ELEMENT_ARRAY_BUFFER = 0x80,
+   USAGE_DISABLE_MINMAX_CACHE = 0x100,
 } gl_buffer_usage;
 
 
@@ -1419,17 +1437,12 @@ struct gl_array_attributes
    const GLubyte *Ptr;
    /** Offset of the first element relative to the binding offset */
    GLuint RelativeOffset;
-   GLshort Stride;          /**< Stride as specified with gl*Pointer() */
-   GLenum16 Type;           /**< Datatype: GL_FLOAT, GL_INT, etc */
-   GLenum16 Format;         /**< Default: GL_RGBA, but may be GL_BGRA */
-   GLboolean Enabled;       /**< Whether the array is enabled */
-   GLubyte Size;            /**< Components per element (1,2,3,4) */
-   unsigned Normalized:1;   /**< Fixed-point values are normalized when converted to floats */
-   unsigned Integer:1;      /**< Fixed-point values are not converted to floats */
-   unsigned Doubles:1;      /**< double precision values are not converted to floats */
-   unsigned _ElementSize:8; /**< Size of each element in bytes */
+   /** Vertex format */
+   struct gl_vertex_format Format;
+   /** Stride as specified with gl*Pointer() */
+   GLshort Stride;
    /** Index into gl_vertex_array_object::BufferBinding[] array */
-   unsigned BufferBindingIndex:6;
+   GLubyte BufferBindingIndex;
 
    /**
     * Derived effective buffer binding index
@@ -1444,7 +1457,7 @@ struct gl_array_attributes
     * Note that _mesa_update_vao_derived_arrays is called when binding
     * the VAO to Array._DrawVAO.
     */
-   unsigned _EffBufferBindingIndex:6;
+   GLubyte _EffBufferBindingIndex;
    /**
     * Derived effective relative offset.
     *
@@ -1538,7 +1551,7 @@ struct gl_vertex_array_object
    GLbitfield VertexAttribBufferMask;
 
    /** Mask of VERT_BIT_* values indicating which arrays are enabled */
-   GLbitfield _Enabled;
+   GLbitfield Enabled;
 
    /**
     * Mask of VERT_BIT_* enabled arrays past position/generic0 mapping
@@ -2092,10 +2105,6 @@ struct gl_program
    /** Texture units used for samplerExternalOES */
    GLbitfield ExternalSamplersUsed;
 
-   /* Fragement shader only fields */
-   GLboolean OriginUpperLeft;
-   GLboolean PixelCenterInteger;
-
    /** Named parameters, constants, etc. from program text */
    struct gl_program_parameter_list *Parameters;
 
@@ -2159,6 +2168,11 @@ struct gl_program
 
          struct gl_uniform_block **UniformBlocks;
          struct gl_uniform_block **ShaderStorageBlocks;
+
+         /**
+          * Bitmask of shader storage blocks not declared as read-only.
+          */
+         unsigned ShaderStorageBlocksWriteAccess;
 
          /** Which texture target is being sampled
           * (TEXTURE_1D/2D/3D/etc_INDEX)
@@ -2502,6 +2516,12 @@ struct gl_shader_info
        * ARB_compute_variable_group_size.
        */
       bool LocalSizeVariable;
+
+      /*
+       * Arrangement of invocations used to calculate derivatives in a compute
+       * shader.  From NV_compute_shader_derivatives.
+       */
+      enum gl_derivative_group DerivativeGroup;
    } Comp;
 };
 
@@ -2566,8 +2586,7 @@ enum gl_compile_status
 {
    COMPILE_FAILURE = 0,
    COMPILE_SUCCESS,
-   COMPILE_SKIPPED,
-   COMPILED_NO_OPTS
+   COMPILE_SKIPPED
 };
 
 /**
@@ -3404,6 +3423,7 @@ struct gl_renderbuffer_attachment
     */
    struct gl_texture_object *Texture;
    GLuint TextureLevel; /**< Attached mipmap level. */
+   GLsizei NumSamples;  /**< from FramebufferTexture2DMultisampleEXT */
    GLuint CubeMapFace;  /**< 0 .. 5, for cube map textures. */
    GLuint Zoffset;      /**< Slice for 3D textures,  or layer for both 1D
                          * and 2D array textures */
@@ -3495,6 +3515,8 @@ struct gl_framebuffer
    bool _HasAttachments;
 
    GLbitfield _IntegerBuffers;  /**< Which color buffers are integer valued */
+   GLbitfield _RGBBuffers;  /**< Which color buffers have baseformat == RGB */
+   GLbitfield _FP32Buffers; /**< Which color buffers are FP32 */
 
    /* ARB_color_buffer_float */
    GLboolean _AllColorBuffersFixedPoint; /* no integer, no float */
@@ -4237,6 +4259,7 @@ struct gl_extensions
    GLboolean EXT_depth_bounds_test;
    GLboolean EXT_disjoint_timer_query;
    GLboolean EXT_draw_buffers2;
+   GLboolean EXT_float_blend;
    GLboolean EXT_framebuffer_multisample;
    GLboolean EXT_framebuffer_multisample_blit_scaled;
    GLboolean EXT_framebuffer_sRGB;
@@ -4244,6 +4267,7 @@ struct gl_extensions
    GLboolean EXT_gpu_shader4;
    GLboolean EXT_memory_object;
    GLboolean EXT_memory_object_fd;
+   GLboolean EXT_multisampled_render_to_texture;
    GLboolean EXT_packed_float;
    GLboolean EXT_pixel_buffer_object;
    GLboolean EXT_point_parameters;
@@ -4251,12 +4275,16 @@ struct gl_extensions
    GLboolean EXT_render_snorm;
    GLboolean EXT_semaphore;
    GLboolean EXT_semaphore_fd;
+   GLboolean EXT_shader_image_load_formatted;
    GLboolean EXT_shader_integer_mix;
    GLboolean EXT_shader_samples_identical;
+   GLboolean EXT_sRGB;
    GLboolean EXT_stencil_two_side;
    GLboolean EXT_texture_array;
+   GLboolean EXT_texture_buffer_object;
    GLboolean EXT_texture_compression_latc;
    GLboolean EXT_texture_compression_s3tc;
+   GLboolean EXT_texture_compression_s3tc_srgb;
    GLboolean EXT_texture_env_dot3;
    GLboolean EXT_texture_filter_anisotropic;
    GLboolean EXT_texture_integer;
@@ -4264,6 +4292,7 @@ struct gl_extensions
    GLboolean EXT_texture_shared_exponent;
    GLboolean EXT_texture_snorm;
    GLboolean EXT_texture_sRGB;
+   GLboolean EXT_texture_sRGB_R8;
    GLboolean EXT_texture_sRGB_decode;
    GLboolean EXT_texture_swizzle;
    GLboolean EXT_texture_type_2_10_10_10_REV;
@@ -4280,6 +4309,7 @@ struct gl_extensions
    GLboolean OES_texture_view;
    GLboolean OES_viewport_array;
    /* vendor extensions */
+   GLboolean AMD_compressed_ATC_texture;
    GLboolean AMD_framebuffer_multisample_advanced;
    GLboolean AMD_depth_clamp_separate;
    GLboolean AMD_performance_monitor;
@@ -4311,6 +4341,7 @@ struct gl_extensions
    GLboolean EXT_shader_framebuffer_fetch_non_coherent;
    GLboolean MESA_shader_integer_functions;
    GLboolean MESA_ycbcr_texture;
+   GLboolean NV_compute_shader_derivatives;
    GLboolean NV_conditional_render;
    GLboolean NV_fill_rectangle;
    GLboolean NV_fog_distance;
@@ -4413,7 +4444,7 @@ struct gl_matrix_stack
 #define _NEW_TRANSFORM         (1u << 17)  /**< gl_context::Transform */
 #define _NEW_VIEWPORT          (1u << 18)  /**< gl_context::Viewport */
 #define _NEW_TEXTURE_STATE     (1u << 19)  /**< gl_context::Texture (states only) */
-#define _NEW_ARRAY             (1u << 20)  /**< gl_context::Array */
+/* gap */
 #define _NEW_RENDERMODE        (1u << 21)  /**< gl_context::RenderMode, etc */
 #define _NEW_BUFFERS           (1u << 22)  /**< gl_context::Visual, DrawBuffer, */
 #define _NEW_CURRENT_ATTRIB    (1u << 23)  /**< gl_context::Current */
@@ -5087,7 +5118,6 @@ struct gl_context
    void *swtnl_context;
    struct vbo_context *vbo_context;
    struct st_context *st;
-   void *aelt_context;
    /*@}*/
 
    /**

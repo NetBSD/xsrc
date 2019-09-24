@@ -55,9 +55,11 @@
 #include "st_debug.h"
 #include "st_draw.h"
 #include "st_program.h"
+#include "st_util.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "util/u_cpu_detect.h"
 #include "util/u_inlines.h"
 #include "util/u_format.h"
 #include "util/u_prim.h"
@@ -66,6 +68,13 @@
 #include "draw/draw_context.h"
 #include "cso_cache/cso_context.h"
 
+#if defined(PIPE_OS_LINUX) && !defined(ANDROID)
+#include <sched.h>
+#define HAVE_SCHED_GETCPU 1
+#else
+#define sched_getcpu() 0
+#define HAVE_SCHED_GETCPU 0
+#endif
 
 /**
  * Set the restart index.
@@ -122,12 +131,38 @@ prepare_draw(struct st_context *st, struct gl_context *ctx)
        st->gfx_shaders_may_be_dirty) {
       st_validate_state(st, ST_PIPELINE_RENDER);
    }
+
+   struct pipe_context *pipe = st->pipe;
+
+   /* Pin threads regularly to the same Zen CCX that the main thread is
+    * running on. The main thread can move between CCXs.
+    */
+   if (unlikely(HAVE_SCHED_GETCPU && /* Linux */
+                /* AMD Zen */
+                util_cpu_caps.nr_cpus != util_cpu_caps.cores_per_L3 &&
+                /* no glthread */
+                ctx->CurrentClientDispatch != ctx->MarshalExec &&
+                /* driver support */
+                pipe->set_context_param &&
+                /* do it occasionally */
+                ++st->pin_thread_counter % 512 == 0)) {
+      int cpu = sched_getcpu();
+      if (cpu >= 0) {
+         unsigned L3_cache = cpu / util_cpu_caps.cores_per_L3;
+
+         pipe->set_context_param(pipe,
+                                 PIPE_CONTEXT_PARAM_PIN_THREADS_TO_L3_CACHE,
+                                 L3_cache);
+      }
+   }
 }
 
 /**
  * This function gets plugged into the VBO module and is called when
  * we have something to render.
  * Basically, translate the information into the format expected by gallium.
+ *
+ * Try to keep this logic in sync with st_feedback_draw_vbo.
  */
 static void
 st_draw_vbo(struct gl_context *ctx,
@@ -147,9 +182,6 @@ st_draw_vbo(struct gl_context *ctx,
    unsigned start = 0;
 
    prepare_draw(st, ctx);
-
-   if (st->vertex_array_out_of_memory)
-      return;
 
    /* Initialize pipe_draw_info. */
    info.primitive_restart = false;
@@ -254,9 +286,6 @@ st_indirect_draw_vbo(struct gl_context *ctx,
 
    assert(stride);
    prepare_draw(st, ctx);
-
-   if (st->vertex_array_out_of_memory)
-      return;
 
    memset(&indirect, 0, sizeof(indirect));
    util_draw_init_info(&info);

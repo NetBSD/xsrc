@@ -29,6 +29,12 @@
 
 #include "bufferobj.h"
 
+void
+_mesa_set_vertex_format(struct gl_vertex_format *vertex_format,
+                        GLubyte size, GLenum16 type, GLenum16 format,
+                        GLboolean normalized, GLboolean integer,
+                        GLboolean doubles);
+
 
 /**
  * Returns a pointer to the vertex attribute data in a client array,
@@ -62,15 +68,33 @@ _mesa_update_array_format(struct gl_context *ctx,
                           GLuint relativeOffset);
 
 extern void
+_mesa_enable_vertex_array_attribs(struct gl_context *ctx,
+                                 struct gl_vertex_array_object *vao,
+                                 GLbitfield attrib_bits);
+
+static inline void
 _mesa_enable_vertex_array_attrib(struct gl_context *ctx,
                                  struct gl_vertex_array_object *vao,
-                                 gl_vert_attrib attrib);
+                                 gl_vert_attrib attrib)
+{
+   assert(attrib < VERT_ATTRIB_MAX);
+   _mesa_enable_vertex_array_attribs(ctx, vao, VERT_BIT(attrib));
+}
 
 
 extern void
+_mesa_disable_vertex_array_attribs(struct gl_context *ctx,
+                                   struct gl_vertex_array_object *vao,
+                                   GLbitfield attrib_bits);
+
+static inline void
 _mesa_disable_vertex_array_attrib(struct gl_context *ctx,
                                   struct gl_vertex_array_object *vao,
-                                  gl_vert_attrib attrib);
+                                  gl_vert_attrib attrib)
+{
+   assert(attrib < VERT_ATTRIB_MAX);
+   _mesa_disable_vertex_array_attribs(ctx, vao, VERT_BIT(attrib));
+}
 
 
 extern void
@@ -292,6 +316,9 @@ static inline unsigned
 _mesa_primitive_restart_index(const struct gl_context *ctx,
                               unsigned index_size)
 {
+   /* The index_size parameter is menat to be in bytes. */
+   assert(index_size == 1 || index_size == 2 || index_size == 4);
+
    /* From the OpenGL 4.3 core specification, page 302:
     * "If both PRIMITIVE_RESTART and PRIMITIVE_RESTART_FIXED_INDEX are
     *  enabled, the index value determined by PRIMITIVE_RESTART_FIXED_INDEX

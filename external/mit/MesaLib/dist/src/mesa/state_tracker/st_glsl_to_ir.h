@@ -1,6 +1,4 @@
 /*
- * Copyright (C) 2005-2007  Brian Paul   All Rights Reserved.
- * Copyright (C) 2008  VMware, Inc.   All Rights Reserved.
  * Copyright © 2010 Intel Corporation
  * Copyright © 2011 Bryan Cain
  *
@@ -24,24 +22,15 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __ST_GLSL_TYPES_H__
-#define __ST_GLSL_TYPES_H__
-
-#include "compiler/glsl_types.h"
+#include "main/mtypes.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int st_glsl_storage_type_size(const struct glsl_type *type,
-                              bool is_bindless);
-
-int st_glsl_uniforms_type_size(const struct glsl_type *type, bool bindless);
-
-int st_glsl_type_dword_size(const struct glsl_type *type, bool bindless);
+GLboolean
+st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog);
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __ST_GLSL_TYPES_H__ */
