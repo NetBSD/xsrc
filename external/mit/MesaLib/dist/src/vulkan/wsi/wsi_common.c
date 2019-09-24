@@ -22,20 +22,26 @@
  */
 
 #include "wsi_common_private.h"
-#include "drm_fourcc.h"
+#include "drm-uapi/drm_fourcc.h"
 #include "util/macros.h"
+#include "util/xmlconfig.h"
 #include "vk_util.h"
 
+#include <time.h>
 #include <unistd.h>
 #include <xf86drm.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 VkResult
 wsi_device_init(struct wsi_device *wsi,
                 VkPhysicalDevice pdevice,
                 WSI_FN_GetPhysicalDeviceProcAddr proc_addr,
                 const VkAllocationCallbacks *alloc,
-                int display_fd)
+                int display_fd,
+                const struct driOptionCache *dri_options)
 {
+   const char *present_mode;
    VkResult result;
 
    memset(wsi, 0, sizeof(*wsi));
@@ -57,6 +63,9 @@ wsi_device_init(struct wsi_device *wsi,
       .pNext = &wsi->pci_bus_info,
    };
    GetPhysicalDeviceProperties2(pdevice, &pdp2);
+
+   wsi->maxImageDimension2D = pdp2.properties.limits.maxImageDimension2D;
+   wsi->override_present_mode = VK_PRESENT_MODE_MAX_ENUM_KHR;
 
    GetPhysicalDeviceMemoryProperties(pdevice, &wsi->memory_props);
    GetPhysicalDeviceQueueFamilyProperties(pdevice, &wsi->queue_family_count, NULL);
@@ -92,7 +101,7 @@ wsi_device_init(struct wsi_device *wsi,
 #undef WSI_GET_CB
 
 #ifdef VK_USE_PLATFORM_XCB_KHR
-   result = wsi_x11_init_wsi(wsi, alloc);
+   result = wsi_x11_init_wsi(wsi, alloc, dri_options);
    if (result != VK_SUCCESS)
       goto fail;
 #endif
@@ -108,6 +117,25 @@ wsi_device_init(struct wsi_device *wsi,
    if (result != VK_SUCCESS)
       goto fail;
 #endif
+
+   present_mode = getenv("MESA_VK_WSI_PRESENT_MODE");
+   if (present_mode) {
+      if (!strcmp(present_mode, "fifo")) {
+         wsi->override_present_mode = VK_PRESENT_MODE_FIFO_KHR;
+      } else if (!strcmp(present_mode, "mailbox")) {
+         wsi->override_present_mode = VK_PRESENT_MODE_MAILBOX_KHR;
+      } else if (!strcmp(present_mode, "immediate")) {
+         wsi->override_present_mode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+      } else {
+         fprintf(stderr, "Invalid MESA_VK_WSI_PRESENT_MODE value!\n");
+      }
+   }
+
+   if (dri_options) {
+      if (driCheckOption(dri_options, "adaptive_sync", DRI_BOOL))
+         wsi->enable_adaptive_sync = driQueryOptionb(dri_options,
+                                                     "adaptive_sync");
+   }
 
    return VK_SUCCESS;
 
@@ -199,6 +227,59 @@ fail:
    return result;
 }
 
+static bool
+wsi_swapchain_is_present_mode_supported(struct wsi_device *wsi,
+                                        const VkSwapchainCreateInfoKHR *pCreateInfo,
+                                        VkPresentModeKHR mode)
+{
+      ICD_FROM_HANDLE(VkIcdSurfaceBase, surface, pCreateInfo->surface);
+      struct wsi_interface *iface = wsi->wsi[surface->platform];
+      VkPresentModeKHR *present_modes;
+      uint32_t present_mode_count;
+      bool supported = false;
+      VkResult result;
+
+      result = iface->get_present_modes(surface, &present_mode_count, NULL);
+      if (result != VK_SUCCESS)
+         return supported;
+
+      present_modes = malloc(present_mode_count * sizeof(*present_modes));
+      if (!present_modes)
+         return supported;
+
+      result = iface->get_present_modes(surface, &present_mode_count,
+                                        present_modes);
+      if (result != VK_SUCCESS)
+         goto fail;
+
+      for (uint32_t i = 0; i < present_mode_count; i++) {
+         if (present_modes[i] == mode) {
+            supported = true;
+            break;
+         }
+      }
+
+fail:
+      free(present_modes);
+      return supported;
+}
+
+enum VkPresentModeKHR
+wsi_swapchain_get_present_mode(struct wsi_device *wsi,
+                               const VkSwapchainCreateInfoKHR *pCreateInfo)
+{
+   if (wsi->override_present_mode == VK_PRESENT_MODE_MAX_ENUM_KHR)
+      return pCreateInfo->presentMode;
+
+   if (!wsi_swapchain_is_present_mode_supported(wsi, pCreateInfo,
+                                                wsi->override_present_mode)) {
+      fprintf(stderr, "Unsupported MESA_VK_WSI_PRESENT_MODE value!\n");
+      return pCreateInfo->presentMode;
+   }
+
+   return wsi->override_present_mode;
+}
+
 void
 wsi_swapchain_finish(struct wsi_swapchain *chain)
 {
@@ -278,8 +359,8 @@ wsi_create_native_image(const struct wsi_swapchain *chain,
          .sType = VK_STRUCTURE_TYPE_WSI_FORMAT_MODIFIER_PROPERTIES_LIST_MESA,
          .pNext = NULL,
       };
-      VkFormatProperties2KHR format_props = {
-         .sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2_KHR,
+      VkFormatProperties2 format_props = {
+         .sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2,
          .pNext = &modifier_props_list,
       };
       wsi->GetPhysicalDeviceFormatProperties2KHR(wsi->pdevice,
@@ -379,13 +460,13 @@ wsi_create_native_image(const struct wsi_swapchain *chain,
       .pNext = NULL,
       .implicit_sync = true,
    };
-   const VkExportMemoryAllocateInfoKHR memory_export_info = {
-      .sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO_KHR,
+   const VkExportMemoryAllocateInfo memory_export_info = {
+      .sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO,
       .pNext = &memory_wsi_info,
       .handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
    };
-   const VkMemoryDedicatedAllocateInfoKHR memory_dedicated_info = {
-      .sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO_KHR,
+   const VkMemoryDedicatedAllocateInfo memory_dedicated_info = {
+      .sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO,
       .pNext = &memory_export_info,
       .image = image->image,
       .buffer = VK_NULL_HANDLE,
@@ -431,7 +512,7 @@ wsi_create_native_image(const struct wsi_swapchain *chain,
 
       for (uint32_t p = 0; p < image->num_planes; p++) {
          const VkImageSubresource image_subresource = {
-            .aspectMask = VK_IMAGE_ASPECT_PLANE_0_BIT_KHR << p,
+            .aspectMask = VK_IMAGE_ASPECT_PLANE_0_BIT << p,
             .mipLevel = 0,
             .arrayLayer = 0,
          };
@@ -504,8 +585,8 @@ wsi_create_prime_image(const struct wsi_swapchain *chain,
    uint32_t linear_size = linear_stride * pCreateInfo->imageExtent.height;
    linear_size = align_u32(linear_size, 4096);
 
-   const VkExternalMemoryBufferCreateInfoKHR prime_buffer_external_info = {
-      .sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO_KHR,
+   const VkExternalMemoryBufferCreateInfo prime_buffer_external_info = {
+      .sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO,
       .pNext = NULL,
       .handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
    };
@@ -530,13 +611,13 @@ wsi_create_prime_image(const struct wsi_swapchain *chain,
       .pNext = NULL,
       .implicit_sync = true,
    };
-   const VkExportMemoryAllocateInfoKHR prime_memory_export_info = {
-      .sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO_KHR,
+   const VkExportMemoryAllocateInfo prime_memory_export_info = {
+      .sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO,
       .pNext = &memory_wsi_info,
       .handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
    };
-   const VkMemoryDedicatedAllocateInfoKHR prime_memory_dedicated_info = {
-      .sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO_KHR,
+   const VkMemoryDedicatedAllocateInfo prime_memory_dedicated_info = {
+      .sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO,
       .pNext = &prime_memory_export_info,
       .image = VK_NULL_HANDLE,
       .buffer = image->prime.buffer,
@@ -585,8 +666,8 @@ wsi_create_prime_image(const struct wsi_swapchain *chain,
 
    wsi->GetImageMemoryRequirements(chain->device, image->image, &reqs);
 
-   const VkMemoryDedicatedAllocateInfoKHR memory_dedicated_info = {
-      .sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO_KHR,
+   const VkMemoryDedicatedAllocateInfo memory_dedicated_info = {
+      .sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO,
       .pNext = NULL,
       .image = image->image,
       .buffer = VK_NULL_HANDLE,
@@ -734,7 +815,7 @@ wsi_common_get_surface_capabilities(struct wsi_device *wsi_device,
       .sType = VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_2_KHR,
    };
 
-   VkResult result = iface->get_capabilities2(surface, NULL, &caps2);
+   VkResult result = iface->get_capabilities2(surface, wsi_device, NULL, &caps2);
 
    if (result == VK_SUCCESS)
       *pSurfaceCapabilities = caps2.surfaceCapabilities;
@@ -750,7 +831,7 @@ wsi_common_get_surface_capabilities2(struct wsi_device *wsi_device,
    ICD_FROM_HANDLE(VkIcdSurfaceBase, surface, pSurfaceInfo->surface);
    struct wsi_interface *iface = wsi_device->wsi[surface->platform];
 
-   return iface->get_capabilities2(surface, pSurfaceInfo->pNext,
+   return iface->get_capabilities2(surface, wsi_device, pSurfaceInfo->pNext,
                                    pSurfaceCapabilities);
 }
 
@@ -777,7 +858,7 @@ wsi_common_get_surface_capabilities2ext(
       .pNext = &counters,
    };
 
-   VkResult result = iface->get_capabilities2(surface, NULL, &caps2);
+   VkResult result = iface->get_capabilities2(surface, wsi_device, NULL, &caps2);
 
    if (result == VK_SUCCESS) {
       VkSurfaceCapabilities2EXT *ext_caps = pSurfaceCapabilities;
@@ -1018,4 +1099,12 @@ wsi_common_queue_present(const struct wsi_device *wsi,
    }
 
    return final_result;
+}
+
+uint64_t
+wsi_common_get_current_time(void)
+{
+   struct timespec current;
+   clock_gettime(CLOCK_MONOTONIC, &current);
+   return current.tv_nsec + current.tv_sec * 1000000000ull;
 }

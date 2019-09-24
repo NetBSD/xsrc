@@ -7,6 +7,8 @@ MESA_UTIL_FILES := \
 	build_id.h \
 	crc32.c \
 	crc32.h \
+	dag.c \
+	dag.h \
 	debug.c \
 	debug.h \
 	disk_cache.c \
@@ -27,6 +29,8 @@ MESA_UTIL_FILES := \
 	mesa-sha1.h \
 	os_time.c \
 	os_time.h \
+	os_file.c \
+	os_file.h \
 	os_misc.c \
 	os_misc.h \
 	u_process.c \
@@ -72,6 +76,11 @@ MESA_UTIL_FILES := \
 	u_debug.h \
 	u_cpu_detect.c \
 	u_cpu_detect.h \
+	os_memory_aligned.h \
+	os_memory_debug.h \
+	os_memory_stdc.h \
+	os_memory.h \
+	u_memory.h \
 	vma.c \
 	vma.h
 
