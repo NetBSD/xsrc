@@ -1,0 +1,10 @@
+prefix=@prefix@
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: gbm
+Description: Mesa gbm library
+Version: @VERSION@
+Libs: -L${libdir} -lgbm
+Libs.private: -ldl
+Cflags: -I${includedir}
