@@ -63,7 +63,8 @@ radv_init_trace(struct radv_device *device)
 	device->trace_bo = ws->buffer_create(ws, TRACE_BO_SIZE, 8,
 					     RADEON_DOMAIN_VRAM,
 					     RADEON_FLAG_CPU_ACCESS|
-					     RADEON_FLAG_NO_INTERPROCESS_SHARING);
+					     RADEON_FLAG_NO_INTERPROCESS_SHARING,
+					     RADV_BO_PRIORITY_UPLOAD_BUFFER);
 	if (!device->trace_bo)
 		return false;
 
@@ -628,7 +629,7 @@ static void
 radv_dump_device_name(struct radv_device *device, FILE *f)
 {
 	struct radeon_info *info = &device->physical_device->rad_info;
-	char llvm_string[32] = {}, kernel_version[128] = {};
+	char kernel_version[128] = {};
 	struct utsname uname_data;
 	const char *chip_name;
 
@@ -638,14 +639,11 @@ radv_dump_device_name(struct radv_device *device, FILE *f)
 		snprintf(kernel_version, sizeof(kernel_version),
 			 " / %s", uname_data.release);
 
-	snprintf(llvm_string, sizeof(llvm_string),
-		 ", LLVM %i.%i.%i", (HAVE_LLVM >> 8) & 0xff,
-		 HAVE_LLVM & 0xff, MESA_LLVM_VERSION_PATCH);
-
-	fprintf(f, "Device name: %s (%s DRM %i.%i.%i%s%s)\n\n",
+	fprintf(f, "Device name: %s (%s DRM %i.%i.%i%s, LLVM "
+		MESA_LLVM_VERSION_STRING ")\n\n",
 		chip_name, device->physical_device->name,
 		info->drm_major, info->drm_minor, info->drm_patchlevel,
-		kernel_version, llvm_string);
+		kernel_version);
 }
 
 static bool
