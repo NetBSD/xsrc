@@ -181,7 +181,8 @@ void si_test_dma_perf(struct si_screen *sscreen)
 							si_cp_dma_copy_buffer(sctx, dst, src, 0, 0, size, 0,
 									      SI_COHERENCY_NONE, cache_policy);
 						} else {
-							si_cp_dma_clear_buffer(sctx, dst, 0, size, clear_value,
+							si_cp_dma_clear_buffer(sctx, sctx->gfx_cs, dst, 0, size,
+									       clear_value, 0,
 									       SI_COHERENCY_NONE, cache_policy);
 						}
 					} else if (test_sdma) {
@@ -232,7 +233,8 @@ void si_test_dma_perf(struct si_screen *sscreen)
 						sctx->flags |= SI_CONTEXT_INV_VMEM_L1 |
 							       SI_CONTEXT_INV_SMEM_L1;
 
-						ctx->set_shader_buffers(ctx, PIPE_SHADER_COMPUTE, 0, is_copy ? 2 : 1, sb);
+						ctx->set_shader_buffers(ctx, PIPE_SHADER_COMPUTE, 0,
+									is_copy ? 2 : 1, sb, 0x1);
 						ctx->bind_compute_state(ctx, cs);
 						sctx->cs_max_waves_per_sh = cs_waves_per_sh;
 

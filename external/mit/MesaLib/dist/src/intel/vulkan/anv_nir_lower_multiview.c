@@ -125,7 +125,7 @@ build_view_index(struct lower_multiview_state *state)
          const struct glsl_type *type = glsl_int_type();
          if (b->shader->info.stage == MESA_SHADER_TESS_CTRL ||
              b->shader->info.stage == MESA_SHADER_GEOMETRY)
-            type = glsl_array_type(type, 1);
+            type = glsl_array_type(type, 1, 0);
 
          nir_variable *idx_var =
             nir_variable_create(b->shader, nir_var_shader_in,
@@ -136,7 +136,7 @@ build_view_index(struct lower_multiview_state *state)
 
          nir_deref_instr *deref = nir_build_deref_var(b, idx_var);
          if (glsl_type_is_array(type))
-            deref = nir_build_deref_array(b, deref, nir_imm_int(b, 0));
+            deref = nir_build_deref_array_imm(b, deref, 0);
 
          state->view_index = nir_load_deref(b, deref);
       }

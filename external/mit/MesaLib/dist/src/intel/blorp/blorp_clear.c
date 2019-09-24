@@ -43,26 +43,27 @@ struct brw_blorp_const_color_prog_key
 };
 
 static bool
-blorp_params_get_clear_kernel(struct blorp_context *blorp,
+blorp_params_get_clear_kernel(struct blorp_batch *batch,
                               struct blorp_params *params,
                               bool use_replicated_data,
                               bool clear_rgb_as_red)
 {
+   struct blorp_context *blorp = batch->blorp;
+
    const struct brw_blorp_const_color_prog_key blorp_key = {
       .shader_type = BLORP_SHADER_TYPE_CLEAR,
       .use_simd16_replicated_data = use_replicated_data,
       .clear_rgb_as_red = clear_rgb_as_red,
    };
 
-   if (blorp->lookup_shader(blorp, &blorp_key, sizeof(blorp_key),
+   if (blorp->lookup_shader(batch, &blorp_key, sizeof(blorp_key),
                             &params->wm_prog_kernel, &params->wm_prog_data))
       return true;
 
    void *mem_ctx = ralloc_context(NULL);
 
    nir_builder b;
-   nir_builder_init_simple_shader(&b, mem_ctx, MESA_SHADER_FRAGMENT, NULL);
-   b.shader->info.name = ralloc_strdup(b.shader, "BLORP-clear");
+   blorp_nir_init_shader(&b, mem_ctx, MESA_SHADER_FRAGMENT, "BLORP-clear");
 
    nir_variable *v_color =
       BLORP_CREATE_NIR_INPUT(b.shader, clear_color, glsl_vec4_type());
@@ -73,7 +74,6 @@ blorp_params_get_clear_kernel(struct blorp_context *blorp,
          nir_variable_create(b.shader, nir_var_shader_in,
                              glsl_vec4_type(), "gl_FragCoord");
       frag_coord->data.location = VARYING_SLOT_POS;
-      frag_coord->data.origin_upper_left = true;
 
       nir_ssa_def *pos = nir_f2i32(&b, nir_load_var(&b, frag_coord));
       nir_ssa_def *comp = nir_umod(&b, nir_channel(&b, pos, 0),
@@ -104,7 +104,7 @@ blorp_params_get_clear_kernel(struct blorp_context *blorp,
                        &prog_data);
 
    bool result =
-      blorp->upload_shader(blorp, &blorp_key, sizeof(blorp_key),
+      blorp->upload_shader(batch, &blorp_key, sizeof(blorp_key),
                            program, prog_data.base.program_size,
                            &prog_data.base, sizeof(prog_data),
                            &params->wm_prog_kernel, &params->wm_prog_data);
@@ -126,9 +126,10 @@ struct layer_offset_vs_key {
  * vertex shader.
  */
 static bool
-blorp_params_get_layer_offset_vs(struct blorp_context *blorp,
+blorp_params_get_layer_offset_vs(struct blorp_batch *batch,
                                  struct blorp_params *params)
 {
+   struct blorp_context *blorp = batch->blorp;
    struct layer_offset_vs_key blorp_key = {
       .shader_type = BLORP_SHADER_TYPE_LAYER_OFFSET_VS,
    };
@@ -136,15 +137,14 @@ blorp_params_get_layer_offset_vs(struct blorp_context *blorp,
    if (params->wm_prog_data)
       blorp_key.num_inputs = params->wm_prog_data->num_varying_inputs;
 
-   if (blorp->lookup_shader(blorp, &blorp_key, sizeof(blorp_key),
+   if (blorp->lookup_shader(batch, &blorp_key, sizeof(blorp_key),
                             &params->vs_prog_kernel, &params->vs_prog_data))
       return true;
 
    void *mem_ctx = ralloc_context(NULL);
 
    nir_builder b;
-   nir_builder_init_simple_shader(&b, mem_ctx, MESA_SHADER_VERTEX, NULL);
-   b.shader->info.name = ralloc_strdup(b.shader, "BLORP-layer-offset-vs");
+   blorp_nir_init_shader(&b, mem_ctx, MESA_SHADER_VERTEX, "BLORP-layer-offset-vs");
 
    const struct glsl_type *uvec4_type = glsl_vector_type(GLSL_TYPE_UINT, 4);
 
@@ -194,7 +194,7 @@ blorp_params_get_layer_offset_vs(struct blorp_context *blorp,
       blorp_compile_vs(blorp, mem_ctx, b.shader, &vs_prog_data);
 
    bool result =
-      blorp->upload_shader(blorp, &blorp_key, sizeof(blorp_key),
+      blorp->upload_shader(batch, &blorp_key, sizeof(blorp_key),
                            program, vs_prog_data.base.base.program_size,
                            &vs_prog_data.base.base, sizeof(vs_prog_data),
                            &params->vs_prog_kernel, &params->vs_prog_data);
@@ -351,7 +351,7 @@ blorp_fast_clear(struct blorp_batch *batch,
    get_fast_clear_rect(batch->blorp->isl_dev, surf->aux_surf,
                        &params.x0, &params.y0, &params.x1, &params.y1);
 
-   if (!blorp_params_get_clear_kernel(batch->blorp, &params, true, false))
+   if (!blorp_params_get_clear_kernel(batch, &params, true, false))
       return;
 
    brw_blorp_surface_info_init(batch->blorp, &params.dst, surf, level,
@@ -361,7 +361,7 @@ blorp_fast_clear(struct blorp_batch *batch,
    batch->blorp->exec(batch, &params);
 }
 
-static union isl_color_value
+union isl_color_value
 swizzle_color_value(union isl_color_value src, struct isl_swizzle swizzle)
 {
    union isl_color_value dst = { .u32 = { 0, } };
@@ -453,12 +453,12 @@ blorp_clear(struct blorp_batch *batch,
       }
    }
 
-   if (!blorp_params_get_clear_kernel(batch->blorp, &params,
+   if (!blorp_params_get_clear_kernel(batch, &params,
                                       use_simd16_replicated_data,
                                       clear_rgb_as_red))
       return;
 
-   if (!blorp_ensure_sf_program(batch->blorp, &params))
+   if (!blorp_ensure_sf_program(batch, &params))
       return;
 
    while (num_layers > 0) {
@@ -589,7 +589,7 @@ blorp_clear_depth_stencil(struct blorp_batch *batch,
        * we disable statistics in 3DSTATE_WM.  Give it the usual clear shader
        * to work around the issue.
        */
-      if (!blorp_params_get_clear_kernel(batch->blorp, &params, false, false))
+      if (!blorp_params_get_clear_kernel(batch, &params, false, false))
          return;
    }
 
@@ -829,7 +829,7 @@ blorp_clear_attachments(struct blorp_batch *batch,
        * is tiled or not, we have to assume it may be linear.  This means no
        * SIMD16_REPDATA for us. :-(
        */
-      if (!blorp_params_get_clear_kernel(batch->blorp, &params, false, false))
+      if (!blorp_params_get_clear_kernel(batch, &params, false, false))
          return;
    }
 
@@ -847,7 +847,7 @@ blorp_clear_attachments(struct blorp_batch *batch,
       params.stencil_ref = stencil_value;
    }
 
-   if (!blorp_params_get_layer_offset_vs(batch->blorp, &params))
+   if (!blorp_params_get_layer_offset_vs(batch, &params))
       return;
 
    params.vs_inputs.base_layer = start_layer;
@@ -914,7 +914,7 @@ blorp_ccs_resolve(struct blorp_batch *batch,
     * color" message.
     */
 
-   if (!blorp_params_get_clear_kernel(batch->blorp, &params, true, false))
+   if (!blorp_params_get_clear_kernel(batch, &params, true, false))
       return;
 
    batch->blorp->exec(batch, &params);
@@ -936,9 +936,10 @@ struct blorp_mcs_partial_resolve_key
 };
 
 static bool
-blorp_params_get_mcs_partial_resolve_kernel(struct blorp_context *blorp,
+blorp_params_get_mcs_partial_resolve_kernel(struct blorp_batch *batch,
                                             struct blorp_params *params)
 {
+   struct blorp_context *blorp = batch->blorp;
    const struct blorp_mcs_partial_resolve_key blorp_key = {
       .shader_type = BLORP_SHADER_TYPE_MCS_PARTIAL_RESOLVE,
       .indirect_clear_color = params->dst.clear_color_addr.buffer != NULL,
@@ -946,15 +947,15 @@ blorp_params_get_mcs_partial_resolve_kernel(struct blorp_context *blorp,
       .num_samples = params->num_samples,
    };
 
-   if (blorp->lookup_shader(blorp, &blorp_key, sizeof(blorp_key),
+   if (blorp->lookup_shader(batch, &blorp_key, sizeof(blorp_key),
                             &params->wm_prog_kernel, &params->wm_prog_data))
       return true;
 
    void *mem_ctx = ralloc_context(NULL);
 
    nir_builder b;
-   nir_builder_init_simple_shader(&b, mem_ctx, MESA_SHADER_FRAGMENT, NULL);
-   b.shader->info.name = ralloc_strdup(b.shader, "BLORP-mcs-partial-resolve");
+   blorp_nir_init_shader(&b, mem_ctx, MESA_SHADER_FRAGMENT,
+                         "BLORP-mcs-partial-resolve");
 
    nir_variable *v_color =
       BLORP_CREATE_NIR_INPUT(b.shader, clear_color, glsl_vec4_type());
@@ -1002,7 +1003,7 @@ blorp_params_get_mcs_partial_resolve_kernel(struct blorp_context *blorp,
                        &prog_data);
 
    bool result =
-      blorp->upload_shader(blorp, &blorp_key, sizeof(blorp_key),
+      blorp->upload_shader(batch, &blorp_key, sizeof(blorp_key),
                            program, prog_data.base.program_size,
                            &prog_data.base, sizeof(prog_data),
                            &params->wm_prog_kernel, &params->wm_prog_data);
@@ -1039,7 +1040,7 @@ blorp_mcs_partial_resolve(struct blorp_batch *batch,
    memcpy(&params.wm_inputs.clear_color,
           surf->clear_color.f32, sizeof(float) * 4);
 
-   if (!blorp_params_get_mcs_partial_resolve_kernel(batch->blorp, &params))
+   if (!blorp_params_get_mcs_partial_resolve_kernel(batch, &params))
       return;
 
    batch->blorp->exec(batch, &params);
@@ -1192,7 +1193,7 @@ blorp_ccs_ambiguate(struct blorp_batch *batch,
    memset(&params.wm_inputs.clear_color, 0,
           sizeof(params.wm_inputs.clear_color));
 
-   if (!blorp_params_get_clear_kernel(batch->blorp, &params, true, false))
+   if (!blorp_params_get_clear_kernel(batch, &params, true, false))
       return;
 
    batch->blorp->exec(batch, &params);

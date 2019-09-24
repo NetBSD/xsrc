@@ -74,7 +74,6 @@ is_expression(const fs_visitor *v, const fs_inst *const inst)
    case FS_OPCODE_FB_READ_LOGICAL:
    case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD:
    case FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_LOGICAL:
-   case FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7:
    case FS_OPCODE_LINTERP:
    case SHADER_OPCODE_FIND_LIVE_CHANNEL:
    case SHADER_OPCODE_BROADCAST:
@@ -184,8 +183,13 @@ instructions_match(fs_inst *a, fs_inst *b, bool *negate)
           a->dst.type == b->dst.type &&
           a->offset == b->offset &&
           a->mlen == b->mlen &&
+          a->ex_mlen == b->ex_mlen &&
+          a->sfid == b->sfid &&
+          a->desc == b->desc &&
           a->size_written == b->size_written &&
           a->base_mrf == b->base_mrf &&
+          a->check_tdr == b->check_tdr &&
+          a->send_has_side_effects == b->send_has_side_effects &&
           a->eot == b->eot &&
           a->header_size == b->header_size &&
           a->shadow_compare == b->shadow_compare &&
@@ -203,30 +207,31 @@ create_copy_instr(const fs_builder &bld, fs_inst *inst, fs_reg src, bool negate)
       DIV_ROUND_UP(inst->dst.component_size(inst->exec_size), REG_SIZE);
    fs_inst *copy;
 
-   if (inst->opcode == SHADER_OPCODE_LOAD_PAYLOAD ||
-       written != dst_width) {
-      fs_reg *payload;
-      int sources, header_size;
-      if (inst->opcode == SHADER_OPCODE_LOAD_PAYLOAD) {
-         sources = inst->sources;
-         header_size = inst->header_size;
-      } else {
-         assert(written % dst_width == 0);
-         sources = written / dst_width;
-         header_size = 0;
-      }
-
+   if (inst->opcode == SHADER_OPCODE_LOAD_PAYLOAD) {
       assert(src.file == VGRF);
-      payload = ralloc_array(bld.shader->mem_ctx, fs_reg, sources);
-      for (int i = 0; i < header_size; i++) {
+      fs_reg *payload = ralloc_array(bld.shader->mem_ctx, fs_reg,
+                                     inst->sources);
+      for (int i = 0; i < inst->header_size; i++) {
          payload[i] = src;
          src.offset += REG_SIZE;
       }
-      for (int i = header_size; i < sources; i++) {
+      for (int i = inst->header_size; i < inst->sources; i++) {
+         src.type = inst->src[i].type;
          payload[i] = src;
          src = offset(src, bld, 1);
       }
-      copy = bld.LOAD_PAYLOAD(inst->dst, payload, sources, header_size);
+      copy = bld.LOAD_PAYLOAD(inst->dst, payload, inst->sources,
+                              inst->header_size);
+   } else if (written != dst_width) {
+      assert(src.file == VGRF);
+      assert(written % dst_width == 0);
+      const int sources = written / dst_width;
+      fs_reg *payload = ralloc_array(bld.shader->mem_ctx, fs_reg, sources);
+      for (int i = 0; i < sources; i++) {
+         payload[i] = src;
+         src = offset(src, bld, 1);
+      }
+      copy = bld.LOAD_PAYLOAD(inst->dst, payload, sources, 0);
    } else {
       copy = bld.MOV(inst->dst, src);
       copy->group = inst->group;

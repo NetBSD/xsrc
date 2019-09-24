@@ -32,6 +32,8 @@ struct tgsi_token;
 
 struct virgl_context;
 struct virgl_resource;
+struct virgl_screen;
+struct virgl_transfer;
 struct virgl_sampler_view;
 
 struct virgl_surface {
@@ -276,4 +278,19 @@ int virgl_encode_launch_grid(struct virgl_context *ctx,
                              const struct pipe_grid_info *grid_info);
 int virgl_encode_texture_barrier(struct virgl_context *ctx,
                                  unsigned flags);
+
+int virgl_encode_host_debug_flagstring(struct virgl_context *ctx,
+                                  const char *envname);
+
+int virgl_encode_get_query_result_qbo(struct virgl_context *ctx,
+                                      uint32_t handle,
+                                      struct virgl_resource *res, boolean wait,
+                                      uint32_t result_type,
+                                      uint32_t offset,
+                                      uint32_t index);
+
+void virgl_encode_transfer(struct virgl_screen *vs, struct virgl_cmd_buf *buf,
+                           struct virgl_transfer *trans, uint32_t direction);
+
+void virgl_encode_end_transfers(struct virgl_cmd_buf *buf);
 #endif

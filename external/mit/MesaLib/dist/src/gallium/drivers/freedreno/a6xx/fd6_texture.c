@@ -213,12 +213,6 @@ fd6_sampler_states_bind(struct pipe_context *pctx,
 	}
 }
 
-static bool
-use_astc_srgb_workaround(struct pipe_context *pctx, enum pipe_format format)
-{
-	return false;  // TODO check if this is still needed on a5xx
-}
-
 static struct pipe_sampler_view *
 fd6_sampler_view_create(struct pipe_context *pctx, struct pipe_resource *prsc,
 		const struct pipe_sampler_view *cso)
@@ -243,40 +237,16 @@ fd6_sampler_view_create(struct pipe_context *pctx, struct pipe_resource *prsc,
 	so->base.context = pctx;
 	so->seqno = ++fd6_context(fd_context(pctx))->tex_seqno;
 
-	so->texconst0 =
-		A6XX_TEX_CONST_0_FMT(fd6_pipe2tex(format)) |
-		fd6_tex_swiz(format, cso->swizzle_r, cso->swizzle_g,
-				cso->swizzle_b, cso->swizzle_a);
-
-	/* NOTE: since we sample z24s8 using 8888_UINT format, the swizzle
-	 * we get isn't quite right.  Use SWAP(XYZW) as a cheap and cheerful
-	 * way to re-arrange things so stencil component is where the swiz
-	 * expects.
-	 *
-	 * Note that gallium expects stencil sampler to return (s,s,s,s)
-	 * which isn't quite true.  To make that happen we'd have to massage
-	 * the swizzle.  But in practice only the .x component is used.
-	 */
-	if (format == PIPE_FORMAT_X24S8_UINT) {
-		so->texconst0 |= A6XX_TEX_CONST_0_SWAP(XYZW);
-	}
-
-	if (util_format_is_srgb(format)) {
-		if (use_astc_srgb_workaround(pctx, format))
-			so->astc_srgb = true;
-		so->texconst0 |= A6XX_TEX_CONST_0_SRGB;
-	}
-
 	if (cso->target == PIPE_BUFFER) {
 		unsigned elements = cso->u.buf.size / util_format_get_blocksize(format);
 
 		lvl = 0;
 		so->texconst1 =
-			A6XX_TEX_CONST_1_WIDTH(elements) |
-			A6XX_TEX_CONST_1_HEIGHT(1);
+			A6XX_TEX_CONST_1_WIDTH(elements & MASK(15)) |
+			A6XX_TEX_CONST_1_HEIGHT(elements >> 15);
 		so->texconst2 =
-			A6XX_TEX_CONST_2_FETCHSIZE(fd6_pipe2fetchsize(format)) |
-			A6XX_TEX_CONST_2_PITCH(elements * rsc->cpp);
+			A6XX_TEX_CONST_2_UNK4 |
+			A6XX_TEX_CONST_2_UNK31;
 		so->offset = cso->u.buf.offset;
 	} else {
 		unsigned miplevels;
@@ -295,6 +265,17 @@ fd6_sampler_view_create(struct pipe_context *pctx, struct pipe_resource *prsc,
 					util_format_get_nblocksx(
 							format, rsc->slices[lvl].pitch) * rsc->cpp);
 		so->offset = fd_resource_offset(rsc, lvl, cso->u.tex.first_layer);
+		so->ubwc_offset = fd_resource_ubwc_offset(rsc, lvl, cso->u.tex.first_layer);
+		so->ubwc_enabled = fd_resource_ubwc_enabled(rsc, lvl);
+	}
+
+	so->texconst0 |= fd6_tex_const_0(prsc, lvl, cso->format,
+				cso->swizzle_r, cso->swizzle_g,
+				cso->swizzle_b, cso->swizzle_a);
+
+	if (so->ubwc_enabled) {
+		so->texconst9 |= A6XX_TEX_CONST_9_FLAG_BUFFER_ARRAY_PITCH(rsc->ubwc_size);
+		so->texconst10 |= A6XX_TEX_CONST_10_FLAG_BUFFER_PITCH(rsc->ubwc_pitch);
 	}
 
 	so->texconst2 |= A6XX_TEX_CONST_2_TYPE(fd6_tex_type(cso->target));
@@ -324,13 +305,17 @@ fd6_sampler_view_create(struct pipe_context *pctx, struct pipe_resource *prsc,
 		break;
 	case PIPE_TEXTURE_3D:
 		so->texconst3 =
+			A6XX_TEX_CONST_3_MIN_LAYERSZ(rsc->slices[prsc->last_level].size0) |
 			A6XX_TEX_CONST_3_ARRAY_PITCH(rsc->slices[lvl].size0);
 		so->texconst5 =
 			A6XX_TEX_CONST_5_DEPTH(u_minify(prsc->depth0, lvl));
 		break;
 	default:
-		so->texconst3 = 0x00000000;
 		break;
+	}
+
+	if (so->ubwc_enabled) {
+		so->texconst3 |= A6XX_TEX_CONST_3_FLAG | A6XX_TEX_CONST_3_UNK27;
 	}
 
 	return &so->base;
@@ -360,34 +345,6 @@ fd6_sampler_view_destroy(struct pipe_context *pctx,
 	free(view);
 }
 
-static void
-fd6_set_sampler_views(struct pipe_context *pctx, enum pipe_shader_type shader,
-		unsigned start, unsigned nr,
-		struct pipe_sampler_view **views)
-{
-	struct fd_context *ctx = fd_context(pctx);
-	struct fd6_context *fd6_ctx = fd6_context(ctx);
-	uint16_t astc_srgb = 0;
-	unsigned i;
-
-	for (i = 0; i < nr; i++) {
-		if (views[i]) {
-			struct fd6_pipe_sampler_view *view =
-					fd6_pipe_sampler_view(views[i]);
-			if (view->astc_srgb)
-				astc_srgb |= (1 << i);
-		}
-	}
-
-	fd_set_sampler_views(pctx, shader, start, nr, views);
-
-	if (shader == PIPE_SHADER_FRAGMENT) {
-		fd6_ctx->fastc_srgb = astc_srgb;
-	} else if (shader == PIPE_SHADER_VERTEX) {
-		fd6_ctx->vastc_srgb = astc_srgb;
-	}
-}
-
 
 static uint32_t
 key_hash(const void *_key)
@@ -407,7 +364,7 @@ key_equals(const void *_a, const void *_b)
 }
 
 struct fd6_texture_state *
-fd6_texture_state(struct fd_context *ctx, enum a6xx_state_block sb,
+fd6_texture_state(struct fd_context *ctx, enum pipe_shader_type type,
 		struct fd_texture_stateobj *tex)
 {
 	struct fd6_context *fd6_ctx = fd6_context(ctx);
@@ -439,19 +396,7 @@ fd6_texture_state(struct fd_context *ctx, enum a6xx_state_block sb,
 		needs_border |= sampler->needs_border;
 	}
 
-	/* This will need update for HS/DS/GS: */
-	if (unlikely(needs_border && (sb == SB6_FS_TEX))) {
-		/* TODO we could probably use fixed offsets for each shader
-		 * stage and avoid the need for # of VS samplers to be part
-		 * of the FS tex state.. but I don't think our handling of
-		 * BCOLOR_OFFSET is actually correct, and trying to use a
-		 * hard coded offset of 16 breaks things.
-		 *
-		 * Note that when this changes, then a corresponding change
-		 * in emit_border_color() is also needed.
-		 */
-		key.bcolor_offset = ctx->tex[PIPE_SHADER_VERTEX].num_samplers;
-	}
+	key.bcolor_offset = fd6_border_color_offset(ctx, type, tex);
 
 	uint32_t hash = key_hash(&key);
 	struct hash_entry *entry =
@@ -467,7 +412,8 @@ fd6_texture_state(struct fd_context *ctx, enum a6xx_state_block sb,
 	state->stateobj = fd_ringbuffer_new_object(ctx->pipe, 0x1000);
 	state->needs_border = needs_border;
 
-	fd6_emit_textures(ctx->pipe, state->stateobj, sb, tex, key.bcolor_offset);
+	fd6_emit_textures(ctx->pipe, state->stateobj, type, tex, key.bcolor_offset,
+			NULL, NULL);
 
 	/* NOTE: uses copy of key in state obj, because pointer passed by caller
 	 * is probably on the stack
@@ -496,7 +442,7 @@ fd6_texture_init(struct pipe_context *pctx)
 
 	pctx->create_sampler_view = fd6_sampler_view_create;
 	pctx->sampler_view_destroy = fd6_sampler_view_destroy;
-	pctx->set_sampler_views = fd6_set_sampler_views;
+	pctx->set_sampler_views = fd_set_sampler_views;
 
 	fd6_ctx->tex_cache = _mesa_hash_table_create(NULL, key_hash, key_equals);
 }

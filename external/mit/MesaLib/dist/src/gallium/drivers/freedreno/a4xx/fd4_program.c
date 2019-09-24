@@ -39,18 +39,18 @@
 
 static struct ir3_shader *
 create_shader_stateobj(struct pipe_context *pctx, const struct pipe_shader_state *cso,
-		enum shader_t type)
+		gl_shader_stage type)
 {
 	struct fd_context *ctx = fd_context(pctx);
 	struct ir3_compiler *compiler = ctx->screen->compiler;
-	return ir3_shader_create(compiler, cso, type, &ctx->debug);
+	return ir3_shader_create(compiler, cso, type, &ctx->debug, pctx->screen);
 }
 
 static void *
 fd4_fp_state_create(struct pipe_context *pctx,
 		const struct pipe_shader_state *cso)
 {
-	return create_shader_stateobj(pctx, cso, SHADER_FRAGMENT);
+	return create_shader_stateobj(pctx, cso, MESA_SHADER_FRAGMENT);
 }
 
 static void
@@ -64,7 +64,7 @@ static void *
 fd4_vp_state_create(struct pipe_context *pctx,
 		const struct pipe_shader_state *cso)
 {
-	return create_shader_stateobj(pctx, cso, SHADER_VERTEX);
+	return create_shader_stateobj(pctx, cso, MESA_SHADER_VERTEX);
 }
 
 static void
@@ -79,7 +79,7 @@ emit_shader(struct fd_ringbuffer *ring, const struct ir3_shader_variant *so)
 {
 	const struct ir3_info *si = &so->info;
 	enum a4xx_state_block sb = fd4_stage2shadersb(so->type);
-	enum adreno_state_src src;
+	enum a4xx_state_src src;
 	uint32_t i, sz, *bin;
 
 	if (fd_mesa_debug & FD_DBG_DIRECT) {
@@ -101,7 +101,7 @@ emit_shader(struct fd_ringbuffer *ring, const struct ir3_shader_variant *so)
 		OUT_RING(ring, CP_LOAD_STATE4_1_EXT_SRC_ADDR(0) |
 				CP_LOAD_STATE4_1_STATE_TYPE(ST4_SHADER));
 	} else {
-		OUT_RELOC(ring, so->bo, 0,
+		OUT_RELOCD(ring, so->bo, 0,
 				CP_LOAD_STATE4_1_STATE_TYPE(ST4_SHADER), 0);
 	}
 
@@ -245,7 +245,7 @@ fd4_program_emit(struct fd_ringbuffer *ring, struct fd4_emit *emit,
 	face_regid      = ir3_find_sysval_regid(s[FS].v, SYSTEM_VALUE_FRONT_FACE);
 	coord_regid     = ir3_find_sysval_regid(s[FS].v, SYSTEM_VALUE_FRAG_COORD);
 	zwcoord_regid   = (coord_regid == regid(63,0)) ? regid(63,0) : (coord_regid + 2);
-	vcoord_regid    = ir3_find_sysval_regid(s[FS].v, SYSTEM_VALUE_VARYING_COORD);
+	vcoord_regid    = ir3_find_sysval_regid(s[FS].v, SYSTEM_VALUE_BARYCENTRIC_PIXEL);
 
 	/* we could probably divide this up into things that need to be
 	 * emitted if frag-prog is dirty vs if vert-prog is dirty..

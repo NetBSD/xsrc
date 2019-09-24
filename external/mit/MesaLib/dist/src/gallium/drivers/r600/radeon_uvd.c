@@ -152,7 +152,8 @@ static void map_msg_fb_it_buf(struct ruvd_decoder *dec)
 	buf = &dec->msg_fb_it_buffers[dec->cur_buffer];
 
 	/* and map it for CPU access */
-	ptr = dec->ws->buffer_map(buf->res->buf, dec->cs, PIPE_TRANSFER_WRITE);
+	ptr = dec->ws->buffer_map(buf->res->buf, dec->cs,
+                                  PIPE_TRANSFER_WRITE | RADEON_TRANSFER_TEMPORARY);
 
 	/* calc buffer offsets */
 	dec->msg = (struct ruvd_msg *)ptr;
@@ -246,7 +247,7 @@ static unsigned calc_ctx_size_h265_main(struct ruvd_decoder *dec)
 
 static unsigned calc_ctx_size_h265_main10(struct ruvd_decoder *dec, struct pipe_h265_picture_desc *pic)
 {
-	unsigned block_size, log2_ctb_size, width_in_ctb, height_in_ctb, num_16x16_block_per_ctb;
+	unsigned log2_ctb_size, width_in_ctb, height_in_ctb, num_16x16_block_per_ctb;
 	unsigned context_buffer_size_per_ctb_row, cm_buffer_size, max_mb_address, db_left_tile_pxl_size;
 	unsigned db_left_tile_ctx_size = 4096 / 16 * (32 + 16 * 4);
 
@@ -261,8 +262,8 @@ static unsigned calc_ctx_size_h265_main10(struct ruvd_decoder *dec, struct pipe_
 	else
 		max_references = MAX2(max_references, 17);
 
-	block_size = (1 << (pic->pps->sps->log2_min_luma_coding_block_size_minus3 + 3));
-	log2_ctb_size = block_size + pic->pps->sps->log2_diff_max_min_luma_coding_block_size;
+	log2_ctb_size = pic->pps->sps->log2_min_luma_coding_block_size_minus3 + 3 +
+		pic->pps->sps->log2_diff_max_min_luma_coding_block_size;
 
 	width_in_ctb = (width + ((1 << log2_ctb_size) - 1)) >> log2_ctb_size;
 	height_in_ctb = (height + ((1 << log2_ctb_size) - 1)) >> log2_ctb_size;
@@ -1068,7 +1069,7 @@ static void ruvd_begin_frame(struct pipe_video_codec *decoder,
 	dec->bs_size = 0;
 	dec->bs_ptr = dec->ws->buffer_map(
 		dec->bs_buffers[dec->cur_buffer].res->buf,
-		dec->cs, PIPE_TRANSFER_WRITE);
+		dec->cs, PIPE_TRANSFER_WRITE | RADEON_TRANSFER_TEMPORARY);
 }
 
 /**
@@ -1121,7 +1122,8 @@ static void ruvd_decode_bitstream(struct pipe_video_codec *decoder,
 			}
 
 			dec->bs_ptr = dec->ws->buffer_map(buf->res->buf, dec->cs,
-							  PIPE_TRANSFER_WRITE);
+							  PIPE_TRANSFER_WRITE |
+							  RADEON_TRANSFER_TEMPORARY);
 			if (!dec->bs_ptr)
 				return;
 
@@ -1332,7 +1334,7 @@ struct pipe_video_codec *ruvd_create_decoder(struct pipe_context *context,
 	dec->stream_handle = rvid_alloc_stream_handle();
 	dec->screen = context->screen;
 	dec->ws = ws;
-	dec->cs = ws->cs_create(rctx->ctx, RING_UVD, NULL, NULL);
+	dec->cs = ws->cs_create(rctx->ctx, RING_UVD, NULL, NULL, false);
 	if (!dec->cs) {
 		RVID_ERR("Can't get command submission context.\n");
 		goto error;

@@ -69,15 +69,18 @@ extern void dri_message(int level, const char *f, ...) PRINTFLIKE(2, 3);
 #define ErrorMessageF(...) dri_message(_LOADER_WARNING, __VA_ARGS__)
 #define CriticalErrorMessageF(...) dri_message(_LOADER_FATAL, __VA_ARGS__)
 
-extern void *driOpenDriver(const char *driverName);
-
-extern const __DRIextension **
-driGetDriverExtensions(void *handle, const char *driver_name);
+extern const __DRIextension **driOpenDriver(const char *driverName,
+                                            void **out_driver_handle);
 
 extern bool
 dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
                          unsigned *major_ver, unsigned *minor_ver,
                          uint32_t *render_type, uint32_t *flags, unsigned *api,
                          int *reset, int *release, unsigned *error);
+
+extern bool
+dri2_check_no_error(uint32_t flags, struct glx_context *share_context,
+                    int major, unsigned *error);
+
 
 #endif /* _DRI_COMMON_H */

@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2015 Rob Clark <robclark@freedesktop.org>
  *
@@ -30,7 +28,7 @@
 #include "util/hash_table.h"
 
 #include "ir3_cache.h"
-#include "ir3_shader.h"
+#include "ir3_gallium.h"
 
 
 static uint32_t
@@ -98,6 +96,10 @@ ir3_cache_lookup(struct ir3_cache *cache, const struct ir3_cache_key *key,
 	struct ir3_shader_variant *bs = ir3_shader_variant(key->vs, key->key, true, debug);
 	struct ir3_shader_variant *vs = ir3_shader_variant(key->vs, key->key, false, debug);
 	struct ir3_shader_variant *fs = ir3_shader_variant(key->fs, key->key, false, debug);
+
+	if (!bs || !vs || !fs) {
+		return NULL;
+	}
 
 	struct ir3_program_state *state =
 		cache->funcs->create_state(cache->data, bs, vs, fs, &key->key);

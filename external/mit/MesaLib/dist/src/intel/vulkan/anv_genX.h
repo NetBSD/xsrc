@@ -66,6 +66,8 @@ void genX(cmd_buffer_mark_image_written)(struct anv_cmd_buffer *cmd_buffer,
                                          uint32_t base_layer,
                                          uint32_t layer_count);
 
+void genX(cmd_emit_conditional_render_predicate)(struct anv_cmd_buffer *cmd_buffer);
+
 void
 genX(emit_urb_setup)(struct anv_device *device, struct anv_batch *batch,
                      const struct gen_l3_config *l3_config,
@@ -74,14 +76,6 @@ genX(emit_urb_setup)(struct anv_device *device, struct anv_batch *batch,
 
 void genX(cmd_buffer_so_memcpy)(struct anv_cmd_buffer *cmd_buffer,
                                 struct anv_address dst, struct anv_address src,
-                                uint32_t size);
-
-void genX(cmd_buffer_mi_memcpy)(struct anv_cmd_buffer *cmd_buffer,
-                                struct anv_address dst, struct anv_address src,
-                                uint32_t size);
-
-void genX(cmd_buffer_mi_memset)(struct anv_cmd_buffer *cmd_buffer,
-                                struct anv_address dst, uint32_t value,
                                 uint32_t size);
 
 void genX(blorp_exec)(struct blorp_batch *batch,

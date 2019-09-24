@@ -37,8 +37,8 @@
 #include "util/ralloc.h"
 
 #include <xf86drm.h>
-#include "drm_fourcc.h"
-#include "vc4_drm.h"
+#include "drm-uapi/drm_fourcc.h"
+#include "drm-uapi/vc4_drm.h"
 #include "vc4_screen.h"
 #include "vc4_context.h"
 #include "vc4_resource.h"
@@ -177,6 +177,9 @@ vc4_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
         case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
                 /* Note: Not supported in hardware, just faking it. */
                 return 5;
+
+        case PIPE_CAP_MAX_VARYINGS:
+                return 8;
 
         case PIPE_CAP_VENDOR_ID:
                 return 0x14E4;

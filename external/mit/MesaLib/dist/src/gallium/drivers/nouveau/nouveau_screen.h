@@ -3,6 +3,7 @@
 
 #include "pipe/p_screen.h"
 #include "util/disk_cache.h"
+#include "util/u_atomic.h"
 #include "util/u_memory.h"
 
 #ifdef DEBUG
@@ -15,6 +16,9 @@ typedef uint16_t u16;
 extern int nouveau_mesa_debug;
 
 struct nouveau_bo;
+
+#define NOUVEAU_SHADER_CACHE_FLAGS_IR_TGSI 0 << 0
+#define NOUVEAU_SHADER_CACHE_FLAGS_IR_NIR  1 << 0
 
 struct nouveau_screen {
    struct pipe_screen base;
@@ -64,6 +68,8 @@ struct nouveau_screen {
 
    struct disk_cache *disk_shader_cache;
 
+   bool prefer_nir;
+
 #ifdef NOUVEAU_ENABLE_DRIVER_STATISTICS
    union {
       uint64_t v[29];
@@ -106,10 +112,10 @@ struct nouveau_screen {
 
 #ifdef NOUVEAU_ENABLE_DRIVER_STATISTICS
 # define NOUVEAU_DRV_STAT(s, n, v) do {         \
-      (s)->stats.named.n += (v);                \
+      p_atomic_add(&(s)->stats.named.n, (v));   \
    } while(0)
-# define NOUVEAU_DRV_STAT_RES(r, n, v) do {                     \
-      nouveau_screen((r)->base.screen)->stats.named.n += (v);   \
+# define NOUVEAU_DRV_STAT_RES(r, n, v) do {                                \
+      p_atomic_add(&nouveau_screen((r)->base.screen)->stats.named.n, v);   \
    } while(0)
 # define NOUVEAU_DRV_STAT_IFD(x) x
 #else

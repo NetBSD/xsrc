@@ -70,6 +70,7 @@ struct etna_transfer {
    struct pipe_transfer base;
    struct pipe_resource *rsc;
    void *staging;
+   void *mapped;
 };
 
 struct etna_vertexbuf_state {
@@ -136,9 +137,6 @@ struct etna_context {
    uint32_t prim_hwsupport;
    struct primconvert_context *primconvert;
 
-   /* list of resources used by currently-unsubmitted renders */
-   struct list_head used_resources;
-
    struct slab_child_pool transfer_pool;
    struct blitter_context *blitter;
 
@@ -190,6 +188,9 @@ struct etna_context {
 
    /* list of active hardware queries */
    struct list_head active_hw_queries;
+
+   struct etna_bo *dummy_rt;
+   struct etna_reloc dummy_rt_reloc;
 };
 
 static inline struct etna_context *

@@ -43,7 +43,7 @@ struct virgl_screen {
 
    struct virgl_drm_caps caps;
 
-   struct slab_parent_pool texture_transfer_pool;
+   struct slab_parent_pool transfer_pool;
 
    uint32_t sub_ctx_id;
 };
@@ -54,6 +54,9 @@ virgl_screen(struct pipe_screen *pipe)
 {
    return (struct virgl_screen *)pipe;
 }
+
+boolean
+virgl_has_readback_format(struct pipe_screen *screen, enum virgl_formats fmt);
 
 #define VIRGL_MAP_BUFFER_ALIGNMENT 64
 

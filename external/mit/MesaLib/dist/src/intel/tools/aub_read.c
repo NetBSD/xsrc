@@ -31,6 +31,7 @@
 #include "util/macros.h"
 
 #include "aub_read.h"
+#include "gen_context.h"
 #include "intel_aub.h"
 
 #define TYPE(dw)       (((dw) >> 29) & 7)
@@ -136,7 +137,7 @@ handle_trace_block(struct aub_read *read, const uint32_t *p)
    int type = p[1] & AUB_TRACE_TYPE_MASK;
    int address_space = p[1] & AUB_TRACE_ADDRESS_SPACE_MASK;
    int header_length = p[0] & 0xffff;
-   int engine = GEN_ENGINE_RENDER;
+   enum drm_i915_gem_engine_class engine = I915_ENGINE_CLASS_RENDER;
    const void *data = p + header_length + 2;
    uint64_t address = gen_48b_address((read->devinfo.gen >= 8 ? ((uint64_t) p[5] << 32) : 0) |
                                       ((uint64_t) p[3]));
@@ -151,13 +152,13 @@ handle_trace_block(struct aub_read *read, const uint32_t *p)
    case AUB_TRACE_OP_COMMAND_WRITE:
       switch (type) {
       case AUB_TRACE_TYPE_RING_PRB0:
-         engine = GEN_ENGINE_RENDER;
+         engine = I915_ENGINE_CLASS_RENDER;
          break;
       case AUB_TRACE_TYPE_RING_PRB1:
-         engine = GEN_ENGINE_VIDEO;
+         engine = I915_ENGINE_CLASS_VIDEO;
          break;
       case AUB_TRACE_TYPE_RING_PRB2:
-         engine = GEN_ENGINE_BLITTER;
+         engine = I915_ENGINE_CLASS_COPY;
          break;
       default:
          parse_error(read, p, "command write to unknown ring %d\n", type);
@@ -182,76 +183,70 @@ handle_memtrace_reg_write(struct aub_read *read, const uint32_t *p)
    if (read->reg_write)
       read->reg_write(read->user_data, offset, value);
 
-   int engine;
+   enum drm_i915_gem_engine_class engine;
    uint64_t context_descriptor;
 
    switch (offset) {
-   case 0x2230: /* render elsp */
+   case EXECLIST_SUBMITPORT_RCSUNIT: /* render elsp */
       read->render_elsp[read->render_elsp_index++] = value;
       if (read->render_elsp_index < 4)
          return;
 
       read->render_elsp_index = 0;
-      engine = GEN_ENGINE_RENDER;
+      engine = I915_ENGINE_CLASS_RENDER;
       context_descriptor = (uint64_t)read->render_elsp[2] << 32 |
          read->render_elsp[3];
       break;
-   case 0x12230: /* video elsp */
+   case EXECLIST_SUBMITPORT_VCSUNIT0: /* video elsp */
       read->video_elsp[read->video_elsp_index++] = value;
       if (read->video_elsp_index < 4)
          return;
 
       read->video_elsp_index = 0;
-      engine = GEN_ENGINE_VIDEO;
+      engine = I915_ENGINE_CLASS_VIDEO;
       context_descriptor = (uint64_t)read->video_elsp[2] << 32 |
          read->video_elsp[3];
       break;
-   case 0x22230: /* blitter elsp */
+   case EXECLIST_SUBMITPORT_BCSUNIT: /* blitter elsp */
       read->blitter_elsp[read->blitter_elsp_index++] = value;
       if (read->blitter_elsp_index < 4)
          return;
 
       read->blitter_elsp_index = 0;
-      engine = GEN_ENGINE_BLITTER;
+      engine = I915_ENGINE_CLASS_COPY;
       context_descriptor = (uint64_t)read->blitter_elsp[2] << 32 |
          read->blitter_elsp[3];
       break;
-   case 0x2510: /* render elsq0 lo */
+   case EXECLIST_SQ_CONTENTS0_RCSUNIT: /* render elsq0 lo */
       read->render_elsp[3] = value;
       return;
-      break;
-   case 0x2514: /* render elsq0 hi */
+   case (EXECLIST_SQ_CONTENTS0_RCSUNIT + 4): /* render elsq0 hi */
       read->render_elsp[2] = value;
       return;
-      break;
-   case 0x12510: /* video elsq0 lo */
+   case EXECLIST_SQ_CONTENTS0_VCSUNIT0: /* video elsq0 lo */
       read->video_elsp[3] = value;
       return;
-      break;
-   case 0x12514: /* video elsq0 hi */
+   case EXECLIST_SQ_CONTENTS0_VCSUNIT0 + 4: /* video elsq0 hi */
       read->video_elsp[2] = value;
       return;
-      break;
-   case 0x22510: /* blitter elsq0 lo */
+   case EXECLIST_SQ_CONTENTS0_BCSUNIT: /* blitter elsq0 lo */
       read->blitter_elsp[3] = value;
       return;
-      break;
-   case 0x22514: /* blitter elsq0 hi */
+   case (EXECLIST_SQ_CONTENTS0_BCSUNIT + 4): /* blitter elsq0 hi */
       read->blitter_elsp[2] = value;
       return;
-      break;
-   case 0x2550: /* render elsc */
-      engine = GEN_ENGINE_RENDER;
+   case EXECLIST_CONTROL_RCSUNIT: /* render elsc */
+      engine = I915_ENGINE_CLASS_RENDER;
       context_descriptor = (uint64_t)read->render_elsp[2] << 32 |
          read->render_elsp[3];
       break;
-   case 0x12550: /* video_elsc */
-      engine = GEN_ENGINE_VIDEO;
+   case EXECLIST_CONTROL_VCSUNIT0: /* video_elsc */
+      engine = I915_ENGINE_CLASS_VIDEO;
       context_descriptor = (uint64_t)read->video_elsp[2] << 32 |
          read->video_elsp[3];
       break;
-   case 0x22550: /* blitter elsc */
-      engine = GEN_ENGINE_BLITTER;
+   case EXECLIST_CONTROL_BCSUNIT: /* blitter elsc */
+      engine = I915_ENGINE_CLASS_COPY;
       context_descriptor = (uint64_t)read->blitter_elsp[2] << 32 |
          read->blitter_elsp[3];
       break;
@@ -294,7 +289,8 @@ handle_memtrace_mem_write(struct aub_read *read, const uint32_t *p)
 int
 aub_read_command(struct aub_read *read, const void *data, uint32_t data_len)
 {
-   const uint32_t *p = data, *end = data + data_len, *next;
+   const uint32_t *p = data, *next;
+   MAYBE_UNUSED const uint32_t *end = data + data_len;
    uint32_t h, header_length, bias;
 
    assert(data_len >= 4);

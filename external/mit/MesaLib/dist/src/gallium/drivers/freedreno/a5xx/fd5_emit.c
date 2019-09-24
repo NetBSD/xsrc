@@ -51,7 +51,7 @@
  * sizedwords:     size of const value buffer
  */
 static void
-fd5_emit_const(struct fd_ringbuffer *ring, enum shader_t type,
+fd5_emit_const(struct fd_ringbuffer *ring, gl_shader_stage type,
 		uint32_t regid, uint32_t offset, uint32_t sizedwords,
 		const uint32_t *dwords, struct pipe_resource *prsc)
 {
@@ -90,7 +90,7 @@ fd5_emit_const(struct fd_ringbuffer *ring, enum shader_t type,
 }
 
 static void
-fd5_emit_const_bo(struct fd_ringbuffer *ring, enum shader_t type, boolean write,
+fd5_emit_const_bo(struct fd_ringbuffer *ring, gl_shader_stage type, boolean write,
 		uint32_t regid, uint32_t num, struct pipe_resource **prscs, uint32_t *offsets)
 {
 	uint32_t anum = align(num, 2);
@@ -396,37 +396,24 @@ emit_textures(struct fd_context *ctx, struct fd_ringbuffer *ring,
 
 static void
 emit_ssbos(struct fd_context *ctx, struct fd_ringbuffer *ring,
-		enum a4xx_state_block sb, struct fd_shaderbuf_stateobj *so)
+		enum a4xx_state_block sb, struct fd_shaderbuf_stateobj *so,
+		const struct ir3_shader_variant *v)
 {
 	unsigned count = util_last_bit(so->enabled_mask);
+	const struct ir3_ibo_mapping *m = &v->image_mapping;
 
-	if (count == 0)
-		return;
-
-	OUT_PKT7(ring, CP_LOAD_STATE4, 3 + (4 * count));
-	OUT_RING(ring, CP_LOAD_STATE4_0_DST_OFF(0) |
-			CP_LOAD_STATE4_0_STATE_SRC(SS4_DIRECT) |
-			CP_LOAD_STATE4_0_STATE_BLOCK(sb) |
-			CP_LOAD_STATE4_0_NUM_UNIT(count));
-	OUT_RING(ring, CP_LOAD_STATE4_1_STATE_TYPE(0) |
-			CP_LOAD_STATE4_1_EXT_SRC_ADDR(0));
-	OUT_RING(ring, CP_LOAD_STATE4_2_EXT_SRC_ADDR_HI(0));
 	for (unsigned i = 0; i < count; i++) {
-		OUT_RING(ring, 0x00000000);
-		OUT_RING(ring, 0x00000000);
-		OUT_RING(ring, 0x00000000);
-		OUT_RING(ring, 0x00000000);
-	}
+		unsigned slot = m->ssbo_to_ibo[i];
 
-	OUT_PKT7(ring, CP_LOAD_STATE4, 3 + (2 * count));
-	OUT_RING(ring, CP_LOAD_STATE4_0_DST_OFF(0) |
-			CP_LOAD_STATE4_0_STATE_SRC(SS4_DIRECT) |
-			CP_LOAD_STATE4_0_STATE_BLOCK(sb) |
-			CP_LOAD_STATE4_0_NUM_UNIT(count));
-	OUT_RING(ring, CP_LOAD_STATE4_1_STATE_TYPE(1) |
-			CP_LOAD_STATE4_1_EXT_SRC_ADDR(0));
-	OUT_RING(ring, CP_LOAD_STATE4_2_EXT_SRC_ADDR_HI(0));
-	for (unsigned i = 0; i < count; i++) {
+		OUT_PKT7(ring, CP_LOAD_STATE4, 5);
+		OUT_RING(ring, CP_LOAD_STATE4_0_DST_OFF(slot) |
+				CP_LOAD_STATE4_0_STATE_SRC(SS4_DIRECT) |
+				CP_LOAD_STATE4_0_STATE_BLOCK(sb) |
+				CP_LOAD_STATE4_0_NUM_UNIT(1));
+		OUT_RING(ring, CP_LOAD_STATE4_1_STATE_TYPE(1) |
+				CP_LOAD_STATE4_1_EXT_SRC_ADDR(0));
+		OUT_RING(ring, CP_LOAD_STATE4_2_EXT_SRC_ADDR_HI(0));
+
 		struct pipe_shader_buffer *buf = &so->sb[i];
 		unsigned sz = buf->buffer_size;
 
@@ -435,18 +422,16 @@ emit_ssbos(struct fd_context *ctx, struct fd_ringbuffer *ring,
 
 		OUT_RING(ring, A5XX_SSBO_1_0_WIDTH(sz));
 		OUT_RING(ring, A5XX_SSBO_1_1_HEIGHT(sz >> 16));
-	}
 
-	OUT_PKT7(ring, CP_LOAD_STATE4, 3 + (2 * count));
-	OUT_RING(ring, CP_LOAD_STATE4_0_DST_OFF(0) |
-			CP_LOAD_STATE4_0_STATE_SRC(SS4_DIRECT) |
-			CP_LOAD_STATE4_0_STATE_BLOCK(sb) |
-			CP_LOAD_STATE4_0_NUM_UNIT(count));
-	OUT_RING(ring, CP_LOAD_STATE4_1_STATE_TYPE(2) |
-			CP_LOAD_STATE4_1_EXT_SRC_ADDR(0));
-	OUT_RING(ring, CP_LOAD_STATE4_2_EXT_SRC_ADDR_HI(0));
-	for (unsigned i = 0; i < count; i++) {
-		struct pipe_shader_buffer *buf = &so->sb[i];
+		OUT_PKT7(ring, CP_LOAD_STATE4, 5);
+		OUT_RING(ring, CP_LOAD_STATE4_0_DST_OFF(slot) |
+				CP_LOAD_STATE4_0_STATE_SRC(SS4_DIRECT) |
+				CP_LOAD_STATE4_0_STATE_BLOCK(sb) |
+				CP_LOAD_STATE4_0_NUM_UNIT(1));
+		OUT_RING(ring, CP_LOAD_STATE4_1_STATE_TYPE(2) |
+				CP_LOAD_STATE4_1_EXT_SRC_ADDR(0));
+		OUT_RING(ring, CP_LOAD_STATE4_2_EXT_SRC_ADDR_HI(0));
+
 		if (buf->buffer) {
 			struct fd_resource *rsc = fd_resource(buf->buffer);
 			OUT_RELOCW(ring, rsc->bo, buf->buffer_offset, 0, 0);
@@ -587,7 +572,7 @@ fd5_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 
 	if (dirty & (FD_DIRTY_ZSA | FD_DIRTY_RASTERIZER | FD_DIRTY_PROG)) {
 		struct fd5_zsa_stateobj *zsa = fd5_zsa_stateobj(ctx->zsa);
-		bool fragz = fp->has_kill | fp->writes_pos;
+		bool fragz = fp->no_earlyz | fp->writes_pos;
 
 		OUT_PKT4(ring, REG_A5XX_RB_DEPTH_CNTL, 1);
 		OUT_RING(ring, zsa->rb_depth_cntl);
@@ -704,7 +689,7 @@ fd5_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 	if (!emit->binning_pass)
 		ir3_emit_fs_consts(fp, ring, ctx);
 
-	struct pipe_stream_output_info *info = &vp->shader->stream_output;
+	struct ir3_stream_output_info *info = &vp->shader->stream_output;
 	if (info->num_outputs) {
 		struct fd_streamout_stateobj *so = &ctx->streamout;
 
@@ -821,10 +806,10 @@ fd5_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 		emit_border_color(ctx, ring);
 
 	if (ctx->dirty_shader[PIPE_SHADER_FRAGMENT] & FD_DIRTY_SHADER_SSBO)
-		emit_ssbos(ctx, ring, SB4_SSBO, &ctx->shaderbuf[PIPE_SHADER_FRAGMENT]);
+		emit_ssbos(ctx, ring, SB4_SSBO, &ctx->shaderbuf[PIPE_SHADER_FRAGMENT], fp);
 
 	if (ctx->dirty_shader[PIPE_SHADER_FRAGMENT] & FD_DIRTY_SHADER_IMAGE)
-		fd5_emit_images(ctx, ring, PIPE_SHADER_FRAGMENT);
+		fd5_emit_images(ctx, ring, PIPE_SHADER_FRAGMENT, fp);
 }
 
 void
@@ -862,10 +847,10 @@ fd5_emit_cs_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 			~0 : ctx->tex[PIPE_SHADER_COMPUTE].num_textures);
 
 	if (dirty & FD_DIRTY_SHADER_SSBO)
-		emit_ssbos(ctx, ring, SB4_CS_SSBO, &ctx->shaderbuf[PIPE_SHADER_COMPUTE]);
+		emit_ssbos(ctx, ring, SB4_CS_SSBO, &ctx->shaderbuf[PIPE_SHADER_COMPUTE], cp);
 
 	if (dirty & FD_DIRTY_SHADER_IMAGE)
-		fd5_emit_images(ctx, ring, PIPE_SHADER_COMPUTE);
+		fd5_emit_images(ctx, ring, PIPE_SHADER_COMPUTE, cp);
 }
 
 /* emit setup at begin of new cmdstream buffer (don't rely on previous

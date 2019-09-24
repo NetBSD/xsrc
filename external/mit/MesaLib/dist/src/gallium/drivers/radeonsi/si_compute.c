@@ -32,9 +32,9 @@
 #include "si_build_pm4.h"
 #include "si_compute.h"
 
-#define COMPUTE_DBG(rscreen, fmt, args...) \
+#define COMPUTE_DBG(sscreen, fmt, args...) \
 	do { \
-		if ((rscreen->debug_flags & DBG(COMPUTE))) fprintf(stderr, fmt, ##args); \
+		if ((sscreen->debug_flags & DBG(COMPUTE))) fprintf(stderr, fmt, ##args); \
 	} while (0);
 
 struct dispatch_packet {
@@ -106,6 +106,7 @@ static void si_create_compute_state_async(void *job, int thread_index)
 		assert(program->ir_type == PIPE_SHADER_IR_NIR);
 		sel.nir = program->ir.nir;
 
+		si_nir_opts(sel.nir);
 		si_nir_scan_shader(sel.nir, &sel.info);
 		si_lower_nir(&sel);
 	}
@@ -308,7 +309,7 @@ static void si_set_global_binding(
 		uint64_t va;
 		uint32_t offset;
 		pipe_resource_reference(&program->global_buffers[first + i], resources[i]);
-		va = r600_resource(resources[i])->gpu_address;
+		va = si_resource(resources[i])->gpu_address;
 		offset = util_le32_to_cpu(*handles[i]);
 		va += offset;
 		va = util_cpu_to_le64(va);
@@ -378,7 +379,7 @@ static bool si_setup_compute_scratch_buffer(struct si_context *sctx,
 		scratch_bo_size = sctx->compute_scratch_buffer->b.b.width0;
 
 	if (scratch_bo_size < scratch_needed) {
-		r600_resource_reference(&sctx->compute_scratch_buffer, NULL);
+		si_resource_reference(&sctx->compute_scratch_buffer, NULL);
 
 		sctx->compute_scratch_buffer =
 			si_aligned_buffer_create(&sctx->screen->b,
@@ -398,7 +399,7 @@ static bool si_setup_compute_scratch_buffer(struct si_context *sctx,
 		if (si_shader_binary_upload(sctx->screen, shader))
 			return false;
 
-		r600_resource_reference(&shader->scratch_bo,
+		si_resource_reference(&shader->scratch_bo,
 		                        sctx->compute_scratch_buffer);
 	}
 
@@ -499,9 +500,13 @@ static bool si_switch_compute_shader(struct si_context *sctx,
 	COMPUTE_DBG(sctx->screen, "COMPUTE_PGM_RSRC1: 0x%08x "
 		"COMPUTE_PGM_RSRC2: 0x%08x\n", config->rsrc1, config->rsrc2);
 
+	sctx->max_seen_compute_scratch_bytes_per_wave =
+		MAX2(sctx->max_seen_compute_scratch_bytes_per_wave,
+		     config->scratch_bytes_per_wave);
+
 	radeon_set_sh_reg(cs, R_00B860_COMPUTE_TMPRING_SIZE,
 	          S_00B860_WAVES(sctx->scratch_waves)
-	             | S_00B860_WAVESIZE(config->scratch_bytes_per_wave >> 10));
+	             | S_00B860_WAVESIZE(sctx->max_seen_compute_scratch_bytes_per_wave >> 10));
 
 	sctx->cs_shader_state.emitted_program = program;
 	sctx->cs_shader_state.offset = offset;
@@ -582,7 +587,7 @@ static void si_setup_user_sgprs_co_v2(struct si_context *sctx,
 			AMD_CODE_PROPERTY_ENABLE_SGPR_DISPATCH_PTR)) {
 		struct dispatch_packet dispatch;
 		unsigned dispatch_offset;
-		struct r600_resource *dispatch_buf = NULL;
+		struct si_resource *dispatch_buf = NULL;
 		uint64_t dispatch_va;
 
 		/* Upload dispatch ptr */
@@ -620,7 +625,7 @@ static void si_setup_user_sgprs_co_v2(struct si_context *sctx,
 		radeon_emit(cs, S_008F04_BASE_ADDRESS_HI(dispatch_va >> 32) |
                                 S_008F04_STRIDE(0));
 
-		r600_resource_reference(&dispatch_buf, NULL);
+		si_resource_reference(&dispatch_buf, NULL);
 		user_sgpr += 2;
 	}
 
@@ -651,7 +656,7 @@ static bool si_upload_compute_input(struct si_context *sctx,
 {
 	struct radeon_cmdbuf *cs = sctx->gfx_cs;
 	struct si_compute *program = sctx->cs_shader_state.program;
-	struct r600_resource *input_buffer = NULL;
+	struct si_resource *input_buffer = NULL;
 	unsigned kernel_args_size;
 	unsigned num_work_size_bytes = program->use_code_object_v2 ? 0 : 36;
 	uint32_t kernel_args_offset = 0;
@@ -704,7 +709,7 @@ static bool si_upload_compute_input(struct si_context *sctx,
 		                S_008F04_STRIDE(0));
 	}
 
-	r600_resource_reference(&input_buffer, NULL);
+	si_resource_reference(&input_buffer, NULL);
 
 	return true;
 }
@@ -724,22 +729,11 @@ static void si_setup_tgsi_user_data(struct si_context *sctx,
 
 	if (info->indirect) {
 		if (program->uses_grid_size) {
-			uint64_t base_va = r600_resource(info->indirect)->gpu_address;
-			uint64_t va = base_va + info->indirect_offset;
-			int i;
-
-			radeon_add_to_buffer_list(sctx, sctx->gfx_cs,
-					 r600_resource(info->indirect),
-					 RADEON_USAGE_READ, RADEON_PRIO_DRAW_INDIRECT);
-
-			for (i = 0; i < 3; ++i) {
-				radeon_emit(cs, PKT3(PKT3_COPY_DATA, 4, 0));
-				radeon_emit(cs, COPY_DATA_SRC_SEL(COPY_DATA_SRC_MEM) |
-						COPY_DATA_DST_SEL(COPY_DATA_REG));
-				radeon_emit(cs, (va + 4 * i));
-				radeon_emit(cs, (va + 4 * i) >> 32);
-				radeon_emit(cs, (grid_size_reg >> 2) + i);
-				radeon_emit(cs, 0);
+			for (unsigned i = 0; i < 3; ++i) {
+				si_cp_copy_data(sctx,
+						COPY_DATA_REG, NULL, (grid_size_reg >> 2) + i,
+						COPY_DATA_SRC_MEM, si_resource(info->indirect),
+						info->indirect_offset + 4 * i);
 			}
 		}
 	} else {
@@ -797,11 +791,6 @@ static void si_emit_dispatch_packets(struct si_context *sctx,
 	radeon_set_sh_reg(cs, R_00B854_COMPUTE_RESOURCE_LIMITS,
 			  compute_resource_limits);
 
-	radeon_set_sh_reg_seq(cs, R_00B81C_COMPUTE_NUM_THREAD_X, 3);
-	radeon_emit(cs, S_00B81C_NUM_THREAD_FULL(info->block[0]));
-	radeon_emit(cs, S_00B820_NUM_THREAD_FULL(info->block[1]));
-	radeon_emit(cs, S_00B824_NUM_THREAD_FULL(info->block[2]));
-
 	unsigned dispatch_initiator =
 		S_00B800_COMPUTE_SHADER_EN(1) |
 		S_00B800_FORCE_START_AT_000(1) |
@@ -809,11 +798,38 @@ static void si_emit_dispatch_packets(struct si_context *sctx,
 		 * allow launching waves out-of-order. (same as Vulkan) */
 		S_00B800_ORDER_MODE(sctx->chip_class >= CIK);
 
+	const uint *last_block = info->last_block;
+	bool partial_block_en = last_block[0] || last_block[1] || last_block[2];
+
+	radeon_set_sh_reg_seq(cs, R_00B81C_COMPUTE_NUM_THREAD_X, 3);
+
+	if (partial_block_en) {
+		unsigned partial[3];
+
+		/* If no partial_block, these should be an entire block size, not 0. */
+		partial[0] = last_block[0] ? last_block[0] : info->block[0];
+		partial[1] = last_block[1] ? last_block[1] : info->block[1];
+		partial[2] = last_block[2] ? last_block[2] : info->block[2];
+
+		radeon_emit(cs, S_00B81C_NUM_THREAD_FULL(info->block[0]) |
+				S_00B81C_NUM_THREAD_PARTIAL(partial[0]));
+		radeon_emit(cs, S_00B820_NUM_THREAD_FULL(info->block[1]) |
+				S_00B820_NUM_THREAD_PARTIAL(partial[1]));
+		radeon_emit(cs, S_00B824_NUM_THREAD_FULL(info->block[2]) |
+				S_00B824_NUM_THREAD_PARTIAL(partial[2]));
+
+		dispatch_initiator |= S_00B800_PARTIAL_TG_EN(1);
+	} else {
+		radeon_emit(cs, S_00B81C_NUM_THREAD_FULL(info->block[0]));
+		radeon_emit(cs, S_00B820_NUM_THREAD_FULL(info->block[1]));
+		radeon_emit(cs, S_00B824_NUM_THREAD_FULL(info->block[2]));
+	}
+
 	if (info->indirect) {
-		uint64_t base_va = r600_resource(info->indirect)->gpu_address;
+		uint64_t base_va = si_resource(info->indirect)->gpu_address;
 
 		radeon_add_to_buffer_list(sctx, sctx->gfx_cs,
-		                 r600_resource(info->indirect),
+		                 si_resource(info->indirect),
 		                 RADEON_USAGE_READ, RADEON_PRIO_DRAW_INDIRECT);
 
 		radeon_emit(cs, PKT3(PKT3_SET_BASE, 2, 0) |
@@ -865,12 +881,14 @@ static void si_launch_grid(
 	    program->shader.compilation_failed)
 		return;
 
-	if (sctx->last_num_draw_calls != sctx->num_draw_calls) {
-		si_update_fb_dirtiness_after_rendering(sctx);
-		sctx->last_num_draw_calls = sctx->num_draw_calls;
-	}
+	if (sctx->has_graphics) {
+		if (sctx->last_num_draw_calls != sctx->num_draw_calls) {
+			si_update_fb_dirtiness_after_rendering(sctx);
+			sctx->last_num_draw_calls = sctx->num_draw_calls;
+		}
 
-	si_decompress_textures(sctx, 1 << PIPE_SHADER_COMPUTE);
+		si_decompress_textures(sctx, 1 << PIPE_SHADER_COMPUTE);
+	}
 
 	/* Add buffer sizes for memory checking in need_cs_space. */
 	si_context_add_resource_size(sctx, &program->shader.bo->b.b);
@@ -881,13 +899,16 @@ static void si_launch_grid(
 
 		/* Indirect buffers use TC L2 on GFX9, but not older hw. */
 		if (sctx->chip_class <= VI &&
-		    r600_resource(info->indirect)->TC_L2_dirty) {
+		    si_resource(info->indirect)->TC_L2_dirty) {
 			sctx->flags |= SI_CONTEXT_WRITEBACK_GLOBAL_L2;
-			r600_resource(info->indirect)->TC_L2_dirty = false;
+			si_resource(info->indirect)->TC_L2_dirty = false;
 		}
 	}
 
 	si_need_gfx_cs_space(sctx);
+
+	if (sctx->bo_list_add_all_compute_resources)
+		si_compute_resources_add_all_to_bo_list(sctx);
 
 	if (!sctx->cs_shader_state.initialized)
 		si_initialize_compute(sctx);
@@ -902,7 +923,8 @@ static void si_launch_grid(
 	si_upload_compute_shader_descriptors(sctx);
 	si_emit_compute_shader_pointers(sctx);
 
-	if (si_is_atom_dirty(sctx, &sctx->atoms.s.render_cond)) {
+	if (sctx->has_graphics &&
+	    si_is_atom_dirty(sctx, &sctx->atoms.s.render_cond)) {
 		sctx->atoms.s.render_cond.emit(sctx);
 		si_set_atom_dirty(sctx, &sctx->atoms.s.render_cond, false);
 	}
@@ -915,8 +937,8 @@ static void si_launch_grid(
 
 	/* Global buffers */
 	for (i = 0; i < MAX_GLOBAL_BUFFERS; i++) {
-		struct r600_resource *buffer =
-			r600_resource(program->global_buffers[i]);
+		struct si_resource *buffer =
+			si_resource(program->global_buffers[i]);
 		if (!buffer) {
 			continue;
 		}

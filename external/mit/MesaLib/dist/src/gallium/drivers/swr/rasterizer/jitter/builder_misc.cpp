@@ -445,7 +445,11 @@ namespace SwrJit
         args.push_back(PointerType::get(mInt8Ty, 0));
         FunctionType* callPrintTy = FunctionType::get(Type::getVoidTy(JM()->mContext), args, true);
         Function*     callPrintFn =
+#if LLVM_VERSION_MAJOR >= 9
+            cast<Function>(JM()->mpCurrentModule->getOrInsertFunction("CallPrint", callPrintTy).getCallee());
+#else
             cast<Function>(JM()->mpCurrentModule->getOrInsertFunction("CallPrint", callPrintTy));
+#endif
 
         // if we haven't yet added the symbol to the symbol table
         if ((sys::DynamicLibrary::SearchForAddressOfSymbol("CallPrint")) == nullptr)
@@ -614,7 +618,11 @@ namespace SwrJit
         {
             FunctionType* pFuncTy   = FunctionType::get(mFP32Ty, mInt16Ty);
             Function*     pCvtPh2Ps = cast<Function>(
+#if LLVM_VERSION_MAJOR >= 9
+                JM()->mpCurrentModule->getOrInsertFunction("ConvertFloat16ToFloat32", pFuncTy).getCallee());
+#else
                 JM()->mpCurrentModule->getOrInsertFunction("ConvertFloat16ToFloat32", pFuncTy));
+#endif
 
             if (sys::DynamicLibrary::SearchForAddressOfSymbol("ConvertFloat16ToFloat32") == nullptr)
             {
@@ -650,7 +658,11 @@ namespace SwrJit
             // call scalar C function for now
             FunctionType* pFuncTy   = FunctionType::get(mInt16Ty, mFP32Ty);
             Function*     pCvtPs2Ph = cast<Function>(
+#if LLVM_VERSION_MAJOR >= 9
+                JM()->mpCurrentModule->getOrInsertFunction("ConvertFloat32ToFloat16", pFuncTy).getCallee());
+#else
                 JM()->mpCurrentModule->getOrInsertFunction("ConvertFloat32ToFloat16", pFuncTy));
+#endif
 
             if (sys::DynamicLibrary::SearchForAddressOfSymbol("ConvertFloat32ToFloat16") == nullptr)
             {
@@ -765,6 +777,119 @@ namespace SwrJit
     Value* Builder::VPOPCNT(Value* a) { return POPCNT(VMOVMSK(a)); }
 
     //////////////////////////////////////////////////////////////////////////
+    /// @brief Float / Fixed-point conversions
+    //////////////////////////////////////////////////////////////////////////
+    Value* Builder::VCVT_F32_FIXED_SI(Value*             vFloat,
+                                      uint32_t           numIntBits,
+                                      uint32_t           numFracBits,
+                                      const llvm::Twine& name)
+    {
+        SWR_ASSERT((numIntBits + numFracBits) <= 32, "Can only handle 32-bit fixed-point values");
+        Value* fixed = nullptr;
+        {
+            // Do round to nearest int on fractional bits first
+            // Not entirely perfect for negative numbers, but close enough
+            vFloat = VROUND(FMUL(vFloat, VIMMED1(float(1 << numFracBits))),
+                            C(_MM_FROUND_TO_NEAREST_INT));
+            vFloat = FMUL(vFloat, VIMMED1(1.0f / float(1 << numFracBits)));
+
+            // TODO: Handle INF, NAN, overflow / underflow, etc.
+
+            Value* vSgn      = FCMP_OLT(vFloat, VIMMED1(0.0f));
+            Value* vFloatInt = BITCAST(vFloat, mSimdInt32Ty);
+            Value* vFixed    = AND(vFloatInt, VIMMED1((1 << 23) - 1));
+            vFixed           = OR(vFixed, VIMMED1(1 << 23));
+            vFixed           = SELECT(vSgn, NEG(vFixed), vFixed);
+
+            Value* vExp = LSHR(SHL(vFloatInt, VIMMED1(1)), VIMMED1(24));
+            vExp        = SUB(vExp, VIMMED1(127));
+
+            Value* vExtraBits = SUB(VIMMED1(23 - numFracBits), vExp);
+
+            fixed = ASHR(vFixed, vExtraBits, name);
+        }
+
+        return fixed;
+    }
+
+    Value* Builder::VCVT_FIXED_SI_F32(Value*             vFixed,
+                                      uint32_t           numIntBits,
+                                      uint32_t           numFracBits,
+                                      const llvm::Twine& name)
+    {
+        SWR_ASSERT((numIntBits + numFracBits) <= 32, "Can only handle 32-bit fixed-point values");
+        uint32_t extraBits = 32 - numIntBits - numFracBits;
+        if (numIntBits && extraBits)
+        {
+            // Sign extend
+            Value* shftAmt = VIMMED1(extraBits);
+            vFixed         = ASHR(SHL(vFixed, shftAmt), shftAmt);
+        }
+
+        Value* fVal  = VIMMED1(0.0f);
+        Value* fFrac = VIMMED1(0.0f);
+        if (numIntBits)
+        {
+            fVal = SI_TO_FP(ASHR(vFixed, VIMMED1(numFracBits)), mSimdFP32Ty, name);
+        }
+
+        if (numFracBits)
+        {
+            fFrac = UI_TO_FP(AND(vFixed, VIMMED1((1 << numFracBits) - 1)), mSimdFP32Ty);
+            fFrac = FDIV(fFrac, VIMMED1(float(1 << numFracBits)), name);
+        }
+
+        return FADD(fVal, fFrac, name);
+    }
+
+    Value* Builder::VCVT_F32_FIXED_UI(Value*             vFloat,
+                                      uint32_t           numIntBits,
+                                      uint32_t           numFracBits,
+                                      const llvm::Twine& name)
+    {
+        SWR_ASSERT((numIntBits + numFracBits) <= 32, "Can only handle 32-bit fixed-point values");
+        Value* fixed = nullptr;
+        // KNOB_SIM_FAST_MATH?  Below works correctly from a precision
+        // standpoint...
+        {
+            fixed = FP_TO_UI(VROUND(FMUL(vFloat, VIMMED1(float(1 << numFracBits))),
+                                    C(_MM_FROUND_TO_NEAREST_INT)),
+                             mSimdInt32Ty);
+        }
+        return fixed;
+    }
+
+    Value* Builder::VCVT_FIXED_UI_F32(Value*             vFixed,
+                                      uint32_t           numIntBits,
+                                      uint32_t           numFracBits,
+                                      const llvm::Twine& name)
+    {
+        SWR_ASSERT((numIntBits + numFracBits) <= 32, "Can only handle 32-bit fixed-point values");
+        uint32_t extraBits = 32 - numIntBits - numFracBits;
+        if (numIntBits && extraBits)
+        {
+            // Sign extend
+            Value* shftAmt = VIMMED1(extraBits);
+            vFixed         = ASHR(SHL(vFixed, shftAmt), shftAmt);
+        }
+
+        Value* fVal  = VIMMED1(0.0f);
+        Value* fFrac = VIMMED1(0.0f);
+        if (numIntBits)
+        {
+            fVal = UI_TO_FP(LSHR(vFixed, VIMMED1(numFracBits)), mSimdFP32Ty, name);
+        }
+
+        if (numFracBits)
+        {
+            fFrac = UI_TO_FP(AND(vFixed, VIMMED1((1 << numFracBits) - 1)), mSimdFP32Ty);
+            fFrac = FDIV(fFrac, VIMMED1(float(1 << numFracBits)), name);
+        }
+
+        return FADD(fVal, fFrac, name);
+    }
+
+    //////////////////////////////////////////////////////////////////////////
     /// @brief C functions called by LLVM IR
     //////////////////////////////////////////////////////////////////////////
 
@@ -815,7 +940,11 @@ namespace SwrJit
 
             FunctionType* pFuncTy = FunctionType::get(Type::getVoidTy(JM()->mContext), args, false);
             Function*     pFunc   = cast<Function>(
+#if LLVM_VERSION_MAJOR >= 9
+                JM()->mpCurrentModule->getOrInsertFunction("BucketManager_StartBucket", pFuncTy).getCallee());
+#else
                 JM()->mpCurrentModule->getOrInsertFunction("BucketManager_StartBucket", pFuncTy));
+#endif
             if (sys::DynamicLibrary::SearchForAddressOfSymbol("BucketManager_StartBucket") ==
                 nullptr)
             {
@@ -840,7 +969,11 @@ namespace SwrJit
 
             FunctionType* pFuncTy = FunctionType::get(Type::getVoidTy(JM()->mContext), args, false);
             Function*     pFunc   = cast<Function>(
+#if LLVM_VERSION_MAJOR >=9
+                JM()->mpCurrentModule->getOrInsertFunction("BucketManager_StopBucket", pFuncTy).getCallee());
+#else
                 JM()->mpCurrentModule->getOrInsertFunction("BucketManager_StopBucket", pFuncTy));
+#endif
             if (sys::DynamicLibrary::SearchForAddressOfSymbol("BucketManager_StopBucket") ==
                 nullptr)
             {

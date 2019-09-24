@@ -150,7 +150,8 @@ radeon_drm_cs_create(struct radeon_winsys_ctx *ctx,
                      enum ring_type ring_type,
                      void (*flush)(void *ctx, unsigned flags,
                                    struct pipe_fence_handle **fence),
-                     void *flush_ctx)
+                     void *flush_ctx,
+                     bool stop_exec_on_failure)
 {
     struct radeon_drm_winsys *ws = (struct radeon_drm_winsys*)ctx;
     struct radeon_drm_cs *cs;
@@ -751,7 +752,9 @@ radeon_cs_create_fence(struct radeon_cmdbuf *rcs)
 
     /* Create a fence, which is a dummy BO. */
     fence = cs->ws->base.buffer_create(&cs->ws->base, 1, 1,
-                                       RADEON_DOMAIN_GTT, RADEON_FLAG_NO_SUBALLOC);
+                                       RADEON_DOMAIN_GTT,
+                                       RADEON_FLAG_NO_SUBALLOC
+                                       | RADEON_FLAG_NO_INTERPROCESS_SHARING);
     if (!fence)
        return NULL;
 
