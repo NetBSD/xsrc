@@ -33,6 +33,8 @@
 #include "main/macros.h"
 #include "main/state.h"
 
+#include "genX_boilerplate.h"
+
 #include "brw_context.h"
 #include "brw_draw.h"
 #include "brw_multisample_state.h"
@@ -56,100 +58,6 @@
 #include "main/viewport.h"
 #include "util/half_float.h"
 
-UNUSED static void *
-emit_dwords(struct brw_context *brw, unsigned n)
-{
-   intel_batchbuffer_begin(brw, n);
-   uint32_t *map = brw->batch.map_next;
-   brw->batch.map_next += n;
-   intel_batchbuffer_advance(brw);
-   return map;
-}
-
-struct brw_address {
-   struct brw_bo *bo;
-   unsigned reloc_flags;
-   uint32_t offset;
-};
-
-#define __gen_address_type struct brw_address
-#define __gen_user_data struct brw_context
-
-static uint64_t
-__gen_combine_address(struct brw_context *brw, void *location,
-                      struct brw_address address, uint32_t delta)
-{
-   struct intel_batchbuffer *batch = &brw->batch;
-   uint32_t offset;
-
-   if (address.bo == NULL) {
-      return address.offset + delta;
-   } else {
-      if (GEN_GEN < 6 && brw_ptr_in_state_buffer(batch, location)) {
-         offset = (char *) location - (char *) brw->batch.state.map;
-         return brw_state_reloc(batch, offset, address.bo,
-                                address.offset + delta,
-                                address.reloc_flags);
-      }
-
-      assert(!brw_ptr_in_state_buffer(batch, location));
-
-      offset = (char *) location - (char *) brw->batch.batch.map;
-      return brw_batch_reloc(batch, offset, address.bo,
-                             address.offset + delta,
-                             address.reloc_flags);
-   }
-}
-
-UNUSED static struct brw_address
-rw_bo(struct brw_bo *bo, uint32_t offset)
-{
-   return (struct brw_address) {
-            .bo = bo,
-            .offset = offset,
-            .reloc_flags = RELOC_WRITE,
-   };
-}
-
-static struct brw_address
-ro_bo(struct brw_bo *bo, uint32_t offset)
-{
-   return (struct brw_address) {
-            .bo = bo,
-            .offset = offset,
-   };
-}
-
-static struct brw_address
-rw_32_bo(struct brw_bo *bo, uint32_t offset)
-{
-   return (struct brw_address) {
-            .bo = bo,
-            .offset = offset,
-            .reloc_flags = RELOC_WRITE | RELOC_32BIT,
-   };
-}
-
-static struct brw_address
-ro_32_bo(struct brw_bo *bo, uint32_t offset)
-{
-   return (struct brw_address) {
-            .bo = bo,
-            .offset = offset,
-            .reloc_flags = RELOC_32BIT,
-   };
-}
-
-UNUSED static struct brw_address
-ggtt_bo(struct brw_bo *bo, uint32_t offset)
-{
-   return (struct brw_address) {
-            .bo = bo,
-            .offset = offset,
-            .reloc_flags = RELOC_WRITE | RELOC_NEEDS_GGTT,
-   };
-}
-
 #if GEN_GEN == 4
 static struct brw_address
 KSP(struct brw_context *brw, uint32_t offset)
@@ -164,38 +72,36 @@ KSP(UNUSED struct brw_context *brw, uint32_t offset)
 }
 #endif
 
-#include "genxml/genX_pack.h"
+#if GEN_GEN >= 7
+MAYBE_UNUSED static void
+emit_lrm(struct brw_context *brw, uint32_t reg, struct brw_address addr)
+{
+   brw_batch_emit(brw, GENX(MI_LOAD_REGISTER_MEM), lrm) {
+      lrm.RegisterAddress  = reg;
+      lrm.MemoryAddress    = addr;
+   }
+}
+#endif
 
-#define _brw_cmd_length(cmd) cmd ## _length
-#define _brw_cmd_length_bias(cmd) cmd ## _length_bias
-#define _brw_cmd_header(cmd) cmd ## _header
-#define _brw_cmd_pack(cmd) cmd ## _pack
+MAYBE_UNUSED static void
+emit_lri(struct brw_context *brw, uint32_t reg, uint32_t imm)
+{
+   brw_batch_emit(brw, GENX(MI_LOAD_REGISTER_IMM), lri) {
+      lri.RegisterOffset   = reg;
+      lri.DataDWord        = imm;
+   }
+}
 
-#define brw_batch_emit(brw, cmd, name)                  \
-   for (struct cmd name = { _brw_cmd_header(cmd) },     \
-        *_dst = emit_dwords(brw, _brw_cmd_length(cmd)); \
-        __builtin_expect(_dst != NULL, 1);              \
-        _brw_cmd_pack(cmd)(brw, (void *)_dst, &name),   \
-        _dst = NULL)
-
-#define brw_batch_emitn(brw, cmd, n, ...) ({           \
-      uint32_t *_dw = emit_dwords(brw, n);             \
-      struct cmd template = {                          \
-         _brw_cmd_header(cmd),                         \
-         .DWordLength = n - _brw_cmd_length_bias(cmd), \
-         __VA_ARGS__                                   \
-      };                                               \
-      _brw_cmd_pack(cmd)(brw, _dw, &template);         \
-      _dw + 1; /* Array starts at dw[1] */             \
-   })
-
-#define brw_state_emit(brw, cmd, align, offset, name)              \
-   for (struct cmd name = {},                                      \
-        *_dst = brw_state_batch(brw, _brw_cmd_length(cmd) * 4,     \
-                                align, offset);                    \
-        __builtin_expect(_dst != NULL, 1);                         \
-        _brw_cmd_pack(cmd)(brw, (void *)_dst, &name),              \
-        _dst = NULL)
+#if GEN_IS_HASWELL || GEN_GEN >= 8
+MAYBE_UNUSED static void
+emit_lrr(struct brw_context *brw, uint32_t dst, uint32_t src)
+{
+   brw_batch_emit(brw, GENX(MI_LOAD_REGISTER_REG), lrr) {
+      lrr.SourceRegisterAddress        = src;
+      lrr.DestinationRegisterAddress   = dst;
+   }
+}
+#endif
 
 /**
  * Polygon stipple packet
@@ -363,15 +269,15 @@ genX(emit_vertex_buffer_state)(struct brw_context *brw,
 #endif
 
 #if GEN_GEN == 11
-      .VertexBufferMOCS = ICL_MOCS_WB,
+      .MOCS = ICL_MOCS_WB,
 #elif GEN_GEN == 10
-      .VertexBufferMOCS = CNL_MOCS_WB,
+      .MOCS = CNL_MOCS_WB,
 #elif GEN_GEN == 9
-      .VertexBufferMOCS = SKL_MOCS_WB,
+      .MOCS = SKL_MOCS_WB,
 #elif GEN_GEN == 8
-      .VertexBufferMOCS = BDW_MOCS_WB,
+      .MOCS = BDW_MOCS_WB,
 #elif GEN_GEN == 7
-      .VertexBufferMOCS = GEN7_MOCS_L3,
+      .MOCS = GEN7_MOCS_L3,
 #endif
    };
 
@@ -499,11 +405,13 @@ pinned_bo_high_bits(struct brw_bo *bo)
  * In the relocation world, we have no idea what the addresses will be, so
  * we can't apply this workaround.  Instead, we tell the kernel to move it
  * to the low 4GB regardless.
+ *
+ * This HW issue is gone on Gen11+.
  */
 static void
 vf_invalidate_for_vb_48bit_transitions(struct brw_context *brw)
 {
-#if GEN_GEN >= 8
+#if GEN_GEN >= 8 && GEN_GEN < 11
    bool need_invalidate = false;
 
    for (unsigned i = 0; i < brw->vb.nr_buffers; i++) {
@@ -633,7 +541,7 @@ genX(emit_vertices)(struct brw_context *brw)
    for (unsigned i = 0; i < brw->vb.nr_enabled; i++) {
       struct brw_vertex_element *input = brw->vb.enabled[i];
       const struct gl_array_attributes *glattrib = input->glattrib;
-      uint32_t format = brw_get_vertex_surface_type(brw, glattrib);
+      uint32_t format = brw_get_vertex_surface_type(brw, &glattrib->Format);
 
       if (uploads_needed(format, input->is_dual_slot) > 1)
          nr_elements++;
@@ -726,7 +634,7 @@ genX(emit_vertices)(struct brw_context *brw)
    for (i = 0; i < brw->vb.nr_enabled; i++) {
       const struct brw_vertex_element *input = brw->vb.enabled[i];
       const struct gl_array_attributes *glattrib = input->glattrib;
-      uint32_t format = brw_get_vertex_surface_type(brw, glattrib);
+      uint32_t format = brw_get_vertex_surface_type(brw, &glattrib->Format);
       uint32_t comp0 = VFCOMP_STORE_SRC;
       uint32_t comp1 = VFCOMP_STORE_SRC;
       uint32_t comp2 = VFCOMP_STORE_SRC;
@@ -769,16 +677,16 @@ genX(emit_vertices)(struct brw_context *brw)
 
          const struct gl_array_attributes *glattrib = input->glattrib;
          const int size = (GEN_GEN < 8 && is_passthru_format(format)) ?
-            upload_format_size(upload_format) : glattrib->Size;
+            upload_format_size(upload_format) : glattrib->Format.Size;
 
          switch (size) {
             case 0: comp0 = VFCOMP_STORE_0;
             case 1: comp1 = VFCOMP_STORE_0;
             case 2: comp2 = VFCOMP_STORE_0;
             case 3:
-               if (GEN_GEN >= 8 && glattrib->Doubles) {
+               if (GEN_GEN >= 8 && glattrib->Format.Doubles) {
                   comp3 = VFCOMP_STORE_0;
-               } else if (glattrib->Integer) {
+               } else if (glattrib->Format.Integer) {
                   comp3 = VFCOMP_STORE_1_INT;
                } else {
                   comp3 = VFCOMP_STORE_1_FP;
@@ -803,7 +711,7 @@ genX(emit_vertices)(struct brw_context *brw)
           *     to be specified as VFCOMP_STORE_0 in order to output a 256-bit
           *     vertex element."
           */
-         if (glattrib->Doubles && !input->is_dual_slot) {
+         if (glattrib->Format.Doubles && !input->is_dual_slot) {
             /* Store vertex elements which correspond to double and dvec2 vertex
              * shader inputs as 128-bit vertex elements, instead of 256-bits.
              */
@@ -890,7 +798,7 @@ genX(emit_vertices)(struct brw_context *brw)
 #if GEN_GEN >= 6
    if (gen6_edgeflag_input) {
       const struct gl_array_attributes *glattrib = gen6_edgeflag_input->glattrib;
-      const uint32_t format = brw_get_vertex_surface_type(brw, glattrib);
+      const uint32_t format = brw_get_vertex_surface_type(brw, &glattrib->Format);
 
       struct GENX(VERTEX_ELEMENT_STATE) elem_state = {
          .Valid = true,
@@ -979,7 +887,7 @@ genX(emit_index_buffer)(struct brw_context *brw)
        */
       ib.BufferStartingAddress = ro_32_bo(brw->ib.bo, 0);
 #if GEN_GEN >= 8
-      ib.IndexBufferMOCS = GEN_GEN >= 9 ? SKL_MOCS_WB : BDW_MOCS_WB;
+      ib.MOCS = GEN_GEN >= 9 ? SKL_MOCS_WB : BDW_MOCS_WB;
       ib.BufferSize = brw->ib.size;
 #else
       ib.BufferEndingAddress = ro_bo(brw->ib.bo, brw->ib.size - 1);
@@ -1019,6 +927,22 @@ const struct brw_tracked_state genX(cut_index) = {
    .emit = genX(upload_cut_index),
 };
 #endif
+
+static void
+genX(upload_vf_statistics)(struct brw_context *brw)
+{
+   brw_batch_emit(brw, GENX(3DSTATE_VF_STATISTICS), vf) {
+      vf.StatisticsEnable = true;
+   }
+}
+
+const struct brw_tracked_state genX(vf_statistics) = {
+   .dirty = {
+      .mesa  = 0,
+      .brw   = BRW_NEW_BLORP | BRW_NEW_CONTEXT,
+   },
+   .emit = genX(upload_vf_statistics),
+};
 
 #if GEN_GEN >= 6
 /**
@@ -2018,7 +1942,8 @@ genX(upload_wm)(struct brw_context *brw)
       if (wm_prog_data->base.use_alt_mode)
          wm.FloatingPointMode = FLOATING_POINT_MODE_Alternate;
 
-      wm.SamplerCount = GEN_GEN == 5 ?
+      /* WA_1606682166 */
+      wm.SamplerCount = (GEN_GEN == 5 || GEN_GEN == 11) ?
          0 : DIV_ROUND_UP(stage_state->sampler_count, 4);
 
       wm.BindingTableEntryCount =
@@ -2180,7 +2105,10 @@ static const struct brw_tracked_state genX(wm_state) = {
 
 #define INIT_THREAD_DISPATCH_FIELDS(pkt, prefix) \
    pkt.KernelStartPointer = KSP(brw, stage_state->prog_offset);           \
+   /* WA_1606682166 */                                                    \
    pkt.SamplerCount       =                                               \
+      GEN_GEN == 11 ?                                                     \
+      0 :                                                                 \
       DIV_ROUND_UP(CLAMP(stage_state->sampler_count, 0, 16), 4);          \
    /* Gen 11 workarounds table #2056 WABTPPrefetchDisable suggests to     \
     * disable prefetching of binding tables in A0 and B0 steppings.       \
@@ -3307,13 +3235,13 @@ genX(upload_push_constant_packets)(struct brw_context *brw)
 
                if (binding->BufferObject == ctx->Shared->NullBufferObj) {
                   static unsigned msg_id = 0;
-                  _mesa_gl_debug(ctx, &msg_id, MESA_DEBUG_SOURCE_API,
-                                 MESA_DEBUG_TYPE_UNDEFINED,
-                                 MESA_DEBUG_SEVERITY_HIGH,
-                                 "UBO %d unbound, %s shader uniform data "
-                                 "will be undefined.",
-                                 range->block,
-                                 _mesa_shader_stage_to_string(stage));
+                  _mesa_gl_debugf(ctx, &msg_id, MESA_DEBUG_SOURCE_API,
+                                  MESA_DEBUG_TYPE_UNDEFINED,
+                                  MESA_DEBUG_SEVERITY_HIGH,
+                                  "UBO %d unbound, %s shader uniform data "
+                                  "will be undefined.",
+                                  range->block,
+                                  _mesa_shader_stage_to_string(stage));
                   continue;
                }
 
@@ -3857,7 +3785,7 @@ genX(upload_3dstate_so_buffers)(struct brw_context *brw)
          sob.SOBufferEnable = true;
          sob.StreamOffsetWriteEnable = true;
          sob.StreamOutputBufferOffsetAddressEnable = true;
-         sob.SOBufferMOCS = mocs_wb;
+         sob.MOCS = mocs_wb;
 
          sob.SurfaceSize = MAX2(xfb_obj->Size[i] / 4, 1) - 1;
          sob.StreamOutputBufferOffsetAddress =
@@ -4011,8 +3939,13 @@ genX(upload_ps)(struct brw_context *brw)
        */
       ps.VectorMaskEnable = GEN_GEN >= 8;
 
-      ps.SamplerCount =
-         DIV_ROUND_UP(CLAMP(stage_state->sampler_count, 0, 16), 4);
+      /* WA_1606682166:
+       * "Incorrect TDL's SSP address shift in SARB for 16:6 & 18:8 modes.
+       * Disable the Sampler state prefetch functionality in the SARB by
+       * programming 0xB000[30] to '1'."
+       */
+      ps.SamplerCount = GEN_GEN == 11 ?
+         0 : DIV_ROUND_UP(CLAMP(stage_state->sampler_count, 0, 16), 4);
 
       /* BRW_NEW_FS_PROG_DATA */
       /* Gen 11 workarounds table #2056 WABTPPrefetchDisable suggests to disable
@@ -4552,6 +4485,107 @@ static const struct brw_tracked_state genX(cs_state) = {
    },
    .emit = genX(upload_cs_state)
 };
+
+#define GPGPU_DISPATCHDIMX 0x2500
+#define GPGPU_DISPATCHDIMY 0x2504
+#define GPGPU_DISPATCHDIMZ 0x2508
+
+#define MI_PREDICATE_SRC0  0x2400
+#define MI_PREDICATE_SRC1  0x2408
+
+static void
+prepare_indirect_gpgpu_walker(struct brw_context *brw)
+{
+   GLintptr indirect_offset = brw->compute.num_work_groups_offset;
+   struct brw_bo *bo = brw->compute.num_work_groups_bo;
+
+   emit_lrm(brw, GPGPU_DISPATCHDIMX, ro_bo(bo, indirect_offset + 0));
+   emit_lrm(brw, GPGPU_DISPATCHDIMY, ro_bo(bo, indirect_offset + 4));
+   emit_lrm(brw, GPGPU_DISPATCHDIMZ, ro_bo(bo, indirect_offset + 8));
+
+#if GEN_GEN <= 7
+   /* Clear upper 32-bits of SRC0 and all 64-bits of SRC1 */
+   emit_lri(brw, MI_PREDICATE_SRC0 + 4, 0);
+   emit_lri(brw, MI_PREDICATE_SRC1    , 0);
+   emit_lri(brw, MI_PREDICATE_SRC1 + 4, 0);
+
+   /* Load compute_dispatch_indirect_x_size into SRC0 */
+   emit_lrm(brw, MI_PREDICATE_SRC0, ro_bo(bo, indirect_offset + 0));
+
+   /* predicate = (compute_dispatch_indirect_x_size == 0); */
+   brw_batch_emit(brw, GENX(MI_PREDICATE), mip) {
+      mip.LoadOperation    = LOAD_LOAD;
+      mip.CombineOperation = COMBINE_SET;
+      mip.CompareOperation = COMPARE_SRCS_EQUAL;
+   }
+
+   /* Load compute_dispatch_indirect_y_size into SRC0 */
+   emit_lrm(brw, MI_PREDICATE_SRC0, ro_bo(bo, indirect_offset + 4));
+
+   /* predicate |= (compute_dispatch_indirect_y_size == 0); */
+   brw_batch_emit(brw, GENX(MI_PREDICATE), mip) {
+      mip.LoadOperation    = LOAD_LOAD;
+      mip.CombineOperation = COMBINE_OR;
+      mip.CompareOperation = COMPARE_SRCS_EQUAL;
+   }
+
+   /* Load compute_dispatch_indirect_z_size into SRC0 */
+   emit_lrm(brw, MI_PREDICATE_SRC0, ro_bo(bo, indirect_offset + 8));
+
+   /* predicate |= (compute_dispatch_indirect_z_size == 0); */
+   brw_batch_emit(brw, GENX(MI_PREDICATE), mip) {
+      mip.LoadOperation    = LOAD_LOAD;
+      mip.CombineOperation = COMBINE_OR;
+      mip.CompareOperation = COMPARE_SRCS_EQUAL;
+   }
+
+   /* predicate = !predicate; */
+#define COMPARE_FALSE                           1
+   brw_batch_emit(brw, GENX(MI_PREDICATE), mip) {
+      mip.LoadOperation    = LOAD_LOADINV;
+      mip.CombineOperation = COMBINE_OR;
+      mip.CompareOperation = COMPARE_FALSE;
+   }
+#endif
+}
+
+static void
+genX(emit_gpgpu_walker)(struct brw_context *brw)
+{
+   const struct brw_cs_prog_data *prog_data =
+      brw_cs_prog_data(brw->cs.base.prog_data);
+
+   const GLuint *num_groups = brw->compute.num_work_groups;
+
+   bool indirect = brw->compute.num_work_groups_bo != NULL;
+   if (indirect)
+      prepare_indirect_gpgpu_walker(brw);
+
+   const unsigned simd_size = prog_data->simd_size;
+   unsigned group_size = prog_data->local_size[0] *
+      prog_data->local_size[1] * prog_data->local_size[2];
+
+   uint32_t right_mask = 0xffffffffu >> (32 - simd_size);
+   const unsigned right_non_aligned = group_size & (simd_size - 1);
+   if (right_non_aligned != 0)
+      right_mask >>= (simd_size - right_non_aligned);
+
+   brw_batch_emit(brw, GENX(GPGPU_WALKER), ggw) {
+      ggw.IndirectParameterEnable      = indirect;
+      ggw.PredicateEnable              = GEN_GEN <= 7 && indirect;
+      ggw.SIMDSize                     = prog_data->simd_size / 16;
+      ggw.ThreadDepthCounterMaximum    = 0;
+      ggw.ThreadHeightCounterMaximum   = 0;
+      ggw.ThreadWidthCounterMaximum    = prog_data->threads - 1;
+      ggw.ThreadGroupIDXDimension      = num_groups[0];
+      ggw.ThreadGroupIDYDimension      = num_groups[1];
+      ggw.ThreadGroupIDZDimension      = num_groups[2];
+      ggw.RightExecutionMask           = right_mask;
+      ggw.BottomExecutionMask          = 0xffffffff;
+   }
+
+   brw_batch_emit(brw, GENX(MEDIA_STATE_FLUSH), msf);
+}
 
 #endif
 
@@ -5622,6 +5656,8 @@ genX(init_atoms)(struct brw_context *brw)
 #if GEN_GEN < 6
    static const struct brw_tracked_state *render_atoms[] =
    {
+      &genX(vf_statistics),
+
       /* Once all the programs are done, we know how large urb entry
        * sizes need to be and can decide if we need to change the urb
        * layout.
@@ -5678,6 +5714,8 @@ genX(init_atoms)(struct brw_context *brw)
 #elif GEN_GEN == 6
    static const struct brw_tracked_state *render_atoms[] =
    {
+      &genX(vf_statistics),
+
       &genX(sf_clip_viewport),
 
       /* Command packets: */
@@ -5742,6 +5780,8 @@ genX(init_atoms)(struct brw_context *brw)
 #elif GEN_GEN == 7
    static const struct brw_tracked_state *render_atoms[] =
    {
+      &genX(vf_statistics),
+
       /* Command packets: */
 
       &genX(cc_vp),
@@ -5832,6 +5872,8 @@ genX(init_atoms)(struct brw_context *brw)
 #elif GEN_GEN >= 8
    static const struct brw_tracked_state *render_atoms[] =
    {
+      &genX(vf_statistics),
+
       &genX(cc_vp),
       &genX(sf_clip_viewport),
 
@@ -5946,5 +5988,6 @@ genX(init_atoms)(struct brw_context *brw)
                            compute_atoms, ARRAY_SIZE(compute_atoms));
 
    brw->vtbl.emit_mi_report_perf_count = genX(emit_mi_report_perf_count);
+   brw->vtbl.emit_compute_walker = genX(emit_gpgpu_walker);
 #endif
 }

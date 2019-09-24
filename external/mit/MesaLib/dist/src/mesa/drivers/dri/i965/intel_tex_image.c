@@ -14,6 +14,7 @@
 #include "main/texobj.h"
 #include "main/teximage.h"
 #include "main/texstore.h"
+#include "main/glthread.h"
 
 #include "drivers/common/meta.h"
 
@@ -23,7 +24,6 @@
 #include "intel_tex.h"
 #include "intel_fbo.h"
 #include "intel_image.h"
-#include "intel_tiled_memcpy.h"
 #include "brw_context.h"
 #include "brw_blorp.h"
 
@@ -192,7 +192,7 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
    struct brw_bo *bo;
 
    uint32_t cpp;
-   mem_copy_fn_type copy_type;
+   isl_memcpy_type copy_type;
 
    /* This fastpath is restricted to specific texture types:
     * a 2D BGRA, RGBA, L8 or A8 texture. It could be generalized to support
@@ -222,8 +222,9 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
    if (ctx->_ImageTransferState)
       return false;
 
-   if (!intel_get_memcpy_type(texImage->TexFormat, format, type, &copy_type,
-                              &cpp))
+   copy_type = intel_miptree_get_memcpy_type(texImage->TexFormat, format, type,
+                                             &cpp);
+   if (copy_type == ISL_MEMCPY_INVALID)
       return false;
 
    /* If this is a nontrivial texture view, let another path handle it instead. */
@@ -290,7 +291,7 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
    xoffset += level_x;
    yoffset += level_y;
 
-   linear_to_tiled(
+   isl_memcpy_linear_to_tiled(
       xoffset * cpp, (xoffset + width) * cpp,
       yoffset, yoffset + height,
       map,
@@ -441,6 +442,8 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    struct gl_texture_image *texImage;
    mesa_format texFormat = MESA_FORMAT_NONE;
    GLenum internal_format = 0;
+
+   _mesa_glthread_finish(ctx);
 
    texObj = _mesa_get_current_tex_object(ctx, target);
 
@@ -614,16 +617,6 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
    if (image == NULL)
       return;
 
-   /* We support external textures only for EGLImages created with
-    * EGL_EXT_image_dma_buf_import. We may lift that restriction in the future.
-    */
-   if (target == GL_TEXTURE_EXTERNAL_OES && !image->dma_buf_imported) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-            "glEGLImageTargetTexture2DOES(external target is enabled only "
-               "for images created with EGL_EXT_image_dma_buf_import");
-      return;
-   }
-
    /* Disallow depth/stencil textures: we don't have a way to pass the
     * separate stencil miptree of a GL_DEPTH_STENCIL texture through.
     */
@@ -695,7 +688,7 @@ intel_gettexsubimage_tiled_memcpy(struct gl_context *ctx,
    struct brw_bo *bo;
 
    uint32_t cpp;
-   mem_copy_fn_type copy_type;
+   isl_memcpy_type copy_type;
 
    /* This fastpath is restricted to specific texture types:
     * a 2D BGRA, RGBA, L8 or A8 texture. It could be generalized to support
@@ -729,8 +722,9 @@ intel_gettexsubimage_tiled_memcpy(struct gl_context *ctx,
    if (texImage->_BaseFormat == GL_RGB)
       return false;
 
-   if (!intel_get_memcpy_type(texImage->TexFormat, format, type, &copy_type,
-                              &cpp))
+   copy_type = intel_miptree_get_memcpy_type(texImage->TexFormat, format, type,
+                                             &cpp);
+   if (copy_type == ISL_MEMCPY_INVALID)
       return false;
 
    /* If this is a nontrivial texture view, let another path handle it instead. */
@@ -794,7 +788,7 @@ intel_gettexsubimage_tiled_memcpy(struct gl_context *ctx,
    xoffset += level_x;
    yoffset += level_y;
 
-   tiled_to_linear(
+   isl_memcpy_tiled_to_linear(
       xoffset * cpp, (xoffset + width) * cpp,
       yoffset, yoffset + height,
       pixels,

@@ -67,33 +67,28 @@ check_array_data(struct gl_context *ctx, struct gl_vertex_array_object *vao,
                  GLuint attrib, GLuint j)
 {
    const struct gl_array_attributes *array = &vao->VertexAttrib[attrib];
-   if (array->Enabled) {
+   if (vao->Enabled & VERT_BIT(attrib)) {
       const struct gl_vertex_buffer_binding *binding =
          &vao->BufferBinding[array->BufferBindingIndex];
       struct gl_buffer_object *bo = binding->BufferObj;
       const void *data = array->Ptr;
       if (_mesa_is_bufferobj(bo)) {
-         if (!bo->Mappings[MAP_INTERNAL].Pointer) {
-            /* need to map now */
-            bo->Mappings[MAP_INTERNAL].Pointer =
-               ctx->Driver.MapBufferRange(ctx, 0, bo->Size,
-                                          GL_MAP_READ_BIT, bo, MAP_INTERNAL);
-         }
          data = ADD_POINTERS(_mesa_vertex_attrib_address(array, binding),
                              bo->Mappings[MAP_INTERNAL].Pointer);
       }
-      switch (array->Type) {
+      switch (array->Format.Type) {
       case GL_FLOAT:
          {
             GLfloat *f = (GLfloat *) ((GLubyte *) data + binding->Stride * j);
             GLint k;
-            for (k = 0; k < array->Size; k++) {
+            for (k = 0; k < array->Format.Size; k++) {
                if (IS_INF_OR_NAN(f[k]) || f[k] >= 1.0e20F || f[k] <= -1.0e10F) {
                   printf("Bad array data:\n");
                   printf("  Element[%u].%u = %f\n", j, k, f[k]);
                   printf("  Array %u at %p\n", attrib, (void *) array);
                   printf("  Type 0x%x, Size %d, Stride %d\n",
-                         array->Type, array->Size, binding->Stride);
+                         array->Format.Type, array->Format.Size,
+                         binding->Stride);
                   printf("  Address/offset %p in Buffer Object %u\n",
                          array->Ptr, bo->Name);
                   f[k] = 1.0F;  /* XXX replace the bad value! */
@@ -104,25 +99,6 @@ check_array_data(struct gl_context *ctx, struct gl_vertex_array_object *vao,
          break;
       default:
          ;
-      }
-   }
-}
-
-
-/**
- * Unmap the buffer object referenced by given array, if mapped.
- */
-static void
-unmap_array_buffer(struct gl_context *ctx, struct gl_vertex_array_object *vao,
-                   GLuint attrib)
-{
-   const struct gl_array_attributes *array = &vao->VertexAttrib[attrib];
-   if (array->Enabled) {
-      const struct gl_vertex_buffer_binding *binding =
-         &vao->BufferBinding[array->BufferBindingIndex];
-      struct gl_buffer_object *bo = binding->BufferObj;
-      if (_mesa_is_bufferobj(bo) && _mesa_bufferobj_mapped(bo, MAP_INTERNAL)) {
-         ctx->Driver.UnmapBuffer(ctx, bo, MAP_INTERNAL);
       }
    }
 }
@@ -155,17 +131,14 @@ check_draw_elements_data(struct gl_context *ctx, GLsizei count,
                          GLint basevertex)
 {
    struct gl_vertex_array_object *vao = ctx->Array.VAO;
-   const void *elemMap;
    GLint i;
    GLuint k;
 
-   if (_mesa_is_bufferobj(vao->IndexBufferObj)) {
-      elemMap = ctx->Driver.MapBufferRange(ctx, 0,
-                                           vao->IndexBufferObj->Size,
-                                           GL_MAP_READ_BIT,
-                                           vao->IndexBufferObj, MAP_INTERNAL);
-      elements = ADD_POINTERS(elements, elemMap);
-   }
+   _mesa_vao_map(ctx, vao, GL_MAP_READ_BIT);
+
+   if (_mesa_is_bufferobj(vao->IndexBufferObj))
+       elements =
+          ADD_POINTERS(vao->IndexBufferObj->Mappings[MAP_INTERNAL].Pointer, elements);
 
    for (i = 0; i < count; i++) {
       GLuint j;
@@ -191,13 +164,7 @@ check_draw_elements_data(struct gl_context *ctx, GLsizei count,
       }
    }
 
-   if (_mesa_is_bufferobj(vao->IndexBufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, vao->IndexBufferObj, MAP_INTERNAL);
-   }
-
-   for (k = 0; k < VERT_ATTRIB_MAX; k++) {
-      unmap_array_buffer(ctx, vao, k);
-   }
+   _mesa_vao_unmap(ctx, vao);
 }
 
 
@@ -225,7 +192,7 @@ skip_validated_draw(struct gl_context *ctx)
    case API_OPENGLES:
       /* For OpenGL ES, only draw if we have vertex positions
        */
-      if (!ctx->Array.VAO->VertexAttrib[VERT_ATTRIB_POS].Enabled)
+      if (!(ctx->Array.VAO->Enabled & VERT_BIT_POS))
          return true;
       break;
 
@@ -252,8 +219,7 @@ skip_validated_draw(struct gl_context *ctx)
          /* Draw if we have vertex positions (GL_VERTEX_ARRAY or generic
           * array [0]).
           */
-         return (!ctx->Array.VAO->VertexAttrib[VERT_ATTRIB_POS].Enabled &&
-                 !ctx->Array.VAO->VertexAttrib[VERT_ATTRIB_GENERIC0].Enabled);
+         return !(ctx->Array.VAO->Enabled & (VERT_BIT_POS|VERT_BIT_GENERIC0));
       }
       break;
 
@@ -272,36 +238,35 @@ static void
 print_draw_arrays(struct gl_context *ctx,
                   GLenum mode, GLint start, GLsizei count)
 {
-   const struct gl_vertex_array_object *vao = ctx->Array.VAO;
+   struct gl_vertex_array_object *vao = ctx->Array.VAO;
 
-   printf("_mesa_exec_DrawArrays(mode 0x%x, start %d, count %d):\n",
+   printf("_mesa_DrawArrays(mode 0x%x, start %d, count %d):\n",
           mode, start, count);
 
-   unsigned i;
-   for (i = 0; i < VERT_ATTRIB_MAX; ++i) {
+   _mesa_vao_map_arrays(ctx, vao, GL_MAP_READ_BIT);
+
+   GLbitfield mask = vao->Enabled;
+   while (mask) {
+      const gl_vert_attrib i = u_bit_scan(&mask);
       const struct gl_array_attributes *array = &vao->VertexAttrib[i];
-      if (!array->Enabled)
-         continue;
 
       const struct gl_vertex_buffer_binding *binding =
          &vao->BufferBinding[array->BufferBindingIndex];
       struct gl_buffer_object *bufObj = binding->BufferObj;
 
-      printf("attr %s: size %d stride %d  enabled %d  "
+      printf("attr %s: size %d stride %d  "
              "ptr %p  Bufobj %u\n",
              gl_vert_attrib_name((gl_vert_attrib) i),
-             array->Size, binding->Stride, array->Enabled,
+             array->Format.Size, binding->Stride,
              array->Ptr, bufObj->Name);
 
       if (_mesa_is_bufferobj(bufObj)) {
-         GLubyte *p = ctx->Driver.MapBufferRange(ctx, 0, bufObj->Size,
-                                                 GL_MAP_READ_BIT, bufObj,
-                                                 MAP_INTERNAL);
+         GLubyte *p = bufObj->Mappings[MAP_INTERNAL].Pointer;
          int offset = (int) (GLintptr)
             _mesa_vertex_attrib_address(array, binding);
 
          unsigned multiplier;
-         switch (array->Type) {
+         switch (array->Format.Type) {
          case GL_DOUBLE:
          case GL_INT64_ARB:
          case GL_UNSIGNED_INT64_ARB:
@@ -315,7 +280,7 @@ print_draw_arrays(struct gl_context *ctx,
          int *k = (int *) f;
          int i = 0;
          int n = (count - 1) * (binding->Stride / (4 * multiplier))
-           + array->Size;
+            + array->Format.Size;
          if (n > 32)
             n = 32;
          printf("  Data at offset %d:\n", offset);
@@ -327,9 +292,10 @@ print_draw_arrays(struct gl_context *ctx,
                printf("    float[%d] = 0x%08x %f\n", i, k[i], f[i]);
             i++;
          } while (i < n);
-         ctx->Driver.UnmapBuffer(ctx, bufObj, MAP_INTERNAL);
       }
    }
+
+   _mesa_vao_unmap_arrays(ctx, vao);
 }
 
 
@@ -538,8 +504,8 @@ _mesa_exec_EvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2)
 /**
  * Called from glDrawArrays when in immediate mode (not display list mode).
  */
-static void GLAPIENTRY
-_mesa_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
+void GLAPIENTRY
+_mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
 {
    GET_CURRENT_CONTEXT(ctx);
 
@@ -573,9 +539,9 @@ _mesa_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
  * Called from glDrawArraysInstanced when in immediate mode (not
  * display list mode).
  */
-static void GLAPIENTRY
-_mesa_exec_DrawArraysInstanced(GLenum mode, GLint start, GLsizei count,
-                               GLsizei numInstances)
+void GLAPIENTRY
+_mesa_DrawArraysInstanced(GLenum mode, GLint start, GLsizei count,
+                          GLsizei numInstances)
 {
    GET_CURRENT_CONTEXT(ctx);
 
@@ -859,10 +825,10 @@ _mesa_validated_drawrangeelements(struct gl_context *ctx, GLenum mode,
 /**
  * Called by glDrawRangeElementsBaseVertex() in immediate mode.
  */
-static void GLAPIENTRY
-_mesa_exec_DrawRangeElementsBaseVertex(GLenum mode, GLuint start, GLuint end,
-                                       GLsizei count, GLenum type,
-                                       const GLvoid * indices, GLint basevertex)
+void GLAPIENTRY
+_mesa_DrawRangeElementsBaseVertex(GLenum mode, GLuint start, GLuint end,
+                                  GLsizei count, GLenum type,
+                                  const GLvoid * indices, GLint basevertex)
 {
    static GLuint warnCount = 0;
    GLboolean index_bounds_valid = GL_TRUE;
@@ -958,9 +924,9 @@ _mesa_exec_DrawRangeElementsBaseVertex(GLenum mode, GLuint start, GLuint end,
 /**
  * Called by glDrawRangeElements() in immediate mode.
  */
-static void GLAPIENTRY
-_mesa_exec_DrawRangeElements(GLenum mode, GLuint start, GLuint end,
-                             GLsizei count, GLenum type, const GLvoid * indices)
+void GLAPIENTRY
+_mesa_DrawRangeElements(GLenum mode, GLuint start, GLuint end,
+                        GLsizei count, GLenum type, const GLvoid * indices)
 {
    if (MESA_VERBOSE & VERBOSE_DRAW) {
       GET_CURRENT_CONTEXT(ctx);
@@ -970,17 +936,17 @@ _mesa_exec_DrawRangeElements(GLenum mode, GLuint start, GLuint end,
                   _mesa_enum_to_string(type), indices);
    }
 
-   _mesa_exec_DrawRangeElementsBaseVertex(mode, start, end, count, type,
-                                          indices, 0);
+   _mesa_DrawRangeElementsBaseVertex(mode, start, end, count, type,
+                                     indices, 0);
 }
 
 
 /**
  * Called by glDrawElements() in immediate mode.
  */
-static void GLAPIENTRY
-_mesa_exec_DrawElements(GLenum mode, GLsizei count, GLenum type,
-                        const GLvoid * indices)
+void GLAPIENTRY
+_mesa_DrawElements(GLenum mode, GLsizei count, GLenum type,
+                   const GLvoid * indices)
 {
    GET_CURRENT_CONTEXT(ctx);
 
@@ -1009,9 +975,9 @@ _mesa_exec_DrawElements(GLenum mode, GLsizei count, GLenum type,
 /**
  * Called by glDrawElementsBaseVertex() in immediate mode.
  */
-static void GLAPIENTRY
-_mesa_exec_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type,
-                                  const GLvoid * indices, GLint basevertex)
+void GLAPIENTRY
+_mesa_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type,
+                             const GLvoid * indices, GLint basevertex)
 {
    GET_CURRENT_CONTEXT(ctx);
 
@@ -1321,10 +1287,9 @@ _mesa_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
 }
 
 
-static void GLAPIENTRY
-_mesa_exec_MultiDrawElements(GLenum mode,
-                             const GLsizei *count, GLenum type,
-                             const GLvoid * const *indices, GLsizei primcount)
+void GLAPIENTRY
+_mesa_MultiDrawElements(GLenum mode, const GLsizei *count, GLenum type,
+                        const GLvoid * const *indices, GLsizei primcount)
 {
    GET_CURRENT_CONTEXT(ctx);
 
@@ -1344,12 +1309,12 @@ _mesa_exec_MultiDrawElements(GLenum mode,
 }
 
 
-static void GLAPIENTRY
-_mesa_exec_MultiDrawElementsBaseVertex(GLenum mode,
-                                       const GLsizei *count, GLenum type,
-                                       const GLvoid * const *indices,
-                                       GLsizei primcount,
-                                       const GLsizei *basevertex)
+void GLAPIENTRY
+_mesa_MultiDrawElementsBaseVertex(GLenum mode,
+                                  const GLsizei *count, GLenum type,
+                                  const GLvoid * const *indices,
+                                  GLsizei primcount,
+                                  const GLsizei *basevertex)
 {
    GET_CURRENT_CONTEXT(ctx);
 
@@ -1444,8 +1409,8 @@ _mesa_draw_transform_feedback(struct gl_context *ctx, GLenum mode,
  * glVertexPointer, glColorPointer, etc.
  * Part of GL_ARB_transform_feedback2.
  */
-static void GLAPIENTRY
-_mesa_exec_DrawTransformFeedback(GLenum mode, GLuint name)
+void GLAPIENTRY
+_mesa_DrawTransformFeedback(GLenum mode, GLuint name)
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_transform_feedback_object *obj =
@@ -1997,15 +1962,15 @@ void
 _mesa_initialize_exec_dispatch(const struct gl_context *ctx,
                                struct _glapi_table *exec)
 {
-   SET_DrawArrays(exec, _mesa_exec_DrawArrays);
-   SET_DrawElements(exec, _mesa_exec_DrawElements);
+   SET_DrawArrays(exec, _mesa_DrawArrays);
+   SET_DrawElements(exec, _mesa_DrawElements);
 
    if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
-      SET_DrawRangeElements(exec, _mesa_exec_DrawRangeElements);
+      SET_DrawRangeElements(exec, _mesa_DrawRangeElements);
    }
 
    SET_MultiDrawArrays(exec, _mesa_exec_MultiDrawArrays);
-   SET_MultiDrawElementsEXT(exec, _mesa_exec_MultiDrawElements);
+   SET_MultiDrawElementsEXT(exec, _mesa_MultiDrawElements);
 
    if (ctx->API == API_OPENGL_COMPAT) {
       SET_Rectf(exec, _mesa_exec_Rectf);
@@ -2015,13 +1980,13 @@ _mesa_initialize_exec_dispatch(const struct gl_context *ctx,
 
    if (ctx->API != API_OPENGLES &&
        ctx->Extensions.ARB_draw_elements_base_vertex) {
-      SET_DrawElementsBaseVertex(exec, _mesa_exec_DrawElementsBaseVertex);
+      SET_DrawElementsBaseVertex(exec, _mesa_DrawElementsBaseVertex);
       SET_MultiDrawElementsBaseVertex(exec,
-                                      _mesa_exec_MultiDrawElementsBaseVertex);
+                                      _mesa_MultiDrawElementsBaseVertex);
 
       if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
          SET_DrawRangeElementsBaseVertex(exec,
-                                         _mesa_exec_DrawRangeElementsBaseVertex);
+                                         _mesa_DrawRangeElementsBaseVertex);
          SET_DrawElementsInstancedBaseVertex(exec,
                                              _mesa_exec_DrawElementsInstancedBaseVertex);
       }
@@ -2042,12 +2007,12 @@ _mesa_initialize_exec_dispatch(const struct gl_context *ctx,
    }
 
    if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
-      SET_DrawArraysInstancedARB(exec, _mesa_exec_DrawArraysInstanced);
+      SET_DrawArraysInstancedARB(exec, _mesa_DrawArraysInstanced);
       SET_DrawElementsInstancedARB(exec, _mesa_exec_DrawElementsInstanced);
    }
 
    if (_mesa_is_desktop_gl(ctx)) {
-      SET_DrawTransformFeedback(exec, _mesa_exec_DrawTransformFeedback);
+      SET_DrawTransformFeedback(exec, _mesa_DrawTransformFeedback);
       SET_DrawTransformFeedbackStream(exec,
                                       _mesa_exec_DrawTransformFeedbackStream);
       SET_DrawTransformFeedbackInstanced(exec,
@@ -2063,87 +2028,6 @@ _mesa_initialize_exec_dispatch(const struct gl_context *ctx,
    }
 }
 
-
-
-/**
- * The following functions are only used for OpenGL ES 1/2 support.
- * And some aren't even supported (yet) in ES 1/2.
- */
-
-
-void GLAPIENTRY
-_mesa_DrawArrays(GLenum mode, GLint first, GLsizei count)
-{
-   _mesa_exec_DrawArrays(mode, first, count);
-}
-
-
-void GLAPIENTRY
-_mesa_DrawArraysInstanced(GLenum mode, GLint first, GLsizei count,
-                          GLsizei primcount)
-{
-   _mesa_exec_DrawArraysInstanced(mode, first, count, primcount);
-}
-
-
-void GLAPIENTRY
-_mesa_DrawElements(GLenum mode, GLsizei count, GLenum type,
-                   const GLvoid *indices)
-{
-   _mesa_exec_DrawElements(mode, count, type, indices);
-}
-
-
-void GLAPIENTRY
-_mesa_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type,
-                             const GLvoid *indices, GLint basevertex)
-{
-   _mesa_exec_DrawElementsBaseVertex(mode, count, type, indices, basevertex);
-}
-
-
-void GLAPIENTRY
-_mesa_DrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count,
-                        GLenum type, const GLvoid * indices)
-{
-   _mesa_exec_DrawRangeElements(mode, start, end, count, type, indices);
-}
-
-
-void GLAPIENTRY
-_mesa_DrawRangeElementsBaseVertex(GLenum mode, GLuint start, GLuint end,
-                                  GLsizei count, GLenum type,
-                                  const GLvoid *indices, GLint basevertex)
-{
-   _mesa_exec_DrawRangeElementsBaseVertex(mode, start, end, count, type,
-                                          indices, basevertex);
-}
-
-
-void GLAPIENTRY
-_mesa_MultiDrawElementsEXT(GLenum mode, const GLsizei *count, GLenum type,
-                           const GLvoid ** indices, GLsizei primcount)
-{
-   _mesa_exec_MultiDrawElements(mode, count, type, indices, primcount);
-}
-
-
-void GLAPIENTRY
-_mesa_MultiDrawElementsBaseVertex(GLenum mode,
-                                  const GLsizei *count, GLenum type,
-                                  const GLvoid **indices, GLsizei primcount,
-                                  const GLint *basevertex)
-{
-   _mesa_exec_MultiDrawElementsBaseVertex(mode, count, type, indices,
-                                          primcount, basevertex);
-}
-
-
-void GLAPIENTRY
-_mesa_DrawTransformFeedback(GLenum mode, GLuint name)
-{
-   _mesa_exec_DrawTransformFeedback(mode, name);
-}
 
 
 /* GL_IBM_multimode_draw_arrays */

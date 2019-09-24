@@ -95,6 +95,37 @@ extern const struct brw_tracked_state gen7_urb;
 extern const struct brw_tracked_state gen8_pma_fix;
 extern const struct brw_tracked_state brw_cs_work_groups_surface;
 
+void gen4_emit_raw_pipe_control(struct brw_context *brw, uint32_t flags,
+                                struct brw_bo *bo, uint32_t offset,
+                                uint64_t imm);
+void gen45_emit_raw_pipe_control(struct brw_context *brw, uint32_t flags,
+                                 struct brw_bo *bo, uint32_t offset,
+                                 uint64_t imm);
+void gen5_emit_raw_pipe_control(struct brw_context *brw, uint32_t flags,
+                                struct brw_bo *bo, uint32_t offset,
+                                uint64_t imm);
+void gen6_emit_raw_pipe_control(struct brw_context *brw, uint32_t flags,
+                                struct brw_bo *bo, uint32_t offset,
+                                uint64_t imm);
+void gen7_emit_raw_pipe_control(struct brw_context *brw, uint32_t flags,
+                                struct brw_bo *bo, uint32_t offset,
+                                uint64_t imm);
+void gen75_emit_raw_pipe_control(struct brw_context *brw, uint32_t flags,
+                                 struct brw_bo *bo, uint32_t offset,
+                                 uint64_t imm);
+void gen8_emit_raw_pipe_control(struct brw_context *brw, uint32_t flags,
+                                struct brw_bo *bo, uint32_t offset,
+                                uint64_t imm);
+void gen9_emit_raw_pipe_control(struct brw_context *brw, uint32_t flags,
+                                struct brw_bo *bo, uint32_t offset,
+                                uint64_t imm);
+void gen10_emit_raw_pipe_control(struct brw_context *brw, uint32_t flags,
+                                 struct brw_bo *bo, uint32_t offset,
+                                 uint64_t imm);
+void gen11_emit_raw_pipe_control(struct brw_context *brw, uint32_t flags,
+                                 struct brw_bo *bo, uint32_t offset,
+                                 uint64_t imm);
+
 static inline bool
 brw_state_dirty(const struct brw_context *brw,
                 GLuint mesa_flags, uint64_t brw_flags)
@@ -128,7 +159,7 @@ void brw_disk_cache_write_compute_program(struct brw_context *brw);
 void brw_disk_cache_write_render_programs(struct brw_context *brw);
 
 /***********************************************************************
- * brw_state.c
+ * brw_state_upload.c
  */
 void brw_upload_render_state(struct brw_context *brw);
 void brw_render_state_finished(struct brw_context *brw);
@@ -138,6 +169,7 @@ void brw_init_state(struct brw_context *brw);
 void brw_destroy_state(struct brw_context *brw);
 void brw_emit_select_pipeline(struct brw_context *brw,
                               enum brw_pipeline pipeline);
+void brw_enable_obj_preemption(struct brw_context *brw, bool enable);
 
 static inline void
 brw_select_pipeline(struct brw_context *brw, enum brw_pipeline pipeline)

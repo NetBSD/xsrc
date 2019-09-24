@@ -97,6 +97,7 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.EXT_blend_func_separate = true;
    ctx->Extensions.EXT_blend_minmax = true;
    ctx->Extensions.EXT_draw_buffers2 = true;
+   ctx->Extensions.EXT_float_blend = true;
    ctx->Extensions.EXT_framebuffer_sRGB = true;
    ctx->Extensions.EXT_gpu_program_parameters = true;
    ctx->Extensions.EXT_packed_float = true;
@@ -104,6 +105,7 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.EXT_point_parameters = true;
    ctx->Extensions.EXT_provoking_vertex = true;
    ctx->Extensions.EXT_render_snorm = true;
+   ctx->Extensions.EXT_sRGB = true;
    ctx->Extensions.EXT_stencil_two_side = true;
    ctx->Extensions.EXT_texture_array = true;
    ctx->Extensions.EXT_texture_env_dot3 = true;
@@ -113,6 +115,7 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.EXT_texture_snorm = true;
    ctx->Extensions.EXT_texture_sRGB = true;
    ctx->Extensions.EXT_texture_sRGB_decode = true;
+   ctx->Extensions.EXT_texture_sRGB_R8 = true;
    ctx->Extensions.EXT_texture_swizzle = true;
    ctx->Extensions.EXT_texture_type_2_10_10_10_REV = true;
    ctx->Extensions.EXT_vertex_array_bgra = true;
@@ -232,7 +235,7 @@ intelInitExtensions(struct gl_context *ctx)
       if (ctx->API != API_OPENGL_COMPAT ||
           ctx->Const.AllowHigherCompatVersion) {
          ctx->Extensions.ARB_gpu_shader5 = true;
-         ctx->Extensions.ARB_gpu_shader_fp64 = devinfo->has_64bit_types;
+         ctx->Extensions.ARB_gpu_shader_fp64 = true;
       }
       ctx->Extensions.ARB_shader_atomic_counters = true;
       ctx->Extensions.ARB_shader_atomic_counter_ops = true;
@@ -247,7 +250,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ARB_texture_compression_bptc = true;
       ctx->Extensions.ARB_texture_view = true;
       ctx->Extensions.ARB_shader_storage_buffer_object = true;
-      ctx->Extensions.ARB_vertex_attrib_64bit = devinfo->has_64bit_types;
+      ctx->Extensions.ARB_vertex_attrib_64bit = true;
       ctx->Extensions.EXT_shader_samples_identical = true;
       ctx->Extensions.OES_primitive_bounding_box = true;
       ctx->Extensions.OES_texture_buffer = true;
@@ -263,6 +266,7 @@ intelInitExtensions(struct gl_context *ctx)
             ctx->Extensions.ARB_compute_shader = true;
             ctx->Extensions.ARB_ES3_1_compatibility =
                devinfo->gen >= 8 || devinfo->is_haswell;
+            ctx->Extensions.NV_compute_shader_derivatives = true;
          }
 
          if (can_do_predicate_writes(brw->screen)) {
@@ -289,18 +293,26 @@ intelInitExtensions(struct gl_context *ctx)
    }
 
    if (devinfo->gen >= 8 || devinfo->is_baytrail) {
-      /* For now, we only enable OES_copy_image on platforms that support
-       * ETC2 natively in hardware.  We would need more hacks to support it
-       * elsewhere. Same with OES_texture_view.
+      /* For now, we can't enable OES_texture_view on Gen 7 because of
+       * some piglit failures coming from
+       * piglit/tests/spec/arb_texture_view/rendering-formats.c that need
+       * investigation.
        */
-      ctx->Extensions.OES_copy_image = true;
       ctx->Extensions.OES_texture_view = true;
    }
 
+   if (devinfo->gen >= 7) {
+      /* We can safely enable OES_copy_image on Gen 7, since we emulate
+       * the ETC2 support using the shadow_miptree to store the
+       * compressed data.
+       */
+      ctx->Extensions.OES_copy_image = true;
+   }
+
    if (devinfo->gen >= 8) {
-      ctx->Extensions.ARB_gpu_shader_int64 = devinfo->has_64bit_types;
+      ctx->Extensions.ARB_gpu_shader_int64 = true;
       /* requires ARB_gpu_shader_int64 */
-      ctx->Extensions.ARB_shader_ballot = devinfo->has_64bit_types;
+      ctx->Extensions.ARB_shader_ballot = true;
       ctx->Extensions.ARB_ES3_2_compatibility = true;
    }
 
@@ -354,5 +366,6 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ARB_color_buffer_float = true;
 
    ctx->Extensions.EXT_texture_compression_s3tc = true;
+   ctx->Extensions.EXT_texture_compression_s3tc_srgb = true;
    ctx->Extensions.ANGLE_texture_compression_dxt = true;
 }
