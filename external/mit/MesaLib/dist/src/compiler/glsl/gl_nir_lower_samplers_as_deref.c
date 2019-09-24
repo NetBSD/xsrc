@@ -99,19 +99,16 @@ remove_struct_derefs_prep(nir_deref_instr **p, char **name,
 
       remove_struct_derefs_prep(&p[1], name, location, type);
 
-      *type = glsl_get_array_instance(*type, length);
+      *type = glsl_array_type(*type, length, glsl_get_explicit_stride(cur->type));
       break;
    }
 
    case nir_deref_type_struct: {
-      *location += glsl_get_record_location_offset(cur->type, next->strct.index);
+      *location += glsl_get_struct_location_offset(cur->type, next->strct.index);
       ralloc_asprintf_append(name, ".%s",
                              glsl_get_struct_elem_name(cur->type, next->strct.index));
 
       remove_struct_derefs_prep(&p[1], name, location, type);
-
-      /* skip over the struct type: */
-      *type = next->type;
       break;
    }
 
@@ -150,10 +147,20 @@ lower_deref(nir_builder *b, struct lower_samplers_as_deref_state *state,
 
    remove_struct_derefs_prep(path.path, &name, &location, &type);
 
-   assert(location < state->shader_program->data->NumUniformStorage &&
-          state->shader_program->data->UniformStorage[location].opaque[stage].active);
+   if (state->shader_program && var->data.how_declared != nir_var_hidden) {
+      /* For GLSL programs, look up the bindings in the uniform storage. */
+      assert(location < state->shader_program->data->NumUniformStorage &&
+             state->shader_program->data->UniformStorage[location].opaque[stage].active);
 
-   binding = state->shader_program->data->UniformStorage[location].opaque[stage].index;
+      binding = state->shader_program->data->UniformStorage[location].opaque[stage].index;
+   } else {
+      /* For ARB programs, built-in shaders, or internally generated sampler
+       * variables in GLSL programs, assume that whoever created the shader
+       * set the bindings correctly already.
+       */
+      assert(var->data.explicit_binding);
+      binding = var->data.binding;
+   }
 
    if (var->type == type) {
       /* Fast path: We did not encounter any struct derefs. */
@@ -170,6 +177,14 @@ lower_deref(nir_builder *b, struct lower_samplers_as_deref_state *state,
    } else {
       var = nir_variable_create(state->shader, nir_var_uniform, type, name);
       var->data.binding = binding;
+
+      /* Don't set var->data.location.  The old structure location could be
+       * used to index into gl_uniform_storage, assuming the full structure
+       * was walked in order.  With the new split variables, this invariant
+       * no longer holds and there's no meaningful way to start from a base
+       * location and access a particular array element.  Just leave it 0.
+       */
+
       _mesa_hash_table_insert_pre_hashed(state->remap_table, hash, name, var);
    }
 
@@ -190,6 +205,26 @@ lower_deref(nir_builder *b, struct lower_samplers_as_deref_state *state,
    return new_deref;
 }
 
+static void
+record_textures_used(struct shader_info *info,
+                     nir_deref_instr *deref,
+                     nir_texop op)
+{
+   nir_variable *var = nir_deref_instr_get_variable(deref);
+
+   /* Structs have been lowered already, so get_aoa_size is sufficient. */
+   const unsigned size =
+      glsl_type_is_array(var->type) ? glsl_get_aoa_size(var->type) : 1;
+   unsigned mask = ((1ull << MAX2(size, 1)) - 1) << var->data.binding;
+
+   info->textures_used |= mask;
+
+   if (op == nir_texop_txf ||
+       op == nir_texop_txf_ms ||
+       op == nir_texop_txf_ms_mcs)
+      info->textures_used_by_txf |= mask;
+}
+
 static bool
 lower_sampler(nir_tex_instr *instr, struct lower_samplers_as_deref_state *state,
               nir_builder *b)
@@ -199,28 +234,31 @@ lower_sampler(nir_tex_instr *instr, struct lower_samplers_as_deref_state *state,
    int sampler_idx =
       nir_tex_instr_src_index(instr, nir_tex_src_sampler_deref);
 
-   if (texture_idx < 0)
-      return false;
-
-   assert(texture_idx >= 0 && sampler_idx >= 0);
-   assert(instr->src[texture_idx].src.is_ssa);
-   assert(instr->src[sampler_idx].src.is_ssa);
-   assert(instr->src[texture_idx].src.ssa == instr->src[sampler_idx].src.ssa);
-
    b->cursor = nir_before_instr(&instr->instr);
 
-   nir_deref_instr *texture_deref =
-      lower_deref(b, state, nir_src_as_deref(instr->src[texture_idx].src));
-   /* don't lower bindless: */
-   if (!texture_deref)
-      return false;
-   nir_instr_rewrite_src(&instr->instr, &instr->src[texture_idx].src,
-                         nir_src_for_ssa(&texture_deref->dest.ssa));
+   if (texture_idx >= 0) {
+      assert(instr->src[texture_idx].src.is_ssa);
 
-   nir_deref_instr *sampler_deref =
-      lower_deref(b, state, nir_src_as_deref(instr->src[sampler_idx].src));
-   nir_instr_rewrite_src(&instr->instr, &instr->src[sampler_idx].src,
-                         nir_src_for_ssa(&sampler_deref->dest.ssa));
+      nir_deref_instr *texture_deref =
+         lower_deref(b, state, nir_src_as_deref(instr->src[texture_idx].src));
+      /* only lower non-bindless: */
+      if (texture_deref) {
+         nir_instr_rewrite_src(&instr->instr, &instr->src[texture_idx].src,
+                               nir_src_for_ssa(&texture_deref->dest.ssa));
+         record_textures_used(&b->shader->info, texture_deref, instr->op);
+      }
+   }
+
+   if (sampler_idx >= 0) {
+      assert(instr->src[sampler_idx].src.is_ssa);
+      nir_deref_instr *sampler_deref =
+         lower_deref(b, state, nir_src_as_deref(instr->src[sampler_idx].src));
+      /* only lower non-bindless: */
+      if (sampler_deref) {
+         nir_instr_rewrite_src(&instr->instr, &instr->src[sampler_idx].src,
+                               nir_src_for_ssa(&sampler_deref->dest.ssa));
+      }
+   }
 
    return true;
 }
@@ -287,6 +325,9 @@ gl_nir_lower_samplers_as_deref(nir_shader *shader,
    state.shader_program = shader_program;
    state.remap_table = _mesa_hash_table_create(NULL, _mesa_key_hash_string,
                                                _mesa_key_string_equal);
+
+   shader->info.textures_used = 0;
+   shader->info.textures_used_by_txf = 0;
 
    nir_foreach_function(function, shader) {
       if (function->impl)

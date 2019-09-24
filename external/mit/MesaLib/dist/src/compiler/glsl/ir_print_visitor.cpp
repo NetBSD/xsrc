@@ -90,8 +90,7 @@ ir_print_visitor::ir_print_visitor(FILE *f)
    : f(f)
 {
    indentation = 0;
-   printable_names =
-      _mesa_hash_table_create(NULL, _mesa_hash_pointer, _mesa_key_pointer_equal);
+   printable_names = _mesa_pointer_hash_table_create(NULL);
    symbols = _mesa_symbol_table_ctor();
    mem_ctx = ralloc_context(NULL);
 }
@@ -150,7 +149,7 @@ print_type(FILE *f, const glsl_type *t)
       fprintf(f, "(array ");
       print_type(f, t->fields.array);
       fprintf(f, " %u)", t->length);
-   } else if (t->is_record() && !is_gl_identifier(t->name)) {
+   } else if (t->is_struct() && !is_gl_identifier(t->name)) {
       fprintf(f, "%s@%p", t->name, (void *) t);
    } else {
       fprintf(f, "%s", t->name);
@@ -471,7 +470,7 @@ void ir_print_visitor::visit(ir_constant *ir)
    if (ir->type->is_array()) {
       for (unsigned i = 0; i < ir->type->length; i++)
 	 ir->get_array_element(i)->accept(this);
-   } else if (ir->type->is_record()) {
+   } else if (ir->type->is_struct()) {
       for (unsigned i = 0; i < ir->type->length; i++) {
 	 fprintf(f, "(%s ", ir->type->fields.structure[i].name);
          ir->get_record_field(i)->accept(this);

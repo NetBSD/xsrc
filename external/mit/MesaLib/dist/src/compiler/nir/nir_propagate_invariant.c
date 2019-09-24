@@ -65,13 +65,22 @@ add_cf_node(nir_cf_node *cf, struct set *invariants)
 static void
 add_var(nir_variable *var, struct set *invariants)
 {
-   _mesa_set_add(invariants, var);
+   /* Because we pass the result of nir_intrinsic_get_var directly to this
+    * function, it's possible for var to be NULL if, for instance, there's a
+    * cast somewhere in the chain.
+    */
+   if (var != NULL)
+      _mesa_set_add(invariants, var);
 }
 
 static bool
 var_is_invariant(nir_variable *var, struct set * invariants)
 {
-   return var->data.invariant || _mesa_set_search(invariants, var);
+   /* Because we pass the result of nir_intrinsic_get_var directly to this
+    * function, it's possible for var to be NULL if, for instance, there's a
+    * cast somewhere in the chain.
+    */
+   return var && (var->data.invariant || _mesa_set_search(invariants, var));
 }
 
 static void
@@ -182,8 +191,7 @@ bool
 nir_propagate_invariant(nir_shader *shader)
 {
    /* Hash set of invariant things */
-   struct set *invariants = _mesa_set_create(NULL, _mesa_hash_pointer,
-                                             _mesa_key_pointer_equal);
+   struct set *invariants = _mesa_pointer_set_create(NULL);
 
    bool progress = false;
    nir_foreach_function(function, shader) {

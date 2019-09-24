@@ -75,9 +75,14 @@ is_phi_src_scalarizable(nir_phi_src *src,
       return should_lower_phi(nir_instr_as_phi(src_instr), state);
 
    case nir_instr_type_load_const:
-   case nir_instr_type_ssa_undef:
       /* These are trivially scalarizable */
       return true;
+
+   case nir_instr_type_ssa_undef:
+      /* The caller of this function is going to OR the results and we don't
+       * want undefs to count so we return false.
+       */
+      return false;
 
    case nir_instr_type_intrinsic: {
       nir_intrinsic_instr *src_intrin = nir_instr_as_intrinsic(src_instr);
@@ -86,7 +91,10 @@ is_phi_src_scalarizable(nir_phi_src *src,
       case nir_intrinsic_load_deref: {
          nir_deref_instr *deref = nir_src_as_deref(src_intrin->src[0]);
          return deref->mode == nir_var_shader_in ||
-                deref->mode == nir_var_uniform;
+                deref->mode == nir_var_uniform ||
+                deref->mode == nir_var_mem_ubo ||
+                deref->mode == nir_var_mem_ssbo ||
+                deref->mode == nir_var_mem_global;
       }
 
       case nir_intrinsic_interp_deref_at_centroid:
@@ -95,6 +103,7 @@ is_phi_src_scalarizable(nir_phi_src *src,
       case nir_intrinsic_load_uniform:
       case nir_intrinsic_load_ubo:
       case nir_intrinsic_load_ssbo:
+      case nir_intrinsic_load_global:
       case nir_intrinsic_load_input:
          return true;
       default:
@@ -146,11 +155,16 @@ should_lower_phi(nir_phi_instr *phi, struct lower_phis_to_scalar_state *state)
     */
    entry = _mesa_hash_table_insert(state->phi_table, phi, (void *)(intptr_t)1);
 
-   bool scalarizable = true;
+   bool scalarizable = false;
 
    nir_foreach_phi_src(src, phi) {
+      /* This loop ignores srcs that are not scalarizable because its likely
+       * still worth copying to temps if another phi source is scalarizable.
+       * This reduces register spilling by a huge amount in the i965 driver for
+       * Deus Ex: MD.
+       */
       scalarizable = is_phi_src_scalarizable(src, state);
-      if (!scalarizable)
+      if (scalarizable)
          break;
    }
 
@@ -275,8 +289,7 @@ lower_phis_to_scalar_impl(nir_function_impl *impl)
 
    state.mem_ctx = ralloc_parent(impl);
    state.dead_ctx = ralloc_context(NULL);
-   state.phi_table = _mesa_hash_table_create(state.dead_ctx, _mesa_hash_pointer,
-                                             _mesa_key_pointer_equal);
+   state.phi_table = _mesa_pointer_hash_table_create(state.dead_ctx);
 
    nir_foreach_block(block, impl) {
       progress = lower_phis_to_scalar_block(block, &state) || progress;

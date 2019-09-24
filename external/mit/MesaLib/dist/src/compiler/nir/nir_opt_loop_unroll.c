@@ -165,36 +165,23 @@ simple_unroll(nir_loop *loop)
    nir_cf_extract(&loop_body, nir_after_cf_node(&limiting_term->nif->cf_node),
                   nir_after_block(nir_loop_last_block(loop)));
 
-   struct hash_table *remap_table =
-      _mesa_hash_table_create(NULL, _mesa_hash_pointer,
-                              _mesa_key_pointer_equal);
+   struct hash_table *remap_table = _mesa_pointer_hash_table_create(NULL);
 
-   /* Clone the loop header */
-   nir_cf_list cloned_header;
-   nir_cf_list_clone(&cloned_header, &lp_header, loop->cf_node.parent,
-                     remap_table);
+   /* Clone the loop header and insert before the loop */
+   nir_cf_list_clone_and_reinsert(&lp_header, loop->cf_node.parent,
+                                  nir_before_cf_node(&loop->cf_node),
+                                  remap_table);
 
-   /* Insert cloned loop header before the loop */
-   nir_cf_reinsert(&cloned_header, nir_before_cf_node(&loop->cf_node));
+   for (unsigned i = 0; i < loop->info->max_trip_count; i++) {
+      /* Clone loop body and insert before the loop */
+      nir_cf_list_clone_and_reinsert(&loop_body, loop->cf_node.parent,
+                                     nir_before_cf_node(&loop->cf_node),
+                                     remap_table);
 
-   /* Temp list to store the cloned loop body as we unroll */
-   nir_cf_list unrolled_lp_body;
-
-   /* Clone loop header and append to the loop body */
-   for (unsigned i = 0; i < loop->info->trip_count; i++) {
-      /* Clone loop body */
-      nir_cf_list_clone(&unrolled_lp_body, &loop_body, loop->cf_node.parent,
-                        remap_table);
-
-      /* Insert unrolled loop body before the loop */
-      nir_cf_reinsert(&unrolled_lp_body, nir_before_cf_node(&loop->cf_node));
-
-      /* Clone loop header */
-      nir_cf_list_clone(&cloned_header, &lp_header, loop->cf_node.parent,
-                        remap_table);
-
-      /* Insert loop header after loop body */
-      nir_cf_reinsert(&cloned_header, nir_before_cf_node(&loop->cf_node));
+      /* Clone loop header and insert after loop body */
+      nir_cf_list_clone_and_reinsert(&lp_header, loop->cf_node.parent,
+                                     nir_before_cf_node(&loop->cf_node),
+                                     remap_table);
    }
 
    /* Remove the break from the loop terminator and add instructions from
@@ -207,11 +194,9 @@ simple_unroll(nir_loop *loop)
                   nir_after_block(limiting_term->break_block));
 
    /* Clone so things get properly remapped */
-   nir_cf_list cloned_break_list;
-   nir_cf_list_clone(&cloned_break_list, &break_list, loop->cf_node.parent,
-                     remap_table);
-
-   nir_cf_reinsert(&cloned_break_list, nir_before_cf_node(&loop->cf_node));
+   nir_cf_list_clone_and_reinsert(&break_list, loop->cf_node.parent,
+                                  nir_before_cf_node(&loop->cf_node),
+                                  remap_table);
 
    /* Remove the loop */
    nir_cf_node_remove(&loop->cf_node);
@@ -247,6 +232,65 @@ get_complex_unroll_insert_location(nir_cf_node *node, bool continue_from_then)
          return nir_after_block(nir_if_last_else_block(if_stmt));
       }
    }
+}
+
+static nir_cf_node *
+complex_unroll_loop_body(nir_loop *loop, nir_loop_terminator *unlimit_term,
+                         nir_cf_list *lp_header, nir_cf_list *lp_body,
+                         struct hash_table *remap_table,
+                         unsigned num_times_to_clone)
+{
+   /* In the terminator that we have no trip count for move everything after
+    * the terminator into the continue from branch.
+    */
+   nir_cf_list loop_end;
+   nir_cf_extract(&loop_end, nir_after_cf_node(&unlimit_term->nif->cf_node),
+                  nir_after_block(nir_loop_last_block(loop)));
+   move_cf_list_into_loop_term(&loop_end, unlimit_term);
+
+   /* Pluck out the loop body. */
+   nir_cf_extract(lp_body, nir_before_block(nir_loop_first_block(loop)),
+                  nir_after_block(nir_loop_last_block(loop)));
+
+   /* Set unroll_loc to the loop as we will insert the unrolled loop before it
+    */
+   nir_cf_node *unroll_loc = &loop->cf_node;
+
+   /* Temp list to store the cloned loop as we unroll */
+   nir_cf_list unrolled_lp_body;
+
+   for (unsigned i = 0; i < num_times_to_clone; i++) {
+
+      nir_cursor cursor =
+         get_complex_unroll_insert_location(unroll_loc,
+                                            unlimit_term->continue_from_then);
+
+      /* Clone loop header and insert in if branch */
+      nir_cf_list_clone_and_reinsert(lp_header, loop->cf_node.parent,
+                                     cursor, remap_table);
+
+      cursor =
+         get_complex_unroll_insert_location(unroll_loc,
+                                            unlimit_term->continue_from_then);
+
+      /* Clone loop body */
+      nir_cf_list_clone(&unrolled_lp_body, lp_body, loop->cf_node.parent,
+                        remap_table);
+
+      unroll_loc = exec_node_data(nir_cf_node,
+                                  exec_list_get_tail(&unrolled_lp_body.list),
+                                  node);
+      assert(unroll_loc->type == nir_cf_node_block &&
+             exec_list_is_empty(&nir_cf_node_as_block(unroll_loc)->instr_list));
+
+      /* Get the unrolled if node */
+      unroll_loc = nir_cf_node_prev(unroll_loc);
+
+      /* Insert unrolled loop body */
+      nir_cf_reinsert(&unrolled_lp_body, cursor);
+   }
+
+   return unroll_loc;
 }
 
 /**
@@ -340,7 +384,7 @@ complex_unroll(nir_loop *loop, nir_loop_terminator *unlimit_term,
        * trip count == 1 we execute the code above the break twice and the
        * code below it once so we need clone things twice and so on.
        */
-      num_times_to_clone = loop->info->trip_count + 1;
+      num_times_to_clone = loop->info->max_trip_count + 1;
    } else {
       /* Pluck out the loop header */
       nir_cf_extract(&lp_header, nir_before_block(header_blk),
@@ -368,92 +412,37 @@ complex_unroll(nir_loop *loop, nir_loop_terminator *unlimit_term,
 
       nir_cf_node_remove(&limiting_term->nif->cf_node);
 
-      num_times_to_clone = loop->info->trip_count;
+      num_times_to_clone = loop->info->max_trip_count;
    }
 
-   /* In the terminator that we have no trip count for move everything after
-    * the terminator into the continue from branch.
-    */
-   nir_cf_list loop_end;
-   nir_cf_extract(&loop_end, nir_after_cf_node(&unlimit_term->nif->cf_node),
-                  nir_after_block(nir_loop_last_block(loop)));
-   move_cf_list_into_loop_term(&loop_end, unlimit_term);
+   struct hash_table *remap_table = _mesa_pointer_hash_table_create(NULL);
 
-   /* Pluck out the loop body. */
-   nir_cf_list loop_body;
-   nir_cf_extract(&loop_body, nir_before_block(nir_loop_first_block(loop)),
-                  nir_after_block(nir_loop_last_block(loop)));
-
-   struct hash_table *remap_table =
-      _mesa_hash_table_create(NULL, _mesa_hash_pointer,
-                              _mesa_key_pointer_equal);
-
-   /* Set unroll_loc to the loop as we will insert the unrolled loop before it
-    */
-   nir_cf_node *unroll_loc = &loop->cf_node;
-
-   /* Temp lists to store the cloned loop as we unroll */
-   nir_cf_list unrolled_lp_body;
-   nir_cf_list cloned_header;
-
-   for (unsigned i = 0; i < num_times_to_clone; i++) {
-      /* Clone loop header */
-      nir_cf_list_clone(&cloned_header, &lp_header, loop->cf_node.parent,
-                        remap_table);
-
-      nir_cursor cursor =
-         get_complex_unroll_insert_location(unroll_loc,
-                                            unlimit_term->continue_from_then);
-
-      /* Insert cloned loop header */
-      nir_cf_reinsert(&cloned_header, cursor);
-
-      cursor =
-         get_complex_unroll_insert_location(unroll_loc,
-                                            unlimit_term->continue_from_then);
-
-      /* Clone loop body */
-      nir_cf_list_clone(&unrolled_lp_body, &loop_body, loop->cf_node.parent,
-                        remap_table);
-
-      unroll_loc = exec_node_data(nir_cf_node,
-                                  exec_list_get_tail(&unrolled_lp_body.list),
-                                  node);
-      assert(unroll_loc->type == nir_cf_node_block &&
-             exec_list_is_empty(&nir_cf_node_as_block(unroll_loc)->instr_list));
-
-      /* Get the unrolled if node */
-      unroll_loc = nir_cf_node_prev(unroll_loc);
-
-      /* Insert unrolled loop body */
-      nir_cf_reinsert(&unrolled_lp_body, cursor);
-   }
+   nir_cf_list lp_body;
+   nir_cf_node *unroll_loc =
+      complex_unroll_loop_body(loop, unlimit_term, &lp_header, &lp_body,
+                               remap_table, num_times_to_clone);
 
    if (!limiting_term_second) {
       assert(unroll_loc->type == nir_cf_node_if);
 
-      nir_cf_list_clone(&cloned_header, &lp_header, loop->cf_node.parent,
-                        remap_table);
-
       nir_cursor cursor =
          get_complex_unroll_insert_location(unroll_loc,
                                             unlimit_term->continue_from_then);
 
-      /* Insert cloned loop header */
-      nir_cf_reinsert(&cloned_header, cursor);
-
-      /* Clone so things get properly remapped, and insert break block from
-       * the limiting terminator.
-       */
-      nir_cf_list cloned_break_blk;
-      nir_cf_list_clone(&cloned_break_blk, &limit_break_list,
-                        loop->cf_node.parent, remap_table);
+      /* Clone loop header and insert in if branch */
+      nir_cf_list_clone_and_reinsert(&lp_header, loop->cf_node.parent,
+                                     cursor, remap_table);
 
       cursor =
          get_complex_unroll_insert_location(unroll_loc,
                                             unlimit_term->continue_from_then);
 
-      nir_cf_reinsert(&cloned_break_blk, cursor);
+      /* Clone so things get properly remapped, and insert break block from
+       * the limiting terminator.
+       */
+      nir_cf_list_clone_and_reinsert(&limit_break_list, loop->cf_node.parent,
+                                     cursor, remap_table);
+
       nir_cf_delete(&limit_break_list);
    }
 
@@ -462,7 +451,56 @@ complex_unroll(nir_loop *loop, nir_loop_terminator *unlimit_term,
 
    /* Delete the original loop header and body */
    nir_cf_delete(&lp_header);
-   nir_cf_delete(&loop_body);
+   nir_cf_delete(&lp_body);
+
+   _mesa_hash_table_destroy(remap_table, NULL);
+}
+
+/**
+ * Unroll loops where we only have a single terminator but the exact trip
+ * count is unknown. For example:
+ *
+ *    for (int i = 0; i < imin(x, 4); i++)
+ *       ...
+ */
+static void
+complex_unroll_single_terminator(nir_loop *loop)
+{
+   assert(list_length(&loop->info->loop_terminator_list) == 1);
+   assert(loop->info->limiting_terminator);
+   assert(nir_is_trivial_loop_if(loop->info->limiting_terminator->nif,
+                                 loop->info->limiting_terminator->break_block));
+
+   nir_loop_terminator *terminator = loop->info->limiting_terminator;
+
+   loop_prepare_for_unroll(loop);
+
+   /* Pluck out the loop header */
+   nir_cf_list lp_header;
+   nir_cf_extract(&lp_header, nir_before_block(nir_loop_first_block(loop)),
+                  nir_before_cf_node(&terminator->nif->cf_node));
+
+   struct hash_table *remap_table =
+      _mesa_hash_table_create(NULL, _mesa_hash_pointer,
+                              _mesa_key_pointer_equal);
+
+   /* We need to clone the loop one extra time in order to clone the lcssa
+    * vars for the last iteration (they are inside the following ifs break
+    * branch). We leave other passes to clean up this redundant if.
+    */
+   unsigned num_times_to_clone = loop->info->max_trip_count + 1;
+
+   nir_cf_list lp_body;
+   MAYBE_UNUSED nir_cf_node *unroll_loc =
+      complex_unroll_loop_body(loop, terminator, &lp_header, &lp_body,
+                               remap_table, num_times_to_clone);
+
+   /* Delete the original loop header and body */
+   nir_cf_delete(&lp_header);
+   nir_cf_delete(&lp_body);
+
+   /* The original loop has been replaced so remove it. */
+   nir_cf_node_remove(&loop->cf_node);
 
    _mesa_hash_table_destroy(remap_table, NULL);
 }
@@ -522,31 +560,7 @@ wrapper_unroll(nir_loop *loop)
            nir_after_block(nir_if_last_else_block(terminator->nif));
       }
    } else {
-      nir_block *blk_after_loop =
-         nir_cursor_current_block(nir_after_cf_node(&loop->cf_node));
-
-      /* There may still be some single src phis following the loop that
-       * have not yet been cleaned up by another pass. Tidy those up
-       * before unrolling the loop.
-       */
-      nir_foreach_instr_safe(instr, blk_after_loop) {
-         if (instr->type != nir_instr_type_phi)
-            break;
-
-         nir_phi_instr *phi = nir_instr_as_phi(instr);
-         assert(exec_list_length(&phi->srcs) == 1);
-
-         nir_phi_src *phi_src =
-            exec_node_data(nir_phi_src, exec_list_get_head(&phi->srcs), node);
-
-         nir_ssa_def_rewrite_uses(&phi->dest.ssa, phi_src->src);
-         nir_instr_remove(instr);
-      }
-
-      /* Remove break at end of the loop */
-      nir_block *last_loop_blk = nir_loop_last_block(loop);
-      nir_instr *break_instr = nir_block_last_instr(last_loop_blk);
-      nir_instr_remove(break_instr);
+      loop_prepare_for_unroll(loop);
    }
 
    /* Pluck out the loop body. */
@@ -564,18 +578,199 @@ wrapper_unroll(nir_loop *loop)
 }
 
 static bool
-is_loop_small_enough_to_unroll(nir_shader *shader, nir_loop_info *li)
+is_access_out_of_bounds(nir_loop_terminator *term, nir_deref_instr *deref,
+                        unsigned trip_count)
 {
-   unsigned max_iter = shader->options->max_unroll_iterations;
+   for (nir_deref_instr *d = deref; d; d = nir_deref_instr_parent(d)) {
+      if (d->deref_type != nir_deref_type_array)
+         continue;
 
-   if (li->trip_count > max_iter)
+      nir_alu_instr *alu = nir_instr_as_alu(term->conditional_instr);
+      nir_src src = term->induction_rhs ? alu->src[1].src : alu->src[0].src;
+      if (!nir_srcs_equal(d->arr.index, src))
+         continue;
+
+      nir_deref_instr *parent = nir_deref_instr_parent(d);
+      assert(glsl_type_is_array(parent->type) ||
+             glsl_type_is_matrix(parent->type));
+
+      /* We have already unrolled the loop and the new one will be imbedded in
+       * the innermost continue branch. So unless the array is greater than
+       * the trip count any iteration over the loop will be an out of bounds
+       * access of the array.
+       */
+      return glsl_get_length(parent->type) <= trip_count;
+   }
+
+   return false;
+}
+
+/* If we know an array access is going to be out of bounds remove or replace
+ * the access with an undef. This can later result in the entire loop being
+ * removed by nir_opt_dead_cf().
+ */
+static void
+remove_out_of_bounds_induction_use(nir_shader *shader, nir_loop *loop,
+                                   nir_loop_terminator *term,
+                                   nir_cf_list *lp_header,
+                                   nir_cf_list *lp_body,
+                                   unsigned trip_count)
+{
+   if (!loop->info->guessed_trip_count)
+      return;
+
+   /* Temporarily recreate the original loop so we can alter it */
+   nir_cf_reinsert(lp_header, nir_after_block(nir_loop_last_block(loop)));
+   nir_cf_reinsert(lp_body, nir_after_block(nir_loop_last_block(loop)));
+
+   nir_builder b;
+   nir_builder_init(&b, nir_cf_node_get_function(&loop->cf_node));
+
+   nir_foreach_block_in_cf_node(block, &loop->cf_node) {
+      nir_foreach_instr_safe(instr, block) {
+         if (instr->type != nir_instr_type_intrinsic)
+            continue;
+
+         nir_intrinsic_instr *intrin = nir_instr_as_intrinsic(instr);
+
+         /* Check for arrays variably-indexed by a loop induction variable.
+          * If this access is out of bounds remove the instruction or replace
+          * its use with an undefined instruction.
+          * If the loop is no longer useful we leave it for the appropriate
+          * pass to clean it up for us.
+          */
+         if (intrin->intrinsic == nir_intrinsic_load_deref ||
+             intrin->intrinsic == nir_intrinsic_store_deref ||
+             intrin->intrinsic == nir_intrinsic_copy_deref) {
+
+            if (is_access_out_of_bounds(term, nir_src_as_deref(intrin->src[0]),
+                                        trip_count)) {
+               if (intrin->intrinsic == nir_intrinsic_load_deref) {
+                  nir_ssa_def *undef =
+                     nir_ssa_undef(&b, intrin->dest.ssa.num_components,
+                                   intrin->dest.ssa.bit_size);
+                  nir_ssa_def_rewrite_uses(&intrin->dest.ssa,
+                                           nir_src_for_ssa(undef));
+               } else {
+                  nir_instr_remove(instr);
+                  continue;
+               }
+            }
+
+            if (intrin->intrinsic == nir_intrinsic_copy_deref &&
+                is_access_out_of_bounds(term, nir_src_as_deref(intrin->src[1]),
+                                        trip_count)) {
+               nir_instr_remove(instr);
+            }
+         }
+      }
+   }
+
+   /* Now that we are done extract the loop header and body again */
+   nir_cf_extract(lp_header, nir_before_block(nir_loop_first_block(loop)),
+                  nir_before_cf_node(&term->nif->cf_node));
+   nir_cf_extract(lp_body, nir_before_block(nir_loop_first_block(loop)),
+                  nir_after_block(nir_loop_last_block(loop)));
+}
+
+/* Partially unrolls loops that don't have a known trip count.
+ */
+static void
+partial_unroll(nir_shader *shader, nir_loop *loop, unsigned trip_count)
+{
+   assert(list_length(&loop->info->loop_terminator_list) == 1);
+
+   nir_loop_terminator *terminator =
+      list_first_entry(&loop->info->loop_terminator_list,
+                        nir_loop_terminator, loop_terminator_link);
+
+   assert(nir_is_trivial_loop_if(terminator->nif, terminator->break_block));
+
+   loop_prepare_for_unroll(loop);
+
+   /* Pluck out the loop header */
+   nir_cf_list lp_header;
+   nir_cf_extract(&lp_header, nir_before_block(nir_loop_first_block(loop)),
+                  nir_before_cf_node(&terminator->nif->cf_node));
+
+   struct hash_table *remap_table =
+      _mesa_hash_table_create(NULL, _mesa_hash_pointer,
+                              _mesa_key_pointer_equal);
+
+   nir_cf_list lp_body;
+   nir_cf_node *unroll_loc =
+      complex_unroll_loop_body(loop, terminator, &lp_header, &lp_body,
+                               remap_table, trip_count);
+
+   /* Attempt to remove out of bounds array access */
+   remove_out_of_bounds_induction_use(shader, loop, terminator, &lp_header,
+                                      &lp_body, trip_count);
+
+   nir_cursor cursor =
+      get_complex_unroll_insert_location(unroll_loc,
+                                         terminator->continue_from_then);
+
+   /* Reinsert the loop in the innermost nested continue branch of the unrolled
+    * loop.
+    */
+   nir_loop *new_loop = nir_loop_create(shader);
+   nir_cf_node_insert(cursor, &new_loop->cf_node);
+   new_loop->partially_unrolled = true;
+
+   /* Clone loop header and insert into new loop */
+   nir_cf_list_clone_and_reinsert(&lp_header, loop->cf_node.parent,
+                                  nir_after_cf_list(&new_loop->body),
+                                  remap_table);
+
+   /* Clone loop body and insert into new loop */
+   nir_cf_list_clone_and_reinsert(&lp_body, loop->cf_node.parent,
+                                  nir_after_cf_list(&new_loop->body),
+                                  remap_table);
+
+   /* Insert break back into terminator */
+   nir_jump_instr *brk = nir_jump_instr_create(shader, nir_jump_break);
+   nir_if *nif = nir_block_get_following_if(nir_loop_first_block(new_loop));
+   if (terminator->continue_from_then) {
+      nir_instr_insert_after_block(nir_if_last_else_block(nif), &brk->instr);
+   } else {
+      nir_instr_insert_after_block(nir_if_last_then_block(nif), &brk->instr);
+   }
+
+   /* Delete the original loop header and body */
+   nir_cf_delete(&lp_header);
+   nir_cf_delete(&lp_body);
+
+   /* The original loop has been replaced so remove it. */
+   nir_cf_node_remove(&loop->cf_node);
+
+   _mesa_hash_table_destroy(remap_table, NULL);
+}
+
+/*
+ * Returns true if we should unroll the loop, otherwise false.
+ */
+static bool
+check_unrolling_restrictions(nir_shader *shader, nir_loop *loop)
+{
+   if (loop->control == nir_loop_control_unroll)
+      return true;
+
+   if (loop->control == nir_loop_control_dont_unroll)
       return false;
 
-   if (li->force_unroll)
+   nir_loop_info *li = loop->info;
+   unsigned max_iter = shader->options->max_unroll_iterations;
+   unsigned trip_count =
+      li->max_trip_count ? li->max_trip_count : li->guessed_trip_count;
+
+   if (trip_count > max_iter)
+      return false;
+
+   if (li->force_unroll && !li->guessed_trip_count)
       return true;
 
    bool loop_not_too_large =
-      li->num_instructions * li->trip_count <= max_iter * LOOP_UNROLL_LIMIT;
+      li->instr_cost * trip_count <= max_iter * LOOP_UNROLL_LIMIT;
 
    return loop_not_too_large;
 }
@@ -612,7 +807,7 @@ process_loops(nir_shader *sh, nir_cf_node *cf_node, bool *has_nested_loop_out)
    /* Don't attempt to unroll a second inner loop in this pass, wait until the
     * next pass as we have altered the cf.
     */
-   if (!progress) {
+   if (!progress && loop->control != nir_loop_control_dont_unroll) {
 
       /* Check for the classic
        *
@@ -627,27 +822,37 @@ process_loops(nir_shader *sh, nir_cf_node *cf_node, bool *has_nested_loop_out)
           !loop->info->complex_loop) {
 
          nir_block *last_loop_blk = nir_loop_last_block(loop);
-         if (!nir_block_ends_in_break(last_loop_blk))
+         if (nir_block_ends_in_break(last_loop_blk)) {
+            progress = wrapper_unroll(loop);
             goto exit;
+         }
 
-         progress = wrapper_unroll(loop);
-
-         goto exit;
+         /* If we were able to guess the loop iteration based on array access
+          * then do a partial unroll.
+          */
+         unsigned num_lt = list_length(&loop->info->loop_terminator_list);
+         if (!has_nested_loop && num_lt == 1 && !loop->partially_unrolled &&
+             loop->info->guessed_trip_count &&
+             check_unrolling_restrictions(sh, loop)) {
+            partial_unroll(sh, loop, loop->info->guessed_trip_count);
+            progress = true;
+         }
       }
 
-      if (has_nested_loop || loop->info->limiting_terminator == NULL)
+      if (has_nested_loop || !loop->info->limiting_terminator)
          goto exit;
 
-      if (!is_loop_small_enough_to_unroll(sh, loop->info))
+      if (!check_unrolling_restrictions(sh, loop))
          goto exit;
 
-      if (loop->info->is_trip_count_known) {
+      if (loop->info->exact_trip_count_known) {
          simple_unroll(loop);
          progress = true;
       } else {
          /* Attempt to unroll loops with two terminators. */
          unsigned num_lt = list_length(&loop->info->loop_terminator_list);
-         if (num_lt == 2) {
+         if (num_lt == 2 &&
+             !loop->info->limiting_terminator->exact_trip_count_unknown) {
             bool limiting_term_second = true;
             nir_loop_terminator *terminator =
                list_first_entry(&loop->info->loop_terminator_list,
@@ -665,11 +870,17 @@ process_loops(nir_shader *sh, nir_cf_node *cf_node, bool *has_nested_loop_out)
              * limiting terminator just do a simple unroll as the second
              * terminator can never be reached.
              */
-            if (loop->info->trip_count == 0 && !limiting_term_second) {
+            if (loop->info->max_trip_count == 0 && !limiting_term_second) {
                simple_unroll(loop);
             } else {
                complex_unroll(loop, terminator, limiting_term_second);
             }
+            progress = true;
+         }
+
+         if (num_lt == 1) {
+            assert(loop->info->limiting_terminator->exact_trip_count_unknown);
+            complex_unroll_single_terminator(loop);
             progress = true;
          }
       }

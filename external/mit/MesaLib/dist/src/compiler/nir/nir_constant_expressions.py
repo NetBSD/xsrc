@@ -1,23 +1,8 @@
 from __future__ import print_function
 
 import re
-
-type_split_re = re.compile(r'(?P<type>[a-z]+)(?P<bits>\d+)')
-
-def type_has_size(type_):
-    return type_[-1:].isdigit()
-
-def type_size(type_):
-    assert type_has_size(type_)
-    return int(type_split_re.match(type_).group('bits'))
-
-def type_sizes(type_):
-    if type_has_size(type_):
-        return [type_size(type_)]
-    elif type_ == 'float':
-        return [16, 32, 64]
-    else:
-        return [8, 16, 32, 64]
+from nir_opcodes import opcodes
+from nir_opcodes import type_has_size, type_size, type_sizes, type_base_type
 
 def type_add_size(type_, size):
     if type_has_size(type_):
@@ -39,15 +24,14 @@ def op_bit_sizes(op):
     return sorted(list(sizes)) if sizes is not None else None
 
 def get_const_field(type_):
-    if type_ == "bool32":
-        return "u32"
+    if type_size(type_) == 1:
+        return 'b'
+    elif type_base_type(type_) == 'bool':
+        return 'i' + str(type_size(type_))
     elif type_ == "float16":
         return "u16"
     else:
-        m = type_split_re.match(type_)
-        if not m:
-            raise Exception(str(type_))
-        return m.group('type')[0] + m.group('bits')
+        return type_base_type(type_)[0] + str(type_size(type_))
 
 template = """\
 /*
@@ -79,7 +63,10 @@ template = """\
 #include <math.h>
 #include "util/rounding.h" /* for _mesa_roundeven */
 #include "util/half_float.h"
+#include "util/bigmath.h"
 #include "nir_constant_expressions.h"
+
+#define MAX_UINT_FOR_SIZE(bits) (UINT64_MAX >> (64 - (bits)))
 
 /**
  * Evaluate one component of packSnorm4x8.
@@ -254,11 +241,17 @@ unpack_half_1x16(uint16_t u)
 }
 
 /* Some typed vector structures to make things like src0.y work */
+typedef int8_t int1_t;
+typedef uint8_t uint1_t;
 typedef float float16_t;
 typedef float float32_t;
 typedef double float64_t;
+typedef bool bool1_t;
+typedef bool bool8_t;
+typedef bool bool16_t;
 typedef bool bool32_t;
-% for type in ["float", "int", "uint"]:
+typedef bool bool64_t;
+% for type in ["float", "int", "uint", "bool"]:
 % for width in type_sizes(type):
 struct ${type}${width}_vec {
    ${type}${width}_t x;
@@ -268,13 +261,6 @@ struct ${type}${width}_vec {
 };
 % endfor
 % endfor
-
-struct bool32_vec {
-    bool x;
-    bool y;
-    bool z;
-    bool w;
-};
 
 <%def name="evaluate_op(op, bit_size)">
    <%
@@ -295,12 +281,13 @@ struct bool32_vec {
 
       const struct ${input_types[j]}_vec src${j} = {
       % for k in range(op.input_sizes[j]):
-         % if input_types[j] == "bool32":
-            _src[${j}].u32[${k}] != 0,
+         % if input_types[j] == "int1":
+             /* 1-bit integers use a 0/-1 convention */
+             -(int1_t)_src[${j}][${k}].b,
          % elif input_types[j] == "float16":
-            _mesa_half_to_float(_src[${j}].u16[${k}]),
+            _mesa_half_to_float(_src[${j}][${k}].u16),
          % else:
-            _src[${j}].${get_const_field(input_types[j])}[${k}],
+            _src[${j}][${k}].${get_const_field(input_types[j])},
          % endif
       % endfor
       % for k in range(op.input_sizes[j], 4):
@@ -322,14 +309,15 @@ struct bool32_vec {
             % elif "src" + str(j) not in op.const_expr:
                ## Avoid unused variable warnings
                <% continue %>
-            % elif input_types[j] == "bool32":
-               const bool src${j} = _src[${j}].u32[_i] != 0;
+            % elif input_types[j] == "int1":
+               /* 1-bit integers use a 0/-1 convention */
+               const int1_t src${j} = -(int1_t)_src[${j}][_i].b;
             % elif input_types[j] == "float16":
                const float src${j} =
-                  _mesa_half_to_float(_src[${j}].u16[_i]);
+                  _mesa_half_to_float(_src[${j}][_i].u16);
             % else:
                const ${input_types[j]}_t src${j} =
-                  _src[${j}].${get_const_field(input_types[j])}[_i];
+                  _src[${j}][_i].${get_const_field(input_types[j])};
             % endif
          % endfor
 
@@ -346,13 +334,16 @@ struct bool32_vec {
 
          ## Store the current component of the actual destination to the
          ## value of dst.
-         % if output_type == "bool32":
-            ## Sanitize the C value to a proper NIR bool
-            _dst_val.u32[_i] = dst ? NIR_TRUE : NIR_FALSE;
+         % if output_type == "int1" or output_type == "uint1":
+            /* 1-bit integers get truncated */
+            _dst_val[_i].b = dst & 1;
+         % elif output_type.startswith("bool"):
+            ## Sanitize the C value to a proper NIR 0/-1 bool
+            _dst_val[_i].${get_const_field(output_type)} = -(int)dst;
          % elif output_type == "float16":
-            _dst_val.u16[_i] = _mesa_float_to_half(dst);
+            _dst_val[_i].u16 = _mesa_float_to_half(dst);
          % else:
-            _dst_val.${get_const_field(output_type)}[_i] = dst;
+            _dst_val[_i].${get_const_field(output_type)} = dst;
          % endif
       }
    % else:
@@ -375,26 +366,28 @@ struct bool32_vec {
       ## For each component in the destination, copy the value of dst to
       ## the actual destination.
       % for k in range(op.output_size):
-         % if output_type == "bool32":
-            ## Sanitize the C value to a proper NIR bool
-            _dst_val.u32[${k}] = dst.${"xyzw"[k]} ? NIR_TRUE : NIR_FALSE;
+         % if output_type == "int1" or output_type == "uint1":
+            /* 1-bit integers get truncated */
+            _dst_val[${k}].b = dst.${"xyzw"[k]} & 1;
+         % elif output_type.startswith("bool"):
+            ## Sanitize the C value to a proper NIR 0/-1 bool
+            _dst_val[${k}].${get_const_field(output_type)} = -(int)dst.${"xyzw"[k]};
          % elif output_type == "float16":
-            _dst_val.u16[${k}] = _mesa_float_to_half(dst.${"xyzw"[k]});
+            _dst_val[${k}].u16 = _mesa_float_to_half(dst.${"xyzw"[k]});
          % else:
-            _dst_val.${get_const_field(output_type)}[${k}] = dst.${"xyzw"[k]};
+            _dst_val[${k}].${get_const_field(output_type)} = dst.${"xyzw"[k]};
          % endif
       % endfor
    % endif
 </%def>
 
 % for name, op in sorted(opcodes.items()):
-static nir_const_value
-evaluate_${name}(MAYBE_UNUSED unsigned num_components,
+static void
+evaluate_${name}(nir_const_value *_dst_val,
+                 MAYBE_UNUSED unsigned num_components,
                  ${"UNUSED" if op_bit_sizes(op) is None else ""} unsigned bit_size,
-                 MAYBE_UNUSED nir_const_value *_src)
+                 MAYBE_UNUSED nir_const_value **_src)
 {
-   nir_const_value _dst_val = { {0, } };
-
    % if op_bit_sizes(op) is not None:
       switch (bit_size) {
       % for bit_size in op_bit_sizes(op):
@@ -410,26 +403,25 @@ evaluate_${name}(MAYBE_UNUSED unsigned num_components,
    % else:
       ${evaluate_op(op, 0)}
    % endif
-
-   return _dst_val;
 }
 % endfor
 
-nir_const_value
-nir_eval_const_opcode(nir_op op, unsigned num_components,
-                      unsigned bit_width, nir_const_value *src)
+void
+nir_eval_const_opcode(nir_op op, nir_const_value *dest,
+                      unsigned num_components, unsigned bit_width,
+                      nir_const_value **src)
 {
    switch (op) {
 % for name in sorted(opcodes.keys()):
    case nir_op_${name}:
-      return evaluate_${name}(num_components, bit_width, src);
+      evaluate_${name}(dest, num_components, bit_width, src);
+      return;
 % endfor
    default:
       unreachable("shouldn't get here");
    }
 }"""
 
-from nir_opcodes import opcodes
 from mako.template import Template
 
 print(Template(template).render(opcodes=opcodes, type_sizes=type_sizes,

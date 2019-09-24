@@ -28,6 +28,7 @@
 #include "nir.h"
 #include "compiler/shader_enums.h"
 #include "util/half_float.h"
+#include "vulkan/vulkan_core.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h> /* for PRIx64 macro */
@@ -80,10 +81,7 @@ print_register(nir_register *reg, print_state *state)
    FILE *fp = state->fp;
    if (reg->name != NULL)
       fprintf(fp, "/* %s */ ", reg->name);
-   if (reg->is_global)
-      fprintf(fp, "gr%u", reg->index);
-   else
-      fprintf(fp, "r%u", reg->index);
+   fprintf(fp, "r%u", reg->index);
 }
 
 static const char *sizes[] = { "error", "vec1", "vec2", "vec3", "vec4",
@@ -96,8 +94,6 @@ print_register_decl(nir_register *reg, print_state *state)
 {
    FILE *fp = state->fp;
    fprintf(fp, "decl_reg %s %u ", sizes[reg->num_components], reg->bit_size);
-   if (reg->is_packed)
-      fprintf(fp, "(packed) ");
    print_register(reg, state);
    if (reg->num_array_elems != 0)
       fprintf(fp, "[%u]", reg->num_array_elems);
@@ -123,10 +119,10 @@ print_ssa_use(nir_ssa_def *def, print_state *state)
    fprintf(fp, "ssa_%u", def->index);
 }
 
-static void print_src(nir_src *src, print_state *state);
+static void print_src(const nir_src *src, print_state *state);
 
 static void
-print_reg_src(nir_reg_src *src, print_state *state)
+print_reg_src(const nir_reg_src *src, print_state *state)
 {
    FILE *fp = state->fp;
    print_register(src->reg, state);
@@ -156,7 +152,7 @@ print_reg_dest(nir_reg_dest *dest, print_state *state)
 }
 
 static void
-print_src(nir_src *src, print_state *state)
+print_src(const nir_src *src, print_state *state)
 {
    if (src->is_ssa)
       print_ssa_use(src->ssa, state);
@@ -298,6 +294,16 @@ print_constant(nir_constant *c, const struct glsl_type *type, print_state *state
    unsigned i, j;
 
    switch (glsl_get_base_type(type)) {
+   case GLSL_TYPE_BOOL:
+      /* Only float base types can be matrices. */
+      assert(cols == 1);
+
+      for (i = 0; i < rows; i++) {
+         if (i > 0) fprintf(fp, ", ");
+         fprintf(fp, "%s", c->values[0][i].b ? "true" : "false");
+      }
+      break;
+
    case GLSL_TYPE_UINT8:
    case GLSL_TYPE_INT8:
       /* Only float base types can be matrices. */
@@ -305,7 +311,7 @@ print_constant(nir_constant *c, const struct glsl_type *type, print_state *state
 
       for (i = 0; i < rows; i++) {
          if (i > 0) fprintf(fp, ", ");
-         fprintf(fp, "0x%02x", c->values[0].u8[i]);
+         fprintf(fp, "0x%02x", c->values[0][i].u8);
       }
       break;
 
@@ -316,19 +322,18 @@ print_constant(nir_constant *c, const struct glsl_type *type, print_state *state
 
       for (i = 0; i < rows; i++) {
          if (i > 0) fprintf(fp, ", ");
-         fprintf(fp, "0x%04x", c->values[0].u16[i]);
+         fprintf(fp, "0x%04x", c->values[0][i].u16);
       }
       break;
 
    case GLSL_TYPE_UINT:
    case GLSL_TYPE_INT:
-   case GLSL_TYPE_BOOL:
       /* Only float base types can be matrices. */
       assert(cols == 1);
 
       for (i = 0; i < rows; i++) {
          if (i > 0) fprintf(fp, ", ");
-         fprintf(fp, "0x%08x", c->values[0].u32[i]);
+         fprintf(fp, "0x%08x", c->values[0][i].u32);
       }
       break;
 
@@ -336,7 +341,7 @@ print_constant(nir_constant *c, const struct glsl_type *type, print_state *state
       for (i = 0; i < cols; i++) {
          for (j = 0; j < rows; j++) {
             if (i + j > 0) fprintf(fp, ", ");
-            fprintf(fp, "%f", _mesa_half_to_float(c->values[i].u16[j]));
+            fprintf(fp, "%f", _mesa_half_to_float(c->values[i][j].u16));
          }
       }
       break;
@@ -345,7 +350,7 @@ print_constant(nir_constant *c, const struct glsl_type *type, print_state *state
       for (i = 0; i < cols; i++) {
          for (j = 0; j < rows; j++) {
             if (i + j > 0) fprintf(fp, ", ");
-            fprintf(fp, "%f", c->values[i].f32[j]);
+            fprintf(fp, "%f", c->values[i][j].f32);
          }
       }
       break;
@@ -354,7 +359,7 @@ print_constant(nir_constant *c, const struct glsl_type *type, print_state *state
       for (i = 0; i < cols; i++) {
          for (j = 0; j < rows; j++) {
             if (i + j > 0) fprintf(fp, ", ");
-            fprintf(fp, "%f", c->values[i].f64[j]);
+            fprintf(fp, "%f", c->values[i][j].f64);
          }
       }
       break;
@@ -366,7 +371,7 @@ print_constant(nir_constant *c, const struct glsl_type *type, print_state *state
 
       for (i = 0; i < cols; i++) {
          if (i > 0) fprintf(fp, ", ");
-         fprintf(fp, "0x%08" PRIx64, c->values[0].u64[i]);
+         fprintf(fp, "0x%08" PRIx64, c->values[0][i].u64);
       }
       break;
 
@@ -403,16 +408,20 @@ get_variable_mode_str(nir_variable_mode mode, bool want_local_global_mode)
       return "shader_out";
    case nir_var_uniform:
       return "uniform";
-   case nir_var_shader_storage:
-      return "shader_storage";
+   case nir_var_mem_ubo:
+      return "ubo";
    case nir_var_system_value:
       return "system";
-   case nir_var_shared:
+   case nir_var_mem_ssbo:
+      return "ssbo";
+   case nir_var_mem_shared:
       return "shared";
-   case nir_var_global:
-      return want_local_global_mode ? "global" : "";
-   case nir_var_local:
-      return want_local_global_mode ? "local" : "";
+   case nir_var_mem_global:
+      return "global";
+   case nir_var_shader_temp:
+      return want_local_global_mode ? "shader_temp" : "";
+   case nir_var_function_temp:
+      return want_local_global_mode ? "function_temp" : "";
    default:
       return "";
    }
@@ -441,13 +450,61 @@ print_var_decl(nir_variable *var, print_state *state)
    const char *const wonly = (access & ACCESS_NON_READABLE) ? "writeonly " : "";
    fprintf(fp, "%s%s%s%s%s", coher, volat, restr, ronly, wonly);
 
+#define FORMAT_CASE(x) case x: fprintf(stderr, #x " "); break
+   switch (var->data.image.format) {
+   FORMAT_CASE(GL_RGBA32F);
+   FORMAT_CASE(GL_RGBA32UI);
+   FORMAT_CASE(GL_RGBA32I);
+   FORMAT_CASE(GL_R32F);
+   FORMAT_CASE(GL_R32UI);
+   FORMAT_CASE(GL_R32I);
+   FORMAT_CASE(GL_RG32F);
+   FORMAT_CASE(GL_RG32UI);
+   FORMAT_CASE(GL_RG32I);
+   FORMAT_CASE(GL_R8);
+   FORMAT_CASE(GL_RG8);
+   FORMAT_CASE(GL_RGBA8);
+   FORMAT_CASE(GL_R8_SNORM);
+   FORMAT_CASE(GL_RG8_SNORM);
+   FORMAT_CASE(GL_RGBA8_SNORM);
+   FORMAT_CASE(GL_R16);
+   FORMAT_CASE(GL_RG16);
+   FORMAT_CASE(GL_RGBA16);
+   FORMAT_CASE(GL_R16_SNORM);
+   FORMAT_CASE(GL_RG16_SNORM);
+   FORMAT_CASE(GL_RGBA16_SNORM);
+   FORMAT_CASE(GL_R16F);
+   FORMAT_CASE(GL_RG16F);
+   FORMAT_CASE(GL_RGBA16F);
+   FORMAT_CASE(GL_R8UI);
+   FORMAT_CASE(GL_R8I);
+   FORMAT_CASE(GL_RG8UI);
+   FORMAT_CASE(GL_RG8I);
+   FORMAT_CASE(GL_RGBA8UI);
+   FORMAT_CASE(GL_RGBA8I);
+   FORMAT_CASE(GL_R16UI);
+   FORMAT_CASE(GL_R16I);
+   FORMAT_CASE(GL_RG16UI);
+   FORMAT_CASE(GL_RG16I);
+   FORMAT_CASE(GL_RGBA16UI);
+   FORMAT_CASE(GL_RGBA16I);
+   FORMAT_CASE(GL_R11F_G11F_B10F);
+   FORMAT_CASE(GL_RGB9_E5);
+   FORMAT_CASE(GL_RGB10_A2);
+   FORMAT_CASE(GL_RGB10_A2UI);
+   default: /* Including the normal GL_NONE */
+      break;
+   }
+#undef FORMAT_CASE
+
    fprintf(fp, "%s %s", glsl_get_type_name(var->type),
            get_var_name(var, state));
 
    if (var->data.mode == nir_var_shader_in ||
        var->data.mode == nir_var_shader_out ||
        var->data.mode == nir_var_uniform ||
-       var->data.mode == nir_var_shader_storage) {
+       var->data.mode == nir_var_mem_ubo ||
+       var->data.mode == nir_var_mem_ssbo) {
       const char *loc = NULL;
       char buf[4];
 
@@ -472,6 +529,7 @@ print_var_decl(nir_variable *var, print_state *state)
       case MESA_SHADER_TESS_CTRL:
       case MESA_SHADER_TESS_EVAL:
       case MESA_SHADER_COMPUTE:
+      case MESA_SHADER_KERNEL:
       default:
          /* TODO */
          break;
@@ -521,7 +579,7 @@ print_var_decl(nir_variable *var, print_state *state)
 }
 
 static void
-print_deref_link(nir_deref_instr *instr, bool whole_chain, print_state *state)
+print_deref_link(const nir_deref_instr *instr, bool whole_chain, print_state *state)
 {
    FILE *fp = state->fp;
 
@@ -577,10 +635,10 @@ print_deref_link(nir_deref_instr *instr, bool whole_chain, print_state *state)
               glsl_get_struct_elem_name(parent->type, instr->strct.index));
       break;
 
-   case nir_deref_type_array: {
-      nir_const_value *const_index = nir_src_as_const_value(instr->arr.index);
-      if (const_index) {
-         fprintf(fp, "[%u]", const_index->u32[0]);
+   case nir_deref_type_array:
+   case nir_deref_type_ptr_as_array: {
+      if (nir_src_is_const(instr->arr.index)) {
+         fprintf(fp, "[%"PRIx64"]", nir_src_as_int(instr->arr.index));
       } else {
          fprintf(fp, "[");
          print_src(&instr->arr.index, state);
@@ -619,6 +677,9 @@ print_deref_instr(nir_deref_instr *instr, print_state *state)
    case nir_deref_type_cast:
       fprintf(fp, " = deref_cast ");
       break;
+   case nir_deref_type_ptr_as_array:
+      fprintf(fp, " = deref_ptr_as_array ");
+      break;
    default:
       unreachable("Invalid deref instruction type");
    }
@@ -639,6 +700,26 @@ print_deref_instr(nir_deref_instr *instr, print_state *state)
       fprintf(fp, "/* &");
       print_deref_link(instr, true, state);
       fprintf(fp, " */");
+   }
+}
+
+static const char *
+vulkan_descriptor_type_name(VkDescriptorType type)
+{
+   switch (type) {
+   case VK_DESCRIPTOR_TYPE_SAMPLER: return "sampler";
+   case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER: return "texture+sampler";
+   case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE: return "texture";
+   case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE: return "image";
+   case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER: return "texture-buffer";
+   case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER: return "image-buffer";
+   case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER: return "UBO";
+   case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER: return "SSBO";
+   case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC: return "UBO";
+   case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC: return "SSBO";
+   case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT: return "input-att";
+   case VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK_EXT: return "inline-UBO";
+   default: return "unknown";
    }
 }
 
@@ -690,7 +771,12 @@ print_intrinsic_instr(nir_intrinsic_instr *instr, print_state *state)
       [NIR_INTRINSIC_IMAGE_DIM] = "image_dim",
       [NIR_INTRINSIC_IMAGE_ARRAY] = "image_array",
       [NIR_INTRINSIC_ACCESS] = "access",
+      [NIR_INTRINSIC_SRC_ACCESS] = "src-access",
+      [NIR_INTRINSIC_DST_ACCESS] = "dst-access",
       [NIR_INTRINSIC_FORMAT] = "format",
+      [NIR_INTRINSIC_ALIGN_MUL] = "align_mul",
+      [NIR_INTRINSIC_ALIGN_OFFSET] = "align_offset",
+      [NIR_INTRINSIC_DESC_TYPE] = "desc_type",
    };
    for (unsigned idx = 1; idx < NIR_INTRINSIC_NUM_INDEX_FLAGS; idx++) {
       if (!info->index_map[idx])
@@ -719,11 +805,14 @@ print_intrinsic_instr(nir_intrinsic_instr *instr, print_state *state)
             [GLSL_SAMPLER_DIM_SUBPASS_MS] = "Subpass-MSAA",
          };
          enum glsl_sampler_dim dim = nir_intrinsic_image_dim(instr);
-         assert(dim < ARRAY_SIZE(dim_name) && dim_name[idx]);
+         assert(dim < ARRAY_SIZE(dim_name) && dim_name[dim]);
          fprintf(fp, " image_dim=%s", dim_name[dim]);
       } else if (idx == NIR_INTRINSIC_IMAGE_ARRAY) {
-         bool array = nir_intrinsic_image_dim(instr);
-         fprintf(fp, " image_dim=%s", array ? "true" : "false");
+         bool array = nir_intrinsic_image_array(instr);
+         fprintf(fp, " image_array=%s", array ? "true" : "false");
+      } else if (idx == NIR_INTRINSIC_DESC_TYPE) {
+         VkDescriptorType desc_type = nir_intrinsic_desc_type(instr);
+         fprintf(fp, " desc_type=%s", vulkan_descriptor_type_name(desc_type));
       } else {
          unsigned off = info->index_map[idx] - 1;
          assert(index_name[idx]);  /* forgot to update index_name table? */
@@ -742,6 +831,7 @@ print_intrinsic_instr(nir_intrinsic_instr *instr, print_state *state)
       var_list = &state->shader->uniforms;
       break;
    case nir_intrinsic_load_input:
+   case nir_intrinsic_load_interpolated_input:
    case nir_intrinsic_load_per_vertex_input:
       var_list = &state->shader->inputs;
       break;
@@ -757,8 +847,10 @@ print_intrinsic_instr(nir_intrinsic_instr *instr, print_state *state)
    nir_foreach_variable(var, var_list) {
       if ((var->data.driver_location == nir_intrinsic_base(instr)) &&
           (instr->intrinsic == nir_intrinsic_load_uniform ||
-           var->data.location_frac == nir_intrinsic_component(instr)) &&
-          var->name) {
+           (nir_intrinsic_component(instr) >= var->data.location_frac  &&
+            nir_intrinsic_component(instr) <
+            (var->data.location_frac + glsl_get_components(var->type)))) &&
+           var->name) {
          fprintf(fp, "\t/* %s */", var->name);
          break;
       }
@@ -793,6 +885,9 @@ print_tex_instr(nir_tex_instr *instr, print_state *state)
    case nir_texop_txf_ms:
       fprintf(fp, "txf_ms ");
       break;
+   case nir_texop_txf_ms_fb:
+      fprintf(fp, "txf_ms_fb ");
+      break;
    case nir_texop_txf_ms_mcs:
       fprintf(fp, "txf_ms_mcs ");
       break;
@@ -821,8 +916,11 @@ print_tex_instr(nir_tex_instr *instr, print_state *state)
 
    bool has_texture_deref = false, has_sampler_deref = false;
    for (unsigned i = 0; i < instr->num_srcs; i++) {
-      print_src(&instr->src[i].src, state);
+      if (i > 0) {
+         fprintf(fp, ", ");
+      }
 
+      print_src(&instr->src[i].src, state);
       fprintf(fp, " ");
 
       switch(instr->src[i].src_type) {
@@ -843,6 +941,9 @@ print_tex_instr(nir_tex_instr *instr, print_state *state)
          break;
       case nir_tex_src_lod:
          fprintf(fp, "(lod)");
+         break;
+      case nir_tex_src_min_lod:
+         fprintf(fp, "(min_lod)");
          break;
       case nir_tex_src_ms_index:
          fprintf(fp, "(ms_index)");
@@ -870,6 +971,12 @@ print_tex_instr(nir_tex_instr *instr, print_state *state)
       case nir_tex_src_sampler_offset:
          fprintf(fp, "(sampler_offset)");
          break;
+      case nir_tex_src_texture_handle:
+         fprintf(fp, "(texture_handle)");
+         break;
+      case nir_tex_src_sampler_handle:
+         fprintf(fp, "(sampler_handle)");
+         break;
       case nir_tex_src_plane:
          fprintf(fp, "(plane)");
          break;
@@ -878,20 +985,28 @@ print_tex_instr(nir_tex_instr *instr, print_state *state)
          unreachable("Invalid texture source type");
          break;
       }
-
-      fprintf(fp, ", ");
    }
 
    if (instr->op == nir_texop_tg4) {
-      fprintf(fp, "%u (gather_component), ", instr->component);
+      fprintf(fp, ", %u (gather_component)", instr->component);
    }
 
-   if (!has_texture_deref) {
-      fprintf(fp, "%u (texture), ", instr->texture_index);
+   if (nir_tex_instr_has_explicit_tg4_offsets(instr)) {
+      fprintf(fp, ", { (%i, %i)", instr->tg4_offsets[0][0], instr->tg4_offsets[0][1]);
+      for (unsigned i = 1; i < 4; ++i)
+         fprintf(fp, ", (%i, %i)", instr->tg4_offsets[i][0],
+                 instr->tg4_offsets[i][1]);
+      fprintf(fp, " } (offsets)");
    }
 
-   if (!has_sampler_deref) {
-      fprintf(fp, "%u (sampler), ", instr->sampler_index);
+   if (instr->op != nir_texop_txf_ms_fb) {
+      if (!has_texture_deref) {
+         fprintf(fp, ", %u (texture)", instr->texture_index);
+      }
+
+      if (!has_sampler_deref) {
+         fprintf(fp, ", %u (sampler)", instr->sampler_index);
+      }
    }
 }
 
@@ -931,18 +1046,21 @@ print_load_const_instr(nir_load_const_instr *instr, print_state *state)
 
       switch (instr->def.bit_size) {
       case 64:
-         fprintf(fp, "0x%16" PRIx64 " /* %f */", instr->value.u64[i],
-                 instr->value.f64[i]);
+         fprintf(fp, "0x%16" PRIx64 " /* %f */", instr->value[i].u64,
+                 instr->value[i].f64);
          break;
       case 32:
-         fprintf(fp, "0x%08x /* %f */", instr->value.u32[i], instr->value.f32[i]);
+         fprintf(fp, "0x%08x /* %f */", instr->value[i].u32, instr->value[i].f32);
          break;
       case 16:
-         fprintf(fp, "0x%04x /* %f */", instr->value.u16[i],
-                 _mesa_half_to_float(instr->value.u16[i]));
+         fprintf(fp, "0x%04x /* %f */", instr->value[i].u16,
+                 _mesa_half_to_float(instr->value[i].u16));
          break;
       case 8:
-         fprintf(fp, "0x%02x", instr->value.u8[i]);
+         fprintf(fp, "0x%02x", instr->value[i].u8);
+         break;
+      case 1:
+         fprintf(fp, "%s", instr->value[i].b ? "true" : "false");
          break;
       }
    }
@@ -1222,8 +1340,7 @@ init_print_state(print_state *state, nir_shader *shader, FILE *fp)
 {
    state->fp = fp;
    state->shader = shader;
-   state->ht = _mesa_hash_table_create(NULL, _mesa_hash_pointer,
-                                       _mesa_key_pointer_equal);
+   state->ht = _mesa_pointer_hash_table_create(NULL);
    state->syms = _mesa_set_create(NULL, _mesa_key_hash_string,
                                   _mesa_key_string_equal);
    state->index = 0;
@@ -1253,23 +1370,21 @@ nir_print_shader_annotated(nir_shader *shader, FILE *fp,
    if (shader->info.label)
       fprintf(fp, "label: %s\n", shader->info.label);
 
-   switch (shader->info.stage) {
-   case MESA_SHADER_COMPUTE:
+   if (gl_shader_stage_is_compute(shader->info.stage)) {
       fprintf(fp, "local-size: %u, %u, %u%s\n",
               shader->info.cs.local_size[0],
               shader->info.cs.local_size[1],
               shader->info.cs.local_size[2],
               shader->info.cs.local_size_variable ? " (variable)" : "");
       fprintf(fp, "shared-size: %u\n", shader->info.cs.shared_size);
-      break;
-   default:
-      break;
    }
 
    fprintf(fp, "inputs: %u\n", shader->num_inputs);
    fprintf(fp, "outputs: %u\n", shader->num_outputs);
    fprintf(fp, "uniforms: %u\n", shader->num_uniforms);
    fprintf(fp, "shared: %u\n", shader->num_shared);
+   if (shader->scratch_size)
+      fprintf(fp, "scratch: %u\n", shader->scratch_size);
 
    nir_foreach_variable(var, &shader->uniforms) {
       print_var_decl(var, &state);
@@ -1295,10 +1410,6 @@ nir_print_shader_annotated(nir_shader *shader, FILE *fp,
       print_var_decl(var, &state);
    }
 
-   foreach_list_typed(nir_register, reg, node, &shader->registers) {
-      print_register_decl(reg, &state);
-   }
-
    foreach_list_typed(nir_function, func, node, &shader->functions) {
       print_function(func, &state);
    }
@@ -1310,6 +1421,7 @@ void
 nir_print_shader(nir_shader *shader, FILE *fp)
 {
    nir_print_shader_annotated(shader, fp, NULL);
+   fflush(fp);
 }
 
 void
@@ -1320,4 +1432,13 @@ nir_print_instr(const nir_instr *instr, FILE *fp)
    };
    print_instr(instr, &state, 0);
 
+}
+
+void
+nir_print_deref(const nir_deref_instr *deref, FILE *fp)
+{
+   print_state state = {
+      .fp = fp,
+   };
+   print_deref_link(deref, true, &state);
 }
