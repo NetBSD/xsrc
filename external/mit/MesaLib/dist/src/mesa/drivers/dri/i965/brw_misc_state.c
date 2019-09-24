@@ -493,6 +493,27 @@ brw_emit_select_pipeline(struct brw_context *brw, enum brw_pipeline pipeline)
       }
    }
 
+   if (devinfo->gen == 9 && pipeline == BRW_RENDER_PIPELINE) {
+      /* We seem to have issues with geometry flickering when 3D and compute
+       * are combined in the same batch and this appears to fix it.
+       */
+      const uint32_t subslices = MAX2(brw->screen->subslice_total, 1);
+      const uint32_t maxNumberofThreads =
+         devinfo->max_cs_threads * subslices - 1;
+
+      BEGIN_BATCH(9);
+      OUT_BATCH(MEDIA_VFE_STATE << 16 | (9 - 2));
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(2 << 8 | maxNumberofThreads << 16);
+      OUT_BATCH(0);
+      OUT_BATCH(2 << 16);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+   }
+
    if (devinfo->gen >= 6) {
       /* From "BXML » GT » MI » vol1a GPU Overview » [Instruction]
        * PIPELINE_SELECT [DevBWR+]":
@@ -614,12 +635,6 @@ brw_upload_invariant_state(struct brw_context *brw)
       OUT_BATCH(0);
       ADVANCE_BATCH();
    }
-
-   const uint32_t _3DSTATE_VF_STATISTICS =
-      is_965 ? GEN4_3DSTATE_VF_STATISTICS : GM45_3DSTATE_VF_STATISTICS;
-   BEGIN_BATCH(1);
-   OUT_BATCH(_3DSTATE_VF_STATISTICS << 16 | 1);
-   ADVANCE_BATCH();
 }
 
 /**

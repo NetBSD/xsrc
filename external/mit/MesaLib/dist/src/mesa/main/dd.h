@@ -784,9 +784,8 @@ struct dd_function_table {
                            GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                            GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                            GLbitfield mask, GLenum filter);
-   void (*DiscardFramebuffer)(struct gl_context *ctx,
-                              GLenum target, GLsizei numAttachments,
-                              const GLenum *attachments);
+   void (*DiscardFramebuffer)(struct gl_context *ctx, struct gl_framebuffer *fb,
+                              struct gl_renderbuffer_attachment *att);
 
    /**
     * \name Functions for GL_ARB_sample_locations
@@ -1299,6 +1298,13 @@ struct dd_function_table {
    void (*ShaderCacheSerializeDriverBlob)(struct gl_context *ctx,
                                           struct gl_program *prog);
    /*@}*/
+
+   /**
+    * \name Set the number of compiler threads for ARB_parallel_shader_compile
+    */
+   void (*SetMaxShaderCompilerThreads)(struct gl_context *ctx, unsigned count);
+   bool (*GetShaderProgramCompletionStatus)(struct gl_context *ctx,
+                                            struct gl_shader_program *shprog);
 };
 
 

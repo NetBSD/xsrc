@@ -57,7 +57,6 @@ files_i965 = files(
   'brw_performance_query.h',
   'brw_performance_query.c',
   'brw_performance_query_mdapi.c',
-  'brw_performance_query_metrics.h',
   'brw_program.c',
   'brw_program.h',
   'brw_program_binary.c',
@@ -133,21 +132,12 @@ files_i965 = files(
   'libdrm_macros.h',
 )
 
-files_intel_tiled_memcpy = files(
-  'intel_tiled_memcpy_normal.c',
-  'intel_tiled_memcpy.h',
-)
-
-files_intel_tiled_memcpy_sse41 = files(
-  'intel_tiled_memcpy_sse41.c',
-  'intel_tiled_memcpy_sse41.h',
-)
-
 i965_gen_libs = []
 foreach v : ['40', '45', '50', '60', '70', '75', '80', '90', '100', '110']
   i965_gen_libs += static_library(
     'i965_gen@0@'.format(v),
-    ['genX_blorp_exec.c', 'genX_state_upload.c', gen_xml_pack],
+    ['genX_blorp_exec.c', 'genX_boilerplate.h', 'genX_pipe_control.c',
+     'genX_state_upload.c', gen_xml_pack],
     include_directories : [inc_common, inc_intel, inc_dri_common],
     c_args : [
       c_vis_args, no_override_init_args, c_sse2_args,
@@ -158,73 +148,17 @@ foreach v : ['40', '45', '50', '60', '70', '75', '80', '90', '100', '110']
 endforeach
 
 
-i965_hw_metrics = [
-  'hsw',
-  'bdw', 'chv',
-  'sklgt2', 'sklgt3', 'sklgt4',
-  'kblgt2', 'kblgt3',
-  'cflgt2', 'cflgt3',
-  'bxt', 'glk',
-  'cnl',
-]
-
-i965_hw_metrics_xml_files = []
-foreach hw : i965_hw_metrics
-  i965_hw_metrics_xml_files += 'brw_oa_@0@.xml'.format(hw)
-endforeach
-
-i965_oa_sources = custom_target(
-  'i965-oa-sources',
-  input : i965_hw_metrics_xml_files,
-  output : [ 'brw_oa_metrics.c', 'brw_oa_metrics.h' ],
-  command : [
-    prog_python, files('brw_oa.py'),
-    '--code', '@OUTPUT0@', '--header', '@OUTPUT1@',
-    '@INPUT@',
-  ],
-)
-
-intel_tiled_memcpy = static_library(
-  'intel_tiled_memcpy',
-  [files_intel_tiled_memcpy],
-  include_directories : [
-    inc_common, inc_intel, inc_dri_common, inc_drm_uapi,
-  ],
-  c_args : [c_vis_args, no_override_init_args, '-msse2'],
-  extra_files : ['intel_tiled_memcpy.c']
-)
-
-if with_sse41
-  intel_tiled_memcpy_sse41 = static_library(
-    'intel_tiled_memcpy_sse41',
-    [files_intel_tiled_memcpy_sse41],
-    include_directories : [
-      inc_common, inc_intel, inc_dri_common, inc_drm_uapi,
-    ],
-    link_args : ['-Wl,--exclude-libs=ALL'],
-    c_args : [c_vis_args, no_override_init_args, '-Wl,--exclude-libs=ALL', '-msse2', sse41_args],
-    extra_files : ['intel_tiled_memcpy.c']
-  )
-else
-  intel_tiled_memcpy_sse41 = []
-endif
-
-
 libi965 = static_library(
   'i965',
-  [files_i965, i965_oa_sources, ir_expression_operation_h,
-   xmlpool_options_h],
+  [files_i965, ir_expression_operation_h, xmlpool_options_h],
   include_directories : [
-    inc_common, inc_intel, inc_dri_common, inc_util, inc_drm_uapi,
+    inc_common, inc_intel, inc_dri_common, inc_util, inc_include,
   ],
   c_args : [c_vis_args, no_override_init_args, c_sse2_args],
   cpp_args : [cpp_vis_args, c_sse2_args],
   link_with : [
     i965_gen_libs, libintel_common, libintel_dev, libisl, libintel_compiler,
-    libblorp, intel_tiled_memcpy, intel_tiled_memcpy_sse41
+    libblorp, libintel_perf
   ],
-  dependencies : [dep_libdrm, dep_valgrind, idep_nir_headers],
+  dependencies : [dep_libdrm, dep_valgrind, idep_nir_headers, idep_genxml],
 )
-
-dri_drivers += libi965
-dri_link += 'i965_dri.so'

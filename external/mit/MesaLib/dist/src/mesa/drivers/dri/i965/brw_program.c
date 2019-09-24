@@ -40,6 +40,8 @@
 #include "tnl/tnl.h"
 #include "util/ralloc.h"
 #include "compiler/glsl/ir.h"
+#include "compiler/glsl/program.h"
+#include "compiler/glsl/gl_nir.h"
 #include "compiler/glsl/glsl_to_nir.h"
 
 #include "brw_program.h"
@@ -52,6 +54,10 @@
 #include "brw_gs.h"
 #include "brw_vs.h"
 #include "brw_wm.h"
+#include "brw_state.h"
+
+#include "main/shaderapi.h"
+#include "main/shaderobj.h"
 
 static bool
 brw_nir_lower_uniforms(nir_shader *nir, bool is_scalar)
@@ -66,6 +72,9 @@ brw_nir_lower_uniforms(nir_shader *nir, bool is_scalar)
       return nir_lower_io(nir, nir_var_uniform, type_size_vec4_bytes, 0);
    }
 }
+
+static struct gl_program *brwNewProgram(struct gl_context *ctx, GLenum target,
+                                        GLuint id, bool is_arb_asm);
 
 nir_shader *
 brw_create_nir(struct brw_context *brw,
@@ -85,14 +94,12 @@ brw_create_nir(struct brw_context *brw,
       if (shader_prog->data->spirv) {
          nir = _mesa_spirv_to_nir(ctx, shader_prog, stage, options);
       } else {
-         nir = glsl_to_nir(shader_prog, stage, options);
+         nir = glsl_to_nir(ctx, shader_prog, stage, options);
       }
       assert (nir);
 
       nir_remove_dead_variables(nir, nir_var_shader_in | nir_var_shader_out);
-      nir_lower_returns(nir);
-      nir_validate_shader(nir, "after glsl_to_nir or spirv_to_nir and "
-                               "return lowering");
+      nir_validate_shader(nir, "after glsl_to_nir or spirv_to_nir");
       NIR_PASS_V(nir, nir_lower_io_to_temporaries,
                  nir_shader_get_entrypoint(nir), true, false);
    } else {
@@ -101,9 +108,26 @@ brw_create_nir(struct brw_context *brw,
    }
    nir_validate_shader(nir, "before brw_preprocess_nir");
 
-   nir = brw_preprocess_nir(brw->screen->compiler, nir);
+   nir_shader_gather_info(nir, nir_shader_get_entrypoint(nir));
+
+   nir_shader *softfp64 = NULL;
+   if ((options->lower_doubles_options & nir_lower_fp64_full_software) &&
+       nir->info.uses_64bit) {
+      softfp64 = glsl_float64_funcs_to_nir(ctx, options);
+      ralloc_steal(ralloc_parent(nir), softfp64);
+   }
+
+   nir = brw_preprocess_nir(brw->screen->compiler, nir, softfp64);
+
+   NIR_PASS_V(nir, gl_nir_lower_samplers, shader_prog);
+   prog->info.textures_used = nir->info.textures_used;
+   prog->info.textures_used_by_txf = nir->info.textures_used_by_txf;
 
    NIR_PASS_V(nir, brw_nir_lower_image_load_store, devinfo);
+
+   NIR_PASS_V(nir, gl_nir_lower_buffers, shader_prog);
+   /* Do a round of constant folding to clean up address calculations */
+   NIR_PASS_V(nir, nir_opt_constant_folding);
 
    if (stage == MESA_SHADER_TESS_CTRL) {
       /* Lower gl_PatchVerticesIn from a sys. value to a uniform on Gen8+. */
@@ -407,7 +431,7 @@ brw_alloc_stage_scratch(struct brw_context *brw,
        * and we wish to view that there are 4 subslices per slice
        * instead of the actual number of subslices per slice.
        */
-      if (devinfo->gen >= 9)
+      if (devinfo->gen >= 9 && devinfo->gen < 11)
          subslices = 4 * brw->screen->devinfo.num_slices;
 
       unsigned scratch_ids_per_subslice;
@@ -835,7 +859,10 @@ brw_assign_common_binding_table_offsets(const struct gen_device_info *devinfo,
    stage_prog_data->binding_table.plane_start[2] = next_binding_table_offset;
    next_binding_table_offset += num_textures;
 
-   /* prog_data->base.binding_table.size will be set by brw_mark_surface_used. */
+   /* Set the binding table size.  Some callers may append new entries
+    * and increase this accordingly.
+    */
+   stage_prog_data->binding_table.size_bytes = next_binding_table_offset * 4;
 
    assert(next_binding_table_offset <= BRW_MAX_SURFACES);
    return next_binding_table_offset;
@@ -885,4 +912,23 @@ brw_populate_default_key(const struct gen_device_info *devinfo,
    default:
       unreachable("Unsupported stage!");
    }
+}
+
+void
+brw_debug_recompile(struct brw_context *brw,
+                    gl_shader_stage stage,
+                    unsigned api_id,
+                    unsigned key_program_string_id,
+                    void *key)
+{
+   const struct brw_compiler *compiler = brw->screen->compiler;
+   enum brw_cache_id cache_id = brw_stage_cache_id(stage);
+
+   compiler->shader_perf_log(brw, "Recompiling %s shader for program %d\n",
+                             _mesa_shader_stage_to_string(stage), api_id);
+
+   const void *old_key =
+      brw_find_previous_compile(&brw->cache, cache_id, key_program_string_id);
+
+   brw_debug_key_recompile(compiler, brw, stage, old_key, key);
 }
