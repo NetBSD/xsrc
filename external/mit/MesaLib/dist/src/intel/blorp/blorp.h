@@ -45,10 +45,10 @@ struct blorp_context {
 
    const struct brw_compiler *compiler;
 
-   bool (*lookup_shader)(struct blorp_context *blorp,
+   bool (*lookup_shader)(struct blorp_batch *batch,
                          const void *key, uint32_t key_size,
                          uint32_t *kernel_out, void *prog_data_out);
-   bool (*upload_shader)(struct blorp_context *blorp,
+   bool (*upload_shader)(struct blorp_batch *batch,
                          const void *key, uint32_t key_size,
                          const void *kernel, uint32_t kernel_size,
                          const struct brw_stage_prog_data *prog_data,
@@ -91,8 +91,8 @@ void blorp_batch_finish(struct blorp_batch *batch);
 
 struct blorp_address {
    void *buffer;
+   uint64_t offset;
    unsigned reloc_flags;
-   uint32_t offset;
    uint32_t mocs;
 };
 
@@ -125,6 +125,8 @@ enum blorp_filter {
    BLORP_FILTER_BILINEAR,
    BLORP_FILTER_SAMPLE_0,
    BLORP_FILTER_AVERAGE,
+   BLORP_FILTER_MIN_SAMPLE,
+   BLORP_FILTER_MAX_SAMPLE,
 };
 
 void
@@ -157,6 +159,9 @@ blorp_buffer_copy(struct blorp_batch *batch,
                   struct blorp_address src,
                   struct blorp_address dst,
                   uint64_t size);
+
+union isl_color_value
+swizzle_color_value(union isl_color_value src, struct isl_swizzle swizzle);
 
 void
 blorp_fast_clear(struct blorp_batch *batch,

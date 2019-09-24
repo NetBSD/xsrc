@@ -36,6 +36,7 @@
 #include "etnaviv_query.h"
 #include "etnaviv_query_hw.h"
 #include "etnaviv_rasterizer.h"
+#include "etnaviv_resource.h"
 #include "etnaviv_screen.h"
 #include "etnaviv_shader.h"
 #include "etnaviv_state.h"
@@ -59,6 +60,9 @@ static void
 etna_context_destroy(struct pipe_context *pctx)
 {
    struct etna_context *ctx = etna_context(pctx);
+
+   if (ctx->dummy_rt)
+      etna_bo_del(ctx->dummy_rt);
 
    util_copy_framebuffer_state(&ctx->framebuffer_s, NULL);
 
@@ -211,13 +215,8 @@ etna_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
    ctx->dirty |= ETNA_DIRTY_INDEX_BUFFER;
 
    struct etna_shader_key key = {};
-   struct etna_surface *cbuf = etna_surface(pfb->cbufs[0]);
-
-   if (cbuf) {
-      struct etna_resource *res = etna_resource(cbuf->base.texture);
-
-      key.frag_rb_swap = !!translate_rs_format_rb_swap(res->base.format);
-   }
+   if (pfb->cbufs[0])
+      key.frag_rb_swap = !!translate_rs_format_rb_swap(pfb->cbufs[0]->format);
 
    if (!etna_get_vs(ctx, key) || !etna_get_fs(ctx, key)) {
       BUG("compiled shaders are not okay");
@@ -331,7 +330,7 @@ static void
 etna_cmd_stream_reset_notify(struct etna_cmd_stream *stream, void *priv)
 {
    struct etna_context *ctx = priv;
-   struct etna_resource *rsc, *rsc_tmp;
+   struct etna_screen *screen = ctx->screen;
 
    etna_set_state(stream, VIVS_GL_API_MODE, VIVS_GL_API_MODE_OPENGL);
    etna_set_state(stream, VIVS_GL_VERTEX_ELEMENT_CONFIG, 0x00000001);
@@ -386,16 +385,18 @@ etna_cmd_stream_reset_notify(struct etna_cmd_stream *stream, void *priv)
    ctx->dirty = ~0L;
    ctx->dirty_sampler_views = ~0L;
 
-   /* go through all the used resources and clear their status flag */
-   LIST_FOR_EACH_ENTRY_SAFE(rsc, rsc_tmp, &ctx->used_resources, list)
-   {
-      debug_assert(rsc->status != 0);
-      rsc->status = 0;
-      rsc->pending_ctx = NULL;
-      list_delinit(&rsc->list);
-   }
+   /*
+    * Go through all _resources_ associated with this _screen_, pending
+    * in this _context_ and mark them as not pending in this _context_
+    * anymore, since they were just flushed.
+    */
+   mtx_lock(&screen->lock);
+   set_foreach(screen->used_resources, entry) {
+      struct etna_resource *rsc = (struct etna_resource *)entry->key;
 
-   assert(LIST_IS_EMPTY(&ctx->used_resources));
+      _mesa_set_remove_key(rsc->pending_ctx, ctx);
+   }
+   mtx_unlock(&screen->lock);
 }
 
 static void
@@ -438,8 +439,6 @@ etna_context_create(struct pipe_screen *pscreen, void *priv, unsigned flags)
    ctx->screen = screen;
    /* need some sane default in case state tracker doesn't set some state: */
    ctx->sample_mask = 0xffff;
-
-   list_inithead(&ctx->used_resources);
 
    /*  Set sensible defaults for state */
    etna_cmd_stream_reset_notify(ctx->stream, ctx);
@@ -487,6 +486,16 @@ etna_context_create(struct pipe_screen *pscreen, void *priv, unsigned flags)
 
    slab_create_child(&ctx->transfer_pool, &screen->transfer_pool);
    list_inithead(&ctx->active_hw_queries);
+
+   /* create dummy RT buffer, used when rendering with no color buffer */
+   ctx->dummy_rt = etna_bo_new(ctx->screen->dev, 64 * 64 * 4,
+                               DRM_ETNA_GEM_CACHE_WC);
+   if (!ctx->dummy_rt)
+      goto fail;
+
+   ctx->dummy_rt_reloc.bo = ctx->dummy_rt;
+   ctx->dummy_rt_reloc.offset = 0;
+   ctx->dummy_rt_reloc.flags = ETNA_RELOC_READ | ETNA_RELOC_WRITE;
 
    return pctx;
 

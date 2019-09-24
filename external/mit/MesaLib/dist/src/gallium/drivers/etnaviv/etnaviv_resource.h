@@ -31,8 +31,12 @@
 #include "etnaviv_tiling.h"
 #include "pipe/p_state.h"
 #include "util/list.h"
+#include "util/set.h"
+#include "util/u_helpers.h"
 
+struct etna_context;
 struct pipe_screen;
+struct util_dynarray;
 
 struct etna_resource_level {
    unsigned width, padded_width; /* in pixels */
@@ -47,6 +51,15 @@ struct etna_resource_level {
    uint32_t ts_size;
    uint32_t clear_value; /* clear value of resource level (mainly for TS) */
    bool ts_valid;
+
+   /* keep track if we have done some per block patching */
+   bool patched;
+   struct util_dynarray *patch_offsets;
+};
+
+enum etna_resource_addressing_mode {
+   ETNA_ADDRESSING_MODE_TILED = 0,
+   ETNA_ADDRESSING_MODE_LINEAR,
 };
 
 /* status of queued up but not flushed reads and write operations.
@@ -66,6 +79,7 @@ struct etna_resource {
    /* only lod 0 used for non-texture buffers */
    /* Layout for surface (tiled, multitiled, split tiled, ...) */
    enum etna_surface_layout layout;
+   enum etna_resource_addressing_mode addressing_mode;
    /* Horizontal alignment for texture unit (TEXTURE_HALIGN_*) */
    unsigned halign;
    struct etna_bo *bo; /* Surface video memory */
@@ -83,10 +97,7 @@ struct etna_resource {
 
    enum etna_resource_status status;
 
-   /* resources accessed by queued but not flushed draws are tracked
-    * in the used_resources list. */
-   struct list_head list;
-   struct etna_context *pending_ctx;
+   struct set *pending_ctx;
 };
 
 /* returns TRUE if a is newer than b */
@@ -155,7 +166,8 @@ etna_screen_resource_alloc_ts(struct pipe_screen *pscreen,
 
 struct pipe_resource *
 etna_resource_alloc(struct pipe_screen *pscreen, unsigned layout,
-                    uint64_t modifier, const struct pipe_resource *templat);
+                    enum etna_resource_addressing_mode mode, uint64_t modifier,
+                    const struct pipe_resource *templat);
 
 void
 etna_resource_screen_init(struct pipe_screen *pscreen);

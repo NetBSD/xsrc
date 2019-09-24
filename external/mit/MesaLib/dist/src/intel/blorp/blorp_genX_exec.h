@@ -82,6 +82,10 @@ static void
 blorp_surface_reloc(struct blorp_batch *batch, uint32_t ss_offset,
                     struct blorp_address address, uint32_t delta);
 
+static uint64_t
+blorp_get_surface_address(struct blorp_batch *batch,
+                          struct blorp_address address);
+
 #if GEN_GEN >= 7 && GEN_GEN < 10
 static struct blorp_address
 blorp_get_surface_base_address(struct blorp_batch *batch);
@@ -126,12 +130,13 @@ _blorp_combine_address(struct blorp_batch *batch, void *location,
         _blorp_cmd_pack(cmd)(batch, (void *)_dst, &name),         \
         _dst = NULL)
 
-#define blorp_emitn(batch, cmd, n) ({                       \
+#define blorp_emitn(batch, cmd, n, ...) ({                  \
       uint32_t *_dw = blorp_emit_dwords(batch, n);          \
       if (_dw) {                                            \
          struct cmd template = {                            \
             _blorp_cmd_header(cmd),                         \
             .DWordLength = n - _blorp_cmd_length_bias(cmd), \
+            __VA_ARGS__                                     \
          };                                                 \
          _blorp_cmd_pack(cmd)(batch, _dw, &template);       \
       }                                                     \
@@ -311,7 +316,7 @@ blorp_fill_vertex_buffer_state(struct blorp_batch *batch,
    vb[idx].BufferPitch = stride;
 
 #if GEN_GEN >= 6
-   vb[idx].VertexBufferMOCS = addr.mocs;
+   vb[idx].MOCS = addr.mocs;
 #endif
 
 #if GEN_GEN >= 7
@@ -347,12 +352,12 @@ blorp_emit_vertex_buffers(struct blorp_batch *batch,
    blorp_emit_input_varying_data(batch, params, &addrs[1], &size);
    blorp_fill_vertex_buffer_state(batch, vb, 1, addrs[1], size, 0);
 
+   blorp_vf_invalidate_for_vb_48b_transitions(batch, addrs, num_vbs);
+
    const unsigned num_dwords = 1 + num_vbs * GENX(VERTEX_BUFFER_STATE_length);
    uint32_t *dw = blorp_emitn(batch, GENX(3DSTATE_VERTEX_BUFFERS), num_dwords);
    if (!dw)
       return;
-
-   blorp_vf_invalidate_for_vb_48b_transitions(batch, addrs, num_vbs);
 
    for (unsigned i = 0; i < num_vbs; i++) {
       GENX(VERTEX_BUFFER_STATE_pack)(batch, dw, &vb[i]);
@@ -507,6 +512,10 @@ blorp_emit_vertex_elements(struct blorp_batch *batch,
    for (unsigned i = 0; i < num_elements; i++) {
       GENX(VERTEX_ELEMENT_STATE_pack)(batch, dw, &ve[i]);
       dw += GENX(VERTEX_ELEMENT_STATE_length);
+   }
+
+   blorp_emit(batch, GENX(3DSTATE_VF_STATISTICS), vf) {
+      vf.StatisticsEnable = false;
    }
 
 #if GEN_GEN >= 8
@@ -1363,6 +1372,13 @@ blorp_emit_surface_state(struct blorp_batch *batch,
    isl_surf_fill_state(batch->blorp->isl_dev, state,
                        .surf = &surf, .view = &surface->view,
                        .aux_surf = &surface->aux_surf, .aux_usage = aux_usage,
+                       .address =
+                          blorp_get_surface_address(batch, surface->addr),
+                       .aux_address = aux_usage == ISL_AUX_USAGE_NONE ? 0 :
+                          blorp_get_surface_address(batch, surface->aux_addr),
+                       .clear_address = !use_clear_address ? 0 :
+                          blorp_get_surface_address(batch,
+                                                    surface->clear_color_addr),
                        .mocs = surface->addr.mocs,
                        .clear_color = surface->clear_color,
                        .use_clear_address = use_clear_address,
@@ -1718,7 +1734,42 @@ blorp_update_clear_color(struct blorp_batch *batch,
                          enum isl_aux_op op)
 {
    if (info->clear_color_addr.buffer && op == ISL_AUX_OP_FAST_CLEAR) {
-#if GEN_GEN >= 9
+#if GEN_GEN == 11
+      blorp_emit(batch, GENX(PIPE_CONTROL), pipe) {
+         pipe.CommandStreamerStallEnable = true;
+      }
+
+      /* 2 QWORDS */
+      const unsigned inlinedata_dw = 2 * 2;
+      const unsigned num_dwords = GENX(MI_ATOMIC_length) + inlinedata_dw;
+
+      struct blorp_address clear_addr = info->clear_color_addr;
+      uint32_t *dw = blorp_emitn(batch, GENX(MI_ATOMIC), num_dwords,
+                                 .DataSize = MI_ATOMIC_QWORD,
+                                 .ATOMICOPCODE = MI_ATOMIC_OP_MOVE8B,
+                                 .InlineData = true,
+                                 .MemoryAddress = clear_addr);
+      /* dw starts at dword 1, but we need to fill dwords 3 and 5 */
+      dw[2] = info->clear_color.u32[0];
+      dw[4] = info->clear_color.u32[1];
+
+      clear_addr.offset += 8;
+      dw = blorp_emitn(batch, GENX(MI_ATOMIC), num_dwords,
+                                 .DataSize = MI_ATOMIC_QWORD,
+                                 .ATOMICOPCODE = MI_ATOMIC_OP_MOVE8B,
+                                 .CSSTALL = true,
+                                 .ReturnDataControl = true,
+                                 .InlineData = true,
+                                 .MemoryAddress = clear_addr);
+      /* dw starts at dword 1, but we need to fill dwords 3 and 5 */
+      dw[2] = info->clear_color.u32[2];
+      dw[4] = info->clear_color.u32[3];
+
+      blorp_emit(batch, GENX(PIPE_CONTROL), pipe) {
+         pipe.StateCacheInvalidationEnable = true;
+         pipe.TextureCacheInvalidationEnable = true;
+      }
+#elif GEN_GEN >= 9
       for (int i = 0; i < 4; i++) {
          blorp_emit(batch, GENX(MI_STORE_DATA_IMM), sdi) {
             sdi.Address = info->clear_color_addr;

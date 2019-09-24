@@ -1,7 +1,7 @@
 #ifndef AUBINATOR_VIEWER_H
 #define AUBINATOR_VIEWER_H
 
-#include "imgui.h"
+#include "imgui/imgui.h"
 
 #include "common/gen_decoder.h"
 #include "common/gen_disasm.h"
@@ -12,13 +12,15 @@ struct aub_viewer_cfg {
    ImColor highlight_color;
    ImColor error_color;
    ImColor missing_color;
+   ImColor boolean_color;
 
   aub_viewer_cfg() :
     clear_color(114, 144, 154),
     dwords_color(29, 177, 194, 255),
     highlight_color(0, 230, 0, 255),
     error_color(236, 255, 0, 255),
-    missing_color(230, 0, 230, 255) {}
+    missing_color(230, 0, 230, 255),
+    boolean_color(228, 75, 255) {}
 };
 
 struct aub_viewer_decode_cfg {
@@ -56,7 +58,7 @@ struct aub_decode_urb_stage_state {
 };
 
 struct aub_viewer_decode_ctx {
-   struct gen_batch_decode_bo (*get_bo)(void *user_data, uint64_t address);
+   struct gen_batch_decode_bo (*get_bo)(void *user_data, bool ppgtt, uint64_t address);
    unsigned (*get_state_size)(void *user_data,
                               uint32_t offset_from_dynamic_state_base_addr);
 
@@ -68,6 +70,7 @@ struct aub_viewer_decode_ctx {
 
    struct gen_spec *spec;
    struct gen_disasm *disasm;
+   enum drm_i915_gem_engine_class engine;
 
    struct aub_viewer_cfg *cfg;
    struct aub_viewer_decode_cfg *decode_cfg;
@@ -79,6 +82,8 @@ struct aub_viewer_decode_ctx {
    enum aub_decode_stage stage;
    uint32_t end_urb_offset;
    struct aub_decode_urb_stage_state urb_stages[AUB_DECODE_N_STAGE];
+
+   int n_batch_buffer_start;
 };
 
 void aub_viewer_decode_ctx_init(struct aub_viewer_decode_ctx *ctx,
@@ -86,12 +91,12 @@ void aub_viewer_decode_ctx_init(struct aub_viewer_decode_ctx *ctx,
                                 struct aub_viewer_decode_cfg *decode_cfg,
                                 struct gen_spec *spec,
                                 struct gen_disasm *disasm,
-                                struct gen_batch_decode_bo (*get_bo)(void *, uint64_t),
+                                struct gen_batch_decode_bo (*get_bo)(void *, bool, uint64_t),
                                 unsigned (*get_state_size)(void *, uint32_t),
                                 void *user_data);
 
 void aub_viewer_render_batch(struct aub_viewer_decode_ctx *ctx,
                              const void *batch, uint32_t batch_size,
-                             uint64_t batch_addr);
+                             uint64_t batch_addr, bool from_ring);
 
 #endif /* AUBINATOR_VIEWER_H */

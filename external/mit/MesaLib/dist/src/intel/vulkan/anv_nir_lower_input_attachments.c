@@ -35,7 +35,14 @@ load_frag_coord(nir_builder *b)
    nir_variable *pos = nir_variable_create(b->shader, nir_var_shader_in,
                                            glsl_vec4_type(), NULL);
    pos->data.location = VARYING_SLOT_POS;
-   pos->data.origin_upper_left = true;
+   /**
+    * From Vulkan spec:
+    *   "The OriginLowerLeft execution mode must not be used; fragment entry
+    *    points must declare OriginUpperLeft."
+    *
+    * So at this point origin_upper_left should be true
+    */
+   assert(b->shader->info.fs.origin_upper_left == true);
 
    return nir_load_var(b, pos);
 }
@@ -61,8 +68,7 @@ try_lower_input_load(nir_function_impl *impl, nir_intrinsic_instr *load)
    nir_ssa_def *offset = nir_ssa_for_src(&b, load->src[1], 2);
    nir_ssa_def *pos = nir_iadd(&b, frag_coord, offset);
 
-   nir_ssa_def *layer =
-      nir_load_system_value(&b, nir_intrinsic_load_layer_id, 0);
+   nir_ssa_def *layer = nir_load_layer_id(&b);
    nir_ssa_def *coord =
       nir_vec3(&b, nir_channel(&b, pos, 0), nir_channel(&b, pos, 1), layer);
 

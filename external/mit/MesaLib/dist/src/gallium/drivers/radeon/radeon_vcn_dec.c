@@ -552,7 +552,7 @@ static unsigned calc_ctx_size_h265_main(struct radeon_decoder *dec)
 
 static unsigned calc_ctx_size_h265_main10(struct radeon_decoder *dec, struct pipe_h265_picture_desc *pic)
 {
-	unsigned block_size, log2_ctb_size, width_in_ctb, height_in_ctb, num_16x16_block_per_ctb;
+	unsigned log2_ctb_size, width_in_ctb, height_in_ctb, num_16x16_block_per_ctb;
 	unsigned context_buffer_size_per_ctb_row, cm_buffer_size, max_mb_address, db_left_tile_pxl_size;
 	unsigned db_left_tile_ctx_size = 4096 / 16 * (32 + 16 * 4);
 
@@ -568,8 +568,8 @@ static unsigned calc_ctx_size_h265_main10(struct radeon_decoder *dec, struct pip
 	else
 		max_references = MAX2(max_references, 17);
 
-	block_size = (1 << (pic->pps->sps->log2_min_luma_coding_block_size_minus3 + 3));
-	log2_ctb_size = block_size + pic->pps->sps->log2_diff_max_min_luma_coding_block_size;
+	log2_ctb_size = pic->pps->sps->log2_min_luma_coding_block_size_minus3 + 3 +
+		pic->pps->sps->log2_diff_max_min_luma_coding_block_size;
 
 	width_in_ctb = (width + ((1 << log2_ctb_size) - 1)) >> log2_ctb_size;
 	height_in_ctb = (height + ((1 << log2_ctb_size) - 1)) >> log2_ctb_size;
@@ -823,8 +823,8 @@ static struct pb_buffer *rvcn_dec_message_decode(struct radeon_decoder *dec,
 	decode->bsd_size = align(dec->bs_size, 128);
 	decode->dpb_size = dec->dpb.res->buf->size;
 	decode->dt_size =
-		r600_resource(((struct vl_video_buffer *)target)->resources[0])->buf->size +
-		r600_resource(((struct vl_video_buffer *)target)->resources[1])->buf->size;
+		si_resource(((struct vl_video_buffer *)target)->resources[0])->buf->size +
+		si_resource(((struct vl_video_buffer *)target)->resources[1])->buf->size;
 
 	decode->sct_size = 0;
 	decode->sc_coeff_size = 0;
@@ -942,7 +942,9 @@ static struct pb_buffer *rvcn_dec_message_decode(struct radeon_decoder *dec,
 			si_vid_clear_buffer(dec->base.context, &dec->ctx);
 
 			/* ctx needs probs table */
-			ptr = dec->ws->buffer_map(dec->ctx.res->buf, dec->cs, PIPE_TRANSFER_WRITE);
+			ptr = dec->ws->buffer_map(
+				dec->ctx.res->buf, dec->cs,
+				PIPE_TRANSFER_WRITE | RADEON_TRANSFER_TEMPORARY);
 			fill_probs_table(ptr);
 			dec->ws->buffer_unmap(dec->ctx.res->buf);
 		}
@@ -1035,7 +1037,8 @@ static void map_msg_fb_it_probs_buf(struct radeon_decoder *dec)
 	buf = &dec->msg_fb_it_probs_buffers[dec->cur_buffer];
 
 	/* and map it for CPU access */
-	ptr = dec->ws->buffer_map(buf->res->buf, dec->cs, PIPE_TRANSFER_WRITE);
+	ptr = dec->ws->buffer_map(buf->res->buf, dec->cs,
+				  PIPE_TRANSFER_WRITE | RADEON_TRANSFER_TEMPORARY);
 
 	/* calc buffer offsets */
 	dec->msg = ptr;
@@ -1313,7 +1316,7 @@ static void radeon_dec_begin_frame(struct pipe_video_codec *decoder,
 	dec->bs_size = 0;
 	dec->bs_ptr = dec->ws->buffer_map(
 		dec->bs_buffers[dec->cur_buffer].res->buf,
-		dec->cs, PIPE_TRANSFER_WRITE);
+		dec->cs, PIPE_TRANSFER_WRITE | RADEON_TRANSFER_TEMPORARY);
 }
 
 /**
@@ -1358,8 +1361,9 @@ static void radeon_dec_decode_bitstream(struct pipe_video_codec *decoder,
 				return;
 			}
 
-			dec->bs_ptr = dec->ws->buffer_map(buf->res->buf, dec->cs,
-							  PIPE_TRANSFER_WRITE);
+			dec->bs_ptr = dec->ws->buffer_map(
+				buf->res->buf, dec->cs,
+				PIPE_TRANSFER_WRITE | RADEON_TRANSFER_TEMPORARY);
 			if (!dec->bs_ptr)
 				return;
 
@@ -1508,7 +1512,7 @@ struct pipe_video_codec *radeon_create_decoder(struct pipe_context *context,
 	dec->stream_handle = si_vid_alloc_stream_handle();
 	dec->screen = context->screen;
 	dec->ws = ws;
-	dec->cs = ws->cs_create(sctx->ctx, ring, NULL, NULL);
+	dec->cs = ws->cs_create(sctx->ctx, ring, NULL, NULL, false);
 	if (!dec->cs) {
 		RVID_ERR("Can't get command submission context.\n");
 		goto error;
@@ -1544,7 +1548,9 @@ struct pipe_video_codec *radeon_create_decoder(struct pipe_context *context,
 			void *ptr;
 
 			buf = &dec->msg_fb_it_probs_buffers[i];
-			ptr = dec->ws->buffer_map(buf->res->buf, dec->cs, PIPE_TRANSFER_WRITE);
+			ptr = dec->ws->buffer_map(
+				buf->res->buf, dec->cs,
+				PIPE_TRANSFER_WRITE | RADEON_TRANSFER_TEMPORARY);
 			ptr += FB_BUFFER_OFFSET + FB_BUFFER_SIZE;
 			fill_probs_table(ptr);
 			dec->ws->buffer_unmap(buf->res->buf);

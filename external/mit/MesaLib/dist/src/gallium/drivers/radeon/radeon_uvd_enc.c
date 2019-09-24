@@ -73,7 +73,8 @@ radeon_uvd_enc_get_param(struct radeon_uvd_encoder *enc,
    enc->enc_pic.general_tier_flag = pic->seq.general_tier_flag;
    enc->enc_pic.general_profile_idc = pic->seq.general_profile_idc;
    enc->enc_pic.general_level_idc = pic->seq.general_level_idc;
-   enc->enc_pic.max_poc = pic->seq.intra_period;
+   enc->enc_pic.max_poc =
+      MAX2(16, util_next_power_of_two(pic->seq.intra_period));
    enc->enc_pic.log2_max_poc = 0;
    for (int i = enc->enc_pic.max_poc; i != 0; enc->enc_pic.log2_max_poc++)
       i = (i >> 1);
@@ -263,9 +264,9 @@ radeon_uvd_enc_get_feedback(struct pipe_video_codec *encoder,
 
    if (NULL != size) {
       radeon_uvd_enc_feedback_t *fb_data =
-         (radeon_uvd_enc_feedback_t *) enc->ws->buffer_map(fb->res->buf,
-                                                           enc->cs,
-                                                           PIPE_TRANSFER_READ_WRITE);
+         (radeon_uvd_enc_feedback_t *) enc->ws->buffer_map(
+               fb->res->buf, enc->cs,
+               PIPE_TRANSFER_READ_WRITE | RADEON_TRANSFER_TEMPORARY);
 
       if (!fb_data->status)
          *size = fb_data->bitstream_size;
@@ -314,7 +315,7 @@ radeon_uvd_create_encoder(struct pipe_context *context,
    enc->screen = context->screen;
    enc->ws = ws;
    enc->cs =
-      ws->cs_create(sctx->ctx, RING_UVD_ENC, radeon_uvd_enc_cs_flush, enc);
+      ws->cs_create(sctx->ctx, RING_UVD_ENC, radeon_uvd_enc_cs_flush, enc, false);
 
    if (!enc->cs) {
       RVID_ERR("Can't get command submission context.\n");

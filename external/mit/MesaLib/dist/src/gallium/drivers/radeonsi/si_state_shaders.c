@@ -337,10 +337,10 @@ void si_destroy_shader_cache(struct si_screen *sscreen)
 /* SHADER STATES */
 
 static void si_set_tesseval_regs(struct si_screen *sscreen,
-				 struct si_shader_selector *tes,
+				 const struct si_shader_selector *tes,
 				 struct si_pm4_state *pm4)
 {
-	struct tgsi_shader_info *info = &tes->info;
+	const struct tgsi_shader_info *info = &tes->info;
 	unsigned tes_prim_mode = info->properties[TGSI_PROPERTY_TES_PRIM_MODE];
 	unsigned tes_spacing = info->properties[TGSI_PROPERTY_TES_SPACING];
 	bool tes_vertex_order_cw = info->properties[TGSI_PROPERTY_TES_VERTEX_ORDER_CW];
@@ -464,12 +464,7 @@ static struct si_pm4_state *si_get_shader_pm4_state(struct si_shader *shader)
 static unsigned si_get_num_vs_user_sgprs(unsigned num_always_on_user_sgprs)
 {
 	/* Add the pointer to VBO descriptors. */
-	if (HAVE_32BIT_POINTERS) {
-		return num_always_on_user_sgprs + 1;
-	} else {
-		assert(num_always_on_user_sgprs % 2 == 0);
-		return num_always_on_user_sgprs + 2;
-	}
+	return num_always_on_user_sgprs + 1;
 }
 
 static void si_shader_ls(struct si_screen *sscreen, struct si_shader *shader)
@@ -581,7 +576,7 @@ static void si_emit_shader_es(struct si_context *sctx)
 					   shader->vgt_vertex_reuse_block_cntl);
 
 	if (initial_cdw != sctx->gfx_cs->current.cdw)
-		sctx->context_roll_counter++;
+		sctx->context_roll = true;
 }
 
 static void si_shader_es(struct si_screen *sscreen, struct si_shader *shader)
@@ -830,7 +825,7 @@ static void si_emit_shader_gs(struct si_context *sctx)
 	}
 
 	if (initial_cdw != sctx->gfx_cs->current.cdw)
-		sctx->context_roll_counter++;
+		sctx->context_roll = true;
 }
 
 static void si_shader_gs(struct si_screen *sscreen, struct si_shader *shader)
@@ -1007,7 +1002,7 @@ static void si_emit_shader_vs(struct si_context *sctx)
 					   shader->vgt_vertex_reuse_block_cntl);
 
 	if (initial_cdw != sctx->gfx_cs->current.cdw)
-		sctx->context_roll_counter++;
+		sctx->context_roll = true;
 }
 
 /**
@@ -1199,7 +1194,7 @@ static void si_emit_shader_ps(struct si_context *sctx)
 				   shader->ctx_reg.ps.cb_shader_mask);
 
 	if (initial_cdw != sctx->gfx_cs->current.cdw)
-		sctx->context_roll_counter++;
+		sctx->context_roll = true;
 }
 
 static void si_shader_ps(struct si_shader *shader)
@@ -1957,6 +1952,10 @@ current_not_ready:
 		/* Use the default (unoptimized) shader for now. */
 		memset(&key->opt, 0, sizeof(key->opt));
 		mtx_unlock(&sel->mutex);
+
+		if (sscreen->options.sync_compile)
+			util_queue_fence_wait(&shader->ready);
+
 		goto again;
 	}
 
@@ -2047,6 +2046,9 @@ static void si_init_shader_selector_async(void *job, int thread_index)
 	assert(thread_index >= 0);
 	assert(thread_index < ARRAY_SIZE(sscreen->compiler));
 	compiler = &sscreen->compiler[thread_index];
+
+	if (sel->nir)
+		si_lower_nir(sel);
 
 	/* Compile the main shader part for use with a prolog and/or epilog.
 	 * If this fails, the driver will try to compile a monolithic shader
@@ -2166,12 +2168,12 @@ void si_schedule_initial_compile(struct si_context *sctx, unsigned processor,
 	util_queue_fence_init(ready_fence);
 
 	struct util_async_debug_callback async_debug;
-	bool wait =
+	bool debug =
 		(sctx->debug.debug_message && !sctx->debug.async) ||
 		sctx->is_debug ||
 		si_can_dump_shader(sctx->screen, processor);
 
-	if (wait) {
+	if (debug) {
 		u_async_debug_init(&async_debug);
 		compiler_ctx_state->debug = async_debug.base;
 	}
@@ -2179,11 +2181,14 @@ void si_schedule_initial_compile(struct si_context *sctx, unsigned processor,
 	util_queue_add_job(&sctx->screen->shader_compiler_queue, job,
 			   ready_fence, execute, NULL);
 
-	if (wait) {
+	if (debug) {
 		util_queue_fence_wait(ready_fence);
 		u_async_debug_drain(&async_debug, &sctx->debug);
 		u_async_debug_cleanup(&async_debug);
 	}
+
+	if (sctx->screen->options.sync_compile)
+		util_queue_fence_wait(ready_fence);
 }
 
 /* Return descriptor slot usage masks from the given shader info. */
@@ -2242,10 +2247,9 @@ static void *si_create_shader_selector(struct pipe_context *ctx,
 
 		sel->nir = state->ir.nir;
 
+		si_nir_opts(sel->nir);
 		si_nir_scan_shader(sel->nir, &sel->info);
-		si_nir_scan_tess_ctrl(sel->nir, &sel->info, &sel->tcs_info);
-
-		si_lower_nir(sel);
+		si_nir_scan_tess_ctrl(sel->nir, &sel->tcs_info);
 	}
 
 	sel->type = sel->info.processor;
@@ -2874,7 +2878,7 @@ static void si_emit_spi_map(struct si_context *sctx)
 				    sctx->tracked_regs.spi_ps_input_cntl, num_interp);
 
 	if (initial_cdw != sctx->gfx_cs->current.cdw)
-		sctx->context_roll_counter++;
+		sctx->context_roll = true;
 }
 
 /**
@@ -3094,15 +3098,10 @@ static int si_update_scratch_buffer(struct si_context *sctx,
 	/* Update the shader state to use the new shader bo. */
 	si_shader_init_pm4_state(sctx->screen, shader);
 
-	r600_resource_reference(&shader->scratch_bo, sctx->scratch_buffer);
+	si_resource_reference(&shader->scratch_bo, sctx->scratch_buffer);
 
 	si_shader_unlock(shader);
 	return 1;
-}
-
-static unsigned si_get_current_scratch_buffer_size(struct si_context *sctx)
-{
-	return sctx->scratch_buffer ? sctx->scratch_buffer->b.b.width0 : 0;
 }
 
 static unsigned si_get_scratch_buffer_bytes_per_wave(struct si_shader *shader)
@@ -3117,23 +3116,6 @@ static struct si_shader *si_get_tcs_current(struct si_context *sctx)
 
 	return sctx->tcs_shader.cso ? sctx->tcs_shader.current :
 				      sctx->fixed_func_tcs_shader.current;
-}
-
-static unsigned si_get_max_scratch_bytes_per_wave(struct si_context *sctx)
-{
-	unsigned bytes = 0;
-
-	bytes = MAX2(bytes, si_get_scratch_buffer_bytes_per_wave(sctx->ps_shader.current));
-	bytes = MAX2(bytes, si_get_scratch_buffer_bytes_per_wave(sctx->gs_shader.current));
-	bytes = MAX2(bytes, si_get_scratch_buffer_bytes_per_wave(sctx->vs_shader.current));
-	bytes = MAX2(bytes, si_get_scratch_buffer_bytes_per_wave(sctx->tes_shader.current));
-
-	if (sctx->tes_shader.cso) {
-		struct si_shader *tcs = si_get_tcs_current(sctx);
-
-		bytes = MAX2(bytes, si_get_scratch_buffer_bytes_per_wave(tcs));
-	}
-	return bytes;
 }
 
 static bool si_update_scratch_relocs(struct si_context *sctx)
@@ -3193,18 +3175,42 @@ static bool si_update_scratch_relocs(struct si_context *sctx)
 
 static bool si_update_spi_tmpring_size(struct si_context *sctx)
 {
-	unsigned current_scratch_buffer_size =
-		si_get_current_scratch_buffer_size(sctx);
-	unsigned scratch_bytes_per_wave =
-		si_get_max_scratch_bytes_per_wave(sctx);
-	unsigned scratch_needed_size = scratch_bytes_per_wave *
-		sctx->scratch_waves;
+	/* SPI_TMPRING_SIZE.WAVESIZE must be constant for each scratch buffer.
+	 * There are 2 cases to handle:
+	 *
+	 * - If the current needed size is less than the maximum seen size,
+	 *   use the maximum seen size, so that WAVESIZE remains the same.
+	 *
+	 * - If the current needed size is greater than the maximum seen size,
+	 *   the scratch buffer is reallocated, so we can increase WAVESIZE.
+	 *
+	 * Shaders that set SCRATCH_EN=0 don't allocate scratch space.
+	 * Otherwise, the number of waves that can use scratch is
+	 * SPI_TMPRING_SIZE.WAVES.
+	 */
+	unsigned bytes = 0;
+
+	bytes = MAX2(bytes, si_get_scratch_buffer_bytes_per_wave(sctx->ps_shader.current));
+	bytes = MAX2(bytes, si_get_scratch_buffer_bytes_per_wave(sctx->gs_shader.current));
+	bytes = MAX2(bytes, si_get_scratch_buffer_bytes_per_wave(sctx->vs_shader.current));
+
+	if (sctx->tes_shader.cso) {
+		bytes = MAX2(bytes, si_get_scratch_buffer_bytes_per_wave(sctx->tes_shader.current));
+		bytes = MAX2(bytes, si_get_scratch_buffer_bytes_per_wave(si_get_tcs_current(sctx)));
+	}
+
+	sctx->max_seen_scratch_bytes_per_wave =
+		MAX2(sctx->max_seen_scratch_bytes_per_wave, bytes);
+
+	unsigned scratch_needed_size =
+		sctx->max_seen_scratch_bytes_per_wave * sctx->scratch_waves;
 	unsigned spi_tmpring_size;
 
 	if (scratch_needed_size > 0) {
-		if (scratch_needed_size > current_scratch_buffer_size) {
+		if (!sctx->scratch_buffer ||
+		    scratch_needed_size > sctx->scratch_buffer->b.b.width0) {
 			/* Create a bigger scratch buffer */
-			r600_resource_reference(&sctx->scratch_buffer, NULL);
+			si_resource_reference(&sctx->scratch_buffer, NULL);
 
 			sctx->scratch_buffer =
 				si_aligned_buffer_create(&sctx->screen->b,
@@ -3228,7 +3234,7 @@ static bool si_update_spi_tmpring_size(struct si_context *sctx)
 		"scratch size should already be aligned correctly.");
 
 	spi_tmpring_size = S_0286E8_WAVES(sctx->scratch_waves) |
-			   S_0286E8_WAVESIZE(scratch_bytes_per_wave >> 10);
+			   S_0286E8_WAVESIZE(sctx->max_seen_scratch_bytes_per_wave >> 10);
 	if (spi_tmpring_size != sctx->spi_tmpring_size) {
 		sctx->spi_tmpring_size = spi_tmpring_size;
 		si_mark_atom_dirty(sctx, &sctx->atoms.s.scratch_state);
@@ -3254,10 +3260,10 @@ static void si_init_tess_factor_ring(struct si_context *sctx)
 
 	si_init_config_add_vgt_flush(sctx);
 
-	si_pm4_add_bo(sctx->init_config, r600_resource(sctx->tess_rings),
+	si_pm4_add_bo(sctx->init_config, si_resource(sctx->tess_rings),
 		      RADEON_USAGE_READWRITE, RADEON_PRIO_SHADER_RINGS);
 
-	uint64_t factor_va = r600_resource(sctx->tess_rings)->gpu_address +
+	uint64_t factor_va = si_resource(sctx->tess_rings)->gpu_address +
 			     sctx->screen->tess_offchip_ring_size;
 
 	/* Append these registers to the init config state. */

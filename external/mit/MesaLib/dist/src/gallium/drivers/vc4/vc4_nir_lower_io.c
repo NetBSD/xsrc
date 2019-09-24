@@ -180,8 +180,7 @@ vc4_nir_lower_vertex_attr(struct vc4_compile *c, nir_builder *b,
         /* We only accept direct outputs and TGSI only ever gives them to us
          * with an offset value of 0.
          */
-        assert(nir_src_as_const_value(intr->src[0]) &&
-               nir_src_as_const_value(intr->src[0])->u32[0] == 0);
+        assert(nir_src_as_uint(intr->src[0]) == 0);
 
         /* Generate dword loads for the VPM values (Since these intrinsics may
          * be reordered, the actual reads will be generated at the top of the
@@ -330,7 +329,8 @@ vc4_nir_lower_uniform(struct vc4_compile *c, nir_builder *b,
                 nir_intrinsic_instr *intr_comp =
                         nir_intrinsic_instr_create(c->s, intr->intrinsic);
                 intr_comp->num_components = 1;
-                nir_ssa_dest_init(&intr_comp->instr, &intr_comp->dest, 1, 32, NULL);
+                nir_ssa_dest_init(&intr_comp->instr, &intr_comp->dest, 1,
+                                  intr->dest.ssa.bit_size, NULL);
 
                 /* Convert the uniform offset to bytes.  If it happens
                  * to be a constant, constant-folding will clean up
@@ -339,6 +339,8 @@ vc4_nir_lower_uniform(struct vc4_compile *c, nir_builder *b,
                 nir_intrinsic_set_base(intr_comp,
                                        nir_intrinsic_base(intr) * 16 +
                                        i * 4);
+                nir_intrinsic_set_range(intr_comp,
+                                        nir_intrinsic_range(intr) * 16 - i * 4);
 
                 intr_comp->src[0] =
                         nir_src_for_ssa(nir_ishl(b, intr->src[0].ssa,

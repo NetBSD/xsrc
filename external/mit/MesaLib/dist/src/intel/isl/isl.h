@@ -949,6 +949,12 @@ enum isl_msaa_layout {
    ISL_MSAA_LAYOUT_ARRAY,
 };
 
+typedef enum {
+  ISL_MEMCPY = 0,
+  ISL_MEMCPY_BGRA8,
+  ISL_MEMCPY_STREAMING_LOAD,
+  ISL_MEMCPY_INVALID,
+} isl_memcpy_type;
 
 struct isl_device {
    const struct gen_device_info *info;
@@ -1170,7 +1176,7 @@ struct isl_surf {
 
    /**
     * Physical extent of the surface's base level, in units of physical
-    * surface samples and aligned to the format's compression block.
+    * surface samples.
     *
     * Consider isl_dim_layout as an operator that transforms a logical surface
     * layout to a physical surface layout. Then
@@ -1355,6 +1361,11 @@ struct isl_buffer_fill_state_info {
     */
    enum isl_format format;
 
+   /**
+    * The swizzle to use in the surface state
+    */
+   struct isl_swizzle swizzle;
+
    uint32_t stride_B;
 };
 
@@ -1491,6 +1502,9 @@ isl_format_has_int_channel(enum isl_format fmt)
    return isl_format_has_uint_channel(fmt) ||
           isl_format_has_sint_channel(fmt);
 }
+
+bool isl_format_has_color_component(enum isl_format fmt,
+                                    int component) ATTRIBUTE_CONST;
 
 unsigned isl_format_get_num_channels(enum isl_format fmt);
 
@@ -1872,6 +1886,34 @@ isl_surf_get_image_alignment_sa(const struct isl_surf *surf)
 }
 
 /**
+ * Logical extent of level 0 in units of surface elements.
+ */
+static inline struct isl_extent4d
+isl_surf_get_logical_level0_el(const struct isl_surf *surf)
+{
+   const struct isl_format_layout *fmtl = isl_format_get_layout(surf->format);
+
+   return isl_extent4d(DIV_ROUND_UP(surf->logical_level0_px.w, fmtl->bw),
+                       DIV_ROUND_UP(surf->logical_level0_px.h, fmtl->bh),
+                       DIV_ROUND_UP(surf->logical_level0_px.d, fmtl->bd),
+                       surf->logical_level0_px.a);
+}
+
+/**
+ * Physical extent of level 0 in units of surface elements.
+ */
+static inline struct isl_extent4d
+isl_surf_get_phys_level0_el(const struct isl_surf *surf)
+{
+   const struct isl_format_layout *fmtl = isl_format_get_layout(surf->format);
+
+   return isl_extent4d(DIV_ROUND_UP(surf->phys_level0_sa.w, fmtl->bw),
+                       DIV_ROUND_UP(surf->phys_level0_sa.h, fmtl->bh),
+                       DIV_ROUND_UP(surf->phys_level0_sa.d, fmtl->bd),
+                       surf->phys_level0_sa.a);
+}
+
+/**
  * Pitch between vertically adjacent surface elements, in bytes.
  */
 static inline uint32_t
@@ -2064,6 +2106,32 @@ isl_tiling_get_intratile_offset_sa(enum isl_tiling tiling,
 uint32_t
 isl_surf_get_depth_format(const struct isl_device *dev,
                           const struct isl_surf *surf);
+
+/**
+ * @brief performs a copy from linear to tiled surface
+ *
+ */
+void
+isl_memcpy_linear_to_tiled(uint32_t xt1, uint32_t xt2,
+                           uint32_t yt1, uint32_t yt2,
+                           char *dst, const char *src,
+                           uint32_t dst_pitch, int32_t src_pitch,
+                           bool has_swizzling,
+                           enum isl_tiling tiling,
+                           isl_memcpy_type copy_type);
+
+/**
+ * @brief performs a copy from tiled to linear surface
+ *
+ */
+void
+isl_memcpy_tiled_to_linear(uint32_t xt1, uint32_t xt2,
+                           uint32_t yt1, uint32_t yt2,
+                           char *dst, const char *src,
+                           int32_t dst_pitch, uint32_t src_pitch,
+                           bool has_swizzling,
+                           enum isl_tiling tiling,
+                           isl_memcpy_type copy_type);
 
 #ifdef __cplusplus
 }

@@ -37,18 +37,21 @@
 #include "tgsi/tgsi_text.h"
 #include "tgsi/tgsi_dump.h"
 
-#include "freedreno_util.h"
+#include "ir3/ir3_compiler.h"
+#include "ir3/ir3_gallium.h"
+#include "ir3/ir3_nir.h"
+#include "ir3/instr-a3xx.h"
+#include "ir3/ir3.h"
 
-#include "ir3_compiler.h"
-#include "ir3_nir.h"
-#include "instr-a3xx.h"
-#include "ir3.h"
+#include "main/mtypes.h"
 
 #include "compiler/glsl/standalone.h"
 #include "compiler/glsl/glsl_to_nir.h"
 #include "compiler/glsl/gl_nir.h"
 #include "compiler/nir_types.h"
 #include "compiler/spirv/nir_spirv.h"
+
+#include "pipe/p_context.h"
 
 static void dump_info(struct ir3_shader_variant *so, const char *str)
 {
@@ -103,29 +106,43 @@ static nir_shader *
 load_glsl(unsigned num_files, char* const* files, gl_shader_stage stage)
 {
 	static const struct standalone_options options = {
-			.glsl_version = 140,
+			.glsl_version = 460,
 			.do_link = true,
 	};
 	struct gl_shader_program *prog;
+	const nir_shader_compiler_options *nir_options =
+			ir3_get_compiler_options(compiler);
+	static struct gl_context local_ctx;
 
-	prog = standalone_compile_shader(&options, num_files, files);
+	prog = standalone_compile_shader(&options, num_files, files, &local_ctx);
 	if (!prog)
 		errx(1, "couldn't parse `%s'", files[0]);
 
-	nir_shader *nir = glsl_to_nir(prog, stage, ir3_get_compiler_options(compiler));
+	nir_shader *nir = glsl_to_nir(&local_ctx, prog, stage, nir_options);
 
 	/* required NIR passes: */
-	/* TODO cmdline args for some of the conditional lowering passes? */
+	if (nir_options->lower_all_io_to_temps ||
+			nir->info.stage == MESA_SHADER_VERTEX ||
+			nir->info.stage == MESA_SHADER_GEOMETRY) {
+		NIR_PASS_V(nir, nir_lower_io_to_temporaries,
+				nir_shader_get_entrypoint(nir),
+				true, true);
+	} else if (nir->info.stage == MESA_SHADER_FRAGMENT) {
+		NIR_PASS_V(nir, nir_lower_io_to_temporaries,
+				nir_shader_get_entrypoint(nir),
+				true, false);
+	}
 
-	NIR_PASS_V(nir, nir_lower_io_to_temporaries,
-			nir_shader_get_entrypoint(nir),
-			true, true);
 	NIR_PASS_V(nir, nir_lower_global_vars_to_local);
 	NIR_PASS_V(nir, nir_split_var_copies);
 	NIR_PASS_V(nir, nir_lower_var_copies);
 
 	NIR_PASS_V(nir, nir_split_var_copies);
 	NIR_PASS_V(nir, nir_lower_var_copies);
+	nir_print_shader(nir, stdout);
+	NIR_PASS_V(nir, gl_nir_lower_atomics, prog, true);
+	NIR_PASS_V(nir, nir_lower_atomics_to_ssbo, 8);
+	nir_print_shader(nir, stdout);
 
 	switch (stage) {
 	case MESA_SHADER_VERTEX:
@@ -152,6 +169,9 @@ load_glsl(unsigned num_files, char* const* files, gl_shader_stage stage)
 				&nir->num_outputs,
 				ir3_glsl_type_size);
 		break;
+	case MESA_SHADER_COMPUTE:
+	case MESA_SHADER_KERNEL:
+		break;
 	default:
 		errx(1, "unhandled shader stage: %d", stage);
 	}
@@ -161,6 +181,7 @@ load_glsl(unsigned num_files, char* const* files, gl_shader_stage stage)
 			ir3_glsl_type_size);
 
 	NIR_PASS_V(nir, nir_lower_system_values);
+	NIR_PASS_V(nir, nir_lower_frexp);
 	NIR_PASS_V(nir, nir_lower_io, nir_var_all, ir3_glsl_type_size, 0);
 	NIR_PASS_V(nir, gl_nir_lower_samplers, prog);
 
@@ -215,6 +236,7 @@ load_spirv(const char *filename, const char *entry, gl_shader_stage stage)
 			.variable_pointers = true,
 		},
 		.lower_workgroup_access_to_offsets = true,
+		.lower_ubo_ssbo_access_to_offsets = true,
 		.debug = {
 			.func = debug_func,
 		}
@@ -282,7 +304,7 @@ int main(int argc, char **argv)
 
 	while (n < argc) {
 		if (!strcmp(argv[n], "--verbose")) {
-			fd_mesa_debug |= FD_DBG_MSGS | FD_DBG_OPTMSGS | FD_DBG_DISASM;
+			ir3_shader_debug |= IR3_DBG_OPTMSGS | IR3_DBG_DISASM;
 			n++;
 			continue;
 		}
@@ -337,7 +359,7 @@ int main(int argc, char **argv)
 		}
 
 		if (!strcmp(argv[n], "--stream-out")) {
-			struct pipe_stream_output_info *so = &s.stream_output;
+			struct ir3_stream_output_info *so = &s.stream_output;
 			debug_printf(" %s", argv[n]);
 			/* TODO more dynamic config based on number of outputs, etc
 			 * rather than just hard-code for first output:
@@ -396,6 +418,12 @@ int main(int argc, char **argv)
 				errx(1, "in SPIR-V mode, an entry point must be specified");
 			entry = argv[n];
 			n++;
+		} else if (strcmp(ext, ".comp") == 0) {
+			if (s.from_tgsi || from_spirv)
+				errx(1, "cannot mix GLSL/TGSI/SPIRV");
+			if (num_files >= ARRAY_SIZE(filenames))
+				errx(1, "too many GLSL files");
+			stage = MESA_SHADER_COMPUTE;
 		} else if (strcmp(ext, ".frag") == 0) {
 			if (s.from_tgsi || from_spirv)
 				errx(1, "cannot mix GLSL/TGSI/SPIRV");
@@ -431,16 +459,16 @@ int main(int argc, char **argv)
 			return ret;
 		}
 
-		if (fd_mesa_debug & FD_DBG_OPTMSGS)
+		if (ir3_shader_debug & IR3_DBG_OPTMSGS)
 			debug_printf("%s\n", (char *)ptr);
 
 		if (!tgsi_text_translate(ptr, toks, ARRAY_SIZE(toks)))
 			errx(1, "could not parse `%s'", filenames[0]);
 
-		if (fd_mesa_debug & FD_DBG_OPTMSGS)
+		if (ir3_shader_debug & IR3_DBG_OPTMSGS)
 			tgsi_dump(toks, 0);
 
-		nir = ir3_tgsi_to_nir(toks);
+		nir = ir3_tgsi_to_nir(compiler, toks, NULL);
 		NIR_PASS_V(nir, nir_lower_global_vars_to_local);
 	} else if (from_spirv) {
 		nir = load_spirv(filenames[0], entry, stage);
@@ -463,20 +491,7 @@ int main(int argc, char **argv)
 
 	v.key = key;
 	v.shader = &s;
-
-	switch (nir->info.stage) {
-	case MESA_SHADER_FRAGMENT:
-		s.type = v.type = SHADER_FRAGMENT;
-		break;
-	case MESA_SHADER_VERTEX:
-		s.type = v.type = SHADER_VERTEX;
-		break;
-	case MESA_SHADER_COMPUTE:
-		s.type = v.type = SHADER_COMPUTE;
-		break;
-	default:
-		errx(1, "unhandled shader stage: %d", nir->info.stage);
-	}
+	s.type = v.type = nir->info.stage;
 
 	info = "NIR compiler";
 	ret = ir3_compile_shader_nir(s.compiler, &v);

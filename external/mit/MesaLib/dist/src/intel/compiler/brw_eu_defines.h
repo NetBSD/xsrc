@@ -41,14 +41,14 @@
 /* Using the GNU statement expression extension */
 #define SET_FIELD(value, field)                                         \
    ({                                                                   \
-      uint32_t fieldval = (value) << field ## _SHIFT;                   \
+      uint32_t fieldval = (uint32_t)(value) << field ## _SHIFT;         \
       assert((fieldval & ~ field ## _MASK) == 0);                       \
       fieldval & field ## _MASK;                                        \
    })
 
 #define SET_BITS(value, high, low)                                      \
    ({                                                                   \
-      const uint32_t fieldval = (value) << (low);                       \
+      const uint32_t fieldval = (uint32_t)(value) << (low);             \
       assert((fieldval & ~INTEL_MASK(high, low)) == 0);                 \
       fieldval & INTEL_MASK(high, low);                                 \
    })
@@ -316,6 +316,13 @@ enum opcode {
    SHADER_OPCODE_COS,
 
    /**
+    * A generic "send" opcode.  The first two sources are the message
+    * descriptor and extended message descriptor respectively.  The third
+    * and optional fourth sources are the message payload
+    */
+   SHADER_OPCODE_SEND,
+
+   /**
     * Texture sampling opcodes.
     *
     * LOGICAL opcodes are eventually translated to the matching non-LOGICAL
@@ -354,7 +361,7 @@ enum opcode {
    SHADER_OPCODE_SAMPLEINFO,
    SHADER_OPCODE_SAMPLEINFO_LOGICAL,
 
-   SHADER_OPCODE_IMAGE_SIZE,
+   SHADER_OPCODE_IMAGE_SIZE_LOGICAL,
 
    /**
     * Combines multiple sources of size 1 into a larger virtual GRF.
@@ -395,20 +402,32 @@ enum opcode {
     * Source 4: [required] Opcode-specific control immediate, same as source 2
     *                      of the matching non-LOGICAL opcode.
     */
-   SHADER_OPCODE_UNTYPED_ATOMIC,
+   VEC4_OPCODE_UNTYPED_ATOMIC,
    SHADER_OPCODE_UNTYPED_ATOMIC_LOGICAL,
-   SHADER_OPCODE_UNTYPED_ATOMIC_FLOAT,
    SHADER_OPCODE_UNTYPED_ATOMIC_FLOAT_LOGICAL,
-   SHADER_OPCODE_UNTYPED_SURFACE_READ,
+   VEC4_OPCODE_UNTYPED_SURFACE_READ,
    SHADER_OPCODE_UNTYPED_SURFACE_READ_LOGICAL,
-   SHADER_OPCODE_UNTYPED_SURFACE_WRITE,
+   VEC4_OPCODE_UNTYPED_SURFACE_WRITE,
    SHADER_OPCODE_UNTYPED_SURFACE_WRITE_LOGICAL,
 
-   SHADER_OPCODE_TYPED_ATOMIC,
+   /**
+    * Untyped A64 surface access opcodes.
+    *
+    * Source 0: 64-bit address
+    * Source 1: Operational source
+    * Source 2: [required] Opcode-specific control immediate, same as source 2
+    *                      of the matching non-LOGICAL opcode.
+    */
+   SHADER_OPCODE_A64_UNTYPED_READ_LOGICAL,
+   SHADER_OPCODE_A64_UNTYPED_WRITE_LOGICAL,
+   SHADER_OPCODE_A64_BYTE_SCATTERED_READ_LOGICAL,
+   SHADER_OPCODE_A64_BYTE_SCATTERED_WRITE_LOGICAL,
+   SHADER_OPCODE_A64_UNTYPED_ATOMIC_LOGICAL,
+   SHADER_OPCODE_A64_UNTYPED_ATOMIC_INT64_LOGICAL,
+   SHADER_OPCODE_A64_UNTYPED_ATOMIC_FLOAT_LOGICAL,
+
    SHADER_OPCODE_TYPED_ATOMIC_LOGICAL,
-   SHADER_OPCODE_TYPED_SURFACE_READ,
    SHADER_OPCODE_TYPED_SURFACE_READ_LOGICAL,
-   SHADER_OPCODE_TYPED_SURFACE_WRITE,
    SHADER_OPCODE_TYPED_SURFACE_WRITE_LOGICAL,
 
    SHADER_OPCODE_RND_MODE,
@@ -420,9 +439,7 @@ enum opcode {
     * opcode, but instead of taking a single payload blog they expect their
     * arguments separately as individual sources, like untyped write/read.
     */
-   SHADER_OPCODE_BYTE_SCATTERED_READ,
    SHADER_OPCODE_BYTE_SCATTERED_READ_LOGICAL,
-   SHADER_OPCODE_BYTE_SCATTERED_WRITE,
    SHADER_OPCODE_BYTE_SCATTERED_WRITE_LOGICAL,
 
    SHADER_OPCODE_MEMORY_FENCE,
@@ -518,13 +535,10 @@ enum opcode {
    FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD,
    FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD_GEN7,
    FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN4,
-   FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7,
    FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_LOGICAL,
    FS_OPCODE_DISCARD_JUMP,
    FS_OPCODE_SET_SAMPLE_ID,
    FS_OPCODE_PACK_HALF_2x16_SPLIT,
-   FS_OPCODE_UNPACK_HALF_2x16_SPLIT_X,
-   FS_OPCODE_UNPACK_HALF_2x16_SPLIT_Y,
    FS_OPCODE_PLACEHOLDER_HALT,
    FS_OPCODE_INTERPOLATE_AT_SAMPLE,
    FS_OPCODE_INTERPOLATE_AT_SHARED_OFFSET,
@@ -811,6 +825,8 @@ enum tex_logical_srcs {
    TEX_LOGICAL_SRC_LOD,
    /** dPdy if the operation takes explicit derivatives */
    TEX_LOGICAL_SRC_LOD2,
+   /** Min LOD */
+   TEX_LOGICAL_SRC_MIN_LOD,
    /** Sample index */
    TEX_LOGICAL_SRC_SAMPLE_INDEX,
    /** MCS data */
@@ -819,6 +835,10 @@ enum tex_logical_srcs {
    TEX_LOGICAL_SRC_SURFACE,
    /** Texture sampler index */
    TEX_LOGICAL_SRC_SAMPLER,
+   /** Texture surface bindless handle */
+   TEX_LOGICAL_SRC_SURFACE_HANDLE,
+   /** Texture sampler bindless handle */
+   TEX_LOGICAL_SRC_SAMPLER_HANDLE,
    /** Texel offset for gathers */
    TEX_LOGICAL_SRC_TG4_OFFSET,
    /** REQUIRED: Number of coordinate components (as UD immediate) */
@@ -827,6 +847,23 @@ enum tex_logical_srcs {
    TEX_LOGICAL_SRC_GRAD_COMPONENTS,
 
    TEX_LOGICAL_NUM_SRCS,
+};
+
+enum surface_logical_srcs {
+   /** Surface binding table index */
+   SURFACE_LOGICAL_SRC_SURFACE,
+   /** Surface bindless handle */
+   SURFACE_LOGICAL_SRC_SURFACE_HANDLE,
+   /** Surface address; could be multi-dimensional for typed opcodes */
+   SURFACE_LOGICAL_SRC_ADDRESS,
+   /** Data to be written or used in an atomic op */
+   SURFACE_LOGICAL_SRC_DATA,
+   /** Surface number of dimensions.  Affects the size of ADDRESS */
+   SURFACE_LOGICAL_SRC_IMM_DIMS,
+   /** Per-opcode immediate argument.  For atomics, this is the atomic opcode */
+   SURFACE_LOGICAL_SRC_IMM_ARG,
+
+   SURFACE_LOGICAL_NUM_SRCS
 };
 
 #ifdef __cplusplus
@@ -1163,11 +1200,23 @@ enum brw_message_target {
 #define HSW_DATAPORT_DC_PORT1_ATOMIC_COUNTER_OP                     11
 #define HSW_DATAPORT_DC_PORT1_ATOMIC_COUNTER_OP_SIMD4X2             12
 #define HSW_DATAPORT_DC_PORT1_TYPED_SURFACE_WRITE                   13
+#define GEN9_DATAPORT_DC_PORT1_A64_SCATTERED_READ                   0x10
+#define GEN8_DATAPORT_DC_PORT1_A64_UNTYPED_SURFACE_READ             0x11
+#define GEN8_DATAPORT_DC_PORT1_A64_UNTYPED_ATOMIC_OP                0x12
+#define GEN8_DATAPORT_DC_PORT1_A64_UNTYPED_SURFACE_WRITE            0x19
+#define GEN8_DATAPORT_DC_PORT1_A64_SCATTERED_WRITE                  0x1a
 #define GEN9_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_FLOAT_OP              0x1b
+#define GEN9_DATAPORT_DC_PORT1_A64_UNTYPED_ATOMIC_FLOAT_OP          0x1d
 
 /* GEN9 */
 #define GEN9_DATAPORT_RC_RENDER_TARGET_WRITE                        12
 #define GEN9_DATAPORT_RC_RENDER_TARGET_READ                         13
+
+/* A64 scattered message subtype */
+#define GEN8_A64_SCATTERED_SUBTYPE_BYTE                             0
+#define GEN8_A64_SCATTERED_SUBTYPE_DWORD                            1
+#define GEN8_A64_SCATTERED_SUBTYPE_QWORD                            2
+#define GEN8_A64_SCATTERED_SUBTYPE_HWORD                            3
 
 /* Dataport special binding table indices: */
 #define BRW_BTI_STATELESS                255
@@ -1181,6 +1230,7 @@ enum brw_message_target {
  */
 #define GEN8_BTI_STATELESS_IA_COHERENT   255
 #define GEN8_BTI_STATELESS_NON_COHERENT  253
+#define GEN9_BTI_BINDLESS                252
 
 /* Dataport atomic operations for Untyped Atomic Integer Operation message
  * (and others).

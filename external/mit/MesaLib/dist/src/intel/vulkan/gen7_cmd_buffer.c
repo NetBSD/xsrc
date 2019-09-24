@@ -114,8 +114,6 @@ gen7_cmd_buffer_emit_scissor(struct anv_cmd_buffer *cmd_buffer)
                   GEN7_3DSTATE_SCISSOR_STATE_POINTERS, ssp) {
       ssp.ScissorRectPointer = scissor_state.offset;
    }
-
-   anv_state_flush(cmd_buffer->device, scissor_state);
 }
 #endif
 
@@ -215,7 +213,6 @@ genX(cmd_buffer_flush_dynamic_state)(struct anv_cmd_buffer *cmd_buffer)
          .BackfaceStencilReferenceValue = d->stencil_reference.back & 0xff,
       };
       GENX(COLOR_CALC_STATE_pack)(NULL, cc_state.map, &cc);
-      anv_state_flush(cmd_buffer->device, cc_state);
 
       anv_batch_emit(&cmd_buffer->batch, GENX(3DSTATE_CC_STATE_POINTERS), ccp) {
          ccp.ColorCalcStatePointer = cc_state.offset;
@@ -270,7 +267,7 @@ genX(cmd_buffer_flush_dynamic_state)(struct anv_cmd_buffer *cmd_buffer)
          ib.CutIndexEnable             = pipeline->primitive_restart;
 #endif
          ib.IndexFormat                = cmd_buffer->state.gfx.gen7.index_type;
-         ib.IndexBufferMOCS            = anv_mocs_for_bo(cmd_buffer->device,
+         ib.MOCS                       = anv_mocs_for_bo(cmd_buffer->device,
                                                          buffer->address.bo);
 
          ib.BufferStartingAddress      = anv_address_add(buffer->address,
@@ -288,42 +285,4 @@ genX(cmd_buffer_enable_pma_fix)(struct anv_cmd_buffer *cmd_buffer,
                                 bool enable)
 {
    /* The NP PMA fix doesn't exist on gen7 */
-}
-
-void genX(CmdSetEvent)(
-    VkCommandBuffer                             commandBuffer,
-    VkEvent                                     event,
-    VkPipelineStageFlags                        stageMask)
-{
-   anv_finishme("Implement events on gen7");
-}
-
-void genX(CmdResetEvent)(
-    VkCommandBuffer                             commandBuffer,
-    VkEvent                                     event,
-    VkPipelineStageFlags                        stageMask)
-{
-   anv_finishme("Implement events on gen7");
-}
-
-void genX(CmdWaitEvents)(
-    VkCommandBuffer                             commandBuffer,
-    uint32_t                                    eventCount,
-    const VkEvent*                              pEvents,
-    VkPipelineStageFlags                        srcStageMask,
-    VkPipelineStageFlags                        destStageMask,
-    uint32_t                                    memoryBarrierCount,
-    const VkMemoryBarrier*                      pMemoryBarriers,
-    uint32_t                                    bufferMemoryBarrierCount,
-    const VkBufferMemoryBarrier*                pBufferMemoryBarriers,
-    uint32_t                                    imageMemoryBarrierCount,
-    const VkImageMemoryBarrier*                 pImageMemoryBarriers)
-{
-   anv_finishme("Implement events on gen7");
-
-   genX(CmdPipelineBarrier)(commandBuffer, srcStageMask, destStageMask,
-                            false, /* byRegion */
-                            memoryBarrierCount, pMemoryBarriers,
-                            bufferMemoryBarrierCount, pBufferMemoryBarriers,
-                            imageMemoryBarrierCount, pImageMemoryBarriers);
 }

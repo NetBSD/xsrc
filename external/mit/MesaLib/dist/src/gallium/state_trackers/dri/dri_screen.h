@@ -57,8 +57,7 @@ struct dri_screen
 
    /* dri */
    __DRIscreen *sPriv;
-   boolean throttling_enabled;
-   int default_throttle_frames;
+   unsigned default_throttle_frames;
 
    struct st_config_options options;
 
@@ -103,6 +102,7 @@ struct __DRIimageRec {
    unsigned level;
    unsigned layer;
    uint32_t dri_format;
+   uint32_t dri_fourcc;
    uint32_t dri_components;
    unsigned use;
 

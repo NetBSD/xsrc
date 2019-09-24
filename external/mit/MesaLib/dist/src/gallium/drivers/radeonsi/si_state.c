@@ -121,7 +121,7 @@ static void si_emit_cb_render_state(struct si_context *sctx)
 				S_028424_OVERWRITE_COMBINER_MRT_SHARING_DISABLE(1) |
 				S_028424_OVERWRITE_COMBINER_WATERMARK(watermark) |
 				S_028424_OVERWRITE_COMBINER_DISABLE(oc_disable) |
-				S_028424_DISABLE_CONSTANT_ENCODE_REG(sctx->family == CHIP_RAVEN2));
+				S_028424_DISABLE_CONSTANT_ENCODE_REG(sctx->screen->has_dcc_constant_encode));
 	}
 
 	/* RB+ register settings. */
@@ -256,7 +256,7 @@ static void si_emit_cb_render_state(struct si_context *sctx)
 					    sx_blend_opt_control);
 	}
 	if (initial_cdw != cs->current.cdw)
-		sctx->context_roll_counter++;
+		sctx->context_roll = true;
 }
 
 /*
@@ -474,10 +474,11 @@ static void *si_create_blend_state_mode(struct pipe_context *ctx,
 
 	si_pm4_set_reg(pm4, R_028B70_DB_ALPHA_TO_MASK,
 		       S_028B70_ALPHA_TO_MASK_ENABLE(state->alpha_to_coverage) |
-		       S_028B70_ALPHA_TO_MASK_OFFSET0(2) |
-		       S_028B70_ALPHA_TO_MASK_OFFSET1(2) |
-		       S_028B70_ALPHA_TO_MASK_OFFSET2(2) |
-		       S_028B70_ALPHA_TO_MASK_OFFSET3(2));
+		       S_028B70_ALPHA_TO_MASK_OFFSET0(3) |
+		       S_028B70_ALPHA_TO_MASK_OFFSET1(1) |
+		       S_028B70_ALPHA_TO_MASK_OFFSET2(0) |
+		       S_028B70_ALPHA_TO_MASK_OFFSET3(2) |
+		       S_028B70_OFFSET_ROUND(1));
 
 	if (state->alpha_to_coverage)
 		blend->need_src_alpha_4bit |= 0xf;
@@ -792,7 +793,7 @@ static void si_emit_clip_regs(struct si_context *sctx)
 		S_028810_CLIP_DISABLE(window_space));
 
 	if (initial_cdw != sctx->gfx_cs->current.cdw)
-		sctx->context_roll_counter++;
+		sctx->context_roll = true;
 }
 
 /*
@@ -1014,10 +1015,8 @@ static void si_bind_rs_state(struct pipe_context *ctx, void *state)
 	si_update_poly_offset_state(sctx);
 
 	if (!old_rs ||
-	    old_rs->scissor_enable != rs->scissor_enable) {
-		sctx->scissors.dirty_mask = (1 << SI_MAX_VIEWPORTS) - 1;
+	    old_rs->scissor_enable != rs->scissor_enable)
 		si_mark_atom_dirty(sctx, &sctx->atoms.s.scissors);
-	}
 
 	if (!old_rs ||
 	    old_rs->line_width != rs->line_width ||
@@ -1026,10 +1025,8 @@ static void si_bind_rs_state(struct pipe_context *ctx, void *state)
 		si_mark_atom_dirty(sctx, &sctx->atoms.s.guardband);
 
 	if (!old_rs ||
-	    old_rs->clip_halfz != rs->clip_halfz) {
-		sctx->viewports.depth_range_dirty_mask = (1 << SI_MAX_VIEWPORTS) - 1;
+	    old_rs->clip_halfz != rs->clip_halfz)
 		si_mark_atom_dirty(sctx, &sctx->atoms.s.viewports);
-	}
 
 	if (!old_rs ||
 	    old_rs->clip_plane_enable != rs->clip_plane_enable ||
@@ -1355,6 +1352,14 @@ void si_save_qbo_state(struct si_context *sctx, struct si_qbo_state *st)
 
 	si_get_pipe_constant_buffer(sctx, PIPE_SHADER_COMPUTE, 0, &st->saved_const0);
 	si_get_shader_buffers(sctx, PIPE_SHADER_COMPUTE, 0, 3, st->saved_ssbo);
+
+	st->saved_ssbo_writable_mask = 0;
+
+	for (unsigned i = 0; i < 3; i++) {
+		if (sctx->const_and_shader_buffers[PIPE_SHADER_COMPUTE].writable_mask &
+		    (1u << si_get_shaderbuf_slot(i)))
+			st->saved_ssbo_writable_mask |= 1 << i;
+	}
 }
 
 static void si_emit_db_render_state(struct si_context *sctx)
@@ -1446,7 +1451,7 @@ static void si_emit_db_render_state(struct si_context *sctx)
 				   SI_TRACKED_DB_SHADER_CONTROL, db_shader_control);
 
 	if (initial_cdw != sctx->gfx_cs->current.cdw)
-		sctx->context_roll_counter++;
+		sctx->context_roll = true;
 }
 
 /*
@@ -2151,7 +2156,7 @@ static boolean si_is_format_supported(struct pipe_screen *screen,
 	unsigned retval = 0;
 
 	if (target >= PIPE_MAX_TEXTURE_TYPES) {
-		PRINT_ERR("r600: unsupported texture type %d\n", target);
+		PRINT_ERR("radeonsi: unsupported texture type %d\n", target);
 		return false;
 	}
 
@@ -2806,9 +2811,11 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	 *
 	 * Only flush and wait for CB if there is actually a bound color buffer.
 	 */
-	if (sctx->framebuffer.uncompressed_cb_mask)
+	if (sctx->framebuffer.uncompressed_cb_mask) {
 		si_make_CB_shader_coherent(sctx, sctx->framebuffer.nr_samples,
-					   sctx->framebuffer.CB_has_shader_readable_metadata);
+					   sctx->framebuffer.CB_has_shader_readable_metadata,
+					   sctx->framebuffer.all_DCC_pipe_aligned);
+	}
 
 	sctx->flags |= SI_CONTEXT_CS_PARTIAL_FLUSH;
 
@@ -2857,6 +2864,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	sctx->framebuffer.any_dst_linear = false;
 	sctx->framebuffer.CB_has_shader_readable_metadata = false;
 	sctx->framebuffer.DB_has_shader_readable_metadata = false;
+	sctx->framebuffer.all_DCC_pipe_aligned = true;
 	unsigned num_bpp64_colorbufs = 0;
 
 	for (i = 0; i < state->nr_cbufs; i++) {
@@ -2907,8 +2915,13 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 		if (tex->surface.bpe >= 8)
 			num_bpp64_colorbufs++;
 
-		if (vi_dcc_enabled(tex, surf->base.u.tex.level))
+		if (vi_dcc_enabled(tex, surf->base.u.tex.level)) {
 			sctx->framebuffer.CB_has_shader_readable_metadata = true;
+
+			if (sctx->chip_class >= GFX9 &&
+			    !tex->surface.u.gfx9.dcc.pipe_aligned)
+				sctx->framebuffer.all_DCC_pipe_aligned = false;
+		}
 
 		si_context_add_resource_size(sctx, surf->base.texture);
 
@@ -3527,7 +3540,7 @@ static void si_emit_msaa_config(struct si_context *sctx)
 				   SI_TRACKED_PA_SC_MODE_CNTL_1, sc_mode_cntl_1);
 
 	if (initial_cdw != cs->current.cdw) {
-		sctx->context_roll_counter++;
+		sctx->context_roll = true;
 
 		/* GFX9: Flush DFSM when the AA mode changes. */
 		if (sctx->screen->dfsm_allowed) {
@@ -3570,7 +3583,7 @@ static void si_set_min_samples(struct pipe_context *ctx, unsigned min_samples)
  * @param state 256-bit descriptor; only the high 128 bits are filled in
  */
 void
-si_make_buffer_descriptor(struct si_screen *screen, struct r600_resource *buf,
+si_make_buffer_descriptor(struct si_screen *screen, struct si_resource *buf,
 			  enum pipe_format format,
 			  unsigned offset, unsigned size,
 			  uint32_t *state)
@@ -3613,14 +3626,11 @@ si_make_buffer_descriptor(struct si_screen *screen, struct r600_resource *buf,
 	 * - For VMEM and inst.IDXEN == 0 or STRIDE == 0, it's in byte units.
 	 * - For VMEM and inst.IDXEN == 1 and STRIDE != 0, it's in units of STRIDE.
 	 */
-	if (screen->info.chip_class >= GFX9)
-		/* When vindex == 0, LLVM sets IDXEN = 0, thus changing units
+	if (screen->info.chip_class >= GFX9 && HAVE_LLVM < 0x0800)
+		/* When vindex == 0, LLVM < 8.0 sets IDXEN = 0, thus changing units
 		 * from STRIDE to bytes. This works around it by setting
 		 * NUM_RECORDS to at least the size of one element, so that
 		 * the first element is readable when IDXEN == 0.
-		 *
-		 * TODO: Fix this in LLVM, but do we need a new intrinsic where
-		 *       IDXEN is enforced?
 		 */
 		num_records = num_records ? MAX2(num_records, stride) : 0;
 	else if (screen->info.chip_class == VI)
@@ -4064,7 +4074,7 @@ si_create_sampler_view_custom(struct pipe_context *ctx,
 	/* Buffer resource. */
 	if (texture->target == PIPE_BUFFER) {
 		si_make_buffer_descriptor(sctx->screen,
-					  r600_resource(texture),
+					  si_resource(texture),
 					  state->format,
 					  state->u.buf.offset,
 					  state->u.buf.size,
@@ -4584,7 +4594,7 @@ static void *si_create_vertex_elements(struct pipe_context *ctx,
 		unsigned num_divisors = util_last_bit(v->instance_divisor_is_fetched);
 
 		v->instance_divisor_factor_buffer =
-			(struct r600_resource*)
+			(struct si_resource*)
 			pipe_buffer_create(&sscreen->b, 0, PIPE_USAGE_DEFAULT,
 					   num_divisors * sizeof(divisor_factors[0]));
 		if (!v->instance_divisor_factor_buffer) {
@@ -4633,7 +4643,7 @@ static void si_delete_vertex_element(struct pipe_context *ctx, void *state)
 
 	if (sctx->vertex_elements == state)
 		sctx->vertex_elements = NULL;
-	r600_resource_reference(&v->instance_divisor_factor_buffer, NULL);
+	si_resource_reference(&v->instance_divisor_factor_buffer, NULL);
 	FREE(state);
 }
 
@@ -4658,7 +4668,7 @@ static void si_set_vertex_buffers(struct pipe_context *ctx,
 			dsti->stride = src->stride;
 			si_context_add_resource_size(sctx, buf);
 			if (buf)
-				r600_resource(buf)->bind_history |= PIPE_BIND_VERTEX_BUFFER;
+				si_resource(buf)->bind_history |= PIPE_BIND_VERTEX_BUFFER;
 		}
 	} else {
 		for (i = 0; i < count; i++) {
@@ -4687,7 +4697,7 @@ static void si_set_tess_state(struct pipe_context *ctx,
 	cb.user_buffer = NULL;
 	cb.buffer_size = sizeof(array);
 
-	si_upload_const_buffer(sctx, (struct r600_resource**)&cb.buffer,
+	si_upload_const_buffer(sctx, (struct si_resource**)&cb.buffer,
 			       (void*)array, sizeof(array),
 			       &cb.buffer_offset);
 
@@ -4702,15 +4712,20 @@ static void si_texture_barrier(struct pipe_context *ctx, unsigned flags)
 	si_update_fb_dirtiness_after_rendering(sctx);
 
 	/* Multisample surfaces are flushed in si_decompress_textures. */
-	if (sctx->framebuffer.uncompressed_cb_mask)
+	if (sctx->framebuffer.uncompressed_cb_mask) {
 		si_make_CB_shader_coherent(sctx, sctx->framebuffer.nr_samples,
-					   sctx->framebuffer.CB_has_shader_readable_metadata);
+					   sctx->framebuffer.CB_has_shader_readable_metadata,
+					   sctx->framebuffer.all_DCC_pipe_aligned);
+	}
 }
 
 /* This only ensures coherency for shader image/buffer stores. */
 static void si_memory_barrier(struct pipe_context *ctx, unsigned flags)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
+
+	if (!(flags & ~PIPE_BARRIER_UPDATE))
+		return;
 
 	/* Subsequent commands must wait for all shader invocations to
 	 * complete. */
@@ -4770,6 +4785,15 @@ static void *si_create_blend_custom(struct si_context *sctx, unsigned mode)
 
 static void si_init_config(struct si_context *sctx);
 
+void si_init_state_compute_functions(struct si_context *sctx)
+{
+	sctx->b.create_sampler_state = si_create_sampler_state;
+	sctx->b.delete_sampler_state = si_delete_sampler_state;
+	sctx->b.create_sampler_view = si_create_sampler_view;
+	sctx->b.sampler_view_destroy = si_sampler_view_destroy;
+	sctx->b.memory_barrier = si_memory_barrier;
+}
+
 void si_init_state_functions(struct si_context *sctx)
 {
 	sctx->atoms.s.framebuffer.emit = si_emit_framebuffer_state;
@@ -4808,12 +4832,6 @@ void si_init_state_functions(struct si_context *sctx)
 
 	sctx->b.set_framebuffer_state = si_set_framebuffer_state;
 
-	sctx->b.create_sampler_state = si_create_sampler_state;
-	sctx->b.delete_sampler_state = si_delete_sampler_state;
-
-	sctx->b.create_sampler_view = si_create_sampler_view;
-	sctx->b.sampler_view_destroy = si_sampler_view_destroy;
-
 	sctx->b.set_sample_mask = si_set_sample_mask;
 
 	sctx->b.create_vertex_elements_state = si_create_vertex_elements;
@@ -4822,13 +4840,10 @@ void si_init_state_functions(struct si_context *sctx)
 	sctx->b.set_vertex_buffers = si_set_vertex_buffers;
 
 	sctx->b.texture_barrier = si_texture_barrier;
-	sctx->b.memory_barrier = si_memory_barrier;
 	sctx->b.set_min_samples = si_set_min_samples;
 	sctx->b.set_tess_state = si_set_tess_state;
 
 	sctx->b.set_active_query_state = si_set_active_query_state;
-
-	sctx->b.draw_vbo = si_draw_vbo;
 
 	si_init_config(sctx);
 }

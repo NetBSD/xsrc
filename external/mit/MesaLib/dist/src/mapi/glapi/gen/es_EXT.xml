@@ -565,6 +565,12 @@
     <enum name="HALF_FLOAT_OES"                           value="0x8D61"/>
 </category>
 
+<category name="GL_AMD_compressed_ATC_texture" number="40">
+    <enum name="ATC_RGB_AMD"                              value="0x8C92"/>
+    <enum name="ATC_RGBA_EXPLICIT_ALPHA_AMD"              value="0x8C93"/>
+    <enum name="ATC_RGBA_INTERPOLATED_ALPHA_AMD"          value="0x87EE"/>
+</category>
+
 <!-- 41. GL_EXT_texture_filter_anisotropic -->
 
 <category name="GL_EXT_texture_type_2_10_10_10_REV" number="42">
@@ -809,6 +815,8 @@
     <enum name="R8_EXT"                                   value="0x8229"/>
     <enum name="RG8_EXT"                                  value="0x822B"/>
 </category>
+
+<xi:include href="EXT_multisampled_render_to_texture.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <!-- 111. GL_ANGLE_texture_compression_dxt -->
 <category name="GL_ANGLE_texture_compression_dxt" number="111">
@@ -1449,6 +1457,19 @@
 
 <category name="GL_OES_texture_view" number="218">
     <function name="TextureViewOES" es2="3.1" alias="TextureView">
+        <param name="texture" type="GLuint"/>
+        <param name="target" type="GLenum"/>
+        <param name="origtexture" type="GLuint"/>
+        <param name="internalformat" type="GLenum"/>
+        <param name="minlevel" type="GLuint"/>
+        <param name="numlevels" type="GLuint"/>
+        <param name="minlayer" type="GLuint"/>
+        <param name="numlayers" type="GLuint"/>
+   </function>
+</category>
+
+<category name="GL_EXT_texture_view" number="185">
+    <function name="TextureViewEXT" es2="3.1" alias="TextureView">
         <param name="texture" type="GLuint"/>
         <param name="target" type="GLenum"/>
         <param name="origtexture" type="GLuint"/>

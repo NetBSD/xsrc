@@ -35,6 +35,52 @@
 #include "isl_gen9.h"
 #include "isl_priv.h"
 
+void
+isl_memcpy_linear_to_tiled(uint32_t xt1, uint32_t xt2,
+                           uint32_t yt1, uint32_t yt2,
+                           char *dst, const char *src,
+                           uint32_t dst_pitch, int32_t src_pitch,
+                           bool has_swizzling,
+                           enum isl_tiling tiling,
+                           isl_memcpy_type copy_type)
+{
+#ifdef USE_SSE41
+   if (copy_type == ISL_MEMCPY_STREAMING_LOAD) {
+      _isl_memcpy_linear_to_tiled_sse41(
+         xt1, xt2, yt1, yt2, dst, src, dst_pitch, src_pitch, has_swizzling,
+         tiling, copy_type);
+      return;
+   }
+#endif
+
+   _isl_memcpy_linear_to_tiled(
+      xt1, xt2, yt1, yt2, dst, src, dst_pitch, src_pitch, has_swizzling,
+      tiling, copy_type);
+}
+
+void
+isl_memcpy_tiled_to_linear(uint32_t xt1, uint32_t xt2,
+                           uint32_t yt1, uint32_t yt2,
+                           char *dst, const char *src,
+                           int32_t dst_pitch, uint32_t src_pitch,
+                           bool has_swizzling,
+                           enum isl_tiling tiling,
+                           isl_memcpy_type copy_type)
+{
+#ifdef USE_SSE41
+   if (copy_type == ISL_MEMCPY_STREAMING_LOAD) {
+      _isl_memcpy_tiled_to_linear_sse41(
+         xt1, xt2, yt1, yt2, dst, src, dst_pitch, src_pitch, has_swizzling,
+         tiling, copy_type);
+      return;
+   }
+#endif
+
+   _isl_memcpy_tiled_to_linear(
+      xt1, xt2, yt1, yt2, dst, src, dst_pitch, src_pitch, has_swizzling,
+      tiling, copy_type);
+}
+
 void PRINTFLIKE(3, 4) UNUSED
 __isl_finishme(const char *file, int line, const char *fmt, ...)
 {
@@ -53,6 +99,9 @@ isl_device_init(struct isl_device *dev,
                 const struct gen_device_info *info,
                 bool has_bit6_swizzling)
 {
+   /* Gen8+ don't have bit6 swizzling, ensure callsite is not confused. */
+   assert(!(has_bit6_swizzling && info->gen >= 8));
+
    dev->info = info;
    dev->use_separate_stencil = ISL_DEV_GEN(dev) >= 6;
    dev->has_bit6_swizzling = has_bit6_swizzling;
@@ -73,7 +122,8 @@ isl_device_init(struct isl_device *dev,
    dev->ss.size = RENDER_SURFACE_STATE_length(info) * 4;
    dev->ss.align = isl_align(dev->ss.size, 32);
 
-   dev->ss.clear_color_state_size = CLEAR_COLOR_length(info) * 4;
+   dev->ss.clear_color_state_size =
+      isl_align(CLEAR_COLOR_length(info) * 4, 64);
    dev->ss.clear_color_state_offset =
       RENDER_SURFACE_STATE_ClearValueAddress_start(info) / 32 * 4;
 
@@ -667,7 +717,7 @@ isl_surf_choose_dim_layout(const struct isl_device *dev,
 
 /**
  * Calculate the physical extent of the surface's first level, in units of
- * surface samples. The result is aligned to the format's compression block.
+ * surface samples.
  */
 static void
 isl_calc_phys_level0_extent_sa(const struct isl_device *dev,
@@ -696,8 +746,8 @@ isl_calc_phys_level0_extent_sa(const struct isl_device *dev,
       case ISL_DIM_LAYOUT_GEN4_2D:
       case ISL_DIM_LAYOUT_GEN6_STENCIL_HIZ:
          *phys_level0_sa = (struct isl_extent4d) {
-            .w = isl_align_npot(info->width, fmtl->bw),
-            .h = fmtl->bh,
+            .w = info->width,
+            .h = 1,
             .d = 1,
             .a = info->array_len,
          };
@@ -721,8 +771,8 @@ isl_calc_phys_level0_extent_sa(const struct isl_device *dev,
          assert(info->samples == 1);
 
          *phys_level0_sa = (struct isl_extent4d) {
-            .w = isl_align_npot(info->width, fmtl->bw),
-            .h = isl_align_npot(info->height, fmtl->bh),
+            .w = info->width,
+            .h = info->height,
             .d = 1,
             .a = info->array_len,
          };
@@ -757,9 +807,6 @@ isl_calc_phys_level0_extent_sa(const struct isl_device *dev,
          isl_msaa_interleaved_scale_px_to_sa(info->samples,
                                              &phys_level0_sa->w,
                                              &phys_level0_sa->h);
-
-         phys_level0_sa->w = isl_align(phys_level0_sa->w, fmtl->bw);
-         phys_level0_sa->h = isl_align(phys_level0_sa->h, fmtl->bh);
          break;
       }
       break;
@@ -782,8 +829,8 @@ isl_calc_phys_level0_extent_sa(const struct isl_device *dev,
          assert(ISL_DEV_GEN(dev) >= 9);
 
          *phys_level0_sa = (struct isl_extent4d) {
-            .w = isl_align_npot(info->width, fmtl->bw),
-            .h = isl_align_npot(info->height, fmtl->bh),
+            .w = info->width,
+            .h = info->height,
             .d = 1,
             .a = info->depth,
          };
@@ -792,8 +839,8 @@ isl_calc_phys_level0_extent_sa(const struct isl_device *dev,
       case ISL_DIM_LAYOUT_GEN4_3D:
          assert(ISL_DEV_GEN(dev) < 9);
          *phys_level0_sa = (struct isl_extent4d) {
-            .w = isl_align(info->width, fmtl->bw),
-            .h = isl_align(info->height, fmtl->bh),
+            .w = info->width,
+            .h = info->height,
             .d = info->depth,
             .a = 1,
          };
@@ -918,13 +965,10 @@ isl_calc_phys_slice0_extent_sa_gen4_2d(
       const struct isl_extent4d *phys_level0_sa,
       struct isl_extent2d *phys_slice0_sa)
 {
-   const struct isl_format_layout *fmtl = isl_format_get_layout(info->format);
-
    assert(phys_level0_sa->depth == 1);
 
    if (info->levels == 1) {
-      /* Do not pad the surface to the image alignment. Instead, pad it only
-       * to the pixel format's block alignment.
+      /* Do not pad the surface to the image alignment.
        *
        * For tiled surfaces, using a reduced alignment here avoids wasting CPU
        * cycles on the below mipmap layout caluclations. Reducing the
@@ -939,8 +983,8 @@ isl_calc_phys_slice0_extent_sa_gen4_2d(
        * VkBufferImageCopy::bufferRowLength.
        */
       *phys_slice0_sa = (struct isl_extent2d) {
-         .w = isl_align_npot(phys_level0_sa->w, fmtl->bw),
-         .h = isl_align_npot(phys_level0_sa->h, fmtl->bh),
+         .w = phys_level0_sa->w,
+         .h = phys_level0_sa->h,
       };
       return;
    }
@@ -1005,9 +1049,9 @@ isl_calc_phys_total_extent_el_gen4_2d(
                                            array_pitch_span,
                                            &phys_slice0_sa);
    *total_extent_el = (struct isl_extent2d) {
-      .w = isl_assert_div(phys_slice0_sa.w, fmtl->bw),
+      .w = isl_align_div_npot(phys_slice0_sa.w, fmtl->bw),
       .h = *array_pitch_el_rows * (phys_level0_sa->array_len - 1) +
-           isl_assert_div(phys_slice0_sa.h, fmtl->bh),
+           isl_align_div_npot(phys_slice0_sa.h, fmtl->bh),
    };
 }
 
@@ -1151,7 +1195,7 @@ isl_calc_phys_total_extent_el_gen9_1d(
 {
    MAYBE_UNUSED const struct isl_format_layout *fmtl = isl_format_get_layout(info->format);
 
-   assert(phys_level0_sa->height / fmtl->bh == 1);
+   assert(phys_level0_sa->height == 1);
    assert(phys_level0_sa->depth == 1);
    assert(info->samples == 1);
    assert(image_align_sa->w >= fmtl->bw);
@@ -1332,20 +1376,6 @@ isl_calc_row_pitch(const struct isl_device *dev,
    uint32_t alignment_B =
       isl_calc_row_pitch_alignment(surf_info, tile_info);
 
-   /* If pitch isn't given and it can be chosen freely, align it by cache line
-    * allowing one to use blit engine on the surface.
-    */
-   if (surf_info->row_pitch_B == 0 && tile_info->tiling == ISL_TILING_LINEAR) {
-      /* From the Broadwell PRM docs for XY_SRC_COPY_BLT::SourceBaseAddress:
-       *
-       *    "Base address of the destination surface: X=0, Y=0. Lower 32bits
-       *    of the 48bit addressing. When Src Tiling is enabled (Bit_15
-       *    enabled), this address must be 4KB-aligned. When Tiling is not
-       *    enabled, this address should be CL (64byte) aligned."
-       */
-      alignment_B = MAX2(alignment_B, 64);
-   }
-
    const uint32_t min_row_pitch_B =
       isl_calc_min_row_pitch(dev, surf_info, tile_info, phys_total_el,
                              alignment_B);
@@ -1442,8 +1472,6 @@ isl_surf_init_s(const struct isl_device *dev,
    struct isl_extent4d phys_level0_sa;
    isl_calc_phys_level0_extent_sa(dev, info, dim_layout, tiling, msaa_layout,
                                   &phys_level0_sa);
-   assert(phys_level0_sa.w % fmtl->bw == 0);
-   assert(phys_level0_sa.h % fmtl->bh == 0);
 
    enum isl_array_pitch_span array_pitch_span =
       isl_choose_array_pitch_span(dev, info, dim_layout, &phys_level0_sa);
@@ -1484,6 +1512,14 @@ isl_surf_init_s(const struct isl_device *dev,
          }
       }
       base_alignment_B = isl_round_up_to_power_of_two(base_alignment_B);
+
+      /* From the Skylake PRM Vol 2c, PLANE_STRIDE::Stride:
+       *
+       *     "For Linear memory, this field specifies the stride in chunks of
+       *     64 bytes (1 cache line)."
+       */
+      if (isl_surf_usage_is_display(info->usage))
+         base_alignment_B = MAX(base_alignment_B, 64);
    } else {
       const uint32_t total_h_tl =
          isl_align_div(phys_total_el.h, tile_info.logical_extent_el.height);

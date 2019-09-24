@@ -271,6 +271,7 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_INT64:
    case PIPE_CAP_INT64_DIVMOD:
    case PIPE_CAP_QUERY_SO_OVERFLOW:
+   case PIPE_CAP_TGSI_DIV:
       return 1;
 
    case PIPE_CAP_VENDOR_ID:
@@ -310,6 +311,8 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_CLEAR_TEXTURE:
       return 1;
+   case PIPE_CAP_MAX_VARYINGS:
+      return 32;
    case PIPE_CAP_MULTISAMPLE_Z_RESOLVE:
    case PIPE_CAP_RESOURCE_FROM_USER_MEMORY:
    case PIPE_CAP_DEVICE_RESET_STATUS_QUERY:
@@ -547,7 +550,8 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
       }
    }
 
-   if (format_desc->layout == UTIL_FORMAT_LAYOUT_ASTC) {
+   if (format_desc->layout == UTIL_FORMAT_LAYOUT_ASTC ||
+       format_desc->layout == UTIL_FORMAT_LAYOUT_ATC) {
       /* Software decoding is not hooked up. */
       return FALSE;
    }
@@ -634,7 +638,12 @@ llvmpipe_fence_finish(struct pipe_screen *screen,
    if (!timeout)
       return lp_fence_signalled(f);
 
-   lp_fence_wait(f);
+   if (!lp_fence_signalled(f)) {
+      if (timeout != PIPE_TIMEOUT_INFINITE)
+         return lp_fence_timedwait(f, timeout);
+
+      lp_fence_wait(f);
+   }
    return TRUE;
 }
 

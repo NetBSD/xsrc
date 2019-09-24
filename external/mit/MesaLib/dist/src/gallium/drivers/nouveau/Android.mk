@@ -37,10 +37,21 @@ LOCAL_SRC_FILES := \
 	$(NVC0_C_SOURCES)
 
 LOCAL_C_INCLUDES := \
-	$(TARGET_OUT_HEADERS)/libdrm
+	$(MESA_TOP)/include \
+	$(call generated-sources-dir-for,STATIC_LIBRARIES,libmesa_nir,,)/nir \
+	$(MESA_TOP)/src/compiler/nir \
+	$(MESA_TOP)/src/mapi \
+	$(MESA_TOP)/src/mesa
 
+LOCAL_STATIC_LIBRARIES := libmesa_nir
+LOCAL_SHARED_LIBRARIES := libdrm_nouveau
 LOCAL_MODULE := libmesa_pipe_nouveau
 
-include external/stlport/libstlport.mk
 include $(GALLIUM_COMMON_MK)
 include $(BUILD_STATIC_LIBRARY)
+
+ifneq ($(HAVE_GALLIUM_NOUVEAU),)
+GALLIUM_TARGET_DRIVERS += nouveau
+$(eval GALLIUM_LIBS += $(LOCAL_MODULE) libmesa_winsys_nouveau)
+$(eval GALLIUM_SHARED_LIBS += $(LOCAL_SHARED_LIBRARIES))
+endif

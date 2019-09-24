@@ -41,7 +41,7 @@
  * programmed with the start address of each mipmap level, and hw
  * derives the layer offset within the level.
  *
- * Texture Layout on a4xx:
+ * Texture Layout on a4xx+:
  *
  * For cubemap and 2d array, each layer contains all of it's mipmap
  * levels (layer_first layout).
@@ -59,8 +59,6 @@ struct fd_resource_slice {
 	uint32_t size0;          /* size of first layer in slice */
 };
 
-struct set;
-
 struct fd_resource {
 	struct pipe_resource base;
 	struct fd_bo *bo;
@@ -72,10 +70,16 @@ struct fd_resource {
 	/* buffer range that has been initialized */
 	struct util_range valid_buffer_range;
 	bool valid;
+	struct renderonly_scanout *scanout;
 
 	/* reference to the resource holding stencil data for a z32_s8 texture */
 	/* TODO rename to secondary or auxiliary? */
 	struct fd_resource *stencil;
+
+	uint32_t offset;
+	uint32_t ubwc_offset;
+	uint32_t ubwc_pitch;
+	uint32_t ubwc_size;
 
 	/* bitmask of in-flight batches which reference this resource.  Note
 	 * that the batch doesn't hold reference to resources (but instead
@@ -99,7 +103,6 @@ struct fd_resource {
 	uint16_t seqno;
 
 	unsigned tile_mode : 2;
-	unsigned preferred_tile_mode : 2;
 
 	/*
 	 * LRZ
@@ -165,7 +168,20 @@ fd_resource_offset(struct fd_resource *rsc, unsigned level, unsigned layer)
 		offset = slice->offset + (slice->size0 * layer);
 	}
 	debug_assert(offset < fd_bo_size(rsc->bo));
-	return offset;
+	return offset + rsc->offset;
+}
+
+static inline uint32_t
+fd_resource_ubwc_offset(struct fd_resource *rsc, unsigned level, unsigned layer)
+{
+	/* for now this doesn't do anything clever, but when UBWC is enabled
+	 * for multi layer/level images, it will.
+	 */
+	if (rsc->ubwc_size) {
+		debug_assert(level == 0);
+		debug_assert(layer == 0);
+	}
+	return rsc->ubwc_offset;
 }
 
 /* This might be a5xx specific, but higher mipmap levels are always linear: */
@@ -178,6 +194,13 @@ fd_resource_level_linear(struct pipe_resource *prsc, int level)
 	return false;
 }
 
+static inline bool
+fd_resource_ubwc_enabled(struct fd_resource *rsc, int level)
+{
+	return rsc->ubwc_size && rsc->tile_mode &&
+			!fd_resource_level_linear(&rsc->base, level);
+}
+
 /* access # of samples, with 0 normalized to 1 (which is what we care about
  * most of the time)
  */
@@ -186,10 +209,6 @@ fd_resource_nr_samples(struct pipe_resource *prsc)
 {
 	return MAX2(1, prsc->nr_samples);
 }
-
-void fd_blitter_pipe_begin(struct fd_context *ctx, bool render_cond, bool discard,
-		enum fd_render_stage stage);
-void fd_blitter_pipe_end(struct fd_context *ctx);
 
 void fd_resource_screen_init(struct pipe_screen *pscreen);
 void fd_resource_context_init(struct pipe_context *pctx);

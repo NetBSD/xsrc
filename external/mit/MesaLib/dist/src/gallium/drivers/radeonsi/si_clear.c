@@ -133,7 +133,7 @@ static bool vi_get_fast_clear_parameters(enum pipe_format base_format,
 		return false;
 
 	*eliminate_needed = true;
-	*clear_value = 0x20202020U; /* use CB clear color registers */
+	*clear_value = DCC_CLEAR_COLOR_REG;
 
 	if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN)
 		return true; /* need ELIMINATE_FAST_CLEAR */
@@ -203,15 +203,22 @@ static bool vi_get_fast_clear_parameters(enum pipe_format base_format,
 	}
 
 	/* This doesn't need ELIMINATE_FAST_CLEAR.
-	 * CB uses both the DCC clear codes and the CB clear color registers,
-	 * so they must match.
+	 * On chips predating Raven2, the DCC clear codes and the CB clear
+	 * color registers must match.
 	 */
 	*eliminate_needed = false;
 
-	if (color_value)
-		*clear_value |= 0x80808080U;
-	if (alpha_value)
-		*clear_value |= 0x40404040U;
+	if (color_value) {
+		if (alpha_value)
+			*clear_value = DCC_CLEAR_COLOR_1111;
+		else
+			*clear_value = DCC_CLEAR_COLOR_1110;
+	} else {
+		if (alpha_value)
+			*clear_value = DCC_CLEAR_COLOR_0001;
+		else
+			*clear_value = DCC_CLEAR_COLOR_0000;
+	}
 	return true;
 }
 
@@ -256,7 +263,7 @@ void vi_dcc_clear_level(struct si_context *sctx,
 	}
 
 	si_clear_buffer(sctx, dcc_buffer, dcc_offset, clear_size,
-			&clear_value, 4, SI_COHERENCY_CB_META);
+			&clear_value, 4, SI_COHERENCY_CB_META, false);
 }
 
 /* Set the same micro tile mode as the destination of the last MSAA resolve.
@@ -489,7 +496,7 @@ static void si_do_fast_color_clear(struct si_context *sctx,
 				uint32_t clear_value = 0xCCCCCCCC;
 				si_clear_buffer(sctx, &tex->cmask_buffer->b.b,
 						tex->cmask_offset, tex->surface.cmask_size,
-						&clear_value, 4, SI_COHERENCY_CB_META);
+						&clear_value, 4, SI_COHERENCY_CB_META, false);
 				fmask_decompress_needed = true;
 			}
 
@@ -517,7 +524,7 @@ static void si_do_fast_color_clear(struct si_context *sctx,
 			uint32_t clear_value = 0;
 			si_clear_buffer(sctx, &tex->cmask_buffer->b.b,
 					tex->cmask_offset, tex->surface.cmask_size,
-					&clear_value, 4, SI_COHERENCY_CB_META);
+					&clear_value, 4, SI_COHERENCY_CB_META, false);
 			eliminate_needed = true;
 		}
 
@@ -531,6 +538,12 @@ static void si_do_fast_color_clear(struct si_context *sctx,
 		si_set_optimal_micro_tile_mode(sctx->screen, tex);
 
 		*buffers &= ~clear_bit;
+
+		/* Chips with DCC constant encoding don't need to set the clear
+		 * color registers for DCC clear values 0 and 1.
+		 */
+		if (sctx->screen->has_dcc_constant_encode && !eliminate_needed)
+			continue;
 
 		if (si_set_clear_color(tex, fb->cbufs[i]->format, color)) {
 			sctx->framebuffer.dirty_cbufs |= 1 << i;
@@ -625,7 +638,7 @@ static void si_clear(struct pipe_context *ctx, unsigned buffers,
 		 * This hack decreases back-to-back ClearDepth performance.
 		 */
 		if ((sctx->db_depth_clear || sctx->db_stencil_clear) &&
-		    sctx->screen->clear_db_cache_before_clear)
+		    sctx->screen->options.clear_db_cache_before_clear)
 			sctx->flags |= SI_CONTEXT_FLUSH_AND_INV_DB;
 	}
 
@@ -658,6 +671,13 @@ static void si_clear_render_target(struct pipe_context *ctx,
 				   bool render_condition_enabled)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
+	struct si_texture *sdst = (struct si_texture*)dst->texture;
+
+	if (dst->texture->nr_samples <= 1 && !sdst->dcc_offset) {
+		si_compute_clear_render_target(ctx, dst, color, dstx, dsty, width,
+					       height, render_condition_enabled);
+		return;
+	}
 
 	si_blitter_begin(sctx, SI_CLEAR_SURFACE |
 			 (render_condition_enabled ? 0 : SI_DISABLE_RENDER_COND));
@@ -751,8 +771,11 @@ static void si_clear_texture(struct pipe_context *pipe,
 
 void si_init_clear_functions(struct si_context *sctx)
 {
-	sctx->b.clear = si_clear;
 	sctx->b.clear_render_target = si_clear_render_target;
-	sctx->b.clear_depth_stencil = si_clear_depth_stencil;
 	sctx->b.clear_texture = si_clear_texture;
+
+	if (sctx->has_graphics) {
+		sctx->b.clear = si_clear;
+		sctx->b.clear_depth_stencil = si_clear_depth_stencil;
+	}
 }

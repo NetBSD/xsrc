@@ -55,6 +55,9 @@ namespace SwrJit
         STATS_STORE_TGSM              = 15,
         STATS_DISCARD                 = 16,
         STATS_BARRIER                 = 17,
+
+        // ------------------
+        STATS_TOTAL_COUNTERS
     };
 
     using namespace llvm;
@@ -161,7 +164,6 @@ namespace SwrJit
 #include "builder_math.h"
 #include "builder_mem.h"
 
-    protected:
         void SetPrivateContext(Value* pPrivateContext)
         {
             mpPrivateContext = pPrivateContext;

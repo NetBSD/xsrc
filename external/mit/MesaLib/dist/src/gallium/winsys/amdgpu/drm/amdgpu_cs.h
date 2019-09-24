@@ -67,10 +67,23 @@ struct amdgpu_ib {
    struct pb_buffer        *big_ib_buffer;
    uint8_t                 *ib_mapped;
    unsigned                used_ib_space;
+
+   /* The maximum seen size from cs_check_space. If the driver does
+    * cs_check_space and flush, the newly allocated IB should have at least
+    * this size.
+    */
+   unsigned                max_check_space_size;
+
    unsigned                max_ib_size;
    uint32_t                *ptr_ib_size;
    bool                    ptr_ib_size_inside_ib;
    enum ib_type            ib_type;
+};
+
+struct amdgpu_fence_list {
+   struct pipe_fence_handle    **list;
+   unsigned                    num;
+   unsigned                    max;
 };
 
 struct amdgpu_cs_context {
@@ -96,13 +109,9 @@ struct amdgpu_cs_context {
    unsigned                    last_added_bo_usage;
    uint32_t                    last_added_bo_priority_usage;
 
-   struct pipe_fence_handle    **fence_dependencies;
-   unsigned                    num_fence_dependencies;
-   unsigned                    max_fence_dependencies;
-
-   struct pipe_fence_handle    **syncobj_to_signal;
-   unsigned                    num_syncobj_to_signal;
-   unsigned                    max_syncobj_to_signal;
+   struct amdgpu_fence_list    fence_dependencies;
+   struct amdgpu_fence_list    syncobj_dependencies;
+   struct amdgpu_fence_list    syncobj_to_signal;
 
    struct pipe_fence_handle    *fence;
 
@@ -129,6 +138,7 @@ struct amdgpu_cs {
    /* Flush CS. */
    void (*flush_cs)(void *ctx, unsigned flags, struct pipe_fence_handle **fence);
    void *flush_data;
+   bool stop_exec_on_failure;
 
    struct util_queue_fence flush_completed;
    struct pipe_fence_handle *next_fence;
@@ -169,11 +179,11 @@ static inline void amdgpu_ctx_unref(struct amdgpu_ctx *ctx)
 static inline void amdgpu_fence_reference(struct pipe_fence_handle **dst,
                                           struct pipe_fence_handle *src)
 {
-   struct amdgpu_fence **rdst = (struct amdgpu_fence **)dst;
-   struct amdgpu_fence *rsrc = (struct amdgpu_fence *)src;
+   struct amdgpu_fence **adst = (struct amdgpu_fence **)dst;
+   struct amdgpu_fence *asrc = (struct amdgpu_fence *)src;
 
-   if (pipe_reference(&(*rdst)->reference, &rsrc->reference)) {
-      struct amdgpu_fence *fence = *rdst;
+   if (pipe_reference(&(*adst)->reference, &asrc->reference)) {
+      struct amdgpu_fence *fence = *adst;
 
       if (amdgpu_fence_is_syncobj(fence))
          amdgpu_cs_destroy_syncobj(fence->ws->dev, fence->syncobj);
@@ -183,7 +193,7 @@ static inline void amdgpu_fence_reference(struct pipe_fence_handle **dst,
       util_queue_fence_destroy(&fence->submitted);
       FREE(fence);
    }
-   *rdst = rsrc;
+   *adst = asrc;
 }
 
 int amdgpu_lookup_buffer(struct amdgpu_cs_context *cs, struct amdgpu_winsys_bo *bo);

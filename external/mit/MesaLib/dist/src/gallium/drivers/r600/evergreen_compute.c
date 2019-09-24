@@ -438,7 +438,9 @@ static void *evergreen_create_compute_state(struct pipe_context *ctx,
 	/* Upload code + ROdata */
 	shader->code_bo = r600_compute_buffer_alloc_vram(rctx->screen,
 							shader->bc.ndw * 4);
-	p = r600_buffer_map_sync_with_rings(&rctx->b, shader->code_bo, PIPE_TRANSFER_WRITE);
+	p = r600_buffer_map_sync_with_rings(
+		&rctx->b, shader->code_bo,
+		PIPE_TRANSFER_WRITE | RADEON_TRANSFER_TEMPORARY);
 	//TODO: use util_memcpy_cpu_to_le32 ?
 	memcpy(p, shader->bc.bytecode, shader->bc.ndw * 4);
 	rctx->b.ws->buffer_unmap(shader->code_bo->buf);
@@ -462,8 +464,8 @@ static void evergreen_delete_compute_state(struct pipe_context *ctx, void *state
 	} else {
 #ifdef HAVE_OPENCL
 		radeon_shader_binary_clean(&shader->binary);
-		pipe_resource_reference(&shader->code_bo, NULL);
-		pipe_resource_reference(&shader->kernel_param, NULL);
+		pipe_resource_reference((struct pipe_resource**)&shader->code_bo, NULL);
+		pipe_resource_reference((struct pipe_resource**)&shader->kernel_param, NULL);
 #endif
 		r600_destroy_shader(&shader->bc);
 	}

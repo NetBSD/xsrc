@@ -35,20 +35,20 @@ static void cik_sdma_copy_buffer(struct si_context *ctx,
 {
 	struct radeon_cmdbuf *cs = ctx->dma_cs;
 	unsigned i, ncopy, csize;
-	struct r600_resource *rdst = r600_resource(dst);
-	struct r600_resource *rsrc = r600_resource(src);
+	struct si_resource *sdst = si_resource(dst);
+	struct si_resource *ssrc = si_resource(src);
 
 	/* Mark the buffer range of destination as valid (initialized),
 	 * so that transfer_map knows it should wait for the GPU when mapping
 	 * that range. */
-	util_range_add(&rdst->valid_buffer_range, dst_offset,
+	util_range_add(&sdst->valid_buffer_range, dst_offset,
 		       dst_offset + size);
 
-	dst_offset += rdst->gpu_address;
-	src_offset += rsrc->gpu_address;
+	dst_offset += sdst->gpu_address;
+	src_offset += ssrc->gpu_address;
 
 	ncopy = DIV_ROUND_UP(size, CIK_SDMA_COPY_MAX_SIZE);
-	si_need_dma_space(ctx, ncopy * 7, rdst, rsrc);
+	si_need_dma_space(ctx, ncopy * 7, sdst, ssrc);
 
 	for (i = 0; i < ncopy; i++) {
 		csize = MIN2(size, CIK_SDMA_COPY_MAX_SIZE);
@@ -496,12 +496,21 @@ static void cik_sdma_copy(struct pipe_context *ctx,
 	    dst->flags & PIPE_RESOURCE_FLAG_SPARSE)
 		goto fallback;
 
-	if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
+	/* If src is a buffer and dst is a texture, we are uploading metadata. */
+	if (src->target == PIPE_BUFFER) {
 		cik_sdma_copy_buffer(sctx, dst, src, dstx, src_box->x, src_box->width);
 		return;
 	}
 
-	if ((sctx->chip_class == CIK || sctx->chip_class == VI) &&
+	/* SDMA causes corruption. See:
+	 *   https://bugs.freedesktop.org/show_bug.cgi?id=110575
+	 *   https://bugs.freedesktop.org/show_bug.cgi?id=110635
+	 *
+	 * Keep SDMA enabled on APUs.
+	 */
+	if ((sctx->screen->debug_flags & DBG(FORCE_DMA) ||
+	     !sctx->screen->info.has_dedicated_vram) &&
+	    (sctx->chip_class == CIK || sctx->chip_class == VI) &&
 	    cik_sdma_copy_texture(sctx, dst, dst_level, dstx, dsty, dstz,
 				  src, src_level, src_box))
 		return;

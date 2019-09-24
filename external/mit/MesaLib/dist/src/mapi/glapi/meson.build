@@ -44,6 +44,7 @@ if with_shared_glapi
   static_glapi_args += [
     '-DMAPI_MODE_BRIDGE',
     '-DMAPI_ABI_HEADER="@0@"'.format(glapi_mapi_tmp_h.full_path()),
+    gcc_lto_quirk,
   ]
 else
   static_glapi_args += '-DMAPI_MODE_UTIL'
@@ -87,6 +88,7 @@ if with_any_opengl and not with_shared_glapi and with_tests
       include_directories : [inc_include, inc_src, inc_mesa, inc_mapi],
       link_with : [libglapi_static],
       dependencies : [idep_gtest, dep_thread],
-    )
+    ),
+    suite : ['mapi'],
   )
 endif

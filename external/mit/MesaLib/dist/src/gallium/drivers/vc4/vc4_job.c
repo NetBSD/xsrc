@@ -32,13 +32,6 @@
 #include "util/hash_table.h"
 
 static void
-remove_from_ht(struct hash_table *ht, void *key)
-{
-        struct hash_entry *entry = _mesa_hash_table_search(ht, key);
-        _mesa_hash_table_remove(ht, entry);
-}
-
-static void
 vc4_job_free(struct vc4_context *vc4, struct vc4_job *job)
 {
         struct vc4_bo **referenced_bos = job->bo_pointers.base;
@@ -46,22 +39,26 @@ vc4_job_free(struct vc4_context *vc4, struct vc4_job *job)
                 vc4_bo_unreference(&referenced_bos[i]);
         }
 
-        remove_from_ht(vc4->jobs, &job->key);
+        _mesa_hash_table_remove_key(vc4->jobs, &job->key);
 
         if (job->color_write) {
-                remove_from_ht(vc4->write_jobs, job->color_write->texture);
+                _mesa_hash_table_remove_key(vc4->write_jobs,
+                                            job->color_write->texture);
                 pipe_surface_reference(&job->color_write, NULL);
         }
         if (job->msaa_color_write) {
-                remove_from_ht(vc4->write_jobs, job->msaa_color_write->texture);
+                _mesa_hash_table_remove_key(vc4->write_jobs,
+                                            job->msaa_color_write->texture);
                 pipe_surface_reference(&job->msaa_color_write, NULL);
         }
         if (job->zs_write) {
-                remove_from_ht(vc4->write_jobs, job->zs_write->texture);
+                _mesa_hash_table_remove_key(vc4->write_jobs,
+                                            job->zs_write->texture);
                 pipe_surface_reference(&job->zs_write, NULL);
         }
         if (job->msaa_zs_write) {
-                remove_from_ht(vc4->write_jobs, job->msaa_zs_write->texture);
+                _mesa_hash_table_remove_key(vc4->write_jobs,
+                                            job->msaa_zs_write->texture);
                 pipe_surface_reference(&job->msaa_zs_write, NULL);
         }
 
@@ -492,11 +489,7 @@ vc4_job_submit(struct vc4_context *vc4, struct vc4_job *job)
         if (!(vc4_debug & VC4_DEBUG_NORAST)) {
                 int ret;
 
-#ifndef USE_VC4_SIMULATOR
-                ret = drmIoctl(vc4->fd, DRM_IOCTL_VC4_SUBMIT_CL, &submit);
-#else
-                ret = vc4_simulator_flush(vc4, &submit, job);
-#endif
+                ret = vc4_ioctl(vc4->fd, DRM_IOCTL_VC4_SUBMIT_CL, &submit);
                 static bool warned = false;
                 if (ret && !warned) {
                         fprintf(stderr, "Draw call returned %s.  "

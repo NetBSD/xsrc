@@ -114,11 +114,25 @@ namespace brw {
       fs_builder
       group(unsigned n, unsigned i) const
       {
-         assert(force_writemask_all ||
-                (n <= dispatch_width() && i < dispatch_width() / n));
          fs_builder bld = *this;
+
+         if (n <= dispatch_width() && i < dispatch_width() / n) {
+            bld._group += i * n;
+         } else {
+            /* The requested channel group isn't a subset of the channel group
+             * of this builder, which means that the resulting instructions
+             * would use (potentially undefined) channel enable signals not
+             * specified by the parent builder.  That's only valid if the
+             * instruction doesn't have per-channel semantics, in which case
+             * we should clear off the default group index in order to prevent
+             * emitting instructions with channel group not aligned to their
+             * own execution size.
+             */
+            assert(force_writemask_all);
+            bld._group = 0;
+         }
+
          bld._dispatch_width = n;
-         bld._group += i * n;
          return bld;
       }
 
@@ -308,10 +322,11 @@ namespace brw {
          case SHADER_OPCODE_INT_REMAINDER:
             return emit(instruction(opcode, dispatch_width(), dst,
                                     fix_math_operand(src0),
-                                    fix_math_operand(src1)));
+                                    fix_math_operand(fix_byte_src(src1))));
 
          default:
-            return emit(instruction(opcode, dispatch_width(), dst, src0, src1));
+            return emit(instruction(opcode, dispatch_width(), dst,
+                                    src0, fix_byte_src(src1)));
 
          }
       }
@@ -330,12 +345,12 @@ namespace brw {
          case BRW_OPCODE_LRP:
             return emit(instruction(opcode, dispatch_width(), dst,
                                     fix_3src_operand(src0),
-                                    fix_3src_operand(src1),
-                                    fix_3src_operand(src2)));
+                                    fix_3src_operand(fix_byte_src(src1)),
+                                    fix_3src_operand(fix_byte_src(src2))));
 
          default:
             return emit(instruction(opcode, dispatch_width(), dst,
-                                    src0, src1, src2));
+                                    src0, fix_byte_src(src1), fix_byte_src(src2)));
          }
       }
 
@@ -385,8 +400,11 @@ namespace brw {
       {
          assert(mod == BRW_CONDITIONAL_GE || mod == BRW_CONDITIONAL_L);
 
-         return set_condmod(mod, SEL(dst, fix_unsigned_negate(src0),
-                                     fix_unsigned_negate(src1)));
+         /* In some cases we can't have bytes as operand for src1, so use the
+          * same type for both operand.
+          */
+         return set_condmod(mod, SEL(dst, fix_unsigned_negate(fix_byte_src(src0)),
+                                     fix_unsigned_negate(fix_byte_src(src1))));
       }
 
       /**
@@ -410,6 +428,21 @@ namespace brw {
          ubld.emit(SHADER_OPCODE_BROADCAST, dst, src, component(chan_index, 0));
 
          return src_reg(component(dst, 0));
+      }
+
+      src_reg
+      move_to_vgrf(const src_reg &src, unsigned num_components) const
+      {
+         src_reg *const src_comps = new src_reg[num_components];
+         for (unsigned i = 0; i < num_components; i++)
+            src_comps[i] = offset(src, dispatch_width(), i);
+
+         const dst_reg dst = vgrf(src.type, num_components);
+         LOAD_PAYLOAD(dst, src_comps, num_components, 0);
+
+         delete[] src_comps;
+
+         return src_reg(dst);
       }
 
       void
@@ -437,43 +470,13 @@ namespace brw {
 
          if (cluster_size > 1) {
             const fs_builder ubld = exec_all().group(dispatch_width() / 2, 0);
-            dst_reg left = horiz_stride(tmp, 2);
-            dst_reg right = horiz_stride(horiz_offset(tmp, 1), 2);
-
-            /* From the Cherryview PRM Vol. 7, "Register Region Restrictiosn":
-             *
-             *    "When source or destination datatype is 64b or operation is
-             *    integer DWord multiply, regioning in Align1 must follow
-             *    these rules:
-             *
-             *    [...]
-             *
-             *    3. Source and Destination offset must be the same, except
-             *       the case of scalar source."
-             *
-             * In order to work around this, we create a temporary register
-             * and shift left over to match right.  If we have a 64-bit type,
-             * we have to use two integer MOVs instead of a 64-bit MOV.
-             */
-            if (need_matching_subreg_offset(opcode, tmp.type)) {
-               dst_reg tmp2 = vgrf(tmp.type);
-               dst_reg new_left = horiz_stride(horiz_offset(tmp2, 1), 2);
-               if (type_sz(tmp.type) > 4) {
-                  ubld.MOV(subscript(new_left, BRW_REGISTER_TYPE_D, 0),
-                           subscript(left, BRW_REGISTER_TYPE_D, 0));
-                  ubld.MOV(subscript(new_left, BRW_REGISTER_TYPE_D, 1),
-                           subscript(left, BRW_REGISTER_TYPE_D, 1));
-               } else {
-                  ubld.MOV(new_left, left);
-               }
-               left = new_left;
-            }
+            const dst_reg left = horiz_stride(tmp, 2);
+            const dst_reg right = horiz_stride(horiz_offset(tmp, 1), 2);
             set_condmod(mod, ubld.emit(opcode, right, left, right));
          }
 
          if (cluster_size > 2) {
-            if (type_sz(tmp.type) <= 4 &&
-                !need_matching_subreg_offset(opcode, tmp.type)) {
+            if (type_sz(tmp.type) <= 4) {
                const fs_builder ubld =
                   exec_all().group(dispatch_width() / 4, 0);
                src_reg left = horiz_stride(horiz_offset(tmp, 1), 4);
@@ -658,8 +661,8 @@ namespace brw {
                             emit(BRW_OPCODE_CSEL,
                                  retype(dst, BRW_REGISTER_TYPE_F),
                                  retype(src0, BRW_REGISTER_TYPE_F),
-                                 retype(src1, BRW_REGISTER_TYPE_F),
-                                 src2));
+                                 retype(fix_byte_src(src1), BRW_REGISTER_TYPE_F),
+                                 fix_byte_src(src2)));
       }
 
       /**
@@ -709,6 +712,22 @@ namespace brw {
 
       backend_shader *shader;
 
+      /**
+       * Byte sized operands are not supported for src1 on Gen11+.
+       */
+      src_reg
+      fix_byte_src(const src_reg &src) const
+      {
+         if ((shader->devinfo->gen < 11 && !shader->devinfo->is_geminilake) ||
+             type_sz(src.type) != 1)
+            return src;
+
+         dst_reg temp = vgrf(src.type == BRW_REGISTER_TYPE_UB ?
+                             BRW_REGISTER_TYPE_UD : BRW_REGISTER_TYPE_D);
+         MOV(temp, src);
+         return src_reg(temp);
+      }
+
    private:
       /**
        * Workaround for negation of UD registers.  See comment in
@@ -734,13 +753,26 @@ namespace brw {
       src_reg
       fix_3src_operand(const src_reg &src) const
       {
-         if (src.file == VGRF || src.file == UNIFORM || src.stride > 1) {
+         switch (src.file) {
+         case FIXED_GRF:
+            /* FINISHME: Could handle scalar region, other stride=1 regions */
+            if (src.vstride != BRW_VERTICAL_STRIDE_8 ||
+                src.width != BRW_WIDTH_8 ||
+                src.hstride != BRW_HORIZONTAL_STRIDE_1)
+               break;
+            /* fallthrough */
+         case ATTR:
+         case VGRF:
+         case UNIFORM:
+         case IMM:
             return src;
-         } else {
-            dst_reg expanded = vgrf(src.type);
-            MOV(expanded, src);
-            return expanded;
+         default:
+            break;
          }
+
+         dst_reg expanded = vgrf(src.type);
+         MOV(expanded, src);
+         return expanded;
       }
 
       /**
@@ -771,38 +803,6 @@ namespace brw {
          } else {
             return src;
          }
-      }
-
-
-      /* From the Cherryview PRM Vol. 7, "Register Region Restrictiosn":
-       *
-       *    "When source or destination datatype is 64b or operation is
-       *    integer DWord multiply, regioning in Align1 must follow
-       *    these rules:
-       *
-       *    [...]
-       *
-       *    3. Source and Destination offset must be the same, except
-       *       the case of scalar source."
-       *
-       * This helper just detects when we're in this case.
-       */
-      bool
-      need_matching_subreg_offset(enum opcode opcode,
-                                  enum brw_reg_type type) const
-      {
-         if (!shader->devinfo->is_cherryview &&
-             !gen_device_info_is_9lp(shader->devinfo))
-            return false;
-
-         if (type_sz(type) > 4)
-            return true;
-
-         if (opcode == BRW_OPCODE_MUL &&
-             !brw_reg_type_is_floating_point(type))
-            return true;
-
-         return false;
       }
 
       bblock_t *block;
