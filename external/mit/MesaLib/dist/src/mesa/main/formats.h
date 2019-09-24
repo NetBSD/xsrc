@@ -71,6 +71,7 @@ enum mesa_format_layout {
    MESA_FORMAT_LAYOUT_ETC2,
    MESA_FORMAT_LAYOUT_BPTC,
    MESA_FORMAT_LAYOUT_ASTC,
+   MESA_FORMAT_LAYOUT_ATC,
    MESA_FORMAT_LAYOUT_OTHER,
 };
 
@@ -440,6 +441,7 @@ typedef enum
    MESA_FORMAT_X8B8G8R8_SRGB,    /* RRRR RRRR GGGG GGGG BBBB BBBB xxxx xxxx */
    MESA_FORMAT_L8A8_SRGB,                            /* AAAA AAAA LLLL LLLL */
    MESA_FORMAT_A8L8_SRGB,                            /* LLLL LLLL AAAA AAAA */
+   MESA_FORMAT_R_SRGB8,          /* RRRR RRRR */
 
    /* Array sRGB formats */
    MESA_FORMAT_L_SRGB8,       /* ubyte[i] = L */
@@ -656,6 +658,12 @@ typedef enum
    MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x5x5,
    MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x6x5,
    MESA_FORMAT_SRGB8_ALPHA8_ASTC_6x6x6,
+
+   /* ATC compressed formats */
+   MESA_FORMAT_ATC_RGB,
+   MESA_FORMAT_ATC_RGBA_EXPLICIT,
+   MESA_FORMAT_ATC_RGBA_INTERPOLATED,
+
    MESA_FORMAT_COUNT
 } mesa_format;
 
