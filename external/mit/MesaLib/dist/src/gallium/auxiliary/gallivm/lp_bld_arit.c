@@ -555,6 +555,12 @@ lp_build_add(struct lp_build_context *bld,
         return bld->one;
 
       if (!type.floating && !type.fixed) {
+         if (HAVE_LLVM >= 0x0900) {
+            char intrin[32];
+            intrinsic = type.sign ? "llvm.sadd.sat" : "llvm.uadd.sat";
+            lp_format_intrinsic(intrin, sizeof intrin, intrinsic, bld->vec_type);
+            return lp_build_intrinsic_binary(builder, intrin, bld->vec_type, a, b);
+         }
          if (type.width * type.length == 128) {
             if (util_cpu_caps.has_sse2) {
                if (type.width == 8)
@@ -625,6 +631,7 @@ lp_build_add(struct lp_build_context *bld,
           * NOTE: cmp/select does sext/trunc of the mask. Does not seem to
           * interfere with llvm's ability to recognize the pattern but seems
           * a bit brittle.
+          * NOTE: llvm 9+ always uses (non arch specific) intrinsic.
           */
          LLVMValueRef overflowed = lp_build_cmp(bld, PIPE_FUNC_GREATER, a, res);
          res = lp_build_select(bld, overflowed,
@@ -876,6 +883,12 @@ lp_build_sub(struct lp_build_context *bld,
         return bld->zero;
 
       if (!type.floating && !type.fixed) {
+         if (HAVE_LLVM >= 0x0900) {
+            char intrin[32];
+            intrinsic = type.sign ? "llvm.ssub.sat" : "llvm.usub.sat";
+            lp_format_intrinsic(intrin, sizeof intrin, intrinsic, bld->vec_type);
+            return lp_build_intrinsic_binary(builder, intrin, bld->vec_type, a, b);
+         }
          if (type.width * type.length == 128) {
             if (util_cpu_caps.has_sse2) {
                if (type.width == 8)
@@ -925,6 +938,7 @@ lp_build_sub(struct lp_build_context *bld,
           * NOTE: cmp/select does sext/trunc of the mask. Does not seem to
           * interfere with llvm's ability to recognize the pattern but seems
           * a bit brittle.
+          * NOTE: llvm 9+ always uses (non arch specific) intrinsic.
           */
          LLVMValueRef no_ov = lp_build_cmp(bld, PIPE_FUNC_GREATER, a, b);
          a = lp_build_select(bld, no_ov, a, b);
@@ -1992,6 +2006,8 @@ arch_rounding_available(const struct lp_type type)
    else if ((util_cpu_caps.has_altivec &&
             (type.width == 32 && type.length == 4)))
       return TRUE;
+   else if (util_cpu_caps.has_neon)
+      return TRUE;
 
    return FALSE;
 }
@@ -2099,7 +2115,7 @@ lp_build_round_arch(struct lp_build_context *bld,
                     LLVMValueRef a,
                     enum lp_build_round_mode mode)
 {
-   if (util_cpu_caps.has_sse4_1) {
+   if (util_cpu_caps.has_sse4_1 || util_cpu_caps.has_neon) {
       LLVMBuilderRef builder = bld->gallivm->builder;
       const struct lp_type type = bld->type;
       const char *intrinsic_root;
@@ -2477,7 +2493,7 @@ lp_build_iround(struct lp_build_context *bld,
    else {
       LLVMValueRef half;
 
-      half = lp_build_const_vec(bld->gallivm, type, 0.5);
+      half = lp_build_const_vec(bld->gallivm, type, nextafterf(0.5, 0.0));
 
       if (type.sign) {
          LLVMTypeRef vec_type = bld->vec_type;

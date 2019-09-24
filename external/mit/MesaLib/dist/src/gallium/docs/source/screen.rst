@@ -105,6 +105,15 @@ The integer capabilities:
   The only legacy features that Gallium drivers must implement are
   the legacy shader inputs and outputs (colors, texcoords, fog, clipvertex,
   edgeflag).
+* ``PIPE_CAP_ESSL_FEATURE_LEVEL``: An optional cap to allow drivers to
+  report a higher GLSL version for GLES contexts.  This is useful when a
+  driver does not support all the required features for a higher GL version,
+  but does support the required features for a higher GLES version.  A driver
+  is allowed to return ``0`` in which case ``PIPE_CAP_GLSL_FEATURE_LEVEL`` is
+  used.
+  Note that simply returning the same value as the GLSL feature level cap is
+  incorrect.  For example, GLSL version 3.30 does not require ``ARB_gpu_shader5``,
+  but ESSL version 3.20 es does require ``EXT_gpu_shader5``
 * ``PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION``: Whether quads adhere to
   the flatshade_first setting in ``pipe_rasterizer_state``.
 * ``PIPE_CAP_USER_VERTEX_BUFFERS``: Whether the driver supports user vertex
@@ -409,7 +418,7 @@ The integer capabilities:
   for a driver that does not support multiple output streams (i.e.,
   ``PIPE_CAP_MAX_VERTEX_STREAMS`` is 1), both query types are identical.
 * ``PIPE_CAP_MEMOBJ``: Whether operations on memory objects are supported.
-* ``PIPE_CAP_LOAD_CONSTBUF``: True if the driver supports TGSI_OPCODE_LOAD use
+* ``PIPE_CAP_LOAD_CONSTBUF``: True if the driver supports ``TGSI_OPCODE_LOAD`` use
   with constant buffers.
 * ``PIPE_CAP_TGSI_ANY_REG_AS_ADDRESS``: Any TGSI register can be used as
   an address for indirect register indexing.
@@ -434,7 +443,7 @@ The integer capabilities:
   Whether pipe_vertex_buffer::buffer_offset is treated as signed. The u_vbuf
   module needs this for optimal performance in workstation applications.
 * ``PIPE_CAP_CONTEXT_PRIORITY_MASK``: For drivers that support per-context
-  priorities, this returns a bitmask of PIPE_CONTEXT_PRIORITY_x for the
+  priorities, this returns a bitmask of ``PIPE_CONTEXT_PRIORITY_x`` for the
   supported priority levels.  A driver that does not support prioritized
   contexts can return 0.
 * ``PIPE_CAP_FENCE_SIGNAL``: True if the driver supports signaling semaphores
@@ -446,17 +455,24 @@ The integer capabilities:
 * ``PIPE_CAP_PACKED_UNIFORMS``: True if the driver supports packed uniforms
   as opposed to padding to vec4s.
 * ``PIPE_CAP_CONSERVATIVE_RASTER_POST_SNAP_TRIANGLES``: Whether the
-  PIPE_CONSERVATIVE_RASTER_POST_SNAP mode is supported for triangles.
+  ``PIPE_CONSERVATIVE_RASTER_POST_SNAP`` mode is supported for triangles.
+  The post-snap mode means the conservative rasterization occurs after
+  the conversion from floating-point to fixed-point coordinates
+  on the subpixel grid.
 * ``PIPE_CAP_CONSERVATIVE_RASTER_POST_SNAP_POINTS_LINES``: Whether the
-PIPE_CONSERVATIVE_RASTER_POST_SNAP mode is supported for points and lines.
+  ``PIPE_CONSERVATIVE_RASTER_POST_SNAP`` mode is supported for points and lines.
 * ``PIPE_CAP_CONSERVATIVE_RASTER_PRE_SNAP_TRIANGLES``: Whether the
-PIPE_CONSERVATIVE_RASTER_PRE_SNAP mode is supported for triangles.
+  ``PIPE_CONSERVATIVE_RASTER_PRE_SNAP`` mode is supported for triangles.
+  The pre-snap mode means the conservative rasterization occurs before
+  the conversion from floating-point to fixed-point coordinates.
 * ``PIPE_CAP_CONSERVATIVE_RASTER_PRE_SNAP_POINTS_LINES``: Whether the
-PIPE_CONSERVATIVE_RASTER_PRE_SNAP mode is supported for points and lines.
-* ``PIPE_CAP_CONSERVATIVE_RASTER_POST_DEPTH_COVERAGE``: Whether PIPE_CAP_POST_DEPTH_COVERAGE
-works with conservative rasterization.
+  ``PIPE_CONSERVATIVE_RASTER_PRE_SNAP`` mode is supported for points and lines.
+* ``PIPE_CAP_CONSERVATIVE_RASTER_POST_DEPTH_COVERAGE``: Whether
+  ``PIPE_CAP_POST_DEPTH_COVERAGE`` works with conservative rasterization.
+* ``PIPE_CAP_CONSERVATIVE_RASTER_INNER_COVERAGE``: Whether
+  inner_coverage from GL_INTEL_conservative_rasterization is supported.
 * ``PIPE_CAP_MAX_CONSERVATIVE_RASTER_SUBPIXEL_PRECISION_BIAS``: The maximum
-subpixel precision bias in bits during conservative rasterization.
+  subpixel precision bias in bits during conservative rasterization.
 * ``PIPE_CAP_PROGRAMMABLE_SAMPLE_LOCATIONS``: True is the driver supports
   programmable sample location through ```get_sample_pixel_grid``` and
   ```set_sample_locations```.
@@ -472,11 +488,42 @@ subpixel precision bias in bits during conservative rasterization.
 * ``PIPE_CAP_MAX_COMBINED_HW_ATOMIC_COUNTER_BUFFERS``: Maximum total number of
   atomic counter buffers. A value of 0 means the sum of all per-shader stage
   maximums (see ``PIPE_SHADER_CAP_MAX_HW_ATOMIC_COUNTER_BUFFERS``).
-* ``PIPE_CAP_MAX_TEXTURE_UPLOAD_MEMORY_BUDGET: Maximum recommend memory size
+* ``PIPE_CAP_MAX_TEXTURE_UPLOAD_MEMORY_BUDGET``: Maximum recommend memory size
   for all active texture uploads combined. This is a performance hint.
   0 means no limit.
 * ``PIPE_CAP_MAX_VERTEX_ELEMENT_SRC_OFFSET``: The maximum supported value for
   of pipe_vertex_element::src_offset.
+* ``PIPE_CAP_SURFACE_SAMPLE_COUNT``: Whether the driver
+  supports pipe_surface overrides of resource nr_samples. If set, will
+  enable EXT_multisampled_render_to_texture.
+* ``PIPE_CAP_TGSI_ATOMFADD``: Atomic floating point adds are supported on
+  images, buffers, and shared memory.
+* ``PIPE_CAP_RGB_OVERRIDE_DST_ALPHA_BLEND``: True if the driver needs blend state to use zero/one instead of destination alpha for RGB/XRGB formats.
+* ``PIPE_CAP_GLSL_TESS_LEVELS_AS_INPUTS``: True if the driver wants TESSINNER and TESSOUTER to be inputs (rather than system values) for tessellation evaluation shaders.
+* ``PIPE_CAP_DEST_SURFACE_SRGB_CONTROL``: Indicates whether the drivers
+  supports switching the format between sRGB and linear for a surface that is
+  used as destination in draw and blit calls.
+* ``PIPE_CAP_NIR_COMPACT_ARRAYS``: True if the compiler backend supports NIR's compact array feature, for all shader stages.
+* ``PIPE_CAP_MAX_VARYINGS``: The maximum number of fragment shader
+  varyings. This will generally correspond to
+  ``PIPE_SHADER_CAP_MAX_INPUTS`` for the fragment shader, but in some
+  cases may be a smaller number.
+* ``PIPE_CAP_COMPUTE_GRID_INFO_LAST_BLOCK``: Whether pipe_grid_info::last_block
+  is implemented by the driver. See struct pipe_grid_info for more details.
+* ``PIPE_CAP_COMPUTE_SHADER_DERIVATIVE``: True if the driver supports derivatives (and texture lookups with implicit derivatives) in compute shaders.
+* ``PIPE_CAP_TGSI_SKIP_SHRINK_IO_ARRAYS``:  Whether the TGSI pass to shrink IO
+  arrays should be skipped and enforce keeping the declared array sizes instead.
+  A driver might rely on the input mapping that was defined with the original
+  GLSL code.
+* ``PIPE_CAP_IMAGE_LOAD_FORMATTED``: True if a format for image loads does not need to be specified in the shader IR
+* ``PIPE_CAP_MAX_FRAMES_IN_FLIGHT``: Maximum number of frames that state
+  trackers should allow to be in flight before throttling pipe_context
+  execution. 0 = throttling is disabled.
+* ``PIPE_CAP_DMABUF``: Whether Linux DMABUF handles are supported by
+  resource_from_handle and resource_get_handle.
+* ``PIPE_CAP_PREFER_COMPUTE_FOR_MULTIMEDIA``: Whether VDPAU, VAAPI, and
+  OpenMAX should use a compute-based blit instead of pipe_context::blit and compute pipeline for compositing images.
+* ``PIPE_CAP_TGSI_DIV``: Whether opcode DIV is supported
 
 .. _pipe_capf:
 

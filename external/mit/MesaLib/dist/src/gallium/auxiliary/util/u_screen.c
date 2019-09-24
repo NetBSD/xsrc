@@ -77,6 +77,7 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
    case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
    case PIPE_CAP_SEAMLESS_CUBE_MAP:
    case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
+   case PIPE_CAP_RGB_OVERRIDE_DST_ALPHA_BLEND:
       return 0;
 
    case PIPE_CAP_MIN_TEXEL_OFFSET:
@@ -105,6 +106,10 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
    case PIPE_CAP_GLSL_FEATURE_LEVEL_COMPATIBILITY:
       /* Minimum GLSL level implemented by gallium drivers. */
       return 120;
+
+   case PIPE_CAP_ESSL_FEATURE_LEVEL:
+      /* Tell state-tracker to fallback to PIPE_CAP_GLSL_FEATURE_LEVEL */
+      return 0;
 
    case PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION:
    case PIPE_CAP_USER_VERTEX_BUFFERS:
@@ -145,6 +150,7 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
       return 1;
 
    case PIPE_CAP_QUERY_PIPELINE_STATISTICS:
+   case PIPE_CAP_QUERY_PIPELINE_STATISTICS_SINGLE:
    case PIPE_CAP_TEXTURE_BORDER_COLOR_QUIRK:
       return 0;
 
@@ -261,6 +267,9 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
    case PIPE_CAP_GLSL_OPTIMIZE_CONSERVATIVELY:
       return 1;
 
+   case PIPE_CAP_GLSL_TESS_LEVELS_AS_INPUTS:
+      return 0;
+
    case PIPE_CAP_TGSI_FS_FBFETCH:
    case PIPE_CAP_TGSI_MUL_ZERO_WINS:
    case PIPE_CAP_DOUBLES:
@@ -273,6 +282,7 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
    case PIPE_CAP_TGSI_BALLOT:
    case PIPE_CAP_TGSI_TES_LAYER_VIEWPORT:
    case PIPE_CAP_CAN_BIND_CONST_BUFFER_AS_VERTEX:
+   case PIPE_CAP_TGSI_DIV:
       return 0;
 
    case PIPE_CAP_ALLOW_MAPPED_BUFFERS_DURING_EXECUTION:
@@ -284,6 +294,7 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
    case PIPE_CAP_POST_DEPTH_COVERAGE:
    case PIPE_CAP_BINDLESS_TEXTURE:
    case PIPE_CAP_NIR_SAMPLERS_AS_DEREF:
+   case PIPE_CAP_NIR_COMPACT_ARRAYS:
    case PIPE_CAP_QUERY_SO_OVERFLOW:
    case PIPE_CAP_MEMOBJ:
    case PIPE_CAP_LOAD_CONSTBUF:
@@ -307,10 +318,15 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
    case PIPE_CAP_CONSERVATIVE_RASTER_PRE_SNAP_POINTS_LINES:
    case PIPE_CAP_MAX_CONSERVATIVE_RASTER_SUBPIXEL_PRECISION_BIAS:
    case PIPE_CAP_CONSERVATIVE_RASTER_POST_DEPTH_COVERAGE:
+   case PIPE_CAP_CONSERVATIVE_RASTER_INNER_COVERAGE:
    case PIPE_CAP_PROGRAMMABLE_SAMPLE_LOCATIONS:
    case PIPE_CAP_MAX_COMBINED_SHADER_BUFFERS:
    case PIPE_CAP_MAX_COMBINED_HW_ATOMIC_COUNTERS:
    case PIPE_CAP_MAX_COMBINED_HW_ATOMIC_COUNTER_BUFFERS:
+   case PIPE_CAP_TGSI_ATOMFADD:
+   case PIPE_CAP_TGSI_SKIP_SHRINK_IO_ARRAYS:
+   case PIPE_CAP_IMAGE_LOAD_FORMATTED:
+   case PIPE_CAP_PREFER_COMPUTE_FOR_MULTIMEDIA:
       return 0;
 
    case PIPE_CAP_MAX_GS_INVOCATIONS:
@@ -325,6 +341,30 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
 
    case PIPE_CAP_MAX_VERTEX_ELEMENT_SRC_OFFSET:
       return 2047;
+
+   case PIPE_CAP_SURFACE_SAMPLE_COUNT:
+      return 0;
+   case PIPE_CAP_DEST_SURFACE_SRGB_CONTROL:
+      return 1;
+
+   case PIPE_CAP_MAX_VARYINGS:
+      return 8;
+
+   case PIPE_CAP_COMPUTE_GRID_INFO_LAST_BLOCK:
+      return 0;
+
+   case PIPE_CAP_COMPUTE_SHADER_DERIVATIVES:
+      return 0;
+
+   case PIPE_CAP_MAX_FRAMES_IN_FLIGHT:
+      return 1;
+
+   case PIPE_CAP_DMABUF:
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)
+      return 1;
+#else
+      return 0;
+#endif
 
    default:
       unreachable("bad PIPE_CAP_*");

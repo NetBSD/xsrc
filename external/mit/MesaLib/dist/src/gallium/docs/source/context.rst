@@ -143,6 +143,11 @@ to the array index which is used for sampling.
   to a respective sampler view and releases a reference to the previous
   sampler view.
 
+  Sampler views outside of ``[start_slot, start_slot + num_views)`` are
+  unmodified.  If ``views`` is NULL, the behavior is the same as if
+  ``views[n]`` was NULL for the entire range, ie. releasing the reference
+  for all the sampler views in the specified range.
+
 * ``create_sampler_view`` creates a new sampler view. ``texture`` is associated
   with the sampler view which results in sampler view holding a reference
   to the texture. Format specified in template must be compatible
@@ -490,6 +495,11 @@ Number of tessellation control shader threads launched.
 Number of tessellation evaluation shader threads launched.
 If a shader type is not supported by the device/driver,
 the corresponding values should be set to 0.
+
+``PIPE_QUERY_PIPELINE_STATISTICS_SINGLE`` returns a single counter from
+the ``PIPE_QUERY_PIPELINE_STATISTICS`` group.  The specific counter must
+be selected when calling ``create_query`` by passing one of the
+``PIPE_STAT_QUERY`` enums as the query's ``index``.
 
 Gallium does not guarantee the availability of any query types; one must
 always check the capabilities of the :ref:`Screen` first.
