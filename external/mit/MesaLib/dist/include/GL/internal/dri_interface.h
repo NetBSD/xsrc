@@ -50,6 +50,8 @@ typedef struct drm_clip_rect drm_clip_rect_t;
 #endif
 #endif
 
+#include <GL/gl.h>
+
 #include <stdint.h>
 
 /**
@@ -1292,6 +1294,7 @@ struct __DRIdri2ExtensionRec {
 #define __DRI_IMAGE_FORMAT_XBGR2101010  0x1010
 #define __DRI_IMAGE_FORMAT_ABGR2101010  0x1011
 #define __DRI_IMAGE_FORMAT_SABGR8       0x1012
+#define __DRI_IMAGE_FORMAT_UYVY         0x1013
 
 #define __DRI_IMAGE_USE_SHARE		0x0001
 #define __DRI_IMAGE_USE_SCANOUT		0x0002
@@ -1346,12 +1349,18 @@ struct __DRIdri2ExtensionRec {
 #define __DRI_IMAGE_FOURCC_NV16		0x3631564e
 #define __DRI_IMAGE_FOURCC_YUYV		0x56595559
 #define __DRI_IMAGE_FOURCC_UYVY		0x59565955
+#define __DRI_IMAGE_FOURCC_AYUV		0x56555941
+#define __DRI_IMAGE_FOURCC_XYUV8888	0x56555958
 
 #define __DRI_IMAGE_FOURCC_YVU410	0x39555659
 #define __DRI_IMAGE_FOURCC_YVU411	0x31315659
 #define __DRI_IMAGE_FOURCC_YVU420	0x32315659
 #define __DRI_IMAGE_FOURCC_YVU422	0x36315659
 #define __DRI_IMAGE_FOURCC_YVU444	0x34325659
+
+#define __DRI_IMAGE_FOURCC_P010		0x30313050
+#define __DRI_IMAGE_FOURCC_P012		0x32313050
+#define __DRI_IMAGE_FOURCC_P016		0x36313050
 
 /**
  * Queryable on images created by createImageFromNames.
@@ -1372,6 +1381,8 @@ struct __DRIdri2ExtensionRec {
 #define __DRI_IMAGE_COMPONENTS_Y_UV	0x3004
 #define __DRI_IMAGE_COMPONENTS_Y_XUXV	0x3005
 #define __DRI_IMAGE_COMPONENTS_Y_UXVX	0x3008
+#define __DRI_IMAGE_COMPONENTS_AYUV	0x3009
+#define __DRI_IMAGE_COMPONENTS_XYUV	0x300A
 #define __DRI_IMAGE_COMPONENTS_R	0x3006
 #define __DRI_IMAGE_COMPONENTS_RG	0x3007
 

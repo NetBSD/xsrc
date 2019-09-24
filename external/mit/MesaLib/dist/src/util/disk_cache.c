@@ -338,8 +338,6 @@ disk_cache_create(const char *gpu_name, const char *driver_id,
       goto path_fail;
    cache->index_mmap_size = size;
 
-   close(fd);
-
    cache->size = (uint64_t *) cache->index_mmap;
    cache->stored_keys = cache->index_mmap + sizeof(uint64_t);
 
@@ -393,6 +391,9 @@ disk_cache_create(const char *gpu_name, const char *driver_id,
 
  path_fail:
 
+   if (fd != -1)
+      close(fd);
+
    cache->driver_keys_blob_size = cv_size;
 
    /* Create driver id keys */
@@ -431,8 +432,6 @@ disk_cache_create(const char *gpu_name, const char *driver_id,
    return cache;
 
  fail:
-   if (fd != -1)
-      close(fd);
    if (cache)
       ralloc_free(cache);
    ralloc_free(local);
@@ -741,7 +740,7 @@ static size_t
 deflate_and_write_to_disk(const void *in_data, size_t in_data_size, int dest,
                           const char *filename)
 {
-   unsigned char out[BUFSIZE];
+   unsigned char *out;
 
    /* allocate deflate state */
    z_stream strm;
@@ -758,6 +757,11 @@ deflate_and_write_to_disk(const void *in_data, size_t in_data_size, int dest,
    /* compress until end of in_data */
    size_t compressed_size = 0;
    int flush;
+
+   out = malloc(BUFSIZE * sizeof(unsigned char));
+   if (out == NULL)
+      return 0;
+
    do {
       int remaining = in_data_size - BUFSIZE;
       flush = remaining > 0 ? Z_NO_FLUSH : Z_FINISH;
@@ -779,6 +783,7 @@ deflate_and_write_to_disk(const void *in_data, size_t in_data_size, int dest,
          ssize_t written = write_all(dest, out, have);
          if (written == -1) {
             (void)deflateEnd(&strm);
+            free(out);
             return 0;
          }
       } while (strm.avail_out == 0);
@@ -793,6 +798,7 @@ deflate_and_write_to_disk(const void *in_data, size_t in_data_size, int dest,
 
    /* clean up and return */
    (void)deflateEnd(&strm);
+   free(out);
    return compressed_size;
 }
 

@@ -62,6 +62,7 @@ private:
 
    // we want to insert calls to the builtin library only after optimization
    void handleDIV(Instruction *); // integer division, modulus
+   void handleRCPRSQLib(Instruction *, Value *[]);
    void handleRCPRSQ(Instruction *); // double precision float recip/rsqrt
    void handleFTZ(Instruction *);
    void handleSET(CmpInstruction *);
@@ -81,6 +82,7 @@ private:
    virtual bool visit(Function *);
    virtual bool visit(BasicBlock *);
 
+   void replaceCvt(Instruction *);
    void replaceZero(Instruction *);
    bool tryReplaceContWithBra(BasicBlock *);
    void propagateJoin(BasicBlock *);

@@ -442,8 +442,6 @@ intelInitContext(struct intel_context *intel,
 
    intel->is_945 = IS_945(devID);
 
-   intel->has_swizzling = intel->intelScreen->hw_has_swizzling;
-
    memset(&ctx->TextureFormatSupported,
 	  0, sizeof(ctx->TextureFormatSupported));
 
@@ -601,7 +599,7 @@ intelDestroyContext(__DRIcontext * driContextPriv)
       driDestroyOptionCache(&intel->optionCache);
 
       /* free the Mesa context */
-      _mesa_free_context_data(&intel->ctx);
+      _mesa_free_context_data(&intel->ctx, true);
 
       _math_matrix_dtr(&intel->ViewportMatrix);
 
