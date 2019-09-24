@@ -195,7 +195,7 @@ vbo_exec_copy_to_current(struct vbo_exec_context *exec)
                                      exec->vtx.attrtype[i]);
       }
 
-      if (exec->vtx.attrtype[i] != vbo->current[i].Type ||
+      if (exec->vtx.attrtype[i] != vbo->current[i].Format.Type ||
           memcmp(current, tmp, 4 * sizeof(GLfloat) * dmul) != 0) {
          memcpy(current, tmp, 4 * sizeof(GLfloat) * dmul);
 
@@ -205,14 +205,9 @@ vbo_exec_copy_to_current(struct vbo_exec_context *exec)
           * directly.
           */
          /* Size here is in components - not bytes */
-         vbo->current[i].Size = exec->vtx.attrsz[i] / dmul;
-         vbo->current[i]._ElementSize =
-            vbo->current[i].Size * sizeof(GLfloat) * dmul;
-         vbo->current[i].Type = exec->vtx.attrtype[i];
-         vbo->current[i].Integer =
-            vbo_attrtype_to_integer_flag(exec->vtx.attrtype[i]);
-         vbo->current[i].Doubles =
-            vbo_attrtype_to_double_flag(exec->vtx.attrtype[i]);
+         vbo_set_vertex_format(&vbo->current[i].Format,
+                               exec->vtx.attrsz[i] / dmul,
+                               exec->vtx.attrtype[i]);
 
          /* This triggers rather too much recalculation of Mesa state
           * that doesn't get used (eg light positions).
@@ -459,6 +454,20 @@ vbo_exec_begin_vertices(struct gl_context *ctx)
    assert(exec->begin_vertices_flags);
 
    ctx->Driver.NeedFlush |= exec->begin_vertices_flags;
+}
+
+
+/**
+ * If index=0, does glVertexAttrib*() alias glVertex() to emit a vertex?
+ * It depends on a few things, including whether we're inside or outside
+ * of glBegin/glEnd.
+ */
+static inline bool
+is_vertex_position(const struct gl_context *ctx, GLuint index)
+{
+   return (index == 0 &&
+           _mesa_attr_zero_aliases_vertex(ctx) &&
+           _mesa_inside_begin_end(ctx));
 }
 
 
@@ -803,11 +812,14 @@ vbo_exec_Begin(GLenum mode)
    ctx->Driver.CurrentExecPrimitive = mode;
 
    ctx->Exec = ctx->BeginEnd;
+
    /* We may have been called from a display list, in which case we should
     * leave dlist.c's dispatch table in place.
     */
-   if (ctx->CurrentClientDispatch == ctx->OutsideBeginEnd) {
-      ctx->CurrentClientDispatch = ctx->BeginEnd;
+   if (ctx->CurrentClientDispatch == ctx->MarshalExec) {
+      ctx->CurrentServerDispatch = ctx->Exec;
+   } else if (ctx->CurrentClientDispatch == ctx->OutsideBeginEnd) {
+      ctx->CurrentClientDispatch = ctx->Exec;
       _glapi_set_dispatch(ctx->CurrentClientDispatch);
    } else {
       assert(ctx->CurrentClientDispatch == ctx->Save);
@@ -858,8 +870,11 @@ vbo_exec_End(void)
    }
 
    ctx->Exec = ctx->OutsideBeginEnd;
-   if (ctx->CurrentClientDispatch == ctx->BeginEnd) {
-      ctx->CurrentClientDispatch = ctx->OutsideBeginEnd;
+
+   if (ctx->CurrentClientDispatch == ctx->MarshalExec) {
+      ctx->CurrentServerDispatch = ctx->Exec;
+   } else if (ctx->CurrentClientDispatch == ctx->BeginEnd) {
+      ctx->CurrentClientDispatch = ctx->Exec;
       _glapi_set_dispatch(ctx->CurrentClientDispatch);
    }
 

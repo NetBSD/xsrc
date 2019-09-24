@@ -36,8 +36,9 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <xf86drm.h>
-#include <drm_fourcc.h>
+#include "drm-uapi/drm_fourcc.h"
 #include "util/hash_table.h"
+#include "util/xmlconfig.h"
 
 #include "vk_util.h"
 #include "wsi_common_private.h"
@@ -451,6 +452,7 @@ x11_surface_get_support(VkIcdSurfaceBase *icd_surface,
 
 static VkResult
 x11_surface_get_capabilities(VkIcdSurfaceBase *icd_surface,
+                             struct wsi_device *wsi_device,
                              VkSurfaceCapabilitiesKHR *caps)
 {
    xcb_connection_t *conn = x11_surface_get_connection(icd_surface);
@@ -484,8 +486,10 @@ x11_surface_get_capabilities(VkIcdSurfaceBase *icd_surface,
        */
       caps->currentExtent = (VkExtent2D) { -1, -1 };
       caps->minImageExtent = (VkExtent2D) { 1, 1 };
-      /* This is the maximum supported size on Intel */
-      caps->maxImageExtent = (VkExtent2D) { 1 << 14, 1 << 14 };
+      caps->maxImageExtent = (VkExtent2D) {
+         wsi_device->maxImageDimension2D,
+         wsi_device->maxImageDimension2D,
+      };
    }
    free(err);
    free(geom);
@@ -508,6 +512,9 @@ x11_surface_get_capabilities(VkIcdSurfaceBase *icd_surface,
    /* There is no real maximum */
    caps->maxImageCount = 0;
 
+   if (wsi_device->x11.override_minImageCount)
+      caps->minImageCount = wsi_device->x11.override_minImageCount;
+
    caps->supportedTransforms = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
    caps->currentTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
    caps->maxImageArrayLayers = 1;
@@ -515,6 +522,7 @@ x11_surface_get_capabilities(VkIcdSurfaceBase *icd_surface,
       VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
       VK_IMAGE_USAGE_SAMPLED_BIT |
       VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+      VK_IMAGE_USAGE_STORAGE_BIT |
       VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
    return VK_SUCCESS;
@@ -522,12 +530,31 @@ x11_surface_get_capabilities(VkIcdSurfaceBase *icd_surface,
 
 static VkResult
 x11_surface_get_capabilities2(VkIcdSurfaceBase *icd_surface,
+                              struct wsi_device *wsi_device,
                               const void *info_next,
                               VkSurfaceCapabilities2KHR *caps)
 {
    assert(caps->sType == VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_2_KHR);
 
-   return x11_surface_get_capabilities(icd_surface, &caps->surfaceCapabilities);
+   VkResult result =
+      x11_surface_get_capabilities(icd_surface, wsi_device,
+                                   &caps->surfaceCapabilities);
+
+   vk_foreach_struct(ext, caps->pNext) {
+      switch (ext->sType) {
+      case VK_STRUCTURE_TYPE_SURFACE_PROTECTED_CAPABILITIES_KHR: {
+         VkSurfaceProtectedCapabilitiesKHR *protected = (void *)ext;
+         protected->supportsProtected = VK_FALSE;
+         break;
+      }
+
+      default:
+         /* Ignored */
+         break;
+      }
+   }
+
+   return result;
 }
 
 static VkResult
@@ -715,6 +742,7 @@ struct x11_swapchain {
 
    struct x11_image                             images[0];
 };
+WSI_DEFINE_NONDISP_HANDLE_CASTS(x11_swapchain, VkSwapchainKHR)
 
 /**
  * Update the swapchain status with the result of an operation, and return
@@ -830,19 +858,9 @@ x11_handle_dri3_present_event(struct x11_swapchain *chain,
 }
 
 
-static uint64_t wsi_get_current_time(void)
-{
-   uint64_t current_time;
-   struct timespec tv;
-
-   clock_gettime(CLOCK_MONOTONIC, &tv);
-   current_time = tv.tv_nsec + tv.tv_sec*1000000000ull;
-   return current_time;
-}
-
 static uint64_t wsi_get_absolute_timeout(uint64_t timeout)
 {
-   uint64_t current_time = wsi_get_current_time();
+   uint64_t current_time = wsi_common_get_current_time();
 
    timeout = MIN2(UINT64_MAX - current_time, timeout);
 
@@ -893,7 +911,7 @@ x11_acquire_next_image_poll_x11(struct x11_swapchain *chain,
             /* If a non-special event happens, the fd will still
              * poll. So recalculate the timeout now just in case.
              */
-            uint64_t current_time = wsi_get_current_time();
+            uint64_t current_time = wsi_common_get_current_time();
             if (atimeout > current_time)
                timeout = atimeout - current_time;
             else
@@ -960,6 +978,19 @@ x11_present_to_x11(struct x11_swapchain *chain, uint32_t image_index,
       options |= XCB_PRESENT_OPTION_SUBOPTIMAL;
 #endif
 
+   /* Poll for any available event and update the swapchain status. This could
+    * update the status of the swapchain to SUBOPTIMAL or OUT_OF_DATE if the
+    * associated X11 surface has been resized.
+    */
+   xcb_generic_event_t *event;
+   while ((event = xcb_poll_for_special_event(chain->conn, chain->special_event))) {
+      VkResult result = x11_handle_dri3_present_event(chain, (void *)event);
+      free(event);
+      if (result < 0)
+         return x11_swapchain_result(chain, result);
+      x11_swapchain_result(chain, result);
+   }
+
    xshmfence_reset(image->shm_fence);
 
    ++chain->send_sbc;
@@ -995,6 +1026,10 @@ x11_acquire_next_image(struct wsi_swapchain *anv_chain,
    struct x11_swapchain *chain = (struct x11_swapchain *)anv_chain;
    uint64_t timeout = info->timeout;
 
+   /* If the swapchain is in an error state, don't go any further. */
+   if (chain->status < 0)
+      return chain->status;
+
    if (chain->threaded) {
       return x11_acquire_next_image_from_queue(chain, image_index, timeout);
    } else {
@@ -1008,6 +1043,10 @@ x11_queue_present(struct wsi_swapchain *anv_chain,
                   const VkPresentRegionKHR *damage)
 {
    struct x11_swapchain *chain = (struct x11_swapchain *)anv_chain;
+
+   /* If the swapchain is in an error state, don't go any further. */
+   if (chain->status < 0)
+      return chain->status;
 
    if (chain->threaded) {
       wsi_queue_push(&chain->present_queue, image_index);
@@ -1301,6 +1340,33 @@ x11_swapchain_destroy(struct wsi_swapchain *anv_chain,
    return VK_SUCCESS;
 }
 
+static void
+wsi_x11_set_adaptive_sync_property(xcb_connection_t *conn,
+                                   xcb_drawable_t drawable,
+                                   uint32_t state)
+{
+   static char const name[] = "_VARIABLE_REFRESH";
+   xcb_intern_atom_cookie_t cookie;
+   xcb_intern_atom_reply_t* reply;
+   xcb_void_cookie_t check;
+
+   cookie = xcb_intern_atom(conn, 0, strlen(name), name);
+   reply = xcb_intern_atom_reply(conn, cookie, NULL);
+   if (reply == NULL)
+      return;
+
+   if (state)
+      check = xcb_change_property_checked(conn, XCB_PROP_MODE_REPLACE,
+                                          drawable, reply->atom,
+                                          XCB_ATOM_CARDINAL, 32, 1, &state);
+   else
+      check = xcb_delete_property_checked(conn, drawable, reply->atom);
+
+   xcb_discard_reply(conn, check.sequence);
+   free(reply);
+}
+
+
 static VkResult
 x11_surface_create_swapchain(VkIcdSurfaceBase *icd_surface,
                              VkDevice device,
@@ -1347,7 +1413,7 @@ x11_surface_create_swapchain(VkIcdSurfaceBase *icd_surface,
    chain->base.get_wsi_image = x11_get_wsi_image;
    chain->base.acquire_next_image = x11_acquire_next_image;
    chain->base.queue_present = x11_queue_present;
-   chain->base.present_mode = pCreateInfo->presentMode;
+   chain->base.present_mode = wsi_swapchain_get_present_mode(wsi_device, pCreateInfo);
    chain->base.image_count = num_images;
    chain->conn = conn;
    chain->window = window;
@@ -1365,7 +1431,7 @@ x11_surface_create_swapchain(VkIcdSurfaceBase *icd_surface,
     * mode which provokes reallocation when anything changes, to make
     * sure we have the most optimal allocation.
     */
-   struct x11_swapchain *old_chain = (void *)(intptr_t) pCreateInfo->oldSwapchain;
+   WSI_FROM_HANDLE(x11_swapchain, old_chain, pCreateInfo->oldSwapchain);
    if (old_chain)
       chain->last_present_mode = old_chain->last_present_mode;
    else
@@ -1453,6 +1519,13 @@ x11_surface_create_swapchain(VkIcdSurfaceBase *icd_surface,
 
    for (int i = 0; i < ARRAY_SIZE(modifiers); i++)
       vk_free(pAllocator, modifiers[i]);
+
+   /* It is safe to set it here as only one swapchain can be associated with
+    * the window, and swapchain creation does the association. At this point
+    * we know the creation is going to succeed. */
+   wsi_x11_set_adaptive_sync_property(conn, window,
+                                      wsi_device->enable_adaptive_sync);
+
    *swapchain_out = &chain->base;
 
    return VK_SUCCESS;
@@ -1477,7 +1550,8 @@ fail_alloc:
 
 VkResult
 wsi_x11_init_wsi(struct wsi_device *wsi_device,
-                 const VkAllocationCallbacks *alloc)
+                 const VkAllocationCallbacks *alloc,
+                 const struct driOptionCache *dri_options)
 {
    struct wsi_x11 *wsi;
    VkResult result;
@@ -1506,6 +1580,13 @@ wsi_x11_init_wsi(struct wsi_device *wsi_device,
    if (!wsi->connections) {
       result = VK_ERROR_OUT_OF_HOST_MEMORY;
       goto fail_mutex;
+   }
+
+   if (dri_options) {
+      if (driCheckOption(dri_options, "vk_x11_override_min_image_count", DRI_INT)) {
+         wsi_device->x11.override_minImageCount =
+            driQueryOptioni(dri_options, "vk_x11_override_min_image_count");
+      }
    }
 
    wsi->base.get_support = x11_surface_get_support;
