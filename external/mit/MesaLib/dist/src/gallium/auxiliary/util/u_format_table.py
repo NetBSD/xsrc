@@ -136,11 +136,13 @@ def write_format_table(formats):
         print("   %s,\t/* is_array */" % (bool_map(format.is_array()),))
         print("   %s,\t/* is_bitmask */" % (bool_map(format.is_bitmask()),))
         print("   %s,\t/* is_mixed */" % (bool_map(format.is_mixed()),))
+        print("   %s,\t/* is_unorm */" % (bool_map(format.is_unorm()),))
+        print("   %s,\t/* is_snorm */" % (bool_map(format.is_snorm()),))
         u_format_pack.print_channels(format, do_channel_array)
         u_format_pack.print_channels(format, do_swizzle_array)
         print("   %s," % (colorspace_map(format.colorspace),))
         access = True
-        if format.layout == 'astc':
+        if format.layout == 'astc' or format.layout == 'atc':
             access = False
         if format.layout == 'etc' and format.short_name() != 'etc1_rgb8':
             access = False

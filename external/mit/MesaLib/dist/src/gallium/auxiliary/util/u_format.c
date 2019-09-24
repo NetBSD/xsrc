@@ -32,7 +32,7 @@
  * @author Jose Fonseca <jfonseca@vmware.com>
  */
 
-#include "u_memory.h"
+#include "util/u_memory.h"
 #include "u_format.h"
 #include "u_format_s3tc.h"
 #include "u_surface.h"
@@ -149,24 +149,25 @@ util_format_is_pure_uint(enum pipe_format format)
 }
 
 /**
- * Returns true if all non-void channels are normalized signed.
+ * Returns true if the format contains normalized signed channels.
  */
 boolean
 util_format_is_snorm(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
-   int i;
 
-   if (desc->is_mixed)
-      return FALSE;
+   return desc->is_snorm;
+}
 
-   i = util_format_get_first_non_void_channel(format);
-   if (i == -1)
-      return FALSE;
+/**
+ * Returns true if the format contains normalized unsigned channels.
+ */
+boolean
+util_format_is_unorm(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
 
-   return desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED &&
-          !desc->channel[i].pure_integer &&
-          desc->channel[i].normalized;
+   return desc->is_unorm;
 }
 
 boolean
@@ -715,6 +716,68 @@ util_format_translate(enum pipe_format dst_format,
 
       FREE(tmp_row);
    }
+   else if (util_format_is_pure_sint(src_format) ||
+            util_format_is_pure_sint(dst_format)) {
+      unsigned tmp_stride;
+      int *tmp_row;
+
+      if (!src_format_desc->unpack_rgba_sint ||
+          !dst_format_desc->pack_rgba_sint) {
+         return FALSE;
+      }
+
+      tmp_stride = MAX2(width, x_step) * 4 * sizeof *tmp_row;
+      tmp_row = MALLOC(y_step * tmp_stride);
+      if (!tmp_row)
+         return FALSE;
+
+      while (height >= y_step) {
+         src_format_desc->unpack_rgba_sint(tmp_row, tmp_stride, src_row, src_stride, width, y_step);
+         dst_format_desc->pack_rgba_sint(dst_row, dst_stride, tmp_row, tmp_stride, width, y_step);
+
+         dst_row += dst_step;
+         src_row += src_step;
+         height -= y_step;
+      }
+
+      if (height) {
+         src_format_desc->unpack_rgba_sint(tmp_row, tmp_stride, src_row, src_stride, width, height);
+         dst_format_desc->pack_rgba_sint(dst_row, dst_stride, tmp_row, tmp_stride, width, height);
+      }
+
+      FREE(tmp_row);
+   }
+   else if (util_format_is_pure_uint(src_format) ||
+            util_format_is_pure_uint(dst_format)) {
+      unsigned tmp_stride;
+      unsigned int *tmp_row;
+
+      if (!src_format_desc->unpack_rgba_uint ||
+          !dst_format_desc->pack_rgba_uint) {
+         return FALSE;
+      }
+
+      tmp_stride = MAX2(width, x_step) * 4 * sizeof *tmp_row;
+      tmp_row = MALLOC(y_step * tmp_stride);
+      if (!tmp_row)
+         return FALSE;
+
+      while (height >= y_step) {
+         src_format_desc->unpack_rgba_uint(tmp_row, tmp_stride, src_row, src_stride, width, y_step);
+         dst_format_desc->pack_rgba_uint(dst_row, dst_stride, tmp_row, tmp_stride, width, y_step);
+
+         dst_row += dst_step;
+         src_row += src_step;
+         height -= y_step;
+      }
+
+      if (height) {
+         src_format_desc->unpack_rgba_uint(tmp_row, tmp_stride, src_row, src_stride, width, height);
+         dst_format_desc->pack_rgba_uint(dst_row, dst_stride, tmp_row, tmp_stride, width, height);
+      }
+
+      FREE(tmp_row);
+   }
    else {
       unsigned tmp_stride;
       float *tmp_row;
@@ -863,5 +926,45 @@ void util_format_unswizzle_4f(float *dst, const float *src,
          dst[3] = src[i];
          break;
       }
+   }
+}
+
+enum pipe_format
+util_format_snorm8_to_sint8(enum pipe_format format)
+{
+   switch (format) {
+   case PIPE_FORMAT_R8_SNORM:
+      return PIPE_FORMAT_R8_SINT;
+   case PIPE_FORMAT_R8G8_SNORM:
+      return PIPE_FORMAT_R8G8_SINT;
+   case PIPE_FORMAT_R8G8B8_SNORM:
+      return PIPE_FORMAT_R8G8B8_SINT;
+   case PIPE_FORMAT_R8G8B8A8_SNORM:
+      return PIPE_FORMAT_R8G8B8A8_SINT;
+
+   case PIPE_FORMAT_A8_SNORM:
+      return PIPE_FORMAT_A8_SINT;
+   case PIPE_FORMAT_L8_SNORM:
+      return PIPE_FORMAT_L8_SINT;
+   case PIPE_FORMAT_L8A8_SNORM:
+      return PIPE_FORMAT_L8A8_SINT;
+   case PIPE_FORMAT_I8_SNORM:
+      return PIPE_FORMAT_I8_SINT;
+
+   case PIPE_FORMAT_R8G8B8X8_SNORM:
+      return PIPE_FORMAT_R8G8B8X8_SINT;
+   case PIPE_FORMAT_R8A8_SNORM:
+      return PIPE_FORMAT_R8A8_SINT;
+   case PIPE_FORMAT_A8L8_SNORM:
+      return PIPE_FORMAT_A8L8_SINT;
+   case PIPE_FORMAT_G8R8_SNORM:
+      return PIPE_FORMAT_G8R8_SINT;
+   case PIPE_FORMAT_A8B8G8R8_SNORM:
+      return PIPE_FORMAT_A8B8G8R8_SINT;
+   case PIPE_FORMAT_X8B8G8R8_SNORM:
+      return PIPE_FORMAT_X8B8G8R8_SINT;
+
+   default:
+      return format;
    }
 }

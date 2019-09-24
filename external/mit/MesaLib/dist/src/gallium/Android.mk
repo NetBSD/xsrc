@@ -25,64 +25,34 @@
 
 GALLIUM_TOP := $(call my-dir)
 GALLIUM_COMMON_MK := $(GALLIUM_TOP)/Android.common.mk
+GALLIUM_TARGET_DRIVERS :=
 
 SUBDIRS := auxiliary
+SUBDIRS += auxiliary/pipe-loader
 
 #
 # Gallium drivers and their respective winsys
 #
 
-# swrast
-SUBDIRS += winsys/sw/android drivers/softpipe
-
-# freedreno
-ifneq ($(filter freedreno, $(MESA_GPU_DRIVERS)),)
+SUBDIRS += winsys/sw/kms-dri winsys/sw/dri drivers/softpipe
 SUBDIRS += winsys/freedreno/drm drivers/freedreno
-endif
-
-# i915g
-ifneq ($(filter i915g, $(MESA_GPU_DRIVERS)),)
 SUBDIRS += winsys/i915/drm drivers/i915
-endif
-
-# ilo
-ifneq ($(filter ilo, $(MESA_GPU_DRIVERS)),)
-SUBDIRS += winsys/intel/drm drivers/ilo
-endif
-
-# nouveau
-ifneq ($(filter nouveau, $(MESA_GPU_DRIVERS)),)
-SUBDIRS += \
-	winsys/nouveau/drm \
-	drivers/nouveau
-endif
-
-# r300g/r600g/radeonsi
-ifneq ($(filter r300g r600g radeonsi, $(MESA_GPU_DRIVERS)),)
-SUBDIRS += winsys/radeon/drm
-ifneq ($(filter r300g, $(MESA_GPU_DRIVERS)),)
-SUBDIRS += drivers/r300
-endif
-ifneq ($(filter r600g radeonsi, $(MESA_GPU_DRIVERS)),)
-SUBDIRS += drivers/radeon
-ifneq ($(filter r600g, $(MESA_GPU_DRIVERS)),)
-SUBDIRS += drivers/r600
-endif
-ifneq ($(filter radeonsi, $(MESA_GPU_DRIVERS)),)
-SUBDIRS += drivers/radeonsi
-endif
-endif
-endif
-
-# vmwgfx
-ifneq ($(filter vmwgfx, $(MESA_GPU_DRIVERS)),)
+SUBDIRS += winsys/nouveau/drm drivers/nouveau
+SUBDIRS += winsys/kmsro/drm drivers/kmsro
+SUBDIRS += winsys/radeon/drm drivers/r300
+SUBDIRS += winsys/radeon/drm drivers/r600
+SUBDIRS += winsys/radeon/drm winsys/amdgpu/drm drivers/radeonsi
+SUBDIRS += winsys/vc4/drm drivers/vc4
+SUBDIRS += winsys/virgl/drm winsys/virgl/vtest drivers/virgl
 SUBDIRS += winsys/svga/drm drivers/svga
-endif
+SUBDIRS += winsys/etnaviv/drm drivers/etnaviv drivers/renderonly
+SUBDIRS += state_trackers/dri
+SUBDIRS += winsys/iris/drm drivers/iris
+SUBDIRS += winsys/lima/drm drivers/lima
 
-#
-# Gallium state trackers and their users (targets)
-#
-SUBDIRS += state_trackers/egl targets/egl-static
+# sort to eliminate any duplicates
+INC_DIRS := $(call all-named-subdir-makefiles,$(sort $(SUBDIRS)))
+# targets/dri must be included last
+INC_DIRS += $(call all-named-subdir-makefiles,targets/dri)
 
-mkfiles := $(patsubst %,$(GALLIUM_TOP)/%/Android.mk,$(SUBDIRS))
-include $(mkfiles)
+include $(INC_DIRS)

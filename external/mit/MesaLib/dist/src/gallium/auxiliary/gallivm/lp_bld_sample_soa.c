@@ -3112,6 +3112,11 @@ lp_build_sample_soa_code(struct gallivm_state *gallivm,
       use_aos &= bld.num_lods <= num_quads ||
                  derived_sampler_state.min_img_filter ==
                     derived_sampler_state.mag_img_filter;
+
+      if(gallivm_perf & GALLIVM_PERF_NO_AOS_SAMPLING) {
+         use_aos = 0;
+      }
+
       if (dims > 1) {
          use_aos &= lp_is_simple_wrap_mode(derived_sampler_state.wrap_t);
          if (dims > 2) {
@@ -3549,10 +3554,6 @@ lp_build_sample_soa_func(struct gallivm_state *gallivm,
       const struct util_format_description *format_desc;
       format_desc = util_format_description(static_texture_state->format);
       if (format_desc && format_desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
-         /*
-          * This is not 100% correct, if we have cache but the
-          * util_format_s3tc_prefer is true the cache won't get used
-          * regardless (could hook up the block decode there...) */
          need_cache = TRUE;
       }
    }
