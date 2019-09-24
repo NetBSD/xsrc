@@ -707,10 +707,13 @@ resolve_parallel_copy(nir_parallel_copy_instr *pcopy,
       nir_register *reg = nir_local_reg_create(state->builder.impl);
       reg->name = "copy_temp";
       reg->num_array_elems = 0;
-      if (values[b].is_ssa)
+      if (values[b].is_ssa) {
          reg->num_components = values[b].ssa->num_components;
-      else
+         reg->bit_size = values[b].ssa->bit_size;
+      } else {
          reg->num_components = values[b].reg.reg->num_components;
+         reg->bit_size = values[b].reg.reg->bit_size;
+      }
       values[num_vals].is_ssa = false;
       values[num_vals].reg.reg = reg;
 
@@ -765,8 +768,7 @@ nir_convert_from_ssa_impl(nir_function_impl *impl, bool phi_webs_only)
    nir_builder_init(&state.builder, impl);
    state.dead_ctx = ralloc_context(NULL);
    state.phi_webs_only = phi_webs_only;
-   state.merge_node_table = _mesa_hash_table_create(NULL, _mesa_hash_pointer,
-                                                    _mesa_key_pointer_equal);
+   state.merge_node_table = _mesa_pointer_hash_table_create(NULL);
    state.progress = false;
 
    nir_foreach_block(block, impl) {
@@ -825,7 +827,7 @@ nir_convert_from_ssa(nir_shader *shader, bool phi_webs_only)
 
 static void
 place_phi_read(nir_shader *shader, nir_register *reg,
-               nir_ssa_def *def, nir_block *block)
+               nir_ssa_def *def, nir_block *block, unsigned depth)
 {
    if (block != def->parent_instr->block) {
       /* Try to go up the single-successor tree */
@@ -838,14 +840,24 @@ place_phi_read(nir_shader *shader, nir_register *reg,
          }
       }
 
-      if (all_single_successors) {
+      if (all_single_successors && depth < 32) {
          /* All predecessors of this block have exactly one successor and it
           * is this block so they must eventually lead here without
           * intersecting each other.  Place the reads in the predecessors
           * instead of this block.
+          *
+          * We only let this function recurse 32 times because it can recurse
+          * indefinitely in the presence of infinite loops.  Because we're
+          * crawling a single-successor chain, it doesn't matter where we
+          * place it so it's ok to stop at an arbitrary distance.
+          *
+          * TODO: One day, we could detect back edges and avoid the recursion
+          * that way.
           */
-         set_foreach(block->predecessors, entry)
-            place_phi_read(shader, reg, def, (nir_block *)entry->key);
+         set_foreach(block->predecessors, entry) {
+            place_phi_read(shader, reg, def, (nir_block *)entry->key,
+                           depth + 1);
+         }
          return;
       }
    }
@@ -902,7 +914,7 @@ nir_lower_phis_to_regs_block(nir_block *block)
          assert(src->src.is_ssa);
          /* We don't want derefs ending up in phi sources */
          assert(!nir_src_as_deref(src->src));
-         place_phi_read(shader, reg, src->src.ssa, src->pred);
+         place_phi_read(shader, reg, src->src.ssa, src->pred, 0);
       }
 
       nir_instr_remove(&phi->instr);

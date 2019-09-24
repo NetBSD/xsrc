@@ -1460,8 +1460,7 @@ move_non_declarations(exec_list *instructions, exec_node *last,
    hash_table *temps = NULL;
 
    if (make_copies)
-      temps = _mesa_hash_table_create(NULL, _mesa_hash_pointer,
-                                      _mesa_key_pointer_equal);
+      temps = _mesa_pointer_hash_table_create(NULL);
 
    foreach_in_list_safe(ir_instruction, inst, instructions) {
       if (inst->as_function())
@@ -1507,8 +1506,7 @@ class array_sizing_visitor : public deref_type_updater {
 public:
    array_sizing_visitor()
       : mem_ctx(ralloc_context(NULL)),
-        unnamed_interfaces(_mesa_hash_table_create(NULL, _mesa_hash_pointer,
-                                                   _mesa_key_pointer_equal))
+        unnamed_interfaces(_mesa_pointer_hash_table_create(NULL))
    {
    }
 
@@ -2051,9 +2049,11 @@ link_fs_inout_layout_qualifiers(struct gl_shader_program *prog,
          shader->SampleInterlockOrdered;
       linked_shader->Program->info.fs.sample_interlock_unordered |=
          shader->SampleInterlockUnordered;
-
       linked_shader->Program->sh.fs.BlendSupport |= shader->BlendSupport;
    }
+
+   linked_shader->Program->info.fs.pixel_center_integer = pixel_center_integer;
+   linked_shader->Program->info.fs.origin_upper_left = origin_upper_left;
 }
 
 /**
@@ -2170,9 +2170,9 @@ link_gs_inout_layout_qualifiers(struct gl_shader_program *prog,
 
 
 /**
- * Perform cross-validation of compute shader local_size_{x,y,z} layout
- * qualifiers for the attached compute shaders, and propagate them to the
- * linked CS and linked shader program.
+ * Perform cross-validation of compute shader local_size_{x,y,z} layout and
+ * derivative arrangement qualifiers for the attached compute shaders, and
+ * propagate them to the linked CS and linked shader program.
  */
 static void
 link_cs_input_layout_qualifiers(struct gl_shader_program *prog,
@@ -2190,6 +2190,8 @@ link_cs_input_layout_qualifiers(struct gl_shader_program *prog,
       gl_prog->info.cs.local_size[i] = 0;
 
    gl_prog->info.cs.local_size_variable = false;
+
+   gl_prog->info.cs.derivative_group = DERIVATIVE_GROUP_NONE;
 
    /* From the ARB_compute_shader spec, in the section describing local size
     * declarations:
@@ -2234,6 +2236,17 @@ link_cs_input_layout_qualifiers(struct gl_shader_program *prog,
          }
          gl_prog->info.cs.local_size_variable = true;
       }
+
+      enum gl_derivative_group group = shader->info.Comp.DerivativeGroup;
+      if (group != DERIVATIVE_GROUP_NONE) {
+         if (gl_prog->info.cs.derivative_group != DERIVATIVE_GROUP_NONE &&
+             gl_prog->info.cs.derivative_group != group) {
+            linker_error(prog, "compute shader defined with conflicting "
+                         "derivative groups\n");
+            return;
+         }
+         gl_prog->info.cs.derivative_group = group;
+      }
    }
 
    /* Just do the intrastage -> interstage propagation right now,
@@ -2245,6 +2258,30 @@ link_cs_input_layout_qualifiers(struct gl_shader_program *prog,
       linker_error(prog, "compute shader must contain a fixed or a variable "
                          "local group size\n");
       return;
+   }
+
+   if (gl_prog->info.cs.derivative_group == DERIVATIVE_GROUP_QUADS) {
+      if (gl_prog->info.cs.local_size[0] % 2 != 0) {
+         linker_error(prog, "derivative_group_quadsNV must be used with a "
+                      "local group size whose first dimension "
+                      "is a multiple of 2\n");
+         return;
+      }
+      if (gl_prog->info.cs.local_size[1] % 2 != 0) {
+         linker_error(prog, "derivative_group_quadsNV must be used with a local"
+                      "group size whose second dimension "
+                      "is a multiple of 2\n");
+         return;
+      }
+   } else if (gl_prog->info.cs.derivative_group == DERIVATIVE_GROUP_LINEAR) {
+      if ((gl_prog->info.cs.local_size[0] *
+           gl_prog->info.cs.local_size[1] *
+           gl_prog->info.cs.local_size[2]) % 4 != 0) {
+         linker_error(prog, "derivative_group_linearNV must be used with a "
+                      "local group size whose total number of invocations "
+                      "is a multiple of 4\n");
+         return;
+      }
    }
 }
 
@@ -2693,18 +2730,22 @@ find_available_slots(unsigned used_mask, unsigned needed_count)
 #define SAFE_MASK_FROM_INDEX(i) (((i) >= 32) ? ~0 : ((1 << (i)) - 1))
 
 /**
- * Assign locations for either VS inputs or FS outputs
+ * Assign locations for either VS inputs or FS outputs.
  *
- * \param mem_ctx       Temporary ralloc context used for linking
- * \param prog          Shader program whose variables need locations assigned
- * \param constants     Driver specific constant values for the program.
- * \param target_index  Selector for the program target to receive location
- *                      assignmnets.  Must be either \c MESA_SHADER_VERTEX or
- *                      \c MESA_SHADER_FRAGMENT.
+ * \param mem_ctx        Temporary ralloc context used for linking.
+ * \param prog           Shader program whose variables need locations
+ *                       assigned.
+ * \param constants      Driver specific constant values for the program.
+ * \param target_index   Selector for the program target to receive location
+ *                       assignmnets.  Must be either \c MESA_SHADER_VERTEX or
+ *                       \c MESA_SHADER_FRAGMENT.
+ * \param do_assignment  Whether we are actually marking the assignment or we
+ *                       are just doing a dry-run checking.
  *
  * \return
- * If locations are successfully assigned, true is returned.  Otherwise an
- * error is emitted to the shader link log and false is returned.
+ * If locations are (or can be, in case of dry-running) successfully assigned,
+ * true is returned.  Otherwise an error is emitted to the shader link log and
+ * false is returned.
  */
 static bool
 assign_attribute_or_color_locations(void *mem_ctx,
@@ -4299,7 +4340,7 @@ get_array_stride(struct gl_context *ctx, struct gl_uniform_storage *uni,
       if (GLSL_INTERFACE_PACKING_STD140 ==
           iface->
              get_internal_ifc_packing(ctx->Const.UseSTD430AsDefaultPacking)) {
-         if (array_type->is_record() || array_type->is_array())
+         if (array_type->is_struct() || array_type->is_array())
             return glsl_align(array_type->std140_size(row_major), 16);
          else
             return MAX2(array_type->std140_base_alignment(row_major), 16);
@@ -4408,9 +4449,7 @@ build_program_resource_list(struct gl_context *ctx,
    if (input_stage == MESA_SHADER_STAGES && output_stage == 0)
       return;
 
-   struct set *resource_set = _mesa_set_create(NULL,
-                                               _mesa_hash_pointer,
-                                               _mesa_key_pointer_equal);
+   struct set *resource_set = _mesa_pointer_set_create(NULL);
 
    /* Program interface needs to expose varyings in case of SSO. */
    if (shProg->SeparateShader) {
@@ -5102,15 +5141,14 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       prev = i;
    }
 
-   /* The cross validation of outputs/inputs above validates explicit locations
-    * but for SSO programs we need to do this also for the inputs in the
-    * first stage and outputs of the last stage included in the program, since
-    * there is no cross validation for these.
+   /* The cross validation of outputs/inputs above validates interstage
+    * explicit locations. We need to do this also for the inputs in the first
+    * stage and outputs of the last stage included in the program, since there
+    * is no cross validation for these.
     */
-   if (prog->SeparateShader)
-      validate_sso_explicit_locations(ctx, prog,
-                                      (gl_shader_stage) first,
-                                      (gl_shader_stage) last);
+   validate_first_and_last_interface_explicit_locations(ctx, prog,
+                                                        (gl_shader_stage) first,
+                                                        (gl_shader_stage) last);
 
    /* Cross-validate uniform blocks between shader stages */
    validate_interstage_uniform_blocks(prog, prog->_LinkedShaders);

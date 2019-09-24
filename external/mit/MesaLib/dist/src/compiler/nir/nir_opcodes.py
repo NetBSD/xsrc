@@ -23,6 +23,7 @@
 # Authors:
 #    Connor Abbott (cwabbott0@gmail.com)
 
+import re
 
 # Class that represents all the information we have about the opcode
 # NOTE: this must be kept in sync with nir_op_info
@@ -32,12 +33,13 @@ class Opcode(object):
    NOTE: this must be kept in sync with nir_op_info
    """
    def __init__(self, name, output_size, output_type, input_sizes,
-                input_types, algebraic_properties, const_expr):
+                input_types, is_conversion, algebraic_properties, const_expr):
       """Parameters:
 
       - name is the name of the opcode (prepend nir_op_ for the enum name)
       - all types are strings that get nir_type_ prepended to them
       - input_types is a list of types
+      - is_conversion is true if this opcode represents a type conversion
       - algebraic_properties is a space-seperated string, where nir_op_is_ is
         prepended before each entry
       - const_expr is an expression or series of statements that computes the
@@ -69,6 +71,7 @@ class Opcode(object):
       assert isinstance(input_sizes[0], int)
       assert isinstance(input_types, list)
       assert isinstance(input_types[0], str)
+      assert isinstance(is_conversion, bool)
       assert isinstance(algebraic_properties, str)
       assert isinstance(const_expr, str)
       assert len(input_sizes) == len(input_types)
@@ -83,13 +86,16 @@ class Opcode(object):
       self.output_type = output_type
       self.input_sizes = input_sizes
       self.input_types = input_types
+      self.is_conversion = is_conversion
       self.algebraic_properties = algebraic_properties
       self.const_expr = const_expr
 
 # helper variables for strings
 tfloat = "float"
 tint = "int"
-tbool = "bool32"
+tbool = "bool"
+tbool1 = "bool1"
+tbool32 = "bool32"
 tuint = "uint"
 tuint16 = "uint16"
 tfloat32 = "float32"
@@ -99,6 +105,35 @@ tint64 = "int64"
 tuint64 = "uint64"
 tfloat64 = "float64"
 
+_TYPE_SPLIT_RE = re.compile(r'(?P<type>int|uint|float|bool)(?P<bits>\d+)?')
+
+def type_has_size(type_):
+    m = _TYPE_SPLIT_RE.match(type_)
+    assert m is not None, 'Invalid NIR type string: "{}"'.format(type_)
+    return m.group('bits') is not None
+
+def type_size(type_):
+    m = _TYPE_SPLIT_RE.match(type_)
+    assert m is not None, 'Invalid NIR type string: "{}"'.format(type_)
+    assert m.group('bits') is not None, \
+           'NIR type string has no bit size: "{}"'.format(type_)
+    return int(m.group('bits'))
+
+def type_sizes(type_):
+    if type_has_size(type_):
+        return [type_size(type_)]
+    elif type_ == 'bool':
+        return [1, 32]
+    elif type_ == 'float':
+        return [16, 32, 64]
+    else:
+        return [1, 8, 16, 32, 64]
+
+def type_base_type(type_):
+    m = _TYPE_SPLIT_RE.match(type_)
+    assert m is not None, 'Invalid NIR type string: "{}"'.format(type_)
+    return m.group('type')
+
 commutative = "commutative "
 associative = "associative "
 
@@ -106,21 +141,22 @@ associative = "associative "
 opcodes = {}
 
 def opcode(name, output_size, output_type, input_sizes, input_types,
-           algebraic_properties, const_expr):
+           is_conversion, algebraic_properties, const_expr):
    assert name not in opcodes
    opcodes[name] = Opcode(name, output_size, output_type, input_sizes,
-                          input_types, algebraic_properties, const_expr)
+                          input_types, is_conversion, algebraic_properties,
+                          const_expr)
 
 def unop_convert(name, out_type, in_type, const_expr):
-   opcode(name, 0, out_type, [0], [in_type], "", const_expr)
+   opcode(name, 0, out_type, [0], [in_type], False, "", const_expr)
 
 def unop(name, ty, const_expr):
-   opcode(name, 0, ty, [0], [ty], "", const_expr)
+   opcode(name, 0, ty, [0], [ty], False, "", const_expr)
 
 def unop_horiz(name, output_size, output_type, input_size, input_type,
                const_expr):
-   opcode(name, output_size, output_type, [input_size], [input_type], "",
-          const_expr)
+   opcode(name, output_size, output_type, [input_size], [input_type],
+          False, "", const_expr)
 
 def unop_reduce(name, output_size, output_type, input_type, prereduce_expr,
                 reduce_expr, final_expr):
@@ -141,6 +177,8 @@ def unop_reduce(name, output_size, output_type, input_type, prereduce_expr,
    unop_horiz(name + "4", output_size, output_type, 4, input_type,
               final(reduce_(reduce_(src0, src1), reduce_(src2, src3))))
 
+def unop_numeric_convert(name, out_type, in_type, const_expr):
+   opcode(name, 0, out_type, [0], [in_type], True, "", const_expr)
 
 # These two move instructions differ in what modifiers they support and what
 # the negate modifier means. Otherwise, they are identical.
@@ -168,34 +206,28 @@ unop("fexp2", tfloat, "exp2f(src0)")
 unop("flog2", tfloat, "log2f(src0)")
 
 # Generate all of the numeric conversion opcodes
-for src_t in [tint, tuint, tfloat]:
-   if src_t in (tint, tuint):
-      dst_types = [tfloat, src_t]
+for src_t in [tint, tuint, tfloat, tbool]:
+   if src_t == tbool:
+      dst_types = [tfloat, tint]
+   elif src_t == tint:
+      dst_types = [tfloat, tint, tbool]
+   elif src_t == tuint:
+      dst_types = [tfloat, tuint]
    elif src_t == tfloat:
-      dst_types = [tint, tuint, tfloat]
+      dst_types = [tint, tuint, tfloat, tbool]
 
    for dst_t in dst_types:
-      if dst_t == tfloat:
-         bit_sizes = [16, 32, 64]
-      else:
-         bit_sizes = [8, 16, 32, 64]
-      for bit_size in bit_sizes:
+      for bit_size in type_sizes(dst_t):
           if bit_size == 16 and dst_t == tfloat and src_t == tfloat:
               rnd_modes = ['_rtne', '_rtz', '']
               for rnd_mode in rnd_modes:
-                  unop_convert("{0}2{1}{2}{3}".format(src_t[0], dst_t[0],
-                                                       bit_size, rnd_mode),
-                               dst_t + str(bit_size), src_t, "src0")
+                  unop_numeric_convert("{0}2{1}{2}{3}".format(src_t[0], dst_t[0],
+                                                              bit_size, rnd_mode),
+                                       dst_t + str(bit_size), src_t, "src0")
           else:
-              unop_convert("{0}2{1}{2}".format(src_t[0], dst_t[0], bit_size),
-                           dst_t + str(bit_size), src_t, "src0")
-
-# We'll hand-code the to/from bool conversion opcodes.  Because bool doesn't
-# have multiple bit-sizes, we can always infer the size from the other type.
-unop_convert("f2b", tbool, tfloat, "src0 != 0.0")
-unop_convert("i2b", tbool, tint, "src0 != 0")
-unop_convert("b2f", tfloat, tbool, "src0 ? 1.0 : 0.0")
-unop_convert("b2i", tint, tbool, "src0 ? 1 : 0")
+              conv_expr = "src0 != 0" if dst_t == tbool else "src0"
+              unop_numeric_convert("{0}2{1}{2}".format(src_t[0], dst_t[0], bit_size),
+                                   dst_t + str(bit_size), src_t, conv_expr)
 
 
 # Unary floating-point rounding operations.
@@ -216,8 +248,8 @@ unop("fsin", tfloat, "bit_size == 64 ? sin(src0) : sinf(src0)")
 unop("fcos", tfloat, "bit_size == 64 ? cos(src0) : cosf(src0)")
 
 # dfrexp
-unop_convert("frexp_exp", tint32, tfloat64, "frexp(src0, &dst);")
-unop_convert("frexp_sig", tfloat64, tfloat64, "int n; dst = frexp(src0, &n);")
+unop_convert("frexp_exp", tint32, tfloat, "frexp(src0, &dst);")
+unop_convert("frexp_sig", tfloat, tfloat, "int n; dst = frexp(src0, &n);")
 
 # Partial derivatives.
 
@@ -378,12 +410,21 @@ dst.x = dst.y = 0.0;
 float absX = fabs(src0.x);
 float absY = fabs(src0.y);
 float absZ = fabs(src0.z);
-if (src0.x >= 0 && absX >= absY && absX >= absZ) { dst.x = -src0.y; dst.y = -src0.z; }
-if (src0.x < 0 && absX >= absY && absX >= absZ) { dst.x = -src0.y; dst.y = src0.z; }
-if (src0.y >= 0 && absY >= absX && absY >= absZ) { dst.x = src0.z; dst.y = src0.x; }
-if (src0.y < 0 && absY >= absX && absY >= absZ) { dst.x = -src0.z; dst.y = src0.x; }
-if (src0.z >= 0 && absZ >= absX && absZ >= absY) { dst.x = -src0.y; dst.y = src0.x; }
-if (src0.z < 0 && absZ >= absX && absZ >= absY) { dst.x = -src0.y; dst.y = -src0.x; }
+
+float ma = 0.0;
+if (absX >= absY && absX >= absZ) { ma = 2 * src0.x; }
+if (absY >= absX && absY >= absZ) { ma = 2 * src0.y; }
+if (absZ >= absX && absZ >= absY) { ma = 2 * src0.z; }
+
+if (src0.x >= 0 && absX >= absY && absX >= absZ) { dst.x = -src0.z; dst.y = -src0.y; }
+if (src0.x < 0 && absX >= absY && absX >= absZ) { dst.x = src0.z; dst.y = -src0.y; }
+if (src0.y >= 0 && absY >= absX && absY >= absZ) { dst.x = src0.x; dst.y = src0.z; }
+if (src0.y < 0 && absY >= absX && absY >= absZ) { dst.x = src0.x; dst.y = -src0.z; }
+if (src0.z >= 0 && absZ >= absX && absZ >= absY) { dst.x = src0.x; dst.y = -src0.y; }
+if (src0.z < 0 && absZ >= absX && absZ >= absY) { dst.x = -src0.x; dst.y = -src0.y; }
+
+dst.x = dst.x / ma + 0.5;
+dst.y = dst.y / ma + 0.5;
 """)
 
 unop_horiz("cube_face_index", 1, tfloat32, 3, tfloat32, """
@@ -400,18 +441,22 @@ if (src0.z < 0 && absZ >= absX && absZ >= absY) dst.x = 5;
 
 
 def binop_convert(name, out_type, in_type, alg_props, const_expr):
-   opcode(name, 0, out_type, [0, 0], [in_type, in_type], alg_props, const_expr)
+   opcode(name, 0, out_type, [0, 0], [in_type, in_type],
+          False, alg_props, const_expr)
 
 def binop(name, ty, alg_props, const_expr):
    binop_convert(name, ty, ty, alg_props, const_expr)
 
 def binop_compare(name, ty, alg_props, const_expr):
-   binop_convert(name, tbool, ty, alg_props, const_expr)
+   binop_convert(name, tbool1, ty, alg_props, const_expr)
+
+def binop_compare32(name, ty, alg_props, const_expr):
+   binop_convert(name, tbool32, ty, alg_props, const_expr)
 
 def binop_horiz(name, out_size, out_type, src1_size, src1_type, src2_size,
                 src2_type, const_expr):
    opcode(name, out_size, out_type, [src1_size, src2_size], [src1_type, src2_type],
-          "", const_expr)
+          False, "", const_expr)
 
 def binop_reduce(name, output_size, output_type, src_type, prereduce_expr,
                  reduce_expr, final_expr):
@@ -426,29 +471,84 @@ def binop_reduce(name, output_size, output_type, src_type, prereduce_expr,
    src2 = prereduce("src0.z", "src1.z")
    src3 = prereduce("src0.w", "src1.w")
    opcode(name + "2", output_size, output_type,
-          [2, 2], [src_type, src_type], commutative,
+          [2, 2], [src_type, src_type], False, commutative,
           final(reduce_(src0, src1)))
    opcode(name + "3", output_size, output_type,
-          [3, 3], [src_type, src_type], commutative,
+          [3, 3], [src_type, src_type], False, commutative,
           final(reduce_(reduce_(src0, src1), src2)))
    opcode(name + "4", output_size, output_type,
-          [4, 4], [src_type, src_type], commutative,
+          [4, 4], [src_type, src_type], False, commutative,
           final(reduce_(reduce_(src0, src1), reduce_(src2, src3))))
 
 binop("fadd", tfloat, commutative + associative, "src0 + src1")
 binop("iadd", tint, commutative + associative, "src0 + src1")
+binop("iadd_sat", tint, commutative, """
+      src1 > 0 ?
+         (src0 + src1 < src0 ? (1ull << (bit_size - 1)) - 1 : src0 + src1) :
+         (src0 < src0 + src1 ? (1ull << (bit_size - 1))     : src0 + src1)
+""")
+binop("uadd_sat", tuint, commutative,
+      "(src0 + src1) < src0 ? MAX_UINT_FOR_SIZE(sizeof(src0) * 8) : (src0 + src1)")
+binop("isub_sat", tint, "", """
+      src1 < 0 ?
+         (src0 - src1 < src0 ? (1ull << (bit_size - 1)) - 1 : src0 - src1) :
+         (src0 < src0 - src1 ? (1ull << (bit_size - 1))     : src0 - src1)
+""")
+binop("usub_sat", tuint, "", "src0 < src1 ? 0 : src0 - src1")
+
 binop("fsub", tfloat, "", "src0 - src1")
 binop("isub", tint, "", "src0 - src1")
 
 binop("fmul", tfloat, commutative + associative, "src0 * src1")
 # low 32-bits of signed/unsigned integer multiply
 binop("imul", tint, commutative + associative, "src0 * src1")
+
+# Generate 64 bit result from 2 32 bits quantity
+binop_convert("imul_2x32_64", tint64, tint32, commutative,
+              "(int64_t)src0 * (int64_t)src1")
+binop_convert("umul_2x32_64", tuint64, tuint32, commutative,
+              "(uint64_t)src0 * (uint64_t)src1")
+
 # high 32-bits of signed integer multiply
-binop("imul_high", tint32, commutative,
-      "(int32_t)(((int64_t) src0 * (int64_t) src1) >> 32)")
+binop("imul_high", tint, commutative, """
+if (bit_size == 64) {
+   /* We need to do a full 128-bit x 128-bit multiply in order for the sign
+    * extension to work properly.  The casts are kind-of annoying but needed
+    * to prevent compiler warnings.
+    */
+   uint32_t src0_u32[4] = {
+      src0,
+      (int64_t)src0 >> 32,
+      (int64_t)src0 >> 63,
+      (int64_t)src0 >> 63,
+   };
+   uint32_t src1_u32[4] = {
+      src1,
+      (int64_t)src1 >> 32,
+      (int64_t)src1 >> 63,
+      (int64_t)src1 >> 63,
+   };
+   uint32_t prod_u32[4];
+   ubm_mul_u32arr(prod_u32, src0_u32, src1_u32);
+   dst = (uint64_t)prod_u32[2] | ((uint64_t)prod_u32[3] << 32);
+} else {
+   dst = ((int64_t)src0 * (int64_t)src1) >> bit_size;
+}
+""")
+
 # high 32-bits of unsigned integer multiply
-binop("umul_high", tuint32, commutative,
-      "(uint32_t)(((uint64_t) src0 * (uint64_t) src1) >> 32)")
+binop("umul_high", tuint, commutative, """
+if (bit_size == 64) {
+   /* The casts are kind-of annoying but needed to prevent compiler warnings. */
+   uint32_t src0_u32[2] = { src0, (uint64_t)src0 >> 32 };
+   uint32_t src1_u32[2] = { src1, (uint64_t)src1 >> 32 };
+   uint32_t prod_u32[4];
+   ubm_mul_u32arr(prod_u32, src0_u32, src1_u32);
+   dst = (uint64_t)prod_u32[2] | ((uint64_t)prod_u32[3] << 32);
+} else {
+   dst = ((uint64_t)src0 * (uint64_t)src1) >> bit_size;
+}
+""")
 
 binop("fdiv", tfloat, "", "src0 / src1")
 binop("idiv", tint, "", "src1 == 0 ? 0 : (src0 / src1)")
@@ -463,6 +563,32 @@ binop_convert("uadd_carry", tuint, tuint, commutative, "src0 + src1 < src0")
 # of the two unsigned arguments.
 
 binop_convert("usub_borrow", tuint, tuint, "", "src0 < src1")
+
+# hadd: (a + b) >> 1 (without overflow)
+# x + y = x - (x & ~y) + (x & ~y) + y - (~x & y) + (~x & y)
+#       =      (x & y) + (x & ~y) +      (x & y) + (~x & y)
+#       = 2 *  (x & y) + (x & ~y) +                (~x & y)
+#       =     ((x & y) << 1) + (x ^ y)
+#
+# Since we know that the bottom bit of (x & y) << 1 is zero,
+#
+# (x + y) >> 1 = (((x & y) << 1) + (x ^ y)) >> 1
+#              =   (x & y) +      ((x ^ y)  >> 1)
+binop("ihadd", tint, commutative, "(src0 & src1) + ((src0 ^ src1) >> 1)")
+binop("uhadd", tuint, commutative, "(src0 & src1) + ((src0 ^ src1) >> 1)")
+
+# rhadd: (a + b + 1) >> 1 (without overflow)
+# x + y + 1 = x + (~x & y) - (~x & y) + y + (x & ~y) - (x & ~y) + 1
+#           =      (x | y) - (~x & y) +      (x | y) - (x & ~y) + 1
+#           = 2 *  (x | y) - ((~x & y) +               (x & ~y)) + 1
+#           =     ((x | y) << 1) - (x ^ y) + 1
+#
+# Since we know that the bottom bit of (x & y) << 1 is zero,
+#
+# (x + y + 1) >> 1 = (x | y) + (-(x ^ y) + 1) >> 1)
+#                  = (x | y) -  ((x ^ y)      >> 1)
+binop("irhadd", tint, commutative, "(src0 | src1) + ((src0 ^ src1) >> 1)")
+binop("urhadd", tuint, commutative, "(src0 | src1) + ((src0 ^ src1) >> 1)")
 
 binop("umod", tuint, "", "src1 == 0 ? 0 : src0 % src1")
 
@@ -498,16 +624,35 @@ binop_compare("ieq", tint, commutative, "src0 == src1")
 binop_compare("ine", tint, commutative, "src0 != src1")
 binop_compare("ult", tuint, "", "src0 < src1")
 binop_compare("uge", tuint, "", "src0 >= src1")
+binop_compare32("flt32", tfloat, "", "src0 < src1")
+binop_compare32("fge32", tfloat, "", "src0 >= src1")
+binop_compare32("feq32", tfloat, commutative, "src0 == src1")
+binop_compare32("fne32", tfloat, commutative, "src0 != src1")
+binop_compare32("ilt32", tint, "", "src0 < src1")
+binop_compare32("ige32", tint, "", "src0 >= src1")
+binop_compare32("ieq32", tint, commutative, "src0 == src1")
+binop_compare32("ine32", tint, commutative, "src0 != src1")
+binop_compare32("ult32", tuint, "", "src0 < src1")
+binop_compare32("uge32", tuint, "", "src0 >= src1")
 
 # integer-aware GLSL-style comparisons that compare floats and ints
 
-binop_reduce("ball_fequal",  1, tbool, tfloat, "{src0} == {src1}",
+binop_reduce("ball_fequal",  1, tbool1, tfloat, "{src0} == {src1}",
              "{src0} && {src1}", "{src}")
-binop_reduce("bany_fnequal", 1, tbool, tfloat, "{src0} != {src1}",
+binop_reduce("bany_fnequal", 1, tbool1, tfloat, "{src0} != {src1}",
              "{src0} || {src1}", "{src}")
-binop_reduce("ball_iequal",  1, tbool, tint, "{src0} == {src1}",
+binop_reduce("ball_iequal",  1, tbool1, tint, "{src0} == {src1}",
              "{src0} && {src1}", "{src}")
-binop_reduce("bany_inequal", 1, tbool, tint, "{src0} != {src1}",
+binop_reduce("bany_inequal", 1, tbool1, tint, "{src0} != {src1}",
+             "{src0} || {src1}", "{src}")
+
+binop_reduce("b32all_fequal",  1, tbool32, tfloat, "{src0} == {src1}",
+             "{src0} && {src1}", "{src}")
+binop_reduce("b32any_fnequal", 1, tbool32, tfloat, "{src0} != {src1}",
+             "{src0} || {src1}", "{src}")
+binop_reduce("b32all_iequal",  1, tbool32, tint, "{src0} == {src1}",
+             "{src0} && {src1}", "{src}")
+binop_reduce("b32any_inequal", 1, tbool32, tint, "{src0} != {src1}",
              "{src0} || {src1}", "{src}")
 
 # non-integer-aware GLSL-style comparisons that return 0.0 or 1.0
@@ -525,10 +670,15 @@ binop("sge", tfloat, "", "(src0 >= src1) ? 1.0f : 0.0f") # Set on Greater or Equ
 binop("seq", tfloat32, commutative, "(src0 == src1) ? 1.0f : 0.0f") # Set on Equal
 binop("sne", tfloat32, commutative, "(src0 != src1) ? 1.0f : 0.0f") # Set on Not Equal
 
-
-opcode("ishl", 0, tint, [0, 0], [tint, tuint32], "", "src0 << src1")
-opcode("ishr", 0, tint, [0, 0], [tint, tuint32], "", "src0 >> src1")
-opcode("ushr", 0, tuint, [0, 0], [tuint, tuint32], "", "src0 >> src1")
+# SPIRV shifts are undefined for shift-operands >= bitsize,
+# but SM5 shifts are defined to use the least significant bits, only
+# The NIR definition is according to the SM5 specification.
+opcode("ishl", 0, tint, [0, 0], [tint, tuint32], False, "",
+       "src0 << (src1 & (sizeof(src0) * 8 - 1))")
+opcode("ishr", 0, tint, [0, 0], [tint, tuint32], False, "",
+       "src0 >> (src1 & (sizeof(src0) * 8 - 1))")
+opcode("ushr", 0, tuint, [0, 0], [tuint, tuint32], False, "",
+       "src0 >> (src1 & (sizeof(src0) * 8 - 1))")
 
 # bitwise logic operators
 #
@@ -559,9 +709,9 @@ binop_reduce("fdot", 1, tfloat, tfloat, "{src0} * {src1}", "{src0} + {src1}",
 binop_reduce("fdot_replicated", 4, tfloat, tfloat,
              "{src0} * {src1}", "{src0} + {src1}", "{src}")
 
-opcode("fdph", 1, tfloat, [3, 4], [tfloat, tfloat], "",
+opcode("fdph", 1, tfloat, [3, 4], [tfloat, tfloat], False, "",
        "src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src1.w")
-opcode("fdph_replicated", 4, tfloat, [3, 4], [tfloat, tfloat], "",
+opcode("fdph_replicated", 4, tfloat, [3, 4], [tfloat, tfloat], False, "",
        "src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src1.w")
 
 binop("fmin", tfloat, "", "fminf(src0, src1)")
@@ -638,7 +788,7 @@ else
    dst = ((1u << bits) - 1) << offset;
 """)
 
-opcode("ldexp", 0, tfloat, [0, 0], [tfloat, tint32], "", """
+opcode("ldexp", 0, tfloat, [0, 0], [tfloat, tint32], False, "", """
 dst = (bit_size == 64) ? ldexp(src0, src1) : ldexpf(src0, src1);
 /* flush denormals to zero. */
 if (!isnormal(dst))
@@ -662,11 +812,11 @@ binop("extract_i16", tint, "", "(int16_t)(src0 >> (src1 * 16))")
 
 
 def triop(name, ty, const_expr):
-   opcode(name, 0, ty, [0, 0, 0], [ty, ty, ty], "", const_expr)
+   opcode(name, 0, ty, [0, 0, 0], [ty, ty, ty], False, "", const_expr)
 def triop_horiz(name, output_size, src1_size, src2_size, src3_size, const_expr):
    opcode(name, output_size, tuint,
    [src1_size, src2_size, src3_size],
-   [tuint, tuint, tuint], "", const_expr)
+   [tuint, tuint, tuint], False, "", const_expr)
 
 triop("ffma", tfloat, "src0 * src1 + src2")
 
@@ -695,7 +845,9 @@ triop("imed3", tint, "MAX2(MIN2(MAX2(src0, src1), src2), MIN2(src0, src1))")
 triop("umed3", tuint, "MAX2(MIN2(MAX2(src0, src1), src2), MIN2(src0, src1))")
 
 opcode("bcsel", 0, tuint, [0, 0, 0],
-      [tbool, tuint, tuint], "", "src0 ? src1 : src2")
+      [tbool1, tuint, tuint], False, "", "src0 ? src1 : src2")
+opcode("b32csel", 0, tuint, [0, 0, 0],
+       [tbool32, tuint, tuint], False, "", "src0 ? src1 : src2")
 
 # SM5 bfi assembly
 triop("bfi", tuint32, """
@@ -714,7 +866,7 @@ if (mask == 0) {
 
 # SM5 ubfe/ibfe assembly
 opcode("ubfe", 0, tuint32,
-       [0, 0, 0], [tuint32, tint32, tint32], "", """
+       [0, 0, 0], [tuint32, tint32, tint32], False, "", """
 unsigned base = src0;
 int offset = src1, bits = src2;
 if (bits == 0) {
@@ -728,7 +880,7 @@ if (bits == 0) {
 }
 """)
 opcode("ibfe", 0, tint32,
-       [0, 0, 0], [tint32, tint32, tint32], "", """
+       [0, 0, 0], [tint32, tint32, tint32], False, "", """
 int base = src0;
 int offset = src1, bits = src2;
 if (bits == 0) {
@@ -744,7 +896,7 @@ if (bits == 0) {
 
 # GLSL bitfieldExtract()
 opcode("ubitfield_extract", 0, tuint32,
-       [0, 0, 0], [tuint32, tint32, tint32], "", """
+       [0, 0, 0], [tuint32, tint32, tint32], False, "", """
 unsigned base = src0;
 int offset = src1, bits = src2;
 if (bits == 0) {
@@ -756,7 +908,7 @@ if (bits == 0) {
 }
 """)
 opcode("ibitfield_extract", 0, tint32,
-       [0, 0, 0], [tint32, tint32, tint32], "", """
+       [0, 0, 0], [tint32, tint32, tint32], False, "", """
 int base = src0;
 int offset = src1, bits = src2;
 if (bits == 0) {
@@ -781,10 +933,10 @@ def quadop_horiz(name, output_size, src1_size, src2_size, src3_size,
    opcode(name, output_size, tuint,
           [src1_size, src2_size, src3_size, src4_size],
           [tuint, tuint, tuint, tuint],
-          "", const_expr)
+          False, "", const_expr)
 
 opcode("bitfield_insert", 0, tuint32, [0, 0, 0, 0],
-       [tuint32, tuint32, tint32, tint32], "", """
+       [tuint32, tuint32, tint32, tint32], False, "", """
 unsigned base = src0, insert = src1;
 int offset = src2, bits = src3;
 if (bits == 0) {

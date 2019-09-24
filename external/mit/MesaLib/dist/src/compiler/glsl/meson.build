@@ -53,6 +53,13 @@ ir_expression_operation_strings_h = custom_target(
   capture : true,
 )
 
+float64_glsl_h = custom_target(
+  'float64_glsl.h',
+  input : ['xxd.py', 'float64.glsl'],
+  output : 'float64_glsl.h',
+  command : [prog_python, '@INPUT@', '@OUTPUT@', '-n', 'float64_source'],
+)
+
 files_libglsl = files(
   'ast.h',
   'ast_array_index.cpp',
@@ -67,6 +74,8 @@ files_libglsl = files(
   'builtin_variables.cpp',
   'generate_ir.cpp',
   'gl_nir_lower_atomics.c',
+  'gl_nir_lower_bindless_images.c',
+  'gl_nir_lower_buffers.c',
   'gl_nir_lower_samplers.c',
   'gl_nir_lower_samplers_as_deref.c',
   'gl_nir_link_atomics.c',
@@ -213,7 +222,8 @@ files_libglsl_standalone = files(
 libglsl = static_library(
   'glsl',
   [files_libglsl, glsl_parser, glsl_lexer_cpp, ir_expression_operation_h,
-   ir_expression_operation_strings_h, ir_expression_operation_constant_h],
+   ir_expression_operation_strings_h, ir_expression_operation_constant_h,
+   float64_glsl_h],
   c_args : [c_vis_args, c_msvc_compat_args, no_override_init_args],
   cpp_args : [cpp_vis_args, cpp_msvc_compat_args],
   link_with : libglcpp,

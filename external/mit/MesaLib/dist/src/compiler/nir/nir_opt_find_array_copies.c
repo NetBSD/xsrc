@@ -37,14 +37,8 @@ index_ssa_def_cb(nir_ssa_def *def, void *state)
 static nir_deref_instr *
 get_deref_for_load_src(nir_src src, unsigned first_valid_load)
 {
-   if (!src.is_ssa)
-      return NULL;
-
-   if (src.ssa->parent_instr->type != nir_instr_type_intrinsic)
-      return NULL;
-
-   nir_intrinsic_instr *load = nir_instr_as_intrinsic(src.ssa->parent_instr);
-   if (load->intrinsic != nir_intrinsic_load_deref)
+   nir_intrinsic_instr *load = nir_src_as_intrinsic(src);
+   if (load == NULL || load->intrinsic != nir_intrinsic_load_deref)
       return NULL;
 
    if (load->dest.ssa.index < first_valid_load)
@@ -225,7 +219,7 @@ opt_find_array_copies_block(nir_builder *b, nir_block *block,
        * continue on because it won't affect local stores or read-only
        * variables.
        */
-      if (dst_deref->mode != nir_var_local)
+      if (dst_deref->mode != nir_var_function_temp)
          continue;
 
       /* We keep track of the SSA indices where the two last-written
@@ -273,7 +267,7 @@ opt_find_array_copies_block(nir_builder *b, nir_block *block,
        */
       const nir_variable_mode read_only_modes =
          nir_var_shader_in | nir_var_uniform | nir_var_system_value;
-      if (!(src_deref->mode & (nir_var_local | read_only_modes)))
+      if (!(src_deref->mode & (nir_var_function_temp | read_only_modes)))
          goto reset;
 
       /* If we don't yet have an active copy, then make this instruction the
