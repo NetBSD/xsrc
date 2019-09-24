@@ -31,6 +31,7 @@
 #include "shader_enums.h"
 #include "blob.h"
 #include "c11/threads.h"
+#include "util/macros.h"
 
 #ifdef __cplusplus
 #include "main/config.h"
@@ -46,10 +47,13 @@ struct _mesa_glsl_parse_state;
 struct glsl_symbol_table;
 
 extern void
-_mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state);
+glsl_type_singleton_init_or_ref();
 
 extern void
-_mesa_glsl_release_types(void);
+glsl_type_singleton_decref();
+
+extern void
+_mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state);
 
 void encode_type_to_blob(struct blob *blob, const struct glsl_type *type);
 
@@ -114,6 +118,42 @@ static inline bool glsl_base_type_is_integer(enum glsl_base_type type)
           type == GLSL_TYPE_IMAGE;
 }
 
+static inline unsigned int
+glsl_base_type_get_bit_size(const enum glsl_base_type base_type)
+{
+   switch (base_type) {
+   case GLSL_TYPE_BOOL:
+      return 1;
+
+   case GLSL_TYPE_INT:
+   case GLSL_TYPE_UINT:
+   case GLSL_TYPE_FLOAT: /* TODO handle mediump */
+   case GLSL_TYPE_SUBROUTINE:
+      return 32;
+
+   case GLSL_TYPE_FLOAT16:
+   case GLSL_TYPE_UINT16:
+   case GLSL_TYPE_INT16:
+      return 16;
+
+   case GLSL_TYPE_UINT8:
+   case GLSL_TYPE_INT8:
+      return 8;
+
+   case GLSL_TYPE_DOUBLE:
+   case GLSL_TYPE_INT64:
+   case GLSL_TYPE_UINT64:
+   case GLSL_TYPE_IMAGE:
+   case GLSL_TYPE_SAMPLER:
+      return 64;
+
+   default:
+      unreachable("unknown base type");
+   }
+
+   return 0;
+}
+
 enum glsl_sampler_dim {
    GLSL_SAMPLER_DIM_1D = 0,
    GLSL_SAMPLER_DIM_2D,
@@ -176,6 +216,13 @@ struct glsl_type {
    unsigned interface_packing:2;
    unsigned interface_row_major:1;
 
+   /**
+    * For \c GLSL_TYPE_STRUCT this specifies if the struct is packed or not.
+    *
+    * Only used for Compute kernels
+    */
+   unsigned packed:1;
+
 private:
    glsl_type() : mem_ctx(NULL)
    {
@@ -208,6 +255,13 @@ public:
     * Will never be \c NULL.
     */
    const char *name;
+
+   /**
+    * Explicit array, matrix, or vector stride.  This is used to communicate
+    * explicit array layouts from SPIR-V.  Should be 0 if the type has no
+    * explicit stride.
+    */
+   unsigned explicit_stride;
 
    /**
     * Subtype of composite data types.
@@ -272,10 +326,17 @@ public:
    const glsl_type *get_scalar_type() const;
 
    /**
+    * Gets the "bare" type without any decorations or layout information.
+    */
+   const glsl_type *get_bare_type() const;
+
+   /**
     * Get the instance of a built-in scalar, vector, or matrix type
     */
    static const glsl_type *get_instance(unsigned base_type, unsigned rows,
-					unsigned columns);
+                                        unsigned columns,
+                                        unsigned explicit_stride = 0,
+                                        bool row_major = false);
 
    /**
     * Get the instance of a sampler type
@@ -292,14 +353,16 @@ public:
     * Get the instance of an array type
     */
    static const glsl_type *get_array_instance(const glsl_type *base,
-					      unsigned elements);
+                                              unsigned elements,
+                                              unsigned explicit_stride = 0);
 
    /**
     * Get the instance of a record type
     */
-   static const glsl_type *get_record_instance(const glsl_struct_field *fields,
+   static const glsl_type *get_struct_instance(const glsl_struct_field *fields,
 					       unsigned num_fields,
-					       const char *name);
+					       const char *name,
+					       bool packed = false);
 
    /**
     * Get the instance of an interface block type
@@ -350,7 +413,7 @@ public:
     * For the initial call, length is the index of the member to find the
     * offset for.
     */
-   unsigned record_location_offset(unsigned length) const;
+   unsigned struct_location_offset(unsigned length) const;
 
    /**
     * Calculate the number of unique values from glGetUniformLocation for the
@@ -378,8 +441,11 @@ public:
     *
     * For vertex shader attributes - doubles only take one slot.
     * For inter-shader varyings - dvec3/dvec4 take two slots.
+    *
+    * Vulkan doesn’t make this distinction so the argument should always be
+    * false.
     */
-   unsigned count_attribute_slots(bool is_vertex_input) const;
+   unsigned count_attribute_slots(bool is_gl_vertex_input) const;
 
    /**
     * Alignment in bytes of the start of this type in a std140 uniform
@@ -393,6 +459,11 @@ public:
     * elements in the array)
     */
    unsigned std140_size(bool row_major) const;
+
+   /**
+    * Gets an explicitly laid out type with the std140 layout.
+    */
+   const glsl_type *get_explicit_std140_type(bool row_major) const;
 
    /**
     * Alignment in bytes of the start of this type in a std430 shader
@@ -412,6 +483,26 @@ public:
     * Note that this is not GL_BUFFER_SIZE
     */
    unsigned std430_size(bool row_major) const;
+
+   /**
+    * Gets an explicitly laid out type with the std430 layout.
+    */
+   const glsl_type *get_explicit_std430_type(bool row_major) const;
+
+   /**
+    * Gets an explicitly laid out interface type.
+    */
+   const glsl_type *get_explicit_interface_type(bool supports_std430) const;
+
+   /**
+    * Alignment in bytes of the start of this type in OpenCL memory.
+    */
+   unsigned cl_alignment() const;
+
+   /**
+    * Size in bytes of this type in OpenCL memory
+    */
+   unsigned cl_size() const;
 
    /**
     * \brief Can this type be implicitly converted to another?
@@ -573,6 +664,16 @@ public:
    }
 
    /**
+    * Query whether or not a type is 32-bit
+    */
+   bool is_32bit() const
+   {
+      return base_type == GLSL_TYPE_UINT ||
+             base_type == GLSL_TYPE_INT ||
+             base_type == GLSL_TYPE_FLOAT;
+   }
+
+   /**
     * Query whether or not a type is a non-array boolean type
     */
    bool is_boolean() const
@@ -635,7 +736,7 @@ public:
    /**
     * Query whether or not a type is a record
     */
-   bool is_record() const
+   bool is_struct() const
    {
       return base_type == GLSL_TYPE_STRUCT;
    }
@@ -758,9 +859,13 @@ public:
     */
    const glsl_type *row_type() const
    {
-      return is_matrix()
-	 ? get_instance(base_type, matrix_columns, 1)
-	 : error_type;
+      if (!is_matrix())
+         return error_type;
+
+      if (explicit_stride && !interface_row_major)
+         return get_instance(base_type, matrix_columns, 1, explicit_stride);
+      else
+         return get_instance(base_type, matrix_columns, 1);
    }
 
    /**
@@ -772,9 +877,13 @@ public:
     */
    const glsl_type *column_type() const
    {
-      return is_matrix()
-	 ? get_instance(base_type, vector_elements, 1)
-	 : error_type;
+      if (!is_matrix())
+         return error_type;
+
+      if (explicit_stride && interface_row_major)
+         return get_instance(base_type, vector_elements, 1, explicit_stride);
+      else
+         return get_instance(base_type, vector_elements, 1);
    }
 
    /**
@@ -828,11 +937,15 @@ public:
    /**
     * Compare a record type against another record type.
     *
-    * This is useful for matching record types declared across shader stages.
+    * This is useful for matching record types declared on the same shader
+    * stage as well as across different shader stages.
+    * The option to not match name is needed for matching record types
+    * declared across different shader stages.
     * The option to not match locations is to deal with places where the
     * same struct is defined in a block which has a location set on it.
     */
-   bool record_compare(const glsl_type *b, bool match_locations = true) const;
+   bool record_compare(const glsl_type *b, bool match_name,
+                       bool match_locations = true) const;
 
    /**
     * Get the type interface packing.
@@ -884,8 +997,9 @@ private:
 
    /** Constructor for vector and matrix types */
    glsl_type(GLenum gl_type,
-	     glsl_base_type base_type, unsigned vector_elements,
-	     unsigned matrix_columns, const char *name);
+             glsl_base_type base_type, unsigned vector_elements,
+             unsigned matrix_columns, const char *name,
+             unsigned explicit_stride = 0, bool row_major = false);
 
    /** Constructor for sampler or image types */
    glsl_type(GLenum gl_type, glsl_base_type base_type,
@@ -894,7 +1008,7 @@ private:
 
    /** Constructor for record types */
    glsl_type(const glsl_struct_field *fields, unsigned num_fields,
-	     const char *name);
+	     const char *name, bool packed = false);
 
    /** Constructor for interface types */
    glsl_type(const glsl_struct_field *fields, unsigned num_fields,
@@ -905,17 +1019,20 @@ private:
    glsl_type(const glsl_type *return_type,
              const glsl_function_param *params, unsigned num_params);
 
-   /** Constructor for array types */
-   glsl_type(const glsl_type *array, unsigned length);
+   /** Constructors for array types */
+   glsl_type(const glsl_type *array, unsigned length, unsigned explicit_stride);
 
    /** Constructor for subroutine types */
    glsl_type(const char *name);
 
+   /** Hash table containing the known explicit matrix and vector types. */
+   static struct hash_table *explicit_matrix_types;
+
    /** Hash table containing the known array types. */
    static struct hash_table *array_types;
 
-   /** Hash table containing the known record types. */
-   static struct hash_table *record_types;
+   /** Hash table containing the known struct types. */
+   static struct hash_table *struct_types;
 
    /** Hash table containing the known interface types. */
    static struct hash_table *interface_types;
@@ -948,8 +1065,9 @@ private:
     * data.
     */
    /*@{*/
+   friend void glsl_type_singleton_init_or_ref(void);
+   friend void glsl_type_singleton_decref(void);
    friend void _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *);
-   friend void _mesa_glsl_release_types(void);
    /*@}*/
 };
 
@@ -1049,7 +1167,7 @@ struct glsl_struct_field {
    unsigned implicit_sized_array:1;
 #ifdef __cplusplus
    glsl_struct_field(const struct glsl_type *_type, const char *_name)
-      : type(_type), name(_name), location(-1), offset(0), xfb_buffer(0),
+      : type(_type), name(_name), location(-1), offset(-1), xfb_buffer(0),
         xfb_stride(0), interpolation(0), centroid(0),
         sample(0), matrix_layout(GLSL_MATRIX_LAYOUT_INHERITED), patch(0),
         precision(GLSL_PRECISION_NONE), memory_read_only(0),
@@ -1061,7 +1179,7 @@ struct glsl_struct_field {
    }
 
    glsl_struct_field()
-      : type(NULL), name(NULL), location(0), offset(0), xfb_buffer(0),
+      : type(NULL), name(NULL), location(-1), offset(-1), xfb_buffer(0),
         xfb_stride(0), interpolation(0), centroid(0),
         sample(0), matrix_layout(0), patch(0),
         precision(0), memory_read_only(0),

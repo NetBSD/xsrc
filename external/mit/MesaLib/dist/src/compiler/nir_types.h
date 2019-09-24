@@ -46,11 +46,17 @@ const char *glsl_get_type_name(const struct glsl_type *type);
 const struct glsl_type *glsl_get_struct_field(const struct glsl_type *type,
                                               unsigned index);
 
+int glsl_get_struct_field_offset(const struct glsl_type *type,
+                                 unsigned index);
+
+const struct glsl_struct_field *
+glsl_get_struct_field_data(const struct glsl_type *type, unsigned index);
+
+unsigned glsl_get_explicit_stride(const struct glsl_type *type);
 const struct glsl_type *glsl_get_array_element(const struct glsl_type *type);
 const struct glsl_type *glsl_without_array(const struct glsl_type *type);
 const struct glsl_type *glsl_without_array_or_matrix(const struct glsl_type *type);
-const struct glsl_type *glsl_get_array_instance(const struct glsl_type *type,
-                                                unsigned array_size);
+const struct glsl_type *glsl_get_bare_type(const struct glsl_type *type);
 
 const struct glsl_type *glsl_get_column_type(const struct glsl_type *type);
 
@@ -75,8 +81,9 @@ unsigned glsl_get_length(const struct glsl_type *type);
 unsigned glsl_get_aoa_size(const struct glsl_type *type);
 
 unsigned glsl_count_attribute_slots(const struct glsl_type *type,
-                                    bool is_vertex_input);
+                                    bool is_gl_vertex_input);
 unsigned glsl_get_component_slots(const struct glsl_type *type);
+unsigned glsl_varying_count(const struct glsl_type *type);
 
 const char *glsl_get_struct_elem_name(const struct glsl_type *type,
                                       unsigned index);
@@ -86,46 +93,23 @@ enum glsl_base_type glsl_get_sampler_result_type(const struct glsl_type *type);
 unsigned glsl_get_sampler_target(const struct glsl_type *type);
 int glsl_get_sampler_coordinate_components(const struct glsl_type *type);
 
-unsigned glsl_get_record_location_offset(const struct glsl_type *type,
+unsigned glsl_get_struct_location_offset(const struct glsl_type *type,
                                          unsigned length);
 
 unsigned glsl_atomic_size(const struct glsl_type *type);
 
+int glsl_get_cl_size(const struct glsl_type *type);
+
+int glsl_get_cl_alignment(const struct glsl_type *type);
+
 static inline unsigned
 glsl_get_bit_size(const struct glsl_type *type)
 {
-   switch (glsl_get_base_type(type)) {
-   case GLSL_TYPE_INT:
-   case GLSL_TYPE_UINT:
-   case GLSL_TYPE_BOOL:
-   case GLSL_TYPE_FLOAT: /* TODO handle mediump */
-   case GLSL_TYPE_SUBROUTINE:
-      return 32;
-
-   case GLSL_TYPE_FLOAT16:
-   case GLSL_TYPE_UINT16:
-   case GLSL_TYPE_INT16:
-      return 16;
-
-   case GLSL_TYPE_UINT8:
-   case GLSL_TYPE_INT8:
-      return 8;
-
-   case GLSL_TYPE_DOUBLE:
-   case GLSL_TYPE_INT64:
-   case GLSL_TYPE_UINT64:
-   case GLSL_TYPE_IMAGE:
-   case GLSL_TYPE_SAMPLER:
-      return 64;
-
-   default:
-      unreachable("unknown base type");
-   }
-
-   return 0;
+   return glsl_base_type_get_bit_size(glsl_get_base_type(type));
 }
 
 bool glsl_type_is_16bit(const struct glsl_type *type);
+bool glsl_type_is_32bit(const struct glsl_type *type);
 bool glsl_type_is_64bit(const struct glsl_type *type);
 bool glsl_type_is_void(const struct glsl_type *type);
 bool glsl_type_is_error(const struct glsl_type *type);
@@ -133,10 +117,13 @@ bool glsl_type_is_vector(const struct glsl_type *type);
 bool glsl_type_is_scalar(const struct glsl_type *type);
 bool glsl_type_is_vector_or_scalar(const struct glsl_type *type);
 bool glsl_type_is_matrix(const struct glsl_type *type);
+bool glsl_matrix_type_is_row_major(const struct glsl_type *type);
 bool glsl_type_is_array(const struct glsl_type *type);
 bool glsl_type_is_array_of_arrays(const struct glsl_type *type);
 bool glsl_type_is_array_or_matrix(const struct glsl_type *type);
 bool glsl_type_is_struct(const struct glsl_type *type);
+bool glsl_type_is_interface(const struct glsl_type *type);
+bool glsl_type_is_struct_or_ifc(const struct glsl_type *type);
 bool glsl_type_is_sampler(const struct glsl_type *type);
 bool glsl_type_is_image(const struct glsl_type *type);
 bool glsl_type_is_dual_slot(const struct glsl_type *type);
@@ -171,10 +158,17 @@ const struct glsl_type *glsl_vector_type(enum glsl_base_type base_type,
                                          unsigned components);
 const struct glsl_type *glsl_matrix_type(enum glsl_base_type base_type,
                                          unsigned rows, unsigned columns);
+const struct glsl_type *glsl_explicit_matrix_type(const struct glsl_type *mat,
+                                                  unsigned stride,
+                                                  bool row_major);
+
 const struct glsl_type *glsl_array_type(const struct glsl_type *base,
-                                        unsigned elements);
+                                        unsigned elements,
+                                        unsigned explicit_stride);
+
 const struct glsl_type *glsl_struct_type(const struct glsl_struct_field *fields,
-                                         unsigned num_fields, const char *name);
+                                         unsigned num_fields, const char *name,
+                                         bool packed);
 const struct glsl_type *glsl_interface_type(const struct glsl_struct_field *fields,
                                             unsigned num_fields,
                                             enum glsl_interface_packing packing,
@@ -202,6 +196,9 @@ void glsl_get_natural_size_align_bytes(const struct glsl_type *type,
                                        unsigned *size, unsigned *align);
 
 const struct glsl_type *glsl_atomic_uint_type(void);
+
+unsigned glsl_type_get_sampler_count(const struct glsl_type *type);
+unsigned glsl_type_get_image_count(const struct glsl_type *type);
 
 #ifdef __cplusplus
 }
