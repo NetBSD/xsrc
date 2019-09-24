@@ -179,6 +179,10 @@ nir_minmag(nir_builder *b, nir_ssa_def *x, nir_ssa_def *y)
    return nir_bcsel(b, condy, y, nir_bcsel(b, condx, x, nir_fmin(b, x, y)));
 }
 
+#ifdef __vax__
+#define NAN FLT_MAX
+#endif
+
 static inline nir_ssa_def*
 nir_nan(nir_builder *b, nir_ssa_def *x)
 {
