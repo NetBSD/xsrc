@@ -34,6 +34,7 @@
  * cannot use immediate values.
  */
 
+#include <cstdlib>
 #include "brw_fs.h"
 #include "brw_cfg.h"
 #include "util/half_float.h"
@@ -232,7 +233,7 @@ get_constant_value(const struct gen_device_info *devinfo,
       break;
    }
    case BRW_REGISTER_TYPE_Q: {
-      int64_t val = !can_do_source_mods ? src->d64 : abs(src->d64);
+      int64_t val = !can_do_source_mods ? src->d64 : std::abs(src->d64);
       memcpy(out, &val, 8);
       break;
    }
