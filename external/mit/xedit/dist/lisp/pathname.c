@@ -1056,8 +1056,8 @@ Lisp_UserHomedirPathname(LispBuiltin *builtin)
  */
 {
     GC_ENTER();
-    int length;
     char *home = getenv("HOME"), data[PATH_MAX + 1];
+    char sepstr[] = {PATH_SEP, '\0'};
     LispObj *result;
 
     LispObj *host;
@@ -1067,16 +1067,15 @@ Lisp_UserHomedirPathname(LispBuiltin *builtin)
     if (host != UNSPEC && !STRINGP(host))
 	LispDestroy("%s: bad hostname %s", STRFUN(builtin), STROBJ(host));
 
-    length = 0;
     if (home) {
-	length = strlen(home);
-	strncpy(data, home, length);
-	if (length && home[length - 1] != PATH_SEP)
-	    data[length++] = PATH_SEP;
+	strlcpy(data, home, sizeof(data));
+	if (data[0] != '\0' && data[strlen(data) - 1] != PATH_SEP)
+		strlcat(data, sepstr, sizeof(data));
+    } else {
+	data[0] = '\0';
     }
-    data[length] = '\0';
 
-    result = LSTRING(data, length);
+    result = STRING(data);
     GC_PROTECT(result);
     result = APPLY1(Oparse_namestring, result);
     GC_LEAVE();
