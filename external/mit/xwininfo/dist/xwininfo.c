@@ -251,7 +251,7 @@ static Bool window_id_format_dec = False;
 static iconv_t iconv_from_utf8;
 #endif
 static const char *user_encoding;
-static void print_utf8 (const char *, const char *, size_t, const char *);
+static void print_utf8 (const char *, char *, size_t, const char *);
 static char *get_friendly_name (const char *, const char *);
 
 static xcb_connection_t *dpy;
@@ -850,7 +850,7 @@ Display_Window_Id (struct wininfo *w, Bool newline_wanted)
 	    if (wm_name_encoding == XCB_ATOM_STRING) {
 		printf (" \"%.*s\"", wm_name_len, wm_name);
 	    } else if (wm_name_encoding == atom_utf8_string) {
-		print_utf8 (" \"", wm_name, wm_name_len,  "\"");
+		print_utf8 (" \"", (char *) wm_name, wm_name_len,  "\"");
 	    } else {
 		/* Encodings we don't support, including COMPOUND_TEXT */
 		const char *enc_name = Get_Atom_Name (dpy, wm_name_encoding);
@@ -1887,7 +1887,7 @@ is_valid_utf8 (const char *string, size_t len)
  * Length of the string is specified in bytes, or -1 for going until '\0'
  */
 static void
-print_utf8 (const char *prefix, const char *u8str, size_t length, const char *suffix)
+print_utf8 (const char *prefix, char *u8str, size_t length, const char *suffix)
 {
     size_t inlen = length;
 
