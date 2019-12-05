@@ -1240,7 +1240,7 @@ _mesa_initialize_context(struct gl_context *ctx,
     */
    if (env_var_as_boolean("MESA_NO_ERROR", false)) {
 #if !defined(_WIN32)
-      if (geteuid() == getuid())
+      if (!issetugid())
 #endif
          ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_NO_ERROR_BIT_KHR;
    }
