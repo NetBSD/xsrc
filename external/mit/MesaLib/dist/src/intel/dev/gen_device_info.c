@@ -82,7 +82,7 @@ gen_device_name_to_pci_device_id(const char *name)
 int
 gen_get_pci_device_id_override(void)
 {
-   if (geteuid() == getuid()) {
+   if (!issetugid()) {
       const char *devid_override = getenv("INTEL_DEVID_OVERRIDE");
       if (devid_override) {
          const int id = gen_device_name_to_pci_device_id(devid_override);

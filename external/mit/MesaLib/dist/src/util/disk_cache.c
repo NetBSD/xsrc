@@ -212,7 +212,7 @@ disk_cache_create(const char *gpu_name, const char *driver_id,
    size_t cv_size = sizeof(cache_version);
 
    /* If running as a users other than the real user disable cache */
-   if (geteuid() != getuid())
+   if (issetugid())
       return NULL;
 
    /* A ralloc context for transient data during this invocation. */
