@@ -491,7 +491,7 @@ dri2_open_driver(_EGLDisplay *disp)
    const __DRIextension **(*get_extensions)(void);
 
    search_paths = NULL;
-   if (geteuid() == getuid()) {
+   if (!issetugid()) {
       /* don't allow setuid apps to use LIBGL_DRIVERS_PATH */
       search_paths = getenv("LIBGL_DRIVERS_PATH");
    }

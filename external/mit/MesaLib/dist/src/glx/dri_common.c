@@ -106,7 +106,7 @@ driOpenDriver(const char *driverName)
    glhandle = dlopen(GL_LIB_NAME, RTLD_NOW | RTLD_GLOBAL);
 
    libPaths = NULL;
-   if (geteuid() == getuid()) {
+   if (!issetugid()) {
       /* don't allow setuid apps to use LIBGL_DRIVERS_PATH */
       libPaths = getenv("LIBGL_DRIVERS_PATH");
       if (!libPaths)

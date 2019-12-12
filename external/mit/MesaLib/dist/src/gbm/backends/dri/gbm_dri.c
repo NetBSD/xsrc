@@ -310,7 +310,7 @@ dri_open_driver(struct gbm_dri_device *dri)
 
    search_paths = NULL;
    /* don't allow setuid apps to use LIBGL_DRIVERS_PATH or GBM_DRIVERS_PATH */
-   if (geteuid() == getuid()) {
+   if (!issetugid()) {
       /* Read GBM_DRIVERS_PATH first for compatibility, but LIBGL_DRIVERS_PATH
        * is recommended over GBM_DRIVERS_PATH.
        */
