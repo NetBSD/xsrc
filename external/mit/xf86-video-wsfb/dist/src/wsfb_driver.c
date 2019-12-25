@@ -875,6 +875,7 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 	int ret, flags, ncolors;
 	int wsmode = WSDISPLAYIO_MODE_DUMBFB;
 	int wstype;
+	int width;
 	size_t len;
 
 	TRACE_ENTER("WsfbScreenInit");
@@ -979,7 +980,17 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 	fPtr->fbstart = fPtr->fbmem + fPtr->fbi.fbi_fboffset;
 
 	if (fPtr->shadowFB) {
-		fPtr->shadow = calloc(1, fPtr->fbi.fbi_stride * pScrn->virtualY);
+		if (fPtr->rotate) {
+			/*
+			 * Note Rotate and Shadow FB options are valid
+			 * only on depth >= 8.
+			 */
+			len = pScrn->virtualX * pScrn->virtualY *
+			    (pScrn->bitsPerPixel >> 3);
+		} else {
+			len = fPtr->fbi.fbi_stride * pScrn->virtualY;
+		}
+		fPtr->shadow = calloc(1, len);
 
 		if (!fPtr->shadow) {
 			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
@@ -988,13 +999,29 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 		}
 	}
 
+	/*
+	 * fbScreenInit() seems to require "pixel width of frame buffer"
+	 * but it is actually "stride in pixel" of frame buffer,
+	 * per xorg/xserver/tree/fb/fbscreen.c.
+	 */
+	if (fPtr->rotate) {
+		width = pScrn->displayWidth;
+	} else {
+		if (pScrn->bitsPerPixel > 8) {
+			width =
+			    fPtr->fbi.fbi_stride / (pScrn->bitsPerPixel >> 3);
+		} else {
+			width =
+			    fPtr->fbi.fbi_stride * (8 / pScrn->bitsPerPixel);
+		}
+	}
 	switch (pScrn->bitsPerPixel) {
 	case 1:
 		ret = fbScreenInit(pScreen,
 		    fPtr->fbstart,
 		    pScrn->virtualX, pScrn->virtualY,
 		    pScrn->xDpi, pScrn->yDpi,
-		    fPtr->fbi.fbi_stride * 8, pScrn->bitsPerPixel);
+		    width, pScrn->bitsPerPixel);
 		break;
 	case 4:
 	case 8:
@@ -1005,8 +1032,7 @@ WsfbScreenInit(SCREEN_INIT_ARGS_DECL)
 		    fPtr->shadowFB ? fPtr->shadow : fPtr->fbstart,
 		    pScrn->virtualX, pScrn->virtualY,
 		    pScrn->xDpi, pScrn->yDpi,
-		    /* apparently fb wants stride in pixels, not bytes */
-		    fPtr->fbi.fbi_stride / (pScrn->bitsPerPixel >> 3),
+		    width,
 		    pScrn->bitsPerPixel);
 		break;
 	default:
