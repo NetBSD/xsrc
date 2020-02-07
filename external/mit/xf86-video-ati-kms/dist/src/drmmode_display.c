@@ -870,6 +870,7 @@ drmmode_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
 	Rotation saved_rotation;
 	DisplayModeRec saved_mode;
 	Bool ret = FALSE;
+	uint32_t handle;
 	int i;
 	struct drmmode_fb *fb = NULL;
 
@@ -917,10 +918,15 @@ drmmode_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
 		if (!fb)
 			fb = radeon_pixmap_get_fb(pScreen->GetWindowPixmap(pScreen->root));
 		if (!fb) {
+			if (info->front_buffer->flags & RADEON_BO_FLAGS_GBM) {
+				handle = gbm_bo_get_handle(info->front_buffer->bo.gbm).u32;
+			} else {
+				handle = info->front_buffer->bo.radeon->handle;
+			}
 			fb = radeon_fb_create(pScrn, pRADEONEnt->fd,
 					      pScrn->virtualX, pScrn->virtualY,
 					      pScrn->displayWidth * info->pixel_bytes,
-					      info->front_buffer->bo.radeon->handle);
+					      handle);
 			/* Prevent refcnt of ad-hoc FBs from reaching 2 */
 			drmmode_fb_reference(pRADEONEnt->fd, &drmmode_crtc->fb, NULL);
 			drmmode_crtc->fb = fb;
