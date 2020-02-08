@@ -1,4 +1,4 @@
-/* $NetBSD: xsetwallpaper.c,v 1.2 2018/03/24 19:43:31 jmcneill Exp $ */
+/* $NetBSD: xsetwallpaper.c,v 1.3 2020/02/08 20:29:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: xsetwallpaper.c,v 1.2 2018/03/24 19:43:31 jmcneill Exp $");
+__RCSID("$NetBSD: xsetwallpaper.c,v 1.3 2020/02/08 20:29:30 jmcneill Exp $");
 
 #include <sys/endian.h>
 
@@ -41,10 +41,12 @@ __RCSID("$NetBSD: xsetwallpaper.c,v 1.2 2018/03/24 19:43:31 jmcneill Exp $");
 
 #define DEFAULT_FILL_COLOR	"#000000"
 
+static uint8_t *	resize_nn(const uint8_t *, int, int, int, int);
+
 static void
 usage(const char *pn)
 {
-	fprintf(stderr, "usage: %s [-f fillcolor] filename\n", pn);
+	fprintf(stderr, "usage: %s [-f fillcolor] [-s] filename\n", pn);
 	exit(EXIT_FAILURE);
 }
 
@@ -60,6 +62,7 @@ main(int argc, char *argv[])
 	int imagew, imageh, imagebpp;
 	int ch, i;
 	int screen, default_depth, byte_order;
+	int scale = 0;
 	Display *display;
 	Colormap colormap;
 	XImage *image;
@@ -68,10 +71,13 @@ main(int argc, char *argv[])
 	Window window;
 	GC gc;
 
-	while ((ch = getopt(argc, argv, "f:h")) != -1) {
+	while ((ch = getopt(argc, argv, "f:sh")) != -1) {
 		switch (ch) {
 		case 'f':
 			fill_color = optarg;
+			break;
+		case 's':
+			scale = 1;
 			break;
 		case 'h':
 		default:
@@ -132,6 +138,14 @@ main(int argc, char *argv[])
 #endif
 
 	XSync(display, False);
+
+	if (scale) {
+		data = resize_nn(data, imagew, imageh, root_width, root_height);
+		if (data == NULL)
+			err(EXIT_FAILURE, "couldn't resize image\n");
+		imagew = root_width;
+		imageh = root_height;
+	}
 
 	/* Parse the fill colour and allocate it */
 	if (!XParseColor(display, colormap, fill_color, &color)) {
@@ -195,4 +209,27 @@ main(int argc, char *argv[])
 	XCloseDisplay(display);
 
 	return EXIT_SUCCESS;
+}
+
+static uint8_t *
+resize_nn(const uint8_t *data, int src_w, int src_h, int dst_w, int dst_h)
+{
+	const uint32_t *src;
+	uint32_t *dst;
+	int src_x, src_y, dst_x, dst_y;
+
+	src = (const uint32_t *)data;
+	dst = malloc(src_w * src_h * 4);
+	if (dst == NULL)
+		return NULL;
+
+	for (dst_y = 0; dst_y < dst_h; dst_y++) {
+		src_y = dst_y * src_h / dst_h;
+		for (dst_x = 0; dst_x < dst_w; dst_x++) {
+			src_x = dst_x * src_w / dst_w;
+			dst[dst_y * dst_w + dst_x] = src[src_y * src_w + src_x];
+		}
+	}
+
+	return (uint8_t *)dst;
 }
