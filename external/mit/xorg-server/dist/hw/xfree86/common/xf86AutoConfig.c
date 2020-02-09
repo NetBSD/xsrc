@@ -356,15 +356,15 @@ listPossibleVideoDrivers(XF86MatchedDrivers *md)
     xf86AddMatchedDriver(md, "fbdev");
 #endif
 
+#if defined(__NetBSD__)
+    xf86AddMatchedDriver(md, "wsfb");
+#endif
+
     /* Fallback to platform default hardware */
 #if defined(__i386__) || defined(__amd64__) || defined(__hurd__)
     xf86AddMatchedDriver(md, "vesa");
 #elif defined(__sparc__) && !defined(__sun)
     xf86AddMatchedDriver(md, "sunffb");
-#endif
-    
-#if defined(__NetBSD__)
-    xf86AddMatchedDriver(md, "wsfb");
 #endif
 }
 
