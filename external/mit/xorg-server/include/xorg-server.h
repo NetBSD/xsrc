@@ -140,7 +140,7 @@
 #define XORGSERVER 1
 
 /* Current Xorg version */
-#define XORG_VERSION_CURRENT (((1) * 10000000) + ((20) * 100000) + ((5) * 1000) + 0)
+#define XORG_VERSION_CURRENT (((1) * 10000000) + ((20) * 100000) + ((6) * 1000) + 0)
 
 /* Build Xv Extension */
 #define XvExtension 1
