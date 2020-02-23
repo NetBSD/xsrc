@@ -137,6 +137,9 @@
 /* Define to 1 if you have the <linux/fb.h> header file. */
 /* #undef HAVE_LINUX_FB_H */
 
++ /* Define to 1 if you have the `memfd_create' function. */
+/* #undef HAVE_MEMFD_CREATE */
+
 /* Define to 1 if you have the `mkostemp' function. */
 #define HAVE_MKOSTEMP 1
 
@@ -473,9 +476,6 @@
 /* Wrap SIGBUS to catch MIT-SHM faults */
 #define BUSFAULT 1
 
-/* Directory for shared memory temp files */
-#define SHMDIR "/var/shm"
-
 /* Don't let Xdefs.h define 'pointer' */
 #define _XTYPEDEF_POINTER
 
@@ -531,5 +531,8 @@
 
 /* Have epoll_create1() */
 /* #undef HAVE_EPOLL_CREATE1 */
+
+/* Have isastream */
+/* #undef HAVE_ISASTREAM */
 
 #endif /* _DIX_CONFIG_H_ */
