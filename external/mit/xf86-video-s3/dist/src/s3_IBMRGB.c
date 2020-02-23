@@ -157,7 +157,7 @@ static void S3ProgramIBMRGBClock(ScrnInfoPtr pScrn, int clk, unsigned char m,
 static void S3IBMRGBSetClock(ScrnInfoPtr pScrn, long freq, int clk, long dacspeed,
 		      long fref)
 {
-	volatile double ffreq, fdacspeed, ffref;
+	volatile double ffreq, ffref;
 	volatile int df, n, m, max_n, min_df;
 	volatile int best_m=69, best_n=17, best_df=0;
 	volatile double diff, mindiff;
@@ -172,7 +172,6 @@ static void S3IBMRGBSetClock(ScrnInfoPtr pScrn, long freq, int clk, long dacspee
 	else
 		ffreq = freq / 1000.0;
 
-	fdacspeed = dacspeed / 1e3;
 	ffref = fref / 1e3;
 
 	ffreq /= ffref;

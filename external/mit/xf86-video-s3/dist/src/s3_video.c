@@ -63,7 +63,6 @@ static FBLinearPtr S3XVMemAlloc(ScrnInfoPtr pScrn, pointer pVideo, int size);
 void S3InitVideo(ScreenPtr pScreen)
 {
 	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
-	S3Ptr pS3 = S3PTR(pScrn);
 	XF86VideoAdaptorPtr *adaptors, *newAdaptors = NULL;
 	XF86VideoAdaptorPtr newAdaptor = NULL;
 	int num_adaptors;

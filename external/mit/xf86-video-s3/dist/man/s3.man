@@ -50,9 +50,9 @@ driver supports PCI video cards based on the following S3 chips:
 
 .PP
 Also driver supports the following RAMDACs:
-.TP 12
+.IP 12
 .B IBM 524, IBM 524A, IBM 526, IBM 526DB
-.TP 12
+.IP 12
 .B TI ViewPoint 3025 
 
 .SH DESCRIPTION
