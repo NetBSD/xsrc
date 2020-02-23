@@ -1709,7 +1709,6 @@ _X_EXPORT XF86ModuleData ztvModuleData = { &z4lVersionRec, z4lSetup, NULL };
 static pointer
 z4lSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 {
-    const char *osname;
     static Bool setupDone = FALSE;
 
     if (setupDone != FALSE) {
@@ -1719,19 +1718,7 @@ z4lSetup(pointer module, pointer opts, int *errmaj, int *errmin)
     }
 
     setupDone = TRUE;
-    LoaderGetOS(&osname, NULL, NULL, NULL);
-
-    if (osname == NULL || strcmp(osname, "linux") != 0) {
-        if (errmaj)
-            *errmaj = LDR_BADOS;
-        if (errmin)
-            *errmin = 0;
-
-        return NULL;
-    }
-
     xf86AddDriver(&Z4l, module, 0);
-
     return (pointer) 1;
 }
 
