@@ -1,3 +1,4 @@
+! model		layout				=	symbols
   ataritt	$nonlatin		=	xfree68_vndr/ataritt(us)+%l%(v):2
   ataritt	*			=	xfree68_vndr/ataritt(us)+%l%(v)
   amiga		$nonlatin		=	xfree68_vndr/amiga(usa1)+%l%(v):2
@@ -34,6 +35,5 @@
   ws007sh	*			=	pc+sharp_vndr/ws007sh(basic)
   ws011sh	*			=	pc+sharp_vndr/ws011sh(basic)
   ws020sh	*			=	pc+sharp_vndr/ws020sh(basic)
-  htcdream	$htcdreamlayouts	=	%l(htcdream)
   *	   	$nonlatin		=	pc+us+%l%(v):2
   *		*			=	pc+%l%(v)

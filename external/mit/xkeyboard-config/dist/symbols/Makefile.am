@@ -17,7 +17,7 @@ gr hr hu \
 id ie il \
 in iq \
 ir is it \
-jp \
+jp jv \
 ke kg kh \
 kr kz \
 la latam latin \
