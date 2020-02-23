@@ -50,7 +50,7 @@
 #include <dirent.h>
 #include <errno.h>
 
-#if defined(__i386__) || defined(__x86_64__) || defined(__arm__)
+#if defined(__i386__) || defined(__x86_64__)
 #include <sys/io.h>
 #else
 #define inb(x) -1

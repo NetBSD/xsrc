@@ -445,7 +445,7 @@ pci_device_x86_read_rom(struct pci_device *dev, void *buffer)
     if (memfd == -1)
 	return errno;
 
-    bios = mmap(NULL, dev->rom_size, PROT_READ, 0, memfd, d->rom_base);
+    bios = mmap(NULL, dev->rom_size, PROT_READ, MAP_SHARED, memfd, d->rom_base);
     if (bios == MAP_FAILED) {
 	close(memfd);
 	return errno;
@@ -594,12 +594,12 @@ pci_device_x86_region_probe (struct pci_device *dev, int reg_num)
         }
 
         /* Map the region in our space */
-        memfd = open ("/dev/mem", O_RDONLY | O_CLOEXEC);
+        memfd = open ("/dev/mem", O_RDWR | O_CLOEXEC);
         if (memfd == -1)
             return errno;
 
         dev->regions[reg_num].memory =
-         mmap (NULL, dev->regions[reg_num].size, PROT_READ | PROT_WRITE, 0,
+         mmap (NULL, dev->regions[reg_num].size, PROT_READ | PROT_WRITE, MAP_SHARED,
                memfd, dev->regions[reg_num].base_addr);
         if (dev->regions[reg_num].memory == MAP_FAILED)
         {
@@ -607,8 +607,6 @@ pci_device_x86_region_probe (struct pci_device *dev, int reg_num)
             close (memfd);
             return errno;
         }
-
-        close (memfd);
     }
 
     return 0;
@@ -857,10 +855,10 @@ pci_device_x86_map_range(struct pci_device *dev,
 	prot |= PROT_WRITE;
 
     map->memory = mmap(NULL, map->size, prot, MAP_SHARED, memfd, map->base);
-    close(memfd);
-    if (map->memory == MAP_FAILED)
+    if (map->memory == MAP_FAILED) {
+    	close(memfd);
 	return errno;
-
+    }
     return 0;
 }
 

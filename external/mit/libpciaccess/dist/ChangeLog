@@ -1,3 +1,24 @@
+commit fbd1f0fe79ba25b72635f8e36a6c33d7e0ca19f6
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed Jul 17 12:24:48 2019 -0400
+
+    libpciaccess 0.16
+
+commit f834c15afb49aa340c44374c6e00ef303b076ace
+Author: Damien Zammit <damien@zamaudio.com>
+Date:   Sun May 19 20:33:21 2019 +1000
+
+    x86: Use MAP_SHARED for memory/rom region mmap && fix mode
+
+commit 1d71669e577f5f2eb02542851696d3bcb722a80b
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Thu Jul 11 12:56:40 2019 -0400
+
+    linux: Don't try to include <sys/io.h> on arm
+    
+    It no longer exists in newer glibc, and didn't work like you'd have
+    hoped on anything but strongarm anyway.
+
 commit 726e27bedf163597b5c948b66daeacf9b76f441a
 Author: Adam Jackson <ajax@redhat.com>
 Date:   Thu Jul 11 12:27:36 2019 -0400
