@@ -28,6 +28,9 @@
 /* Define to 1 if you have the `readlink' function. */
 #define HAVE_READLINK 1
 
+/* Define to 1 if you have the `reallocarray' function. */
+/* #undef HAVE_REALLOCARRAY */
+
 /* Define to 1 if the system has the type `socklen_t'. */
 #define HAVE_SOCKLEN_T 1
 
@@ -42,6 +45,12 @@
 
 /* Define to 1 if you have the <string.h> header file. */
 #define HAVE_STRING_H 1
+
+/* Define to 1 if you have the `strlcat' function. */
+#define HAVE_STRLCAT 1
+
+/* Define to 1 if you have the `strlcpy' function. */
+#define HAVE_STRLCPY 1
 
 /* Define to 1 if you have the <sys/poll.h> header file. */
 #define HAVE_SYS_POLL_H 1
@@ -75,7 +84,7 @@
 #define PACKAGE_NAME "libXfont2"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libXfont2 2.0.3"
+#define PACKAGE_STRING "libXfont2 2.0.4"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libXfont2"
@@ -84,7 +93,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.0.3"
+#define PACKAGE_VERSION "2.0.4"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 2
@@ -93,7 +102,7 @@
 #define PACKAGE_VERSION_MINOR 0
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 3
+#define PACKAGE_VERSION_PATCHLEVEL 4
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -127,7 +136,7 @@
 
 
 /* Version number of package */
-#define VERSION "2.0.3"
+#define VERSION "2.0.4"
 
 /* Support bdf format bitmap font files */
 #define XFONT_BDFFORMAT 1
