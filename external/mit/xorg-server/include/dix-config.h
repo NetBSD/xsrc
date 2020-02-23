@@ -137,7 +137,7 @@
 /* Define to 1 if you have the <linux/fb.h> header file. */
 /* #undef HAVE_LINUX_FB_H */
 
-+ /* Define to 1 if you have the `memfd_create' function. */
+/* Define to 1 if you have the `memfd_create' function. */
 /* #undef HAVE_MEMFD_CREATE */
 
 /* Define to 1 if you have the `mkostemp' function. */
