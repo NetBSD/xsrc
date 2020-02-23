@@ -233,8 +233,8 @@ CTAGS = ctags
 CSCOPE = cscope
 DIST_SUBDIRS = $(SUBDIRS)
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in COPYING \
-	ChangeLog INSTALL README compile config.guess config.sub \
-	depcomp install-sh missing
+	ChangeLog INSTALL compile config.guess config.sub depcomp \
+	install-sh missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -400,6 +400,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = man
 AM_CFLAGS = $(VIEWRES_CFLAGS) $(CWARNFLAGS)
+AM_CPPFLAGS = -D_CONST_X_STRING
 viewres_LDADD = $(VIEWRES_LIBS)
 viewres_SOURCES = \
         viewres.c
@@ -412,6 +413,7 @@ dist_appdefault_DATA = \
         app-defaults/Viewres-color
 
 MAINTAINERCLEANFILES = ChangeLog INSTALL
+EXTRA_DIST = README.md
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
