@@ -1,3 +1,56 @@
+commit c8c1e7ffbeb81bbaa148ed3f66e45e373e35ddad
+Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
+Date:   Fri Sep 20 12:45:29 2019 +0300
+
+    Geode 2.11.20
+    
+    This release restores compatibility with xserver-1.20 and newer.
+    
+    VALIDATION PLATFORM
+     * Debian (X server 1.20.4) on FIC ION603A (Geode LX800).
+    
+    Signed-off-by: Martin-Éric Racine <martin-eric.racine@iki.fi>
+
+commit df37efae78f874b219758dc05d4740477d371300
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 25 13:57:53 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c428d075998d7ebd50046094aa0b2ecc39bb353f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 18 12:41:22 2018 -0800
+
+    Update README for gitlab migration
+    
+    Also update http: URL's to https:
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8382e6bb0c76a8029493eae3f2d7a3dbfd0cfc12
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Mon Mar 5 10:28:15 2018 -0500
+
+    gx: Fix RANDR initialization for xserver 1.20
+    
+    xf86DisableRandR() doesn't exist anymore, and we don't need it anyway,
+    the core code will notice that we set up RANDR ourselves.
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 09aaa3d1fae4aeb099b16e7a046151761bcdea95
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue Jan 24 09:53:06 2017 -0500
+
+    Remove call to LoaderGetOS
+    
+    On OSes that don't have a /dev/videox we'll just fail the open() and not
+    initialize the Xv adaptor.
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
 commit ec3440ea602aa2c8fc826adfd921506aec60eb7d
 Author: Martin-Éric Racine <martin-eric.racine@iki.fi>
 Date:   Sat Dec 10 15:18:28 2016 +0200
@@ -1483,8 +1536,8 @@ Date:   Fri Aug 6 11:16:02 2010 +0800
     1)google chrome hang
     2)Some website using repeat for source picture with PictOpSrc. To sum up, right now this patch has gracefully solved the Nautilus bug and some special rendering under PictOpSrc and PictOpOver I will describe all special conditions I met
     Websites for test before and after this patch:
-    	1)http://daduke.org (greater srcX and srcY)
-    	2)http://bjdns2.cncmax.cn (negative srcX and srcY)
+            1)http://daduke.org (greater srcX and srcY)
+            2)http://bjdns2.cncmax.cn (negative srcX and srcY)
     
     From: Frank Huang <frankr.huang@amd.com>
     
@@ -2446,10 +2499,10 @@ Date:   Wed Sep 10 17:33:30 2008 -0600
     
     Conflicts:
     
-    	src/geode_ddc.c
-    	src/gx_randr.c
-    	src/lx_randr.c
-    	src/lx_rotate.c
+            src/geode_ddc.c
+            src/gx_randr.c
+            src/lx_randr.c
+            src/lx_rotate.c
 
 commit 85d2103a90e6ab422246b66d252dbee19c96a0d7
 Author: Jordan Crouse <jordan.crouse@amd.com>
@@ -3048,8 +3101,8 @@ Date:   Fri Jun 22 17:09:28 2007 -0600
     
     Conflicts:
     
-    	src/amd_lx_driver.c
-    	src/amd_lx_rotate.c
+            src/amd_lx_driver.c
+            src/amd_lx_rotate.c
 
 commit ea11d99bc29086a8fa92c01dd22f195d626b33d2
 Author: Jordan Crouse <jordan.crouse@amd.com>
@@ -3073,7 +3126,7 @@ Date:   Wed Jun 13 12:28:36 2007 -0400
     
     Conflicts:
     
-    	configure.ac
+            configure.ac
 
 commit dc23a3168df78424108e8609b250e88c3dd16775
 Author: Jordan Crouse <jordan.crouse@amd.com>
@@ -3147,7 +3200,7 @@ Date:   Thu May 10 10:39:08 2007 -0600
     
     Conflicts:
     
-    	man/amd.man
+            man/amd.man
 
 commit 022a106b38693d2d705e8c15ad84c18832fa2e8c
 Author: Jordan Crouse <jordan.crouse@amd.com>

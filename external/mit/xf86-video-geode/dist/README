@@ -147,7 +147,7 @@ A: Make sure that a sufficient amount of video RAM is reserved in the BIOS,
 
 Q: How do I produce useful information whenever submitting a bug report?
 
-A: See http://www.x.org/wiki/Development/Documentation/ServerDebugging
+A: See https://www.x.org/wiki/Development/Documentation/ServerDebugging
    and follow the instructions found there.
 
 Q: How do I test development snapshots from the upstream GIT repository?
@@ -165,26 +165,23 @@ A: Run the following commands from a command line interpreter shell:
 
 Q: What is the preferred method for submitting patches to this driver?
 
-A: See http://www.x.org/wiki/Development/Documentation/SubmittingPatches
-   and submit the patches to the Geode X.org mailing list or to Bugzilla
-   against product "xorg" component "Driver/geode".
+A: See https://www.x.org/wiki/Development/Documentation/SubmittingPatches
+   and submit the patches to the Geode X.org mailing list or to gitlab
+   in the xf86-video-geode project.
 
 7.PROJECT CONTACTS
 
 Project homepage:
-http://www.x.org/wiki/GeodeDriver
+https://www.x.org/wiki/GeodeDriver
 
 Mailing list:
-http://lists.freedesktop.org/mailman/listinfo/xorg-driver-geode
+https://lists.x.org/mailman/listinfo/xorg-driver-geode
 
 Bug reports:
-https://bugs.freedesktop.org/enter_bug.cgi?product=xorg&component=Driver%2Fgeode
-
-Code browser:
-http://cgit.freedesktop.org/xorg/driver/xf86-video-geode
+https://gitlab.freedesktop.org/xorg/driver/xf86-video-geode/issues
 
 Code repository:
-git://anongit.freedesktop.org/git/xorg/driver/xf86-video-geode
+https://gitlab.freedesktop.org/xorg/driver/xf86-video-geode
 
 IRC channel:
 #geode on the Freenode network.
