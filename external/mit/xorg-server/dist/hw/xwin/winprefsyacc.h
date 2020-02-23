@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 3.0.5.  */
+/* A Bison parser, made by GNU Bison 3.1.  */
 
 /* Bison interface for Yacc-like parsers in C
 
@@ -112,13 +112,13 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 90 "winprefsyacc.y" /* yacc.c:1910  */
+#line 90 "winprefsyacc.y" /* yacc.c:1913  */
 
   char *sVal;
   unsigned long uVal;
   int iVal;
 
-#line 122 "winprefsyacc.h" /* yacc.c:1910  */
+#line 122 "winprefsyacc.h" /* yacc.c:1913  */
 };
 
 typedef union YYSTYPE YYSTYPE;

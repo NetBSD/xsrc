@@ -70,11 +70,6 @@ conf_data.set('SYSTEMD_LOGIND', build_systemd_logind)
 conf_data.set('NEED_DBUS', build_systemd_logind or build_hal)
 conf_data.set('CONFIG_WSCONS', host_machine.system() == 'openbsd')
 
-# XXX: SHMDIR is weird in autoconf, probing the build system for
-# various tmp directories.  Could we replace it with C code at runtime
-# that just uses whatever directory works?
-conf_data.set_quoted('SHMDIR', '/tmp')
-
 conf_data.set('HAVE_XSHMFENCE', xshmfence_dep.found())
 conf_data.set('WITH_LIBDRM', libdrm_dep.found())
 conf_data.set('GLAMOR_HAS_EGL_QUERY_DMABUF',
@@ -119,12 +114,14 @@ conf_data.set('HAVE_CBRT', cc.has_function('cbrt'))
 conf_data.set('HAVE_EPOLL_CREATE1', cc.has_function('epoll_create1'))
 conf_data.set('HAVE_GETUID', cc.has_function('getuid'))
 conf_data.set('HAVE_GETEUID', cc.has_function('geteuid'))
+conf_data.set('HAVE_ISASTREAM', cc.has_function('isastream'))
 conf_data.set('HAVE_ISSETUGID', cc.has_function('issetugid'))
 conf_data.set('HAVE_GETIFADDRS', cc.has_function('getifaddrs'))
 conf_data.set('HAVE_GETPEEREID', cc.has_function('getpeereid'))
 conf_data.set('HAVE_GETPEERUCRED', cc.has_function('getpeerucred'))
 conf_data.set('HAVE_GETPROGNAME', cc.has_function('getprogname'))
 conf_data.set('HAVE_GETZONEID', cc.has_function('getzoneid'))
+conf_data.set('HAVE_MEMFD_CREATE', cc.has_function('memfd_create'))
 conf_data.set('HAVE_MKOSTEMP', cc.has_function('mkostemp'))
 conf_data.set('HAVE_MMAP', cc.has_function('mmap'))
 conf_data.set('HAVE_POLL', cc.has_function('poll'))

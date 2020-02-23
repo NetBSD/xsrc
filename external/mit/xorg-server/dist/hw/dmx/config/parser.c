@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 3.0.5.  */
+/* A Bison parser, made by GNU Bison 3.1.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
@@ -44,7 +44,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "3.0.5"
+#define YYBISON_VERSION "3.1"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -205,13 +205,13 @@ typedef signed char yytype_int8;
 #ifdef YYTYPE_UINT16
 typedef YYTYPE_UINT16 yytype_uint16;
 #else
-typedef unsigned short int yytype_uint16;
+typedef unsigned short yytype_uint16;
 #endif
 
 #ifdef YYTYPE_INT16
 typedef YYTYPE_INT16 yytype_int16;
 #else
-typedef short int yytype_int16;
+typedef short yytype_int16;
 #endif
 
 #ifndef YYSIZE_T
@@ -223,7 +223,7 @@ typedef short int yytype_int16;
 #  include <stddef.h> /* INFRINGES ON USER NAME SPACE */
 #  define YYSIZE_T size_t
 # else
-#  define YYSIZE_T unsigned int
+#  define YYSIZE_T unsigned
 # endif
 #endif
 
@@ -275,7 +275,7 @@ typedef short int yytype_int16;
 # define YYUSE(E) /* empty */
 #endif
 
-#if defined __GNUC__ && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
+#if defined __GNUC__ && ! defined __ICC && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
 /* Suppress an incorrect diagnostic about yylval being uninitialized.  */
 # define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN \
     _Pragma ("GCC diagnostic push") \
@@ -443,7 +443,7 @@ union yyalloc
 #define YYMAXUTOK   268
 
 #define YYTRANSLATE(YYX)                                                \
-  ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
+  ((unsigned) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
 
 /* YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to TOKEN-NUM
    as returned by yylex, without out-of-bounds checking.  */
@@ -778,7 +778,7 @@ do {                                                            \
 static void
 yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule)
 {
-  unsigned long int yylno = yyrline[yyrule];
+  unsigned long yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
   int yyi;
   YYFPRINTF (stderr, "Reducing stack by rule %d (line %lu):\n",
@@ -1210,7 +1210,7 @@ yyparse (void)
       yyvsp = yyvs + yysize - 1;
 
       YYDPRINTF ((stderr, "Stack size increased to %lu\n",
-                  (unsigned long int) yystacksize));
+                  (unsigned long) yystacksize));
 
       if (yyss + yystacksize - 1 <= yyssp)
         YYABORT;
@@ -1321,279 +1321,279 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 96 "parser.y" /* yacc.c:1648  */
+#line 96 "parser.y" /* yacc.c:1651  */
     { dmxConfigEntry = (yyvsp[0].entry); }
-#line 1327 "parser.c" /* yacc.c:1648  */
+#line 1327 "parser.c" /* yacc.c:1651  */
     break;
 
   case 4:
-#line 100 "parser.y" /* yacc.c:1648  */
+#line 100 "parser.y" /* yacc.c:1651  */
     { APPEND(DMXConfigEntryPtr,(yyvsp[-1].entry),(yyvsp[0].entry)); (yyval.entry) = (yyvsp[-1].entry); }
-#line 1333 "parser.c" /* yacc.c:1648  */
+#line 1333 "parser.c" /* yacc.c:1651  */
     break;
 
   case 5:
-#line 103 "parser.y" /* yacc.c:1648  */
+#line 103 "parser.y" /* yacc.c:1651  */
     { (yyval.entry) = dmxConfigEntryVirtual((yyvsp[0].virtual)); }
-#line 1339 "parser.c" /* yacc.c:1648  */
+#line 1339 "parser.c" /* yacc.c:1651  */
     break;
 
   case 6:
-#line 104 "parser.y" /* yacc.c:1648  */
+#line 104 "parser.y" /* yacc.c:1651  */
     { (yyval.entry) = dmxConfigEntryComment((yyvsp[0].comment)); }
-#line 1345 "parser.c" /* yacc.c:1648  */
+#line 1345 "parser.c" /* yacc.c:1651  */
     break;
 
   case 7:
-#line 108 "parser.y" /* yacc.c:1648  */
+#line 108 "parser.y" /* yacc.c:1651  */
     { (yyval.virtual) = dmxConfigCreateVirtual((yyvsp[-3].token), NULL, NULL, (yyvsp[-2].token), (yyvsp[-1].subentry), (yyvsp[0].token)); }
-#line 1351 "parser.c" /* yacc.c:1648  */
+#line 1351 "parser.c" /* yacc.c:1651  */
     break;
 
   case 8:
-#line 110 "parser.y" /* yacc.c:1648  */
+#line 110 "parser.y" /* yacc.c:1651  */
     { (yyval.virtual) = dmxConfigCreateVirtual((yyvsp[-4].token), NULL, (yyvsp[-3].pair), (yyvsp[-2].token), (yyvsp[-1].subentry), (yyvsp[0].token)); }
-#line 1357 "parser.c" /* yacc.c:1648  */
+#line 1357 "parser.c" /* yacc.c:1651  */
     break;
 
   case 9:
-#line 112 "parser.y" /* yacc.c:1648  */
+#line 112 "parser.y" /* yacc.c:1651  */
     { (yyval.virtual) = dmxConfigCreateVirtual((yyvsp[-4].token), (yyvsp[-3].string), NULL, (yyvsp[-2].token), (yyvsp[-1].subentry), (yyvsp[0].token)); }
-#line 1363 "parser.c" /* yacc.c:1648  */
+#line 1363 "parser.c" /* yacc.c:1651  */
     break;
 
   case 10:
-#line 114 "parser.y" /* yacc.c:1648  */
+#line 114 "parser.y" /* yacc.c:1651  */
     { (yyval.virtual) = dmxConfigCreateVirtual((yyvsp[-5].token), (yyvsp[-4].string), (yyvsp[-3].pair), (yyvsp[-2].token), (yyvsp[-1].subentry), (yyvsp[0].token) ); }
-#line 1369 "parser.c" /* yacc.c:1648  */
+#line 1369 "parser.c" /* yacc.c:1651  */
     break;
 
   case 12:
-#line 118 "parser.y" /* yacc.c:1648  */
+#line 118 "parser.y" /* yacc.c:1651  */
     { APPEND(DMXConfigSubPtr,(yyvsp[-1].subentry),(yyvsp[0].subentry)); (yyval.subentry) = (yyvsp[-1].subentry); }
-#line 1375 "parser.c" /* yacc.c:1648  */
+#line 1375 "parser.c" /* yacc.c:1651  */
     break;
 
   case 13:
-#line 121 "parser.y" /* yacc.c:1648  */
+#line 121 "parser.y" /* yacc.c:1651  */
     { (yyval.subentry) = dmxConfigSubComment((yyvsp[0].comment)); }
-#line 1381 "parser.c" /* yacc.c:1648  */
+#line 1381 "parser.c" /* yacc.c:1651  */
     break;
 
   case 14:
-#line 122 "parser.y" /* yacc.c:1648  */
+#line 122 "parser.y" /* yacc.c:1651  */
     { (yyval.subentry) = dmxConfigSubDisplay((yyvsp[0].display)); }
-#line 1387 "parser.c" /* yacc.c:1648  */
+#line 1387 "parser.c" /* yacc.c:1651  */
     break;
 
   case 15:
-#line 123 "parser.y" /* yacc.c:1648  */
+#line 123 "parser.y" /* yacc.c:1651  */
     { (yyval.subentry) = dmxConfigSubWall((yyvsp[0].wall)); }
-#line 1393 "parser.c" /* yacc.c:1648  */
+#line 1393 "parser.c" /* yacc.c:1651  */
     break;
 
   case 16:
-#line 124 "parser.y" /* yacc.c:1648  */
+#line 124 "parser.y" /* yacc.c:1651  */
     { (yyval.subentry) = dmxConfigSubOption((yyvsp[0].option)); }
-#line 1399 "parser.c" /* yacc.c:1648  */
+#line 1399 "parser.c" /* yacc.c:1651  */
     break;
 
   case 17:
-#line 125 "parser.y" /* yacc.c:1648  */
+#line 125 "parser.y" /* yacc.c:1651  */
     { (yyval.subentry) = dmxConfigSubParam((yyvsp[0].param)); }
-#line 1405 "parser.c" /* yacc.c:1648  */
+#line 1405 "parser.c" /* yacc.c:1651  */
     break;
 
   case 18:
-#line 129 "parser.y" /* yacc.c:1648  */
+#line 129 "parser.y" /* yacc.c:1651  */
     { (yyval.option) = dmxConfigCreateOption((yyvsp[-2].token), (yyvsp[-1].string), (yyvsp[0].token)); }
-#line 1411 "parser.c" /* yacc.c:1648  */
+#line 1411 "parser.c" /* yacc.c:1651  */
     break;
 
   case 19:
-#line 133 "parser.y" /* yacc.c:1648  */
+#line 133 "parser.y" /* yacc.c:1651  */
     { (yyval.param) = dmxConfigCreateParam((yyvsp[-2].token), NULL, (yyvsp[-1].string), NULL, (yyvsp[0].token)); }
-#line 1417 "parser.c" /* yacc.c:1648  */
+#line 1417 "parser.c" /* yacc.c:1651  */
     break;
 
   case 20:
-#line 135 "parser.y" /* yacc.c:1648  */
+#line 135 "parser.y" /* yacc.c:1651  */
     { (yyval.param) = dmxConfigCreateParam((yyvsp[-3].token), (yyvsp[-2].token), NULL, (yyvsp[0].token), NULL);
                (yyval.param)->next = (yyvsp[-1].param);
              }
-#line 1425 "parser.c" /* yacc.c:1648  */
+#line 1425 "parser.c" /* yacc.c:1651  */
     break;
 
   case 22:
-#line 141 "parser.y" /* yacc.c:1648  */
+#line 141 "parser.y" /* yacc.c:1651  */
     { APPEND(DMXConfigParamPtr,(yyvsp[-1].param),(yyvsp[0].param)); (yyval.param) = (yyvsp[-1].param); }
-#line 1431 "parser.c" /* yacc.c:1648  */
+#line 1431 "parser.c" /* yacc.c:1651  */
     break;
 
   case 23:
-#line 145 "parser.y" /* yacc.c:1648  */
+#line 145 "parser.y" /* yacc.c:1651  */
     { (yyval.param) = dmxConfigCreateParam(NULL, NULL, (yyvsp[-1].string), NULL, (yyvsp[0].token)); }
-#line 1437 "parser.c" /* yacc.c:1648  */
+#line 1437 "parser.c" /* yacc.c:1651  */
     break;
 
   case 24:
-#line 149 "parser.y" /* yacc.c:1648  */
+#line 149 "parser.y" /* yacc.c:1651  */
     { (yyval.pdim) = dmxConfigCreatePartDim((yyvsp[-1].pair), (yyvsp[0].pair)); }
-#line 1443 "parser.c" /* yacc.c:1648  */
+#line 1443 "parser.c" /* yacc.c:1651  */
     break;
 
   case 25:
-#line 151 "parser.y" /* yacc.c:1648  */
+#line 151 "parser.y" /* yacc.c:1651  */
     { (yyval.pdim) = dmxConfigCreatePartDim((yyvsp[0].pair), NULL); }
-#line 1449 "parser.c" /* yacc.c:1648  */
+#line 1449 "parser.c" /* yacc.c:1651  */
     break;
 
   case 26:
-#line 153 "parser.y" /* yacc.c:1648  */
+#line 153 "parser.y" /* yacc.c:1651  */
     { (yyval.pdim) = dmxConfigCreatePartDim(NULL, (yyvsp[0].pair)); }
-#line 1455 "parser.c" /* yacc.c:1648  */
+#line 1455 "parser.c" /* yacc.c:1651  */
     break;
 
   case 27:
-#line 157 "parser.y" /* yacc.c:1648  */
+#line 157 "parser.y" /* yacc.c:1651  */
     { (yyval.fdim) = dmxConfigCreateFullDim((yyvsp[-2].pdim), (yyvsp[0].pdim)); }
-#line 1461 "parser.c" /* yacc.c:1648  */
+#line 1461 "parser.c" /* yacc.c:1651  */
     break;
 
   case 28:
-#line 159 "parser.y" /* yacc.c:1648  */
+#line 159 "parser.y" /* yacc.c:1651  */
     { (yyval.fdim) = dmxConfigCreateFullDim(NULL, (yyvsp[0].pdim)); }
-#line 1467 "parser.c" /* yacc.c:1648  */
+#line 1467 "parser.c" /* yacc.c:1651  */
     break;
 
   case 29:
-#line 161 "parser.y" /* yacc.c:1648  */
+#line 161 "parser.y" /* yacc.c:1651  */
     { (yyval.fdim) = dmxConfigCreateFullDim((yyvsp[0].pdim), NULL); }
-#line 1473 "parser.c" /* yacc.c:1648  */
+#line 1473 "parser.c" /* yacc.c:1651  */
     break;
 
   case 30:
-#line 165 "parser.y" /* yacc.c:1648  */
+#line 165 "parser.y" /* yacc.c:1651  */
     { (yyval.display) = dmxConfigCreateDisplay((yyvsp[-4].token), (yyvsp[-3].string), (yyvsp[-2].fdim), (yyvsp[-1].pair), (yyvsp[0].token)); }
-#line 1479 "parser.c" /* yacc.c:1648  */
+#line 1479 "parser.c" /* yacc.c:1651  */
     break;
 
   case 31:
-#line 167 "parser.y" /* yacc.c:1648  */
+#line 167 "parser.y" /* yacc.c:1651  */
     { (yyval.display) = dmxConfigCreateDisplay((yyvsp[-3].token), NULL, (yyvsp[-2].fdim), (yyvsp[-1].pair), (yyvsp[0].token)); }
-#line 1485 "parser.c" /* yacc.c:1648  */
+#line 1485 "parser.c" /* yacc.c:1651  */
     break;
 
   case 32:
-#line 169 "parser.y" /* yacc.c:1648  */
+#line 169 "parser.y" /* yacc.c:1651  */
     { (yyval.display) = dmxConfigCreateDisplay((yyvsp[-3].token), (yyvsp[-2].string), NULL, (yyvsp[-1].pair), (yyvsp[0].token)); }
-#line 1491 "parser.c" /* yacc.c:1648  */
+#line 1491 "parser.c" /* yacc.c:1651  */
     break;
 
   case 33:
-#line 172 "parser.y" /* yacc.c:1648  */
+#line 172 "parser.y" /* yacc.c:1651  */
     { (yyval.display) = dmxConfigCreateDisplay((yyvsp[-3].token), (yyvsp[-2].string), (yyvsp[-1].fdim), NULL, (yyvsp[0].token)); }
-#line 1497 "parser.c" /* yacc.c:1648  */
+#line 1497 "parser.c" /* yacc.c:1651  */
     break;
 
   case 34:
-#line 174 "parser.y" /* yacc.c:1648  */
+#line 174 "parser.y" /* yacc.c:1651  */
     { (yyval.display) = dmxConfigCreateDisplay((yyvsp[-2].token), NULL, (yyvsp[-1].fdim), NULL, (yyvsp[0].token)); }
-#line 1503 "parser.c" /* yacc.c:1648  */
+#line 1503 "parser.c" /* yacc.c:1651  */
     break;
 
   case 35:
-#line 176 "parser.y" /* yacc.c:1648  */
+#line 176 "parser.y" /* yacc.c:1651  */
     { (yyval.display) = dmxConfigCreateDisplay((yyvsp[-2].token), (yyvsp[-1].string), NULL, NULL, (yyvsp[0].token)); }
-#line 1509 "parser.c" /* yacc.c:1648  */
+#line 1509 "parser.c" /* yacc.c:1651  */
     break;
 
   case 36:
-#line 178 "parser.y" /* yacc.c:1648  */
+#line 178 "parser.y" /* yacc.c:1651  */
     { (yyval.display) = dmxConfigCreateDisplay((yyvsp[-1].token), NULL, NULL, NULL, (yyvsp[0].token)); }
-#line 1515 "parser.c" /* yacc.c:1648  */
+#line 1515 "parser.c" /* yacc.c:1651  */
     break;
 
   case 37:
-#line 182 "parser.y" /* yacc.c:1648  */
+#line 182 "parser.y" /* yacc.c:1651  */
     { (yyval.wall) = dmxConfigCreateWall((yyvsp[-4].token), (yyvsp[-3].pair), (yyvsp[-2].pair), (yyvsp[-1].string), (yyvsp[0].token)); }
-#line 1521 "parser.c" /* yacc.c:1648  */
+#line 1521 "parser.c" /* yacc.c:1651  */
     break;
 
   case 38:
-#line 184 "parser.y" /* yacc.c:1648  */
+#line 184 "parser.y" /* yacc.c:1651  */
     { (yyval.wall) = dmxConfigCreateWall((yyvsp[-3].token), (yyvsp[-2].pair), NULL, (yyvsp[-1].string), (yyvsp[0].token)); }
-#line 1527 "parser.c" /* yacc.c:1648  */
+#line 1527 "parser.c" /* yacc.c:1651  */
     break;
 
   case 39:
-#line 186 "parser.y" /* yacc.c:1648  */
+#line 186 "parser.y" /* yacc.c:1651  */
     { (yyval.wall) = dmxConfigCreateWall((yyvsp[-2].token), NULL, NULL, (yyvsp[-1].string), (yyvsp[0].token)); }
-#line 1533 "parser.c" /* yacc.c:1648  */
+#line 1533 "parser.c" /* yacc.c:1651  */
     break;
 
   case 41:
-#line 190 "parser.y" /* yacc.c:1648  */
+#line 190 "parser.y" /* yacc.c:1651  */
     { (yyval.token) = (yyvsp[-1].token); (yyval.token)->comment = (yyvsp[0].comment)->comment; }
-#line 1539 "parser.c" /* yacc.c:1648  */
+#line 1539 "parser.c" /* yacc.c:1651  */
     break;
 
   case 43:
-#line 194 "parser.y" /* yacc.c:1648  */
+#line 194 "parser.y" /* yacc.c:1651  */
     { (yyval.string) = (yyvsp[-1].string); (yyval.string)->comment = (yyvsp[0].comment)->comment; }
-#line 1545 "parser.c" /* yacc.c:1648  */
+#line 1545 "parser.c" /* yacc.c:1651  */
     break;
 
   case 45:
-#line 198 "parser.y" /* yacc.c:1648  */
+#line 198 "parser.y" /* yacc.c:1651  */
     { (yyval.pair) = (yyvsp[-1].pair); (yyval.pair)->comment = (yyvsp[0].comment)->comment; }
-#line 1551 "parser.c" /* yacc.c:1648  */
+#line 1551 "parser.c" /* yacc.c:1651  */
     break;
 
   case 47:
-#line 202 "parser.y" /* yacc.c:1648  */
+#line 202 "parser.y" /* yacc.c:1651  */
     { (yyval.pair) = (yyvsp[-1].pair); (yyval.pair)->comment = (yyvsp[0].comment)->comment; }
-#line 1557 "parser.c" /* yacc.c:1648  */
+#line 1557 "parser.c" /* yacc.c:1651  */
     break;
 
   case 49:
-#line 206 "parser.y" /* yacc.c:1648  */
+#line 206 "parser.y" /* yacc.c:1651  */
     { (yyval.pair) = (yyvsp[-1].pair); (yyval.pair)->comment = (yyvsp[0].comment)->comment; }
-#line 1563 "parser.c" /* yacc.c:1648  */
+#line 1563 "parser.c" /* yacc.c:1651  */
     break;
 
   case 51:
-#line 210 "parser.y" /* yacc.c:1648  */
+#line 210 "parser.y" /* yacc.c:1651  */
     { (yyval.token) = (yyvsp[-1].token); (yyval.token)->comment = (yyvsp[0].comment)->comment; }
-#line 1569 "parser.c" /* yacc.c:1648  */
+#line 1569 "parser.c" /* yacc.c:1651  */
     break;
 
   case 53:
-#line 214 "parser.y" /* yacc.c:1648  */
+#line 214 "parser.y" /* yacc.c:1651  */
     { (yyval.token) = (yyvsp[-1].token); (yyval.token)->comment = (yyvsp[0].comment)->comment; }
-#line 1575 "parser.c" /* yacc.c:1648  */
+#line 1575 "parser.c" /* yacc.c:1651  */
     break;
 
   case 55:
-#line 218 "parser.y" /* yacc.c:1648  */
+#line 218 "parser.y" /* yacc.c:1651  */
     { (yyval.token) = (yyvsp[-1].token); (yyval.token)->comment = (yyvsp[0].comment)->comment; }
-#line 1581 "parser.c" /* yacc.c:1648  */
+#line 1581 "parser.c" /* yacc.c:1651  */
     break;
 
   case 57:
-#line 222 "parser.y" /* yacc.c:1648  */
+#line 222 "parser.y" /* yacc.c:1651  */
     { (yyval.token) = (yyvsp[-1].token); (yyval.token)->comment = (yyvsp[0].comment)->comment; }
-#line 1587 "parser.c" /* yacc.c:1648  */
+#line 1587 "parser.c" /* yacc.c:1651  */
     break;
 
   case 59:
-#line 226 "parser.y" /* yacc.c:1648  */
+#line 226 "parser.y" /* yacc.c:1651  */
     { APPEND(DMXConfigStringPtr, (yyvsp[-1].string), (yyvsp[0].string)); (yyval.string) = (yyvsp[-1].string); }
-#line 1593 "parser.c" /* yacc.c:1648  */
+#line 1593 "parser.c" /* yacc.c:1651  */
     break;
 
 
-#line 1597 "parser.c" /* yacc.c:1648  */
+#line 1597 "parser.c" /* yacc.c:1651  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
