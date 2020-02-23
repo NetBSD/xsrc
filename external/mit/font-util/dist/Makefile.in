@@ -236,8 +236,8 @@ CSCOPE = cscope
 DIST_SUBDIRS = $(SUBDIRS)
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in \
 	$(srcdir)/fontutil.m4.in $(srcdir)/fontutil.pc.in COPYING \
-	ChangeLog INSTALL README compile config.guess config.sub \
-	depcomp install-sh missing
+	ChangeLog INSTALL compile config.guess config.sub depcomp \
+	install-sh missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -340,6 +340,8 @@ PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
+PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
+PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
@@ -427,7 +429,7 @@ mapfiles_DATA = \
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = fontutil.pc
 CLEANFILES = bdftruncate
-EXTRA_DIST = $(mapfiles_DATA)
+EXTRA_DIST = $(mapfiles_DATA) README.md
 MAINTAINERCLEANFILES = ChangeLog INSTALL
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
