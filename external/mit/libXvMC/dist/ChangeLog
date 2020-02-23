@@ -1,3 +1,41 @@
+commit 36086307ba9fd1272365b964056e8a6780109478
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue Sep 24 12:52:29 2019 -0400
+
+    libXvMC 1.0.12
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 0fab90b409a3e4848603bdb6b438523038239f23
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue Sep 24 12:28:19 2019 -0400
+
+    vld: Provide <X11/extensions/vldXvMC.h> ourself
+    
+    This header refers to libX11 types, it doesn't belong in xorgproto and
+    has been moved to legacy in 2019.2. Supply it ourselves.
+
+commit dd9ae03725990ee9c9336bca4b267dfbb696002f
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue Jul 23 15:28:50 2019 -0400
+
+    pkgconfig: Remove xv from xvmc.pc
+    
+    This library does not itself require libXv for anything.
+
+commit 0366572c58a85558f9dc7229e74b9a0397becc89
+Author: Dylan Baker <dylan@pnwbakers.com>
+Date:   Mon Jul 8 09:46:28 2019 -0700
+
+    Add a pkgconfig file for libXvMCW
+    
+    Mesa needs to link with this for testing, as do others presumably.
+    Having a pkg-config file makes this much easier
+    
+    Bugzilla: https://bugs.freedesktop.org/show_bug.cgi?id=110735
+    
+    v2: - remove xv from Requires and Requires.private
+
 commit 63a79d1d087f5121b07510692bf6dd8207d0c0d7
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Sat Mar 16 15:11:28 2019 -0700
