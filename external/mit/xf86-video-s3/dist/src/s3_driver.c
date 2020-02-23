@@ -42,7 +42,6 @@
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "xf86Pci.h"
-#include "xf86PciInfo.h"
 #include "xf86fbman.h"
 #include "xf86cmap.h"
 #if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
@@ -52,7 +51,6 @@
 #include "compiler.h"
 #include "mipointer.h"
 #include "micmap.h"
-#include "mibstore.h"
 #include "fb.h"
 #include "inputstr.h"
 #include "shadowfb.h"
@@ -309,7 +307,7 @@ static Bool S3PreInit(ScrnInfoPtr pScrn, int flags)
 	Gamma gzeros = {0.0, 0.0, 0.0};
 	int i, vgaCRIndex, vgaCRReg;
 	unsigned char tmp;
-	char *s;
+	const char *s;
 
         if (flags & PROBE_DETECT)
                 return FALSE;
@@ -742,7 +740,7 @@ static Bool S3ScreenInit(SCREEN_INIT_ARGS_DECL)
 	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 	S3Ptr pS3 = S3PTR(pScrn);
 	BoxRec ScreenArea;
-	int width, height, displayWidth;
+	int width, height;
 	
 	if (pS3->rotate) {
 		height = pScrn->virtualX;
@@ -790,10 +788,8 @@ static Bool S3ScreenInit(SCREEN_INIT_ARGS_DECL)
         if(pS3->shadowFB) {
         	pS3->ShadowPitch = BitmapBytePad(pScrn->bitsPerPixel * width);
         	pS3->ShadowPtr = malloc(pS3->ShadowPitch * height);
-		displayWidth = pS3->ShadowPitch / (pScrn->bitsPerPixel >> 3);
         } else {
         	pS3->ShadowPtr = NULL;
-		displayWidth = pScrn->displayWidth;
         }
         
         if (!fbScreenInit(pScreen, (pS3->shadowFB ? pS3->ShadowPtr : pS3->FBBase), 
@@ -822,7 +818,6 @@ static Bool S3ScreenInit(SCREEN_INIT_ARGS_DECL)
 	fbPictureInit (pScreen, 0, 0);
 	S3DGAInit(pScreen);
 
-        miInitializeBackingStore(pScreen);
         xf86SetBackingStore(pScreen);
 
 	/* framebuffer manager setup */

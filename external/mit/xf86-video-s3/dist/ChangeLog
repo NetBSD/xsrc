@@ -1,3 +1,168 @@
+commit 5c18f179c36d4eedd447d883385a1c93763e4b1a
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Jul 25 10:03:33 2019 -0700
+
+    Version bumped to 0.7.0
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 7dd4b94c8e3453d3b684dc22c338b5387d278c8f
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Dec 18 17:41:03 2018 -0600
+
+    Eliminate unused variable compilation warning
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 55a62ca2a9a6a6d59ac2aedbb23f40e0bc05402b
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Dec 18 17:35:43 2018 -0600
+
+    Eliminate set but not used variable compilation warnings
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 0626eaa962419fa702fae0020525d62f51bd9e2e
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Dec 18 17:25:55 2018 -0600
+
+    Use const char for xf86GetOptValString return type
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 159c850ba86bd580fd3e749dd4f43e3b4228d91b
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Dec 18 15:30:34 2018 -0600
+
+    Discontinue the use of xf86PciInfo.h
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 0da14645b6bd27787164001031bafaca551fcecd
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 7 19:06:54 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 49f69dedee27b54dcd58793886c36e6b1eaa2b07
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 18 16:07:49 2018 -0800
+
+    Update README for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9ee0976d25100d2090a5856361351d2c3750fe24
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:22 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit c729d499f9f4305b21d989032aa7d1b3cde1fff3
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 2684e25c3e1107df3627dca39df600935091a9e1
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
+commit a32e5df1b515799414dc541aa1ec28fed32db152
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jun 1 21:03:14 2014 -0700
+
+    autogen.sh: Honor NOCONFIGURE=1
+    
+    See http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9a8969cb5f9a87c19f075b500ad77bfdbac75d8e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jun 1 21:03:13 2014 -0700
+
+    configure: Drop AM_MAINTAINER_MODE
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9ede7835a2340400f72984c99b690e5c46189f0a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Sep 10 08:33:44 2016 -0700
+
+    Remove unused BIOS size & address macros
+    
+    Use of them was removed by 82bd67a255fb
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 82bd67a255fb45847d8a10811641bc0b203ba864
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Mar 17 10:27:51 2016 -0700
+
+    s3_bios.c: Simplify code for choosing between 16000 & 16000 for RefClock
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 7b454358082fc07985878fc92b902d7534144cae
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Mar 12 10:54:22 2016 -0800
+
+    When checking malloc for success, it helps to use == NULL, instead of =
+    
+    Fixes gcc 5.3 compiler warning:
+    s3_bios.c: In function 'find_bios_string':
+    s3_bios.c:49:2: warning: suggest parentheses around assignment used as
+        truth value [-Wparentheses]
+      if (bios = NULL)
+        ^
+    
+    [Tested by compiling only, as I have no S3 hardware, but clearly no one
+     else has tested this code since commit c41a1188ce53 in 2009, as it would
+     be segfaulting if run.]
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ed0fbfd27609e897c42d7ab316481a9504746233
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Jan 7 16:28:58 2014 -0500
+
+    Remove mibstore.h
+    
+    As it was done in numerous other drivers. Fixes compile error.
+    
+    Tested-by: Trevor Woerner <trevor.woerner@linaro.org>
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 92d10d5d6882c3db6695a8fff83c88fbaaa27a33
+Author: Eric S. Raymond <esr@thyrsus.com>
+Date:   Thu Aug 23 12:46:03 2012 -0400
+
+    Fix malformed list syntax.
+    
+    TP without a body shouldn't really be used for an item list. Fixing this
+    makes structural translation to DocBook possible.
+    
+    Signed-off-by: Eric S. Raymond <esr@thyrsus.com>
+
 commit 73304078ffd138ba642587af1131a80720bfe65c
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Tue Jul 17 16:05:09 2012 +1000

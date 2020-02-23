@@ -34,7 +34,6 @@
 
 #include "xf86.h"
 #include "xf86Pci.h"
-#include "xf86PciInfo.h"
 #include "xf86RamDac.h"
 #ifdef HAVE_XAA_H
 #include "xaa.h"
@@ -49,6 +48,24 @@
 #include "fourcc.h"
 
 #include "compat-api.h"
+
+
+#define PCI_VENDOR_S3			0x5333
+
+#define PCI_CHIP_PLATO			0x0551
+#define PCI_CHIP_TRIO			0x8811
+#define PCI_CHIP_AURORA64VP		0x8812
+#define PCI_CHIP_TRIO64UVP		0x8814
+#define PCI_CHIP_868			0x8880
+#define PCI_CHIP_928			0x88B0
+#define PCI_CHIP_864_0			0x88C0
+#define PCI_CHIP_864_1			0x88C1
+#define PCI_CHIP_964_0			0x88D0
+#define PCI_CHIP_964_1			0x88D1
+#define PCI_CHIP_968			0x88F0
+#define PCI_CHIP_TRIO64V2_DXGX	0x8901
+#define PCI_CHIP_PLATO_PX		0x8902
+
 
 typedef struct _S3RegRec {
 	unsigned char	cr31, cr32, cr33, cr34, cr3a, cr3b, cr3c;
@@ -248,9 +265,6 @@ void S3RefreshArea32(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 #define TRIO64_RAMDAC	0x8811
 #define	TI3025_RAMDAC	0x3025
 #define	TI3020_RAMDAC	0x3020
-
-#define BIOS_BSIZE	1024
-#define	BIOS_BASE	0xc0000
 
 /*
  * Chip...Sets...
