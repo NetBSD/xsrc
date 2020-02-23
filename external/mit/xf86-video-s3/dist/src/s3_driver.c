@@ -42,7 +42,6 @@
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "xf86Pci.h"
-#include "xf86PciInfo.h"
 #include "xf86fbman.h"
 #include "xf86cmap.h"
 #if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
@@ -795,7 +794,7 @@ static Bool S3ScreenInit(SCREEN_INIT_ARGS_DECL)
 	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 	S3Ptr pS3 = S3PTR(pScrn);
 	BoxRec ScreenArea;
-	int width, height, displayWidth;
+	int width, height;
 	
 	if (pS3->rotate) {
 		height = pScrn->virtualX;
@@ -843,10 +842,8 @@ static Bool S3ScreenInit(SCREEN_INIT_ARGS_DECL)
         if(pS3->shadowFB) {
         	pS3->ShadowPitch = BitmapBytePad(pScrn->bitsPerPixel * width);
         	pS3->ShadowPtr = malloc(pS3->ShadowPitch * height);
-		displayWidth = pS3->ShadowPitch / (pScrn->bitsPerPixel >> 3);
         } else {
         	pS3->ShadowPtr = NULL;
-		displayWidth = pScrn->displayWidth;
         }
         
         if (!fbScreenInit(pScreen, (pS3->shadowFB ? pS3->ShadowPtr : pS3->FBBase), 
