@@ -991,16 +991,19 @@ xkb_symbols "unipunct" {
 
 // Раскладка представляет собой обычную русскую раскладку, в которой некоторые редко используемые буквы
 // убрали на третий уровень, и поставили все пунктуационные знаки на то же место, где они стоят на
-// US раскладке.
+// US раскладке (+ добавлен знак номера, который отсутствует в US раскладке, но часто нужен в RU).
 
 // ru(unipunct):
-// `~ 1! 2@ 3# 4$ 5% 6^ 7& 8* 9( 0) -_ =+
+// `~ 1! 2@ 3#3№ 4$ 5% 6^ 7& 8* 9( 0) -_ =+
 // хХ бБ уУюЮ кК еЕэЭ нН гГ шШщЩ жЖ зЗ [{ ]} \|
 // фФ ыЫ вВ аА пП рР оОёЁ лЛ дД ;: '"           //"
 // яЯ чЧцЦ сС мМ иИйЙ тТ ьЬъЪ ,< .> /?
 
  include "us(basic)"
  name[Group1]= "Russian (with US punctuation)";
+ 
+ // Единственный символ, который отсутствует на US раскладке - №
+ key <AE03> { [ 3,             numbersign, 3, numerosign  ] };
 
  key <LatQ> { [ Cyrillic_ha,   Cyrillic_HA ] };
  key <LatW> { [ Cyrillic_be,   Cyrillic_BE ] };
@@ -1032,3 +1035,24 @@ xkb_symbols "unipunct" {
  key <LatM> { [ Cyrillic_softsign, Cyrillic_SOFTSIGN, Cyrillic_hardsign, Cyrillic_HARDSIGN ] };
 };
 
+partial alphanumeric_keys
+xkb_symbols "phonetic_mac" {
+
+    include "ru(phonetic_winkeys)"
+    name[Group1]= "Russian (phonetic Macintosh)";
+
+    key <LatE> { [       Cyrillic_ie,       Cyrillic_IE, Cyrillic_io, Cyrillic_IO  ] };
+    key <LatW> { [      Cyrillic_sha,      Cyrillic_SHA  ] };
+    key <LatV> { [       Cyrillic_ve,       Cyrillic_VE  ] };
+    key <TLDE> { [    Cyrillic_shcha,    Cyrillic_SHCHA  ] };
+    key <AD11> { [       Cyrillic_yu,       Cyrillic_YU  ] };
+    key <AD12> { [      Cyrillic_zhe,      Cyrillic_ZHE  ] };
+    key <AE03> { [                 3,        numbersign, numerosign  ] };
+    key <AE04> { [                 4,            dollar, U20BD       ] }; // ruble
+    key <AE05> { [                 5,           percent  ] };
+    key <AE06> { [                 6,             caret  ] };
+    key <AE11> { [ Cyrillic_softsign, Cyrillic_SOFTSIGN, minus,       underscore  ] };
+    key <AE12> { [ Cyrillic_hardsign, Cyrillic_HARDSIGN, equal,       plus        ] };
+
+    include "level3(ralt_switch)"
+};
