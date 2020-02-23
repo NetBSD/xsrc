@@ -78,16 +78,28 @@ extern "C" {
 
 #ifdef __OpenBSD__
 #define DRM_DIR_NAME  "/dev"
-#define DRM_DEV_NAME  "%s/drm%d"
-#define DRM_CONTROL_DEV_NAME  "%s/drmC%d"
-#define DRM_RENDER_DEV_NAME  "%s/drmR%d"
+#define DRM_PRIMARY_MINOR_NAME  "drm"
+#define DRM_CONTROL_MINOR_NAME  "drmC"
+#define DRM_RENDER_MINOR_NAME   "drmR"
 #else
 #define DRM_DIR_NAME  "/dev/dri"
-#define DRM_DEV_NAME  "%s/card%d"
-#define DRM_CONTROL_DEV_NAME  "%s/controlD%d"
-#define DRM_RENDER_DEV_NAME  "%s/renderD%d"
+#define DRM_PRIMARY_MINOR_NAME  "card"
+#define DRM_CONTROL_MINOR_NAME  "controlD"
+#define DRM_RENDER_MINOR_NAME   "renderD"
 #define DRM_PROC_NAME "/proc/dri/" /* For backward Linux compatibility */
 #endif
+
+#define DRM_DEV_NAME          "%s/" DRM_PRIMARY_MINOR_NAME "%d"
+#define DRM_CONTROL_DEV_NAME  "%s/" DRM_CONTROL_MINOR_NAME "%d"
+#define DRM_RENDER_DEV_NAME   "%s/" DRM_RENDER_MINOR_NAME  "%d"
+
+#define DRM_NODE_NAME_MAX \
+    (sizeof(DRM_DIR_NAME) + 1 /* slash */ \
+     + MAX3(sizeof(DRM_PRIMARY_MINOR_NAME), \
+            sizeof(DRM_CONTROL_MINOR_NAME), \
+            sizeof(DRM_RENDER_MINOR_NAME)) \
+     + sizeof("144") /* highest possible node number */ \
+     + 1) /* NULL-terminator */
 
 #define DRM_ERR_NO_DEVICE  (-1001)
 #define DRM_ERR_NO_ACCESS  (-1002)
