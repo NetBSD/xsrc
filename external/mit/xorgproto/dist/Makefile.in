@@ -89,6 +89,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@LEGACY_TRUE@am__append_1 = include/X11/extensions/XKBgeom.h
+@LEGACY_TRUE@am__append_2 = include/X11/extensions/vldXvMC.h
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -101,15 +103,16 @@ DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
 	$(damage_HEADERS) $(dmx_HEADERS) $(dri2_HEADERS) \
 	$(dri3_HEADERS) $(am__evie_HEADERS_DIST) $(fixes_HEADERS) \
 	$(am__fontcache_HEADERS_DIST) $(fonts_HEADERS) $(gl_HEADERS) \
-	$(glinternal_HEADERS) $(input_HEADERS) $(kb_HEADERS) \
+	$(glinternal_HEADERS) $(input_HEADERS) $(am__kb_HEADERS_DIST) \
 	$(am__lg3d_HEADERS_DIST) $(present_HEADERS) \
 	$(am__print_HEADERS_DIST) $(randr_HEADERS) $(record_HEADERS) \
 	$(render_HEADERS) $(resource_HEADERS) $(scrnsaver_HEADERS) \
-	$(am__trap_HEADERS_DIST) $(video_HEADERS) $(windowswm_HEADERS) \
-	$(xcmisc_HEADERS) $(xext_HEADERS) $(xf86bigfont_HEADERS) \
-	$(xf86dga_HEADERS) $(xf86dri_HEADERS) \
-	$(am__xf86misc_HEADERS_DIST) $(am__xf86rush_HEADERS_DIST) \
-	$(xf86vidmode_HEADERS) $(xinerama_HEADERS) $(xproto_HEADERS) \
+	$(am__trap_HEADERS_DIST) $(am__video_HEADERS_DIST) \
+	$(am__windowswm_HEADERS_DIST) $(xcmisc_HEADERS) \
+	$(xext_HEADERS) $(xf86bigfont_HEADERS) $(xf86dga_HEADERS) \
+	$(xf86dri_HEADERS) $(am__xf86misc_HEADERS_DIST) \
+	$(am__xf86rush_HEADERS_DIST) $(xf86vidmode_HEADERS) \
+	$(xinerama_HEADERS) $(xproto_HEADERS) \
 	$(am__xproxymng_HEADERS_DIST) $(am__DIST_COMMON)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
@@ -266,6 +269,11 @@ am__evie_HEADERS_DIST = include/X11/extensions/evieproto.h \
 am__fontcache_HEADERS_DIST = include/X11/extensions/fontcache.h \
 	include/X11/extensions/fontcacheP.h \
 	include/X11/extensions/fontcachstr.h
+am__kb_HEADERS_DIST = include/X11/extensions/XKB.h \
+	include/X11/extensions/XKBproto.h \
+	include/X11/extensions/XKBsrv.h \
+	include/X11/extensions/XKBstr.h \
+	include/X11/extensions/XKBgeom.h
 am__lg3d_HEADERS_DIST = include/X11/extensions/lgewire.h
 am__print_HEADERS_DIST = include/X11/extensions/Print.h \
 	include/X11/extensions/Printstr.h
@@ -276,6 +284,13 @@ am__trap_HEADERS_DIST = include/X11/extensions/xtrapbits.h \
 	include/X11/extensions/xtraplib.h \
 	include/X11/extensions/xtraplibp.h \
 	include/X11/extensions/xtrapproto.h
+am__video_HEADERS_DIST = include/X11/extensions/Xv.h \
+	include/X11/extensions/XvMC.h \
+	include/X11/extensions/XvMCproto.h \
+	include/X11/extensions/Xvproto.h \
+	include/X11/extensions/vldXvMC.h
+am__windowswm_HEADERS_DIST = include/X11/extensions/windowswm.h \
+	include/X11/extensions/windowswmstr.h
 am__xf86misc_HEADERS_DIST = include/X11/extensions/xf86misc.h \
 	include/X11/extensions/xf86mscstr.h
 am__xf86rush_HEADERS_DIST = include/X11/extensions/xf86rush.h \
@@ -633,13 +648,10 @@ input_HEADERS = \
 inputprotopkgconfigdir = $(datadir)/pkgconfig
 inputprotopkgconfig_DATA = inputproto.pc
 kbdir = $(includedir)/X11/extensions
-kb_HEADERS = \
-	include/X11/extensions/XKBgeom.h \
-	include/X11/extensions/XKB.h \
+kb_HEADERS = include/X11/extensions/XKB.h \
 	include/X11/extensions/XKBproto.h \
 	include/X11/extensions/XKBsrv.h \
-	include/X11/extensions/XKBstr.h
-
+	include/X11/extensions/XKBstr.h $(am__append_1)
 kbprotopkgconfigdir = $(datadir)/pkgconfig
 kbprotopkgconfig_DATA = kbproto.pc
 @LEGACY_TRUE@lg3ddir = $(includedir)/X11/extensions
@@ -723,22 +735,19 @@ scrnsaverprotopkgconfig_DATA = scrnsaverproto.pc
 @LEGACY_TRUE@trapprotopkgconfigdir = $(datadir)/pkgconfig
 @LEGACY_TRUE@trapprotopkgconfig_DATA = trapproto.pc
 videodir = $(includedir)/X11/extensions
-video_HEADERS = \
-	include/X11/extensions/vldXvMC.h \
-	include/X11/extensions/Xv.h \
+video_HEADERS = include/X11/extensions/Xv.h \
 	include/X11/extensions/XvMC.h \
 	include/X11/extensions/XvMCproto.h \
-	include/X11/extensions/Xvproto.h
-
+	include/X11/extensions/Xvproto.h $(am__append_2)
 videoprotopkgconfigdir = $(datadir)/pkgconfig
 videoprotopkgconfig_DATA = videoproto.pc
-windowswmdir = $(includedir)/X11/extensions
-windowswm_HEADERS = \
-        include/X11/extensions/windowswm.h \
-	include/X11/extensions/windowswmstr.h
+@LEGACY_TRUE@windowswmdir = $(includedir)/X11/extensions
+@LEGACY_TRUE@windowswm_HEADERS = \
+@LEGACY_TRUE@        include/X11/extensions/windowswm.h \
+@LEGACY_TRUE@	include/X11/extensions/windowswmstr.h
 
-windowswmprotopkgconfigdir = $(datadir)/pkgconfig
-windowswmprotopkgconfig_DATA = windowswmproto.pc
+@LEGACY_TRUE@windowswmprotopkgconfigdir = $(datadir)/pkgconfig
+@LEGACY_TRUE@windowswmprotopkgconfig_DATA = windowswmproto.pc
 xprotodir = $(includedir)/X11
 xproto_HEADERS = \
 	include/X11/ap_keysym.h \
