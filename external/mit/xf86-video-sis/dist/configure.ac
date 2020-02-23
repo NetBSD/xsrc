@@ -23,8 +23,8 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-video-sis],
-        [0.10.9],
-        [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
+        [0.12.0],
+        [https://gitlab.freedesktop.org/xorg/driver/xf86-video-sis/issues],
         [xf86-video-sis])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
@@ -32,7 +32,6 @@ AC_CONFIG_AUX_DIR(.)
 
 # Initialize Automake
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
-AM_MAINTAINER_MODE
 
 # Require X.Org macros 1.8 or later for MAN_SUBSTS set by XORG_MANPAGE_SECTIONS
 m4_ifndef([XORG_MACROS_VERSION],
@@ -76,12 +75,18 @@ sdkdir=`$PKG_CONFIG --variable=sdkdir xorg-server`
 # Checks for libraries.
 
 if test "$DRI" != no; then
-        AC_CHECK_FILE([${sdkdir}/dri.h],
-                      [have_dri_h="yes"], [have_dri_h="no"])
-        AC_CHECK_FILE([${sdkdir}/sarea.h],
-                      [have_sarea_h="yes"], [have_sarea_h="no"])
-        AC_CHECK_FILE([${sdkdir}/dristruct.h],
-                      [have_dristruct_h="yes"], [have_dristruct_h="no"])
+        if test "$cross_compiling" = "no" ; then
+               AC_CHECK_FILE([${sdkdir}/dri.h],
+                             [have_dri_h="yes"], [have_dri_h="no"])
+               AC_CHECK_FILE([${sdkdir}/sarea.h],
+                             [have_sarea_h="yes"], [have_sarea_h="no"])
+               AC_CHECK_FILE([${sdkdir}/dristruct.h],
+                             [have_dristruct_h="yes"], [have_dristruct_h="no"])
+        else
+		have_dri_h="yes"
+		have_sarea_h="yes"
+		have_dristruct_h="yes"
+        fi
 fi
 
 AC_MSG_CHECKING([whether to include DRI support])
@@ -122,7 +127,7 @@ AM_CONDITIONAL(XAA, test "x$XAA" = xyes)
 AC_MSG_RESULT([$XAA])
 
 # technically this should be a configure flag.  meh.
-AC_DEFINE(XF86EXA, 1, [Build support for Exa])
+AC_DEFINE(USE_EXA, 1, [Build support for EXA])
 
 SAVE_CPPFLAGS="$CPPFLAGS"
 CPPFLAGS="$CPPFLAGS $XORG_CFLAGS"

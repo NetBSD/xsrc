@@ -4212,7 +4212,11 @@ SISPutImageBlit(
    UChar  *ybased, *uvbased, packed;
    CARD16 *myuvbased;
    SiS_Packet12_YUV MyPacket;
+#if 0
+#ifdef SISMERGED
    Bool first;
+#endif
+#endif
 
    if(index >= NUM_BLIT_PORTS) return BadMatch;
 
@@ -4388,7 +4392,11 @@ SISPutImageBlit(
    }
 #endif
 
+#if 0
+#ifdef SISMERGED
    first = TRUE;
+#endif
+#endif
    while(nbox--) {
       left = pbox->x1;
       if(left >= drw_x + xoffset + width) goto mycont;
@@ -4477,7 +4485,11 @@ SISPutImageBlit(
 #if 0
       MyPacket.P12_Command &= ~(pPriv->VBlankTriggerCRT1 | pPriv->VBlankTriggerCRT2);
 #endif
+#if 0
+#ifdef SISMERGED
       first = FALSE;
+#endif
+#endif
 mycont:
       pbox++;
    }

@@ -197,7 +197,6 @@
 #include "sarea.h"
 #define _XF86DRI_SERVER_
 #include "dri.h"
-#include "GL/glxint.h"
 #include "sis_dri.h"
 #endif /* SISDRI */
 
@@ -231,7 +230,7 @@
 
 #ifdef SISVRAMQ
 #ifdef XORG_VERSION_CURRENT
-#if defined(SIS_HAVE_EXA) || (defined(XF86EXA) && (XF86EXA != 0))
+#if defined(SIS_HAVE_EXA) || (defined(USE_EXA) && (USE_EXA != 0))
 #if 1
 #define SIS_USE_EXA		/* Include code for EXA */
 #endif
@@ -271,14 +270,14 @@
 
 #undef SISCHECKOSSSE
 #ifdef XORG_VERSION_CURRENT
-#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(6,8,99,13,0)
+#if (XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(6,8,99,13,0)) || (XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(1,19,99,1,0))
 #define SISCHECKOSSSE		/* Automatic check OS for SSE; requires SigIll facility */
 #endif
 #endif
 
 #undef SISGAMMARAMP
 #ifdef XORG_VERSION_CURRENT
-#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(6,8,99,13,0)
+#if (XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(6,8,99,13,0)) || (XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,0,0,0,0))
 #define SISGAMMARAMP		/* Driver can set gamma ramp; requires additional symbols in xf86sym.h */
 #endif
 #endif
@@ -1198,9 +1197,6 @@ typedef struct {
     Bool		directRenderingEnabled;
     DRIInfoPtr 		pDRIInfo;
     int			drmSubFD;
-    int			numVisualConfigs;
-    __GLXvisualConfig*	pVisualConfigs;
-    SISConfigPrivPtr	pVisualConfigsPriv;
     SISRegRec		DRContextRegs;
 #endif
 

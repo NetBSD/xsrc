@@ -759,7 +759,7 @@ SiS300LoadCursorImage(ScrnInfoPtr pScrn, UChar *src)
     }
 
     if(pSiS->VBFlags & CRT2_ENABLE) {
-       if((pSiS->UseHWARGBCursor) && (!pSiS->VBFlags & DISPTYPE_CRT1)) {
+       if((pSiS->UseHWARGBCursor) && (!(pSiS->VBFlags & DISPTYPE_CRT1))) {
 	  status2 = sis301GetCursorStatus;
 	  sis301DisableHWCursor()
 	  SISWaitRetraceCRT2(pScrn);
