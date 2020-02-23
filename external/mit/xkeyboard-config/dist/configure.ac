@@ -1,4 +1,4 @@
-AC_INIT(xkeyboard-config, 2.27)
+AC_INIT(xkeyboard-config, 2.29)
 AC_CONFIG_SRCDIR(rules/base.xml)
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
 
@@ -10,6 +10,7 @@ XORG_MACROS_VERSION(1.12)
 XORG_MANPAGE_SECTIONS
 XORG_WITH_XSLTPROC
 AC_PROG_SED
+AM_PATH_PYTHON([3.0])
 
 AC_SUBST(VERSION)
 
@@ -82,7 +83,6 @@ keycodes/Makefile
 keycodes/digital_vndr/Makefile
 keycodes/sgi_vndr/Makefile
 rules/Makefile
-rules/bin/Makefile
 rules/compat/Makefile
 symbols/Makefile
 symbols/digital_vndr/Makefile

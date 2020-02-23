@@ -85,16 +85,10 @@ partial alphanumeric_keys
 xkb_symbols "winkeys" {
 
     include "fi(kotoistus)"
+
     name[Group1]="Finnish (Winkeys)";
+
     include "eurosign(5)"
-};
-
-partial alphanumeric_keys
-xkb_symbols "classic" {
-
-    include "fi(fi)"
-
-    name[Group1]="Finnish (classic)";
 };
 
 hidden partial alphanumeric_keys
@@ -160,6 +154,14 @@ xkb_symbols "fi" {
 };
 
 partial alphanumeric_keys
+xkb_symbols "classic" {
+
+    include "fi(fi)"
+
+    name[Group1]="Finnish (classic)";
+};
+
+partial alphanumeric_keys
 xkb_symbols "nodeadkeys" {
 
     // Classic Finnish keyboard layout without dead keys
@@ -208,6 +210,8 @@ xkb_symbols "sun_type6" {
     // Sun Type 6/7 keyboard for Finland
 
     include "sun_vndr/fi(sun_type6)"
+
+    name[Group1]="Finnish (Sun Type 6/7)";
 };
 
 partial
@@ -289,7 +293,7 @@ xkb_symbols "fidvorak" {
     // Less and greater than symbols moved behind 3rd level modifiers on comma and period.
     // Includes an assortment of dead keys but is not made with them in mind.
 
-    name[Group1]= "Finnish Dvorak";
+    name[Group1]="Finnish (Dvorak)";
 
     key <TLDE> { [  grave,           asciitilde,       dead_grave,            dead_tilde            ] };
     key <AE01> { [  1,               exclam,           NoSymbol,              exclamdown            ] };

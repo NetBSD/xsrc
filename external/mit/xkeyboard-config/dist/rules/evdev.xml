@@ -449,13 +449,6 @@
     </model>
     <model>
       <configItem>
-        <name>htcdream</name>
-        <description>HTC Dream</description>
-        <vendor>HTC</vendor>
-      </configItem>
-    </model>
-    <model>
-      <configItem>
         <name>kinesis</name>
         <description>Kinesis</description>
         <vendor>Kinesis</vendor>
@@ -858,6 +851,13 @@
       <configItem>
         <name>microsoftmult</name>
         <description>Microsoft Wireless Multimedia 1.0A</description>
+        <vendor>Microsoft</vendor>
+      </configItem>
+    </model>
+    <model>
+      <configItem>
+        <name>microsoftsurface</name>
+        <description>Microsoft Surface</description>
         <vendor>Microsoft</vendor>
       </configItem>
     </model>
@@ -1290,13 +1290,6 @@
     </model>
     <model>
       <configItem>
-       <name>htcdream</name>
-       <description>Htc Dream phone</description>
-       <vendor>htc</vendor>
-     </configItem>
-    </model>
-    <model>
-      <configItem>
        <name>teck227</name>
        <description>Truly Ergonomic 227</description>
        <vendor>Truly Ergonomic</vendor>
@@ -1451,7 +1444,7 @@
             <languageList>
               <iso639Id>eng</iso639Id>
               <iso639Id>fra</iso639Id>
-              <iso639Id>ger</iso639Id>
+              <iso639Id>deu</iso639Id>
             </languageList>
           </configItem>
         </variant>
@@ -1472,6 +1465,12 @@
               <iso639Id>hrv</iso639Id>
               <iso639Id>srp</iso639Id>
             </languageList>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>norman</name>
+            <description>English (Norman)</description>
           </configItem>
         </variant>
         <variant>
@@ -1639,7 +1638,7 @@
         <shortDescription>sq</shortDescription>
         <description>Albanian</description>
         <languageList>
-          <iso639Id>alb</iso639Id>
+          <iso639Id>sqi</iso639Id>
         </languageList>
       </configItem>
       <variantList>
@@ -1647,6 +1646,12 @@
           <configItem>
             <name>plisi</name>
             <description>Albanian (Plisi)</description>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>veqilharxhi</name>
+            <description>Albanian (Veqilharxhi)</description>
           </configItem>
         </variant>
       </variantList>
@@ -1701,7 +1706,7 @@
         <shortDescription>de</shortDescription>
         <description>German (Austria)</description>
         <languageList>
-          <iso639Id>ger</iso639Id>
+          <iso639Id>deu</iso639Id>
         </languageList>
       </configItem>
       <variantList>
@@ -1787,7 +1792,7 @@
         <shortDescription>be</shortDescription>
         <description>Belgian</description>
         <languageList>
-          <iso639Id>ger</iso639Id>
+          <iso639Id>deu</iso639Id>
           <iso639Id>nld</iso639Id>
           <iso639Id>fra</iso639Id>
         </languageList>
@@ -1984,17 +1989,6 @@
             <!-- Keyboard indicator for Kannada layouts -->
             <shortDescription>kn</shortDescription>
             <description>Kannada</description>
-            <languageList>
-              <iso639Id>kan</iso639Id>
-            </languageList>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>kan-kagapa</name>
-            <!-- Keyboard indicator for Kannada layouts -->
-            <shortDescription>kn</shortDescription>
-            <description>Kannada (KaGaPa phonetic)</description>
             <languageList>
               <iso639Id>kan</iso639Id>
             </languageList>
@@ -2715,10 +2709,75 @@
         <shortDescription>zh</shortDescription>
         <description>Chinese</description>
         <languageList>
-          <iso639Id>chi</iso639Id>
+          <iso639Id>zho</iso639Id>
         </languageList>
       </configItem>
       <variantList>
+
+        <variant>
+          <configItem>
+            <name>mon_trad</name>
+            <description>Mongolian (Bichig)</description>
+            <languageList>
+              <iso639Id>mvf</iso639Id>
+            </languageList>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>mon_trad_todo</name>
+            <description>Mongolian Todo</description>
+            <languageList>
+              <iso639Id>mvf</iso639Id>
+            </languageList>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>mon_trad_xibe</name>
+            <description>Mongolian Xibe</description>
+            <languageList>
+              <iso639Id>sjo</iso639Id>
+            </languageList>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>mon_trad_manchu</name>
+            <description>Mongolian Manchu</description>
+            <languageList>
+              <iso639Id>mnc</iso639Id>
+            </languageList>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>mon_trad_galik</name>
+            <description>Mongolian Galik</description>
+            <languageList>
+              <iso639Id>mvf</iso639Id>
+            </languageList>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>mon_todo_galik</name>
+            <description>Mongolian Todo Galik</description>
+            <languageList>
+              <iso639Id>mvf</iso639Id>
+            </languageList>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>mon_manchu_galik</name>
+            <description>Mongolian Manchu Galik</description>
+            <languageList>
+              <iso639Id>mnc</iso639Id>
+            </languageList>
+          </configItem>
+        </variant>
+
         <variant>
           <configItem>
             <name>tib</name>
@@ -2752,7 +2811,7 @@
             <name>altgr-pinyin</name>
             <description>Hanyu Pinyin (altgr)</description>
             <languageList>
-              <iso639Id>chi</iso639Id>
+              <iso639Id>zho</iso639Id>
             </languageList>
           </configItem>
         </variant>
@@ -2802,7 +2861,7 @@
         <shortDescription>cs</shortDescription>
         <description>Czech</description>
         <languageList>
-          <iso639Id>cze</iso639Id>
+          <iso639Id>ces</iso639Id>
         </languageList>
       </configItem>
       <variantList>
@@ -2822,6 +2881,12 @@
           <configItem>
             <name>qwerty_bksl</name>
             <description>Czech (QWERTY, extended backslash)</description>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>qwerty-mac</name>
+            <description>Czech (QWERTY, Macintosh)</description>
           </configItem>
         </variant>
         <variant>
@@ -2972,7 +3037,7 @@
         <shortDescription>fa</shortDescription>
         <description>Persian</description>
         <languageList>
-          <iso639Id>per</iso639Id>
+          <iso639Id>fas</iso639Id>
         </languageList>
       </configItem>
       <variantList>
@@ -3118,6 +3183,12 @@
       <variantList>
         <variant>
           <configItem>
+            <name>winkeys</name>
+            <description>Finnish (Winkeys)</description>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
             <name>classic</name>
             <description>Finnish (classic)</description>
           </configItem>
@@ -3126,12 +3197,6 @@
           <configItem>
             <name>nodeadkeys</name>
             <description>Finnish (classic, no dead keys)</description>
-          </configItem>
-        </variant>
-        <variant>
-          <configItem>
-            <name>winkeys</name>
-            <description>Finnish (Winkeys)</description>
           </configItem>
         </variant>
         <variant>
@@ -3230,6 +3295,12 @@
         </variant>
         <variant>
           <configItem>
+            <name>bepo_afnor</name>
+            <description>French (Bepo, ergonomic, Dvorak way, AFNOR)</description>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
             <name>dvorak</name>
             <description>French (Dvorak)</description>
           </configItem>
@@ -3244,6 +3315,12 @@
           <configItem>
             <name>azerty</name>
             <description>French (AZERTY)</description>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>afnor</name>
+            <description>French (AFNOR standardized AZERTY)</description>
           </configItem>
         </variant>
         <variant>
@@ -3266,7 +3343,7 @@
             <name>geo</name>
             <description>Georgian (France, AZERTY Tskapo)</description>
             <languageList>
-              <iso639Id>geo</iso639Id>
+              <iso639Id>kat</iso639Id>
             </languageList>
           </configItem>
         </variant>
@@ -3388,7 +3465,7 @@
         <shortDescription>ka</shortDescription>
         <description>Georgian</description>
         <languageList>
-          <iso639Id>geo</iso639Id>
+          <iso639Id>kat</iso639Id>
         </languageList>
       </configItem>
       <variantList>
@@ -3433,7 +3510,7 @@
         <shortDescription>de</shortDescription>
         <description>German</description>
         <languageList>
-          <iso639Id>ger</iso639Id>
+          <iso639Id>deu</iso639Id>
         </languageList>
       </configItem>
       <variantList>
@@ -3466,7 +3543,7 @@
             <name>ro</name>
             <description>Romanian (Germany)</description>
             <languageList>
-              <iso639Id>rum</iso639Id>
+              <iso639Id>ron</iso639Id>
             </languageList>
           </configItem>
         </variant>
@@ -3475,7 +3552,7 @@
             <name>ro_nodeadkeys</name>
             <description>Romanian (Germany, no dead keys)</description>
             <languageList>
-              <iso639Id>rum</iso639Id>
+              <iso639Id>ron</iso639Id>
             </languageList>
           </configItem>
         </variant>
@@ -3568,7 +3645,7 @@
         <shortDescription>gr</shortDescription>
         <description>Greek</description>
         <languageList>
-          <iso639Id>gre</iso639Id>
+          <iso639Id>ell</iso639Id>
         </languageList>
       </configItem>
       <variantList>
@@ -3732,7 +3809,7 @@
         <shortDescription>is</shortDescription>
         <description>Icelandic</description>
         <languageList>
-          <iso639Id>ice</iso639Id>
+          <iso639Id>isl</iso639Id>
         </languageList>
       </configItem>
       <variantList>
@@ -3839,7 +3916,7 @@
             <name>geo</name>
             <description>Georgian (Italy)</description>
             <languageList>
-              <iso639Id>geo</iso639Id>
+              <iso639Id>kat</iso639Id>
             </languageList>
           </configItem>
         </variant>
@@ -3854,10 +3931,10 @@
             <name>intl</name>
             <description>Italian (intl., with dead keys)</description>
             <languageList>
-              <iso639Id>ger</iso639Id>
+              <iso639Id>deu</iso639Id>
               <iso639Id>fra</iso639Id>
               <iso639Id>ita</iso639Id>
-              <iso639Id>slo</iso639Id>
+              <iso639Id>slk</iso639Id>
               <iso639Id>srd</iso639Id>
               <iso639Id>nap</iso639Id>
               <iso639Id>scn</iso639Id>
@@ -4148,6 +4225,15 @@
             <description>Lithuanian (LEKPa)</description>
           </configItem>
         </variant>
+        <variant>
+          <configItem>
+            <name>sgs</name>
+            <description>Samogitian</description>
+            <languageList>
+              <iso639Id>sgs</iso639Id>
+            </languageList>
+          </configItem>
+        </variant>
       </variantList>
     </layout>
     <layout>
@@ -4206,7 +4292,7 @@
         <shortDescription>mi</shortDescription>
         <description>Maori</description>
         <languageList>
-          <iso639Id>mao</iso639Id>
+          <iso639Id>mri</iso639Id>
         </languageList>
       </configItem>
       <variantList/>
@@ -4546,7 +4632,7 @@
         <shortDescription>ro</shortDescription>
         <description>Romanian</description>
         <languageList>
-          <iso639Id>rum</iso639Id>
+          <iso639Id>ron</iso639Id>
         </languageList>
       </configItem>
       <variantList>
@@ -4860,7 +4946,7 @@
         <shortDescription>sk</shortDescription>
         <description>Slovak</description>
         <languageList>
-          <iso639Id>slo</iso639Id>
+          <iso639Id>slk</iso639Id>
         </languageList>
       </configItem>
       <variantList>
@@ -5049,7 +5135,7 @@
         <shortDescription>de</shortDescription>
         <description>German (Switzerland)</description>
         <languageList>
-          <iso639Id>ger</iso639Id>
+          <iso639Id>deu</iso639Id>
           <iso639Id>gsw</iso639Id>
         </languageList>
       </configItem>
@@ -6158,7 +6244,7 @@
         <shortDescription>md</shortDescription>
         <description>Moldavian</description>
         <languageList>
-          <iso639Id>rum</iso639Id>
+          <iso639Id>ron</iso639Id>
         </languageList>
       </configItem>
       <variantList>
@@ -6178,7 +6264,7 @@
       <configItem>
         <name>id</name>
         <shortDescription>id</shortDescription>
-        <description>Indonesian (Jawi)</description>
+        <description>Indonesian (Arab Melayu, phonetic)</description>
         <languageList>
           <iso639Id>ind</iso639Id>
           <iso639Id>msa</iso639Id>
@@ -6189,7 +6275,25 @@
           <iso639Id>mfa</iso639Id>
         </languageList>
       </configItem>
-      <variantList></variantList>
+      <variantList>
+       <variant>
+         <configItem>
+          <name>phoneticx</name>
+            <description>Indonesian (Arab Melayu, ext. phonetic)</description>
+         </configItem>
+       </variant>
+      </variantList>
+    </layout>
+    <layout> 
+      <configItem>
+        <name>jv</name>
+        <shortDescription>jv</shortDescription>
+        <description>Indonesian (Javanese)</description>
+        <languageList>
+          <iso639Id>jv</iso639Id>
+        </languageList>
+      </configItem>
+      <variantList/>
     </layout>
     <layout>
       <configItem>
@@ -6244,7 +6348,7 @@
       <option>
         <configItem>
           <name>grp:rwin_switch</name>
-          <description>Left Win (while pressed)</description>
+          <description>Right Win (while pressed)</description>
         </configItem>
       </option>
       <option>
@@ -6582,6 +6686,12 @@
       </option>
       <option>
         <configItem>
+          <name>ctrl:swapcaps_hyper</name>
+          <description>Caps Lock as Control, Control as Hyper</description>
+        </configItem>
+      </option>
+      <option>
+        <configItem>
           <name>ctrl:ac_ctrl</name>
           <description>At left of 'A'</description>
         </configItem>
@@ -6650,6 +6760,19 @@
         <configItem>
           <name>grp_led:scroll</name>
           <description>Scroll Lock</description>
+        </configItem>
+      </option>
+    </group>
+    <group allowMultipleSelection="true">
+      <!-- Using LEDs to indicate modifiers -->
+      <configItem>
+        <name>mod_led</name>
+        <description>Use keyboard LED to indicate modifiers</description>
+      </configItem>
+      <option>
+        <configItem>
+          <name>mod_led:compose</name>
+          <description>Compose</description>
         </configItem>
       </option>
     </group>
@@ -6883,6 +7006,12 @@
         <configItem>
           <name>altwin:menu</name>
           <description>Add the standard behavior to Menu key</description>
+        </configItem>
+      </option>
+      <option>
+        <configItem>
+          <name>altwin:menu_win</name>
+          <description>Menu is mapped to Win</description>
         </configItem>
       </option>
       <option>
@@ -7201,6 +7330,18 @@
       </configItem>
       <option>
         <configItem>
+          <name>lv5:lsgt_switch</name>
+          <description>&lt;Less/Greater&gt; chooses 5th level</description>
+        </configItem>
+      </option>
+      <option>
+        <configItem>
+          <name>lv5:ralt_switch</name>
+          <description>Right Alt chooses 5th level</description>
+        </configItem>
+      </option>
+      <option>
+        <configItem>
           <name>lv5:lsgt_switch_lock</name>
           <description>&lt;Less/Greater&gt; chooses 5th level; acts as onetime lock when pressed together with another 5th level chooser</description>
         </configItem>
@@ -7389,21 +7530,33 @@
        </configItem>
       </option>
     </group>
-    <group allowMultipleSelection="false">
+    <group allowMultipleSelection="true">
       <configItem>
         <name>korean</name>
         <description>Korean Hangul/Hanja keys</description>
       </configItem>
       <option>
         <configItem>
-          <name>korean:ralt_rctrl</name>
-          <description>Right Alt as Hangul, right Ctrl as Hanja</description>
+          <name>korean:ralt_hangul</name>
+          <description>Make right Alt a Hangul key</description>
         </configItem>
       </option>
       <option>
         <configItem>
-          <name>korean:rctrl_ralt</name>
-          <description>Right Ctrl as Hangul, right Alt as Hanja</description>
+          <name>korean:rctrl_hangul</name>
+          <description>Make right Ctrl a Hangul key</description>
+        </configItem>
+      </option>
+      <option>
+        <configItem>
+          <name>korean:ralt_hanja</name>
+          <description>Make right Alt a Hanja key</description>
+        </configItem>
+      </option>
+      <option>
+        <configItem>
+          <name>korean:rctrl_hanja</name>
+          <description>Make right Ctrl a Hanja key</description>
         </configItem>
       </option>
     </group>
