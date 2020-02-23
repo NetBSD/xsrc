@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 3.0.5.  */
+/* A Bison parser, made by GNU Bison 3.1.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
@@ -44,7 +44,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "3.0.5"
+#define YYBISON_VERSION "3.1"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -297,13 +297,13 @@ typedef signed char yytype_int8;
 #ifdef YYTYPE_UINT16
 typedef YYTYPE_UINT16 yytype_uint16;
 #else
-typedef unsigned short int yytype_uint16;
+typedef unsigned short yytype_uint16;
 #endif
 
 #ifdef YYTYPE_INT16
 typedef YYTYPE_INT16 yytype_int16;
 #else
-typedef short int yytype_int16;
+typedef short yytype_int16;
 #endif
 
 #ifndef YYSIZE_T
@@ -315,7 +315,7 @@ typedef short int yytype_int16;
 #  include <stddef.h> /* INFRINGES ON USER NAME SPACE */
 #  define YYSIZE_T size_t
 # else
-#  define YYSIZE_T unsigned int
+#  define YYSIZE_T unsigned
 # endif
 #endif
 
@@ -367,7 +367,7 @@ typedef short int yytype_int16;
 # define YYUSE(E) /* empty */
 #endif
 
-#if defined __GNUC__ && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
+#if defined __GNUC__ && ! defined __ICC && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
 /* Suppress an incorrect diagnostic about yylval being uninitialized.  */
 # define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN \
     _Pragma ("GCC diagnostic push") \
@@ -535,7 +535,7 @@ union yyalloc
 #define YYMAXUTOK   286
 
 #define YYTRANSLATE(YYX)                                                \
-  ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
+  ((unsigned) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
 
 /* YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to TOKEN-NUM
    as returned by yylex, without out-of-bounds checking.  */
@@ -890,7 +890,7 @@ do {                                                            \
 static void
 yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule)
 {
-  unsigned long int yylno = yyrline[yyrule];
+  unsigned long yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
   int yyi;
   YYFPRINTF (stderr, "Reducing stack by rule %d (line %lu):\n",
@@ -1322,7 +1322,7 @@ yyparse (void)
       yyvsp = yyvs + yysize - 1;
 
       YYDPRINTF ((stderr, "Stack size increased to %lu\n",
-                  (unsigned long int) yystacksize));
+                  (unsigned long) yystacksize));
 
       if (yyss + yystacksize - 1 <= yyssp)
         YYABORT;
@@ -1433,235 +1433,235 @@ yyreduce:
   switch (yyn)
     {
         case 20:
-#line 160 "winprefsyacc.y" /* yacc.c:1648  */
+#line 160 "winprefsyacc.y" /* yacc.c:1651  */
     { SetTrayIcon((yyvsp[-1].sVal)); free((yyvsp[-1].sVal)); }
-#line 1439 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1439 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 21:
-#line 163 "winprefsyacc.y" /* yacc.c:1648  */
+#line 163 "winprefsyacc.y" /* yacc.c:1651  */
     { SetRootMenu((yyvsp[-1].sVal)); free((yyvsp[-1].sVal)); }
-#line 1445 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1445 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 22:
-#line 166 "winprefsyacc.y" /* yacc.c:1648  */
+#line 166 "winprefsyacc.y" /* yacc.c:1651  */
     { SetDefaultSysMenu((yyvsp[-2].sVal), (yyvsp[-1].iVal)); free((yyvsp[-2].sVal)); }
-#line 1451 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1451 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 23:
-#line 169 "winprefsyacc.y" /* yacc.c:1648  */
+#line 169 "winprefsyacc.y" /* yacc.c:1651  */
     { SetDefaultIcon((yyvsp[-1].sVal)); free((yyvsp[-1].sVal)); }
-#line 1457 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1457 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 24:
-#line 172 "winprefsyacc.y" /* yacc.c:1648  */
+#line 172 "winprefsyacc.y" /* yacc.c:1651  */
     { SetIconDirectory((yyvsp[-1].sVal)); free((yyvsp[-1].sVal)); }
-#line 1463 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1463 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 25:
-#line 175 "winprefsyacc.y" /* yacc.c:1648  */
+#line 175 "winprefsyacc.y" /* yacc.c:1651  */
     { AddMenuLine("-", CMD_SEPARATOR, ""); }
-#line 1469 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1469 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 26:
-#line 176 "winprefsyacc.y" /* yacc.c:1648  */
+#line 176 "winprefsyacc.y" /* yacc.c:1651  */
     { AddMenuLine((yyvsp[-3].sVal), CMD_ALWAYSONTOP, ""); free((yyvsp[-3].sVal)); }
-#line 1475 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1475 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 27:
-#line 177 "winprefsyacc.y" /* yacc.c:1648  */
+#line 177 "winprefsyacc.y" /* yacc.c:1651  */
     { AddMenuLine((yyvsp[-4].sVal), CMD_EXEC, (yyvsp[-2].sVal)); free((yyvsp[-4].sVal)); free((yyvsp[-2].sVal)); }
-#line 1481 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1481 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 28:
-#line 178 "winprefsyacc.y" /* yacc.c:1648  */
+#line 178 "winprefsyacc.y" /* yacc.c:1651  */
     { AddMenuLine((yyvsp[-4].sVal), CMD_MENU, (yyvsp[-2].sVal)); free((yyvsp[-4].sVal)); free((yyvsp[-2].sVal)); }
-#line 1487 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1487 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 29:
-#line 179 "winprefsyacc.y" /* yacc.c:1648  */
+#line 179 "winprefsyacc.y" /* yacc.c:1651  */
     { AddMenuLine((yyvsp[-3].sVal), CMD_RELOAD, ""); free((yyvsp[-3].sVal)); }
-#line 1493 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1493 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 32:
-#line 186 "winprefsyacc.y" /* yacc.c:1648  */
+#line 186 "winprefsyacc.y" /* yacc.c:1651  */
     { OpenMenu((yyvsp[-1].sVal)); free((yyvsp[-1].sVal)); }
-#line 1499 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1499 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 33:
-#line 186 "winprefsyacc.y" /* yacc.c:1648  */
+#line 186 "winprefsyacc.y" /* yacc.c:1651  */
     {CloseMenu();}
-#line 1505 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1505 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 34:
-#line 189 "winprefsyacc.y" /* yacc.c:1648  */
+#line 189 "winprefsyacc.y" /* yacc.c:1651  */
     { AddIconLine((yyvsp[-3].sVal), (yyvsp[-2].sVal)); free((yyvsp[-3].sVal)); free((yyvsp[-2].sVal)); }
-#line 1511 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1511 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 37:
-#line 196 "winprefsyacc.y" /* yacc.c:1648  */
+#line 196 "winprefsyacc.y" /* yacc.c:1651  */
     {OpenIcons();}
-#line 1517 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1517 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 38:
-#line 196 "winprefsyacc.y" /* yacc.c:1648  */
+#line 196 "winprefsyacc.y" /* yacc.c:1651  */
     {CloseIcons();}
-#line 1523 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1523 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 39:
-#line 199 "winprefsyacc.y" /* yacc.c:1648  */
+#line 199 "winprefsyacc.y" /* yacc.c:1651  */
     { (yyval.uVal)=STYLE_TOPMOST; }
-#line 1529 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1529 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 40:
-#line 200 "winprefsyacc.y" /* yacc.c:1648  */
+#line 200 "winprefsyacc.y" /* yacc.c:1651  */
     { (yyval.uVal)=STYLE_MAXIMIZE; }
-#line 1535 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1535 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 41:
-#line 201 "winprefsyacc.y" /* yacc.c:1648  */
+#line 201 "winprefsyacc.y" /* yacc.c:1651  */
     { (yyval.uVal)=STYLE_MINIMIZE; }
-#line 1541 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1541 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 42:
-#line 202 "winprefsyacc.y" /* yacc.c:1648  */
+#line 202 "winprefsyacc.y" /* yacc.c:1651  */
     { (yyval.uVal)=STYLE_BOTTOM; }
-#line 1547 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1547 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 43:
-#line 205 "winprefsyacc.y" /* yacc.c:1648  */
+#line 205 "winprefsyacc.y" /* yacc.c:1651  */
     { (yyval.uVal)=STYLE_NOTITLE; }
-#line 1553 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1553 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 44:
-#line 206 "winprefsyacc.y" /* yacc.c:1648  */
+#line 206 "winprefsyacc.y" /* yacc.c:1651  */
     { (yyval.uVal)=STYLE_OUTLINE; }
-#line 1559 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1559 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 45:
-#line 207 "winprefsyacc.y" /* yacc.c:1648  */
+#line 207 "winprefsyacc.y" /* yacc.c:1651  */
     { (yyval.uVal)=STYLE_NOFRAME; }
-#line 1565 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1565 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 46:
-#line 210 "winprefsyacc.y" /* yacc.c:1648  */
+#line 210 "winprefsyacc.y" /* yacc.c:1651  */
     { (yyval.uVal)=(yyvsp[0].uVal); }
-#line 1571 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1571 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 47:
-#line 211 "winprefsyacc.y" /* yacc.c:1648  */
+#line 211 "winprefsyacc.y" /* yacc.c:1651  */
     { (yyval.uVal)=(yyvsp[0].uVal); }
-#line 1577 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1577 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 48:
-#line 212 "winprefsyacc.y" /* yacc.c:1648  */
+#line 212 "winprefsyacc.y" /* yacc.c:1651  */
     { (yyval.uVal)=(yyvsp[-1].uVal)|(yyvsp[0].uVal); }
-#line 1583 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1583 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 49:
-#line 213 "winprefsyacc.y" /* yacc.c:1648  */
+#line 213 "winprefsyacc.y" /* yacc.c:1651  */
     { (yyval.uVal)=(yyvsp[-1].uVal)|(yyvsp[0].uVal); }
-#line 1589 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1589 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 50:
-#line 216 "winprefsyacc.y" /* yacc.c:1648  */
+#line 216 "winprefsyacc.y" /* yacc.c:1651  */
     { AddStyleLine((yyvsp[-3].sVal), (yyvsp[-2].uVal)); free((yyvsp[-3].sVal)); }
-#line 1595 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1595 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 53:
-#line 223 "winprefsyacc.y" /* yacc.c:1648  */
+#line 223 "winprefsyacc.y" /* yacc.c:1651  */
     {OpenStyles();}
-#line 1601 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1601 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 54:
-#line 223 "winprefsyacc.y" /* yacc.c:1648  */
+#line 223 "winprefsyacc.y" /* yacc.c:1651  */
     {CloseStyles();}
-#line 1607 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1607 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 55:
-#line 226 "winprefsyacc.y" /* yacc.c:1648  */
+#line 226 "winprefsyacc.y" /* yacc.c:1651  */
     { (yyval.iVal)=AT_END; }
-#line 1613 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1613 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 56:
-#line 227 "winprefsyacc.y" /* yacc.c:1648  */
+#line 227 "winprefsyacc.y" /* yacc.c:1651  */
     { (yyval.iVal)=AT_START; }
-#line 1619 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1619 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 57:
-#line 228 "winprefsyacc.y" /* yacc.c:1648  */
+#line 228 "winprefsyacc.y" /* yacc.c:1651  */
     { (yyval.iVal)=AT_END; }
-#line 1625 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1625 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 58:
-#line 231 "winprefsyacc.y" /* yacc.c:1648  */
+#line 231 "winprefsyacc.y" /* yacc.c:1651  */
     { AddSysMenuLine((yyvsp[-4].sVal), (yyvsp[-3].sVal), (yyvsp[-2].iVal)); free((yyvsp[-4].sVal)); free((yyvsp[-3].sVal)); }
-#line 1631 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1631 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 61:
-#line 238 "winprefsyacc.y" /* yacc.c:1648  */
+#line 238 "winprefsyacc.y" /* yacc.c:1651  */
     {OpenSysMenu();}
-#line 1637 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1637 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 62:
-#line 238 "winprefsyacc.y" /* yacc.c:1648  */
+#line 238 "winprefsyacc.y" /* yacc.c:1651  */
     {CloseSysMenu();}
-#line 1643 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1643 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 63:
-#line 241 "winprefsyacc.y" /* yacc.c:1648  */
+#line 241 "winprefsyacc.y" /* yacc.c:1651  */
     { pref.fForceExit = TRUE; }
-#line 1649 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1649 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 64:
-#line 244 "winprefsyacc.y" /* yacc.c:1648  */
+#line 244 "winprefsyacc.y" /* yacc.c:1651  */
     { pref.fSilentExit = TRUE; }
-#line 1655 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1655 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
   case 65:
-#line 247 "winprefsyacc.y" /* yacc.c:1648  */
+#line 247 "winprefsyacc.y" /* yacc.c:1651  */
     { ErrorF("LoadPreferences: %s\n", (yyvsp[-1].sVal)); free((yyvsp[-1].sVal)); }
-#line 1661 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1661 "winprefsyacc.c" /* yacc.c:1651  */
     break;
 
 
-#line 1665 "winprefsyacc.c" /* yacc.c:1648  */
+#line 1665 "winprefsyacc.c" /* yacc.c:1651  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1889,7 +1889,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 251 "winprefsyacc.y" /* yacc.c:1907  */
+#line 251 "winprefsyacc.y" /* yacc.c:1910  */
 
 /*
  * Errors in parsing abort and print log messages

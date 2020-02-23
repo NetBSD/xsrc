@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 3.0.5.  */
+/* A Bison parser, made by GNU Bison 3.1.  */
 
 /* Bison interface for Yacc-like parsers in C
 
@@ -76,7 +76,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 57 "parser.y" /* yacc.c:1910  */
+#line 57 "parser.y" /* yacc.c:1913  */
 
     DMXConfigTokenPtr      token;
     DMXConfigStringPtr     string;
@@ -93,7 +93,7 @@ union YYSTYPE
     DMXConfigVirtualPtr    virtual;
     DMXConfigEntryPtr      entry;
 
-#line 97 "parser.h" /* yacc.c:1910  */
+#line 97 "parser.h" /* yacc.c:1913  */
 };
 
 typedef union YYSTYPE YYSTYPE;
