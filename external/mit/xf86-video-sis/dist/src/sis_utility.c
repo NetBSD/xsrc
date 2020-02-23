@@ -193,30 +193,30 @@
 typedef struct _SiSCtrlQueryVersion {
     CARD8	reqType;		/* always SiSCtrlReqCode */
     CARD8	SiSCtrlReqType;		/* always X_SiSCtrlQueryVersion */
-    CARD16	length B16;
+    CARD16	length;
 } xSiSCtrlQueryVersionReq;
 #define sz_xSiSCtrlQueryVersionReq	4
 
 typedef struct {
     BYTE	type;			/* X_Reply */
     BOOL	pad1;
-    CARD16	sequenceNumber B16;
-    CARD32	length B32;
-    CARD16	majorVersion B16;	/* major version of SISCTRL */
-    CARD16	minorVersion B16;	/* minor version of SISCTRL */
-    CARD32	pad2 B32;
-    CARD32	pad3 B32;
-    CARD32	pad4 B32;
-    CARD32	pad5 B32;
-    CARD32	pad6 B32;
+    CARD16	sequenceNumber;
+    CARD32	length;
+    CARD16	majorVersion;		/* major version of SISCTRL */
+    CARD16	minorVersion;		/* minor version of SISCTRL */
+    CARD32	pad2;
+    CARD32	pad3;
+    CARD32	pad4;
+    CARD32	pad5;
+    CARD32	pad6;
 } xSiSCtrlQueryVersionReply;
 #define sz_xSiSCtrlQueryVersionReply	32
 
 typedef struct {
     CARD8	reqType;		/* always SiSCtrlReqCode */
     CARD8	SiSCtrlReqType;		/* always SiSCtrl_SiSCtrlCommand */
-    CARD16	length B16;
-    CARD32	pad1 B32;
+    CARD16	length;
+    CARD32	pad1;
     CARD32	screen;
     CARD32 	sdc_id;
     CARD32 	sdc_chksum;
@@ -231,8 +231,8 @@ typedef struct {
 typedef struct {
     BYTE	type;			/* X_Reply */
     BOOL	pad1;
-    CARD16	sequenceNumber B16;
-    CARD32	length B32;
+    CARD16	sequenceNumber;
+    CARD32	length;
     CARD32	screen;
     CARD32 	sdc_id;
     CARD32 	sdc_chksum;
@@ -523,7 +523,7 @@ SISSwitchCRT2Type(ScrnInfoPtr pScrn, ULong newvbflags, Bool quiet)
     }
 #endif
 
-    if((!(newvbflags & CRT2_ENABLE)) && (!newvbflags & DISPTYPE_CRT1)) {
+    if((!(newvbflags & CRT2_ENABLE)) && (!(newvbflags & DISPTYPE_CRT1))) {
        if(!quiet) {
           xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
              "CRT2 can't be switched off while CRT1 is off\n");
@@ -850,7 +850,7 @@ SISGetMergedModeDetails(ScrnInfoPtr pScrn,
  ***********************************/
 
 static void
-sisutil_prepare_string(xSiSCtrlCommandReply *sdcbuf, char *mystring)
+sisutil_prepare_string(xSiSCtrlCommandReply *sdcbuf, const char *mystring)
 {
    int slen = 0;
    sdcbuf->sdc_buffer[0] = 0;
@@ -1871,7 +1871,9 @@ static int
 SiSProcSiSCtrlQueryVersion(ClientPtr client)
 {
     xSiSCtrlQueryVersionReply	  rep;
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
     register int		  n;
+#endif
 
     REQUEST_SIZE_MATCH(xSiSCtrlQueryVersionReq);
     rep.type = X_Reply;
@@ -1896,7 +1898,9 @@ SiSProcSiSCtrlCommand(ClientPtr client)
     xSiSCtrlCommandReply rep;
     ExtensionEntry 	 *myext;
     xSiSCtrlScreenTable  *myctrl;
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
     register int	 n;
+#endif
     int 		 i, ret;
 
     REQUEST_SIZE_MATCH(xSiSCtrlCommandReq);
@@ -1958,7 +1962,9 @@ static int
 SiSSProcSiSCtrlQueryVersion(ClientPtr client)
 {
     REQUEST(xSiSCtrlQueryVersionReq);
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
     register int n;
+#endif
     _swaps(&stuff->length, n);
     REQUEST_SIZE_MATCH(xSiSCtrlQueryVersionReq);
     return SiSProcSiSCtrlQueryVersion(client);
@@ -1968,7 +1974,9 @@ static int
 SiSSProcSiSCtrlCommand(ClientPtr client)
 {
     REQUEST(xSiSCtrlCommandReq);
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
     register int n;
+#endif
     int i;
     _swaps(&stuff->length, n);
     _swapl(&stuff->screen, n);

@@ -1874,7 +1874,7 @@ SiSUploadToScratch(PixmapPtr pSrc, PixmapPtr pDst)
 	SISPtr pSiS = SISPTR(pScrn);
 	unsigned char *src, *dst;
 	int src_pitch = exaGetPixmapPitch(pSrc);
-	int dst_pitch, size, w, h, bytes;
+	int dst_pitch, size, w, h;
 
 	w = pSrc->drawable.width;
 
@@ -1906,8 +1906,6 @@ SiSUploadToScratch(PixmapPtr pSrc, PixmapPtr pDst)
 	src = pSrc->devPrivate.ptr;
 	src_pitch = exaGetPixmapPitch(pSrc);
 	dst = pDst->devPrivate.ptr;
-
-	bytes = (src_pitch < dst_pitch) ? src_pitch : dst_pitch;
 
 	h = pSrc->drawable.height;
 

@@ -32,16 +32,17 @@ sis_drv_la_SOURCES = \
          300vtbl.h \
          310vtbl.h \
          compat-api.h \
+         init.c \
+         init.h \
          init301.c \
          init301.h \
-         init.c \
          initdef.h \
          initextx.c \
          initextx.h \
-         init.h \
          oem300.h \
          oem310.h \
          osdef.h \
+         sis.h \
          sis300_accel.c \
          sis300_accel.h \
          sis310_accel.c \
@@ -58,7 +59,6 @@ sis_drv_la_SOURCES = \
          sis_dga.c \
          sis_driver.c \
          sis_driver.h \
-         sis.h \
          sis_memcpy.c \
          sis_opt.c \
          sis_regs.h \

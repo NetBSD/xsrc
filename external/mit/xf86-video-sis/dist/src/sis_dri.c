@@ -44,7 +44,6 @@
 #include "sis_regs.h"
 
 #include "fb.h"
-#include "GL/glxtokens.h"
 
 #ifndef SISHAVEDRMWRITE
 # if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,2,99,0,0)
@@ -96,12 +95,6 @@ extern char *DRICreatePCIBusID(pciVideoPtr PciInfo);
   while( (SIS_MMIO_IN16(pSiS->IOBase, Q_STATUS+2) & 0x8000) != 0x8000){}; \
   }
 
-extern void GlxSetVisualConfigs(
-    int nconfigs,
-    __GLXvisualConfig *configs,
-    void **configprivs
-);
-
 /* The kernel's "sis" DRM module handles all chipsets */
 static char SISKernelDriverName[] = "sis";
 
@@ -110,7 +103,6 @@ static char SISClientDriverNameSiS300[] = "sis";	/* 300, 540, 630, 730 */
 static char SISClientDriverNameSiS315[] = "sis315";	/* All of 315/330 series */
 static char SISClientDriverNameXGI[]    = "xgi";	/* XGI V3, V5, V8 */
 
-static Bool SISInitVisualConfigs(ScreenPtr pScreen);
 static Bool SISCreateContext(ScreenPtr pScreen, VisualPtr visual,
                    drm_context_t hwContext, void *pVisualConfigPriv,
                    DRIContextType contextStore);
@@ -124,141 +116,6 @@ static void SISDRISwapContext(ScreenPtr pScreen, DRISyncType syncType,
 static void SISDRIInitBuffers(WindowPtr pWin, RegionPtr prgn, CARD32 index);
 static void SISDRIMoveBuffers(WindowPtr pParent, DDXPointRec ptOldOrg,
                    RegionPtr prgnSrc, CARD32 index);
-
-static Bool
-SISInitVisualConfigs(ScreenPtr pScreen)
-{
-  ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
-  SISPtr pSIS = SISPTR(pScrn);
-  int numConfigs = 0;
-  __GLXvisualConfig *pConfigs = 0;
-  SISConfigPrivPtr pSISConfigs = 0;
-  SISConfigPrivPtr *pSISConfigPtrs = 0;
-  int i, db, z_stencil, accum;
-  Bool useZ16 = FALSE;
-
-  if(getenv("SIS_FORCE_Z16")) {
-     useZ16 = TRUE;
-  }
-
-  switch (pScrn->bitsPerPixel) {
-  case 8:
-  case 24:
-    break;
-  case 16:
-  case 32:
-    numConfigs = (useZ16) ? 8 : 16;
-
-    if(!(pConfigs = (__GLXvisualConfig*)calloc(sizeof(__GLXvisualConfig),
-						   numConfigs))) {
-       return FALSE;
-    }
-    if(!(pSISConfigs = (SISConfigPrivPtr)calloc(sizeof(SISConfigPrivRec),
-						    numConfigs))) {
-       free(pConfigs);
-       return FALSE;
-    }
-    if(!(pSISConfigPtrs = (SISConfigPrivPtr*)calloc(sizeof(SISConfigPrivPtr),
-							  numConfigs))) {
-       free(pConfigs);
-       free(pSISConfigs);
-       return FALSE;
-    }
-    for(i=0; i<numConfigs; i++) pSISConfigPtrs[i] = &pSISConfigs[i];
-
-    i = 0;
-    for(accum = 0; accum <= 1; accum++) {
-       for(z_stencil = 0; z_stencil < (useZ16 ? 2 : 4); z_stencil++) {
-	  for(db = 0; db <= 1; db++) {
-	     pConfigs[i].vid = -1;
-	     pConfigs[i].class = -1;
-	     pConfigs[i].rgba = TRUE;
-	     if(pScrn->bitsPerPixel == 16) {
-	        pConfigs[i].redSize   = 5;
-	        pConfigs[i].greenSize = 6;
-	        pConfigs[i].blueSize  = 5;
-	        pConfigs[i].alphaSize = 0;
-	        pConfigs[i].redMask   = 0x0000F800;
-	        pConfigs[i].greenMask = 0x000007E0;
-	        pConfigs[i].blueMask  = 0x0000001F;
-	        pConfigs[i].alphaMask = 0x00000000;
-	     } else {
-	        pConfigs[i].redSize   = 8;
-	        pConfigs[i].greenSize = 8;
-	        pConfigs[i].blueSize  = 8;
-	        pConfigs[i].alphaSize = 8;
-	        pConfigs[i].redMask   = 0x00FF0000;
-	        pConfigs[i].greenMask = 0x0000FF00;
-	        pConfigs[i].blueMask  = 0x000000FF;
-	        pConfigs[i].alphaMask = 0xFF000000;
-	     }
-	     if(accum) {
-	        pConfigs[i].accumRedSize   = 16;
-	        pConfigs[i].accumGreenSize = 16;
-	        pConfigs[i].accumBlueSize  = 16;
-	        if(pConfigs[i].alphaMask == 0)
-	           pConfigs[i].accumAlphaSize = 0;
-	        else
-	           pConfigs[i].accumAlphaSize = 16;
-	     } else {
-	        pConfigs[i].accumRedSize   = 0;
-	        pConfigs[i].accumGreenSize = 0;
-	        pConfigs[i].accumBlueSize  = 0;
-	        pConfigs[i].accumAlphaSize = 0;
-	     }
-	     if(db) pConfigs[i].doubleBuffer = TRUE;
-	     else   pConfigs[i].doubleBuffer = FALSE;
-	     pConfigs[i].stereo = FALSE;
-	     pConfigs[i].bufferSize = -1;
-	     switch(z_stencil) {
-	     case 0:
-	        pConfigs[i].depthSize = 0;
-	        pConfigs[i].stencilSize = 0;
-	        break;
-	     case 1:
-	        pConfigs[i].depthSize = 16;
-	        pConfigs[i].stencilSize = 0;
-	        break;
-	     case 2:
-	       pConfigs[i].depthSize = 32;
-	       pConfigs[i].stencilSize = 0;
-	       break;
-	     case 3:
-	       pConfigs[i].depthSize = 24;
-	       pConfigs[i].stencilSize = 8;
-	       break;
-             }
-	     pConfigs[i].auxBuffers = 0;
-	     pConfigs[i].level = 0;
-	     if(pConfigs[i].accumRedSize != 0)
-	        pConfigs[i].visualRating = GLX_SLOW_CONFIG;
-	     else
-	        pConfigs[i].visualRating = GLX_NONE_EXT;
-	     pConfigs[i].transparentPixel = GLX_NONE;
-	     pConfigs[i].transparentRed   = 0;
-	     pConfigs[i].transparentGreen = 0;
-	     pConfigs[i].transparentBlue  = 0;
-	     pConfigs[i].transparentAlpha = 0;
-	     pConfigs[i].transparentIndex = 0;
-	     i++;
-	  }
-       }
-    }
-    if(i != numConfigs) {
-       xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-		"[dri] Incorrect initialization of visuals. Disabling the DRI.\n");
-       return FALSE;
-    }
-    break;
-  }
-
-  pSIS->numVisualConfigs = numConfigs;
-  pSIS->pVisualConfigs = pConfigs;
-  pSIS->pVisualConfigsPriv = pSISConfigs;
-  GlxSetVisualConfigs(numConfigs, pConfigs, (void**)pSISConfigPtrs);
-
-  return TRUE;
-}
 
 Bool
 SISDRIScreenInit(ScreenPtr pScreen)
@@ -276,10 +133,9 @@ SISDRIScreenInit(ScreenPtr pScreen)
    pSIS->cmdQ_SharedWritePortBackup = NULL;
 #endif
 
-  /* Check that the GLX, DRI, and DRM modules have been loaded by testing
+  /* Check that the DRI, and DRM modules have been loaded by testing
    * for canonical symbols in each module.
    */
-  if(!xf86LoaderCheckSymbol("GlxSetVisualConfigs")) return FALSE;
   if(!xf86LoaderCheckSymbol("drmAvailable"))        return FALSE;
   if(!xf86LoaderCheckSymbol("DRIQueryVersion")) {
      xf86DrvMsg(pScreen->myNum, X_ERROR,
@@ -651,11 +507,6 @@ SISDRIScreenInit(ScreenPtr pScreen)
 
   pSISDRI->irqEnabled = pSIS->irqEnabled;
 
-  if(!(SISInitVisualConfigs(pScreen))) {
-     SISDRICloseScreen(pScreen);
-     return FALSE;
-  }
-
   xf86DrvMsg(pScrn->scrnIndex, X_INFO, "[dri] Visual configs initialized\n" );
 
   return TRUE;
@@ -799,16 +650,6 @@ SISDRICloseScreen(ScreenPtr pScreen)
      }
      DRIDestroyInfoRec(pSIS->pDRIInfo);
      pSIS->pDRIInfo = NULL;
-  }
-
-  if(pSIS->pVisualConfigs) {
-     free(pSIS->pVisualConfigs);
-     pSIS->pVisualConfigs = NULL;
-  }
-
-  if(pSIS->pVisualConfigsPriv) {
-     free(pSIS->pVisualConfigsPriv);
-     pSIS->pVisualConfigsPriv = NULL;
   }
 
 }

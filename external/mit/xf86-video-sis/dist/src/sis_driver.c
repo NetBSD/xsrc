@@ -1305,7 +1305,7 @@ SiSCopyModeNLink(ScrnInfoPtr pScrn, DisplayModePtr dest,
  * (Code base taken from mga driver)
  */
 static DisplayModePtr
-SiSGetModeFromName(char* str, DisplayModePtr i)
+SiSGetModeFromName(const char* str, DisplayModePtr i)
 {
     DisplayModePtr c = i;
     if(!i) return NULL;
@@ -2148,7 +2148,9 @@ int
 SiSProcXineramaQueryVersion(ClientPtr client)
 {
     xPanoramiXQueryVersionReply	  rep;
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
     register int		  n;
+#endif
 
     REQUEST_SIZE_MATCH(xPanoramiXQueryVersionReq);
     rep.type = X_Reply;
@@ -2172,7 +2174,9 @@ SiSProcXineramaGetState(ClientPtr client)
     REQUEST(xPanoramiXGetStateReq);
     WindowPtr			pWin;
     xPanoramiXGetStateReply	rep;
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
     register int		n;
+#endif
     int				rc;
 
     REQUEST_SIZE_MATCH(xPanoramiXGetStateReq);
@@ -2198,7 +2202,9 @@ SiSProcXineramaGetScreenCount(ClientPtr client)
     REQUEST(xPanoramiXGetScreenCountReq);
     WindowPtr				pWin;
     xPanoramiXGetScreenCountReply	rep;
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
     register int			n;
+#endif
     int					rc;
 
     REQUEST_SIZE_MATCH(xPanoramiXGetScreenCountReq);
@@ -2224,7 +2230,9 @@ SiSProcXineramaGetScreenSize(ClientPtr client)
     REQUEST(xPanoramiXGetScreenSizeReq);
     WindowPtr				pWin;
     xPanoramiXGetScreenSizeReply	rep;
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
     register int			n;
+#endif
     int					rc;
 
     REQUEST_SIZE_MATCH(xPanoramiXGetScreenSizeReq);
@@ -2259,7 +2267,9 @@ SiSProcXineramaIsActive(ClientPtr client)
     rep.sequenceNumber = client->sequence;
     rep.state = !SiSnoPanoramiXExtension;
     if(client->swapped) {
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
 	register int n;
+#endif
 	_swaps(&rep.sequenceNumber, n);
 	_swapl(&rep.length, n);
 	_swapl(&rep.state, n);
@@ -2280,7 +2290,9 @@ SiSProcXineramaQueryScreens(ClientPtr client)
     rep.number = (SiSnoPanoramiXExtension) ? 0 : SiSXineramaNumScreens;
     rep.length = rep.number * sz_XineramaScreenInfo >> 2;
     if(client->swapped) {
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
        register int n;
+#endif
        _swaps(&rep.sequenceNumber, n);
        _swapl(&rep.length, n);
        _swapl(&rep.number, n);
@@ -2297,7 +2309,9 @@ SiSProcXineramaQueryScreens(ClientPtr client)
 	  scratch.width  = SiSXineramadataPtr[i].width;
 	  scratch.height = SiSXineramadataPtr[i].height;
 	  if(client->swapped) {
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
 	     register int n;
+#endif
 	     _swaps(&scratch.x_org, n);
 	     _swaps(&scratch.y_org, n);
 	     _swaps(&scratch.width, n);
@@ -2337,7 +2351,9 @@ static int
 SiSSProcXineramaQueryVersion (ClientPtr client)
 {
     REQUEST(xPanoramiXQueryVersionReq);
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
     register int n;
+#endif
     _swaps(&stuff->length,n);
     REQUEST_SIZE_MATCH (xPanoramiXQueryVersionReq);
     return SiSProcXineramaQueryVersion(client);
@@ -2347,7 +2363,9 @@ static int
 SiSSProcXineramaGetState(ClientPtr client)
 {
     REQUEST(xPanoramiXGetStateReq);
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
     register int n;
+#endif
     _swaps (&stuff->length, n);
     REQUEST_SIZE_MATCH(xPanoramiXGetStateReq);
     return SiSProcXineramaGetState(client);
@@ -2357,7 +2375,9 @@ static int
 SiSSProcXineramaGetScreenCount(ClientPtr client)
 {
     REQUEST(xPanoramiXGetScreenCountReq);
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
     register int n;
+#endif
     _swaps (&stuff->length, n);
     REQUEST_SIZE_MATCH(xPanoramiXGetScreenCountReq);
     return SiSProcXineramaGetScreenCount(client);
@@ -2367,7 +2387,9 @@ static int
 SiSSProcXineramaGetScreenSize(ClientPtr client)
 {
     REQUEST(xPanoramiXGetScreenSizeReq);
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
     register int n;
+#endif
     _swaps (&stuff->length, n);
     REQUEST_SIZE_MATCH(xPanoramiXGetScreenSizeReq);
     return SiSProcXineramaGetScreenSize(client);
@@ -2377,7 +2399,9 @@ static int
 SiSSProcXineramaIsActive(ClientPtr client)
 {
     REQUEST(xXineramaIsActiveReq);
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
     register int n;
+#endif
     _swaps (&stuff->length, n);
     REQUEST_SIZE_MATCH(xXineramaIsActiveReq);
     return SiSProcXineramaIsActive(client);
@@ -2387,7 +2411,9 @@ static int
 SiSSProcXineramaQueryScreens(ClientPtr client)
 {
     REQUEST(xXineramaQueryScreensReq);
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 12
     register int n;
+#endif
     _swaps (&stuff->length, n);
     REQUEST_SIZE_MATCH(xXineramaQueryScreensReq);
     return SiSProcXineramaQueryScreens(client);
@@ -2738,7 +2764,7 @@ SiSPrintModes(ScrnInfoPtr pScrn)
     float hsync, refresh = 0.0;
     char *desc, *desc2, *prefix, *uprefix, *output;
 
-    xf86DrvMsg(pScrn->scrnIndex, pScrn->virtualFrom, "Virtual size is %dx%d "
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Virtual size is %dx%d "
 	       "(pitch %d)\n", pScrn->virtualX, pScrn->virtualY,
 	       pScrn->displayWidth);
 
@@ -6192,7 +6218,6 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
           Bool acceptcustommodes = TRUE;  /* Accept user modelines */
 	  Bool includelcdmodes   = TRUE;  /* Include modes reported by DDC */
 	  Bool isfordvi          = FALSE; /* Is for digital DVI output */
-	  Bool fakecrt2modes     = FALSE; /* Fake some modes for CRT2 */
 	  Bool IsForCRT2	 = FALSE;
 	  if(pSiS->UseVESA) {
 	     acceptcustommodes = FALSE;
@@ -6210,15 +6235,11 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
 		      if(pSiS->VBFlags & (CRT2_TV|CRT2_LCD)) {
 		         acceptcustommodes = FALSE;
 		         includelcdmodes   = FALSE;
-			 fakecrt2modes = TRUE;
 		      }
 		   }
 		} else {
 		   acceptcustommodes = FALSE;
 		   includelcdmodes   = FALSE;
-		   if(pSiS->VBFlags & (CRT2_TV|CRT2_LCD)) {
-		      fakecrt2modes = TRUE;
-		   }
 		}
 		clockRanges->interlaceAllowed = FALSE;
 		IsForCRT2 = TRUE;
@@ -6227,7 +6248,6 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
 		   if(!(pSiS->VBFlags2 & VB2_SISTMDSLCDABRIDGE)) {
 		      acceptcustommodes = FALSE;
 		      includelcdmodes   = FALSE;
-		      fakecrt2modes     = TRUE;
 		      /* Will handle i-lace in mode-switching code */
 		   } else {
 		      isfordvi = TRUE;
@@ -6246,7 +6266,6 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
 	        if(!(pSiS->VBFlags2 & VB2_SISTMDSLCDABRIDGE)) {
 		   acceptcustommodes = FALSE;
 		   includelcdmodes   = FALSE;
-		   fakecrt2modes     = TRUE;
 		   /* Will handle i-lace in mode-switching code */
 		} else {
 		   isfordvi = TRUE;
@@ -6282,7 +6301,6 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
 		   acceptcustommodes = FALSE;
 		   includelcdmodes   = FALSE;
 		   if(!(pSiS->VBFlags & DISPTYPE_CRT1)) {
-		      fakecrt2modes = TRUE;
 		      IsForCRT2 = TRUE;
 		   }
 		}
@@ -6291,7 +6309,6 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
 	     acceptcustommodes = FALSE;
 	     includelcdmodes   = FALSE;
 	     if((pSiS->VBFlags & CRT1_LCDA) || (!(pSiS->VBFlags & DISPTYPE_CRT1))) {
-		fakecrt2modes = TRUE;
 		IsForCRT2 = TRUE;
 	     }
 	  } else {
@@ -6301,7 +6318,7 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
 
 	  pSiS->HaveCustomModes = FALSE;
 	  if(SiSMakeOwnModeList(pScrn, acceptcustommodes, includelcdmodes,
-			isfordvi, &pSiS->HaveCustomModes, FALSE /*fakecrt2modes*/, IsForCRT2)) {
+			isfordvi, &pSiS->HaveCustomModes, FALSE, IsForCRT2)) {
 	     xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 		 "Replaced %s mode list with built-in modes\n",
 	     pSiS->HaveCustomModes ? "default" : "entire");
@@ -6621,7 +6638,6 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
        Bool acceptcustommodes = TRUE;
        Bool includelcdmodes   = TRUE;
        Bool isfordvi          = FALSE;
-       Bool fakecrt2modes     = FALSE;
 
        xf86DrvMsg(pScrn->scrnIndex, X_INFO, crtsetupstr, 2);
 
@@ -6649,20 +6665,16 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
 	     if(pSiS->VBFlags & (CRT2_LCD|CRT2_TV)) {
 		includelcdmodes   = FALSE;
 		acceptcustommodes = FALSE;
-		fakecrt2modes     = TRUE;
 	     }
 	  }
        } else {
 	  includelcdmodes   = FALSE;
 	  acceptcustommodes = FALSE;
-	  if(pSiS->VBFlags & (CRT2_LCD|CRT2_TV)) {
-	     fakecrt2modes = TRUE;
-	  }
        }
 
        pSiS->HaveCustomModes2 = FALSE;
        if(!SiSMakeOwnModeList(pSiS->CRT2pScrn, acceptcustommodes, includelcdmodes,
-				isfordvi, &pSiS->HaveCustomModes2, FALSE /* fakecrt2modes */, TRUE )) {
+				isfordvi, &pSiS->HaveCustomModes2, FALSE, TRUE )) {
 
 	  SISErrorLog(pScrn, "Building list of built-in modes for CRT2 failed, %s\n",
 				mergeddisstr);
@@ -6901,17 +6913,11 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
        }
     }
 
-    /* Load the dri and glx modules if requested. */
+    /* Load the dri modules if requested. */
 #ifdef SISDRI
     if(pSiS->loadDRI) {
        if(!xf86LoaderCheckSymbol("DRIScreenInit")) {
-	  if(xf86LoadSubModule(pScrn, "dri")) {
-	     if(!xf86LoaderCheckSymbol("GlxSetVisualConfigs")) {
-	        if(!xf86LoadSubModule(pScrn, "glx")) {
-		   SISErrorLog(pScrn, "Failed to load glx module\n");
-		}
-	     }
-	  } else {
+	  if(!xf86LoadSubModule(pScrn, "dri")) {
 	     SISErrorLog(pScrn, "Failed to load dri module\n");
 	  }
        }
@@ -8979,7 +8985,7 @@ SISScreenInit(SCREEN_INIT_ARGS_DECL)
 	     case 24: refreshArea = SISRefreshArea24; break;
 	     case 32: refreshArea = SISRefreshArea32; break;
 	  }
-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,3,0,0,0)
+#if (XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,3,0,0,0)) && (GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 24)
 	  xf86DisableRandR();
 	  xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 		"Driver rotation enabled, disabling RandR\n");
@@ -8992,7 +8998,7 @@ SISScreenInit(SCREEN_INIT_ARGS_DECL)
              if(!pSiS->PointerMoved) pSiS->PointerMoved = pScrn->PointerMoved;
 	     pScrn->PointerMoved = SISPointerMovedReflect;
 	     refreshArea = SISRefreshAreaReflect;
-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,3,0,0,0)
+#if (XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,3,0,0,0)) && (GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 24)
 	     xf86DisableRandR();
 	     xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 		  "Driver reflection enabled, disabling RandR\n");
@@ -9103,7 +9109,7 @@ SISScreenInit(SCREEN_INIT_ARGS_DECL)
        pSiS->Rotate = 0;
        pSiS->Reflect = 0;
        pSiS->ShadowFB = FALSE;
-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,3,0,0,0)
+#if (XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,3,0,0,0)) && (GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 24)
        if(pSiS->CRT1XOffs || pSiS->CRT1YOffs || pSiS->CRT2XOffs || pSiS->CRT2YOffs) {
 	  xf86DisableRandR();
 	  xf86DrvMsg(pScrn->scrnIndex, X_INFO,
@@ -9322,7 +9328,9 @@ SISMergedPointerMoved(SCRN_ARG_TYPE arg, int x, int y)
   int		CRT1XOffs = 0, CRT1YOffs = 0, CRT2XOffs = 0, CRT2YOffs = 0;
   int		HVirt = pScrn1->virtualX;
   int		VVirt = pScrn1->virtualY;
+#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 20
   int		sigstate;
+#endif
   Bool		doit = FALSE, HaveNonRect = FALSE, HaveOffsRegions = FALSE;
   SiSScrn2Rel   srel = ((SiSMergedDisplayModePtr)pSiS->CurrentLayout.mode->Private)->CRT2Position;
 
@@ -14003,8 +14011,10 @@ UChar
 SiS_GetSetBIOSScratch(ScrnInfoPtr pScrn, UShort offset, UChar value)
 {
     UChar ret = 0;
+#ifndef XSERVER_LIBPCIACCESS
 #ifdef SIS_USE_BIOS_SCRATCH
     UChar *base;
+#endif
 #endif
 
     /* For some reasons (like detecting the current display mode),

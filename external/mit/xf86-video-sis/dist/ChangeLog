@@ -1,3 +1,232 @@
+commit 866e109fc12752b1679e0b59baf40326d421a03f
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Dec 3 10:09:49 2019 -0800
+
+    Version bumped to 0.12.0
+    
+    A maintenance release to support X.Org X Server 1.20.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit f0c0896a83e8545aa3b779934b4c30c2e5f371cf
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Nov 26 09:31:52 2019 -0800
+
+    Enable SISGAMMARAMP macro on X.Org X Server
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit eac25b01caee75210fe4df60bf2363a642981d93
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Tue Nov 26 09:31:37 2019 -0800
+
+    Fix for xf86InterceptSigIll() discontinuation in X Server 1.20
+    
+    xf86InterceptSigIll() will still be used on X.Org X Server 1.19 or
+    older.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 5d816e15d8bbafa59b072e5fd561e1897a0ea04b
+Author: Kevin Brace <kevinbrace@bracecomputerlab.com>
+Date:   Tue Nov 26 09:31:22 2019 -0800
+
+    Do not call xf86DisableRandR() for X Server 1.20
+    
+    This is needed for X Server 1.20 support.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@bracecomputerlab.com>
+
+commit dfe2ce49b5e9664787f5677507eba7ea0446fb7e
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Fri Jul 26 15:44:13 2019 -0700
+
+    Version bumped to 0.11.0
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 16fe43012005f249375e83ebf43da76d6de67cb7
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Thu Jul 18 15:31:14 2019 -0700
+
+    Convert text format specifier type to unsigned short
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 9e42918588b65860422cb296a92ecede15db7419
+Author: Fabrice Fontaine <fontaine.fabrice@gmail.com>
+Date:   Sat May 4 16:57:57 2019 +0200
+
+    configure.ac: fix cross-compilation
+    
+    AC_CHECK_FILE can't be used when cross-compiling
+    
+    [Retrieved from:
+    https://git.buildroot.net/buildroot/tree/package/x11r7/xdriver_xf86-video-sis/0001-cross.patch]
+    Signed-off-by: Fabrice Fontaine <fontaine.fabrice@gmail.com>
+
+commit 22d3c79f9718dada0d8ef386a3a2cd2db31d7bc8
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Dec 17 18:53:46 2018 -0600
+
+    Convert EXA support preprocessor macro to USE_EXA
+    
+    All the other DDXs do it this way.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 0baf5baf7ecb0197961c8ce92943fedba852e437
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Dec 17 15:23:07 2018 -0600
+
+    Eliminate constant related compilation warnings for native functions
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 0b2cce041e445cee8a8308b9ae4ea70794ae8c13
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Dec 17 15:08:45 2018 -0600
+
+    Eliminate swap macro related unused variable compilation warnings
+    
+    Unfortunately, commit c530ebb5d4ad0663838a0132e3610d713eaaa640 did not
+    the check for ABI_VIDEODRV_VERSION where the swap macros are actually
+    used in the code. Checking for ABI_VIDEODRV_VERSION suppresses unused
+    variable compilation warnings for newer versions of the X Server.
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 301cefae671cb2a4f25b068b0ef2ea9331ae17f3
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Dec 17 15:07:55 2018 -0600
+
+    Suppress logical operation and parenthesis related compilation warnings
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 940eed5b73b28d3067b025e583ebf257cdd4603f
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Mon Dec 17 15:06:53 2018 -0600
+
+    Eliminate set but not used variable compilation warnings
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 7e75c8b1e944132186f8b3a9227d0eaf651b1206
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Dec 7 19:09:21 2018 -0800
+
+    Update configure.ac bug URL for gitlab migration
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3fcdc11644f65744c1980e24f860bd20fc4cc782
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Nov 10 13:03:46 2018 -0800
+
+    Remove obsolete B16 & B32 tags in struct definitions
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 413dfdfc456d4b8a33c55012227850b1bdc07d84
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Wed Jul 11 21:15:33 2018 -0700
+
+    Elimination of many "variable set but not used" compilation warnings
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 5559abc347a698ed0baf79ba7d57b4bc0056f33e
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Wed Jul 11 21:02:37 2018 -0700
+
+    Add conditional compilation directives to suppress compilation warnings
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit 31f3dd0df2bc855ba9955b588cbcaaa25e3e60d6
+Author: Kevin Brace <kevinbrace@gmx.com>
+Date:   Wed Jul 11 17:09:04 2018 -0700
+
+    Minor adjustment to the compilation order
+    
+    Signed-off-by: Kevin Brace <kevinbrace@gmx.com>
+
+commit a50b2b3412dd8e7f3916acb142c942e85ffcb3e5
+Author: Emil Velikov <emil.velikov@collabora.com>
+Date:   Mon Jul 17 12:01:57 2017 +0100
+
+    xf86-video-sis: remove the GlxSetVisualConfigs stub and friends
+    
+    The function was an empty since 2008 at least. Remove it alongside the
+    unused GLX visuals code.
+    
+    With this all the GL/GLX dependencies in the driver are gone.
+    
+    Cc: Connor Behan <connor.behan@gmail.com>
+    Cc: Thomas Klausner <wiz@NetBSD.org>
+    Signed-off-by: Emil Velikov <emil.velikov@collabora.com>
+
+commit 4b1356a2b7fd06e9a05d134caa4033681c939737
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Thu Feb 16 11:21:27 2017 -0500
+
+    Remove reference to ->virtualFrom
+    
+    The core will print this information as well anyway.
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit d8b449d331a16e80a75382de60f10b3670ad4cf0
+Author: Mihail Konev <k.mvc@ya.ru>
+Date:   Thu Jan 26 14:00:22 2017 +1000
+
+    autogen: add default patch prefix
+    
+    Signed-off-by: Mihail Konev <k.mvc@ya.ru>
+
+commit e281d49ee462afe27f52be8334c67613216a62a6
+Author: Emil Velikov <emil.l.velikov@gmail.com>
+Date:   Mon Mar 9 12:00:52 2015 +0000
+
+    autogen.sh: use quoted string variables
+    
+    Place quotes around the $srcdir, $ORIGDIR and $0 variables to prevent
+    fall-outs, when they contain space.
+    
+    Signed-off-by: Emil Velikov <emil.l.velikov@gmail.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 96f78918e84971578f5217affba31a535227d947
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Tue Jan 24 10:32:07 2017 +1000
+
+    autogen.sh: use exec instead of waiting for configure to finish
+    
+    Syncs the invocation of configure with the one from the server.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Reviewed-by: Emil Velikov <emil.velikov@collabora.com>
+
+commit 576d819d534c22e7b9cd1488e847b95ed856f527
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jun 1 21:03:14 2014 -0700
+
+    autogen.sh: Honor NOCONFIGURE=1
+    
+    See http://people.gnome.org/~walters/docs/build-api.txt
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9c55c0de3e96d2758c1fe5176531b98c7009bdca
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jun 1 21:03:13 2014 -0700
+
+    configure: Drop AM_MAINTAINER_MODE
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
 commit 3b1aca65448a0660d8ecb60b2431a306b66d5a5a
 Author: Matt Turner <mattst88@gmail.com>
 Date:   Tue Jan 17 14:45:31 2017 -0800

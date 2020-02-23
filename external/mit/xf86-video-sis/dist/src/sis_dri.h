@@ -106,11 +106,6 @@ typedef struct {
 typedef struct {
   /* Nothing here yet */
   int dummy;
-} SISConfigPrivRec, *SISConfigPrivPtr;
-
-typedef struct {
-  /* Nothing here yet */
-  int dummy;
 } SISDRIContextRec, *SISDRIContextPtr;
 
 #include "screenint.h"

@@ -252,7 +252,7 @@ SiSBuildBuiltInModeList(ScrnInfoPtr pScrn, BOOLEAN includelcdmodes, BOOLEAN isfo
 
       current = new;
 
-      sprintf(current->name, "%dx%d", pSiS->SiS_Pr->SiS_RefIndex[i].XRes,
+      sprintf(current->name, "%hu%hu", pSiS->SiS_Pr->SiS_RefIndex[i].XRes,
 				      pSiS->SiS_Pr->SiS_RefIndex[i].YRes);
 
       current->status = MODE_OK;
