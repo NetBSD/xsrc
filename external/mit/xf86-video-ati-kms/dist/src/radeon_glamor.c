@@ -81,6 +81,14 @@ radeon_glamor_pre_init(ScrnInfoPtr scrn)
 
 	s = xf86GetOptValString(info->Options, OPTION_ACCELMETHOD);
 	if (!s) {
+#ifdef __NetBSD__
+		/*
+		 * glamor isn't working yet for GL.  disable where not
+		 * needed for anything at all.
+		 */
+		if (info->ChipFamily < CHIP_FAMILY_TAHITI)
+			return FALSE;
+#else
 		if (xorgGetVersion() >= XORG_VERSION_NUMERIC(1,18,3,0,0)) {
 			if (info->ChipFamily < CHIP_FAMILY_R600)
 				return FALSE;
@@ -88,6 +96,7 @@ radeon_glamor_pre_init(ScrnInfoPtr scrn)
 			if (info->ChipFamily < CHIP_FAMILY_TAHITI)
 				return FALSE;
 		}
+#endif
 	}
 
 	if (s && strcasecmp(s, "glamor") != 0) {
