@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 2017/06/23 02:15:07 macallan Exp $	*/
+/*	$NetBSD: main.c,v 1.4 2020/06/08 15:01:59 rin Exp $	*/
 
 /*
  * Copyright (c) 2011 Michael Lorenz
@@ -76,7 +76,7 @@ main(int argc, char *argv[])
 	int width, datalen, didx, i, start, end, out;
 	FILE *output;
 	uint8_t *fontdata;
-	char fontname[128], filename[128];
+	char fontname[128], filename[sizeof(fontname) + 4 /* .wsf */];
 
 	if (argc != 3) {
 		printf("usage: ttf2wsfont some_font.ttf height\n");
@@ -141,12 +141,13 @@ main(int argc, char *argv[])
 	}
 
 	/* now output as a header file */
-	snprintf(fontname, 128, "%s_%dx%d", face->family_name, width, cell_height);
+	snprintf(fontname, sizeof(fontname), "%s_%dx%d", face->family_name,
+	    width, cell_height);
 	for (i = 0; i < strlen(fontname); i++) {
 		if (isblank((int)fontname[i]))
 			fontname[i]='_';
 	}
-	snprintf(filename, 128, "%s.h", fontname);
+	snprintf(filename, sizeof(filename), "%s.h", fontname);
 	if ((output = fopen(filename, "w")) == NULL) {
 		fprintf(stderr, "Can't open output file %s\n", filename);
 		return -1;
@@ -185,14 +186,14 @@ main(int argc, char *argv[])
 	fprintf(output, "};\n");
 	fclose(output);
 	/* dump as binary */
-	snprintf(filename, 128, "%s.wsf", fontname);	
+	snprintf(filename, sizeof(filename), "%s.wsf", fontname);	
 	if ((out = open(filename, O_RDWR | O_CREAT | O_TRUNC, DEFFILEMODE)) > 0) {
 		char nbuf[64];
 		uint32_t foo;
 		write(out, "WSFT", 4);
-		memset(nbuf, 0, 64);
-		strncpy(nbuf, face->family_name, 64);
-		write(out, nbuf, 64);
+		memset(nbuf, 0, sizeof(nbuf));
+		strlcpy(nbuf, face->family_name, sizeof(nbuf));
+		write(out, nbuf, sizeof(nbuf));
 		/* firstchar */
 		foo = htole32(32);
 		write(out, &foo, 4);
