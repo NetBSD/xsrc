@@ -567,9 +567,8 @@ _xf86findDriver(const char *ident, XF86ConfDevicePtr p)
 	return NULL;
 }
 
-static enum accel_method { NOACCEL, SNA, UXA } get_accel_method(void)
+static enum accel_method { NOACCEL, SNA, UXA } get_accel_method(enum accel_method accel_method)
 {
-	enum accel_method accel_method = DEFAULT_ACCEL_METHOD;
 	XF86ConfDevicePtr dev;
 
 	if (hosted())
@@ -641,7 +640,17 @@ intel_scrn_create(DriverPtr		driver,
 #endif
 
 #if KMS
-	switch (get_accel_method()) {
+	enum accel_method default_accel_method = DEFAULT_ACCEL_METHOD;
+	/*
+	 * XXX
+	 * Use UXA by default for Gen3/4/5 chipsets (except 915) to avoid
+	 * screen corruption etc.  (PR/54995, PR/55198)
+	 */
+	if ((unsigned)((struct intel_device_info *)match_data)->gen > 030 &&
+	    (unsigned)((struct intel_device_info *)match_data)->gen < 060)
+		default_accel_method = UXA;
+
+	switch (get_accel_method(default_accel_method)) {
 #if USE_SNA
 	case NOACCEL:
 	case SNA:
