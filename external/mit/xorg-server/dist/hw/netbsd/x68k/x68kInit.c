@@ -1,4 +1,4 @@
-/* $NetBSD: x68kInit.c,v 1.5 2020/07/18 04:46:22 tsutsui Exp $ */
+/* $NetBSD: x68kInit.c,v 1.6 2020/07/18 15:48:08 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -71,6 +71,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "Xos.h"
 #include "x68k.h"
 #include "mi.h"
+#include "extinit.h"
 
 static int nscreens;
 
@@ -78,6 +79,13 @@ void
 OsVendorInit(void)
 {
 }
+
+#ifdef GLXEXT
+void
+GlxExtensionInit(void)
+{
+}
+#endif
 
 /*-------------------------------------------------------------------------
  * function "InitOutput"                                [ called by DIX ]
