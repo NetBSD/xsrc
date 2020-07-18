@@ -1,4 +1,4 @@
-/* $NetBSD: x68kInit.c,v 1.2 2020/04/10 16:49:36 tsutsui Exp $ */
+/* $NetBSD: x68kInit.c,v 1.3 2020/07/18 04:37:50 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -128,8 +128,14 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char *argv[])
 void
 InitInput(int argc, char *argv[]) 
 {
-    x68kPointerDevice = AddInputDevice(serverClient, x68kMouseProc, TRUE);
-    x68kKeyboardDevice = AddInputDevice(serverClient, x68kKbdProc, TRUE);
+    int rc;
+
+    rc = AllocDevicePair(serverClient, "x68k",
+			 &x68kPointerDevice, &x68kKeyboardDevice,
+			 x68kMouseProc,x68kKbdProc, FALSE);
+    if (rc != Success)
+	FatalError("Failed to init x68k default input devices.\n");
+
     GetEventList(&x68kEvents);
 
     if ( !mieqInit() )
