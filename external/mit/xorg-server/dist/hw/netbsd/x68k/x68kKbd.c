@@ -1,4 +1,4 @@
-/* $NetBSD: x68kKbd.c,v 1.4 2020/04/10 16:49:36 tsutsui Exp $ */
+/* $NetBSD: x68kKbd.c,v 1.5 2020/07/18 15:37:02 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -87,12 +87,18 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 X68kKbdPriv x68kKbdPriv;
 DeviceIntPtr x68kKeyboardDevice = NULL;
 
+static void x68kKbdHandlerNotify(int, int, void *);
 static void x68kInitModMap(KeySymsRec *, CARD8 *);
 static void x68kInitKbdNames(XkbRMLVOSet *, X68kKbdPrivPtr);
 static void x68kKbdRingBell(DeviceIntPtr, int, int);
 static void x68kKbdBell(int, DeviceIntPtr, pointer, int);
 static void x68kKbdCtrl(DeviceIntPtr, KeybdCtrl *);
 static void x68kSetLeds(X68kKbdPrivPtr, u_char);
+
+static void
+x68kKbdHandlerNotify(int fd __unused, int ready __unused, void *data __unused)
+{
+}
 
 /*------------------------------------------------------------------------
  * x68kKbdProc --
@@ -144,13 +150,14 @@ x68kKbdProc(DeviceIntPtr pDev, 	/* Keyboard to manipulate */
                 return !Success;
             }
 	    x68kSetLeds(&x68kKbdPriv, (u_char)x68kKbdPriv.leds);
-            (void) AddEnabledDevice(x68kKbdPriv.fd);
+            SetNotifyFd(x68kKbdPriv.fd, x68kKbdHandlerNotify,
+		X_NOTIFY_READ, NULL);
             pKeyboard->on = TRUE;
             break;
 
         case DEVICE_CLOSE:
         case DEVICE_OFF:
-            RemoveEnabledDevice(x68kKbdPriv.fd);
+            RemoveNotifyFd(x68kKbdPriv.fd);
             pKeyboard->on = FALSE;
             break;
         default:
