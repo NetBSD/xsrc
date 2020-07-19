@@ -1,4 +1,4 @@
-/* $NetBSD: x68kKbd.c,v 1.5 2020/07/18 15:37:02 tsutsui Exp $ */
+/* $NetBSD: x68kKbd.c,v 1.6 2020/07/19 19:11:05 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -382,12 +382,10 @@ x68kKbdCtrl(DeviceIntPtr pDev, KeybdCtrl *ctrl)
 {
     X68kKbdPrivPtr pPriv = (X68kKbdPrivPtr)pDev->public.devicePrivate;
 
-#ifdef XKB
     if (pPriv->leds != ctrl->leds) {
         x68kSetLeds(pPriv, (u_char)ctrl->leds);
 	pPriv->leds = ctrl->leds;
     }
-#endif
 }
 
 /*-------------------------------------------------------------------------
