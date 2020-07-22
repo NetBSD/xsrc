@@ -1,4 +1,4 @@
-/* $NetBSD: x68kInit.c,v 1.6 2020/07/18 15:48:08 tsutsui Exp $ */
+/* $NetBSD: x68kInit.c,v 1.7 2020/07/22 21:24:20 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -68,7 +68,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 *******************************************************/
 
-#include "Xos.h"
+#include <X11/Xos.h>
 #include "x68k.h"
 #include "mi.h"
 #include "extinit.h"

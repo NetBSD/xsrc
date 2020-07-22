@@ -1,4 +1,4 @@
-/* $NetBSD: x68k.h,v 1.4 2020/04/10 16:49:36 tsutsui Exp $ */
+/* $NetBSD: x68k.h,v 1.5 2020/07/22 21:24:20 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -43,12 +43,12 @@
 #include <machine/grfioctl.h>
 
 /* generic X */
-#include <X.h>
-#include <Xmd.h>
+#include <X11/X.h>
+#include <X11/Xmd.h>
 #define XK_KATAKANA
-#include <keysym.h>
+#include <X11/keysym.h>
 #define NEED_EVENTS
-#include <Xproto.h>
+#include <X11/Xproto.h>
 
 /* dix */
 #include <misc.h>
