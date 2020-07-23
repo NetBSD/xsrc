@@ -418,7 +418,7 @@ sunCG2Init(
 	ret = sunInitCommon (screen, pScreen, (off_t) 0,
 			sunCfbScreenInit, CG2ScreenInit,
 			fbCreateDefColormap, CG2SaveScreen,
-			(int) &((struct cg2memfb *) 0)->pixplane);
+			offsetof(struct cg2memfb, pixplane));
 	((CG2Ptr) sunFbs[screen].fb)->regs.ppmask.reg = 0xFF;
 #ifndef LOWMEMFTPT
     }
@@ -436,7 +436,7 @@ typedef struct {
     u_char mpixel[CG4_MELEN];		/* bit-per-pixel memory */
     u_char epixel[CG4_MELEN];		/* enable plane */
     u_char cpixel[CG4_HEIGHT][CG4_WIDTH];	/* byte-per-pixel memory */
-} *CG4Ptr;
+} *CG4Ptr, CG4Rec;
 
 static void
 CG4Switch(ScreenPtr pScreen, int select)
@@ -462,7 +462,7 @@ sunCG4Init(
 	sunFbs[screen].EnterLeave = CG4Switch;
     return sunInitCommon (screen, pScreen, (off_t) 0,
 	sunCfbScreenInit, CGScreenInit,
-	fbCreateDefColormap, sunSaveScreen, (int) ((CG4Ptr) 0)->cpixel);
+	fbCreateDefColormap, sunSaveScreen, offsetof(CG4Rec, cpixel));
 }
 
 #ifdef FBTYPE_SUNFAST_COLOR /* { */
