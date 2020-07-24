@@ -664,6 +664,7 @@ InitInput(int argc, char **argv)
 void
 CloseInput(void)
 {
+    mieqFini();
 }
 
 #if SUNMAXDEPTH == 8
