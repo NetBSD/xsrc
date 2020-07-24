@@ -197,7 +197,7 @@ sunUninstallColormap(ColormapPtr cmap)
 	if (cmap->mid != defMapID) {
 	    ColormapPtr defMap;
 	    dixLookupResourceByType((void **)&defMap, defMapID, RT_COLORMAP,
-				    NullClient, DixUnknownAccess);
+				    serverClient, DixUseAccess);
 
 	    if (defMap)
 		(*cmap->pScreen->InstallColormap)(defMap);
