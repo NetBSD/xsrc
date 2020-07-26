@@ -141,6 +141,7 @@ sunScreenAllocate(ScreenPtr pScreen)
     if (!pPrivate)
 	return FALSE;
 
+    pPrivate->origColormapValid = FALSE;
     sunSetScreenPrivate(pScreen, pPrivate);
     return TRUE;
 }
