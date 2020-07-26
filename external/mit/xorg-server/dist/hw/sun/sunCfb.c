@@ -94,11 +94,15 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 static void CGUpdateColormap(ScreenPtr, int, int, u_char *, u_char *, u_char *);
 static void CGGetColormap(ScreenPtr, int, int, u_char *, u_char *, u_char *);
 static void CGStoreColors(ColormapPtr, int, xColorItem *);
+static void CGSaveColormap(ScreenPtr);
+static void CGRestoreColormap(ScreenPtr);
+static void CGScreenInitCommon(ScreenPtr);
 static void CGScreenInit(ScreenPtr);
 static void checkMono(int, char **);
 #ifdef INCLUDE_CG2_HEADER
 static void CG2UpdateColormap(ScreenPtr, int, int, u_char *, u_char *, u_char *);
 static void CG2GetColormap(ScreenPtr, int, int, u_char *, u_char *, u_char *);
+static void CG2RestoreColormap(ScreenPtr);
 static Bool CG2SaveScreen(ScreenPtr, int);
 static void CG2ScreenInit(ScreenPtr pScreen);
 #endif
@@ -246,22 +250,61 @@ CGStoreColors(ColormapPtr pmap, int ndef, xColorItem *pdefs)
 }
 
 static void
-CGScreenInit(ScreenPtr pScreen)
+CGSaveColormap(ScreenPtr pScreen)
 {
-#ifndef STATIC_COLOR /* { */
     sunScreenPtr pPrivate = sunGetScreenPrivate(pScreen);
+    sunCmapPtr origColormap;
+    u_char *rmap, *gmap, *bmap;
+
+    origColormap = &pPrivate->origColormap;
+    rmap = origColormap->origRed;
+    gmap = origColormap->origGreen;
+    bmap = origColormap->origBlue;
+    (*pPrivate->GetColormap)(pScreen, 0, NCMAP, rmap, gmap, bmap);
+}
+
+static void
+CGRestoreColormap(ScreenPtr pScreen)
+{
+    sunScreenPtr pPrivate = sunGetScreenPrivate(pScreen);
+    sunCmapPtr origColormap;
+    u_char *rmap, *gmap, *bmap;
+
+    if (pPrivate->origColormapValid) {
+	origColormap = &pPrivate->origColormap;
+	rmap = origColormap->origRed;
+	gmap = origColormap->origGreen;
+	bmap = origColormap->origBlue;
+	(*pPrivate->UpdateColormap)(pScreen, 0, NCMAP, rmap, gmap, bmap);
+    }
+}
+
+static void
+CGScreenInitCommon(ScreenPtr pScreen)
+{
     pScreen->InstallColormap = sunInstallColormap;
     pScreen->UninstallColormap = sunUninstallColormap;
     pScreen->ListInstalledColormaps = sunListInstalledColormaps;
     pScreen->StoreColors = CGStoreColors;
-    pPrivate->UpdateColormap = CGUpdateColormap;
-    pPrivate->GetColormap = CGGetColormap;
     if (sunFlipPixels) {
 	Pixel pixel = pScreen->whitePixel;
 	pScreen->whitePixel = pScreen->blackPixel;
 	pScreen->blackPixel = pixel;
     }
-#endif /* } */
+}
+
+static void
+CGScreenInit(ScreenPtr pScreen)
+{
+    sunScreenPtr pPrivate = sunGetScreenPrivate(pScreen);
+
+    CGScreenInitCommon(pScreen);
+    pPrivate->UpdateColormap = CGUpdateColormap;
+    pPrivate->GetColormap = CGGetColormap;
+    pPrivate->RestoreColormap = CGRestoreColormap;
+
+    CGSaveColormap(pScreen);
+    pPrivate->origColormapValid = TRUE;
 }
 
 static void
@@ -372,6 +415,15 @@ CG2GetColormap(ScreenPtr pScreen, int index, int count, u_char *rmap, u_char *gm
     }
 }
 
+static void
+CG2RestoreColormap(ScreenPtr pScreen)
+{
+    int screen = pScreen->myNum;
+
+    CGRestoreColormap(pScreen);
+    ((CG2Ptr)sunFbs[screen].fb)->regs.ppmask.reg = 1;
+}
+
 static Bool
 CG2SaveScreen(ScreenPtr pScreen, int on)
 {
@@ -387,9 +439,14 @@ static void
 CG2ScreenInit(ScreenPtr pScreen)
 {
     sunScreenPtr pPrivate = sunGetScreenPrivate(pScreen);
-    CGScreenInit (pScreen);
+
+    CGScreenInitCommon(pScreen);
     pPrivate->UpdateColormap = CG2UpdateColormap;
     pPrivate->GetColormap = CG2GetColormap;
+    pPrivate->RestoreColormap = CG2RestoreColormap;
+
+    CGSaveColormap(pScreen);
+    pPrivate->origColormapValid = TRUE;
 }
 
 Bool

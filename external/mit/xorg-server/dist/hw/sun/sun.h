@@ -247,11 +247,21 @@ typedef struct {
     CursorPtr	    pCursor;		/* current cursor */
 } sunCursorRec, *sunCursorPtr;
 
+#define NCMAP	256
+typedef struct {
+    u_char	    origRed[NCMAP];
+    u_char	    origGreen[NCMAP];
+    u_char	    origBlue[NCMAP];
+} sunCmapRec, *sunCmapPtr;
+
 typedef struct {
     ColormapPtr	    installedMap;
     CloseScreenProcPtr CloseScreen;
     void	    (*UpdateColormap)(ScreenPtr, int, int, u_char *, u_char *, u_char *);
     void	    (*GetColormap)(ScreenPtr, int, int, u_char *, u_char *, u_char *);
+    Bool	    origColormapValid;
+    sunCmapRec	    origColormap;
+    void	    (*RestoreColormap)(ScreenPtr);
     sunCursorRec    hardwareCursor;
     Bool	    hasHardwareCursor;
 } sunScreenRec, *sunScreenPtr;
