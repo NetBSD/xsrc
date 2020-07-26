@@ -96,6 +96,12 @@ static void CGGetColormap(ScreenPtr, int, int, u_char *, u_char *, u_char *);
 static void CGStoreColors(ColormapPtr, int, xColorItem *);
 static void CGScreenInit(ScreenPtr);
 static void checkMono(int, char **);
+#ifdef INCLUDE_CG2_HEADER
+static void CG2UpdateColormap(ScreenPtr, int, int, u_char *, u_char *, u_char *);
+static void CG2GetColormap(ScreenPtr, int, int, u_char *, u_char *, u_char *);
+static Bool CG2SaveScreen(ScreenPtr, int);
+static void CG2ScreenInit(ScreenPtr pScreen);
+#endif
 static void CG4Switch(ScreenPtr, int);
 
 static void
