@@ -1282,6 +1282,9 @@ fbResolveColor(unsigned short	*pred,
 extern _X_EXPORT Bool
 fbInitializeColormap(ColormapPtr pmap);
 
+extern _X_EXPORT Bool
+mfbCreateColormap(ColormapPtr pmap);
+
 extern _X_EXPORT int
 fbExpandDirectColors (ColormapPtr   pmap, 
 		      int	    ndef,
