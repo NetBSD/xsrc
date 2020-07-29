@@ -51,7 +51,11 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "xkbsrv.h"
 #include "xkbstr.h"
 
+#ifdef __sun
 #define SUN_LED_MASK	0x0f
+#else
+#define SUN_LED_MASK	0x07
+#endif
 #define MIN_KEYCODE	7	/* necessary to avoid the mouse buttons */
 #define MAX_KEYCODE	255	/* limited by the protocol */
 #ifndef KB_SUN4
@@ -144,6 +148,7 @@ SetLights(KeybdCtrl* ctrl, int fd)
 #ifdef KIOCSLED
     static unsigned char led_tab[16] = {
 	0,
+#ifdef __sun
 	LED_NUM_LOCK,
 	LED_SCROLL_LOCK,
 	LED_SCROLL_LOCK | LED_NUM_LOCK,
@@ -159,8 +164,25 @@ SetLights(KeybdCtrl* ctrl, int fd)
 	LED_CAPS_LOCK | LED_COMPOSE | LED_NUM_LOCK,
 	LED_CAPS_LOCK | LED_COMPOSE | LED_SCROLL_LOCK,
 	LED_CAPS_LOCK | LED_COMPOSE | LED_SCROLL_LOCK | LED_NUM_LOCK
+#else
+	LED_CAPS_LOCK,
+	LED_NUM_LOCK,
+	LED_NUM_LOCK | LED_CAPS_LOCK,
+	LED_SCROLL_LOCK,
+	LED_SCROLL_LOCK | LED_CAPS_LOCK,
+	LED_SCROLL_LOCK | LED_NUM_LOCK,
+	LED_SCROLL_LOCK | LED_NUM_LOCK | LED_CAPS_LOCK,
+	LED_COMPOSE,
+	LED_COMPOSE | LED_CAPS_LOCK,
+	LED_COMPOSE | LED_NUM_LOCK,
+	LED_COMPOSE | LED_NUM_LOCK | LED_CAPS_LOCK,
+	LED_COMPOSE | LED_SCROLL_LOCK,
+	LED_COMPOSE | LED_SCROLL_LOCK | LED_CAPS_LOCK,
+	LED_COMPOSE | LED_SCROLL_LOCK | LED_NUM_LOCK,
+	LED_COMPOSE | LED_SCROLL_LOCK | LED_NUM_LOCK | LED_CAPS_LOCK,
+#endif
     };
-    if (ioctl (fd, KIOCSLED, (caddr_t)&led_tab[ctrl->leds & 0x0f]) == -1)
+    if (ioctl (fd, KIOCSLED, (caddr_t)&led_tab[ctrl->leds & SUN_LED_MASK]) == -1)
 	ErrorF("Failed to set keyboard lights");
 #endif
 }
@@ -223,10 +245,17 @@ DDXRingBell(int volume, int pitch, int duration)
 }
 
 
+#ifdef __sun
 #define XLED_NUM_LOCK    0x1
 #define XLED_COMPOSE     0x4
 #define XLED_SCROLL_LOCK 0x2
 #define XLED_CAPS_LOCK   0x8
+#else
+#define XLED_NUM_LOCK    0x2
+#define XLED_COMPOSE     0x8
+#define XLED_SCROLL_LOCK 0x4
+#define XLED_CAPS_LOCK   0x1
+#endif
 
 static KeyCode
 LookupKeyCode(KeySym keysym, XkbDescPtr xkb, KeySymsPtr syms)
@@ -324,7 +353,7 @@ DoLEDs(
 	    pseudoKey(device, FALSE,
 		LookupKeyCode(SunXK_Compose, xkb, syms));
 
-    pPriv->leds = ctrl->leds & 0x0f;
+    pPriv->leds = ctrl->leds & SUN_LED_MASK;
     SetLights (ctrl, pPriv->fd);
     free(syms->map);
     free(syms);
@@ -359,7 +388,7 @@ sunKbdCtrl(DeviceIntPtr device, KeybdCtrl* ctrl)
     	if (ioctl (pPriv->fd, KIOCCMD, &kbdClickCmd) == -1)
  	    ErrorF("Failed to set keyclick");
     }
-    if ((pPriv->type == KB_SUN4) && (pPriv->leds != (ctrl->leds & 0x0f)))
+    if ((pPriv->type == KB_SUN4) && (pPriv->leds != (ctrl->leds & SUN_LED_MASK)))
 	DoLEDs(device, ctrl, pPriv);
 }
 
