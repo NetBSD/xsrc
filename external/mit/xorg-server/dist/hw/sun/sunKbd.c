@@ -839,15 +839,3 @@ LegalModifier(unsigned int key, DeviceIntPtr pDev)
 {
     return TRUE;
 }
-
-/*ARGSUSED*/
-void
-sunBlockHandler(int nscreen, void *pbdata, void *pTimeout, void *pReadmask)
-{
-}
-
-/*ARGSUSED*/
-void
-sunWakeupHandler(int nscreen, void *pbdata, unsigned long err, void *pReadmask)
-{
-}
