@@ -111,21 +111,6 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define	XK_R15	NoSymbol
 #endif
 
-/* twm and Motif have hard-coded dependencies on Meta being Mod1 :-( */
-#if 0
-/* This set has optimal characteristics for use in the Toolkit... */
-#define Meta_Mask Mod1Mask
-#define Mode_switch_Mask Mod2Mask
-#define Num_Lock_Mask Mod3Mask
-#define Alt_Mask Mod4Mask
-#else
-/* but this set is compatible with what we shipped in R6. */
-#define Meta_Mask Mod1Mask
-#define Mode_switch_Mask Mod2Mask
-#define Alt_Mask Mod3Mask
-#define Num_Lock_Mask Mod4Mask
-#endif
-
 #ifdef US2
 
 static KeySym US2Keymap[] = {

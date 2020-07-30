@@ -58,9 +58,16 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #endif
 #define MIN_KEYCODE	7	/* necessary to avoid the mouse buttons */
 #define MAX_KEYCODE	255	/* limited by the protocol */
+#define NUM_KEYCODES	(MAX_KEYCODE - MIN_KEYCODE + 1)
 #ifndef KB_SUN4
 #define KB_SUN4		4
 #endif
+
+#define Meta_Mask	Mod1Mask
+#define Mode_switch_Mask Mod2Mask
+#define Alt_Mask	Mod3Mask
+#define Num_Lock_Mask	Mod4Mask
+#define ScrollLockMask	Mod5Mask
 
 #define tvminus(tv, tv1, tv2)   /* tv = tv1 - tv2 */ \
 		if ((tv1).tv_usec < (tv2).tv_usec) { \
@@ -79,6 +86,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 		}
 
 static void sunKbdHandlerNotify(int, int, void *);
+static void sunInitModMap(const KeySymsRec *, CARD8 *);
 static void SwapLKeys(KeySymsRec *);
 static void SetLights(KeybdCtrl *, int);
 static KeyCode LookupKeyCode(KeySym, XkbDescPtr, KeySymsPtr);
@@ -605,13 +613,12 @@ sunInitKbdNames(XkbRMLVOSet *rmlvo, sunKbdPrivPtr pKbd)
 int
 sunKbdProc(DeviceIntPtr device, int what)
 {
-    int i;
     DevicePtr pKeyboard = (DevicePtr) device;
     sunKbdPrivPtr pPriv;
     KeybdCtrl*	ctrl = &device->kbdfeed->ctrl;
     XkbRMLVOSet rmlvo;
+    CARD8 workingModMap[MAP_LENGTH];
 
-    static CARD8 *workingModMap = NULL;
     static KeySymsRec *workingKeySyms;
 
     switch (what) {
@@ -633,14 +640,8 @@ sunKbdProc(DeviceIntPtr device, int what)
 	    }
 	    if (workingKeySyms->maxKeyCode > MAX_KEYCODE)
 		workingKeySyms->maxKeyCode = MAX_KEYCODE;
-	}
 
-	if (!workingModMap) {
-	    workingModMap = malloc(MAP_LENGTH);
-	    (void) memset(workingModMap, 0, MAP_LENGTH);
-	    for(i=0; sunModMaps[sunKbdPriv.type][i].key != 0; i++)
-		workingModMap[sunModMaps[sunKbdPriv.type][i].key + MIN_KEYCODE] =
-		sunModMaps[sunKbdPriv.type][i].modifiers;
+	    sunInitModMap(workingKeySyms, workingModMap);
 	}
 
 	pKeyboard->devicePrivate = (void *)&sunKbdPriv;
@@ -694,6 +695,73 @@ sunKbdProc(DeviceIntPtr device, int what)
 	FatalError("Unknown keyboard operation\n");
     }
     return Success;
+}
+
+/*-------------------------------------------------------------------------
+ * sunInitModMap --
+ *	Initialize ModMap per specified KeyMap table.
+ *
+ * Results:
+ * 	None.
+ *
+ * Side Effects:
+ *	None.
+ *-----------------------------------------------------------------------*/
+static void
+sunInitModMap(
+    const KeySymsRec *KeySyms,	/* KeyMap data to set ModMap */
+    CARD8 *ModMap		/* ModMap to be initialized */
+)
+{
+    KeySym *k;
+    int i, min, max, width;
+    
+    for (i = 0; i < MAP_LENGTH; i++)
+        ModMap[i] = NoSymbol;
+
+    min   = KeySyms->minKeyCode;
+    max   = KeySyms->maxKeyCode;
+    width = KeySyms->mapWidth;
+    for (i = min, k = KeySyms->map; i < max; i++, k += width) {
+	switch (*k) {
+
+	case XK_Shift_L:
+	case XK_Shift_R:
+	    ModMap[i] = ShiftMask;
+	    break;
+
+	case XK_Control_L:
+	case XK_Control_R:
+	    ModMap[i] = ControlMask;
+	    break;
+
+	case XK_Caps_Lock:
+	    ModMap[i] = LockMask;
+	    break;
+
+	case XK_Alt_L:
+	case XK_Alt_R:
+	    ModMap[i] = Alt_Mask;
+	    break;
+
+	case XK_Num_Lock:
+	    ModMap[i] = Num_Lock_Mask;
+	    break;
+
+	case XK_Scroll_Lock:
+	    ModMap[i] = ScrollLockMask;
+	    break;
+
+	case XK_Meta_L:
+	case XK_Meta_R:
+	    ModMap[i] = Meta_Mask;
+	    break;
+
+	case SunXK_AltGraph:
+	    ModMap[i] = Mode_switch_Mask;
+	    break;
+        }
+    }
 }
 
 /*-
