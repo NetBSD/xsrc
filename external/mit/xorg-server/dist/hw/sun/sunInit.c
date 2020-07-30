@@ -510,7 +510,6 @@ OsVendorInit(void)
 		FatalError ("Unsupported keyboard type 4 layout %d\n",
 			    sunKbdPriv.layout);
 	    sunKeySyms[KB_SUN4].map = sunType4KeyMaps[sunKbdPriv.layout];
-	    sunModMaps[KB_SUN4] = sunType4ModMaps[sunKbdPriv.layout];
         }
 	inited = 1;
     }
