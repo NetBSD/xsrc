@@ -1,3 +1,245 @@
+commit 9949364ea761ab7efa2a9930ec7718f966a740c0
+Author: Matthieu Herrb <matthieu@herrb.eu>
+Date:   Thu Jul 30 21:36:22 2020 +0200
+
+    libX11 1.6.10
+    
+    Signed-off-by: Matthieu Herrb <matthieu@herrb.eu>
+
+commit 1703b9f3435079d3c6021e1ee2ec34fd4978103d
+Author: Matthieu Herrb <matthieu@herrb.eu>
+Date:   Fri Jul 24 21:09:10 2020 +0200
+
+    Change the data_len parameter of _XimAttributeToValue() to CARD16
+    
+    It's coming from a length in the protocol (unsigned) and passed
+    to functions that expect unsigned int parameters (_XCopyToArg()
+    and memcpy()).
+    
+    Signed-off-by: Matthieu Herrb <matthieu@herrb.eu>
+    Reviewed-by: Todd Carson <toc@daybefore.net>
+
+commit 1a566c9e00e5f35c1f9e7f3d741a02e5170852b2
+Author: Todd Carson <tc@daybefore.net>
+Date:   Fri Jul 24 20:59:32 2020 +0200
+
+    Zero out buffers in functions
+    
+    It looks like uninitialized stack or heap memory can leak
+    out via padding bytes.
+    
+    Signed-off-by: Matthieu Herrb <matthieu@herrb.eu>
+    Reviewed-by: Matthieu Herrb <matthieu@herrb.eu>
+
+commit 2fcfcc49f3b1be854bb9085993a01d17c62acf60
+Author: Todd Carson <tc@daybefore.net>
+Date:   Fri Jul 24 20:22:44 2020 +0200
+
+    Fix more unchecked lengths
+    
+    Signed-off-by: Matthieu Herrb <matthieu@herrb.eu>
+    Reviewed-by: Matthieu Herrb <matthieu@herrb.eu>
+
+commit 388b303c62aa35a245f1704211a023440ad2c488
+Author: Todd Carson <tc@daybefore.net>
+Date:   Fri Jul 24 19:36:51 2020 +0200
+
+    fix integer overflows in _XimAttributeToValue()
+    
+    Signed-off-by: Matthieu Herrb <matthieu@herrb.eu>
+    Reviewed-by: Matthieu Herrb <matthieu@herrb.eu>
+
+commit 0e6561efcfaa0ae7b5c74eac7e064b76d687544e
+Author: Todd Carson <tc@daybefore.net>
+Date:   Fri Jul 24 19:33:30 2020 +0200
+
+    Fix signed length values in _XimGetAttributeID()
+    
+    The lengths are unsigned according to the specification. Passing
+    negative values can lead to data corruption.
+    
+    Signed-off-by: Matthieu Herrb <matthieu@herrb.eu>
+    Reviewed-by: Matthieu Herrb <matthieu@herrb.eu>
+
+commit 2b7598221d87049d03e9a95fcb541c37c8728184
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Jul 22 15:19:58 2020 -0700
+
+    Fix spelling/wording issues
+    
+    Found by using:
+        codespell --builtin clear,rare,usage,informal,code,names
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f9e3378ebcfc79ff00591b8617a68e97580a741e
+Author: Samuel Thibault <samuel.thibault@ens-lyon.org>
+Date:   Sun Jul 19 22:19:24 2020 +0200
+
+    xlibi18n: Fix converting horizline keysyms to UCS
+    
+    U+23BA - U+23BD are meant to represent the scan lines, and U+2500 is
+    unified with scan line 5.
+    
+    Signed-off-by: Samuel Thibault <samuel.thibault@ens-lyon.org>
+
+commit 4385a84c4a79c1b60bf12839899a1544198de975
+Author: Samuel Thibault <samuel.thibault@ens-lyon.org>
+Date:   Thu Jun 4 02:19:13 2020 +0200
+
+    Braille: Fix default lookup
+    
+    cbb59d172 ('Braille: Fix typing quickly') broke the default lookup that
+    translates Braille keysym patterns to Braille Unicode patterns since it
+    rightfully clears brl_committing, but then we do not have it any more to
+    fill brl_committed.
+    
+    This change saves the committed pattern so we can return it in the
+    default lookup.
+    
+    Signed-off-by: Samuel Thibault <samuel.thibault@ens-lyon.org>
+
+commit fb65b67169105c82c243f265e0f993cf72efdacd
+Author: Marko Myllynen <myllynen@redhat.com>
+Date:   Fri Feb 28 13:59:36 2020 +0200
+
+    Update Finnish compose sequences for SFS 5966:2019 standard
+    
+    U0219, U0218, U021B, U021A are now part of the standard.
+    
+    Fixes #70 which was printed incorrectly in the earlier standard version.
+
+commit 07724ce046348a21cc82a874853b14b9a285df75
+Author: Tristan Miller <psychonaut@nothingisreal.com>
+Date:   Wed Sep 25 13:34:01 2019 +0200
+
+    Add acute accent compose sequences for Russian vowels.
+    
+    Fixes: https://gitlab.freedesktop.org/xorg/lib/libx11/issues/104
+    
+    Signed-off-by: Tristan Miller <psychonaut@nothingisreal.com>
+
+commit 3ec9264d01a3a66c0fa0145a7c1db06a64be1507
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sat Apr 25 14:40:54 2020 -0400
+
+    document an ancient performance problem (see Debian #954845).
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 791c93816ce0520d54925b0b3ccbc29823370041
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Sat Apr 25 14:22:11 2020 -0400
+
+    update/correct function prototypes in manpages to match headers
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 844271305a28e87031562dfeb43defbea02960a2
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Tue Apr 21 20:53:35 2020 -0400
+
+    reduce gcc-normal warnings using casts (no object change)
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 53b59ddfc114a55d26e9717a1b4822f1b18c40ca
+Author: Thomas E. Dickey <dickey@invisible-island.net>
+Date:   Tue Apr 21 18:13:22 2020 -0400
+
+    reduce gcc-normal warnings using casts (no object change)
+    
+    Signed-off-by: Thomas E. Dickey <dickey@invisible-island.net>
+
+commit 68c72a7341b114277ab232f2499ee3bd035af8a0
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed Dec 11 11:53:11 2019 -0500
+
+    Fix XTS regression in XCopyColormapAndFree
+    
+    XCopyColormapAndFree/5 threw an assertion:
+    
+        520|4 5 00014017 1 2|Assertion XCopyColormapAndFree-5.(A)
+        520|4 5 00014017 1 3|When a colourmap argument does not name a valid colourmap,
+        520|4 5 00014017 1 4|then a BadColor error occurs.
+        520|4 5 00014017 1 5|METH: Create a bad colourmap by creating and freeing a colourmap.
+        520|4 5 00014017 1 6|METH: Call test function using bad colourmap as the colourmap argument.
+        520|4 5 00014017 1 7|METH: Verify that a BadColor error occurs.
+        520|4 5 00014017 1 8|unexpected signal 6 (SIGABRT) received
+        220|4 5 2 15:05:53|UNRESOLVED
+        410|4 5 1 15:05:53|IC End
+        510|4|system 0: Abandoning testset: caught unexpected signal 11 (SIGSEGV)
+    
+    More specifically:
+    
+        lt-XCopyColormapAndFree: xcb_io.c:533: _XAllocID: Assertion `ret != inval_id' failed.
+    
+    This bug was introduced (by following my advice, d'oh) in:
+    
+        commit 99a2cf1aa0b58391078d5d3edf0a7dab18c7745d
+        Author: Tapani Pälli <tapani.palli@intel.com>
+        Date:   Mon May 13 08:29:49 2019 +0300
+    
+            Protect colormap add/removal with display lock
+    
+    In that patch we moved the call to _XcmsCopyCmapRecAndFree inside the
+    display lock. The problem is said routine has side effects, including
+    trying to implicitly create a colormap in some cases. Since we don't run
+    the XID handler until SyncHandle() we would see inconsistent internal
+    xlib state, triggering the above assert.
+    
+    Fix this by dropping and re-taking the display lock before calling into
+    XCMS.
+    
+    Reviewed-by: Tapani Pälli <tapani.palli@intel.com>
+
+commit 7f46a38139f66fda734f3a6c445b84ea89c8f310
+Author: Alex Henrie <alexhenrie24@gmail.com>
+Date:   Wed Jan 1 14:54:06 2020 -0700
+
+    Handle small final sigma in XConvertCase
+    
+    lowercase: GREEK SMALL LETTER FINAL SIGMA (U+03C2)
+    uppercase: GREEK CAPITAL LETTER SIGMA (U+03A3)
+    
+    This mapping was correct in UCSConvertCase, but the "legacy" mapping
+    must also be correct for Caps Lock to work with the final sigma key.
+    
+    https://gitlab.freedesktop.org/xorg/lib/libx11/issues/5
+    
+    Signed-off-by: Alex Henrie <alexhenrie24@gmail.com>
+
+commit a48787d3d155c8a09cead345f5055da30c1db537
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed Dec 11 14:12:27 2019 +1000
+
+    Handle ssharp in XConvertCase()
+    
+    lowercase: LATIN SMALL LETTER SHARP S (U+00DF)
+    uppercase: LATIN CAPITAL LETTER SHARP S (U+1E9E)
+    
+    The uppercase sharp s (XK_ssharp) is a relatively recent addition to unicode
+    but was added to the relevant keyboard layouts in xkeyboard-config-2.25
+    (d1411e5e95c)
+    https://gitlab.freedesktop.org/xkeyboard-config/xkeyboard-config/issues/144
+    
+    Alas, the CapsLock behavior was broken on the finnish layout (maybe others).
+    This was due to xkbcomp using XConvertCase() to determine whether a key
+    requires the type FOUR_LEVEL_ALPHABETIC or FOUR_LEVEL_SEMIALPHABETIC.
+    
+    Let's make this function return the right lower/upper symbols for the sharp s
+    and hope that the world won't get any worse because of it.
+    
+    https://gitlab.freedesktop.org/xorg/lib/libx11/issues/110
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit b8766a438461e20b5c6f7a6111b703d4cb71501f
+Author: Raul Fernandes <rgfernandes@gmail.com>
+Date:   Wed Oct 9 18:39:26 2019 +0000
+
+    Use memcmp and memcpy
+
 commit db7cca17ad7807e92a928da9d4c68a00f4836da2
 Author: Adam Jackson <ajax@redhat.com>
 Date:   Wed Oct 9 13:41:29 2019 -0400
