@@ -247,11 +247,21 @@ typedef struct {
     CursorPtr	    pCursor;		/* current cursor */
 } sunCursorRec, *sunCursorPtr;
 
+#define NCMAP	256
+typedef struct {
+    u_char	    origRed[NCMAP];
+    u_char	    origGreen[NCMAP];
+    u_char	    origBlue[NCMAP];
+} sunCmapRec, *sunCmapPtr;
+
 typedef struct {
     ColormapPtr	    installedMap;
     CloseScreenProcPtr CloseScreen;
     void	    (*UpdateColormap)(ScreenPtr, int, int, u_char *, u_char *, u_char *);
     void	    (*GetColormap)(ScreenPtr, int, int, u_char *, u_char *, u_char *);
+    Bool	    origColormapValid;
+    sunCmapRec	    origColormap;
+    void	    (*RestoreColormap)(ScreenPtr);
     sunCursorRec    hardwareCursor;
     Bool	    hasHardwareCursor;
 } sunScreenRec, *sunScreenPtr;
@@ -296,10 +306,8 @@ extern Bool		sunNoGX;
 
 /* sunKeyMap.c */
 extern KeySymsRec	sunKeySyms[];
-extern const SunModmapRec *sunModMaps[];
 extern const int	sunMaxLayout;
 extern KeySym		*sunType4KeyMaps[];
-extern const SunModmapRec *sunType4ModMaps[];
 
 /* sunKbd.c */
 extern long		sunAutoRepeatInitiate;
@@ -351,8 +359,6 @@ extern Firm_event* sunKbdGetEvents(int, Bool, int *, Bool *);
 extern void sunKbdEnqueueEvent(DeviceIntPtr, Firm_event *);
 extern int sunKbdProc(DeviceIntPtr, int);
 extern void sunKbdWait(void);
-void sunBlockHandler(int, pointer, pointer, pointer);
-void sunWakeupHandler(int, pointer, unsigned long, pointer);
 
 /* sunMouse.c */
 extern Firm_event* sunMouseGetEvents(int, Bool, int *, Bool *);

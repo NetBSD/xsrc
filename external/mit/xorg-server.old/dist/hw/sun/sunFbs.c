@@ -137,10 +137,11 @@ sunScreenAllocate(ScreenPtr pScreen)
 	Error("dixRegisterPrivateKey failed");
 	return FALSE;
     }
-    pPrivate = (sunScreenPtr) xalloc (sizeof (sunScreenRec));
+    pPrivate = calloc(1, sizeof (sunScreenRec));
     if (!pPrivate)
 	return FALSE;
 
+    pPrivate->origColormapValid = FALSE;
     sunSetScreenPrivate(pScreen, pPrivate);
     return TRUE;
 }
@@ -171,10 +172,12 @@ closeScreen(int i, ScreenPtr pScreen)
 #if 0	/* XXX GX is disabled for now */
     sunDisableCursor (pScreen);
 #endif
+    if (pPrivate->origColormapValid)
+	(*pPrivate->RestoreColormap)(pScreen);
     pScreen->CloseScreen = pPrivate->CloseScreen;
     ret = (*pScreen->CloseScreen) (i, pScreen);
     (void) (*pScreen->SaveScreen) (pScreen, SCREEN_SAVER_OFF);
-    xfree ((pointer) pPrivate);
+    free ((pointer) pPrivate);
     return ret;
 }
 

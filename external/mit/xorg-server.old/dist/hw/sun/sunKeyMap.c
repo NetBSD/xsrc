@@ -111,21 +111,6 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define	XK_R15	NoSymbol
 #endif
 
-/* twm and Motif have hard-coded dependencies on Meta being Mod1 :-( */
-#if 0
-/* This set has optimal characteristics for use in the Toolkit... */
-#define Meta_Mask Mod1Mask
-#define Mode_switch_Mask Mod2Mask
-#define Num_Lock_Mask Mod3Mask
-#define Alt_Mask Mod4Mask
-#else
-/* but this set is compatible with what we shipped in R6. */
-#define Meta_Mask Mod1Mask
-#define Mode_switch_Mask Mod2Mask
-#define Alt_Mask Mod3Mask
-#define Num_Lock_Mask Mod4Mask
-#endif
-
 #ifdef US2
 
 static KeySym US2Keymap[] = {
@@ -258,19 +243,9 @@ static KeySym US2Keymap[] = {
 	NoSymbol,	NoSymbol,		/* 0x7f */
 };
 
-static const SunModmapRec US2Modmap[] = {
-	{  99,	ShiftMask },
-	{ 110,	ShiftMask },
-	{  76,	ControlMask },
-	{ 120,	Meta_Mask },
-	{ 122,	Meta_Mask },
-	{   0,	0 }
-};
-
 #else
 
 #define US2Keymap NULL
-#define US2Modmap NULL
 
 #endif /* US2 */
 
@@ -406,20 +381,9 @@ static KeySym US3Keymap[] = {
 	NoSymbol,	NoSymbol,		/* 0x7f */
 };
 
-static const SunModmapRec US3Modmap[] = {
-	{  99,	ShiftMask },
-	{ 110,	ShiftMask },
-	{  76,	ControlMask },
-	{ 119,	LockMask },
-	{ 120,	Meta_Mask },
-	{ 122,	Meta_Mask },
-	{   0,	0 }
-};
-
 #else
 
 #define US3Keymap NULL
-#define US3Modmap NULL
 
 #endif /* US3 */
 
@@ -431,78 +395,6 @@ KeySymsRec sunKeySyms[] = {
     { US3Keymap,	1,	0x7a,	2 },
     { (KeySym *)NULL,	1,	0x7d,	4 }
 };
-
-const SunModmapRec *sunModMaps[] = {
-    NULL,
-    NULL,
-    US2Modmap,
-    US3Modmap,
-    NULL
-};
-
-static const SunModmapRec Generic5Modmap[] = {
-	{  99,	ShiftMask },
-	{ 110,	ShiftMask },
-	{ 119,	LockMask },
-	{  76,	ControlMask },
-	{ 120,	Meta_Mask },
-	{ 122,	Meta_Mask },
-	{  13,	Mode_switch_Mask },
-	{  98,	Num_Lock_Mask },
-	{  19,	Alt_Mask },
-	{   0,	0}
-};
-
-#if defined(DEN4) || defined(SWEDFIN4) || defined(SWFR4) || defined(SWGE4)
-
-static const SunModmapRec DenSwedFinSw4Modmap[] = {
-        {  99,	ShiftMask },
-        { 110,	ShiftMask },
-        {  76,	LockMask },
-        { 119,	ControlMask },
-        { 120,	Meta_Mask },
-        { 122,	Meta_Mask },
-        {  67,	Mode_switch_Mask },
-        {  98,	Num_Lock_Mask },
-        {  19,	Alt_Mask },
-        {   0,	0 }
-};
-
-#endif
-
-#if defined(FRBE4) || defined(NETH4)
-
-static const SunModmapRec FrBeNeth4Modmap[] = {
-	{  99,	ShiftMask },
-	{ 110,	ShiftMask },
-	{  13,	LockMask },
-	{  76,	ControlMask },
-	{ 120,	Meta_Mask },
-	{ 122,	Meta_Mask },
-	{ 119,	Mode_switch_Mask },
-	{  98,	Num_Lock_Mask },
-	{  19,	Alt_Mask },
-	{   0,	0 }
-};
-
-#endif
-
-#if defined(ITALY4) || defined(NORW4) || defined(PORT4) || defined(SPAINLATAM4)
-
-static const SunModmapRec ItNorPortSp4Modmap[] = {
-	{  99,	ShiftMask },
-	{ 110,	ShiftMask },
-	{  76,	LockMask },
-	{ 119,	ControlMask },
-	{ 120,	Meta_Mask },
-	{ 122,	Meta_Mask },
-	{  13,	Mode_switch_Mask },
-	{  98,	Num_Lock_Mask },
-	{  19,	Alt_Mask },
-	{   0,	0 }
-};
-
-#endif
 
 #ifdef CAN4
 
@@ -634,23 +526,9 @@ static KeySym Canada4Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-static const SunModmapRec Canada4Modmap[] = {
-	{  99,	ShiftMask },
-	{ 110,	ShiftMask },
-	{  76,	LockMask },
-	{  13,	ControlMask },
-	{ 120,	Meta_Mask },
-	{ 122,	Meta_Mask },
-	{ 119,	Mode_switch_Mask },
-	{  98,	Num_Lock_Mask },
-	{  19,	Alt_Mask },
-	{   0,	0}
-};
-
 #else
 
 #define Canada4Keymap NULL
-#define Canada4Modmap NULL
 
 #endif /* CANADA4 */
 
@@ -784,12 +662,9 @@ static KeySym CanadaFr5Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define CanadaFr5Modmap Generic5Modmap
-
 #else
 
 #define CanadaFr5Keymap NULL
-#define CanadaFr5Modmap NULL
 
 #endif /* CANFR5 */
 
@@ -924,12 +799,9 @@ static KeySym Denmark4Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define Denmark4Modmap DenSwedFinSw4Modmap
-
 #else
 
 #define Denmark4Keymap NULL
-#define Denmark4Modmap NULL
 
 #endif /* DENMARK4 */
 
@@ -1064,12 +936,9 @@ static KeySym Denmark5Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define Denmark5Modmap Generic5Modmap
-
 #else
 
 #define Denmark5Keymap NULL
-#define Denmark5Modmap NULL
 
 #endif /* DEN5 */
 
@@ -1204,12 +1073,9 @@ static KeySym France5Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define France5Modmap Generic5Modmap
-
 #else
 
 #define France5Keymap NULL
-#define France5Modmap NULL
 
 #endif /* FRANCE5 */
 
@@ -1344,12 +1210,9 @@ static KeySym FranceBelg4Keymap[] = {
 	XK_KP_Add,	XK_KP_Add,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define FranceBelg4Modmap FrBeNeth4Modmap
-
 #else
 
 #define FranceBelg4Keymap NULL
-#define FranceBelg4Modmap NULL
 
 #endif /* FRANCEBELG4 */
 
@@ -1484,23 +1347,9 @@ static KeySym Germany4Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-static const SunModmapRec Germany4Modmap[] = {
-	{  99,	ShiftMask },
-	{ 110,	ShiftMask },
-	{  76,	LockMask },
-	{ 119,	ControlMask },
-	{ 120,	Meta_Mask },
-	{ 122,	Meta_Mask },
-	{  19,	Mode_switch_Mask },
-	{  98,	Num_Lock_Mask },
-	{  13,	Alt_Mask },
-	{   0,	0 }
-};
-
 #else
 
 #define Germany4Keymap NULL
-#define Germany4Modmap NULL
 
 #endif /* GERMANY4 */
 
@@ -1635,12 +1484,9 @@ static KeySym Germany5Keymap[] = {
 	XK_KP_Add,	XK_KP_Add,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define Germany5Modmap Generic5Modmap
-
 #else
 
 #define Germany5Keymap NULL
-#define Germany5Modmap NULL
 
 #endif /* GERMANY5 */
 
@@ -1775,12 +1621,9 @@ static KeySym Italy4Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define Italy4Modmap ItNorPortSp4Modmap
-
 #else
 
 #define Italy4Keymap NULL
-#define Italy4Modmap NULL
 
 #endif /* ITALY4 */
 
@@ -1915,12 +1758,9 @@ static KeySym Italy5Keymap[] = {
 	XK_KP_Add,	XK_KP_Add,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define Italy5Modmap Generic5Modmap
-
 #else
 
 #define Italy5Keymap NULL
-#define Italy5Modmap NULL
 
 #endif /* ITALY5 */
 
@@ -2055,12 +1895,9 @@ static KeySym Japan4Keymap[] = {
 	XK_KP_Add,	XK_KP_Add,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define Japan4Modmap Generic5Modmap
-
 #else
 
 #define Japan4Keymap NULL
-#define Japan4Modmap NULL
 
 #endif /* JAPAN4 */
 
@@ -2195,12 +2032,9 @@ static KeySym Japan5Keymap[] = {
 	XK_KP_Add,	XK_KP_Add,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define Japan5Modmap Generic5Modmap
-
 #else
 
 #define Japan5Keymap NULL
-#define Japan5Modmap NULL
 
 #endif /* JAPAN5 */
 
@@ -2335,23 +2169,9 @@ static KeySym Korea4Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-static const SunModmapRec Korea4Modmap[] = {
-	{  99,	ShiftMask },
-	{ 110,	ShiftMask },
-	{ 119,	LockMask },
-	{  76,	ControlMask },
-	{ 120,	Meta_Mask },
-	{ 122,	Meta_Mask },
-	{ 111,	Mode_switch_Mask },
-	{  98,	Num_Lock_Mask },
-	{  19,	Alt_Mask },
-	{   0,	0 }
-};
-
 #else
 
 #define Korea4Keymap NULL
-#define Korea4Modmap NULL
 
 #endif /* KOREA4 */
 
@@ -2486,12 +2306,9 @@ static KeySym Korea5Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define Korea5Modmap Generic5Modmap
-
 #else
 
 #define Korea5Keymap NULL
-#define Korea5Modmap NULL
 
 #endif /* KOREA5 */
 
@@ -2626,12 +2443,9 @@ static KeySym Netherland4Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define Netherland4Modmap FrBeNeth4Modmap
-
 #else
 
 #define Netherland4Keymap NULL
-#define Netherland4Modmap NULL
 
 #endif /* NETHERLAND4 */
 
@@ -2766,12 +2580,9 @@ static KeySym Netherland5Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define Netherland5Modmap Generic5Modmap
-
 #else
 
 #define Netherland5Keymap NULL
-#define Netherland5Modmap NULL
 
 #endif /* NETHERLAND5 */
 
@@ -2906,12 +2717,9 @@ static KeySym Norway4Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define Norway4Modmap ItNorPortSp4Modmap
-
 #else
 
 #define Norway4Keymap NULL
-#define Norway4Modmap NULL
 
 #endif /* NORWAY4 */
 
@@ -3046,12 +2854,9 @@ static KeySym Norway5Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define Norway5Modmap Generic5Modmap
-
 #else
 
 #define Norway5Keymap NULL
-#define Norway5Modmap NULL
 
 #endif /* NORWAY5 */
 
@@ -3186,12 +2991,9 @@ static KeySym Portugal4Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define Portugal4Modmap ItNorPortSp4Modmap
-
 #else
 
 #define Portugal4Keymap NULL
-#define Portugal4Modmap NULL
 
 #endif /* PORTUGAL4 */
 
@@ -3326,12 +3128,9 @@ static KeySym Portugal5Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define Portugal5Modmap Generic5Modmap
-
 #else
 
 #define Portugal5Keymap NULL
-#define Portugal5Modmap NULL
 
 #endif /* PORTUGAL5 */
 
@@ -3466,12 +3265,9 @@ static KeySym Spain5Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define Spain5Modmap Generic5Modmap
-
 #else
 
 #define Spain5Keymap NULL
-#define Spain5Modmap NULL
 
 #endif /* SPAIN5 */
 
@@ -3606,12 +3402,9 @@ static KeySym SpainLatAm4Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define SpainLatAm4Modmap ItNorPortSp4Modmap
-
 #else
 
 #define SpainLatAm4Keymap NULL
-#define SpainLatAm4Modmap NULL
 
 #endif /* SPAINLATAM4 */
 
@@ -3746,12 +3539,9 @@ static KeySym Sweden5Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define Sweden5Modmap Generic5Modmap
-
 #else
 
 #define Sweden5Keymap NULL
-#define Sweden5Modmap NULL
 
 #endif /* SWEDEN5 */
 
@@ -3886,12 +3676,9 @@ static KeySym SwedenFin4Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define SwedenFin4Modmap DenSwedFinSw4Modmap
-
 #else
 
 #define SwedenFin4Keymap NULL
-#define SwedenFin4Modmap NULL
 
 #endif /* SWEDENFIN4 */
 
@@ -4026,12 +3813,9 @@ static KeySym SwissFr4Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define SwissFr4Modmap DenSwedFinSw4Modmap
-
 #else
 
 #define SwissFr4Keymap NULL
-#define SwissFr4Modmap NULL
 
 #endif /* SWFR4 */
 
@@ -4166,12 +3950,9 @@ static KeySym SwissFr5Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define SwissFr5Modmap Generic5Modmap
-
 #else
 
 #define SwissFr5Keymap NULL
-#define SwissFr5Modmap NULL
 
 #endif /* SWFR5 */
 
@@ -4306,12 +4087,9 @@ static KeySym SwissGe4Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define SwissGe4Modmap DenSwedFinSw4Modmap
-
 #else
 
 #define SwissGe4Keymap NULL
-#define SwissGe4Modmap NULL
 
 #endif /* SWISSGE4 */
 
@@ -4446,12 +4224,9 @@ static KeySym SwissGe5Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define SwissGe5Modmap Generic5Modmap
-
 #else
 
 #define SwissGe5Keymap NULL
-#define SwissGe5Modmap NULL
 
 #endif /* SWITZER_GE5 */
 
@@ -4586,12 +4361,9 @@ static KeySym Taiwan4Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define Taiwan4Modmap Generic5Modmap
-
 #else
 
 #define Taiwan4Keymap NULL
-#define Taiwan4Modmap NULL
 
 #endif /* TAIWAN4 */
 
@@ -4726,12 +4498,9 @@ static KeySym Taiwan5Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define Taiwan5Modmap Generic5Modmap
-
 #else
 
 #define Taiwan5Keymap NULL
-#define Taiwan5Modmap NULL
 
 #endif /* TAIWAN5 */
 
@@ -4866,12 +4635,9 @@ static KeySym UK4Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define UK4Modmap Generic5Modmap
-
 #else
 
 #define UK4Keymap NULL
-#define UK4Modmap NULL
 
 #endif /* UK4 */
 
@@ -5006,12 +4772,9 @@ static KeySym UK5Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define UK5Modmap Generic5Modmap
-
 #else
 
 #define UK5Keymap NULL
-#define UK5Modmap NULL
 
 #endif /* UK5 */
 
@@ -5146,21 +4909,9 @@ static KeySym US101AKeymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-static const SunModmapRec US101AModmap[] = {
-	{  99,	ShiftMask },
-	{ 110,	ShiftMask },
-	{ 119,	LockMask },
-	{  76,	ControlMask },
-	{ 122,	Meta_Mask },
-	{  98,	Num_Lock_Mask },
-	{ 120,	Alt_Mask },
-	{   0,	0 }
-};
-
 #else
 
 #define US101AKeymap NULL
-#define US101AModmap NULL
 
 #endif /* US101A */
 
@@ -5295,12 +5046,9 @@ static KeySym US4Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define US4Modmap Generic5Modmap
-
 #else
 
 #define US4Keymap NULL
-#define US4Modmap NULL
 
 #endif /* US4 */
 
@@ -5435,12 +5183,9 @@ static KeySym US5Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define US5Modmap Generic5Modmap
-
 #else
 
 #define US5Keymap NULL
-#define US5Modmap NULL
 
 #endif /* US5 */
 
@@ -5574,12 +5319,9 @@ static KeySym US_UNIX5Keymap[] = {
 	XK_KP_Add,	NoSymbol,	NoSymbol,	NoSymbol,	/*125*/
 };
 
-#define US_UNIX5Modmap Generic5Modmap
-
 #else
 
 #define US_UNIX5Keymap NULL
-#define US_UNIX5Modmap NULL
 
 #endif /* US_UNIX5 */
 
@@ -5694,104 +5436,3 @@ KeySym *sunType4KeyMaps[] = {
 };
 
 const int sunMaxLayout = sizeof(sunType4KeyMaps) / sizeof(sunType4KeyMaps[0]);
-
-const SunModmapRec *sunType4ModMaps[] = {
-	US4Modmap,		/* 0 */
-	US4Modmap,		/* 1 */
-	FranceBelg4Modmap,	/* 2 */
-	Canada4Modmap,		/* 3 */
-	Denmark4Modmap,		/* 4 */
-	Germany4Modmap,		/* 5 */
-	Italy4Modmap,		/* 6 */
-	Netherland4Modmap,	/* 7 */
-	Norway4Modmap,		/* 8 */
-	Portugal4Modmap,	/* 9 */
-	SpainLatAm4Modmap,	/* 10 */
-	SwedenFin4Modmap,	/* 11 */
-	SwissFr4Modmap,		/* 12 */
-	SwissGe4Modmap,		/* 13 */
-	UK4Modmap,		/* 14 */
-	NULL,			/* 15 */
-	Korea4Modmap,		/* 16 */
-	Taiwan4Modmap,		/* 17 */
-	NULL,			/* 18 */
-	US101AModmap,		/* 19 */
-	NULL,			/* 20 */
-	NULL,			/* 21 */
-	NULL,			/* 22 */
-	NULL,			/* 23 */
-	NULL,			/* 24 */
-	NULL,			/* 25 */
-	NULL,			/* 26 */
-	NULL,			/* 27 */
-	NULL,			/* 28 */
-	NULL,			/* 29 */
-	NULL,			/* 30 */
-	NULL,			/* 31 */
-	Japan4Modmap,		/* 32 */
-	US5Modmap,		/* 33 */
-	US_UNIX5Modmap,		/* 34 */
-	France5Modmap,		/* 35 */
-	Denmark5Modmap,		/* 36 */
-	Germany5Modmap,		/* 37 */
-	Italy5Modmap,		/* 38 */
-	Netherland5Modmap,	/* 39 */
-	Norway5Modmap,		/* 40 */
-	Portugal5Modmap,	/* 41 */
-	Spain5Modmap,		/* 42 */
-	Sweden5Modmap,		/* 43 */
-	SwissFr5Modmap,		/* 44 */
-	SwissGe5Modmap,		/* 45 */
-	UK5Modmap,		/* 46 */
-	Korea5Modmap,		/* 47 */
-	Taiwan5Modmap,		/* 48 */
-	Japan5Modmap,		/* 49 */
-	CanadaFr5Modmap,	/* 50 */
-	NULL, /* Hungary5 */	/* 51 */
-	NULL, /* Poland5 */	/* 52 */
-	NULL, /* Czech5 */	/* 53 */
-	NULL, /* Russia5 */	/* 54 */
-	NULL, 			/* 55 */
-	NULL,			/* 56 */
-	NULL,			/* 57 */
-	NULL,			/* 58 */
-	NULL,			/* 59 */
-	NULL,			/* 60 */
-	NULL,			/* 61 */
-	NULL,			/* 62 */
-	NULL, /* CanadaFr5+ */	/* 63 */
-	NULL,			/* 64 */
-	NULL,			/* 65 */
-	NULL,			/* 66 */
-	NULL,			/* 67 */
-	NULL,			/* 68 */
-	NULL,			/* 69 */
-	NULL,			/* 70 */
-	NULL,			/* 71 */
-	NULL,			/* 72 */
-	NULL,			/* 73 */
-	NULL,			/* 74 */
-	NULL,			/* 75 */
-	NULL,			/* 76 */
-	NULL,			/* 77 */
-	NULL,			/* 78 */
-	NULL,			/* 79 */
-	US5Modmap,		/* 80 */
-	US_UNIX5Modmap,		/* 81 */
-	France5Modmap,		/* 82 */
-	Denmark5Modmap,		/* 83 */
-	Germany5Modmap,		/* 84 */
-	Italy5Modmap,		/* 85 */
-	Netherland5Modmap,	/* 86 */
-	Norway5Modmap,		/* 87 */
-	Portugal5Modmap,	/* 88 */
-	Spain5Modmap,		/* 89 */
-	Sweden5Modmap,		/* 90 */
-	SwissFr5Modmap,		/* 91 */
-	SwissGe5Modmap,		/* 92 */
-	UK5Modmap,		/* 93 */
-	Korea5Modmap,		/* 94 */
-	Taiwan5Modmap,		/* 95 */
-	Japan5Modmap,		/* 96 */
-	CanadaFr5Modmap,	/* 97 */
-};
