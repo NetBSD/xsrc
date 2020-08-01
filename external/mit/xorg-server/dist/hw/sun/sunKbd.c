@@ -592,8 +592,8 @@ sunInitKbdNames(XkbRMLVOSet *rmlvo, sunKbdPrivPtr pKbd)
     }
 #else
     rmlvo->rules = "base";
-    rmlvo->model = NULL;
-    rmlvo->layout = NULL;
+    rmlvo->model = "empty";
+    rmlvo->layout = "empty";
     rmlvo->variant = NULL;
     rmlvo->options = NULL;
 #endif
@@ -649,9 +649,10 @@ sunKbdProc(DeviceIntPtr device, int what)
 
 	sunInitKbdNames(&rmlvo, pKeyboard->devicePrivate);
 #if 0 /* XXX needs more work for Xorg xkb */
-	InitKeyboardDeviceStruct(device, rmlvo,
+	InitKeyboardDeviceStruct(device, &rmlvo,
 				 sunBell, sunKbdCtrl);
 #else
+	XkbSetRulesDflts(&rmlvo);
 	InitKeyboardDeviceStruct(device, NULL,
 				 sunBell, sunKbdCtrl);
 	XkbApplyMappingChange(device, workingKeySyms,
