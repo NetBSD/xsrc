@@ -1,4 +1,4 @@
-/* $NetBSD: x68kGraph.c,v 1.5 2020/04/10 16:49:36 tsutsui Exp $ */
+/* $NetBSD: x68kGraph.c,v 1.6 2020/08/01 20:09:03 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -62,11 +62,11 @@ fee is hereby granted, provided that the above copyright no-
 tice  appear  in all copies and that both that copyright no-
 tice and this permission notice appear in  supporting  docu-
 mentation,  and  that the names of Sun or X Consortium
-not be used in advertising or publicity pertaining to 
-distribution  of  the software  without specific prior 
-written permission. Sun and X Consortium make no 
-representations about the suitability of this software for 
-any purpose. It is provided "as is" without any express or 
+not be used in advertising or publicity pertaining to
+distribution  of  the software  without specific prior
+written permission. Sun and X Consortium make no
+representations about the suitability of this software for
+any purpose. It is provided "as is" without any express or
 implied warranty.
 
 SUN DISCLAIMS ALL WARRANTIES WITH REGARD TO  THIS  SOFTWARE,
@@ -97,15 +97,15 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /* Modified from  sunCG4C.c for X11R3 by Tom Jarmolowski	*/
 /****************************************************************/
 
-/* 
+/*
  * Copyright 1991, 1992, 1993 Kaleb S. Keithley
  *
  * Permission to use, copy, modify, and distribute this
  * software and its documentation for any purpose and without
  * fee is hereby granted, provided that the above copyright
- * notice appear in all copies.  Kaleb S. Keithley makes no 
- * representations about the suitability of this software for 
- * any purpose.  It is provided "as is" without express or 
+ * notice appear in all copies.  Kaleb S. Keithley makes no
+ * representations about the suitability of this software for
+ * any purpose.  It is provided "as is" without express or
  * implied warranty.
  */
 
@@ -131,7 +131,7 @@ static void x68kUpdateColormap(ScreenPtr pScreen, int dex, int count,
  * function "x68kGraphOpen"                          [ X68kFBProc function ]
  *
  *  purpose:  call common frame buffer opening procedure
- *            then set hardware colormap for several static color modes. 
+ *            then set hardware colormap for several static color modes.
  *  argument: (X68kScreenRec *)pPriv : X68k private screen record
  *  returns:  (Bool): TRUE  if successed
  *                    FALSE otherwise
@@ -151,7 +151,7 @@ x68kGraphOpen(X68kScreenRec *pPriv)
 	for ( i = 0; i < 256; ) {
 	    pPriv->reg->gpal[i++] = x;
 	    pPriv->reg->gpal[i++] = x;
- 	    x += 0x0202;
+	    x += 0x0202;
         }
     }
     if (pPriv->depth == 4 && pPriv->class == StaticGray ) {
@@ -192,14 +192,14 @@ x68kGraphInit(ScreenPtr pScreen, int argc, char *argv[])
 
     /* get private screen record set by X68KConfig */
     pPriv = x68kGetScreenRecByType(X68K_FB_GRAPHIC);
-    
+
     /* store private record into screen */
     if (!dixRegisterPrivateKey(&x68kScreenPrivateKeyRec, PRIVATE_SCREEN, 0)) {
         ErrorF("dixRegisterPrivateKey failed");
         return FALSE;
     }
     x68kSetScreenPrivate(pScreen, pPriv);
-    
+
     /* register normal cfb screen functions */
     if (!fbSetupScreen(pScreen, pPriv->fb,
                        pPriv->scr_width, pPriv->scr_height,
@@ -212,7 +212,7 @@ x68kGraphInit(ScreenPtr pScreen, int argc, char *argv[])
     pScreen->UninstallColormap = x68kUninstallColormap;
     pScreen->ListInstalledColormaps = x68kListInstalledColormaps;
     pScreen->StoreColors = x68kStoreColors;
-    
+
     /* visual initialization and etc.. */
     if (!x68kCfbFinishScreenInit(pScreen, pPriv->fb,
                                  pPriv->scr_width, pPriv->scr_height,
@@ -226,7 +226,7 @@ x68kGraphInit(ScreenPtr pScreen, int argc, char *argv[])
     pScreen->blackPixel = 0;
     if ( !miCreateDefColormap(pScreen) )
         return FALSE;
-    
+
     return TRUE;
 }
 
@@ -293,7 +293,7 @@ x68kCfbFinishScreenInit(
     /* for 4/16bit StaticGray visual mode */
     else if (pPriv->depth == 4 && pPriv->class == StaticGray ) {
         VisualID *vid = NULL;
-        
+
         ndepths = 1;
         nvisuals = 1;
         depths = (DepthPtr)malloc( sizeof(DepthRec) );
@@ -332,7 +332,7 @@ x68kCfbFinishScreenInit(
                       rootdepth, ndepths, depths,
                       defaultVisual, nvisuals, visuals))
 	return FALSE;
-    
+
     pScreen->CloseScreen = fbCloseScreen;
     pScreen->SaveScreen = x68kSaveScreen;
 

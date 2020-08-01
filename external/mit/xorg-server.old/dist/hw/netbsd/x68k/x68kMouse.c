@@ -1,4 +1,4 @@
-/* $NetBSD: x68kMouse.c,v 1.2 2020/04/10 16:49:36 tsutsui Exp $ */
+/* $NetBSD: x68kMouse.c,v 1.3 2020/08/01 20:09:03 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -47,11 +47,11 @@ fee is hereby granted, provided that the above copyright no-
 tice  appear  in all copies and that both that copyright no-
 tice and this permission notice appear in  supporting  docu-
 mentation,  and  that the names of Sun or X Consortium
-not be used in advertising or publicity pertaining to 
-distribution  of  the software  without specific prior 
-written permission. Sun and X Consortium make no 
-representations about the suitability of this software for 
-any purpose. It is provided "as is" without any express or 
+not be used in advertising or publicity pertaining to
+distribution  of  the software  without specific prior
+written permission. Sun and X Consortium make no
+representations about the suitability of this software for
+any purpose. It is provided "as is" without any express or
 implied warranty.
 
 SUN DISCLAIMS ALL WARRANTIES WITH REGARD TO  THIS  SOFTWARE,
@@ -70,9 +70,9 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * Permission to use, copy, modify, and distribute this
  * software and its documentation for any purpose and without
  * fee is hereby granted, provided that the above copyright
- * notice appear in all copies.  Kaleb S. Keithley makes no 
- * representations about the suitability of this software for 
- * any purpose.  It is provided "as is" without express or 
+ * notice appear in all copies.  Kaleb S. Keithley makes no
+ * representations about the suitability of this software for
+ * any purpose.  It is provided "as is" without express or
  * implied warranty.
  */
 
@@ -117,9 +117,9 @@ int
 x68kMouseProc(DeviceIntPtr device, int what)
 {
     DevicePtr   pMouse = &device->public;
-    int	    	format;
+    int		format;
     static int	oformat;
-    BYTE    	map[4];
+    BYTE	map[4];
     Atom btn_labels[3] = {0};
     Atom axes_labels[2] = { 0, 0 };
 
@@ -141,7 +141,7 @@ x68kMouseProc(DeviceIntPtr device, int what)
 	    axes_labels[1] = XIGetKnownProperty(AXIS_LABEL_PROP_REL_Y);
 
 	    InitPointerDeviceStruct(pMouse, map, 3, btn_labels,
- 		x68kMouseCtrl, GetMotionHistorySize(),
+		x68kMouseCtrl, GetMotionHistorySize(),
 		2, axes_labels);
 	    break;
 
@@ -179,7 +179,7 @@ x68kMouseProc(DeviceIntPtr device, int what)
     }
     return Success;
 }
-    
+
 /*-
  *-----------------------------------------------------------------------
  * x68kMouseCtrl --

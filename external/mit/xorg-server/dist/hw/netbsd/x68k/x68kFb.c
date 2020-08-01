@@ -1,4 +1,4 @@
-/* $NetBSD: x68kFb.c,v 1.3 2020/04/10 16:49:36 tsutsui Exp $ */
+/* $NetBSD: x68kFb.c,v 1.4 2020/08/01 20:09:03 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -35,7 +35,7 @@ DevPrivateKeyRec x68kScreenPrivateKeyRec;
  *
  *  purpose:  open and map frame buffer, and obtain some FB-specific
  *            infomation. then set controller to approppriate mode as
- *            configured in X68kConfig. 
+ *            configured in X68kConfig.
  *  argument: (X68kScreenRec *)pPriv : X68k private screen record
  *            (const char *)device   : name of frame buffer device
  *  returns:  (Bool): TRUE  if succeeded
@@ -45,7 +45,7 @@ Bool
 x68kFbCommonOpen(X68kScreenRec *pPriv, const char *device)
 {
     struct grfinfo gi;
-    
+
     /* open frame buffer */
     if ( ( pPriv->fd = open(device, O_RDWR, 0)) < 0) {
         ErrorF( "Can't open frame buffer" );
@@ -57,7 +57,7 @@ x68kFbCommonOpen(X68kScreenRec *pPriv, const char *device)
         return FALSE;
     }
     pPriv->mapsize = gi.gd_regsize + gi.gd_fbsize;
-    
+
     /* map control registers and frame buffer */
     pPriv->reg = (FbReg *)mmap(0, pPriv->mapsize, PROT_READ | PROT_WRITE,
                                MAP_FILE | MAP_SHARED, pPriv->fd, 0 );
@@ -96,7 +96,7 @@ x68kFbCommonClose(X68kScreenRec *pPriv)
     /* change video mode */
     pPriv->x68kreg = graphNone;
     x68kRegSetup(pPriv);
-    
+
     /* unmap and close frame buffer */
     if ( munmap(__UNVOLATILE(pPriv->reg), pPriv->mapsize) == -1 )
         ErrorF("Can't unmap frame buffer");
@@ -123,7 +123,7 @@ x68kRegSetup(X68kScreenRec *pPriv)
     if ( (pr20 & 0x0003) < (pPriv->x68kreg.crtc.r20 & 0x0003) ||
          ( (pr20 & 0x0003) == (pPriv->x68kreg.crtc.r20 & 0x0003) &&
            (pr20 & 0x0010) < (pPriv->x68kreg.crtc.r20 & 0x0010) ) ) {
-        
+
         /* to higher resolution */
         CRTCSET(r00); CRTCSET(r01); CRTCSET(r02);CRTCSET(r03);
         CRTCSET(r04); CRTCSET(r05); CRTCSET(r06);CRTCSET(r07);

@@ -1,4 +1,4 @@
-/* $NetBSD: x68kInit.c,v 1.3 2020/07/18 04:37:50 tsutsui Exp $ */
+/* $NetBSD: x68kInit.c,v 1.4 2020/08/01 20:09:03 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -50,11 +50,11 @@ fee is hereby granted, provided that the above copyright no-
 tice  appear  in all copies and that both that copyright no-
 tice and this permission notice appear in  supporting  docu-
 mentation,  and  that the names of Sun or X Consortium
-not be used in advertising or publicity pertaining to 
-distribution  of  the software  without specific prior 
-written permission. Sun and X Consortium make no 
-representations about the suitability of this software for 
-any purpose. It is provided "as is" without any express or 
+not be used in advertising or publicity pertaining to
+distribution  of  the software  without specific prior
+written permission. Sun and X Consortium make no
+representations about the suitability of this software for
+any purpose. It is provided "as is" without any express or
 implied warranty.
 
 SUN DISCLAIMS ALL WARRANTIES WITH REGARD TO  THIS  SOFTWARE,
@@ -95,7 +95,7 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char *argv[])
     int i;
     X68kScreenRec *screen;
     X68kFbProcRec *fb;
-    
+
     pScreenInfo->imageByteOrder = IMAGE_BYTE_ORDER;
     pScreenInfo->bitmapScanlineUnit = BITMAP_SCANLINE_UNIT;
     pScreenInfo->bitmapScanlinePad = BITMAP_SCANLINE_PAD;
@@ -106,7 +106,7 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char *argv[])
 
     /* register pixmap formats */
     x68kRegisterPixmapFormats(pScreenInfo);
-    
+
     /* open and initialize frame buffer for each screen */
     for (i = 0; i < nscreens; i++) {
         screen = x68kGetScreenRec(i);
@@ -126,7 +126,7 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char *argv[])
  *  returns:  nothing
  *-----------------------------------------------------------------------*/
 void
-InitInput(int argc, char *argv[]) 
+InitInput(int argc, char *argv[])
 {
     int rc;
 

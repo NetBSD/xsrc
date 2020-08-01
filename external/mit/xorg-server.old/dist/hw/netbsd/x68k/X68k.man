@@ -1,4 +1,4 @@
-.\" $NetBSD: X68k.man,v 1.1.1.1 2016/06/09 09:07:59 mrg Exp $
+.\" $NetBSD: X68k.man,v 1.2 2020/08/01 20:09:03 tsutsui Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Sh DESCRIPTION
 .Nm
 is the server for Version 11 of the X Window System on X68k hardware
-running 
+running
 .Nx .
 It will normally be started by the
 .Xr xdm 1
@@ -121,7 +121,7 @@ is either
 or
 .Fa Graphic ,
 and specifies the screen to be used by this mode.  Note that the type
-Graphic requires the 
+Graphic requires the
 .Pa /dev/grf1
 device driver configured in your kernel.
 
@@ -142,7 +142,7 @@ are the size of the screen by pixel.
 Remaining arguments are set to the registers of the CRT controler
 and the video controler of the x68k.
 Be carefull to change these values, or it may
-DAMAGE THE DISPLAY HARDWARE!! 
+DAMAGE THE DISPLAY HARDWARE!!
 
 .It Fn Mode
 One argument
@@ -155,7 +155,7 @@ function.
 .It Fn Mouse
 One argument
 .Fa type
-is required.  Specify the pointing device type; currently 
+is required.  Specify the pointing device type; currently
 .Fa standard
 is the only acceptable argument.
 .It Fn Keyboard

@@ -1,4 +1,4 @@
-/* $NetBSD: x68kReg.h,v 1.2 2020/04/10 16:49:36 tsutsui Exp $ */
+/* $NetBSD: x68kReg.h,v 1.3 2020/08/01 20:09:03 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -42,7 +42,7 @@ typedef struct {
     u_short r16, r17, r18, r19, r20, r21, r22, r23;
     u_short ctrl;
 } X68kCrtc;
-    
+
 /*
  * video controller
  */

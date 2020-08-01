@@ -1,4 +1,4 @@
-/* $NetBSD: x68kKbd.c,v 1.6 2020/07/19 19:11:05 tsutsui Exp $ */
+/* $NetBSD: x68kKbd.c,v 1.7 2020/08/01 20:09:03 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -47,11 +47,11 @@ fee is hereby granted, provided that the above copyright no-
 tice  appear  in all copies and that both that copyright no-
 tice and this permission notice appear in  supporting  docu-
 mentation,  and  that the names of Sun or X Consortium
-not be used in advertising or publicity pertaining to 
-distribution  of  the software  without specific prior 
-written permission. Sun and X Consortium make no 
-representations about the suitability of this software for 
-any purpose. It is provided "as is" without any express or 
+not be used in advertising or publicity pertaining to
+distribution  of  the software  without specific prior
+written permission. Sun and X Consortium make no
+representations about the suitability of this software for
+any purpose. It is provided "as is" without any express or
 implied warranty.
 
 SUN DISCLAIMS ALL WARRANTIES WITH REGARD TO  THIS  SOFTWARE,
@@ -109,14 +109,14 @@ x68kKbdHandlerNotify(int fd __unused, int ready __unused, void *data __unused)
  *
  *----------------------------------------------------------------------*/
 int
-x68kKbdProc(DeviceIntPtr pDev, 	/* Keyboard to manipulate */
-            int what)	    	/* What to do to it */
+x68kKbdProc(DeviceIntPtr pDev,	/* Keyboard to manipulate */
+            int what)		/* What to do to it */
 {
     DevicePtr pKeyboard = &pDev->public;
     CARD8 x68kModMap[MAP_LENGTH];
     int mode;
     XkbRMLVOSet rmlvo;
-    
+
     switch (what) {
         case DEVICE_INIT:
             pKeyboard->devicePrivate = (pointer)&x68kKbdPriv;
@@ -178,7 +178,7 @@ static void
 x68kInitModMap(KeySymsRec *KeySyms, CARD8 *x68kModMap)
 {
     int i;
-    
+
     for (i = 0; i < MAP_LENGTH; i++)
         x68kModMap[i] = NoSymbol;
     if (KeySyms->minKeyCode < MIN_KEYCODE) {
@@ -247,7 +247,7 @@ x68kInitKbdNames(XkbRMLVOSet *rmlvo, X68kKbdPrivPtr pKbd)
     rmlvo->options = NULL;
 #endif
 }
-    
+
 /*-
  *-----------------------------------------------------------------------
  * x68kKbdGetEvents --
@@ -265,8 +265,8 @@ x68kInitKbdNames(XkbRMLVOSet *rmlvo, X68kKbdPrivPtr pKbd)
 Firm_event *
 x68kKbdGetEvents(int fd, int *pNumEvents, Bool *pAgain)
 {
-    int nBytes; 	    /* number of bytes of events available. */
-    static Firm_event evBuf[X68K_MAXEVENTS];   /* Buffer for Firm_events */
+    int nBytes;		/* number of bytes of events available. */
+    static Firm_event evBuf[X68K_MAXEVENTS];	/* Buffer for Firm_events */
 
     if ((nBytes = read (fd, evBuf, sizeof(evBuf))) == -1) {
 	if (errno == EWOULDBLOCK) {
@@ -318,15 +318,15 @@ x68kKbdEnqueueEvent(DeviceIntPtr pDev, Firm_event *fe)
 static void
 x68kKbdRingBell(DeviceIntPtr pDev, int volume, int duration)
 {
-    int		    kbdCmd;   	    /* Command to give keyboard */
+    int		    kbdCmd;	/* Command to give keyboard */
     X68kKbdPrivPtr  pPriv = (X68kKbdPrivPtr)pDev->public.devicePrivate;
- 
+
     if (volume == 0)
- 	return;
+	return;
 
     kbdCmd = KBD_CMD_BELL;
     if (ioctl (pPriv->fd, KIOCCMD, &kbdCmd) == -1) {
- 	ErrorF("Failed to activate bell");
+	ErrorF("Failed to activate bell");
 	return;
     }
     usleep (duration * 1000);
@@ -339,9 +339,9 @@ static void
 x68kKbdBell(int volume, DeviceIntPtr pDev, pointer ctrl, int unused)
 {
     KeybdCtrl*      kctrl = (KeybdCtrl*) ctrl;
- 
+
     if (kctrl->bell == 0)
- 	return;
+	return;
 
     x68kKbdRingBell(pDev, volume, kctrl->bell_duration);
 }
@@ -402,7 +402,7 @@ x68kSetLeds(X68kKbdPrivPtr pPriv, u_char data)
     /* bit sequence of led indicator in xkb and hardware are same */
     if (ioctl(pPriv->fd, KIOCSLED, &data) == -1)
         ErrorF("Failed to set keyboard lights");
-}    
+}
 
 Bool
 LegalModifier(unsigned int key, DeviceIntPtr pDev)

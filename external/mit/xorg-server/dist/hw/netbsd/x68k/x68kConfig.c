@@ -1,4 +1,4 @@
-/* $NetBSD: x68kConfig.c,v 1.4 2020/04/10 16:49:36 tsutsui Exp $ */
+/* $NetBSD: x68kConfig.c,v 1.5 2020/08/01 20:09:03 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -61,7 +61,7 @@ X68kScreenRec *
 x68kGetScreenRecByType(int type)
 {
     int i;
-    
+
     for (i = 0; i < X68K_FB_TYPES; i++) {
         if (x68kScreen[i].type == type)
             return &x68kScreen[i];
@@ -175,7 +175,7 @@ getToken(void)
     int c;
     static int line = 1;
     Token *ret;
-    
+
     ret = (Token *)malloc(sizeof(Token));
     if (ret == NULL)
         FatalError("Out of memory");
@@ -261,7 +261,7 @@ Command command[] = {
     { "Keyboard", parseKeyboard },
     { "Mode", parseMode },
 };
-#define NCOMMANDS (sizeof(command)/sizeof(command[0])) 
+#define NCOMMANDS (sizeof(command)/sizeof(command[0]))
 
 /*-------------------------------------------------------------------------
  * function "parseCommand"
@@ -277,7 +277,7 @@ parseCommand(void)
     Token **argv = 0, *token;
     int argc = 0;
     int i;
-    
+
     token = getToken();
     if (token->type == TOKEN_EOF)
         return FALSE;
@@ -309,7 +309,7 @@ parseCommand(void)
     for (i = 0; i < NCOMMANDS; i++) {
         if (strcasecmp(command[i].symbol, argv[0]->content.symbol) == 0) {
             /* parse command */
-            command[i].proc(argc, argv);        
+            command[i].proc(argc, argv);
             break;
         }
     }
@@ -342,7 +342,7 @@ static void
 checkArguments(int n, enum TokenType *type, int argc_m1, Token **argv)
 {
     int i;
-    
+
     if (argc_m1 < n)
         parseError(argv[0]->line, "too few arguments to command `%s'",
                    argv[0]->content.symbol);
@@ -392,14 +392,14 @@ parseModeDef(int argc, Token **argv)
     Mode *mode;
     char *symbol;
     int class, width, height;
-    
+
     checkArguments(18, argtype, argc-1, argv);
 
     mode = (Mode *)malloc(sizeof(Mode));
     if (mode == NULL)
         FatalError("Out of memory");
     mode->name = strdup(argv[1]->content.symbol);
-    
+
     /* parse frame buffer type */
     symbol = argv[2]->content.symbol;
     if (strcasecmp("Text", symbol) == 0)
@@ -409,7 +409,7 @@ parseModeDef(int argc, Token **argv)
     else
         parseError(argv[2]->line, "unknown frame buffer type");
     mode->depth = argv[3]->content.literal;
-    
+
     /* parse frame buffer class */
     symbol = argv[4]->content.symbol;
     if (strcasecmp("StaticGray", symbol) == 0)
@@ -430,7 +430,7 @@ parseModeDef(int argc, Token **argv)
     class = mode->class;
     width = mode->width = argv[5]->content.literal;
     height = mode->height = argv[6]->content.literal;
-    
+
     /* examine whether type, depth, class, width, and height are
        a legal combination or not, and then set mode registers */
     switch (mode->type) {
@@ -493,7 +493,7 @@ parseModeDef(int argc, Token **argv)
     mode->reg.crtc.r14 = 0;    mode->reg.crtc.r15 = 0;
     mode->reg.crtc.r16 = 0;    mode->reg.crtc.r17 = 0;
     mode->reg.crtc.r18 = 0;    mode->reg.crtc.r19 = 0;
-    
+
     /* add new mode to linked mode list */
     mode->next = modeList;
     modeList = mode;
@@ -530,7 +530,7 @@ parseMode(int argc, Token **argv)
     x68kScreen[0].x68kreg = mode->reg;
     x68kScreen[0].scr_width = mode->width;
     x68kScreen[0].scr_height = mode->height;
-    
+
     switch (mode->type) {
         /* for TVRAM frame buffer */
         case X68K_FB_TEXT:
@@ -579,7 +579,7 @@ static void
 parseMouse(int argc, Token **argv)
 {
     enum TokenType argtype[] = { TOKEN_SYMBOL };
-    
+
     checkArguments(1, argtype, argc-1, argv);
     /* only `standard' mouse allowed */
     if (strcasecmp("standard", argv[1]->content.symbol) != 0)
@@ -598,7 +598,7 @@ static void
 parseKeyboard(int argc, Token **argv)
 {
     enum TokenType argtype[] = { TOKEN_SYMBOL };
-    
+
     checkArguments(1, argtype, argc-1, argv);
     if (strcasecmp("standard", argv[1]->content.symbol) == 0) {
         x68kKeySyms = &jisKeySyms;
@@ -606,7 +606,7 @@ parseKeyboard(int argc, Token **argv)
     } else if (strcasecmp("ascii", argv[1]->content.symbol) == 0) {
         x68kKeySyms = &asciiKeySyms;
         x68kKbdPriv.type = X68K_KB_ASCII;
-    } else        
+    } else
         parseError(argv[1]->line, "unknown keyboard type `%s'",
                    argv[1]->content.symbol);
 }
@@ -624,7 +624,7 @@ void
 parseError(int line, const char *str, ...)
 {
     va_list arglist;
-    
+
     fprintf(stderr, "%s:%d: ", configFilename, line);
     if (str != NULL) {
 	va_start(arglist, str);

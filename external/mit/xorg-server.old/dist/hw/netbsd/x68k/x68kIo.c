@@ -1,4 +1,4 @@
-/* $NetBSD: x68kIo.c,v 1.2 2020/04/10 16:49:36 tsutsui Exp $ */
+/* $NetBSD: x68kIo.c,v 1.3 2020/08/01 20:09:03 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -50,11 +50,11 @@ fee is hereby granted, provided that the above copyright no-
 tice  appear  in all copies and that both that copyright no-
 tice and this permission notice appear in  supporting  docu-
 mentation,  and  that the names of Sun or X Consortium
-not be used in advertising or publicity pertaining to 
-distribution  of  the software  without specific prior 
-written permission. Sun and X Consortium make no 
-representations about the suitability of this software for 
-any purpose. It is provided "as is" without any express or 
+not be used in advertising or publicity pertaining to
+distribution  of  the software  without specific prior
+written permission. Sun and X Consortium make no
+representations about the suitability of this software for
+any purpose. It is provided "as is" without any express or
 implied warranty.
 
 SUN DISCLAIMS ALL WARRANTIES WITH REGARD TO  THIS  SOFTWARE,
@@ -118,12 +118,12 @@ ProcessInputEvents(void)
 static void
 x68kEnqueueEvents(void)
 {
-    Firm_event	*ptrEvents,    	/* Current pointer event */
-		*kbdEvents;    	/* Current keyboard event */
-    int		numPtrEvents, 	/* Number of remaining pointer events */
-		numKbdEvents;   /* Number of remaining keyboard events */
-    int		nPE,   	    	/* Original number of pointer events */
-		nKE;   	    	/* Original number of keyboard events */
+    Firm_event	*ptrEvents,	/* Current pointer event */
+		*kbdEvents;	/* Current keyboard event */
+    int		numPtrEvents,	/* Number of remaining pointer events */
+		numKbdEvents;	/* Number of remaining keyboard events */
+    int		nPE,		/* Original number of pointer events */
+		nKE;		/* Original number of keyboard events */
     Bool	PtrAgain,	/* need to (re)read */
 		KbdAgain;	/* need to (re)read */
     DeviceIntPtr        pPointer;

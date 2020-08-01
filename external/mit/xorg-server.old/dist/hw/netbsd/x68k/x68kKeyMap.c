@@ -1,4 +1,4 @@
-/* $NetBSD: x68kKeyMap.c,v 1.2 2020/04/10 16:49:36 tsutsui Exp $ */
+/* $NetBSD: x68kKeyMap.c,v 1.3 2020/08/01 20:09:03 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -135,10 +135,10 @@ static KeySym jisKeymap[] = {
     XK_F4,	    NoSymbol,	    NoSymbol,       NoSymbol,    /* 0x66 */
     XK_F5,	    NoSymbol,	    NoSymbol,       NoSymbol,    /* 0x67 */
     XK_F6,	    NoSymbol,	    NoSymbol,       NoSymbol,    /* 0x68 */
-    XK_F7,  	    NoSymbol,       NoSymbol,       NoSymbol,    /* 0x69 */
+    XK_F7,	    NoSymbol,       NoSymbol,       NoSymbol,    /* 0x69 */
     XK_F8,	    NoSymbol,	    NoSymbol,       NoSymbol,    /* 0x6a */
-    XK_F9,  	    NoSymbol,	    NoSymbol,       NoSymbol,    /* 0x6b */
-    XK_F10, 	    NoSymbol,	    NoSymbol,       NoSymbol,    /* 0x6c */
+    XK_F9,	    NoSymbol,	    NoSymbol,       NoSymbol,    /* 0x6b */
+    XK_F10,	    NoSymbol,	    NoSymbol,       NoSymbol,    /* 0x6c */
     NoSymbol,	    NoSymbol,	    NoSymbol,       NoSymbol,    /* 0x6d */
     NoSymbol,	    NoSymbol,	    NoSymbol,       NoSymbol,    /* 0x6e */
     NoSymbol,	    NoSymbol,	    NoSymbol,       NoSymbol,    /* 0x6f */
@@ -262,10 +262,10 @@ static KeySym asciiKeymap[] = {
     XK_F4,	    NoSymbol,	    NoSymbol,       NoSymbol,    /* 0x66 */
     XK_F5,	    NoSymbol,	    NoSymbol,       NoSymbol,    /* 0x67 */
     XK_F6,	    NoSymbol,	    NoSymbol,       NoSymbol,    /* 0x68 */
-    XK_F7,  	    NoSymbol,       NoSymbol,       NoSymbol,    /* 0x69 */
+    XK_F7,	    NoSymbol,       NoSymbol,       NoSymbol,    /* 0x69 */
     XK_F8,	    NoSymbol,	    NoSymbol,       NoSymbol,    /* 0x6a */
-    XK_F9,  	    NoSymbol,	    NoSymbol,       NoSymbol,    /* 0x6b */
-    XK_F10, 	    NoSymbol,	    NoSymbol,       NoSymbol,    /* 0x6c */
+    XK_F9,	    NoSymbol,	    NoSymbol,       NoSymbol,    /* 0x6b */
+    XK_F10,	    NoSymbol,	    NoSymbol,       NoSymbol,    /* 0x6c */
     NoSymbol,	    NoSymbol,	    NoSymbol,       NoSymbol,    /* 0x6d */
     NoSymbol,	    NoSymbol,	    NoSymbol,       NoSymbol,    /* 0x6e */
     NoSymbol,	    NoSymbol,	    NoSymbol,       NoSymbol,    /* 0x6f */

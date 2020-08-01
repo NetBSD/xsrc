@@ -1,4 +1,4 @@
-/* $NetBSD: x68kText.c,v 1.2 2020/04/10 16:49:36 tsutsui Exp $ */
+/* $NetBSD: x68kText.c,v 1.3 2020/08/01 20:09:03 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -57,7 +57,7 @@ x68kTextOpen(X68kScreenRec *pPriv)
 
     tpal0 = pPriv->reg->tpal[0];
     tpal15 = pPriv->reg->tpal[15];
-    
+
     pPriv->reg->tpal[0] = 0;
     pPriv->reg->tpal[15] = 0xFFFE;
 
@@ -115,7 +115,7 @@ x68kTextInit(int screen, ScreenPtr pScreen, int argc, char *argv[])
     if ( !miCreateDefColormap(pScreen) )
         return FALSE;
     pScreen->SaveScreen = x68kSaveScreen;
-    
+
     return TRUE;
 }
 
