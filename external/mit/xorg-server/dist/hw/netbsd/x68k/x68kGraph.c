@@ -1,4 +1,4 @@
-/* $NetBSD: x68kGraph.c,v 1.6 2020/08/01 20:09:03 tsutsui Exp $ */
+/* $NetBSD: x68kGraph.c,v 1.7 2020/08/01 20:21:00 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -116,7 +116,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "fb.h"
 
 /* local functions */
-static Bool x68kCfbFinishScreenInit(ScreenPtr pScreen, pointer pbits,
+static Bool x68kCfbFinishScreenInit(ScreenPtr pScreen, void *pbits,
                                     int xsize, int ysize,
                                     int dpix, int dpiy, int width);
 static void x68kInstallColormap(ColormapPtr cmap);
@@ -235,7 +235,7 @@ x68kGraphInit(ScreenPtr pScreen, int argc, char *argv[])
  *
  *  purpose:  initialize visuals and perform miscellaneous settings
  *  argument: (ScreenPtr)pScreen     : DIX screen record
- *            (pointer)pbits         : frame buffer
+ *            (void *)pbits          : frame buffer
  *            (int)xsize, (int)ysize : screen size
  *            (int)dpix, (int)dpiy   : screen resolution in dots per inch
  *            (int)width             : pixel width of frame buffer
@@ -245,7 +245,7 @@ x68kGraphInit(ScreenPtr pScreen, int argc, char *argv[])
 static Bool
 x68kCfbFinishScreenInit(
     ScreenPtr pScreen,
-    pointer pbits,
+    void *pbits,
     int xsize, int ysize,
     int dpix, int dpiy,
     int width)
@@ -361,7 +361,7 @@ x68kInstallColormap(ColormapPtr cmap)
 	return;
     if (pPriv->installedMap)
 	WalkTree(pPriv->installedMap->pScreen, TellLostMap,
-		 (pointer) &(pPriv->installedMap->mid));
+		 (void *) &(pPriv->installedMap->mid));
 
     if (pPriv->class & DynamicClass) {
         if ((cmap->pVisual->class | DynamicClass) == DirectColor) {
@@ -395,7 +395,7 @@ x68kInstallColormap(ColormapPtr cmap)
         x68kUpdateColormap(cmap->pScreen, 0, 1<<(pPriv->depth), rmap, gmap, bmap);
     }
     pPriv->installedMap = cmap;
-    WalkTree(cmap->pScreen, TellGainedMap, (pointer) &(cmap->mid));
+    WalkTree(cmap->pScreen, TellGainedMap, (void *) &(cmap->mid));
 }
 
 /*-------------------------------------------------------------------------
@@ -414,7 +414,7 @@ x68kUninstallColormap(ColormapPtr cmap)
 	Colormap defMapID = cmap->pScreen->defColormap;
 
 	if (cmap->mid != defMapID) {
-	    pointer retval;
+	    void *retval;
 	    ColormapPtr defMap;
 	    dixLookupResourceByType(&retval, defMapID, RT_COLORMAP,
 		serverClient, DixReadAccess);
