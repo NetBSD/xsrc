@@ -51,6 +51,14 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include    "mi.h"
 #include    "fb.h"
 
+/* default log file paths */
+#ifndef DEFAULT_LOGDIR
+#define DEFAULT_LOGDIR "/var/log"
+#endif
+#ifndef DEFAULT_LOGPREFIX
+#define DEFAULT_LOGPREFIX "Xsun."
+#endif
+
 /* maximum pixmap depth */
 #ifndef SUNMAXDEPTH
 #define SUNMAXDEPTH 8
@@ -482,6 +490,8 @@ OsVendorInit(void)
 {
     static int inited;
     if (!inited) {
+	const char *logfile;
+	char *lf;
 #ifndef i386
 	struct rlimit rl;
 
@@ -496,6 +506,20 @@ OsVendorInit(void)
 	    (void) setrlimit (RLIMIT_NOFILE, &rl);
 	}
 #endif
+
+#define LOGSUFFIX ".log"
+#define LOGOLDSUFFIX ".old"
+
+	logfile = DEFAULT_LOGDIR "/" DEFAULT_LOGPREFIX;
+	if (asprintf(&lf, "%s%%s" LOGSUFFIX, logfile) == -1)
+	    FatalError("Cannot allocate space for the log file name\n");
+	LogInit(lf, LOGOLDSUFFIX);
+
+#undef LOGSUFFIX
+#undef LOGOLDSUFFIX
+
+	free(lf);
+
 	sunKbdPriv.fd = open ("/dev/kbd", O_RDWR, 0);
 	if (sunKbdPriv.fd < 0)
 	    FatalError ("Cannot open /dev/kbd, error %d\n", errno);

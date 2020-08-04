@@ -186,6 +186,7 @@ AbortDDX(void)
 	sunDisableCursor (pScreen);
 #endif
     }
+    LogClose();
 }
 
 /* Called by GiveUp(). */
