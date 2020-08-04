@@ -186,6 +186,7 @@ AbortDDX(enum ExitCode error)
 	sunDisableCursor (pScreen);
 #endif
     }
+    LogClose(error);
 }
 
 /* Called by GiveUp(). */
