@@ -202,6 +202,9 @@ struct _XDisplay
 	unsigned long last_request_read_upper32bit;
 	unsigned long request_upper32bit;
 #endif
+
+	/* avoid recursion on requests sequence number synchronization */
+	Bool req_seq_syncing; /* requests syncing is in-progress */
 };
 
 #define XAllocIDs(dpy,ids,n) (*(dpy)->idlist_alloc)(dpy,ids,n)
@@ -444,15 +447,15 @@ extern LockInfoPtr _Xglobal_lock;
  */
 #if defined(MALLOC_0_RETURNS_NULL) || defined(__clang_analyzer__)
 
-# define Xmalloc(size) malloc(((size) == 0 ? 1 : (size)))
-# define Xrealloc(ptr, size) realloc((ptr), ((size) == 0 ? 1 : (size)))
-# define Xcalloc(nelem, elsize) calloc(((nelem) == 0 ? 1 : (nelem)), (elsize))
+# define Xmalloc(size) malloc((size_t)((size) == 0 ? 1 : (size)))
+# define Xrealloc(ptr, size) realloc((ptr), (size_t)((size) == 0 ? 1 : (size)))
+# define Xcalloc(nelem, elsize) calloc((size_t)((nelem) == 0 ? 1 : (nelem)), (size_t)(elsize))
 
 #else
 
-# define Xmalloc(size) malloc((size))
-# define Xrealloc(ptr, size) realloc((ptr), (size))
-# define Xcalloc(nelem, elsize) calloc((nelem), (elsize))
+# define Xmalloc(size) malloc((size_t)(size))
+# define Xrealloc(ptr, size) realloc((ptr), (size_t)(size))
+# define Xcalloc(nelem, elsize) calloc((size_t)(nelem), (size_t)(elsize))
 
 #endif
 
@@ -636,7 +639,7 @@ extern void _XFlushGCCache(Display *dpy, GC gc);
 #ifndef DataRoutineIsProcedure
 #define Data(dpy, data, len) {\
 	if (dpy->bufptr + (len) <= dpy->bufmax) {\
-		memcpy(dpy->bufptr, data, (int)len);\
+		memcpy(dpy->bufptr, data, (int)(len));\
 		dpy->bufptr += ((len) + 3) & ~3;\
 	} else\
 		_XSend(dpy, data, len);\

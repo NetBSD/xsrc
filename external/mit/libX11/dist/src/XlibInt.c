@@ -188,7 +188,7 @@ void _XPollfdCacheDel(
 static int sync_hazard(Display *dpy)
 {
     /*
-     * "span" and "hazard" need to be signed such that the ">=" comparision
+     * "span" and "hazard" need to be signed such that the ">=" comparison
      * works correctly in the case that hazard is greater than 65525
      */
     int64_t span = X_DPY_GET_REQUEST(dpy) - X_DPY_GET_LAST_REQUEST_READ(dpy);
@@ -218,10 +218,12 @@ void _XSeqSyncFunction(
     xGetInputFocusReply rep;
     _X_UNUSED register xReq *req;
 
-    if ((X_DPY_GET_REQUEST(dpy) - X_DPY_GET_LAST_REQUEST_READ(dpy)) >= (65535 - BUFSIZE/SIZEOF(xReq))) {
+    if ((X_DPY_GET_REQUEST(dpy) - X_DPY_GET_LAST_REQUEST_READ(dpy)) >= (65535 - BUFSIZE/SIZEOF(xReq)) && !dpy->req_seq_syncing) {
+	dpy->req_seq_syncing = True;
 	GetEmptyReq(GetInputFocus, req);
 	(void) _XReply (dpy, (xReply *)&rep, 0, xTrue);
 	sync_while_locked(dpy);
+	dpy->req_seq_syncing = False;
     } else if (sync_hazard(dpy))
 	_XSetPrivSyncFunction(dpy);
 }
@@ -1706,9 +1708,9 @@ int _XGetHostname (
 	return 0;
 
     uname (&name);
-    len = strlen (name.nodename);
+    len = (int) strlen (name.nodename);
     if (len >= maxlen) len = maxlen - 1;
-    strncpy (buf, name.nodename, len);
+    strncpy (buf, name.nodename, (size_t) len);
     buf[len] = '\0';
 #else
     if (maxlen <= 0 || buf == NULL)
@@ -1717,7 +1719,7 @@ int _XGetHostname (
     buf[0] = '\0';
     (void) gethostname (buf, maxlen);
     buf [maxlen - 1] = '\0';
-    len = strlen(buf);
+    len = (int) strlen(buf);
 #endif /* NEED_UTSNAME */
     return len;
 }
